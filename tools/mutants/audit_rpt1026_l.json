@@ -22,8 +22,8 @@
   {
     "name": "auditl-entry-left-behind",
     "file": "src/ui/touch/touch.js",
-    "old": "    dispose() { clearInterval(navTimer); setGyro(false); closeEntry(); ui.remove();",
-    "new": "    dispose() { clearInterval(navTimer); setGyro(false); ui.remove();",
+    "old": "    dispose() { clearInterval(navTimer); setGyro(false); closeEntry(); clearTouchHeld(); ui.remove();",
+    "new": "    dispose() { clearInterval(navTimer); setGyro(false); clearTouchHeld(); ui.remove();",
     "tests": [
       "test/ui/audit_rpt1026_l.test.js"
     ],

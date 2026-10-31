@@ -36,7 +36,7 @@ test('YARD-LINE a lot\'s holder is a building that could be a home - Daggerfall\
 
 test('YARD-LINE the producer stamps the building\'s record on its frame, and the yard asks the line of its holders alone (mutants: the record unstamped; the lines unpassed)', () => {
   const world = hostText('src/scenes/world.js');
-  assert.match(world, /pixelHomeFrames\.set\(homeKey, \{ at, box: \[\.\.\.box\], rects, type: bd\?\.buildingType \?\? null, faction: bd\?\.factionId \?\? 0, parts: \[\[cpu, local\]\], terraced: isFabricDoorId\(placed\.modelIdNum\), block: b\.blockName, record: placed\.recordIndex \}\)/);   // PIN MOVED (AUDIT RPT1026 J2): the frame carries its models too - PIN MOVED (AUDIT TAMRIEL-WIDE A1): and whether it is terraced - PIN MOVED (IC-BACKYARD): and its block and record
+  assert.match(world, /pixelHomeFrames\.set\(homeKey, \{ at, box: \[\.\.\.box\], rects, grounds: \[ground\], type: bd\?\.buildingType \?\? null, faction: bd\?\.factionId \?\? 0, parts: \[\[cpu, local\]\], terraced: isFabricDoorId\(placed\.modelIdNum\), block: b\.blockName, record: placed\.recordIndex \}\)/);   // PIN MOVED (YARD-DECK): and each model's ground in parts - PIN MOVED (AUDIT RPT1026 J2): the frame carries its models too - PIN MOVED (AUDIT TAMRIEL-WIDE A1): and whether it is terraced - PIN MOVED (IC-BACKYARD): and its block and record
   assert.match(world, /const bd = b\.dfBlock\?\.rmbBlock\?\.fldHeader\?\.buildingDataList\?\.\[placed\.recordIndex\] \?\? null;/);
   const yards = src('src/scenes/homeYards.js');
   assert.match(yards, /yardWhyNot\(piece\.pos, cur\.lot, cur\.others, foot, cur\.roads, cur\.lines\)/);   // PIN MOVED (YARD-JOINED, FIELD BUGS 2026-10-29f): the lot with its owner's lots beside it

@@ -185,7 +185,7 @@ test('PERF-TV readout: a click on a drawn plate is found where it landed (the on
 
 test('PERF-TV by source: the view asks the readout before it picks; the host keeps the marks\' scene points between the ground\'s changes (the route\'s far legs and the cap\'s count are tv2\'s pins)', () => {
   const v = rd('src/scenes/travelView.js');
-  assert.match(v, /const key = deps\.hud\?\.pickAt\?\.\(e\.clientX, e\.clientY\) \?\? null;\n\s*if \(key\) deps\.onMark\?\.\(key, e\); else deps\.onPick\?\.\(e\.clientX, e\.clientY, e\);/);
+  assert.match(v, /const key = deps\.hud\?\.pickAt\?\.\(e\.clientX, e\.clientY\) \?\? null;\n\s*if \(key\) deps\.onMark\?\.\(key, e\);\n\s*else deps\.onPick\?\.\(e\.clientX, e\.clientY, e\);/);
   const w = rd('src/scenes/world.js');
   assert.match(w, /hud: \{ show: showTravelViewHud, hide: hideTravelViewHud, update: updateTravelViewHud, pickAt: travelViewHudPickAt \},/);
   assert.match(w, /if \(k\[0\] !== built\.size \|\| k\[1\] !== state\.mapOrigin\.x \|\| k\[2\] !== state\.mapOrigin\.y \|\| k\[3\] !== c\[0\] \|\| k\[4\] !== c\[1\] \|\| k\[5\] !== c\[2\] \|\| t - k\[6\] > 500\) \{/, 'the ground moves on a build, a drop, a re-anchor - and every half second besides');

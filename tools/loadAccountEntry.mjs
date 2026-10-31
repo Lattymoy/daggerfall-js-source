@@ -29,7 +29,11 @@ const points = [];
 const bySql = new Map();
 // each point with its moment (AUDIT SCALE C5: the storm's seconds are bucketed by when a request ended, not by when the
 // harness happened to read)
-const sink = { writeDataPoint(/** @type {any} */ p) { if (points.length < POINTS_MAX) points.push({ ...p, t: Date.now() }); } };
+const sink = {
+  writeDataPoint(/** @type {any} */ p) {
+    if (points.length < POINTS_MAX) points.push({ ...p, t: Date.now() });
+  },
+};
 
 const note = (/** @type {string} */ sql, /** @type {any} */ meta) => {
   const key = sql.replace(/\s+/g, ' ').trim().slice(0, 240);
@@ -60,9 +64,19 @@ function statement(/** @type {any} */ real, /** @type {string} */ sql) {
           return row[col];
         };
       }
-      if (key === 'all' || key === 'run') return async () => { const r = await target[key](); note(sql, r?.meta); return r; };
+      if (key === 'all' || key === 'run')
+        return async () => {
+          const r = await target[key]();
+          note(sql, r?.meta);
+          return r;
+        };
       // raw() answers no meta: counted as a statement, its rows unknown (the service asks none today) - never run twice
-      if (key === 'raw') return async (/** @type {any} */ opts) => { const r = await target.raw(opts); note(sql, null); return r; };
+      if (key === 'raw')
+        return async (/** @type {any} */ opts) => {
+          const r = await target.raw(opts);
+          note(sql, null);
+          return r;
+        };
       const v = Reflect.get(target, key);
       return typeof v === 'function' ? v.bind(target) : v;
     },
@@ -72,7 +86,8 @@ function statement(/** @type {any} */ real, /** @type {string} */ sql) {
   return st;
 }
 
-let wrapped = null, wrappedOf = null;
+let wrapped = null,
+  wrappedOf = null;
 function database(/** @type {any} */ db) {
   if (!db) return db;
   if (wrappedOf === db) return wrapped;
@@ -103,7 +118,10 @@ export default {
     // EVERY READ DRAINS: the points and the statements since the last read, never a running total - a reader that
     // folds each read into its own sum (the storm's every second) counts each statement once
     if (url.pathname === '/__load/stats') {
-      const body = JSON.stringify({ points: points.splice(0), statements: [...bySql].map(([sql, s]) => ({ sql, ...s })) });
+      const body = JSON.stringify({
+        points: points.splice(0),
+        statements: [...bySql].map(([sql, s]) => ({ sql, ...s })),
+      });
       bySql.clear();
       return new Response(body, { headers: { 'content-type': 'application/json' } });
     }

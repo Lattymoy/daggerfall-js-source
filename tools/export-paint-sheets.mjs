@@ -25,12 +25,17 @@ const { width: W, height: H, data } = img.getDFBitmap();
 
 const write = (name, pick, scale = 1) => {
   const png = new PNG({ width: W * scale, height: H * scale });
-  for (let y = 0; y < H * scale; y++) for (let x = 0; x < W * scale; x++) {
-    const sx = (x / scale) | 0, sy = (y / scale) | 0;
-    const [r, g, b, a] = pick(sx, sy);
-    const o = (y * W * scale + x) * 4;
-    png.data[o] = r; png.data[o + 1] = g; png.data[o + 2] = b; png.data[o + 3] = a;
-  }
+  for (let y = 0; y < H * scale; y++)
+    for (let x = 0; x < W * scale; x++) {
+      const sx = (x / scale) | 0,
+        sy = (y / scale) | 0;
+      const [r, g, b, a] = pick(sx, sy);
+      const o = (y * W * scale + x) * 4;
+      png.data[o] = r;
+      png.data[o + 1] = g;
+      png.data[o + 2] = b;
+      png.data[o + 3] = a;
+    }
   writeFileSync(resolve(OUT, name), PNG.sync.write(png));
   console.log(name, `${W * scale}x${H * scale}`);
 };

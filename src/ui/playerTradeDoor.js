@@ -9,48 +9,82 @@
 // (MENU1). The session it draws is net/tradeSession.js's; this file owns only the overlay's life.
 import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';
 import { registerOverlay } from './enhanced/enhancedOverlays.js';
-import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { noteFirstUse } from '../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 /** Can this page draw the window? It reads no ARENA2 at all, as the enhanced shop counter's does not. */
-export const playerTradeReady = () => typeof document !== 'undefined';   // OVH3: an online window - it keeps its own face over either skin
+export const playerTradeReady = () => typeof document !== 'undefined'; // OVH3: an online window - it keeps its own face over either skin
 
 /**
  * Build the window over `session`. `deps`: `{ items(), entity, gold() }` - the live pack, the player entity, the purse.
  * Returns the overlay object (`.repaint()` is the host's call on every session change), or null when the skin cannot.
  */
 export function createPlayerTradeWindow(session, deps) {
-  noteFirstUse('player-trade');   // TUT1
+  noteFirstUse('player-trade'); // TUT1
   if (!playerTradeReady()) return null;
-  let fired = false, view = null;
+  let fired = false,
+    view = null;
   const host = document.createElement('div');
   host.id = 'enhanced-player-trade';
-  host.style.cssText = 'position:fixed;inset:0;z-index:13;background:transparent;overflow:hidden';   // 13: the depth every in-game enhanced screen shares
+  host.style.cssText = 'position:fixed;inset:0;z-index:13;background:transparent;overflow:hidden'; // 13: the depth every in-game enhanced screen shares
   document.body.append(host);
   let unregister = () => {};
   const close = () => {
     if (fired) return;
-    unregister(); view?.unmount(); view = null; host.remove();
-    fired = true;   // last: `done` must not read true while the DOM is up
+    unregister();
+    view?.unmount();
+    view = null;
+    host.remove();
+    fired = true; // last: `done` must not read true while the DOM is up
   };
-  unregister = registerOverlay(() => { if (session.phase === 'open') session.cancel(); close(); });
+  unregister = registerOverlay(() => {
+    if (session.phase === 'open') session.cancel();
+    close();
+  });
   const overlay = {
     isChoiceWindow: true,
     hooks: {},
-    get done() { return fired; },
-    repaint() { view?.repaint(); },
-    input() { /* the view's own capture keydown owns the keyboard */ },
-    click() { /* the view is a fixed opaque div; pointers never get here */ },
-    wheel() { /* the view scrolls itself */ },
-    hover() { /* the view has its own :hover, and no canvas to hit-test */ },
-    tick() { /* the session drives its own clock (tradeFrame) */ },
-    draw() { /* the DOM is the picture */ },
-    dispose() { if (session.phase === 'open') session.cancel(); close(); },
+    get done() {
+      return fired;
+    },
+    repaint() {
+      view?.repaint();
+    },
+    input() {
+      /* the view's own capture keydown owns the keyboard */
+    },
+    click() {
+      /* the view is a fixed opaque div; pointers never get here */
+    },
+    wheel() {
+      /* the view scrolls itself */
+    },
+    hover() {
+      /* the view has its own :hover, and no canvas to hit-test */
+    },
+    tick() {
+      /* the session drives its own clock (tradeFrame) */
+    },
+    draw() {
+      /* the DOM is the picture */
+    },
+    dispose() {
+      if (session.phase === 'open') session.cancel();
+      close();
+    },
   };
   // COVERED-KEYS: `owner` is the window the trade's keys are gated on (ui/windowStack.js listenWindowKeys).
   mountEnhancedChunk({
     load: () => import('./enhanced/enhancedPlayerTrade.js'),
-    mount: ({ mountEnhancedPlayerTrade }) => { view = mountEnhancedPlayerTrade(host, { session, deps: { ...deps, onExit: close, owner: overlay } }); },
-    alive: () => !fired, host, onDismiss: () => { host.remove(); fired = true; }, label: 'player trade',
+    mount: ({ mountEnhancedPlayerTrade }) => {
+      view = mountEnhancedPlayerTrade(host, { session, deps: { ...deps, onExit: close, owner: overlay } });
+    },
+    alive: () => !fired,
+    host,
+    onDismiss: () => {
+      host.remove();
+      fired = true;
+    },
+    label: 'player trade',
   });
   return overlay;
 }

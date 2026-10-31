@@ -20,8 +20,8 @@
   {
     "name": "EL-yard-literal",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "a freeport of ${ETHER_SEA_NAME}, in",
-    "new": "a freeport of the Eltheric Ocean, in",
+    "old": "  const lede = `${o.port} - a freeport of ${ETHER_SEA_NAME}, in ${o.waters}. No crown's writ runs past the Veil, and no crown's favors. Your charts hold ${o.charted} ${o.charted === 1 ? 'isle' : 'isles'}.`;",
+    "new": "  const lede = `${o.port} - a freeport of the Eltheric Ocean, in ${o.waters}. No crown's writ runs past the Veil, and no crown's favors. Your charts hold ${o.charted} ${o.charted === 1 ? 'isle' : 'isles'}.`;",
     "tests": [
       "test/world/eltheric.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EL-crossing-literal",
     "file": "src/systems/naval/etherCrossing.js",
-    "old": "`here the sea is no longer the sea, but the ${ETHER_WORD}.`,",
-    "new": "'here the sea is no longer the sea, but the Eltheric.',",
+    "old": "        `here the sea is no longer the sea, but the ${ETHER_WORD}.`,",
+    "new": "        'here the sea is no longer the sea, but the Eltheric.',",
     "tests": [
       "test/world/eltheric.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EL-ledger-literal",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "ether: `${ETHER_WORD} ship`, legend: 'legend' });",
-    "new": "ether: 'Eltheric ship', legend: 'legend' });",
+    "old": "  ether: `${ETHER_WORD} ship`,",
+    "new": "  ether: 'Eltheric ship',",
     "tests": [
       "test/world/eltheric.test.js"
     ]

@@ -25,13 +25,13 @@ const rigBag = (src, open) => { const i = src.indexOf(open); assert.ok(i >= 0, o
 
 test('TECH1 THE ACTION: WeaponTechnique appended last, a port row the classic windows yield, on Mouse3 alone, in Combat - and a touch corner\'s, a d-pad\'s and a pad button\'s to choose (mutants: inserted mid-list; another key; the group)', () => {
   assert.equal(TECHNIQUE_ACTION, 'WeaponTechnique');
-  assert.equal(ACTIONS.at(-7), 'WeaponTechnique',   // SHOT-KINDS: the guns' load after the hold   // PIN MOVED (UI-CALM: the saddle panel's key; CARGO-ANYWHERE: the hold's last; PARTY-PING: the ping's; Decorate)
+  assert.equal(ACTIONS.at(-9), 'WeaponTechnique',   // PIN MOVED (TECH-KEY2: the signature key appended last)   // SHOT-KINDS: the guns' load after the hold   // PIN MOVED (UI-CALM: the saddle panel's key; CARGO-ANYWHERE: the hold's last; PARTY-PING: the ping's; Decorate)   // PIN MOVED (PVP-KEY: PvpFlag appended last)
     'appended - the classic grid and a saved file resolve by position (SPYGLASS\' glass after it - PIN MOVED)');
   assert.ok(PORT_ACTIONS.includes('WeaponTechnique'));
   assert.deepEqual(DEFAULT_BINDINGS.filter(([, a]) => a === 'WeaponTechnique'), [['Mouse3', 'WeaponTechnique']]);
   assert.deepEqual(DEFAULT_BINDINGS.filter(([c]) => c === 'Mouse3'), [['Mouse3', 'WeaponTechnique']], 'one key, one action');
   const combat = ACTION_GROUPS.find((g) => g.title === 'Combat');
-  assert.deepEqual(combat.rows.map((r) => r.action), ['ReadyWeapon', 'SwingWeapon', 'SwitchHand', 'WeaponTechnique', 'ShotCycle']);   // PIN MOVED (SHOT-KINDS: the guns' load at a helm after it)
+  assert.deepEqual(combat.rows.map((r) => r.action), ['ReadyWeapon', 'SwingWeapon', 'SwitchHand', 'WeaponTechnique', 'SignatureTechnique', 'ShotCycle']);   // PIN MOVED (SHOT-KINDS: the guns' load at a helm after it; TECH-KEY2: the signature key beside it)
   assert.equal(actionLabel('WeaponTechnique'), 'Weapon technique (hold to aim)');
   assert.deepEqual(TOUCH_BUTTON_ACTIONS.find((a) => a.id === 'WeaponTechnique'), { id: 'WeaponTechnique', label: 'Weapon technique (hold to aim)', glyph: 'Tech', kind: 'hold', w: 60 });
   assert.deepEqual(DPAD_CHOICES.find(([v]) => v === 'WeaponTechnique'), ['WeaponTechnique', 'Weapon technique']);
@@ -46,19 +46,27 @@ test('TECH1 THE RIG: the one runner stepped AHEAD of the gesture on the swing\'s
   const gesture = rig.indexOf('? playerWeapon.gesture(_dx, _dy, _held, dt');
   assert.ok(step > 0 && gesture > step, 'the technique first: a click\'s strike and a technique\'s are one machine');
   // PIN MOVED (AUDIT TECH-FX): the context is filled in place each frame (tc.<field> = ...), not made anew
-  assert.match(rig, /tc\.held = !!actionDown\?\.\(TECHNIQUE_ACTION\);/);
+  // PIN MOVED (TECH-KEY2; AUDIT TECH-FEEDBACK II F6: or its touch button - the action ships with no key)
+  assert.match(rig, /tc\.held = !!actionDown\?\.\(TECHNIQUE_ACTION\);\n\s*tc\.held2 = !!actionDown\?\.\(SIGNATURE_ACTION\) \|\| touchHeld\(SIGNATURE_ACTION\);/);
+  assert.match(rig, /cutSwing: \(\) => \{ if \(playerWeapon\.cutSwing\(\)\) fpArm\.cutAttack\?\.\(\); \},/, 'AUDIT TECH-FEEDBACK II F3: a flight\'s launch cuts the swing and the arm');
+  const touch = read('src/ui/touch/touch.js');
+  assert.match(touch, /\(\) => \{ slotHeld\.set\(b, downAction\(action\.id\)\); setTouchHeld\(action\.id, true\); \}, \(\) => \{ const c = slotHeld\.get\(b\) \?\? null; slotHeld\.delete\(b\); upCode\(c, liveNeeds\(\)\); setTouchHeld\(action\.id, false\); \}/, 'F6: a hold button holds its action');
+  assert.match(touch, /upCode\(c, liveNeeds\(\)\); \}   \/\/ nothing stays down under a button that is going\n\s*clearTouchHeld\(\);/, 'F6: and lets it go with the corner');
+  assert.deepEqual(TOUCH_BUTTON_ACTIONS.find((a) => a.id === 'SignatureTechnique'), { id: 'SignatureTechnique', label: 'Martial technique (hold to aim)', glyph: 'Path', kind: 'hold', w: 60 });
   assert.match(rig, /tc\.ready = !paralyzed && !!c && canAttack && !armLoosing && !_heldHit && !!camNow\?\.pos && !!camNow\?\.feet;/, 'AUDIT TECH1: and no plain shot\'s hit held for the arm');
   assert.match(rig, /tc\.paralyzed = !!paralyzed;/, 'AUDIT TECH1: a held body\'s clock stops');
   assert.match(rig, /tc\.blocked = !!technique\?\.blocked\?\.\(\);/, 'AUDIT TECH1: a window holds the key');
   assert.match(rig, /const strike = !paralyzed && c && canAttack && !armLoosing && !techniqueFlying\(\)\s*\? playerWeapon\.gesture\(/, 'AUDIT TECH1: no gesture while a leap or a dash is in the air');
   assert.match(rig, /if \(techniqueFlying\(\)\) return;[^\n]*\n\s*const strike = playerWeapon\.clickAttack\(\);/, 'AUDIT TECH1: nor the touch button\'s swing');
-  assert.match(rig, /startSwing: \(s\) => \{ if \(!playerWeapon\.techniqueStrike\(s\)\) return false; fpAttack\(s, _techDt\); return true; \}/);   // PIN MOVED (AUDIT TECH-FX): the frame's dt through _techDt, the closure made once
+  // PIN MOVED (TECH-CANCEL, AUDIT TECH-FEEDBACK F2/F6): the Morrowind arm's blow cut once the strike began, whatever the machine was doing
+  assert.match(rig, /startSwing: \(s\) => \{ if \(!playerWeapon\.techniqueStrike\(s\)\) return false; fpArm\.cutAttack\?\.\(\); fpAttack\(s, _techDt\); return true; \}/);   // PIN MOVED (AUDIT TECH-FX): the frame's dt through _techDt, the closure made once
   assert.match(rig, /_techDt = dt;\s*_techCtx \?\?= \{/, 'AUDIT TECH-FX: the dt set before the context is read, the context made once');
   assert.match(rig, /return claimShot\(held\.evs, _techCtx\);/);
   assert.match(rig, /tc\.holding = !!_heldHit;/, 'a Morrowind arm\'s held hit is a loose still to come (MW-D42)');   // PIN MOVED (AUDIT TECH-FX)
   // PIN MOVED (TWO-HANDS, bible/05-Combat/Two-Hands.md): the machine's attack through _attack, which starts it the same
   // way and names the strike's hand - a technique's always the lead's, never a flurry's
-  assert.match(code('src/combat/playerWeapon.js'), /techniqueStrike\(strike\) \{\s*if \(!this\._attack\(strike, \{ lead: true \}\)\) return false;/);
+  // PIN MOVED (TECH-CANCEL): the swing in flight cut first, put back if the strike cannot begin
+  assert.match(code('src/combat/playerWeapon.js'), /techniqueStrike\(strike\) \{\n\s*const was = machineCut\(this\.machine\);\n\s*if \(!this\._attack\(strike, \{ lead: true \}\)\) \{\n\s*if \(was\) Object\.assign\(this\.machine, was\);\n\s*return false;\n\s*\}/);   // AUDIT TECH-FEEDBACK II F8: the cut answers the machine as it was
   // PIN MOVED (PISTOL-PORT, bible/05-Combat/Dwarven-Pistolet.md): the strike is `const` again - a Pistolet's pull is the
   // pistol lab's pair's (`_pistolShot`), so nothing re-names a strike between naming it and starting the machine - and a
   // technique's is still the lead's
@@ -115,18 +123,20 @@ test('TECH1 THE FOUR HOSTS: exterior.js, world.js, worldModes.js\' interior arm 
   const dc = code('src/scenes/dungeonContext.js');
   assert.match(dc, /const rv = m\.technique \? null : arenaRivalBody\(\);/);
   assert.match(dc, /const boss = struckBy\(gateBossBody\(\)\) \? null : gateBossBody\(\);/);
-  assert.match(dc, /const cr = gateCrystalBodies\(\)\.find\(\(q\) => !struckBy\(q\) && missileHitsCapsule\(m\.pos, q\.ai\.feet, q\.ai\.height, q\.ai\.radius\)\);\s*if \(cr\) \{/, 'AUDIT TECH1: a struck crystal passed, the next one under the shaft met');
-  assert.match(dc, /const hb = gateHostBodies\(\)\.find\(\(q\) => !struckBy\(q\) && missileHitsCapsule\(m\.pos, q\.ai\.feet, q\.ai\.height, q\.ai\.radius\)\);\s*if \(hb\) \{/, 'AUDIT TECH1: a struck body of his host passed, the next one met');
+  assert.match(dc, /const cr = gateCrystalBodies\(\)\.find\(\(q\) => !struckBy\(q\) && missileHitsCapsule\(m\.pos, q\.ai\.feet, q\.ai\.height, q\.ai\.radius, _from\)\);\s*if \(cr\) \{/, 'AUDIT TECH1: a struck crystal passed, the next one under the shaft met');
+  assert.match(dc, /const hb = gateHostBodies\(\)\.find\(\(q\) => !struckBy\(q\) && missileHitsCapsule\(m\.pos, q\.ai\.feet, q\.ai\.height, q\.ai\.radius, _from\)\);\s*if \(hb\) \{/, 'AUDIT TECH1: a struck body of his host passed, the next one met');
   assert.match(dc, /if \(f\.dead \|\| f\.companion != null\) continue;[^\n]*\n\s*if \(struckBy\(f\)\) continue;/);
   assert.match(dc, /if \(techniquePierces\(m, f\)\) continue;/);
-  assert.match(dc, /if \(missileHitsFoe\(m\.pos, f\)\) \{\s*nextArenaQ\(\);\s*_arenaQ = shaftSequence\(m, _arenaQ\);/, 'AUDIT TECH1: a piercing shaft is one blow to the arena\'s referee');
+  assert.match(dc, /if \(missileHitsFoe\(m\.pos, f, _from\)\) \{\s*nextArenaQ\(\);\s*_arenaQ = shaftSequence\(m, _arenaQ\);/, 'AUDIT TECH1: a piercing shaft is one blow to the arena\'s referee');
 });
 
 test('TECH1 THE WORLD HOST\'S OWN: the chip off the MODE\'s rig with its key\'s name, the recentre\'s shift beside the foes\' (AUDIT TACT D3); the HUD\'s chip wears the marks\' blue from the leaf; every host keeps the browser\'s Back off the side buttons (mutants: the chip off world.js\'s own rig; the shift; the guard)', () => {
   const w = code('src/scenes/world.js');
   // PIN MOVED (AUDIT TECH-FX): the key's word through a thunk the chip asks only when ready, cached on the store's rev
   assert.match(w, /setHudTechniqueChips\(\(e\) => techniqueHudChips\(e, \(modes\?\.liveArm\?\.\(\)\?\.rig \?\? weaponRig\)\?\.playerWeapon, techniqueKeyWord\)\);/);
-  assert.match(w, /const b = bindings\(\), rev = b\?\.rev \?\? 0, pad = controllerLook\(\) \? \(padFamily\(\) \?\? 'xbox'\) : null;\s*if \(_techKey === null \|\| _techKeyStore !== b \|\| _techKeyRev !== rev \|\| _techKeyPad !== pad\) \{ _techKeyStore = b; _techKeyRev = rev; _techKeyPad = pad; _techKey = actionKeyWord\(TECHNIQUE_ACTION, \{ bindings: b, controller: pad !== null, family: pad \?\? 'xbox' \}\); \}/);   // PIN MOVED (FINAL AUDIT): the card's word (actionKeyWord - the key that answers, a pad's button while a pad is in hand), asked again when the pad is taken up or put down
+  // PIN MOVED (TECH-KEY2): the word moved out of the host (ui/techniqueKeyWord.js), one a key, kept a binding change
+  assert.match(w, /import \{ techniqueKeyWord \} from '\.\.\/ui\/techniqueKeyWord\.js';/);
+  assert.match(code('src/ui/techniqueKeyWord.js'), /const b = bindings\(\),\n\s*rev = b\?\.rev \?\? 0,\n\s*pad = controllerLook\(\) \? \(padFamily\(\) \?\? 'xbox'\) : null;\n\s*if \(_store !== b \|\| _rev !== rev \|\| _pad !== pad\) \{\n\s*_store = b;\n\s*_rev = rev;\n\s*_pad = pad;\n\s*_words\.clear\(\);\n\s*\}\n\s*if \(!_words\.has\(action\)\)\n\s*_words\.set\(action, actionKeyWord\(action, \{ bindings: b, controller: pad !== null, family: pad \?\? 'xbox' \}\)\);/);   // PIN MOVED (FINAL AUDIT): the card's word (actionKeyWord - the key that answers, a pad's button while a pad is in hand), asked again when the pad is taken up or put down
   assert.match(code('src/ui/enhanced/enhancedHud.js'), /const powers = setPowerChips\(vitals\);\s*powers\.push\(\.\.\.techniqueChips\(vitals\)\);/, 'the chip after the set powers\'');
   assert.match(w, /offsetTactics\(r\.offset\);\s*offsetTechniques\(r\.offset\);/);
   assert.equal(TECH_CHIP_COLOUR, '#59c7ff');

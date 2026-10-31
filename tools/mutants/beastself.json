@@ -56,8 +56,8 @@
   {
     "name": "BEASTSELF-the-view-jumps",
     "file": "src/player/mwView.js",
-    "old": "  standInEdge({ fpEye, feet, yaw, pitch });   // BEAST-SELF: the view carried across the arm's stand-aside\n",
-    "new": "",
+    "old": "  standInEdge({ fpEye, feet, yaw, pitch }); // BEAST-SELF: the view carried across the arm's stand-aside\n  benchSeated = !!state.seated; // WAGONS3: the host's word that the player drives from a wagon's bench, either lane",
+    "new": "  benchSeated = !!state.seated; // WAGONS3: the host's word that the player drives from a wagon's bench, either lane",
     "tests": [
       "test/player/beastself.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "BEASTSELF-the-fly-in",
     "file": "src/player/mwView.js",
-    "old": "    eotbCamera.eye({ fpEye, feet, yaw, pitch });   // the head the view leaves from\n",
-    "new": "",
+    "old": "    eotbCamera.eye({ fpEye, feet, yaw, pitch }); // the head the view leaves from\n    if (third) eotbCamera.toggleOffset(true);",
+    "new": "    if (third) eotbCamera.toggleOffset(true);",
     "tests": [
       "test/player/beastself.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "BEASTSELF-the-person-not-carried-back",
     "file": "src/player/mwView.js",
-    "old": "  if (_beastInSprite && !mounted) mwCamera.restore(",
-    "new": "  if (false) mwCamera.restore(",
+    "old": "  if (_beastInSprite && !mounted)\n    mwCamera.restore({ firstPerson: !eotbCamera.thirdPerson(), baseDistance: mwCamera.baseDistance() });",
+    "new": "  if (false) mwCamera.restore({ firstPerson: !eotbCamera.thirdPerson(), baseDistance: mwCamera.baseDistance() });",
     "tests": [
       "test/player/beastself.test.js"
     ]

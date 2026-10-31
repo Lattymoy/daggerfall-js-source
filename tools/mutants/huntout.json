@@ -2,8 +2,8 @@
   {
     "name": "WAIT-hover-not-taken",
     "file": "src/ui/waitWindow.js",
-    "old": "  hover() {}\n",
-    "new": "",
+    "old": "  hover() {}\n  release() {}",
+    "new": "  release() {}",
     "tests": [
       "test/systems/quest/forage4_wait.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WAIT-seconds-unrounded",
     "file": "src/scenes/foragingWait.js",
-    "old": "Math.round((minutes / 60) * WAIT_PER_HOUR * 100) / 100",
-    "new": "(minutes / 60) * WAIT_PER_HOUR",
+    "old": "export const waitRealSeconds = (minutes) => Math.round((minutes / 60) * WAIT_PER_HOUR * 100) / 100;",
+    "new": "export const waitRealSeconds = (minutes) => (minutes / 60) * WAIT_PER_HOUR;",
     "tests": [
       "test/systems/quest/forage4_wait.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WAIT-seconds-to-the-tenth",
     "file": "src/scenes/foragingWait.js",
-    "old": "Math.round((minutes / 60) * WAIT_PER_HOUR * 100) / 100",
-    "new": "Math.round((minutes / 60) * WAIT_PER_HOUR * 10) / 10",
+    "old": "export const waitRealSeconds = (minutes) => Math.round((minutes / 60) * WAIT_PER_HOUR * 100) / 100;",
+    "new": "export const waitRealSeconds = (minutes) => Math.round((minutes / 60) * WAIT_PER_HOUR * 10) / 10;",
     "tests": [
       "test/systems/quest/forage4_wait.test.js"
     ]

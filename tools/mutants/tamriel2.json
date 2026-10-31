@@ -50,8 +50,8 @@
   {
     "name": "TAMRIEL2-the-sea-wears-a-climate",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "return tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Ocean;",
-    "new": "return tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Woodlands;",
+    "old": "tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Ocean;   // FOUNDATION F4",
+    "new": "tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Woodlands;   // FOUNDATION F4",
     "tests": [
       "test/world/tamriel2.test.js"
     ]
@@ -124,8 +124,8 @@
   {
     "name": "TAMRIEL2-streams-is-the-map",
     "file": "src/world/streamingWorld.js",
-    "old": "if (!!f && px >= f.x0 && px < f.x0 + f.w && py >= f.y0 && py < f.y0 + f.h) return true;",
-    "new": "if (false) return true;",
+    "old": "    if (!!f && px >= f.x0 && px < f.x0 + f.w && py >= f.y0 && py < f.y0 + f.h) return true;",
+    "new": "    if (false) return true;",
     "tests": [
       "test/world/tamriel2.test.js"
     ]
@@ -133,8 +133,8 @@
   {
     "name": "TAMRIEL2-streams-past-the-frame",
     "file": "src/world/streamingWorld.js",
-    "old": "if (!!f && px >= f.x0 && px < f.x0 + f.w && py >= f.y0 && py < f.y0 + f.h) return true;",
-    "new": "if (!!f && px >= f.x0 && py >= f.y0 && py < f.y0 + f.h) return true;",
+    "old": "    if (!!f && px >= f.x0 && px < f.x0 + f.w && py >= f.y0 && py < f.y0 + f.h) return true;",
+    "new": "    if (!!f && px >= f.x0 && py >= f.y0 && py < f.y0 + f.h) return true;",
     "tests": [
       "test/world/tamriel2.test.js"
     ]
@@ -142,7 +142,7 @@
   {
     "name": "TAMRIEL2-the-load-list-stops-at-the-map",
     "file": "src/world/streamingWorld.js",
-    "old": "        if (!StreamingWorldState.streams(px, py)) continue;   // TAMRIEL2: the frame, where the host set one",
+    "old": "        if (!StreamingWorldState.streams(px, py)) continue; // TAMRIEL2: the frame, where the host set one",
     "new": "        if (!StreamingWorldState.onMap(px, py)) continue;",
     "tests": [
       "test/world/tamriel2.test.js"

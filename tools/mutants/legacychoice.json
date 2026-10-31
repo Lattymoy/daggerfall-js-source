@@ -72,8 +72,8 @@
   {
     "name": "LEGACY-CHOICE-no-third-online",
     "file": "src/ui/legacy/legacyModelChoice.js",
-    "old": "    ...(online ? [Object.freeze({ id: NO_LINEAGE,",
-    "new": "    ...(false ? [Object.freeze({ id: NO_LINEAGE,",
+    "old": "  const casual = online",
+    "new": "  const casual = false",
     "tests": [
       "test/systems/legacychoice.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "LEGACY-CHOICE-third-offline",
     "file": "src/ui/legacy/legacyModelChoice.js",
-    "old": "    ...(online ? [Object.freeze({ id: NO_LINEAGE,",
-    "new": "    ...(true ? [Object.freeze({ id: NO_LINEAGE,",
+    "old": "  const casual = online",
+    "new": "  const casual = true",
     "tests": [
       "test/systems/legacychoice.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "LEGACY-CHOICE-flat-screen",
     "file": "src/ui/legacy/legacyModelChoice.js",
-    "old": "  faceText: online ? LEGACY_CHOICE_FACE : LEGACY_MODEL_FACE, faceTags: LEGACY_MODEL_TAGS, stacked: online,",
-    "new": "  faceText: online ? LEGACY_CHOICE_FACE : LEGACY_MODEL_FACE, faceTags: LEGACY_MODEL_TAGS, stacked: false,",
+    "old": "    stacked: online,",
+    "new": "    stacked: false,",
     "tests": [
       "test/systems/legacychoice.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "LEGACY-CHOICE-offline-words",
     "file": "src/ui/legacy/legacyModelChoice.js",
-    "old": "  faceText: online ? LEGACY_CHOICE_FACE : LEGACY_MODEL_FACE, faceTags: LEGACY_MODEL_TAGS, stacked: online,",
-    "new": "  faceText: LEGACY_MODEL_FACE, faceTags: LEGACY_MODEL_TAGS, stacked: online,",
+    "old": "    faceText: online ? LEGACY_CHOICE_FACE : LEGACY_MODEL_FACE,",
+    "new": "    faceText: LEGACY_MODEL_FACE,",
     "tests": [
       "test/systems/legacychoice.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "LEGACY-CHOICE-no-third-key",
     "file": "src/ui/levelingChoice.js",
-    "old": "    'char:3': 'three', Digit3: 'three', Numpad3: 'three',   // LEGACY-CHOICE: the third answer online\n",
-    "new": "",
+    "old": "    'char:3': 'three',\n    Digit3: 'three',\n    Numpad3: 'three', // LEGACY-CHOICE: the third answer online\n  });",
+    "new": "  });",
     "tests": [
       "test/systems/legacychoice.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "LEGACY-CHOICE-third-key-unarmed",
     "file": "src/ui/levelingChoice.js",
-    "old": "      case 'three': this.pickIndex(2, false); break;",
-    "new": "      case 'three': break;",
+    "old": "        this.pickIndex(2, false);\n        break; // a screen of two has no third: refused as no option",
+    "new": "        break; // a screen of two has no third: refused as no option",
     "tests": [
       "test/systems/legacychoice.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "LEGACY-CHOICE-up-is-down",
     "file": "src/ui/levelingChoice.js",
-    "old": "const n = this.options.length, step = move === 'up' ? n - 1 : 1;",
-    "new": "const n = this.options.length, step = 1;",
+    "old": "          step = move === 'up' ? n - 1 : 1;",
+    "new": "          step = 1;",
     "tests": [
       "test/systems/legacychoice.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "LEGACY-CHOICE-narrow-popup",
     "file": "src/ui/enhanced/enhancedLevelingChoice.js",
-    "old": "owner.options.length >= 3 ? 'px-win lvl-win lvl-three' : 'px-win lvl-win'",
-    "new": "'px-win lvl-win'",
+    "old": "  const win = el(doc, 'div', owner.options.length >= 3 ? 'px-win lvl-win lvl-three' : 'px-win lvl-win');",
+    "new": "  const win = el(doc, 'div', 'px-win lvl-win');",
     "tests": [
       "test/systems/legacychoice.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "LEGACY-CHOICE-third-tag-echoes-its-title",
     "file": "src/ui/legacy/legacyModelChoice.js",
-    "old": "[NO_LINEAGE]: 'No death cost' });",
-    "new": "[NO_LINEAGE]: 'Casual' });",
+    "old": "  [NO_LINEAGE]: 'No death cost',",
+    "new": "  [NO_LINEAGE]: 'Casual',",
     "tests": [
       "test/systems/legacychoice.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "LEGACY-POINTER-hover-under-the-face",
     "file": "src/ui/levelingChoice.js",
-    "old": "    if (this._fired || this._faced) return;   // LEGACY-POINTER: the Plus face's tiles own the pointer",
-    "new": "    if (this._fired) return;   // LEGACY-POINTER: the Plus face's tiles own the pointer",
+    "old": "    if (this._fired || this._faced) return; // LEGACY-POINTER: the Plus face's tiles own the pointer",
+    "new": "    if (this._fired) return; // LEGACY-POINTER: the Plus face's tiles own the pointer",
     "tests": [
       "test/systems/legacychoice.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "LEGACY-POINTER-face-never-noted",
     "file": "src/ui/levelingChoice.js",
-    "old": "drawLevelingFace(this)) { this._faced = true; return; }",
-    "new": "drawLevelingFace(this)) { return; }",
+    "old": "      this._faced = true;\n      return;",
+    "new": "      return;",
     "tests": [
       "test/systems/legacychoice.test.js"
     ],
@@ -232,11 +232,22 @@
   {
     "name": "LEGACY-POINTER-face-never-cleared",
     "file": "src/ui/levelingChoice.js",
-    "old": "    this._faced = false;\n    if (!this._fired && isEnhanced()",
-    "new": "    if (!this._fired && isEnhanced()",
+    "old": "    this._faced = false;\n    if (!this._fired && isEnhanced() && typeof document !== 'undefined' && drawLevelingFace(this)) {",
+    "new": "    if (!this._fired && isEnhanced() && typeof document !== 'undefined' && drawLevelingFace(this)) {",
     "tests": [
       "test/systems/legacychoice.test.js"
     ],
     "note": "LEGACY-POINTER: a question back on the canvas (the skin switched under it) never took the canvas pointer again."
+  },
+  {
+    "name": "CASUAL-FIRST-casual-last",
+    "file": "src/ui/legacy/legacyModelChoice.js",
+    "old": "  return Object.freeze([...casual, ...models]); // CASUAL-FIRST: Enter without reading costs nothing at all",
+    "new": "  return Object.freeze([...models, ...casual]); // CASUAL-FIRST: Enter without reading costs nothing at all",
+    "tests": [
+      "test/systems/legacychoice.test.js",
+      "test/systems/legacy/casuallife.test.js"
+    ],
+    "note": "CASUAL-FIRST: online Casual went back behind the two models, so Enter without reading founds an Enduring house."
   }
 ]

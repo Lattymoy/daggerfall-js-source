@@ -12,10 +12,11 @@
 // the owner's sprung list ride the foes frame beside `c` (SURV3's camps) - validated here, at the reader, never by
 // the relay, which reads a frame's record count and nothing else. No wire or relay change.
 
-/** A site id: `px,py:objectID` or `px,py:hold` - WB12d: or `px,py:rite.<day>`, a breach's faithful (scenes/riteHost.js),
- *  its day in it (AUDIT WB12d C14: a later breach's circle on the same pixel is a site of its own) - STAR5: or
- *  `px,py:star.<night>.<k>`, a fallen star's coven, `.m` its master and `.c` its master's circle (starSiteId). */
-export const WOD_SITE_RE = /^-?\d{1,5},-?\d{1,5}:(?:\d{1,10}(?:\.\d{1,3})?|hold|rite\.\d{1,9}|star\.\d{1,10}\.[0-2](?:\.[mc])?)$/;   // STAR5: a fallen star's coven, its master (`.m`) and its circle (`.c`)
+/** A site id: `px,py:objectID` or `px,py:hold` - WB12d: or `px,py:rite.<day>`, a breach's faithful, its day in it (C14)
+ *  - STAR5: or `px,py:star.<night>.<k>`, a fallen star's coven, `.m` its master, `.c` its circle (starSiteId) - STOREFRONT:
+ *  or `px,py:brass.<stage>.<k>`, a Brass Fissure's constructs, `.h` its Colossus (brassSiteId). */
+export const WOD_SITE_RE =
+  /^-?\d{1,5},-?\d{1,5}:(?:\d{1,10}(?:\.\d{1,3})?|hold|rite\.\d{1,9}|star\.\d{1,10}\.[0-2](?:\.[mc])?|brass\.[0-2]\.\d(?:\.h)?)$/; // STAR5: a fallen star's coven, its master (`.m`) and its circle (`.c`); STOREFRONT: a Brass Fissure's
 /** WB12d: the site of a day's faithful at a breach in pixel (px, py). */
 export const riteSiteId = (px, py, day) => `${px},${py}:rite.${day}`;
 /** AUDIT WB12d (C5): a breach's faithful - today's site, or one a save from before the day joined the id held. */
@@ -24,6 +25,14 @@ export const isRiteSite = (site) => typeof site === 'string' && /:rite(?:\.\d{1,
  *  coven's waves, its master (`m`) and its master's circle (`c`), one owner's all (the first to spring the waves'), so every
  *  screen tells the master and its circle among the foes it sees. */
 export const starSiteId = (px, py, n, k, part = '') => `${px},${py}:star.${n}.${k}${part ? `.${part}` : ''}`;
+/** STOREFRONT (bible/06-Systems/Battle-Pass.md section 6): a Brass Fissure's sites in pixel (px, py) - the season's stage
+ *  and the fissure's number in its region: its constructs, and `h` its Brass Colossus (scenes/seasonHost.js). */
+export const brassSiteId = (px, py, stage, k, part = '') => `${px},${py}:brass.${stage}.${k}${part ? `.${part}` : ''}`;
+/** STOREFRONT: whether a site is a Brass Fissure's - its constructs' or its Colossus's (brassSiteId). */
+export const isBrassSite = (site) => typeof site === 'string' && /:brass\.[0-2]\.\d(?:\.h)?$/.test(site);
+/** STOREFRONT (AUDIT LANE 5): whether a site is a Heart Fissure's Colossus's (`.h`) - its traits the season's three
+ *  (systems/bossTraits.js bossTraitsMost). */
+export const isColossusSite = (site) => typeof site === 'string' && /:brass\.[0-2]\.\d\.h$/.test(site);
 /** The most sites one frame may name, as tags or as the sprung list. */
 export const WOD_SITES_MAX = 64;
 /** A reader's allowance for one owner's camp foes - apart from CELL_PUPPETS_MAX, as the watch's is (WATCH1): a camp
@@ -54,7 +63,8 @@ export const wodSiteId = (px, py, oid, n = 0) => `${px},${py}:${oid}${n > 0 ? `.
  *  the valid entries, at most WOD_SITES_MAX, each site once, the age clamped to [0, WOD_AGE_MAX]. */
 export function validSites(raw) {
   if (!Array.isArray(raw)) return [];
-  const out = [], seen = new Set();
+  const out = [],
+    seen = new Set();
   for (const e of raw) {
     if (out.length >= WOD_SITES_MAX) break;
     if (!Array.isArray(e) || e.length !== 2) continue;

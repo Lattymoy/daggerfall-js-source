@@ -2,8 +2,8 @@
   {
     "name": "CHAP3C-PRICED-NOTHING",
     "file": "src/net/npcChapterLaw.js",
-    "old": "(factor === 1 || !(price > 0) ? price : Math.max(1, Math.round(price * factor)));",
-    "new": "(factor === 1 ? price : Math.max(1, Math.round(price * factor)));",
+    "old": "  factor === 1 || !(price > 0) ? price : Math.max(1, Math.round(price * factor));",
+    "new": "  factor === 1 ? price : Math.max(1, Math.round(price * factor));",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CHAP3C-PRICED-ROUND",
     "file": "src/net/npcChapterLaw.js",
-    "old": "(factor === 1 || !(price > 0) ? price : Math.max(1, Math.round(price * factor)));",
-    "new": "(factor === 1 || !(price > 0) ? price : Math.max(1, Math.floor(price * factor)));",
+    "old": "  factor === 1 || !(price > 0) ? price : Math.max(1, Math.round(price * factor));",
+    "new": "  factor === 1 || !(price > 0) ? price : Math.max(1, Math.floor(price * factor));",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CHAP3C-SHELF-MIN",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return Math.max(HALL_QUALITY_MIN, Math.min(Math.max(HALL_QUALITY_MAX, quality), quality + step));",
-    "new": "return Math.min(Math.max(HALL_QUALITY_MAX, quality), quality + step);",
+    "old": "  return Math.max(HALL_QUALITY_MIN, Math.min(Math.max(HALL_QUALITY_MAX, quality), quality + step));",
+    "new": "  return Math.min(Math.max(HALL_QUALITY_MAX, quality), quality + step);",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js",
       "test/net/audit_chap3.test.js"
@@ -30,8 +30,8 @@
   {
     "name": "CHAP3C-SHELF-MAX",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return Math.max(HALL_QUALITY_MIN, Math.min(Math.max(HALL_QUALITY_MAX, quality), quality + step));",
-    "new": "return Math.max(HALL_QUALITY_MIN, quality + step);",
+    "old": "  return Math.max(HALL_QUALITY_MIN, Math.min(Math.max(HALL_QUALITY_MAX, quality), quality + step));",
+    "new": "  return Math.max(HALL_QUALITY_MIN, quality + step);",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js",
       "test/net/audit_chap3.test.js"
@@ -50,8 +50,8 @@
   {
     "name": "CHAP3C-SHELF-FAILING",
     "file": "src/net/npcChapterLaw.js",
-    "old": "writs: 0.5, shelf: -4 }",
-    "new": "writs: 0.5, shelf: -3 }",
+    "old": "  Object.freeze({ band: 'failing', name: 'Failing', from: 0, price: 1.25, writs: 0.5, shelf: -4 }),",
+    "new": "  Object.freeze({ band: 'failing', name: 'Failing', from: 0, price: 1.25, writs: 0.5, shelf: -3 }),",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js"
     ]
@@ -59,8 +59,8 @@
   {
     "name": "CHAP3C-SHELF-THRIVING",
     "file": "src/net/npcChapterLaw.js",
-    "old": "from: 70, price: 0.9, writs: 1.5, shelf: 4 }",
-    "new": "from: 70, price: 0.9, writs: 1.5, shelf: 5 }",
+    "old": "  Object.freeze({ band: 'thriving', name: 'Thriving', from: 70, price: 0.9, writs: 1.5, shelf: 4 }),",
+    "new": "  Object.freeze({ band: 'thriving', name: 'Thriving', from: 70, price: 0.9, writs: 1.5, shelf: 5 }),",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js"
     ]
@@ -68,8 +68,8 @@
   {
     "name": "CHAP3C-SHELF-ASCENDANT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "from: 90, price: 0.8, writs: 1.5, shelf: 4 }",
-    "new": "from: 90, price: 0.8, writs: 1.5, shelf: 3 }",
+    "old": "  Object.freeze({ band: 'ascendant', name: 'Ascendant', from: 90, price: 0.8, writs: 1.5, shelf: 4 }),",
+    "new": "  Object.freeze({ band: 'ascendant', name: 'Ascendant', from: 90, price: 0.8, writs: 1.5, shelf: 3 }),",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "CHAP3C-SHEET-KEY",
     "file": "src/net/chapterSheet.js",
-    "old": "next.set(`${c.f}|${c.region}`, { strength: c.strength, seats: chapterRollSeatsOf(c.seats), season: chapterSeasonOf(c), patron: sheetPatronOf(c.patron) });",
-    "new": "next.set(`${c.f}`, { strength: c.strength, seats: chapterRollSeatsOf(c.seats), season: chapterSeasonOf(c), patron: sheetPatronOf(c.patron) });",
+    "old": "                next.set(`${c.f}|${c.region}`, {",
+    "new": "                next.set(`${c.f}`, {",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js"
     ],
@@ -105,8 +105,8 @@
   {
     "name": "CHAP3C-SHEET-ROWS",
     "file": "src/net/chapterSheet.js",
-    "old": "if (Number.isSafeInteger(c?.f) && Number.isSafeInteger(c?.region) && Number.isFinite(c?.strength)) next.set",
-    "new": "if (Number.isFinite(c?.strength)) next.set",
+    "old": "              if (Number.isSafeInteger(c?.f) && Number.isSafeInteger(c?.region) && Number.isFinite(c?.strength))",
+    "new": "              if (Number.isFinite(c?.strength))",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js"
     ]
@@ -114,8 +114,8 @@
   {
     "name": "CHAP3C-SHEET-BEAT",
     "file": "src/net/chapterSheet.js",
-    "old": "if (stopped || busy || nowMs() - readAt < SHEET_KEPT_MS) return false;",
-    "new": "if (stopped || busy || nowMs() - readAt <= SHEET_KEPT_MS) return false;",
+    "old": "    if (stopped || busy || nowMs() - readAt < SHEET_KEPT_MS) return false;",
+    "new": "    if (stopped || busy || nowMs() - readAt <= SHEET_KEPT_MS) return false;",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js"
     ]
@@ -132,8 +132,8 @@
   {
     "name": "CHAP3C-SHEET-STOPS",
     "file": "src/net/chapterSheet.js",
-    "old": "      } else if (SHEET_STOPS.includes(r?.error)) {",
-    "new": "      } else if (false) {",
+    "old": "          } else if (SHEET_STOPS.includes(r?.error)) {",
+    "new": "          } else if (false) {",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js",
       "test/net/audit_chap3.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "CHAP3C-SHEET-KEEP",
     "file": "src/net/chapterSheet.js",
-    "old": "      } else if (SHEET_STOPS.includes(r?.error)) {",
-    "new": "      } else if ((strengths = new Map()) && SHEET_STOPS.includes(r?.error)) {",
+    "old": "          } else if (SHEET_STOPS.includes(r?.error)) {",
+    "new": "          } else if ((strengths = new Map()) && SHEET_STOPS.includes(r?.error)) {",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js",
       "test/net/audit_chap3.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "CHAP3C-SHEET-STOPPED",
     "file": "src/net/chapterSheet.js",
-    "old": "if (stopped || busy ||",
-    "new": "if (busy ||",
+    "old": "    if (stopped || busy || nowMs() - readAt < SHEET_KEPT_MS) return false;",
+    "new": "    if (busy || nowMs() - readAt < SHEET_KEPT_MS) return false;",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js"
     ]
@@ -161,8 +161,8 @@
   {
     "name": "CHAP3C-SHEET-BUSY",
     "file": "src/net/chapterSheet.js",
-    "old": "if (stopped || busy ||",
-    "new": "if (stopped ||",
+    "old": "    if (stopped || busy || nowMs() - readAt < SHEET_KEPT_MS) return false;",
+    "new": "    if (stopped || nowMs() - readAt < SHEET_KEPT_MS) return false;",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js",
       "test/net/audit_chap3.test.js"
@@ -171,8 +171,8 @@
   {
     "name": "CHAP3C-OFFER",
     "file": "src/systems/guild/guildServiceActions.js",
-    "old": "price: factored(trainingPrice(membership, entity.level ?? 1), priceFactor) };",
-    "new": "price: trainingPrice(membership, entity.level ?? 1) };",
+    "old": "  return {\n    kind: 'offer',\n    textId: TRAINING_OFFER_ID,\n    price: factored(trainingPrice(membership, entity.level ?? 1), priceFactor),\n  };",
+    "new": "  return { kind: 'offer', textId: TRAINING_OFFER_ID, price: trainingPrice(membership, entity.level ?? 1) };",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js"
     ]
@@ -180,8 +180,8 @@
   {
     "name": "CHAP3C-AFFORD",
     "file": "src/systems/guild/guildServiceActions.js",
-    "old": "return totalGoldAmount(entity) >= factored(trainingPrice(membership, entity.level ?? 1), priceFactor);",
-    "new": "return totalGoldAmount(entity) >= trainingPrice(membership, entity.level ?? 1);",
+    "old": "  return totalGoldAmount(entity) >= factored(trainingPrice(membership, entity.level ?? 1), priceFactor);",
+    "new": "  return totalGoldAmount(entity) >= trainingPrice(membership, entity.level ?? 1);",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js"
     ]
@@ -189,8 +189,8 @@
   {
     "name": "CHAP3C-FACTORED-ROUND",
     "file": "src/systems/guild/guildServiceActions.js",
-    "old": "(f === 1 || !(price > 0) ? price : Math.max(1, Math.round(price * f)));",
-    "new": "(f === 1 || !(price > 0) ? price : Math.max(1, Math.ceil(price * f)));",
+    "old": "  f === 1 || !(price > 0) ? price : Math.max(1, Math.round(price * f));",
+    "new": "  f === 1 || !(price > 0) ? price : Math.max(1, Math.ceil(price * f));",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js"
     ]
@@ -235,8 +235,8 @@
   {
     "name": "CHAP3C-SPELLMAKER",
     "file": "src/ui/spell/spellMakerWindow.js",
-    "old": "this.totalGoldCost = chapterPriced(gold, this.priceFactor?.() ?? 1);",
-    "new": "this.totalGoldCost = chapterPriced(gold, 1);",
+    "old": "    this.totalGoldCost = chapterPriced(gold, this.priceFactor?.() ?? 1); // AUDIT CHAP3 R12: the law's one rounding",
+    "new": "    this.totalGoldCost = chapterPriced(gold, 1); // AUDIT CHAP3 R12: the law's one rounding",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js",
       "test/net/audit_chap3.test.js"
@@ -245,8 +245,8 @@
   {
     "name": "CHAP3C-SPELLMAKER-SP",
     "file": "src/ui/spell/spellMakerWindow.js",
-    "old": "    this.totalSpellPointCost = sp;\n  }",
-    "new": "    { const f = this.priceFactor?.() ?? 1; this.totalSpellPointCost = f === 1 ? sp : Math.round(sp * f); }\n  }",
+    "old": "    this.totalSpellPointCost = sp;",
+    "new": "    {\n      const f = this.priceFactor?.() ?? 1;\n      this.totalSpellPointCost = f === 1 ? sp : Math.round(sp * f);\n    }",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js"
     ],
@@ -255,8 +255,8 @@
   {
     "name": "CHAP3C-SPELLMAKER-KEPT",
     "file": "src/ui/spell/spellMakerWindow.js",
-    "old": "    this.priceFactor = priceFactor;\n",
-    "new": "",
+    "old": "    this.priceFactor = priceFactor;\n    this.done = false;",
+    "new": "    this.done = false;",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js"
     ]

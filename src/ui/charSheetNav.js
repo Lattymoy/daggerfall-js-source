@@ -25,12 +25,19 @@ import { PlayerHistoryWindow, preloadPlayerHistoryArt } from './playerHistory.js
  * @returns the hook bag CharSheet's constructor takes.
  */
 export function charSheetHooks({
-  entity, inventory = null, spellbook = null, questMessages = null, notebook = null, artDeps = null,
+  entity,
+  inventory = null,
+  spellbook = null,
+  questMessages = null,
+  notebook = null,
+  artDeps = null,
   // HandleQuestClicks' find-place seam (DaggerfallQuestJournalWindow.cs
   // :439-466), host-specific like inventory and spellbook: only a host
   // that owns a travel map can answer it, and one that does not leaves
   // all three unset so the journal simply never offers the dialog.
-  currentLocationName = null, canFindPlace = null, gotoPlace = null,
+  currentLocationName = null,
+  canFindPlace = null,
+  gotoPlace = null,
   // AUDIT 58: the sheet's own TEXT.RSC door. StatButton_OnMouseClick
   // (DaggerfallCharacterSheetWindow.cs:925-941) pops records 0..7 - the
   // eight attribute descriptions - as ClickAnywhereToClose boxes, and
@@ -43,7 +50,10 @@ export function charSheetHooks({
   // Both new windows share LGBK00I0.IMG, so one warm covers both. Fire
   // and forget, exactly as preloadCharSheetArt does: art that has not
   // arrived leaves the window on its text fallback rather than trapping.
-  if (artDeps) { preloadQuestJournalArt(artDeps); preloadPlayerHistoryArt(artDeps); }
+  if (artDeps) {
+    preloadQuestJournalArt(artDeps);
+    preloadPlayerHistoryArt(artDeps);
+  }
   return {
     // Host-specific: passed straight through. A host that hands null
     // gets the sheet's honest refusal rather than a dead button.
@@ -57,15 +67,17 @@ export function charSheetHooks({
     // told to a player who has three, and the port does not tell a
     // player that a thing is empty when the truth is that this screen
     // cannot see it. The dungeon host is exactly this case today.
-    logbook: (questMessages || notebook)
-      ? () => new QuestJournalWindow({
-        questMessages: questMessages ?? (() => []),
-        notebook: notebook ?? (() => null),
-        currentLocationName: currentLocationName ?? undefined,
-        canFindPlace: canFindPlace ?? undefined,
-        gotoPlace: gotoPlace ?? undefined,
-      })
-      : undefined,
+    logbook:
+      questMessages || notebook
+        ? () =>
+            new QuestJournalWindow({
+              questMessages: questMessages ?? (() => []),
+              notebook: notebook ?? (() => null),
+              currentLocationName: currentLocationName ?? undefined,
+              canFindPlace: canFindPlace ?? undefined,
+              gotoPlace: gotoPlace ?? undefined,
+            })
+        : undefined,
     history: () => new PlayerHistoryWindow(entity),
     // AUDIT 58: the attribute popups' text. A host with no TEXT.RSC
     // leaves it unset and the eight buttons still CLICK and consume,

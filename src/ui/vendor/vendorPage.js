@@ -20,9 +20,9 @@
 import { goldText, wearOf, wearText } from '../../net/marketLaw.js';
 import { vendorSearch, VENDOR_LISTING_S } from '../../net/vendorLaw.js';
 import { accountRefusalText } from '../../net/accountClient.js';
-import { vendorStatsNode, injectVendorStatsCss } from './vendorTab.js';   // a piece's stats, as the board shows them
-import { isStolen, stolenTag } from '../../systems/stolenGoods.js';   // RPT1026-LEDGERLAW: a stolen piece said so where another player buys it
-import { pictureNode } from '../menu/menuGlyphs.js';   // MENU-ORDER: a piece's picture, the host's
+import { vendorStatsNode, injectVendorStatsCss } from './vendorTab.js'; // a piece's stats, as the board shows them
+import { isStolen, stolenTag } from '../../systems/stolenGoods.js'; // RPT1026-LEDGERLAW: a stolen piece said so where another player buys it
+import { pictureNode } from '../menu/menuGlyphs.js'; // MENU-ORDER: a piece's picture, the host's
 
 /** The rail's row: under the Professions. */
 export const VENDOR_PAGE_SECTIONS = Object.freeze([Object.freeze(['vendor', 'Vendor'])]);
@@ -30,12 +30,13 @@ export const VENDOR_PAGE_SECTIONS = Object.freeze([Object.freeze(['vendor', 'Ven
 export const VENDOR_PAGE_FRESH_MS = 30_000;
 /** The page's words. */
 export const VENDOR_PAGE_TEXT = Object.freeze({
-  noTraders: 'You have no trader. Place one in a home you own (Decorate, Catalog, Vendors), then make it the "Hired trader" station.',
+  noTraders:
+    'You have no trader. Place one in a home you own (Decorate, Catalog, Vendors), then make it the "Hired trader" station.',
   noStock: 'Nothing is up for sale. Click your trader in its home to put up a piece from your pack.',
   noSales: 'Your traders have sold nothing yet.',
   noneFound: 'No trader in that region has anything for sale.',
-  noMatch: 'No trader\'s goods match that search.',
-  cold: 'The counting-house is not answering. Your traders can\'t be checked right now.',
+  noMatch: "No trader's goods match that search.",
+  cold: "The counting-house is not answering. Your traders can't be checked right now.",
   reading: 'Asking after your traders...',
   takings: (g) => (g > 0 ? `Takings waiting: ${goldText(g)}` : 'No takings waiting.'),
   look: 'Click a piece to see its stats.',
@@ -45,20 +46,56 @@ export const VENDOR_PAGE_TEXT = Object.freeze({
 let _provider = /** @type {any} */ (null);
 /** The host's side: { shown, mine, search, regionHere, regionNames, nameOf, townOf, take, collectGold, waypoint, waypointKey,
  *  waypoint0, clearWaypoint } - MENU-ORDER: and `picture(item, wake)`, a piece's picture (ui/menu/menuPicture.js). */
-export function setVendorPage(p) { _provider = p ?? null; }
-export const vendorPageShown = () => { try { return !!_provider && _provider.shown() === true; } catch { return false; } };
+export function setVendorPage(p) {
+  _provider = p ?? null;
+}
+export const vendorPageShown = () => {
+  try {
+    return !!_provider && _provider.shown() === true;
+  } catch {
+    return false;
+  }
+};
 
 const _st = {
-  mine: /** @type {any} */ (null), mineAt: -Infinity, mineErr: /** @type {string|null} */ (null), mineBusy: false,
-  region: /** @type {number|null} */ (null), found: /** @type {any} */ (null), foundFor: /** @type {number|null} */ (null), foundBusy: false,
-  query: '', picked: /** @type {string|null} */ (null), word: /** @type {{ ok: boolean, text: string }|null} */ (null), busy: false,
+  mine: /** @type {any} */ (null),
+  mineAt: -Infinity,
+  mineErr: /** @type {string|null} */ (null),
+  mineBusy: false,
+  region: /** @type {number|null} */ (null),
+  found: /** @type {any} */ (null),
+  foundFor: /** @type {number|null} */ (null),
+  foundBusy: false,
+  query: '',
+  picked: /** @type {string|null} */ (null),
+  word: /** @type {{ ok: boolean, text: string }|null} */ (null),
+  busy: false,
 };
 /** A fresh page for a new character, or after the switch. */
 export function resetVendorPage() {
-  Object.assign(_st, { mine: null, mineAt: -Infinity, mineErr: null, mineBusy: false, region: null, found: null, foundFor: null, foundBusy: false, query: '', picked: null, word: null, busy: false });
+  Object.assign(_st, {
+    mine: null,
+    mineAt: -Infinity,
+    mineErr: null,
+    mineBusy: false,
+    region: null,
+    found: null,
+    foundFor: null,
+    foundBusy: false,
+    query: '',
+    picked: null,
+    word: null,
+    busy: false,
+  });
 }
 
-const safe = (fn, fallback) => { try { return fn(); } catch { return fallback; } };
+const safe = (fn, fallback) => {
+  try {
+    return fn();
+  } catch {
+    return fallback;
+  }
+};
 /** Days or hours a piece still stands. */
 const leftText = (expiresAt) => {
   const left = Math.max(0, Number(expiresAt) - Date.now() / 1000);
@@ -66,7 +103,11 @@ const leftText = (expiresAt) => {
 };
 const agoText = (at) => {
   const s = Math.max(0, Date.now() / 1000 - Number(at));
-  return s < 3600 ? `${Math.max(1, Math.round(s / 60))}m ago` : s < 86_400 ? `${Math.round(s / 3600)}h ago` : `${Math.round(s / 86_400)}d ago`;
+  return s < 3600
+    ? `${Math.max(1, Math.round(s / 60))}m ago`
+    : s < 86_400
+      ? `${Math.round(s / 3600)}h ago`
+      : `${Math.round(s / 86_400)}d ago`;
 };
 
 /** The page's few rules of its own - a row a line, its button at its end; everything else is the pause window's. */
@@ -110,7 +151,10 @@ export function drawVendorPage(detail, rerender, kit) {
     const b = el('button', `act ${cls}`, text);
     b.type = 'button';
     b.disabled = disabled || _st.busy;
-    b.onclick = (e) => { e?.stopPropagation?.(); onPress(); };
+    b.onclick = (e) => {
+      e?.stopPropagation?.();
+      onPress();
+    };
     return b;
   };
   const nameOf = (it) => safe(() => p.nameOf(it), 'a piece') || 'a piece';
@@ -118,16 +162,28 @@ export function drawVendorPage(detail, rerender, kit) {
   /** MENU-ORDER: a row's name with its piece's picture before it (none without one). */
   const named = (item) => {
     const n = el('b', null, nameOf(item));
-    const pic = pictureNode(safe(() => p.picture?.(item, rerender), null), el, 'vendor-pic');
-    if (pic) { if (n.prepend) n.prepend(pic); else n.append(pic); }
+    const pic = pictureNode(
+      safe(() => p.picture?.(item, rerender), null),
+      el,
+      'vendor-pic',
+    );
+    if (pic) {
+      if (n.prepend) n.prepend(pic);
+      else n.append(pic);
+    }
     return n;
   };
   /** An act: one at a time, its word kept, my traders read again. */
   const act = async (start) => {
     if (_st.busy) return;
-    _st.busy = true; rerender();
+    _st.busy = true;
+    rerender();
     let r = null;
-    try { r = await start(); } catch { r = { ok: false, text: accountRefusalText('server') }; }
+    try {
+      r = await start();
+    } catch {
+      r = { ok: false, text: accountRefusalText('server') };
+    }
     _st.busy = false;
     _st.word = { ok: !!r?.ok, text: r?.text ?? '' };
     _st.mineAt = -Infinity;
@@ -140,33 +196,69 @@ export function drawVendorPage(detail, rerender, kit) {
     row.classList?.add?.('vendor-look');
     if (open) row.classList?.add?.('on');
     const name = row.querySelector?.('b');
-    if (name) { name.setAttribute?.('role', 'button'); name.setAttribute?.('aria-expanded', open ? 'true' : 'false'); name.title = open ? 'Hide its stats' : 'Show its stats'; }
-    row.onclick = (e) => { if (e?.target?.closest?.('button')) return; _st.picked = open ? null : key; rerender(); };
+    if (name) {
+      name.setAttribute?.('role', 'button');
+      name.setAttribute?.('aria-expanded', open ? 'true' : 'false');
+      name.title = open ? 'Hide its stats' : 'Show its stats';
+    }
+    row.onclick = (e) => {
+      if (e?.target?.closest?.('button')) return;
+      _st.picked = open ? null : key;
+      rerender();
+    };
     if (open) {
       let stats = null;
-      try { stats = p.stats?.(item) ?? null; } catch { stats = null; }
+      try {
+        stats = p.stats?.(item) ?? null;
+      } catch {
+        stats = null;
+      }
       const look = vendorStatsNode(stats, el);
-      if (look) { look.classList?.add?.('vendor-rowstats'); row.append(look); }
+      if (look) {
+        look.classList?.add?.('vendor-rowstats');
+        row.append(look);
+      }
     }
   };
   // THE READS - mine when stale, the search's region when it changed
   if (!_st.mineBusy && Date.now() - _st.mineAt > VENDOR_PAGE_FRESH_MS) {
     _st.mineBusy = true;
-    Promise.resolve(safe(() => p.mine(), null)).then((r) => {
-      _st.mineBusy = false; _st.mineAt = Date.now();
-      if (r?.ok) { _st.mine = r.data; _st.mineErr = null; } else _st.mineErr = r?.error ?? 'server';
-      rerender();
-    }, () => { _st.mineBusy = false; _st.mineAt = Date.now(); _st.mineErr = 'offline'; rerender(); });
+    Promise.resolve(safe(() => p.mine(), null)).then(
+      (r) => {
+        _st.mineBusy = false;
+        _st.mineAt = Date.now();
+        if (r?.ok) {
+          _st.mine = r.data;
+          _st.mineErr = null;
+        } else _st.mineErr = r?.error ?? 'server';
+        rerender();
+      },
+      () => {
+        _st.mineBusy = false;
+        _st.mineAt = Date.now();
+        _st.mineErr = 'offline';
+        rerender();
+      },
+    );
   }
   if (_st.region == null) _st.region = safe(() => p.regionHere(), null) ?? 0;
   if (!_st.foundBusy && _st.foundFor !== _st.region) {
     const want = _st.region;
     _st.foundBusy = true;
-    Promise.resolve(safe(() => p.search(want), null)).then((r) => {
-      _st.foundBusy = false; _st.foundFor = want;
-      _st.found = r?.ok ? r.data : { rows: [], error: r?.error ?? 'server' };
-      rerender();
-    }, () => { _st.foundBusy = false; _st.foundFor = want; _st.found = { rows: [], error: 'offline' }; rerender(); });
+    Promise.resolve(safe(() => p.search(want), null)).then(
+      (r) => {
+        _st.foundBusy = false;
+        _st.foundFor = want;
+        _st.found = r?.ok ? r.data : { rows: [], error: r?.error ?? 'server' };
+        rerender();
+      },
+      () => {
+        _st.foundBusy = false;
+        _st.foundFor = want;
+        _st.found = { rows: [], error: 'offline' };
+        rerender();
+      },
+    );
   }
 
   if (_st.word?.text) detail.append(el('p', `vendor-word${_st.word.ok ? '' : ' bad'}`, _st.word.text));
@@ -174,13 +266,26 @@ export function drawVendorPage(detail, rerender, kit) {
   // ─── YOUR TRADERS ───
   detail.append(divider('Your traders'));
   const mine = _st.mine;
-  if (!mine) detail.append(el('p', 'px-note', _st.mineErr ? (_st.mineErr === 'offline' || _st.mineErr === 'server' ? VENDOR_PAGE_TEXT.cold : accountRefusalText(_st.mineErr)) : VENDOR_PAGE_TEXT.reading));
+  if (!mine)
+    detail.append(
+      el(
+        'p',
+        'px-note',
+        _st.mineErr
+          ? _st.mineErr === 'offline' || _st.mineErr === 'server'
+            ? VENDOR_PAGE_TEXT.cold
+            : accountRefusalText(_st.mineErr)
+          : VENDOR_PAGE_TEXT.reading,
+      ),
+    );
   else {
     const traders = mine.traders ?? [];
     if (!traders.length) detail.append(el('p', 'px-note', VENDOR_PAGE_TEXT.noTraders));
     for (const t of traders) {
       const here = (mine.stock ?? []).filter((l) => l.vendor?.map === t.map && l.vendor?.id === t.id);
-      detail.append(el('p', 'vendor-line', `${townOf(t.map)} - ${here.length} piece${here.length === 1 ? '' : 's'} for sale`));
+      detail.append(
+        el('p', 'vendor-line', `${townOf(t.map)} - ${here.length} piece${here.length === 1 ? '' : 's'} for sale`),
+      );
     }
     const takings = el('div', 'vendor-takings');
     takings.append(el('span', 'vendor-line', VENDOR_PAGE_TEXT.takings(Number(mine.gold) || 0)));
@@ -193,8 +298,15 @@ export function drawVendorPage(detail, rerender, kit) {
     const grid = el('div', 'vendor-rows');
     for (const l of stock) {
       const row = el('div', 'vendor-row');
-      row.append(named(l.item), el('span', 'vendor-meta', `${wearText(wearOf(l.item)) ?? 'whole'} · ${goldText(l.price)} · ${townOf(l.vendor?.map)} · ${leftText(l.expiresAt)}`),
-        btn('vendor-take', 'Take back', () => act(() => p.take(l))));
+      row.append(
+        named(l.item),
+        el(
+          'span',
+          'vendor-meta',
+          `${wearText(wearOf(l.item)) ?? 'whole'} · ${goldText(l.price)} · ${townOf(l.vendor?.map)} · ${leftText(l.expiresAt)}`,
+        ),
+        btn('vendor-take', 'Take back', () => act(() => p.take(l))),
+      );
       lookable(row, `s:${l.id}`, l.item);
       grid.append(row);
     }
@@ -202,19 +314,31 @@ export function drawVendorPage(detail, rerender, kit) {
 
     detail.append(divider('Sold'));
     // LW15: the town's patrons' purchases beside the players' - each named, the buyer the town's own resident
-    const sold = [...(mine.sold ?? []), ...(mine.patronSold ?? [])].sort((a, b) => (Number(b.at) || 0) - (Number(a.at) || 0));
+    const sold = [...(mine.sold ?? []), ...(mine.patronSold ?? [])].sort(
+      (a, b) => (Number(b.at) || 0) - (Number(a.at) || 0),
+    );
     if (!sold.length) detail.append(el('p', 'px-note', VENDOR_PAGE_TEXT.noSales));
     const sg = el('div', 'vendor-rows');
     let total = 0;
     for (const s of sold) {
       total += Number(s.gets) || 0;
       const row = el('div', 'vendor-row');
-      const who = s.patron ? safe(() => p.patronName?.(s.patron), null) : null;   // LW15: "Sold to Ada Lark of Wayrest"
-      row.append(named(s.item), el('span', 'vendor-meta', `${who ? `Sold to ${who} - ` : ''}${goldText(s.total)} - you got ${goldText(s.gets)} · ${townOf(s.vendor?.map)} · ${agoText(s.at)}`));
+      const who = s.patron ? safe(() => p.patronName?.(s.patron), null) : null; // LW15: "Sold to Ada Lark of Wayrest"
+      row.append(
+        named(s.item),
+        el(
+          'span',
+          'vendor-meta',
+          `${who ? `Sold to ${who} - ` : ''}${goldText(s.total)} - you got ${goldText(s.gets)} · ${townOf(s.vendor?.map)} · ${agoText(s.at)}`,
+        ),
+      );
       lookable(row, `d:${s.listing}:${s.at}`, s.item);
       sg.append(row);
     }
-    if (sold.length) sg.append(el('p', 'vendor-sum', `${sold.length} sale${sold.length === 1 ? '' : 's'} shown, ${goldText(total)} to you.`));
+    if (sold.length)
+      sg.append(
+        el('p', 'vendor-sum', `${sold.length} sale${sold.length === 1 ? '' : 's'} shown, ${goldText(total)} to you.`),
+      );
     detail.append(sg);
   }
 
@@ -223,14 +347,26 @@ export function drawVendorPage(detail, rerender, kit) {
   const wp = safe(() => p.waypoint0(), null);
   if (wp) {
     const line = el('div', 'vendor-waypoint');
-    line.append(el('span', 'vendor-line', `Waypoint: ${wp.owner || 'a trader'}'s house in ${wp.town || townOf(wp.map)}`), btn('vendor-clear', 'Clear waypoint', () => { p.clearWaypoint(); rerender(); }));
+    line.append(
+      el('span', 'vendor-line', `Waypoint: ${wp.owner || 'a trader'}'s house in ${wp.town || townOf(wp.map)}`),
+      btn('vendor-clear', 'Clear waypoint', () => {
+        p.clearWaypoint();
+        rerender();
+      }),
+    );
     detail.append(line);
   }
   const head = el('div', 'prof-storehead');
   const search = el('input', 'prof-search');
-  search.type = 'search'; search.placeholder = 'Search items, owners, towns'; search.value = _st.query;
+  search.type = 'search';
+  search.placeholder = 'Search items, owners, towns';
+  search.value = _st.query;
   search.setAttribute?.('data-focus', 'vendor-search');
-  search.oninput = () => { _st.query = search.value; _st.picked = null; rerender(); };
+  search.oninput = () => {
+    _st.query = search.value;
+    _st.picked = null;
+    rerender();
+  };
   const region = el('select', 'prof-sort');
   const names = p.regionNames ?? [];
   const here = safe(() => p.regionHere(), null);
@@ -241,22 +377,57 @@ export function drawVendorPage(detail, rerender, kit) {
     if (i === _st.region) o.selected = true;
     region.append(o);
   });
-  region.onchange = () => { _st.region = Number(region.value); _st.picked = null; rerender(); };
+  region.onchange = () => {
+    _st.region = Number(region.value);
+    _st.picked = null;
+    rerender();
+  };
   head.append(search, region);
   detail.append(head, el('p', 'vendor-sum', VENDOR_PAGE_TEXT.look));
   const found = _st.foundFor === _st.region ? _st.found : null;
-  if (!found) { detail.append(el('p', 'px-note', 'Asking after the traders...')); return; }
-  if (found.error && !(found.rows ?? []).length) { detail.append(el('p', 'px-note', found.error === 'offline' || found.error === 'server' ? VENDOR_PAGE_TEXT.cold : accountRefusalText(found.error))); return; }
+  if (!found) {
+    detail.append(el('p', 'px-note', 'Asking after the traders...'));
+    return;
+  }
+  if (found.error && !(found.rows ?? []).length) {
+    detail.append(
+      el(
+        'p',
+        'px-note',
+        found.error === 'offline' || found.error === 'server' ? VENDOR_PAGE_TEXT.cold : accountRefusalText(found.error),
+      ),
+    );
+    return;
+  }
   const rows = /** @type {any[]} */ (vendorSearch(found.rows ?? [], _st.query, { nameOf, townOf }));
-  if (!rows.length) { detail.append(el('p', 'px-note', (found.rows ?? []).length ? VENDOR_PAGE_TEXT.noMatch : VENDOR_PAGE_TEXT.noneFound)); return; }
+  if (!rows.length) {
+    detail.append(
+      el('p', 'px-note', (found.rows ?? []).length ? VENDOR_PAGE_TEXT.noMatch : VENDOR_PAGE_TEXT.noneFound),
+    );
+    return;
+  }
   const fg = el('div', 'vendor-rows');
   const wpKey = safe(() => p.waypointKey(), null);
   for (const r of rows) {
     const row = el('div', 'vendor-row');
     const set = wpKey === `${r.map}:${r.buildingKey}`;
-    row.append(named(r.item), el('span', 'vendor-meta', `${goldText(r.price)} · ${r.owner ?? 'someone'}'s house, ${townOf(r.map)}${r.mine ? ' · yours' : ''}${isStolen(r.item) ? ` · ${stolenTag()}` : ''}`),
-      set ? btn('vendor-clear', 'Clear waypoint', () => { p.clearWaypoint(); rerender(); })
-        : btn('vendor-wp', 'Set waypoint', () => { p.waypoint(r); rerender(); }));
+    row.append(
+      named(r.item),
+      el(
+        'span',
+        'vendor-meta',
+        `${goldText(r.price)} · ${r.owner ?? 'someone'}'s house, ${townOf(r.map)}${r.mine ? ' · yours' : ''}${isStolen(r.item) ? ` · ${stolenTag()}` : ''}`,
+      ),
+      set
+        ? btn('vendor-clear', 'Clear waypoint', () => {
+            p.clearWaypoint();
+            rerender();
+          })
+        : btn('vendor-wp', 'Set waypoint', () => {
+            p.waypoint(r);
+            rerender();
+          }),
+    );
     lookable(row, `f:${r.id}`, r.item);
     fg.append(row);
   }

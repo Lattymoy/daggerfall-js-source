@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-GUILD1d-S1-lone-delete-strands",
     "file": "server-account/src/realm.js",
-    "old": "  if (master?.hall) return { error: 'guild-hall' };\n",
-    "new": "",
+    "old": "  if (master?.hall) return { error: 'guild-hall' };\n  // AUDIT GUILD2 G2: and empties its guild's vault - deleted, the guild stood memberless with pieces nobody could take",
+    "new": "  // AUDIT GUILD2 G2: and empties its guild's vault - deleted, the guild stood memberless with pieces nobody could take",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]
@@ -67,7 +67,7 @@
   {
     "name": "AUDIT-GUILD1d-S7-entry-rank-in-the-write",
     "file": "server-account/src/halls.js",
-    "old": "AND rank IN (${HALL_POWERS.hallEntry.join(', ')}))`).bind(entry, a.me.guild_id, a.me.rid)",
+    "old": "AND ${guildPowerSql('hallEntry', 'rank', '?2')})`).bind(entry, a.me.guild_id, a.me.rid)",
     "new": "AND rank IN (0, 1, 2, 3))`).bind(entry, a.me.guild_id, a.me.rid)",
     "tests": [
       "test/net/auditguild1d.test.js"
@@ -85,8 +85,8 @@
   {
     "name": "AUDIT-GUILD1d-S8-restore-reads-a-hall-as-a-home",
     "file": "tools/realmRestore.mjs",
-    "old": "if (nowHome && (nowHome.player !== player || String(nowHome.char_id).startsWith('guild:'))) {",
-    "new": "if (nowHome && nowHome.player !== player) {",
+    "old": "        if (nowHome && (nowHome.player !== player || String(nowHome.char_id).startsWith('guild:'))) {",
+    "new": "        if (nowHome && nowHome.player !== player) {",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]
@@ -212,8 +212,8 @@
   {
     "name": "AUDIT-GUILD1d-A1-hall-bed-no-scene",
     "file": "src/systems/homeRent.js",
-    "old": "home.own === true || !!(home.hall && home.member) || rentDaysLeft(home.tenant, nowS) > 0",
-    "new": "home.own === true || rentDaysLeft(home.tenant, nowS) > 0",
+    "old": "export const homeBedIsMine = (home, nowS) =>\n  !!home && (home.own === true || !!(home.hall && home.member) || rentDaysLeft(home.tenant, nowS) > 0); // GUILD1d (merged past RENT-REST): a member rests in their guild's hall as in their own home",
+    "new": "export const homeBedIsMine = (home, nowS) => !!home && (home.own === true || rentDaysLeft(home.tenant, nowS) > 0); // GUILD1d (merged past RENT-REST): a member rests in their guild's hall as in their own home",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]
@@ -302,8 +302,8 @@
   {
     "name": "AUDIT-GUILD1d-R4-width-off-the-record",
     "file": "src/scenes/hallBanners.js",
-    "old": "  rx = 0 - oz; rz = ox + 0;   // (+0: never a signed zero)\n",
-    "new": "",
+    "old": "  rx = 0 - oz;\n  rz = ox + 0; // (+0: never a signed zero)\n  const side = w / 2 + BANNER_SIDE_GAP_M + BANNER_W_M / 2;",
+    "new": "  const side = w / 2 + BANNER_SIDE_GAP_M + BANNER_W_M / 2;",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]
@@ -393,8 +393,8 @@
   {
     "name": "AUDIT-GUILD1d-R14-older-answer-clears",
     "file": "src/net/guild/guildBook.js",
-    "old": "&& this._heraldryAsk?.rid === rid) this._heraldryAsk = null;",
-    "new": ") this._heraldryAsk = null;",
+    "old": "      if ((r?.ok || guildRefused(r?.error) || HERALDRY_REFUSED.has(r?.error)) && this._heraldryAsk?.rid === rid)\n        this._heraldryAsk = null;",
+    "new": "      if (r?.ok || guildRefused(r?.error) || HERALDRY_REFUSED.has(r?.error)) this._heraldryAsk = null;",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]

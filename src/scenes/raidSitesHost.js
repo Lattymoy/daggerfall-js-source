@@ -13,7 +13,7 @@
 // scenes/worldModes.js and scenes/dungeonContext.js - FLAGGED: a raid is the street's, and stands nothing indoors (RAID1).
 import { NAV_CELL } from '../world/city/cityNavigation.js';
 import { findTownPath, pathLine } from '../systems/livingWorld/townPaths.js';
-import { streetNet } from '../systems/livingWorld/places.js';   // AUDIT WORLD-EVENTS L4-3/L4-8: the town's street net, where its living town has no places
+import { streetNet } from '../systems/livingWorld/places.js'; // AUDIT WORLD-EVENTS L4-3/L4-8: the town's street net, where its living town has no places
 import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';
 import { RAID_BEARER_HEALTH_X, RAID_BEARER_LEASH_M, RAID_REFUGEE_HEALTH_X } from '../systems/raidKinds.js';
 
@@ -22,6 +22,27 @@ export const RAID_WAY_EXPANSIONS = 30000;
 /** AUDIT WORLD-EVENTS L4-8: the least a walkable component holds to be the town's streets where its living town names
  *  none (cells) - a yard boxed in about the grid's middle is no square (the game's held one, two, sixteen and 237). */
 export const RAID_STREETS_MIN = 400;
+/** RAID-REACH: how far round a player's feet (cells) its street is sought - a player at a door or a wall's foot. */
+export const RAID_REACH_RING = 4;
+/**
+ * RAID-REACH: the street label nearest a location-frame point within `ring` cells (0: none). Pure.
+ * @param {{ width: number, height: number }} nav @param {Int32Array} label @param {number[]} local @param {number} ring
+ */
+export function streetCellAt(nav, label, local, ring) {
+  const W = nav.width,
+    H = nav.height,
+    gx = Math.floor(local[0] / NAV_CELL),
+    gy = Math.floor(local[1] / NAV_CELL);
+  for (let r = 0; r <= ring; r++)
+    for (let dy = -r; dy <= r; dy++)
+      for (let dx = -r; dx <= r; dx++) {
+        const x = gx + dx,
+          y = gy + dy;
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r || x < 0 || y < 0 || x >= W || y >= H) continue;
+        if (label[y * W + x]) return label[y * W + x];
+      }
+  return 0;
+}
 /** The sides a way comes from, by the raid's draw (0 north - the grid's far rows, +z - then east, south, west), as the
  *  living town's exits name them (systems/livingWorld/places.js). */
 const SIDE_NAMES = Object.freeze(['n', 'e', 's', 'w']);
@@ -42,13 +63,20 @@ export function gridStreets(nav) {
   for (let i = 0; i < label.length; i++) if (label[i]) size.set(label[i], (size.get(label[i]) ?? 0) + 1);
   let biggest = 0;
   for (const n of size.values()) biggest = Math.max(biggest, n);
-  const min = Math.min(RAID_STREETS_MIN, biggest), W = nav.width, H = nav.height, mx = Math.floor(W / 2), my = Math.floor(H / 2);
-  for (let r = 0; r < Math.max(W, H) && biggest; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
-    const x = mx + dx, y = my + dy;
-    if (Math.max(Math.abs(dx), Math.abs(dy)) !== r || x < 0 || y < 0 || x >= W || y >= H) continue;
-    const id = label[y * W + x];
-    if (id && size.get(id) >= min) return { label, id, square: [x, y], exits: null };
-  }
+  const min = Math.min(RAID_STREETS_MIN, biggest),
+    W = nav.width,
+    H = nav.height,
+    mx = Math.floor(W / 2),
+    my = Math.floor(H / 2);
+  for (let r = 0; r < Math.max(W, H) && biggest; r++)
+    for (let dy = -r; dy <= r; dy++)
+      for (let dx = -r; dx <= r; dx++) {
+        const x = mx + dx,
+          y = my + dy;
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r || x < 0 || y < 0 || x >= W || y >= H) continue;
+        const id = label[y * W + x];
+        if (id && size.get(id) >= min) return { label, id, square: [x, y], exits: null };
+      }
   return null;
 }
 /**
@@ -58,15 +86,25 @@ export function gridStreets(nav) {
  * @param {Int32Array} label @param {number} id @param {number} side @returns {number[]|null}
  */
 export function streetEdgeCell(nav, label, id, side) {
-  const W = nav.width, H = nav.height, k = ((side | 0) % 4 + 4) % 4, rows = k === 0 || k === 2;
-  const lines = rows ? H : W, along = rows ? W : H, half = along / 2;
+  const W = nav.width,
+    H = nav.height,
+    k = (((side | 0) % 4) + 4) % 4,
+    rows = k === 0 || k === 2;
+  const lines = rows ? H : W,
+    along = rows ? W : H,
+    half = along / 2;
   for (let n = 0; n < lines; n++) {
     const i = k === 0 ? H - 1 - n : k === 1 ? W - 1 - n : k === 2 ? n : n;
-    let best = null, bestMid = Infinity;
+    let best = null,
+      bestMid = Infinity;
     for (let j = 0; j < along; j++) {
-      const x = rows ? j : i, y = rows ? i : j;
+      const x = rows ? j : i,
+        y = rows ? i : j;
       if (label[y * W + x] !== id) continue;
-      if (Math.abs(j - half) < bestMid) { bestMid = Math.abs(j - half); best = [x, y]; }
+      if (Math.abs(j - half) < bestMid) {
+        bestMid = Math.abs(j - half);
+        best = [x, y];
+      }
     }
     if (best) return best;
   }
@@ -89,18 +127,27 @@ export function streetEdgeCell(nav, label, id, side) {
 export function createRaidSites({ townAt, townAtPixel = () => null, feet, groundAt, standGuard, spawnFoe }) {
   /** AUDIT WORLD-EVENTS L4-4: the raid's own town - its map pixel's, built - else the one about the player's feet (the
    *  feet alone read null across the block the town's rect is widened by, and the raid kept the null). */
-  const townOf = (raid) => (raid && Number.isInteger(raid.px) && Number.isInteger(raid.py) ? townAtPixel(raid.px, raid.py) : null) ?? (() => { const f = feet(); return f ? townAt(f[0], f[2]) ?? null : null; })();
+  const townOf = (raid) =>
+    (raid && Number.isInteger(raid.px) && Number.isInteger(raid.py) ? townAtPixel(raid.px, raid.py) : null) ??
+    (() => {
+      const f = feet();
+      return f ? (townAt(f[0], f[2]) ?? null) : null;
+    })();
   /** @type {WeakMap<object, any>} each classic grid's streets, read once */
   const gridNets = new WeakMap();
   /** AUDIT WORLD-EVENTS L4-3/L4-8: the town's streets and square - its living town's places' (the net its doors open
    *  onto, the square on it, the exits on it), else its grid's (gridStreets). */
   function streetsOf(t) {
     const pl = t.places;
-    if (pl?.net && pl.square?.cell) return { label: pl.net, id: pl.netId, square: pl.square.cell, exits: pl.exits ?? null };
+    if (pl?.net && pl.square?.cell)
+      return { label: pl.net, id: pl.netId, square: pl.square.cell, exits: pl.exits ?? null };
     if (!gridNets.has(t.nav)) gridNets.set(t.nav, gridStreets(t.nav));
     return gridNets.get(t.nav);
   }
-  const sceneOf = (t, cell) => { const s = t.toScene((cell[0] + 0.5) * NAV_CELL, (cell[1] + 0.5) * NAV_CELL); return [s[0], groundAt(s[0], s[1]), s[1]]; };
+  const sceneOf = (t, cell) => {
+    const s = t.toScene((cell[0] + 0.5) * NAV_CELL, (cell[1] + 0.5) * NAV_CELL);
+    return [s[0], groundAt(s[0], s[1]), s[1]];
+  };
   return {
     /** The town's square in the scene ([x, y, z]), or null (its town not built, or no streets). @param {any} [raid] */
     square(raid = null) {
@@ -118,14 +165,34 @@ export function createRaidSites({ townAt, townAtPixel = () => null, feet, ground
       const t = townOf(raid);
       const s = t ? streetsOf(t) : null;
       if (!s) return null;
-      const k = ((side | 0) % 4 + 4) % 4;
+      const k = (((side | 0) % 4) + 4) % 4;
       const start = s.exits?.find((e) => e.side === SIDE_NAMES[k])?.cell ?? streetEdgeCell(t.nav, s.label, s.id, k);
       if (!start) return null;
       const cells = findTownPath(t.nav, start, s.square, { maxExpansions: RAID_WAY_EXPANSIONS });
       if (!cells || cells.length < 2) return null;
-      return pathLine(cells).pts.map((p) => { const s = t.toScene(p[0], p[1]); return [s[0], groundAt(s[0], s[1]), s[1]]; });
+      return pathLine(cells).pts.map((p) => {
+        const s = t.toScene(p[0], p[1]);
+        return [s[0], groundAt(s[0], s[1]), s[1]];
+      });
     },
-    /** The Standard-Bearer at `post`: the watch's own, RAID_BEARER_HEALTH_X as hardy, kept within RAID_BEARER_LEASH_M of it. */
+    /**
+     * RAID-REACH (2026-10-31: "spawn in the wall of mobs", "checking pathfinding"): can a raid's monster at `spot` walk to
+     * `from` - the player its pack goes to, or its leader? Its cell on the town's walk grid is a street (no building, wall
+     * or water) on the same streets as `from`'s. Off any town's grid (an area's event, the fields) it can.
+     * @param {number[]} spot @param {number[]|null} from
+     */
+    reachable(spot, from) {
+      const t = townAt(spot[0], spot[2]);
+      if (!t?.local) return true;
+      const s = streetsOf(t);
+      if (!s) return true;
+      const cell = streetCellAt(t.nav, s.label, t.local, 0);
+      if (cell === 0) return false;
+      const f = from ? townAt(from[0], from[2]) : null;
+      const goal = f?.local && f.nav === t.nav ? streetCellAt(t.nav, s.label, f.local, RAID_REACH_RING) : 0;
+      return cell === (goal || s.id);
+    },
+    /** The Standard-Bearer at `post`:the watch's own, RAID_BEARER_HEALTH_X as hardy, kept within RAID_BEARER_LEASH_M of it. */
     async standBearer(post) {
       const g = await standGuard(post, 0);
       if (!g?.entity) return g ?? null;
@@ -139,8 +206,12 @@ export function createRaidSites({ townAt, townAtPixel = () => null, feet, ground
      *  (cityGuards.js WATCH-LEAVES), and the next runner raises its own. @param {any} g */
     releaseBearer(g) {
       if (!g) return;
-      g.raidBearer = false; g.leaving = true;
-      if (g.ai) { g.ai.follow = null; g.ai.target = null; }
+      g.raidBearer = false;
+      g.leaving = true;
+      if (g.ai) {
+        g.ai.follow = null;
+        g.ai.target = null;
+      }
     },
     /** A refugee at `at`, walking behind `follow` (the way's guide - characters/enemy/enemyMotor.js `follow`). */
     async standRefugee(at, follow) {

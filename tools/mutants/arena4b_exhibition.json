@@ -2,8 +2,8 @@
   {
     "name": "ARENA4b-EX-DRAW-TIER",
     "file": "src/net/arena/arenaExhibition.js",
-    "old": "const pool = ARENA_LADDER_SPEC[tier].slice(0, ARENA_TIER_BOUTS)",
-    "new": "const pool = ARENA_LADDER_SPEC[tier + 1].slice(0, ARENA_TIER_BOUTS)",
+    "old": "  const pool = ARENA_LADDER_SPEC[tier].slice(0, ARENA_TIER_BOUTS).map((b) => ({ mobile: b[0][0], level: b[0][1] }));",
+    "new": "  const pool = ARENA_LADDER_SPEC[tier + 1].slice(0, ARENA_TIER_BOUTS).map((b) => ({ mobile: b[0][0], level: b[0][1] }));",
     "tests": [
       "test/net/arena/arena4b_exhibition.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ARENA4b-EX-BOUTID-SEED",
     "file": "src/net/arena/arenaExhibition.js",
-    "old": "export const exhibitionBoutId = (hour) => arenaHash(hour, 1)",
-    "new": "export const exhibitionBoutId = (hour) => arenaHash(hour, 2)",
+    "old": "  arenaHash(hour, 1).toString(16).padStart(8, '0') +",
+    "new": "  arenaHash(hour, 2).toString(16).padStart(8, '0') +",
     "tests": [
       "test/net/arena/arena4b_exhibition.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ARENA4b-EX-ROOM-HOUR",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "return m ? Number(m[1]) : null; };",
-    "new": "return m ? Number(m[1]) + 1 : null; };",
+    "old": "  return m ? Number(m[1]) : null;",
+    "new": "  return m ? Number(m[1]) + 1 : null;",
     "tests": [
       "test/net/arena/arena4b_exhibition.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ARENA4b-EX-OPENING-WINDOW",
     "file": "src/net/arena/arenaExhibition.js",
-    "old": "return ex && ex.open ? ex : null;",
-    "new": "return ex;",
+    "old": "  return ex && ex.open ? ex : null;",
+    "new": "  return ex;",
     "tests": [
       "test/net/arena/arena4b_exhibition.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ARENA4b-EX-OPENING-HOUR",
     "file": "src/net/arena/arenaExhibition.js",
-    "old": "if (!Number.isSafeInteger(hour) || hourIndexOf(nowMinutes) !== hour) return null;",
-    "new": "if (!Number.isSafeInteger(hour)) return null;",
+    "old": "  if (!Number.isSafeInteger(hour) || hourIndexOf(nowMinutes) !== hour) return null;",
+    "new": "  if (!Number.isSafeInteger(hour)) return null;",
     "tests": [
       "test/net/arena/arena4b_exhibition.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "ARENA4b-EX-ADMITS-AHEAD",
     "file": "src/net/arena/arenaExhibition.js",
-    "old": "hour >= now - EXHIBITION_KEPT_HOURS - 1 && hour <= now + 1; };",
-    "new": "hour >= now - EXHIBITION_KEPT_HOURS - 1 && hour <= now + 10; };",
+    "old": "  return Number.isSafeInteger(hour) && hour >= now - EXHIBITION_KEPT_HOURS - 1 && hour <= now + 1;",
+    "new": "  return Number.isSafeInteger(hour) && hour >= now - EXHIBITION_KEPT_HOURS - 1 && hour <= now + 10;",
     "tests": [
       "test/net/arena/arena4b_exhibition.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "ARENA4b-EX-ADMITS-BEHIND",
     "file": "src/net/arena/arenaExhibition.js",
-    "old": "hour >= now - EXHIBITION_KEPT_HOURS - 1 && hour <= now + 1; };",
-    "new": "hour >= 0 && hour <= now + 1; };",
+    "old": "  return Number.isSafeInteger(hour) && hour >= now - EXHIBITION_KEPT_HOURS - 1 && hour <= now + 1;",
+    "new": "  return Number.isSafeInteger(hour) && hour >= 0 && hour <= now + 1;",
     "tests": [
       "test/net/arena/arena4b_exhibition.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "ARENA4b-EX-LAW-WAITS",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "    startLaw(st, now);\n    return st;\n",
-    "new": "    return st;\n",
+    "old": "    startLaw(st, now);\n    return st;",
+    "new": "    return st;",
     "tests": [
       "test/net/arena/arena4b_exhibition.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "ARENA4b-EX-SIDES",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "windup: body.windup, reach: body.reach, side: i,",
-    "new": "windup: body.windup, reach: body.reach, side: 1 - i,",
+    "old": "        side: i,",
+    "new": "        side: 1 - i,",
     "tests": [
       "test/net/arena/arena4b_exhibition.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "ARENA4b-EX-RECEIPT",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "  if (st.kind === 'ex' || st.casual) return [];",
-    "new": "  if (st.casual) return [];",
+    "old": "  if (st.kind === 'ex' || st.casual) return []; // ARENA4b: nor a casual bout - nothing of it is the realm's to keep",
+    "new": "  if (st.casual) return []; // ARENA4b: nor a casual bout - nothing of it is the realm's to keep",
     "tests": [
       "test/net/arena/arena4b_exhibition.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "ARENA4b-EX-STATE-HOUR",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "...(st.kind === 'ex' ? { h: st.hour } : {})",
-    "new": "...({})",
+    "old": "    ...(st.kind === 'ex' ? { h: st.hour } : {}),",
+    "new": "    ...{},",
     "tests": [
       "test/net/arena/arena4b_exhibition.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "ARENA4b-EX-LIVE-ENTRY",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "if (st.kind === 'ex') return { o: st.o, kind: 'ex', h: st.hour, a: { b: ARENA_EX_BANNERS[0] }, b: { b: ARENA_EX_BANNERS[1] }, tier: st.tier, sp: st.spectators, at: st.at };",
-    "new": "if (st.kind === 'ex') return { o: st.o, kind: 'ex', h: st.hour, a: { b: ARENA_EX_BANNERS[0] }, b: { b: ARENA_EX_BANNERS[1] }, sp: st.spectators, at: st.at };",
+    "old": "      tier: st.tier,\n      sp: st.spectators,",
+    "new": "      sp: st.spectators,",
     "tests": [
       "test/net/arena/arena4b_exhibition.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "ARENA4b-EX-WIRE-ST-HOUR",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "      if (m.kind === 'ex' && int(m.h, 0, ARENA_HOUR_MAX) == null) return null;   // ARENA4b: an exhibition says its hour\n",
-    "new": "",
+    "old": "      if (m.kind === 'ex' && int(m.h, 0, ARENA_HOUR_MAX) == null) return null; // ARENA4b: an exhibition says its hour\n      if (!ARENA_ST_PHASES.includes(m.ph) || num(m.pa, 1e15) == null || num(m.lim, 1e9) == null) return null;",
+    "new": "      if (!ARENA_ST_PHASES.includes(m.ph) || num(m.pa, 1e15) == null || num(m.lim, 1e9) == null) return null;",
     "tests": [
       "test/net/arena/arena4b_exhibition.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "ARENA4b-EX-WIRE-LIVE-HOUR",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "        if (ex && int(b.h, 0, ARENA_HOUR_MAX) == null) return null;\n",
-    "new": "",
+    "old": "        if (ex && int(b.h, 0, ARENA_HOUR_MAX) == null) return null;\n        // ARENA4b: an exhibition's two billed by their banners alone (the relay names nobody), an unknown one dropped",
+    "new": "        // ARENA4b: an exhibition's two billed by their banners alone (the relay names nobody), an unknown one dropped",
     "tests": [
       "test/net/arena/arena4b_exhibition.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "ARENA4b-EX-WIRE-LIVE-BILL",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "if ((!ex && !a) || (!ex && b.b && !z)",
-    "new": "if ((!ex && !a) || (b.b && !z)",
+    "old": "        if ((!ex && !a) || (!ex && b.b && !z) || int(b.sp, 0, ARENA_SPECTATORS_MAX) == null || num(b.at, 1e15) == null)",
+    "new": "        if ((!ex && !a) || (b.b && !z) || int(b.sp, 0, ARENA_SPECTATORS_MAX) == null || num(b.at, 1e15) == null)",
     "tests": [
       "test/net/arena/arena4b_exhibition.test.js"
     ]
@@ -223,8 +223,8 @@
   {
     "name": "ARENA4b-EX-FLOOR-ROOM",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "isArenaExhibitionRoom(`arena:${o}`) || isArenaPrivateRoom(`arena:${o}`) ? `arena:${o}` : null);",
-    "new": "isArenaExhibitionRoom(`arena:${o}`) || isArenaPrivateRoom(`arena:${o}`) ? arenaBoutRoom(o) : null);",
+    "old": "      ? `arena:${o}`",
+    "new": "      ? arenaBoutRoom(o)",
     "tests": [
       "test/net/arena/arena4b_exhibition.test.js"
     ]

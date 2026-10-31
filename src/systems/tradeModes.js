@@ -53,30 +53,28 @@
 //    one home here. The only difference is the +3 that moves the SELL
 //    modes onto their own three records.
 
-import { calculateCost, calculateTradePrice, essentialPrice } from './shopStock.js';   // ESSENTIALS-HALF: online, a potion costs half
+import { calculateCost, calculateTradePrice, essentialPrice } from './shopStock.js'; // ESSENTIALS-HALF: online, a potion costs half
 import { GOLD_PIECE_WEIGHT_KG, isEnchanted } from './inventory.js';
 import { calculateItemRepairCost, repairRefusal } from './repairService.js';
 import { itemValueOf, conditionPercentage, isAmmunition } from './item/itemTemplates.js';
-import { plateMetal } from './armorMaterials.js';   // DAEDRIC-SALE: a plate piece's metal, one decode
-import { WEAPON_MATERIALS } from '../characters/weapons.js';   // DAEDRIC-SALE: the Daedric metal's index
-import { craftedRarityWorth, socketsOf, gemWorthOf } from './loot/lootRarity.js';   // CRAFT-WORTH: a crafted piece's rolled worth, never a counter's
-import { isOnlinePage } from './online/onlineLane.js';   // SELL-AS-FOUND and MEND-THIRD: online, a sale reads a found piece through its mark
-import { foundSalePercentage, isFoundMarked } from './item/foundMark.js';   // SELL-AS-FOUND and MEND-THIRD: the mark's one home
-import { isCampfireKit } from './survival/items.js';   // AUDIT REST: the Campfire an essential online
+import { plateMetal } from './armorMaterials.js'; // DAEDRIC-SALE: a plate piece's metal, one decode
+import { WEAPON_MATERIALS } from '../characters/weapons.js'; // DAEDRIC-SALE: the Daedric metal's index
+import { craftedRarityWorth, socketsOf, gemWorthOf } from './loot/lootRarity.js'; // CRAFT-WORTH: a crafted piece's rolled worth, never a counter's
+import { isOnlinePage } from './online/onlineLane.js'; // SELL-AS-FOUND and MEND-THIRD: online, a sale reads a found piece through its mark
+import { foundSalePercentage, isFoundMarked } from './item/foundMark.js'; // SELL-AS-FOUND and MEND-THIRD: the mark's one home
+import { isCampfireKit } from './survival/items.js'; // AUDIT REST: the Campfire an essential online
 import { isFirewood } from './rest/restItems.js';
-import { isPotion } from './useItem.js';   // ESSENTIALS-HALF: the potion, by DFU's own IsPotion   // JAN1: the one value read; RRI2: ConditionPercentage, the Sell arm's third argument
+import { isPotion } from './useItem.js'; // ESSENTIALS-HALF: the potion, by DFU's own IsPotion   // JAN1: the one value read; RRI2: ConditionPercentage, the Sell arm's third argument
 import { HOLIDAYS } from './holidays.js';
 import { GUILDS } from './guild/guilds.js';
-import { isBagItem } from '../net/bagLaw.js';   // BAG1: a loaded Materials Bag is never sold (the cart's rule)
-import { activeWagonItem } from './wagon/wagonKinds.js';   // WAGONS2 (FINAL AUDIT): the wagon driven, read once for every counter (sellGuardOf)
-import { wagonSoldWhole } from './wagon/wagonUpkeep.js';   // WAGON-TIERS: a wagon's wear prices its sale only on Hard
-import { wagonUpkeepRules } from './upkeep/upkeepSwitch.js';   // WAGON-TIERS: the tier, through wagon upkeep's one accessor
-import { PATRON_COUNTER_MARK, COUNTER_PAID_MARK, COUNTER_VALUE_MARK } from '../net/patronLaw.js';   // AUDIT LW-II-2 S1: online, a counter's piece is no patron's; LAW-3: nor sold on for more than it cost
-import { clearStolen } from './stolenGoods.js';   // STOLEN-GOODS AUDIT S3: a piece bought at a counter is the buyer's, honestly
-import {
-  cureOfferMessageOffset, TRADE_MESSAGE_BASE_ID, NOT_ENOUGH_GOLD_ID,
-} from './guild/guildServiceActions.js';
-import { localizedText, formatText } from './textManager.js';   // L10N3d: the window's own lines
+import { isBagItem } from '../net/bagLaw.js'; // BAG1: a loaded Materials Bag is never sold (the cart's rule)
+import { activeWagonItem } from './wagon/wagonKinds.js'; // WAGONS2 (FINAL AUDIT): the wagon driven, read once for every counter (sellGuardOf)
+import { wagonSoldWhole } from './wagon/wagonUpkeep.js'; // WAGON-TIERS: a wagon's wear prices its sale only on Hard
+import { wagonUpkeepRules } from './upkeep/upkeepSwitch.js'; // WAGON-TIERS: the tier, through wagon upkeep's one accessor
+import { PATRON_COUNTER_MARK, COUNTER_PAID_MARK, COUNTER_VALUE_MARK } from '../net/patronLaw.js'; // AUDIT LW-II-2 S1: online, a counter's piece is no patron's; LAW-3: nor sold on for more than it cost
+import { clearStolen } from './stolenGoods.js'; // STOLEN-GOODS AUDIT S3: a piece bought at a counter is the buyer's, honestly
+import { cureOfferMessageOffset, TRADE_MESSAGE_BASE_ID, NOT_ENOUGH_GOLD_ID } from './guild/guildServiceActions.js';
+import { localizedText, formatText } from './textManager.js'; // L10N3d: the window's own lines
 
 /** The shared TEXT.RSC ids. DaggerfallTradeWindow declares both
  *  (:33-34) and so do the guild services; ONE DFU MEMBER, ONE EXPORT,
@@ -90,7 +88,12 @@ export { GOLD_PIECE_WEIGHT_KG };
 /** WindowModes (:133-141). Inventory is DFU's own "should never get
  *  used, treat as 'none'" - kept because the numbering depends on it. */
 export const WINDOW_MODES = Object.freeze({
-  Inventory: 0, Sell: 1, Buy: 2, Repair: 3, Identify: 4, SellMagic: 5,
+  Inventory: 0,
+  Sell: 1,
+  Buy: 2,
+  Repair: 3,
+  Identify: 4,
+  SellMagic: 5,
 });
 
 /** LoadTextures' mode switch (:755-764). Sell and SellMagic share the
@@ -115,9 +118,7 @@ export const modeActionArt = (mode) => MODE_ACTION_ART[mode] ?? null;
  *  so these are its bindings and not a fresh 24 and 33. The NAMES
  *  differ between the two DFU sites, which is exactly how a duplicate
  *  slips past a guard that matches on identifiers. */
-export {
-  DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID, MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID,
-} from './repairService.js';
+export { DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID, MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID } from './repairService.js';
 
 /** CalculateItemIdentifyCost's numerator (:1950) - `(25 * value) >> 8`. */
 export const IDENTIFY_COST_MULTIPLIER = 25;
@@ -150,7 +151,10 @@ export const itemIsIdentified = (item) => !isEnchanted(item) || item?.isIdentifi
  *  The holiday arm is gated on HasCurrentLocation, so identifying in
  *  the wilderness never gets the festival - the caller passes the
  *  holiday it resolved (or None off-location). */
-export function calculateItemIdentifyCost(baseItemValue, { holidayId = HOLIDAYS.None, reducedIdentifyCost = null } = {}) {
+export function calculateItemIdentifyCost(
+  baseItemValue,
+  { holidayId = HOLIDAYS.None, reducedIdentifyCost = null } = {},
+) {
   if (holidayId === HOLIDAYS.Witches_Festival) return 0;
   const cost = (IDENTIFY_COST_MULTIPLIER * baseItemValue) >> 8;
   return reducedIdentifyCost ? reducedIdentifyCost(cost) : cost;
@@ -179,8 +183,12 @@ export function identifySpellPass(items, chance, rolls = Math.random) {
   const identified = [];
   let successCount = 0;
   for (const item of list) {
-    if (itemIsIdentified(item)) { successCount++; continue; }   // already known counts as a success
-    if (Math.floor(rolls() * 100) < chance) {                   // Dice100.SuccessRoll
+    if (itemIsIdentified(item)) {
+      successCount++;
+      continue;
+    } // already known counts as a success
+    if (Math.floor(rolls() * 100) < chance) {
+      // Dice100.SuccessRoll
       identified.push(item);
       successCount++;
     }
@@ -215,23 +223,27 @@ export const identifiedTallyText = (successCount, total) =>
 export function buyHolidayHalvesPrice(item, { holidayId = HOLIDAYS.None, guildFactionId = null } = {}) {
   const inGuild = guildFactionId != null;
   if (holidayId === HOLIDAYS.Merchants_Festival && !inGuild) return true;
-  if (holidayId === HOLIDAYS.Tales_and_Tallow && inGuild
-    && guildFactionId === GUILDS.MagesGuild.factionId) return true;
+  if (holidayId === HOLIDAYS.Tales_and_Tallow && inGuild && guildFactionId === GUILDS.MagesGuild.factionId) return true;
   return holidayId === HOLIDAYS.Warriors_Festival && !inGuild && item.group === 'Weapons';
 }
 
 /** One basket item's Buy price (:443-450). The halving is C# integer
  *  division on an int, so it TRUNCATES, and it lands AFTER the stack
  *  multiply rather than per unit. */
-export function buyItemPrice(item, { quality = 0, priceAdjustment = 1000, holidayId = HOLIDAYS.None, guildFactionId = null, online = undefined } = {}) {
-  const price = calculateCost(itemValueOf(item), quality, priceAdjustment) * (item.stackCount ?? 1);   // JAN1: the one value read
+export function buyItemPrice(
+  item,
+  { quality = 0, priceAdjustment = 1000, holidayId = HOLIDAYS.None, guildFactionId = null, online = undefined } = {},
+) {
+  const price = calculateCost(itemValueOf(item), quality, priceAdjustment) * (item.stackCount ?? 1); // JAN1: the one value read
   const holiday = buyHolidayHalvesPrice(item, { holidayId, guildFactionId });
   const held = holiday ? Math.trunc(price / 2) : price;
   // ESSENTIALS-HALF (2026-09-30, Discord: "cut the cost of most essential items by half"): online a POTION costs half
   // (shopStock.js essentialPrice, rounded up - its law against buying to sell back), at every counter's Buy. AUDIT
   // ESSENTIALS F1: never on top of a holiday's own half - the sale cap reads the full price, so a quarter bought on
   // Merchants Festival sold back for half; the two halves do not stack
-  return (isPotion(item) || isCampfireKit(item) || isFirewood(item)) && !holiday ? essentialPrice(held, { online }) : held;   // AUDIT REST: REST2's Campfire and Firewood arm
+  return (isPotion(item) || isCampfireKit(item) || isFirewood(item)) && !holiday
+    ? essentialPrice(held, { online })
+    : held; // AUDIT REST: REST2's Campfire and Firewood arm
 }
 
 /** SELL-AS-FOUND (AUDIT ECON O1, 2026-10-01) AND MEND-THIRD (2026-10-19): ONLINE A COUNTER PAYS FOR A FOUND PIECE AT
@@ -279,22 +291,27 @@ export function saleConditionPercentage(item, { online = isOnlinePage() } = {}) 
  *  itself to more; PRICE-5: a lot that paid a gold a piece or more gives every piece one, and the rest by the asks (a
  *  cheap stack bought beside a dear piece floored to 0, and sold for 0 ever after); PRICE-6: and the value each piece
  *  was bought at (COUNTER_VALUE_MARK). */
-export function markCounterBought(items, { online = isOnlinePage(), price = null, holidayId = HOLIDAYS.None, guildFactionId = null } = {}) {
+export function markCounterBought(
+  items,
+  { online = isOnlinePage(), price = null, holidayId = HOLIDAYS.None, guildFactionId = null } = {},
+) {
   for (const it of items ?? []) clearStolen(it);
   if (!online) return 0;
   const lot = (items ?? []).filter((it) => it && typeof it === 'object');
   const stackOf = (it) => (Number.isInteger(it.stackCount) && it.stackCount > 1 ? it.stackCount : 1);
-  const asks = lot.map((it) => Math.max(buyItemPrice(it, { quality: 10, online, holidayId, guildFactionId }), stackOf(it)));   // a gold a piece at least, as a purchase asks
+  const asks = lot.map((it) =>
+    Math.max(buyItemPrice(it, { quality: 10, online, holidayId, guildFactionId }), stackOf(it)),
+  ); // a gold a piece at least, as a purchase asks
   const total = asks.reduce((a, b) => a + b, 0);
   const paid = typeof price === 'number' && Number.isFinite(price) && price >= 0 && total > 0;
   const pieces = lot.reduce((n, it) => n + stackOf(it), 0);
-  const base = paid && /** @type {number} */ (price) >= pieces ? 1 : 0;   // PRICE-5: a gold a piece first, where the lot paid it
+  const base = paid && /** @type {number} */ (price) >= pieces ? 1 : 0; // PRICE-5: a gold a piece first, where the lot paid it
   const rest = paid ? /** @type {number} */ (price) - base * pieces : 0;
   lot.forEach((it, i) => {
     it[PATRON_COUNTER_MARK] = true;
     if (paid) it[COUNTER_PAID_MARK] = base + Math.floor((rest * asks[i]) / total / stackOf(it));
     const v = counterValueOf(it);
-    if (Number.isFinite(v) && v >= 0) it[COUNTER_VALUE_MARK] = Math.round(v);   // PRICE-6
+    if (Number.isFinite(v) && v >= 0) it[COUNTER_VALUE_MARK] = Math.round(v); // PRICE-6
   });
   return lot.length;
 }
@@ -306,7 +323,7 @@ export function markCounterBought(items, { online = isOnlinePage(), price = null
  *  piece's OWN value alone - a piece with none is priced at its template's base (itemValueOf), which never held the roll. */
 export function counterValueOf(item) {
   const v = itemValueOf(item);
-  if (!Number.isFinite(item?.value)) return daedricSaleValue(item, v);   // AUDIT CRAFT-WORTH: the base the read falls back to carries no roll to take off
+  if (!Number.isFinite(item?.value)) return daedricSaleValue(item, v); // AUDIT CRAFT-WORTH: the base the read falls back to carries no roll to take off
   const rolled = craftedRarityWorth(item);
   return daedricSaleValue(item, rolled > 0 ? Math.max(1, v - rolled) : v);
 }
@@ -327,7 +344,7 @@ export function isDaedricGear(item) {
 }
 function daedricSaleValue(item, v) {
   if (!isDaedricGear(item) || !Number.isFinite(v)) return v;
-  const gems = Number.isFinite(item?.value) ? socketsOf(item).reduce((n, g) => n + (g ? (gemWorthOf(g) || 0) : 0), 0) : 0;
+  const gems = Number.isFinite(item?.value) ? socketsOf(item).reduce((n, g) => n + (g ? gemWorthOf(g) || 0 : 0), 0) : 0;
   const own = Math.max(0, v - gems);
   return Math.max(1, Math.round(own * DAEDRIC_SALE_SHARE) + Math.min(gems, v));
 }
@@ -348,11 +365,21 @@ function daedricSaleValue(item, v) {
  * is what getTradePrice's floor below asks a gold for. The sale and
  * identify arms count none.
  */
-export function tradeCost(mode, staged = [], {
-  quality = 0, priceAdjustment = 1000, holidayId = HOLIDAYS.None,
-  guildFactionId = null, reducedRepairCost = null, reducedIdentifyCost = null,
-  usingIdentifySpell = false, isBeingRepaired = () => false, online = undefined,
-} = {}) {
+export function tradeCost(
+  mode,
+  staged = [],
+  {
+    quality = 0,
+    priceAdjustment = 1000,
+    holidayId = HOLIDAYS.None,
+    guildFactionId = null,
+    reducedRepairCost = null,
+    reducedIdentifyCost = null,
+    usingIdentifySpell = false,
+    isBeingRepaired = () => false,
+    online = undefined,
+  } = {},
+) {
   let cost = 0;
   let modeActionEnabled = false;
   let pieces = 0;
@@ -392,9 +419,11 @@ export function tradeCost(mode, staged = [], {
         // CalculateCost never reads - see the header; RRI2: Roleplay &
         // Realism: Items' override reads it, so the slot is passed.
         // SELL-AS-FOUND and MEND-THIRD: online, a found piece at its mark and a third of its owner's own mends past it
-        const c = calculateCost(counterValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack;   // JAN1: an item with no finite value is priced at its base, never NaN; CRAFT-WORTH: a crafted piece at its plain worth
+        const c =
+          calculateCost(counterValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) *
+          stack; // JAN1: an item with no finite value is priced at its base, never NaN; CRAFT-WORTH: a crafted piece at its plain worth
         cost += c;
-        sold(item, c, stack);   // LAW-3
+        sold(item, c, stack); // LAW-3
         break;
       }
       case 'SellMagic': {
@@ -408,16 +437,19 @@ export function tradeCost(mode, staged = [], {
         // at no gold: a Daedric cuirass found at 47% sold for 22,350 and fenced, unmended, for 47,553. An unmarked piece -
         // a magic item's condition is its uses - and every piece offline fence as DFU's do.
         const fenced = live && isFoundMarked(item) ? saleConditionPercentage(item, { online: true }) : -1;
-        const c = calculateCost(counterValueOf(item), quality, priceAdjustment, fenced);   // CRAFT-WORTH: a fenced crafted piece at its plain worth
+        const c = calculateCost(counterValueOf(item), quality, priceAdjustment, fenced); // CRAFT-WORTH: a fenced crafted piece at its plain worth
         cost += c;
-        sold(item, c, stack);   // LAW-3: the stack it hands over cost what it cost
+        sold(item, c, stack); // LAW-3: the stack it hands over cost what it cost
         break;
       }
       case 'Repair':
         if (isBeingRepaired(item)) break;
         modeActionEnabled = true;
-        cost += calculateItemRepairCost(itemValueOf(item), quality, item.currentCondition ?? 0, item.maxCondition ?? 0,
-          { reducedRepairCost, priceAdjustment }) * stack;
+        cost +=
+          calculateItemRepairCost(itemValueOf(item), quality, item.currentCondition ?? 0, item.maxCondition ?? 0, {
+            reducedRepairCost,
+            priceAdjustment,
+          }) * stack;
         pieces += stack;
         break;
       case 'Identify':
@@ -433,7 +465,7 @@ export function tradeCost(mode, staged = [], {
         break;
     }
   }
-  return resale ? { cost, modeActionEnabled, pieces, resale } : { cost, modeActionEnabled, pieces };   // LAW-3: the tally only where a counter's piece is sold
+  return resale ? { cost, modeActionEnabled, pieces, resale } : { cost, modeActionEnabled, pieces }; // LAW-3: the tally only where a counter's piece is sold
 }
 
 /** FB0929: the least a purchase asks for each piece it buys or mends -
@@ -500,7 +532,7 @@ export function getTradePrice(mode, cost, quality, skills, pieces = cost > 0 ? 1
  *  records further on to their own set. */
 export function tradeMessageOffset(mode, cost, tradePrice) {
   const band = cureOfferMessageOffset(cost, tradePrice);
-  return (mode === 'Sell' || mode === 'SellMagic') ? band + 3 : band;
+  return mode === 'Sell' || mode === 'SellMagic' ? band + 3 : band;
 }
 
 /** ShowTradePopup as a decision (:1100-1134). A BUYING mode with too
@@ -536,7 +568,7 @@ export const letterOfCreditText = () => localizedText('letterOfCredit', LETTER_O
  *  0.0025 kg/piece the character sheet's encumbrance line does. */
 export function sellProceeds(tradePrice, { carriedWeightKg = 0, maxEncumbranceKg = Infinity } = {}) {
   const goldWeight = tradePrice * GOLD_PIECE_WEIGHT_KG;
-  return (carriedWeightKg + goldWeight <= maxEncumbranceKg)
+  return carriedWeightKg + goldWeight <= maxEncumbranceKg
     ? { kind: 'gold', amount: tradePrice }
     : { kind: 'letterOfCredit', amount: tradePrice };
 }
@@ -575,13 +607,21 @@ export function localListAccepts(mode, item, { accepts = () => true, enchanted =
  *  nowhere: any one turned back to the first wagon in the pack sold a loaded caravan while a spare cart was held). */
 export const sellGuardOf = (entity) => ({
   wagonLoaded: (entity?.wagonItems ?? []).length > 0,
-  bagLoaded: (entity?.bagItems ?? []).length > 0,   // BAG1: the Materials Bag holding anything
+  bagLoaded: (entity?.bagItems ?? []).length > 0, // BAG1: the Materials Bag holding anything
   usedWagon: activeWagonItem(entity?.items ?? []),
 });
-export function localClickDecision(mode, item, {
-  inBasket = () => false, allowMagicRepairs = false, usingIdentifySpell = false,
-  wagonLoaded = false, usedWagon = null, bagLoaded = false,
-} = {}) {
+export function localClickDecision(
+  mode,
+  item,
+  {
+    inBasket = () => false,
+    allowMagicRepairs = false,
+    usingIdentifySpell = false,
+    wagonLoaded = false,
+    usedWagon = null,
+    bagLoaded = false,
+  } = {},
+) {
   switch (mode) {
     case 'Sell':
     case 'SellMagic':
@@ -603,7 +643,7 @@ export function localClickDecision(mode, item, {
       return { kind: 'refuse', refusal };
     }
     case 'Identify':
-      return (!itemIsIdentified(item) || usingIdentifySpell)
+      return !itemIsIdentified(item) || usingIdentifySpell
         ? { kind: 'stage' }
         : { kind: 'refuse', refusal: 'identified' };
     case 'Buy':

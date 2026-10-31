@@ -420,9 +420,9 @@ test('LA-AUDIT F1 + D: THE PROBE JUDGES A PICTURE, AND ONLY THE LIGHTING\'S - su
   assert.match(probe, /const bad = judge\(\{ scenes: SCENES, all, errors, frames: FRAMES, stillMax: STILL_MAX, booted, streetTavern \}\);/);
   assert.match(probe, /const summary = summarize\(name, rows, out\.err\);/);
   assert.match(probe, /if \(!booted\) fail\(`the world never booted \(\$\{BOOT_S\} s\)`\);/);
-  assert.match(probe, /await ev\(\(\) => \{ const e = window\.__playerEntity; if \(e && e\.maxHealth > 0\) e\.health = e\.maxHealth; \}\);\n\s+await ev\(\(\[src, keep, keep4\]\) => \{ const P = window\.__lfp;/, 'LA-AUDIT D: each pass starts whole');
-  assert.match(probe, /hp: window\.__playerEntity\?\.health \?\? null, flash: window\.__lfpFlash \? \+window\.__lfpFlash\.alpha\.toFixed\(3\) : null/, 'and every row carries the health and the HUD\'s flash');
-  assert.match(probe, /const j = i >> 2, w = PK && PK\[j\] \? 0 : PC && PC\.length >= j \* 3 \+ 3 \? Math\.min\(1, Math\.max\(PC\[j \* 3\], PC\[j \* 3 \+ 1\], PC\[j \* 3 \+ 2\]\)\) : 1;/);
+  assert.match(probe, /await ev\(\(\) => \{\n\s*const e = window\.__playerEntity;\n\s*if \(e && e\.maxHealth > 0\) e\.health = e\.maxHealth;\n\s*\}\);\n\s*await ev\(\n\s*\(\[src, keep, keep4\]\) => \{\n\s*const P = window\.__lfp;/, 'LA-AUDIT D: each pass starts whole');
+  assert.match(probe, /hp: window\.__playerEntity\?\.health \?\? null,\n\s*flash: window\.__lfpFlash \? \+window\.__lfpFlash\.alpha\.toFixed\(3\) : null/, 'and every row carries the health and the HUD\'s flash');
+  assert.match(probe, /const j = i >> 2,\n\s*w =\n\s*PK && PK\[j\]\n\s*\? 0\n\s*: PC && PC\.length >= j \* 3 \+ 3\n\s*\? Math\.min\(1, Math\.max\(PC\[j \* 3\], PC\[j \* 3 \+ 1\], PC\[j \* 3 \+ 2\]\)\)\n\s*: 1;/);
 });
 
 // ═══ F6. THE HANDOVER AND THE LO COMPARE, DRIVEN ═════════════════════════════════════════════════════════════════

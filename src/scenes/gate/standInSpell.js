@@ -30,7 +30,7 @@
 //
 // Not a DFU member (every DFU foe is its own); the whole a Disintegrate counts here is gateBoss.js's (STAND_IN_WHOLE).
 import { applySpell, spellSways, isSoulTrapEffect, tickActiveEffects } from '../../systems/effects.js';
-import { bossStrike } from '../../systems/bossTraits.js';   // BOSS-TRAITS: the striker's half on a stand-in
+import { bossStrike } from '../../systems/bossTraits.js'; // BOSS-TRAITS: the striker's half on a stand-in
 import { duelSpellOf } from '../../combat/duelCombat.js';
 import { reportPlayerAttack } from '../../combat/formulas.js';
 import { tellSpellLanded } from '../../systems/spell/spellPower.js';
@@ -38,8 +38,8 @@ import { SOUL_TRAP_TEXT } from '../../systems/mysticism.js';
 import { HIT_KINDS } from '../../net/gate/gateBrain.js';
 import { ARENA_HIT, arenaBlowCap } from '../../net/arena/arenaLaw.js';
 import { BOSS_SWAY_TEXT, BOSS_SWAY_TELL_MS, standInBlowCap } from '../../world/gate/gateBoss.js';
-import { COURT_ROUND_MS } from './gateCourt.js';   // BOSS-DOT: the round a relay body's lasting harm ticks on - the court's trap's
-import { SERPENT_HIT_CAP_X, SERPENT_HAND_REF } from '../../net/serpent/serpentBrain.js';   // BOSS-DOT: the most a hand's blow lands on the serpent
+import { COURT_ROUND_MS } from './gateCourt.js'; // BOSS-DOT: the round a relay body's lasting harm ticks on - the court's trap's
+import { SERPENT_HIT_CAP_X, SERPENT_HAND_REF } from '../../net/serpent/serpentBrain.js'; // BOSS-DOT: the most a hand's blow lands on the serpent
 
 /** BOSS-DOT: THE LASTING HARM A RELAY BODY CARRIES - an entry of Continuous Damage on its health (DUEL_SPELL_TYPES' type 1,
  *  sub 0; DFU's ContinuousDamageHealth) with a round still to run. Its two siblings on fatigue and magicka have nothing to
@@ -50,7 +50,19 @@ const NO_ROUNDS = Object.freeze([]);
 /** The sinks a stand-in's rounds and casts land through: every hurt summed into `got.n`, every other family nothing. */
 /** The sinks a count on a stand-in runs through - `resist` its body (AUDIT WORLD-EVENTS L2-2: a carried round is resisted by
  *  its element as it ticks, as the cast's own claim is in onBody - it went out whole). */
-const counting = (got, resist = null) => ({ hurt: (n, o) => { got.n += Math.max(0, resist && n > 0 ? bossStrike(resist, n, { kind: 'spell', element: o?.element ?? null }).damage : n); }, heal() {}, drainFatigue() {}, restoreFatigue() {}, drainMagicka() {}, restoreMagicka() {} });
+const counting = (got, resist = null) => ({
+  hurt: (n, o) => {
+    got.n += Math.max(
+      0,
+      resist && n > 0 ? bossStrike(resist, n, { kind: 'spell', element: o?.element ?? null }).damage : n,
+    );
+  },
+  heal() {},
+  drainFatigue() {},
+  restoreFatigue() {},
+  drainMagicka() {},
+  restoreMagicka() {},
+});
 
 /**
  * A HARMFUL SPELL'S FAMILIES ON A STAND-IN, COUNTED: `harm` (duelSpellOf's) landed on `entity` by the one door every spell
@@ -64,12 +76,15 @@ const counting = (got, resist = null) => ({ hurt: (n, o) => { got.n += Math.max(
  */
 export function countOnStandIn(harm, entity, level, caster, rolls = Math.random, carried = NO_ROUNDS) {
   const got = { n: 0 };
-  let r = null, kept = NO_ROUNDS;
+  let r = null,
+    kept = NO_ROUNDS;
   entity.activeEffects = carried.map((a) => ({ ...a }));
   try {
     r = applySpell(harm, level, entity, counting(got), rolls, { entity: caster });
     kept = (entity.activeEffects ?? []).filter(carriedOnStandIn);
-  } finally { entity.activeEffects = []; }
+  } finally {
+    entity.activeEffects = [];
+  }
   return { dealt: got.n, r, kept };
 }
 
@@ -93,7 +108,10 @@ export function createStandInRounds({ now = Date.now, rolls = Math.random } = {}
     /** A cast on the body landed: what it carries now - the first a keeper holds ticks from the next round, never from a
      *  round before it was laid. */
     keep(key, entries) {
-      if (!entries?.length) { kept.delete(key); return; }
+      if (!entries?.length) {
+        kept.delete(key);
+        return;
+      }
       if (!kept.size) round = Math.floor(now() / COURT_ROUND_MS);
       kept.set(key, entries);
     },
@@ -103,21 +121,32 @@ export function createStandInRounds({ now = Date.now, rolls = Math.random } = {}
     frame(bodyOf, alive = true) {
       const r = Math.floor(now() / COURT_ROUND_MS);
       if (!alive) kept.clear();
-      if (!kept.size || round === null || r < round) { round = r; return; }   // none running: the clock stands at this round - one laid now ticks from the next
+      if (!kept.size || round === null || r < round) {
+        round = r;
+        return;
+      } // none running: the clock stands at this round - one laid now ticks from the next
       if (r === round) return;
       const due = r - round;
       round = r;
       for (const [key, entries] of [...kept]) {
         const body = bodyOf(key);
-        if (!body?.entity) { kept.delete(key); continue; }
-        const got = { n: 0 }, e = body.entity;
+        if (!body?.entity) {
+          kept.delete(key);
+          continue;
+        }
+        const got = { n: 0 },
+          e = body.entity;
         let left = NO_ROUNDS;
         e.activeEffects = entries;
         try {
-          for (let k = 0; k < due && e.activeEffects.some(carriedOnStandIn); k++) tickActiveEffects(e, counting(got, e), rolls);
+          for (let k = 0; k < due && e.activeEffects.some(carriedOnStandIn); k++)
+            tickActiveEffects(e, counting(got, e), rolls);
           left = e.activeEffects.filter(carriedOnStandIn);
-        } finally { e.activeEffects = []; }
-        if (left.length) kept.set(key, left); else kept.delete(key);
+        } finally {
+          e.activeEffects = [];
+        }
+        if (left.length) kept.set(key, left);
+        else kept.delete(key);
         if (got.n >= 1) body.land(got.n);
       }
     },
@@ -143,14 +172,23 @@ export const standInShown = (dealt, cap) => Math.min(Math.max(0, dealt), cap);
  */
 export function createStandInSpell(host) {
   const { player, say, rolls = Math.random, now = Date.now } = host;
-  let swayToldAt = -Infinity;   // WB8a: when his refusal was last said
-  const rounds = createStandInRounds({ now, rolls });   // BOSS-DOT: the lasting harm each body carries - him `b`, one of his host `h<i>`, a crystal `c<n>`
+  let swayToldAt = -Infinity; // WB8a: when his refusal was last said
+  const rounds = createStandInRounds({ now, rolls }); // BOSS-DOT: the lasting harm each body carries - him `b`, one of his host `h<i>`, a crystal `c<n>`
   /** AUDIT SCHOOLS L2 F4: MY SPELL LANDED ON A STAND-IN OF THE COURT - told to the paths' riders as any landing of mine is
    *  (hostMagic.js applySpellToFoe), with no foe record: the relay holds the body, so no arc or second burn reaches it.
    *  What it took is what can land (STAND-IN-WHOLE). `caster` the cast's wrapper (its token and cost), when the cast
    *  engine's. */
   function tellStandIn(sp, entity, r, took, caster) {
-    tellSpellLanded({ caster: player, target: entity, foe: null, spell: sp, r, self: false, took, cast: caster?.cast ?? null });
+    tellSpellLanded({
+      caster: player,
+      target: entity,
+      foe: null,
+      spell: sp,
+      r,
+      self: false,
+      took,
+      cast: caster?.cast ?? null,
+    });
   }
   /** A body of the court met (him, a crystal, one of his host): the spell counted on its stand-in, told, its number risen
    *  as a blow's does (HN1) - what can land, by the body it met (AUDIT FB1018f L3-2: a turned one says its word) - and the
@@ -158,8 +196,13 @@ export function createStandInSpell(host) {
    *  kept when the claim went - a spell its ward or the ground turns lays nothing; one whose first round dealt nothing lays
    *  its rounds (it met the body: DFU pushes the entry whatever the round dealt). */
   function onBody(sp, body, harm, caster, land, key) {
-    const { dealt: counted, r, kept } = countOnStandIn(harm, body.entity, player.level, player, rolls, rounds.carried(key));
-    const dealt = counted >= 1 ? bossStrike(body.entity, counted, { kind: 'spell', element: sp.element ?? null }).damage : counted;   // BOSS-TRAITS: a relay boss's resistance to the spell's element (systems/bossTraits.js)
+    const {
+      dealt: counted,
+      r,
+      kept,
+    } = countOnStandIn(harm, body.entity, player.level, player, rolls, rounds.carried(key));
+    const dealt =
+      counted >= 1 ? bossStrike(body.entity, counted, { kind: 'spell', element: sp.element ?? null }).damage : counted; // BOSS-TRAITS: a relay boss's resistance to the spell's element (systems/bossTraits.js)
     if (!(dealt >= 1)) {
       const laid = kept.length > 0 && !turned(body);
       if (laid) rounds.keep(key, kept);
@@ -179,7 +222,12 @@ export function createStandInSpell(host) {
    *  any blow into the ward is; null for a body no longer offered. */
   function bodyOf(key) {
     const n = Number(key.slice(1));
-    const body = key === 'b' ? host.boss() : key[0] === 'h' ? host.host().find((q) => q.host === n) : host.crystals().find((q) => q.crystal === n);
+    const body =
+      key === 'b'
+        ? host.boss()
+        : key[0] === 'h'
+          ? host.host().find((q) => q.host === n)
+          : host.crystals().find((q) => q.crystal === n);
     if (!body) return null;
     const land = key === 'b' ? host.landOnBoss : key[0] === 'h' ? host.landOnHost : host.landOnCrystal;
     return { entity: body.entity, land: (d) => !turned(body) && !!land(body, d, HIT_KINDS.Spell, true) };
@@ -188,13 +236,15 @@ export function createStandInSpell(host) {
   const standInRound = () => rounds.frame(bodyOf, player.health > 0);
   /** WB9c: a harmful spell of mine that met a crystal (hostMagic's crystal seam). */
   function spellOnCrystal(sp, c, caster = null) {
-    const cr = host.crystals().find((q) => q.crystal === c), harm = duelSpellOf(sp);
+    const cr = host.crystals().find((q) => q.crystal === c),
+      harm = duelSpellOf(sp);
     if (!cr || !harm) return false;
     return onBody(sp, cr, harm, caster, host.landOnCrystal, `c${c}`);
   }
   /** WB11c: a harmful spell of mine that met one of his host (hostMagic's host seam). */
   function spellOnHost(sp, i, caster = null) {
-    const hb = host.host().find((q) => q.host === i), harm = duelSpellOf(sp);
+    const hb = host.host().find((q) => q.host === i),
+      harm = duelSpellOf(sp);
     if (!hb || !harm) return false;
     return onBody(sp, hb, harm, caster, host.landOnHost, `h${i}`);
   }
@@ -204,23 +254,28 @@ export function createStandInSpell(host) {
    *  referee counts every spell claim a cast, and a bout takes the referee's blow alone (BAL8, as OPEN-HAND drops what a
    *  follow-up owes a player). */
   function spellOnRival(sp) {
-    const rb = host.rival(), harm = duelSpellOf(sp);
+    const rb = host.rival(),
+      harm = duelSpellOf(sp);
     if (!rb || !harm) return false;
     const { dealt } = countOnStandIn(harm, rb.entity, player.level, player, rolls);
     if (!(dealt >= 1)) return false;
-    reportPlayerAttack({ hit: true, damage: Math.round(standInShown(dealt, arenaBlowCap({ r: ARENA_HIT.Spell }))) });   // HN1: the number pops as a blow's does
+    reportPlayerAttack({ hit: true, damage: Math.round(standInShown(dealt, arenaBlowCap({ r: ARENA_HIT.Spell }))) }); // HN1: the number pops as a blow's does
     host.nextArenaQ();
     return host.landOnRival(rb, dealt, 'spell');
   }
   /** WB4b: a harmful spell of mine that met him (hostMagic's boss seam). BOSS-DOT: its Continuous Damage carried on the
    *  shared round (it said "continuous families are not his to carry - the stand-in forgets them"). */
   function spellOnBoss(sp, caster = null) {
-    const boss = host.boss(), harm = duelSpellOf(sp);
+    const boss = host.boss(),
+      harm = duelSpellOf(sp);
     if (!boss) return false;
     // WB8a: A SWAY ON HIM. A Pacify or a Charm in the spell is refused by his own word (world/gate/gateBoss.js bossStandIn's
     // pacifyImmune) and said so - the rest of the spell lands as it would; alone, the refusal is what met him
     const sways = spellSways(sp) && !!boss.entity.pacifyImmune;
-    if (sways && now() - swayToldAt >= BOSS_SWAY_TELL_MS) { swayToldAt = now(); say(BOSS_SWAY_TEXT(boss.entity.name)); }
+    if (sways && now() - swayToldAt >= BOSS_SWAY_TELL_MS) {
+      swayToldAt = now();
+      say(BOSS_SWAY_TEXT(boss.entity.name));
+    }
     // WBX7 (2026-09-26, Swololo on Discord: "soul trap didnt seem to work"): A SOUL TRAP ON HIM. The trap is laid on his
     // stand-in by the one door every spell lands through (applySpell - its rounds, its chance frozen at the cast by my
     // level, his save against a new trap, "Trap active."), and handed to the court, which keeps it on the fight's clock:
@@ -236,11 +291,29 @@ export function createStandInSpell(host) {
       const running = host.trapNow();
       if (running) boss.entity.activeEffects = [{ kind: 'soulTrap', chance: running.chance, roundsRemaining: 0 }];
       try {
-        const res = applySpell({ ...sp, effects: trapFx }, player.level, boss.entity, { hurt: noSink, heal: noSink, drainFatigue: noSink, restoreFatigue: noSink, drainMagicka: noSink, restoreMagicka: noSink }, rolls, { entity: player });
+        const res = applySpell(
+          { ...sp, effects: trapFx },
+          player.level,
+          boss.entity,
+          {
+            hurt: noSink,
+            heal: noSink,
+            drainFatigue: noSink,
+            restoreFatigue: noSink,
+            drainMagicka: noSink,
+            restoreMagicka: noSink,
+          },
+          rolls,
+          { entity: player },
+        );
         const trap = (boss.entity.activeEffects ?? []).find((a) => a.kind === 'soulTrap' && !a.ended);
         if (trap) laid = !!host.onTrap({ chance: trap.chance, rounds: (trap.roundsRemaining ?? 0) + 1 });
         if (res?.trapAlert && SOUL_TRAP_TEXT[res.trapAlert]) say(SOUL_TRAP_TEXT[res.trapAlert]);
-      } catch (e) { console.warn('[gate] the trap on him', e?.message ?? e); } finally { boss.entity.activeEffects = []; }
+      } catch (e) {
+        console.warn('[gate] the trap on him', e?.message ?? e);
+      } finally {
+        boss.entity.activeEffects = [];
+      }
     }
     if (!harm) return laid || sways;
     return onBody(sp, boss, harm, caster, host.landOnBoss, 'b');
@@ -264,21 +337,40 @@ export function createStandInSpell(host) {
  * last met. `frame(alive)` each frame of the serpent's fight: none (the fight over, my ship's deck, my death) ends its rounds.
  * @param {{ player: any, standIn: () => any, land: (box: any, d: number) => any, now?: () => number, rolls?: () => number, cap?: () => number }} o DRAGON3: the Dwarven Dragon's door too, `cap` the gate's (standInBlowCap)
  */
-export function createSerpentSpell({ player, standIn, land, now = Date.now, rolls = Math.random, cap = () => SERPENT_HIT_CAP_X * SERPENT_HAND_REF }) {
+export function createSerpentSpell({
+  player,
+  standIn,
+  land,
+  now = Date.now,
+  rolls = Math.random,
+  cap = () => SERPENT_HIT_CAP_X * SERPENT_HAND_REF,
+}) {
   const rounds = createStandInRounds({ now, rolls });
   let met = null;
   return {
     cast(sp, box, caster = null) {
-      const harm = duelSpellOf(sp), e = standIn();
+      const harm = duelSpellOf(sp),
+        e = standIn();
       if (!harm) return false;
       const { dealt, r, kept } = countOnStandIn(harm, e, player.level, player, rolls, rounds.carried('s'));
       if (kept.length) met = box;
       rounds.keep('s', kept);
       if (!(dealt >= 1)) return kept.length > 0;
-      tellSpellLanded({ caster: player, target: e, foe: null, spell: sp, r, self: false, took: standInShown(dealt, cap()), cast: caster?.cast ?? null });   // AUDIT SCHOOLS L2 F4: told to the riders - what can land, STAND-IN-WHOLE's law
+      tellSpellLanded({
+        caster: player,
+        target: e,
+        foe: null,
+        spell: sp,
+        r,
+        self: false,
+        took: standInShown(dealt, cap()),
+        cast: caster?.cast ?? null,
+      }); // AUDIT SCHOOLS L2 F4: told to the riders - what can land, STAND-IN-WHOLE's law
       land(box, dealt);
       return true;
     },
-    frame(alive) { rounds.frame(() => (met ? { entity: standIn(), land: (d) => land(met, d) } : null), !!alive && player.health > 0); },
+    frame(alive) {
+      rounds.frame(() => (met ? { entity: standIn(), land: (d) => land(met, d) } : null), !!alive && player.health > 0);
+    },
   };
 }

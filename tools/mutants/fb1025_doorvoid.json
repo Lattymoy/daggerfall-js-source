@@ -56,8 +56,8 @@
   {
     "name": "FB1025-DOORVOID-through-is-always-z",
     "file": "src/world/interior/doorsToNowhere.js",
-    "old": "const through = hi[0] - lo[0] < hi[2] - lo[2] ? 0 : 2;",
-    "new": "const through = 2;",
+    "old": "  const through = hi[0] - lo[0] < hi[2] - lo[2] ? 0 : 2;",
+    "new": "  const through = 2;",
     "tests": [
       "test/world/fb1025_doorvoid.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "FB1025-DOORVOID-reach-past-the-pit",
     "file": "src/world/interior/doorsToNowhere.js",
-    "old": "DOOR_FLOOR_REACH + RAY_LIFT, skip",
-    "new": "2 * DOOR_FLOOR_REACH + RAY_LIFT, skip",
+    "old": "      return Number.isFinite(collider.raycast(origin, [0, -1, 0], DOOR_FLOOR_REACH + RAY_LIFT, skip));",
+    "new": "      return Number.isFinite(collider.raycast(origin, [0, -1, 0], 2 * DOOR_FLOOR_REACH + RAY_LIFT, skip));",
     "tests": [
       "test/world/fb1025_doorvoid.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "FB1025-DOORVOID-the-owner-takes-it-out",
     "file": "src/systems/decor/decorInteriorDoors.js",
-    "old": "object.kind === 'door' && !object.special && !object.sealed",
-    "new": "object.kind === 'door' && !object.special",
+    "old": "    !object.sealed &&\n    (object.actionFlag ?? 0) === 0 &&",
+    "new": "    (object.actionFlag ?? 0) === 0 &&",
     "tests": [
       "test/world/fb1025_doorvoid.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "FB1025-BADCELL-every-31000-of-a-listed-room",
     "file": "src/world/interior/interiorLayout.js",
-    "old": "  if (obj.xPos !== BAD_MODEL_SPOT.xPos || obj.yPos !== BAD_MODEL_SPOT.yPos || obj.zPos !== BAD_MODEL_SPOT.zPos) return false;\n",
-    "new": "",
+    "old": "  if (obj.xPos !== BAD_MODEL_SPOT.xPos || obj.yPos !== BAD_MODEL_SPOT.yPos || obj.zPos !== BAD_MODEL_SPOT.zPos)\n    return false;\n  const records = BAD_INTERIOR_MODEL_RECORDS.get(blockIndex);",
+    "new": "  const records = BAD_INTERIOR_MODEL_RECORDS.get(blockIndex);",
     "tests": [
       "test/world/fb1025_doorvoid.test.js",
       "test/world/interior.test.js"
@@ -111,8 +111,8 @@
   {
     "name": "FB1025-BADCELL-the-spot-read-in-plan-alone",
     "file": "src/world/interior/interiorLayout.js",
-    "old": "obj.xPos !== BAD_MODEL_SPOT.xPos || obj.yPos !== BAD_MODEL_SPOT.yPos || obj.zPos",
-    "new": "obj.xPos !== BAD_MODEL_SPOT.xPos || obj.zPos",
+    "old": "  if (obj.xPos !== BAD_MODEL_SPOT.xPos || obj.yPos !== BAD_MODEL_SPOT.yPos || obj.zPos !== BAD_MODEL_SPOT.zPos)\n    return false;",
+    "new": "  if (obj.xPos !== BAD_MODEL_SPOT.xPos || obj.zPos !== BAD_MODEL_SPOT.zPos) return false;",
     "tests": [
       "test/world/interior.test.js"
     ]

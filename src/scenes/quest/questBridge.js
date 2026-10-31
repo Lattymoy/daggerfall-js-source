@@ -113,6 +113,7 @@ import { createQuestlineOffers, setLineBoard } from './questlineOffers.js';   //
 // are unchanged.
 import { positionHash, staticNpcData, layoutNpcData } from '../../characters/staticNpc.js';
 import { festivalQuestEnded } from '../../systems/festival/festivalClient.js';   // WITCH1: a quest done asks a find
+import { passQuestEnded } from '../../systems/pass/passClient.js';   // STOREFRONT: and a Battle Pass find
 import { setEscortQuestAway, setEscortQuestGone } from '../../ui/hud/hudEscortFaces.js';   // QUEST-SHELF-FACES: a quest set aside shows no faces; RPT1026-MISC FACE-ORPHAN: nor one gone
 
 export { positionHash, staticNpcData, layoutNpcData };
@@ -494,7 +495,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     // AUDIT QUESTLINES LINES-7: and a questline's step gone without its end (an error terminated it) is offered again a day
     // later, never parsed again every tick
     // WITCH1: and a quest done is a Witches' Festival find (systems/festival/festivalClient.js - nothing while it is not live)
-    onQuestEnded: (q) => { questlines?.runner?.dropped?.(q); festivalQuestEnded(q); ctx.onQuestEnded?.(q); },
+    onQuestEnded: (q) => { questlines?.runner?.dropped?.(q); festivalQuestEnded(q); passQuestEnded(q); ctx.onQuestEnded?.(q); },
   });
   // QL4 (bible/06-Systems/Questlines-Arc.md section 2.3): the questlines' six actions, after DFU's 82 - here, so every
   // host's machine has them before a save or a script that says them is read (a first-match scan; none of DFU's claims
@@ -517,7 +518,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     // AUDIT 24 (the seven-slice sweep): a LIVE read, not a hardcoded
     // false. DaggerfallUnity.Settings.PlayerNudity is a real setting
     // the port already stores and the launcher already renders as a
-    // toggle - and questLists.js:"|| (quest.minReq >= 10 && quest.minReq <= rep)" gates adult quests on it, so
+    // toggle - and questLists.js:"(quest.minReq < 10 && quest.minReq <= rank)" gates adult quests on it, so
     // flipping it did nothing at all. A GETTER because C# reads the
     // setting at the point of use, and the consumer reads
     // `deps.playerNudity` as a value.

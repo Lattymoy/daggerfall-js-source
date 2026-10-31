@@ -8377,25 +8377,23 @@ frame, and the commit the goods will ride is the longer frame - it is measured n
 **Not changed:** the classic Info box, the wire's item law, TRADE_ITEMS_MAX. Pins: `test/systems/tradeinfo.test.js` (3),
 `tools/mutants/trade_info.json` (8 dead). Re-aimed: `test/systems/lr1_lootrarity.test.js` (the card reads itemPowerLines).
 
-## CHAT-POST (2026-09-27, Discord - Tabitha: "Link in chat / Post in chat"; "random magic items' details in chat") - an item posted in chat
+## CHAT-POST (2026-09-27, Discord - Tabitha: "Link in chat / Post in chat"; "random magic items' details in chat") - an item linked in chat
 
-**ONE LINE** (`ui/enhanced/enhancedInventory.js` itemChatText / itemChatLabel): the item's name in brackets - a stack
-of more than one as `[Ruby x260]` - and (for an older relay) its headline stat and its magic (itemBriefLines), cut at
-a whole word to CHAT_MAX. Beside the words the frame carries the linked records (`items`, net/wire.js validChatItems -
+**ONE LINK** (`ui/enhanced/enhancedInventory.js` itemChatLabel): the item's name in brackets - a stack of more than
+one as `[Ruby x260]`. Beside the words the frame carries the linked records (`items`, net/wire.js validChatItems -
 shape only, at most CHAT_ITEMS_MAX; a single legacy `item` still reads). The receiving client projects each through
 validLootItem and draws coloured `[Name]`s inside the words (`ui/chatItemLink.js` chatTextParts); hover opens the
 pack's own tip card (`showItemHover`). Nothing on the line is put in a pack - the card is a look, as a trade offer's
 is before a commit. An older relay drops the records and the line is the words alone.
 
 **THE DOOR.** "Link in chat" inserts `[Label]` into the chat field (`chatPanel.linkItem`) so a typed message can carry
-the piece; "Post in chat" still says the item as its own line. Both sit on the pack's card and its right-click menu
-(`itemActs`), only where the host hands the door (`deps.canPostItem` - online, with a chat tab open). Typing `[` in
-the field also lists matching bag pieces (`bagItems` → `matchBagItems`); Tab or Enter finishes the bracket. The host
-sends through `chatSend` (`scenes/world.js`), so every tab's own reasons hold. The building's pack posts through
-world.js's host object, and the dungeon's through worldModes into dungeonContext (THE FOUR HOSTS; exterior.js has no
-chat).
+the piece. It sits on the pack's card and its right-click menu (`itemActs`), only where the host hands the door
+(`deps.canPostItem` - online, with a chat tab open). Typing `[` in the field also lists matching bag pieces
+(`bagItems` → `matchBagItems`); Tab or Enter finishes the bracket. The host sends the finished line through
+`chatSend` (`scenes/world.js`), so every tab's own reasons hold. The building's pack links through world.js's host
+object, and the dungeon's through worldModes into dungeonContext (THE FOUR HOSTS; exterior.js has no chat).
 
-**Deploy the relay** that fans `items` before the site that draws the links, or every post is words alone. Pins:
+**Deploy the relay** that fans `items` before the site that draws the links, or every link is words alone. Pins:
 `test/systems/chatpost.test.js`, `tools/mutants/chat_post.json`.
 
 ## CHAT-FIND (2026-10-11, the owner: "search for a player's name in the chat in every ui"; "put the search bar above the player list for better visibility") - the chat's search
@@ -12794,7 +12792,8 @@ Seats-Arc 9.2. New: `src/ui/hallOfRecords.js`.
   Anyone the seats are open to may read it, as the standings; the standings keep their own eight.
 - **The book** (`townSeatLaw.js` `hallOfRecordsChapters`, `hallOfRecordsTitle`; `ui/hallOfRecords.js`): "The Hall of
   Records of Anticlere", centred in the title face; one chapter a Season under its name, centred; each line a paragraph;
-  "Nothing is written here yet." for an empty Hall. Opened through the reader's one door (`ui/bookDoor.js`), so the
+  "No guild has held this seat yet. Its claims, sieges and holders are written here." for an empty Hall (RECORDS-SAID,
+  `01-Overview/bugs/Field-Bugs-2026-10-30b.md` section 6; it said "Nothing is written here yet."). Opened through the reader's one door (`ui/bookDoor.js`), so the
   enhanced skin reads it in its book window and the classic in its scroll.
 - **Where it is read** (`worldModes.js` `hallOfRecordsHere`, `openHallOfRecords`; the host's `hallOfRecords` in
   `scenes/world.js`): DECIDED, a seat's palace's shelf-set models - geometry in DFU's palace, no shop and no bookshelf -
@@ -14095,7 +14094,7 @@ entirety of tamriel"): the staff reach and see past the Bay. `/tp <x> <y>` takes
 sign, as `/pos` prints it (`worldPixelOk`). `/tp 2700 187` had answered "A map pixel is x 0-999, y 0-499.", and
 `/tp 1688 -488` had searched for a place of that name. `/tp <place>` searches the world's registry's places past the
 Bay after the Bay's own, in the order it always read them, so `/tp Solitude` finds the city. The flat map (Shift+N)
-finds a province's box over the continent's frame, 8 pixels apart (`staffFlatMapHost.js:"const COARSE = 8;"`), and
+finds a province's box over the continent's frame, 8 pixels apart (`staffFlatMapHost.js:"const COARSE = 8"`), and
 draws it as it draws a Bay region. It had scanned the Bay's 1000 x 500 and drawn nothing.
 
 The grammar and the search are `scenes/staffTp.js`, read ahead of `net/staffCommands.js`. That file is in the relay's
@@ -17651,3 +17650,40 @@ moved: `test/ui/enhanced/enhancedInventory.test.js` (the seam's first act admits
 and the gate) and `test/systems/disc22c_classic_loot.test.js`'s draw line kept by the order of the try's statements.
 Mutants: `tools/mutants/rpt1026_world.json` CONFIRM-REREAD (3), CONFIRM-ONCE (2), DECOR-VERBS (8), all dead;
 `worldhover.json`'s two gate records re-aimed by content (dead).
+
+## MUSIC-BOX - a music box in the house, its tunes a collection (2026-10-31, the owner)
+
+The owner: *"Music box collection - Music box with unlockable existing tracks to play inside of the house"*, and on the
+first build, which unlocked a tune the first time the game played it: *"this is a collectable - not just given to
+player"*. The port's own; DFU has no music box.
+
+THE LAW (`systems/musicBox.js`):
+
+- **The tunes** are Daggerfall's own songs: the General MIDI half of SongManager's playlists (`song/songManager.js`),
+  each once, named by the first place the game plays it ("Day 1", "Tavern 3", "Shop") - 62 of them. FM records and
+  quest-only songs are no tunes; an FM twin plays as its General MIDI tune.
+- **Sheet music** (template 1830, DFU's Parchment picture, 25 gold at a counter, never shelved) carries one tune. A foe
+  of the player's own killing blow (`playerKills.js`) drops one into the pack one time in 40, once a body, said on the
+  HUD; three sheets in four are a tune the character does not hold while any is left. Used, a sheet adds its tune and
+  is spent; a tune already held keeps the sheet, to sell. Hearing a song collects nothing.
+- **The music box** is a placed piece made the `music` station (`net/decorLaw.js` DECOR_STATIONS, after the cooking
+  station so the stations counted from the end stand; 5,000 gold, a tenth of a craft's licence; "Music box"). Pressed
+  (`scenes/musicBoxPress.js`, after the piece's own use and before a station's craft), it lists Off and each tune held,
+  the one playing marked. The pick plays in that room, looped, over the room's own music, and fades when the player
+  leaves. Anyone in the room may press it; what it plays is the presser's own - the piece carries no tune, so the
+  account service learns nothing new beyond the station.
+- **Kept** in the save's per-mod slot (`musicBox`): the tunes and the UTC day each was learned, and the boxes' picks
+  (the newest 32). The Collections page lists the Tunes after the Fish (`ui/collections/gatheredPart.js`).
+
+THE FOUR HOSTS: the interior host (`worldModes.js`) presses the box and answers `musicBoxHere(id)`; `world.js` runs
+the box's score last in its music chain, before the director (`createMusicBoxScore`); `exterior.js` stands yards,
+whose pieces take no station; `dungeonContext.js` places no decor. createWorldModes +4 logical lines, its ceiling
+raised with the reason (`test/scenes/hostceiling.test.js`). The station is the shared law, so it waits on the account
+deploy (`acct231`).
+
+**Pins.** `test/systems/musicbox.test.js`. Pins moved for the station and the chain: `test/net/audit29_client.test.js`,
+`test/net/prof2_client.test.js`, `test/ui/homestations.test.js`, `test/systems/decor/decoruse.test.js`,
+`test/systems/huntersmark_trophies.test.js`, `test/ui/collections2.test.js`, `test/scenes/arena2_hosts.test.js`,
+`test/scenes/soundscapehost.test.js`, `test/systems/gate/wb7_boss_audio.test.js`,
+`test/systems/superDungeon/sd13_score.test.js`; the chain's mutant records in `arena2.json`, `soundscape.json`,
+`sd13.json` and `wb7.json` re-aimed by content.

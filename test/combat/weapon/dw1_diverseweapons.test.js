@@ -124,7 +124,7 @@ test('DW1: the atlas asks by the per-template name under the flag, and by the cl
   const ww = src('src/combat/weapon/weaponWidget.js');
   assert.match(ww, /const file = atlasFileName\(w\.specificWeapon, classic, undefined, ctx\?\.glow \? false : undefined\);/);   // PIN MOVED (WEAPON-GLOW1): the plain set asked while an element shows, as the loader asks it
   assert.match(ww, /for \(const name of customTextureNames\(file, record, frame, metal, w\.s\.doubleScale\)\) \{/);
-  assert.match(ww, /customWeaponImage\(name\)\.then/);
+  assert.match(ww, /customWeaponImage\(name\)\n\s*\.then/);
   // and the rig's art cache carries the name the atlas is asked by, or
   // a longsword and a broadsword share the first one's frames
   const rig = src('src/combat/weapon/weaponRig.js');
@@ -146,7 +146,7 @@ test('DW1: the names one frame is asked by - the metal suffix, and the w_ ask fa
   // forgets them with the atlas
   const ww = src('src/combat/weapon/weaponWidget.js');
   assert.match(ww, /if \(misses\.has\(name\)\) continue;/);
-  assert.match(ww, /if \(!img\) \{ misses\.add\(name\); return; \}/);
+  assert.match(ww, /if \(!img\) \{\n\s*misses\.add\(name\);\n\s*return;\n\s*\}/);
   assert.match(ww, /w\.customMisses = new Set\(\);/);
 });
 

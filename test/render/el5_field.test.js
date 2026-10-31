@@ -142,7 +142,8 @@ test('EL5: the face basis the shader selects by is pointFaceMatrices\' own - a p
 
 test('EL5: every lane shader takes any caster\'s shadow through shadowOfLight, after the range early-out; the flat too', () => {
   for (const [name, fs] of [['mesh', EL_MESH_FS], ['terrain', EL_TERRAIN_FS], ['char', EL_CHAR_FS]]) {
-    assert.match(fs, /float d = length\(L\);\n    if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n    vec3 Ln = L \/ max\(d, 1e-4\);\n    int k = uCasterOf\[i\];[^\n]*\n(?:    \/\/[^\n]*\n)*    float sh = k >= 0 \? casterShadowAt\(k, uPointLights\[i\], wp, n\)[^\n]*\n      : \(k == -2 \|\| d > uPointLights\[i\]\.w \* 0\.7\) \? 1\.0[^\n]*\n      : mix\(contactShadow\(wp, n, Ln, d\), 1\.0, smoothstep\(uPointLights\[i\]\.w \* 0\.6, uPointLights\[i\]\.w \* 0\.7, d\)\);/, `${name}: EL8 - a caster's map (DISC15: of either tier), else a contact shadow`);
+    // PIN MOVED (LIGHT-REACH): a surface turned from the light leaves the loop before its caster is read
+    assert.match(fs, /float d = length\(L\);\n    if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n    vec3 Ln = L \/ max\(d, 1e-4\);\n(?:    \/\/[^\n]*\n)*    if \(dot\(n, Ln\) <= 0\.0\) continue;\n    int k = uCasterOf\[i\];[^\n]*\n(?:    \/\/[^\n]*\n)*    float sh = k >= 0 \? casterShadowAt\(k, uPointLights\[i\], wp, n\)[^\n]*\n      : \(k == -2 \|\| d > uPointLights\[i\]\.w \* 0\.7\) \? 1\.0[^\n]*\n      : mix\(contactShadow\(wp, n, Ln, d\), 1\.0, smoothstep\(uPointLights\[i\]\.w \* 0\.6, uPointLights\[i\]\.w \* 0\.7, d\)\);/, `${name}: EL8 - a caster's map (DISC15: of either tier), else a contact shadow`);
     assert.ok(!/uShadowIndex \?/.test(fs), `${name}: no single-index compare left`);
   }
   assert.match(EL_BB_FS, /float d = length\(uPointLights\[i\]\.xyz - wp\);\n    if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n(?:    [^\n]*\n){3}    float sh = shadowOfLight\(i, uPointLights\[i\], at, vec3\(0\.0\)\);/);
@@ -226,7 +227,7 @@ test('EL5: the glare hides in world units at five taps, the resolve grades in di
   assert.match(a, /float viewDist\(float d01\) \{\n  float z = d01 \* 2\.0 - 1\.0;\n  return uProjInfo\.w \/ \(z \+ uProjInfo\.z\);/, 'the depth image linearised the way the AO does');
   assert.match(a, /float lantern = -vc\.z;/);
   assert.ok(!/<= d \+ 0\.002/.test(a), 'no hyperbolic constant left');
-  assert.match(a, /depthOn\(P\);   \/\/ EL5\/EL6/); assert.match(a, /if \(f\.carried && f\.carried\[i\]\) continue;   \/\/ MAC-T1/, 'the hand\'s light skipped by its flag (LIGHT-NEAR1: the camera-distance skip is gone)');
+  assert.match(a, /depthOn\(P\); \/\/ EL5\/EL6/); assert.match(a, /if \(f\.carried && f\.carried\[i\]\) continue; \/\/ MAC-T1/, 'the hand\'s light skipped by its flag (LIGHT-NEAR1: the camera-distance skip is gone)');
   assert.match(a, /vec3 e = airEncode\(max\(c, vec3\(0\.0\)\)\);\n  e = \(e - 0\.5\) \* uGrade\.w \+ 0\.5;\n  e \+= \(bayer4\(gl_FragCoord\.xy\) - \$\{BAYER_MEAN\}\) \/ 255\.0;/, 'the contrast after the encode, about mid-grey; EL6: dithered at the byte, zero-mean');
   assert.ok(!/c = \(c - 0\.18\) \* uGrade\.w \+ 0\.18;/.test(a), 'the linear pivot is gone');
   assert.match(a, /import \{ spherePlanes, recordVisible, subMeshVisible, batchVisible, ZERO_ORIGIN \} from '\.\/bounds\.js';/, 'the leaf imports a leaf');   // AUDIT 68 S16-v-replay-origin-alloc: and its zero origin
@@ -234,12 +235,12 @@ test('EL5: the glare hides in world units at five taps, the resolve grades in di
   assert.match(b, /^import \{ frustumPlanes \} from '\.\/frustum\.js';/m, 'bounds.js imports EV3\'s plane extraction and nothing else (one home)');
   assert.equal((b.match(/^import /gm) || []).length, 1);
   const probe = read('tools/enhancedLightingProbe.mjs');
-  assert.match(probe, /if \(bleed > 0\.005\) failures\.push\(`lantern A bleeds through the wall/, 'the bleed check (EL6: the eye frozen, five times tighter)');
-  assert.match(probe, /if \(emitBleed > 0\.002\) failures\.push\(`the emitter behind the wall blooms through it/, 'EL6: the emitter check');
-  assert.match(probe, /if \(!\(front\.bloom\?\.sum > 0\)\) failures\.push\('an emitter in view put nothing in the bloom source/, 'EL6: and the occlusion discriminates');
+  assert.match(probe, /if \(bleed > 0\.005\)\n\s*failures\.push\(`lantern A bleeds through the wall/, 'the bleed check (EL6: the eye frozen, five times tighter)');
+  assert.match(probe, /if \(emitBleed > 0\.002\)\n\s*failures\.push\(`the emitter behind the wall blooms through it/, 'EL6: the emitter check');
+  assert.match(probe, /if \(!\(front\.bloom\?\.sum > 0\)\)\n\s*failures\.push\('an emitter in view put nothing in the bloom source/, 'EL6: and the occlusion discriminates');
   assert.match(probe, /if \(r\.air\) r\.air\._now = \(\) => 1000;/, 'EL6: the eye frozen for the comparisons');
-  assert.match(probe, /if \(!\(shadowLane - shadowNoA < 0\.01\)\) failures\.push/, 'the shadow check (EL7: A\'s own contribution behind the wall, none)');
-  assert.match(probe, /if \(!\(openLane - openNoA > 0\.02\)\) failures\.push/, 'and beside it, some');
+  assert.match(probe, /if \(!\(shadowLane - shadowNoA < 0\.01\)\)\n\s*failures\.push/, 'the shadow check (EL7: A\'s own contribution behind the wall, none)');
+  assert.match(probe, /if \(!\(openLane - openNoA > 0\.02\)\)\n\s*failures\.push/, 'and beside it, some');
   assert.match(probe, /sh\.culledTotal === 0\) failures\.push\('the replays culled nothing/, 'the cull check (SC1: summed over the frames - a still room replays nothing on its last)');
   assert.match(probe, /'--use-angle=swiftshader'/, 'a real GL, software');
 });

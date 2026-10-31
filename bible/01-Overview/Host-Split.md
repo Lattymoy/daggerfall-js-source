@@ -825,6 +825,23 @@ mutant re-aimed under it). The tool re-aimed ten mutant records over the moved l
 `portships.json`'s); the pins that read the moved lines off world.js's own text read the host whole (`hostText`:
 `shiplife.test.js`, `sealanes.test.js`, `auditholdings.test.js`, `etherplaces.test.js` - PIN MOVED, PORT-SHIPS).
 
+
+## STOREFRONT - the dungeon pack out of bootWorld, the season's host wired (2026-10-29)
+
+The season in the world (`06-Systems/Battle-Pass.md` section 6) is a host of its own, `src/scenes/seasonHost.js`
+`createSeasonHost`, on the bindings the Starfall's host already read: one object both take (`_eventHostDeps`), so the
+season costs `bootWorld` one hook at each door it uses - its frame, its draw, its lights, the held map's cards, the
+gate's clearings and the let-go. To pay for them, BOUNTY1's dungeon pack (`standDungeonPack`) moved out whole to
+`src/scenes/bountyDungeonPack.js` `standBountyDungeonPack`, its pool, the hunter's feet and the camp counter handed in
+and DFU's placement its default seam. `bootWorld` 35,299 -> 35,258 logical lines, and the ceiling at it
+(`test/scenes/hostceiling.test.js`); the three BOUNTY-LAIR mutant records re-aimed at the module. `createWorldModes`,
+`buildDungeonContext` and `bootExterior` gained a field at the kill reports they already made (the kill effect's place,
+`killFxOf`), no statement. At the merge of main, beside its PvP wiring, `bootWorld` measures 35,282 and the ceiling
+stands there.
+
+At the merges of main with FRONTS and DRAGON (05cf1838d, 50417cc24), `bootWorld` measures 35,276 and then 35,195 - DRAGON's
+moves out beside STOREFRONT's - and the ceiling stands there. The Resonant Maul's save at its mint added no binding: the
+season's host asks the checkpoint clock's own door (`onlineCheckpointClock.js` askCheckpoint).
 ## DRAGON0 - the POI editor's mount out of bootWorld (2026-10-29)
 
 The Dwarven Dragon (`11-Multiplayer/Dwarven-Dragon.md`) needs wiring in the world host - its client, its blows on the
@@ -865,3 +882,59 @@ and the day's serpent, handed to `systems/naval/etherCrossing.js` createCrossSea
 its reset and its two marks) went into the gate it belongs with (`createCrossingGate` `refused`). `bootWorld` 35,231 ->
 35,230 logical lines on the merged host, and the ceiling at it (`test/scenes/hostceiling.test.js`, its mutant re-aimed under it).
 
+
+## SHIP-BOARD - the ship's board out of bootWorld (CLEANUP, 2026-10-30)
+
+`boardOrDisembark`, one member of 81 lines with no writes, went out verbatim by `tools/hostMove.mjs` to
+`scenes/shipBoardHost.js` `createShipBoard`: fifteen names by value, `veilRefused` live, `boardOrDisembark` returned
+(the mount rig's `onShip` and `shipTransportMode` call it from closures run after construction). The host drops three
+imports. `bootWorld` 35,158 -> 35,140 logical lines, and the ceiling at it (`test/scenes/hostceiling.test.js`, its
+mutant re-aimed under it). The tool re-aimed eight records; the two pins that lift the board's text and run it hand it
+a `host` (`audit68_worldjs.test.js`, `audit_etherow.test.js` - PIN MOVED). Nine re-aimed records, all dead.
+
+## SHOT-HOOKS - the shot-mode probe surface out of bootWorld (CLEANUP, 2026-10-30)
+
+The `if (shotMode) { ... }` block that hangs the probes' doors on `window` (`__move`, `__streamIdle`, `__pixelBuild`,
+`__standing`, `__climb` and sixty-five more) declared nothing, so no name could select it. `tools/hostMove.mjs` now
+takes a statement by its first line (`--group @17386`; the tool's own fixture `anonymous-statement` and two mutants
+pin it). The block went out verbatim to `scenes/worldShotHooks.js` `createWorldShotHooks`: 58 names by value, 20 live
+(two written), nothing returned; the host drops five imports. `bootWorld` 35,140 -> 34,479 logical lines, and the
+ceiling at it (`test/scenes/hostceiling.test.js`, its mutant re-aimed under it). The tool re-aimed six records and one
+doc anchor; three pins read the probes through `hostText` and the live `host.` names (`fixc_firstStart.test.js`,
+`auditclimb1.test.js`, `terrainworker.test.js` - PIN MOVED).
+
+The late probes went the same way: five statements that start at the boot's end (`installShotProbes`, the castle's,
+`__magic`, the travel and spellbook surface, `__readyRanged`) to `scenes/worldShotProbes.js`
+`createWorldShotProbes`: sixteen names by value, four live (`_travelMap` written). `bootWorld` 34,479 -> 34,366
+logical lines, the ceiling at it. The tool now refuses a line two statements start on. Two cites in code comments
+(`ambientEffects.js`, `travelControlUI.js`) and `spellbookwindow.test.js` read the new module (PIN MOVED).
+
+The whole suite found what the moves' own tests had not: the online and realm-saves probes inject their seams into
+the host's scope beside `__quickSave`, which left with the late probes, so their needle is now the construction that
+stands where the block stood (`onlineFrameProbe.mjs`, `realmSavesProbe.mjs`, in `if (shotMode)`); the clock census
+row for the exhibition's hour follows its line (`time1_census.json`); `hc1_horsecart.test.js` reads the ship's landing
+through `hostText`; and the board's cut comment keeps the measured sentence `tr4_ship.test.js` quotes.
+
+## PROFESSIONS - the professions' wiring out of bootWorld (CLEANUP, 2026-10-30)
+
+The `if (profBook) { ... }` block - the gathering host, its kinds, the bodies, the stations, the HUD's pieces - went out
+verbatim by `tools/hostMove.mjs` (`--group @11147`) to `scenes/professionsHost.js` `createProfessionsHost`: 35 names by
+value, 22 live (three written), nothing returned; the host drops 59 imports. `bootWorld` 34,356 -> 33,878 logical lines
+on the merged host, and the ceiling at it (`test/scenes/hostceiling.test.js`, its mutant re-aimed under it). The tool
+re-aimed 63 records and seven doc anchors, and now writes a setter's parameter as `value` (LEGIBLE 5).
+
+52 pins went red. 37 files read the host through `hostText` now; the regexes over the moved lines name the live reads
+as the module makes them (`host.modes`, `host.modeNow()`); the three that lift and run the code hand it a `host`
+(`fb1001_mining.test.js`, `fb1002_herbcursor_audit.test.js`, `auditdisenchant_host.test.js`); `nodemarks.test.js`
+reads the split import line in two; `l10n4_hardcoded.test.js` carries the 35 English lines with the code (world.js
+315 -> 280). All PIN MOVED (HOST-SPLIT PROFESSIONS).
+
+## TEST-PRESET - the test room's boot and the wizard's door out of bootWorld (CLEANUP, 2026-10-30)
+
+The `if (testPreset) { ... } else if ...` chain - the test room's character, its loot and its ride, and the classic
+start's wizard - went out verbatim (`--group @6709 --handle boot`: the block already names a `host`) to
+`scenes/testPresetHost.js` `createTestPreset`: fifteen names by value, four live (three written). `bootWorld` 33,878 ->
+33,789 logical lines, and the ceiling at it. Six records and one doc anchor re-aimed by the tool, three code-comment
+cites by hand (`playerEntity.js`, `exterior.js`, `chargenSession.js`); the moved comment cut to eight lines. Twelve red
+pins: ten files read the host through `hostText`, two regexes name `boot.` reads, and the English map carries its
+three lines. Seven records, all dead.

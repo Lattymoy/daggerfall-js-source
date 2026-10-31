@@ -12,8 +12,8 @@
   {
     "name": "AUDIT31-law-kit-auctionable",
     "file": "src/net/marketLaw.js",
-    "old": "&& takesQuality(/** @type {any} */ (recipeById(recipeId)));",
-    "new": "&& !!recipeById(recipeId);",
+    "old": "  quality === MASTERWORK && pieceListable(recipeId) && takesQuality(/** @type {any} */ (recipeById(recipeId)));",
+    "new": "  quality === MASTERWORK && pieceListable(recipeId) && !!recipeById(recipeId);",
     "tests": [
       "test/net/audit31_law.test.js"
     ]
@@ -31,8 +31,8 @@
   {
     "name": "AUDIT31-law-writmay-proto",
     "file": "src/net/writLaw.js",
-    "old": "(Object.hasOwn(WRIT_POWERS, power) ? WRIT_POWERS[power] : [])",
-    "new": "(WRIT_POWERS[power] ?? [])",
+    "old": "export const writMay = (rank, power) => (Object.hasOwn(WRIT_POWERS, power) ? WRIT_POWERS[power] : []).includes(rank);",
+    "new": "export const writMay = (rank, power) => (WRIT_POWERS[power] ?? []).includes(rank);",
     "tests": [
       "test/net/audit31_law.test.js"
     ]
@@ -40,8 +40,8 @@
   {
     "name": "AUDIT31-law-member-takes-more",
     "file": "src/net/writLaw.js",
-    "old": "&& units <= ownDeposit);",
-    "new": "&& units <= ownDeposit + 1);",
+    "old": "  (Number.isSafeInteger(rank) && Number.isSafeInteger(ownDeposit) && units <= ownDeposit);",
+    "new": "  (Number.isSafeInteger(rank) && Number.isSafeInteger(ownDeposit) && units <= ownDeposit + 1);",
     "tests": [
       "test/net/audit31_law.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "AUDIT31-law-wear-rounds-whole",
     "file": "src/net/marketLaw.js",
-    "old": "  if (cur >= max) return WEAR_WHOLE;\n  return Math.max(1, Math.min(WEAR_WHOLE - 1,",
-    "new": "  return Math.max(1, Math.min(WEAR_WHOLE,",
+    "old": "  if (cur >= max) return WEAR_WHOLE;\n  return Math.max(1, Math.min(WEAR_WHOLE - 1, Math.round((cur * WEAR_WHOLE) / max)));",
+    "new": "  return Math.max(1, Math.min(WEAR_WHOLE, Math.round((cur * WEAR_WHOLE) / max)));",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -170,7 +170,7 @@
   {
     "name": "AUDIT31-svc-member-takes-early",
     "file": "server-account/src/writs.js",
-    "old": "  if (kind === 'withdraw' && !guildTakeMay(rank, units, await ownDeposit(db, g, key, me, character))) return { error: 'guild-stores-mine' };",
+    "old": "  if (kind === 'withdraw' && !guildTakeMay(rank, units, await ownDeposit(db, g, key, me, character)))\n    return { error: 'guild-stores-mine' };",
     "new": "  if (kind === 'withdraw' && rank > 1 && false) return { error: 'guild-stores-mine' };",
     "tests": [
       "test/net/audit31_service.test.js",
@@ -180,8 +180,8 @@
   {
     "name": "AUDIT31-svc-member-takes-decision",
     "file": "server-account/src/writs.js",
-    "old": "        AND (?9 IN (${TAKERS_SQL})\n          OR COALESCE(",
-    "new": "        AND (?9 = ?9\n          OR COALESCE(",
+    "old": "        AND (?9 IN (${TAKERS_SQL})",
+    "new": "        AND (?9 = ?9",
     "tests": [
       "test/net/audit31_service.test.js"
     ]
@@ -189,8 +189,8 @@
   {
     "name": "AUDIT31-svc-writ-room",
     "file": "server-account/src/writs.js",
-    "old": "        AND (?19 IS NOT NULL OR ${guildHeldSql('?4', '?8')} + ${reservedSql('?4', '?8', '?12')} + ?9 <= ?18)",
-    "new": "        AND (?19 IS NOT NULL OR (?18 = ?18 AND ?9 = ?9))",
+    "old": "        AND (?19 IS NOT NULL OR ${guildHeldSql('?4', '?8')} + ${reservedSql('?4', '?8', '?12')} + ?9 <= ?18)   -- SEAT2b: a seat writ fills no guild Stores",
+    "new": "        AND (?19 IS NOT NULL OR (?18 = ?18 AND ?9 = ?9))   -- SEAT2b: a seat writ fills no guild Stores",
     "tests": [
       "test/net/audit31_service.test.js"
     ]
@@ -198,8 +198,8 @@
   {
     "name": "AUDIT31-svc-writ-reserve-ignored",
     "file": "server-account/src/writs.js",
-    "old": "        AND (?19 IS NOT NULL OR ${guildHeldSql('?4', '?8')} + ${reservedSql('?4', '?8', '?12')} + ?9 <= ?18)",
-    "new": "        AND (?19 IS NOT NULL OR ${guildHeldSql('?4', '?8')} + ?9 <= ?18)",
+    "old": "        AND (?19 IS NOT NULL OR ${guildHeldSql('?4', '?8')} + ${reservedSql('?4', '?8', '?12')} + ?9 <= ?18)   -- SEAT2b: a seat writ fills no guild Stores",
+    "new": "        AND (?19 IS NOT NULL OR ${guildHeldSql('?4', '?8')} + ?9 <= ?18)   -- SEAT2b: a seat writ fills no guild Stores",
     "tests": [
       "test/net/audit31_service.test.js"
     ]
@@ -225,8 +225,8 @@
   {
     "name": "AUDIT31-svc-crafter-unsettled",
     "file": "server-account/src/writs.js",
-    "old": "WHERE (poster = ?1 OR crafter = ?1) AND state = 'open' AND expires_at <= ?2`)",
-    "new": "WHERE poster = ?1 AND state = 'open' AND expires_at <= ?2`)",
+    "old": "          `UPDATE commissions SET state = 'expired', closed_at = ?2 WHERE (poster = ?1 OR crafter = ?1) AND state = 'open' AND expires_at <= ?2`,",
+    "new": "          `UPDATE commissions SET state = 'expired', closed_at = ?2 WHERE poster = ?1 AND state = 'open' AND expires_at <= ?2`,",
     "tests": [
       "test/net/audit31_service.test.js"
     ]
@@ -234,8 +234,8 @@
   {
     "name": "AUDIT31-svc-crafter-yours-filled-only",
     "file": "server-account/src/writs.js",
-    "old": "      OR (c.crafter = ?1 AND (c.state = 'open' OR c.closed_at > ?2))",
-    "new": "      OR (c.crafter = ?1 AND (c.state = 'open' OR (c.state = 'filled' AND c.closed_at > ?2)))",
+    "old": "      OR (c.crafter = ?1 AND (c.state = 'open' OR c.closed_at > ?2))   -- AUDIT 31 L1: a week of those closed, as the poster's",
+    "new": "      OR (c.crafter = ?1 AND (c.state = 'open' OR (c.state = 'filled' AND c.closed_at > ?2)))   -- AUDIT 31 L1: a week of those closed, as the poster's",
     "tests": [
       "test/net/audit31_service.test.js"
     ]
@@ -243,7 +243,7 @@
   {
     "name": "AUDIT31-svc-unyielded-word",
     "file": "server-account/src/writs.js",
-    "old": "  if (!commissionable(recipe)) return { error: pieceListable(recipe) && commissionUnyielded(recipe) ? 'commission-unyielded' : 'commission-recipe' };",
+    "old": "  if (!commissionable(recipe))\n    return {\n      error: pieceListable(recipe) && commissionUnyielded(recipe) ? 'commission-unyielded' : 'commission-recipe',\n    };",
     "new": "  if (!commissionable(recipe)) return { error: 'commission-recipe' };",
     "tests": [
       "test/net/audit31_service.test.js"
@@ -253,8 +253,8 @@
     "name": "AUDIT31-svc-fulfil-uncollected",
     "file": "server-account/src/writs.js",
     "note": "INT19 (PIN MOVED): re-aimed by content - the fill's words for a held piece are pieceBusy's, asked before the record moves and after a refused decision",
-    "old": "  if (await db.prepare('SELECT 1 FROM market_deliveries WHERE provenance = ?1 AND collected = 0').bind(provenance).first()) return 'market-uncollected';\n",
-    "new": "",
+    "old": "  if (\n    await db.prepare('SELECT 1 FROM market_deliveries WHERE provenance = ?1 AND collected = 0').bind(provenance).first()\n  )\n    return 'market-uncollected';\n  if (await pieceComingBack(db, me, provenance)) return 'market-uncollected'; // INT19: back as its record, still to collect",
+    "new": "  if (await pieceComingBack(db, me, provenance)) return 'market-uncollected'; // INT19: back as its record, still to collect",
     "tests": [
       "test/net/audit31_service.test.js"
     ]
@@ -271,8 +271,8 @@
   {
     "name": "AUDIT31-svc-eligible-order",
     "file": "server-account/src/writs.js",
-    "old": "ORDER BY p.quality, p.provenance LIMIT",
-    "new": "ORDER BY p.quality DESC, p.provenance LIMIT",
+    "old": "    ORDER BY p.quality, p.provenance LIMIT ${WRIT_SHOWN * 4}`,",
+    "new": "    ORDER BY p.quality DESC, p.provenance LIMIT ${WRIT_SHOWN * 4}`,",
     "tests": [
       "test/net/audit31_service.test.js"
     ]
@@ -289,8 +289,8 @@
   {
     "name": "AUDIT31-svc-writs-open-said",
     "file": "server-account/src/writs.js",
-    "old": "    writsOpen: true, me: displayName(player),",
-    "new": "    writsOpen: false, me: displayName(player),",
+    "old": "    writsOpen: true,",
+    "new": "    writsOpen: false,",
     "tests": [
       "test/net/audit31_service.test.js"
     ]
@@ -298,8 +298,8 @@
   {
     "name": "AUDIT31-svc-writ-unyielded-word",
     "file": "server-account/src/writs.js",
-    "old": "material(key) && UNYIELDED.includes(key) ? 'market-unyielded' : 'bad-material'",
-    "new": "'bad-material'",
+    "old": "  if (!writMaterialOk(key))\n    return { error: material(key) && UNYIELDED.includes(key) ? 'market-unyielded' : 'bad-material' };",
+    "new": "  if (!writMaterialOk(key)) return { error: 'bad-material' };",
     "tests": [
       "test/net/prof6_service.test.js"
     ],
@@ -309,8 +309,8 @@
   {
     "name": "AUDIT31-svc-commission-elsewhere",
     "file": "server-account/src/writs.js",
-    "old": "  if (Number(c.region) !== region) return { error: 'commission-elsewhere' };",
-    "new": "  if (Number(c.region) !== region) return { error: 'writ-elsewhere' };",
+    "old": "  if (Number(c.region) !== region) return { error: 'commission-elsewhere' }; // AUDIT 31 L6: a commission's own word",
+    "new": "  if (Number(c.region) !== region) return { error: 'writ-elsewhere' }; // AUDIT 31 L6: a commission's own word",
     "tests": [
       "test/net/prof6_service.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "AUDIT31-book-no-session-market",
     "file": "src/net/marketBook.js",
-    "old": "    if (!signedIn()) return { ok: false, error: 'no-session' };\n    if (body.provenance",
-    "new": "    if (body.provenance",
+    "old": "    if (!signedIn()) return { ok: false, error: 'no-session' };\n    if (body.provenance && (keptPieces().has(body.provenance) || holds?.(body.provenance)))",
+    "new": "    if (body.provenance && (keptPieces().has(body.provenance) || holds?.(body.provenance)))",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -345,8 +345,8 @@
   {
     "name": "AUDIT31-book-no-session-writ",
     "file": "src/net/writBook.js",
-    "old": "        if (!account()) return { ok: false, error: 'no-session' };\n",
-    "new": "",
+    "old": "        if (!account()) return { ok: false, error: 'no-session' };\n        if (req?.provenance && (keptPieces().has(req.provenance) || holds?.(req.provenance)))",
+    "new": "        if (req?.provenance && (keptPieces().has(req.provenance) || holds?.(req.provenance)))",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -355,8 +355,8 @@
     "name": "AUDIT31-book-slot-reread",
     "file": "src/net/writBook.js",
     "note": "INT19 (PIN MOVED): re-aimed by content - a fill goes through the realm act and keeps nothing; the slot law is the kept fills' (a tab's from before), each read in its own character alone",
-    "old": "  const keptOf = (key = slot()) => { const k = table()[key]; return Array.isArray(k?.fulfils) ? k.fulfils : []; };",
-    "new": "  const keptOf = (key = slot()) => { const k = Object.values(table())[0]; return Array.isArray(k?.fulfils) ? k.fulfils : []; };",
+    "old": "    const k = table()[key];",
+    "new": "    const k = Object.values(table())[0];",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -364,8 +364,8 @@
   {
     "name": "AUDIT31-book-id-unslotted-writ",
     "file": "src/net/writBook.js",
-    "old": "    const k = `${slot()}|${key}`;",
-    "new": "    const k = key;",
+    "old": "      const k = `${slot()}|${key}`;",
+    "new": "      const k = key;",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -382,8 +382,8 @@
   {
     "name": "AUDIT31-book-market-untold",
     "file": "src/net/writBook.js",
-    "old": "      try { market?.told?.(d.balance); } catch { /* the market book's own */ }\n",
-    "new": "",
+    "old": "      try {\n        market?.told?.(d.balance);\n      } catch {\n        /* the market book's own */\n      }\n    }",
+    "new": "    }",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "AUDIT31-book-market-unforgotten",
     "file": "src/net/writBook.js",
-    "old": "    if (r?.ok && MOVES_MARKS.includes(key.split('|')[0])) { try { market?.forget?.(); }",
-    "new": "    if (false) { try { market?.forget?.(); }",
+    "old": "      if (r?.ok && MOVES_MARKS.includes(key.split('|')[0])) {",
+    "new": "      if (false) {",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -418,8 +418,8 @@
   {
     "name": "AUDIT31-book-moved-leading",
     "file": "src/net/marketBook.js",
-    "old": "'auction-low', 'auction-leading', 'auction-bid-standing',",
-    "new": "'auction-low', 'auction-bid-standing',",
+    "old": "  'auction-leading',\n  'auction-bid-standing',",
+    "new": "  'auction-bid-standing',",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -445,8 +445,8 @@
   {
     "name": "AUDIT31-book-holds-market",
     "file": "src/net/marketBook.js",
-    "old": "    if (body.provenance && (keptPieces().has(body.provenance) || holds?.(body.provenance))) return",
-    "new": "    if (body.provenance && keptPieces().has(body.provenance)) return",
+    "old": "    if (body.provenance && (keptPieces().has(body.provenance) || holds?.(body.provenance)))\n      return { ok: false, error: PIECE_KEPT_ERROR };",
+    "new": "    if (body.provenance && keptPieces().has(body.provenance)) return { ok: false, error: PIECE_KEPT_ERROR };",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -454,8 +454,8 @@
   {
     "name": "AUDIT31-book-holds-writ",
     "file": "src/net/writBook.js",
-    "old": "        if (req?.provenance && (keptPieces().has(req.provenance) || holds?.(req.provenance))) return",
-    "new": "        if (req?.provenance && keptPieces().has(req.provenance)) return",
+    "old": "        if (req?.provenance && (keptPieces().has(req.provenance) || holds?.(req.provenance)))\n          return { ok: false, error: PIECE_KEPT_ERROR };",
+    "new": "        if (req?.provenance && keptPieces().has(req.provenance)) return { ok: false, error: PIECE_KEPT_ERROR };",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -464,8 +464,8 @@
     "name": "AUDIT31-book-gone-put-back",
     "file": "src/net/marketBook.js",
     "note": "INT19 (PIN MOVED): re-aimed by content - a piece the service says is elsewhere is never put back by the realm act's undo (realmPieceAct)",
-    "old": "if (PIECE_GONE.includes(a?.error)) gone = true;",
-    "new": "if (false) gone = true;",
+    "old": "        if (PIECE_GONE.includes(a?.error)) gone = true;",
+    "new": "        if (false) gone = true;",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "AUDIT31-book-gone-settle-market",
     "file": "src/net/marketBook.js",
-    "old": "            if (PIECE_GONE.includes(r?.error)) { try { drop?.(l.item, l.where); }",
-    "new": "            if (false) { try { drop?.(l.item, l.where); }",
+    "old": "              if (PIECE_GONE.includes(r?.error)) {",
+    "new": "              if (false) {",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -482,8 +482,8 @@
   {
     "name": "AUDIT31-book-gone-settle-writ",
     "file": "src/net/writBook.js",
-    "old": "            if (PIECE_GONE.includes(r?.error)) { try { drop?.(f.item, f.where); }",
-    "new": "            if (false) { try { drop?.(f.item, f.where); }",
+    "old": "              if (PIECE_GONE.includes(r?.error)) {",
+    "new": "              if (false) {",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -520,8 +520,8 @@
   {
     "name": "AUDIT31-host-recipe-unstamped",
     "file": "src/systems/smithItems.js",
-    "old": "  item.recipe = r.id;   // AUDIT 31 H3: an Ebony and a Warforged piece mint the same template and material\n",
-    "new": "",
+    "old": "  item.recipe = r.id; // AUDIT 31 H3: an Ebony and a Warforged piece mint the same template and material\n  item.provenance = provenance;",
+    "new": "  item.provenance = provenance;",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -529,8 +529,8 @@
   {
     "name": "AUDIT31-host-recipe-unread",
     "file": "src/systems/smithItems.js",
-    "old": "  if (typeof item?.recipe === 'string') return item.recipe === recipeId;",
-    "new": "",
+    "old": "  if (typeof item?.recipe === 'string') return item.recipe === recipeId; // AUDIT 31 H3: its own record's, where it keeps one",
+    "new": "  // AUDIT 31 H3: its own record's, where it keeps one",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -538,8 +538,8 @@
   {
     "name": "AUDIT31-tab-focus-lost",
     "file": "src/ui/noticeWindow.js",
-    "old": "    giveBack(kept);\n  }",
-    "new": "    void kept;\n  }",
+    "old": "    giveBack(kept);",
+    "new": "    void kept;",
     "tests": [
       "test/ui/audit31_tabs.test.js"
     ]
@@ -547,8 +547,8 @@
   {
     "name": "AUDIT31-tab-scroll-lost",
     "file": "src/ui/noticeWindow.js",
-    "old": "    if (b && k.top && k.where === `${tab}|${view}`) b.scrollTop = k.top;\n",
-    "new": "",
+    "old": "    if (b && k.top && k.where === `${tab}|${view}`) b.scrollTop = k.top;\n    if (!k.key) return;",
+    "new": "    if (!k.key) return;",
     "tests": [
       "test/ui/audit31_tabs.test.js"
     ]
@@ -557,7 +557,7 @@
     "name": "AUDIT31-tab-two-grids",
     "file": "src/ui/noticeWindow.js",
     "old": "      grid.replaceChildren(...sifted.rows.map((e) => e.card()), ...gridWords());",
-    "new": "      const g2 = el('ul', 'notice-grid'); grid.replaceChildren(...sifted.rows.filter((e) => e.kind === 'court' || e.kind === 'chapter').map((e) => e.card()), ...gridWords()); g2.replaceChildren(...sifted.rows.filter((e) => e.kind !== 'court' && e.kind !== 'chapter').map((e) => e.card())); if (g2.children.length) body.append(g2);",
+    "new": "      const g2 = el('ul', 'notice-grid');\n      grid.replaceChildren(\n        ...sifted.rows.filter((e) => e.kind === 'court' || e.kind === 'chapter').map((e) => e.card()),\n        ...gridWords(),\n      );\n      g2.replaceChildren(...sifted.rows.filter((e) => e.kind !== 'court' && e.kind !== 'chapter').map((e) => e.card()));\n      if (g2.children.length) body.append(g2);",
     "tests": [
       "test/ui/audit31_tabs.test.js"
     ]
@@ -574,8 +574,8 @@
   {
     "name": "AUDIT31-tab-note-button-shut",
     "file": "src/ui/noticeWindow.js",
-    "old": "      else if (n.button === 'commission' && !commissionsOpen()) { b.disabled = true;",
-    "new": "      else if (false) { b.disabled = true;",
+    "old": "      else if (n.button === 'commission' && !commissionsOpen()) {",
+    "new": "      else if (false) {",
     "tests": [
       "test/ui/audit31_tabs.test.js"
     ]
@@ -674,8 +674,8 @@
   {
     "name": "AUDIT31-tab-escape-window",
     "file": "src/ui/noticeWindow.js",
-    "old": "    if (tab === 'work' && workMore?.closeForm()) { render(); return; }   // AUDIT 31 U12: Escape closes an open form first\n",
-    "new": "",
+    "old": "    if (tab === 'work' && workMore?.closeForm()) {\n      render();\n      return;\n    } // AUDIT 31 U12: Escape closes an open form first\n    if (tab === 'work' || tab === 'market' || tab === 'seat' || tab === 'vendors' || view === 'board') exit();",
+    "new": "    if (tab === 'work' || tab === 'market' || tab === 'seat' || tab === 'vendors' || view === 'board') exit();",
     "tests": [
       "test/ui/audit31_tabs.test.js"
     ]
@@ -728,8 +728,8 @@
   {
     "name": "AUDIT31-tab-empty-filter",
     "file": "src/ui/marketTab.js",
-    "old": "st.family || marketQueryOf(st.find) ? 'No Masterwork of that kind is up for auction.' :",
-    "new": "false ? 'No Masterwork of that kind is up for auction.' :",
+    "old": "            st.family || marketQueryOf(st.find)\n              ? 'No Masterwork of that kind is up for auction.'\n              : 'No Masterwork is up for auction.',",
+    "new": "            false ? 'No Masterwork of that kind is up for auction.' : 'No Masterwork is up for auction.',",
     "tests": [
       "test/ui/audit31_tabs.test.js"
     ]
@@ -737,8 +737,8 @@
   {
     "name": "AUDIT31-tab-hint-add-late",
     "file": "src/ui/marketTab.js",
-    "old": "adds ${AUCTION_ADD_S / 60} minutes. You get the top bid",
-    "new": "adds ${AUCTION_LATE_S / 60} minutes. You get the top bid",
+    "old": "                ? `Fee ${marksText(fee)}, kept if you cancel (only before the first bid). Runs ${AUCTION_S / 3600} hours on every board; each bid beats the last by ${AUCTION_RAISE_PCT}%, and a bid in the last ${AUCTION_LATE_S / 60} minutes adds ${AUCTION_ADD_S / 60} minutes. You get the top bid, less ${less}${pct == null ? ' and any Tithe' : ''}.`",
+    "new": "                ? `Fee ${marksText(fee)}, kept if you cancel (only before the first bid). Runs ${AUCTION_S / 3600} hours on every board; each bid beats the last by ${AUCTION_RAISE_PCT}%, and a bid in the last ${AUCTION_LATE_S / 60} minutes adds ${AUCTION_LATE_S / 60} minutes. You get the top bid, less ${less}${pct == null ? ' and any Tithe' : ''}.`",
     "tests": [
       "test/net/prof5b_client.test.js"
     ],
@@ -757,8 +757,8 @@
   {
     "name": "AUDIT31-guild-look-cached",
     "file": "src/ui/socialPanel.js",
-    "old": "  const lookAtGuild = () => { guildUi.storesAsked = false; guildUi.vaultAsked = false; if (guild?.stale?.()) guild.refresh(); };",
-    "new": "  const lookAtGuild = () => { guildUi.vaultAsked = false; if (guild?.stale?.()) guild.refresh(); };",
+    "old": "  const lookAtGuild = () => { guildUi.storesAsked = false; guildUi.vaultAsked = false; guildUi.shopAsked = false; if (guild?.stale?.()) guild.refresh(); };",
+    "new": "  const lookAtGuild = () => { guildUi.vaultAsked = false; guildUi.shopAsked = false; if (guild?.stale?.()) guild.refresh(); };",
     "tests": [
       "test/net/audit31_client.test.js"
     ],

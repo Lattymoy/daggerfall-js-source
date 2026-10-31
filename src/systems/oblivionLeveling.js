@@ -62,8 +62,8 @@
 
 import { modSetting } from './modSettings.js';
 import { STAT_KEYS_ORDER, hitPointsPerLevelUp } from './chargen.js';
-import { refreshOnlineLayer } from './renownLayer.js';   // LEVEL-EVEN (systems/levelEven.js)
-import { atLevelCap, releaseCapLatch } from './levelCap.js';   // LEVEL-45: the level stops at 45 on this lane too
+import { refreshOnlineLayer } from './renownLayer.js'; // LEVEL-EVEN (systems/levelEven.js)
+import { atLevelCap, releaseCapLatch } from './levelCap.js'; // LEVEL-45: the level stops at 45 on this lane too
 
 /** The vendor key - the registry row, the Mods pane and the store. */
 export const ORL_VENDOR = 'oblivion-remaster-leveling';
@@ -241,7 +241,10 @@ export function checkForVirtueLevelUp(entity) {
   // still full afterwards, so the level it owes is offered on the next pass.
   // (ORL1's fix review.)
   if (entity.oghmaLevelUp) return false;
-  if (atLevelCap(entity)) { releaseCapLatch(entity); return false; }   // LEVEL-45 (systems/levelCap.js): the bar fills and holds, no level owed - one latched before it let go
+  if (atLevelCap(entity)) {
+    releaseCapLatch(entity);
+    return false;
+  } // LEVEL-45 (systems/levelCap.js): the bar fills and holds, no level owed - one latched before it let go
   if ((entity.levelProgress ?? 0) < LEVELUP_TOTAL) return false;
   entity.readyToLevelUp = true;
   entity.pendingLevel = entity.level + 1;
@@ -268,14 +271,14 @@ export function rollOverLevelProgress(entity) {
  *  COSTS. Luck costs more, and only while the mod is allowed to raise
  *  it by more than one. */
 export function attributeOffset(attrKey, s) {
-  return (attrKey === LUCK && s.allowLuckIncrease) ? s.luckIncreaseCost : 1;
+  return attrKey === LUCK && s.allowLuckIncrease ? s.luckIncreaseCost : 1;
 }
 
 /** player.lua:63-69 getAttributeIncreaseLimit - how far one attribute
  *  may move in one level. Luck is pinned to +1 when the mod is not
  *  allowed to raise it. */
 export function attributeIncreaseLimit(attrKey, s) {
-  return (attrKey === LUCK && !s.allowLuckIncrease) ? 1 : ATTRIBUTE_INCREASE_LIMIT;
+  return attrKey === LUCK && !s.allowLuckIncrease ? 1 : ATTRIBUTE_INCREASE_LIMIT;
 }
 
 /** What this one attribute could absorb, in PURSE POINTS - the inner
@@ -381,7 +384,7 @@ export function virtueSpendPlan(stats, s, budget, deltas = null) {
       k,
       off: attributeOffset(k, s),
       room: Math.max(0, Math.min(attributeIncreaseLimit(k, s) - taken, headroom)),
-      slot: taken > 0 ? 0 : 1,   // an already-open row costs no new slot
+      slot: taken > 0 ? 0 : 1, // an already-open row costs no new slot
     };
   });
   const open = rows.reduce((n, r) => n + (r.slot === 0 ? 1 : 0), 0);
@@ -421,18 +424,25 @@ export function virtueSpendPlan(stats, s, budget, deltas = null) {
   best[0][0] = 0;
   const trail = [];
   for (const row of rows) {
-    const nb = mk(), nt = mk();
+    const nb = mk(),
+      nt = mk();
     for (let n = 0; n <= slots; n++) {
       for (let c = 0; c <= B; c++) {
         const have = best[n][c];
         if (have < 0) continue;
-        if (have > nb[n][c]) { nb[n][c] = have; nt[n][c] = 0; }   // leave this row alone
+        if (have > nb[n][c]) {
+          nb[n][c] = have;
+          nt[n][c] = 0;
+        } // leave this row alone
         const n2 = n + row.slot;
         if (n2 > slots) continue;
         for (let d = 1; d <= row.room; d++) {
           const cc = c + d * row.off;
           if (cc > B) break;
-          if (have + d > nb[n2][cc]) { nb[n2][cc] = have + d; nt[n2][cc] = d; }
+          if (have + d > nb[n2][cc]) {
+            nb[n2][cc] = have + d;
+            nt[n2][cc] = d;
+          }
         }
       }
     }
@@ -442,18 +452,33 @@ export function virtueSpendPlan(stats, s, budget, deltas = null) {
 
   // The purse is the largest cost anything reaches; among the row counts
   // that reach it, the one that buys the most points.
-  let cost = 0, usedSlots = 0;
+  let cost = 0,
+    usedSlots = 0;
   for (let c = B; c >= 0; c--) {
-    let n = -1, pts = -1;
-    for (let i = 0; i <= slots; i++) if (best[i][c] > pts) { pts = best[i][c]; n = i; }
-    if (n >= 0 && pts >= 0) { cost = c; usedSlots = n; break; }
+    let n = -1,
+      pts = -1;
+    for (let i = 0; i <= slots; i++)
+      if (best[i][c] > pts) {
+        pts = best[i][c];
+        n = i;
+      }
+    if (n >= 0 && pts >= 0) {
+      cost = c;
+      usedSlots = n;
+      break;
+    }
   }
 
   const plan = Object.fromEntries(STAT_KEYS_ORDER.map((k) => [k, 0]));
-  let c = cost, n = usedSlots;
+  let c = cost,
+    n = usedSlots;
   for (let i = rows.length - 1; i >= 0; i--) {
     const d = trail[i][n][c];
-    if (d > 0) { plan[rows[i].k] = d; c -= d * rows[i].off; n -= rows[i].slot; }
+    if (d > 0) {
+      plan[rows[i].k] = d;
+      c -= d * rows[i].off;
+      n -= rows[i].slot;
+    }
   }
   return { cost, plan };
 }
@@ -510,20 +535,25 @@ export function canLowerAttribute(attrKey, deltas) {
 export function commitVirtueLevelUp(entity, deltas, purse, s, rolls = Math.random) {
   if (!entity.readyToLevelUp) return false;
   // LEVEL-45 (systems/levelCap.js): a level latched before the cap is no level at the cap
-  if (atLevelCap(entity)) { entity.readyToLevelUp = false; entity.pendingLevel = null; return false; }
+  if (atLevelCap(entity)) {
+    entity.readyToLevelUp = false;
+    entity.pendingLevel = null;
+    return false;
+  }
   if (purse !== 0) return false;
   // Daggerfall's hit-points-per-level, not Morrowind's
   // Endurance * fLevelUpHealthEndMult - the header's point 2 - and so
   // in Daggerfall's position, BEFORE the attributes land, reading the
   // endurance the character came in with.
-  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter
+  entity.maxHealth =
+    (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls); // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter
   entity.health = Math.min(entity.health, entity.maxHealth);
   for (const key of STAT_KEYS_ORDER) {
     const d = deltas[key] ?? 0;
     if (d > 0) entity.stats[key] = entity.stats[key] + d;
   }
   entity.level += 1;
-  refreshOnlineLayer(entity, { keepHealth: true });   // LEVEL-EVEN: the online health floor over the new level and maximum (AUDIT LEVEL-EVEN L2-1: health as it stands)
+  refreshOnlineLayer(entity, { keepHealth: true }); // LEVEL-EVEN: the online health floor over the new level and maximum (AUDIT LEVEL-EVEN L2-1: health as it stands)
   rollOverLevelProgress(entity);
   entity.readyToLevelUp = false;
   entity.pendingLevel = null;

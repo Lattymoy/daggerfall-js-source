@@ -35,15 +35,31 @@ const table = parseRscCsv(readFileSync(join(ROOT, 'vendor/dfu-text/Internal_RSC.
 const file = new TextRsc().load(new Uint8Array(readFileSync(join(ARENA2, 'TEXT.RSC'))), { table: null });
 
 const norm = (vs) => vs.map((v) => v.replace(/[ \n]+$/g, '').replace(/^[ \n]+/g, ''));
-const only = process.argv.slice(2).map(Number).filter((n) => Number.isFinite(n));
-const ids = only.length ? only : [...new Set([...table.keys(), ...[...Array(20000).keys()].filter((i) => file.hasRecord(i))])].sort((a, b) => a - b);
+const only = process.argv
+  .slice(2)
+  .map(Number)
+  .filter((n) => Number.isFinite(n));
+const ids = only.length
+  ? only
+  : [...new Set([...table.keys(), ...[...Array(20000).keys()].filter((i) => file.hasRecord(i))])].sort((a, b) => a - b);
 
-let differ = 0, missingInFile = 0, missingInTable = 0, carried = 0;
+let differ = 0,
+  missingInFile = 0,
+  missingInTable = 0,
+  carried = 0;
 for (const id of ids) {
   const t = table.has(id) ? norm(parseRscMarkup(table.get(id))) : null;
   const f = file.hasRecord(id) ? norm(file.plainText(id)) : null;
-  if (!t) { missingInTable++; if (only.length) console.log(`${id}: not in the table`); continue; }
-  if (!f) { missingInFile++; if (only.length) console.log(`${id}: not in TEXT.RSC`); continue; }
+  if (!t) {
+    missingInTable++;
+    if (only.length) console.log(`${id}: not in the table`);
+    continue;
+  }
+  if (!f) {
+    missingInFile++;
+    if (only.length) console.log(`${id}: not in TEXT.RSC`);
+    continue;
+  }
   const same = t.length === f.length && t.every((v, i) => v === f[i]);
   if (same && !only.length) continue;
   differ += same ? 0 : 1;
@@ -59,5 +75,7 @@ for (const id of ids) {
     }
   }
 }
-console.log(`${differ} record(s) differ (${carried} carried), ${missingInFile} only in the table, ${missingInTable} only in TEXT.RSC`);
+console.log(
+  `${differ} record(s) differ (${carried} carried), ${missingInFile} only in the table, ${missingInTable} only in TEXT.RSC`,
+);
 process.exit(differ > carried ? 1 : 0);

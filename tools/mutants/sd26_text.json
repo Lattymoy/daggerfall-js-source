@@ -38,8 +38,8 @@
   {
     "name": "SD26-T2-a-cut-line-lost",
     "file": "src/scenes/superDungeon/sdVoice.js",
-    "old": "        if (standing && r < standing.rank && (k === null || standing.key !== k)) back(standing, t);\n",
-    "new": "",
+    "old": "        if (standing && r < standing.rank && (k === null || standing.key !== k)) back(standing, t);\n        put(text, r, t, k);",
+    "new": "        put(text, r, t, k);",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SD26-T2-a-line-nearly-read-again",
     "file": "src/scenes/superDungeon/sdVoice.js",
-    "old": "    if (w.until - t < SD_VOICE_READ_MS || waiting.some",
-    "new": "    if (waiting.some",
+    "old": "    if (w.until - t < SD_VOICE_READ_MS || waiting.some((x) => x.text === w.text)) return;",
+    "new": "    if (waiting.some((x) => x.text === w.text)) return;",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SD26-T2-the-threads-word-back",
     "file": "src/scenes/superDungeon/sdVoice.js",
-    "old": "if (standing && r < standing.rank && (k === null || standing.key !== k)) back(standing, t);",
-    "new": "if (standing && r < standing.rank) back(standing, t);",
+    "old": "        if (standing && r < standing.rank && (k === null || standing.key !== k)) back(standing, t);",
+    "new": "        if (standing && r < standing.rank) back(standing, t);",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD26-T3-the-window-unread",
     "file": "src/scenes/superDungeon/sdVoice.js",
-    "old": "    if (covered()) { coveredAt ??= t; return; }",
-    "new": "    if (false) { coveredAt ??= t; return; }",
+    "old": "    if (covered()) {",
+    "new": "    if (false) {",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SD26-T3-the-standing-clock-run-on",
     "file": "src/scenes/superDungeon/sdVoice.js",
-    "old": "      if (standing) standing.until += t - coveredAt;\n",
-    "new": "",
+    "old": "      if (standing) standing.until += t - coveredAt;\n      for (const w of waiting) if (w.rank !== SD_VOICE_RANK.readout) w.at += t - Math.max(coveredAt, w.at);",
+    "new": "      for (const w of waiting) if (w.rank !== SD_VOICE_RANK.readout) w.at += t - Math.max(coveredAt, w.at);",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SD26-T3-the-turns-waits-aged",
     "file": "src/scenes/superDungeon/sdVoice.js",
-    "old": "      for (const w of waiting) if (w.rank !== SD_VOICE_RANK.readout) w.at += t - Math.max(coveredAt, w.at);\n",
-    "new": "",
+    "old": "      for (const w of waiting) if (w.rank !== SD_VOICE_RANK.readout) w.at += t - Math.max(coveredAt, w.at);\n      coveredAt = null;",
+    "new": "      coveredAt = null;",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SD26-T3-a-readout-kept-past-its-moment",
     "file": "src/scenes/superDungeon/sdVoice.js",
-    "old": "      for (const w of waiting) if (w.rank !== SD_VOICE_RANK.readout) w.at +=",
-    "new": "      for (const w of waiting) if (true) w.at +=",
+    "old": "      for (const w of waiting) if (w.rank !== SD_VOICE_RANK.readout) w.at += t - Math.max(coveredAt, w.at);",
+    "new": "      for (const w of waiting) if (true) w.at += t - Math.max(coveredAt, w.at);",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SD26-T3-the-turn-under-it-queued",
     "file": "src/scenes/superDungeon/sdVoice.js",
-    "old": "      if (standing && waiting.length && waiting[0].rank < standing.rank) { back(standing, t); standing = null; }",
-    "new": "      void 0;",
+    "old": "      if (standing && waiting.length && waiting[0].rank < standing.rank) {\n        back(standing, t);\n        standing = null;\n      } // said under it, more urgent",
+    "new": "      void 0; // said under it, more urgent",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SD26-T3-a-line-written-under-it",
     "file": "src/scenes/superDungeon/sdVoice.js",
-    "old": "      if (coveredAt === null && (!standing ||",
-    "new": "      if ((!standing ||",
+    "old": "      if (coveredAt === null && (!standing || r < standing.rank || (k !== null && standing.key === k))) {",
+    "new": "      if (!standing || r < standing.rank || (k !== null && standing.key === k)) {",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "SD26-T4-the-line-under-the-card",
     "file": "src/ui/gate/gateMarksView.js",
-    "old": "body:has(.wb-marks-card:not([style*=\"display: none\"])) .hudmid { z-index: 32; }\n",
-    "new": "",
+    "old": "body:has(.wb-marks-card:not([style*=\"display: none\"])) .hudmid { z-index: 32; }\n/* WB13c: beside the party's frames where the screen holds both, never over them */",
+    "new": "/* WB13c: beside the party's frames where the screen holds both, never over them */",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "SD26-T4-the-line-under-the-chart",
     "file": "src/ui/gate/gateDamageChart.js",
-    "old": "body:has(.wb-dmg-chart:not([style*=\"display: none\"])) .hudmid { z-index: 32; }\n",
-    "new": "",
+    "old": "body:has(.wb-dmg-chart:not([style*=\"display: none\"])) .hudmid { z-index: 32; }\n.wb-dmg-title { font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: #ff8a4a; text-align: center; }",
+    "new": ".wb-dmg-title { font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: #ff8a4a; text-align: center; }",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "SD26-T6-the-hour-on-dagons-plate",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "background: rgba(60,42,8,0.9); animation-name: wb-brass-plate; }",
-    "new": "background: rgba(60,42,8,0.9); }",
+    "old": ".wb-boss-bar.brass .wb-boss-callout.dagon .wb-boss-callout-text { color: inherit; background: rgba(60,42,8,0.9); animation-name: wb-brass-plate; }",
+    "new": ".wb-boss-bar.brass .wb-boss-callout.dagon .wb-boss-callout-text { color: inherit; background: rgba(60,42,8,0.9); }",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "SD26-T6-the-call-in-the-gates-cream",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": ".wb-boss-bar.brass .wb-boss-callout.dagon .wb-boss-callout-text { color: inherit; ",
-    "new": ".wb-boss-bar.brass .wb-boss-callout.dagon .wb-boss-callout-text { ",
+    "old": ".wb-boss-bar.brass .wb-boss-callout.dagon .wb-boss-callout-text { color: inherit; background: rgba(60,42,8,0.9); animation-name: wb-brass-plate; }",
+    "new": ".wb-boss-bar.brass .wb-boss-callout.dagon .wb-boss-callout-text { background: rgba(60,42,8,0.9); animation-name: wb-brass-plate; }",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "SD26-T6-the-omens-the-gates-orange",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "m.color : theme === 'brass' ? '#e8c060' : '#ffb27a';",
-    "new": "m.color : '#ffb27a';",
+    "old": "  c.icon.style.color = m.kind === 'aspect' ? m.color : theme === 'brass' ? '#e8c060' : '#ffb27a'; // AUDIT SD IV (T6): the omens' signs in the Hour's brass, as its card's (gateMarksView.js writeRow)",
+    "new": "  c.icon.style.color = m.kind === 'aspect' ? m.color : '#ffb27a'; // AUDIT SD IV (T6): the omens' signs in the Hour's brass, as its card's (gateMarksView.js writeRow)",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "SD26-T6-the-look-unread-by-the-row",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "if (marksKey !== shown.marks || theme !== shown.marksTheme) {",
-    "new": "if (marksKey !== shown.marks) {",
+    "old": "  if (marksKey !== shown.marks || theme !== shown.marksTheme) {",
+    "new": "  if (marksKey !== shown.marks) {",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SD26-T6-the-last-minute-the-gates-red",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": ".wb-boss-bar.brass .wb-boss-wrath.near { color: #fff6dc; background: rgba(130,96,20,0.85); animation-name: wb-brass-near; }\n",
-    "new": "",
+    "old": ".wb-boss-bar.brass .wb-boss-wrath.near { color: #fff6dc; background: rgba(130,96,20,0.85); animation-name: wb-brass-near; }\n/* SERPENT1: the sea serpent's bar - the same readout in the sea's colours (its model's \\`theme\\`, ui/serpentBar.js) */",
+    "new": "/* SERPENT1: the sea serpent's bar - the same readout in the sea's colours (its model's \\`theme\\`, ui/serpentBar.js) */",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -264,8 +264,8 @@
     "name": "SD26-T7-the-hour-before-the-find",
     "file": "src/scenes/superDungeon/sdHost.js",
     "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
-    "old": "    sayOwed(t);\n    // SD19: A FOUND HOLLOW'S LAST HOUR, said to the realm once (its place known - or the world offering none: the region's name)\n    if (phase === 'found' && rec && hourSaidS !== rec.s && Number.isFinite(rec.until) && rec.until > t && rec.until - t <= SD_HOUR_LEFT_MS) {\n      const hh = hollowOf(rec);\n      if (hh || (memo && memo.s === rec.s && memo.none)) { hourSaidS = rec.s; say(sdHourLine({ name: hh?.loc?.name, near: hh?.site?.cityName || '', region: province ? '' : regionName(rec.r) || '', province })); }\n    }\n",
-    "new": "    // SD19: A FOUND HOLLOW'S LAST HOUR, said to the realm once (its place known - or the world offering none: the region's name)\n    if (phase === 'found' && rec && hourSaidS !== rec.s && Number.isFinite(rec.until) && rec.until > t && rec.until - t <= SD_HOUR_LEFT_MS) {\n      const hh = hollowOf(rec);\n      if (hh || (memo && memo.s === rec.s && memo.none)) { hourSaidS = rec.s; say(sdHourLine({ name: hh?.loc?.name, near: hh?.site?.cityName || '', region: province ? '' : regionName(rec.r) || '', province })); }\n    }\n    sayOwed(t);\n",
+    "old": "    sayOwed(t);\n    // SD19: A FOUND HOLLOW'S LAST HOUR, said to the realm once (its place known - or the world offering none: the region's name)\n    if (\n      phase === 'found' &&\n      rec &&\n      hourSaidS !== rec.s &&\n      Number.isFinite(rec.until) &&\n      rec.until > t &&\n      rec.until - t <= SD_HOUR_LEFT_MS\n    ) {\n      const hh = hollowOf(rec);\n      if (hh || (memo && memo.s === rec.s && memo.none)) {\n        hourSaidS = rec.s;\n        say(\n          sdHourLine({\n            name: hh?.loc?.name,\n            near: hh?.site?.cityName || '',\n            region: province ? '' : regionName(rec.r) || '',\n            province,\n          }),\n        );\n      }\n    }",
+    "new": "    // SD19: A FOUND HOLLOW'S LAST HOUR, said to the realm once (its place known - or the world offering none: the region's name)\n    if (\n      phase === 'found' &&\n      rec &&\n      hourSaidS !== rec.s &&\n      Number.isFinite(rec.until) &&\n      rec.until > t &&\n      rec.until - t <= SD_HOUR_LEFT_MS\n    ) {\n      const hh = hollowOf(rec);\n      if (hh || (memo && memo.s === rec.s && memo.none)) {\n        hourSaidS = rec.s;\n        say(\n          sdHourLine({\n            name: hh?.loc?.name,\n            near: hh?.site?.cityName || '',\n            region: province ? '' : regionName(rec.r) || '',\n            province,\n          }),\n        );\n      }\n    }\n    sayOwed(t);",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -273,8 +273,8 @@
   {
     "name": "SD26-T8-the-turn-offered-after-the-concord",
     "file": "src/scenes/superDungeon/sdHall.js",
-    "old": "ok ? SD_HALL_TEXT.held : st[2] === 'f'",
-    "new": "st[2] === 'f'",
+    "old": "            ok ? SD_HALL_TEXT.held : st[2] === 'f' ? SD_HALL_TEXT.forward : SD_HALL_TEXT.back,",
+    "new": "            st[2] === 'f' ? SD_HALL_TEXT.forward : SD_HALL_TEXT.back,",
     "tests": [
       "test/ui/gate/sd26_text.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "SD26-T9-the-marks-line-dashed",
     "file": "src/systems/superDungeon/sdOmen.js",
-    "old": "${E.stone}, its ${E.sig.replace(/^The /, '')}, under",
-    "new": "${E.stone} - ${sdNameIn(E.sig)} - under",
+    "old": "    ? `${name || 'The Abyss Dungeon'} keeps the Ending of ${E.stone}, its ${E.sig.replace(/^The /, '')}, under ${O.map((o) => sdNameIn(o.name)).join(' and ')}.`",
+    "new": "    ? `${name || 'The Abyss Dungeon'} keeps the Ending of ${E.stone} - ${sdNameIn(E.sig)} - under ${O.map((o) => sdNameIn(o.name)).join(' and ')}.`",
     "tests": [
       "test/ui/gate/sd26_text.test.js",
       "test/scenes/superDungeon/sd11d_words.test.js"
@@ -292,8 +292,8 @@
   {
     "name": "SD26-T9-the-lion-tip-dashed",
     "file": "src/ui/superDungeon/sdMarksView.js",
-    "old": "  daggerfall: 'Its Stomp\\'s ring reaches the rim. Jump it.',",
-    "new": "  daggerfall: 'Jump its Stomp\\'s ring - it reaches the rim.',",
+    "old": "  daggerfall: \"Its Stomp's ring reaches the rim. Jump it.\", // AUDIT SD IV (T9): WB13b's words - no dash aside, no \"X, not Y\"",
+    "new": "  daggerfall: \"Jump its Stomp's ring - it reaches the rim.\", // AUDIT SD IV (T9): WB13b's words - no dash aside, no \"X, not Y\"",
     "tests": [
       "test/ui/gate/sd26_text.test.js",
       "test/scenes/superDungeon/sd11d_words.test.js"

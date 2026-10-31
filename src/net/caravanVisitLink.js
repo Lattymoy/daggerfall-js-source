@@ -15,59 +15,118 @@
 import { OnlineSession } from './online.js';
 import { cellRoomOfWire } from './wire.js';
 import { validHccRecord, HCC_WIRE_KIND } from '../systems/horse/horseCartWire.js';
-import { thrownRecord } from '../systems/wagon/wagonWarden.js';   // AUDIT WARDEN1 R9: a caravan the town watch threw stands where it landed
+import { thrownRecord } from '../systems/wagon/wagonWarden.js'; // AUDIT WARDEN1 R9: a caravan the town watch threw stands where it landed
 
-import { CARAVAN_STANDS_NATIVES } from '../systems/caravanRoom.js';   // the caravan the room stands on, where it stands - one reach for the visit and the owner's own room
+import { CARAVAN_STANDS_NATIVES } from '../systems/caravanRoom.js'; // the caravan the room stands on, where it stands - one reach for the visit and the owner's own room
 export { CARAVAN_STANDS_NATIVES };
 
 /** Whether a cell's record (`raw`, the park record's `r`) is a caravan still parked where `at` says (natives). */
 export function caravanStands(raw, at) {
   const w = raw == null ? null : validHccRecord(raw)?.w;
-  return !!w && w.kind === HCC_WIRE_KIND.Deployed && w.model === 'caravan' && Array.isArray(at)
-    && Math.abs(w.position[0] - at[0]) <= CARAVAN_STANDS_NATIVES && Math.abs(w.position[2] - at[2]) <= CARAVAN_STANDS_NATIVES;
+  return (
+    !!w &&
+    w.kind === HCC_WIRE_KIND.Deployed &&
+    w.model === 'caravan' &&
+    Array.isArray(at) &&
+    Math.abs(w.position[0] - at[0]) <= CARAVAN_STANDS_NATIVES &&
+    Math.abs(w.position[2] - at[2]) <= CARAVAN_STANDS_NATIVES
+  );
 }
 
 /** The record a cell's word stands its team on (`e` its park word): where the town watch threw it when it did (`y`) -
  *  the pool draws it there and a visitor walks in there (WARDEN1). Pure. */
-export const caravanRecordOf = (/** @type {any} */ e) => (e?.r != null && Number.isFinite(e.y) ? thrownRecord(e.r) : e?.r ?? null);
+export const caravanRecordOf = (/** @type {any} */ e) =>
+  e?.r != null && Number.isFinite(e.y) ? thrownRecord(e.r) : (e?.r ?? null);
 
 /** `onGone(why)` the caravan moved on or went ('gone') or its door shut on me ('shut'); `onLook(look)` its owner painted
  *  it again; `may(w, visit)` (WAGONS2-VISIT AUDIT) whether its door, as its record's word says it now (`w` the record's
  *  wagon - its `entry` and `guild`), still opens to me. */
 export function createCaravanVisitLink({ onGone, onLook = null, may = null, Session = OnlineSession }) {
-  let link = null, source = null, visit = null, cell = null, gone = false, due = false, lookKey = null, why = 'gone';
+  let link = null,
+    source = null,
+    visit = null,
+    cell = null,
+    gone = false,
+    due = false,
+    lookKey = null,
+    why = 'gone';
   function close() {
-    link?.leave(); link = null; source = null; visit = null; cell = null; gone = false; due = false; lookKey = null; why = 'gone';
+    link?.leave();
+    link = null;
+    source = null;
+    visit = null;
+    cell = null;
+    gone = false;
+    due = false;
+    lookKey = null;
+    why = 'gone';
   }
   /** A word about the caravan's record (null: none). */
   function judge(raw) {
     if (gone || !visit) return;
-    if (!caravanStands(raw, visit.at)) { gone = true; due = true; why = 'gone'; return; }
+    if (!caravanStands(raw, visit.at)) {
+      gone = true;
+      due = true;
+      why = 'gone';
+      return;
+    }
     const w = validHccRecord(raw)?.w ?? null;
-    if (may && w && !may(w, visit)) { gone = true; due = true; why = 'shut'; return; }   // WAGONS2-VISIT (AUDIT): its door shut on me while I stood in it - out, as a moved caravan's visitor is
+    if (may && w && !may(w, visit)) {
+      gone = true;
+      due = true;
+      why = 'shut';
+      return;
+    } // WAGONS2-VISIT (AUDIT): its door shut on me while I stood in it - out, as a moved caravan's visitor is
     const look = w?.look ?? null;
     const key = JSON.stringify(look);
-    if (key !== lookKey) { lookKey = key; onLook?.(look); }
+    if (key !== lookKey) {
+      lookKey = key;
+      onLook?.(look);
+    }
   }
   return {
     close,
     /** Every frame: `main` my primary session, `v` the visit I stand in (scenes/worldModes.js caravanVisit - its room,
      *  its owner key `k`, where its record stood `at`, its paint `look`) or null. */
     tick(main, v) {
-      if (!main || !v || main.terminal || typeof v.k !== 'string' || !Array.isArray(v.at)) { close(); return; }
-      const room = (typeof v.cell === 'string' && v.cell) || cellRoomOfWire(v.at[0], v.at[2]);   // WAGONS2-VISIT (AUDIT): the cell that keeps its record (where it was read), else the one its pose names
+      if (!main || !v || main.terminal || typeof v.k !== 'string' || !Array.isArray(v.at)) {
+        close();
+        return;
+      }
+      const room = (typeof v.cell === 'string' && v.cell) || cellRoomOfWire(v.at[0], v.at[2]); // WAGONS2-VISIT (AUDIT): the cell that keeps its record (where it was read), else the one its pose names
       // the handoff: never beside my own primary (stepping out joins that very cell)
-      if (!room || main.room === room || main.inRoom?.(room)) { close(); return; }
+      if (!room || main.room === room || main.inRoom?.(room)) {
+        close();
+        return;
+      }
       if (source !== main || visit?.k !== v.k || visit?.room !== v.privateRoom) {
         close();
-        source = main; cell = room; visit = { k: v.k, at: [...v.at], room: v.privateRoom, owner: v.cabinOwner ?? null }; lookKey = JSON.stringify(v.look ?? null);
-        link = new Session({ url: main.url, id: main.id, secret: main.secret, name: main.name, look: main.look, mintToken: main.mintToken, presence: false });
-        link.onParks = (r, list) => { if (r === cell) judge(caravanRecordOf((Array.isArray(list) ? list : []).find((e) => e?.k === visit?.k))); };
-        link.onPark = (r, e) => { if (r === cell && e?.k === visit?.k) judge(caravanRecordOf(e)); };
+        source = main;
+        cell = room;
+        visit = { k: v.k, at: [...v.at], room: v.privateRoom, owner: v.cabinOwner ?? null };
+        lookKey = JSON.stringify(v.look ?? null);
+        link = new Session({
+          url: main.url,
+          id: main.id,
+          secret: main.secret,
+          name: main.name,
+          look: main.look,
+          mintToken: main.mintToken,
+          presence: false,
+        });
+        link.onParks = (r, list) => {
+          if (r === cell) judge(caravanRecordOf((Array.isArray(list) ? list : []).find((e) => e?.k === visit?.k)));
+        };
+        link.onPark = (r, e) => {
+          if (r === cell && e?.k === visit?.k) judge(caravanRecordOf(e));
+        };
       }
       if (link.room !== cell) link.join(cell, null);
       link.tick();
-      if (due) { due = false; if (onGone?.(why) === false) due = true; }
+      if (due) {
+        due = false;
+        if (onGone?.(why) === false) due = true;
+      }
     },
   };
 }

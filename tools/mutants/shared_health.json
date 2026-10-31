@@ -22,8 +22,8 @@
   {
     "name": "SHARED-HEALTH-the-pvp-window-unread",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "return at > 0 && now - at < PVP_HEAL_BLOCK_MS; };",
-    "new": "return at > 0; };",
+    "old": "  return at > 0 && now - at < PVP_HEAL_BLOCK_MS;",
+    "new": "  return at > 0;",
     "tests": [
       "test/net/siege/sharedhealth_law.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "SHARED-HEALTH-the-sieges-block-unread",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "} else if (difference >= 0.5 && share.heard && !healsBlocked) {",
-    "new": "} else if (difference >= 0.5 && share.heard) {",
+    "old": "  } else if (difference >= 0.5 && share.heard && !healsBlocked) {",
+    "new": "  } else if (difference >= 0.5 && share.heard) {",
     "tests": [
       "test/net/siege/sharedhealth_law.test.js"
     ],
@@ -52,18 +52,18 @@
   {
     "name": "PVP-HEAL-the-cap-unread",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "Math.round(target) - fighter.hp, healRoom(fighter, now), sourced",
-    "new": "Math.round(target) - fighter.hp, sourced",
+    "old": "      healRoom(fighter, now),\n      sourced ? Math.floor(healCredit(fighter, now)) : Infinity,",
+    "new": "      sourced ? Math.floor(healCredit(fighter, now)) : Infinity,",
     "tests": [
       "test/net/siege/sharedhealth_law.test.js",
-      "test/ui/fb1019f_duelbar.test.js"
+      "test/net/duel/sharedhealth_duel.test.js"
     ],
     "note": "A heal outside a fight between players would land as a single point."
   },
   {
     "name": "SHARED-HEALTH-the-blow-opens-no-window",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  if (got > 0) noteRefereeChange(to, -got, now, true);   // SHARED-HEALTH: a report that has not seen this blow still counts it; no heal mid-PvP",
+    "old": "  if (got > 0) noteRefereeChange(to, -got, now, true); // SHARED-HEALTH: a report that has not seen this blow still counts it; no heal mid-PvP",
     "new": "  if (got > 0) noteRefereeChange(to, -got, now);",
     "tests": [
       "test/net/siege/sharedhealth_law.test.js"
@@ -76,15 +76,15 @@
     "old": "healsBlocked: false, kept: async () => {} });   // PVP-HEAL",
     "new": "healsBlocked: true, kept: async () => {} });   // PVP-HEAL",
     "tests": [
-      "test/ui/fb1019f_duelbar.test.js"
+      "test/net/duel/sharedhealth_duel.test.js"
     ],
     "note": "The relay would let a duellist heal once the window passed."
   },
   {
     "name": "SHARED-HEALTH-the-carry-drops-the-window",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (x.f.share) x.f.share.playerBlowAt = carry.pvpAt;",
-    "new": "",
+    "old": "  if (x.f.share) x.f.share.playerBlowAt = carry.pvpAt; // and its no-heal window: a step into another cell is no way out of a fight",
+    "new": "  // and its no-heal window: a step into another cell is no way out of a fight",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ],
@@ -133,7 +133,7 @@
   {
     "name": "SHARED-HEALTH-the-blow-unlogged",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  if (got > 0) noteRefereeChange(to, -got, now, true);   // SHARED-HEALTH: a report that has not seen this blow still counts it; no heal mid-PvP",
+    "old": "  if (got > 0) noteRefereeChange(to, -got, now, true); // SHARED-HEALTH: a report that has not seen this blow still counts it; no heal mid-PvP",
     "new": "",
     "tests": [
       "test/net/siege/sharedhealth_law.test.js"
@@ -196,7 +196,7 @@
     "old": "      if (bout) this._duelSay(bout, { t: 'vit', k: 'ask' });",
     "new": "",
     "tests": [
-      "test/ui/fb1019f_duelbar.test.js"
+      "test/net/duel/sharedhealth_duel.test.js"
     ],
     "note": "A duel's counts would never anchor at the fighters' own health."
   },
@@ -206,7 +206,7 @@
     "old": "    this._vitSay(struck.sub, struck.f);   // SHARED-HEALTH: the blow on the struck player's own health",
     "new": "",
     "tests": [
-      "test/ui/fb1019f_duelbar.test.js"
+      "test/net/duel/sharedhealth_duel.test.js"
     ],
     "note": "A duel's blow would never reach the struck player's own health."
   },
@@ -243,8 +243,8 @@
   {
     "name": "SHARED-HEALTH-the-zone-refill-restored",
     "file": "src/net/wild/wildRef.js",
-    "old": "  const res = r === SIEGE_HIT.Spell\n    ? refereeCast(a.f, t.f, { from: a.pose, at: t.pose, d, el }, now)",
-    "new": "  if (now - a.struckAt >= WILD_REF.mendMs) a.f.hp = a.f.max;\n  if (now - t.struckAt >= WILD_REF.mendMs) t.f.hp = t.f.max;\n  const res = r === SIEGE_HIT.Spell\n    ? refereeCast(a.f, t.f, { from: a.pose, at: t.pose, d, el }, now)",
+    "old": "  const res =",
+    "new": "  if (now - a.struckAt >= WILD_REF.mendMs) a.f.hp = a.f.max;\n  if (now - t.struckAt >= WILD_REF.mendMs) t.f.hp = t.f.max;\n  const res =",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ],
@@ -293,8 +293,8 @@
   {
     "name": "SHARED-HEALTH-the-carry-drops-the-report-number",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (x.f.share) x.f.share.report = carry.rep;",
-    "new": "",
+    "old": "  if (x.f.share) x.f.share.report = carry.rep; // the last report this count took: the client's first word here keeps what its health did since",
+    "new": "  // the last report this count took: the client's first word here keeps what its health did since",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ],
@@ -303,8 +303,8 @@
   {
     "name": "PVP-HEALTH-the-bound-dropped",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "const to = Math.max(1, Math.min(PVP_HEALTH_MAX, Math.trunc(Number(max) || 0)));",
-    "new": "const to = Math.max(1, Math.trunc(Number(max) || 0));",
+    "old": "  const to = Math.max(1, Math.min(PVP_HEALTH_MAX, Math.trunc(Number(max) || 0)));",
+    "new": "  const to = Math.max(1, Math.trunc(Number(max) || 0));",
     "tests": [
       "test/net/siege/sharedhealth_law.test.js"
     ]
@@ -312,8 +312,8 @@
   {
     "name": "PVP-HEALTH-the-rise-heals",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "const kept = to > fighter.max && inPvpFight(fighter, now) ? fighter.hp : ",
-    "new": "const kept = ",
+    "old": "  const kept = to > fighter.max && inPvpFight(fighter, now) ? fighter.hp : Math.round((fighter.hp * to) / fighter.max);",
+    "new": "  const kept = Math.round((fighter.hp * to) / fighter.max);",
     "tests": [
       "test/net/siege/sharedhealth_law.test.js"
     ]
@@ -321,8 +321,8 @@
   {
     "name": "PVP-HEALTH-the-maximum-unread",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "  if (Number.isFinite(report.max)) setPoolMax(fighter, Math.min(report.max, healthCapAt(cl, PVP_HEALTH_MAX)), now);",
-    "new": "",
+    "old": "  if (Number.isFinite(report.max)) setPoolMax(fighter, Math.min(report.max, healthCapAt(cl, PVP_HEALTH_MAX)), now); // PVP-HEALTH: the pool's whole is the real maximum; PVP-VITALS: never past its signed level's",
+    "new": "  // PVP-HEALTH: the pool's whole is the real maximum; PVP-VITALS: never past its signed level's",
     "tests": [
       "test/net/siege/sharedhealth_law.test.js"
     ]

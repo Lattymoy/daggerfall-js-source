@@ -36,12 +36,12 @@
 // note is the player's own words, and a finished quest's log was expanded against resources the quest no longer has
 // (Localization-Arc.md, L10N5).
 
-import { graphemesOf } from './graphemes.js';   // JOURNAL1: a long run is cut between the reader's characters
-import { localizedStrings, getLocalizedLocationName, getLocalizedRegionName } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
-import { dateFromClassicMinutes, dateTimeString, midDateTimeString } from './gameDate.js';   // L10N5: a header's date drawn again
-import { localizedQuestDisplayName } from './quest/localizedQuest.js';   // L10N5: a finished quest named in the language
+import { graphemesOf } from './graphemes.js'; // JOURNAL1: a long run is cut between the reader's characters
+import { localizedStrings, getLocalizedLocationName, getLocalizedRegionName } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
+import { dateFromClassicMinutes, dateTimeString, midDateTimeString } from './gameDate.js'; // L10N5: a header's date drawn again
+import { localizedQuestDisplayName } from './quest/localizedQuest.js'; // L10N5: a finished quest named in the language
 
-export const MAX_LINE_LENGTH = 70;         // PlayerNotebook.MaxLineLenth
+export const MAX_LINE_LENGTH = 70; // PlayerNotebook.MaxLineLenth
 export const MAX_MESSAGE_COUNT = 50;
 const PREFIX_DATE_HEADER = 'D:';
 const PREFIX_QUESTION = 'Q:';
@@ -64,7 +64,10 @@ const format = (tpl, ...args) => tpl.replace(/\{(\d)\}/g, (_, i) => String(args[
 
 /** L10N5: where a note was written, as the language names it - a location by its MapId, else the region by its index;
  *  the canonical name where the language has none. */
-const shownPlace = (p) => (p.mapId != null ? getLocalizedLocationName(p.mapId, p.name ?? '') : getLocalizedRegionName(p.region, () => p.name ?? ''));
+const shownPlace = (p) =>
+  p.mapId != null
+    ? getLocalizedLocationName(p.mapId, p.name ?? '')
+    : getLocalizedRegionName(p.region, () => p.name ?? '');
 
 /** L10N5: a header's render data, if it is one - a note's `{ kind: 'note', at, place }` or a finished quest's
  *  `{ kind: 'quest', quest, name, success, at }` (anything else is no header data, and its text stands). */
@@ -77,9 +80,15 @@ export function headerData(h) {
 
 /** L10N5: a header's words from its render data, in the current language - the shapes PlayerNotebook writes them in. */
 export function renderHeader(h) {
-  if (h.kind === 'note') return format(EN.noteHeader, dateTimeString(dateFromClassicMinutes(h.at)), shownPlace(h.place));
+  if (h.kind === 'note')
+    return format(EN.noteHeader, dateTimeString(dateFromClassicMinutes(h.at)), shownPlace(h.place));
   const name = (h.quest && localizedQuestDisplayName(h.quest)) || h.name || EN.quest;
-  return format(EN.finishQuestHeader, name, h.success ? EN.completedQuest : EN.endedQuest, midDateTimeString(dateFromClassicMinutes(h.at)));
+  return format(
+    EN.finishQuestHeader,
+    name,
+    h.success ? EN.completedQuest : EN.endedQuest,
+    midDateTimeString(dateFromClassicMinutes(h.at)),
+  );
 }
 
 const NOTHING = Object.freeze({ formatting: 'nothing', text: '' });
@@ -88,9 +97,9 @@ const NEWLINE = Object.freeze({ formatting: 'newline', text: '' });
 export class PlayerNotebook {
   constructor(deps = {}) {
     this.deps = deps;
-    this.notes = [];             // token[][]
-    this.finishedQuests = [];    // token[][]
-    this.messages = [];          // the 50-slot ring
+    this.notes = []; // token[][]
+    this.finishedQuests = []; // token[][]
+    this.messages = []; // the 50-slot ring
     this.nextMessageIndex = 0;
     // JOURNAL-CLEAN (2026-09-30, Discord: "Should there be a way to clean both finished and unfinished quests from
     // your journal for a cleaner look?"): the uids (as strings - the quest walk's own `id`, scenes/quest/questBridge.js
@@ -102,9 +111,15 @@ export class PlayerNotebook {
 
   // ---- notes ----
 
-  getNotes() { return [...this.notes]; }
-  getNote(index) { return index < this.notes.length ? this.notes[index] : null; }
-  removeNote(index) { this.notes.splice(index, 1); }
+  getNotes() {
+    return [...this.notes];
+  }
+  getNote(index) {
+    return index < this.notes.length ? this.notes[index] : null;
+  }
+  removeNote(index) {
+    this.notes.splice(index, 1);
+  }
 
   /** MoveNote (:64-72): remove-then-insert, the index correcting DOWN
    *  when the destination sat past the source. */
@@ -133,7 +148,7 @@ export class PlayerNotebook {
     for (const token of texts) {
       if (!token.text) note.push(NEWLINE);
       else wrapLinesIntoNote(note, token.text, token.formatting);
-      if ((note.length - 2) >= (MAX_LINES_SMALL * 2)) {
+      if (note.length - 2 >= MAX_LINES_SMALL * 2) {
         this.notes.push(note);
         note = this._createNote();
       }
@@ -142,9 +157,12 @@ export class PlayerNotebook {
   }
 
   _createNote() {
-    const header = { formatting: 'highlight', text: format(EN.noteHeader, this.deps.dateTimeString?.() ?? '', this.deps.cityName?.() ?? '') };
+    const header = {
+      formatting: 'highlight',
+      text: format(EN.noteHeader, this.deps.dateTimeString?.() ?? '', this.deps.cityName?.() ?? ''),
+    };
     const render = headerData({ kind: 'note', at: this.deps.nowMinutes?.(), place: this.deps.place?.() });
-    if (render) header.render = render;   // L10N5: what the header says, for a load to draw it again
+    if (render) header.render = render; // L10N5: what the header says, for a load to draw it again
     return [header, NOTHING];
   }
 
@@ -161,7 +179,10 @@ export class PlayerNotebook {
   /** AddMessage (:154-167): fill to 50, then overwrite the oldest. */
   addMessage(str) {
     if (!str) return;
-    const message = [{ formatting: 'center', text: '' }, { formatting: 'text', text: str }];
+    const message = [
+      { formatting: 'center', text: '' },
+      { formatting: 'text', text: str },
+    ];
     if (this.messages.length < MAX_MESSAGE_COUNT) {
       this.messages.push(message);
     } else {
@@ -172,18 +193,30 @@ export class PlayerNotebook {
 
   // ---- finished quests ----
 
-  getFinishedQuests() { return [...this.finishedQuests]; }
-  getFinishedQuest(index) { return index < this.finishedQuests.length ? this.finishedQuests[index] : null; }
-  removeFinishedQuest(index) { this.finishedQuests.splice(index, 1); }
+  getFinishedQuests() {
+    return [...this.finishedQuests];
+  }
+  getFinishedQuest(index) {
+    return index < this.finishedQuests.length ? this.finishedQuests[index] : null;
+  }
+  removeFinishedQuest(index) {
+    this.finishedQuests.splice(index, 1);
+  }
 
   /** JOURNAL-CLEAN: the archive emptied in one stroke - the enhanced journal's "Clear archive". The notes and the
    *  hidden list are not the archive's, and stay. */
-  clearFinishedQuests() { this.finishedQuests.length = 0; }
+  clearFinishedQuests() {
+    this.finishedQuests.length = 0;
+  }
 
   // ---- JOURNAL-CLEAN: hidden active quests ----
 
-  getHiddenQuests() { return [...this.hiddenQuests]; }
-  isQuestHidden(id) { return id != null && this.hiddenQuests.includes(String(id)); }
+  getHiddenQuests() {
+    return [...this.hiddenQuests];
+  }
+  isQuestHidden(id) {
+    return id != null && this.hiddenQuests.includes(String(id));
+  }
   /** AUDIT JOURNAL-CLEAN F3: keep only the hidden ids of quests still RUNNING (`liveIds`). A quest ended any way but
    *  completion (the quest repair, a clear by name or prefix, an error) left its id behind, saved - and uids are reused
    *  after a load, so a new quest could start hidden. Answers how many were dropped. */
@@ -238,7 +271,7 @@ export class PlayerNotebook {
     for (const msg of messages) {
       for (const token of msg.getTextTokens()) entry.push(token);
       entry.push(NEWLINE);
-      if ((entry.length - 2) >= (MAX_LINES_QUESTS * 2)) {
+      if (entry.length - 2 >= MAX_LINES_QUESTS * 2) {
         this.finishedQuests.push(entry);
         this.addFinishedQuestTokens(msg.getTextTokens());
         entry = [];
@@ -262,10 +295,19 @@ export class PlayerNotebook {
 
   _createFinishedQuest(questName, success, quest = null) {
     const status = success ? EN.completedQuest : EN.endedQuest;
-    const header = { formatting: 'highlight', text: format(EN.finishQuestHeader, questName, status, this.deps.midDateTimeString?.() ?? '') };
+    const header = {
+      formatting: 'highlight',
+      text: format(EN.finishQuestHeader, questName, status, this.deps.midDateTimeString?.() ?? ''),
+    };
     // L10N5: the quest by its file and its own DisplayName (L10N5's ownDisplayName - never a translation's), for a load
     const own = quest ? (quest.ownDisplayName !== undefined ? quest.ownDisplayName : quest.displayName) : null;
-    const render = headerData({ kind: 'quest', quest: quest?.questName ?? null, name: own || null, success: !!success, at: this.deps.nowMinutes?.() });
+    const render = headerData({
+      kind: 'quest',
+      quest: quest?.questName ?? null,
+      name: own || null,
+      success: !!success,
+      at: this.deps.nowMinutes?.(),
+    });
     if (render) header.render = render;
     return [header, NOTHING];
   }
@@ -277,7 +319,7 @@ export class PlayerNotebook {
   clear() {
     this.notes.length = 0;
     this.finishedQuests.length = 0;
-    this.hiddenQuests.length = 0;   // JOURNAL-CLEAN: a new game hides nothing
+    this.hiddenQuests.length = 0; // JOURNAL-CLEAN: a new game hides nothing
   }
 
   /** GetNotebookSaveData (:264-306): entries flatten to LINE LISTS
@@ -303,7 +345,7 @@ export class PlayerNotebook {
   restoreSaveData(data) {
     this.notes = redrawHeaders((data.notebookEntries ?? []).map(convertLines), data.noteHeaders);
     this.finishedQuests = redrawHeaders((data.finishedQuestEntries ?? []).map(convertLines), data.finishedQuestHeaders);
-    restoreOutcomes(this.finishedQuests, data.finishedQuestOutcomes);   // AUDIT QUESTLINES UI-5
+    restoreOutcomes(this.finishedQuests, data.finishedQuestOutcomes); // AUDIT QUESTLINES UI-5
     // JOURNAL-CLEAN: an older save carries no list and hides nothing; a malformed one is read for what it holds.
     const hidden = Array.isArray(data.hiddenQuestIds) ? data.hiddenQuestIds : [];
     this.hiddenQuests = [...new Set(hidden.filter((id) => typeof id === 'string' || Number.isFinite(id)).map(String))];
@@ -325,7 +367,10 @@ export class PlayerNotebook {
  * text can be refused. Text with no such run comes back as it was.
  */
 export function breakableNote(str) {
-  return String(str ?? '').split(/( +)/).map((run, k) => (k % 2 || run.length <= MAX_LINE_LENGTH ? run : pieces(run))).join('');
+  return String(str ?? '')
+    .split(/( +)/)
+    .map((run, k) => (k % 2 || run.length <= MAX_LINE_LENGTH ? run : pieces(run)))
+    .join('');
 }
 
 function pieces(run) {
@@ -353,8 +398,10 @@ export function wrapLinesIntoNote(note, str, formatting) {
     // DFU shows an exception. A 71-character run with no space is
     // reachable: a quest name, a URL-ish token, any pasted note.
     if (pos < 0) {
-      throw new RangeError('wrapLinesIntoNote: no break point in the first '
-        + `${MAX_LINE_LENGTH + 1} characters (C#'s Substring(0, -1) throws here)`);
+      throw new RangeError(
+        'wrapLinesIntoNote: no break point in the first ' +
+          `${MAX_LINE_LENGTH + 1} characters (C#'s Substring(0, -1) throws here)`,
+      );
     }
     note.push({ formatting, text: ' ' + str.slice(0, pos) });
     note.push(NOTHING);
@@ -383,7 +430,10 @@ function redrawHeaders(entries, headers) {
 
 /** AUDIT QUESTLINES UI-5: a filed entry's outcome - the side record fileFinishedOutcome keeps on its header - or null.
  *  The enhanced archive's to draw (ui/enhanced/enhancedMenu.js pauseQuests, ui/enhanced/enhancedChronicle.js). */
-export const filedOutcome = (entry) => (entry?.[0]?.formatting === 'highlight' && typeof entry[0].outcome === 'string' && entry[0].outcome ? entry[0].outcome : null);
+export const filedOutcome = (entry) =>
+  entry?.[0]?.formatting === 'highlight' && typeof entry[0].outcome === 'string' && entry[0].outcome
+    ? entry[0].outcome
+    : null;
 
 /** AUDIT QUESTLINES UI-5: `{ finishedQuestOutcomes: [text or null, by entry] }`, or nothing when no entry has one. */
 function outcomeField(entries) {
@@ -410,7 +460,10 @@ function convertEntry(entry) {
     else if (token.formatting === 'question') lines.push(PREFIX_QUESTION + token.text);
     else if (token.formatting === 'answer') lines.push(PREFIX_ANSWER + token.text);
     else if (lineBreak) lines.push('');
-    else { lineBreak = true; continue; }
+    else {
+      lineBreak = true;
+      continue;
+    }
     lineBreak = false;
   }
   return lines;

@@ -328,8 +328,8 @@
   {
     "name": "lane-no-shadows",
     "file": "src/render/enhancedLighting.js",
-    "old": "  shadows: true,   // EL2: the renderer builds its ShadowPass for this lane\n",
-    "new": "",
+    "old": "  shadows: true, // EL2: the renderer builds its ShadowPass for this lane\n  air: true, // EL3: and its AirPass, behind `?air=off` (syncLightingLane reads the door)",
+    "new": "  air: true, // EL3: and its AirPass, behind `?air=off` (syncLightingLane reads the door)",
     "tests": [
       "test/render/el2_shadows.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "lane-bb-shadow-at-fragment",
     "file": "src/render/enhancedLighting.js",
-    "old": "  vec3 base = vBBBase + vec3(0.0, 0.5, 0.0);   // EL2",
-    "new": "  vec3 base = vBBWorld;   // EL2",
+    "old": "  vec3 base = vBBBase + vec3(0.0, 0.5, 0.0);   // EL2: the shadow is read a half unit up the sprite's base, once for the whole flat",
+    "new": "  vec3 base = vBBWorld;   // EL2: the shadow is read a half unit up the sprite's base, once for the whole flat",
     "tests": [
       "test/render/el2_shadows.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "lane-mesh-no-sun-shadow",
     "file": "src/render/enhancedLighting.js",
-    "old": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map\n  float mdiff = max(dot(n, uMoonDir), 0.0);\n  float l3diff",
-    "new": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) : 0.0;\n  float mdiff = max(dot(n, uMoonDir), 0.0);\n  float l3diff",
+    "old": "  // output-identical rather than an approximation.\n  float ndl = max(dot(n, uLightDir), 0.0);\n  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map\n  float mdiff = max(dot(n, uMoonDir), 0.0);\n  float l3diff = max(dot(n, uLight3Dir), 0.0);",
+    "new": "  // output-identical rather than an approximation.\n  float ndl = max(dot(n, uLightDir), 0.0);\n  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) : 0.0;\n  float mdiff = max(dot(n, uMoonDir), 0.0);\n  float l3diff = max(dot(n, uLight3Dir), 0.0);",
     "tests": [
       "test/render/el2_shadows.test.js"
     ]

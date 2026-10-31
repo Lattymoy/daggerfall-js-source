@@ -15,22 +15,24 @@
 //                   its owner as my hit - the sinks every spell of mine already lands through)
 //   castOnPlayer(b, { power })  a spell bundle on me, no saving throw and no chance roll (a potion's way); `power` (AUDIT
 //                   SCHOOLS): a path's rider - a merge with it takes the larger Shield pool or ward chance (effects.js powerCast)
-//   player()        my entity (a kill's word names the foe, not me)
-//   clear(a, b)     AUDIT SET M4 (optional): whether nothing solid stands between feet a and feet b, chest high
-//   say(line)       RVN3 (optional): a line the scene's HUD speaks
-//   sfx(id, at)     RVN3 (optional): a sound where a foe stands
+//   player()        my entity (a kill's word names the foe, not me); clear(a, b) AUDIT SET M4 (optional): whether
+//                   nothing solid stands between feet a and feet b, chest high
+//   say(line), sfx(id, at)  RVN3 (optional): a line the scene's HUD speaks; a sound where a foe stands
 //   lairHere(at)    RVN7 (optional): where a revenant's deed is done, for its lair - { px, py, dungeons, enterable } in
 //                   the open world (its map pixel and the named dungeons in reach - LAIR-DOOR: those the player can go
 //                   down into, and the test itself; `at` a map pixel { x, y } to ask of instead of mine), { underground }
 //                   in a dungeon, or null
-//   fx(recipe, at)  UNQUIET (optional): one of the magic engine's techniques where something stands (a revenant's
-//                   flight craft - its 'vanish' puff, render/spellImpactFx.js)
+//   fx(recipe, at)  UNQUIET (optional): a magic technique where something stands (a revenant's 'vanish' puff)
+//   killFx(look, at, o), burst(recipe, at, o), eye()  STOREFRONT (optional): a kill effect where a body falls, one of
+//                   the effects engine's bursts (o.ambient: the breaths' own cap) - each whether it began - and the eye
 // }
 
-/** @type {null | { foes: () => any[], feet: () => number[]|null, hurtFoe: (f: any, n: number) => void, castOnPlayer: (b: any, o?: { power?: boolean }) => void, player?: () => any, clear?: (a: number[], b: number[]) => boolean, say?: (line: string) => void, sfx?: (id: number, at: number[]) => void, lairHere?: (at?: { x: number, y: number }) => any, isPuppet?: (f: any) => boolean, fx?: (recipe: string, at: number[], o?: any) => void }} */
+/** @type {null | { foes: () => any[], feet: () => number[]|null, hurtFoe: (f: any, n: number) => void, castOnPlayer: (b: any, o?: { power?: boolean }) => void, player?: () => any, clear?: (a: number[], b: number[]) => boolean, say?: (line: string) => void, sfx?: (id: number, at: number[]) => void, lairHere?: (at?: { x: number, y: number }) => any, isPuppet?: (f: any) => boolean, fx?: (recipe: string, at: number[], o?: any) => void, killFx?: (look: string, at: number[], o?: any) => boolean, burst?: (recipe: string, at: number[], o?: any) => boolean, eye?: () => number[]|null }} */
 let _door = null;
 /** The running host's word: this is the scene now. `null` takes it down. */
-export function setPlayerDoor(door) { _door = door && typeof door === 'object' ? door : null; }
+export function setPlayerDoor(door) {
+  _door = door && typeof door === 'object' ? door : null;
+}
 /** The scene the player stands in, or null before a host has run a frame. */
 export const playerDoor = () => _door;
 

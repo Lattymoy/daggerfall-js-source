@@ -160,8 +160,8 @@
   {
     "name": "CK-pack-none",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "health: null, maxHealth: null, items: [] };",
-    "new": "health: null, maxHealth: null };",
+    "old": "        items: [],\n      };",
+    "new": "      };",
     "tests": [
       "test/systems/companionkit.test.js"
     ]
@@ -178,8 +178,8 @@
   {
     "name": "CK-pack-not-saved",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "party: party.map((p) => ({ ...p, items: packOut(p.items) }))",
-    "new": "party: party.map((p) => ({ ...p, items: [] }))",
+    "old": "    snapshot: () => ({\n      party: party.map((p) => ({ ...p, items: packOut(p.items) })),\n      resting: resting.map((r) => ({ ...r })),\n    }),",
+    "new": "    snapshot: () => ({ party: party.map((p) => ({ ...p, items: [] })), resting: resting.map((r) => ({ ...r })) }),",
     "tests": [
       "test/systems/companionkit.test.js"
     ]
@@ -187,8 +187,8 @@
   {
     "name": "CK-codec-out-unread",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "return codec ? codec.serialize(items) : items.slice();",
-    "new": "return items.slice();",
+    "old": "      return codec ? codec.serialize(items) : items.slice();",
+    "new": "      return items.slice();",
     "tests": [
       "test/systems/companionkit.test.js"
     ]
@@ -196,8 +196,8 @@
   {
     "name": "CK-codec-in-unread",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "const out = codec ? codec.deserialize(data) : data.slice();",
-    "new": "const out = data.slice();",
+    "old": "      const out = codec ? codec.deserialize(data) : data.slice();",
+    "new": "      const out = data.slice();",
     "tests": [
       "test/systems/companionkit.test.js"
     ]
@@ -205,8 +205,8 @@
   {
     "name": "CK-pack-kept",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "      c.items.length = 0;\n",
-    "new": "",
+    "old": "      c.items.length = 0;\n      return out;",
+    "new": "      return out;",
     "tests": [
       "test/systems/companionkit.test.js"
     ]
@@ -223,8 +223,8 @@
   {
     "name": "CK-steal-opens",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "  if (mode !== 'steal' && openCompanion && foe.companion != null",
-    "new": "  if (openCompanion && foe.companion != null",
+    "old": "  if (\n    mode !== 'steal' &&\n    openCompanion &&\n    foe.companion != null &&\n    foe.shipmate === true &&\n    !String(foe.companion).startsWith('peer:')\n  ) {",
+    "new": "  if (openCompanion && foe.companion != null && foe.shipmate === true && !String(foe.companion).startsWith('peer:')) {",
     "tests": [
       "test/systems/companionkit.test.js"
     ]
@@ -232,8 +232,8 @@
   {
     "name": "CK-peer-opened",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": " && !String(foe.companion).startsWith('peer:')) {",
-    "new": ") {",
+    "old": "  if (\n    mode !== 'steal' &&\n    openCompanion &&\n    foe.companion != null &&\n    foe.shipmate === true &&\n    !String(foe.companion).startsWith('peer:')\n  ) {",
+    "new": "  if (mode !== 'steal' && openCompanion && foe.companion != null && foe.shipmate === true) {",
     "tests": [
       "test/systems/companionkit.test.js"
     ]
@@ -268,8 +268,8 @@
   {
     "name": "CK-bar-no-name",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    set('name', mate ? p.name : '', (v) => { slot.word.textContent = v; });",
-    "new": "    set('name', '', (v) => { slot.word.textContent = v; });",
+    "old": "    set('name', mate ? p.name : '', (v) => {",
+    "new": "    set('name', '', (v) => {",
     "tests": [
       "test/systems/companionkit.test.js"
     ]
@@ -277,8 +277,8 @@
   {
     "name": "CK-bar-no-digits",
     "file": "src/ui/naval/navalHud.js",
-    "old": "? `${Math.max(0, Math.round(p.hp))}/${Math.round(p.hpMax)}` : ''",
-    "new": "? '' : ''",
+    "old": "    set(\n      'hp',\n      mate && Number.isFinite(p.hp) && Number.isFinite(p.hpMax) && p.hpMax > 0\n        ? `${Math.max(0, Math.round(p.hp))}/${Math.round(p.hpMax)}`\n        : '',\n      (v) => {\n        slot.hp.textContent = v;\n      },\n    );",
+    "new": "    set('hp', mate && Number.isFinite(p.hp) && Number.isFinite(p.hpMax) && p.hpMax > 0 ? '' : '', (v) => {\n      slot.hp.textContent = v;\n    });",
     "tests": [
       "test/systems/companionkit.test.js"
     ]
@@ -295,8 +295,8 @@
   {
     "name": "CK-bar-fx-uncapped",
     "file": "src/ui/naval/navalHud.js",
-    "old": "p.fx.slice(0, MATE_FX_MAX) : [];",
-    "new": "p.fx.slice() : [];",
+    "old": "    const fx = mate && Array.isArray(p.fx) ? p.fx.slice(0, MATE_FX_MAX) : [];",
+    "new": "    const fx = mate && Array.isArray(p.fx) ? p.fx.slice() : [];",
     "tests": [
       "test/systems/companionkit.test.js"
     ]
@@ -313,7 +313,7 @@
   {
     "name": "CK-panel-hidden-offline",
     "file": "src/ui/partyPanel.js",
-    "old": "      if (!social) { if (ck !== compPainted) paint(); return; }",
+    "old": "      if (!social) {\n        if (ck !== compPainted) paint();\n        return;\n      }",
     "new": "      if (!social) return;",
     "tests": [
       "test/systems/companionkit.test.js"
@@ -349,7 +349,7 @@
   {
     "name": "CK-panel-no-cards",
     "file": "src/ui/partyPanel.js",
-    "old": "    const mates = comps();   // COMPANION-KIT",
+    "old": "    const mates = comps(); // COMPANION-KIT",
     "new": "    const mates = [];",
     "tests": [
       "test/systems/companionkit.test.js"
@@ -358,8 +358,8 @@
   {
     "name": "CK-panel-seam-lost",
     "file": "src/ui/partyPanel.js",
-    "old": "    setCompanions(fn) { companions = typeof fn === 'function' ? fn : null; compPainted = null; },",
-    "new": "    setCompanions(fn) { void fn; },",
+    "old": "      companions = typeof fn === 'function' ? fn : null;\n      compPainted = null;",
+    "new": "      void fn;",
     "tests": [
       "test/systems/companionkit.test.js"
     ]
@@ -367,8 +367,8 @@
   {
     "name": "CK-panel-mark",
     "file": "src/ui/partyPanel.js",
-    "old": "    if (card.facemark && card.facemark.textContent !== mark) card.facemark.textContent = mark;\n",
-    "new": "",
+    "old": "    if (card.facemark && card.facemark.textContent !== mark) card.facemark.textContent = mark;\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/companionkit.test.js"
     ]

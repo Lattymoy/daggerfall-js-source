@@ -48,7 +48,7 @@ test('LIGHT-ID: THE ONE CONSTRUCTION SEAM - no light is written into a frame\'s 
     });
   }
   assert.deepEqual(hits, [], 'a light written into a list outside the seam');
-  assert.match(rd('src/render/lightId.js'), /out\[i \* 4\] = l\.x; out\[i \* 4 \+ 1\] = l\.y; out\[i \* 4 \+ 2\] = l\.z; out\[i \* 4 \+ 3\] = range;\n\s+if \(out\.ids\) out\.ids\[i\] = lightIdOf\(l\);/, 'the seam writes the place and the identity side by side');
+  assert.match(rd('src/render/lightId.js'), /out\[i \* 4\] = l\.x; out\[i \* 4 \+ 1\] = l\.y; out\[i \* 4 \+ 2\] = l\.z; out\[i \* 4 \+ 3\] = range;\n\s*if \(out\.ids\) out\.ids\[i\] = lightIdOf\(l\);/, 'the seam writes the place and the identity side by side');
   for (const [file, re] of [
     ['src/world/city/cityLights.js', /packLight\(out, i, l, Number\.isFinite\(w\) \? w : CITY_LIGHT_RANGE\);/],
     ['src/scenes/magicCandle.js', /packLight\(out, i, l\);[\s\S]*copyLights\(out, live\.length, base, 0, keep \/ 4\);/],
@@ -69,7 +69,7 @@ test('LIGHT-ID: THE POOLS THAT REFILL IN ORDER NAME EACH ENTRY BY THE LIGHT IT S
   assert.deepEqual([lightIdOf(pool[0]), lightIdOf(pool[1]), lightIdOf(pool[2])], [lightIdOf(c), lightIdOf(a), lightIdOf(b)], 'each entry its lantern\'s after the reshuffle - never the slot\'s');
   const world = rd('src/scenes/world.js');
   assert.match(world, /e\.wodRange = l\.range; e\.wodColor = l\.color;\n\s+adoptLight\(e, l\);[^\n]*\n[\s\S]*?e\.wodRange = l\.range; e\.wodColor = l\.color;\n\s+adoptLight\(e, l\);/, 'the World of Daggerfall lights and the boats\' lanterns in the pool');
-  assert.match(world, /csaLit\.push\(adoptLight\(\{ x: l\.x, y: l\.y, z: l\.z, range: l\.range, color: CITY_LIGHT_COLOR_F32 \}, l\)\)/, 'a quay\'s lantern, copied each frame');
+  assert.match(world, /csaLit\.push\(adoptLight\(\{ x: l\.x, y: l\.y, z: l\.z, range: l\.range \* streetLightReach\(lightingOn\), color: CITY_LIGHT_COLOR_F32 \}, l\)\)/, 'a quay\'s lantern, copied each frame');   // PIN MOVED (AUDIT LIGHT-REACH S5): at the lane's reach
   assert.match(rd('src/scenes/homeYards.js'), /e\.x = l\.x; e\.y = l\.y; e\.z = l\.z;\n\s+adoptLight\(e, l\);/, 'the yards\' rows');
   const fx = rd('src/scenes/superDungeon/sdFx.js');
   assert.match(fx, /o\.color\[2\] = b;\n\s+adoptLight\(o, src\);/, 'the Hour\'s pooled lights, each its burst\'s');

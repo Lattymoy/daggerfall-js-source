@@ -28,7 +28,7 @@ THE CHAIN.
 3. An online page never puts a character back inside a dungeon: ONLINE-UNDERGROUND-LOAD1 wakes them at the nearest
    temple, town or graveyard to it (`world.js:"townTalk.say(undergroundWakeText(wake.kind));"`).
 4. The record is restored after that landing, as it was saved. The Transport window and the mount key ask whether
-   the horse is near (`horseCart.js:"function canUseHorseTransport() {"`), and its own click needs it in reach. It is
+   the horse is near (`horseCart.js:"function canUseHorseTransport"`), and its own click needs it in reach. It is
    at the dungeon door, often in another map pixel.
 
 WHY NOTHING STOPPED IT. DFU's load always lands at the save, so the mod never meets a load that lands elsewhere. The
@@ -42,7 +42,7 @@ THE CALL (the port's own; no DFU twin - recorded in `Port-Ledger.md` section A):
   `csaElsewhere` - the online wake from a dungeon, a dungeon that cannot be found, a dungeon that cannot be entered, a
   save taken somewhere else - handed to the restore
   (`world.js:"if (hccRecord) hccRuntime.restoreSaveData(hccRecord, { elsewhere: csaElsewhere });"`). The runtime calls
-  the pair as the online respawn does, by WILD1's forced journey (`horseCart.js:"function callTeamToLanding() {"`).
+  the pair as the online respawn does, by WILD1's forced journey (`horseCart.js:"function callTeamToLanding"`).
 - **Only what the respawn would call comes.** A horse waiting or following, and a team with its horse hitched, come
   and stand behind the player. A wagon parked alone stays where it was left, and a pair sent to the stable stays at
   the stable. A dungeon that could not be entered lands its player at its own door, so the horse there only steps

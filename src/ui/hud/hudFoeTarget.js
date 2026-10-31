@@ -17,13 +17,13 @@
 // seconds ago is not your target, and a bar that never leaves is
 // furniture. It clears at once when the foe dies, because a dead thing
 // has no health to report.
-import { foeTitle } from '../../systems/foeTitle.js';   // FOE-TITLE: what a special foe is called, one home
-import { bossTraitWords, bossTraitRules, bossWardNow, bossClockS } from '../../systems/bossTraits.js';   // BOSS-TRAITS: the traits a foe carries, their rules, its ward
+import { foeTitle } from '../../systems/foeTitle.js'; // FOE-TITLE: what a special foe is called, one home
+import { bossTraitWords, bossTraitRules, bossWardNow, bossClockS } from '../../systems/bossTraits.js'; // BOSS-TRAITS: the traits a foe carries, their rules, its ward
 
 export const FOE_TARGET_SECONDS = 6;
 /** LOOT7 (the Loot arc): a CHAMPION's trait before its name; ELITE FOES: "Elite" before it; REVENANT: its own name -
  *  systems/foeTitle.js, the one home every surface asks (a leaf, as this one is). */
-const titled = (e, base) => foeTitle(e, base, { traits: false });   // AUDIT WORLD-EVENTS L5-12: the traits are said on their own line below
+const titled = (e, base) => foeTitle(e, base, { traits: false }); // AUDIT WORLD-EVENTS L5-12: the traits are said on their own line below
 
 let _foe = null;
 let _left = 0;
@@ -35,7 +35,9 @@ export const THREAT_YIELD_S = 2;
 /** TELL9: the poise track's reader - `(foe) => { state, fill, word } | null` - registered by the host that knows the
  *  brain (scenes/hostCombat.js: ai/tactics.js poiseTrack); this leaf imports none. */
 let _poiseOf = null;
-export function setFoePoiseReader(fn) { _poiseOf = typeof fn === 'function' ? fn : null; }
+export function setFoePoiseReader(fn) {
+  _poiseOf = typeof fn === 'function' ? fn : null;
+}
 
 /** The one call both damage paths make. `fromPlayer` is already the
  *  flag each of them takes, so this asks nothing new of either. */
@@ -49,7 +51,7 @@ export function markFoeStruck(foe, { fromPlayer = true } = {}) {
   if (bout && !bout.chained) return;
   _foe = foe;
   _left = FOE_TARGET_SECONDS;
-  _sinceStruck = 0;   // TELL9: a threat yields to it for THREAT_YIELD_S
+  _sinceStruck = 0; // TELL9: a threat yields to it for THREAT_YIELD_S
 }
 
 /** STAND-IN-BAR (AUDIT KETCH II, 2026-10-26, the owner: "the additional enemies dont have health bars"): A BODY THE RELAY
@@ -63,7 +65,14 @@ export function markHostStruck(hb, went) {
   return went;
 }
 /** The relay's share of a stand-in's health (0 to 1), or null - its word not heard, or a reader that throws. */
-const relayShareOf = (e) => { try { const v = typeof e.relayShare === 'function' ? e.relayShare() : null; return typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : null; } catch { return null; } };
+const relayShareOf = (e) => {
+  try {
+    const v = typeof e.relayShare === 'function' ? e.relayShare() : null;
+    return typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : null;
+  } catch {
+    return null;
+  }
+};
 
 /** TELL9 (11.1): a foe began a wind-up at the local player (scenes/hostCombat.js tellCues, at its wind's start): it is
  *  the bar's foe now, unless I struck another in the last THREAT_YIELD_S - the foe I am fighting keeps it; its own
@@ -72,7 +81,7 @@ export function markFoeThreat(foe) {
   if (!foe?.entity || foe.dead) return;
   const bout = foe.entity.bout;
   if (bout && !bout.chained) return;
-  if (_foe && _foe !== foe && !_foe.dead && (_sinceStruck < THREAT_YIELD_S || _foe.duel)) return;   // AUDIT TELL U7: nor while my duel's opponent holds it (its health comes only as the duel's word does)
+  if (_foe && _foe !== foe && !_foe.dead && (_sinceStruck < THREAT_YIELD_S || _foe.duel)) return; // AUDIT TELL U7: nor while my duel's opponent holds it (its health comes only as the duel's word does)
   _foe = foe;
   _left = FOE_TARGET_SECONDS;
 }
@@ -82,7 +91,10 @@ export function tickFoeTarget(dt = 0) {
   _sinceStruck += dt;
   if (!_foe) return;
   _left -= dt;
-  if (_left <= 0 || _foe.dead) { _foe = null; _left = 0; }
+  if (_left <= 0 || _foe.dead) {
+    _foe = null;
+    _left = 0;
+  }
 }
 
 /**
@@ -97,14 +109,14 @@ export function foeTarget() {
   if (e.relayHealth && !(share > 0)) return null;
   const max = e.maxHealth || e.health || 1;
   return {
-    name: String(titled(e, e.name ?? e.career?.name ?? 'Foe')),   // LOOT7: a champion's trait before its name; ELITE FOES: an elite's word; REVENANT: its own name
+    name: String(titled(e, e.name ?? e.career?.name ?? 'Foe')), // LOOT7: a champion's trait before its name; ELITE FOES: an elite's word; REVENANT: its own name
     health: share != null ? share * max : Math.max(0, e.health ?? 0),
     maxHealth: max,
-    fade: Math.min(1, _left / 1.5),   // the last second and a half
-    poise: _poiseOf ? _poiseOf(_foe) ?? null : null,   // TELL9: the poise track under the health (null: none drawn)
-    traits: bossTraitWords(e),   // BOSS-TRAITS: every trait's word (systems/bossTraits.js)
-    rules: bossTraitRules(e),   // AUDIT WORLD-EVENTS L5-6: and what each one does - the trait line's tip
-    ward: bossWardNow(e, bossClockS())?.now ?? 0,   // BOSS-TRAITS: what its ward holds now (AUDIT WORLD-EVENTS L2-5: on the traits' clock; L2-7: a puppet's as its owner says it)
+    fade: Math.min(1, _left / 1.5), // the last second and a half
+    poise: _poiseOf ? (_poiseOf(_foe) ?? null) : null, // TELL9: the poise track under the health (null: none drawn)
+    traits: bossTraitWords(e), // BOSS-TRAITS: every trait's word (systems/bossTraits.js)
+    rules: bossTraitRules(e), // AUDIT WORLD-EVENTS L5-6: and what each one does - the trait line's tip
+    ward: bossWardNow(e, bossClockS())?.now ?? 0, // BOSS-TRAITS: what its ward holds now (AUDIT WORLD-EVENTS L2-5: on the traits' clock; L2-7: a puppet's as its owner says it)
   };
 }
 
@@ -114,8 +126,12 @@ export function foeTarget() {
  *  the other's bar. Null when there is no target. */
 export function foeTargetRef() {
   const e = _foe?.entity;
-  return e && !_foe.dead && !(e.relayHealth && !(relayShareOf(e) > 0)) ? e : null;   // STAND-IN-BAR: a relay's body fallen is no target
+  return e && !_foe.dead && !(e.relayHealth && !(relayShareOf(e) > 0)) ? e : null; // STAND-IN-BAR: a relay's body fallen is no target
 }
 
 /** A host tearing down, and the tests. */
-export function clearFoeTarget() { _foe = null; _left = 0; _sinceStruck = Infinity; }
+export function clearFoeTarget() {
+  _foe = null;
+  _left = 0;
+  _sinceStruck = Infinity;
+}

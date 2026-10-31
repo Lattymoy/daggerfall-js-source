@@ -1,480 +1,480 @@
 [
- {
-  "name": "U1-skyrim-off-its-stone",
-  "file": "src/world/urban/townLook.js",
-  "old": "  Skyrim: look(Mountain,",
-  "new": "  Skyrim: look(Temperate,",
-  "tests": [
-   "test/world/urban/urban1_look.test.js"
-  ]
- },
- {
-  "name": "U1-the-zone-unread",
-  "file": "src/world/urban/townLook.js",
-  "old": "  const z = zone ? TOWN_LOOK_ZONES[zone] : null;",
-  "new": "  const z = null;",
-  "tests": [
-   "test/world/urban/urban1_look.test.js"
-  ]
- },
- {
-  "name": "U1-the-whole-climate-swapped",
-  "file": "src/world/urban/townLook.js",
-  "old": "  return Object.freeze({ ...settings, climateType: base, zoneClimateType: settings.climateType });",
-  "new": "  return Object.freeze({ ...settings, climateType: base, groundArchive: base + 2, zoneClimateType: settings.climateType });",
-  "tests": [
-   "test/world/urban/urban1_look.test.js"
-  ]
- },
- {
-  "name": "U1-the-set-unmoved",
-  "file": "src/world/urban/townLook.js",
-  "old": "  if (!settings || base == null || settings.climateType === base) return settings;",
-  "new": "  if (!settings || base == null || true) return settings;",
-  "tests": [
-   "test/world/urban/urban1_look.test.js"
-  ]
- },
- {
-  "name": "U1-the-imperial-city-dressed",
-  "file": "src/scenes/tamrielPlacesHost.js",
-  "old": "climate: at.k === 0 ? getWorldClimateSettings",
-  "new": "climate: at.k === -1 ? getWorldClimateSettings",
-  "tests": [
-   "test/world/urban/urban1_look.test.js"
-  ]
- },
- {
-  "name": "U2-a-law-too-sharp",
-  "file": "src/world/urban/urbanArt.js",
-  "old": "    return 0.34 + q.p[2] * 0.34 +",
-  "new": "    return 0.34 + q.p[2] * 0.9 +",
-  "tests": [
-   "test/world/urban/urban2_art.test.js"
-  ]
- },
- {
-  "name": "U2-a-stake-off-the-side",
-  "file": "src/world/urban/urbanArt.js",
-  "old": "grainT = noise(seed + 3, 4), w = 16,",
-  "new": "grainT = noise(seed + 3, 4), w = 12,",
-  "tests": [
-   "test/world/urban/urban2_art.test.js"
-  ]
- },
- {
-  "name": "U2-a-style-off-its-index",
-  "file": "src/world/urban/urbanRecords.js",
-  "old": "URBAN_STYLE_KEYS.indexOf(style) * 8 + URBAN_KINDS[kind]",
-  "new": "URBAN_STYLE_KEYS.indexOf(style) * 4 + URBAN_KINDS[kind]",
-  "tests": [
-   "test/world/urban/urban2_art.test.js"
-  ]
- },
- {
-  "name": "U2-a-province-moved",
-  "file": "src/world/urban/urbanRecords.js",
-  "old": "  Skyrim: 'granite', HighRock: 'breton',",
-  "new": "  Skyrim: 'breton', HighRock: 'breton',",
-  "tests": [
-   "test/world/urban/urban2_art.test.js"
-  ]
- },
- {
-  "name": "U2-installed-twice",
-  "file": "src/world/urban/urbanArt.js",
-  "old": "  if (_installed) return false;\n  _installed = true;\n  let made = null;",
-  "new": "  _installed = true;\n  let made = null;",
-  "tests": [
-   "test/world/urban/urban2_art.test.js"
-  ]
- },
- {
-  "name": "U2-castle-dour-in-rubble",
-  "file": "src/world/capitalSolitude.js",
-  "old": "const ASHLAR = urbanArt('ashlar')",
-  "new": "const ASHLAR = art(CAPITAL_ART.nordStone)",
-  "tests": [
-   "test/world/urban/urban2_art.test.js"
-  ]
- },
- {
-  "name": "U2-the-warehouse-framed-to-its-foot",
-  "file": "src/world/capitalSolitude.js",
-  "old": "  hall(mb, HALF_TIMBER, H.x, H.z, H.w, H.d, q + WAREHOUSE_PLINTH, q + H.h);",
-  "new": "  hall(mb, HALF_TIMBER, H.x, H.z, H.w, H.d, q - 1, q + H.h);",
-  "tests": [
-   "test/world/urban/urban2_art.test.js"
-  ]
- },
- {
-  "name": "U3-the-rows-unflipped",
-  "file": "src/world/urban/townFabric.js",
-  "old": "          const i = (by * C + (C - 1 - ay)) * W + bx * C + ax;",
-  "new": "          const i = (by * C + ay) * W + bx * C + ax;",
-  "tests": [
-   "test/world/urban/urban3_fabric.test.js"
-  ]
- },
- {
-  "name": "U3-a-prop-a-house",
-  "file": "src/world/urban/townFabric.js",
-  "old": "const isHouseByte = (a) => a >= 1 && a <= 23;",
-  "new": "const isHouseByte = (a) => a >= 1;",
-  "tests": [
-   "test/world/urban/urban3_fabric.test.js"
-  ]
- },
- {
-  "name": "U3-the-water-walked",
-  "file": "src/world/urban/townFabric.js",
-  "old": "          if (WATER.has(rec)) built[i] = 1;",
-  "new": "          if (false) built[i] = 1;",
-  "tests": [
-   "test/world/urban/urban3_fabric.test.js"
-  ]
- },
- {
-  "name": "U3-the-diagonal-a-side",
-  "file": "src/world/urban/townFabric.js",
-  "old": "if (y > 0) { relax(i, i - W, 3); if (x > 0) relax(i, i - W - 1, 4);",
-  "new": "if (y > 0) { relax(i, i - W, 3); if (x > 0) relax(i, i - W - 1, 3);",
-  "tests": [
-   "test/world/urban/urban3_fabric.test.js"
-  ]
- },
- {
-  "name": "U3-the-reach-short",
-  "file": "src/world/urban/townFabric.js",
-  "old": "for (let k = Math.max(0, x - r); k <= Math.min(W - 1, x + r); k++)",
-  "new": "for (let k = Math.max(0, x - r + 1); k <= Math.min(W - 1, x + r); k++)",
-  "tests": [
-   "test/world/urban/urban3_fabric.test.js"
-  ]
- },
- {
-  "name": "U3-the-road-shunned",
-  "file": "src/world/urban/townFabric.js",
-  "old": "(g.road[j] ? 0 : FABRIC.offRoad)",
-  "new": "(g.road[j] ? FABRIC.offRoad : 0)",
-  "tests": [
-   "test/world/urban/urban3_fabric.test.js"
-  ]
- },
- {
-  "name": "U3-the-pavement-band-swapped",
-  "file": "src/world/urban/townFabric.js",
-  "old": "carriageway[i] && nearHouse[i] > FABRIC.pave ? K.main : K.pave;",
-  "new": "carriageway[i] && nearHouse[i] > FABRIC.pave ? K.pave : K.main;",
-  "tests": [
-   "test/world/urban/urban3_fabric.test.js"
-  ],
-  "note": "TOWN-BOARDS: re-aimed by content - the pavement is the carriageway's ring by the eight ways now, the carriageway's cells by a house its pavement; the band swapped is the same mutant on the new line."
- },
- {
-  "name": "U3-a-village-given-streets",
-  "file": "src/world/urban/townFabric.js",
-  "old": "  if (mains && open.some((v) => v)) {",
-  "new": "  if (open.some((v) => v)) {",
-  "tests": [
-   "test/world/urban/urban3_fabric.test.js"
-  ]
- },
- {
-  "name": "U3-the-corridor-read-by-its-cell",
-  "file": "src/world/urban/townFabric.js",
-  "old": "  const wide = maxNear(clear, g.W, g.H, FABRIC.reach);",
-  "new": "  const wide = clear;",
-  "tests": [
-   "test/world/urban/urban3_fabric.test.js"
-  ]
- },
- {
-  "name": "U3-a-fence-on-a-house",
-  "file": "src/world/urban/townFabric.js",
-  "old": "if (out || kind[j] === K.off || isWay(j) || kind[j] === K.open) y.fence.push(edgeOf(i, j, dir));",
-  "new": "if (out || kind[j] === K.off || isWay(j) || kind[j] === K.open || kind[j] === K.built) y.fence.push(edgeOf(i, j, dir));",
-  "tests": [
-   "test/world/urban/urban3_fabric.test.js"
-  ]
- },
- {
-  "name": "U3-no-gate",
-  "file": "src/world/urban/townFabric.js",
-  "old": "      for (let k = from; k < from + FABRIC.gate; k++) y.gates.push(best[k]);\n",
-  "new": "",
-  "tests": [
-   "test/world/urban/urban3_fabric.test.js"
-  ]
- },
- {
-  "name": "U3-the-gate-shut",
-  "file": "src/world/urban/townFabric.js",
-  "old": "for (const e of y.fence) if (!gs.has(e)) shut[e.inner] = 1; }",
-  "new": "for (const e of y.fence) shut[e.inner] = 1; }",
-  "tests": [
-   "test/world/urban/urban3_fabric.test.js"
-  ]
- },
- {
-  "name": "U3-the-reach-unrun",
-  "file": "src/world/urban/townFabric.js",
-  "old": "  for (let guard = 0; guard <= 2 * (yards.length + walls.length) + 2; guard++) {",
-  "new": "  for (let guard = 0; guard < 0; guard++) {",
-  "tests": [
-   "test/world/urban/urban3_fabric.test.js"
-  ]
- },
- {
-  "name": "U3-the-pile-by-the-house",
-  "file": "src/world/urban/townFabric.js",
-  "old": "  pileClear: 2,",
-  "new": "  pileClear: 0,",
-  "tests": [
-   "test/world/urban/urban3_fabric.test.js"
-  ]
- },
- {
-  "name": "U3-the-nearer-mouth-walled",
-  "file": "src/world/urban/townFabric.js",
-  "old": "sort((a, b) => far(b) - far(a) || a[0].inner - b[0].inner)[0];",
-  "new": "sort((a, b) => far(a) - far(b) || a[0].inner - b[0].inner)[0];",
-  "tests": [
-   "test/world/urban/urban3_fabric.test.js"
-  ]
- },
- {
-  "name": "U3-a-capitals-plazas-walled-off",
-  "file": "src/world/urban/townFabric.js",
-  "old": "    if (outWalls && outRuns.length === 1",
-  "new": "    if (outRuns.length === 1",
-  "tests": [
-   "test/world/urban/urban3_fabric.test.js"
-  ]
- },
- {
-  "name": "U3M-the-kerb-over-the-step",
-  "file": "src/world/urban/townFabricModel.js",
-  "old": "export const FABRIC_PAVE_Y = 0.08;",
-  "new": "export const FABRIC_PAVE_Y = 0.18;",
-  "tests": [
-   "test/world/urban/urban3_model.test.js"
-  ]
- },
- {
-  "name": "U3M-the-pavement-at-the-roads-height",
-  "file": "src/world/urban/townFabricModel.js",
-  "old": "  flat(flags, pave, FABRIC_PAVE_Y);",
-  "new": "  flat(flags, pave, FABRIC_ROAD_Y);",
-  "tests": [
-   "test/world/urban/urban3_model.test.js"
-  ]
- },
- {
-  "name": "U3M-a-kerb-against-a-house",
-  "file": "src/world/urban/townFabricModel.js",
-  "old": "(pave[j] || plan.kind[j] === K.built)) return;",
-  "new": "(pave[j])) return;",
-  "tests": [
-   "test/world/urban/urban3_model.test.js"
-  ]
- },
- {
-  "name": "U3M-cobbles-in-a-hamlet",
-  "file": "src/world/urban/townFabricModel.js",
-  "old": "  if (cobbles && st.side) flat(",
-  "new": "  if (st.side) flat(",
-  "tests": [
-   "test/world/urban/urban3_model.test.js"
-  ]
- },
- {
-  "name": "U3M-the-stretch-unread",
-  "file": "src/world/urban/townFabricModel.js",
-  "old": "k = own > 0 ? len / own : 1,",
-  "new": "k = 1,",
-  "tests": [
-   "test/world/urban/urban3_model.test.js"
-  ]
- },
- {
-  "name": "U3M-the-foot-unlifted",
-  "file": "src/world/urban/townFabricModel.js",
-  "old": "    positions[i * 3 + 1] = p[i * 3 + 1] - y0;",
-  "new": "    positions[i * 3 + 1] = p[i * 3 + 1];",
-  "tests": [
-   "test/world/urban/urban3_model.test.js"
-  ]
- },
- {
-  "name": "U3M-a-mirror-left-unwound",
-  "file": "src/world/urban/townFabricModel.js",
-  "old": "  if (mirrored) for (let t = 0;",
-  "new": "  if (false) for (let t = 0;",
-  "tests": [
-   "test/world/urban/urban3_model.test.js"
-  ]
- },
- {
-  "name": "U3M-the-pillars-unlaid",
-  "file": "src/world/urban/townFabricModel.js",
-  "old": "      for (const [x, z] of [s.a, s.b]) mb.box(wallTex,",
-  "new": "      for (const [x, z] of []) mb.box(wallTex,",
-  "tests": [
-   "test/world/urban/urban3_model.test.js"
-  ]
- },
- {
-  "name": "U3M-the-dead-ends-wall-a-yards",
-  "file": "src/world/urban/townFabricModel.js",
-  "old": "runSegment(run, W), FABRIC_DEAD_WALL.h, FABRIC_DEAD_WALL.t,",
-  "new": "runSegment(run, W), FABRIC_WALL.h, FABRIC_DEAD_WALL.t,",
-  "tests": [
-   "test/world/urban/urban3_model.test.js"
-  ]
- },
- {
-  "name": "U3M-the-texels-unmapped",
-  "file": "src/world/urban/townFabricModel.js",
-  "old": "  const own = mb.groups.size ? vanillaTexels(mb.build()) : null;",
-  "new": "  const own = mb.groups.size ? mb.build() : null;",
-  "tests": [
-   "test/world/urban/urban3_model.test.js"
-  ]
- },
- {
-  "name": "U3M-the-gate-fenced",
-  "file": "src/world/urban/townFabricModel.js",
-  "old": "  for (const run of runsOf(plan.fences)) {\n    if (++laid",
-  "new": "  for (const run of runsOf([...plan.fences, ...plan.gates])) {\n    if (++laid",
-  "tests": [
-   "test/world/urban/urban3_model.test.js"
-  ]
- },
- {
-  "name": "U3S-the-imperial-city-dressed",
-  "file": "src/world/urban/townFabricStand.js",
-  "old": "  if (dfLocation.capital) return dfLocation.capital.k !== 0;",
-  "new": "  if (dfLocation.capital) return dfLocation.capital.k !== -1;",
-  "tests": [
-   "test/world/urban/urban3_stand.test.js"
-  ]
- },
- {
-  "name": "U3S-a-lair-dressed",
-  "file": "src/world/urban/townFabricStand.js",
-  "old": "  if (dfLocation.country) return !dfLocation.country.dungeon;",
-  "new": "  if (dfLocation.country) return true;",
-  "tests": [
-   "test/world/urban/urban3_stand.test.js"
-  ]
- },
- {
-  "name": "U3S-the-way-in-reversed",
-  "file": "src/world/urban/townFabricStand.js",
-  "old": "[(g.at[0] - g.out[0] * GATE_IN_M) / 1.6,",
-  "new": "[(g.at[0] + g.out[0] * GATE_IN_M) / 1.6,",
-  "tests": [
-   "test/world/urban/urban3_stand.test.js"
-  ]
- },
- {
-  "name": "U3S-the-anchor-from-the-south",
-  "file": "src/world/urban/townFabricStand.js",
-  "old": "((rows - ar) * BLOCK_M) / 1.6",
-  "new": "(ar * BLOCK_M) / 1.6",
-  "tests": [
-   "test/world/urban/urban3_stand.test.js"
-  ]
- },
- {
-  "name": "U3S-a-hamlet-crossed",
-  "file": "src/world/urban/townFabricStand.js",
-  "old": "ends: W >= H ? [side.W, side.E] : [side.S, side.N]",
-  "new": "ends: [side.W, side.E]",
-  "tests": [
-   "test/world/urban/urban3_stand.test.js"
-  ]
- },
- {
-  "name": "U3S-a-model-left-on-the-door",
-  "file": "src/world/urban/townFabricStand.js",
-  "old": "    _fabrics.delete(id);\n    unregisterCustomModel(f.modelId);",
-  "new": "    _fabrics.delete(id);",
-  "tests": [
-   "test/world/urban/urban3_stand.test.js"
-  ]
- },
- {
-  "name": "U3S-an-id-reused",
-  "file": "src/world/urban/townFabricStand.js",
-  "old": "  const modelId = TOWN_FABRIC_MODEL_BASE + _next++;",
-  "new": "  const modelId = TOWN_FABRIC_MODEL_BASE + _fabrics.size;",
-  "tests": [
-   "test/world/urban/urban3_stand.test.js"
-  ]
- },
- {
-  "name": "U3S-the-breath-unasked",
-  "file": "src/world/urban/townFabricStand.js",
-  "old": "  while (!r.done) { await breathe(); r = steps.next(); }",
-  "new": "  while (!r.done) { r = steps.next(); }",
-  "tests": [
-   "test/world/urban/urban3_stand.test.js"
-  ]
- },
- {
-  "name": "U3S-the-model-made-in-one-piece",
-  "file": "src/world/urban/townFabricStand.js",
-  "old": "    buildSliced: (ctx, breathe) => townFabricModelSliced(plan, style, opts(ctx), breathe),",
-  "new": "    buildSliced: null,",
-  "tests": [
-   "test/world/urban/urban3_stand.test.js"
-  ]
- },
- {
-  "name": "U3M-the-models-breath-unasked",
-  "file": "src/world/urban/townFabricModel.js",
-  "old": "  while (!r.done) { await breathe(); r = steps.next(); }",
-  "new": "  while (!r.done) { r = steps.next(); }",
-  "tests": [
-   "test/world/urban/urban3_stand.test.js"
-  ]
- },
- {
-  "name": "U3M-the-mapping-unbreathed",
-  "file": "src/world/urban/townFabricModel.js",
-  "old": "  yield 'mapped';\n",
-  "new": "",
-  "tests": [
-   "test/world/urban/urban3_stand.test.js"
-  ]
- },
- {
-  "name": "U3S-the-fabrics-shut-unread",
-  "file": "src/world/urban/townFabricStand.js",
-  "old": "(nav) => { shut(nav); shutTownFabric(nav, dfLocation); };",
-  "new": "(nav) => { shut(nav); };",
-  "tests": [
-   "test/world/urban/urban3_stand.test.js"
-  ]
- },
- {
-  "name": "U3S-the-model-unmerged",
-  "file": "src/scenes/pixelBuild.js",
-  "old": "          if (cpuF.normals && cpuF.uvs) { addStatic(cpuF, local, false); entry._batched = true; }\n",
-  "new": "",
-  "tests": [
-   "test/world/urban/urban3_stand.test.js"
-  ]
- },
- {
-  "name": "U3S-the-gates-a-walls",
-  "file": "src/world/townWalls.js",
-  "old": "wall.pieces.filter((p) => p.model === WALL_MODELS.gate).map((p) => Object.freeze(gateOpening(p)))",
-  "new": "wall.pieces.filter((p) => p.model === WALL_MODELS.wall).map((p) => Object.freeze(gateOpening(p)))",
-  "tests": [
-   "test/world/urban/urban3_stand.test.js"
-  ]
- }
+  {
+    "name": "U1-skyrim-off-its-stone",
+    "file": "src/world/urban/townLook.js",
+    "old": "  Skyrim: look(Mountain, \"the Nord's stone and timber - ashlar and rubble walls, framing over stone\"),",
+    "new": "  Skyrim: look(Temperate, \"the Nord's stone and timber - ashlar and rubble walls, framing over stone\"),",
+    "tests": [
+      "test/world/urban/urban1_look.test.js"
+    ]
+  },
+  {
+    "name": "U1-the-zone-unread",
+    "file": "src/world/urban/townLook.js",
+    "old": "  const z = zone ? TOWN_LOOK_ZONES[zone] : null;",
+    "new": "  const z = null;",
+    "tests": [
+      "test/world/urban/urban1_look.test.js"
+    ]
+  },
+  {
+    "name": "U1-the-whole-climate-swapped",
+    "file": "src/world/urban/townLook.js",
+    "old": "  return Object.freeze({ ...settings, climateType: base, zoneClimateType: settings.climateType });",
+    "new": "  return Object.freeze({\n    ...settings,\n    climateType: base,\n    groundArchive: base + 2,\n    zoneClimateType: settings.climateType,\n  });",
+    "tests": [
+      "test/world/urban/urban1_look.test.js"
+    ]
+  },
+  {
+    "name": "U1-the-set-unmoved",
+    "file": "src/world/urban/townLook.js",
+    "old": "  if (!settings || base == null || settings.climateType === base) return settings;",
+    "new": "  if (!settings || base == null || true) return settings;",
+    "tests": [
+      "test/world/urban/urban1_look.test.js"
+    ]
+  },
+  {
+    "name": "U1-the-imperial-city-dressed",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "climate: at.k === 0 ? getWorldClimateSettings",
+    "new": "climate: at.k === -1 ? getWorldClimateSettings",
+    "tests": [
+      "test/world/urban/urban1_look.test.js"
+    ]
+  },
+  {
+    "name": "U2-a-law-too-sharp",
+    "file": "src/world/urban/urbanArt.js",
+    "old": "    return 0.34 + q.p[2] * 0.34 + Math.max(-0.2, Math.min(0.2, (dx + dy) * 0.045)) - (q.edge < 2.2 ? 0.12 : 0);",
+    "new": "    return 0.34 + q.p[2] * 0.9 + Math.max(-0.2, Math.min(0.2, (dx + dy) * 0.045)) - (q.edge < 2.2 ? 0.12 : 0);",
+    "tests": [
+      "test/world/urban/urban2_art.test.js"
+    ]
+  },
+  {
+    "name": "U2-a-stake-off-the-side",
+    "file": "src/world/urban/urbanArt.js",
+    "old": "    w = 16,",
+    "new": "    w = 12,",
+    "tests": [
+      "test/world/urban/urban2_art.test.js"
+    ]
+  },
+  {
+    "name": "U2-a-style-off-its-index",
+    "file": "src/world/urban/urbanRecords.js",
+    "old": "export const styleArt = (style, kind) => [URBAN_ARCHIVE, URBAN_STYLE_KEYS.indexOf(style) * 8 + URBAN_KINDS[kind]];",
+    "new": "export const styleArt = (style, kind) => [URBAN_ARCHIVE, URBAN_STYLE_KEYS.indexOf(style) * 4 + URBAN_KINDS[kind]];",
+    "tests": [
+      "test/world/urban/urban2_art.test.js"
+    ]
+  },
+  {
+    "name": "U2-a-province-moved",
+    "file": "src/world/urban/urbanRecords.js",
+    "old": "  Skyrim: 'granite',",
+    "new": "  Skyrim: 'breton',",
+    "tests": [
+      "test/world/urban/urban2_art.test.js"
+    ]
+  },
+  {
+    "name": "U2-installed-twice",
+    "file": "src/world/urban/urbanArt.js",
+    "old": "  if (_installed) return false;\n  _installed = true;",
+    "new": "  _installed = true;",
+    "tests": [
+      "test/world/urban/urban2_art.test.js"
+    ]
+  },
+  {
+    "name": "U2-castle-dour-in-rubble",
+    "file": "src/world/capitalSolitude.js",
+    "old": "const ASHLAR = urbanArt('ashlar'),",
+    "new": "const ASHLAR = art(CAPITAL_ART.nordStone),",
+    "tests": [
+      "test/world/urban/urban2_art.test.js"
+    ]
+  },
+  {
+    "name": "U2-the-warehouse-framed-to-its-foot",
+    "file": "src/world/capitalSolitude.js",
+    "old": "  hall(mb, HALF_TIMBER, H.x, H.z, H.w, H.d, q + WAREHOUSE_PLINTH, q + H.h);",
+    "new": "  hall(mb, HALF_TIMBER, H.x, H.z, H.w, H.d, q - 1, q + H.h);",
+    "tests": [
+      "test/world/urban/urban2_art.test.js"
+    ]
+  },
+  {
+    "name": "U3-the-rows-unflipped",
+    "file": "src/world/urban/townFabric.js",
+    "old": "          const i = (by * C + (C - 1 - ay)) * W + bx * C + ax;",
+    "new": "          const i = (by * C + ay) * W + bx * C + ax;",
+    "tests": [
+      "test/world/urban/urban3_fabric.test.js"
+    ]
+  },
+  {
+    "name": "U3-a-prop-a-house",
+    "file": "src/world/urban/townFabric.js",
+    "old": "const isHouseByte = (a) => a >= 1 && a <= 23;",
+    "new": "const isHouseByte = (a) => a >= 1;",
+    "tests": [
+      "test/world/urban/urban3_fabric.test.js"
+    ]
+  },
+  {
+    "name": "U3-the-water-walked",
+    "file": "src/world/urban/townFabric.js",
+    "old": "          if (WATER.has(rec)) built[i] = 1;",
+    "new": "          if (false) built[i] = 1;",
+    "tests": [
+      "test/world/urban/urban3_fabric.test.js"
+    ]
+  },
+  {
+    "name": "U3-the-diagonal-a-side",
+    "file": "src/world/urban/townFabric.js",
+    "old": "        if (x > 0) relax(i, i - W - 1, 4);",
+    "new": "        if (x > 0) relax(i, i - W - 1, 3);",
+    "tests": [
+      "test/world/urban/urban3_fabric.test.js"
+    ]
+  },
+  {
+    "name": "U3-the-reach-short",
+    "file": "src/world/urban/townFabric.js",
+    "old": "      for (let k = Math.max(0, x - r); k <= Math.min(W - 1, x + r); k++) m = Math.max(m, v[z * W + k]);",
+    "new": "      for (let k = Math.max(0, x - r + 1); k <= Math.min(W - 1, x + r); k++) m = Math.max(m, v[z * W + k]);",
+    "tests": [
+      "test/world/urban/urban3_fabric.test.js"
+    ]
+  },
+  {
+    "name": "U3-the-road-shunned",
+    "file": "src/world/urban/townFabric.js",
+    "old": "      const nc = c + 1 + (g.road[j] ? 0 : FABRIC.offRoad) + FABRIC.mainCost * Math.max(0, FABRIC.mainWant - clear[j]);",
+    "new": "      const nc = c + 1 + (g.road[j] ? FABRIC.offRoad : 0) + FABRIC.mainCost * Math.max(0, FABRIC.mainWant - clear[j]);",
+    "tests": [
+      "test/world/urban/urban3_fabric.test.js"
+    ]
+  },
+  {
+    "name": "U3-the-pavement-band-swapped",
+    "file": "src/world/urban/townFabric.js",
+    "old": "      if (open[i] && round[i]) kind[i] = carriageway[i] && nearHouse[i] > FABRIC.pave ? K.main : K.pave;",
+    "new": "      if (open[i] && round[i]) kind[i] = carriageway[i] && nearHouse[i] > FABRIC.pave ? K.pave : K.main;",
+    "tests": [
+      "test/world/urban/urban3_fabric.test.js"
+    ],
+    "note": "TOWN-BOARDS: re-aimed by content - the pavement is the carriageway's ring by the eight ways now, the carriageway's cells by a house its pavement; the band swapped is the same mutant on the new line."
+  },
+  {
+    "name": "U3-a-village-given-streets",
+    "file": "src/world/urban/townFabric.js",
+    "old": "  if (mains && open.some((v) => v)) {",
+    "new": "  if (open.some((v) => v)) {",
+    "tests": [
+      "test/world/urban/urban3_fabric.test.js"
+    ]
+  },
+  {
+    "name": "U3-the-corridor-read-by-its-cell",
+    "file": "src/world/urban/townFabric.js",
+    "old": "  const wide = maxNear(clear, g.W, g.H, FABRIC.reach);",
+    "new": "  const wide = clear;",
+    "tests": [
+      "test/world/urban/urban3_fabric.test.js"
+    ]
+  },
+  {
+    "name": "U3-a-fence-on-a-house",
+    "file": "src/world/urban/townFabric.js",
+    "old": "        if (out || kind[j] === K.off || isWay(j) || kind[j] === K.open) y.fence.push(edgeOf(i, j, dir)); // (two yards never touch: each is a whole piece of the grass)",
+    "new": "        if (out || kind[j] === K.off || isWay(j) || kind[j] === K.open || kind[j] === K.built)\n          y.fence.push(edgeOf(i, j, dir)); // (two yards never touch: each is a whole piece of the grass)",
+    "tests": [
+      "test/world/urban/urban3_fabric.test.js"
+    ]
+  },
+  {
+    "name": "U3-no-gate",
+    "file": "src/world/urban/townFabric.js",
+    "old": "      for (let k = from; k < from + FABRIC.gate; k++) y.gates.push(best[k]);\n    }",
+    "new": "    }",
+    "tests": [
+      "test/world/urban/urban3_fabric.test.js"
+    ]
+  },
+  {
+    "name": "U3-the-gate-shut",
+    "file": "src/world/urban/townFabric.js",
+    "old": "      for (const e of y.fence) if (!gs.has(e)) shut[e.inner] = 1;",
+    "new": "      for (const e of y.fence) shut[e.inner] = 1;",
+    "tests": [
+      "test/world/urban/urban3_fabric.test.js"
+    ]
+  },
+  {
+    "name": "U3-the-reach-unrun",
+    "file": "src/world/urban/townFabric.js",
+    "old": "  for (let guard = 0; guard <= 2 * (yards.length + walls.length) + 2; guard++) {",
+    "new": "  for (let guard = 0; guard < 0; guard++) {",
+    "tests": [
+      "test/world/urban/urban3_fabric.test.js"
+    ]
+  },
+  {
+    "name": "U3-the-pile-by-the-house",
+    "file": "src/world/urban/townFabric.js",
+    "old": "  pileClear: 2, // a woodpile's cell this far from every house at the least (never before a door)",
+    "new": "  pileClear: 0, // a woodpile's cell this far from every house at the least (never before a door)",
+    "tests": [
+      "test/world/urban/urban3_fabric.test.js"
+    ]
+  },
+  {
+    "name": "U3-the-nearer-mouth-walled",
+    "file": "src/world/urban/townFabric.js",
+    "old": "      closed = mouthRuns.slice().sort((a, b) => far(b) - far(a) || a[0].inner - b[0].inner)[0];",
+    "new": "      closed = mouthRuns.slice().sort((a, b) => far(a) - far(b) || a[0].inner - b[0].inner)[0];",
+    "tests": [
+      "test/world/urban/urban3_fabric.test.js"
+    ]
+  },
+  {
+    "name": "U3-a-capitals-plazas-walled-off",
+    "file": "src/world/urban/townFabric.js",
+    "old": "    if (outWalls && outRuns.length === 1 && outRuns[0].length <= FABRIC.deadMouth)",
+    "new": "    if (outRuns.length === 1 && outRuns[0].length <= FABRIC.deadMouth)",
+    "tests": [
+      "test/world/urban/urban3_fabric.test.js"
+    ]
+  },
+  {
+    "name": "U3M-the-kerb-over-the-step",
+    "file": "src/world/urban/townFabricModel.js",
+    "old": "export const FABRIC_PAVE_Y = 0.08;",
+    "new": "export const FABRIC_PAVE_Y = 0.18;",
+    "tests": [
+      "test/world/urban/urban3_model.test.js"
+    ]
+  },
+  {
+    "name": "U3M-the-pavement-at-the-roads-height",
+    "file": "src/world/urban/townFabricModel.js",
+    "old": "  flat(flags, pave, FABRIC_PAVE_Y);",
+    "new": "  flat(flags, pave, FABRIC_ROAD_Y);",
+    "tests": [
+      "test/world/urban/urban3_model.test.js"
+    ]
+  },
+  {
+    "name": "U3M-a-kerb-against-a-house",
+    "file": "src/world/urban/townFabricModel.js",
+    "old": "      if (inside && (pave[j] || surf[j] === K.built)) return;",
+    "new": "      if (inside && pave[j]) return;",
+    "tests": [
+      "test/world/urban/urban3_model.test.js"
+    ]
+  },
+  {
+    "name": "U3M-cobbles-in-a-hamlet",
+    "file": "src/world/urban/townFabricModel.js",
+    "old": "    k === K.pave ? F.flags : (k === K.main && st.carriage) || (k === K.side && cobbles && st.side) ? F.road : F.none,",
+    "new": "    k === K.pave ? F.flags : (k === K.main && st.carriage) || (k === K.side && st.side) ? F.road : F.none,",
+    "tests": [
+      "test/world/urban/urban3_model.test.js"
+    ]
+  },
+  {
+    "name": "U3M-the-stretch-unread",
+    "file": "src/world/urban/townFabricModel.js",
+    "old": "    k = own > 0 ? len / own : 1,",
+    "new": "    k = 1,",
+    "tests": [
+      "test/world/urban/urban3_model.test.js"
+    ]
+  },
+  {
+    "name": "U3M-the-foot-unlifted",
+    "file": "src/world/urban/townFabricModel.js",
+    "old": "    positions[i * 3 + 1] = p[i * 3 + 1] - y0;",
+    "new": "    positions[i * 3 + 1] = p[i * 3 + 1];",
+    "tests": [
+      "test/world/urban/urban3_model.test.js"
+    ]
+  },
+  {
+    "name": "U3M-a-mirror-left-unwound",
+    "file": "src/world/urban/townFabricModel.js",
+    "old": "  if (mirrored)",
+    "new": "  if (false)",
+    "tests": [
+      "test/world/urban/urban3_model.test.js"
+    ]
+  },
+  {
+    "name": "U3M-the-pillars-unlaid",
+    "file": "src/world/urban/townFabricModel.js",
+    "old": "      for (const [x, z] of [s.a, s.b])",
+    "new": "      for (const [x, z] of [])",
+    "tests": [
+      "test/world/urban/urban3_model.test.js"
+    ]
+  },
+  {
+    "name": "U3M-the-dead-ends-wall-a-yards",
+    "file": "src/world/urban/townFabricModel.js",
+    "old": "      FABRIC_DEAD_WALL.h,",
+    "new": "      FABRIC_WALL.h,",
+    "tests": [
+      "test/world/urban/urban3_model.test.js"
+    ]
+  },
+  {
+    "name": "U3M-the-texels-unmapped",
+    "file": "src/world/urban/townFabricModel.js",
+    "old": "  const own = mb.groups.size ? vanillaTexels(mb.build()) : null;",
+    "new": "  const own = mb.groups.size ? mb.build() : null;",
+    "tests": [
+      "test/world/urban/urban3_model.test.js"
+    ]
+  },
+  {
+    "name": "U3M-the-gate-fenced",
+    "file": "src/world/urban/townFabricModel.js",
+    "old": "  for (const run of runsOf(plan.fences)) {",
+    "new": "  for (const run of runsOf([...plan.fences, ...plan.gates])) {",
+    "tests": [
+      "test/world/urban/urban3_model.test.js"
+    ]
+  },
+  {
+    "name": "U3S-the-imperial-city-dressed",
+    "file": "src/world/urban/townFabricStand.js",
+    "old": "  if (dfLocation.capital) return dfLocation.capital.k !== 0;",
+    "new": "  if (dfLocation.capital) return dfLocation.capital.k !== -1;",
+    "tests": [
+      "test/world/urban/urban3_stand.test.js"
+    ]
+  },
+  {
+    "name": "U3S-a-lair-dressed",
+    "file": "src/world/urban/townFabricStand.js",
+    "old": "  if (dfLocation.country) return !dfLocation.country.dungeon;",
+    "new": "  if (dfLocation.country) return true;",
+    "tests": [
+      "test/world/urban/urban3_stand.test.js"
+    ]
+  },
+  {
+    "name": "U3S-the-way-in-reversed",
+    "file": "src/world/urban/townFabricStand.js",
+    "old": "            (g.at[0] - g.out[0] * GATE_IN_M) / 1.6,",
+    "new": "            (g.at[0] + g.out[0] * GATE_IN_M) / 1.6,",
+    "tests": [
+      "test/world/urban/urban3_stand.test.js"
+    ]
+  },
+  {
+    "name": "U3S-the-anchor-from-the-south",
+    "file": "src/world/urban/townFabricStand.js",
+    "old": "      centre = /** @type {[number, number]} */ ([(ax * BLOCK_M) / 1.6, ((rows - ar) * BLOCK_M) / 1.6]);",
+    "new": "      centre = /** @type {[number, number]} */ ([(ax * BLOCK_M) / 1.6, (ar * BLOCK_M) / 1.6]);",
+    "tests": [
+      "test/world/urban/urban3_stand.test.js"
+    ]
+  },
+  {
+    "name": "U3S-a-hamlet-crossed",
+    "file": "src/world/urban/townFabricStand.js",
+    "old": "    return { mains: true, ends: W >= H ? [side.W, side.E] : [side.S, side.N], centre: mid };",
+    "new": "    return { mains: true, ends: [side.W, side.E], centre: mid };",
+    "tests": [
+      "test/world/urban/urban3_stand.test.js"
+    ]
+  },
+  {
+    "name": "U3S-a-model-left-on-the-door",
+    "file": "src/world/urban/townFabricStand.js",
+    "old": "    unregisterCustomModel(f.modelId);\n  }",
+    "new": "  }",
+    "tests": [
+      "test/world/urban/urban3_stand.test.js"
+    ]
+  },
+  {
+    "name": "U3S-an-id-reused",
+    "file": "src/world/urban/townFabricStand.js",
+    "old": "  const modelId = TOWN_FABRIC_MODEL_BASE + _next++;",
+    "new": "  const modelId = TOWN_FABRIC_MODEL_BASE + _fabrics.size;",
+    "tests": [
+      "test/world/urban/urban3_stand.test.js"
+    ]
+  },
+  {
+    "name": "U3S-the-breath-unasked",
+    "file": "src/world/urban/townFabricStand.js",
+    "old": "    await breathe();\n    r = steps.next();",
+    "new": "    r = steps.next();",
+    "tests": [
+      "test/world/urban/urban3_stand.test.js"
+    ]
+  },
+  {
+    "name": "U3S-the-model-made-in-one-piece",
+    "file": "src/world/urban/townFabricStand.js",
+    "old": "      buildSliced: (ctx, breathe) => townFabricModelSliced(plan, style, opts(ctx), breathe), // made a breath at a time as it was planned",
+    "new": "      buildSliced: null, // made a breath at a time as it was planned",
+    "tests": [
+      "test/world/urban/urban3_stand.test.js"
+    ]
+  },
+  {
+    "name": "U3M-the-models-breath-unasked",
+    "file": "src/world/urban/townFabricModel.js",
+    "old": "    await breathe();\n    r = steps.next();",
+    "new": "    r = steps.next();",
+    "tests": [
+      "test/world/urban/urban3_stand.test.js"
+    ]
+  },
+  {
+    "name": "U3M-the-mapping-unbreathed",
+    "file": "src/world/urban/townFabricModel.js",
+    "old": "  yield 'mapped';\n  return composeArenaModel([...(own ? [own] : []), ...parts]);",
+    "new": "  return composeArenaModel([...(own ? [own] : []), ...parts]);",
+    "tests": [
+      "test/world/urban/urban3_stand.test.js"
+    ]
+  },
+  {
+    "name": "U3S-the-fabrics-shut-unread",
+    "file": "src/world/urban/townFabricStand.js",
+    "old": "    shutTownFabric(nav, dfLocation);\n  };",
+    "new": "  };",
+    "tests": [
+      "test/world/urban/urban3_stand.test.js"
+    ]
+  },
+  {
+    "name": "U3S-the-model-unmerged",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "          if (cpuF.normals && cpuF.uvs) { addStatic(cpuF, local, false); entry._batched = true; }\n",
+    "new": "",
+    "tests": [
+      "test/world/urban/urban3_stand.test.js"
+    ]
+  },
+  {
+    "name": "U3S-the-gates-a-walls",
+    "file": "src/world/townWalls.js",
+    "old": "wall.pieces.filter((p) => p.model === WALL_MODELS.gate).map((p) => Object.freeze(gateOpening(p)))",
+    "new": "wall.pieces.filter((p) => p.model === WALL_MODELS.wall).map((p) => Object.freeze(gateOpening(p)))",
+    "tests": [
+      "test/world/urban/urban3_stand.test.js"
+    ]
+  }
 ]

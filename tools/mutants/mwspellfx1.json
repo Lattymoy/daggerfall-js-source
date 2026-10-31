@@ -2,8 +2,8 @@
   {
     "name": "MWSPELLFX1-vis-at-a-key-is-the-one-before",
     "file": "src/formats/morrowind/mwVfx.js",
-    "old": "while (lo < hi) { const mid = (lo + hi) >>> 1; if (time < keys[mid].time) hi = mid; else lo = mid + 1; }",
-    "new": "while (lo < hi) { const mid = (lo + hi) >>> 1; if (time <= keys[mid].time) hi = mid; else lo = mid + 1; }",
+    "old": "    if (time < keys[mid].time) hi = mid;",
+    "new": "    if (time <= keys[mid].time) hi = mid;",
     "tests": [
       "test/formats/morrowind/mwspellfx1.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "MWSPELLFX1-the-alpha-uniform-replaces",
     "file": "src/formats/morrowind/mwVfx.js",
-    "old": "clamp01(diffuseA * alphaUniform)];",
-    "new": "clamp01(alphaUniform)];",
+    "old": "    clamp01(diffuseA * alphaUniform),",
+    "new": "    clamp01(alphaUniform),",
     "tests": [
       "test/formats/morrowind/mwspellfx1.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "MWSPELLFX1-the-billboard-faces-away",
     "file": "src/formats/morrowind/mwVfx.js",
-    "old": "          [-relForward[0], -relForward[1], -relForward[2]]);",
-    "new": "          [relForward[0], relForward[1], relForward[2]]);",
+    "old": "          [-relForward[0], -relForward[1], -relForward[2]],",
+    "new": "          [relForward[0], relForward[1], relForward[2]],",
     "tests": [
       "test/formats/morrowind/mwspellfx1.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "MWSPELLFX1-world-sparks-sized-by-the-effect",
     "file": "src/formats/morrowind/mwVfx.js",
-    "old": "sizeScale: affineScale(viewA) });",
-    "new": "sizeScale: affineScale(affineMul(viewA, placeA)) });",
+    "old": "            sizeScale: affineScale(viewA),",
+    "new": "            sizeScale: affineScale(affineMul(viewA, placeA)),",
     "tests": [
       "test/formats/morrowind/mwspellfx1.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "MWSPELLFX1-a-loop-starts-over",
     "file": "src/formats/morrowind/mwVfx.js",
-    "old": "        if (loop && desc.length > 0) time -= desc.length * Math.floor(time / desc.length);",
-    "new": "        if (loop && desc.length > 0) time = 0;",
+    "old": "          time -= desc.length * Math.floor(time / desc.length); // UpdateVfxCallback: the remainder carried",
+    "new": "          time = 0; // UpdateVfxCallback: the remainder carried",
     "tests": [
       "test/formats/morrowind/mwspellfx1.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "MWSPELLFX1-every-bolt-wears-the-texture",
     "file": "src/formats/morrowind/mwSpellFx.js",
-    "old": "        texture: effects.length === 1 ? effects[0]?.particle || null : null,",
-    "new": "        texture: effects[0]?.particle || null,",
+    "old": "        texture: effects.length === 1 ? effects[0]?.particle || null : null, // one projectile effect: the first effect's texture",
+    "new": "        texture: effects[0]?.particle || null, // one projectile effect: the first effect's texture",
     "tests": [
       "test/formats/morrowind/mwspellfx1.test.js"
     ]
@@ -128,7 +128,7 @@
   {
     "name": "MWSPELLFX1-a-casting-visual-per-effect",
     "file": "src/formats/morrowind/mwSpellFx.js",
-    "old": "    cast: effects.map((m) => visual(m, 'cast')).filter((v, i, all) => v && all.findIndex((w) => w && w.model === v.model) === i),",
+    "old": "    cast: effects\n      .map((m) => visual(m, 'cast'))\n      .filter((v, i, all) => v && all.findIndex((w) => w && w.model === v.model) === i),",
     "new": "    cast: effects.map((m) => visual(m, 'cast')).filter(Boolean),",
     "tests": [
       "test/formats/morrowind/mwspellfx1.test.js"
@@ -137,7 +137,7 @@
   {
     "name": "MWSPELLFX1-the-area-at-its-own-size",
     "file": "src/formats/morrowind/mwSpellFx.js",
-    "old": "export const areaVisualScale = (radiusMetres, unitsPerMetre) => 2 * (radiusMetres * unitsPerMetre) / MW_UNITS_PER_FOOT;",
+    "old": "export const areaVisualScale = (radiusMetres, unitsPerMetre) =>\n  (2 * (radiusMetres * unitsPerMetre)) / MW_UNITS_PER_FOOT;",
     "new": "export const areaVisualScale = (radiusMetres, unitsPerMetre) => (radiusMetres * unitsPerMetre) / MW_UNITS_PER_FOOT;",
     "tests": [
       "test/formats/morrowind/mwspellfx1.test.js"
@@ -155,8 +155,8 @@
   {
     "name": "MWSPELLFX1-magic-harm-is-all-one",
     "file": "src/formats/morrowind/mwSpellFx.js",
-    "old": "if (ELEMENTAL.has(type) && Number.isInteger(element) && element >= 0 && element <= 3) return ELEMENT_DAMAGE[element];",
-    "new": "if (ELEMENTAL.has(type) && Number.isInteger(element) && element >= 0 && element <= 4) return ELEMENT_DAMAGE[element];",
+    "old": "  if (ELEMENTAL.has(type) && Number.isInteger(element) && element >= 0 && element <= 3) return ELEMENT_DAMAGE[element];",
+    "new": "  if (ELEMENTAL.has(type) && Number.isInteger(element) && element >= 0 && element <= 4) return ELEMENT_DAMAGE[element];",
     "tests": [
       "test/formats/morrowind/mwspellfx1.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "MWSPELLFX1-the-bolt-spins-backwards",
     "file": "src/formats/morrowind/mwSpellFx.js",
-    "old": "  const a = -seconds * BOLT_SPIN_PER_S;   // about -Y: Ry(-angle)",
-    "new": "  const a = seconds * BOLT_SPIN_PER_S;   // about -Y: Ry(-angle)",
+    "old": "  const a = -seconds * BOLT_SPIN_PER_S; // about -Y: Ry(-angle)",
+    "new": "  const a = seconds * BOLT_SPIN_PER_S; // about -Y: Ry(-angle)",
     "tests": [
       "test/formats/morrowind/mwspellfx1.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "MWSPELLFX1-drawn-by-nobody",
     "file": "src/scenes/hostMagic.js",
-    "old": "      const mw = mwFx.draw();   // MW-SPELLFX1: Morrowind's spell effects, through the renderer's own particle path",
-    "new": "      const mw = false;",
+    "old": "      const mw = drawKills() + Number(mwFx.draw()) > 0;   // STOREFRONT: the kill effects; MW-SPELLFX1: Morrowind's spell effects, through the renderer's own particle path",
+    "new": "      const mw = drawKills() > 0;",
     "tests": [
       "test/formats/morrowind/mwspellfx1.test.js"
     ]

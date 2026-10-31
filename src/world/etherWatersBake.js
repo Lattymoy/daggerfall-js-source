@@ -31,12 +31,21 @@
 // so this thread's queries never flood a cell twice.
 // ═══════════════════════════════════════════════════════════════════
 import {
-  DeepWatersBake, BAY_FRAME, inFrame, floodSteps, classifyPixel, coarseCandidateBits, pixelWaterSampler, PIXEL_MIXED, PIXEL_SEA, PIXEL_LAND,
+  DeepWatersBake,
+  BAY_FRAME,
+  inFrame,
+  floodSteps,
+  classifyPixel,
+  coarseCandidateBits,
+  pixelWaterSampler,
+  PIXEL_MIXED,
+  PIXEL_SEA,
+  PIXEL_LAND,
 } from './deepWater/deepWatersBake.js';
 import { ETHER_BOX, ISLE_CELL_PX, etherCellOf, etherFrame, isleAt } from './ethericSea.js';
 import { etherTemplateOf, etherPlaceId } from './etherPlaces.js';
-import { outlineOfBasis, rectOfBasis } from './terrain/terrainTiles.js';   // AUDIT TESA III E1-4: an isle's outline off its template's basis
-import { TAMRIEL_ROW } from './tamrielWatersBake.js';   // TAMRIEL-DEEP: the continent's rows routed to its bake
+import { outlineOfBasis, rectOfBasis } from './terrain/terrainTiles.js'; // AUDIT TESA III E1-4: an isle's outline off its template's basis
+import { TAMRIEL_ROW } from './tamrielWatersBake.js'; // TAMRIEL-DEEP: the continent's rows routed to its bake
 
 /** The Eltheric Ocean's frame: its box, as the stream holds it (world/ethericSea.js etherFrame). */
 export const ETHER_FRAME = Object.freeze(etherFrame());
@@ -56,17 +65,31 @@ const NONE8 = new Uint8Array(8);
  * @param {(template: any) => { xMin: number, xMax: number, yMin: number, yMax: number, shape?: any }} rectOf
  */
 export function etherPlaceRects(templates, rectOf) {
-  const bases = [], seen = new Map();
-  const pack = (a) => { const bits = new Uint8Array((a.length + 7) >> 3); for (let i = 0; i < a.length; i++) if (a[i]) bits[i >> 3] |= 1 << (i & 7); return bits; };
+  const bases = [],
+    seen = new Map();
+  const pack = (a) => {
+    const bits = new Uint8Array((a.length + 7) >> 3);
+    for (let i = 0; i < a.length; i++) if (a[i]) bits[i >> 3] |= 1 << (i & 7);
+    return bits;
+  };
   const basisIndex = (b) => {
     if (!b) return -1;
-    const bits = pack(b.padded), stamp = pack(b.stamp), fields = b.fields ? pack(b.fields) : null;   // FB1028: and its crops' tiles
+    const bits = pack(b.padded),
+      stamp = pack(b.stamp),
+      fields = b.fields ? pack(b.fields) : null; // FB1028: and its crops' tiles
     const key = `${b.PW},${b.PH},${b.walled ? 1 : 0},${b.x0},${b.y0},${b.clear}:${bits.join(',')}:${stamp.join(',')}:${fields?.join(',') ?? ''}`;
     let k = seen.get(key);
-    if (k === undefined) { seen.set(key, k = bases.length); bases.push({ PW: b.PW, PH: b.PH, walled: b.walled, x0: b.x0, y0: b.y0, clear: b.clear, bits, stamp, fields }); }
+    if (k === undefined) {
+      seen.set(key, (k = bases.length));
+      bases.push({ PW: b.PW, PH: b.PH, walled: b.walled, x0: b.x0, y0: b.y0, clear: b.clear, bits, stamp, fields });
+    }
     return k;
   };
-  const rows = (list) => (list ?? []).map((t) => { const r = rectOf(t); return [r.xMin, r.xMax, r.yMin, r.yMax, basisIndex(r.shape?.basis ?? null)]; });
+  const rows = (list) =>
+    (list ?? []).map((t) => {
+      const r = rectOf(t);
+      return [r.xMin, r.xMax, r.yMin, r.yMax, basisIndex(r.shape?.basis ?? null)];
+    });
   return { towns: rows(templates?.towns), havens: rows(templates?.havens), ruins: rows(templates?.ruins), bases };
 }
 
@@ -80,8 +103,22 @@ function isleRect(basis, isle) {
   const k = `${isle.key}|${basis.PW},${basis.PH},${basis.x0},${basis.y0}`;
   let r = _isleRects.get(k);
   if (r) return r;
-  const unpack = (bits) => { const a = new Uint8Array(basis.PW * basis.PH); for (let i = 0; i < a.length; i++) a[i] = (bits[i >> 3] >> (i & 7)) & 1; return a; };
-  const b = { padded: unpack(basis.bits), stamp: unpack(basis.stamp), fields: basis.fields ? unpack(basis.fields) : null, PW: basis.PW, PH: basis.PH, walled: basis.walled, x0: basis.x0, y0: basis.y0, clear: basis.clear };
+  const unpack = (bits) => {
+    const a = new Uint8Array(basis.PW * basis.PH);
+    for (let i = 0; i < a.length; i++) a[i] = (bits[i >> 3] >> (i & 7)) & 1;
+    return a;
+  };
+  const b = {
+    padded: unpack(basis.bits),
+    stamp: unpack(basis.stamp),
+    fields: basis.fields ? unpack(basis.fields) : null,
+    PW: basis.PW,
+    PH: basis.PH,
+    walled: basis.walled,
+    x0: basis.x0,
+    y0: basis.y0,
+    clear: basis.clear,
+  };
   r = rectOfBasis(b, outlineOfBasis(b, etherPlaceId(isle)));
   if (_isleRects.size >= ISLE_SHAPES_KEPT) _isleRects.delete(/** @type {string} */ (_isleRects.keys().next().value));
   _isleRects.set(k, r);
@@ -123,16 +160,28 @@ export class EtherWatersBake extends DeepWatersBake {
 
   _class(i, px, py) {
     let c = this._cls.get(i);
-    if (c === undefined) { c = classifyPixel(this.woods, px, py); this._cls.set(i, c); }
+    if (c === undefined) {
+      c = classifyPixel(this.woods, px, py);
+      this._cls.set(i, c);
+    }
     return c;
   }
 
-  _caches() { return [this._fine, this._full, this._dist, this._edge, this._sea, this._cls]; }
+  _caches() {
+    return [this._fine, this._full, this._dist, this._edge, this._sea, this._cls];
+  }
 
   /** AUDIT ETHER-OW C1-3: whether this thread holds the sea bits the dry check reads - the pixel's and its cardinal
    *  neighbours' in the box - without a flood: those the worker sent (adoptPlanes) or this thread already flooded. */
   holdsSea(px, py) {
-    for (const [x, y] of [[px, py], [px - 1, py], [px + 1, py], [px, py - 1], [px, py + 1]]) if (this.inFrame(x, y) && !this._sea.has(this._index(x, y))) return false;
+    for (const [x, y] of [
+      [px, py],
+      [px - 1, py],
+      [px + 1, py],
+      [px, py - 1],
+      [px, py + 1],
+    ])
+      if (this.inFrame(x, y) && !this._sea.has(this._index(x, y))) return false;
     return true;
   }
 
@@ -146,10 +195,16 @@ export class EtherWatersBake extends DeepWatersBake {
   /** THE FLOOD of the cell holding (px, py), from its border; every pixel of it kept. Answers (px, py)'s. */
   _floodCell(px, py, want) {
     const [cx, cy] = etherCellOf(px, py);
-    const x0 = ETHER_BOX.x0 + cx * ISLE_CELL_PX, y0 = ETHER_BOX.y0 + cy * ISLE_CELL_PX;
-    const w = Math.min(ISLE_CELL_PX, ETHER_BOX.x1 - x0), h = Math.min(ISLE_CELL_PX, ETHER_BOX.y1 - y0);   // the box's east cells are cut short
-    const steps = floodSteps(w, h, (x, y) => this._class(this._index(x0 + x, y0 + y), x0 + x, y0 + y),
-      (x, y) => coarseCandidateBits(pixelWaterSampler(this.woods, x0 + x, y0 + y, this.locationRectAt(x0 + x, y0 + y))));
+    const x0 = ETHER_BOX.x0 + cx * ISLE_CELL_PX,
+      y0 = ETHER_BOX.y0 + cy * ISLE_CELL_PX;
+    const w = Math.min(ISLE_CELL_PX, ETHER_BOX.x1 - x0),
+      h = Math.min(ISLE_CELL_PX, ETHER_BOX.y1 - y0); // the box's east cells are cut short
+    const steps = floodSteps(
+      w,
+      h,
+      (x, y) => this._class(this._index(x0 + x, y0 + y), x0 + x, y0 + y),
+      (x, y) => coarseCandidateBits(pixelWaterSampler(this.woods, x0 + x, y0 + y, this.locationRectAt(x0 + x, y0 + y))),
+    );
     let r = steps.next();
     while (!r.done) r = steps.next();
     const { state, partialIndex, partialBits } = /** @type {any} */ (r.value);
@@ -157,7 +212,8 @@ export class EtherWatersBake extends DeepWatersBake {
     for (let k = 0; k < partialIndex.length; k++) partial.set(partialIndex[k], partialBits.slice(k * 8, k * 8 + 8));
     let out = NONE8;
     for (let k = 0; k < w * h; k++) {
-      const s = state[k], i = this._index(x0 + (k % w), y0 + Math.floor(k / w));
+      const s = state[k],
+        i = this._index(x0 + (k % w), y0 + Math.floor(k / w));
       const bits = s === 1 ? ALL8 : s === 2 ? partial.get(k) : NONE8;
       this._sea.set(i, bits);
       if (i === want) out = bits;
@@ -167,23 +223,26 @@ export class EtherWatersBake extends DeepWatersBake {
 
   /** A row carries its pixel's sea bits and class too: this thread's queries flood nothing the worker flooded. */
   _row(i, row) {
-    const sea = this._sea.get(i), cls = this._cls.get(i);
+    const sea = this._sea.get(i),
+      cls = this._cls.get(i);
     return { ...row, f: ETHER_ROW, sea: sea ? sea.slice() : null, cls: cls ?? null };
   }
 
   prepare(px, py) {
     this._keep(px, py);
     super.prepare(px, py);
-    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (this.inFrame(px + dx, py + dy)) this.seaBits(px + dx, py + dy);
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++) if (this.inFrame(px + dx, py + dy)) this.seaBits(px + dx, py + dy);
   }
 
   adoptPlanes(rows) {
     for (const r of rows ?? []) {
       if (!Number.isInteger(r?.i) || r.i < 0 || r.i >= this.frame.w * this.frame.h) continue;
       if (r.sea && r.sea.length === 8 && !this._sea.has(r.i)) this._sea.set(r.i, r.sea);
-      if ((r.cls === PIXEL_LAND || r.cls === PIXEL_SEA || r.cls === PIXEL_MIXED) && !this._cls.has(r.i)) this._cls.set(r.i, r.cls);
+      if ((r.cls === PIXEL_LAND || r.cls === PIXEL_SEA || r.cls === PIXEL_MIXED) && !this._cls.has(r.i))
+        this._cls.set(r.i, r.cls);
     }
-    super.adoptPlanes(rows);   // the base keeps every cache bounded about the last row's pixel (its _keep reads this bake's six)
+    super.adoptPlanes(rows); // the base keeps every cache bounded about the last row's pixel (its _keep reads this bake's six)
   }
 }
 
@@ -204,33 +263,69 @@ export class DeepWatersBakes {
     this.hasFineWaterMask = true;
   }
   /** TAMRIEL-DEEP: the continent's bake, set when the trace lands (or null: none again). @param {?DeepWatersBake} bake */
-  setTamriel(bake) { this.tamriel = bake; }
+  setTamriel(bake) {
+    this.tamriel = bake;
+  }
   /** @returns {DeepWatersBake} - AUDIT ETHER-OW C1-5: the bake whose frame answers the pixel, by the one law of it
    *  (waterFrameOf, the host's own) */
   of(px, py) {
     const f = waterFrameOf(px, py, !!this.ether, this.tamriel?.frame ?? null);
-    return f === ETHER_FRAME ? /** @type {DeepWatersBake} */ (this.ether) : f === BAY_FRAME ? this.bay : /** @type {DeepWatersBake} */ (this.tamriel);
+    return f === ETHER_FRAME
+      ? /** @type {DeepWatersBake} */ (this.ether)
+      : f === BAY_FRAME
+        ? this.bay
+        : /** @type {DeepWatersBake} */ (this.tamriel);
   }
-  frameOf(px, py) { return this.of(px, py).frameOf(); }
-  holdsSea(px, py) { return this.of(px, py).holdsSea(px, py); }
-  sampleDistanceMeters(x, y, fx, fz) { return this.of(x, y).sampleDistanceMeters(x, y, fx, fz); }
-  sampleEdgeDistanceMeters(x, y, fx, fz) { return this.of(x, y).sampleEdgeDistanceMeters(x, y, fx, fz); }
-  sampleLocalEdgeDistanceMeters(x, y, fx, fz) { return this.of(x, y).sampleLocalEdgeDistanceMeters(x, y, fx, fz); }
-  isWaterAt(x, y, fx, fz) { return this.of(x, y).isWaterAt(x, y, fx, fz); }
-  isCarvedWater(x, y, fx, fz) { return this.of(x, y).isCarvedWater(x, y, fx, fz); }
-  mapPixelHasFineWaterCells(x, y) { return this.of(x, y).mapPixelHasFineWaterCells(x, y); }
-  mapPixelHasWaterCells(x, y) { return this.of(x, y).mapPixelHasWaterCells(x, y); }
-  mapPixelOrCardinalNeighborHasWaterCells(x, y) { return this.of(x, y).mapPixelOrCardinalNeighborHasWaterCells(x, y); }
-  mapPixelHasLandCells(x, y) { return this.of(x, y).mapPixelHasLandCells(x, y); }
-  prepare(px, py) { this.of(px, py).prepare(px, py); }
-  exportPlanes(px, py) { return this.of(px, py).exportPlanes(px, py); }
+  frameOf(px, py) {
+    return this.of(px, py).frameOf();
+  }
+  holdsSea(px, py) {
+    return this.of(px, py).holdsSea(px, py);
+  }
+  sampleDistanceMeters(x, y, fx, fz) {
+    return this.of(x, y).sampleDistanceMeters(x, y, fx, fz);
+  }
+  sampleEdgeDistanceMeters(x, y, fx, fz) {
+    return this.of(x, y).sampleEdgeDistanceMeters(x, y, fx, fz);
+  }
+  sampleLocalEdgeDistanceMeters(x, y, fx, fz) {
+    return this.of(x, y).sampleLocalEdgeDistanceMeters(x, y, fx, fz);
+  }
+  isWaterAt(x, y, fx, fz) {
+    return this.of(x, y).isWaterAt(x, y, fx, fz);
+  }
+  isCarvedWater(x, y, fx, fz) {
+    return this.of(x, y).isCarvedWater(x, y, fx, fz);
+  }
+  mapPixelHasFineWaterCells(x, y) {
+    return this.of(x, y).mapPixelHasFineWaterCells(x, y);
+  }
+  mapPixelHasWaterCells(x, y) {
+    return this.of(x, y).mapPixelHasWaterCells(x, y);
+  }
+  mapPixelOrCardinalNeighborHasWaterCells(x, y) {
+    return this.of(x, y).mapPixelOrCardinalNeighborHasWaterCells(x, y);
+  }
+  mapPixelHasLandCells(x, y) {
+    return this.of(x, y).mapPixelHasLandCells(x, y);
+  }
+  prepare(px, py) {
+    this.of(px, py).prepare(px, py);
+  }
+  exportPlanes(px, py) {
+    return this.of(px, py).exportPlanes(px, py);
+  }
   adoptPlanes(rows) {
     const list = rows ?? [];
     this.bay.adoptPlanes(list.filter((r) => r?.f !== ETHER_ROW && r?.f !== TAMRIEL_ROW));
     this.ether?.adoptPlanes(list.filter((r) => r?.f === ETHER_ROW));
     this.tamriel?.adoptPlanes(list.filter((r) => r?.f === TAMRIEL_ROW));
   }
-  evictOutside(px, py, radius) { this.bay.evictOutside(px, py, radius); this.ether?.evictOutside(px, py, radius); this.tamriel?.evictOutside(px, py, radius); }
+  evictOutside(px, py, radius) {
+    this.bay.evictOutside(px, py, radius);
+    this.ether?.evictOutside(px, py, radius);
+    this.tamriel?.evictOutside(px, py, radius);
+  }
 }
 
 /**
@@ -249,5 +344,9 @@ export function worldBakes(bay, { woods = null, ether = null, continent = false 
  *  stands (`tamriel`, that bake's frame, or null): the Eltheric's in its box, the continent's past the Bay's map within
  *  its frame, the Bay's else (the mod's own clamps, off its map). Pure - the host asks it before the bake is in.
  *  @param {number} px @param {number} py @param {boolean} ether @param {?{ x0: number, y0: number, w: number, h: number }} [tamriel] */
-export const waterFrameOf = (px, py, ether, tamriel = null) => (ether && inFrame(ETHER_FRAME, px, py) ? ETHER_FRAME
-  : tamriel && !inFrame(BAY_FRAME, px, py) && inFrame(tamriel, px, py) ? tamriel : BAY_FRAME);
+export const waterFrameOf = (px, py, ether, tamriel = null) =>
+  ether && inFrame(ETHER_FRAME, px, py)
+    ? ETHER_FRAME
+    : tamriel && !inFrame(BAY_FRAME, px, py) && inFrame(tamriel, px, py)
+      ? tamriel
+      : BAY_FRAME;

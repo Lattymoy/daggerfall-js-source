@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { dragonTimes, isDragonWatch, dragonFightId, DRAGON_BRAIN_V, DRAGON_NATIVE_PER_M } from '../../../src/net/dragon/dragonLaw.js';
+import { dragonTimes, dragonFightId, DRAGON_BRAIN_V, DRAGON_NATIVE_PER_M } from '../../../src/net/dragon/dragonLaw.js';
 import { roostLeg } from '../../../src/net/dragon/dragonBody.js';
 import * as B from '../../../src/net/dragon/dragonBrain.js';
 import { DRAGON_SEAM } from '../../../src/net/bossSeam.js';
@@ -16,13 +16,13 @@ import { validDragonOut, DRAGON_FIGHT_KEY, DRAGON_TELL_RETRY_MS, cellRoomOfWire,
 import { foldDragon, DRAGON_STATE_EMPTY } from '../../../src/net/dragon/dragonLink.js';
 import { sweepDragonReceipts } from '../../../server/src/dragonFights.js';
 import { fakeRooms } from '../../fakeRoom.mjs';
+import { RELAY_KEY, dragonOmenFrom, siteOf, aged } from '../../dragonOmen.mjs';
 
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const seeded = (s = 7) => () => ((s = (Math.imul(s, 1103515245) + 12345) >>> 0) / 4294967296);
-let W = 500_000;
-while (!isDragonWatch(W)) W++;
-const T = dragonTimes(W);
-const birth = (now = T.landAt + 60_000) => DRAGON_SEAM.new({ w: W, b: 0, sx: 0, sz: 0, now, leaveAt: T.leaveAt, roost: roostLeg(W) });
+const OMEN = await dragonOmenFrom(500_000), W = OMEN.w;   // DRAGON-HIDDEN: a dragon's watch under the relay's own secret
+const T = dragonTimes(OMEN);
+const birth = (now = T.landAt + 60_000) => DRAGON_SEAM.new({ w: W, b: 0, sx: 0, sz: 0, now, leaveAt: T.leaveAt, roost: roostLeg(OMEN) });
 const BODIES = [{ sub: 'a', x: 10, z: 0 }, { sub: 'b', x: -15, z: 20 }, { sub: 'c', x: 5, z: -25 }];
 /** The brain stepped until `pred` holds of a word it says: `{ f, word, now }`. */
 function stepUntil(pred, ms = 20 * 60_000) {
@@ -108,22 +108,20 @@ test('AUDIT DRAGON the hub\'s receipts: every expired one swept in its page, a l
   const idx = src('server/src/index.js');
   assert.match(idx, /const dragonRc = await sweepDragonReceipts\(this, now, cur\.get\('sweep:dragonrc'\) \?\? null, dead, SWEEP_PAGE\);/);
   assert.match(idx, /'sweep:dragonrc': dragonRc\.full \? dragonRc\.last : null,/);
-  assert.match(src('server/src/dragonFights.js'), /noRcpt: new Bounded\(HUB_KEEP_MAX\) \}\);/);
+  assert.match(src('server/src/dragonFights.js'), /noRcpt: new Bounded\(HUB_KEEP_MAX\),\n\s*stood: new WeakMap\(\),\n\s*judged: new Map\(\),\n\s*refused: new Map\(\),\n\s*asking: new Map\(\),\n\s*budget: new Map\(\),\n\s*\}\);/);   // PIN MOVED (AUDIT DRAGON-CELL II E1): each socket's cell clock beside it; (DRAGON-BUDGET) and the cells judged; (AUDIT DRAGON-CELL III G5) the budgets spent and the asks in flight
 });
 
 test('AUDIT DRAGON a kill whose receipts fail to mint is tried again at DRAGON_TELL_RETRY_MS, never left to the fight\'s end two hours on, and then said (mutants: no retry)', async () => {
-  const PX = 205, PY = 214, SX = (PX + 0.5) * PIXEL_UNITS, SZ = (499 - PY + 0.5) * PIXEL_UNITS;
+  const { px: PX, py: PY } = siteOf(OMEN), SX = (PX + 0.5) * PIXEL_UNITS, SZ = (499 - PY + 0.5) * PIXEL_UNITS;   // DRAGON-CELL: a pixel of its omen's cell
   const ID = dragonFightId(W, SX, SZ);
   const at = (mx, mz) => ({ x: SX + mx * DRAGON_NATIVE_PER_M, y: 0, z: SZ + mz * DRAGON_NATIVE_PER_M, yaw: 0, pitch: 0 });
   const subtle = globalThis.crypto.subtle;
-  const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
-  const pkcs8 = Buffer.from(await subtle.exportKey('pkcs8', kp.privateKey)).toString('base64');
   const realNow = Date.now; let clock = T.landAt + 60_000;
   try {
     Date.now = () => clock;
     const world = fakeRooms({ now: () => clock });
-    const r = world.room(cellRoomOfWire(SX, SZ));
-    r.env.GATE_SIGNING_KEY = pkcs8;
+    const r = aged(world.room(cellRoomOfWire(SX, SZ)));
+    r.env.GATE_SIGNING_KEY = RELAY_KEY.pkcs8;
     const a = r.connect();
     await r.hello(a, 'peer-0001', at(40, 0));
     await r.raw(a, JSON.stringify({ t: 'dragon', k: 'in', w: W, bv: DRAGON_BRAIN_V, lv: 20, sx: SX, sz: SZ }));

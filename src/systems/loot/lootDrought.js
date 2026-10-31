@@ -28,7 +28,7 @@
 // and the finder answers 1.
 // ═══════════════════════════════════════════════════════════════════
 
-import { droughtHeld, rollerLevel } from './lootLevelGate.js';   // LOOT-GATE
+import { droughtHeld, rollerLevel } from './lootLevelGate.js'; // LOOT-GATE
 import { lootRarityOn, registerLegendaryFind, rarityRank, RARITIES, isGarment, legendariesFor } from './lootRarity.js';
 import { registerTakeListener } from '../inventory.js';
 import { registerModSaveData } from '../modSaveData.js';
@@ -44,7 +44,8 @@ let _drought = 0;
 /** The pieces taken since the last Legendary. */
 export const droughtOf = () => _drought;
 /** The Legendary threshold's multiplier at a drought. */
-export const droughtMult = (d = _drought) => Math.min(DROUGHT_MAX_MULT, 1 + DROUGHT_STEP_MULT * Math.floor(Math.max(0, Number(d) || 0) / DROUGHT_STEP));
+export const droughtMult = (d = _drought) =>
+  Math.min(DROUGHT_MAX_MULT, 1 + DROUGHT_STEP_MULT * Math.floor(Math.max(0, Number(d) || 0) / DROUGHT_STEP));
 
 /** THE TAKE: a piece a source door rolled and nobody took before - its mark cleared, the drought one more below
  *  Legendary, emptied at Legendary or better. Answers whether it counted. AUDIT LOOT II A10: a garment counts only if it
@@ -56,7 +57,7 @@ export function noteTaken(item) {
   delete item.untaken;
   if (!lootRarityOn()) return false;
   if (isGarment(item) && !legendariesFor(item).length) return false;
-  if (droughtHeld(rollerLevel()) && rarityRank(item) < RARITIES.legendary.rank) return false;   // LOOT-GATE (lootLevelGate.js): no drought builds under level 10 - the mark still clears; AUDIT UPDATE L6: a Legendary still empties it
+  if (droughtHeld(rollerLevel()) && rarityRank(item) < RARITIES.legendary.rank) return false; // LOOT-GATE (lootLevelGate.js): no drought builds under level 10 - the mark still clears; AUDIT UPDATE L6: a Legendary still empties it
   _drought = rarityRank(item) >= RARITIES.legendary.rank ? 0 : Math.min(DROUGHT_MAX, _drought + 1);
   return true;
 }
@@ -72,10 +73,14 @@ export function validDroughtRecord(r) {
 registerModSaveData(DROUGHT_SAVE_VENDOR, {
   newSaveData: () => ({ drought: 0 }),
   getSaveData: () => ({ drought: _drought }),
-  restoreSaveData: (r) => { _drought = validDroughtRecord(r); },
+  restoreSaveData: (r) => {
+    _drought = validDroughtRecord(r);
+  },
 });
 registerLegendaryFind(DROUGHT, () => (lootRarityOn() ? droughtMult() : 1));
 registerTakeListener(DROUGHT, noteTaken);
 
 /** Tests only: the drought set outright. */
-export function _setDroughtForTests(n) { _drought = Math.max(0, Math.trunc(Number(n) || 0)); }
+export function _setDroughtForTests(n) {
+  _drought = Math.max(0, Math.trunc(Number(n) || 0));
+}

@@ -11,8 +11,8 @@
   {
     "name": "JUNGLE-GRASS-the-meadow-s-blades-taken-for-its-tufts",
     "file": "src/render/jungleFloorArt.js",
-    "old": "LAB_GRASS.density / MEADOW_BLADES_PER_TUFT / (2 * LAB_GRASS.densitySpan) ** 2;",
-    "new": "LAB_GRASS.density / (2 * LAB_GRASS.densitySpan) ** 2;",
+    "old": "export const JUNGLE_FLOOR_GRASS = LAB_GRASS.density / MEADOW_BLADES_PER_TUFT / (2 * LAB_GRASS.densitySpan) ** 2;",
+    "new": "export const JUNGLE_FLOOR_GRASS = LAB_GRASS.density / (2 * LAB_GRASS.densitySpan) ** 2;",
     "tests": [
       "test/world/junglegrass.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "JUNGLE-GRASS-the-flora-scaled-with-the-grass",
     "file": "src/render/jungleFloorArt.js",
-    "old": ": (p.judged[end] * JUNGLE_FLOOR_JUDGED) / JUNGLE_FLOOR_PLANTS_M2))),",
-    "new": ": p.judged[end]))),",
+    "old": "            : (p.judged[end] * JUNGLE_FLOOR_JUDGED) / JUNGLE_FLOOR_PLANTS_M2,",
+    "new": "            : p.judged[end],",
     "tests": [
       "test/world/junglegrass.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "JUNGLE-GRASS-the-tuft-and-sedge-out-of-proportion",
     "file": "src/render/jungleFloorArt.js",
-    "old": "? (p.judged[end] / grassShare(end)) *",
-    "new": "? 0.5 *",
+    "old": "            ? (p.judged[end] / grassShare(end)) * (1 - (floraShare(end) * JUNGLE_FLOOR_JUDGED) / JUNGLE_FLOOR_PLANTS_M2)",
+    "new": "            ? 0.5 * (1 - (floraShare(end) * JUNGLE_FLOOR_JUDGED) / JUNGLE_FLOOR_PLANTS_M2)",
     "tests": [
       "test/world/junglegrass.test.js"
     ]

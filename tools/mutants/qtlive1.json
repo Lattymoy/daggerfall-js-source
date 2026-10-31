@@ -20,8 +20,8 @@
   {
     "name": "QT-LIVE1-charge-ignores-the-played-step",
     "file": "src/systems/quest/clock.js",
-    "old": "    return Math.trunc(Math.min(Math.max(raw - raised, 0), step));",
-    "new": "    return Math.trunc(raw);",
+    "old": "    return Math.trunc(Math.min(Math.max(raw - raised, 0), step)); // QCLOCK-WORLD: the lived step, never the raise",
+    "new": "    return Math.trunc(raw); // QCLOCK-WORLD: the lived step, never the raise",
     "tests": [
       "test/ui/enhanced/qtlive1.test.js",
       "test/systems/quest/auditworld78.test.js"
@@ -31,8 +31,8 @@
   {
     "name": "QT-LIVE1-charge-lets-a-backward-sample-add",
     "file": "src/systems/quest/clock.js",
-    "old": "    return Math.trunc(Math.min(Math.max(raw - raised, 0), step));",
-    "new": "    return Math.trunc(Math.min(raw - raised, step));",
+    "old": "    return Math.trunc(Math.min(Math.max(raw - raised, 0), step)); // QCLOCK-WORLD: the lived step, never the raise",
+    "new": "    return Math.trunc(Math.min(raw - raised, step)); // QCLOCK-WORLD: the lived step, never the raise",
     "tests": [
       "test/ui/enhanced/qtlive1.test.js",
       "test/systems/quest/auditworld78.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "QT-LIVE1-running-clock-answers-the-field-when-disabled-check-inverted",
     "file": "src/systems/quest/clock.js",
-    "old": "    if (!this.clockEnabled || this.clockFinished) return this.remainingTimeInSeconds;\n    if (this.waitsShort)",
-    "new": "    if (this.clockEnabled && !this.clockFinished) return this.remainingTimeInSeconds;\n    if (this.waitsShort)",
+    "old": "    if (!this.clockEnabled || this.clockFinished) return this.remainingTimeInSeconds;",
+    "new": "    if (this.clockEnabled && !this.clockFinished) return this.remainingTimeInSeconds;",
     "tests": [
       "test/ui/enhanced/qtlive1.test.js"
     ],

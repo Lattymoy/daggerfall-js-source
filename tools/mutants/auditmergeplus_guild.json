@@ -2,8 +2,8 @@
   {
     "name": "A1-a-second-press-claims-again",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  if (out.has(key)) return { ok: false, error: HOME_BUY_BUSY };\n",
-    "new": "",
+    "old": "  if (out.has(key)) return { ok: false, error: HOME_BUY_BUSY };\n  out.add(key);",
+    "new": "  out.add(key);",
     "tests": [
       "test/net/auditmergeplus_guild.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "A1-the-hold-never-let-go",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  } finally {\n    out.delete(key);\n  }",
-    "new": "  } finally {\n  }",
+    "old": "    out.delete(key);\n  }",
+    "new": "  }",
     "tests": [
       "test/net/auditmergeplus_guild.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "A4-the-workers-words-read-as-may-have-landed",
     "file": "src/net/guild/guildBook.js",
-    "old": "  'rate', 'body', 'too-large', 'method', 'not-found', 'no-database', 'no-player',\n",
-    "new": "",
+    "old": "  'rate',\n  'body',\n  'too-large',\n  'method',\n  'not-found',\n  'no-database',\n  'no-player',\n]);",
+    "new": "]);",
     "tests": [
       "test/net/auditmergeplus_guild.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "A4-rate-read-as-may-have-landed",
     "file": "src/net/guild/guildBook.js",
-    "old": "  'rate', 'body', 'too-large', 'method', 'not-found', 'no-database', 'no-player',",
-    "new": "  'body', 'too-large', 'method', 'not-found', 'no-database', 'no-player',",
+    "old": "  'rate',\n  'body',",
+    "new": "  'body',",
     "tests": [
       "test/net/auditmergeplus_guild.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "A4-body-read-as-may-have-landed",
     "file": "src/net/guild/guildBook.js",
-    "old": "  'rate', 'body', 'too-large', 'method', 'not-found', 'no-database', 'no-player',",
-    "new": "  'rate', 'too-large', 'method', 'not-found', 'no-database', 'no-player',",
+    "old": "  'body',\n  'too-large',",
+    "new": "  'too-large',",
     "tests": [
       "test/net/auditmergeplus_guild.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "A4-too-large-read-as-may-have-landed",
     "file": "src/net/guild/guildBook.js",
-    "old": "  'rate', 'body', 'too-large', 'method', 'not-found', 'no-database', 'no-player',",
-    "new": "  'rate', 'body', 'method', 'not-found', 'no-database', 'no-player',",
+    "old": "  'too-large',\n  'method',",
+    "new": "  'method',",
     "tests": [
       "test/net/auditmergeplus_guild.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "A4-method-read-as-may-have-landed",
     "file": "src/net/guild/guildBook.js",
-    "old": "  'rate', 'body', 'too-large', 'method', 'not-found', 'no-database', 'no-player',",
-    "new": "  'rate', 'body', 'too-large', 'not-found', 'no-database', 'no-player',",
+    "old": "  'method',\n  'not-found',",
+    "new": "  'not-found',",
     "tests": [
       "test/net/auditmergeplus_guild.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "A4-not-found-read-as-may-have-landed",
     "file": "src/net/guild/guildBook.js",
-    "old": "  'rate', 'body', 'too-large', 'method', 'not-found', 'no-database', 'no-player',",
-    "new": "  'rate', 'body', 'too-large', 'method', 'no-database', 'no-player',",
+    "old": "  'not-found',\n  'no-database',",
+    "new": "  'no-database',",
     "tests": [
       "test/net/auditmergeplus_guild.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "A4-no-database-read-as-may-have-landed",
     "file": "src/net/guild/guildBook.js",
-    "old": "  'rate', 'body', 'too-large', 'method', 'not-found', 'no-database', 'no-player',",
-    "new": "  'rate', 'body', 'too-large', 'method', 'not-found', 'no-player',",
+    "old": "  'no-database',\n  'no-player',",
+    "new": "  'no-player',",
     "tests": [
       "test/net/auditmergeplus_guild.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "A4-no-player-read-as-may-have-landed",
     "file": "src/net/guild/guildBook.js",
-    "old": "  'rate', 'body', 'too-large', 'method', 'not-found', 'no-database', 'no-player',",
-    "new": "  'rate', 'body', 'too-large', 'method', 'not-found', 'no-database',",
+    "old": "  'no-player',\n]);",
+    "new": "]);",
     "tests": [
       "test/net/auditmergeplus_guild.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "A5-the-acts-look-handed-the-one-in-flight",
     "file": "src/net/guild/guildBook.js",
-    "old": "      if (this._looking) await this._looking.catch(() => {});\n",
-    "new": "",
+    "old": "      if (this._looking) await this._looking.catch(() => {});\n      await this.refresh();",
+    "new": "      await this.refresh();",
     "tests": [
       "test/net/auditmergeplus_guild.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "A5-a-failed-look-fails-the-act",
     "file": "src/net/guild/guildBook.js",
-    "old": "await this._looking.catch(() => {});",
-    "new": "await this._looking;",
+    "old": "      if (this._looking) await this._looking.catch(() => {});",
+    "new": "      if (this._looking) await this._looking;",
     "tests": [
       "test/net/auditmergeplus_guild.test.js"
     ]

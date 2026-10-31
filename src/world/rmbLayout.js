@@ -18,17 +18,17 @@
 // records are later features of this arc; see bible/03-World/World-Arc.md.
 
 import { ROTATION_DIVISOR, RMB_DIMENSION } from '../formats/blocksFile.js';
-import { PLACEMENTS as WINDMILL_PLACEMENTS } from './windmillMesh.js';   // WM2d: the mills Daggerfall does not stand
-import { WINDMILL_INTERIOR } from './windmillInterior.js';   // WM2g: and the inside of one
+import { PLACEMENTS as WINDMILL_PLACEMENTS } from './windmillMesh.js'; // WM2d: the mills Daggerfall does not stand
+import { WINDMILL_INTERIOR } from './windmillInterior.js'; // WM2g: and the inside of one
 import { GLOBAL_SCALE } from './meshReader.js';
 import { trs, multiply } from './mat4.js';
-import { GROUND_RECORD_LIMIT } from './terrain/terrainTiles.js';   // AUDIT WATER-NEXT m8: MeshReader.cs:487's marker, one home
+import { GROUND_RECORD_LIMIT } from './terrain/terrainTiles.js'; // AUDIT WATER-NEXT m8: MeshReader.cs:487's marker, one home
 
 /** RMBLayout.propsOffsetY (:37): a misc model stands this far (RMB units) under its record - a prefab standing in for
  *  one too, the crop fields' batches among them (world/rmbFlats.js, FIELD BUGS 2026-10-04d CROPS). */
 export const PROPS_OFFSET_Y = -4;
 export const GROUND_OFFSET = -1;
-export const GROUND_TILE_SIZE = 256;   // RMBTileSide mirror - value-pinned, no mesh consumer yet (AUDIT 23 wa-5)
+export const GROUND_TILE_SIZE = 256; // RMBTileSide mirror - value-pinned, no mesh consumer yet (AUDIT 23 wa-5)
 export const GROUND_TILE_DIM = 16;
 
 /** RMBLayout.CityGateOpenModelID / CityGateClosedModelID
@@ -42,8 +42,7 @@ export const CITY_GATE_CLOSED_MODEL_ID = 447;
 /** IsCityGate (RMBLayout.cs:1007-1011) - "Two variants of City Gate
  *  model known", so BOTH ids answer true and a block that places the
  *  CLOSED variant is tracked too. */
-export const isCityGate = (modelID) =>
-  modelID === CITY_GATE_OPEN_MODEL_ID || modelID === CITY_GATE_CLOSED_MODEL_ID;
+export const isCityGate = (modelID) => modelID === CITY_GATE_OPEN_MODEL_ID || modelID === CITY_GATE_CLOSED_MODEL_ID;
 
 /** RMBLayout.BulletinBoardModelID (RMBLayout.cs:42). DFU stands this
  *  model STANDALONE rather than folding it into the block combiner
@@ -75,6 +74,20 @@ export function modelScaleVector(obj) {
   return [obj.xScale || 1, obj.yScale || 1, obj.zScale || 1];
 }
 
+/** A misc model record's place in its block (RMBLayout's AddProps, below) - its own export (AUDIT PROP-GROUND: the town's
+ *  fabric finds a foot plate where the block stands it, world/urban/townFabricStand.js fabricBlockOf). */
+export function miscModelMatrix(obj) {
+  return trs(
+    obj.xPos * GLOBAL_SCALE,
+    (-obj.yPos + PROPS_OFFSET_Y) * GLOBAL_SCALE,
+    (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE,
+    -obj.xRotation / ROTATION_DIVISOR,
+    -obj.yRotation / ROTATION_DIVISOR,
+    -obj.zRotation / ROTATION_DIVISOR,
+    ...modelScaleVector(obj),
+  );
+}
+
 /** WD3: the classic model Kamer's prefab REPLACES (MeshReplacement, `41600.prefab`) - in ARCH3D (record 8176) and
  *  placed by no classic block. Kamer's own seven farms stand it through PLACEMENTS; a town mod's farm stands it among
  *  its own records (Beautiful Villages' six - FARMAA04, 05, 07 and FARMBA05, 08, 09 - and 34 of Beautiful Cities' blocks). */
@@ -99,7 +112,7 @@ export function layoutRmbBlock(dfBlock, { enhanced = false, windmills = true } =
       (RMB_DIMENSION - subRecord.zPos) * GLOBAL_SCALE,
       0,
       -subRecord.yRotation / ROTATION_DIVISOR,
-      0
+      0,
     );
 
     for (const obj of subRecord.exterior.block3dObjectRecords) {
@@ -110,9 +123,12 @@ export function layoutRmbBlock(dfBlock, { enhanced = false, windmills = true } =
         -obj.xRotation / ROTATION_DIVISOR,
         -obj.yRotation / ROTATION_DIVISOR,
         -obj.zRotation / ROTATION_DIVISOR,
-        ...modelScaleVector(obj)
+        ...modelScaleVector(obj),
       );
-      if (millsHere && obj.modelIdNum === WINDMILL_MODEL_ID) { ownMills.push({ matrix: multiply(subRecordMatrix, modelMatrix) }); continue; }
+      if (millsHere && obj.modelIdNum === WINDMILL_MODEL_ID) {
+        ownMills.push({ matrix: multiply(subRecordMatrix, modelMatrix) });
+        continue;
+      }
       models.push({
         modelId: obj.modelId,
         modelIdNum: obj.modelIdNum,
@@ -127,16 +143,11 @@ export function layoutRmbBlock(dfBlock, { enhanced = false, windmills = true } =
 
   // Miscellaneous scene models.
   for (const obj of rmb.misc3dObjectRecords) {
-    const miscMatrix = trs(
-      obj.xPos * GLOBAL_SCALE,
-      (-obj.yPos + PROPS_OFFSET_Y) * GLOBAL_SCALE,
-      (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE,
-      -obj.xRotation / ROTATION_DIVISOR,
-      -obj.yRotation / ROTATION_DIVISOR,
-      -obj.zRotation / ROTATION_DIVISOR,
-      ...modelScaleVector(obj)
-    );
-    if (millsHere && obj.modelIdNum === WINDMILL_MODEL_ID) { ownMills.push({ matrix: miscMatrix }); continue; }
+    const miscMatrix = miscModelMatrix(obj);
+    if (millsHere && obj.modelIdNum === WINDMILL_MODEL_ID) {
+      ownMills.push({ matrix: miscMatrix });
+      continue;
+    }
     models.push({ modelId: obj.modelId, modelIdNum: obj.modelIdNum, matrix: miscMatrix });
   }
 
@@ -227,15 +238,29 @@ export function attachWindmillRecord(dfBlock) {
   if (already >= 0) return already;
   subs.push({
     windmill: true,
-    xPos: 0, zPos: 0, yRotation: 0,
+    xPos: 0,
+    zPos: 0,
+    yRotation: 0,
     exterior: {
       header: {
-        position: 0, num3dObjectRecords: 0, numFlatObjectRecords: 0,
-        numSection3Records: 0, numPeopleRecords: 0, numDoorRecords: 0,
-        unknown1: 0, unknown2: 0, unknown3: 0, unknown4: 0, unknown5: 0, unknown6: 0,
+        position: 0,
+        num3dObjectRecords: 0,
+        numFlatObjectRecords: 0,
+        numSection3Records: 0,
+        numPeopleRecords: 0,
+        numDoorRecords: 0,
+        unknown1: 0,
+        unknown2: 0,
+        unknown3: 0,
+        unknown4: 0,
+        unknown5: 0,
+        unknown6: 0,
       },
-      block3dObjectRecords: [], blockFlatObjectRecords: [],
-      blockSection3Records: [], blockPeopleRecords: [], blockDoorRecords: [],
+      block3dObjectRecords: [],
+      blockFlatObjectRecords: [],
+      blockSection3Records: [],
+      blockPeopleRecords: [],
+      blockDoorRecords: [],
     },
     interior: WINDMILL_INTERIOR,
   });
@@ -268,12 +293,20 @@ export function windmillsFor(blockName) {
   for (const p of WINDMILL_PLACEMENTS) {
     if (p.block !== blockName) continue;
     const subRecordMatrix = trs(
-      p.subX * GLOBAL_SCALE, 0, (RMB_DIMENSION - p.subZ) * GLOBAL_SCALE,
-      0, -p.subRot / ROTATION_DIVISOR, 0
+      p.subX * GLOBAL_SCALE,
+      0,
+      (RMB_DIMENSION - p.subZ) * GLOBAL_SCALE,
+      0,
+      -p.subRot / ROTATION_DIVISOR,
+      0,
     );
     const modelMatrix = trs(
-      p.x * GLOBAL_SCALE, -p.y * GLOBAL_SCALE, p.z * GLOBAL_SCALE,
-      0, -p.rotY / ROTATION_DIVISOR, 0
+      p.x * GLOBAL_SCALE,
+      -p.y * GLOBAL_SCALE,
+      p.z * GLOBAL_SCALE,
+      0,
+      -p.rotY / ROTATION_DIVISOR,
+      0,
     );
     const entry = { matrix: multiply(subRecordMatrix, modelMatrix) };
     if (p.building) {
@@ -287,10 +320,10 @@ export function windmillsFor(blockName) {
         // building standing in a farm that Daggerfall leaves empty. The
         // hosts skip it on the classic skin; this flag is how they know.
         enhancedOnly: true,
-        matrix: multiply(subRecordMatrix, trs(
-          b.x * GLOBAL_SCALE, -b.y * GLOBAL_SCALE, b.z * GLOBAL_SCALE,
-          0, -b.rotY / ROTATION_DIVISOR, 0
-        )),
+        matrix: multiply(
+          subRecordMatrix,
+          trs(b.x * GLOBAL_SCALE, -b.y * GLOBAL_SCALE, b.z * GLOBAL_SCALE, 0, -b.rotY / ROTATION_DIVISOR, 0),
+        ),
       };
     }
     out.push(entry);

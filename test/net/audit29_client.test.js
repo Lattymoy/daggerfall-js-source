@@ -177,7 +177,7 @@ test('AUDIT 29 B2: a home\'s Forge station is offered, and sold, only where a Fo
   const { setPref } = await import('../../src/systems/uiPrefs.js');
   setProfessionsPages(null);
   assert.equal(forgeOffered(), false);
-  assert.deepEqual(stationsOffered(), ['alchemy', 'spells', 'enchant', 'cooking'], 'offline, or the switch shut: no Forge in the cycle');   // PIN MOVED (DECOR-USE): the cooking station is the room's fire, offline too - Climates & Calories cooks there
+  assert.deepEqual(stationsOffered(), ['alchemy', 'spells', 'enchant', 'cooking', 'music'], 'offline, or the switch shut: no Forge in the cycle');   // PIN MOVED (DECOR-USE): the cooking station is the room's fire, offline too - Climates & Calories cooks there; PIN MOVED (MUSIC-BOX): and the music box
   const book = { state: { open: true } };
   setProfessionsPages({ book });
   setPref('skin', 'classic');
@@ -185,7 +185,7 @@ test('AUDIT 29 B2: a home\'s Forge station is offered, and sold, only where a Fo
   setPref('skin', 'enhanced');
   assert.equal(forgeOffered(), true);
   // PIN MOVED (PROF11): the mason's bench is a seventh home station, offered by the same gate
-  assert.deepEqual(stationsOffered(), ['alchemy', 'spells', 'enchant', 'forge', 'workbench', 'cooking', 'loom', 'mason', 'jeweller', 'vendor'], 'PROF4: the workbench by the same gate; PROF7: the loom; PROF11: the mason\'s bench; PIN MOVED (PROF10): the jeweller\'s bench; PIN MOVED (HOME-VENDOR): the hired trader, where the market trades');
+  assert.deepEqual(stationsOffered(), ['alchemy', 'spells', 'enchant', 'forge', 'workbench', 'cooking', 'music', 'loom', 'mason', 'jeweller', 'vendor'], 'PIN MOVED (MUSIC-BOX): the music box after the cooking station; PROF4: the workbench by the same gate; PROF7: the loom; PROF11: the mason\'s bench; PIN MOVED (PROF10): the jeweller\'s bench; PIN MOVED (HOME-VENDOR): the hired trader, where the market trades');
   assert.match(FORGE_COLD_LINE, /Crafting page/);   // PIN MOVED (CRAFT-HALL): the stations are worked from the Crafting page
   setProfessionsPages(null);
   const src = (await import('node:fs')).readFileSync(new URL('../../src/scenes/decor/decorTool.js', import.meta.url), 'utf8');

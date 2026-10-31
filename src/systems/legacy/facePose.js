@@ -17,7 +17,11 @@
  * @returns {{ race: string|undefined, gender: string|undefined, face: number|undefined, common?: number, resident?: string, kin?: boolean }}
  */
 export const facePose = (p, { currentId = null } = {}) => ({
-  race: p.race, gender: p.gender, face: p.face,
+  race: p.race,
+  gender: p.gender,
+  face: p.face,
   ...(p.kind === 'member' && currentId != null && p.id !== currentId ? { kin: true } : {}),
-  ...(p.kind === 'resident' && Number.isInteger(p.residentFace) && /** @type {number} */ (p.residentFace) >= 0 ? { common: /** @type {number} */ (p.residentFace), ...(p.residentId ? { resident: String(p.residentId) } : {}) } : {}),
+  ...(p.kind === 'resident' && Number.isInteger(p.residentFace) && /** @type {number} */ (p.residentFace) >= 0
+    ? { common: /** @type {number} */ (p.residentFace), ...(p.residentId ? { resident: String(p.residentId) } : {}) }
+    : {}),
 });

@@ -277,7 +277,7 @@ test('SW1 KEPT BUG FOR BUG: SetBlock’s left-handed animated branch writes CURR
   // which waits for current to reach target - therefore falls straight
   // through its wait. Pinned so a tidy-up cannot quietly "fix" the mod.
   const src = readFileSync('src/combat/shieldWidget.js', 'utf8');
-  assert.match(src, /if \(w\.s\.animated && w\.flipped\) w\.shieldPositionCurrent = rect;/,
+  assert.match(src, /if \(w\.s\.animated && w\.flipped\)\n\s*w\.shieldPositionCurrent = rect;/,
     'the slip is still written, and still named as the author’s');
   assert.match(src, /KEPT BUG FOR BUG/, 'and still labelled');
 
@@ -647,7 +647,7 @@ test('SW1-LOOK: the frame’s look reaches the shield as the ARRAY it is, or Ine
   // reason no pin and no player said so.
   const rig = readFileSync('src/combat/weapon/weaponRig.js', 'utf8');
   const feed = rig.slice(rig.indexOf('if (shieldOn()) shield.lateUpdate({'));
-  const body = feed.slice(0, feed.indexOf('\n        });'));
+  const body = feed.slice(0, feed.indexOf('});'));
   // WIDGET-LOOK (FIELD BUGS 2026-10-03): indexed off the frame's look converted to DFU's axes (dfuLookAxes answers the
   // same [yaw, pitch] array)
   assert.match(body, /look: \{ x: lookAxes\[0\], y: lookAxes\[1\],/, 'indexed, as the clone reads it');

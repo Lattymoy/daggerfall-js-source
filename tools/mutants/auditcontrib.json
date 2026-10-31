@@ -56,8 +56,8 @@
   {
     "name": "A5-the-classic-online-screen-ends-in-three-seconds",
     "file": "src/ui/deathScreen.js",
-    "old": "    if (!this.fall && !this.online) { this.sequence.tick(dt); return; }",
-    "new": "    if (!this.fall) { this.sequence.tick(dt); return; }",
+    "old": "    if (!this.fall && !this.online) {",
+    "new": "    if (!this.fall) {",
     "tests": [
       "test/systems/auditcontrib.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "A4-the-rise-keeps-the-sky",
     "file": "src/ui/deathScreen.js",
-    "old": "    if (this._view) { this._view.cam.pitch = this._view.pitch; this._view = null; }\n    removeEnhancedDeath();",
-    "new": "    removeEnhancedDeath();",
+    "old": "    if (this._view) {\n      this._view.cam.pitch = this._view.pitch;\n      this._view = null;\n    }\n    removeEnhancedDeath(); // AUDIT CONTRIB A4: the veil goes with the screen, not STALE_MS after it - the risen see at once",
+    "new": "    removeEnhancedDeath(); // AUDIT CONTRIB A4: the veil goes with the screen, not STALE_MS after it - the risen see at once",
     "tests": [
       "test/systems/auditcontrib.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "H1-the-diamond-holds-tap-under-the-hotbar",
     "file": "src/systems/quickslots.js",
-    "old": " || hotbarInForce()) {   // AUDIT CONTRIB H1",
-    "new": ") {   // AUDIT CONTRIB H1",
+    "old": "  if (blocked || gap > QUICK_GAP_MS || typeof isHeld !== 'function' || hotbarInForce()) {",
+    "new": "  if (blocked || gap > QUICK_GAP_MS || typeof isHeld !== 'function') {",
     "tests": [
       "test/systems/auditcontrib.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "H1-the-bar-eats-a-mods-hotkey",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "  const i = slotOfActions(eventActions(e));   // AUDIT KB1: the event's own read - a listener writes no latch",
-    "new": "  const i = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0'].indexOf(e.code);",
+    "old": "  const i = slotOfActions(eventActions(e)); // AUDIT KB1: the event's own read - a listener writes no latch",
+    "new": "  const i = [\n    'Digit1',\n    'Digit2',\n    'Digit3',\n    'Digit4',\n    'Digit5',\n    'Digit6',\n    'Digit7',\n    'Digit8',\n    'Digit9',\n    'Digit0',\n  ].indexOf(e.code);",
     "tests": [
       "test/systems/auditcontrib.test.js",
       "test/ui/pad1.test.js"
@@ -168,8 +168,8 @@
   {
     "name": "H2-the-other-light-of-the-kind",
     "file": "src/systems/quickslots.js",
-    "old": "  if (lit && quickslotKey(lit) === e.key) { item = lit; count = Math.max(count, 1); }\n",
-    "new": "",
+    "old": "  if (lit && quickslotKey(lit) === e.key) {\n    item = lit;\n    count = Math.max(count, 1);\n  }\n  return { key: e.key, name: e.name, item, count };",
+    "new": "  return { key: e.key, name: e.name, item, count };",
     "tests": [
       "test/systems/auditcontrib.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "H3-a-refused-ready-is-a-press",
     "file": "src/systems/quickslots.js",
-    "old": "took === false ? 'refused' : 'pressed'",
-    "new": "'pressed'",
+    "old": "    return { kind: fired ? 'cast' : took === false ? 'refused' : 'pressed', name: r.name, readied: armed };",
+    "new": "    return { kind: fired ? 'cast' : 'pressed', name: r.name, readied: armed };",
     "tests": [
       "test/systems/auditcontrib.test.js"
     ]

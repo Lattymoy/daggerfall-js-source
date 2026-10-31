@@ -130,7 +130,7 @@ test('ORG2: a key a Features row owns stands in that row\'s own section - so FT1
 });
 
 test('ORG2: optionPath names where an item lives, and every message that sends a player to a switch reads it (mutant: a path hard-coded, or the section dropped)', () => {
-  assert.equal(optionPath('feat:grass'), 'Settings › Graphics › Plants, trees & wind');
+  assert.equal(optionPath('feat:grass'), 'Settings › Graphics › Plants, wind & wildlife');   // PIN MOVED (AMBIENT-LIFE, 2026-10-31): the section holds the Wildlife row too
   assert.equal(optionPath('feat:grass', { section: false }), 'Settings › Graphics');
   assert.equal(optionPath('bindings'), 'Settings › Controls › Key bindings');
   assert.equal(optionPath('no-such-item'), 'Settings', 'an item with no place still names the door');

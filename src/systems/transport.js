@@ -27,16 +27,22 @@
 //     handler has no arm for it, so you walk out on foot.)
 
 import { TRANSPORT_HORSE_TEMPLATE, hasCart, hasHorse } from './inventorySession.js';
-import { hasDragon } from './dragon/dragonMount.js';   // DRAGON5: the tamed dragon, a third mount
+import { hasDragon } from './dragon/dragonMount.js'; // DRAGON5: the tamed dragon, a third mount
 
 /** TransportModes (:23-31). Ship is "(not a real player transport
  *  mode)" in DFU's own comment - it is the fast-travel boarding, and
  *  it is not part of TR1. */
-export const TRANSPORT_MODES = Object.freeze({ Foot: 'Foot', Horse: 'Horse', Cart: 'Cart', Ship: 'Ship', Dragon: 'Dragon' });   // DRAGON5: Dragon is the port's own (Ledger A)
+export const TRANSPORT_MODES = Object.freeze({
+  Foot: 'Foot',
+  Horse: 'Horse',
+  Cart: 'Cart',
+  Ship: 'Ship',
+  Dragon: 'Dragon',
+}); // DRAGON5: Dragon is the port's own (Ledger A)
 
 /** PlayerSpeedChanger.cs:31-34. */
-export const DF_RIDE_BASE = 375;   // dfWalkBase 150 + 225
-export const DF_CART_BASE = 250;   // dfWalkBase 150 + 100
+export const DF_RIDE_BASE = 375; // dfWalkBase 150 + 225
+export const DF_CART_BASE = 250; // dfWalkBase 150 + 100
 
 /** `horseItemIndexes` (:72), seeded with Transportation.Horse. DFU
  *  exposes AddHorseItemIndex for mods to widen it; with no mods the
@@ -54,7 +60,8 @@ export { hasCart, hasHorse, hasDragon };
 
 /** IsOnFoot (:55-58). */
 export const isOnFoot = (mode) => mode === TRANSPORT_MODES.Foot;
-export const isRiding = (mode) => mode === TRANSPORT_MODES.Horse || mode === TRANSPORT_MODES.Cart || mode === TRANSPORT_MODES.Dragon;
+export const isRiding = (mode) =>
+  mode === TRANSPORT_MODES.Horse || mode === TRANSPORT_MODES.Cart || mode === TRANSPORT_MODES.Dragon;
 /** DRAGON5: a ride on a horse - DFU's two, the horse and the cart behind one: their sprite, hooves and voices. */
 export const isHorseRide = (mode) => mode === TRANSPORT_MODES.Horse || mode === TRANSPORT_MODES.Cart;
 
@@ -68,8 +75,8 @@ export function toggleMount(mode, items = []) {
   if (isRiding(mode)) return TRANSPORT_MODES.Foot;
   if (hasHorse(items)) return TRANSPORT_MODES.Horse;
   if (hasCart(items)) return TRANSPORT_MODES.Cart;
-  if (hasDragon(items)) return TRANSPORT_MODES.Dragon;   // DRAGON5: past DFU's two, so a horse is still the one a key mounts
-  return mode;   // nothing to mount: the mode is unchanged (no else arm)
+  if (hasDragon(items)) return TRANSPORT_MODES.Dragon; // DRAGON5: past DFU's two, so a horse is still the one a key mounts
+  return mode; // nothing to mount: the mode is unchanged (no else arm)
 }
 
 /** GetBaseSpeed's riding arm (:156-160) in classic units, for the
@@ -84,12 +91,16 @@ export const rideBaseFor = (mode) => (mode === TRANSPORT_MODES.Cart ? DF_CART_BA
 // (EnhancedRiding.cs:69) - a mod's delegate over PlayerSpeedChanger.CanRun;
 // DFU's own is CanRunUnlessRiding. Answers a boolean, or null for DFU's.
 let _canRun = null;
-export function setCanRunOverride(fn) { _canRun = typeof fn === 'function' ? fn : null; }
+export function setCanRunOverride(fn) {
+  _canRun = typeof fn === 'function' ? fn : null;
+}
 // STEED1 (bible/06-Systems/Horse-Care.md): HORSE CARE'S WORD ON A GALLOP, after the mod's - `(mode, modsWord)` answers a
 // boolean, or null for no word (horse care off, or not a horse). A winded or starving horse will not gallop whatever the
 // mod allows; with no mod ruling, horse care lets a horse gallop on its breath. One a host (systems/upkeep/upkeepRuntime.js).
 let _gallop = null;
-export function setGallopGate(fn) { _gallop = typeof fn === 'function' ? fn : null; }
+export function setGallopGate(fn) {
+  _gallop = typeof fn === 'function' ? fn : null;
+}
 export const canRunUnlessRiding = (mode) => {
   const mods = _canRun?.(mode) ?? null;
   return _gallop?.(mode, mods) ?? mods ?? !isRiding(mode);
@@ -104,10 +115,12 @@ export const canRunUnlessRiding = (mode) => {
 // held or latched) rides with the question, because a tier that never puts a horse below DFU's (Boons) rides a gallop
 // asked and refused at DFU's own pace, where Hard holds it to the walk (upkeepRuntime.js rideWalks).
 let _walk = null;
-export function setRideWalk(fn) { _walk = typeof fn === 'function' ? fn : null; }
+export function setRideWalk(fn) {
+  _walk = typeof fn === 'function' ? fn : null;
+}
 export const rideWalks = (mode, runAsked = false) => isRiding(mode) && _walk?.(mode, !!runAsked) === true;
 
 /** HandleTransition (:196-202): a building or dungeon interior puts
  *  you back on foot. Anything else leaves the mode alone. */
 export const dismountOnTransition = (mode, transition) =>
-  (transition === 'ToBuildingInterior' || transition === 'ToDungeonInterior' ? TRANSPORT_MODES.Foot : mode);
+  transition === 'ToBuildingInterior' || transition === 'ToDungeonInterior' ? TRANSPORT_MODES.Foot : mode;

@@ -10,9 +10,22 @@
 // grain a stray texel near a paint's family would mark; her canvas (`canvas`) is a sail whole, every texel of it
 // shaded by the paint against the cloth's own (`shadeCloth`), its seams and its dirt kept.
 import { C, galleonArt, GALLEON_ARCHIVE, GALLEON_NIGHT, galleonGlow, TEX as GALLEON_TEX } from './galleonArt.js';
-import { CARRACK_PALETTE as CARRACK_K, carrackArt, CARRACK_ARCHIVE, CARRACK_NIGHT, carrackGlow, TEX as CARRACK_TEX } from './carrackArt.js';
-import { LARGE_BOAT_PALETTE as LARGE_BOAT_K, largeBoatArt, LARGE_BOAT_ARCHIVE, TEX as LARGE_BOAT_TEX } from './largeBoatArt.js';
+import {
+  CARRACK_PALETTE as CARRACK_K,
+  carrackArt,
+  CARRACK_ARCHIVE,
+  CARRACK_NIGHT,
+  carrackGlow,
+  TEX as CARRACK_TEX,
+} from './carrackArt.js';
+import {
+  LARGE_BOAT_PALETTE as LARGE_BOAT_K,
+  largeBoatArt,
+  LARGE_BOAT_ARCHIVE,
+  TEX as LARGE_BOAT_TEX,
+} from './largeBoatArt.js';
 import { SHIP_PAINTS, paintFamilies, lumOf } from '../../systems/naval/shipLivery.js';
+import { clothPicture } from '../../systems/naval/sailCloth.js'; // GUILD-SHOP: her sailcloth's pattern and arms
 
 const GILT = [C.gilt, C.giltDark, C.giltLit];
 /** The galleon's strake: her oxblood, its light, and the seams and trenails its planks and lids are painted with. */
@@ -22,39 +35,88 @@ const palette = (...sets) => sets.flatMap((s) => Object.values(s));
 /** The records of `tex` named by `keys` (those it has). */
 const recs = (tex, keys) => Object.freeze(keys.filter((k) => tex[k] != null).map((k) => tex[k]));
 /** A port ship's painted pictures, by her TEX names. */
-const PAINTED = ['hullSide0', 'hullSide1', 'hullSide2', 'hullSide3', 'hullSide4', 'castle0', 'castle1', 'sternWindows0', 'sternWindows1', 'transom0', 'transom1',
-  'house0', 'quarterRail0', 'roof', 'trim', 'gilt', 'lid', 'dark', 'door'];
+const PAINTED = [
+  'hullSide0',
+  'hullSide1',
+  'hullSide2',
+  'hullSide3',
+  'hullSide4',
+  'castle0',
+  'castle1',
+  'sternWindows0',
+  'sternWindows1',
+  'transom0',
+  'transom1',
+  'house0',
+  'quarterRail0',
+  'roof',
+  'trim',
+  'gilt',
+  'lid',
+  'dark',
+  'door',
+];
 
 /** Each port ship's archive: its painter, the colours it paints from, its families and their bases, and its glass. */
 export const LIVERY_ART = Object.freeze({
   [GALLEON_ARCHIVE]: Object.freeze({
-    art: galleonArt, records: recs(GALLEON_TEX, PAINTED), canvas: GALLEON_TEX.canvas, palette: palette(C), strake: OXBLOOD, strakeBase: C.oxblood, accent: GILT, accentBase: C.gilt, night: GALLEON_NIGHT, glow: galleonGlow,
+    art: galleonArt,
+    records: recs(GALLEON_TEX, PAINTED),
+    canvas: GALLEON_TEX.canvas,
+    palette: palette(C),
+    strake: OXBLOOD,
+    strakeBase: C.oxblood,
+    accent: GILT,
+    accentBase: C.gilt,
+    night: GALLEON_NIGHT,
+    glow: galleonGlow,
   }),
   [CARRACK_ARCHIVE]: Object.freeze({
-    art: carrackArt, records: recs(CARRACK_TEX, PAINTED), canvas: CARRACK_TEX.canvas, palette: palette(C, CARRACK_K), strake: [CARRACK_K.blue, CARRACK_K.blueLit, CARRACK_K.blueDark, [18, 26, 38], [26, 36, 52]], strakeBase: CARRACK_K.blue,
-    accent: [CARRACK_K.ochre, CARRACK_K.ochreLit, CARRACK_K.ochreDark, ...GILT], accentBase: CARRACK_K.ochre, night: CARRACK_NIGHT, glow: carrackGlow,
+    art: carrackArt,
+    records: recs(CARRACK_TEX, PAINTED),
+    canvas: CARRACK_TEX.canvas,
+    palette: palette(C, CARRACK_K),
+    strake: [CARRACK_K.blue, CARRACK_K.blueLit, CARRACK_K.blueDark, [18, 26, 38], [26, 36, 52]],
+    strakeBase: CARRACK_K.blue,
+    accent: [CARRACK_K.ochre, CARRACK_K.ochreLit, CARRACK_K.ochreDark, ...GILT],
+    accentBase: CARRACK_K.ochre,
+    night: CARRACK_NIGHT,
+    glow: carrackGlow,
   }),
   [LARGE_BOAT_ARCHIVE]: Object.freeze({
-    art: largeBoatArt, records: recs(LARGE_BOAT_TEX, PAINTED), canvas: LARGE_BOAT_TEX.canvas, palette: palette(C, LARGE_BOAT_K), strake: [LARGE_BOAT_K.green, LARGE_BOAT_K.greenLit, LARGE_BOAT_K.greenDark, ...OXBLOOD], strakeBase: LARGE_BOAT_K.green,
-    accent: [LARGE_BOAT_K.ochre, LARGE_BOAT_K.ochreDark, ...GILT], accentBase: LARGE_BOAT_K.ochre, night: Object.freeze({}), glow: () => null,
+    art: largeBoatArt,
+    records: recs(LARGE_BOAT_TEX, PAINTED),
+    canvas: LARGE_BOAT_TEX.canvas,
+    palette: palette(C, LARGE_BOAT_K),
+    strake: [LARGE_BOAT_K.green, LARGE_BOAT_K.greenLit, LARGE_BOAT_K.greenDark, ...OXBLOOD],
+    strakeBase: LARGE_BOAT_K.green,
+    accent: [LARGE_BOAT_K.ochre, LARGE_BOAT_K.ochreDark, ...GILT],
+    accentBase: LARGE_BOAT_K.ochre,
+    night: Object.freeze({}),
+    glow: () => null,
   }),
 });
 
-const _art = new Map();   // archive -> [record, picture][] - painted once
-const artOf = (archive) => { if (!_art.has(archive)) _art.set(archive, LIVERY_ART[archive].art()); return _art.get(archive); };
+const _art = new Map(); // archive -> [record, picture][] - painted once
+const artOf = (archive) => {
+  if (!_art.has(archive)) _art.set(archive, LIVERY_ART[archive].art());
+  return _art.get(archive);
+};
 /** AUDIT 2: every port ship's base pictures painted for the livery painter now - the pool's preload asks, while the world
  *  loads (AUDIT GN2-PF3's law): the first livery of a port hull painted them inside the pool's draw, 50 ms the first time
  *  she was seen painted (SEA-COLOURS paints the sea's from its first sail). */
-export function warmLiveryArt() { for (const archive of Object.keys(LIVERY_ART)) artOf(Number(archive)); }
+export function warmLiveryArt() {
+  for (const archive of Object.keys(LIVERY_ART)) artOf(Number(archive));
+}
 
 /**
  * A livery over one port ship's pictures: each record it changes, `{ record, picture, glow, night }` - its picture
  * repainted (before Daggerfall's look - world/dfLook.js - as its stand-in is built), and for a see-through record its
  * glass's glow and its night twin's record (null for one with none). [] for an archive no port ship's, or a livery that
- * paints none of hers.
- * @param {number} archive @param {{ strake: number, accent: number, sail: number } | null} livery
+ * paints none of hers. GUILD-SHOP: her canvas in her sailcloth, `emblem` its arms; `canvasOnly`, that canvas alone.
+ * @param {number} archive @param {{ strake: number, accent: number, sail: number, cloth?: any } | null} livery @param {any} [emblem] @param {{ canvasOnly?: boolean }} [o]
  */
-export function liveryArtOf(archive, livery) {
+export function liveryArtOf(archive, livery, emblem = null, { canvasOnly = false } = {}) {
   const a = LIVERY_ART[archive];
   if (!a || !livery) return [];
   const paint = (i) => SHIP_PAINTS[i]?.rgb ?? null;
@@ -66,10 +128,18 @@ export function liveryArtOf(archive, livery) {
   const out = [];
   for (const [record, pic] of artOf(archive)) {
     if (record === a.canvas) {
-      if (sail) out.push({ record, picture: shadeCloth(pic, sail), glow: null, night: null });
+      const cloth = livery.cloth ?? null;
+      if (cloth)
+        out.push({
+          record,
+          picture: clothPicture(pic, sail ?? C.canvas, paint(cloth.second) ?? C.canvas, cloth, C.canvas, emblem),
+          glow: null,
+          night: null,
+        });
+      else if (sail) out.push({ record, picture: shadeCloth(pic, sail), glow: null, night: null });
       continue;
     }
-    if (!a.records.includes(record) || !families.some((f) => f.paint)) continue;
+    if (canvasOnly || !a.records.includes(record) || !families.some((f) => f.paint)) continue;
     const { picture, changed } = paintFamilies(pic, a.palette, families);
     if (!changed) continue;
     const night = a.night[record] ?? null;
@@ -81,7 +151,8 @@ export function liveryArtOf(archive, livery) {
 /** A sail of the fleet's canvas in `paint`: every texel the paint at its lightness against the cloth's own (C.canvas) -
  *  the seams, the dirt and the light of the cloth kept. A new picture. */
 export function shadeCloth(pic, paint) {
-  const data = new Uint8Array(pic.data), base = lumOf(C.canvas);
+  const data = new Uint8Array(pic.data),
+    base = lumOf(C.canvas);
   for (let i = 0; i < data.length; i += 4) {
     if (!data[i + 3]) continue;
     const k = lumOf([data[i], data[i + 1], data[i + 2]]) / base;

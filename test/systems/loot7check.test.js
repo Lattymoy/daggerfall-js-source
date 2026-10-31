@@ -30,6 +30,7 @@ import { createWeapon } from '../../src/combat/enemyEquipment.js';
 import { ENEMY_BASICS, enemyDisplayName } from '../../src/characters/enemy/enemyBasics.js';
 import { makeEnemyEntity } from '../../src/characters/enemy/enemyEntity.js';
 import { calculateAttackDamage } from '../../src/combat/formulas.js';
+import { killFxOf } from '../../src/systems/playerKills.js';   // STOREFRONT: the kill door says where a kill falls, in the harness's scope
 import { ARENA_PUPPET_OWNER } from '../../src/net/arena/arenaLaw.js';   // ARENA4: the kill door's puppet test, the real owner word (no puppet here)
 import { playerEntity } from '../../src/characters/playerEntity.js';
 import { registerPresenter, _resetNotifyForTests } from '../../src/systems/notify.js';
@@ -190,8 +191,8 @@ test('LOOT7-CHECK CHAMP-SAID: the first blow either way says a champion on the l
   assert.equal(heard.length, 4);
   assert.equal(CH.sayChampion(orc(), (l) => heard.push(l)), false, 'never a plain foe');
   const src = strip(read('src/systems/champions.js'));
-  assert.match(src, /registerPlayerStruckListener\(CHAMPIONS_SAID, \(attacker, target, damage\) => \{ if \(damage > 0 && target\?\.isPlayer && !target\.peer\) sayChampion\(attacker\); \}\);/);
-  assert.match(src, /registerPlayerStrikeListener\(CHAMPIONS_SAID, \(attacker, target, damage\) => \{ if \(damage > 0 && attacker\?\.isPlayer && !attacker\.peer\) sayChampion\(target\); \}\);/);
+  assert.match(src, /registerPlayerStruckListener\(CHAMPIONS_SAID, \(attacker, target, damage\) => \{\n\s*if \(damage > 0 && target\?\.isPlayer && !target\.peer\) sayChampion\(attacker\);\n\s*\}\);/);
+  assert.match(src, /registerPlayerStrikeListener\(CHAMPIONS_SAID, \(attacker, target, damage\) => \{\n\s*if \(damage > 0 && attacker\?\.isPlayer && !attacker\.peer\) sayChampion\(target\);\n\s*\}\);/);
   assert.match(src, /export function sayChampion\(entity, say = popupMessage\) \{/, 'the live host\'s line - DaggerfallUI.PopupMessage - unless a caller hands its own');
 });
 
@@ -227,7 +228,7 @@ function killDoor() {
     ...ROOM_LOOT_OFF,   // PIN MOVED (PARTY-LOOT): the dungeon's room-loot seams, answering as an offline dungeon's (test/roomLootOff.mjs)
     foes: [], _authority: true, ARENA_PUPPET_OWNER, feudWeakBlow: () => false, blowClassOf: () => null, opts: {},   // AUDIT FEUD: the hit door asks a blow's weakness (none here)
     lastPlayerFeet: [0, 0, 0], _ecvT: 0, foeDeps: null, playerEntity: { isPlayer: true, items: [] }, audio: {},
-    renownFoeStruck: () => {}, renownFoeDied: () => {}, reportPlayerKill: () => {}, egFindStruck: async () => false, takeWholeBlow: () => false, bossStrikeAt, bossTakeAt, bossClockS, strikeTraits, traitWire, traitWireKey, readTraitWire, traitsAuthority, traitsFrame,   /* PIN MOVED (EG-E3): the joiner's find door */ markFoeStruck: () => {}, markConcealedHit: () => {},
+    renownFoeStruck: () => {}, renownFoeDied: () => {}, reportPlayerKill: () => {}, killFxOf, egFindStruck: async () => false, takeWholeBlow: () => false, bossStrikeAt, bossTakeAt, bossClockS, strikeTraits, traitWire, traitWireKey, readTraitWire, traitsAuthority, traitsFrame,   /* PIN MOVED (EG-E3): the joiner's find door */ markFoeStruck: () => {}, markConcealedHit: () => {},
     handleAttackFromPlayer: () => {}, damageShieldPool: (e, n) => n, noteFighter: () => {}, PARTY_ME: 'me', _sharedFoe: () => false, partyFoeLoses: (f, n) => n, fightN: () => 1,
     peerSoulTrapOf: () => null, attemptSoulTrap: () => ({ allowDeath: true }), isAzurasStarEquipped: () => false, fillEmptyTrap: () => false,
     hudText: { add: (l) => hud.push(l) }, SOUL_TRAP_TEXT: {}, setEnemyAlert: () => {}, sayEnemyDied, isClassEnemyId,
@@ -243,7 +244,7 @@ function joiner(self) {
     ...ROOM_LOOT_OFF,   // PIN MOVED (PARTY-LOOT): the dungeon's room-loot seams, answering as an offline dungeon's (test/roomLootOff.mjs)
     foes, _layoutFoes: 2, _retyping: new Set(), _authority: false, isClassEnemyId, enemyEntityType, validFoeRecord, ...TRAIT_DOORS, opts: { selfId: () => self },
     appliedOwnerTm,   // PIN MOVED (OWNER-CLOCK): the stream door's frame clock (net/ownerClock.js) - null outside a frame
-    renownFoeDied: () => {}, reportPlayerKill: () => {}, egFindStruck: async () => false, rollCorpseKit: () => [], addCorpseFood: () => {}, stampWonWeapons: () => {}, capFoeLoot: () => [], liveStat: () => 50,
+    renownFoeDied: () => {}, reportPlayerKill: () => {}, killFxOf, egFindStruck: async () => false, rollCorpseKit: () => [], addCorpseFood: () => {}, stampWonWeapons: () => {}, capFoeLoot: () => [], liveStat: () => 50,
     dropFoeCard: () => null,   // PIN MOVED (AUDIT CARDS-6 A3): the copy's own card, drawn at the copy door - not this seam
     playerEntity: { isPlayer: true, items: [] }, setFoeDead: (f, d) => { f.dead = d; }, retypeFoe: async () => false,
     sayEnemyDied, hudText: { add: (l) => hud.push(l) },

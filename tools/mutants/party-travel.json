@@ -2,8 +2,8 @@
   {
     "name": "PT-round-stamp-unread",
     "file": "src/systems/party/partyTravelLaw.js",
-    "old": "const at = stampOf(tv.at, now);",
-    "new": "const at = Number(tv.at) || 0;",
+    "old": "  const at = stampOf(tv.at, now);",
+    "new": "  const at = Number(tv.at) || 0;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PT-round-never-lapses",
     "file": "src/systems/party/partyTravelLaw.js",
-    "old": "return now - at > timeout ? null : { x: tv.x, y: tv.y, o: tv.o, at, go: null };",
-    "new": "return { x: tv.x, y: tv.y, o: tv.o, at, go: null };",
+    "old": "  return now - at > timeout ? null : { x: tv.x, y: tv.y, o: tv.o, at, go: null };",
+    "new": "  return { x: tv.x, y: tv.y, o: tv.o, at, go: null };",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PT-departed-never-lapses",
     "file": "src/systems/party/partyTravelLaw.js",
-    "old": "return now - go > TRIP_FOLLOW_MS ? null : { x: tv.x, y: tv.y, o: tv.o, at, go };",
-    "new": "return { x: tv.x, y: tv.y, o: tv.o, at, go };",
+    "old": "  if (go > 0 && go >= at) return now - go > TRIP_FOLLOW_MS ? null : { x: tv.x, y: tv.y, o: tv.o, at, go };",
+    "new": "  if (go > 0 && go >= at) return { x: tv.x, y: tv.y, o: tv.o, at, go };",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PT-go-before-at-departs",
     "file": "src/systems/party/partyTravelLaw.js",
-    "old": "if (go > 0 && go >= at)",
-    "new": "if (go > 0)",
+    "old": "  if (go > 0 && go >= at) return now - go > TRIP_FOLLOW_MS ? null : { x: tv.x, y: tv.y, o: tv.o, at, go };",
+    "new": "  if (go > 0) return now - go > TRIP_FOLLOW_MS ? null : { x: tv.x, y: tv.y, o: tv.o, at, go };",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PT-vote-any-round",
     "file": "src/systems/party/partyTravelLaw.js",
-    "old": "if (p.tr === at) return 'ready';",
-    "new": "if (p.tr != null) return 'ready';",
+    "old": "  if (p.tr === at) return 'ready';",
+    "new": "  if (p.tr != null) return 'ready';",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PT-decline-reads-ready",
     "file": "src/systems/party/partyTravelLaw.js",
-    "old": "if (p.td === at) return 'declined';",
-    "new": "if (p.td === at) return 'ready';",
+    "old": "  if (p.td === at) return 'declined';",
+    "new": "  if (p.td === at) return 'ready';",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PT-offline-seat-gathered",
     "file": "src/systems/party/partyTravelLaw.js",
-    "old": "    if (!memberPresent(m)) continue;\n",
-    "new": "",
+    "old": "    if (!memberPresent(m)) continue;\n    out[tripAnswerOf(m.p, at)].push(m.name || 'A party member');",
+    "new": "    out[tripAnswerOf(m.p, at)].push(m.name || 'A party member');",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "PT-count-drops-leader",
     "file": "src/systems/party/partyTravelLaw.js",
-    "old": "return `${tally.ready.length + 1}/",
-    "new": "return `${tally.ready.length}/",
+    "old": "  return `${tally.ready.length + 1}/${tally.ready.length + tally.waiting.length + 1} ready`;",
+    "new": "  return `${tally.ready.length}/${tally.ready.length + tally.waiting.length + 1} ready`;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "PT-offline-leader-travelled-to",
     "file": "src/systems/party/partyTravelLaw.js",
-    "old": "if (!leader || leader.online === false) return { refuse: PARTY_TRAVEL_TEXT.offline };",
-    "new": "if (!leader) return { refuse: PARTY_TRAVEL_TEXT.offline };",
+    "old": "  if (!leader || leader.online === false) return { refuse: PARTY_TRAVEL_TEXT.offline };",
+    "new": "  if (!leader) return { refuse: PARTY_TRAVEL_TEXT.offline };",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PT-indoors-travels",
     "file": "src/systems/party/partyTravelLaw.js",
-    "old": "  if (!outdoors) return { refuse: PARTY_TRAVEL_TEXT.inside };\n",
-    "new": "",
+    "old": "  if (!outdoors) return { refuse: PARTY_TRAVEL_TEXT.inside };\n  const p = leader.p;",
+    "new": "  const p = leader.p;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "PT-here-travels",
     "file": "src/systems/party/partyTravelLaw.js",
-    "old": "  if (here && p.px === here.x && p.py === here.y) return { refuse: PARTY_TRAVEL_TEXT.here };\n",
-    "new": "",
+    "old": "  if (here && p.px === here.x && p.py === here.y) return { refuse: PARTY_TRAVEL_TEXT.here };\n  return {",
+    "new": "  return {",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PT-beside-indoors",
     "file": "src/systems/party/partyTravelLaw.js",
-    "old": "if (!p || p.in !== 0 || p.px !== x || p.py !== y) return null;",
-    "new": "if (!p || p.px !== x || p.py !== y) return null;",
+    "old": "  if (!p || p.in !== 0 || p.px !== x || p.py !== y) return null;",
+    "new": "  if (!p || p.px !== x || p.py !== y) return null;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "PT-beside-pixel-unchecked",
     "file": "src/systems/party/partyTravelLaw.js",
-    "old": "  if (at.x !== x || at.y !== y) return null;\n",
-    "new": "",
+    "old": "  if (at.x !== x || at.y !== y) return null;\n  return { x: p.wx, y: p.wy, z: p.wz };",
+    "new": "  return { x: p.wx, y: p.wy, z: p.wz };",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PT-beside-walls-ignored",
     "file": "src/systems/party/partyTravelLaw.js",
-    "old": "if (!(d > 0) || !probe.clear(at, [dx / d, 0, dz / d], d + BESIDE_REACH)) continue;",
-    "new": "if (!(d > 0)) continue;",
+    "old": "    if (!(d > 0) || !probe.clear(at, [dx / d, 0, dz / d], d + BESIDE_REACH)) continue;",
+    "new": "    if (!(d > 0)) continue;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "PT-beside-level-ignored",
     "file": "src/systems/party/partyTravelLaw.js",
-    "old": "if (!f || !(Math.abs(f[1] - at[1]) <= BESIDE_LEVEL)) continue;",
-    "new": "if (!f) continue;",
+    "old": "    if (!f || !(Math.abs(f[1] - at[1]) <= BESIDE_LEVEL)) continue;",
+    "new": "    if (!f) continue;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "PT-beside-flying-lands",
     "file": "src/systems/party/partyTravelLaw.js",
-    "old": "return own && Math.abs(own[1] - at[1]) <= BESIDE_LEVEL ? { pos: own, yaw: null } : null;",
-    "new": "return own ? { pos: own, yaw: null } : null;",
+    "old": "  return own && Math.abs(own[1] - at[1]) <= BESIDE_LEVEL ? { pos: own, yaw: null } : null;",
+    "new": "  return own ? { pos: own, yaw: null } : null;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "PT-walk-is-journey",
     "file": "src/systems/party/partyTravelLaw.js",
-    "old": "return Math.max(Math.abs(now.px - was.px), Math.abs(now.py - was.py)) > 1;",
-    "new": "return Math.max(Math.abs(now.px - was.px), Math.abs(now.py - was.py)) > 0;",
+    "old": "  return Math.max(Math.abs(now.px - was.px), Math.abs(now.py - was.py)) > 1;",
+    "new": "  return Math.max(Math.abs(now.px - was.px), Math.abs(now.py - was.py)) > 0;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "PT-chat-travel-not-host",
     "file": "src/net/chatCommands.js",
-    "old": "'leader', 'travel', 'event',",
-    "new": "'leader', 'event',",
+    "old": "  'travel',\n  'event',",
+    "new": "  'event',",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "PT-propose-through-old-hub",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (!s?.party || !s.leads() || !host.relayOk() || !pick?.pixel || opts?.playerControlled) return false;",
-    "new": "if (!s?.party || !s.leads() || !pick?.pixel || opts?.playerControlled) return false;",
+    "old": "    if (!s?.party || !s.leads() || !host.relayOk() || !pick?.pixel || opts?.playerControlled) return false;",
+    "new": "    if (!s?.party || !s.leads() || !pick?.pixel || opts?.playerControlled) return false;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "PT-propose-a-walked-trip",
     "file": "src/systems/party/partyTravel.js",
-    "old": "|| !pick?.pixel || opts?.playerControlled) return false;",
-    "new": "|| !pick?.pixel) return false;",
+    "old": "    if (!s?.party || !s.leads() || !host.relayOk() || !pick?.pixel || opts?.playerControlled) return false;",
+    "new": "    if (!s?.party || !s.leads() || !host.relayOk() || !pick?.pixel) return false;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "PT-propose-nobody-gathered",
     "file": "src/systems/party/partyTravel.js",
-    "old": "    if (!gathered.length) return false;\n",
-    "new": "",
+    "old": "    if (!gathered.length) return false;\n    trip = {",
+    "new": "    trip = {",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "PT-propose-to-here",
     "file": "src/systems/party/partyTravel.js",
-    "old": "    if (pick.pixel.x === here.x && pick.pixel.y === here.y) return false;\n",
-    "new": "",
+    "old": "    if (pick.pixel.x === here.x && pick.pixel.y === here.y) return false;\n    const gathered = host.gathered();",
+    "new": "    const gathered = host.gathered();",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "PT-leader-sets-out-inside",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (!host.outdoors() || !host.alive()) { cancel(PARTY_TRAVEL_TEXT.off); return; }",
-    "new": "if (!host.alive()) { cancel(PARTY_TRAVEL_TEXT.off); return; }",
+    "old": "      if (!host.outdoors() || !host.alive()) {",
+    "new": "      if (!host.alive()) {",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "PT-leader-walks-off-with-it",
     "file": "src/systems/party/partyTravel.js",
-    "old": "      if (Math.hypot(f.x - t.origin.x, f.z - t.origin.z) > host.radius) { cancel(PARTY_TRAVEL_TEXT.moved); return; }\n",
-    "new": "",
+    "old": "      if (Math.hypot(f.x - t.origin.x, f.z - t.origin.z) > host.radius) {\n        cancel(PARTY_TRAVEL_TEXT.moved);\n        return;\n      }\n      if (now - t.at > PARTY_READY_TIMEOUT_MS) {",
+    "new": "      if (now - t.at > PARTY_READY_TIMEOUT_MS) {",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "PT-round-never-late",
     "file": "src/systems/party/partyTravel.js",
-    "old": "      if (now - t.at > PARTY_READY_TIMEOUT_MS) { cancel(PARTY_TRAVEL_TEXT.late); return; }\n",
-    "new": "",
+    "old": "      if (now - t.at > PARTY_READY_TIMEOUT_MS) {\n        cancel(PARTY_TRAVEL_TEXT.late);\n        return;\n      }\n      const tally = tripTally(host.gathered(), t.at);",
+    "new": "      const tally = tripTally(host.gathered(), t.at);",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "PT-sets-out-over-window",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (!tripSetsOut(tally) || host.busy()) return;",
-    "new": "if (!tripSetsOut(tally)) return;",
+    "old": "      if (!tripSetsOut(tally) || host.busy()) return; // a window of mine up: the party sets out when it closes",
+    "new": "      if (!tripSetsOut(tally)) return; // a window of mine up: the party sets out when it closes",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "PT-leader-gold-unchecked",
     "file": "src/systems/party/partyTravel.js",
-    "old": "const refusal = host.refusal() ?? (host.canAfford(t.computed) ? null : fareText(t.computed, false));",
-    "new": "const refusal = host.refusal();",
+    "old": "      const refusal = host.refusal() ?? (host.canAfford(t.computed) ? null : fareText(t.computed, false));",
+    "new": "      const refusal = host.refusal();",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "PT-leader-before-pose",
     "file": "src/systems/party/partyTravel.js",
-    "old": "      if (!t.goSent && now - t.go < PARTY_TRIP_GO_MS) return;\n",
-    "new": "",
+    "old": "      if (!t.goSent && now - t.go < PARTY_TRIP_GO_MS) return;\n      // AUDIT PARTY-TRAVEL: the door's refusals asked AGAIN as the journey begins - between `go` and here (a pose's",
+    "new": "      // AUDIT PARTY-TRAVEL: the door's refusals asked AGAIN as the journey begins - between `go` and here (a pose's",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "PT-leader-waits-for-ever",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (!t.goSent && now - t.go < PARTY_TRIP_GO_MS) return;",
-    "new": "if (!t.goSent) return;",
+    "old": "      if (!t.goSent && now - t.go < PARTY_TRIP_GO_MS) return;",
+    "new": "      if (!t.goSent) return;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "PT-failed-journey-keeps-round",
     "file": "src/systems/party/partyTravel.js",
-    "old": "        if (trip === t) trip = null;\n",
-    "new": "",
+    "old": "        if (trip === t) trip = null;\n        host.say(PARTY_TRAVEL_TEXT.off);",
+    "new": "        host.say(PARTY_TRAVEL_TEXT.off);",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "PT-yes-unrefused",
     "file": "src/systems/party/partyTravel.js",
-    "old": "      why = host.refusal();\n",
-    "new": "",
+    "old": "      why = host.refusal();\n      if (!why) {",
+    "new": "      if (!why) {",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "PT-yes-unpriced",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (!fare.afford) why = fareText(fare.computed, false); }",
-    "new": "}",
+    "old": "        if (!fare.afford) why = fareText(fare.computed, false);\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "PT-far-member-asked",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (host.nearLeader(lead)) { near = round.at; nearFrom = f; }",
-    "new": "if (true) { near = round.at; nearFrom = f; }",
+    "old": "      if (host.nearLeader(lead)) {",
+    "new": "      if (true) {",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "PT-busy-member-boxed",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (told !== round.at) { told = round.at; host.say(`${lead.name || 'The leader'} wants the party to travel to ${dest}. Type /travel to come along.`); }\n        return;",
-    "new": "if (told !== round.at) { told = round.at; host.say(`${lead.name || 'The leader'} wants the party to travel to ${dest}. Type /travel to come along.`); }",
+    "old": "        }\n        return;\n      }",
+    "new": "        }\n      }",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "PT-asked-every-tick",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (near === null || asked === round.at || vote === round.at",
-    "new": "if (near === null || vote === round.at",
+    "old": "      if (near === null || asked === round.at || vote === round.at || decline === round.at || !host.alive()) return;",
+    "new": "      if (near === null || vote === round.at || decline === round.at || !host.alive()) return;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "PT-vote-outlives-its-round",
     "file": "src/systems/party/partyTravel.js",
-    "old": "    if (vote != null && vote !== round.at) vote = null;   // a vote names its round\n",
-    "new": "",
+    "old": "    if (vote != null && vote !== round.at) vote = null; // a vote names its round\n    if (decline != null && decline !== round.at) decline = null;",
+    "new": "    if (decline != null && decline !== round.at) decline = null;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "PT-ended-round-box-stands",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (promptFor != null && promptFor !== 'leader' && promptFor !== round?.at) { closePrompt(); host.say(PARTY_TRAVEL_TEXT.called); }",
-    "new": "if (false) { closePrompt(); host.say(PARTY_TRAVEL_TEXT.called); }",
+    "old": "    if (promptFor != null && promptFor !== 'leader' && promptFor !== round?.at) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "PT-follows-from-afar",
     "file": "src/systems/party/partyTravel.js",
-    "old": "    if (near !== round.at) { host.say(PARTY_TRAVEL_TEXT.lost); return; }\n",
-    "new": "",
+    "old": "    if (near !== round.at) {\n      host.say(PARTY_TRAVEL_TEXT.lost);\n      return;\n    }\n    follow = {",
+    "new": "    follow = {",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "PT-follows-before-arrival",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (!arrived && !roundLeft && !seatQuiet) return;",
-    "new": "if (false) return;",
+    "old": "    if (!arrived && !roundLeft && !seatQuiet) return;",
+    "new": "    if (false) return;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "PT-follows-from-under-a-window",
     "file": "src/systems/party/partyTravel.js",
-    "old": "    if (host.busy()) {\n      if (waited >= 2 * TRIP_FOLLOW_MS)",
-    "new": "    if (false) {\n      if (waited >= 2 * TRIP_FOLLOW_MS)",
+    "old": "    const waited = host.clock() - f.since;\n    if (host.busy()) {",
+    "new": "    const waited = host.clock() - f.since;\n    if (false) {",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "PT-window-follows-for-ever",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (waited >= 2 * TRIP_FOLLOW_MS) leaveBehind(f);",
-    "new": "if (false) leaveBehind(f);",
+    "old": "      if (waited >= 2 * TRIP_FOLLOW_MS) leaveBehind(f);",
+    "new": "      if (false) leaveBehind(f);",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "PT-follows-a-leader-who-stayed",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (roundLeft && atDeparture && !there) { follow = null;",
-    "new": "if (false) { follow = null;",
+    "old": "    if (roundLeft && atDeparture && !there) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "PT-follower-waits-for-ever",
     "file": "src/systems/party/partyTravel.js",
-    "old": "const waited = host.clock() - f.since;",
-    "new": "const waited = 0;",
+    "old": "    const waited = host.clock() - f.since;",
+    "new": "    const waited = 0;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "PT-offered-every-tick",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (!offerDue || now - settledAt < LEADER_SETTLE_MS || follow || host.moving()) return;",
-    "new": "if (follow || host.moving()) return;",
+    "old": "    if (!offerDue || now - settledAt < LEADER_SETTLE_MS || follow || host.moving()) return;",
+    "new": "    if (follow || host.moving()) return;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "PT-stayed-offered-again",
     "file": "src/systems/party/partyTravel.js",
-    "old": "    if (stay && stay.x === p.px && stay.y === p.py) return;\n",
-    "new": "",
+    "old": "    if (stay && stay.x === p.px && stay.y === p.py) return;\n    if (bound && bound.x === p.px && bound.y === p.py) return; // I am on my way there already",
+    "new": "    if (bound && bound.x === p.px && bound.y === p.py) return; // I am on my way there already",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "PT-bound-offered-again",
     "file": "src/systems/party/partyTravel.js",
-    "old": "    if (bound && bound.x === p.px && bound.y === p.py) return;   // I am on my way there already\n",
-    "new": "",
+    "old": "    if (bound && bound.x === p.px && bound.y === p.py) return; // I am on my way there already\n    if (host.busy() || offerLeader() !== true)",
+    "new": "    if (host.busy() || offerLeader() !== true)",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "PT-offer-over-a-window",
     "file": "src/systems/party/partyTravel.js",
-    "old": "    if (host.busy()) return PARTY_TRAVEL_TEXT.busy;",
-    "new": "",
+    "old": "    if (host.busy()) return PARTY_TRAVEL_TEXT.busy; // the box takes the host's one slot - never from under another window",
+    "new": "    // the box takes the host's one slot - never from under another window",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "PT-offer-goes-where-leader-was",
     "file": "src/systems/party/partyTravel.js",
-    "old": "journey(now, host.myToggles(), now.acct, now.name, now.loc);",
-    "new": "journey(trip0, host.myToggles(), trip0.acct, trip0.name, trip0.loc);",
+    "old": "        journey(now, host.myToggles(), now.acct, now.name, now.loc);",
+    "new": "        journey(trip0, host.myToggles(), trip0.acct, trip0.name, trip0.loc);",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "PT-map-no-never-rests",
     "file": "src/systems/party/partyTravel.js",
-    "old": "mapQuietUntil = host.clock() + LEADER_MAP_QUIET_MS; mapPending = true;",
-    "new": "mapPending = true;",
+    "old": "            mapQuietUntil = host.clock() + LEADER_MAP_QUIET_MS;\n            mapPending = true;",
+    "new": "            mapPending = true;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "PT-map-opens-under-box",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (mapPending && !host.busy()) { mapPending = false; host.openMap(); }",
-    "new": "if (mapPending) { mapPending = false; host.openMap(); }",
+    "old": "      if (mapPending && !host.busy()) {",
+    "new": "      if (mapPending) {",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "PT-reset-leaves-box",
     "file": "src/systems/party/partyTravel.js",
-    "old": "    if (prompt) closePrompt();\n",
-    "new": "",
+    "old": "    if (prompt) closePrompt();\n    if (follow) host.say(PARTY_TRAVEL_TEXT.off);",
+    "new": "    if (follow) host.say(PARTY_TRAVEL_TEXT.off);",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "PT-reset-remembers-the-leader",
     "file": "src/systems/party/partyTravel.js",
-    "old": "stay = null; bound = null; leaderSeen = null;",
-    "new": "stay = null; bound = null;",
+    "old": "    leaderSeen = null;\n    offerDue = false;",
+    "new": "    offerDue = false;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "PT-call-off-a-departed-round",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (trip && trip.go == null) { trip = null; host.poseDirty(); host.mid('You call off the journey.'); return 'You call off the journey.'; }",
-    "new": "if (trip) { trip = null; host.poseDirty(); host.mid('You call off the journey.'); return 'You call off the journey.'; }",
+    "old": "        if (trip && trip.go == null) {",
+    "new": "        if (trip) {",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "PT-travel-always-yes",
     "file": "src/systems/party/partyTravel.js",
-    "old": "answer(round.at, yes == null ? vote !== round.at : !!yes), said: true",
-    "new": "answer(round.at, true), said: true",
+    "old": "    return { line: answer(round.at, yes == null ? vote !== round.at : !!yes), said: true };",
+    "new": "    return { line: answer(round.at, true), said: true };",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -596,8 +596,8 @@
   {
     "name": "PT-host-never-beside",
     "file": "src/systems/party/partyArrival.js",
-    "old": "beside = target ? seams.besideLanding(target, pick.besideSeat ?? 0) : null;",
-    "new": "beside = null;",
+    "old": "        beside = target ? seams.besideLanding(target, pick.besideSeat ?? 0) : null;",
+    "new": "        beside = null;",
     "tests": [
       "test/systems/partyArrivalTransaction.test.js"
     ]

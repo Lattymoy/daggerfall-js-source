@@ -46,32 +46,49 @@ judges what it found, and fights what comes near. Imrah Bel-Tavir's reading, nev
 that keeps the Mzunthar over the Bay. One dragon in twenty runs on an aetherium heart instead of a brass coil. Sailors
 call it **Aetherbright**: its plates are the blue of the crystal, its wings the violet of its light.
 
-## 2. When and where - a function of the clock
+## 2. When and where - the relay's secret, told near its cell
 
-Like the gate and the serpent, a dragon is a fact of the shared world that every client and the relay compute from wall
-time alone (DRAGON-LAW, net/dragon/dragonLaw.js):
+DRAGON-HIDDEN (the owner: "people are able to predict the dragon spawn by looking at source code"): the rolls were a
+public salt's, so anyone could count every dragon to come. Every roll now takes an omen `{w, s}` (net/dragon/dragonLaw.js),
+its seed an HMAC of the relay's `GATE_SIGNING_KEY` under its own label (net/dragon/dragonSeed.js). DRAGON-CELL: the relay
+told the seed to every screen at the landing, and the seed named the pixel; now only a player near its cell is told.
 
-- **The watch.** The real clock is cut into watches of `DRAGON_WATCH_MS` (one hour). Each watch draws, from a hash of
-  its number and `DRAGON_SALT`, whether a dragon comes down: one watch in three (`DRAGON_WATCH_ONE_IN`), about eight a
-  day, at times nobody is told.
-- **Its life.** It comes down at `DRAGON_LAND_AT_MS` into the watch (a quarter past), stays until slain or
-  `DRAGON_STAY_MS` (40 minutes) later, then climbs away. So at most one dragon stands at once, worldwide.
-- **The shiny.** The same hash draws one dragon in `DRAGON_SHINY_ONE_IN` (20) as Aetherbright. The fight, its receipt
-  and the account's row carry it.
-- **Where.** The hash picks a theatre among those that stand (`dragonLaneOf`, the gate's lanes,
-  `03-World/World-Wide.md`). The gate's site law finds the pixel over the world's own data (`systems/gate/gateSite.js`:
-  land, no place in the pixel, a town two to four pixels away) under a number of the dragon's own, `dragonSiteDay`, past
-  every gate day (`systems/dragon/dragonSite.js`). The site is that pixel's centre. The relay never reads the map: it
-  holds a fight at the site an `in` names in its own cell, at most `DRAGON_SITES_MAX` a watch, so a forged site stands a
-  fight of its own that nobody else draws (the serpent's AUDIT SERPENT S1 law).
+- **The watch.** The real clock is cut into watches of `DRAGON_WATCH_MS` (one hour). A watch holds `DRAGON_CELLS_A_WATCH`
+  (4) omens, each seed its own HMAC (`dragonOmenSeeds`, `dragonCandidates`), so one told says nothing of another. One
+  omen in `DRAGON_WATCH_ONE_IN` (3) brings a dragon down where its cell has ground: at most 8.9 a day, up to four a watch.
+- **When.** An omen's landing is a whole second its seed rolls in the watch's first `DRAGON_LAND_SPAN_MS` (20 minutes,
+  DRAGON-HIDDEN-TIME), so the clock tells nobody when.
+- **Where.** An omen picks a cell (`dragonCellOf`): one of the relay's 16-pixel world cells in the continent's frame at
+  its authored fit (`DRAGON_CELLS`), a box the relay knows with no map; it holds the land at the shipped fits. The client
+  finds the site in it over the world's own data (`systems/dragon/dragonSite.js`): the Bay's gate scan's ground where the
+  cell has any, which every screen holds; else the gate's law over the towns about the cell past the Bay, the
+  countryside's among them (`scenes/gate/gateLanes.js` groundIn, read in idle slices once the countryside stands and the
+  land is laid). Its own roll picks one pixel. A cell with no ground brings no dragon, and a screen with the land past the
+  Bay off sees none whose site is past it. An omen within two cells of an earlier one is dropped.
+- **Told near its cell.** A client asks (`ask`) for this watch and the last, down whatever room it stands in. The relay
+  judges a pose in a cell room (in a cell the socket covers) and in a battle; a private room and any other answers
+  nothing. A socket not yet stood `DRAGON_TELL_DWELL_MS` (20 s) in the cell of its pose hears nothing. One that has is
+  told a landed dragon's omen within `DRAGON_TELL_PX` (6 pixels, the dragon's sight) of its cell, and null otherwise, no
+  sooner than a quiet watch (`dragonQuietAt`). An `in` waits the same. The client asks again outside a told omen's
+  reach, and after a null from another pixel, or the same one a minute on. No secret, no dragon.
+- **The budget.** An account is judged in at most `DRAGON_JUDGED_CELLS_MAX` (48) cells a watch, all its sockets
+  together, on the hub (DRAGON-BUDGET). An ask is charged every cell its pose could be told of, an `in` its site's cell.
+  A fight's words reach a passer-by only once its account is granted the fight's cell.
+- **Its life.** It stays until slain or `DRAGON_STAY_MS` (40 minutes) after its landing, then climbs away. Up to four may
+  stand at once, three cells apart at least. Each pays: a kill is keyed by watch, place and account (DRAGON-EACH).
+- **The shiny.** One omen in `DRAGON_SHINY_ONE_IN` (20) is the Aetherbright. The fight, its receipt and the account's
+  row carry it.
+- **The fight's site.** The relay holds a fight at the site an `in` names in its own cell, at most `DRAGON_SITES_MAX` a
+  dragon, at a pixel's centre in the cell of an omen of that watch (`dragonCandidateOf`, `dragonSiteOk`). A forged site
+  within that stands a fight of its own that nobody else draws (the serpent's AUDIT SERPENT S1 law).
 
 No line in chat and no ring on the map. The dragon is found by being seen.
 
 ## 3. Seen in the sky - before anyone fights it
 
 From its landing until a player comes within `DRAGON_ADMIT_R` (600 m), the dragon roosts in the air: it circles its
-site at `ROOST_ALT` (70 m) on a path that is a function of the clock (`net/dragon/dragonBody.js`), so every screen draws
-it in the same place with no frame sent.
+site at `ROOST_ALT` (70 m) on a path that is a function of the clock and its omen (`net/dragon/dragonBody.js`), so every
+screen told the omen draws it in the same place with no frame sent.
 
 - **Drawn** to `DRAGON_SIGHT_R` (4 km), in the view's own fog, as the Dwarven Dragon's own sprite at `DRAGON_SCALE`
   (1.6 - a wingspan near 19 m), its idle frames in the air.
@@ -88,11 +105,11 @@ never a room of its own. The brain (`net/dragon/dragonBrain.js`) is pure law, pl
 seconds, and forgotten two hours after it ends.
 
 - **The join** (`in`): the watch, the site, the brain's law `bv`, the level (never above the token's `cl`). Refused:
-  an older law (*reload*); another watch or a watch with no dragon (*the dragon is gone*); a pose past
-  `DRAGON_ADMIT_R` (*too far*); a site in another cell (junk); a dragon slain or gone.
+  an older law (*reload*); another watch or a watch with no dragon (*the dragon is gone*); a site its dragon could not
+  stand at (*gone*); a pose past `DRAGON_ADMIT_R` (*too far*); a site in another cell (junk); a dragon slain or gone.
 - **Every word names its fight** (`id`, the watch and the site), so a client folds its own alone (the serpent's AUDIT
   SERPENT 2 F1 law).
-- **The numbers** are the gate's level-claim law: a fighter brings `DRAGON_TTK_S` (200) seconds of
+- **The numbers** are the gate's level-claim law: a fighter brings `DRAGON_TTK_S` (720; 200 before DRAGON-HARDER) seconds of
   `dpsRef(lv) = 5 + lv` to its health, at the fight's fraction for a late one, and may deal by a bucket refilled at
   three times the reference a second, fifteen deep, no blow over twelve. A share leaves the health when its fighter is
   gone from the fight for 45 s.
@@ -145,7 +162,7 @@ At nought the cell stamps the kill once (`fell`, with its three best dealers and
 earner's receipt. On every screen the dragon falls from where it was, straight down to the ground under it, and lands
 with its body's thud. Then it lies **deactivated** for `DRAGON_REMAINS_MS` (10 minutes): its idle frame on the ground,
 washed dark, its glow out. Its cell says its state every five seconds to anyone who comes near while it lies, and answers
-a late `in` with it, so nobody sees the clock's dragon circling over a slain one. The spoils burst from it (section 8).
+a late `in` with it, so nobody sees the roosting dragon circling over a slain one. The spoils burst from it (section 8).
 
 **Earned**: a fighter that dealt `DRAGON_DEALT_SHARE` (2.5%) of its own share is a **dealer**; one that stood within
 150 m of it for a quarter of the fight is a **stander**. A dealer's party shares its kill as a stander's, as the
@@ -154,13 +171,15 @@ serpent's does.
 ## 8. The spoils and the tame
 
 **The receipt** (`net/dragon/dragonReceipt.js`, version `z1`): Ed25519 under the relay's one key, refused by every other
-verifier and theirs by this one. Its claims: `q` the watch, `b` the dragon (0 brass, 1 Aetherbright), `s` the account,
-`c` the hoard's seed, `x` dealt or stood, `l` the level, `m` the relay's body count, `i` issued, `e` a week on.
+verifier and theirs by this one. Its claims: `q` the watch, `p` the place (its cell's number, `dragonPlaceOf`; none from a
+relay before DRAGON-EACH), `b` the dragon (0 brass, 1 Aetherbright), `s` the account, `c` the hoard's seed, `x` dealt or
+stood, `l` the level, `m` the relay's body count, `i` issued, `e` a week on.
 
 **The claim** (`server-account/src/dragons.js` `claimDragon`, route `/v1/dragon/claim`, migration `0194_dragon.sql`, acct222).
 The device carries the receipt (`net/dragon/dragonClaims.js`) with the character that fought and a claim id of its own.
-The service counts one kill a (watch, account) in `dragon_kills`, and gives the hoard to the claim whose id writes the
-watch's `dragon_spoils` row, so a second browser is answered no. A guest is given its hoard and nothing else. The kill is
+The service counts one kill a (watch, place, account) in `dragon_kills` (migration 0203; place -1 for a receipt from
+before it), and gives the hoard to the claim whose id writes that dragon's `dragon_spoils` row, so a second browser is
+answered no. A guest is given its hoard and nothing else. The kill is
 the questline act `dragon-slain`. No Renown and no silver: the dragon pays its hoard and its tame.
 
 **The hoard** (`systems/dragon/dragonSpoils.js`, rolled on the receipt's seed, never past the character's level), within the
@@ -186,6 +205,13 @@ derived like the Marks of Mastery (`net/huntLaw.js` DRAGON_TITLES, `server-accou
 signed into the token (relay world294) and shown in the wardrobe under the Dwarven Dragon. Each is worn on a metal
 name plate (the owner: "naw just make the name plate"): brass, aetherium, and the Firsts' gold and ice
 (`ui/titleFlame.js` TITLE_PLATE and plateCss).
+
+**A named First** (FIRST-WYRM, 2026-10-31, the owner: "Seasoning needs to be granted the first dragon rider. He hasnt
+recieved it"). `server-account/wrangler.toml` FIRST_WYRM_RIDER_HANDLES grants First Wyrm Rider by handle, as First of
+the Spire is granted (`server-account/src/titles.js` isNamedFirstWyrm). It holds the account Seanobi (FIRST-WYRM-NAME, the owner: "His name is Seanobi"). While the list
+names anyone, it names the First: the earliest brass tame holds the title only if listed. There is one First. The
+service's rows were not read here, so why the derived First missed him is not known. First Aether Rider stays
+derived.
 
 ## 9. What a player sees and hears
 
@@ -410,6 +436,97 @@ client's next stand-up binds it again (`scenes/dragonRewards.js` recall, bind), 
 saddlebags' load is lost. PINS MOVED: the two switches, the bind's off case (`dragon5_mount`), the tamed line
 (`dragonaudit_account`), the online stock (`dragon5c_care`, `merchantyards1`); two mutants whose gate stands open now
 mutate its other side (`DRAGON5c-the-oil-kept-off-online`, `AUDIT-DRAGON-the-waiting-line-with-the-ride-on`).
+
+**DRAGON-HARDER (2026-10-29, the owner: "The dragon is way too easy to kill wtf").** A fighter's share was 200 seconds
+of its reference damage (`dpsRef`, 5 + level), but the gate's bucket lets it deal three times that, fifteen deep: one
+fighter at the cap took its share in about a minute, and more fighters only brought more shares. `DRAGON_TTK_S` is 720:
+twelve minutes at the reference, about four at the cap - over the Ketch Warden's 600 (KETCH-LONGER, the same finding),
+the rarest world boss the longest fight. Relay world293, world289, world290, world291 then world292 on its branch until HAND-WRAPS, PVP-LINGER, GILDED-GLOW and DELVE II took them (`DRAGON_RIDE_RELAY_MIN` stays 288). PINS MOVED: the relay
+version's (each note before the last), `dragon2_law`'s; `DRAGON2-the-share-the-gates` mutates 720 to 600.
+
+**DRAGON-HIDDEN (2026-10-29, the owner: "people are able to predict the dragon spawn by looking at source code").**
+Every roll was `gateHash(DRAGON_SALT, w, k)`, the salt in the client, so the source counted each dragon to come, its
+province and its pixel. The rolls take a watch's omen now (section 2): the relay's seed, told at its landing, never
+before; the site's number is the seed's, not the watch's. A modified client still learns a site at its landing - it
+must, to draw it - but never a watch ahead, and a forged site still stands a fight of its own (section 2).
+`DRAGON_BRAIN_MIN` 2: an old game is told to reload. The fight's gate is 293 (292 until DELVE II took it), past the
+ride's 288. Pinned by `test/net/dragon/dragonhidden.test.js` (5); `tools/mutants/dragonhidden.json`, 11 dead; eight
+records re-aimed onto the omen, dead.
+
+**AUDIT DRAGON-HIDDEN (2026-10-30, the owner: "Audit this"; `01-Overview/audits/Audit-Dragon-Hidden.md`).** Three lanes
+read DRAGON-HARDER and DRAGON-HIDDEN cold. The relay holds a forged site to a pixel's centre on its omen's side of the
+Bay's edge (`dragonSiteOk`), and a cell waking lets go of an unslain fight an older law made. An `ask` goes down whatever
+room the player stands in - a siege's battle and a tourney drew no dragon - and is answered each time, asked again after
+two seconds, so a lost answer or a clock ahead of the relay's costs no watch. The tests' omen names its look and theatre:
+a run's random key drew the Aetherbright one time in twenty and failed two pins. Relay world293, re-hashed in place.
+
+Pinned by `test/net/dragon/dragonhiddenaudit.test.js` (8); `tools/mutants/dragonhiddenaudit.json`, 17 dead. PINS MOVED:
+`dragonhidden`'s answer (each time, not once a socket - `DRAGON-HIDDEN-told-twice` retired with the code) and its ask
+(no cell); `dragon3_host`'s two `online.js` lines; `DRAGON3-the-hub-says-every-word` re-aimed by content. The two records
+`dragonhidden`'s titles named and nobody wrote are added: `dragonhidden.json` 12, dead.
+
+**DRAGON-CELL (2026-10-31, from Discord: a player read each dragon's pixel off the omen frame; the owner chose
+"Cell-scoped").** DRAGON-HIDDEN told a watch's seed to every screen at the landing, and the seed named the pixel, so a
+watcher on the desktop app's debugging port read each dragon's site. The relay has no map, so it cannot
+tell who stands near a pixel. The seed picks a cell now, which the relay can judge: it tells an omen only to a socket
+posed within six pixels of its cell, and null to any other at a quiet watch's time (section 2). A watch holds four
+omens, because a cell holds ground about 28% of the time: on the freeware 1,220 of the Bay's 2,016 cells, and past the
+Bay at most 23,281 of 86,344 (`tools/dragonCellProbe.mjs`). No host line changed. Relay world299, `DRAGON_RELAY_MIN`
+299, `DRAGON_BRAIN_MIN` 3. Deploy the relay first.
+
+Pinned by `test/net/dragon/dragoncell.test.js` (4); `tools/mutants/dragoncell.json`, 22 dead (20 since AUDIT DRAGON-CELL
+retired two with their code). PINS MOVED: the relay
+version's 46 files and its law's row; `dragon2_law`'s site and relay floor; `dragon3_client`'s site; `dragonhidden`'s
+tell and quiet watch; `dragonhiddenaudit`'s A1, B1, A3 and A6. Re-aimed by content and run, dead: DRAGON2-the-site-day-a-gates,
+DRAGON3-the-gates-day and -a-site-asked-every-frame, AUDIT-DRAGON-the-gate-its-own-number, two of `dragonhidden`'s, the
+three A1 of `dragonhiddenaudit`'s, and the relay version's three. Retired with their code: AUDIT-DRAGON-HIDDEN-A1-the-cells-check-dropped
+and -B5-asked-after-a-null-omen (DRAGON-CELL-the-in-any-site and -the-null-asked-again-here hold their laws).
+DRAGON-HIDDEN-asked-before-the-landing was alive on main too: recorded equivalent, with why. The version line carries STOREFRONT's rollback floor and kill fields, so WIREAUDIT-6 and -9 aim there.
+
+**AUDIT DRAGON-CELL (2026-10-31, the owner: "Audit"; `01-Overview/audits/Audit-Dragon-Cell.md`).** Three lanes read
+DRAGON-CELL and FIND-FOUND cold. A told omen's seed ran back to its watch's seed through gateHash, so each omen's seed is
+its own HMAC now, and a quiet omen is told null. An `in` reads no omen outside its socket's cover or far from its pose.
+A socket is told after 20 s in its room, a battle's pose is judged, and the client asks again outside a told omen's
+reach and after a null. A cell across the Bay's edge takes the Bay's ground where it has any, and a square is read once
+the countryside stands, in idle slices. Open, and put to the owner: many forged sockets at once (D3), and one reward a
+watch (D4). Relay world299, re-hashed in place. Pinned by `test/net/dragon/dragoncellaudit.test.js` (9);
+`tools/mutants/dragoncellaudit.json`, 18 dead.
+
+**AUDIT DRAGON-CELL II (2026-10-31, the owner: "Audit"; `01-Overview/audits/Audit-Dragon-Cell-II.md`).** The first
+audit's 20 s wait was a socket's, and a private room holds any pose, so one socket swept every cell in minutes. The wait
+is the cell's now, a private room judges no pose, and an `in` waits too. A socket not yet stood hears nothing, so a
+player arriving late is told in 20 to 35 s. A square waits for the land to be laid, and the Bay's scan warms on Safari.
+The watch's own seed is retired. Relay world299, re-hashed in place again. Pinned by `dragoncellaudit.test.js` (12);
+`tools/mutants/dragoncellaudit2.json`, 12 dead.
+
+**DRAGON-BUDGET (2026-10-31, the owner: "Do it", of AUDIT DRAGON-CELL II's open D3).** The wait made a sweep cost 20 s a
+cell a socket, and a client could open hundreds of sockets. A room that judges a pose (a cell's or a battle's) now asks
+the hub before it judges an account in a cell it has not (`server/src/dragonFights.js` judged, the hub's
+dragonJudgeInternal at `DRAGON_INTERNAL_JUDGE`), and the hub grants an account `DRAGON_JUDGED_CELLS_MAX` cells a
+watch. A room keeps a cell granted; a hub that fails refuses. The count lives with the hub's instance,
+which a sleep forgets. Relay world299, re-hashed in place. Pinned by `test/net/dragon/dragonbudget.test.js` (3);
+`tools/mutants/dragonbudget.json`, 9 dead. PINS MOVED: `dragonaudit_relay`'s state line; `dragoncell`'s and
+`dragoncellaudit`'s rooms aged; seven records re-aimed (AUDIT-DRAGON-the-cache-unbounded, D2's two, D6, E2's two, E3).
+AUDIT DRAGON-CELL III changed it: 24 cells became 48, each a pose could be told of (G4).
+
+**DRAGON-EACH (2026-10-31, the owner: "open up the rewards", of AUDIT DRAGON-CELL D4; acct233, migration 0203).** A
+kill was keyed by watch and account, so a second dragon in one watch paid nothing. The receipt now signs its dragon's
+place (`p`, its cell's number, `dragonLaw.js` dragonPlaceOf). The hub keeps an account's receipts of its newest watch,
+one a place (`dragonFights.js` keptOf), and the service keys the kill, the hoard and the tame by (watch, place,
+account). The client settles and spends one a dragon. A forged site has its cell's place, so it pays once. A receipt
+from before counts one a watch. Relay world299, re-hashed in place. Pinned by `test/net/dragon/dragoneach.test.js` (6);
+`tools/mutants/dragoneach.json`, 25 dead. PINS MOVED: acct233 in twenty test files and eleven mutant lists; the hub's
+keep (`dragonhiddenaudit`); four records re-aimed (DRAGON2's hub and hello, AUDIT DRAGON's sweep). Deploy order and
+rollback floors: AUDIT DRAGON-CELL III G2.
+
+**AUDIT DRAGON-CELL III (2026-10-31, the owner: "Audit"; `01-Overview/audits/Audit-Dragon-Cell-III.md`).** Three lanes
+read DRAGON-BUDGET and DRAGON-EACH cold. CI deploys the relay before the service, so a placed receipt counted by acct232
+could be paid again by acct233: a placed receipt is now refused where an older service counted its watch after it was
+minted. One charged cell told a 3x3 block, so an ask is charged each cell it could be told of (48 a watch). A full
+budget is kept in the room, a fight's words reach a passer-by only once granted its cell, an `in` is judged by its site's
+cell, and a node room holds two dragons. The account deploy now names `dragonLaw.js`. Open, put to the owner: guest
+accounts cost nothing, and a dragon in a cell with no ground. Pinned by `dragoncellaudit3.test.js` (8);
+`tools/mutants/dragoncellaudit3.json`, 29 dead.
 
 **DRAGON7 - the Aetherbright (2026-10-29).** `characters/dwarvenDragonShiny.js` turns each PLTE colour at load - the brass
 and copper to aetherium's blue, the wings' olive membrane to its violet, the greys cooled - and writes the chunk's CRC

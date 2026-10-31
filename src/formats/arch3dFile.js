@@ -111,7 +111,10 @@ function indexPatch(bsa) {
   for (const [offset, data] of ARCH3D_PATCH) {
     for (let i = 0; i < data.length;) {
       const record = recordAt(bsa, offset + i);
-      if (record === -1) { i++; continue; }
+      if (record === -1) {
+        i++;
+        continue;
+      }
       const start = bsa.getRecordPosition(record);
       const n = Math.min(data.length - i, start + bsa.getRecordLength(record) - (offset + i));
       if (!byRecord.has(record)) byRecord.set(record, []);
@@ -285,7 +288,12 @@ export class Arch3dFile {
 
     let normalPos = rec.header.normalListOffset;
     let pos = rec.header.planeListOffset;
-    let minX = 0, maxX = 0, minY = 0, maxY = 0, minZ = 0, maxZ = 0;
+    let minX = 0,
+      maxX = 0,
+      minY = 0,
+      maxY = 0,
+      minZ = 0,
+      maxZ = 0;
     let size = { x: 0, y: 0, z: 0 };
     let centre = { x: 0, y: 0, z: 0 };
 
@@ -311,10 +319,7 @@ export class Arch3dFile {
       const textureRecord = header.texture & 0x7f;
       let foundTexture = false;
       for (let i = 0; i < uniqueTextureBuffer.length; i++) {
-        if (
-          uniqueTextureBuffer[i].archive === textureArchive &&
-          uniqueTextureBuffer[i].record === textureRecord
-        ) {
+        if (uniqueTextureBuffer[i].archive === textureArchive && uniqueTextureBuffer[i].record === textureRecord) {
           foundTexture = true;
           break;
         }
@@ -420,11 +425,7 @@ export class Arch3dFile {
     const planeCount = rec.pureMesh.planes.length;
     for (let plane = 0; plane < planeCount; plane++) {
       const p = rec.pureMesh.planes[plane];
-      const subMeshIndex = this._getSubMesh(
-        rec.pureMesh,
-        p.textureIndex.archive,
-        p.textureIndex.record
-      );
+      const subMeshIndex = this._getSubMesh(rec.pureMesh, p.textureIndex.archive, p.textureIndex.record);
       this._writePlane(subMeshIndex, p);
     }
 
@@ -508,8 +509,7 @@ export class Arch3dFile {
         planeIn.points[pt].u = this._calculatedUVBuffer[pt].u;
         planeIn.points[pt].v = this._calculatedUVBuffer[pt].v;
       }
-      buf.planeBuffer[planeIndex].uvGenerationMethod =
-        UV_GENERATION_METHODS.ModifiedMatrixGenerator;
+      buf.planeBuffer[planeIndex].uvGenerationMethod = UV_GENERATION_METHODS.ModifiedMatrixGenerator;
     }
 
     // Write first 3 points, then the remaining corners.
@@ -548,10 +548,7 @@ export class Arch3dFile {
   /** Find submesh this archive/record combo belongs to. */
   _getSubMesh(mesh, textureArchive, textureRecord) {
     for (let i = 0; i < mesh.uniqueTextures.length; i++) {
-      if (
-        mesh.uniqueTextures[i].archive === textureArchive &&
-        mesh.uniqueTextures[i].record === textureRecord
-      ) {
+      if (mesh.uniqueTextures[i].archive === textureArchive && mesh.uniqueTextures[i].record === textureRecord) {
         return i;
       }
     }
@@ -589,15 +586,19 @@ export class Arch3dFile {
       }
 
       // Direction vectors.
-      const l0x = b.x - a.x, l0y = b.y - a.y, l0z = b.z - a.z;
-      const l1x = c.x - a.x, l1y = c.y - a.y, l1z = c.z - a.z;
+      const l0x = b.x - a.x,
+        l0y = b.y - a.y,
+        l0z = b.z - a.z;
+      const l1x = c.x - a.x,
+        l1y = c.y - a.y,
+        l1z = c.z - a.z;
 
       // Angle between direction vectors: acos of normalized dot. Normalizing
       // a zero-length vector throws, matching DFU's Vector3.Normalize.
       const m0 = Math.sqrt(l0x * l0x + l0y * l0y + l0z * l0z);
       const m1 = Math.sqrt(l1x * l1x + l1y * l1y + l1z * l1z);
       if (m0 === 0 || m1 === 0) {
-        throw new Error('Can not normalize a vector when it\'s magnitude is zero');
+        throw new Error("Can not normalize a vector when it's magnitude is zero");
       }
       const angle = Math.acos((l0x * l1x + l0y * l1y + l0z * l1z) / (m0 * m1));
       if (angle > 0.001) {

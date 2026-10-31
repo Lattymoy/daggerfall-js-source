@@ -76,8 +76,8 @@
   {
     "name": "WB8a-his-refusal-unsaid",
     "file": "src/scenes/gate/standInSpell.js",
-    "old": "{ swayToldAt = now(); say(BOSS_SWAY_TEXT(boss.entity.name)); }",
-    "new": "{ swayToldAt = now(); }",
+    "old": "      say(BOSS_SWAY_TEXT(boss.entity.name));\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/wb8a_never_swayed.test.js"
     ]

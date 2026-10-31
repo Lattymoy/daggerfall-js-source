@@ -17,9 +17,9 @@
 // "from the keys that exist" - either would be a different mod.
 
 import AMBIENT_TEXTS from '../../vendor/ambient-text/ambientTexts.json' with { type: 'json' };
-import { LOCATION_TYPES, DUNGEON_TYPES } from '../formats/mapsFile.js';   // DFRegion.LocationTypes / DungeonTypes - the names the keys are spelled with
-import { dice100 } from '../combat/formulas.js';   // Dice100.SuccessRoll
-import { weatherFlags } from '../world/weather.js';   // WeatherManager's four public flags
+import { LOCATION_TYPES, DUNGEON_TYPES } from '../formats/mapsFile.js'; // DFRegion.LocationTypes / DungeonTypes - the names the keys are spelled with
+import { dice100 } from '../combat/formulas.js'; // Dice100.SuccessRoll
+import { weatherFlags } from '../world/weather.js'; // WeatherManager's four public flags
 
 export { AMBIENT_TEXTS };
 
@@ -68,15 +68,15 @@ export const weatherKeyForWeather = (weather) => weatherKey(weatherFlags(weather
  *  along with every index outside 224..232. The arms verbatim, in the
  *  switch's own order. */
 export const CLIMATE_KEYS = Object.freeze([
-  'Desert',     // 224 Desert
-  'Desert',     // 225 Desert2
-  'Mountains',  // 226 Mountain
-  'Swamp',      // 227 Rainforest
-  'Swamp',      // 228 Swamp
-  'Desert',     // 229 Subtropical
-  'Woods',      // 230 MountainWoods
-  'Woods',      // 231 Woodlands
-  'Woods',      // 232 HauntedWoodlands
+  'Desert', // 224 Desert
+  'Desert', // 225 Desert2
+  'Mountains', // 226 Mountain
+  'Swamp', // 227 Rainforest
+  'Swamp', // 228 Swamp
+  'Desert', // 229 Subtropical
+  'Woods', // 230 MountainWoods
+  'Woods', // 231 Woodlands
+  'Woods', // 232 HauntedWoodlands
 ]);
 
 export function climateKey(climateIndex) {
@@ -94,10 +94,15 @@ export function climateKey(climateIndex) {
  *  Underground the location is not consulted at all: the family is the
  *  DUNGEON's type and there is no tail. */
 export function ambientTextKey({
-  insideDungeon = false, dungeonType = DUNGEON_TYPES.NoDungeon,
-  inLocationRect = false, locationType = LOCATION_TYPES.None,
-  isDay = true, climateIndex = 223, weather = 'sunny',
-  index = 0, tail = 0,
+  insideDungeon = false,
+  dungeonType = DUNGEON_TYPES.NoDungeon,
+  inLocationRect = false,
+  locationType = LOCATION_TYPES.None,
+  isDay = true,
+  climateIndex = 223,
+  weather = 'sunny',
+  index = 0,
+  tail = 0,
 } = {}) {
   if (insideDungeon) return `${enumName(DUNGEON_TYPES, dungeonType)}${index}`;
   // IsPlayerInLocationRect decides whether the location is consulted at
@@ -152,9 +157,15 @@ export const hasAmbientText = (key, texts = AMBIENT_TEXTS) => Object.prototype.h
  *                  test; the game always gets the author's own table.
  */
 export function createAmbientText({
-  settings, where = () => ({}), insideBuilding = () => false,
-  ready = () => true, paused = () => false,
-  say = () => {}, rolls = Math.random, enabled = () => true, texts = AMBIENT_TEXTS,
+  settings,
+  where = () => ({}),
+  insideBuilding = () => false,
+  ready = () => true,
+  paused = () => false,
+  say = () => {},
+  rolls = Math.random,
+  enabled = () => true,
+  texts = AMBIENT_TEXTS,
 } = {}) {
   // .ctor (IL 0x5de4): lastIndex starts at -1. It is the one field that
   // matters - Random.Range(0, 10) can never return -1, so the FIRST
@@ -185,7 +196,9 @@ export function createAmbientText({
    *  misses does not narrow the next roll. */
   const selectAmbientText = () => {
     let index = w.lastIndex;
-    do { index = Math.floor(rolls() * 10); } while (index === w.lastIndex);
+    do {
+      index = Math.floor(rolls() * 10);
+    } while (index === w.lastIndex);
     const at = where();
     // AUDIT AT F1: THE TAIL ROLL IS NOT SPENT UNDERGROUND. The dungeon
     // arm (IL_002e..IL_005d) formats its key and jumps straight to the
@@ -215,7 +228,10 @@ export function createAmbientText({
     // while a game booted with it ON and toggled off and back spoke at
     // once. Same switch, two behaviours, decided by history. The row's
     // "Takes effect at once" is true in both cases now.
-    if (!w.started) { start(unscaledTime); return null; }
+    if (!w.started) {
+      start(unscaledTime);
+      return null;
+    }
     if (!enabled()) return null;
     // IsPlayerInsideBuilding returns EARLY, and it returns before the
     // clock is WRITTEN (that write is below the interval gate), so the
@@ -272,14 +288,16 @@ let _host = null;
 
 /** The host that owns the motor claims the mod. `null` releases it.
  *  `{ insideBuilding(), where(), say(text, seconds), paused() }`. */
-export function setAmbientTextHost(host) { _host = host; }
+export function setAmbientTextHost(host) {
+  _host = host;
+}
 
 const _mod = createAmbientText({
   settings: () => readAmbientTextSettings((k) => modSettingsOf(AMBIENT_TEXT_VENDOR)[k]),
   enabled: () => !!modSettingsOf(AMBIENT_TEXT_VENDOR).Enabled,
   ready: () => !!_host,
   paused: () => !!_host?.paused?.(),
-  insideBuilding: () => _host?.insideBuilding?.() ?? true,   // no host is not a place to speak from
+  insideBuilding: () => _host?.insideBuilding?.() ?? true, // no host is not a place to speak from
   where: () => _host?.where?.() ?? {},
   say: (text, seconds) => _host?.say?.(text, seconds),
 });

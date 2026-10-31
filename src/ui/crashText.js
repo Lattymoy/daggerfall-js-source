@@ -28,8 +28,8 @@ export function crashText(err, event = null) {
   // FIELD 2026-09-27 (michelle!!'s "CRASH (2) / unknown error"): an error event with NO error object - a
   // cross-origin "Script error.", a worker's error bubbling to the page - still carries its own message, and
   // this said "unknown error" over it (main.js's `|| e.message` never fires: this never returns '').
-  const message = isObj ? (err.message ?? '') : (err == null ? (event?.message ?? '') : String(err));
-  const head = name && message ? `${name}: ${message}` : (message || name || 'unknown error');
+  const message = isObj ? (err.message ?? '') : err == null ? (event?.message ?? '') : String(err);
+  const head = name && message ? `${name}: ${message}` : message || name || 'unknown error';
   const stack = typeof err?.stack === 'string' ? err.stack : '';
   // Chrome already leads with the message; do not print it twice.
   const frames = stack.startsWith(head) ? stack.slice(head.length).trim() : stack;
@@ -41,4 +41,5 @@ export function crashText(err, event = null) {
  *  NO error object - "ResizeObserver loop completed with undelivered notifications." (Chrome's older "... limit
  *  exceeded"). The notes are delivered the next frame and nothing threw, yet WebKit raises it from the menu at boot and
  *  the overlay said CRASH over the game. @param {{ error?: any, message?: any } | null} [event] */
-export const isBenignWindowError = (event) => event?.error == null && /^ResizeObserver loop\b/.test(String(event?.message ?? ''));
+export const isBenignWindowError = (event) =>
+  event?.error == null && /^ResizeObserver loop\b/.test(String(event?.message ?? ''));

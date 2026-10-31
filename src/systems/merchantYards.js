@@ -37,14 +37,14 @@
 // Pure: no DOM, no renderer, no clock. Not a DFU member. Ledger A (MERCHANT-YARDS, CARP-YARD).
 import { LOCATION_TYPES } from '../formats/mapsFile.js';
 import { getNameBankOfRegion, GENDERS } from '../characters/nameHelper.js';
-import { seededPersonName } from '../characters/personNames.js';   // REGION-NAMES
-import { folkOfRegion, folkRace, folkNameBank, folkKeyOf } from '../characters/provinceFolk.js';   // PROVINCE-FOLK
+import { seededPersonName } from '../characters/personNames.js'; // REGION-NAMES
+import { folkOfRegion, folkRace, folkNameBank, folkKeyOf } from '../characters/provinceFolk.js'; // PROVINCE-FOLK
 import { setItemFields, mintCondition, TRANSPORT_HORSE } from './item/itemTemplates.js';
 import { WAGON_KIND_ORDER, newWagonItem, isWagonItem } from './wagon/wagonKinds.js';
-import { birthHorses } from './horse/horseCoats.js';   // STEED1: the stable's horses born at the yard
-import { horseBornStats, steedValue } from './steedCare.js';   // STEED1: and priced by what they are
-import { UPKEEP_ITEM, newUpkeepItem, upkeepItemsAvailable, dwarvenOilAvailable } from './upkeep/upkeepItemRows.js';   // STEED1/WAGONS4: the oats, the kits
-import { WORKBENCH_FEE } from '../net/professionLaw.js';   // CARP-YARD: the joinery's bench asks the furnisher's fee
+import { birthHorses } from './horse/horseCoats.js'; // STEED1: the stable's horses born at the yard
+import { horseBornStats, steedValue } from './steedCare.js'; // STEED1: and priced by what they are
+import { UPKEEP_ITEM, newUpkeepItem, upkeepItemsAvailable, dwarvenOilAvailable } from './upkeep/upkeepItemRows.js'; // STEED1/WAGONS4: the oats, the kits
+import { WORKBENCH_FEE } from '../net/professionLaw.js'; // CARP-YARD: the joinery's bench asks the furnisher's fee
 
 /** The two yards, in the order a town stands them. */
 export const YARD_KIND_ORDER = Object.freeze(['stable', 'transport']);
@@ -57,12 +57,34 @@ export const ALL_YARD_KINDS = Object.freeze([...YARD_KIND_ORDER, ...CRAFT_YARD_O
  * its keeper is called, `seed` the yard's own salt on the town's map id (its keeper's name and face).
  */
 export const YARD_KINDS = Object.freeze({
-  stable: Object.freeze({ key: 'stable', title: 'Stables', sign: 'STABLES', trade: 'Horses bought and sold', keeper: 'Stablemaster', seed: 0x57ab1e }),
-  transport: Object.freeze({ key: 'transport', title: 'Wagon Yard', sign: 'WAGONS', trade: 'Carts and wagons bought and sold', keeper: 'Wagonwright', seed: 0x3a90e5 }),
-  carpenter: Object.freeze({ key: 'carpenter', title: 'Joinery', sign: 'JOINERY', trade: `Carpentry at the workbench - ${WORKBENCH_FEE} gold a craft or a saw`, keeper: 'Carpenter', seed: 0xca4be7 }),   // CARP-YARD
+  stable: Object.freeze({
+    key: 'stable',
+    title: 'Stables',
+    sign: 'STABLES',
+    trade: 'Horses bought and sold',
+    keeper: 'Stablemaster',
+    seed: 0x57ab1e,
+  }),
+  transport: Object.freeze({
+    key: 'transport',
+    title: 'Wagon Yard',
+    sign: 'WAGONS',
+    trade: 'Carts and wagons bought and sold',
+    keeper: 'Wagonwright',
+    seed: 0x3a90e5,
+  }),
+  carpenter: Object.freeze({
+    key: 'carpenter',
+    title: 'Joinery',
+    sign: 'JOINERY',
+    trade: `Carpentry at the workbench - ${WORKBENCH_FEE} gold a craft or a saw`,
+    keeper: 'Carpenter',
+    seed: 0xca4be7,
+  }), // CARP-YARD
 });
 /** A kind the law knows, or null. */
-export const validYardKind = (k) => (typeof k === 'string' && Object.prototype.hasOwnProperty.call(YARD_KINDS, k) ? k : null);
+export const validYardKind = (k) =>
+  typeof k === 'string' && Object.prototype.hasOwnProperty.call(YARD_KINDS, k) ? k : null;
 
 /** The quality every yard's counter prices at (a shop's 1..20 - systems/shopStock.js calculateTradePrice): a middling
  *  shop's, the same in every town, so no yard is a cheaper one to buy at and a dearer one to sell to. */
@@ -88,12 +110,25 @@ export const YARD_OIL_STACK = 10;
 export const YARD_KITS_STACK = 5;
 /** A 32-bit mix of three integers (a stable's town, its day, its stall). */
 const mix3 = (a, b, c) => {
-  let h = Math.imul((a >>> 0) ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul((b >>> 0) + 0x632be5ab, 0xc2b2ae35) ^ Math.imul((c >>> 0) + 0x27d4eb2f, 0x165667b1);
-  h ^= h >>> 15; h = Math.imul(h, 0x2c1b3c6d); h ^= h >>> 12; h = Math.imul(h, 0x297a2d39); h ^= h >>> 15;
+  let h =
+    Math.imul((a >>> 0) ^ 0x9e3779b9, 0x85ebca6b) ^
+    Math.imul((b >>> 0) + 0x632be5ab, 0xc2b2ae35) ^
+    Math.imul((c >>> 0) + 0x27d4eb2f, 0x165667b1);
+  h ^= h >>> 15;
+  h = Math.imul(h, 0x2c1b3c6d);
+  h ^= h >>> 12;
+  h = Math.imul(h, 0x297a2d39);
+  h ^= h >>> 15;
   return h >>> 0;
 };
 /** mulberry32: a stream of [0, 1) off a 32-bit seed. */
-const stream = (seed) => () => { seed = (seed + 0x6d2b79f5) >>> 0; let t = seed; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+const stream = (seed) => () => {
+  seed = (seed + 0x6d2b79f5) >>> 0;
+  let t = seed;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+};
 /**
  * STEED1 (the owner: "Every horse should have different stats"): THE STABLE'S HORSES ON A DAY - STABLE_HORSES_OFFERED
  * of them, each born at the yard (horseCoats.js birthHorses on a stream of the town's map id, the world's day and its
@@ -122,9 +157,18 @@ export function stableHorses(mapId, day, { owned = [], priced = false } = {}) {
 export function yardStock(kind, { mapId = 0, day = 0, online = false, owned = [], priced = false } = {}) {
   const mint = (it) => mintCondition(setItemFields(it));
   const upkeep = upkeepItemsAvailable(online);
-  if (validYardKind(kind) === 'stable') return [...stableHorses(mapId, day, { owned, priced }), ...(upkeep ? [mint(newUpkeepItem(UPKEEP_ITEM.Oats, YARD_OATS_STACK))] : []), ...(dwarvenOilAvailable(online) ? [mint(newUpkeepItem(UPKEEP_ITEM.DwarvenOil, YARD_OIL_STACK))] : [])];   // DRAGON5c: and the tamed dragon's oil, behind its own switch
-  if (validYardKind(kind) === 'transport') return [...WAGON_KIND_ORDER.map((k) => mint(newWagonItem(k))), ...(upkeep ? [mint(newUpkeepItem(UPKEEP_ITEM.WagonKit, YARD_KITS_STACK))] : [])];
-  return [];   // CARP-YARD: the joinery keeps no counter - its trade is the bench
+  if (validYardKind(kind) === 'stable')
+    return [
+      ...stableHorses(mapId, day, { owned, priced }),
+      ...(upkeep ? [mint(newUpkeepItem(UPKEEP_ITEM.Oats, YARD_OATS_STACK))] : []),
+      ...(dwarvenOilAvailable(online) ? [mint(newUpkeepItem(UPKEEP_ITEM.DwarvenOil, YARD_OIL_STACK))] : []),
+    ]; // DRAGON5c: and the tamed dragon's oil, behind its own switch
+  if (validYardKind(kind) === 'transport')
+    return [
+      ...WAGON_KIND_ORDER.map((k) => mint(newWagonItem(k))),
+      ...(upkeep ? [mint(newUpkeepItem(UPKEEP_ITEM.WagonKit, YARD_KITS_STACK))] : []),
+    ];
+  return []; // CARP-YARD: the joinery keeps no counter - its trade is the bench
 }
 /** Whether a yard buys an item back: the Stable a horse, the Wagon Yard a cart or a wagon of any kind (DFU's Small Cart,
  *  marked or not). Nothing else - and neither buys the other's. */
@@ -150,22 +194,36 @@ export const yardSeed = (mapId, kind) => townSeed(mapId, YARD_KINDS[validYardKin
 export function townKeeper(seed, regionIndex, people = folkOfRegion(regionIndex)) {
   const female = ((seed >>> 7) & 1) === 1;
   const gender = female ? GENDERS.Female : GENDERS.Male;
-  const race = folkRace(people, seed ^ 0x666f6c6b);   // PROVINCE-FOLK: past the Bay one of the place's people (its zone's - AUDIT PROVINCE-FOLK B6), named from their own bank
-  const name = seededPersonName(seed, race ? folkNameBank(race) : getNameBankOfRegion(Number.isInteger(regionIndex) ? regionIndex : -1), gender,
-    { race, region: Number.isInteger(regionIndex) ? regionIndex : -1, home: folkKeyOf(people) });   // REGION-NAMES: their people's customs, their region's
-  return { name, gender, sex: female ? 'female' : 'male', variant: (seed >>> 11) & 3, ...(race ? { race, home: folkKeyOf(people) } : {}) };   // `home`: whose people, for the place's hands (portHost.js raceOf)
+  const race = folkRace(people, seed ^ 0x666f6c6b); // PROVINCE-FOLK: past the Bay one of the place's people (its zone's - AUDIT PROVINCE-FOLK B6), named from their own bank
+  const name = seededPersonName(
+    seed,
+    race ? folkNameBank(race) : getNameBankOfRegion(Number.isInteger(regionIndex) ? regionIndex : -1),
+    gender,
+    { race, region: Number.isInteger(regionIndex) ? regionIndex : -1, home: folkKeyOf(people) },
+  ); // REGION-NAMES: their people's customs, their region's
+  return {
+    name,
+    gender,
+    sex: female ? 'female' : 'male',
+    variant: (seed >>> 11) & 3,
+    ...(race ? { race, home: folkKeyOf(people) } : {}),
+  }; // `home`: whose people, for the place's hands (portHost.js raceOf)
 }
 /**
  * A yard's keeper, on the yard's seed (townKeeper's draw). Pure.
  * @param {number} mapId @param {string} kind @param {number} regionIndex
  */
-export const yardKeeper = (mapId, kind, regionIndex, people = undefined) => townKeeper(yardSeed(mapId, kind), regionIndex, people);
+export const yardKeeper = (mapId, kind, regionIndex, people = undefined) =>
+  townKeeper(yardSeed(mapId, kind), regionIndex, people);
 
 /** SHIPYARDS: a place named after its keeper - their surname where the bank gives one, else their name - and its
  *  title ("Halbrecht's Stables"); with no name, "The <title>". The one home of the yards' and the shipyard's names. Pure. */
 export function namedAfter(keeperName, title) {
-  const parts = String(keeperName ?? '').trim().split(/\s+/).filter(Boolean);
-  const who = parts.length > 1 ? parts[parts.length - 1] : parts[0] ?? '';
+  const parts = String(keeperName ?? '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  const who = parts.length > 1 ? parts[parts.length - 1] : (parts[0] ?? '');
   return who ? `${who}'s ${title}` : `The ${title}`;
 }
 /** The yard's name, after its keeper ("Halbrecht's Stables", "Jalib's Wagon Yard"). Pure. */
@@ -180,8 +238,14 @@ export const yardName = (kind, keeperName) => namedAfter(keeperName, YARD_KINDS[
 export function yardCounter(kind, regionIndex, name = '') {
   const k = validYardKind(kind) ?? 'stable';
   return {
-    buildingType: `yard:${k}`, quality: YARD_QUALITY, regionIndex: regionIndex ?? 0, buildingKey: 0, yard: k,
-    name: (typeof name === 'string' && name.trim()) || `The ${YARD_KINDS[k].title}`, priceIndex: YARD_PRICE_INDEX, noSteal: YARD_TEXT.steal,
+    buildingType: `yard:${k}`,
+    quality: YARD_QUALITY,
+    regionIndex: regionIndex ?? 0,
+    buildingKey: 0,
+    yard: k,
+    name: (typeof name === 'string' && name.trim()) || `The ${YARD_KINDS[k].title}`,
+    priceIndex: YARD_PRICE_INDEX,
+    noSteal: YARD_TEXT.steal,
     accepts: (/** @type {any} */ it) => yardBuysItem(k, it),
   };
 }
@@ -191,7 +255,7 @@ export function yardCounter(kind, regionIndex, name = '') {
 export const YARD_TEXT = Object.freeze({
   steal: 'The keeper never takes an eye off the stock.',
   ask: (keeper) => `Ask the ${keeper.toLowerCase()} to buy.`,
-  shut: 'The yard\'s counter will not open here.',
+  shut: "The yard's counter will not open here.",
 });
 export const YARD_ROWS = Object.freeze([
   Object.freeze({ id: 'buy', label: 'Buy' }),
@@ -206,8 +270,12 @@ export const YARD_BENCH = Object.freeze({ kind: 'shop', fee: WORKBENCH_FEE, who:
 /** CARP-YARD: the joinery's one row - its workbench, Carpentry's station (the Stores page, at the bench). */
 export const YARD_BENCH_ROW = Object.freeze({ id: 'bench', label: 'Workbench' });
 /** A yard's keeper's rows: the Stable's two, the Wagon Yard's three, the joinery's bench. */
-export const yardRowsFor = (kind) => (validYardKind(kind) === 'carpenter' ? [YARD_BENCH_ROW]
-  : validYardKind(kind) === 'transport' ? [...YARD_ROWS, YARD_MEND_ROW] : [...YARD_ROWS]);
+export const yardRowsFor = (kind) =>
+  validYardKind(kind) === 'carpenter'
+    ? [YARD_BENCH_ROW]
+    : validYardKind(kind) === 'transport'
+      ? [...YARD_ROWS, YARD_MEND_ROW]
+      : [...YARD_ROWS];
 /** CARP-YARD: what the joinery's carpenter says on Steal (the bench where the Stores page is not says ui/professions/profPages.js
  *  WORKBENCH_COLD_LINE, a home's workbench's own word). */
 export const CARPENTER_STEAL_TEXT = 'The carpenter never takes an eye off the tools.';
@@ -248,8 +316,13 @@ export function yardDirectoryRows(sites) {
     const kind = validYardKind(s?.kind);
     if (!kind || !Number.isFinite(s.x) || !Number.isFinite(s.z)) continue;
     out.push({
-      name: yardName(kind, s.keeper?.name), buildingType: `yard:${kind}`, factionId: 0, quality: YARD_QUALITY,
-      position: [s.x, 0, s.z], buildingKey: yardBuildingKey(kind), yard: kind,
+      name: yardName(kind, s.keeper?.name),
+      buildingType: `yard:${kind}`,
+      factionId: 0,
+      quality: YARD_QUALITY,
+      position: [s.x, 0, s.z],
+      buildingKey: yardBuildingKey(kind),
+      yard: kind,
     });
   }
   return out;

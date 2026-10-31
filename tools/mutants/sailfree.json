@@ -219,8 +219,8 @@
   {
     "name": "SAIL-FREE-the-journey-tacks",
     "file": "src/systems/seaHelm.js",
-    "old": "const noGo = q.free ? 0 : q.squareOnly",
-    "new": "const noGo = q.squareOnly",
+    "old": "    const noGo = q.free ? 0 : q.squareOnly ? H.noGoSquare : H.noGoFore; // SAIL-FREE: the responsive helm sails straight up",
+    "new": "    const noGo = q.squareOnly ? H.noGoSquare : H.noGoFore; // SAIL-FREE: the responsive helm sails straight up",
     "tests": [
       "test/systems/sailfree.test.js"
     ]

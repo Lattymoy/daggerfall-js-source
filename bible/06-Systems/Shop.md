@@ -4,6 +4,11 @@
 > (`src/net/shopLaw.js`, `server-account/src/shop.js`, `src/ui/enhanced/enhancedShop.js`) and the pins are what runs.
 > Not a DFU member: Daggerfall Unity has no accounts and no shop, so nothing here departs from it (Port-Ledger section
 > A, SHOP).
+> STOREFRONT (2026-10-29) rebuilt the catalogue, the window and the purchase path on this one - tiers, wares held by
+> id, bundles priced against what is held, the featured carousel: `06-Systems/Storefront.md`. This page stays SHOP's record.
+> AURUM-ONLY (2026-10-30, the owner: "nothing should cost money money anymore"): every ware, the pre-alpha nine with them,
+> is bought with Aurum at $1 = 100 Aurum, and money buys the Aurum packs alone (`06-Systems/Aurum.md` sections 4 and 5).
+> An order paid before the switch is still granted, refunded and taken back as this page says.
 
 ## 1. What was asked
 
@@ -90,6 +95,8 @@ checkout moves its order from open to paid, sets the ware's bit on `players.shop
 server's post - one batch, guarded on the order moving, so a webhook told twice grants once. The amount and currency
 must be the order's. A delayed payment method waits for its own event. A full refund or a dispute takes the bit off
 (unless another paid order holds the ware) with a letter saying so; a part refund keeps it; a dispute won gives it back.
+Since STOREFRONT the grant is guarded on the row as read too, and a payment taken back takes what it alone covered, a
+giver's credited wares with it (`Storefront.md` sections 3 and 3.2).
 
 The amount checked is Stripe's subtotal, the price before any tax Stripe adds. A paid amount that is not the order's
 grants nothing and is logged: the money is taken, so it is the owner's to refund or grant. A grant the database failed
@@ -179,6 +186,12 @@ Pins: `test/server/shoplocal.test.js`. Mutants: `tools/mutants/shoplocal.json`.
   `eternalPoint` moves its cloth back along the facing by the pose's `wingBack` (`uWingBack`: WING_SPRITE_BACK on a
   sprite, 0 on a rig), and its wisps and embers fly from the moved cloth. From the front round to either side none of it
   lies over the body. From behind it covers the back, as a cape does.
+- **CAPE-CARD** (2026-10-30, the owner, with a shot of the cape on a player's front: "Did we learn nothing from the
+  angel wings aura?"; `01-Overview/bugs/Field-Bugs-2026-10-30.md`). A peer drawn as a paperdoll or a class sprite now
+  says how its picture faces (`net/remotePlayers.js` faceOf), so the cape hangs on its back; both are cards, and the
+  cape stands behind them as on a sprite. AUDIT CAPE-CARD (`01-Overview/audits/Audit-Cape-Card.md`): every peer's
+  picture turns to the camera that draws it, and a doll's swing stays behind it. The straight cut (CAPE-FLAT) was
+  reverted at the owner's word: the cape keeps the shape above.
 
 ## 7. Seen
 
@@ -198,5 +211,6 @@ Wear and its sentence, Escape back to the gem - at 1280 and on a 390 phone, sign
 - The Collections page still draws an aura as a ring of its colours; `auraPreview.js` could show it in the round there.
 
 Pins: `test/server/shop_service.test.js` (the law, the service end to end), `test/ui/shop_window.test.js` (the
-window, the faces, the catalogue's entries, ETERNAL-FIT). Mutants: `tools/mutants/shop.json`,
-`tools/mutants/eternalfit.json`.
+window, the faces, the catalogue's entries, ETERNAL-FIT), `test/render/capecard.test.js` (CAPE-CARD),
+`test/render/auditcapecard.test.js` (AUDIT CAPE-CARD). Mutants: `tools/mutants/shop.json`, `tools/mutants/eternalfit.json`,
+`tools/mutants/capecard.json`, `tools/mutants/auditcapecard.json`.

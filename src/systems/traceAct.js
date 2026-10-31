@@ -48,7 +48,8 @@ import { TRACE_ACT, tracePoints, traceTolerance } from '../net/professionLaw.js'
 const off = (a, p) => Math.hypot(a.yaw - p[0], a.pitch - p[1]);
 /** The distance from (x, y) to the segment a-b, degrees. */
 function toSegment(x, y, a, b) {
-  const dx = b[0] - a[0], dy = b[1] - a[1];
+  const dx = b[0] - a[0],
+    dy = b[1] - a[1];
   const l2 = dx * dx + dy * dy;
   const t = l2 > 0 ? Math.max(0, Math.min(1, ((x - a[0]) * dx + (y - a[1]) * dy) / l2)) : 0;
   return Math.hypot(x - (a[0] + t * dx), y - (a[1] + t * dy));
@@ -77,29 +78,57 @@ export function createTraceAct({ tier, rank = 0, band = 1, gentle = false, rng =
   const points = traceLine(tracePoints(tier), rng);
   const endYaw = points[points.length - 1][0];
   const st = {
-    kind: 'trace', points, tol: traceTolerance(rank, band), gentle, t: 0, done: false, cancelled: false,
+    kind: 'trace',
+    points,
+    tol: traceTolerance(rank, band),
+    gentle,
+    t: 0,
+    done: false,
+    cancelled: false,
     /** the trace under way: started at the first point, its clock (its first move along the line - AUDIT 32 L1), the
      *  points passed (the index of the last), the furthest yaw the deviations have measured, the deviations */
-    tracing: false, t0: /** @type {number|null} */ (null), reached: 0, far: 0, devs: /** @type {number[]} */ ([]),
+    tracing: false,
+    t0: /** @type {number|null} */ (null),
+    reached: 0,
+    far: 0,
+    devs: /** @type {number[]} */ ([]),
     /** where the crosshair was last frame, and the path drawn this trace (the meter's) */
-    last: /** @type {{ yaw: number, pitch: number }|null} */ (null), path: /** @type {number[][]} */ ([]),
+    last: /** @type {{ yaw: number, pitch: number }|null} */ (null),
+    path: /** @type {number[][]} */ ([]),
     aim: /** @type {{ yaw: number, pitch: number }|null} */ (null),
     /** traces let go before the last point; Gentle acts' hold; the finished trace's measure */
-    slips: 0, held: 0, score: 0, seconds: 0,
+    slips: 0,
+    held: 0,
+    score: 0,
+    seconds: 0,
   };
-  const reset = () => { st.tracing = false; st.t0 = null; st.devs = []; st.reached = 0; st.last = null; st.path = []; };
+  const reset = () => {
+    st.tracing = false;
+    st.t0 = null;
+    st.devs = [];
+    st.reached = 0;
+    st.last = null;
+    st.path = [];
+  };
   /**
    * The crosshair drawn from `a` to `b`: the points passed in turn (the chord's nearest approach to each next point), and
    * the deviation every stepDeg of NEW progress along the chord - the yaw past the furthest measured, to the line's end
    * (AUDIT 32 L1, the plane's law; and L5: a chord across the world walks no further than the line).
    */
   function draw(a, b, step) {
-    const pa = [a.yaw, a.pitch], pb = [b.yaw, b.pitch];
-    for (let next = points[st.reached + 1]; next && toSegment(next[0], next[1], pa, pb) <= TRACE_ACT.startDeg; next = points[st.reached + 1]) st.reached++;
+    const pa = [a.yaw, a.pitch],
+      pb = [b.yaw, b.pitch];
+    for (
+      let next = points[st.reached + 1];
+      next && toSegment(next[0], next[1], pa, pb) <= TRACE_ACT.startDeg;
+      next = points[st.reached + 1]
+    )
+      st.reached++;
     const hi = Math.min(b.yaw, endYaw);
     if (hi > st.far) {
-      if (st.t0 == null) st.t0 = st.t - step;   // the first move along the line starts the clock: the frame it began in
-      const lo = st.far, n = Math.ceil((hi - lo) / TRACE_ACT.stepDeg - 1e-9);
+      if (st.t0 == null) st.t0 = st.t - step; // the first move along the line starts the clock: the frame it began in
+      const lo = st.far,
+        n = Math.ceil((hi - lo) / TRACE_ACT.stepDeg - 1e-9);
       for (let i = 1; i <= n; i++) {
         const x = lo + ((hi - lo) * i) / n;
         const y = b.yaw === a.yaw ? b.pitch : a.pitch + ((b.pitch - a.pitch) * (x - a.yaw)) / (b.yaw - a.yaw);
@@ -112,7 +141,13 @@ export function createTraceAct({ tier, rank = 0, band = 1, gentle = false, rng =
   return {
     state: st,
     /** How far the trace has come, 0 to 1 - the points passed against the line's. */
-    get progress() { return st.done ? 1 : gentle ? Math.min(1, st.held / TRACE_ACT.gentleS) : st.reached / Math.max(1, points.length - 1); },
+    get progress() {
+      return st.done
+        ? 1
+        : gentle
+          ? Math.min(1, st.held / TRACE_ACT.gentleS)
+          : st.reached / Math.max(1, points.length - 1);
+    },
     /**
      * One frame. `held` - E held; `aim` - the crosshair's bearing from the body's centre, degrees.
      * @param {number} dt @param {{ held?: boolean, aim?: { yaw: number, pitch: number }|null }} input
@@ -131,30 +166,47 @@ export function createTraceAct({ tier, rank = 0, band = 1, gentle = false, rng =
       }
       if (!st.tracing) {
         if (held && aim && off(aim, points[0]) <= TRACE_ACT.startDeg) {
-          st.tracing = true; st.t0 = null; st.far = aim.yaw; st.devs = [toLine(aim.yaw, aim.pitch, points)]; st.reached = 0; st.last = aim; st.path = [[aim.yaw, aim.pitch]];
+          st.tracing = true;
+          st.t0 = null;
+          st.far = aim.yaw;
+          st.devs = [toLine(aim.yaw, aim.pitch, points)];
+          st.reached = 0;
+          st.last = aim;
+          st.path = [[aim.yaw, aim.pitch]];
         }
         return;
       }
-      if (!held || !aim) { reset(); st.slips++; return; }   // let go before the last point: start again
+      if (!held || !aim) {
+        reset();
+        st.slips++;
+        return;
+      } // let go before the last point: start again
       draw(/** @type {{ yaw: number, pitch: number }} */ (st.last), aim, step);
       st.last = aim;
       if (st.reached >= points.length - 1) {
-        st.done = true; st.tracing = false;
+        st.done = true;
+        st.tracing = false;
         st.seconds = st.t - (st.t0 ?? st.t);
         const dev = st.devs.reduce((s, d) => s + d, 0) / st.devs.length;
         st.score = Math.max(0, 1 - dev / st.tol);
       }
     },
     /** Esc: ended, nothing lost. */
-    cancel() { st.cancelled = true; st.tracing = false; },
+    cancel() {
+      st.cancelled = true;
+      st.tracing = false;
+    },
     /** The act's report, once it is done: `{ score, clean, torn, seconds, slips }`. */
     report() {
       if (!st.done) return null;
       if (gentle) return { score: 0, clean: false, torn: false, seconds: 0, slips: 0 };
       const steady = st.seconds >= TRACE_ACT.minS && st.seconds <= TRACE_ACT.maxS;
       return {
-        score: Math.round(st.score * 100) / 100, clean: steady && st.score >= TRACE_ACT.clean, torn: st.score < TRACE_ACT.torn,
-        seconds: st.seconds, slips: st.slips,
+        score: Math.round(st.score * 100) / 100,
+        clean: steady && st.score >= TRACE_ACT.clean,
+        torn: st.score < TRACE_ACT.torn,
+        seconds: st.seconds,
+        slips: st.slips,
       };
     },
   };

@@ -193,7 +193,7 @@ test('AUDIT 64 F11: both exterior hosts stand the array, and the arm does NOT co
   assert.ok(bl.includes("'Guild is closed. Open from %d1:00 to %d2:00.'") && bl.includes("'Store is closed. Open from %d1:00 to %d2:00.'")
     && bl.includes(".replaceAll('%d1', String(OPEN_HOURS[buildingType])).replaceAll('%d2', String(CLOSE_HOURS[buildingType]))"),
   'Internal_Strings.csv:36-37, ":00" suffixes and all');
-  assert.ok(bl.includes("buildingType === BUILDING_TYPES.GuildHall ? localizedText('guildClosed',")
+  assert.ok(bl.includes("buildingType === BUILDING_TYPES.GuildHall\n        ? localizedText('guildClosed',")
     && bl.includes(": localizedText('storeClosed',"),
   'GuildHall gets guildClosed, everything else storeClosed');
   // And the host no longer reads the raw hour tables at all - if it did, it
@@ -269,11 +269,11 @@ test('AUDIT 64 F13: the layout carries SetLayoutData(RdbObject) inputs, and the 
   // StaticNPC.cs:149-151 hashes the RAW, UN-NEGATED XPos/YPos/ZPos (the
   // billboard's -YPos is the render transform only), and :154 seeds the
   // name off the FLAT RESOURCE's stream position, not obj.Position.
-  assert.ok(l.includes('rawX: obj.xPos, rawY: obj.yPos, rawZ: obj.zPos,'),
+  assert.ok(l.includes('rawX: obj.xPos,\n          rawY: obj.yPos,\n          rawZ: obj.zPos,'),
     'the un-negated record ints ride the flat');
   assert.ok(l.includes('flatPosition: fr.position,'),
     'nameSeed reads the flat resource offset, not the object offset');
-  assert.ok(l.includes('factionID: fr.factionOrMobileId, flags: fr.flags,'));
+  assert.ok(l.includes('factionID: fr.factionOrMobileId,\n          flags: fr.flags,'));
   const d = src('src/scenes/dungeonContext.js');
   assert.ok(d.includes('context: NPC_CONTEXT.Dungeon,'),
     'StaticNPC.cs:159 - the ONLY producer of Context.Dungeon, which topicTree reads');
@@ -321,7 +321,7 @@ test('AUDIT 64 F13: a dungeon static NPC\'s bootstrap behaviour reaches BOTH beh
   // The dungeon context must therefore hand its raw people list out;
   // npcTargets() is the RAY's filtered view and serves neither.
   const d = src('src/scenes/dungeonContext.js');
-  assert.ok(d.includes('\n    people,\n'),
+  assert.ok(d.includes('people,'),
     'buildDungeonContext exposes the raw static-NPC list, not only npcTargets()');
   const m = src('src/scenes/worldModes.js');
   const scene = m.slice(m.indexOf('const sceneBehaviours = () => {'), m.indexOf('const activeStaticNpcQuestBehaviours'));
@@ -476,7 +476,10 @@ test('AUDIT 64 F16: a 216 pile is centred on its marker; only the RANDOM pile is
     'the RANDOM arm keeps AlignBillboardToGround (RDBLayout.cs:1619-1620)');
   // pile.half is set BEFORE the branch, so lootTargets and restorePiles
   // read one consistent record.
-  assert.ok(d.indexOf('pile.half = [size.w / 2, size.h / 2];') < d.indexOf('const g = pile.isFixed'));
+  // PIN MOVED (AUDIT-STOREFRONT III D1): the half is set beside the archive's own (`lawHalf`) - and found at all, which
+  // the bare indexOf (-1 below anything) never asked
+  const half = d.indexOf('[pile.half, pile.lawHalf] = [[size.w / 2, size.h / 2], [law.w / 2, law.h / 2]];');
+  assert.ok(half > 0 && half < d.indexOf('const g = pile.isFixed'));
 });
 
 // ---------------------------------------------------------------------------

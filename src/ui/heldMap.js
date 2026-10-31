@@ -144,7 +144,9 @@ import { dungeonMap3dOn, tamrielMapOn } from './map/mapSkin.js';   // EM3-3D: th
 // TAMRIEL1 (2026-10-08, Mac: "the entirety of tamriel ... connected as a gigantic map ... seen by players ingame"): the
 // continent inked round the Bay on the world sheet - the sheet's pan box grows to the whole frame, the home view stays
 // the Bay's own fit, and past that fit the sheet is on the continent (ui/tamrielInk.js; bible/03-World/Tamriel.md)
-import { tamrielInkFor, paintTamrielInk, paintPastBay, pastBayStamp, tamrielHoverAt, tamrielCityAt, tamrielCityBucket, onContinent, ARENA_KIND_GLYPHS, releasePastBayInk, viewLeavesBay, tamrielFindRows } from './tamrielInk.js';   // TESA2: the press's city beside the hover's; BAY-LEFT-MAPS C9: the find box's places past the Bay
+import { tamrielInkFor, paintTamrielInk, paintPastBay, pastBayStamp, tamrielHoverAt, tamrielCityAt, tamrielCityBucket, onContinent, ARENA_KIND_GLYPHS, releasePastBayInk, viewLeavesBay, tamrielFindRows, tamrielFoundRows } from './tamrielInk.js';   // TESA2: the press's city beside the hover's; BAY-LEFT-MAPS C9: the find box's places past the Bay (FIND-FOUND: and the found)
+import { foundMadePlaces, discoveryGeneration } from '../systems/discovery.js';   // FIND-FOUND: the places past the Bay found, and when that moves
+import { eventWay } from '../systems/eventBoard.js';   // AUDIT FIND-FOUND F1: a homonym's way from the player, the board's own words
 import { tamrielFrameInBay, inBay } from '../world/tamriel/tamrielFrame.js';
 import { tamrielLandVersion } from '../world/tamriel/tamrielLand.js';   // TAMRIEL3: the trace's version, in the static key
 import { arenaPlacesVersion } from '../world/arenaPlaces.js';   // TESA1: the places' version past the Bay, beside it
@@ -225,6 +227,7 @@ import { retroScreenRect } from '../systems/retroMode.js';   // DISC25-B: DFU's 
 import { TRAVEL_VIEW_BUTTON } from '../scenes/travelView.js';   // TV1: the Overworld door's words (ETHER-OW: one home with the Eltheric chart's)
 import { STAR_VIOLET_CSS } from './starfall/starMapMark.js';   // STAR6: a fallen star's violet
 import { STAR_CARD_TEXT } from '../systems/starfall/starWords.js';   // STAR6: its legend's word
+import { readFissureMarksIn, fissureMarksKey, FISSURE_BRASS_CSS, fissureLegendText } from './fissureMapMark.js';   // STOREFRONT: the season's Brass Fissures
 import { capturePointer } from './pointerCapture.js';   // RPT1026-CLIENT: a pad's synthetic pointer is refused a capture, never thrown
 
 export const HELD_MAP_URL = new URL('art/held-map.png', APP_ROOT ?? globalThis.document?.baseURI ?? 'https://invalid.invalid/').href;
@@ -743,6 +746,8 @@ export class HeldMapWindow {
     // STAR6: the night's fallen stars (the host's `stars`, on the same poll) - each its card, the raids' reader's
     this._stars = [];
     this._starsKey = '';
+    this._fissures = [];   // STOREFRONT: the season's Brass Fissures
+    this._fissuresKey = '';
     // GUIDE5: where the quests point (the host's `quests`, on the same poll) - each place the player's map holds
     this._quests = [];
     this._questsKey = '';
@@ -759,6 +764,7 @@ export class HeldMapWindow {
     this._panel = null;     // 'travel' | 'teleport' | null
     this._panelState = null;
     this._searchIndex = null;
+    this._searchBase = null;   // AUDIT FIND-FOUND F2: the rows a find does not move
     this._dead = false;
     // MAP2: the mod itself (null when it is off), read ONCE per open the
     // way the classic window reads it; the ports filter is per-open (the
@@ -1469,6 +1475,7 @@ export class HeldMapWindow {
           pois: this._pois,   // POI-2
           raids: this._raids,   // EVENT-TIP: the towns under attack
           stars: this._stars,   // STAR6: the night's fallen stars
+          fissures: this._fissures,   // STOREFRONT: the season's Brass Fissures
           quests: this._quests,   // GUIDE5: where the quests point
           vendor: this._vendor,   // HOME-VENDOR: the trader's waypoint
           travellers: this._trav.filter((t) => playersOnMaps() && playerShown(t)).map((t) => ({ x: t.x, y: t.y, name: t.name, color: TV_KIN_COLORS[t.kin] ?? TRAVELLER_MARK_CSS, journey: t.journey, ship: t.ship })),   // TV3; OWS1: at sea, a ship; OW-WHO: the players' filters; OW-KIN: a friend's and a guild-mate's in theirs
@@ -2293,6 +2300,10 @@ export class HeldMapWindow {
     const stars = readRaidMarksIn(this.deps.stars, sheet);
     const starsKey = raidMarksKey(stars);
     if (starsKey !== this._starsKey) { this._starsKey = starsKey; this._stars = stars; gateMoved = true; this._dirty = true; }
+    // STOREFRONT: and the season's Brass Fissures - a stage turning, the day's gate beside one while the map stands open
+    const fissures = readFissureMarksIn(this.deps.fissures, sheet);
+    const fissuresKey = fissureMarksKey(fissures);   // AUDIT-STOREFRONT II (lane D 3): kept for the list it was read as
+    if (fissuresKey !== this._fissuresKey) { this._fissuresKey = fissuresKey; this._fissures = fissures; gateMoved = true; this._dirty = true; }
     // GUIDE5: the quests' places ride the same poll (a step logged, a place found, the followed quest changed while the
     // map stands open); a card is bounded by the world events' own reader
     const quests = readQuestMarks(this.deps.quests, this._size, sheet).map((m) => ({ ...m, tip: readTip(m.tip),   // START3: past the Bay over the continent's frame, as WW2's rings
@@ -2341,7 +2352,7 @@ export class HeldMapWindow {
     if (!leg) return;
     leg.innerHTML = '';
     const trav = this._trav.filter((t) => playersOnMaps() && playerShown(t));   // OW-WHO; MAP-PLAYERS: the legend speaks for the players the sheet draws
-    if (!this._party.length && !this._gate && !this._gates.length && !this._serpent && !this._sds?.length && !this._arch && !this._ketches.length && !this._bounties.length && !this._revenants.length && !this._raids.length && !this._stars.length && !trav.length && !this._quests.length && !this._pois.length && !this._vendor && !this._lodes.length) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
+    if (!this._party.length && !this._gate && !this._gates.length && !this._serpent && !this._sds?.length && !this._arch && !this._ketches.length && !this._bounties.length && !this._revenants.length && !this._raids.length && !this._stars.length && !this._fissures.length && !trav.length && !this._quests.length && !this._pois.length && !this._vendor && !this._lodes.length) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
     if (this._party.length) {
       const dot = el('span', 'hmlegdot');
       dot.style.background = this._party.some((m) => m.online) ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS;
@@ -2414,6 +2425,11 @@ export class HeldMapWindow {
       const dot = el('span', 'hmlegdot');
       dot.style.background = STAR_VIOLET_CSS;
       leg.append(dot, el('span', 'hmlegtext', STAR_CARD_TEXT.legend()));
+    }
+    if (this._fissures.length) {   // STOREFRONT: and a Brass Fissure
+      const dot = el('span', 'hmlegdot');
+      dot.style.background = FISSURE_BRASS_CSS;
+      leg.append(dot, el('span', 'hmlegtext', fissureLegendText()));
     }
     // GUIDE5: and a quest's place - the legend's dot turned to the mark's own diamond. AUDIT GUIDE U16: both kinds, as
     // the sheet draws them - the followed quest's filled with the pen's ink, the rest hollow, each edged in gold
@@ -2721,6 +2737,18 @@ export class HeldMapWindow {
   _starAt(sx, sy) {
     let best = null, bestD = RAID_HIT_PX * RAID_HIT_PX;
     for (const m of this._stars) {
+      const [x, y] = toPaper(this._view, m.x, m.y);
+      const d = (x - sx) ** 2 + (y - sy) ** 2;
+      if (d < bestD) { best = m; bestD = d; }
+    }
+    return best;
+  }
+
+  /** STOREFRONT: the Brass Fissure under the cursor - its cog on its pixel (inkMap.js paintFissureMark), within the
+   *  location marks' own reach. */
+  _fissureAt(sx, sy) {
+    let best = null, bestD = RAID_HIT_PX * RAID_HIT_PX;
+    for (const m of this._fissures) {
       const [x, y] = toPaper(this._view, m.x, m.y);
       const d = (x - sx) ** 2 + (y - sy) ** 2;
       if (d < bestD) { best = m; bestD = d; }
@@ -3519,7 +3547,25 @@ export class HeldMapWindow {
     // places stand. The box read MAPS.BSA's regions alone, so Solitude, Whiterun, the Imperial City - every one of the 296
     // names past the Bay - was never found.
     const ink = this._tamriel ? tamrielInkFor(this._model) : null;
-    if (this._searchIndex && this._searchIndex.ink === ink) return this._searchIndex;
+    const gen = ink ? discoveryGeneration() : 0;   // FIND-FOUND: a place found while the sheet stands is in the box at once
+    if (this._searchIndex && this._searchIndex.ink === ink && this._searchIndex.gen === gen) return this._searchIndex;
+    // AUDIT FIND-FOUND F2: the Bay's and the listed rows kept by the ink alone - a find reads the found rows again, not MAPS.BSA
+    const base = this._searchBase?.ink === ink ? this._searchBase : (this._searchBase = { ink, byName: this._searchRows(ink) });
+    const byName = new Map(base.byName);   // display name -> [entry]
+    // FIND-FOUND: and the countryside's and the lairs' places the player has found - no list holds them (ui/tamrielInk.js
+    // tamrielFoundRows); a quest's town past the Bay, found when its questor gave the quest there, was never in the box
+    for (const row of ink ? tamrielFoundRows(foundMadePlaces()) : []) {
+      byName.set(row.name, [...(byName.get(row.name) ?? []), { name: row.name, regionName: row.regionName, pastBay: true, port: row.port, pos: { x: row.x, y: row.y } }]);
+    }
+    const distance = getDaggerfallDistance();
+    distance.setDictionary([...byName.keys()]);
+    this._searchIndex = { byName, distance, ink, gen };
+    return this._searchIndex;
+  }
+
+  /** The box's rows a find does not move: MAPS.BSA's, and the listed places past the Bay while the sheet shows the
+   *  continent (`ink`). @param {any} ink */
+  _searchRows(ink) {
     const byName = new Map();   // display name -> [entry]
     const maps = this.deps.maps;
     const count = maps?.regionCount ?? 0;
@@ -3537,15 +3583,12 @@ export class HeldMapWindow {
         byName.set(name, list);
       });
     }
-    for (const row of tamrielFindRows(ink)) {
+    for (const row of ink ? tamrielFindRows(ink) : []) {
       const list = byName.get(row.name) ?? [];
       list.push({ name: row.name, regionName: row.regionName, pastBay: true, port: row.port, pos: { x: row.x, y: row.y } });
       byName.set(row.name, list);
     }
-    const distance = getDaggerfallDistance();
-    distance.setDictionary([...byName.keys()]);
-    this._searchIndex = { byName, distance, ink };
-    return this._searchIndex;
+    return byName;
   }
 
   /** FindLocation's own ladder per candidate: ranked by the weighted
@@ -3558,8 +3601,11 @@ export class HeldMapWindow {
     const matches = distance.findBestMatches(name, 200);   // AUDIT-MAP2: the box shows twelve; a thousand kept every name in the bay through the full DP per keystroke
     const out = [];
     let cutoff = null;
+    // AUDIT FIND-FOUND F1: one name, many places past the Bay (103 Helbenars on the freeware) - the nearest first, each its way
+    const me = this.deps.getPlayerPixel?.() ?? null, away = (/** @type {any} */ e) => (me && e.pos ? Math.hypot(e.pos.x - me.x, e.pos.y - me.y) : 0);
     for (const match of matches) {
-      const entries = byName.get(match.text) ?? [];
+      const all = byName.get(match.text) ?? [];
+      const entries = all.length > 1 && all.some((e) => e.pastBay) ? [...all].sort((a, b) => away(a) - away(b)).map((e) => ({ ...e, way: e.pos ? eventWay(me, { px: e.pos.x, py: e.pos.y })?.text ?? '' : '' })) : all;   // AUDIT DRAGON-CELL II E8: a Bay homonym its way too
       for (const entry of entries) {
         // BAY-LEFT-MAPS (C9): a place past the Bay is on the sheet found or not (TESA1's law, tamrielMarksIn) - under the
         // Ports filter a port alone, as the sheet inks it (C11)
@@ -4081,6 +4127,9 @@ export class HeldMapWindow {
     // STAR6: a fallen star answers as itself (its card names its town, its coven and how it stands)
     const star = this._starAt(sx, sy);
     if (star) return { label: star.label, cursor: m ? 'pointer' : '', tip: star.tip };
+    // STOREFRONT: a Brass Fissure answers as itself (its card names its town and what waits at it)
+    const fissure = this._fissureAt(sx, sy);
+    if (fissure) return { label: fissure.label, cursor: m ? 'pointer' : '', tip: fissure.tip };
     // GUIDE5: a quest's place answers as the quest (its card names the place); a press still picks the place under it
     const quest = this._questAt(sx, sy);
     if (quest) return { label: quest.label, cursor: m || this._questPlace(quest) ? 'pointer' : '', tip: quest.tip };
@@ -4233,7 +4282,7 @@ export class HeldMapWindow {
     for (const entry of entries) {
       const li = el('li');
       const b = el('button', 'hmresult');
-      b.append(el('span', 'hmresult-name', entry.name), el('span', 'hmresult-region', entry.regionName));
+      b.append(el('span', 'hmresult-name', entry.name), el('span', 'hmresult-region', [entry.regionName, entry.way].filter(Boolean).join(', ')));   // AUDIT FIND-FOUND F1 (II E8: no lone comma)
       b.onclick = () => this._searchPick(entry);
       li.append(b);
       ul.append(li);

@@ -42,8 +42,8 @@ export const PICTURE_H = 200;
  *  1000 pixels are 53.3 picture pixels - a sixth of the picture's width - which is the Bay's share of the lore map. */
 export const PIXELS_PER_PICTURE_UNIT = 18.75;
 /** The continent's grid, in Bay pixels (819.2 m each). */
-export const TAMRIEL_W = PICTURE_W * PIXELS_PER_PICTURE_UNIT;   // 6000
-export const TAMRIEL_H = PICTURE_H * PIXELS_PER_PICTURE_UNIT;   // 3750
+export const TAMRIEL_W = PICTURE_W * PIXELS_PER_PICTURE_UNIT; // 6000
+export const TAMRIEL_H = PICTURE_H * PIXELS_PER_PICTURE_UNIT; // 3750
 /** The Bay's own map, as the frame knows it: WOODS.WLD's 1000 x 500. */
 export const BAY_W = MAP_WIDTH;
 export const BAY_H = MAP_HEIGHT;
@@ -58,9 +58,10 @@ export const BAY_ORIGIN = Object.freeze({ x: 862, y: 975 });
  *  same pair). `null` puts the defaults back. */
 let _fit = { ox: BAY_ORIGIN.x, oy: BAY_ORIGIN.y, ppu: PIXELS_PER_PICTURE_UNIT };
 export function setTamrielFit(fit) {
-  _fit = fit && Number.isFinite(fit.ox) && Number.isFinite(fit.oy) && fit.ppu > 0
-    ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu }
-    : { ox: BAY_ORIGIN.x, oy: BAY_ORIGIN.y, ppu: PIXELS_PER_PICTURE_UNIT };
+  _fit =
+    fit && Number.isFinite(fit.ox) && Number.isFinite(fit.oy) && fit.ppu > 0
+      ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu }
+      : { ox: BAY_ORIGIN.x, oy: BAY_ORIGIN.y, ppu: PIXELS_PER_PICTURE_UNIT };
 }
 export const tamrielFit = () => _fit;
 /** The continent's grid at the live scale, Bay pixels. */
@@ -86,7 +87,7 @@ export function bayToPicture(x, y) {
 }
 /** Is a Bay-coordinate point on the Bay's own map - the data's ground, where nothing authored is drawn? */
 export function inBay(x, y) {
-  return x >= 0 && y >= 0 && x < BAY_W && y < BAY_H;   // BAY-OWN: inBay itself
+  return x >= 0 && y >= 0 && x < BAY_W && y < BAY_H; // BAY-OWN: inBay itself
 }
 /** The Bay's rectangle on the picture grid: {x0, y0, x1, y1}, picture units. */
 export function bayPictureRect() {

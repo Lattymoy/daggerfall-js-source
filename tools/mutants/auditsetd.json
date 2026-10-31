@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-SET-the-points-as-exposure",
     "file": "src/combat/pcaao.js",
-    "old": "result = 100 - entityEnchantArmorMod(target) - entityArmorPoints(target, struckBodyPart);",
-    "new": "result = 100 - entityEnchantArmorMod(target) + entityArmorPoints(target, struckBodyPart);",
+    "old": "    result = 100 - entityEnchantArmorMod(target) - entityArmorPoints(target, struckBodyPart); // RF1 + AUDIT SET P-M1",
+    "new": "    result = 100 - entityEnchantArmorMod(target) + entityArmorPoints(target, struckBodyPart); // RF1 + AUDIT SET P-M1",
     "tests": [
       "test/systems/pcaao.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-SET-every-joiner-told",
     "file": "src/scenes/dungeonContext.js",
-    "old": "if (r.d === 1 && !f.dead && r.v != null && r.v === (opts.selfId?.() ?? null)) reportPlayerKill(f.entity, REMOTE_KILL);",
-    "new": "if (r.d === 1 && !f.dead && r.v != null) reportPlayerKill(f.entity, REMOTE_KILL);",
+    "old": "if (r.d === 1 && !f.dead && r.v != null && r.v === (opts.selfId?.() ?? null)) reportPlayerKill(f.entity, { ...REMOTE_KILL, fx: killFxOf(f) });",
+    "new": "if (r.d === 1 && !f.dead && r.v != null) reportPlayerKill(f.entity, { ...REMOTE_KILL, fx: killFxOf(f) });",
     "tests": [
       "test/systems/audit68_dungeonctx.test.js"
     ]

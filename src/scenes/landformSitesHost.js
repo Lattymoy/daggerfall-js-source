@@ -51,7 +51,8 @@ export function pixelsMovedBy(keys) {
   const out = new Set();
   for (const k of keys) {
     const [x, y] = worldPixelOfKey(k);
-    for (let dy = -SITE_REACH_PIXELS; dy <= SITE_REACH_PIXELS; dy++) for (let dx = -SITE_REACH_PIXELS; dx <= SITE_REACH_PIXELS; dx++) out.add(worldPixelKey(x + dx, y + dy));
+    for (let dy = -SITE_REACH_PIXELS; dy <= SITE_REACH_PIXELS; dy++)
+      for (let dx = -SITE_REACH_PIXELS; dx <= SITE_REACH_PIXELS; dx++) out.add(worldPixelKey(x + dx, y + dy));
   }
   return out;
 }
@@ -71,23 +72,35 @@ export function createLandformSites(host) {
   const stale = new Set();
   const stampNow = () => [arena ? arenaPixels() : null, tamrielFit(), tamrielLandVersion(), capitalsVersion()];
   /** The table as the places stand now. */
-  const make = () => landformSitesBeyond(pastBaySites({ pixels: arena ? arenaPixels() : null, templateOf: (p) => arenaTemplateOf(arena, p), capitals }));
+  const make = () =>
+    landformSitesBeyond(
+      pastBaySites({ pixels: arena ? arenaPixels() : null, templateOf: (p) => arenaTemplateOf(arena, p), capitals }),
+    );
   /** The standing pixels a moved site reaches built again, behind their views; the ones in flight once they publish. */
   function rebuildAbout(keys) {
-    const reach = pixelsMovedBy(keys), again = [];
-    for (const [k, p] of host.built) if (reach.has(worldPixelKey(p.px, p.py)) && !host.swap.owes(k)) again.push({ px: p.px, py: p.py });
-    for (const k of host.inFlight.keys()) { const [x, y] = k.split(',').map(Number); if (reach.has(worldPixelKey(x, y))) stale.add(k); }
+    const reach = pixelsMovedBy(keys),
+      again = [];
+    for (const [k, p] of host.built)
+      if (reach.has(worldPixelKey(p.px, p.py)) && !host.swap.owes(k)) again.push({ px: p.px, py: p.py });
+    for (const k of host.inFlight.keys()) {
+      const [x, y] = k.split(',').map(Number);
+      if (reach.has(worldPixelKey(x, y))) stale.add(k);
+    }
     if (again.length) host.swap.rebuild(again);
     return again.length;
   }
   /** Asked on the frame (after the places' own sweeps): the table made again when what stands the places moved. Answers
    *  whether the table moved. */
   function refresh() {
-    if (stale.size) {   // a pixel posted under the old table, published since: built again, once
+    if (stale.size) {
+      // a pixel posted under the old table, published since: built again, once
       const again = [];
       for (const k of stale) {
         const p = host.built.get(k);
-        if (p) { stale.delete(k); if (!host.swap.owes(k)) again.push({ px: p.px, py: p.py }); } else if (!host.inFlight.has(k)) stale.delete(k);
+        if (p) {
+          stale.delete(k);
+          if (!host.swap.owes(k)) again.push({ px: p.px, py: p.py });
+        } else if (!host.inFlight.has(k)) stale.delete(k);
       }
       if (again.length) host.swap.rebuild(again);
     }
@@ -95,17 +108,19 @@ export function createLandformSites(host) {
     const s = stampNow();
     if (stamp && s.every((v, i) => v === stamp?.[i])) return false;
     stamp = s;
-    const next = make(), moved = sitesMoved(table, next);
-    if (table && !moved.length) return false;   // the same sites: no ground moves
+    const next = make(),
+      moved = sitesMoved(table, next);
+    if (table && !moved.length) return false; // the same sites: no ground moves
     const first = table === null;
     table = next;
     generation++;
     terrainGen.setLandformBeyond(next);
-    if (first) return true;   // as the world mounts: no pixel stands yet (nor its book - the host's stream is made below it)
+    if (first) return true; // as the world mounts: no pixel stands yet (nor its book - the host's stream is made below it)
     const n = moved.length ? rebuildAbout(moved) : 0;
-    if (moved.length) console.log(`[landforms] ${next.size} sites past the Bay (${moved.length} moved): ${n} pixel(s) built again`);
+    if (moved.length)
+      console.log(`[landforms] ${next.size} sites past the Bay (${moved.length} moved): ${n} pixel(s) built again`);
     return true;
   }
-  refresh();   // the first table before the first job is posted
+  refresh(); // the first table before the first job is posted
   return { beyond: () => table, generation: () => generation, refresh };
 }

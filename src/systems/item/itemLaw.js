@@ -85,6 +85,7 @@ import { DEX_ENEMY_IDS } from '../enemyExpansion/dexIds.js';   // SOUL-LAW: the 
 import '../professions/profTemplates.js';
 import '../survival/items.js';
 import '../thunderlock.js';
+import '../pass/resonantMaul.js';   // STOREFRONT: the Brass Colossus's Legendary, unrolled - lawful where it is held
 import '../pistolet.js';   // PISTOLET: the second gun's row, the Thunderlock's way
 import '../handWraps.js';   // HAND-WRAPS: the fists' weapon's row
 import '../gate/gateSpoils.js';
@@ -93,6 +94,7 @@ import '../gems.js';   // GEM2: the graded gems' rows
 import '../walletItem.js';
 import '../upkeep/upkeepItemRows.js';   // STEED1/WAGONS4: the Sack of Oats and the Wagon Repair Kit
 import '../livingWorld/keepsake.js';
+import '../musicSheetRow.js';   // MUSIC-BOX: the Sheet music
 import '../legacy/heirloom.js';
 import '../comeSailAway/comeSailAwayItems.js';
 import '../naval/navalStores.js';

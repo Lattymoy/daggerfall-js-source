@@ -62,7 +62,10 @@ const LUMA = [0.2126, 0.7152, 0.0722];
 export function dreadRamp(l) {
   const [s0, s1, s2] = DREAD_RAMP;
   if (!(l > s0.at)) return [...s0.color];
-  const [a, b, t] = l < s1.at ? [s0.color, s1.color, (l - s0.at) / (s1.at - s0.at)] : [s1.color, s2.color, Math.min(1, (l - s1.at) / (s2.at - s1.at))];
+  const [a, b, t] =
+    l < s1.at
+      ? [s0.color, s1.color, (l - s0.at) / (s1.at - s0.at)]
+      : [s1.color, s2.color, Math.min(1, (l - s1.at) / (s2.at - s1.at))];
   return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 }
 
@@ -79,7 +82,8 @@ const glslVec = (c) => `vec3(${c.map((v) => v.toFixed(4)).join(', ')})`;
 /** `dreadGrade` in GLSL - `vec3 dreadGrade(vec3 c, float w)`, the same stops, dim and weights (generated from them,
  *  so the two cannot drift). A shader includes it and grades its final colour by its own `uDread`. */
 export const DREAD_GLSL = (() => {
-  const [s0, s1, s2] = DREAD_RAMP, f = (v) => v.toFixed(4);
+  const [s0, s1, s2] = DREAD_RAMP,
+    f = (v) => v.toFixed(4);
   return `
 vec3 dreadRamp(float l) {
   if (l < ${f(s1.at)}) return mix(${glslVec(s0.color)}, ${glslVec(s1.color)}, clamp((l - ${f(s0.at)}) / ${f(s1.at - s0.at)}, 0.0, 1.0));
@@ -98,7 +102,8 @@ vec3 dreadGrade(vec3 c, float w) {
  * over DREAD_FADE_S; one they did not (a welcome - they joined into it, or the relay came back without it) is whole.
  */
 export function createDread() {
-  let target = 0, weight = 0;
+  let target = 0,
+    weight = 0;
   return {
     set(ev, { live = false } = {}) {
       target = ev?.kind === DREAD_EVENT ? 1 : 0;
@@ -109,8 +114,12 @@ export function createDread() {
       weight = weight < target ? Math.min(target, weight + step) : Math.max(target, weight - step);
       return weight;
     },
-    get weight() { return weight; },
-    get on() { return target === 1; },
+    get weight() {
+      return weight;
+    },
+    get on() {
+      return target === 1;
+    },
   };
 }
 
@@ -135,7 +144,12 @@ export const DREAD_SLOTS_MAX = 8;
 
 /** A slot's hash (a 32-bit mix of its index), the one seed its strike is read from - the same on every client. SUNBABY2: the
  *  sun baby's fireballs read their slots through it too (world/sunbabySky.js). */
-export const slotHash = (slot) => { let h = Math.imul(slot | 0, 0x9e3779b1) ^ 0x7f4a7c15; h = Math.imul(h ^ (h >>> 15), 0x85ebca6b); h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35); return (h ^ (h >>> 16)) >>> 0; };
+export const slotHash = (slot) => {
+  let h = Math.imul(slot | 0, 0x9e3779b1) ^ 0x7f4a7c15;
+  h = Math.imul(h ^ (h >>> 15), 0x85ebca6b);
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
+  return (h ^ (h >>> 16)) >>> 0;
+};
 
 /**
  * The strikes of the slots in (fromMs, toMs] of the shared clock at weight `w`: `[{ atMs, seed, bearing, distance,
@@ -149,7 +163,18 @@ export const slotHash = (slot) => { let h = Math.imul(slot | 0, 0x9e3779b1) ^ 0x
  * @param {number} fromMs @param {number} toMs @param {number} w
  * @param {{salt?: number, near?: number, split?: number, far?: number, nearShare?: number}} [ring]
  */
-export function dreadStrikes(fromMs, toMs, w, { salt = 0, near: nearM = DREAD_NEAR_M, split = DREAD_SPLIT_M, far: farM = DREAD_FAR_M, nearShare = DREAD_NEAR_SHARE } = {}) {
+export function dreadStrikes(
+  fromMs,
+  toMs,
+  w,
+  {
+    salt = 0,
+    near: nearM = DREAD_NEAR_M,
+    split = DREAD_SPLIT_M,
+    far: farM = DREAD_FAR_M,
+    nearShare = DREAD_NEAR_SHARE,
+  } = {},
+) {
   const out = [];
   if (!(w > 0) || !(toMs > fromMs)) return out;
   const last = Math.floor(toMs / DREAD_SLOT_MS);
@@ -162,7 +187,14 @@ export function dreadStrikes(fromMs, toMs, w, { salt = 0, near: nearM = DREAD_NE
     if (atMs <= fromMs || atMs > toMs) continue;
     const near = r() < nearShare;
     const distance = near ? nearM + (split - nearM) * r() : split + (farM - split) * r();
-    out.push({ atMs, seed, bearing: r() * 2 * Math.PI, distance, kind: r() < DREAD_CG_SHARE ? 'cg' : 'ic', strength: 0.8 + 0.2 * r() });
+    out.push({
+      atMs,
+      seed,
+      bearing: r() * 2 * Math.PI,
+      distance,
+      kind: r() < DREAD_CG_SHARE ? 'cg' : 'ic',
+      strength: 0.8 + 0.2 * r(),
+    });
   }
   return out;
 }
@@ -181,15 +213,17 @@ export function dreadStrikes(fromMs, toMs, w, { salt = 0, near: nearM = DREAD_NE
  */
 export function createDreadStorm(ring = undefined) {
   let lastMs = null;
-  const thunder = [];   // { dueMs, clip, volume, x, z }
+  const thunder = []; // { dueMs, clip, volume, x, z }
   return {
     tick({ sharedMs, eye, weight, centre = null }) {
-      const strikes = [], sounds = [];
-      if (lastMs !== null && sharedMs < lastMs) lastMs = null;   // the clock went back (a new offset): start again from now
+      const strikes = [],
+        sounds = [];
+      if (lastMs !== null && sharedMs < lastMs) lastMs = null; // the clock went back (a new offset): start again from now
       if (lastMs !== null) {
         const c = centre ?? eye;
         for (const s of dreadStrikes(lastMs, sharedMs, weight, ring)) {
-          const x = c[0] + Math.sin(s.bearing) * s.distance, z = c[2] + Math.cos(s.bearing) * s.distance;
+          const x = c[0] + Math.sin(s.bearing) * s.distance,
+            z = c[2] + Math.cos(s.bearing) * s.distance;
           strikes.push({ x, z, seed: s.seed, kind: s.kind, strength: s.strength, color: DREAD_BOLT_COLOR });
           const t = thunderOf(centre ? Math.hypot(x - eye[0], z - eye[2]) : s.distance);
           if (t) thunder.push({ dueMs: s.atMs + t.delay * 1000, clip: t.clip, volume: t.volume, x, z });
@@ -205,7 +239,10 @@ export function createDreadStorm(ring = undefined) {
       if (thunder.length > 32) thunder.splice(0, thunder.length - 32);
       return { strikes, sounds };
     },
-    reset() { lastMs = null; thunder.length = 0; },
+    reset() {
+      lastMs = null;
+      thunder.length = 0;
+    },
   };
 }
 

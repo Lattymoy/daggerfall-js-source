@@ -22,7 +22,7 @@ import { ecoHash } from '../ecotone.js';
 import { jungleDepthAt, JUNGLE_EDGE, JUNGLE_WANDER_MAX } from './jungleRegion.js';
 import { TERRAIN_SIZE } from '../terrain/terrainSampler.js';
 import { WORLD_MAP_TILE_DIM, WATER, DIRT } from '../terrain/terrainTiles.js';
-import { natureCleared } from '../terrain/terrainNature.js';   // E1-5: a town's clearing its outline's, as its trees'
+import { natureCleared } from '../terrain/terrainNature.js'; // E1-5: a town's clearing its outline's, as its trees'
 
 /** The trails' numbers, in one place. Tiles are DFU's (6.4 m), on the world's lattice (x east, z north). */
 export const JUNGLE_TRAILS = Object.freeze({
@@ -31,8 +31,18 @@ export const JUNGLE_TRAILS = Object.freeze({
    *  trail runs along a lattice line, and its warp - a value noise a coordinate, `amp` tiles each way over `cell`-tile
    *  cells: 6 amp under its cell, so the warp can never fold a trail back over itself (warpStretch under 2) */
   families: Object.freeze([
-    Object.freeze({ cell: 176, salt: 701, turn: Object.freeze([4 / 5, 3 / 5]), warp: Object.freeze({ cell: 112, amp: 18 }) }),
-    Object.freeze({ cell: 240, salt: 709, turn: Object.freeze([12 / 13, -5 / 13]), warp: Object.freeze({ cell: 160, amp: 26 }) }),
+    Object.freeze({
+      cell: 176,
+      salt: 701,
+      turn: Object.freeze([4 / 5, 3 / 5]),
+      warp: Object.freeze({ cell: 112, amp: 18 }),
+    }),
+    Object.freeze({
+      cell: 240,
+      salt: 709,
+      turn: Object.freeze([12 / 13, -5 / 13]),
+      warp: Object.freeze({ cell: 160, amp: 26 }),
+    }),
   ]),
   /** the lattice's values are held this far off the trail's middle value either side, so no island of the field - and
    *  no ring of trail round it - is smaller than about half a cell */
@@ -45,7 +55,8 @@ export const JUNGLE_TRAILS = Object.freeze({
   block: 4,
 });
 
-const s3 = (t) => t * t * (3 - 2 * t), ds3 = (t) => 6 * t * (1 - t);
+const s3 = (t) => t * t * (3 - 2 * t),
+  ds3 = (t) => 6 * t * (1 - t);
 /** a lattice point's value, held off the middle by JUNGLE_TRAILS.gap */
 const lattice = (ix, iz, salt) => {
   const v = ecoHash(ix, iz, salt) * (1 - 2 * JUNGLE_TRAILS.gap);
@@ -54,12 +65,23 @@ const lattice = (ix, iz, salt) => {
 /** value noise at (x, z) tiles over `cell`-tile cells: its value and its gradient (per tile) into out[0..2] - the
  *  gradient no steeper than 1.5 / cell an axis (smoothstep's steepest, a lattice step of at most 1) */
 function valueNoise(x, z, cell, salt, out) {
-  const qx = x / cell, qz = z / cell, ix = Math.floor(qx), iz = Math.floor(qz), fx = qx - ix, fz = qz - iz;
-  const a = lattice(ix, iz, salt), b = lattice(ix + 1, iz, salt), c = lattice(ix, iz + 1, salt), d = lattice(ix + 1, iz + 1, salt);
-  const ux = s3(fx), uz = s3(fz), top = a + (b - a) * ux, bot = c + (d - c) * ux;
+  const qx = x / cell,
+    qz = z / cell,
+    ix = Math.floor(qx),
+    iz = Math.floor(qz),
+    fx = qx - ix,
+    fz = qz - iz;
+  const a = lattice(ix, iz, salt),
+    b = lattice(ix + 1, iz, salt),
+    c = lattice(ix, iz + 1, salt),
+    d = lattice(ix + 1, iz + 1, salt);
+  const ux = s3(fx),
+    uz = s3(fz),
+    top = a + (b - a) * ux,
+    bot = c + (d - c) * ux;
   out[0] = top + (bot - top) * uz;
-  out[1] = ((b - a) * (1 - uz) + (d - c) * uz) * ds3(fx) / cell;
-  out[2] = (bot - top) * ds3(fz) / cell;
+  out[1] = (((b - a) * (1 - uz) + (d - c) * uz) * ds3(fx)) / cell;
+  out[2] = ((bot - top) * ds3(fz)) / cell;
 }
 
 /** how far the warp can stretch a step at most: 1 + its amplitude (2 amp) times its two noises' steepest together
@@ -69,12 +91,15 @@ export const warpStretch = (fam) => 1 + (2 * fam.warp.amp * 3) / fam.warp.cell;
  *  warp's stretch */
 const steepest = (fam) => ((1.5 * Math.SQRT2) / fam.cell) * warpStretch(fam);
 
-const _u = [0, 0, 0], _v = [0, 0, 0], _f = [0, 0, 0];
+const _u = [0, 0, 0],
+  _v = [0, 0, 0],
+  _f = [0, 0, 0];
 /** a family's field at the world tile point (wx, wz) into _f (its value, its gradient in the turned, warped frame), the
  *  warp's noises in _u and _v; answers the warp's amplitude */
 function field(wx, wz, fam) {
   const [c, s] = fam.turn;
-  const x = c * wx - s * wz, z = s * wx + c * wz;   // turned: a rotation keeps every distance
+  const x = c * wx - s * wz,
+    z = s * wx + c * wz; // turned: a rotation keeps every distance
   valueNoise(x, z, fam.warp.cell, fam.salt + 1, _u);
   valueNoise(x, z, fam.warp.cell, fam.salt + 2, _v);
   const A = 2 * fam.warp.amp;
@@ -89,8 +114,9 @@ function familyDistance(wx, wz, fam) {
   const A = field(wx, wz, fam);
   const gx = _f[1] * (1 + A * _u[1]) + _f[2] * A * _v[1];
   const gz = _f[1] * A * _u[2] + _f[2] * (1 + A * _v[2]);
-  const off = Math.abs(_f[0] - 0.5), g = Math.sqrt(gx * gx + gz * gz);
-  return g > 0 ? off / g : (off > 0 ? Infinity : 0);
+  const off = Math.abs(_f[0] - 0.5),
+    g = Math.sqrt(gx * gx + gz * gz);
+  return g > 0 ? off / g : off > 0 ? Infinity : 0;
 }
 
 /** How far (tiles) the world tile point (wx, wz) - x east, z north (FOREST1's frame: a pixel's first tile px * 128,
@@ -101,8 +127,10 @@ export function trailDistance(wx, wz) {
   return d;
 }
 
-const NB = WORLD_MAP_TILE_DIM / JUNGLE_TRAILS.block;   // a pixel's blocks a side
-let _blocksOf = -1, _blocksPy = 0, _blocks = new Float64Array(0);
+const NB = WORLD_MAP_TILE_DIM / JUNGLE_TRAILS.block; // a pixel's blocks a side
+let _blocksOf = -1,
+  _blocksPy = 0,
+  _blocks = new Float64Array(0);
 /**
  * A PIXEL'S BLOCKS (JUNGLE_TRAILS.block tiles square, NB x NB, row by row from its first tile): for each family in turn,
  * a floor (tiles) under how near its line comes to any point of the block - the field's distance from the middle at the
@@ -114,17 +142,24 @@ let _blocksOf = -1, _blocksPy = 0, _blocks = new Float64Array(0);
  */
 export function trailBlocks(px, py) {
   if (_blocksOf === px && _blocksPy === py) return _blocks;
-  const B = JUNGLE_TRAILS.block, H = B / 2, R = Math.SQRT2 * H, ox = px * WORLD_MAP_TILE_DIM, oz = -py * WORLD_MAP_TILE_DIM;
-  const fams = JUNGLE_TRAILS.families, out = new Float64Array(fams.length * NB * NB);
+  const B = JUNGLE_TRAILS.block,
+    H = B / 2,
+    R = Math.SQRT2 * H,
+    ox = px * WORLD_MAP_TILE_DIM,
+    oz = -py * WORLD_MAP_TILE_DIM;
+  const fams = JUNGLE_TRAILS.families,
+    out = new Float64Array(fams.length * NB * NB);
   fams.forEach((fam, k) => {
     for (let j = 0; j < NB; j++) {
       for (let i = 0; i < NB; i++) {
         field(ox + i * B + H, oz + j * B + H, fam);
-        out[(k * NB + j) * NB + i] = Math.abs(_f[0] - 0.5) / steepest(fam) - R - 1e-9;   // a rounding's margin, toward near
+        out[(k * NB + j) * NB + i] = Math.abs(_f[0] - 0.5) / steepest(fam) - R - 1e-9; // a rounding's margin, toward near
       }
     }
   });
-  _blocksOf = px; _blocksPy = py; _blocks = out;
+  _blocksOf = px;
+  _blocksPy = py;
+  _blocks = out;
   return out;
 }
 
@@ -132,16 +167,23 @@ export function trailBlocks(px, py) {
  *  half width - 0 on it. A tree whose foot reaches less stands clear (jungleNature.js withJungle). */
 export function trailRoom(px, py, x, z) {
   const scale = TERRAIN_SIZE / WORLD_MAP_TILE_DIM;
-  return Math.max(0, (trailDistance(px * WORLD_MAP_TILE_DIM + x / scale, -py * WORLD_MAP_TILE_DIM + z / scale) - JUNGLE_TRAILS.half) * scale);
+  return Math.max(
+    0,
+    (trailDistance(px * WORLD_MAP_TILE_DIM + x / scale, -py * WORLD_MAP_TILE_DIM + z / scale) - JUNGLE_TRAILS.half) *
+      scale,
+  );
 }
 
 /** Whether a disc of `reach` (m) about a pixel-local point (x east, z north, metres) stands clear of every trail's dirt
  *  (VERGE1's vergeClear's shape): its block's floor first (trailBlocks), the point's own distance only where that cannot
  *  say. A jungle tree keeps its foot so (jungleNature.js withJungle). */
 export function trailClear(px, py, x, z, reach) {
-  const scale = TERRAIN_SIZE / WORLD_MAP_TILE_DIM, bx = Math.floor(x / scale / JUNGLE_TRAILS.block), bz = Math.floor(z / scale / JUNGLE_TRAILS.block);
+  const scale = TERRAIN_SIZE / WORLD_MAP_TILE_DIM,
+    bx = Math.floor(x / scale / JUNGLE_TRAILS.block),
+    bz = Math.floor(z / scale / JUNGLE_TRAILS.block);
   if (bx >= 0 && bx < NB && bz >= 0 && bz < NB) {
-    const blocks = trailBlocks(px, py), need = JUNGLE_TRAILS.half + reach / scale;
+    const blocks = trailBlocks(px, py),
+      need = JUNGLE_TRAILS.half + reach / scale;
     let far = true;
     for (let k = 0; k < JUNGLE_TRAILS.families.length; k++) if (blocks[(k * NB + bz) * NB + bx] < need) far = false;
     if (far) return true;
@@ -188,14 +230,23 @@ export function cornerCleared(rect, x, y) {
  */
 export function paintJungleTrails(tileData, tilemap, paths, { px, py, nine, whole = false, rect = null }) {
   if (!nine || (!whole && !trailsReach(nine))) return paths;
-  const T = WORLD_MAP_TILE_DIM, D = T + 1, scale = TERRAIN_SIZE / T, ox = px * T, oz = -py * T;
-  const B = JUNGLE_TRAILS.block, fams = JUNGLE_TRAILS.families, near = [], blocks = trailBlocks(px, py);
+  const T = WORLD_MAP_TILE_DIM,
+    D = T + 1,
+    scale = TERRAIN_SIZE / T,
+    ox = px * T,
+    oz = -py * T;
+  const B = JUNGLE_TRAILS.block,
+    fams = JUNGLE_TRAILS.families,
+    near = [],
+    blocks = trailBlocks(px, py);
   const on = new Uint8Array(D * D);
   let n = 0;
   for (let by = 0; by < T; by += B) {
     for (let bx = 0; bx < T; bx += B) {
       near.length = 0;
-      fams.forEach((fam, k) => { if (blocks[(k * NB + by / B) * NB + bx / B] <= JUNGLE_TRAILS.half) near.push(fam); });
+      fams.forEach((fam, k) => {
+        if (blocks[(k * NB + by / B) * NB + bx / B] <= JUNGLE_TRAILS.half) near.push(fam);
+      });
       if (!near.length) continue;
       // the block's own corners: its first B a side, and the pixel's last row and column with the last block's
       for (let y = by; y < (by + B === T ? D : by + B); y++) {
@@ -205,7 +256,7 @@ export function paintJungleTrails(tileData, tilemap, paths, { px, py, nine, whol
           let d = Infinity;
           for (const fam of near) d = Math.min(d, familyDistance(ox + x, oz + y, fam));
           if (d > JUNGLE_TRAILS.half) continue;
-          if (rect && cornerCleared(rect, x, y)) continue;   // the town's own ground and its clearing (E1-5: its outline's)
+          if (rect && cornerCleared(rect, x, y)) continue; // the town's own ground and its clearing (E1-5: its outline's)
           if (!whole && jungleDepthAt(px, py, nine, x * scale, y * scale) < JUNGLE_EDGE.in) continue;
           on[i] = 1;
           tileData[i] = DIRT;
@@ -218,8 +269,9 @@ export function paintJungleTrails(tileData, tilemap, paths, { px, py, nine, whol
   paths ??= new Uint8Array(T * T);
   for (let y = 0; y < T; y++) {
     for (let x = 0; x < T; x++) {
-      const t = y * T + x, i = x + y * D;
-      if (tilemap[t] === 0 && on[i] + on[i + 1] + on[i + D] + on[i + D + 1] >= 2) paths[t] = 1;   // half dirt by its art and more
+      const t = y * T + x,
+        i = x + y * D;
+      if (tilemap[t] === 0 && on[i] + on[i + 1] + on[i + D] + on[i + D + 1] >= 2) paths[t] = 1; // half dirt by its art and more
     }
   }
   return paths;

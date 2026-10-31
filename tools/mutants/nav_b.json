@@ -2,8 +2,8 @@
   {
     "name": "NAV-B-the-smoke-born-opaque",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "p.kind === 'smoke' ? Math.min(1, k * 6) * (1 - k) :",
-    "new": "p.kind === 'smoke' ? (1 - k) :",
+    "old": "            ? Math.min(1, k * 6) * (1 - k)",
+    "new": "            ? 1 - k",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "NAV-B-the-swell-linear",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "(p.kind === 'smoke' ? Math.sqrt(k) : k);",
-    "new": "k;",
+    "old": "      const size = p.size0 + (p.size1 - p.size0) * (p.kind === 'smoke' ? Math.sqrt(k) : k);",
+    "new": "      const size = p.size0 + (p.size1 - p.size0) * k;",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "NAV-B-the-wind-ignored",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "    const ax = (w[0] ?? 0) * WIND_MPS, az = (w[2] ?? 0) * WIND_MPS;",
-    "new": "    const ax = 0, az = 0;",
+    "old": "    const ax = (w[0] ?? 0) * WIND_MPS,\n      az = (w[2] ?? 0) * WIND_MPS;",
+    "new": "    const ax = 0,\n      az = 0;",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "NAV-B-the-burn-per-frame",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "    const k = clamp(dt, 0, 0.1);\n    if (r() < 14 * k)",
-    "new": "    const k = 0.05;\n    if (r() < 14 * k)",
+    "old": "  function burn(pos, dt) {\n    const k = clamp(dt, 0, 0.1);",
+    "new": "  function burn(pos, dt) {\n    const k = 0.05;",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "NAV-B-the-focus-unsent",
     "file": "src/render/navalRender.js",
-    "old": "    if (u.uFocus) gl.uniform4fv(u.uFocus, r._focus);\n    if (u.uJungleHaze && r._haze) gl.uniform4fv(u.uJungleHaze, r._haze);   // BANTHA1: the jungle's haze (render/hazeGlsl.js)\n  }",
-    "new": "    if (u.uJungleHaze && r._haze) gl.uniform4fv(u.uJungleHaze, r._haze);   // BANTHA1: the jungle's haze (render/hazeGlsl.js)\n  }",
+    "old": "    if (u.uFocus) gl.uniform4fv(u.uFocus, r._focus);\n    if (u.uJungleHaze && r._haze) gl.uniform4fv(u.uJungleHaze, r._haze); // BANTHA1: the jungle's haze (render/hazeGlsl.js)",
+    "new": "    if (u.uJungleHaze && r._haze) gl.uniform4fv(u.uJungleHaze, r._haze); // BANTHA1: the jungle's haze (render/hazeGlsl.js)",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js",
       "test/render/tv4_weather_above.test.js"
@@ -111,8 +111,8 @@
   {
     "name": "NAV-B-the-uv-flipped",
     "file": "src/render/navalRender.js",
-    "old": "out[o + 4] = v0 + (v1 - v0) * (1 - sy) / 2;",
-    "new": "out[o + 4] = v0 + (v1 - v0) * (sy + 1) / 2;",
+    "old": "    out[o + 4] = v0 + ((v1 - v0) * (1 - sy)) / 2;",
+    "new": "    out[o + 4] = v0 + ((v1 - v0) * (sy + 1)) / 2;",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "NAV-B-a-picture-coloured",
     "file": "src/render/navalRender.js",
-    "old": "      data[i] = 255; data[i + 1] = 255; data[i + 2] = 255;",
-    "new": "      data[i] = 255; data[i + 1] = 200; data[i + 2] = 255;",
+    "old": "      data[i + 1] = 255;",
+    "new": "      data[i + 1] = 200;",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "NAV-B-a-batch-a-move",
     "file": "src/scenes/naval/navalFlames.js",
-    "old": "        move(p) { f.pos[0] = p[0]; f.pos[1] = p[1]; f.pos[2] = p[2]; },",
-    "new": "        move(p) { f.pos = [...p]; },",
+    "old": "          f.pos[0] = p[0];\n          f.pos[1] = p[1];\n          f.pos[2] = p[2];",
+    "new": "          f.pos = [...p];",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "NAV-B-a-retired-flame-burning",
     "file": "src/scenes/naval/navalFlames.js",
-    "old": "        retire() { f.dead = true; unmount(f); live.delete(f); },",
-    "new": "        retire() { f.dead = true; live.delete(f); },",
+    "old": "          unmount(f);\n          live.delete(f);",
+    "new": "          live.delete(f);",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "NAV-B-the-flame-scale",
     "file": "src/scenes/naval/navalFlames.js",
-    "old": "      art = { count, size: { w: size.width * GLOBAL_SCALE * FLAME_SCALE, h: size.height * GLOBAL_SCALE * FLAME_SCALE } };",
-    "new": "      art = { count, size: { w: size.width * GLOBAL_SCALE, h: size.height * GLOBAL_SCALE } };",
+    "old": "        art = {\n          count,\n          size: { w: size.width * GLOBAL_SCALE * FLAME_SCALE, h: size.height * GLOBAL_SCALE * FLAME_SCALE },\n        };",
+    "new": "        art = { count, size: { w: size.width * GLOBAL_SCALE, h: size.height * GLOBAL_SCALE } };",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "NAV-B-aim-posts-uncounted",
     "file": "src/render/navalRender.js",
-    "old": "(aim.zone?.length ?? 0) * (aim.posts ? 2 : 1)",
-    "new": "(aim.zone?.length ?? 0)",
+    "old": "      ? (aim.zone?.length ?? 0) * (aim.posts ? 2 : 1) +",
+    "new": "      ? (aim.zone?.length ?? 0) +",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
     ]

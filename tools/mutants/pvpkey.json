@@ -1,0 +1,193 @@
+[
+  {
+    "name": "PVP-KEY-default-dropped",
+    "file": "src/systems/inputActions.js",
+    "old": "  ['CapsLock', 'PvpFlag'],\n",
+    "new": "",
+    "tests": [
+      "test/net/pvpkey.test.js"
+    ],
+    "why": "the flag ships with no key"
+  },
+  {
+    "name": "PVP-KEY-caps-raw",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "      if (here() && acts.includes(PVP_FLAG_ACTION)) toggle();",
+    "new": "      if (here() && e.code === 'CapsLock') toggle();",
+    "tests": [
+      "test/net/pvpkey.test.js"
+    ],
+    "why": "Caps Lock read raw again - a player's own Caps Lock action flags PvP too"
+  },
+  {
+    "name": "PVP-KEY-registry-unread",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "      if (here() && acts.includes(PVP_FLAG_ACTION)) toggle();",
+    "new": "      if (here() && acts.length) toggle();",
+    "tests": [
+      "test/net/pvpkey.test.js"
+    ],
+    "why": "any bound key flags PvP"
+  },
+  {
+    "name": "PVP-KEY-mouse-unheard",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "        code &&\n        el?.tagName === 'CANVAS' &&\n        inGame(el) &&\n        here() &&",
+    "new": "        false &&",
+    "tests": [
+      "test/net/pvpkey.test.js"
+    ],
+    "why": "a mouse button bound to the flag does nothing"
+  },
+  {
+    "name": "PVP-KEY-unnamed",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "    const key = keyWord() || t('pvp.flag.noKey', 'no key'); // PVP-KEY: the key it answers now",
+    "new": "    const key = 'Caps Lock'; // PVP-KEY: the key it answers now",
+    "tests": [
+      "test/net/pvpkey.test.js"
+    ],
+    "why": "the button names Caps Lock whatever the key is"
+  },
+  {
+    "name": "AUDIT-PVP-KEY-B1-window-unread",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "  const inGame = (el) => !windowUp() && !isDomControlTarget(el) && !el?.closest?.('[data-dom-focus]');",
+    "new": "  const inGame = (el) => !isDomControlTarget(el) && !el?.closest?.('[data-dom-focus]');",
+    "tests": [
+      "test/net/pvpkey.test.js"
+    ],
+    "why": "a letter typed in a game window's text box flags PvP"
+  },
+  {
+    "name": "AUDIT-PVP-KEY-B1-control-unread",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "  const inGame = (el) => !windowUp() && !isDomControlTarget(el) && !el?.closest?.('[data-dom-focus]');",
+    "new": "  const inGame = (el) => !windowUp() && !el?.closest?.('[data-dom-focus]');",
+    "tests": [
+      "test/net/pvpkey.test.js"
+    ],
+    "why": "the key pressed on the pause window's button flags PvP"
+  },
+  {
+    "name": "AUDIT-PVP-KEY-B1-dom-window-unread",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "  const inGame = (el) => !windowUp() && !isDomControlTarget(el) && !el?.closest?.('[data-dom-focus]');",
+    "new": "  const inGame = (el) => !windowUp() && !isDomControlTarget(el);",
+    "tests": [
+      "test/net/pvpkey.test.js"
+    ],
+    "why": "the key pressed in a DOM window that holds the focus flags PvP"
+  },
+  {
+    "name": "AUDIT-PVP-KEY-B2-bare-code",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "    keyActions = eventActions,",
+    "new": "    keyActions = (e) => eventActions({ code: e.code }),",
+    "tests": [
+      "test/net/pvpkey.test.js"
+    ],
+    "why": "a combo bound to the flag never answers; its bare key does"
+  },
+  {
+    "name": "AUDIT-PVP-KEY-B3-target-unread",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "        el?.tagName === 'CANVAS' &&\n        inGame(el) &&",
+    "new": "        inGame(el) &&",
+    "tests": [
+      "test/net/pvpkey.test.js"
+    ],
+    "why": "a mouse press on a button or the chat flags PvP; the PvP button's own click toggles twice"
+  },
+  {
+    "name": "AUDIT-PVP-KEY-B6-every-caps-the-game",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "        noteCaps(acts.length ? 'game' : null);",
+    "new": "        noteCaps('game');",
+    "tests": [
+      "test/net/pvpkey.test.js"
+    ],
+    "why": "a Caps Lock bound to nothing lowers the capitals the player asked for in chat"
+  },
+  {
+    "name": "AUDIT-PVP-KEY-B7-not-told",
+    "file": "src/systems/inputActions.js",
+    "old": "const ADDED_AT = Object.freeze({ ModeWheel: 3, PvpFlag: 4 });",
+    "new": "const ADDED_AT = Object.freeze({ ModeWheel: 3 });",
+    "tests": [
+      "test/net/pvpkey.test.js"
+    ],
+    "why": "a file whose Caps Lock is spent loses the flag's key without a word"
+  },
+  {
+    "name": "AUDIT-PVP-KEY-C2-default-caps-raw",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "    keyActions = eventActions,",
+    "new": "    keyActions = (e) => (e.code === 'CapsLock' ? [PVP_FLAG_ACTION] : []),",
+    "tests": [
+      "test/net/pvpkey.test.js"
+    ],
+    "why": "the shipped host's key read raw again behind an injected test door"
+  },
+  {
+    "name": "AUDIT-PVP-KEY-C2-default-word-caps",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "    keyWord = () => actionKeyWord(PVP_FLAG_ACTION),",
+    "new": "    keyWord = () => 'Caps Lock',",
+    "tests": [
+      "test/net/pvpkey.test.js"
+    ],
+    "why": "the shipped title names Caps Lock whatever the key"
+  },
+  {
+    "name": "AUDIT-PVP-KEY-C6-on-title-unnamed",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "      ? t('pvp.flag.onTitle', 'PvP on ({key})', { key })",
+    "new": "      ? t('pvp.flag.onTitle', 'PvP on ({key})', { key: 'Caps Lock' })",
+    "tests": [
+      "test/net/pvpkey.test.js"
+    ],
+    "why": "the up title names Caps Lock whatever the key"
+  },
+  {
+    "name": "AUDIT-PVP-KEY-C7-key-zone-unread",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "      if (here() && acts.includes(PVP_FLAG_ACTION)) toggle();",
+    "new": "      if (acts.includes(PVP_FLAG_ACTION)) toggle();",
+    "tests": [
+      "test/net/pvpkey.test.js"
+    ],
+    "why": "the key asks the toggle out of the zone (it refuses up there; down it would drop)"
+  },
+  {
+    "name": "AUDIT-PVP-KEY-C7-mouse-zone-unread",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "        here() &&\n        keyActions({ code, shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, altKey: e.altKey }).includes(PVP_FLAG_ACTION)",
+    "new": "        keyActions({ code, shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, altKey: e.altKey }).includes(PVP_FLAG_ACTION)",
+    "tests": [
+      "test/net/pvpkey.test.js"
+    ],
+    "why": "a mouse button asks the toggle out of the zone"
+  },
+  {
+    "name": "AUDIT-PVP-KEY-C7-select-unread",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "      if (e.repeat || el?.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el?.tagName ?? '')) return;",
+    "new": "      if (e.repeat || el?.isContentEditable || /^(INPUT|TEXTAREA)$/.test(el?.tagName ?? '')) return;",
+    "tests": [
+      "test/net/pvpkey.test.js"
+    ],
+    "equivalent": true,
+    "why": "belt and braces: inGame's isDomControlTarget holds a list box too (AUDIT PVP-KEY B1)"
+  },
+  {
+    "name": "AUDIT-PVP-KEY-B1-talk-unread",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "    windowUp = () => !!talk?.overlayActive || overlayOpen(),",
+    "new": "    windowUp = () => overlayOpen(),",
+    "tests": [
+      "test/net/pvpkey.test.js"
+    ],
+    "why": "the shipped host deaf to the pausing windows - the game's text box typed a flag"
+  }
+]

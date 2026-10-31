@@ -44,6 +44,7 @@ import { templateByIndex } from '../../src/systems/item/itemTemplates.js';
 import { resolveHover } from '../../src/systems/worldHover.js';
 import { foldQuickLoot, plaqueStep, plaqueActionFor } from '../../src/systems/quickLoot.js';
 import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } from '../../src/world/terrain/terrainSampler.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const heard = [];
 registerPresenter({ hudText: (l) => { heard.push(l); return true; }, popupMessage: (l) => { heard.push(`POPUP ${l}`); return true; }, priority: 99 });
@@ -446,7 +447,7 @@ test('TOOL-USE: Foraging switched off online - the card still offers Use, and th
 });
 
 test('TOOL-USE: the world host hands Foraging the professions, the keys, and the tool\'s Use to the gathering host (world.js setForagingHost)', () => {
-  const w = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+  const w = hostText('src/scenes/world.js');
   const at = w.indexOf('setForagingHost({');
   assert.ok(at > 0);
   const host = w.slice(at, w.indexOf('\n  });', at));
@@ -597,7 +598,7 @@ test('PROF-MENU: the act choice key steps the plaque\'s light down the node\'s l
 });
 
 test('PROF-MENU host by source: the street\'s plaque races the node over its own winner and names it first, its click presses a lit row (never mid-act), the list opens where no plaque stands; the dungeon\'s the same through its host; an absent reason still says "not now" (mutants: each wire cut)', () => {
-  const w = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /plaque: \(\) => worldPlaqueOn\(\),\n\s*lit: \(key\) => plaqueActionFor\(key\),\n\s*choose: \(rows, pick\) => profChoose\(rows, pick\),\n\s*step: \(n\) => plaqueStep\(n\),/);
   assert.match(w, /const _hoverNamers = \[\n\s*\(key\) => gatherHost\?\.hoverName\?\.\(key\) \?\? yards\?\.hoverName\?\.\(key\) \?\? null,/);
   assert.match(w, /pick: \(\) => profHoverOver\(modes\.exteriorHoverPick\(cam\.pos, _hd, \{/);

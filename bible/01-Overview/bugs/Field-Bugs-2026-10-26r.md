@@ -351,7 +351,7 @@ the pack. Both skins.
 
 FIXED.
 - A LIST WHOSE MOVES A SERVICE SETTLES KEEPS ITS COIN A PILE (`itemTransfer.js:"if (toPlayer && isGoldPieces(item) && from?.pileCoins !== true) {"`).
-  The shared chest's list carries the mark (`decorGrants.js:"  Object.defineProperty(goods, 'pileCoins', { value: true });"`),
+  The shared chest's list carries the mark (`decorGrants.js:"Object.defineProperty(goods, 'pileCoins', { value: true })"`),
   so in both windows a pile taken from it lands in the window's pack as a pile. The close counts the coins leaving
   (whole piles and handfuls cut off one), tells the service (`purse` on the settle), and pays the purse in the act's
   `apply` (the door's new `pay`, `bindDecorHouseFrom`) - only once the settle lands, or a lost answer's record moved one
@@ -516,7 +516,7 @@ WHAT THE PORT DID. INT4's ledger keeps the first holder of a piece; another reco
 holder's checkpoint still with it past `DUPE_GRACE_S` (750 s) settles the claim a copy - the claimant's, locked. A
 crafted piece's claim was settled by the craft's record instead: where `products.owner` named the claimant's account
 and not the holder's, the holder "kept a piece it sold", so the piece went to the claimant and the holder's copy was
-written down (`craft`) and locked (`ledger.js:"const upheld = new Map();"`). The owner moves with a market sale, an
+written down (`craft`) and locked (`ledger.js:"const upheld = new"`). The owner moves with a market sale, an
 auction won and a commission filled - and with nothing else: a realm trade (`realmTrade.js`), a delivery collected from
 the market's pack route (MARKET-ANY, `market.js` collectGood), a guild vault and a shared chest move the piece and never
 the owner (Professions-Arc 18's hand-over of the owner was never built). The report's steps, run on the real Worker: a
@@ -528,17 +528,17 @@ this clause.
 
 FIXED. The craft's record is the account the service last HANDED the piece to. Every move of a crafted piece into a
 record - `ledgerMoves`' entered set, so the trade, the collect, the vault, the chest, the zone's escrow and staff's
-return alike - writes `products.handed_to` (`ledger.js:"// RPT1026-LEDGERLAW: and a crafted one is that record's account's by the craft's record (CRAFT_RECORD_SQL) - handed on"`;
+return alike - writes `products.handed_to` (`ledger.js:"RPT1026-LEDGERLAW: and a"`;
 NULL where it is the owner's own account, and only where it changes) - where the account handing it on is the one the
-record names (AUDIT RPT1026 C1, `ledger.js:"AND COALESCE(handed_to, owner) = COALESCE(?2,"`: the trade's other side,
+record names (AUDIT RPT1026 C1, `ledger.js:"AND COALESCE(handed_to, owner)"`: the trade's other side,
 `realmTrade.js` `from`, or the account an escrow row names). The batch wrote it whoever gave the piece: a seller that kept
 a piece it SOLD holds the ledger's row first (the sale lets the row go, and the buyer's piece is minted at its pack), and
 one realm trade of it to an accomplice, or one listing of it from the pack an accomplice collected, named the
 accomplice the craft's record - the buyer's claim was settled the copy and the buyer's piece locked, where INT19 had
 given it to the buyer. A sale that moves the owner clears it
 (`market.js` pieceSoldSteps - the Drakes buy, the gold buy, the auction won - and `writs.js`'s fill); the uphold reads
-`COALESCE(handed_to, owner)` (`ledger.js:"const CRAFT_RECORD_SQL = 'COALESCE(p.handed_to, p.owner)';"`) - and never
-against the owner holding it (`ledger.js:"// RPT1026-LEDGERLAW: and never against its owner holding it"`: a piece come back
+`COALESCE(handed_to, owner)` (`ledger.js:"const CRAFT_RECORD_SQL"`) - and never
+against the owner holding it (`ledger.js:".all(); // RPT1026-LEDGERLAW"`: a piece come back
 to its owner by a peer's hands is the owner's, so the hand-over before it cannot turn the report's exploit round). The
 maker's written-back piece is now the claimant's copy - locked, no strike, as every contested claim's - the buyer keeps theirs
 and passes it on, and the maker is refused `piece-dupe`. The seller that kept a piece it SOLD is still the copier (the
@@ -573,9 +573,9 @@ excuse.
 
 FIXED. Every judgement keeps the character law's VALUES beside the signature (`judge.js:"export function lawValuesOf(save, summary) {"`
 - each finding's key and the value it read, `gold@=-8000000`, `stat@agility=101`; `realm_characters.law_v`), the clear
-excuses the two together (`review.js:"law_excused = CASE WHEN law_v IS NULL THEN law_sig ELSE law_sig || '|' || law_v END,"`,
+excuses the two together (`review.js:"law_excused = CASE"`,
 `verdict.js:"export const lawExcuseOf"` - a finding of pieces alone keeps its signature as every excuse was), and a
-checkpoint the law finds nothing in ends an excuse of the values (`verdict.js:"    // RPT1026-LEDGERLAW: a checkpoint the law finds nothing in ends staff's excuse - the next finding is the law's again."`;
+checkpoint the law finds nothing in ends an excuse of the values (`verdict.js:"RPT1026-LEDGERLAW: a checkpoint"`;
 AUDIT RPT1026 C2: the batch ended every excuse there, so a piece staff had cleared, put away for one checkpoint - a vault,
 a listing, a trade and back - held its holder again, with a strike, when it came back; a piece's excuse stands, as every
 excuse did). A state whose values pass the 1,000 characters kept, or a value its 40, is cut and marked so
@@ -608,9 +608,9 @@ and a smith's restore made it count again. On the real producers (a Daedric cuir
 its low end, two field kits, a blow's wear back to the mark): a smith's whole repair then sold at 29% where a piece only a
 smith ever repaired sells at 19%; kits a wear apart credited 14,748 of a room the piece held 6,555 of (35% at a smith).
 
-FIXED. `foundMark.js:"export function spendOwnMends(item, at = item?.currentCondition) {"` cuts `selfMended` to what the
+FIXED. `foundMark.js:"export function spendOwnMends"` cuts `selfMended` to what the
 piece holds above its mark, and every rise of a found piece's condition calls it first: an own mend before it credits
-(creditOwnMend, at its `from`), a smith's paid repair before it restores - `repairService.js:"export function repairWhole(item) {"`,
+(creditOwnMend, at its `from`), a smith's paid repair before it restores - `repairService.js:"export function repairWhole"`,
 the one door every paid repair restores through (the finished job's `repairJobsAt`, and the two InstantRepairs arms of
 the interior host, the counter's and the keyed flow's). A fall needs nothing: a sale reads the count no higher than the
 piece holds. The cuirass reads 19% after the smith, and 26% after the two kits a wear apart. Economy-Arc's MEND-THIRD
@@ -657,7 +657,7 @@ pack, received by a real session and drawn by the real window).
 
 Both reports are of build 0.0.235 (2026-10-18). SIDE-ONCE (`01-Overview/bugs/Field-Bugs-2026-10-19f.md`, the owner: "One
 copy per setting"; on main with #1054, merged 2026-10-20 13:06 UTC) took User Takes Damage's and Item Deteriorates' `AllowMultipleSecondaryInstances`
-away (`enchantmentCatalogue.js:"  UserTakesDamage: 1,   // SIDE-ONCE: DFU's 1 | 2 - a setting once"`), so a setting is
+away (`enchantmentCatalogue.js:"UserTakesDamage: 1"`), so a setting is
 picked once, and the primary list leaves out an effect with no setting left - Health Leech with all three taken (checked
 on main: `primaryPickerList` drops it with three, keeps it with two; User Takes Damage offers "sunlight" alone after "holy
 places"). `test/systems/fb1019f_sideonce.test.js`.
@@ -678,7 +678,7 @@ which spend the budget; every negative-cost side effect has two settings or more
 
 AUDIT PROF10 J2 (`06-Systems/Professions-Arc.md`, "Audited (2026-10-03, AUDIT PROF10)"; Mac: "Item maker can add to it"):
 the item maker takes a crafted piece of jewellery with the enchantments it carries (`enchanting.js` keptEnchantments), each
-kept row costed as the maker costs a row and counted against the piece's points (`enchanting.js:"  const cost = totalEnchantmentCost(powers, sideEffects) + enchantmentListCost(keptEnchantments(item) ?? []);"`
+kept row costed as the maker costs a row and counted against the piece's points (`enchanting.js:"const cost = totalEnchantmentCost"`
 in enchantDecision, the "used/available" label), in DFU's eleven-row guard and the picker's filters, never removed, at no
 gold. MAKER-RARE took identified Rares the same way. Tell the player: a crafted jewel stays open to the item maker by
 design - it can take more enchantments until its enchantment points are used up, and what it has always counts.
@@ -965,8 +965,8 @@ its tuning-forks had the same shape. The Elite Breach's lords did not: a blow th
 
 FIXED. A BLOW IS A SIGHTING. A blow that reaches the purse comes from a pose in the arena, so its striker is seen and
 its share brought back, at the fraction the boss stands at (a return never heals it), before what it lands is judged:
-`net/superDungeon/sdRemnant.js:"function sighted(f, p, now) {"` in applyRemnantHit, applyEchoHit (the Echoes rescaled
-with it) and applyHeartHit; `gateBrain.js` applyHit; `ketchWarden.js:"function sighted(f, p, now) { p.seenAt = now; restoreShare(f, p); }"`
+`net/superDungeon/sdRemnant.js:"function sighted"` in applyRemnantHit, applyEchoHit (the Echoes rescaled
+with it) and applyHeartHit; `gateBrain.js` applyHit; `ketchWarden.js:"function sighted"`
 in applyWardenHit and applyForkHit. Restored rather than refused: the same blow a beat later would find its share in,
 so a refusal only drops an honest blow struck between a return and the beat that sees it. And the relay judges a blow
 from a pose no older than the census's own law: `server/src/index.js:"const pose = a.pose && !a.pose.dd && now - (a.pAt ?? a.since ?? 0) <= SD_POSE_FRESH_MS"`
@@ -1005,7 +1005,7 @@ shape it would take.
 - 48 (sent from 0.0.256): Field-Bugs-2026-10-19f BOSS-DOT. The relay's bodies carry a spell's lasting rounds
   (`scenes/gate/standInSpell.js` createStandInRounds, ticked by `dungeonContext.js:"standInRound();"`).
 - 55 (0.0.256): Field-Bugs-2026-10-19f STAND-IN-WHOLE. A stand-in holds a count the wire carries
-  (`world/gate/gateBoss.js:"e.maxHealth = e.health = STAND_IN_WHOLE;"`), so a Disintegrate's claim is landed, not refused.
+  (`world/gate/gateBoss.js:"e.maxHealth = e.health = STAND_IN_WHOLE"`), so a Disintegrate's claim is landed, not refused.
 - 34 (0.0.244): Field-Bugs-2026-10-19f DUEL-BAR, the owner's call. The duel's vitality is shown on the player's own bar
   (`net/duel/duelBar.js` duelVitality).
 
@@ -1019,7 +1019,7 @@ alone.
 
 WHAT THE PORT DOES. The same: `effects.js:"const saveElement = (e) => (savesAsMagic(e) ? 4 : spell.element);"` -
 Disintegrate is not one of MAGIC_ONLY_KEYS. The spellmaker's default element is Magic
-(`spellMaker.js:"export const DEFAULT_ELEMENT_INDEX = 4;"`). The Enemy Expansion's careers (`dexTableText.js`
+(`spellMaker.js:"export const DEFAULT_ELEMENT_INDEX"`). The Enemy Expansion's careers (`dexTableText.js`
 CareerBase): the Ice Golem is immune to Magic, Frost and Poison; the Stone Golem to Magic and Poison; the Iron Golem
 to Shock and Poison. Run on the real modules (200 casts each of a three-Disintegrate spell at 100%): element Magic -
 Iron Golem 200 of 200 disintegrated, Ice and Stone Golems 0; element Fire - all three, every time.
@@ -1041,7 +1041,7 @@ So the trap failed whichever of the two killed it, as reported.
 
 FIXED. The cast engine sends a cast's Soul Trap effects through the session's door to the foe's runner
 (`hostMagic.js:"if (trapToOwner?.(foe, { ...spell, effects: trapFx }, casterLevel))"`; the door is
-`enchantments.js:"export const spellToFoeOwner = "`, the mounted enchantment ctx's `spellToOwner`, routed by the pool as
+`enchantments.js:"export const spellToFoeOwner"`, the mounted enchantment ctx's `spellToOwner`, routed by the pool as
 a strike's is). The rest of the spell lands here as before. The runner lands the trap marked as the caster's, names the
 caster on the body as it falls (`j`, `q`), and the caster rolls it against its own pack. And the runner's own trap is
 read whoever struck: `exteriorFoes.js:"if (!trap.allowDeath && !peer) { f.entity.health = 1; return; }"` and its
@@ -1169,7 +1169,7 @@ the striker's own Chameleon, Invisibility or Shadow stood through every blow it 
 
 FIXED. The one stand-in carries the entity that strikes it (`duelStandIn(striker)`, `struckBy`), and a blow that lands
 damage unveils that entity:
-`duelCombat.js:"if (n > 0 && target?.struckBy) breakNormalPowerConcealment(target.struckBy);"`. The world host's four
+`duelCombat.js:"if (n > 0 && target?.struckBy) breakNormalPowerConcealment"`. The world host's four
 rolls hand the player (a duel's, a siege work's, a battle's, the zone's - a hall's swing reaches the zone's). A miss
 unveils nothing; the true powers stand. A spell's harm is counted with the player as its caster, whose damage arms
 already unveil (`effects.js` handleAttackFromSource).
@@ -1236,7 +1236,7 @@ counted every weak blow whole, to the clamp. Mastering it from the sheet (or swi
 counter to the bank, which cannot tell how it was counted: 20,000 plain uses bought a point every rest. Mastering at the
 prompt was safe only because the pass that raised the skill to 100 had just zeroed it.
 
-FIXED. The plain practice is dropped the moment a skill may pass 100 (`masterSkills.js:"function dropPlainPractice(entity, id) {"`):
+FIXED. The plain practice is dropped the moment a skill may pass 100 (`masterSkills.js:"function dropPlainPractice"`):
 in masterSkill, and in setMasterSkills when the switch moves on, for each skill mastered and at the cap or beyond. A skill below 100
 keeps its uses (it counts by the plain rule either way), a switch pressed On while on drops nothing, the weighted fraction
 (`skillUseFrac`) is the tough-foe rule's own and stays. DFU's TallySkill is untouched. Port-Ledger A's MOVE-BANK row
@@ -1284,9 +1284,9 @@ WHAT THE PORT DID. The same: the copy's spawn rolled its table and kit (`hostCom
 the kit and ran the death's handlers. With Repairs Objects the Skull never breaks, so a player set copy after copy on a
 Daedra and looted each.
 
-FIXED. The enchant ctx's allied door marks the foe its host's stand answers (`foeLootCap.js:"export function summonedBody(f) {"`:
+FIXED. The enchant ctx's allied door marks the foe its host's stand answers (`foeLootCap.js:"export function summonedBody"`:
 its carried list emptied - its hand and worn kit still fight), and the last word every body door asks
-(`foeLootCap.js:"  if (entity?.summoned === true && Array.isArray(entity.items)) return entity.items.splice(0);"`)
+(`foeLootCap.js:"if (entity?.summoned === true && Array.isArray(entity.items))"`)
 empties whatever its death laid on it. Elite and revenant drops were never an ally's. Port-Ledger A.
 
 THE FOUR HOSTS. `scenes/hostEnchant.js` createEnchantCtx is the one ctx body; `world.js`, `exterior.js` and
@@ -1297,7 +1297,7 @@ so no host changed.
 AND EVERY OTHER PLAYER'S COPY OF IT. In a dungeon online the room's other players stand the copy as a loose stand's
 puppet (SUMMON-SYNC), built on their own machine - and that build rolled its kind's loot there (buildFoeAt's
 spawnEnemyLoot), its stream death its kit, food and card, so the farm reopened with a second player. The owner's own frame
-names its summons beside its loose stands (`sm`: `foeLootCap.js:"export function summonedWord(src, out) {"`); a reader
+names its summons beside its loose stands (`sm`: `foeLootCap.js:"export function summonedWord"`); a reader
 flags the record (`dungeonContext.js:"      const r = summonedRecord(validFoeRecord(raw), summ);"`) and marks the puppet
 it stands (`dungeonContext.js:"    applyFoeRecord(markSummoned(f, r), r);"`, in applyOwnRecord) - bare alive, its death's
 finds emptied by capFoeLoot. Both ways at once (my summon on a friend's machine, theirs on mine), and the mark rides the
@@ -1353,7 +1353,7 @@ nothing to take and the bind goes ahead.
 WHAT THE PORT DID. Exactly that, on purpose (AUDIT 63 F14's review round). A bound soul's costs are negative, so the second
 item got the soul's whole budget free: a single gem paid for item after item while that window stayed open.
 
-FIXED. The window reads the pack's souls every time it asks (`itemMakerWindow.js:"  get _souls() { return this._filledSouls(); }"`),
+FIXED. The window reads the pack's souls every time it asks (`itemMakerWindow.js:"get _souls() {"`),
 and the law refuses a Soul Bound row whose soul the pack no longer holds, whatever list the row came from
 (enchantDecision's `souls`: "That soul is no longer in your pack.", nothing paid). Port-Ledger A; Systems-Arc's AUDIT 63
 F14 record says the freeze is gone. The account service's item law cannot tell such a piece: it reads one item, and holds a
@@ -1370,7 +1370,7 @@ when laid anyway, nothing paid; two gems bind two, the law's three answers). PIN
 WHAT THE PORT DID. Flowing Steel worked - +3% a landed blow, five deep, four seconds after the last (AUDIT MARTIAL L1 L2 pins
 it through the real formula) - and said nothing; the Legendary Flow, the same law on a blade, has had a chip since LOOT5.
 
-FIXED. Its stacks stand on the HUD beside the sets' and the Legendaries' (`martialPowers.js:"export function martialHudChips(entity, now = _now()) {"`):
+FIXED. Its stacks stand on the HUD beside the sets' and the Legendaries' (`martialPowers.js:"export function martialHudChips"`):
 "Flowing Steel 3" and its seconds, in the technique's blue, its card "Specialization". world.js hands it on in the one
 setHudSetChips statement it already had (no logical line added to bootWorld).
 
@@ -1389,7 +1389,7 @@ DFU has no hotbar; UI2's is the port's.
 WHAT THE PORT DID. UI2 put every piece a body slot takes on the bar as worn - a press put it on or took it off - so a Cast When
 Used amulet could not be cast from the bar.
 
-FIXED. A piece carrying Cast When Used is USED, the pack's Use (`quickslots.js:"const castsWhenUsed = (item) =>"`); a slot saved
+FIXED. A piece carrying Cast When Used is USED, the pack's Use (`quickslots.js:"const castsWhenUsed"`); a slot saved
 as worn before the change asks the piece at the press. A Cast When Held piece is still worn; a weapon still readies and a
 shield still straps on. Slots-Hotbar-Status.md's UI2 line narrowed.
 
@@ -1573,7 +1573,7 @@ WHAT DFU DOES. Nothing to follow: Daggerfall has no shared loot.
 WHAT THE PORT DID. A dungeon pile's or a body's base is every client's own computation from the room's seeded dice
 (PARTY-LOOT). The room's word carries the base's signature (`h`). When a live peer's signature differs from this
 client's (`roomLootHost.js` landRoomWord), the container is marked unreadable. The press then said AUDIT SETS M2's line,
-`systems/loot/loot.js:"export const LOOT_NEWER_TEXT = 'Something in here is from a newer version of the game. Reload to open it.';"`.
+`systems/loot/loot.js:"export const LOOT_NEWER_TEXT"`.
 But a signature differs whenever the two clients run different loot code. That happens with any build apart: a page
 open since the last update, or a desktop copy not restarted. The older build is as often the other player's as the
 reader's, and the line told a current player that their own game was the old one. The host reads a joiner on
@@ -1623,7 +1623,7 @@ enchantment is DFU's: Wyrmbane rolls Cast When Strikes, so its own blows wore it
 
 FIXED. A piece the rarity ladder stamped (`rarityTier.js` stampedTier: Magic, Rare, Legendary, Aetheric, Gilded)
 breaks at that door as a blow breaks it. It says "has broken", is taken off, and stays, repairable
-(`enchantments.js:"if (broke && !stampedTier(item) && !(ctx?.allowMagicRepairs ?? false)) {"`). DFU's own enchanted items
+(`enchantments.js:"if (broke && !stampedTier(item) && !(ctx?.allowMagicRepairs ?? false))"`). DFU's own enchanted items
 (MAGIC.DEF's, the item maker's, soul-bound) keep DFU's law. A departure: Port-Ledger A, RARE-KEPT.
 
 AUDIT RPT1026 G2: NOT THE REPORT'S CAUSE. The report's dungeon was an elite one - a spawned dungeon, which stands on an
@@ -1803,7 +1803,7 @@ row: the guild shut, and nothing to abandon. Driven on current main with two mac
 the partner both close on the short wait and both get the outcome's gear (RAVEN-CLOSE, FIELD BUGS 2026-10-21d): the
 reward and the long wait the reports met are already gone; the lock was not.
 
-FIXED. `machine.js:"export const holdsQuestorDoor = (quest) =>"` names a running quest that holds the door - a Person its
+FIXED. `machine.js:"export const holdsQuestorDoor"` names a running quest that holds the door - a Person its
 questor by the click, the one lastNPCClickedQuestorOf asks of. Each is a row
 (`questBridge.js:"if (!ql?.objectives?.length && !holdsQuestorDoor(q)) continue;"`), its Abandon drawn
 (`ui/enhanced/enhancedMenu.js:"} else if (sel.entries && sel.id != null && clean.abandon && clean.canAbandon?.(sel.id)) {"`), its
@@ -1839,10 +1839,10 @@ Rhaneraza's "The Pig and Mug", one spawn marker and two item markers. FB1020c CR
 not off another quest's Person, and with no clear marker it kept DFU's stand.
 
 FIXED. Another quest Person already stood in the room crowds as a resident does
-(`sceneMount.js:"export function crowdOf(people, stands = null, self = null) {"` - drawn, standing, a Person's, never the
+(`sceneMount.js:"export function crowdOf"` - drawn, standing, a Person's, never the
 asker's own), and with no spawn marker clear the Person stands beside its own: the first of eight spots a box out (then
 1.6 boxes) on the same floor within 0.3 m, in plain line at waist height and clear of everyone
-(`sceneMount.js:"export function besideSpot(at, collider, lift, w, crowd) {"`); none, DFU's marker. Its layout data stays
+(`sceneMount.js:"export function besideSpot"`); none, DFU's marker. Its layout data stays
 the drawn marker's. Port-Ledger A, QUEST-MARKERS' row, widened.
 
 THE FOUR HOSTS. `worldModes.js` standQuestFlatIn's one logical line (CROWD-CLEAR's) hands the stands: no growth. world.js
@@ -1862,7 +1862,7 @@ back in the pack and the Queen never asks again.
 WHAT THE PORT DID. NO-ASKS-AGAIN re-arms an inert No and the author's clearing No; a No that does something else stayed
 DFU's.
 
-FIXED. `noAsksAgain.js:"export function givesBackNo(quest, task, prompt) {"`: a No whose every action is a `get item` of
+FIXED. `noAsksAgain.js:"export function givesBackNo"`: a No whose every action is a `get item` of
 the item its asking click toted, named by nothing but the prompt, asks again once that item is back in the pack. The
 corpus has four (M0B11Y18 `_S.20_`, 80C0XY00 `_school_`, $CUREWER `_S.15_`, N0B00Y09 `_nononono_`). A departure,
 Port-Ledger A, NO-ASKS-AGAIN's row, widened.
@@ -1876,7 +1876,7 @@ as the player's choice - N0B00Y09's `_nononono_` is its "Keep it for the Guild" 
 tick after the No, N0B00Y09 settled `loyal` (+2, nothing to the Brotherhood) under a journal that still named the choice,
 and $CUREWER's refusal ended `failed` - with the questlines on, as they are by default and always online. A stamped
 quest's No that its sheet reads (a choice's `sets`, a task an objective or an outcome binds:
-`noAsksAgain.js:"export function sheetReadTasks(quest) {"`) is DFU's again, asked once. The reported queen's
+`noAsksAgain.js:"export function sheetReadTasks"`) is DFU's again, asked once. The reported queen's
 (M0B11Y18's sheet reads nothing of `_S.20_`) still asks again, and while the questlines are off all four do. Pinned by
 `test/systems/quest/audit_rpt1026_quests.test.js` (the stamped and unstamped census, N0B00Y09 and $CUREWER through the
 real bridge and layer; red at the batch head); `tools/mutants/audit_rpt1026_quests.json`.
@@ -1965,7 +1965,7 @@ it, while the bout's receipt was still with the service, the board's climb was s
 entered the floor for that step, and only there did askTicket's guard ("Your last ladder bout is still being recorded")
 or the service's `order` ("That is not your next ladder bout") let it go - the player on an empty floor.
 
-FIXED. `arenaOnline.js:"if (claims.ladderKept?.()) { void claims.flush(); return { ok: false, text: O.stillRecording }; }"`
+FIXED. `arenaOnline.js:"once the flush moved".."if (claims.ladderKept?.()) {"`
 in fightLadder: the receipt holds the Fight at the Herald, is carried again by the refusal, and the next press asks the
 climb the service moved. Not a DFU member. `11-Multiplayer/Arena.md` RPT1026-QUESTS ARENA-ORDER.
 
@@ -2178,7 +2178,7 @@ AUDIT RPT1026 I1 (2026-10-27): held hands hold each other - a held hand waits wh
 company's minute - and the Hollow-long count took away the snap that had freed them. A team that spent its six apiece
 learning the gearing (each long turn mended) was held out of every thread by one held griefer account turning on: over
 the realm's own judge the Concord came in no slot of 24 against one griefer (the old law's 24). Now a hand the thread
-held out behind held hands alone is marked (`sdBrain.js:"export function orreryWaited("`) and begun again at the snap; a
+held out behind held hands alone is marked (`sdBrain.js:"export function orreryWaited"`) and begun again at the snap; a
 hand held out by a free hand's turns keeps its count, so the contest above stands. Against one, two, four or eight griefer
 accounts the learned team reaches the Concord in every slot. Pinned by `test/net/superDungeon/audit_rpt1026_events.test.js`
 (the realm's judge, `orreryJudge`, and its snap); mutants `tools/mutants/audit_rpt1026_events.json` (I1, 5, dead);
@@ -2640,14 +2640,14 @@ one over. The next answer took the extra back: *The key turns to rust.* - the st
 (`egClient.js` open) restacks only on the service's yes, never on a refusal or a lost answer: #41's eight were KEY-FACE's
 faces.
 
-FIXED. Every face thrown is kept with the body's list it lies in (`weirKey.js:"export function throwWeirKeyFace("`), and
-every restack sets the pack to the balance less the faces still lying (`weirKey.js:"  const want = Math.max(0, n - weirKeysLying());"`):
+FIXED. Every face thrown is kept with the body's list it lies in (`weirKey.js:"export function throwWeirKeyFace"`), and
+every restack sets the pack to the balance less the faces still lying (`weirKey.js:"const want = Math.max"`):
 one taken up - gone from its list, whatever door took it - leaves the count, so the pack and the bodies always show the
 balance together. Out of the dungeon (the find's tier door, `setWeirKeyFacesHere`, null outside a dungeon) the faces left
 behind are folded off their bodies at the next answer, so a dungeon entered again shows none and the pack holds
 the whole balance; a load keeps none as lying (`foldStrayWeirKeys`, KEY-FACE's fold, clears the list); the find let go
 keeps none. The throw is now `throwWeirKeyFace` then the restack to the balance
-(`egFind.js:"  if (Array.isArray(entity?.items)) throwWeirKeyFace(entity.items);"`).
+(`egFind.js:"if (Array.isArray(entity?.items))"`).
 
 THE WORDS. Nothing the player saw said the keys are the account's. The key's card carries, under its own line, *Every
 character on your account shares the same Weir Keys.* (`itemInfo.js:"export const weirKeySharedLine = () =>"`,
@@ -2664,8 +2664,8 @@ dungeon and into the next (or into the same one, which the world's modes build a
 outside, the faces of the visit before were still counted as lying - on bodies its context took with it - and every
 restack there held the pack a key short of the balance for each, none of them on any body to take up, until an answer
 landed outside again. A face is kept against the visit it was thrown in: the world host's door is
-`egFind.js:"export const egFindPlace = (mode, modes) =>"` (the dungeon's tier and its context), and a face of another
-visit is folded as one away is (`weirKey.js:"  foldLyingWeirKeys((e) => e.at !== here);"`). A find answered after the
+`egFind.js:"export const egFindPlace"` (the dungeon's tier and its context), and a face of another
+visit is folded as one away is (`weirKey.js:"foldLyingWeirKeys((e) => e.at !== here)"`). A find answered after the
 player left the visit it was asked in puts its key in the pack, not on the body left behind. The world host's entry is
 rewritten in place (`placeNow` for `tierNow`), no host line added. Pinned: `test/scenes/audit_rpt1026_client.test.js`
 (K1, 5); PIN MOVED: `test/scenes/eliteGates/egeco_hosts.test.js` reads the world's `placeNow`.
@@ -2690,7 +2690,7 @@ report measured the result: a thousand frames a second and more, about 3,760 gar
 
 FIXED - A DEPARTURE. Where the shell lifted the wait (`installFramePacer`), Off holds at `LIFTED_OFF_FPS`, the row's own
 top, `FRAME_CAP_MAX` (300): never faster than any rate the row offers, past every screen the stops name
-(`frameCap.js:"  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300)) || (_lifted ? LIFTED_OFF_FPS : 0);"`).
+(`frameCap.js:"return frameCapRate"`).
 A cap the player chose stands; a browser and the app with VSync on are unchanged (the screen paces them, and Off is no
 cap). The FPS counter's pace line reads `vsync off  cap 300`. The report's other asks are not done: a warning beside the
 two rows (the ceiling takes its case away) and the crash log's lines.
@@ -2952,7 +2952,7 @@ raw (A0C01Y09's "_sister_ was found dead! And on the eve of %g3 wedding day too.
 character's clock, and the next load is far.
 
 FIXED. removeQuest drops the quest's progress rumor with it
-(`machine.js:"this.deps.removeProgressRumors?.(quest.uid);"`). A departure in WHEN (Port-Ledger A, RUMOR-ORPHAN;
+(`machine.js:"this.deps.removeProgressRumors?.(quest.uid)"`). A departure in WHEN (Port-Ledger A, RUMOR-ORPHAN;
 `06-Systems/Quest-Arc.md`).
 
 PINS. `test/systems/quest/rpt1026_misc_rumor.test.js` (1: the real machine and mill, wired as the world host wires

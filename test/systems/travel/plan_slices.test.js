@@ -128,7 +128,7 @@ test('PLAN-SLICES the host\'s wiring: the world host plans through the slicer, i
   assert.match(w, /function travelViewRouteTo\(summary, \{ roads = false, voyage = false, noWay = null \} = \{\}\) \{\n\s+return planJourney\(\(\) => \{/);
   assert.match(w, /function travelViewWalkTo\(point, pix, \{ door = null, water = false, roads = false, outside = false \} = \{\}\) \{\n\s+return planJourney\(\(\) => \{/);
   assert.doesNotMatch(w, /function tvMooredDry|const tvSeaAsk = /);
-  assert.match(read('src/scenes/travelView.js'), /trip: planning\(\) \? planningLine\(\) : deps\.trip\?\.\(\) \?\? ''/);
+  assert.match(read('src/scenes/travelView.js'), /trip: planning\(\) \? planningLine\(\) : \(deps\.trip\?\.\(\) \?\? ''/);
   assert.match(read('src/scenes/travelView.js'), /const planningLine = \(\) => t\('travelView\.planning', 'Planning the way\.\.\.'\);/);
 });
 

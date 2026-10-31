@@ -25,15 +25,20 @@ import { parseInt as questParseInt } from './parseUtils.js';
 
 /** .NET-alternation matcher over an ordered pattern list. */
 export function matchFirst(line, patterns) {
-  let best = null, bestIndex = Infinity;
+  let best = null,
+    bestIndex = Infinity;
   for (const p of patterns) {
     const m = p.exec(line);
-    if (m && m.index < bestIndex) { best = m; bestIndex = m.index; }
+    if (m && m.index < bestIndex) {
+      best = m;
+      bestIndex = m.index;
+    }
   }
   return best;
 }
 
-const MESSAGE_TAGS = /anyInfo (?<info>\d+)|used (?<used>\d+)|rumors (?<rumors>\d+)|anyInfo (?<infoName>\w+)|used (?<usedName>\w+)|rumors (?<rumorsName>\w+)/g;
+const MESSAGE_TAGS =
+  /anyInfo (?<info>\d+)|used (?<used>\d+)|rumors (?<rumors>\d+)|anyInfo (?<infoName>\w+)|used (?<usedName>\w+)|rumors (?<rumorsName>\w+)/g;
 
 export class QuestResource {
   constructor(parentQuest) {
@@ -84,7 +89,9 @@ export class QuestResource {
    *  object never strands a stale link. C#'s setter dereferences the
    *  value - a null assignment throws, kept: only real behaviours
    *  are ever assigned. */
-  get questResourceBehaviour() { return this._questResourceBehaviour; }
+  get questResourceBehaviour() {
+    return this._questResourceBehaviour;
+  }
   set questResourceBehaviour(value) {
     this._questResourceBehaviour = value;
     value.onDestroy(this._onBehaviourDestroyed);
@@ -93,8 +100,12 @@ export class QuestResource {
   /** IsHidden get/set -> SetHidden (QuestResource.cs:90,362). NOTE
    *  from the C#: Foes are a one-to-many resource - hiding a Foe
    *  removes ALL spawned instances of that Foe. */
-  get isHidden() { return this._isHidden; }
-  set isHidden(value) { this._isHidden = value; }
+  get isHidden() {
+    return this._isHidden;
+  }
+  set isHidden(value) {
+    this._isHidden = value;
+  }
 
   /** Base SetResource parses the message tags off the line. */
   setResource(line) {
@@ -125,7 +136,9 @@ export class QuestResource {
 
   /** ExpandMacro (QuestResource.cs): the base answers nothing; the
    *  resources override. Returns a string or false. */
-  expandMacro(_macroType) { return false; }
+  expandMacro(_macroType) {
+    return false;
+  }
 
   /** GetMessage (QuestResource.cs:283-296): every variant's
    *  UNEXPANDED tokens as a list, null when the id resolves to no
@@ -144,7 +157,9 @@ export class QuestResource {
   /** Gender (QuestResource.cs:100-103): Male unless overridden
    *  (Person -> npcGender, Foe -> humanoidGender); the pronoun
    *  macros read it off lastResourceReferenced. */
-  get gender() { return 0; }   // GENDERS.Male
+  get gender() {
+    return 0;
+  } // GENDERS.Male
 
   dispose() {}
 
@@ -191,7 +206,9 @@ export class QuestResource {
 
   /** The resource-specific halves - abstract in C#, overridden by the
    *  five resources; the base answers nothing. */
-  getSaveData() { return null; }
+  getSaveData() {
+    return null;
+  }
   restoreSaveData(_dataIn) {}
 
   /** SetPlayerClicked (QuestResource.cs:264-272): a muted or
@@ -205,7 +222,9 @@ export class QuestResource {
   }
 
   /** RearmPlayerClick (QuestResource.cs:278-281). */
-  rearmPlayerClick() { this.hasPlayerClicked = false; }
+  rearmPlayerClick() {
+    this.hasPlayerClicked = false;
+  }
 
   _parseMessageTags(line) {
     const matches = [...line.matchAll(MESSAGE_TAGS)];

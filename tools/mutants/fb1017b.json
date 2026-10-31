@@ -2,8 +2,8 @@
   {
     "name": "SHAM-TRAIL-no-entry",
     "file": "src/systems/quest/questPatches.js",
-    "old": "\\tclear _talkguardian_\\n\\tlog ${SHAM_TRAIL_MESSAGE} step ${SHAM_TRAIL_STEP}\\n`, count: 1 },",
-    "new": "\\tclear _talkguardian_\\n`, count: 1 },",
+    "old": "        new: `\\tplace npc _hooker_ at _tavern_ \\n\\tclear _talkguardian_\\n\\tlog ${SHAM_TRAIL_MESSAGE} step ${SHAM_TRAIL_STEP}\\n`,",
+    "new": "        new: `\\tplace npc _hooker_ at _tavern_ \\n\\tclear _talkguardian_\\n`,",
     "tests": [
       "test/systems/quest/fb1017b_shamtrail.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "SHAM-TRAIL-race-not-name",
     "file": "src/systems/quest/questPatches.js",
-    "old": "_child_ just thanked me and ran off with it.",
-    "new": "=child_ just thanked me and ran off with it.",
+    "old": "  'No daedra came out of _child_ when I brought the _item_. _child_ just thanked me and ran off with it. Something is not right here. _guardian_ was staying at _tavern_, and someone there may know more.';",
+    "new": "  'No daedra came out of _child_ when I brought the _item_. =child_ just thanked me and ran off with it. Something is not right here. _guardian_ was staying at _tavern_, and someone there may know more.';",
     "tests": [
       "test/systems/quest/fb1017b_shamtrail.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "SHAM-TRAIL-no-tavern",
     "file": "src/systems/quest/questPatches.js",
-    "old": "_guardian_ was staying at _tavern_, and someone",
-    "new": "_guardian_ was staying nearby, and someone",
+    "old": "  'No daedra came out of _child_ when I brought the _item_. _child_ just thanked me and ran off with it. Something is not right here. _guardian_ was staying at _tavern_, and someone there may know more.';",
+    "new": "  'No daedra came out of _child_ when I brought the _item_. _child_ just thanked me and ran off with it. Something is not right here. _guardian_ was staying nearby, and someone there may know more.';",
     "tests": [
       "test/systems/quest/fb1017b_shamtrail.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "SHAM-TRAIL-english-only",
     "file": "src/systems/quest/questPatches.js",
-    "old": "...entryLines(t('quest.possessedChild.shamTrail', SHAM_TRAIL_EN))]",
-    "new": "...entryLines(SHAM_TRAIL_EN)]",
+    "old": "    const entry = [\n      `Message:  ${SHAM_TRAIL_MESSAGE}`,\n      '%qdt:',\n      ...entryLines(t('quest.possessedChild.shamTrail', SHAM_TRAIL_EN)),\n    ].join('\\n');",
+    "new": "    const entry = [`Message:  ${SHAM_TRAIL_MESSAGE}`, '%qdt:', ...entryLines(SHAM_TRAIL_EN)].join('\\n');",
     "tests": [
       "test/systems/quest/fb1017b_shamtrail.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "SHAM-TRAIL-wrap-wide",
     "file": "src/systems/quest/questPatches.js",
-    "old": "if (line && line.length + 1 + word.length > width) {",
-    "new": "if (line && line.length + 1 + word.length > width * 2) {",
+    "old": "    if (line && line.length + 1 + word.length > width) {",
+    "new": "    if (line && line.length + 1 + word.length > width * 2) {",
     "tests": [
       "test/systems/quest/fb1017b_shamtrail.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "SHAM-TRAIL-count-loose",
     "file": "src/systems/quest/questPatches.js",
-    "old": "    if (found !== p.count) throw new Error(`${label}: ${name} holds",
-    "new": "    if (found < p.count) throw new Error(`${label}: ${name} holds",
+    "old": "    if (found !== p.count) throw new Error(`${label}: ${name} holds \"${p.old.trim()}\" ${found} times, not ${p.count}`);",
+    "new": "    if (found < p.count) throw new Error(`${label}: ${name} holds \"${p.old.trim()}\" ${found} times, not ${p.count}`);",
     "tests": [
       "test/systems/quest/fb1017b_shamtrail.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "SHAM-TRAIL-not-read",
     "file": "src/scenes/quest/questData.js",
-    "old": "questlineLines(name, (patchable.has(name) ? patchedLines(name, patchable.get(name)) : null) ?? quests.get(name) ?? null, questlines)",
-    "new": "questlineLines(name, quests.get(name) ?? null, questlines)",
+    "old": "      getQuestSourceLines: (name, questlines) =>\n        questlineLines(\n          name,\n          (patchable.has(name) ? patchedLines(name, patchable.get(name)) : null) ?? quests.get(name) ?? null,\n          questlines,\n        ),",
+    "new": "      getQuestSourceLines: (name, questlines) => questlineLines(name, quests.get(name) ?? null, questlines),",
     "tests": [
       "test/systems/quest/fb1017b_shamtrail.test.js"
     ],

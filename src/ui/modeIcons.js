@@ -35,9 +35,9 @@ let _fetch = async (url) => {
   if (!r.ok) throw new Error(`${url}: ${r.status}`);
   return new Uint8Array(await r.arrayBuffer());
 };
-let _decode = null;   // test seam: bytes -> { width, height, data }
+let _decode = null; // test seam: bytes -> { width, height, data }
 
-const _byRenderer = new WeakMap();   // renderer -> Map<file, { state: 'loading'|'ready'|'failed', icon }>
+const _byRenderer = new WeakMap(); // renderer -> Map<file, { state: 'loading'|'ready'|'failed', icon }>
 
 function load(renderer, cache, file) {
   const slot = { state: 'loading', icon: null };
@@ -48,7 +48,10 @@ function load(renderer, cache, file) {
     const px = toScreenOrder(await decode(await _fetch(modeIconUrl(file))));
     slot.icon = { tex: renderer.uploadTexture('dfu-icon', file, px, { alpha: true }), w: px.width, h: px.height };
     slot.state = 'ready';
-  })().catch((e) => { slot.state = 'failed'; console.warn(`[hud] ${file} did not load - the mode's name stands in:`, e?.message ?? e); });
+  })().catch((e) => {
+    slot.state = 'failed';
+    console.warn(`[hud] ${file} did not load - the mode's name stands in:`, e?.message ?? e);
+  });
   return slot;
 }
 
@@ -62,7 +65,8 @@ export function modeIcon(renderer, style, mode) {
   let cache = _byRenderer.get(renderer);
   if (!cache) _byRenderer.set(renderer, (cache = new Map()));
   if (!cache.has(`${set}-${suffix}.png`)) {
-    for (const s of Object.values(MODE_ICON_SUFFIX)) if (!cache.has(`${set}-${s}.png`)) load(renderer, cache, `${set}-${s}.png`);
+    for (const s of Object.values(MODE_ICON_SUFFIX))
+      if (!cache.has(`${set}-${s}.png`)) load(renderer, cache, `${set}-${s}.png`);
   }
   const slot = cache.get(`${set}-${suffix}.png`);
   return slot.state === 'ready' ? slot.icon : null;
@@ -70,5 +74,11 @@ export function modeIcon(renderer, style, mode) {
 
 export function _setModeIconSeamsForTests({ fetch: f = null, decode = null } = {}) {
   _decode = decode;
-  _fetch = f ?? (async (url) => { const r = await fetch(url); if (!r.ok) throw new Error(`${url}: ${r.status}`); return new Uint8Array(await r.arrayBuffer()); });
+  _fetch =
+    f ??
+    (async (url) => {
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(`${url}: ${r.status}`);
+      return new Uint8Array(await r.arrayBuffer());
+    });
 }

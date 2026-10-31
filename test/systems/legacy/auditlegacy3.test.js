@@ -20,7 +20,7 @@ import { renownHeldSql } from '../../../server-account/src/renownTracks.js';
 import { RENOWN_TRACKS_MAX } from '../../../src/net/renown.js';
 import { GUILD_FOUND_RENOWN, GUILD_RANK_MASTER } from '../../../src/net/guild/guildLaw.js';
 import {
-  mintToken, verifyToken, claimsValid, REALM_CHARACTER_RE, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, TOKEN_VILLAINY_MAX, tokenBodyOf, GLYPHS, SEAT_TITLES, AURAS, ICONS,
+  mintToken, verifyToken, claimsValid, REALM_CHARACTER_RE, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, TOKEN_VILLAINY_MAX, TOKEN_MIGHT_MAX, tokenBodyOf, GLYPHS, SEAT_TITLES, AURAS, ICONS,
   RENOWN_MAX, ARENA_RATING_MAX, CHARACTER_LEVEL_MAX, TOKEN_ARMS_TOP_MAX,
 } from '../../../src/net/identityToken.js';
 import { HOUSE_NAME_MAX, HOUSE_GIVEN_MAX, HOUSE_GEN_MAX } from '../../../src/net/houseLaw.js';
@@ -178,6 +178,7 @@ test('AUDIT LEGACY III O11: THE TOKEN\'S BODY BOUND IS ONE - the relay\'s hello 
     s: 'a'.repeat(40), n: 'W'.repeat(NAME_MAX), k: 'linked', t: seatT, ts: [0xffffffff, 9999], g: [...GLYPHS], au: aura, pi: icon, mu: nowS + 10 ** 9, lv: RENOWN_MAX,
     gi: `g${'z'.repeat(10)}`, gt: 'WWWW', gm: `m${'9'.repeat(15)}`, rc: 1, rb: [15, 14], ar: ARENA_RATING_MAX, cl: CHARACTER_LEVEL_MAX,
     ak: 'aaaaa',   // ARMORY: and a kit in every slot
+    fx: 'ddd',   // STOREFRONT: and an effect in every slot
   };
   const house = { hn: 'H'.repeat(HOUSE_NAME_MAX), hc: 'G'.repeat(HOUSE_GIVEN_MAX), hb: 1, hg: HOUSE_GEN_MAX };
   // INT7: and the arms (`wa`, at their widest) - every claim the realm signs, the house still inside the hello's bound
@@ -185,14 +186,17 @@ test('AUDIT LEGACY III O11: THE TOKEN\'S BODY BOUND IS ONE - the relay\'s hello 
   // glyphs, so every claim at once - every glyph, a crown of each province's too - beside a house at its bounds is 948,
   // past the hello's 864: the mint then leaves the house unsaid (the rule this test reads below), and the token it makes
   // is the one checked here. Without the province crowns the house still fits beside every other claim (855).
+  // PIN MOVED (STOREFRONT): the glyphs are signed as their mask (`gb`), and every claim, the effects kit and a house at
+  // its bounds, with the villain meter, is 651 - the house said again. As words they are 1,078, which this bound refuses.
   const crowns = /^crown(SK|MW|SU|VW|EW|BM|CY)$/;
-  const arms = { ci: `r${'f'.repeat(20)}`, wa: [TOKEN_ARMS_TOP_MAX, 1], vl: TOKEN_VILLAINY_MAX };   // PVP-VILLAIN-KEEP: and the villain meter at its top
-  assert.ok(tokenBodyOf(await mintToken({ ...every, ...house, ...arms }, kp.privateKey, { subtle, nowS })).length > TOKEN_BODY_MAX, 'every glyph and a house: past the hello - the mint leaves the house unsaid');
+  const arms = { ci: `r${'f'.repeat(20)}`, wa: [TOKEN_ARMS_TOP_MAX, 1], mg: TOKEN_MIGHT_MAX, vl: TOKEN_VILLAINY_MAX };   // PVP-VILLAIN-KEEP: and the villain meter at its top; EG-MIGHT (PIN MOVED): and the kit's might at its widest
+  const asWords = Buffer.from(JSON.stringify({ ...every, ...house, ...arms })).toString('base64url').length;
+  assert.ok(asWords > TOKEN_BODY_MAX, `every glyph's word and a house: past the hello (${asWords}) - the mask is what makes the room`);
   const bay = tokenBodyOf(await mintToken({ ...every, g: GLYPHS.filter((g) => !crowns.test(g)), ...house, ...arms }, kp.privateKey, { subtle, nowS })).length;
   assert.ok(bay <= TOKEN_BODY_MAX, `the house beside every claim but the province crowns (${bay} of ${TOKEN_BODY_MAX})`);
-  const widest = await mintToken({ ...every, ...arms }, kp.privateKey, { subtle, nowS });   // what the mint makes of every claim and a house
+  const widest = await mintToken({ ...every, ...house, ...arms }, kp.privateKey, { subtle, nowS });   // what the mint makes of every claim and a house - the house kept (PIN MOVED, STOREFRONT)
   const body = tokenBodyOf(widest).length;
-  assert.ok(body > 640, `past the old bound (${body})`);
+  assert.ok(asWords > 640, `as words, past the old bound (${asWords})`);
   assert.ok(body <= TOKEN_BODY_MAX, `every claim, a house at its bounds and the character inside the hello (${body} of ${TOKEN_BODY_MAX})`);
   assert.ok(widest.length <= TOKEN_MAX_CHARS);
   assert.equal(parseClient(JSON.stringify({ t: 'hello', id: 'mac-0001', secret: 'shh-shh-shh-0001', name: 'Mac', look: { race: 'Nord', gender: 'male', faceIndex: 2, items: [] }, tok: widest })).tok, widest, 'the wire takes it');
@@ -501,7 +505,7 @@ test('AUDIT LEGACY III O7: A TOMBSTONE IS NEVER DELETED - nor undone: it is the 
   // the record rewritten without the death: the person is still the played one's
   await A.write({ people: ysolde });
   assert.equal((await A.call('/v1/realm/create', { name: 'Ysolde Hlaalu', lineage: A.fam, person: 1 })).body.error, 'lineage-played');
-  assert.match(rd('server-account/src/realm.js'), /if \(row\.dead_at != null\) return \{ error: 'dead' \};   \/\/ AUDIT LEGACY III O7/);
+  assert.match(rd('server-account/src/realm.js'), /if \(row\.dead_at != null\) return \{ error: 'dead' \}; \/\/ AUDIT LEGACY III O7/);
 });
 
 test('AUDIT LEGACY III O8/O9: AN ACCOUNT\'S UNIONS, THE LATEST WORD FIRST, READ BY ITS OWN INDEXES - listed newest-wed first, a union older than fifty others was never listed again and its end never reached the house; and every read scanned the whole table', async () => {

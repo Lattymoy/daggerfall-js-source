@@ -4,15 +4,19 @@
     "file": "src/world/portSites.js",
     "old": "        if (near) {",
     "new": "        if (false) {",
-    "tests": ["test/world/westheadnorth.test.js"],
+    "tests": [
+      "test/world/westheadnorth.test.js"
+    ],
     "note": "a near place stands by the sea's distance: Westhead Moor's shipyard back on the west side"
   },
   {
     "name": "WESTHEAD-NORTH-sea-kept",
     "file": "src/world/portSites.js",
     "old": "        } else if (kind === 'shipyard') score += back;",
-    "new": "        } if (kind === 'shipyard') score += back;",
-    "tests": ["test/world/westheadnorth.test.js"],
+    "new": "        }\n        if (kind === 'shipyard') score += back;",
+    "tests": [
+      "test/world/westheadnorth.test.js"
+    ],
     "note": "the sea's distance added to the near place's: it is drawn back toward the sea"
   },
   {
@@ -20,7 +24,9 @@
     "file": "src/world/portSites.js",
     "old": "    const s = portSite(g, kind, field, apart, near?.[kind] ?? null);",
     "new": "    const s = portSite(g, kind, field, apart, null);",
-    "tests": ["test/world/westheadnorth.test.js"],
+    "tests": [
+      "test/world/westheadnorth.test.js"
+    ],
     "note": "portSitesOn never hands a kind its row"
   },
   {
@@ -28,7 +34,9 @@
     "file": "src/world/portSites.js",
     "old": "    const s = portSite(g, kind, field, apart, near?.[kind] ?? null);",
     "new": "    const s = portSite(g, kind, field, apart, near?.shipyard ?? null);",
-    "tests": ["test/world/westheadnorth.test.js"],
+    "tests": [
+      "test/world/westheadnorth.test.js"
+    ],
     "note": "the lighthouse stands on the shipyard's cell too"
   },
   {
@@ -36,7 +44,9 @@
     "file": "src/world/portSitesKept.js",
     "old": "  const key = `${portSitesStamp(g, field)}${near ? `:near${JSON.stringify(near)}` : ''}`;",
     "new": "  const key = portSitesStamp(g, field);",
-    "tests": ["test/world/westheadnorth.test.js"],
+    "tests": [
+      "test/world/westheadnorth.test.js"
+    ],
     "note": "a launch that kept the sea's answer serves it to the near ask"
   },
   {
@@ -44,7 +54,9 @@
     "file": "src/world/portSitesKept.js",
     "old": "  const placed = portSitesOn(g, field, near);",
     "new": "  const placed = portSitesOn(g, field);",
-    "tests": ["test/world/westheadnorth.test.js"],
+    "tests": [
+      "test/world/westheadnorth.test.js"
+    ],
     "note": "the kept path places without the row"
   },
   {
@@ -52,7 +64,9 @@
     "file": "src/scenes/world.js",
     "old": "bearing), portPlacesNear(mapId, layoutStampOfMapId(mapId), layoutsMatch));   // WESTHEAD-NORTH",
     "new": "bearing), null);   // WESTHEAD-NORTH",
-    "tests": ["test/world/westheadnorth.test.js"],
+    "tests": [
+      "test/world/westheadnorth.test.js"
+    ],
     "note": "the host never hands the row"
   },
   {
@@ -60,7 +74,9 @@
     "file": "src/world/portSites.js",
     "old": "    Object.freeze({ layout: 'classic', shipyard: Object.freeze([156, 406]) }),",
     "new": "",
-    "tests": ["test/world/westheadnorth.test.js"],
+    "tests": [
+      "test/world/westheadnorth.test.js"
+    ],
     "note": "Daggerfall's layout back on TS7's west side"
   },
   {
@@ -68,7 +84,9 @@
     "file": "src/world/portSites.js",
     "old": "    Object.freeze({ layout: 'classic', shipyard: Object.freeze([156, 406]) }),",
     "new": "    Object.freeze({ layout: 'classic', shipyard: Object.freeze([200, 406]) }),",
-    "tests": ["test/world/westheadnorth.test.js"],
+    "tests": [
+      "test/world/westheadnorth.test.js"
+    ],
     "note": "the classic row moved"
   },
   {
@@ -76,23 +94,30 @@
     "file": "src/scenes/world.js",
     "old": "portPlacesNear(mapId, layoutStampOfMapId(mapId), layoutsMatch)",
     "new": "portPlacesNear(mapId, layoutStampOfMapId(mapId), () => true)",
-    "tests": ["test/world/westheadnorth.test.js"],
+    "tests": [
+      "test/world/westheadnorth.test.js"
+    ],
     "note": "AUDIT A2: the first row in every layout"
   },
   {
     "name": "WESTHEAD-NORTH-bc-row-dropped",
     "file": "src/world/portSites.js",
-    "old": "    Object.freeze({ layout: 'beautiful-cities', shipyard: Object.freeze([188, 429]) }),",
-    "new": "",
-    "tests": ["test/world/westheadnorth.test.js", "test/world/westheadnorth_bc.test.js"],
+    "old": "    Object.freeze({ layout: 'beautiful-cities', shipyard: Object.freeze([188, 429]) }),\n  ]),",
+    "new": "  ]),",
+    "tests": [
+      "test/world/westheadnorth.test.js",
+      "test/world/westheadnorth_bc.test.js"
+    ],
     "note": "AUDIT A2: Beautiful Cities' layout back on TS7's west side"
   },
   {
     "name": "WESTHEAD-NORTH-row-any-layout",
     "file": "src/world/portSites.js",
-    "old": ".find((row) => match(row.layout, stamp))",
-    "new": ".find(() => true)",
-    "tests": ["test/world/westheadnorth.test.js"],
+    "old": "export const portPlacesNear = (mapId, stamp, match) =>\n  (PORT_PLACES_NEAR[mapId] ?? []).find((row) => match(row.layout, stamp)) ?? null;",
+    "new": "export const portPlacesNear = (mapId, stamp, match) => (PORT_PLACES_NEAR[mapId] ?? []).find(() => true) ?? null;",
+    "tests": [
+      "test/world/westheadnorth.test.js"
+    ],
     "note": "AUDIT A2: the classic row stands the shipyard inland in the packs' layout"
   },
   {
@@ -100,23 +125,29 @@
     "file": "src/world/portSites.js",
     "old": "          score += Math.sqrt(dx * dx + dy * dy);",
     "new": "          score += dx * dx + dy * dy;",
-    "tests": ["test/world/westheadnorth.test.js"],
+    "tests": [
+      "test/world/westheadnorth.test.js"
+    ],
     "note": "AUDIT A: the distance outweighs the face and the road"
   },
   {
     "name": "WESTHEAD-NORTH-road-skipped",
     "file": "src/world/portSites.js",
-    "old": "        if (kind === 'shipyard') {\n          const s = frontStrip(",
-    "new": "        if (kind === 'shipyard' && !near) {\n          const s = frontStrip(",
-    "tests": ["test/world/westheadnorth.test.js"],
+    "old": "        if (kind === 'shipyard') {",
+    "new": "        if (kind === 'shipyard' && !near) {",
+    "tests": [
+      "test/world/westheadnorth.test.js"
+    ],
     "note": "AUDIT A: a near place with no road at its front costs nothing"
   },
   {
     "name": "WESTHEAD-NORTH-key-flag",
     "file": "src/world/portSitesKept.js",
-    "old": "${near ? `:near${JSON.stringify(near)}` : ''}",
-    "new": "${near ? ':near' : ''}",
-    "tests": ["test/world/westheadnorth.test.js"],
+    "old": "  const key = `${portSitesStamp(g, field)}${near ? `:near${JSON.stringify(near)}` : ''}`;",
+    "new": "  const key = `${portSitesStamp(g, field)}${near ? ':near' : ''}`;",
+    "tests": [
+      "test/world/westheadnorth.test.js"
+    ],
     "note": "AUDIT A: a moved row served the old place"
   },
   {
@@ -124,7 +155,9 @@
     "file": "src/world/portSitesKept.js",
     "old": "  if (!kept) return portSitesOn(g, field, near);",
     "new": "  if (!kept) return portSitesOn(g, field);",
-    "tests": ["test/world/westheadnorth.test.js"],
+    "tests": [
+      "test/world/westheadnorth.test.js"
+    ],
     "note": "AUDIT A: the record unfetched places by the sea's law"
   }
 ]

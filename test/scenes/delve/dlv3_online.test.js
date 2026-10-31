@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 import { dungeonOf, seedFor, run } from './delveRig.mjs';
 import { _setDelveWireForTests, wireDelve, sendDelveWord, delveWireReady, attachDelveHearer } from '../../../src/net/delve/delveLink.js';
 import { delveView, delvePlanWire, phaseMs, VIEW_ME, VIEW_PEER } from '../../../src/scenes/delve/delveOnline.js';
-import { DP, FLAME, WEIGHT, HOLD_WAVE_MAX_MS, delvePlanHash, SPRING_MAX_MS, litanyShowMs, sealWindowMs } from '../../../src/net/delve/delveLaw.js';
+import { DP, FLAME, WEIGHT, HOLD_WAVE_MAX_MS, delvePlanHash, SPRING_MAX_MS, litanyShowMs, sealWindowMs, weighPlates, plateAt, LITANY_STAND_M } from '../../../src/net/delve/delveLaw.js';
 import { pieceCrystals, siteFlames, weightPlaces } from '../../../src/scenes/delve/delveProps.js';
 import { plateLooks, PLATE_LOOK } from '../../../src/scenes/delve/delveLitany.js';
 import { midScreenText, setMidScreenText } from '../../../src/ui/midScreenText.js';
@@ -79,7 +79,7 @@ test('DLV3 THE WRONG PLATE ON MY CLOCK (AUDIT DLV3 8): its mark stamped on the h
   assert.equal(plateLooks(led, 4, wrong, [], 50_300)[1], PLATE_LOOK.wrong);
   assert.notEqual(plateLooks(led, 4, wrong, [], 50_700)[1], PLATE_LOOK.wrong, 'gone at 0.7 s');
   const host = rd('src/scenes/delve/delveHost.js');
-  assert.match(host, /case 'wrong': r\.wrong = \{ j: ev\.j, at: now \};/);
+  assert.match(host, /case 'wrong':\n\s*r\.wrong = \{ j: ev\.j, at: now \};/);
   assert.match(host, /plateLooks\(r\.led, r\.plates\.length, r\.wrong, r\.looks, now\)/);
 });
 
@@ -243,6 +243,20 @@ test('DLV3 AT A RELAY THAT KEEPS NONE, NOTHING STANDS: no plan said, no word, no
   await run(D, 1_000, [s.x, s.y, s.z]);
   assert.equal(sent.length, 0);
   assert.equal(D.api.dynamicDraws.length, 0);
+  D.host.destroy();
+});
+
+test('WEIGH-POSE: online a weight is set on a plate only once the pose the room hears stands on it - last frame\'s feet, the world saying my pose before the dungeon moves me; said on the frame I reach it, the room set it on the floor beside the plate (mutants: the act judged at this frame\'s feet)', async () => {
+  const { D, W, hear, s } = online('weighing');
+  const p = weighPlates(s)[0], off = [p[0] + (LITANY_STAND_M + 0.3) * Math.sign(s.x - p[0] || 1), p[1], p[2]];
+  await run(D, 100, [s.x, s.y, s.z]);
+  hear(dl(0, { p: DP.work, kd: 6, wt: [[WEIGHT.carried, -1, 0, 0], [WEIGHT.home, -1, 0, 0], [WEIGHT.home, -1, 0, 0]], hd: -1 }, { hd: 0, pa: 1 }));
+  await run(D, 100, off);
+  assert.equal(plateAt([p], off[0], off[1], off[2]), -1, 'a step short of the plate');
+  await run(D, 100, p);
+  assert.equal(W.said('a').length, 0, 'the frame I reach it: the room still hears me a step short - nothing said');
+  await run(D, 100, p);
+  assert.deepEqual(W.said('a').map((w) => [w.a, w.j]), [[DELVE_ACTS.indexOf('set'), 0]], 'the next: set, where the room hears me on it');
   D.host.destroy();
 });
 

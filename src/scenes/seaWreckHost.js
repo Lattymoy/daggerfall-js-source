@@ -47,7 +47,16 @@ export const SEA_WRECK_RETRY_MS = 15_000;
 export const SEA_WRECK_CAPTAIN_RETRY_MS = 2_000;
 /** AUDIT SEA VENTURES E3, B7: the answers that say nothing of the wreck - asked again: her grace, the session holding
  *  another act or a save not yet landed, the service down or busy, a record that moved under a seize, a key not stood. */
-export const SEA_WRECK_TRANSIENT = Object.freeze(['grace', 'busy', 'offline', 'server', 'rate', 'seq', 'no-signing-key', 'no-gate-key']);
+export const SEA_WRECK_TRANSIENT = Object.freeze([
+  'grace',
+  'busy',
+  'offline',
+  'server',
+  'rate',
+  'seq',
+  'no-signing-key',
+  'no-gate-key',
+]);
 /** AUDIT SEA VENTURES E2: the carries owed, kept in the page's storage across a reload - the most kept. */
 export const SEA_WRECK_KEPT_KEY = 'dfo.sea.wrecksDue';
 export const SEA_WRECK_KEPT_MAX = 16;
@@ -59,12 +68,22 @@ export const SEA_WRECK_KEPT_MAX = 16;
  */
 export function collectSeaPrizes({ session, checkpoint, character, door, say }) {
   return realmGoldAct({
-    session, checkpoint: () => checkpoint(), needsAnswer: true,
+    session,
+    checkpoint: () => checkpoint(),
+    needsAnswer: true,
     call: (/** @type {any} */ at) => door.collect({ character: character(), realm: at }),
     apply: (/** @type {any} */ a) => {
       const items = Array.isArray(a?.data?.items) ? a.data.items : [];
       for (const it of items) addItem((playerEntity.items ??= []), it);
-      if (items.length) say?.(t('sea.pvp.prizeTaken', 'Plunder from a wreck\'s hold is in your pack: {n, plural, one {# piece} other {# pieces}}.', { n: items.length }), 5);
+      if (items.length)
+        say?.(
+          t(
+            'sea.pvp.prizeTaken',
+            "Plunder from a wreck's hold is in your pack: {n, plural, one {# piece} other {# pieces}}.",
+            { n: items.length },
+          ),
+          5,
+        );
     },
   });
 }
@@ -76,12 +95,22 @@ export function collectSeaPrizes({ session, checkpoint, character, door, say }) 
  */
 export function reclaimSeaPrizes({ session, checkpoint, character, door, say }) {
   return realmGoldAct({
-    session, checkpoint: () => checkpoint(), needsAnswer: true,
+    session,
+    checkpoint: () => checkpoint(),
+    needsAnswer: true,
     call: (/** @type {any} */ at) => door.reclaim({ character: character(), realm: at }),
     apply: (/** @type {any} */ a) => {
       const items = Array.isArray(a?.data?.items) ? a.data.items : [];
       for (const it of items) addItem((playerEntity.items ??= []), it);
-      if (items.length) say?.(t('sea.pvp.holdBack', 'Goods your killer never collected are back in your pack: {n, plural, one {# piece} other {# pieces}}.', { n: items.length }), 5);
+      if (items.length)
+        say?.(
+          t(
+            'sea.pvp.holdBack',
+            'Goods your killer never collected are back in your pack: {n, plural, one {# piece} other {# pieces}}.',
+            { n: items.length },
+          ),
+          5,
+        );
     },
   });
 }
@@ -91,14 +120,26 @@ export function createSeaWreckHost(deps) {
   const now = () => Number(deps.now?.()) || Date.now();
   let door = deps.door ?? null;
   const doorNow = () => (door ??= accountSeaWreck({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }));
-  const storage = () => { try { return deps.storage ?? appStorage(); } catch { return null; } };
-  const seen = new Set();      // wrecks owed here, or carried
-  const due = new Map();       // r -> { rc, c, role, at, busy } - my wrecks to carry: her captain's, her killer's
+  const storage = () => {
+    try {
+      return deps.storage ?? appStorage();
+    } catch {
+      return null;
+    }
+  };
+  const seen = new Set(); // wrecks owed here, or carried
+  const due = new Map(); // r -> { rc, c, role, at, busy } - my wrecks to carry: her captain's, her killer's
   let restoredFor = null;
   const say = (/** @type {string} */ text, s = 5) => deps.say?.(text, s);
 
   /** The carries owed, kept in the page's storage (AUDIT SEA VENTURES E2: a reload lost them). */
-  const keep = () => { try { storage()?.setItem(SEA_WRECK_KEPT_KEY, JSON.stringify([...due.values()].map((w) => w.rc))); } catch { /* storage refused: kept by this page alone */ } };
+  const keep = () => {
+    try {
+      storage()?.setItem(SEA_WRECK_KEPT_KEY, JSON.stringify([...due.values()].map((w) => w.rc)));
+    } catch {
+      /* storage refused: kept by this page alone */
+    }
+  };
   /** A RECEIPT OWED BY ME: her captain's carried at once, her killer's past her grace (`live` - just signed; restored from
    *  storage, asked at once and the service says its grace). Answers whether it is mine and new. */
   function owe(/** @type {string} */ rc, /** @type {any} */ c, /** @type {string} */ me, live = false) {
@@ -106,7 +147,13 @@ export function createSeaWreckHost(deps) {
     if (!role || seen.has(c.r) || now() / 1000 >= c.e) return false;
     seen.add(c.r);
     if (seen.size > 64) seen.delete(seen.values().next().value);
-    due.set(c.r, { rc, c, role, at: role === 'killer' && live ? now() + SEA_WRECK_SLACK_S * 1000 : now(), busy: false });
+    due.set(c.r, {
+      rc,
+      c,
+      role,
+      at: role === 'killer' && live ? now() + SEA_WRECK_SLACK_S * 1000 : now(),
+      busy: false,
+    });
     while (due.size > SEA_WRECK_KEPT_MAX) due.delete(due.keys().next().value);
     return true;
   }
@@ -115,8 +162,15 @@ export function createSeaWreckHost(deps) {
     if (restoredFor === me) return;
     restoredFor = me;
     let list = [];
-    try { list = JSON.parse(storage()?.getItem(SEA_WRECK_KEPT_KEY) ?? '[]'); } catch { list = []; }
-    for (const rc of Array.isArray(list) ? list : []) { const c = typeof rc === 'string' ? readSeaWreck(rc) : null; if (c) owe(rc, c, me); }
+    try {
+      list = JSON.parse(storage()?.getItem(SEA_WRECK_KEPT_KEY) ?? '[]');
+    } catch {
+      list = [];
+    }
+    for (const rc of Array.isArray(list) ? list : []) {
+      const c = typeof rc === 'string' ? readSeaWreck(rc) : null;
+      if (c) owe(rc, c, me);
+    }
   }
   /** HER CAPTAIN'S CARRY: a record act, its prize's pieces out of her hold, said. AUDIT SEA VENTURES E4: only over a
    *  checkpoint that went - a refused one (a duel, the death screen) left the service's record behind her game, the prize
@@ -124,16 +178,29 @@ export function createSeaWreckHost(deps) {
   function asCaptain(/** @type {any} */ w) {
     let stood = false;
     return realmGoldAct({
-      session: deps.session, needsAnswer: true,
-      checkpoint: () => { stood = deps.checkpoint?.() !== false; },
-      call: (/** @type {any} */ at) => (stood ? doorNow().wreck({ receipt: w.rc, realm: at }) : Promise.resolve({ ok: false, error: 'busy' })),
+      session: deps.session,
+      needsAnswer: true,
+      checkpoint: () => {
+        stood = deps.checkpoint?.() !== false;
+      },
+      call: (/** @type {any} */ at) =>
+        stood ? doorNow().wreck({ receipt: w.rc, realm: at }) : Promise.resolve({ ok: false, error: 'busy' }),
       apply: (/** @type {any} */ a) => {
         const d = a?.data ?? {};
         const took = Array.isArray(d.took) ? d.took : [];
-        const out = took.length ? deps.naval?.()?.pvp?.takeHold?.(w.c.u, took) ?? [] : [];
-        const n = out.length || Math.max(0, Math.floor(Number(d.n) || 0));   // her record already without them: still said
-        if (n) say(t('sea.pvp.holdTaken', 'Your wreck was boarded and her hold plundered: {n, plural, one {# piece} other {# pieces}} taken.', { n }), 6);
-        else if (w.c.b === 1) say(t('sea.pvp.holdSpared', 'Your wreck was boarded, but nothing in her hold was worth the taking.'), 5);
+        const out = took.length ? (deps.naval?.()?.pvp?.takeHold?.(w.c.u, took) ?? []) : [];
+        const n = out.length || Math.max(0, Math.floor(Number(d.n) || 0)); // her record already without them: still said
+        if (n)
+          say(
+            t(
+              'sea.pvp.holdTaken',
+              'Your wreck was boarded and her hold plundered: {n, plural, one {# piece} other {# pieces}} taken.',
+              { n },
+            ),
+            6,
+          );
+        else if (w.c.b === 1)
+          say(t('sea.pvp.holdSpared', 'Your wreck was boarded, but nothing in her hold was worth the taking.'), 5);
       },
     });
   }
@@ -141,7 +208,14 @@ export function createSeaWreckHost(deps) {
    *  alone to carry) - and, boarded, my prizes collected. */
   async function asKiller(/** @type {any} */ w) {
     const res = await doorNow().wreck({ receipt: w.rc });
-    if (res?.ok && w.c.b === 1) await collectSeaPrizes({ session: deps.session, checkpoint: () => deps.checkpoint?.(), character: () => deps.character?.(), door: doorNow(), say: (x, s) => say(x, s) });
+    if (res?.ok && w.c.b === 1)
+      await collectSeaPrizes({
+        session: deps.session,
+        checkpoint: () => deps.checkpoint?.(),
+        character: () => deps.character?.(),
+        door: doorNow(),
+        say: (x, s) => say(x, s),
+      });
     return res;
   }
   /** A carry settled - landed, refused for good, or its receipt expired: forgotten, and her hold (her captain's) open
@@ -153,11 +227,13 @@ export function createSeaWreckHost(deps) {
   }
   /** A WRECK'S SIGNED RECEIPT (seaBroadsides.js hear's `wc`): mine, kept to carry. */
   function receipt(/** @type {unknown} */ rc) {
-    const c = readSeaWreck(rc), me = deps.me?.() ?? null;
+    const c = readSeaWreck(rc),
+      me = deps.me?.() ?? null;
     if (!c || !me) return;
     restore(me);
     if (!owe(/** @type {string} */ (rc), c, me, true)) return;
-    if (c.k === me && c.b !== 1) say(t('sea.pvp.notBoarded', 'You did not board her in time. Her hold stays her captain\'s.'), 5);
+    if (c.k === me && c.b !== 1)
+      say(t('sea.pvp.notBoarded', "You did not board her in time. Her hold stays her captain's."), 5);
     keep();
   }
   /** THE FRAME (the sea's host's guns' step): each carry come due asked - again its wait on while the answer says nothing
@@ -169,12 +245,26 @@ export function createSeaWreckHost(deps) {
     const at = now();
     for (const [r, w] of due) {
       if (w.busy || at < w.at) continue;
-      if (at / 1000 >= w.c.e) { settled(r, w); continue; }
+      if (at / 1000 >= w.c.e) {
+        settled(r, w);
+        continue;
+      }
       w.busy = true;
-      (w.role === 'captain' ? asCaptain(w) : asKiller(w)).then((/** @type {any} */ res) => {
-        if (res?.ok || res?.unknown || !SEA_WRECK_TRANSIENT.includes(res?.error)) { settled(r, w); return; }
-        w.at = now() + (w.role === 'captain' ? SEA_WRECK_CAPTAIN_RETRY_MS : SEA_WRECK_RETRY_MS);
-      }).catch((e) => { console.warn('[sea] the wreck failed', e?.message ?? e); w.at = now() + SEA_WRECK_RETRY_MS; }).finally(() => { w.busy = false; });
+      (w.role === 'captain' ? asCaptain(w) : asKiller(w))
+        .then((/** @type {any} */ res) => {
+          if (res?.ok || res?.unknown || !SEA_WRECK_TRANSIENT.includes(res?.error)) {
+            settled(r, w);
+            return;
+          }
+          w.at = now() + (w.role === 'captain' ? SEA_WRECK_CAPTAIN_RETRY_MS : SEA_WRECK_RETRY_MS);
+        })
+        .catch((e) => {
+          console.warn('[sea] the wreck failed', e?.message ?? e);
+          w.at = now() + SEA_WRECK_RETRY_MS;
+        })
+        .finally(() => {
+          w.busy = false;
+        });
     }
   }
   return { receipt, frame };

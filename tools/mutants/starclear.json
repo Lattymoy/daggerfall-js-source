@@ -2,8 +2,8 @@
   {
     "name": "STAR-CLEAR-the-stars-left-out-of-the-set",
     "file": "src/world/gate/gateClearance.js",
-    "old": ", ...membersFrom(stars, 's', 'star:', STAR_ROCK_M)];",
-    "new": "];",
+    "old": "    ...membersFrom(stars, 's', 'star:', STAR_ROCK_M),\n    ...membersFrom(fissures, 'f', 'brass:', FISSURE_ROCK_M),",
+    "new": "    ...membersFrom(fissures, 'f', 'brass:', FISSURE_ROCK_M),",
     "tests": [
       "test/scenes/starfall/starclear.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "STAR-CLEAR-a-star's-reach-the-arch's",
     "file": "src/world/gate/gateClearance.js",
-    "old": "...membersFrom(stars, 's', 'star:', STAR_ROCK_M)];",
-    "new": "...membersFrom(stars, 's', 'star:', EG_ARCH_ROCK_M)];",
+    "old": "    ...membersFrom(stars, 's', 'star:', STAR_ROCK_M),",
+    "new": "    ...membersFrom(stars, 's', 'star:', EG_ARCH_ROCK_M),",
     "tests": [
       "test/scenes/starfall/starclear.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "STAR-CLEAR-the-stars-never-remake-the-set",
     "file": "src/world/gate/gateClearance.js",
-    "old": "    if (gate !== g || arches !== a || stars !== s) {",
-    "new": "    if (gate !== g || arches !== a) {",
+    "old": "    if (gate !== g || arches !== a || stars !== s || fissures !== b) {",
+    "new": "    if (gate !== g || arches !== a || fissures !== b) {",
     "tests": [
       "test/scenes/starfall/starclear.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "STAR-CLEAR-the-host-never-hands-its-stars",
     "file": "src/scenes/world.js",
-    "old": "egClient?.archClears() ?? null, starfall?.starClears() ?? null);",
-    "new": "egClient?.archClears() ?? null, null);",
+    "old": "egClient?.archClears() ?? null, starfall?.starClears() ?? null, passSeason?.fissureClears() ?? null);",
+    "new": "egClient?.archClears() ?? null, null, passSeason?.fissureClears() ?? null);",
     "tests": [
       "test/scenes/starfall/starclear.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "STAR-CLEAR-from-the-omen-alone",
     "file": "src/scenes/starfall/starfallHost.js",
-    "old": "t >= s.times.fallAt - STAR_WARN_MS && t < s.times.goneAt",
-    "new": "t >= s.times.omenAt && t < s.times.goneAt",
+    "old": "        ? [...nightSites(t), ...allSitesOf(starNightAt(t) + 1)].filter(\n            (s) => t >= s.times.fallAt - STAR_WARN_MS && t < s.times.goneAt,\n          )",
+    "new": "        ? [...nightSites(t), ...allSitesOf(starNightAt(t) + 1)].filter((s) => t >= s.times.omenAt && t < s.times.goneAt)",
     "tests": [
       "test/scenes/starfall/starclear.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "STAR-CLEAR-kept-past-its-going",
     "file": "src/scenes/starfall/starfallHost.js",
-    "old": "t >= s.times.fallAt - STAR_WARN_MS && t < s.times.goneAt",
-    "new": "t >= s.times.fallAt - STAR_WARN_MS && t < s.times.goneAt + STAR_WARN_MS",
+    "old": "            (s) => t >= s.times.fallAt - STAR_WARN_MS && t < s.times.goneAt,",
+    "new": "            (s) => t >= s.times.fallAt - STAR_WARN_MS && t < s.times.goneAt + STAR_WARN_MS,",
     "tests": [
       "test/scenes/starfall/starclear.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "STAR-CLEAR-a-new-list-every-ask",
     "file": "src/scenes/starfall/starfallHost.js",
-    "old": "      if (key !== clears.key) clears.list = key ?",
-    "new": "      clears.list = key ?",
+    "old": "      if (key !== clears.key)\n        clears.list = key\n          ? Object.freeze(\n              list.map((s) => Object.freeze({ s: `${s.n}.${s.k}`, px: s.px, py: s.py, x: s.spot[0], z: s.spot[1] })),\n            )\n          : NONE;",
+    "new": "      clears.list = key\n        ? Object.freeze(\n            list.map((s) => Object.freeze({ s: `${s.n}.${s.k}`, px: s.px, py: s.py, x: s.spot[0], z: s.spot[1] })),\n          )\n        : NONE;",
     "tests": [
       "test/scenes/starfall/starclear.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "STAR-CLEAR-read-again-every-ask",
     "file": "src/scenes/starfall/starfallHost.js",
-    "old": "      if (Math.abs(t - clears.at) < 1000) return clears.list;\n",
-    "new": "",
+    "old": "      if (Math.abs(t - clears.at) < 1000) return clears.list;\n      clears.at = t;",
+    "new": "      clears.at = t;",
     "tests": [
       "test/scenes/starfall/starclear.test.js"
     ]

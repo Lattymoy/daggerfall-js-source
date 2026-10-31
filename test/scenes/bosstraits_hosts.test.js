@@ -78,7 +78,7 @@ test('BOSS-TRAITS WHO CARRIES THEM, by the hosts\' source: an elite of my own dr
   const x = rd('src/scenes/exteriorFoes.js');
   assert.match(x, /if \(entity\.eliteFoe && !puppet && !entity\.raidLeader && !bossTraitsOf\(entity\)\.length\) eliteTraits\(entity\);/);
   assert.match(x, /\.\.\.\(bossTraitsOf\(f\.entity\)\.length \? \{ bt: bossTraitMask\(f\.entity\.bossTraits\) \} : \{\}\), \.\.\.\(f\.entity\?\.bossWrath \? \{ bw: 1 \} : \{\}\), \.\.\.\(f\.entity\?\.bossWard \? \{ bv: bossWardShare\(f\.entity\) \} : \{\}\), \.\.\.\(f\.entity\?\.raidLeader \? \{ rl: 1 \} : \{\}\)/);   // PIN MOVED - AUDIT WORLD-EVENTS L2-7: and its ward's share
-  assert.match(x, /if \(f\.entity\.eliteFoe && r\.bt\) \{ giveBossTraits\(f\.entity, bossTraitsOfMask\(r\.bt, r\.rl === 1 \? 2 : 1\), \{ own: false \}\); if \(r\.bw === 1 && markBossWrath\(f\.entity\)\) say\?\.\(bossWrathLine\(/);   // PIN MOVED - AUDIT WORLD-EVENTS L2-11: the mask trimmed; L2-7: its wrath said at a reader
+  assert.match(x, /if \(f\.entity\.eliteFoe && r\.bt\) \{ giveBossTraits\(f\.entity, bossTraitsOfMask\(r\.bt, bossTraitsMost\(r\.rl === 1, isColossusSite\(f\.site\)\)\), \{ own: false \}\); if \(r\.bw === 1 && markBossWrath\(f\.entity\)\) say\?\.\(bossWrathLine\(/);   // PIN MOVED - AUDIT WORLD-EVENTS L2-11: the mask trimmed (AUDIT LANE 5: by bossTraitsMost, the Colossus's three); L2-7: its wrath said at a reader
   assert.match(x, /if \(fromPlayer && !peer\) damage = strikeTraits\(f\.entity, damage, kind, weapon, element, _whole \|\| bypassShield, \(n\) => \{ onPlayerHurt\?\.\(n, null\); flashPlayerDamage\(n\); \}, say\);/);   // PIN MOVED - AUDIT WORLD-EVENTS L2-10 / L2-13 / L5-6 (scenes/foeTraitsHost.js)
   assert.ok(x.indexOf('damage = strikeTraits(f.entity') < x.indexOf('    if (f.puppet) {\n      if (!fromPlayer && striker'), 'the striker\'s half before the divert');
   assert.match(x, /damage = bossTakeAt\(f\.entity, damage, _whole \|\| bypassShield, bossClockS\(\), say, [^\n]*\{ blow: fromPlayer \|\| striker != null \|\| kind !== 'melee', mine: fromPlayer \}\);/);   // PIN MOVED - AUDIT WORLD-EVENTS L2-5 / L2-10
@@ -90,7 +90,7 @@ test('BOSS-TRAITS WHO CARRIES THEM, by the hosts\' source: an elite of my own dr
   assert.match(d, /dealDamage: \(t, d\) => landOnBoss\(boss, bossStrikeAt\(boss\.entity, d, 'arrow', null, null, false, \(n\) => hurtPlayer\(n\)\), HIT_KINDS\.Shaft\)/);
   assert.match(d, /if \(fromPlayer && !peer\) damage = strikeTraits\(foe\.entity, damage, kind, weapon, element, _whole \|\| bypassShield, \(n\) => hurtPlayer\(n\), \(l\) => hudText\.add\(l\)\);/);   // PIN MOVED - AUDIT WORLD-EVENTS L2-10 / L5-6 (scenes/foeTraitsHost.js)
   assert.match(d, /damage = bossTakeAt\(foe\.entity, damage, _whole \|\| bypassShield, bossClockS\(\), \(l\) => hudText\.add\(l\), [^\n]*\{ blow: fromPlayer \|\| striker != null \|\| kind !== 'melee', mine: fromPlayer \}\);/);   // PIN MOVED - AUDIT WORLD-EVENTS L2-5 / L2-10
-  assert.match(rd('src/scenes/gate/standInSpell.js'), /const dealt = counted >= 1 \? bossStrike\(body\.entity, counted, \{ kind: 'spell', element: sp\.element \?\? null \}\)\.damage : counted;/);
+  assert.match(rd('src/scenes/gate/standInSpell.js'), /const dealt =\n\s*counted >= 1 \? bossStrike\(body\.entity, counted, \{ kind: 'spell', element: sp\.element \?\? null \}\)\.damage : counted;/);
   // the spells hand their element to the sinks a resistance reads it at
   const fx = rd('src/systems/effects.js');
   assert.match(fx, /sinks\.hurt\(n, \{ element: spell\.element \?\? null \}\);/);

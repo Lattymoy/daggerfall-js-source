@@ -32,9 +32,16 @@ import { buildProgram } from './glProgram.js';
 import { HAZE, hazeNoise } from '../systems/heatHaze.js';
 
 /** The two noise reads' world axes and scales (HeatHaze.glsl, verbatim). */
-export const HAZE_AXES = Object.freeze({ a: [0.9239, 0.3827], b: [-0.4226, 0.9063], up: 1.5, scale: 0.0022, k1: 3.6, k2: 7.2 });
+export const HAZE_AXES = Object.freeze({
+  a: [0.9239, 0.3827],
+  b: [-0.4226, 0.9063],
+  up: 1.5,
+  scale: 0.0022,
+  k1: 3.6,
+  k2: 7.2,
+});
 /** The two reads' drift per second of _AnimationSpeed x _Time.y: (u1, v1, u2, v2). */
-export const HAZE_DRIFT = Object.freeze([0.026, -0.30, -0.043, -0.48]);
+export const HAZE_DRIFT = Object.freeze([0.026, -0.3, -0.043, -0.48]);
 
 const VS = `#version 300 es
 layout(location=0) in vec3 aPos;
@@ -85,10 +92,12 @@ export function hazeCylinder(segments = HAZE.cylinderSegments, half = HAZE.cylin
   const pos = new Float32Array(segments * 2 * 3);
   const idx = new Uint16Array(segments * 6);
   for (let i = 0; i < segments; i++) {
-    const a = Math.fround(Math.fround(Math.fround(i) * Math.fround(Math.PI)) * 2 / segments);
-    const c = Math.cos(a), s = Math.sin(a);
+    const a = Math.fround((Math.fround(Math.fround(i) * Math.fround(Math.PI)) * 2) / segments);
+    const c = Math.cos(a),
+      s = Math.sin(a);
     pos.set([c, -half, s, c, half, s], i * 6);
-    const n = (i + 1) % segments, o = i * 6;
+    const n = (i + 1) % segments,
+      o = i * 6;
     idx.set([i * 2, n * 2 + 1, i * 2 + 1, i * 2, n * 2, n * 2 + 1], o);
   }
   return { pos, idx };
@@ -102,8 +111,14 @@ export function hazePhase(anchor, speedTime, noiseScale, out = [0, 0, 0, 0]) {
   const ax = anchor[0] * HAZE_AXES.a[0] + anchor[2] * HAZE_AXES.a[1];
   const bx = anchor[0] * HAZE_AXES.b[0] + anchor[2] * HAZE_AXES.b[1];
   const up = anchor[1] * HAZE_AXES.up;
-  out[0] = ax * k * HAZE_AXES.k1; out[1] = up * k * HAZE_AXES.k1; out[2] = bx * k * HAZE_AXES.k2; out[3] = up * k * HAZE_AXES.k2;
-  for (let i = 0; i < 4; i++) { const v = out[i] + speedTime * HAZE_DRIFT[i]; out[i] = v - Math.floor(v); }
+  out[0] = ax * k * HAZE_AXES.k1;
+  out[1] = up * k * HAZE_AXES.k1;
+  out[2] = bx * k * HAZE_AXES.k2;
+  out[3] = up * k * HAZE_AXES.k2;
+  for (let i = 0; i < 4; i++) {
+    const v = out[i] + speedTime * HAZE_DRIFT[i];
+    out[i] = v - Math.floor(v);
+  }
   return out;
 }
 
@@ -114,8 +129,16 @@ export class HeatHazeRenderer {
     this.prog = buildProgram(gl, VS, FS, 'heat haze');
     const L = (n) => gl.getUniformLocation(this.prog, n);
     this.loc = {
-      proj: L('uProj'), view: L('uView'), center: L('uCenter'), scale: L('uScale'), noise: L('uNoise'), grab: L('uGrab'),
-      intensity: L('uIntensity'), noiseScale: L('uNoiseScale'), phase: L('uPhase'), port: L('uPort'),
+      proj: L('uProj'),
+      view: L('uView'),
+      center: L('uCenter'),
+      scale: L('uScale'),
+      noise: L('uNoise'),
+      grab: L('uGrab'),
+      intensity: L('uIntensity'),
+      noiseScale: L('uNoiseScale'),
+      phase: L('uPhase'),
+      port: L('uPort'),
     };
     const { pos, idx } = hazeCylinder();
     this.count = idx.length;
@@ -134,14 +157,25 @@ export class HeatHazeRenderer {
     this.noise = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, this.noise);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, HAZE.noiseSize, HAZE.noiseSize, 0, gl.RGBA, gl.UNSIGNED_BYTE, hazeNoise());
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA8,
+      HAZE.noiseSize,
+      HAZE.noiseSize,
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      hazeNoise(),
+    );
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
     // the grab: the world's viewport, sized on its first use and whenever the viewport changes
     this.grab = gl.createTexture();
-    this.grabW = 0; this.grabH = 0;
+    this.grabW = 0;
+    this.grabH = 0;
     gl.bindTexture(gl.TEXTURE_2D, null);
     /** The land's displacement from the scene, metres, kept across the floating origin's shifts (double precision). */
     this.anchor = [0, 0, 0];
@@ -151,7 +185,9 @@ export class HeatHazeRenderer {
   /** The floating origin moved the scene by `offset` (the hosts' `state.update` answer): the land did not move. */
   offsetOrigin(offset) {
     if (!offset) return;
-    this.anchor[0] -= offset[0]; this.anchor[1] -= offset[1]; this.anchor[2] -= offset[2];
+    this.anchor[0] -= offset[0];
+    this.anchor[1] -= offset[1];
+    this.anchor[2] -= offset[2];
   }
 
   /**
@@ -175,7 +211,8 @@ export class HeatHazeRenderer {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      this.grabW = vw; this.grabH = vh;
+      this.grabW = vw;
+      this.grabH = vh;
     }
     gl.copyTexSubImage2D(gl.TEXTURE_2D, 0, 0, 0, vx, vy, vw, vh);
     gl.activeTexture(gl.TEXTURE0);
@@ -190,7 +227,10 @@ export class HeatHazeRenderer {
     gl.uniform1i(this.loc.grab, 1);
     gl.uniform1f(this.loc.intensity, state.intensity);
     gl.uniform1f(this.loc.noiseScale, state.noiseScale);
-    gl.uniform4fv(this.loc.phase, hazePhase(this.anchor, state.animationSpeed * seconds, state.noiseScale, this._phase));
+    gl.uniform4fv(
+      this.loc.phase,
+      hazePhase(this.anchor, state.animationSpeed * seconds, state.noiseScale, this._phase),
+    );
     gl.uniform4f(this.loc.port, vx, vy, vw, vh);
     gl.disable(gl.BLEND);
     gl.depthMask(false);

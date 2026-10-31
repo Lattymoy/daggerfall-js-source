@@ -38,24 +38,49 @@ export const EG_WAGER_FAMILIES = Object.freeze(Object.keys(EG_WAGER_FAMILY_WORDS
 /** The window's own words. */
 export const EG_START_TEXT = Object.freeze({
   keys: (n) => t('eg.start.keys', 'Weir Keys: {n}', { n }),
-  get stake() { return t('eg.start.stake', 'Opening the breach stakes one Weir Key.'); },
-  get rehearseFree() { return t('eg.start.rehearseFree', 'You can still rehearse Halls 1-5, free, once a day.'); },
-  get where() { return t('eg.start.where', 'Where to start'); },
+  get stake() {
+    return t('eg.start.stake', 'Opening the breach stakes one Weir Key.');
+  },
+  get rehearseFree() {
+    return t('eg.start.rehearseFree', 'You can still rehearse Halls 1-5, free, once a day.');
+  },
+  get where() {
+    return t('eg.start.where', 'Where to start');
+  },
   without: (names) => t('eg.start.without', 'Without {names}', { names }),
   can: (name) => t('eg.start.can', '{name} can start here', { name }),
   cannot: (name) => t('eg.start.cannot', '{name} cannot start here', { name }),
-  get wagerRule() { return t('eg.start.wagerRule', 'Up to three decrees, one from each family, for the whole breach. A wagered breach ranks on the Depths board only.'); },
+  get wagerRule() {
+    return t(
+      'eg.start.wagerRule',
+      'Up to three decrees, one from each family, for the whole breach. A wagered breach ranks on the Depths board only.',
+    );
+  },
   wagerCount: (n, max) => t('eg.start.wagerCount', '{n} of {max}', { n, max }),
-  get wagerShow() { return t('eg.start.wagerShow', 'Show decrees'); },
-  get wagerHide() { return t('eg.start.wagerHide', 'Hide decrees'); },
-  get open() { return t('eg.start.open', 'Open the breach'); },
-  get pickFirst() { return t('eg.start.pickFirst', 'Choose where to start first.'); },
-  get rehearse() { return t('eg.start.rehearse', 'Rehearse Halls 1-5'); },
-  get boards() { return t('eg.start.boards', 'Boards'); },
-  get cancel() { return t('eg.start.cancel', 'Cancel'); },
+  get wagerShow() {
+    return t('eg.start.wagerShow', 'Show decrees');
+  },
+  get wagerHide() {
+    return t('eg.start.wagerHide', 'Hide decrees');
+  },
+  get open() {
+    return t('eg.start.open', 'Open the breach');
+  },
+  get pickFirst() {
+    return t('eg.start.pickFirst', 'Choose where to start first.');
+  },
+  get rehearse() {
+    return t('eg.start.rehearse', 'Rehearse Halls 1-5');
+  },
+  get boards() {
+    return t('eg.start.boards', 'Boards');
+  },
+  get cancel() {
+    return t('eg.start.cancel', 'Cancel');
+  },
 });
 
-const bandOf = (ew) => (EG_BANDS[egBandOfHall(egStartHall(ew > 0 ? ew : 0))]?.name ?? '');
+const bandOf = (ew) => EG_BANDS[egBandOfHall(egStartHall(ew > 0 ? ew : 0))]?.name ?? '';
 
 /**
  * THE WINDOW'S MODEL: the keys, the warnings, each start the opener may make (deepest first, Hall 1 last - its name, its
@@ -64,21 +89,49 @@ const bandOf = (ew) => (EG_BANDS[egBandOfHall(egStartHall(ew > 0 ? ew : 0))]?.na
  * @param {{ keys: number, me: string, members: { sub: string, name: string }[], starts: Record<string, number[]|null>, rehearsal?: boolean,
  *   questDue?: boolean, wager?: number[], board?: boolean }} o
  */
-export function egStartModel({ keys, me, members, starts, rehearsal = false, questDue = false, wager = [], board = false }) {
+export function egStartModel({
+  keys,
+  me,
+  members,
+  starts,
+  rehearsal = false,
+  questDue = false,
+  wager = [],
+  board = false,
+}) {
   const party = members?.length ? members : [{ sub: me, name: '' }];
   const mine = Array.isArray(starts?.[me]) ? /** @type {number[]} */ (starts[me]) : [0];
   const list = keys > 0 ? (mine.includes(0) ? mine : [...mine, 0]) : [];
   const held = new Set(wager);
   return {
-    keys, questDue: !!questDue, rehearsal: !!rehearsal, board: !!board,
+    keys,
+    questDue: !!questDue,
+    rehearsal: !!rehearsal,
+    board: !!board,
     starts: list.map((ew) => {
-      const can = party.map((m) => Array.isArray(starts?.[m.sub]) && egMayStart(/** @type {number[]} */ (starts[m.sub]), ew));
+      const can = party.map(
+        (m) => Array.isArray(starts?.[m.sub]) && egMayStart(/** @type {number[]} */ (starts[m.sub]), ew),
+      );
       const named = party.map((m) => m.name || 'a companion');
-      return { ew, name: ew > 0 ? `Redoubt ${ew}` : EG_TEXT.startHall, band: bandOf(ew), marks: party.length > 1 ? named.map((name, i) => ({ name, can: can[i] })) : [],
-        missing: named.filter((_, i) => !can[i]) };
+      return {
+        ew,
+        name: ew > 0 ? `Redoubt ${ew}` : EG_TEXT.startHall,
+        band: bandOf(ew),
+        marks: party.length > 1 ? named.map((name, i) => ({ name, can: can[i] })) : [],
+        missing: named.filter((_, i) => !can[i]),
+      };
     }),
     wager: [...wager],
-    families: EG_WAGER_FAMILIES.map((fam) => ({ fam, words: EG_WAGER_FAMILY_WORDS[fam], decrees: EG_DECREES.filter((d) => d.fam === fam).map((d) => ({ id: d.id, name: d.name, line: d.line, held: held.has(d.id) })) })),
+    families: EG_WAGER_FAMILIES.map((fam) => ({
+      fam,
+      words: EG_WAGER_FAMILY_WORDS[fam],
+      decrees: EG_DECREES.filter((d) => d.fam === fam).map((d) => ({
+        id: d.id,
+        name: d.name,
+        line: d.line,
+        held: held.has(d.id),
+      })),
+    })),
   };
 }
 
@@ -104,43 +157,85 @@ export function openEgStartPanel(o) {
   const doc = o.doc ?? globalThis.document;
   if (!doc?.createElement) return null;
   dressEgKit(doc);
-  if (doc.getElementById && !doc.getElementById(STYLE_ID)) { const st = doc.createElement('style'); st.id = STYLE_ID; st.textContent = EG_START_CSS; (doc.head ?? doc.body)?.append(st); }
+  if (doc.getElementById && !doc.getElementById(STYLE_ID)) {
+    const st = doc.createElement('style');
+    st.id = STYLE_ID;
+    st.textContent = EG_START_CSS;
+    (doc.head ?? doc.body)?.append(st);
+  }
   const say = o.say ?? (() => {});
-  let wager = [], pick = /** @type {number|null} */ (null), why = '', folded = true, done = false;
+  let wager = [],
+    pick = /** @type {number|null} */ (null),
+    why = '',
+    folded = true,
+    done = false;
   /** @type {any} */ let root = null;
   /** @type {any} */ let win = null;
   let unregister = () => {};
   const view = globalThis.window ?? doc.defaultView ?? null;
   const onKey = (e) => {
     if (!root || typeof e?.key !== 'string' || e.metaKey || e.ctrlKey || e.altKey) return;
-    if (overlayAction(e) === 'back') { e.preventDefault?.(); e.stopPropagation?.(); cancel(); }
+    if (overlayAction(e) === 'back') {
+      e.preventDefault?.();
+      e.stopPropagation?.();
+      cancel();
+    }
   };
   // THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD: the overlay out of the slot (and done, so a host that drains on
   // `done` drains it), the page let go, then whoever is next
   const leave = () => {
     const w = win;
     win = null;
-    if (w) { w.done = true; o.unmount?.(w); }
-    unregister(); unregister = () => {};
+    if (w) {
+      w.done = true;
+      o.unmount?.(w);
+    }
+    unregister();
+    unregister = () => {};
     view?.removeEventListener?.('keydown', onKey, { capture: true });
-    root?.remove?.(); root = null;
+    root?.remove?.();
+    root = null;
   };
-  const finish = (fn) => { if (done) return; done = true; leave(); fn(); };
+  const finish = (fn) => {
+    if (done) return;
+    done = true;
+    leave();
+    fn();
+  };
   const cancel = () => finish(() => o.onCancel?.());
   const choose = (c) => finish(() => o.onChoose(c));
   const model = () => egStartModel({ ...o, wager, board: typeof o.board === 'function' });
   function begin() {
     const s = model().starts.find((x) => x.ew === pick);
-    if (!s) { why = EG_START_TEXT.pickFirst; draw(); return; }
-    if (!s.missing.length) { choose({ ew: s.ew, wg: [...wager], rh: false }); return; }
+    if (!s) {
+      why = EG_START_TEXT.pickFirst;
+      draw();
+      return;
+    }
+    if (!s.missing.length) {
+      choose({ ew: s.ew, wg: [...wager], rh: false });
+      return;
+    }
     // asked once: going on without the members who cannot make this start (the window out of the slot, the box in it)
     leave();
-    o.ask([EG_TEXT.without(egNamesText(s.missing))], () => choose({ ew: s.ew, wg: [...wager], rh: false }), () => { if (!done) show(); }, cancel);
+    o.ask(
+      [EG_TEXT.without(egNamesText(s.missing))],
+      () => choose({ ew: s.ew, wg: [...wager], rh: false }),
+      () => {
+        if (!done) show();
+      },
+      cancel,
+    );
   }
   function boards() {
     leave();
     let back = false;
-    const again = () => { if (!back && !done) { back = true; show(); } };
+    const again = () => {
+      if (!back && !done) {
+        back = true;
+        show();
+      }
+    };
     if (!o.board(again)) again();
   }
   function toggle(id) {
@@ -155,7 +250,13 @@ export function openEgStartPanel(o) {
     const m = model();
     const el = (tag, cls, text) => egEl(doc, tag, cls, text);
     root.replaceChildren();
-    root.append(egHead(doc, EG_TEXT.name, { chips: [el('span', `eg-k-chip${m.keys > 0 ? ' gold' : ''}`, EG_START_TEXT.keys(m.keys))], onClose: cancel, closeWords: EG_START_TEXT.cancel }));
+    root.append(
+      egHead(doc, EG_TEXT.name, {
+        chips: [el('span', `eg-k-chip${m.keys > 0 ? ' gold' : ''}`, EG_START_TEXT.keys(m.keys))],
+        onClose: cancel,
+        closeWords: EG_START_TEXT.cancel,
+      }),
+    );
     const body = el('div', 'eg-k-body');
     const top = egSection(doc, '');
     top.append(el('div', 'eg-k-line', m.keys > 0 ? EG_START_TEXT.stake : EG_TEXT.noKeys));
@@ -172,11 +273,23 @@ export function openEgStartPanel(o) {
         b.append(el('span', 'eg-k-tname', s.name), el('span', 'eg-k-tline', s.band));
         if (s.marks.length) {
           const marks = el('span', 'eg-marks');
-          for (const mk of s.marks) { const c = el('span', `eg-k-chip ${mk.can ? 'gold' : 'red'}`, `${mk.can ? EG_START_TICK : EG_START_CROSS} ${mk.name}`); c.setAttribute('aria-label', mk.can ? EG_START_TEXT.can(mk.name) : EG_START_TEXT.cannot(mk.name)); marks.append(c); }
+          for (const mk of s.marks) {
+            const c = el(
+              'span',
+              `eg-k-chip ${mk.can ? 'gold' : 'red'}`,
+              `${mk.can ? EG_START_TICK : EG_START_CROSS} ${mk.name}`,
+            );
+            c.setAttribute('aria-label', mk.can ? EG_START_TEXT.can(mk.name) : EG_START_TEXT.cannot(mk.name));
+            marks.append(c);
+          }
           b.append(marks);
         }
         if (s.missing.length) b.append(el('span', 'eg-k-tline', EG_START_TEXT.without(egNamesText(s.missing))));
-        b.addEventListener?.('click', () => { pick = s.ew; why = ''; draw(); });
+        b.addEventListener?.('click', () => {
+          pick = s.ew;
+          why = '';
+          draw();
+        });
         tiles.append(b);
       }
       sec.append(tiles);
@@ -185,8 +298,20 @@ export function openEgStartPanel(o) {
       const open = !folded || m.wager.length > 0;
       const fold = el('button', 'eg-k-btn', open ? EG_START_TEXT.wagerHide : EG_START_TEXT.wagerShow);
       fold.setAttribute('aria-expanded', String(open));
-      fold.addEventListener?.('click', () => { folded = open; draw(); });
-      const wsec = egSection(doc, EG_TEXT.wager(m.wager.map((id) => EG_DECREES[id]?.name).filter(Boolean).join(', ')), [el('span', 'eg-k-chip', EG_START_TEXT.wagerCount(m.wager.length, EG_WAGER_MAX)), fold]);
+      fold.addEventListener?.('click', () => {
+        folded = open;
+        draw();
+      });
+      const wsec = egSection(
+        doc,
+        EG_TEXT.wager(
+          m.wager
+            .map((id) => EG_DECREES[id]?.name)
+            .filter(Boolean)
+            .join(', '),
+        ),
+        [el('span', 'eg-k-chip', EG_START_TEXT.wagerCount(m.wager.length, EG_WAGER_MAX)), fold],
+      );
       wsec.append(el('div', 'eg-k-line dim', EG_START_TEXT.wagerRule));
       if (open) {
         for (const f of m.families) {
@@ -206,8 +331,12 @@ export function openEgStartPanel(o) {
       body.append(wsec);
     }
     root.append(body);
-    const acts = el('div', 'eg-k-dock');   // the presses on the window's foot, never scrolled away under the Wager
-    if (why) { const w = el('div', 'eg-k-line warn', why); w.setAttribute('aria-live', 'polite'); acts.append(w); }   // a refusal over the presses, where the eye is
+    const acts = el('div', 'eg-k-dock'); // the presses on the window's foot, never scrolled away under the Wager
+    if (why) {
+      const w = el('div', 'eg-k-line warn', why);
+      w.setAttribute('aria-live', 'polite');
+      acts.append(w);
+    } // a refusal over the presses, where the eye is
     if (m.starts.length) {
       const go = el('button', 'eg-k-btn eg-go', EG_START_TEXT.open);
       go.setAttribute('data-kind', 'primary');
@@ -215,9 +344,22 @@ export function openEgStartPanel(o) {
       go.addEventListener?.('click', () => begin());
       acts.append(go);
     }
-    if (m.rehearsal) { const r = el('button', 'eg-k-btn eg-rehearse', EG_START_TEXT.rehearse); r.addEventListener?.('click', () => choose({ ew: 0, wg: [], rh: true })); acts.append(r); }
-    if (m.board) { const b = el('button', 'eg-k-btn eg-boards', EG_START_TEXT.boards); b.setAttribute('data-kind', 'quiet'); b.title = EG_BOARD_TEXT.title; b.addEventListener?.('click', () => boards()); acts.append(b); }
-    const c = el('button', 'eg-k-btn eg-cancel', EG_START_TEXT.cancel); c.setAttribute('data-kind', 'quiet'); c.addEventListener?.('click', () => cancel()); acts.append(c);
+    if (m.rehearsal) {
+      const r = el('button', 'eg-k-btn eg-rehearse', EG_START_TEXT.rehearse);
+      r.addEventListener?.('click', () => choose({ ew: 0, wg: [], rh: true }));
+      acts.append(r);
+    }
+    if (m.board) {
+      const b = el('button', 'eg-k-btn eg-boards', EG_START_TEXT.boards);
+      b.setAttribute('data-kind', 'quiet');
+      b.title = EG_BOARD_TEXT.title;
+      b.addEventListener?.('click', () => boards());
+      acts.append(b);
+    }
+    const c = el('button', 'eg-k-btn eg-cancel', EG_START_TEXT.cancel);
+    c.setAttribute('data-kind', 'quiet');
+    c.addEventListener?.('click', () => cancel());
+    acts.append(c);
     root.append(acts);
   }
   function show() {
@@ -227,23 +369,60 @@ export function openEgStartPanel(o) {
     root.setAttribute('role', 'dialog');
     root.setAttribute('aria-label', EG_TEXT.name);
     // a press on the window is the window's - never a swing or a look
-    for (const k of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu']) root.addEventListener?.(k, (e) => e.stopPropagation?.());
+    for (const k of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu'])
+      root.addEventListener?.(k, (e) => e.stopPropagation?.());
     root.addEventListener?.('keydown', (e) => e.stopPropagation?.());
     // the overlay in the host's slot - the generic shape (ui/brokerDoor.js): the window's own DOM owns the keys and the pointer
-    const w = { isChoiceWindow: true, done: false, input() {}, click() {}, wheel() {}, hover() {}, tick() {}, draw() {},
-      dispose() { if (w.done) return; w.done = true; if (win === w && !done) { win = null; cancel(); } } };
+    const w = {
+      isChoiceWindow: true,
+      done: false,
+      input() {},
+      click() {},
+      wheel() {},
+      hover() {},
+      tick() {},
+      draw() {},
+      dispose() {
+        if (w.done) return;
+        w.done = true;
+        if (win === w && !done) {
+          win = null;
+          cancel();
+        }
+      },
+    };
     win = w;
-    if (!o.mount?.(w)) { win = null; root = null; Promise.resolve().then(cancel); return; }   // a slot that refuses it: nothing staked
+    if (!o.mount?.(w)) {
+      win = null;
+      root = null;
+      Promise.resolve().then(cancel);
+      return;
+    } // a slot that refuses it: nothing staked
     (doc.body ?? doc.documentElement)?.append(root);
     unregister = registerOverlay(cancel);
     view?.addEventListener?.('keydown', onKey, { capture: true });
     draw();
-    try { root.focus?.({ preventScroll: true }); } catch { /* a page that cannot focus */ }
+    try {
+      root.focus?.({ preventScroll: true });
+    } catch {
+      /* a page that cannot focus */
+    }
   }
   show();
   return {
-    close() { if (!done) { done = true; leave(); } },
-    state: () => ({ view: 'panel', wager: [...wager], done, pick, rows: root ? model().starts.map((s) => s.name) : [] }),
+    close() {
+      if (!done) {
+        done = true;
+        leave();
+      }
+    },
+    state: () => ({
+      view: 'panel',
+      wager: [...wager],
+      done,
+      pick,
+      rows: root ? model().starts.map((s) => s.name) : [],
+    }),
   };
 }
 
@@ -256,6 +435,16 @@ export function openEgStartPanel(o) {
  */
 export function egStartPanelDoors({ slot, doc = globalThis.document }) {
   return {
-    open: (o) => openEgStartPanel({ ...o, doc, mount: (w) => { const top = slot.top(); if (top?.done) slot.close(top); return !!slot.mount(w); }, unmount: (w) => slot.close(w) }),
+    open: (o) =>
+      openEgStartPanel({
+        ...o,
+        doc,
+        mount: (w) => {
+          const top = slot.top();
+          if (top?.done) slot.close(top);
+          return !!slot.mount(w);
+        },
+        unmount: (w) => slot.close(w),
+      }),
   };
 }

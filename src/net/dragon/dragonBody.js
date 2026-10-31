@@ -31,7 +31,11 @@ export const DRAGON_LEG = Object.freeze({ line: 0, orbit: 1 });
 export const EASE = Object.freeze({ smooth: 0, fall: 1 });
 
 const TAU = 2 * Math.PI;
-const wrap = (a) => { let x = (a + Math.PI) % TAU; if (x < 0) x += TAU; return x - Math.PI; };
+const wrap = (a) => {
+  let x = (a + Math.PI) % TAU;
+  if (x < 0) x += TAU;
+  return x - Math.PI;
+};
 const r2 = (v) => Math.round(v * 100) / 100;
 const smooth = (u) => u * u * (3 - 2 * u);
 
@@ -41,14 +45,35 @@ const smooth = (u) => u * u * (3 - 2 * u);
  * @param {number} at @param {number} ms @param {number[]} from [x, z, a] @param {number[]} to [x, z, a] @param {number} yw
  * @param {number} [e] EASE
  */
-export const lineLeg = (at, ms, from, to, yw, e = EASE.smooth) => ({ k: DRAGON_LEG.line, at: Math.round(at), ms: Math.max(0, Math.round(ms)),
-  x: r2(from[0]), z: r2(from[1]), a: r2(from[2]), tx: r2(to[0]), tz: r2(to[1]), ta: r2(to[2]), yw: Math.round(wrap(yw) * 1000) / 1000, e });
+export const lineLeg = (at, ms, from, to, yw, e = EASE.smooth) => ({
+  k: DRAGON_LEG.line,
+  at: Math.round(at),
+  ms: Math.max(0, Math.round(ms)),
+  x: r2(from[0]),
+  z: r2(from[1]),
+  a: r2(from[2]),
+  tx: r2(to[0]),
+  tz: r2(to[1]),
+  ta: r2(to[2]),
+  yw: Math.round(wrap(yw) * 1000) / 1000,
+  e,
+});
 /**
  * An orbit leg: about (cx, cz), radius `r`, at angle `a0` (atan2's, from the centre) at `at`, turning `sd` (+1 sunwise,
  * -1 against) at FLY_V; its height `a`, eased to `ta` over `ams` when it climbs or comes down.
  */
-export const orbitLeg = (at, cx, cz, r, a0, sd, a, ta = a, ams = 0) => ({ k: DRAGON_LEG.orbit, at: Math.round(at), cx: r2(cx), cz: r2(cz), r: r2(Math.max(5, r)),
-  a0: Math.round(wrap(a0) * 1000) / 1000, sd: sd < 0 ? -1 : 1, a: r2(a), ta: r2(ta), ams: Math.max(0, Math.round(ams)) });
+export const orbitLeg = (at, cx, cz, r, a0, sd, a, ta = a, ams = 0) => ({
+  k: DRAGON_LEG.orbit,
+  at: Math.round(at),
+  cx: r2(cx),
+  cz: r2(cz),
+  r: r2(Math.max(5, r)),
+  a0: Math.round(wrap(a0) * 1000) / 1000,
+  sd: sd < 0 ? -1 : 1,
+  a: r2(a),
+  ta: r2(ta),
+  ams: Math.max(0, Math.round(ams)),
+});
 
 /** Where leg `l` holds the dragon at `t`: `{x, z, a, yw}`. Before the leg's start, its start. */
 export function dragonLegAt(l, t) {
@@ -56,33 +81,60 @@ export function dragonLegAt(l, t) {
   if (l.k === DRAGON_LEG.orbit) {
     const ang = l.a0 + l.sd * (FLY_V / l.r) * (dt / 1000);
     const u = l.ams > 0 ? Math.min(1, dt / l.ams) : 1;
-    return { x: l.cx + Math.sin(ang) * l.r, z: l.cz + Math.cos(ang) * l.r, a: l.a + (l.ta - l.a) * smooth(u), yw: wrap(ang + (l.sd * Math.PI) / 2) };
+    return {
+      x: l.cx + Math.sin(ang) * l.r,
+      z: l.cz + Math.cos(ang) * l.r,
+      a: l.a + (l.ta - l.a) * smooth(u),
+      yw: wrap(ang + (l.sd * Math.PI) / 2),
+    };
   }
-  const u = l.ms > 0 ? Math.min(1, dt / l.ms) : 1, k = l.e === EASE.fall ? u * u : smooth(u);
-  const dx = l.tx - l.x, dz = l.tz - l.z, moving = Math.hypot(dx, dz) > 0.5;
+  const u = l.ms > 0 ? Math.min(1, dt / l.ms) : 1,
+    k = l.e === EASE.fall ? u * u : smooth(u);
+  const dx = l.tx - l.x,
+    dz = l.tz - l.z,
+    moving = Math.hypot(dx, dz) > 0.5;
   return { x: l.x + dx * k, z: l.z + dz * k, a: l.a + (l.ta - l.a) * k, yw: moving ? Math.atan2(dx, dz) : l.yw };
 }
 /** The leg of a plan standing at `t`: the latest begun, else the first. @param {any[]} legs @param {number} t */
 export function legOf(legs, t) {
   let best = legs[0] ?? null;
-  for (const l of legs) if (l.at <= t) best = l; else break;
+  for (const l of legs)
+    if (l.at <= t) best = l;
+    else break;
   return best;
 }
 /** Where a plan holds the dragon at `t`, or null for none. @param {any[]} legs @param {number} t */
-export const planAt = (legs, t) => { const l = legOf(legs ?? [], t); return l ? dragonLegAt(l, t) : null; };
+export const planAt = (legs, t) => {
+  const l = legOf(legs ?? [], t);
+  return l ? dragonLegAt(l, t) : null;
+};
 /** When a plan's last leg ends (an orbit never does: Infinity). @param {any[]} legs */
-export const planEnd = (legs) => { const l = legs?.[legs.length - 1]; return !l ? -Infinity : l.k === DRAGON_LEG.orbit ? Infinity : l.at + l.ms; };
+export const planEnd = (legs) => {
+  const l = legs?.[legs.length - 1];
+  return !l ? -Infinity : l.k === DRAGON_LEG.orbit ? Infinity : l.at + l.ms;
+};
 
-/** Watch `w`'s roost before its fight: an orbit about its site, high, from its landing. @param {number} w */
-export function roostLeg(w) {
-  return orbitLeg(dragonTimes(w).landAt, 0, 0, ROOST_R, (dragonRoll(w, 3) / 4294967296) * TAU, dragonRoll(w, 4) & 1 ? 1 : -1, ROOST_ALT);
+/** An omen's roost before its fight: an orbit about its site, high, from its landing. @param {{w: number, s: number}} o */
+export function roostLeg(o) {
+  return orbitLeg(
+    dragonTimes(o).landAt,
+    0,
+    0,
+    ROOST_R,
+    (dragonRoll(o, 3) / 4294967296) * TAU,
+    dragonRoll(o, 4) & 1 ? 1 : -1,
+    ROOST_ALT,
+  );
 }
 /** An orbit that takes up from where `p` stands at `at`: about a centre ORBIT_R toward the site (kept inside its ground),
  *  so it flies on with no jump; climbing to `ta` over `ams`. */
 export function orbitFrom(p, at, r, sd, ta = p.a, ams = 0) {
   const d = Math.hypot(p.x, p.z) || 1;
-  const cx = p.x - (p.x / d) * Math.min(r, d), cz = p.z - (p.z / d) * Math.min(r, d), rr = Math.max(5, Math.hypot(p.x - cx, p.z - cz) || r);
-  const ux = (p.x - cx) || 0, uz = (p.z - cz) || rr;
+  const cx = p.x - (p.x / d) * Math.min(r, d),
+    cz = p.z - (p.z / d) * Math.min(r, d),
+    rr = Math.max(5, Math.hypot(p.x - cx, p.z - cz) || r);
+  const ux = p.x - cx || 0,
+    uz = p.z - cz || rr;
   return orbitLeg(at, cx, cz, rr, Math.atan2(ux, uz), sd, p.a, ta, ams);
 }
 /** Its death's fall from where `p` stood at `at`: straight down to the ground under it. */

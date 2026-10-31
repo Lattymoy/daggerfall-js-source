@@ -12,8 +12,8 @@
   {
     "name": "AUDITBR5-the-set-asks-no-alias",
     "file": "scripts/desktopRelease.mjs",
-    "old": "  ...ALIAS_COPIES.map(([, to]) => to),\n",
-    "new": "",
+    "old": "  ...ALIAS_COPIES.map(([, to]) => to),\n  // DA13: the game a file at a time - the manifest every copy reads first, and the pack it fetches ranges of",
+    "new": "  // DA13: the game a file at a time - the manifest every copy reads first, and the pack it fetches ranges of",
     "tests": [
       "test/tooling/rel4_release.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "AUDITBR5-an-alias-under-anothers-name",
     "file": "scripts/desktopRelease.mjs",
-    "old": "Object.freeze([DOWNLOAD_FILES[k], LEGACY_DOWNLOAD_FILES[k]])",
-    "new": "Object.freeze([DOWNLOAD_FILES[k], LEGACY_DOWNLOAD_FILES.winSetup])",
+    "old": "  Object.keys(DOWNLOAD_FILES).map((k) => Object.freeze([DOWNLOAD_FILES[k], LEGACY_DOWNLOAD_FILES[k]])),",
+    "new": "  Object.keys(DOWNLOAD_FILES).map((k) => Object.freeze([DOWNLOAD_FILES[k], LEGACY_DOWNLOAD_FILES.winSetup])),",
     "tests": [
       "test/tooling/rel4_release.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "AUDITBR5-the-alias-copies-nothing",
     "file": "scripts/desktopRelease.mjs",
-    "old": "    for (const [from, to] of ALIAS_COPIES) copyFileSync(join(a, from), join(a, to));\n",
-    "new": "",
+    "old": "    for (const [from, to] of ALIAS_COPIES) copyFileSync(join(a, from), join(a, to));\n    console.log(`${ALIAS_COPIES.length} downloads copied under their names from before BR5`);",
+    "new": "    console.log(`${ALIAS_COPIES.length} downloads copied under their names from before BR5`);",
     "tests": [
       "test/tooling/rel4_release.test.js"
     ],
@@ -194,8 +194,8 @@
   {
     "name": "AUDITBR5-the-stats-card-named",
     "file": "src/ui/statsCard.js",
-    "old": "'Rules: the original game\\u2019s combat formulas.",
-    "new": "'Rules: Daggerfall\\u2019s combat formulas.",
+    "old": "      : t(\n          'stats.rules.classic',\n          'Rules: the original game\\u2019s combat formulas. Damage is before any armor effects.',\n        ),",
+    "new": "      : t('stats.rules.classic', 'Rules: Daggerfall\\u2019s combat formulas. Damage is before any armor effects.'),",
     "tests": [
       "test/ui/brand.test.js"
     ],

@@ -22,7 +22,18 @@
 // ═══════════════════════════════════════════════════════════════════
 import { LOCATION_TYPES } from '../formats/mapsFile.js';
 import { ARENA_TEMPLATE_KINDS, arenaPlaceId, arenaLocationIndex } from './arenaLocations.js';
-import { CAPITALS, capitalPin, capitalSliceOrdinal, capitalSliceName, capitalPlaceId, capitalLocationIndex, capitalSlicePort, capitalDims, capitalCanalOpen } from './tamrielCapitals.js';
+import {
+  CAPITALS,
+  capitalPin,
+  capitalSliceOrdinal,
+  capitalSliceName,
+  capitalPlaceId,
+  capitalLocationIndex,
+  capitalSlicePort,
+  capitalDims,
+  capitalCanalOpen,
+} from './tamrielCapitals.js';
+import { THEATRE_KEYS, areaOfDistrict, districtOf } from './worldWide/worldGrid.js'; // FOUNDATION F1: a capital's slice its province's
 
 /** The registry's name for the places past the Bay. */
 export const PAST_BAY_SOURCE = 'tesa';
@@ -42,25 +53,49 @@ export function pastBayPlaceRows({ pixels, templateOf, capitals }) {
       if (!at) return;
       // AUDIT FB1029g P1: its span as the build lays it (synthesizeCapitalLocation) - w by h slices about its centre, each
       // eight blocks square where there are several; a square's n by n read Alinor's and Torval's harbours out
-      const D = capitalDims(cap), many = D.w * D.h > 1;
-      const pin = pixels?.byPixel.get(`${at.px},${at.py}`) ?? null;   // the place of its name, pinned on its centre
+      const D = capitalDims(cap),
+        many = D.w * D.h > 1;
+      const pin = pixels?.byPixel.get(`${at.px},${at.py}`) ?? null; // the place of its name, pinned on its centre
+      // FOUNDATION F1: every slice in its capital's province - Alinor's harbour and Torval's docks stand on the picture's
+      // sea, where the pixel's own read named no province (region -1)
+      const t = THEATRE_KEYS.indexOf(cap.province);
       for (let s = 0; s < D.w * D.h; s++) {
-        const sx = s % D.w, sy = (s - sx) / D.w;
+        const sx = s % D.w,
+          sy = (s - sx) / D.w,
+          px = at.px + sx - D.mx,
+          py = at.py + sy - D.my,
+          [cx, cy] = districtOf(px, py);
         rows.push({
-          mapId: capitalPlaceId(k, capitalSliceOrdinal(cap, s)), name: capitalSliceName(cap, s), px: at.px + sx - D.mx, py: at.py + sy - D.my,
-          type: LOCATION_TYPES.TownCity, w: many ? 8 : cap.plan[0].length, h: many ? 8 : cap.plan.length,
-          port: capitalSlicePort(k, s, pin?.port),   // NIBEN-SEA: its harbour's slice (the Imperial City's Waterfront, on its canal); BAY-LEFT-SEA: the slice's own port byte's law
-          location: capitalLocationIndex(k, capitalSliceOrdinal(cap, s)),   // WW7-5: its location's index (a town past the Bay reports itself)
+          mapId: capitalPlaceId(k, capitalSliceOrdinal(cap, s)),
+          name: capitalSliceName(cap, s),
+          px,
+          py,
+          ...(t > 0 ? { area: areaOfDistrict(t, cx, cy) } : {}),
+          type: LOCATION_TYPES.TownCity,
+          w: many ? 8 : cap.plan[0].length,
+          h: many ? 8 : cap.plan.length,
+          port: capitalSlicePort(k, s, pin?.port), // NIBEN-SEA: its harbour's slice (the Imperial City's Waterfront, on its canal); BAY-LEFT-SEA: the slice's own port byte's law
+          location: capitalLocationIndex(k, capitalSliceOrdinal(cap, s)), // WW7-5: its location's index (a town past the Bay reports itself)
         });
       }
     });
   }
   for (const p of pixels?.stood ?? []) {
-    if (p.pinned && capitals) continue;   // it stands as its capital (above)
+    if (p.pinned && capitals) continue; // it stands as its capital (above)
     const template = templateOf(p);
-    if (!template) continue;   // no clone of its kind: no location stands
+    if (!template) continue; // no clone of its kind: no location stands
     const ed = template.exterior?.exteriorData;
-    rows.push({ mapId: arenaPlaceId(p), name: p.name, px: p.bx, py: p.by, type: ARENA_TEMPLATE_KINDS[p.kind].type, w: ed?.width ?? 1, h: ed?.height ?? 1, port: !!p.port, location: arenaLocationIndex(p) });   // WW7-5: its location's index
+    rows.push({
+      mapId: arenaPlaceId(p),
+      name: p.name,
+      px: p.bx,
+      py: p.by,
+      type: ARENA_TEMPLATE_KINDS[p.kind].type,
+      w: ed?.width ?? 1,
+      h: ed?.height ?? 1,
+      port: !!p.port,
+      location: arenaLocationIndex(p),
+    }); // WW7-5: its location's index
   }
   return rows;
 }
@@ -88,14 +123,21 @@ export function pastBaySites({ pixels, templateOf, capitals }) {
   if (capitals) {
     CAPITALS.forEach((cap, k) => {
       const D = capitalDims(cap);
-      if (D.w * D.h > 1 || cap.shore || capitalCanalOpen(k) || !cap.plan) return;   // its own ground's law
+      if (D.w * D.h > 1 || cap.shore || capitalCanalOpen(k) || !cap.plan) return; // its own ground's law
       const at = capitalPin({ name: cap.name, province: cap.province });
       if (!at) return;
-      out.push({ px: at.px, py: at.py, loc: { mapTableData: { locationType: LOCATION_TYPES.TownCity }, exterior: { exteriorData: { width: cap.plan[0].length, height: cap.plan.length, blockNames: [''] } } } });
+      out.push({
+        px: at.px,
+        py: at.py,
+        loc: {
+          mapTableData: { locationType: LOCATION_TYPES.TownCity },
+          exterior: { exteriorData: { width: cap.plan[0].length, height: cap.plan.length, blockNames: [''] } },
+        },
+      });
     });
   }
   for (const p of pixels?.stood ?? []) {
-    if (p.pinned && capitals) continue;   // a site already: it stands as its capital (above)
+    if (p.pinned && capitals) continue; // a site already: it stands as its capital (above)
     const template = templateOf(p);
     if (template) out.push({ px: p.bx, py: p.by, loc: template });
   }

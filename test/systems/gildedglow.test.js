@@ -104,7 +104,7 @@ test('GILDED-GLOW THE LOOK: the seventh look, one strength, its word gilded2; a 
   assert.equal(WG.GLOW_LOOKS.at(-1), 'gilded');
   assert.equal(WG.GLOW_CODE.gilded, 7);
   // render/renderer.js keys a frame's field by its look's code and its cuts, the code under 8 - every look must fit
-  assert.ok(read('src/render/renderer.js').includes('const key = glow.code + 8 * ((cutL ? 1 : 0) + (cutR ? 2 : 0)) + 32 * (aw * 4096 + ah);'));
+  assert.ok(read('src/render/renderer.js').includes('const flat = glow.code + 8 * ((cutL ? 1 : 0) + (cutR ? 2 : 0)) + 32 * (aw * 4096 + ah);'));   // BACK-HOLSTER GLOW: `flat`, a world picture's key its negative
   assert.ok(Math.max(...Object.values(WG.GLOW_CODE)) < 8, 'every look\'s code under the field key\'s 8');
   // one strength, as the arcane look and the armory's pieces
   assert.equal(WG.GILDED_LEVEL, 2);

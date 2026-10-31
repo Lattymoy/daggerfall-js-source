@@ -18,8 +18,8 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { WRIT_RID_RE } from './writLaw.js';
-import { PIECE_GONE, PIECE_KEPT_ERROR, realmPieceAct } from './marketBook.js';   // INT19: a commission's piece through the realm act
-import { ASK_AGAIN_NOW, jittered } from './backoff.js';   // SCALE1: asks again spread out, and never at once into a minute's refusal
+import { PIECE_GONE, PIECE_KEPT_ERROR, realmPieceAct } from './marketBook.js'; // INT19: a commission's piece through the realm act
+import { ASK_AGAIN_NOW, jittered } from './backoff.js'; // SCALE1: asks again spread out, and never at once into a minute's refusal
 
 export const WRIT_KEPT_KEY = 'prof6.kept';
 export const WRIT_TRIES = 3;
@@ -57,7 +57,18 @@ export function mintWritRid() {
  *   `holds` - AUDIT 31 H1: whether another book keeps an act on a piece (the market's kept listing); `realm` - INT19: a
  *   realm character's act on its record (net/marketBook.js realmPieceAct), null for any other (no commission filled)
  */
-export function createWritBook({ door, storage = null, character, now = () => Date.now(), marks = null, stores = null, market = null, holds = null, sleep = wait, realm = null }) {
+export function createWritBook({
+  door,
+  storage = null,
+  character,
+  now = () => Date.now(),
+  marks = null,
+  stores = null,
+  market = null,
+  holds = null,
+  sleep = wait,
+  realm = null,
+}) {
   const state = {
     /** the guild Stores as last read (the Guild tab's), or null */
     guildStores: /** @type {any} */ (null),
@@ -66,7 +77,13 @@ export function createWritBook({ door, storage = null, character, now = () => Da
     /** AUDIT 31 U12: the Work tab's forms' drafts (ui/workTab.js) - kept for the session, whatever closed the window */
     workDrafts: /** @type {any} */ (null),
   };
-  const account = () => { try { return door.account?.() ?? null; } catch { return null; } };
+  const account = () => {
+    try {
+      return door.account?.() ?? null;
+    } catch {
+      return null;
+    }
+  };
   const slot = () => `${account() ?? ''}|${character() ?? ''}`;
 
   // ─── THE KEPT FILLS ────────────────────────────────────────────────
@@ -76,28 +93,57 @@ export function createWritBook({ door, storage = null, character, now = () => Da
     try {
       const v = JSON.parse(storage?.getItem?.(WRIT_KEPT_KEY) ?? 'null');
       return v && typeof v === 'object' && !Array.isArray(v) ? v : {};
-    } catch { return {}; }
+    } catch {
+      return {};
+    }
   };
-  const writeTable = (t) => { try { storage?.setItem?.(WRIT_KEPT_KEY, JSON.stringify(t)); _memory = null; } catch { _memory = t; } };
-  const keptOf = (key = slot()) => { const k = table()[key]; return Array.isArray(k?.fulfils) ? k.fulfils : []; };
+  const writeTable = (t) => {
+    try {
+      storage?.setItem?.(WRIT_KEPT_KEY, JSON.stringify(t));
+      _memory = null;
+    } catch {
+      _memory = t;
+    }
+  };
+  const keptOf = (key = slot()) => {
+    const k = table()[key];
+    return Array.isArray(k?.fulfils) ? k.fulfils : [];
+  };
   const writeKept = (list, key = slot()) => {
     const t = { ...table() };
-    if (list.length) t[key] = { fulfils: list }; else delete t[key];
+    if (list.length) t[key] = { fulfils: list };
+    else delete t[key];
     writeTable(t);
   };
   /** AUDIT 31 B2: a kept fill's slot is the one it was pressed in, read once at the press. INT19: a fill is no longer kept
    *  (the record is the truth); the fills a tab from before kept are let go as their settle answers them. */
-  const letGo = (rid, key = slot()) => { const had = keptOf(key).some((x) => x.rid === rid); writeKept(keptOf(key).filter((x) => x.rid !== rid), key); return had; };
+  const letGo = (rid, key = slot()) => {
+    const had = keptOf(key).some((x) => x.rid === rid);
+    writeKept(
+      keptOf(key).filter((x) => x.rid !== rid),
+      key,
+    );
+    return had;
+  };
   /** AUDIT 31 H1: the pieces this book keeps a fill of, this slot's. */
-  const keptPieces = () => new Set(keptOf().map((f) => f.body?.provenance).filter(Boolean));
+  const keptPieces = () =>
+    new Set(
+      keptOf()
+        .map((f) => f.body?.provenance)
+        .filter(Boolean),
+    );
 
   /** One ask, up to WRIT_TRIES times with a wait between; the service's no is final at once. */
   async function ask(fn) {
     let r = null;
     for (let i = 0; i < WRIT_TRIES; i++) {
       if (i > 0) await sleep(jittered(WRIT_RETRY_MS[Math.min(i - 1, WRIT_RETRY_MS.length - 1)]));
-      try { r = await fn(); } catch { r = { ok: false, error: 'offline' }; }
-      if (r?.ok || !ASK_AGAIN_NOW.includes(r?.error)) return r;   // SCALE1: `rate` goes back kept, to the pump
+      try {
+        r = await fn();
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
+      if (r?.ok || !ASK_AGAIN_NOW.includes(r?.error)) return r; // SCALE1: `rate` goes back kept, to the pump
     }
     return r;
   }
@@ -107,63 +153,102 @@ export function createWritBook({ door, storage = null, character, now = () => Da
     const d = r?.ok ? r.data : null;
     if (!d) return r;
     if (Number.isSafeInteger(d.balance)) {
-      try { marks?.set?.(d.balance); } catch { /* the Marks book's own */ }
-      try { market?.told?.(d.balance); } catch { /* the market book's own */ }
+      try {
+        marks?.set?.(d.balance);
+      } catch {
+        /* the Marks book's own */
+      }
+      try {
+        market?.told?.(d.balance);
+      } catch {
+        /* the market book's own */
+      }
     }
-    if (d.store && typeof d.store.material === 'string') { try { stores?.apply?.(d.store); } catch { /* the professions' book's own */ } }
+    if (d.store && typeof d.store.material === 'string') {
+      try {
+        stores?.apply?.(d.store);
+      } catch {
+        /* the professions' book's own */
+      }
+    }
     if (Array.isArray(d.rows)) state.guildStores = { rows: d.rows, moves: d.moves ?? [], mayWithdraw: !!d.mayWithdraw };
     // the Officers' writ budget this week - a guild Stores read's, a budget set's
     const b = d.writBudget ?? (d.guild && Number.isSafeInteger(d.guild.budget) ? d.guild : null);
-    if (b && Number.isSafeInteger(b.budget)) state.writBudget = { budget: b.budget, spent: b.spent | 0, left: b.left | 0 };
+    if (b && Number.isSafeInteger(b.budget))
+      state.writBudget = { budget: b.budget, spent: b.spent | 0, left: b.left | 0 };
     return r;
   }
   const kept = (r) => RETRY.includes(r?.error) || WAIT.includes(r?.error);
 
   // ─── THE ACTS ──────────────────────────────────────────────────────
-  let _busy = null, _busyKey = null;
+  let _busy = null,
+    _busyKey = null;
   /** One act at a time: a press of the act under way is that act; any other is refused `writ-busy`. */
   const once = (key, fn) => {
     if (_busy) return _busyKey === key ? _busy : Promise.resolve({ ok: false, error: 'writ-busy' });
     _busyKey = key;
-    return (_busy = (async () => { try { return await fn(); } finally { _busy = null; _busyKey = null; } })());
+    return (_busy = (async () => {
+      try {
+        return await fn();
+      } finally {
+        _busy = null;
+        _busyKey = null;
+      }
+    })());
   };
   const ids = new Map();
   /** AUDIT 31 B4: an id is its slot's - another character's press of the same act is never answered as this one's. */
   const idFor = (key) => {
     let v = ids.get(key);
     if (v && now() - v.at > WRIT_ID_MS) v = null;
-    if (!v) ids.set(key, v = { id: mintWritRid(), at: now() });
+    if (!v) ids.set(key, (v = { id: mintWritRid(), at: now() }));
     return v.id;
   };
   /** An act with its id kept for a press asked again - let go on an answer, kept on silence. AUDIT 31 B5: an act that
    *  moves Marks lets the market's reads go, so none begun before it paints the older balance. */
-  const idAct = (key, send) => once(key, async () => {
-    const k = `${slot()}|${key}`;
-    const r = heard(await ask(() => send(idFor(k))));
-    if (!kept(r)) ids.delete(k);
-    if (r?.ok && MOVES_MARKS.includes(key.split('|')[0])) { try { market?.forget?.(); } catch { /* the market book's own */ } }
-    return r;
-  });
+  const idAct = (key, send) =>
+    once(key, async () => {
+      const k = `${slot()}|${key}`;
+      const r = heard(await ask(() => send(idFor(k))));
+      if (!kept(r)) ids.delete(k);
+      if (r?.ok && MOVES_MARKS.includes(key.split('|')[0])) {
+        try {
+          market?.forget?.();
+        } catch {
+          /* the market book's own */
+        }
+      }
+      return r;
+    });
 
   const book = {
     state,
-    get busy() { return !!_busy; },
+    get busy() {
+      return !!_busy;
+    },
     /** Kept fills waiting for an answer. */
-    get pending() { return keptOf().length; },
+    get pending() {
+      return keptOf().length;
+    },
 
     /** A GUILD WRIT posted - `req` `{ region, material, units, pay }`. */
     post: (req) => idAct(`post|${JSON.stringify(req)}`, (rid) => door.post({ character: character(), ...req, rid })),
     /** A DELIVERY to a guild writ - `req` `{ region, writ, units }`. */
-    supply: (req) => idAct(`supply|${JSON.stringify(req)}`, (rid) => door.supply({ character: character(), ...req, rid })),
+    supply: (req) =>
+      idAct(`supply|${JSON.stringify(req)}`, (rid) => door.supply({ character: character(), ...req, rid })),
     /** A guild writ WITHDRAWN (its Guildmaster's, or the Officer's who posted it). */
     withdraw: (writ) => idAct(`withdraw|${writ}`, (rid) => door.withdraw({ character: character(), writ, rid })),
     /** SILVER-WAYS: A GUILD CONTRACT posted - `req` `{ region, kind, pay, deeds }` - and one withdrawn. */
-    contract: (req) => idAct(`contract|${JSON.stringify(req)}`, (rid) => door.contract({ character: character(), ...req, rid })),
-    withdrawContract: (contract) => idAct(`cwithdraw|${contract}`, (rid) => door.withdrawContract({ character: character(), contract, rid })),
+    contract: (req) =>
+      idAct(`contract|${JSON.stringify(req)}`, (rid) => door.contract({ character: character(), ...req, rid })),
+    withdrawContract: (contract) =>
+      idAct(`cwithdraw|${contract}`, (rid) => door.withdrawContract({ character: character(), contract, rid })),
     /** The Officers' writ BUDGET, the Guildmaster's to set. */
-    budget: (marks) => once(`budget|${marks}`, async () => heard(await ask(() => door.budget({ character: character(), marks })))),
+    budget: (marks) =>
+      once(`budget|${marks}`, async () => heard(await ask(() => door.budget({ character: character(), marks })))),
     /** A COMMISSION posted - `req` `{ region, crafter, recipe, quality, pay }`. */
-    commission: (req) => idAct(`commission|${JSON.stringify(req)}`, (rid) => door.commission({ character: character(), ...req, rid })),
+    commission: (req) =>
+      idAct(`commission|${JSON.stringify(req)}`, (rid) => door.commission({ character: character(), ...req, rid })),
     /** A commission CANCELLED by its poster, or DECLINED by its crafter. */
     cancel: (id) => idAct(`cancel|${id}`, (rid) => door.cancel(id, rid)),
     decline: (id) => idAct(`decline|${id}`, (rid) => door.decline(id, rid)),
@@ -178,20 +263,31 @@ export function createWritBook({ door, storage = null, character, now = () => Da
       return once(`fulfil|${JSON.stringify(req)}`, async () => {
         // AUDIT 31 B1: never with no account; H1: never a piece another kept act holds
         if (!account()) return { ok: false, error: 'no-session' };
-        if (req?.provenance && (keptPieces().has(req.provenance) || holds?.(req.provenance))) return { ok: false, error: PIECE_KEPT_ERROR };
-        if (!realm) return { ok: false, error: 'realm-needed' };   // INT19: a crafted piece is handed on out of a realm record alone
+        if (req?.provenance && (keptPieces().has(req.provenance) || holds?.(req.provenance)))
+          return { ok: false, error: PIECE_KEPT_ERROR };
+        if (!realm) return { ok: false, error: 'realm-needed' }; // INT19: a crafted piece is handed on out of a realm record alone
         if (!piece) return { ok: false, error: 'piece-held' };
         const body = { character: character(), ...req, rid: mintWritRid() };
         const r = heard(await realmPieceAct(realm, piece, (at) => door.fulfil({ ...body, realm: at })));
-        if (r?.ok) { try { market?.forget?.(); } catch { /* the market book's own */ } }
+        if (r?.ok) {
+          try {
+            market?.forget?.();
+          } catch {
+            /* the market book's own */
+          }
+        }
         return r ?? { ok: false, error: 'server' };
       });
     },
     /** THE GUILD STORES read (the Guild tab's). */
     guildStores: () => once('guild-stores', async () => heard(await ask(() => door.stores(character())))),
     /** A DEPOSIT to the guild Stores, or a WITHDRAWAL from them (an Officer's or the Guildmaster's). */
-    deposit: (material, units) => idAct(`deposit|${material}|${units}`, (rid) => door.deposit({ character: character(), material, units, rid })),
-    withdrawStores: (material, units) => idAct(`gwithdraw|${material}|${units}`, (rid) => door.withdrawStores({ character: character(), material, units, rid })),
+    deposit: (material, units) =>
+      idAct(`deposit|${material}|${units}`, (rid) => door.deposit({ character: character(), material, units, rid })),
+    withdrawStores: (material, units) =>
+      idAct(`gwithdraw|${material}|${units}`, (rid) =>
+        door.withdrawStores({ character: character(), material, units, rid }),
+      ),
 
     /**
      * SETTLE: every kept fill asked again with its own id - let go on the answer (the piece out of the save, `drop`, in
@@ -199,23 +295,49 @@ export function createWritBook({ door, storage = null, character, now = () => Da
      * @param {(item: any, where: string) => void} putBack @param {((item: any, where: string) => void)|null} [drop]
      */
     settle(putBack, drop = null) {
-      const go = () => once('settle', async () => {
-        const key = slot();   // AUDIT 31 B2: the slot it began in - a quick-load mid-settle stops it
-        let settled = 0;
-        for (const f of keptOf(key)) {
-          const r = heard(await ask(() => door.fulfil(f.body)));
-          if (slot() !== key) break;
-          if (r?.ok) { letGo(f.rid, key); try { drop?.(f.item, f.where); } catch (e) { console.warn('[writs] drop', e); } settled++; }
-          else if (!kept(r)) {
-            letGo(f.rid, key);
-            if (PIECE_GONE.includes(r?.error)) { try { drop?.(f.item, f.where); } catch (e) { console.warn('[writs] drop', e); } }   // AUDIT 31 H1
-            else { try { putBack(f.item, f.where); } catch (e) { console.warn('[writs] put back', e); } }
-            settled++;
+      const go = () =>
+        once('settle', async () => {
+          const key = slot(); // AUDIT 31 B2: the slot it began in - a quick-load mid-settle stops it
+          let settled = 0;
+          for (const f of keptOf(key)) {
+            const r = heard(await ask(() => door.fulfil(f.body)));
+            if (slot() !== key) break;
+            if (r?.ok) {
+              letGo(f.rid, key);
+              try {
+                drop?.(f.item, f.where);
+              } catch (e) {
+                console.warn('[writs] drop', e);
+              }
+              settled++;
+            } else if (!kept(r)) {
+              letGo(f.rid, key);
+              if (PIECE_GONE.includes(r?.error)) {
+                try {
+                  drop?.(f.item, f.where);
+                } catch (e) {
+                  console.warn('[writs] drop', e);
+                }
+              } // AUDIT 31 H1
+              else {
+                try {
+                  putBack(f.item, f.where);
+                } catch (e) {
+                  console.warn('[writs] put back', e);
+                }
+              }
+              settled++;
+            }
           }
-        }
-        if (settled) { try { market?.forget?.(); } catch { /* the market book's own */ } }
-        return { ok: true, settled };
-      });
+          if (settled) {
+            try {
+              market?.forget?.();
+            } catch {
+              /* the market book's own */
+            }
+          }
+          return { ok: true, settled };
+        });
       // AUDIT 31 B10: asked while another act is under way, it waits for it - the tab's one settle is never refused
       return _busy && _busyKey !== 'settle' ? _busy.then(go, go) : go();
     },

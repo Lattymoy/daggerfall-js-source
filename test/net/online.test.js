@@ -100,7 +100,7 @@ test('ONLINE1: the pose - changed past a hair, eased between two with the yaw by
   const src = rd('src/net/online.js');
   assert.match(src, /import \{ tabStorage \} from '\.\.\/systems\/appStorage\.js'/); assert.match(src, /export const peerId = \(storage = tabStorage\(\)\)/); assert.match(src, /export const peerSecret = \(storage = tabStorage\(\)\)/);
   assert.doesNotMatch(src, /appStorage\(\)/, 'never the browser-wide one');
-  assert.match(rd('src/systems/appStorage.js'), /export function tabStorage\(\) \{\s*\n\s*try \{ return globalThis\.sessionStorage \?\? null; \} catch \{ return null; \}/);
+  assert.match(rd('src/systems/appStorage.js'), /export function tabStorage\(\) \{\n\s*try \{\n\s*return globalThis\.sessionStorage \?\? null;\n\s*\} catch \{\n\s*return null;\n\s*\}/);
   assert.equal(relayUrl('wss://daggerfall-online.example.workers.dev/'), 'wss://daggerfall-online.example.workers.dev'); assert.equal(relayUrl('ws://localhost:8787'), 'ws://localhost:8787');
   for (const bad of ['http://relay.test', 'ws://relay.test', 'wss://relay.test/x?y=1', 'javascript:alert(1)', '']) assert.equal(relayUrl(bad), null, `${bad || 'empty'} is no relay`);
   assert.match(DEFAULT_SERVER, /^wss:\/\/daggerfall-online\./, 'the relay this port hosts');

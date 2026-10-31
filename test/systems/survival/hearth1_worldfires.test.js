@@ -280,7 +280,7 @@ test('AUDIT HEARTH1 F3: the three hosts measure a hearth\u2019s height different
   assert.match(read('src/world/city/cityLights.js'), /y: -obj\.yPos \* GLOBAL_SCALE \+ size\.h,/, 'the exterior pair: the light at the TOP of the flat');
   assert.match(read('src/world/city/cityLights.js'), /foot: -obj\.yPos \* GLOBAL_SCALE, w: size\.w, h: size\.h,/, '...and the flat standing on -yPos');
   assert.match(read('src/world/interior/interiorLights.js'), /y: f\.y \+ h \/ 2 \+ offset,/, 'the interior: the centre, plus a per-record offset');
-  assert.match(read('src/world/interior/interiorLights.js'), /foot: f\.y, w, h,/, '...and the flat standing on its y');
+  assert.match(read('src/world/interior/interiorLights.js'), /foot: f\.y,\n\s*w,\n\s*h,/, '...and the flat standing on its y');
   assert.match(read('src/scenes/dungeonContext.js'), /const based = centers\.map\(\(p\) => Object\.assign\(\[p\[0\], p\[1\] - size\.h \/ 2, p\[2\]\], \{ noCover: !!p\.noCover \}\)\);/, 'a dungeon flat\u2019s stored y is its CENTRE - its own batch shifts down to find the base');
   assert.match(read('src/scenes/dungeonContext.js'), /foot: size \? f\.y - size\.h \/ 2 : undefined/, '...and the hearth takes the same half-height down');
   assert.match(read('src/systems/survival/hearth.js'), /AUDIT HEARTH1 F3 - WHERE A HEARTH IS, VERTICALLY/, 'and the law says so');

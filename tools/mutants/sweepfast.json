@@ -2,8 +2,8 @@
   {
     "name": "SWEEP-FAST-part-off-by-one",
     "file": "tools/egSpanSolve.mjs",
-    "old": "seeds.filter((_, i) => i % k === p - 1)",
-    "new": "seeds.filter((_, i) => i % k === p % k)",
+    "old": "export const sweepPart = (seeds, p, k) => seeds.filter((_, i) => i % k === p - 1);",
+    "new": "export const sweepPart = (seeds, p, k) => seeds.filter((_, i) => i % k === p % k);",
     "tests": [
       "test/tooling/sweepfast.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "SWEEP-FAST-part-past-k",
     "file": "tools/egSpanSolve.mjs",
-    "old": "return k >= 1 && p >= 1 && p <= k ? { p, k } : null;",
-    "new": "return k >= 1 && p >= 1 ? { p, k } : null;",
+    "old": "  return k >= 1 && p >= 1 && p <= k ? { p, k } : null;",
+    "new": "  return k >= 1 && p >= 1 ? { p, k } : null;",
     "tests": [
       "test/tooling/sweepfast.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "SWEEP-FAST-part-zero",
     "file": "tools/egSpanSolve.mjs",
-    "old": "return k >= 1 && p >= 1 && p <= k ? { p, k } : null;",
-    "new": "return k >= 1 && p <= k ? { p, k } : null;",
+    "old": "  return k >= 1 && p >= 1 && p <= k ? { p, k } : null;",
+    "new": "  return k >= 1 && p <= k ? { p, k } : null;",
     "tests": [
       "test/tooling/sweepfast.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "SWEEP-FAST-bad-part-run",
     "file": "tools/egSpanSolve.mjs",
-    "old": "  if (!part) { log('--part is p/k, 1 <= p <= k'); return 2; }\n",
-    "new": "",
+    "old": "  if (!part) {\n    log('--part is p/k, 1 <= p <= k');\n    return 2;\n  }\n  const all = sweepSeeds(Number(arg('--seeds', 25)), Number(arg('--from', 1)), argv.includes('--golden'));",
+    "new": "  const all = sweepSeeds(Number(arg('--seeds', 25)), Number(arg('--from', 1)), argv.includes('--golden'));",
     "tests": [
       "test/tooling/sweepfast.test.js"
     ],

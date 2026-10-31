@@ -11,8 +11,8 @@
   {
     "name": "WB9d-the-bite-never-falling",
     "file": "src/ui/gate/gateGroundView.js",
-    "old": "since >= 0 && since < GROUND_BITE_MS ? 1 - since / GROUND_BITE_MS : 0;",
-    "new": "since >= 0 && since < GROUND_BITE_MS ? 1 : 0;",
+    "old": "  const bite = since >= 0 && since < GROUND_BITE_MS ? 1 - since / GROUND_BITE_MS : 0;",
+    "new": "  const bite = since >= 0 && since < GROUND_BITE_MS ? 1 : 0;",
     "tests": [
       "test/net/gate/wb9d_gate_ground.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WB9d-the-warning-out-of-the-ground",
     "file": "src/ui/gate/gateGroundView.js",
-    "old": "warn: peril ? peril.order ?? GROUND_VIEW_TEXT.peril(peril.name) : inside ? GROUND_VIEW_TEXT.warn(ground) : null",
-    "new": "warn: peril ? peril.order ?? GROUND_VIEW_TEXT.peril(peril.name) : GROUND_VIEW_TEXT.warn(ground)",
+    "old": "    warn: peril ? (peril.order ?? GROUND_VIEW_TEXT.peril(peril.name)) : inside ? GROUND_VIEW_TEXT.warn(ground) : null,",
+    "new": "    warn: peril ? (peril.order ?? GROUND_VIEW_TEXT.peril(peril.name)) : GROUND_VIEW_TEXT.warn(ground),",
     "tests": [
       "test/net/gate/wb9d_gate_ground.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB9d-a-write-a-frame",
     "file": "src/ui/gate/gateGroundView.js",
-    "old": "  if (model.edge !== shown.edge) { shown.edge",
-    "new": "  if (true) { shown.edge",
+    "old": "  if (model.edge !== shown.edge) {",
+    "new": "  if (true) {",
     "tests": [
       "test/net/gate/wb9d_gate_ground.test.js"
     ]

@@ -74,7 +74,7 @@
   {
     "name": "AUDIT-CRACK-foot-unread",
     "file": "src/player/parkour.js",
-    "old": "  for (let h = PARKOUR_CRACK_STEP; h < below - 1e-9; h += PARKOUR_CRACK_STEP) if (meets(y - h)) { foot = y - h; break; }",
+    "old": "  for (let h = PARKOUR_CRACK_STEP; h < below - 1e-9; h += PARKOUR_CRACK_STEP)\n    if (meets(y - h)) {\n      foot = y - h;\n      break;\n    }",
     "new": "",
     "tests": [
       "test/world/fb1002_audit.test.js"

@@ -24,14 +24,14 @@
 // built. A menu-side loader would be a duplicate port of a path that
 // already works, which is the shape this project's audits keep finding.
 
-import { UP_Y } from '../world/mat4.js';   // EV2: the shared billboard up axis
+import { UP_Y } from '../world/mat4.js'; // EV2: the shared billboard up axis
 import { StartWindow, loadStartArt } from '../ui/startWindow.js';
 import { TitleScreen, loadTitleArt } from '../ui/titleScreen.js';
 import { LoadClassicWindow, LOAD_CLASSIC_IMG } from '../ui/loadClassicWindow.js';
 import { fetchBytes } from './shared.js';
-import { readZipEntries, droppedEntries, walkDroppedEntries } from './dataSource.js';   // OT1: the saves picker's phone path rides the ARENA2 door's zip walk (AUDIT 68: and its drop walk)
+import { readZipEntries, droppedEntries, walkDroppedEntries } from './dataSource.js'; // OT1: the saves picker's phone path rides the ARENA2 door's zip walk (AUDIT 68: and its drop walk)
 import { music } from '../systems/music.js';
-import { mostRecentRestorable } from '../systems/save/saveSlots.js';   // SAV4: the F2 question, now over the slot store
+import { mostRecentRestorable } from '../systems/save/saveSlots.js'; // SAV4: the F2 question, now over the slot store
 import { SaveGames, SAVENAME_TXT, MAPSAVE_FILENAME, RUMOR_FILENAME, BIO_FILENAME } from '../formats/save/saveGames.js';
 import { SAVETREE_FILENAME } from '../formats/save/saveTreeFile.js';
 import { SAVE_IMAGE_FILENAME } from '../formats/save/saveImageFile.js';
@@ -42,10 +42,10 @@ import { FntFile } from '../formats/fntFile.js';
 import { loadImg, nativeMetrics, pointToNative } from '../ui/native/nativePanel.js';
 import { makeFont } from '../ui/text.js';
 import { bitmapToColor32 } from '../formats/color32Order.js';
-import { SaveWindow } from '../ui/saveWindow.js';   // SAV4: the start menu's Load door
-import { t, localizedText } from '../systems/textManager.js';   // L10N4: the window title's step and the classic picker's words in the player's language
+import { SaveWindow } from '../ui/saveWindow.js'; // SAV4: the start menu's Load door
+import { t, localizedText } from '../systems/textManager.js'; // L10N4: the window title's step and the classic picker's words in the player's language
 
-const TITLE_SONGS = ['5STRONG.HMI', '03.HMI'];   // DFU start scene song, then the stand-in
+const TITLE_SONGS = ['5STRONG.HMI', '03.HMI']; // DFU start scene song, then the stand-in
 
 async function startTitleMusic() {
   await music.ensure(fetchBytes);
@@ -62,7 +62,7 @@ async function startTitleMusic() {
  * chargen follow).
  */
 export async function runMenu(canvas, renderer, status) {
-  startTitleMusic();   // fire-and-forget: the menu never waits on MIDI.BSA
+  startTitleMusic(); // fire-and-forget: the menu never waits on MIDI.BSA
   await runTitle(canvas, renderer, status);
   status(t('menu.classic.status.mainMenu', 'main menu'));
   let art = null;
@@ -75,14 +75,14 @@ export async function runMenu(canvas, renderer, status) {
 
   return new Promise((resolve) => {
     let done = false;
-    let suspended = false;   // SAV3: the classic-load flow draws its own frames
+    let suspended = false; // SAV3: the classic-load flow draws its own frames
     const onPointerDown = async (e) => {
       if (done || suspended) return;
       const r = canvas.getBoundingClientRect();
       const px = (e.clientX - r.left) * (canvas.width / r.width);
       const py = (e.clientY - r.top) * (canvas.height / r.height);
       const action = win.click(canvas, px, py);
-      if (!action) return;                      // consumed, but not a button
+      if (!action) return; // consumed, but not a button
       if (action === 'load') {
         // SAV4: DFU's start-window Load opens the SLOT WINDOW
         // (LoadGame mode, displayMostRecentChar - StartWindow.cs:89),
@@ -91,9 +91,7 @@ export async function runMenu(canvas, renderer, status) {
         // SAV3 residue, closed. AUDIT 19 F3's law holds throughout:
         // no path here ever starts a game the player did not ask for.
         suspended = true;
-        const picked = hasSavedGame()
-          ? await runSaveLoadWindow(canvas, renderer, status)
-          : 'classic';
+        const picked = hasSavedGame() ? await runSaveLoadWindow(canvas, renderer, status) : 'classic';
         let resolved = null;
         if (picked === 'classic') {
           resolved = (await runClassicLoad(canvas, renderer, status)) ? 'classicload' : null;
@@ -102,7 +100,10 @@ export async function runMenu(canvas, renderer, status) {
           resolved = 'load';
         }
         suspended = false;
-        if (!resolved) { status(t('menu.classic.status.mainMenu', 'main menu')); return; }
+        if (!resolved) {
+          status(t('menu.classic.status.mainMenu', 'main menu'));
+          return;
+        }
         done = true;
         canvas.removeEventListener('pointerdown', onPointerDown);
         resolve(resolved);
@@ -165,7 +166,7 @@ export async function runTitle(canvas, renderer, status) {
     // native path instead and never reaches here.
     uploadLogo: (pixels) => renderer.uploadTexture('ui', 'logo', pixels, { smooth: true }),
   });
-  if (!art) return false;                          // no art, no title screen
+  if (!art) return false; // no art, no title screen
   status(t('menu.classic.status.title', 'title'));
   const title = new TitleScreen(art);
 
@@ -196,15 +197,22 @@ export async function runTitle(canvas, renderer, status) {
 /** The seven files a classic save directory can carry, by their
  *  UPPERCASE names (SaveGames' own set). */
 const CLASSIC_SAVE_FILES = new Set([
-  SAVETREE_FILENAME, SAVEVARS_FILENAME, SAVE_IMAGE_FILENAME,
-  SAVENAME_TXT, MAPSAVE_FILENAME, RUMOR_FILENAME, BIO_FILENAME,
+  SAVETREE_FILENAME,
+  SAVEVARS_FILENAME,
+  SAVE_IMAGE_FILENAME,
+  SAVENAME_TXT,
+  MAPSAVE_FILENAME,
+  RUMOR_FILENAME,
+  BIO_FILENAME,
 ]);
 
 /** A picked path's SAVE# slot and file, or null: the SaveGames walk's
  *  own shape (a SAVE0-SAVE5 segment, then one of the seven names),
  *  case-folded because a user's folder may not be uppercase. */
 function classicSaveSlot(path) {
-  const m = String(path).toUpperCase().match(/(?:^|\/)SAVE([0-5])\/([^/]+)$/);
+  const m = String(path)
+    .toUpperCase()
+    .match(/(?:^|\/)SAVE([0-5])\/([^/]+)$/);
   return m && CLASSIC_SAVE_FILES.has(m[2]) ? { index: Number(m[1]), name: m[2] } : null;
 }
 
@@ -247,7 +255,8 @@ export async function classicSaveFilesFromZip(file) {
 function pickClassicSaveFiles() {
   return new Promise((resolve) => {
     const ui = document.createElement('div');
-    ui.style.cssText = 'position:fixed;inset:0;background:#111;color:#ddd;font:14px monospace;display:flex;align-items:center;justify-content:center;z-index:10';
+    ui.style.cssText =
+      'position:fixed;inset:0;background:#111;color:#ddd;font:14px monospace;display:flex;align-items:center;justify-content:center;z-index:10';
     ui.innerHTML = `
       <div style="max-width:460px;text-align:center;border:1px solid #444;padding:24px">
         <h2 style="margin-top:0">${t('menu.classicLoad.title', 'Load Classic Save')}</h2>
@@ -260,12 +269,18 @@ function pickClassicSaveFiles() {
       </div>`;
     document.body.appendChild(ui);
     const msg = ui.querySelector('#savemsg');
-    const finish = (result) => { ui.remove(); resolve(result); };
+    const finish = (result) => {
+      ui.remove();
+      resolve(result);
+    };
 
     const ingest = async (files) => {
       const saves = collectClassicSaveFiles(files);
       const indexes = Object.keys(saves);
-      if (!indexes.length) { msg.textContent = t('menu.classicLoad.noFolders', 'no SAVE0-SAVE5 folders in that selection'); return; }
+      if (!indexes.length) {
+        msg.textContent = t('menu.classicLoad.noFolders', 'no SAVE0-SAVE5 folders in that selection');
+        return;
+      }
       msg.textContent = t('menu.classicLoad.reading', 'reading {n} save slot(s)...', { n: indexes.length });
       for (const files2 of Object.values(saves)) {
         for (const [name, file] of Object.entries(files2)) {
@@ -276,25 +291,32 @@ function pickClassicSaveFiles() {
     };
 
     ui.querySelector('#picksaves').addEventListener('change', (e) => ingest([...e.target.files]));
-    ui.querySelector('#picksaveszip').addEventListener('change', async (e) => {   // OT1: the phone path
+    ui.querySelector('#picksaveszip').addEventListener('change', async (e) => {
+      // OT1: the phone path
       const f = e.target.files[0];
       if (!f) return;
       msg.textContent = t('menu.classicLoad.unpacking', 'unpacking {file}...', { file: f.name });
-      try { await ingest(await classicSaveFilesFromZip(f)); }
-      catch (err) { msg.textContent = t('menu.classicLoad.zipFailed', 'zip failed: {error}', { error: err.message }); }
+      try {
+        await ingest(await classicSaveFilesFromZip(f));
+      } catch (err) {
+        msg.textContent = t('menu.classicLoad.zipFailed', 'zip failed: {error}', { error: err.message });
+      }
     });
     ui.querySelector('#cancelsaves').addEventListener('click', () => finish(null));
     ui.addEventListener('dragover', (e) => e.preventDefault());
     ui.addEventListener('drop', async (e) => {
       e.preventDefault();
-      const roots = droppedEntries(e.dataTransfer);   // AUDIT 68 S18-drop-items-after-await: before the first await
+      const roots = droppedEntries(e.dataTransfer); // AUDIT 68 S18-drop-items-after-await: before the first await
       const files = [];
       // Directory entries carry no webkitRelativePath - the walk's
       // path stands in for it, so the SAVE# segment survives.
       try {
         await walkDroppedEntries(roots, async (f, path) => {
           // OT1: a dropped archive is the phone path by another gesture
-          if (/\.zip$/i.test(f.name)) { files.push(...await classicSaveFilesFromZip(f)); return; }
+          if (/\.zip$/i.test(f.name)) {
+            files.push(...(await classicSaveFilesFromZip(f)));
+            return;
+          }
           files.push({ webkitRelativePath: path, arrayBuffer: () => f.arrayBuffer() });
         });
       } catch (err) {
@@ -332,12 +354,20 @@ export async function runClassicLoad(canvas, renderer, status) {
     artPalBytes = await fetchBytes('ART_PAL.COL');
     palette = new DFPalette();
     palette.load(artPalBytes, 'ART_PAL.COL');
-  } catch { palette = null; }
+  } catch {
+    palette = null;
+  }
   const art = { bg: null, font: null };
-  try { art.bg = await loadImg({ renderer, fetchBytes, palette: palette ?? new DFPalette() }, LOAD_CLASSIC_IMG); }
-  catch (e) { console.warn('[menu] LOAD00I0.IMG unavailable - the classic list draws bare:', e?.message ?? e); }
-  try { art.font = makeFont(renderer, new FntFile().load(await fetchBytes('FONT0003.FNT')), 'FONT0003'); }
-  catch (e) { console.warn('[menu] FONT0003.FNT unavailable - save names go unlabelled:', e?.message ?? e); }
+  try {
+    art.bg = await loadImg({ renderer, fetchBytes, palette: palette ?? new DFPalette() }, LOAD_CLASSIC_IMG);
+  } catch (e) {
+    console.warn('[menu] LOAD00I0.IMG unavailable - the classic list draws bare:', e?.message ?? e);
+  }
+  try {
+    art.font = makeFont(renderer, new FntFile().load(await fetchBytes('FONT0003.FNT')), 'FONT0003');
+  } catch (e) {
+    console.warn('[menu] FONT0003.FNT unavailable - save names go unlabelled:', e?.message ?? e);
+  }
 
   // LazyOpenSave per slot: a bad slot is logged and stays unmounted,
   // DFU's own arm (:117-121). The screenshot is the save's IMAGE.RAW
@@ -425,15 +455,28 @@ export function takePickedLoadKey() {
 export async function runSaveLoadWindow(canvas, renderer, status) {
   status(t('menu.classic.status.loadGame', 'load game'));
   let font = null;
-  try { font = makeFont(renderer, new FntFile().load(await fetchBytes('FONT0003.FNT')), 'FONT0003'); }
-  catch (e) { console.warn('[menu] FONT0003.FNT unavailable - the save list draws bare:', e?.message ?? e); }
+  try {
+    font = makeFont(renderer, new FntFile().load(await fetchBytes('FONT0003.FNT')), 'FONT0003');
+  } catch (e) {
+    console.warn('[menu] FONT0003.FNT unavailable - the save list draws bare:', e?.message ?? e);
+  }
 
   return new Promise((resolve) => {
-    const win = new SaveWindow('load', {
-      loadKey: (key) => { finish(key); },
-      onSwitchClassic: () => { finish('classic'); },
-      onBack: () => { finish(null); },
-    }, { displayMostRecentChar: true });
+    const win = new SaveWindow(
+      'load',
+      {
+        loadKey: (key) => {
+          finish(key);
+        },
+        onSwitchClassic: () => {
+          finish('classic');
+        },
+        onBack: () => {
+          finish(null);
+        },
+      },
+      { displayMostRecentChar: true },
+    );
     const finish = (result) => {
       if (win.done && result === undefined) return;
       win.done = true;

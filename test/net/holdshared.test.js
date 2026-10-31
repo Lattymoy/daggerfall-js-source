@@ -22,6 +22,7 @@ import { privateInteriorOf } from '../../src/net/privateInterior.js';
 import { worldCoordToMapPixel } from '../../src/world/streamingWorld.js';
 import { validStaffDestination } from '../../src/net/staffTeleport.js';
 import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
+import { withIndoorFloor, indoorSceneY } from '../../src/net/peer/indoorFloor.js';   // INDOOR-FLOOR: the key block's pose and law read a room's floor
 
 const read = (f) => readFileSync(new URL(`../../${f}`, import.meta.url), 'utf8');
 const HOLD_MAP_ID = 187853213;   // DaggerfallDungeon.cs:151 `case 187853213: // Daggerfall/Privateer's Hold`
@@ -67,7 +68,7 @@ function keyIn(ident) {
   const args = {
     modes: { mode: 'dungeon', sailingCabin: null, roomIdentity: () => ident },
     state: { compensation: [0, 0, 0], localFromWorld: (x, z) => [x, z], worldCoords: (p) => ({ x: p[0], z: p[2] }) },
-    player: { pos: [1, 2, 3] }, cam: { yaw: 0, pitch: 0 }, worldCoordToMapPixel, roomKeyFor, privateInteriorOf,
+    player: { pos: [1, 2, 3] }, cam: { yaw: 0, pitch: 0 }, worldCoordToMapPixel, roomKeyFor, privateInteriorOf, withIndoorFloor, indoorSceneY,
     _questLoc: () => null, privateRoomHere: () => assert.fail('a dungeon is never a private room'), siegeSession: null, royalSession: null, campToWire: (p) => p,
     seaVaultRoomId, _wdunInside: null, seaVentures: { vaultHere: () => null },   // PIN MOVED (AUDIT SEA VENTURES D7, D8): a vault of the deep's room its own lane - a dungeon of the Bay its own map id, as before
   };

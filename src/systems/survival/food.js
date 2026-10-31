@@ -19,27 +19,62 @@
 // simply a poorer one, and no roll is made against the eater.
 import { HARD_RULES } from './difficulty.js';
 const dice100 = (chance, roll01) => Math.floor(roll01 * 100) < chance;
-export const DISEASE_STOMACH_ROT = 3, DISEASE_SWAMP_ROT = 6, DISEASE_YELLOW_FEVER = 2;
+export const DISEASE_STOMACH_ROT = 3,
+  DISEASE_SWAMP_ROT = 6,
+  DISEASE_YELLOW_FEVER = 2;
 
 export const TEMPLATE = Object.freeze({
-  CampingEquipment: 530, Rations: 531, Apple: 532, Orange: 533, Bread: 534, RawFish: 535, CookedFish: 536,
-  Meat: 537, RawMeat: 538, Waterskin: 539, Skillet: 540, Campfire: 541,
+  CampingEquipment: 530,
+  Rations: 531,
+  Apple: 532,
+  Orange: 533,
+  Bread: 534,
+  RawFish: 535,
+  CookedFish: 536,
+  Meat: 537,
+  RawMeat: 538,
+  Waterskin: 539,
+  Skillet: 540,
+  Campfire: 541,
 });
-export const SURVIVAL_GROUP = 'UselessItems2';   // the port's home for its own consumables (the torch's group)
+export const SURVIVAL_GROUP = 'UselessItems2'; // the port's home for its own consumables (the torch's group)
 
 /** satiety: minutes a meal holds you. keeps: the rot roll's ceiling - a
  *  day's roll of 1..100 plus half the days kept must beat it to spoil a
  *  stage, so bread lasts and raw fish does not. raw: eaten as is, it
  *  turns the stomach. thirst: what it takes off the thirst. */
 export const FOOD = Object.freeze({
-  [TEMPLATE.Rations]: Object.freeze({ name: 'Rations', satiety: 240, keeps: null, raw: false, thirst: 0, stack: true }),   // AUDIT SURV-TIERS (the third pass): the Peckish line's own four hours - at 250 the page said "You could eat." and the sack refused for ten minutes
+  [TEMPLATE.Rations]: Object.freeze({ name: 'Rations', satiety: 240, keeps: null, raw: false, thirst: 0, stack: true }), // AUDIT SURV-TIERS (the third pass): the Peckish line's own four hours - at 250 the page said "You could eat." and the sack refused for ten minutes
   [TEMPLATE.Apple]: Object.freeze({ name: 'Apple', satiety: 60, keeps: 90, raw: false, thirst: 10, stale: 'Soft' }),
   [TEMPLATE.Orange]: Object.freeze({ name: 'Orange', satiety: 60, keeps: 90, raw: false, thirst: 10, stale: 'Soft' }),
   [TEMPLATE.Bread]: Object.freeze({ name: 'Bread', satiety: 180, keeps: 95, raw: false, thirst: 0, stale: 'Stale' }),
-  [TEMPLATE.RawFish]: Object.freeze({ name: 'Raw Fish', satiety: 90, keeps: 50, raw: true, thirst: 0, stale: 'Smelly', cooks: TEMPLATE.CookedFish }),
-  [TEMPLATE.CookedFish]: Object.freeze({ name: 'Cooked Fish', satiety: 200, keeps: 80, raw: false, thirst: 0, stale: 'Smelly' }),
+  [TEMPLATE.RawFish]: Object.freeze({
+    name: 'Raw Fish',
+    satiety: 90,
+    keeps: 50,
+    raw: true,
+    thirst: 0,
+    stale: 'Smelly',
+    cooks: TEMPLATE.CookedFish,
+  }),
+  [TEMPLATE.CookedFish]: Object.freeze({
+    name: 'Cooked Fish',
+    satiety: 200,
+    keeps: 80,
+    raw: false,
+    thirst: 0,
+    stale: 'Smelly',
+  }),
   [TEMPLATE.Meat]: Object.freeze({ name: 'Meat', satiety: 240, keeps: 90, raw: false, thirst: 0, stale: 'Smelly' }),
-  [TEMPLATE.RawMeat]: Object.freeze({ name: 'Raw Meat', satiety: 100, keeps: 60, raw: true, thirst: 0, stale: 'Smelly', cooks: TEMPLATE.Meat }),
+  [TEMPLATE.RawMeat]: Object.freeze({
+    name: 'Raw Meat',
+    satiety: 100,
+    keeps: 60,
+    raw: true,
+    thirst: 0,
+    stale: 'Smelly',
+    cooks: TEMPLATE.Meat,
+  }),
 });
 export const FOOD_STAGE = Object.freeze({ Fresh: 0, Stale: 1, Mouldy: 2, Rotten: 3, Putrid: 4 });
 export const STAGE_WORDS = Object.freeze(['', 'Stale', 'Mouldy', 'Rotten', 'Putrid']);
@@ -60,10 +95,14 @@ export const DRINK_RELIEF = 40;
  */
 const MORE_FOOD = new Map();
 export function registerFoods(rows) {
-  for (const [t, row] of Object.entries(rows ?? {})) if (FOOD[t] == null && row) MORE_FOOD.set(Number(t), Object.freeze({ ...row }));
+  for (const [t, row] of Object.entries(rows ?? {}))
+    if (FOOD[t] == null && row) MORE_FOOD.set(Number(t), Object.freeze({ ...row }));
 }
-export const isFood = (item) => !!item && (FOOD[item.templateIndex] ?? MORE_FOOD.get(item.templateIndex)) != null && (item.group == null || item.group === SURVIVAL_GROUP);
-export const foodOf = (item) => (item ? FOOD[item.templateIndex] ?? MORE_FOOD.get(item.templateIndex) ?? null : null);
+export const isFood = (item) =>
+  !!item &&
+  (FOOD[item.templateIndex] ?? MORE_FOOD.get(item.templateIndex)) != null &&
+  (item.group == null || item.group === SURVIVAL_GROUP);
+export const foodOf = (item) => (item ? (FOOD[item.templateIndex] ?? MORE_FOOD.get(item.templateIndex) ?? null) : null);
 export const foodStage = (item) => Math.min(FOOD_STAGE.Putrid, Math.max(0, item?.foodStage ?? 0));
 /** The name with its stage: "Soft Apple", "Mouldy Bread", "Putrid Meat". */
 export function foodName(item) {
@@ -80,8 +119,22 @@ export const foodSatiety = (item) => Math.trunc((foodOf(item)?.satiety ?? 0) / (
 /** The mod's own icons: the spoiled faces of each food (record 0
  *  mouldy, 1 rotten and worse), raw meat's three, the waterskin. */
 export const VENDOR_ICON_FILES = Object.freeze([
-  '532_0-0', '532_1-0', '533_0-0', '533_1-0', '534_0-0', '534_1-0', '535_0-0', '535_1-0',
-  '536_0-0', '536_1-0', '537_0-0', '537_1-0', '538_0-0', '538_1-0', '538_2-0', '539_0-0',
+  '532_0-0',
+  '532_1-0',
+  '533_0-0',
+  '533_1-0',
+  '534_0-0',
+  '534_1-0',
+  '535_0-0',
+  '535_1-0',
+  '536_0-0',
+  '536_1-0',
+  '537_0-0',
+  '537_1-0',
+  '538_0-0',
+  '538_1-0',
+  '538_2-0',
+  '539_0-0',
 ]);
 /** Dress a food for its stage: the name and, past stale, the mod's own
  *  picture (record 0 mouldy, 1 rotten and putrid) - exactly DFU's
@@ -98,11 +151,15 @@ export function dressFood(item) {
   if (!isFood(item)) return item;
   item.name = foodName(item);
   const s = foodStage(item);
-  if (s >= FOOD_STAGE.Mouldy && VENDOR_ICON_FILES.includes(`${item.templateIndex}_${s === FOOD_STAGE.Mouldy ? 0 : 1}-0`)) {
+  if (
+    s >= FOOD_STAGE.Mouldy &&
+    VENDOR_ICON_FILES.includes(`${item.templateIndex}_${s === FOOD_STAGE.Mouldy ? 0 : 1}-0`)
+  ) {
     item.worldTextureArchive = item.templateIndex;
     item.worldTextureRecord = s === FOOD_STAGE.Mouldy ? 0 : 1;
   } else {
-    delete item.worldTextureArchive; delete item.worldTextureRecord;   // the template's picture (items.js's copy also wrote both back as undefined, which every reader - Number.isFinite - takes as absent)
+    delete item.worldTextureArchive;
+    delete item.worldTextureRecord; // the template's picture (items.js's copy also wrote both back as undefined, which every reader - Number.isFinite - takes as absent)
   }
   return item;
 }
@@ -115,7 +172,7 @@ export function rotOnce(item) {
   if (s >= FOOD_STAGE.Putrid) return false;
   item.foodStage = s + 1;
   item.value = 0;
-  dressFood(item);   // AUDIT C&C I5: the mod's RotFood, which names the food as it turns it (shortName = GetFoodStatus() + name)
+  dressFood(item); // AUDIT C&C I5: the mod's RotFood, which names the food as it turns it (shortName = GetFoodStatus() + name)
   return true;
 }
 
@@ -135,18 +192,23 @@ export function rotFoodDay(collections, rotDay = 0, rolls = Math.random) {
   let n = 0;
   // AUDIT SURV A: `rotDay` is the WORLD's rot-day counter; an item ages from the day it was first seen (stamped
   // here), not from the world's first day - a global count spoiled every food overnight past the third month
-  for (const list of collections) for (const item of list ?? []) {
-    if (!foodOf(item) || foodOf(item).keeps == null) continue;
-    if (!Number.isFinite(item.rotDay)) item.rotDay = rotDay;
-    const kept = Math.max(0, rotDay - item.rotDay);
-    // PROF9: a Provisioner's provisions never spoil (PROF0 3.3) - the dishes they cook and the foods they take from the Stores.
-    // AUDIT PROF9 K1: asked FIRST - a Butcher-Provisioner's meat carries both marks, and never spoiling outranks half the pace
-    if (item.noRot === true) continue;
-    // PROF7: a Butcher's meat spoils half as fast (PROF0 3.3) - the same days at half the pace: rolled every other day,
-    // aged half its days
-    if (item.slowRot === true) { if (kept % 2 === 1) continue; if (rotRoll(item, Math.floor(kept / 2), rolls)) n++; continue; }
-    if (rotRoll(item, kept, rolls)) n++;
-  }
+  for (const list of collections)
+    for (const item of list ?? []) {
+      if (!foodOf(item) || foodOf(item).keeps == null) continue;
+      if (!Number.isFinite(item.rotDay)) item.rotDay = rotDay;
+      const kept = Math.max(0, rotDay - item.rotDay);
+      // PROF9: a Provisioner's provisions never spoil (PROF0 3.3) - the dishes they cook and the foods they take from the Stores.
+      // AUDIT PROF9 K1: asked FIRST - a Butcher-Provisioner's meat carries both marks, and never spoiling outranks half the pace
+      if (item.noRot === true) continue;
+      // PROF7: a Butcher's meat spoils half as fast (PROF0 3.3) - the same days at half the pace: rolled every other day,
+      // aged half its days
+      if (item.slowRot === true) {
+        if (kept % 2 === 1) continue;
+        if (rotRoll(item, Math.floor(kept / 2), rolls)) n++;
+        continue;
+      }
+      if (rotRoll(item, kept, rolls)) n++;
+    }
   return n;
 }
 
@@ -154,7 +216,7 @@ export function rotFoodDay(collections, rotDay = 0, rolls = Math.random) {
  *  minutes weighted by the natural temperature; each 720 is a day. */
 export const ROT_DAY_MINUTES = 720;
 export function rotWeight(natural) {
-  if (natural <= -30) return 0;   // frozen keeps
+  if (natural <= -30) return 0; // frozen keeps
   if (natural > 50) return 3;
   if (natural > 20) return 2;
   return 1;
@@ -180,24 +242,35 @@ export function eatLaw(item, { lastAte, now, luck = 50, rolls = Math.random, rul
   if (hunger < satiety) return { ok: false, reason: 'not hungry' };
   let base = lastAte ?? now;
   if (hunger > satiety + FULL_AHEAD_MINUTES) base = now - FULL_AHEAD_MINUTES;
-  const newLastAte = Math.min(now, base + satiety);   // AUDIT SURV-TIERS (the third pass): never a meal in the future - a marker ahead of the clock is a fresh start to the load (alignSurvival), and rations at 250 wrote one ten minutes ahead
+  const newLastAte = Math.min(now, base + satiety); // AUDIT SURV-TIERS (the third pass): never a meal in the future - a marker ahead of the clock is a fresh start to the load (alignSurvival), and rations at 250 wrote one ten minutes ahead
   let sick = null;
   // SURV-TIERS: a tier without sickness makes no roll at all - every raw or spoiled meal there is Hard's lucky one
   if ((f.raw || stage > 0) && (rules ?? HARD_RULES).sickness) {
     const lucky = dice100(luck, rolls());
     if (!lucky) sick = stage >= FOOD_STAGE.Mouldy ? 'foul' : 'mild';
   }
-  return { ok: true, lastAte: newLastAte, satiety, thirstRelief: f.thirst, sick, feel: sick ? (sick === 'foul' ? 'disgusted' : 'nauseated') : 'invigorated' };
+  return {
+    ok: true,
+    lastAte: newLastAte,
+    satiety,
+    thirstRelief: f.thirst,
+    sick,
+    feel: sick ? (sick === 'foul' ? 'disgusted' : 'nauseated') : 'invigorated',
+  };
 }
 
 /** The diseases a bad meal risks: the mild one (stomach rot) and the
  *  foul list (the dungeon's own). */
 export const MILD_MEAL_DISEASES = Object.freeze([DISEASE_STOMACH_ROT]);
-export const FOUL_MEAL_DISEASES = Object.freeze([DISEASE_STOMACH_ROT, DISEASE_SWAMP_ROT, DISEASE_YELLOW_FEVER]);   // all curable; no plague from a meal
+export const FOUL_MEAL_DISEASES = Object.freeze([DISEASE_STOMACH_ROT, DISEASE_SWAMP_ROT, DISEASE_YELLOW_FEVER]); // all curable; no plague from a meal
 
 /** Infect for a bad meal through the disease law the caller hands in
  *  (diseases.js inflictDisease - a roll inside). */
-export function sickenFromMeal(entity, sick, { inflict = null, rolls = Math.random, currentDay = 0, onContract = null } = {}) {
+export function sickenFromMeal(
+  entity,
+  sick,
+  { inflict = null, rolls = Math.random, currentDay = 0, onContract = null } = {},
+) {
   if (!sick || typeof inflict !== 'function') return false;
   return inflict(entity, sick === 'foul' ? FOUL_MEAL_DISEASES : MILD_MEAL_DISEASES, { rolls, currentDay, onContract });
 }
@@ -218,7 +291,8 @@ export function drinkFrom(skin) {
 /** Fill every skin from a source with `kg` of water to give (Infinity at
  *  a fountain). Returns the kg poured and how many skins were touched. */
 export function refillSkins(items, kg = Infinity) {
-  let poured = 0, filled = 0;
+  let poured = 0,
+    filled = 0;
   for (const i of items ?? []) {
     if (!isWaterskin(i)) continue;
     const room = WATERSKIN_CAPACITY_KG - waterIn(i);
@@ -226,7 +300,8 @@ export function refillSkins(items, kg = Infinity) {
     const give = Math.min(room, kg - poured);
     if (give <= 0) break;
     i.water = Math.round((waterIn(i) + give) * 100) / 100;
-    poured += give; filled++;
+    poured += give;
+    filled++;
   }
   return { poured, filled, skins: (items ?? []).filter(isWaterskin).length };
 }

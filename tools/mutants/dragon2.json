@@ -2,44 +2,48 @@
   {
     "name": "DRAGON2-every-watch-a-dragon",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "dragonRoll(w, 0) % DRAGON_WATCH_ONE_IN === 0",
-    "new": "dragonRoll(w, 0) % DRAGON_WATCH_ONE_IN >= 0",
+    "old": "export const isDragonOmen = (o) => dragonOmenOk(o) && dragonRoll(o, 0) % DRAGON_WATCH_ONE_IN === 0;",
+    "new": "export const isDragonOmen = (o) => dragonOmenOk(o) && dragonRoll(o, 0) % DRAGON_WATCH_ONE_IN >= 0;",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed."
   },
   {
     "name": "DRAGON2-every-dragon-shiny",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "export const dragonShinyOf = (w) => dragonRoll(w, 1) % DRAGON_SHINY_ONE_IN === 0;",
-    "new": "export const dragonShinyOf = (w) => dragonRoll(w, 1) >= 0;",
+    "old": "export const dragonShinyOf = (o) => dragonRoll(o, 1) % DRAGON_SHINY_ONE_IN === 0;",
+    "new": "export const dragonShinyOf = (o) => dragonRoll(o, 1) >= 0;",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed."
   },
   {
     "name": "DRAGON2-the-stay-unbounded",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "return isDragonWatch(w) && nowMs >= t.landAt && nowMs < t.leaveAt; };",
-    "new": "return isDragonWatch(w) && nowMs >= t.landAt; };",
+    "old": "  return nowMs >= t.landAt && nowMs < t.leaveAt;",
+    "new": "  return nowMs >= t.landAt;",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed. Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start."
   },
   {
     "name": "DRAGON2-the-site-day-a-gates",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "export const dragonSiteDay = (w) => DRAGON_SITE_BASE + (w % DRAGON_SITE_BASE);",
-    "new": "export const dragonSiteDay = (w) => w;",
+    "old": "export const dragonSitePick = (o) => dragonRoll(o, 5);",
+    "new": "export const dragonSitePick = (o) => o.w;",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed. Re-aimed by content again (DRAGON-CELL)."
   },
   {
     "name": "DRAGON2-the-orbits-pace",
     "file": "src/net/dragon/dragonBody.js",
-    "old": "const ang = l.a0 + l.sd * (FLY_V / l.r) * (dt / 1000);",
-    "new": "const ang = l.a0 + l.sd * FLY_V * (dt / 1000);",
+    "old": "    const ang = l.a0 + l.sd * (FLY_V / l.r) * (dt / 1000);",
+    "new": "    const ang = l.a0 + l.sd * FLY_V * (dt / 1000);",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ]
@@ -47,8 +51,8 @@
   {
     "name": "DRAGON2-the-fall-eased-smooth",
     "file": "src/net/dragon/dragonBody.js",
-    "old": "k = l.e === EASE.fall ? u * u : smooth(u);",
-    "new": "k = smooth(u);",
+    "old": "    k = l.e === EASE.fall ? u * u : smooth(u);",
+    "new": "    k = smooth(u);",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ]
@@ -56,8 +60,8 @@
   {
     "name": "DRAGON2-the-latest-leg-skipped",
     "file": "src/net/dragon/dragonBody.js",
-    "old": "for (const l of legs) if (l.at <= t) best = l; else break;",
-    "new": "for (const l of legs) if (l.at <= t) break;",
+    "old": "  for (const l of legs)\n    if (l.at <= t) best = l;\n    else break;",
+    "new": "  for (const l of legs) if (l.at <= t) break;",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ]
@@ -65,8 +69,8 @@
   {
     "name": "DRAGON2-a-swing-aloft",
     "file": "src/net/dragon/dragonBrain.js",
-    "old": "if (r === HIT_KINDS.Melee ? !grounded || gap > MELEE_REACH + POSE_SLACK : gap > DRAGON_SHOT_R) return 0;",
-    "new": "if (r === HIT_KINDS.Melee ? gap > MELEE_REACH + POSE_SLACK : gap > DRAGON_SHOT_R) return 0;",
+    "old": "  if (r === HIT_KINDS.Melee ? !grounded || gap > MELEE_REACH + POSE_SLACK : gap > DRAGON_SHOT_R) return 0;",
+    "new": "  if (r === HIT_KINDS.Melee ? gap > MELEE_REACH + POSE_SLACK : gap > DRAGON_SHOT_R) return 0;",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ]
@@ -74,8 +78,8 @@
   {
     "name": "DRAGON2-the-grounded-weight-gone",
     "file": "src/net/dragon/dragonBrain.js",
-    "old": "const want = d * (grounded ? GROUNDED_X : 1),",
-    "new": "const want = d,",
+    "old": "  const want = d * (grounded ? GROUNDED_X : 1),",
+    "new": "  const want = d,",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ]
@@ -83,8 +87,8 @@
   {
     "name": "DRAGON2-the-shot-reach-unbounded",
     "file": "src/net/dragon/dragonBrain.js",
-    "old": "gap > MELEE_REACH + POSE_SLACK : gap > DRAGON_SHOT_R) return 0;",
-    "new": "gap > MELEE_REACH + POSE_SLACK : false) return 0;",
+    "old": "  if (r === HIT_KINDS.Melee ? !grounded || gap > MELEE_REACH + POSE_SLACK : gap > DRAGON_SHOT_R) return 0;",
+    "new": "  if (r === HIT_KINDS.Melee ? !grounded || gap > MELEE_REACH + POSE_SLACK : false) return 0;",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ]
@@ -92,8 +96,8 @@
   {
     "name": "DRAGON2-the-ward-ignored",
     "file": "src/net/dragon/dragonBrain.js",
-    "old": "|| !(f.max > 0) || now < f.shieldUntil) return 0;",
-    "new": "|| !(f.max > 0)) return 0;",
+    "old": "  if (!p || f.fell || f.gone || !Number.isFinite(d) || !(d > 0) || !(f.max > 0) || now < f.shieldUntil) return 0;",
+    "new": "  if (!p || f.fell || f.gone || !Number.isFinite(d) || !(d > 0) || !(f.max > 0)) return 0;",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ]
@@ -101,8 +105,8 @@
   {
     "name": "DRAGON2-the-late-bucket-full",
     "file": "src/net/dragon/dragonBrain.js",
-    "old": "bucket: frac >= 1 ? BUCKET_DEPTH_X * dpsRef(level) : 0,",
-    "new": "bucket: BUCKET_DEPTH_X * dpsRef(level),",
+    "old": "    bucket: frac >= 1 ? BUCKET_DEPTH_X * dpsRef(level) : 0,",
+    "new": "    bucket: BUCKET_DEPTH_X * dpsRef(level),",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ]
@@ -110,8 +114,8 @@
   {
     "name": "DRAGON2-the-share-the-gates",
     "file": "src/net/dragon/dragonBrain.js",
-    "old": "export const DRAGON_TTK_S = 200;",
-    "new": "export const DRAGON_TTK_S = 240;",
+    "old": "export const DRAGON_TTK_S = 720; // DRAGON-HARDER (the owner: \"The dragon is way too easy to kill\"): 200 before - the bucket deals 3x its reference, so it fell in a minute; 720 is twelve minutes at reference, four at the cap",
+    "new": "export const DRAGON_TTK_S = 600; // DRAGON-HARDER (the owner: \"The dragon is way too easy to kill\"): 200 before - the bucket deals 3x its reference, so it fell in a minute; 720 is twelve minutes at reference, four at the cap",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ]
@@ -128,8 +132,8 @@
   {
     "name": "DRAGON2-a-wind-up-under-its-floor",
     "file": "src/net/dragon/dragonBrain.js",
-    "old": "const blow = { ...egBlowOf({ i: ++f.seq, s: stamps.filter((s) => egStampOk(s)), at: now + wu, wu, p: B.p, el: B.el, sp }), a: B.id };",
-    "new": "const blow = { ...egBlowOf({ i: ++f.seq, s: stamps.filter((s) => egStampOk(s)), at: now + wu, wu, p: B.p, el: B.el, sp }), wu, a: B.id };",
+    "old": "    a: B.id,",
+    "new": "    wu,\n    a: B.id,",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ]
@@ -137,8 +141,8 @@
   {
     "name": "DRAGON2-the-repeat-bound-gone",
     "file": "src/net/dragon/dragonBrain.js",
-    "old": "const can = DRAGON_BLOWS.filter((B) => B.air && B.w > 0 && B.ph <= f.ph && !(f.last.length >= DRAGON_REPEAT_MAX && f.last.every((id) => id === B.id)));",
-    "new": "const can = DRAGON_BLOWS.filter((B) => B.air && B.w > 0 && B.ph <= f.ph);",
+    "old": "  const can = DRAGON_BLOWS.filter(\n    (B) =>\n      B.air && B.w > 0 && B.ph <= f.ph && !(f.last.length >= DRAGON_REPEAT_MAX && f.last.every((id) => id === B.id)),\n  );",
+    "new": "  const can = DRAGON_BLOWS.filter((B) => B.air && B.w > 0 && B.ph <= f.ph);",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ]
@@ -146,8 +150,8 @@
   {
     "name": "DRAGON2-a-phases-ward-skipped",
     "file": "src/net/dragon/dragonBrain.js",
-    "old": "    f.shieldUntil = now + DRAGON_SHIELD_MS;\n",
-    "new": "    f.shieldUntil = now;\n",
+    "old": "    f.shieldUntil = now + DRAGON_SHIELD_MS;",
+    "new": "    f.shieldUntil = now;",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ]
@@ -155,8 +159,8 @@
   {
     "name": "DRAGON2-the-ground-kept-for-good",
     "file": "src/net/dragon/dragonBrain.js",
-    "old": "  if (f.md === DRAGON_MODE.ground && now >= f.mdUntil) { out.push(...gust(f, now, at, rng)); return out; }",
-    "new": "  if (f.md === DRAGON_MODE.ground && now >= f.mdUntil && false) { out.push(...gust(f, now, at, rng)); return out; }",
+    "old": "  if (f.md === DRAGON_MODE.ground && now >= f.mdUntil) {",
+    "new": "  if (f.md === DRAGON_MODE.ground && now >= f.mdUntil && false) {",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ]
@@ -164,8 +168,8 @@
   {
     "name": "DRAGON2-the-leaving-never-said",
     "file": "src/net/dragon/dragonBrain.js",
-    "old": "  if (now >= f.leaveAt) {\n",
-    "new": "  if (false) {\n",
+    "old": "  if (now >= f.leaveAt) {",
+    "new": "  if (false) {",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ]
@@ -173,8 +177,8 @@
   {
     "name": "DRAGON2-the-wake-not-carried",
     "file": "src/net/dragon/dragonBrain.js",
-    "old": "f.seq = (f.seq ?? 0) + DRAGON_WAKE_SEQ;",
-    "new": "f.seq = f.seq ?? 0;",
+    "old": "  if (f && typeof f === 'object') f.seq = (f.seq ?? 0) + DRAGON_WAKE_SEQ;",
+    "new": "  if (f && typeof f === 'object') f.seq = f.seq ?? 0;",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ]
@@ -182,8 +186,8 @@
   {
     "name": "DRAGON2-the-sleep-resumed-mid-blow",
     "file": "src/net/dragon/dragonBrain.js",
-    "old": "if (f.fell || f.gone || now - f.beatAt < DRAGON_SLEEP_MS) return [];",
-    "new": "if (f.fell || f.gone) return [];",
+    "old": "  if (f.fell || f.gone || now - f.beatAt < DRAGON_SLEEP_MS) return [];",
+    "new": "  if (f.fell || f.gone) return [];",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ]
@@ -191,8 +195,8 @@
   {
     "name": "DRAGON2-the-element-counted",
     "file": "src/net/bossRef.js",
-    "old": "    if (a.el != null) { a.bj = true; continue; }\n",
-    "new": "",
+    "old": "    if (a.el != null) {\n      a.bj = true;\n      continue;\n    }\n    landing(a, live, Math.min(1, Math.max(0, a.p)), (x, z) => egInBlow(a, x, z), out);",
+    "new": "    landing(a, live, Math.min(1, Math.max(0, a.p)), (x, z) => egInBlow(a, x, z), out);",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ]
@@ -200,8 +204,8 @@
   {
     "name": "DRAGON2-the-landing-judged-early",
     "file": "src/net/bossRef.js",
-    "old": "    if (a.bj || now < a.at + BODY_AFTER_MS) continue;\n    if (a.el != null) { a.bj = true; continue; }",
-    "new": "    if (a.bj || now < a.at) continue;\n    if (a.el != null) { a.bj = true; continue; }",
+    "old": "    if (a.bj || now < a.at + BODY_AFTER_MS) continue;",
+    "new": "    if (a.bj || now < a.at) continue;",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ]
@@ -209,8 +213,8 @@
   {
     "name": "DRAGON2-the-version-read-after-the-signature",
     "file": "src/net/dragon/dragonReceipt.js",
-    "old": "  if (v !== DRAGON_RECEIPT_V) return { ok: false, why: 'version' };\n",
-    "new": "",
+    "old": "  if (v !== DRAGON_RECEIPT_V) return { ok: false, why: 'version' };\n  if (!sig64) return { ok: false, why: 'unsigned' };",
+    "new": "  if (!sig64) return { ok: false, why: 'unsigned' };",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ]
@@ -218,8 +222,8 @@
   {
     "name": "DRAGON2-the-shapes-overlapping",
     "file": "src/net/dragon/dragonReceipt.js",
-    "old": "for (const k of ['d', 'h', 'w', 'y', 'n', 'k', 't', 'o', 'r']) if (c[k] !== undefined) return false;",
-    "new": "for (const k of []) if (c[k] !== undefined) return false;",
+    "old": "  for (const k of ['d', 'h', 'w', 'y', 'n', 'k', 't', 'o', 'r']) if (c[k] !== undefined) return false;",
+    "new": "  for (const k of []) if (c[k] !== undefined) return false;",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ]
@@ -245,8 +249,8 @@
   {
     "name": "DRAGON2-the-state-fanned-to-all",
     "file": "server/src/dragonFights.js",
-    "old": "  say(room, ws, { ...DRAGON_SEAM.stateOf(f) });\n",
-    "new": "  fan(room, id, f, [DRAGON_SEAM.stateOf(f)]);\n",
+    "old": "  say(room, ws, { ...DRAGON_SEAM.stateOf(f) });",
+    "new": "  fan(room, id, f, [DRAGON_SEAM.stateOf(f)]);",
     "tests": [
       "test/net/dragon/dragon2_relay.test.js"
     ]
@@ -254,11 +258,12 @@
   {
     "name": "DRAGON2-the-fan-unbounded",
     "file": "server/src/dragonFights.js",
-    "old": "  return Math.hypot(c.x, c.z) <= dragonBrain.DRAGON_FAN_R;\n",
-    "new": "  return true;\n",
+    "old": "  if (Math.hypot(c.x, c.z) > dragonBrain.DRAGON_FAN_R) return false;\n  // AUDIT DRAGON-CELL III G7: a fight's words name its site, so a passer-by hears them once its account is granted the",
+    "new": "  // AUDIT DRAGON-CELL III G7: a fight's words name its site, so a passer-by hears them once its account is granted the",
     "tests": [
       "test/net/dragon/dragon2_relay.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL III)."
   },
   {
     "name": "DRAGON2-an-older-game-fought",
@@ -272,7 +277,7 @@
   {
     "name": "DRAGON2-too-far-admitted",
     "file": "server/src/dragonFights.js",
-    "old": "  if (Math.hypot(at.x, at.z) > dragonBrain.DRAGON_ADMIT_R) { no('far'); return; }",
+    "old": "  if (Math.hypot(at.x, at.z) > dragonBrain.DRAGON_ADMIT_R) {\n    no('far');\n    return;\n  }",
     "new": "",
     "tests": [
       "test/net/dragon/dragon2_relay.test.js"
@@ -281,8 +286,8 @@
   {
     "name": "DRAGON2-the-dead-striking",
     "file": "server/src/dragonFights.js",
-    "old": "const pose = a.pose && !a.pose.dd && own ? frameOf(f, a.pose) : null;",
-    "new": "const pose = a.pose && own ? frameOf(f, a.pose) : null;",
+    "old": "  const pose = a.pose && !a.pose.dd && own ? frameOf(f, a.pose) : null;",
+    "new": "  const pose = a.pose && own ? frameOf(f, a.pose) : null;",
     "tests": [
       "test/net/dragon/dragon2_relay.test.js"
     ]
@@ -290,8 +295,8 @@
   {
     "name": "DRAGON2-a-receipt-to-one-who-earned-nothing",
     "file": "server/src/dragonFights.js",
-    "old": "    if (!DRAGON_SEAM.earned(f, sub)) continue;\n",
-    "new": "",
+    "old": "    if (!DRAGON_SEAM.earned(f, sub)) continue;\n    const q = {",
+    "new": "    const q = {",
     "tests": [
       "test/net/dragon/dragon2_relay.test.js"
     ]
@@ -299,19 +304,21 @@
   {
     "name": "DRAGON2-the-hub-told-nothing",
     "file": "server/src/dragonFights.js",
-    "old": "  if (rooms?.idFromName && rooms?.get) {\n    try {\n      const body = { w: f.w,",
-    "new": "  if (false) {\n    try {\n      const body = { w: f.w,",
+    "old": "  if (rooms?.idFromName && rooms?.get) {",
+    "new": "  if (false) {",
     "tests": [
       "test/net/dragon/dragon2_relay.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-EACH). Re-aimed by content (AUDIT DRAGON-CELL III)."
   },
   {
     "name": "DRAGON2-the-hello-handed-nothing",
     "file": "server/src/dragonFights.js",
-    "old": "  say(room, ws, { k: 'rcpt', r: kept.r });\n}",
+    "old": "  for (const x of good) say(room, ws, { k: 'rcpt', r: x.r });\n}",
     "new": "}",
     "tests": [
       "test/net/dragon/dragon2_relay.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-EACH): the hub hands each kept receipt."
   }
 ]

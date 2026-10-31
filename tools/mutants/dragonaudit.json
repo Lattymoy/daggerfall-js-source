@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-DRAGON-the-fraction-forgotten",
     "file": "src/net/dragon/dragonBrain.js",
-    "old": " if (!(f.max > 0)) f.idle = frac; }",
-    "new": " }",
+    "old": "  if (!(f.max > 0)) f.idle = frac;\n}",
+    "new": "}",
     "tests": [
       "test/net/dragon/dragonaudit_relay.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-DRAGON-the-states-time-dropped",
     "file": "src/net/dragon/dragonBrain.js",
-    "old": " ma: f.ma ?? 0,",
-    "new": "",
+    "old": "    ma: f.ma ?? 0,\n    n: Object.values(f.players).filter((p) => !p.retired).length,",
+    "new": "    n: Object.values(f.players).filter((p) => !p.retired).length,",
     "tests": [
       "test/net/dragon/dragonaudit_relay.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-DRAGON-the-span-dropped-at-the-word",
     "file": "src/net/dragon/dragonBrain.js",
-    "old": "const blowWord = (b) => ({ k: 'atk', i: b.i, a: b.a, at: b.at, wu: b.wu, s: b.s, ...(b.sp ? { sp: b.sp } : {}) });",
-    "new": "const blowWord = (b) => ({ k: 'atk', i: b.i, a: b.a, at: b.at, wu: b.wu, s: b.s });",
+    "old": "const blowWord = (b) => ({ k: 'atk', i: b.i, a: b.a, at: b.at, wu: b.wu, s: b.s, ...(b.sp ? { sp: b.sp } : {}) }); // AUDIT DRAGON: a sweep's span (the Strafing Run's) rides with it",
+    "new": "const blowWord = (b) => ({ k: 'atk', i: b.i, a: b.a, at: b.at, wu: b.wu, s: b.s }); // AUDIT DRAGON: a sweep's span (the Strafing Run's) rides with it",
     "tests": [
       "test/net/dragon/dragonaudit_relay.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-DRAGON-the-seats-time",
     "file": "src/net/dragon/dragonBrain.js",
-    "old": "p.stoodMs >= SEAT_KEEP_MS;",
-    "new": "p.stoodMs >= 15_000;",
+    "old": "export const dragonHasPart = (p) => p.dealt >= DRAGON_DEALT_SHARE * p.share || p.stoodMs >= SEAT_KEEP_MS;",
+    "new": "export const dragonHasPart = (p) => p.dealt >= DRAGON_DEALT_SHARE * p.share || p.stoodMs >= 15_000;",
     "tests": [
       "test/net/dragon/dragonaudit_relay.test.js"
     ]
@@ -56,26 +56,28 @@
   {
     "name": "AUDIT-DRAGON-none-swept",
     "file": "server/src/dragonFights.js",
-    "old": "  for (const [k, v] of kept) { last = k; if (!v || typeof v !== 'object' || !(Number.isFinite(v.e) && now < v.e * 1000)) dead.push(k); }",
-    "new": "  for (const [k] of kept) { last = k; }",
+    "old": "  for (const [k, v] of kept) {\n    last = k;\n    if (!keptOf(v).some((x) => now < x.e * 1000)) dead.push(k);",
+    "new": "  for (const [k] of kept) {\n    last = k;",
     "tests": [
       "test/net/dragon/dragonaudit_relay.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-EACH): an account's keep a list."
   },
   {
     "name": "AUDIT-DRAGON-the-live-one-swept",
     "file": "server/src/dragonFights.js",
-    "old": "  for (const [k, v] of kept) { last = k; if (!v || typeof v !== 'object' || !(Number.isFinite(v.e) && now < v.e * 1000)) dead.push(k); }",
-    "new": "  for (const [k] of kept) { last = k; dead.push(k); }",
+    "old": "  for (const [k, v] of kept) {\n    last = k;\n    if (!keptOf(v).some((x) => now < x.e * 1000)) dead.push(k);",
+    "new": "  for (const [k] of kept) {\n    last = k;\n    dead.push(k);",
     "tests": [
       "test/net/dragon/dragonaudit_relay.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-EACH): an account's keep a list."
   },
   {
     "name": "AUDIT-DRAGON-no-retry",
     "file": "server/src/dragonFights.js",
-    "old": "    if (f.fell && !f.said) at = Math.min(at, now + DRAGON_TELL_RETRY_MS);",
-    "new": "    if (false) at = Math.min(at, now + DRAGON_TELL_RETRY_MS);",
+    "old": "    } // its remains told to who comes near, as its fight was\n    if (f.fell && !f.said)",
+    "new": "    } // its remains told to who comes near, as its fight was\n    if (false)",
     "tests": [
       "test/net/dragon/dragonaudit_relay.test.js"
     ]
@@ -83,26 +85,28 @@
   {
     "name": "AUDIT-DRAGON-the-cache-unbounded",
     "file": "server/src/dragonFights.js",
-    "old": "noRcpt: new Bounded(HUB_KEEP_MAX) });",
-    "new": "noRcpt: new Map() });",
+    "old": "    noRcpt: new Bounded(HUB_KEEP_MAX),",
+    "new": "    noRcpt: new Map(),",
     "tests": [
       "test/net/dragon/dragonaudit_relay.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL II). Re-aimed by content (AUDIT DRAGON-CELL III)."
   },
   {
     "name": "AUDIT-DRAGON-the-gate-its-own-number",
     "file": "src/net/wire.js",
-    "old": "export const DRAGON_RELAY_MIN = DRAGON_RIDE_RELAY_MIN;",
-    "new": "export const DRAGON_RELAY_MIN = 281;",
+    "old": "export const DRAGON_RELAY_MIN = 299;",
+    "new": "export const DRAGON_RELAY_MIN = 298;",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (THE MERGE OF MAIN AT c9169e3fb): 293, past DELVE II's world292. Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed. Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start. Re-aimed by content again (DRAGON-CELL)."
   },
   {
     "name": "AUDIT-DRAGON-the-route-unlisted",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/dragon/tames',   // AUDIT DRAGON: the tames the service drew, read back\n",
-    "new": "",
+    "old": "  '/v1/dragon/tames', // AUDIT DRAGON: the tames the service drew, read back\n  '/v1/star/claim', // STAR7: a fallen star's receipt",
+    "new": "  '/v1/star/claim', // STAR7: a fallen star's receipt",
     "tests": [
       "test/net/dragon/dragonaudit_account.test.js"
     ]
@@ -110,20 +114,22 @@
   {
     "name": "AUDIT-DRAGON-the-record-off-the-cards",
     "file": "server-account/src/index.js",
-    "old": "serpents: await serpentRecordOf(ctx, who.player.id), dragons: await dragonRecordOf(ctx, who.player.id), sds:",
-    "new": "serpents: await serpentRecordOf(ctx, who.player.id), sds:",
+    "old": "serpents, dragons, sds, stars, ketch, renown, marks }",
+    "new": "serpents, sds, stars, ketch, renown, marks }",
     "tests": [
       "test/net/dragon/dragonaudit_account.test.js"
-    ]
+    ],
+    "note": "AURA-FAST (re-aimed by content): the reads asked together, the field dropped from the answer."
   },
   {
     "name": "AUDIT-DRAGON-a-strangers-tames-told",
     "file": "server-account/src/index.js",
-    "old": "dragons: await dragonSlainOf(ctx, body.id)",
-    "new": "dragons: await dragonRecordOf(ctx, body.id)",
+    "old": "dragonSlainOf(ctx, body.id)",
+    "new": "dragonRecordOf(ctx, body.id)",
     "tests": [
       "test/net/dragon/dragonaudit_account.test.js"
-    ]
+    ],
+    "note": "AURA-FAST (re-aimed by content): the reads asked together, the field dropped from the answer."
   },
   {
     "name": "AUDIT-DRAGON-a-line-for-none",
@@ -137,8 +143,8 @@
   {
     "name": "AUDIT-DRAGON-the-recall-unasked",
     "file": "src/scenes/dragonRewards.js",
-    "old": "    if (!(host.dragonMountOnline ?? DRAGON_MOUNT_ONLINE) || !characterId || !account.tames) return;\n    const r = await account.tames().catch(() => null);",
-    "new": "    return;\n    const r = await account.tames().catch(() => null);",
+    "old": "    if (!(host.dragonMountOnline ?? DRAGON_MOUNT_ONLINE) || !characterId || !account.tames) return;",
+    "new": "    return;",
     "tests": [
       "test/net/dragon/dragonaudit_account.test.js"
     ]
@@ -146,8 +152,8 @@
   {
     "name": "AUDIT-DRAGON-another-characters-recalled",
     "file": "src/scenes/dragonRewards.js",
-    "old": "m && TAME_ID_RE.test(m.id) && m.character === characterId && !have.has(m.id)",
-    "new": "m && TAME_ID_RE.test(m.id) && !have.has(m.id)",
+    "old": "      .filter((m) => m && TAME_ID_RE.test(m.id) && m.character === characterId && !have.has(m.id))",
+    "new": "      .filter((m) => m && TAME_ID_RE.test(m.id) && !have.has(m.id))",
     "tests": [
       "test/net/dragon/dragonaudit_account.test.js"
     ]
@@ -155,8 +161,8 @@
   {
     "name": "AUDIT-DRAGON-the-waiting-line-with-the-ride-on",
     "file": "src/systems/dragon/dragonWords.js",
-    "old": "  tamed: () => (DRAGON_MOUNT_ONLINE ? t('dragon.claim.tamed',",
-    "new": "  tamed: () => (false ? t('dragon.claim.tamed',",
+    "old": "    DRAGON_MOUNT_ONLINE",
+    "new": "    false",
     "tests": [
       "test/net/dragon/dragonaudit_account.test.js"
     ]
@@ -200,8 +206,8 @@
   {
     "name": "AUDIT-DRAGON-dropped-not-set-down",
     "file": "src/player/dragonRide.js",
-    "old": "  if (what === 'landed' && wasAloft && !mounted && !grounded) _settling = true;   // off it in the air: set down\n",
-    "new": "",
+    "old": "  if (what === 'landed' && wasAloft && !mounted && !grounded) _settling = true; // off it in the air: set down\n  if (_settling && (grounded || mounted)) _settling = false;",
+    "new": "  if (_settling && (grounded || mounted)) _settling = false;",
     "tests": [
       "test/net/dragon/dragon5_mount.test.js"
     ]

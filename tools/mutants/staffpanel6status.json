@@ -242,8 +242,8 @@
   {
     "name": "STAFF-PANEL6-STATUS-cache-window-inclusive",
     "file": "server-account/src/staffKept.js",
-    "old": "if (here && nowS >= here.at && nowS - here.at < freshS) return here.value;",
-    "new": "if (here && nowS >= here.at && nowS - here.at <= freshS) return here.value;",
+    "old": "  if (here && nowS >= here.at && nowS - here.at < freshS) return here.value;",
+    "new": "  if (here && nowS >= here.at && nowS - here.at <= freshS) return here.value;",
     "why": "a part kept a second past its window (STAFF-SPEED-2: the kept answer's own check, staffKept.js)",
     "tests": [
       "test/server/staffpanel6status.test.js"

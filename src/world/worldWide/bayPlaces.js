@@ -23,9 +23,17 @@ export function bayPlaceRows(locs, { hasPort = () => false } = {}) {
     const p = longitudeLatitudeToMapPixel(md.longitude, md.latitude);
     const ed = loc.exterior?.exteriorData;
     rows.push({
-      mapId: md.mapId >>> 0, name: String(loc.name ?? ''), px: p.x, py: p.y, type: md.locationType, region: loc.regionIndex,
-      w: Math.max(1, ed?.width ?? 1), h: Math.max(1, ed?.height ?? 1), port: !!hasPort(md.mapId),
-      dungeonType: md.dungeonType ?? 0, hasDungeon: !!loc.hasDungeon,
+      mapId: md.mapId >>> 0,
+      name: String(loc.name ?? ''),
+      px: p.x,
+      py: p.y,
+      type: md.locationType,
+      region: loc.regionIndex,
+      w: Math.max(1, ed?.width ?? 1),
+      h: Math.max(1, ed?.height ?? 1),
+      port: !!hasPort(md.mapId),
+      dungeonType: md.dungeonType ?? 0,
+      hasDungeon: !!loc.hasDungeon,
     });
   }
   return rows;

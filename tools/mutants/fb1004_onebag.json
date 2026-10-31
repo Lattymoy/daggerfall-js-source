@@ -29,8 +29,8 @@
   {
     "name": "ONEBAG-the-bag-counted-against-itself",
     "file": "src/net/bagLaw.js",
-    "old": "l.some((x) => x !== item && isBagItem(x))",
-    "new": "l.some((x) => isBagItem(x))",
+    "old": "  (lists ?? []).some((l) => Array.isArray(l) && l.some((x) => x !== item && isBagItem(x)));",
+    "new": "  (lists ?? []).some((l) => Array.isArray(l) && l.some((x) => isBagItem(x)));",
     "tests": [
       "test/systems/professions/fb1004_onebag.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "ONEBAG-the-bag-a-piece",
     "file": "src/systems/decor/decorItems.js",
-    "old": "  if (isBagItem(item) || isPackOnly(item)) return null;\n  if (item.templateIndex === TROPHY_TEMPLATE) return null;",
-    "new": "  if (isPackOnly(item)) return null;\n  if (item.templateIndex === TROPHY_TEMPLATE) return null;",
+    "old": "  if (isBagItem(item) || isPackOnly(item)) return null;",
+    "new": "  if (isPackOnly(item)) return null;",
     "tests": [
       "test/systems/professions/fb1004_onebag.test.js"
     ]

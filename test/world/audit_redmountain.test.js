@@ -256,7 +256,7 @@ test('AUDIT RED-MOUNTAIN N2: the Ghostfence\'s glow drawn after the water and th
   const w = read('src/scenes/world.js');
   assert.ok(w.indexOf('frameRing();') < w.indexOf('frameWater();') && w.indexOf('frameWater();') < w.indexOf('renderer.drawBillboards(allBatches, camRight, bbUp);'), 'the ring, the water, the flats');
   const g = read('src/render/ghostfenceGlow.js');
-  assert.match(g, /gl\.depthMask\(true\); gl\.depthFunc\(gl\.LESS\); gl\.enable\(gl\.CULL_FACE\);/);
+  assert.match(g, /gl\.depthMask\(true\);\n\s*gl\.depthFunc\(gl\.LESS\);\n\s*gl\.enable\(gl\.CULL_FACE\);/);
 });
 
 // ── THE FENCE'S LAW AND THE LAND (G, L) ───────────────────────────

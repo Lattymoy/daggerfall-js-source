@@ -50,6 +50,7 @@ import {
 } from '../../src/net/npcChapterLaw.js';
 import { MARKS_MAX, MARKS_MOVE_MAX, MARKS_OPS_MAX, MARKS_OPS_WINDOW_S, MARKS_RID_RE, utcDay } from '../../src/net/marksLaw.js';   // CHAP7a: a patron's bid
 import { guildMay } from '../../src/net/guild/guildLaw.js';
+import { guildPowerSql } from './guildPowerSql.js';   // AUDIT GUILD-RANKS A1
 import { accountKind, displayName, overRate } from './accounts.js';
 import { guildActorOf } from './guilds.js';
 import { marksOpenFor, guildBalanceOf } from './marks.js';
@@ -287,7 +288,7 @@ export async function bidPatron(ctx, player, env, { character, faction, region, 
   if (hallHidden(faction) || !(await allChapters(db, nowS)).some((c) => c.faction === faction && c.region === region)) return { error: 'no-chapter' };
   const a = await guildActorOf(db, player, character);
   if (a.error) return a;
-  if (!guildMay(a.me.rank, 'withdraw')) return { error: 'guild-rank' };
+  if (!guildMay(a.me.rank, 'withdraw', a.powers)) return { error: 'guild-rank' };
   if (!marksOpenFor(player, env)) return { error: 'marks-closed' };
   const guild = String(a.me.guild_id);
   const prev = Number((await db.prepare('SELECT amount FROM npc_chapter_patron_bids WHERE faction = ?1 AND region = ?2 AND season = ?3 AND guild_id = ?4')
@@ -301,7 +302,7 @@ export async function bidPatron(ctx, player, env, { character, faction, region, 
       // THE LINE: the guildmaster still, the treasury's silver, the bid where it stood, the Season not yet opened
       db.prepare(`${LEDGER} SELECT 'guild', ?1, 'escrow', ?2, 'patron-escrow', ?3, ?4, ?5, ?6, ?7, ?8
         WHERE COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?1), 0) >= ?3
-          AND EXISTS (SELECT 1 FROM guild_members WHERE player = ?6 AND char_id = ?9 AND guild_id = ?1 AND rank = ?10)
+          AND EXISTS (SELECT 1 FROM guild_members WHERE player = ?6 AND char_id = ?9 AND guild_id = ?1 AND rank = ?10 AND ${guildPowerSql('withdraw', 'rank', '?1')})
           AND COALESCE((SELECT amount FROM npc_chapter_patron_bids WHERE faction = ?11 AND region = ?12 AND season = ?13 AND guild_id = ?1), 0) = ?14
           AND NOT EXISTS (SELECT 1 FROM npc_chapter_weeks WHERE week >= ?15)`)
         .bind(guild, patronEscrowId(season, faction, region, guild), more, utcDay(nowS), nowS, player.id, displayName(player), rid, character, a.me.rank,

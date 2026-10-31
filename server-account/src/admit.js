@@ -20,7 +20,13 @@
 // ═══════════════════════════════════════════════════════════════════
 
 /** The doors a sign-in knocks at - each a POST. */
-export const ADMIT_ROUTES = new Set(['/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover', '/v1/auth/token', '/v1/auth/session']);
+export const ADMIT_ROUTES = new Set([
+  '/v1/auth/guest',
+  '/v1/auth/login',
+  '/v1/auth/recover',
+  '/v1/auth/token',
+  '/v1/auth/session',
+]);
 /** Places let in a second. */
 export const ADMIT_RATE = 5;
 /** How many a quiet line lets in at once. */
@@ -47,9 +53,9 @@ export const admitLine = () => ({ head: 0, tail: 0, at: 0, swept: 0, places: new
  * @param {number} [rate] @param {number} [burst]
  */
 export function admitAsk(line, key, nowMs, rate = ADMIT_RATE, burst = ADMIT_BURST) {
-  line.head = line.at ? line.head + Math.max(0, nowMs - line.at) * rate / 1000 : line.tail + burst;   // a new line stands quiet
+  line.head = line.at ? line.head + (Math.max(0, nowMs - line.at) * rate) / 1000 : line.tail + burst; // a new line stands quiet
   line.at = nowMs;
-  line.head = Math.min(line.head, line.tail + burst);   // quiet, the head waits a burst past the back
+  line.head = Math.min(line.head, line.tail + burst); // quiet, the head waits a burst past the back
   if (nowMs - line.swept >= ADMIT_SWEEP_MS) {
     line.swept = nowMs;
     for (const [k, p] of line.places) if (nowMs - p.seen > ADMIT_KEEP_MS) line.places.delete(k);
@@ -57,7 +63,10 @@ export function admitAsk(line, key, nowMs, rate = ADMIT_RATE, burst = ADMIT_BURS
   }
   if ((line.passes.get(key) ?? 0) > nowMs) return { go: true };
   let place = line.places.get(key);
-  if (!place) { place = { ticket: ++line.tail, seen: nowMs }; line.places.set(key, place); }
+  if (!place) {
+    place = { ticket: ++line.tail, seen: nowMs };
+    line.places.set(key, place);
+  }
   place.seen = nowMs;
   if (place.ticket <= line.head) {
     line.places.delete(key);
@@ -65,12 +74,15 @@ export function admitAsk(line, key, nowMs, rate = ADMIT_RATE, burst = ADMIT_BURS
     return { go: true };
   }
   const position = Math.ceil(place.ticket - line.head);
-  const wait = Math.round(Math.min(ADMIT_WAIT_MAX_MS, Math.max(ADMIT_WAIT_MIN_MS, position / rate * 1000)));
+  const wait = Math.round(Math.min(ADMIT_WAIT_MAX_MS, Math.max(ADMIT_WAIT_MIN_MS, (position / rate) * 1000)));
   return { go: false, position, wait };
 }
 
 /** A number the service's vars may set, else the default. @param {any} v @param {number} d */
-const varOr = (v, d) => { const n = Number(v); return Number.isFinite(n) && n > 0 ? n : d; };
+const varOr = (v, d) => {
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? n : d;
+};
 
 /** THE LINE ITSELF - one Durable Object (`idFromName('line')`), its line in memory: a line lost to an eviction is a
  *  line nobody stood in for a while. */
@@ -85,8 +97,14 @@ export class AdmitGate {
   /** @param {Request} request */
   async fetch(request) {
     let key = '';
-    try { key = String((await request.json())?.key ?? ''); } catch { key = ''; }
-    return new Response(JSON.stringify(admitAsk(this.line, key, Date.now(), this.rate, this.burst)), { headers: { 'content-type': 'application/json' } });
+    try {
+      key = String((await request.json())?.key ?? '');
+    } catch {
+      key = '';
+    }
+    return new Response(JSON.stringify(admitAsk(this.line, key, Date.now(), this.rate, this.burst)), {
+      headers: { 'content-type': 'application/json' },
+    });
   }
 }
 
@@ -98,10 +116,18 @@ export async function admitWait(env, key) {
   if (!env?.ADMIT) return null;
   try {
     const stub = env.ADMIT.get(env.ADMIT.idFromName('line'));
-    const ask = stub.fetch('https://admit/ask', { method: 'POST', body: JSON.stringify({ key }) }).then((/** @type {any} */ res) => res.json());
-    const r = await Promise.race([ask, new Promise((resolve) => globalThis.setTimeout(() => resolve(null), ADMIT_ASK_MS))]);
+    const ask = stub
+      .fetch('https://admit/ask', { method: 'POST', body: JSON.stringify({ key }) })
+      .then((/** @type {any} */ res) => res.json());
+    const r = await Promise.race([
+      ask,
+      new Promise((resolve) => globalThis.setTimeout(() => resolve(null), ADMIT_ASK_MS)),
+    ]);
     if (!r || r.go !== false) return null;
-    return { position: Math.max(1, Math.trunc(Number(r.position) || 1)), wait: Math.max(ADMIT_WAIT_MIN_MS, Math.trunc(Number(r.wait) || ADMIT_WAIT_MIN_MS)) };
+    return {
+      position: Math.max(1, Math.trunc(Number(r.position) || 1)),
+      wait: Math.max(ADMIT_WAIT_MIN_MS, Math.trunc(Number(r.wait) || ADMIT_WAIT_MIN_MS)),
+    };
   } catch {
     return null;
   }

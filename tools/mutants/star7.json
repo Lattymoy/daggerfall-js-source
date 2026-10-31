@@ -38,8 +38,8 @@
  {
   "name": "STAR7-a-guest-counted",
   "file": "server-account/src/stars.js",
-  "old": "if (!player.handle) {   // a guest",
-  "new": "if (false) {   // a guest",
+  "old": "  if (!player.handle) {",
+  "new": "  if (false) {",
   "tests": [
    "test/net/starfall/star7_service.test.js"
   ]
@@ -74,8 +74,9 @@
  {
   "name": "STAR7-the-cards-silent",
   "file": "server-account/src/index.js",
-  "old": "sds: await sdRecordOf(ctx, who.player.id), stars: await starRecordOf(ctx, who.player.id), ketch: await ketchRecordOf(ctx, who.player.id), renown:",
-  "new": "sds: await sdRecordOf(ctx, who.player.id), ketch: await ketchRecordOf(ctx, who.player.id), renown:",
+  "old": "sds, stars, ketch, renown, marks }",
+  "new": "sds, ketch, renown, marks }",
+  "note": "AURA-FAST (re-aimed by content): the reads asked together, the field dropped from the answer.",
   "tests": [
    "test/net/starfall/star7_service.test.js"
   ]
@@ -83,8 +84,9 @@
  {
   "name": "STAR7-the-public-card-silent",
   "file": "server-account/src/index.js",
-  "old": "sds: await sdRecordOf(ctx, body.id), stars: await starRecordOf(ctx, body.id), ketch: await ketchRecordOf(ctx, body.id) }",
-  "new": "sds: await sdRecordOf(ctx, body.id), ketch: await ketchRecordOf(ctx, body.id) }",
+  "old": "sds, stars, ketch }",
+  "new": "sds, ketch }",
+  "note": "AURA-FAST (re-aimed by content): the reads asked together, the field dropped from the answer.",
   "tests": [
    "test/net/starfall/star7_service.test.js"
   ]
@@ -92,8 +94,8 @@
  {
   "name": "STAR7-the-renown-unspent",
   "file": "server-account/src/progress.js",
-  "old": "case '/v1/star/claim': if (a.recorded === true) add('renown', n(a.renown?.credited)); break;",
-  "new": "case '/v1/star/claim': break;",
+  "old": "      if (a.recorded === true) add('renown', n(a.renown?.credited));\n      break; // STAR7: the Renown a star paid (its count is bounded by the day - stars.js STAR_CLAIMS_DAY_MAX)",
+  "new": "      break; // STAR7: the Renown a star paid (its count is bounded by the day - stars.js STAR_CLAIMS_DAY_MAX)",
   "tests": [
    "test/net/starfall/star7_service.test.js"
   ]
@@ -110,8 +112,8 @@
  {
   "name": "STAR7-silk-number",
   "file": "src/systems/sigil/sigilSets.js",
-  "old": "tier(4, 'bound-in-silk', 'Bound in Silk', { more: [60, 140] },",
-  "new": "tier(4, 'bound-in-silk', 'Bound in Silk', { more: [50, 140] },",
+  "old": "        { more: [60, 140] },",
+  "new": "        { more: [50, 140] },",
   "tests": [
    "test/systems/starfall/star7_rewards.test.js"
   ]
@@ -182,8 +184,8 @@
  {
   "name": "STAR7-thread-frost",
   "file": "src/systems/sigil/sigilSetPowers.js",
-  "old": "if (thread) { add(m().resist, 'poison', thread.poison);",
-  "new": "if (thread) { add(m().resist, 'frost', thread.poison);",
+  "old": "    add(m().resist, 'poison', thread.poison);",
+  "new": "    add(m().resist, 'frost', thread.poison);",
   "tests": [
    "test/systems/starfall/star7_rewards.test.js"
   ]
@@ -200,7 +202,7 @@
  {
   "name": "STAR7-silk-never-cut",
   "file": "src/systems/sigil/sigilSetPowers.js",
-  "old": "  if (had >= STRAND_HITS - 1) _s.strands.delete(target);   // the held blow landed\n  else if (whole) _s.strands.set(target, { n: had + 1, until: now + STRAND_SECONDS });",
+  "old": "  if (had >= STRAND_HITS - 1)\n    _s.strands.delete(target); // the held blow landed\n  else if (whole) _s.strands.set(target, { n: had + 1, until: now + STRAND_SECONDS });",
   "new": "  if (whole) _s.strands.set(target, { n: had + 1, until: now + STRAND_SECONDS });",
   "tests": [
    "test/systems/starfall/star7_rewards.test.js"
@@ -218,8 +220,8 @@
  {
   "name": "STAR7-one-count-moved",
   "file": "src/systems/sigil/sigilSetPowers.js",
-  "old": "const now = _now(), had = strandsAt(target, now);",
-  "new": "const now = _now(), had = strandsAt(_s.strandFoe === target ? target : null, now);",
+  "old": "    had = strandsAt(target, now);",
+  "new": "    had = strandsAt(_s.strandFoe === target ? target : null, now);",
   "tests": [
    "test/systems/starfall/star7_rewards.test.js"
   ]
@@ -227,8 +229,8 @@
  {
   "name": "STAR7-death-kept",
   "file": "src/systems/sigil/sigilSetPowers.js",
-  "old": "  if (entity) _s.strands.delete(entity);   // STAR7: and its strands\n",
-  "new": "",
+  "old": "  if (entity) _s.strands.delete(entity); // STAR7: and its strands\n  if (t.get('thieftaker')?.[2]) markNext(door, entity, now);",
+  "new": "  if (t.get('thieftaker')?.[2]) markNext(door, entity, now);",
   "tests": [
    "test/systems/starfall/star7_rewards.test.js"
   ]
@@ -254,8 +256,8 @@
  {
   "name": "STAR7-veil-unheard",
   "file": "src/systems/sigil/sigilSetPowers.js",
-  "old": "  veil(entity, before, after, saved);   // STAR7: Mephala's Veil - Shed Skin's crossing, at its own line\n",
-  "new": "",
+  "old": "  veil(entity, before, after, saved); // STAR7: Mephala's Veil - Shed Skin's crossing, at its own line\n  const v = tierOf(entity, 'ruhn', 2);",
+  "new": "  const v = tierOf(entity, 'ruhn', 2);",
   "tests": [
    "test/systems/starfall/star7_rewards.test.js"
   ]
@@ -272,8 +274,8 @@
  {
   "name": "STAR7-glass-unstacked",
   "file": "src/systems/starfall/starglassRow.js",
-  "old": "basePrice: 400, rarity: 20, stackable: true,",
-  "new": "basePrice: 400, rarity: 20, stackable: false,",
+  "old": "  stackable: true,",
+  "new": "  stackable: false,",
   "tests": [
    "test/systems/starfall/star7_rewards.test.js"
   ]
@@ -290,8 +292,8 @@
  {
   "name": "STAR7-ground-unclear",
   "file": "src/world/starfall/starglassArt.js",
-  "old": "  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (!starglassTexel(x, y) && !outline.has(y * w + x)) { const i = (y * w + x) * 4; img.colors[i] = 0; img.colors[i + 1] = 0; img.colors[i + 2] = 0; }\n",
-  "new": "",
+  "old": "  for (let y = 0; y < h; y++)\n    for (let x = 0; x < w; x++)\n      if (!starglassTexel(x, y) && !outline.has(y * w + x)) {\n        const i = (y * w + x) * 4;\n        img.colors[i] = 0;\n        img.colors[i + 1] = 0;\n        img.colors[i + 2] = 0;\n      }\n  return img;",
+  "new": "  return img;",
   "tests": [
    "test/systems/starfall/star7_rewards.test.js"
   ]
@@ -344,8 +346,8 @@
  {
   "name": "STAR7-list-order",
   "file": "src/systems/starfall/starSpoils.js",
-  "old": "{ kind: 'item', item: s.starglass, tier: 'common' }, { kind: 'gold', gold: s.gold, tier: 'common' }];",
-  "new": "{ kind: 'gold', gold: s.gold, tier: 'common' }, { kind: 'item', item: s.starglass, tier: 'common' }];",
+  "old": "    { kind: 'item', item: s.starglass, tier: 'common' },\n    { kind: 'gold', gold: s.gold, tier: 'common' },",
+  "new": "    { kind: 'gold', gold: s.gold, tier: 'common' },\n    { kind: 'item', item: s.starglass, tier: 'common' },",
   "tests": [
    "test/systems/starfall/star7_rewards.test.js"
   ]
@@ -353,8 +355,8 @@
  {
   "name": "STAR7-no-act",
   "file": "src/net/starfall/starClaims.js",
-  "old": "const noteStar = (heart) => { noteAct('star-held'); if (heart)",
-  "new": "const noteStar = (heart) => { if (heart)",
+  "old": "    noteAct('star-held');\n    if (heart) noteAct('heart-star-held');",
+  "new": "    if (heart) noteAct('heart-star-held');",
   "tests": [
    "test/net/starfall/star7_claims.test.js"
   ]
@@ -362,8 +364,8 @@
  {
   "name": "STAR7-settled-forgotten",
   "file": "src/net/starfall/starClaims.js",
-  "old": "settled.add(e.r); markSettled(live(e.r)); keep(",
-  "new": "keep(",
+  "old": "          settled.add(e.r);\n          markSettled(live(e.r));\n          keep(kept().filter((k) => k.r !== e.r));",
+  "new": "          keep(kept().filter((k) => k.r !== e.r));",
   "tests": [
    "test/net/starfall/star7_claims.test.js"
   ]
@@ -371,8 +373,8 @@
  {
   "name": "STAR7-any-account",
   "file": "src/net/starfall/starClaims.js",
-  "old": "if (!mine || live(e.r)?.s !== mine) continue;   // another account's waits for its own sign-in",
-  "new": "if (!mine) continue;   // another account's waits for its own sign-in",
+  "old": "        if (!mine || live(e.r)?.s !== mine) continue; // another account's waits for its own sign-in",
+  "new": "        if (!mine) continue; // another account's waits for its own sign-in",
   "tests": [
    "test/net/starfall/star7_claims.test.js"
   ]
@@ -407,8 +409,8 @@
  {
   "name": "STAR7-expiry-ignored",
   "file": "src/net/starfall/starClaims.js",
-  "old": "return c && c.signed && (now == null || c.e > now) ? c : null; };",
-  "new": "return c && c.signed ? c : null; };",
+  "old": "    return c && c.signed && (now == null || c.e > now) ? c : null;",
+  "new": "    return c && c.signed ? c : null;",
   "tests": [
    "test/net/starfall/star7_claims.test.js"
   ]
@@ -425,8 +427,8 @@
  {
   "name": "STAR7-recovery-keyless",
   "file": "src/scenes/starfall/starRewards.js",
-  "old": "onHanded: (rec) => spoils.adopt(rec), key: STAR_SPOILS_KEYS.store, inSave })",
-  "new": "onHanded: (rec) => spoils.adopt(rec), key: STAR_SPOILS_KEYS.day, inSave })",
+  "old": "            key: STAR_SPOILS_KEYS.store,",
+  "new": "            key: STAR_SPOILS_KEYS.day,",
   "tests": [
    "test/net/starfall/star7_claims.test.js"
   ]
@@ -461,8 +463,8 @@
  {
   "name": "STAR7-capped-unnamed",
   "file": "src/net/marksBook.js",
-  "old": "kind === 'star' ? MARKS_TEXT.cappedStar() : ",
-  "new": "",
+  "old": "              : kind === 'star'\n                ? MARKS_TEXT.cappedStar()\n                : MARKS_TEXT.capped",
+  "new": "              : MARKS_TEXT.capped",
   "tests": [
    "test/net/silverways_client.test.js"
   ]
@@ -470,8 +472,8 @@
  {
   "name": "B3-the-fill-out-of-the-batch",
   "file": "server-account/src/stars.js",
-  "old": "    spoilsGrantStatement(db, player.id, 0, `EXISTS (SELECT 1 FROM stars_held WHERE star = ?5 AND account = ?1 AND nonce = ?6)`, key, nonce),\n",
-  "new": "",
+  "old": "    spoilsGrantStatement(\n      db,\n      player.id,\n      0,\n      `EXISTS (SELECT 1 FROM stars_held WHERE star = ?5 AND account = ?1 AND nonce = ?6)`,\n      key,\n      nonce,\n    ),\n  ]);",
+  "new": "  ]);",
   "tests": [
    "test/net/starfall/star7_service.test.js"
   ],
@@ -480,8 +482,8 @@
  {
   "name": "B3-the-fill-unguarded",
   "file": "server-account/src/stars.js",
-  "old": "`EXISTS (SELECT 1 FROM stars_held WHERE star = ?5 AND account = ?1 AND nonce = ?6)`, key, nonce)",
-  "new": "`EXISTS (SELECT 1 FROM stars_held WHERE star = ?5 AND account = ?1 AND nonce = ?6) OR 1`, key, nonce)",
+  "old": "      `EXISTS (SELECT 1 FROM stars_held WHERE star = ?5 AND account = ?1 AND nonce = ?6)`,",
+  "new": "      `EXISTS (SELECT 1 FROM stars_held WHERE star = ?5 AND account = ?1 AND nonce = ?6) OR 1`,",
   "tests": [
    "test/net/starfall/star7_service.test.js"
   ],
@@ -510,8 +512,8 @@
  {
   "name": "B3-the-snapshot-unsaid",
   "file": "server-account/src/stars.js",
-  "old": "level: renownForXp(now.xp), credited: paid,",
-  "new": "level: renownForXp(now.xp), credited: 0,",
+  "old": "            credited: paid,",
+  "new": "            credited: 0,",
   "tests": [
    "test/net/starfall/star7_service.test.js"
   ],
@@ -560,8 +562,8 @@
  {
   "name": "STAR7-act-for-anyone",
   "file": "src/net/starfall/starClaims.js",
-  "old": "    if (ch && ch === e.ch) { noteStar(heart); return; }\n",
-  "new": "    { noteStar(heart); return; }\n",
+  "old": "    if (ch && ch === e.ch) {",
+  "new": "    {",
   "tests": [
    "test/net/starfall/star7_claims.test.js"
   ],
@@ -590,8 +592,8 @@
  {
   "name": "STAR7-owed-unpaid",
   "file": "src/net/starfall/starClaims.js",
-  "old": "      payOwed();   // AUDIT STARFALL 7: an act owed the character standing now\n",
-  "new": "",
+  "old": "      payOwed(); // AUDIT STARFALL 7: an act owed the character standing now\n      const mine = me(),",
+  "new": "      const mine = me(),",
   "tests": [
    "test/net/starfall/star7_claims.test.js"
   ],
@@ -600,8 +602,8 @@
  {
   "name": "STAR7-who-unhanded",
   "file": "src/scenes/starfall/starRewards.js",
-  "old": "claim: account.claim, me: account.me, who,",
-  "new": "claim: account.claim, me: account.me,",
+  "old": "    me: account.me,\n    who, // AUDIT STARFALL 7: a star's act belongs to the character that held it, noted while it stands",
+  "new": "    me: account.me, // AUDIT STARFALL 7: a star's act belongs to the character that held it, noted while it stands",
   "tests": [
    "test/net/starfall/star7_claims.test.js"
   ],

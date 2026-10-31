@@ -2,7 +2,7 @@
   {
     "name": "INSTANCES-STRANGER-ADMITTED",
     "file": "src/net/instanceRoom.js",
-    "old": "  return typeof kin === 'function' && await kin(subject, r.owner) ? 'party' : null;",
+    "old": "  return typeof kin === 'function' && (await kin(subject, r.owner)) ? 'party' : null;",
     "new": "  return 'party';",
     "tests": [
       "test/net/instances1.test.js",
@@ -13,8 +13,8 @@
   {
     "name": "INSTANCES-STAFF-REFUSED",
     "file": "src/net/instanceRoom.js",
-    "old": "  if (staff) return 'staff';\n",
-    "new": "",
+    "old": "  if (staff) return 'staff';\n  if (r.owner === (await instanceOwnerOf(subject))) return 'owner';",
+    "new": "  if (r.owner === (await instanceOwnerOf(subject))) return 'owner';",
     "tests": [
       "test/net/instances1.test.js"
     ],
@@ -33,8 +33,8 @@
   {
     "name": "INSTANCES-PARTY-NOT-ASKERS",
     "file": "src/net/instanceRoom.js",
-    "old": "!Array.isArray(members) || !members.includes(subject) ||",
-    "new": "!Array.isArray(members) ||",
+    "old": "  if (!Array.isArray(members) || !members.includes(subject) || typeof owner !== 'string' || !OWNER_RE.test(owner))\n    return false;",
+    "new": "  if (!Array.isArray(members) || typeof owner !== 'string' || !OWNER_RE.test(owner)) return false;",
     "tests": [
       "test/net/instances1.test.js"
     ],
@@ -127,8 +127,8 @@
   {
     "name": "INSTANCES-HOLD-PUBLIC",
     "file": "src/systems/instancePlaces.js",
-    "old": "  if (!isHold && !publicLast) rows.push({ kind: 'public' });",
-    "new": "  if (!publicLast) rows.push({ kind: 'public' });",
+    "old": "  const noPublic = isHold || startPublicShut({ startLair, questHere, relaid }); // START-INSTANCE (AUDIT S1: a public room laid whole stands it)",
+    "new": "  const noPublic = startPublicShut({ startLair, questHere, relaid }); // START-INSTANCE (AUDIT S1: a public room laid whole stands it)",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],
@@ -167,7 +167,7 @@
   {
     "name": "INSTANCES-QUEST-EPOCH-UNSAVED",
     "file": "src/systems/quest/quest.js",
-    "old": "    this.instanceEpoch = isInstanceEpoch(data.instanceEpoch) ? data.instanceEpoch : null;   // INSTANCES: an older envelope's quest mints one at its first instance",
+    "old": "    this.instanceEpoch = isInstanceEpoch(data.instanceEpoch) ? data.instanceEpoch : null; // INSTANCES: an older envelope's quest mints one at its first instance",
     "new": "    this.instanceEpoch = null;",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
@@ -177,8 +177,8 @@
   {
     "name": "INSTANCES-COPY-TAKES-SENDERS",
     "file": "src/systems/quest/machine.js",
-    "old": "    questData = { ...this._onThisClock(questData), ...NO_SHELF, ...NO_INSTANCE, ql: receivedState(questData.ql) };   // TIME3: the sender's countdowns, on this character's clock; QL1: the party's progress, this holder's reward unpaid",
-    "new": "    questData = { ...this._onThisClock(questData), ...NO_SHELF, ql: receivedState(questData.ql) };   // TIME3: the sender's countdowns, on this character's clock; QL1: the party's progress, this holder's reward unpaid",
+    "old": "    questData = { ...this._onThisClock(questData), ...NO_SHELF, ...NO_INSTANCE, ql: receivedState(questData.ql) }; // TIME3: the sender's countdowns, on this character's clock; QL1: the party's progress, this holder's reward unpaid",
+    "new": "    questData = { ...this._onThisClock(questData), ...NO_SHELF, ql: receivedState(questData.ql) }; // TIME3: the sender's countdowns, on this character's clock; QL1: the party's progress, this holder's reward unpaid",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],
@@ -187,7 +187,7 @@
   {
     "name": "INSTANCES-RESYNC-TAKES-PARTNERS",
     "file": "src/systems/quest/machine.js",
-    "old": "    quest.restoreSaveData({ ...questData, uid, instanceEpoch: quest.instanceEpoch ?? null }, this._saveResolvers());   // INSTANCES: and its instance - this copy's own (NO_INSTANCE)",
+    "old": "    quest.restoreSaveData({ ...questData, uid, instanceEpoch: quest.instanceEpoch ?? null }, this._saveResolvers()); // INSTANCES: and its instance - this copy's own (NO_INSTANCE)",
     "new": "    quest.restoreSaveData({ ...questData, uid }, this._saveResolvers());",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
@@ -258,8 +258,8 @@
   {
     "name": "INSTANCES-PARTNER-ANY-PLACE",
     "file": "src/systems/instancePlaces.js",
-    "old": "    if (!r || r.base !== base || out.some(",
-    "new": "    if (!r || out.some(",
+    "old": "    if (!r || r.base !== base || out.some((o) => o.owner === r.owner && o.epoch === r.epoch)) continue;",
+    "new": "    if (!r || out.some((o) => o.owner === r.owner && o.epoch === r.epoch)) continue;",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],
@@ -348,8 +348,8 @@
   {
     "name": "INSTANCES-LEAVE-ENTERS",
     "file": "src/scenes/instanceDoor.js",
-    "old": "    async atDoor(site, go) { const entry = await choose(site); return entry ? go(entry) : true; },",
-    "new": "    async atDoor(site, go) { const entry = await choose(site); return go(entry); },",
+    "old": "      return entry ? go(entry) : true;",
+    "new": "      return go(entry);",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],
@@ -378,8 +378,8 @@
   {
     "name": "INSTANCES-RECORD-UNCHECKED",
     "file": "src/scenes/instanceDoor.js",
-    "old": "if (ok && await stillHeld(site, inst, recorded.staff === true)) return",
-    "new": "if (ok && inst) return",
+    "old": "      if (ok && (await stillHeld(site, inst, recorded.staff === true))) return { instance: inst, whole: true };",
+    "new": "      if (ok && inst) return { instance: inst, whole: true };",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],
@@ -398,8 +398,8 @@
   {
     "name": "INSTANCES-PARTY-APART",
     "file": "src/scenes/instanceDoor.js",
-    "old": "    if (partner) return { instance: { owner: partner.owner, epoch: partner.epoch }, whole: true };\n",
-    "new": "",
+    "old": "    if (partner) return { instance: { owner: partner.owner, epoch: partner.epoch }, whole: true };\n    const inst = await mine(site);",
+    "new": "    const inst = await mine(site);",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],
@@ -418,8 +418,8 @@
   {
     "name": "INSTANCES-REFUSED-EVERY-FRAME",
     "file": "src/scenes/instanceDoor.js",
-    "old": " || !isInstanceRoom(room) || refusedRoom === room) return false;",
-    "new": " || !isInstanceRoom(room)) return false;",
+    "old": "      if (!session?.terminal || session.error !== INSTANCE_DOOR_WORD || !isInstanceRoom(room) || refusedRoom === room)\n        return false;",
+    "new": "      if (!session?.terminal || session.error !== INSTANCE_DOOR_WORD || !isInstanceRoom(room)) return false;",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],
@@ -469,8 +469,8 @@
   {
     "name": "INSTANCES-STAFF-DEST-DROPS",
     "file": "src/net/staffTeleport.js",
-    "old": "...insOf(d), ...(d.whole === true || d.ins != null ? { whole: true } : {}) };",
-    "new": "};",
+    "old": "    return {\n      ...out,\n      mapId: d.mapId,\n      ...(d.locationKey != null ? { locationKey: d.locationKey } : {}),\n      ...insOf(d),\n      ...(d.whole === true || d.ins != null ? { whole: true } : {}),\n    };",
+    "new": "    return { ...out, mapId: d.mapId, ...(d.locationKey != null ? { locationKey: d.locationKey } : {}) };",
     "tests": [
       "test/net/staffTeleport.test.js"
     ],
@@ -489,8 +489,8 @@
   {
     "name": "INSTANCES-ZONE-INSTANCED",
     "file": "src/scenes/instanceDoor.js",
-    "old": " && !keepsNone(site) && !deps.wild?.();",
-    "new": " && !keepsNone(site);",
+    "old": "  const can = (site) => online() && !!deps.instanceOk?.() && !keepsNone(site) && !deps.wild?.();",
+    "new": "  const can = (site) => online() && !!deps.instanceOk?.() && !keepsNone(site);",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],
@@ -499,8 +499,8 @@
   {
     "name": "INSTANCES-ANCHOR-FORGETS",
     "file": "src/systems/teleportAnchor.js",
-    "old": "    dungeon: insideDungeon && dungeon ? { ...(instanceOfWord(dungeon.ins) ? { ins: dungeon.ins } : {}), whole: dungeon.whole === true } : null,",
-    "new": "    dungeon: null,",
+    "old": "    dungeon:\n      insideDungeon && dungeon\n        ? { ...(instanceOfWord(dungeon.ins) ? { ins: dungeon.ins } : {}), whole: dungeon.whole === true }\n        : null, // INSTANCES (the audit)",
+    "new": "    dungeon: null, // INSTANCES (the audit)",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],

@@ -18,14 +18,22 @@
 // Pure: every answer is the city's metres (x east, z south) and depths under the street's ground (metres down to the
 // sewer's floor, its invert).
 import { IMPERIAL, imperialRoads, polar, imperialBearing, imperialLand, pointSeg } from './imperialCity.js';
-import { fabricStreetsIn } from './imperialFabric.js';   // the branches under the districts' own streets
+import { fabricStreetsIn } from './imperialFabric.js'; // the branches under the districts' own streets
 
 /** The sewers' measures: a main's width and height, a branch's; a main's invert under Green Emperor Way, its fall a metre
  *  out; a ring's fall a metre along toward a radial, its drop into one; a branch's depth; the covers' spacing. */
 export const IMPERIAL_SEWERS = Object.freeze({
-  main: Object.freeze({ w: 2.4, h: 2.8 }), branch: Object.freeze({ w: 1.2, h: 1.6 }),
-  headDepth: 5, MAIN_FALL: 1 / 500, RING_FALL: 1 / 1000, RING_DROP: 0.6, branchDepth: 2.6,
-  manholeEvery: 60, branchManhole: 40, coverR: 0.6, gateOut: 0.4,
+  main: Object.freeze({ w: 2.4, h: 2.8 }),
+  branch: Object.freeze({ w: 1.2, h: 1.6 }),
+  headDepth: 5,
+  MAIN_FALL: 1 / 500,
+  RING_FALL: 1 / 1000,
+  RING_DROP: 0.6,
+  branchDepth: 2.6,
+  manholeEvery: 60,
+  branchManhole: 40,
+  coverR: 0.6,
+  gateOut: 0.4,
 });
 const S = IMPERIAL_SEWERS;
 
@@ -38,7 +46,7 @@ export const radialDepthAt = (r) => S.headDepth + Math.max(0, r - IMPERIAL.way.r
 export function outfallAt(b, I = IMPERIAL) {
   let r = I.cityWall.r + 20;
   while (r < I.lake && imperialLand(...polar(b, r), I)) r += 4;
-  return polar(b, r - 4);   // the last step on land: its mouth on the shore, the water a step on
+  return polar(b, r - 4); // the last step on land: its mouth on the shore, the water a step on
 }
 
 let _mains = null;
@@ -50,47 +58,101 @@ let _mains = null;
  */
 export function imperialSewerMains(I = IMPERIAL) {
   if (_mains && I === IMPERIAL) return _mains;
-  const roads = imperialRoads(I), out = [];
+  const roads = imperialRoads(I),
+    out = [];
   const radials = roads.filter((r) => r.kind === 'avenue' || r.kind === 'radial').sort((a, b) => a.b - b.b);
   for (const rd of radials) {
-    const head = rd.kind === 'avenue' ? (I.way.r0 + I.way.r1) / 2 : I.palaceWall.r + 10, end = I.cityWall.r;
+    const head = rd.kind === 'avenue' ? (I.way.r0 + I.way.r1) / 2 : I.palaceWall.r + 10,
+      end = I.cityWall.r;
     const id = `${rd.kind}:${rd.b}`;
-    out.push({ id, kind: 'radial', b: rd.b, path: [polar(rd.b, head), polar(rd.b, end)], depth0: radialDepthAt(head), depth1: radialDepthAt(end), w: S.main.w, h: S.main.h, into: `outfall:${rd.b}` });
-    const fall = outfallAt(rd.b, I), rEnd = Math.hypot(...fall);
-    out.push({ id: `outfall:${rd.b}`, kind: 'outfall', b: rd.b, path: [polar(rd.b, end), fall], depth0: radialDepthAt(end), depth1: radialDepthAt(rEnd), w: S.main.w, h: S.main.h, into: 'lake' });
+    out.push({
+      id,
+      kind: 'radial',
+      b: rd.b,
+      path: [polar(rd.b, head), polar(rd.b, end)],
+      depth0: radialDepthAt(head),
+      depth1: radialDepthAt(end),
+      w: S.main.w,
+      h: S.main.h,
+      into: `outfall:${rd.b}`,
+    });
+    const fall = outfallAt(rd.b, I),
+      rEnd = Math.hypot(...fall);
+    out.push({
+      id: `outfall:${rd.b}`,
+      kind: 'outfall',
+      b: rd.b,
+      path: [polar(rd.b, end), fall],
+      depth0: radialDepthAt(end),
+      depth1: radialDepthAt(rEnd),
+      w: S.main.w,
+      h: S.main.h,
+      into: 'lake',
+    });
   }
   // the rings: a run from the middle between two radials to each of them
   for (const ring of roads.filter((r) => r.kind === 'ring' || r.kind === 'way')) {
     const meets = ring.kind === 'way' ? radials.filter((rd) => rd.kind === 'avenue') : radials;
     for (let k = 0; k < meets.length; k++) {
-      const a = meets[k].b, b = k + 1 < meets.length ? meets[k + 1].b : meets[0].b + 360, mid = (a + b) / 2;
-      const span = ((b - a) / 2) * (Math.PI / 180) * ring.r;   // metres from the middle to either radial
-      const dJoin = radialDepthAt(ring.r) - S.RING_DROP, dMid = Math.max(1.5, dJoin - span * S.RING_FALL);
-      for (const { to, rb } of [{ to: meets[k], rb: a }, { to: k + 1 < meets.length ? meets[k + 1] : meets[0], rb: b }]) {
+      const a = meets[k].b,
+        b = k + 1 < meets.length ? meets[k + 1].b : meets[0].b + 360,
+        mid = (a + b) / 2;
+      const span = ((b - a) / 2) * (Math.PI / 180) * ring.r; // metres from the middle to either radial
+      const dJoin = radialDepthAt(ring.r) - S.RING_DROP,
+        dMid = Math.max(1.5, dJoin - span * S.RING_FALL);
+      for (const { to, rb } of [
+        { to: meets[k], rb: a },
+        { to: k + 1 < meets.length ? meets[k + 1] : meets[0], rb: b },
+      ]) {
         const path = [];
         for (let i = 0; i <= 8; i++) path.push(polar(mid + ((rb - mid) * i) / 8, ring.r));
-        out.push({ id: `${ring.kind}:${ring.r}:${mid.toFixed(1)}>${to.b}`, kind: ring.kind === 'way' ? 'way' : 'ring', r: ring.r, path, depth0: dMid, depth1: dJoin, w: S.main.w, h: S.main.h, into: `${to.kind}:${to.b}` });
+        out.push({
+          id: `${ring.kind}:${ring.r}:${mid.toFixed(1)}>${to.b}`,
+          kind: ring.kind === 'way' ? 'way' : 'ring',
+          r: ring.r,
+          path,
+          depth0: dMid,
+          depth1: dJoin,
+          w: S.main.w,
+          h: S.main.h,
+          into: `${to.kind}:${to.b}`,
+        });
       }
     }
   }
-  const frozen = Object.freeze(out.map((m) => Object.freeze({ ...m, path: Object.freeze(m.path.map((p) => Object.freeze(p))) })));
+  const frozen = Object.freeze(
+    out.map((m) => Object.freeze({ ...m, path: Object.freeze(m.path.map((p) => Object.freeze(p))) })),
+  );
   if (I === IMPERIAL) _mains = frozen;
   return frozen;
 }
 /** THE OUTFALLS: each culvert's end at the lake - `{ id, at, b }`. */
-export const imperialSewerOutfalls = (I = IMPERIAL) => imperialSewerMains(I).filter((m) => m.kind === 'outfall').map((m) => Object.freeze({ id: m.id, at: m.path[m.path.length - 1], b: m.b }));
+export const imperialSewerOutfalls = (I = IMPERIAL) =>
+  imperialSewerMains(I)
+    .filter((m) => m.kind === 'outfall')
+    .map((m) => Object.freeze({ id: m.id, at: m.path[m.path.length - 1], b: m.b }));
 
 /** A main's depth at a point along it (its nearest point's share of the way from its head). */
 export function mainDepthAt(m, x, z) {
-  let best = Infinity, at = 0, total = 0;
+  let best = Infinity,
+    at = 0,
+    total = 0;
   const lens = [];
-  for (let i = 0; i + 1 < m.path.length; i++) { const l = Math.hypot(m.path[i + 1][0] - m.path[i][0], m.path[i + 1][1] - m.path[i][1]); lens.push(l); total += l; }
+  for (let i = 0; i + 1 < m.path.length; i++) {
+    const l = Math.hypot(m.path[i + 1][0] - m.path[i][0], m.path[i + 1][1] - m.path[i][1]);
+    lens.push(l);
+    total += l;
+  }
   let run = 0;
   for (let i = 0; i + 1 < m.path.length; i++) {
-    const a = m.path[i], b = m.path[i + 1], d = pointSeg(x, z, a, b);
+    const a = m.path[i],
+      b = m.path[i + 1],
+      d = pointSeg(x, z, a, b);
     if (d < best) {
-      const l2 = lens[i] ** 2, t = l2 ? Math.max(0, Math.min(1, ((x - a[0]) * (b[0] - a[0]) + (z - a[1]) * (b[1] - a[1])) / l2)) : 0;
-      best = d; at = run + t * lens[i];
+      const l2 = lens[i] ** 2,
+        t = l2 ? Math.max(0, Math.min(1, ((x - a[0]) * (b[0] - a[0]) + (z - a[1]) * (b[1] - a[1])) / l2)) : 0;
+      best = d;
+      at = run + t * lens[i];
     }
     run += lens[i];
   }
@@ -103,44 +165,84 @@ export function mainDepthAt(m, x, z) {
  * it, `gateOut` short of the road's edge.
  */
 export function sewerCoversIn(x0, z0, x1, z1, I = IMPERIAL) {
-  const out = [], roads = imperialRoads(I);
-  const widthOf = (m) => (m.kind === 'radial' ? roads.find((r) => (r.kind === 'avenue' || r.kind === 'radial') && r.b === m.b)?.w : roads.find((r) => (r.kind === 'ring' || r.kind === 'way') && r.r === m.r)?.w) ?? 16;
+  const out = [],
+    roads = imperialRoads(I);
+  const widthOf = (m) =>
+    (m.kind === 'radial'
+      ? roads.find((r) => (r.kind === 'avenue' || r.kind === 'radial') && r.b === m.b)?.w
+      : roads.find((r) => (r.kind === 'ring' || r.kind === 'way') && r.r === m.r)?.w) ?? 16;
   for (const m of imperialSewerMains(I)) {
     if (m.kind === 'outfall') continue;
     const w = widthOf(m);
     for (let i = 0; i + 1 < m.path.length; i++) {
-      const a = m.path[i], b = m.path[i + 1], len = Math.hypot(b[0] - a[0], b[1] - a[1]);
-      if (Math.max(a[0], b[0]) < x0 - w || Math.min(a[0], b[0]) > x1 + w || Math.max(a[1], b[1]) < z0 - w || Math.min(a[1], b[1]) > z1 + w) continue;
-      const t = [(b[0] - a[0]) / len, (b[1] - a[1]) / len], n = [-t[1], t[0]];
+      const a = m.path[i],
+        b = m.path[i + 1],
+        len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      if (
+        Math.max(a[0], b[0]) < x0 - w ||
+        Math.min(a[0], b[0]) > x1 + w ||
+        Math.max(a[1], b[1]) < z0 - w ||
+        Math.min(a[1], b[1]) > z1 + w
+      )
+        continue;
+      const t = [(b[0] - a[0]) / len, (b[1] - a[1]) / len],
+        n = [-t[1], t[0]];
       // the covers at whole spacings along the main from its head, so two runs that share a point share its cover
-      for (let s = Math.ceil(1e-6 + runBefore(m, i) / S.manholeEvery) * S.manholeEvery - runBefore(m, i); s < len; s += S.manholeEvery) {
+      for (
+        let s = Math.ceil(1e-6 + runBefore(m, i) / S.manholeEvery) * S.manholeEvery - runBefore(m, i);
+        s < len;
+        s += S.manholeEvery
+      ) {
         const p = [a[0] + t[0] * s, a[1] + t[1] * s];
         if (p[0] < x0 || p[0] >= x1 || p[1] < z0 || p[1] >= z1) continue;
         out.push({ at: p, kind: 'manhole', main: m.id });
-        for (const side of [1, -1]) out.push({ at: [p[0] + n[0] * side * (w / 2 - S.gateOut), p[1] + n[1] * side * (w / 2 - S.gateOut)], kind: 'grate', main: m.id });
+        for (const side of [1, -1])
+          out.push({
+            at: [p[0] + n[0] * side * (w / 2 - S.gateOut), p[1] + n[1] * side * (w / 2 - S.gateOut)],
+            kind: 'grate',
+            main: m.id,
+          });
       }
     }
   }
   return out;
 }
 /** A main's run up to its i-th point. */
-function runBefore(m, i) { let s = 0; for (let k = 0; k < i; k++) s += Math.hypot(m.path[k + 1][0] - m.path[k][0], m.path[k + 1][1] - m.path[k][1]); return s; }
+function runBefore(m, i) {
+  let s = 0;
+  for (let k = 0; k < i; k++) s += Math.hypot(m.path[k + 1][0] - m.path[k][0], m.path[k + 1][1] - m.path[k][1]);
+  return s;
+}
 
 /** The main under a point's road (within its road's half-width), or null - the one a branch or a grate pours into. */
 export function mainUnder(x, z, pad = 0, I = IMPERIAL) {
-  let best = null, bd = Infinity;
+  let best = null,
+    bd = Infinity;
   for (const m of imperialSewerMains(I)) {
     if (m.kind === 'outfall') continue;
-    for (let i = 0; i + 1 < m.path.length; i++) { const d = pointSeg(x, z, m.path[i], m.path[i + 1]); if (d < bd) { bd = d; best = m; } }
+    for (let i = 0; i + 1 < m.path.length; i++) {
+      const d = pointSeg(x, z, m.path[i], m.path[i + 1]);
+      if (d < bd) {
+        bd = d;
+        best = m;
+      }
+    }
   }
   return bd <= S.main.w / 2 + pad ? best : null;
 }
 /** The nearest main to a point - where a branch there drains. */
 export function nearestMain(x, z, I = IMPERIAL) {
-  let best = null, bd = Infinity;
+  let best = null,
+    bd = Infinity;
   for (const m of imperialSewerMains(I)) {
     if (m.kind === 'outfall') continue;
-    for (let i = 0; i + 1 < m.path.length; i++) { const d = pointSeg(x, z, m.path[i], m.path[i + 1]); if (d < bd) { bd = d; best = m; } }
+    for (let i = 0; i + 1 < m.path.length; i++) {
+      const d = pointSeg(x, z, m.path[i], m.path[i + 1]);
+      if (d < bd) {
+        bd = d;
+        best = m;
+      }
+    }
   }
   return best;
 }
@@ -155,12 +257,24 @@ export const sewerBearing = (x, z) => imperialBearing(x, z);
 export function sewerBranchesIn(r, c) {
   const branches = fabricStreetsIn(r, c).map((s) => {
     const m = nearestMain((s.a[0] + s.b[0]) / 2, (s.a[1] + s.b[1]) / 2);
-    return Object.freeze({ a: s.a, b: s.b, w: S.branch.w, depth: S.branchDepth, drainsTo: m?.id ?? null, street: s.kind });
+    return Object.freeze({
+      a: s.a,
+      b: s.b,
+      w: S.branch.w,
+      depth: S.branchDepth,
+      drainsTo: m?.id ?? null,
+      street: s.kind,
+    });
   });
   const covers = [];
   for (const br of branches) {
     const len = Math.hypot(br.b[0] - br.a[0], br.b[1] - br.a[1]);
-    for (let s = S.branchManhole / 2; s < len; s += S.branchManhole) covers.push({ at: [br.a[0] + ((br.b[0] - br.a[0]) * s) / len, br.a[1] + ((br.b[1] - br.a[1]) * s) / len], kind: 'manhole', main: br.drainsTo });
+    for (let s = S.branchManhole / 2; s < len; s += S.branchManhole)
+      covers.push({
+        at: [br.a[0] + ((br.b[0] - br.a[0]) * s) / len, br.a[1] + ((br.b[1] - br.a[1]) * s) / len],
+        kind: 'manhole',
+        main: br.drainsTo,
+      });
   }
   return { branches, covers };
 }

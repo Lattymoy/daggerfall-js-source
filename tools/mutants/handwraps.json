@@ -2,8 +2,8 @@
   {
     "name": "HANDWRAPS-metal-kept",
     "file": "src/combat/enemyEquipment.js",
-    "old": "  if (templateIndex === HAND_WRAPS_TEMPLATE) material = 0;",
-    "new": "  if (false) material = 0;",
+    "old": "  if (templateIndex === HAND_WRAPS_TEMPLATE) material = 0; // HAND-WRAPS: cloth - no metal, whatever the roll (systems/handWraps.js)",
+    "new": "  if (false) material = 0; // HAND-WRAPS: cloth - no metal, whatever the roll (systems/handWraps.js)",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "HANDWRAPS-shelf-metal",
     "file": "src/systems/item/itemTemplates.js",
-    "old": "  if (named.templateIndex === HAND_WRAPS_TEMPLATE) named.material = 0;",
-    "new": "",
+    "old": "  if (named.templateIndex === HAND_WRAPS_TEMPLATE) named.material = 0; // HAND-WRAPS: cloth, no metal (a shelf mints at a random one)",
+    "new": "  // HAND-WRAPS: cloth, no metal (a shelf mints at a random one)",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "HANDWRAPS-art",
     "file": "src/combat/fpsWeapon.js",
-    "old": "  if (isHandWraps(item)) return T.Melee;",
-    "new": "",
+    "old": "  if (isHandWraps(item)) return T.Melee; // HAND-WRAPS: the bare hands' art and swing, never a magic sheet (Melee has none)",
+    "new": "  // HAND-WRAPS: the bare hands' art and swing, never a magic sheet (Melee has none)",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "HANDWRAPS-skill",
     "file": "src/characters/weapons.js",
-    "old": "  if (templateIndex === HAND_WRAPS_TEMPLATE) return SKILLS.HandToHand;",
-    "new": "",
+    "old": "  if (templateIndex === HAND_WRAPS_TEMPLATE) return SKILLS.HandToHand; // HAND-WRAPS: the fists' own skill",
+    "new": "  // HAND-WRAPS: the fists' own skill",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "HANDWRAPS-pcaao-fists",
     "file": "src/combat/pcaao.js",
-    "old": "rolls, { unaware: !!unaware, wraps });   // BAL10: the host's word, for the fists' blow modifiers; HAND-WRAPS",
-    "new": "rolls, { unaware: !!unaware });   // BAL10: the host's word, for the fists' blow modifiers; HAND-WRAPS",
+    "old": "          wraps,\n        }); // BAL10: the host's word, for the fists' blow modifiers; HAND-WRAPS: and the wraps' lines (formulas.js)",
+    "new": "        }); // BAL10: the host's word, for the fists' blow modifiers; HAND-WRAPS: and the wraps' lines (formulas.js)",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "HANDWRAPS-lines-unread",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  const held = weapon ?? info?.wraps ?? null;   // HAND-WRAPS: a fist's blow carries its wraps' lines and powers",
-    "new": "  const held = weapon;   // HAND-WRAPS: a fist's blow carries its wraps' lines and powers",
+    "old": "  const held = weapon ?? info?.wraps ?? null; // HAND-WRAPS: a fist's blow carries its wraps' lines and powers (combat/formulas.js)",
+    "new": "  const held = weapon; // HAND-WRAPS: a fist's blow carries its wraps' lines and powers (combat/formulas.js)",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "HANDWRAPS-stats",
     "file": "src/combat/combatStats.js",
-    "old": "  const wraps = isHandWraps(held) ? held : null, weapon = wraps ? null : held;",
-    "new": "  const wraps = null, weapon = held;",
+    "old": "  const wraps = isHandWraps(held) ? held : null,\n    weapon = wraps ? null : held; // HAND-WRAPS: the fists' blow, the wraps' lines over it (combat/formulas.js)",
+    "new": "  const wraps = null,\n    weapon = held; // HAND-WRAPS: the fists' blow, the wraps' lines over it (combat/formulas.js)",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "WRAPS-AURA-dropped",
     "file": "src/systems/weaponGlow.js",
-    "old": "  if (isHandWraps(item)) return fistGlow(undefined, true);",
-    "new": "",
+    "old": "  if (isHandWraps(item)) return fistGlow(undefined, true); // WRAPS-AURA (mob: \"wraps are glowing without the aura on\"): wraps glow by the weapon aura alone",
+    "new": "  // WRAPS-AURA (mob: \"wraps are glowing without the aura on\"): wraps glow by the weapon aura alone",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -304,8 +304,8 @@
   {
     "name": "HANDWRAPS-peer",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    b.rig.setHandGlow?.(hands && weaponGlowOn() ? peerWrapsGlow(look) ?? (heldNow ? null : fistGlow(kit, true)) : null);",
-    "new": "",
+    "old": "    b.rig.setHandGlow?.(\n      hands && weaponGlowOn() ? (peerWrapsGlow(look) ?? (heldNow ? null : fistGlow(kit, true))) : null,\n    ); // HAND-WRAPS (AUDIT C2): their fists in their wraps' glow, whichever hand holds them",
+    "new": "    // HAND-WRAPS (AUDIT C2): their fists in their wraps' glow, whichever hand holds them",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -324,8 +324,8 @@
   {
     "name": "HANDWRAPS-peer-left",
     "file": "src/net/peer/peerBodies.js",
-    "old": "for (const w of [fistWrapsOf(R, L), fistWrapsOf(L, R)])",
-    "new": "for (const w of [fistWrapsOf(R, L)])",
+    "old": "  for (const w of [fistWrapsOf(R, L), fistWrapsOf(L, R)]) {",
+    "new": "  for (const w of [fistWrapsOf(R, L)]) {",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -394,8 +394,8 @@
   {
     "name": "HANDWRAPS-duel",
     "file": "src/combat/duelCombat.js",
-    "old": "  if (!item || isHandWraps(item) || !Number.isInteger(",
-    "new": "  if (!item || !Number.isInteger(",
+    "old": "    isHandWraps(item) ||\n    !Number.isInteger(item.templateIndex) ||",
+    "new": "    !Number.isInteger(item.templateIndex) ||",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],
@@ -404,8 +404,8 @@
   {
     "name": "HANDWRAPS-stoneskin",
     "file": "src/systems/bossTraits.js",
-    "old": "(!weapon || isHandWraps(weapon) || weaponSkillUsed",
-    "new": "(!weapon || weaponSkillUsed",
+    "old": "  kind === 'melee' && (!weapon || isHandWraps(weapon) || weaponSkillUsed(weapon.templateIndex) === SKILLS.BluntWeapon); // HAND-WRAPS (AUDIT B3): a fist in wraps is a fist",
+    "new": "  kind === 'melee' && (!weapon || weaponSkillUsed(weapon.templateIndex) === SKILLS.BluntWeapon); // HAND-WRAPS (AUDIT B3): a fist in wraps is a fist",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],
@@ -414,8 +414,8 @@
   {
     "name": "HANDWRAPS-bladeturning",
     "file": "src/systems/bossTraits.js",
-    "old": "!!weapon && !isHandWraps(weapon) && weaponSkillUsed",
-    "new": "!!weapon && weaponSkillUsed",
+    "old": "  kind === 'arrow' ||\n  (kind === 'melee' &&\n    !!weapon &&\n    !isHandWraps(weapon) &&\n    weaponSkillUsed(weapon.templateIndex) !== SKILLS.BluntWeapon);",
+    "new": "  kind === 'arrow' || (kind === 'melee' && !!weapon && weaponSkillUsed(weapon.templateIndex) !== SKILLS.BluntWeapon);",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],
@@ -424,8 +424,8 @@
   {
     "name": "HANDWRAPS-tell",
     "file": "src/ai/tells.js",
-    "old": "    case SKILLS.HandToHand: return TELL.K_HANDS;",
-    "new": "",
+    "old": "    case SKILLS.HandToHand:\n      return TELL.K_HANDS; // HAND-WRAPS (AUDIT B6): a fist in wraps weighs a fist",
+    "new": "    // HAND-WRAPS (AUDIT B6): a fist in wraps weighs a fist",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],
@@ -434,8 +434,8 @@
   {
     "name": "HANDWRAPS-swing-sound",
     "file": "src/systems/soundClips.js",
-    "old": "  if (!weapon || isHandWraps(weapon)) return SOUND.SwingHighPitch;",
-    "new": "  if (!weapon) return SOUND.SwingHighPitch;",
+    "old": "  if (!weapon || isHandWraps(weapon)) return SOUND.SwingHighPitch; // HAND-WRAPS (AUDIT B7): a fist's swing, a peer's too",
+    "new": "  if (!weapon) return SOUND.SwingHighPitch; // HAND-WRAPS (AUDIT B7): a fist's swing, a peer's too",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],
@@ -444,8 +444,8 @@
   {
     "name": "HANDWRAPS-hit-sound",
     "file": "src/systems/soundClips.js",
-    "old": "  return SOUND.Hit1 + (weapon && !isHandWraps(weapon)",
-    "new": "  return SOUND.Hit1 + (weapon",
+    "old": "    (weapon && !isHandWraps(weapon) // HAND-WRAPS (AUDIT B7): a fist's hit",
+    "new": "    (weapon // HAND-WRAPS (AUDIT B7): a fist's hit",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],
@@ -454,8 +454,8 @@
   {
     "name": "HANDWRAPS-stats-other-hand",
     "file": "src/combat/combatStats.js",
-    "old": "  return fistWrapsOf(it ?? null, t[usingRightHand ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null);",
-    "new": "  return isHandWraps(it) ? it : null;",
+    "old": "  return fistWrapsOf(it ?? null, t[usingRightHand ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null); // HAND-WRAPS (AUDIT B10): an empty fist beside them wears them",
+    "new": "  return isHandWraps(it) ? it : null; // HAND-WRAPS (AUDIT B10): an empty fist beside them wears them",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],
@@ -464,8 +464,8 @@
   {
     "name": "HANDWRAPS-stats-estimate",
     "file": "src/combat/combatStats.js",
-    "old": "wraps ? { ...ESTIMATE, wraps } : ESTIMATE",
-    "new": "ESTIMATE",
+    "old": "      return entity.isInBeastForm ? d : weaponBlowMods(null, d, entity, foe, wraps ? { ...ESTIMATE, wraps } : ESTIMATE); // BAL10: both cores read the fists' blow modifiers now - never the beast's claws",
+    "new": "      return entity.isInBeastForm ? d : weaponBlowMods(null, d, entity, foe, ESTIMATE); // BAL10: both cores read the fists' blow modifiers now - never the beast's claws",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],
@@ -474,8 +474,8 @@
   {
     "name": "HANDWRAPS-pcaao-mods",
     "file": "src/combat/pcaao.js",
-    "old": "    if (info?.wraps) damage = weaponDamageMods(info.wraps, damage);",
-    "new": "",
+    "old": "    if (info?.wraps) damage = weaponDamageMods(info.wraps, damage); // HAND-WRAPS: the wraps' own lines over the fist's roll, as a weapon's over its own",
+    "new": "    // HAND-WRAPS: the wraps' own lines over the fist's roll, as a weapon's over its own",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],
@@ -484,8 +484,8 @@
   {
     "name": "HANDWRAPS-leech",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  const held = weapon ?? info?.wraps ?? null;   // HAND-WRAPS: a fist's blow carries its wraps' leech and powers",
-    "new": "  const held = weapon;   // HAND-WRAPS: a fist's blow carries its wraps' leech and powers",
+    "old": "  const held = weapon ?? info?.wraps ?? null; // HAND-WRAPS: a fist's blow carries its wraps' leech and powers ('fists' stays the bare blow's)",
+    "new": "  const held = weapon; // HAND-WRAPS: a fist's blow carries its wraps' leech and powers ('fists' stays the bare blow's)",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],
@@ -494,8 +494,8 @@
   {
     "name": "HANDWRAPS-quake",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "case 'quake': if (held && !ranged(held))",
-    "new": "case 'quake': if (weapon && !ranged(held))",
+    "old": "        if (held && !ranged(held)) quake(target, (damage * p.share) / 100, p.metres, p.name);",
+    "new": "        if (weapon && !ranged(held)) quake(target, (damage * p.share) / 100, p.metres, p.name);",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],
@@ -504,8 +504,8 @@
   {
     "name": "HANDWRAPS-sigil",
     "file": "src/systems/sigil/sigil.js",
-    "old": "  const held = weapon ?? info?.wraps ?? null;",
-    "new": "  const held = weapon;",
+    "old": "  const held = weapon ?? info?.wraps ?? null; // HAND-WRAPS (AUDIT B4): a fist's blow carries its wraps' sigil",
+    "new": "  const held = weapon; // HAND-WRAPS (AUDIT B4): a fist's blow carries its wraps' sigil",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],
@@ -514,8 +514,8 @@
   {
     "name": "HANDWRAPS-peer-switch",
     "file": "src/net/peer/peerBodies.js",
-    "old": "b.rig.setHandGlow?.(hands && weaponGlowOn() ? peerWrapsGlow(look) ?? (heldNow ? null : fistGlow(kit, true)) : null);",
-    "new": "b.rig.setHandGlow?.(hands ? peerWrapsGlow(look) ?? (heldNow ? null : fistGlow(kit, true)) : null);",
+    "old": "    b.rig.setHandGlow?.(\n      hands && weaponGlowOn() ? (peerWrapsGlow(look) ?? (heldNow ? null : fistGlow(kit, true))) : null,\n    ); // HAND-WRAPS (AUDIT C2): their fists in their wraps' glow, whichever hand holds them",
+    "new": "    b.rig.setHandGlow?.(hands ? (peerWrapsGlow(look) ?? (heldNow ? null : fistGlow(kit, true))) : null); // HAND-WRAPS (AUDIT C2): their fists in their wraps' glow, whichever hand holds them",
     "tests": [
       "test/combat/handwraps.test.js"
     ],

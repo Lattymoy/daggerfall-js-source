@@ -51,32 +51,103 @@
 // code this layer presses it releases when the pad goes, the setting
 // turns off, or the layer is disposed - a held key with no hand on it
 // is the disease the touch layer's `up()` guards against.
-import { bindings, noteHostInput } from './input.js';   // AUDIT FB1018f L2-5: and the host's hooks, noted for the hotbar's keys
-import { getBinding, getAxisBinding, getAxisInversion, getJoystickUIBinding, DEFAULT_SHARES } from '../systems/inputActions.js';
-import { unityAxes, unityButtons, axisNumber, axisKeyDown, axisKeyName, parseAxisKeyName, movementAxes, cameraAxes, controllerLookDegrees, controllerSettings, CURSOR_SPEED, NUM_AXES, AXIS_KEY_BASE } from '../systems/gamepad.js';
+import { bindings, noteHostInput } from './input.js'; // AUDIT FB1018f L2-5: and the host's hooks, noted for the hotbar's keys
+import {
+  getBinding,
+  getAxisBinding,
+  getAxisInversion,
+  getJoystickUIBinding,
+  DEFAULT_SHARES,
+} from '../systems/inputActions.js';
+import {
+  unityAxes,
+  unityButtons,
+  axisNumber,
+  axisKeyDown,
+  axisKeyName,
+  parseAxisKeyName,
+  movementAxes,
+  cameraAxes,
+  controllerLookDegrees,
+  controllerSettings,
+  CURSOR_SPEED,
+  NUM_AXES,
+  AXIS_KEY_BASE,
+} from '../systems/gamepad.js';
 import { getBinding as getBindingOf, isPadCode } from '../systems/inputActions.js';
 // PADPLUS1: the Enhanced Plus controller layer - its layout, the crossbar, the menus, the prompts (ui/plus/plusPad.js)
 import {
-  plusPadActive, ensurePlusPadLayout, plusToggleRun, crossbarInForce, crossbarApi, crossbarSlot, CROSSBAR_CODES, CROSSBAR_HOLD,
-  LOOT_DPAD, HELM_DPAD, lockArm, lockPrompts, plusDpadByCode, NEXT_MODE, HOTBAR_ARRANGE_CODE, plusStickSens, scaleStick, plusBindCapturing, lootPrompts, quickActApi, cycleTab, spatialStep, scrollAt, domTargetAt, domPointer, domHoverChange, interactiveAt, markHover, showPrompts, windowPrompts, activeTabStrip, controlRectNear,
+  plusPadActive,
+  ensurePlusPadLayout,
+  plusToggleRun,
+  crossbarInForce,
+  crossbarApi,
+  crossbarSlot,
+  CROSSBAR_CODES,
+  CROSSBAR_HOLD,
+  LOOT_DPAD,
+  HELM_DPAD,
+  lockArm,
+  lockPrompts,
+  plusDpadByCode,
+  NEXT_MODE,
+  HOTBAR_ARRANGE_CODE,
+  plusStickSens,
+  scaleStick,
+  plusBindCapturing,
+  lootPrompts,
+  quickActApi,
+  cycleTab,
+  spatialStep,
+  scrollAt,
+  domTargetAt,
+  domPointer,
+  domHoverChange,
+  interactiveAt,
+  markHover,
+  showPrompts,
+  windowPrompts,
+  activeTabStrip,
+  controlRectNear,
 } from './plus/plusPad.js';
-import { padCursorAssist, createPadCursorState, stepPadCursor, linearPadCursorStep, padCursorCanvasTargets, pullTargetAmong, PAD_CURSOR } from '../systems/padCursor.js';   // PAD-CURSOR: the Destiny feel
+import {
+  padCursorAssist,
+  createPadCursorState,
+  stepPadCursor,
+  linearPadCursorStep,
+  padCursorCanvasTargets,
+  pullTargetAmong,
+  PAD_CURSOR,
+} from '../systems/padCursor.js'; // PAD-CURSOR: the Destiny feel
 import { GAUNTLET_POINT, GAUNTLET_PRESS } from './plus/plusCursor.js';
-import { dfuCursorUrl } from './cursor.js';   // CLASSIC-CURSOR: the pad's arrow is DFU's controllerCursorImage, the mouse's own
-import { overlayOpen } from './enhanced/enhancedOverlays.js';   // PADPLUS2: the enhanced doors' registry - a DOM window is up
+import { dfuCursorUrl } from './cursor.js'; // CLASSIC-CURSOR: the pad's arrow is DFU's controllerCursorImage, the mouse's own
+import { overlayOpen } from './enhanced/enhancedOverlays.js'; // PADPLUS2: the enhanced doors' registry - a DOM window is up
 import { getInt, getBool } from '../systems/settings/settings.js';
-import { quickLootSelection, quickLootWheel } from '../systems/quickLoot.js';   // PADPLUS6: the loot plaque's list, on the d-pad   // PADPLUS2: the swing mode decides the stroke
+import { quickLootSelection, quickLootWheel } from '../systems/quickLoot.js'; // PADPLUS6: the loot plaque's list, on the d-pad   // PADPLUS2: the swing mode decides the stroke
 import { lookScale } from './lookSettings.js';
-import { getInteractionMode, nextInteractionMode, MODE_ACTIONS } from '../player/interactionMode.js';   // PADPLUS10: hold up = the next mode
+import { getInteractionMode, nextInteractionMode, MODE_ACTIONS } from '../player/interactionMode.js'; // PADPLUS10: hold up = the next mode
 import { setControllerLook } from '../player/lookFilter.js';
-import { cursorActive } from '../player/pointerLock.js';   // PADMOUSE: the freed mouse (FreeMouse) is the pad's pointer mode too
-import { padFamilyOf, setPadFamily } from './padGlyphs.js';   // QS3: which family of button glyph the HUD's quickslot tags draw
+import { cursorActive } from '../player/pointerLock.js'; // PADMOUSE: the freed mouse (FreeMouse) is the pad's pointer mode too
+import { padFamilyOf, setPadFamily } from './padGlyphs.js'; // QS3: which family of button glyph the HUD's quickslot tags draw
 
 /** PADPLUS1: the pad codes that are the WORLD's and stand down while a window is up under Plus (View and Menu
  *  keep theirs - they open and close windows). */
-const MENU_BUTTONS = Object.freeze(['JoystickButton0', 'JoystickButton1', 'JoystickButton2', 'JoystickButton3', 'JoystickButton4', 'JoystickButton5',
-  'JoystickButton8', 'JoystickButton9', 'JoystickAxis9Button0', 'JoystickAxis10Button0',
-  'JoystickAxis7Button0', 'JoystickAxis7Button1', 'JoystickAxis6Button0', 'JoystickAxis6Button1']);
+const MENU_BUTTONS = Object.freeze([
+  'JoystickButton0',
+  'JoystickButton1',
+  'JoystickButton2',
+  'JoystickButton3',
+  'JoystickButton4',
+  'JoystickButton5',
+  'JoystickButton8',
+  'JoystickButton9',
+  'JoystickAxis9Button0',
+  'JoystickAxis10Button0',
+  'JoystickAxis7Button0',
+  'JoystickAxis7Button1',
+  'JoystickAxis6Button0',
+  'JoystickAxis6Button1',
+]);
 const DPAD_DOWN = 'JoystickAxis7Button1';
 /** PADPLUS10: the registry action that selects an interaction mode ('grab' -> 'GrabMode'). */
 const modeActionOf = (mode) => Object.keys(MODE_ACTIONS).find((a) => MODE_ACTIONS[a] === mode) ?? null;
@@ -88,20 +159,29 @@ const SHARE_ACTIONS = new Set(DEFAULT_SHARES.map(([, action]) => action));
 /** AUDIT CAPTAIN'S SEA S3: the look stick's click - while the glass is up it turns the glass's magnification (the wheel's
  *  x2, x4, x8, round), and nothing else hears it until it is let go. */
 export const GLASS_PAD_ZOOM = 'JoystickButton9';
-const DPAD_DIRS = Object.freeze([['JoystickAxis7Button0', 'up'], ['JoystickAxis7Button1', 'down'], ['JoystickAxis6Button1', 'left'], ['JoystickAxis6Button0', 'right']]);
+const DPAD_DIRS = Object.freeze([
+  ['JoystickAxis7Button0', 'up'],
+  ['JoystickAxis7Button1', 'down'],
+  ['JoystickAxis6Button1', 'left'],
+  ['JoystickAxis6Button0', 'right'],
+]);
 
 /** PADPLUS4: ONE POINTER. With the pad in hand the page showed two - the gauntlet (a mouse pointer the page had not
  *  hidden: a pad-only player never grants the pointer lock) and the pad's own cursor. While the pad is the live
  *  device under Plus the root wears .plus-padhide and every mouse pointer on the page is none; a real mouse move
  *  makes the mouse the live device again and gives it back (GP1's UsingController). */
-const PADHIDE_CSS = 'html.plus-padhide.plus-padhide, html.plus-padhide.plus-padhide *, html.plus-padhide.plus-padhide *::before, html.plus-padhide.plus-padhide *::after { cursor: none !important; }';
+const PADHIDE_CSS =
+  'html.plus-padhide.plus-padhide, html.plus-padhide.plus-padhide *, html.plus-padhide.plus-padhide *::before, html.plus-padhide.plus-padhide *::after { cursor: none !important; }';
 let padHidden = false;
 function padHideMouse(on) {
   const d = globalThis.document;
   if (!d?.documentElement || padHidden === !!on) return;
   padHidden = !!on;
   if (on && !d.getElementById('plus-padhide-style') && d.head) {
-    const st = d.createElement('style'); st.id = 'plus-padhide-style'; st.textContent = PADHIDE_CSS; d.head.append(st);
+    const st = d.createElement('style');
+    st.id = 'plus-padhide-style';
+    st.textContent = PADHIDE_CSS;
+    d.head.append(st);
   }
   d.documentElement.classList.toggle('plus-padhide', padHidden);
 }
@@ -120,7 +200,10 @@ export const CURSOR_SIZE = 32;
 const CURSOR_ART = dfuCursorUrl();
 
 function defaultMakeEvent(type, init) {
-  const Ctor = type.startsWith('pointer') && typeof globalThis.PointerEvent === 'function' ? globalThis.PointerEvent : globalThis.MouseEvent;
+  const Ctor =
+    type.startsWith('pointer') && typeof globalThis.PointerEvent === 'function'
+      ? globalThis.PointerEvent
+      : globalThis.MouseEvent;
   return new Ctor(type, init);
 }
 
@@ -163,40 +246,82 @@ export function pickPad(list) {
  *     and the right stick looks under it
  * @returns { tick(dt), axes(), usingController(), dispose() } or null without the API
  */
-export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = synth, makeEvent = defaultMakeEvent } = {}) {
-  noteHostInput(hooks);   // AUDIT FB1018f L2-5: the host's pause, for the hotbar's keys too - before the refusal below
+export function attachGamepad(
+  canvas,
+  hooks = {},
+  { getPads = null, dispatch = synth, makeEvent = defaultMakeEvent } = {},
+) {
+  noteHostInput(hooks); // AUDIT FB1018f L2-5: the host's pause, for the hotbar's keys too - before the refusal below
   if (!getPads && !hasGamepadApi()) return null;
   getPads ??= () => navigator.getGamepads();
   const axes = new Float32Array(NUM_AXES + 1);
   const buttons = new Set();
-  const held = new Set();        // every code this layer is pressing
-  let analog = null;             // the movement stick's throw for MoveAxes
+  const held = new Set(); // every code this layer is pressing
+  let analog = null; // the movement stick's throw for MoveAxes
   let usingController = false;
   let mouseMoved = false;
   let swinging = false;
-  let lastMouse = null;          // Input.mousePosition, the port's last real mouse point (client px)
-  let cursor = null;             // controllerCursorPosition, client px
-  const cursorFeel = createPadCursorState();   // PAD-CURSOR: its velocity and the full-lean clock
+  let lastMouse = null; // Input.mousePosition, the port's last real mouse point (client px)
+  let cursor = null; // controllerCursorPosition, client px
+  const cursorFeel = createPadCursorState(); // PAD-CURSOR: its velocity and the full-lean clock
   const capturedHeld = new Set(); // A captured press cannot become a UI gesture before release.
-  const cursorHeld = {};         // the UI click actions down at the cursor
+  const cursorHeld = {}; // the UI click actions down at the cursor
   let cursorEl = null;
   // PADPLUS1: the Plus layer's own state - the run latch, the crossbar's held buttons, the menu buttons' last frame,
   // the DOM element the cursor pressed on and the one it is over
-  const P = { layout: false, runLatch: false, runPrev: false, runIdle: 0, lbPrev: false, rbPrev: false, setOrder: 0,
-    stale: new Set(), lastOverlay: false, lastFreed: false, btnPrev: null, stickPrev: false, handsOff: false, lootUp: false, lootRep: {}, helmUp: false, helm: {}, xbSet: null, xbHeld: new Set(), xbPrev: new Set(), menuPrev: new Set(), placeTaken: new Set(), dh: {}, padMap: null, padMapCode: null, padMapSeen: false, padMapAge: 0, scroll: 0, domOver: null, promptAt: 0, tabs: false, plusCursor: null };
-  let paneCapturing = () => false;   // the controls pane's capture (ui/enhanced/enhancedControls.js captureArmed), loaded lazily - no import ring
-  import('./enhanced/enhancedControls.js').then((m) => { if (typeof m.captureArmed === 'function') paneCapturing = m.captureArmed; }).catch(() => {});
-  const capturing = () => paneCapturing() || plusBindCapturing();   // PADPLUS10: and the Plus bindings window's
+  const P = {
+    layout: false,
+    runLatch: false,
+    runPrev: false,
+    runIdle: 0,
+    lbPrev: false,
+    rbPrev: false,
+    setOrder: 0,
+    stale: new Set(),
+    lastOverlay: false,
+    lastFreed: false,
+    btnPrev: null,
+    stickPrev: false,
+    handsOff: false,
+    lootUp: false,
+    lootRep: {},
+    helmUp: false,
+    helm: {},
+    xbSet: null,
+    xbHeld: new Set(),
+    xbPrev: new Set(),
+    menuPrev: new Set(),
+    placeTaken: new Set(),
+    dh: {},
+    padMap: null,
+    padMapCode: null,
+    padMapSeen: false,
+    padMapAge: 0,
+    scroll: 0,
+    domOver: null,
+    promptAt: 0,
+    tabs: false,
+    plusCursor: null,
+  };
+  let paneCapturing = () => false; // the controls pane's capture (ui/enhanced/enhancedControls.js captureArmed), loaded lazily - no import ring
+  import('./enhanced/enhancedControls.js')
+    .then((m) => {
+      if (typeof m.captureArmed === 'function') paneCapturing = m.captureArmed;
+    })
+    .catch(() => {});
+  const capturing = () => paneCapturing() || plusBindCapturing(); // PADPLUS10: and the Plus bindings window's
   // PADMOUSE (Mac: "when i activate it i cant move the mousepointer and it often doesnt even appear"): freeing the
   // mouse from the pad lets go of the pointer lock, and the browser answers that with a trusted mousemove carrying a
   // jump - read as a hand on the mouse, it took the pad's pointer away the moment it was asked for. A real mouse now
   // has to travel a few pixels, and nothing counts for a moment after the lock changes.
   let lockGraceUntil = 0;
   const nowMs = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
-  const onLockChange = () => { lockGraceUntil = nowMs() + 300; };
+  const onLockChange = () => {
+    lockGraceUntil = nowMs() + 300;
+  };
   globalThis.document?.addEventListener?.('pointerlockchange', onLockChange);
   const onMouseMove = (e) => {
-    if (e.isTrusted === false) return;   // the cursor's own synthetic moves are not a hand on the mouse
+    if (e.isTrusted === false) return; // the cursor's own synthetic moves are not a hand on the mouse
     if (nowMs() < lockGraceUntil) return;
     if (e.movementX || e.movementY) mouseMoved = true;
     if (Number.isFinite(e.clientX) && Number.isFinite(e.clientY)) lastMouse = [e.clientX, e.clientY];
@@ -207,10 +332,13 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
   // keystroke trips this. Without it the crossbar/diamond swap (enhancedHotbar's 'auto' mode, off padFamily()) never
   // let go of the pad once one had been seen, even typing at a menu with the controller left untouched.
   let keyboardUsed = false;
-  const onKeyDown = (e) => { if (e.isTrusted === false) return; keyboardUsed = true; };
+  const onKeyDown = (e) => {
+    if (e.isTrusted === false) return;
+    keyboardUsed = true;
+  };
   window.addEventListener('keydown', onKeyDown, true);
   const cursorShow = (on) => {
-    if (canvas?.style) canvas.style.cursor = on ? 'none' : '';   // Cursor.visible = false (:563)
+    if (canvas?.style) canvas.style.cursor = on ? 'none' : ''; // Cursor.visible = false (:563)
     if (typeof document === 'undefined' || !document.body) return;
     if (on && !cursorEl) {
       cursorEl = document.createElement('div');
@@ -237,11 +365,15 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
       if (cursorEl.style.backgroundImage !== want) cursorEl.style.backgroundImage = want;
     }
     cursorEl.style.display = on ? 'block' : 'none';
-    if (on && cursor) { cursorEl.style.left = `${cursor[0]}px`; cursorEl.style.top = `${cursor[1]}px`; }
+    if (on && cursor) {
+      cursorEl.style.left = `${cursor[0]}px`;
+      cursorEl.style.top = `${cursor[1]}px`;
+    }
   };
-  const domDown = {};   // PADPLUS1: the DOM element each button went down on
+  const domDown = {}; // PADPLUS1: the DOM element each button went down on
   /** The MouseEvent `buttons` mask of the click actions held at the cursor. */
-  const heldMask = () => (cursorHeld.LeftClick ? 1 : 0) | (cursorHeld.RightClick ? 2 : 0) | (cursorHeld.MiddleClick ? 4 : 0);
+  const heldMask = () =>
+    (cursorHeld.LeftClick ? 1 : 0) | (cursorHeld.RightClick ? 2 : 0) | (cursorHeld.MiddleClick ? 4 : 0);
   const pointerAt = (type, button) => {
     if (!cursor) return;
     // PADPLUS1: UNDER PLUS THE CURSOR CLICKS THE PAGE. The enhanced windows are DOM above the canvas, and an event
@@ -253,39 +385,85 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
       const t = domTargetAt(cursor[0], cursor[1], canvas);
       const phase = type === 'pointerdown' ? 'down' : type === 'pointerup' ? 'up' : 'move';
       if (phase === 'move') {
-        if (t !== P.domOver) { domHoverChange(P.domOver, t, { x: cursor[0], y: cursor[1], makeEvent }); P.domOver = t; }
+        if (t !== P.domOver) {
+          domHoverChange(P.domOver, t, { x: cursor[0], y: cursor[1], makeEvent });
+          P.domOver = t;
+        }
         markHover(t ? interactiveAt(cursor[0], cursor[1]) : null);
       }
       if (phase === 'down') domDown[button] = t;
       const at = phase === 'up' ? (t ?? domDown[button]) : t;
       if (phase === 'up') domDown[button] = null;
-      if (at) { domPointer(at, phase, { x: cursor[0], y: cursor[1], button, buttons: phase === 'move' ? heldMask() : undefined, makeEvent }); return; }
+      if (at) {
+        domPointer(at, phase, {
+          x: cursor[0],
+          y: cursor[1],
+          button,
+          buttons: phase === 'move' ? heldMask() : undefined,
+          makeEvent,
+        });
+        return;
+      }
     }
     // PAD-CURSOR: a MOVE carries the buttons actually held (a hover reported the left button down - a drag to any window
     // that reads `buttons`, the scroll bars' own poll); a press its own button, a release none
-    const buttons = type === 'pointerup' ? 0 : type === 'pointermove' ? heldMask() : (button === 0 ? 1 : button === 2 ? 2 : 4);
-    canvas.dispatchEvent(makeEvent(type, { clientX: cursor[0], clientY: cursor[1], button, buttons, pointerType: 'mouse', pointerId: 1, isPrimary: true, bubbles: true, cancelable: true }));
+    const buttons =
+      type === 'pointerup' ? 0 : type === 'pointermove' ? heldMask() : button === 0 ? 1 : button === 2 ? 2 : 4;
+    canvas.dispatchEvent(
+      makeEvent(type, {
+        clientX: cursor[0],
+        clientY: cursor[1],
+        button,
+        buttons,
+        pointerType: 'mouse',
+        pointerId: 1,
+        isPrimary: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
   };
   const cursorRelease = () => {
-    for (const ui of Object.keys(cursorHeld)) if (cursorHeld[ui]) { cursorHeld[ui] = false; pointerAt('pointerup', DOM_BUTTON_OF_UI[ui]); }
+    for (const ui of Object.keys(cursorHeld))
+      if (cursorHeld[ui]) {
+        cursorHeld[ui] = false;
+        pointerAt('pointerup', DOM_BUTTON_OF_UI[ui]);
+      }
   };
 
-  const press = (code) => { if (!held.has(code)) { held.add(code); dispatch('keydown', code); } };
+  const press = (code) => {
+    if (!held.has(code)) {
+      held.add(code);
+      dispatch('keydown', code);
+    }
+  };
   /** CSA-L: the helm's d-pad let go whole - a trim held ends with the helm, a window or a bumper over it. */
   const helmLetGo = () => {
-    for (const [code, st] of Object.entries(P.helm)) { if (st.held) hooks.helm?.gesture?.(HELM_DPAD[code], 'release'); st.t = -1; st.held = false; }
+    for (const [code, st] of Object.entries(P.helm)) {
+      if (st.held) hooks.helm?.gesture?.(HELM_DPAD[code], 'release');
+      st.t = -1;
+      st.held = false;
+    }
   };
   const releaseAll = (keep = null) => {
-    for (const code of [...held]) if (!keep?.has(code)) { held.delete(code); dispatch('keyup', code); }
+    for (const code of [...held])
+      if (!keep?.has(code)) {
+        held.delete(code);
+        dispatch('keyup', code);
+      }
   };
   // AUDIT FB1029e S4: the page let go of every key on blur (ui/input.js letGoOnBlur) - the pad lets go of its own too, so
   // the next tick presses again whatever is still down, never a held set the host no longer holds
-  const onFocusLost = () => { if (globalThis.document?.visibilityState !== 'visible' || !globalThis.document?.hasFocus?.()) releaseAll(); };
+  const onFocusLost = () => {
+    if (globalThis.document?.visibilityState !== 'visible' || !globalThis.document?.hasFocus?.()) releaseAll();
+  };
   globalThis.window?.addEventListener?.('blur', onFocusLost);
   globalThis.document?.addEventListener?.('visibilitychange', onFocusLost);
   const codeOf = (store, action) => getBinding(store, action) ?? getBinding(store, action, false);
   // PADPLUS1: a pad code down - a button, or an axis key past its half (RT as the RightClick UI button under Plus)
-  const padDownIn = (axesNow, code) => !!code && (buttons.has(code) || (code.startsWith('JoystickAxis') && axisKeyDown(axesNow, parseAxisKeyName(code) ?? -1)));
+  const padDownIn = (axesNow, code) =>
+    !!code &&
+    (buttons.has(code) || (code.startsWith('JoystickAxis') && axisKeyDown(axesNow, parseAxisKeyName(code) ?? -1)));
 
   /**
    * PADPLUS1: ONE FRAME OF THE PLUS LAYER, between the codes the frame wants and the edges it presses.
@@ -300,24 +478,45 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
    */
   function plusFrame({ b, wanted, overlay, dt, padDown, moving, axes: ax }) {
     const swallowed = new Set();
-    const dpad = plusDpadByCode();   // PADPLUS10: the player's d-pad (tap and hold per direction)
+    const dpad = plusDpadByCode(); // PADPLUS10: the player's d-pad (tap and hold per direction)
     // PADPLUS10: one d-pad action - its registry key pressed; NextMode presses the key of the mode after the current one
     const fireDpad = (action, code) => {
       if (!action) return;
       const name = action === NEXT_MODE ? modeActionOf(nextInteractionMode(getInteractionMode())) : action;
-      if (SHARE_ACTIONS.has(name)) { try { if (hooks.padAction?.(name)) return; } catch (e) { console.warn('[gamepad] pad action:', e?.message ?? e); } }   // AUDIT CAPTAIN'S SEA S2
+      if (SHARE_ACTIONS.has(name)) {
+        try {
+          if (hooks.padAction?.(name)) return;
+        } catch (e) {
+          console.warn('[gamepad] pad action:', e?.message ?? e);
+        }
+      } // AUDIT CAPTAIN'S SEA S2
       const c = name ? codeOf(b, name) : null;
       // PAD-BINDS (FIELD BUGS 2026-10-04e): an action on no key at all (TravelView ships unbound) is the host's own
       // door - a synthetic press of nothing reached nothing
-      if (!c) { try { hooks.padAction?.(name); } catch (e) { console.warn('[gamepad] pad action:', e?.message ?? e); } return; }
+      if (!c) {
+        try {
+          hooks.padAction?.(name);
+        } catch (e) {
+          console.warn('[gamepad] pad action:', e?.message ?? e);
+        }
+        return;
+      }
       wanted.add(c);
-      if (action === 'AutoMap' || action === 'TravelMap') { P.padMap = action; P.padMapCode = code; P.padMapSeen = false; P.padMapAge = 0; }
+      if (action === 'AutoMap' || action === 'TravelMap') {
+        P.padMap = action;
+        P.padMapCode = code;
+        P.padMapSeen = false;
+        P.padMapAge = 0;
+      }
     };
     // run toggle
     const runCode = getBindingOf(b, 'Run', false);
     if (plusToggleRun() && runCode && isPadCode(runCode)) {
       const d = padDown(runCode);
-      if (d && !P.runPrev && !overlay) { P.runLatch = !P.runLatch; P.runIdle = 0; }
+      if (d && !P.runPrev && !overlay) {
+        P.runLatch = !P.runLatch;
+        P.runIdle = 0;
+      }
       P.runPrev = d;
       P.runIdle = moving ? 0 : P.runIdle + dt;
       if (overlay || P.runIdle > 0.5) P.runLatch = false;
@@ -325,10 +524,12 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
       if (P.runLatch) wanted.add(runCode);
     } else P.runLatch = false;
     // the crossbar
-    const lb = buttons.has(CROSSBAR_HOLD[0]), rb = buttons.has(CROSSBAR_HOLD[1]);
+    const lb = buttons.has(CROSSBAR_HOLD[0]),
+      rb = buttons.has(CROSSBAR_HOLD[1]);
     if (lb && !P.lbPrev) P.setOrder = 0;
     if (rb && !P.rbPrev) P.setOrder = 1;
-    P.lbPrev = lb; P.rbPrev = rb;
+    P.lbPrev = lb;
+    P.rbPrev = rb;
     const xbOn = !overlay && crossbarInForce();
     // PADPLUS6: LOOKING AT LOOT, THE D-PAD IS THE PLAQUE'S. The quick-loot plaque's list moves on the mouse wheel,
     // and a pad has none; up and down move its highlight now (held, they repeat), right takes everything, left opens
@@ -352,13 +553,24 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
     if (xbOn) {
       for (const c of CROSSBAR_HOLD) wanted.delete(c);
       for (const code of CROSSBAR_CODES) {
-        if (!downNow.has(code)) { P.xbHeld.delete(code); continue; }
-        if (set !== null && !P.xbPrev.has(code)) { P.xbHeld.add(code); crossbarApi()?.press?.(crossbarSlot(set, code)); }
-        if (P.xbHeld.has(code)) { swallowed.add(code); wanted.delete(code); continue; }
+        if (!downNow.has(code)) {
+          P.xbHeld.delete(code);
+          continue;
+        }
+        if (set !== null && !P.xbPrev.has(code)) {
+          P.xbHeld.add(code);
+          crossbarApi()?.press?.(crossbarSlot(set, code));
+        }
+        if (P.xbHeld.has(code)) {
+          swallowed.add(code);
+          wanted.delete(code);
+          continue;
+        }
         // PADPLUS3: the bare d-pad never reaches a slot - it is its own actions, one press each
         const bare = dpad[code];
         if (bare && !lootUp && !helmUp && !boardUp) {
-          wanted.delete(code); swallowed.add(code);
+          wanted.delete(code);
+          swallowed.add(code);
           // PADPLUS10: a direction with a HOLD fires its tap on the release (below); one without fires on the press
           if (bare.hold) continue;
           if (set === null && !P.xbPrev.has(code)) fireDpad(bare.tap, code);
@@ -368,60 +580,102 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
       // transport, up: swap hands / next interaction mode. The hold fires ONCE, the moment it has been held long
       // enough; letting go before that is the tap. Each new hold of up is one more step through the modes.
       for (const [code, act] of Object.entries(dpad)) {
-        const st = P.dh[code] ??= { t: -1, fired: false };
-        if (!act.hold) { st.t = -1; continue; }
+        const st = (P.dh[code] ??= { t: -1, fired: false });
+        if (!act.hold) {
+          st.t = -1;
+          continue;
+        }
         const now = downNow.has(code);
-        if (now && !P.xbPrev.has(code)) { st.t = set === null && !lootUp && !helmUp && !boardUp ? 0 : -1; st.fired = false; }
-        if (st.t >= 0 && (set !== null || lootUp || helmUp || boardUp)) st.t = -1;   // a bumper, a loot plaque, the helm or the board took the press
+        if (now && !P.xbPrev.has(code)) {
+          st.t = set === null && !lootUp && !helmUp && !boardUp ? 0 : -1;
+          st.fired = false;
+        }
+        if (st.t >= 0 && (set !== null || lootUp || helmUp || boardUp)) st.t = -1; // a bumper, a loot plaque, the helm or the board took the press
         if (st.t < 0) continue;
         if (now) {
           st.t += dt;
-          if (!st.fired && st.t >= DPAD_HOLD_S) { st.fired = true; fireDpad(act.hold, code); }
+          if (!st.fired && st.t >= DPAD_HOLD_S) {
+            st.fired = true;
+            fireDpad(act.hold, code);
+          }
         } else {
           if (!st.fired) fireDpad(act.tap, code);
           st.t = -1;
         }
       }
-    } else { P.xbHeld.clear(); for (const st of Object.values(P.dh)) st.t = -1; }   // AUDIT MERGE-PLUS B4: a window up forgets the press too - its tap fired once the window closed
+    } else {
+      P.xbHeld.clear();
+      for (const st of Object.values(P.dh)) st.t = -1;
+    } // AUDIT MERGE-PLUS B4: a window up forgets the press too - its tap fired once the window closed
     if (lootUp) {
       for (const [code, act] of Object.entries(LOOT_DPAD)) {
-        wanted.delete(code); swallowed.add(code);
-        const down = downNow.has(code), fresh = down && !P.xbPrev.has(code);
+        wanted.delete(code);
+        swallowed.add(code);
+        const down = downNow.has(code),
+          fresh = down && !P.xbPrev.has(code);
         if (act === 'up' || act === 'down') {
-          if (!down) { P.lootRep[code] = 0; continue; }
+          if (!down) {
+            P.lootRep[code] = 0;
+            continue;
+          }
           P.lootRep[code] = fresh ? 0.35 : (P.lootRep[code] ?? 0) - dt;
-          if (fresh || P.lootRep[code] <= 0) { if (!fresh) P.lootRep[code] = 0.12; quickLootWheel(act === 'up' ? -1 : 1); }
-        } else if (fresh) { const c = codeOf(b, act); if (c) wanted.add(c); }
+          if (fresh || P.lootRep[code] <= 0) {
+            if (!fresh) P.lootRep[code] = 0.12;
+            quickLootWheel(act === 'up' ? -1 : 1);
+          }
+        } else if (fresh) {
+          const c = codeOf(b, act);
+          if (c) wanted.add(c);
+        }
       }
     }
     if (helmUp) {
       for (const [code, dir] of Object.entries(HELM_DPAD)) {
-        wanted.delete(code); swallowed.add(code);
-        const st = P.helm[code] ??= { t: -1, fired: false, held: false };
+        wanted.delete(code);
+        swallowed.add(code);
+        const st = (P.helm[code] ??= { t: -1, fired: false, held: false });
         const down = downNow.has(code);
         // AUDIT CAPTAIN'S SEA S3: a press the player gave the glass on this direction is the glass's at the helm too (the
         // helm's own gesture there yields to the player's choice - helmPadPrompts says so)
-        const glassTap = dpad[code]?.tap === 'Spyglass', glassHold = dpad[code]?.hold === 'Spyglass';
-        if (down && !P.xbPrev.has(code)) { st.t = 0; st.fired = false; st.held = false; }
+        const glassTap = dpad[code]?.tap === 'Spyglass',
+          glassHold = dpad[code]?.hold === 'Spyglass';
+        if (down && !P.xbPrev.has(code)) {
+          st.t = 0;
+          st.fired = false;
+          st.held = false;
+        }
         if (st.t < 0) continue;
         if (down) {
           st.t += dt;
-          if (!st.fired && st.t >= DPAD_HOLD_S) { st.fired = true; if (glassHold) fireDpad('Spyglass', code); else st.held = !!hooks.helm?.gesture?.(dir, 'hold'); }   // true: a hold the let-go ends (the trim)
+          if (!st.fired && st.t >= DPAD_HOLD_S) {
+            st.fired = true;
+            if (glassHold) fireDpad('Spyglass', code);
+            else st.held = !!hooks.helm?.gesture?.(dir, 'hold');
+          } // true: a hold the let-go ends (the trim)
         } else {
-          if (!st.fired) { if (glassTap) fireDpad('Spyglass', code); else hooks.helm?.gesture?.(dir, 'tap'); }
-          else if (st.held) hooks.helm?.gesture?.(dir, 'release');
-          st.t = -1; st.held = false;
+          if (!st.fired) {
+            if (glassTap) fireDpad('Spyglass', code);
+            else hooks.helm?.gesture?.(dir, 'tap');
+          } else if (st.held) hooks.helm?.gesture?.(dir, 'release');
+          st.t = -1;
+          st.held = false;
         }
       }
     }
     P.xbPrev = downNow;
-    if (P.xbSet !== set) { P.xbSet = set; crossbarApi()?.setActive?.(set); }
+    if (P.xbSet !== set) {
+      P.xbSet = set;
+      crossbarApi()?.setActive?.(set);
+    }
     // the windows
     if (overlay && !capturing()) {
       const menuDown = new Set();
       for (const c of MENU_BUTTONS) if (padDown(c)) menuDown.add(c);
       const edge = (c) => menuDown.has(c) && !P.menuPrev.has(c);
-      for (const c of MENU_BUTTONS) { wanted.delete(c); if (c !== 'JoystickButton0' && c !== 'JoystickButton1' && c !== 'JoystickAxis10Button0') swallowed.add(c); }
+      for (const c of MENU_BUTTONS) {
+        wanted.delete(c);
+        if (c !== 'JoystickButton0' && c !== 'JoystickButton1' && c !== 'JoystickAxis10Button0') swallowed.add(c);
+      }
       // PAD-ARRANGE (FIELD BUGS 2026-10-04e): THE HOTBAR UNDER A WINDOW. LT raises the bar to be arranged (again lowers
       // it); with a slot or a new entry IN HAND on the crossbar, a bumper held and a slot's own button puts it there -
       // the bumpers are then the bar's, never the tabs' (on the row of ten they place nothing, so they stay the tabs').
@@ -429,15 +683,29 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
       // the window's edge (P.stale) is nothing here.
       const xbApi = crossbarApi();
       for (const c of [...P.placeTaken]) if (!menuDown.has(c)) P.placeTaken.delete(c);
-      if (edge(HOTBAR_ARRANGE_CODE) && !P.stale.has(HOTBAR_ARRANGE_CODE)) { try { if (xbApi?.canArrange?.()) xbApi.arrange?.(); } catch (e) { console.warn('[gamepad] arrange:', e?.message ?? e); } }
+      if (edge(HOTBAR_ARRANGE_CODE) && !P.stale.has(HOTBAR_ARRANGE_CODE)) {
+        try {
+          if (xbApi?.canArrange?.()) xbApi.arrange?.();
+        } catch (e) {
+          console.warn('[gamepad] arrange:', e?.message ?? e);
+        }
+      }
       let inHand = false;
-      try { inHand = !!xbApi?.holding?.() && !!xbApi?.crossbar?.(); } catch { inHand = false; }
+      try {
+        inHand = !!xbApi?.holding?.() && !!xbApi?.crossbar?.();
+      } catch {
+        inHand = false;
+      }
       if (inHand && (lb || rb)) {
         const hset = lb && rb ? P.setOrder : lb ? 0 : 1;
         for (const code of CROSSBAR_CODES) {
           if (!edge(code) || P.stale.has(code) || P.placeTaken.has(code)) continue;
           P.placeTaken.add(code);
-          try { xbApi.place?.(crossbarSlot(hset, code)); } catch (e) { console.warn('[gamepad] place:', e?.message ?? e); }
+          try {
+            xbApi.place?.(crossbarSlot(hset, code));
+          } catch (e) {
+            console.warn('[gamepad] place:', e?.message ?? e);
+          }
         }
       }
       for (const c of P.placeTaken) swallowed.add(c);
@@ -451,33 +719,63 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
       if (P.padMap) P.padMapSeen = true;
       const mapCode = P.padMapCode ?? DPAD_DOWN;
       if (P.padMap === 'AutoMap' && edge(mapCode) && !P.stale.has(mapCode)) {
-        const c = codeOf(b, 'Escape'); if (c) { wanted.add(c); closeMap = true; }
+        const c = codeOf(b, 'Escape');
+        if (c) {
+          wanted.add(c);
+          closeMap = true;
+        }
         P.padMap = null;
       }
       if (cursor) {
-        const arm = lockArm();   // AUDIT LOCKPICK C3: the lock's window - its d-pad moves the pick, its X the Auto attempt
+        const arm = lockArm(); // AUDIT LOCKPICK C3: the lock's window - its d-pad moves the pick, its X the Auto attempt
         for (const [c, dir] of DPAD_DIRS) {
           if (!free(c) || (closeMap && c === mapCode)) continue;
           const to = arm?.dpad?.(dir, cursor) ?? spatialStep(cursor, dir);
-          if (to) { cursor[0] = to[0]; cursor[1] = to[1]; usingController = true; pointerAt('pointermove', 0); cursorShow(true); }
+          if (to) {
+            cursor[0] = to[0];
+            cursor[1] = to[1];
+            usingController = true;
+            pointerAt('pointermove', 0);
+            cursorShow(true);
+          }
         }
-        if (free('JoystickButton3')) { pointerAt('pointerdown', 2); pointerAt('pointerup', 2); }
+        if (free('JoystickButton3')) {
+          pointerAt('pointerdown', 2);
+          pointerAt('pointerup', 2);
+        }
         // PADPLUS5: X is the quick act on the item under the cursor - wear, take off, light, use
-        if (free('JoystickButton2')) { try { if (!arm?.auto?.()) quickActApi()?.act?.(globalThis.document?.elementFromPoint?.(cursor[0], cursor[1]) ?? null); } catch (e) { console.warn('[gamepad] quick act:', e?.message ?? e); } }
+        if (free('JoystickButton2')) {
+          try {
+            if (!arm?.auto?.())
+              quickActApi()?.act?.(globalThis.document?.elementFromPoint?.(cursor[0], cursor[1]) ?? null);
+          } catch (e) {
+            console.warn('[gamepad] quick act:', e?.message ?? e);
+          }
+        }
         // the right stick: its vertical, as a wheel (Axis5 is up-positive)
         const rv = ax[5] ?? 0;
         if (Math.abs(rv) > 0.25) {
-          P.scroll += -rv * 900 * dt * plusStickSens('right');   // PADPLUS10: the right stick's sensitivity
+          P.scroll += -rv * 900 * dt * plusStickSens('right'); // PADPLUS10: the right stick's sensitivity
           const step = Math.trunc(P.scroll);
-          if (step) { P.scroll -= step; scrollAt(cursor[0], cursor[1], step); }
+          if (step) {
+            P.scroll -= step;
+            scrollAt(cursor[0], cursor[1], step);
+          }
         } else P.scroll = 0;
       }
       P.menuPrev = menuDown;
     } else {
-      P.menuPrev.clear(); P.placeTaken.clear();
+      P.menuPrev.clear();
+      P.placeTaken.clear();
       // PADPLUS9: the map the d-pad opened is forgotten once it has closed (by B, by down, by its key), or if no
       // window came up for it within a second - so a later window's down is never taken for the map's close
-      if (P.padMap) { P.padMapAge += dt; if (P.padMapSeen || P.padMapAge > 1) { P.padMap = null; P.padMapSeen = false; } }
+      if (P.padMap) {
+        P.padMapAge += dt;
+        if (P.padMapSeen || P.padMapAge > 1) {
+          P.padMap = null;
+          P.padMapSeen = false;
+        }
+      }
     }
     return swallowed;
   }
@@ -489,14 +787,23 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
       if (!xb?.canArrange?.()) return null;
       if (xb.holding?.()) return xb.crossbar?.() ? 'handxb' : 'hand';
       return xb.arranging?.() ? 'on' : 'off';
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   };
 
   // PADPLUS2: a full-screen enhanced door on the page (#enhanced-inventory, #enhanced-pause, ...), looked for five
   // times a second - the doors' hosts are fixed, inset 0, direct children of the body
-  let domUp = false, domAt = 0;
+  let domUp = false,
+    domAt = 0;
   /** PADPLUS6: is the quick-loot plaque listing rows right now (a corpse, a chest, a player's verbs). */
-  const lootListed = () => { try { return quickLootSelection() != null; } catch { return false; } };
+  const lootListed = () => {
+    try {
+      return quickLootSelection() != null;
+    } catch {
+      return false;
+    }
+  };
   const domWindowUp = (dt) => {
     domAt -= dt;
     if (domAt > 0) return domUp;
@@ -511,7 +818,8 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
       // never taken down) is full-screen and fixed too, but click-through - it read as a window from the first swing
       // on, and the prompt bar and the cursor came up over the world
       if (cs && (cs.display === 'none' || cs.visibility === 'hidden' || cs.pointerEvents === 'none')) continue;
-      domUp = true; break;
+      domUp = true;
+      break;
     }
     return domUp;
   };
@@ -531,13 +839,23 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
    *    while it is down, fired when it lifts - and the look runs on under it: a stroke's one-frame press would fire
    *    the guns the frame after it laid them.
    */
-  const SWING_REPEAT = 0.4, STROKE_PX = 60;
-  let swingT = 0, swingAlt = false, pulsed = false;
+  const SWING_REPEAT = 0.4,
+    STROKE_PX = 60;
+  let swingT = 0,
+    swingAlt = false,
+    pulsed = false;
   function plusSwing(down, left, dt) {
-    const gesture = getInt('Controls', 'WeaponSwingMode', 0, 2) === 0 && !getBool('Controls', 'BowDrawback') && !hooks.aimHold?.();
-    if (pulsed) { pulsed = false; hooks.attack?.(0, 0, false); }
+    const gesture =
+      getInt('Controls', 'WeaponSwingMode', 0, 2) === 0 && !getBool('Controls', 'BowDrawback') && !hooks.aimHold?.();
+    if (pulsed) {
+      pulsed = false;
+      hooks.attack?.(0, 0, false);
+    }
     if (!down) {
-      if (swinging) { swinging = false; if (!gesture) hooks.attack?.(0, 0, false); }
+      if (swinging) {
+        swinging = false;
+        if (!gesture) hooks.attack?.(0, 0, false);
+      }
       swingT = 0;
       return;
     }
@@ -547,47 +865,80 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
     if (!first && swingT > 0) return;
     swingT = SWING_REPEAT;
     let dx, dy;
-    if (Math.hypot(left.h, left.v) > 0.5) { const m = Math.hypot(left.h, left.v); dx = (left.h / m) * STROKE_PX; dy = (-left.v / m) * STROKE_PX; }
-    else { swingAlt = !swingAlt; dx = swingAlt ? STROKE_PX : -STROKE_PX; dy = STROKE_PX * 0.3; }
+    if (Math.hypot(left.h, left.v) > 0.5) {
+      const m = Math.hypot(left.h, left.v);
+      dx = (left.h / m) * STROKE_PX;
+      dy = (-left.v / m) * STROKE_PX;
+    } else {
+      swingAlt = !swingAlt;
+      dx = swingAlt ? STROKE_PX : -STROKE_PX;
+      dy = STROKE_PX * 0.3;
+    }
     // PAD-PULSE (AUDIT 2026-10-01 part four): a stroke after the first is the HOLD's, said so - the rig swings again on it,
     // and a profession's act takes the press alone (one strike, one tug, never a felled tree by RT held)
-    if (gesture) { hooks.attack?.(dx, dy, true, first ? null : { repeat: true }); pulsed = true; }
-    else if (first) hooks.attack?.(dx, dy, true);
+    if (gesture) {
+      hooks.attack?.(dx, dy, true, first ? null : { repeat: true });
+      pulsed = true;
+    } else if (first) hooks.attack?.(dx, dy, true);
   }
 
   function tick(dt) {
     const plus = plusPadActive();
-    padHideMouse(plus && usingController);   // PADPLUS4: the pad in hand hides the mouse's pointer, in the world too
+    padHideMouse(plus && usingController); // PADPLUS4: the pad in hand hides the mouse's pointer, in the world too
     const s = controllerSettings();
     const pad = s.enabled ? pickPad(getPads()) : null;
     if (!pad) {
       analog = null;
-      if (swinging) { swinging = false; hooks.attack?.(0, 0, false); }
-      if (usingController) { usingController = false; setControllerLook(false); }
+      if (swinging) {
+        swinging = false;
+        hooks.attack?.(0, 0, false);
+      }
+      if (usingController) {
+        usingController = false;
+        setControllerLook(false);
+      }
       capturedHeld.clear();
-      setPadFamily(null);   // QS3: a glyph for a pad nobody is holding is a lie
-      cursorRelease(); cursorShow(false);
-      P.runLatch = false; P.xbHeld.clear(); P.xbPrev.clear(); P.menuPrev.clear();
-      for (const st of Object.values(P.dh)) st.t = -1;   // AUDIT MERGE-PLUS B4: and a d-pad press the pad dropped mid-way (it opened the map on the pad's return)
-      if (P.xbSet !== null) { P.xbSet = null; crossbarApi()?.setActive?.(null); }
-      showPrompts(null); markHover(null);
+      setPadFamily(null); // QS3: a glyph for a pad nobody is holding is a lie
+      cursorRelease();
+      cursorShow(false);
+      P.runLatch = false;
+      P.xbHeld.clear();
+      P.xbPrev.clear();
+      P.menuPrev.clear();
+      for (const st of Object.values(P.dh)) st.t = -1; // AUDIT MERGE-PLUS B4: and a d-pad press the pad dropped mid-way (it opened the map on the pad's return)
+      if (P.xbSet !== null) {
+        P.xbSet = null;
+        crossbarApi()?.setActive?.(null);
+      }
+      showPrompts(null);
+      markHover(null);
       releaseAll();
-      mouseMoved = false; keyboardUsed = false;
+      mouseMoved = false;
+      keyboardUsed = false;
       return;
     }
     unityAxes(pad, axes);
     unityButtons(pad, buttons);
     const b = bindings();
-    if (plus && !P.layout) { P.layout = true; try { ensurePlusPadLayout(b); } catch (e) { console.warn('[gamepad] Plus layout:', e?.message ?? e); } }
+    if (plus && !P.layout) {
+      P.layout = true;
+      try {
+        ensurePlusPadLayout(b);
+      } catch (e) {
+        console.warn('[gamepad] Plus layout:', e?.message ?? e);
+      }
+    }
     for (const code of capturedHeld) if (!padDownIn(axes, code)) capturedHeld.delete(code);
-    const padDown = (code) => padDownIn(axes, code) && !capturedHeld.has(code) && !(plus && P.stale.has(code));   // PADPLUS3: a stale button is up
+    const padDown = (code) => padDownIn(axes, code) && !capturedHeld.has(code) && !(plus && P.stale.has(code)); // PADPLUS3: a stale button is up
     const wanted = new Set(buttons);
     // axis keys: all thirty-two, polled (GetAxisKey) - GetAnyKeyDown
     // walks every one of them (KeyCodeList :1573-1587), which is how
     // the joystick window's capture sees a stick move (GP2)
-    for (let key = AXIS_KEY_BASE; key < AXIS_KEY_BASE + NUM_AXES * 2; key++) if (axisKeyDown(axes, key)) wanted.add(axisKeyName(key));
+    for (let key = AXIS_KEY_BASE; key < AXIS_KEY_BASE + NUM_AXES * 2; key++)
+      if (axisKeyDown(axes, key)) wanted.add(axisKeyName(key));
     // the movement stick (FindInputAxisActions)
-    const mh = axisNumber(getAxisBinding(b, 'MovementHorizontal')), mvn = axisNumber(getAxisBinding(b, 'MovementVertical'));
+    const mh = axisNumber(getAxisBinding(b, 'MovementHorizontal')),
+      mvn = axisNumber(getAxisBinding(b, 'MovementVertical'));
     let moved = false;
     // PADPLUS2: UNDER PLUS, A WINDOW IS ANY WINDOW. The hosts' `overlayActive` is the TOWN's slot alone - in the
     // world host a dungeon's or a building's windows live on their own stacks (modes.overlayHeld), so with one of
@@ -608,9 +959,13 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
     // does nothing more until it comes up; the next press means what the new state says.
     if (plus) {
       const downAll = new Set(buttons);
-      for (let key = AXIS_KEY_BASE; key < AXIS_KEY_BASE + NUM_AXES * 2; key++) if (axisKeyDown(axes, key)) downAll.add(axisKeyName(key));
-      if (overlay !== P.lastOverlay || freed !== P.lastFreed) { P.lastOverlay = overlay; P.lastFreed = freed; P.stale = downAll; }
-      else for (const c of [...P.stale]) if (!downAll.has(c)) P.stale.delete(c);
+      for (let key = AXIS_KEY_BASE; key < AXIS_KEY_BASE + NUM_AXES * 2; key++)
+        if (axisKeyDown(axes, key)) downAll.add(axisKeyName(key));
+      if (overlay !== P.lastOverlay || freed !== P.lastFreed) {
+        P.lastOverlay = overlay;
+        P.lastFreed = freed;
+        P.stale = downAll;
+      } else for (const c of [...P.stale]) if (!downAll.has(c)) P.stale.delete(c);
       for (const c of P.stale) wanted.delete(c);
     }
     // FindInputAxisActions never runs under a pause (Update :488-500
@@ -620,18 +975,31 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
       // PADPLUS10: the left stick's sensitivity - past the dead zone the lean is scaled, so a gentler thumb reaches a full run
       let [lh, lv] = [axes[mh], axes[mvn]];
       if (plus && Math.hypot(lh, lv) > s.deadzone) [lh, lv] = scaleStick(lh, lv, plusStickSens('left'));
-      const m = movementAxes(lh, lv, { deadzone: s.deadzone, threshold: s.threshold, invertH: getAxisInversion(b, 'MovementHorizontal'), invertV: getAxisInversion(b, 'MovementVertical') });
+      const m = movementAxes(lh, lv, {
+        deadzone: s.deadzone,
+        threshold: s.threshold,
+        invertH: getAxisInversion(b, 'MovementHorizontal'),
+        invertV: getAxisInversion(b, 'MovementVertical'),
+      });
       if (m) {
-        for (const a of m.actions) { const c = codeOf(b, a); if (c) wanted.add(c); }
+        for (const a of m.actions) {
+          const c = codeOf(b, a);
+          if (c) wanted.add(c);
+        }
         analog = { x: m.x, y: m.y };
         moved = true;
       } else analog = null;
     } else analog = null;
     // the camera stick (Update :525-540, PlayerMouseLook :114-122)
-    const ch = axisNumber(getAxisBinding(b, 'CameraHorizontal')), cv = axisNumber(getAxisBinding(b, 'CameraVertical'));
+    const ch = axisNumber(getAxisBinding(b, 'CameraHorizontal')),
+      cv = axisNumber(getAxisBinding(b, 'CameraVertical'));
     let look = { x: 0, y: 0 };
     if (ch && cv) {
-      look = cameraAxes(axes[ch], axes[cv], { deadzone: s.deadzone, invertH: getAxisInversion(b, 'CameraHorizontal'), invertV: getAxisInversion(b, 'CameraVertical') });
+      look = cameraAxes(axes[ch], axes[cv], {
+        deadzone: s.deadzone,
+        invertH: getAxisInversion(b, 'CameraHorizontal'),
+        invertV: getAxisInversion(b, 'CameraVertical'),
+      });
       if (look.x || look.y) moved = true;
     }
     // UsingController (:1536-1546): a stick makes the pad live, the mouse
@@ -651,23 +1019,39 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
     // pressed, or a stick thrown from rest - never a button still held, or a drifting stick resting past the dead zone.
     const stickNow = moved;
     let padEdge = false;
-    for (const c of buttons) if (!P.btnPrev?.has(c)) { padEdge = true; break; }
+    for (const c of buttons)
+      if (!P.btnPrev?.has(c)) {
+        padEdge = true;
+        break;
+      }
     if (stickNow && !P.stickPrev) padEdge = true;
-    P.btnPrev = new Set(buttons); P.stickPrev = stickNow;
+    P.btnPrev = new Set(buttons);
+    P.stickPrev = stickNow;
     const wasUsing = usingController;
-    if (mouseMoved || keyboardUsed) { usingController = false; P.handsOff = true; }   // KBHAND1: keyboard hands the diamond back too
-    else if (padEdge || (usingController && (stickNow || buttons.size))) { usingController = true; P.handsOff = false; }
-    setPadFamily(usingController || !P.handsOff ? padFamilyOf(pad.id) : null);   // sticky: the keyboard keeps it until the pad ACTS   // QS3: Xbox or PlayStation, off the pad's own id
+    if (mouseMoved || keyboardUsed) {
+      usingController = false;
+      P.handsOff = true;
+    } // KBHAND1: keyboard hands the diamond back too
+    else if (padEdge || (usingController && (stickNow || buttons.size))) {
+      usingController = true;
+      P.handsOff = false;
+    }
+    setPadFamily(usingController || !P.handsOff ? padFamilyOf(pad.id) : null); // sticky: the keyboard keeps it until the pad ACTS   // QS3: Xbox or PlayStation, off the pad's own id
     const r0 = canvas?.getBoundingClientRect?.();
     if (usingController && (!wasUsing || !cursor)) {
-      cursor = lastMouse ? [lastMouse[0], lastMouse[1]] : r0 ? [r0.left + r0.width / 2, r0.top + r0.height / 2] : [0, 0];
+      cursor = lastMouse
+        ? [lastMouse[0], lastMouse[1]]
+        : r0
+          ? [r0.left + r0.width / 2, r0.top + r0.height / 2]
+          : [0, 0];
     }
     // PADMOUSE: a pointer mode just begun puts the pointer on the screen - never left off it where the mouse last was
     if (cursor && r0 && r0.width > 0) {
       cursor[0] = Math.min(r0.left + r0.width, Math.max(r0.left, cursor[0]));
       cursor[1] = Math.min(r0.top + r0.height, Math.max(r0.top, cursor[1]));
     }
-    mouseMoved = false; keyboardUsed = false;
+    mouseMoved = false;
+    keyboardUsed = false;
     setControllerLook(usingController);
     // PADPLUS1: the Plus layer - the run toggle and the crossbar in the world, the tabs, the jumps, the scroll and
     // the Options press in a window. `swallowed` are buttons it took: no key, no click for them this frame.
@@ -675,9 +1059,17 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
     // AUDIT CAPTAIN'S SEA S3: THE GLASS UNDER A PAD - while it is up, the look stick's click turns its magnification (a
     // pad has no wheel), and that click is the glass's until it is let go (whatever it is bound to waits)
     const glassUp = !overlay && !!hooks.glass?.up?.();
-    const zoomDown = buttons.has(GLASS_PAD_ZOOM), zoomFresh = zoomDown && !P.zoomPrev;
+    const zoomDown = buttons.has(GLASS_PAD_ZOOM),
+      zoomFresh = zoomDown && !P.zoomPrev;
     P.zoomPrev = zoomDown;
-    if (glassUp && zoomFresh) { P.glassZoom = true; try { hooks.glass.zoom?.(); } catch (e) { console.warn('[gamepad] glass:', e?.message ?? e); } }
+    if (glassUp && zoomFresh) {
+      P.glassZoom = true;
+      try {
+        hooks.glass.zoom?.();
+      } catch (e) {
+        console.warn('[gamepad] glass:', e?.message ?? e);
+      }
+    }
     if (!zoomDown) P.glassZoom = false;
     if (P.glassZoom) wanted.delete(GLASS_PAD_ZOOM);
     // PADPLUS10: while the bindings window waits for a button, a press is only its own code - no Back, no click
@@ -687,75 +1079,137 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
     // the UI buttons as the mouse's (GetMouseButton :1050-1063) and Back as Escape (:1065-1068)
     for (const [ui, mouse] of Object.entries(MOUSE_CODE_OF_UI)) {
       const code = getJoystickUIBinding(b, ui);
-      if (code && uiDown(code) && !pointerMode) wanted.add(mouse);   // PADMOUSE: freed, the click lands AT the pointer (below), not as a world key
+      if (code && uiDown(code) && !pointerMode) wanted.add(mouse); // PADMOUSE: freed, the click lands AT the pointer (below), not as a world key
     }
     const back = getJoystickUIBinding(b, 'Back');
-    if (back && uiDown(back) && overlay) { wanted.delete(back); const c = codeOf(b, 'Escape'); if (c) wanted.add(c); }
+    if (back && uiDown(back) && overlay) {
+      wanted.delete(back);
+      const c = codeOf(b, 'Escape');
+      if (c) wanted.add(c);
+    }
     // UI pointer mode owns clicks: avoid raw pad and Mouse aliases advancing a dialog before the pointer event.
-    if (pointerMode && !binding) for (const ui of Object.keys(DOM_BUTTON_OF_UI)) { const c = getJoystickUIBinding(b, ui); if (c) wanted.delete(c); }
+    if (pointerMode && !binding)
+      for (const ui of Object.keys(DOM_BUTTON_OF_UI)) {
+        const c = getJoystickUIBinding(b, ui);
+        if (c) wanted.delete(c);
+      }
     // edges: presses first, then the releases of what is no longer wanted
     for (const code of wanted) press(code);
     releaseAll(wanted);
     // THE CONTROLLER CURSOR (GP3): CursorVisible is a window up
     if (pointerMode && usingController && cursor) {
-      let h = mh ? axes[mh] : 0, v = mvn ? axes[mvn] : 0;   // GetAxisRaw (:1526-1527)
+      let h = mh ? axes[mh] : 0,
+        v = mvn ? axes[mvn] : 0; // GetAxisRaw (:1526-1527)
       if (getAxisInversion(b, 'MovementHorizontal')) h = -h;
       if (getAxisInversion(b, 'MovementVertical')) v = -v;
-      const sens = s.cursorSensitivity * (plus ? plusStickSens('left') : 1);   // PADPLUS10: and the cursor's speed
+      const sens = s.cursorSensitivity * (plus ? plusStickSens('left') : 1); // PADPLUS10: and the cursor's speed
       let st = null;
       if (padCursorAssist()) {
         // PAD-CURSOR (Ledger A): the Destiny feel on BOTH skins - the curve, the ramp, the boost, the friction over a
         // control and the pull to it (systems/padCursor.js). The pull reads the DOM's controls and any canvas
         // window's published buttons, and runs with the stick at rest too, so a let-go settles on the button
         const near = controlRectNear(cursor[0], cursor[1], PAD_CURSOR.PULL_RADIUS);
-        const target = pullTargetAmong(near ? [near, ...padCursorCanvasTargets()] : padCursorCanvasTargets(), cursor[0], cursor[1]);
-        st = stepPadCursor(cursorFeel, { h, v, dt, deadzone: s.deadzone, speed: sens * CURSOR_SPEED, over: !!target?.inside, target, at: cursor });
-        if (Math.abs(st.dx) < 0.05 && Math.abs(st.dy) < 0.05) st = null;   // settled: no move event every idle frame
+        const target = pullTargetAmong(
+          near ? [near, ...padCursorCanvasTargets()] : padCursorCanvasTargets(),
+          cursor[0],
+          cursor[1],
+        );
+        st = stepPadCursor(cursorFeel, {
+          h,
+          v,
+          dt,
+          deadzone: s.deadzone,
+          speed: sens * CURSOR_SPEED,
+          over: !!target?.inside,
+          target,
+          at: cursor,
+        });
+        if (Math.abs(st.dx) < 0.05 && Math.abs(st.dy) < 0.05) st = null; // settled: no move event every idle frame
       } else if (Math.hypot(h, v) > s.deadzone) {
-        st = linearPadCursorStep(h, v, dt, sens);   // DFU's own, the switch off (:1558-1562)
+        st = linearPadCursorStep(h, v, dt, sens); // DFU's own, the switch off (:1558-1562)
         // PADPLUS1: a little friction over a control, so a thumb can stop on a button rather than sail past it
-        if (plus && P.domOver && interactiveAt(cursor[0], cursor[1])) { st.dx *= 0.55; st.dy *= 0.55; }
+        if (plus && P.domOver && interactiveAt(cursor[0], cursor[1])) {
+          st.dx *= 0.55;
+          st.dy *= 0.55;
+        }
       }
       if (st) {
         const r = canvas?.getBoundingClientRect?.() ?? { left: 0, top: 0, width: Infinity, height: Infinity };
         cursor[0] = Math.min(r.left + r.width, Math.max(r.left, cursor[0] + st.dx));
-        cursor[1] = Math.min(r.top + r.height, Math.max(r.top, cursor[1] + st.dy));   // screen px, y down (Unity's y is up - :1568, flipped in the step)
+        cursor[1] = Math.min(r.top + r.height, Math.max(r.top, cursor[1] + st.dy)); // screen px, y down (Unity's y is up - :1568, flipped in the step)
         pointerAt('pointermove', 0);
       }
       for (const [ui, button] of Object.entries(DOM_BUTTON_OF_UI)) {
         const code = getJoystickUIBinding(b, ui);
         const down = !!code && uiDown(code);
-        if (down && !cursorHeld[ui]) { cursorHeld[ui] = true; pointerAt('pointerdown', button); }
-        else if (!down && cursorHeld[ui]) { cursorHeld[ui] = false; pointerAt('pointerup', button); }
+        if (down && !cursorHeld[ui]) {
+          cursorHeld[ui] = true;
+          pointerAt('pointerdown', button);
+        } else if (!down && cursorHeld[ui]) {
+          cursorHeld[ui] = false;
+          pointerAt('pointerup', button);
+        }
       }
       cursorShow(true);
-    } else { cursorRelease(); cursorShow(false); if (plus) markHover(null); }
+    } else {
+      cursorRelease();
+      cursorShow(false);
+      if (plus) markHover(null);
+    }
     // PADPLUS1: the prompt bar - a window up under the live pad; the strip's tabs are looked for four times a second
     if (plus && overlay && usingController) {
       P.promptAt -= dt;
-      if (P.promptAt <= 0) { P.promptAt = 0.25; P.tabs = !!activeTabStrip(); P.quick = !!quickActApi()?.available?.(); }
-      const arm = lockArm(), uiBack = getJoystickUIBinding(b, 'Back') ?? 'JoystickButton1', uiClick = getJoystickUIBinding(b, 'LeftClick') ?? 'JoystickButton0';
-      showPrompts(arm ? lockPrompts({ gentle: !!arm.gentle?.(), click: uiClick, back: uiBack })   // AUDIT LOCKPICK C3: the lock's own row
-        : windowPrompts({ tabs: P.tabs, quick: P.quick, uiBack, uiClick, hotbar: hotbarPrompt(), back: !globalThis.document?.querySelector?.('[data-no-back]') }), padFamilyOf(pad.id));
-    } else if (plus && P.lootUp && usingController) showPrompts(lootPrompts({ take: getJoystickUIBinding(b, 'LeftClick') ?? 'JoystickButton0' }), padFamilyOf(pad.id));   // PADPLUS6
-    else if (plus && P.helmUp && usingController) showPrompts(hooks.helm?.prompts?.() ?? null, padFamilyOf(pad.id));   // CSA-L: the helm's d-pad
+      if (P.promptAt <= 0) {
+        P.promptAt = 0.25;
+        P.tabs = !!activeTabStrip();
+        P.quick = !!quickActApi()?.available?.();
+      }
+      const arm = lockArm(),
+        uiBack = getJoystickUIBinding(b, 'Back') ?? 'JoystickButton1',
+        uiClick = getJoystickUIBinding(b, 'LeftClick') ?? 'JoystickButton0';
+      showPrompts(
+        arm
+          ? lockPrompts({ gentle: !!arm.gentle?.(), click: uiClick, back: uiBack }) // AUDIT LOCKPICK C3: the lock's own row
+          : windowPrompts({
+              tabs: P.tabs,
+              quick: P.quick,
+              uiBack,
+              uiClick,
+              hotbar: hotbarPrompt(),
+              back: !globalThis.document?.querySelector?.('[data-no-back]'),
+            }),
+        padFamilyOf(pad.id),
+      );
+    } else if (plus && P.lootUp && usingController)
+      showPrompts(
+        lootPrompts({ take: getJoystickUIBinding(b, 'LeftClick') ?? 'JoystickButton0' }),
+        padFamilyOf(pad.id),
+      ); // PADPLUS6
+    else if (plus && P.helmUp && usingController)
+      showPrompts(hooks.helm?.prompts?.() ?? null, padFamilyOf(pad.id)); // CSA-L: the helm's d-pad
     else showPrompts(null);
     // the swing: RightClick's button held is the drag's button held -
     // its edges first, so the frame the button lifts is a look again
     const swingBtn = getJoystickUIBinding(b, 'RightClick');
     const swingNow = !!swingBtn && uiDown(swingBtn) && !pointerMode;
     if (plus) plusSwing(swingNow, { h: mh ? axes[mh] : 0, v: mvn ? axes[mvn] : 0 }, dt);
-    else if (swingNow && !swinging) { swinging = true; hooks.attack?.(0, 0, true); }
-    else if (!swingNow && swinging) { swinging = false; hooks.attack?.(0, 0, false); }
+    else if (swingNow && !swinging) {
+      swinging = true;
+      hooks.attack?.(0, 0, true);
+    } else if (!swingNow && swinging) {
+      swinging = false;
+      hooks.attack?.(0, 0, false);
+    }
     // the look, in the hook's units (the host multiplies by lookScale())
     // - or, while the swing's button is down, the drag's direction
     if ((look.x || look.y) && !pointerMode && hooks.look) {
-      const toUnits = (deg) => ((deg * Math.PI) / 180) / lookScale();
-      const lookSens = s.lookSensitivity * (plus ? plusStickSens('right') : 1);   // PADPLUS10: the right stick's sensitivity
+      const toUnits = (deg) => (deg * Math.PI) / 180 / lookScale();
+      const lookSens = s.lookSensitivity * (plus ? plusStickSens('right') : 1); // PADPLUS10: the right stick's sensitivity
       const dx = toUnits(controllerLookDegrees(look.x, dt, lookSens));
       const dy = toUnits(controllerLookDegrees(look.y, dt, lookSens));
-      if (swinging && !plus && !hooks.aimHold?.()) hooks.attack?.(look.x * SWING_PX_PER_SEC * dt, -look.y * SWING_PX_PER_SEC * dt, true);   // PADPLUS2: under Plus the right stick always looks; NAV-H: and at a helm with guns, the aim's look
-      else hooks.look(dx, -dy);   // the hook reads screen-down positive and negates
+      if (swinging && !plus && !hooks.aimHold?.())
+        hooks.attack?.(look.x * SWING_PX_PER_SEC * dt, -look.y * SWING_PX_PER_SEC * dt, true); // PADPLUS2: under Plus the right stick always looks; NAV-H: and at a helm with guns, the aim's look
+      else hooks.look(dx, -dy); // the hook reads screen-down positive and negates
     }
   }
 
@@ -765,6 +1219,24 @@ export function attachGamepad(canvas, hooks = {}, { getPads = null, dispatch = s
     usingController: () => usingController,
     cursor: () => (cursor ? [cursor[0], cursor[1]] : null),
     held: () => new Set(held),
-    dispose() { capturedHeld.clear(); padHideMouse(false); showPrompts(null); markHover(null); if (P.xbSet !== null) crossbarApi()?.setActive?.(null); cursorRelease(); cursorShow(false); cursorEl?.remove?.(); cursorEl = null; releaseAll(); setControllerLook(false); setPadFamily(null); window.removeEventListener('mousemove', onMouseMove); window.removeEventListener('keydown', onKeyDown, true); globalThis.document?.removeEventListener?.('pointerlockchange', onLockChange); globalThis.window?.removeEventListener?.('blur', onFocusLost); globalThis.document?.removeEventListener?.('visibilitychange', onFocusLost); },
+    dispose() {
+      capturedHeld.clear();
+      padHideMouse(false);
+      showPrompts(null);
+      markHover(null);
+      if (P.xbSet !== null) crossbarApi()?.setActive?.(null);
+      cursorRelease();
+      cursorShow(false);
+      cursorEl?.remove?.();
+      cursorEl = null;
+      releaseAll();
+      setControllerLook(false);
+      setPadFamily(null);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('keydown', onKeyDown, true);
+      globalThis.document?.removeEventListener?.('pointerlockchange', onLockChange);
+      globalThis.window?.removeEventListener?.('blur', onFocusLost);
+      globalThis.document?.removeEventListener?.('visibilitychange', onFocusLost);
+    },
   };
 }

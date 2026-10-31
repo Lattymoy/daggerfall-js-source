@@ -2,8 +2,8 @@
   {
     "name": "STAFF-MAP-shown-token-sent",
     "file": "src/net/staffMap.js",
-    "old": "if (tokenHidden(tok)) { why = null; heard(true); return tok; }",
-    "new": "if (tok) { why = null; heard(true); return tok; }",
+    "old": "    if (tokenHidden(tok)) {",
+    "new": "    if (tok) {",
     "why": "a staff game whose Hide me is off says hello in another region's channel as itself - its players see a staff member arrive",
     "tests": [
       "test/net/staffmap_e2e.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "STAFF-MAP-hide-off-unsaid",
     "file": "src/net/staffMap.js",
-    "old": "state: region == null ? 'off' : shown ? 'hide' : link?.status ?? 'off'",
-    "new": "state: region == null ? 'off' : link?.status ?? 'off'",
+    "old": "      state: region == null ? 'off' : shown ? 'hide' : (link?.status ?? 'off'),",
+    "new": "      state: region == null ? 'off' : (link?.status ?? 'off'),",
     "why": "a staff game whose Hide me is off shows an empty map with no word why",
     "tests": [
       "test/net/staffmap_e2e.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "FOLLOW-HIDDEN-REJOIN-parks-hidden",
     "file": "src/scenes/staffFollowHost.js",
-    "old": "if (parked !== null && (hidden() || parked !== where())) parked = null;",
-    "new": "if (parked !== null && parked !== where()) parked = null;",
+    "old": "        if (parked !== null && (hidden() || parked !== where())) parked = null;",
+    "new": "        if (parked !== null && parked !== where()) parked = null;",
     "why": "a hidden staff member let go of a follow stands in no room until they walk off that map pixel - every player stays unloaded (mob: \"when i change form invis all players dont load\")",
     "tests": [
       "test/net/staffmap_e2e.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "STAFF-MAP-lastWhy-copied-once",
     "file": "src/net/staffMap.js",
-    "old": "return Object.defineProperties(mint, Object.getOwnPropertyDescriptors({   // descriptors: lastWhy read live, never copied once",
-    "new": "return Object.assign(mint, ({   // descriptors: lastWhy read live, never copied once",
+    "old": "  return Object.defineProperties(\n    mint,\n    Object.getOwnPropertyDescriptors({\n      // descriptors: lastWhy read live, never copied once\n      get lastWhy() {\n        return why;\n      },\n      coolMs: () => minter.coolMs?.() ?? 0,\n      holds: (/** @type {string|null} */ room) => !!minter.holds?.(room),\n      opened: (/** @type {string|null} */ room, /** @type {string} */ tok) => minter.opened?.(room, tok),\n      unopened: (/** @type {string|null} */ room, /** @type {string} */ tok) => minter.unopened?.(room, tok),\n    }),\n  );",
+    "new": "  return Object.assign(mint, {\n    // descriptors: lastWhy read live, never copied once\n    get lastWhy() {\n      return why;\n    },\n    coolMs: () => minter.coolMs?.() ?? 0,\n    holds: (/** @type {string|null} */ room) => !!minter.holds?.(room),\n    opened: (/** @type {string|null} */ room, /** @type {string} */ tok) => minter.opened?.(room, tok),\n    unopened: (/** @type {string|null} */ room, /** @type {string} */ tok) => minter.unopened?.(room, tok),\n  });",
     "why": "the map's refused shown token reads as no reason at all, so the session retries a link that can never open",
     "tests": [
       "test/net/staffmap_e2e.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "STAFF-FOLLOW-UNLOCK-no-bar",
     "file": "src/scenes/staffFollowHost.js",
-    "old": "const barFrame = () => { if (door.panel()) bar.show({ following: hook.locked(), hidden: hiddenNow, asking, seeing: host.seeing() }); else bar.hide(); };",
-    "new": "const barFrame = () => { if (door.panel()) bar.show({ following: false, hidden: hiddenNow, asking, seeing: host.seeing() }); else bar.hide(); };",
+    "old": "    if (door.panel()) bar.show({ following: hook.locked(), hidden: hiddenNow, asking, seeing: host.seeing() });",
+    "new": "    if (door.panel()) bar.show({ following: false, hidden: hiddenNow, asking, seeing: host.seeing() });",
     "why": "a locked follow has no Unlock on the game's screen - with the panel's card closed the staff member is stuck behind the target's eyes (mob: \"follow needs a unlock button in game\")",
     "tests": [
       "test/ui/staffFollowBar.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "STAFF-FOLLOW-UNLOCK-press-leaks",
     "file": "src/ui/staffFollowBar.js",
-    "old": "b.addEventListener?.('click', (/** @type {any} */ e) => { e.stopPropagation?.(); e.preventDefault?.(); b.blur?.(); run(); });",
-    "new": "b.addEventListener?.('click', () => { b.blur?.(); run(); });",
+    "old": "    b.addEventListener?.('click', (/** @type {any} */ e) => {\n      e.stopPropagation?.();\n      e.preventDefault?.();",
+    "new": "    b.addEventListener?.('click', () => {",
     "why": "the Unlock's press reaches the world under it - a swing or a look",
     "tests": [
       "test/ui/staffFollowBar.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "STAFF-HIDE-IN-GAME-wrong-way",
     "file": "src/ui/staffFollowBar.js",
-    "old": "hideBtn = button(BUTTON_CSS, 'data-staff-hide', () => onHide(!hiddenNow));",
-    "new": "hideBtn = button(BUTTON_CSS, 'data-staff-hide', () => onHide(hiddenNow));",
+    "old": "    hideBtn = button(BUTTON_CSS, 'data-staff-hide', () => onHide(!hiddenNow));",
+    "new": "    hideBtn = button(BUTTON_CSS, 'data-staff-hide', () => onHide(hiddenNow));",
     "why": "the bar's Hide me asks the state the staff member is already in - the button does nothing",
     "tests": [
       "test/ui/staffFollowBar.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "STAFF-TAG-MENU-skipped",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (rows.length && layer) layer.menu(name || sub, rows, ...(where ? [where] : []));",
-    "new": "if (false) layer.menu(name || sub, rows);",
+    "old": "    if (rows.length && layer) layer.menu(name || sub, rows, ...(where ? [where] : []));",
+    "new": "    if (false) layer.menu(name || sub, rows);",
     "why": "a tag's click follows at once again - no menu (mob: \"when u lcick on someon\", \"i mean the pop up\")",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "STAFF-FLATMAP-no-urgency-order",
     "file": "src/scenes/staffFlatMapHost.js",
-    "old": "(RANK[/** @type {keyof typeof RANK} */ (a.level)] ?? 3) - (RANK[/** @type {keyof typeof RANK} */ (b.level)] ?? 3) || a.name.localeCompare(b.name)",
-    "new": "a.name.localeCompare(b.name)",
+    "old": "        .sort(\n          (/** @type {any} */ a, /** @type {any} */ b) =>\n            (RANK[/** @type {keyof typeof RANK} */ (a.level)] ?? 3) -\n              (RANK[/** @type {keyof typeof RANK} */ (b.level)] ?? 3) || a.name.localeCompare(b.name),\n        );",
+    "new": "        .sort((/** @type {any} */ a, /** @type {any} */ b) => a.name.localeCompare(b.name));",
     "why": "the Most urgent list is by name - a flagged player is buried",
     "tests": [
       "test/scenes/staffFlatMap.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "STAFF-FLATMAP-hide-off-unsaid",
     "file": "src/scenes/staffFlatMapHost.js",
-    "old": "const hint = state === 'hide' ?",
-    "new": "const hint = false ?",
+    "old": "      const hint =\n        state === 'hide'\n          ? t(\n              'net.staffFlat.hideOff',\n              'Turn Hide me on (the bar at the top) to watch a region - it opens only while you are hidden.',\n            )\n          : state === 'open'\n            ? t(\n                'net.staffFlat.count',\n                '{n, plural, one {# traveller} other {# travellers}} outdoors - indoors and dungeons send no position',\n                { n: players.length },\n              )\n            : t('net.staffFlat.connecting', 'Connecting…');",
+    "new": "      const hint = false\n        ? t(\n            'net.staffFlat.hideOff',\n            'Turn Hide me on (the bar at the top) to watch a region - it opens only while you are hidden.',\n          )\n        : state === 'open'\n          ? t(\n              'net.staffFlat.count',\n              '{n, plural, one {# traveller} other {# travellers}} outdoors - indoors and dungeons send no position',\n              { n: players.length },\n            )\n          : t('net.staffFlat.connecting', 'Connecting…');",
     "why": "with Hide me off the flat map is empty with no word why",
     "tests": [
       "test/scenes/staffFlatMap.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "STAFF-FLATMAP-link-kept",
     "file": "src/scenes/staffFlatMapHost.js",
-    "old": "else { map.pick(null); sheet.hide(); }",
-    "new": "else { sheet.hide(); }",
+    "old": "        map.pick(null);\n        sheet.hide();",
+    "new": "        sheet.hide();",
     "why": "closing the flat map keeps a hidden link open in that region",
     "tests": [
       "test/scenes/staffFlatMap.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "FOLLOW-GROUND-HINT-dropped",
     "file": "src/net/staffHook.js",
-    "old": "if (typeof r === 'string' && r.length > 0 && r.length <= ROOM_HINT_MAX && !isSocialRoom(r) && !isChatRoom(r)) {",
-    "new": "if (false) {",
+    "old": "        if (typeof r === 'string' && r.length > 0 && r.length <= ROOM_HINT_MAX && !isSocialRoom(r) && !isChatRoom(r)) {",
+    "new": "        if (false) {",
     "why": "a player picked off the staff member's own ground whose game has sent no where note is locked on and never drawn - the camera never moves (mob: \"panel open said locked never moved\")",
     "tests": [
       "test/net/staffpanel5drop_e2e.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "FOLLOW-GROUND-HINT-view-never-hints",
     "file": "src/scenes/staffViewHost.js",
-    "old": "return { room: m.room, id, ly: m.layer ?? 0 };",
-    "new": "return null;",
+    "old": "    return { room: m.room, id, ly: m.layer ?? 0 };",
+    "new": "    return null;",
     "why": "a tag picked on the ground hands the follow nowhere to look",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "FOLLOW-GROUND-HINT-bar-silent",
     "file": "src/ui/staffFollowBar.js",
-    "old": "const line = following && !seeing ?",
-    "new": "const line = false ?",
+    "old": "      const line =\n        following && !seeing\n          ? t('net.staffFollow.finding', 'Following - finding them…')\n          : following\n            ? name\n              ? t('net.staffFollow.following', 'Following {name}', { name })\n              : t('net.staffFollow.followingAnon', 'Following')\n            : hidden\n              ? t('net.staffFollow.hidden', 'Hidden')\n              : t('net.staffFollow.shown', 'Shown to players');",
+    "new": "      const line = false\n        ? t('net.staffFollow.finding', 'Following - finding them…')\n        : following\n          ? name\n            ? t('net.staffFollow.following', 'Following {name}', { name })\n            : t('net.staffFollow.followingAnon', 'Following')\n          : hidden\n            ? t('net.staffFollow.hidden', 'Hidden')\n            : t('net.staffFollow.shown', 'Shown to players');",
     "why": "a follow locked but not yet finding its target says Following with a still camera",
     "tests": [
       "test/ui/staffFollowBar.test.js"

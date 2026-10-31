@@ -137,8 +137,8 @@ test('ARENA4b the carrier: a receipt kept with the fighter standing here as it c
 
 test('ARENA4b the host: arenaOnline hands its claims the fighter and the Renown hook; world.js adopts a won bout\'s Renown by the one plan, only for the fighting character, and the service credits a pledged war-guild in Daggerfall\'s region (mutants: the character check dropped; the order not carried; the influence unasked)', () => {
   const o = read('src/scenes/arena/arenaOnline.js');
-  assert.ok(o.includes('claim: async (r, c, n) => { const a = await deps.account.claim(r, c, n); answered(r, a); return a; }'), 'the fighter rides the claim (PIN MOVED at the merge of the client stream: the claim\'s answer also settles the held purse, arenaOnline.js answered)');
-  assert.ok(o.includes('character: () => deps.character?.() ?? null, name: () => deps.characterName?.() ?? null, onRenown: (d) => deps.onRenown?.(d)'));
+  assert.ok(o.includes('claim: async (r, c, n) => {\n      const a = await deps.account.claim(r, c, n);\n      answered(r, a);\n      return a;\n    }'), 'the fighter rides the claim (PIN MOVED at the merge of the client stream: the claim\'s answer also settles the held purse, arenaOnline.js answered)');
+  assert.ok(o.includes('character: () => deps.character?.() ?? null,\n    name: () => deps.characterName?.() ?? null,\n    onRenown: (d) => deps.onRenown?.(d)'));
   const w = read('src/scenes/world.js');
   const glue = w.slice(w.indexOf('inBout: () => arenaBouts.holds(),'), w.indexOf('inBout: () => arenaBouts.holds(),') + 1400);
   assert.ok(glue.includes('character: () => characterIdOf(playerEntity)'));

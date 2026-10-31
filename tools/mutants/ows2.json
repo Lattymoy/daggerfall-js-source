@@ -2,8 +2,8 @@
   {
     "name": "OWS2-no-launch",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "        if (layer !== ASHORE) continue;   // no boat to hand: the sea refused",
-    "new": "        continue;   // no boat to hand: the sea refused",
+    "old": "        if (layer !== ASHORE) continue; // no boat to hand: the sea refused",
+    "new": "        continue; // no boat to hand: the sea refused",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "OWS2-left-launches-again",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "nl = sea.again ? ASHORE : LEFT;",
-    "new": "nl = ASHORE;",
+    "old": "          nl = sea.again ? ASHORE : LEFT;",
+    "new": "          nl = ASHORE;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "OWS2-packed-never-again",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "nl = sea.again ? ASHORE : LEFT;",
-    "new": "nl = LEFT;",
+    "old": "          nl = sea.again ? ASHORE : LEFT;",
+    "new": "          nl = LEFT;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "OWS2-sea-goal-walked",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const wet = sea ? isWater(nx, ny) || (seaGoal && n === goal) : false;",
-    "new": "const wet = sea ? isWater(nx, ny) : false;",
+    "old": "      const wet = sea ? isWater(nx, ny) || (seaGoal && n === goal) : false;",
+    "new": "      const wet = sea ? isWater(nx, ny) : false;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "OWS2-goal-either-layer",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const goalOk = (layer) => !sea || (seaGoal ? layer === AFLOAT : layer !== AFLOAT);",
-    "new": "const goalOk = () => true;",
+    "old": "  const goalOk = (layer) => !sea || (seaGoal ? layer === AFLOAT : layer !== AFLOAT);",
+    "new": "  const goalOk = () => true;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "OWS2-sail-land-corner",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "          if (dx && dy && !isWater(cx + dx, cy) && !isWater(cx, cy + dy)) continue;\n",
-    "new": "\n",
+    "old": "          if (dx && dy && !isWater(cx + dx, cy) && !isWater(cx, cy + dy)) continue;",
+    "new": "",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "OWS2-coast-cheap",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "kindIx = 3; step = diag * (nearLand(nx, ny) ? SEA_COST.coast : SEA_COST.sea);",
-    "new": "kindIx = 3; step = diag * SEA_COST.sea;",
+    "old": "          step = diag * (nearLand(nx, ny) ? SEA_COST.coast : SEA_COST.sea);",
+    "new": "          step = diag * SEA_COST.sea;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "OWS2-free-launch",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "nl = AFLOAT; kindIx = 4; step = diag * SEA_COST.sea + SEA_COST.shore;",
-    "new": "nl = AFLOAT; kindIx = 4; step = diag * SEA_COST.sea;",
+    "old": "        step = diag * SEA_COST.sea + SEA_COST.shore; // the launch",
+    "new": "        step = diag * SEA_COST.sea; // the launch",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "OWS2-free-landfall",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "kindIx = 5; step = diag * ROUTE_COST.open + SEA_COST.shore;",
-    "new": "kindIx = 5; step = diag * ROUTE_COST.open;",
+    "old": "          step = diag * ROUTE_COST.open + SEA_COST.shore;",
+    "new": "          step = diag * ROUTE_COST.open;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "OWS2-start-ashore",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const startLayer = !sea ? 0 : sea.start === 'sea' ? AFLOAT : ASHORE;",
-    "new": "const startLayer = !sea ? 0 : ASHORE;",
+    "old": "  const startLayer = !sea ? 0 : sea.start === 'sea' ? AFLOAT : ASHORE;",
+    "new": "  const startLayer = !sea ? 0 : ASHORE;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "OWS2-road-share-sea",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "kinds.filter((k) => k === 'road' || k === 'track').length",
-    "new": "kinds.filter((k) => k !== 'open').length",
+    "old": "  return kinds.filter((k) => k === 'road' || k === 'track').length / kinds.length;",
+    "new": "  return kinds.filter((k) => k !== 'open').length / kinds.length;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "OWS2-helm-dead-band",
     "file": "src/systems/seaHelm.js",
-    "old": "const turn = err > H.deadDeg ? 1 : err < -H.deadDeg ? -1 : 0;",
-    "new": "const turn = err > 0 ? 1 : err < 0 ? -1 : 0;",
+    "old": "  const turn = err > H.deadDeg ? 1 : err < -H.deadDeg ? -1 : 0;",
+    "new": "  const turn = err > 0 ? 1 : err < 0 ? -1 : 0;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "OWS2-helm-tack-never-about",
     "file": "src/systems/seaHelm.js",
-    "old": "      else if (st.tack * off < -H.laneDeg) st.tack = -st.tack;",
-    "new": "      else if (false) st.tack = -st.tack;",
+    "old": "      else if (st.tack * off < -H.laneDeg || -st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM)\n        st.tack = -st.tack; // the mark swung past the eye, or she stands past the lane: go about",
+    "new": "      else if (false) st.tack = -st.tack; // the mark swung past the eye, or she stands past the lane: go about",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "OWS2-helm-about-early",
     "file": "src/systems/seaHelm.js",
-    "old": "else if (st.tack * off < -H.laneDeg)",
-    "new": "else if (st.tack * off < 0)",
+    "old": "      else if (st.tack * off < -H.laneDeg || -st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM)",
+    "new": "      else if (st.tack * off < 0 || -st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM)",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "OWS2-helm-square-close",
     "file": "src/systems/seaHelm.js",
-    "old": "q.squareOnly ? H.noGoSquare : H.noGoFore;",
-    "new": "H.noGoFore;",
+    "old": "    const noGo = q.free ? 0 : q.squareOnly ? H.noGoSquare : H.noGoFore; // SAIL-FREE: the responsive helm sails straight up",
+    "new": "    const noGo = q.free ? 0 : H.noGoFore; // SAIL-FREE: the responsive helm sails straight up",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "OWS2-helm-sails-turning",
     "file": "src/systems/seaHelm.js",
-    "old": "const sailsWanted = sailable && st.oars <= 0 && Math.abs(err) <= H.sailTurnMax;",
-    "new": "const sailsWanted = sailable && st.oars <= 0;",
+    "old": "  const sailsWanted = sailable && st.oars <= 0 && Math.abs(err) <= H.sailTurnMax;",
+    "new": "  const sailsWanted = sailable && st.oars <= 0;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "OWS2-helm-calm-sails",
     "file": "src/systems/seaHelm.js",
-    "old": "(q.free ? windLen > 0 : windLen >= H.calm)",
-    "new": "(q.free ? windLen > 0 : windLen >= 0)",
+    "old": "  const sailable = q.hasSails && (q.free ? windLen > 0 : windLen >= H.calm) && !rowingIn && !avoiding && !crewRows;",
+    "new": "  const sailable = q.hasSails && (q.free ? windLen > 0 : windLen >= 0) && !rowingIn && !avoiding && !crewRows;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "OWS2-helm-no-stall",
     "file": "src/systems/seaHelm.js",
-    "old": "if (st.stall >= H.stallS) { st.stall = 0; st.oars = H.oarsS; }",
-    "new": "if (st.stall >= H.stallS) { st.stall = 0; }",
+    "old": "      st.oars = H.oarsS;\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "OWS2-helm-row-in-never",
     "file": "src/systems/seaHelm.js",
-    "old": "const rowingIn = !!q.landfall && ahead <= H.rowInM;",
-    "new": "const rowingIn = false;",
+    "old": "  const rowingIn = !!q.landfall && ahead <= H.rowInM;",
+    "new": "  const rowingIn = false;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "OWS2-helm-no-avoid",
     "file": "src/systems/seaHelm.js",
-    "old": "  if (avoiding) course = foldDeg(q.heading + (q.freer ?? 1) * 90);",
-    "new": "  if (false) course = foldDeg(q.heading + (q.freer ?? 1) * 90);",
+    "old": "  if (avoiding)",
+    "new": "  if (false)",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "OWS2-helm-avoid-wrong-hand",
     "file": "src/systems/seaHelm.js",
-    "old": "foldDeg(q.heading + (q.freer ?? 1) * 90)",
-    "new": "foldDeg(q.heading - (q.freer ?? 1) * 90)",
+    "old": "    course = foldDeg(q.heading + (q.freer ?? 1) * 90); // land close ahead: hard over to the freer hand",
+    "new": "    course = foldDeg(q.heading - (q.freer ?? 1) * 90); // land close ahead: hard over to the freer hand",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "OWS2-helm-crew-never-rows",
     "file": "src/systems/seaHelm.js",
-    "old": "const crewRows = !!q.crewed && (q.oarWay ?? 0) >= (q.sailWay ?? 0);",
-    "new": "const crewRows = false;",
+    "old": "  const crewRows = !!q.crewed && (q.oarWay ?? 0) >= (q.sailWay ?? 0);",
+    "new": "  const crewRows = false;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "OWS2-helm-crewless-rows",
     "file": "src/systems/seaHelm.js",
-    "old": "const crewRows = !!q.crewed && (q.oarWay ?? 0) >= (q.sailWay ?? 0);",
-    "new": "const crewRows = (q.oarWay ?? 0) >= (q.sailWay ?? 0);",
+    "old": "  const crewRows = !!q.crewed && (q.oarWay ?? 0) >= (q.sailWay ?? 0);",
+    "new": "  const crewRows = (q.oarWay ?? 0) >= (q.sailWay ?? 0);",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "OWS2-helm-raise-obstructed",
     "file": "src/systems/seaHelm.js",
-    "old": "sailsWanted && !q.sailsUp && q.canSail ? 'raise'",
-    "new": "sailsWanted && !q.sailsUp ? 'raise'",
+    "old": "  const sails = sailsWanted && !q.sailsUp && q.canSail ? 'raise' : !sailsWanted && q.sailsUp ? 'lower' : null;",
+    "new": "  const sails = sailsWanted && !q.sailsUp ? 'raise' : !sailsWanted && q.sailsUp ? 'lower' : null;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "OWS2-square-only-any",
     "file": "src/systems/seaHelm.js",
-    "old": "(boat?.SailsSquare?.length ?? 0) === (boat?.Sails?.length ?? 0)",
-    "new": "(boat?.SailsSquare?.length ?? 0) > 0",
+    "old": "export const squareOnly = (boat) =>\n  (boat?.Sails?.length ?? 0) > 0 && (boat?.SailsSquare?.length ?? 0) === (boat?.Sails?.length ?? 0);",
+    "new": "export const squareOnly = (boat) => (boat?.Sails?.length ?? 0) > 0 && (boat?.SailsSquare?.length ?? 0) > 0;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -363,8 +363,8 @@
   {
     "name": "OWS2-trip-sea-silent",
     "file": "src/scenes/travelView.js",
-    "old": "  if (sea) return TRAVEL_VIEW_TEXT.bySea(name);\n",
-    "new": "\n",
+    "old": "  if (sea) return TRAVEL_VIEW_TEXT.bySea(name);",
+    "new": "",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]

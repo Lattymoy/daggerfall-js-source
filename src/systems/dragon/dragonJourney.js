@@ -18,7 +18,14 @@ export const DRAGON_CRUISE_BAND_M = 15;
 export function dragonFlightPlan(from, to) {
   if (!from || !to) return null;
   if (from.x === to.x && from.y === to.y) return { pixels: [{ x: from.x, y: from.y }], cost: 0, kinds: [] };
-  return { pixels: [{ x: from.x, y: from.y }, { x: to.x, y: to.y }], cost: Math.max(Math.abs(to.x - from.x), Math.abs(to.y - from.y)), kinds: [AIR_LEG_KIND] };
+  return {
+    pixels: [
+      { x: from.x, y: from.y },
+      { x: to.x, y: to.y },
+    ],
+    cost: Math.max(Math.abs(to.x - from.x), Math.abs(to.y - from.y)),
+    kinds: [AIR_LEG_KIND],
+  };
 }
 
 /** Whether a journey's leg is flown. @param {{ kind?: string } | null | undefined} leg */

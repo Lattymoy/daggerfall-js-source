@@ -2,8 +2,8 @@
   {
     "name": "CRAFT-WORTH-sell-arm-reads-the-roll",
     "file": "src/systems/tradeModes.js",
-    "old": "        const c = calculateCost(counterValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack;",
-    "new": "        const c = calculateCost(itemValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack;",
+    "old": "          calculateCost(counterValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) *\n          stack; // JAN1: an item with no finite value is priced at its base, never NaN; CRAFT-WORTH: a crafted piece at its plain worth",
+    "new": "          calculateCost(itemValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack; // JAN1: an item with no finite value is priced at its base, never NaN; CRAFT-WORTH: a crafted piece at its plain worth",
     "tests": [
       "test/systems/craftworth.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CRAFT-WORTH-sellmagic-reads-the-roll",
     "file": "src/systems/tradeModes.js",
-    "old": "        const c = calculateCost(counterValueOf(item), quality, priceAdjustment, fenced);",
-    "new": "        const c = calculateCost(itemValueOf(item), quality, priceAdjustment, fenced);",
+    "old": "        const c = calculateCost(counterValueOf(item), quality, priceAdjustment, fenced); // CRAFT-WORTH: a fenced crafted piece at its plain worth",
+    "new": "        const c = calculateCost(itemValueOf(item), quality, priceAdjustment, fenced); // CRAFT-WORTH: a fenced crafted piece at its plain worth",
     "tests": [
       "test/systems/craftworth.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "AUDIT-CRAFT-WORTH-roll-off-the-base",
     "file": "src/systems/tradeModes.js",
-    "old": "  if (!Number.isFinite(item?.value)) return daedricSaleValue(item, v);",
-    "new": "",
+    "old": "  if (!Number.isFinite(item?.value)) return daedricSaleValue(item, v); // AUDIT CRAFT-WORTH: the base the read falls back to carries no roll to take off",
+    "new": "  // AUDIT CRAFT-WORTH: the base the read falls back to carries no roll to take off",
     "tests": [
       "test/systems/craftworth.test.js"
     ]

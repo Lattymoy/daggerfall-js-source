@@ -1,0 +1,200 @@
+[
+  {
+    "name": "ARMORY-MIRROR-the-lens-mirror-unread",
+    "file": "src/render/armoryPass.js",
+    "old": "  const k = proj && mirroredVp(proj) ? -1 : 1;",
+    "new": "  const k = 1;",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-pass-reads-the-view-row",
+    "file": "src/render/armoryPass.js",
+    "old": "    const right = cardRightOf(proj, view), up = [view[1], view[5], view[9]];",
+    "new": "    const right = [view[0], view[4], view[8]], up = [view[1], view[5], view[9]];",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-host-gathers-off-the-view-row",
+    "file": "src/scenes/auraHost.js",
+    "old": "right = vw ? cardRightOf(renderer._proj, vw) : null;",
+    "new": "right = vw ? [vw[0], vw[4], vw[8]] : null;",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-mine-stepped-off-the-view-row",
+    "file": "src/scenes/auraHost.js",
+    "old": "armoryMotionStep(selfKit, now, vw ? cardRightOf(renderer._proj, vw) : null);",
+    "new": "armoryMotionStep(selfKit, now, vw ? [vw[0], vw[4], vw[8]] : null);",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-a-side-view-read-as-the-picture",
+    "file": "src/render/armoryPass.js",
+    "old": "  if (pose.armsTurned) return own;\n",
+    "new": "",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-arms-called-read",
+    "file": "src/render/armoryPose.js",
+    "old": "  out.armsTurned = !arms; // ARMORY-MIRROR: no arms read - the sets' rows turned with the body, its own sides (armoryPass.js armletSide)",
+    "new": "  out.armsTurned = false; // ARMORY-MIRROR: no arms read - the sets' rows turned with the body, its own sides (armoryPass.js armletSide)",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-hidden-arm-drawn",
+    "file": "src/render/armoryPass.js",
+    "old": "  if (away > ARM_HIDDEN_SIN && (ahead < 0 || (pose.armsTurned && ahead < ARM_HIDDEN_SIN))) return null;",
+    "new": "",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-near-arm-hidden",
+    "file": "src/render/armoryPass.js",
+    "old": "  if (away > ARM_HIDDEN_SIN && (ahead < 0 ||",
+    "new": "  if (away < -ARM_HIDDEN_SIN && (ahead < 0 ||",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-right-side-drawn",
+    "file": "src/render/armoryPass.js",
+    "old": "(ahead < 0 || (pose.armsTurned && ahead < ARM_HIDDEN_SIN))",
+    "new": "(ahead < 0)",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-band-at-the-merged-shoulder",
+    "file": "src/render/armoryPose.js",
+    "old": "      if (!run || out(s > 0 ? run[0] : run[1]) <= 0 || run[1] - run[0] + 1 > ARM_BAND.max * A) continue;",
+    "new": "      if (!run || run[1] - run[0] + 1 > 99 * A) continue;",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-band-by-its-far-end",
+    "file": "src/render/armoryPose.js",
+    "old": "      band = { row: r / A, c: (run[0] + run[1]) / 2 - mid, wd: Math.max(ARM_BAND.min * A, run[1] - run[0] + 1) };",
+    "new": "      band = { row: r / A, c: (s > 0 ? run[1] : run[0]) - mid, wd: Math.max(ARM_BAND.min * A, run[1] - run[0] + 1) };",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-a-side-views-edges-unread",
+    "file": "src/render/armoryPose.js",
+    "old": "    flank = arms ? null : flankAt(flankRow);",
+    "new": "    flank = null;",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-band-unread",
+    "file": "src/render/armoryPass.js",
+    "old": "    const band = pose.card && right ? pose.bands?.[side] : null,",
+    "new": "    const band = null,",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-bands-width-unread",
+    "file": "src/render/armoryPass.js",
+    "old": "k: band ? band.w / (2 * r0 * s) : 1 };",
+    "new": "k: 1 };",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-back-edge-the-front",
+    "file": "src/render/armoryPass.js",
+    "old": "< 0 ? flank.hi : flank.lo;",
+    "new": "< 0 ? flank.lo : flank.hi;",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-eyes-line-lost",
+    "file": "src/render/armoryPass.js",
+    "old": "const along = (/** @type {number} */ t) => (flank && !band ? onArm(mix(sh0, el0, t)) : mix(sh, el, t));",
+    "new": "const along = (/** @type {number} */ t) => mix(sh, el, t);",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-right-arm-read-as-the-left",
+    "file": "src/render/armoryPass.js",
+    "old": "away = (arm === 'left' ? 1 : -1) * (ex * fwd[2] - ez * fwd[0]) / l;",
+    "new": "away = (ex * fwd[2] - ez * fwd[0]) / l;",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-right-arms-picture-side-swapped",
+    "file": "src/render/armoryPass.js",
+    "old": "return (ahead > 0) === (arm === 'left') ? 'R' : 'L';",
+    "new": "return ahead > 0 ? 'R' : 'L';",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-a-chain-off-its-band",
+    "file": "src/render/armoryPass.js",
+    "old": "      sh = add(sh, off); el = add(el, off);",
+    "new": "",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-colour-unread",
+    "file": "src/render/armoryPose.js",
+    "old": "    if (!band) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-far-side-of-the-step",
+    "file": "src/render/armoryPose.js",
+    "old": "            inner = x;",
+    "new": "            inner = x - s;",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-an-unsteady-width-taken",
+    "file": "src/render/armoryPose.js",
+    "old": "      if (\n        found.length >= (fromRow - toRow + 1) * 0.6 &&\n        wds[wds.length - 1] - wds[0] <= 2 * A &&\n        md <= ARM_BAND.max * A\n      ) {",
+    "new": "      if (found.length >= (fromRow - toRow + 1) * 0.6 && md <= ARM_BAND.max * A) {",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  }
+]

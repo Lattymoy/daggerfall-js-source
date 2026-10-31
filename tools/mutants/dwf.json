@@ -2,8 +2,8 @@
   {
     "name": "DW-F-skirt-whole",
     "file": "src/world/deepWater/deepWaterCap.js",
-    "old": "        if (clipped) { dropped++; continue; }\n        const t0 = edge(i)",
-    "new": "        const t0 = edge(i)",
+    "old": "        if (clipped) {\n          dropped++;\n          continue;\n        }\n        const t0 = edge(i),",
+    "new": "        const t0 = edge(i),",
     "tests": [
       "test/world/deepWater/dwf_farsea.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DW-F-skirt-rows-for-columns",
     "file": "src/world/deepWater/deepWaterCap.js",
-    "old": "const tiles = [(t) => t, (t) => last * dim + t, (t) => t * dim, (t) => t * dim + last];",
-    "new": "const tiles = [(t) => t * dim, (t) => t * dim + last, (t) => t, (t) => last * dim + t];",
+    "old": "    const tiles = [(t) => t, (t) => last * dim + t, (t) => t * dim, (t) => t * dim + last];",
+    "new": "    const tiles = [(t) => t * dim, (t) => t * dim + last, (t) => t, (t) => last * dim + t];",
     "tests": [
       "test/world/deepWater/dwf_farsea.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DW-F-skirt-south-row-inside",
     "file": "src/world/deepWater/deepWaterCap.js",
-    "old": "const tiles = [(t) => t, ",
-    "new": "const tiles = [(t) => dim + t, ",
+    "old": "    const tiles = [(t) => t, (t) => last * dim + t, (t) => t * dim, (t) => t * dim + last];",
+    "new": "    const tiles = [(t) => dim + t, (t) => last * dim + t, (t) => t * dim, (t) => t * dim + last];",
     "tests": [
       "test/world/deepWater/dwf_farsea.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DW-F-skirt-null-before-the-skirt",
     "file": "src/world/deepWater/deepWaterCap.js",
-    "old": "  if (stride > 1) {\n    const edges = [(i) => i,",
-    "new": "  if (!dropped) return null;\n  if (stride > 1) {\n    const edges = [(i) => i,",
+    "old": "  if (stride > 1) {",
+    "new": "  if (!dropped) return null;\n  if (stride > 1) {",
     "tests": [
       "test/world/deepWater/dwf_farsea.test.js"
     ]

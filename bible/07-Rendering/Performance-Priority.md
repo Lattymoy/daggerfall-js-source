@@ -158,9 +158,14 @@ TESA14 (2026-10-24, `03-World/Arena-Provinces.md` TESA14): the frame stood at 46
 the weather's drain - the `!weatherOverride` block - is the twenty-third closure (`frameWeatherDrain`), lines inserted
 only, and the frame is 45,242.
 
+AMBIENT-LIFE (2026-10-31, at its merge into main): the frame stood at 46,158 bytes against the 3/4 tripwire's 46,080 -
+the creatures' frame, draw and lights calls (`ambientLife`) - and main's deploy failed on it. The head bob's block
+(AUDIT 28 W10: `headBobber.update` and the bob's offset) is a closure of its own, `frameHeadBob`, lines inserted only,
+and the frame is 45,563.
+
 Pins: `test/scenes/perfv8.test.js` (2) - every `frame` in the world host's graph and every closure moved out of one under the
 ceiling and under three quarters of it (the tripwire: move the next statement out before the cliff, not after); over
-the parse, the closures by name in order (26 since `frameSnowCover`), each made in the frame and called once - a plain call, the statement after
+the parse, the closures by name in order (30 since `frameHeadBob`), each made in the frame and called once - a plain call, the statement after
 its close - holding one statement, no `return`, no `var`. Mutants: `tools/mutants/perfv8.json`, 8, all dead.
 
 ## PERF-YARD — a yard's pieces are culled as the town's own models are
@@ -1801,7 +1806,7 @@ scenes/horseCartPool.js frame -> poseTeam / pose3dTeam / horseRig.step, writeHor
 
 **Found.** PERF-TEAMS cuts another player's team past `PEER_TEAM_DRAW_M` (400 m); inside it nothing asked the view or
 the distance before a pose. `horseCartPool.js:"function pose3dTeam"` stepped every horse the pool stands - mine, and
-every peer's alone, following, parked in harness or pulling - through `horseRig.js:"function step(h,"`, which stepped
+every peer's alone, following, parked in harness or pulling - through `horseRig.js:"{ feet, yaw, speed"`, which stepped
 the gait, wrote the palette (`writeHorsePalette`, 33 bones composed) and sent it (`renderer.updateSkinPalette`, 1,632
 bytes) every frame. Only the draw asked the view (AUDIT COATS3D A12), so a horse behind the eye or a parked pair a
 hundred metres off cost what one in the street did. A riding peer's horse was the same:
@@ -1816,7 +1821,7 @@ container).
   since HORSE-VIEW II, its own section). False steps the clock and places the horse, and neither writes nor sends its
   pose: it stands in the last one sent (`stale`). The palette is the clock's alone, so `horseRig.js:"function pose(h)"`
   catches a horse up to the very palette an every-frame horse shows on that frame. A horse never posed is posed
-  whatever `pose` says. `seen` is the draw's own view test, and `horseRig.js:"function draw(h, canvas,"` takes `fresh`:
+  whatever `pose` says. `seen` is the draw's own view test, and `horseRig.js:"canvas, { proj, view,"` takes `fresh`:
   a pose behind its clock is caught up before the picture is queued.
 - The pool's horses - every one it stands, mine and every peer's, alone, following, parked in harness or pulling - are
   posed only in the last body pass's view (`_cam3d`, draw3d's camera - one frame behind; before the first pass, every
@@ -2090,7 +2095,7 @@ horse would stand.
 - **The standing horses.** Every horse that stands steps its idle's clock every frame. `end` judges the view by the
   camera the frame draws through - both hosts hand it the `{ proj, view }` they hand the draw - and the cadence by the
   distance from `begin`'s eye (world.js `mwv.eye`, exterior.js `eye`) over that camera's lens
-  (`standingHorses.js:"e.out = poseWhereSeen(rig, e.horse, o.feet, cam ? pass : null, eye, frameNo, e.phase);"`); `draw`
+  (`standingHorses.js:"e.out = poseWhereSeen"`); `draw`
   draws the ones in the view and catches up one come into it since its last pose (`fresh`) - judged by the camera it
   is drawn through, however it came into the view, so it hands the law no `wasOut`. The view test is the rig's
   own (`seen`, the draw's box), where it was a ball at the feet of its own (`VIEW_LIFT`, `VIEW_REACH`, gone): a horse
@@ -2183,12 +2188,12 @@ step sits inside `createComeSailAwayRuntime`, a host under its ceiling (`test/sc
 **The fix** (`scenes/comeSailAway/farLife.js` `createBoatLives`, `farTreeStep`; `systems/comeSailAway/comeSailAway.js`
 `animate`, `simulateParticles`; `comeSailAwayPool.js` `lifeOf`; `comeSailAwayPeers.js` `pose`).
 - **A module the runtime wires.** `comeSailAway.js:"const lives = createBoatLives({ eye: () => deps.pool?.lifeEye?.() ?? null });"`,
-  and the runtime's two steps call it (`farLife.js:"export function createBoatLives({ eye = () => null } = {}) {"`):
+  and the runtime's two steps call it (`farLife.js:"export function createBoatLives"`):
   past NEAR_LIFE_M of the pool's last eye (`lifeEye`, the one the peers' boats read) a boat's Animators step one frame
   in FAR_LIFE_EVERY on the time she missed, each boat on her own frame of the stride, and her particle systems on the
   same frame and time, none between. With no eye (a pool that keeps none), every boat every frame, as before. The
   runtime is three logical lines shorter, and its ceiling came down with it, 2,783 -> 2,780.
-- **A ship's tree** (`farLife.js:"export function farTreeStep(life, dt, root, pos, eye) {"`). One whose tree was
+- **A ship's tree** (`farLife.js:"export function farTreeStep"`). One whose tree was
   switched on or off or reshaped since she last lived lives that frame, whatever her range. BOAT-FAR's audit gave the
   pool's held walk this rule (its two stamps, inline in `lifeOf`); an Animator needs it as much - switched off it does
   nothing, switched on it starts over from its default state - so a far boat of mine stood again as I come out of a
@@ -2226,11 +2231,11 @@ runtime ceiling onto 2,780.
 and no answer moves.
 1. *Her stamps kept only as she lived.* `farTreeStep` wrote her tree's stamps on a frame she lived alone. A frame that
    holds her is one whose stamps read as kept - a changed one hands `farLifeStep` no place, and she lives - so there
-   they were written with what they held: the guard is gone (`farLife.js:"life.shape = shape; life.on = on;"`), its
+   they were written with what they held: the guard is gone (`farLife.js:"life.shape = shape"`), its
    mutant (the stamps kept every frame) was the same answer, and BO-tree-stamps-never-kept is re-aimed onto the line.
 2. *A parent no root of mine has.* `createBoatLives` read a boat's place as `root.parent ? root.position :
    root.localPosition`, the pool's `lifeOf`'s shape; a boat of mine is SpawnBoat's
-   (`comeSailAwayBoat.js:"newBoat.GameObject = new PrefabNode('Boat');"`) and nothing in the tree hangs that root under
+   (`comeSailAwayBoat.js:"newBoat.GameObject ="`) and nothing in the tree hangs that root under
    another node, so the first branch was never taken and its mutant survived every pin. It reads `root.localPosition`,
    and says why; BO-lives-eye-unread and BO-lives-range-unread are re-aimed onto it. The pool's `lifeOf` has the same
    branch over roots built the same way, and keeps it: it is not this record's line.
@@ -2255,7 +2260,7 @@ her frames still and is made when it was. A list made over an older walk is not 
 drew nothing), nor one a draw made outside a frame. The departure, past 600 m only: a mesh still loading when she was
 walked (a part's first sight, `meshFor`; the pipeline's classic models) is drawn from her next life, up to three frames
 later; a part's renderer switched on or off while she is held likewise. Once she is built, only her crew's flats are
-switched in this tree - `navalCrew.js:"for (const f of flats) { f.was = f.renderer.m_Enabled; f.renderer.m_Enabled = false; }"`
+switched in this tree - `navalCrew.js:"for (const f of flats)"`
 as a crew stands in their places, and `standDown` puts each back - and the draw passes a flat by, switched or not:
 `syncFlats` reads a flat's `m_Enabled` every frame, held or walked.
 
@@ -3360,6 +3365,74 @@ the largest the sampling profile named the city's replacement blocks (`worldData
 MAPS records and the deep waters' location rects, as MEM-AUDIT found at Knightstale - and the pixel builds' own
 allocations.
 
+## OW-WIDE — the Overworld's stutter past the Bay
+
+*The owner (2026-10-30): "I want to improve overworld travel performance. It currently seems like there is stutter due
+to our larger map".*
+
+**The probe, mended first.** `tools/owHitchProbe.mjs` measured nothing on main. A new character's tutorial pages open one
+after another, each a pause that brings the Overworld down. A Living World band by Knightstale noticed the traveller and
+brought it down again: `&nofoes` empties a dungeon, not the wild. The run walked on foot. The probe now turns the popups
+off and holds the player unseen (STAFF-UNSEEN's law, pinned against the staff host's own write; `FOES=1` keeps the
+foes). It raises a fallen view again, starts from any pixel (`AT=x,y`), and fails a run whose view was down for half its
+samples.
+
+**How it was measured.** The freeware ARENA2. The Colovian Highlands (1575,405) past the Bay and Knightstale in it, W
+held at x60 for 60 s under one CPU profile. SwiftShader with the draws stubbed, on four shared cores: the figures rank
+the costs, they are not a player's milliseconds. A base arm is this tree with `src/` stashed (a worktree lacks the
+generated assets the page needs, so `TREE=` timed out here).
+
+**Found past the Bay** (the base):
+- `floraSeat.js` standsOnGround: single tasks of 484, 165 and 144 ms in a pixel's build. FLORA-GROUND's WeakSet held
+  every wild flat standing, and its growth rehashed the whole table in one add (node: 2 M adds 2.8 s, the longest 207
+  ms). A large weak table is dear to the collector too.
+- A crossing's demotions built inline: 24-130 ms a crossing, the worst 190 and 395 ms. Past the Bay their ghost rows read
+  the continent's ground; PERF-EXT26 kept them inline at 0.21 ms, in the Bay.
+- The far ring built again at each tree art landed: 11-19 builds of 20-147 ms in a minute, in bursts.
+
+**The fixes:**
+- **OW-SEAT** (`floraSeat.js`): the mark is a symbol on the centre's own array. The same plants stand on the same ground.
+- **OW-DEMOTE** (`world.js` restrideOffThread): with the terrain worker up, a demotion's grid is the worker's, as a
+  promotion's is. The finer surface stands for one round trip, as a promotion's coarser one does.
+- **OW-RING** (`farRing.js` _floraDue): a tree's art rebuilds the ring once the far-flora book has stood still
+  FLORA_SETTLE_MS (1.5 s), or FLORA_WAIT_MAX_MS (6 s) after the first art. A zone's burst is one build.
+
+**Measured** (60 s each; the province's base twice):
+
+| | province base | province OW-WIDE | Knightstale base | Knightstale OW-WIDE |
+|---|---|---|---|---|
+| frames | 6,133 / 6,245 | 6,665 | 5,126 | 5,071 |
+| over 100 ms / over 200 ms | 43 / 8, 27 / 8 | 22 / 2 | 38 / 6 | 23 / 8 |
+| the longest frame, ms | 610 / 615 | 503 | 428 | 430 |
+| long tasks' time, s | 8.7 / 8.6 | 7.0 | 15.4 | 14.0 |
+| the collector, s (longest pause, ms) | 2.6 (275) / 2.5 (618) | 1.7 (137) | 2.6 (261) | 2.6 (252) |
+| a pixel build's longest task, ms | 487 / 535 | 44 | 318 | 39 |
+| far ring builds | 14 / 11 | 9, 5 over 16 ms | 19 | 3 |
+
+The Knightstale fix run travelled 12 pixels to the base's 10. Past the Bay the stutter falls by every measure. In the
+Bay the long frames fall and the rest is the same.
+
+**Tried and taken out: OW-WAYS.** The living world's ways past the Bay plan two to five whole windows in one frame
+(`beyondWays.js` plan, 10-35 ms here). Walked a slice a frame, then planned a few a frame with the narrow answer kept,
+the longest fell to 14-24 ms, but the trips waited longer for their ways. Waiting trips are asked again every frame
+(PERF-WAYS1), and walked across frames the planner's scratch outlived the young generation: the collector went from 2.5
+to 3.5-5.2 s past the Bay. The planner is as it was. Its arrays a box (`travelRoute.js` searchSteps) are what a later
+pass would pool.
+
+**What is left.** The collector's pauses, the pixel builds' 25-45 ms units, a restride's swap on the main thread
+(`seatFlora` moves every group's batch, 20-70 ms here), the Overworld's HUD (`travelViewHud.js` drawMarks, 2-4 ms a
+frame) and the frame's read of the canvas's size, which lays out the page's changed DOM.
+
+**The four hosts.** `scenes/world.js` wired: it alone streams pixels, restrides them and keeps the far ring.
+`scenes/exterior.js` (one fixed city: no stream, no restride, no far ring), `scenes/worldModes.js` (a building) and `scenes/dungeonContext.js` (a dungeon) stand no streamed pixel. Not a DFU member:
+DFU's StreamingWorld has no worker, no far ring and no plant mark.
+
+Pins: `test/scenes/ow_wide.test.js` (OW-SEAT). PIN MOVED: `restrideworker.test.js` (OW-DEMOTE: the stride the job asked;
+a demotion the worker's), `landform.test.js` and `audit_waternext.test.js` (the job's stride), `distantland.test.js` (the swap's call), `farflora.test.js` (OW-RING: the settle, the burst, the wait let go at a build),
+`floraground_rings.test.js` (the centres' places compared, the mark riding the array). Mutants:
+`tools/mutants/ow_wide.json`, 8, all dead; re-aimed by content: `floraground.json` (the mark unread), `perfextc.json`
+(three), `stream1.json` (one), all dead.
+
 ## For the owner
 
 - **The A/B this branch owes**: on a machine with the data, `ARENA2_PATH=... node tools/frameProbe.mjs knight night`
@@ -3376,4 +3449,6 @@ allocations.
   tools/owHitchProbe.mjs` with `TREE=` the base, then this branch (OUT= one file; p50, p95, max and the frames over 33 ms
   of `gap`, the long tasks); `tools/heldMapLoadProbe.mjs` the same two ways (the frames to whole and the holes at each
   view); `tools/horizonProbe.mjs` for the picture. On a GPU the far plane's fragments are the cost to watch.
+- **OW-WIDE's A/B on a GPU**: `ARENA2_PATH=... node tools/owHitchProbe.mjs` with `AT=1575,405` (the Colovian Highlands)
+  and without it (Knightstale), on main and on this branch, one after the other - the long frames and the collector's.
 - **The picture's levers** above (1, 4, 6b, 7) are yours - and 5's distance is the Other players card's now (PEER-RANGE): each trades a little of what is seen for frame time.

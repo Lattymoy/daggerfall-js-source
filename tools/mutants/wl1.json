@@ -2,8 +2,8 @@
   {
     "name": "WL1-aperture-tiled-past-reason-kept",
     "file": "src/render/windowApertures.js",
-    "old": "    if ((iu1 - iu0) * (iv1 - iv0) > 4096) continue;",
-    "new": "    if ((iu1 - iu0) * (iv1 - iv0) > 4096 * 4096) continue;",
+    "old": "      if ((iu1 - iu0) * (iv1 - iv0) > 4096) continue; // a picture tiled past reason is no window",
+    "new": "      if ((iu1 - iu0) * (iv1 - iv0) > 4096 * 4096) continue; // a picture tiled past reason is no window",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WL1-aperture-cover-whole",
     "file": "src/render/windowApertures.js",
-    "old": "      a0 = Math.max(0, a0); b0 = Math.max(0, b0); a1 = Math.min(1, a1); b1 = Math.min(1, b1);",
-    "new": "      a0 = 0; b0 = 0; a1 = 1; b1 = 1;",
+    "old": "          a0 = Math.max(0, a0);\n          b0 = Math.max(0, b0);\n          a1 = Math.min(1, a1);\n          b1 = Math.min(1, b1);",
+    "new": "          a0 = 0;\n          b0 = 0;\n          a1 = 1;\n          b1 = 1;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WL1-twin-crossing-wrong",
     "file": "src/render/windowLight.js",
-    "old": "const sl = dot(sub3(c4, c0), c3); tt = s / (s - sl); }",
-    "new": "const sl = dot(sub3(c4, c0), c3); tt = s / (s + sl); }",
+    "old": "    tt = s / (s - sl);",
+    "new": "    tt = s / (s + sl);",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "WL1-duals-unscaled",
     "file": "src/render/windowLight.js",
-    "old": "  out[o + 4] = vx / ku; out[o + 5] = vy / ku;",
-    "new": "  out[o + 4] = vx; out[o + 5] = vy;",
+    "old": "  out[o + 4] = vx / ku;\n  out[o + 5] = vy / ku;",
+    "new": "  out[o + 4] = vx;\n  out[o + 5] = vy;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "WL1-glsl-behind-lit",
     "file": "src/render/windowLight.js",
-    "old": "    if (s <= 0.0) continue;   // behind the glass",
-    "new": "    if (s <= -1e9) continue;   // behind the glass",
+    "old": "    if (s <= 0.0) continue;   // behind the glass: the wall it stands in keeps its light",
+    "new": "    if (s <= -1e9) continue;   // behind the glass: the wall it stands in keeps its light",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "WL1-glsl-crossing-wrong",
     "file": "src/render/windowLight.js",
-    "old": "tt = s / (s - dot(c4.xyz - c0.xyz, c3.xyz)); }",
-    "new": "tt = s / (s + dot(c4.xyz - c0.xyz, c3.xyz)); }",
+    "old": "    if (kind == 0) { ray = c4.xyz - wp; tt = s / (s - dot(c4.xyz - c0.xyz, c3.xyz)); }   // toward the lamp, to the glass's plane",
+    "new": "    if (kind == 0) { ray = c4.xyz - wp; tt = s / (s + dot(c4.xyz - c0.xyz, c3.xyz)); }   // toward the lamp, to the glass's plane",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "WL1-glsl-aperture-unbounded",
     "file": "src/render/windowLight.js",
-    "old": "    if (abs(a) > 0.5 + pa || abs(b) > 0.5 + pb) continue;",
-    "new": "    if (abs(a) > 5.0 + pa || abs(b) > 5.0 + pb) continue;",
+    "old": "    if (abs(a) > 0.5 + pa || abs(b) > 0.5 + pb) continue;   // the ray crosses the wall, not the window or its soft edge",
+    "new": "    if (abs(a) > 5.0 + pa || abs(b) > 5.0 + pb) continue;   // the ray crosses the wall, not the window or its soft edge",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "WL1-glsl-mask-v-from-u",
     "file": "src/render/windowLight.js",
-    "old": "vec3(c1.w + a * c3.w, c2.w + b * c4.w, float(code & 255))",
-    "new": "vec3(c1.w + a * c3.w, c2.w + b * c3.w, float(code & 255))",
+    "old": "    float m = textureLod(uWinMask, vec3(c1.w + a * c3.w, c2.w + b * c4.w, float(code & 255)), lod).r;",
+    "new": "    float m = textureLod(uWinMask, vec3(c1.w + a * c3.w, c2.w + b * c3.w, float(code & 255)), lod).r;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "WL1-glsl-sun-map-unread",
     "file": "src/render/windowLight.js",
-    "old": "(kind == 1 ? (isFlat > 0.5 ? flatSun : sunShadowAt(wp, n)) : 1.0)",
-    "new": "1.0",
+    "old": "    float g = kind == 0 ? ${atten} : ${shadow === 'flat' ? '(kind == 1 ? flatSun : 1.0)' : shadow ? '(kind == 1 ? (isFlat > 0.5 ? flatSun : sunShadowAt(wp, n)) : 1.0)' : '1.0'};",
+    "new": "    float g = kind == 0 ? ${atten} : ${shadow === 'flat' ? '(kind == 1 ? flatSun : 1.0)' : shadow ? '1.0' : '1.0'};",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "WL1-street-gather-every-room",
     "file": "src/render/windowLight.js",
-    "old": "      if (kind === 'street' && !t.street[j]) continue;",
-    "new": "      if (false) continue;",
+    "old": "      if (kind === 'street' && !t.street[j]) continue; // a dark room throws nothing; glass in a roof shows no room",
+    "new": "      if (false) continue; // a dark room throws nothing; glass in a roof shows no room",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "WL1-hold-forever",
     "file": "src/render/windowLight.js",
-    "old": "          if (now - s.seen > WL_HOLD_MS) { list.splice(li, 1); continue; }",
-    "new": "          if (false) { list.splice(li, 1); continue; }",
+    "old": "          if (now - s.seen > WL_HOLD_MS) {",
+    "new": "          if (false) {",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "WL1-forget-lost",
     "file": "src/render/windowLight.js",
-    "old": "  forget(mesh) { this.sources.street.delete(mesh); this.sources.inside.delete(mesh); }",
-    "new": "  forget(mesh) { }",
+    "old": "  forget(mesh) {\n    this.sources.street.delete(mesh);\n    this.sources.inside.delete(mesh);\n  }",
+    "new": "  forget(mesh) {}",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "WL1-shift-leaves-the-tiles",
     "file": "src/render/windowLight.js",
-    "old": "      if (s.subs) for (const p of s.subs) if (p) {",
-    "new": "      if (false) for (const p of s.subs) if (p) {",
+    "old": "          if (s.subs)",
+    "new": "          if (false)",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -227,7 +227,7 @@
   {
     "name": "WL1-no-fade",
     "file": "src/render/windowLight.js",
-    "old": "      const fade = c.d <= cut * WL_FADE_FROM ? 1 : (cut - c.d) / (cut * (1 - WL_FADE_FROM));",
+    "old": "      const fade = wlFade(c.d, cut);",
     "new": "      const fade = 1;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
@@ -245,8 +245,8 @@
   {
     "name": "WL1-curtains-ignored",
     "file": "src/render/windowLight.js",
-    "old": "    if (clip) { u0 = Math.max(u0, clip[0]); u1 = Math.min(u1, clip[1]); }",
-    "new": "    if (false) { u0 = Math.max(u0, clip[0]); u1 = Math.min(u1, clip[1]); }",
+    "old": "    if (clip) {",
+    "new": "    if (false) {",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -254,7 +254,7 @@
   {
     "name": "WL1-curtains-pass-nothing",
     "file": "src/render/windowLight.js",
-    "old": "    if (curtains && this._aperture(c, null, this._whole)) l.area += (this._whole.area - l.area) * WL_CURTAIN_PASS;",
+    "old": "    if (whole) l.area += (whole.area - l.area) * WL_CURTAIN_PASS;",
     "new": "    if (false) l.area += 0;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
@@ -263,8 +263,8 @@
   {
     "name": "WL1-sunFor-facing-reversed",
     "file": "src/render/windowLight.js",
-    "old": "          if (v[0] * dir[0] + v[1] * dir[1] + v[2] * dir[2] < -0.02 * Math.hypot(v[0], v[1], v[2])) return dir;",
-    "new": "          if (v[0] * dir[0] + v[1] * dir[1] + v[2] * dir[2] > 0.02 * Math.hypot(v[0], v[1], v[2])) return dir;",
+    "old": "              if (v[0] * dir[0] + v[1] * dir[1] + v[2] * dir[2] < -0.02 * Math.hypot(v[0], v[1], v[2])) return dir;",
+    "new": "              if (v[0] * dir[0] + v[1] * dir[1] + v[2] * dir[2] > 0.02 * Math.hypot(v[0], v[1], v[2])) return dir;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -326,20 +326,22 @@
   {
     "name": "WL1-block-on-point-zero",
     "file": "src/render/renderer.js",
-    "old": "gl.uniformBlockBinding(p, bi, WL_UBO_BINDING);",
-    "new": "gl.uniformBlockBinding(p, bi, 0);",
+    "old": "[['WinLights', WL_UBO_BINDING], ['WinFar', WL_FAR_UBO_BINDING]]",
+    "new": "[['WinLights', 0], ['WinFar', WL_FAR_UBO_BINDING]]",
     "tests": [
       "test/render/wl1_windowlight.test.js"
-    ]
+    ],
+    "why": "LIGHT-REACH: re-aimed by content - the law moved with the code that carries it."
   },
   {
     "name": "WL1-band-over-the-lanterns",
     "file": "src/render/renderer.js",
-    "old": "    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, WL_GRID_ROW, CLUSTER_GRID_W",
-    "new": "    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, CLUSTER_GRID_W",
+    "old": "{ sp: this._wl.space, row: WL_GRID_ROW, base: WL_LIST_BASE }",
+    "new": "{ sp: this._wl.space, row: 0, base: WL_LIST_BASE }",
     "tests": [
       "test/render/wl1_windowlight.test.js"
-    ]
+    ],
+    "why": "LIGHT-REACH: re-aimed by content - the law moved with the code that carries it."
   },
   {
     "name": "WL1-draw-never-noted",
@@ -434,8 +436,8 @@
   {
     "name": "WL1-batch-measures-none",
     "file": "src/render/staticBatch.js",
-    "old": "      if (this.windows?.(archive, record)) sub.apertures = yield* apertureSteps(",
-    "new": "      if (false) sub.apertures = yield* apertureSteps(",
+    "old": "      if (this.windows?.(archive, record))\n        sub.apertures = yield* apertureSteps(positions, normals, uvs, indices, start, at - start); // WL1: renderer.createMesh takes them as they are",
+    "new": "      if (false) sub.apertures = yield* apertureSteps(positions, normals, uvs, indices, start, at - start); // WL1: renderer.createMesh takes them as they are",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -452,8 +454,8 @@
   {
     "name": "WL1-view-out-reads-no-outside",
     "file": "src/render/realWindows.js",
-    "old": "  finally { opts.renderer.captureOutsideLight?.(opts.scene, opts.now, opts.mode); }",
-    "new": "  finally { /* nothing */ }",
+    "old": "    opts.renderer.captureOutsideLight?.(opts.scene, opts.now, opts.mode);",
+    "new": "    /* nothing */",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -470,8 +472,8 @@
   {
     "name": "WL1-lane-point-unlit",
     "file": "src/render/enhancedLighting.js",
-    "old": "  return acc + winLit(wp, n, 0.0, 1.0);",
-    "new": "  return acc;",
+    "old": "  return acc + winLit(wp, n, 0.0, 1.0);   // WL1: the windows' light, through their glass",
+    "new": "  return acc;   // WL1: the windows' light, through their glass",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -488,8 +490,8 @@
   {
     "name": "WL1-exterior-glass-colour-short",
     "file": "src/world/exteriorGlass.js",
-    "old": "  '171_2': Object.freeze([104, 105, 106]),",
-    "new": "  '171_2': Object.freeze([104]),",
+    "old": "  '171_2': Object.freeze([104, 105, 106]), // a timber wall's four blue panes",
+    "new": "  '171_2': Object.freeze([104]), // a timber wall's four blue panes",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -524,8 +526,8 @@
   {
     "name": "WL1-mover-leaves-a-ghost",
     "file": "src/render/windowLight.js",
-    "old": "    if (moved) { moved.m.set(m); moved.subs = null; moved.seen = now; moved.remap = remap; return; }",
-    "new": "    if (false) { moved.m.set(m); moved.subs = null; moved.seen = now; moved.remap = remap; return; }",
+    "old": "    if (moved) {",
+    "new": "    if (false) {",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -533,8 +535,8 @@
   {
     "name": "WL1-far-placement-gathered",
     "file": "src/render/windowLight.js",
-    "old": "      if (far(p.all, 0)) continue;\n      for (let ci = 0; ci < p.tiles.length; ci++) {\n        if (far(p.ball, ci * 4)) continue;\n        if (p.tiles[ci])",
-    "new": "      for (let ci = 0; ci < p.tiles.length; ci++) {\n        if (far(p.ball, ci * 4)) continue;\n        if (p.tiles[ci])",
+    "old": "      if (pastBall(p.all, 0, eye, reach)) continue;\n      for (let ci = 0; ci < p.tiles.length; ci++) {",
+    "new": "      for (let ci = 0; ci < p.tiles.length; ci++) {",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ],
@@ -553,8 +555,8 @@
   {
     "name": "WL1-drop-keeps-the-layer",
     "file": "src/render/windowLight.js",
-    "old": "    if (k.layer >= 0) { this._holder[k.layer] = null; this._free.push(k.layer); }",
-    "new": "    if (false) { this._holder[k.layer] = null; this._free.push(k.layer); }",
+    "old": "    if (!k) return;\n    if (k.layer >= 0) {",
+    "new": "    if (!k) return;\n    if (false) {",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -562,8 +564,8 @@
   {
     "name": "WL1-mips-per-mask",
     "file": "src/render/windowLight.js",
-    "old": "    this._mipsDirty = true;\n    return true;",
-    "new": "    gl.generateMipmap(gl.TEXTURE_2D_ARRAY);\n    return true;",
+    "old": "    this._mipsDirty = true;",
+    "new": "    gl.generateMipmap(gl.TEXTURE_2D_ARRAY);",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -571,17 +573,18 @@
   {
     "name": "WL1-overflow-drops-all",
     "file": "src/render/windowLight.js",
-    "old": "    while (fit > 0 && !buildLightClusters(this.spheres, fit, view, proj, this.space)) fit = Math.min(fit - 1, Math.floor(fit * CLUSTER_LIST_CAP / this.space.need * 0.9));",
-    "new": "    if (!buildLightClusters(this.spheres, fit, view, proj, this.space)) fit = 0;",
+    "old": "    while (fit > 0 && !buildLightClusterBoxes(boxes, fit, view, proj, space))\n      fit = Math.min(fit - 1, Math.floor(((fit * CLUSTER_LIST_CAP) / space.need) * 0.9));",
+    "new": "    if (!buildLightClusterBoxes(boxes, fit, view, proj, space)) fit = 0;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
-    ]
+    ],
+    "why": "LIGHT-REACH: re-aimed by content - the law moved with the code that carries it."
   },
   {
     "name": "WL1-sliver-kept",
     "file": "src/render/windowApertures.js",
-    "old": "      if (!(a1 - a0 >= APERTURE_MIN_COVER && b1 - b0 >= APERTURE_MIN_COVER)) continue;",
-    "new": "      if (!(a1 - a0 > 1e-4 && b1 - b0 > 1e-4)) continue;",
+    "old": "          if (!(a1 - a0 >= APERTURE_MIN_COVER && b1 - b0 >= APERTURE_MIN_COVER)) continue;",
+    "new": "          if (!(a1 - a0 > 1e-4 && b1 - b0 > 1e-4)) continue;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -589,8 +592,8 @@
   {
     "name": "WL1-quad-twice",
     "file": "src/render/windowApertures.js",
-    "old": "    if (into < 0) {\n      const key = bucketKey(",
-    "new": "    if (true) {\n      const key = bucketKey(",
+    "old": "    if (into < 0) {",
+    "new": "    if (true) {",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -598,8 +601,8 @@
   {
     "name": "WL1-no-area-kept",
     "file": "src/render/windowApertures.js",
-    "old": "    if (!(Math.hypot(ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx) > 1e-8)) continue;",
-    "new": "    if (false) continue;",
+    "old": "    if (!(Math.hypot(ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx) > 1e-8)) continue; // no area: no plane to light through",
+    "new": "    if (false) continue; // no area: no plane to light through",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -607,8 +610,8 @@
   {
     "name": "WL1-glassless-share-a-candidate",
     "file": "src/render/windowLight.js",
-    "old": "      if (!(Math.min(ap[k + 16], box[2]) - Math.max(ap[k + 14], box[0]) > 1e-3 && Math.min(ap[k + 17], box[3]) - Math.max(ap[k + 15], box[1]) > 1e-3)) continue;",
-    "new": "      if (false) continue;",
+    "old": "      if (!(\n        Math.min(ap[k + 16], box[2]) - Math.max(ap[k + 14], box[0]) > 1e-3 &&\n        Math.min(ap[k + 17], box[3]) - Math.max(ap[k + 15], box[1]) > 1e-3\n      ))\n        continue; // no glass on its share",
+    "new": "      if (false) continue; // no glass on its share",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -616,8 +619,8 @@
   {
     "name": "WL1-penumbra-receiver-side",
     "file": "src/render/windowLight.js",
-    "old": "    float pw = kind == 0 ? ${f(2 * WL_LAMP_RADIUS)} * tt : ${f(WL_SUN_ANGLE)} * tt;",
-    "new": "    float pw = kind == 0 ? ${f(WL_LAMP_RADIUS)} * tt / max(1.0 - tt, 1e-3) : ${f(WL_SUN_ANGLE)} * tt;",
+    "old": "    float pw = kind == 0 ? ${f(2 * WL_LAMP_RADIUS)} * tt : ${f(WL_SUN_ANGLE)} * tt;   // the source's footprint on the glass's plane, metres",
+    "new": "    float pw = kind == 0 ? ${f(WL_LAMP_RADIUS)} * tt / max(1.0 - tt, 1e-3) : ${f(WL_SUN_ANGLE)} * tt;   // the source's footprint on the glass's plane, metres",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -625,7 +628,7 @@
   {
     "name": "WL1-storey-ignored",
     "file": "src/render/windowLight.js",
-    "old": "  if (kind === WL_KIND.sunBare && wp[1] < c0[1] - 0.5 / Math.max(Math.hypot(c2[0], c2[1], c2[2]), 1e-4) - WL_STOREY) return acc;",
+    "old": "  if (kind === WL_KIND.sunBare && wp[1] < c0[1] - 0.5 / Math.max(Math.hypot(c2[0], c2[1], c2[2]), 1e-4) - WL_STOREY)\n    return acc;",
     "new": "  if (false) return acc;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
@@ -643,11 +646,12 @@
   {
     "name": "WL1-beam-ball-at-the-glass",
     "file": "src/render/windowLight.js",
-    "old": "    const h = faces ? WL_SUN_REACH / 2 : 0;",
-    "new": "    const h = 0;",
+    "old": "      nHi = Math.max(nHi, en);",
+    "new": "      nHi = Math.max(nHi, 0);",
     "tests": [
       "test/render/wl1_windowlight.test.js"
-    ]
+    ],
+    "why": "LIGHT-REACH: re-aimed by content - the law moved with the code that carries it."
   },
   {
     "name": "WL1-build-unbudgeted",
@@ -661,8 +665,8 @@
   {
     "name": "WL1-speck-4-connected",
     "file": "src/world/exteriorGlass.js",
-    "old": "        if ((!dx && !dy) || nx < 0 || ny < 0 || nx >= W || ny >= H) continue;",
-    "new": "        if ((!dx && !dy) || (dx && dy) || nx < 0 || ny < 0 || nx >= W || ny >= H) continue;",
+    "old": "          if ((!dx && !dy) || nx < 0 || ny < 0 || nx >= W || ny >= H) continue;",
+    "new": "          if ((!dx && !dy) || (dx && dy) || nx < 0 || ny < 0 || nx >= W || ny >= H) continue;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -706,8 +710,8 @@
   {
     "name": "WL1-sunFor-past-the-gather",
     "file": "src/render/windowLight.js",
-    "old": "          if (far(p.all, 0)) continue;\n          for (let ci = 0; ci < p.tiles.length; ci++) {\n            if (far(p.ball, ci * 4)) continue;\n            const first",
-    "new": "          for (let ci = 0; ci < p.tiles.length; ci++) {\n            const first",
+    "old": "          if (far(p.all, 0)) continue;\n          for (let ci = 0; ci < p.tiles.length; ci++) {\n            if (far(p.ball, ci * 4)) continue;",
+    "new": "          for (let ci = 0; ci < p.tiles.length; ci++) {",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -742,11 +746,12 @@
   {
     "name": "WL1-overflow-cut-stays",
     "file": "src/render/windowLight.js",
-    "old": "    if (fit < w) this._cuts[kind] = Math.min(this._cuts[kind], this._ld[fit]);",
-    "new": "    // the cut stays",
+    "old": "      cut(fit);\n      this.stats.dropped += n - fit;",
+    "new": "      this.stats.dropped += n - fit;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
-    ]
+    ],
+    "why": "LIGHT-REACH: re-aimed by content - the law moved with the code that carries it."
   },
   {
     "name": "WL1-glass-depth-cold",
@@ -760,8 +765,8 @@
   {
     "name": "WL1-FIX-flat-window-sun-unread",
     "file": "src/render/windowLight.js",
-    "old": "'(kind == 1 ? flatSun : 1.0)'",
-    "new": "'1.0'",
+    "old": "    float g = kind == 0 ? ${atten} : ${shadow === 'flat' ? '(kind == 1 ? flatSun : 1.0)' : shadow ? '(kind == 1 ? (isFlat > 0.5 ? flatSun : sunShadowAt(wp, n)) : 1.0)' : '1.0'};",
+    "new": "    float g = kind == 0 ? ${atten} : ${shadow === 'flat' ? '1.0' : shadow ? '(kind == 1 ? (isFlat > 0.5 ? flatSun : sunShadowAt(wp, n)) : 1.0)' : '1.0'};",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -769,8 +774,8 @@
   {
     "name": "WL1-FIX-flat-vertex-ignores-the-window-sun",
     "file": "src/render/enhancedLighting.js",
-    "old": "  vBBSunVis = (dot(uBBSun, uBBSun) > 0.0 || uWinOn == 2) ? (uMesh",
-    "new": "  vBBSunVis = (dot(uBBSun, uBBSun) > 0.0) ? (uMesh",
+    "old": "  vBBSunVis = (dot(uBBSun, uBBSun) > 0.0 || uWinOn == 2) ? (uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;   // LA-COST3: EL2's point, TREES1's kernel, PERF-SUN2's gate; AUDIT FLICKER S1: its height, off its own card; AUDIT LPT B4: a low-poly tree's every VERTEX runs this, so one tap at its root`,",
+    "new": "  vBBSunVis = (dot(uBBSun, uBBSun) > 0.0) ? (uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;   // LA-COST3: EL2's point, TREES1's kernel, PERF-SUN2's gate; AUDIT FLICKER S1: its height, off its own card; AUDIT LPT B4: a low-poly tree's every VERTEX runs this, so one tap at its root`,",
     "tests": [
       "test/render/la_cost.test.js"
     ]

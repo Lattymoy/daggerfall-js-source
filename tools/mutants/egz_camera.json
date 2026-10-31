@@ -2,8 +2,8 @@
   {
     "name": "EGZN-wall-run-unmarked",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "  const piece = (build) => occ(() => egKitInto(f, build));\n  egPassage(",
-    "new": "  const piece = (build) => egKitInto(f, build);\n  egPassage(",
+    "old": "  const piece = (build) => occ(() => egKitInto(f, build));",
+    "new": "  const piece = (build) => egKitInto(f, build);",
     "tests": [
       "test/world/eliteGates/egz_camera.test.js",
       "test/world/eliteGates/eglook_halls.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "EGZN-stacks-bookcases-left-out",
     "file": "src/world/eliteGates/egGround.js",
-    "old": "return (kit, ta, tb, yb) => { bookcase(kit, W, ta, tb, yb, spec); return {",
-    "new": "return (kit, ta, tb, yb) => { return {",
+    "old": "      bookcase(kit, W, ta, tb, yb, spec);\n      return {",
+    "new": "      return {",
     "tests": [
       "test/world/eliteGates/egz_camera.test.js",
       "test/world/eliteGates/eglook_halls.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "EGZN-colonnade-left-out",
     "file": "src/world/eliteGates/egGround.js",
-    "old": "if (q.open) { colonnade(spec, q, grid, band, piece); return; }",
-    "new": "if (q.open) return;",
+    "old": "  if (q.open) {\n    colonnade(spec, q, grid, band, piece);\n    return;\n  }",
+    "new": "  if (q.open) return;",
     "tests": [
       "test/world/eliteGates/egz_camera.test.js",
       "test/world/eliteGates/eglook_halls.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "EGZN-ossuary-loculi-left-out",
     "file": "src/world/eliteGates/egGround.js",
-    "old": "(odd(ta) ? loculi(kit, W, ta, tb, yb, yTop, style, spec) : null)",
-    "new": "null",
+    "old": "  if (q.kit === 'ossuary') return (kit, ta, tb, yb) => (odd(ta) ? loculi(kit, W, ta, tb, yb, yTop, style, spec) : null);",
+    "new": "  if (q.kit === 'ossuary') return (kit, ta, tb, yb) => null;",
     "tests": [
       "test/world/eliteGates/egz_camera.test.js",
       "test/world/eliteGates/eglook_halls.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "EGZN-gloam-trunks-left-out",
     "file": "src/world/eliteGates/egGround.js",
-    "old": "  if (kit === 'gloam') thicket(spec, q, yFoot, yTop, piece);\n",
-    "new": "",
+    "old": "  if (kit === 'gloam') thicket(spec, q, yFoot, yTop, piece);\n}",
+    "new": "}",
     "tests": [
       "test/world/eliteGates/egz_camera.test.js",
       "test/world/eliteGates/eglook_halls.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "EGZN-forge-hearths-left-out",
     "file": "src/world/eliteGates/egGround.js",
-    "old": "(odd(ta) ? forgeBay(kit, W, ta, tb, yb, yTop, spec) : null)",
-    "new": "null",
+    "old": "  if (q.kit === 'forge') return (kit, ta, tb, yb) => (odd(ta) ? forgeBay(kit, W, ta, tb, yb, yTop, spec) : null);",
+    "new": "  if (q.kit === 'forge') return (kit, ta, tb, yb) => null;",
     "tests": [
       "test/world/eliteGates/egz_camera.test.js",
       "test/world/eliteGates/eglook_halls.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "EGZN-tiers-unmarked",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "else if (d.t === 'tiers') egTierBenches(spec, d, piece);",
-    "new": "else if (d.t === 'tiers') egTierBenches(spec, d, (build) => egKitInto(f, build));",
+    "old": "  else if (d.t === 'tiers') egTierBenches(spec, d, piece);",
+    "new": "  else if (d.t === 'tiers') egTierBenches(spec, d, (build) => egKitInto(f, build));",
     "tests": [
       "test/world/eliteGates/egz_camera.test.js",
       "test/world/eliteGates/eglook_halls.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "EGZN-niche-floor-an-occluder",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "    quadTo(f, SD_REALM_FLOOR_RECORD, [x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1], [0, 1, 0]);\n    occ(() => {\n",
-    "new": "    occ(() => {\n    quadTo(f, SD_REALM_FLOOR_RECORD, [x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1], [0, 1, 0]);\n",
+    "old": "    quadTo(f, SD_REALM_FLOOR_RECORD, [x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1], [0, 1, 0]);\n    occ(() => {",
+    "new": "    occ(() => {\n      quadTo(f, SD_REALM_FLOOR_RECORD, [x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1], [0, 1, 0]);",
     "tests": [
       "test/world/eliteGates/egz_camera.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "EGZN-niche-unmarked",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "    occ(() => {\n      quadTo(f, SD_REALM_ROOT_RECORD, [x0, y1, z0]",
-    "new": "    whole(() => {\n      quadTo(f, SD_REALM_ROOT_RECORD, [x0, y1, z0]",
+    "old": "    quadTo(f, SD_REALM_FLOOR_RECORD, [x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1], [0, 1, 0]);\n    occ(() => {",
+    "new": "    quadTo(f, SD_REALM_FLOOR_RECORD, [x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1], [0, 1, 0]);\n    whole(() => {",
     "tests": [
       "test/world/eliteGates/egz_camera.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "EGZN-door-post-unmarked",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "if (d.role === 'end') egDoorway(spec, d, EG_DOOR, band, (build) => occ(() => egKitInto(f, build)));",
-    "new": "if (d.role === 'end') egDoorway(spec, d, EG_DOOR, band, (build) => egKitInto(f, build));",
+    "old": "  if (d.role === 'end') egDoorway(spec, d, EG_DOOR, band, (build) => occ(() => egKitInto(f, build)));",
+    "new": "  if (d.role === 'end') egDoorway(spec, d, EG_DOOR, band, (build) => egKitInto(f, build));",
     "tests": [
       "test/world/eliteGates/egz_camera.test.js",
       "test/world/eliteGates/eglook_halls.test.js"
@@ -120,8 +120,8 @@
   {
     "name": "EGZN-door-arch-left-out",
     "file": "src/world/eliteGates/egGround.js",
-    "old": "  piece((kit) => {\n    for (const f of [-1, 1]) {\n      const W = egWallFrame(spec, d.x - ro,",
-    "new": "  ((build) => build(createMeshKit()))((kit) => {\n    for (const f of [-1, 1]) {\n      const W = egWallFrame(spec, d.x - ro,",
+    "old": "    ent = crown + 0.1;\n  piece((kit) => {",
+    "new": "    ent = crown + 0.1;\n  ((build) => build(createMeshKit()))((kit) => {",
     "tests": [
       "test/world/eliteGates/egz_camera.test.js",
       "test/world/eliteGates/eglook_halls.test.js"
@@ -130,8 +130,8 @@
   {
     "name": "EGZN-ring-wall-unmarked",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "if (d.t === 'wall') egRingArcade(spec, d, band, piece);",
-    "new": "if (d.t === 'wall') egRingArcade(spec, d, band, (build) => egKitInto(f, build));",
+    "old": "  if (d.t === 'wall') egRingArcade(spec, d, band, piece);",
+    "new": "  if (d.t === 'wall') egRingArcade(spec, d, band, (build) => egKitInto(f, build));",
     "tests": [
       "test/world/eliteGates/egz_camera.test.js",
       "test/world/eliteGates/eglook_halls.test.js"
@@ -140,8 +140,8 @@
   {
     "name": "EGZN-long-wall-unmarked",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "} else if (d.t === 'hall') egLongWalls(spec, d, band, piece);",
-    "new": "} else if (d.t === 'hall') egLongWalls(spec, d, band, (build) => egKitInto(f, build));",
+    "old": "  } else if (d.t === 'hall') egLongWalls(spec, d, band, piece);",
+    "new": "  } else if (d.t === 'hall') egLongWalls(spec, d, band, (build) => egKitInto(f, build));",
     "tests": [
       "test/world/eliteGates/egz_camera.test.js",
       "test/world/eliteGates/eglook_halls.test.js"
@@ -150,8 +150,8 @@
   {
     "name": "EGZN-vignette-unmarked",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "for (const v of spec.vignettes ?? []) occ(() => vignetteModel(f, spec, v));",
-    "new": "for (const v of spec.vignettes ?? []) vignetteModel(f, spec, v);",
+    "old": "    for (const v of spec.vignettes ?? []) occ(() => vignetteModel(f, spec, v));",
+    "new": "    for (const v of spec.vignettes ?? []) vignetteModel(f, spec, v);",
     "tests": [
       "test/world/eliteGates/egz_camera.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "EGZN-arch-unmarked",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "egChokeArch(spec, d, band, archParts(spec, d), (build) => occ(() => egKitInto(f, build)));",
-    "new": "egChokeArch(spec, d, band, archParts(spec, d), (build) => egKitInto(f, build));",
+    "old": "      if (d.t === 'arch') egChokeArch(spec, d, band, archParts(spec, d), (build) => occ(() => egKitInto(f, build))); // EG-LOOK: its arms dressed in the law's boxes, a voussoir arch over the gap",
+    "new": "      if (d.t === 'arch') egChokeArch(spec, d, band, archParts(spec, d), (build) => egKitInto(f, build)); // EG-LOOK: its arms dressed in the law's boxes, a voussoir arch over the gap",
     "tests": [
       "test/world/eliteGates/egz_camera.test.js",
       "test/world/eliteGates/eglook_halls.test.js"
@@ -169,8 +169,8 @@
   {
     "name": "EGZN-spout-unmarked",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "of egSlagSpouts(spec)) occ(() => {",
-    "new": "of egSlagSpouts(spec)) whole(() => {",
+    "old": "      occ(() => {",
+    "new": "      whole(() => {",
     "tests": [
       "test/world/eliteGates/egz_camera.test.js"
     ]
@@ -178,8 +178,8 @@
   {
     "name": "EGZN-marker-floats-not-triangles",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "for (const [rec, g] of f.byRec) at.set(rec, g.p.length / 9);",
-    "new": "for (const [rec, g] of f.byRec) at.set(rec, g.p.length / 3);",
+    "old": "    for (const [rec, g] of f.byRec) at.set(rec, g.p.length / 9);",
+    "new": "    for (const [rec, g] of f.byRec) at.set(rec, g.p.length / 3);",
     "tests": [
       "test/world/eliteGates/egz_camera.test.js"
     ]
@@ -198,8 +198,8 @@
   {
     "name": "EGZN-run-at-the-wrong-index",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "const i = sub.get(rec), s = model.subMeshes[i].startIndex + a * 3;",
-    "new": "const i = sub.get(rec), s = model.subMeshes[i].startIndex + a;",
+    "old": "          s = model.subMeshes[i].startIndex + a * 3;",
+    "new": "          s = model.subMeshes[i].startIndex + a;",
     "tests": [
       "test/world/eliteGates/egz_camera.test.js"
     ]
@@ -207,8 +207,8 @@
   {
     "name": "EGZN-box-min-unkept",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "if (x < b[k]) b[k] = x; if (x > b[k + 3]) b[k + 3] = x;",
-    "new": "if (x > b[k]) b[k] = x; if (x > b[k + 3]) b[k + 3] = x;",
+    "old": "            if (x < b[k]) b[k] = x;",
+    "new": "            if (x > b[k]) b[k] = x;",
     "tests": [
       "test/world/eliteGates/egz_camera.test.js"
     ]
@@ -225,8 +225,8 @@
   {
     "name": "EGZN-ledge-shaft-unread",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "return q?.shaft && z < q.zB && y >= q.yB + EG_SHAFT_LEDGE_M ? EG_SHAFT_WAY : null;",
-    "new": "return q && z < q.zB && y >= q.yB + EG_SHAFT_LEDGE_M ? EG_SHAFT_WAY : null;",
+    "old": "  return q?.shaft && z < q.zB && y >= q.yB + EG_SHAFT_LEDGE_M ? EG_SHAFT_WAY : null;",
+    "new": "  return q && z < q.zB && y >= q.yB + EG_SHAFT_LEDGE_M ? EG_SHAFT_WAY : null;",
     "tests": [
       "test/net/eliteGates/egz_camera_shaft.test.js"
     ]
@@ -234,8 +234,8 @@
   {
     "name": "EGZN-ledge-foot-z-unread",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "return q?.shaft && z < q.zB && y >= q.yB + EG_SHAFT_LEDGE_M ? EG_SHAFT_WAY : null;",
-    "new": "return q?.shaft && y >= q.yB + EG_SHAFT_LEDGE_M ? EG_SHAFT_WAY : null;",
+    "old": "  return q?.shaft && z < q.zB && y >= q.yB + EG_SHAFT_LEDGE_M ? EG_SHAFT_WAY : null;",
+    "new": "  return q?.shaft && y >= q.yB + EG_SHAFT_LEDGE_M ? EG_SHAFT_WAY : null;",
     "tests": [
       "test/net/eliteGates/egz_camera_shaft.test.js"
     ]
@@ -243,8 +243,8 @@
   {
     "name": "EGZN-ledge-foot-height-unread",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "return q?.shaft && z < q.zB && y >= q.yB + EG_SHAFT_LEDGE_M ? EG_SHAFT_WAY : null;",
-    "new": "return q?.shaft && z < q.zB ? EG_SHAFT_WAY : null;",
+    "old": "  return q?.shaft && z < q.zB && y >= q.yB + EG_SHAFT_LEDGE_M ? EG_SHAFT_WAY : null;",
+    "new": "  return q?.shaft && z < q.zB ? EG_SHAFT_WAY : null;",
     "tests": [
       "test/net/eliteGates/egz_camera_shaft.test.js"
     ]
@@ -261,8 +261,8 @@
   {
     "name": "EGZN-zone-shaft-unmarked",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "open: q.open ? 1 : 0, shaft: q.shaft ? 1 : 0, zB: q.zB ?? q.z1, yB: q.yB ?? q.y });",
-    "new": "open: q.open ? 1 : 0, shaft: 0, zB: q.zB ?? q.z1, yB: q.yB ?? q.y });",
+    "old": "      shaft: q.shaft ? 1 : 0,",
+    "new": "      shaft: 0,",
     "tests": [
       "test/net/eliteGates/egz_camera_shaft.test.js"
     ]
@@ -800,8 +800,8 @@
   {
     "name": "EGZN-shaft-still-eased",
     "file": "src/player/mwView.js",
-    "old": "  if (still) return 0;\n",
-    "new": "\n",
+    "old": "  if (still) return 0;\n  const step = (SPIRE_SHAFT_PITCH * Math.max(0, Number(dt) || 0)) / SPIRE_SHAFT_EASE_S;",
+    "new": "  const step = (SPIRE_SHAFT_PITCH * Math.max(0, Number(dt) || 0)) / SPIRE_SHAFT_EASE_S;",
     "tests": [
       "test/net/eliteGates/egz_camera_shaft.test.js"
     ],
@@ -828,8 +828,8 @@
   {
     "name": "EGZN-shaft-first-person-biased",
     "file": "src/player/mwView.js",
-    "old": "  if (!word || !third) { _shaftBias = 0; _shaftFacing = false; return pitch; }",
-    "new": "  if (!word) { _shaftBias = 0; _shaftFacing = false; return pitch; }",
+    "old": "  if (!word || !third) {",
+    "new": "  if (!word) {",
     "tests": [
       "test/net/eliteGates/egz_camera_shaft.test.js"
     ]
@@ -873,8 +873,8 @@
   {
     "name": "EGZN-shaft-rise-without-bias",
     "file": "src/player/mwView.js",
-    "old": "  if (!(_shaftBias > 0)) return floor;\n",
-    "new": "\n",
+    "old": "  if (!(_shaftBias > 0)) return floor;\n  return Math.max(floor ?? -Infinity, pivotY + (SPIRE_SHAFT_RISE_M * _shaftBias) / SPIRE_SHAFT_PITCH);",
+    "new": "  return Math.max(floor ?? -Infinity, pivotY + (SPIRE_SHAFT_RISE_M * _shaftBias) / SPIRE_SHAFT_PITCH);",
     "tests": [
       "test/net/eliteGates/egz_camera_shaft.test.js"
     ]
@@ -900,8 +900,8 @@
   {
     "name": "EGZN-shaft-sprite-lane-unbiased",
     "file": "src/player/mwView.js",
-    "old": "    pitch = spireShaftPitch(pitch, yaw, frame.dt ?? 0, eotbCamera.thirdPerson());",
-    "new": "    void spireShaftPitch;",
+    "old": "    pitch = spireShaftPitch(pitch, yaw, frame.dt ?? 0, eotbCamera.thirdPerson()); // EG-ZN: over a shaft's ledge facing its drop, the camera's pitch biased down...",
+    "new": "    void spireShaftPitch; // EG-ZN: over a shaft's ledge facing its drop, the camera's pitch biased down...",
     "tests": [
       "test/net/eliteGates/egz_camera_shaft.test.js"
     ]
@@ -909,8 +909,8 @@
   {
     "name": "EGZN-shaft-mw-lane-unrisen",
     "file": "src/player/mwView.js",
-    "old": "  pivotFloor = spireShaftPivot(pivotFloor, feet[1] + (FOCAL_HEIGHT * heightScale) / MW_UNITS_PER_METER);",
-    "new": "  void spireShaftPivot;",
+    "old": "  pivotFloor = spireShaftPivot(pivotFloor, feet[1] + (FOCAL_HEIGHT * heightScale) / MW_UNITS_PER_METER); // ...and its focal risen (the standing feet's: no saddle in the Spire)",
+    "new": "  void spireShaftPivot; // ...and its focal risen (the standing feet's: no saddle in the Spire)",
     "tests": [
       "test/net/eliteGates/egz_camera_shaft.test.js"
     ]

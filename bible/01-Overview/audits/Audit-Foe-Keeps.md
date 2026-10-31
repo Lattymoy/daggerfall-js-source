@@ -160,7 +160,7 @@ audit. DECIDED: A TENTH OF ITS WORTH, the coin's own share - LETTERS-DROP's "let
 letter is coin in another form, and one kept whole would make every purse a letter before a fight) and FOE-KEEPS' "I
 dont want people to lose everything they have" both kept. A kill takes a tenth of each letter's worth into the remains'
 one gold pile and the letter stays where it lies; a quest's letter, one the ledger keeps and one worth under ten pay
-nothing (`wildDropLaw.js:"export const WILD_FALL_LETTERS = 1;"`, `gold.letters` by the letter's id). The fallen's own
+nothing (`wildDropLaw.js:"export const WILD_FALL_LETTERS"`, `gold.letters` by the letter's id). The fallen's own
 ask says its game lowers a letter by its share (`letters` 1, `wildDeath.js` wildFallWords) and a seizure - which no game
 applies - takes the tenth too; a tab from before the word is answered as before, its letters whole, since its game
 would never lower one (the COMPANION-DROP word's own pattern). The death screen says it: "A tenth of your letters of

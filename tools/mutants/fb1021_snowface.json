@@ -20,8 +20,8 @@
   {
     "name": "SNOW-FACE-the-cpu-s-shed-back",
     "file": "src/render/snowCoverGlsl.js",
-    "old": "  const e = SNOW_GROUND.edge, c = cover;",
-    "new": "  const e = SNOW_GROUND.edge, c = cover * smooth(0.62, 0.8, 0.5);",
+    "old": "    c = cover;",
+    "new": "    c = cover * smooth(0.62, 0.8, 0.5);",
     "tests": [
       "test/render/fb1021_snowface.test.js",
       "test/render/precip4_snowground.test.js"
@@ -30,8 +30,8 @@
   {
     "name": "LANE-TURN-sent-to-the-skin",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "!turned.has(p)) { turned.add(p); markRebuild(key); }",
-    "new": "!turned.has(p)) { turned.add(p); markReskin(key); }",
+    "old": "            markRebuild(key);",
+    "new": "            markReskin(key);",
     "tests": [
       "test/render/fb1021_snowface.test.js",
       "test/render/precip4_snowground.test.js"
@@ -50,8 +50,8 @@
   {
     "name": "LANE-TURN-a-turn-on-before-the-window",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "if (!on || ready) for (const [key, p] of builtOf())",
-    "new": "if (true) for (const [key, p] of builtOf())",
+    "old": "      if (!on || ready)",
+    "new": "      if (true)",
     "tests": [
       "test/render/fb1021_snowface.test.js",
       "test/render/precip4_snowground.test.js"

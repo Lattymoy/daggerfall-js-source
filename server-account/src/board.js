@@ -46,7 +46,7 @@ import { withGambitHonoursAll } from './gambit.js';   // KG6: and The King's Gam
 import { withArenaHonoursAll } from './arena.js';   // AUDIT PRE-MERGE 1003 S8: the arena's honours on an author's badge
 import { withEgHonoursAll } from './egHonours.js';   // EG-E2: and the Spire Champions
 import { withMasteryMarksAll } from './hunts.js';   // AUDIT HORIZONTAL F5: and the Marks of Mastery
-import { guildActorOf } from './guilds.js';
+import { guildActorOf, guildPowersOfRow } from './guilds.js';
 import { heraldryOfRow } from './halls.js';   // GUILD1e: a recruitment note's guild's banner
 import { guildMay } from '../../src/net/guild/guildLaw.js';
 import { maskText } from '../../src/net/nameFilter.js';   // TEXT-F1: a note kept before the filter, starred as it is read
@@ -76,7 +76,7 @@ export async function sweepBoard(db, nowS, limit = 200) {
 
 /** Whether a recruitment note still recruits: its guild stands, and the author's character is still in it at a rank
  *  that may invite (AUDIT 28 N4 - NOTE_ROW's join). */
-const recruits = (n) => !!n.guild_name && n.author_rank != null && guildMay(Number(n.author_rank), 'invite');
+const recruits = (n) => !!n.guild_name && n.author_rank != null && guildMay(Number(n.author_rank), 'invite', guildPowersOfRow({ ranks: n.guild_ranks, powers: n.guild_powers }));   // GUILD-RANKS
 
 /** A note as a reader sees it. `mod` adds what a moderator needs to decide; the author's own note says when reports
  *  have hidden it from everyone else. */
@@ -113,7 +113,7 @@ export async function readBoard({ db, nowS, primary = db }, reader, env, map) { 
   if (!boardKeyOk(mapId)) return { error: 'bad-board' };
   const mod = canModerate(reader, env);
   // the author's own notes always (AUDIT 28 N2: muted or hidden, they still hold the author's places)
-  const { results: notes = [] } = await db.prepare(`SELECT n.*, g.name AS guild_name, g.tag AS guild_tag, g.heraldry AS guild_heraldry, gm.rank AS author_rank,
+  const { results: notes = [] } = await db.prepare(`SELECT n.*, g.name AS guild_name, g.tag AS guild_tag, g.heraldry AS guild_heraldry, gm.rank AS author_rank, g.ranks AS guild_ranks, g.powers AS guild_powers,
       (SELECT COUNT(*) FROM board_reports r WHERE r.note_id = n.id) AS reports
     FROM board_notes n JOIN players p ON p.id = n.author LEFT JOIN guilds g ON g.id = n.guild_id
       LEFT JOIN guild_members gm ON gm.player = n.author AND gm.char_id = n.char_id AND gm.guild_id = n.guild_id
@@ -151,7 +151,7 @@ export async function readBoard({ db, nowS, primary = db }, reader, env, map) { 
 
 /** A note's row with its guild's name and tag and its author's rank in it now (a recruitment note's), for every answer
  *  that shows one. */
-const NOTE_ROW = `SELECT n.*, g.name AS guild_name, g.tag AS guild_tag, g.heraldry AS guild_heraldry, gm.rank AS author_rank FROM board_notes n
+const NOTE_ROW = `SELECT n.*, g.name AS guild_name, g.tag AS guild_tag, g.heraldry AS guild_heraldry, gm.rank AS author_rank, g.ranks AS guild_ranks, g.powers AS guild_powers FROM board_notes n
   LEFT JOIN guilds g ON g.id = n.guild_id LEFT JOIN guild_members gm ON gm.player = n.author AND gm.char_id = n.char_id AND gm.guild_id = n.guild_id`;
 
 /** An account's live notes, on every board. */
@@ -190,7 +190,7 @@ export async function pinNote({ db, rand, nowS }, author, env, { map, subject, b
   if (words.button === 'guild') {
     const a = await guildActorOf(db, author, character);
     if ('error' in a) return { error: a.error === 'no-guild' || a.error === 'guild-character' ? 'note-no-guild' : a.error };
-    if (!guildMay(a.me.rank, 'invite')) return { error: 'guild-rank' };
+    if (!guildMay(a.me.rank, 'invite', a.powers)) return { error: 'guild-rank' };
     guildId = a.me.guild_id;
   }
   if (await overRate({ db, nowS }, `board-pin:${author.id}`, NOTES_PINNED_MAX, BOARD_WINDOW_S)) return { error: 'board-rate' };

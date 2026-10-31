@@ -2,8 +2,8 @@
   {
     "name": "WB3-the-share-off-the-claim",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  const share = BOSS_TTK_S * dpsRef(level) * profileOf(f).hpX * (f.vg ? VG_SHARE_X : 1);",
-    "new": "  const share = BOSS_TTK_S * dpsRef(LV_MAX) * profileOf(f).hpX * (f.vg ? VG_SHARE_X : 1);",
+    "old": "  const share = BOSS_TTK_S * dpsRef(level) * profileOf(f).hpX * (f.vg ? VG_SHARE_X : 1); // WB8b: Colossal - each share a quarter more; AUDIT WB14 (PLAY-4): a Vanguard night's less its Vanguard's",
+    "new": "  const share = BOSS_TTK_S * dpsRef(LV_MAX) * profileOf(f).hpX * (f.vg ? VG_SHARE_X : 1); // WB8b: Colossal - each share a quarter more; AUDIT WB14 (PLAY-4): a Vanguard night's less its Vanguard's",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "WB3-the-bucket-rate-off-the-claim",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  // the damage: WB8b's Unyielding lightens it, then it is capped a blow, then the bucket\n  const ref = dpsRef(p.lv);\n  p.bucket = Math.min(BUCKET_DEPTH_X * ref, p.bucket + (Math.max(0, now - p.bucketAt) / 1000) * BUCKET_RATE_X * ref);",
-    "new": "  // the damage: WB8b's Unyielding lightens it, then it is capped a blow, then the bucket\n  const ref = dpsRef(p.lv);\n  p.bucket = Math.min(BUCKET_DEPTH_X * ref, p.bucket + (Math.max(0, now - p.bucketAt) / 1000) * BUCKET_RATE_X * dpsRef(LV_MAX));",
+    "old": "  // the damage: WB8b's Unyielding lightens it, then it is capped a blow, then the bucket\n  const ref = dpsRef(p.lv);\n  p.bucket = Math.min(BUCKET_DEPTH_X * ref, p.bucket + (Math.max(0, now - p.bucketAt) / 1000) * BUCKET_RATE_X * ref);\n  p.bucketAt = now;",
+    "new": "  // the damage: WB8b's Unyielding lightens it, then it is capped a blow, then the bucket\n  const ref = dpsRef(p.lv);\n  p.bucket = Math.min(\n    BUCKET_DEPTH_X * ref,\n    p.bucket + (Math.max(0, now - p.bucketAt) / 1000) * BUCKET_RATE_X * dpsRef(LV_MAX),\n  );\n  p.bucketAt = now;",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "WB3-the-one-blow-cap-lifted",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  const got = Math.max(0, Math.min(want, HIT_CAP_X * ref, p.bucket, f.hp, H ? H.h * f.max : Infinity));",
-    "new": "  const got = Math.max(0, Math.min(want, p.bucket, f.hp, H ? H.h * f.max : Infinity));",
+    "old": "  const got = Math.max(0, Math.min(want, HIT_CAP_X * ref, p.bucket, f.hp, H ? H.h * f.max : Infinity)); // WB14d: never past the half's pool",
+    "new": "  const got = Math.max(0, Math.min(want, p.bucket, f.hp, H ? H.h * f.max : Infinity)); // WB14d: never past the half's pool",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "WB3-a-re-claim-raising-the-cap",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (known) { if (typeof name === 'string' && name) known.name = name.slice(0, 24); if (!f.fell && !f.wrath) { known.seenAt = now; restoreShare(f, known); } return true; }",
-    "new": "  if (known && clampLv(lv) === known.lv) { if (typeof name === 'string' && name) known.name = name.slice(0, 24); if (!f.fell && !f.wrath) { known.seenAt = now; restoreShare(f, known); } return true; }",
+    "old": "  if (known) {",
+    "new": "  if (known && clampLv(lv) === known.lv) {",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "WB3-a-blow-from-off-the-court",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (!onFloor(pose.x, pose.z, f.xa, now, POSE_SLACK, planOf(f))) return 0;",
-    "new": "  if (!onFloor(pose.x, pose.z, f.xa, now, POSE_SLACK * 30, planOf(f))) return 0;",
+    "old": "  if (!onFloor(pose.x, pose.z, f.xa, now, POSE_SLACK, planOf(f))) return 0; // nobody strikes the court from off it - WB9b: its floor as far as it is laid; WB14b: the night's plan's",
+    "new": "  if (!onFloor(pose.x, pose.z, f.xa, now, POSE_SLACK * 30, planOf(f))) return 0; // nobody strikes the court from off it - WB9b: its floor as far as it is laid; WB14b: the night's plan's",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js",
       "test/net/gate/audit_wb11.test.js"
@@ -94,8 +94,8 @@
   {
     "name": "WB3-the-top-unordered",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  return Object.values(f.players).filter((q) => q.dealt > 0)\n    .sort((a, b) => b.dealt - a.dealt || a.joinedAt - b.joinedAt)",
-    "new": "  return Object.values(f.players).filter((q) => q.dealt > 0)\n    .sort((a, b) => a.joinedAt - b.joinedAt)",
+    "old": "    .filter((q) => q.dealt > 0)\n    .sort((a, b) => b.dealt - a.dealt || a.joinedAt - b.joinedAt)",
+    "new": "    .filter((q) => q.dealt > 0)\n    .sort((a, b) => a.joinedAt - b.joinedAt)",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "WB3-no-opening",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    pos: [0, 0], yaw: 0, move: null, atk: null, lastA: -1, runA: 0, freeAt: 0, nextAt: now + OPENING_MS, seq: 0,",
-    "new": "    pos: [0, 0], yaw: 0, move: null, atk: null, lastA: -1, runA: 0, freeAt: 0, nextAt: now, seq: 0,",
+    "old": "    nextAt: now + OPENING_MS,",
+    "new": "    nextAt: now,",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "WB3-the-charge-at-any-gap",
     "file": "src/net/gate/gateBrain.js",
-    "old": "(a.minGap <= 0 || gap >= a.minGap)",
-    "new": "(true)",
+    "old": "      (a.minGap <= 0 || gap >= a.minGap) &&",
+    "new": "      true &&",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "WB3-the-phase-line-off",
     "file": "src/net/gate/gateBrain.js",
-    "old": "f.hp / f.max <= PHASE_AT[f.phase - 1]",
-    "new": "f.hp / f.max < PHASE_AT[f.phase - 1]",
+    "old": "  if (f.max > 0 && f.phase < 3 && f.hp / f.max <= PHASE_AT[f.phase - 1] && !(f.phase === 2 && sunders(f))) {",
+    "new": "  if (f.max > 0 && f.phase < 3 && f.hp / f.max < PHASE_AT[f.phase - 1] && !(f.phase === 2 && sunders(f))) {",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "WB3-phase-three-cuts-the-wrath",
     "file": "src/net/gate/gateBrain.js",
-    "old": "(phase >= 3 && atk.id !== ATTACKS.wrath.id && atk.id !== ATTACKS.reckon.id",
-    "new": "(phase >= 3 && atk.id !== ATTACKS.reckon.id",
+    "old": "  phase >= 3 &&\n  atk.id !== ATTACKS.wrath.id &&\n  atk.id !== ATTACKS.reckon.id &&\n  atk.id !== ATTACKS.cross.id &&\n  atk.id !== ATTACKS.chains.id",
+    "new": "  phase >= 3 && atk.id !== ATTACKS.reckon.id && atk.id !== ATTACKS.cross.id && atk.id !== ATTACKS.chains.id",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "WB3-a-dead-target",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  const live = bodies.filter((b) => !b.dead && f.players[b.sub]);\n  if (!live.length) return null;",
-    "new": "  const live = bodies.filter((b) => f.players[b.sub]);\n  if (!live.length) return null;",
+    "old": "export function pickTarget(f, bodies, rng) {\n  const live = bodies.filter((b) => !b.dead && f.players[b.sub]);",
+    "new": "export function pickTarget(f, bodies, rng) {\n  const live = bodies.filter((b) => f.players[b.sub]);",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "WB3-the-dead-standing",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  for (const b of bodies) { const p = f.players[b.sub]; if (p && !b.dead) { p.stoodMs += dt; living = true; } }",
-    "new": "  for (const b of bodies) { const p = f.players[b.sub]; if (p) { p.stoodMs += dt; living = true; } }",
+    "old": "    if (p && !b.dead) {",
+    "new": "    if (p) {",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "WB3-the-state-drops-the-shield",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    atk: f.atk ? atkFrame(f.atk) : null, sh: f.shieldUntil, wr: f.wrathAt,",
-    "new": "    atk: f.atk ? atkFrame(f.atk) : null, wr: f.wrathAt,",
+    "old": "    sh: f.shieldUntil,\n    wr: f.wrathAt,",
+    "new": "    wr: f.wrathAt,",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "WB3-no-second-volley",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    if (f.phase >= 3) tg = tg.concat(",
-    "new": "    if (f.phase >= 4) tg = tg.concat(",
+    "old": "    if (f.phase >= 3)",
+    "new": "    if (f.phase >= 4)",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "WB3-an-extractable-key",
     "file": "src/net/gate/gateReceipt.js",
-    "old": "subtle.importKey('pkcs8', bytes, { name: 'Ed25519' }, false, ['sign'])",
-    "new": "subtle.importKey('pkcs8', bytes, { name: 'Ed25519' }, true, ['sign'])",
+    "old": "    return await subtle.importKey('pkcs8', bytes, { name: 'Ed25519' }, false, ['sign']);",
+    "new": "    return await subtle.importKey('pkcs8', bytes, { name: 'Ed25519' }, true, ['sign']);",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
     ]
@@ -319,7 +319,7 @@
   {
     "name": "WB3-a-bad-secret-throws",
     "file": "src/net/gate/gateReceipt.js",
-    "old": "  try { return await subtle.importKey('pkcs8', bytes, { name: 'Ed25519' }, false, ['sign']); } catch { return null; }",
+    "old": "  try {\n    return await subtle.importKey('pkcs8', bytes, { name: 'Ed25519' }, false, ['sign']);\n  } catch {\n    return null;\n  }",
     "new": "  return await subtle.importKey('pkcs8', bytes, { name: 'Ed25519' }, false, ['sign']);",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"

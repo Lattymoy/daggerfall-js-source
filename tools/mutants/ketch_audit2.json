@@ -2,8 +2,8 @@
   {
     "name": "KT2-the-sky-aboard-alone",
     "file": "src/scenes/ketch/ketchClient.js",
-    "old": "      if (!aboard) {\n        down = null;\n        if ((modes()?.mode ?? 'exterior') === 'exterior') {",
-    "new": "      if (!aboard) down = null;\n      if (aboard) {\n        if ((modes()?.mode ?? 'exterior') === 'exterior') {",
+    "old": "      if (!aboard) {\n        down = null;",
+    "new": "      if (!aboard) down = null;\n      if (aboard) {",
     "note": "The sky, the lift's ride up and the fall's waking aboard alone: nobody boards.",
     "tests": [
       "test/scenes/ketch_audit2_page.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "KT2-the-body-said-in-the-fight-alone",
     "file": "src/scenes/ketch/ketchClient.js",
-    "old": "    if (entity.health > 0 && entity.maxHealth > 0) sayBody(",
-    "new": "    if (link.joined() && entity.health > 0 && entity.maxHealth > 0) sayBody(",
+    "old": "    if (entity.health > 0 && entity.maxHealth > 0) sayBody(entity.health / entity.maxHealth, performance.now());",
+    "new": "    if (link.joined() && entity.health > 0 && entity.maxHealth > 0)\n      sayBody(entity.health / entity.maxHealth, performance.now());",
     "note": "The page's health unsaid before the Warden's fight: the count heals nowhere.",
     "tests": [
       "test/scenes/ketch_audit2_page.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "KT2-the-cap-a-rooms-in-memory",
     "file": "src/scenes/ketch/ketchClient.js",
-    "old": "pelletDrops.given = kept?.n === sh.n && Number.isFinite(kept.given) ? kept.given : 0;",
-    "new": "pelletDrops.given = 0;",
+    "old": "      pelletDrops.given = kept?.n === sh.n && Number.isFinite(kept.given) ? kept.given : 0;",
+    "new": "      pelletDrops.given = 0;",
     "note": "A page stood again pays a fresh cap.",
     "tests": [
       "test/scenes/ketch_audit2_page.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "KT2-the-bosses-capped",
     "file": "src/systems/ketch/ketchSpoils.js",
-    "old": "  if (KT_PELLETS_OWN.includes(kind)) return { n: r, given: g };\n",
-    "new": "",
+    "old": "  if (KT_PELLETS_OWN.includes(kind)) return { n: r, given: g };\n  const n = Math.min(r, Math.max(0, KT_CONSTRUCT_PELLETS_MAX - g));",
+    "new": "  const n = Math.min(r, Math.max(0, KT_CONSTRUCT_PELLETS_MAX - g));",
     "note": "The bosses' Pellets under the Watch's cap.",
     "tests": [
       "test/scenes/ketch_audit2_page.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "KT2-the-walk-unstepped",
     "file": "src/net/ketch/ketchLink.js",
-    "old": "return { ...B, x: p[0], z: p[1], h: 0,",
-    "new": "return { ...B, h: 0,",
+    "old": "          return { ...B, x: p[0], z: p[1], h: 0, down: w.at, mv: null, sw: w.sw === 1 ? 1 : 0 };",
+    "new": "          return { ...B, h: 0, down: w.at, mv: null, sw: w.sw === 1 ? 1 : 0 };",
     "note": "A pile at its walk's start.",
     "tests": [
       "test/scenes/ketch_audit2_page.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "KT2-the-sweep-unmarked",
     "file": "src/net/ketch/ketchBrain.js",
-    "old": "if (B.floor === 'hold' && B.h > 0) { B.h = 0; B.downAt = now; out.push({ k: 'dn', o: B.id, n: '', sw: 1, at: now }); }",
-    "new": "if (B.floor === 'hold' && B.h > 0) { B.h = 0; B.downAt = now; out.push({ k: 'dn', o: B.id, n: '', at: now }); }",
+    "old": "          B.h = 0;\n          B.downAt = now;\n          out.push({ k: 'dn', o: B.id, n: '', sw: 1, at: now });\n        }\n      toStage(V, KT_STAGE.sailwalk, now, out);",
+    "new": "          B.h = 0;\n          B.downAt = now;\n          out.push({ k: 'dn', o: B.id, n: '', at: now });\n        }\n      toStage(V, KT_STAGE.sailwalk, now, out);",
     "note": "The engine's sweep said as kills.",
     "tests": [
       "test/net/ketch/ketch_audit2_relay.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "KT2-the-lab-waves-three",
     "file": "src/tools/ketchLabLink.js",
-    "old": "wv: clamp(Math.round(num(p.get('wv'), 0)), 0, KT_WATCH_WAVES),",
-    "new": "wv: clamp(Math.round(num(p.get('wv'), 0)), 0, 3),",
+    "old": "    wv: clamp(Math.round(num(p.get('wv'), 0)), 0, KT_WATCH_WAVES),",
+    "new": "    wv: clamp(Math.round(num(p.get('wv'), 0)), 0, 3),",
     "note": "The lab's waves stop at three.",
     "tests": [
       "test/scenes/ketch_audit2_page.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "KT2-the-lab-old-need",
     "file": "src/tools/ketchLabLink.js",
-    "old": "num(p.get('nd'), engineNeeds(KT_LAB_CREW))",
-    "new": "num(p.get('nd'), 5)",
+    "old": "  const nd = clamp(Math.round(num(p.get('nd'), engineNeeds(KT_LAB_CREW))), 0, 7); // AUDIT KETCH II L5-6: the engine's appetite for the lab's crew (5 was KETCH-LONGER's before)",
+    "new": "  const nd = clamp(Math.round(num(p.get('nd'), 5)), 0, 7); // AUDIT KETCH II L5-6: the engine's appetite for the lab's crew (5 was KETCH-LONGER's before)",
     "note": "The lab's engine at the old appetite.",
     "tests": [
       "test/scenes/ketch_audit2_page.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "KT2-the-lid-landing-none",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": ": own ? ketchSkyLanding(safe, safeZone) : null;",
-    "new": ": null;",
+    "old": "    const at =\n      safe && safeZone !== 'sailwalk' && safeZone !== 'top' ? safe : own ? ketchSkyLanding(safe, safeZone) : null;",
+    "new": "    const at = safe && safeZone !== 'sailwalk' && safeZone !== 'top' ? safe : null;",
     "note": "Off the main top onto the lid: stood nowhere, a cast-back a frame.",
     "tests": [
       "test/world/ketch_audit2_walk.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "KT2-the-roof-stood-on",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "(ketchOnLid(p[0], p[1], p[2]) || ketchOnRoof(p[0], p[1], p[2]))",
-    "new": "ketchOnLid(p[0], p[1], p[2])",
+    "old": "        if (p && (ketchOnLid(p[0], p[1], p[2]) || ketchOnRoof(p[0], p[1], p[2]))) castBack(true);",
+    "new": "        if (p && ketchOnLid(p[0], p[1], p[2])) castBack(true);",
     "note": "The engine house's roof a road past the Sailwalk.",
     "tests": [
       "test/world/ketch_audit2_walk.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "KT2-the-sailwalk-landing-the-spar",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "(safe && zone === 'sailwalk' ? castBackTo(",
-    "new": "(false ? castBackTo(",
+    "old": "  safe && zone === 'sailwalk'",
+    "new": "  false",
     "note": "Off the Sailwalk the landing the spar it stood on.",
     "tests": [
       "test/world/ketch_audit2_walk.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "KT2-the-belly-bilge-solid",
     "file": "src/world/ketch/ketchModel.js",
-    "old": "[out[0], -0.8, out[2]]);",
-    "new": "[out[0], -0.8, out[2]], null, hullRunSolid(a, b));",
+    "old": "      [out[0], -0.8, out[2]],\n    );",
+    "new": "      [out[0], -0.8, out[2]],\n      null,\n      hullRunSolid(a, b),\n    );",
     "note": "Her bilge to her keel solid: a body under a fallen section in her belly.",
     "tests": [
       "test/world/ketch_audit2_walk.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "KT2-the-belly-bottom-solid",
     "file": "src/world/ketch/ketchModel.js",
-    "old": "KT_HULL.keel, [0, -1, 0]);   // AUDIT KETCH II L4-1",
-    "new": "KT_HULL.keel, [0, -1, 0], true);   // AUDIT KETCH II L4-1",
+    "old": "  K.fan(R.hull, keel.slice().reverse(), KT_HULL.keel, [0, -1, 0]); // AUDIT KETCH II L4-1: drawn only - a fall inside her goes on to the void's cast-back",
+    "new": "  K.fan(R.hull, keel.slice().reverse(), KT_HULL.keel, [0, -1, 0], true); // AUDIT KETCH II L4-1: drawn only - a fall inside her goes on to the void's cast-back",
     "note": "Her bottom solid: a body under a fallen section on it.",
     "tests": [
       "test/world/ketch_audit2_walk.test.js"
@@ -172,8 +172,8 @@
   {
     "name": "KT2-the-bulwark-gap",
     "file": "src/world/ketch/ketchModel.js",
-    "old": "const meet = KT_BRIDGE.z - Math.sqrt(KT_BRIDGE.r * KT_BRIDGE.r - KT_WAIST.x1 * KT_WAIST.x1);",
-    "new": "const meet = 179;",
+    "old": "  const meet = KT_BRIDGE.z - Math.sqrt(KT_BRIDGE.r * KT_BRIDGE.r - KT_WAIST.x1 * KT_WAIST.x1);",
+    "new": "  const meet = 179;",
     "note": "The bulwark short of the disc: a walk off her side.",
     "tests": [
       "test/world/ketch_audit2_walk.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "KT2-the-wheel-west",
     "file": "src/world/ketch/ketchModel.js",
-    "old": "const P = (a) => [E.x + Math.cos(a) * fr, fy + Math.sin(a) * fr, fz];",
-    "new": "const P = (a) => [E.x - E.r - 1.3, fy + Math.sin(a) * fr, E.z + Math.cos(a) * fr];",
+    "old": "      const P = (a) => [E.x + Math.cos(a) * fr, fy + Math.sin(a) * fr, fz];",
+    "new": "      const P = (a) => [E.x - E.r - 1.3, fy + Math.sin(a) * fr, E.z + Math.cos(a) * fr];",
     "note": "The flywheel's face through socket 1 again.",
     "tests": [
       "test/world/ketch_audit2_walk.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "KT2-the-wheel-drawn-only",
     "file": "src/world/ketch/ketchModel.js",
-    "old": "uv(a1), [0, 0, -1], true);\n      K.tri(R.gear, [E.x, fy, fz], P(a0), P(a1), [0.5, 0.5], uv(a0), uv(a1), [0, 0, 1], true);",
-    "new": "uv(a1), [0, 0, -1]);\n      K.tri(R.gear, [E.x, fy, fz], P(a0), P(a1), [0.5, 0.5], uv(a0), uv(a1), [0, 0, 1]);",
+    "old": "      K.tri(R.gear, [E.x, fy, fz], P(a0), P(a1), [0.5, 0.5], uv(a0), uv(a1), [0, 0, -1], true);\n      K.tri(R.gear, [E.x, fy, fz], P(a0), P(a1), [0.5, 0.5], uv(a0), uv(a1), [0, 0, 1], true);",
+    "new": "      K.tri(R.gear, [E.x, fy, fz], P(a0), P(a1), [0.5, 0.5], uv(a0), uv(a1), [0, 0, -1]);\n      K.tri(R.gear, [E.x, fy, fz], P(a0), P(a1), [0.5, 0.5], uv(a0), uv(a1), [0, 0, 1]);",
     "note": "The flywheel walked through.",
     "tests": [
       "test/world/ketch_audit2_walk.test.js"
@@ -242,8 +242,8 @@
   {
     "name": "KT2-the-crew-a-poses-fresh",
     "file": "src/net/ketch/ketchBrain.js",
-    "old": "const list = V.crew.filter((s) => now - (V.players[s]?.seenAt ?? 0) <= KT_PLACE_KEEP_MS);",
-    "new": "const list = V.crew.filter((s) => now - (V.players[s]?.seenAt ?? 0) <= KT_POSE_FRESH_MS);",
+    "old": "  const list = V.crew.filter((s) => now - (V.players[s]?.seenAt ?? 0) <= KT_PLACE_KEEP_MS);",
+    "new": "  const list = V.crew.filter((s) => now - (V.players[s]?.seenAt ?? 0) <= KT_POSE_FRESH_MS);",
     "note": "The Wardens born at whoever posed last.",
     "tests": [
       "test/net/ketch/ketch_audit2_relay.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "KT2-four-posts",
     "file": "src/net/ketch/ketchDeck.js",
-    "old": "[3, 58], [-7, 52], [4, 52]]",
-    "new": "[3, 58]]",
+    "old": "      [-7, 52],\n      [4, 52],\n    ].map((p) => Object.freeze(p)),",
+    "new": "    ].map((p) => Object.freeze(p)),",
     "note": "Two Sentries on one post.",
     "tests": [
       "test/net/ketch/ketch_audit2_relay.test.js"
@@ -262,8 +262,8 @@
   {
     "name": "KT2-backs-off-for-ever",
     "file": "src/net/ketch/ketchConstructs.js",
-    "old": "if (now - B.nearAt < KT_KEEP_BACK_MS) {",
-    "new": "if (true) {",
+    "old": "    if (now - B.nearAt < KT_KEEP_BACK_MS) {",
+    "new": "    if (true) {",
     "note": "A Sentry chased never shoots.",
     "tests": [
       "test/net/ketch/ketch_audit2_relay.test.js"
@@ -272,8 +272,8 @@
   {
     "name": "KT2-the-bows-box",
     "file": "src/net/ketch/ketchConstructs.js",
-    "old": "const half = F.bow && B === F ? ketchBowHalf(pz) : Infinity;",
-    "new": "const half = Infinity;",
+    "old": "    const half = F.bow && B === F ? ketchBowHalf(pz) : Infinity; // AUDIT KETCH II L4-4: the bow narrows inside its box",
+    "new": "    const half = Infinity; // AUDIT KETCH II L4-4: the bow narrows inside its box",
     "note": "A Sentry out over the bow's nets.",
     "tests": [
       "test/net/ketch/ketch_audit2_relay.test.js"
@@ -282,7 +282,7 @@
   {
     "name": "KT2-the-drum-alone",
     "file": "src/net/ketch/ketchConstructs.js",
-    "old": "  hold: Object.freeze([Object.freeze([KT_ENGINE.x, KT_ENGINE.z, KT_SOCKET_R + 0.5]), Object.freeze([KT_LIFT.x, KT_LIFT.z, KT_LIFT.half * Math.SQRT2 + 0.2]),\n    ...KT_CRADLES.map(([x, z]) => Object.freeze([x, z, 0.6 * Math.SQRT2 + 0.1])), ...KT_ARCS.z.flatMap((z) => [-1, 1].map((s) => Object.freeze([s * KT_ARCS.post, z, 0.6])))]),",
+    "old": "  hold: Object.freeze([\n    Object.freeze([KT_ENGINE.x, KT_ENGINE.z, KT_SOCKET_R + 0.5]),\n    Object.freeze([KT_LIFT.x, KT_LIFT.z, KT_LIFT.half * Math.SQRT2 + 0.2]),\n    ...KT_CRADLES.map(([x, z]) => Object.freeze([x, z, 0.6 * Math.SQRT2 + 0.1])),\n    ...KT_ARCS.z.flatMap((z) => [-1, 1].map((s) => Object.freeze([s * KT_ARCS.post, z, 0.6]))),\n  ]),",
     "new": "  hold: Object.freeze([Object.freeze([KT_ENGINE.x, KT_ENGINE.z, KT_ENGINE.r])]),",
     "note": "Spiders through the hold's cradles, posts and tower.",
     "tests": [
@@ -292,8 +292,8 @@
   {
     "name": "KT2-twenty-minutes",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "export const KT_LAST_MS = 45 * 60 * 1000;",
-    "new": "export const KT_LAST_MS = 20 * 60 * 1000;",
+    "old": "export const KT_LAST_MS = 45 * 60 * 1000; // AUDIT KETCH II L5-1: twenty before - KETCH-LONGER made a voyage some twenty to twenty-five minutes, and a crew boarding at her last minute was shut out with the Warden standing and no receipt",
+    "new": "export const KT_LAST_MS = 20 * 60 * 1000; // AUDIT KETCH II L5-1: twenty before - KETCH-LONGER made a voyage some twenty to twenty-five minutes, and a crew boarding at her last minute was shut out with the Warden standing and no receipt",
     "note": "Her crews' last minutes shorter than the Warden's fight.",
     "tests": [
       "test/net/ketch/ketch_audit2_relay.test.js",
@@ -303,8 +303,8 @@
   {
     "name": "KT2-thirty-seconds",
     "file": "src/net/ketch/ketchWarden.js",
-    "old": "export const KW_LOST_MS = 120_000;",
-    "new": "export const KW_LOST_MS = 30_000;",
+    "old": "export const KW_LOST_MS = 120_000; // AUDIT KETCH II L5-4, L5-5: thirty seconds before - a solo who fell (nobody to raise it) was never back in time over the fastest way up (some forty seconds), so one death began an eleven-minute fight again; and a raise inside its window (KT_DOWN_MS, a minute) stood a body up on a fight already lost",
+    "new": "export const KW_LOST_MS = 30_000; // AUDIT KETCH II L5-4, L5-5: thirty seconds before - a solo who fell (nobody to raise it) was never back in time over the fastest way up (some forty seconds), so one death began an eleven-minute fight again; and a raise inside its window (KT_DOWN_MS, a minute) stood a body up on a fight already lost",
     "note": "A fight lost before a raise or a way back.",
     "tests": [
       "test/net/ketch/ketch_audit2_relay.test.js",
@@ -334,8 +334,8 @@
   {
     "name": "KT2-the-host-never-marked",
     "file": "src/ui/hud/hudFoeTarget.js",
-    "old": "  if (went) markFoeStruck(hb);\n",
-    "new": "",
+    "old": "  if (went) markFoeStruck(hb);\n  return went;",
+    "new": "  return went;",
     "note": "A host body struck never takes the target bar.",
     "tests": [
       "test/scenes/ketch_audit2_page.test.js"
@@ -344,8 +344,8 @@
   {
     "name": "KT2-the-stand-ins-count-read",
     "file": "src/ui/hud/hudFoeTarget.js",
-    "old": "health: share != null ? share * max : Math.max(0, e.health ?? 0),",
-    "new": "health: Math.max(0, e.health ?? 0),",
+    "old": "    health: share != null ? share * max : Math.max(0, e.health ?? 0),",
+    "new": "    health: Math.max(0, e.health ?? 0),",
     "note": "The bar reads the stand-in's count nothing empties: always whole.",
     "tests": [
       "test/scenes/ketch_audit2_page.test.js"
@@ -354,8 +354,8 @@
   {
     "name": "KT2-the-fallen-a-target",
     "file": "src/ui/hud/hudFoeTarget.js",
-    "old": "  if (e.relayHealth && !(share > 0)) return null;\n",
-    "new": "",
+    "old": "  if (e.relayHealth && !(share > 0)) return null;\n  const max = e.maxHealth || e.health || 1;",
+    "new": "  const max = e.maxHealth || e.health || 1;",
     "note": "A fallen host body's bar stands empty after its fall.",
     "tests": [
       "test/scenes/ketch_audit2_page.test.js"

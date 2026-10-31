@@ -41,8 +41,8 @@ test('FAST-SUITE: every door runs through it - npm test is the whole suite as on
   // PIN MOVED (CI-TIMES): the shard hands on the times it was split by and its record too
   assert.match(shards, /return runTests\(files, \{ times, extra: runnerFlags\(argv\.slice\(1\)\), record \}\);\n\}/, 'a shard, its runner flags handed on');
   assert.match(changed, /return runTests\(files, \{ extra: runnerFlags\(argv\) \}\);\n\}/, 'the changed tests, likewise');
-  assert.equal((shards.match(/\['--test'/g) ?? []).length, 1, 'one spawn of the runner, runTests\'');
-  assert.doesNotMatch(changed, /\['--test'/, 'test:changed spawns none of its own');
+  assert.equal((shards.match(/\[\n\s*'--test'/g) ?? []).length, 1, 'one spawn of the runner, runTests\'');
+  assert.doesNotMatch(changed, /\[\n\s*'--test'/, 'test:changed spawns none of its own');
   // 1/1 is every test file: the whole of testFiles in one shard
   const all = testFiles();
   assert.deepEqual([...shardsOf(all, 1, {})[0].files].sort(), all);

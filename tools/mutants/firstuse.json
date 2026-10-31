@@ -85,8 +85,8 @@
   {
     "name": "FU-smoke-needed",
     "file": "src/scenes/riteHost.js",
-    "old": "smokePass = smokeOf();",
-    "new": "smokePass = smokeOf(true);",
+    "old": "      if (!smokePass && smokeOf && smokeFade(t) > 0) smokePass = smokeOf();",
+    "new": "      if (!smokePass && smokeOf && smokeFade(t) > 0) smokePass = smokeOf(true);",
     "tests": [
       "test/render/firstuse.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "FU-starfall-bare-step",
     "file": "src/scenes/starfall/starfallHost.js",
-    "old": "void warmPrograms([{ start: () => startPrograms(renderer.gl, STARFALL_PROGRAMS), run: ensurePass, need: () => !pass && !passTried }]);",
-    "new": "void warmPrograms([ensurePass]);",
+    "old": "    void warmPrograms([\n      { start: () => startPrograms(renderer.gl, STARFALL_PROGRAMS), run: ensurePass, need: () => !pass && !passTried },\n    ]); // a step that finds it built builds nothing (ensurePass)",
+    "new": "    void warmPrograms([ensurePass]); // a step that finds it built builds nothing (ensurePass)",
     "tests": [
       "test/render/firstuse.test.js"
     ]

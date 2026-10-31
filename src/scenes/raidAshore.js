@@ -36,11 +36,12 @@
 // crew goes home when her ship leaves the sea under the fight (`crew`), and a wave that lands after its raid is over is
 // withdrawn as it lands (`late`).
 
-import { RAID_CREW } from '../systems/naval/navalBoarding.js';   // RAID-WON: the raids' own crew
-import { WA_RAID_QUESTS } from '../systems/warmAshesShips.js';   // RAID-WON: the raids, as the quest machine names them
+import { RAID_CREW } from '../systems/naval/navalBoarding.js'; // RAID-WON: the raids' own crew
+import { WA_RAID_QUESTS } from '../systems/warmAshesShips.js'; // RAID-WON: the raids, as the quest machine names them
 
 /** A quest's own foes still standing, out of a pool's list - the quest resource behaviour's UID (world.js endRaid's law). */
-export const questFoesOf = (quest, foes) => (quest ? (foes ?? []).filter((f) => f && !f.dead && f.questBehaviour?.questUID === quest.uid) : []);
+export const questFoesOf = (quest, foes) =>
+  quest ? (foes ?? []).filter((f) => f && !f.dead && f.questBehaviour?.questUID === quest.uid) : [];
 
 /**
  * @param {{ pools: () => ({ foes: () => any[], remove: (foe: any) => void } | null)[] }} deps - the foe pools a raid's foes
@@ -54,7 +55,10 @@ export function createRaidAshore(deps) {
     let n = 0;
     for (const pool of deps.pools?.() ?? []) {
       if (!pool) continue;
-      for (const f of questFoesOf(quest, [...pool.foes()])) { pool.remove(f); n++; }
+      for (const f of questFoesOf(quest, [...pool.foes()])) {
+        pool.remove(f);
+        n++;
+      }
     }
     return n;
   }
@@ -94,7 +98,11 @@ export function createRaidAshore(deps) {
       let n = 0;
       for (const pool of deps.pools?.() ?? []) {
         if (!pool) continue;
-        for (const f of questFoesOf(quest, [...pool.foes()])) if (f.questBehaviour?.targetSymbol?.name === RAID_CREW) { pool.remove(f); n++; }
+        for (const f of questFoesOf(quest, [...pool.foes()]))
+          if (f.questBehaviour?.targetSymbol?.name === RAID_CREW) {
+            pool.remove(f);
+            n++;
+          }
       }
       return n;
     },
@@ -104,10 +112,23 @@ export function createRaidAshore(deps) {
      *  tryPlaceInteriorQuestFoe). A raid's alone (WA_RAID_QUESTS): another quest's foe landing after its quest ended
      *  stands, as DFU's CreateFoe stood it in the tick it placed it. Answers whether it was. */
     late(quest, f) {
-      if (!quest || !f || f.dead || !WA_RAID_QUESTS.includes(quest.questName) || !(ending.has(quest.uid) || quest.questTombstoned)) return false;
-      for (const pool of deps.pools?.() ?? []) if (pool?.foes().includes(f)) { pool.remove(f); return true; }
+      if (
+        !quest ||
+        !f ||
+        f.dead ||
+        !WA_RAID_QUESTS.includes(quest.questName) ||
+        !(ending.has(quest.uid) || quest.questTombstoned)
+      )
+        return false;
+      for (const pool of deps.pools?.() ?? [])
+        if (pool?.foes().includes(f)) {
+          pool.remove(f);
+          return true;
+        }
       return false;
     },
-    get ending() { return ending.size; },
+    get ending() {
+      return ending.size;
+    },
   };
 }

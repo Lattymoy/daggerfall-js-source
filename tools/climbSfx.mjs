@@ -35,7 +35,26 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { bake, writeWav8, DF_RATE } from './sndify.mjs';
-import { RATE, rng, seconds, buf, decay, attack, biquad, sweepLowpass, noise, mix, softClip, envelope, unit, knock, rough, bandSweep, rub, grit } from './sfxSynth.mjs';   // GATHER-FEEL: the climb's own pieces live in the kit now
+import {
+  RATE,
+  rng,
+  seconds,
+  buf,
+  decay,
+  attack,
+  biquad,
+  sweepLowpass,
+  noise,
+  mix,
+  softClip,
+  envelope,
+  unit,
+  knock,
+  rough,
+  bandSweep,
+  rub,
+  grit,
+} from './sfxSynth.mjs'; // GATHER-FEEL: the climb's own pieces live in the kit now
 import { isMain } from './lib/isMain.mjs';
 
 const OUT = 'public/sfx';
@@ -75,7 +94,7 @@ function catchLip() {
   const rand = rng(0xca7c41);
   const out = buf(0.8);
   mix(out, slap(rand, { f0: 1350, tau: 0.007 }), 0, 1);
-  mix(out, slap(rand, { f0: 1120, tau: 0.008, tip: 2500 }), 0.022, 0.85);   // the second hand, a beat behind
+  mix(out, slap(rand, { f0: 1120, tau: 0.008, tip: 2500 }), 0.022, 0.85); // the second hand, a beat behind
   mix(out, knock(0.12, 220, 150, 0.01, 0.028), 0.001, 0.25);
   mix(out, knock(0.12, 190, 130, 0.01, 0.028), 0.023, 0.22);
   // the body meeting the wall, and the clothes taking it
@@ -109,14 +128,18 @@ function scrape(seed, { band = 780 } = {}) {
   return () => {
     const rand = rng(seed);
     const out = buf(0.48);
-    const scuffs = [[0, 0.09, 1], [0.11 + 0.02 * rand(), 0.11, 0.8], [0.25 + 0.02 * rand(), 0.08, 0.65]];
+    const scuffs = [
+      [0, 0.09, 1],
+      [0.11 + 0.02 * rand(), 0.11, 0.8],
+      [0.25 + 0.02 * rand(), 0.08, 0.65],
+    ];
     for (const [at, len, g] of scuffs) {
       const f0 = band * (0.85 + 0.3 * rand());
       mix(out, rub(rand, len + 0.06, { f0, q: 0.8, hz: 85 + 40 * rand(), inMs: 8, tau: len * 0.45 }), at, g);
       mix(out, rub(rand, len + 0.04, { f0: 2400, q: 1.6, hz: 170, inMs: 6, tau: len * 0.3 }), at + 0.004, g * 0.35);
     }
     const last = scuffs[2][0] + scuffs[2][1];
-    mix(out, knock(0.08, 160, 105, 0.008, 0.02), last, 0.25);   // the toe finds its hold
+    mix(out, knock(0.08, 160, 105, 0.008, 0.02), last, 0.25); // the toe finds its hold
     grit(out, rand, { count: 5, from: 0.03, to: 0.42, gain: 0.22 });
     return softClip(out, 1.5);
   };
@@ -132,7 +155,8 @@ function pull() {
   const flutterPh = rand() * Math.PI * 2;
   for (let i = 0; i < n; i++) {
     const t = i / RATE;
-    rustle[i] *= Math.min(1, t / 0.12) * Math.min(1, (0.48 - t) / 0.2) * (0.7 + 0.3 * Math.sin(2 * Math.PI * 11 * t + flutterPh));
+    rustle[i] *=
+      Math.min(1, t / 0.12) * Math.min(1, (0.48 - t) / 0.2) * (0.7 + 0.3 * Math.sin(2 * Math.PI * 11 * t + flutterPh));
   }
   mix(out, unit(rustle), 0, 0.4);
   // the body sliding over the stone edge
@@ -142,7 +166,10 @@ function pull() {
   // a buckle's small clink
   const clink = buf(0.06);
   for (let i = 0; i < clink.length; i++) {
-    clink[i] = (Math.sin((2 * Math.PI * 2900 * i) / RATE) + 0.6 * Math.sin((2 * Math.PI * 4100 * i) / RATE)) * attack(i, 0.2) * decay(i, 0.012);
+    clink[i] =
+      (Math.sin((2 * Math.PI * 2900 * i) / RATE) + 0.6 * Math.sin((2 * Math.PI * 4100 * i) / RATE)) *
+      attack(i, 0.2) *
+      decay(i, 0.012);
   }
   mix(out, unit(clink), 0.31, 0.16);
   // a knee set down on top
@@ -158,7 +185,11 @@ function whoosh() {
   const LEN = 0.58;
   const n = seconds(LEN);
   const out = buf(LEN);
-  const air = bandSweep(noise(n, rand), (t) => (t < 0.18 ? 350 + (1100 - 350) * (t / 0.18) : 1100 - (1100 - 450) * Math.min(1, (t - 0.18) / (LEN - 0.18))), 1.4);
+  const air = bandSweep(
+    noise(n, rand),
+    (t) => (t < 0.18 ? 350 + (1100 - 350) * (t / 0.18) : 1100 - (1100 - 450) * Math.min(1, (t - 0.18) / (LEN - 0.18))),
+    1.4,
+  );
   const flutterPh = rand() * Math.PI * 2;
   for (let i = 0; i < n; i++) {
     const t = i / RATE;
@@ -220,7 +251,8 @@ function bakeRaw(mono) {
   for (const v of mono) max = Math.max(max, Math.abs(v));
   const g = max > 0 ? 0.92 / max : 1;
   const out = new Uint8Array(mono.length);
-  for (let i = 0; i < mono.length; i++) out[i] = Math.max(0, Math.min(255, Math.round(Math.max(-1, Math.min(1, mono[i] * g)) * 127 + 128)));
+  for (let i = 0; i < mono.length; i++)
+    out[i] = Math.max(0, Math.min(255, Math.round(Math.max(-1, Math.min(1, mono[i] * g)) * 127 + 128)));
   return out;
 }
 
@@ -233,6 +265,8 @@ if (isMain(import.meta.url)) {
     const pcm = bake(mono, RATE, { peak });
     writeFileSync(join(OUT, `${name}.wav`), writeWav8(pcm));
     if (rawDir) writeFileSync(join(rawDir, `${name}-44k.wav`), writeWav8(bakeRaw(mono), RATE));
-    console.log(`${name}.wav  ${DF_RATE}Hz 8-bit mono  ${pcm.length} samples  ${(pcm.length / DF_RATE).toFixed(3)}s  ${(44 + pcm.length)} bytes`);
+    console.log(
+      `${name}.wav  ${DF_RATE}Hz 8-bit mono  ${pcm.length} samples  ${(pcm.length / DF_RATE).toFixed(3)}s  ${44 + pcm.length} bytes`,
+    );
   }
 }

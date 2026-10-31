@@ -113,8 +113,8 @@
   {
     "name": "AINT15-HOST-ASKS-PRIMARY",
     "file": "src/scenes/serpentHost.js",
-    "old": "const sayHull = bodySayer((v) => !!live && !!deps.online?.send?.(",
-    "new": "const sayHull = bodySayer((v) => !!live && !!deps.online?.bossOk?.() && !!deps.online?.send?.(",
+    "old": "    (v) => !!live && !!deps.online?.send?.({ k: 'vt', v }, cellRoomOfWire(live.sw.site.sx, live.sw.site.sz)),",
+    "new": "    (v) =>\n      !!live &&\n      !!deps.online?.bossOk?.() &&\n      !!deps.online?.send?.({ k: 'vt', v }, cellRoomOfWire(live.sw.site.sx, live.sw.site.sz)),",
     "tests": [
       "test/net/int_lane3_audit.test.js",
       "test/net/int12_body_relay.test.js"
@@ -124,7 +124,7 @@
     "name": "AINT11-POSAT-FIRST-AFTER",
     "file": "src/net/bossRef.js",
     "old": "  return q ? [q[1], q[2]] : null;",
-    "new": "  return q ? [q[1], q[2]] : (b.tr[0] ? [b.tr[0][1], b.tr[0][2]] : [b.x, b.z]);",
+    "new": "  return q ? [q[1], q[2]] : b.tr[0] ? [b.tr[0][1], b.tr[0][2]] : [b.x, b.z];",
     "tests": [
       "test/net/int_lane3_audit.test.js",
       "test/net/int11_body.test.js"
@@ -252,7 +252,7 @@
   {
     "name": "AINT11-HEAL-BUDGET-NOT-BACK",
     "file": "src/net/bossBody.js",
-    "old": "  b.m += back; b.h -= back;",
+    "old": "  b.m += back;\n  b.h -= back;",
     "new": "  b.h -= back;",
     "tests": [
       "test/net/int_lane3_audit.test.js"
@@ -261,8 +261,8 @@
   {
     "name": "AINT11-HEAL-PAST-LINE-KEPT",
     "file": "src/net/bossBody.js",
-    "old": "b.o = Math.max(0, b.o - k);",
-    "new": "b.o = Math.max(0, b.o);",
+    "old": "  b.o = Math.max(0, b.o - k);",
+    "new": "  b.o = Math.max(0, b.o);",
     "tests": [
       "test/net/int_lane3_audit.test.js"
     ]
@@ -352,8 +352,8 @@
   {
     "name": "AINT11-TELL-PAST-DEATH",
     "file": "src/net/bossBody.js",
-    "old": "  if (!enforce || !b?.dn || b.dd != null || now",
-    "new": "  if (!enforce || !b?.dn || now",
+    "old": "  if (!enforce || !b?.dn || b.dd != null || now - (b.ta ?? -Infinity) < BODY_TELL_MS) return false;",
+    "new": "  if (!enforce || !b?.dn || now - (b.ta ?? -Infinity) < BODY_TELL_MS) return false;",
     "tests": [
       "test/net/int_lane3_audit.test.js"
     ]
@@ -361,8 +361,8 @@
   {
     "name": "AINT11-TELL-EVERY-BEAT",
     "file": "src/net/bossBody.js",
-    "old": "now - (b.ta ?? -Infinity) < BODY_TELL_MS) return false;",
-    "new": "false) return false;",
+    "old": "  if (!enforce || !b?.dn || b.dd != null || now - (b.ta ?? -Infinity) < BODY_TELL_MS) return false;",
+    "new": "  if (!enforce || !b?.dn || b.dd != null || false) return false;",
     "tests": [
       "test/net/int_lane3_audit.test.js"
     ]
@@ -370,8 +370,8 @@
   {
     "name": "AINT11-TELL-UNENFORCED",
     "file": "src/net/bossBody.js",
-    "old": "  if (!enforce || !b?.dn ||",
-    "new": "  if (!b?.dn ||",
+    "old": "  if (!enforce || !b?.dn || b.dd != null || now - (b.ta ?? -Infinity) < BODY_TELL_MS) return false;",
+    "new": "  if (!b?.dn || b.dd != null || now - (b.ta ?? -Infinity) < BODY_TELL_MS) return false;",
     "tests": [
       "test/net/int_lane3_audit.test.js"
     ]
@@ -415,8 +415,8 @@
   {
     "name": "AINT14-RANK-ROUNDED-WRONG",
     "file": "server-account/src/review.js",
-    "old": "Math.min(n - 1, Math.ceil(q * n) - 1)",
-    "new": "Math.min(n - 1, Math.floor(q * n))",
+    "old": "  for (const q of MEASURE_QUANTILES) quantiles.push([q, n ? await at(Math.min(n - 1, Math.ceil(q * n) - 1)) : null]);",
+    "new": "  for (const q of MEASURE_QUANTILES) quantiles.push([q, n ? await at(Math.min(n - 1, Math.floor(q * n))) : null]);",
     "tests": [
       "test/net/int_lane3_audit.test.js",
       "test/net/int12_body_relay.test.js",

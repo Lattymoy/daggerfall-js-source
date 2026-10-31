@@ -26,7 +26,7 @@
 // could. The same pairs, planned by the same planner on the same network in the same direction - every way the one it
 // was - known in a tenth of the frames.
 import { planRoute } from '../travel/travelRoute.js';
-import { keepLandPieces } from '../travel/landPiecesKept.js';   // FIRST-VISIT: the land's pieces kept across launches
+import { keepLandPieces } from '../travel/landPiecesKept.js'; // FIRST-VISIT: the land's pieces kept across launches
 import { inBay } from '../../world/tamriel/tamrielFrame.js';
 
 /** New pairs asked a frame - at the least (LW3). */
@@ -52,7 +52,15 @@ export const WAYS_MAX_PER_FRAME = 32;
  *   `roads` the drawn network (null until it is built); `ground` the planner's ground (travelRoute.js routeGround's);
  *   `now` the clock the frame's asking is timed by (PERF-WAYS1; milliseconds); WW7-7 `beyond` the ways past the Bay
  */
-export function createWayBook({ roads, ground, plan = planRoute, now = () => performance.now(), beyond = null, keep = keepLandPieces }) {   // FIRST-VISIT `keep`: the fetch of the land's pieces (landPiecesKept.js) - a promise the book waits on, or null
+export function createWayBook({
+  roads,
+  ground,
+  plan = planRoute,
+  now = () => performance.now(),
+  beyond = null,
+  keep = keepLandPieces,
+}) {
+  // FIRST-VISIT `keep`: the fetch of the land's pieces (landPiecesKept.js) - a promise the book waits on, or null
   /** @type {Map<string, WayPlan|null>} */
   const book = new Map();
   /** WW7-7: the ways past the Bay, and the epoch of the roads past the Bay they were asked on. @type {Map<string, WayPlan|null>} */
@@ -62,28 +70,53 @@ export function createWayBook({ roads, ground, plan = planRoute, now = () => per
   const edge = new Map();
   /** @type {any} */ let edgeNet = null;
   let budget = WAYS_PER_FRAME;
-  let asked = 0, spent = 0, spendMs = WAYS_MS_PER_FRAME;   // PERF-WAYS1: the frame's asking so far (pairs, ms), and how long it may run past the floor
-  let net = null, generation = 0;
-  let keeping = null;   // FIRST-VISIT: the network's pieces being fetched (or folded and kept) - the ways wait on it
+  let asked = 0,
+    spent = 0,
+    spendMs = WAYS_MS_PER_FRAME; // PERF-WAYS1: the frame's asking so far (pairs, ms), and how long it may run past the floor
+  let net = null,
+    generation = 0;
+  let keeping = null; // FIRST-VISIT: the network's pieces being fetched (or folded and kept) - the ways wait on it
   /** The kept way of the lower id's town to the other's, the reverse when `flip`. @param {WayPlan|null|undefined} way @param {boolean} flip */
-  const turned = (way, flip) => (!way || !flip ? way : { pixels: [...way.pixels].reverse(), kinds: [...(way.kinds ?? [])].reverse() });
+  const turned = (way, flip) =>
+    !way || !flip ? way : { pixels: [...way.pixels].reverse(), kinds: [...(way.kinds ?? [])].reverse() };
   /** WW7-7: a pair past the Bay - its planner's, on the build of the roads past the Bay it was asked on. WW7-9: `cross` a
    *  pair across the Bay's edge - its book the drawn network's too (none built yet: it waits). */
-  const farWayOf = (/** @type {{ mapId: number, px: number, py: number }} */ p, /** @type {{ mapId: number, px: number, py: number }} */ q, /** @type {boolean} */ flip, cross = false) => {
+  const farWayOf = (
+    /** @type {{ mapId: number, px: number, py: number }} */ p,
+    /** @type {{ mapId: number, px: number, py: number }} */ q,
+    /** @type {boolean} */ flip,
+    cross = false,
+  ) => {
     const epoch = /** @type {NonNullable<typeof beyond>} */ (beyond).epoch();
-    if (!epoch) return undefined;   // a region still to land: no way is the one every client will walk yet
-    if (epoch !== farAt) { if (farAt) { far.clear(); edge.clear(); beyond?.clear?.(); generation++; } farAt = epoch; }
+    if (!epoch) return undefined; // a region still to land: no way is the one every client will walk yet
+    if (epoch !== farAt) {
+      if (farAt) {
+        far.clear();
+        edge.clear();
+        beyond?.clear?.();
+        generation++;
+      }
+      farAt = epoch;
+    }
     const raw = cross ? roads() : null;
     if (cross && !raw) return undefined;
-    if (raw && raw.roads !== edgeNet) { if (edgeNet !== null) { edge.clear(); generation++; } edgeNet = raw.roads; }   // another network: the ways over it asked again
-    const book = cross ? edge : far, key = `${p.mapId}>${q.mapId}`;
+    if (raw && raw.roads !== edgeNet) {
+      if (edgeNet !== null) {
+        edge.clear();
+        generation++;
+      }
+      edgeNet = raw.roads;
+    } // another network: the ways over it asked again
+    const book = cross ? edge : far,
+      key = `${p.mapId}>${q.mapId}`;
     let way = book.get(key);
     if (way === undefined) {
-      if (budget <= 0 && (spent >= spendMs || asked >= WAYS_MAX_PER_FRAME)) return undefined;   // PERF-WAYS1's floor, its time and its cap, as a Bay pair's
+      if (budget <= 0 && (spent >= spendMs || asked >= WAYS_MAX_PER_FRAME)) return undefined; // PERF-WAYS1's floor, its time and its cap, as a Bay pair's
       const t0 = now();
       way = /** @type {NonNullable<typeof beyond>} */ (beyond).plan({ x: p.px, y: p.py }, { x: q.px, y: q.py }, cross);
-      if (way === undefined) return undefined;   // its ground still being read (a tile a frame)
-      budget--; asked++;
+      if (way === undefined) return undefined; // its ground still being read (a tile a frame)
+      budget--;
+      asked++;
       spent += now() - t0;
       book.set(key, way ?? null);
     }
@@ -97,28 +130,44 @@ export function createWayBook({ roads, ground, plan = planRoute, now = () => per
      * @returns {WayPlan|null|undefined}
      */
     wayOf(a, b) {
-      const pastA = !inBay(a.px, a.py), pastB = !inBay(b.px, b.py);
-      if (pastA !== pastB && !beyond) return null;   // WW7-7: across the Bay's edge with no land past it - no trip's way
-      if ((pastA || pastB) && beyond) { const flip = a.mapId > b.mapId; return farWayOf(flip ? b : a, flip ? a : b, flip, pastA !== pastB); }   // WW7-9: past the Bay, or across its edge
+      const pastA = !inBay(a.px, a.py),
+        pastB = !inBay(b.px, b.py);
+      if (pastA !== pastB && !beyond) return null; // WW7-7: across the Bay's edge with no land past it - no trip's way
+      if ((pastA || pastB) && beyond) {
+        const flip = a.mapId > b.mapId;
+        return farWayOf(flip ? b : a, flip ? a : b, flip, pastA !== pastB);
+      } // WW7-9: past the Bay, or across its edge
       const raw = roads();
       if (!raw) return undefined;
       if (raw.roads !== net) {
-        if (net !== null) { book.clear(); generation++; }
+        if (net !== null) {
+          book.clear();
+          generation++;
+        }
         net = raw.roads;
         const k = keep?.(ground(), raw) ?? null;
         keeping = k;
-        k?.catch(() => false).finally(() => { if (keeping === k) keeping = null; });
+        k?.catch(() => false).finally(() => {
+          if (keeping === k) keeping = null;
+        });
       }
       if (keeping) return undefined;
       const flip = a.mapId > b.mapId;
-      const p = flip ? b : a, q = flip ? a : b;
+      const p = flip ? b : a,
+        q = flip ? a : b;
       const key = `${p.mapId}>${q.mapId}`;
       let way = book.get(key);
       if (way === undefined) {
-        if (budget <= 0 && !(spent < spendMs && asked < WAYS_MAX_PER_FRAME)) return undefined;   // PERF-WAYS1: the floor spent, and the frame's time or its cap
-        budget--; asked++;
+        if (budget <= 0 && !(spent < spendMs && asked < WAYS_MAX_PER_FRAME)) return undefined; // PERF-WAYS1: the floor spent, and the frame's time or its cap
+        budget--;
+        asked++;
         const t0 = now();
-        way = plan({ x: p.px, y: p.py }, { x: q.px, y: q.py }, { roads: raw.roads ?? null, tracks: raw.tracks ?? null, ...ground() }) ?? null;
+        way =
+          plan(
+            { x: p.px, y: p.py },
+            { x: q.px, y: q.py },
+            { roads: raw.roads ?? null, tracks: raw.tracks ?? null, ...ground() },
+          ) ?? null;
         spent += now() - t0;
         book.set(key, way);
       }
@@ -126,11 +175,23 @@ export function createWayBook({ roads, ground, plan = planRoute, now = () => per
     },
     /** A new frame: the asking renewed - `n` pairs at the least, and more while it has taken under `ms` (PERF-WAYS1);
      *  WW7-7: and the ground past the Bay's reading. */
-    frame(n = WAYS_PER_FRAME, ms = WAYS_MS_PER_FRAME) { budget = n; asked = 0; spent = 0; spendMs = ms; beyond?.frame?.(); },
+    frame(n = WAYS_PER_FRAME, ms = WAYS_MS_PER_FRAME) {
+      budget = n;
+      asked = 0;
+      spent = 0;
+      spendMs = ms;
+      beyond?.frame?.();
+    },
     /** Bumped each time the network changed under the book (the host's trips are cleared with it). */
-    get generation() { return generation; },
-    get size() { return book.size + far.size + edge.size; },
+    get generation() {
+      return generation;
+    },
+    get size() {
+      return book.size + far.size + edge.size;
+    },
     /** FIRST-VISIT: the land's pieces being fetched for the network - a promise the ways wait on, or null. */
-    get keeping() { return keeping; },
+    get keeping() {
+      return keeping;
+    },
   };
 }

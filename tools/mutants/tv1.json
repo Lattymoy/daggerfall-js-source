@@ -52,8 +52,8 @@
   {
     "name": "TV1-fog-from-the-camera",
     "file": "src/render/fogGlsl.js",
-    "old": "  float d = length(worldPos - focusOrigin());",
-    "new": "  float d = length(worldPos - uCamPos);",
+    "old": "  float d = length(worldPos - focusOrigin());   // TV1: the traveller's eye under the travel view, the camera otherwise",
+    "new": "  float d = length(worldPos - uCamPos);   // TV1: the traveller's eye under the travel view, the camera otherwise",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "TV1-escape-opens-the-pause",
     "file": "src/scenes/travelView.js",
-    "old": "    if (acts.includes('Escape')) { if (down) { keysTaken.add(code); exit('escape'); } swallow(e); return; }",
-    "new": "    if (acts.includes('Escape')) { if (down) { keysTaken.add(code); exit('escape'); } return; }",
+    "old": "      }\n      swallow(e);\n      return;",
+    "new": "      }\n      return;",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "TV1-heartbeat-not-rearmed-by-the-frame",
     "file": "src/scenes/travelView.js",
-    "old": "    if (state === 'off') return null;\n    rearm();",
-    "new": "    if (state === 'off') return null;",
+    "old": "    rearm();\n    const ok = deps.allowed();",
+    "new": "    const ok = deps.allowed();",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "TV1-a-stalled-loop-keeps-the-view",
     "file": "src/scenes/travelView.js",
-    "old": "    if (!missed) { missed = true; beat = schedule(stalled, TV_HEARTBEAT_MS); return; }\n    finish();\n",
-    "new": "    if (!missed) { missed = true; beat = schedule(stalled, TV_HEARTBEAT_MS); return; }\n",
+    "old": "    finish();\n  }",
+    "new": "  }",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "TV1-a-dead-host-swallows-the-press",
     "file": "src/scenes/travelView.js",
-    "old": "    if (state === 'off' || gone() || !isCanvasEvent(e)) return;\n    swallow(e);\n    pointers.set",
-    "new": "    if (state === 'off' || !isCanvasEvent(e)) return;\n    swallow(e);\n    pointers.set",
+    "old": "  function onPointerDown(e) {\n    if (state === 'off' || gone() || !isCanvasEvent(e)) return;",
+    "new": "  function onPointerDown(e) {\n    if (state === 'off' || !isCanvasEvent(e)) return;",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-TV-B2-a-refused-hold-kept",
     "file": "src/scenes/travelView.js",
-    "old": "      deps.holdBody?.(true);\n      askedBody = !!deps.holdBody;",
-    "new": "      askedBody = !!deps.holdBody?.(true);",
+    "old": "      deps.holdBody?.(true);\n      askedBody = !!deps.holdBody; // AUDIT TV B2: asked is released, even when the body could not be held",
+    "new": "      askedBody = !!deps.holdBody?.(true); // AUDIT TV B2: asked is released, even when the body could not be held",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "AUDIT-TV-B2-reasked-falling",
     "file": "src/scenes/travelView.js",
-    "old": "    if (from === 'off') {\n      hintKeys = deps.hintKeys?.() ?? null;\n      deps.holdBody?.(true);",
-    "new": "    if (true) {\n      hintKeys = deps.hintKeys?.() ?? null;\n      deps.holdBody?.(true);",
+    "old": "    if (from === 'off') {",
+    "new": "    if (true) {",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "AUDIT-TV-B3-touch-untaken",
     "file": "src/scenes/travelView.js",
-    "old": "    win[m]('touchstart', onTouchStart, { capture: true, passive: false });",
-    "new": "",
+    "old": "    win[m]('touchstart', onTouchStart, { capture: true, passive: false }); // AUDIT TV B3",
+    "new": "    // AUDIT TV B3",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -222,7 +222,7 @@
   {
     "name": "AUDIT-TV-B4-button-release-swallowed",
     "file": "src/scenes/travelView.js",
-    "old": "    if (e.type === 'mouseup') { if (!buttonsTaken.delete(b)) return; } else buttonsTaken.add(b);",
+    "old": "    if (e.type === 'mouseup') {\n      if (!buttonsTaken.delete(b)) return;\n    } else buttonsTaken.add(b);",
     "new": "    buttonsTaken.add(b);",
     "tests": [
       "test/render/tv1_travel_view.test.js"
@@ -232,8 +232,8 @@
   {
     "name": "AUDIT-TV-B7-typing-taken",
     "file": "src/scenes/travelView.js",
-    "old": "    if (typing(e)) { if (!down) { keysTaken.delete(code); for (const a of acts) lookHeld.delete(a); } return; }\n",
-    "new": "",
+    "old": "    if (typing(e)) {\n      if (!down) {\n        keysTaken.delete(code);\n        for (const a of acts) lookHeld.delete(a);\n      }\n      return;\n    }\n    // AUDIT TV B4: a release is the view's only when the press was - a look key held down before the view rose lets",
+    "new": "    // AUDIT TV B4: a release is the view's only when the press was - a look key held down before the view rose lets",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "AUDIT-TV-B9-cancel-picks",
     "file": "src/scenes/travelView.js",
-    "old": " && p.button === 0 && state === 'up' && e.type !== 'pointercancel') {",
-    "new": " && p.button === 0 && state === 'up') {",
+    "old": "    if (p && p.id === e.pointerId && !p.moved && p.button === 0 && state === 'up' && e.type !== 'pointercancel') {",
+    "new": "    if (p && p.id === e.pointerId && !p.moved && p.button === 0 && state === 'up') {",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -332,8 +332,8 @@
   {
     "name": "AUDIT-DEEP-X9-one-hitch-drops-the-view",
     "file": "src/scenes/travelView.js",
-    "old": "    if (!missed) { missed = true; beat = schedule(stalled, TV_HEARTBEAT_MS); return; }\n",
-    "new": "",
+    "old": "    if (!missed) {\n      missed = true;\n      beat = schedule(stalled, TV_HEARTBEAT_MS);\n      return;\n    }\n    finish();",
+    "new": "    finish();",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -342,7 +342,7 @@
   {
     "name": "AUDIT-DEEP-T1-7-the-box-keeps-the-turn",
     "file": "src/scenes/travelView.js",
-    "old": "    if (typing(e)) { if (!down) { keysTaken.delete(code); for (const a of acts) lookHeld.delete(a); } return; }",
+    "old": "    if (typing(e)) {\n      if (!down) {\n        keysTaken.delete(code);\n        for (const a of acts) lookHeld.delete(a);\n      }\n      return;\n    }",
     "new": "    if (typing(e)) return;",
     "tests": [
       "test/render/tv1_travel_view.test.js"
@@ -362,8 +362,8 @@
   {
     "name": "AUDIT-DEEP-T1-12-keys-never-read",
     "file": "src/scenes/travelView.js",
-    "old": "      hintKeys = deps.hintKeys?.() ?? null;\n",
-    "new": "",
+    "old": "      hintKeys = deps.hintKeys?.() ?? null;\n      deps.holdBody?.(true);",
+    "new": "      deps.holdBody?.(true);",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -422,8 +422,8 @@
   {
     "name": "AUDIT-DEEP-T1-1-no-mirror",
     "file": "src/player/tapRay.js",
-    "old": "  if (!front && !(behind && Number.isFinite(cw))) return",
-    "new": "  if (!front) return",
+    "old": "  if (!front && !(behind && Number.isFinite(cw))) return { x: 0, y: 0, depth: 0, front: false };",
+    "new": "  if (!front) return { x: 0, y: 0, depth: 0, front: false };",
     "tests": [
       "test/scenes/tv3_travellers.test.js"
     ],
@@ -472,8 +472,8 @@
   {
     "name": "AUDIT-DEEP-X3-the-save-keeps-third-person",
     "file": "src/player/mwView.js",
-    "old": "return heldThird?.changed && heldThird.lane === 'mw' ? { ...s, firstPerson: true } : s;",
-    "new": "return s;",
+    "old": "  return heldThird?.changed && heldThird.lane === 'mw' ? { ...s, firstPerson: true } : s;",
+    "new": "  return s;",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -512,8 +512,8 @@
   {
     "name": "AUDIT-DEEP-T1-3-lag-unheld",
     "file": "src/player/travelCamera.js",
-    "old": "  if (lag > TV_FOCUS_SNAP) { const s",
-    "new": "  if (false) { const s",
+    "old": "  if (lag > TV_FOCUS_SNAP) {",
+    "new": "  if (false) {",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -552,8 +552,8 @@
   {
     "name": "AUDIT-DEEP-R7-leaned-tops-pop",
     "file": "src/render/bounds.js",
-    "old": "  out[3] = batchReach(b) + (b.size?.h ?? 0) * _flatLean;",
-    "new": "  out[3] = batchReach(b);",
+    "old": "  out[3] = batchReach(b) + (b.size?.h ?? 0) * _flatLean; // AUDIT DEEP R-7: a leaned flat's top swings out by h sin(lean)",
+    "new": "  out[3] = batchReach(b); // AUDIT DEEP R-7: a leaned flat's top swings out by h sin(lean)",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -612,8 +612,8 @@
   {
     "name": "AUDIT-DEEP-R2-the-seam-drops-it",
     "file": "src/player/mwView.js",
-    "old": "drawEotbBody(canvas, { proj, view, eye, feet, yaw: viewYaw, face });",
-    "new": "drawEotbBody(canvas, { proj, view, eye, feet, yaw: viewYaw });",
+    "old": "    const drawn = drawEotbBody(canvas, { proj, view, eye, feet, yaw: viewYaw, face });",
+    "new": "    const drawn = drawEotbBody(canvas, { proj, view, eye, feet, yaw: viewYaw });",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -652,8 +652,8 @@
   {
     "name": "AUDIT-DEEP2-A6-repeat-steals-the-release",
     "file": "src/scenes/travelView.js",
-    "old": "    if (down && e.repeat && !keysTaken.has(code)) return;\n",
-    "new": "",
+    "old": "    if (down && e.repeat && !keysTaken.has(code)) return;\n    // AUDIT DEEP2 A3: an enhanced overlay opened over the view (the Tab dial) has the keys - its Escape closes it, its",
+    "new": "    // AUDIT DEEP2 A3: an enhanced overlay opened over the view (the Tab dial) has the keys - its Escape closes it, its",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -672,8 +672,8 @@
   {
     "name": "AUDIT-DEEP2-A2-a-pad-activates-the-world",
     "file": "src/scenes/travelView.js",
-    "old": "    if (acts.some((a) => TV_WORLD_ACTIONS.includes(a))) { if (down) keysTaken.add(code); swallow(e); return; }\n",
-    "new": "",
+    "old": "    if (acts.some((a) => TV_WORLD_ACTIONS.includes(a))) {\n      if (down) keysTaken.add(code);\n      swallow(e);\n      return;\n    }\n    const look = acts.filter((a) => TV_LOOK_ACTIONS.includes(a));",
+    "new": "    const look = acts.filter((a) => TV_LOOK_ACTIONS.includes(a));",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -682,7 +682,7 @@
   {
     "name": "AUDIT-DEEP2-A7-blur-holds-on",
     "file": "src/scenes/travelView.js",
-    "old": "    pointers.clear(); lookHeld.clear(); keysTaken.clear();\n  }",
+    "old": "    pointers.clear();\n    lookHeld.clear();\n    keysTaken.clear();\n  }",
     "new": "  }",
     "tests": [
       "test/render/tv1_travel_view.test.js"
@@ -692,8 +692,8 @@
   {
     "name": "AUDIT-DEEP2-A7-hover-orbits",
     "file": "src/scenes/travelView.js",
-    "old": "    if (e.pointerType === 'mouse' && e.buttons === 0) { press = null; pointers.delete(e.pointerId); return; }\n",
-    "new": "",
+    "old": "    if (e.pointerType === 'mouse' && e.buttons === 0) {\n      press = null;\n      pointers.delete(e.pointerId);\n      return;\n    }\n    const dx = e.clientX - press.x,",
+    "new": "    const dx = e.clientX - press.x,",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -702,8 +702,8 @@
   {
     "name": "AUDIT-DEEP2-A1-panel-press-is-mouse0",
     "file": "src/ui/enhanced/enhancedTravelControl.js",
-    "old": "  bar.addEventListener('mousedown', (e) => { if (e.target?.closest?.('[data-act]')) e.stopPropagation(); });\n",
-    "new": "",
+    "old": "  bar.addEventListener('mousedown', (e) => {\n    if (e.target?.closest?.('[data-act]')) e.stopPropagation();\n  });\n  bar.addEventListener('click', (e) => {",
+    "new": "  bar.addEventListener('click', (e) => {",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -752,8 +752,8 @@
   {
     "name": "AUDIT-DEEP2-D2-the-lurch",
     "file": "src/scenes/travelView.js",
-    "old": "      if (camera) camera = { ...camera, focus: sh(camera.focus), feet: sh(camera.feet) };\n",
-    "new": "",
+    "old": "      if (camera) camera = { ...camera, focus: sh(camera.focus), feet: sh(camera.feet) };\n      if (shown) shown = { ...shown, eye: sh(shown.eye) };",
+    "new": "      if (shown) shown = { ...shown, eye: sh(shown.eye) };",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -772,8 +772,8 @@
   {
     "name": "AUDIT-DEEP2-D6-riders-from-the-head",
     "file": "src/scenes/world.js",
-    "old": "    const peerEye = travelView?.eye ?? cam.pos, peerRight",
-    "new": "    const peerEye = cam.pos, peerRight",
+    "old": "    const peerEye = travelView?.eye ?? (renderer._view ? renderer._camPos : cam.pos), peerRight",
+    "new": "    const peerEye = (renderer._view ? renderer._camPos : cam.pos), peerRight",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],

@@ -17,7 +17,7 @@
 //     bow (WeaponManager.cs:385-389)
 
 import { RACES } from '../systems/races.js';
-import { getBool } from '../systems/settings/settings.js';   // SETT: CombatVoices is a real setting now
+import { getBool } from '../systems/settings/settings.js'; // SETT: CombatVoices is a real setting now
 
 /** DaggerfallUnity.Settings.CombatVoices, read AT THE POINT OF USE as
  *  DFU reads it (EnemyAttack.cs:217, WeaponManager.cs:385) - not
@@ -26,7 +26,7 @@ import { getBool } from '../systems/settings/settings.js';   // SETT: CombatVoic
  *  this a real setting; it was a pinned constant before. */
 export const combatVoicesEnabled = () => getBool('Enhancements', 'CombatVoices');
 
-export const ATTACK_VOICE_CHANCE = 20;   // enemy class + player grunt
+export const ATTACK_VOICE_CHANCE = 20; // enemy class + player grunt
 export const PAIN_VOICE_CHANCE = 40;
 
 /** EnemySounds:72 - each foe's voice race is ROLLED at spawn:
@@ -37,9 +37,14 @@ export const rollVoiceRace = (rolls = Math.random) => 1 + Math.floor(rolls() * 5
 // pairs from 390; the female set lives in the 43..62 block with the
 // shared-clip quirks preserved below.
 const MALE_PAIN1 = Object.freeze({
-  [RACES.Breton]: 390, [RACES.Redguard]: 393, [RACES.Nord]: 396,
-  [RACES.DarkElf]: 399, [RACES.HighElf]: 402, [RACES.WoodElf]: 405,
-  [RACES.Khajiit]: 408, [RACES.Argonian]: 411,
+  [RACES.Breton]: 390,
+  [RACES.Redguard]: 393,
+  [RACES.Nord]: 396,
+  [RACES.DarkElf]: 399,
+  [RACES.HighElf]: 402,
+  [RACES.WoodElf]: 405,
+  [RACES.Khajiit]: 408,
+  [RACES.Argonian]: 411,
 });
 
 /** GetRaceGenderAttackSound, verbatim decision (the attack bark IS
@@ -73,8 +78,14 @@ export function raceGenderPainSound(race, gender, heavyDamage, rolls = Math.rand
   if (race === RACES.WoodElf || race === RACES.Khajiit) {
     return heavyDamage ? 59 : 58;
   }
-  if (race === RACES.Breton || race === RACES.Redguard || race === RACES.Nord ||
-      race === RACES.DarkElf || race === RACES.HighElf || race === RACES.Argonian) {
+  if (
+    race === RACES.Breton ||
+    race === RACES.Redguard ||
+    race === RACES.Nord ||
+    race === RACES.DarkElf ||
+    race === RACES.HighElf ||
+    race === RACES.Argonian
+  ) {
     if (heavyDamage) return 50;
     return Math.floor(rolls() * 2) === 0 ? 46 : 52;
   }
@@ -102,9 +113,7 @@ export function combatVoice({ race, gender, isAttack, heavyDamage = false, rolls
   // call. Not observable: an enemy's gender is fixed per entity, so
   // every later call would swap again anyway. Recorded, not chased.)
   if (gender === 'male' && r === RACES.HighElf) r = RACES.WoodElf;
-  const clip = isAttack
-    ? raceGenderAttackSound(r, gender, rolls)
-    : raceGenderPainSound(r, gender, heavyDamage, rolls);
+  const clip = isAttack ? raceGenderAttackSound(r, gender, rolls) : raceGenderPainSound(r, gender, heavyDamage, rolls);
   return { clip, pitchLift: rolls() * 0.3 };
 }
 

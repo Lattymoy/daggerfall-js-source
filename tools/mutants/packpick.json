@@ -4,7 +4,10 @@
     "file": "src/ui/marketTab.js",
     "old": "      if (!goods.some((g) => g.item === st.list.good)) st.list.good = null;",
     "new": "      if (!goods.some((g) => g.item === st.list.good)) st.list.good = goods[0]?.item ?? null;",
-    "tests": ["test/ui/packpick.test.js", "test/systems/fb1001_market_goods.test.js"],
+    "tests": [
+      "test/ui/packpick.test.js",
+      "test/systems/fb1001_market_goods.test.js"
+    ],
     "note": "the pack's first piece chosen before any is pressed - a sale takes it out of the pack"
   },
   {
@@ -12,130 +15,172 @@
     "file": "src/ui/vendor/vendorTab.js",
     "old": "    if (!goods.some((g) => g.item === st.good)) st.good = null;",
     "new": "    if (!goods.some((g) => g.item === st.good)) st.good = goods[0]?.item ?? null;",
-    "tests": ["test/ui/packpick.test.js", "test/ui/audit657_board.test.js"]
+    "tests": [
+      "test/ui/packpick.test.js",
+      "test/ui/audit657_board.test.js"
+    ]
   },
   {
     "name": "PACK-PICK-crafted-first-by-default",
     "file": "src/ui/marketTab.js",
     "old": "      if (!pieces.some((p) => p.item.provenance === st.list.pieces[pk])) st.list.pieces[pk] = '';",
-    "new": "      if (!pieces.some((p) => p.item.provenance === st.list.pieces[pk])) st.list.pieces[pk] = pieces[0]?.item.provenance ?? '';",
-    "tests": ["test/net/prof5b_client.test.js"]
+    "new": "      if (!pieces.some((p) => p.item.provenance === st.list.pieces[pk]))\n        st.list.pieces[pk] = pieces[0]?.item.provenance ?? '';",
+    "tests": [
+      "test/net/prof5b_client.test.js"
+    ]
   },
   {
     "name": "PACK-PICK-kind-unkept",
     "file": "src/ui/marketTab.js",
-    "old": "        KIND_KEPT.set(m.book, k);",
-    "new": "",
-    "tests": ["test/ui/packpick.test.js"],
+    "old": "        KIND_KEPT.set(m.book, k);\n        if (st.list.kind !== k) {",
+    "new": "        if (st.list.kind !== k) {",
+    "tests": [
+      "test/ui/packpick.test.js"
+    ],
     "note": "a board opened again opens on its own default, whatever kind was pressed"
   },
   {
     "name": "PACK-PICK-kind-kept-unread",
     "file": "src/ui/marketTab.js",
-    "old": "kind: /** @type {string|null} */ (KIND_KEPT.get(m.book) ?? null)",
-    "new": "kind: /** @type {string|null} */ (null)",
-    "tests": ["test/ui/packpick.test.js"]
+    "old": "      kind: /** @type {string|null} */ (KIND_KEPT.get(m.book) ?? null),",
+    "new": "      kind: /** @type {string|null} */ (null),",
+    "tests": [
+      "test/ui/packpick.test.js"
+    ]
   },
   {
     "name": "PACK-PICK-pack-not-first",
     "file": "src/ui/marketTab.js",
-    "old": "    if (!st.list.kind) st.list.kind = packOk && (m.goods?.() ?? []).some((g) => !(g.why ?? craftedWhy(g.item))) ? 'item' : 'material';",
+    "old": "    if (!st.list.kind)\n      st.list.kind = packOk && (m.goods?.() ?? []).some((g) => !(g.why ?? craftedWhy(g.item))) ? 'item' : 'material';",
     "new": "    if (!st.list.kind) st.list.kind = 'material';",
-    "tests": ["test/ui/packpick.test.js", "test/systems/fb1001_market_goods.test.js"]
+    "tests": [
+      "test/ui/packpick.test.js",
+      "test/systems/fb1001_market_goods.test.js"
+    ]
   },
   {
     "name": "PACK-PICK-press-never-lets-go",
     "file": "src/ui/marketTab.js",
-    "old": "pick: (it) => { st.list.good = st.list.good === it ? null : it; ui.rerender(); }",
-    "new": "pick: (it) => { st.list.good = it; ui.rerender(); }",
-    "tests": ["test/ui/packpick.test.js"]
+    "old": "            st.list.good = st.list.good === it ? null : it;",
+    "new": "            st.list.good = it;",
+    "tests": [
+      "test/ui/packpick.test.js"
+    ]
   },
   {
     "name": "PACK-PICK-typing-redraws",
     "file": "src/ui/packPicker.js",
-    "old": "  find.oninput = () => { sift.query = find.value; typed(); };",
-    "new": "  find.oninput = () => { sift.query = find.value; o.redraw(); };",
-    "tests": ["test/ui/packpick.test.js"],
+    "old": "    typed();",
+    "new": "    o.redraw();",
+    "tests": [
+      "test/ui/packpick.test.js"
+    ],
     "note": "the window redrawn under the keys - the field typed in rebuilt mid-word (AUDIT BOARD-SIFT's IME finding)"
   },
   {
     "name": "PACK-PICK-search-unread",
     "file": "src/ui/packPicker.js",
-    "old": "    && (!q || String(e.name ?? '').toLowerCase().includes(q)));",
-    "new": "    && true);",
-    "tests": ["test/ui/packpick.test.js"]
+    "old": "      ) &&\n      (!q ||\n        String(e.name ?? '')\n          .toLowerCase()\n          .includes(q)),",
+    "new": "      ) && true,",
+    "tests": [
+      "test/ui/packpick.test.js"
+    ]
   },
   {
     "name": "PACK-PICK-page-unread",
     "file": "src/ui/packPicker.js",
-    "old": "storeFilterAccepts(e.item, s.cat) && ",
-    "new": "",
-    "tests": ["test/ui/packpick.test.js"]
+    "old": "      safe(\n        () =>\n          storeFilterAccepts(e.item, s.cat) &&\n          storeRarityAccepts(e.item, s.rarity) &&\n          storeMaterialAccepts(e.item, s.material),\n        false,\n      ) &&",
+    "new": "      safe(() => storeRarityAccepts(e.item, s.rarity) && storeMaterialAccepts(e.item, s.material), false) &&",
+    "tests": [
+      "test/ui/packpick.test.js"
+    ]
   },
   {
     "name": "PACK-PICK-refused-pressable",
     "file": "src/ui/packPicker.js",
-    "old": "const d = marked(el('div', 'packpick-tile off'), e.item);",
-    "new": "const d = marked(el('button', 'packpick-tile off'), e.item);",
-    "tests": ["test/ui/packpick.test.js", "test/ui/homevendor_ui.test.js"]
+    "old": "    const d = marked(el('div', 'packpick-tile off'), e.item);",
+    "new": "    const d = marked(el('button', 'packpick-tile off'), e.item);",
+    "tests": [
+      "test/ui/packpick.test.js",
+      "test/ui/homevendor_ui.test.js"
+    ]
   },
   {
     "name": "PACK-PICK-why-unsaid",
     "file": "src/ui/packPicker.js",
     "old": "  if (why && e.why) w.append(el('span', 'packpick-why', e.why));",
     "new": "",
-    "tests": ["test/ui/packpick.test.js", "test/systems/fb1001_market_goods.test.js", "test/net/goldmarket_client.test.js"]
+    "tests": [
+      "test/ui/packpick.test.js",
+      "test/systems/fb1001_market_goods.test.js",
+      "test/net/goldmarket_client.test.js"
+    ]
   },
   {
     "name": "PACK-PICK-tier-unmarked",
     "file": "src/ui/packPicker.js",
-    "old": "if (r) n.setAttribute('data-rarity', r); return n;",
-    "new": "return n;",
-    "tests": ["test/ui/packpick.test.js"]
+    "old": "  if (r) n.setAttribute('data-rarity', r);\n  return n;",
+    "new": "  return n;",
+    "tests": [
+      "test/ui/packpick.test.js"
+    ]
   },
   {
     "name": "PACK-PICK-menus-gone",
     "file": "src/ui/packPicker.js",
-    "old": "  if (pages.length > 2 || sift.cat !== 'all') menu(pages, 'cat',",
-    "new": "  if (false) menu(pages, 'cat',",
-    "tests": ["test/ui/packpick.test.js"]
+    "old": "  if (pages.length > 2 || sift.cat !== 'all') menu(pages, 'cat', t('pack.pick.page', 'Kind of piece'));",
+    "new": "  if (false) menu(pages, 'cat', t('pack.pick.page', 'Kind of piece'));",
+    "tests": [
+      "test/ui/packpick.test.js"
+    ]
   },
   {
     "name": "PACK-PICK-scroll-unkept",
     "file": "src/ui/packPicker.js",
-    "old": "  if (top > 0 || offTop > 0) Promise.resolve().then(() => { grid.scrollTop = top; offList.scrollTop = offTop; });   // once the window has drawn it (marketTab.js toTop's way)",
+    "old": "  if (top > 0 || offTop > 0)\n    Promise.resolve().then(() => {\n      grid.scrollTop = top;\n      offList.scrollTop = offTop;\n    }); // once the window has drawn it (marketTab.js toTop's way)",
     "new": "",
-    "tests": ["test/ui/packpick.test.js"],
+    "tests": [
+      "test/ui/packpick.test.js"
+    ],
     "note": "a press throws the tiles back to the first - the 20th piece pressed and gone from sight"
   },
   {
     "name": "PACK-PICK-scroll-over-new-sift",
     "file": "src/ui/packPicker.js",
-    "old": "    if (moved) { sift.top = 0; grid.scrollTop = 0; sift.offTop = 0; offList.scrollTop = 0; }",
-    "new": "",
-    "tests": ["test/ui/packpick.test.js"]
+    "old": "    if (moved) {\n      sift.top = 0;\n      grid.scrollTop = 0;\n      sift.offTop = 0;\n      offList.scrollTop = 0;\n    }\n    const shown = siftEntries(ok, sift);",
+    "new": "    const shown = siftEntries(ok, sift);",
+    "tests": [
+      "test/ui/packpick.test.js"
+    ]
   },
   {
     "name": "PACK-PICK-look-unread",
     "file": "src/ui/packPicker.js",
     "old": "  const look = safe(() => o.look?.(e.item) ?? null);",
     "new": "  const look = null;",
-    "tests": ["test/ui/packpick.test.js", "test/systems/fb1001_market_goods.test.js"],
+    "tests": [
+      "test/ui/packpick.test.js",
+      "test/systems/fb1001_market_goods.test.js"
+    ],
     "note": "the piece chosen named and nothing more - the description the field asked for"
   },
   {
     "name": "PACK-PICK-stall-look-unread",
     "file": "src/ui/vendor/vendorTab.js",
-    "old": "look: (it) => v.stats?.(it) ?? null,",
-    "new": "look: null,",
-    "tests": ["test/ui/packpick.test.js"]
+    "old": "        look: (it) => v.stats?.(it) ?? null,",
+    "new": "        look: null,",
+    "tests": [
+      "test/ui/packpick.test.js"
+    ]
   },
   {
     "name": "PACK-PICK-trader-look-a-copy",
     "file": "src/scenes/vendorHost.js",
     "old": "  const vendorItemStats = itemLookRows;",
     "new": "  const vendorItemStats = (it) => (it && typeof it === 'object' ? { rows: [], magic: [] } : null);",
-    "tests": ["test/ui/packpick.test.js"],
+    "tests": [
+      "test/ui/packpick.test.js"
+    ],
     "note": "the trader's look its own presenter again - the board and the stall would say two things of one piece"
   },
   {
@@ -143,21 +188,27 @@
     "file": "src/ui/marketTab.js",
     "old": "      if (goldOk() && m.goods) filters.append(sellPackButton());",
     "new": "      if (m.goods) filters.append(sellPackButton());",
-    "tests": ["test/ui/packpick.test.js"]
+    "tests": [
+      "test/ui/packpick.test.js"
+    ]
   },
   {
     "name": "PACK-PICK-sell-not-on-the-pack",
     "file": "src/ui/marketTab.js",
-    "old": "() => { st.list.kind = 'item'; KIND_KEPT.set(m.book, 'item'); go('mine'); }",
-    "new": "() => { go('mine'); }",
-    "tests": ["test/ui/packpick.test.js"]
+    "old": "      st.list.kind = 'item';\n      KIND_KEPT.set(m.book, 'item');\n      go('mine');",
+    "new": "      go('mine');",
+    "tests": [
+      "test/ui/packpick.test.js"
+    ]
   },
   {
     "name": "PACK-PICK-tiers-colours-unlaid",
     "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": "${rarityVarsCss('.market-listform ')}\n",
     "new": "",
-    "tests": ["test/ui/packpick.test.js"],
+    "tests": [
+      "test/ui/packpick.test.js"
+    ],
     "note": "the tiles' frames coloured only where the Plus sheet is laid - the board stands on either skin"
   }
 ]

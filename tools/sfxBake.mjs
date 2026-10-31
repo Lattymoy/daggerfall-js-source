@@ -67,18 +67,25 @@ export async function decodeAudio(page, path) {
 
 /** One browser, one blank page, for a caller that has a list. */
 export async function withDecoder(fn) {
-  const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});   // the probes' door: CHROMIUM names a browser the pinned Playwright did not install
+  const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {}); // the probes' door: CHROMIUM names a browser the pinned Playwright did not install
   try {
     const page = await browser.newPage();
     await page.goto('about:blank');
     return await fn(page);
-  } finally { await browser.close(); }
+  } finally {
+    await browser.close();
+  }
 }
 
 /** ms to 90% of peak - the transient, or the lack of one. */
 function attackMs(x, rate) {
-  let peak = 0, at = 0;
-  for (let i = 0; i < x.length; i++) if (Math.abs(x[i]) > peak) { peak = Math.abs(x[i]); at = i; }
+  let peak = 0,
+    at = 0;
+  for (let i = 0; i < x.length; i++)
+    if (Math.abs(x[i]) > peak) {
+      peak = Math.abs(x[i]);
+      at = i;
+    }
   const want = peak * 0.9;
   for (let i = 0; i <= at; i++) if (Math.abs(x[i]) >= want) return (i / rate) * 1000;
   return (at / rate) * 1000;
@@ -86,8 +93,13 @@ function attackMs(x, rate) {
 
 /** ms from the peak to 40dB below it, on a smoothed envelope. */
 function tailMs(x, rate) {
-  let peak = 0, at = 0;
-  for (let i = 0; i < x.length; i++) if (Math.abs(x[i]) > peak) { peak = Math.abs(x[i]); at = i; }
+  let peak = 0,
+    at = 0;
+  for (let i = 0; i < x.length; i++)
+    if (Math.abs(x[i]) > peak) {
+      peak = Math.abs(x[i]);
+      at = i;
+    }
   const floor = peak * 0.01;
   const win = Math.max(1, Math.round(rate * 0.01));
   let acc = 0;
@@ -102,8 +114,12 @@ function tailMs(x, rate) {
 }
 
 const crestDb = (x) => {
-  let peak = 0, sum = 0;
-  for (const v of x) { peak = Math.max(peak, Math.abs(v)); sum += v * v; }
+  let peak = 0,
+    sum = 0;
+  for (const v of x) {
+    peak = Math.max(peak, Math.abs(v));
+    sum += v * v;
+  }
   const rms = Math.sqrt(sum / x.length);
   return rms > 0 ? 20 * Math.log10(peak / rms) : 0;
 };
@@ -111,16 +127,20 @@ const crestDb = (x) => {
 /** Spectral centroid by a coarse DFT over a log-spaced bank - enough
  *  to say "bright" or "dark" without carrying an FFT. */
 function centroid(x, rate) {
-  let num = 0, den = 0;
+  let num = 0,
+    den = 0;
   for (let f = 120; f < rate / 2; f *= 1.18) {
-    let re = 0, im = 0;
+    let re = 0,
+      im = 0;
     const step = Math.max(1, Math.floor(x.length / 4096));
     for (let i = 0; i < x.length; i += step) {
-      const w = 2 * Math.PI * f * i / rate;
-      re += x[i] * Math.cos(w); im += x[i] * Math.sin(w);
+      const w = (2 * Math.PI * f * i) / rate;
+      re += x[i] * Math.cos(w);
+      im += x[i] * Math.sin(w);
     }
     const mag = Math.hypot(re, im);
-    num += mag * f; den += mag;
+    num += mag * f;
+    den += mag;
   }
   return den > 0 ? num / den : 0;
 }
@@ -137,21 +157,32 @@ export function measure(pcm) {
   };
 }
 
-export const measureLine = (name, m) => [
-  name.padEnd(52),
-  m.seconds.toFixed(2).padStart(6),
-  `${m.attack.toFixed(1)}ms`.padStart(8),
-  `${m.crest.toFixed(1)}dB`.padStart(7),
-  `${m.tail.toFixed(0)}ms`.padStart(7),
-  `${m.bright.toFixed(0)}Hz`.padStart(8),
-].join(' ');
+export const measureLine = (name, m) =>
+  [
+    name.padEnd(52),
+    m.seconds.toFixed(2).padStart(6),
+    `${m.attack.toFixed(1)}ms`.padStart(8),
+    `${m.crest.toFixed(1)}dB`.padStart(7),
+    `${m.tail.toFixed(0)}ms`.padStart(7),
+    `${m.bright.toFixed(0)}Hz`.padStart(8),
+  ].join(' ');
 
 if (isMain(import.meta.url)) {
   const root = process.argv[2] ?? 'scratch/gun-sounds';
   // sources only - the .wav beside them is this tool's own output
   const files = findAudio(root).filter((f) => extname(f).toLowerCase() !== '.wav');
-  if (!files.length) { console.error(`nothing to bake under ${root}`); process.exit(1); }
-  console.log('file'.padEnd(52), 'secs'.padStart(6), 'attack'.padStart(8), 'crest'.padStart(7), 'tail'.padStart(7), 'bright'.padStart(8));
+  if (!files.length) {
+    console.error(`nothing to bake under ${root}`);
+    process.exit(1);
+  }
+  console.log(
+    'file'.padEnd(52),
+    'secs'.padStart(6),
+    'attack'.padStart(8),
+    'crest'.padStart(7),
+    'tail'.padStart(7),
+    'bright'.padStart(8),
+  );
   const rows = await withDecoder(async (page) => {
     const out = [];
     for (const f of files) {

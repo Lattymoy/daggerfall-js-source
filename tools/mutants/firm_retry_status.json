@@ -2,8 +2,8 @@
   {
     "name": "FIRM-RETRY-read-failure-no-retry",
     "file": "src/net/firmament/firmamentBook.js",
-    "old": "      if (UNHEARD.has(state.error)) retryLater();\n",
-    "new": "      if (false) retryLater();\n",
+    "old": "      if (UNHEARD.has(state.error)) retryLater();",
+    "new": "      if (false) retryLater();",
     "tests": [
       "test/net/firmament/firm_book_retry.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "FIRM-RETRY-send-failure-no-retry",
     "file": "src/net/firmament/firmamentBook.js",
-    "old": "      retryLater();   // FIRM-RETRY: the kept change is asked again by that read\n",
-    "new": "",
+    "old": "      retryLater(); // FIRM-RETRY: the kept change is asked again by that read\n      tell();",
+    "new": "      tell();",
     "tests": [
       "test/net/firmament/firm_book_retry.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "FIRM-RETRY-wait-never-resets",
     "file": "src/net/firmament/firmamentBook.js",
-    "old": "    unanswered = false;\n    retryWaitMs = FIRM_READ_RETRY_MS;",
-    "new": "    unanswered = false;",
+    "old": "    retryWaitMs = FIRM_READ_RETRY_MS;\n  };",
+    "new": "  };",
     "tests": [
       "test/net/firmament/firm_book_retry.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "FIRM-RETRY-two-retries-at-once",
     "file": "src/net/firmament/firmamentBook.js",
-    "old": "    if (retryWaiting) return;\n",
-    "new": "",
+    "old": "    if (retryWaiting) return;\n    retryWaiting = true;",
+    "new": "    retryWaiting = true;",
     "tests": [
       "test/net/firmament/firm_book_retry.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "FIRM-RETRY-refusal-retried",
     "file": "src/net/firmament/firmamentBook.js",
-    "old": "      else answered();",
-    "new": "      else retryLater();",
+    "old": "      else answered(); // the service looked and refused (a shut sky, a 404): asking again changes nothing",
+    "new": "      else retryLater(); // the service looked and refused (a shut sky, a 404): asking again changes nothing",
     "tests": [
       "test/net/firmament/firm_book_retry.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "FIRM-STATUS-seat-ignored",
     "file": "src/systems/firmamentLive.js",
-    "old": "  if (!_online) return 'seat';\n",
-    "new": "",
+    "old": "  if (!_online) return 'seat';\n  if (!_tree.start) return read ? 'no-sign' : 'unread';",
+    "new": "  if (!_tree.start) return read ? 'no-sign' : 'unread';",
     "tests": [
       "test/systems/firm_status.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "FIRM-STATUS-read-ignored",
     "file": "src/systems/firmamentLive.js",
-    "old": "return read ? 'no-sign' : 'unread';",
-    "new": "return 'no-sign';",
+    "old": "  if (!_tree.start) return read ? 'no-sign' : 'unread';",
+    "new": "  if (!_tree.start) return 'no-sign';",
     "tests": [
       "test/systems/firm_status.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "FIRM-STATUS-mentoring-ignored",
     "file": "src/systems/firmamentLive.js",
-    "old": "  if (_mentorScale < 1) return 'mentoring';\n",
-    "new": "",
+    "old": "  if (_mentorScale < 1) return 'mentoring';\n  return 'active';",
+    "new": "  return 'active';",
     "tests": [
       "test/systems/firm_status.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "FIRM-STATUS-duel-ignored",
     "file": "src/systems/firmamentLive.js",
-    "old": "  if (dueling) return 'duel';   // MENTOR2: the duel first - it puts the combat stars to sleep, mentoring only scales them\n",
-    "new": "",
+    "old": "  if (dueling) return 'duel'; // MENTOR2: the duel first - it puts the combat stars to sleep, mentoring only scales them\n  if (_mentorScale < 1) return 'mentoring';",
+    "new": "  if (_mentorScale < 1) return 'mentoring';",
     "tests": [
       "test/systems/firm_status.test.js"
     ]

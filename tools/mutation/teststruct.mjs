@@ -7,7 +7,12 @@ const ROOT = process.cwd();
 const TEST = path.join(ROOT, 'test');
 const out = [];
 
-for (const f of fs.readdirSync(TEST, { recursive: true }).map(String).filter(x => x.endsWith('.test.js')).sort()) {   // TIDY5: the tests in their folders
+for (const f of fs
+  .readdirSync(TEST, { recursive: true })
+  .map(String)
+  .filter((x) => x.endsWith('.test.js'))
+  .sort()) {
+  // TIDY5: the tests in their folders
   const text = fs.readFileSync(path.join(TEST, f), 'utf8');
   const lines = text.split('\n');
   // find top-level test( calls
@@ -31,15 +36,25 @@ for (const f of fs.readdirSync(TEST, { recursive: true }).map(String).filter(x =
       // count unclosed if/for/while blocks: crude — look at the enclosing line prefix
       const lineStart = before.lastIndexOf('\n') + 1;
       const linePrefix = body.slice(lineStart, a.index);
-      if (/^\s*(if|for|while)\s*\(.*\)\s*$/.test(linePrefix.trimEnd()) ||
-          /\b(if|for|while)\s*\([^)]*\)\s*(\{\s*)?$/.test(linePrefix)) guarded++;
+      if (
+        /^\s*(if|for|while)\s*\(.*\)\s*$/.test(linePrefix.trimEnd()) ||
+        /\b(if|for|while)\s*\([^)]*\)\s*(\{\s*)?$/.test(linePrefix)
+      )
+        guarded++;
       else {
         // inside an open block opened by if/for/while whose brace is still unclosed
-        let depth = 0; const stack = [];
+        let depth = 0;
+        const stack = [];
         for (let k = before.length - 1, d = 0; k >= 0; k--) {
           const ch = before[k];
           if (ch === '}') d++;
-          else if (ch === '{') { if (d === 0) { stack.push(k); break; } d--; }
+          else if (ch === '{') {
+            if (d === 0) {
+              stack.push(k);
+              break;
+            }
+            d--;
+          }
         }
         if (stack.length) {
           const bi = stack[0];
@@ -57,7 +72,9 @@ for (const f of fs.readdirSync(TEST, { recursive: true }).map(String).filter(x =
 out.sort((a, b) => a.asserts - b.asserts);
 console.log('total test() blocks:', out.length);
 console.log('--- tests with <=2 assertion sites ---');
-for (const r of out.filter(r => r.asserts <= 2)) console.log(`${r.asserts}a/${r.guarded}g  ${r.file}:${r.line}  ${r.name.slice(0, 90)}`);
+for (const r of out.filter((r) => r.asserts <= 2))
+  console.log(`${r.asserts}a/${r.guarded}g  ${r.file}:${r.line}  ${r.name.slice(0, 90)}`);
 console.log('--- tests where EVERY assertion site is inside if/for/while ---');
-for (const r of out.filter(r => r.asserts > 0 && r.guarded === r.asserts)) console.log(`${r.asserts}a  ${r.file}:${r.line}  ${r.name.slice(0, 90)}`);
+for (const r of out.filter((r) => r.asserts > 0 && r.guarded === r.asserts))
+  console.log(`${r.asserts}a  ${r.file}:${r.line}  ${r.name.slice(0, 90)}`);
 fs.writeFileSync(path.join(ROOT, '.mutaudit', 'teststruct.json'), JSON.stringify(out, null, 1));

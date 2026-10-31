@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { PNG } from 'pngjs';
 import {
-  HORSE_COATS, HORSE_PATTERNS, HORSE_LEGS, HORSE_COAT_MAX, HORSE_PATTERN_MAX, HORSE_LEGS_MAX, HORSE_SEED_MAX, HORSE_LOOK_CODE_MAX,
+  HORSE_COATS, HORSE_PATTERNS, HORSE_LEGS, HORSE_COAT_MAX, HORSE_PATTERN_MAX, HORSE_LEGS_MAX, HORSE_SEED_MAX, HORSE_LOOK_CODE_MAX, HORSE_LOOK_WORN_MAX, HORSE_MOUNTS, withMountLook, wireHorseLook,
   HORSE_LOOK_PARTS, COAT_REGION_SHARE, COAT_SHADOW_VALUE, COAT_SHADOW_REACH, SHADE_HUE, SHADE_VALUE, BIRTH_WEIGHTS, STRANGER_SEEDS,
   readHorseLook, horseLookCode, horseLookOfCode, describeHorseLook, activeHorseItem, horseLookOf, riddenHorseLook, rollHorseLook,
   birthHorses, restyledHorse, restyleRiddenHorse, horseLookRows, strangerHorseLook, lookSuffix, isCoatPixel, recolorHorse, shadeOf,
@@ -46,7 +46,16 @@ test('COATS1 the law: seven coats, five patterns, three legs and a seed, one num
   assert.equal(horseLookCode(l), 4 + 7 * (2 + 5 * (1 + 3 * 40000)));
   assert.deepEqual(horseLookOfCode(horseLookCode(l)), l);
   assert.deepEqual(horseLookOfCode(HORSE_LOOK_CODE_MAX), { coat: 6, pattern: 4, legs: 2, seed: 65535 });
-  assert.deepEqual(horseLookOfCode(HORSE_LOOK_CODE_MAX + 1), { coat: 0, pattern: 0, legs: 0, seed: 0 }, 'past the law: the bay as drawn');
+  // STOREFRONT: past the wire's law, a mount look laid over the bay - a screen's code, never a peer's word
+  assert.deepEqual([...HORSE_MOUNTS], ['none', 'warhorse', 'spectral', 'dawnfire', 'automaton']);
+  assert.deepEqual(horseLookOfCode(HORSE_LOOK_CODE_MAX + 1), { coat: 0, pattern: 0, legs: 0, seed: 0, mount: 1 });
+  assert.equal(HORSE_LOOK_WORN_MAX, (HORSE_LOOK_CODE_MAX + 1) * 5 - 1);
+  assert.deepEqual(horseLookOfCode(HORSE_LOOK_WORN_MAX + 1), { coat: 0, pattern: 0, legs: 0, seed: 0 }, 'past the law: the bay as drawn');
+  const worn = withMountLook(horseLookCode(l), 'spectral');
+  assert.deepEqual(horseLookOfCode(worn), { ...l, mount: 2 });
+  assert.equal(wireHorseLook(worn), horseLookCode(l), 'the wire never carries the look laid over it');
+  assert.equal(withMountLook(worn, null), horseLookCode(l));
+  assert.equal(withMountLook(horseLookCode(l), 'unicorn'), horseLookCode(l), 'a look the law does not know: none');
   assert.deepEqual(readHorseLook({ coat: 9, pattern: -1, legs: 2.5, seed: 70000 }), { coat: 0, pattern: 0, legs: 0, seed: 0 });
   assert.equal(lookSuffix(0), ''); assert.equal(lookSuffix(code(2)), '~2'); assert.equal(lookSuffix(l), `~${horseLookCode(l)}`);
   assert.deepEqual([code(0), code(2, 1, 1), code(3, 3, 2), code(4, 2), code(1, 4)].map(describeHorseLook),
@@ -134,7 +143,7 @@ test('COATS1 the dye: the hide is the warm, coloured, non-leather pixels; the ta
 test('COATS1 the dye: the body takes the coat, the face apart from it, the saddle and the mane keep theirs; the bay as drawn is no pass', () => {
   const img = drawn();
   assert.equal(recolorHorse(img, 0), img, 'code 0: the picture itself');
-  assert.equal(recolorHorse(img, HORSE_LOOK_CODE_MAX + 1), img, 'a look the law does not know: the bay as drawn');
+  assert.equal(recolorHorse(img, HORSE_LOOK_WORN_MAX + 1), img, 'a look the law does not know: the bay as drawn');
   const black = recolorHorse(img, code(2));
   assert.notEqual(black, img); assert.notEqual(black.colors, img.colors);
   assert.deepEqual(at(img, 5, 8), HIDE, 'the source untouched');
@@ -309,9 +318,10 @@ test('COATS1 the riding sprite: the horse\'s frames dyed under their own record,
   const look = code(4, 1, 2, 8);
   assert.equal(ridingLook(TRANSPORT_MODES.Horse, look), look);
   assert.equal(ridingLook(TRANSPORT_MODES.Cart, look), 0, 'MRED01I0\'s boards are the hide\'s brown');
-  assert.equal(ridingLook(TRANSPORT_MODES.Horse, HORSE_LOOK_CODE_MAX + 1), 0);
+  assert.equal(ridingLook(TRANSPORT_MODES.Horse, HORSE_LOOK_WORN_MAX + 1), 0);
+  assert.equal(ridingLook(TRANSPORT_MODES.Horse, withMountLook(look, 'dawnfire')), withMountLook(look, 'dawnfire'), 'STOREFRONT: my mount look rides with it');
   const src = readFileSync(new URL('../../../src/systems/riding.js', import.meta.url), 'utf8');
-  assert.match(src, /recolorHorse\(frameToColor32\(cfa\.getDFBitmap\(0, f\), palette, null\), c, \{ bottomFirst: false, legs: false, tack: false \}\)/, 'each frame dyed before its upload - its lower edge no hoof, no saddle to spare');
+  assert.match(src, /recolorHorse\(frameToColor32\(cfa\.getDFBitmap\(0, f\), palette, null\), c, \{\n\s*bottomFirst: false,\n\s*legs: false,\n\s*tack: false,\n\s*\}\)/, 'each frame dyed before its upload - its lower edge no hoof, no saddle to spare');
   assert.match(src, /records\.push\(`ride:\$\{fileName\}:\$\{f\}\$\{lookSuffix\(c\)\}`\)/, 'under its look\'s record');
   await assert.rejects(loadRidingArt(async () => { throw new Error('no ARENA2'); }, null, { uploadTexture: () => {} }, TRANSPORT_MODES.Horse, look), 'no art, no riding sprite: a refusal the rig logs');
   const rig = readFileSync(new URL('../../../src/player/mountRig.js', import.meta.url), 'utf8');
@@ -432,12 +442,12 @@ test('COATS1 the Stable: the horse born before the card reads it; a row a part, 
 test('COATS1 the wiring: both exterior hosts bear the horses each frame; the rig\'s record carries the look to the body, the pose to the others, the pool\'s seam to both pools', () => {
   const rd = (p) => readFileSync(new URL(`../../../src/${p}`, import.meta.url), 'utf8');
   for (const host of ['scenes/world.js', 'scenes/exterior.js']) assert.match(rd(host), /const hccTick = \(dt, nowMs\) => \{\n {4}birthHorses\(playerEntity\.items\);/, host);
-  assert.match(rd('combat/weapon/weaponRig.js'), /horseLook: entity \? riddenHorseLook\(entity\.items \?\? \[\]\) : 0/);
+  assert.match(rd('combat/weapon/weaponRig.js'), /horseLook: entity \? ownMountLook\(riddenHorseLook\(entity\.items \?\? \[\]\)\) : 0/);   // PIN MOVED (STOREFRONT: my mount look over it)
   assert.match(rd('player/eyeOfTheBeholder/eotbBody.js'), /horse: last\.horseLook \?\? 0/);
-  assert.match(rd('player/eyeOfTheBeholder/eotbBody.js'), /lookedPixels\(s, img\)/);
+  assert.match(rd('player/eyeOfTheBeholder/eotbBody.js'), /const riders = s\.horse \? await ridersReady\(\) : null;[\s\S]*lookedPixels\(s, img, riders\)/);   // PIN MOVED (AUDIT-STOREFRONT: its rider spared)
   assert.match(rd('player/eyeOfTheBeholder/eotbBody.js'), /renderer\?\.evictTexture\?\.\(k\.replace\(':', '_'\)\)/, 'a look left behind on my own rider is let go');
-  assert.match(rd('net/peer/peerRiders.js'), /horse: pose\.rc \| 0/);
-  assert.match(rd('net/peer/peerRiders.js'), /lookedPixels\(s, raw\)/);
+  assert.match(rd('net/peer/peerRiders.js'), /horse: peerMountLook\(peer\.id, pose\.rc \| 0, feet\)/);   // PIN MOVED (STOREFRONT: the rider's mount look over it; the wire audit: where it stands, for the Others' effects choice)
+  assert.match(rd('net/peer/peerRiders.js'), /const riders = s\.horse \? await ridersReady\(\) : null;[\s\S]*lookedPixels\(s, raw, riders\)/);   // PIN MOVED (AUDIT-STOREFRONT: its rider spared)
   assert.match(rd('scenes/world.js'), /rc: riding \? \(player\.transportMode === TRANSPORT_MODES\.Dragon \? dragonLookOfItem\(dragonMountOf\(playerEntity\.items\)\) : riddenHorseLook\(playerEntity\.items \?\? \[\]\)\) \|\| undefined : dragonRideLook\(\) \|\| undefined/);   // PIN MOVED (DRAGON5): a tamed dragon's look on its own ride; PIN MOVED (DRAGON-BLUE): an Admin's ride's look off a horse (was: `: undefined`)
   assert.match(rd('world/wagonModels.js'), /horseLook: \(\) => riddenHorseLook\(items\(\)\)/, 'THE ONE CONSTRUCTION SEAM: both hosts\' pools');
   assert.match(rd('scenes/world.js'), /horseArt: \(look = 0\) => !!hcc\.presentation\.horseArt\.ensureLook\(look\)/, 'the town watch\'s throw in its look');

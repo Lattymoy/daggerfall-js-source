@@ -24,10 +24,43 @@
 //
 // This lives outside index.js because every named export of the entrypoint is read as an entrypoint (relayScale.js).
 import { isL0Tree, cellMoveDue, treeAfter, isNodeRoom, isCoarseNode, nodeHoldsCell } from '../../src/net/cellTree.js';
-import { CELL_HELLO_LAW, CLOSE_REPARTITION, LAYERS_MAX, LAYER_HEADER, PARK_INTERNAL_DROP, isCellRoom, layerName, layerOf, roomOf } from './relay.js';
+import {
+  CELL_HELLO_LAW,
+  CLOSE_REPARTITION,
+  LAYERS_MAX,
+  LAYER_HEADER,
+  PARK_INTERNAL_DROP,
+  isCellRoom,
+  layerName,
+  layerOf,
+  roomOf,
+} from './relay.js';
 import { ROOM_CALL_MS } from './relayScale.js';
-import { CELL_DIRECTORY, CELL_INTERNAL_TREE, CELL_TREE_KEY, CELL_TREE_KEEP_MS, CELL_TREE_RETRY_MS, CELL_TELL_HEADER, MOVED_HEADER, NODE_HEADER, cellTreeInternal, directoryTree, nodeOfRoom } from './cellNodes.js';
-import { CELL_INTERNAL_TAKE, CELL_MOVED_KEY, CELL_PULLED_KEY, cellTakeInternal, handOver, handoverPayloads, letGo, roomPost, rowsOf, takeHandover } from './cellHandover.js';
+import {
+  CELL_DIRECTORY,
+  CELL_INTERNAL_TREE,
+  CELL_TREE_KEY,
+  CELL_TREE_KEEP_MS,
+  CELL_TREE_RETRY_MS,
+  CELL_TELL_HEADER,
+  MOVED_HEADER,
+  NODE_HEADER,
+  cellTreeInternal,
+  directoryTree,
+  nodeOfRoom,
+} from './cellNodes.js';
+import {
+  CELL_INTERNAL_TAKE,
+  CELL_MOVED_KEY,
+  CELL_PULLED_KEY,
+  cellTakeInternal,
+  handOver,
+  handoverPayloads,
+  letGo,
+  roomPost,
+  rowsOf,
+  takeHandover,
+} from './cellHandover.js';
 import { SEV_INTERNAL_CALL } from './staffEvents.js';
 
 /**
@@ -86,8 +119,18 @@ export const CELL_PLAN_KEY = 'cellplan';
 /** THE THRESHOLDS: a split past 150 named sockets for a minute - SOCKETS_MAX is 256, so a crowd splits before its node
  *  fills and layers - and a merge of four siblings under 40 together for ten minutes (a split's children sum to its
  *  150, far over). Each is a relay var. */
-export const CELL_LAW_DEFAULT = Object.freeze({ splitAt: 150, splitDwellMs: 60_000, mergeAt: 40, mergeDwellMs: 600_000 });
-export const CELL_LAW_VARS = Object.freeze({ splitAt: 'CELL_SPLIT_AT', splitDwellMs: 'CELL_SPLIT_DWELL_MS', mergeAt: 'CELL_MERGE_AT', mergeDwellMs: 'CELL_MERGE_DWELL_MS' });
+export const CELL_LAW_DEFAULT = Object.freeze({
+  splitAt: 150,
+  splitDwellMs: 60_000,
+  mergeAt: 40,
+  mergeDwellMs: 600_000,
+});
+export const CELL_LAW_VARS = Object.freeze({
+  splitAt: 'CELL_SPLIT_AT',
+  splitDwellMs: 'CELL_SPLIT_DWELL_MS',
+  mergeAt: 'CELL_MERGE_AT',
+  mergeDwellMs: 'CELL_MERGE_DWELL_MS',
+});
 /** The law the relay's vars say: each a whole number, else its default - and all four their defaults when the merge
  *  line is not under the split line (four siblings that sum to a split's crowd would merge back the minute it split).
  *  @param {any} env */
@@ -95,13 +138,21 @@ export function cellLawOf(env) {
   const law = /** @type {Record<string, number>} */ ({});
   for (const [field, varName] of Object.entries(CELL_LAW_VARS)) {
     const text = String(env?.[varName] ?? '');
-    law[field] = /^\d{1,9}$/.test(text) ? Number(text) : CELL_LAW_DEFAULT[/** @type {keyof typeof CELL_LAW_DEFAULT} */ (field)];
+    law[field] = /^\d{1,9}$/.test(text)
+      ? Number(text)
+      : CELL_LAW_DEFAULT[/** @type {keyof typeof CELL_LAW_DEFAULT} */ (field)];
   }
   return law.mergeAt < law.splitAt ? /** @type {typeof CELL_LAW_DEFAULT} */ (law) : CELL_LAW_DEFAULT;
 }
 
-const json = (/** @type {any} */ body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
-const post = (/** @type {string} */ path, /** @type {unknown} */ body) => new Request(`https://relay.internal${path}`, { method: 'POST', body: JSON.stringify(body), signal: AbortSignal.timeout(ROOM_CALL_MS) });
+const json = (/** @type {any} */ body, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+const post = (/** @type {string} */ path, /** @type {unknown} */ body) =>
+  new Request(`https://relay.internal${path}`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(ROOM_CALL_MS),
+  });
 const bodyOf = async (/** @type {Request} */ request) => {
   try {
     return await request.json();
@@ -110,7 +161,10 @@ const bodyOf = async (/** @type {Request} */ request) => {
   }
 };
 /** A move's receivers or departers, as a door is told them: one to four node keys. @param {unknown} listed */
-const nodesOf = (listed) => (Array.isArray(listed) && listed.length >= 1 && listed.length <= 4 && listed.every(isNodeRoom) ? /** @type {string[]} */ (listed) : null);
+const nodesOf = (listed) =>
+  Array.isArray(listed) && listed.length >= 1 && listed.length <= 4 && listed.every(isNodeRoom)
+    ? /** @type {string[]} */ (listed)
+    : null;
 
 /** Is `room` the directory? Its id against the directory's name, once an instance - so no other room's alarm reads
  *  storage to find out. @param {any} room */
@@ -120,7 +174,10 @@ export function isCellDirectory(room) {
     try {
       const id = room.state?.id,
         directoryId = room.env?.ROOMS?.idFromName?.(CELL_DIRECTORY);
-      isDirectory = id != null && directoryId != null && (typeof id.equals === 'function' ? id.equals(directoryId) : id === directoryId);
+      isDirectory =
+        id != null &&
+        directoryId != null &&
+        (typeof id.equals === 'function' ? id.equals(directoryId) : id === directoryId);
     } catch {
       isDirectory = false;
     }
@@ -179,7 +236,12 @@ async function cellPull(room, request, key, now) {
     const response = await cellObject.fetch(post(CELL_INTERNAL_GIVE, { to: [node] }));
     if (!response.ok) return;
     const payload = await response.json();
-    const rowCount = (payload?.parks?.length ?? 0) + (payload?.sp?.length ?? 0) + (payload?.dg?.length ?? 0) + (payload?.gr?.length ?? 0) + Object.keys(payload?.copy ?? {}).length;
+    const rowCount =
+      (payload?.parks?.length ?? 0) +
+      (payload?.sp?.length ?? 0) +
+      (payload?.dg?.length ?? 0) +
+      (payload?.gr?.length ?? 0) +
+      Object.keys(payload?.copy ?? {}).length;
     if (rowCount && (await takeHandover(room, payload, now)) == null) return;
     room._cellPulled.add(key);
     await storage.put(CELL_PULLED_KEY, [...room._cellPulled]);
@@ -192,7 +254,8 @@ async function cellPull(room, request, key, now) {
 /** The cell door's refusal: a cell's hello in a COARSE node from a build below CELL_HELLO_LAW (wire.js). A build without
  *  `of` would open a halo into this very object and be replaced by it. A fine cell's object refuses nobody.
  *  @param {any} room @param {any} socket @param {any} hello the hello, parsed */
-export const cellDoorShut = (room, socket, hello) => isCoarseNode(room._attach(socket)?.nd) && !(hello.cv >= CELL_HELLO_LAW);
+export const cellDoorShut = (room, socket, hello) =>
+  isCoarseNode(room._attach(socket)?.nd) && !(hello.cv >= CELL_HELLO_LAW);
 
 /**
  * THE CELL TREE'S DOORS, AT THE TOP OF Room.fetch (null: none of theirs - the fetch goes on): every `/internal/cells/`
@@ -228,8 +291,10 @@ async function cellInternal(room, path, request) {
   }
   const to = nodesOf(body?.to);
   if (!to) return json({ ok: false, error: 'no receivers' }, 400);
-  if (path === CELL_INTERNAL_GIVE) return json(handoverPayloads(await rowsOf(room.state.storage, Date.now()), to).get(to[0]));
-  if (path === CELL_INTERNAL_MOVE) return json(await handOver(room, to, roomPost(room.env), Date.now(), { keep: true }));
+  if (path === CELL_INTERNAL_GIVE)
+    return json(handoverPayloads(await rowsOf(room.state.storage, Date.now()), to).get(to[0]));
+  if (path === CELL_INTERNAL_MOVE)
+    return json(await handOver(room, to, roomPost(room.env), Date.now(), { keep: true }));
   if (path === CELL_INTERNAL_CLOSE) return closeInternal(room, to, layerOf(body?.ly));
   return json({ error: 'no such door' }, 404);
 }
@@ -251,7 +316,7 @@ async function closeInternal(room, to, layer) {
     } catch {
       // already closed
     }
-    room._dead.add(socket);   // the runtime calls no webSocketClose for a close the object made, so the room reaps it
+    room._dead.add(socket); // the runtime calls no webSocketClose for a close the object made, so the room reaps it
     room._closed(socket);
   }
   await room._reap();
@@ -272,8 +337,18 @@ async function planOf(room) {
 
 /** A NODE'S COUNT, HEARD - and the law asked whether a move is due. @param {any} room @param {any} body @param {number} now */
 async function countInternal(room, body, now) {
-  if (!body || !isNodeRoom(body.node) || !Number.isInteger(body.ly) || body.ly < 0 || body.ly >= LAYERS_MAX || !Number.isInteger(body.n) || body.n < 0 || body.n > COUNT_MAX) return json({ ok: false }, 400);
-  room._kind ??= 'cells';   // the directory's metrics point (relayScale.js RoomMetrics: blob12 and blob13, its moves)
+  if (
+    !body ||
+    !isNodeRoom(body.node) ||
+    !Number.isInteger(body.ly) ||
+    body.ly < 0 ||
+    body.ly >= LAYERS_MAX ||
+    !Number.isInteger(body.n) ||
+    body.n < 0 ||
+    body.n > COUNT_MAX
+  )
+    return json({ ok: false }, 400);
+  room._kind ??= 'cells'; // the directory's metrics point (relayScale.js RoomMetrics: blob12 and blob13, its moves)
   directoryOf(room).reports.set(`${body.node}#${body.ly}`, { node: body.node, n: body.n, at: now });
   await cellPlanDue(room, now);
   room._metricsTick();
@@ -350,7 +425,9 @@ export async function cellPlanAlarm(room, now = Date.now()) {
       for (const node of plan.from) directory.cool[node] = now + MOVE_COOLDOWN_MS;
       room._metrics.c.cellBlocked++;
       room._metricsTick(true);
-      console.warn(`[cells] ${plan.kind} of ${plan.from.join(' ')} not made: ${blocked.length ? `blocked by ${blocked.join('; ')}` : failed.length ? `no answer from ${failed.join(' ')}` : 'the tree is no longer its'}`);
+      console.warn(
+        `[cells] ${plan.kind} of ${plan.from.join(' ')} not made: ${blocked.length ? `blocked by ${blocked.join('; ')}` : failed.length ? `no answer from ${failed.join(' ')}` : 'the tree is no longer its'}`,
+      );
       return;
     }
     room._cellPlan = { ...plan, stage: 'close' };

@@ -20,10 +20,13 @@
 // hosts: world.js WIRED (the streets); worldModes.js and dungeonContext.js
 // stand no street; exterior.js (the bench) not wired - it draws no online homes.
 // ═══════════════════════════════════════════════════════════════════
-import { heraldryKey } from '../net/heraldryLaw.js';   // GUILD2c: a banner's whole arms as its key
+import { heraldryKey } from '../net/heraldryLaw.js'; // GUILD2c: a banner's whole arms as its key
+import { guildArmsOf } from '../net/guild/guildArmsBook.js'; // GUILD-LOGO: the hall's guild's approved logo, by its tag
+import { logoImage, logoVersion } from '../ui/guild/guildLogoImages.js';
+import { drawBannerArms } from '../ui/guild/guildCrestArt.js';
 import { BANNER_W_M, BANNER_H_M, BANNERS_MAX } from '../render/bannerPass.js';
 import { doorFaceSign } from '../systems/siegeField.js';
-import { rayTriangle } from '../systems/automap/automapPick.js';   // AUDIT RPT1026 J2: a cloth's wall asked of the building's own faces
+import { rayTriangle } from '../systems/automap/automapPick.js'; // AUDIT RPT1026 J2: a cloth's wall asked of the building's own faces
 
 /** The cloth's top over the door's foot, its gap beyond each jamb, and how far it hangs off the wall - metres. */
 export const BANNER_TOP_M = 3.5;
@@ -35,11 +38,17 @@ export const BANNER_REFRESH_MS = 1000;
 /** A door record's two opposite corners (`vert0`, `vert2`, the model's own space) through a column-major `matrix`: the
  *  pixel-local points, or null. Pure. */
 export function doorCornersOf(door, matrix) {
-  const v0 = door?.vert0, v2 = door?.vert2;
+  const v0 = door?.vert0,
+    v2 = door?.vert2;
   if (!v0 || !v2 || !matrix) return null;
   const m = matrix;
-  const at = (v) => [m[0] * v.x + m[4] * v.y + m[8] * v.z + m[12], m[1] * v.x + m[5] * v.y + m[9] * v.z + m[13], m[2] * v.x + m[6] * v.y + m[10] * v.z + m[14]];
-  const a = at(v0), b = at(v2);
+  const at = (v) => [
+    m[0] * v.x + m[4] * v.y + m[8] * v.z + m[12],
+    m[1] * v.x + m[5] * v.y + m[9] * v.z + m[13],
+    m[2] * v.x + m[6] * v.y + m[10] * v.z + m[14],
+  ];
+  const a = at(v0),
+    b = at(v2);
   return [...a, ...b].every(Number.isFinite) ? { a, b } : null;
 }
 
@@ -50,7 +59,11 @@ export function doorNormalOf(door, matrix) {
   const n = door?.normal;
   if (!n || !matrix) return null;
   const m = matrix;
-  const v = [m[0] * n.x + m[4] * n.y + m[8] * n.z, m[1] * n.x + m[5] * n.y + m[9] * n.z, m[2] * n.x + m[6] * n.y + m[10] * n.z];
+  const v = [
+    m[0] * n.x + m[4] * n.y + m[8] * n.z,
+    m[1] * n.x + m[5] * n.y + m[9] * n.z,
+    m[2] * n.x + m[6] * n.y + m[10] * n.z,
+  ];
   const l = Math.hypot(v[0], v[1], v[2]);
   return l > 1e-9 ? v.map((c) => c / l) : null;
 }
@@ -75,16 +88,20 @@ const WALLED = new WeakMap();
  * @param {any[]} parts @param {number[]} p @param {number[]} out
  */
 export function wallBehind(parts, p, out) {
-  const o = [p[0] + out[0] * WALL_RAY_FRONT_M, p[1], p[2] + out[1] * WALL_RAY_FRONT_M], d = [-out[0], 0, -out[1]];
+  const o = [p[0] + out[0] * WALL_RAY_FRONT_M, p[1], p[2] + out[1] * WALL_RAY_FRONT_M],
+    d = [-out[0], 0, -out[1]];
   const reach = WALL_RAY_FRONT_M + BANNER_WALL_BEHIND_M;
   for (const [cpu, m] of parts ?? []) {
-    const P = cpu?.positions, I = cpu?.indices;
+    const P = cpu?.positions,
+      I = cpu?.indices;
     if (!P || !I || !m) continue;
     const x = (i) => m[0] * P[i] + m[4] * P[i + 1] + m[8] * P[i + 2] + m[12];
     const y = (i) => m[1] * P[i] + m[5] * P[i + 1] + m[9] * P[i + 2] + m[13];
     const z = (i) => m[2] * P[i] + m[6] * P[i + 1] + m[10] * P[i + 2] + m[14];
     for (let t = 0; t + 2 < I.length; t += 3) {
-      const a = I[t] * 3, b = I[t + 1] * 3, c = I[t + 2] * 3;
+      const a = I[t] * 3,
+        b = I[t + 1] * 3,
+        c = I[t + 2] * 3;
       const hit = rayTriangle(o, d, x(a), y(a), z(a), x(b), y(b), z(b), x(c), y(c), z(c));
       if (hit != null && hit <= reach) return true;
     }
@@ -115,43 +132,73 @@ export function hallBannerAnchors(frame) {
   const d = frame?.door;
   const box = frame?.box;
   if (!d || !Array.isArray(box) || box.length < 6) return null;
-  let rx = d.b[0] - d.a[0], rz = d.b[2] - d.a[2];
+  let rx = d.b[0] - d.a[0],
+    rz = d.b[2] - d.a[2];
   const w = Math.hypot(rx, rz);
   if (!(w >= 0.3)) return null;
-  rx /= w; rz /= w;
-  const cx = (d.a[0] + d.b[0]) / 2, cz = (d.a[2] + d.b[2]) / 2;
+  rx /= w;
+  rz /= w;
+  const cx = (d.a[0] + d.b[0]) / 2,
+    cz = (d.a[2] + d.b[2]) / 2;
   const foot = Math.min(d.a[1], d.b[1]);
   // the face: square to the door's span, away from the building's middle - CASTLE-GATE (AUDIT G1): along the door's own
   // outward normal where the frame carries it (a castle's entrance)
   const [ox, oz] = doorFaceSign(-rz, rx, cx, cz, box, frame.normal);
   // AUDIT GUILD1d R4: the cloth's width runs from its face, never from the door record's own vertex order - under the
   // port's mirrored projection one of the two orders drew the device mirror-imaged
-  rx = 0 - oz; rz = ox + 0;   // (+0: never a signed zero)
+  rx = 0 - oz;
+  rz = ox + 0; // (+0: never a signed zero)
   const side = w / 2 + BANNER_SIDE_GAP_M + BANNER_W_M / 2;
-  const onWall = (x, z) => x >= box[0] - BANNER_WALL_PAD_M && x <= box[3] + BANNER_WALL_PAD_M && z >= box[2] - BANNER_WALL_PAD_M && z <= box[5] + BANNER_WALL_PAD_M;
+  const onWall = (x, z) =>
+    x >= box[0] - BANNER_WALL_PAD_M &&
+    x <= box[3] + BANNER_WALL_PAD_M &&
+    z >= box[2] - BANNER_WALL_PAD_M &&
+    z <= box[5] + BANNER_WALL_PAD_M;
   // AUDIT RPT1026 J2: a face behind each end, at the cloth's lower edge and its middle - asked once a frame
   const parts = Array.isArray(frame.parts) && frame.parts.length ? frame.parts : null;
   const walled = (s) => {
     if (!parts) return true;
     let memo = WALLED.get(frame);
-    if (!memo) WALLED.set(frame, memo = new Map());
+    if (!memo) WALLED.set(frame, (memo = new Map()));
     if (!memo.has(s)) {
       const bottom = foot + BANNER_TOP_M - BANNER_H_M;
-      memo.set(s, [-1, 1].every((e) => [bottom + 0.1, bottom + BANNER_H_M / 2].every((y) =>
-        wallBehind(parts, [cx + rx * (side * s + e * BANNER_W_M / 2), y, cz + rz * (side * s + e * BANNER_W_M / 2)], [ox, oz]))));
+      memo.set(
+        s,
+        [-1, 1].every((e) =>
+          [bottom + 0.1, bottom + BANNER_H_M / 2].every((y) =>
+            wallBehind(
+              parts,
+              [cx + rx * (side * s + (e * BANNER_W_M) / 2), y, cz + rz * (side * s + (e * BANNER_W_M) / 2)],
+              [ox, oz],
+            ),
+          ),
+        ),
+      );
     }
     return memo.get(s);
   };
-  return [-1, 1].filter((s) => [-1, 1].every((e) => onWall(cx + rx * (side * s + e * BANNER_W_M / 2), cz + rz * (side * s + e * BANNER_W_M / 2))) && walled(s)).map((s) => ({
-    top: [cx + rx * side * s + ox * BANNER_OUT_M, foot + BANNER_TOP_M, cz + rz * side * s + oz * BANNER_OUT_M],
-    right: [rx, 0, rz], out: [ox, 0, oz],
-  }));
+  return [-1, 1]
+    .filter(
+      (s) =>
+        [-1, 1].every((e) =>
+          onWall(cx + rx * (side * s + (e * BANNER_W_M) / 2), cz + rz * (side * s + (e * BANNER_W_M) / 2)),
+        ) && walled(s),
+    )
+    .map((s) => ({
+      top: [cx + rx * side * s + ox * BANNER_OUT_M, foot + BANNER_TOP_M, cz + rz * side * s + oz * BANNER_OUT_M],
+      right: [rx, 0, rz],
+      out: [ox, 0, oz],
+    }));
 }
 
 /** A heraldry's texture key. */
 // GUILD2c: a divided or recoloured banner keys by its whole arms (heraldryLaw.js heraldryKey) - two banners sharing a field,
 // a border and a device but parted differently are two textures; a plain banner (and a seat's device-less cloth) keeps
 // GUILD1d's key, so every texture already cached keeps its name
+/** GUILD-LOGO (Guild-Shop.md section 7): a banner's cloth painted - render/bannerPass.js's `paint`: its heraldry, and an
+ *  approved logo (`h.logo`) once its picture is in; the banner's key carries the logo, so the cloth is painted again. */
+export const paintHallBanner = (/** @type {any} */ ctx, /** @type {any} */ h, /** @type {number} */ w) =>
+  drawBannerArms(ctx, h, w, h?.logo ? logoImage(h.logo) : null);
 export const bannerKeyOf = (h) => (h?.division || h?.charge ? heraldryKey(h) : `${h.field}|${h.border}|${h.device}`);
 
 /**
@@ -172,36 +219,63 @@ export function createHallBanners({ built, homes, translation, eye = () => null,
   /** @type {any[]} */
   const nearest = [];
   let eyeAt = null;
-  const byEye = (x, y) => Math.hypot(x.top[0] - eyeAt[0], x.top[2] - eyeAt[2]) - Math.hypot(y.top[0] - eyeAt[0], y.top[2] - eyeAt[2]);
+  const byEye = (x, y) =>
+    Math.hypot(x.top[0] - eyeAt[0], x.top[2] - eyeAt[2]) - Math.hypot(y.top[0] - eyeAt[0], y.top[2] - eyeAt[2]);
   function read() {
     const out = [];
     for (const [, p] of built?.() ?? []) {
       if (!p?.homeTown || !p.homeFrames) continue;
       for (const [bk, frame] of p.homeFrames) {
-        const h = homes?.homeAt?.(p.homeTown, bk)?.hall?.heraldry ?? null;
-        if (!h) continue;
+        const hall = homes?.homeAt?.(p.homeTown, bk)?.hall ?? null;
+        const shown = hall?.heraldry ?? null;
+        if (!shown) continue;
         const anchors = hallBannerAnchors(frame);
         if (!anchors) continue;
-        anchors.forEach((a, i) => out.push({ px: p.px, py: p.py, a, key: bannerKeyOf(h), heraldry: h, phase: (bk % 13) * 0.7 + i * 1.9 }));
+        // GUILD-LOGO: its guild's approved logo over the device, once its picture is in
+        const logo = hall.tag ? (guildArmsOf(hall.tag)?.logo ?? null) : null;
+        const h = logo && logoImage(logo) ? { ...shown, logo } : shown;
+        const key = h === shown ? bannerKeyOf(shown) : `${bannerKeyOf(shown)}#${logo}`;
+        anchors.forEach((a, i) =>
+          out.push({ px: p.px, py: p.py, a, key, heraldry: h, phase: (bk % 13) * 0.7 + i * 1.9 }),
+        );
       }
     }
     held = out;
-    outs = held.map((b) => ({ key: b.key, heraldry: b.heraldry, phase: b.phase, top: [0, 0, 0], right: b.a.right, out: b.a.out }));
+    outs = held.map((b) => ({
+      key: b.key,
+      heraldry: b.heraldry,
+      phase: b.phase,
+      top: [0, 0, 0],
+      right: b.a.right,
+      out: b.a.out,
+    }));
   }
   return {
     list() {
       const v = homes?.version?.() ?? 0;
-      if (v !== seen || now() - at >= BANNER_REFRESH_MS) { read(); seen = v; at = now(); }
-      if (!held.length) return outs;   // (empty)
+      const lv = v * 4096 + logoVersion(); // GUILD-LOGO: and again when a logo's picture comes in
+      if (lv !== seen || now() - at >= BANNER_REFRESH_MS) {
+        read();
+        seen = lv;
+        at = now();
+      }
+      if (!held.length) return outs; // (empty)
       for (let i = 0; i < held.length; i++) {
-        const b = held[i], t = translation(b.px, b.py), top = outs[i].top;
-        top[0] = t[0] + b.a.top[0]; top[1] = t[1] + b.a.top[1]; top[2] = t[2] + b.a.top[2];
+        const b = held[i],
+          t = translation(b.px, b.py),
+          top = outs[i].top;
+        top[0] = t[0] + b.a.top[0];
+        top[1] = t[1] + b.a.top[1];
+        top[2] = t[2] + b.a.top[2];
       }
       if (outs.length <= BANNERS_MAX) return outs;
       const e = eye();
       nearest.length = 0;
       for (const o of outs) nearest.push(o);
-      if (e) { eyeAt = e; nearest.sort(byEye); }
+      if (e) {
+        eyeAt = e;
+        nearest.sort(byEye);
+      }
       nearest.length = BANNERS_MAX;
       return nearest;
     },

@@ -54,7 +54,8 @@ export function toColor32OrderInPlace(image) {
   if (data.length !== row * height) throw new Error(`${width}x${height} carries ${data.length} bytes`);
   const tmp = new Uint8Array(row);
   for (let y = 0, z = height - 1; y < z; y++, z--) {
-    const a = y * row, b = z * row;
+    const a = y * row,
+      b = z * row;
     tmp.set(data.subarray(a, a + row));
     data.copyWithin(a, b, b + row);
     data.set(tmp, b);
@@ -141,7 +142,10 @@ export function bitmapToColor32(bmp, palette, alphaIndex = 0) {
     const o = i * 4;
     if (idx === alphaIndex) continue;
     const c = palette.get(idx);
-    u8[o] = c.r; u8[o + 1] = c.g; u8[o + 2] = c.b; u8[o + 3] = 255;
+    u8[o] = c.r;
+    u8[o + 1] = c.g;
+    u8[o + 2] = c.b;
+    u8[o + 3] = 255;
   }
   return { width: bmp.width, height: bmp.height, colors };
 }

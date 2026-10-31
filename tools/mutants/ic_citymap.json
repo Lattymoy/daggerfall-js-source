@@ -2,8 +2,8 @@
   {
     "name": "IC-TOWNMAP3-the-slices-corner-lost",
     "file": "src/ui/town/imperialSheet.js",
-    "old": "  const offX = sx * IC_SLICE_PX, offY = sy * IC_SLICE_PX;\n",
-    "new": "  const offX = 0, offY = 0;\n",
+    "old": "  const offX = sx * IC_SLICE_PX,\n    offY = sy * IC_SLICE_PX;",
+    "new": "  const offX = 0,\n    offY = 0;",
     "tests": [
       "test/ui/town/ic_citymap.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "IC-TOWNMAP3-the-slices-rows-unflipped",
     "file": "src/ui/town/imperialSheet.js",
-    "old": "    return { ...p, x: offX + p.x, y: offY + (fieldH - 1) - p.y };\n",
-    "new": "    return { ...p, x: offX + p.x, y: offY + p.y };\n",
+    "old": "    return { ...p, x: offX + p.x, y: offY + (fieldH - 1) - p.y };",
+    "new": "    return { ...p, x: offX + p.x, y: offY + p.y };",
     "tests": [
       "test/ui/town/ic_citymap.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "IC-TOWNMAP3-the-bags-slice-dropped",
     "file": "src/ui/town/townMapDoor.js",
-    "old": "    imperial: deps.imperialSlice ?? null,",
-    "new": "    imperial: null,",
+    "old": "    imperial: deps.imperialSlice ?? null, // IC-TOWNMAP: the Imperial City's slice the player stands in - the sheet draws the city (ui/town/imperialSheet.js)",
+    "new": "    imperial: null, // IC-TOWNMAP: the Imperial City's slice the player stands in - the sheet draws the city (ui/town/imperialSheet.js)",
     "tests": [
       "test/ui/town/ic_citymap.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "IC-TOWNMAP3-a-district-unnamed",
     "file": "src/ui/town/imperialSheet.js",
-    "old": "  const sectorLabels = IMPERIAL_SECTORS.map(",
-    "new": "  const sectorLabels = IMPERIAL_SECTORS.slice(1).map(",
+    "old": "  const sectorLabels = IMPERIAL_SECTORS.map(([name, b]) => ({",
+    "new": "  const sectorLabels = IMPERIAL_SECTORS.slice(1).map(([name, b]) => ({",
     "tests": [
       "test/ui/town/ic_citymap.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "IC-TOWNMAP3-the-labels-zoom-gate-reversed",
     "file": "src/ui/town/imperialSheet.js",
-    "old": "    if (view.scale < l.zoom) continue;\n",
-    "new": "    if (view.scale >= l.zoom) continue;\n",
+    "old": "    if (view.scale < l.zoom) continue;",
+    "new": "    if (view.scale >= l.zoom) continue;",
     "tests": [
       "test/ui/town/ic_citymap.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "IC-TOWNMAP3-the-caret-not-drawn",
     "file": "src/ui/town/imperialSheet.js",
-    "old": "        paintCaret(ctx, x, y, p.yaw ?? 0, { fill: TOWN_PEN.caret, halo: TOWN_PEN.halo });\n",
-    "new": "        void x; void y;\n",
+    "old": "        paintCaret(ctx, x, y, p.yaw ?? 0, { fill: TOWN_PEN.caret, halo: TOWN_PEN.halo });",
+    "new": "        void x;\n        void y;",
     "tests": [
       "test/ui/town/ic_citymap.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "IC-TOWNMAP3-the-plan-built-at-every-paint",
     "file": "src/ui/town/imperialSheet.js",
-    "old": "  if (icPlanCache) return icPlanCache;\n",
-    "new": "  if (icPlanCache && icPlanBuilds < 0) return icPlanCache;\n",
+    "old": "  if (icPlanCache) return icPlanCache;",
+    "new": "  if (icPlanCache && icPlanBuilds < 0) return icPlanCache;",
     "tests": [
       "test/ui/town/ic_citymap.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "IC-TOWNMAP3-the-fabric-built-at-any-zoom",
     "file": "src/ui/town/imperialSheet.js",
-    "old": "  const fabricPending = () => wantFabric && fabric.size",
-    "new": "  const fabricPending = () => true && fabric.size",
+    "old": "  const fabricPending = () => wantFabric && fabric.size < fabricQueue().length;",
+    "new": "  const fabricPending = () => true && fabric.size < fabricQueue().length;",
     "tests": [
       "test/ui/town/ic_citymap.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "IC-TOWNMAP3-the-whole-district-in-one-tick",
     "file": "src/ui/town/imperialSheet.js",
-    "old": "    tick() { if (fabricPending()) buildFabric(IC_FABRIC_PER_TICK); },",
-    "new": "    tick() { if (fabricPending()) buildFabric(Infinity); },",
+    "old": "      if (fabricPending()) buildFabric(IC_FABRIC_PER_TICK);",
+    "new": "      if (fabricPending()) buildFabric(Infinity);",
     "tests": [
       "test/ui/town/ic_citymap.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "IC-TOWNMAP3-the-fabric-not-drawn",
     "file": "src/ui/town/imperialSheet.js",
-    "old": "paintFabricCell(ctx, env.view, f);\n",
-    "new": "void f;\n",
+    "old": "        for (const f of fabric.values())\n          if (f.r >= r0 && f.r <= r1 && f.c >= c0 && f.c <= c1) paintFabricCell(ctx, env.view, f);",
+    "new": "        for (const f of fabric.values()) if (f.r >= r0 && f.r <= r1 && f.c >= c0 && f.c <= c1) void f;",
     "tests": [
       "test/ui/town/ic_citymap.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "IC-TOWNMAP3-find-me-off-the-player",
     "file": "src/ui/town/imperialSheet.js",
-    "old": "      return viewCentredOn(p.x, p.y, Math.min(",
-    "new": "      return viewCentredOn(p.x, p.y + 64, Math.min(",
+    "old": "      return viewCentredOn(p.x, p.y, Math.min(SCALE_MAX, Math.max(street, view?.scale ?? 0)), limits);",
+    "new": "      return viewCentredOn(p.x, p.y + 64, Math.min(SCALE_MAX, Math.max(street, view?.scale ?? 0)), limits);",
     "tests": [
       "test/ui/town/ic_citymap.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "IC-TOWNMAP3-the-slice-drawn-at-every-zoom",
     "file": "src/ui/town/imperialSheet.js",
-    "old": "      if (env.view.scale >= IC_FABRIC_ZOOM) {\n",
-    "new": "      if (env.view.scale >= 0) {\n",
+    "old": "      if (env.view.scale >= IC_FABRIC_ZOOM) {",
+    "new": "      if (env.view.scale >= 0) {",
     "tests": [
       "test/ui/town/ic_citymap.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "IC-TOWNMAP3-the-pointers-district-crossed",
     "file": "src/ui/town/imperialSheet.js",
-    "old": "imperialDistrictAt(u * WORLD_PER_PX - IC_HALF_M, v * WORLD_PER_PX - IC_HALF_M)",
-    "new": "imperialDistrictAt(v * WORLD_PER_PX - IC_HALF_M, u * WORLD_PER_PX - IC_HALF_M)",
+    "old": "          imperialDistrictAt(u * WORLD_PER_PX - IC_HALF_M, v * WORLD_PER_PX - IC_HALF_M),",
+    "new": "          imperialDistrictAt(v * WORLD_PER_PX - IC_HALF_M, u * WORLD_PER_PX - IC_HALF_M),",
     "tests": [
       "test/ui/town/ic_citymap.test.js"
     ]

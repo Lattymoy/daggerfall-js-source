@@ -21,7 +21,7 @@
 import { modSettingsOf } from '../../systems/modSettings.js';
 import { trs } from '../../world/mat4.js';
 import { localAabb, transformedAabb } from '../../render/frustum.js';
-import { drawSeen } from '../../scenes/decor/decorRoom.js';   // PERF-WAGON: one mesh by the street's view test
+import { drawSeen } from '../../scenes/decor/decorRoom.js'; // PERF-WAGON: one mesh by the street's view test
 
 /** [IL] IL_1e4d, IL_1eef: the mesh, and the model id the activation is keyed on. */
 export const WAGON_MODEL = 41239;
@@ -81,16 +81,24 @@ export function wobbleRoll(time, onExteriorPath = false) {
  * composes (Ry * Rx * Rz), which is also Unity's.
  */
 export function lookAtEuler(from, to) {
-  const dx = to[0] - from[0], dy = to[1] - from[1], dz = to[2] - from[2];
+  const dx = to[0] - from[0],
+    dy = to[1] - from[1],
+    dz = to[2] - from[2];
   const len = Math.hypot(dx, dy, dz);
   if (len === 0) return { yaw: 0, pitch: 0 };
-  const yaw = Math.atan2(dx, dz) * 180 / Math.PI;
-  const pitch = -Math.asin(Math.max(-1, Math.min(1, dy / len))) * 180 / Math.PI;
+  const yaw = (Math.atan2(dx, dz) * 180) / Math.PI;
+  const pitch = (-Math.asin(Math.max(-1, Math.min(1, dy / len))) * 180) / Math.PI;
   return { yaw, pitch };
 }
 
-const norm = (v) => { const l = Math.hypot(v[0], v[1], v[2]); return l > 0 ? [v[0] / l, v[1] / l, v[2] / l] : [0, 0, 0]; };
-const yawForward = (yawDeg) => { const r = yawDeg * Math.PI / 180; return [Math.sin(r), 0, Math.cos(r)]; };
+const norm = (v) => {
+  const l = Math.hypot(v[0], v[1], v[2]);
+  return l > 0 ? [v[0] / l, v[1] / l, v[2] / l] : [0, 0, 0];
+};
+const yawForward = (yawDeg) => {
+  const r = (yawDeg * Math.PI) / 180;
+  return [Math.sin(r), 0, Math.cos(r)];
+};
 
 /**
  * [IL] UpdateWagon (IL_1f18-IL_223e), one frame, PURE: `w` is the
@@ -104,42 +112,70 @@ export function updateWagon(w, f = {}) {
   const dt = f.dt ?? 0;
   const next = { ...w, time: w.time + dt };
   // IL_1f18-IL_1f39: the setting off - hide, and nothing else
-  if (!f.showCart) { next.active = false; return next; }
+  if (!f.showCart) {
+    next.active = false;
+    return next;
+  }
   // IL_1f49-IL_1f59, IL_2225-IL_223e: not the cart transport - hide
-  if (!f.cart) { next.active = false; return next; }
+  if (!f.cart) {
+    next.active = false;
+    return next;
+  }
   const body = f.bodyPos ?? [0, 0, 0];
   const bodyFwd = f.bodyForward ?? [0, 0, 1];
   // IL_1f5e-IL_1fb1: first frame of the cart - shown ten metres behind
   if (!next.active || !next.pos) {
     next.active = true;
-    next.pos = [body[0] - bodyFwd[0] * SPAWN_BEHIND, body[1] - bodyFwd[1] * SPAWN_BEHIND, body[2] - bodyFwd[2] * SPAWN_BEHIND];
+    next.pos = [
+      body[0] - bodyFwd[0] * SPAWN_BEHIND,
+      body[1] - bodyFwd[1] * SPAWN_BEHIND,
+      body[2] - bodyFwd[2] * SPAWN_BEHIND,
+    ];
   }
   // IL_1fb6-IL_1ff9: loc0 `far`, loc1 `veryFar`, loc2 the delta
-  let far = false, veryFar = false;
+  let far = false,
+    veryFar = false;
   const delta = [body[0] - next.pos[0], body[1] - next.pos[1], body[2] - next.pos[2]];
   const mag = Math.hypot(delta[0], delta[1], delta[2]);
-  if (mag > FOLLOW_TRIGGER) { far = true; if (mag > TELEPORT_TRIGGER) veryFar = true; }
+  if (mag > FOLLOW_TRIGGER) {
+    far = true;
+    if (mag > TELEPORT_TRIGGER) veryFar = true;
+  }
   if (far) {
     // IL_2000-IL_2032: the direction is the delta, or the LAST offset past ten metres
     const dir = norm(veryFar ? w.offsetLast : delta);
-    let target = [body[0] - dir[0] * FOLLOW_DISTANCE, body[1] - dir[1] * FOLLOW_DISTANCE, body[2] - dir[2] * FOLLOW_DISTANCE];
+    let target = [
+      body[0] - dir[0] * FOLLOW_DISTANCE,
+      body[1] - dir[1] * FOLLOW_DISTANCE,
+      body[2] - dir[2] * FOLLOW_DISTANCE,
+    ];
     // IL_2034-IL_20a8: the ground probe. `wagon.position -
     // wagon.TransformPoint(forward * 0.6)` is `-wagon.forward * 0.6`.
     const wf = yawForward(w.yaw);
-    const origin = [target[0] - wf[0] * PROBE_BACK, target[1] - wf[1] * PROBE_BACK + PROBE_UP, target[2] - wf[2] * PROBE_BACK];
+    const origin = [
+      target[0] - wf[0] * PROBE_BACK,
+      target[1] - wf[1] * PROBE_BACK + PROBE_UP,
+      target[2] - wf[2] * PROBE_BACK,
+    ];
     const hit = f.raycast ? f.raycast(origin, [0, -1, 0], PROBE_DOWN) : null;
     if (hit != null && hit < PROBE_DOWN) {
       // IL_20af-IL_2115: the target's y is the hit plus one, then the
       // 2.49 is measured again from the body to THAT point
       const grounded = [target[0], origin[1] - hit + GROUND_LIFT, target[2]];
       const d2 = norm([body[0] - grounded[0], body[1] - grounded[1], body[2] - grounded[2]]);
-      target = [body[0] - d2[0] * FOLLOW_DISTANCE, body[1] - d2[1] * FOLLOW_DISTANCE, body[2] - d2[2] * FOLLOW_DISTANCE];
+      target = [
+        body[0] - d2[0] * FOLLOW_DISTANCE,
+        body[1] - d2[1] * FOLLOW_DISTANCE,
+        body[2] - d2[2] * FOLLOW_DISTANCE,
+      ];
     }
-    next.pos = target;   // IL_2117-IL_2124
+    next.pos = target; // IL_2117-IL_2124
   }
   // IL_2129-IL_213f: LookAt(body) every frame - which also clears any roll
   const look = lookAtEuler(next.pos, body);
-  next.yaw = look.yaw; next.pitch = look.pitch; next.roll = 0;
+  next.yaw = look.yaw;
+  next.pitch = look.pitch;
+  next.roll = 0;
   // IL_2144-IL_21ea: the wobble, only while following
   if (far) next.roll = wobbleRoll(next.time, !!f.onExteriorPath);
   // IL_21ef: the offset remembered is the delta BEFORE the move...
@@ -150,10 +186,19 @@ export function updateWagon(w, f = {}) {
 }
 
 /** [IL] SpawnWagon's state: inactive, no position yet, the seed offset. */
-export const freshWagon = () => ({ active: false, pos: null, yaw: 0, pitch: 0, roll: 0, offsetLast: [...OFFSET_LAST_SEED], time: 0 });
+export const freshWagon = () => ({
+  active: false,
+  pos: null,
+  yaw: 0,
+  pitch: 0,
+  roll: 0,
+  offsetLast: [...OFFSET_LAST_SEED],
+  time: 0,
+});
 
 /** The cart's model matrix: LookAt's yaw and pitch, the wobble's roll (IL_21aa-IL_21ea sets localEulerAngles (x, y, roll)). */
-export const wagonMatrix = (w) => (w.active && w.pos ? trs(w.pos[0], w.pos[1], w.pos[2], w.pitch, w.yaw, w.roll) : null);
+export const wagonMatrix = (w) =>
+  w.active && w.pos ? trs(w.pos[0], w.pos[1], w.pos[2], w.pitch, w.yaw, w.roll) : null;
 
 /**
  * [IL] CheckWagon (IL_224c-IL_22a4): the hit was the cart - in Info
@@ -165,7 +210,11 @@ export const checkWagon = (mode) => (mode === 'info' ? 'info' : 'inventory');
 
 /** `Graphics.ShowCart`, as LoadSettings reads it into `wagon` (IL_0eb6-IL_0ec5). */
 export function showCart() {
-  try { return modSettingsOf('eye-of-the-beholder')['Graphics.ShowCart'] !== false; } catch { return true; }
+  try {
+    return modSettingsOf('eye-of-the-beholder')['Graphics.ShowCart'] !== false;
+  } catch {
+    return true;
+  }
 }
 
 /**
@@ -183,16 +232,27 @@ export function createEotbWagon() {
   const ensureMesh = () => {
     if (gpu || loading || !pipeline) return;
     loading = true;
-    Promise.resolve(pipeline.getGpuMesh(WAGON_MODEL)).then((g) => {
-      gpu = g ?? null;
-      const cpu = pipeline?.cpuModels?.get(WAGON_MODEL);
-      if (cpu?.positions) localBox = localAabb(cpu.positions);
-    }).catch(() => {}).finally(() => { loading = false; });
+    Promise.resolve(pipeline.getGpuMesh(WAGON_MODEL))
+      .then((g) => {
+        gpu = g ?? null;
+        const cpu = pipeline?.cpuModels?.get(WAGON_MODEL);
+        if (cpu?.positions) localBox = localAabb(cpu.positions);
+      })
+      .catch(() => {})
+      .finally(() => {
+        loading = false;
+      });
   };
 
   return {
     /** The host's mesh pipeline (SpawnWagon's CreateDaggerfallMeshGameObject). */
-    attach(p) { pipeline = p ?? null; gpu = null; localBox = null; if (pipeline) ensureMesh(); return this; },
+    attach(p) {
+      pipeline = p ?? null;
+      gpu = null;
+      localBox = null;
+      if (pipeline) ensureMesh();
+      return this;
+    },
     /**
      * One frame (UpdateWagon). `feet` and `yaw` are the host's; the body
      * is the player object - the capsule CENTRE, `feet + height / 2`,
@@ -201,7 +261,15 @@ export function createEotbWagon() {
     tick(dt, { feet = null, yaw = 0, height = 1.8, cart = false, onExteriorPath = false, raycast = null } = {}) {
       if (!feet) return w;
       const body = [feet[0], feet[1] + height / 2, feet[2]];
-      w = updateWagon(w, { dt, showCart: showCart(), cart, bodyPos: body, bodyForward: [Math.sin(yaw), 0, Math.cos(yaw)], onExteriorPath, raycast });
+      w = updateWagon(w, {
+        dt,
+        showCart: showCart(),
+        cart,
+        bodyPos: body,
+        bodyForward: [Math.sin(yaw), 0, Math.cos(yaw)],
+        onExteriorPath,
+        raycast,
+      });
       if (w.active) ensureMesh();
       return w;
     },
@@ -227,19 +295,37 @@ export function createEotbWagon() {
     targets(rayDistance = WAGON_REACH) {
       const m = wagonMatrix(w);
       if (!m) return [];
-      const box = localBox ? transformedAabb(localBox, m) : [w.pos[0] - 1, w.pos[1] - 1, w.pos[2] - 1, w.pos[0] + 1, w.pos[1] + 1, w.pos[2] + 1];
+      const box = localBox
+        ? transformedAabb(localBox, m)
+        : [w.pos[0] - 1, w.pos[1] - 1, w.pos[2] - 1, w.pos[0] + 1, w.pos[1] + 1, w.pos[2] + 1];
       // DISC10: the ray meets the cart's OWN turned box (`obb`), not the axis-aligned one around it, and a box that
       // holds the eye names nothing by the ground or a wall inside it - the cart has no collider (`noSurface`)
-      return [{ key: 'eotbWagon', aabb: { min: [box[0], box[1], box[2]], max: [box[3], box[4], box[5]] }, obb: localBox ? { m, box: localBox } : null, noSurface: true, distance: rayDistance, reach: WAGON_REACH }];
+      return [
+        {
+          key: 'eotbWagon',
+          aabb: { min: [box[0], box[1], box[2]], max: [box[3], box[4], box[5]] },
+          obb: localBox ? { m, box: localBox } : null,
+          noSurface: true,
+          distance: rayDistance,
+          reach: WAGON_REACH,
+        },
+      ];
     },
     /** CheckWagon, with the host's two doors. */
     activate(mode, { say = null, openInventoryWithWagon = null } = {}) {
-      if (checkWagon(mode) === 'info') { say?.(WAGON_INFO_TEXT); return 'info'; }
+      if (checkWagon(mode) === 'info') {
+        say?.(WAGON_INFO_TEXT);
+        return 'info';
+      }
       openInventoryWithWagon?.();
       return 'inventory';
     },
-    state() { return w; },
-    reset() { w = freshWagon(); },
+    state() {
+      return w;
+    },
+    reset() {
+      w = freshWagon();
+    },
   };
 }
 

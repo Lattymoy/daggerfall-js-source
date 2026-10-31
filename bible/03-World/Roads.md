@@ -971,7 +971,7 @@ the classic picture the fountain stands by the tree's foot. Low Poly Trees'
 stood inside it. Of BLOCKS.BSA's 5,964 scenery trees with a Low Poly
 prototype, 46 had a trunk reaching one of their block's solid things.
 
-**The law** (`roadVerge.js:"export function lptTrunkCap(solids, x, z, trunk, widest) {"`):
+**The law** (`roadVerge.js:"export function lptTrunkCap"`):
 a location's Low Poly tree is drawn no wider than the room its root has to
 the nearest SOLID thing of its pixel over its trunk - LPT-FIT's own shape, a
 scale, never a move.
@@ -1021,8 +1021,8 @@ Bay's, where the network is the port's own (TESA14, `Arena-Provinces.md`).
 
 TESA14 routed past the Bay on the Bay's dials: the climb read raw off a pixel's one height byte, where the lattice's
 +-2 a pixel is texture, not a hill, so a route wandered on noise and walked straight over a ridge as readily as round it.
-Now every route a region builds there pays the land's law (`roadLand.js:"export function landStep(t, cx, cy, nx, ny, len) {"`,
-its dials `roadLand.js:"export const VOYAGER_DIALS = Object.freeze({"`), handed to the builder as its `terrain`
+Now every route a region builds there pays the land's law (`roadLand.js:"export function landStep"`,
+its dials `roadLand.js:"export const VOYAGER_DIALS"`), handed to the builder as its `terrain`
 (`tamrielRoads.js:"const land = landForRoutes(heights, water, bay, MAP_W, MAP_H, VOYAGER_DIALS, (u, v) => landGrain(gx + u, gy + v), still);"`):
 
 - **The grade, squared**, on the height averaged over 5 x 5 pixels (a summed-area table, integer sums): a step costs its
@@ -1037,7 +1037,7 @@ its dials `roadLand.js:"export const VOYAGER_DIALS = Object.freeze({"`), handed 
   walks at both ends, is crossed at 12 a step on top of its length - a road crosses a river once, where it must, and the
   roads after it take the same crossing; wider water is refused as before. No bridge model of its own: the painter paves
   no water, so a ford's tile is the river's.
-- **The land's grain** (`roadLand.js:"export function landGrain(x, y) {"`): rough patches some kilometres across -
+- **The land's grain** (`roadLand.js:"export function landGrain"`): rough patches some kilometres across -
   value noise on a 10-pixel lattice of integer hashes, taken where it runs over 0.5 and eased in to whole at 0.65,
   nought over about half the land and whole over a quarter - a step up to 2.5 dearer. What one height byte cannot say of
   819 m of ground: the woods, the fens, the broken ground a road-builder goes round on a plain. Measured on a plain
@@ -1065,7 +1065,7 @@ every junction a star. Past the Bay the roads are drawn by the port's own law (`
   curve, a bit in no such pair (a T's stem) runs straight in, and the centre is paved round (JUNCTION_R, 2.5 tiles): a
   road joining at 45 degrees merges as a Y, a crossroads is a small square with its corners rounded. **An end** runs
   straight in to the centre.
-- **The painter** (`roadCurves.js:"export function paintCurvedPaths(tileData, tilemap, { px, py, road, track, byteAt, rect = null, paths = null, tdDim = CURVE_DIM + 1 }) {"`):
+- **The painter** (`roadCurves.js:"export function paintCurvedPaths"`):
   a road paves the tiles within ROAD_HALF (1 tile - two across, Basic Roads' width) of its curve with his road tile
   turned and flipped to its lie, and wears the ground's corners to dirt over a 0.9-tile shoulder so the squares blend it
   into the grass at any angle; a track wears its 0.75-tile half to dirt as the jungle's trails do; water is never paved;
@@ -1074,7 +1074,7 @@ every junction a star. Past the Bay the roads are drawn by the port's own law (`
   painter's to the byte (pinned). Rivers and streams are still his painter's, called after with no road.
 - **The seam** is one option at the kernel's call - the pixel and the layer's reader, past the Bay alone:
   `terrainGen.js:"curve: arena ? { px, py, byteAt: arenaRoadByte } : null,   // VOYAGER2: past the Bay, the roads drawn as curves (world/road/roadCurves.js)"`.
-  The verge measures from the same curves (`roadBand.js:"const d = Math.min(r ? curveDistance(r, tx, tz) : Infinity, t ? curveDistance(t, tx, tz) : Infinity) * TILE_M - PATH_HALF_M;"`):
+  The verge measures from the same curves (`roadBand.js:"tz = (z - iz * PIXEL_M)".."const d ="`):
   a bend's apex is on the road, the arms' old corner 86 m off it; a Bay pixel reads its crossing's join with its own byte.
 - Cost: a pixel's curves over grass 3.1-3.4 ms against 1.1-1.4 ms for his painter (2,048 dense synthetic pixels, load 30
   on four cores), in the terrain worker's job, only on a pixel past the Bay with a road or a track.
@@ -1084,7 +1084,7 @@ every junction a star. Past the Bay the roads are drawn by the port's own law (`
 
 `10-UI/Travel-View.md` VOYAGER2.1: the route planner (`travelRoute.js` planRoute) read no road's byte past the Bay's table
 (TV-BEYOND), so a click past the Bay walked open ground (3.5 a step) beside a road it could walk at 1. Now `routeGround`
-carries the installed layer's reader (`travelRoute.js:"get pathsBeyond() { return pathsBeyond === arenaRoadByte && !arenaRoadsLayer() ? null : pathsBeyond; },"`)
+carries the installed layer's reader (`travelRoute.js:"get pathsBeyond()"`)
 into every plan through the host's existing `...tvRouteGround()`: a road or a track past the Bay is its kind's step, and a
 crossing's join (TESA5) carries a Bay road out to them as one road. FREE mode (no roads handed) reads none.
 
@@ -1232,7 +1232,7 @@ day: "No band aids or half assed work".
 ### What the player saw, and why
 
 - **The road's edge was the tile grid's line.** Basic Roads paints a road in whole tiles: the paving, record 46, and on a
-  diagonal the flank tiles 47 and 55 (`roadPainter.js:"export const ROAD_TILES = Object.freeze(["`). The terrain program
+  diagonal the flank tiles 47 and 55 (`roadPainter.js:"export const ROAD_TILES"`). The terrain program
   draws one tile a fragment, to its edge, as DFU's TilemapTextureArray shader does. A track has DF's own dirt-to-grass
   tiles (TRACK_TILES 11/26, 12/27, 10/25, 51/52), which carry their own soft edge. The paving has none: a road's side was a
   hard straight line, or a staircase on a diagonal or a curve, on the Bay, past it, and in towns.
@@ -1248,7 +1248,7 @@ day: "No band aids or half assed work".
 
 ### The blend (`world/road/roadEdge.js`, its GLSL twin `render/roadEdgeGlsl.js`)
 
-- **The law** (`roadEdge.js:"export function roadEdgeAt(byteAt, x, y) {"`): the road's share at a point is the bilinear of
+- **The law** (`roadEdge.js:"export function roadEdgeAt"`): the road's share at a point is the bilinear of
   the four cells round the nearest tile corner (1 for the paving, 0 for the rest), moved by a wander of three octaves of
   value noise (lattices of 32, 128 and 512 cells a pixel, amplitudes 0.12, 0.06 and 0.05 - a bend some 25 m long, a ragged
   6 m, a broken 1.6 m) and drawn across a smoothstep rim 0.07 wide each way. The other kind's picture is the nearest
@@ -1271,7 +1271,7 @@ day: "No band aids or half assed work".
 
 ### The bridges (`world/road/roadBridges.js`, `world/road/bridgeModels.js`)
 
-- **The crossings** (`roadBridges.js:"export function crossingsOf(px, py, byteAt, law = tamrielWaters()) {"`): where a
+- **The crossings** (`roadBridges.js:"export function crossingsOf"`): where a
   pixel's own road or track curve - the line the painter paints (`roadCurves.js` curvesOf) - meets a carved river's centre
   line: the point, the line's heading, the river's width and level there. The pixel that holds the point owns it. Of two
   crossings of one river whose decks would meet (a junction's curves through one point), the squarer stands, and a track's
@@ -1284,12 +1284,12 @@ day: "No band aids or half assed work".
   Its length over the water is the width over the sine of the angle the road meets it at (never under 0.35); its ramps
   come down to the river's level a metre in eight. The river's level is the valley's floor at its banks (CYRODIIL-WATERS'
   carve lays the land beside a channel at it), so each end meets the road on its own ground.
-- **Under it the river runs** (`roadBridges.js:"export function unpaveBridges(tilemap, paths, px, py, byteAt"`): in the
+- **Under it the river runs** (`roadBridges.js:"export function unpaveBridges"`): in the
   terrain kernel, after the road painter and before the roads' smoothing and the waters' paint
   (`terrainGen.js:"if (arena && landforms) { unpaveBridges(tilemap, paths, px, py, arenaRoadByte);"`), the road's tiles
   and shoulders under a deck and over the channel are laid back - the bridges of the pixel and its eight neighbours - so
   the channel's water is painted there. A ford keeps its road.
-- **The model** (`bridgeModels.js:"export function buildBridgeMesh(b, px, py) {"`): built on the page's thread from the
+- **The model** (`bridgeModels.js:"export function buildBridgeMesh"`): built on the page's thread from the
   kernel's answer, in the capitals' kit: the port's own bridge stone and timber (`capitalModels.js` capitalArt, painted
   the same on every client, CAPITAL_ART.bridgeStone as Alinor's bridges wear it), at Daggerfall's texel size
   (vanillaTexels). Daggerfall has no model to stand there (above). The host stands it with the pixel's statics and
@@ -1311,7 +1311,7 @@ day: "No band aids or half assed work".
   (`tamrielRoads.js:"const still = lakeRaster(gx, gy, MAP_W, MAP_H, LAKE_MARGIN);"`; `tamrielWaters.js` lakeRaster, a
   pixel's middle within LAKE_MARGIN, 0.25 of a pixel, of the lake's water - past a curve's widest swing and a road's half
   width), and the routes' land never takes a lake's water as a ford
-  (`roadLand.js:"if (!wet(x, y) || (still && still[i])) continue;"`). TAMRIEL_ROADS_VERSION 8: the roads past the Bay
+  (`roadLand.js:"if (!wet(x, y) || (still && still[i]))"`). TAMRIEL_ROADS_VERSION 8: the roads past the Bay
   are laid again once.
 
 ### Measured (the freeware, Cyrodiil's six regions (3, 5), (3, 6), (2, 5), (3, 4), (3, 7), (2, 6), the relief on)

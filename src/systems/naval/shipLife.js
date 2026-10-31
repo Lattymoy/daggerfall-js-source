@@ -53,7 +53,7 @@
 import { hash32 } from '../../world/spawnedDungeons.js';
 import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { hullBuild, MOD_CARRACK_BUILD } from './navalShips.js';
-import { stepFishing, fishingHeld } from './fishingBoats.js';   // FISH-BOATS: a fishing boat's day, an errand of her own
+import { stepFishing, fishingHeld } from './fishingBoats.js'; // FISH-BOATS: a fishing boat's day, an errand of her own
 
 /** How far past the town's rect a berth may lie (m), the shore scan's grid (m), the water kept between a berth's hull
  *  and the shore (m), a berth's spacing (her lengths), and the most berths a harbour holds. */
@@ -132,7 +132,12 @@ export const ERRAND_SALT = 0x5b1f;
 export const ERRANDS = Object.freeze(['moored', 'depart', 'voyage', 'arrive', 'patrol', 'lurk']);
 
 const TAU = Math.PI * 2;
-const wrap = (a) => { a %= TAU; if (a > Math.PI) a -= TAU; else if (a < -Math.PI) a += TAU; return a; };
+const wrap = (a) => {
+  a %= TAU;
+  if (a > Math.PI) a -= TAU;
+  else if (a < -Math.PI) a += TAU;
+  return a;
+};
 const heading = (from, to) => Math.atan2(to[0] - from[0], to[1] - from[1]);
 const dist2 = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
 /** A ship's plan point [x, z] from her 3D position. */
@@ -166,7 +171,10 @@ export function alongside(berth, hull, harbourHull = BERTH_HULL) {
  *  berth's (BERTH_HULL's) the berths' template's (SHIPS-2: berthSize). */
 export function footprintClear(pos, yaw, hull, isWater) {
   const { halfWidth, bowZ, aftZ } = berthSize(hull);
-  const fx = Math.sin(yaw), fz = Math.cos(yaw), sx = fz, sz = -fx;
+  const fx = Math.sin(yaw),
+    fz = Math.cos(yaw),
+    sx = fz,
+    sz = -fx;
   for (let z = aftZ; z <= bowZ + 1e-6; z += Math.max(4, (bowZ - aftZ) / 8)) {
     for (const s of [-halfWidth, 0, halfWidth]) {
       if (!isWater(pos[0] + fx * z + sx * s, pos[1] + fz * z + sz * s, hull)) return false;
@@ -183,9 +191,16 @@ export const BERTH_QUAY_ENDS = 3;
  *  to the quay's back, its ends past her bow and her stern. */
 export function quayBox(pos, yaw, normal, hull = BERTH_HULL) {
   const { halfWidth, bowZ, aftZ } = berthSize(hull);
-  const fx = Math.sin(yaw), fz = Math.cos(yaw), lx = -normal[0], lz = -normal[1];
-  return [[aftZ - BERTH_QUAY_ENDS, -halfWidth], [bowZ + BERTH_QUAY_ENDS, -halfWidth], [bowZ + BERTH_QUAY_ENDS, halfWidth + BERTH_QUAY_IN], [aftZ - BERTH_QUAY_ENDS, halfWidth + BERTH_QUAY_IN]]
-    .map(([z, x]) => [pos[0] + fx * z + lx * x, pos[1] + fz * z + lz * x]);
+  const fx = Math.sin(yaw),
+    fz = Math.cos(yaw),
+    lx = -normal[0],
+    lz = -normal[1];
+  return [
+    [aftZ - BERTH_QUAY_ENDS, -halfWidth],
+    [bowZ + BERTH_QUAY_ENDS, -halfWidth],
+    [bowZ + BERTH_QUAY_ENDS, halfWidth + BERTH_QUAY_IN],
+    [aftZ - BERTH_QUAY_ENDS, halfWidth + BERTH_QUAY_IN],
+  ].map(([z, x]) => [pos[0] + fx * z + lx * x, pos[1] + fz * z + lz * x]);
 }
 /** PORT-SHIPS: a berth asked of her town and her ground this often over her (m) - under the narrowest pier a capital
  *  stands (Alinor's and Torval's, 6 m). */
@@ -202,7 +217,8 @@ export const BOW_TAPER = 0.3;
 export const STERN_TAPER = 0.12;
 /** PORT-SHIPS: her waterplane's half beam `z` along her (berthSize's frame, bow +). */
 export function waterplaneHalf(z, hull = BERTH_HULL) {
-  const { halfWidth, bowZ, aftZ } = berthSize(hull), L = bowZ - aftZ;
+  const { halfWidth, bowZ, aftZ } = berthSize(hull),
+    L = bowZ - aftZ;
   return halfWidth * Math.max(0, Math.min(1, (bowZ - z) / (BOW_TAPER * L), (z - aftZ) / (STERN_TAPER * L)));
 }
 /**
@@ -217,20 +233,35 @@ export function waterplaneHalf(z, hull = BERTH_HULL) {
  */
 export function berthStands(pos, yaw, normal, hull, { keep = null, ground = null, water }, quay = true) {
   const { halfWidth, bowZ, aftZ } = berthSize(hull);
-  const fx = Math.sin(yaw), fz = Math.cos(yaw), lx = -normal[0], lz = -normal[1];
+  const fx = Math.sin(yaw),
+    fz = Math.cos(yaw),
+    lx = -normal[0],
+    lz = -normal[1];
   const at = (z, x) => [pos[0] + fx * z + lx * x, pos[1] + fz * z + lz * x];
   if (ground) {
     const n = Math.ceil((bowZ - aftZ) / KEEP_STEP);
     for (let i = 0; i <= n; i++) {
-      const z = aftZ + ((bowZ - aftZ) * i) / n, w = waterplaneHalf(z, hull), m = Math.ceil((2 * w) / KEEP_STEP);
-      for (let j = 0; j <= m; j++) { const p = at(z, -w + (m ? (2 * w * j) / m : 0)); if (ground(p[0], p[1]) > BERTH_DRY_M) return false; }
+      const z = aftZ + ((bowZ - aftZ) * i) / n,
+        w = waterplaneHalf(z, hull),
+        m = Math.ceil((2 * w) / KEEP_STEP);
+      for (let j = 0; j <= m; j++) {
+        const p = at(z, -w + (m ? (2 * w * j) / m : 0));
+        if (ground(p[0], p[1]) > BERTH_DRY_M) return false;
+      }
     }
   }
   if (!keep) return true;
-  const ends = quay ? BERTH_QUAY_ENDS : 0, inn = halfWidth + (quay ? BERTH_QUAY_IN : 0);
-  const z0 = aftZ - ends, z1 = bowZ + ends, nz = Math.ceil((z1 - z0) / KEEP_STEP), nx = Math.ceil((inn + halfWidth) / KEEP_STEP);
+  const ends = quay ? BERTH_QUAY_ENDS : 0,
+    inn = halfWidth + (quay ? BERTH_QUAY_IN : 0);
+  const z0 = aftZ - ends,
+    z1 = bowZ + ends,
+    nz = Math.ceil((z1 - z0) / KEEP_STEP),
+    nx = Math.ceil((inn + halfWidth) / KEEP_STEP);
   for (let i = 0; i <= nz; i++) {
-    for (let j = 0; j <= nx; j++) { const p = at(z0 + ((z1 - z0) * i) / nz, -halfWidth + ((inn + halfWidth) * j) / nx); if (keep(p[0], p[1])) return false; }
+    for (let j = 0; j <= nx; j++) {
+      const p = at(z0 + ((z1 - z0) * i) / nz, -halfWidth + ((inn + halfWidth) * j) / nx);
+      if (keep(p[0], p[1])) return false;
+    }
   }
   if (!quay) return true;
   for (let t = KEEP_STEP; t <= BERTH_JETTY_WALK; t += KEEP_STEP) {
@@ -244,9 +275,13 @@ export function berthStands(pos, yaw, normal, hull, { keep = null, ground = null
 export function boxesMeet(a, b) {
   for (const box of [a, b]) {
     for (let i = 0; i < 4; i++) {
-      const [px, pz] = box[i], [qx, qz] = box[(i + 1) % 4], ax = pz - qz, az = qx - px;
+      const [px, pz] = box[i],
+        [qx, qz] = box[(i + 1) % 4],
+        ax = pz - qz,
+        az = qx - px;
       const span = (q) => q.map(([x, z]) => x * ax + z * az);
-      const sa = span(a), sb = span(b);
+      const sa = span(a),
+        sb = span(b);
       if (Math.max(...sa) <= Math.min(...sb) || Math.max(...sb) <= Math.min(...sa)) return false;
     }
   }
@@ -262,39 +297,63 @@ export function boxesMeet(a, b) {
  * ground under the sea (`ground(x, z)`, its height over the sea's top), her approach's hull too; either null asks nothing.
  * ALDBRUGH-QUAY: `square` reads `reach` off the rect along each axis (a square), where it is read round by default.
  */
-export function findHarbour({ rect, isWater: own, hull = BERTH_HULL, deep = deepestBerther(), max = HARBOUR_BERTHS, reach = HARBOUR_REACH, keep = null, ground = null, square = false }) {
-  const { length, halfWidth } = berthSize(hull);   // SHIPS-2: the berths' template's
+export function findHarbour({
+  rect,
+  isWater: own,
+  hull = BERTH_HULL,
+  deep = deepestBerther(),
+  max = HARBOUR_BERTHS,
+  reach = HARBOUR_REACH,
+  keep = null,
+  ground = null,
+  square = false,
+}) {
+  const { length, halfWidth } = berthSize(hull); // SHIPS-2: the berths' template's
   const isWater = (x, z, h) => !!own(x, z, h) && (h === deep || !!own(x, z, deep));
   const water = (x, z) => isWater(x, z, hull);
-  const stands = keep || ground ? { keep, ground, water } : null;   // PORT-SHIPS
-  const cx = (rect.minX + rect.maxX) / 2, cz = (rect.minZ + rect.maxZ) / 2;
-  const x0 = rect.minX - reach, x1 = rect.maxX + reach, z0 = rect.minZ - reach, z1 = rect.maxZ + reach;
+  const stands = keep || ground ? { keep, ground, water } : null; // PORT-SHIPS
+  const cx = (rect.minX + rect.maxX) / 2,
+    cz = (rect.minZ + rect.maxZ) / 2;
+  const x0 = rect.minX - reach,
+    x1 = rect.maxX + reach,
+    z0 = rect.minZ - reach,
+    z1 = rect.maxZ + reach;
   const cands = [];
   for (let x = x0; x <= x1; x += SHORE_STEP) {
     for (let z = z0; z <= z1; z += SHORE_STEP) {
       if (!water(x, z)) continue;
       // beside the land: a neighbour a step off is land
-      if (water(x + SHORE_STEP, z) && water(x - SHORE_STEP, z) && water(x, z + SHORE_STEP) && water(x, z - SHORE_STEP)) continue;
+      if (water(x + SHORE_STEP, z) && water(x - SHORE_STEP, z) && water(x, z + SHORE_STEP) && water(x, z - SHORE_STEP))
+        continue;
       // the shore's normal: toward the water round her, away from the land
-      let nx = 0, nz = 0;
+      let nx = 0,
+        nz = 0;
       for (let k = 0; k < 16; k++) {
-        const a = (k / 16) * TAU, dx = Math.sin(a), dz = Math.cos(a);
-        if (water(x + dx * SHORE_STEP * 2, z + dz * SHORE_STEP * 2)) { nx += dx; nz += dz; }
+        const a = (k / 16) * TAU,
+          dx = Math.sin(a),
+          dz = Math.cos(a);
+        if (water(x + dx * SHORE_STEP * 2, z + dz * SHORE_STEP * 2)) {
+          nx += dx;
+          nz += dz;
+        }
       }
       const n = Math.hypot(nx, nz);
-      if (n < 1.5) continue;   // a pool, or a sliver of water between two lands
-      nx /= n; nz /= n;
+      if (n < 1.5) continue; // a pool, or a sliver of water between two lands
+      nx /= n;
+      nz /= n;
       const off = halfWidth + BERTH_MARGIN;
       const pos = [x + nx * off, z + nz * off];
-      const dx = Math.max(rect.minX - pos[0], 0, pos[0] - rect.maxX), dz = Math.max(rect.minZ - pos[1], 0, pos[1] - rect.maxZ);
-      if ((square ? Math.max(dx, dz) : Math.hypot(dx, dz)) > reach) continue;   // ALDBRUGH-QUAY: `square`, the port law's own ring of pixels, corners and all
+      const dx = Math.max(rect.minX - pos[0], 0, pos[0] - rect.maxX),
+        dz = Math.max(rect.minZ - pos[1], 0, pos[1] - rect.maxZ);
+      if ((square ? Math.max(dx, dz) : Math.hypot(dx, dz)) > reach) continue; // ALDBRUGH-QUAY: `square`, the port law's own ring of pixels, corners and all
       cands.push({ pos, normal: [nx, nz], d: Math.hypot(pos[0] - cx, pos[1] - cz) });
     }
   }
   cands.sort((a, b) => a.d - b.d || a.pos[0] - b.pos[0] || a.pos[1] - b.pos[1]);
   /** The berths off `from`, nearest the town first. */
   const pick = (from) => {
-    const berths = [], boxes = [];
+    const berths = [],
+      boxes = [];
     for (const c of from) {
       if (berths.length >= max) break;
       if (berths.some((b) => dist2(b.pos, c.pos) < length * BERTH_SPACING)) continue;
@@ -302,11 +361,14 @@ export function findHarbour({ rect, isWater: own, hull = BERTH_HULL, deep = deep
       // she lies along the shore, whichever way her approach astern of her is open water
       for (const yaw of [wrap(along), wrap(along + Math.PI)]) {
         if (!footprintClear(c.pos, yaw, hull, isWater)) continue;
-        if (stands && !berthStands(c.pos, yaw, c.normal, hull, stands)) continue;   // PORT-SHIPS: afloat, and her ship, her quay and her jetty's way out of the town
+        if (stands && !berthStands(c.pos, yaw, c.normal, hull, stands)) continue; // PORT-SHIPS: afloat, and her ship, her quay and her jetty's way out of the town
         const back = length * APPROACH_LENGTHS;
-        const approach = [c.pos[0] - Math.sin(yaw) * back + c.normal[0] * APPROACH_OUT, c.pos[1] - Math.cos(yaw) * back + c.normal[1] * APPROACH_OUT];
+        const approach = [
+          c.pos[0] - Math.sin(yaw) * back + c.normal[0] * APPROACH_OUT,
+          c.pos[1] - Math.cos(yaw) * back + c.normal[1] * APPROACH_OUT,
+        ];
         if (!footprintClear(approach, yaw, hull, isWater)) continue;
-        if (stands && !berthStands(approach, yaw, c.normal, hull, stands, false)) continue;   // PORT-SHIPS: and her approach's hull
+        if (stands && !berthStands(approach, yaw, c.normal, hull, stands, false)) continue; // PORT-SHIPS: and her approach's hull
         // QUAY-CROSSING: her quay never laid across another berth's - round a point of land two berths BERTH_SPACING
         // apart turned to each other stood their quays' ends one over the other
         const box = quayBox(c.pos, yaw, c.normal, hull);
@@ -323,9 +385,15 @@ export function findHarbour({ rect, isWater: own, hull = BERTH_HULL, deep = deep
   const openOut = (px, pz, mx, mz, wet = false) => {
     for (let d = 0; d <= MOUTH_REACH; d += SHORE_STEP) {
       const p = [px + mx * d, pz + mz * d];
-      if (!water(p[0], p[1])) { if (wet) return null; continue; }
+      if (!water(p[0], p[1])) {
+        if (wet) return null;
+        continue;
+      }
       let open = true;
-      for (let k = 0; k < 12 && open; k++) { const a = (k / 12) * TAU; open = water(p[0] + Math.sin(a) * MOUTH_CLEAR, p[1] + Math.cos(a) * MOUTH_CLEAR); }
+      for (let k = 0; k < 12 && open; k++) {
+        const a = (k / 12) * TAU;
+        open = water(p[0] + Math.sin(a) * MOUTH_CLEAR, p[1] + Math.cos(a) * MOUTH_CLEAR);
+      }
       if (open) return p;
     }
     return null;
@@ -334,11 +402,25 @@ export function findHarbour({ rect, isWater: own, hull = BERTH_HULL, deep = deep
    *  town on an isthmus, a peninsula's tip) cancel that mean out - then the nearest berth's own normal, from her own
    *  place; and a berth that cannot reach the mouth through the water is no berth of this harbour. */
   const mouthOf = (berths) => {
-    let mx = 0, mz = 0, px = 0, pz = 0;
-    for (const b of berths) { mx += b.normal[0]; mz += b.normal[1]; px += b.pos[0]; pz += b.pos[1]; }
+    let mx = 0,
+      mz = 0,
+      px = 0,
+      pz = 0;
+    for (const b of berths) {
+      mx += b.normal[0];
+      mz += b.normal[1];
+      px += b.pos[0];
+      pz += b.pos[1];
+    }
     let m = Math.hypot(mx, mz);
-    if (m < berths.length * MOUTH_AGREE) { [mx, mz] = berths[0].normal; [px, pz] = berths[0].pos; m = 1; }
-    else { px /= berths.length; pz /= berths.length; }
+    if (m < berths.length * MOUTH_AGREE) {
+      [mx, mz] = berths[0].normal;
+      [px, pz] = berths[0].pos;
+      m = 1;
+    } else {
+      px /= berths.length;
+      pz /= berths.length;
+    }
     return openOut(px, pz, mx / m, mz / m);
   };
   let berths = pick(cands);
@@ -382,73 +464,141 @@ export function createWaterGrid({ isWater, hull = 0, cell = WATER_CELL, nodeCap 
     if (v !== undefined) return v;
     const [x, z] = centre(i, k);
     v = water(x, z);
-    for (let a = 0; v && a < 8; a++) { const t = (a / 8) * TAU; v = water(x + Math.sin(t) * cell * WATER_CLEAR, z + Math.cos(t) * cell * WATER_CLEAR); }
+    for (let a = 0; v && a < 8; a++) {
+      const t = (a / 8) * TAU;
+      v = water(x + Math.sin(t) * cell * WATER_CLEAR, z + Math.cos(t) * cell * WATER_CLEAR);
+    }
     cache.set(kk, v);
     return v;
   }
   function clear(a, b) {
     // AUDIT SHIP-LIFE A3: sampled every quarter cell - at 0.4 a straightened leg clipped a 10 m spit's corner
-    const d = dist2(a, b), n = Math.max(1, Math.ceil(d / (cell * CLEAR_STEP)));
-    const sx = d > 0 ? (b[1] - a[1]) / d : 0, sz = d > 0 ? -(b[0] - a[0]) / d : 0;
+    const d = dist2(a, b),
+      n = Math.max(1, Math.ceil(d / (cell * CLEAR_STEP)));
+    const sx = d > 0 ? (b[1] - a[1]) / d : 0,
+      sz = d > 0 ? -(b[0] - a[0]) / d : 0;
     for (let s = 0; s <= n; s++) {
-      const t = s / n, x = a[0] + (b[0] - a[0]) * t, z = a[1] + (b[1] - a[1]) * t;
+      const t = s / n,
+        x = a[0] + (b[0] - a[0]) * t,
+        z = a[1] + (b[1] - a[1]) * t;
       if (!water(x, z)) return false;
-      if (Math.min(t, 1 - t) * d > LEG_END_M && !(water(x + sx * LEG_MARGIN, z + sz * LEG_MARGIN) && water(x - sx * LEG_MARGIN, z - sz * LEG_MARGIN))) return false;
+      if (
+        Math.min(t, 1 - t) * d > LEG_END_M &&
+        !(water(x + sx * LEG_MARGIN, z + sz * LEG_MARGIN) && water(x - sx * LEG_MARGIN, z - sz * LEG_MARGIN))
+      )
+        return false;
     }
     return true;
   }
   /** The water straight between two points, no margin (a way's first and last legs, to and from the grid). */
   function wet(a, b) {
-    const d = dist2(a, b), n = Math.max(1, Math.ceil(d / (cell * 0.25)));
-    for (let s = 0; s <= n; s++) { const t = s / n; if (!water(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)) return false; }
+    const d = dist2(a, b),
+      n = Math.max(1, Math.ceil(d / (cell * 0.25)));
+    for (let s = 0; s <= n; s++) {
+      const t = s / n;
+      if (!water(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)) return false;
+    }
     return true;
   }
   /** The open cell nearest a point, within three rings, that the water joins to it (AUDIT SHIP-LIFE A3: never a cell
    *  across a spit - the leg to and from the grid is sailed as it lies, and the berthing leg with no swing off the
    *  shore) - null for none. */
   function nearestOpen(p) {
-    const i0 = Math.floor(p[0] / cell), k0 = Math.floor(p[1] / cell);
-    let best = null, bestD = Infinity;
+    const i0 = Math.floor(p[0] / cell),
+      k0 = Math.floor(p[1] / cell);
+    let best = null,
+      bestD = Infinity;
     for (let r = 0; r <= 3 && !best; r++) {
-      for (let i = i0 - r; i <= i0 + r; i++) for (let k = k0 - r; k <= k0 + r; k++) {
-        if (Math.max(Math.abs(i - i0), Math.abs(k - k0)) !== r || !open(i, k) || !wet(p, centre(i, k))) continue;
-        const d = dist2(centre(i, k), p);
-        if (d < bestD) { bestD = d; best = [i, k]; }
-      }
+      for (let i = i0 - r; i <= i0 + r; i++)
+        for (let k = k0 - r; k <= k0 + r; k++) {
+          if (Math.max(Math.abs(i - i0), Math.abs(k - k0)) !== r || !open(i, k) || !wet(p, centre(i, k))) continue;
+          const d = dist2(centre(i, k), p);
+          if (d < bestD) {
+            bestD = d;
+            best = [i, k];
+          }
+        }
     }
     return best;
   }
   function path(from, to) {
     expansions = 0;
-    if (clear(from, to)) return [[from[0], from[1]], [to[0], to[1]]];
-    const s = nearestOpen(from), g = nearestOpen(to);
+    if (clear(from, to))
+      return [
+        [from[0], from[1]],
+        [to[0], to[1]],
+      ];
+    const s = nearestOpen(from),
+      g = nearestOpen(to);
     if (!s || !g) return null;
     const gk = key(g[0], g[1]);
-    const cost = new Map([[key(s[0], s[1]), 0]]), prev = new Map(), shut = new Set();
+    const cost = new Map([[key(s[0], s[1]), 0]]),
+      prev = new Map(),
+      shut = new Set();
     const heap = [[dist2(centre(s[0], s[1]), centre(g[0], g[1])), s[0], s[1]]];
-    const push = (e) => { heap.push(e); let i = heap.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (heap[p][0] <= heap[i][0]) break; [heap[p], heap[i]] = [heap[i], heap[p]]; i = p; } };
-    const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; let i = 0; for (;;) { const l = i * 2 + 1, r = l + 1; let m = i; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === i) break; [heap[m], heap[i]] = [heap[i], heap[m]]; i = m; } } return top; };
+    const push = (e) => {
+      heap.push(e);
+      let i = heap.length - 1;
+      while (i > 0) {
+        const p = (i - 1) >> 1;
+        if (heap[p][0] <= heap[i][0]) break;
+        [heap[p], heap[i]] = [heap[i], heap[p]];
+        i = p;
+      }
+    };
+    const pop = () => {
+      const top = heap[0],
+        last = heap.pop();
+      if (heap.length) {
+        heap[0] = last;
+        let i = 0;
+        for (;;) {
+          const l = i * 2 + 1,
+            r = l + 1;
+          let m = i;
+          if (l < heap.length && heap[l][0] < heap[m][0]) m = l;
+          if (r < heap.length && heap[r][0] < heap[m][0]) m = r;
+          if (m === i) break;
+          [heap[m], heap[i]] = [heap[i], heap[m]];
+          i = m;
+        }
+      }
+      return top;
+    };
     let found = false;
     while (heap.length) {
       const [, i, k] = pop();
       const kk = key(i, k);
       if (shut.has(kk)) continue;
       shut.add(kk);
-      if (kk === gk) { found = true; break; }
+      if (kk === gk) {
+        found = true;
+        break;
+      }
       if (++expansions > nodeCap) return null;
       const c0 = cost.get(kk);
-      for (let di = -1; di <= 1; di++) for (let dk = -1; dk <= 1; dk++) {
-        if (!di && !dk) continue;
-        const ni = i + di, nk = k + dk, nkey = key(ni, nk);
-        if (shut.has(nkey) || !open(ni, nk)) continue;
-        if (di && dk && !(open(i + di, k) && open(i, k + dk))) continue;   // no corner cut past a closed cell
-        const c = c0 + (di && dk ? Math.SQRT2 : 1) * cell;
-        if (c < (cost.get(nkey) ?? Infinity)) { cost.set(nkey, c); prev.set(nkey, kk); push([c + dist2(centre(ni, nk), centre(g[0], g[1])), ni, nk]); }
-      }
+      for (let di = -1; di <= 1; di++)
+        for (let dk = -1; dk <= 1; dk++) {
+          if (!di && !dk) continue;
+          const ni = i + di,
+            nk = k + dk,
+            nkey = key(ni, nk);
+          if (shut.has(nkey) || !open(ni, nk)) continue;
+          if (di && dk && !(open(i + di, k) && open(i, k + dk))) continue; // no corner cut past a closed cell
+          const c = c0 + (di && dk ? Math.SQRT2 : 1) * cell;
+          if (c < (cost.get(nkey) ?? Infinity)) {
+            cost.set(nkey, c);
+            prev.set(nkey, kk);
+            push([c + dist2(centre(ni, nk), centre(g[0], g[1])), ni, nk]);
+          }
+        }
     }
     if (!found) return null;
     const cells = [];
-    for (let kk = gk; kk; kk = prev.get(kk)) { const [i, k] = kk.split(',').map(Number); cells.push(centre(i, k)); }
+    for (let kk = gk; kk; kk = prev.get(kk)) {
+      const [i, k] = kk.split(',').map(Number);
+      cells.push(centre(i, k));
+    }
     cells.reverse();
     const raw = [[from[0], from[1]], ...cells, [to[0], to[1]]];
     // the corners straightened: from each point, the farthest ahead the water between lets her sail straight to
@@ -456,13 +606,25 @@ export function createWaterGrid({ isWater, hull = 0, cell = WATER_CELL, nodeCap 
     let at = 0;
     while (at < raw.length - 1) {
       let next = at + 1;
-      for (let q = raw.length - 1; q > at + 1; q--) if (clear(raw[at], raw[q])) { next = q; break; }
+      for (let q = raw.length - 1; q > at + 1; q--)
+        if (clear(raw[at], raw[q])) {
+          next = q;
+          break;
+        }
       out.push(raw[next]);
       at = next;
     }
     return out;
   }
-  return { path, clear, open, get expansions() { return expansions; }, cell };
+  return {
+    path,
+    clear,
+    open,
+    get expansions() {
+      return expansions;
+    },
+    cell,
+  };
 }
 
 /** Her errand's own stream: off her seed, never her captain's. */
@@ -487,7 +649,10 @@ export function errandFor({ seed, faction, hull, pos, speed = 0, clock = 0, harb
       if (i >= 0) return { kind: 'moored', harbour: h.key, berth: i, until: clock + dwellOf(r), path: null, i: 0 };
     }
   }
-  const near = harbours.map((h) => ({ h, d: dist2(h.harbour.mouth, here) })).filter((x) => x.d <= VOYAGE_REACH).sort((a, b) => a.d - b.d);
+  const near = harbours
+    .map((h) => ({ h, d: dist2(h.harbour.mouth, here) }))
+    .filter((x) => x.d <= VOYAGE_REACH)
+    .sort((a, b) => a.d - b.d);
   if (faction === 'merchant') {
     for (const { h } of near) {
       const berth = hull === 3 ? -1 : h.harbour.berths.findIndex((_, i) => h.free?.(i) ?? true);
@@ -505,7 +670,8 @@ export function errandFor({ seed, faction, hull, pos, speed = 0, clock = 0, harb
     const m = near[0].h.harbour.mouth;
     let at = null;
     for (let k = 0; k < OUTBOUND_TRIES && !at; k++) {
-      const a = r() * TAU, q = [m[0] + Math.sin(a) * LURK_R, m[1] + Math.cos(a) * LURK_R];
+      const a = r() * TAU,
+        q = [m[0] + Math.sin(a) * LURK_R, m[1] + Math.cos(a) * LURK_R];
       if (!clear || clear(m, q)) at = q;
     }
     return { kind: 'lurk', harbour: near[0].h.key, at: at ?? [m[0], m[1]], path: null, i: 0, spin: r() };
@@ -520,9 +686,18 @@ function outbound(r, here, clear = null) {
   let a = r() * TAU;
   for (let k = 0; clear && k < OUTBOUND_TRIES; k++) {
     const b = k ? r() * TAU : a;
-    if (clear(here, [here[0] + Math.sin(b) * OUTBOUND_OPEN, here[1] + Math.cos(b) * OUTBOUND_OPEN])) { a = b; break; }
+    if (clear(here, [here[0] + Math.sin(b) * OUTBOUND_OPEN, here[1] + Math.cos(b) * OUTBOUND_OPEN])) {
+      a = b;
+      break;
+    }
   }
-  return { kind: 'voyage', harbour: null, to: [here[0] + Math.sin(a) * VOYAGE_DIST, here[1] + Math.cos(a) * VOYAGE_DIST], path: null, i: 0 };
+  return {
+    kind: 'voyage',
+    harbour: null,
+    to: [here[0] + Math.sin(a) * VOYAGE_DIST, here[1] + Math.cos(a) * VOYAGE_DIST],
+    path: null,
+    i: 0,
+  };
 }
 
 /** Along a way: its next point unreached, advanced past every one within REACH_M. */
@@ -551,7 +726,8 @@ export function stepErrand(ship, dt, ctx) {
   const here = flat(ship.pos);
   const plan = (goal, sails = 1) => ({ want: heading(here, goal), goal: [goal[0], 0, goal[1]], sails });
   // a stall: no way under sail for STALL_S - a detour abeam into open water, then her way planned anew past what held her
-  if (e.kind !== 'moored' && !fishingHeld(e)) {   // FISH-BOATS: at anchor or working her ground, she is where she means to be
+  if (e.kind !== 'moored' && !fishingHeld(e)) {
+    // FISH-BOATS: at anchor or working her ground, she is where she means to be
     // AUDIT SHIP-LIFE A1: whatever sail she carries - the last of a berthing's way and a captain boxed in by the land
     // both shorten it, and a hulk across either held her there for good
     e.stall = ship.speed < STALL_WAY ? (e.stall ?? 0) + dt : 0;
@@ -563,22 +739,35 @@ export function stepErrand(ship, dt, ctx) {
       // else out; any other keeps her own cruise
       e.detours = (e.detours ?? 0) + 1;
       if (e.detours > DETOUR_GIVEUP) {
-        const other = e.kind === 'arrive' && hb && ship.hull !== 3 ? hb.berths.findIndex((_, i) => i !== e.berth && (ctx.free?.(e.harbour, i) ?? true)) : -1;
-        ship.errand = other >= 0 ? { kind: 'arrive', harbour: e.harbour, berth: other, path: null, i: 0 }
-          : e.kind === 'arrive' ? outbound(errandRng(ship.seed ^ Math.floor(ship.clock)), here, ctx.grid(ship.hull).clear) : null;
+        const other =
+          e.kind === 'arrive' && hb && ship.hull !== 3
+            ? hb.berths.findIndex((_, i) => i !== e.berth && (ctx.free?.(e.harbour, i) ?? true))
+            : -1;
+        ship.errand =
+          other >= 0
+            ? { kind: 'arrive', harbour: e.harbour, berth: other, path: null, i: 0 }
+            : e.kind === 'arrive'
+              ? outbound(errandRng(ship.seed ^ Math.floor(ship.clock)), here, ctx.grid(ship.hull).clear)
+              : null;
         return stepErrand(ship, dt, ctx);
       }
       const clear = ctx.grid(ship.hull).clear;
       const sides = e.detour ? [-(e.side ?? 1), e.side ?? 1] : [1, -1];
       e.detour = null;
       for (const side of sides) {
-        const a = ship.yaw + side * Math.PI / 2, q = [here[0] + Math.sin(a) * DETOUR_M, here[1] + Math.cos(a) * DETOUR_M];
-        if (clear(here, q)) { e.detour = q; e.side = side; break; }
+        const a = ship.yaw + (side * Math.PI) / 2,
+          q = [here[0] + Math.sin(a) * DETOUR_M, here[1] + Math.cos(a) * DETOUR_M];
+        if (clear(here, q)) {
+          e.detour = q;
+          e.side = side;
+          break;
+        }
       }
     }
     if (e.detour) {
       if (dist2(here, e.detour) > REACH_M) return plan(e.detour, 0.6);
-      e.detour = null; e.path = null;
+      e.detour = null;
+      e.path = null;
     }
   }
   // AUDIT SHIP-LIFE A2: no way through the water (none within PATH_NODES - a headland too deep, a berth the water does
@@ -587,35 +776,63 @@ export function stepErrand(ship, dt, ctx) {
   const way = (to, via = null) => {
     if (!e.path) {
       const grid = ctx.grid(ship.hull);
-      const a = grid.path(here, via ?? to), b = via ? grid.path(via, to) : null;
+      const a = grid.path(here, via ?? to),
+        b = via ? grid.path(via, to) : null;
       if (!a || (via && !b)) return null;
-      e.path = [...a, ...(b ? b.slice(1) : [])].map((q) => [q[0], q[1]]); e.i = 0;   // her own points - never a harbour's, which the origin moves apart
+      e.path = [...a, ...(b ? b.slice(1) : [])].map((q) => [q[0], q[1]]);
+      e.i = 0; // her own points - never a harbour's, which the origin moves apart
     }
     return follow(ship, e);
   };
-  const giveUp = () => { ship.errand = null; return null; };
+  const giveUp = () => {
+    ship.errand = null;
+    return null;
+  };
   switch (e.kind) {
     case 'moored': {
       const b = hb?.berths[e.berth];
-      if (!b) { ship.errand = null; return null; }
-      if (dist2(here, b.pos) > BERTH_SNAP_M * 2) { ship.errand = { kind: 'arrive', harbour: e.harbour, berth: e.berth, path: null, i: 0 }; return stepErrand(ship, dt, ctx); }   // moved off her berth (a fight): back to it
-      if (ship.clock >= e.until && !(ctx.night && ship.cls?.faction === 'merchant')) {   // SHIP-WATCH: a merchantman waits for the morning
+      if (!b) {
+        ship.errand = null;
+        return null;
+      }
+      if (dist2(here, b.pos) > BERTH_SNAP_M * 2) {
+        ship.errand = { kind: 'arrive', harbour: e.harbour, berth: e.berth, path: null, i: 0 };
+        return stepErrand(ship, dt, ctx);
+      } // moved off her berth (a fight): back to it
+      if (ship.clock >= e.until && !(ctx.night && ship.cls?.faction === 'merchant')) {
+        // SHIP-WATCH: a merchantman waits for the morning
         ship.errand = { kind: 'depart', harbour: e.harbour, berth: e.berth, path: null, i: 0 };
         return stepErrand(ship, dt, ctx);
       }
-      return { hold: { pos: alongside(b, ship.hull, hb.hull), yaw: b.yaw } };   // QUAYS: her side to its quay
+      return { hold: { pos: alongside(b, ship.hull, hb.hull), yaw: b.yaw } }; // QUAYS: her side to its quay
     }
     case 'depart': {
-      if (!hb) { ship.errand = null; return null; }
+      if (!hb) {
+        ship.errand = null;
+        return null;
+      }
       const b = hb.berths[e.berth];
-      const p = way(hb.mouth, b ? [b.pos[0] + b.normal[0] * (hullSize(ship.hull).halfWidth * 3 + 20), b.pos[1] + b.normal[1] * (hullSize(ship.hull).halfWidth * 3 + 20)] : null);
+      const p = way(
+        hb.mouth,
+        b
+          ? [
+              b.pos[0] + b.normal[0] * (hullSize(ship.hull).halfWidth * 3 + 20),
+              b.pos[1] + b.normal[1] * (hullSize(ship.hull).halfWidth * 3 + 20),
+            ]
+          : null,
+      );
       if (!p) return giveUp();
       if (dist2(here, hb.mouth) <= REACH_M * 1.5) {
         const r = errandRng(ship.seed ^ Math.floor(ship.clock));
-        if (ship.cls?.faction === 'navy') ship.errand = { kind: 'patrol', harbour: e.harbour, since: ship.clock, path: null, i: 0, spin: r() };
+        if (ship.cls?.faction === 'navy')
+          ship.errand = { kind: 'patrol', harbour: e.harbour, since: ship.clock, path: null, i: 0, spin: r() };
         else {
-          const other = (ctx.harbours?.() ?? []).filter((x) => x.key !== e.harbour && dist2(x.harbour.mouth, here) <= VOYAGE_REACH).sort((a, c) => dist2(a.harbour.mouth, here) - dist2(c.harbour.mouth, here))[0];
-          ship.errand = other ? { kind: 'voyage', harbour: other.key, to: null, path: null, i: 0 } : outbound(r, here, ctx.grid(ship.hull).clear);
+          const other = (ctx.harbours?.() ?? [])
+            .filter((x) => x.key !== e.harbour && dist2(x.harbour.mouth, here) <= VOYAGE_REACH)
+            .sort((a, c) => dist2(a.harbour.mouth, here) - dist2(c.harbour.mouth, here))[0];
+          ship.errand = other
+            ? { kind: 'voyage', harbour: other.key, to: null, path: null, i: 0 }
+            : outbound(r, here, ctx.grid(ship.hull).clear);
         }
         return stepErrand(ship, dt, ctx);
       }
@@ -623,13 +840,19 @@ export function stepErrand(ship, dt, ctx) {
     }
     case 'voyage': {
       const to = hb ? hb.mouth : e.to;
-      if (!to) { ship.errand = null; return null; }
-      const p = hb ? way(to) : to;   // out of the world: straight, her lookout's own land swing on the way
+      if (!to) {
+        ship.errand = null;
+        return null;
+      }
+      const p = hb ? way(to) : to; // out of the world: straight, her lookout's own land swing on the way
       if (!p) return giveUp();
       if (dist2(here, to) <= REACH_M * 1.5) {
         if (hb) {
           const berth = hb.berths.findIndex((_, i) => ctx.free?.(e.harbour, i) ?? true);
-          ship.errand = berth >= 0 && ship.hull !== 3 ? { kind: 'arrive', harbour: e.harbour, berth, path: null, i: 0 } : outbound(errandRng(ship.seed ^ 0x77), here, ctx.grid(ship.hull).clear);
+          ship.errand =
+            berth >= 0 && ship.hull !== 3
+              ? { kind: 'arrive', harbour: e.harbour, berth, path: null, i: 0 }
+              : outbound(errandRng(ship.seed ^ 0x77), here, ctx.grid(ship.hull).clear);
         } else ship.errand = outbound(errandRng(ship.seed ^ Math.floor(ship.clock)), here, ctx.grid(ship.hull).clear);
         return stepErrand(ship, dt, ctx);
       }
@@ -637,37 +860,58 @@ export function stepErrand(ship, dt, ctx) {
     }
     case 'arrive': {
       const b = hb?.berths[e.berth];
-      if (!b) { ship.errand = null; return null; }
+      if (!b) {
+        ship.errand = null;
+        return null;
+      }
       // AUDIT HOLDINGS Q5: her berth looked at again on the way in - taken since she chose it (a player's ship made fast
       // there, here or on another player's screen, whose putOff never reaches the ship I stand) - another free berth,
       // else out
       if (ctx.free && !ctx.free(e.harbour, e.berth, ship)) {
         const other = hb.berths.findIndex((_, i) => i !== e.berth && ctx.free(e.harbour, i, ship));
-        ship.errand = other >= 0 && ship.hull !== 3 ? { kind: 'arrive', harbour: e.harbour, berth: other, path: null, i: 0 } : outbound(errandRng(ship.seed ^ Math.floor(ship.clock)), here, ctx.grid(ship.hull).clear);
+        ship.errand =
+          other >= 0 && ship.hull !== 3
+            ? { kind: 'arrive', harbour: e.harbour, berth: other, path: null, i: 0 }
+            : outbound(errandRng(ship.seed ^ Math.floor(ship.clock)), here, ctx.grid(ship.hull).clear);
         return stepErrand(ship, dt, ctx);
       }
       const p = way(b.pos, b.approach);
       if (!p) return giveUp();
       const left = remaining(ship, e);
       if (dist2(here, b.pos) <= BERTH_SNAP_M && ship.speed <= BERTH_WAY) {
-        ship.errand = { kind: 'moored', harbour: e.harbour, berth: e.berth, until: ship.clock + dwellOf(errandRng(ship.seed ^ Math.floor(ship.clock))), path: null, i: 0 };
-        return { hold: { pos: alongside(b, ship.hull, hb.hull), yaw: b.yaw } };   // QUAYS: eased in alongside its quay
+        ship.errand = {
+          kind: 'moored',
+          harbour: e.harbour,
+          berth: e.berth,
+          until: ship.clock + dwellOf(errandRng(ship.seed ^ Math.floor(ship.clock))),
+          path: null,
+          i: 0,
+        };
+        return { hold: { pos: alongside(b, ship.hull, hb.hull), yaw: b.yaw } }; // QUAYS: eased in alongside its quay
       }
       const sails = left >= ARRIVE_EASE_M ? 1 : Math.max(ARRIVE_SAILS, left / ARRIVE_EASE_M);
       // the last leg, into a berth the harbour sounded: no swing off the shore she lies along
       return { ...plan(p, sails), berthing: e.i === e.path.length - 1 };
     }
     case 'patrol': {
-      if (!hb) { ship.errand = null; return null; }
-      if (ship.clock - e.since >= PATROL_S) { ship.errand = outbound(errandRng(ship.seed ^ Math.floor(ship.clock)), here, ctx.grid(ship.hull).clear); return stepErrand(ship, dt, ctx); }
+      if (!hb) {
+        ship.errand = null;
+        return null;
+      }
+      if (ship.clock - e.since >= PATROL_S) {
+        ship.errand = outbound(errandRng(ship.seed ^ Math.floor(ship.clock)), here, ctx.grid(ship.hull).clear);
+        return stepErrand(ship, dt, ctx);
+      }
       if (!e.path) {
-        const grid = ctx.grid(ship.hull), ring = [];
+        const grid = ctx.grid(ship.hull),
+          ring = [];
         for (let k = 0; k < PATROL_POINTS; k++) {
           const a = (e.spin ?? 0) * TAU + (k / PATROL_POINTS) * TAU;
           const q = [hb.mouth[0] + Math.sin(a) * PATROL_R, hb.mouth[1] + Math.cos(a) * PATROL_R];
-          if (grid.clear(hb.mouth, q)) ring.push(q);   // AUDIT SHIP-LIFE A4: a point the water from the mouth reaches
+          if (grid.clear(hb.mouth, q)) ring.push(q); // AUDIT SHIP-LIFE A4: a point the water from the mouth reaches
         }
-        e.path = ringOver(ring, [hb.mouth[0], hb.mouth[1]], grid.clear); e.i = 0;
+        e.path = ringOver(ring, [hb.mouth[0], hb.mouth[1]], grid.clear);
+        e.i = 0;
       }
       if (dist2(here, e.path[e.i]) <= REACH_M) e.i = (e.i + 1) % e.path.length;
       return plan(e.path[e.i], 0.7);
@@ -675,20 +919,30 @@ export function stepErrand(ship, dt, ctx) {
     case 'lurk': {
       // SHIP-WATCH: by night her lurking place closer in on the mouth (NIGHT_LURK_K) - her ring laid afresh at the turn
       const night = !!ctx.night && !!hb;
-      if (e.night !== night) { e.night = night; e.path = null; }
-      const at = night ? [hb.mouth[0] + (e.at[0] - hb.mouth[0]) * NIGHT_LURK_K, hb.mouth[1] + (e.at[1] - hb.mouth[1]) * NIGHT_LURK_K] : e.at;
+      if (e.night !== night) {
+        e.night = night;
+        e.path = null;
+      }
+      const at = night
+        ? [hb.mouth[0] + (e.at[0] - hb.mouth[0]) * NIGHT_LURK_K, hb.mouth[1] + (e.at[1] - hb.mouth[1]) * NIGHT_LURK_K]
+        : e.at;
       if (!e.path) {
-        const clear = ctx.grid(ship.hull).clear, ring = [];
+        const clear = ctx.grid(ship.hull).clear,
+          ring = [];
         for (let k = 0; k < 4; k++) {
-          const a = (e.spin ?? 0) * TAU + (k / 4) * TAU, q = [at[0] + Math.sin(a) * LURK_RING, at[1] + Math.cos(a) * LURK_RING];
-          if (clear(at, q)) ring.push(q);   // AUDIT SHIP-LIFE A4: as the patrol's
+          const a = (e.spin ?? 0) * TAU + (k / 4) * TAU,
+            q = [at[0] + Math.sin(a) * LURK_RING, at[1] + Math.cos(a) * LURK_RING];
+          if (clear(at, q)) ring.push(q); // AUDIT SHIP-LIFE A4: as the patrol's
         }
-        e.path = ringOver(ring, [at[0], at[1]], clear); e.i = 0;
+        e.path = ringOver(ring, [at[0], at[1]], clear);
+        e.i = 0;
       }
       if (dist2(here, e.path[e.i]) <= REACH_M) e.i = (e.i + 1) % e.path.length;
       return plan(e.path[e.i], dist2(here, at) > LURK_R * 0.5 ? 1 : LURK_SAILS);
     }
-    case 'anchor': case 'fish': case 'home':   // FISH-BOATS (fishingBoats.js): her anchorage, her ground and her way home
+    case 'anchor':
+    case 'fish':
+    case 'home': // FISH-BOATS (fishingBoats.js): her anchorage, her ground and her way home
       return stepFishing(ship, dt, ctx, { here, plan, way });
     default:
       ship.errand = null;
@@ -703,7 +957,10 @@ export function stepErrand(ship, dt, ctx) {
 function ringOver(ring, hub, clear) {
   if (!ring.length) return [hub];
   const out = [];
-  for (const q of ring) { if (out.length && !clear(out[out.length - 1], q)) out.push([hub[0], hub[1]]); out.push(q); }
+  for (const q of ring) {
+    if (out.length && !clear(out[out.length - 1], q)) out.push([hub[0], hub[1]]);
+    out.push(q);
+  }
   if (out.length > 1 && !clear(out[out.length - 1], out[0])) out.push([hub[0], hub[1]]);
   return out;
 }
@@ -711,14 +968,27 @@ function ringOver(ring, hub, clear) {
 /** Every point an errand keeps, moved with the world (the host's floating origin): `o` the shift [x, y, z]. */
 export function offsetErrand(e, o) {
   if (!e) return;
-  const mv = (p) => { if (p) { p[0] += o[0]; p[1] += o[2]; } };
-  mv(e.to); mv(e.at); mv(e.detour);
+  const mv = (p) => {
+    if (p) {
+      p[0] += o[0];
+      p[1] += o[2];
+    }
+  };
+  mv(e.to);
+  mv(e.at);
+  mv(e.detour);
   for (const p of e.path ?? []) mv(p);
 }
 /** A harbour moved with the world. */
 export function offsetHarbour(h, o) {
   if (!h) return;
-  const mv = (p) => { p[0] += o[0]; p[1] += o[2]; };
+  const mv = (p) => {
+    p[0] += o[0];
+    p[1] += o[2];
+  };
   mv(h.mouth);
-  for (const b of h.berths) { mv(b.pos); mv(b.approach); }
+  for (const b of h.berths) {
+    mv(b.pos);
+    mv(b.approach);
+  }
 }

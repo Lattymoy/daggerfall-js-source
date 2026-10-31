@@ -7,7 +7,7 @@ import { modSetting } from '../modSettings.js';
 import { LEGACY_MOD, MODELS } from './family.js';
 
 /** Arkay's toll, as a share of the lifespan, by the "Legacy.Toll" choice (Light, Standard, Heavy). */
-export const TOLL_SHARES = Object.freeze([0.04, 0.06, 0.10]);
+export const TOLL_SHARES = Object.freeze([0.04, 0.06, 0.1]);
 
 /** Is Project Legacy on. */
 export const legacyOn = () => !!modSetting(LEGACY_MOD, 'Enabled');

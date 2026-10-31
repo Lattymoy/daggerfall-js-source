@@ -313,8 +313,8 @@
   {
     "name": "PERF-EXT23-the-merge-never-breathes-between-model-copies",
     "file": "src/render/staticBatch.js",
-    "old": "      v += c.positions.length / 3;\n      yield;",
-    "new": "      v += c.positions.length / 3;",
+    "old": "      yield;\n    }",
+    "new": "    }",
     "tests": [
       "test/render/publishtail.test.js"
     ]
@@ -322,8 +322,8 @@
   {
     "name": "PERF-EXT23-the-merge-never-breathes-between-groups",
     "file": "src/render/staticBatch.js",
-    "old": "      if (withBounds) { subs.push(boundsOf(positions, indices, start, at - start)); yield; }",
-    "new": "      if (withBounds) { subs.push(boundsOf(positions, indices, start, at - start)); }",
+    "old": "        yield;\n      }",
+    "new": "      }",
     "tests": [
       "test/render/publishtail.test.js"
     ]
@@ -331,8 +331,8 @@
   {
     "name": "PERF-EXT23-a-group-sphere-is-the-whole-meshs",
     "file": "src/render/staticBatch.js",
-    "old": "      if (withBounds) { subs.push(boundsOf(positions, indices, start, at - start)); yield; }",
-    "new": "      if (withBounds) { subs.push(boundsOf(positions)); yield; }",
+    "old": "        subs.push(boundsOf(positions, indices, start, at - start));",
+    "new": "        subs.push(boundsOf(positions));",
     "tests": [
       "test/render/publishtail.test.js"
     ]
@@ -349,8 +349,8 @@
   {
     "name": "PERF-EXT23-finishSliced-drains-without-a-breath",
     "file": "src/render/staticBatch.js",
-    "old": "      if (r.done) return r.value;\n      await breathe();",
-    "new": "      if (r.done) return r.value;",
+    "old": "      await breathe();\n    }",
+    "new": "    }",
     "tests": [
       "test/render/publishtail.test.js"
     ]
@@ -358,8 +358,8 @@
   {
     "name": "PERF-EXT23-the-sliced-sphere-centre-is-not-rounded-before-the-reach",
     "file": "src/render/bounds.js",
-    "old": "  const sphere = new Float32Array(4);\n  if (n === 0) return sphere;",
-    "new": "  const sphere = new Float64Array(4);\n  if (n === 0) return sphere;",
+    "old": "  const sphere = new Float32Array(4);",
+    "new": "  const sphere = new Float64Array(4);",
     "tests": [
       "test/render/publishtail.test.js"
     ]
@@ -367,8 +367,8 @@
   {
     "name": "PERF-EXT23-a-range-skips-its-last-vertex",
     "file": "src/render/bounds.js",
-    "old": "    for (let o = k0 * 3, end = Math.min(n, k0 + range) * 3; o < end; o += 3) {\n      const x = positions[o]",
-    "new": "    for (let o = k0 * 3, end = Math.min(n, k0 + range) * 3 - 3; o < end; o += 3) {\n      const x = positions[o]",
+    "old": "  for (let k0 = 0; k0 < n; k0 += range) {\n    for (let o = k0 * 3, end = Math.min(n, k0 + range) * 3; o < end; o += 3) {\n      const x = positions[o],",
+    "new": "  for (let k0 = 0; k0 < n; k0 += range) {\n    for (let o = k0 * 3, end = Math.min(n, k0 + range) * 3 - 3; o < end; o += 3) {\n      const x = positions[o],",
     "tests": [
       "test/render/publishtail.test.js"
     ]
@@ -376,8 +376,8 @@
   {
     "name": "PERF-EXT23-the-reach-pass-measures-from-the-box-corner",
     "file": "src/render/bounds.js",
-    "old": "  sphere[0] = (minX + maxX) / 2; sphere[1] = (minY + maxY) / 2; sphere[2] = (minZ + maxZ) / 2;",
-    "new": "  sphere[0] = minX; sphere[1] = (minY + maxY) / 2; sphere[2] = (minZ + maxZ) / 2;",
+    "old": "  sphere[0] = (minX + maxX) / 2;",
+    "new": "  sphere[0] = minX;",
     "tests": [
       "test/render/publishtail.test.js"
     ]
@@ -487,8 +487,8 @@
   {
     "name": "PERF-EXT24-a-NaN-stalls-the-stream",
     "file": "src/systems/buildBreather.js",
-    "old": "  if (Number.isNaN(left)) return BUILD_SLICE_MS;",
-    "new": "  if (Number.isNaN(left)) return 0;",
+    "old": "  if (Number.isNaN(left)) return BUILD_SLICE_MS; // a NaN in is the old slice out, never a stall",
+    "new": "  if (Number.isNaN(left)) return 0; // a NaN in is the old slice out, never a stall",
     "tests": [
       "test/systems/buildslice.test.js"
     ]
@@ -496,8 +496,8 @@
   {
     "name": "PERF-EXT24-the-budget-is-asked-once-and-never-again",
     "file": "src/systems/buildBreather.js",
-    "old": "          sliceStart = now();\n          sliceFrame = resumedBy === TURNED ? null : framesNow();   // BOOT-HIDDEN: a turn's slice is not one a frame can vouch for\n          sliceBudget = budget ? budget() : sliceMs;",
-    "new": "          sliceStart = now();\n          sliceFrame = resumedBy === TURNED ? null : framesNow();   // BOOT-HIDDEN: a turn's slice is not one a frame can vouch for",
+    "old": "            sliceBudget = budget ? budget() : sliceMs;\n            resolve();",
+    "new": "            resolve();",
     "tests": [
       "test/systems/buildslice.test.js"
     ]
@@ -505,8 +505,8 @@
   {
     "name": "PERF-EXT24-no-slice-is-reported",
     "file": "src/systems/buildBreather.js",
-    "old": "if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent);   // PERF-EXT24 (the review): a resumed slice no frame ran inside - heard once, by the slice's first waiter",
-    "new": "void spent;",
+    "old": "        if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent); // PERF-EXT24 (the review): a resumed slice no frame ran inside - heard once, by the slice's first waiter",
+    "new": "        void spent;",
     "tests": [
       "test/systems/buildslice.test.js"
     ]
@@ -514,8 +514,8 @@
   {
     "name": "PERF-EXT24-the-lent-slice-is-dropped-not-sampled",
     "file": "src/systems/frameClock.js",
-    "old": "  const busy = lastOwn + lent;",
-    "new": "  const busy = lastOwn;",
+    "old": "  const busy = lastOwn + lent; // PERF-EXT24: and the stream's slices since the last sample",
+    "new": "  const busy = lastOwn; // PERF-EXT24: and the stream's slices since the last sample",
     "tests": [
       "test/systems/buildslice.test.js"
     ]
@@ -532,8 +532,8 @@
   {
     "name": "PERF-EXT24-a-lent-slice-is-counted-in-every-sample-after",
     "file": "src/systems/frameClock.js",
-    "old": "  lent = 0;\n  const stamp = open;",
-    "new": "  const stamp = open;",
+    "old": "  lent = 0;\n  const stamp = open; // FB1018D HITCH-KEEP (AUDIT FB1018D L2-1): the rAF stamp the frame began at - the counter's own for that frame",
+    "new": "  const stamp = open; // FB1018D HITCH-KEEP (AUDIT FB1018D L2-1): the rAF stamp the frame began at - the counter's own for that frame",
     "tests": [
       "test/systems/buildslice.test.js"
     ],
@@ -551,8 +551,8 @@
   {
     "name": "PERF-EXT24-the-meter-drops-the-build-span",
     "file": "src/render/perfMeter.js",
-    "old": "  addCpu(name, ms) { if (this.cpu && ms > 0) this.cpuZones.set(name, (this.cpuZones.get(name) ?? 0) + ms); }",
-    "new": "  addCpu(name, ms) { void name; void ms; }",
+    "old": "    if (this.cpu && ms > 0) this.cpuZones.set(name, (this.cpuZones.get(name) ?? 0) + ms);",
+    "new": "    void name;\n    void ms;",
     "tests": [
       "test/systems/buildslice.test.js"
     ]
@@ -705,8 +705,8 @@
   {
     "name": "PERF-EXT26-the-promotions-stay-on-the-main-thread-queue",
     "file": "src/scenes/world.js",
-    "old": "    if (terrainGen.threaded) {\n      for (const p of restridePending.values()) promoteOffThread(p);",
-    "new": "    if (false) {\n      for (const p of restridePending.values()) promoteOffThread(p);",
+    "old": "    if (terrainGen.threaded) {\n      for (const p of restridePending.values()) restrideOffThread(p);",
+    "new": "    if (false) {\n      for (const p of restridePending.values()) restrideOffThread(p);",
     "tests": [
       "test/world/terrain/restrideworker.test.js"
     ]
@@ -732,8 +732,8 @@
   {
     "name": "PERF-EXT26-a-reply-lands-on-a-pixel-that-walked-back-out",
     "file": "src/scenes/world.js",
-    "old": "      if (strideFor(p.px, p.py) !== 1 || p._stride === 1) return;   // walked back out, or promoted meanwhile",
-    "new": "      if (p._stride === 1) return;   // walked back out, or promoted meanwhile",
+    "old": "      if (strideFor(p.px, p.py) !== stride || p._stride === stride) return;   // walked back out, or restrided meanwhile",
+    "new": "      if (p._stride === stride) return;   // walked back out, or restrided meanwhile",
     "tests": [
       "test/world/terrain/restrideworker.test.js"
     ]
@@ -741,8 +741,8 @@
   {
     "name": "PERF-EXT26-the-reply-is-thrown-away-and-built-again-here",
     "file": "src/scenes/world.js",
-    "old": "      restrideTerrain(p, 1, grid);",
-    "new": "      restrideTerrain(p, 1);",
+    "old": "      restrideTerrain(p, stride, grid);",
+    "new": "      restrideTerrain(p, stride);",
     "tests": [
       "test/world/terrain/restrideworker.test.js"
     ]
@@ -854,8 +854,8 @@
   {
     "name": "PERF-EXT24-review-a-slice-a-frame-ran-inside-is-lent-again",
     "file": "src/systems/buildBreather.js",
-    "old": "      if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent);",
-    "new": "      if (sliceFrame !== null) onSlice?.(spent);",
+    "old": "        if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent); // PERF-EXT24 (the review): a resumed slice no frame ran inside - heard once, by the slice's first waiter",
+    "new": "        if (sliceFrame !== null) onSlice?.(spent); // PERF-EXT24 (the review): a resumed slice no frame ran inside - heard once, by the slice's first waiter",
     "tests": [
       "test/systems/buildslice.test.js"
     ]
@@ -863,8 +863,8 @@
   {
     "name": "PERF-EXT24-review-every-slice-is-lent-again-the-reset-and-the-wait-too",
     "file": "src/systems/buildBreather.js",
-    "old": "      if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent);",
-    "new": "      onSlice?.(spent);",
+    "old": "        if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent); // PERF-EXT24 (the review): a resumed slice no frame ran inside - heard once, by the slice's first waiter",
+    "new": "        onSlice?.(spent); // PERF-EXT24 (the review): a resumed slice no frame ran inside - heard once, by the slice's first waiter",
     "tests": [
       "test/systems/buildslice.test.js"
     ]
@@ -872,8 +872,8 @@
   {
     "name": "PERF-EXT24-review-a-reset-slice-is-vouched-for",
     "file": "src/systems/buildBreather.js",
-    "old": "    reset() { sliceStart = now(); sliceFrame = null;",
-    "new": "    reset() { sliceStart = now(); sliceFrame = framesNow();",
+    "old": "      sliceFrame = null;",
+    "new": "      sliceFrame = framesNow();",
     "tests": [
       "test/systems/buildslice.test.js"
     ]
@@ -881,8 +881,8 @@
   {
     "name": "PERF-EXT24-review-the-birth-slice-is-vouched-for",
     "file": "src/systems/buildBreather.js",
-    "old": "  let sliceFrame = null;",
-    "new": "  let sliceFrame = framesNow();",
+    "old": "  let sliceFrame = null; // PERF-EXT24 (the review): the frame count at this slice's resume; null for a slice a reset (or the breather's birth) began",
+    "new": "  let sliceFrame = framesNow(); // PERF-EXT24 (the review): the frame count at this slice's resume; null for a slice a reset (or the breather's birth) began",
     "tests": [
       "test/systems/buildslice.test.js"
     ]
@@ -890,8 +890,8 @@
   {
     "name": "PERF-EXT24-review-the-resume-never-reads-the-count",
     "file": "src/systems/buildBreather.js",
-    "old": "          sliceFrame = resumedBy === TURNED ? null : framesNow();   // BOOT-HIDDEN: a turn's slice is not one a frame can vouch for",
-    "new": "          sliceFrame = resumedBy === TURNED ? null : -1;",
+    "old": "            sliceFrame = resumedBy === TURNED ? null : framesNow(); // BOOT-HIDDEN: a turn's slice is not one a frame can vouch for",
+    "new": "            sliceFrame = resumedBy === TURNED ? null : -1;",
     "tests": [
       "test/systems/buildslice.test.js"
     ]
@@ -899,8 +899,8 @@
   {
     "name": "PERF-EXT24-review-the-frame-clock-counts-no-frame",
     "file": "src/systems/frameClock.js",
-    "old": "  begun++;   // PERF-EXT24 (the review)",
-    "new": "",
+    "old": "  begun++; // PERF-EXT24 (the review)\n}",
+    "new": "}",
     "tests": [
       "test/systems/buildslice.test.js"
     ]

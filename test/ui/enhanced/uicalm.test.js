@@ -62,7 +62,7 @@ test('UI-CALM the saddle panel is a block in the bottom-right corner, up and awa
   assert.equal(saddleAlert(S({ horse: null, load: { kg: 800, limit: 800 } })), null, 'at its limit is not past it');
   assert.deepEqual([saddleHello(S(), 'F2'), saddleHello(S(), '')], ['F2: saddle panel', 'Saddle panel: give it a key in Controls']);
   // the key: a port action on F2, its press handed to the one glue by both hosts, which puts the panel up or away
-  assert.equal(ACTIONS.at(-5), 'SaddlePanel');   // PIN MOVED (CARGO-ANYWHERE: ShipHold appended after; SHOT-KINDS: ShotCycle; PARTY-PING: PartyPing; Decorate)
+  assert.equal(ACTIONS.at(-7), 'SaddlePanel');   // PIN MOVED (TECH-KEY2: SignatureTechnique appended last; CARGO-ANYWHERE: ShipHold appended after; SHOT-KINDS: ShotCycle; PARTY-PING: PartyPing; Decorate)   // PIN MOVED (PVP-KEY: PvpFlag appended last)
   assert.ok(PORT_ACTIONS.includes('SaddlePanel') && DEFAULT_BINDINGS.some(([c, a]) => c === 'F2' && a === 'SaddlePanel'));
   assert.match(rd('src/scenes/saddleHost.js'), /if \(s && toggle && !covered\) toggleSaddlePanel\(\);/);
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(rd(host), /toggle: show && hccActionPressed\('SaddlePanel'\),/, host);
@@ -107,7 +107,7 @@ test('UI-CALM the windows read: the quiet ink a step lighter and the type floor 
   assert.match(rd('src/ui/enhanced/enhancedStyle.js'), /applyPlusTheme\(doc\);   \/\/ PLUS2: the stored colour\n    injectUiCalmStyle\(doc\);/);
   const hold = rd('src/ui/holdingsPages.js');
   assert.match(hold, /const colours = choices\.map\(\(name\) => LOOK_SWATCHES\[name\] \?\? null\);\n  if \(colours\.every\(Boolean\)\) \{/);
-  assert.match(hold, /if \(_lookOpen === 'horse'\) for \(const row of m\.look\.rows\) extra\.push\(choiceRow\(/);
+  assert.match(hold, /if \(_lookOpen === 'horse'\)\n\s*for \(const row of m\.look\.rows\)\n\s*extra\.push\(choiceRow\(/);
   assert.match(rd('src/ui/enhanced/enhancedChargen.js'), /stagePrimary = \{ label: left > 0 \? `\$\{left\} left to spend` : 'Begin your life',/);
   assert.deepEqual(CLASS_WAYS.map(([w, names]) => [w, names.length]), [['Magic', 6], ['Stealth', 6], ['Combat', 6]]);
   assert.deepEqual(['Mage', 'Thief', 'Knight', 'Custom'].map(classWayOf), ['Magic', 'Stealth', 'Combat', null]);

@@ -23,7 +23,7 @@ import { chromium } from 'playwright';
 const b = await chromium.launch();
 const p = await b.newPage({ viewport: { width: 1400, height: 900 } });
 const errs = [];
-p.on('pageerror', e => errs.push(e.message));
+p.on('pageerror', (e) => errs.push(e.message));
 await p.goto('http://127.0.0.1:5199/chargen.html', { waitUntil: 'networkidle' });
 await p.waitForSelector('.prov', { timeout: 20000 });
 const st = async () => JSON.parse(await p.evaluate(() => window.__chargen()));
@@ -51,7 +51,7 @@ await realClick('.bigbtn', 1);
 await p.waitForTimeout(200);
 if (await p.locator('.repbox').count()) await realClick('.act.primary');
 console.log('history       ->', (await st()).state);
-await realClick('.act', 1);                       // suggest a name
+await realClick('.act', 1); // suggest a name
 await realClick('.act.primary');
 console.log('name          ->', (await st()).state);
 await p.waitForTimeout(700);

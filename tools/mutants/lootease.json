@@ -12,8 +12,8 @@
   {
     "name": "LOOT-EASE-ladder-magic-back",
     "file": "src/systems/foeLootCap.js",
-    "old": "magic:     Object.freeze({ base: 50,   perTier: 5,     cap: 190 }),",
-    "new": "magic:     Object.freeze({ base: 40,   perTier: 5,     cap: 190 }),",
+    "old": "  magic: Object.freeze({ base: 50, perTier: 5, cap: 190 }),",
+    "new": "  magic: Object.freeze({ base: 40, perTier: 5, cap: 190 }),",
     "why": "the plain Magic floor back at FOE-CAP's 4%",
     "tests": [
       "test/systems/search1_searchables.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "LOOT-EASE-ladder-rare-back",
     "file": "src/systems/foeLootCap.js",
-    "old": "rare:      Object.freeze({ base: 6,    perTier: 1.2,   cap: 38 }),",
-    "new": "rare:      Object.freeze({ base: 4,    perTier: 1.2,   cap: 38 }),",
+    "old": "  rare: Object.freeze({ base: 6, perTier: 1.2, cap: 38 }),",
+    "new": "  rare: Object.freeze({ base: 4, perTier: 1.2, cap: 38 }),",
     "why": "the plain Rare floor back at 0.4%",
     "tests": [
       "test/systems/search1_searchables.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "LOOT-EASE-ladder-legendary-slope",
     "file": "src/systems/foeLootCap.js",
-    "old": "legendary: Object.freeze({ base: 0.15, perTier: 0.075, cap: 3 }),",
-    "new": "legendary: Object.freeze({ base: 0.15, perTier: 0.05, cap: 3 }),",
+    "old": "  legendary: Object.freeze({ base: 0.15, perTier: 0.075, cap: 3 }),",
+    "new": "  legendary: Object.freeze({ base: 0.15, perTier: 0.05, cap: 3 }),",
     "why": "the orange slope back at FOE-CAP's",
     "tests": [
       "test/systems/search1_searchables.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "LOOT-EASE-ladder-rare-ceiling",
     "file": "src/systems/foeLootCap.js",
-    "old": "perTier: 1.2,   cap: 38 })",
-    "new": "perTier: 1.2,   cap: 25 })",
+    "old": "  rare: Object.freeze({ base: 6, perTier: 1.2, cap: 38 }),",
+    "new": "  rare: Object.freeze({ base: 6, perTier: 1.2, cap: 25 }),",
     "why": "yellow's ceiling back at 2.5% - luck reaches it",
     "tests": [
       "test/systems/search1_searchables.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "LOOT-EASE-ladder-legendary-ceiling",
     "file": "src/systems/foeLootCap.js",
-    "old": "perTier: 0.075, cap: 3 })",
-    "new": "perTier: 0.075, cap: 2 })",
+    "old": "  legendary: Object.freeze({ base: 0.15, perTier: 0.075, cap: 3 }),",
+    "new": "  legendary: Object.freeze({ base: 0.15, perTier: 0.075, cap: 2 }),",
     "why": "orange's ceiling back at 0.2% - luck reaches it",
     "tests": [
       "test/systems/search1_searchables.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "CAP-SUPPLIES-no-supply-rank",
     "file": "src/systems/foeLootCap.js",
-    "old": "return r > 0 ? 1 + r : (isLootSupply(it) ? 1 : 0); };",
-    "new": "return r > 0 ? 1 + r : 0; };",
+    "old": "  return r > 0 ? 1 + r : isLootSupply(it) ? 1 : 0;",
+    "new": "  return r > 0 ? 1 + r : 0;",
     "why": "a supply ranked as any Common piece: the steel blade's worth outbids the potion",
     "tests": [
       "test/systems/search1_searchables.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "CAP-SUPPLIES-supply-over-magic",
     "file": "src/systems/foeLootCap.js",
-    "old": "return r > 0 ? 1 + r : (isLootSupply(it) ? 1 : 0); };",
-    "new": "return r > 0 ? 1 + r : (isLootSupply(it) ? 9 : 0); };",
+    "old": "  return r > 0 ? 1 + r : isLootSupply(it) ? 1 : 0;",
+    "new": "  return r > 0 ? 1 + r : isLootSupply(it) ? 9 : 0;",
     "why": "a supply kept over a Magic piece",
     "tests": [
       "test/systems/search1_searchables.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "CAP-SUPPLIES-rest-unregistered",
     "file": "src/systems/rest/restItems.js",
-    "old": "registerLootSupply('REST', isRestItem);",
-    "new": "registerLootSupply('REST', null);",
+    "old": "registerLootSupply('REST', isRestItem); // CAP-SUPPLIES: a full body's cap keeps one before a Common piece (foeLootCap.js)",
+    "new": "registerLootSupply('REST', null); // CAP-SUPPLIES: a full body's cap keeps one before a Common piece (foeLootCap.js)",
     "why": "the seven never registered: a Tonic is no supply",
     "tests": [
       "test/systems/search1_searchables.test.js"
@@ -102,7 +102,7 @@
   {
     "name": "KIT-ROLL-never",
     "file": "src/systems/foeLootCap.js",
-    "old": "    if (!it || it.untaken === true || !rarityEligible(it)) return;   // AUDIT 625 L1: no mark - the kit the spawn's roll passed by",
+    "old": "    if (!it || it.untaken === true || !rarityEligible(it)) return; // AUDIT 625 L1: no mark - the kit the spawn's roll passed by",
     "new": "    return;",
     "why": "no kit ever rolled - the steel stays white",
     "tests": [
@@ -113,7 +113,7 @@
   {
     "name": "KIT-ROLL-a-carried-piece-too",
     "file": "src/systems/foeLootCap.js",
-    "old": "    if (!it || it.untaken === true || !rarityEligible(it)) return;   // AUDIT 625 L1: no mark - the kit the spawn's roll passed by",
+    "old": "    if (!it || it.untaken === true || !rarityEligible(it)) return; // AUDIT 625 L1: no mark - the kit the spawn's roll passed by",
     "new": "    if (!it || !rarityEligible(it)) return;",
     "why": "the carried piece rolled a second time at the death",
     "tests": [
@@ -124,8 +124,8 @@
   {
     "name": "KIT-ROLL-the-whole-ladder",
     "file": "src/systems/foeLootCap.js",
-    "old": "entity.level, entity.mobileType)), boss: false, weights: plainFoeRarityWeights(quarters) };",
-    "new": "entity.level, entity.mobileType)), boss: false };",
+    "old": "    weights: plainFoeRarityWeights(quarters),\n  }; // RENOWN-LOOT: the death's roller's Renown; AUDIT 625 L3: the plain ladder for every foe",
+    "new": "  }; // RENOWN-LOOT: the death's roller's Renown; AUDIT 625 L3: the plain ladder for every foe",
     "why": "the kit on the whole ladder: 0.09 is blue",
     "tests": [
       "test/systems/search1_searchables.test.js"
@@ -160,7 +160,7 @@
     "name": "KIT-ROLL-no-stamp",
     "file": "src/systems/foeLootCap.js",
     "old": "  if (!lootRarityOn() || !entity || !Array.isArray(entity.items) || entity.revenant) return [];",
-    "new": "  if (!lootRarityOn() || !entity || !Array.isArray(entity.items) || !Number.isInteger(entity.lootCap) || entity.revenant) return [];",
+    "new": "  if (\n    !lootRarityOn() ||\n    !entity ||\n    !Array.isArray(entity.items) ||\n    !Number.isInteger(entity.lootCap) ||\n    entity.revenant\n  )\n    return [];",
     "why": "AUDIT 625 L3, the old law brought back: a foe its spawn never stamped plain - a boss, every humanoid from level 18 - left Common",
     "tests": [
       "test/systems/audit625_loot.test.js",
@@ -181,7 +181,7 @@
   {
     "name": "KIT-ROLL-twice",
     "file": "src/systems/foeLootCap.js",
-    "old": "    const piece = { ...it, untaken: true };   // AUDIT 625 L2: a copy in the body; the table's piece stays as it was minted",
+    "old": "    const piece = { ...it, untaken: true }; // AUDIT 625 L2: a copy in the body; the table's piece stays as it was minted",
     "new": "    const piece = { ...it };",
     "why": "a white roll rolled again at a second door",
     "tests": [
@@ -192,7 +192,7 @@
   {
     "name": "KIT-ROLL-unmarked",
     "file": "src/systems/foeLootCap.js",
-    "old": "    const piece = { ...it, untaken: true };   // AUDIT 625 L2: a copy in the body; the table's piece stays as it was minted",
+    "old": "    const piece = { ...it, untaken: true }; // AUDIT 625 L2: a copy in the body; the table's piece stays as it was minted",
     "new": "    const piece = { ...it, untaken: undefined };",
     "why": "a kit piece's take never counts for the drought",
     "tests": [
@@ -287,8 +287,8 @@
   {
     "name": "MAGICKA-COMMON-foe-dropped",
     "file": "src/systems/healingSupply.js",
-    "old": " maybeAddMagickaPotion(items, enemy.magicka, rolls); });",
-    "new": " });",
+    "old": "    maybeAddMagickaPotion(items, enemy.magicka, rolls);\n  });",
+    "new": "  });",
     "why": "no foe carries one",
     "tests": [
       "test/systems/potion_common.test.js"
@@ -298,8 +298,8 @@
   {
     "name": "MAGICKA-COMMON-pile-dropped",
     "file": "src/systems/healingSupply.js",
-    "old": " maybeAddMagickaPotion(items, pile.magicka, rolls); }",
-    "new": " }",
+    "old": "      maybeAddMagickaPotion(items, pile.magicka, rolls);\n    }",
+    "new": "    }",
     "why": "no pile holds one",
     "tests": [
       "test/systems/potion_common.test.js"
@@ -309,8 +309,8 @@
   {
     "name": "MAGICKA-COMMON-drawn-first",
     "file": "src/systems/healingSupply.js",
-    "old": "maybeAddHealingPotion(items, enemy.healing, rolls); maybeAddMagickaPotion(items, enemy.magicka, rolls);",
-    "new": "maybeAddMagickaPotion(items, enemy.magicka, rolls); maybeAddHealingPotion(items, enemy.healing, rolls);",
+    "old": "    maybeAddHealingPotion(items, enemy.healing, rolls);\n    maybeAddMagickaPotion(items, enemy.magicka, rolls);",
+    "new": "    maybeAddMagickaPotion(items, enemy.magicka, rolls);\n    maybeAddHealingPotion(items, enemy.healing, rolls);",
     "why": "the magicka potion's draw before the healing potion's",
     "tests": [
       "test/systems/potion_common.test.js"
@@ -340,8 +340,8 @@
   {
     "name": "REST-LOOT-pile-ember-back",
     "file": "src/systems/rest/restItems.js",
-    "old": "[[REST_ITEM.EmberJar, 6], [REST_ITEM.Tonic, 6],",
-    "new": "[[REST_ITEM.EmberJar, 4], [REST_ITEM.Tonic, 6],",
+    "old": "  [REST_ITEM.EmberJar, 6],",
+    "new": "  [REST_ITEM.EmberJar, 4],",
     "why": "a pile's Ember Jar back at 4",
     "tests": [
       "test/systems/survival/rest6_consumables.test.js"
@@ -350,8 +350,8 @@
   {
     "name": "REST-LOOT-pile-firewood",
     "file": "src/systems/rest/restItems.js",
-    "old": "[REST_ITEM.Firewood, 4], [REST_ITEM.Candle, 2]",
-    "new": "[REST_ITEM.Firewood, 5], [REST_ITEM.Candle, 2]",
+    "old": "  [REST_ITEM.Firewood, 4],",
+    "new": "  [REST_ITEM.Firewood, 5],",
     "why": "a pile's Firewood moved",
     "tests": [
       "test/systems/survival/rest6_consumables.test.js"
@@ -360,8 +360,8 @@
   {
     "name": "REST-LOOT-foe-ember-back",
     "file": "src/systems/rest/restItems.js",
-    "old": "export const REST_FOE_CHANCES = Object.freeze([[REST_ITEM.EmberJar, 3],",
-    "new": "export const REST_FOE_CHANCES = Object.freeze([[REST_ITEM.EmberJar, 2],",
+    "old": "  [REST_ITEM.EmberJar, 3],",
+    "new": "  [REST_ITEM.EmberJar, 2],",
     "why": "a foe's Ember Jar back at 2",
     "tests": [
       "test/systems/survival/rest6_consumables.test.js"
@@ -370,8 +370,8 @@
   {
     "name": "REST-LOOT-foe-draught-dropped",
     "file": "src/systems/rest/restItems.js",
-    "old": "[REST_ITEM.Salts, 1], [REST_ITEM.Draught, 1]]);",
-    "new": "[REST_ITEM.Salts, 1]]);",
+    "old": "  [REST_ITEM.Draught, 1],\n]);",
+    "new": "]);",
     "why": "a foe never carries the Draught",
     "tests": [
       "test/systems/survival/rest6_consumables.test.js"
@@ -380,8 +380,8 @@
   {
     "name": "REST-LOOT-the-bedroll-found",
     "file": "src/systems/rest/restItems.js",
-    "old": "export const REST_FOE_CHANCES = Object.freeze([[REST_ITEM.EmberJar, 3],",
-    "new": "export const REST_FOE_CHANCES = Object.freeze([[REST_ITEM.Bedroll, 1], [REST_ITEM.EmberJar, 3],",
+    "old": "  [REST_ITEM.EmberJar, 3],",
+    "new": "  [REST_ITEM.Bedroll, 1],\n  [REST_ITEM.EmberJar, 3],",
     "why": "the Bedroll on a foe",
     "tests": [
       "test/systems/survival/rest6_consumables.test.js"

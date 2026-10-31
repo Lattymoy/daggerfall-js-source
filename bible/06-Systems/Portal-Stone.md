@@ -65,11 +65,11 @@ The players, +7: *"I hate that I have to buy portal shards one by one; it would 
 them."* The owner: *"No band aids."* So the count is the sale's own law, not a loop of single sales, and the question
 is the one DFU already asks for a count.
 
-- **ONE SALE LAW** (`portalStone.js:"export function buyPortalStones(items, n) {"`): `n` stones for exactly `n` times
+- **ONE SALE LAW** (`portalStone.js:"export function buyPortalStones"`): `n` stones for exactly `n` times
   `PORTAL_STONE_SHARDS`, all of it or none of it - `n` a whole number from 1 to the most (`'count'` else), the shards
   (`'shards'`: 5n-1 refuses n, nothing taken), the stack (`'stack'`). `buyPortalStone` is its count of one
-  (`portalStone.js:"export const buyPortalStone = (items) => buyPortalStones(items, 1);"`), never a second law.
-- **THE MOST** (`portalStone.js:"export function portalStoneMax(items) {"`): the floor of the spendable shards over
+  (`portalStone.js:"export const buyPortalStone"`), never a second law.
+- **THE MOST** (`portalStone.js:"export function portalStoneMax"`): the floor of the spendable shards over
   the price, and no more than the room left on the stack the stones land on (`portalStoneRoom`): `LOOT_STACK_MAX`
   (`loot.js`, 65,535) less that stack. `addItem` merges with no cap, and `itemLaw.js` flags a stack past
   `LOOT_STACK_MAX` (`'stack'`) - a bulk sale over it would have held an honest player's trading. The stack is read
@@ -80,7 +80,7 @@ is the one DFU already asks for a count.
   `askPortalStone` and `buyPortalStoneNow` left `createWorldModes`, its ceiling down by the 17 logical lines that left).
   The chain is the tavern's room rental's - DaggerfallTavernWindow's field then Yes/No, run by U24's
   `ServiceFlowWindow` (`guildServiceWindows.js:"export class ServiceFlowWindow {"`), as
-  `tavernWindow.js:"export const DAYS_FIELD = Object.freeze({ numeric: true, maxCharacters: 3, initial: '1' });"`
+  `tavernWindow.js:"export const DAYS_FIELD"`
   rents a room. The field is the split popup's (`itemTransfer.js:"export const HOW_MANY_ITEMS = (max) =>"`, its parse
   `parseSplitAmount`: "0", past the most and "3x" end the chain with nothing taken, as SplitStackPopup_OnGotUserInput
   moves nothing), **seeded with 1**. Escape on the field, No or Escape on the offer, take nothing. Both skins take the
@@ -329,6 +329,25 @@ What a player sees: use a Portal Stone, zoom out past the Bay, press anywhere on
 portal tears open; step in, the screen blacks, the world builds there and the traveller stands on dry, level ground near
 the pixel's centre; "You arrive at Skyrim."
 
+## PORTAL-BOOK - a stone to a kept house door (2026-10-31)
+
+The owner, 2026-10-31: *"Portal stone to one of your houses or to the guildhal - portal book (lets you keep spot to summon
+stones to like your houses guild hall friends houses)"*. Not a DFU member (`01-Overview/Port-Ledger.md`, PORTAL-BOOK).
+
+- **The book** (`systems/gate/gateSpoils.js`, template 577): bound and pack-only, no weight, the Holy Tome's picture. Every
+  character has one: the kit holds it (`startingGear.js`), and a character from before it is given one once as its save is
+  restored (`portalBookGift`, the Wallet's gift). The item law knows it (acct232; acct231 on its branch, renumbered past MUSIC-BOX at the fold), so the account service deploys first.
+- **A spot is kept from inside a house** (`scenes/portalBookHost.js` bookHouseOf): my home (online, or a Daggerfall deed), my
+  guild's hall, another guild's open hall, or another player's home I was let into. Being inside is the proof I may go in.
+  The spot is the landing outside the front door nearest me, facing out - the exit's own landing (`player/enterExit.js`).
+  A ship's cabin, a caravan and a rented room keep none.
+- **The law** (`systems/portalBook.js`): ten spots, one a house (keeping it again moves it), each on the save
+  (`portalBook`), its landing on its own map pixel or refused.
+- **The window**: K keeps this house, 1 to 0 open a spot, F forgets one. A spot opens only outdoors.
+- **The portal** (`scenes/portalStoneHost.js` openToSpot): the stone's own door, holds and pick (`standPortal`), one stone
+  spent from the pack. Whoever steps in lands at the door (`landAtDoor`), on the ground found within 4 m under it, else at
+  the town's marker. Online the record carries the landing (`a`), believed only on the destination's pixel.
+
 ## Calls made here, put to the owner
 
 - **The price: 5 shards** - five Magic pieces salvaged, or two Rares (with one over). The Reforge's Magic line is 2,
@@ -343,6 +362,8 @@ the pixel's centre; "You arrive at Skyrim."
 - **The gift is for characters that exist**: a character made after it is born past it, as the amnesty's.
 - **PORTAL-BULK: the count** - as many as the purse and the stack allow, asked before the offer, the field seeded with 1
   (never the most); no bulk price - five shards a stone, however many.
+- **PORTAL-BOOK: house doors you can enter** - put to the owner as a choice (house doors, any town street, anywhere
+  outdoors), house doors recommended; ten spots; the book free to every character; the door's own law decides entry.
 
 ## Pinned
 
@@ -356,6 +377,9 @@ untouched, the count's refusals, one stone the same law), the stack cap (the roo
 flagged, a locked stack never landed on) and the question run whole (the field and its seed, the offer, Yes buys n,
 Escape and No take nothing, the parse's refusals, one stone skipping the field, none said at once, a sale refused at
 the Yes). `test/systems/portal1_gift.test.js` (3): the gift's law, its mark through the save, and the hosts.
+
+`test/systems/portalbook.test.js` (10): PORTAL-BOOK's row and gift, the spot's law, the keep and the forget, the house's
+spot, the wire's landing, the house read indoors, the window indoors and outdoors, and the wiring.
 `tools/mutants/portal1.json` (110, all dead - PORTAL-BULK's 18 among them: price x n -> price at the refusal, the
 spend and the offer, floor -> ceil, the cap off by one and off, the room off by one and read off the locked stack,
 `portalStones(n)` -> `portalStones(1)`, a count of none, the field seeded with the most, the parse unbounded, one stone

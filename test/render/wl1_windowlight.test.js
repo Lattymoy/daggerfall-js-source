@@ -11,7 +11,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   WindowLightPass, windowLightGlsl, windowLightOn, writeWindowLight, windowLightAt, lampOf, maskBoxOf, maskLayerOf, holesOf,
-  windowAperturesOf, WL_REC, WL_VEC4, WL_MAX_LIGHTS, WL_KIND, WL_LAMP_GOBO, WL_LAMP_SPILL, WL_LAMP_RANGE, WL_SUN_GAIN,
+  windowAperturesOf, WL_REC, WL_VEC4, WL_MAX_LIGHTS, WL_FAR_UBO_BINDING, WL_KIND, WL_LAMP_GOBO, WL_LAMP_SPILL, WL_LAMP_RANGE, WL_SUN_GAIN,
   WL_MOON_GAIN, WL_SKY_GAIN, WL_SUN_REACH, WL_HOLD_MS, WL_MASK_SIZE, WL_MASK_UNIT, WL_UBO_BINDING, WL_GRID_ROW, WL_LIST_BASE,
   WL_GATHER, WL_CURTAIN_PASS, WL_LAMP_DEPTH, WL_LAMP_LIFT, WL_MOVE_REACH, WL_PLACEMENTS_MAX, WL_LAMP_RADIUS, WL_SUN_ANGLE,
   WL_SPILL_REACH, WL_STOREY, WL_MASK_LAYERS, WL_BUILD_TILES,
@@ -316,7 +316,9 @@ test('WL1 W6: THE NEAREST WL_MAX_LIGHTS - more lit windows than the block holds 
     meshes.push(mesh);
   }
   const proj = perspective(1.1, 1.6, 0.1, 500), view = lookAt([0, 2, 0], [0, 2, -10], [0, 1, 0]);
-  const n = pass.frame({ kind: 'street', eye: [0, 2, 0], view, proj, now: 1100, lamp: [1, 1, 1], glass: () => 'window' });
+  const both = pass.frame({ kind: 'street', eye: [0, 2, 0], view, proj, now: 1100, lamp: [1, 1, 1], glass: () => 'window' });
+  const n = pass.count;   // PIN MOVED (LIGHT-REACH): the frame answers the near tier and the far rows together
+  assert.equal(both, n + pass.farCount);
   assert.ok(pass.stats.candidates > WL_MAX_LIGHTS, `more candidates (${pass.stats.candidates}) than the block holds`);
   assert.ok(n <= WL_MAX_LIGHTS && n > WL_MAX_LIGHTS / 2, `${n}`);
   // the lit tiles' centres, every front alike (the seed reads the plane off the model's own frame), nearest first
@@ -379,10 +381,12 @@ test('WL1 W8: THE RENDERER\'S FRAME - its kind from the world frame and the Real
   const log = [];
   const r = recordingRenderer(log);
   const binds = log.filter((c) => c[0] === 'uniformBlockBinding');
-  assert.ok(binds.length >= 5 && binds.every((c) => c[3] === WL_UBO_BINDING), `every lit program on the block's point (${binds.length})`);
+  // PIN MOVED (LIGHT-REACH): each lit program holds two blocks - the near lights' and the far rows' - each on its own point
+  assert.ok(binds.length >= 10 && binds.every((c, i) => c[3] === (i % 2 ? WL_FAR_UBO_BINDING : WL_UBO_BINDING)), `every lit program on the blocks' points (${binds.length})`);
+  assert.deepEqual(log.filter((c) => c[0] === 'bindBufferBase' && c[1] === 'UNIFORM_BUFFER').map((c) => c[2]), [WL_UBO_BINDING, WL_FAR_UBO_BINDING], 'LIGHT-REACH: both blocks on their points from the renderer\'s first frame');
   assert.ok(uploads(log, 'uWinMask').length >= 5 && uploads(log, 'uWinMask').every((v) => v[0] === WL_MASK_UNIT), 'the masks\' unit');
   const grid = log.find((c) => c[0] === 'texImage2D' && c[3] === 'RG16UI');
-  assert.ok(grid && grid[5] === 48 && CLUSTER_BANDS === 2, 'LC1\'s grid two bands high');
+  assert.ok(grid && grid[5] === 72 && CLUSTER_BANDS === 3, 'LC1\'s grid three bands high (PIN MOVED, LIGHT-REACH: the far rows\' band)');
   assert.equal(r._wlKindOf({ world: true }), null, 'the row Off until a host says it');
   r.setWindowRooms('full');
   r.setWindowEmission(windowEmissionRGB('night'));
@@ -447,7 +451,7 @@ test('WL1 W9: A BUILDING\'S FRAME READS THE OUTSIDE - the view out\'s step asks 
   r.captureOutsideLight(scene, 9000, 'off');
   assert.equal(setups, n + 1, 'the row Off reads nothing');
   assert.equal(r._rwMode, 'off');
-  assert.match(rd('src/render/realWindows.js'), /finally \{ opts\.renderer\.captureOutsideLight\?\.\(opts\.scene, opts\.now, opts\.mode\); \}/);
+  assert.match(rd('src/render/realWindows.js'), /finally \{\n\s*opts\.renderer\.captureOutsideLight\?\.\(opts\.scene, opts\.now, opts\.mode\);\n\s*\}/);
 });
 
 test('WL1 W10: THE SUN MAP IN A BUILDING - a frame with no sun of its own but a window sun draws the sun\'s cascades toward it, a window\'s sub-mesh through the glass cut (its mask a hole), the rest as ever; a frame without one draws none, and the street\'s own sun keeps the glass (mutants: the window sun ignored, the cut lost, the cut on the street\'s sun)', () => {
@@ -648,12 +652,13 @@ test('WL1 W18 (AUDIT): more cells than the band\'s list holds keeps the nearest 
   const pass = passOn();
   pass.addMask('4001_0', CROSS);
   const ap = frontAp();
-  for (let i = 0; i < 80; i++) {   // eighty fronts in rows 2 m apart, the eye among them
-    const m = identity(); m[14] = 30 - 2 * i;
+  for (let i = 0; i < 160; i++) {   // PIN MOVED (LIGHT-REACH): a light's box is its beam's, not its reach's sphere - so a
+    const m = identity(); m[14] = 30 - 0.5 * i;   // denser street than eighty fronts 2 m apart is needed to fill the list
     pass.note({ wl: [wlOf('4001_0', ap)] }, m, null, 'street', 1000);
   }
   const view = lookAt([0, 2, 0], [0, 1.5, -10], [0, 1, 0]), proj = perspective(1.1, 1.6, 0.1, 500);
-  const n = pass.frame({ kind: 'street', eye: [0, 2, 0], view, proj, now: 1000, lamp: [1, 1, 1], glass: () => 'window' });
+  pass.frame({ kind: 'street', eye: [0, 2, 0], view, proj, now: 1000, lamp: [1, 1, 1], glass: () => 'window' });
+  const n = pass.count;   // PIN MOVED (LIGHT-REACH): the frame answers the far rows with it
   assert.ok(pass.stats.dropped > 0, `the list overflowed (${pass.stats.dropped} dropped)`);
   assert.ok(n > 0 && n === pass.count, `the nearest kept (${n})`);
   assert.equal(pass._cuts.street, pass._ld[n], 'the cut comes in to the first left out: from here the edge fades');
@@ -702,11 +707,19 @@ test('WL1 W20 (AUDIT): with no sun map, the sun through glass stops a storey dow
   };
   const sd = [0.8, 0.6, 0];
   assert.equal(frame(sd), 2);
-  const b = Array.from(pass.spheres.subarray(0, 4)), ctr = [pass.data[0], pass.data[1], pass.data[2]];
-  assert.ok(near(b[0], ctr[0] - sd[0] * 12, 1e-4) && near(b[1], ctr[1] - sd[1] * 12, 1e-4) && near(b[3], 12 + WL_SPILL_REACH, 1e-4), 'the beam\'s ball: half its reach into the room');
+  // PIN MOVED (LIGHT-REACH): the light's box (centre, three half-axes), not a ball - the beam carried away from the sun
+  // into the room as far as its reach, with the glow's half-box on the room's side of the glass
+  const box = () => ({ c: Array.from(pass.boxes.subarray(0, 3)), ext: [0, 1, 2].map((a) => [0, 3, 6].reduce((e, h) => e + Math.abs(pass.boxes[3 + h + a]), 0)) });
+  const ctr = [pass.data[0], pass.data[1], pass.data[2]], into = box();
+  const T = WL_SUN_REACH + 0.5 * Math.hypot(3, 3), edge = WL_SUN_ANGLE * T;   // the beam's run (the reach and the pane's half diagonal), the sun's soft edge over it
+  assert.ok(near(into.ext[0], 0.5 * sd[0] * T, 1e-3) && near(into.c[0], ctr[0] - 0.5 * sd[0] * T, 1e-3), 'the beam\'s box runs into the room, away from the sun, its reach long');
+  const yLo = -1.5 - edge - sd[1] * T, yHi = WL_SPILL_REACH;
+  assert.ok(near(into.c[1], ctr[1] + 0.5 * (yLo + yHi), 1e-3) && near(into.ext[1], 0.5 * (yHi - yLo), 1e-3), 'and down as the sun\'s rays go, the glow\'s half-box above');
+  assert.ok(near(into.ext[2], WL_SPILL_REACH, 1e-3), 'across the pane: the glow\'s');
   assert.equal(frame([-0.8, 0.6, 0]), 2);
   assert.equal(pass.data[3], WL_SPILL_REACH, 'facing away: only its glow, out to the spill\'s reach');
-  assert.ok(near(pass.spheres[3], WL_SPILL_REACH, 1e-4) && near(pass.spheres[0], pass.data[0], 1e-4), 'a ball to match, about the glass');
+  const glow = box();
+  assert.ok(near(glow.ext[0], WL_SPILL_REACH / 2, 1e-3) && near(glow.c[0], ctr[0] - WL_SPILL_REACH / 2, 1e-3) && near(glow.ext[1], WL_SPILL_REACH, 1e-3), 'a box to match: the glow\'s half-box on the room\'s side');
 });
 
 test('WL1 W21 (AUDIT): a frame builds at most WL_BUILD_TILES tiles\' world data, the nearest cells first, and lights what it built in that same frame (mutant: the budget ignored)', () => {

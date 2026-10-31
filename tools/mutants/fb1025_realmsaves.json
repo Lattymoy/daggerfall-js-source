@@ -94,8 +94,8 @@
   {
     "name": "SAVES-SAID-landing-always-said",
     "file": "src/systems/online/realmUnsavedNotice.js",
-    "old": "      if (warnedAt == null) return;",
-    "new": "",
+    "old": "      if (warnedAt == null) return;\n      warnedAt = null;",
+    "new": "      warnedAt = null;",
     "tests": [
       "test/systems/online/realmUnsavedNotice.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "SAVES-SAID-never-wired",
     "file": "src/systems/online/realmUnsavedNotice.js",
-    "old": "  session.onCheckpointAnswered = heard;",
-    "new": "",
+    "old": "  session.onCheckpointAnswered = heard;\n  return { heard, tick: heard };",
+    "new": "  return { heard, tick: heard };",
     "tests": [
       "test/systems/online/realmUnsavedNotice.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "SAVES-SAID-lost-session-said",
     "file": "src/systems/online/realmUnsavedNotice.js",
-    "old": "    if (session.lost) return;",
-    "new": "",
+    "old": "    if (session.lost) return;\n    const at = now();",
+    "new": "    const at = now();",
     "equivalent": true,
     "why": "the session tells no handler after its end (realmSaves.js `if (!lost) toldAnswered()`); the notice's own guard is belt-and-braces for a host that calls heard() itself",
     "tests": [

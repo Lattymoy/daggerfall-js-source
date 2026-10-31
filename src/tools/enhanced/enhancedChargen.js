@@ -43,8 +43,12 @@ async function loadMap() {
     pal.load(await getBytes('ART_PAL.COL'), 'ART_PAL.COL');
     const [picker, picture] = await Promise.all([one('TAMRIEL2.IMG'), one('TMAP00I0.IMG')]);
     return {
-      picker, picture,
-      palette: (i) => { const c = pal.get(i); return [c.r, c.g, c.b]; },
+      picker,
+      picture,
+      palette: (i) => {
+        const c = pal.get(i);
+        return [c.r, c.g, c.b];
+      },
       loadFaces: makeFaceLoader(pal),
     };
   } catch (e) {
@@ -54,15 +58,22 @@ async function loadMap() {
 }
 
 async function loadText() {
-  try { return new TextRsc().load(await getBytes('TEXT.RSC')); }
-  catch (e) { console.warn('[chargen prototype] TEXT.RSC unavailable', e); return null; }
+  try {
+    return new TextRsc().load(await getBytes('TEXT.RSC'));
+  } catch (e) {
+    console.warn('[chargen prototype] TEXT.RSC unavailable', e);
+    return null;
+  }
 }
 
 /** The ten head records for one identity, as canvases. The CIF reader
  *  and the palette are the game's own; only the canvas is ours. */
 function makeFaceLoader(pal) {
   if (!pal) return null;
-  const rgb = (i) => { const c = pal.get(i); return [c.r, c.g, c.b]; };
+  const rgb = (i) => {
+    const c = pal.get(i);
+    return [c.r, c.g, c.b];
+  };
   return async (raceKey, gender) => {
     const name = raceArt(raceKey, gender).heads;
     const cif = new CifRciFile();
@@ -76,9 +87,7 @@ function makeFaceLoader(pal) {
 }
 
 await ensureArena2();
-const [{ flow }, map, textRsc] = await Promise.all([
-  createChargenFlow(getBytes), loadMap(), loadText(),
-]);
+const [{ flow }, map, textRsc] = await Promise.all([createChargenFlow(getBytes), loadMap(), loadText()]);
 attachChargenText(flow, textRsc);
 mountEnhancedChargen(app, {
   flow,

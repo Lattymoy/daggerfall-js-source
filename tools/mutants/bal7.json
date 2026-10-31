@@ -20,7 +20,7 @@
   {
     "name": "BAL7-the-leech-uncapped",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  pct = Math.min(LEECH_CAP, pct);   // BAL7",
+    "old": "  pct = Math.min(LEECH_CAP, pct); // BAL7",
     "new": "  // BAL7",
     "tests": [
       "test/systems/bal7_loot.test.js"
@@ -38,8 +38,8 @@
   {
     "name": "BAL7-open-hand-whole",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "      case 'fists': if (!weapon) again(target, (damage * p.share) / 100, p.name); break;",
-    "new": "      case 'fists': if (!weapon) again(target, damage, p.name); break;",
+    "old": "        if (!weapon) again(target, (damage * p.share) / 100, p.name);",
+    "new": "        if (!weapon) again(target, damage, p.name);",
     "tests": [
       "test/systems/bal7_loot.test.js"
     ]

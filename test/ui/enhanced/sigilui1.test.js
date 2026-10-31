@@ -140,7 +140,7 @@ test('RARITY-UI the frame: a piece\'s tier and its rune are marked on every pict
     assert.ok(ITEM_FRAME_CSS.includes(sel), sel);
   }
   assert.ok(PLUS_CSS.includes(ITEM_FRAME_CSS), 'the frames ride the Plus sheet');
-  assert.match(read('src/ui/enhanced/enhancedHotbar.js'), /if \(rar\) n\.dataset\.rarity = rar; else delete n\.dataset\.rarity;\n\s+if \(it && validSigil\(it\.sigil\)\) n\.dataset\.sigil = ''; else delete n\.dataset\.sigil;/);
+  assert.match(read('src/ui/enhanced/enhancedHotbar.js'), /if \(rar\) n\.dataset\.rarity = rar;\n\s*else delete n\.dataset\.rarity;\n\s*if \(it && validSigil\(it\.sigil\)\) n\.dataset\.sigil = '';\n\s*else delete n\.dataset\.sigil;/);
   assert.match(read('src/ui/enhanced/enhancedHud.js'), /if \(rar\) part\.cell\.dataset\.rarity = rar; else delete part\.cell\.dataset\.rarity;\n\s+if \(worn && validSigil\(worn\.sigil\)\) part\.cell\.dataset\.sigil = ''; else delete part\.cell\.dataset\.sigil;/);
   for (const f of ['src/ui/enhanced/enhancedTrade.js', 'src/ui/enhanced/enhancedPlayerTrade.js']) assert.match(read(f), /markItemFrame\(el\('button', 'itemrow'\), item\)/, f);
 });

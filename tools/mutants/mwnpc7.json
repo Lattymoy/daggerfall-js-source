@@ -1,200 +1,200 @@
 [
- {
-  "name": "MWNPC7-variant-ignored",
-  "file": "src/characters/folkBodies.js",
-  "old": "  const { role, cut } = FOLK_DRESS[gender][folkVariant(person.archive, race)];",
-  "new": "  const { role, cut } = FOLK_DRESS[gender][0];",
-  "tests": [
-   "test/characters/mwnpc7_folk.test.js"
-  ]
- },
- {
-  "name": "MWNPC7-female-variant-unread",
-  "file": "src/characters/folkBodies.js",
-  "old": "    const j = t.female.indexOf(archive);\n    if (j >= 0) return j;",
-  "new": "",
-  "tests": [
-   "test/characters/mwnpc7_folk.test.js"
-  ]
- },
- {
-  "name": "MWNPC7-gender-ignored",
-  "file": "src/characters/folkBodies.js",
-  "old": "  const female = person.gender === GENDERS.Female;",
-  "new": "  const female = false;",
-  "tests": [
-   "test/characters/mwnpc7_folk.test.js"
-  ]
- },
- {
-  "name": "MWNPC7-legs-dropped",
-  "file": "src/characters/wardrobe.js",
-  "old": "    items.push({ templateIndex: pickOf(/** @type {number[]} */ (S.legs), wmix(s ^ 0xc2)), group, equipSlot: EQUIP_SLOTS.LegsClothes, dye: lowDye });",
-  "new": "",
-  "tests": [
-   "test/characters/mwnpc7_folk.test.js"
-  ]
- },
- {
-  "name": "MWNPC7-one-dye",
-  "file": "src/characters/wardrobe.js",
-  "old": "  const dye = (salt) => pickOf(R.dyes, wmix(s ^ salt));",
-  "new": "  const dye = (salt) => R.dyes[0];",
-  "tests": [
-   "test/characters/mwnpc7_folk.test.js"
-  ]
- },
- {
-  "name": "MWNPC7-guard-in-clothes",
-  "file": "src/characters/folkBodies.js",
-  "old": "  if (person.guard || person.archive === GUARD_TEXTURE) {",
-  "new": "  if (false) {",
-  "tests": [
-   "test/characters/mwnpc7_folk.test.js"
-  ]
- },
- {
-  "name": "MWNPC7-guard-iron",
-  "file": "src/characters/folkBodies.js",
-  "old": "equipSlot: EQUIP_SLOTS[slot], material: ARMOR_MATERIAL.Steel });",
-  "new": "equipSlot: EQUIP_SLOTS[slot], material: ARMOR_MATERIAL.Iron });",
-  "tests": [
-   "test/characters/mwnpc7_folk.test.js"
-  ]
- },
- {
-  "name": "MWNPC7-reroll-same-id",
-  "file": "src/characters/folkBodies.js",
-  "old": "  return (person._mwFolk = { key, n, id: `${shell}.${n}`, seed,",
-  "new": "  return (person._mwFolk = { key, n, id: `${shell}`, seed,",
-  "tests": [
-   "test/characters/mwnpc7_folk.test.js"
-  ]
- },
- {
-  "name": "MWNPC7-reroll-unseen",
-  "file": "src/characters/folkBodies.js",
-  "old": "  if (person._mwFolk && person._mwFolk.key === key) return person._mwFolk;",
-  "new": "  if (person._mwFolk) return person._mwFolk;",
-  "tests": [
-   "test/characters/mwnpc7_folk.test.js"
-  ]
- },
- {
-  "name": "MWNPC7-roll-every-frame",
-  "file": "src/characters/folkBodies.js",
-  "old": "  if (person._mwFolk && person._mwFolk.key === key) return person._mwFolk;",
-  "new": "  if (false) return person._mwFolk;",
-  "tests": [
-   "test/characters/mwnpc7_folk.test.js"
-  ]
- },
- {
-  "name": "MWNPC7-yaw-wheel-ignored",
-  "file": "src/characters/folkBodies.js",
-  "old": "  a.yaw = Number.isFinite(person.yaw) ? person.yaw : (person.facingYaw ?? 0);",
-  "new": "  a.yaw = Number.isFinite(person.yaw) ? person.yaw : 0;",
-  "tests": [
-   "test/characters/mwnpc7_folk.test.js"
-  ]
- },
- {
-  "name": "MWNPC7-idle-walks",
-  "file": "src/characters/folkBodies.js",
-  "old": "  a.moving = person.state === 'move';",
-  "new": "  a.moving = true;",
-  "tests": [
-   "test/characters/mwnpc7_folk.test.js"
-  ]
- },
- {
-  "name": "MWNPC7-actor-allocates",
-  "file": "src/characters/folkBodies.js",
-  "old": "  const a = person._mwActor ??= {",
-  "new": "  const a = {",
-  "tests": [
-   "test/characters/mwnpc7_folk.test.js"
-  ]
- },
- {
-  "name": "MWNPC7-lane-no-reset",
-  "file": "src/characters/npcBodies.js",
-  "old": "      if (batch) batch.castOnly = false;\n      if (!lane || !offered) return;",
-  "new": "      if (!lane || !offered) return;",
-  "tests": [
-   "test/characters/mwnpc7_folk.test.js"
-  ]
- },
- {
-  "name": "MWNPC7-lane-kept-unwanted",
-  "file": "src/characters/npcBodies.js",
-  "old": "      if (!want()) { if (lane) { lane.destroy(); lane = null; } offered = false; return false; }",
-  "new": "      if (!want()) { offered = false; return false; }",
-  "tests": [
-   "test/characters/mwnpc7_folk.test.js"
-  ]
- },
- {
-  "name": "MWNPC7-lane-resyncs",
-  "file": "src/characters/npcBodies.js",
-  "old": "      if (!lane || !offered) return;\n      offered = false;\n      lane.end(dt, eye);",
-  "new": "      if (!lane) return;\n      offered = false;\n      lane.end(dt, eye);",
-  "tests": [
-   "test/characters/mwnpc7_folk.test.js"
-  ]
- },
- {
-  "name": "MWNPC7-lane-unmarked",
-  "file": "src/characters/npcBodies.js",
-  "old": "if (batches[i]) batches[i].castOnly = lane.has(laneName, ids[i]);",
-  "new": "if (batches[i]) batches[i].castOnly = false;",
-  "tests": [
-   "test/characters/mwnpc7_folk.test.js"
-  ]
- },
- {
-  "name": "MWNPC7-lane-unsynced",
-  "file": "src/characters/npcBodies.js",
-  "old": "      offered = false;\n      lane.end(dt, eye);\n      for (let i = 0;",
-  "new": "      offered = false;\n      for (let i = 0;",
-  "tests": [
-   "test/characters/mwnpc7_folk.test.js"
-  ]
- },
- {
-  "name": "MWNPC7-world-unoffered",
-  "file": "src/scenes/world.js",
-  "old": "        if (_folkOn) { const a = person.living?.res ? residentWalkerActor(",
-  "new": "        if (false) { const a = person.living?.res ? residentWalkerActor(",
-  "tests": [
-   "test/characters/mwnpc7_folk.test.js"
-  ]
- },
- {
-  "name": "MWNPC7-world-undrawn",
-  "file": "src/scenes/world.js",
-  "old": "    folkStreet.draw(canvas, proj, view, mwv.eye, townTalk.overlayActive ? 0 : dt);",
-  "new": "",
-  "tests": [
-   "test/characters/mwnpc7_folk.test.js"
-  ]
- },
- {
-  "name": "MWNPC7-world-kept-indoors",
-  "file": "src/scenes/world.js",
-  "old": "folkStreet.destroy();   // MWNPC7: indoors",
-  "new": "// MWNPC7: indoors",
-  "tests": [
-   "test/characters/mwnpc7_folk.test.js"
-  ]
- },
- {
-  "name": "MWNPC7-exterior-unoffered",
-  "file": "src/scenes/exterior.js",
-  "old": "        if (_folkOn) folkStreet.offer(folkActor(person, batch.origin, population.race), batch);",
-  "new": "        if (false) folkStreet.offer(folkActor(person, batch.origin, population.race), batch);",
-  "tests": [
-   "test/characters/mwnpc7_folk.test.js"
-  ]
- }
+  {
+    "name": "MWNPC7-variant-ignored",
+    "file": "src/characters/folkBodies.js",
+    "old": "  const { role, cut } = FOLK_DRESS[gender][folkVariant(person.archive, race)];",
+    "new": "  const { role, cut } = FOLK_DRESS[gender][0];",
+    "tests": [
+      "test/characters/mwnpc7_folk.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC7-female-variant-unread",
+    "file": "src/characters/folkBodies.js",
+    "old": "    const j = t.female.indexOf(archive);\n    if (j >= 0) return j;\n  }",
+    "new": "  }",
+    "tests": [
+      "test/characters/mwnpc7_folk.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC7-gender-ignored",
+    "file": "src/characters/folkBodies.js",
+    "old": "  const female = person.gender === GENDERS.Female;",
+    "new": "  const female = false;",
+    "tests": [
+      "test/characters/mwnpc7_folk.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC7-legs-dropped",
+    "file": "src/characters/wardrobe.js",
+    "old": "    items.push({\n      templateIndex: pickOf(/** @type {number[]} */ (S.legs), wmix(s ^ 0xc2)),\n      group,\n      equipSlot: EQUIP_SLOTS.LegsClothes,\n      dye: lowDye,\n    });\n  }",
+    "new": "  }",
+    "tests": [
+      "test/characters/mwnpc7_folk.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC7-one-dye",
+    "file": "src/characters/wardrobe.js",
+    "old": "  const dye = (salt) => pickOf(R.dyes, wmix(s ^ salt));",
+    "new": "  const dye = (salt) => R.dyes[0];",
+    "tests": [
+      "test/characters/mwnpc7_folk.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC7-guard-in-clothes",
+    "file": "src/characters/folkBodies.js",
+    "old": "  if (person.guard || person.archive === GUARD_TEXTURE) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/characters/mwnpc7_folk.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC7-guard-iron",
+    "file": "src/characters/folkBodies.js",
+    "old": "      items.push({\n        templateIndex: piece,\n        group: 'Armor',\n        equipSlot: EQUIP_SLOTS[slot],\n        material: ARMOR_MATERIAL.Steel,\n      }); // steel - MWNPC12: 1 named no material, so none of it was ever worn",
+    "new": "      items.push({ templateIndex: piece, group: 'Armor', equipSlot: EQUIP_SLOTS[slot], material: ARMOR_MATERIAL.Iron }); // steel - MWNPC12: 1 named no material, so none of it was ever worn",
+    "tests": [
+      "test/characters/mwnpc7_folk.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC7-reroll-same-id",
+    "file": "src/characters/folkBodies.js",
+    "old": "  return (person._mwFolk = { key, n, id: `${shell}.${n}`, seed, look: folkLookOf(person, race, seed) });",
+    "new": "  return (person._mwFolk = { key, n, id: `${shell}`, seed, look: folkLookOf(person, race, seed) });",
+    "tests": [
+      "test/characters/mwnpc7_folk.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC7-reroll-unseen",
+    "file": "src/characters/folkBodies.js",
+    "old": "  if (person._mwFolk && person._mwFolk.key === key) return person._mwFolk;",
+    "new": "  if (person._mwFolk) return person._mwFolk;",
+    "tests": [
+      "test/characters/mwnpc7_folk.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC7-roll-every-frame",
+    "file": "src/characters/folkBodies.js",
+    "old": "  if (person._mwFolk && person._mwFolk.key === key) return person._mwFolk;",
+    "new": "  if (false) return person._mwFolk;",
+    "tests": [
+      "test/characters/mwnpc7_folk.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC7-yaw-wheel-ignored",
+    "file": "src/characters/folkBodies.js",
+    "old": "  a.yaw = Number.isFinite(person.yaw) ? person.yaw : (person.facingYaw ?? 0);",
+    "new": "  a.yaw = Number.isFinite(person.yaw) ? person.yaw : 0;",
+    "tests": [
+      "test/characters/mwnpc7_folk.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC7-idle-walks",
+    "file": "src/characters/folkBodies.js",
+    "old": "  a.moving = person.state === 'move';",
+    "new": "  a.moving = true;",
+    "tests": [
+      "test/characters/mwnpc7_folk.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC7-actor-allocates",
+    "file": "src/characters/folkBodies.js",
+    "old": "  const a = (person._mwActor ??= {\n    id: '',\n    look: null,\n    feet: null,\n    yaw: 0,\n    moving: false,\n    running: false,\n    drawn: false,\n    swings: 0,\n    strike: 0,\n    casts: 0,\n    castRange: 0,\n    hits: 0,\n    dead: 0,\n  });",
+    "new": "  const a = {\n    id: '',\n    look: null,\n    feet: null,\n    yaw: 0,\n    moving: false,\n    running: false,\n    drawn: false,\n    swings: 0,\n    strike: 0,\n    casts: 0,\n    castRange: 0,\n    hits: 0,\n    dead: 0,\n  };",
+    "tests": [
+      "test/characters/mwnpc7_folk.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC7-lane-no-reset",
+    "file": "src/characters/npcBodies.js",
+    "old": "      if (batch) batch.castOnly = false;\n      if (!lane || !offered) return;",
+    "new": "      if (!lane || !offered) return;",
+    "tests": [
+      "test/characters/mwnpc7_folk.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC7-lane-kept-unwanted",
+    "file": "src/characters/npcBodies.js",
+    "old": "      if (!want()) { if (lane) { lane.destroy(); lane = null; } offered = false; return false; }",
+    "new": "      if (!want()) { offered = false; return false; }",
+    "tests": [
+      "test/characters/mwnpc7_folk.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC7-lane-resyncs",
+    "file": "src/characters/npcBodies.js",
+    "old": "      if (!lane || !offered) return;\n      offered = false;\n      lane.end(dt, eye);",
+    "new": "      if (!lane) return;\n      offered = false;\n      lane.end(dt, eye);",
+    "tests": [
+      "test/characters/mwnpc7_folk.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC7-lane-unmarked",
+    "file": "src/characters/npcBodies.js",
+    "old": "if (batches[i]) batches[i].castOnly = lane.has(laneName, ids[i]);",
+    "new": "if (batches[i]) batches[i].castOnly = false;",
+    "tests": [
+      "test/characters/mwnpc7_folk.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC7-lane-unsynced",
+    "file": "src/characters/npcBodies.js",
+    "old": "      offered = false;\n      lane.end(dt, eye);\n      for (let i = 0;",
+    "new": "      offered = false;\n      for (let i = 0;",
+    "tests": [
+      "test/characters/mwnpc7_folk.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC7-world-unoffered",
+    "file": "src/scenes/world.js",
+    "old": "        if (_folkOn) { const a = person.living?.res ? residentWalkerActor(",
+    "new": "        if (false) { const a = person.living?.res ? residentWalkerActor(",
+    "tests": [
+      "test/characters/mwnpc7_folk.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC7-world-undrawn",
+    "file": "src/scenes/world.js",
+    "old": "    folkStreet.draw(canvas, proj, view, mwv.eye, townTalk.overlayActive ? 0 : dt);",
+    "new": "",
+    "tests": [
+      "test/characters/mwnpc7_folk.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC7-world-kept-indoors",
+    "file": "src/scenes/world.js",
+    "old": "folkStreet.destroy();   // MWNPC7: indoors",
+    "new": "// MWNPC7: indoors",
+    "tests": [
+      "test/characters/mwnpc7_folk.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC7-exterior-unoffered",
+    "file": "src/scenes/exterior.js",
+    "old": "        if (_folkOn) folkStreet.offer(folkActor(person, batch.origin, population.race), batch);",
+    "new": "        if (false) folkStreet.offer(folkActor(person, batch.origin, population.race), batch);",
+    "tests": [
+      "test/characters/mwnpc7_folk.test.js"
+    ]
+  }
 ]

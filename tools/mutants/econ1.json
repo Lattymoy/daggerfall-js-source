@@ -20,8 +20,8 @@
   {
     "name": "ECON1-the-seam-reads-the-players-own",
     "file": "src/systems/shopStock.js",
-    "old": "  if (_worldPrice) { const p = _worldPrice(regionIndex); if (Number.isFinite(p)) return p; }",
-    "new": "",
+    "old": "  if (_worldPrice) {\n    const p = _worldPrice(regionIndex);\n    if (Number.isFinite(p)) return p;\n  }\n  playerEntity.regionPrices ??= {};",
+    "new": "  playerEntity.regionPrices ??= {};",
     "tests": [
       "test/systems/econ1_world_prices.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ECON1-the-seam-writes-the-worlds-into-the-save",
     "file": "src/systems/shopStock.js",
-    "old": "  if (_worldPrice) { const p = _worldPrice(regionIndex); if (Number.isFinite(p)) return p; }",
-    "new": "  if (_worldPrice) { const p = _worldPrice(regionIndex); if (Number.isFinite(p)) { (playerEntity.regionPrices ??= {})[regionIndex] = p; return p; } }",
+    "old": "    if (Number.isFinite(p)) return p;",
+    "new": "    if (Number.isFinite(p)) {\n      (playerEntity.regionPrices ??= {})[regionIndex] = p;\n      return p;\n    }",
     "tests": [
       "test/systems/econ1_world_prices.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "ECON1-the-step-rises-on-a-failed-roll",
     "file": "src/systems/shopStock.js",
-    "old": "  const next = dice100(chanceOfPriceRise, roll01) ? Math.trunc(51 * adj / 50) : Math.trunc(49 * adj / 50);",
-    "new": "  const next = dice100(chanceOfPriceRise, roll01) ? Math.trunc(49 * adj / 50) : Math.trunc(51 * adj / 50);",
+    "old": "  const next = dice100(chanceOfPriceRise, roll01) ? Math.trunc((51 * adj) / 50) : Math.trunc((49 * adj) / 50);",
+    "new": "  const next = dice100(chanceOfPriceRise, roll01) ? Math.trunc((49 * adj) / 50) : Math.trunc((51 * adj) / 50);",
     "tests": [
       "test/systems/econ1_world_prices.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "ECON1-the-flag-half-forgets-the-low-arm",
     "file": "src/systems/shopStock.js",
-    "old": "      turnOnConditionFlag(conditions, regionIndex, REGION_FLAGS.PricesLow, rolls);\n    }\n  } else {",
-    "new": "    }\n  } else {",
+    "old": "      turnOnConditionFlag(conditions, regionIndex, REGION_FLAGS.PricesLow, rolls);\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/econ1_world_prices.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "AUDIT-ALL-E2-the-walk-leans-on-the-lazy-init",
     "file": "src/systems/shopStock.js",
-    "old": "  playerEntity.regionPrices ??= {};   // AUDIT ALL E2",
-    "new": "  // AUDIT ALL E2",
+    "old": "  playerEntity.regionPrices ??= {}; // AUDIT ALL E2: the table is this walk's own to stand - it leaned on regionPriceAdjustment's lazy init, which the world's source (ECON1) skips",
+    "new": "  // AUDIT ALL E2: the table is this walk's own to stand - it leaned on regionPriceAdjustment's lazy init, which the world's source (ECON1) skips",
     "tests": [
       "test/systems/econ1_world_prices.test.js"
     ]

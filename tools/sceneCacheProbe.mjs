@@ -10,10 +10,15 @@ import { chromium } from 'playwright';
 const SHOPPY = new Set([0, 2, 5, 6, 7, 8, 9, 12, 13]);
 const server = await createServer({ root: '/home/user/project-dagger', server: { port: 5214, strictPort: true } });
 await server.listen();
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 const errors = [];
-page.on('pageerror', (e) => { errors.push(e.message); console.log('[pageerror]', e.message); });
+page.on('pageerror', (e) => {
+  errors.push(e.message);
+  console.log('[pageerror]', e.message);
+});
 await page.goto('http://localhost:5214/play/?shot&play&exterior&time=12:00');
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 180000 });
 
@@ -22,7 +27,10 @@ const waitFrames = async (n) => {
   await page.waitForFunction(([f0, k]) => window.__frame > f0 + k, [f, n], { timeout: 60000 });
 };
 const cache = async () => JSON.parse(await page.evaluate(() => window.__sceneCache()));
-const fail = (m) => { console.log('FAIL:', m); process.exit(1); };
+const fail = (m) => {
+  console.log('FAIL:', m);
+  process.exit(1);
+};
 
 const doors = JSON.parse(await page.evaluate(() => JSON.stringify(window.__doors())));
 let pick = null;
@@ -32,11 +40,14 @@ for (let i = 0; i < doors.length && !pick; i++) {
   const { pos, normal } = doors[i];
   const pose = [pos[0] + normal[0] * 1.5, pos[1] - 1.2, pos[2] + normal[2] * 1.5, Math.atan2(-normal[0], -normal[2])];
   await page.evaluate(([x, y, z, yaw]) => window.__pose(x, y, z, yaw, -0.05), pose);
-  if (!await page.evaluate(() => window.__enter())) continue;
+  if (!(await page.evaluate(() => window.__enter()))) continue;
   await waitFrames(10);
-  const shelves = JSON.parse(await page.evaluate(() => window.__shelves()) ?? 'null');
+  const shelves = JSON.parse((await page.evaluate(() => window.__shelves())) ?? 'null');
   if (shelves?.shelves?.length > 0) pick = { b, pose };
-  else { await page.evaluate(() => window.__exit()); await waitFrames(4); }
+  else {
+    await page.evaluate(() => window.__exit());
+    await waitFrames(4);
+  }
 }
 if (!pick) fail('no shop with a shelf found');
 console.log('shop:', pick.b.name, '| type', pick.b.buildingType);
@@ -68,7 +79,7 @@ if (c.cached.length !== 1) fail(`expected exactly one cached scene, got ${c.cach
 
 console.log('\n== COME BACK ==');
 await page.evaluate(([x, y, z, yaw]) => window.__pose(x, y, z, yaw, -0.05), pick.pose);
-if (!await page.evaluate(() => window.__enter())) fail('could not get back in');
+if (!(await page.evaluate(() => window.__enter()))) fail('could not get back in');
 await waitFrames(10);
 c = await cache();
 console.log('shelf 0 on return:', c.shelves[0], '| left it at', changed, '| a restock would say', stocked);

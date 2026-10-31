@@ -64,9 +64,9 @@
 // is strict).
 
 /** PlayerGPS.NearbyObjectFlags (:112-123), verbatim. */
-import { LOCATION_TYPES } from '../formats/mapsFile.js';   // V5: IsPlayerInTown's seven town types
-import { enemyCareerIndex } from '../characters/enemy/enemyBasics.js';   // DEX1: SetEnemyCareer's careerIndex - a class's ID - 128, a mod's id its own
-import { ENEMY_GROUPS, enemyEntityGroup } from '../combat/enemyGroups.js';   // AUDIT DEX C3: GetEnemyGroup's one home, a mod's door with it
+import { LOCATION_TYPES } from '../formats/mapsFile.js'; // V5: IsPlayerInTown's seven town types
+import { enemyCareerIndex } from '../characters/enemy/enemyBasics.js'; // DEX1: SetEnemyCareer's careerIndex - a class's ID - 128, a mod's id its own
+import { ENEMY_GROUPS, enemyEntityGroup } from '../combat/enemyGroups.js'; // AUDIT DEX C3: GetEnemyGroup's one home, a mod's door with it
 
 export const NEARBY = Object.freeze({
   None: 0,
@@ -79,7 +79,7 @@ export const NEARBY = Object.freeze({
   Animal: 64,
 });
 
-export const REFRESH_NEARBY_OBJECTS_INTERVAL = 0.33;   // :39
+export const REFRESH_NEARBY_OBJECTS_INTERVAL = 0.33; // :39
 // GetNearbyObjects' default maxRange (:538). DFU's own note: "Not
 // matched to classic range at this time" - a recorded approximation.
 export const NEARBY_DEFAULT_MAX_RANGE = 14;
@@ -119,7 +119,7 @@ const GROUP_FLAG = Object.freeze({
  *  Animal never calmed a Mage and Dispel Undead could not destroy a
  *  Knight. X8's Pacify family reads this rather than re-transcribing
  *  the career switch, so the two cannot drift apart. */
-const careerIndexOf = (mobileType) => enemyCareerIndex(mobileType);   // DEX1: SetEnemyCareer's careerIndex - a mod's id its own
+const careerIndexOf = (mobileType) => enemyCareerIndex(mobileType); // DEX1: SetEnemyCareer's careerIndex - a mod's id its own
 /**
  * V5 - PlayerGPS.IsPlayerInTown (:504-527), verbatim including its
  * two optional gates, because getting them backwards inverts the
@@ -136,15 +136,21 @@ const careerIndexOf = (mobileType) => enemyCareerIndex(mobileType);   // DEX1: S
  * The seven town types are DFU's list, not "the three called Town":
  * HomeFarms, HomeWealthy, Tavern and ReligionTemple are towns here too.
  */
-export const TOWN_LOCATION_TYPES = Object.freeze(new Set([
-  LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage,
-  LOCATION_TYPES.HomeFarms, LOCATION_TYPES.HomeWealthy,
-  LOCATION_TYPES.Tavern, LOCATION_TYPES.ReligionTemple,
-]));
-export function isPlayerInTown(locationType, {
-  mustBeInLocationRect = false, mustBeOutside = false,
-  inLocationRect = false, inside = false,
-} = {}) {
+export const TOWN_LOCATION_TYPES = Object.freeze(
+  new Set([
+    LOCATION_TYPES.TownCity,
+    LOCATION_TYPES.TownHamlet,
+    LOCATION_TYPES.TownVillage,
+    LOCATION_TYPES.HomeFarms,
+    LOCATION_TYPES.HomeWealthy,
+    LOCATION_TYPES.Tavern,
+    LOCATION_TYPES.ReligionTemple,
+  ]),
+);
+export function isPlayerInTown(
+  locationType,
+  { mustBeInLocationRect = false, mustBeOutside = false, inLocationRect = false, inside = false } = {},
+) {
   if (!TOWN_LOCATION_TYPES.has(locationType)) return false;
   if (mustBeInLocationRect && !inLocationRect) return false;
   if (mustBeOutside && inside) return false;
@@ -221,10 +227,9 @@ export function updateNearbyObjects(playerPos, { entities = [], loot = [] } = {}
  *  every bit; and the range test is STRICT. */
 export function getNearbyObjects(list, flags, maxRange = NEARBY_DEFAULT_MAX_RANGE, activeInHierarchy = true) {
   if (flags === NEARBY.None) return null;
-  return (list ?? []).filter((no) =>
-    (no.flags & flags) === flags
-    && no.distance < maxRange
-    && no.active === activeInHierarchy);
+  return (list ?? []).filter(
+    (no) => (no.flags & flags) === flags && no.distance < maxRange && no.active === activeInHierarchy,
+  );
 }
 
 /** The 0.33 s rebuild timer (:352-356), as a tiny stateful pump a
@@ -236,7 +241,9 @@ export function createNearbyScan(rebuild) {
   let timer = 0;
   let list = [];
   return {
-    get list() { return list; },
+    get list() {
+      return list;
+    },
     tick(dt) {
       timer += dt;
       if (timer > REFRESH_NEARBY_OBJECTS_INTERVAL) {
@@ -246,7 +253,10 @@ export function createNearbyScan(rebuild) {
       return list;
     },
     /** A scene change must not carry the previous scene's objects. */
-    reset() { timer = 0; list = []; },
+    reset() {
+      timer = 0;
+      list = [];
+    },
   };
 }
 

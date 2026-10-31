@@ -23,18 +23,41 @@
 // for.
 import { GUILD_GROUPS, SOCIAL_GROUPS, FACTION_TYPES } from '../../formats/factionFile.js';
 import { hasGuildService, npcServiceKind, canAccessService } from './guildServices.js';
-import { isMember, joinedGuildOfGroup, updateRank, rankNeeds, getTitle, membershipOf, reviewDaysLeft, reviewedRank, numHighLowSkills, underworldRuleOf,
-  isJoinableByApplication, membershipKey,   // WAY-BACK: a stranger is told the way in where one walks in
-  GUILD_EXPEL_BELOW, DAYS_BETWEEN_RANK_CHANGES, RANK_REQ_REPUTATION, RANK_REQ_SKILL_HIGH, RANK_REQ_SKILL_LOW } from './guilds.js';
-import { QUEST_SUCCESS_REP } from '../quest/questRepute.js';   // WAY-BACK: what a stranger's quest done pays the guild (the leaf - AUDIT GUIDE O6)
-import { RECOVERY_INTERVAL_MINUTES } from '../court.js';   // WAY-BACK: REP4's week, a bad name's point back
+import {
+  isMember,
+  joinedGuildOfGroup,
+  updateRank,
+  rankNeeds,
+  getTitle,
+  membershipOf,
+  reviewDaysLeft,
+  reviewedRank,
+  numHighLowSkills,
+  underworldRuleOf,
+  isJoinableByApplication,
+  membershipKey, // WAY-BACK: a stranger is told the way in where one walks in
+  GUILD_EXPEL_BELOW,
+  DAYS_BETWEEN_RANK_CHANGES,
+  RANK_REQ_REPUTATION,
+  RANK_REQ_SKILL_HIGH,
+  RANK_REQ_SKILL_LOW,
+} from './guilds.js';
+import { QUEST_SUCCESS_REP } from '../quest/questRepute.js'; // WAY-BACK: what a stranger's quest done pays the guild (the leaf - AUDIT GUIDE O6)
+import { RECOVERY_INTERVAL_MINUTES } from '../court.js'; // WAY-BACK: REP4's week, a bad name's point back
 import { MINUTES_PER_DAY } from '../gameDate.js';
-import { getReputation } from '../faction/factionRep.js';   // AUDIT GUILD-WORDS L1-2: the review's warnings read the standing
-import { standingOwedOf } from '../standingOwed.js';   // STANDING-WORDS: what the Roll still owes, online
-import { SKILL_NAMES } from '../skills.js';   // PROMO-NOW: the hall's line names the guild's skills
+import { getReputation } from '../faction/factionRep.js'; // AUDIT GUILD-WORDS L1-2: the review's warnings read the standing
+import { standingOwedOf } from '../standingOwed.js'; // STANDING-WORDS: what the Roll still owes, online
+import { SKILL_NAMES } from '../skills.js'; // PROMO-NOW: the hall's line names the guild's skills
 import { isDivine } from './guildVariants.js';
-import { localizedText, localizedTable, t } from '../textManager.js';   // L10N3d: the labels and the refusal; PROMO-NOW: the hall's line
-import { SEAT_RANK, SEAT_MERIT_WEEKS, SEAT_TENURE_S, SEAT_ACCOUNT_AGE_S, ROLL_GAIN_DAY_MAX, HALL_WRIT_REP } from '../../net/npcChapterLaw.js';   // SEAT-LINE: what a seat asks, the law's own numbers; OWED-PACE: the Roll's day; WAY-BACK: and a chapter writ's credit
+import { localizedText, localizedTable, t } from '../textManager.js'; // L10N3d: the labels and the refusal; PROMO-NOW: the hall's line
+import {
+  SEAT_RANK,
+  SEAT_MERIT_WEEKS,
+  SEAT_TENURE_S,
+  SEAT_ACCOUNT_AGE_S,
+  ROLL_GAIN_DAY_MAX,
+  HALL_WRIT_REP,
+} from '../../net/npcChapterLaw.js'; // SEAT-LINE: what a seat asks, the law's own numbers; OWED-PACE: the Roll's day; WAY-BACK: and a chapter writ's credit
 
 /** The four ids the window quotes by name (:29-32), plus the two
  *  OnPush records and the spymaster greeting (:455). */
@@ -42,7 +65,7 @@ export const NO_POTION_INGREDIENTS = 34;
 export const SORCEROR_MAGICKA_RECHARGE = 465;
 export const TEMPLE_RESET_STATS = 403;
 export const INSUFFICIENT_RANK_ID = 3100;
-export const YOU_ARE_HEALED_ID = 350;          // DaggerfallUI.MessageBox(350)
+export const YOU_ARE_HEALED_ID = 350; // DaggerfallUI.MessageBox(350)
 export const SPYMASTER_GREETING_ID = 402;
 /** Internal_Strings "serviceMembersOnly" - the NON-member refusal,
  *  which is a plain string and not a TEXT.RSC record. */
@@ -63,7 +86,7 @@ export const SERVICE_LABEL = localizedTable({
   BuyPotions: ['serviceBuyPotions', 'Buy Potions'],
   MakePotions: ['serviceMakePotions', 'Make Potions'],
   BuySpells: ['serviceBuySpells', 'Buy Spells'],
-  BuySpellsMages: ['serviceBuySpells', 'Buy Spells'],      // the two share one label (:379-381)
+  BuySpellsMages: ['serviceBuySpells', 'Buy Spells'], // the two share one label (:379-381)
   MakeSpells: ['serviceMakeSpells', 'Make Spells'],
   BuyMagicItems: ['serviceBuyMagicItems', 'Buy Magic Items'],
   MakeMagicItems: ['serviceMakeMagicItems', 'Make Magic Items'],
@@ -75,10 +98,10 @@ export const SERVICE_LABEL = localizedTable({
   ReceiveArmor: ['serviceReceiveArmor', 'Receive Armor'],
   ReceiveHouse: ['serviceReceiveHouse', 'Receive House'],
 });
-export const serviceLabel = (service) => SERVICE_LABEL[service] ?? '?';   // DFU's `default: "?"`
+export const serviceLabel = (service) => SERVICE_LABEL[service] ?? '?'; // DFU's `default: "?"`
 
 /** GuildNpcServices.TG_Spymaster - the id the t=2037 escape tests. */
-export const TG_SPYMASTER_FACTION_ID = 806;   // AUDIT 23 (guilds-3): Services.cs:78 TG_Spymaster = 806 (803 is TG_Training)
+export const TG_SPYMASTER_FACTION_ID = 806; // AUDIT 23 (guilds-3): Services.cs:78 TG_Spymaster = 806 (803 is TG_Training)
 
 /** StaticNPCClick's routing (:1512-1607), as a decision.
  *
@@ -97,14 +120,20 @@ export const TG_SPYMASTER_FACTION_ID = 806;   // AUDIT 23 (guilds-3): Services.c
  *                    TalkToStaticNPC argument on the t=2037 path
  */
 export function staticNpcRoute({
-  npcFactionId, npcFaction, buildingFaction = null, buildingType = -1,
-  insideBuilding = true, isShop = () => false, isRepairShop = () => false,
-  isBank = () => false, isTavern = () => false, hasCustomMerchantService = () => false,
+  npcFactionId,
+  npcFaction,
+  buildingFaction = null,
+  buildingType = -1,
+  insideBuilding = true,
+  isShop = () => false,
+  isRepairShop = () => false,
+  isBank = () => false,
+  isTavern = () => false,
+  hasCustomMerchantService = () => false,
 } = {}) {
   if (!npcFaction) return { kind: 'talk', spymaster: false };
-  const buildingGroup = (insideBuilding && buildingFaction)
-    ? buildingFaction.ggroup : GUILD_GROUPS.None;
-  const buildingFactionId = (insideBuilding && buildingFaction) ? buildingFaction.id : 0;
+  const buildingGroup = insideBuilding && buildingFaction ? buildingFaction.ggroup : GUILD_GROUPS.None;
+  const buildingFactionId = insideBuilding && buildingFaction ? buildingFaction.id : 0;
 
   if (hasGuildService(npcFactionId)) {
     let guildGroup = buildingGroup;
@@ -113,8 +142,10 @@ export function staticNpcRoute({
       // buildings of divine faction)"
       guildGroup = npcFaction.ggroup;
       // The two bug-numbered escapes, verbatim.
-      if ((guildGroup === GUILD_GROUPS.HolyOrder && !isDivine(buildingFactionId))
-        || (npcFactionId === TG_SPYMASTER_FACTION_ID && buildingFactionId === 0)) {
+      if (
+        (guildGroup === GUILD_GROUPS.HolyOrder && !isDivine(buildingFactionId)) ||
+        (npcFactionId === TG_SPYMASTER_FACTION_ID && buildingFactionId === 0)
+      ) {
         return { kind: 'talk', spymaster: npcFactionId === TG_SPYMASTER_FACTION_ID };
       }
     }
@@ -157,12 +188,19 @@ export function showsJoinButton(memberships, guildGroup) {
  *  L1-5, L3-3: a seat held elsewhere is told why its rank is not read here). */
 export function serviceAccess(guild, membership, service, ctx = null) {
   if (canAccessService(guild, membership, service)) return { allowed: true };
-  if (!isMember(membership)) return { allowed: false, text: localizedText('serviceMembersOnly', SERVICE_MEMBERS_ONLY) };   // :325
+  if (!isMember(membership)) return { allowed: false, text: localizedText('serviceMembersOnly', SERVICE_MEMBERS_ONLY) }; // :325
   const ceiling = ctx?.rankCeiling;
   if (Number.isInteger(ceiling) && !canAccessService(guild, { ...membership, rank: ceiling }, service)) {
     for (let rank = ceiling + 1; rank <= SEAT_RANK.master; rank++) {
       if (canAccessService(guild, { ...membership, rank }, service)) {
-        return { allowed: false, text: t('guild.seatService', 'Rank {rank} offers this. Online, ranks {officer} and {master} are chapter chairs won by Merit, and a chair\'s services are at its own chapter\'s halls, for a member at rank {cap}. A notice board explains chapters.', { rank, officer: SEAT_RANK.officer, master: SEAT_RANK.master, cap: ceiling }) };
+        return {
+          allowed: false,
+          text: t(
+            'guild.seatService',
+            "Rank {rank} offers this. Online, ranks {officer} and {master} are chapter chairs won by Merit, and a chair's services are at its own chapter's halls, for a member at rank {cap}. A notice board explains chapters.",
+            { rank, officer: SEAT_RANK.officer, master: SEAT_RANK.master, cap: ceiling },
+          ),
+        };
       }
     }
   }
@@ -206,12 +244,19 @@ export function cureAllAttributes(entity) {
   let n = 0;
   for (const a of entity?.activeEffects ?? []) {
     if (a.kind === 'drainAttribute' || a.kind === 'transferAttribute') {
-      if ((a.magnitude ?? 0) > 0) { a.magnitude = 0; n++; }
+      if ((a.magnitude ?? 0) > 0) {
+        a.magnitude = 0;
+        n++;
+      }
       a.ended = true;
       continue;
     }
     if (a.kind === 'disease' || a.kind === 'poison') {
-      for (const [k, v] of Object.entries(a.statMods ?? {})) if (v < 0) { a.statMods[k] = 0; n++; }
+      for (const [k, v] of Object.entries(a.statMods ?? {}))
+        if (v < 0) {
+          a.statMods[k] = 0;
+          n++;
+        }
     }
   }
   return n;
@@ -229,10 +274,21 @@ export function cureAllAttributes(entity) {
  *  `freeHealing` / `freeMagickaRecharge` are passed in rather than
  *  imported-and-called so the caller keeps guildServices.js's exact
  *  argument list (the magicka one needs the entity's career). */
-export function onPushEffects(entity, guild, memberships, store, now, {
-  freeHealing = false, freeMagickaRecharge = false, revealLocation = null,
-  ownsHouse = null, rankCeiling = null, promoteWhenEarned = false,
-} = {}) {
+export function onPushEffects(
+  entity,
+  guild,
+  memberships,
+  store,
+  now,
+  {
+    freeHealing = false,
+    freeMagickaRecharge = false,
+    revealLocation = null,
+    ownsHouse = null,
+    rankCeiling = null,
+    promoteWhenEarned = false,
+  } = {},
+) {
   const steps = [];
   // Check guild advancement. UpdateRank returns tokens only when the
   // rank actually MOVED; the port's returns the outcome + new rank.
@@ -243,10 +299,18 @@ export function onPushEffects(entity, guild, memberships, store, now, {
   // CHAP4b: rankCeiling, the host's - online, while the Roll holds, 7 (ranks 8 and 9 are seats, Chapters-Arc 3.5)
   // PROMO-NOW: promoteWhenEarned, the host's - online, a promotion does not wait the 28 days
   // OWED-PACE (FIELD BUGS 2026-10-16c): what the Roll still owes the guild, online (0 offline) - never expelled over it
-  const moved = updateRank(memberships, guild, entity, store, now, { revealLocation, ownsHouse, rankCeiling, promoteWhenEarned, owed: standingOwedOf(guild.factionId) });
+  const moved = updateRank(memberships, guild, entity, store, now, {
+    revealLocation,
+    ownsHouse,
+    rankCeiling,
+    promoteWhenEarned,
+    owed: standingOwedOf(guild.factionId),
+  });
   if (moved) {
     // RR1: a mod's TokensExpulsion rides as the box's own rows (centred, %pcn the player's name - MacroHelper's), ahead of the record's
-    const rows = moved.lines ? moved.lines.map((t) => ({ text: t.replaceAll('%pcn', entity?.name ?? ''), center: true })) : undefined;
+    const rows = moved.lines
+      ? moved.lines.map((t) => ({ text: t.replaceAll('%pcn', entity?.name ?? ''), center: true }))
+      : undefined;
     steps.push({ textId: moved.textId, ...(rows ? { rows } : {}), clickAnywhere: true, rankChange: moved });
   }
   if (freeHealing) {
@@ -262,7 +326,7 @@ export function onPushEffects(entity, guild, memberships, store, now, {
   }
   if (freeMagickaRecharge && (entity.magicka ?? 0) < (entity.maxMagicka ?? 0)) {
     steps.push({ textId: SORCEROR_MAGICKA_RECHARGE, clickAnywhere: true });
-    entity.magicka = entity.maxMagicka;   // DFU refills AFTER showing the box
+    entity.magicka = entity.maxMagicka; // DFU refills AFTER showing the box
   }
   return steps;
 }
@@ -280,14 +344,26 @@ const daysOf = (days) => (Number.isSafeInteger(days) && days > 0 ? days : 0);
  *  the standing is 0 or more, AUDIT GUILD-WORDS II A-6). `online`: PROMO-NOW's - a member who earns the next rank is
  *  promoted at once, which ends the probation sooner than the days (II C-7). */
 export function probationWords(days, kind = 'expel', online = false) {
-  if (kind === 'ends') return t('guild.probation.ends', 'On probation: it ends at your next review, at the guild\'s hall.');
+  if (kind === 'ends')
+    return t('guild.probation.ends', "On probation: it ends at your next review, at the guild's hall.");
   if (kind === 'skills') {
-    return t('guild.probation.skills', 'On probation: your guild skills are short of a member\'s. Your review is {days, plural, =0 {at your next visit to the guild\'s hall} one {at the guild\'s hall in # day or later} other {at the guild\'s hall in # days or later}}: below {expel} you are expelled, and it ends only once one skill reaches {high}, a second {low}, and your standing is 0 or more.',
-      { days: daysOf(days), high: RANK_REQ_SKILL_HIGH[0], low: RANK_REQ_SKILL_LOW[0], expel: GUILD_EXPEL_BELOW });
+    return t(
+      'guild.probation.skills',
+      "On probation: your guild skills are short of a member's. Your review is {days, plural, =0 {at your next visit to the guild's hall} one {at the guild's hall in # day or later} other {at the guild's hall in # days or later}}: below {expel} you are expelled, and it ends only once one skill reaches {high}, a second {low}, and your standing is 0 or more.",
+      { days: daysOf(days), high: RANK_REQ_SKILL_HIGH[0], low: RANK_REQ_SKILL_LOW[0], expel: GUILD_EXPEL_BELOW },
+    );
   }
   return daysOf(days) > 0
-    ? t('guild.probation.in', 'On probation: your review is at the guild\'s hall in {days, plural, one {# day} other {# days}} or later{online, select, yes { - sooner if you earn the next rank} other {}}. Below {expel} you are expelled there, below 0 it runs {renew} days more, and at 0 or more it ends.', { days, online: online ? 'yes' : 'no', expel: GUILD_EXPEL_BELOW, renew: DAYS_BETWEEN_RANK_CHANGES })
-    : t('guild.probation.due', 'On probation: your review is at your next visit to the guild\'s hall. Below {expel} you are expelled there, below 0 it runs {renew} days more, and at 0 or more it ends.', { expel: GUILD_EXPEL_BELOW, renew: DAYS_BETWEEN_RANK_CHANGES });
+    ? t(
+        'guild.probation.in',
+        "On probation: your review is at the guild's hall in {days, plural, one {# day} other {# days}} or later{online, select, yes { - sooner if you earn the next rank} other {}}. Below {expel} you are expelled there, below 0 it runs {renew} days more, and at 0 or more it ends.",
+        { days, online: online ? 'yes' : 'no', expel: GUILD_EXPEL_BELOW, renew: DAYS_BETWEEN_RANK_CHANGES },
+      )
+    : t(
+        'guild.probation.due',
+        "On probation: your review is at your next visit to the guild's hall. Below {expel} you are expelled there, below 0 it runs {renew} days more, and at 0 or more it ends.",
+        { expel: GUILD_EXPEL_BELOW, renew: DAYS_BETWEEN_RANK_CHANGES },
+      );
 }
 
 /**
@@ -311,16 +387,36 @@ export function reviewWarnings(entity, guild, book, store, ctx = null) {
     const kind = guild.neverExpels && !underworldRuleOf(guild) ? 'ends' : skillsShort ? 'skills' : 'expel';
     out.push(probationWords(days, kind, !!ctx?.online));
   } else if (ruled < 0) {
-    out.push(getReputation(store, guild.factionId) < 0
-      ? t('guild.probation.comingRep', 'Your review {days, plural, =0 {at your next visit to the guild\'s hall} one {at the guild\'s hall in # day or later} other {at the guild\'s hall in # days or later}} puts you on probation: your standing is below 0.', { days: daysOf(days) })
-      : t('guild.probation.comingSkills', 'Your review {days, plural, =0 {at your next visit to the guild\'s hall} one {at the guild\'s hall in # day or later} other {at the guild\'s hall in # days or later}} puts you on probation: your guild skills are short of a member\'s.', { days: daysOf(days) }));
+    out.push(
+      getReputation(store, guild.factionId) < 0
+        ? t(
+            'guild.probation.comingRep',
+            "Your review {days, plural, =0 {at your next visit to the guild's hall} one {at the guild's hall in # day or later} other {at the guild's hall in # days or later}} puts you on probation: your standing is below 0.",
+            { days: daysOf(days) },
+          )
+        : t(
+            'guild.probation.comingSkills',
+            "Your review {days, plural, =0 {at your next visit to the guild's hall} one {at the guild's hall in # day or later} other {at the guild's hall in # days or later}} puts you on probation: your guild skills are short of a member's.",
+            { days: daysOf(days) },
+          ),
+    );
   }
   if (ruled >= 0 && ruled < m.rank) {
     const title = getTitle({ rank: ruled }, entity, guild);
     const need = RANK_REQ_REPUTATION[m.rank];
-    out.push(getReputation(store, guild.factionId) < need
-      ? t('guild.rankNeeds.fallsRep', 'Your review {days, plural, =0 {at your next visit to the guild\'s hall} one {at the guild\'s hall in # day or later} other {at the guild\'s hall in # days or later}} lowers you to {title}: {current} needs reputation {need}.', { days: daysOf(days), title, current: getTitle({ rank: m.rank }, entity, guild), need })
-      : t('guild.rankNeeds.falls', 'Your review {days, plural, =0 {at your next visit to the guild\'s hall} one {at the guild\'s hall in # day or later} other {at the guild\'s hall in # days or later}} lowers you to {title}.', { days: daysOf(days), title }));
+    out.push(
+      getReputation(store, guild.factionId) < need
+        ? t(
+            'guild.rankNeeds.fallsRep',
+            "Your review {days, plural, =0 {at your next visit to the guild's hall} one {at the guild's hall in # day or later} other {at the guild's hall in # days or later}} lowers you to {title}: {current} needs reputation {need}.",
+            { days: daysOf(days), title, current: getTitle({ rank: m.rank }, entity, guild), need },
+          )
+        : t(
+            'guild.rankNeeds.falls',
+            "Your review {days, plural, =0 {at your next visit to the guild's hall} one {at the guild's hall in # day or later} other {at the guild's hall in # days or later}} lowers you to {title}.",
+            { days: daysOf(days), title },
+          ),
+    );
   }
   return out;
 }
@@ -330,9 +426,14 @@ export function reviewWarnings(entity, guild, book, store, ctx = null) {
  *  more!"): "(21 more to come)" read as 21 more NEEDED, and a quest done the same day grew it - the Roll credits at most
  *  ROLL_GAIN_DAY_MAX a real day and owes the rest (npcChapterLaw.js rollCredit). So the row says the owed is EARNED and
  *  the pace it arrives at. */
-const reputationLine = (n, owed) => (owed > 0
-  ? t('guild.rankNeeds.reputationOwed', 'Reputation {have} of {need} ({owed} more already earned, arriving at most {max} a real day)', { have: n.reputation, need: n.reputationNeed, owed, max: ROLL_GAIN_DAY_MAX })
-  : t('guild.rankNeeds.reputation', 'Reputation {have} of {need}', { have: n.reputation, need: n.reputationNeed }));
+const reputationLine = (n, owed) =>
+  owed > 0
+    ? t(
+        'guild.rankNeeds.reputationOwed',
+        'Reputation {have} of {need} ({owed} more already earned, arriving at most {max} a real day)',
+        { have: n.reputation, need: n.reputationNeed, owed, max: ROLL_GAIN_DAY_MAX },
+      )
+    : t('guild.rankNeeds.reputation', 'Reputation {have} of {need}', { have: n.reputation, need: n.reputationNeed });
 
 /** PROMO-NOW (FIELD BUGS 2026-10-15, "passed 200 days still no promotion i meet the requirements"): the hall's line for
  *  a member - the next rank and what it asks that they do not yet have, as the review reads it (guilds.js rankNeeds):
@@ -344,7 +445,13 @@ export function rankNeedsLines(entity, guild, memberships, store, ctx = null) {
   // (`ctx.book`, the host's; the line's own book seats a seat's rank), and said even where no next rank is (L1-4); online
   // while the Roll paces (`ctx.pace`) - exactly when the host's review promotes without the wait (worldModes
   // promoteWhenEarned), so a probation may end sooner (AUDIT GUILD-WORDS II C-7)
-  const warnings = reviewWarnings(entity, guild, ctx?.book ?? memberships, store, ctx && { ...ctx, online: !!ctx.pace });
+  const warnings = reviewWarnings(
+    entity,
+    guild,
+    ctx?.book ?? memberships,
+    store,
+    ctx && { ...ctx, online: !!ctx.pace },
+  );
   const n = rankNeeds(memberships, guild, entity, store, ctx);
   if (!n) return warnings.length ? warnings : null;
   const owed = standingOwedOf(guild.factionId);
@@ -358,27 +465,51 @@ export function rankNeedsLines(entity, guild, memberships, store, ctx = null) {
     return [
       ...warnings,
       next,
-      t('guild.rankNeeds.seat', "Ranks {officer} and {master} are each chapter's council and Master, won only by Merit",
-        { officer: SEAT_RANK.officer, master: SEAT_RANK.master }),
+      t(
+        'guild.rankNeeds.seat',
+        "Ranks {officer} and {master} are each chapter's council and Master, won only by Merit",
+        { officer: SEAT_RANK.officer, master: SEAT_RANK.master },
+      ),
       ...(n.reputation < n.reputationNeed ? [reputationLine(n, owed)] : []),
       // AUDIT GUILD-WORDS L3-4: the seats' days and weeks are real ones (UTC), the review's the character's - said so
-      t('guild.rankNeeds.seatMerit', 'At each Sunday\'s Turning the chairs go to the members with the most Merit over the last {weeks} weeks, with {days} real days in the guild and accounts {age} real days old',
-        { weeks: SEAT_MERIT_WEEKS, days: SEAT_TENURE_S / 86_400, age: SEAT_ACCOUNT_AGE_S / 86_400 }),
+      t(
+        'guild.rankNeeds.seatMerit',
+        "At each Sunday's Turning the chairs go to the members with the most Merit over the last {weeks} weeks, with {days} real days in the guild and accounts {age} real days old",
+        { weeks: SEAT_MERIT_WEEKS, days: SEAT_TENURE_S / 86_400, age: SEAT_ACCOUNT_AGE_S / 86_400 },
+      ),
     ];
   }
   const lines = [];
   if (n.reputation < n.reputationNeed) lines.push(reputationLine(n, owed));
   if (n.high < 1) {
-    lines.push(n.best
-      ? t('guild.rankNeeds.highBest', 'A guild skill at {bar} - your best, {skill}, is {value}', { bar: n.skillHigh, skill: SKILL_NAMES[n.best.skill], value: n.best.value })
-      : t('guild.rankNeeds.high', 'A guild skill at {bar}', { bar: n.skillHigh }));
+    lines.push(
+      n.best
+        ? t('guild.rankNeeds.highBest', 'A guild skill at {bar} - your best, {skill}, is {value}', {
+            bar: n.skillHigh,
+            skill: SKILL_NAMES[n.best.skill],
+            value: n.best.value,
+          })
+        : t('guild.rankNeeds.high', 'A guild skill at {bar}', { bar: n.skillHigh }),
+    );
   }
   if (n.high + n.low < 2) lines.push(t('guild.rankNeeds.second', 'A second guild skill at {bar}', { bar: n.skillLow }));
-  if (n.high < 1 || n.high + n.low < 2) lines.push(t('guild.rankNeeds.skills', 'Guild skills: {skills}', { skills: guild.skills.map((s) => SKILL_NAMES[s]).join(', ') }));
+  if (n.high < 1 || n.high + n.low < 2)
+    lines.push(
+      t('guild.rankNeeds.skills', 'Guild skills: {skills}', {
+        skills: guild.skills.map((s) => SKILL_NAMES[s]).join(', '),
+      }),
+    );
   // ROLL-PACE (FIELD BUGS 2026-10-15f): online the Roll pays a rank at its pace since the membership began - when that is
   // what holds the next one, the hall says how long (`ctx.pace`, npcRollTracker.js rollPaceOf)
   const wait = n.rank > (ctx?.pace?.ceiling ?? Infinity) ? ctx.pace.wait(n.rank) : null;
-  if (wait > 0) lines.push(t('guild.rankNeeds.paced', '{days, plural, =1 {Earliest promotion: tomorrow} other {Earliest promotion: in # days}}', { days: wait }));
+  if (wait > 0)
+    lines.push(
+      t(
+        'guild.rankNeeds.paced',
+        '{days, plural, =1 {Earliest promotion: tomorrow} other {Earliest promotion: in # days}}',
+        { days: wait },
+      ),
+    );
   if (!lines.length) return warnings.length ? warnings : null;
   return [...warnings, next, ...lines];
 }
@@ -396,16 +527,27 @@ export function rankNeedsLines(entity, guild, memberships, store, ctx = null) {
  *  with no faction store, or at a standing the join already accepts. What the Roll still owes counts toward the line
  *  (`standingOwedOf`, 0 offline, and kept through a lease's stop - AUDIT WAY-BACK L2-3). */
 function wayBackOf(guild, memberships, store) {
-  if (!guild || !store || !isJoinableByApplication(guild) || isMember(joinedGuildOfGroup(memberships, membershipKey(guild)))) return null;
-  const rep = getReputation(store, guild.factionId), need = RANK_REQ_REPUTATION[0];
+  if (
+    !guild ||
+    !store ||
+    !isJoinableByApplication(guild) ||
+    isMember(joinedGuildOfGroup(memberships, membershipKey(guild)))
+  )
+    return null;
+  const rep = getReputation(store, guild.factionId),
+    need = RANK_REQ_REPUTATION[0];
   if (rep >= need) return null;
   const owed = standingOwedOf(guild.factionId);
   return { rep, need, owed, quests: Math.ceil(Math.max(0, need - rep - owed) / QUEST_SUCCESS_REP) };
 }
 
 /** WAY-BACK: the quests line alone - the Standing page's, under the organization's own row. */
-const questsLine = (w) => t('guild.wayBack.quests', 'As a stranger you may still ask its quest-giver for work: each quest done raises your standing {per}{n, plural, =0 {} one { - # more quest reaches {need}} other { - # more quests reach {need}}}.',
-  { per: QUEST_SUCCESS_REP, n: w.quests, need: w.need });
+const questsLine = (w) =>
+  t(
+    'guild.wayBack.quests',
+    'As a stranger you may still ask its quest-giver for work: each quest done raises your standing {per}{n, plural, =0 {} one { - # more quest reaches {need}} other { - # more quests reach {need}}}.',
+    { per: QUEST_SUCCESS_REP, n: w.quests, need: w.need },
+  );
 export function wayBackQuestLine(guild, memberships, store) {
   const w = wayBackOf(guild, memberships, store);
   return w ? questsLine(w) : null;
@@ -422,15 +564,37 @@ export function wayBackLines(guild, entity, memberships, store, ctx = null) {
   if (!w) return null;
   const { high, low } = numHighLowSkills(entity, guild, 0);
   return [
-    t('guild.wayBack.standing', 'Your standing here is {rep}. It takes members at {need} or more.', { rep: w.rep, need: w.need }),
-    ...(high < 1 || high + low < 2 ? [t('guild.wayBack.skills', 'It also asks one of its guild skills at {high} and a second at {low}: {skills}.',
-      { high: RANK_REQ_SKILL_HIGH[0], low: RANK_REQ_SKILL_LOW[0], skills: guild.skills.map((s) => SKILL_NAMES[s]).join(', ') })] : []),
+    t('guild.wayBack.standing', 'Your standing here is {rep}. It takes members at {need} or more.', {
+      rep: w.rep,
+      need: w.need,
+    }),
+    ...(high < 1 || high + low < 2
+      ? [
+          t('guild.wayBack.skills', 'It also asks one of its guild skills at {high} and a second at {low}: {skills}.', {
+            high: RANK_REQ_SKILL_HIGH[0],
+            low: RANK_REQ_SKILL_LOW[0],
+            skills: guild.skills.map((s) => SKILL_NAMES[s]).join(', '),
+          }),
+        ]
+      : []),
     questsLine(w),
-    ...(ctx?.shut ? [t('guild.wayBack.shut', 'This hall is shut this Season. The guild\'s halls in other regions still give work.')] : []),
-    t('guild.wayBack.drift', 'Below 0 your standing also recovers a point {days, plural, one {every day} other {every # days}} of your own time. Rests and journeys count{online, select, yes {, and so does time logged off} other {}}.',
-      { days: RECOVERY_INTERVAL_MINUTES / MINUTES_PER_DAY, online: ctx?.online ? 'yes' : 'no' }),
-    ...(ctx?.paced ? [t('guild.wayBack.paced', 'Online, quests and the recovery raise it by at most {max} a real day (days start at midnight UTC){owed, plural, =0 {} other {, with # more standing on the way}}. On top of that, a chapter writ of the guild\'s on a notice board adds {writ}.',
-      { max: ROLL_GAIN_DAY_MAX, owed: w.owed, writ: HALL_WRIT_REP })] : []),
+    ...(ctx?.shut
+      ? [t('guild.wayBack.shut', "This hall is shut this Season. The guild's halls in other regions still give work.")]
+      : []),
+    t(
+      'guild.wayBack.drift',
+      'Below 0 your standing also recovers a point {days, plural, one {every day} other {every # days}} of your own time. Rests and journeys count{online, select, yes {, and so does time logged off} other {}}.',
+      { days: RECOVERY_INTERVAL_MINUTES / MINUTES_PER_DAY, online: ctx?.online ? 'yes' : 'no' },
+    ),
+    ...(ctx?.paced
+      ? [
+          t(
+            'guild.wayBack.paced',
+            "Online, quests and the recovery raise it by at most {max} a real day (days start at midnight UTC){owed, plural, =0 {} other {, with # more standing on the way}}. On top of that, a chapter writ of the guild's on a notice board adds {writ}.",
+            { max: ROLL_GAIN_DAY_MAX, owed: w.owed, writ: HALL_WRIT_REP },
+          ),
+        ]
+      : []),
   ];
 }
 
@@ -450,27 +614,27 @@ export const SERVICE_DESTINATION = Object.freeze({
   Training: 'guildServiceTraining',
   Donate: 'guildServiceDonation',
   CureDisease: 'guildServiceCureDisease',
-  Quests: 'questOffer',    // Q4-ii: QuestOfferFlow.offerGuildQuest
-  Identify: 'guildServiceIdentify',   // X7: the trade window's Identify mode
-  Repair: 'guildServiceRepair',   // R1: the keyed repair flow (FG rank discount rides it)
-  BuyPotions: 'guildServiceBuyPotions',   // G4: Buy mode over the daily potion shelf
-  MakePotions: 'guildServicePotionMaker',   // M2: the keyed potion maker
+  Quests: 'questOffer', // Q4-ii: QuestOfferFlow.offerGuildQuest
+  Identify: 'guildServiceIdentify', // X7: the trade window's Identify mode
+  Repair: 'guildServiceRepair', // R1: the keyed repair flow (FG rank discount rides it)
+  BuyPotions: 'guildServiceBuyPotions', // G4: Buy mode over the daily potion shelf
+  MakePotions: 'guildServicePotionMaker', // M2: the keyed potion maker
   // U42: BOTH arms are one destination because DFU's switch falls
   // one case into the other (:383-387) - the temples' BuySpells and
   // the Mages Guild's BuySpellsMages push the SAME window with the
   // same `true`, and the only thing that differs is who may ask.
-  BuySpells: 'guildServiceSpellbook',        // U42: the spellbook's buy mode
-  BuySpellsMages: 'guildServiceSpellbook',   // U42: the spellbook's buy mode
-  MakeSpells: 'guildServiceSpellMaker',   // S1: the keyed spell maker
-  BuyMagicItems: 'guildServiceBuyMagicItems',   // G4: Buy mode over the daily magic shelf
-  MakeMagicItems: 'guildServiceItemMaker',   // M4: the keyed item maker
-  SellMagicItems: 'guildServiceSellMagicItems',   // G4: the trade window in SellMagic mode
-  BuySoulgems: 'guildServiceBuySoulgems',   // X6: the trade window in Buy mode over the daily soul-gem shelf
-  Teleport: 'guildServiceTeleport',   // G5: the travel map, armed for teleportation
-  DaedraSummoning: 'guildServiceDaedraSummoning',   // G7: the summoning calendar, the cost and the roll
-  Spymaster: 'guildServiceSpymaster',   // G6: the 402 greeting, then the NPC's own talk
-  ReceiveArmor: 'guildServiceReceiveArmor',   // G6: KnightlyOrder.ReceiveArmor
-  ReceiveHouse: 'guildServiceReceiveHouse',   // H1: KnightlyOrder.ReceiveHouse, over the live house registry
+  BuySpells: 'guildServiceSpellbook', // U42: the spellbook's buy mode
+  BuySpellsMages: 'guildServiceSpellbook', // U42: the spellbook's buy mode
+  MakeSpells: 'guildServiceSpellMaker', // S1: the keyed spell maker
+  BuyMagicItems: 'guildServiceBuyMagicItems', // G4: Buy mode over the daily magic shelf
+  MakeMagicItems: 'guildServiceItemMaker', // M4: the keyed item maker
+  SellMagicItems: 'guildServiceSellMagicItems', // G4: the trade window in SellMagic mode
+  BuySoulgems: 'guildServiceBuySoulgems', // X6: the trade window in Buy mode over the daily soul-gem shelf
+  Teleport: 'guildServiceTeleport', // G5: the travel map, armed for teleportation
+  DaedraSummoning: 'guildServiceDaedraSummoning', // G7: the summoning calendar, the cost and the roll
+  Spymaster: 'guildServiceSpymaster', // G6: the 402 greeting, then the NPC's own talk
+  ReceiveArmor: 'guildServiceReceiveArmor', // G6: KnightlyOrder.ReceiveArmor
+  ReceiveHouse: 'guildServiceReceiveHouse', // H1: KnightlyOrder.ReceiveHouse, over the live house registry
 });
 export const serviceDestination = (service) => SERVICE_DESTINATION[service] ?? null;
 
@@ -505,7 +669,7 @@ export const SERVICE_SHORTCUT = Object.freeze({
   BuyPotions: 'GuildsBuyPotions',
   MakePotions: 'GuildsMakePotions',
   BuySpells: 'GuildsBuySpells',
-  BuySpellsMages: 'GuildsBuySpells',   // the two share one arm (:433-435)
+  BuySpellsMages: 'GuildsBuySpells', // the two share one arm (:433-435)
   MakeSpells: 'GuildsMakeSpells',
   BuyMagicItems: 'GuildsBuyMagicItems',
   MakeMagicItems: 'GuildsMakeMagicItems',

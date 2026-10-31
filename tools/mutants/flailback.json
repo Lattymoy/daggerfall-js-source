@@ -1,0 +1,50 @@
+[
+  {
+    "name": "FLAIL-BACK-not-wired-body",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "loadHolster = loadBackPicture,",
+    "new": "loadHolster = loadHolsterPicture,",
+    "tests": ["test/player/eyeOfTheBeholder/holster_flail.test.js"],
+    "why": "my flail on my back as the doll stands it"
+  },
+  {
+    "name": "FLAIL-BACK-not-wired-walkers",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "loadHolster = loadBackPicture,",
+    "new": "loadHolster = loadHolsterPicture,",
+    "tests": ["test/player/eyeOfTheBeholder/holster_flail.test.js"],
+    "why": "a walker's flail on its back as the doll stands it"
+  },
+  {
+    "name": "FLAIL-BACK-chain-across",
+    "file": "src/player/eyeOfTheBeholder/eotbHolsterFlail.js",
+    "old": "  const off = c1 + FLAIL_BACK_GAP + C.half;",
+    "new": "  const off = 0;",
+    "tests": ["test/player/eyeOfTheBeholder/holster_flail.test.js"],
+    "why": "the chain hung over the handle"
+  },
+  {
+    "name": "FLAIL-BACK-chain-up",
+    "file": "src/player/eyeOfTheBeholder/eotbHolsterFlail.js",
+    "old": "    const a = top - s, b = c - off;",
+    "new": "    const a = s - top, b = c - off;",
+    "tests": ["test/player/eyeOfTheBeholder/holster_flail.test.js"],
+    "why": "the chain stood up off the cap"
+  },
+  {
+    "name": "FLAIL-BACK-gap-unbridged",
+    "file": "src/player/eyeOfTheBeholder/eotbHolsterFlail.js",
+    "old": "      if (bridge && bridge[at(x, y) + 3] > 127) return -2 - at(x, y);",
+    "new": "",
+    "tests": ["test/player/eyeOfTheBeholder/holster_flail.test.js"],
+    "why": "the handle broken at the doll's hand"
+  },
+  {
+    "name": "FLAIL-BACK-mace-too",
+    "file": "src/player/eyeOfTheBeholder/eotbHolsterFlail.js",
+    "old": "/^(fl|lf)/.test(",
+    "new": "/^(fl|lf|mc)/.test(",
+    "tests": ["test/player/eyeOfTheBeholder/holster_flail.test.js"],
+    "why": "a mace taken for a flail"
+  }
+]

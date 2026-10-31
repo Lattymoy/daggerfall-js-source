@@ -23,12 +23,10 @@
 // item table's JSON - DFU's enchantment budgets, one home - and the
 // recipe leaf); the client draws and mints by it.
 // ═══════════════════════════════════════════════════════════════════
-import { POTION_RECIPES, potionRecipeKey, potionKeyFromCauldron } from '../systems/potionRecipes.js';   // DFU's twenty, one home (law 1)
-import {
-  TIER_RANKS, topTierOf, JOURNEYMAN_RANK, PROF_RANK_MAX, ingredientKeys, keyTemplate,
-} from './professionLaw.js';
-import { craftXp, jewelPoints, firstCraftPays, brewFirstPays, brewFirstXp } from './recipeLaw.js';   // AUDIT PROF12 E2: a disenchant's XP the piece's recipe's; FIRST-BUDGET: a brew's first, the discovery law's
-import TEMPLATES_JSON from '../characters/itemTemplates.json' with { type: 'json' };   // DFU's ItemTemplates.txt verbatim - each template's enchantment budget
+import { POTION_RECIPES, potionRecipeKey, potionKeyFromCauldron } from '../systems/potionRecipes.js'; // DFU's twenty, one home (law 1)
+import { TIER_RANKS, topTierOf, JOURNEYMAN_RANK, PROF_RANK_MAX, ingredientKeys, keyTemplate } from './professionLaw.js';
+import { craftXp, jewelPoints, firstCraftPays, brewFirstPays, brewFirstXp } from './recipeLaw.js'; // AUDIT PROF12 E2: a disenchant's XP the piece's recipe's; FIRST-BUDGET: a brew's first, the discovery law's
+import TEMPLATES_JSON from '../characters/itemTemplates.json' with { type: 'json' }; // DFU's ItemTemplates.txt verbatim - each template's enchantment budget
 
 // ─── THE BREW (9.3) ──────────────────────────────────────────────────
 
@@ -40,7 +38,10 @@ import TEMPLATES_JSON from '../characters/itemTemplates.json' with { type: 'json
  * "follows the rank" (3.2's own, PROF10's ladder).
  */
 export const POTION_PRICE_TIERS = Object.freeze([50, 75, 100, 125, 200, 250]);
-export const potionTier = (price) => { const i = POTION_PRICE_TIERS.findIndex((p) => price <= p); return i < 0 ? POTION_PRICE_TIERS.length + 1 : i + 1; };
+export const potionTier = (price) => {
+  const i = POTION_PRICE_TIERS.findIndex((p) => price <= p);
+  return i < 0 ? POTION_PRICE_TIERS.length + 1 : i + 1;
+};
 /**
  * @typedef {{ id: string, name: string, tier: number, rank: number, key: number, price: number,
  *   ingredients: readonly number[] }} Potion
@@ -48,13 +49,23 @@ export const potionTier = (price) => { const i = POTION_PRICE_TIERS.findIndex((p
 /** DFU's twenty as the station lists them, in DFU's own order: `id` the recipe's name (DFU's localisation key), `name` its
  *  display name, `key` the broker's (potionRecipeKey over the pre-sorted ingredients - DFU's dictionary key). */
 /** @type {readonly Potion[]} */
-export const POTIONS = Object.freeze(/** @type {any[]} */ (POTION_RECIPES).map((r) => {
-  const tier = potionTier(r.price);
-  return Object.freeze({ id: r.name, name: r.displayName, tier, rank: TIER_RANKS[tier - 1], key: potionRecipeKey(r.ingredients), price: r.price, ingredients: r.ingredients });
-}));
+export const POTIONS = Object.freeze(
+  /** @type {any[]} */ (POTION_RECIPES).map((r) => {
+    const tier = potionTier(r.price);
+    return Object.freeze({
+      id: r.name,
+      name: r.displayName,
+      tier,
+      rank: TIER_RANKS[tier - 1],
+      key: potionRecipeKey(r.ingredients),
+      price: r.price,
+      ingredients: r.ingredients,
+    });
+  }),
+);
 const BY_ID = new Map(POTIONS.map((p) => [p.id, p]));
 /** A potion by its recipe's name ('healing'), or null. */
-export const potionById = (id) => (typeof id === 'string' ? BY_ID.get(id) ?? null : null);
+export const potionById = (id) => (typeof id === 'string' ? (BY_ID.get(id) ?? null) : null);
 
 /** The Stores' keys a DFU ingredient is held under, and the template a key holds - professionLaw's since FIRST-BUDGET
  *  (Professions-Arc 52), re-exported here where every reader imports them. */
@@ -75,7 +86,7 @@ export function brewSpends(potion, keys) {
   if (templates.some((t) => t == null)) return null;
   if (potionKeyFromCauldron(/** @type {number[]} */ (templates)) !== potion.key) return null;
   const sorted = (/** @type {readonly number[]} */ a) => [...a].sort((x, y) => x - y).join(',');
-  if (sorted(/** @type {number[]} */ (templates)) !== sorted(potion.ingredients)) return null;   // AUDIT PROF-541 B1: the recipe's own, never a collision
+  if (sorted(/** @type {number[]} */ (templates)) !== sorted(potion.ingredients)) return null; // AUDIT PROF-541 B1: the recipe's own, never a collision
   const out = new Map();
   for (const k of /** @type {string[]} */ (keys)) out.set(k, (out.get(k) ?? 0) + 1);
   return [...out].map(([key, n]) => ({ key, n }));
@@ -95,7 +106,9 @@ export { brewFirstPays, brewFirstXp };
 
 /** The Brewer (3.3: "3 potions a brew at Journeyman"), the Distiller ("Potent chance +10%") - Alchemy's choices at 50; the
  *  Master Alchemist ("Potent is +40%, not +25%") and the Transmuter (professionLaw TRANSMUTER) its two at 100. */
-export const BREWER = 'brewer', DISTILLER = 'distiller', MASTER_ALCHEMIST = 'master-alchemist';
+export const BREWER = 'brewer',
+  DISTILLER = 'distiller',
+  MASTER_ALCHEMIST = 'master-alchemist';
 /** THE POTIONS A BREW MAKES (9.3: "2 potions at Journeyman and 3 at Master (Brewer 3 at Journeyman)"): DECIDED one below
  *  Journeyman - DFU's own maker's one a mix. AUDIT PROF-541 R2-S1: `potion` the brew's - one made wholly of goods only a
  *  counter sells (!brewFirstPays: Water Breathing, Levitation) makes ONE whatever the rank or the Brewer, else the
@@ -115,7 +128,16 @@ export function brewCount(rank, spec50 = null, potion = null) {
 /** POTENT (9.3: "Potent (+25% magnitude, named so) at 10% at Expert and 20% at Master, +5% an unbruised herb"): the
  *  chances, percent. `apothecary` the Seats' hall's (Seats-Arc 7.5: "+1 step" a tier - DECIDED, a step is Expert's
  *  rung, +10). */
-export const POTENT = Object.freeze({ expert: 10, master: 20, expertRank: 75, unbruised: 5, distiller: 10, apothecary: 10, pct: 25, masterPct: 40 });
+export const POTENT = Object.freeze({
+  expert: 10,
+  master: 20,
+  expertRank: 75,
+  unbruised: 5,
+  distiller: 10,
+  apothecary: 10,
+  pct: 25,
+  masterPct: 40,
+});
 /**
  * A BREW'S POTENT CHANCE, percent of 100: the rank's (none below Expert, 10 at Expert, 20 at Master), +5 an unbruised herb
  * among its ingredients (DECIDED: at any rank - the herb's gift, not the brewer's), +10 a Distiller's, +10 a step of the
@@ -134,7 +156,12 @@ export const potentPct = (spec100 = null) => (spec100 === MASTER_ALCHEMIST ? POT
 export const potentOk = (pct) => pct === POTENT.pct || pct === POTENT.masterPct;
 /** A Potent potion's magnitudes (DFU's EffectSettings' four magnitude fields - potions.js potionBundle's settings): each
  *  raised by the share, rounded; nothing else of the bundle moves. */
-export const POTENT_FIELDS = Object.freeze(['magnitudeBaseLow', 'magnitudeBaseHigh', 'magnitudeLevelBase', 'magnitudeLevelHigh']);
+export const POTENT_FIELDS = Object.freeze([
+  'magnitudeBaseLow',
+  'magnitudeBaseHigh',
+  'magnitudeLevelBase',
+  'magnitudeLevelHigh',
+]);
 /** AUDIT PROF12 A3: whether settings carry DFU's DEFAULT magnitude - every one of the four fields 1 (DefaultEffectSettings,
  *  potions.js; a recipe's `settings` name only what differs) - the fourteen potions whose effect has no magnitude to raise
  *  (the Resists, Slow Falling, Water Breathing, Chameleon Form, Invisibility, Shadow Form, the Cures, Free Action,
@@ -163,7 +190,7 @@ export function potentEffect(effect, pct, casterLevel = 1) {
   const raise = (base, plus, per, min1) => {
     if (!Number.isFinite(base) || !Number.isFinite(plus)) return base;
     let mult = Math.floor(level / Math.max(1, Number(per) || 1));
-    if (min1 && mult < 1) mult = 1;   // rollDuration's clamp (DFU SetDuration); chanceValue has none
+    if (min1 && mult < 1) mult = 1; // rollDuration's clamp (DFU SetDuration); chanceValue has none
     return base + Math.round(((base + plus * mult) * pct) / 100);
   };
   out.durationBase = raise(out.durationBase, out.durationMod, out.durationPerLevel, true);
@@ -182,7 +209,7 @@ export const potentLasts = (potion) => !!potion && magnitudeDefault(RECIPE_BY_ID
 export function potentAble(potion) {
   const r = potion ? RECIPE_BY_ID.get(potion.id) : null;
   if (!r) return false;
-  return !(/^3,/.test(String(r.effect)) && !(r.secondary?.length) && magnitudeDefault(r.settings ?? {}));
+  return !(/^3,/.test(String(r.effect)) && !r.secondary?.length && magnitudeDefault(r.settings ?? {}));
 }
 /** A brew's XP (3.2: "a craft 20 x tier x units"): a brew is one unit, whatever it makes (a Brewer's third potion earns
  *  nothing more, as a Cook's second serving does not, PROF9), at its potion's tier, quartered more than two tiers below the
@@ -212,7 +239,8 @@ export function piecePoints(r, hand = null) {
 /** A hundred points an Essence (9.3); a Disenchanter's twice (3.3: "Arcane Essence x2"). */
 export const ESSENCE_POINTS = 100;
 export const DISENCHANTER = 'disenchanter';
-export const essenceOf = (points, disenchanter = false) => Math.floor(Math.max(0, Number(points) || 0) / ESSENCE_POINTS) * (disenchanter ? 2 : 1);
+export const essenceOf = (points, disenchanter = false) =>
+  Math.floor(Math.max(0, Number(points) || 0) / ESSENCE_POINTS) * (disenchanter ? 2 : 1);
 /**
  * A DISENCHANT's ENCHANTING XP. DECIDED: 9.3 says Enchanting's XP comes from what the service sees, and names no number:
  * 5 an Essence the piece yields before a Disenchanter's doubling, x THE PIECE's tier - its recipe's, as a craft's XP is

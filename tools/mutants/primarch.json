@@ -2,8 +2,8 @@
   {
     "name": "PRIMARCH-the-founders-gold",
     "file": "src/ui/playerBadge.js",
-    "old": "const PRIMARCH_GOLD = Object.freeze([0.847, 0.812, 0.682, 1]);",
-    "new": "const PRIMARCH_GOLD = Object.freeze([1, 0.784, 0.29, 1]);",
+    "old": "const PRIMARCH_GOLD = Object.freeze([0.847, 0.812, 0.682, 1]); // #d8cfae",
+    "new": "const PRIMARCH_GOLD = Object.freeze([1, 0.784, 0.29, 1]); // #d8cfae",
     "tests": [
       "test/net/primarch.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "PRIMARCH-a-paler-gold",
     "file": "src/ui/playerBadge.js",
-    "old": "const PRIMARCH_GOLD = Object.freeze([0.847, 0.812, 0.682, 1]);",
-    "new": "const PRIMARCH_GOLD = Object.freeze([0.914, 0.894, 0.851, 1]);",
+    "old": "const PRIMARCH_GOLD = Object.freeze([0.847, 0.812, 0.682, 1]); // #d8cfae",
+    "new": "const PRIMARCH_GOLD = Object.freeze([0.914, 0.894, 0.851, 1]); // #d8cfae",
     "tests": [
       "test/net/primarch.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "PRIMARCH-glyph-in-another-colour",
     "file": "src/ui/playerBadge.js",
-    "old": "  primarch: TITLE_RGBA.primarch,       // PRIMARCH:",
-    "new": "  primarch: TITLE_RGBA.crowned,       // PRIMARCH:",
+    "old": "  primarch: TITLE_RGBA.primarch, // PRIMARCH: the cross in the title's light gold - GA00250: \"with the same color of the name\"",
+    "new": "  primarch: TITLE_RGBA.crowned, // PRIMARCH: the cross in the title's light gold - GA00250: \"with the same color of the name\"",
     "tests": [
       "test/net/primarch.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "PRIMARCH-a-mark-another-glyph-has",
     "file": "src/ui/playerBadge.js",
-    "old": "  primarch: 't',      // PRIMARCH:",
-    "new": "  primarch: 'O',      // PRIMARCH:",
+    "old": "  primarch: 't', // PRIMARCH: a cross with its foot turned, as the reference's footrest",
+    "new": "  primarch: 'O', // PRIMARCH: a cross with its foot turned, as the reference's footrest",
     "tests": [
       "test/net/primarch.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "PRIMARCH-the-glyph-stroked",
     "file": "src/ui/playerBadge.js",
-    "old": "aegis: true, primarch: false, crystalfist: false, wikimaid: false, nirnrootsage: false,",
-    "new": "aegis: true, primarch: true, crystalfist: false, wikimaid: false, nirnrootsage: false,",
+    "old": "  primarch: false,",
+    "new": "  primarch: true,",
     "tests": [
       "test/net/primarch.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "PRIMARCH-the-slant-turned",
     "file": "src/ui/playerBadge.js",
-    "old": "M6 9.6L10 12.9V14.5L6 11.2Z",
-    "new": "M6 12.9L10 9.6V11.2L6 14.5Z",
+    "old": "  primarch: 'M7.2 0.4H8.8V15.6H7.2ZM6 1.4H10V2.9H6ZM2.9 3.8H13.1V5.4H2.9ZM6 9.6L10 12.9V14.5L6 11.2Z',",
+    "new": "  primarch: 'M7.2 0.4H8.8V15.6H7.2ZM6 1.4H10V2.9H6ZM2.9 3.8H13.1V5.4H2.9ZM6 12.9L10 9.6V11.2L6 14.5Z',",
     "tests": [
       "test/net/primarch.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "PRIMARCH-the-head-bar-long",
     "file": "src/ui/playerBadge.js",
-    "old": "M6 1.4H10V2.9H6Z",
-    "new": "M2.9 1.4H13.1V2.9H2.9Z",
+    "old": "  primarch: 'M7.2 0.4H8.8V15.6H7.2ZM6 1.4H10V2.9H6ZM2.9 3.8H13.1V5.4H2.9ZM6 9.6L10 12.9V14.5L6 11.2Z',",
+    "new": "  primarch: 'M7.2 0.4H8.8V15.6H7.2ZM2.9 1.4H13.1V2.9H2.9ZM2.9 3.8H13.1V5.4H2.9ZM6 9.6L10 12.9V14.5L6 11.2Z',",
     "tests": [
       "test/net/primarch.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "PRIMARCH-the-shaft-off-the-middle",
     "file": "src/ui/playerBadge.js",
-    "old": "primarch: 'M7.2 0.4H8.8V15.6H7.2Z",
-    "new": "primarch: 'M7.6 0.4H9.2V15.6H7.6Z",
+    "old": "  primarch: 'M7.2 0.4H8.8V15.6H7.2ZM6 1.4H10V2.9H6ZM2.9 3.8H13.1V5.4H2.9ZM6 9.6L10 12.9V14.5L6 11.2Z',",
+    "new": "  primarch: 'M7.6 0.4H9.2V15.6H7.6ZM6 1.4H10V2.9H6ZM2.9 3.8H13.1V5.4H2.9ZM6 9.6L10 12.9V14.5L6 11.2Z',",
     "tests": [
       "test/net/primarch.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "PRIMARCH-a-bar-wound-the-other-way",
     "file": "src/ui/playerBadge.js",
-    "old": "M2.9 3.8H13.1V5.4H2.9Z",
-    "new": "M2.9 3.8V5.4H13.1V3.8Z",
+    "old": "  primarch: 'M7.2 0.4H8.8V15.6H7.2ZM6 1.4H10V2.9H6ZM2.9 3.8H13.1V5.4H2.9ZM6 9.6L10 12.9V14.5L6 11.2Z',",
+    "new": "  primarch: 'M7.2 0.4H8.8V15.6H7.2ZM6 1.4H10V2.9H6ZM2.9 3.8V5.4H13.1V3.8ZM6 9.6L10 12.9V14.5L6 11.2Z',",
     "tests": [
       "test/net/primarch.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "PRIMARCH-the-footrest-gone",
     "file": "src/ui/playerBadge.js",
-    "old": "V5.4H2.9ZM6 9.6L10 12.9V14.5L6 11.2Z'",
-    "new": "V5.4H2.9Z'",
+    "old": "  primarch: 'M7.2 0.4H8.8V15.6H7.2ZM6 1.4H10V2.9H6ZM2.9 3.8H13.1V5.4H2.9ZM6 9.6L10 12.9V14.5L6 11.2Z',",
+    "new": "  primarch: 'M7.2 0.4H8.8V15.6H7.2ZM6 1.4H10V2.9H6ZM2.9 3.8H13.1V5.4H2.9Z',",
     "tests": [
       "test/net/primarch.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "PRIMARCH-the-radiances-button-in-violet",
     "file": "src/ui/playerBadge.js",
-    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
-    "new": "radiance: 'aegis', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
+    "old": "  radiance: 'primarch',",
+    "new": "  radiance: 'aegis',",
     "tests": [
       "test/net/primarch.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "PRIMARCH-the-title-misspelt",
     "file": "src/ui/playerBadge.js",
-    "old": "  primarch: 'Primarch',              // PRIMARCH",
-    "new": "  primarch: 'Primarck',              // PRIMARCH",
+    "old": "  primarch: 'Primarch', // PRIMARCH (2026-10-04, GA00250: \"the title will be Primarch\"): GA00250's own",
+    "new": "  primarch: 'Primarck', // PRIMARCH (2026-10-04, GA00250: \"the title will be Primarch\"): GA00250's own",
     "tests": [
       "test/net/primarch.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "PRIMARCH-the-aura-unnamed",
     "file": "src/ui/playerBadge.js",
-    "old": "  radiance: 'Golden Radiance',",
-    "new": "  radiance: '',",
+    "old": "  radiance: 'Golden Radiance', // PRIMARCH: the Primarch's column of golden light about the body, granted with the title",
+    "new": "  radiance: '', // PRIMARCH: the Primarch's column of golden light about the body, granted with the title",
     "tests": [
       "test/net/primarch.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "PRIMARCH-the-glyphs-word",
     "file": "server-account/src/titles.js",
-    "old": "aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });",
-    "new": "aegis: 'aegis', primarch: 'aegis', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });",
+    "old": "  primarch: 'primarch',",
+    "new": "  primarch: 'aegis',",
     "tests": [
       "test/net/primarch.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "PRIMARCH-the-aura-not-granted",
     "file": "server-account/src/titles.js",
-    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
-    "new": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
+    "old": "  primarch: 'radiance',\n  shadowfang: 'shadowcloak',",
+    "new": "  shadowfang: 'shadowcloak',",
     "tests": [
       "test/net/primarch.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "PRIMARCH-the-ward-granted",
     "file": "server-account/src/titles.js",
-    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
-    "new": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'oblivionward', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
+    "old": "  primarch: 'radiance',",
+    "new": "  primarch: 'oblivionward',",
     "tests": [
       "test/net/primarch.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "PRIMARCH-the-vocabularys-aura",
     "file": "src/net/identityToken.js",
-    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal']);",
-    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal']);",
+    "old": "  'radiance',\n  'shadowcloak',",
+    "new": "  'shadowcloak',",
     "tests": [
       "test/net/primarch.test.js"
     ],

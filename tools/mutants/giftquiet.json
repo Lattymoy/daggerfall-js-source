@@ -2,8 +2,8 @@
   {
     "name": "GQ-said-every-time",
     "file": "src/systems/allyCast.js",
-    "old": "    if (!fresh && last !== undefined && t - last < windowMs) return false;\n",
-    "new": "",
+    "old": "    if (!fresh && last !== undefined && t - last < windowMs) return false;\n    said.set(key, t);",
+    "new": "    said.set(key, t);",
     "tests": [
       "test/systems/giftquiet.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "GQ-asking-refreshes",
     "file": "src/systems/allyCast.js",
-    "old": "    if (!fresh && last !== undefined && t - last < windowMs) return false;\n    said.set(key, t);\n",
-    "new": "    said.set(key, t);\n    if (!fresh && last !== undefined && t - last < windowMs) return false;\n",
+    "old": "    if (!fresh && last !== undefined && t - last < windowMs) return false;\n    said.set(key, t);",
+    "new": "    said.set(key, t);\n    if (!fresh && last !== undefined && t - last < windowMs) return false;",
     "tests": [
       "test/systems/giftquiet.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "GQ-window-edge",
     "file": "src/systems/allyCast.js",
-    "old": "t - last < windowMs) return false;",
-    "new": "t - last <= windowMs) return false;",
+    "old": "    if (!fresh && last !== undefined && t - last < windowMs) return false;",
+    "new": "    if (!fresh && last !== undefined && t - last <= windowMs) return false;",
     "tests": [
       "test/systems/giftquiet.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "GQ-fresh-ignored",
     "file": "src/systems/allyCast.js",
-    "old": "    if (!fresh && last !== undefined",
-    "new": "    if (last !== undefined",
+    "old": "    if (!fresh && last !== undefined && t - last < windowMs) return false;",
+    "new": "    if (last !== undefined && t - last < windowMs) return false;",
     "tests": [
       "test/systems/giftquiet.test.js"
     ]

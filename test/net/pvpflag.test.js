@@ -175,7 +175,7 @@ test('PVP-FLAG-CAPS (ui/capsFix.js, ui/chatPanel.js): the flag\'s Caps Lock type
   key('CapsLock', { code: 'CapsLock' });
   assert.deepEqual(key('E'), [false, false], 'pressed in the field: the player\'s own capitals');
   assert.ok(rd('src/ui/chatPanel.js').includes('if (capsFixKey(e, input)) { e.stopPropagation(); return; }'));
-  assert.ok(rd('src/scenes/pvpFlagHost.js').includes("      noteCaps('game');"));
+  assert.ok(rd('src/scenes/pvpFlagHost.js').includes("noteCaps(acts.length ? 'game' : null);"));   // PIN MOVED (AUDIT PVP-KEY B6: the game's only where its press did something - test/net/pvpkey.test.js)
 });
 
 test('PVP-SKULL THE REFEREE AND THE WIRE (net/wild/wildRef.js wildAggroWord, wildFlagWord; net/wire.js): a flagged fighter in a blow is said in aggro, its ms left riding `a`, once each ten seconds; an unflagged one never; one entering hears each flagged fighter\'s aggro left; the wire keeps `a` on a flag up alone (mutants: the aggro unsaid; said each blow; the newcomer\'s aggro dropped; the wire\'s `a` dropped)', () => {
@@ -287,7 +287,7 @@ test('PVP-SKULL THE OVERWORLD (scenes/travelViewMarks.js, scenes/travelView.js, 
   assert.deepEqual([pvpSkullOf('peer-x'), pvpSkullOf('peer-z')], ['gold', null]);
   const marks = rd('src/scenes/travelViewMarks.js');
   assert.equal(marks.match(/skull: pvpSkullOf\((d|t)\.id\) \}\);/g)?.length, 3, 'the stranger, the near player and the traveller');
-  assert.ok(rd('src/scenes/travelView.js').includes('...(m.skull ? { skull: m.skull } : {}) });'));
+  assert.ok(rd('src/scenes/travelView.js').includes('...(m.skull ? { skull: m.skull } : {}),\n      });'));
   const hud = rd('src/ui/travel/travelViewHud.js');
   assert.ok(hud.includes("else if (sk) g.drawImage(sk, inScreen(x - SKULL_PX / 2, SKULL_PX, vw), ly - SKULL_PX - 1, SKULL_PX, SKULL_PX);"));
   assert.ok(hud.includes("q.m.color ?? '', q.m.skull ?? '');"), 'a skull up or down draws the picture again');

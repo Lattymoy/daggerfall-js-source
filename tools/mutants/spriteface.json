@@ -42,8 +42,8 @@
   {
     "name": "SPRITEFACE-the-sign-turned",
     "file": "src/player/eyeOfTheBeholder/eotbBillboard.js",
-    "old": "  const y = Math.atan2(toCamera[0], toCamera[2]) - orientation * ANGLE_PER_ORIENTATION * Math.PI / 180;",
-    "new": "  const y = Math.atan2(toCamera[0], toCamera[2]) + orientation * ANGLE_PER_ORIENTATION * Math.PI / 180;",
+    "old": "  const y = Math.atan2(toCamera[0], toCamera[2]) - (orientation * ANGLE_PER_ORIENTATION * Math.PI) / 180;",
+    "new": "  const y = Math.atan2(toCamera[0], toCamera[2]) + (orientation * ANGLE_PER_ORIENTATION * Math.PI) / 180;",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteface.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "SPRITEFACE-the-step-not-the-pictures",
     "file": "src/player/eyeOfTheBeholder/eotbBillboard.js",
-    "old": "  const y = Math.atan2(toCamera[0], toCamera[2]) - orientation * ANGLE_PER_ORIENTATION * Math.PI / 180;",
-    "new": "  const y = Math.atan2(toCamera[0], toCamera[2]) - orientation * 40 * Math.PI / 180;",
+    "old": "  const y = Math.atan2(toCamera[0], toCamera[2]) - (orientation * ANGLE_PER_ORIENTATION * Math.PI) / 180;",
+    "new": "  const y = Math.atan2(toCamera[0], toCamera[2]) - (orientation * 40 * Math.PI) / 180;",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteface.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "SPRITEFACE-the-bearing-not-the-eyes",
     "file": "src/player/eyeOfTheBeholder/eotbBillboard.js",
-    "old": "  const y = Math.atan2(toCamera[0], toCamera[2]) - orientation",
-    "new": "  const y = Math.atan2(toCamera[2], toCamera[0]) - orientation",
+    "old": "  const y = Math.atan2(toCamera[0], toCamera[2]) - (orientation * ANGLE_PER_ORIENTATION * Math.PI) / 180;",
+    "new": "  const y = Math.atan2(toCamera[2], toCamera[0]) - (orientation * ANGLE_PER_ORIENTATION * Math.PI) / 180;",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteface.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "SPRITEFACE-the-pose-not-the-picture",
     "file": "src/render/auraRing.js",
-    "old": "  ? { feet: w.at, yaw: face ? face.yaw : w.yaw, turn: face ? face.turn : null, bones: fig ? auraSpriteBones(fig) : null }",
-    "new": "  ? { feet: w.at, yaw: w.yaw, turn: face ? face.turn : null, bones: fig ? auraSpriteBones(fig) : null }",
+    "old": "  ? { feet: w.at, yaw: face ? face.yaw : w.yaw, turn: face ? face.turn : null, bones: fig ? auraSpriteBones(fig) : null, card: !fig && face?.card === true, front: !fig && face?.front === true }",
+    "new": "  ? { feet: w.at, yaw: w.yaw, turn: face ? face.turn : null, bones: fig ? auraSpriteBones(fig) : null, card: !fig && face?.card === true, front: !fig && face?.front === true }",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteface.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "SPRITEFACE-the-view-keeps-none",
     "file": "src/player/mwView.js",
-    "old": "spriteFacing = drawn ? eotbFacing() : null;",
-    "new": "spriteFacing = null;",
+    "old": "    spriteFacing = drawn ? eotbFacing() : null;",
+    "new": "    spriteFacing = null;",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteface.test.js"
     ],
@@ -152,7 +152,7 @@
   {
     "name": "SPRITEFACE-a-peers-light-off-the-pose",
     "file": "src/scenes/auraHost.js",
-    "old": "const face = (walkers?.faceOf?.(d.id) ?? riders?.faceOf?.(d.id))?.yaw ?? peerBodyYaw(d.shown) ?? 0;",
+    "old": "const face = seenAs?.yaw ?? peerBodyYaw(d.shown) ?? 0;",
     "new": "const face = peerBodyYaw(d.shown) ?? 0;",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteface.test.js"

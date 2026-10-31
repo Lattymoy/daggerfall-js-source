@@ -39,11 +39,11 @@
 // And the questlines' own rows of the quest tables (QL_PLACE_ROWS), laid as a mod lays its own.
 import { ActionTemplate } from '../quest/actions.js';
 import { Symbol as QuestSymbol } from '../quest/symbol.js';
-import { GENDERS } from '../../characters/nameHelper.js';   // STAR8: a foe's gender, named
+import { GENDERS } from '../../characters/nameHelper.js'; // STAR8: a foe's gender, named
 import { isClassEnemyId } from '../../characters/enemy/enemyBasics.js';
 import { isStamped, isEnding } from './qlLaw.js';
-import { sheetFor } from './qlSheets.js';   // AUDIT QUESTLINES BRANCH-10: an outcome is one its quest's sheet has
-import { addIntoQuestTables } from '../quest/tables.js';   // AUDIT STAR8 S4: the questlines' place rows
+import { sheetFor } from './qlSheets.js'; // AUDIT QUESTLINES BRANCH-10: an outcome is one its quest's sheet has
+import { addIntoQuestTables } from '../quest/tables.js'; // AUDIT STAR8 S4: the questlines' place rows
 
 const SYMBOL = '[a-zA-Z0-9_.]+';
 
@@ -60,7 +60,11 @@ export const ASK_AGAIN_TICKS = 300;
  *  question answered null is asked again. */
 const held = new WeakMap();
 const UP = -1;
-const heldOf = (quest) => { let m = held.get(quest); if (!m) held.set(quest, (m = new Map())); return m; };
+const heldOf = (quest) => {
+  let m = held.get(quest);
+  if (!m) held.set(quest, (m = new Map()));
+  return m;
+};
 
 /** AUDIT QUESTLINES BRANCH-1: A RECEIVED COPY KEPT IN STEP WITH A PARTY ASKS NOTHING - the sharer chooses, and the copies
  *  take the choice on the resync (decision 7, record 10.2). Every copy asked: the resync carried the sharer's click, so
@@ -73,8 +77,11 @@ const heldOf = (quest) => { let m = held.get(quest); if (!m) held.set(quest, (m 
 // shared on to a new party, its sharer not in it, waited for nobody. AUDIT QA3 E1: never by the party's silence - two
 // minutes without a change is a journey, and the holder asked under a sharer still there answered the same choice twice
 // (R0C11Y26's gold and its standing, kept both); nor does sharing a received copy on make its holder a second chooser.
-const awaitsSharer = (quest) => quest?.ql?.received === true && !!quest.hooks?.sharedCopy?.(quest)
-  && (quest.hooks?.partySize?.() ?? quest.hooks?.rewardShares?.(quest) ?? 1) > 1 && quest.hooks?.sharerHere?.(quest) !== false;
+const awaitsSharer = (quest) =>
+  quest?.ql?.received === true &&
+  !!quest.hooks?.sharedCopy?.(quest) &&
+  (quest.hooks?.partySize?.() ?? quest.hooks?.rewardShares?.(quest) ?? 1) > 1 &&
+  quest.hooks?.sharerHere?.(quest) !== false;
 
 /** `ask` - a choice in the player's own words. The host shows the question's message and the choices' messages
  *  (hooks.showChoice - a box, then a pick that cannot be dismissed without a choice, as PromptMulti's box cannot -
@@ -85,18 +92,22 @@ const awaitsSharer = (quest) => quest?.ql?.received === true && !!quest.hooks?.s
  *  never asked again - a task cleared and set again does not re-arm it (ActionTemplate.rearmAction). */
 export class QlAsk extends ActionTemplate {
   static typeName = 'QlAsk';
-  get saveShape() { return [['id'], ['choiceIds'], ['choiceTasks', 'symArray']]; }
+  get saveShape() {
+    return [['id'], ['choiceIds'], ['choiceTasks', 'symArray']];
+  }
   constructor(parentQuest) {
     super(parentQuest);
     this.allowRearm = false;
-    this.reported = false;   // AUDIT QUESTLINES BRANCH-9: a missing message said once - transient
+    this.reported = false; // AUDIT QUESTLINES BRANCH-9: a missing message said once - transient
     this.id = 0;
     /** @type {number[]} */
     this.choiceIds = [];
     /** @type {any[]} */
     this.choiceTasks = [];
   }
-  get pattern() { return new RegExp(`^\\s*ask (?<id>\\d+) choices (?<rest>(?:\\d+ ${SYMBOL}\\s*){2,4})$`); }
+  get pattern() {
+    return new RegExp(`^\\s*ask (?<id>\\d+) choices (?<rest>(?:\\d+ ${SYMBOL}\\s*){2,4})$`);
+  }
   createNew(source, parentQuest) {
     const match = this.test(source);
     if (!match) return null;
@@ -112,13 +123,23 @@ export class QlAsk extends ActionTemplate {
   }
   update(caller) {
     const quest = this.parentQuest;
-    const task = caller?.symbol ?? null, at = caller?.actions?.indexOf?.(this) ?? -1;
-    const key = `${task?.name ?? ''}#${at}`, latch = heldOf(quest), was = latch.get(key);
+    const task = caller?.symbol ?? null,
+      at = caller?.actions?.indexOf?.(this) ?? -1;
+    const key = `${task?.name ?? ''}#${at}`,
+      latch = heldOf(quest),
+      was = latch.get(key);
     if (was === UP) return;
-    if (was > 0) { latch.set(key, was - 1); return; }
+    if (was > 0) {
+      latch.set(key, was - 1);
+      return;
+    }
     if (awaitsSharer(quest)) return;
     const message = quest.getMessage(this.id) ?? null;
-    const offered = this.choiceIds.map((id, i) => ({ id, task: this.choiceTasks[i], message: quest.getMessage(id) ?? null }));
+    const offered = this.choiceIds.map((id, i) => ({
+      id,
+      task: this.choiceTasks[i],
+      message: quest.getMessage(id) ?? null,
+    }));
     const choices = offered.filter((c) => c.message);
     // AUDIT QUESTLINES BRANCH-9: A MESSAGE THE QUEST DOES NOT HAVE FAILS LOUDLY, AND THE QUEST STAYS ANSWERABLE. The ask
     // warned, marked itself done and asked nothing - the reward waited on its choice for ever (M0B60Y10 with a misspelt
@@ -127,23 +148,40 @@ export class QlAsk extends ActionTemplate {
     if (!this.reported && (!message || choices.length < offered.length)) {
       this.reported = true;
       const missing = [...(message ? [] : [this.id]), ...offered.filter((c) => !c.message).map((c) => c.id)];
-      console.error(`[questlines] ${quest.questName}: ask ${this.id} names a message the quest does not have (${missing.join(', ')}) - ${choices.length ? 'asked with what it has' : 'nothing to ask: it waits, unanswered'}`);
+      console.error(
+        `[questlines] ${quest.questName}: ask ${this.id} names a message the quest does not have (${missing.join(', ')}) - ${choices.length ? 'asked with what it has' : 'nothing to ask: it waits, unanswered'}`,
+      );
     }
     if (!choices.length) return;
     latch.set(key, UP);
-    quest.hooks?.showChoice?.(quest, message, choices.map((c) => c.message), (index) => {
-      if (latch.get(key) === UP) latch.delete(key);
-      const chosen = Number.isInteger(index) ? choices[index] : null;
-      if (!chosen) { latch.set(key, ASK_AGAIN_TICKS); return; }   // closed unanswered: asked again later
-      // AUDIT QUESTLINES BRANCH-1: THE ANSWER IS THE ASK'S AS IT STANDS NOW - the one in this place (a resync's rebuild of
-      // it, or itself), and only while unanswered: not once it is complete or a choice of its is already set (a partner's
-      // answer, carried on the resync while this box was up - taken too, both ways paid), nor once the quest is ending.
-      const live = task ? quest.getTask?.(task)?.actions?.[at] : this;
-      if (!(live instanceof QlAsk) || live.id !== this.id || live.isComplete || isEnding(quest) || quest.questTombstoned
-        || live.choiceTasks.some((s) => quest.getTask?.(s)?.getTriggerValue?.())) return;
-      live.setComplete();
-      quest.startTask(chosen.task);
-    });
+    quest.hooks?.showChoice?.(
+      quest,
+      message,
+      choices.map((c) => c.message),
+      (index) => {
+        if (latch.get(key) === UP) latch.delete(key);
+        const chosen = Number.isInteger(index) ? choices[index] : null;
+        if (!chosen) {
+          latch.set(key, ASK_AGAIN_TICKS);
+          return;
+        } // closed unanswered: asked again later
+        // AUDIT QUESTLINES BRANCH-1: THE ANSWER IS THE ASK'S AS IT STANDS NOW - the one in this place (a resync's rebuild of
+        // it, or itself), and only while unanswered: not once it is complete or a choice of its is already set (a partner's
+        // answer, carried on the resync while this box was up - taken too, both ways paid), nor once the quest is ending.
+        const live = task ? quest.getTask?.(task)?.actions?.[at] : this;
+        if (
+          !(live instanceof QlAsk) ||
+          live.id !== this.id ||
+          live.isComplete ||
+          isEnding(quest) ||
+          quest.questTombstoned ||
+          live.choiceTasks.some((s) => quest.getTask?.(s)?.getTriggerValue?.())
+        )
+          return;
+        live.setComplete();
+        quest.startTask(chosen.task);
+      },
+    );
   }
 }
 
@@ -155,8 +193,12 @@ export class QlOutcome extends ActionTemplate {
     /** @type {any} */
     this.outcomeSymbol = null;
   }
-  get saveShape() { return [['outcomeSymbol', 'sym']]; }
-  get pattern() { return new RegExp(`^\\s*outcome (?<name>${SYMBOL})\\s*$`); }
+  get saveShape() {
+    return [['outcomeSymbol', 'sym']];
+  }
+  get pattern() {
+    return new RegExp(`^\\s*outcome (?<name>${SYMBOL})\\s*$`);
+  }
   createNew(source, parentQuest) {
     const match = this.test(source);
     if (!match) return null;
@@ -165,14 +207,18 @@ export class QlOutcome extends ActionTemplate {
     return action;
   }
   update(_caller) {
-    const quest = this.parentQuest, name = this.outcomeSymbol?.name;
+    const quest = this.parentQuest,
+      name = this.outcomeSymbol?.name;
     if (isStamped(quest) && !quest.ql.outcome && name) {
       // AUDIT QUESTLINES BRANCH-10: a name the quest's sheet does not have is no outcome - written, it stood first, so the
       // sheet's own bindings never settled one, and the quest ended a success that paid no standing and no gear and filed
       // `done` (outcomeOf finds no row). Said, and left to the sheet. A quest with no sheet has nothing to hold it to.
       const sheet = sheetFor(quest.questName);
       if (!sheet || (sheet.outcomes ?? []).some((o) => o.id === name)) quest.ql.outcome = name;
-      else console.warn(`[questlines] ${quest.questName}: outcome ${name} is not one its sheet has - left to the sheet's bindings`);
+      else
+        console.warn(
+          `[questlines] ${quest.questName}: outcome ${name} is not one its sheet has - left to the sheet's bindings`,
+        );
     }
     this.setComplete();
   }
@@ -182,7 +228,9 @@ export class QlOutcome extends ActionTemplate {
  *  first asked. The count it started from is saved, so a reload never restarts it. */
 export class QlAct extends ActionTemplate {
   static typeName = 'QlAct';
-  get saveShape() { return [['kind'], ['count'], ['from']]; }
+  get saveShape() {
+    return [['kind'], ['count'], ['from']];
+  }
   constructor(parentQuest) {
     super(parentQuest);
     this.isTriggerCondition = true;
@@ -191,7 +239,9 @@ export class QlAct extends ActionTemplate {
     /** @type {number|null} */
     this.from = null;
   }
-  get pattern() { return /^\s*ql act (?<kind>[a-z][a-z0-9-]{0,39}) (?<n>\d+)\s*$/; }
+  get pattern() {
+    return /^\s*ql act (?<kind>[a-z][a-z0-9-]{0,39}) (?<n>\d+)\s*$/;
+  }
   createNew(source, parentQuest) {
     const match = this.test(source);
     if (!match) return null;
@@ -214,7 +264,9 @@ export class QlAct extends ActionTemplate {
  *  made a success - the line is the script's word that this way ends well. */
 export class QlPaid extends ActionTemplate {
   static typeName = 'QlPaid';
-  get pattern() { return /^\s*ql paid\s*$/; }
+  get pattern() {
+    return /^\s*ql paid\s*$/;
+  }
   createNew(source, parentQuest) {
     return this.test(source) ? new QlPaid(parentQuest) : null;
   }
@@ -243,8 +295,12 @@ export class QlName extends ActionTemplate {
     /** STAR8: `female`, `male`, or '' (none named) */
     this.gender = '';
   }
-  get saveShape() { return [['personSymbol', 'sym'], ['given'], ['gender']]; }
-  get pattern() { return /^\s*ql name (?<sym>_[a-zA-Z0-9_.]+_) (?<given>[A-Za-z][A-Za-z'_-]{0,47})(?: (?<gender>female|male))?\s*$/; }
+  get saveShape() {
+    return [['personSymbol', 'sym'], ['given'], ['gender']];
+  }
+  get pattern() {
+    return /^\s*ql name (?<sym>_[a-zA-Z0-9_.]+_) (?<given>[A-Za-z][A-Za-z'_-]{0,47})(?: (?<gender>female|male))?\s*$/;
+  }
   createNew(source, parentQuest) {
     const match = this.test(source);
     if (!match) return null;
@@ -257,15 +313,17 @@ export class QlName extends ActionTemplate {
   update(_caller) {
     const sym = this.personSymbol?.original ?? this.personSymbol?.name;
     const person = this.parentQuest.getPerson?.(this.personSymbol);
-    const foe = person ? null : this.parentQuest.getFoe?.(this.personSymbol) ?? null;
+    const foe = person ? null : (this.parentQuest.getFoe?.(this.personSymbol) ?? null);
     if (person) person.displayName = this.given;
     if (foe) {
       foe.displayName = this.given;
       foe.namePending = false;
-      if (this.gender && isClassEnemyId(foe.foeType)) foe.humanoidGender = this.gender === 'female' ? GENDERS.Female : GENDERS.Male;
+      if (this.gender && isClassEnemyId(foe.foeType))
+        foe.humanoidGender = this.gender === 'female' ? GENDERS.Female : GENDERS.Male;
     }
     if (!person && !foe) console.warn(`[questlines] ql name: no person ${sym}`);
-    else if (this.gender && !(foe && isClassEnemyId(foe.foeType))) console.warn(`[questlines] ql name: ${sym} takes no gender here`);
+    else if (this.gender && !(foe && isClassEnemyId(foe.foeType)))
+      console.warn(`[questlines] ql name: ${sym} takes no gender here`);
     this.setComplete();
   }
 }
@@ -288,13 +346,20 @@ export class QlGone extends ActionTemplate {
     this.foeSymbols = [];
     this.seen = false;
   }
-  get saveShape() { return [['foeSymbols', 'symArray'], ['seen']]; }
-  get pattern() { return /^\s*ql gone((?: _[a-zA-Z0-9_.]+_){1,4})\s*$/; }
+  get saveShape() {
+    return [['foeSymbols', 'symArray'], ['seen']];
+  }
+  get pattern() {
+    return /^\s*ql gone((?: _[a-zA-Z0-9_.]+_){1,4})\s*$/;
+  }
   createNew(source, parentQuest) {
     const match = this.test(source);
     if (!match) return null;
     const action = new QlGone(parentQuest);
-    action.foeSymbols = match[1].trim().split(/\s+/).map((s) => new QuestSymbol(s));
+    action.foeSymbols = match[1]
+      .trim()
+      .split(/\s+/)
+      .map((s) => new QuestSymbol(s));
     return action;
   }
   checkTrigger(_caller) {
@@ -302,9 +367,12 @@ export class QlGone extends ActionTemplate {
     const stands = quest?.hooks?.questFoeStands;
     const foes = this.foeSymbols.map((s) => quest?.getFoe?.(s)).filter(Boolean);
     if (typeof stands !== 'function' || !foes.length) return false;
-    if (foes.some((f) => stands(quest, f))) { this.seen = true; return false; }
+    if (foes.some((f) => stands(quest, f))) {
+      this.seen = true;
+      return false;
+    }
     if (!this.seen || foes[0].killCount >= Math.max(1, foes[0].spawnCount)) return false;
-    this.seen = false;   // fired: what stands next is seen afresh
+    this.seen = false; // fired: what stands next is seen afresh
     return true;
   }
 }
@@ -318,4 +386,11 @@ addIntoQuestTables({ places: QL_PLACE_ROWS.map((line) => ({ line, unlessKey: lin
 
 /** The questlines' templates, in the order the bridge registers them (after DFU's 82 - a first-match scan, and no DFU
  *  pattern claims any of these lines: test/systems/questlines/ql4_actions.test.js). */
-export const questlineActionTemplates = () => [new QlAsk(null), new QlOutcome(null), new QlAct(null), new QlPaid(null), new QlName(null), new QlGone(null)];
+export const questlineActionTemplates = () => [
+  new QlAsk(null),
+  new QlOutcome(null),
+  new QlAct(null),
+  new QlPaid(null),
+  new QlName(null),
+  new QlGone(null),
+];

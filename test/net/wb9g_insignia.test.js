@@ -110,8 +110,8 @@ test('WB9g the token and the wire: a token may carry the aura worn (`au`), absen
   assert.equal(readAura(null), null);
   // the relay: the hello's verified identity carries it, and the attached row it is stamped from carries it on
   const relay = rd('server/src/index.js');
-  assert.match(relay, /return \{ name: c\.n, kind: c\.k, subject: c\.s, title: c\.t, ts: c\.ts, glyphs: c\.g, gx: c\.gx, au: c\.au, pi: c\.pi, rb: c\.rb, mu, lt, lv: c\.lv, \.\.\.guild, gio: c\.i, ar: c\.ar, cl: c\.cl, \.\.\.house, ci: c\.ci, wa: c\.wa \};/, 'off the signature (LEASE1, PIN MOVED: the time of the word on the mute beside it; LEGACY7, PIN MOVED: the house after it; SEASON1 part two, PIN MOVED: a Season\'s banner ribbon beside it; ARENA4, PIN MOVED: the season\'s rating after it; ARENA4b, PIN MOVED: the character\'s level after that; AUDIT LEGACY III O1, PIN MOVED: the realm character; INT7, PIN MOVED: the arms the judged pack holds last); WITCH1, PIN MOVED: the profile icon worn beside the aura');
-  assert.match(relay, /this\._setAttach\(ws, \{ \.\.\.a, \.\.\.placed, \.\.\.shown, [^\n]*?id: m\.id, sc: m\.secret, name: who\.name, title: who\.title, \.\.\.\(who\.ts \? \{ ts: who\.ts \} : \{\}\), glyphs: who\.glyphs, gx: who\.gx, au: who\.au, \.\.\.\(who\.pi \? \{ pi: who\.pi \} : \{\}\), \.\.\.\(who\.rb \? \{ rb: who\.rb \} : \{\}\), lv: who\.lv,/, 'onto the socket\'s row (SEAT1c: a seat title\'s claim beside the title; AUDIT PRE-MERGE 1003b, PIN MOVED: an arena floor\'s place carried across a reconnect and a session\'s shown mark ahead of it; SCALE5c, PIN MOVED: a shard\'s socket\'s id on the bus and its hello\'s account ahead of its id); WITCH1, PIN MOVED: the profile icon worn beside the aura');
+  assert.match(relay, /return \{ name: c\.n, kind: c\.k, subject: c\.s, title: c\.t, ts: c\.ts, glyphs: c\.g, gx: c\.gx, au: c\.au, pi: c\.pi, rb: c\.rb, mu, lt, lv: c\.lv, \.\.\.guild, gio: c\.i, ar: c\.ar, cl: c\.cl, \.\.\.house, ci: c\.ci, wa: c\.wa, mg: c\.mg \};/, 'off the signature (EG-MIGHT, PIN MOVED: the kit\'s might last; LEASE1, PIN MOVED: the time of the word on the mute beside it; LEGACY7, PIN MOVED: the house after it; SEASON1 part two, PIN MOVED: a Season\'s banner ribbon beside it; ARENA4, PIN MOVED: the season\'s rating after it; ARENA4b, PIN MOVED: the character\'s level after that; AUDIT LEGACY III O1, PIN MOVED: the realm character; INT7, PIN MOVED: the arms the judged pack holds last); WITCH1, PIN MOVED: the profile icon worn beside the aura');
+  assert.match(relay, /this\._setAttach\(ws, \{ \.\.\.a, \.\.\.placed, \.\.\.shown, [^\n]*?id: m\.id, sc: m\.secret, name: who\.name, title: who\.title, \.\.\.\(who\.ts \? \{ ts: who\.ts \} : \{\}\), glyphs: who\.glyphs, gx: who\.gx, au: who\.au, \.\.\.\(who\.pi \? \{ pi: who\.pi \} : \{\}\), \.\.\.\(who\.rb \? \{ rb: who\.rb \} : \{\}\), lv: who\.lv, \.\.\.\(who\.ak \? \{ ak: who\.ak \} : \{\}\), \.\.\.\(who\.fx \? \{ fx: who\.fx \} : \{\}\),/, 'onto the socket\'s row (PIN MOVED, STOREFRONT: the armory\'s kit and the effects kit after the level, GUILD-SHOP\'s order at the merge of main; SEAT1c: a seat title\'s claim beside the title; AUDIT PRE-MERGE 1003b, PIN MOVED: an arena floor\'s place carried across a reconnect and a session\'s shown mark ahead of it; SCALE5c, PIN MOVED: a shard\'s socket\'s id on the bus and its hello\'s account ahead of its id); WITCH1, PIN MOVED: the profile icon worn beside the aura');
 });
 
 // ── THE SERVICE ─────────────────────────────────────────────────────
@@ -667,13 +667,13 @@ test('WB9g the world host, by source: the auras gathered with the peers each fra
   assert.match(w, /const drawVeiledPeerBodies = \(\) => \{ peerBodies\?\.drawVeiled\(\); auraHost\.draw\(\); nodeGlintPass\.draw\(travelView\?\.active \? null : nodeMarksAt\(enchantFeet\(\)\)\); partyPing\?\.draw\(renderer\); \};/);   // NODE-MARKS: the nodes' glow rides the hook after the auras
   assert.match(h, /frame\(\/\*\* @type \{any\[\]\} \*\/ seen\) \{\n      auraList\.length = 0; armoryList\.length = 0; gathered\+\+;\n      const online = deps\.online\(\);\n      if \(!online \|\| deps\.travelActive\(\)\) return;/);
   assert.match(w, /travelActive: \(\) => !!travelView\?\.active/);
-  assert.match(h, /const mine = ownAura\(\), kit = ownArmory\(\);/);
+  assert.match(h, /const mine = ownAura\(\), kit = ownArmory\(\), fx = ownEffects\(\);/);
   assert.match(h, /if \(deps\.veiled\(d\.id\) \|\| !d\.shown\) continue;   \/\/ a concealed peer's fire is concealed with them/);
   assert.match(w, /veiled: \(id\) => _veils\.has\(id\)/);
   assert.match(h, /const proj = renderer\._proj, view = renderer\._view, eye = renderer\._camPos;/);
   assert.match(h, /if \(pass\?\.drawn\) renderer\.markForeignPass\(\);/);
   assert.match(h, /auraList\.length = 0;   \/\/ this frame's, drawn once: a frame that gathers none \(the seat left, death, offline\) draws none/, 'a frame that gathers none draws none');
-  assert.match(w, /peerRiders\.settle\([^\n]*\n    auraHost\.frame\(seen\);   \/\/ WB9g/, 'gathered once the bodies and the riders have stood');
+  assert.match(w, /remotePlayers\.sync\(visiblePeers[^\n]*\n    peerFlashFrame\(\);[^\n]*\n    auraHost\.frame\(seen\);   \/\/ WB9g/, 'gathered once every layer has drawn its peers - the bodies, the riders, the walkers and the classic layer (AUDIT CAPE-CARD A5, PIN MOVED)');
   // PIN MOVED (AURA-STALL, #1137): the build is its door's (render/glProgram.js compiledPass), whose throw is told and answers no pass for good
   // PIN MOVED (AURA-SPLIT, #1143): the door waits on no program - each look's is the pass's own (render/auraRing.js programOf)
   assert.match(h, /const auraPassOf = compiledPass\(renderer\.gl, \[\], \(\) => new AuraRingRenderer\(renderer\.gl\), \(\/\*\* @type \{any\} \*\/ e\) => console\.warn\('\[online\] the aura would not build'/, 'a fire that will not build costs the fire, never the game');
@@ -695,7 +695,7 @@ test('WB9g the world host, by source: the auras gathered with the peers each fra
   assert.match(w, /insignia: insigniaRows, insigniaLoad, buyInsignia: insigniaBuy, wearInsignia: insigniaWear, insigniaBusy: \(\) => _insignia\.busy,/);
   // the service's side: the routes behind the door, the version moved, the deploy watching the law
   const svc = rd('server-account/src/service.js');
-  assert.match(svc, /'\/v1\/account\/insignia', '\/v1\/account\/aura',/);
+  assert.match(svc, /'\/v1\/account\/insignia',\n\s*'\/v1\/account\/aura',/);
   assert.match(rd('.github/workflows/account-deploy.yml'), /- "src\/net\/insignia\.js"/, 'the Worker bundles the law - a change to it deploys');
   assert.match(rd('server-account/migrations/0040_insignia.sql'), /ALTER TABLE players ADD COLUMN insignia TEXT;\nALTER TABLE players ADD COLUMN insignia_spent INTEGER NOT NULL DEFAULT 0;\nALTER TABLE players ADD COLUMN aura TEXT;/);
 });

@@ -2,8 +2,8 @@
   {
     "name": "SCR-shown-without-the-dev-glyph",
     "file": "src/net/chatVoice.js",
-    "old": "return Array.isArray(g) && g.includes('dev');",
-    "new": "return Array.isArray(g);",
+    "old": "    return Array.isArray(g) && g.includes('dev');",
+    "new": "    return Array.isArray(g);",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SCR-shown-on-every-tab",
     "file": "src/net/chatVoice.js",
-    "old": "shown: (tabId) => admin() && PUBLIC_TABS.includes(tabId),",
-    "new": "shown: (tabId) => admin(),",
+    "old": "    shown: (tabId) => admin() && PUBLIC_TABS.includes(tabId),",
+    "new": "    shown: (tabId) => admin(),",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SCR-red-not-wrapped",
     "file": "src/net/chatVoice.js",
-    "old": "return onSend?.(tabId, `/red ${text.trim()}`);",
-    "new": "return onSend?.(tabId, text);",
+    "old": "      if (red()) return onSend?.(tabId, `/red ${text.trim()}`);",
+    "new": "      if (red()) return onSend?.(tabId, text);",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SCR-command-wrapped",
     "file": "src/net/chatVoice.js",
-    "old": "if (!voice.shown(tabId) || isCommandLine(text)) return",
-    "new": "if (!voice.shown(tabId)) return",
+    "old": "      if (!voice.shown(tabId) || isCommandLine(text)) return onSend?.(tabId, text);",
+    "new": "      if (!voice.shown(tabId)) return onSend?.(tabId, text);",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SCR-red-not-kept",
     "file": "src/net/chatVoice.js",
-    "old": "setPref(VOICE_PREF, want === 'red' ? 'red' : 'me'); return; }",
-    "new": "setPref(VOICE_PREF, 'me'); return; }",
+    "old": "        setPref(VOICE_PREF, want === 'red' ? 'red' : 'me');",
+    "new": "        setPref(VOICE_PREF, 'me');",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SCR-hidden-me-not-asked",
     "file": "src/net/chatVoice.js",
-    "old": "if (want === 'red' || !hidden) {",
-    "new": "if (want === 'red' || true) {",
+    "old": "      if (want === 'red' || !hidden) {",
+    "new": "      if (want === 'red' || true) {",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SCR-yes-never-asks-the-panel",
     "file": "src/net/chatVoice.js",
-    "old": "void showMe().catch(() => false).then(",
-    "new": "void Promise.resolve(true).then(",
+    "old": "      void showMe()\n        .catch(() => false)\n        .then((ok) => say(tabId, ok ? voiceShownText() : voiceOpenPanelText()));",
+    "new": "      void Promise.resolve(true).then((ok) => say(tabId, ok ? voiceShownText() : voiceOpenPanelText()));",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SCR-panel-no-said-as-yes",
     "file": "src/net/chatVoice.js",
-    "old": "ok ? voiceShownText() : voiceOpenPanelText()",
-    "new": "voiceShownText()",
+    "old": "        .then((ok) => say(tabId, ok ? voiceShownText() : voiceOpenPanelText()));",
+    "new": "        .then((ok) => say(tabId, voiceShownText()));",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SCR-failed-ask-said-as-yes",
     "file": "src/net/chatVoice.js",
-    "old": "void showMe().catch(() => false).then(",
-    "new": "void showMe().catch(() => true).then(",
+    "old": "        .catch(() => false)",
+    "new": "        .catch(() => true)",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SCR-ask-never-lapses",
     "file": "src/net/chatVoice.js",
-    "old": "asking: () => now() - askedAt <= VOICE_ASK_MS,",
-    "new": "asking: () => askedAt > -Infinity,",
+    "old": "    asking: () => now() - askedAt <= VOICE_ASK_MS,",
+    "new": "    asking: () => askedAt > -Infinity,",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SCR-hidden-me-line-sent",
     "file": "src/net/chatVoice.js",
-    "old": "if (hidden) { say(tabId, voiceHiddenText()); return false; }\n",
-    "new": "",
+    "old": "      if (hidden) {\n        say(tabId, voiceHiddenText());\n        return false;\n      }\n      return onSend?.(tabId, text);",
+    "new": "      return onSend?.(tabId, text);",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SCR-hidden-me-line-cleared",
     "file": "src/net/chatVoice.js",
-    "old": "say(tabId, voiceHiddenText()); return false; }",
-    "new": "say(tabId, voiceHiddenText()); return true; }",
+    "old": "        return false;",
+    "new": "        return true;",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SCR-door-ask-to-any-origin",
     "file": "src/net/staffHook.js",
-    "old": "win.postMessage({ dfoStaff: 'hide', on: want }, origin);",
-    "new": "win.postMessage({ dfoStaff: 'hide', on: want }, '*');",
+    "old": "    win.postMessage({ dfoStaff: 'hide', on: want }, origin);",
+    "new": "    win.postMessage({ dfoStaff: 'hide', on: want }, '*');",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SCR-door-another-sender",
     "file": "src/net/staffHook.js",
-    "old": "if (e?.source === win && e?.origin === origin && m?.dfoStaff === 'hide'",
-    "new": "if (e?.origin === origin && m?.dfoStaff === 'hide'",
+    "old": "      if (e?.source === win && e?.origin === origin && m?.dfoStaff === 'hide' && m.on === want && 'ok' in m)\n        done(m.ok === true);",
+    "new": "      if (e?.origin === origin && m?.dfoStaff === 'hide' && m.on === want && 'ok' in m) done(m.ok === true);",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SCR-door-another-origin",
     "file": "src/net/staffHook.js",
-    "old": "if (e?.source === win && e?.origin === origin && m?.dfoStaff === 'hide'",
-    "new": "if (e?.source === win && m?.dfoStaff === 'hide'",
+    "old": "      if (e?.source === win && e?.origin === origin && m?.dfoStaff === 'hide' && m.on === want && 'ok' in m)\n        done(m.ok === true);",
+    "new": "      if (e?.source === win && m?.dfoStaff === 'hide' && m.on === want && 'ok' in m) done(m.ok === true);",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SCR-door-ask-its-own-answer",
     "file": "src/net/staffHook.js",
-    "old": "m?.dfoStaff === 'hide' && m.on === want && 'ok' in m) done(m.ok === true);",
-    "new": "m?.dfoStaff === 'hide' && m.on === want) done(m.ok === true);",
+    "old": "      if (e?.source === win && e?.origin === origin && m?.dfoStaff === 'hide' && m.on === want && 'ok' in m)\n        done(m.ok === true);",
+    "new": "      if (e?.source === win && e?.origin === origin && m?.dfoStaff === 'hide' && m.on === want) done(m.ok === true);",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SCR-door-no-timeout",
     "file": "src/net/staffHook.js",
-    "old": "const timer = setTimer(() => done(false), STAFF_TOKEN_WAIT_MS);",
-    "new": "const timer = 0;",
+    "old": "    const timer = setTimer(() => done(false), STAFF_TOKEN_WAIT_MS);",
+    "new": "    const timer = 0;",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "SCR-door-listener-kept",
     "file": "src/net/staffHook.js",
-    "old": "clearTimer(timer); win.removeEventListener?.('message', heard); resolve(ok);",
-    "new": "clearTimer(timer); resolve(ok);",
+    "old": "      win.removeEventListener?.('message', heard);\n      resolve(ok);",
+    "new": "      resolve(ok);",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "SCR-host-not-forwarding",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "      host.voice.adopt(issued);   // STAFF-CHAT-RED",
-    "new": "      void issued;   // STAFF-CHAT-RED",
+    "old": "      host.voice.adopt(issued); // STAFF-CHAT-RED: and whether this token is a hidden staff member's",
+    "new": "      void issued; // STAFF-CHAT-RED: and whether this token is a hidden staff member's",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]

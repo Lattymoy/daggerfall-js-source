@@ -2,7 +2,7 @@
   {
     "name": "PROF3-law-longsword-leather",
     "file": "src/net/recipeLaw.js",
-    "old": "  product('longsword', 'Longsword', 'weapon', 120, 3, [[COPPER, 1], [LEATHER, 1]]),",
+    "old": "  product('longsword', 'Longsword', 'weapon', 120, 3, [\n    [COPPER, 1],\n    [LEATHER, 1],\n  ]),",
     "new": "  product('longsword', 'Longsword', 'weapon', 120, 3, [[COPPER, 1]]),",
     "tests": [
       "test/net/prof3_law.test.js",
@@ -12,8 +12,8 @@
   {
     "name": "PROF3-law-cuirass-two-leather",
     "file": "src/net/recipeLaw.js",
-    "old": "product('cuirass', 'Cuirass', 'plate', 102, 6, [[LEATHER, 2]])",
-    "new": "product('cuirass', 'Cuirass', 'plate', 102, 6, [[LEATHER, 1]])",
+    "old": "  product('cuirass', 'Cuirass', 'plate', 102, 6, [[LEATHER, 2]]),",
+    "new": "  product('cuirass', 'Cuirass', 'plate', 102, 6, [[LEATHER, 1]]),",
     "tests": [
       "test/net/prof3_law.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "PROF3-law-chain-rounds-down",
     "file": "src/net/recipeLaw.js",
-    "old": "Math.ceil(p.ingots * 0.75)",
-    "new": "Math.floor(p.ingots * 0.75)",
+    "old": "  PLATE.map((p) => product(`chain-${p.id}`, p.name, 'chain', p.templateIndex, Math.ceil(p.ingots * 0.75))),",
+    "new": "  PLATE.map((p) => product(`chain-${p.id}`, p.name, 'chain', p.templateIndex, Math.floor(p.ingots * 0.75))),",
     "tests": [
       "test/net/prof3_law.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "PROF3-law-warforged-not-ebony",
     "file": "src/net/recipeLaw.js",
-    "old": "'ingot:daedric': 9, 'ingot:warforged': 7,",
-    "new": "'ingot:daedric': 9, 'ingot:warforged': 1,",
+    "old": "  'ingot:warforged': 7,",
+    "new": "  'ingot:warforged': 1,",
     "tests": [
       "test/net/prof3_law.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "PROF3-law-plate-no-flag",
     "file": "src/net/recipeLaw.js",
-    "old": "p.kind === 'plate' || p.kind === 'shield' ? ARMOR_PLATE + m",
-    "new": "p.kind === 'plate' ? ARMOR_PLATE + m",
+    "old": "    p.kind === 'plate' || p.kind === 'shield'\n      ? ARMOR_PLATE + m\n      : p.kind === 'chain'\n        ? ARMOR_CHAIN\n        : p.kind === 'weapon'\n          ? m\n          : 0;",
+    "new": "    p.kind === 'plate' ? ARMOR_PLATE + m : p.kind === 'chain' ? ARMOR_CHAIN : p.kind === 'weapon' ? m : 0;",
     "tests": [
       "test/net/prof3_law.test.js",
       "test/systems/prof3_client.test.js"
@@ -67,8 +67,8 @@
   {
     "name": "PROF3-law-row-top",
     "file": "src/net/recipeLaw.js",
-    "old": "Object.freeze({ upTo: Infinity, odds: Object.freeze([0, 0, 40, 52, 8]) }),",
-    "new": "Object.freeze({ upTo: Infinity, odds: Object.freeze([0, 0, 40, 55, 5]) }),",
+    "old": "  Object.freeze({ upTo: Infinity, odds: Object.freeze([0, 0, 40, 52, 8]) }),",
+    "new": "  Object.freeze({ upTo: Infinity, odds: Object.freeze([0, 0, 40, 55, 5]) }),",
     "tests": [
       "test/net/prof3_law.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "PROF3-law-margin-negative",
     "file": "src/net/recipeLaw.js",
-    "old": "const odds = [...QUALITY_ROWS.find((r) => Math.max(0, margin) <= r.upTo).odds];",
-    "new": "const odds = [...QUALITY_ROWS.find((r) => margin < r.upTo).odds];",
+    "old": "  const odds = [...QUALITY_ROWS.find((r) => Math.max(0, margin) <= r.upTo).odds];",
+    "new": "  const odds = [...QUALITY_ROWS.find((r) => margin < r.upTo).odds];",
     "tests": [
       "test/net/prof3_law.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "PROF3-law-masterwright-from-top",
     "file": "src/net/recipeLaw.js",
-    "old": "for (let q = 0; q < MASTERWORK && left > 0; q++)",
-    "new": "for (let q = MASTERWORK - 1; q >= 0 && left > 0; q--)",
+    "old": "    for (let q = 0; q < MASTERWORK && left > 0; q++) {",
+    "new": "    for (let q = MASTERWORK - 1; q >= 0 && left > 0; q--) {",
     "tests": [
       "test/net/prof3_law.test.js",
       "test/net/prof3_service.test.js"
@@ -105,8 +105,8 @@
   {
     "name": "PROF3-law-weaponsmith-armour",
     "file": "src/net/recipeLaw.js",
-    "old": "(spec50 === 'weaponsmith' && r.family === 'weapons')",
-    "new": "(spec50 === 'weaponsmith')",
+    "old": "    (spec50 === 'weaponsmith' && r.family === 'weapons') ||",
+    "new": "    spec50 === 'weaponsmith' ||",
     "tests": [
       "test/net/prof3_law.test.js",
       "test/net/prof3_service.test.js"
@@ -115,8 +115,8 @@
   {
     "name": "PROF3-law-warforged-no-step",
     "file": "src/net/recipeLaw.js",
-    "old": "  if (r.metal === WARFORGED || r.leather === HARDENED_LEATHER.key || (heartwood && takesHeartwood(r))) steps++;\n",
-    "new": "  if (r.leather === HARDENED_LEATHER.key || (heartwood && takesHeartwood(r))) steps++;\n",
+    "old": "  if (r.metal === WARFORGED || r.leather === HARDENED_LEATHER.key || (heartwood && takesHeartwood(r))) steps++;",
+    "new": "  if (r.leather === HARDENED_LEATHER.key || (heartwood && takesHeartwood(r))) steps++;",
     "tests": [
       "test/net/prof3_law.test.js",
       "test/net/prof3_service.test.js"
@@ -154,8 +154,8 @@
   {
     "name": "PROF3-law-quartermaster-swords",
     "file": "src/net/recipeLaw.js",
-    "old": "((r.kind === 'kit' && spec100 === 'quartermaster') || (r.kind === 'dish'",
-    "new": "((spec100 === 'quartermaster') || (r.kind === 'dish'",
+    "old": "  (r.kind === 'kit' && spec100 === 'quartermaster') || (r.kind === 'dish' && spec50 === COOK) ? 2 : 1;",
+    "new": "  spec100 === 'quartermaster' || (r.kind === 'dish' && spec50 === COOK) ? 2 : 1;",
     "tests": [
       "test/net/prof3_law.test.js"
     ],
@@ -182,7 +182,7 @@
   {
     "name": "PROF3-law-lines-any-item",
     "file": "src/net/recipeLaw.js",
-    "old": "  if (!item || typeof item.provenance !== 'string' || !PROVENANCE_RE.test(item.provenance)) return Number.isInteger(item?.quality) && item.quality > 1 && item.quality < MASTERWORK ? [QUALITY_NAMES[item.quality]] : [];",
+    "old": "  if (!item || typeof item.provenance !== 'string' || !PROVENANCE_RE.test(item.provenance))\n    return Number.isInteger(item?.quality) && item.quality > 1 && item.quality < MASTERWORK\n      ? [QUALITY_NAMES[item.quality]]\n      : [];",
     "new": "  if (!item) return [];",
     "tests": [
       "test/net/prof3_law.test.js"
@@ -213,8 +213,8 @@
   {
     "name": "PROF3-record-other-shapes",
     "file": "src/net/productRecord.js",
-    "old": "  for (const k of ['n', 'k', 't', 'o', 'd', 'b', 'w', 'y', 'e']) if (c[k] !== undefined) return false;\n",
-    "new": "",
+    "old": "  for (const k of ['n', 'k', 't', 'o', 'd', 'b', 'w', 'y', 'e']) if (c[k] !== undefined) return false;\n  if (typeof c.p !== 'string' || !PROVENANCE_RE.test(c.p)) return false;",
+    "new": "  if (typeof c.p !== 'string' || !PROVENANCE_RE.test(c.p)) return false;",
     "tests": [
       "test/net/prof3_law.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "PROF3-record-kit-quality",
     "file": "src/net/productRecord.js",
-    "old": "(!rollsQuality(r) ? c.q !== -1 : (c.q < 0 || c.q > MASTERWORK) && !(r.kind === 'kit' && c.q === -1))",
-    "new": "(c.q < -1 || c.q > MASTERWORK)",
+    "old": "  if (\n    !Number.isInteger(c.q) ||\n    (!rollsQuality(r) ? c.q !== -1 : (c.q < 0 || c.q > MASTERWORK) && !(r.kind === 'kit' && c.q === -1))\n  )\n    return false; // PROF4: arrows take none; CRAFT5: a kit its quality - or none, one made before kits took one",
+    "new": "  if (!Number.isInteger(c.q) || c.q < -1 || c.q > MASTERWORK) return false; // PROF4: arrows take none; CRAFT5: a kit its quality - or none, one made before kits took one",
     "tests": [
       "test/net/prof3_law.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "PROF3-record-no-sig-check",
     "file": "src/net/productRecord.js",
-    "old": "  if (!good) return { ok: false, why: 'signature' };\n",
-    "new": "",
+    "old": "  if (!good) return { ok: false, why: 'signature' };\n  let claims;",
+    "new": "  let claims;",
     "tests": [
       "test/net/prof3_law.test.js"
     ]
@@ -356,8 +356,8 @@
   {
     "name": "PROF3-svc-quartermaster-any",
     "file": "src/net/professionLaw.js",
-    "old": "  recipe('metal:brass', 'metal:brass', [['metal:copper', 1], ['metal:tin', 1]]),   // Brass is a metal, not an ingot (PROF3)",
-    "new": "  recipe('metal:brass', 'metal:brass', [['metal:copper', 1], ['metal:tin', 1]], { more: QUARTERMASTER }),   // Brass is a metal, not an ingot (PROF3)",
+    "old": "  recipe('metal:brass', 'metal:brass', [\n    ['metal:copper', 1],\n    ['metal:tin', 1],\n  ]), // Brass is a metal, not an ingot (PROF3)",
+    "new": "  recipe(\n    'metal:brass',\n    'metal:brass',\n    [\n      ['metal:copper', 1],\n      ['metal:tin', 1],\n    ],\n    { more: QUARTERMASTER },\n  ), // Brass is a metal, not an ingot (PROF3)",
     "tests": [
       "test/net/prof3_service.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "PROF3-piece-rarity-random",
     "file": "src/systems/smithItems.js",
-    "old": "      applyRarity(item, eff.rarity, rolls, null, { fits, byLines: at(MINT_V_LINES)",
-    "new": "      applyRarity(item, eff.rarity, Math.random, null, { fits, byLines: at(MINT_V_LINES)",
+    "old": "      applyRarity(item, eff.rarity, rolls, null, {",
+    "new": "      applyRarity(item, eff.rarity, Math.random, null, {",
     "tests": [
       "test/systems/prof3_client.test.js"
     ],
@@ -411,8 +411,8 @@
   {
     "name": "PROF3-piece-no-condition",
     "file": "src/systems/smithItems.js",
-    "old": "    item.maxCondition = item.currentCondition = Math.max(1, Math.round(item.maxCondition * eff.condition));\n",
-    "new": "",
+    "old": "    item.maxCondition = item.currentCondition = Math.max(1, Math.round(item.maxCondition * eff.condition));\n    if (eff.weight !== 1)",
+    "new": "    if (eff.weight !== 1)",
     "tests": [
       "test/systems/prof3_client.test.js"
     ]
@@ -420,8 +420,8 @@
   {
     "name": "PROF3-piece-mark-kept-affix",
     "file": "src/systems/smithItems.js",
-    "old": "    if (q === MASTERWORK && mark) item.name = templateByIndex(r.templateIndex)?.name ?? item.name;   // the mark is its name (itemNameParts)\n",
-    "new": "",
+    "old": "    if (q === MASTERWORK && mark) item.name = templateByIndex(r.templateIndex)?.name ?? item.name; // the mark is its name (itemNameParts)\n    if (r.kind === 'jewel') setJewel(item, r, hand); // PROF10: its metal's and its gem's name, points and worth",
+    "new": "    if (r.kind === 'jewel') setJewel(item, r, hand); // PROF10: its metal's and its gem's name, points and worth",
     "tests": [
       "test/systems/prof3_client.test.js"
     ]
@@ -429,8 +429,8 @@
   {
     "name": "PROF3-piece-tool-life",
     "file": "src/systems/smithItems.js",
-    "old": "    item.maxCondition = item.currentCondition = TOOL_LIFE[q];",
-    "new": "    item.maxCondition = item.currentCondition = 50;",
+    "old": "    item.maxCondition = item.currentCondition = TOOL_LIFE[q]; // FORAGE0 14.7: a tool's quality is its life",
+    "new": "    item.maxCondition = item.currentCondition = 50; // FORAGE0 14.7: a tool's quality is its life",
     "tests": [
       "test/systems/prof3_client.test.js"
     ]
@@ -438,8 +438,8 @@
   {
     "name": "PROF3-kit-least-worn",
     "file": "src/systems/item/itemTemplates.js",
-    "old": "wornFirst(b) - wornFirst(a) || conditionShare(a) - conditionShare(b);",
-    "new": "wornFirst(b) - wornFirst(a) || conditionShare(b) - conditionShare(a);",
+    "old": "export const mendOrder = (a, b) => wornFirst(b) - wornFirst(a) || conditionShare(a) - conditionShare(b);",
+    "new": "export const mendOrder = (a, b) => wornFirst(b) - wornFirst(a) || conditionShare(b) - conditionShare(a);",
     "tests": [
       "test/systems/prof3_client.test.js"
     ]
@@ -447,8 +447,8 @@
   {
     "name": "PROF3-kit-unclamped",
     "file": "src/systems/smithItems.js",
-    "old": "  it.currentCondition = Math.min(kitCeiling(it, kit), it.currentCondition + Math.ceil(it.maxCondition * (kit.fieldKit === true ? FIELD_KIT_REPAIR : KIT_REPAIR)));",
-    "new": "  it.currentCondition = it.currentCondition + Math.ceil(it.maxCondition * (kit.fieldKit === true ? FIELD_KIT_REPAIR : KIT_REPAIR));",
+    "old": "  it.currentCondition = Math.min(\n    kitCeiling(it, kit),\n    it.currentCondition + Math.ceil(it.maxCondition * (kit.fieldKit === true ? FIELD_KIT_REPAIR : KIT_REPAIR)),\n  ); // KIT-CEILING: never past three quarters - CRAFT5: nine tenths, a Superior or Masterwork kit's",
+    "new": "  it.currentCondition =\n    it.currentCondition + Math.ceil(it.maxCondition * (kit.fieldKit === true ? FIELD_KIT_REPAIR : KIT_REPAIR)); // KIT-CEILING: never past three quarters - CRAFT5: nine tenths, a Superior or Masterwork kit's",
     "tests": [
       "test/systems/prof3_client.test.js"
     ]
@@ -465,8 +465,8 @@
   {
     "name": "PROF3-kit-chain-refused",
     "file": "src/systems/smithItems.js",
-    "old": "|| (m === 1 && item.material === ARMOR_CHAIN)",
-    "new": "",
+    "old": "  if (item.group === 'Armor') return item.material === ARMOR_PLATE + m || (m === 1 && item.material === ARMOR_CHAIN);",
+    "new": "  if (item.group === 'Armor') return item.material === ARMOR_PLATE + m;",
     "tests": [
       "test/systems/prof3_client.test.js"
     ]
@@ -536,7 +536,7 @@
   },
   {
     "name": "PROF3-host-settle-crafts",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "        settle: () => profBook.settle(profMint, profMintCraft),",
     "new": "        settle: () => profBook.settle(profMint),",
     "tests": [
@@ -546,8 +546,8 @@
   {
     "name": "PROF3-heat-cancel-strikes-on",
     "file": "src/systems/heatAct.js",
-    "old": "    cancel() { st.done = true; },",
-    "new": "    cancel() { },",
+    "old": "    cancel() {\n      st.done = true;\n    },",
+    "new": "    cancel() {},",
     "tests": [
       "test/systems/prof3_client.test.js"
     ]

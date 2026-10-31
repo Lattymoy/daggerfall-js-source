@@ -33,8 +33,9 @@ process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const ROOT = process.env.TREE || fileURLToPath(new URL('..', import.meta.url));
 const PORT = Number(process.env.PORT || 5245);
 const SECONDS = Number(process.env.SECONDS || 60);
-const PROFILE = process.env.PROFILE || null;   // a file: the run under a CPU profile, its long tasks after the first frame printed
-const W = Number(process.env.W || 480), H = Number(process.env.H || 270);
+const PROFILE = process.env.PROFILE || null; // a file: the run under a CPU profile, its long tasks after the first frame printed
+const W = Number(process.env.W || 480),
+  H = Number(process.env.H || 270);
 export const PARALLEL_ARGS = ['--enable-angle-features=enableParallelCompileAndLink'];
 
 /** Every question that waits on the driver for a program, timed and named. `__glWaits` holds
@@ -76,7 +77,9 @@ export function waitsBySite(waits, firstAt) {
     const when = firstAt != null && w.at >= firstAt ? 'after' : 'before';
     const k = `${when}\t${w.kind}\t${w.site}`;
     const r = rows.get(k) ?? { when, kind: w.kind, site: w.site, n: 0, ms: 0, worst: 0 };
-    r.n++; r.ms += w.ms; r.worst = Math.max(r.worst, w.ms);
+    r.n++;
+    r.ms += w.ms;
+    r.worst = Math.max(r.worst, w.ms);
     rows.set(k, r);
   }
   const all = [...rows.values()].sort((a, b) => b.ms - a.ms);
@@ -92,18 +95,32 @@ async function runScene(browser, name) {
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   const cdp = PROFILE ? await ctx.newCDPSession(page) : null;
-  if (cdp) { await cdp.send('Profiler.enable'); await cdp.send('Profiler.setSamplingInterval', { interval: 500 }); await cdp.send('Profiler.start'); }
+  if (cdp) {
+    await cdp.send('Profiler.enable');
+    await cdp.send('Profiler.setSamplingInterval', { interval: 500 });
+    await cdp.send('Profiler.start');
+  }
   const t0 = Date.now();
   await page.goto(`http://localhost:${PORT}${SCENES[name]}`);
   await page.waitForFunction(() => (window.__frame | 0) > 0, null, { timeout: 1200000, polling: 250 });
   console.log(`  [${name}] first world frame after ${((Date.now() - t0) / 1000).toFixed(0)}s; ${SECONDS}s more`);
   await new Promise((r) => setTimeout(r, SECONDS * 1000));
-  const got = await page.evaluate(() => ({ waits: window.__glWaits, first: window.__bootFreezeFrames[0] ?? null, frames: window.__frame | 0,
-    ext: !!document.createElement('canvas').getContext('webgl2')?.getExtension('KHR_parallel_shader_compile') }));
+  const got = await page.evaluate(() => ({
+    waits: window.__glWaits,
+    first: window.__bootFreezeFrames[0] ?? null,
+    frames: window.__frame | 0,
+    ext: !!document.createElement('canvas').getContext('webgl2')?.getExtension('KHR_parallel_shader_compile'),
+  }));
   const profile = cdp ? (await cdp.send('Profiler.stop')).profile : null;
   if (profile) writeFileSync(PROFILE, JSON.stringify(profile));
   await ctx.close();
-  return { name, errors, ...got, ...waitsBySite(got.waits, got.first), tasks: profile ? longTasks(profile).long.filter((k) => k.fromFirstMs >= 0) : null };
+  return {
+    name,
+    errors,
+    ...got,
+    ...waitsBySite(got.waits, got.first),
+    tasks: profile ? longTasks(profile).long.filter((k) => k.fromFirstMs >= 0) : null,
+  };
 }
 
 /** The passes no scene here stands, built in a context each: at once, and by the started door where the tree has it. */
@@ -159,7 +176,13 @@ const SALTED = `(() => { const P = WebGL2RenderingContext.prototype, f = P.shade
 
 async function runQueue(browser) {
   const rows = [];
-  for (const [arm, delayMs] of [['alone', 0], ['at once', 0], ['in turn', 0], ['at once', 150], ['in turn', 150]]) {
+  for (const [arm, delayMs] of [
+    ['alone', 0],
+    ['at once', 0],
+    ['in turn', 0],
+    ['at once', 150],
+    ['in turn', 150],
+  ]) {
     for (let run = 0; run < 2; run++) {
       const ctx = await browser.newContext();
       await ctx.addInitScript(SALTED);
@@ -179,23 +202,36 @@ async function runPasses(browser) {
   await page.goto(`http://localhost:${PORT}/src/render/glProgram.js`);
   const r = {};
   for (const started of [false, true]) r[started ? 'started' : 'new'] = await page.evaluate(`(${PASSES})(${started})`);
-  r.ext = await page.evaluate(() => !!document.createElement('canvas').getContext('webgl2')?.getExtension('KHR_parallel_shader_compile'));
+  r.ext = await page.evaluate(
+    () => !!document.createElement('canvas').getContext('webgl2')?.getExtension('KHR_parallel_shader_compile'),
+  );
   await ctx.close();
   return r;
 }
 
 if (isMain(import.meta.url)) {
   const names = process.argv.slice(2);
-  if (!names.length || names.some((n) => n !== 'passes' && n !== 'queue' && !SCENES[n])) throw new Error(`compileStallProbe: name passes, queue, or scenes of ${Object.keys(SCENES).join(', ')}`);
-  const server = await createServer({ root: ROOT, configFile: `${ROOT}/vite.config.js`, server: { port: PORT, strictPort: true, hmr: false, watch: null }, logLevel: 'error' });
+  if (!names.length || names.some((n) => n !== 'passes' && n !== 'queue' && !SCENES[n]))
+    throw new Error(`compileStallProbe: name passes, queue, or scenes of ${Object.keys(SCENES).join(', ')}`);
+  const server = await createServer({
+    root: ROOT,
+    configFile: `${ROOT}/vite.config.js`,
+    server: { port: PORT, strictPort: true, hmr: false, watch: null },
+    logLevel: 'error',
+  });
   await server.listen();
-  const browser = await chromium.launch({ args: [...SWIFTSHADER_ARGS, ...(process.env.PARALLEL === '0' ? [] : PARALLEL_ARGS)] });
+  const browser = await chromium.launch({
+    args: [...SWIFTSHADER_ARGS, ...(process.env.PARALLEL === '0' ? [] : PARALLEL_ARGS)],
+  });
   const failed = [];
   try {
     for (const name of names) {
       if (name === 'queue') {
-        console.log('== queue: the foes\' telegraph built beside the passes play meets (COMPILE-QUEUE)');
-        for (const x of await runQueue(browser)) console.log(`  ${x.arm.padEnd(8)} built at +${String(x.delayMs).padStart(3)} ms: ${String(x.buildMs).padStart(5)} ms${x.doneMs == null ? '' : `; all done after ${x.doneMs} ms`}`);
+        console.log("== queue: the foes' telegraph built beside the passes play meets (COMPILE-QUEUE)");
+        for (const x of await runQueue(browser))
+          console.log(
+            `  ${x.arm.padEnd(8)} built at +${String(x.delayMs).padStart(3)} ms: ${String(x.buildMs).padStart(5)} ms${x.doneMs == null ? '' : `; all done after ${x.doneMs} ms`}`,
+          );
         continue;
       }
       if (name === 'passes') {
@@ -203,19 +239,39 @@ if (isMain(import.meta.url)) {
         console.log(`== passes (KHR_parallel_shader_compile ${r.ext ? 'on' : 'off'})`);
         for (const [arm, rows] of Object.entries(r)) {
           if (arm === 'ext') continue;
-          if (rows.none) { console.log(`  ${arm}: ${rows.none}`); continue; }
-          for (const [pass, x] of Object.entries(rows)) console.log(`  ${arm.padEnd(7)} ${pass.padEnd(16)} the main thread waited ${String(x.waitMs).padStart(8)} ms (worst ${x.worstMs}), ${x.frames} frames polled, ${x.wallMs} ms to built`);
+          if (rows.none) {
+            console.log(`  ${arm}: ${rows.none}`);
+            continue;
+          }
+          for (const [pass, x] of Object.entries(rows))
+            console.log(
+              `  ${arm.padEnd(7)} ${pass.padEnd(16)} the main thread waited ${String(x.waitMs).padStart(8)} ms (worst ${x.worstMs}), ${x.frames} frames polled, ${x.wallMs} ms to built`,
+            );
         }
         continue;
       }
       const r = await runScene(browser, name);
-      console.log(`== ${name} (KHR_parallel_shader_compile ${r.ext ? 'on' : 'off'}): ${r.frames} frames; the main thread waited on programs ${r.beforeMs.toFixed(0)} ms before the first world frame, ${r.afterMs.toFixed(0)} ms after; errors ${r.errors.length}`);
-      for (const k of r.tasks ?? []) console.log(`  task ${k.fromFirstMs} ms after the first frame: ${k.ms} ms - ${k.self.slice(0, 4).map(([f, ms]) => `${f} ${ms}`).join('; ')}`);
-      for (const x of r.rows.filter((x) => x.ms >= 5)) console.log(`  ${x.when.padEnd(6)} ${x.kind.padEnd(8)} ${x.ms.toFixed(0).padStart(7)} ms in ${String(x.n).padStart(3)} (worst ${x.worst.toFixed(0)})  ${x.site}`);
+      console.log(
+        `== ${name} (KHR_parallel_shader_compile ${r.ext ? 'on' : 'off'}): ${r.frames} frames; the main thread waited on programs ${r.beforeMs.toFixed(0)} ms before the first world frame, ${r.afterMs.toFixed(0)} ms after; errors ${r.errors.length}`,
+      );
+      for (const k of r.tasks ?? [])
+        console.log(
+          `  task ${k.fromFirstMs} ms after the first frame: ${k.ms} ms - ${k.self
+            .slice(0, 4)
+            .map(([f, ms]) => `${f} ${ms}`)
+            .join('; ')}`,
+        );
+      for (const x of r.rows.filter((x) => x.ms >= 5))
+        console.log(
+          `  ${x.when.padEnd(6)} ${x.kind.padEnd(8)} ${x.ms.toFixed(0).padStart(7)} ms in ${String(x.n).padStart(3)} (worst ${x.worst.toFixed(0)})  ${x.site}`,
+        );
       // a run is a measurement when the first world frame was seen and the page threw nothing
-      const why = r.first == null ? 'no world frame' : r.errors[0] ?? null;
+      const why = r.first == null ? 'no world frame' : (r.errors[0] ?? null);
       if (why) failed.push(`${name} (${why})`);
     }
-  } finally { await browser.close(); await server.close(); }
+  } finally {
+    await browser.close();
+    await server.close();
+  }
   if (failed.length) throw new Error(`compileStallProbe: no measurement for ${failed.join('; ')}`);
 }

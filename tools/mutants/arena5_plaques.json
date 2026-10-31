@@ -2,8 +2,8 @@
   {
     "name": "ARENA5-PLAQUE-NEAREST-WALL",
     "file": "src/world/arena/arenaPlaques.js",
-    "old": "if (Number.isFinite(d) && d < dist - 1e-6) { dist = d; way = w; }",
-    "new": "if (Number.isFinite(d) && !way) { dist = d; way = w; }",
+    "old": "    if (Number.isFinite(d) && d < dist - 1e-6) {",
+    "new": "    if (Number.isFinite(d) && !way) {",
     "tests": [
       "test/systems/arena/arena5_plaques.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ARENA5-PLAQUE-YAW",
     "file": "src/world/arena/arenaPlaques.js",
-    "old": "const yawDeg = (Math.atan2(-way[0], -way[1]) * 180) / Math.PI;",
-    "new": "const yawDeg = (Math.atan2(way[0], way[1]) * 180) / Math.PI;",
+    "old": "  const yawDeg = (Math.atan2(-way[0], -way[1]) * 180) / Math.PI; // the face, out of the wall",
+    "new": "  const yawDeg = (Math.atan2(way[0], way[1]) * 180) / Math.PI; // the face, out of the wall",
     "tests": [
       "test/systems/arena/arena5_plaques.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ARENA5-PLAQUE-ORDER",
     "file": "src/world/arena/arenaPlaques.js",
-    "old": "  spots.sort((a, b) => a.s - b.s);\n",
-    "new": "",
+    "old": "  spots.sort((a, b) => a.s - b.s);\n  return { floor, wall: [way[0], way[1]], plaques: spots.map((p, k) => ({ pos: p.pos, yawDeg, k })) };",
+    "new": "  return { floor, wall: [way[0], way[1]], plaques: spots.map((p, k) => ({ pos: p.pos, yawDeg, k })) };",
     "tests": [
       "test/systems/arena/arena5_plaques.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ARENA5-PLAQUE-CAP",
     "file": "src/world/arena/arenaPlaques.js",
-    "old": "for (let t = 0; spots.length < n && t < n * 2 + 1; t++) {",
-    "new": "for (let t = 0; t < n * 2 + 1; t++) {",
+    "old": "  for (let t = 0; spots.length < n && t < n * 2 + 1; t++) {",
+    "new": "  for (let t = 0; t < n * 2 + 1; t++) {",
     "tests": [
       "test/systems/arena/arena5_plaques.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ARENA5-PLAQUE-DOORWAY",
     "file": "src/world/arena/arenaPlaques.js",
-    "old": "if (!Number.isFinite(d) || Math.abs(d - dist) > PLAQUE_FLAT_M) continue;",
-    "new": "if (Number.isFinite(d) && Math.abs(d - dist) > PLAQUE_FLAT_M) continue;",
+    "old": "    if (!Number.isFinite(d) || Math.abs(d - dist) > PLAQUE_FLAT_M) continue; // the wall is not this one here (a door, a corner)",
+    "new": "    if (Number.isFinite(d) && Math.abs(d - dist) > PLAQUE_FLAT_M) continue; // the wall is not this one here (a door, a corner)",
     "tests": [
       "test/systems/arena/arena5_plaques.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ARENA5-PLAQUE-CORNER",
     "file": "src/world/arena/arenaPlaques.js",
-    "old": "if (Number.isFinite(clear) && clear < lat + PLAQUE_W / 2) continue;",
-    "new": "void clear;",
+    "old": "      if (Number.isFinite(clear) && clear < lat + PLAQUE_W / 2) continue;",
+    "new": "      void clear;",
     "tests": [
       "test/systems/arena/arena5_plaques.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "ARENA5-PLAQUE-NO-FLOOR",
     "file": "src/world/arena/arenaPlaques.js",
-    "old": "  if (!Number.isFinite(drop)) return null;\n",
-    "new": "",
+    "old": "  if (!Number.isFinite(drop)) return null;\n  const floor = at[1] + 0.5 - drop;",
+    "new": "  const floor = at[1] + 0.5 - drop;",
     "tests": [
       "test/systems/arena/arena5_plaques.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "ARENA5-PLAQUE-NOT-REGISTERED",
     "file": "src/world/arena/arenaPlaques.js",
-    "old": "  registerCustomModel(PLAQUE_MODEL, () => plaqueModel(true));\n",
-    "new": "",
+    "old": "  registerCustomModel(PLAQUE_MODEL, () => plaqueModel(true));\n  registerCustomModel(PLAQUE_BARE_MODEL, () => plaqueModel(false));",
+    "new": "  registerCustomModel(PLAQUE_BARE_MODEL, () => plaqueModel(false));",
     "tests": [
       "test/systems/arena/arena5_plaques.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "ARENA5-PLAQUES-MINE-MISSING",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "  if (L.grand) {\n    const year",
-    "new": "  if (false) {\n    const year",
+    "old": "  if (L.grand) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/arena/arena5_plaques.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "ARENA5-PLAQUES-ONLINE-SAVE",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "  if (board) {\n    for (const h of Array.isArray(board.hall)",
-    "new": "  if (false) {\n    for (const h of Array.isArray(board.hall)",
+    "old": "  if (board) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/arena/arena5_plaques.test.js"
     ]
@@ -110,7 +110,7 @@
   {
     "name": "ARENA5-GATE-PLAQUES-OFFLINE",
     "file": "src/scenes/arena/arenaGate.js",
-    "old": "    if (!on) return hallPlaques({ ladder: P.arenaLadder, league: P.arenaLeague, gameMinutes: gm(), name: P.name ?? '', max: PLAQUE_MAX });",
+    "old": "    if (!on)\n      return hallPlaques({\n        ladder: P.arenaLadder,\n        league: P.arenaLeague,\n        gameMinutes: gm(),\n        name: P.name ?? '',\n        max: PLAQUE_MAX,\n      });",
     "new": "    if (!on) return [];",
     "tests": [
       "test/systems/arena/arena5_plaques.test.js"
@@ -120,7 +120,7 @@
     "name": "ARENA5-GATE-PLAQUES-WAIT",
     "file": "src/scenes/arena/arenaGate.js",
     "old": "    return b ? hallPlaques({ board: b, max: PLAQUE_MAX }) : [];",
-    "new": "    return hallPlaques(b ? { board: b, max: PLAQUE_MAX } : { ladder: P.arenaLadder, league: P.arenaLeague, gameMinutes: gm(), name: P.name ?? '', max: PLAQUE_MAX });",
+    "new": "    return hallPlaques(\n      b\n        ? { board: b, max: PLAQUE_MAX }\n        : { ladder: P.arenaLadder, league: P.arenaLeague, gameMinutes: gm(), name: P.name ?? '', max: PLAQUE_MAX },\n    );",
     "tests": [
       "test/systems/arena/arena5_plaques.test.js"
     ]

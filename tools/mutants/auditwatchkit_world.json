@@ -182,8 +182,8 @@
   {
     "name": "WK-P5-gold-a-pile",
     "file": "src/systems/naval/navalTransfer.js",
-    "old": "    if (isGoldPieces(item)) { addGoldPieces(entity, item.stackCount ?? 1); continue; }\n",
-    "new": "",
+    "old": "    if (isGoldPieces(item)) {\n      addGoldPieces(entity, item.stackCount ?? 1);\n      continue;\n    }\n    const plan = planTake(item, { bag: entity.items, entity, dryRun: true });",
+    "new": "    const plan = planTake(item, { bag: entity.items, entity, dryRun: true });",
     "tests": [
       "test/scenes/auditwatchkit_world.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "WK-P5-force-dropped",
     "file": "src/systems/naval/navalTransfer.js",
-    "old": "if (force && (!plan.ok || plan.amount < (item.stackCount ?? 1)))",
-    "new": "if (false)",
+    "old": "    if (force && (!plan.ok || plan.amount < (item.stackCount ?? 1))) {",
+    "new": "    if (false) {",
     "tests": [
       "test/scenes/auditwatchkit_world.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "REALM-COPY-the-copy-never-marked",
     "file": "src/systems/offlineCopy.js",
-    "old": "  markRealmCopy(copy);\n",
-    "new": "",
+    "old": "  markRealmCopy(copy);\n  if (own === null || world === null) return copy;",
+    "new": "  if (own === null || world === null) return copy;",
     "tests": [
       "test/systems/realm_copy_mark.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "REALM-COPY-the-copys-button-live",
     "file": "src/ui/enhanced/bringOnlineButton.js",
-    "old": "  if (realmCopy) return { label: t('menu.online.realmCopyOffline', 'Copied from online: offline only'), offlineOnly: true };",
-    "new": "  if (realmCopy) return { label: t('menu.online.realmCopyOffline', 'Copied from online: offline only'), offlineOnly: false };",
+    "old": "    return { label: t('menu.online.realmCopyOffline', 'Copied from online: offline only'), offlineOnly: true };",
+    "new": "    return { label: t('menu.online.realmCopyOffline', 'Copied from online: offline only'), offlineOnly: false };",
     "tests": [
       "test/systems/realm_copy_mark.test.js"
     ]

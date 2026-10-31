@@ -1169,3 +1169,169 @@ DEPARTURE from the assembly, the sixth, recorded in the Ledger row.
 (the body's clip is one stroke under Mixed, alternating, by the rig's count where it names one, at five-thirds of the
 weapon's tick), `test/net/disc23b_eotb_sprites.test.js` (a peer's stroke by `an`); `tools/mutants/onestroke.json`.
 `tools/mutants/disc23b.json`'s clip-never-ends record re-aimed at the shot's own frames. Not verified in a browser.
+
+## ATTACK-MOVE (2026-10-31): a swing on the move plays whole
+
+A player's report, through the owner: "attack animations do not play properly when you attack and move
+simultaneously". The IL's `LoopIdleBillboard` runs beside a clip: while walking its clock advanced and repainted the
+walk table between the swing's frames, and a turn (`UpdateOrientation`) repainted the stance too. On the move the
+screen flickered between the walk and the swing.
+
+**The change.** `eotbBody.js`: a stance's delayed repaint (the walk's clock, a table change, one queued just before
+the clip) is dropped while a clip plays - the repaint after the clip paints the stance again - and a turn mid-clip
+repaints the clip's own frame at the new view. A peer's walker already rested its clock under a shot
+(`peerRiders.js`). A DEPARTURE from the assembly, the seventh, recorded in the Ledger row.
+
+**Pins.** `test/player/eyeOfTheBeholder/eotb_body.test.js` ATTACK-MOVE (every frame of a swing on the move, the eye
+swung round mid-swing, is the swing, turned with the eye; the walk after it); `tools/mutants/attackmove.json`. Not verified in a browser.
+
+**ATTACK-TURN** (the owner, 2026-10-31: "Walking shouldnt cancel attack animations"). A turn mid-clip repainted
+`frameCurrent`, which the walk's clock moves on under the clip. Steered on the move, 24 of a swing's 59 ticks showed the
+walk's frame number of the swing - most often its first. A turn now repaints the frame shown.
+
+**ATTACK-WARM.** Each layered outfit and each pair of hands is its own set of composed frames, and the body draws one
+only once it is composed: until then the last stays (`draw`). `preload` composes all when the body attaches, but a
+weapon or a piece changed later composed its swing as it played, and the walk's frame held through the blow.
+`layeredWarm.js` queues a new look's clips - the swing, each hand's for a pair, the loose, a readied cast - drawn, in
+every view, `LAYERED_WARM_A_FRAME` a frame. A walker's drawn weapon's swing is queued too (`peerRiders.js`,
+`WARM_QUEUE_MAX`); a sheathed one waits for its drawing. The port's own: the mod has no layered body.
+
+**Pins.** `eotb_body.test.js` ATTACK-TURN (a swing, a cast and a loose steered on the move show their own frame every
+tick) and ATTACK-WARM; `test/net/layered_peers.test.js` ATTACK-WARM; `tools/mutants/attackmove.json` (11, all dead).
+
+## TURN-FREE (2026-10-31): a readied body keeps its own facing
+
+The owner: "Allow players to view all rotations of their character when idle or moving in a direction with the camera
+facing another direction". The bundle ships `Graphics.TurnToView` at 2, When Weapon Readied: with a weapon out or a
+spell readied the body faced the camera, so it only ever showed its back. The port ships 1, Only When Animating: the
+body faces its walk, and stood still its last facing, so the eye goes round it through all eight views; a blow or a
+cast turns it to the camera while it plays, so it strikes where the player looks. The ladder is the IL's and the pane
+keeps all four. A DEPARTURE from the bundle's settings, the eighth, in the Ledger row.
+
+**Pins.** `eotb_body.test.js` TURN-FREE (the bundle's value read from `modsettings.json`; stood still, all eight views;
+walking aside, its side; a blow, the eye's); the IL's own pins at 2 set it (PIN MOVED); `tools/mutants/turnfree.json`
+(3, all dead).
+
+## BACK-HOLSTER (2026-10-30): the sheathed weapon on the sprite's back - NOT the mod's
+
+Mac: "For layered/skins in third person. I want to implement back holstered weapon visuals for the sprites which rotate
+on the back properly in all directions." Eye Of The Beholder draws no holster, and DFU has none; this is the port's own.
+The Morrowind body keeps Weapon Sheathing's (`systems/weaponSheathing.js`, WS1).
+
+**What rides the back.** While the weapon is sheathed, the one in the weapon hand (`EQUIP_SLOTS.RightHand`) if its skill
+is Long Blade, Axe, Blunt Weapon or Archery: the long blades, the axes, the maces, flails, warhammers and staffs, the bows
+and the Thunderlock. A short blade (Dagger, Tanto, Wakizashi, Shortsword) belongs at the hip, which is not drawn yet;
+nor is the Pistolet. In hand, in the saddle, as a beast, in first person and under the Overworld's grown body there is
+none. The skins and Layered Gearing alike carry it, mine and every walker's (`wd` 0, their look's weapon hand).
+
+**The picture.** The weapon's own paper-doll picture, as the pack draws it for its wearer: TEXTURE.233/234 in its metal,
+a Diverse Weapons replacement, a custom class's (`ui/item/itemIconColor32.js`), read from the player's data at run time -
+nothing of ARENA2 ships. Each is drawn on its own slant, so `uprightWeaponPicture` finds its long axis (the straight line
+through the most pixels - a haft, a blade, a bowstring; a mean axis was pulled off an axe's haft by its head), turns it
+upright by a half turn where needed so its widest end is on top (a sword's guard, an axe's or a hammer's head), and
+resamples it at the sprites' pixel size: the paper doll's 0.01 m a pixel against the sets' 0.019. It is uploaded as
+drawn and mirrored; a store keeps eight, more while more are asked, and asks again for one that did not come (AUDIT).
+
+**FLAIL-BACK** (2026-10-31, the owner: "The flail when holstered on the back needs to look different. Adjust the
+placement of the ball and chain"). Stood up as the doll draws it, a flail's chain stuck out sideways from the cap and its
+ball rode the top like a flag, the handle broken at the doll's hand. `eotbHolsterFlail.js` `uprightFlailPicture` splits
+it as the hands do (`heldPicture`, `heldChain`): the handle upright, cap on top, its hand's gap bridged, and the chain
+hung from the cap down beside it, the ball by the handle's foot. `loadBackPicture` is the door my body and every walker
+take the back's picture through. Pins: `test/player/eyeOfTheBeholder/holster_flail.test.js`,
+`tools/mutants/flailback.json` (6, all dead).
+
+**The hang.** A line in the body's frame from the right shoulder to the left hip, 35 degrees off the spine, a quarter
+of its height over the shoulder row (`EOTB_FIGURE.shoulder`), 0.16 m behind the body's middle, centred on the painted
+body (`auraSpriteAcross`, the cape's law), scaled with the sprite. Its frame is the picture's facing (`portrayedYaw`),
+so it turns with the eight views and never between them. Each frame the line is laid into the view plane: from behind
+it leans to the right shoulder, from the front the other way and mirrored, from the side it stands upright and shorter.
+It stands 3 cm before the body's card only where the eye sees the back (views 3, 4, 5); elsewhere 3 cm behind it, so
+the card covers it where they meet and only the hilt and the tip show past the body.
+
+**The side** (Mac: "On the side facing, the holstered weapon is wrong and overlays the body"). Drawn before the card
+there, a longsword lay over the torso: the painted torso reaches 0.22 m to its back, past the fixed 0.16. From the side
+the line now stands just past the painted back - half the chest's run (`spriteMarks` `chestHalf`) and 3 cm - and
+behind the card, so not one pixel of it lies over the body.
+
+**Over the aura** (Mac, the same day: "if a cape aura is present, the holster should appear over the aura"). The auras
+draw after the bodies as added light that writes no depth, so the Shadow Cloak's cape glowed over the weapon from behind.
+Straight after a wearer's own aura, `scenes/auraHost.js` draws again the holster that owner drew this frame
+(`eotbBody.holstersDrawn`, the walkers' `holstersDrawn`, each listed under its wearer's id): `redrawHolstersOver` at
+LEQUAL, so it passes exactly where it stood and stays hidden where the body hid it, with no second shadow and LESS given
+back. A nearer wearer's aura is drawn after it, over it (AUDIT A2). A per-frame list in the module was tried first: the
+renderer's `_frameStamp` is no frame count (LA-COST1 bumps it on every setter), and the probe caught the redraw doing
+nothing.
+
+**Drawn in the hand, none on the back.** My sprite reads the rig's own word (`weaponRig.js` `eotbState`, `sheathed`); a
+spell readied over a sheathed weapon keeps it there. A walker's `wd` 1 or 2 (a weapon or a bow drawn) takes it off.
+
+**Its glow** (Mac: "if the weapon has an effect, like the shock effect or an equipped weapon aura, does it show?",
+then "Do this and yes to #2"). Sheathed, the weapon on the back wears the weapon glow's look - its element, a set
+glow, the Gilded crimson, the Aura Armory's piece or the arcane look - drawn round its picture by the third glow
+drawer (`05-Combat/Weapon-Glow.md` "The world picture"). Drawn, the glow stands round the whole sprite. It turns,
+mirrors and hides with the weapon, and the aura host draws it over its own cape and under a nearer one. The weapon on the back and its glow
+are the rig's hand in use (`weaponRig.js` `eotbState` `handItem`), a walker's by its pose's `lh`. Full strength, as in
+the hand: one law.
+
+**The quiver** (QUIVER, 2026-10-30; Mac: "For the bow, lets add a quiver to the holster"). A bow - the short and the long
+bow, not the Thunderlock - carries a quiver on the back by the Morrowind body's law (`06-Systems/Weapon-Sheathing.md`
+WS1): it hangs with the bow, stays while the bow is drawn, and holds arrows while its wearer has them (my rig's
+`hasAmmo`, a walker's pose `am`). The departure: WS1 counts the arrows into its slots; a sprite's quiver is full or
+empty, since the wire says only `am`, so mine looks the same to me as to others.
+
+**Its picture and hang.** Daggerfall draws no quiver, so `eotbQuiver.js` paints a leather tube (lit as a cylinder, a
+lighter rim, a strap band) and stands three of the Arrow's own picture (TEXTURE.207 record 16) out of its mouth,
+fletching up. It hangs by `hangSpriteHolster` with `BACK_QUIVER`: steeper than the bow, its arrows over the shoulders,
+nearer the body so the bow lies over it, and `side` toward the body's right as the view sees it - never in depth, so
+the card covers it from the side. It is redrawn with the bow over its own aura; it has no glow.
+
+**Where.** `player/eyeOfTheBeholder/eotbHolster.js` (the law, the picture, the store, the hang, the batch);
+`eotbBody.js` draws mine after the body (`drawHolster`); `net/peer/peerRiders.js` hangs each walker's (`slingHolster`)
+and draws it in `drawLanterns`, beside the bodies; `scenes/auraHost.js` draws each again over its own aura
+(`eotbHolster.js` `drawAurasThenBacks`, `eotbGlow.js` `createSpriteBacks`). No host function grew. **Known limits.** Layered Gearing's art holds its
+mace in every frame, so a sheathed layered body shows the mace in hand and the weapon on its back. A flail stands on
+its handle with its chain and ball off to the side. Not yet checked in the running game.
+
+**Pins.** `test/player/eyeOfTheBeholder/backholster.test.js` (which weapons; the picture stood up, end and side kept;
+the slant, length, face and depth in all eight views and three facings; the side past the painted back; glued to the
+picture; the store; my body's gates in the rig's own words; the walkers'; the redraw over the aura; `chestHalf`, the
+across law and the capes moved for the pass; the audit's A1-A6); `tools/mutants/backholster.json`; three records in
+`htwaist.json` and `seraphwings.json` re-aimed by content. The glow: `test/player/eyeOfTheBeholder/spriteglow.test.js`
+(the law, the lists, the renderer's primitive call by call, the shaders' rows, the wiring; A5, A7, A8) and
+`tools/mutants/spriteglow.json`. The quiver: `test/player/eyeOfTheBeholder/backquiver.test.js` (the bows, the picture,
+the hang and its `side`, the store, mine and the walkers', the redraw) and `tools/mutants/backquiver.json`.
+
+**The probe.** `tools/backHolsterProbe.mjs` draws it in the real renderer
+(the game's mirrored lens) on a skin and on Layered Gearing, five weapons from ARENA2, eight views each, and the
+claymore under the Shadow Cloak through the real aura pass, hung as the host hangs it: 34 checks - it leans to the
+right shoulder from behind, hides in front, shows past the back from the side with no pixel over the body, the cape's
+mass is behind the painted body from the side, and after the redraw no weapon pixel is tinted (up to 468 were). And
+the glow: a shock and the Brand on the back from behind, none over the body from the front, alive as its clock runs,
+over the cape, and round the whole sprite drawn from every side - 46 checks.
+
+The quiver's probe draws the long bow and its quiver with ARENA2's arrow, 64 checks in all. From behind, its arrows
+stand over the shoulder row, off the bow's middle toward the right shoulder and under the bow. From the front and the
+side it is hidden behind the body, and empty it shows no arrows over its mouth.
+
+## AUDIT BACK-HOLSTER (2026-10-30): the holster and its glow, read cold
+
+Mac: "Audit this." A reviewer who had not written it read the four commits; each finding was checked against the code
+before anything changed. Eight held, one did not:
+
+- **A1, the store thrashed.** Nine weapons on screen and a store of eight: each frame's miss let go the next one asked,
+  so none ever came up. Now only a picture unasked for two seconds goes (`HOLSTER_ART_HOLD_MS`).
+- **A2, another wearer's cape.** The weapons and glows were drawn after the whole aura pass, so a cape nearer the eye lay
+  under a weapon behind it. The auras now draw farthest first in runs, each wearer's back right after its own aura;
+  a body wearing none has its glows drawn before every aura.
+- **A3, a failed picture never came back.** `itemIconColor32` gives up after four seconds; the store kept that for the
+  session. It asks again after 30 seconds (`HOLSTER_RETRY_MS`), as the riders' art does.
+- **A4 (refuted as reported).** The cull's sphere follows the current size (`bounds.js` `batchReach`). But it stands
+  upright and the weapon leans 35 degrees, so its tip could pass out of it; the radius now takes the lean.
+- **A5, my glow on the wrong picture.** Keyed to the picture asked, not the one standing while the next uploads. Now
+  the standing batch's, in its pixels.
+- **A6, an allocation every frame** for every walker with no weapon on its back. Now made only to hang.
+- **A7, the glow unfogged.** `glowWorldFs` fogs it to nothing at its place, as the auras are.
+- **A8, no cull.** A glow off the view baked a field and drew; its padded quad is now culled first.
+- **A9, the cape's shift** was not given back if the pass threw; it is, in a `finally`.
+
+Pins: the A-numbered tests in the two files above, and a record a fix in `backholster.json` and `spriteglow.json`.

@@ -1,0 +1,212 @@
+[
+  {
+    "name": "VENDOR-HOUSES-reread-every-open",
+    "file": "src/systems/vendorHouses.js",
+    "old": "  if (\n    had &&\n    ((had.busy && nowS - had.at < VENDOR_HOUSES_HUNG_S) ||\n      (!had.busy && nowS - had.at < (had.failed ? VENDOR_HOUSES_RETRY_S : VENDOR_HOUSES_READ_S)))\n  )\n    return;",
+    "new": "  if (had && ((had.busy && nowS - had.at < VENDOR_HOUSES_HUNG_S) || (!had.busy && false))) return;",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "VENDOR-HOUSES: the directory read at every opening of the town map"
+  },
+  {
+    "name": "VENDOR-HOUSES-version-still",
+    "file": "src/systems/vendorHouses.js",
+    "old": "        if (!same) _version++;",
+    "new": "        if (!same) _version += 0;",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "VENDOR-HOUSES: a read that changed the traders never repaints the sheet"
+  },
+  {
+    "name": "VENDOR-HOUSES-any-town",
+    "file": "src/systems/vendorHouses.js",
+    "old": "const keyOf = (map, buildingKey) => `${Number(map) >>> 0}:${Number(buildingKey)}`;",
+    "new": "const keyOf = (map, buildingKey) => `${Number(buildingKey)}`;",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "VENDOR-HOUSES: a house of another town with the same key is marked"
+  },
+  {
+    "name": "VENDOR-HOUSES-flag-dropped-read",
+    "file": "src/ui/town/townMapMarks.js",
+    "old": "    .map((r) => ({\n      buildingKey: r.buildingKey,\n      own: r.own === true,\n      ...(r.vendor === true ? { vendor: true } : {}),\n      label: r.label,\n    }));",
+    "new": "    .map((r) => ({ buildingKey: r.buildingKey, own: r.own === true, label: r.label }));",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "VENDOR-HOUSES: the trader flag dropped as the host's rows are read"
+  },
+  {
+    "name": "VENDOR-HOUSES-flag-dropped-rows",
+    "file": "src/ui/town/townMapMarks.js",
+    "old": "    if (home)\n      out.push({\n        buildingKey: key,\n        own: home.own === true,\n        ...(home.vendor === true ? { vendor: true } : {}),\n        label: vendorTitle(home),\n      });",
+    "new": "    if (home) out.push({ buildingKey: key, own: home.own === true, label: vendorTitle(home) });",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "VENDOR-HOUSES: the trader flag dropped from the town's rows"
+  },
+  {
+    "name": "VENDOR-HOUSES-flag-dropped-sheet",
+    "file": "src/ui/town/townSheet.js",
+    "old": "      out.push({ x, y: sheetY(h, y), own: r.own, ...(r.vendor ? { vendor: true } : {}), label: r.label });   // VENDOR-HOUSES",
+    "new": "      out.push({ x, y: sheetY(h, y), own: r.own, label: r.label });   // VENDOR-HOUSES",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "VENDOR-HOUSES: the sheet drops the trader flag"
+  },
+  {
+    "name": "VENDOR-HOUSES-no-blue",
+    "file": "src/ui/ink/inkTown.js",
+    "old": "    own ? TOWN_PEN.home : vendor ? TOWN_PEN.vendor : TOWN_PEN.halo,",
+    "new": "    own ? TOWN_PEN.home : TOWN_PEN.halo,",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "VENDOR-HOUSES: a trader's house drawn in parchment like any house"
+  },
+  {
+    "name": "VENDOR-HOUSES-blue-over-own",
+    "file": "src/ui/ink/inkTown.js",
+    "old": "    own ? TOWN_PEN.home : vendor ? TOWN_PEN.vendor : TOWN_PEN.halo,",
+    "new": "    vendor ? TOWN_PEN.vendor : own ? TOWN_PEN.home : TOWN_PEN.halo,",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "VENDOR-HOUSES: my own house with my trader in it drawn as a stranger's trader"
+  },
+  {
+    "name": "VENDOR-HOUSES-paint-ignores",
+    "file": "src/ui/ink/inkTown.js",
+    "old": "    paintHomeMark(ctx, x, y, h.own === true, h.vendor === true);",
+    "new": "    paintHomeMark(ctx, x, y, h.own === true, false);",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "VENDOR-HOUSES: the overlay never hands the flag to the ink"
+  },
+  {
+    "name": "VENDOR-HOUSES-host-never-asks",
+    "file": "src/scenes/exteriorAutomapToggle.js",
+    "old": "    if (onlineHomes) ensureVendorHouses(here.region);   // VENDOR-HOUSES: and its traders\n",
+    "new": "",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "VENDOR-HOUSES: the town key never asks for the region's traders"
+  },
+  {
+    "name": "VENDOR-HOUSES-host-own-blue",
+    "file": "src/scenes/exteriorAutomapToggle.js",
+    "old": "          return h && !h.own && isVendorHouse(mapId, buildingKey) ? { ...h, vendor: true } : h;",
+    "new": "          return h && isVendorHouse(mapId, buildingKey) ? { ...h, vendor: true } : h;",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "VENDOR-HOUSES: my own home marked a trader's"
+  },
+  {
+    "name": "VENDOR-HOUSES-unregistered",
+    "file": "src/scenes/vendorHost.js",
+    "old": "  registerVendorHouseReader((region) => (vendorMarketOpen() ? vendorReachable(region) : null), {\n    open: vendorMarketOpen,\n  }); // VENDOR-HOUSES: the houses the town map inks blue",
+    "new": "  registerVendorHouseReader(null); // VENDOR-HOUSES: the houses the town map inks blue",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "VENDOR-HOUSES: nothing reads the directory for the town map"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-F4-failure-waits-whole-read",
+    "file": "src/systems/vendorHouses.js",
+    "old": "    ((had.busy && nowS - had.at < VENDOR_HOUSES_HUNG_S) ||\n      (!had.busy && nowS - had.at < (had.failed ? VENDOR_HOUSES_RETRY_S : VENDOR_HOUSES_READ_S)))",
+    "new": "    ((had.busy && nowS - had.at < VENDOR_HOUSES_HUNG_S) || (!had.busy && nowS - had.at < VENDOR_HOUSES_READ_S))",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK F4: a market not open yet is not asked again for two minutes"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-F4-shut-market-kept",
+    "file": "src/systems/vendorHouses.js",
+    "old": "          if (r == null && entry.keys.size) {\n            entry.keys = new Set();\n            _version++;\n          }\n          return;",
+    "new": "          return;",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK F4: a shut market's traders stay blue"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-F4-hung-read-holds",
+    "file": "src/systems/vendorHouses.js",
+    "old": "  if (\n    had &&\n    ((had.busy && nowS - had.at < VENDOR_HOUSES_HUNG_S) ||\n      (!had.busy && nowS - had.at < (had.failed ? VENDOR_HOUSES_RETRY_S : VENDOR_HOUSES_READ_S)))\n  )",
+    "new": "  if (had && (had.busy || (!had.busy && nowS - had.at < (had.failed ? VENDOR_HOUSES_RETRY_S : VENDOR_HOUSES_READ_S))))",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK F4: a read never answered holds the region for good"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-F4-late-answer-taken",
+    "file": "src/systems/vendorHouses.js",
+    "old": "        if (_regions.get(region) !== entry) return; // a newer read took the region over\n        if (!r?.ok) {",
+    "new": "        if (!r?.ok) {",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK F4: a hung read's late answer overwrites the newer one"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-F8-waypoint-twice",
+    "file": "src/ui/town/townMapMarks.js",
+    "old": "  home.vendor === true && home.waypoint !== true\n    ? t('town.home.trader', '{home} - trader', { home: homeDoorTitle(home) })\n    : homeDoorTitle(home);",
+    "new": "  home.vendor === true ? t('town.home.trader', '{home} - trader', { home: homeDoorTitle(home) }) : homeDoorTitle(home);",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK F8: the waypoint's house says trader twice"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-II-F4-rejection-a-success",
+    "file": "src/systems/vendorHouses.js",
+    "old": "      () => {\n        if (_regions.get(region) === entry) entry.failed = true;\n      },",
+    "new": "      () => {},",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK II F4: a rejected read waits the whole read"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-II-F4-throw-a-shut-market",
+    "file": "src/systems/vendorHouses.js",
+    "old": "  } catch (e) {\n    asked = Promise.reject(e);",
+    "new": "  } catch {\n    asked = null;",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK II F4: a read that throws clears every mark"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-II-F5-load-remembered",
+    "file": "src/systems/vendorHouses.js",
+    "old": "    if (_loads != null && _regions.size) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK II F5: another character's traders stay blue"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-II-F5-shut-market-marked",
+    "file": "src/systems/vendorHouses.js",
+    "old": "  if (!_open()) return false;\n  const k = keyOf(map, buildingKey);",
+    "new": "  const k = keyOf(map, buildingKey);",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK II F5: a shut market's traders stay blue"
+  }
+]

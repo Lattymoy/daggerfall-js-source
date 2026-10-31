@@ -2,8 +2,8 @@
   {
     "name": "ARCHERY-REF-the-sieges-bows-back",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  126: 18, 127: 12, 128: 16, 129: 17, 130: 19,",
-    "new": "  126: 18, 127: 12, 128: 16, 129: 16, 130: 18,",
+    "old": "  129: 17,\n  130: 19, // BAL-ARCHERY: the bows' tops one past FormulaHelper's",
+    "new": "  129: 16,\n  130: 18, // BAL-ARCHERY: the bows' tops one past FormulaHelper's",
     "tests": [
       "test/systems/pvpref_law.test.js",
       "test/net/arena/int7_arms.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "ARCHERY-REF-the-short-bow-back",
     "file": "src/net/siege/siegeRef.js",
-    "old": "129: 17, 130: 19,",
-    "new": "129: 16, 130: 19,",
+    "old": "  129: 17,",
+    "new": "  129: 16,",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "ARCHERY-REF-the-arenas-bows-back",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "129: 17, 130: 19 });",
-    "new": "129: 16, 130: 18 });",
+    "old": "  129: 17,\n  130: 19,",
+    "new": "  129: 16,\n  130: 18,",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]

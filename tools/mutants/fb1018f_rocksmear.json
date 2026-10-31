@@ -2,8 +2,8 @@
   {
     "name": "ROCK-SMEAR-inside-out",
     "file": "src/world/townStandIns.js",
-    "old": "const l2 = (n[0] * g[0] + n[1] * g[1] + n[2] * g[2] < 0 ? -1 : 1) * (Math.hypot(...n) || 1)",
-    "new": "const l2 = (Math.hypot(...n) || 1)",
+    "old": "    const l2 = (n[0] * g[0] + n[1] * g[1] + n[2] * g[2] < 0 ? -1 : 1) * (Math.hypot(...n) || 1),",
+    "new": "    const l2 = Math.hypot(...n) || 1,",
     "tests": [
       "test/world/fb1018f_rocksmear.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "ROCK-SMEAR-one-plan",
     "file": "src/world/townStandIns.js",
-    "old": "m.tri(ROCK, a, b, c, nn, boulderUv(a, nn), boulderUv(b, nn), boulderUv(c, nn));",
-    "new": "m.tri(ROCK, a, b, c, nn, [a[0], -a[1]], [b[0], -b[1]], [c[0], -c[1]]);",
+    "old": "    m.tri(ROCK, a, b, c, nn, boulderUv(a, nn), boulderUv(b, nn), boulderUv(c, nn));",
+    "new": "    m.tri(ROCK, a, b, c, nn, [a[0], -a[1]], [b[0], -b[1]], [c[0], -c[1]]);",
     "tests": [
       "test/world/fb1018f_rocksmear.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "ROCK-SMEAR-underside-side-view",
     "file": "src/world/townStandIns.js",
-    "old": "  if (ay >= ax && ay >= az) return [p[0], -p[2]];",
-    "new": "  if (ay >= ax && ay >= az) return [p[0], -p[1]];",
+    "old": "  if (ay >= ax && ay >= az) return [p[0], -p[2]]; // the crown and the underside: from above",
+    "new": "  if (ay >= ax && ay >= az) return [p[0], -p[1]]; // the crown and the underside: from above",
     "tests": [
       "test/world/fb1018f_rocksmear.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "ROCK-SMEAR-x-side-front-view",
     "file": "src/world/townStandIns.js",
-    "old": "  return ax >= az ? [p[2], -p[1]] : [p[0], -p[1]];",
-    "new": "  return ax >= az ? [p[0], -p[1]] : [p[0], -p[1]];",
+    "old": "  return ax >= az ? [p[2], -p[1]] : [p[0], -p[1]]; // a side: along the axis it faces, its rows level",
+    "new": "  return ax >= az ? [p[0], -p[1]] : [p[0], -p[1]]; // a side: along the axis it faces, its rows level",
     "tests": [
       "test/world/fb1018f_rocksmear.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "ROCK-SMEAR-signed-lean",
     "file": "src/world/townStandIns.js",
-    "old": "  const ax = Math.abs(n[0]), ay = Math.abs(n[1]), az = Math.abs(n[2]);",
-    "new": "  const ax = n[0], ay = Math.abs(n[1]), az = Math.abs(n[2]);",
+    "old": "  const ax = Math.abs(n[0]),",
+    "new": "  const ax = n[0],",
     "tests": [
       "test/world/fb1018f_rocksmear.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "ROCK-SMEAR-rows-upside-down",
     "file": "src/world/townStandIns.js",
-    "old": "  return ax >= az ? [p[2], -p[1]] : [p[0], -p[1]];",
-    "new": "  return ax >= az ? [p[2], p[1]] : [p[0], -p[1]];",
+    "old": "  return ax >= az ? [p[2], -p[1]] : [p[0], -p[1]]; // a side: along the axis it faces, its rows level",
+    "new": "  return ax >= az ? [p[2], p[1]] : [p[0], -p[1]]; // a side: along the axis it faces, its rows level",
     "tests": [
       "test/world/fb1018f_rocksmear.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "ROCK-SMEAR-prism-on-trust",
     "file": "src/world/townStandIns.js",
-    "old": "  const pts = area < 0 ? [...corners].reverse() : corners;",
-    "new": "  const pts = corners;",
+    "old": "  const pts = area < 0 ? [...corners].reverse() : corners; // counter-clockwise seen from +z: each side's outward normal is its edge turned right",
+    "new": "  const pts = corners; // counter-clockwise seen from +z: each side's outward normal is its edge turned right",
     "tests": [
       "test/world/fb1018f_rocksmear.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "ROCK-SMEAR-prism-backwards",
     "file": "src/world/townStandIns.js",
-    "old": "  const pts = area < 0 ? [...corners].reverse() : corners;",
-    "new": "  const pts = area > 0 ? [...corners].reverse() : corners;",
+    "old": "  const pts = area < 0 ? [...corners].reverse() : corners; // counter-clockwise seen from +z: each side's outward normal is its edge turned right",
+    "new": "  const pts = area > 0 ? [...corners].reverse() : corners; // counter-clockwise seen from +z: each side's outward normal is its edge turned right",
     "tests": [
       "test/world/fb1018f_rocksmear.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "ROCK-SMEAR-centroid-off-the-axis",
     "file": "src/world/townStandIns.js",
-    "old": "(a[0] + b[0] + c[0]) / 3 - cx, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3 - cz]",
-    "new": "(a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3]",
+    "old": "    const g = [(a[0] + b[0] + c[0]) / 3 - cx, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3 - cz];",
+    "new": "    const g = [(a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3];",
     "tests": [
       "test/world/fb1018f_rocksmear.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "ROCK-SMEAR-prism-area-half-shoelace",
     "file": "src/world/townStandIns.js",
-    "old": "area += a[0] * b[1] - b[0] * a[1];",
-    "new": "area += a[0] * b[1];",
+    "old": "    area += a[0] * b[1] - b[0] * a[1];",
+    "new": "    area += a[0] * b[1];",
     "tests": [
       "test/world/fb1018f_rocksmear.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "ROCK-SMEAR-tie-flips",
     "file": "src/world/townStandIns.js",
-    "old": "n[0] * g[0] + n[1] * g[1] + n[2] * g[2] < 0 ? -1 : 1",
-    "new": "n[0] * g[0] + n[1] * g[1] + n[2] * g[2] <= 0 ? -1 : 1",
+    "old": "    const l2 = (n[0] * g[0] + n[1] * g[1] + n[2] * g[2] < 0 ? -1 : 1) * (Math.hypot(...n) || 1),",
+    "new": "    const l2 = (n[0] * g[0] + n[1] * g[1] + n[2] * g[2] <= 0 ? -1 : 1) * (Math.hypot(...n) || 1),",
     "tests": [
       "test/world/fb1018f_rocksmear.test.js"
     ],
@@ -113,8 +113,8 @@
   {
     "name": "ROCK-SMEAR-uv-of-raw-normal",
     "file": "src/world/townStandIns.js",
-    "old": "boulderUv(a, nn), boulderUv(b, nn), boulderUv(c, nn)",
-    "new": "boulderUv(a, n), boulderUv(b, n), boulderUv(c, n)",
+    "old": "    m.tri(ROCK, a, b, c, nn, boulderUv(a, nn), boulderUv(b, nn), boulderUv(c, nn));",
+    "new": "    m.tri(ROCK, a, b, c, nn, boulderUv(a, n), boulderUv(b, n), boulderUv(c, n));",
     "tests": [
       "test/world/fb1018f_rocksmear.test.js"
     ],
@@ -124,8 +124,8 @@
   {
     "name": "ROCK-SMEAR-prism-reverse-in-place",
     "file": "src/world/townStandIns.js",
-    "old": "const pts = area < 0 ? [...corners].reverse() : corners;",
-    "new": "const pts = area < 0 ? corners.reverse() : corners;",
+    "old": "  const pts = area < 0 ? [...corners].reverse() : corners; // counter-clockwise seen from +z: each side's outward normal is its edge turned right",
+    "new": "  const pts = area < 0 ? corners.reverse() : corners; // counter-clockwise seen from +z: each side's outward normal is its edge turned right",
     "tests": [
       "test/world/fb1018f_rocksmear.test.js"
     ],

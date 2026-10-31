@@ -34,32 +34,58 @@ export function createDungeonCorpsePrefabs(h) {
     rise: async (f) => {
       const p = f.corpsePos ?? f.ai.feet;
       if (!(await h.spawnLooseFoe(f.mobileType, [p[0], p[1], p[2]]))) return false;
-      if (f.dead && f.corpse) { f.corpseDestroyed = 1; h.freeCorpse(f); }
+      if (f.dead && f.corpse) {
+        f.corpseDestroyed = 1;
+        h.freeCorpse(f);
+      }
       return true;
     },
-    vanish: (f) => { f.corpseDestroyed = 1; h.freeCorpse(f); },
+    vanish: (f) => {
+      f.corpseDestroyed = 1;
+      h.freeCorpse(f);
+    },
     toAsh: (f, ash) => {
-      const p = f.corpsePos, g = gen;
-      f.corpseDestroyed = 2; h.freeCorpse(f);
-      if (p) h.mintMarker({ corpseTexture: ash, feet: p, centre: ash.centre }).then((c) => {
-        if (!c) return;
-        if (h.dead() || g !== gen) { h.renderer.destroyBillboardBatch(c.batch); return; }
-        ashes.add(c.batch); h.billboardBatches.push(c.batch);   // the level's flats draw it and destroy() frees it
-      });
+      const p = f.corpsePos,
+        g = gen;
+      f.corpseDestroyed = 2;
+      h.freeCorpse(f);
+      if (p)
+        h.mintMarker({ corpseTexture: ash, feet: p, centre: ash.centre }).then((c) => {
+          if (!c) return;
+          if (h.dead() || g !== gen) {
+            h.renderer.destroyBillboardBatch(c.batch);
+            return;
+          }
+          ashes.add(c.batch);
+          h.billboardBatches.push(c.batch); // the level's flats draw it and destroy() frees it
+        });
     },
     send: (f, spell, level) => {
-      const sp = hitSpellFields(spell, level), hit = { dmg: 0, kind: 'spell', ...sp, cs: 1 };
-      if (sp) h.onFoeHit?.(f._ownFrom != null ? { own: 1, to: f._ownFrom, k: h.locationKey(), i: f._ownI, ...hit } : { ...(f._encId != null ? { i: f._encId, xs: 1 } : { i: f._surI ?? h.foes.indexOf(f) }), ...hit });
+      const sp = hitSpellFields(spell, level),
+        hit = { dmg: 0, kind: 'spell', ...sp, cs: 1 };
+      if (sp)
+        h.onFoeHit?.(
+          f._ownFrom != null
+            ? { own: 1, to: f._ownFrom, k: h.locationKey(), i: f._ownI, ...hit }
+            : { ...(f._encId != null ? { i: f._encId, xs: 1 } : { i: f._surI ?? h.foes.indexOf(f) }), ...hit },
+        );
     },
     say: (line) => h.say(line),
-    key: (f) => { const i = h.foes.indexOf(f); return i >= 0 && i < h.layoutFoes() ? `${h.locationKey()}|${i}` : null; },
+    key: (f) => {
+      const i = h.foes.indexOf(f);
+      return i >= 0 && i < h.layoutFoes() ? `${h.locationKey()}|${i}` : null;
+    },
   });
   return {
     ...runner,
     /** A save's load rebuilt the level: every ash flat goes with it, and one still warming never lands. */
     clearAsh() {
       gen++;
-      for (const b of ashes) { const i = h.billboardBatches.indexOf(b); if (i >= 0) h.billboardBatches.splice(i, 1); h.renderer.destroyBillboardBatch(b); }
+      for (const b of ashes) {
+        const i = h.billboardBatches.indexOf(b);
+        if (i >= 0) h.billboardBatches.splice(i, 1);
+        h.renderer.destroyBillboardBatch(b);
+      }
       ashes.clear();
     },
   };
@@ -95,18 +121,36 @@ export function createStreetCorpsePrefabs(h) {
       if (f.dead && f.corpse) h.removeCorpse(f);
       return true;
     },
-    vanish: (f) => { f.corpseDestroyed = 1; if (!f.puppet) h.removeCorpse(f); else dropMarker(f); },   // D6: a copy's flat goes at its owner's word
+    vanish: (f) => {
+      f.corpseDestroyed = 1;
+      if (!f.puppet) h.removeCorpse(f);
+      else dropMarker(f);
+    }, // D6: a copy's flat goes at its owner's word
     toAsh: (f, ash) => {
-      const gen = h.epoch(), pixelKey = f.corpsePixelKey ?? h.currentPixelKey();
+      const gen = h.epoch(),
+        pixelKey = f.corpsePixelKey ?? h.currentPixelKey();
       f.corpseDestroyed = 2;
       const body = dropMarker(f);
-      h.mintMarker({ collider: body ? null : h.collider, corpseTexture: ash, feet: body?.pos ?? f.ai.feet, centre: ash.centre }).then((c) => {
+      h.mintMarker({
+        collider: body ? null : h.collider,
+        corpseTexture: ash,
+        feet: body?.pos ?? f.ai.feet,
+        centre: ash.centre,
+      }).then((c) => {
         if (!c) return;
-        if (gen !== h.epoch() || f._gone || !f.corpse) { h.renderer.destroyBillboardBatch(c.batch); return; }
-        c.pixelKey = f.corpsePixelKey = pixelKey; f.corpseMarker = c; h.corpseBatches.push(c);
+        if (gen !== h.epoch() || f._gone || !f.corpse) {
+          h.renderer.destroyBillboardBatch(c.batch);
+          return;
+        }
+        c.pixelKey = f.corpsePixelKey = pixelKey;
+        f.corpseMarker = c;
+        h.corpseBatches.push(c);
       });
     },
-    send: (f, spell, level) => { const sp = hitSpellFields(spell, level); if (sp && f.puppet) h.sendHit(f, { dmg: 0, kind: 'spell', ...sp, cs: 1 }); },
+    send: (f, spell, level) => {
+      const sp = hitSpellFields(spell, level);
+      if (sp && f.puppet) h.sendHit(f, { dmg: 0, kind: 'spell', ...sp, cs: 1 });
+    },
     say: (line) => h.say(line),
     key: () => null,
   });

@@ -2,8 +2,8 @@
   {
     "name": "BATCH-SALVAGE-a-piece-chosen-twice-breaks-twice",
     "file": "src/systems/reforge.js",
-    "old": "for (const it of new Set(Array.isArray(pieces) ? pieces : []))",
-    "new": "for (const it of (Array.isArray(pieces) ? pieces : []))",
+    "old": "  for (const it of new Set(Array.isArray(pieces) ? pieces : [])) {",
+    "new": "  for (const it of Array.isArray(pieces) ? pieces : []) {",
     "tests": [
       "test/systems/batchsalvage.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "BATCH-SALVAGE-a-refusal-unnamed",
     "file": "src/systems/reforge.js",
-    "old": "if (r.ok) { count++; shards += r.shards; } else refused.push({ item: it, reason: r.reason });",
-    "new": "if (r.ok) { count++; shards += r.shards; }",
+    "old": "    } else refused.push({ item: it, reason: r.reason });",
+    "new": "    }",
     "tests": [
       "test/systems/batchsalvage.test.js"
     ]

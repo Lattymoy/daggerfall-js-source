@@ -29,8 +29,8 @@
   {
     "name": "emit-no-occlusion",
     "file": "src/render/airPass.js",
-    "old": "  if (occluded()) discard;   // EL6\n  if (uRoomsLit > 0.5",
-    "new": "  if (uRoomsLit > 0.5",
+    "old": "  if (occluded()) discard;   // EL6\n  if (uRoomsLit > 0.5 && !rwRoomLit(rwSeedBits(normalize(vNormal), vWorldPos, uModel[3].xyz, vUV))) discard;   // the room drawn dark (render/realWindows.js): no amber halo round it",
+    "new": "  if (uRoomsLit > 0.5 && !rwRoomLit(rwSeedBits(normalize(vNormal), vWorldPos, uModel[3].xyz, vUV))) discard;   // the room drawn dark (render/realWindows.js): no amber halo round it",
     "tests": [
       "test/render/el6_field.test.js"
     ],
@@ -48,8 +48,8 @@
   {
     "name": "emit-no-depth-bind",
     "file": "src/render/airPass.js",
-    "old": "    gl.activeTexture(gl.TEXTURE2);\n    gl.bindTexture(gl.TEXTURE_2D, this.frame.depth);\n    gl.uniform1i(prog.uDepth, 2);",
-    "new": "    gl.activeTexture(gl.TEXTURE2);\n    gl.uniform1i(prog.uDepth, 2);",
+    "old": "    gl.bindTexture(gl.TEXTURE_2D, this.frame.depth);\n    gl.uniform1i(prog.uDepth, 2);",
+    "new": "    gl.uniform1i(prog.uDepth, 2);",
     "tests": [
       "test/render/el6_field.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "resolve-no-ao",
     "file": "src/render/airPass.js",
-    "old": "    c *= mix(1.0, texture(uAO, wuv).r, uAOMix);   // EL6: the crevice loses its light here, once, whole\n",
-    "new": "",
+    "old": "    c *= mix(1.0, texture(uAO, wuv).r, uAOMix);   // EL6: the crevice loses its light here, once, whole\n    c += texture(uBloom, wuv).rgb * uGrade.x${shafts ? ' + texture(uShaft, wuv).rgb * uGrade.y' : ''};",
+    "new": "    c += texture(uBloom, wuv).rgb * uGrade.x${shafts ? ' + texture(uShaft, wuv).rgb * uGrade.y' : ''};",
     "tests": [
       "test/render/audit_el.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "resolve-ao-unit",
     "file": "src/render/airPass.js",
-    "old": "gl.uniform1i(PR.uAO, 3);   // EL6",
-    "new": "gl.uniform1i(PR.uAO, 0);   // EL6",
+    "old": "    gl.uniform1i(PR.uAO, 3); // EL6",
+    "new": "    gl.uniform1i(PR.uAO, 0); // EL6",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "resolve-no-dither",
     "file": "src/render/airPass.js",
-    "old": "  e += (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: the dither, at the byte, zero-mean\n",
-    "new": "",
+    "old": "  e += (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: the dither, at the byte, zero-mean\n  outColor = vec4(clamp(e, 0.0, 1.0), 1.0);",
+    "new": "  outColor = vec4(clamp(e, 0.0, 1.0), 1.0);",
     "tests": [
       "test/render/el5_field.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "images-before-resolve",
     "file": "src/render/airPass.js",
-    "old": "    if (prepared) this._images();\n    else { this._blank(quad); this.measured = false; }\n    this.fresh = false;\n",
-    "new": "    this._blank(quad); this.measured = false;\n    this.fresh = false;\n",
+    "old": "    if (prepared) this._images();\n    else {\n      this._blank(quad);\n      this.measured = false;\n    }",
+    "new": "    this._blank(quad);\n    this.measured = false;",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "prepare-draws-nothing-broken",
     "file": "src/render/airPass.js",
-    "old": "    this.f = f;\n    this.fresh = true;   // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);",
-    "new": "    this.f = null;\n    this.fresh = true;   // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);",
+    "old": "    this.f = f;",
+    "new": "    this.f = null;",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "prepare-keeps-stats",
     "file": "src/render/airPass.js",
-    "old": "    this.stats.emitDraws = 0; this.stats.glares = 0; this.stats.shafts = false; this.stats.haze = false; this.stats.vol = false;   // this frame's, counted at the resolve\n",
-    "new": "",
+    "old": "    this.stats.emitDraws = 0;\n    this.stats.glares = 0;\n    this.stats.shafts = false;\n    this.stats.haze = false;\n    this.stats.vol = false; // this frame's, counted at the resolve\n  }",
+    "new": "  }",
     "tests": [
       "test/render/el6_field.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "measured-at-prepare",
     "file": "src/render/airPass.js",
-    "old": "    this.measured = false;   // AUDIT-EL F10: set at the resolve, by whether the world drew",
-    "new": "    this.measured = true;   // AUDIT-EL F10: set at the resolve, by whether the world drew",
+    "old": "    this.measured = false; // AUDIT-EL F10: set at the resolve, by whether the world drew",
+    "new": "    this.measured = true; // AUDIT-EL F10: set at the resolve, by whether the world drew",
     "tests": [
       "test/render/el6_field.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "frame-depth-renderbuffer-kept",
     "file": "src/render/airPass.js",
-    "old": "      depths.push(depth); fbos.push(fb);",
-    "new": "      depths.push(null); fbos.push(fb);",
+    "old": "      depths.push(depth);",
+    "new": "      depths.push(null);",
     "tests": [
       "test/render/el6_field.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "depthon-no-rect",
     "file": "src/render/airPass.js",
-    "old": "      gl.uniform4fv(prog.uRect, this.rect);\n      gl.uniform2fv(prog.uCanvas, this.canvas);\n    };",
-    "new": "      gl.uniform2fv(prog.uCanvas, this.canvas);\n    };",
+    "old": "      gl.uniform4fv(prog.uRect, this.rect);\n      gl.uniform2fv(prog.uCanvas, this.canvas);",
+    "new": "      gl.uniform2fv(prog.uCanvas, this.canvas);",
     "tests": [
       "test/render/el6_field.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "lane-no-dither",
     "file": "src/render/enhancedLighting.js",
-    "old": "  return dwWaterFog(col, wp) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;",
-    "new": "  return dwWaterFog(col, wp);",
+    "old": "  return dwWaterFog(col, wp) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: dithered at the byte, zero-mean - a lantern's falloff on a dark floor is bands without it   // DW-C: the sea's distance fog on the DISPLAY colour - the mod's post effect reads the camera's finished image",
+    "new": "  return dwWaterFog(col, wp);   // EL6: dithered at the byte, zero-mean - a lantern's falloff on a dark floor is bands without it   // DW-C: the sea's distance fog on the DISPLAY colour - the mod's post effect reads the camera's finished image",
     "tests": [
       "test/render/el6_field.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "scatter-no-early-out",
     "file": "src/render/enhancedLighting.js",
-    "old": "    if (length(rel) > dist + uPointLights[i].w) continue;   // EL6: a lantern farther than the ray reaches plus its range glows on no part of it\n",
-    "new": "",
+    "old": "    if (length(rel) > dist + uPointLights[i].w) continue;   // EL6: a lantern farther than the ray reaches plus its range glows on no part of it\n    acc += elScatter(rel, uPointLights[i].w, dir, dist) * uPointColors[i];",
+    "new": "    acc += elScatter(rel, uPointLights[i].w, dir, dist) * uPointColors[i];",
     "tests": [
       "test/render/el6_field.test.js"
     ]

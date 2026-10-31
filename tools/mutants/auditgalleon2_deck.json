@@ -12,8 +12,8 @@
   {
     "name": "AUDIT-GALLEON-2-DK2-own-floor-any-distance",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "      if (Math.abs(own - ref) <= FLIGHT_JOIN) { out[0] = x; out[1] = own; out[2] = z; return out; }",
-    "new": "      if (!Number.isNaN(own)) { out[0] = x; out[1] = own; out[2] = z; return out; }",
+    "old": "      if (Math.abs(own - ref) <= FLIGHT_JOIN) {",
+    "new": "      if (!Number.isNaN(own)) {",
     "tests": [
       "test/systems/naval/auditgalleon2_deck.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-GALLEON-2-DK2-own-any-piece",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "own = c < 0 ? NaN : floorNear(c, p, ref);",
-    "new": "own = c < 0 ? NaN : floorNear(c, -1, ref);",
+    "old": "        own = c < 0 ? NaN : floorNear(c, p, ref);",
+    "new": "        own = c < 0 ? NaN : floorNear(c, -1, ref);",
     "tests": [
       "test/systems/naval/auditgalleon2_deck.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "AUDIT-GALLEON-2-DK2-deck-under-her-stair-unread",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "      if (p >= 0 && more.piece[n] !== p) continue;\n",
-    "new": "      if (p >= 0 && (p === 0 || more.piece[n] !== p)) continue;\n",
+    "old": "        if (p >= 0 && more.piece[n] !== p) continue;",
+    "new": "        if (p >= 0 && (p === 0 || more.piece[n] !== p)) continue;",
     "tests": [
       "test/systems/naval/auditgalleon2_deck.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "AUDIT-GALLEON-2-DK1-covers-unread-aboard",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "          if (ajar) for (let n = ajar.at[j]; n < ajar.at[j + 1]; n++) if (ajar.y[n] >= lo && ajar.y[n] <= hi) return true;",
-    "new": "",
+    "old": "          if (ajar)\n            for (let n = ajar.at[j]; n < ajar.at[j + 1]; n++) if (ajar.y[n] >= lo && ajar.y[n] <= hi) return true; // AUDIT GN2-DK1: a shut cover stood on",
+    "new": "          // AUDIT GN2-DK1: a shut cover stood on",
     "tests": [
       "test/systems/naval/auditgalleon2_deck.test.js"
     ],
@@ -82,7 +82,7 @@
   {
     "name": "AUDIT-GALLEON-2-DK1-lids-unbaked",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "          if (moves) { lids[k * nx + i].push(y); continue; }",
+    "old": "          if (moves) {\n            lids[k * nx + i].push(y);\n            continue;\n          }",
     "new": "          if (moves) continue;",
     "tests": [
       "test/systems/naval/auditgalleon2_deck.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "AUDIT-GALLEON-2-DK3-doorways-unbaked",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "      for (const h of doors[j]) if (h >= main - LEVEL_BIN && add(j, h)) front.push(j, h);\n",
-    "new": "",
+    "old": "      for (const h of doors[j]) if (h >= main - LEVEL_BIN && add(j, h)) front.push(j, h);\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/naval/auditgalleon2_deck.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "AUDIT-GALLEON-2-DK3-leaf-unmarked",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "wallFace(moves ? leaves : walls, ax, ay, az, bx, by, bz, cx, cy, cz)",
-    "new": "wallFace(walls, ax, ay, az, bx, by, bz, cx, cy, cz)",
+    "old": "        wallFace(moves ? leaves : walls, ax, ay, az, bx, by, bz, cx, cy, cz);",
+    "new": "        wallFace(walls, ax, ay, az, bx, by, bz, cx, cy, cz);",
     "tests": [
       "test/systems/naval/auditgalleon2_deck.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "AUDIT-GALLEON-2-DK3-leaf-no-wall",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "      if (rises(leaves[j], y)) { if (upFlat[j].some((u) => Math.abs(u - y) < 1e-3) && !doors[j].some((q) => Math.abs(q - y) < 1e-3)) doors[j].push(y); continue; }",
-    "new": "      if (rises(leaves[j], y)) { if (upFlat[j].some((u) => Math.abs(u - y) < 1e-3) && !doors[j].some((q) => Math.abs(q - y) < 1e-3)) doors[j].push(y); }",
+    "old": "          doors[j].push(y);\n        continue;\n      }",
+    "new": "          doors[j].push(y);\n      }",
     "tests": [
       "test/systems/naval/auditgalleon2_deck.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "AUDIT-GALLEON-2-DK4-comment",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "the mod's galleon 690 -> 727",
-    "new": "the mod's galleon 714 -> 750",
+    "old": "  // 511, the Large Galley 4013 -> 4016, the mod's galleon 690 -> 727 (AUDIT GN2-DK4: over her own extent, the pool's -",
+    "new": "  // 511, the Large Galley 4013 -> 4016, the mod's galleon 714 -> 750 (AUDIT GN2-DK4: over her own extent, the pool's -",
     "tests": [
       "test/systems/naval/auditgalleon2_deck.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "AUDIT-GALLEON-2-TS9-diagonal-over-a-flight",
     "file": "src/systems/naval/navalDeck.js",
-    "old": ": n - j === nx ? (flights[j] & 2) !== 0 : j - n === nx ? (flights[n] & 2) !== 0 : false;",
-    "new": ": n - j === nx ? (flights[j] & 2) !== 0 : j - n === nx ? (flights[n] & 2) !== 0 : true;",
+    "old": "            : false;",
+    "new": "            : true;",
     "tests": [
       "test/systems/naval/auditgalleon2_deck.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-GALLEON-2-TS9-line-ignores-flights",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "!Number.isNaN(y[kk * nx + ii]) && steps(was, kk * nx + ii);",
-    "new": "!Number.isNaN(y[kk * nx + ii]) && Math.abs(y[kk * nx + ii] - y[was]) <= DECK_JOIN;",
+    "old": "      ii >= 0 && kk >= 0 && ii < nx && kk < nz && !Number.isNaN(y[kk * nx + ii]) && steps(was, kk * nx + ii);",
+    "new": "      ii >= 0 &&\n      kk >= 0 &&\n      ii < nx &&\n      kk < nz &&\n      !Number.isNaN(y[kk * nx + ii]) &&\n      Math.abs(y[kk * nx + ii] - y[was]) <= DECK_JOIN;",
     "tests": [
       "test/systems/naval/auditgalleon2_deck.test.js"
     ],

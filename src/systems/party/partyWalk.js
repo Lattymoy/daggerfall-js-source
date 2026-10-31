@@ -67,7 +67,10 @@ export function walkHaltLapsed(tw, now) {
  */
 export function walkOf(dest, at) {
   const w = { x: dest.pixel.x, y: dest.pixel.y, at: Math.round(at), go: Math.round(at), h: null };
-  if (dest.point) { w.sx = Math.round(dest.point.x); w.sz = Math.round(dest.point.z); }
+  if (dest.point) {
+    w.sx = Math.round(dest.point.x);
+    w.sz = Math.round(dest.point.z);
+  }
   return w;
 }
 
@@ -104,7 +107,10 @@ export function walkBegin(prev, dest, now, gathered) {
     const moved = !!dest.point && (Math.round(dest.point.x) !== live.sx || Math.round(dest.point.z) !== live.sz);
     if (live.h == null && !moved) return live;
     const w = { ...live, go: Math.round(now), h: null };
-    if (dest.point) { w.sx = Math.round(dest.point.x); w.sz = Math.round(dest.point.z); }
+    if (dest.point) {
+      w.sx = Math.round(dest.point.x);
+      w.sz = Math.round(dest.point.z);
+    }
     return w;
   }
   return gathered > 0 ? walkOf(dest, now) : null;
@@ -139,7 +145,7 @@ export function leaderWalkStep({ tw, journeying, dest, ended, stops, now }) {
     if (leaderMustHalt(tw, stops, now)) return { tw: { ...tw, h: Math.round(now) }, halt: true };
     return { tw, halt: false };
   }
-  if (walkHaltLapsed(tw, now)) return { tw: null, halt: false };   // AUDIT OW4 P2: off the pose, never set out again
+  if (walkHaltLapsed(tw, now)) return { tw: null, halt: false }; // AUDIT OW4 P2: off the pose, never set out again
   if (journeying) return { tw: mine ? { ...tw, go: Math.round(now), h: null } : null, halt: false };
   if (dest ? !mine : tw.sx == null) return { tw: null, halt: false };
   return { tw, halt: false };
@@ -157,7 +163,8 @@ export function leaderMustHalt(tw, stops, now = Infinity) {
   // AUDIT OW5 P4: never a stamp from the future - the wire bounds `ts` from below alone, so one member's pose stamped far
   // ahead (a clock off by hours, a client made to) read as a stop after EVERY set-out and halted the party at once
   const latest = now + PARTY_WALK_TS_SKEW_MS;
-  for (const s of stops ?? []) if (Number.isFinite(s) && /** @type {number} */ (s) > tw.go && /** @type {number} */ (s) <= latest) return true;
+  for (const s of stops ?? [])
+    if (Number.isFinite(s) && /** @type {number} */ (s) > tw.go && /** @type {number} */ (s) <= latest) return true;
   return false;
 }
 
@@ -210,7 +217,7 @@ export function memberFollowing(mine, tw) {
 export function memberStopOf({ was, journeying, ended, following, why = null }) {
   if (!was && !following) return null;
   if (ended) return 'done';
-  const stop = was && following && !journeying;   // released in the same breath (the walk gone, a new round): my stop is mine
+  const stop = was && following && !journeying; // released in the same breath (the walk gone, a new round): my stop is mine
   return !stop ? null : WALK_BALKS.includes(/** @type {string} */ (why)) ? 'balk' : 'stop';
 }
 
@@ -242,10 +249,19 @@ export function memberStopOf({ was, journeying, ended, following, why = null }) 
  *   `mine.at` the round I answered, `mine.yes` my answer, `mine.go` the party's set-out I last walked on
  * @returns {'ask'|'start'|'halt'|'leave'|null}
  */
-export function memberWalkStep({ tw, mine, gathered, journeying, onWalk = journeying, was = onWalk, free = true, now }) {
+export function memberWalkStep({
+  tw,
+  mine,
+  gathered,
+  journeying,
+  onWalk = journeying,
+  was = onWalk,
+  free = true,
+  now,
+}) {
   if (!tw) return null;
   if (mine.at !== tw.at) {
-    if (now - tw.at > PARTY_WALK_ASK_MS) return null;   // too old to be asked about: left behind
+    if (now - tw.at > PARTY_WALK_ASK_MS) return null; // too old to be asked about: left behind
     return gathered && !journeying && free ? 'ask' : null;
   }
   if (!mine.yes) return null;

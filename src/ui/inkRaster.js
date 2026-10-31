@@ -35,12 +35,18 @@ export function clearCoverage(cov) {
 
 /** A square of side `side` device pixels centred on (cx, cy): the samples whose centres it holds. */
 export function stampSquare(cov, cx, cy, side) {
-  const { ss, sw, sh, mask } = cov, h = side / 2;
+  const { ss, sw, sh, mask } = cov,
+    h = side / 2;
   // sample (i, j)'s centre is ((i + 0.5) / ss, (j + 0.5) / ss): inside [cx - h, cx + h) when i in [ceil(ss(cx-h) - 0.5), ...)
-  const i0 = Math.max(0, Math.ceil((cx - h) * ss - 0.5)), i1 = Math.min(sw - 1, Math.ceil((cx + h) * ss - 0.5) - 1);
-  const j0 = Math.max(0, Math.ceil((cy - h) * ss - 0.5)), j1 = Math.min(sh - 1, Math.ceil((cy + h) * ss - 0.5) - 1);
+  const i0 = Math.max(0, Math.ceil((cx - h) * ss - 0.5)),
+    i1 = Math.min(sw - 1, Math.ceil((cx + h) * ss - 0.5) - 1);
+  const j0 = Math.max(0, Math.ceil((cy - h) * ss - 0.5)),
+    j1 = Math.min(sh - 1, Math.ceil((cy + h) * ss - 0.5) - 1);
   if (i1 < i0 || j1 < j0) return;
-  for (let j = j0; j <= j1; j++) { const row = j * sw; for (let i = i0; i <= i1; i++) mask[row + i] = 1; }
+  for (let j = j0; j <= j1; j++) {
+    const row = j * sw;
+    for (let i = i0; i <= i1; i++) mask[row + i] = 1;
+  }
   cov.any = true;
 }
 
@@ -50,18 +56,26 @@ export function stampSquare(cov, cx, cy, side) {
  * @param {ReturnType<typeof createCoverage>} cov @param {ArrayLike<number>} rgb @param {Uint8ClampedArray} [out]
  */
 export function coveragePixels(cov, rgb, out = new Uint8ClampedArray(cov.w * cov.h * 4)) {
-  const { w, h, ss, sw, mask } = cov, full = ss * ss, r = rgb[0], g = rgb[1], b = rgb[2];
+  const { w, h, ss, sw, mask } = cov,
+    full = ss * ss,
+    r = rgb[0],
+    g = rgb[1],
+    b = rgb[2];
   // at the default four samples a side a pixel's row of samples is one 32-bit word, and its bytes (each 0 or 1) sum
   // into the top byte of the word times 0x01010101 - four reads a pixel
-  const words = ss === 4 && mask.byteOffset % 4 === 0 ? new Uint32Array(mask.buffer, mask.byteOffset, mask.length >> 2) : null;
+  const words =
+    ss === 4 && mask.byteOffset % 4 === 0 ? new Uint32Array(mask.buffer, mask.byteOffset, mask.length >> 2) : null;
   const ww = sw >> 2;
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       let n = 0;
       if (words) {
         const k = y * 4 * ww + x;
-        n = (Math.imul(words[k], 0x01010101) >>> 24) + (Math.imul(words[k + ww], 0x01010101) >>> 24)
-          + (Math.imul(words[k + 2 * ww], 0x01010101) >>> 24) + (Math.imul(words[k + 3 * ww], 0x01010101) >>> 24);
+        n =
+          (Math.imul(words[k], 0x01010101) >>> 24) +
+          (Math.imul(words[k + ww], 0x01010101) >>> 24) +
+          (Math.imul(words[k + 2 * ww], 0x01010101) >>> 24) +
+          (Math.imul(words[k + 3 * ww], 0x01010101) >>> 24);
       } else {
         for (let v = 0; v < ss; v++) {
           const row = (y * ss + v) * sw + x * ss;
@@ -69,7 +83,9 @@ export function coveragePixels(cov, rgb, out = new Uint8ClampedArray(cov.w * cov
         }
       }
       const o = (y * w + x) * 4;
-      out[o] = r; out[o + 1] = g; out[o + 2] = b;
+      out[o] = r;
+      out[o + 1] = g;
+      out[o + 2] = b;
       out[o + 3] = Math.round((n * 255) / full);
     }
   }

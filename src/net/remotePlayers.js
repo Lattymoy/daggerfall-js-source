@@ -21,7 +21,7 @@
 // the singleton and could hand the inventory a stranger's doll, or the
 // stranger the player's, panel and all.
 import { composePaperDollPixels } from '../ui/paperDoll.js';
-import { drawnEquipTable, capeShown } from '../systems/capeShown.js';   // CAPE-TOGGLE: my cloak and my aura hidden, on everyone's screen
+import { drawnEquipTable, capeShown } from '../systems/capeShown.js';   // CAPE-TOGGLE: my cloak hidden, on everyone's screen
 import { createEquipTable } from '../characters/equipTable.js';
 import { CAPSULE_HEIGHT } from '../player/motor.js';
 import { drawText, measureText } from '../ui/text.js';
@@ -49,7 +49,7 @@ export function ribbonTints(rb) {
 // the same class-enemy sprite classic dungeon humanoids already use (Warrior, Mage, Knight, ...), driven by simple
 // moving/striking flags off the peer's synced pose instead of AI - the reusable pieces dungeonContext.js already
 // builds a foe's OWN mobile unit from (MobileUnit.update takes the same flags EnemyMotor's AI would set).
-import { MobileUnit } from '../characters/mobile/mobileUnit.js';
+import { MobileUnit, mobilePortrayedYaw } from '../characters/mobile/mobileUnit.js';   // CAPE-CARD: and the way its picture faces
 import { ENEMY_BASICS, ENEMY_NAMES } from '../characters/enemy/enemyBasics.js';
 import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';   // DISC12: the beast a peer in beast form stands as
 import { mobileBillboardSize } from '../world/rmbFlats.js';
@@ -429,7 +429,7 @@ export function composeLook(entity, { eotbSet = ownEotbSet(), layered = ownLayer
   const klass = careerName(entity);
   // DISC23-B: `eo` OMITTED while the mod is off, `class`'s law - a look without it keeps the bytes it always had
   // LAYERED-GEAR: `lg` OMITTED while the skin is off, the same law
-  // CAPE-TOGGLE: `hc` while my capes are hidden, so a peer draws no aura on me (scenes/auraHost.js) - OMITTED otherwise
+  // CAPE-TOGGLE: `hc` while my capes are hidden (my aura stays on: scenes/auraHost.js) - OMITTED otherwise
   const hc = entity?.isPlayer === true && !capeShown();
   return { race: entity?.race ?? 'Breton', gender: entity?.gender ?? 'male', faceIndex: entity?.faceIndex ?? 0, ...(klass ? { class: klass } : {}), ...(Number.isInteger(eotbSet) ? { eo: eotbSet } : {}), ...(layered === 1 || layered === 2 ? { lg: layered } : {}), ...(hc ? { hc: 1 } : {}), items };
 }
@@ -586,7 +586,7 @@ export class RemotePlayers {
   addCorpse(peer, pose, room = null, { until = null, quiet = false } = {}) {
     if (!pose) return;
     const ct = corpseTextureFor(peer?.look);
-    const c = { id: peer?.id ?? null, acct: peer?.acct ?? null, pose: { x: pose.x, y: pose.y, z: pose.z }, room, until: until ?? this._now() + CORPSE_MS, ct, batch: null, building: false };
+    const c = { id: peer?.id ?? null, acct: peer?.acct ?? null, pose: { x: pose.x, y: pose.y, z: pose.z, ...(Number.isFinite(pose.fy) ? { fy: pose.fy } : {}) }, room, until: until ?? this._now() + CORPSE_MS, ct, batch: null, building: false };   // AUDIT FB1030 N1: and its room's floor (INDOOR-FLOOR)
     this._corpses.push(c);
     while (this._corpses.length > CORPSES_MAX) this._dropCorpse(this._corpses.shift());
     const audio = this.deps?.audio;
@@ -902,9 +902,9 @@ export class RemotePlayers {
    * answers 0 for every peer.
    * @param {Iterable<any>} peers
    * @param {(p: any) => number[]} [toScene]
-   * @param {{bodyHeight?: (id: any) => number, dt?: number, eye?: number[]|null, poseAgeMs?: ((peer: any) => number)|null, conceal?: (id: any) => object|null, hidden?: (id: any) => boolean|'bar', grow?: ((feet: number[]) => number)|null, room?: Iterable<any>|null}} [opts]  PEER-FS1: `eye` is the listener, for the falloff; INVIS-LOOK: `conceal` a concealed peer's draw (ECV1's visual) or null; AUDIT PEER-RANGE A L1/L6: `room` every peer the room draws before a screen's cut (the draw distance's, the court's) - a resurrection is seen in it, and a peer in it keeps its class sprite's bundle while it is cut (`peers` when absent)
+   * @param {{bodyHeight?: (id: any) => number, dt?: number, eye?: number[]|null, view?: ArrayLike<number>|null, poseAgeMs?: ((peer: any) => number)|null, conceal?: (id: any) => object|null, hidden?: (id: any) => boolean|'bar', grow?: ((feet: number[]) => number)|null, room?: Iterable<any>|null}} [opts]  PEER-FS1: `eye` is the listener, for the falloff; INVIS-LOOK: `conceal` a concealed peer's draw (ECV1's visual) or null; AUDIT PEER-RANGE A L1/L6: `room` every peer the room draws before a screen's cut (the draw distance's, the court's) - a resurrection is seen in it, and a peer in it keeps its class sprite's bundle while it is cut (`peers` when absent)
    */
-  sync(peers, toScene = (p) => [p.x, p.y, p.z], { bodyHeight = () => 0, dt = 0, eye = null, poseAgeMs = null, conceal = () => null, hidden = () => false, grow = null, room = null } = {}) {
+  sync(peers, toScene = (p) => [p.x, p.y, p.z], { bodyHeight = () => 0, dt = 0, eye = null, view = null, poseAgeMs = null, conceal = () => null, hidden = () => false, grow = null, room = null } = {}) {
     const live = new Set();
     this._grow = grow;   // OW-PEERS (FIELD BUGS 2026-10-01 #11): under the Overworld, feet -> how many times its size a sprite is drawn
     // PCORPSE1: the fallen lie on whatever the living do - placed, aged out, drawn
@@ -961,7 +961,7 @@ export class RemotePlayers {
       // sprite, its rider in the art, whatever the 'Other players' card says (a build without the dragon: as before)
       const mobileType = beast ? (beast === 2 ? MOBILE_TYPES.Wereboar : MOBILE_TYPES.Werewolf) : peer.shown.rd === POSE_RIDE.Dragon && ENEMY_BASICS[DWARVEN_DRAGON_ID] ? DWARVEN_DRAGON_ID : spritesOn && peer.look ? classMobileType(peer.look.class) : null;
       const bundle = mobileType != null && ENEMY_BASICS[mobileType] ? this._mobileFor(peer.id, mobileType, peer.look?.gender === 'female' ? 'female' : 'male', mobileType === DWARVEN_DRAGON_ID ? dragonArchiveOf(peer.shown.rc) : null) : null;
-      if (bundle && typeof bundle.then !== 'function') { this._syncMobilePeer(peer, bundle, toScene, dt, eye, veil); continue; }
+      if (bundle && typeof bundle.then !== 'function') { this._syncMobilePeer(peer, bundle, toScene, dt, view ?? eye, veil); continue; }   // AUDIT CAPE-CARD A1: turned to the camera that draws it
       // BEAST-PEER (2026-09-26, Mac: "Wereform uses daggerfall paperdoll when others see you transform"): A BEAST IS
       // NEVER THE PERSON. The doll is the peer's HUMAN paperdoll, and it stood for a beast whenever the beast's art was
       // still on its way - EOTB's lycanthrope and the enemy sprite both load at first sight, which is the moment of the
@@ -1228,8 +1228,8 @@ export class RemotePlayers {
     const yaw = Number.isFinite(face) ? face : 0;
     // BUGFIX (2026-09-17): mobileOrientation (characters/mobile/mobileUnit.js) reads cameraPos[0]/[2] unconditionally to
     // work out which of the 8 directional frames faces the viewer - it was never optional the way `null` assumed,
-    // and crashed the moment a sprite actually built successfully. `eye` is the local player's own position, passed
-    // in from world.js's onlineFrame (the same call site already reading `player.pos` for peerBodies.sync); the `f`
+    // and crashed the moment a sprite actually built successfully. `eye` is the eye that draws the picture - the frame's
+    // camera, world.js onlineFrame's `view` (AUDIT CAPE-CARD A1), else the sync's own eye; the `f`
     // fallback (face the peer's own feet - degenerates to an arbitrary but valid angle, never a crash) only matters
     // if sync() is ever called without an eye at all, which callers should not do.
     //
@@ -1292,6 +1292,27 @@ export class RemotePlayers {
   /** The batches for the hosts' billboard pass. */
   /** PEERFX3: a peer's drawn sprite (doll or class body), for the hurt flash; null when this layer draws none. */
   batchOf(id) { return this._batches.get(id)?.batch ?? null; }
+  /** AURA-ON-DRAGON: a peer's class sprite's drawn height (m) - a dragon's rider's, the dragon's - or 0 with none drawn. */
+  spriteHeightOf(id) { const e = this._batches.get(id); return e?.kind === 'mobile' && e.height > 0 ? e.height : 0; }
+  /** AURA-SEAT: the record a peer's class sprite draws this frame (`"record#frame"`), or null with none drawn. */
+  spriteRecordOf(id) { const e = this._batches.get(id); return e?.kind === 'mobile' ? e.batch?.record ?? null : null; }
+
+  /** CAPE-CARD (2026-10-30): the way a peer's picture faces as `eye` sees it, SPRITE-FACE's { yaw, turn } (peerRiders.js
+   *  faceOf) - a doll shows every eye its front; a class sprite the view it was drawn in (mobilePortrayedYaw). `turn` the
+   *  pose's own facing, which an aura's swing reads; `card` - a flat card with no figure to read, so what hangs on its
+   *  back stands behind it (render/auraRing.js auraSpritePosed); `front` a doll's - its front to every eye, so its swing
+   *  stays behind it (AUDIT CAPE-CARD A6, auraSwingDrawn). `at` the picture's feet (A4: a seated one sinks). Written in
+   *  place on the peer's entry; null for a peer this layer draws no picture of. */
+  faceOf(id, eye) {
+    const e = this._batches.get(id), at = e?.batch?.origin;
+    if (!e || !at || !eye) return null;
+    const yaw = e.kind === 'mobile' ? mobilePortrayedYaw(e.mobileUnit.orientation, at, eye)
+      : eye[0] !== at[0] || eye[2] !== at[2] ? Math.atan2(eye[0] - at[0], eye[2] - at[2]) : null;
+    if (yaw === null) return null;
+    const turn = peerBodyYaw(e.peer?.shown), f = e.face ?? (e.face = { yaw: 0, turn: 0, card: true, front: false, at });
+    f.yaw = yaw; f.turn = Number.isFinite(turn) ? turn : yaw; f.front = e.kind !== 'mobile'; f.at = at;
+    return f;
+  }
 
   batches() {
     const out = [];

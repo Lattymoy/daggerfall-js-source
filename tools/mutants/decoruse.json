@@ -56,8 +56,8 @@
   {
     "name": "DECORUSE-the-fire-unpressed",
     "file": "src/systems/decor/decorUse.js",
-    "old": "  if (decorHearth(piece)) { if (camps.usable?.() !== false) camps.activate('hearth:', mode()); }",
-    "new": "  if (decorHearth(piece)) { if (false) camps.activate('hearth:', mode()); }",
+    "old": "    if (camps.usable?.() !== false) camps.activate('hearth:', mode());",
+    "new": "    if (false) camps.activate('hearth:', mode());",
     "tests": [
       "test/systems/decor/decoruse.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "DECORUSE-no-cooking-station",
     "file": "src/net/decorLaw.js",
-    "old": "'workbench', 'cooking', 'loom', 'mason', 'jeweller', 'vendor']);",
-    "new": "'workbench', 'loom', 'mason', 'jeweller', 'vendor']);",
+    "old": "  'cooking',\n  'music',\n  'loom',",
+    "new": "  'loom',",
     "tests": [
       "test/systems/decor/decoruse.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "DECORUSE-its-licence-cheap",
     "file": "src/net/decorLaw.js",
-    "old": "workbench: 50_000, cooking: 50_000, loom",
-    "new": "workbench: 50_000, cooking: 5_000, loom",
+    "old": "  cooking: 50_000,\n  music: 5_000,",
+    "new": "  cooking: 5_000,",
     "tests": [
       "test/systems/decor/decoruse.test.js"
     ]

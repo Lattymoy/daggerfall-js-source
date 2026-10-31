@@ -22,18 +22,19 @@
 // Not a DFU member: Daggerfall Unity has no other players. Ledger A (ONLINE).
 import { isTextEntryTarget } from './input.js';
 import { titleBadge, glyphBadges, glyphSvgNode, paintTitle } from './playerBadge.js';
-import { profileIconNode } from './profileIcons.js';   // WITCH1: the profile icon a player wears
-import { readIcon } from '../net/wire.js';   // WITCH1: read by the wire's own law - a word the vocabulary holds, or none
+import { profileIconNode } from './profileIcons.js'; // WITCH1: the profile icon a player wears
+import { readIcon } from '../net/wire.js'; // WITCH1: read by the wire's own law - a word the vocabulary holds, or none
 import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS } from './pixelifyFive.js';
 import { EQUIP_SLOTS } from '../characters/paperdoll/paperdoll.js';
 import { itemLongName } from '../systems/item/itemInfo.js';
 import { raceDisplayName } from '../systems/talk/talkSession.js';
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
-import { duelRecordText } from '../net/duel/duelRecord.js';   // DUEL1: the duelling record's words, the account card's own
-import { renownText } from '../net/renown.js';   // RENOWN1: Renown, left of the name
-import { guildTagText } from '../net/guild/guildLaw.js';   // GUILD1c: the guild's tag, right of the name
-import { localizedStrings, t } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; STAR7: the stars' line through the core
-import { houseLine } from '../net/houseLaw.js';   // LEGACY7: the house, under the name
+import { duelRecordText } from '../net/duel/duelRecord.js'; // DUEL1: the duelling record's words, the account card's own
+import { renownText } from '../net/renown.js'; // RENOWN1: Renown, left of the name
+import { guildTagText } from '../net/guild/guildLaw.js'; // GUILD1c: the guild's tag, right of the name
+import { guildArmsOf } from '../net/guild/guildArmsBook.js'; // GUILD-SHOP: a Guild Crest's arms, by the peer's tag
+import { localizedStrings, t } from '../systems/textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language; STAR7: the stars' line through the core
+import { houseLine } from '../net/houseLaw.js'; // LEGACY7: the house, under the name
 
 export const PROFILE_STYLE_ID = 'dagger-profile-style';
 
@@ -41,13 +42,41 @@ export const PROFILE_STYLE_ID = 'dagger-profile-style';
 /** L10N3d: TextProvider.GetAbbreviatedStatName / GetStatName (:537-576) and the vitals' rows, read in the player's
  *  language when the card reads them - each element a getter by DFU's key. */
 const CARD_WORDS = localizedStrings({
-  STR: 'STR', INT: 'INT', WIL: 'WIL', AGI: 'AGI', END: 'END', PER: 'PER', SPD: 'SPD', LUC: 'LUC',
-  strength: 'Strength', intelligence: 'Intelligence', willpower: 'Willpower', agility: 'Agility', endurance: 'Endurance',
-  personality: 'Personality', speed: 'Speed', luck: 'Luck', health: 'Health', fatigue: 'Fatigue', magicka: 'Magicka',
+  STR: 'STR',
+  INT: 'INT',
+  WIL: 'WIL',
+  AGI: 'AGI',
+  END: 'END',
+  PER: 'PER',
+  SPD: 'SPD',
+  LUC: 'LUC',
+  strength: 'Strength',
+  intelligence: 'Intelligence',
+  willpower: 'Willpower',
+  agility: 'Agility',
+  endurance: 'Endurance',
+  personality: 'Personality',
+  speed: 'Speed',
+  luck: 'Luck',
+  health: 'Health',
+  fatigue: 'Fatigue',
+  magicka: 'Magicka',
 });
-const cardWords = (keys) => Object.freeze(keys.reduce((a, k, i) => Object.defineProperty(a, i, { enumerable: true, get: () => CARD_WORDS[k] }), []));
+const cardWords = (keys) =>
+  Object.freeze(
+    keys.reduce((a, k, i) => Object.defineProperty(a, i, { enumerable: true, get: () => CARD_WORDS[k] }), []),
+  );
 export const ATTR_SHORT = cardWords(['STR', 'INT', 'WIL', 'AGI', 'END', 'PER', 'SPD', 'LUC']);
-export const ATTR_LABELS = cardWords(['strength', 'intelligence', 'willpower', 'agility', 'endurance', 'personality', 'speed', 'luck']);
+export const ATTR_LABELS = cardWords([
+  'strength',
+  'intelligence',
+  'willpower',
+  'agility',
+  'endurance',
+  'personality',
+  'speed',
+  'luck',
+]);
 /** The card's three vitals, in its order. */
 export const VITAL_LABELS = cardWords(['health', 'fatigue', 'magicka']);
 
@@ -56,30 +85,52 @@ export const VITAL_LABELS = cardWords(['health', 'fatigue', 'magicka']);
  *  would use for it. The paired slots read as one word twice: two rings are two rings. */
 export const GEAR_ROWS = Object.freeze([
   [EQUIP_SLOTS.Head, 'Head'],
-  [EQUIP_SLOTS.Cloak1, 'Cloak'], [EQUIP_SLOTS.Cloak2, 'Cloak'],
-  [EQUIP_SLOTS.RightArm, 'Right arm'], [EQUIP_SLOTS.LeftArm, 'Left arm'],
-  [EQUIP_SLOTS.ChestArmor, 'Chest'], [EQUIP_SLOTS.ChestClothes, 'Clothes'],
+  [EQUIP_SLOTS.Cloak1, 'Cloak'],
+  [EQUIP_SLOTS.Cloak2, 'Cloak'],
+  [EQUIP_SLOTS.RightArm, 'Right arm'],
+  [EQUIP_SLOTS.LeftArm, 'Left arm'],
+  [EQUIP_SLOTS.ChestArmor, 'Chest'],
+  [EQUIP_SLOTS.ChestClothes, 'Clothes'],
   [EQUIP_SLOTS.Gloves, 'Hands'],
-  [EQUIP_SLOTS.LegsArmor, 'Legs'], [EQUIP_SLOTS.LegsClothes, 'Legs'],
+  [EQUIP_SLOTS.LegsArmor, 'Legs'],
+  [EQUIP_SLOTS.LegsClothes, 'Legs'],
   [EQUIP_SLOTS.Feet, 'Feet'],
-  [EQUIP_SLOTS.RightHand, 'Right hand'], [EQUIP_SLOTS.LeftHand, 'Left hand'],
-  [EQUIP_SLOTS.Amulet0, 'Amulet'], [EQUIP_SLOTS.Amulet1, 'Amulet'],
-  [EQUIP_SLOTS.Bracelet0, 'Bracelet'], [EQUIP_SLOTS.Bracelet1, 'Bracelet'],
-  [EQUIP_SLOTS.Bracer0, 'Bracer'], [EQUIP_SLOTS.Bracer1, 'Bracer'],
-  [EQUIP_SLOTS.Ring0, 'Ring'], [EQUIP_SLOTS.Ring1, 'Ring'],
-  [EQUIP_SLOTS.Mark0, 'Mark'], [EQUIP_SLOTS.Mark1, 'Mark'],
-  [EQUIP_SLOTS.Crystal0, 'Crystal'], [EQUIP_SLOTS.Crystal1, 'Crystal'],
+  [EQUIP_SLOTS.RightHand, 'Right hand'],
+  [EQUIP_SLOTS.LeftHand, 'Left hand'],
+  [EQUIP_SLOTS.Amulet0, 'Amulet'],
+  [EQUIP_SLOTS.Amulet1, 'Amulet'],
+  [EQUIP_SLOTS.Bracelet0, 'Bracelet'],
+  [EQUIP_SLOTS.Bracelet1, 'Bracelet'],
+  [EQUIP_SLOTS.Bracer0, 'Bracer'],
+  [EQUIP_SLOTS.Bracer1, 'Bracer'],
+  [EQUIP_SLOTS.Ring0, 'Ring'],
+  [EQUIP_SLOTS.Ring1, 'Ring'],
+  [EQUIP_SLOTS.Mark0, 'Mark'],
+  [EQUIP_SLOTS.Mark1, 'Mark'],
+  [EQUIP_SLOTS.Crystal0, 'Crystal'],
+  [EQUIP_SLOTS.Crystal1, 'Crystal'],
 ]);
 
 /** PROFILE-UI (2026-10-07, Mac: "Lets only organize and polish the player profile. Its a mess"): WHAT THEY WEAR IN ITS
  *  PARTS, in the order a reader looks for them - what is in their hands (a shield with the sword), their armour, their
  *  clothes, their jewellery - each piece by its own group (net/wire.js LOOK_GROUPS: every piece the look carries names
  *  one), a hand's piece in hand whatever it is. */
-export const GEAR_PARTS = Object.freeze([['hand', 'In hand'], ['armour', 'Armour'], ['clothing', 'Clothing'], ['jewellery', 'Jewellery']]);
+export const GEAR_PARTS = Object.freeze([
+  ['hand', 'In hand'],
+  ['armour', 'Armour'],
+  ['clothing', 'Clothing'],
+  ['jewellery', 'Jewellery'],
+]);
 const HAND_SLOTS = new Set([EQUIP_SLOTS.RightHand, EQUIP_SLOTS.LeftHand]);
 /** The part a worn piece stands in. */
-export const gearPartOf = (slot, it) => (HAND_SLOTS.has(slot) || it?.group === 'Weapons' ? 'hand'
-  : it?.group === 'Armor' ? 'armour' : it?.group === 'Jewellery' ? 'jewellery' : 'clothing');
+export const gearPartOf = (slot, it) =>
+  HAND_SLOTS.has(slot) || it?.group === 'Weapons'
+    ? 'hand'
+    : it?.group === 'Armor'
+      ? 'armour'
+      : it?.group === 'Jewellery'
+        ? 'jewellery'
+        : 'clothing';
 
 /** A look's worn items as rows, slot by slot in GEAR_ROWS' order - the first item a slot names (a look projected by
  *  validLook carries no two, but a slot is one place, so the first stands) - each with its part (PROFILE-UI). */
@@ -104,10 +155,16 @@ export function gearGroups(rows) {
   for (const r of Array.isArray(rows) ? rows : []) {
     const part = parts.get(r?.part) ?? parts.get('clothing');
     const last = part.rows[part.rows.length - 1];
-    if (last && last.one === r.slot) { last.names.push(r.name); last.slot = `${r.slot}s`; continue; }
+    if (last && last.one === r.slot) {
+      last.names.push(r.name);
+      last.slot = `${r.slot}s`;
+      continue;
+    }
     part.rows.push({ one: r.slot, slot: r.slot, names: [r.name] });
   }
-  return [...parts.values()].filter((p) => p.rows.length).map((p) => ({ head: p.head, rows: p.rows.map(({ slot, names }) => ({ slot, names })) }));
+  return [...parts.values()]
+    .filter((p) => p.rows.length)
+    .map((p) => ({ head: p.head, rows: p.rows.map(({ slot, names }) => ({ slot, names })) }));
 }
 
 /** The states a profile can stand in: waiting on their card, drawn from it, or drawn without one - because they did not
@@ -136,7 +193,7 @@ export function profileDuelLine(record) {
 /** WB5b: their gates closed, off the same record - said only once there is one to say (a stranger's none is not news). */
 export function profileGateLine(record) {
   const n = record && typeof record === 'object' ? record.gates?.closed : null;
-  return Number.isSafeInteger(n) && n > 0 ? `Breaches closed: ${n}` : null;   // WB12a
+  return Number.isSafeInteger(n) && n > 0 ? `Breaches closed: ${n}` : null; // WB12a
 }
 /** RAID4: the towns they defended, off the same record - said only once there is one to say. */
 export function profileRaidLine(record) {
@@ -176,7 +233,15 @@ export function profileKetchLine(record) {
 /** KETCH: the account service's record as the Inspect card's lines - the gates closed, the towns defended, the serpents
  *  slain, the Hours broken, the stars held, the voyages sailed - one door, so the world host lays them all (it laid the
  *  stars none before it). */
-export const profileRecordLines = (record) => ({ gates: profileGateLine(record), raids: profileRaidLine(record), serpents: profileSerpentLine(record), dragons: profileDragonLine(record), hours: profileSdLine(record), stars: profileStarLine(record), voyages: profileKetchLine(record) });
+export const profileRecordLines = (record) => ({
+  gates: profileGateLine(record),
+  raids: profileRaidLine(record),
+  serpents: profileSerpentLine(record),
+  dragons: profileDragonLine(record),
+  hours: profileSdLine(record),
+  stars: profileStarLine(record),
+  voyages: profileKetchLine(record),
+});
 /** AUDIT RENOWN1 UI-3: a view with the peer's Renown as the session knows it NOW - the level rises on a renown frame
  *  while the card stands open, and the card showed the level it was opened with. A level the session does not know
  *  leaves the view's own. */
@@ -185,8 +250,17 @@ export function profileRenown(v, lv) {
   if (!v || !text || v.level === text) return v;
   return { ...v, level: text, levelTitle: `Renown ${lv}` };
 }
-export function profileView({ name = null, peer = null, look = null, card = null, state = 'asking', duel = null, record = null, wed = null } = {}) {
-  const who = (typeof name === 'string' && name) ? name : 'Someone';
+export function profileView({
+  name = null,
+  peer = null,
+  look = null,
+  card = null,
+  state = 'asking',
+  duel = null,
+  record = null,
+  wed = null,
+} = {}) {
+  const who = typeof name === 'string' && name ? name : 'Someone';
   const worn = card?.look ?? look ?? null;
   const race = typeof worn?.race === 'string' ? raceDisplayName(worn.race) : null;
   const klass = typeof worn?.class === 'string' ? worn.class : null;
@@ -197,13 +271,17 @@ export function profileView({ name = null, peer = null, look = null, card = null
     name: who,
     level: renownText(lv),
     levelTitle: renownText(lv) ? `Renown ${lv}` : null,
-    guild: guildTagText(peer?.gt),   // GUILD1c: the tag the relay stamped off their signed token - "<HND>", or null
-    house: houseLine(peer?.house),   // LEGACY7: the house the relay stamped - "☠ Ysolde II of House Hlaalu", or null
+    guild: guildTagText(peer?.gt), // GUILD1c: the tag the relay stamped off their signed token - "<HND>", or null
+    house: houseLine(peer?.house), // LEGACY7: the house the relay stamped - "☠ Ysolde II of House Hlaalu", or null
     title: titleBadge(peer),
-    icon: readIcon(peer),   // WITCH1: the profile icon the relay stamped off their signed token - null for their face
+    icon: readIcon(peer), // WITCH1: the profile icon the relay stamped off their signed token - null for their face
+    iconArms: readIcon(peer) === 'guildcrest' ? guildArmsOf(peer?.gt) : undefined, // GUILD-SHOP: their Guild Crest wears their guild's arms
+    iconTag: readIcon(peer) === 'guildcrest' ? (peer?.gt ?? null) : null, // AUDIT GUILD-SHOP C6: and whose, to draw again when they come in
     glyphs: glyphBadges(peer),
     line: [card ? `Level ${card.level}` : null, race, klass].filter(Boolean).join(' '),
-    attrs: card ? STAT_KEYS_ORDER.map((key, i) => ({ key, short: ATTR_SHORT[i], label: ATTR_LABELS[i], value: card.attrs[i] })) : [],
+    attrs: card
+      ? STAT_KEYS_ORDER.map((key, i) => ({ key, short: ATTR_SHORT[i], label: ATTR_LABELS[i], value: card.attrs[i] }))
+      : [],
     vitals: card ? VITAL_LABELS.map((label, i) => ({ label, value: card.vitals[i] })) : [],
     gear: gearRows(worn),
     note: profileNote(PROFILE_STATES.includes(state) ? state : 'silent', who),
@@ -212,17 +290,23 @@ export function profileView({ name = null, peer = null, look = null, card = null
     // ... player inspect profile"): the Challenge button's state as the host's duel law says it ({ label, enabled, why }
     // - null: no button, offline or on a relay that cannot carry a duel), and their record's line - the account
     // service's count, read by the account the relay stamped on their card (net/duel/duelRecord.js), never the card's word
-    duel: duel && typeof duel.label === 'string' ? { label: duel.label, enabled: !!duel.enabled, why: duel.enabled ? null : (duel.why ?? null) } : null,
+    duel:
+      duel && typeof duel.label === 'string'
+        ? { label: duel.label, enabled: !!duel.enabled, why: duel.enabled ? null : (duel.why ?? null) }
+        : null,
     // LEGACY7 part three: the Propose button's state as the house's law says it - the duel's shape (null: no button)
-    wed: wed && typeof wed.label === 'string' ? { label: wed.label, enabled: !!wed.enabled, why: wed.enabled ? null : (wed.why ?? null) } : null,
+    wed:
+      wed && typeof wed.label === 'string'
+        ? { label: wed.label, enabled: !!wed.enabled, why: wed.enabled ? null : (wed.why ?? null) }
+        : null,
     duels: profileDuelLine(record),
     gates: profileGateLine(record),
-    raids: profileRaidLine(record),   // RAID4
-    serpents: profileSerpentLine(record),   // AUDIT SERPENT D4
-    dragons: profileDragonLine(record),   // AUDIT DRAGON
-    hours: profileSdLine(record),   // SD9b
-    stars: profileStarLine(record),   // STAR7
-    voyages: profileKetchLine(record),   // KETCH
+    raids: profileRaidLine(record), // RAID4
+    serpents: profileSerpentLine(record), // AUDIT SERPENT D4
+    dragons: profileDragonLine(record), // AUDIT DRAGON
+    hours: profileSdLine(record), // SD9b
+    stars: profileStarLine(record), // STAR7
+    voyages: profileKetchLine(record), // KETCH
   };
 }
 
@@ -307,9 +391,23 @@ export function injectProfileStyle(doc = document) {
  * The card over the document. `canOpen()` is the host's word on whether a surface may stand (the F-menu's gate),
  * `onOpen`/`onClose` its pointer door, `above()` whether a surface stands over this one (then Escape is not ours).
  */
-export function createProfileWindow({ canOpen = () => true, onOpen = null, onClose = null, above = () => false, onDuel = null, onWed = null, doc = document, win = globalThis } = {}) {
+export function createProfileWindow({
+  canOpen = () => true,
+  onOpen = null,
+  onClose = null,
+  above = () => false,
+  onDuel = null,
+  onWed = null,
+  doc = document,
+  win = globalThis,
+} = {}) {
   injectProfileStyle(doc);
-  const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
+  const el = (tag, cls, text) => {
+    const n = doc.createElement(tag);
+    n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  };
   const root = el('div', 'dfprofile');
   root.dataset.state = 'closed';
   const card = el('div', 'dfprofile-card');
@@ -326,27 +424,44 @@ export function createProfileWindow({ canOpen = () => true, onOpen = null, onClo
   const paint = (v) => {
     card.replaceChildren();
     const head = el('div', 'dfprofile-head');
-    const icon = v.icon ? profileIconNode(doc, v.icon, 'dfprofile-icon', 56) : null;   // WITCH1: the icon they wear, over the name
+    const icon = v.icon ? profileIconNode(doc, v.icon, 'dfprofile-icon', 56, { arms: v.iconArms }) : null; // WITCH1: the icon they wear, over the name
     if (icon) head.append(icon);
-    if (v.title) head.append(paintTitle(el('div', 'dfprofile-title', v.title.text), v.title));   // SHADOW-FANG: its colour, or its gradient
+    if (v.title) head.append(paintTitle(el('div', 'dfprofile-title', v.title.text), v.title)); // SHADOW-FANG: its colour, or its gradient
     const nm = el('div', 'dfprofile-name');
     nm.id = 'dfprofile-name-node';
-    if (v.level) { const lv = el('span', 'dfprofile-renown', v.level); if (v.levelTitle) lv.title = v.levelTitle; nm.append(lv); }   // RENOWN1: left of the name
+    if (v.level) {
+      const lv = el('span', 'dfprofile-renown', v.level);
+      if (v.levelTitle) lv.title = v.levelTitle;
+      nm.append(lv);
+    } // RENOWN1: left of the name
     nm.append(el('span', 'dfprofile-nametext', v.name));
-    if (v.guild) nm.append(el('span', 'dfprofile-guild', v.guild));   // GUILD1c: right of the name
+    if (v.guild) nm.append(el('span', 'dfprofile-guild', v.guild)); // GUILD1c: right of the name
     head.append(nm);
     // PROFILE-UI (Mac: "Its a mess"): the glyphs on a row of their own under the name, wrapping - beside it, a player's
     // eighteen squeezed the name to a letter a line
     if (v.glyphs.length) {
       const glyphs = el('div', 'dfprofile-glyphs');
-      for (const g of v.glyphs) { const svg = glyphSvgNode(doc, g, 'dfprofile-glyph'); if (!svg) break; glyphs.append(svg); }
+      for (const g of v.glyphs) {
+        const svg = glyphSvgNode(doc, g, 'dfprofile-glyph');
+        if (!svg) break;
+        glyphs.append(svg);
+      }
       head.append(glyphs);
     }
-    if (v.house) head.append(el('div', 'dfprofile-house', v.house));   // LEGACY7: under the name, as over the head
+    if (v.house) head.append(el('div', 'dfprofile-house', v.house)); // LEGACY7: under the name, as over the head
     if (v.line) head.append(el('div', 'dfprofile-line', v.line));
     // PROFILE-UI: their record - the duels (DUEL1), the gates closed (WB5b), the towns defended (RAID4), the serpents slain
     // (AUDIT SERPENT D4) - a row of plaques, each its own words, where four dim lines stood one under another
-    const facts = [['dfprofile-duels', v.duels], ['dfprofile-gates', v.gates], ['dfprofile-raids', v.raids], ['dfprofile-serpents', v.serpents], ['dfprofile-dragons', v.dragons], ['dfprofile-hours', v.hours], ['dfprofile-stars', v.stars], ['dfprofile-voyages', v.voyages]].filter(([, t]) => t);   // STAR7: and the fallen stars held; KETCH: and the voyages sailed
+    const facts = [
+      ['dfprofile-duels', v.duels],
+      ['dfprofile-gates', v.gates],
+      ['dfprofile-raids', v.raids],
+      ['dfprofile-serpents', v.serpents],
+      ['dfprofile-dragons', v.dragons],
+      ['dfprofile-hours', v.hours],
+      ['dfprofile-stars', v.stars],
+      ['dfprofile-voyages', v.voyages],
+    ].filter(([, t]) => t); // STAR7: and the fallen stars held; KETCH: and the voyages sailed
     if (facts.length) {
       const record = el('div', 'dfprofile-facts');
       for (const [cls, t] of facts) record.append(el('div', `dfprofile-fact ${cls}`, t));
@@ -368,7 +483,11 @@ export function createProfileWindow({ canOpen = () => true, onOpen = null, onClo
       }
       sheet.append(grid);
       const vit = el('div', 'dfprofile-vitals');
-      for (const x of v.vitals) { const r = el('div', 'dfprofile-vital'); r.append(el('span', 'dfprofile-k', x.label), el('span', 'dfprofile-v', String(x.value))); vit.append(r); }
+      for (const x of v.vitals) {
+        const r = el('div', 'dfprofile-vital');
+        r.append(el('span', 'dfprofile-k', x.label), el('span', 'dfprofile-v', String(x.value)));
+        vit.append(r);
+      }
       sheet.append(vit);
     } else sheet.append(el('div', 'dfprofile-none', v.state === 'asking' ? '...' : 'Not shown.'));
     const gear = el('div', 'dfprofile-gear');
@@ -390,25 +509,32 @@ export function createProfileWindow({ canOpen = () => true, onOpen = null, onClo
     card.append(body);
     const close = el('button', 'dfprofile-close', 'Close');
     close.type = 'button';
-    close.addEventListener('click', () => { hide(); });
+    close.addEventListener('click', () => {
+      hide();
+    });
     // DUEL1: the challenge beside Close - the host's word on whether one can go now (v.duel), its reason under a
     // disabled one; the press is the host's (`onDuel`), which re-asks the duel law before anything is sent.
     // LEGACY7 part three: and the proposal beside it, the same shape (v.wed, `onWed`)
-    const duelOn = !!(v.duel && onDuel), wedOn = !!(v.wed && onWed);
+    const duelOn = !!(v.duel && onDuel),
+      wedOn = !!(v.wed && onWed);
     if (duelOn || wedOn) {
       const actions = el('div', 'dfprofile-actions');
       if (duelOn) {
         const duel = el('button', 'dfprofile-duel', v.duel.label);
         duel.type = 'button';
         if (!v.duel.enabled) duel.disabled = true;
-        duel.addEventListener('click', () => { if (v.duel.enabled && shownPeer) onDuel(shownPeer); });
+        duel.addEventListener('click', () => {
+          if (v.duel.enabled && shownPeer) onDuel(shownPeer);
+        });
         actions.append(duel);
       }
       if (wedOn) {
         const wed = el('button', 'dfprofile-wed', v.wed.label);
         wed.type = 'button';
         if (!v.wed.enabled) wed.disabled = true;
-        wed.addEventListener('click', () => { if (v.wed.enabled && shownPeer) onWed(shownPeer); });
+        wed.addEventListener('click', () => {
+          if (v.wed.enabled && shownPeer) onWed(shownPeer);
+        });
         actions.append(wed);
       }
       actions.append(close);
@@ -423,20 +549,31 @@ export function createProfileWindow({ canOpen = () => true, onOpen = null, onClo
     open = false;
     shownPeer = null;
     root.dataset.state = 'closed';
-    onClose?.();   // the host takes the pointer back - inside the gesture that closed
+    onClose?.(); // the host takes the pointer back - inside the gesture that closed
     return true;
   };
 
   /** Stand the card for one peer. False when the host will not have a surface now, or there is no peer. */
+  /** AUDIT GUILD-SHOP C6: a Guild Crest drawn before its guild's arms came in is drawn again once they do (a few looks). */
+  const crestLater = (peerId, view, tries = 10) => {
+    if (!view?.iconTag || view.iconArms || tries <= 0 || typeof setTimeout !== 'function') return;
+    setTimeout(() => {
+      if (!alive || !open || shownPeer !== peerId) return;
+      const arms = guildArmsOf(view.iconTag);
+      if (arms) paint({ ...view, iconArms: arms });
+      else crestLater(peerId, view, tries - 1);
+    }, 600);
+  };
   const show = (peerId, view) => {
     if (!alive || !peerId || !view || !canOpen()) return false;
     paint(view);
+    crestLater(peerId, view);
     shownPeer = peerId;
     const was = open;
     open = true;
     root.dataset.state = 'open';
     card.focus?.();
-    if (!was) onOpen?.();   // the pointer freed on the OPEN alone - a second peer's card over the first asks for nothing twice
+    if (!was) onOpen?.(); // the pointer freed on the OPEN alone - a second peer's card over the first asks for nothing twice
     return true;
   };
 
@@ -445,6 +582,7 @@ export function createProfileWindow({ canOpen = () => true, onOpen = null, onClo
   const update = (peerId, view) => {
     if (!alive || !open || !peerId || peerId !== shownPeer || !view) return false;
     paint(view);
+    crestLater(peerId, view);
     return true;
   };
 
@@ -452,7 +590,7 @@ export function createProfileWindow({ canOpen = () => true, onOpen = null, onClo
     if (!open) return;
     if (isTextEntryTarget(e.target)) return;
     if (e.code !== 'Escape') return;
-    if (above()) return;   // a surface over this one owns the key - untouched, unstopped
+    if (above()) return; // a surface over this one owns the key - untouched, unstopped
     e.preventDefault();
     e.stopImmediatePropagation();
     hide();
@@ -460,11 +598,14 @@ export function createProfileWindow({ canOpen = () => true, onOpen = null, onClo
   win.addEventListener('keydown', onKey, true);
   // a PRESS inside the card is the card's - never a swing or a look; a RELEASE is never stopped (AUDIT CHAT C5)
   const swallow = (e) => e.stopPropagation();
-  for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu']) card.addEventListener(t, swallow);
+  for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu'])
+    card.addEventListener(t, swallow);
 
   return {
     root,
-    show, update, hide,
+    show,
+    update,
+    hide,
     isOpen: () => open,
     /** Which peer the card stands for. */
     peerId: () => shownPeer,

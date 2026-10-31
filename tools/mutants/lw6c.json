@@ -11,8 +11,8 @@
   {
     "name": "LW6c-price",
     "file": "src/systems/livingWorld/keepsake.js",
-    "old": "hitPoints: 100, capacityOrTarget: 0, basePrice: 1,",
-    "new": "hitPoints: 100, capacityOrTarget: 0, basePrice: 100,",
+    "old": "  basePrice: 1,",
+    "new": "  basePrice: 100,",
     "tests": [
       "test/systems/livingWorld/lw6c_keepsake.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LW6c-stack",
     "file": "src/systems/livingWorld/keepsake.js",
-    "old": "  playerTextureRecord: 0, stackable: false,",
-    "new": "  playerTextureRecord: 0, stackable: true,",
+    "old": "  stackable: false,",
+    "new": "  stackable: true,",
     "tests": [
       "test/systems/livingWorld/lw6c_keepsake.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "LW6c-kind",
     "file": "src/systems/livingWorld/keepsake.js",
-    "old": "KEEPSAKE_KINDS[lwSeed(textSeed(res.id), 0x6b656570) % KEEPSAKE_KINDS.length]",
-    "new": "KEEPSAKE_KINDS[0]",
+    "old": "  const kind = KEEPSAKE_KINDS[lwSeed(textSeed(res.id), 0x6b656570) % KEEPSAKE_KINDS.length]; // 'keep'",
+    "new": "  const kind = KEEPSAKE_KINDS[0]; // 'keep'",
     "tests": [
       "test/systems/livingWorld/lw6c_keepsake.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LW6c-name",
     "file": "src/systems/livingWorld/keepsake.js",
-    "old": "name: `${res.name}'s ${kind}`,",
-    "new": "name: `${kind}`,",
+    "old": "    name: `${res.name}'s ${kind}`,",
+    "new": "    name: `${kind}`,",
     "tests": [
       "test/systems/livingWorld/lw6c_keepsake.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "LW6c-mark",
     "file": "src/systems/livingWorld/keepsake.js",
-    "old": "town: res.town >>> 0, home: res.home ?? null } };",
-    "new": "town: res.town >>> 0, home: null } };",
+    "old": "    livingKeepsake: { id: res.id, name: res.name, town: res.town >>> 0, home: res.home ?? null },",
+    "new": "    livingKeepsake: { id: res.id, name: res.name, town: res.town >>> 0, home: null },",
     "tests": [
       "test/systems/livingWorld/lw6c_keepsake.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LW6c-is",
     "file": "src/systems/livingWorld/keepsake.js",
-    "old": "it?.templateIndex === KEEPSAKE_TEMPLATE && !!it?.livingKeepsake;",
-    "new": "it?.templateIndex === KEEPSAKE_TEMPLATE;",
+    "old": "export const isKeepsake = (it) => it?.templateIndex === KEEPSAKE_TEMPLATE && !!it?.livingKeepsake;",
+    "new": "export const isKeepsake = (it) => it?.templateIndex === KEEPSAKE_TEMPLATE;",
     "tests": [
       "test/systems/livingWorld/lw6c_keepsake.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "LW6c-town",
     "file": "src/systems/livingWorld/keepsake.js",
-    "old": "isKeepsake(it) && it.livingKeepsake.town === (town >>> 0)",
-    "new": "isKeepsake(it)",
+    "old": "        it.livingKeepsake.town === town >>> 0 &&\n        (it.livingKeepsake.home ?? homeOf?.(it.livingKeepsake.id) ?? null) === home &&",
+    "new": "        (it.livingKeepsake.home ?? homeOf?.(it.livingKeepsake.id) ?? null) === home &&",
     "tests": [
       "test/systems/livingWorld/lw6c_keepsake.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "LW6c-home",
     "file": "src/systems/livingWorld/keepsake.js",
-    "old": "    && (it.livingKeepsake.home ?? homeOf?.(it.livingKeepsake.id) ?? null) === home",
-    "new": "    && true",
+    "old": "        (it.livingKeepsake.home ?? homeOf?.(it.livingKeepsake.id) ?? null) === home &&",
+    "new": "        true &&",
     "tests": [
       "test/systems/livingWorld/lw6c_keepsake.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "LW6c-place",
     "file": "src/systems/livingWorld/keepsake.js",
-    "old": "    && placeIdOf(it.livingKeepsake.id) !== placeIdOf(holder)) ?? null;",
-    "new": "    ) ?? null;",
+    "old": "        (it.livingKeepsake.home ?? homeOf?.(it.livingKeepsake.id) ?? null) === home &&\n        placeIdOf(it.livingKeepsake.id) !== placeIdOf(holder),",
+    "new": "        (it.livingKeepsake.home ?? homeOf?.(it.livingKeepsake.id) ?? null) === home,",
     "tests": [
       "test/systems/livingWorld/lw6c_keepsake.test.js"
     ]

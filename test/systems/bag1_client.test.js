@@ -42,6 +42,7 @@ import { harvestHauls } from '../../src/ui/haulCards.js';
 import { herbPatches, nodeKey } from '../../src/net/nodeLaw.js';
 import { sharedClassicMinutes } from '../../src/net/wire.js';
 import { utcDay } from '../../src/net/marksLaw.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const noWait = () => Promise.resolve();
@@ -565,7 +566,7 @@ test('BAG1 (AUDIT2 K5/K6/K8/K12): a station\'s put-in refused for a later input 
   assert.deepEqual(r, { ok: false, error: 'stores-full', material: 'metal:tin', moved: 1 }, 'the iron in, the tin refused');
   assert.equal(movedFirstText(r), ' 1 of the materials went into your Stores first. Your next try uses them from there.');
   assert.equal(movedFirstText({ moved: 0 }), '');
-  assert.match(src('src/scenes/world.js'), /text: `\$\{accountRefusalText\(r\?\.error\)\}\$\{movedFirstText\(r\)\}` \};\n\s+\/\/ the fee for the smelt/);
+  assert.match(hostText('src/scenes/world.js'), /text: `\$\{accountRefusalText\(r\?\.error\)\}\$\{movedFirstText\(r\)\}` \};\n\s+\/\/ the fee for the smelt/);
   assert.equal(book.storesHeld('ingot:iron'), 1, 'the iron waits in the Stores for the next craft');
   tin = { ok: false, error: 'offline' };
   const r2 = await book.craft('dagger:iron', {}, () => {});
@@ -614,7 +615,7 @@ test('BAG1 (AUDIT B8/B9): a station\'s put-in with no answer says so; a Court wr
   assert.equal(madeWhere({ bag: 2, pack: 0, stored: 1 }), 'Into your bag - 1 stays in your Stores: no room in your bag or pack.');
   assert.equal(madeWhere({ bag: 0, pack: 0, stored: 4 }), '4 stay in your Stores: no room in your bag or pack.');
   assert.equal(madeWhere(undefined), '');
-  assert.match(src('src/scenes/world.js'), /const where = madeWhere\(r\.data\.put\)/);
+  assert.match(hostText('src/scenes/world.js'), /const where = madeWhere\(r\.data\.put\)/);
   assert.equal(leftWords({ material: HERB, put: { left: 3, lost: [{ key: HERB, n: 2 }, { key: OAK, n: 1 }] } }), `2 ${materialCountLabel(HERB, 2)} and 1 ${materialCountLabel(OAK, 1)}`);
   assert.equal(leftWords({ material: HERB, put: { left: 2 } }), `2 ${materialCountLabel(HERB, 2)}`, 'a put from before the audit');
   // the book names what it could not mint: a gem the hands could not make is the gem's, not the harvest's (PACK-OVER: a
@@ -751,7 +752,7 @@ test('BAG1 (AUDIT B4/B5; AUDIT2 K4/H5): every gathering kind names the material 
   mintCarried(some, OAK, 185);
   assert.deepEqual(giveCarried(some, OAK, 4), { bag: 0, pack: 2, over: 2 });
   assert.deepEqual(giveCarried(body(), 'essence:arcane', 2), { bag: 0, pack: 0, over: 0 }, 'the Stores\' own, never an item');
-  assert.match(src('src/scenes/world.js'), /const got = carryHands\.give\(key, n\);/);
+  assert.match(hostText('src/scenes/world.js'), /const got = carryHands\.give\(key, n\);/);
 });
 
 test('BAG1 (AUDIT H1/H2; AUDIT2 U8): the bag opens from a plain pack - its button on the footer while nothing stands beside the pack; never over a reward tray; the bag\'s card offers no Put in bag for what it refuses; the gold field goes with the bag\'s opening (mutants: the door on the side window alone; the bag over a tray; a dagger offered; the field back over the pack)', () => {
@@ -982,7 +983,7 @@ test('BAG1 full: a carrying book\'s node is full when neither the bag nor the pa
 // ─── THE HOST ───────────────────────────────────────────────────────
 
 test('BAG1 wired: the world host hands the book its hands on the bag and the pack, mints each answer there, reaches the Stores in a town, and puts a writ\'s shortfall in first; the potion maker spends the bag (by source)', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /mint: \(key, n\) => \{ const got = mintCarried\(playerEntity, key, n, carryOpts\(key\)\);/);
   assert.match(w, /take: \(key, n, stamp = null, order = null, counter = false\) => \{\n\s+const t = takeCarried\(playerEntity, key, n, stamp, order, \{ counter \}\);/);   // PIN MOVED (AUDIT TOWN-ECON 2 PRICE-2): a counter's pieces a station's put-in's alone
   // AUDIT2: every unit handed over minted; the deposits' stamps in the save; the checkpoint that LANDED before a deposit

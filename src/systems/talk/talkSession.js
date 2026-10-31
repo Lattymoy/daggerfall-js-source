@@ -26,14 +26,14 @@
 // stale clause, and the CR1-era sweep dropped this one: a flag that
 // says "pends" about a thing that shipped is the screen lying.)
 
-import { expandMacroValues } from '../quest/questMacros.js';   // MH1: the ONE macro walk
-import { localizedText, localizedTable } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { expandMacroValues } from '../quest/questMacros.js'; // MH1: the ONE macro walk
+import { localizedText, localizedTable } from '../textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
 
 export const NO_RESPONSE_TEXT_ID = 7205;
 export const MIN_NEUTRAL_REACTION = 0;
 export const MIN_LIKE_REACTION = 10;
 export const MIN_VERY_LIKE_REACTION = 30;
-export const REFUSE_TALK_REACTION = -20;   // TalkToNpc: reaction < -20 -> 7205
+export const REFUSE_TALK_REACTION = -20; // TalkToNpc: reaction < -20 -> 7205
 
 export const OATH_BASE_TEXT_ID = 201;
 
@@ -45,8 +45,14 @@ export const OATH_BASE_TEXT_ID = 201;
 // not reachable from a player race, and GetFactionRaceFromRace answers
 // None for anything it does not list.
 export const OATH_RACE_INDEX = Object.freeze({
-  Nord: 0, Khajiit: 1, Redguard: 2, Breton: 3,
-  Argonian: 4, WoodElf: 5, HighElf: 6, DarkElf: 7,
+  Nord: 0,
+  Khajiit: 1,
+  Redguard: 2,
+  Breton: 3,
+  Argonian: 4,
+  WoodElf: 5,
+  HighElf: 6,
+  DarkElf: 7,
 });
 
 /** GetNPCGreetingRecord's reaction tail (the Province-parent path). */
@@ -62,17 +68,24 @@ export const firstName = (name) => (name ?? '').split(' ')[0];
 
 /** %hnr - TalkManager.GetHonoric (:1826-1832): by player gender,
  *  localization keys "Sir" / "Ma'am" (Internal_Strings 414/415). */
-export const honorificOf = (gender) => (gender === 'male' ? localizedText('Sir', 'Sir') : localizedText("Ma'am", "Ma'am"));
+export const honorificOf = (gender) =>
+  gender === 'male' ? localizedText('Sir', 'Sir') : localizedText("Ma'am", "Ma'am");
 
 /** %ra - MacroHelper.PlayerRace (:942-945): the BIRTH race template's
  *  display Name (a transformed vampire/werewolf keeps it). The names
  *  are DFU's Internal_Strings values - the elves are TWO words - by
  *  RaceTemplate's keys (RaceTemplate.cs:177-330). */
 export const RACE_DISPLAY_NAME = localizedTable({
-  Breton: ['breton', 'Breton'], Redguard: ['redguard', 'Redguard'], Nord: ['nord', 'Nord'], DarkElf: ['darkElf', 'Dark Elf'],
-  HighElf: ['highElf', 'High Elf'], WoodElf: ['woodElf', 'Wood Elf'], Khajiit: ['khajiit', 'Khajiit'], Argonian: ['argonian', 'Argonian'],
+  Breton: ['breton', 'Breton'],
+  Redguard: ['redguard', 'Redguard'],
+  Nord: ['nord', 'Nord'],
+  DarkElf: ['darkElf', 'Dark Elf'],
+  HighElf: ['highElf', 'High Elf'],
+  WoodElf: ['woodElf', 'Wood Elf'],
+  Khajiit: ['khajiit', 'Khajiit'],
+  Argonian: ['argonian', 'Argonian'],
 });
-export const raceDisplayName = (race) => RACE_DISPLAY_NAME[String(race ?? '').replace(/\s+/g, '')] ?? race ?? '';   // a key, or a stored name ('Dark Elf')
+export const raceDisplayName = (race) => RACE_DISPLAY_NAME[String(race ?? '').replace(/\s+/g, '')] ?? race ?? ''; // a key, or a stored name ('Dark Elf')
 
 /** %oth: TEXT.RSC 201 + FactionRace (DFU's oath fix - classic used
  *  the region race INDEX and gave High Rock Nord oaths). */
@@ -85,7 +98,10 @@ export const oathTextId = (race) => OATH_BASE_TEXT_ID + (OATH_RACE_INDEX[race] ?
  *  MAP now, not a replaceAll chain. */
 export function expandMacros(text, { playerName = '', oath = '', cityName = '' } = {}) {
   return expandMacroValues(text, {
-    pcf: known(playerName) && firstName(playerName), pcn: known(playerName), cn: known(cityName), oth: oath,
+    pcf: known(playerName) && firstName(playerName),
+    pcn: known(playerName),
+    cn: known(cityName),
+    oth: oath,
   });
 }
 
@@ -101,24 +117,43 @@ const known = (v) => (v == null || v === '' ? null : v);
  *  only %pcf/%pcn/%hnt/%key, so 7251 variant 13 printed a bare leading
  *  comma (", as if I know...") and 7251 variant 10 printed "I'm new to
  *  %cn too." with the macro raw on screen. */
-export function expandAnswerRecord(raw, {
-  playerName = '', oath = '', cityName = '', hint = '', key = '',
-  // T4: the live path passes honorificOf(gender) / raceDisplayName(race)
-  // off the entity; these are the pre-chargen entity's values, for
-  // callers with no identity in hand.
-  honorific = honorificOf('male'), race = raceDisplayName('Breton'),
-  // MACRO-6: TalkManagerMCP's other answers a Where-is record carries.
-  // %hnt2 is DialogHint2, whose LocalBuilding arm is the SAME
-  // GetKeySubjectBuildingHint as %hnt (TalkManagerMCP.cs:103-122), and
-  // %fn/%mn are FemaleName/MaleName (:58-71) - 7269 and 7275-7294 carry
-  // them, and the host with no talk engine printed them raw. A function
-  // is called per occurrence, as C# calls the handler per macro.
-  femaleName = null, maleName = null,
-} = {}) {
+export function expandAnswerRecord(
+  raw,
+  {
+    playerName = '',
+    oath = '',
+    cityName = '',
+    hint = '',
+    key = '',
+    // T4: the live path passes honorificOf(gender) / raceDisplayName(race)
+    // off the entity; these are the pre-chargen entity's values, for
+    // callers with no identity in hand.
+    honorific = honorificOf('male'),
+    race = raceDisplayName('Breton'),
+    // MACRO-6: TalkManagerMCP's other answers a Where-is record carries.
+    // %hnt2 is DialogHint2, whose LocalBuilding arm is the SAME
+    // GetKeySubjectBuildingHint as %hnt (TalkManagerMCP.cs:103-122), and
+    // %fn/%mn are FemaleName/MaleName (:58-71) - 7269 and 7275-7294 carry
+    // them, and the host with no talk engine printed them raw. A function
+    // is called per occurrence, as C# calls the handler per macro.
+    femaleName = null,
+    maleName = null,
+  } = {},
+) {
   return expandMacroValues(raw, {
-    pcf: known(playerName) && firstName(playerName), pcn: known(playerName), cn: known(cityName), oth: oath,
-    hnt: hint, hnt2: hint, key, hnr: honorific, ra: race,
-    fn: femaleName, fn2: femaleName, mn: maleName, mn2: maleName,
+    pcf: known(playerName) && firstName(playerName),
+    pcn: known(playerName),
+    cn: known(cityName),
+    oth: oath,
+    hnt: hint,
+    hnt2: hint,
+    key,
+    hnr: honorific,
+    ra: race,
+    fn: femaleName,
+    fn2: femaleName,
+    mn: maleName,
+    mn2: maleName,
   });
 }
 
@@ -130,7 +165,14 @@ export function expandAnswerRecord(raw, {
  * @param rolls Math.random-compatible (variant picks)
  * @returns { refused, textId, text }
  */
-export function startMobileTalk({ reaction, textVariants, playerName = '', npcRace = 'Breton', cityName = '', rolls = Math.random }) {
+export function startMobileTalk({
+  reaction,
+  textVariants,
+  playerName = '',
+  npcRace = 'Breton',
+  cityName = '',
+  rolls = Math.random,
+}) {
   const pick = (id) => {
     const variants = textVariants(id) ?? [''];
     return variants[Math.floor(rolls() * variants.length)] ?? '';

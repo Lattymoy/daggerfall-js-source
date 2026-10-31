@@ -128,8 +128,8 @@
   {
     "name": "SET6-the-line-at-a-lower-height",
     "file": "src/render/spoilsGlow.js",
-    "old": "legendary: 1.9, aetheric: 2.1, artifact: 2.3",
-    "new": "legendary: 1.9, aetheric: 1.8, artifact: 2.3",
+    "old": "  aetheric: 2.1,",
+    "new": "  aetheric: 1.8,",
     "tests": [
       "test/systems/set6_aetheric.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SET6-the-record-field-undeclared",
     "file": "src/systems/item/itemFields.js",
-    "old": "  aetheric: str(),   // SET6: an Aetheric piece's record (systems/aetheric.js) - Ruhn's Regalia\n",
-    "new": "",
+    "old": "  aetheric: str(), // SET6: an Aetheric piece's record (systems/aetheric.js) - Ruhn's Regalia\n  gilded: str(), // GILDED1: a Gilded piece's record (systems/gilded.js) - the Hourlock",
+    "new": "  gilded: str(), // GILDED1: a Gilded piece's record (systems/gilded.js) - the Hourlock",
     "tests": [
       "test/systems/set6_aetheric.test.js"
     ]

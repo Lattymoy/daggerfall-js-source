@@ -32,15 +32,15 @@ and the code. Reports 1-7 were traced in parallel lanes on 2026-10-21, each on m
 `src/systems/npcSession.js` (`_holdSelection`, run at the end of `removeNpcQuestor` and `restoreSaveData`).
 
 FOUND. The Work answers, TEXT.RSC 8076 (6 variants) and 8077 (8), each name the potential questor through `%pqn` and
-their building through `%pqp`. Both read the pool's selection, and `npcSession.js:"    if (!entry) return '';"` answers
+their building through `%pqp`. Both read the pool's selection, and `npcSession.js:"if (!entry) return"` answers
 the empty string for a selection the pool does not hold. The answer is expanded first and the next questor is picked
-after it (`answerPipeline.js:"        this.deps.setRandomQuestor?.();"`), which is DFU's own order
+after it (`answerPipeline.js:"this.deps.setRandomQuestor?.()"`), which is DFU's own order
 (TalkManager.cs:2033-2036). So an answer names the selection that stood BEFORE the ask. The build keeps that selection
-in the pool: it selects the last questor it adds (`npcSession.js:"        this.selectedNpcWorkKey = npc.nameSeed;"`,
+in the pool: it selects the last questor it adds (`npcSession.js:"this.selectedNpcWorkKey = npc.nameSeed"`,
 TalkManager.cs:2869). The other two writers did not:
 - THE OFFER. A click on a pool member opens the quest offer, and the offer window's constructor takes them out of the
   pool, whether the job is accepted, declined or never drawn:
-  `offerFlow.js:"    if (!this.deps.isPlayerInsideCastle?.()) this.deps.removeNpcQuestor?.(npcData.nameSeed);"`,
+  `offerFlow.js:"this.deps.removeNpcQuestor?.(npcData.nameSeed)"`,
   DaggerfallQuestOfferWindow.cs:33-35. Nothing moved the selection off the spent questor. The selection is a uniform pick
   made after the previous answer, so a player who goes to the person that answer named, and takes or declines their
   job, makes the next answer blank with a chance of 1 in N, N being the pool's size. Pools are small where most players
@@ -52,7 +52,7 @@ TalkManager.cs:2869). The other two writers did not:
 - THE LOAD. `save.js:"    talk.session.restoreSaveData(extras.talk);"` brings the save's pool in, but neither the
   selection nor the pool's location is saved (DFU's SaveDataConversation carries neither). The arrival does not rebuild
   the pool in the same town (`world.js:"    if (key === _topicsKey) {"`, then the location gate,
-  `npcSession.js:"    if (this.exteriorUsedForQuestors === locationIndex) return false;"`). The 25% draw is another
+  `npcSession.js:"if (this.exteriorUsedForQuestors === locationIndex)"`). The 25% draw is another
   session's, so this session's selection is rarely in the restored pool. 72% of first answers after loading an earlier
   session's save in the same town were blank, and 100% after a boot load in a location at index 0. The dungeon
   quickload takes the same restore with no arrival at all
@@ -73,7 +73,7 @@ next Work answer throws KeyNotFoundException before SetRandomQuestor (TalkManage
 the topic stays dead in that town until the pool is rebuilt. DFU's RemoveNpcQuestor (TalkManager.cs:2602-2605) and
 RestoreConversationData (TalkManager.cs:2541-2542) both leave the selection where it stood.
 
-FIXED. Both writers end in `npcSession.js:"  _holdSelection() {"`. While the pool holds questors and none of them is the
+FIXED. Both writers end in `npcSession.js:"_holdSelection() {"`. While the pool holds questors and none of them is the
 selection, it selects the last one it holds, the build's own rule. A selection the pool still holds is left alone, and
 an empty pool still answers the no-work record. Nothing is drawn: neither DFRandom nor the talk's rolls. DFU's order
 stays: the answer names the selection that stood before the ask, and the pick follows it. A departure from DFU's
@@ -85,9 +85,9 @@ and its line in `06-Systems/Talk-Arc.md` (QUESTOR-HELD). The one new Ledger row 
 change (`:975`, A MOD'S MATERIALS, and `:976`, AN ENEMY'S GLOW), and are aimed at their rows now.
 
 QUESTOR-SHE (found on the way). The four pronouns of the Work answer are the questor's
-(`talkMacros.js:"  const female = () => ctx.questorGender?.() === GENDERS.Female;"`). That helper compared the string
+(`talkMacros.js:"const female = ()"`). That helper compared the string
 `'female'`, but the pool's NPCData carries the Genders enum
-(`staticNpc.js:"    gender: ((pn.flags ?? 0) & 32) === 32 ? GENDERS.Female : GENDERS.Male,"`), and the world host hands
+(`staticNpc.js:"gender: ((pn.flags ?? 0) & 32)"`), and the world host hands
 it on unchanged (`world.js:"      return npcSession.getQuestorGender();"`). So every woman with work, 44.8% of questors,
 was "he/him/his" in four of 8076's six variants and three of 8077's eight. The pins had handed the helper the string,
 which no producer mints. DFU switches on the enum (TalkManagerMCP.cs:146-195), so this restores DFU and departs from
@@ -145,7 +145,7 @@ FOUND. The panel's build is Update 0.0.296 (`a0ba01168`, the release `app-v0.1.1
 the release's own build stamp, its chunks are `worldTick-CEm_09Ca.js` - the panel's, exactly - with `arenaGate-GhJErWMY`
 and `world-6d1hmgxx` beside it, which the blurred names on the panel match; the world chunk carries the build tag, so
 the hash names that one build. The rebuilt sourcemaps map every frame of the panel, column for column:
-`activate.js:"let t0 = (aabb.min[a] - origin[a]) * inv;"` in `rayAabb` <- `nearestActivatableHit` <- `nearest` <-
+`activate.js:"let t0 = (aabb.min[a] - origin[a])"` in `rayAabb` <- `nearestActivatableHit` <- `nearest` <-
 `firmFirst` <- `pickActivatableHit` <- `worldModes.js` `exteriorActivationHit` <- the press's `raceActivation` in
 `world.js`'s `frameMotor`. The rebuilt chunk's own `pickActivatableHit`, handed a person and one target as WITCH1 minted
 it, throws the panel's five frames at the panel's columns.
@@ -170,15 +170,15 @@ the hover pick throws nothing.
 (PELTS), `src/ui/professions/profPages.js` (the Hunting and Outfitting unlock lines, drafted in the fifteen machine-made
 languages).
 
-FOUND. A body is skinned by its foe's id and nothing else: `professionLaw.js:"export const hideOfFoe = (mobileType) =>"`
+FOUND. A body is skinned by its foe's id and nothing else: `professionLaw.js:"export const hideOfFoe"`
 finds the hide whose `foes` hold the id, and the ten hides held PROF0 4.4's classic foes by DFU's MobileTypes
 (DaggerfallUnityEnums.cs:142-211, "Monster IDs are 0-42"). Daggerfall Enemy Expansion (#1067) adds fifty rows past the
-classic table (BestiaryMod.cs:665 and 1343; `enemyBasics.js:"export function registerEnemyRows(rows) {"`): its monsters
+classic table (BestiaryMod.cs:665 and 1343; `enemyBasics.js:"export function registerEnemyRows"`): its monsters
 are 256-290 and its classes 384-398 (the 128 bit, DaggerfallEntity.cs:976-979), and each of its foes carries the mod's
 own id - a DEX Wolf stood by the street's real pool (`exteriorFoes.js` spawnFoe) has `mobileType` 262. Every step a hide
 takes refused it:
 - THE KILL. `huntHost.js:"const hide = hideOfFoe(entity.mobileType);"` answered null, so the world host's kill listener
-  (`world.js:"registerPlayerKillListener('hunting', (entity) => { bodyStamps.stamp(entity); });"`) stamped no body, and a
+  (`professionsHost.js:"registerPlayerKillListener('hunting', (entity) => { bodyStamps.stamp(entity); });"`) stamped no body, and a
   body with no stamp is never a node (`huntHost.js:"if (!s) continue;"`): no "Skin the Wolf", E opened the loot and the
   knife's Use did nothing - in the street's pool, a building's and a dungeon's alike.
 - THE TRACKER. `huntHost.js:"!hideOfFoe(f.entity?.mobileType ?? f.mobileType)) continue;"` marked none of them.
@@ -217,11 +217,11 @@ your Stores"), so a wolf mapped to the nearest fur would say it skinned a bear. 
 2, as the furs of the Bear and the Bat; the Mudcrab Chitin tier 1, as the Rat Pelt (the mudcrab is level 2). The two furs
 carry the Big Tooth one body in four, as the Bear's and the Tiger's do, and cut Large and Small Skins (PELTS); the chitin
 carries no part and cuts none. All three give Raw Meat (C&C gives every body of Animal affinity its meat,
-`survival/loot.js:"export const isAnimal = (entity) =>"`) and cure to Cured Leather (4.4, tiers 1-3). Templates 681-683
+`survival/loot.js:"export const isAnimal"`) and cure to Cured Leather (4.4, tiers 1-3). Templates 681-683
 were free in the registry and in 4.8's table and sit after Arcane Essence (680); they take the pictures the ten borrow
 (a pelt is Nymph Hair's lock, a chitin Fairy Dragon's Scales'). The cures now stand by tier
-(`professionLaw.js:"HIDES.filter((h) => h.cures).sort((a, b) => a.tier - b.tier"`), since a chain plans a leather's cures
-cheapest first (`chainLaw.js:"export const producersOf = "`, CRAFT1's order); the ten keep their order - but the Bear
+(`professionLaw.js:"HIDES.filter((h) => h.cures)"`), since a chain plans a leather's cures
+cheapest first (`chainLaw.js:"export const producersOf"`, CRAFT1's order); the ten keep their order - but the Bear
 Hide's last of its tier since AUDIT FB1021 L2-1 (`01-Overview/audits/Audit-Field-Bugs-2026-10-21.md`: it is the Ram Kit's
 too, and a chain spent every one before a Wolf Pelt). The profession page
 names the new hides at Hunting 0 and 10 and the two furs' skins at Outfitting 10. No departure from DFU: DFU has no
@@ -278,7 +278,7 @@ The Place is resolved at the parse (`scheduleQuest`), and that is when the templ
 `_collectQuestSitesOfBuildingType` -> `_getBuildingName` -> `generateBuildingName`, through the quest world's name bag
 (`place.js:"      ...(world.buildingNameOpts?.() ?? {}), locationName: location.name, regionName: location.regionName,"`).
 A temple is named for its god's first child and a guild hall for its own faction
-(`buildingNames.js:"      a = shownTempleName?.(factionId) ?? templeName?.(factionId) ?? '';   // L10N3e: FormulaHelper.cs:3036, as shown"`),
+(`buildingNames.js:"a = shownTempleName?.(factionId)"`),
 and only the bag holds those resolvers. The world host's bag comes from the town host
 (`questWorld.js:"    buildingNameOpts: () => townTalk.nameOpts?.() ?? {},"`), and that bag answered null whenever no town's
 topics stood. The world host clears the topics on every map pixel without a location
@@ -329,7 +329,7 @@ every caller passes its own (place.js the site's town, person.js the questor's).
 outside a town (`rebuildDirectory`'s own gate). This restores DFU and departs from nothing.
 
 A save that already holds the blank has it named at the load. The load's re-seat (`world.js` applyLayoutPins ->
-`reseatMovedSites` -> `machine.js:"    for (const resource of quest.resources.values()) if (resource.isPlace) resource.nameSiteAgain?.(world);   // FB1020h SITE-NAMED: a site the bag named '' off a town - not counted: no site moved"`)
+`reseatMovedSites` -> `machine.js:"if (resource.isPlace) resource.nameSiteAgain?.(world)"`)
 names it from its building through the same bag (`place.js:"  nameSiteAgain(world) {"`). That applies only to a
 Building site named exactly '' whose record stands in its town's layout. A residence is never renamed (its surname is a
 roll), and a kind DFU names '' itself stays ''. GetName seeds DFRandom, so the state is put back afterwards. If the
@@ -415,7 +415,7 @@ and the book asks the room for what the window moved. Traced end to end on the r
   10,050. The remains said again under a take (a socket's hello) rebuilt the pile and lost the take the same way (the
   room 10,050, the taker 2,000).
 - THE GOLD PAST 65,535 (REMAINS-GOLD). The book minted every record through `validLootList`, the projection for a
-  stranger's word, whose stack bound is the wire's 65,535 (`systems/loot/loot.js:"export const LOOT_STACK_MAX = 65535;"`). The item law
+  stranger's word, whose stack bound is the wire's 65,535 (`systems/loot/loot.js:"export const LOOT_STACK_MAX"`). The item law
   already allows a coin pile to one int (`itemLaw.js:"const stackMax = "`; its comment names "a death in the wild" as a
   pile past the wire's bound), as DFU keeps the count (DaggerfallUnityItem.cs:51; ItemBuilder.CreateGoldPieces,
   ItemBuilder.cs:790-797). So a gold share over 65,535 showed on nobody's pile - not the killer's, not a stranger's, not
@@ -424,17 +424,17 @@ and the book asks the room for what the window moved. Traced end to end on the r
   showed the katana, broadsword, cloak and shoes but no coin; after he took everything the room still held the 70,050. A
   purse of 20,100 with a cart of 200,000 laid 110,050, the same. A pack tops out at 225 kg and DFU's trade window pays in
   letters past that (DaggerfallTradeWindow.cs:1038-1048), so a purse past 131,070 is rare - but a wagon carries 300,000
-  to 800,000 coins (`wagonKinds.js:"export const SMALL_CART_KG = 750;"`, to the Caravan's 2,000 kg), and its coin drops
+  to 800,000 coins (`wagonKinds.js:"export const SMALL_CART_KG"`, to the Caravan's 2,000 kg), and its coin drops
   whenever the wagon is with the fallen (CART-AWAY).
 
 FIXED, both in the book, which every host reaches. REMAINS-TAKE: a pile shows what the room holds less my takes still
 waiting on an answer. The book keeps the count of each take it has asked, in order (`asked`); each `got`, `no` or `cr`
 ends the oldest. Every `rm` sets the pile to the room's count less those takes, in place
-(`wildRemains.js:"const follow = "`), and before any room word moves a pile, and before a pile is rebuilt, the book first
-asks the room for what the window took since the last frame (`wildRemains.js:"const settle = "`). The room grants at most
-what is left (`wildLaw.js:"export function takeFrom(rec, i, n, sub = null) {"`), so a take larger than the pile is a `got`
+(`wildRemains.js:"const follow = (rec, i)"`), and before any room word moves a pile, and before a pile is rebuilt, the book first
+asks the room for what the window took since the last frame (`wildRemains.js:"const settle = (rec)"`). The room grants at most
+what is left (`wildLaw.js:"export function takeFrom"`), so a take larger than the pile is a `got`
 of the rest, never a `no`. REMAINS-GOLD: a coin record is minted by its count, in the pile and in the room's grant
-(`wildRemains.js:"const mintOne = "`, through `goldStack`, the service's own minter), any whole count to `GOLD_INT_MAX`;
+(`wildRemains.js:"const mintOne = (/** @type {any} */ r)"`, through `goldStack`, the service's own minter), any whole count to `GOLD_INT_MAX`;
 every other record keeps the host's mint. The remains are the service's word, never a peer's, so the stranger's bound
 (HACKED-GOLD) is not theirs; the 65,535 stands for every peer's word. Neither is a DFU member (WILD1's remains), so
 nothing departs from DFU, and the coin's count now follows DFU's int.
@@ -468,7 +468,7 @@ take moved into `settle`): dead, as are int_lane2's four mutants on the book.
 
 NOT CHANGED:
 - THE PILE'S PLACE. It stands a fixed step from where the fallen fell, at their feet's height
-  (`wildRemains.js:"const feet = [f0[0] + 1.8, f0[1], f0[2] + 1.2];"`). Over the zone's real terrain (DFU's kernel, no
+  (`wildRemains.js:"const feet = [f0[0] + 1.8, f0[1], f0[2] + 1.2]"`). Over the zone's real terrain (DFU's kernel, no
   landforms; 6,000 points in 300 of its 12,564 pixels) the ground there sits a median 0.135 m off (90% within 0.32 m,
   worst 1.16 m). Underground a step that size could put the pile in a wall; not measured.
 - A TAKE PAST A MILLION. The wire bounds a take at 1,000,000 (`wire.js:"export const WILD_STACK_MAX = 1_000_000;"`); a
@@ -488,7 +488,7 @@ FOUND. A temple of Mara is a building of type Temple (14) whose faction is 24 (`
 88, the Benevolence of Mara, is its priestess). In Daggerfall's own layout all 445 are TEMPAAC0.RMB #21 (each god has
 its own block: Kynareth TEMPAAH0 #13, 641; Arkay TEMPAAA0 #0, 396; Akatosh TEMPAAD0 #22, 235; and so on). The statue
 there is flat TEXTURE.097 record 7, 55 x 91 px, record scale 0, at (64, 0, -48), and
-`rmbFlats.js:"export function billboardSize(t, record) {"` draws it 1.375 x 2.275 m - DFU's size (MeshReader.cs:324-332,
+`rmbFlats.js:"export function billboardSize"` draws it 1.375 x 2.275 m - DFU's size (MeshReader.cs:324-332,
 DaggerfallBillboard.cs:257-260, DaggerfallInterior.cs:869). With both town packs served (the default offline, and online
 by the room's settings) there are 448: 282 in Beautiful Villages' TEMPASC0 #9 (151 of them the wilderness temples named
 "... of Mara"), 122 in Beautiful Cities' TEMPAAC0 #21, 26 in TEMPBSC0 #12 and 18 in TEMPBAC0 #21. The four pack blocks
@@ -500,10 +500,10 @@ already lists it under "Not stood in". The pedestal stands empty in all 448.
 
 Every interior flat of BLOCKS.BSA and both packs was swept: one alone is taller than a storey (3.2 m) or wider than 3 m,
 TEXTURE.210 record 24, a 4.55 m lamp in the classic data (1,498 placements) - no statue. Every scaled model in the Mara
-rooms is scaled as the pack's author wrote it, by `rmbLayout.js:"export function modelScaleVector(obj) {"`'s rule
+rooms is scaled as the pack's author wrote it, by `rmbLayout.js:"export function modelScaleVector"`'s rule
 (RMBLayout.cs:74-77, DaggerfallInterior.cs:445), Mara's tapestry 45147 at 1.3 and 1.5 among them, and each placement is
 drawn and collided from the same mesh and matrix. In the five room variants every flat's solid body (PROP-BODIES) sits
-inside its drawn picture, at its foot (`propBodies.js:"  return body(c, (footShare(t, record, size) * w) / 2, h * COVER_HEIGHT_FRAC);"`,
+inside its drawn picture, at its foot (`propBodies.js:"body(c, (footShare(t, record, size) * w) / 2, h * COVER_HEIGHT_FRAC)"`,
 from `interiorContext.js:"collider.cover.add('prop-bodies', flatBodies(t, archive, record, size, centers));"`); no flat
 without a picture has one (the 0.025 m statue is under STEP_OFFSET), and no floor or ceiling cuts a body but one 2 cm
 ceiling touch (211.47, the pack design's lower storey). Outside, the Mara blocks hold no statue: the tallest flats are
@@ -534,11 +534,11 @@ NOT CHANGED (for the owner, with the reporter's word):
 count), the English catalog and the thirteen complete languages' drafts.
 
 FOUND. The Stores keep four origins, not three: own, bought, gold, and since AUDIT BAG-CRAFT A1
-(`06-Systems/Materials-Bag.md` 15, migration 0097) `loose` (`bagLaw.js:"export const LOOSE_ORIGIN = 'loose';"`) - units a
+(`06-Systems/Materials-Bag.md` 15, migration 0097) `loose` (`bagLaw.js:"export const LOOSE_ORIGIN"`) - units a
 put-in brought from the pack that the service never handed out. Two doors make them: a station's own shortfall
 (`profBook.js` ensureInStores with `work`) and the Stores page's Put in of uncounted goods
 (`profPages.js:"LOOT-LOOSE: what the service counts by"`) - every looted, traded or counter-bought stack. A station spends
-them first (`bagLaw.js:"export const STATION_ORIGINS = "`), and one loose unit among a craft's inputs walls the whole
+them first (`bagLaw.js:"export const STATION_ORIGINS"`), and one loose unit among a craft's inputs walls the whole
 piece: A1 marked it `products.bought_with = 'gold'` (`professions.js:"const boughtWith = "`), so it lists for gold alone,
 as a pack's piece does; a temper with a loose input does the same. But migration 0041 wrote that column as "A PIECE'S
 LAST PURCHASE", and the disenchant read it so - its origin was `p.bought_with === 'gold' ? 'gold' : ...` (alchemy.js line
@@ -590,7 +590,7 @@ ACCOUNT_VERSION acct166, one release with SOUL-LAW (whose migration is 0143, aft
 in 19 test files, 10 records in 9 mutant lists). The same deploy carries DEX-HIDES' law to the Worker.
 
 THE FOUR HOSTS: none changed. `world.js` wires the Stores page and the enchanting station's acts through the module
-(`world.js:"      setProfessionsPages({"`), and `worldModes.js` stands the station
+(`professionsHost.js:"      setProfessionsPages({"`), and `worldModes.js` stands the station
 (`worldModes.js:"    enchantHere() {"`); the change is the account service's, the book's mirror reads it as before, and the
 page draws it. `exterior.js` and `dungeonContext.js` stand no enchanting station and wire no Stores page
 (Professions-Arc 37, the four hosts).
@@ -680,9 +680,9 @@ shared machine allowed. It stands on the code path above and the measured Chromi
 window (`townTalk.js:"if ((e.key === 'Enter' || e.key === ' ') && isDomControlTarget(e.target)) return true;"`).
 
 The family. Earlier fixes each wrote the rule out for themselves, and no helper held it:
-- STEED-UI's saddle and helm panels (`enhancedSaddle.js:"// AUDIT STEED-UI: a button never keeps the keyboard's focus"`);
+- STEED-UI's saddle and helm panels (`enhancedSaddle.js:"AUDIT STEED-UI: a"`);
 - the held map's filters (`heldMap.js:"// NEVER THE FOCUS - out of the tab order"`) and the wild map's buttons;
-- the pace steppers (`travelPaceControls.js:"b.tabIndex = -1;   // never the focus"`);
+- the pace steppers (`travelPaceControls.js:"b.tabIndex = -1;"`);
 - the enhanced dialog and port (`enhancedDialog.js:"btn.tabIndex = -1;   // the keys are the game's"`).
 
 The chat's own field already kept Tab (C7, `chatPanel.js:"else if (e.code === 'Tab') e.preventDefault();   // C7"`).
@@ -694,17 +694,17 @@ Every in-game DOM button, read from every module that builds one, by where it st
   standing over play. Social stays after its own press, so its focus was pressed again by the next Space.
 - AFFECTED by the walk only: each of these goes when it is pressed, so its focus falls back to the page.
   - the friends panel's invitation toast, Accept and Decline (`socialPanel.js:"const toastYes = el('button', 'dfsocial-btn', 'Accept'); toastYes.type = 'button';"`);
-  - the duel prompt (`duelPrompt.js:"const yes = el('button', 'dfduel-btn', 'Accept'); yes.type = 'button';"`);
-  - the Elite Breach's call (`egCall.js:"const btn = el('button', 'dfegcall-btn', 'Answer');"`);
+  - the duel prompt (`duelPrompt.js:"const yes = el('button', 'dfduel-btn', 'Accept')"`);
+  - the Elite Breach's call (`egCall.js:"const btn = el('button', 'dfegcall-btn', 'Answer')"`);
   - the Code of Conduct card;
-  - the arena session's button (`arenaSessionButton.js:"Hidden under any window"`);
+  - the arena session's button (`arenaSessionButton.js:"members, Make Red"`);
   - the siege readout's Claim, Close and Leave;
   - the journey panel's Map, Camp and Exit (a window over it hides it:
-    `enhancedTravelControl.js:"if (last.covered !== true) { last.covered = true;"`);
+    `enhancedTravelControl.js:"if (last.covered !== true)"`);
   - the `/unstuck` wait's Cancel (`world.js:"const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = 'Cancel';"`).
 - ALREADY NEVER THE FOCUS: the family above.
 - OWN KEYBOARD BY DESIGN: the seated card tables. The Iliac and Gambit roots take the focus and stop Tab
-  (`iliacTableHud.js:"root.addEventListener('keydown', (e) => { if (e.key === 'Tab' || e.key === ' ' || e.key === 'Enter') e.stopPropagation?.(); });"`),
+  (`iliacTableHud.js:"root.addEventListener"`),
   and the card table's fold is `tabindex="0"`.
 
 FIXED.
@@ -763,7 +763,7 @@ PIN MOVED: none. No existing pin or mutant record quotes a line this moved (muta
 
 NOT CHANGED (recorded as found):
 - THE ARENA STANDS' CHEER AND BOO keep the focus on purpose, so that a keyboard user's press keeps its place
-  (`arenaHud.js:"// AUDIT PRE-MERGE 1003 U15: SHUT, NOT DISABLED"`). A Tab from the page no longer reaches them. After a
+  (`arenaHud.js:"AUDIT PRE-MERGE 1003 U15"`). A Tab from the page no longer reaches them. After a
   mouse press, though, the next Space shouts again (they have their own keys, = and -). That call is the owner's.
 - THE SURFACES A PLAYER OPENS keep a press's focus while the player can still walk and jump: the friends panel, the
   F-menu, the profile and the page windows, and the Overworld's own HUD. Their Tab from the page is now the game's, as
@@ -771,7 +771,7 @@ NOT CHANGED (recorded as found):
 - THE EXISTING COPIES (saddle, helm, held map, wild map, pace steppers, enhanced dialog and port) keep their own lines.
   Each holds the rule, and their pins and mutants quote them. Moving them onto the helper is churn with no change to a
   player.
-- THE ELITE SPIRE'S FOLD AND TOUCH BUTTONS are a phone's (`egSpireHud.js:".eg-fold:empty { display: none; }"` on a desk).
+- THE ELITE SPIRE'S FOLD AND TOUCH BUTTONS are a phone's (`egSpireHud.js:".eg-fold:empty {"` on a desk).
 - THE CLASSIC-START WIZARD in the standalone `?dungeon` bench: a Tab from the page no longer walks into the enhanced
   wizard (a Tab from one of its controls still does). In `?world` and `?exterior` the wizard stands in townTalk's slot,
   which already took every Tab under it. That predates this fix, and the wizard's own note wants the walk.
@@ -789,12 +789,12 @@ the host, because the classic boot's own window held every key through the probe
 
 FOUND. The "freeze" was the realm's trade hold, not a hang. The Ogre is not one of DFU's MobileTypes: it is Daggerfall
 Enemy Expansion's 282, a line of the mod's own MonsterBase table. DEX1 merged as #1067 on the day of the report and is on
-by default (`modSettings.js:"  'daggerfall-enemy-expansion': Object.freeze({"`); its fifty enemies are 256-290 (monsters)
-and 384-398 (people), joined to the bestiary at the game's load (`dexInstall.js:"  registerEnemyRows(rows);"`). The soul
+by default (`modSettings.js:"'daggerfall-enemy-expansion':"`); its fifty enemies are 256-290 (monsters)
+and 384-398 (people), joined to the bestiary at the game's load (`dexInstall.js:"registerEnemyRows(rows)"`). The soul
 trap's kill door hands the foe's own mobile id to the trap
 (`exteriorFoes.js:"const trap = _peerTrap ? { allowDeath: true } : attemptSoulTrap(f.entity, f.mobileType, playerEntity.items, Math.random());"`,
 `dungeonContext.js:"const trap = _peerTrap ? { allowDeath: true } : attemptSoulTrap(foe.entity, foe.mobileType, playerEntity.items, Math.random());"`),
-and the gem takes it (`mysticism.js:"  trap.trappedSoulType = soulType;"`) - DFU's own law: EnemyEntity.cs:217 hands
+and the gem takes it (`mysticism.js:"trap.trappedSoulType"`) - DFU's own law: EnemyEntity.cs:217 hands
 `SoulTrap.FillEmptyTrapItem((MobileTypes)mobileEnemy.ID)` and SoulTrap.cs:158 writes it. With the mod installed DFU's
 EnemyBasics holds the custom id, and ItemHelper.cs:352-368 names the gem "Soul Trap (Ogre)", as the port does
 (`itemInfo.js:"const shownSoulName = (soul) => getLocalizedEnemyName(soul, enemyDisplayName(soul));"`).
@@ -803,9 +803,9 @@ Item law 8 took only DFU's ranges (`itemLaw.js:"const soulLawful = "`: 0-42 and 
 fifty was a `soul` finding (`itemLaw.js:"&& soulLawful(item.trappedSoulType))) out.add('soul');"`). The account service
 judges every realm checkpoint headless with that law
 (`judge.js:"for (const code of findingsOf(it)) keep({ code, list: li, at: i, t: it?.templateIndex ?? null });"`), the
-verdict holds the character and adds a strike (`verdict.js:"  if (law > 0 || (until != null && until > nowS)) return 'law';"`),
-and the client announces the hold (`realmHoldHost.js:"session.onTradeHeld = "`) by the template's name
-(`itemIds.js:"  const name = now === 'law' && why ? lawTemplate(why.t)?.name : null;"`). Reproduced word for word through
+verdict holds the character and adds a strike (`verdict.js:"if (law > 0 || (until != null && until > nowS))"`),
+and the client announces the hold (`realmHoldHost.js:"session.onTradeHeld"`) by the template's name
+(`itemIds.js:"const name = now"`). Reproduced word for word through
 the real Worker: "The realm is reviewing this character: it carries a Soul Trap the game could not have made. Trading is
 frozen until it is gone. Holds add up: from the third, trading stays frozen for a week even after it is gone, and for a
 month each time after that." While the hold stands every route that hands the character's value to another player
@@ -819,28 +819,28 @@ TRADE-VIRT's 120-row threshold), the merchant's counter in Sell and Buy drew eve
 priced it (5,000 gold to sell, 5,625 to buy at quality 10) in 52-78 ms, and moved the Ogre's gem onto the counter and back
 by double click; the trade between players drew all 152 rows. Filling a gem writes no value (SoulTrap.cs:158 writes only
 the soul), its picture is the template's, virtualRows' aim loop is bounded
-(`virtualRows.js:"    for (let pass = 0; pass < AIM_PASSES && steer(); pass++);"`), and a landing pass walks the waiting
-tiles once (`landingTiles.js:"export function landingTiles(draw, { alive = () => true, later = nextFrame } = {}) {"`).
+(`virtualRows.js:"for (let pass = 0; pass < AIM_PASSES && steer(); pass++)"`), and a landing pass walks the waiting
+tiles once (`landingTiles.js:"export function landingTiles"`).
 
 TRADE-WHOLE (found on the way). The trade between players writes the giver's offer for the wire through validLootList,
 and since AUDIT INT that clamp drops a piece the law refuses and keeps the rest
-(`systems/loot/loot.js:"    if (!lawRefuses(it)) out.push(lawPriced(it));"`) - right for a chest, wrong for a trade: the offer was
-never refused (`tradeSession.js:"      if (!wired) return { ok: false, why: 'That cannot be traded.' };"`), so the gem stood
+(`systems/loot/loot.js:"if (!lawRefuses(it))"`) - right for a chest, wrong for a trade: the offer was
+never refused (`tradeSession.js:"if (!wired) return"`), so the gem stood
 in the giver's offer while the wire carried nothing. Driven hand to hand on the real sessions: offered alone, the peer
 saw an empty table and its lock answered "Nothing is being traded."
-(`tradeSession.js:"    if (!this.hasContent) return { ok: false, why: 'Nothing is being traded.' };"`), the trade left
+(`tradeSession.js:"if (!this.hasContent)"`), the trade left
 open with nothing either side could do; offered beside 10 gold, both sides confirmed and read "Trade with B complete." -
 the take reserves the offered entries, gem included, while the commit sends only what the wire carries
-(`tradeSession.js:"    this._enqueue({ k: 'commit', r: this.rev, o: this.theirRev, items: this._mineWire, g: this.mine.gold }, {"`),
+(`tradeSession.js:"{ k: 'commit', r"`),
 so the gem left the giver's pack and the peer got the gold alone. Through the realm the half's `give` lacked the gem
-(`tradeSession.js:"    const half = { sid: this.sid, give: { items: this._mineWire, gold: this.mine.gold }, get: { items: this._theirRaw, gold: this.theirs.gold }, pick };"`)
+(`tradeSession.js:"const half = {"`)
 and the hold refused the trade first; and `unwire` showed a peer's lot less the piece the law refuses.
 
 FIXED.
 - LAW 9 (`itemLaw.js:"const MOD_SOULS = new Set(DEX_ENEMY_IDS);"`): a Soul Gem or Azura's Star may hold the soul of any
   of the mod's fifty. The service installs no mod, so the ids are read headless from the mod's own tables
-  (`dexIds.js:"export const DEX_ENEMY_IDS = Object.freeze((() => {"`): every `.mdb.csv` line's ID that is not one of DFU's
-  MobileTypes (`enemyBasics.js:"export const isClassicEnemyId = "`), with MUDEX's tables read after the mod's - the same
+  (`dexIds.js:"export const DEX_ENEMY_IDS"`): every `.mdb.csv` line's ID that is not one of DFU's
+  MobileTypes (`enemyBasics.js:"export const isClassicEnemyId"`), with MUDEX's tables read after the mod's - the same
   reading the install registers, and a pin holds the two equal. A soul no creature has is still a finding.
 - THE SERVICE. acct166 carries law 9 (`service.js`'s ACCOUNT_VERSION, `'acct166'` at `1feee3838` - FIELD BUGS 2026-10-21b
   CAKE-CAP-SAID's acct167 after it, renumbered past this at its merge - and wrangler.toml), one
@@ -853,7 +853,7 @@ FIXED.
   signature is kept, as 0125 kept the key's - the migration runs before the Worker that carries law 9, so a checkpoint law
   8 judges in that gap finds the same gem and is no new strike. Written as a staff act (`by: 'soul-lift'`); an untimed hold
   lifts at the character's first checkpoint under law 9 in any case.
-- TRADE-WHOLE (`tradePack.js:"function wholeLot(records) {"`): the trade's pack clamps its lot whole or not at all, which
+- TRADE-WHOLE (`tradePack.js:"function wholeLot"`): the trade's pack clamps its lot whole or not at all, which
   is what `wire` and `unwire` were documented to do ("or null if any is no item"). An offer holding a refused piece is
   refused with "That cannot be traded." and the piece stays in the pack; a peer's lot that carries one ends the trade
   with a message (tradeUnreadableText). validLootList is unchanged for the chests, bodies and shelves AUDIT INT made it
@@ -900,11 +900,11 @@ NOT CHANGED:
 - THE NOTICE NAMES THE TEMPLATE. A law hold names the piece by `lawTemplate(why.t)` ("a Soul Trap", not "Soul Trap
   (Ogre)"): the finding records the template alone. Naming it as the pack does would need the judge to record the soul.
 - THE ITEM MAKER OVER AZURA'S STAR. EnumerateFilledTraps counts a Star's soul unbounded
-  (`mysticism.js:"    else if (isAzurasStar(it)) found.add(soul);   // :121-125, unbounded"`, SoulBound.cs:121-125), so a
+  (`mysticism.js:"else if (isAzurasStar(it))"`, SoulBound.cs:121-125), so a
   Star holding one of the fifty lists Bound Soul, and its chooser, held to SoulBound's 43 costed souls
-  (`enchantmentCatalogue.js:"    params = params.filter((p) => soulSet.has(p.param));   // SoulBound.cs:52-55"`), is empty:
+  (`enchantmentCatalogue.js:"params = params.filter"`), is empty:
   pressing it does nothing. DFU with the mod throws IndexOutOfRangeException there (SoulBound.cs:125). A gem's soul past
-  43 is counted in neither game (`mysticism.js:"    if (isSoulTrap(it) && soul < SOUL_BOUND_MONSTER_ID_COUNT) found.add(soul);"`,
+  43 is counted in neither game (`mysticism.js:"if (isSoulTrap(it) && soul < SOUL_BOUND_MONSTER_ID_COUNT)"`,
   SoulBound.cs:115); the mod's souls bind nothing. Whether the Star should refuse or say so is the owner's call.
 - A FORGED SOUL'S STRIKE IS LIFTED TOO. The finding records the template, never the soul, so 0143 cannot tell a soul of
   the fifty from one no creature has. A forged soul gains nothing (the fill writes no value, the item maker reads only

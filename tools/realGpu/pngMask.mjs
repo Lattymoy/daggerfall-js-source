@@ -23,5 +23,8 @@ export function pngMask(a, b, tolerance = 8) {
 if (isMain(import.meta.url)) {
   const [a, b, out, tolerance = 8] = process.argv.slice(2);
   if (!a || !b || !out) throw new Error('pngMask: name two PNGs and the mask to write');
-  writeFileSync(out, PNG.sync.write(pngMask(PNG.sync.read(readFileSync(a)), PNG.sync.read(readFileSync(b)), Number(tolerance))));
+  writeFileSync(
+    out,
+    PNG.sync.write(pngMask(PNG.sync.read(readFileSync(a)), PNG.sync.read(readFileSync(b)), Number(tolerance))),
+  );
 }

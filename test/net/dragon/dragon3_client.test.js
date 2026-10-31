@@ -6,23 +6,25 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createDragonLink, foldDragon, DRAGON_STATE_EMPTY, sameDragonSite } from '../../../src/net/dragon/dragonLink.js';
-import { dragonSiteOf, pixelCentreNative, createDragonSites } from '../../../src/systems/dragon/dragonSite.js';
+import { dragonSiteOf, createDragonSites } from '../../../src/systems/dragon/dragonSite.js';
 import { dragonBarModel, DRAGON_PHASE_AT, DRAGON_LEAVE_WARN_MS } from '../../../src/ui/dragonBar.js';
 import { drapeGrid, drapeBounds, DRAPE_CELLS_MAX } from '../../../src/render/dragon/dragonTelegraph.js';
 import { dragonSkyAt, skyWatchAt } from '../../../src/scenes/dragonHost.js';
 import { DRAGON_NO_TEXT, DRAGON_WORDS } from '../../../src/systems/dragon/dragonWords.js';
 import { COMPASS_WORDS } from '../../../src/systems/compassWords.js';
 import * as tm from '../../../src/systems/textManager.js';
-import { isDragonWatch, dragonTimes, dragonSiteDay, dragonLaneOf, DRAGON_CLIMB_MS, DRAGON_REMAINS_MS } from '../../../src/net/dragon/dragonLaw.js';
+import { isDragonOmen, dragonTimes, pixelCentreNative, dragonCellOf, dragonSitePick, DRAGON_CELL_PX, DRAGON_CLIMB_MS, DRAGON_REMAINS_MS } from '../../../src/net/dragon/dragonLaw.js';
+import { worldPixelKey, worldPixelOfKey } from '../../../src/world/worldWide/worldGrid.js';   // DRAGON-CELL: a square's ground is keyed so
 import { roostLeg, dragonLegAt, orbitLeg, CLIMB_ALT } from '../../../src/net/dragon/dragonBody.js';
 import { validDragonOut, DRAGON_NO_WORDS } from '../../../src/net/wire.js';
-import { gateNumber } from '../../../src/net/gate/gateLaw.js';
 import { sitePixelOfNative } from '../../../src/systems/serpent/serpentSite.js';
 import { TELEGRAPH_KIND } from '../../../src/render/gate/gateTelegraph.js';
 
+/** DRAGON-HIDDEN: a watch's omen under the tests' seed (the relay's is its secret's - net/dragon/dragonSeed.js). */
+const om = (w, s = 0x5eed1234) => ({ w, s });
 let W = 500_000;
-while (!isDragonWatch(W)) W++;
-const TT = dragonTimes(W);
+while (!isDragonOmen(om(W))) W++;
+const TT = { ...dragonTimes(om(W)), s: om(W).s };
 const SITE = { w: W, ...pixelCentreNative(205, 214) };
 const word = (o) => validDragonOut({ t: 'dragon', w: W, sx: SITE.sx, sz: SITE.sz, ...o });
 const ST = (o = {}) => word({ k: 'st', b: 0, ph: 1, h: 1000, m: 1000, md: 0, mu: 0, sh: 0, legs: [orbitLeg(TT.landAt, 0, 0, 55, 0, 1, 30)], blows: [], n: 1, lv: TT.leaveAt, op: 0, fell: null, gone: null, ...o });
@@ -75,27 +77,51 @@ test('DRAGON3 fold: the mode\'s turn is kept at its word\'s moment (`ma`), a who
   assert.equal(s.ma, 5000);
 });
 
-test('DRAGON3 site: watch w\'s site is the gate\'s law under the dragon\'s own number - the Bay\'s scan on its lane, a theatre\'s siteOf(gateNumber(day, lane)) past it - at its pixel\'s centre, the serpent\'s pixel law\'s inverse; asked once while found, again after its retry when not (mutants: the gate\'s day; a theatre\'s number on lane 0)', () => {
+test('DRAGON3 site (DRAGON-CELL - PIN MOVED: the gate\'s law on a lane, until the relay told the omen to the whole world): an omen\'s site is one of its cell\'s grounds by its own roll - the Bay\'s scan\'s pixels in the cell where it has any (AUDIT DRAGON-CELL D7), else the square\'s ground past the Bay (groundIn, asked for that cell alone) - at its pixel\'s centre; null while a scan is not whole, false where the cell has none; found once and kept; a scan not whole and a cell with none asked again after the retry (mutants: a pixel outside the cell taken; the pick the first; the square another\'s)', () => {
+  const cellOf = (o) => dragonCellOf(o), corner = (o) => [cellOf(o).cx * DRAGON_CELL_PX, cellOf(o).cy * DRAGON_CELL_PX];
+  const onBay = (o) => { const [x0, y0] = corner(o); return x0 >= 0 && y0 >= 0 && x0 + DRAGON_CELL_PX <= 1000 && y0 + DRAGON_CELL_PX <= 500; };
+  const offBay = (o) => { const [x0, y0] = corner(o); return x0 + DRAGON_CELL_PX <= 0 || y0 + DRAGON_CELL_PX <= 0 || x0 >= 1000 || y0 >= 500; };
+  const find = (pred) => { let w = W; while (!pred(om(w))) w++; return om(w); };
+  // past the Bay: the square asked is the cell's; its ground's pixels sorted, one by the omen's roll
+  const far = find((o) => offBay(o) && dragonSitePick(o) % 3 !== 0), [fx, fy] = corner(far);   // a pick that is not the first
   let asked = null;
-  const scans = { bayScan: () => ({ byRegion: new Map(), towns: [], townAt: [] }), theatres: () => ({ siteOf: (n) => { asked = n; return { px: 3001, py: -40, near: 'Far' }; } }) };
-  let w = W;
-  while (dragonLaneOf(w) === 0) w++;
-  const far = dragonSiteOf(w, scans);
-  assert.equal(asked, gateNumber(dragonSiteDay(w), dragonLaneOf(w)));
-  assert.deepEqual(sitePixelOfNative(far.sx, far.sz), [3001, -40]);
-  let w0 = W;
-  while (dragonLaneOf(w0) !== 0) w0++;
-  const bay = dragonSiteOf(w0, { bayScan: () => null, theatres: () => { throw new Error('no theatre on the Bay\'s lane'); } });
-  assert.equal(bay, null, 'no scan yet');
+  const keys = [[fx + 9, fy + 2], [fx + 1, fy + 7], [fx + 4, fy + 4]].map(([x, y]) => worldPixelKey(x, y));
+  const square = { byArea: new Map([[70, Int32Array.from(keys.slice(0, 2))], [71, Int32Array.from(keys.slice(2))]]), towns: [{ name: 'Helbenar' }], townOf: new Map(keys.map((k) => [k, 0])) };
+  const farSite = dragonSiteOf(far, { bayScan: () => { throw new Error('no Bay pixel in it'); }, theatres: () => ({ groundIn: (x0, y0, side) => { asked = [x0, y0, side]; return square; } }) });
+  assert.deepEqual(asked, [fx, fy, DRAGON_CELL_PX]);
+  const sorted = [...keys].sort((a, b) => a - b), pick = worldPixelOfKey(sorted[dragonSitePick(far) % 3]);
+  assert.deepEqual([sitePixelOfNative(farSite.sx, farSite.sz), farSite.near], [pick, 'Helbenar']);
+  // on the Bay: the Bay's scan's pixels in the cell alone, every region's list (AUDIT DRAGON-CELL D10: the Bay's scan holds no open zone)
+  const bay = find(onBay), [bx, by] = corner(bay);
+  const id = (x, y) => y * 1000 + x;
+  const scan = { byRegion: new Map([[3, [id(bx + 2, by + 3), id(bx + 20, by + 3)]]]), towns: [{ name: 'Daggerfall' }], townAt: { [id(bx + 2, by + 3)]: 0 } };
+  const bs = dragonSiteOf(bay, { bayScan: () => scan, theatres: () => { throw new Error('no square past the Bay in it'); } });
+  assert.deepEqual([sitePixelOfNative(bs.sx, bs.sz), bs.near], [[bx + 2, by + 3], 'Daggerfall'], 'its one ground in the cell');
+  // AUDIT DRAGON-CELL D7: a cell across the Bay's edge takes the Bay's ground alone where it has any - every screen holds the
+  // Bay's scan, whatever its land past the Bay - and the square's only where it has none
+  const edge = { w: W, s: 0 };
+  while (!(corner(edge)[0] === 992 && corner(edge)[1] >= 0 && corner(edge)[1] < 480)) edge.s++;
+  const [ex, ey] = corner(edge);
+  let squares = 0;
+  const past = { groundIn: () => { squares++; return square; } };
+  const es = dragonSiteOf(edge, { bayScan: () => ({ byRegion: new Map([[5, [id(ex + 3, ey + 4)]]]), towns: [], townAt: {} }), theatres: () => past });
+  assert.deepEqual([sitePixelOfNative(es.sx, es.sz), squares], [[ex + 3, ey + 4], 0], 'the Bay\'s, the square unasked');
+  assert.ok(dragonSiteOf(edge, { bayScan: () => ({ byRegion: new Map(), towns: [], townAt: {} }), theatres: () => past }));
+  assert.equal(squares, 1, 'no Bay ground in it: the square asked');
+  assert.equal(dragonSiteOf(bay, { bayScan: () => null, theatres: () => null }), null, 'no scan yet');
+  assert.equal(dragonSiteOf(bay, { bayScan: () => ({ byRegion: new Map(), towns: [], townAt: [] }), theatres: () => null }), false, 'no ground: no dragon');
   let t = 0, calls = 0;
-  const S = createDragonSites({ bayScan: () => null, theatres: () => ({ siteOf: () => { calls++; return { px: 5, py: 6 }; } }) }, { now: () => t, retryMs: 1000 });
-  assert.ok(S.of(w)); assert.ok(S.of(w));
+  const S = createDragonSites({ bayScan: () => null, theatres: () => ({ groundIn: () => { calls++; return square; } }) }, { now: () => t, retryMs: 1000 });
+  assert.ok(S.of(far)); assert.ok(S.of(far));
   assert.equal(calls, 1, 'found once');
-  const N = createDragonSites({ bayScan: () => null, theatres: () => ({ siteOf: () => { calls++; return null; } }) }, { now: () => t, retryMs: 1000 });
-  calls = 0; N.of(w); N.of(w); t = 1001; N.of(w);
+  const empty = { byArea: new Map(), towns: [], townOf: new Map() };
+  const E = createDragonSites({ bayScan: () => null, theatres: () => ({ groundIn: () => { calls++; return empty; } }) }, { now: () => t, retryMs: 1000 });
+  calls = 0; assert.equal(E.of(far), null); E.of(far); t = 5000; E.of(far);
+  assert.equal(calls, 2, 'a cell with no ground asked again after its retry - the land past the Bay may stand later (AUDIT DRAGON-CELL D8)');
+  const N = createDragonSites({ bayScan: () => null, theatres: () => ({ groundIn: () => { calls++; return null; } }) }, { now: () => t, retryMs: 1000 });
+  calls = 0; N.of(far); N.of(far); t += 1001; N.of(far);
   assert.equal(calls, 2, 'asked again after its retry');
 });
-
 test('DRAGON3 bar: brass, its phase marks at 66% and 33%, ALOFT or GROUNDED with its seconds, the blow named in its element\'s colour with MOVE when it holds my feet, the climb away counted in its last five minutes (mutants: MOVE never; the climb always)', () => {
   const b = { b: 0, name: 'The Dwarven Dragon', title: 'Rourken Outrider', hp: 500, max: 1000, phase: 2, fighters: 3, warded: false, grounded: true, groundLeft: 7200,
     atk: { key: 'breath', name: 'Scalding Breath', el: 'fire', t: 0.5, aimed: true }, fell: null, gone: null, leaveIn: DRAGON_LEAVE_WARN_MS + 1, now: 0 };
@@ -127,13 +153,17 @@ test('DRAGON3 drape: the grid lies on the land - every vertex\'s height the grou
 
 test('DRAGON3 sky: with no fight heard it roosts on its own clock, then climbs away from its leaving; a dragon slain late in its watch is still about while its remains may lie (mutants: the climb from nowhere; the remains forgotten at the watch\'s turn)', () => {
   const at = TT.landAt + 123_456;
-  assert.deepEqual(dragonSkyAt(TT, at), dragonLegAt(roostLeg(W), at));
-  const up = dragonSkyAt(TT, TT.leaveAt + DRAGON_CLIMB_MS), from = dragonLegAt(roostLeg(W), TT.leaveAt), leaving = dragonSkyAt(TT, TT.leaveAt);
+  assert.deepEqual(dragonSkyAt(TT, at), dragonLegAt(roostLeg(om(W)), at));
+  const up = dragonSkyAt(TT, TT.leaveAt + DRAGON_CLIMB_MS), from = dragonLegAt(roostLeg(om(W)), TT.leaveAt), leaving = dragonSkyAt(TT, TT.leaveAt);
   assert.ok(Math.abs(up.a - CLIMB_ALT) < 1e-6, 'it climbs out of sight');
   assert.ok(Math.hypot(leaving.x - from.x, leaving.z - from.z) < 0.05 && Math.abs(leaving.a - from.a) < 0.05, 'from where it roosted, no jump');
-  assert.equal(skyWatchAt(TT.leaveAt + 60_000).w, W, 'past its climb, its remains may still lie');
-  const after = skyWatchAt(TT.leaveAt + DRAGON_REMAINS_MS + 1);
-  assert.notEqual(after.w, W);
+  const told = (w) => (w === W ? TT.s : undefined);   // DRAGON-HIDDEN: the omen its cell told, and no other
+  assert.equal(skyWatchAt(TT.landAt - 1, told), null, 'before it lands: nothing in the sky');
+  assert.equal(skyWatchAt(TT.landAt, told).w, W);
+  assert.equal(skyWatchAt(TT.leaveAt + 60_000, told).w, W, 'past its climb, its remains may still lie');
+  assert.equal(skyWatchAt(TT.leaveAt + 6 * 60_000, told).w, W, 'past its watch\'s turn too, while they may lie');
+  assert.equal(skyWatchAt(TT.leaveAt + DRAGON_REMAINS_MS + 1, told), null);
+  assert.equal(skyWatchAt(TT.landAt, () => undefined), null, 'no omen told, no dragon drawn - the source rolls none');
 });
 
 test('DRAGON3 the sighting\'s way: every compass way a whole phrase of its own, so a language never reads an English word inside its sentence (mutants: the way left English)', () => {

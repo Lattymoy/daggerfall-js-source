@@ -11,7 +11,7 @@
   {
     "name": "SEAT-HALL-rank",
     "file": "server-account/src/decor.js",
-    "old": "AND g.rank IN (${HALL_POWERS.decorate.join(', ')})\n    AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p)))`;",
+    "old": "AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}\n    AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p)))`;",
     "new": "AND g.rank IN (0, 1, 2, 3)\n    AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p)))`;",
     "tests": [
       "test/net/seathall_service.test.js"
@@ -20,8 +20,8 @@
   {
     "name": "SEAT-HALL-holder",
     "file": "server-account/src/decor.js",
-    "old": "WHERE g.guild_id = h.guild_id AND g.player = k.p AND g.char_id = k.c\n    AND g.rank IN (${HALL_POWERS.decorate.join(', ')})\n    AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p)))`;",
-    "new": "WHERE g.player = k.p AND g.char_id = k.c\n    AND g.rank IN (${HALL_POWERS.decorate.join(', ')})\n    AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p)))`;",
+    "old": "WHERE g.guild_id = h.guild_id AND g.player = k.p AND g.char_id = k.c\n    AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}\n    AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p)))`;",
+    "new": "WHERE g.player = k.p AND g.char_id = k.c\n    AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}\n    AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p)))`;",
     "tests": [
       "test/net/seathall_service.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "SEAT-HALL-law-holder",
     "file": "src/net/townSeatLaw.js",
-    "old": "&& seat.holder?.guild?.id === guildId;",
-    "new": "&& !!seat.holder?.guild?.id;",
+    "old": "export const seatHallOf = (seat, guildId) => !!seat && !!guildId && seat.holder?.guild?.id === guildId;",
+    "new": "export const seatHallOf = (seat, guildId) => !!seat && !!guildId && !!seat.holder?.guild?.id;",
     "tests": [
       "test/net/seathall_client.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "SEAT-HALL-door-list",
     "file": "src/net/accountClient.js",
-    "old": "{ mapId, buildingKey, ...(seat ? { seat: true } : {}), ...(yard && !seat ? { yard: true } : {}) }),   // SEAT-HALL",
-    "new": "{ mapId, buildingKey, ...(yard && !seat ? { yard: true } : {}) }),   // SEAT-HALL",
+    "old": "{ mapId, buildingKey, ...(seat ? { seat: true } : {}), ...(yard && !seat ? { yard: true } : {}) })\n      .then((r) =>",
+    "new": "{ mapId, buildingKey, ...(yard && !seat ? { yard: true } : {}) })\n      .then((r) =>",
     "tests": [
       "test/net/seathall_client.test.js"
     ]
@@ -351,8 +351,8 @@
   {
     "name": "SEAT-HALL-keeper-rank",
     "file": "src/scenes/seatHallHost.js",
-    "old": "keeper: member && hallMay(Number(mine?.rank), 'decorate')",
-    "new": "keeper: member",
+    "old": "      return {\n        key: seat.key,\n        name: g.name ?? '',\n        member,\n        keeper: member && guildMay(Number(mine?.rank), 'decorate', mine?.powers ?? null),\n      };",
+    "new": "      return { key: seat.key, name: g.name ?? '', member, keeper: member };",
     "tests": [
       "test/net/seathall_client.test.js"
     ],
@@ -361,8 +361,8 @@
   {
     "name": "SEAT-HALL-crown",
     "file": "src/scenes/seatHallHost.js",
-    "old": "const g = seat?.tier === 'palace' ? seat.holder?.guild ?? null : null;",
-    "new": "const g = seat.holder?.guild ?? null;",
+    "old": "      const g = seat?.tier === 'palace' ? (seat.holder?.guild ?? null) : null;",
+    "new": "      const g = seat.holder?.guild ?? null;",
     "tests": [
       "test/net/seathall_client.test.js"
     ],

@@ -272,8 +272,8 @@
   {
     "name": "RVN8-handback-unwired",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "  const back = revenantHandBack(player, r, f.entity);",
-    "new": "  const back = [];",
+    "old": "  const back = revenantHandBack(player, r, f.entity); // RVN8 (Feud-Arc.md 19): what it took of mine, handed back at the oath",
+    "new": "  const back = []; // RVN8 (Feud-Arc.md 19): what it took of mine, handed back at the oath",
     "tests": [
       "test/systems/rvn8_took.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "RVN8-handback-unsaid",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "    + (back.length ? ` It hands back your ${back.map((it) => takenName(it)).join(' and ')}: \"It's yours. It always was.\"` : '');",
-    "new": "    + '';",
+    "old": "      : `Sworn to you. Your companions are full, so ${r.given} waits until you call it.`) +\n    (back.length\n      ? ` It hands back your ${back.map((it) => takenName(it)).join(' and ')}: \"It's yours. It always was.\"`\n      : ''); // AUDIT FEUD 2: its article gone after \"your\"",
+    "new": "      : `Sworn to you. Your companions are full, so ${r.given} waits until you call it.`) + ''; // AUDIT FEUD 2: its article gone after \"your\"",
     "tests": [
       "test/systems/rvn8_took.test.js"
     ]

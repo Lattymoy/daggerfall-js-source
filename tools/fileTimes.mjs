@@ -11,8 +11,10 @@ import { resolve } from 'node:path';
 import { repoPath } from './failSummary.mjs';
 
 /** The runner's event for a whole FILE: nesting 0, its name the file's own path (a test is named by its author). */
-export const fileEvent = (data, cwd = process.cwd()) => data?.nesting === 0 && !!data.file
-  && repoPath(data.file, cwd) === repoPath(resolve(cwd, String(data.name ?? '')), cwd);
+export const fileEvent = (data, cwd = process.cwd()) =>
+  data?.nesting === 0 &&
+  !!data.file &&
+  repoPath(data.file, cwd) === repoPath(resolve(cwd, String(data.name ?? '')), cwd);
 
 /** A runner event's file time - `[file, ms]` for a file's own `test:complete`, else null. */
 export function fileTimeOf(ev, cwd = process.cwd()) {
@@ -24,7 +26,25 @@ export function fileTimeOf(ev, cwd = process.cwd()) {
 /** `times` (file -> ms) added to the JSON file at `path` - what it held kept, a file timed again replaced - sorted. */
 export function addTimes(path, times) {
   let held = {};
-  if (existsSync(path)) { try { const t = JSON.parse(readFileSync(path, 'utf8')); if (t && typeof t === 'object') held = t; } catch { /* a broken record is written afresh */ } }
+  if (existsSync(path)) {
+    try {
+      const t = JSON.parse(readFileSync(path, 'utf8'));
+      if (t && typeof t === 'object') held = t;
+    } catch {
+      /* a broken record is written afresh */
+    }
+  }
   const all = { ...held, ...times };
-  writeFileSync(path, JSON.stringify(Object.fromEntries(Object.keys(all).sort().map((k) => [k, all[k]])), null, 1) + '\n');
+  writeFileSync(
+    path,
+    JSON.stringify(
+      Object.fromEntries(
+        Object.keys(all)
+          .sort()
+          .map((k) => [k, all[k]]),
+      ),
+      null,
+      1,
+    ) + '\n',
+  );
 }

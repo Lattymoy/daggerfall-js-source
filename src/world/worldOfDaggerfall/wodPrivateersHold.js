@@ -38,9 +38,9 @@ import { objectMatrix } from './wodLocationObjects.js';
 /** The block DungeonExterior finds by name (:183). */
 export const PRIVATEERS_HOLD_BLOCK = 'CUSTAA30.RMB';
 
-const f = Math.fround;   // the C#'s float literals
+const f = Math.fround; // the C#'s float literals
 const at = (x, y, z) => Object.freeze([f(x), f(y), f(z)]);
-const model = (modelId, pos, yawDeg = 0) => Object.freeze({ modelId, pos, yawDeg: f(yawDeg) });   // Rotate takes floats
+const model = (modelId, pos, yawDeg = 0) => Object.freeze({ modelId, pos, yawDeg: f(yawDeg) }); // Rotate takes floats
 const flat = (archive, record, pos, fireLight = false) => Object.freeze({ archive, record, pos, fireLight });
 
 /** Start's models, in its own order (:70-206). */
@@ -51,7 +51,7 @@ export const HOLD_MODELS = Object.freeze([
   model(43506, at(66.7, 1.6, 21.5), -89.99001),
   model(43506, at(98.47, 1.61, 14.74), -89.978),
   model(43502, at(80.03, 2.75, 9.24), -89.96201),
-  model(43506, at(55.12, 1.609995, 5.689998)),   // its Rotate is commented out (:92)
+  model(43506, at(55.12, 1.609995, 5.689998)), // its Rotate is commented out (:92)
   model(43513, at(74.6, 1.1, 64.1)),
   model(43512, at(65.7, 1.1, 82.1)),
   model(43509, at(91.8, 4.699997, 84.99999)),
@@ -61,7 +61,7 @@ export const HOLD_MODELS = Object.freeze([
   model(43506, at(85.8, 1.599994, 51.77939)),
   model(43506, at(66.97934, 1.599994, 87), -179.99),
   // Pillars
-  model(41731, at(66.1, 3.099442e-06, 34.2), -179.99),
+  model(41731, at(66.1, 3.099442e-6, 34.2), -179.99),
   model(41732, at(75.95, 0, 47.85), -179.99),
   // Rocks
   model(41717, at(54.4, 0, 44.3), -179.99),
@@ -114,7 +114,12 @@ export const HOLD_FLATS = Object.freeze([
 
 /** The "FireLight" each 210 flat carries (:249-256 and its four copies):
  *  a child at local (0, 1, 0) of the flat's centre. */
-export const HOLD_FIRE_LIGHT = Object.freeze({ lift: 1, range: 20, intensity: 1, color: Object.freeze([f(0.95), f(0.91), f(0.63)]) });
+export const HOLD_FIRE_LIGHT = Object.freeze({
+  lift: 1,
+  range: 20,
+  intensity: 1,
+  color: Object.freeze([f(0.95), f(0.91), f(0.63)]),
+});
 
 /** Start's seven foes (:307-389), each at its local transform - the
  *  sprite's CENTRE, one unit over the block's floor. */
@@ -149,7 +154,11 @@ export function holdModelMatrix(m) {
 export function holdFireLights() {
   const L = HOLD_FIRE_LIGHT;
   const color = [L.color[0] * L.intensity, L.color[1] * L.intensity, L.color[2] * L.intensity];
-  return HOLD_FLATS.filter((h) => h.fireLight).map((h) => ({ pos: [h.pos[0], h.pos[1] + L.lift, h.pos[2]], range: L.range, color }));
+  return HOLD_FLATS.filter((h) => h.fireLight).map((h) => ({
+    pos: [h.pos[0], h.pos[1] + L.lift, h.pos[2]],
+    range: L.range,
+    color,
+  }));
 }
 
 /**

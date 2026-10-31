@@ -38,8 +38,8 @@
   {
     "name": "PORTAL1-stone-unlisted",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "Object.freeze([570, 571, 572, 575, 580, 582, 1820, 2000, 2001]);",
-    "new": "Object.freeze([570, 571, 575, 580, 582, 1820, 2000, 2001]);",
+    "old": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 572, 575, 577, 580, 582, 1820, 2000, 2001]); // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -   // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
+    "new": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 575, 577, 580, 582, 1820, 2000, 2001]); // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -   // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ],
@@ -95,8 +95,8 @@
   {
     "name": "PORTAL1-kept-shards-uncounted",
     "file": "src/systems/portalStone.js",
-    "old": "=> n + (isWelkyndShard(it) ? (it.stackCount ?? 1) : 0), 0) - shardsHeld(items);",
-    "new": "=> n, 0) - shardsHeld(items);",
+    "old": "export const shardsKept = (items) =>\n  (Array.isArray(items) ? items : []).reduce((n, it) => n + (isWelkyndShard(it) ? (it.stackCount ?? 1) : 0), 0) -\n  shardsHeld(items);",
+    "new": "export const shardsKept = (items) => (Array.isArray(items) ? items : []).reduce((n, it) => n, 0) - shardsHeld(items);",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "PORTAL1-words-hide-the-kept",
     "file": "src/systems/portalStone.js",
-    "old": "${kept > 0 ? ` you may spend (${kept} more are locked or worn)` : ''}",
-    "new": "",
+    "old": "  shards: (held, kept = 0) =>\n    `A ${PORTAL_STONE.name} costs ${shardsText(PORTAL_STONE_SHARDS)}. You carry ${held}${kept > 0 ? ` you may spend (${kept} more are locked or worn)` : ''}.`,",
+    "new": "  shards: (held, kept = 0) => `A ${PORTAL_STONE.name} costs ${shardsText(PORTAL_STONE_SHARDS)}. You carry ${held}.`,",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "PORTAL1-hold-journey-free",
     "file": "src/systems/portalStone.js",
-    "old": "  if (journey) return 'journey';\n",
-    "new": "",
+    "old": "  if (journey) return 'journey';\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "PORTAL1-place-probe-up",
     "file": "src/systems/portalStone.js",
-    "old": "ground([x, top, z], [0, -1, 0], PORTAL_GROUND_PROBE)",
-    "new": "ground([x, top, z], [0, 1, 0], PORTAL_GROUND_PROBE)",
+    "old": "  const d = ground ? ground([x, top, z], [0, -1, 0], PORTAL_GROUND_PROBE) : null;",
+    "new": "  const d = ground ? ground([x, top, z], [0, 1, 0], PORTAL_GROUND_PROBE) : null;",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -212,8 +212,8 @@
   {
     "name": "PORTAL1-over-it-is-in-it",
     "file": "src/systems/portalStone.js",
-    "old": " && Math.abs(feet[1] - at[1]) <= PORTAL_REACH_Y;",
-    "new": ";",
+    "old": "  return Math.hypot(feet[0] - at[0], feet[2] - at[2]) <= PORTAL_REACH && Math.abs(feet[1] - at[1]) <= PORTAL_REACH_Y;",
+    "new": "  return Math.hypot(feet[0] - at[0], feet[2] - at[2]) <= PORTAL_REACH;",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "PORTAL1-wire-says-the-name",
     "file": "src/systems/portalStone.js",
-    "old": "d: [gate.dest.pixel.x, gate.dest.pixel.y], r:",
-    "new": "d: [gate.dest.pixel.x, gate.dest.pixel.y], n: gate.dest.name, r:",
+    "old": "    r: Math.max(0, Math.round(gate.until - nowMs)),",
+    "new": "    n: gate.dest.name,\n    r: Math.max(0, Math.round(gate.until - nowMs)),",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -266,8 +266,8 @@
   {
     "name": "PORTAL1-wire-z-unbounded",
     "file": "src/systems/portalStone.js",
-    "old": "if (Math.abs(r.p[0]) > POSE_BOUND || Math.abs(r.p[2]) > POSE_BOUND || Math.abs(r.p[1]) > POSE_Y_BOUND) return null;",
-    "new": "if (Math.abs(r.p[0]) > POSE_BOUND || Math.abs(r.p[1]) > POSE_Y_BOUND) return null;",
+    "old": "  if (Math.abs(r.p[0]) > POSE_BOUND || Math.abs(r.p[2]) > POSE_BOUND || Math.abs(r.p[1]) > POSE_Y_BOUND) return null;",
+    "new": "  if (Math.abs(r.p[0]) > POSE_BOUND || Math.abs(r.p[1]) > POSE_Y_BOUND) return null;",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -284,7 +284,7 @@
   {
     "name": "PORTAL1-wire-carries-anything",
     "file": "src/systems/portalStone.js",
-    "old": "  return { i: r.i, p: [r.p[0], r.p[1], r.p[2]], d: [r.d[0], r.d[1]], r: r.r };",
+    "old": "  return {\n    i: r.i,\n    p: [r.p[0], r.p[1], r.p[2]],\n    d: [r.d[0], r.d[1]],\n    r: r.r,\n    ...(r.a !== undefined ? { a: [r.a[0], r.a[1], r.a[2]] } : {}),\n  };",
     "new": "  return r;",
     "tests": [
       "test/systems/portal1_stone.test.js"
@@ -293,8 +293,8 @@
   {
     "name": "PORTAL1-pool-hold-ignored",
     "file": "src/scenes/portalGates.js",
-    "old": "    if (why) { if (why !== 'busy') onRefused(why, entered); return null; }",
-    "new": "    if (false) { if (why !== 'busy') onRefused(why, entered); return null; }",
+    "old": "    if (why) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -302,8 +302,8 @@
   {
     "name": "PORTAL1-pool-busy-said",
     "file": "src/scenes/portalGates.js",
-    "old": "if (why !== 'busy') onRefused(why, entered);",
-    "new": "onRefused(why, entered);",
+    "old": "      if (why !== 'busy') onRefused(why, entered);",
+    "new": "      onRefused(why, entered);",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "PORTAL1-pool-time-gap-ignored",
     "file": "src/scenes/portalGates.js",
-    "old": "_lastTick == null || t - _lastTick > PORTAL_STEP_GAP_MS || !feet",
-    "new": "_lastTick == null || !feet",
+    "old": "      t - _lastTick > PORTAL_STEP_GAP_MS ||\n      !feet ||",
+    "new": "      !feet ||",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "PORTAL1-pool-jump-ignored",
     "file": "src/scenes/portalGates.js",
-    "old": "|| across(feet, _lastFeet) > PORTAL_STEP_JUMP\n",
-    "new": "\n",
+    "old": "      across(feet, _lastFeet) > PORTAL_STEP_JUMP ||\n      Math.abs(feet[1] - _lastFeet[1]) > PORTAL_STEP_JUMP;",
+    "new": "      Math.abs(feet[1] - _lastFeet[1]) > PORTAL_STEP_JUMP;",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -338,7 +338,7 @@
   {
     "name": "PORTAL1-pool-forget-nothing",
     "file": "src/scenes/portalGates.js",
-    "old": "  function forgetSteps() { for (const g of gates) g.was = null; _lastFeet = null; }",
+    "old": "  function forgetSteps() {\n    for (const g of gates) g.was = null;\n    _lastFeet = null;\n  }",
     "new": "  function forgetSteps() {}",
     "tests": [
       "test/systems/portal1_stone.test.js"
@@ -347,8 +347,8 @@
   {
     "name": "PORTAL1-pool-sealing-enters",
     "file": "src/scenes/portalGates.js",
-    "old": "if (!entered && step.entered && t < g.until - PORTAL_MS.close) entered = g;",
-    "new": "if (!entered && step.entered) entered = g;",
+    "old": "      if (!entered && step.entered && t < g.until - PORTAL_MS.close) entered = g; // a sealing portal takes nobody",
+    "new": "      if (!entered && step.entered) entered = g; // a sealing portal takes nobody",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -356,8 +356,8 @@
   {
     "name": "PORTAL1-pool-peer-anywhere",
     "file": "src/scenes/portalGates.js",
-    "old": "    if (across(toScene(r.p), from) > PORTAL_PEER_REACH) return false;\n",
-    "new": "",
+    "old": "    if (across(toScene(r.p), from) > PORTAL_PEER_REACH) return false;\n    if (offGround(toScene(r.p))) return false; // RPT1026-EVENTS GATE-WAY: never believed before an event's gate - its opener's own pick refuses it there, and a modded one is refused here",
+    "new": "    if (offGround(toScene(r.p))) return false; // RPT1026-EVENTS GATE-WAY: never believed before an event's gate - its opener's own pick refuses it there, and a modded one is refused here",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -374,8 +374,8 @@
   {
     "name": "PORTAL1-pool-peer-refresh-extends",
     "file": "src/scenes/portalGates.js",
-    "old": "      old.until = Math.min(old.until, now() + r.r);",
-    "new": "      old.until = now() + r.r;",
+    "old": "      old.until = Math.min(old.until, now() + r.r); // said again: never longer than first said",
+    "new": "      old.until = now() + r.r; // said again: never longer than first said",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -383,8 +383,8 @@
   {
     "name": "PORTAL1-pool-peer-second-id",
     "file": "src/scenes/portalGates.js",
-    "old": "      if (old.id !== r.i) return false;   // one an opener: the first stands its time\n",
-    "new": "",
+    "old": "      if (old.id !== r.i) return false; // one an opener: the first stands its time\n      old.until = Math.min(old.until, now() + r.r); // said again: never longer than first said",
+    "new": "      old.until = Math.min(old.until, now() + r.r); // said again: never longer than first said",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -392,7 +392,7 @@
   {
     "name": "PORTAL1-pool-nameless-kept",
     "file": "src/scenes/portalGates.js",
-    "old": "    if (!r || !dest) return false;",
+    "old": "    if (!r || !named) return false;",
     "new": "    if (!r) return false;",
     "tests": [
       "test/systems/portal1_stone.test.js"
@@ -401,8 +401,8 @@
   {
     "name": "PORTAL1-pool-never-runs-out",
     "file": "src/scenes/portalGates.js",
-    "old": "      if (t >= g.until) { drop(g); continue; }",
-    "new": "      if (false) { drop(g); continue; }",
+    "old": "      if (t >= g.until) {",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "PORTAL1-pool-two-of-mine",
     "file": "src/scenes/portalGates.js",
-    "old": "    for (const g of gates.filter((x) => x.owner === null)) drop(g);\n",
-    "new": "",
+    "old": "    for (const g of gates.filter((x) => x.owner === null)) drop(g);\n    const g = {",
+    "new": "    const g = {",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -419,8 +419,8 @@
   {
     "name": "PORTAL1-pool-said-far",
     "file": "src/scenes/portalGates.js",
-    "old": "if (!g || !near || across(toScene(g.native), near) > PORTAL_SAY_REACH) return null;",
-    "new": "if (!g || !near) return null;",
+    "old": "    if (!g || !near || across(toScene(g.native), near) > PORTAL_SAY_REACH) return null;",
+    "new": "    if (!g || !near) return null;",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -428,8 +428,8 @@
   {
     "name": "PORTAL1-pool-scene-frame-kept",
     "file": "src/scenes/portalGates.js",
-    "old": "native: toWire(pos), dest, until",
-    "new": "native: pos, dest, until",
+    "old": "      native: toWire(pos),",
+    "new": "      native: pos,",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -437,7 +437,7 @@
   {
     "name": "PORTAL1-pool-vortex-left-behind",
     "file": "src/scenes/portalGates.js",
-    "old": "      if (g.fx) { g.fx.feet[0] = at[0]; g.fx.feet[1] = at[1] - 0.05; g.fx.feet[2] = at[2]; }",
+    "old": "      if (g.fx) {\n        g.fx.feet[0] = at[0];\n        g.fx.feet[1] = at[1] - 0.05;\n        g.fx.feet[2] = at[2];\n      }",
     "new": "      void at;",
     "tests": [
       "test/systems/portal1_stone.test.js"
@@ -455,8 +455,8 @@
   {
     "name": "PORTAL1-pool-vortex-follows-eye",
     "file": "src/scenes/portalGates.js",
-    "old": "{ holdMs: holdFor(g.until - now()), fixed: true }",
-    "new": "{ holdMs: holdFor(g.until - now()), fixed: false }",
+    "old": "    g.fx = fx.open(toScene(g.native), { holdMs: holdFor(g.until - now()), fixed: true, skin: skinOf(g) });",
+    "new": "    g.fx = fx.open(toScene(g.native), { holdMs: holdFor(g.until - now()), fixed: false, skin: skinOf(g) });",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -464,7 +464,7 @@
   {
     "name": "PORTAL1-pool-ground-ignored",
     "file": "src/scenes/portalGates.js",
-    "old": "          if (Math.abs(/** @type {number} */ (y) - at[1]) <= PORTAL_REGROUND) { at = [at[0], /** @type {number} */ (y), at[2]]; g.native = toWire(at); }",
+    "old": "          if (Math.abs(/** @type {number} */ (y) - at[1]) <= PORTAL_REGROUND) {\n            at = [at[0], /** @type {number} */ (y), at[2]];\n            g.native = toWire(at);\n          }",
     "new": "          void y;",
     "tests": [
       "test/systems/portal1_stone.test.js"
@@ -473,8 +473,8 @@
   {
     "name": "PORTAL1-pool-ground-anywhere",
     "file": "src/scenes/portalGates.js",
-    "old": "if (Math.abs(/** @type {number} */ (y) - at[1]) <= PORTAL_REGROUND) {",
-    "new": "if (true) {",
+    "old": "          if (Math.abs(/** @type {number} */ (y) - at[1]) <= PORTAL_REGROUND) {",
+    "new": "          if (true) {",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -482,8 +482,8 @@
   {
     "name": "PORTAL1-vortex-follows-the-eye",
     "file": "src/scenes/portalFx.js",
-    "old": "      if (p.fixed) { p.origin[0] = p.feet[0]; p.origin[2] = p.feet[2]; }   // PORTAL1: a gate stands where it opened\n      else if (eye) {",
-    "new": "      if (eye) {",
+    "old": "      if (p.fixed) {\n        p.origin[0] = p.feet[0];\n        p.origin[2] = p.feet[2];\n      } // PORTAL1: a gate stands where it opened\n      else if (from) {",
+    "new": "      if (from) {",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -509,8 +509,8 @@
   {
     "name": "PORTAL1-row-buys-before-it-closes",
     "file": "src/ui/merchant/merchantServiceWindow.js",
-    "old": "  _portal() { this._click(); this._close(); this.hooks.portal?.onBuy?.(); }",
-    "new": "  _portal() { this._click(); this.hooks.portal?.onBuy?.(); this._close(); }",
+    "old": "    this._close();\n    this.hooks.portal?.onBuy?.();",
+    "new": "    this.hooks.portal?.onBuy?.();\n    this._close();",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -518,8 +518,8 @@
   {
     "name": "PORTAL1-row-never-drawn",
     "file": "src/ui/merchant/merchantServiceWindow.js",
-    "old": "    if (this.hooks.portal) drawPortalRow(renderer, m, font, MERCHANT_PANEL_X, MERCHANT_PANEL_Y, MERCHANT_PANEL_H, this.hooks.portal.label);",
-    "new": "",
+    "old": "    if (this.hooks.portal)\n      drawPortalRow(renderer, m, font, MERCHANT_PANEL_X, MERCHANT_PANEL_Y, MERCHANT_PANEL_H, this.hooks.portal.label); // PORTAL1",
+    "new": "    // PORTAL1",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -590,8 +590,8 @@
   {
     "name": "PORTAL1-no-shop-check",
     "file": "src/scenes/shopRows.js",
-    "old": "...(isShop(/** @type {number} */ (buildingType)) ? { portal:",
-    "new": "...(true ? { portal:",
+    "old": "      ...(isShop(/** @type {number} */ (buildingType))\n        ? { portal: { label: PORTAL_TEXT.row, onBuy: () => portalCounter.ask() } }\n        : {}),",
+    "new": "      ...(true ? { portal: { label: PORTAL_TEXT.row, onBuy: () => portalCounter.ask() } } : {}),",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -608,8 +608,8 @@
   {
     "name": "PORTAL1-short-purse-asked",
     "file": "src/scenes/portalCounter.js",
-    "old": "    if (max < 1) { say(portalStoneRefusalText(pack(), portalStoneRefusal(pack(), 1))); return null; }\n",
-    "new": "",
+    "old": "    if (max < 1) {\n      say(portalStoneRefusalText(pack(), portalStoneRefusal(pack(), 1)));\n      return null;\n    }\n    const flow = new ServiceFlowWindow([max === 1 ? offer(1) : count(max)]);",
+    "new": "    const flow = new ServiceFlowWindow([max === 1 ? offer(1) : count(max)]);",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ],
@@ -699,8 +699,8 @@
   {
     "name": "PORTAL1-frame-not-owed",
     "file": "src/scenes/portalStoneHost.js",
-    "old": "    portalGates.open(place.at, { pixel: { x: pick.pixel.x, y: pick.pixel.y }, name: pick.name });\n    host._foesFullAt = -Infinity;",
-    "new": "    portalGates.open(place.at, { pixel: { x: pick.pixel.x, y: pick.pixel.y }, name: pick.name });",
+    "old": "    portalGates.open(place.at, { pixel: { x: pick.pixel.x, y: pick.pixel.y }, name: pick.name, ...(pick.at ? { at: pick.at, yaw: pick.yaw, mapId: pick.mapId } : {}) });   // PORTAL-BOOK: and a kept house's door\n    host._foesFullAt = -Infinity;",
+    "new": "    portalGates.open(place.at, { pixel: { x: pick.pixel.x, y: pick.pixel.y }, name: pick.name, ...(pick.at ? { at: pick.at, yaw: pick.yaw, mapId: pick.mapId } : {}) });   // PORTAL-BOOK: and a kept house's door",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -718,8 +718,8 @@
   {
     "name": "PORTAL1-arrival-forgets-the-team",
     "file": "src/scenes/portalStoneHost.js",
-    "old": "      hccRuntimeOn()?.handlePreFastTravel();\n      try { if (!(await teleportTo(g.dest, { zoneFree: true }))) hudFade.clearFade(); }",
-    "new": "      try { if (!(await teleportTo(g.dest, { zoneFree: true }))) hudFade.clearFade(); }",
+    "old": "      hccRuntimeOn()?.handlePreFastTravel();\n      try { if (!(await teleportTo(g.dest, { zoneFree: true }))) hudFade.clearFade(); else if (g.dest.at) landAtDoor(g.dest); }",
+    "new": "      try { if (!(await teleportTo(g.dest, { zoneFree: true }))) hudFade.clearFade(); else if (g.dest.at) landAtDoor(g.dest); }",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ],
@@ -866,8 +866,8 @@
   {
     "name": "PORTAL-BULK-max-ceil",
     "file": "src/systems/portalStone.js",
-    "old": "Math.floor(shardsHeld(items) / PORTAL_STONE_SHARDS)",
-    "new": "Math.ceil(shardsHeld(items) / PORTAL_STONE_SHARDS)",
+    "old": "  return Math.max(0, Math.min(Math.floor(shardsHeld(items) / PORTAL_STONE_SHARDS), portalStoneRoom(items)));",
+    "new": "  return Math.max(0, Math.min(Math.ceil(shardsHeld(items) / PORTAL_STONE_SHARDS), portalStoneRoom(items)));",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ],
@@ -905,8 +905,8 @@
   {
     "name": "PORTAL-BULK-cap-off",
     "file": "src/systems/portalStone.js",
-    "old": "  if (n > portalStoneRoom(items)) return 'stack';\n",
-    "new": "",
+    "old": "  if (n > portalStoneRoom(items)) return 'stack';\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -914,8 +914,8 @@
   {
     "name": "PORTAL-BULK-room-reads-the-locked-stack",
     "file": "src/systems/portalStone.js",
-    "old": "findExistingStack(items, portalStones(1))",
-    "new": "items.find(isPortalStone)",
+    "old": "  const onto = Array.isArray(items) ? findExistingStack(items, portalStones(1)) : null;",
+    "new": "  const onto = Array.isArray(items) ? items.find(isPortalStone) : null;",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ],
@@ -924,8 +924,8 @@
   {
     "name": "PORTAL-BULK-full-said-as-short",
     "file": "src/systems/portalStone.js",
-    "old": "return reason === 'stack' ? PORTAL_TEXT.full(LOOT_STACK_MAX) : PORTAL_TEXT.shards(",
-    "new": "return false ? PORTAL_TEXT.full(LOOT_STACK_MAX) : PORTAL_TEXT.shards(",
+    "old": "  return reason === 'stack'\n    ? PORTAL_TEXT.full(LOOT_STACK_MAX)\n    : PORTAL_TEXT.shards(shardsHeld(items), shardsKept(items));",
+    "new": "  return false ? PORTAL_TEXT.full(LOOT_STACK_MAX) : PORTAL_TEXT.shards(shardsHeld(items), shardsKept(items));",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -933,8 +933,8 @@
   {
     "name": "PORTAL-BULK-offer-one-price",
     "file": "src/systems/portalStone.js",
-    "old": "{ n, price: n * PORTAL_STONE_SHARDS, held }",
-    "new": "{ n, price: PORTAL_STONE_SHARDS, held }",
+    "old": "      { n, price: n * PORTAL_STONE_SHARDS, held },",
+    "new": "      { n, price: PORTAL_STONE_SHARDS, held },",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -942,8 +942,8 @@
   {
     "name": "PORTAL-BULK-field-seeded-with-max",
     "file": "src/scenes/portalCounter.js",
-    "old": "initial: '1', label: HOW_MANY_ITEMS(max)",
-    "new": "initial: String(max), label: HOW_MANY_ITEMS(max)",
+    "old": "  initial: '1',",
+    "new": "  initial: String(max),",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ],
@@ -970,8 +970,8 @@
   {
     "name": "PORTAL-BULK-yes-buys-one",
     "file": "src/scenes/portalCounter.js",
-    "old": "    onYes: () => { buy(n); return null; },",
-    "new": "    onYes: () => { buy(1); return null; },",
+    "old": "      buy(n);",
+    "new": "      buy(1);",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "REALM5-letters-before-coins",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "  if (amount <= purse) { save.goldPieces = purse - amount; return true; }\n",
-    "new": "",
+    "old": "  if (amount <= purse) {\n    save.goldPieces = purse - amount;\n    return true;\n  }\n  let owed = amount;",
+    "new": "  let owed = amount;",
     "tests": [
       "test/net/realm5.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "REALM5-pays-past-its-reach",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "  if (payableOf(save, region) < amount) return false;\n",
-    "new": "",
+    "old": "  if (payableOf(save, region) < amount) return false;\n  const purse = whole(save.goldPieces);",
+    "new": "  const purse = whole(save.goldPieces);",
     "tests": [
       "test/net/realm5.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "REALM5-bank-never-pays",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "    a.accountGold -= take;\n",
-    "new": "",
+    "old": "    a.accountGold -= take;\n    owed -= take;",
+    "new": "    owed -= take;",
     "tests": [
       "test/net/realm5.test.js"
     ],
@@ -39,7 +39,7 @@
   {
     "name": "REALM5-letters-never-count",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "  const letters = (Array.isArray(save?.items) ? save.items : []).filter((it) => it?.templateIndex === REALM_LETTER_TEMPLATE).reduce((s, it) => s + whole(it.value), 0);",
+    "old": "  const letters = (Array.isArray(save?.items) ? save.items : [])\n    .filter((it) => it?.templateIndex === REALM_LETTER_TEMPLATE)\n    .reduce((s, it) => s + whole(it.value), 0);",
     "new": "  const letters = 0;",
     "tests": [
       "test/net/realm5.test.js"
@@ -75,8 +75,8 @@
   {
     "name": "REALM5-guard-never-trips",
     "file": "server-account/src/realm.js",
-    "old": "db.prepare('INSERT INTO realm_tx_guard (moved, expected) SELECT changes(), ? WHERE changes() != ?').bind(n, n);",
-    "new": "db.prepare('INSERT INTO realm_tx_guard (moved, expected) SELECT changes(), ? WHERE 0 AND ? = ?').bind(n, n, n);",
+    "old": "  db.prepare('INSERT INTO realm_tx_guard (moved, expected) SELECT changes(), ? WHERE changes() != ?').bind(n, n);",
+    "new": "  db.prepare('INSERT INTO realm_tx_guard (moved, expected) SELECT changes(), ? WHERE 0 AND ? = ?').bind(n, n, n);",
     "tests": [
       "test/net/realm5.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "REALM5-book-never-reserves",
     "file": "src/net/guild/guildBook.js",
-    "old": "        reserve: walletReserve(w, gold).reserve,   // MARKET-AUDIT: a refusal gives back exactly what it took\n        call: (/** @type {any} */ at) => this.door.deposit(",
-    "new": "        call: (/** @type {any} */ at) => this.door.deposit(",
+    "old": "          reserve: walletReserve(w, gold).reserve, // MARKET-AUDIT: a refusal gives back exactly what it took\n          call: (/** @type {any} */ at) => this.door.deposit(character, gold, at, w.region?.() ?? null),",
+    "new": "          call: (/** @type {any} */ at) => this.door.deposit(character, gold, at, w.region?.() ?? null),",
     "tests": [
       "test/net/realm5.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "REALM5-book-withdraw-uncredited",
     "file": "src/net/guild/guildBook.js",
-    "old": "        apply: () => this.wallet().credit(gold, { letter }),\n",
-    "new": "",
+    "old": "            apply: () => this.wallet().credit(gold, { letter }),\n            call: (/** @type {any} */ at) => this.door.withdraw(character, gold, at, letter),",
+    "new": "            call: (/** @type {any} */ at) => this.door.withdraw(character, gold, at, letter),",
     "tests": [
       "test/net/realm5.test.js"
     ],
@@ -149,8 +149,8 @@
   {
     "name": "REALM5-book-deposit-no-region",
     "file": "src/net/guild/guildBook.js",
-    "old": "this.door.deposit(character, gold, at, w.region?.() ?? null),",
-    "new": "this.door.deposit(character, gold, at, null),",
+    "old": "          call: (/** @type {any} */ at) => this.door.deposit(character, gold, at, w.region?.() ?? null),",
+    "new": "          call: (/** @type {any} */ at) => this.door.deposit(character, gold, at, null),",
     "tests": [
       "test/net/realm5.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "REALM5-guilds-no-bucket",
     "file": "server-account/src/index.js",
-    "old": "        const r = await act({ ...ctx, env, bucket: env.SAVES }, who.player, body);",
-    "new": "        const r = await act({ ...ctx, env }, who.player, body);",
+    "old": "        const r = await act({ ...ctx, env, bucket: env.SAVES, self: url.origin }, who.player, body);",
+    "new": "        const r = await act({ ...ctx, env, self: url.origin }, who.player, body);",
     "tests": [
       "test/net/realm5.test.js"
     ]

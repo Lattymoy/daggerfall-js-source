@@ -142,8 +142,8 @@ test('the exits and the arrivals stand the player, they do not drop them', () =>
   // with the terrain read off the collider they are about to stand on.
   assert.match(wm, /player\.spawn\(landing\[0\], cabinLanding \? landing\[1\] : repositionFeetY\(player\.collider\.heightAt\(landing\[0\], landing\[2\]\), landing\[1\]\), landing\[2\]\)/,
     'building exit: feet from the door centre');
-  assert.match(wm, /player\.spawn\(landing\.pos\[0\], repositionFeetY\(player\.collider\.heightAt\(landing\.pos\[0\], landing\.pos\[2\]\), landing\.pos\[1\]\), landing\.pos\[2\]\)/,
-    'dungeon exit: the same law');
+  assert.match(wm, /player\.spawn\(landing\.pos\[0\], dungeonExitFeet\(player\.collider, landing\), landing\.pos\[2\]\)/,
+    'dungeon exit: the same law, never over the floor before the door');   // PIN MOVED (TALL-DOOR, FIELD BUGS 2026-10-30b: enterExit.js dungeonExitFeet)
   assert.doesNotMatch(wm, /player\.spawn\(landing\[0\], landing\[1\], landing\[2\]\)/, 'the raw centre spawn is gone');
   assert.doesNotMatch(wm, /player\.spawn\(landing\.pos\[0\], landing\.pos\[1\], landing\.pos\[2\]\)/);
   // The world host's arrivals: PositionPlayerToLocation ends in

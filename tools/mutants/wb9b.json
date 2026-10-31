@@ -2,8 +2,8 @@
   {
     "name": "WB9b-a-court-moved-onto-another",
     "file": "src/net/gate/gateBrain.js",
-    "old": "export const COURTS = Object.freeze([Object.freeze([0, 0]), Object.freeze([-68, -22]),",
-    "new": "export const COURTS = Object.freeze([Object.freeze([0, 0]), Object.freeze([-30, -10]),",
+    "old": "  Object.freeze([-68, -22]),",
+    "new": "  Object.freeze([-30, -10]),",
     "tests": [
       "test/net/gate/wb9b_gate_courts.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WB9b-laid-at-the-word",
     "file": "src/net/gate/gateBrain.js",
-    "old": "Math.max(0, Math.min(1, (now - at - WALK_LEAD_MS) / WALK_FORM_MS))",
-    "new": "Math.max(0, Math.min(1, (now - at) / WALK_FORM_MS))",
+    "old": "  return Number.isFinite(at) ? Math.max(0, Math.min(1, (now - at - WALK_LEAD_MS) / WALK_FORM_MS)) : 0;",
+    "new": "  return Number.isFinite(at) ? Math.max(0, Math.min(1, (now - at) / WALK_FORM_MS)) : 0;",
     "tests": [
       "test/net/gate/wb9b_gate_courts.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WB9b-a-walkway-never-ending",
     "file": "src/net/gate/gateBrain.js",
-    "old": "Math.max(0, Math.min(1, (now - at - WALK_LEAD_MS) / WALK_FORM_MS))",
-    "new": "Math.max(0, (now - at - WALK_LEAD_MS) / WALK_FORM_MS)",
+    "old": "  return Number.isFinite(at) ? Math.max(0, Math.min(1, (now - at - WALK_LEAD_MS) / WALK_FORM_MS)) : 0;",
+    "new": "  return Number.isFinite(at) ? Math.max(0, (now - at - WALK_LEAD_MS) / WALK_FORM_MS) : 0;",
     "tests": [
       "test/net/gate/wb9b_gate_courts.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB9b-the-next-court-open-before-its-walkway",
     "file": "src/net/gate/gateBrain.js",
-    "old": "|| !plan.floors.includes(w.b) || walkFormed(xa, k, now) < 1) continue;",
-    "new": "|| !plan.floors.includes(w.b) || walkFormed(xa, k, now) <= 0) continue;",
+    "old": "      if (live.includes(w.b) || !live.includes(w.a) || !plan.floors.includes(w.b) || walkFormed(xa, k, now) < 1)",
+    "new": "      if (live.includes(w.b) || !live.includes(w.a) || !plan.floors.includes(w.b) || walkFormed(xa, k, now) <= 0)",
     "tests": [
       "test/net/gate/wb9b_gate_courts.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WB9b-the-front-ignored",
     "file": "src/net/gate/gateBrain.js",
-    "old": "if (t >= -pad && t <= w.len * f + pad && side <= WALK_HALF_W + pad) return true;",
-    "new": "if (t >= -pad && t <= w.len + pad && side <= WALK_HALF_W + pad) return true;",
+    "old": "    if (t >= -pad && t <= w.len * f + pad && side <= WALK_HALF_W + pad) return true;",
+    "new": "    if (t >= -pad && t <= w.len + pad && side <= WALK_HALF_W + pad) return true;",
     "tests": [
       "test/net/gate/wb9b_gate_courts.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WB9b-the-walkway-never-laid",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    else for (let k = 0; k < entry.court; k++) if (!Number.isFinite(f.xa[k])) f.xa[k] = now;",
-    "new": "    else {}",
+    "old": "    } else for (let k = 0; k < entry.court; k++) if (!Number.isFinite(f.xa[k])) f.xa[k] = now;",
+    "new": "    } else {\n    }",
     "tests": [
       "test/net/gate/wb9b_gate_courts.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "WB9b-the-wait-forever",
     "file": "src/net/gate/gateBrain.js",
-    "old": "if (next.wait) f.waitUntil = now + CROSS_WAIT_MAX_MS;",
-    "new": "if (next.wait) f.waitUntil = Infinity;",
+    "old": "      if (next.wait) f.waitUntil = now + CROSS_WAIT_MAX_MS;",
+    "new": "      if (next.wait) f.waitUntil = Infinity;",
     "tests": [
       "test/net/gate/wb9b_gate_courts.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "WB9b-the-old-ring",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (!onFloor(pose.x, pose.z, f.xa, now, POSE_SLACK, planOf(f))) return 0;",
-    "new": "  if (Math.hypot(pose.x, pose.z) > COURT_R + POSE_SLACK) return 0;",
+    "old": "  if (!onFloor(pose.x, pose.z, f.xa, now, POSE_SLACK, planOf(f))) return 0; // nobody strikes the court from off it - WB9b: its floor as far as it is laid; WB14b: the night's plan's",
+    "new": "  if (Math.hypot(pose.x, pose.z) > COURT_R + POSE_SLACK) return 0; // nobody strikes the court from off it - WB9b: its floor as far as it is laid; WB14b: the night's plan's",
     "tests": [
       "test/net/gate/wb9b_gate_courts.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "WB9b-the-walkway-left-to-the-next-state",
     "file": "src/net/gate/gateLink.js",
-    "old": "...(g.a === ATTACKS.wrath.id ? { stunUntil: 0, ...flameStill(s) } : {}), ...crossLaid(s, g) };",
-    "new": "...(g.a === ATTACKS.wrath.id ? { stunUntil: 0, ...flameStill(s) } : {}) };",
+    "old": "        ...crossLaid(s, g),\n      }; // WB14a: its marked, by peer id",
+    "new": "      }; // WB14a: its marked, by peer id",
     "tests": [
       "test/net/gate/wb9b_gate_courts.test.js"
     ]
@@ -156,7 +156,7 @@
   {
     "name": "WB9b-the-telegraph-over-the-court-he-leaves",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "  const at = A.aim === 'point' && marks.length ? marks[0] : A.aim === 'players' && marks.length ? marks[0] : [atk.x, atk.z];",
+    "old": "  const at =\n    A.aim === 'point' && marks.length ? marks[0] : A.aim === 'players' && marks.length ? marks[0] : [atk.x, atk.z];",
     "new": "  const at = [atk.x, atk.z];",
     "tests": [
       "test/net/gate/wb9b_gate_courts.test.js"

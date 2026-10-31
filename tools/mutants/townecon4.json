@@ -12,8 +12,8 @@
   {
     "name": "TOWNECON4-lanes-max",
     "file": "src/net/townEconLaw.js",
-    "old": "Math.min(TOWN_SEA_LANES_MAX, /** @type {number} */ (lanes)) * TOWN_SEA_LANE",
-    "new": "/** @type {number} */ (lanes) * TOWN_SEA_LANE",
+    "old": "  Number.isSafeInteger(lanes) && /** @type {number} */ (lanes) > 0\n    ? Math.min(TOWN_SEA_LANES_MAX, /** @type {number} */ (lanes)) * TOWN_SEA_LANE\n    : 0;",
+    "new": "  Number.isSafeInteger(lanes) && /** @type {number} */ (lanes) > 0 ? /** @type {number} */ (lanes) * TOWN_SEA_LANE : 0;",
     "tests": [
       "test/systems/naval/townecon_sea.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "TOWNECON4-lanes-unread",
     "file": "src/net/townEconLaw.js",
-    "old": "+ share + townSeaTerm(lanes));",
-    "new": "+ share);",
+    "old": "      townSeaTerm(lanes) +\n      regionTermOf(regional),",
+    "new": "      regionTermOf(regional),",
     "tests": [
       "test/systems/naval/townecon_sea.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "TOWNECON4-factors-swapped",
     "file": "src/net/townEconLaw.js",
-    "old": "Object.freeze({ ask: townBuyFactor(p), pay: townSaleFactor(p) })",
-    "new": "Object.freeze({ ask: townSaleFactor(p), pay: townBuyFactor(p) })",
+    "old": "export const townExchangeFactors = (p) => Object.freeze({ ask: townBuyFactor(p), pay: townSaleFactor(p) });",
+    "new": "export const townExchangeFactors = (p) => Object.freeze({ ask: townSaleFactor(p), pay: townBuyFactor(p) });",
     "tests": [
       "test/systems/naval/townecon_sea.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "TOWNECON4-ask-unread",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "const sell = Math.max(2, Math.round(p.mid * (1 + k) * ask));",
-    "new": "const sell = Math.max(2, Math.round(p.mid * (1 + k)));",
+    "old": "    const sell = Math.max(2, Math.round(p.mid * (1 + k) * ask)); // SEA-TRADE: the port town's asking factor",
+    "new": "    const sell = Math.max(2, Math.round(p.mid * (1 + k))); // SEA-TRADE: the port town's asking factor",
     "tests": [
       "test/systems/naval/townecon_sea.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "TOWNECON4-pay-unread",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "Math.round(p.mid * (1 - k) * pay)",
-    "new": "Math.round(p.mid * (1 - k))",
+    "old": "      buy: Math.max(1, Math.min(sell - 1, Math.round(p.mid * (1 - k) * pay))),",
+    "new": "      buy: Math.max(1, Math.min(sell - 1, Math.round(p.mid * (1 - k)))),",
     "tests": [
       "test/systems/naval/townecon_sea.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "TOWNECON4-pay-unheld",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "? Math.min(ask, town.pay) : 1;",
-    "new": "? town.pay : 1;",
+    "old": "  const pay = town && Number.isFinite(town.pay) && town.pay > 0 ? Math.min(ask, town.pay) : 1;",
+    "new": "  const pay = town && Number.isFinite(town.pay) && town.pay > 0 ? town.pay : 1;",
     "tests": [
       "test/systems/naval/townecon_sea.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "TOWNECON4-bad-factor",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "const ask = town && Number.isFinite(town.ask) && town.ask > 0 ? town.ask : 1;",
-    "new": "const ask = town && town.ask != null ? Number(town.ask) || 0.01 : 1;",
+    "old": "  const ask = town && Number.isFinite(town.ask) && town.ask > 0 ? town.ask : 1;",
+    "new": "  const ask = town && town.ask != null ? Number(town.ask) || 0.01 : 1;",
     "tests": [
       "test/systems/naval/townecon_sea.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "TOWNECON4-good-unmarked",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    markCounterBought([goods], { price: k * r.sell });",
-    "new": "    void markCounterBought;",
+    "old": "    markCounterBought([goods], { price: k * r.sell }); // SEA-TRADE: online, what it cost rides it (before a stack's merge takes it)",
+    "new": "    void markCounterBought; // SEA-TRADE: online, what it cost rides it (before a stack's merge takes it)",
     "tests": [
       "test/systems/naval/townecon_sea.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "TOWNECON4-office-unpriced",
     "file": "src/scenes/harbourOffice.js",
-    "old": "const townAt = (port) => deps.town?.exchangeAt?.(port) ?? null;",
-    "new": "const townAt = (port) => null && port;",
+    "old": "  const townAt = (port) => deps.town?.exchangeAt?.(port) ?? null;",
+    "new": "  const townAt = (port) => null && port;",
     "tests": [
       "test/systems/naval/townecon_sea.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "TOWNECON4-deal-untold",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    L.note('traded', k * r.buy);\n    deps.town?.seaDeal?.(port);",
-    "new": "    L.note('traded', k * r.buy);",
+    "old": "    L.note('traded', k * r.buy);\n    deps.town?.seaDeal?.(port); // SEA-TRADE: a dealing at the port's exchange",
+    "new": "    L.note('traded', k * r.buy); // SEA-TRADE: a dealing at the port's exchange",
     "tests": [
       "test/systems/naval/townecon_sea.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "TOWNECON4-host-ether",
     "file": "src/scenes/townEconHost.js",
-    "old": "if (!port || port.ether || !Number.isSafeInteger(port.px)",
-    "new": "if (!port || !Number.isSafeInteger(port.px)",
+    "old": "    if (!port || port.ether || !Number.isSafeInteger(port.px) || !Number.isSafeInteger(port.py)) return null;",
+    "new": "    if (!port || !Number.isSafeInteger(port.px) || !Number.isSafeInteger(port.py)) return null;",
     "tests": [
       "test/systems/naval/townecon_sea.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "TOWNECON4-host-deal-unbooked",
     "file": "src/scenes/townEconHost.js",
-    "old": "? book.seaDeal(port.px, port.py) : false),",
-    "new": "? false : false),",
+    "old": "    seaDeal: (port) => (book && portTown(port) != null ? book.seaDeal(port.px, port.py) : false),",
+    "new": "    seaDeal: (port) => (book && portTown(port) != null ? false : false),",
     "tests": [
       "test/systems/naval/townecon_sea.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "TOWNECON4-sea-cap",
     "file": "src/net/townEconLaw.js",
-    "old": "TOWN_ECON_CAPS = Object.freeze({ watch: 30, trade: 10, raid: 1, sea: 10 });",
-    "new": "TOWN_ECON_CAPS = Object.freeze({ watch: 30, trade: 10, raid: 1, sea: 99 });",
+    "old": "export const TOWN_ECON_CAPS = Object.freeze({ watch: 30, trade: 10, raid: 1, sea: 10 });",
+    "new": "export const TOWN_ECON_CAPS = Object.freeze({ watch: 30, trade: 10, raid: 1, sea: 99 });",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "TOWNECON4-book-twice",
     "file": "src/net/townEconBook.js",
-    "old": "seaSpent.has(w.r) || list.some((h) => h.r === w.r && h.sea)) return false;",
-    "new": "false) return false;",
+    "old": "        if (\n          w.s !== who ||\n          !alive(w, t) ||\n          t - w.i > TOWN_SEA_TICK_S ||\n          seaSpent.has(w.r) ||\n          list.some((h) => h.r === w.r && h.sea)\n        )\n          return false;",
+    "new": "        if (w.s !== who || !alive(w, t) || t - w.i > TOWN_SEA_TICK_S || false) return false;",
     "tests": [
       "test/net/townecon_client.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "TOWNECON4-book-stale",
     "file": "src/net/townEconBook.js",
-    "old": "|| t - w.i > TOWN_SEA_TICK_S ||",
-    "new": "||",
+    "old": "        if (\n          w.s !== who ||\n          !alive(w, t) ||\n          t - w.i > TOWN_SEA_TICK_S ||\n          seaSpent.has(w.r) ||\n          list.some((h) => h.r === w.r && h.sea)\n        )\n          return false;",
+    "new": "        if (w.s !== who || !alive(w, t) || seaSpent.has(w.r) || list.some((h) => h.r === w.r && h.sea)) return false;",
     "tests": [
       "test/net/townecon_client.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "TOWNECON4-book-reach",
     "file": "src/net/townEconBook.js",
-    "old": "return !!c && Math.abs(c.x - px) <= TOWN_SEA_REACH_PX && Math.abs(c.y - py) <= TOWN_SEA_REACH_PX;",
-    "new": "return !!c;",
+    "old": "        return !!c && Math.abs(c.x - px) <= TOWN_SEA_REACH_PX && Math.abs(c.y - py) <= TOWN_SEA_REACH_PX;",
+    "new": "        return !!c;",
     "tests": [
       "test/net/townecon_client.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "TOWNECON4-book-unsent",
     "file": "src/net/townEconBook.js",
-    "old": "      const sea = batch.flatMap((w, k) => (w.sea ? [k] : []));",
-    "new": "      const sea = [];",
+    "old": "      const sea = batch.flatMap((w, k) => (w.sea ? [k] : [])); // SEA-TRADE: the ticks that vouch a dealing",
+    "new": "      const sea = []; // SEA-TRADE: the ticks that vouch a dealing",
     "tests": [
       "test/net/townecon_client.test.js"
     ],

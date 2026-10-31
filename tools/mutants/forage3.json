@@ -20,8 +20,8 @@
   {
     "name": "FORAGE3-3-the-palace-draws-a-tool",
     "file": "src/systems/foraging/foragingLaw.js",
-    "old": "    if (buildingType === BUILDING_TYPES.Palace) return dice100(30, rng()) ? { ...none, count: Math.floor(rng() * 1) } : none;",
-    "new": "    if (buildingType === BUILDING_TYPES.Palace) return dice100(30, rng()) ? { ...none, count: Math.floor(rng() * 2) } : none;",
+    "old": "      return dice100(30, rng()) ? { ...none, count: Math.floor(rng() * 1) } : none;",
+    "new": "      return dice100(30, rng()) ? { ...none, count: Math.floor(rng() * 2) } : none;",
     "tests": [
       "test/systems/foraging/forage3_loot.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "FORAGE3-4-a-prison-rolls-24",
     "file": "src/systems/foraging/foragingLaw.js",
-    "old": "{ chance: 25, max: 5, table: FORAGING_LOOT_TABLES.prisonMine }",
-    "new": "{ chance: 24, max: 5, table: FORAGING_LOOT_TABLES.prisonMine }",
+    "old": "      [[DUNGEON_TYPES.Prison, DUNGEON_TYPES.Mine], { chance: 25, max: 5, table: FORAGING_LOOT_TABLES.prisonMine }],",
+    "new": "      [[DUNGEON_TYPES.Prison, DUNGEON_TYPES.Mine], { chance: 24, max: 5, table: FORAGING_LOOT_TABLES.prisonMine }],",
     "tests": [
       "test/systems/foraging/forage3_loot.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "FORAGE3-5-a-stronghold-draws-to-four",
     "file": "src/systems/foraging/foragingLaw.js",
-    "old": "{ chance: 20, max: 4, table: FORAGING_LOOT_TABLES.stronghold }",
-    "new": "{ chance: 20, max: 5, table: FORAGING_LOOT_TABLES.stronghold }",
+    "old": "        { chance: 20, max: 4, table: FORAGING_LOOT_TABLES.stronghold },",
+    "new": "        { chance: 20, max: 5, table: FORAGING_LOOT_TABLES.stronghold },",
     "tests": [
       "test/systems/foraging/forage3_loot.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "FORAGE3-6-the-haunt-draws-a-tool",
     "file": "src/systems/foraging/foragingLaw.js",
-    "old": "{ chance: 5, max: 1, table: FORAGING_LOOT_TABLES.haunt }",
-    "new": "{ chance: 5, max: 2, table: FORAGING_LOOT_TABLES.haunt }",
+    "old": "        { chance: 5, max: 1, table: FORAGING_LOOT_TABLES.haunt },",
+    "new": "        { chance: 5, max: 2, table: FORAGING_LOOT_TABLES.haunt },",
     "tests": [
       "test/systems/foraging/forage3_loot.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "FORAGE3-10-the-gate-drops-the-basket",
     "file": "src/systems/foraging/foragingLaw.js",
-    "old": "(picked - FT.Spade) >>> 0 <= 1)",
-    "new": "(picked - FT.Spade) >>> 0 <= 0)",
+    "old": "  if (!((picked - FT.WoodAxe) >>> 0 <= 4 || (picked - FT.Spade) >>> 0 <= 1)) return null;",
+    "new": "  if (!((picked - FT.WoodAxe) >>> 0 <= 4 || (picked - FT.Spade) >>> 0 <= 0)) return null;",
     "tests": [
       "test/systems/foraging/forage3_loot.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "FORAGE3-11-codes-five-and-six-swapped",
     "file": "src/systems/foraging/foragingLaw.js",
-    "old": "[FT.WoodAxe, FT.PickAxe, FT.Sickle, FT.FishingNet, FT.WoodBundle, FT.Spade, FT.Basket][code - 1] ?? 0",
-    "new": "[FT.WoodAxe, FT.PickAxe, FT.Sickle, FT.FishingNet, FT.Spade, FT.WoodBundle, FT.Basket][code - 1] ?? 0",
+    "old": "  [FT.WoodAxe, FT.PickAxe, FT.Sickle, FT.FishingNet, FT.WoodBundle, FT.Spade, FT.Basket][code - 1] ?? 0;",
+    "new": "  [FT.WoodAxe, FT.PickAxe, FT.Sickle, FT.FishingNet, FT.Spade, FT.WoodBundle, FT.Basket][code - 1] ?? 0;",
     "tests": [
       "test/systems/foraging/forage3_loot.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "FORAGE3-12-the-pile-event-inside-j-o",
     "file": "src/systems/loot/loot.js",
-    "old": "  if (lootTableKey !== '-') raiseTabledLootSpawned(",
-    "new": "  if (alphabetIndex >= 10 && alphabetIndex <= 15) raiseTabledLootSpawned(",
+    "old": "  if (lootTableKey !== '-')",
+    "new": "  if (alphabetIndex >= 10 && alphabetIndex <= 15)",
     "tests": [
       "test/systems/foraging/forage3_loot.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "FORAGE3-13-a-pile-past-the-table-raises",
     "file": "src/systems/loot/loot.js",
-    "old": "  if (lootTableKey !== '-') raiseTabledLootSpawned(",
-    "new": "  if (lootTableKey) raiseTabledLootSpawned(",
+    "old": "  if (lootTableKey !== '-')\n    raiseTabledLootSpawned({ locationIndex, key: lootTableKey, items, rolls, luck, where, quarters });",
+    "new": "  if (lootTableKey) raiseTabledLootSpawned({ locationIndex, key: lootTableKey, items, rolls, luck, where, quarters });",
     "tests": [
       "test/systems/foraging/forage3_loot.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "FORAGE3-15-the-shelf-hook-ignores-the-switch",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "  if (!foragingOn() || !Array.isArray(args?.items) || args.buildingType == null) return 0;",
-    "new": "  if (!Array.isArray(args?.items) || args.buildingType == null) return 0;",
+    "old": "  if (!foragingOn() || !Array.isArray(args?.items) || args.buildingType == null) return 0; // `Interior != null`",
+    "new": "  if (!Array.isArray(args?.items) || args.buildingType == null) return 0; // `Interior != null`",
     "tests": [
       "test/systems/foraging/forage3_loot.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "FORAGE3-16-no-interior-still-rolls",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "  if (!foragingOn() || !Array.isArray(args?.items) || args.buildingType == null) return 0;",
-    "new": "  if (!foragingOn() || !Array.isArray(args?.items)) return 0;",
+    "old": "  if (!foragingOn() || !Array.isArray(args?.items) || args.buildingType == null) return 0; // `Interior != null`",
+    "new": "  if (!foragingOn() || !Array.isArray(args?.items)) return 0; // `Interior != null`",
     "tests": [
       "test/systems/foraging/forage3_loot.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "FORAGE3-17-the-item-at-the-front",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "    if (item) { addItem(items, item, 'back'); added++; }",
-    "new": "    if (item) { addItem(items, item, 'front'); added++; }",
+    "old": "      addItem(items, item, 'back');",
+    "new": "      addItem(items, item, 'front');",
     "tests": [
       "test/systems/foraging/forage3_loot.test.js"
     ]
@@ -155,7 +155,7 @@
   {
     "name": "FORAGE3-18-a-throw-stops-the-rest",
     "file": "src/systems/containerLoot.js",
-    "old": "    try { fn(args); } catch (e) { console.warn('[lootSpawned] a container handler threw', e); }",
+    "old": "    try {\n      fn(args);\n    } catch (e) {\n      console.warn('[lootSpawned] a container handler threw', e);\n    }",
     "new": "    fn(args);",
     "tests": [
       "test/systems/foraging/forage3_loot.test.js"
@@ -174,8 +174,8 @@
   {
     "name": "FORAGE3-20-rri-leaves-the-shelf",
     "file": "src/systems/containerLoot.js",
-    "old": "    onShopShelfStocked(a.items, /** @type {any} */ ({ buildingType: a.buildingType, quality: a.quality, containerType: a.containerType }), a.rolls ? { rolls: a.rolls } : {});",
-    "new": "",
+    "old": "const _handlers = new Map([\n  [\n    RRI_VENDOR,\n    (/** @type {ContainerLootArgs} */ a) => {\n      onShopShelfStocked(\n        a.items,\n        /** @type {any} */ ({ buildingType: a.buildingType, quality: a.quality, containerType: a.containerType }),\n        a.rolls ? { rolls: a.rolls } : {},\n      );\n    },\n  ],\n]);",
+    "new": "const _handlers = new Map([[RRI_VENDOR, (/** @type {ContainerLootArgs} */ a) => {}]]);",
     "tests": [
       "test/systems/rri2_realism.test.js"
     ]

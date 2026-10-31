@@ -57,31 +57,58 @@
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from '../native/nativePanel.js';
 import { drawScreenDimBackdrop } from '../chargenArt.js';
 import { layoutMessageBox, drawMessageBox } from '../messageBox.js';
-import { noticeFrame, noticeRelease } from '../enhanced/enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
+import { noticeFrame, noticeRelease } from '../enhanced/enhancedNotice.js'; // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
 import { InputMessageBoxWindow } from '../inputMessageBox.js';
-import { ListPickerWindow, listPickerArtLoaded, listPickerSmallFont, preloadListPickerSmallFont, SMALL_FONT_PICKER_ROWS } from '../listPicker.js';
 import {
-  makeIconDrawer, drawStackLabel, scrollerHit, applyScroll, safeScrollIndex,
+  ListPickerWindow,
+  listPickerArtLoaded,
+  listPickerSmallFont,
+  preloadListPickerSmallFont,
+  SMALL_FONT_PICKER_ROWS,
+} from '../listPicker.js';
+import {
+  makeIconDrawer,
+  drawStackLabel,
+  scrollerHit,
+  applyScroll,
+  safeScrollIndex,
   playScrollerArrowClick,
-  LIST_SLOTS, CELL_X,
+  LIST_SLOTS,
+  CELL_X,
 } from './itemScroller.js';
 import { audio } from '../../systems/audio.js';
 import { SOUND } from '../../systems/soundClips.js';
 import {
-  enchantDecision, applyEnchantments, enchantmentCostLabel, totalGoldCost,
-  totalEnchantmentCost, itemEnchantmentPower, openPickerDecision, keptEnchantments, enchantmentListCost,
-  itemMakerRefuses, makerKeepsName, gildedKeepsNameText,
+  enchantDecision,
+  applyEnchantments,
+  enchantmentCostLabel,
+  totalGoldCost,
+  totalEnchantmentCost,
+  itemEnchantmentPower,
+  openPickerDecision,
+  keptEnchantments,
+  enchantmentListCost,
+  itemMakerRefuses,
+  makerKeepsName,
+  gildedKeepsNameText,
 } from '../../systems/enchanting.js';
-import { enchantGold } from '../../net/alchemyLaw.js';   // PROF12: Enchanting's layer - the gold with the rank's share off
+import { enchantGold } from '../../net/alchemyLaw.js'; // PROF12: Enchanting's layer - the gold with the rank's share off
 import {
-  enchantmentName, enchantmentParams, enchantmentParamName, primaryPickerList, primaryPick,
-  pickEnchantment, removeEnchantment, PARAM_NONE, isSideEffect,
+  enchantmentName,
+  enchantmentParams,
+  enchantmentParamName,
+  primaryPickerList,
+  primaryPick,
+  pickEnchantment,
+  removeEnchantment,
+  PARAM_NONE,
+  isSideEffect,
 } from '../../systems/enchantmentCatalogue.js';
 import { deductGold, totalGoldAmount } from '../../systems/court.js';
 import { splitStack } from '../../systems/inventory.js';
-import { enumerateFilledTraps } from '../../systems/mysticism.js';   // AUDIT 63 F14: SoulBound.EnumerateFilledTraps (:105-127) - the maker's lists are built from the pack
-import { localizedText } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
-import { shownItemName } from '../../systems/item/itemInfo.js';   // L10N3e: the shortName the label shows, in the player's language
+import { enumerateFilledTraps } from '../../systems/mysticism.js'; // AUDIT 63 F14: SoulBound.EnumerateFilledTraps (:105-127) - the maker's lists are built from the pack
+import { localizedText } from '../../systems/textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
+import { shownItemName } from '../../systems/item/itemInfo.js'; // L10N3e: the shortName the label shows, in the player's language
 
 /** DaggerfallInventoryWindow.TabPages, in the order the four buttons
  *  sit in (:29-32). */
@@ -106,13 +133,20 @@ export const ITEM_RECTS = Object.freeze({
 });
 /** The four live labels (:296-302). */
 export const ITEM_LABELS = Object.freeze({
-  itemName: [52, 3], availableGold: [71, 15], goldCost: [64, 27], enchantmentCost: [98, 39],
+  itemName: [52, 3],
+  availableGold: [71, 15],
+  goldCost: [64, 27],
+  enchantmentCost: [98, 39],
 });
 
 /** EnchantmentPanel's own metrics (:299-305, :22-26). */
-export const ROW_W = 75, ROW_W_SCROLLED = 71;
-export const ROW_H_PLAIN = 7, ROW_H_SECONDARY = 12;
-export const ROW_GAP = 5, ROW_START_Y = 2, ROWS_VISIBLE = 7;
+export const ROW_W = 75,
+  ROW_W_SCROLLED = 71;
+export const ROW_H_PLAIN = 7,
+  ROW_H_SECONDARY = 12;
+export const ROW_GAP = 5,
+  ROW_START_Y = 2,
+  ROWS_VISIBLE = 7;
 /** DaggerfallInputMessageBox/TextBox default used by RenameItem. */
 export const MAX_ITEM_NAME = 31;
 /** Internal_Strings.enterNewName. */
@@ -149,18 +183,21 @@ export const FORCED_TEXT_COLOR = [186 / 255, 207 / 255, 125 / 255, 1];
 export function itemMakerFilter(item, tabPage, selected = null) {
   if (!item || item === selected) return false;
   if (!keptEnchantments(item) || item.group === 'UselessItems2') return false;
-  if (itemMakerRefuses(item)) return false;   // AETHERIC-MAKER: an Aetheric piece is out of every tab
+  if (itemMakerRefuses(item)) return false; // AETHERIC-MAKER: an Aetheric piece is out of every tab
   if (item.potionRecipe !== undefined && item.potionRecipe !== null) return false;
-  const isWeaponOrArmor = (item.group === 'Weapons' || item.group === 'Armor')
-    && !(item.group === 'Weapons' && item.name === 'Arrow');
+  const isWeaponOrArmor =
+    (item.group === 'Weapons' || item.group === 'Armor') && !(item.group === 'Weapons' && item.name === 'Arrow');
   switch (tabPage) {
-    case 'WeaponsAndArmor': return isWeaponOrArmor;
-    case 'MagicItems': return false;
-    case 'Ingredients': return item.group === 'Gems';
+    case 'WeaponsAndArmor':
+      return isWeaponOrArmor;
+    case 'MagicItems':
+      return false;
+    case 'Ingredients':
+      return item.group === 'Gems';
     case 'ClothingAndMisc':
-      return item.group === 'MensClothing' || item.group === 'WomensClothing'
-        || item.group === 'Jewellery';
-    default: return false;
+      return item.group === 'MensClothing' || item.group === 'WomensClothing' || item.group === 'Jewellery';
+    default:
+      return false;
   }
 }
 
@@ -174,10 +211,15 @@ export async function preloadItemMakerArt(deps) {
     // AUDIT 58: both enchantment pickers are SmallFont, 12 rows
     // (:372, :376), so the FNT has to be warm before one opens.
     await preloadListPickerSmallFont(deps);
-  } catch { console.warn('[itemmaker] ITEM00I0 unavailable; the item maker stays closed'); }
+  } catch {
+    console.warn('[itemmaker] ITEM00I0 unavailable; the item maker stays closed');
+  }
 }
 export const itemMakerArtLoaded = () => !!_art && !!_tabs;
-export function _setItemMakerArtForTests(art, tabs) { _art = art; _tabs = tabs; }
+export function _setItemMakerArtForTests(art, tabs) {
+  _art = art;
+  _tabs = tabs;
+}
 
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 
@@ -210,16 +252,23 @@ export class ItemMakerWindow {
    *  ShowScroller (> 7 rows), stepping scrollerStep (8) against the
    *  SetScrollIndex clamp; routed to whichever list the cursor is
    *  over, since DFU's wheel fires per component. */
-  hover(vx, vy, e = null) { this._mouse = [vx, vy]; this.picker?.hover(vx, vy, e); }   // ROAD-A7: the picker's own hover
-  release() { this.picker?.release(); }   // ROAD-E E1: and the picker's own release, the edge that drops the thumb latch
+  hover(vx, vy, e = null) {
+    this._mouse = [vx, vy];
+    this.picker?.hover(vx, vy, e);
+  } // ROAD-A7: the picker's own hover
+  release() {
+    this.picker?.release();
+  } // ROAD-E E1: and the picker's own release, the edge that drops the thumb latch
   wheel(dir) {
     if (!dir) return;
     const [vx, vy] = this._mouse;
-    const shown = this._lists();   // AUDIT PROF10 J2: a crafted piece's kept rows at each list's head
-    for (const [rect, list, scrollKey] of [[ITEM_RECTS.powersList, shown.powers, 'powersScroll'],
-      [ITEM_RECTS.sideEffectsList, shown.sideEffects, 'sideEffectsScroll']]) {
+    const shown = this._lists(); // AUDIT PROF10 J2: a crafted piece's kept rows at each list's head
+    for (const [rect, list, scrollKey] of [
+      [ITEM_RECTS.powersList, shown.powers, 'powersScroll'],
+      [ITEM_RECTS.sideEffectsList, shown.sideEffects, 'sideEffectsScroll'],
+    ]) {
       if (!inRect(rect, vx, vy)) continue;
-      if (list.length <= ROWS_VISIBLE) return;   // ShowScroller (:182, :191)
+      if (list.length <= ROWS_VISIBLE) return; // ShowScroller (:182, :191)
       const max = Math.max(0, enchContentH(list) - rect[3]);
       this[scrollKey] = Math.max(0, Math.min(max, this[scrollKey] + Math.sign(dir) * ENCH_SCROLLER_STEP));
       return;
@@ -239,7 +288,7 @@ export class ItemMakerWindow {
     // F170: one ScrollIndex per EnchantmentListPicker instance.
     this.powersScroll = 0;
     this.sideEffectsScroll = 0;
-    this._mouse = [0, 0];   // AUDIT 65 UI-5 put the live point on the overlay wheel seam; this window does not read it yet
+    this._mouse = [0, 0]; // AUDIT 65 UI-5 put the live point on the overlay wheel seam; this window does not read it yet
     this.itemName = '';
     this.renameBox = null;
     this.box = null;
@@ -256,10 +305,18 @@ export class ItemMakerWindow {
    *  was gone, and one gem bound item after item until that window shut. The souls are read off the pack every
    *  time the window asks (the pickers' lists), and the enchant itself refuses a bound soul the pack no longer holds
    *  (enchanting.js enchantDecision, `souls`). Port-Ledger A. */
-  get _souls() { return this._filledSouls(); }
+  get _souls() {
+    return this._filledSouls();
+  }
 
-  _close() { this.done = true; noticeRelease(this); this.hooks.onClose?.(); }
-  _say(text) { this.box = { rows: [{ text, center: true }] }; }
+  _close() {
+    this.done = true;
+    noticeRelease(this);
+    this.hooks.onClose?.();
+  }
+  _say(text) {
+    this.box = { rows: [{ text, center: true }] };
+  }
 
   items() {
     return (this.hooks.packItems?.() ?? []).filter((it) => itemMakerFilter(it, this.tab, this.selected));
@@ -277,10 +334,15 @@ export class ItemMakerWindow {
   /** PlayerEntity.GetGoldAmount (:1313-1316) - coins PLUS letters of
    *  credit - which is what both the label (:193) and the enchant
    *  check (:734) read; the deduction seam spends the letters too. */
-  gold() { return totalGoldAmount(this.hooks.player ?? this.hooks.entity ?? {}); }
+  gold() {
+    return totalGoldAmount(this.hooks.player ?? this.hooks.entity ?? {});
+  }
   /** PROF12 (bible/06-Systems/Professions-Arc.md 9.3): Enchanting's share off the gold, percent - the host's (online, the
    *  professions this account's), none else: DFU's own price. */
-  goldDiscountPct() { const v = this.hooks.goldDiscountPct?.(); return Number.isSafeInteger(v) && v > 0 && v < 100 ? v : 0; }
+  goldDiscountPct() {
+    const v = this.hooks.goldDiscountPct?.();
+    return Number.isSafeInteger(v) && v > 0 && v < 100 ? v : 0;
+  }
 
   _selectTab(tab) {
     audio.playOneShot(SOUND.ButtonClick, 1);
@@ -329,12 +391,17 @@ export class ItemMakerWindow {
     // the guard the first cut invented; GILDED-MAKER: but a Gilded piece's
     // name is its record's
     audio.playOneShot(SOUND.ButtonClick, 1);
-    if (makerKeepsName(this.selected)) { this._say(gildedKeepsNameText()); return; }
+    if (makerKeepsName(this.selected)) {
+      this._say(gildedKeepsNameText());
+      return;
+    }
     this.renameBox = new InputMessageBoxWindow({
       label: enterNewNameLabel(),
       value: this.itemName,
       maxCharacters: MAX_ITEM_NAME,
-      onSubmit: (input) => { this.itemName = input; },
+      onSubmit: (input) => {
+        this.itemName = input;
+      },
     });
   }
 
@@ -343,14 +410,21 @@ export class ItemMakerWindow {
    *  it just has nothing in it. */
   _openPicker(selectingPowers) {
     audio.playOneShot(SOUND.ButtonClick, 1);
-    const all = this._lists();   // AUDIT PROF10 J2: a crafted piece's kept rows count in the guard and the filters
+    const all = this._lists(); // AUDIT PROF10 J2: a crafted piece's kept rows count in the guard and the filters
     const d = openPickerDecision(selectingPowers, {
-      item: this.selected, powers: all.powers, sideEffects: all.sideEffects,
+      item: this.selected,
+      powers: all.powers,
+      sideEffects: all.sideEffects,
     });
-    if (d.kind === 'refuse') { this._say(d.text); return; }
+    if (d.kind === 'refuse') {
+      this._say(d.text);
+      return;
+    }
     this.selectingPowers = selectingPowers;
     const types = primaryPickerList(selectingPowers, {
-      item: this.selected, powers: all.powers, sideEffects: all.sideEffects,
+      item: this.selected,
+      powers: all.powers,
+      sideEffects: all.sideEffects,
       // AUDIT 63 F14: EnumerateEnchantments builds groupedSideEffectTemplates
       // from the filled traps (:171, :182) - RPT1026-PROGRESS: as the pack
       // holds them now, never a snapshot taken when the window opened.
@@ -359,36 +433,53 @@ export class ItemMakerWindow {
     this._pickerType = null;
     this.picker = new ListPickerWindow({
       items: types.map(enchantmentName),
-      onPick: (i) => { this.picker = null; this._pickPrimary(types[i]); },
-      onCancel: () => { this.picker = null; },
+      onPick: (i) => {
+        this.picker = null;
+        this._pickPrimary(types[i]);
+      },
+      onCancel: () => {
+        this.picker = null;
+      },
       // AUDIT 58: DaggerfallItemMakerWindow.cs::372 builds this picker
       // with `(uiManager, this, DaggerfallUI.SmallFont, 12)` - the
       // font and the row count travel together (12 x (5+1) = the
       // 72px listBox).
-      font: listPickerSmallFont(), rowsDisplayed: SMALL_FONT_PICKER_ROWS,
+      font: listPickerSmallFont(),
+      rowsDisplayed: SMALL_FONT_PICKER_ROWS,
     });
   }
 
   /** EnchantmentPrimaryPicker_OnUseSelectedItem (:820-866). */
   _pickPrimary(type) {
-    const all = this._lists();   // AUDIT PROF10 J2: and in the secondary list's filters
+    const all = this._lists(); // AUDIT PROF10 J2: and in the secondary list's filters
     const pick = primaryPick(type, {
-      powers: all.powers, sideEffects: all.sideEffects, selectingPowers: this.selectingPowers,
-      souls: this._souls,   // AUDIT 63 F14: GetFilteredEnchantments reads the enumerated souls (:543-556) - RPT1026-PROGRESS: the live pack's
+      powers: all.powers,
+      sideEffects: all.sideEffects,
+      selectingPowers: this.selectingPowers,
+      souls: this._souls, // AUDIT 63 F14: GetFilteredEnchantments reads the enumerated souls (:543-556) - RPT1026-PROGRESS: the live pack's
     });
     if (!pick) return;
-    if (pick.kind === 'add') { this._add(pick.settings); return; }
+    if (pick.kind === 'add') {
+      this._add(pick.settings);
+      return;
+    }
     this._pickerType = type;
     const options = pick.options;
     this.picker = new ListPickerWindow({
       items: options.map((o) => o.label),
-      onPick: (i) => { this.picker = null; this._pickSecondary(type, options[i].param); },
-      onCancel: () => { this.picker = null; },
+      onPick: (i) => {
+        this.picker = null;
+        this._pickSecondary(type, options[i].param);
+      },
+      onCancel: () => {
+        this.picker = null;
+      },
       // AUDIT 58: DaggerfallItemMakerWindow.cs::376 builds this picker
       // with `(uiManager, this, DaggerfallUI.SmallFont, 12)` - the
       // font and the row count travel together (12 x (5+1) = the
       // 72px listBox).
-      font: listPickerSmallFont(), rowsDisplayed: SMALL_FONT_PICKER_ROWS,
+      font: listPickerSmallFont(),
+      rowsDisplayed: SMALL_FONT_PICKER_ROWS,
     });
   }
 
@@ -396,10 +487,13 @@ export class ItemMakerWindow {
    *  a bound soul's forced children arrive, and the only place the
    *  window can refuse for room. */
   _pickSecondary(type, param) {
-    const all = this._lists();   // AUDIT PROF10 J2: and in the room a bound soul's set needs
+    const all = this._lists(); // AUDIT PROF10 J2: and in the room a bound soul's set needs
     const result = pickEnchantment(type, param, { powers: all.powers, sideEffects: all.sideEffects });
     if (!result) return;
-    if (result.kind === 'noRoom') { this._say(result.text); return; }
+    if (result.kind === 'noRoom') {
+      this._say(result.text);
+      return;
+    }
     this._add(result.settings);
     this.powers.push(...result.powers);
     this.sideEffects.push(...result.sideEffects);
@@ -421,8 +515,15 @@ export class ItemMakerWindow {
   /** EnchantButton_OnMouseClick (:705-770). */
   _enchant() {
     audio.playOneShot(SOUND.ButtonClick, 1);
-    const d = enchantDecision(this.selected, this.powers, this.sideEffects, { gold: this.gold(), discountPct: this.goldDiscountPct(), souls: this._souls });   // PROF12: Enchanting's layer; RPT1026-PROGRESS: the souls the pack holds now
-    if (d.kind !== 'enchant') { this._say(d.text); return; }
+    const d = enchantDecision(this.selected, this.powers, this.sideEffects, {
+      gold: this.gold(),
+      discountPct: this.goldDiscountPct(),
+      souls: this._souls,
+    }); // PROF12: Enchanting's layer; RPT1026-PROGRESS: the souls the pack holds now
+    if (d.kind !== 'enchant') {
+      this._say(d.text);
+      return;
+    }
     // DeductGoldAmount, which spends letters of credit as well as the
     // purse - the one deduction seam (court.js).
     deductGold(this.hooks.player ?? this.hooks.entity, d.goldCost);
@@ -436,12 +537,14 @@ export class ItemMakerWindow {
     // SetEnchantments(combined, GameManager.Instance.PlayerEntity)
     // (:760) - the owner is passed, so the created payloads run and
     // the item comes OFF the paperdoll (DaggerfallUnityItem.cs:1338).
-    applyEnchantments(this.selected, [...this.powers, ...this.sideEffects],
-      { owner: this.hooks.player ?? this.hooks.entity });
+    applyEnchantments(this.selected, [...this.powers, ...this.sideEffects], {
+      owner: this.hooks.player ?? this.hooks.entity,
+    });
     // RenameItem (:761). L10N3e: the label still showing the item's own
     // name leaves its canonical name in place - only a name the player
     // gave it is written
-    if (this.itemName && this.itemName !== shownItemName(this.selected) && !makerKeepsName(this.selected)) this.selected.name = this.itemName;
+    if (this.itemName && this.itemName !== shownItemName(this.selected) && !makerKeepsName(this.selected))
+      this.selected.name = this.itemName;
     audio.playOneShot(SOUND.MakeItem, 1);
     this._say(d.text);
     this.selected = null;
@@ -458,9 +561,13 @@ export class ItemMakerWindow {
     return {
       itemName: this.itemName,
       availableGold: String(this.gold()),
-      goldCost: String(enchantGold(totalGoldCost(this.powers), this.goldDiscountPct())),   // PROF12: the rank's share off, online
-      enchantmentCost: enchantmentCostLabel(   // AUDIT PROF10 J2: a crafted piece's kept rows counted as enchantDecision counts them
-        totalEnchantmentCost(this.powers, this.sideEffects) + enchantmentListCost(keptEnchantments(this.selected) ?? []), itemEnchantmentPower(this.selected)),
+      goldCost: String(enchantGold(totalGoldCost(this.powers), this.goldDiscountPct())), // PROF12: the rank's share off, online
+      enchantmentCost: enchantmentCostLabel(
+        // AUDIT PROF10 J2: a crafted piece's kept rows counted as enchantDecision counts them
+        totalEnchantmentCost(this.powers, this.sideEffects) +
+          enchantmentListCost(keptEnchantments(this.selected) ?? []),
+        itemEnchantmentPower(this.selected),
+      ),
     };
   }
 
@@ -470,30 +577,71 @@ export class ItemMakerWindow {
       if (this.renameBox.done) this.renameBox = null;
       return;
     }
-    if (this.picker) { this.picker.input(code); if (this.picker?.done) this.picker = null; return; }
-    if (this.box) { this.box = null; return; }
+    if (this.picker) {
+      this.picker.input(code);
+      if (this.picker?.done) this.picker = null;
+      return;
+    }
+    if (this.box) {
+      this.box = null;
+      return;
+    }
     if (code === 'Escape' || code === 'KeyE') this._close();
   }
 
   click(vx, vy) {
-    if (this.renameBox) { this.renameBox.click(vx, vy); return true; }
-    if (this.picker) { this.picker.click(vx, vy, this._font); if (this.picker?.done) this.picker = null; return true; }
-    if (this.box) { this.box = null; return true; }
+    if (this.renameBox) {
+      this.renameBox.click(vx, vy);
+      return true;
+    }
+    if (this.picker) {
+      this.picker.click(vx, vy, this._font);
+      if (this.picker?.done) this.picker = null;
+      return true;
+    }
+    if (this.box) {
+      this.box = null;
+      return true;
+    }
 
-    if (inRect(ITEM_RECTS.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true; }
+    if (inRect(ITEM_RECTS.exit, vx, vy)) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      this._close();
+      return true;
+    }
     for (let i = 0; i < TAB_PAGES.length; i++) {
       const key = ['weaponsAndArmor', 'magicItems', 'clothingAndMisc', 'ingredients'][i];
-      if (inRect(ITEM_RECTS[key], vx, vy)) { this._selectTab(TAB_PAGES[i]); return true; }
+      if (inRect(ITEM_RECTS[key], vx, vy)) {
+        this._selectTab(TAB_PAGES[i]);
+        return true;
+      }
     }
-    if (inRect(ITEM_RECTS.powersButton, vx, vy)) { this._openPicker(true); return true; }
-    if (inRect(ITEM_RECTS.sideEffectsButton, vx, vy)) { this._openPicker(false); return true; }
-    if (inRect(ITEM_RECTS.enchant, vx, vy)) { this._enchant(); return true; }
-    if (inRect(ITEM_RECTS.selectedItem, vx, vy)) { if (this.selected) this._deselect(); return true; }
-    if (inRect(ITEM_RECTS.nameItem, vx, vy)) { this._openRename(); return true; }
+    if (inRect(ITEM_RECTS.powersButton, vx, vy)) {
+      this._openPicker(true);
+      return true;
+    }
+    if (inRect(ITEM_RECTS.sideEffectsButton, vx, vy)) {
+      this._openPicker(false);
+      return true;
+    }
+    if (inRect(ITEM_RECTS.enchant, vx, vy)) {
+      this._enchant();
+      return true;
+    }
+    if (inRect(ITEM_RECTS.selectedItem, vx, vy)) {
+      if (this.selected) this._deselect();
+      return true;
+    }
+    if (inRect(ITEM_RECTS.nameItem, vx, vy)) {
+      this._openRename();
+      return true;
+    }
 
-    const shown = this._lists();   // AUDIT PROF10 J2: a crafted piece's kept rows at each list's head
-    for (const [rect, list, scrollKey] of [[ITEM_RECTS.powersList, shown.powers, 'powersScroll'],
-      [ITEM_RECTS.sideEffectsList, shown.sideEffects, 'sideEffectsScroll']]) {
+    const shown = this._lists(); // AUDIT PROF10 J2: a crafted piece's kept rows at each list's head
+    for (const [rect, list, scrollKey] of [
+      [ITEM_RECTS.powersList, shown.powers, 'powersScroll'],
+      [ITEM_RECTS.sideEffectsList, shown.sideEffects, 'sideEffectsScroll'],
+    ]) {
       if (!inRect(rect, vx, vy)) continue;
       // F170: the hit maps through the live scroll - the C# panels
       // carry their click at their SCROLLED position (:262-276).
@@ -514,14 +662,20 @@ export class ItemMakerWindow {
       if (hit.kind === 'slot') {
         const item = list[safeScrollIndex(this.scroll, list.length) + hit.slot];
         if (item) this._selectItem(item);
-      } else { playScrollerArrowClick(hit.kind); this.scroll = applyScroll(this.scroll, hit.kind, list.length); }   // ROAD-A7: the two arrows click
+      } else {
+        playScrollerArrowClick(hit.kind);
+        this.scroll = applyScroll(this.scroll, hit.kind, list.length);
+      } // ROAD-A7: the two arrows click
       return true;
     }
-    return true;   // the background is the whole screen
+    return true; // the background is the whole screen
   }
 
   draw(renderer, canvas, font) {
-    if (!_art) { this._close(); return; }
+    if (!_art) {
+      this._close();
+      return;
+    }
     this._font = font;
     const m = nativeMetrics(canvas);
     drawScreenDimBackdrop(renderer, canvas);
@@ -531,10 +685,13 @@ export class ItemMakerWindow {
     // over the base at the tab's own rect (:290-294)
     const tabIndex = TAB_PAGES.indexOf(this.tab);
     if (tabIndex >= 0 && _tabs) {
-      const [tx, ty, tw, th] = ITEM_RECTS[['weaponsAndArmor', 'magicItems', 'clothingAndMisc', 'ingredients'][tabIndex]];
-      renderer.drawScreenQuad(_tabs.tex,
+      const [tx, ty, tw, th] =
+        ITEM_RECTS[['weaponsAndArmor', 'magicItems', 'clothingAndMisc', 'ingredients'][tabIndex]];
+      renderer.drawScreenQuad(
+        _tabs.tex,
         { x: m.ox + tx * m.s, y: m.oy + ty * m.s, w: tw * m.s, h: th * m.s },
-        { u0: 0, v0: (tabIndex * 9) / _tabs.h, u1: 1, v1: (tabIndex * 9 + 9) / _tabs.h });
+        { u0: 0, v0: (tabIndex * 9) / _tabs.h, u1: 1, v1: (tabIndex * 9 + 9) / _tabs.h },
+      );
     }
 
     const L = this.labels();
@@ -543,9 +700,11 @@ export class ItemMakerWindow {
     }
 
     // the two enchantment lists
-    const shown = this._lists();   // AUDIT PROF10 J2: a crafted piece's kept rows at each list's head
-    for (const [rect, list, scrollKey] of [[ITEM_RECTS.powersList, shown.powers, 'powersScroll'],
-      [ITEM_RECTS.sideEffectsList, shown.sideEffects, 'sideEffectsScroll']]) {
+    const shown = this._lists(); // AUDIT PROF10 J2: a crafted piece's kept rows at each list's head
+    for (const [rect, list, scrollKey] of [
+      [ITEM_RECTS.powersList, shown.powers, 'powersScroll'],
+      [ITEM_RECTS.sideEffectsList, shown.sideEffects, 'sideEffectsScroll'],
+    ]) {
       const scrolled = list.length > ROWS_VISIBLE;
       // F170: rows lay out through the live scroll and hide only when
       // WHOLLY outside, either end (panel.Enabled = Overlaps, :289).
@@ -553,7 +712,7 @@ export class ItemMakerWindow {
         if (row.y + row.h <= 0 || row.y >= rect[3]) continue;
         // a FORCED row is the one thing this window colours
         // differently - it is how you can tell a row you did not pick
-        const opts = row.entry.parentEnchantment !== 0 || row.entry.kept ? { color: FORCED_TEXT_COLOR } : undefined;   // AUDIT PROF10 J2: a kept row too
+        const opts = row.entry.parentEnchantment !== 0 || row.entry.kept ? { color: FORCED_TEXT_COLOR } : undefined; // AUDIT PROF10 J2: a kept row too
         shadowText(renderer, font, enchantmentName(row.entry.type), m, rect[0], rect[1] + row.y + 2, opts);
         // SecondaryDisplayName (EnchantmentListPicker.cs:333-334) -
         // the label for the row's PARAM VALUE, matched through the
@@ -561,8 +720,15 @@ export class ItemMakerWindow {
         // not an index into the dense label list.
         const names = enchantmentParams(row.entry.type);
         if (names.length > 0 && row.entry.param !== PARAM_NONE) {
-          shadowText(renderer, font, SECONDARY_INDENT + enchantmentParamName(row.entry.type, row.entry.param),
-            m, rect[0], rect[1] + row.y + 8, opts);
+          shadowText(
+            renderer,
+            font,
+            SECONDARY_INDENT + enchantmentParamName(row.entry.type, row.entry.param),
+            m,
+            rect[0],
+            rect[1] + row.y + 8,
+            opts,
+          );
         }
       }
       if (scrolled) {
@@ -571,7 +737,15 @@ export class ItemMakerWindow {
         const total = enchContentH(list);
         const th = Math.max(4, rect[3] * (rect[3] / total));
         const ty = (this[scrollKey] * (rect[3] - th)) / Math.max(1, total - rect[3]);
-        drawRect(renderer, m, rect[0] + rect[2] - ENCH_SCROLLER_W, rect[1] + ty, ENCH_SCROLLER_W, th, [0.53, 0.53, 0.53, 1]);
+        drawRect(
+          renderer,
+          m,
+          rect[0] + rect[2] - ENCH_SCROLLER_W,
+          rect[1] + ty,
+          ENCH_SCROLLER_W,
+          th,
+          [0.53, 0.53, 0.53, 1],
+        );
       }
     }
 
@@ -604,9 +778,18 @@ export class ItemMakerWindow {
       this._icon(renderer, m, this.selected, [sx - CELL_X, sy], 0);
     }
 
-    if (this.renameBox) { this.renameBox.draw(renderer, canvas, font); return; }
-    if (this.picker && listPickerArtLoaded()) { this.picker.draw(renderer, canvas, font); return; }
-    if (noticeFrame(this, this.box?.rows ?? null)) { this._boxLayout = null; return; }
+    if (this.renameBox) {
+      this.renameBox.draw(renderer, canvas, font);
+      return;
+    }
+    if (this.picker && listPickerArtLoaded()) {
+      this.picker.draw(renderer, canvas, font);
+      return;
+    }
+    if (noticeFrame(this, this.box?.rows ?? null)) {
+      this._boxLayout = null;
+      return;
+    }
     if (this.box) {
       this._boxLayout = layoutMessageBox(font, this.box.rows, []);
       drawMessageBox(renderer, m, font, this._boxLayout);

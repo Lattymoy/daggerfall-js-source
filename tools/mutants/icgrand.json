@@ -29,8 +29,8 @@
   {
     "name": "IC-GRAND-walk-two-half-storeys",
     "file": "src/world/imperialFabric.js",
-    "old": "const step = Math.floor(u01(seed, 9, n) * 3) - 1;",
-    "new": "const step = Math.floor(u01(seed, 9, n) * 5) - 2;",
+    "old": "      const step = Math.floor(u01(seed, 9, n) * 3) - 1;",
+    "new": "      const step = Math.floor(u01(seed, 9, n) * 5) - 2;",
     "tests": [
       "test/world/icgrand_fabric.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "IC-GRAND-ring-order-reversed",
     "file": "src/world/imperialFabric.js",
-    "old": "for (const [a, b] of pieces(Ls - 2 * D, st.front[0], st.front[1], seed, 6)) rects.push(",
-    "new": "for (const [a, b] of pieces(Ls - 2 * D, st.front[0], st.front[1], seed, 6).reverse()) rects.push(",
+    "old": "        for (const [a, b] of pieces(Ls - 2 * D, st.front[0], st.front[1], seed, 6))",
+    "new": "        for (const [a, b] of pieces(Ls - 2 * D, st.front[0], st.front[1], seed, 6).reverse())",
     "tests": [
       "test/world/icgrand_fabric.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "IC-GRAND-no-dead-end",
     "file": "src/world/imperialFabric.js",
-    "old": "hash32(seed, 23, e) % 3 !== 0",
-    "new": "hash32(seed, 23, e) % 3 !== 9",
+    "old": "    if (lineW[e] > ALLEY + 0.01 || hash32(seed, 23, e) % 3 !== 0) continue;",
+    "new": "    if (lineW[e] > ALLEY + 0.01 || hash32(seed, 23, e) % 3 !== 9) continue;",
     "tests": [
       "test/world/icgrand_fabric.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "IC-GRAND-no-bridge",
     "file": "src/world/imperialFabric.js",
-    "old": "hash32(seed, 43, p.key, e) % 4 !== 0",
-    "new": "hash32(seed, 43, p.key, e) % 4 !== 9",
+    "old": "      if (!(p.out & (1 << e)) || p.sw[e] <= ALLEY + 0.01 || hash32(seed, 43, p.key, e) % 4 !== 0) continue;",
+    "new": "      if (!(p.out & (1 << e)) || p.sw[e] <= ALLEY + 0.01 || hash32(seed, 43, p.key, e) % 4 !== 9) continue;",
     "tests": [
       "test/world/icgrand_fabric.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "IC-GRAND-no-statue",
     "file": "src/world/imperialFabric.js",
-    "old": "if (hash32(h.seed, 51, i, j) % 3 !== 0) return null;",
-    "new": "if (hash32(h.seed, 51, i, j) % 3 !== 9) return null;",
+    "old": "  if (hash32(h.seed, 51, i, j) % 3 !== 0) return null;",
+    "new": "  if (hash32(h.seed, 51, i, j) % 3 !== 9) return null;",
     "tests": [
       "test/world/icgrand_fabric.test.js"
     ],
@@ -94,8 +94,8 @@
   {
     "name": "IC-GRAND-no-main-street",
     "file": "src/world/imperialFabric.js",
-    "old": "w < 10 ? 'side' : 'main'",
-    "new": "w < 99 ? 'side' : 'main'",
+    "old": "export const streetKind = (w) => (w <= ALLEY + 0.01 ? 'alley' : w < 7 ? 'lane' : w < 10 ? 'side' : 'main');",
+    "new": "export const streetKind = (w) => (w <= ALLEY + 0.01 ? 'alley' : w < 7 ? 'lane' : w < 99 ? 'side' : 'main');",
     "tests": [
       "test/world/icgrand_fabric.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "IC-GRAND-one-neighbourhood-a-district",
     "file": "src/world/imperialFabric.js",
-    "old": "const key = di * 100 + ring * 10 + half;",
-    "new": "const key = di * 100 + ring * 0 + 0;",
+    "old": "  const key = di * 100 + ring * 10 + half;",
+    "new": "  const key = di * 100 + ring * 0 + 0;",
     "tests": [
       "test/world/icgrand_fabric.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "IC-GRAND-branch-under-an-alley",
     "file": "src/world/imperialFabric.js",
-    "old": "if (!(line.w > ALLEY + 0.01)) continue;",
-    "new": "if (!(line.w > 0)) continue;",
+    "old": "        if (!(line.w > ALLEY + 0.01)) continue;",
+    "new": "        if (!(line.w > 0)) continue;",
     "tests": [
       "test/world/icgrand_sewers.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "IC-GRAND-sewer-uphill",
     "file": "src/world/imperialSewers.js",
-    "old": "headDepth: 5, MAIN_FALL: 1 / 500,",
-    "new": "headDepth: 5, MAIN_FALL: -1 / 500,",
+    "old": "  MAIN_FALL: 1 / 500,",
+    "new": "  MAIN_FALL: -1 / 500,",
     "tests": [
       "test/world/icgrand_sewers.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "IC-GRAND-ring-drop-unread",
     "file": "src/world/imperialSewers.js",
-    "old": "const dJoin = radialDepthAt(ring.r) - S.RING_DROP,",
-    "new": "const dJoin = radialDepthAt(ring.r) - 0,",
+    "old": "      const dJoin = radialDepthAt(ring.r) - S.RING_DROP,",
+    "new": "      const dJoin = radialDepthAt(ring.r) - 0,",
     "tests": [
       "test/world/icgrand_sewers.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "IC-GRAND-culvert-to-dry-land",
     "file": "src/world/imperialSewers.js",
-    "old": "  return polar(b, r - 4);",
-    "new": "  return polar(b, r - 400);",
+    "old": "  return polar(b, r - 4); // the last step on land: its mouth on the shore, the water a step on",
+    "new": "  return polar(b, r - 400); // the last step on land: its mouth on the shore, the water a step on",
     "tests": [
       "test/world/icgrand_sewers.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "IC-GRAND-manholes-spaced-twice",
     "file": "src/world/imperialSewers.js",
-    "old": "s < len; s += S.manholeEvery) {",
-    "new": "s < len; s += S.manholeEvery * 2) {",
+    "old": "        s += S.manholeEvery",
+    "new": "        s += S.manholeEvery * 2",
     "tests": [
       "test/world/icgrand_sewers.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "IC-GRAND-grate-off-the-road",
     "file": "src/world/imperialSewers.js",
-    "old": "out.push({ at: [p[0] + n[0] * side * (w / 2 - S.gateOut),",
-    "new": "out.push({ at: [p[0] + n[0] * side * (w / 2 + S.gateOut),",
+    "old": "            at: [p[0] + n[0] * side * (w / 2 - S.gateOut), p[1] + n[1] * side * (w / 2 - S.gateOut)],",
+    "new": "            at: [p[0] + n[0] * side * (w / 2 + S.gateOut), p[1] + n[1] * side * (w / 2 - S.gateOut)],",
     "tests": [
       "test/world/icgrand_sewers.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "IC-GRAND-arena-far",
     "file": "src/world/imperialBlocks.js",
-    "old": "if (cell === 'L' || cell === 'O' || cell === IMPERIAL_ARENA_CODE) return near;",
-    "new": "if (cell === 'L' || cell === 'O') return near;",
+    "old": "  if (cell === 'L' || cell === 'O' || cell === IMPERIAL_ARENA_CODE) return near;",
+    "new": "  if (cell === 'L' || cell === 'O') return near;",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "IC-GRAND-arena-daggerfall-alone",
     "file": "src/world/arena/arenaCity.js",
-    "old": "export const standsArena = (loc) => isArenaCity(loc) || !!loc?.exterior",
-    "new": "export const standsArena = (loc) => isArenaCity(loc) || !loc?.exterior",
+    "old": "export const standsArena = (loc) =>\n  isArenaCity(loc) || !!loc?.exterior?.exteriorData?.blockNames?.includes(ARENA_BLOCK);",
+    "new": "export const standsArena = (loc) => isArenaCity(loc) || !loc?.exterior?.exteriorData?.blockNames?.includes(ARENA_BLOCK);",
     "tests": [
       "test/world/icgrand_arena.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "IC-GRAND-arena-any-city",
     "file": "src/world/arena/arenaCity.js",
-    "old": "export const standsArena = (loc) => isArenaCity(loc) ||",
-    "new": "export const standsArena = (loc) => true ||",
+    "old": "export const standsArena = (loc) =>\n  isArenaCity(loc) || !!loc?.exterior?.exteriorData?.blockNames?.includes(ARENA_BLOCK);",
+    "new": "export const standsArena = (loc) => true || !!loc?.exterior?.exteriorData?.blockNames?.includes(ARENA_BLOCK);",
     "tests": [
       "test/world/icgrand_arena.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "IC-GRAND-arena-cell-moved",
     "file": "src/world/imperialCity.js",
-    "old": "arena: Object.freeze({ b: 90, r: 4600 }),",
-    "new": "arena: Object.freeze({ b: 91, r: 4600 }),",
+    "old": "  arena: Object.freeze({ b: 90, r: 4600 }),",
+    "new": "  arena: Object.freeze({ b: 91, r: 4600 }),",
     "tests": [
       "test/world/icgrand_arena.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "IC-GRAND-colosseum-model-back",
     "file": "src/world/imperialCity.js",
-    "old": "  nineDivines: 910212,   // TESA-LORE",
-    "new": "  nineDivines: 910212, colosseum: 910205,   // TESA-LORE",
+    "old": "  nineDivines: 910212, // TESA-LORE",
+    "new": "  nineDivines: 910212,\n  colosseum: 910205, // TESA-LORE",
     "tests": [
       "test/world/icgrand_arena.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "IC-GRAND-skyline-masses-unmerged",
     "file": "src/world/imperialImpostor.js",
-    "old": "    while (j + w < 8 && !used[i * 8 + j + w] && key[i * 8 + j + w] === k) w++;\n",
-    "new": "",
+    "old": "      while (j + w < 8 && !used[i * 8 + j + w] && key[i * 8 + j + w] === k) w++;\n      for (; i + d < 8; d++) {",
+    "new": "      for (; i + d < 8; d++) {",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "IC-GRAND-skyline-frame-z-south",
     "file": "src/world/imperialImpostor.js",
-    "old": "positions[o + 2] = oz - q.v[k][2];",
-    "new": "positions[o + 2] = q.v[k][2] - oz + PIXEL;",
+    "old": "      positions[o + 2] = oz - q.v[k][2];",
+    "new": "      positions[o + 2] = q.v[k][2] - oz + PIXEL;",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "IC-GRAND-skyline-never-let-go",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "{ if (handles.size || owed.length) drop(); ring = fr; }",
-    "new": "{ ring = fr; }",
+    "old": "      if (handles.size || owed.length) drop();\n      ring = fr;",
+    "new": "      ring = fr;",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "IC-GRAND-skyline-stood-at-nought",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "mesh: lifted(mesh, cityY, Math.min(cityY, lo))",
-    "new": "mesh: lifted(mesh, 0, Math.min(cityY, lo))",
+    "old": "      handles.set(s, fr.addLandmark({ px, py, mesh: lifted(mesh, cityY, Math.min(cityY, lo)), key: `imperial:${s}` }));",
+    "new": "      handles.set(s, fr.addLandmark({ px, py, mesh: lifted(mesh, 0, Math.min(cityY, lo)), key: `imperial:${s}` }));",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "IC-GRAND-skyline-all-at-once",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "while (owed.length && now() - t0 < SKYLINE_BUDGET_MS) {",
-    "new": "while (owed.length) {",
+    "old": "    while (owed.length && now() - t0 < SKYLINE_BUDGET_MS) {",
+    "new": "    while (owed.length) {",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -355,8 +355,8 @@
   {
     "name": "IC-GRAND-skyline-far-first",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "      .sort((a, b) => Math.hypot(",
-    "new": "      .sort((b, a) => Math.hypot(",
+    "old": "      (a, b) =>",
+    "new": "      (b, a) =>",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -364,8 +364,8 @@
   {
     "name": "IC-GRAND-skyline-wait-forgotten",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "{ owed.push(...waiting); waiting = []; }",
-    "new": "{ waiting = []; }",
+    "old": "      owed.push(...waiting);\n      waiting = [];",
+    "new": "      waiting = [];",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -373,8 +373,8 @@
   {
     "name": "IC-GRAND-skyline-disposed-kept",
     "file": "src/scenes/capitalSkyline.js",
-    "old": " || (first && !first.landmark.vao)",
-    "new": "",
+    "old": "    if (\n      fr !== ring ||\n      !within ||\n      (first && !first.landmark.vao) ||\n      (at && centre && (at.px !== centre.px || at.py !== centre.py))\n    ) {",
+    "new": "    if (fr !== ring || !within || (at && centre && (at.px !== centre.px || at.py !== centre.py))) {",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -409,8 +409,8 @@
   {
     "name": "IC-GRAND-ids-own-in-the-walls",
     "file": "src/world/imperialBlocks.js",
-    "old": "own: 2_060_000,",
-    "new": "own: 2_000_000,",
+    "old": "export const IMPERIAL_BLOCK_INDEX = Object.freeze({ own: 2_060_000, far: 2_100_000, lake: 2_200_000 });",
+    "new": "export const IMPERIAL_BLOCK_INDEX = Object.freeze({ own: 2_000_000, far: 2_100_000, lake: 2_200_000 });",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -418,8 +418,8 @@
   {
     "name": "IC-GRAND-prebuild-models-first",
     "file": "src/world/imperialPrebuild.js",
-    "old": "  return [...blocks, ...IMPERIAL_SLICE_PARTS[s]",
-    "new": "  return [...models, ...blocks, ...IMPERIAL_SLICE_PARTS[s]",
+    "old": "    ...blocks,",
+    "new": "    ...models,\n    ...blocks,",
     "tests": [
       "test/world/icgrand_prebuild.test.js"
     ]
@@ -427,8 +427,8 @@
   {
     "name": "IC-GRAND-prebuild-far-made-near",
     "file": "src/world/imperialPrebuild.js",
-    "old": "if (near) { if (own) { blocks.push(",
-    "new": "if (true) { if (own) { blocks.push(",
+    "old": "    if (near) {",
+    "new": "    if (true) {",
     "tests": [
       "test/world/icgrand_prebuild.test.js"
     ]
@@ -436,8 +436,8 @@
   {
     "name": "IC-GRAND-prebuild-handed-twice",
     "file": "src/world/imperialPrebuildClient.js",
-    "old": "      held.delete(k);\n      taken++;\n      return v;\n    },\n    /** A model the worker made",
-    "new": "      taken++;\n      return v;\n    },\n    /** A model the worker made",
+    "old": "        return null;\n      }\n      const v = held.get(k);\n      held.delete(k);\n      taken++;\n      return v;\n    },",
+    "new": "        return null;\n      }\n      const v = held.get(k);\n      taken++;\n      return v;\n    },",
     "tests": [
       "test/world/icgrand_prebuild.test.js"
     ]
@@ -445,8 +445,8 @@
   {
     "name": "IC-GRAND-prebuild-worker-never-told",
     "file": "src/world/imperialPrebuildClient.js",
-    "old": "{ missed++; client.made(k); return null; }",
-    "new": "{ missed++; return null; }",
+    "old": "        client.made(k);\n        return null;",
+    "new": "        return null;",
     "tests": [
       "test/world/icgrand_prebuild.test.js"
     ]
@@ -454,8 +454,8 @@
   {
     "name": "IC-GRAND-prebuild-list-appended",
     "file": "src/world/imperialPrebuildWorker.js",
-    "old": "queue = (msg.slices ?? []).flatMap(({ s, near }) => sliceWork(s, !!near)).filter((w) => !done.has(keyOf(w))); }",
-    "new": "queue = [...queue, ...(msg.slices ?? []).flatMap(({ s, near }) => sliceWork(s, !!near)).filter((w) => !done.has(keyOf(w)))]; }",
+    "old": "        queue = (msg.slices ?? []).flatMap(({ s, near }) => sliceWork(s, !!near)).filter((w) => !done.has(keyOf(w)));",
+    "new": "        queue = [\n          ...queue,\n          ...(msg.slices ?? []).flatMap(({ s, near }) => sliceWork(s, !!near)).filter((w) => !done.has(keyOf(w))),\n        ];",
     "tests": [
       "test/world/icgrand_prebuild.test.js"
     ]
@@ -481,8 +481,8 @@
   {
     "name": "IC-GRAND-prebuild-far-first",
     "file": "src/scenes/capitalPrebuild.js",
-    "old": "for (let ring = 0; ring <= NEAR_RING + 1; ring++) {",
-    "new": "for (let ring = NEAR_RING + 1; ring >= 0; ring--) {",
+    "old": "  for (let ring = 0; ring <= NEAR_RING + 1; ring++) {",
+    "new": "  for (let ring = NEAR_RING + 1; ring >= 0; ring--) {",
     "tests": [
       "test/world/icgrand_prebuild.test.js"
     ]
@@ -490,8 +490,8 @@
   {
     "name": "IC-GRAND-prebuild-reach-unread",
     "file": "src/scenes/capitalPrebuild.js",
-    "old": "> PREBUILD_REACH) { drop(); return; }",
-    "new": "> PREBUILD_REACH * 99) { drop(); return; }",
+    "old": "    if (!cur || !c || Math.max(Math.abs(cur.x - c.px), Math.abs(cur.y - c.py)) > PREBUILD_REACH) {",
+    "new": "    if (!cur || !c || Math.max(Math.abs(cur.x - c.px), Math.abs(cur.y - c.py)) > PREBUILD_REACH * 99) {",
     "tests": [
       "test/world/icgrand_prebuild.test.js"
     ]
@@ -508,8 +508,8 @@
   {
     "name": "IC-GRAND-palace-gate-walled",
     "file": "src/world/imperialCity.js",
-    "old": "return !(palaceGates().some(",
-    "new": "return !(false && palaceGates().some(",
+    "old": "    palaceGates().some((g) => Math.abs((((mid - g) % 360) + 360) % 360) < 1e-6) && Math.abs(along) < P.gate / 2 - 0.5",
+    "new": "    false &&\n    palaceGates().some((g) => Math.abs((((mid - g) % 360) + 360) % 360) < 1e-6) &&\n    Math.abs(along) < P.gate / 2 - 0.5",
     "tests": [
       "test/world/icgrand_palace.test.js"
     ]
@@ -517,8 +517,8 @@
   {
     "name": "IC-GRAND-palace-gate-unbuilt",
     "file": "src/world/capitalImperial.js",
-    "old": "P = framed(...polar(b, rm), face), gate = gates.has(b), gw",
-    "new": "P = framed(...polar(b, rm), face), gate = false, gw",
+    "old": "      gate = gates.has(b),",
+    "new": "      gate = false,",
     "tests": [
       "test/world/icgrand_palace.test.js"
     ]
@@ -526,8 +526,8 @@
   {
     "name": "IC-GRAND-palace-pavilions-open",
     "file": "src/world/imperialCity.js",
-    "old": "for (const [cx, cz] of palacePillars(I)) if (Math.hypot(x - cx, z - cz) < P.pavilionR + 0.5) return true;",
-    "new": "for (const [cx, cz] of palacePillars(I)) if (Math.hypot(x - cx, z - cz) < 0) return true;",
+    "old": "  for (const [cx, cz] of palacePillars(I)) if (Math.hypot(x - cx, z - cz) < P.pavilionR + 0.5) return true;",
+    "new": "  for (const [cx, cz] of palacePillars(I)) if (Math.hypot(x - cx, z - cz) < 0) return true;",
     "tests": [
       "test/world/icgrand_palace.test.js"
     ]
@@ -535,8 +535,8 @@
   {
     "name": "IC-GRAND-palace-plaza-swallowed",
     "file": "src/world/imperialCity.js",
-    "old": "palace: Object.freeze({ r0: 312,",
-    "new": "palace: Object.freeze({ r0: 212,",
+    "old": "    r0: 312,",
+    "new": "    r0: 212,",
     "tests": [
       "test/world/icgrand_palace.test.js"
     ]
@@ -544,8 +544,8 @@
   {
     "name": "IC-GRAND-gardens-paths-unlaid",
     "file": "src/world/imperialCity.js",
-    "old": "if (gardenPathDistance(x, z, I)[0] < G.path / 2) return 3;",
-    "new": "if (gardenPathDistance(x, z, I)[0] < 0) return 3;",
+    "old": "  if (gardenPathDistance(x, z, I)[0] < G.path / 2) return 3;",
+    "new": "  if (gardenPathDistance(x, z, I)[0] < 0) return 3;",
     "tests": [
       "test/world/icgrand_palace.test.js"
     ]
@@ -553,8 +553,8 @@
   {
     "name": "IC-GRAND-gardens-walks-unlaid",
     "file": "src/world/imperialCity.js",
-    "old": "if (Math.abs(r - w) < G.walk / 2) return 3;",
-    "new": "if (Math.abs(r - w) < 0) return 3;",
+    "old": "    if (Math.abs(r - w) < G.walk / 2) return 3;",
+    "new": "    if (Math.abs(r - w) < 0) return 3;",
     "tests": [
       "test/world/icgrand_palace.test.js"
     ]
@@ -562,8 +562,8 @@
   {
     "name": "IC-GRAND-gardens-fountains-open",
     "file": "src/world/imperialCity.js",
-    "old": "if (Math.hypot(x - fx, z - fz) < F.fountainR + 0.5) return true;",
-    "new": "if (Math.hypot(x - fx, z - fz) < 0) return true;",
+    "old": "    for (const [fx, fz] of G.fountains) if (Math.hypot(x - fx, z - fz) < F.fountainR + 0.5) return true;",
+    "new": "    for (const [fx, fz] of G.fountains) if (Math.hypot(x - fx, z - fz) < 0) return true;",
     "tests": [
       "test/world/icgrand_palace.test.js"
     ]
@@ -571,8 +571,8 @@
   {
     "name": "IC-GRAND-gardens-statue-open",
     "file": "src/world/imperialCity.js",
-    "old": "return k >= 0 && statueStands(rk, I) && Math.abs(along - rk) < lim;",
-    "new": "return false && k >= 0 && statueStands(rk, I) && Math.abs(along - rk) < lim;",
+    "old": "  return k >= 0 && statueStands(rk, I) && Math.abs(along - rk) < lim;",
+    "new": "  return false && k >= 0 && statueStands(rk, I) && Math.abs(along - rk) < lim;",
     "tests": [
       "test/world/icgrand_palace.test.js"
     ]
@@ -580,8 +580,8 @@
   {
     "name": "IC-GRAND-gardens-rows-unplanted",
     "file": "src/world/imperialCity.js",
-    "old": "if (Math.abs(dp - G.rowOff) < half) return Math.floor(",
-    "new": "if (Math.abs(dp - G.rowOff) < half) return false && Math.floor(",
+    "old": "    return Math.floor(Math.abs(r * Math.cos(rad(imperialBearing(x, z) - pb))) / G.rowEvery) % 2 === 0;",
+    "new": "    return false && Math.floor(Math.abs(r * Math.cos(rad(imperialBearing(x, z) - pb))) / G.rowEvery) % 2 === 0;",
     "tests": [
       "test/world/icgrand_palace.test.js"
     ]
@@ -598,8 +598,8 @@
   {
     "name": "IC-GRAND-gardens-statues-unbuilt",
     "file": "src/world/capitalImperial.js",
-    "old": "g.statues.forEach(([x, z, fx, fz], i) => { if (only([x, z], [x, z])) emperorStatue(",
-    "new": "g.statues.forEach(([x, z, fx, fz], i) => { if (false) emperorStatue(",
+    "old": "    if (only([x, z], [x, z])) emperorStatue(mb, x, z, [fx, fz], i % 3);",
+    "new": "    if (false) emperorStatue(mb, x, z, [fx, fz], i % 3);",
     "tests": [
       "test/world/icgrand_palace.test.js"
     ]
@@ -607,8 +607,8 @@
   {
     "name": "IC-GRAND-tombs-face-tower",
     "file": "src/world/capitalImperial.js",
-    "old": "const [x, z] = tombAt(i), P = framed(x, z, unit([x, z]));",
-    "new": "const [x, z] = tombAt(i), P = framed(x, z, unit([-x, -z]));",
+    "old": "      P = framed(x, z, unit([x, z]));",
+    "new": "      P = framed(x, z, unit([-x, -z]));",
     "tests": [
       "test/world/icgrand_palace.test.js"
     ]
@@ -616,8 +616,8 @@
   {
     "name": "IC-GRAND-tombs-walk-unpaved",
     "file": "src/world/imperialCity.js",
-    "old": "if (Math.abs(s) < T.walk / 2 && f >= 0) return 3;",
-    "new": "if (Math.abs(s) < T.walk / 2 && f >= 999) return 3;",
+    "old": "    if (Math.abs(s) < T.walk / 2 && f >= 0) return 3; // its walk out to the Way",
+    "new": "    if (Math.abs(s) < T.walk / 2 && f >= 999) return 3; // its walk out to the Way",
     "tests": [
       "test/world/icgrand_palace.test.js"
     ]
@@ -625,8 +625,8 @@
   {
     "name": "IC-GRAND-tombs-podium-open",
     "file": "src/world/imperialCity.js",
-    "old": "if (Math.abs(f) < I.tombs.w / 2 + I.tombs.podium && Math.abs(s) < I.tombs.w / 2 + I.tombs.podium) return true; }",
-    "new": "if (Math.abs(f) < I.tombs.w / 2 + I.tombs.podium && Math.abs(s) < I.tombs.w / 2 + I.tombs.podium) return false; }",
+    "old": "    if (Math.abs(f) < I.tombs.w / 2 + I.tombs.podium && Math.abs(s) < I.tombs.w / 2 + I.tombs.podium) return true;",
+    "new": "    if (Math.abs(f) < I.tombs.w / 2 + I.tombs.podium && Math.abs(s) < I.tombs.w / 2 + I.tombs.podium) return false;",
     "tests": [
       "test/world/icgrand_palace.test.js"
     ]
@@ -634,8 +634,8 @@
   {
     "name": "IC-GRAND-palacewall-arches-unbuilt",
     "file": "src/world/capitalImperial.js",
-    "old": "obox(mb, MARBLE, P, -t, t, -wd, wd, W.gateH, top);   // the arch's mass over the gate",
-    "new": "// the arch's mass over the gate",
+    "old": "    obox(mb, MARBLE, P, -t, t, -wd, wd, W.gateH, top); // the arch's mass over the gate",
+    "new": "    // the arch's mass over the gate",
     "tests": [
       "test/world/icgrand_palace.test.js"
     ]
@@ -652,8 +652,8 @@
   {
     "name": "IC-GRAND-courts-no-back",
     "file": "src/world/imperialFabric.js",
-    "old": "if (court && Math.min(cw, ct) >= BACK.min) {",
-    "new": "if (court && Math.min(cw, ct) >= BACK.min * 99) {",
+    "old": "  if (court && Math.min(cw, ct) >= BACK.min) {",
+    "new": "  if (court && Math.min(cw, ct) >= BACK.min * 99) {",
     "tests": [
       "test/world/icgrand_fabric.test.js"
     ]
@@ -661,8 +661,8 @@
   {
     "name": "IC-GRAND-courts-walls-through-back",
     "file": "src/world/imperialFabric.js",
-    "old": "if (court && backs.length) {",
-    "new": "if (false) {",
+    "old": "  if (court && backs.length) {",
+    "new": "  if (false) {",
     "tests": [
       "test/world/icgrand_fabric.test.js"
     ]
@@ -670,8 +670,8 @@
   {
     "name": "IC-GRAND-courts-no-well",
     "file": "src/world/imperialFabric.js",
-    "old": "u01(seed, 24) < 0.5 ? [P(Ls - D - 3, Lt - D - 3)] : [];",
-    "new": "u01(seed, 24) < 0 ? [P(Ls - D - 3, Lt - D - 3)] : [];",
+    "old": "  const wells = court && cw > 9 && ct > 9 && u01(seed, 24) < 0.5 ? [P(Ls - D - 3, Lt - D - 3)] : [];",
+    "new": "  const wells = court && cw > 9 && ct > 9 && u01(seed, 24) < 0 ? [P(Ls - D - 3, Lt - D - 3)] : [];",
     "tests": [
       "test/world/icgrand_fabric.test.js"
     ]
@@ -679,8 +679,8 @@
   {
     "name": "IC-GRAND-courts-no-fountain",
     "file": "src/world/imperialFabric.js",
-    "old": "{ L.ground.fountains.push(m); if (mine) L.fountains.push(m); }",
-    "new": "{ L.ground.fountains.push(m); }",
+    "old": "          if (mine) L.fountains.push(m);\n        }",
+    "new": "        }",
     "tests": [
       "test/world/icgrand_fabric.test.js"
     ]
@@ -688,8 +688,8 @@
   {
     "name": "IC-GRAND-courts-orchards-unordered",
     "file": "src/world/imperialFabric.js",
-    "old": "    if (orchard()) return row() ? pick : -1;\n    const grove",
-    "new": "    if (orchard()) return hh % 3 === 0 ? pick : -1;\n    const grove",
+    "old": "    if (orchard()) return row() ? pick : -1;",
+    "new": "    if (orchard()) return hh % 3 === 0 ? pick : -1;",
     "tests": [
       "test/world/icgrand_fabric.test.js"
     ]
@@ -697,8 +697,8 @@
   {
     "name": "IC-GRAND-courts-yards-bare",
     "file": "src/world/imperialFabric.js",
-    "old": "return hh % (garden ? 5 : 11) === 0 ? pick : -1;",
-    "new": "return garden && hh % 5 === 0 ? pick : -1;",
+    "old": "    return hh % (garden ? 5 : 11) === 0 ? pick : -1;",
+    "new": "    return garden && hh % 5 === 0 ? pick : -1;",
     "tests": [
       "test/world/icgrand_fabric.test.js"
     ]
@@ -706,8 +706,8 @@
   {
     "name": "IC-GRAND-courts-back-too-high",
     "file": "src/world/imperialFabric.js",
-    "old": "const low = Math.max(h.k[0] - 1, 2, Math.min(...ks) - 2);",
-    "new": "const low = Math.max(h.k[0] - 1, 2, Math.max(...ks) + 2);",
+    "old": "  const low = Math.max(h.k[0] - 1, 2, Math.min(...ks) - 2);",
+    "new": "  const low = Math.max(h.k[0] - 1, 2, Math.max(...ks) + 2);",
     "tests": [
       "test/world/icgrand_fabric.test.js"
     ]
@@ -715,8 +715,8 @@
   {
     "name": "IC-GRAND-ground-cell-own-alone",
     "file": "src/world/imperialFabric.js",
-    "old": "const G = L.ground;   // IC-GRAND: every near block's, not the cell's own alone",
-    "new": "const G = L;   // IC-GRAND: every near block's, not the cell's own alone",
+    "old": "  const G = L.ground; // IC-GRAND: every near block's, not the cell's own alone",
+    "new": "  const G = L; // IC-GRAND: every near block's, not the cell's own alone",
     "tests": [
       "test/world/icgrand_fabric.test.js"
     ]
@@ -733,8 +733,8 @@
   {
     "name": "IC-GRAND-prebuild-never-forgotten",
     "file": "src/world/imperialPrebuildWorker.js",
-    "old": "if (done.size > DONE_KEEP) done.delete(",
-    "new": "if (done.size > DONE_KEEP * 99) done.delete(",
+    "old": "    if (done.size > DONE_KEEP) done.delete(/** @type {string} */ (done.values().next().value));",
+    "new": "    if (done.size > DONE_KEEP * 99) done.delete(/** @type {string} */ (done.values().next().value));",
     "tests": [
       "test/world/icgrand_prebuild.test.js"
     ]
@@ -742,8 +742,8 @@
   {
     "name": "IC-GRAND-tower-unfluted",
     "file": "src/world/capitalImperial.js",
-    "old": "k = i % 2 ? 1 - depth : 1;",
-    "new": "k = 1;",
+    "old": "      k = i % 2 ? 1 - depth : 1;",
+    "new": "      k = 1;",
     "tests": [
       "test/tesa11_imperial.test.js"
     ]
@@ -751,8 +751,8 @@
   {
     "name": "IC-GRAND-tower-tiers-unringed",
     "file": "src/world/capitalImperial.js",
-    "old": "    if (y1 < T.shaftTop) {\n      const balcony",
-    "new": "    if (false) {\n      const balcony",
+    "old": "    if (y1 < T.shaftTop) {",
+    "new": "    if (false) {",
     "tests": [
       "test/tesa11_imperial.test.js"
     ]
@@ -760,8 +760,8 @@
   {
     "name": "IC-GRAND-palace-gate-pillars-unbuilt",
     "file": "src/world/imperialCity.js",
-    "old": "return [...palaceCorners(I), ...palaceGates().flatMap(",
-    "new": "return [...palaceCorners(I), ...[].flatMap(",
+    "old": "    ...palaceGates().flatMap((g) => {",
+    "new": "    ...[].flatMap((g) => {",
     "tests": [
       "test/world/icgrand_palace.test.js"
     ]
@@ -769,8 +769,8 @@
   {
     "name": "R1-4-skyline-own-pixel",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "mesh: lifted(mesh, cityY, Math.min(cityY, lo))",
-    "new": "mesh: lifted(mesh, fr.groundAt(px, py), Math.min(cityY, lo))",
+    "old": "      handles.set(s, fr.addLandmark({ px, py, mesh: lifted(mesh, cityY, Math.min(cityY, lo)), key: `imperial:${s}` }));",
+    "new": "      handles.set(\n        s,\n        fr.addLandmark({ px, py, mesh: lifted(mesh, fr.groundAt(px, py), Math.min(cityY, lo)), key: `imperial:${s}` }),\n      );",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -778,8 +778,8 @@
   {
     "name": "R1-4-skyline-feet-in-the-air",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "mesh: lifted(mesh, cityY, Math.min(cityY, lo))",
-    "new": "mesh: lifted(mesh, cityY, cityY)",
+    "old": "      handles.set(s, fr.addLandmark({ px, py, mesh: lifted(mesh, cityY, Math.min(cityY, lo)), key: `imperial:${s}` }));",
+    "new": "      handles.set(s, fr.addLandmark({ px, py, mesh: lifted(mesh, cityY, cityY), key: `imperial:${s}` }));",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -787,8 +787,8 @@
   {
     "name": "R1-4-skyline-feet-above",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "mesh: lifted(mesh, cityY, Math.min(cityY, lo))",
-    "new": "mesh: lifted(mesh, cityY, lo)",
+    "old": "      handles.set(s, fr.addLandmark({ px, py, mesh: lifted(mesh, cityY, Math.min(cityY, lo)), key: `imperial:${s}` }));",
+    "new": "      handles.set(s, fr.addLandmark({ px, py, mesh: lifted(mesh, cityY, lo), key: `imperial:${s}` }));",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -796,8 +796,8 @@
   {
     "name": "R1-4-skyline-feet-own-pixel",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++)",
-    "new": "for (let dy = 0; dy <= 0; dy++) for (let dx = 0; dx <= 0; dx++)",
+    "old": "  for (let dy = -1; dy <= 1; dy++)\n    for (let dx = -1; dx <= 1; dx++) {",
+    "new": "  for (let dy = 0; dy <= 0; dy++)\n    for (let dx = 0; dx <= 0; dx++) {",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -805,8 +805,8 @@
   {
     "name": "R1-4-skyline-estimate-kept",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "if (!stood || (!stood.known && g.known)) stood = g;",
-    "new": "if (!stood) stood = g;",
+    "old": "      if (!stood || (!stood.known && g.known)) stood = g;",
+    "new": "      if (!stood) stood = g;",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -814,8 +814,8 @@
   {
     "name": "R1-4-skyline-estimate-not-restood",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "{ for (const h of handles.values()) h.remove(); handles.clear(); waiting = []; owe(centre, cur); }",
-    "new": "{ }",
+    "old": "        for (const h of handles.values()) h.remove();\n        handles.clear();\n        waiting = [];\n        owe(centre, cur);\n      }",
+    "new": "      }",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -823,8 +823,8 @@
   {
     "name": "R1-4-skyline-centre-unread",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "  const y = fr.groundAt(centre.px, centre.py);\n  if (y != null) return { y, known: true };\n",
-    "new": "",
+    "old": "  const y = fr.groundAt(centre.px, centre.py);\n  if (y != null) return { y, known: true };\n  for (const s of BY_CENTRE) {",
+    "new": "  for (const s of BY_CENTRE) {",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -879,8 +879,8 @@
   {
     "name": "IC-FOOTPRINT-worker-unlaid",
     "file": "src/world/imperialPrebuildWorker.js",
-    "old": "return prebuildDeps(imperialSliceFootprint, partModel);",
-    "new": "return prebuildDeps(undefined, partModel);",
+    "old": "  return prebuildDeps(imperialSliceFootprint, partModel);",
+    "new": "  return prebuildDeps(undefined, partModel);",
     "tests": [
       "test/world/icgrand_prebuild.test.js"
     ]
@@ -888,8 +888,8 @@
   {
     "name": "IC-FOOTPRINT-parts-unmade",
     "file": "src/world/imperialPrebuild.js",
-    "old": "...IMPERIAL_SLICE_PARTS[s].map((id) => /** @type {{ kind: 'model', id: number }} */ ({ kind: 'model', id: near ? id : imperialFarPartId(id) })), ",
-    "new": "",
+    "old": "  return [\n    ...blocks,\n    ...IMPERIAL_SLICE_PARTS[s].map(\n      (id) => /** @type {{ kind: 'model', id: number }} */ ({ kind: 'model', id: near ? id : imperialFarPartId(id) }),\n    ),\n    ...models,\n  ]; // IC-TOWER-LOD: a far view's coarse",
+    "new": "  return [...blocks, ...models]; // IC-TOWER-LOD: a far view's coarse",
     "tests": [
       "test/world/icgrand_prebuild.test.js"
     ]
@@ -906,8 +906,8 @@
   {
     "name": "IC-FOOTPRINT-worker-parts-unbuilt",
     "file": "src/world/imperialPrebuildWorker.js",
-    "old": "const m = isImperialPartId(id) ? customModelFor(id) : null;",
-    "new": "const m = null;",
+    "old": "    const m = isImperialPartId(id) ? customModelFor(id) : null;",
+    "new": "    const m = null;",
     "tests": [
       "test/world/icgrand_prebuild.test.js"
     ]
@@ -925,8 +925,8 @@
   {
     "name": "IC-TOWER-LOD-far-view-whole",
     "file": "src/world/imperialBlocks.js",
-    "old": "const models = [...parts.map(imperialFarPartId), ...(carrier",
-    "new": "const models = [...parts, ...(carrier",
+    "old": "    const models = [...parts.map(imperialFarPartId), ...(carrier ? [imperialSkylineId(s)] : [])].map((id) =>",
+    "new": "    const models = [...parts, ...(carrier ? [imperialSkylineId(s)] : [])].map((id) =>",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -934,8 +934,8 @@
   {
     "name": "IC-TOWER-LOD-worker-far-whole",
     "file": "src/world/imperialPrebuild.js",
-    "old": "({ kind: 'model', id: near ? id : imperialFarPartId(id) })",
-    "new": "({ kind: 'model', id })",
+    "old": "    ...IMPERIAL_SLICE_PARTS[s].map(\n      (id) => /** @type {{ kind: 'model', id: number }} */ ({ kind: 'model', id: near ? id : imperialFarPartId(id) }),\n    ),",
+    "new": "    ...IMPERIAL_SLICE_PARTS[s].map((id) => /** @type {{ kind: 'model', id: number }} */ ({ kind: 'model', id })),",
     "tests": [
       "test/world/icgrand_lod.test.js",
       "test/world/icgrand_prebuild.test.js"
@@ -953,8 +953,8 @@
   {
     "name": "IC-TOWER-LOD-silhouette-off-its-list",
     "file": "src/world/imperialImpostor.js",
-    "old": "  for (const t of imperialTowerLod(I.tower)) prism(0, 0, t.n, t.r0,",
-    "new": "  for (const t of imperialTowerLod(I.tower)) prism(0, 0, t.n + 1, t.r0,",
+    "old": "  for (const t of imperialTowerLod(I.tower)) prism(0, 0, t.n, t.r0, t.y0, t.r1, t.y1, mats[t.mat], t.cap);",
+    "new": "  for (const t of imperialTowerLod(I.tower)) prism(0, 0, t.n + 1, t.r0, t.y0, t.r1, t.y1, mats[t.mat], t.cap);",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -962,8 +962,8 @@
   {
     "name": "IC-TOWER-LOD-palace-runs-thick",
     "file": "src/world/capitalImperial.js",
-    "old": "    obox(mb, LOD_ART[w.mat], P, -w.t / 2, w.t / 2, -len / 2, len / 2,",
-    "new": "    obox(mb, LOD_ART[w.mat], P, -w.t, w.t, -len / 2, len / 2,",
+    "old": "    obox(mb, LOD_ART[w.mat], P, -w.t / 2, w.t / 2, -len / 2, len / 2, w.mat === 'slate' ? I.palace.h - 0.5 : -2, w.h);",
+    "new": "    obox(mb, LOD_ART[w.mat], P, -w.t, w.t, -len / 2, len / 2, w.mat === 'slate' ? I.palace.h - 0.5 : -2, w.h);",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]

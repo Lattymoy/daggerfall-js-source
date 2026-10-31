@@ -17,13 +17,37 @@
 // Dressed by the kit's roles (ui/enhanced/enhancedFrame.js FRAME_ROLES): the filters are tiles, a row a list line, a row
 // opened a panel, a tag a chip, Wear the kit's button - this sheet writes geometry and the words' colours alone.
 import { t } from '../../systems/textManager.js';
-import { titleBadge, paintTitle, glyphBadges, glyphSvgNode, TITLE_RGBA, TITLE_GRADIENT, AURA_PAINT, cssRgba } from '../playerBadge.js';
-import { armoryPieceOf } from '../../net/armoryLaw.js';   // ARMORY: a piece's slot and line
-import { profileIconNode } from '../profileIcons.js';
-import { inkColour, GRIMOIRE_DRESS } from '../grimoireDress.js';   // AUDIT COLLECTIONS-II (lane 3): a painted word inked on the Grimoire's page
 import {
-  WARDROBE_SOURCES, AVAIL_NOW, AVAIL_TAG, sourceName, wordPair, wardrobeEntries, wardrobeEntry, wardrobeName, wardrobeHeld, wardrobeWorn,
-  wardrobeCounted, wardrobeKnown, wardrobeAvail, availLine, festivalUntilText,
+  titleBadge,
+  paintTitle,
+  glyphBadges,
+  glyphSvgNode,
+  TITLE_RGBA,
+  TITLE_GRADIENT,
+  AURA_PAINT,
+  cssRgba,
+  ARMORY_LINE_GRADIENT,
+  armoryLineBadge,
+} from '../playerBadge.js';
+import { armoryPieceOf } from '../../net/armoryLaw.js'; // ARMORY: a piece's slot and line
+import { profileIconNode } from '../profileIcons.js';
+import { inkPaintedWord } from '../grimoireDress.js'; // AUDIT COLLECTIONS-II (lane 3): a painted word inked on the Grimoire's page (one home since AUDIT-STOREFRONT II)
+import {
+  WARDROBE_SOURCES,
+  AVAIL_NOW,
+  AVAIL_TAG,
+  sourceName,
+  wordPair,
+  wardrobeEntries,
+  wardrobeEntry,
+  wardrobeName,
+  wardrobeHeld,
+  wardrobeWorn,
+  wardrobeCounted,
+  wardrobeKnown,
+  wardrobeAvail,
+  availLine,
+  festivalUntilText,
 } from './wardrobeCatalogue.js';
 
 /** The filters, in their row's order. */
@@ -34,35 +58,57 @@ export const WARDROBE_FILTERS = Object.freeze([
   wordPair('now', () => t('coll.filter.now', 'Obtainable')),
 ]);
 /** Whether an entry passes a filter, against a wardrobe, now. Pure. */
-export function wardrobeFilterPasses(/** @type {string} */ filter, /** @type {any} */ e, /** @type {any} */ wardrobe, nowMs = Date.now()) {
+export function wardrobeFilterPasses(
+  /** @type {string} */ filter,
+  /** @type {any} */ e,
+  /** @type {any} */ wardrobe,
+  nowMs = Date.now(),
+  /** @type {any} */ shop = null,
+) {
   if (filter === 'held') return wardrobeHeld(e.kind, e.key, wardrobe);
-  if (filter === 'missing') return wardrobeKnown(e) && !wardrobeHeld(e.kind, e.key, wardrobe);   // a character's own is not "missing" from an account that never keeps it
-  if (filter === 'now') return AVAIL_NOW.includes(wardrobeAvail(e, nowMs));
+  if (filter === 'missing') return wardrobeKnown(e) && !wardrobeHeld(e.kind, e.key, wardrobe); // a character's own is not "missing" from an account that never keeps it
+  if (filter === 'now') return AVAIL_NOW.includes(wardrobeAvail(e, nowMs, shop));
   return true;
 }
 
 let _filter = 'all';
-let _open = /** @type {string|null} */ (null);   // the row opened whole, `kind:key`
+let _open = /** @type {string|null} */ (null); // the row opened whole, `kind:key`
 /** @type {any} */
 let _flow = null;
-let _rereadOnceAnswered = false;   // the card closed while a press of the page's own was out: ask again once it is answered
-let _noteKind = /** @type {string|null} */ (null);   // AUDIT COLLECTIONS-II (lane 3): the kind the flow's last word is about
+let _rereadOnceAnswered = false; // the card closed while a press of the page's own was out: ask again once it is answered
+let _noteKind = /** @type {string|null} */ (null); // AUDIT COLLECTIONS-II (lane 3): the kind the flow's last word is about
 /** The parts forgotten (a new visit): every row closed, the filter back to All, the account asked again next draw - the
  *  old visit's read let go, so its later answers repaint nothing. */
-export function resetWardrobePart() { _filter = 'all'; _open = null; _flow = null; _rereadOnceAnswered = false; _noteKind = null; }
+export function resetWardrobePart() {
+  _filter = 'all';
+  _open = null;
+  _flow = null;
+  _rereadOnceAnswered = false;
+  _noteKind = null;
+}
 /** AUDIT COLLECTIONS-II (lane 2): THE ACCOUNT CARD CLOSED - what it did is the service's to say again: the visit's read
  *  asked anew (`start`: a sign-out lands on `out`, another account is read with its own session), at once while its flow
  *  is idle, else once the press in flight is answered (Home.md, ASYNC NEVER DROPS). Nothing to ask with no read yet. */
 export function rereadWardrobeAccount() {
   if (!_flow) return;
-  if (_flow.busy) { _rereadOnceAnswered = true; return; }
+  if (_flow.busy) {
+    _rereadOnceAnswered = true;
+    return;
+  }
   startRead(_flow);
 }
 /** A read begun after the draw that asked - never inside it (a read's first word repaints, and a repaint inside a draw
  *  rebuilds the page under it). */
-const startRead = (/** @type {any} */ flow) => { Promise.resolve().then(() => flow?.start?.()).catch(() => {}); };
+const startRead = (/** @type {any} */ flow) => {
+  Promise.resolve()
+    .then(() => flow?.start?.())
+    .catch(() => {});
+};
 /** A row to open (a "comes with" pressed, a landing). */
-export function openWardrobeRow(/** @type {string} */ kind, /** @type {string} */ key) { _open = `${kind}:${key}`; if (_filter !== 'all') _filter = 'all'; }
+export function openWardrobeRow(/** @type {string} */ kind, /** @type {string} */ key) {
+  _open = `${kind}:${key}`;
+  if (_filter !== 'all') _filter = 'all';
+}
 
 /**
  * THE ACCOUNT THIS VISIT READS: the flow the host's `kit.account` builds, its first read begun after the draw that asked
@@ -74,7 +120,10 @@ export function wardrobeAccount(kit, rerender) {
   if (_flow || typeof kit?.account !== 'function') return _flow;
   const flow = kit.account(() => {
     if (_flow !== flow) return;
-    if (_rereadOnceAnswered && !flow.busy) { _rereadOnceAnswered = false; startRead(flow); }
+    if (_rereadOnceAnswered && !flow.busy) {
+      _rereadOnceAnswered = false;
+      startRead(flow);
+    }
     rerender();
   });
   _flow = flow;
@@ -82,7 +131,7 @@ export function wardrobeAccount(kit, rerender) {
   return flow;
 }
 /** The wardrobe the account answered, or null (nobody signed in, the read not back, offline). */
-export const wardrobeOfFlow = (/** @type {any} */ flow) => (flow?.stage === 'in' ? flow.wardrobe ?? null : null);
+export const wardrobeOfFlow = (/** @type {any} */ flow) => (flow?.stage === 'in' ? (flow.wardrobe ?? null) : null);
 
 export const WARDROBE_PART_CSS = `
 .px-sys .coll-acct { font-size: 12px; color: #b8b0a0; margin: 0 0 8px; }
@@ -156,41 +205,70 @@ function paintedWord(el, /** @type {string} */ kind, /** @type {string} */ key, 
   const cell = el('span', cls);
   const plate = el('span', 'coll-plate');
   const word = el('span', 'coll-word', wardrobeName(kind, key));
-  const paintKey = kind === 'title' ? key : kind === 'aura' ? AURA_PAINT[/** @type {keyof typeof AURA_PAINT} */ (key)]
-    : kind === 'armory' ? AURA_PAINT[/** @type {keyof typeof AURA_PAINT} */ (armoryPieceOf(key)?.line ?? 'eternal')] : null;   // ARMORY: a piece in its line's aura's paint
+  const paintKey =
+    kind === 'title'
+      ? key
+      : kind === 'aura'
+        ? AURA_PAINT[/** @type {keyof typeof AURA_PAINT} */ (key)]
+        : kind === 'armory'
+          ? AURA_PAINT[/** @type {keyof typeof AURA_PAINT} */ (armoryPieceOf(key)?.line ?? 'eternal')]
+          : null; // ARMORY: a piece in its line's aura's paint
+  const line = kind === 'armory' && !paintKey ? armoryLineBadge(armoryPieceOf(key)?.line ?? '') : null; // AUDIT lane 3 F5: a line no title paints
+  if (line && word.style) {
+    paintTitle(word, line, false);
+    inkPaintedWord(word);
+  }
   if (paintKey && word.style) {
-    paintTitle(word, titleBadge({ title: paintKey }), kind === 'title');   // SHOP: a title's flame plate, never an aura's word
-    if (globalThis.document?.documentElement?.dataset?.plusDress === GRIMOIRE_DRESS) inkPaint(word);
+    paintTitle(word, titleBadge({ title: paintKey }), kind === 'title'); // SHOP: a title's flame plate, never an aura's word
+    inkPaintedWord(word); // the Grimoire's page: its colours inked (ui/grimoireDress.js, one home)
   }
   plate.append(word);
   cell.append(plate);
   return cell;
-}
-/** A painted word's colours, each inked for the page. */
-function inkPaint(/** @type {any} */ word) {
-  const ink = (/** @type {string} */ s) => String(s).replace(/#[0-9a-f]{6}\b/gi, (h) => inkColour(h) ?? h);
-  for (const k of ['color', 'backgroundImage', 'filter']) if (word.style[k]) word.style[k] = ink(word.style[k]);
 }
 /** AN AURA'S PICTURE: the ring it lights about the feet, in its title's colours (the account card's paint, AURA_PAINT) -
  *  a sign of the aura, never the aura (that is render/auraRing.js's, drawn in the world). Null with no SVG door. */
 export function auraRingNode(/** @type {any} */ doc, /** @type {string} */ key, size = 32) {
   if (typeof doc?.createElementNS !== 'function') return null;
   const NS = 'http://www.w3.org/2000/svg';
-  const node = (/** @type {string} */ tag, /** @type {Record<string, any>} */ attrs) => { const n = doc.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v)); return n; };
+  const node = (/** @type {string} */ tag, /** @type {Record<string, any>} */ attrs) => {
+    const n = doc.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v));
+    return n;
+  };
   const paint = AURA_PAINT[/** @type {keyof typeof AURA_PAINT} */ (key)];
-  const stops = TITLE_GRADIENT[/** @type {keyof typeof TITLE_GRADIENT} */ (paint)] ?? [TITLE_RGBA[/** @type {keyof typeof TITLE_RGBA} */ (paint)], TITLE_RGBA[/** @type {keyof typeof TITLE_RGBA} */ (paint)]];
+  const stops = ARMORY_LINE_GRADIENT[/** @type {keyof typeof ARMORY_LINE_GRADIENT} */ (key)] ??
+    TITLE_GRADIENT[/** @type {keyof typeof TITLE_GRADIENT} */ (paint)] ?? [
+      TITLE_RGBA[/** @type {keyof typeof TITLE_RGBA} */ (paint)],
+      TITLE_RGBA[/** @type {keyof typeof TITLE_RGBA} */ (paint)],
+    ]; // AUDIT lane 3 F5
   const id = `coll-aura-${key}-${++_ringSerial}`;
-  const svg = node('svg', { viewBox: '0 0 40 26', width: size, height: Math.round(size * 0.65), class: 'coll-ring', 'aria-hidden': 'true' });
+  const svg = node('svg', {
+    viewBox: '0 0 40 26',
+    width: size,
+    height: Math.round(size * 0.65),
+    class: 'coll-ring',
+    'aria-hidden': 'true',
+  });
   const defs = node('defs', {});
   const grad = node('linearGradient', { id, x1: '0', y1: '0', x2: '1', y2: '0' });
-  stops.forEach((rgba, i) => grad.append(node('stop', { offset: String(stops.length > 1 ? i / (stops.length - 1) : 0), 'stop-color': cssRgba(rgba) ?? '#c08a3e' })));
+  stops.forEach((rgba, i) =>
+    grad.append(
+      node('stop', {
+        offset: String(stops.length > 1 ? i / (stops.length - 1) : 0),
+        'stop-color': cssRgba(rgba) ?? '#c08a3e',
+      }),
+    ),
+  );
   defs.append(grad);
-  svg.append(defs,
+  svg.append(
+    defs,
     node('ellipse', { cx: 20, cy: 17, rx: 17, ry: 6.5, fill: `url(#${id})`, opacity: 0.22 }),
     node('ellipse', { cx: 20, cy: 17, rx: 15.5, ry: 5.5, fill: 'none', stroke: `url(#${id})`, 'stroke-width': 2.4 }),
     node('circle', { cx: 13, cy: 9, r: 1.4, fill: `url(#${id})`, opacity: 0.8 }),
     node('circle', { cx: 21, cy: 5, r: 1.1, fill: `url(#${id})`, opacity: 0.65 }),
-    node('circle', { cx: 28, cy: 10, r: 1.6, fill: `url(#${id})`, opacity: 0.9 }));
+    node('circle', { cx: 28, cy: 10, r: 1.6, fill: `url(#${id})`, opacity: 0.9 }),
+  );
   return svg;
 }
 let _ringSerial = 0;
@@ -199,12 +277,15 @@ let _ringSerial = 0;
  *  its painted word. */
 function pictureOf(/** @type {any} */ doc, /** @type {string} */ kind, /** @type {string} */ key, size = 24) {
   if (kind === 'aura') return auraRingNode(doc, key, size + 8);
-  if (kind === 'armory') return auraRingNode(doc, armoryPieceOf(key)?.line ?? 'eternal', size + 8);   // ARMORY: its line's ring - the piece itself is the world's
+  if (kind === 'armory') return auraRingNode(doc, armoryPieceOf(key)?.line ?? 'eternal', size + 8); // ARMORY: its line's ring - the piece itself is the world's
   if (kind === 'icon') return profileIconNode(doc, key, 'coll-icon', size);
   if (kind === 'glyph') {
     const g = glyphBadges({ glyphs: [key] })[0];
     const svg = g ? glyphSvgNode(doc, g, 'coll-glyph', 1.8) : null;
-    if (svg) { svg.setAttribute('width', String(size)); svg.setAttribute('height', String(size)); }
+    if (svg) {
+      svg.setAttribute('width', String(size));
+      svg.setAttribute('height', String(size));
+    }
     return svg;
   }
   return null;
@@ -213,7 +294,8 @@ function pictureOf(/** @type {any} */ doc, /** @type {string} */ kind, /** @type
 /** The words of whose it is, for a thing the account holds: worn (shown, for a glyph), or held (hidden). */
 function stateWord(/** @type {string} */ kind, /** @type {any} */ e, /** @type {any} */ wardrobe) {
   if (e.via) return t('coll.state.via', 'With {title}', { title: wardrobeName(kind, e.via) });
-  if (wardrobeWorn(kind, e.key, wardrobe)) return kind === 'glyph' ? t('coll.state.shown', 'Shown') : t('coll.state.worn', 'Worn');
+  if (wardrobeWorn(kind, e.key, wardrobe))
+    return kind === 'glyph' ? t('coll.state.shown', 'Shown') : t('coll.state.worn', 'Worn');
   return kind === 'glyph' ? t('coll.state.hidden', 'Hidden') : t('coll.state.held', 'Held');
 }
 
@@ -223,21 +305,32 @@ function accountLine(el, /** @type {any} */ flow, /** @type {string} */ kind) {
   const p = el('p', 'coll-acct');
   if (flow.stage === 'loading') p.append(el('span', null, t('coll.acct.loading', 'Reading your account…')));
   else if (flow.stage !== 'in') {
-    if (flow.error) p.append(el('span', 'fail', flow.error), el('span', null, ' '));   // AUDIT COLLECTIONS-II (lane 2): why it signed out (`auth`), never swallowed
-    p.append(el('span', null, t('coll.acct.out', 'Sign in from your profile to see which of these your account holds.')));
-  }
-  else if (!flow.wardrobe) {
+    if (flow.error) p.append(el('span', 'fail', flow.error), el('span', null, ' ')); // AUDIT COLLECTIONS-II (lane 2): why it signed out (`auth`), never swallowed
+    p.append(
+      el('span', null, t('coll.acct.out', 'Sign in from your profile to see which of these your account holds.')),
+    );
+  } else if (!flow.wardrobe) {
     p.append(el('span', 'fail', flow.error || t('coll.acct.none', 'Your account could not be read just now.')));
     // AUDIT COLLECTIONS-II (lane 3): a read that failed is asked again here, never only by leaving the page
     const again = el('button', 'act coll-retry', t('coll.acct.retry', 'Try again'));
     again.type = 'button';
     again.setAttribute('data-focus', 'coll-retry');
-    again.onclick = () => { Promise.resolve(flow.start?.()).catch(() => {}); };
+    again.onclick = () => {
+      Promise.resolve(flow.start?.()).catch(() => {});
+    };
     p.append(again);
-  }
-  else if (flow.account?.kind === 'guest') {
+  } else if (flow.account?.kind === 'guest') {
     // AUDIT COLLECTIONS-II (lane 1): a guest's row earns nothing but the sprout - every grant asks a registered account
-    p.append(el('span', null, t('coll.acct.guest', 'A guest account keeps none of these but the sprout: add a username from your profile to earn them.')));
+    p.append(
+      el(
+        'span',
+        null,
+        t(
+          'coll.acct.guest',
+          'A guest account keeps none of these but the sprout: add a username from your profile to earn them.',
+        ),
+      ),
+    );
   } else {
     p.append(el('span', null, t('coll.acct.scope', 'Held by your account, on every character.')));
     // AUDIT COLLECTIONS-II (lane 3): a press waits in words, and its answer is said on its own kind's part alone
@@ -258,25 +351,53 @@ export function drawWardrobePart(detail, rerender, kit, kind, flow) {
   const { el, divider } = kit;
   const wardrobe = wardrobeOfFlow(flow);
   const now = typeof kit.now === 'function' ? kit.now() : Date.now();
-  const ctx = { el, doc: kit.doc ?? (typeof document === 'undefined' ? null : document), wardrobe, flow, now, rerender, goTo: typeof kit.goTo === 'function' ? kit.goTo : () => {} };
+  const ctx = {
+    el,
+    doc: kit.doc ?? (typeof document === 'undefined' ? null : document),
+    wardrobe,
+    flow,
+    now,
+    rerender,
+    goTo: typeof kit.goTo === 'function' ? kit.goTo : () => {},
+  };
   const line = accountLine(el, flow, kind);
   if (line) detail.append(line);
   const entries = wardrobeEntries(kind);
   const until = festivalUntilText(now);
-  if (until && entries.some((e) => e.avail === 'seasonal')) detail.append(el('p', 'coll-season', t('coll.season.on', 'The Witches’ Festival is on until {date}: its pieces can be had now.', { date: until })));
+  if (until && entries.some((e) => e.avail === 'seasonal'))
+    detail.append(
+      el(
+        'p',
+        'coll-season',
+        t('coll.season.on', 'The Witches’ Festival is on until {date}: its pieces can be had now.', { date: until }),
+      ),
+    );
   // AUDIT COLLECTIONS-II (lane 3): Held and Not held only where the account is read - unread, "Held" found nothing and
   // "Not held" listed everything
   if (!wardrobe && (_filter === 'held' || _filter === 'missing')) _filter = 'all';
   detail.append(filterRow(el, rerender, !!wardrobe));
-  const shown = entries.filter((e) => wardrobeFilterPasses(_filter, e, wardrobe, now));
-  if (!shown.length) { detail.append(el('p', 'px-note', t('coll.none', 'Nothing here.'))); return; }
+  const shown = entries.filter((e) => wardrobeFilterPasses(_filter, e, wardrobe, now, flow?.shop)); // AUDIT-STOREFRONT S2: the shop's own word
+  if (!shown.length) {
+    detail.append(el('p', 'px-note', t('coll.none', 'Nothing here.')));
+    return;
+  }
   for (const [src] of WARDROBE_SOURCES) {
     const rows = shown.filter((e) => e.src === src);
     if (!rows.length) continue;
     const counted = entries.filter((e) => e.src === src && wardrobeCounted(e));
     const held = counted.filter((e) => wardrobeHeld(kind, e.key, wardrobe)).length;
     // AUDIT COLLECTIONS-II (lane 1): a group the account keeps none of (the seats' glyphs, each a character's) says no count
-    detail.append(divider(counted.length ? t('coll.group', '{source} - {held}/{total}', { source: sourceName(src), held: wardrobe ? held : '–', total: counted.length }) : sourceName(src)));   // AUDIT COLLECTIONS-II (lane 3): a dash unread, as the tiles say
+    detail.append(
+      divider(
+        counted.length
+          ? t('coll.group', '{source} - {held}/{total}', {
+              source: sourceName(src),
+              held: wardrobe ? held : '–',
+              total: counted.length,
+            })
+          : sourceName(src),
+      ),
+    ); // AUDIT COLLECTIONS-II (lane 3): a dash unread, as the tiles say
     const list = el('div', 'coll-list');
     for (const e of rows) list.append(...rowOf(ctx, e));
     detail.append(list);
@@ -291,7 +412,10 @@ function filterRow(el, /** @type {() => void} */ rerender, /** @type {boolean} *
     b.type = 'button';
     b.setAttribute('data-focus', `coll-filter-${id}`);
     b.setAttribute('aria-pressed', id === _filter ? 'true' : 'false');
-    b.onclick = () => { _filter = id; rerender(); };
+    b.onclick = () => {
+      _filter = id;
+      rerender();
+    };
     row.append(b);
   }
   return row;
@@ -304,23 +428,37 @@ function filterRow(el, /** @type {() => void} */ rerender, /** @type {boolean} *
 function rowOf(ctx, e) {
   const { el, wardrobe } = ctx;
   const id = `${e.kind}:${e.key}`;
-  const held = wardrobeHeld(e.kind, e.key, wardrobe), worn = wardrobeWorn(e.kind, e.key, wardrobe);
+  const held = wardrobeHeld(e.kind, e.key, wardrobe),
+    worn = wardrobeWorn(e.kind, e.key, wardrobe);
   const known = wardrobeKnown(e);
-  const row = el('button', `coll-row${e.kind === 'title' ? ' nopic' : ''}${held || !known ? ' held' : ''}${worn ? ' worn' : ''}${_open === id ? ' on' : ''}`);   // a character's own is never dimmed as not held
+  const row = el(
+    'button',
+    `coll-row${e.kind === 'title' ? ' nopic' : ''}${held || !known ? ' held' : ''}${worn ? ' worn' : ''}${_open === id ? ' on' : ''}`,
+  ); // a character's own is never dimmed as not held
   row.type = 'button';
   row.dataset.wardrobe = id;
   row.setAttribute('data-focus', `coll-row-${e.kind}-${e.key}`);
   row.setAttribute('aria-expanded', _open === id ? 'true' : 'false');
   const pic = e.kind === 'title' ? null : pictureOf(ctx.doc, e.kind, e.key, 24);
-  if (e.kind !== 'title') { const prev = el('span', 'coll-prev'); if (pic) prev.append(pic); row.append(prev); }
+  if (e.kind !== 'title') {
+    const prev = el('span', 'coll-prev');
+    if (pic) prev.append(pic);
+    row.append(prev);
+  }
   // whose it is said only where it is the account's - a thing not held is the row's dimmed word, never a chip a row
   const tags = el('span', 'coll-tags');
   if (held) tags.append(el('span', `coll-tag ${worn ? 'is-worn' : 'is-held'}`, stateWord(e.kind, e, wardrobe)));
   else if (!known) tags.append(el('span', 'coll-tag is-char', t('coll.state.character', 'Per character')));
-  const avail = wardrobeAvail(e, ctx.now);
-  tags.append(el('span', ['coll-tag', `av-${avail}`].join(' '), AVAIL_TAG[/** @type {keyof typeof AVAIL_TAG} */ (avail)]()));
+  const avail = wardrobeAvail(e, ctx.now, ctx.flow?.shop);
+  tags.append(
+    el('span', ['coll-tag', `av-${avail}`].join(' '), AVAIL_TAG[/** @type {keyof typeof AVAIL_TAG} */ (avail)]()),
+  );
   row.append(paintedWord(el, e.kind, e.key, 'coll-nm'), tags);
-  row.onclick = () => { _open = _open === id ? null : id; ctx.rerender(); if (_open) revealOpened(); };
+  row.onclick = () => {
+    _open = _open === id ? null : id;
+    ctx.rerender();
+    if (_open) revealOpened();
+  };
   return _open === id ? [row, wholeOf(ctx, e)] : [row];
 }
 
@@ -331,22 +469,52 @@ function wholeOf(ctx, e) {
   const { el, wardrobe } = ctx;
   const pic = e.kind === 'title' ? null : pictureOf(ctx.doc, e.kind, e.key, 56);
   const box = el('div', `coll-whole${pic ? '' : ' nopic'}`);
-  if (pic) { const show = el('div', 'coll-show'); show.append(pic); box.append(show); }
+  if (pic) {
+    const show = el('div', 'coll-show');
+    show.append(pic);
+    box.append(show);
+  }
   const text = el('div', 'coll-text');
-  text.append(paintedWord(el, e.kind, e.key, 'coll-bigword'));   // its name on top, every kind's (AUDIT COLLECTIONS-II lane 3: after a jump the row may be out of view)
+  text.append(paintedWord(el, e.kind, e.key, 'coll-bigword')); // its name on top, every kind's (AUDIT COLLECTIONS-II lane 3: after a jump the row may be out of view)
   if (e.look) text.append(el('p', 'coll-look', e.look()));
   text.append(el('h5', null, t('coll.whole.how', 'How to get it')), el('p', 'coll-how', e.how()));
-  text.append(el('h5', null, t('coll.whole.avail', 'Availability')), el('p', 'coll-availline', availLine(e, ctx.now)));
+  text.append(
+    el('h5', null, t('coll.whole.avail', 'Availability')),
+    el('p', 'coll-availline', availLine(e, ctx.now, ctx.flow?.shop)),
+  );
   const held = wardrobeHeld(e.kind, e.key, wardrobe);
-  if (!wardrobeKnown(e)) text.append(el('p', 'coll-own', t('coll.whole.character', 'It shows beside the name of each member of such a guild, on that character - your account does not keep it.')));
-  else if (wardrobe) text.append(el('p', `coll-own${held ? '' : ' no'}`, held ? t('coll.whole.held', 'Your account holds this.') : t('coll.whole.missing', 'Your account does not hold this yet.')));
+  if (!wardrobeKnown(e))
+    text.append(
+      el(
+        'p',
+        'coll-own',
+        t(
+          'coll.whole.character',
+          'It shows beside the name of each member of such a guild, on that character - your account does not keep it.',
+        ),
+      ),
+    );
+  else if (wardrobe)
+    text.append(
+      el(
+        'p',
+        `coll-own${held ? '' : ' no'}`,
+        held
+          ? t('coll.whole.held', 'Your account holds this.')
+          : t('coll.whole.missing', 'Your account does not hold this yet.'),
+      ),
+    );
   box.append(text);
   // AUDIT COLLECTIONS-II (lane 3): the presses in a foot across the whole box, each centred under the row - the pad steps
   // to the nearest thing along its way and twice as hard against it, so a Wear at the text's left was never reached
   const foot = el('div', 'coll-foot');
   if (e.with?.length) foot.append(el('h5', null, t('coll.whole.with', 'Comes with')), withRow(ctx, e));
   const act = held && !e.via ? wearPress(el, e, wardrobe, ctx.flow) : null;
-  if (act) { const acts = el('div', 'coll-acts'); acts.append(act); foot.append(acts); }
+  if (act) {
+    const acts = el('div', 'coll-acts');
+    acts.append(act);
+    foot.append(acts);
+  }
   if (foot.children.length) box.append(foot);
   return box;
 }
@@ -357,10 +525,19 @@ function withRow(ctx, e) {
   for (const w of e.with) {
     const [kind, key] = w.split(':');
     if (!wardrobeEntry(kind, key)) continue;
-    const b = ctx.el('button', 'coll-with', `${WARDROBE_KIND_WORD[/** @type {keyof typeof WARDROBE_KIND_WORD} */ (kind)]()}: ${wardrobeName(kind, key)}`);
+    const b = ctx.el(
+      'button',
+      'coll-with',
+      `${WARDROBE_KIND_WORD[/** @type {keyof typeof WARDROBE_KIND_WORD} */ (kind)]()}: ${wardrobeName(kind, key)}`,
+    );
     b.type = 'button';
     b.setAttribute('data-focus', `coll-with-${kind}-${key}`);
-    b.onclick = () => { openWardrobeRow(kind, key); ctx.goTo(kind); ctx.rerender(); focusRow(kind, key); };
+    b.onclick = () => {
+      openWardrobeRow(kind, key);
+      ctx.goTo(kind);
+      ctx.rerender();
+      focusRow(kind, key);
+    };
     row.append(b);
   }
   return row;
@@ -369,15 +546,23 @@ function withRow(ctx, e) {
  *  press itself is gone with the part it stood in, and the focus fell to the page's body). */
 const focusRow = (/** @type {string} */ kind, /** @type {string} */ key) => {
   globalThis.requestAnimationFrame?.(() => {
-    const row = /** @type {HTMLElement|null|undefined} */ (globalThis.document?.querySelector?.(`[data-focus="coll-row-${kind}-${key}"]`));
-    row?.scrollIntoView?.({ block: 'start' });   // AUDIT COLLECTIONS-II (lane 3): the repaint kept the old part's scroll, the row 1,800px below it
-    try { row?.focus?.({ preventScroll: true }); } catch { row?.focus?.(); }
+    const row = /** @type {HTMLElement|null|undefined} */ (
+      globalThis.document?.querySelector?.(`[data-focus="coll-row-${kind}-${key}"]`)
+    );
+    row?.scrollIntoView?.({ block: 'start' }); // AUDIT COLLECTIONS-II (lane 3): the repaint kept the old part's scroll, the row 1,800px below it
+    try {
+      row?.focus?.({ preventScroll: true });
+    } catch {
+      row?.focus?.();
+    }
   });
 };
 /** AUDIT COLLECTIONS-II (lane 3): a row opened at the pane's foot shows its box - the repaint keeps the scroll, and a box
  *  opened below the fold showed nothing (the journal's questReveal's law). */
 const revealOpened = () => {
-  globalThis.requestAnimationFrame?.(() => globalThis.document?.querySelector?.('.px-sys .coll-whole')?.scrollIntoView?.({ block: 'nearest' }));
+  globalThis.requestAnimationFrame?.(() =>
+    globalThis.document?.querySelector?.('.px-sys .coll-whole')?.scrollIntoView?.({ block: 'nearest' }),
+  );
 };
 /** Each kind's word, singular (a "comes with" press). */
 export const WARDROBE_KIND_WORD = Object.freeze({
@@ -391,12 +576,19 @@ export const WARDROBE_KIND_WORD = Object.freeze({
 /** The press that wears it, takes it off, shows or hides it - the flow's own, its answer the service's. Null without a
  *  signed-in flow. */
 function wearPress(el, /** @type {any} */ e, /** @type {any} */ wardrobe, /** @type {any} */ flow) {
-  const press = { title: 'equip', aura: 'wearAura', armory: 'wearArmory', icon: 'wearIcon', glyph: 'toggleGlyph' }[/** @type {'title'|'aura'|'armory'|'icon'|'glyph'} */ (e.kind)];
+  const press = { title: 'equip', aura: 'wearAura', armory: 'wearArmory', icon: 'wearIcon', glyph: 'toggleGlyph' }[
+    /** @type {'title'|'aura'|'armory'|'icon'|'glyph'} */ (e.kind)
+  ];
   if (flow?.stage !== 'in' || typeof flow[press] !== 'function') return null;
   const worn = wardrobeWorn(e.kind, e.key, wardrobe);
-  const word = e.kind === 'glyph'
-    ? (worn ? t('coll.wear.hide', 'Hide') : t('coll.wear.show', 'Show'))
-    : (worn ? t('coll.wear.off', 'Take off') : t('coll.wear.on', 'Wear'));
+  const word =
+    e.kind === 'glyph'
+      ? worn
+        ? t('coll.wear.hide', 'Hide')
+        : t('coll.wear.show', 'Show')
+      : worn
+        ? t('coll.wear.off', 'Take off')
+        : t('coll.wear.on', 'Wear');
   const b = el('button', ['act', 'coll-wear', ...(flow.busy ? ['busy'] : [])].join(' '), word);
   b.type = 'button';
   // AUDIT COLLECTIONS-II (lane 2): NEVER `disabled` - a disabled button cannot take the focus back, and the keyboard and
@@ -404,6 +596,12 @@ function wearPress(el, /** @type {any} */ e, /** @type {any} */ wardrobe, /** @t
   // (the flow refuses one too)
   b.setAttribute('aria-disabled', flow.busy ? 'true' : 'false');
   b.setAttribute('data-focus', `coll-wear-${e.kind}-${e.key}`);
-  b.onclick = () => { if (flow.busy) return; _noteKind = e.kind; Promise.resolve(e.kind === 'armory' ? flow[press](armoryPieceOf(e.key)?.slot, e.key) : flow[press](e.key)).catch(() => {}); };   // ARMORY: a piece in its slot
+  b.onclick = () => {
+    if (flow.busy) return;
+    _noteKind = e.kind;
+    Promise.resolve(e.kind === 'armory' ? flow[press](armoryPieceOf(e.key)?.slot, e.key) : flow[press](e.key)).catch(
+      () => {},
+    );
+  }; // ARMORY: a piece in its slot
   return b;
 }

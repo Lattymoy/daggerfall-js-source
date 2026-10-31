@@ -4,7 +4,7 @@
 // sky and its clouds, at the far plane (LEQUAL passes only the cleared depth, so the land stands over it), blended over
 // what is there by the event's weight. At weight 0 it draws nothing.
 
-import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
+import { buildProgram } from './glProgram.js'; // AUDIT 68 S17-gl-program-dup: the one compile and link
 import { SUNBABY_GLSL, sunbabySunDir } from '../world/sunbabySky.js';
 
 /** SUNBABY3: Todd's photograph, as Mac supplied it (cropped to the face's disk, world/sunbabySky.js
@@ -14,7 +14,7 @@ export const SUNBABY_TODD_PHOTO_URL = new URL('../assets/sunbaby/todd.jpg', impo
 const VS = `#version 300 es
 layout(location=0) in vec2 aPos;
 out vec2 vNdc;
-void main() { vNdc = aPos; gl_Position = vec4(aPos, 1.0, 1.0); }`;   // AT the far plane, as the enhanced sky's
+void main() { vNdc = aPos; gl_Position = vec4(aPos, 1.0, 1.0); }`; // AT the far plane, as the enhanced sky's
 
 /** The pass's fragment shader - the enhanced sky's ray, then the flower sky and the sun baby along it. */
 export const SUNBABY_FS = `#version 300 es
@@ -38,7 +38,18 @@ void main() {
   outColor = vec4(sunbabySky(dir, uSunDir, uTime, uFace, uToddPhoto, uToddPhotoOn), clamp(uWeight, 0.0, 1.0));
 }`;
 
-export const SUNBABY_UNIFORMS = Object.freeze(['uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uWeight', 'uTime', 'uSunDir', 'uFace', 'uToddPhoto', 'uToddPhotoOn']);
+export const SUNBABY_UNIFORMS = Object.freeze([
+  'uYaw',
+  'uPitch',
+  'uTanHalfFov',
+  'uAspect',
+  'uWeight',
+  'uTime',
+  'uSunDir',
+  'uFace',
+  'uToddPhoto',
+  'uToddPhotoOn',
+]);
 
 /** The flower sky's real-second clock wraps here, so the drift stays inside a float's fraction. */
 const TIME_WRAP_S = 3600;
@@ -73,8 +84,10 @@ export class SunbabySkyRenderer {
     this._photo = null;
     if (typeof Image !== 'undefined') {
       const img = new Image();
-      img.onload = () => { this._photo = img; };
-      img.onerror = () => console.warn('[sunbaby] Todd\'s photograph did not load - the cartoon stands in');
+      img.onload = () => {
+        this._photo = img;
+      };
+      img.onerror = () => console.warn("[sunbaby] Todd's photograph did not load - the cartoon stands in");
       img.src = SUNBABY_TODD_PHOTO_URL;
     }
     this.t0 = typeof performance !== 'undefined' ? performance.now() : 0;
@@ -82,25 +95,29 @@ export class SunbabySkyRenderer {
 
   draw(yaw, pitch, fovY, aspect) {
     if (!(this.weight > 0)) return;
-    const gl = this.gl, u = this.u;
+    const gl = this.gl,
+      u = this.u;
     const now = typeof performance !== 'undefined' ? performance.now() : 0;
     gl.useProgram(this.program);
     gl.depthMask(false);
-    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);   // only where nothing nearer has drawn - z is the far plane
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL); // only where nothing nearer has drawn - z is the far plane
     gl.enable(gl.BLEND);
-    gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);   // over the sky by the weight; the buffer's alpha untouched
-    gl.uniform1f(u.uYaw, yaw); gl.uniform1f(u.uPitch, pitch);
-    gl.uniform1f(u.uTanHalfFov, Math.tan(fovY / 2)); gl.uniform1f(u.uAspect, aspect);
+    gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE); // over the sky by the weight; the buffer's alpha untouched
+    gl.uniform1f(u.uYaw, yaw);
+    gl.uniform1f(u.uPitch, pitch);
+    gl.uniform1f(u.uTanHalfFov, Math.tan(fovY / 2));
+    gl.uniform1f(u.uAspect, aspect);
     gl.uniform1f(u.uWeight, this.weight);
     gl.uniform1f(u.uTime, ((now - this.t0) / 1000) % TIME_WRAP_S);
     gl.uniform3fv(u.uSunDir, sunbabySunDir(this.weight));
-    gl.uniform2f(u.uFace, this.evil, this.todd);   // SUNBABY2
-    if (this._photo) this._uploadPhoto();   // SUNBABY3: loaded since the last frame
+    gl.uniform2f(u.uFace, this.evil, this.todd); // SUNBABY2
+    if (this._photo) this._uploadPhoto(); // SUNBABY3: loaded since the last frame
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.photoTex);
     gl.uniform1i(u.uToddPhoto, 0);
     gl.uniform1f(u.uToddPhotoOn, this.photoOn);
-    gl.disable(gl.CULL_FACE);   // the triangle winds CCW under a CW front face, as the sky's
+    gl.disable(gl.CULL_FACE); // the triangle winds CCW under a CW front face, as the sky's
     gl.bindVertexArray(this.vao);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindVertexArray(null);
@@ -114,7 +131,8 @@ export class SunbabySkyRenderer {
   /** SUNBABY3: the loaded photograph into its texture, mipmapped (it is drawn small, a sun in the sky), rows as the
    *  file has them whatever the unpack flip was left at - then Todd wears it. */
   _uploadPhoto() {
-    const gl = this.gl, img = this._photo;
+    const gl = this.gl,
+      img = this._photo;
     this._photo = null;
     const flip = gl.getParameter(gl.UNPACK_FLIP_Y_WEBGL);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);

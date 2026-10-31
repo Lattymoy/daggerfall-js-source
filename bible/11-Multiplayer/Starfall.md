@@ -508,17 +508,17 @@ pays well for it.*), the Soul Cake's shape, in the classic info box and on the e
 
 **An answer lost after the batch (AUDIT STARFALL B3, AS BUILT).** The claim's one batch is the whole of its money: the
 row, the Renown, the silver and INT5's fill of the playing character's budget, which ran after the batch as the raid's
-does and was lost with any failure between the two (`server-account/src/budget.js:"export function spoilsGrantStatement(db, playerId, pieces = 0, guard = null, ...binds) {"`,
+does and was lost with any failure between the two (`server-account/src/budget.js:"export function spoilsGrantStatement"`,
 held to the claim's own row by its nonce). What still runs after it is no credit: INT17's measure (a debit a lost answer
 only spares), the Renown order (signed again), the silver's answer (struck in the batch). The row carries the device's
 claim id (`stars_held.cid`, migration 0141), so a retry of an answer lost after the commit - a 5xx past the batch, a
 dropped line - is answered `claimed` with `own: true` where the row is that device's, and with what the lost answer
 said: the count and the Renown the row credited its character
-(`server-account/src/stars.js:"if (!thanks || had.cid !== cid) return { recorded: false, why: 'claimed', held, spoils };"`).
+(`server-account/src/stars.js:"if (!thanks || had.cid !== cid)"`).
 The device marks a kept receipt whose attempt went unanswered (`lost`: no answer, and no refusal the service made) and,
 on such a `claimed`, finishes it once - the act owed, the line said, the Renown adopted by the character that held it -
 the mark cleared as it finishes, so an answer heard is never finished twice and another device's row never at all
-(`net/starfall/starClaims.js:"const found = !counted && answer?.ok && answer.data?.why === 'claimed' && answer.data?.own === true && e.lost === true;"`).
+(`net/starfall/starClaims.js:"const found ="`).
 
 **The act is the holder's (AUDIT STARFALL 7, AS BUILT).** A receipt is kept with the character that held the star, and
 its act is that character's quests': noted while it stands here (`createStarClaims`'s `who`, the Starfall host's
@@ -528,7 +528,7 @@ already the holder's alone.
 
 **The Heart-Star's act (T-A, AS BUILT).** A counted Heart-Star (`systems/starfall/starfallNight.js` `heartStar`, off the
 receipt's night and star) notes `heart-star-held` beside `star-held` in the same turn
-(`net/starfall/starClaims.js:"const noteStar = (heart) => { noteAct('star-held'); if (heart) noteAct('heart-star-held'); };"`),
+(`net/starfall/starClaims.js:"const noteStar ="`),
 an act of the endgame family as its star's - so the festival's finds hear the two as one deed and ask one find
 (`systems/festival/festivalClient.js` ONE DEED, ONE FIND). The line's scripts may ask it as an optional objective.
 
@@ -547,10 +547,10 @@ own lore holds with the canon (section "The lore"): FACTION.TXT's Glenmoril Witc
 of the Bluff are #423, the Order of Arkay #82.
 
 **THE SEASON.** `opens.event` names a step need; the line opens only while it holds
-(`systems/questlines/qlLines.js:"export const eventHolds = (l, probe) =>"`), and the window's rows leave out a line not
-begun while it does not (`systems/questlines/qlLineRunner.js:"return QL_LINES.filter((l) => lines[l.id] ||"`). The need
+(`systems/questlines/qlLines.js:"export const eventHolds"`), and the window's rows leave out a line not
+begun while it does not (`systems/questlines/qlLineRunner.js:"return QL_LINES.filter"`). The need
 `starfall` is the festival's calendar at the runner's clock
-(`systems/questlines/qlLineRunner.js:"starfall: (/** @type {number} */ nowMs) => starfallRuns(nowMs),"`) - the same answer
+(`systems/questlines/qlLineRunner.js:"starfall: (/** @type {number} */ nowMs)"`) - the same answer
 the Starfall's host and the relay give. (As first built the need also waited on a staged live event, kept for the runner
 in a leaf of its own; the festival's calendar made both unneeded when its pull request was folded in, and they are gone.)
 
@@ -580,10 +580,10 @@ three are witnessed (`net/questlineClaims.js` QL_SERVICE_LINES).
 2`), each newer than the earlier witnessed step's `seen_at` - so QLTF01's star is never one of QLTF03's three. AUDIT
 STARFALL B2: that floor held only once QLTF01 was done, and QLTF03's end asked first read its window from the line's
 opening - the first star counted for both steps, and the Starwarden was paid on three stars, not four. An end now waits
-while an earlier witnessed step of its line is not done (`server-account/src/questlines.js:"export function qlInOrderSql(lineId, step) {"`):
+while an earlier witnessed step of its line is not done (`server-account/src/questlines.js:"export function qlInOrderSql"`):
 answered `witnessed: false`, and asked again by the runner as every unwitnessed end is.
 
-**THE STARWARDEN'S PURSE (T-B, AS BUILT).** The title's write lays 30 Soul Cakes (`net/festivalLaw.js:"export const QL_STARWARDEN_CAKES = 30;"`)
+**THE STARWARDEN'S PURSE (T-B, AS BUILT).** The title's write lays 30 Soul Cakes (`net/festivalLaw.js:"export const QL_STARWARDEN_CAKES"`)
 on the account's count in the same statement, under the title's own guard - once an account - while the festival is
 open for the account at the claim's clock, never to a guest; answered `purse` (`06-Systems/Witches-Festival.md`, "The
 Starwarden's purse").
@@ -615,7 +615,7 @@ _spindle_ and _who_ clicked`.
   edge, InitialiseOnSet).
 - **S2 - a star step the Festival ends under.** Its needs were read only as it started, so its sixty days ran down on a
   deed no star was left to do. The runner sets it aside, fail-free, and takes it up at the next Festival
-  (`systems/questlines/qlLineRunner.js:"function keepSeason(l, rec, q) {"`); the row waits, "Opens during the Witches'
+  (`systems/questlines/qlLineRunner.js:"function keepSeason"`); the row waits, "Opens during the Witches'
   Festival.".
 - **S4 - the priest of Arkay in Arkay's temple.** `Place _temple_ remote temple` took any god's (396 of the Bay's 2,980
   temples are Arkay's). The questlines lay a row of their own on Quests-Places, `templeArkay` (p3 21, FACTION.TXT's

@@ -41,7 +41,10 @@ export const ARENA_EX_ROOM_RE = /^arena:x(0|[1-9]\d{0,8})$/;
 export const isArenaExhibitionRoom = (key) => ARENA_EX_ROOM_RE.test(String(key ?? ''));
 export const arenaExhibitionRoom = (hour) => `arena:x${Math.max(0, Math.floor(Number(hour) || 0))}`;
 /** The hour out of an exhibition room's key, or null. */
-export const arenaExhibitionHourOf = (key) => { const m = ARENA_EX_ROOM_RE.exec(String(key ?? '')); return m ? Number(m[1]) : null; };
+export const arenaExhibitionHourOf = (key) => {
+  const m = ARENA_EX_ROOM_RE.exec(String(key ?? ''));
+  return m ? Number(m[1]) : null;
+};
 /** ARENA6 (2026-10-03, the owner: "a way to simply host private matches ... a session where people can join, watch,
  *  participate, and allow the host of the session to choose who is fighting and who is in the crowd"): A PRIVATE
  *  SESSION'S ROOM, `arena:p<code>` - six of an alphabet with no letter or digit read as another (no I, L, O, 0 or 1), so
@@ -55,14 +58,19 @@ export const arenaPrivateRoom = (code) => `arena:p${code}`;
 /** The code out of a private session's room key, or null. */
 export const arenaPrivateCodeOf = (key) => (isArenaPrivateRoom(key) ? String(key).slice(7) : null);
 /** A code as a player typed it: upper-cased, its spaces and dashes gone - valid or not (`ARENA_PRIVATE_CODE_RE` says). */
-export const privateCodeTyped = (s) => String(s ?? '').toUpperCase().replace(/[\s-]/g, '').slice(0, 12);
+export const privateCodeTyped = (s) =>
+  String(s ?? '')
+    .toUpperCase()
+    .replace(/[\s-]/g, '')
+    .slice(0, 12);
 /** A FRESH CODE off `bytes(n)` (the caller's CSPRNG - this law has no dice): each byte below 248 (31 x 8) taken as one
  *  letter, the rest thrown back, so no letter is likelier than another. Pure. */
 export function arenaPrivateCode(bytes) {
   const A = ARENA_PRIVATE_CODE_ALPHABET;
   let out = '';
   for (let tries = 0; out.length < ARENA_PRIVATE_CODE_LEN && tries < 64; tries++) {
-    for (const b of bytes(ARENA_PRIVATE_CODE_LEN)) if (b < A.length * 8 && out.length < ARENA_PRIVATE_CODE_LEN) out += A[b % A.length];
+    for (const b of bytes(ARENA_PRIVATE_CODE_LEN))
+      if (b < A.length * 8 && out.length < ARENA_PRIVATE_CODE_LEN) out += A[b % A.length];
   }
   return out;
 }
@@ -77,7 +85,12 @@ export const arenaBoutIdOf = (key) => (isArenaBoutRoom(key) ? String(key).slice(
 /** ARENA4b: the room a floor's instance stands in, by the bout it was entered for - a bout's id (`arena:b<id>`) or an
  *  exhibition's `x<hour>` (`arena:x<hour>`); ARENA6: or a private session's `p<code>` (`arena:p<code>`); null for
  *  anything else. */
-export const arenaFloorRoomOf = (o) => (ARENA_BOUT_ID_RE.test(String(o ?? '')) ? arenaBoutRoom(o) : isArenaExhibitionRoom(`arena:${o}`) || isArenaPrivateRoom(`arena:${o}`) ? `arena:${o}` : null);
+export const arenaFloorRoomOf = (o) =>
+  ARENA_BOUT_ID_RE.test(String(o ?? ''))
+    ? arenaBoutRoom(o)
+    : isArenaExhibitionRoom(`arena:${o}`) || isArenaPrivateRoom(`arena:${o}`)
+      ? `arena:${o}`
+      : null;
 
 // ── THE SEASON ────────────────────────────────────────────────────────────────────────────────
 /** The first season's first second: Monday 2026-09-28 00:00 UTC. */
@@ -85,16 +98,22 @@ export const ARENA_SEASON_EPOCH_S = 1_790_553_600;
 /** A season: eight weeks (Arena.md 3 - "8 weeks online, matching Seats-Arc 9.1's planned seasons"). */
 export const ARENA_SEASON_S = 8 * 7 * 24 * 3600;
 /** The season holding `nowS` (1 the first; nothing before the epoch is earlier than the first). */
-export const arenaSeasonOf = (nowS) => Math.max(1, Math.floor((Math.floor(Number(nowS) || 0) - ARENA_SEASON_EPOCH_S) / ARENA_SEASON_S) + 1);
+export const arenaSeasonOf = (nowS) =>
+  Math.max(1, Math.floor((Math.floor(Number(nowS) || 0) - ARENA_SEASON_EPOCH_S) / ARENA_SEASON_S) + 1);
 /** When a season ends (its last second's successor), epoch seconds. */
 export const arenaSeasonEndsS = (season) => ARENA_SEASON_EPOCH_S + Math.max(1, Math.floor(season)) * ARENA_SEASON_S;
 /** EG-E (bible/11-Multiplayer/Elite-Gates.md section 19): THE ARENA WEEK holding `nowS` - 0 the season epoch's first, seven
  *  days each, Monday 00:00 UTC to Monday; the week an Elite Breach's Redoubt pays once an account in (server-account/src/eg.js),
  *  the Spire's Proclamation's (net/eliteGates/egLaw.js egProclamationOf) and the Broker's Panoply sink's. Never before the epoch's. */
 export const ARENA_WEEK_S = 7 * 24 * 3600;
-export const arenaWeekOf = (nowS) => Math.max(0, Math.floor((Math.floor(Number(nowS) || 0) - ARENA_SEASON_EPOCH_S) / ARENA_WEEK_S));
+export const arenaWeekOf = (nowS) =>
+  Math.max(0, Math.floor((Math.floor(Number(nowS) || 0) - ARENA_SEASON_EPOCH_S) / ARENA_WEEK_S));
 /** A season's day, 1-based (1..56). */
-export const arenaSeasonDay = (nowS) => Math.floor(((Math.floor(Number(nowS) || 0) - ARENA_SEASON_EPOCH_S) % ARENA_SEASON_S + ARENA_SEASON_S) % ARENA_SEASON_S / 86400) + 1;
+export const arenaSeasonDay = (nowS) =>
+  Math.floor(
+    ((((Math.floor(Number(nowS) || 0) - ARENA_SEASON_EPOCH_S) % ARENA_SEASON_S) + ARENA_SEASON_S) % ARENA_SEASON_S) /
+      86400,
+  ) + 1;
 
 // ── THE RATING ────────────────────────────────────────────────────────────────────────────────
 export const ARENA_ELO_START = 1000;
@@ -115,7 +134,8 @@ export function eloAfter(ra, rb, score) {
   return [Math.max(ARENA_ELO_MIN, ra + d), Math.max(ARENA_ELO_MIN, rb - d)];
 }
 /** A rating as a claim or a column holds it: a whole number in bounds, the start for anything else. */
-export const arenaRatingOk = (r) => (Number.isSafeInteger(r) && r >= ARENA_ELO_MIN && r <= ARENA_ELO_MAX ? r : ARENA_ELO_START);
+export const arenaRatingOk = (r) =>
+  Number.isSafeInteger(r) && r >= ARENA_ELO_MIN && r <= ARENA_ELO_MAX ? r : ARENA_ELO_START;
 
 // ── THE QUEUE ─────────────────────────────────────────────────────────────────────────────────
 /** The band a fighter is matched inside, by how long they have waited: 100 points either way, widened by 100 every
@@ -131,7 +151,11 @@ export const MATCH_QUEUE_MAX = 256;
 /** A pair that one of them declined (or let lapse) is not offered again for this long. */
 export const MATCH_REPAIR_MS = 60_000;
 /** A fighter's band after `waitMs` in the queue. Pure. */
-export const matchBand = (waitMs) => Math.min(MATCH_BAND_MAX, MATCH_BAND_START + MATCH_BAND_STEP * Math.floor(Math.max(0, Number(waitMs) || 0) / MATCH_WIDEN_MS));
+export const matchBand = (waitMs) =>
+  Math.min(
+    MATCH_BAND_MAX,
+    MATCH_BAND_START + MATCH_BAND_STEP * Math.floor(Math.max(0, Number(waitMs) || 0) / MATCH_WIDEN_MS),
+  );
 /**
  * THE PAIRS the queue makes now: oldest first, each with the nearest rating that both bands admit (|a - b| inside the
  * narrower of the two), never a fighter twice, never a fighter with themselves, never a pair `apart(a, b)` says not to
@@ -149,15 +173,20 @@ export function pairQueue(queue, now, apart = () => false) {
   const out = [];
   for (const a of list) {
     if (taken.has(a.sub)) continue;
-    let best = null, gap = Infinity;
+    let best = null,
+      gap = Infinity;
     for (const b of list) {
       if (b === a || b.sub === a.sub || taken.has(b.sub) || apart(a.sub, b.sub) || !!a.casual !== !!b.casual) continue;
       const d = Math.abs(a.rating - b.rating);
       if (d > Math.min(matchBand(now - a.at), matchBand(now - b.at))) continue;
-      if (d < gap || (d === gap && best && b.at < best.at)) { best = b; gap = d; }
+      if (d < gap || (d === gap && best && b.at < best.at)) {
+        best = b;
+        gap = d;
+      }
     }
     if (!best) continue;
-    taken.add(a.sub); taken.add(best.sub);
+    taken.add(a.sub);
+    taken.add(best.sub);
     out.push([a, best]);
   }
   return out;
@@ -187,26 +216,72 @@ export const ARENA_TIER_BOUTS = 3;
  * relay and the game cannot come to fight two ladders. The Grand Melee's bouts are every fighter for themselves
  * (`ARENA_FREE_TIER`); the beast tier is `ARENA_BEAST_TIER`.
  */
-export const ARENA_LADDER_SPEC = Object.freeze([
-  [[[138, 1]], [[136, 2]], [[143, 3]], [[143, 3]]],
-  [[[144, 3]], [[140, 4]], [[141, 5]], [[145, 5]]],
-  [[[129, 5]], [[133, 6]], [[142, 7]], [[130, 7]]],
-  [[[145, 7]], [[143, 8]], [[132, 9]], [[139, 9]]],
-  [[[130, 9]], [[131, 10]], [[144, 11]], [[144, 11], [144, 11]]],
-  [[[4, null]], [[5, null]], [[20, null]], [[2, null]]],
-  [[[145, 13]], [[129, 14]], [[133, 15]], [[24, null]]],
-  [[[139, 15]], [[130, 16]], [[140, 17]], [[29, null]]],
-  [[[145, 17], [132, 17]], [[144, 18], [128, 18]], [[145, 19], [128, 19]], [[28, null]]],
-  [[[145, 20], [144, 20], [132, 20]], [[139, 21], [130, 21], [140, 21]], [[28, null], [29, null], [24, null]], [[36, null]]],
-].map((t) => Object.freeze(t.map((b) => Object.freeze(b.map((o) => Object.freeze(o)))))));
+export const ARENA_LADDER_SPEC = Object.freeze(
+  [
+    [[[138, 1]], [[136, 2]], [[143, 3]], [[143, 3]]],
+    [[[144, 3]], [[140, 4]], [[141, 5]], [[145, 5]]],
+    [[[129, 5]], [[133, 6]], [[142, 7]], [[130, 7]]],
+    [[[145, 7]], [[143, 8]], [[132, 9]], [[139, 9]]],
+    [
+      [[130, 9]],
+      [[131, 10]],
+      [[144, 11]],
+      [
+        [144, 11],
+        [144, 11],
+      ],
+    ],
+    [[[4, null]], [[5, null]], [[20, null]], [[2, null]]],
+    [[[145, 13]], [[129, 14]], [[133, 15]], [[24, null]]],
+    [[[139, 15]], [[130, 16]], [[140, 17]], [[29, null]]],
+    [
+      [
+        [145, 17],
+        [132, 17],
+      ],
+      [
+        [144, 18],
+        [128, 18],
+      ],
+      [
+        [145, 19],
+        [128, 19],
+      ],
+      [[28, null]],
+    ],
+    [
+      [
+        [145, 20],
+        [144, 20],
+        [132, 20],
+      ],
+      [
+        [139, 21],
+        [130, 21],
+        [140, 21],
+      ],
+      [
+        [28, null],
+        [29, null],
+        [24, null],
+      ],
+      [[36, null]],
+    ],
+  ].map((t) => Object.freeze(t.map((b) => Object.freeze(b.map((o) => Object.freeze(o)))))),
+);
 export const ARENA_FREE_TIER = 9;
 export const ARENA_BEAST_TIER = 5;
 /** The monsters the ladder fights, as DFU's EnemyBasics has them: `[level, minHealth, maxHealth, minDamage, maxDamage]`
  *  (characters/enemy/enemyBasics.js, pinned). */
 export const ARENA_BEASTS = Object.freeze({
-  2: Object.freeze([3, 12, 26, 1, 8]), 4: Object.freeze([4, 13, 34, 1, 8]), 5: Object.freeze([4, 13, 34, 1, 10]),
-  20: Object.freeze([12, 18, 74, 15, 25]), 24: Object.freeze([16, 20, 90, 5, 50]), 28: Object.freeze([19, 28, 154, 20, 50]),
-  29: Object.freeze([19, 27, 146, 15, 50]), 36: Object.freeze([16, 25, 130, 5, 15]),
+  2: Object.freeze([3, 12, 26, 1, 8]),
+  4: Object.freeze([4, 13, 34, 1, 8]),
+  5: Object.freeze([4, 13, 34, 1, 10]),
+  20: Object.freeze([12, 18, 74, 15, 25]),
+  24: Object.freeze([16, 20, 90, 5, 50]),
+  28: Object.freeze([19, 28, 154, 20, 50]),
+  29: Object.freeze([19, 27, 146, 15, 50]),
+  36: Object.freeze([16, 25, 130, 5, 15]),
 });
 /** A class fighter on the relay: its health 10 + 8 a level (DFU's RollEnemyClassMaxHealth at a 15-point career's mean),
  *  its blow 1 + level/4 to 6 + level (a weapon's range and the level's strength). */
@@ -225,13 +300,36 @@ export const ARENA_ELITE_DMG_MULT = 3;
 /** One AI fighter's body as the relay runs it; `elite` a tier champion's. Pure. */
 export function arenaFoeStats(mobile, level, { elite = false } = {}) {
   const beast = ARENA_BEASTS[mobile] ?? null;
-  const hm = elite ? ARENA_ELITE_HP_MULT : 1, dm = elite ? ARENA_ELITE_DMG_MULT : 1;
+  const hm = elite ? ARENA_ELITE_HP_MULT : 1,
+    dm = elite ? ARENA_ELITE_DMG_MULT : 1;
   if (beast) {
     const [lv, minH, maxH, minD, maxD] = beast;
-    return { mobile, level: lv, hp: Math.round((minH + maxH) / 2) * hm, dmg: [minD * dm, maxD * dm], speed: ARENA_BEAST_SPEED, every: 1300, windup: 350, reach: 2.4, beast: true, elite };
+    return {
+      mobile,
+      level: lv,
+      hp: Math.round((minH + maxH) / 2) * hm,
+      dmg: [minD * dm, maxD * dm],
+      speed: ARENA_BEAST_SPEED,
+      every: 1300,
+      windup: 350,
+      reach: 2.4,
+      beast: true,
+      elite,
+    };
   }
   const lv = Math.max(1, Math.floor(level ?? 1));
-  return { mobile, level: lv, hp: (CLASS_HP_BASE + CLASS_HP_PER_LEVEL * lv) * hm, dmg: [(1 + Math.floor(lv / 4)) * dm, (6 + lv) * dm], speed: ARENA_CLASS_SPEED, every: 1500, windup: 450, reach: 2.3, beast: false, elite };
+  return {
+    mobile,
+    level: lv,
+    hp: (CLASS_HP_BASE + CLASS_HP_PER_LEVEL * lv) * hm,
+    dmg: [(1 + Math.floor(lv / 4)) * dm, (6 + lv) * dm],
+    speed: ARENA_CLASS_SPEED,
+    every: 1500,
+    windup: 450,
+    reach: 2.3,
+    beast: false,
+    elite,
+  };
 }
 /** The bout `bout` (0..2, 3 the champion) of `tier` (0..9): its opponents' bodies (a champion's an elite's), and whether
  *  it is every fighter for themselves (the Grand Melee's three bouts - not its champion). Null for no such bout. Pure. */
@@ -240,7 +338,14 @@ export function arenaLadderBout(tier, bout) {
   const list = t?.[bout];
   if (!list) return null;
   const champion = bout === ARENA_TIER_BOUTS;
-  return { tier, bout, champion, grand: champion && tier === ARENA_TIERS - 1, free: tier === ARENA_FREE_TIER && bout < ARENA_TIER_BOUTS, foes: list.map(([m, l]) => arenaFoeStats(m, l, { elite: champion })) };
+  return {
+    tier,
+    bout,
+    champion,
+    grand: champion && tier === ARENA_TIERS - 1,
+    free: tier === ARENA_FREE_TIER && bout < ARENA_TIER_BOUTS,
+    foes: list.map(([m, l]) => arenaFoeStats(m, l, { elite: champion })),
+  };
 }
 
 // ── AUDIT ARENA-LADDER: THE RELAY'S TELEGRAPHED BLOWS ─────────────────────────────────────────────
@@ -288,11 +393,27 @@ export function arenaLadderOf(won, record = {}) {
   while (k < ARENA_TIERS * (ARENA_TIER_BOUTS + 1) && have.has(k)) k++;
   const grand = k >= ARENA_TIERS * (ARENA_TIER_BOUTS + 1);
   const tier = grand ? ARENA_TIERS - 1 : Math.floor(k / (ARENA_TIER_BOUTS + 1));
-  const champs = Array.from({ length: ARENA_TIERS }, (_, i) => have.has(ladderKey(i, ARENA_TIER_BOUTS)) && ladderKey(i, ARENA_TIER_BOUTS) < k);
+  const champs = Array.from(
+    { length: ARENA_TIERS },
+    (_, i) => have.has(ladderKey(i, ARENA_TIER_BOUTS)) && ladderKey(i, ARENA_TIER_BOUTS) < k,
+  );
   const int = (v) => (Number.isSafeInteger(v) && v > 0 ? v : 0);
   return {
-    v: 1, tier, won: grand ? ARENA_TIER_BOUTS : k % (ARENA_TIER_BOUTS + 1), champs, grand,
-    record: { wins: int(record.wins), losses: int(record.losses), yields: int(record.yields), falls: int(record.falls), ringouts: int(record.ringouts), purses: 0, streak: int(record.streak), best: int(record.best) },
+    v: 1,
+    tier,
+    won: grand ? ARENA_TIER_BOUTS : k % (ARENA_TIER_BOUTS + 1),
+    champs,
+    grand,
+    record: {
+      wins: int(record.wins),
+      losses: int(record.losses),
+      yields: int(record.yields),
+      falls: int(record.falls),
+      ringouts: int(record.ringouts),
+      purses: 0,
+      streak: int(record.streak),
+      best: int(record.best),
+    },
   };
 }
 /** The account's next bout on its climb as `{ tier, bout }`, or null once the Grand Champion has fallen. Pure. */
@@ -305,7 +426,8 @@ export function arenaNextOf(won) {
 /** The Renown level a vitality reads (the token's `lv`), bounded. */
 export const ARENA_LV_MIN = 1;
 export const ARENA_LV_MAX = 60;
-export const arenaLv = (lv) => Math.max(ARENA_LV_MIN, Math.min(ARENA_LV_MAX, Number.isFinite(lv) ? Math.floor(lv) : ARENA_LV_MIN));
+export const arenaLv = (lv) =>
+  Math.max(ARENA_LV_MIN, Math.min(ARENA_LV_MAX, Number.isFinite(lv) ? Math.floor(lv) : ARENA_LV_MIN));
 /** A fighter's vitality in a bout between players: 300 + 2 x Renown level - Seats-Arc 6.1's normalised vitality, flat
  *  on purpose, so even a lie about the level buys a third more at most. */
 export const pvpVitality = (lv) => 300 + 2 * arenaLv(lv);
@@ -315,7 +437,8 @@ export const pvpVitality = (lv) => 300 + 2 * arenaLv(lv);
  *  honest most of it: a lie about the health buys nothing, and nobody fights under what they could be. */
 export const PVE_HP_MIN = 10;
 export const PVE_HP_MAX = 2000;
-export const ladderVitalityAt = (level) => Math.max(PVE_HP_MIN, Math.min(PVE_HP_MAX, 25 + 30 * Math.max(1, Math.floor(Number(level) || 1))));
+export const ladderVitalityAt = (level) =>
+  Math.max(PVE_HP_MIN, Math.min(PVE_HP_MAX, 25 + 30 * Math.max(1, Math.floor(Number(level) || 1))));
 /** ARENA4b: the signed character level's bounds (net/identityToken.js CHARACTER_LEVEL_MIN/MAX, pinned - written here so
  *  this law imports nothing). */
 export const ARENA_CL_MIN = 1;
@@ -329,7 +452,8 @@ export const LADDER_LV_MARGIN = 5;
  *  margin - the hard cap on a claimed level there. Pure. */
 export function ladderLevelCap(tier) {
   let top = 1;
-  for (const b of ARENA_LADDER_SPEC[tier] ?? []) for (const [m, l] of b) top = Math.max(top, l ?? ARENA_BEASTS[m]?.[0] ?? 1);
+  for (const b of ARENA_LADDER_SPEC[tier] ?? [])
+    for (const [m, l] of b) top = Math.max(top, l ?? ARENA_BEASTS[m]?.[0] ?? 1);
   return top + LADDER_LV_MARGIN;
 }
 /**
@@ -368,7 +492,26 @@ export const ARENA_SPEED_MAX = 12.5;
 export const ARENA_SPEED_SLACK = 0.5;
 /** DFU's CalculateWeaponMaxDamage, verbatim case groups, by template (characters/weapons.js, pinned) - the bows one
  *  higher, BAL-ARCHERY's (bible/05-Combat/Balance-Arc.md section 18). */
-export const ARENA_WEAPON_MAX = Object.freeze({ 113: 6, 114: 8, 115: 8, 116: 8, 117: 10, 118: 12, 119: 12, 120: 16, 121: 16, 122: 18, 123: 21, 124: 12, 125: 14, 126: 18, 127: 12, 128: 16, 129: 17, 130: 19 });
+export const ARENA_WEAPON_MAX = Object.freeze({
+  113: 6,
+  114: 8,
+  115: 8,
+  116: 8,
+  117: 10,
+  118: 12,
+  119: 12,
+  120: 16,
+  121: 16,
+  122: 18,
+  123: 21,
+  124: 12,
+  125: 14,
+  126: 18,
+  127: 12,
+  128: 16,
+  129: 17,
+  130: 19,
+});
 /** DFU's weapon material modifier (combat/formulas.js WEAPON_MATERIAL_MODIFIER, pinned), by material 0..9. */
 export const ARENA_MATERIAL_MOD = Object.freeze([-1, 0, 0, 1, 2, 3, 3, 4, 5, 6]);
 /** A bare hand's most (CalculateHandToHandMaxDamage at a skill past 100, the softcap's 200) and the room a fighter's own
@@ -378,7 +521,13 @@ export const ARENA_MOD_MAX = 20;
 /** INT7: the most reach a weapon has (net/siege/siegeRef.js ARMS_TOP_MAX, pinned equal - this law imports nothing). */
 export const ARENA_ARMS_TOP_MAX = 32;
 /** INT7: a signed arms claim (net/identityToken.js `wa`, net/siege/siegeRef.js armsOk - pinned equal): `[reach, bow]`. */
-export const arenaArmsOk = (wa) => Array.isArray(wa) && wa.length === 2 && Number.isInteger(wa[0]) && wa[0] >= 0 && wa[0] <= ARENA_ARMS_TOP_MAX && (wa[1] === 0 || wa[1] === 1);
+export const arenaArmsOk = (wa) =>
+  Array.isArray(wa) &&
+  wa.length === 2 &&
+  Number.isInteger(wa[0]) &&
+  wa[0] >= 0 &&
+  wa[0] <= ARENA_ARMS_TOP_MAX &&
+  (wa[1] === 0 || wa[1] === 1);
 /**
  * THE MOST ONE BLOW MAY BE: a weapon's DFU maximum at its material and the fighter's modifiers' room, doubled for a
  * critical; a bare hand's (or an unknown template's) likewise; a spell ARENA_SPELL_MAX. Pure. INT7: a weapon's maximum at
@@ -477,7 +626,8 @@ export function privateSessionOver(S, now) {
   return null;
 }
 /** When the session's clock ends it next (its life, or its host's absence), ms. Pure. */
-export const privateSessionDeadline = (S) => Math.min(S.at + ARENA_PRIVATE_LIFE_MS, S.hostGoneAt != null ? S.hostGoneAt + ARENA_PRIVATE_HOST_GONE_MS : Infinity);
+export const privateSessionDeadline = (S) =>
+  Math.min(S.at + ARENA_PRIVATE_LIFE_MS, S.hostGoneAt != null ? S.hostGoneAt + ARENA_PRIVATE_HOST_GONE_MS : Infinity);
 
 // ── THE WIRE ──────────────────────────────────────────────────────────────────────────────────
 const int = (v, lo, hi) => (Number.isInteger(v) && v >= lo && v <= hi ? v : null);
@@ -505,9 +655,21 @@ export const ARENA_IN_KINDS = Object.freeze(['q', 'x', 'y', 'n', 'ls', 'in', 'hi
 export function validArenaIn(m) {
   if (!m || typeof m !== 'object' || !ARENA_IN_KINDS.includes(m.k)) return null;
   switch (m.k) {
-    case 'q': return { k: 'q', ...(int(m.lv, 1, 999) != null ? { lv: m.lv } : {}), ...(bannerClaim(m.b) ? { b: m.b } : {}), ...(m.u === 1 ? { u: 1 } : {}) };   // ARENA4b: `u` a casual bout sought
-    case 'x': case 'ls': case 'yd': case 'out': return { k: m.k };
-    case 'y': case 'n': return typeof m.o === 'string' && ARENA_BOUT_ID_RE.test(m.o) ? { k: m.k, o: m.o } : null;
+    case 'q':
+      return {
+        k: 'q',
+        ...(int(m.lv, 1, 999) != null ? { lv: m.lv } : {}),
+        ...(bannerClaim(m.b) ? { b: m.b } : {}),
+        ...(m.u === 1 ? { u: 1 } : {}),
+      }; // ARENA4b: `u` a casual bout sought
+    case 'x':
+    case 'ls':
+    case 'yd':
+    case 'out':
+      return { k: m.k };
+    case 'y':
+    case 'n':
+      return typeof m.o === 'string' && ARENA_BOUT_ID_RE.test(m.o) ? { k: m.k, o: m.o } : null;
     case 'in': {
       if (m.r !== 'f' && m.r !== 's') return null;
       const out = { k: 'in', r: m.r };
@@ -515,47 +677,106 @@ export function validArenaIn(m) {
         if (int(m.tier, 0, ARENA_TIERS - 1) == null || int(m.bout, 0, ARENA_TIER_BOUTS) == null) return null;
         Object.assign(out, { tier: m.tier, bout: m.bout });
       }
-      if (m.lv !== undefined) { if (int(m.lv, 1, 999) == null) return null; out.lv = m.lv; }
-      if (m.mh !== undefined) { if (int(m.mh, 1, 99999) == null) return null; out.mh = m.mh; }
-      if (bannerClaim(m.b)) out.b = m.b;   // ARENA4b: a ladder fighter's banner, billed on the list to watch
-      if (m.z !== undefined) { if (typeof m.z !== 'string' || !ARENA_TICKET_RE.test(m.z)) return null; out.z = m.z; }   // AUDIT ARENA-LADDER: a ladder attempt's ticket
+      if (m.lv !== undefined) {
+        if (int(m.lv, 1, 999) == null) return null;
+        out.lv = m.lv;
+      }
+      if (m.mh !== undefined) {
+        if (int(m.mh, 1, 99999) == null) return null;
+        out.mh = m.mh;
+      }
+      if (bannerClaim(m.b)) out.b = m.b; // ARENA4b: a ladder fighter's banner, billed on the list to watch
+      if (m.z !== undefined) {
+        if (typeof m.z !== 'string' || !ARENA_TICKET_RE.test(m.z)) return null;
+        out.z = m.z;
+      } // AUDIT ARENA-LADDER: a ladder attempt's ticket
       return out;
     }
     case 'hit': {
       if (typeof m.i !== 'string' || !FID_RE.test(m.i)) return null;
-      const d = num(m.d, 10000), r = int(m.r, 0, 2);
+      const d = num(m.d, 10000),
+        r = int(m.r, 0, 2);
       if (d == null || d < 0 || r == null) return null;
       const out = { k: 'hit', i: m.i, d, r };
-      if (m.w !== undefined) { if (int(m.w, -1, 9999) == null) return null; out.w = m.w; }
-      if (m.m !== undefined) { if (int(m.m, 0, 15) == null) return null; out.m = m.m; }
-      if (m.q !== undefined) { if (int(m.q, 0, 0x7fffffff) == null) return null; out.q = m.q; }
+      if (m.w !== undefined) {
+        if (int(m.w, -1, 9999) == null) return null;
+        out.w = m.w;
+      }
+      if (m.m !== undefined) {
+        if (int(m.m, 0, 15) == null) return null;
+        out.m = m.m;
+      }
+      if (m.q !== undefined) {
+        if (int(m.q, 0, 0x7fffffff) == null) return null;
+        out.q = m.q;
+      }
       return out;
     }
-    case 'ch': return m.c === 1 || m.c === -1 ? { k: 'ch', c: m.c } : null;
+    case 'ch':
+      return m.c === 1 || m.c === -1 ? { k: 'ch', c: m.c } : null;
     case 'ps': {
       // ARENA6: a private session's word
       if (!ARENA_PS_ACTS.includes(m.a)) return null;
       const out = { k: 'ps', a: m.a };
-      if (m.a === 'open' || m.a === 'join') { if (bannerClaim(m.bn)) out.bn = m.bn; return out; }
+      if (m.a === 'open' || m.a === 'join') {
+        if (bannerClaim(m.bn)) out.bn = m.bn;
+        return out;
+      }
       const mid = (v) => typeof v === 'string' && (v === '' || ARENA_MEMBER_ID_RE.test(v));
       if (m.a === 'pick') {
         if (m.r === undefined && m.b === undefined) return null;
-        if (m.r !== undefined) { if (!mid(m.r)) return null; out.r = m.r; }
-        if (m.b !== undefined) { if (!mid(m.b)) return null; out.b = m.b; }
+        if (m.r !== undefined) {
+          if (!mid(m.r)) return null;
+          out.r = m.r;
+        }
+        if (m.b !== undefined) {
+          if (!mid(m.b)) return null;
+          out.b = m.b;
+        }
         return out;
       }
-      if (m.a === 'kick') return typeof m.m === 'string' && ARENA_MEMBER_ID_RE.test(m.m) ? { k: 'ps', a: 'kick', m: m.m } : null;
-      if (m.a === 'lock') return m.l === 0 || m.l === 1 ? { k: 'ps', a: 'lock', l: m.l } : null;   // AUDIT PRE-MERGE 1003b S4
+      if (m.a === 'kick')
+        return typeof m.m === 'string' && ARENA_MEMBER_ID_RE.test(m.m) ? { k: 'ps', a: 'kick', m: m.m } : null;
+      if (m.a === 'lock') return m.l === 0 || m.l === 1 ? { k: 'ps', a: 'lock', l: m.l } : null; // AUDIT PRE-MERGE 1003b S4
       return out;
     }
-    default: return null;
+    default:
+      return null;
   }
 }
 
 /** The relay's words, by kind. */
-export const ARENA_OUT_KINDS = Object.freeze(['qd', 'qx', 'of', 'go', 'live', 'st', 'ev', 'hp', 'mv', 'atk', 'blow', 'rc', 'cr', 'no', 'sp', 'pss']);
+export const ARENA_OUT_KINDS = Object.freeze([
+  'qd',
+  'qx',
+  'of',
+  'go',
+  'live',
+  'st',
+  'ev',
+  'hp',
+  'mv',
+  'atk',
+  'blow',
+  'rc',
+  'cr',
+  'no',
+  'sp',
+  'pss',
+]);
 /** A bout's phases on the wire (the `st` word's `ph`; ARENA6: the session word's too). */
-export const ARENA_ST_PHASES = Object.freeze(['wait', 'call', 'walk', 'count', 'fight', 'end', 'verdict', 'heal', 'done', 'void']);
+export const ARENA_ST_PHASES = Object.freeze([
+  'wait',
+  'call',
+  'walk',
+  'count',
+  'fight',
+  'end',
+  'verdict',
+  'heal',
+  'done',
+  'void',
+]);
 /** A name on an arena word: the relay's own (the token's, a display name) - bounded and free of control characters. */
 const nameOk = (s) => typeof s === 'string' && s.length >= 1 && s.length <= 40 && !/[\u0000-\u001f\u007f]/.test(s);
 const bannerOk = (b) => b == null || ARENA_BANNERS.includes(b);
@@ -563,32 +784,98 @@ const bannerOk = (b) => b == null || ARENA_BANNERS.includes(b);
 function billOk(v) {
   if (!v || typeof v !== 'object' || !nameOk(v.n)) return null;
   const out = { n: v.n };
-  if (v.r !== undefined) { if (int(v.r, 0, ARENA_ELO_MAX) == null) return null; out.r = v.r; }
-  if (v.t !== undefined && v.t !== null) { if (typeof v.t !== 'string' || !/^[a-z]{1,24}$/.test(v.t)) return null; out.t = v.t; }
-  if (v.b !== undefined && v.b !== null) { if (!bannerOk(v.b)) return null; out.b = v.b; }
-  if (v.m !== undefined) { if (int(v.m, 0, 999) == null) return null; out.m = v.m; }
+  if (v.r !== undefined) {
+    if (int(v.r, 0, ARENA_ELO_MAX) == null) return null;
+    out.r = v.r;
+  }
+  if (v.t !== undefined && v.t !== null) {
+    if (typeof v.t !== 'string' || !/^[a-z]{1,24}$/.test(v.t)) return null;
+    out.t = v.t;
+  }
+  if (v.b !== undefined && v.b !== null) {
+    if (!bannerOk(v.b)) return null;
+    out.b = v.b;
+  }
+  if (v.m !== undefined) {
+    if (int(v.m, 0, 999) == null) return null;
+    out.m = v.m;
+  }
   return out;
 }
 /** A bout's fighter in a state word: `[id, name, side, hp, max, out, ai(0|1), mobile, temper(x100), home|'' , epithet|'']`. */
 function stFighterOk(f) {
   if (!Array.isArray(f) || f.length !== 11) return null;
   const [id, n, side, hp, max, out, ai, mob, tmp, home, ep] = f;
-  if (typeof id !== 'string' || !FID_RE.test(id) || !nameOk(n) || int(side, 0, 3) == null || int(hp, 0, 99999) == null || int(max, 1, 99999) == null) return null;
-  if (!(out === '' || ARENA_HOW.includes(out)) || (ai !== 0 && ai !== 1) || int(mob, -1, 999) == null || int(tmp, 0, 100) == null) return null;
+  if (
+    typeof id !== 'string' ||
+    !FID_RE.test(id) ||
+    !nameOk(n) ||
+    int(side, 0, 3) == null ||
+    int(hp, 0, 99999) == null ||
+    int(max, 1, 99999) == null
+  )
+    return null;
+  if (
+    !(out === '' || ARENA_HOW.includes(out)) ||
+    (ai !== 0 && ai !== 1) ||
+    int(mob, -1, 999) == null ||
+    int(tmp, 0, 100) == null
+  )
+    return null;
   if (typeof home !== 'string' || home.length > 40 || typeof ep !== 'string' || ep.length > 40) return null;
   return [id, n, side, hp, max, out, ai, mob, tmp, home, ep];
 }
 /** One law event as the relay says it (systems/arena/arenaBout.js's events - their `k`, `at`, and the fields each carries). */
-const EV_KINDS = Object.freeze(['call', 'crier', 'walk', 'count', 'fight', 'hit', 'crit', 'miss', 'knockdown', 'comeback', 'stall', 'flee', 'yield', 'fall', 'ringout', 'timeout', 'end', 'verdict', 'heal', 'done', 'cheer']);
+const EV_KINDS = Object.freeze([
+  'call',
+  'crier',
+  'walk',
+  'count',
+  'fight',
+  'hit',
+  'crit',
+  'miss',
+  'knockdown',
+  'comeback',
+  'stall',
+  'flee',
+  'yield',
+  'fall',
+  'ringout',
+  'timeout',
+  'end',
+  'verdict',
+  'heal',
+  'done',
+  'cheer',
+]);
 function evOk(e) {
   if (!e || typeof e !== 'object' || !EV_KINDS.includes(e.k) || num(e.at, 1e15) == null) return null;
   const out = { k: e.k, at: e.at };
-  if (e.a !== undefined) { if (typeof e.a !== 'string' || !FID_RE.test(e.a)) return null; out.a = e.a; }
-  if (e.b !== undefined) { if (typeof e.b !== 'string' || !FID_RE.test(e.b)) return null; out.b = e.b; }
-  if (e.dmg !== undefined) { if (int(e.dmg, 0, 99999) == null) return null; out.dmg = e.dmg; }
-  if (e.n !== undefined) { if (int(e.n, -1, 3) == null) return null; out.n = e.n; }
-  if (e.side !== undefined) { if (e.side !== null && int(e.side, 0, 3) == null) return null; out.side = e.side; }
-  if (e.how !== undefined) { if (typeof e.how !== 'string' || e.how.length > 12) return null; out.how = e.how; }
+  if (e.a !== undefined) {
+    if (typeof e.a !== 'string' || !FID_RE.test(e.a)) return null;
+    out.a = e.a;
+  }
+  if (e.b !== undefined) {
+    if (typeof e.b !== 'string' || !FID_RE.test(e.b)) return null;
+    out.b = e.b;
+  }
+  if (e.dmg !== undefined) {
+    if (int(e.dmg, 0, 99999) == null) return null;
+    out.dmg = e.dmg;
+  }
+  if (e.n !== undefined) {
+    if (int(e.n, -1, 3) == null) return null;
+    out.n = e.n;
+  }
+  if (e.side !== undefined) {
+    if (e.side !== null && int(e.side, 0, 3) == null) return null;
+    out.side = e.side;
+  }
+  if (e.how !== undefined) {
+    if (typeof e.how !== 'string' || e.how.length > 12) return null;
+    out.how = e.how;
+  }
   return out;
 }
 /**
@@ -614,13 +901,19 @@ function evOk(e) {
 export function validArenaOut(m) {
   if (!m || typeof m !== 'object' || !ARENA_OUT_KINDS.includes(m.k)) return null;
   switch (m.k) {
-    case 'qd': return int(m.n, 0, MATCH_QUEUE_MAX) != null && int(m.band, 0, MATCH_BAND_MAX) != null ? { k: 'qd', n: m.n, band: m.band } : null;
-    case 'qx': case 'no': return typeof m.m === 'string' && m.m.length <= 80 ? { k: m.k, m: m.m } : null;
-    case 'of': case 'go': {
+    case 'qd':
+      return int(m.n, 0, MATCH_QUEUE_MAX) != null && int(m.band, 0, MATCH_BAND_MAX) != null
+        ? { k: 'qd', n: m.n, band: m.band }
+        : null;
+    case 'qx':
+    case 'no':
+      return typeof m.m === 'string' && m.m.length <= 80 ? { k: m.k, m: m.m } : null;
+    case 'of':
+    case 'go': {
       if (typeof m.o !== 'string' || !ARENA_BOUT_ID_RE.test(m.o)) return null;
       const vs = billOk(m.vs);
       if (!vs) return null;
-      const u = m.u === 1 ? { u: 1 } : {};   // ARENA4b: a casual bout's offer and call say so
+      const u = m.u === 1 ? { u: 1 } : {}; // ARENA4b: a casual bout's offer and call say so
       if (m.k === 'of') return num(m.until, 1e15) != null ? { k: 'of', o: m.o, vs, until: m.until, ...u } : null;
       return int(m.side, 0, 1) != null ? { k: 'go', o: m.o, side: m.side, vs, ...u } : null;
     }
@@ -634,27 +927,62 @@ export function validArenaOut(m) {
         if (ex && int(b.h, 0, ARENA_HOUR_MAX) == null) return null;
         // ARENA4b: an exhibition's two billed by their banners alone (the relay names nobody), an unknown one dropped
         const exBill = (v) => (bannerClaim(v?.b) ? { b: v.b } : null);
-        const a = ex ? exBill(b.a) : billOk(b.a), z = ex ? exBill(b.b) : b.b ? billOk(b.b) : null;
-        if ((!ex && !a) || (!ex && b.b && !z) || int(b.sp, 0, ARENA_SPECTATORS_MAX) == null || num(b.at, 1e15) == null) return null;
+        const a = ex ? exBill(b.a) : billOk(b.a),
+          z = ex ? exBill(b.b) : b.b ? billOk(b.b) : null;
+        if ((!ex && !a) || (!ex && b.b && !z) || int(b.sp, 0, ARENA_SPECTATORS_MAX) == null || num(b.at, 1e15) == null)
+          return null;
         if (b.tier !== undefined && int(b.tier, 0, ARENA_TIERS - 1) == null) return null;
-        l.push({ o: b.o, kind: b.kind, ...(ex ? { h: b.h } : {}), ...(a ? { a } : {}), ...(z ? { b: z } : {}), ...(b.tier !== undefined ? { tier: b.tier } : {}), ...(b.u === 1 ? { u: 1 } : {}), sp: b.sp, at: b.at });
+        l.push({
+          o: b.o,
+          kind: b.kind,
+          ...(ex ? { h: b.h } : {}),
+          ...(a ? { a } : {}),
+          ...(z ? { b: z } : {}),
+          ...(b.tier !== undefined ? { tier: b.tier } : {}),
+          ...(b.u === 1 ? { u: 1 } : {}),
+          sp: b.sp,
+          at: b.at,
+        });
       }
       return { k: 'live', l };
     }
     case 'st': {
       if (typeof m.o !== 'string' || !ARENA_BOUT_ID_RE.test(m.o) || !ARENA_KINDS.includes(m.kind)) return null;
-      if (m.kind === 'ex' && int(m.h, 0, ARENA_HOUR_MAX) == null) return null;   // ARENA4b: an exhibition says its hour
+      if (m.kind === 'ex' && int(m.h, 0, ARENA_HOUR_MAX) == null) return null; // ARENA4b: an exhibition says its hour
       if (!ARENA_ST_PHASES.includes(m.ph) || num(m.pa, 1e15) == null || num(m.lim, 1e9) == null) return null;
       if (!Array.isArray(m.f) || m.f.length > 4) return null;
       const f = m.f.map(stFighterOk);
       if (f.some((x) => !x)) return null;
       if (typeof m.me !== 'string' || (m.me !== '' && !FID_RE.test(m.me))) return null;
       /** @type {any} */
-      const out = { k: 'st', o: m.o, kind: m.kind, ph: m.ph, pa: m.pa, fa: num(m.fa, 1e15) ?? null, lim: m.lim, f, me: m.me, sp: int(m.sp, 0, ARENA_SPECTATORS_MAX) ?? 0, ...(m.kind === 'ex' ? { h: m.h } : {}), ...(m.kind === 'pvp' && m.u === 1 ? { u: 1 } : {}) };
-      if (m.tier !== undefined) { if (int(m.tier, 0, ARENA_TIERS - 1) == null || int(m.bout, 0, ARENA_TIER_BOUTS) == null) return null; Object.assign(out, { tier: m.tier, bout: m.bout }); }
+      const out = {
+        k: 'st',
+        o: m.o,
+        kind: m.kind,
+        ph: m.ph,
+        pa: m.pa,
+        fa: num(m.fa, 1e15) ?? null,
+        lim: m.lim,
+        f,
+        me: m.me,
+        sp: int(m.sp, 0, ARENA_SPECTATORS_MAX) ?? 0,
+        ...(m.kind === 'ex' ? { h: m.h } : {}),
+        ...(m.kind === 'pvp' && m.u === 1 ? { u: 1 } : {}),
+      };
+      if (m.tier !== undefined) {
+        if (int(m.tier, 0, ARENA_TIERS - 1) == null || int(m.bout, 0, ARENA_TIER_BOUTS) == null) return null;
+        Object.assign(out, { tier: m.tier, bout: m.bout });
+      }
       if (m.res !== undefined && m.res !== null) {
         const r = m.res;
-        if (!r || typeof r !== 'object' || (r.side !== null && int(r.side, 0, 3) == null) || typeof r.how !== 'string' || r.how.length > 12) return null;
+        if (
+          !r ||
+          typeof r !== 'object' ||
+          (r.side !== null && int(r.side, 0, 3) == null) ||
+          typeof r.how !== 'string' ||
+          r.how.length > 12
+        )
+          return null;
         out.res = { side: r.side, how: r.how };
       }
       return out;
@@ -668,57 +996,143 @@ export function validArenaOut(m) {
       if (!Array.isArray(m.h) || m.h.length > 4) return null;
       const h = [];
       for (const t of m.h) {
-        if (!Array.isArray(t) || t.length !== 3 || typeof t[0] !== 'string' || !FID_RE.test(t[0]) || int(t[1], 0, 99999) == null || int(t[2], 1, 99999) == null) return null;
+        if (
+          !Array.isArray(t) ||
+          t.length !== 3 ||
+          typeof t[0] !== 'string' ||
+          !FID_RE.test(t[0]) ||
+          int(t[1], 0, 99999) == null ||
+          int(t[2], 1, 99999) == null
+        )
+          return null;
         h.push([t[0], t[1], t[2]]);
       }
       return { k: 'hp', h };
     }
     case 'mv': {
       const v = [m.x, m.z, m.tx, m.tz].map((q) => num(q, 1e5));
-      if (typeof m.i !== 'string' || !/^a[0-3]$/.test(m.i) || v.some((q) => q == null) || num(m.v, 50) == null || m.v < 0 || num(m.at, 1e15) == null) return null;
+      if (
+        typeof m.i !== 'string' ||
+        !/^a[0-3]$/.test(m.i) ||
+        v.some((q) => q == null) ||
+        num(m.v, 50) == null ||
+        m.v < 0 ||
+        num(m.at, 1e15) == null
+      )
+        return null;
       return { k: 'mv', i: m.i, x: m.x, z: m.z, tx: m.tx, tz: m.tz, v: m.v, at: m.at };
     }
     case 'atk': {
-      if (typeof m.i !== 'string' || !/^a[0-3]$/.test(m.i) || num(m.at, 1e15) == null || num(m.x, 1e5) == null || num(m.z, 1e5) == null) return null;
+      if (
+        typeof m.i !== 'string' ||
+        !/^a[0-3]$/.test(m.i) ||
+        num(m.at, 1e15) == null ||
+        num(m.x, 1e5) == null ||
+        num(m.z, 1e5) == null
+      )
+        return null;
       if (typeof m.tg !== 'string' || !FID_RE.test(m.tg)) return null;
       // AUDIT ARENA-LADDER: a telegraphed blow - its shape, its facing, and where it was wound up (the fighter's feet)
       if (m.s !== undefined) {
-        if (!ARENA_BLOW_SHAPES.includes(m.s) || num(m.yw, 10) == null || num(m.ox, 1e5) == null || num(m.oz, 1e5) == null) return null;
+        if (
+          !ARENA_BLOW_SHAPES.includes(m.s) ||
+          num(m.yw, 10) == null ||
+          num(m.ox, 1e5) == null ||
+          num(m.oz, 1e5) == null
+        )
+          return null;
         return { k: 'atk', i: m.i, at: m.at, x: m.x, z: m.z, tg: m.tg, s: m.s, yw: m.yw, ox: m.ox, oz: m.oz };
       }
       return { k: 'atk', i: m.i, at: m.at, x: m.x, z: m.z, tg: m.tg };
     }
-    case 'blow': return typeof m.i === 'string' && /^a[0-3]$/.test(m.i) && int(m.d, 0, 9999) != null && typeof m.to === 'string' && /^p[01]$/.test(m.to) ? { k: 'blow', i: m.i, d: m.d, to: m.to } : null;
-    case 'rc': return typeof m.r === 'string' && m.r.length <= 640 ? { k: 'rc', r: m.r } : null;
-    case 'cr': return (m.c === 1 || m.c === -1) && int(m.n, 1, ARENA_SPECTATORS_MAX) != null ? { k: 'cr', c: m.c, n: m.n } : null;
-    case 'sp': return int(m.n, 0, ARENA_SPECTATORS_MAX) != null ? { k: 'sp', n: m.n } : null;
+    case 'blow':
+      return typeof m.i === 'string' &&
+        /^a[0-3]$/.test(m.i) &&
+        int(m.d, 0, 9999) != null &&
+        typeof m.to === 'string' &&
+        /^p[01]$/.test(m.to)
+        ? { k: 'blow', i: m.i, d: m.d, to: m.to }
+        : null;
+    case 'rc':
+      return typeof m.r === 'string' && m.r.length <= 640 ? { k: 'rc', r: m.r } : null;
+    case 'cr':
+      return (m.c === 1 || m.c === -1) && int(m.n, 1, ARENA_SPECTATORS_MAX) != null
+        ? { k: 'cr', c: m.c, n: m.n }
+        : null;
+    case 'sp':
+      return int(m.n, 0, ARENA_SPECTATORS_MAX) != null ? { k: 'sp', n: m.n } : null;
     case 'pss': {
       // ARENA6: a private session, as one member is told it
       const mid = (v) => typeof v === 'string' && (v === '' || ARENA_MEMBER_ID_RE.test(v));
-      if (typeof m.c !== 'string' || !ARENA_PRIVATE_CODE_RE.test(m.c) || !nameOk(m.hn) || (m.h !== 0 && m.h !== 1)) return null;
+      if (typeof m.c !== 'string' || !ARENA_PRIVATE_CODE_RE.test(m.c) || !nameOk(m.hn) || (m.h !== 0 && m.h !== 1))
+        return null;
       if (!mid(m.hm) || !mid(m.me) || !mid(m.r) || !mid(m.b)) return null;
       if (!Array.isArray(m.m) || m.m.length > ARENA_PRIVATE_MEMBERS_MAX) return null;
       const members = [];
       for (const x of m.m) {
         if (!Array.isArray(x) || x.length !== 6) return null;
         const [id, n, g, here, t, bn] = x;
-        if (typeof id !== 'string' || !ARENA_MEMBER_ID_RE.test(id) || !nameOk(n) || (g !== 0 && g !== 1) || (here !== 0 && here !== 1)) return null;
-        if (typeof t !== 'string' || (t !== '' && !/^[a-z]{1,24}$/.test(t)) || !(bn === '' || ARENA_BANNERS.includes(bn))) return null;
+        if (
+          typeof id !== 'string' ||
+          !ARENA_MEMBER_ID_RE.test(id) ||
+          !nameOk(n) ||
+          (g !== 0 && g !== 1) ||
+          (here !== 0 && here !== 1)
+        )
+          return null;
+        if (
+          typeof t !== 'string' ||
+          (t !== '' && !/^[a-z]{1,24}$/.test(t)) ||
+          !(bn === '' || ARENA_BANNERS.includes(bn))
+        )
+          return null;
         members.push([id, n, g, here, t, bn]);
       }
       if (typeof m.o !== 'string' || (m.o !== '' && !ARENA_BOUT_ID_RE.test(m.o))) return null;
       if (typeof m.ph !== 'string' || (m.ph !== '' && !ARENA_ST_PHASES.includes(m.ph))) return null;
-      if (!Array.isArray(m.f) || !(m.f.length === 0 || (m.f.length === 2 && m.f.every((v) => typeof v === 'string' && ARENA_MEMBER_ID_RE.test(v))))) return null;
+      if (
+        !Array.isArray(m.f) ||
+        !(
+          m.f.length === 0 ||
+          (m.f.length === 2 && m.f.every((v) => typeof v === 'string' && ARENA_MEMBER_ID_RE.test(v)))
+        )
+      )
+        return null;
       if (!Array.isArray(m.hist) || m.hist.length > ARENA_PRIVATE_HIST_MAX) return null;
       const hist = [];
       for (const r of m.hist) {
-        if (!Array.isArray(r) || r.length !== 4 || !nameOk(r[0]) || !nameOk(r[1]) || int(r[2], -1, 1) == null || typeof r[3] !== 'string' || r[3].length > 12) return null;
+        if (
+          !Array.isArray(r) ||
+          r.length !== 4 ||
+          !nameOk(r[0]) ||
+          !nameOk(r[1]) ||
+          int(r[2], -1, 1) == null ||
+          typeof r[3] !== 'string' ||
+          r[3].length > 12
+        )
+          return null;
         hist.push([r[0], r[1], r[2], r[3]]);
       }
-      if (m.lo !== 0 && m.lo !== 1) return null;   // AUDIT PRE-MERGE 1003b S4
-      return { k: 'pss', c: m.c, hn: m.hn, hm: m.hm, h: m.h, me: m.me, m: members, r: m.r, b: m.b, o: m.o, ph: m.ph, f: [...m.f], hist, lo: m.lo };
+      if (m.lo !== 0 && m.lo !== 1) return null; // AUDIT PRE-MERGE 1003b S4
+      return {
+        k: 'pss',
+        c: m.c,
+        hn: m.hn,
+        hm: m.hm,
+        h: m.h,
+        me: m.me,
+        m: members,
+        r: m.r,
+        b: m.b,
+        o: m.o,
+        ph: m.ph,
+        f: [...m.f],
+        hist,
+        lo: m.lo,
+      };
     }
-    default: return null;
+    default:
+      return null;
   }
 }
 
@@ -734,15 +1148,15 @@ export const ARENA_NO_TEXT = Object.freeze({
   'seats full': 'The stands are full.',
   'not yours': 'That bout is not yours to fight.',
   void: 'The bout is void. A fighter never came to the sand.',
-  'no contest': 'The bout is void. Both fighters left the sand.',   // AUDIT PRE-MERGE 1003b S9
+  'no contest': 'The bout is void. Both fighters left the sand.', // AUDIT PRE-MERGE 1003b S9
   // ARENA6: a private session's
   'host guest': 'Only a registered account can host a private session.',
   taken: 'That code is already in use. Host again for a new one.',
   'no session': 'No private session has that code.',
   removed: 'The host removed you from this session.',
   'session full': 'That private session is full.',
-  locked: 'That private session is locked to new players.',   // AUDIT PRE-MERGE 1003b S4
-  'host only': 'Only the session\'s host can do that.',
+  locked: 'That private session is locked to new players.', // AUDIT PRE-MERGE 1003b S4
+  'host only': "Only the session's host can do that.",
   'not member': 'Join the session first.',
   'not here': 'That fighter is not here.',
   'guest fighter': 'A guest can watch, but only a registered account can fight.',
@@ -750,7 +1164,7 @@ export const ARENA_NO_TEXT = Object.freeze({
   'bout on': 'A bout is under way. End it first.',
   'no picks': 'Pick a Red and a Blue first.',
   voided: 'The host ended the bout with no result.',
-  'has result': 'That bout has its result and will end on its own.',   // AUDIT PRE-MERGE 1003b R8/S1: End bout after the result
+  'has result': 'That bout has its result and will end on its own.', // AUDIT PRE-MERGE 1003b R8/S1: End bout after the result
   closed: 'The host closed the session.',
   ended: 'The private session has ended.',
 });

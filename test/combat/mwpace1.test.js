@@ -252,6 +252,52 @@ test('MW-SHOT-PACE: a SHOT is paced to the classic loose - its "shoot release" l
   near(done, blow.seconds, 2 / 120 + 1e-9, 'the follow-through ends with the shot');
 });
 
+test('MW-DRAW-PACE: a HELD draw (Bow Drawback) comes to full draw with the classic hold frame, and its loose with the classic hit once let go - a long bow as fast as a short one (mutants: the draw unpaced; the loose unpaced)', async () => {
+  const files = new Map([
+    [fpSkeletonPath({}), f('armfp.nif')],
+    [FP_CLIP_PATH, f('armfpweapon.kf')],
+    ['meshes/fixture/armfphand.nif', f('armfphand.nif')],
+    ['meshes/fixture/armfparm.nif', f('armfparm.nif')],
+    ['meshes/w/bowmesh.nif', f('bowmesh.nif')],
+    ['meshes/w/arrow.nif', f('arrow.nif')],
+    ['textures/tx_fixture.dds', f('fixture.dds')],
+  ]);
+  const weap = Uint8Array.from([...wpdtRec('long bow', 'w/bowmesh.nif', MW_WEAPON_TYPE.MarksmanBow), ...wpdtRec('iron arrow', 'w/arrow.nif', MW_WEAPON_TYPE.Arrow)]);
+  const arm = createFpArm();
+  arm.attach(fakeRenderer(), () => ({ pitch: 0 }));
+  const res = await arm.build({
+    race: 'fprace', weapon: { templateIndex: 130 }, hasAmmo: true,
+    deps: {
+      loadMorrowindArchives: async () => [{ has: (q) => files.has(q), get: (q) => files.get(q) }],
+      storedMorrowindNames: async () => ['armfp.esm', 'weap.esm'],
+      loadMorrowindFile: async (n) => (n === 'weap.esm' ? weap : f('armfp.esm')),
+    },
+  });
+  assert.ok(res.ok, `${res.stage}: ${res.error}`);
+  arm.setSheathed(false);
+  for (let i = 0; i < 400 && arm.status().upper !== UPPER_BODY.WeaponEquipped; i++) arm.update(0.05);
+  // the machine's own draw: StrikeUp from rest to the hold frame
+  const m = createWeaponMachine(true);
+  machineAttack(m, 'StrikeUp');
+  const draw = shotSchedule(m, 1 / 120);
+  assert.ok(draw?.draw && draw.hitAt > 0, 'a held draw is timed to the hold frame');
+  assert.equal(arm.attack('StrikeUp', { hold: true, blow: draw }), 'shoot');
+  assert.ok(arm.status().blow, 'the held draw is paced');
+  let clock = 0;
+  for (let i = 0; i < 600 && arm.status().blow && arm.status().upper === UPPER_BODY.AttackWindUp && clock < draw.hitAt + 0.05; i++) { arm.update(1 / 120); clock += 1 / 120; }
+  assert.equal(arm.status().upper, UPPER_BODY.AttackWindUp, 'held at full draw');
+  // let go: the loose the classic machine now times
+  const loose = { seconds: 0.25, hitAt: 0.125 };
+  assert.equal(arm.release(loose), true);
+  assert.ok(arm.status().blow, 'the loose is paced');
+  let released = null; clock = 0;
+  for (let i = 0; i < 600 && released == null; i++) {
+    arm.update(1 / 120); clock += 1 / 120;
+    if (arm.takeShootRelease()) released = clock;
+  }
+  near(released, loose.hitAt, 2 / 120 + 1e-9, 'the arrow leaves with the classic loose');
+});
+
 test('MW-SHOT-PACE: shotSchedule IS the bow machine\'s clock - its loose and its end, from a drawn idle bow and from rest', () => {
   for (const [drawn, dt] of [[true, 1 / 60], [false, 1 / 60], [true, 1 / 144], [false, 0.05]]) {
     const m = createWeaponMachine(true);
@@ -379,4 +425,9 @@ test('MW-PACE1: the peer\'s body hands its rig the burst\'s schedule', async () 
     { seconds: 0.6, hitAt: 0.24 },         // a longer gap does not slow it
     null,                                  // a pause: a new burst
   ]);
+});
+
+test('MW-DRAW-PACE by source: the rig hands a bow\'s held draw its loose on the classic clock when it lets go (mutant: the rig hands nothing)', () => {
+  const rig = readFileSync(new URL('../../src/combat/weapon/weaponRig.js', import.meta.url), 'utf8');
+  assert.match(rig, /if \(!\(m\.isBow && m\.state === 'StrikeUp'\)\) fpArm\.release\(m\.isBow \? playerWeapon\.strikeSchedule\(dt\) : null\);/);
 });

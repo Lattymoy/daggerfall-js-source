@@ -1,526 +1,526 @@
 [
- {
-  "name": "CROWN1C-fold-st",
-  "file": "src/net/royalLink.js",
-  "old": "      for (const [id, hp, max, down] of g.f) roll[id] = { hp, max, down: down === 1 };",
-  "new": "      for (const [id, hp, max] of g.f) roll[id] = { hp, max, down: false };",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-fold-hp",
-  "file": "src/net/royalLink.js",
-  "old": "    case 'hp': return { ...s, roll: { ...s.roll, [g.id]: { hp: g.h, max: g.m, down: g.h <= 0 } }, heardAt: now };",
-  "new": "    case 'hp': return { ...s, roll: { ...s.roll, [g.id]: { hp: g.h, max: g.m, down: false } }, heardAt: now };",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-fold-fell",
-  "file": "src/net/royalLink.js",
-  "old": "return { ...s, roll: { ...s.roll, [g.id]: { hp: 0, max: was?.max ?? 0, down: true } }, heardAt: now }; }",
-  "new": "return { ...s, heardAt: now }; }",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-fold-spent",
-  "file": "src/net/royalLink.js",
-  "old": "      delete asks[g.a]; delete asks[g.b];\n",
-  "new": "",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-fold-bend-n",
-  "file": "src/net/royalLink.js",
-  "old": "bout: s.bout?.n === g.n ? null : s.bout,",
-  "new": "bout: null,",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-fold-lad",
-  "file": "src/net/royalLink.js",
-  "old": "    case 'lad': return { ...s, ladder: g.l.map((r) => r.slice()), heardAt: now };",
-  "new": "    case 'lad': return s;",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-fold-ask",
-  "file": "src/net/royalLink.js",
-  "old": "    case 'ask': return { ...s, asks: { ...s.asks, [g.id]: now }, heardAt: now };",
-  "new": "    case 'ask': return s;",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-fold-no",
-  "file": "src/net/royalLink.js",
-  "old": "    case 'no': return { ...s, no: g.m, heardAt: now };",
-  "new": "    case 'no': return s;",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-ask-life",
-  "file": "src/net/royalLink.js",
-  "old": "export const royalAskStands = (s, id, now) => Number.isFinite(s.asks[id]) && now - s.asks[id] <= ROYAL_RING.askMs;",
-  "new": "export const royalAskStands = (s, id, now) => Number.isFinite(s.asks[id]);",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-hud-title",
-  "file": "src/net/royalLink.js",
-  "old": "prize ${Number(t.prize ?? 0).toLocaleString('en-US')} silver",
-  "new": "prize ${t.prize} silver",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-hud-days",
-  "file": "src/net/royalLink.js",
-  "old": "return h >= 24 ? `${Math.floor(h / 24)}d ${h % 24}h`",
-  "new": "return h >= 48 ? `${Math.floor(h / 24)}d ${h % 24}h`",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-hud-countdown",
-  "file": "src/net/royalLink.js",
-  "old": "    : now < b.s ? `BOUT ${b.n}:",
-  "new": "    : false ? `BOUT ${b.n}:",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-hud-rows",
-  "file": "src/net/royalLink.js",
-  "old": "  const ladder = s.ladder.slice(0, ROYAL_HUD_ROWS).map(",
-  "new": "  const ladder = s.ladder.map(",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-hud-gone",
-  "file": "src/net/royalLink.js",
-  "old": "${r[0] ? who(r[0]) : 'someone gone'}",
-  "new": "${who(r[0])}",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-hud-vitality",
-  "file": "src/net/royalLink.js",
-  "old": "    if (f && b && (b.a === me || b.b === me)) {",
-  "new": "    if (f) {",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-hud-record",
-  "file": "src/net/royalLink.js",
-  "old": "    self.push(mine ? `You: ${mine[1]} ${mine[1] === 1 ? 'win' : 'wins'}, ${mine[2]} ${mine[2] === 1 ? 'loss' : 'losses'}` : 'You have no bout won yet.');",
-  "new": "    self.push('You have no bout won yet.');",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-hud-asks",
-  "file": "src/net/royalLink.js",
-  "old": "    for (const id of Object.keys(s.asks)) if (royalAskStands(s, id, now)) self.push(",
-  "new": "    for (const id of Object.keys(s.asks)) if (true) self.push(",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-hud-last",
-  "file": "src/net/royalLink.js",
-  "old": "now - s.last.at < ROYAL_LAST_SHOWN_MS) {",
-  "new": "true) {",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-hud-counted",
-  "file": "src/net/royalLink.js",
-  "old": "self.push(s.last.w === me ? (s.last.c ? 'You won the bout.' :",
-  "new": "self.push(s.last.w === me ? (true ? 'You won the bout.' :",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-hud-watch",
-  "file": "src/net/royalLink.js",
-  "old": "  if (watching) self.push('Watching the Royal Tourney');\n  else {",
-  "new": "  {",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-sess-old",
-  "file": "src/net/royalSession.js",
-  "old": "      if (!relayOk()) { say(ROYAL_SESSION_TEXT.old); return false; }",
-  "new": "",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-sess-here",
-  "file": "src/net/royalSession.js",
-  "old": "      if (!field) { say(ROYAL_SESSION_TEXT.notHere(seat?.name ?? 'the city')); return false; }",
-  "new": "",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-sess-retry",
-  "file": "src/net/royalSession.js",
-  "old": "      if (r?.error === 'ring-unsettled') { s.tries++; s.retryAt = nowMs() + passRetryMs(s.tries, ROYAL_PASS_RETRY_MS); if (s.tries === 1) say(r.text); return; }",
-  "new": "",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-sess-wait",
-  "file": "src/net/royalSession.js",
-  "old": "      if (!s.joined) { if (s.retryAt && now >= s.retryAt) { s.retryAt = 0; ask(); } return; }",
-  "new": "      if (!s.joined) { if (s.retryAt) { s.retryAt = 0; ask(); } return; }",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-sess-room",
-  "file": "src/net/royalSession.js",
-  "old": "    s.room = royalRoomKey(s.seat.key, r.week);",
-  "new": "    s.room = royalRoomKey(s.seat.key, 0);",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-sess-mint",
-  "file": "src/net/royalSession.js",
-  "old": "    online.mintSiegePass = s.mint;",
-  "new": "",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-sess-in",
-  "file": "src/net/royalSession.js",
-  "old": "      else if (!s.sentIn) s.sentIn = online.sendSiege({ k: 'in' });",
-  "new": "      else online.sendSiege({ k: 'in' });",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-sess-ends",
-  "file": "src/net/royalSession.js",
-  "old": "      if (s.ends && now >= s.ends) { api.leave(); return; }",
-  "new": "",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-sess-room-check",
-  "file": "src/net/royalSession.js",
-  "old": "      if (!s || room !== s.room) return;\n      s.state = foldRoyal",
-  "new": "      if (!s) return;\n      s.state = foldRoyal",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-sess-back",
-  "file": "src/net/royalSession.js",
-  "old": "      if (g.k === 'back') movePlayer(g.p);",
-  "new": "",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-sess-asked",
-  "file": "src/net/royalSession.js",
-  "old": "      if (g.k === 'ask') say(ROYAL_SESSION_TEXT.asked(name(g.id) || 'A contender'));",
-  "new": "",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-sess-won",
-  "file": "src/net/royalSession.js",
-  "old": "      if (g.k === 'won' && readRoyalReceipt(g.rc) && claims) { claims.keep(g.rc); claims.offer({ force: true }); }",
-  "new": "",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-sess-won-read",
-  "file": "src/net/royalSession.js",
-  "old": "      if (g.k === 'won' && readRoyalReceipt(g.rc) && claims)",
-  "new": "      if (g.k === 'won' && claims)",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-sess-watch-challenge",
-  "file": "src/net/royalSession.js",
-  "old": "      if (!s?.joined || s.side === 'watch' || !peer || peer === online.id) return false;",
-  "new": "      if (!s?.joined || !peer || peer === online.id) return false;",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-sess-self",
-  "file": "src/net/royalSession.js",
-  "old": "      if (!s?.joined || s.side === 'watch' || !peer || peer === online.id) return false;",
-  "new": "      if (!s?.joined || s.side === 'watch' || !peer) return false;",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-sess-accept",
-  "file": "src/net/royalSession.js",
-  "old": "      if (royalAskStands(s.state, peer, nowMs())) return online.sendSiege({ k: 'yes', to: peer });\n",
-  "new": "",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-sess-foe-count",
-  "file": "src/net/royalSession.js",
-  "old": "    return b && now >= b.s && now < b.e && (b.a === online.id || b.b === online.id) ? b : null;",
-  "new": "    return b && now < b.e && (b.a === online.id || b.b === online.id) ? b : null;",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-sess-foe-mine",
-  "file": "src/net/royalSession.js",
-  "old": "    return b && now >= b.s && now < b.e && (b.a === online.id || b.b === online.id) ? b : null;",
-  "new": "    return b && now >= b.s && now < b.e ? b : null;",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-sess-blow",
-  "file": "src/net/royalSession.js",
-  "old": "    blow(to, { w, m, d, r }) { return api.foes().includes(to) && online.sendSiege(",
-  "new": "    blow(to, { w, m, d, r }) { return online.sendSiege(",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-sess-ring",
-  "file": "src/net/royalSession.js",
-  "old": "      return b && (b.a === online.id || b.b === online.id) ? { centre: s.field[0], radius: ROYAL_RING.radiusM } : null;",
-  "new": "      return b ? { centre: s.field[0], radius: ROYAL_RING.radiusM } : null;",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-sess-leave-mint",
-  "file": "src/net/royalSession.js",
-  "old": "      if (mint && online.mintSiegePass === mint) online.mintSiegePass = null;",
-  "new": "      void 0;",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-claims-key",
-  "file": "src/net/siege/siegeClaims.js",
-  "old": "export const ROYAL_CLAIMS_KEY = 'crown1.royalClaims';",
-  "new": "export const ROYAL_CLAIMS_KEY = 'seat2a.siegeClaims';",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-claims-read",
-  "file": "src/net/siege/siegeClaims.js",
-  "old": "storeKey: ROYAL_CLAIMS_KEY, read: readRoyalReceipt,",
-  "new": "storeKey: ROYAL_CLAIMS_KEY, read: readSiegeReceipt,",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-claims-settles",
-  "file": "src/net/siege/siegeClaims.js",
-  "old": "settles: royalClaimSettles, max: ROYAL_CLAIMS_MAX });",
-  "new": "max: ROYAL_CLAIMS_MAX });",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-claims-over",
-  "file": "src/net/siege/siegeClaims.js",
-  "old": "  if (r?.error === 'royal-none' || r?.error === 'royal-over') return true;",
-  "new": "  if (r?.error === 'royal-none') return true;",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-claims-mend",
-  "file": "src/net/siege/siegeClaims.js",
-  "old": "  if (r?.error === 'royal-none' || r?.error === 'royal-over') return true;\n  if (r?.error === 'receipt') return !MENDABLE.includes(r?.why);",
-  "new": "  if (r?.error === 'royal-none' || r?.error === 'royal-over') return true;\n  if (r?.error === 'receipt') return true;",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-claims-max",
-  "file": "src/net/siege/siegeClaims.js",
-  "old": "export const ROYAL_CLAIMS_MAX = 40;",
-  "new": "export const ROYAL_CLAIMS_MAX = 16;",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-ring-banner",
-  "file": "src/systems/siegeField.js",
-  "old": "? [siegeWorldPoint(px, py, f.banners[3])] : null);",
-  "new": "? [siegeWorldPoint(px, py, f.banners[0])] : null);",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-ring-crown",
-  "file": "src/systems/siegeField.js",
-  "old": "(f && f.banners.length >= 4 ?",
-  "new": "(f ?",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-online-ok",
-  "file": "src/net/online.js",
-  "old": "(isRoyalRoom(this.room) ? this.royalOk : this.siegeOk)",
-  "new": "this.siegeOk",
-  "tests": [
-   "test/net/crown1_royal_client.test.js",
-   "test/net/siege/seat2a_siege_play.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-online-floor",
-  "file": "src/net/online.js",
-  "old": "this.royalOk = relayRunsRoyal(relayV); }",
-  "new": "this.royalOk = relayFightsBattles(relayV); }",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-online-recv",
-  "file": "src/net/online.js",
-  "old": "      if (!primary || !isBattleRoom(room)) return;   // CROWN1 part two",
-  "new": "      if (!primary || !isRoyalRoom(room) === isRoyalRoom(room)) return;   // CROWN1 part two",
-  "tests": [
-   "test/net/crown1_royal_client.test.js",
-   "test/net/siege/seat2a_siege_play.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-lines-prize",
-  "file": "src/net/townSeatLaw.js",
-  "old": "The week's champion takes ${Number(r.prize ?? 0).toLocaleString('en-US')} silver",
-  "new": "The week's champion takes ${r.prize} silver",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-lines-row",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  const rows = (r.ladder ?? []).map((x, i) => `${i + 1}. ${x.name || 'Someone'} - ${x.wins} won, ${x.losses} lost`);",
-  "new": "  const rows = (r.ladder ?? []).map((x, i) => `${i + 1}. ${x.name} - ${x.wins} won, ${x.losses} lost`);",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-lines-none",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  return [...out, ...(rows.length ? rows : ['No bout has been won yet.'])];",
-  "new": "  return [...out, ...rows];",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-tab-node",
-  "file": "src/ui/seatTab.js",
-  "old": "        if (data.royal) b.append(royalNode(data.royal));\n",
-  "new": "",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-tab-watch",
-  "file": "src/ui/seatTab.js",
-  "old": "const doors = [['notice-seat-royal-enter', 'Enter the Royal Tourney', false, 'To the ring.'], ['notice-seat-royal-watch', 'Watch the Royal Tourney', true,",
-  "new": "const doors = [['notice-seat-royal-enter', 'Enter the Royal Tourney', false, 'To the ring.'], ['notice-seat-royal-watch', 'Watch the Royal Tourney', false,",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1C-tab-hook",
-  "file": "src/ui/noticeWindow.js",
-  "old": "...(deps.seatRoyal ? { enterRoyal: deps.seatRoyal } : {}),",
-  "new": "",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- }
+  {
+    "name": "CROWN1C-fold-st",
+    "file": "src/net/royalLink.js",
+    "old": "      for (const [id, hp, max, down] of g.f) roll[id] = { hp, max, down: down === 1 };",
+    "new": "      for (const [id, hp, max] of g.f) roll[id] = { hp, max, down: false };",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-fold-hp",
+    "file": "src/net/royalLink.js",
+    "old": "      return { ...s, roll: { ...s.roll, [g.id]: { hp: g.h, max: g.m, down: g.h <= 0 } }, heardAt: now };",
+    "new": "      return { ...s, roll: { ...s.roll, [g.id]: { hp: g.h, max: g.m, down: false } }, heardAt: now };",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-fold-fell",
+    "file": "src/net/royalLink.js",
+    "old": "      return { ...s, roll: { ...s.roll, [g.id]: { hp: 0, max: was?.max ?? 0, down: true } }, heardAt: now };",
+    "new": "      return { ...s, heardAt: now };",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-fold-spent",
+    "file": "src/net/royalLink.js",
+    "old": "      delete asks[g.a];\n      delete asks[g.b];\n      return { ...s, bout: { a: g.a, b: g.b, n: g.n, s: g.s, e: g.e }, asks, heardAt: now };",
+    "new": "      return { ...s, bout: { a: g.a, b: g.b, n: g.n, s: g.s, e: g.e }, asks, heardAt: now };",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-fold-bend-n",
+    "file": "src/net/royalLink.js",
+    "old": "      return {\n        ...s,\n        bout: s.bout?.n === g.n ? null : s.bout,\n        last: { n: g.n, w: g.w, l: g.l, c: g.c, at: now },\n        heardAt: now,\n      };",
+    "new": "      return { ...s, bout: null, last: { n: g.n, w: g.w, l: g.l, c: g.c, at: now }, heardAt: now };",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-fold-lad",
+    "file": "src/net/royalLink.js",
+    "old": "      return { ...s, ladder: g.l.map((r) => r.slice()), heardAt: now };",
+    "new": "      return s;",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-fold-ask",
+    "file": "src/net/royalLink.js",
+    "old": "      return { ...s, asks: { ...s.asks, [g.id]: now }, heardAt: now };",
+    "new": "      return s;",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-fold-no",
+    "file": "src/net/royalLink.js",
+    "old": "      return { ...s, no: g.m, heardAt: now };",
+    "new": "      return s;",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-ask-life",
+    "file": "src/net/royalLink.js",
+    "old": "export const royalAskStands = (s, id, now) => Number.isFinite(s.asks[id]) && now - s.asks[id] <= ROYAL_RING.askMs;",
+    "new": "export const royalAskStands = (s, id, now) => Number.isFinite(s.asks[id]);",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-hud-title",
+    "file": "src/net/royalLink.js",
+    "old": "  const title = `THE ROYAL TOURNEY OF ${String(t.seat ?? '').toUpperCase()}   prize ${Number(t.prize ?? 0).toLocaleString('en-US')} silver   ends in ${daysHours((t.endsMs ?? now) - now)}`;",
+    "new": "  const title = `THE ROYAL TOURNEY OF ${String(t.seat ?? '').toUpperCase()}   prize ${t.prize} silver   ends in ${daysHours((t.endsMs ?? now) - now)}`;",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-hud-days",
+    "file": "src/net/royalLink.js",
+    "old": "  return h >= 24 ? `${Math.floor(h / 24)}d ${h % 24}h` : `${h}h ${Math.max(0, Math.floor(ms / 60_000)) % 60}m`;",
+    "new": "  return h >= 48 ? `${Math.floor(h / 24)}d ${h % 24}h` : `${h}h ${Math.max(0, Math.floor(ms / 60_000)) % 60}m`;",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-hud-countdown",
+    "file": "src/net/royalLink.js",
+    "old": "    : now < b.s",
+    "new": "    : false",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-hud-rows",
+    "file": "src/net/royalLink.js",
+    "old": "  const ladder = s.ladder\n    .slice(0, ROYAL_HUD_ROWS)\n    .map((r, i) => `${i + 1}. ${r[0] ? who(r[0]) : 'someone gone'} ${r[1]}-${r[2]}`)\n    .join('   ');",
+    "new": "  const ladder = s.ladder.map((r, i) => `${i + 1}. ${r[0] ? who(r[0]) : 'someone gone'} ${r[1]}-${r[2]}`).join('   ');",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-hud-gone",
+    "file": "src/net/royalLink.js",
+    "old": "    .map((r, i) => `${i + 1}. ${r[0] ? who(r[0]) : 'someone gone'} ${r[1]}-${r[2]}`)",
+    "new": "    .map((r, i) => `${i + 1}. ${who(r[0])} ${r[1]}-${r[2]}`)",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-hud-vitality",
+    "file": "src/net/royalLink.js",
+    "old": "    if (f && b && (b.a === me || b.b === me)) {",
+    "new": "    if (f) {",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-hud-record",
+    "file": "src/net/royalLink.js",
+    "old": "    self.push(\n      mine\n        ? `You: ${mine[1]} ${mine[1] === 1 ? 'win' : 'wins'}, ${mine[2]} ${mine[2] === 1 ? 'loss' : 'losses'}`\n        : 'You have no bout won yet.',\n    );",
+    "new": "    self.push('You have no bout won yet.');",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-hud-asks",
+    "file": "src/net/royalLink.js",
+    "old": "      if (royalAskStands(s, id, now))\n        self.push(`${who(id)} challenges you. Challenge them back from their card to accept.`);",
+    "new": "      if (true) self.push(`${who(id)} challenges you. Challenge them back from their card to accept.`);",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-hud-last",
+    "file": "src/net/royalLink.js",
+    "old": "    if (s.last && (s.last.w === me || s.last.l === me) && now - s.last.at < ROYAL_LAST_SHOWN_MS) {",
+    "new": "    if (s.last && (s.last.w === me || s.last.l === me) && true) {",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-hud-counted",
+    "file": "src/net/royalLink.js",
+    "old": "          ? s.last.c",
+    "new": "          ? true",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-hud-watch",
+    "file": "src/net/royalLink.js",
+    "old": "  if (watching) self.push('Watching the Royal Tourney');\n  else {",
+    "new": "  {",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-sess-old",
+    "file": "src/net/royalSession.js",
+    "old": "      if (!relayOk()) {\n        say(ROYAL_SESSION_TEXT.old);\n        return false;\n      }\n      if (!field) {",
+    "new": "      if (!field) {",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-sess-here",
+    "file": "src/net/royalSession.js",
+    "old": "      if (!field) {\n        say(ROYAL_SESSION_TEXT.notHere(seat?.name ?? 'the city'));\n        return false;\n      }",
+    "new": "",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-sess-retry",
+    "file": "src/net/royalSession.js",
+    "old": "      if (r?.error === 'ring-unsettled') {\n        s.tries++;\n        s.retryAt = nowMs() + passRetryMs(s.tries, ROYAL_PASS_RETRY_MS);\n        if (s.tries === 1) say(r.text);\n        return;\n      }",
+    "new": "",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-sess-wait",
+    "file": "src/net/royalSession.js",
+    "old": "        if (s.retryAt && now >= s.retryAt) {",
+    "new": "        if (s.retryAt) {",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-sess-room",
+    "file": "src/net/royalSession.js",
+    "old": "    s.room = royalRoomKey(s.seat.key, r.week);",
+    "new": "    s.room = royalRoomKey(s.seat.key, 0);",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-sess-mint",
+    "file": "src/net/royalSession.js",
+    "old": "    online.mintSiegePass = s.mint;",
+    "new": "",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-sess-in",
+    "file": "src/net/royalSession.js",
+    "old": "      else if (!s.sentIn) s.sentIn = online.sendSiege({ k: 'in' });",
+    "new": "      else online.sendSiege({ k: 'in' });",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-sess-ends",
+    "file": "src/net/royalSession.js",
+    "old": "      if (s.ends && now >= s.ends) {\n        api.leave();\n        return;\n      }",
+    "new": "",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-sess-room-check",
+    "file": "src/net/royalSession.js",
+    "old": "      if (!s || room !== s.room) return;",
+    "new": "      if (!s) return;",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-sess-back",
+    "file": "src/net/royalSession.js",
+    "old": "      if (g.k === 'back') movePlayer(g.p);",
+    "new": "",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-sess-asked",
+    "file": "src/net/royalSession.js",
+    "old": "      if (g.k === 'ask') say(ROYAL_SESSION_TEXT.asked(name(g.id) || 'A contender'));",
+    "new": "",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-sess-won",
+    "file": "src/net/royalSession.js",
+    "old": "      if (g.k === 'won' && readRoyalReceipt(g.rc) && claims) {\n        claims.keep(g.rc);\n        claims.offer({ force: true });\n      }\n    },",
+    "new": "    },",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-sess-won-read",
+    "file": "src/net/royalSession.js",
+    "old": "      if (g.k === 'won' && readRoyalReceipt(g.rc) && claims) {",
+    "new": "      if (g.k === 'won' && claims) {",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-sess-watch-challenge",
+    "file": "src/net/royalSession.js",
+    "old": "      if (!s?.joined || s.side === 'watch' || !peer || peer === online.id) return false;",
+    "new": "      if (!s?.joined || !peer || peer === online.id) return false;",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-sess-self",
+    "file": "src/net/royalSession.js",
+    "old": "      if (!s?.joined || s.side === 'watch' || !peer || peer === online.id) return false;",
+    "new": "      if (!s?.joined || s.side === 'watch' || !peer) return false;",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-sess-accept",
+    "file": "src/net/royalSession.js",
+    "old": "      if (royalAskStands(s.state, peer, nowMs())) return online.sendSiege({ k: 'yes', to: peer });\n      const sent = online.sendSiege({ k: 'ask', to: peer });",
+    "new": "      const sent = online.sendSiege({ k: 'ask', to: peer });",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-sess-foe-count",
+    "file": "src/net/royalSession.js",
+    "old": "    return b && now >= b.s && now < b.e && (b.a === online.id || b.b === online.id) ? b : null;",
+    "new": "    return b && now < b.e && (b.a === online.id || b.b === online.id) ? b : null;",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-sess-foe-mine",
+    "file": "src/net/royalSession.js",
+    "old": "    return b && now >= b.s && now < b.e && (b.a === online.id || b.b === online.id) ? b : null;",
+    "new": "    return b && now >= b.s && now < b.e ? b : null;",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-sess-blow",
+    "file": "src/net/royalSession.js",
+    "old": "      return api.foes().includes(to) && online.sendSiege({ k: 'blow', to, w, m, d, r });",
+    "new": "      return online.sendSiege({ k: 'blow', to, w, m, d, r });",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-sess-ring",
+    "file": "src/net/royalSession.js",
+    "old": "      return b && (b.a === online.id || b.b === online.id) ? { centre: s.field[0], radius: ROYAL_RING.radiusM } : null;",
+    "new": "      return b ? { centre: s.field[0], radius: ROYAL_RING.radiusM } : null;",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-sess-leave-mint",
+    "file": "src/net/royalSession.js",
+    "old": "      if (mint && online.mintSiegePass === mint) online.mintSiegePass = null; // AUDIT-SEATS C2: another battle's mint is not this one's to clear",
+    "new": "      void 0; // AUDIT-SEATS C2: another battle's mint is not this one's to clear",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-claims-key",
+    "file": "src/net/siege/siegeClaims.js",
+    "old": "export const ROYAL_CLAIMS_KEY = 'crown1.royalClaims';",
+    "new": "export const ROYAL_CLAIMS_KEY = 'seat2a.siegeClaims';",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-claims-read",
+    "file": "src/net/siege/siegeClaims.js",
+    "old": "    read: readRoyalReceipt,",
+    "new": "    read: readSiegeReceipt,",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-claims-settles",
+    "file": "src/net/siege/siegeClaims.js",
+    "old": "  createSiegeClaims({\n    ...o,\n    storeKey: ROYAL_CLAIMS_KEY,\n    read: readRoyalReceipt,\n    settles: royalClaimSettles,\n    max: ROYAL_CLAIMS_MAX,\n  });",
+    "new": "  createSiegeClaims({ ...o, storeKey: ROYAL_CLAIMS_KEY, read: readRoyalReceipt, max: ROYAL_CLAIMS_MAX });",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-claims-over",
+    "file": "src/net/siege/siegeClaims.js",
+    "old": "  if (r?.error === 'royal-none' || r?.error === 'royal-over') return true;",
+    "new": "  if (r?.error === 'royal-none') return true;",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-claims-mend",
+    "file": "src/net/siege/siegeClaims.js",
+    "old": "  if (r?.error === 'royal-none' || r?.error === 'royal-over') return true;\n  if (r?.error === 'receipt') return !MENDABLE.includes(r?.why);",
+    "new": "  if (r?.error === 'royal-none' || r?.error === 'royal-over') return true;\n  if (r?.error === 'receipt') return true;",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-claims-max",
+    "file": "src/net/siege/siegeClaims.js",
+    "old": "export const ROYAL_CLAIMS_MAX = 40;",
+    "new": "export const ROYAL_CLAIMS_MAX = 16;",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-ring-banner",
+    "file": "src/systems/siegeField.js",
+    "old": "  f && f.banners.length >= 4 ? [siegeWorldPoint(px, py, f.banners[3])] : null;",
+    "new": "  f && f.banners.length >= 4 ? [siegeWorldPoint(px, py, f.banners[0])] : null;",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-ring-crown",
+    "file": "src/systems/siegeField.js",
+    "old": "export const royalRingWire = (px, py, f) =>\n  f && f.banners.length >= 4 ? [siegeWorldPoint(px, py, f.banners[3])] : null;",
+    "new": "export const royalRingWire = (px, py, f) => (f ? [siegeWorldPoint(px, py, f.banners[3])] : null);",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-online-ok",
+    "file": "src/net/online.js",
+    "old": "(isRoyalRoom(this.room) ? this.royalOk : this.siegeOk)",
+    "new": "this.siegeOk",
+    "tests": [
+      "test/net/crown1_royal_client.test.js",
+      "test/net/siege/seat2a_siege_play.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-online-floor",
+    "file": "src/net/online.js",
+    "old": "this.royalOk = relayRunsRoyal(relayV); }",
+    "new": "this.royalOk = relayFightsBattles(relayV); }",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-online-recv",
+    "file": "src/net/online.js",
+    "old": "      if (!primary || !isBattleRoom(room)) return;   // CROWN1 part two",
+    "new": "      if (!primary || !isRoyalRoom(room) === isRoyalRoom(room)) return;   // CROWN1 part two",
+    "tests": [
+      "test/net/crown1_royal_client.test.js",
+      "test/net/siege/seat2a_siege_play.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-lines-prize",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    `A Royal Tourney is proclaimed: a duel ladder all week at the castle's square, every blow refereed. The week's champion takes ${Number(r.prize ?? 0).toLocaleString('en-US')} silver and the title for good.`,",
+    "new": "    `A Royal Tourney is proclaimed: a duel ladder all week at the castle's square, every blow refereed. The week's champion takes ${r.prize} silver and the title for good.`,",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-lines-row",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  const rows = (r.ladder ?? []).map((x, i) => `${i + 1}. ${x.name || 'Someone'} - ${x.wins} won, ${x.losses} lost`);",
+    "new": "  const rows = (r.ladder ?? []).map((x, i) => `${i + 1}. ${x.name} - ${x.wins} won, ${x.losses} lost`);",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-lines-none",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  return [...out, ...(rows.length ? rows : ['No bout has been won yet.'])];",
+    "new": "  return [...out, ...rows];",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-tab-node",
+    "file": "src/ui/seatTab.js",
+    "old": "        if (data.royal) b.append(royalNode(data.royal));\n      }",
+    "new": "      }",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-tab-watch",
+    "file": "src/ui/seatTab.js",
+    "old": "        ['notice-seat-royal-watch', 'Watch the Royal Tourney', true, 'You take your place to watch.'],",
+    "new": "        ['notice-seat-royal-watch', 'Watch the Royal Tourney', false, 'You take your place to watch.'],",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1C-tab-hook",
+    "file": "src/ui/noticeWindow.js",
+    "old": "          ...(deps.seatRoyal ? { enterRoyal: deps.seatRoyal } : {}),\n          ...(deps.seatRecords ? { readRecords: deps.seatRecords } : {}),",
+    "new": "          ...(deps.seatRecords ? { readRecords: deps.seatRecords } : {}),",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  }
 ]

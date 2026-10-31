@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-MEND-THIRD-L3-2-worn-kit-unmarked",
     "file": "src/combat/rriEnemyEquipment.js",
-    "old": "    markFound(item);\n  }\n  return item;\n}",
-    "new": "  }\n  return item;\n}",
+    "old": "    markFound(item);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/auditmendthird.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "AUDIT-MEND-THIRD-L3-4-stale-mark-kept",
     "file": "src/world/oceanHoles.js",
-    "old": "    if (!enchanted) dropFoundMark(item);\n",
-    "new": "",
+    "old": "    if (!enchanted) dropFoundMark(item);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/auditmendthird.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "AUDIT-MEND-THIRD-L1-6-temper-leaves-the-mark",
     "file": "src/systems/smithItems.js",
-    "old": "  scaleFoundMark(item, oldMax, item.maxCondition);\n",
-    "new": "",
+    "old": "  scaleFoundMark(item, oldMax, item.maxCondition);\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/systems/auditmendthird.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "AUDIT-MEND-THIRD-owner-mends-not-moved",
     "file": "src/systems/item/foundMark.js",
-    "old": "  if (Number.isInteger(item.selfMended)) item.selfMended = share(item.selfMended);\n",
-    "new": "",
+    "old": "  if (Number.isInteger(item.selfMended)) item.selfMended = share(item.selfMended);\n}",
+    "new": "}",
     "tests": [
       "test/systems/auditmendthird.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-MEND-THIRD-L3-6-start-kit-unmarked",
     "file": "src/systems/roleplayRealismItems/rriKits.js",
-    "old": "    markFound(item);   // AUDIT MEND-THIRD L3-6: a new character's kit is handed over worn - marked, as a found piece is\n",
-    "new": "",
+    "old": "    markFound(item); // AUDIT MEND-THIRD L3-6: a new character's kit is handed over worn - marked, as a found piece is\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/auditmendthird.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "AUDIT-MEND-THIRD-L3-6-questions-dagger-unmarked",
     "file": "src/systems/roleplayRealismItems/rriKits.js",
-    "old": "      markFound(dagger);   // AUDIT MEND-THIRD L3-6: handed over worn - SELL-AS-FOUND's mark (item/foundMark.js)\n",
-    "new": "",
+    "old": "      markFound(dagger); // AUDIT MEND-THIRD L3-6: handed over worn - SELL-AS-FOUND's mark (item/foundMark.js)\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/auditmendthird.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "AUDIT-MEND-THIRD-L3-6-dagger-unmarked",
     "file": "src/systems/conditionRepair.js",
-    "old": "    if (had === 0 && isQuestionsDagger(it)) markFound(it);",
-    "new": "",
+    "old": "    if (had === 0 && isQuestionsDagger(it)) markFound(it); // AUDIT MEND-THIRD L3-6: handed over worn at character creation - marked",
+    "new": "    // AUDIT MEND-THIRD L3-6: handed over worn at character creation - marked",
     "tests": [
       "test/systems/auditmendthird.test.js"
     ],
@@ -133,7 +133,7 @@
     "name": "AUDIT-MEND-THIRD-L1-4-patron-reads-no-mark",
     "file": "src/net/patronLaw.js",
     "old": "  return worth > 0 ? conditionCostBase(worth, foundSalePercentage(item)) : 0;",
-    "new": "  return worth > 0 ? conditionCostBase(worth, Math.trunc((100 * (item.currentCondition ?? 0)) / (item.maxCondition || 1))) : 0;",
+    "new": "  return worth > 0\n    ? conditionCostBase(worth, Math.trunc((100 * (item.currentCondition ?? 0)) / (item.maxCondition || 1)))\n    : 0;",
     "tests": [
       "test/systems/auditmendthird.test.js"
     ],

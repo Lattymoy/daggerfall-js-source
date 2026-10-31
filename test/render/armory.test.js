@@ -13,12 +13,12 @@ import { INSIGNIA, ARMORY_BROKER_PRICE } from '../../src/net/insignia.js';
 import { SHOP_WARES, shopKeysOf, shopOwns } from '../../src/net/shopLaw.js';
 import { ARMORY_SET_TEXT } from '../../src/ui/armoryText.js';
 import { badged, readArmory } from '../../src/net/wire.js';
-import { POSE_AT, REST_POINTS, newPose, poseFromBones, poseFromFigure, poseAtRest, poseWorld, spriteMarks, spriteArmsSeen } from '../../src/render/armoryPose.js';
+import { POSE_AT, REST_POINTS, newPose, poseFromBones, poseFromFigure, poseAtRest, poseWorld, spriteMarks, spriteArmsSeen, ARMORY_BEAST_FIT, ARMORY_BEAST_CHEST, ARMORY_BEAST_ARM } from '../../src/render/armoryPose.js';
 import { spriteFor } from '../../src/player/eyeOfTheBeholder/eotbSprite.js';
 import { auraSpriteBones, auraClothOver } from '../../src/render/auraRing.js';
 import {
   armoryDraws, armoryWearers, armoryMotionStep, armoryEyeAtHead, armoryPrograms, armoryRatesWhole, ARMORY_BODY_PIECES, ARMORY_PROGRAMS,
-  ARMORY_RANGE_M, ARMORY_DRAW_MAX, ARMORY_TRAIL, ARMORY_STRIDE_M, ArmoryRenderer,
+  ARMORY_RANGE_M, ARMORY_DRAW_MAX, ARMORY_TRAIL, ARMORY_STRIDE_M, ArmoryRenderer, ARMORY_BEAST_SLOTS,
 } from '../../src/render/armoryPass.js';
 import { createAuraHost, armoryOthersOf, armoryLayers, ARMORY_NEAR_M } from '../../src/scenes/auraHost.js';
 import { weaponPieceArt, weaponPieceLayout, startWeaponPiecePreview, BLADE_W, BLADE_H, BLADE_FILL } from '../../src/render/weaponPiecePreview.js';
@@ -35,9 +35,11 @@ const rd = (/** @type {string} */ p) => readFileSync(new URL(`../../${p}`, impor
 
 test('ARMORY the kit: five slot letters, each a piece of its slot or empty, never all empty - and the pieces it names, the kit of a wardrobe, a slot changed, the held left (mutants: a piece in the wrong slot passed; an empty kit a claim; a slot changed beside the one asked)', () => {
   assert.deepEqual(ARMORY_SLOTS, ['head', 'torso', 'arms', 'legs', 'weapon']);
-  assert.equal(ARMORY_PIECES.length, 10, 'two lines of five');
-  assert.equal(new Set(ARMORY_KEYS).size, 10, 'a key each');
-  for (const s of ARMORY_SLOTS) assert.equal(new Set(ARMORY_PIECES.filter((p) => p.slot === s).map((p) => p.code)).size, 2, `${s}: its codes its own`);
+  // PIN MOVED: GUILD-SHOP - the guild's line, one piece: the Insignia Armlet in the arms slot, the guild shop's
+  assert.equal(ARMORY_PIECES.length, 12, 'two lines of five, the guild\'s armlet and the Crystal Spurs');   // PIN MOVED (THANKS-POST): the update's gift
+  assert.equal(new Set(ARMORY_KEYS).size, 12, 'a key each');
+  for (const s of ARMORY_SLOTS) assert.equal(new Set(ARMORY_PIECES.filter((p) => p.slot === s).map((p) => p.code)).size, s === 'arms' ? 4 : 2, `${s}: its codes its own`);   // PIN MOVED (THANKS-POST): the Crystal Spurs, the arms slot's fourth
+  assert.deepEqual(armoryLinePieces('guild').map((p) => [p.key, p.slot, p.code, p.source]), [['insigniaarmlet', 'arms', 'c', 'guild']]);
   assert.deepEqual(armoryLinePieces('dagonfire').map((p) => [p.key, p.source]), [['burningcrown', 'broker'], ['emberheart', 'broker'], ['ashbound', 'broker'], ['cinderstride', 'broker'], ['breachbrand', 'broker']], 'the Dagonfire line, the Sigil Broker\'s');
   assert.ok(armoryLinePieces('eternal').every((p) => p.source === 'shop'), 'the Eternal line, the shop\'s');
   assert.deepEqual([armoryLineKit('eternal'), armoryLineKit('dagonfire'), armoryLineKit('none')], ['bbbbb', 'aaaaa', null]);
@@ -62,12 +64,13 @@ test('ARMORY the kit: five slot letters, each a piece of its slot or empty, neve
   assert.equal(armoryKitHeld('aa000', []), null);
 });
 
-test('ARMORY the economy (the owner: "The dagon breach set should be very expensive from the dagon breach shop dealer", "The store set should be $20"): the Sigil Broker sells each Dagonfire piece for 75 of the account\'s embers; the shop sells each Eternal piece for $6 and the five together for $20, the set held whole when its five are and its five held when it is (mutants: the Broker\'s price; a set\'s pieces never given; the set sold over five singles)', () => {
+test('ARMORY the economy (the owner: "The dagon breach set should be very expensive from the dagon breach shop dealer", "The store set should be $20"): the Sigil Broker sells each Dagonfire piece for 75 of the account\'s embers; the shop sells each Eternal piece for 600 Aurum and the five together for 2,000 (PIN MOVED, AURUM-ONLY: $6 and $20), the set held whole when its five are and its five held when it is (mutants: the Broker\'s price; a set\'s pieces never given; the set sold over five singles)', () => {
   assert.equal(ARMORY_BROKER_PRICE, 75);
   assert.deepEqual(INSIGNIA.filter((o) => o.kind === 'armory').map((o) => [o.id, o.price]), armoryLinePieces('dagonfire').map((p) => [`armory:${p.key}`, 75]));
   const set = SHOP_WARES.find((w) => w.id === 'armory:eternalset');
-  assert.deepEqual([set?.cents, set?.category], [2000, 'armory']);
-  assert.deepEqual(SHOP_WARES.filter((w) => w.kind === 'armory' && w.key !== 'eternalset').map((w) => w.cents), [600, 600, 600, 600, 600]);
+  // PIN MOVED (AURUM-ONLY): the set's $20 and a piece's $6 are 2,000 and 600 Aurum - the owner's "$1 = 100 Aurum"
+  assert.deepEqual([set?.price, set?.cents, set?.category], [2000, 0, 'armory']);
+  assert.deepEqual(SHOP_WARES.filter((w) => w.kind === 'armory' && w.key !== 'eternalset').map((w) => w.price), [600, 600, 600, 600, 600]);
   assert.deepEqual(shopKeysOf(set?.bit, 'armory'), armoryWarePieces('eternalset'), 'the set gives its five');
   const singles = SHOP_WARES.filter((w) => w.kind === 'armory' && w.key !== 'eternalset').reduce((a, w) => a | w.bit, 0);
   assert.equal(shopOwns(singles, 'armory:eternalset'), true, 'five singles: the set is not sold again');
@@ -120,7 +123,7 @@ test('ARMORY the words: the client\'s English each piece\'s service name and eac
 test('ARMORY the pose: a rig\'s bones its joints, a sprite\'s figure its card and its upper limbs, the rest pose crouched and saddled, a point turned with the body (mutants: a sprite\'s forearm called measured; the yaw unturned; the picture\'s marks ignored)', () => {
   const pose = newPose();
   assert.equal(poseFromBones(null, pose), false, 'no skeleton, nothing written');
-  assert.equal(poseFromBones({ 'bip01 head': [0, 1.7, 0] }, pose), false, 'no shoulders - the wolf');
+  assert.equal(poseFromBones({ 'bip01 head': [0, 1.7, 0] }, pose), false, 'no shoulders');
   const bones = { 'bip01 head': [0, 1.65, 0], 'bip01 neck': [0, 1.5, 0], 'bip01 l upperarm': [-0.2, 1.42, 0], 'bip01 r upperarm': [0.2, 1.42, 0], 'bip01 l forearm': [-0.25, 1.15, 0.02], 'bip01 r calf': [0.1, 0.5, 0] };
   assert.equal(poseFromBones(bones, pose), true);
   assert.deepEqual([...pose.pts.slice(POSE_AT.elL, POSE_AT.elL + 3)].map((v) => +v.toFixed(3)), [-0.25, 1.15, 0.02], 'the forearm\'s origin is the elbow');
@@ -313,7 +316,7 @@ test('ARMORY the pass draws a worn piece and nothing over my own eyes, a torn be
   pass.draw([wearer()], I, I, [0, 1.6, 3], 1, null, true);
   assert.equal(pass.drawn, 1, 'the crown drawn');
   assert.ok(count('drawArrays') >= 3, 'its tubes and its embers');
-  for (const [why, w] of [['my own first person', wearer({ atHead: true })], ['turned beast', wearer({ torn: 1 })], ['not yet kindled', wearer({ kindle: 0 })], ['a weapon\'s piece', wearer({ kit: '0000a' })]]) {
+  for (const [why, w] of [['my own first person', wearer({ atHead: true })], ['turned beast, the crown off the muzzle', wearer({ torn: 1 })], ['not yet kindled', wearer({ kindle: 0 })], ['a weapon\'s piece', wearer({ kit: '0000a' })]]) {
     log.length = 0;
     pass.draw([w], I, I, [0, 1.6, 3], 1, null, true);
     assert.deepEqual([pass.drawn, count('drawArrays')], [0, 0], why);
@@ -321,6 +324,55 @@ test('ARMORY the pass draws a worn piece and nothing over my own eyes, a torn be
   const tail = log.map((c) => c[0]).slice(-5);
   assert.deepEqual(tail, ['bindVertexArray', 'enable', 'depthMask', 'blendFunc', 'disable'], 'the state handed back');
   assert.deepEqual(log.find((c) => c[0] === 'depthMask' && c[1] === true)?.[1], true);
+});
+
+test('WOLF-KIT turned beast, the chest, arm and leg pieces stay worn on the wolf and the head\'s does not; the wolf\'s pose fitted wider, the paperdoll\'s wolf bare (mutants: every piece off the beast; the paperdoll\'s wolf dressed; the head\'s crown on the muzzle; the wolf posed at a person\'s scale)', () => {
+  const { gl, count } = logGl();
+  const pass = new ArmoryRenderer(/** @type {any} */ (gl));
+  const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+  const wearer = (/** @type {any} */ o = {}) => ({ kit: 'aaaaa', at: [0, 0, 0], yaw: 0, pose: newPose(), kindle: 1, torn: 1, _d: 3, ...o });
+  assert.deepEqual([...ARMORY_BEAST_SLOTS], ['torso', 'arms', 'legs']);
+  pass.draw([wearer()], I, I, [0, 1.6, 3], 1, null, true);
+  assert.equal(pass.drawn, 3, 'the heart, the bracers and the stride on the wolf - never the crown, and the brand is the claws\' glow');
+  for (const kit of ['0a000', '00a00', '000a0', '0b000', '00b00', '000b0']) { pass.draw([wearer({ kit })], I, I, [0, 1.6, 3], 1, null, true); assert.equal(pass.drawn, 1, `${kit} worn turned`); }
+  for (const kit of ['a0000', 'b0000']) { pass.draw([wearer({ kit })], I, I, [0, 1.6, 3], 1, null, true); assert.equal(pass.drawn, 0, `${kit}: no head piece on the wolf`); }
+  assert.ok(count('drawArrays') > 0);
+  const bones = { 'bip01 head': [0, 1.65, 0.3], 'bip01 neck': [0, 1.5, 0.2], 'bip01 spine2': [0.08, 1.3, 0], 'bip01 l upperarm': [-0.25, 1.42, 0.1], 'bip01 r upperarm': [0.25, 1.42, 0.1] };
+  const person = newPose(), wolf = newPose();
+  poseFromBones(bones, person); poseFromBones(bones, wolf, true);
+  assert.deepEqual([person.scale, wolf.scale], [1, ARMORY_BEAST_FIT], 'the wolf\'s pieces as wide as its limbs');
+  assert.ok(ARMORY_BEAST_FIT > 1);
+    assert.deepEqual([+wolf.pts[POSE_AT.chest].toFixed(3), +(wolf.pts[POSE_AT.chest + 2] - 0.1).toFixed(3)], [0, ARMORY_BEAST_CHEST.face], 'the hunched chest\'s face, centred between the shoulders - not on its leaning spine');
+  assert.deepEqual([person.back, wolf.back], [0, ARMORY_BEAST_CHEST.back]);
+  poseFromBones(bones, wolf); assert.equal(wolf.back, 0, 'turned back, a person\'s back again');
+  const sigil = (/** @type {any} */ pose) => armoryDraws('eternalsigil', { at: [0, 0, 0], yaw: 0, pose }, [0, 1.5, 3], true).filter((d) => d.mesh === 2);
+  const wolfBack = newPose(); poseFromBones(bones, wolfBack, true);
+  const [front, back] = sigil(wolfBack);
+  assert.equal(+(front.A[2] - back.A[2]).toFixed(3), ARMORY_BEAST_CHEST.back, 'the sigil\'s back piece behind the wolf\'s back, not inside it');
+  assert.equal(+(bones['bip01 spine2'][1] - wolf.pts[POSE_AT.chest + 1]).toFixed(3), 0, 'a person\'s chest at the spine\'s height');
+  assert.equal(+(bones['bip01 spine2'][1] - wolfBack.pts[POSE_AT.chest + 1]).toFixed(3), ARMORY_BEAST_CHEST.down, 'the wolf\'s down off its shoulders, mid-chest');
+  // the arms: wider round the wolf's, stopped at the wrist
+  const arms = (/** @type {string} */ key, /** @type {any} */ pose) => armoryDraws(key, { at: [0, 0, 0], yaw: 0, pose }, [0, 1.5, 3], true).filter((d) => d.mesh === 0);
+  for (const key of ['ashbound', 'eternalarmlets']) {
+    const p = arms(key, person), w = arms(key, wolfBack);
+    assert.equal(w.length, p.length, `${key}: nothing past the wrist`);
+    assert.ok(Math.abs(w[0].r[0] / p[0].r[0] - ARMORY_BEAST_FIT * ARMORY_BEAST_ARM.arm) < 1e-6, `${key}: as wide as the wolf's arm`);
+  }
+  assert.deepEqual([person.arm, wolfBack.arm], [1, ARMORY_BEAST_ARM.arm]);
+  // the greaves on the wolf's shank, from the hock down to its toes - a person's from the ankle up to the knee
+  const legs = (/** @type {any} */ pose) => armoryDraws('eternalgreaves', { at: [0, 0, 0], yaw: 0, pose }, [0, 1.5, 3], true).filter((d) => d.mesh === 0);
+  const [pl] = legs(person), [wl] = legs(wolfBack);
+  assert.ok(pl.B[1] > pl.A[1] + 0.1, 'a person\'s up the shin');
+  assert.equal(+wl.B[1].toFixed(3), +wolfBack.pts[POSE_AT.ftL + 1].toFixed(3), 'the wolf\'s topped at the hock');
+  assert.ok(Math.abs(wl.A[1] - 0.1 * ARMORY_BEAST_FIT) < 1e-6 && Math.abs(wl.A[0] - wl.B[0]) < 1e-6, 'and straight down to its toes');
+  poseAtRest(wolfBack); assert.deepEqual([wolfBack.arm, wolfBack.hock, wolfBack.back], [1, false, 0], 'the rest pose a person\'s - nothing of the wolf left on it');
+  // the classic sprite's lycanthrope wears none (mob: "just remove them from the paperdoll")
+  const lyc = newPose(); poseFromFigure({ base: 0.1, mpp: 0.029, beast: true, marks: null }, lyc);
+  pass.draw([wearer({ pose: lyc })], I, I, [0, 1.6, 3], 1, null, true);
+  assert.equal(pass.drawn, 0, 'the paperdoll\'s wolf bare');
+  pass.draw([wearer({ pose: lyc, torn: -1 })], I, I, [0, 1.6, 3], 1, null, true);
+  assert.equal(pass.drawn, 4, 'a person\'s picture dressed');
+  poseFromBones(bones, wolfBack, true); poseFromFigure({ base: 0, mpp: 0.02, marks: null }, wolfBack); assert.deepEqual([wolfBack.arm, wolfBack.hock, wolfBack.back], [1, false, 0], 'nor on a sprite\'s');
 });
 
 test('ARMORY a weapon piece\'s own stage: a longsword of Daggerfall\'s pixels, point up, laid at whole pixels a cell; its outline the classic hand\'s shaders, the field baked once and the band drawn over the blade each frame; a weapon piece alone takes it, any other kit the figure\'s (mutants: the field baked every frame; the band drawn under the blade; a kit with a body piece on the blade\'s stage)', () => {
@@ -374,7 +426,7 @@ test('ARMORY the world host: my kit gathered at my feet and a peer\'s off the re
       renderer: { gl: null }, online: () => online, travelActive: () => false, quiet: () => false, camYaw: () => 0,
       player: () => ({ feetAt: () => [1, 0, 2], bodyYawFor: () => 0, height: 1.8, riding: false }),
       spawned: () => true, beast: () => false, veiled: (id) => id === 'p3', toScene: (s) => s.at,
-      walkers: () => null, riders: () => null, bodies: () => ({ bonesOf: (/** @type {string} */ id) => (id === 'p2' ? { feet: [5.1, 0, 5.2], yaw: 1, bones: mwBones } : null) })
+      sprites: () => [], bodies: () => ({ bonesOf: (/** @type {string} */ id) => (id === 'p2' ? { feet: [5.1, 0, 5.2], yaw: 1, bones: mwBones } : null) })
     });
     host.issued({ armory: null });
     host.frame([{ id: 'p2', shown: { at: [5, 0, 5] } }, { id: 'p3', shown: { at: [6, 0, 6] } }, { id: 'p4', shown: { at: [7, 0, 7] } }]);
@@ -426,7 +478,7 @@ test('ARMORY-SEEN the world host lays my pieces under my Eternal cape where the 
       renderer, online: () => online, travelActive: () => false, quiet: () => false, camYaw: () => 0,
       player: () => ({ feetAt: () => [0, 0, 0], bodyFeetAt: () => [0, 0, 0], bodyYawFor: () => 0, height: 1.8, riding: false }),
       spawned: () => true, beast: () => false, veiled: () => false, toScene: (/** @type {any} */ s) => s.at,
-      walkers: () => null, riders: () => null, bodies: () => null,
+      sprites: () => [], bodies: () => null,
     });
     const order = (/** @type {number[]} */ eye) => {
       renderer._camPos = eye;
@@ -455,9 +507,9 @@ test('ARMORY HOST-SPLIT: the world host wires the module and keeps none of it (m
   assert.match(w, /const insigniaRows = \(\) => INSIGNIA\.map\(\(o\) => insigniaRowOf\(o, _insignia\)\);/, 'the Broker\'s rows, every kind\'s, the module\'s too');
   assert.ok(!/new ArmoryRenderer|armoryWearers\(/.test(w), 'the armory\'s pass is the module\'s alone');
   const h = rd('src/scenes/auraHost.js');
-  assert.match(h, /const vw = renderer\._view, right = vw \? \[vw\[0\], vw\[4\], vw\[8\]\] : null;/, 'the view\'s right, the draw\'s (ArmoryRenderer.draw)');
-  assert.match(h, /selfPose\(selfKit\.pose, player\); armoryMotionStep\(selfKit, t, right\);/);
-  assert.match(h, /peerPose\(d\.id, w\); armoryMotionStep\(w, t, right\);/, 'a sprite\'s embers off its feet, mine and a peer\'s');
+  assert.match(h, /const vw = renderer\._view, right = vw \? cardRightOf\(renderer\._proj, vw\) : null;/, 'ARMORY-MIRROR (PIN MOVED): the card\'s right, the draw\'s (ArmoryRenderer.draw) - the view\'s first row is the screen\'s left');
+  assert.match(h, /selfPose\(selfKit\.pose, player, selfLiftNow > 0\); armoryMotionStep\(selfKit, now, vw \? cardRightOf\(renderer\._proj, vw\) : null\);/, 'FOLLOW-NOW (PIN MOVED): mine posed and stepped at the draw, where my body is drawn; ARMORY-MIRROR (PIN MOVED): along the card\'s right');
+  assert.match(h, /peerPose\(d\.id, w, layers\); armoryMotionStep\(w, t, right\);/, 'a sprite\'s embers off its feet, mine and a peer\'s');   // CAPE-CARD (PIN MOVED): posed off the sprite layers' list
 });
 
 test('ARMORY a record drawn at another scale (eotbSprite.js spriteArtScale - ACRO-SHORT\'s Acrobat seen three-quarter on, 81 px where the sets draw 110): its marks read at the sets\' rows scaled by it, and its pose stands at the body\'s own heights (mutants: the art unread; the pose\'s rows the picture\'s pixels)', () => {
@@ -482,7 +534,7 @@ test('ARMORY a record drawn at another scale (eotbSprite.js spriteArtScale - ACR
   const cape = (/** @type {any} */ marks, /** @type {number} */ mpp) => auraSpriteBones({ base: 0, mpp, marks })['bip01 l upperarm'][1];
   assert.ok(Math.abs(cape(drawn, 0.02 / A) - cape(full, 0.02)) < 1e-9, 'the cape\'s shoulders at the body\'s own');
   // every reader hands the record's scale over (the world's body, a peer's, the profile's stage)
-  for (const f of ['src/player/eyeOfTheBeholder/eotbBody.js', 'src/net/peer/peerRiders.js']) assert.match(rd(f), /spriteMarks\(px, width, height, \{ arms: spriteArmsSeen\(s\.view\), art: spriteArtScale\(s\.archive, s\.record\) \}\)/, f);
-  assert.match(rd('src/render/characterStage.js'), /art: shown\.art \}/);
-  assert.match(rd('src/ui/profileBody.js'), /art: spriteArtScale\(s\.archive, s\.record\) \};/);
+  for (const f of ['src/player/eyeOfTheBeholder/eotbBody.js', 'src/net/peer/peerRiders.js']) assert.match(rd(f), /spriteMarks\(withoutShield\(px, (?:img|raw)\.shield, width, height, s\.mirror\), width, height, \{ arms: spriteArmsSeen\(s\.view\), art: spriteArtScale\(s\.archive, s\.record\) \}\)/, f);   // PIN MOVED (LAYERED-SHIELD): read without the shield's air
+  assert.match(rd('src/render/characterStage.js'), /art: shown\.art,\n\s*\}/);
+  assert.match(rd('src/ui/profileBody.js'), /art: spriteArtScale\(s\.archive, s\.record\),\n\s*\};/);
 });

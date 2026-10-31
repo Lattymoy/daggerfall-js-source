@@ -1816,6 +1816,8 @@ palette. In-engine proof: TVRNAL06 patron, pin unchanged.
 
 ### C6b - the 1:1 piece method (SHIPPED)
 
+RETIRED 2026-10-30: nothing but its own test imported `pieceFromSprite.js`, so both were deleted; git keeps them.
+
 Mac's mandate: 1 to 1, no exceptions - so the sprite's pixels ARE the
 piece. `pieceFromSprite.js`: every opaque paperdoll pixel becomes one
 face on a shell wrapped around the torso ellipse (column -> front-arc
@@ -2013,6 +2015,9 @@ interior ambient + point lights, framed on camera; pin unchanged
 (`2 people`). DECIDE-C1 is now LIVE.
 
 ### C4a - Rewrite rig vendored (SHIPPED)
+
+RETIRED 2026-10-30: no page, relay or tool reached `characters/rewrite/` any more (the body went to the Morrowind
+replacement), so the vendored rig, its parity gate and `rigmath.test.js` were deleted; git keeps them.
 
 project-final's Rewrite Engine core + rig (math/geometry/palette,
 limb/body/muzzleFlash - 6 modules, flat-pathed under
@@ -3484,7 +3489,7 @@ seer see through and which leaves the 12.5 s blind pursuit (giveUpTimer) running
 stealth-detected, a seer included, and the pursuit given up at once (giveUpTimer 0, so TakeAction takes none and the
 melee, ranged and spell arms, which all ask inSight, never fire). The flag rides the senses context
 (`scenes/shared.js:"playerUnseen: entity.staffHidden === true"`), set each online frame by the page's follow
-(`scenes/staffFollowHost.js:"const unseen = () =>"`: hidden by the last token, and online). The travel view's `danger`
+(`scenes/staffFollowHost.js:"const unseen = ()"`: hidden by the last token, and online). The travel view's `danger`
 counts no foe near a hidden staff member (scenes/world.js), so the Overworld neither refuses to rise nor falls over one;
 a duel and a hostile ship still count. Pins: test/characters/enemy/staffunseen.test.js; mutants
 tools/mutants/staff-follow-frame.json.

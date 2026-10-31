@@ -34,8 +34,8 @@
   {
     "name": "RPT1026-TRAFFIC-REAL-the-seas-seconds",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "const spent = trafficSeconds(dt, ctx.real, lastReal);",
-    "new": "const spent = Math.max(0, dt);",
+    "old": "      const spent = trafficSeconds(dt, ctx.real, lastReal); // TRAFFIC-REAL: read on every step, the density's or not - a wait is spent only while it counts",
+    "new": "      const spent = Math.max(0, dt); // TRAFFIC-REAL: read on every step, the density's or not - a wait is spent only while it counts",
     "tests": [
       "test/systems/naval/rpt1026_world_traffic.test.js"
     ],
@@ -44,8 +44,8 @@
   {
     "name": "RPT1026-TRAFFIC-REAL-reset-remembers",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "reset() { wait = FIRST_ROLL_S; lastReal = null; },",
-    "new": "reset() { wait = FIRST_ROLL_S; },",
+    "old": "      lastReal = null;\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/naval/rpt1026_world_traffic.test.js"
     ],
@@ -54,8 +54,8 @@
   {
     "name": "RPT1026-TRAFFIC-REAL-first-read-spends",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "return Number.isFinite(lastReal) ? Math.max(0, /** @type {number} */ (real) - /** @type {number} */ (lastReal)) : 0;",
-    "new": "return Number.isFinite(lastReal) ? Math.max(0, /** @type {number} */ (real) - /** @type {number} */ (lastReal)) : Math.max(0, Number(dt) || 0);",
+    "old": "  return Number.isFinite(lastReal) ? Math.max(0, /** @type {number} */ (real) - /** @type {number} */ (lastReal)) : 0;",
+    "new": "  return Number.isFinite(lastReal)\n    ? Math.max(0, /** @type {number} */ (real) - /** @type {number} */ (lastReal))\n    : Math.max(0, Number(dt) || 0);",
     "tests": [
       "test/systems/naval/rpt1026_world_traffic.test.js"
     ],
@@ -125,8 +125,8 @@
   {
     "name": "RPT1026-BANNER-WALL-both-hung",
     "file": "src/scenes/hallBanners.js",
-    "old": "return [-1, 1].filter((s) => [-1, 1].every((e) => onWall(cx + rx * (side * s + e * BANNER_W_M / 2), cz + rz * (side * s + e * BANNER_W_M / 2))) && walled(s)).map((s) => ({",
-    "new": "return [-1, 1].map((s) => ({",
+    "old": "  return [-1, 1]\n    .filter(\n      (s) =>\n        [-1, 1].every((e) =>\n          onWall(cx + rx * (side * s + (e * BANNER_W_M) / 2), cz + rz * (side * s + (e * BANNER_W_M) / 2)),\n        ) && walled(s),\n    )\n    .map((s) => ({\n      top: [cx + rx * side * s + ox * BANNER_OUT_M, foot + BANNER_TOP_M, cz + rz * side * s + oz * BANNER_OUT_M],\n      right: [rx, 0, rz],\n      out: [ox, 0, oz],\n    }));",
+    "new": "  return [-1, 1].map((s) => ({\n    top: [cx + rx * side * s + ox * BANNER_OUT_M, foot + BANNER_TOP_M, cz + rz * side * s + oz * BANNER_OUT_M],\n    right: [rx, 0, rz],\n    out: [ox, 0, oz],\n  }));",
     "tests": [
       "test/scenes/rpt1026_world_bannerwall.test.js"
     ],
@@ -135,8 +135,8 @@
   {
     "name": "RPT1026-BANNER-WALL-one-end-asked",
     "file": "src/scenes/hallBanners.js",
-    "old": "[-1, 1].every((e) => onWall(",
-    "new": "[1].every((e) => onWall(",
+    "old": "      (s) =>\n        [-1, 1].every((e) =>",
+    "new": "      (s) =>\n        [1].every((e) =>",
     "tests": [
       "test/scenes/rpt1026_world_bannerwall.test.js"
     ],
@@ -176,8 +176,8 @@
   {
     "name": "RPT1026-CAUSEWAY-the-corner-refused",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "isWater(bx, ay) && isWater(ax, by) && !pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;",
-    "new": "isWater(bx, ay) && isWater(ax, by)) return -1;",
+    "old": "  if (\n    ax !== bx &&\n    ay !== by &&\n    isWater(bx, ay) &&\n    isWater(ax, by) &&\n    !pavedStep(ax, ay, bx, by, bit, width, height, roads)\n  )\n    return -1;",
+    "new": "  if (ax !== bx && ay !== by && isWater(bx, ay) && isWater(ax, by)) return -1;",
     "tests": [
       "test/systems/travel/rpt1026_world_causeway.test.js"
     ],
@@ -186,8 +186,8 @@
   {
     "name": "RPT1026-CAUSEWAY-the-boat-launches",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "(n !== goal && !pavedStep(cx, cy, nx, ny, STEP_BIT[d], width, height, roads))",
-    "new": "n !== goal",
+    "old": "      } else if (\n        wet &&\n        ((seaGoal && n === goal) || (n !== goal && !pavedStep(cx, cy, nx, ny, STEP_BIT[d], width, height, roads)))\n      ) {",
+    "new": "      } else if (wet && ((seaGoal && n === goal) || n !== goal)) {",
     "tests": [
       "test/systems/travel/rpt1026_world_causeway.test.js"
     ],
@@ -196,8 +196,8 @@
   {
     "name": "RPT1026-CAUSEWAY-a-track-paved",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "!pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;\n  // AUDIT DEEP T2-5",
-    "new": "!pavedStep(ax, ay, bx, by, bit, width, height, tracks)) return -1;\n  // AUDIT DEEP T2-5",
+    "old": "  if (goal === 0 && isWater(bx, by) && !pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;",
+    "new": "  if (goal === 0 && isWater(bx, by) && !pavedStep(ax, ay, bx, by, bit, width, height, tracks)) return -1;",
     "tests": [
       "test/systems/travel/rpt1026_world_causeway.test.js"
     ],
@@ -247,8 +247,8 @@
   {
     "name": "RPT1026-FAR-QUAY-the-band-unwalked",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "if (Math.max(Math.abs(dx), Math.abs(dy)) > 1) out.push(Object.freeze([dx, dy]));",
-    "new": "if (Math.max(Math.abs(dx), Math.abs(dy)) > SEA_RING) out.push(Object.freeze([dx, dy]));",
+    "old": "        if (Math.max(Math.abs(dx), Math.abs(dy)) > 1) out.push(Object.freeze([dx, dy]));",
+    "new": "        if (Math.max(Math.abs(dx), Math.abs(dy)) > SEA_RING) out.push(Object.freeze([dx, dy]));",
     "tests": [
       "test/systems/naval/rpt1026_world_farquay.test.js"
     ],
@@ -257,8 +257,8 @@
   {
     "name": "RPT1026-FAR-QUAY-the-dry-unread",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "  if (built(x, z)) return true;\n  const c = state.compensation;",
-    "new": "  if (built(x, z)) return true;\n  if (built) return false;\n  const c = state.compensation;",
+    "old": "  const c = state.compensation;",
+    "new": "  if (built) return false;\n  const c = state.compensation;",
     "tests": [
       "test/systems/naval/rpt1026_world_farquay.test.js"
     ],
@@ -267,8 +267,8 @@
   {
     "name": "RPT1026-FAR-QUAY-every-pixel-dry",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "d = !isWaterHeight(sampleHeight(Math.fround(k(x, y))));",
-    "new": "d = true;",
+    "old": "  for (let x = 0; x < HEIGHTMAP_DIMENSION && d; x++)\n    for (let y = 0; y < HEIGHTMAP_DIMENSION && d; y++) d = !isWaterHeight(sampleHeight(Math.fround(k(x, y))));",
+    "new": "  for (let x = 0; x < HEIGHTMAP_DIMENSION && d; x++) for (let y = 0; y < HEIGHTMAP_DIMENSION && d; y++) d = true;",
     "tests": [
       "test/systems/naval/rpt1026_world_farquay.test.js"
     ],
@@ -277,8 +277,8 @@
   {
     "name": "RPT1026-FAR-QUAY-one-town-alone",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "for (const one of Array.isArray(near) ? near : [near]) stepOne(one, clock);",
-    "new": "stepOne(Array.isArray(near) ? near[0] : near, clock);",
+    "old": "    for (const one of Array.isArray(near) ? near : [near]) stepOne(one, clock); // RPT1026-WORLD FAR-QUAY: every port near",
+    "new": "    stepOne(Array.isArray(near) ? near[0] : near, clock); // RPT1026-WORLD FAR-QUAY: every port near",
     "tests": [
       "test/systems/naval/rpt1026_world_farquay.test.js"
     ],
@@ -287,8 +287,8 @@
   {
     "name": "RPT1026-FAR-QUAY-the-far-edge-past-the-ring",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "x0 + Math.min(sx * i / nx, sx - EDGE_IN), z0 + Math.min(sz * k / nz, sz - EDGE_IN)",
-    "new": "x0 + (sx * i) / nx, z0 + (sz * k) / nz",
+    "old": "        if (\n          !harbourKnown(\n            built,\n            state,\n            woods,\n            x0 + Math.min((sx * i) / nx, sx - EDGE_IN),\n            z0 + Math.min((sz * k) / nz, sz - EDGE_IN),\n          )\n        )\n          return false;",
+    "new": "        if (!harbourKnown(built, state, woods, x0 + (sx * i) / nx, z0 + (sz * k) / nz)) return false;",
     "tests": [
       "test/systems/naval/rpt1026_world_farquay.test.js"
     ],
@@ -307,8 +307,8 @@
   {
     "name": "RPT1026-FAR-QUAY-host-no-height-map",
     "file": "src/scenes/harbourHost.js",
-    "old": "harbourOf(t, { state, built: csaPixelAt, woods: host.woods })",
-    "new": "harbourOf(t, { state, built: csaPixelAt, woods: null })",
+    "old": "      const h = harbourOf(t, { state, built: csaPixelAt, woods: host.woods });",
+    "new": "      const h = harbourOf(t, { state, built: csaPixelAt, woods: null });",
     "tests": [
       "test/systems/naval/rpt1026_world_farquay.test.js"
     ],
@@ -417,8 +417,8 @@
   {
     "name": "RPT1026-DECOR-VERBS-a-key-dropped",
     "file": "src/systems/decor/decorLook.js",
-    "old": "'chair:', 'bed:', 'door:', 'act:decor:']",
-    "new": "'chair:', 'bed:', 'door:']",
+    "old": "const DECOR_VERB_KEYS = Object.freeze([\n  'decor:',\n  'base:',\n  'container:',\n  'shelf:',\n  'chair:',\n  'bed:',\n  'door:',\n  'act:decor:',\n]);",
+    "new": "const DECOR_VERB_KEYS = Object.freeze(['decor:', 'base:', 'container:', 'shelf:', 'chair:', 'bed:', 'door:']);",
     "tests": [
       "test/scenes/decor/rpt1026_world_decor.test.js"
     ],
@@ -427,8 +427,8 @@
   {
     "name": "RPT1026-DECOR-VERBS-any-frame",
     "file": "src/systems/decor/decorLook.js",
-    "old": "if (frame?.kind !== 'actions' || !decorVerbKey(frame.key) || !frame.rows?.length || frame.startUnlit) return null;",
-    "new": "if (!frame?.rows?.length) return null;",
+    "old": "  if (frame?.kind !== 'actions' || !decorVerbKey(frame.key) || !frame.rows?.length || frame.startUnlit) return null;",
+    "new": "  if (!frame?.rows?.length) return null;",
     "tests": [
       "test/scenes/decor/rpt1026_world_decor.test.js"
     ],

@@ -4,7 +4,8 @@
 
 /** The browser's next idle, or a quarter second at the most (a timer where it has none, one that never keeps a test's
  *  process alive). @returns {Promise<unknown>} */
-export const idleTurn = () => new Promise((resolve) => {
-  if (globalThis.requestIdleCallback) globalThis.requestIdleCallback(() => resolve(undefined), { timeout: 250 });
-  else /** @type {any} */ (setTimeout(resolve, 50)).unref?.();
-});
+export const idleTurn = () =>
+  new Promise((resolve) => {
+    if (globalThis.requestIdleCallback) globalThis.requestIdleCallback(() => resolve(undefined), { timeout: 250 });
+    else /** @type {any} */ (setTimeout(resolve, 50)).unref?.();
+  });

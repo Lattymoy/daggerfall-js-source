@@ -2,8 +2,8 @@
   {
     "name": "ITEM-WALK-C-revenant-pack-unread",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "  for (const r of Array.isArray(feud) ? feud : []) if (r?.sworn && !r.defeated) out.push(...lists(r.companion?.items));\n",
-    "new": "",
+    "old": "  for (const r of Array.isArray(feud) ? feud : []) if (r?.sworn && !r.defeated) out.push(...lists(r.companion?.items));\n  for (const r of Array.isArray(feud) ? feud : [])",
+    "new": "  for (const r of Array.isArray(feud) ? feud : [])",
     "tests": [
       "test/systems/itemwalk.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ITEM-WALK-C-oath-unasked",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "if (r?.sworn && !r.defeated) out.push(",
-    "new": "if (r && !r.defeated) out.push(",
+    "old": "  for (const r of Array.isArray(feud) ? feud : []) if (r?.sworn && !r.defeated) out.push(...lists(r.companion?.items));",
+    "new": "  for (const r of Array.isArray(feud) ? feud : []) if (r && !r.defeated) out.push(...lists(r.companion?.items));",
     "tests": [
       "test/systems/itemwalk.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ITEM-WALK-C-defeat-unasked",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "if (r?.sworn && !r.defeated) out.push(",
-    "new": "if (r?.sworn) out.push(",
+    "old": "  for (const r of Array.isArray(feud) ? feud : []) if (r?.sworn && !r.defeated) out.push(...lists(r.companion?.items));",
+    "new": "  for (const r of Array.isArray(feud) ? feud : []) if (r?.sworn) out.push(...lists(r.companion?.items));",
     "tests": [
       "test/systems/itemwalk.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ITEM-WALK-C-key-misnamed",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "const REVENANT_VENDOR = 'Revenant';",
-    "new": "const REVENANT_VENDOR = 'Revenants';",
+    "old": "export const REVENANT_VENDOR = 'Revenant';",
+    "new": "export const REVENANT_VENDOR = 'Revenants';",
     "tests": [
       "test/systems/itemwalk.test.js"
     ]

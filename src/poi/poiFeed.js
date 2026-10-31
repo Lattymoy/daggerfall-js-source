@@ -38,7 +38,8 @@ export const poiAssetCacheKey = (/** @type {string} */ sha) => `poi:a:${sha}`;
 /** Assets held in memory at once (bytes) before the oldest asked is let go - the GPU keeps what is drawn. */
 export const POI_ASSET_MEMORY_BYTES = 64 * 1024 * 1024;
 
-const hex = (/** @type {ArrayBuffer} */ buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+const hex = (/** @type {ArrayBuffer} */ buf) =>
+  [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 /** A pixel no POI stands on: one shared answer, never a fresh array a pixel a frame (AUDIT POI R12). */
 const NONE = Object.freeze([]);
 
@@ -50,29 +51,42 @@ const NONE = Object.freeze([]);
  *   subtle?: any, now?: () => number, log?: any,
  * }} deps `base` the account service's address (net/accountClient.js serviceBase), null where there is none
  */
-export function createPoiFeed({ base, fetch = (u, i) => globalThis.fetch(u, i), cache = null, subtle = globalThis.crypto?.subtle, now = () => Date.now(), log = console }) {
+export function createPoiFeed({
+  base,
+  fetch = (u, i) => globalThis.fetch(u, i),
+  cache = null,
+  subtle = globalThis.crypto?.subtle,
+  now = () => Date.now(),
+  log = console,
+}) {
   /** @type {Map<string, { id: string, rev: number, doc: any, draft?: boolean }>} */
   let live = new Map();
   /** @type {Map<string, any>} */
   let overlay = new Map();
-  let version = -1, etag = null;
+  let version = -1,
+    etag = null;
   /** AUDIT POI R15: the service the version and tag held are from; S11: the newest version it has answered this game */
-  let heldBase = null, floor = -1;
-  let nextAsk = 0, wait = POI_FEED_RETRY_MS, asking = null, gen = 0;
+  let heldBase = null,
+    floor = -1;
+  let nextAsk = 0,
+    wait = POI_FEED_RETRY_MS,
+    asking = null,
+    gen = 0;
   /** AUDIT POI R13: a refresh asked while an ask was out - asked again the moment it answers */
   let again = false;
   /** @type {Map<number, any[]>} */
   let byPixel = new Map();
   const listeners = new Set();
-  const memory = new Map();   // sha -> bytes, in the order asked (the oldest first let go)
+  const memory = new Map(); // sha -> bytes, in the order asked (the oldest first let go)
   let memoryBytes = 0;
-  const loading = new Map();  // sha -> Promise<Uint8Array>
+  const loading = new Map(); // sha -> Promise<Uint8Array>
 
   /** The standing set, live and overlaid, indexed by pixel; listeners told. */
   function reindex() {
     const all = new Map(live);
     for (const [id, e] of overlay) {
-      if (e === null) all.delete(id);   // a draft retirement: gone from this builder's screen
+      if (e === null)
+        all.delete(id); // a draft retirement: gone from this builder's screen
       else all.set(id, e);
     }
     byPixel = new Map();
@@ -82,7 +96,13 @@ export function createPoiFeed({ base, fetch = (u, i) => globalThis.fetch(u, i), 
       byPixel.get(k).push(e);
     }
     gen++;
-    for (const fn of listeners) { try { fn(); } catch (e) { if (log) console.warn('[poi] a listener threw', e); } }
+    for (const fn of listeners) {
+      try {
+        fn();
+      } catch (e) {
+        if (log) console.warn('[poi] a listener threw', e);
+      }
+    }
   }
   /** Take a feed's body: every document the law takes, by id. Answers whether anything was taken. */
   function take(body, tag) {
@@ -91,7 +111,10 @@ export function createPoiFeed({ base, fetch = (u, i) => globalThis.fetch(u, i), 
     for (const p of body.pois) {
       if (!p || typeof p.id !== 'string' || !Number.isInteger(p.rev)) continue;
       const problems = poiDocProblems(p.doc);
-      if (problems.length || p.doc.id !== p.id) { if (log) console.warn(`[poi] ${p.id} r${p.rev} is not stood - the law refuses it`, problems.slice(0, 3)); continue; }
+      if (problems.length || p.doc.id !== p.id) {
+        if (log) console.warn(`[poi] ${p.id} r${p.rev} is not stood - the law refuses it`, problems.slice(0, 3));
+        continue;
+      }
       next.set(p.id, { id: p.id, rev: p.rev, doc: p.doc });
     }
     live = next;
@@ -114,7 +137,10 @@ export function createPoiFeed({ base, fetch = (u, i) => globalThis.fetch(u, i), 
       if (!b || kept.base !== b) return false;
       heldBase = b;
       return take(kept.body, kept.etag);
-    } catch (e) { if (log) console.warn('[poi] the kept feed would not read', e?.message ?? e); return false; }
+    } catch (e) {
+      if (log) console.warn('[poi] the kept feed would not read', e?.message ?? e);
+      return false;
+    }
   }
 
   /** Ask the service once - 304 for the version held, else the feed taken and kept. */
@@ -122,19 +148,30 @@ export function createPoiFeed({ base, fetch = (u, i) => globalThis.fetch(u, i), 
     const b = base();
     if (!b) return false;
     // AUDIT POI R15: another service than the one the version and tag came from - its own feed asked whole
-    if (b !== heldBase) { heldBase = b; etag = null; version = -1; floor = -1; }
+    if (b !== heldBase) {
+      heldBase = b;
+      etag = null;
+      version = -1;
+      floor = -1;
+    }
     const res = await fetch(`${b}/v1/poi/live`, { headers: etag ? { 'if-none-match': etag } : {} });
     if (res.status === 304) return false;
     if (!res.ok) throw new Error(`poi feed ${res.status}`);
     const text = await res.text();
     const body = JSON.parse(text);
     // S11 (AUDIT POI, the client's half): older than an answer already taken - a stale isolate's; what is held stands
-    if (Number.isInteger(body?.v) && body.v < floor) { if (log) console.warn(`[poi] the feed answered v${body.v} under v${floor} - a stale answer, not taken`); return false; }
+    if (Number.isInteger(body?.v) && body.v < floor) {
+      if (log) console.warn(`[poi] the feed answered v${body.v} under v${floor} - a stale answer, not taken`);
+      return false;
+    }
     const tag = res.headers?.get?.('etag') ?? null;
     const changed = body.v !== version;
     if (!take(body, tag)) throw new Error('poi feed: not a feed');
     floor = body.v;
-    if (cache) cache.put(POI_FEED_CACHE_KEY, new TextEncoder().encode(JSON.stringify({ base: b, etag: tag, body }))).catch(() => {});
+    if (cache)
+      cache
+        .put(POI_FEED_CACHE_KEY, new TextEncoder().encode(JSON.stringify({ base: b, etag: tag, body })))
+        .catch(() => {});
     return changed;
   }
 
@@ -143,11 +180,21 @@ export function createPoiFeed({ base, fetch = (u, i) => globalThis.fetch(u, i), 
   function tick(t = now()) {
     if (asking || t < nextAsk) return null;
     again = false;
-    asking = ask().then(() => { wait = POI_FEED_RETRY_MS; nextAsk = again ? 0 : now() + POI_FEED_POLL_MS; }, (e) => {
-      if (log) console.warn('[poi] the feed would not answer', e?.message ?? e);
-      nextAsk = again ? 0 : now() + wait;
-      wait = Math.min(wait * 2, POI_FEED_POLL_MS);
-    }).finally(() => { asking = null; });
+    asking = ask()
+      .then(
+        () => {
+          wait = POI_FEED_RETRY_MS;
+          nextAsk = again ? 0 : now() + POI_FEED_POLL_MS;
+        },
+        (e) => {
+          if (log) console.warn('[poi] the feed would not answer', e?.message ?? e);
+          nextAsk = again ? 0 : now() + wait;
+          wait = Math.min(wait * 2, POI_FEED_POLL_MS);
+        },
+      )
+      .finally(() => {
+        asking = null;
+      });
     return asking;
   }
 
@@ -164,7 +211,10 @@ export function createPoiFeed({ base, fetch = (u, i) => globalThis.fetch(u, i), 
 
   return {
     /** Start: the kept feed first (if any), then the service. */
-    async start() { await readKept(); nextAsk = 0; },
+    async start() {
+      await readKept();
+      nextAsk = 0;
+    },
     tick,
     /**
      * Ask now, whatever the clock (the editor after a verdict or a put-back). AUDIT POI R13 (CONTRACTS C7): with an ask
@@ -172,25 +222,38 @@ export function createPoiFeed({ base, fetch = (u, i) => globalThis.fetch(u, i), 
      * (bible/Home.md ASYNC NEVER DROPS: the out ask used to set the next a minute off). Answers the ask that will carry it.
      */
     refresh() {
-      if (!asking) { nextAsk = 0; return tick(); }
+      if (!asking) {
+        nextAsk = 0;
+        return tick();
+      }
       again = true;
       return asking.then(() => asking ?? tick());
     },
     /** The POIs standing on a map pixel - live, with this screen's drafts over them. */
-    atPixel(/** @type {number} */ px, /** @type {number} */ py) { return byPixel.get(poiPixelKey(px, py)) ?? NONE; },   // AUDIT RELEASE R2-8: the world's pixel
+    atPixel(/** @type {number} */ px, /** @type {number} */ py) {
+      return byPixel.get(poiPixelKey(px, py)) ?? NONE;
+    }, // AUDIT RELEASE R2-8: the world's pixel
     /** Every standing POI. */
-    all() { return [...byPixel.values()].flat(); },
+    all() {
+      return [...byPixel.values()].flat();
+    },
     /** The live set alone, by id. */
-    liveOf(/** @type {string} */ id) { return live.get(id) ?? null; },
+    liveOf(/** @type {string} */ id) {
+      return live.get(id) ?? null;
+    },
     /** The feed's version, and a counter that moves whenever the standing set does (a host's cheap "anything new?"). */
     version: () => version,
     generation: () => gen,
     /** Hear every change of the standing set. Answers the unsubscribe. */
-    onChange(/** @type {() => void} */ fn) { listeners.add(fn); return () => listeners.delete(fn); },
+    onChange(/** @type {() => void} */ fn) {
+      listeners.add(fn);
+      return () => listeners.delete(fn);
+    },
     /** POI-3: a builder's drafts over the live set, on this screen alone - `{ id: { doc } | null }` (null: hidden). */
     setOverlay(/** @type {Map<string, any>} */ drafts) {
       overlay = new Map();
-      for (const [id, d] of drafts) overlay.set(id, d === null ? null : { id, rev: d.rev ?? 0, doc: d.doc, draft: true });
+      for (const [id, d] of drafts)
+        overlay.set(id, d === null ? null : { id, rev: d.rev ?? 0, doc: d.doc, draft: true });
       reindex();
     },
     /**
@@ -205,14 +268,25 @@ export function createPoiFeed({ base, fetch = (u, i) => globalThis.fetch(u, i), 
       const p = (async () => {
         const check = async (bytes) => bytes && hex(await subtle.digest('SHA-256', bytes)) === sha;
         if (cache) {
-          try { const kept = await cache.get(poiAssetCacheKey(sha)); if (kept && (await check(kept))) { remember(sha, kept); return kept; } } catch { /* a kept copy that will not read is fetched again */ }
+          try {
+            const kept = await cache.get(poiAssetCacheKey(sha));
+            if (kept && (await check(kept))) {
+              remember(sha, kept);
+              return kept;
+            }
+          } catch {
+            /* a kept copy that will not read is fetched again */
+          }
         }
         const b = base();
         if (!b) throw new Error('poi asset: no service');
-        const res = await fetch(`${b}/v1/poi/asset/${sha}`, { headers: auth ? { authorization: `Bearer ${auth}` } : {} });
+        const res = await fetch(`${b}/v1/poi/asset/${sha}`, {
+          headers: auth ? { authorization: `Bearer ${auth}` } : {},
+        });
         if (!res.ok) throw new Error(`poi asset ${sha.slice(0, 12)}: ${res.status}`);
         const bytes = new Uint8Array(await res.arrayBuffer());
-        if (!(await check(bytes))) throw new Error(`poi asset ${sha.slice(0, 12)}: the bytes are not the ones it names`);
+        if (!(await check(bytes)))
+          throw new Error(`poi asset ${sha.slice(0, 12)}: the bytes are not the ones it names`);
         remember(sha, bytes);
         if (cache) cache.put(poiAssetCacheKey(sha), bytes).catch(() => {});
         return bytes;
@@ -231,8 +305,13 @@ export function browserPoiCache(caches = globalThis.caches) {
   let opened = null;
   const box = () => (opened ??= caches.open('dagger-poi'));
   return {
-    async get(key) { const r = await (await box()).match(url(key)); return r ? new Uint8Array(await r.arrayBuffer()) : null; },
-    async put(key, bytes) { await (await box()).put(url(key), new Response(bytes)); },
+    async get(key) {
+      const r = await (await box()).match(url(key));
+      return r ? new Uint8Array(await r.arrayBuffer()) : null;
+    },
+    async put(key, bytes) {
+      await (await box()).put(url(key), new Response(bytes));
+    },
   };
 }
 
@@ -243,7 +322,9 @@ export function idbPoiCache(indexedDBRef = globalThis.indexedDB) {
   if (!store) return null;
   return {
     get: (key) => store.get(key),
-    async put(key, bytes) { await store.set(key, bytes); },
+    async put(key, bytes) {
+      await store.set(key, bytes);
+    },
   };
 }
 

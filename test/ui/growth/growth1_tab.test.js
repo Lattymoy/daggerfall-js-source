@@ -290,7 +290,7 @@ test('AUDIT GROWTH LANE1-11 HOW IT IS USED: the spell from any spell shelf; a fo
   setPref(LOOT_RARITY_KEY, false);
   assert.equal(useLine('technique'), 'Once chosen, press your Weapon Technique key while fighting with one of its two skills.');
   setPref(LOOT_RARITY_KEY, true);
-  try { assert.match(useLine('technique'), / A weapon with a technique of its own uses that instead\.$/); } finally { setPref(LOOT_RARITY_KEY, false); }
+  try { assert.match(useLine('technique'), / A weapon with a technique of its own uses that instead, and your Martial Technique key uses this one\.$/); } finally { setPref(LOOT_RARITY_KEY, false); }   // PIN MOVED (TECH-KEY2)
 });
 
 test('AUDIT GROWTH LANE1-5/6/7 THE RIDERS SAY WHAT THE POWERS DO: the Brawler\'s answers that foe\'s blows only, the Bloodmage\'s a target below the line after the hit, the Berserker\'s arrows too (mutants: the old overclaim; the old underclaim)', () => {
@@ -511,7 +511,7 @@ test('GROWTH3 THE WINDOWS, EMBEDDED (by source; tools/growthProbe.mjs drives the
   assert.match(sky, /if \(embed\) \{ root\.classList\.add\('fmt-embed'\); root\.setAttribute\('aria-modal', 'false'\); exitBtn\.hidden = true; \}/);
   assert.match(sky, /if \(embed\) try \{ watch = new globalThis\.ResizeObserver\(\(\) => \{ if \(!dead\) resize\(\); \}\); watch\.observe\(root\); \} catch \{ watch = null; \}/);
   assert.match(sky, /if \(!embed\) \(goBtn\.disabled \? homeBtn : goBtn\)\.focus\?\.\(\{ preventScroll: true \}\);/);
-  assert.match(rd('src/ui/captainTreeWindow.js'), /unacceptedEsc: t\('captain\.sky\.unacceptedLeave', 'You have unaccepted changes\. Press \{accept\} to keep them, or leave again to discard them\.', \{ accept: t\('captain\.sky\.accept', 'Accept'\) \}\),/);
+  assert.match(rd('src/ui/captainTreeWindow.js'), /unacceptedEsc: t\(\n\s*'captain\.sky\.unacceptedLeave',\n\s*'You have unaccepted changes\. Press \{accept\} to keep them, or leave again to discard them\.',\n\s*\{ accept: t\('captain\.sky\.accept', 'Accept'\) \},/);
   assert.doesNotMatch(rd('src/ui/revenantStarsWindow.js'), /embed/, 'the revenant sky stands over the window, never in it');
   assert.match(rd('src/ui/captainTreeWindow.js'), /return mountSkyWindow\(host, sky, \{ changed, onExit, doc, embed \}\);/);
   const lv = rd('src/ui/enhanced/enhancedLevelUp.js');

@@ -35,7 +35,19 @@ import VAMPIRES from './patches/vampires.json' with { type: 'json' };
 export const QL_MESSAGE_BASE = 1900;
 
 /** Every family's patches, by family name. */
-export const QL_PATCH_FAMILIES = Object.freeze([FIGHTERS_GUILD, KNIGHTLY_ORDERS, MAGES_GUILD, THIEVES_GUILD, DARK_BROTHERHOOD, HOLY_ORDERS, NOBILITY, MERCHANTS, COMMONERS, WITCHES, VAMPIRES]);
+export const QL_PATCH_FAMILIES = Object.freeze([
+  FIGHTERS_GUILD,
+  KNIGHTLY_ORDERS,
+  MAGES_GUILD,
+  THIEVES_GUILD,
+  DARK_BROTHERHOOD,
+  HOLY_ORDERS,
+  NOBILITY,
+  MERCHANTS,
+  COMMONERS,
+  WITCHES,
+  VAMPIRES,
+]);
 
 /** The quests a branch is patched into: upper-case name -> its patches ({ old, new, count }), frozen. */
 export const QL_PATCHES = (() => {
@@ -72,7 +84,10 @@ export function questlineLines(name, lines, on = questlinesOn()) {
   try {
     return applyQuestlinePatches(name, lines.join('\n')).split('\n');
   } catch (e) {
-    if (!_warned.has(name)) { _warned.add(name); console.warn(`[questlines] ${e?.message ?? e} - ${name} read without its branch`); }
+    if (!_warned.has(name)) {
+      _warned.add(name);
+      console.warn(`[questlines] ${e?.message ?? e} - ${name} read without its branch`);
+    }
     return lines;
   }
 }

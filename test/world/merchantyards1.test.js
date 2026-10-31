@@ -404,7 +404,7 @@ test('MERCHANT-YARDS THE PRESS - the Buy row (or no row) buys, the Sell row sell
   st.open = false;
   y.activate('yard:7:transport|keeper', 'grab', null);
   assert.equal(log.mid.at(-1), YARD_TEXT.shut, 'a counter that will not open says so');
-  assert.equal(y.activate('lefay:monument', 'grab', null), false, 'another\'s key is not its');
+  assert.equal(y.activate('monument:lefay', 'grab', null), false, 'another\'s key is not its');
   assert.equal(y.activate('yard:9:stable|keeper', 'grab', null), false, 'a yard not standing');
   // the plaque
   const keeper = y.hoverName('yard:7:stable|keeper');

@@ -2,8 +2,8 @@
   {
     "name": "MAP-WHOLE-edge-rule-floor",
     "file": "src/ui/inkRaster.js",
-    "old": "const i0 = Math.max(0, Math.ceil((cx - h) * ss - 0.5))",
-    "new": "const i0 = Math.max(0, Math.floor((cx - h) * ss - 0.5))",
+    "old": "  const i0 = Math.max(0, Math.ceil((cx - h) * ss - 0.5)),",
+    "new": "  const i0 = Math.max(0, Math.floor((cx - h) * ss - 0.5)),",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "MAP-WHOLE-union-summed",
     "file": "src/ui/inkRaster.js",
-    "old": "mask[row + i] = 1;",
-    "new": "mask[row + i] += 1;",
+    "old": "    for (let i = i0; i <= i1; i++) mask[row + i] = 1;",
+    "new": "    for (let i = i0; i <= i1; i++) mask[row + i] += 1;",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "MAP-WHOLE-share-off",
     "file": "src/ui/inkRaster.js",
-    "old": "out[o + 3] = Math.round((n * 255) / full);",
-    "new": "out[o + 3] = Math.round((n * 255) / (full + 1));",
+    "old": "      out[o + 3] = Math.round((n * 255) / full);",
+    "new": "      out[o + 3] = Math.round((n * 255) / (full + 1));",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "MAP-WHOLE-word-sum-row-twice",
     "file": "src/ui/inkRaster.js",
-    "old": "(Math.imul(words[k + 3 * ww], 0x01010101) >>> 24)",
-    "new": "(Math.imul(words[k + 2 * ww], 0x01010101) >>> 24)",
+    "old": "          (Math.imul(words[k + 3 * ww], 0x01010101) >>> 24);",
+    "new": "          (Math.imul(words[k + 2 * ww], 0x01010101) >>> 24);",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "MAP-WHOLE-clear-skipped",
     "file": "src/ui/inkRaster.js",
-    "old": "if (cov.any) cov.mask.fill(0);",
-    "new": "if (!cov.any) cov.mask.fill(0);",
+    "old": "  if (cov.any) cov.mask.fill(0);",
+    "new": "  if (!cov.any) cov.mask.fill(0);",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "MAP-WHOLE-pen-blue-green",
     "file": "src/ui/inkRaster.js",
-    "old": "Number(m[2]), Number(m[3])]",
-    "new": "Number(m[2]), Number(m[2])]",
+    "old": "  return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : [0, 0, 0];",
+    "new": "  return m ? [Number(m[1]), Number(m[2]), Number(m[2])] : [0, 0, 0];",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "MAP-WHOLE-base-unpainted",
     "file": "src/ui/tamrielTiles.js",
-    "old": "if (base) {",
-    "new": "if (false && base) {",
+    "old": "      if (base) {",
+    "new": "      if (false && base) {",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "MAP-WHOLE-base-not-a-stand-in",
     "file": "src/ui/tamrielTiles.js",
-    "old": "return standBase(ctx, view, dpr, x0, y0, span);",
-    "new": "return false;",
+    "old": "    return standBase(ctx, view, dpr, x0, y0, span);",
+    "new": "    return false;",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "MAP-WHOLE-base-words-every-frame",
     "file": "src/ui/tamrielTiles.js",
-    "old": "const settled = baseWordsAt !== null && baseWordsAt === base.version &&",
-    "new": "const settled = false &&",
+    "old": "        const settled =\n          baseWordsAt !== null &&\n          baseWordsAt === base.version &&\n          [...baseTiles.values()].every((t) => t.canvas && !t.job);",
+    "new": "        const settled = false && [...baseTiles.values()].every((t) => t.canvas && !t.job);",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "MAP-WHOLE-base-version-unkept",
     "file": "src/ui/tamrielTiles.js",
-    "old": "if (whole) baseWordsAt = base.version ?? null;",
-    "new": "if (!whole) baseWordsAt = base.version ?? null;",
+    "old": "          if (whole) baseWordsAt = base.version ?? null;",
+    "new": "          if (!whole) baseWordsAt = base.version ?? null;",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "MAP-WHOLE-base-kept-on-close",
     "file": "src/ui/tamrielTiles.js",
-    "old": "clear() { tiles.clear(); baseTiles.clear();",
-    "new": "clear() { tiles.clear();",
+    "old": "      baseTiles.clear();\n      baseFor = '';",
+    "new": "      baseFor = '';",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "MAP-WHOLE-base-dpr-ignored",
     "file": "src/ui/tamrielTiles.js",
-    "old": "tileLevelIndex(BASE_SCALE / dpr)",
-    "new": "tileLevelIndex(BASE_SCALE)",
+    "old": "export const baseLevelIndex = (dpr = 1) => tileLevelIndex(BASE_SCALE / dpr);",
+    "new": "export const baseLevelIndex = (dpr = 1) => tileLevelIndex(BASE_SCALE);",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "MAP-WHOLE-holes-counted-as-stood",
     "file": "src/ui/tamrielTiles.js",
-    "old": "else holes++;",
-    "new": "else stood++;",
+    "old": "        else holes++;",
+    "new": "        else stood++;",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "MAP-WHOLE-mask-half-a-tile",
     "file": "src/ui/tamrielTiles.js",
-    "old": "createCoverage(TILE_PX, TILE_PX)",
-    "new": "createCoverage(TILE_PX, TILE_PX / 2)",
+    "old": "      coverage: () => (job.cov ??= covSpare.pop() ?? createCoverage(TILE_PX, TILE_PX)), // MAP-WHOLE",
+    "new": "      coverage: () => (job.cov ??= covSpare.pop() ?? createCoverage(TILE_PX, TILE_PX / 2)), // MAP-WHOLE",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "MAP-WHOLE-mask-unpooled",
     "file": "src/ui/tamrielTiles.js",
-    "old": "if (job?.cov && covSpare.length < COV_SPARE) covSpare.push(job.cov);",
-    "new": "if (false) covSpare.push(job.cov);",
+    "old": "    if (job?.cov && covSpare.length < COV_SPARE) covSpare.push(job.cov);",
+    "new": "    if (false) covSpare.push(job.cov);",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "MAP-WHOLE-pixels-a-job",
     "file": "src/ui/tamrielTiles.js",
-    "old": "pixels: () => (pixels ??= new Uint8ClampedArray(TILE_PX * TILE_PX * 4)),",
-    "new": "pixels: () => new Uint8ClampedArray(TILE_PX * TILE_PX * 4),",
+    "old": "      pixels: () => (pixels ??= new Uint8ClampedArray(TILE_PX * TILE_PX * 4)),",
+    "new": "      pixels: () => new Uint8ClampedArray(TILE_PX * TILE_PX * 4),",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]

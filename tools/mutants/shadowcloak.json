@@ -2,8 +2,8 @@
   {
     "name": "SHADOWCLOAK-the-word",
     "file": "src/ui/playerBadge.js",
-    "old": "  shadowcloak: 'Holo Shadow Cloak',",
-    "new": "  shadowcloak: 'Shadow Cloak',",
+    "old": "  shadowcloak: 'Holo Shadow Cloak', // SHADOW-CLOAK: the Shadow Fang's hooded cloak of shadow and crimson light, granted with the title",
+    "new": "  shadowcloak: 'Shadow Cloak', // SHADOW-CLOAK: the Shadow Fang's hooded cloak of shadow and crimson light, granted with the title",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SHADOWCLOAK-the-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
-    "new": "radiance: 'primarch', shadowcloak: 'aegis', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
+    "old": "  shadowcloak: 'shadowfang',",
+    "new": "  shadowcloak: 'aegis',",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],
@@ -48,8 +48,8 @@
   {
     "name": "SHADOWCLOAK-the-aura-not-granted",
     "file": "server-account/src/titles.js",
-    "old": "primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
-    "new": "primarch: 'radiance', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
+    "old": "  shadowfang: 'shadowcloak',\n  crystalfist: 'resonance',",
+    "new": "  crystalfist: 'resonance',",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],
@@ -58,8 +58,8 @@
   {
     "name": "SHADOWCLOAK-granted-to-another-list",
     "file": "server-account/src/titles.js",
-    "old": "primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
-    "new": "primarch: 'radiance', penitent: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
+    "old": "  shadowfang: 'shadowcloak',",
+    "new": "  penitent: 'shadowcloak',",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],
@@ -68,8 +68,8 @@
   {
     "name": "SHADOWCLOAK-the-vocabularys-aura",
     "file": "src/net/identityToken.js",
-    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal']);",
-    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal']);",
+    "old": "  'shadowcloak',\n  'seraphwings',",
+    "new": "  'seraphwings',",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],
@@ -730,8 +730,8 @@
   {
     "name": "SHADOWCLOAK-a-peer-with-no-body",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    if (!this._standing(b)) return null;\n    let bones = null; try { bones = b.rig.thirdBones",
-    "new": "    if (!b) return null;\n    let bones = null; try { bones = b.rig.thirdBones",
+    "old": "    if (!this._standing(b)) return null;",
+    "new": "    if (!b) return null;",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]
@@ -739,7 +739,7 @@
   {
     "name": "SHADOWCLOAK-the-swing-never-set",
     "file": "src/render/auraRing.js",
-    "old": "gl.uniform4f(U.uSwing, sw?.x || 0, sw?.z || 0, sw?.lift || 0, sw?.twist || 0);",
+    "old": "gl.uniform4f(U.uSwing, sw[0], sw[1], sw[2], sw[3]);",
     "new": "gl.uniform4f(U.uSwing, 0, 0, 0, 0);",
     "tests": [
       "test/net/shadowcloak.test.js"
@@ -748,8 +748,8 @@
   {
     "name": "SHADOWCLOAK-the-pose-never-set",
     "file": "src/render/auraRing.js",
-    "old": "const sw = w.swing, pose = w.cape ?? CLOAK_REST_POSE;",
-    "new": "const sw = w.swing, pose = CLOAK_REST_POSE;",
+    "old": "const sw = auraSwingDrawn(w, this._swing), pose = w.cape ?? CLOAK_REST_POSE;",
+    "new": "const sw = auraSwingDrawn(w, this._swing), pose = CLOAK_REST_POSE;",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]
@@ -757,8 +757,8 @@
   {
     "name": "SHADOWCLOAK-my-bones-never-read",
     "file": "src/scenes/auraHost.js",
-    "old": "bones: mwViewBodyBones(CLOAK_BONES) ?? auraSpriteBones(mwViewSpriteFigure()) }",
-    "new": "bones: null ?? auraSpriteBones(mwViewSpriteFigure()) }",
+    "old": "bones: selfLiftNow > 0 ? null : mwViewBodyBones(CLOAK_BONES) ?? auraSpriteBones(mwViewSpriteFigure()), card: !!faced }",
+    "new": "bones: selfLiftNow > 0 ? null : null ?? auraSpriteBones(mwViewSpriteFigure()), card: !!faced }",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],
@@ -786,8 +786,8 @@
   {
     "name": "SHADOWCLOAK-bones-in-first-person",
     "file": "src/player/mwView.js",
-    "old": "  if (eotbLane() || !mwCamera.thirdPerson()) return null;\n  return fpArm.thirdBones(names);",
-    "new": "  if (eotbLane()) return null;\n  return fpArm.thirdBones(names);",
+    "old": "  if (eotbLane() || !mwCamera.thirdPerson()) return null;",
+    "new": "  if (eotbLane()) return null;",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]
@@ -795,8 +795,8 @@
   {
     "name": "SHADOWCLOAK-the-cards-name-the-key",
     "file": "src/ui/accountFlow.js",
-    "old": "{ what: AURA_TEXT[want] ?? want }",
-    "new": "{ what: want }",
+    "old": "        ? t('account.flow.wearing', 'Wearing {what}.', { what: AURA_TEXT[want] ?? want })",
+    "new": "        ? t('account.flow.wearing', 'Wearing {what}.', { what: want })",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]
@@ -813,8 +813,8 @@
   {
     "name": "SHADOWCLOAK-the-draw-commented-out",
     "file": "src/scenes/auraHost.js",
-    "old": "        pass?.draw(auraDraw, proj, view, eye, now, fogNow());",
-    "new": "        // pass?.draw(auraDraw, proj, view, eye, now, fogNow());",
+    "old": "pass.draw(run, proj, view, eye, now, fog); ",
+    "new": "",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]
@@ -822,8 +822,8 @@
   {
     "name": "SHADOWCLOAK-my-riding-ignored",
     "file": "src/scenes/auraHost.js",
-    "old": "/** @type {any} */ (self).mounted = !!player.riding;",
-    "new": "/** @type {any} */ (self).mounted = false;",
+    "old": "/** @type {any} */ (self).mounted = !!player.riding || lift > 0;",
+    "new": "/** @type {any} */ (self).mounted = lift > 0;",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]
@@ -1230,7 +1230,7 @@
   {
     "name": "SHADOWCLOAK-the-rest-pose-posed-into",
     "file": "src/render/auraRing.js",
-    "old": "auraCapePose(posed.bones, w.cape && w.cape !== CLOAK_REST_POSE ? w.cape : null)",
+    "old": "auraCapePose(posed.bones, posedOwn(w.cape))",
     "new": "auraCapePose(posed.bones, w.cape ?? null)",
     "tests": [
       "test/net/shadowcloak.test.js"
@@ -1239,8 +1239,8 @@
   {
     "name": "SHADOWCLOAK-the-rest-pose-crouched-into",
     "file": "src/render/auraRing.js",
-    "old": "const c = w.cape && w.cape !== CLOAK_REST_POSE ? w.cape :",
-    "new": "const c = w.cape ? w.cape :",
+    "old": "const c = posedOwn(w.cape) ?? {",
+    "new": "const c = w.cape ?? {",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]
@@ -1329,8 +1329,8 @@
   {
     "name": "SHADOWCLOAK-a-throwing-rig-ends-the-frame",
     "file": "src/net/peer/peerBodies.js",
-    "old": "let bones = null; try { bones = b.rig.thirdBones?.(names) ?? null; } catch (e) { console.error('[peerBodies] bonesOf', e); }",
-    "new": "let bones = b.rig.thirdBones?.(names) ?? null;",
+    "old": "    let bones = null;\n    try {\n      bones = b.rig.thirdBones?.(names) ?? null;\n    } catch (e) {\n      console.error('[peerBodies] bonesOf', e);\n    } // as every rig call here (AUDIT MWBODY A1): a throw never ends the frame",
+    "new": "    let bones = b.rig.thirdBones?.(names) ?? null; // as every rig call here (AUDIT MWBODY A1): a throw never ends the frame",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]

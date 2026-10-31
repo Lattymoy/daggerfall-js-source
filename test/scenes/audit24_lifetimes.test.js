@@ -81,7 +81,7 @@ test('audit24 lifetimes: a city guard frees its batch on both death paths, and t
   // AUDIT 26 F035 (+ MT-ii, the same gate from the other end): the
   // header grew its provenance flag. PIN MOVED (TELL1: and the blow's kind, weapon, round and striker - the poise meter's weight).
   assert.match(bodyOf(src, 'function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true, bypassShield = false, peer = false, kind = \'melee\', weapon = null, round = false, striker = null, wc = null } = {})'),   // PIN MOVED (TELL8: a peer's blow's class)
-    /health <= 0[\s\S]{0,300}releaseGuardBatch\(g\)/, 'the killed path');
+    /health <= 0[\s\S]{0,360}releaseGuardBatch\(g\)/, 'the killed path');   // PIN MOVED (STOREFRONT), 300 -> 360: the kill's report tells where he falls (killFxOf)
   assert.match(src, /if \(!g\.dead && !g\.defender && !g\.hunter\) \{ g\.dead = true; releaseGuardBatch\(g\); \}/,   // DISC19-F: the town's defenders are not the crime's   // PIN MOVED (PVP-GUARDS): nor a villain's hunters
     'and the walk-away path when the crime clears');
   // PIN MOVED (WATCH-LEAVES, bible/01-Overview/bugs/Field-Bugs-2026-10-12e.md): the defenders' walk-away is the walk-off's end
@@ -213,7 +213,7 @@ test('audit24: preventNormalizingReputations is set by the prison jump and clear
 test('audit24: the three quest settings are LIVE reads, not hardcoded falses', async () => {
   // Every one had a live consumer and a launcher toggle, so the player
   // could flip a switch that reached nothing: adult quests were
-  // filtered out whatever ChildGuard said (questLists.js:"|| (quest.minReq >= 10 && quest.minReq <= rep)"), the
+  // filtered out whatever ChildGuard said (questLists.js:"(quest.minReq < 10 && quest.minReq <= rank)"), the
   // guild list-box arm was unreachable (offerFlow.js:"NONMEMBER, rank ="), and the
   // journal's clocks never counted down (clock.js:"if (macroType !== 5)"). The settings
   // tier map's own both-ways gate now covers them; this pins the

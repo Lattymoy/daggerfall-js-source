@@ -34,7 +34,8 @@ function sweep() {
       const v = Number(m[2].replace(/_/g, ''));
       if (v > PSEUDO_ARCHIVE_FLOOR && !/_MAX$|_MIN$/.test(m[1])) nums.push({ owner: rel, name: m[1], value: v });
     }
-    for (const m of text.matchAll(/(?:export )?const ([A-Z0-9_]*(?:ARCHIVE|ART_KEY)[A-Z0-9_]*) *= *'([^']+)'/g)) if (m[2].length > 1) keys.push({ owner: rel, name: m[1], value: m[2] });
+    // PIN MOVED (the merge of main at e6b386856): an ART_KEY is its own word - lefayMonument.js's STEWART_KEY is a name, no archive
+    for (const m of text.matchAll(/(?:export )?const ([A-Z0-9_]*(?:ARCHIVE|(?<![A-Z])ART_KEY)[A-Z0-9_]*) *= *'([^']+)'/g)) if (m[2].length > 1) keys.push({ owner: rel, name: m[1], value: m[2] });
   }
   return { nums, keys };
 }
@@ -52,7 +53,7 @@ test('EG-G2 THE REGISTRY (section 11.6): no two numbered pseudo-archives overlap
   assert.equal(pseudoArchiveOwner(38151).name, 'SD_REALM_ARCHIVE');
   assert.equal(pseudoArchiveOwner(112370).name, 'ARCHIVE_FOOT', 'a block holds its middle');
   assert.equal(pseudoArchiveOwner('hcc').owner, 'scenes/horseCartPool.js');
-  assert.equal(pseudoArchiveOwner(38194), null, 'a free number has no owner');   // PIN MOVED (NAVAL-REFIT: a ship's paint took 38191, her cabin's 38192, her name boards 38193)
+  assert.equal(pseudoArchiveOwner(38195), null, 'a free number has no owner');   // PIN MOVED (NAVAL-REFIT: a ship's paint took 38191, her cabin's 38192, her name boards 38193) - PIN MOVED (FIGUREHEAD): and her figurehead's pictures 38194, beside them
   assert.equal(pseudoArchiveFree(38150), 38150, 'a free number is its own pick');
   assert.equal(pseudoArchiveFree(38151), 38152, 'past the Hour\'s');
   assert.equal(pseudoArchiveFree(38231, 8), 38233, 'eight free after the harbour\'s and the lamp\'s');   // PIN MOVED (AUDIT EG V, the merge of main): LAMP-KEEPER II's lamp took 38232 - nine were free after the harbour's

@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-REALM2-S1-the-first-save-unread",
     "file": "server-account/src/realm.js",
-    "old": "  if (seq === 1) {\n    // AUDIT REALM2 S1: a new character's",
-    "new": "  if (false) {\n    // AUDIT REALM2 S1: a new character's",
+    "old": "  if (seq === 1) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/auditrealm2_service.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-REALM2-S1-a-birth-at-any-level",
     "file": "server-account/src/realm.js",
-    "old": "shaped && save.level === REALM_BIRTH_LEVEL && liquidWealthOf(save)",
-    "new": "shaped && liquidWealthOf(save)",
+    "old": "      save.level === REALM_BIRTH_LEVEL &&\n      birthSkillOk(save, { legacy: row.lineage_id != null }) &&",
+    "new": "      birthSkillOk(save, { legacy: row.lineage_id != null }) &&",
     "tests": [
       "test/systems/auditrealm2_service.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-REALM2-S1-customs-on-the-saves-own-level",
     "file": "server-account/src/realm.js",
-    "old": "liquidWealthOf(save) <= customsAllowance(level))) return { error: 'customs-allowance' };",
-    "new": "liquidWealthOf(save) <= customsAllowance(save.level))) return { error: 'customs-allowance' };",
+    "old": "  if (!(shaped && liquidWealthOf(save) <= customsAllowance(level))) return { error: 'customs-allowance' };",
+    "new": "  if (!(shaped && liquidWealthOf(save) <= customsAllowance(save.level))) return { error: 'customs-allowance' };",
     "tests": [
       "test/systems/auditrealm2_service.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-REALM2-S3-a-landed-save-dropped",
     "file": "server-account/src/realm.js",
-    "old": "  if (row && (row.obj === key || row.prev === key || row.clean_obj === key)) return true;   // INT6: the clean one kept, too\n",
-    "new": "",
+    "old": "  if (row && (row.obj === key || row.prev === key || row.clean_obj === key)) return true; // INT6: the clean one kept, too\n  await dropObjects(bucket, [key]);",
+    "new": "  await dropObjects(bucket, [key]);",
     "tests": [
       "test/systems/auditrealm2_service.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-REALM2-S4-the-offer-compared-one-way",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "for (const k of new Set([...Object.keys(offered), ...(plain(rec) ? Object.keys(rec) : [])])) {",
-    "new": "for (const k of new Set([...Object.keys(offered)])) {",
+    "old": "  for (const k of new Set([...Object.keys(offered), ...(plain(rec) ? Object.keys(rec) : [])])) {",
+    "new": "  for (const k of new Set([...Object.keys(offered)])) {",
     "tests": [
       "test/systems/auditrealm2_service.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-REALM2-S4-the-record-unbounded",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "    if (JSON.stringify(items[at]).length > REALM_TRADE_RECORD_MAX) return null;",
-    "new": "    if (false) return null;",
+    "old": "    if (JSON.stringify(items[at]).length > REALM_TRADE_RECORD_MAX) return null; // AUDIT REALM2 S4: the record that moves, bounded",
+    "new": "    if (false) return null; // AUDIT REALM2 S4: the record that moves, bounded",
     "tests": [
       "test/systems/auditrealm2_service.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-REALM2-S6-the-carry-after-the-batch",
     "file": "server-account/src/realm.js",
-    "old": "      ...customsCarry(db, playerId, origin, id),\n    ]);\n  } catch (e) {\n    const why = await customsRefusal(ctx, playerId, origin);\n    if (why) return { error: why };\n    throw e;\n  }\n  await freeOthers({ db }, playerId, id);\n",
-    "new": "    ]);\n  } catch (e) {\n    const why = await customsRefusal(ctx, playerId, origin);\n    if (why) return { error: why };\n    throw e;\n  }\n  await freeOthers({ db }, playerId, id);\n  await db.batch(customsCarry(db, playerId, origin, id));\n",
+    "old": "      ...customsCarry(db, playerId, origin, id),\n    ]);\n  } catch (e) {\n    const why = await customsRefusal(ctx, playerId, origin);\n    if (why) return { error: why };\n    throw e;\n  }\n  await freeOthers({ db }, playerId, id);",
+    "new": "    ]);\n  } catch (e) {\n    const why = await customsRefusal(ctx, playerId, origin);\n    if (why) return { error: why };\n    throw e;\n  }\n  await freeOthers({ db }, playerId, id);\n  await db.batch(customsCarry(db, playerId, origin, id));",
     "tests": [
       "test/systems/auditrealm2_service.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-REALM2-S6-a-resume-carries-nothing",
     "file": "server-account/src/realm.js",
-    "old": "    await db.batch(customsCarry(db, playerId, origin, mine.id));",
-    "new": "    void customsCarry;",
+    "old": "    await db.batch(customsCarry(db, playerId, origin, mine.id)); // AUDIT REALM2 S6: carried again - a resume never carried",
+    "new": "    void customsCarry; // AUDIT REALM2 S6: carried again - a resume never carried",
     "tests": [
       "test/systems/auditrealm2_service.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-REALM2-S7-the-racer-told-lease",
     "file": "server-account/src/realm.js",
-    "old": "    return (await recordMovedOf(db, playerId, { id, lease, seq: /** @type {number} */ (seq) - 1 })) ?? { error: 'lease' };",
-    "new": "    return { error: 'lease' };",
+    "old": "      return (\n        (await recordMovedOf(db, playerId, { id, lease, seq: /** @type {number} */ (seq) - 1 })) ?? { error: 'lease' }\n      );",
+    "new": "      return { error: 'lease' };",
     "tests": [
       "test/systems/auditrealm2_service.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "AUDIT-REALM2-S8-a-treasury-deleted",
     "file": "server-account/src/realm.js",
-    "old": "  if ((master?.treasury ?? 0) > 0) return { error: 'guild-treasury' };\n",
-    "new": "",
+    "old": "  if ((master?.treasury ?? 0) > 0) return { error: 'guild-treasury' };\n  // AUDIT GUILD1d S1: and a lone one sells its guild's hall first - deleted, the guild stood memberless with the hall,",
+    "new": "  // AUDIT GUILD1d S1: and a lone one sells its guild's hall first - deleted, the guild stood memberless with the hall,",
     "tests": [
       "test/systems/auditrealm2_service.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "SD5B-the-hands-run-forwards",
     "file": "src/render/superDungeon/sdSky.js",
-    "old": "float hourA = -SKY_TAU * ${f4(SD_CLOCK_FACE.hourTurns)} * tk / SKY_PERIOD, minA = -SKY_TAU",
-    "new": "float hourA = SKY_TAU * ${f4(SD_CLOCK_FACE.hourTurns)} * tk / SKY_PERIOD, minA = SKY_TAU",
+    "old": "  float hourA = -SKY_TAU * ${f4(SD_CLOCK_FACE.hourTurns)} * tk / SKY_PERIOD, minA = -SKY_TAU * ${f4(SD_CLOCK_FACE.minuteTurns)} * tk / SKY_PERIOD;",
+    "new": "  float hourA = SKY_TAU * ${f4(SD_CLOCK_FACE.hourTurns)} * tk / SKY_PERIOD, minA = SKY_TAU * ${f4(SD_CLOCK_FACE.minuteTurns)} * tk / SKY_PERIOD;",
     "tests": [
       "test/render/sd5b_sky.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "SD5B-the-clock-handed-unwrapped",
     "file": "src/render/superDungeon/sdSky.js",
-    "old": "    gl.uniform1f(U.uTime, sdSkyClock(seconds));\n    gl.uniform3fv(U.uHaze, fog?.color ?? NO_HAZE);",
-    "new": "    gl.uniform1f(U.uTime, seconds);\n    gl.uniform3fv(U.uHaze, fog?.color ?? NO_HAZE);",
+    "old": "    gl.uniform4fv(U.uProj, b.lens);\n    gl.uniform1f(U.uTime, sdSkyClock(seconds));",
+    "new": "    gl.uniform4fv(U.uProj, b.lens);\n    gl.uniform1f(U.uTime, seconds);",
     "tests": [
       "test/render/sd5b_sky.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "SD5B-the-compare-left-at-LEQUAL",
     "file": "src/render/superDungeon/sdSky.js",
-    "old": "    gl.depthFunc(gl.LESS);\n",
-    "new": "",
+    "old": "    gl.depthFunc(gl.LESS);\n    gl.depthMask(true);",
+    "new": "    gl.depthMask(true);",
     "tests": [
       "test/render/sd5b_sky.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "SD5B-the-depth-write-not-handed-back",
     "file": "src/render/superDungeon/sdSky.js",
-    "old": "    gl.depthMask(true);\n",
-    "new": "",
+    "old": "    gl.depthMask(true);\n    gl.bindVertexArray(null);",
+    "new": "    gl.bindVertexArray(null);",
     "tests": [
       "test/render/sd5b_sky.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "SD5B-blended",
     "file": "src/render/superDungeon/sdSky.js",
-    "old": "    gl.disable(gl.BLEND);\n",
-    "new": "",
+    "old": "    gl.disable(gl.BLEND);\n    gl.disable(gl.CULL_FACE);",
+    "new": "    gl.disable(gl.CULL_FACE);",
     "tests": [
       "test/render/sd5b_sky.test.js"
     ]

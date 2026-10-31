@@ -45,7 +45,10 @@ const lifeOf = (id) => Number(String(id).split('.').pop());
  *  spent one of a life gone by is no reader's), at most BANDS_WIRE_MAX. */
 function regionWord(word, life) {
   const all = word ?? [];
-  return [...all.filter((e) => e[3] === 1), ...all.filter((e) => e[3] !== 1 && lifeOf(e[0]) >= life - 1)].slice(0, BANDS_WIRE_MAX);
+  return [...all.filter((e) => e[3] === 1), ...all.filter((e) => e[3] !== 1 && lifeOf(e[0]) >= life - 1)].slice(
+    0,
+    BANDS_WIRE_MAX,
+  );
 }
 /** The words a mark carries beside it: `bd` the bands' word, `sr` the raiders' (each chaseWordOf's own, each its own
  *  slots), the lives `bandLife` and `raidLife` the spent are kept for. */
@@ -59,7 +62,10 @@ export function regionChaseWords(bandWord, raidWord, bandLife, raidLife) {
 export function regionChaseHeard(f, me) {
   if (!f?.p || !me) return null;
   const d = Math.max(Math.abs(f.p.px - me.x), Math.abs(f.p.py - me.y));
-  return { bd: d <= REGION_BANDS_NEAR_PX && Array.isArray(f.bd) ? f.bd : [], sr: d <= REGION_RAIDERS_NEAR_PX && Array.isArray(f.sr) ? f.sr : [] };
+  return {
+    bd: d <= REGION_BANDS_NEAR_PX && Array.isArray(f.bd) ? f.bd : [],
+    sr: d <= REGION_RAIDERS_NEAR_PX && Array.isArray(f.sr) ? f.sr : [],
+  };
 }
 
 /** AUDIT OW-REVISITED L4-2: a far chaser's word withdrawn - from `peers` (the bands' or the raiders' peer book: id ->

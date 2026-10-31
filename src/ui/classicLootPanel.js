@@ -23,17 +23,19 @@ import { drawText, measureText } from './text.js';
 import { getString } from '../systems/settings/settings.js';
 import { parseHexColor, DEFAULT_TOOLTIP_TEXT_BG, DEFAULT_TOOLTIP_TEXT_FG, TOOLTIP_MARGIN } from './toolTip.js';
 import { activeUiPack } from '../systems/uiPack.js';
-import { PLAQUE_MINE_TAG } from '../systems/roomLoot.js';   // PARTY-LOOT: a row of this player's own bonus says so
+import { PLAQUE_MINE_TAG } from '../systems/roomLoot.js'; // PARTY-LOOT: a row of this player's own bonus says so
 
 /** Mac's sheet: its size, and the rows its two gold rules sit on (38 and 141, each with a shadow row beside it). */
 export const PARCHMENT = Object.freeze({
   file: 'grimoire-loot-parchment.png',
-  w: 106, h: 180,
-  cutTop: 40,        // the first rule and its shadow stay with the top piece
-  cutBottom: 140,    // the second rule's shadow and the rule go with the bottom piece
-  titleY: 24,        // the band between the top curl and the first rule
-  textX: 16, textW: 74,
-  footY: 146,        // below the second rule, above the bottom curl
+  w: 106,
+  h: 180,
+  cutTop: 40, // the first rule and its shadow stay with the top piece
+  cutBottom: 140, // the second rule's shadow and the rule go with the bottom piece
+  titleY: 24, // the band between the top curl and the first rule
+  textX: 16,
+  textW: 74,
+  footY: 146, // below the second rule, above the bottom curl
 });
 /** The ink on the parchment, and the band behind the lit row. */
 export const PARCHMENT_INK = Object.freeze([0.23, 0.13, 0.05, 1]);
@@ -44,9 +46,13 @@ export const PANEL_OFFSET_X = 24;
 export const lootPanelUrl = (root = APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/') =>
   new URL(`art/${PARCHMENT.file}`, root).href;
 
-let _fetch = async (url) => { const r = await fetch(url); if (!r.ok) throw new Error(`${url}: ${r.status}`); return new Uint8Array(await r.arrayBuffer()); };
+let _fetch = async (url) => {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`${url}: ${r.status}`);
+  return new Uint8Array(await r.arrayBuffer());
+};
 let _decode = null;
-const _byRenderer = new WeakMap();   // renderer -> { state, img }
+const _byRenderer = new WeakMap(); // renderer -> { state, img }
 
 /** The parchment as `{ tex, w, h }` once it has loaded, or null (loading, failed, or no renderer to hold it). */
 export function parchmentImage(renderer) {
@@ -61,7 +67,10 @@ export function parchmentImage(renderer) {
       const px = toScreenOrder(await decode(await _fetch(lootPanelUrl())));
       slot.img = { tex: renderer.uploadTexture('art', PARCHMENT.file, px, { alpha: true }), w: px.width, h: px.height };
       slot.state = 'ready';
-    })().catch((e) => { slot.state = 'failed'; console.warn(`[loot] ${PARCHMENT.file} did not load - the tooltip box stands in:`, e?.message ?? e); });
+    })().catch((e) => {
+      slot.state = 'failed';
+      console.warn(`[loot] ${PARCHMENT.file} did not load - the tooltip box stands in:`, e?.message ?? e);
+    });
   }
   return slot.state === 'ready' ? slot.img : null;
 }
@@ -77,9 +86,17 @@ function fit(fnt, text, w) {
 /** The rows the panel lists: the frame's rows, their stacks, and "and N more" - LOOT-SCROLL: with the rows the plaque's
  *  window leaves above it in the same foot line (`above`; the panel's layout keeps its one foot line). */
 export function lootPanelLines(frame) {
-  const rows = (frame?.rows ?? []).map((r) => (r.stack > 1 ? `${r.name} (${r.stack})` : r.name) + (r.mine ? ` - ${PLAQUE_MINE_TAG}` : ''));   // PARTY-LOOT: this player's own bonus says so
+  const rows = (frame?.rows ?? []).map(
+    (r) => (r.stack > 1 ? `${r.name} (${r.stack})` : r.name) + (r.mine ? ` - ${PLAQUE_MINE_TAG}` : ''),
+  ); // PARTY-LOOT: this player's own bonus says so
   const above = frame?.above > 0 ? frame.above : 0;
-  const more = above ? (frame.rest > 0 ? `${above} above, ${frame.rest} more` : `${above} more above`) : frame?.rest > 0 ? `and ${frame.rest} more` : null;
+  const more = above
+    ? frame.rest > 0
+      ? `${above} above, ${frame.rest} more`
+      : `${above} more above`
+    : frame?.rest > 0
+      ? `and ${frame.rest} more`
+      : null;
   return { title: frame?.title ?? '', rows, more };
 }
 
@@ -109,20 +126,40 @@ export function lootPanelLayout(frame, glyphH, { parchment = false, centreY = NA
   const n = rows.length;
   const top = (h) => Math.max(2, Math.min(Math.floor(bottom) - h - 2, Math.round(centreY - h / 2)));
   if (parchment) {
-    const middle = Math.max(rowH, n * rowH) + 6;   // the body, cut at the rules and stretched to the rows
+    const middle = Math.max(rowH, n * rowH) + 6; // the body, cut at the rules and stretched to the rows
     const h = PARCHMENT.cutTop + middle + (PARCHMENT.h - PARCHMENT.cutBottom);
     const x = Math.min(NATIVE_W - PARCHMENT.w - 2, NATIVE_W / 2 + PANEL_OFFSET_X);
     const y = top(h);
-    return { x, y, w: PARCHMENT.w, h, parchment: true, rowH, rowsY: y + PARCHMENT.cutTop + 3, middle,
-      titleY: y + PARCHMENT.titleY, footY: y + PARCHMENT.cutTop + middle + (PARCHMENT.footY - PARCHMENT.cutBottom) };
+    return {
+      x,
+      y,
+      w: PARCHMENT.w,
+      h,
+      parchment: true,
+      rowH,
+      rowsY: y + PARCHMENT.cutTop + 3,
+      middle,
+      titleY: y + PARCHMENT.titleY,
+      footY: y + PARCHMENT.cutTop + middle + (PARCHMENT.footY - PARCHMENT.cutBottom),
+    };
   }
   const lines = 1 + n + (more ? 1 : 0);
   const w = 120;
   const h = lines * glyphH + 2 * TOOLTIP_MARGIN + 2;
   const x = Math.min(NATIVE_W - w - 2, NATIVE_W / 2 + PANEL_OFFSET_X);
   const y = top(h);
-  return { x, y, w, h, parchment: false, rowH: glyphH, rowsY: y + TOOLTIP_MARGIN + glyphH + 2, middle: 0,
-    titleY: y + TOOLTIP_MARGIN, footY: y + TOOLTIP_MARGIN + (1 + n) * glyphH + 2 };
+  return {
+    x,
+    y,
+    w,
+    h,
+    parchment: false,
+    rowH: glyphH,
+    rowsY: y + TOOLTIP_MARGIN + glyphH + 2,
+    middle: 0,
+    titleY: y + TOOLTIP_MARGIN,
+    footY: y + TOOLTIP_MARGIN + (1 + n) * glyphH + 2,
+  };
 }
 
 /**
@@ -141,7 +178,13 @@ export function drawLootPanel(renderer, m, font, frame, lit = -1, { reticleY = n
     const P = PARCHMENT;
     drawImgCrop(renderer, sheet, m, [0, 0, P.w, P.cutTop], [L.x, L.y, P.w, P.cutTop]);
     drawImgCrop(renderer, sheet, m, [0, P.cutTop, P.w, P.cutBottom - P.cutTop], [L.x, L.y + P.cutTop, P.w, L.middle]);
-    drawImgCrop(renderer, sheet, m, [0, P.cutBottom, P.w, P.h - P.cutBottom], [L.x, L.y + P.cutTop + L.middle, P.w, P.h - P.cutBottom]);
+    drawImgCrop(
+      renderer,
+      sheet,
+      m,
+      [0, P.cutBottom, P.w, P.h - P.cutBottom],
+      [L.x, L.y + P.cutTop + L.middle, P.w, P.h - P.cutBottom],
+    );
     const t = fit(font.fnt, title, P.textW);
     text(t, L.x + (P.w - measureText(font.fnt, t)) / 2, L.titleY, PARCHMENT_INK);
     rows.forEach((r, i) => {
@@ -168,5 +211,11 @@ export function drawLootPanel(renderer, m, font, frame, lit = -1, { reticleY = n
 
 export function _setLootPanelSeamsForTests({ fetch: f = null, decode = null } = {}) {
   _decode = decode;
-  _fetch = f ?? (async (url) => { const r = await fetch(url); if (!r.ok) throw new Error(`${url}: ${r.status}`); return new Uint8Array(await r.arrayBuffer()); });
+  _fetch =
+    f ??
+    (async (url) => {
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(`${url}: ${r.status}`);
+      return new Uint8Array(await r.arrayBuffer());
+    });
 }

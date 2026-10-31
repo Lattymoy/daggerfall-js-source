@@ -2,7 +2,7 @@
 // sections 10.7, 10.8 and 17.4): THE MADE LEVEL'S RULES - one law (systems/madeLevel.js) for the Burning Court, the
 // Shattered Hour and the Spire: `madeLevelOf` over each made location's own producer, MADE_LEVEL_RULES and their words as
 // data; the Burning Court and the Hour re-plugged UNCHANGED (every door's old decision and words, rule by rule); each of
-// the Spire's rules at its own door, run - THE POTION LAW through the item's use, a technique's flight refused on the
+// the Spire's rules at its own door, run - THE POTION CLOCK through the item's use (POTION-CLOCK), a technique's flight refused on the
 // traversal ground, THE FORGIVENESS on the real motor, DEATH-PENALTY's line, the one Levitate ward, the breach client's
 // traversal ground and its half of THE LAW PIN; and THE SWEEP - every rule's door reads the law and asks no level itself.
 import '../../modsOff.js';
@@ -16,7 +16,8 @@ import { sdRealmLocation, SD_REALM_TEXT } from '../../../src/world/superDungeon/
 import { egHallLocation, EG_HALL_TEXT } from '../../../src/world/eliteGates/egHall.js';
 import { EG_TEXT, EG_SPEC, egHallOf, egCircleSpecs, egOnFight, egSpecForget, EG_SEALED_MS } from '../../../src/net/eliteGates/egLaw.js';
 import { egGive8 } from '../../egGive8.mjs';   // PIN MOVED (THE ASCENT - THE ROOMS, LAW 9): a law 8 circle given
-import { registerSpirePotionLaw, spirePotionRefusal, SPIRE_POTION_TEXT } from '../../../src/systems/eliteGates/spireKit.js';
+import { spirePotionsTimed } from '../../../src/systems/eliteGates/spireKit.js';   // PIN MOVED (POTION-CLOCK): the made level's law runs the potion clock
+import { resetPvpPotions, PVP_POTION_MS } from '../../../src/combat/pvpPotions.js';
 import { POTION_RECIPES, potionRecipeKey } from '../../../src/systems/potionRecipes.js';
 import { useItem } from '../../../src/systems/useItem.js';
 import { TEMPLATES } from '../../../src/systems/item/itemKinds.js';
@@ -61,7 +62,7 @@ test('EG-H2 THE LAW (section 24): madeLevelOf names each made location by its ow
   assert.deepEqual(MADE_LEVEL_RULES, {
     court: { ...none, save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', portalStone: 'refused', companions: 'out', regen: 'held', death: 'castOut', unstuck: 'refused', says: 'mid' },
     hour: { ...none, save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'held', levitate: 'banned', runLeap: 'refused', death: 'final', unstuck: 'wayHome', says: 'hour' },
-    spire: { ...none, save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'held', potions: 'counted', levitate: 'banned', slowfall: 'banned',
+    spire: { ...none, save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'held', potions: 'timed', levitate: 'banned', slowfall: 'banned',
       techFlight: 'refused', jumpBuffer: 0.12, latePress: 0.12, runLeap: 'refused', avoidDeath: 'refused', death: 'fall', deathPenalty: 'none', unstuck: 'refused', says: 'mid' },
     // PIN MOVED (KETCH, bible/11-Multiplayer/Sky-Ketch.md section 3): the Hour's row for the deck, the Spire's for flight, a death a fall
     ketch: { ...none, save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'held', levitate: 'banned', slowfall: 'banned',
@@ -80,7 +81,7 @@ test('EG-H2 THE LAW (section 24): madeLevelOf names each made location by its ow
   assert.deepEqual([madeLevelSays(null, 'save'), madeLevelSays('court', 'recall'), madeLevelSays('spire', 'regen')], ['', '', '']);
   try {
     here('spire', true);
-    assert.deepEqual([madeLevelHere(), madeRuleHere('potions'), madeSaysHere('save'), madeOnTraverse()], ['spire', 'counted', EG_TEXT.noSave, true]);
+    assert.deepEqual([madeLevelHere(), madeRuleHere('potions'), madeSaysHere('save'), madeOnTraverse()], ['spire', 'timed', EG_TEXT.noSave, true]);
     registerMadeLevelHere(() => 'arena');
     assert.equal(madeLevelHere(), null, 'a word that names no made level is none');
     registerMadeLevelHere(() => { throw new Error('x'); }, () => { throw new Error('y'); });
@@ -122,24 +123,23 @@ test('EG-H2 THE BURNING COURT AND THE HOUR, UNCHANGED (section 24): rule by rule
   } finally { registerLevitateWard(null); registerMadeLevelHere(null); }
 });
 
-test('EG-H2 THE SPIRE\'S RULES AT THEIR DOORS (sections 10.7, 10.8, 17.4, 24), run: THE POTION LAW counts two restoring potions a hall where the law says so and nowhere else; a technique\'s leap refused on the Spire\'s traversal ground in its words, nothing paid, and free on a fight floor, in the court and in the Hour; THE FORGIVENESS on the real motor - a jump pressed 0.08 s before landing fires on it and a plain jump 0.05 s off an edge still leaps, in the Spire alone; the Spire\'s death screen states no loss and its respawn takes none (mutants: the count everywhere; the flight unrefused; the buffer or the late press anywhere but the Spire, or nowhere; the penalty stated)', () => {
-  // THE POTION LAW
+test('EG-H2 THE SPIRE\'S RULES AT THEIR DOORS (sections 10.7, 10.8, 17.4, 24), run: THE POTION CLOCK times a kind\'s second potion where the law says so and nowhere else (POTION-CLOCK); a technique\'s leap refused on the Spire\'s traversal ground in its words, nothing paid, and free on a fight floor, in the court and in the Hour; THE FORGIVENESS on the real motor - a jump pressed 0.08 s before landing fires on it and a plain jump 0.05 s off an edge still leaps, in the Spire alone; the Spire\'s death screen states no loss and its respawn takes none (mutants: the count everywhere; the flight unrefused; the buffer or the late press anywhere but the Spire, or nowhere; the penalty stated)', () => {
+  // THE POTION CLOCK (POTION-CLOCK, section 17.4): PIN MOVED from THE POTION LAW's two a hall
   const key = (name) => potionRecipeKey(POTION_RECIPES.find((r) => r.name === name).ingredients);
-  let left = 2;
-  registerSpirePotionLaw({ allowed: () => left > 0, used: () => { left--; } });
   const bottle = () => ({ group: 'UselessItems1', templateIndex: TEMPLATES.Glass_Bottle, potionRecipeKey: key('healing'), name: 'Healing' });
   const drink = (pack) => { const it = bottle(); pack.push(it); return useItem(it, pack, { drinkPotion: () => 'Healing' }).kind; };
+  resetPvpPotions();
   try {
     here('court');
     const court = [];
-    assert.deepEqual([drink(court), drink(court), drink(court)], ['potion', 'potion', 'potion'], 'the court counts none (as today)');
-    assert.equal(left, 2, 'nothing counted outside the Spire');
+    assert.equal(spirePotionsTimed(), false);
+    assert.deepEqual([drink(court), drink(court), drink(court)], ['potion', 'potion', 'potion'], 'the court times none (as today)');
     here('spire');
+    assert.equal(spirePotionsTimed(), true);
     const pack = [];
-    assert.deepEqual([drink(pack), drink(pack), drink(pack)], ['potion', 'potion', 'refused'], 'two a hall in the Spire');
-    assert.equal(spirePotionRefusal(bottle()), SPIRE_POTION_TEXT);
+    assert.deepEqual([drink(pack), drink(pack)], ['potion', 'refused'], `a second health potion waits ${PVP_POTION_MS / 1000} s in the Spire`);
     assert.equal(pack.length, 1, 'the refused bottle kept');
-  } finally { registerSpirePotionLaw(null); registerMadeLevelHere(null); }
+  } finally { resetPvpPotions(); registerMadeLevelHere(null); }
   // THE TECHNIQUE'S FLIGHT
   const lcg = (seed) => { let s = (seed >>> 0) || 1; return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; }; };
   const leapSword = () => { const it = LR.applyRarity(createWeapon(120, 1), 'rare', lcg(7)); it.isIdentified = true; LR.addTechniqueLine(it, () => 0.5, { id: 'leap' }); LR.techniqueLineOf(it).value = 20; return it; };
@@ -290,9 +290,8 @@ test('EG-H2 THE SWEEP (section 24, THE ONE CONSTRUCTION SEAM): every rule\'s doo
     ['W', 'arenaFrame(dt);   // ARENA2', 'egCourtFrame();', ['regen']],
     ['W', 'if (!_rezSeen) _rezSeen =', 'if (rez && legacyHost', ['resurrect']],   // PIN MOVED (REZ-BLOODLINE, at the seventh merge of main): the rise asks Project Legacy first
     ['P', 'const portalDoorRefusal = () => {', 'const hold = portalHoldNow();', ['portalStone']],
-    ['K', 'export function spirePotionRefusal(item) {', 'try {', ['potions']],
-    ['K', 'export function spirePotionDrunk(item) {', 'try {', ['potions']],
-    ['T', 'export function refusal(hand, ctx) {', '\n}\n', ['techFlight']],
+    ['K', 'export const spirePotionsTimed = () =>', '\n', ['potions']],   // PIN MOVED (POTION-CLOCK): the clock's one door
+    ['T', 'export function refusal(hand, ctx, key = 1) {', '\n}\n', ['techFlight']],
     ['S', 'export function parkourDeps(', '\n}\n', ['runLeap']],   // EG-PERFECT: the running leap's door, the four hosts' one parkour deps
   ];
   const readRules = new Set();

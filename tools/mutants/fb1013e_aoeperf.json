@@ -2,8 +2,8 @@
   {
     "name": "AOE-PERF-a-the-marks-quad-the-glows-again",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "    case TELEGRAPH_KIND.mark: return boxInto(b, sh.origin[0], sh.origin[1], sh.origin[0], sh.origin[1], telegraphMarkReach(sh));",
-    "new": "    case TELEGRAPH_KIND.mark: return boxInto(b, sh.origin[0], sh.origin[1], sh.origin[0], sh.origin[1], sh.r + sh.r1 + M);",
+    "old": "      return boxInto(b, sh.origin[0], sh.origin[1], sh.origin[0], sh.origin[1], telegraphMarkReach(sh)); // AOE-PERF: his mark draws no glow",
+    "new": "      return boxInto(b, sh.origin[0], sh.origin[1], sh.origin[0], sh.origin[1], sh.r + sh.r1 + M); // AOE-PERF: his mark draws no glow",
     "tests": [
       "test/net/gate/fb1013e_aoeperf.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AOE-PERF-a-the-rings-reach-dropped",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "Math.max(sh.r + TELEGRAPH_MARK_RING, Math.hypot(sh.r, sh.halfW), sh.r + sh.r1)",
-    "new": "Math.max(sh.r, Math.hypot(sh.r, sh.halfW), sh.r + sh.r1)",
+    "old": "  Math.max(sh.r + TELEGRAPH_MARK_RING, Math.hypot(sh.r, sh.halfW), sh.r + sh.r1) + TELEGRAPH_TIGHT_PAD;",
+    "new": "  Math.max(sh.r, Math.hypot(sh.r, sh.halfW), sh.r + sh.r1) + TELEGRAPH_TIGHT_PAD;",
     "tests": [
       "test/net/gate/fb1013e_aoeperf.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AOE-PERF-a-the-chevrons-base-dropped",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "Math.max(sh.r + TELEGRAPH_MARK_RING, Math.hypot(sh.r, sh.halfW), sh.r + sh.r1)",
-    "new": "Math.max(sh.r + TELEGRAPH_MARK_RING, sh.r + sh.r1)",
+    "old": "export const telegraphMarkReach = (sh) =>\n  Math.max(sh.r + TELEGRAPH_MARK_RING, Math.hypot(sh.r, sh.halfW), sh.r + sh.r1) + TELEGRAPH_TIGHT_PAD;",
+    "new": "export const telegraphMarkReach = (sh) => Math.max(sh.r + TELEGRAPH_MARK_RING, sh.r + sh.r1) + TELEGRAPH_TIGHT_PAD;",
     "tests": [
       "test/net/gate/fb1013e_aoeperf.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AOE-PERF-a-the-chevrons-tip-dropped",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "Math.max(sh.r + TELEGRAPH_MARK_RING, Math.hypot(sh.r, sh.halfW), sh.r + sh.r1)",
-    "new": "Math.max(sh.r + TELEGRAPH_MARK_RING, Math.hypot(sh.r, sh.halfW))",
+    "old": "  Math.max(sh.r + TELEGRAPH_MARK_RING, Math.hypot(sh.r, sh.halfW), sh.r + sh.r1) + TELEGRAPH_TIGHT_PAD;",
+    "new": "  Math.max(sh.r + TELEGRAPH_MARK_RING, Math.hypot(sh.r, sh.halfW)) + TELEGRAPH_TIGHT_PAD;",
     "tests": [
       "test/net/gate/fb1013e_aoeperf.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AOE-PERF-b-no-strip",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "  const w = stripW(sh);\n  if (!(w > 0)) return null;",
-    "new": "  const w = stripW(sh);\n  if (sh) return null;",
+    "old": "  if (!(w > 0)) return null;",
+    "new": "  if (sh) return null;",
     "tests": [
       "test/net/gate/fb1013e_aoeperf.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AOE-PERF-b-the-strips-first-cap-dropped",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "if (!out) return { a: [sh.origin[0] - ux * w, sh.origin[1] - uz * w], u: [ux, uz], len: l + 2 * w, w };",
-    "new": "if (!out) return { a: [sh.origin[0], sh.origin[1]], u: [ux, uz], len: l + w, w };",
+    "old": "  if (!out) return { a: [sh.origin[0] - ux * w, sh.origin[1] - uz * w], u: [ux, uz], len: l + 2 * w, w };",
+    "new": "  if (!out) return { a: [sh.origin[0], sh.origin[1]], u: [ux, uz], len: l + w, w };",
     "tests": [
       "test/net/gate/fb1013e_aoeperf.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AOE-PERF-b-the-strips-last-cap-dropped",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "if (!out) return { a: [sh.origin[0] - ux * w, sh.origin[1] - uz * w], u: [ux, uz], len: l + 2 * w, w };",
-    "new": "if (!out) return { a: [sh.origin[0] - ux * w, sh.origin[1] - uz * w], u: [ux, uz], len: l + w, w };",
+    "old": "  if (!out) return { a: [sh.origin[0] - ux * w, sh.origin[1] - uz * w], u: [ux, uz], len: l + 2 * w, w };",
+    "new": "  if (!out) return { a: [sh.origin[0] - ux * w, sh.origin[1] - uz * w], u: [ux, uz], len: l + w, w };",
     "tests": [
       "test/net/gate/fb1013e_aoeperf.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AOE-PERF-b-the-stage-reading-the-box",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": " : uStrip == 1 ? uWalkA + uWalkU",
-    "new": " : uStrip == 2 ? uWalkA + uWalkU",
+    "old": "  vCourt = uOnWalk == 1 ? uWalkA + uWalkU * (aCourt.x * uWalkLen) + vec2(uWalkU.y, -uWalkU.x) * (aCourt.y * ${WALK_HALF_W.toFixed(3)}) : uStrip == 1 ? uWalkA + uWalkU * (aCourt.x * uWalkLen) + vec2(uWalkU.y, -uWalkU.x) * (aCourt.y * uStripW) : mix(uLo, uHi, aCourt);",
+    "new": "  vCourt = uOnWalk == 1 ? uWalkA + uWalkU * (aCourt.x * uWalkLen) + vec2(uWalkU.y, -uWalkU.x) * (aCourt.y * ${WALK_HALF_W.toFixed(3)}) : uStrip == 2 ? uWalkA + uWalkU * (aCourt.x * uWalkLen) + vec2(uWalkU.y, -uWalkU.x) * (aCourt.y * uStripW) : mix(uLo, uHi, aCourt);",
     "tests": [
       "test/net/gate/fb1013e_aoeperf.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AOE-PERF-b-the-strip-left-on",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "    if (strip) { gl.uniform1i(U.uStrip, 0); gl.bindVertexArray(this.vao); }",
-    "new": "    if (strip) { gl.bindVertexArray(this.vao); }",
+    "old": "      gl.uniform1i(U.uStrip, 0);\n      gl.bindVertexArray(this.vao);",
+    "new": "      gl.bindVertexArray(this.vao);",
     "tests": [
       "test/net/gate/fb1013e_aoeperf.test.js"
     ]

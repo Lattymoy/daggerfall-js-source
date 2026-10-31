@@ -13,15 +13,16 @@ export function getInnerSymbolName(symbol) {
   // '='). Replicated exactly; the macro slice inherits DFU's own
   // behavior here, not a fixed-up version.
   let result;
-  result = trimChar(symbol, '=');   // Outer = (dead in C#, kept for shape)
-  result = trimChar(symbol, '#');   // Outer # (dead in C#, kept for shape)
-  result = trimChar(symbol, '_');   // Outer _ - the only one that lands
+  result = trimChar(symbol, '='); // Outer = (dead in C#, kept for shape)
+  result = trimChar(symbol, '#'); // Outer # (dead in C#, kept for shape)
+  result = trimChar(symbol, '_'); // Outer _ - the only one that lands
   return result;
 }
 
 /** C# string.Trim(char): strip the char from BOTH ends, repeatedly. */
 function trimChar(s, ch) {
-  let start = 0, end = s.length;
+  let start = 0,
+    end = s.length;
   while (start < end && s[start] === ch) start++;
   while (end > start && s[end - 1] === ch) end--;
   return s.slice(start, end);

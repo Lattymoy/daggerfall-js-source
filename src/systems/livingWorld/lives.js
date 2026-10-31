@@ -29,15 +29,30 @@ import { lwRoll } from './seed.js';
 
 /** A slot's chance a cycle of dying on the road, by job (a sailor's is the sea's, LW5) - a town of a dozen travellers
  *  loses one every season or so: a merchant one cycle in about 170, a sellsword one in 100, an adventurer one in 80. */
-export const HAZARD = Object.freeze({ merchant: 0.006, mercenary: 0.01, adventurer: 0.012, pilgrim: 0.006, courier: 0.004, pedlar: 0.004 });
+export const HAZARD = Object.freeze({
+  merchant: 0.006,
+  mercenary: 0.01,
+  adventurer: 0.012,
+  pilgrim: 0.006,
+  courier: 0.004,
+  pedlar: 0.004,
+});
 /** LW9: the road's new traffic's - a carter's day to market the safest, a hunter's wild the worst of them, a patrol and
  *  a noble's retainers a sellsword's sort. */
-export const ROAD_HAZARD = Object.freeze({ carter: 0.003, hunter: 0.01, patrol: 0.008, noble: 0.004, retainer: 0.008, minstrel: 0.006 });
+export const ROAD_HAZARD = Object.freeze({
+  carter: 0.003,
+  hunter: 0.01,
+  patrol: 0.008,
+  noble: 0.004,
+  retainer: 0.008,
+  minstrel: 0.006,
+});
 /** A job's hazard, the road's new traffic's beside the first's. @param {string} job */
-export const hazardOf = (job) => HAZARD[/** @type {keyof typeof HAZARD} */ (job)] ?? ROAD_HAZARD[/** @type {keyof typeof ROAD_HAZARD} */ (job)] ?? 0;
+export const hazardOf = (job) =>
+  HAZARD[/** @type {keyof typeof HAZARD} */ (job)] ?? ROAD_HAZARD[/** @type {keyof typeof ROAD_HAZARD} */ (job)] ?? 0;
 /** The cycles a place stands empty after a death. */
 export const VACANT_CYCLES = 3;
-const FATE = 0x46415445;   // 'FATE'
+const FATE = 0x46415445; // 'FATE'
 
 /**
  * @typedef {{ spared?: Set<string>|null, fallen?: Set<string>|null, slain?: Map<string, { t: number }>|null,
@@ -97,8 +112,13 @@ export function placeAt(res, k, turns) {
   let last = null;
   // back from the cycle to the first counted death (a slot's hazard is percents a cycle: a few dozen cycles at most) -
   // to the world's first cycle, never a window, so a death long ago never falls out of the reading and back to the census
-  for (let j = k - 1; j >= 0; j--) if (deathCounted(res, j, turns)) { last = j; break; }
-  if (last != null && k - last <= VACANT_CYCLES) return { vacant: true, holder: null, dies: false, diced: false, since: last, hand: null };
+  for (let j = k - 1; j >= 0; j--)
+    if (deathCounted(res, j, turns)) {
+      last = j;
+      break;
+    }
+  if (last != null && k - last <= VACANT_CYCLES)
+    return { vacant: true, holder: null, dies: false, diced: false, since: last, hand: null };
   // the holder: the newcomer after the last death; before it, the generations back (each the death that came before it).
   // The road's own death this cycle reads the road's own count - a hand's death beside it never makes the road's fate
   const quiet = quietBefore(res, k, turns);

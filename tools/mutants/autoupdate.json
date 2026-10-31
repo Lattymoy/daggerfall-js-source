@@ -1,0 +1,43 @@
+[
+  {
+    "name": "AUTO-UPDATE-the-switch-on-by-default",
+    "file": "src/systems/uiPrefs.js",
+    "old": "  autoUpdates: false,",
+    "new": "  autoUpdates: true,",
+    "tests": [
+      "test/ui/updatescreen.test.js"
+    ],
+    "note": "Every player forced out onto a new version again, the report."
+  },
+  {
+    "name": "AUTO-UPDATE-the-switch-unread-on-the-site",
+    "file": "src/ui/updateScreen.js",
+    "old": "(autoUpdatesOn() ? startForcedUpdate(opts) : opts.notice?.(updateReadyNoticeText()))",
+    "new": "startForcedUpdate(opts)",
+    "tests": [
+      "test/ui/updatescreen.test.js"
+    ],
+    "note": "A browser's game reloads itself whatever the switch says."
+  },
+  {
+    "name": "AUTO-UPDATE-the-switch-unread-in-the-app",
+    "file": "src/ui/updateScreen.js",
+    "old": "() => autoUpdatesOn() && startForcedUpdate(",
+    "new": "() => startForcedUpdate(",
+    "tests": [
+      "test/ui/updatescreen.test.js"
+    ],
+    "note": "The desktop app restarts itself whatever the switch says."
+  },
+  {
+    "name": "AUTO-UPDATE-not-the-players-own-online",
+    "file": "src/systems/online/onlineLane.js",
+    "old": "  'autoUpdates', // AUTO-UPDATE: whether THIS player's game restarts itself onto a new version\n  'skipStartVideo', // UXB1-A: whether THIS player sits through the opening film - read at the front door, before any room",
+    "new": "  'skipStartVideo', // UXB1-A: whether THIS player sits through the opening film - read at the front door, before any room",
+    "tests": [
+      "test/ui/updatescreen.test.js",
+      "test/systems/rf4_featuredecl.test.js"
+    ],
+    "note": "The switch in neither online list."
+  }
+]

@@ -32,11 +32,19 @@ import { mintId, isMuted, overRate } from './accounts.js';
 import { guildActorOf } from './guilds.js';
 import { boardOpenFor } from './board.js';
 import { heraldryOfRow } from './halls.js';
-import { maskText } from '../../src/net/nameFilter.js';   // TEXT-F1: a guild note kept before the filter, starred as it is read
-import { HALL_POWERS, hallMay } from '../../src/net/hallLaw.js';
+import { maskText } from '../../src/net/nameFilter.js'; // TEXT-F1: a guild note kept before the filter, starred as it is read
+import { guildMay } from '../../src/net/guild/guildLaw.js';
+import { guildPowerSql } from './guildPowerSql.js'; // GUILD-RANKS: the hall's powers, as the guild set them, read in the statement
 import {
-  GUILD_NOTES_LIVE_MAX, GUILD_NOTES_SHOWN, NOTE_DAY_S, NOTES_PINNED_MAX, BOARD_OPS_MAX, BOARD_WINDOW_S, NOTE_ID_RE,
-  BOARD_RID_RE, guildNoteWords,
+  GUILD_NOTES_LIVE_MAX,
+  GUILD_NOTES_SHOWN,
+  NOTE_DAY_S,
+  NOTES_PINNED_MAX,
+  BOARD_OPS_MAX,
+  BOARD_WINDOW_S,
+  NOTE_ID_RE,
+  BOARD_RID_RE,
+  guildNoteWords,
 } from '../../src/net/boardLaw.js';
 
 /** The actor: the board open to this account, and the character a member of a guild - or the word that refuses. */
@@ -49,13 +57,21 @@ async function memberOf(db, player, env, character) {
 
 /** A member's live notes on their guild's board. */
 async function liveCount(db, guildId, author, nowS) {
-  const r = await db.prepare('SELECT COUNT(*) AS n FROM guild_notes WHERE guild_id = ? AND author = ? AND expires_at > ?').bind(guildId, author, nowS).first();
+  const r = await db
+    .prepare('SELECT COUNT(*) AS n FROM guild_notes WHERE guild_id = ? AND author = ? AND expires_at > ?')
+    .bind(guildId, author, nowS)
+    .first();
   return Number(r?.n ?? 0);
 }
 
 /** A note as a member sees it: never its account, only the member who pinned it. */
 const noteView = (n, me) => ({
-  id: n.id, from: n.author_name, subject: maskText(n.subject), body: maskText(n.body), at: n.at, expiresAt: n.expires_at,   // TEXT-F1
+  id: n.id,
+  from: n.author_name,
+  subject: maskText(n.subject),
+  body: maskText(n.body),
+  at: n.at,
+  expiresAt: n.expires_at, // TEXT-F1
   mine: n.author === me.player,
 });
 
@@ -63,7 +79,10 @@ const noteView = (n, me) => ({
  *  (server-account/src/cron.js, each hour), never a read's - the board's read swept first, a write on every look at a
  *  guild's board; nothing it answers waits on it, its notes are read `expires_at > now`. */
 export async function sweepGuildNotes(db, nowS, limit = 200) {
-  const r = await db.prepare('DELETE FROM guild_notes WHERE id IN (SELECT id FROM guild_notes WHERE expires_at <= ? LIMIT ?)').bind(nowS, limit).run();
+  const r = await db
+    .prepare('DELETE FROM guild_notes WHERE id IN (SELECT id FROM guild_notes WHERE expires_at <= ? LIMIT ?)')
+    .bind(nowS, limit)
+    .run();
   return Number(r?.meta?.changes ?? 0);
 }
 
@@ -76,18 +95,25 @@ export async function sweepGuildNotes(db, nowS, limit = 200) {
 export async function readGuildBoard({ db, nowS }, player, env, { character } = {}) {
   const a = await memberOf(db, player, env, character);
   if ('error' in a) return a;
-  const { me } = a;
+  const { me, powers } = a;
   const g = await db.prepare('SELECT id, name, tag, heraldry FROM guilds WHERE id = ?').bind(me.guild_id).first();
   if (!g) return { error: 'no-guild' };
-  const { results: notes = [] } = await db.prepare(`SELECT n.* FROM guild_notes n JOIN players p ON p.id = n.author
+  const { results: notes = [] } = await db
+    .prepare(
+      `SELECT n.* FROM guild_notes n JOIN players p ON p.id = n.author
     WHERE n.guild_id = ?1 AND n.expires_at > ?2 AND (COALESCE(p.muted_until, 0) <= ?2 OR n.author = ?3)
-    ORDER BY n.at DESC, n.id DESC LIMIT ?4`).bind(me.guild_id, nowS, player.id, GUILD_NOTES_SHOWN).all();
+    ORDER BY n.at DESC, n.id DESC LIMIT ?4`,
+    )
+    .bind(me.guild_id, nowS, player.id, GUILD_NOTES_SHOWN)
+    .all();
   return {
     guild: { id: g.id, name: g.name, tag: g.tag, heraldry: heraldryOfRow(g.heraldry) },
     notes: notes.map((n) => noteView(n, me)),
     me: {
-      canPin: !isMuted(player, nowS), live: await liveCount(db, me.guild_id, player.id, nowS), max: GUILD_NOTES_LIVE_MAX,
-      keeper: hallMay(me.rank, 'notes'),
+      canPin: !isMuted(player, nowS),
+      live: await liveCount(db, me.guild_id, player.id, nowS),
+      max: GUILD_NOTES_LIVE_MAX,
+      keeper: guildMay(me.rank, 'notes', powers), // GUILD-RANKS: as the guild set it
     },
   };
 }
@@ -105,27 +131,53 @@ export async function pinGuildNote({ db, rand, nowS }, player, env, { character,
   if (isMuted(player, nowS)) return { error: 'muted' };
   if (typeof rid !== 'string' || !BOARD_RID_RE.test(rid)) return { error: 'board-rid' };
   const prior = await db.prepare('SELECT * FROM guild_notes WHERE author = ? AND rid = ?').bind(player.id, rid).first();
-  if (prior) return prior.guild_id === me.guild_id ? { ok: true, repeat: true, note: noteView(prior, me) } : { error: 'board-rid' };
+  if (prior)
+    return prior.guild_id === me.guild_id
+      ? { ok: true, repeat: true, note: noteView(prior, me) }
+      : { error: 'board-rid' };
   const words = guildNoteWords({ subject, body, days });
   if ('error' in words) return words;
-  if (await overRate({ db, nowS }, `guild-board-pin:${player.id}`, NOTES_PINNED_MAX, BOARD_WINDOW_S)) return { error: 'board-rate' };
+  if (await overRate({ db, nowS }, `guild-board-pin:${player.id}`, NOTES_PINNED_MAX, BOARD_WINDOW_S))
+    return { error: 'board-rate' };
   const id = mintId(rand);
   let r;
   try {
-    r = await db.prepare(`INSERT INTO guild_notes (id, guild_id, author, char_id, author_name, subject, body, at, expires_at, rid)
+    r = await db
+      .prepare(
+        `INSERT INTO guild_notes (id, guild_id, author, char_id, author_name, subject, body, at, expires_at, rid)
       SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10
       WHERE EXISTS (SELECT 1 FROM guild_members WHERE player = ?3 AND char_id = ?4 AND guild_id = ?2)
-        AND (SELECT COUNT(*) FROM guild_notes WHERE guild_id = ?2 AND author = ?3 AND expires_at > ?8) < ?11`)
-      .bind(id, me.guild_id, player.id, character, me.name, words.subject, words.body, nowS, nowS + words.days * NOTE_DAY_S, rid, GUILD_NOTES_LIVE_MAX).run();
+        AND (SELECT COUNT(*) FROM guild_notes WHERE guild_id = ?2 AND author = ?3 AND expires_at > ?8) < ?11`,
+      )
+      .bind(
+        id,
+        me.guild_id,
+        player.id,
+        character,
+        me.name,
+        words.subject,
+        words.body,
+        nowS,
+        nowS + words.days * NOTE_DAY_S,
+        rid,
+        GUILD_NOTES_LIVE_MAX,
+      )
+      .run();
   } catch (e) {
     // (author, rid) taken by a twin that raced this one - answered below as the note it made; anything else is ours
     if (!/UNIQUE/i.test(String(/** @type {any} */ (e)?.message ?? e))) throw e;
     r = null;
   }
   if (!r?.meta?.changes) {
-    const again = await db.prepare('SELECT * FROM guild_notes WHERE author = ? AND rid = ?').bind(player.id, rid).first();
+    const again = await db
+      .prepare('SELECT * FROM guild_notes WHERE author = ? AND rid = ?')
+      .bind(player.id, rid)
+      .first();
     if (again) return { ok: true, repeat: true, note: noteView(again, me) };
-    const still = await db.prepare('SELECT 1 FROM guild_members WHERE player = ? AND char_id = ? AND guild_id = ?').bind(player.id, character, me.guild_id).first();
+    const still = await db
+      .prepare('SELECT 1 FROM guild_members WHERE player = ? AND char_id = ? AND guild_id = ?')
+      .bind(player.id, character, me.guild_id)
+      .first();
     return { error: still ? 'notes-full' : 'no-guild' };
   }
   const note = await db.prepare('SELECT * FROM guild_notes WHERE id = ?').bind(id).first();
@@ -142,10 +194,15 @@ export async function takeDownGuildNote({ db, nowS }, player, env, { character, 
   if ('error' in a) return a;
   const { me } = a;
   if (typeof id !== 'string' || !NOTE_ID_RE.test(id)) return { error: 'no-note' };
-  if (await overRate({ db, nowS }, `board-ops:${player.id}`, BOARD_OPS_MAX, BOARD_WINDOW_S)) return { error: 'board-ops-rate' };
-  const r = await db.prepare(`DELETE FROM guild_notes WHERE id = ?1 AND guild_id = ?2
-    AND (author = ?3 OR EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?4 AND guild_id = ?2 AND rank IN (${HALL_POWERS.notes.join(', ')})))`)
-    .bind(id, me.guild_id, player.id, me.rid).run();
+  if (await overRate({ db, nowS }, `board-ops:${player.id}`, BOARD_OPS_MAX, BOARD_WINDOW_S))
+    return { error: 'board-ops-rate' };
+  const r = await db
+    .prepare(
+      `DELETE FROM guild_notes WHERE id = ?1 AND guild_id = ?2
+    AND (author = ?3 OR EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?4 AND guild_id = ?2 AND ${guildPowerSql('notes', 'rank', '?2')}))`,
+    ) // GUILD-RANKS
+    .bind(id, me.guild_id, player.id, me.rid)
+    .run();
   if (!r?.meta?.changes) return { error: 'no-note' };
   return { ok: true, id, live: await liveCount(db, me.guild_id, player.id, nowS) };
 }

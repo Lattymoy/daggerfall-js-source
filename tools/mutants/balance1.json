@@ -133,8 +133,8 @@
   {
     "name": "BALANCE1-overhaul-wear-unscaled",
     "file": "src/combat/pcaao.js",
-    "old": "  lowerCondition(item, blowWear(amount, rolls), owner, say, removeFrom, shownItemName);",
-    "new": "  lowerCondition(item, amount, owner, say, removeFrom, shownItemName);",
+    "old": "  lowerCondition(item, blowWear(amount, rolls), owner, say, removeFrom, shownItemName); // BALANCE1: the mod's amount, on the port's wear scale; L10N3e: the broken line names it as shown",
+    "new": "  lowerCondition(item, amount, owner, say, removeFrom, shownItemName); // BALANCE1: the mod's amount, on the port's wear scale; L10N3e: the broken line names it as shown",
     "tests": [
       "test/systems/balance1.test.js"
     ]

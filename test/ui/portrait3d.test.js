@@ -369,7 +369,7 @@ test('PORTRAIT3D: the faces of the record - the party\'s plate, the family\'s ca
   const party = src('src/ui/partyPanel.js');
   const loader = party.slice(party.indexOf('export function createFaceLoader('));
   assert.ok(loader.indexOf('await morrowindFaceOf(pose)') < loader.indexOf('if (!fetchBytes || !palette) return null;'), 'the head first, before the record\'s data is asked');
-  assert.match(party, /poseHeadImage\(pose, \{ px: HEAD_RECORD\.w \* HEAD_RECORD\.scale, ph: HEAD_RECORD\.h \* HEAD_RECORD\.scale \}\)/);
+  assert.match(party, /poseHeadImage\(pose, \{\n\s*px: HEAD_RECORD\.w \* HEAD_RECORD\.scale,\n\s*ph: HEAD_RECORD\.h \* HEAD_RECORD\.scale,\n\s*\}\)/);
   // the plate: a head is drawn its picture's scale smaller, smooth; a record at whole pixels, square
   const social = new SocialState({ now: () => 1e12 });
   const m = (n) => ({ acct: `acct-${n}`, name: n, online: true, seen: 1e12, peers: [`peer-${n}`], p: null });
@@ -421,7 +421,7 @@ test('PORTRAIT3D: the escorts\' faces - an adult\'s face of the race\'s heads is
   assert.match(esc, /const panel = \{ special, img: \(head && _textures\.get\(head\)\) \|\| \(_textures\.get\(`\$\{file\}#\$\{record\}`\) \?\? null\) \};/);
   assert.match(esc, /if \(!\(head && _textures\.has\(head\)\)\) panel\.img = _textures\.get\(key\);/, 'a record landing late is not drawn over the head');
   assert.match(esc, /if \(headDataStamp\(\) !== _headStamp\) refreshFaces\(\);/);
-  assert.match(esc, /tex: _deps\.renderer\.uploadTexture\('img', key, toScreenOrder\(img\)\), w: HEAD_RECORD\.w, h: HEAD_RECORD\.h/, 'drawn at a record\'s size');
+  assert.match(esc, /tex: _deps\.renderer\.uploadTexture\('img', key, toScreenOrder\(img\)\),\n\s*w: HEAD_RECORD\.w,\n\s*h: HEAD_RECORD\.h/, 'drawn at a record\'s size');
 });
 
 test('PORTRAIT3D: the tab dial\'s face - the player\'s Morrowind head first, trimmed to its painted pixels, drawn at CLASSIC_FACE_MAX at most and smooth (the root says so, and its rule lifts the pixels\' squaring off that door alone); the record where none is drawn', () => {

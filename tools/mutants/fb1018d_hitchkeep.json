@@ -2,8 +2,8 @@
   {
     "name": "HITCH-KEEP-threshold-exclusive",
     "file": "src/ui/fpsCounter.js",
-    "old": "if (stamps[i] - stamps[i - 1] >= HITCH_MS) n++;",
-    "new": "if (stamps[i] - stamps[i - 1] > HITCH_MS) n++;",
+    "old": "  for (let i = 1; i < stamps.length; i++) if (stamps[i] - stamps[i - 1] >= HITCH_MS) n++;",
+    "new": "  for (let i = 1; i < stamps.length; i++) if (stamps[i] - stamps[i - 1] > HITCH_MS) n++;",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "HITCH-KEEP-window-unpruned",
     "file": "src/ui/fpsCounter.js",
-    "old": "        while (kept.length && now - kept[0].at > HITCH_KEEP_MS) kept.shift();\n",
-    "new": "",
+    "old": "        while (kept.length && now - kept[0].at > HITCH_KEEP_MS) kept.shift();\n        const hitch = keptHitch(kept, now);",
+    "new": "        const hitch = keptHitch(kept, now);",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "HITCH-KEEP-worst-not-chosen",
     "file": "src/ui/fpsCounter.js",
-    "old": "if (!worst || s.worstMs > worst.worstMs) worst = s;",
-    "new": "if (!worst || s.worstMs < worst.worstMs) worst = s;",
+    "old": "    if (!worst || s.worstMs > worst.worstMs) worst = s;",
+    "new": "    if (!worst || s.worstMs < worst.worstMs) worst = s;",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "HITCH-KEEP-count-unsummed",
     "file": "src/ui/fpsCounter.js",
-    "old": "count += s.hitches;",
-    "new": "count = s.hitches;",
+    "old": "    count += s.hitches;",
+    "new": "    count = s.hitches;",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "HITCH-KEEP-age-unscaled",
     "file": "src/ui/fpsCounter.js",
-    "old": "agoS: Math.round((now - worst.at) / 1000)",
-    "new": "agoS: Math.round((now - worst.at) / 100)",
+    "old": "    agoS: Math.round((now - worst.at) / 1000),",
+    "new": "    agoS: Math.round((now - worst.at) / 100),",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "HITCH-KEEP-line-unprinted",
     "file": "src/ui/fpsCounter.js",
-    "old": "          + hitchLine(hitch)   // FB1018D HITCH-KEEP\n",
-    "new": "",
+    "old": "            hitchLine(hitch) + // FB1018D HITCH-KEEP\n            paceLine(!!globalThis.window?.daggerShell?.framesLifted, frameCapFps()) + // PASS-COUNT",
+    "new": "            paceLine(!!globalThis.window?.daggerShell?.framesLifted, frameCapFps()) + // PASS-COUNT",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "HITCH-KEEP-second-unkept",
     "file": "src/ui/fpsCounter.js",
-    "old": "        if (hitches) kept.push({ at: now, worstMs, hitches, cpu: gapCpu });\n",
-    "new": "",
+    "old": "        if (hitches) kept.push({ at: now, worstMs, hitches, cpu: gapCpu });\n        while (kept.length && now - kept[0].at > HITCH_KEEP_MS) kept.shift();",
+    "new": "        while (kept.length && now - kept[0].at > HITCH_KEEP_MS) kept.shift();",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "HITCH-KEEP-before-mislabelled",
     "file": "src/ui/fpsCounter.js",
-    "old": "before ${h.beforeMs.toFixed(0)}",
-    "new": "before ${h.inFrameMs.toFixed(0)}",
+    "old": "      ? `\\nscript ${h.scriptMs.toFixed(0)}  frame ${h.inFrameMs.toFixed(0)}  before ${h.beforeMs.toFixed(0)}  stream ${h.streamMs.toFixed(0)}`",
+    "new": "      ? `\\nscript ${h.scriptMs.toFixed(0)}  frame ${h.inFrameMs.toFixed(0)}  before ${h.inFrameMs.toFixed(0)}  stream ${h.streamMs.toFixed(0)}`",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "HITCH-KEEP-script-without-clock",
     "file": "src/ui/fpsCounter.js",
-    "old": "(h.scriptMs != null ? `",
-    "new": "(true ? `",
+    "old": "    (h.scriptMs != null",
+    "new": "    (true",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "HITCH-KEEP-probe-without-it",
     "file": "src/ui/fpsCounter.js",
-    "old": "          hitch };   // FB1018D HITCH-KEEP",
-    "new": "          hitch: null };   // FB1018D HITCH-KEEP",
+    "old": "          hitch,",
+    "new": "          hitch: null,",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "HITCH-KEEP-hidden-gap-counted",
     "file": "src/ui/fpsCounter.js",
-    "old": "    if (hid) { hid = false; stamps = []; sumDraws = 0; sumBinds = 0; samples = 0; sumView = 0; sumShadow = 0; gapMs = 0; gapCpu = null; }",
-    "new": "    if (hid) { hid = false; }",
+    "old": "      stamps = [];\n      sumDraws = 0;\n      sumBinds = 0;\n      samples = 0;\n      sumView = 0;\n      sumShadow = 0;\n      gapMs = 0;\n      gapCpu = null;\n    } // FB1018D HITCH-KEEP: a second starts at the first frame shown",
+    "new": "    } // FB1018D HITCH-KEEP: a second starts at the first frame shown",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "HITCH-KEEP-hide-unheard",
     "file": "src/ui/fpsCounter.js",
-    "old": "const onVisibility = () => { hid = true; };",
-    "new": "const onVisibility = () => { hid = false; };",
+    "old": "    hid = true;",
+    "new": "    hid = false;",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -142,7 +142,7 @@
   {
     "name": "HITCH-KEEP-hide-unlistened",
     "file": "src/ui/fpsCounter.js",
-    "old": "if (typeof document.addEventListener === 'function') document.addEventListener('visibilitychange', onVisibility);",
+    "old": "  if (typeof document.addEventListener === 'function') document.addEventListener('visibilitychange', onVisibility);",
     "new": "",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "HITCH-KEEP-listener-kept",
     "file": "src/ui/fpsCounter.js",
-    "old": "      if (typeof document.removeEventListener === 'function') document.removeEventListener('visibilitychange', onVisibility);   // FB1018D HITCH-KEEP\n",
-    "new": "",
+    "old": "      if (typeof document.removeEventListener === 'function')\n        document.removeEventListener('visibilitychange', onVisibility); // FB1018D HITCH-KEEP\n    },",
+    "new": "    },",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -163,7 +163,7 @@
     "name": "HITCH-KEEP-second-worst-sample",
     "file": "src/ui/fpsCounter.js",
     "old": "        if (hitches) kept.push({ at: now, worstMs, hitches, cpu: gapCpu });",
-    "new": "        if (hitches) kept.push({ at: now, worstMs, hitches, cpu: cpu && { ms: cpu.worstMs, inFrameMs: cpu.inFrameMs, beforeMs: cpu.beforeMs, streamMs: cpu.streamMs } });",
+    "new": "        if (hitches)\n          kept.push({\n            at: now,\n            worstMs,\n            hitches,\n            cpu: cpu && { ms: cpu.worstMs, inFrameMs: cpu.inFrameMs, beforeMs: cpu.beforeMs, streamMs: cpu.streamMs },\n          });",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "HITCH-KEEP-gap-stamp-unasked",
     "file": "src/ui/fpsCounter.js",
-    "old": "gapCpu = frameSampleAt(prev);",
-    "new": "gapCpu = frameSampleAt(now);",
+    "old": "      gapCpu = frameSampleAt(prev);",
+    "new": "      gapCpu = frameSampleAt(now);",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "HITCH-KEEP-gap-not-the-longest",
     "file": "src/ui/fpsCounter.js",
-    "old": "now - prev >= HITCH_MS && now - prev > gapMs",
-    "new": "now - prev >= HITCH_MS",
+    "old": "    if (prev != null && now - prev >= HITCH_MS && now - prev > gapMs) {",
+    "new": "    if (prev != null && now - prev >= HITCH_MS) {",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "HITCH-KEEP-gap-unreset",
     "file": "src/ui/fpsCounter.js",
-    "old": "      gapMs = 0; gapCpu = null;   // FB1018D HITCH-KEEP\n",
-    "new": "",
+    "old": "      gapMs = 0;\n      gapCpu = null; // FB1018D HITCH-KEEP\n      sumDraws = 0;",
+    "new": "      sumDraws = 0;",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "HITCH-KEEP-under-twice-unkept",
     "file": "src/ui/fpsCounter.js",
-    "old": "        if (hitches) kept.push(",
-    "new": "        if (hitches && worstMs >= 2 * HITCH_MS) kept.push(",
+    "old": "        if (hitches) kept.push({ at: now, worstMs, hitches, cpu: gapCpu });",
+    "new": "        if (hitches && worstMs >= 2 * HITCH_MS) kept.push({ at: now, worstMs, hitches, cpu: gapCpu });",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "HITCH-KEEP-minute-shortened",
     "file": "src/ui/fpsCounter.js",
-    "old": "now - kept[0].at > HITCH_KEEP_MS)",
-    "new": "now - kept[0].at > HITCH_KEEP_MS - 5000)",
+    "old": "        while (kept.length && now - kept[0].at > HITCH_KEEP_MS) kept.shift();",
+    "new": "        while (kept.length && now - kept[0].at > HITCH_KEEP_MS - 5000) kept.shift();",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "HITCH-KEEP-hide-keeps-draws",
     "file": "src/ui/fpsCounter.js",
-    "old": "    if (hid) { hid = false; stamps = []; sumDraws = 0; sumBinds = 0; samples = 0;",
-    "new": "    if (hid) { hid = false; stamps = []; samples = 0;",
+    "old": "      stamps = [];\n      sumDraws = 0;\n      sumBinds = 0;\n      samples = 0;",
+    "new": "      stamps = [];\n      samples = 0;",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "HITCH-KEEP-age-floored",
     "file": "src/ui/fpsCounter.js",
-    "old": "agoS: Math.round(",
-    "new": "agoS: Math.floor(",
+    "old": "    agoS: Math.round((now - worst.at) / 1000),",
+    "new": "    agoS: Math.floor((now - worst.at) / 1000),",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "HITCH-KEEP-clock-sample-unstamped",
     "file": "src/systems/frameClock.js",
-    "old": "samples.push([now, busy, inFrame, before, stream, stamp]);",
-    "new": "samples.push([now, busy, inFrame, before, stream]);",
+    "old": "  samples.push([now, busy, inFrame, before, stream, stamp]);",
+    "new": "  samples.push([now, busy, inFrame, before, stream]);",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "HITCH-KEEP-clock-sample-misread",
     "file": "src/systems/frameClock.js",
-    "old": "return { ms: b, inFrameMs: f, beforeMs: w, streamMs: l };",
-    "new": "return { ms: b, inFrameMs: f, beforeMs: f, streamMs: l };",
+    "old": "    if (at === stamp) return { ms: b, inFrameMs: f, beforeMs: w, streamMs: l };",
+    "new": "    if (at === stamp) return { ms: b, inFrameMs: f, beforeMs: f, streamMs: l };",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "HITCH-KEEP-clock-oldest-first",
     "file": "src/systems/frameClock.js",
-    "old": "if (at === stamp) return",
-    "new": "if (at !== stamp) return",
+    "old": "    if (at === stamp) return { ms: b, inFrameMs: f, beforeMs: w, streamMs: l };",
+    "new": "    if (at !== stamp) return { ms: b, inFrameMs: f, beforeMs: w, streamMs: l };",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],

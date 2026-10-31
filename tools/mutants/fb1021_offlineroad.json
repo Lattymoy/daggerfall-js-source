@@ -2,8 +2,8 @@
   {
     "name": "OFFLINE-ROAD-the-due-unread",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "Math.min(Number.isInteger(e?.due) ? e.due : w + Math.max(0, e.until - Math.floor(own)), w + most)",
-    "new": "Math.min(w + Math.max(0, e.until - Math.floor(own)), w + most)",
+    "old": "  const due = Math.min(Number.isInteger(e?.due) ? e.due : w + Math.max(0, e.until - Math.floor(own)), w + most);",
+    "new": "  const due = Math.min(w + Math.max(0, e.until - Math.floor(own)), w + most);",
     "tests": [
       "test/systems/revenant/fb1021_offlineroad.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "OFFLINE-ROAD-the-clamp-gone",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "Math.min(Number.isInteger(e?.due) ? e.due : w + Math.max(0, e.until - Math.floor(own)), w + most)",
-    "new": "(Number.isInteger(e?.due) ? e.due : w + Math.max(0, e.until - Math.floor(own)))",
+    "old": "  const due = Math.min(Number.isInteger(e?.due) ? e.due : w + Math.max(0, e.until - Math.floor(own)), w + most);",
+    "new": "  const due = Number.isInteger(e?.due) ? e.due : w + Math.max(0, e.until - Math.floor(own));",
     "tests": [
       "test/systems/revenant/fb1021_offlineroad.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "OFFLINE-ROAD-before-its-start",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "until: Math.max(e.at, Math.floor(own) + Math.max(0, due - w))",
-    "new": "until: Math.floor(own) + Math.max(0, due - w)",
+    "old": "  return { due, until: Math.max(e.at, Math.floor(own) + Math.max(0, due - w)) };",
+    "new": "  return { due, until: Math.floor(own) + Math.max(0, due - w) };",
     "tests": [
       "test/systems/revenant/fb1021_offlineroad.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "OFFLINE-ROAD-the-due-unkept",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": ", ...(Number.isInteger(e.due) ? { due: e.due } : {}) };   // OFFLINE-ROAD: its world's minute",
-    "new": " };",
+    "old": "    ...(Number.isInteger(e.due) ? { due: e.due } : {}),\n  }; // OFFLINE-ROAD: its world's minute",
+    "new": "  };",
     "tests": [
       "test/systems/revenant/fb1021_offlineroad.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "OFFLINE-ROAD-sent-with-no-due",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "const e = newErrand(r, place, venture, now, seed, world);",
-    "new": "const e = newErrand(r, place, venture, now, seed);",
+    "old": "  const e = newErrand(r, place, venture, now, seed, world); // OFFLINE-ROAD: online, its world's minute",
+    "new": "  const e = newErrand(r, place, venture, now, seed); // OFFLINE-ROAD: online, its world's minute",
     "tests": [
       "test/systems/revenant/fb1021_offlineroad.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "OFFLINE-ROAD-the-world-untrusted",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "online = sharedClockOn(), world = errandWorldNow() } = {}) {",
-    "new": "online = sharedClockOn(), world = ownMinutes() } = {}) {",
+    "old": "  { own = ownMinutes(), raised = raisedMinutes(), online = sharedClockOn(), world = errandWorldNow() } = {},",
+    "new": "  { own = ownMinutes(), raised = raisedMinutes(), online = sharedClockOn(), world = ownMinutes() } = {},",
     "tests": [
       "test/systems/revenant/fb1021_offlineroad.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "OFFLINE-ROAD-the-page-s-word-unsaid",
     "file": "src/ui/companionRoster.js",
-    "old": "other {# real hours}} for each day abroad. Resting",
-    "new": "other {# real hours}} for each day. Resting",
+    "old": "          \"Online, a mission keeps real time: it goes on while you're away, {h, plural, one {# real hour} other {# real hours}} for each day abroad. Resting, waiting or traveling doesn't speed it up.\",",
+    "new": "          \"Online, a mission keeps real time: it goes on while you're away, {h, plural, one {# real hour} other {# real hours}} for each day. Resting, waiting or traveling doesn't speed it up.\",",
     "tests": [
       "test/systems/revenant/fb1021_offlineroad.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-FB1021-L3-1-the-monotonic-time-misread",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "Math.max(0, perf - heard.perf) * ONLINE_MINUTES_PER_MS + ERRAND_WORLD_SLACK",
-    "new": "Math.max(0, perf - heard.perf) * ONLINE_MINUTES_PER_MS * 1000 + ERRAND_WORLD_SLACK",
+    "old": "  return Math.min(world, heard.world + Math.max(0, perf - heard.perf) * ONLINE_MINUTES_PER_MS + ERRAND_WORLD_SLACK);",
+    "new": "  return Math.min(\n    world,\n    heard.world + Math.max(0, perf - heard.perf) * ONLINE_MINUTES_PER_MS * 1000 + ERRAND_WORLD_SLACK,\n  );",
     "tests": [
       "test/systems/revenant/fb1021_offlineroad.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-FB1021-L3-1-the-wake-reads-the-world-whole",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "online = sharedClockOn(), world = errandWorldNow() } = {}) {",
-    "new": "online = sharedClockOn(), world = trustedWorldMinutes() } = {}) {",
+    "old": "  { own = ownMinutes(), raised = raisedMinutes(), online = sharedClockOn(), world = errandWorldNow() } = {},",
+    "new": "  { own = ownMinutes(), raised = raisedMinutes(), online = sharedClockOn(), world = trustedWorldMinutes() } = {},",
     "tests": [
       "test/systems/revenant/fb1021_offlineroad.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-FB1021-L3-2-the-raise-discarded-at-the-turn",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "errandOnWorld(Number.isInteger(e.due) ? e : { ...e, until: errandUntil(e, now - push) + push }, now, world)",
-    "new": "errandOnWorld(e, now, world)",
+    "old": "      const o = errandOnWorld(\n        Number.isInteger(e.due) ? e : { ...e, until: errandUntil(e, now - push) + push },\n        now,\n        world,\n      );",
+    "new": "      const o = errandOnWorld(e, now, world);",
     "tests": [
       "test/systems/revenant/fb1021_offlineroad.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-FB1021-L3-3-the-world-unfloored",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "const p = errandPlace(e?.place), w = Math.floor(world);",
-    "new": "const p = errandPlace(e?.place), w = world;",
+    "old": "    w = Math.floor(world);",
+    "new": "    w = world;",
     "tests": [
       "test/systems/revenant/fb1021_offlineroad.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-FB1021-L3-3-the-vigil-s-road-the-place-s",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "  const most = p ? Math.round(roadDays(p, e.sky) * MINUTES_PER_DAY) : 0;\n  const due = Math.min(",
-    "new": "  const most = p ? Math.round(roadDays(p, null) * MINUTES_PER_DAY) : 0;\n  const due = Math.min(",
+    "old": "  const most = p ? Math.round(roadDays(p, e.sky) * MINUTES_PER_DAY) : 0;",
+    "new": "  const most = p ? Math.round(roadDays(p, null) * MINUTES_PER_DAY) : 0;",
     "tests": [
       "test/systems/revenant/fb1021_offlineroad.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "AUDIT-FB1021-L3-3-a-due-offline",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "world = sharedClockOn() ? errandWorldNow() : NaN } = {}) {",
-    "new": "world = sharedClockOn() ? errandWorldNow() : ownMinutes() } = {}) {",
+    "old": "    world = sharedClockOn() ? errandWorldNow() : NaN,",
+    "new": "    world = sharedClockOn() ? errandWorldNow() : ownMinutes(),",
     "tests": [
       "test/systems/revenant/fb1021_offlineroad.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-FB1021-L3-5-the-words-the-game-s-online",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "errandWords(r.companion.errand, now, sharedClockOn())",
-    "new": "errandWords(r.companion.errand, now, false)",
+    "old": "export const abroadWords = (r, now) =>\n  stateOf(r) === 'errand' ? errandWords(r.companion.errand, now, sharedClockOn()) : null; // AUDIT FB1021 L3-5: online in real time",
+    "new": "export const abroadWords = (r, now) => (stateOf(r) === 'errand' ? errandWords(r.companion.errand, now, false) : null); // AUDIT FB1021 L3-5: online in real time",
     "tests": [
       "test/systems/revenant/fb1021_offlineroad.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "AUDIT-FB1021-L3-5-the-minutes-uncounted",
     "file": "src/systems/revenant/revenantErrands.js",
-    "old": "const m = Math.max(1, Math.ceil(Math.max(0, until - now) / (ONLINE_MINUTES_PER_MS * 60_000)));",
-    "new": "const m = Math.max(1, Math.ceil(Math.max(0, until - now) / 60));",
+    "old": "    const m = Math.max(1, Math.ceil(Math.max(0, until - now) / (ONLINE_MINUTES_PER_MS * 60_000)));",
+    "new": "    const m = Math.max(1, Math.ceil(Math.max(0, until - now) / 60));",
     "tests": [
       "test/systems/revenant/fb1021_offlineroad.test.js"
     ]

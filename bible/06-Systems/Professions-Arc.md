@@ -2367,7 +2367,7 @@ As built:
   low 20 bits, which the service cannot tell from a Bay id. Until it reloads it shares the old vein, and one account can
   take a dungeon's slots once under each key in a day - bounded by the day's cap on unwitnessed veins.
 - **The abyss's ground** (AUDIT TAMRIEL-WIDE C3): an abyss past the Bay names its pit's ground, as the gathering reads
-  that pixel (`dungeonIdentity.js:"export function keptGround(x, y) {"`). Its template is picked by hash and by the
+  that pixel (`dungeonIdentity.js:"export function keptGround"`). Its template is picked by hash and by the
   player's quest sites, so two players could name two grounds for one abyss. At sea past the Bay that ground is the
   Ocean climate and region 0, the politic map's clamp, as a haul there reads it. The Bay's abyss keeps its template's
   ground, the one its facts were witnessed under. **Deploy**: the account service (acct217) before the site; an
@@ -4573,7 +4573,7 @@ A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each stil
   its own, any line however often (the one-line lock gone; an old piece's mark one reforge counted), a line nothing
   else can take the place of not offered - and its price rose with it: `reforgeEssence(tier, count)`, the station's page
   pricing each piece at its next reforge (`profPages.js` drawEssenceReforge), the host asking with the piece's count
-  (`world.js:"const r = await profBook.reforge(offer.tier, reforgeCount(it));"`), the service spending it (acct187). Its
+  (`professionsHost.js:"const r = await profBook.reforge(offer.tier, reforgeCount(it));"`), the service spending it (acct187). Its
   words through t() (`prof.page.reforge.how`, `prof.page.reforge.rank`). AFFIX-LINES moved the craft's own roll the same
   day (`Loot-Rarity.md`): a record of mint version 2 draws its lines over the lines; one made before mints as it was.
   Pinned: `craft4_temper` (the count through the real Worker - 2, then 4; a count no piece holds refused with nothing
@@ -6174,7 +6174,7 @@ The report (SaberGGaming, through the owner): no Daedric Ingot could be had, and
 
 ### 53.1 What stood (MEASURED, 2026-10-25)
 
-- **The transmutation stops at Platinum, as intended** (`professionLaw.js:"export const TRANSMUTE_LADDER = Object.freeze(['metal:tin', 'metal:copper', 'metal:silver', 'metal:gold', 'metal:platinum']);"` - section 37): it was never the Daedric
+- **The transmutation stops at Platinum, as intended** (`professionLaw.js:"export const TRANSMUTE_LADDER"` - section 37): it was never the Daedric
   ingot's road.
 - **4.1's Daedric recipe was never built.** The forge's table ended at Orichalcum ("Daedric waits on its heart and its
   stone"), the ingot stood in `UNYIELDED` (no buy order, no commission, out of the catalogue), and 27 anvil works spent it
@@ -6188,34 +6188,34 @@ The report (SaberGGaming, through the owner): no Daedric Ingot could be had, and
 
 - **The heart: "the heart may come FROM LOOT OR THE GATE".**
 - **The veins: "FULL ORE TABLE"** - a dungeon nobody has witnessed draws over its whole table under the account's
-  existing four a day (`professionLaw.js:"export const DEEP_UNCONFIRMED_PER_DAY = 4;"`), and the witnesses remain for the climate's
+  existing four a day (`professionLaw.js:"export const DEEP_UNCONFIRMED_PER_DAY"`), and the witnesses remain for the climate's
   claim alone.
 
 ### 53.3 DAEDRIC-SMELT, as built
 
 - **The recipe** (4.1's, built): an Ebony Ingot, a Daedra's Heart and a Deadlands Ember a unit - the Sigil Stone's name
-  since WB12a (`professionLaw.js:"  ingot('ingot:daedric', [['ingot:ebony', 1], [DAEDRA_HEART.key, 1, true]], { embers: DAEDRIC_EMBERS }),"`), the
+  since WB12a (`professionLaw.js:"ingot('ingot:orichalcum', [['ore:orichalcum', 2]])".."'ingot:daedric',"`), the
   forge's last row, smelted only; Smithing's 10 XP a tier (70 a unit) and no first-make, as no smelt pays one (section
   52's `FIRST_MAKE_SHARE` is the crafts' and the mason's works'; `recipeLaw.js` workFirstXp), a Quartermaster's two
   ingots a unit for one ember a unit, as every ingot's (3.3). A recipe's input written `[key, n, true]` is a catalyst and `embers` what a unit spends
-  (`professionLaw.js:"export const workEmbers = (r, count) =>"`); every other work carries neither.
+  (`professionLaw.js:"export const workEmbers"`); every other work carries neither.
 - **The heart** is DFU's own Daedra's Heart (ItemTemplates 53, `CreatureIngredients1`, 500 gold), a Stores material at its
-  price's tier as a body's part is, 6 (`professionLaw.js:"export const DAEDRA_HEART = dfu('part:daedra-heart', 'hides', gemTierOfPrice(500), 'CreatureIngredients1', 53);"`),
+  price's tier as a body's part is, 6 (`professionLaw.js:"export const DAEDRA_HEART"`),
   registered with the loose door's materials beside section 50's graded gems. It comes **from loot** - a daedra's: DFU's ingredient themes give an Imp, a Daedra Seducer and a Daedra
   Lord theirs (`systems/loot/lootThemes.js` CREATURE_INGREDIENT_THEME) - **and from the Gate**: the faithful's chest beside
   Dagon's Breach (`systems/riteChest.js` RITE_HEART, a reagent drawn a heart one time in twelve and a half - WB12d, its
   row the Stores' own since). Both are the very item the pack holds as the forge's input.
 - **Through the loose door, never the market.** No door of the service counts a heart, so it enters the Stores only by a
-  station's put-in (`bagLaw.js:"export const looseOrder = (o) => o === 'work';"` - the forge's shortfall, or the Stores page's
+  station's put-in (`bagLaw.js:"export const looseOrder"` - the forge's shortfall, or the Stores page's
   Put in, LOOT-LOOSE), as `loose`, a station's alone. It is the loose door's as section 50's graded gems are
-  (`professionLaw.js:"export const LOOSE_ONLY_KEYS = Object.freeze([...GRADED_GEMS, DAEDRA_HEART].map((g) => g.key));"`): out of the catalogue, no buy order
+  (`professionLaw.js:"export const LOOSE_ONLY_KEYS"`): out of the catalogue, no buy order
   for one and no listing (`bad-material`), no guild writ asking one, and no commission of a work that spends one. On its
   branch the heart had taken the ingot's place in `UNYIELDED`; at the merge with section 50 it joined the loose door's
   list instead, one home for the materials no door of the service counts, and `UNYIELDED` stands empty
-  (`marketLaw.js:"export const UNYIELDED = Object.freeze([]);"` - nothing waits on a yield; its guards kept for the next).
+  (`marketLaw.js:"export const UNYIELDED"` - nothing waits on a yield; its guards kept for the next).
 - **THE DEPARTURE, NAMED - the heart is a catalyst.** Section 7's law, `smeltOrigin` (PROF0 7, 23), makes an ingot's
   origin its inputs': a loose unit spent makes the product loose (AUDIT BAG-CRAFT A1). The heart's does not reach the
-  ingot (`professionLaw.js:"  r.inputs.forEach((inp, i) => { if (!inp.catalyst) b = Math.max(b,"`; the service's decision skips it the same, `professions.js:"    if (inp.catalyst) return;"`) -
+  ingot (`professionLaw.js:"r.inputs.forEach"`; the service's decision skips it the same, `professions.js:"    if (inp.catalyst) return;"`) -
   an ingot is own, bought or loose as its Ebony Ingot was. Why: every heart is loot's word, so were its looseness the
   ingot's, no Daedric ingot could ever be listed, ordered or commissioned - the old `UNYIELDED` kept in all but name. The ingot's
   bound is the ember the service counts, one a unit, so the heart a modified client could claim buys nothing past it.
@@ -6233,8 +6233,8 @@ The report (SaberGGaming, through the owner): no Daedric Ingot could be had, and
   host hands the book its hands once the checkpoint stands (`world.js:"  carryHands.embers = emberHands(playerEntity, saveSoon.changed);"` - bootWorld's
   one line more, its reason beside its ceiling in `test/scenes/hostceiling.test.js`; at the merge with main it sits
   inside main's ceiling, which stood one over main's count).
-- **Never planned, never asked.** No chain plans the smelt (`chainLaw.js:"export const chainWorkOk = "` - the press is the
-  player's own), and no crafting writ asks the Daedric kit (`professionLaw.js:"export const EMBER_MADE = "`; `craftWritLaw.js` WRIT_KITS:
+- **Never planned, never asked.** No chain plans the smelt (`chainLaw.js:"export const chainWorkOk"` - the press is the
+  player's own), and no crafting writ asks the Daedric kit (`professionLaw.js:"export const EMBER_MADE"`; `craftWritLaw.js` WRIT_KITS:
   a writ pays its inputs' worth, and the ember is the account's purse, no Stores good).
 - **The Forge** lists the ember beside the row's inputs with the pack's count and bounds the smelt by it
   (`profPages.js:"export function smeltable(r, held, embers = null) {"`), and while it cannot be smelted says what it takes and where a heart
@@ -6566,8 +6566,8 @@ possible. No exceptions and no band aids." The decisions below are the record's,
 
 ### 57.1 What stood
 
-- Crafting stopped at Rare: a Superior rolled Magic, a Masterwork Rare (`recipeLaw.js:"Object.freeze({ condition: 1.3, weight: 0.9, rarity: 'rare' }),"`).
-  Tempering and the Reforge with Essence are shut for Legendary and above (`temperLaw.js:"export const TEMPER_SHUT = Object.freeze(['legendary', 'aetheric', 'artifact', 'gilded']);"`).
+- Crafting stopped at Rare: a Superior rolled Magic, a Masterwork Rare (`recipeLaw.js:"Object.freeze({ condition: 1.3, weight: 0.9, rarity: 'rare' })"`).
+  Tempering and the Reforge with Essence are shut for Legendary and above (`temperLaw.js:"export const TEMPER_SHUT"`).
 
 - Law 7 (section 1) and 41.1 said it outright: a crafted piece is never the best a slot holds. The Legendary band came
   only from drops.
@@ -6589,7 +6589,7 @@ possible. No exceptions and no band aids." The decisions below are the record's,
 
 - **The recipe's own goods**, as its craft spends them (a station's: loose units too), and the station's fee.
 
-- **Catalysts from three pursuits**, one table (`masterLaw.js:"export const MASTER_CATALYSTS = Object.freeze(["`): 2
+- **Catalysts from three pursuits**, one table (`masterLaw.js:"export const MASTER_CATALYSTS"`): 2
   Heartwood (Logging's rarest find, 2% a Clean Cut on witnessed ground), 3 Pearls (the sea's own - a net hauled at sea on
   witnessed ground; no river or lake gives one) and 10 Arcane Essence (Enchanting). Spent only from what the service
   counted - own or bought, never loose and never bought with gold - so a looted Pearl is no catalyst. A later material
@@ -6602,30 +6602,30 @@ possible. No exceptions and no band aids." The decisions below are the record's,
 - **The law** - `src/net/masterLaw.js`, pure: `masterRecipe`, `masterOptions` (the ladder's lines for the piece's
   group, numbers then effects, each param the kind names on the piece - a garment's attribute Personality alone; never a
   technique), `masterChoiceRefusal` (`recipe`, `count`, `line`, `twice`, `procs`), `rollMasterLines`
-  (`masterLaw.js:"export function rollMasterLines("`: lo to hi, the ladder's own draw, off the seed - the service's
+  (`masterLaw.js:"export function rollMasterLines"`: lo to hi, the ladder's own draw, off the seed - the service's
   alone, once), `isMasterWork`.
 
-- **The record** - `productRecord.js:"export const MINT_V_MASTER = 5;"`: a Master's record stamps mint version 5 (4 on its
+- **The record** - `productRecord.js:"export const MINT_V_MASTER"`: a Master's record stamps mint version 5 (4 on its
   branch, renumbered past JEWEL-KIN's 4 at the merge) and signs its lines at the values the service rolled
-  (`masterLaw.js:"export const masterRecordLines = (lines) =>"`: `[kind, value]` or `[kind, value, param]`), so the
+  (`masterLaw.js:"export const masterRecordLines"`: `[kind, value]` or `[kind, value, param]`), so the
   market and every client mint the piece the service made. The bound is
-  `productRecord.js:"export const PRODUCT_RECORD_MAX = 704;"` (it was 512): the widest record the law signs runs to 649.
+  `productRecord.js:"export const PRODUCT_RECORD_MAX"` (it was 512): the widest record the law signs runs to 649.
 
 - **AUDIT HORIZONTAL B1: the values are signed, never rolled again.** The record named the keys and seed, and every
   reader rolled the values from today's bands, so a band moved (even widened) made every honest Master's work a
   `provenance` finding. The service now rolls once and signs the values; `prof_masters.lines` keeps them, and the mint,
   the judge and a request asked again read them. The record's `l` is held to its shape
-  (`masterLaw.js:"export function masterRecordLinesValid(l) {"`), never to today's pool: the law of the day it was made
+  (`masterLaw.js:"export function masterRecordLinesValid"`), never to today's pool: the law of the day it was made
   was the service's. MINT_V_MASTER stays 4: no deployed service ever signed the old shape, so no record needs reading.
 
-- **The service** - `masterWork.js:"export async function masterWork("`, `/v1/prof/master`: one batch, as the anvil's -
+- **The service** - `masterWork.js:"export async function"`, `/v1/prof/master`: one batch, as the anvil's -
   the rank read, the day's row, every good and catalyst held as it is spent (a Pearl jewel's own Pearl beside its three),
   the products row and signed record, the goods out a station's way, the catalysts bought first. A progression claim of
   the seated character (`progress.js` PROGRESS_ROUTES). Migration `0179_master_work.sql`. The state says whether today's
   is made (`profState`'s `master`). AUDIT HORIZONTAL B3: the goods held and the recipe's own craft asked are pinned - the
   catalysts alone make nothing, and a Smith at Master makes no leather cuirass.
 
-- **The mint** - `smithItems.js:"function applyMasterWork(item, lines) {"`: Legendary, the record's lines at their
+- **The mint** - `smithItems.js:"function applyMasterWork"`: Legendary, the record's lines at their
   signed values, its name its lines' (the mark's over it), its worth its lines'; laid whatever the switch, as the last
   pass is. The market's piece carries the lines (`market.js` pieceOf).
 
@@ -6643,7 +6643,7 @@ possible. No exceptions and no band aids." The decisions below are the record's,
   HORIZONTAL B2: so does a plain craft's Masterwork reshaped to a Legendary of three band-top lines - its record names no
   lines, and this clause alone finds it (pinned).
 
-- **The item maker** refuses every Legendary (`enchanting.js:"if (item?.rarity === 'legendary') return null;"`): a
+- **The item maker** refuses every Legendary (`enchanting.js:"if (item?.rarity === 'legendary')"`): a
   Master's work carries no rows, and DFU's refusal of an enchanted item never reached it.
 
 - Law 7's tiers keep it from the temper and the Reforge (TEMPER_SHUT); it salvages to nothing, as every made piece.
@@ -6651,7 +6651,7 @@ possible. No exceptions and no band aids." The decisions below are the record's,
 ### 57.6 The station
 
 - In the craft box of the anvil, the workbench, the loom and the jeweller's bench, at Master in the recipe's craft
-  (`masterBox.js:"export function drawMasterBox(box, kit, r, { station, book, state, free, rerender, name, go }) {"`):
+  (`masterBox.js:"export function drawMasterBox"`):
   three line pickers - native selects, a key's and a finger's, 40px under Enhanced Plus - each line shown at its band's
   two ends ("+20 to 40% damage"), a chosen line and a second effect greyed in the others; its goods and catalysts held of
   what is asked, a short one marked; one a day, or today's made; the press; and the last work's card (its name as the
@@ -6660,7 +6660,7 @@ possible. No exceptions and no band aids." The decisions below are the record's,
 - **AUDIT HORIZONTAL B4: the box reads its own goods.** It said "the goods above", but with the Heartwood or the cracked
   gem ticked those were the stand-in's, and its press read the station's readiness for them: a Pine Staff with 2 Planks
   and a Heartwood pressed, and the service refused it. The station now hands the box `free` (rank, fee, hands), and the
-  box lists the recipe's own goods (`masterBox.js:"export function masterGoods(r, book) {"`) and the chain that makes
+  box lists the recipe's own goods (`masterBox.js:"export function masterGoods"`) and the chain that makes
   them from raw.
 
 - **AUDIT HORIZONTAL B6: a Pearl jewel's Pearls, as the service holds them.** The catalysts are asked of the counted
@@ -6670,7 +6670,7 @@ possible. No exceptions and no band aids." The decisions below are the record's,
 
 - The press is the station's own craft door with the lines: the fee, the chain of works, the kept act and its mint are a
   craft's. world.js's door hands the page's other asks to the book
-  (`world.js:"craft: async (recipe, { clean, heartwood = false, dye = null, cracked = false, ...more }) => {"`) - a
+  (`professionsHost.js:"craft: async (recipe, { clean, heartwood = false, dye = null, cracked = false, ...more }) => {"`) - a
   spread, no logical line in bootWorld (HOST-SPLIT). The book asks `/v1/prof/master` for a kept craft with lines
   (`profBook.js:"const lines = Array.isArray(master) ? master.filter((x) => typeof x === 'string') : null;"`), its
   catalysts put in from the counted bag first, and keeps the day and the card (`state.master`). AUDIT HORIZONTAL B5:

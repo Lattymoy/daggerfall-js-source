@@ -2,8 +2,8 @@
   {
     "name": "GALLEON-bake-fill-strays",
     "file": "tools/shipBake.mjs",
-    "old": "  if (fault) throw new Error(`${object.name} polygon #${k} (${poly.length} corners): Blender's cut does not tile it",
-    "new": "  if (false) throw new Error(`${object.name} polygon #${k} (${poly.length} corners): Blender's cut does not tile it",
+    "old": "  const fault = tilingFault(blenderProject(corners), tris, corners);\n  if (fault)",
+    "new": "  const fault = tilingFault(blenderProject(corners), tris, corners);\n  if (false)",
     "tests": [
       "test/tooling/auditgalleon_bake.test.js"
     ],
@@ -21,8 +21,8 @@
   {
     "name": "GALLEON-hold-dropped",
     "file": "src/systems/naval/galleonGunDeck.js",
-    "old": "      if (s) { s.laidUntil = Math.max(s.laidUntil, now + HOLD_S); settling.add(boat); }",
-    "new": "      if (s) { s.laidUntil = Math.max(s.laidUntil, now); settling.add(boat); }",
+    "old": "        s.laidUntil = Math.max(s.laidUntil, now + HOLD_S);",
+    "new": "        s.laidUntil = Math.max(s.laidUntil, now);",
     "tests": [
       "test/world/ships/galleon_model.test.js"
     ]
@@ -66,7 +66,7 @@
   {
     "name": "GALLEON-ramp-collider",
     "file": "src/world/ships/galleonModel.js",
-    "old": "  const castleSolid = bakedPartGeometry(part('castle'), { keep: (n) => !(n[1] > WELL_RAMP_NY[0] && n[1] < WELL_RAMP_NY[1]) });",
+    "old": "  const castleSolid = bakedPartGeometry(part('castle'), {\n    keep: (n) => !(n[1] > WELL_RAMP_NY[0] && n[1] < WELL_RAMP_NY[1]),\n  });",
     "new": "  const castleSolid = meshes['galleon:castle'];",
     "tests": [
       "test/systems/naval/auditnav2_deck.test.js"
@@ -76,8 +76,8 @@
   {
     "name": "GALLEON-loader-no-fallback",
     "file": "src/systems/comeSailAway/comeSailAwayModels.js",
-    "old": "      if (!answer.ok) { log?.warn?.(",
-    "new": "      if (!answer.ok) { throw answer.error; log?.warn?.(",
+    "old": "        log?.warn?.(`[come-sail-away] the new ${ship.title} did not load - ${standsAs}`, answer.error);",
+    "new": "        throw answer.error;\n        log?.warn?.(`[come-sail-away] the new ${ship.title} did not load - ${standsAs}`, answer.error);",
     "tests": [
       "test/world/ships/galleon_model.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "GALLEON-muzzle-inside",
     "file": "src/systems/naval/navalShips.js",
-    "old": "broadside: Object.freeze([[5.949, 2.2435, -7.595]",
-    "new": "broadside: Object.freeze([[5.749, 2.2435, -7.595]",
+    "old": "        [5.949, 2.2435, -7.595],",
+    "new": "        [5.749, 2.2435, -7.595],",
     "tests": [
       "test/world/ships/galleon_model.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "GALLEON-wheel-still",
     "file": "src/world/ships/galleonModel.js",
-    "old": "eulerCurve('HelmWheel', [0, 0, -t * WHEEL_TURNS * 360])",
-    "new": "eulerCurve('HelmWheel', [0, 0, 0])",
+    "old": "        eulerCurve('HelmWheel', [0, 0, -t * WHEEL_TURNS * 360]),",
+    "new": "        eulerCurve('HelmWheel', [0, 0, 0]),",
     "tests": [
       "test/world/ships/galleon_model.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "GALLEON2-centreline-unread",
     "file": "tools/shipBake.mjs",
-    "old": "  return [(frame.centreline - y) * frame.scale, (z - frame.waterline) * frame.scale, (x - frame.midship) * frame.scale];\n",
-    "new": "  return [-y * frame.scale, (z - frame.waterline) * frame.scale, (x - frame.midship) * frame.scale];\n",
+    "old": "  return [(frame.centreline - y) * frame.scale, (z - frame.waterline) * frame.scale, (x - frame.midship) * frame.scale];",
+    "new": "  return [-y * frame.scale, (z - frame.waterline) * frame.scale, (x - frame.midship) * frame.scale];",
     "tests": [
       "test/world/ships/galleon_model.test.js"
     ],
@@ -140,8 +140,8 @@
   {
     "name": "GALLEON2-twin-baked",
     "file": "tools/shipBake.mjs",
-    "old": "    if (skip) {\n      const fault = skipFault(o, skip, byName, spec);\n",
-    "new": "    if (skip && !skip.twin) {\n      const fault = skipFault(o, skip, byName, spec);\n",
+    "old": "    if (skip) {",
+    "new": "    if (skip && !skip.twin) {",
     "tests": [
       "test/world/ships/galleon_model.test.js"
     ],
@@ -159,8 +159,8 @@
   {
     "name": "GALLEON2-beams-unsolid",
     "file": "src/world/ships/galleonModel.js",
-    "old": "  kids.push(meshNode('DeckBeams', 'galleon:deckBeams', bakedPartGeometry(beamParts), { collider: true }));\n",
-    "new": "  kids.push(meshNode('DeckBeams', 'galleon:deckBeams', bakedPartGeometry(beamParts), { collider: false }));\n",
+    "old": "  kids.push(meshNode('DeckBeams', 'galleon:deckBeams', bakedPartGeometry(beamParts), { collider: true }));",
+    "new": "  kids.push(meshNode('DeckBeams', 'galleon:deckBeams', bakedPartGeometry(beamParts), { collider: false }));",
     "tests": [
       "test/world/ships/galleon_model.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "GALLEON2-lantern-off-beam",
     "file": "src/world/ships/galleonModel.js",
-    "old": "{ p: [0, M.beams.underY - 0.01, M.beams.z[k]], kids: [lanternFlat()] }",
-    "new": "{ p: [0, M.beams.underY - 0.01, M.beams.z[k] + 0.5], kids: [lanternFlat()] }",
+    "old": "        p: [0, M.beams.underY - 0.01, M.beams.z[k]],",
+    "new": "        p: [0, M.beams.underY - 0.01, M.beams.z[k] + 0.5],",
     "tests": [
       "test/world/ships/galleon_model.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "GALLEON2-cut-unmade",
     "file": "src/world/ships/galleonModel.js",
-    "old": "  const S = band.recs.length, h = (band.y1 - band.y0) / S;\n",
-    "new": "  const S = 1, h = (band.y1 - band.y0) / S;\n",
+    "old": "  const S = band.recs.length,",
+    "new": "  const S = 1,",
     "tests": [
       "test/world/ships/galleon_model.test.js"
     ],
@@ -187,8 +187,8 @@
   {
     "name": "GALLEON2-slice-v-off",
     "file": "src/world/ships/galleonModel.js",
-    "old": "return [u(w), Math.min(1, Math.max(0, (w[1] - y0) / h))];",
-    "new": "return [u(w), Math.min(1, Math.max(0, (w[1] - band.y0) / (band.y1 - band.y0)))];",
+    "old": "    return [u(w), Math.min(1, Math.max(0, (w[1] - y0) / h))];",
+    "new": "    return [u(w), Math.min(1, Math.max(0, (w[1] - band.y0) / (band.y1 - band.y0)))];",
     "tests": [
       "test/world/ships/galleon_model.test.js"
     ]
@@ -215,8 +215,8 @@
   {
     "name": "GALLEON2-underdeck-painted-beams",
     "file": "src/world/ships/galleonModel.js",
-    "old": "tiled(up ? TEX.deck : down ? TEX.underDeck : TEX.trim)",
-    "new": "tiled(up ? TEX.deck : down ? TEX.beams : TEX.trim)",
+    "old": "      return tiled(up ? TEX.deck : down ? TEX.underDeck : TEX.trim); // GALLEON-2: under it, her beams are Mac's",
+    "new": "      return tiled(up ? TEX.deck : down ? TEX.beams : TEX.trim); // GALLEON-2: under it, her beams are Mac's",
     "tests": [
       "test/world/ships/galleon_model.test.js"
     ]
@@ -224,8 +224,8 @@
   {
     "name": "GALLEON2-keel-first-export",
     "file": "src/systems/naval/navalShips.js",
-    "old": "halfWidth: 5.86, keel: -4.64, top: 12.3,",
-    "new": "halfWidth: 5.86, keel: -3.89, top: 12.3,",
+    "old": "    keel: -4.64,",
+    "new": "    keel: -3.89,",
     "tests": [
       "test/world/ships/galleon_model.test.js"
     ],

@@ -461,7 +461,9 @@ export function rollFinalFinds(source, rolls = Math.random) {
   return out;
 }
 /** A legendary record a mod adds - the pool is DFU-shaped but not
- *  DFU's, so it is allowed to grow. */
+ *  DFU's, so it is allowed to grow. STOREFRONT: a record marked `unrolled` is lawful on its items (legendariesFor) but
+ *  no roll lands on it - its own source mints it whole (systems/pass/resonantMaul.js), and every seeded roll of its
+ *  templates draws from the pool it drew from before. */
 const _customLegendaries = [];
 export function registerLegendary(record) {
   if (!record?.id) return _customLegendaries.length;
@@ -1251,8 +1253,9 @@ export const LEGENDARY_POWERS = Object.freeze({
     brief: '+50% to foes under 25%', text: 'Your weapon deals 50% more damage to enemies below 25% health' }),
   'wall-of-daggerfall': Object.freeze({ name: 'Bulwark', kind: 'bulwark', less: 5,
     brief: 'Blows on you: -5 damage', text: 'Each enemy hit on you deals 5 less damage, to a minimum of 1' }),
-  foxglove: Object.freeze({ name: "Fortune's Favour", kind: 'fortune', mult: 1.5,
-    brief: 'Legendaries 50% more likely', text: 'While you wear it, you are 50% more likely to find a Legendary' }),
+  // FOX-STACK (Loot-Arc.md section 22): a quarter - at half, worn beside its own Luck it raised a Legendary's chance 2.25x
+  foxglove: Object.freeze({ name: "Fortune's Favour", kind: 'fortune', mult: 1.25,
+    brief: 'Legendaries 25% more likely', text: 'While you wear it, you are 25% more likely to find a Legendary' }),
   'kings-mark': Object.freeze({ name: 'Tribute', kind: 'tribute', gold: 5,
     brief: 'Kills pay 5 gold per level', text: 'Each kill pays you 5 gold per level of the enemy' }),
   'archmages-loop': Object.freeze({ name: 'Spell Mastery', kind: 'mastery', less: 15, low: 30,
@@ -1276,6 +1279,9 @@ export const LEGENDARY_POWERS = Object.freeze({
 let _gilded = null;
 export function registerGildedRecords(api) { _gilded = api && typeof api.powerOf === 'function' && typeof api.loreOf === 'function' ? api : null; }
 export const powerOf = (id) => (typeof id === 'string' ? (LEGENDARY_POWERS[id] ?? legendaryById(id)?.power ?? _gilded?.powerOf(id) ?? null) : null);
+/** The power ids a piece carries: a Legendary's own, a Rare's imprint (LOOT10), a Gilded's - worn (lootPowers.js wornPowers)
+ *  and judged (net/kitMight.js) by one reading. AUDIT POTION-MIGHT D1: the judge had read no imprint. */
+export const powerIdsOf = (/** @type {any} */ it) => [it?.rarity === 'legendary' ? it.legendary : null, it?.rarity === 'rare' ? it.imprint : null, it?.rarity === 'gilded' ? it.gilded : null];
 /** The power's line on a card and a tooltip: its name and its brief. */
 export const powerLine = (p) => (p?.name && p?.brief ? `${p.name}: ${p.brief}${p.survival && !survivalOn() ? SURVIVAL_OFF_NOTE : ''}` : '');   // LOOT15: a survival power says its reader is off
 /** LOOT10 (bible/06-Systems/Loot-Arc.md section 12): A RARE'S IMPRINT - the power of a Legendary of its own group,
@@ -1487,7 +1493,7 @@ export function applyRarity(item, tier, rolls = Math.random, legendaryPool = nul
   let affixes;
   let enchantment = null;
   if (tier === 'legendary') {
-    const pool = legendaryPool ?? legendariesFor(item);
+    const pool = legendaryPool ?? legendariesFor(item).filter((l) => !l.unrolled);   // STOREFRONT: a record its own source mints is never rolled
     if (!pool.length) return applyRarity(item, 'rare', rolls, null, { byLines, lean, fists });   // no record for this item: the tier below
     const rec = pickLegendary(pool, family, rolls);   // LOOT6: a source's family weighs its own records
     affixes = rec.affixes.map((a) => ({ ...a }));
@@ -2351,10 +2357,23 @@ export function bestRarity(items) {
 }
 
 // ── the fold and its readers ───────────────────────────────────────
+/** FOX-STACK (Loot-Arc.md section 22): a Legendary record counts once, as its power does - a later copy of one worn
+ *  adds no line (six Foxgloves were +90 Luck). The first the table lists is the one that counts. */
+export function countedPieces(pieces) {
+  const seen = new Set();
+  return pieces.filter((it) => {
+    const id = it?.rarity === 'legendary' && typeof it.legendary === 'string' ? it.legendary : null;
+    if (id == null) return true;
+    if (seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}
 function wornItems(entity) {
   const slots = entity?.equip?.slots;
-  if (slots) return slots.filter((it) => it && Array.isArray(it.affixes) && it.affixes.length);
-  return (entity?.items ?? []).filter((it) => it && it.equipSlot != null && Array.isArray(it.affixes) && it.affixes.length);
+  const worn = slots ? slots.filter((it) => it && Array.isArray(it.affixes) && it.affixes.length)
+    : (entity?.items ?? []).filter((it) => it && it.equipSlot != null && Array.isArray(it.affixes) && it.affixes.length);
+  return countedPieces(worn);
 }
 
 /** THE FOLD (RF1: one of the entity's, systems/entityMods.js): every

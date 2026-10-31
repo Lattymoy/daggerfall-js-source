@@ -358,7 +358,7 @@ test('PROF2 forge: what the Stores can smelt of a recipe - every input\'s units 
   // DAEDRIC-SMELT: and over the pack's embers where the work spends any - unknown (no pack in the book), its inputs alone
   const daedric = smeltRecipe('ingot:daedric'), all = () => 1000;
   assert.deepEqual([smeltable(daedric, all, 3), smeltable(daedric, all, 0), smeltable(daedric, all, null), smeltable(smeltRecipe('ingot:iron'), all, 0)], [3, 0, 100, 100]);
-  assert.deepEqual([...DECOR_STATIONS], ['alchemy', 'spells', 'enchant', 'forge', 'workbench', 'cooking', 'loom', 'mason', 'jeweller', 'vendor']);   // PIN MOVED (DECOR-USE): the cooking station   // PROF4: the workbench, a fifth; PROF7: the loom, a sixth; PIN MOVED (PROF11): the mason's bench, a seventh; PIN MOVED (PROF10): the jeweller's bench, an eighth; PIN MOVED (HOME-VENDOR): the hired trader, a ninth
+  assert.deepEqual([...DECOR_STATIONS], ['alchemy', 'spells', 'enchant', 'forge', 'workbench', 'cooking', 'music', 'loom', 'mason', 'jeweller', 'vendor']);   // PIN MOVED (MUSIC-BOX): the music box after the cooking station   // PIN MOVED (DECOR-USE): the cooking station   // PROF4: the workbench, a fifth; PROF7: the loom, a sixth; PIN MOVED (PROF11): the mason's bench, a seventh; PIN MOVED (PROF10): the jeweller's bench, an eighth; PIN MOVED (HOME-VENDOR): the hired trader, a ninth
   assert.deepEqual([DECOR_STATION_FEES.forge, DECOR_STATION_NAMES.forge], [50_000, 'Forge']);
 });
 
@@ -412,7 +412,7 @@ test('PROF2 DONE WHEN: veins placed on rock fields; signatures by kingdom - a co
 
 test('PROF2 hosts: the streaming world stands every kind through the one host, its rock pieces carried on the pixel; the dungeon\'s veins through its own doors; the forge at a smith\'s or a home; the Prospector\'s compass on both skins', () => {
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /gatherHost = createGatherHost\(\{\n\s*book: profBook, hud, kinds: \[herbKind\(\{ book: profBook \}\), mineKind\(\{ book: profBook, lodes: motherlodeBook, marks: marksBook \}\),[^\n]*\n\s*treeKind\(\{ book: profBook, renderer, flatBatchAabb, getTexture, billboardSize, uploadRecord \}\),[^\n]*\n\s*huntKind\(\{ book: profBook, bodies: \(\) => huntBodies\(\), openLoot: openHuntLoot, trophy: trophyDoor\(saveSoon\) \}\),/);   // PROF4: Logging's trees, the third; PROF7: Hunting's bodies, the fourth; PROF8's casts after them; PIN MOVED (PROF2b): Mining's with the Motherlodes; PIN MOVED (HUNTERS-MARK): and a Trophy Hunter's trophy door
+  assert.match(w, /gatherHost = createGatherHost\(\{\n\s*book: profBook, hud, kinds: \[herbKind\(\{ book: profBook \}\), mineKind\(\{ book: profBook, lodes: motherlodeBook, marks: marksBook \}\),[^\n]*\n\s*treeKind\(\{ book: profBook, renderer, flatBatchAabb, getTexture, billboardSize, uploadRecord \}\),[^\n]*\n\s*huntKind\(\{ book: profBook, bodies: \(\) => host\.huntBodies\(\), openLoot: openHuntLoot, trophy: trophyDoor\(saveSoon\) \}\),/);   // PROF4: Logging's trees, the third; PROF7: Hunting's bodies, the fourth; PROF8's casts after them; PIN MOVED (PROF2b): Mining's with the Motherlodes; PIN MOVED (HUNTERS-MARK): and a Trophy Hunter's trophy door
   assert.match(w, /if \(rockPick\(m\.pick\)\) \{ const foot = rockFootprint\(cpu\.positions, cpu\.indices, m\.matrix, samples\); if \(foot\) pixelRocks\.push\(foot\); \}/, 'a rock piece that stood - after the road\'s clearance; ROCK-FOOT: as it stands out of the ground');
   assert.match(w, /rocks: pixelRocks,/);
   assert.match(w, /const rockPick = \(i\) => WOD_ROCK_SITES\.includes\(stood\[i\]\?\.name\);/);   // PIN MOVED (GATE-AGREE): the standing picks' list   // ROCK-SUNK: the rock sites one list, the shrub's exemption's too
@@ -424,7 +424,7 @@ test('PROF2 hosts: the streaming world stands every kind through the one host, i
   assert.match(src('src/scenes/mineHost.js'), /return \(specs\('mining'\)\[50\] === 'prospector' && PROSPECTOR_MARKS\[n\.what\]\) \|\| MINE_MARKS\[n\.what\] \|\| MINE_MARKS\.vein;/, 'NODE-MARKS: the Prospector\'s veins marked from PROSPECT_M off, in the mine kind\'s own mark');
   assert.match(w, /onDungeonLeave: \(\) => \{ if \(_wdunInside\) wdunLeft\(false\); const n = handOverRoomFoes\(\);[^\n]*gatherHost\?\.leaveDungeon\(\); worldPublish\(performance\.now\(\), true\); \},/, 'the veins dropped while the dungeon still stands');   // PVPDUNGEONS: a zone hall's leaving said first (wdunLeft)
   assert.match(w, /profPress: \(\) => gatherHost\?\.press\(\) \?\? false,/);
-  assert.match(src('src/world/worldOfDaggerfall/worldOfDaggerfall.js'), /name: session\.name\[pick\.index\], prefabName: session\.prefab\[pick\.index\] \}\)\);/);   // FOREST1: and the prefab's name - a site or a rock field
+  assert.match(src('src/world/worldOfDaggerfall/worldOfDaggerfall.js'), /name: session\.name\[pick\.index\],\n\s*prefabName: session\.prefab\[pick\.index\],\n\s*\}\)\);/);   // FOREST1: and the prefab's name - a site or a rock field
   const m = src('src/scenes/worldModes.js');
   assert.match(m, /\n\s*dungeonLoc = dfLocation;\n\s*host\.profDungeonEntered\?\.\(ctx\);/, 'after the flip and its lock, once the dungeon is the one stood in');
   assert.match(m, /if \(interact && !pressCast && host\.profPress\?\.\(\)\) return true;/, 'AUDIT 29: Interact alone, above QG1');

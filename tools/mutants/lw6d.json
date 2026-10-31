@@ -38,8 +38,8 @@
   {
     "name": "LW6d-not-a-hand",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "      const tale = tales[kind];   // LW6d",
-    "new": "      const tale = null;   // LW6d",
+    "old": "      const tale = tales[kind]; // LW6d: a tale is kept as a hand death is - its minute, the name it tells of",
+    "new": "      const tale = null; // LW6d: a tale is kept as a hand death is - its minute, the name it tells of",
     "tests": [
       "test/systems/livingWorld/lw6d_word.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "LW6d-written",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "      const talesOut = Object.fromEntries(TALE_KINDS.filter((k) => tales[k].size).map((k) => [k, [...tales[k]].map(([key, h]) => [key, h.t, h.who])]));",
-    "new": "      const talesOut = {};",
+    "old": "      const talesOut = Object.fromEntries(\n        TALE_KINDS.filter((k) => tales[k].size).map((k) => [k, [...tales[k]].map(([key, h]) => [key, h.t, h.who])]),\n      ); // LW6d: likewise",
+    "new": "      const talesOut = {}; // LW6d: likewise",
     "tests": [
       "test/systems/livingWorld/lw6d_word.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LW6d-written-once",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "      const talesOut = Object.fromEntries(TALE_KINDS.filter((k) => tales[k].size).map(",
-    "new": "      const talesOut = Object.fromEntries(TALE_KINDS.map(",
+    "old": "        TALE_KINDS.filter((k) => tales[k].size).map((k) => [k, [...tales[k]].map(([key, h]) => [key, h.t, h.who])]),",
+    "new": "        TALE_KINDS.map((k) => [k, [...tales[k]].map(([key, h]) => [key, h.t, h.who])]),",
     "tests": [
       "test/systems/livingWorld/lw6d_word.test.js"
     ]
@@ -65,7 +65,7 @@
   {
     "name": "LW6d-read",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "        if (turnOk(key) && Number.isFinite(Number(t))) tales[k].set(key, { t: Number(t), seen: true, who: nameOk(who) });",
+    "old": "        if (turnOk(key) && Number.isFinite(Number(t)))\n          tales[k].set(key, { t: Number(t), seen: true, who: nameOk(who) });",
     "new": "        void key;",
     "tests": [
       "test/systems/livingWorld/lw6d_word.test.js"
@@ -138,8 +138,8 @@
   {
     "name": "LW6d-words",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "  : item.kind === 'home' ? HOME_NEWS   // LW6d",
-    "new": "  : false ? HOME_NEWS   // LW6d",
+    "old": "              : item.kind === 'home'",
+    "new": "              : false",
     "tests": [
       "test/systems/livingWorld/lw6d_word.test.js"
     ]

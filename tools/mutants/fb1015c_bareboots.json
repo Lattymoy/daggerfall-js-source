@@ -2,8 +2,8 @@
   {
     "name": "BARE-BOOTS-chain-alone",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "  Leather: ['netch'], Chain: ['chain', 'iron'], Chain2: ['chain', 'iron'],",
-    "new": "  Leather: ['netch'], Chain: ['chain'], Chain2: ['chain'],",
+    "old": "  Chain: ['chain', 'iron'],\n  Chain2: ['chain', 'iron'], // BARE-BOOTS: what imperial chain lacks, iron",
+    "new": "  Chain: ['chain'],\n  Chain2: ['chain'], // BARE-BOOTS: what imperial chain lacks, iron",
     "tests": [
       "test/systems/fb1015c_bareboots.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "BARE-BOOTS-the-walk-by-material",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "  for (const tok of chain) { const hit = byPiece(byToken(tok)); if (hit.length) { token = tok; pool = hit; break; } }",
-    "new": "  for (const tok of chain) { const all = byToken(tok); if (all.length) { token = tok; pool = byPiece(all); break; } }",
+    "old": "    const hit = byPiece(byToken(tok));\n    if (hit.length) {\n      token = tok;\n      pool = hit;",
+    "new": "    const all = byToken(tok);\n    if (all.length) {\n      token = tok;\n      pool = byPiece(all);",
     "tests": [
       "test/systems/fb1015c_bareboots.test.js"
     ]

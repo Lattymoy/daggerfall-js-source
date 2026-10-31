@@ -43,7 +43,8 @@ export const giftMaterials = (place) => (place === 'camp' ? [...FORT_MATERIALS, 
 export function giftChoices(place, stores, bag) {
   const out = [];
   for (const key of giftMaterials(place)) {
-    const s = Math.max(0, Math.floor(Number(stores(key)) || 0)), b = Math.max(0, Math.floor(Number(bag(key)) || 0));
+    const s = Math.max(0, Math.floor(Number(stores(key)) || 0)),
+      b = Math.max(0, Math.floor(Number(bag(key)) || 0));
     if (s + b > 0) out.push({ key, stores: s, bag: b, most: Math.min(GIFT_UNITS_MAX, s + b) });
   }
   return out;

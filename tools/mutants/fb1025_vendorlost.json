@@ -56,8 +56,8 @@
   {
     "name": "VENDORLOST-landed-never-sent",
     "file": "src/net/marketBook.js",
-    "old": "call: (/** @type {any} */ at) => door.buy({ ...entry.body, realm: at, landed: true }),",
-    "new": "call: (/** @type {any} */ at) => door.buy({ ...entry.body, realm: at }),",
+    "old": "        call: (/** @type {any} */ at) => door.buy({ ...entry.body, realm: at, landed: true }),",
+    "new": "        call: (/** @type {any} */ at) => door.buy({ ...entry.body, realm: at }),",
     "tests": [
       "test/net/fb1025_vendorlost.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "VENDORLOST-a-landed-repeat-unpaid",
     "file": "src/net/marketBook.js",
-    "old": "if (!a?.data?.repeat || a?.data?.realm) w.pay(cost);",
-    "new": "if (!a?.data?.repeat) w.pay(cost);",
+    "old": "                if (!a?.data?.repeat || a?.data?.realm) w.pay(cost);",
+    "new": "                if (!a?.data?.repeat) w.pay(cost);",
     "tests": [
       "test/net/fb1025_vendorlost.test.js",
       "test/net/goldmarket_client.test.js"
@@ -75,8 +75,8 @@
   {
     "name": "VENDORLOST-every-repeat-paid",
     "file": "src/net/marketBook.js",
-    "old": "if (!a?.data?.repeat || a?.data?.realm) w.pay(cost);",
-    "new": "w.pay(cost);",
+    "old": "                if (!a?.data?.repeat || a?.data?.realm) w.pay(cost);",
+    "new": "                w.pay(cost);",
     "tests": [
       "test/net/fb1025_vendorlost.test.js",
       "test/net/goldmarket_client.test.js"
@@ -85,8 +85,8 @@
   {
     "name": "VENDORLOST-the-delivery-left",
     "file": "src/net/marketBook.js",
-    "old": "const dn = r.data?.sale?.kind === 'item' && r.data.sale.here ? r.data.delivery?.id : null;",
-    "new": "const dn = null;",
+    "old": "            const dn = r.data?.sale?.kind === 'item' && r.data.sale.here ? r.data.delivery?.id : null;",
+    "new": "            const dn = null;",
     "tests": [
       "test/net/fb1025_vendorlost.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "VENDORLOST-the-road-kept-after-a-collect",
     "file": "src/net/marketBook.js",
-    "old": "    if (r?.ok) { forget(); offRoad(delivery); }",
-    "new": "    if (r?.ok) { forget(); }",
+    "old": "      offRoad(delivery);\n    }",
+    "new": "    }",
     "tests": [
       "test/net/fb1025_vendorlost.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "VENDORLOST-a-piece-s-road-kept",
     "file": "src/net/marketBook.js",
-    "old": "if (r.ok) { settled++; offRoad(d.id); } else if (!r.kept) refused.push(r.error);",
-    "new": "if (r.ok) { settled++; } else if (!r.kept) refused.push(r.error);",
+    "old": "              offRoad(d.id);\n            } else if (!r.kept) refused.push(r.error);",
+    "new": "            } else if (!r.kept) refused.push(r.error);",
     "tests": [
       "test/net/fb1025_vendorlost.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "VENDORLOST-the-stall-never-settling",
     "file": "src/ui/vendor/vendorTab.js",
-    "old": "return { body, open, load, state: st };",
-    "new": "return { body, open: load, load, state: st };",
+    "old": "  return { body, open, load, state: st };",
+    "new": "  return { body, open: load, load, state: st };",
     "tests": [
       "test/net/fb1025_vendorlost.test.js",
       "test/ui/homevendor_ui.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "VENDORLOST-the-board-settling-too",
     "file": "src/ui/vendor/vendorTab.js",
-    "old": "    if (stall && v.settle) {\n",
-    "new": "    if (v.settle) {\n",
+    "old": "    if (stall && v.settle) {",
+    "new": "    if (v.settle) {",
     "tests": [
       "test/net/fb1025_vendorlost.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "VENDORLOST-a-refusal-unsaid",
     "file": "src/ui/vendor/vendorTab.js",
-    "old": "text: refused ? accountRefusalText(refused) : '' };",
-    "new": "text: '' };",
+    "old": "        return { ok: !!r?.ok && !refused, text: refused ? accountRefusalText(refused) : '' };",
+    "new": "        return { ok: !!r?.ok && !refused, text: '' };",
     "tests": [
       "test/net/fb1025_vendorlost.test.js"
     ]
@@ -140,8 +140,8 @@
   {
     "name": "VENDORLOST-the-host-handing-no-settle",
     "file": "src/scenes/vendorHost.js",
-    "old": "        settle: () => arrivals.sweep(),   // VENDOR-LOST: a kept buy's piece collected as the stall opens; RPT1026-MARKET ARRIVE: the road read first, so every piece arrived for this character is collected\n",
-    "new": "",
+    "old": "        settle: () => arrivals.sweep(), // VENDOR-LOST: a kept buy's piece collected as the stall opens; RPT1026-MARKET ARRIVE: the road read first, so every piece arrived for this character is collected\n      },",
+    "new": "      },",
     "tests": [
       "test/net/fb1025_vendorlost.test.js"
     ]

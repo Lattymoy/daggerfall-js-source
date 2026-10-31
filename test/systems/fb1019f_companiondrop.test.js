@@ -197,7 +197,7 @@ test('STORE-KEEPS SEND-OFF IN THE ZONE: with nothing of theirs to drop, a hand a
   assert.equal(RC.sendRevenantAway(s.a.id), true, 'the one at the side sent away');
   assert.equal(N.revenantById(s.a.id).companion.state, 'away');
   assert.equal(RC.leaveRefusal, undefined, 'no refusal left to ask');
-  assert.ok(rd('src/ui/companionRoster.js').includes('away.onclick = () => { _notice = null; sendRevenantAway(r.id); rerender(); };'));
+  assert.ok(rd('src/ui/companionRoster.js').includes('away.onclick = () => {\n        _notice = null;\n        sendRevenantAway(r.id);\n        rerender();\n      };'));
   assert.ok(rd('src/scenes/world.js').includes('const last = revenantsWithYou().sort((a, b) => (b.swornAt ?? 0) - (a.swornAt ?? 0))[0];'));
   assert.ok(!rd('src/scenes/naval/navalHost.js').includes('heldAtSide'), 'the boat\'s picker asks no zone');
 });

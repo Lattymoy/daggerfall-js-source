@@ -24,8 +24,19 @@ function readbackGl() {
   if (readback === undefined) {
     try {
       const c = typeof OffscreenCanvas === 'function' ? new OffscreenCanvas(1, 1) : null;
-      readback = /** @type {any} */ (c?.getContext('webgl2', { alpha: true, premultipliedAlpha: false, antialias: false, depth: false, stencil: false })) ?? null;
-    } catch { readback = null; }
+      readback =
+        /** @type {any} */ (
+          c?.getContext('webgl2', {
+            alpha: true,
+            premultipliedAlpha: false,
+            antialias: false,
+            depth: false,
+            stencil: false,
+          })
+        ) ?? null;
+    } catch {
+      readback = null;
+    }
   }
   return readback && !readback.isContextLost?.() ? readback : null;
 }
@@ -36,12 +47,21 @@ function readbackGl() {
  * @param {Uint8Array} bytes
  * @param {{ gl?: any, bitmap?: (blob: Blob, o: any) => Promise<any> }} [o]
  */
-export function* decodePoiImageSteps(bytes, { gl = readbackGl(), bitmap = (blob, o) => createImageBitmap(blob, o) } = {}) {
+export function* decodePoiImageSteps(
+  bytes,
+  { gl = readbackGl(), bitmap = (blob, o) => createImageBitmap(blob, o) } = {},
+) {
   // a copy the Blob owns (a view over a shared or larger buffer is not a BlobPart)
   const bmp = yield bitmap(new Blob([bytes.slice()]), { premultiplyAlpha: 'none', colorSpaceConversion: 'none' });
   try {
     let read = null;
-    if (gl) { try { read = yield* readThroughGl(gl, bmp); } catch { read = null; } }   // a context that throws: the canvas
+    if (gl) {
+      try {
+        read = yield* readThroughGl(gl, bmp);
+      } catch {
+        read = null;
+      }
+    } // a context that throws: the canvas
     return read ?? throughCanvas(bmp);
   } finally {
     bmp.close?.();
@@ -56,7 +76,12 @@ export async function decodePoiImage(bytes) {
     const v = r.value;
     if (v && typeof v.then === 'function') {
       let got;
-      try { got = await v; } catch (e) { r = it.throw(e); continue; }
+      try {
+        got = await v;
+      } catch (e) {
+        r = it.throw(e);
+        continue;
+      }
       r = it.next(got);
     } else r = it.next();
   }
@@ -66,9 +91,12 @@ export async function decodePoiImage(bytes) {
 /** The bitmap through a WebGL2 texture and back, a band of rows a step - or null where the context cannot (the 2D
  *  canvas then). Every object it makes is deleted. */
 function* readThroughGl(gl, bmp) {
-  const w = bmp.width, h = bmp.height;
-  if (!(w > 0 && h > 0) || w > gl.getParameter(gl.MAX_TEXTURE_SIZE) || h > gl.getParameter(gl.MAX_TEXTURE_SIZE)) return null;
-  const tex = gl.createTexture(), fb = gl.createFramebuffer();
+  const w = bmp.width,
+    h = bmp.height;
+  if (!(w > 0 && h > 0) || w > gl.getParameter(gl.MAX_TEXTURE_SIZE) || h > gl.getParameter(gl.MAX_TEXTURE_SIZE))
+    return null;
+  const tex = gl.createTexture(),
+    fb = gl.createFramebuffer();
   try {
     gl.bindTexture(gl.TEXTURE_2D, tex);
     // an ImageBitmap's upload reads its own options (premultiplyAlpha, colorSpaceConversion, imageOrientation) and not
@@ -76,7 +104,7 @@ function* readThroughGl(gl, bmp) {
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
     gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, bmp);   // row 0 the picture's top, as uploaded
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, bmp); // row 0 the picture's top, as uploaded
     gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
     if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) return null;
@@ -87,7 +115,7 @@ function* readThroughGl(gl, bmp) {
       yield null;
       gl.readPixels(0, y, w, Math.min(band, h - y), gl.RGBA, gl.UNSIGNED_BYTE, data, y * w * 4);
     }
-    if (gl.getError() !== gl.NO_ERROR || gl.isContextLost?.()) return null;   // an upload refused, a context lost: the canvas
+    if (gl.getError() !== gl.NO_ERROR || gl.isContextLost?.()) return null; // an upload refused, a context lost: the canvas
     return { width: w, height: h, data };
   } finally {
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);

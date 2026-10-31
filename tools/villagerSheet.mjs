@@ -14,9 +14,15 @@ import { PNG } from 'pngjs';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { TextureFile } from '../src/formats/textureFile.js';
 import { DFPalette } from '../src/formats/dfPalette.js';
-import { PERSON_TEXTURES, GUARD_TEXTURE, PERSON_IDLE_RECORD, PERSON_GUARD_IDLE_RECORD } from '../src/characters/mobile/mobilePerson.js';
+import {
+  PERSON_TEXTURES,
+  GUARD_TEXTURE,
+  PERSON_IDLE_RECORD,
+  PERSON_GUARD_IDLE_RECORD,
+} from '../src/characters/mobile/mobilePerson.js';
 const A = process.env.ARENA2_PATH;
-const pal = new DFPalette(); pal.load(readFileSync(`${A}/ART_PAL.COL`), 'ART_PAL.COL');
+const pal = new DFPalette();
+pal.load(readFileSync(`${A}/ART_PAL.COL`), 'ART_PAL.COL');
 
 const rows = [];
 for (const [race, g] of Object.entries(PERSON_TEXTURES))
@@ -33,23 +39,35 @@ const cells = rows.map((r) => {
   return { ...r, name, w: bm.width, h: bm.height, idx: bm.data };
 });
 
-const SC = 3, COLS = 5;
+const SC = 3,
+  COLS = 5;
 const CW = Math.max(...cells.map((c) => c.w)) * SC + 10;
 const CH = Math.max(...cells.map((c) => c.h)) * SC + 10;
 const ROWS = Math.ceil(cells.length / COLS);
 const png = new PNG({ width: CW * COLS, height: CH * ROWS });
-for (let i = 0; i < png.data.length; i += 4) { png.data[i] = 24; png.data[i+1] = 26; png.data[i+2] = 30; png.data[i+3] = 255; }
+for (let i = 0; i < png.data.length; i += 4) {
+  png.data[i] = 24;
+  png.data[i + 1] = 26;
+  png.data[i + 2] = 30;
+  png.data[i + 3] = 255;
+}
 cells.forEach((c, i) => {
   const ox = (i % COLS) * CW + Math.floor((CW - c.w * SC) / 2);
-  const oy = Math.floor(i / COLS) * CH + CH - c.h * SC - 5;   // bottom-aligned: feet on a common line
-  for (let y = 0; y < c.h * SC; y++) for (let x = 0; x < c.w * SC; x++) {
-    const idx = c.idx[((y / SC) | 0) * c.w + ((x / SC) | 0)];
-    if (!idx) continue;                                        // 0 = transparent
-    const col = pal.get(idx);
-    const di = ((oy + y) * png.width + (ox + x)) * 4;
-    png.data[di] = col.r; png.data[di+1] = col.g; png.data[di+2] = col.b; png.data[di+3] = 255;
-  }
+  const oy = Math.floor(i / COLS) * CH + CH - c.h * SC - 5; // bottom-aligned: feet on a common line
+  for (let y = 0; y < c.h * SC; y++)
+    for (let x = 0; x < c.w * SC; x++) {
+      const idx = c.idx[((y / SC) | 0) * c.w + ((x / SC) | 0)];
+      if (!idx) continue; // 0 = transparent
+      const col = pal.get(idx);
+      const di = ((oy + y) * png.width + (ox + x)) * 4;
+      png.data[di] = col.r;
+      png.data[di + 1] = col.g;
+      png.data[di + 2] = col.b;
+      png.data[di + 3] = 255;
+    }
 });
 writeFileSync(process.argv[2] || '/home/claude/villagers.png', PNG.sync.write(png));
 console.log('wrote', png.width + 'x' + png.height, cells.length + ' cells');
-cells.forEach((c, i) => console.log(String(i).padStart(2), c.race.padEnd(9), c.gender.padEnd(7), c.name, `${c.w}x${c.h}`));
+cells.forEach((c, i) =>
+  console.log(String(i).padStart(2), c.race.padEnd(9), c.gender.padEnd(7), c.name, `${c.w}x${c.h}`),
+);

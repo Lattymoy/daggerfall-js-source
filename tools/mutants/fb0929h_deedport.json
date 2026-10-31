@@ -49,8 +49,8 @@
   {
     "name": "DEED-PORT-the-first-harbour-not-the-nearest",
     "file": "src/world/worldWide/worldPorts.js",
-    "old": "if (d < bestD) { bestD = d; best = q; } }",
-    "new": "if (!best) { bestD = d; best = q; } }",
+    "old": "          if (d < bestD) {",
+    "new": "          if (!best) {",
     "tests": [
       "test/systems/comeSailAway/fb0929h_deedport.test.js"
     ],

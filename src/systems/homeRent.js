@@ -22,11 +22,21 @@
 // (systems/tavern.js), never a player's own. Ledger A.
 // ═══════════════════════════════════════════════════════════════════
 import {
-  RENT_DAYS, RENT_DAYS_MAX, RENT_ROOMS_MAX, rentCost, rentPriceOk, rentRoomOk, rentAnchorOf, rentDaysLeft, rentUntil, RENT_PRICE_MIN, RENT_PRICE_MAX,
+  RENT_DAYS,
+  RENT_DAYS_MAX,
+  RENT_ROOMS_MAX,
+  rentCost,
+  rentPriceOk,
+  rentRoomOk,
+  rentAnchorOf,
+  rentDaysLeft,
+  rentUntil,
+  RENT_PRICE_MIN,
+  RENT_PRICE_MAX,
 } from '../net/homeLaw.js';
-import { ARENA_TEXT } from './arena/arenaText.js';   // ARENA4b: a room the arena's move carried, named
-import { goldSum, EMPIRE_ACCOUNT_WORDS } from './homeWords.js';   // AUDIT HOME-PRICE E4: the door's sums and account, as the home's own lines say them
-import { walletReserve } from '../net/realm/realmGoldLaw.js';   // MARKET-AUDIT: a refusal gives back exactly what the payment took
+import { ARENA_TEXT } from './arena/arenaText.js'; // ARENA4b: a room the arena's move carried, named
+import { goldSum, EMPIRE_ACCOUNT_WORDS } from './homeWords.js'; // AUDIT HOME-PRICE E4: the door's sums and account, as the home's own lines say them
+import { walletReserve } from '../net/realm/realmGoldLaw.js'; // MARKET-AUDIT: a refusal gives back exactly what the payment took
 
 /** The door's verb for a home with a room free to rent (onlineHomes.js HOME_VERB's own row). */
 export const RENT_VERB = 'home-rent';
@@ -40,17 +50,29 @@ export const rentRowLabel = (from) => `Rent a room: from ${goldSum(from)} gold a
 /** A tenant's row at the door: their own room, and how long it has left. */
 export const rentTenantLabel = (daysLeft) => `Renew your room: ${daysLeft} day${daysLeft === 1 ? '' : 's'} left`;
 /** What a tenant hears walking in. */
-export const rentWelcomeLine = (daysLeft) => `You rent a room here, with ${daysLeft} day${daysLeft === 1 ? '' : 's'} left. You can rest here.`;
+export const rentWelcomeLine = (daysLeft) =>
+  `You rent a room here, with ${daysLeft} day${daysLeft === 1 ? '' : 's'} left. You can rest here.`;
 /** The rent window's lines: the rooms to choose from. */
-export const rentPickLines = (owner) => [`Rooms to rent in ${owner}'s home.`, `The rent is paid now, from your purse and ${EMPIRE_ACCOUNT_WORDS}.`];
+export const rentPickLines = (owner) => [
+  `Rooms to rent in ${owner}'s home.`,
+  `The rent is paid now, from your purse and ${EMPIRE_ACCOUNT_WORDS}.`,
+];
 /** The rent window's lines: how many days, at a room's price. */
-export const rentDaysLines = (room, price) => [`Room ${room} - ${goldSum(price)} gold a day.`, 'For how many days? These are real days.'];
+export const rentDaysLines = (room, price) => [
+  `Room ${room} - ${goldSum(price)} gold a day.`,
+  'For how many days? These are real days.',
+];
 /** The rent window's lines: the price asked, before it is paid. */
-export const rentConfirmLines = (room, days, price) => [`Rent room ${room} for ${days} day${days === 1 ? '' : 's'}?`, `It costs ${goldSum(rentCost(price, days))} gold.`];
+export const rentConfirmLines = (room, days, price) => [
+  `Rent room ${room} for ${days} day${days === 1 ? '' : 's'}?`,
+  `It costs ${goldSum(rentCost(price, days))} gold.`,
+];
 /** A room rented, said. */
-export const rentDoneLine = (room, days) => `Room ${room} is yours for ${days} day${days === 1 ? '' : 's'}. The door will open for you.`;
+export const rentDoneLine = (room, days) =>
+  `Room ${room} is yours for ${days} day${days === 1 ? '' : 's'}. The door will open for you.`;
 /** The purse short of a rent. */
-export const rentShortLine = (cost) => `You need ${goldSum(cost)} gold, in your purse and ${EMPIRE_ACCOUNT_WORDS} together.`;
+export const rentShortLine = (cost) =>
+  `You need ${goldSum(cost)} gold, in your purse and ${EMPIRE_ACCOUNT_WORDS} together.`;
 /** No room free to rent, said at the door. */
 export const RENT_NONE_FREE = 'No room here is free to rent right now.';
 /** Renting asks an online character of the realm - said where there is none. */
@@ -63,7 +85,8 @@ export const RENT_REALM_ONLY = 'Only an online character can rent a room.';
  * interiorRestPlace `homeBed`), where a tenant's bed was asked as DFU asks a house it sold - inside a permanent scene,
  * which a tenant's visit never is - and refused ("You have not rented a room here.").
  */
-export const homeBedIsMine = (home, nowS) => !!home && (home.own === true || !!(home.hall && home.member) || rentDaysLeft(home.tenant, nowS) > 0);   // GUILD1d (merged past RENT-REST): a member rests in their guild's hall as in their own home
+export const homeBedIsMine = (home, nowS) =>
+  !!home && (home.own === true || !!(home.hall && home.member) || rentDaysLeft(home.tenant, nowS) > 0); // GUILD1d (merged past RENT-REST): a member rests in their guild's hall as in their own home
 
 /**
  * RENT-RENEW (FIELD BUGS 2026-10-01): THE DAYS THE DOOR OFFERS for a room at the service's clock `nowS` - those whose
@@ -71,7 +94,8 @@ export const homeBedIsMine = (home, nowS) => !!home && (home.own === true || !!(
  * with days left is offered fewer: the window offered all five, and the service refuses every renewal past thirty days
  * (`rent-long`) - after the purse had paid it, and its reserve came back to the bank.
  */
-export const rentDayRows = (room, nowS) => RENT_DAYS.filter((d) => rentUntil(nowS, room?.yours ? room.until : 0, d) != null);
+export const rentDayRows = (room, nowS) =>
+  RENT_DAYS.filter((d) => rentUntil(nowS, room?.yours ? room.until : 0, d) != null);
 /** RENT-RENEW: one's own room paid as far ahead as a tenancy may run - no day is left to add. */
 export const RENT_FULL_LINE = `Your room is paid for ${RENT_DAYS_MAX} days ahead, the most allowed. Renew it once some of those days have passed.`;
 /**
@@ -79,7 +103,7 @@ export const RENT_FULL_LINE = `Your room is paid for ${RENT_DAYS_MAX} days ahead
  * it"; a room off the offer runs out and is never renewed - rent.js), else none free.
  */
 export function rentNoneLine(rooms, nowS) {
-  const mine = (rooms ?? []).find((r) => r.yours && !r.listed);   // `yours` the service says only while the tenancy runs (rent.js roomsOf)
+  const mine = (rooms ?? []).find((r) => r.yours && !r.listed); // `yours` the service says only while the tenancy runs (rent.js roomsOf)
   if (!mine) return RENT_NONE_FREE;
   const left = rentDaysLeft(mine.until, nowS);
   return `Room ${mine.room} is no longer offered to rent. It is yours for ${left} more day${left === 1 ? '' : 's'}, and cannot be renewed.`;
@@ -94,21 +118,40 @@ export function rentNoneLine(rooms, nowS) {
  * the point (homeBedIsMine, homeLaw.js homeMayEnter).
  */
 export async function homeRooms(api, mapId, buildingKey, character = null) {
-  const r = await api.rooms(mapId, buildingKey, character);   // the playing character: a tenancy is `yours` to renew only for it
+  const r = await api.rooms(mapId, buildingKey, character); // the playing character: a tenancy is `yours` to renew only for it
   if (!r?.ok) return { ok: false, error: r?.error ?? 'server' };
   const d = r.data ?? {};
-  const rooms = (Array.isArray(d.rooms) ? d.rooms : []).filter((x) => rentRoomOk(x?.room) && rentPriceOk(x?.price) && (rentAnchorOf(x?.anchor) || (x?.moved === true && x.anchor == null)))
+  const rooms = (Array.isArray(d.rooms) ? d.rooms : [])
+    .filter(
+      (x) =>
+        rentRoomOk(x?.room) &&
+        rentPriceOk(x?.price) &&
+        (rentAnchorOf(x?.anchor) || (x?.moved === true && x.anchor == null)),
+    )
     .map((x) => ({
-      room: x.room, anchor: rentAnchorOf(x.anchor), price: x.price, listed: x.listed === true, taken: x.taken === true, yours: x.yours === true,
-      until: Number.isSafeInteger(x.until) ? x.until : null, tenant: typeof x.tenant === 'string' ? x.tenant : null,
+      room: x.room,
+      anchor: rentAnchorOf(x.anchor),
+      price: x.price,
+      listed: x.listed === true,
+      taken: x.taken === true,
+      yours: x.yours === true,
+      until: Number.isSafeInteger(x.until) ? x.until : null,
+      tenant: typeof x.tenant === 'string' ? x.tenant : null,
       ...(x.moved === true ? { moved: true } : {}),
     }));
   const n = (v) => (Number.isSafeInteger(v) && v > 0 ? v : 0);
-  return { ok: true, rooms, due: n(d.due), owner: typeof d.owner === 'string' ? d.owner : '', mine: d.mine === true, now: n(d.now) };
+  return {
+    ok: true,
+    rooms,
+    due: n(d.due),
+    owner: typeof d.owner === 'string' ? d.owner : '',
+    mine: d.mine === true,
+    now: n(d.now),
+  };
 }
 
 /** The rooms a visitor may rent now - offered and free, or their own (to renew). */
-export const rentable = (rooms) => (rooms ?? []).filter((r) => r.listed && (!r.taken || r.yours));   // one's own renewed while it is still offered (AUDIT: as the service allows)
+export const rentable = (rooms) => (rooms ?? []).filter((r) => r.listed && (!r.taken || r.yours)); // one's own renewed while it is still offered (AUDIT: as the service allows)
 
 /**
  * RENT ONE (or renew one's own) for `days`: the purse pays at once and gets it back on a refusal, the tenant's record
@@ -117,13 +160,24 @@ export const rentable = (rooms) => (rooms ?? []).filter((r) => r.listed && (!r.t
  * @param {{ api: any, homes?: any, realm?: any, wallet: { gold: number, pay: (n: number) => ((() => void) | void), credit?: (n: number) => void },
  *   mapId: number, buildingKey: number, character: string|null, room: number, days: number, price: number }} o
  */
-export async function rentHomeRoom({ api, homes = null, realm = null, wallet, mapId, buildingKey, character, room, days, price }) {
+export async function rentHomeRoom({
+  api,
+  homes = null,
+  realm = null,
+  wallet,
+  mapId,
+  buildingKey,
+  character,
+  room,
+  days,
+  price,
+}) {
   const cost = rentCost(price, days);
   if (!cost || !rentRoomOk(room)) return { ok: false, error: 'bad-room' };
   if (!realm?.act) return { ok: false, error: 'realm-only' };
   if (!(wallet.gold >= cost)) return { ok: false, error: 'gold' };
   const r = await realm.act({
-    reserve: walletReserve(wallet, cost).reserve,   // MARKET-AUDIT: a refusal gives back exactly what it took
+    reserve: walletReserve(wallet, cost).reserve, // MARKET-AUDIT: a refusal gives back exactly what it took
     call: (/** @type {any} */ at) => api.rentRoom({ mapId, buildingKey, character, room, days, price, realm: at }),
   });
   if (!r?.ok) return { ok: false, error: r?.error ?? 'server' };
@@ -141,14 +195,18 @@ export async function collectHomeRent({ api, realm = null, wallet, mapId, buildi
   let gold = 0;
   const r = await realm.act({
     needsAnswer: true,
-    apply: (/** @type {any} */ res) => { gold = Math.max(0, Number(res?.data?.gold) || 0); if (gold > 0) wallet.credit?.(gold); },
+    apply: (/** @type {any} */ res) => {
+      gold = Math.max(0, Number(res?.data?.gold) || 0);
+      if (gold > 0) wallet.credit?.(gold);
+    },
     call: (/** @type {any} */ at) => api.collectRent({ mapId, buildingKey, character, realm: at }),
   });
   return r?.ok ? { ok: true, gold } : { ok: false, error: r?.error ?? 'server' };
 }
 
 /** A price moved by `step`, kept within the law. */
-export const rentPriceStep = (price, step) => Math.min(RENT_PRICE_MAX, Math.max(RENT_PRICE_MIN, (rentPriceOk(price) ? price : RENT_PRICE_FIRST) + step));
+export const rentPriceStep = (price, step) =>
+  Math.min(RENT_PRICE_MAX, Math.max(RENT_PRICE_MIN, (rentPriceOk(price) ? price : RENT_PRICE_FIRST) + step));
 
 /**
  * THE OWNER'S ROOMS: each room the house's walls part it into (systems/decor/decorRooms.js - `found`, `{ id, name, eye }`)
@@ -169,7 +227,13 @@ export function rentRoomsView(found, offers, roomOf, origin) {
   for (let n = 1; n <= RENT_ROOMS_MAX && next == null; n++) if (!held.has(n)) next = n;
   const rows = (found ?? []).map((f) => {
     // ARENA4b: an offer the arena's move carried has no point - it stands in no room the walls make (listed apart, below)
-    const o = (offers ?? []).find((x) => !used.has(x.room) && Array.isArray(x.anchor) && roomOf([origin[0] + x.anchor[0], origin[1] + x.anchor[1], origin[2] + x.anchor[2]])?.id === f.id) ?? null;
+    const o =
+      (offers ?? []).find(
+        (x) =>
+          !used.has(x.room) &&
+          Array.isArray(x.anchor) &&
+          roomOf([origin[0] + x.anchor[0], origin[1] + x.anchor[1], origin[2] + x.anchor[2]])?.id === f.id,
+      ) ?? null;
     if (o) used.add(o.room);
     // RENT-NUMBER (FIELD BUGS 2026-10-01): a room not offered takes its OWN number where no offer holds it - so the room
     // the owner's panel calls "Room 2" is room 2 at the door too (the first free number named the owner's Room 2 "room
@@ -177,7 +241,18 @@ export function rentRoomsView(found, offers, roomOf, origin) {
     const number = o ? o.room : rentRoomOk(f.id) && !held.has(f.id) ? f.id : next;
     return { id: f.id, name: f.name, eye: f.eye, offer: o, number, offerable: number != null };
   });
-  for (const o of offers ?? []) if (!used.has(o.room)) rows.push({ id: null, name: Array.isArray(o.anchor) ? `Room ${o.room} (its walls have changed)` : ARENA_TEXT.homeMove.roomMoved(o.room), eye: null, offer: o, number: o.room, offerable: false });
+  for (const o of offers ?? [])
+    if (!used.has(o.room))
+      rows.push({
+        id: null,
+        name: Array.isArray(o.anchor)
+          ? `Room ${o.room} (its walls have changed)`
+          : ARENA_TEXT.homeMove.roomMoved(o.room),
+        eye: null,
+        offer: o,
+        number: o.room,
+        offerable: false,
+      });
   return rows;
 }
 
@@ -185,11 +260,13 @@ export function rentRoomsView(found, offers, roomOf, origin) {
 export function rentRowSub(row, nowS) {
   const o = row.offer;
   if (!o) return row.offerable ? 'Not offered to rent' : `Only ${RENT_ROOMS_MAX} rooms can be offered`;
-  if (o.taken) return `Rented by ${o.tenant ?? 'a tenant'} - ${rentDaysLeft(o.until, nowS)} day${rentDaysLeft(o.until, nowS) === 1 ? '' : 's'} left${o.listed ? '' : ', then no longer offered'}`;
-  if (!o.listed) return 'No longer offered to rent';   // AUDIT: a room taken off the offer whose tenancy ran out (it said "Offered")
+  if (o.taken)
+    return `Rented by ${o.tenant ?? 'a tenant'} - ${rentDaysLeft(o.until, nowS)} day${rentDaysLeft(o.until, nowS) === 1 ? '' : 's'} left${o.listed ? '' : ', then no longer offered'}`;
+  if (!o.listed) return 'No longer offered to rent'; // AUDIT: a room taken off the offer whose tenancy ran out (it said "Offered")
   return `Offered at ${goldSum(o.price)} gold a day`;
 }
 /** The anchor a found room is offered by: its flight's point, from the building's origin. */
-export const rentAnchorOfRoom = (room, origin) => rentAnchorOf([room.eye[0] - origin[0], room.eye[1] - origin[1], room.eye[2] - origin[2]]);
+export const rentAnchorOfRoom = (room, origin) =>
+  rentAnchorOf([room.eye[0] - origin[0], room.eye[1] - origin[1], room.eye[2] - origin[2]]);
 /** The days a visitor is offered, as the window's rows. */
 export const RENT_DAY_ROWS = RENT_DAYS;

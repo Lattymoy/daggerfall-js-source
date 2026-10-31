@@ -593,9 +593,10 @@ test('GRAVE-PARTY + AUDIT G2: a PARTY-LOOT pile whose room word this build canno
     return { api, applyLoot, lootTargets, roomUnborn, roomClaimTick, mintUnbornRoom, _roomMine, buildPile, close: (key) => { _lootOpenKey = null; publishLoot(key); } };
   `, state);
   /** A pile as the loop builds it, and drawn: every pile's flat stands at the build, its list empty or not (dungeonContext.js
-   *  `pile.half = ...` and `pile.batch = renderer.createBillboardBatch(...)`, pinned below). */
+   *  `pile.half = ...` and `pile.batch = renderer.createBillboardBatch(...)`, pinned below). PIN MOVED (AUDIT-STOREFRONT
+   *  III D1): the half is set beside the archive's own, `[pile.half, pile.lawHalf] = ...`. */
   const pileAt = (x) => { h.buildPile({ x, y: 0, z: 0, position: 100 + x }, { originX: 0, originZ: 0 }, 0, true, false, 0); Object.assign(state.lootPiles.at(-1), { half: [0.5, 0.5], batch: {} }); return state.lootPiles.length - 1; };
-  assert.match(SRC, /pile\.half = \[size\.w \/ 2, size\.h \/ 2\];[\s\S]{0,2400}?pile\.batch = renderer\.createBillboardBatch\(RANDOM_TREASURE_ARCHIVE, pile\.record, size, \[\[g\[0\], g\[1\], g\[2\]\]\]\);/, 'every pile drawn at the build');
+  assert.match(SRC, /\[pile\.half, pile\.lawHalf\] = \[\[size\.w \/ 2, size\.h \/ 2\], \[law\.w \/ 2, law\.h \/ 2\]\];[\s\S]{0,2400}?pile\.batch = renderer\.createBillboardBatch\(RANDOM_TREASURE_ARCHIVE, pile\.record, size, \[\[g\[0\], g\[1\], g\[2\]\]\]\);/, 'every pile drawn at the build');
   const press = (key) => { said.length = 0; const n = windows.length; h.api.takeLoot(key, 'grab'); return windows.length > n ? windows.at(-1) : null; };
   const unreadable = (key) => h.applyLoot([{ k: key, g: 0, lv: 1, n: 1, tm: clock.t, x: 'from another build', c: [] }], 'a0a0-0001');
 

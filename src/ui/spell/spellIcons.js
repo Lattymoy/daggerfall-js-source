@@ -32,7 +32,7 @@ import { loadImg, drawImgCrop } from '../native/nativePanel.js';
 // the same DFU member, so it is imported and re-exported rather than
 // written a second time.
 import { SPELL_ICON_COUNT } from '../../systems/spell/spellMaker.js';
-import { localizedStrings } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedStrings } from '../../systems/textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** classicSpellIconsRowCount / classicSpellIconsCount (:36-37). */
 export const SPELL_ICON_ROW_COUNT = 20;
@@ -53,15 +53,14 @@ let _art = null;
  *  its list, which is how the HUD's own art gate behaves. */
 export async function preloadSpellIcons(deps) {
   if (_art) return _art;
-  const [icons, mask] = await Promise.all([
-    loadImg(deps, 'ICON00I0.IMG'),
-    loadImg(deps, 'MASK04I0.IMG'),
-  ]);
+  const [icons, mask] = await Promise.all([loadImg(deps, 'ICON00I0.IMG'), loadImg(deps, 'MASK04I0.IMG')]);
   _art = { icons, mask };
   return _art;
 }
 export const spellIconsLoaded = () => !!_art;
-export function _setSpellIconsForTests(art) { _art = art; }
+export function _setSpellIconsForTests(art) {
+  _art = art;
+}
 
 /** The square dimension of one icon, derived from the atlas width
  *  exactly as LoadClassicSpellIcons does (:408-409) rather than
@@ -106,7 +105,7 @@ export function elementIconRect(elementType) {
  *  destination size is the caller's. */
 export function drawSpellIcon(renderer, m, index, dst) {
   const src = _art ? spellIconRect(index) : null;
-  if (!src) return false;   // GetSpellIcon's null - the panel stays black
+  if (!src) return false; // GetSpellIcon's null - the panel stays black
   drawImgCrop(renderer, _art.icons, m, src, dst);
   return true;
 }
@@ -131,14 +130,26 @@ export function drawElementIcon(renderer, m, elementType, dst) {
  *  DFU's are neither. L10N3d: DFU's keys, in enum order, each entry
  *  read in the player's language when the tooltip reads it. */
 const TARGET_TEXT = localizedStrings({
-  casterOnly: 'Caster only', byTouch: 'By touch', singleTargetAtRange: 'Single target at range',
-  areaAroundCaster: 'Area around caster', areaAtRange: 'Area at range',
+  casterOnly: 'Caster only',
+  byTouch: 'By touch',
+  singleTargetAtRange: 'Single target at range',
+  areaAroundCaster: 'Area around caster',
+  areaAtRange: 'Area at range',
 });
 const ELEMENT_TEXT = localizedStrings({
-  fireBased: 'Fire based', coldBased: 'Cold based', poisonBased: 'Poison based', shockBased: 'Shock based', magicBased: 'Magic based',
+  fireBased: 'Fire based',
+  coldBased: 'Cold based',
+  poisonBased: 'Poison based',
+  shockBased: 'Shock based',
+  magicBased: 'Magic based',
 });
 /** A DFU-keyed table as a frozen list in its key order, each entry read when it is read. */
-const inEnumOrder = (table) => Object.freeze(Object.keys(table).reduce((list, key, i) =>
-  Object.defineProperty(list, i, { enumerable: true, get: () => table[key] }), []));
+const inEnumOrder = (table) =>
+  Object.freeze(
+    Object.keys(table).reduce(
+      (list, key, i) => Object.defineProperty(list, i, { enumerable: true, get: () => table[key] }),
+      [],
+    ),
+  );
 export const TARGET_DESCRIPTIONS = inEnumOrder(TARGET_TEXT);
 export const ELEMENT_DESCRIPTIONS = inEnumOrder(ELEMENT_TEXT);

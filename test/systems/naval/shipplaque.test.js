@@ -357,7 +357,7 @@ test('SHIP-PLAQUE the ledger, the Fleet and the word: a named ship\'s alone, a n
   assert.equal(validCsaRecord({ ...rec, p: 'x' }).boats.length, 3, 'never dropped for it');
   // a peer's board, the world's wiring
   const peers = readFileSync(new URL('../../../src/scenes/comeSailAway/comeSailAwayPeers.js', import.meta.url), 'utf8');
-  assert.equal((peers.match(/plaqueName = w\.plaque \? w\.name \?\? '' : ''/g) ?? []).length, 2, 'a peer\'s board her name - built and said again');
+  assert.equal((peers.match(/plaqueName = w\.plaque \? \(w\.name \?\? ''\) : ''/g) ?? []).length, 2, 'a peer\'s board her name - built and said again');
   const world = hostText('src/scenes/world.js');
   assert.match(world, /plaqueOf: \(boat\) => \{ const r = boat\.uid \? fleetShip\(boat\.uid\) : null; return r\?\.plaque && r\.name \? r\.name : null; \}, plaqueFont: \(\) => fetchBytes\('FONT0003\.FNT'\) \}\);/);
   assert.match(world, /plaque: !!\(b\.uid && fleetShip\(b\.uid\)\?\.plaque\),   \/\/ SHIP-PLAQUE: her name on her bows/);

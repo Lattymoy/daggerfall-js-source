@@ -11,8 +11,8 @@
   {
     "name": "POI3B-the-tool-unpressed",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "b.setAttribute('aria-pressed', String(editor.mode() === m));",
-    "new": "b.setAttribute('aria-pressed', 'false');",
+    "old": "      b.setAttribute('aria-pressed', String(editor.mode() === m));",
+    "new": "      b.setAttribute('aria-pressed', 'false');",
     "tests": [
       "test/poi/poi3b_panel.test.js"
     ]
@@ -21,7 +21,7 @@
     "name": "POI3B-a-field-with-no-step",
     "file": "src/ui/poi/poiEditorPanel.js",
     "old": "    const change = (label, fn) => edit.edit(sel.id, label, fn);",
-    "new": "    const change = (label, fn) => { fn(edit.docOf(sel.id)); };",
+    "new": "    const change = (label, fn) => {\n      fn(edit.docOf(sel.id));\n    };",
     "tests": [
       "test/poi/poi3b_panel.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "POI3B-the-problems-unsaid",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "for (const p of ps.slice(0, 40)) {",
-    "new": "for (const p of ps.slice(0, 0)) {",
+    "old": "    for (const p of ps.slice(0, 40)) {",
+    "new": "    for (const p of ps.slice(0, 0)) {",
     "tests": [
       "test/poi/poi3b_panel.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "POI3B-the-revision-not-kept",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "edit.markSaved(id, { rev: r.data.rev, state: 'draft', doc: sent });",
-    "new": "edit.markSaved(id, { rev: null, state: 'draft', doc: sent });",
+    "old": "    edit.markSaved(id, { rev: r.data.rev, state: 'draft', doc: sent });",
+    "new": "    edit.markSaved(id, { rev: null, state: 'draft', doc: sent });",
     "tests": [
       "test/poi/poi3b_panel.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "POI3B-another-draft-as-mine",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "me.handle && String(x.author).toLowerCase() === me.handle.toLowerCase());",
-    "new": "!!me.handle);",
+    "old": "    const mine = [...docs]\n      .reverse()\n      .find(\n        (x) =>\n          (x.state === 'draft' || x.state === 'submitted') &&\n          me.handle &&\n          String(x.author).toLowerCase() === me.handle.toLowerCase(),\n      );",
+    "new": "    const mine = [...docs].reverse().find((x) => (x.state === 'draft' || x.state === 'submitted') && !!me.handle);",
     "tests": [
       "test/poi/poi3b_panel.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "POI3B-the-base-lost",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": ": sentBack ? (pick.base ?? null) : (h.liveRev ?? null), rev:",
-    "new": ": sentBack ? (pick.base ?? null) : null, rev:",
+    "old": "      base: mine ? (mine.base ?? null) : sentBack ? (pick.base ?? null) : (h.liveRev ?? null),",
+    "new": "      base: mine ? (mine.base ?? null) : sentBack ? (pick.base ?? null) : null,",
     "tests": [
       "test/poi/poi3b_panel.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "POI3B-a-refused-part-uploaded",
     "file": "src/poi/poiImport.js",
-    "old": "if (code) { refused.push({ name: p.name, code }); continue; }",
-    "new": "if (code) { refused.push({ name: p.name, code }); }",
+    "old": "      continue;\n    }",
+    "new": "    }",
     "tests": [
       "test/poi/poi3b_panel.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "POI3B-refused-online-no-more",
     "file": "src/systems/online/onlineLane.js",
-    "old": "'wseed', 'season', 'editor']);",
-    "new": "'wseed', 'season']);",
+    "old": "  'editor',\n]); // POI-3: the POI editor's free eye and its map jump are powers too - a builder edits offline",
+    "new": "]); // POI-3: the POI editor's free eye and its map jump are powers too - a builder edits offline",
     "tests": [
       "test/poi/poi3b_panel.test.js"
     ]

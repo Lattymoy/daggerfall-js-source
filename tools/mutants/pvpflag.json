@@ -1,202 +1,479 @@
 [
-  { "name": "PVP-FLAG-the-level", "file": "src/systems/wild/pvpFlag.js", "old": "lockMs: 60_000, level: 30,", "new": "lockMs: 60_000, level: 1,", "tests": ["test/net/pvpflag.test.js"], "why": "PvP opens at level 30" },
-  { "name": "PVP-FLAG-the-lock-short", "file": "src/systems/wild/pvpFlag.js", "old": "lockMs: 60_000, level: 30,", "new": "lockMs: 30_000, level: 30,", "tests": ["test/net/pvpflag.test.js"], "why": "the owner's minute" },
-  { "name": "PVP-FLAG-the-edge", "file": "src/systems/wild/pvpFlag.js", "old": "export const pvpFlagCanDrop = (fightAt, now) => !(now - fightAt < PVP_FLAG.lockMs);", "new": "export const pvpFlagCanDrop = (fightAt, now) => !(now - fightAt <= PVP_FLAG.lockMs);", "tests": ["test/net/pvpflag.test.js"], "why": "free at the minute itself" },
-  { "name": "PVP-FLAG-the-blow-unasked", "file": "src/net/wild/wildRef.js", "old": "  if (!a.flag) return", "new": "  if (false) return", "tests": ["test/net/pvpflag.test.js"], "why": "flagged on flagged alone" },
-  { "name": "PVP-FLAG-the-lock-unheld", "file": "src/net/wild/wildRef.js", "old": "  else if (fl === 0 && pvpFlagCanDrop(Math.max(x.fightAt, x.struckAt), now)) x.flag = false;", "new": "  else if (fl === 0) x.flag = false;", "tests": ["test/net/pvpflag.test.js"], "why": "a drop inside the lock is held up" },
-  { "name": "PVP-FLAG-the-word-unread", "file": "src/net/wild/wildRef.js", "old": "  else if (fl === 1 || x.flag === undefined) x.flag = true;", "new": "  else if (x.flag === undefined) x.flag = true;", "tests": ["test/net/pvpflag.test.js"], "why": "up at once" },
-  { "name": "PVP-FLAG-the-wire-unprojected", "file": "src/net/wire.js", "old": "...(d.z === 1 && d.fl !== undefined ? { fl: d.fl } : {}), ...(d.z === 1 && d.ed === 1 ? { ed: 1 } : {}), ", "new": "...(d.z === 1 && d.ed === 1 ? { ed: 1 } : {}), ", "tests": ["test/net/pvpflag.test.js"], "why": "the word carries the flag" },
-  { "name": "PVP-FLAG-the-move-unsaid", "file": "server/src/index.js", "old": "    if (x.flag !== flagWas || !wasIn || (fl === 0 && x.flag) || (fl === 1 && !x.flag)) this._wildFan(", "new": "    if (false) this._wildFan(", "tests": ["test/net/pvpflag.test.js"], "why": "the room hears each flag" },
-  { "name": "PVP-FLAG-the-newcomer-untold", "file": "server/src/index.js", "old": "if (sub !== a.sub && o.zone && o.flag) this._send(", "new": "if (false) this._send(", "tests": ["test/net/pvpflag.test.js"], "why": "one entering hears every flag up" },
-  { "name": "PVP-FLAG-the-refused-drop-unsaid", "file": "server/src/index.js", "old": "    if (x.flag !== flagWas || !wasIn || (fl === 0 && x.flag) || (fl === 1 && !x.flag)) this._wildFan(", "new": "    if (x.flag !== flagWas || !wasIn || (fl === 1 && !x.flag)) this._wildFan(", "tests": ["test/net/pvpflag.test.js"], "why": "a held drop is said back" },
-  { "name": "PVP-FLAG-the-fair-unflagged", "file": "src/scenes/pvpFlagHost.js", "old": "    fair: () => on,", "new": "    fair: () => true,", "tests": ["test/net/pvpflag.test.js"], "why": "unflagged, my blows touch no player" },
-  { "name": "PVP-FLAG-my-word-unheld", "file": "src/scenes/pvpFlagHost.js", "old": "if (g.id === me()) { on = g.f === 1; paint(); } else", "new": "if (g.id === me()) { paint(); } else", "tests": ["test/net/pvpflag.test.js"], "why": "the referee holds mine" },
-  { "name": "PVP-FLAG-the-lock-unstarted", "file": "src/scenes/pvpFlagHost.js", "old": "fightAt = now(); wasLock = true;", "new": "void now; wasLock = true;", "tests": ["test/net/pvpflag.test.js"], "why": "a blow on me starts the lock" },
-  { "name": "PVP-PORTAL-the-stone-asks-the-zone", "file": "src/scenes/portalStoneHost.js", "old": "const teleportRefused = (to) => host.veilRefused(to) || ", "new": "const teleportRefused = (to) => host.wildTeleportRefused(to) || host.veilRefused(to) || ", "tests": ["test/net/pvpflag.test.js", "test/systems/portal1_stone.test.js", "test/systems/portalbay_stone.test.js"], "why": "PVP-PORTAL: the zone's law is not a stone's, flagged or not" },
-  {"name": "PVP-FLAG-the-field-unread", "file": "src/scenes/pvpFlagHost.js", "old": "if (e.code !== 'CapsLock' || e.repeat || el?.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el?.tagName ?? '')) return;", "new": "if (e.code !== 'CapsLock' || e.repeat) return;", "tests": ["test/net/pvpflag.test.js"], "why": "Caps Lock typed in the chat box never flags"},
-  {"name": "PVP-FLAG-CAPS-the-game-press-unread", "file": "src/ui/capsFix.js", "old": "  if (by !== 'game' || ch.length !== 1", "new": "  if (ch.length !== 1", "tests": ["test/net/pvpflag.test.js"], "why": "only the flag's own Caps Lock is undone"},
-  {"name": "PVP-FLAG-CAPS-the-field-press-unheard", "file": "src/ui/capsFix.js", "old": "  if (e.code === 'CapsLock') { noteCaps('field'); return false; }", "new": "  if (e.code === 'CapsLock') return false;", "tests": ["test/net/pvpflag.test.js"], "why": "a Caps Lock pressed in chat is the player's own"},
-  {"name": "PVP-SKULL-the-aggro-unsaid", "file": "server/src/index.js", "old": "    this._wildAggroSay(st, [a.sub, tb.sub], now);", "new": "    void st;", "tests": ["test/net/pvpflag.test.js"], "why": "a blow turns both skulls gold"},
-  {"name": "PVP-SKULL-said-each-blow", "file": "src/net/wild/wildRef.js", "old": "  if (!x?.flag || now - (x.aggroSaid ?? -Infinity) < PVP_FLAG.sayMs) return null;", "new": "  if (!x?.flag) return null;", "tests": ["test/net/pvpflag.test.js"], "why": "once each ten seconds"},
-  {"name": "PVP-SKULL-the-unflagged-gold", "file": "src/net/wild/wildRef.js", "old": "  if (!x?.flag || now - (x.aggroSaid", "new": "  if (!x || now - (x.aggroSaid", "tests": ["test/net/pvpflag.test.js"], "why": "no skull for the unflagged"},
-  {"name": "PVP-SKULL-the-newcomer-white", "file": "server/src/index.js", "old": "JSON.stringify(wildFlagWord(o, Date.now()))", "new": "JSON.stringify({ t: 'wref', k: 'flag', id: o.id, f: 1 })", "tests": ["test/net/pvpflag.test.js"], "why": "one entering hears the aggro left"},
-  {"name": "PVP-SKULL-the-wire-drops-a", "file": "src/net/wire.js", "old": "f: m.f, ...(m.f === 1 && Number.isInteger(m.a) && m.a > 0 && m.a <= 60_000 ? { a: m.a } : {}), ...(m.f === 1 && m.v === 1 ? { v: 1 } : {}) }", "new": "f: m.f, ...(m.f === 1 && m.v === 1 ? { v: 1 } : {}) }", "tests": ["test/net/pvpflag.test.js"], "why": "the aggro rides the wire"},
-  {"name": "PVP-SKULL-the-gold-unread", "file": "src/scenes/pvpFlagHost.js", "old": "(reds.has(id) ? 'red' : peers.get(id) > now() ? 'gold' : 'white')", "new": "(reds.has(id) ? 'red' : 'white')", "tests": ["test/net/pvpflag.test.js"], "why": "a peer in aggro is gold"},
-  {"name": "PVP-SKULL-the-mask-unworn", "file": "src/scenes/pvpFlagHost.js", "old": "      if (!k) return q && near", "new": "      return q && near", "tests": ["test/net/pvpflag.test.js"], "why": "each name wears its skull"},
-  {"name": "PVP-SKULL-a-tint-lost", "file": "src/ui/pvpSkull.js", "old": "  red: ['#d42a1e', '#86120a', '#ff7d6b'],", "new": "  red: ['#ece6d6', '#86120a', '#ff7d6b'],", "tests": ["test/net/pvpflag.test.js"], "why": "the villain's red"},
+  {
+    "name": "PVP-FLAG-the-level",
+    "file": "src/systems/wild/pvpFlag.js",
+    "old": "export const PVP_FLAG = Object.freeze({ lockMs: 60_000, level: 30, sayMs: 10_000 });",
+    "new": "export const PVP_FLAG = Object.freeze({ lockMs: 60_000, level: 1, sayMs: 10_000 });",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ],
+    "why": "PvP opens at level 30"
+  },
+  {
+    "name": "PVP-FLAG-the-lock-short",
+    "file": "src/systems/wild/pvpFlag.js",
+    "old": "export const PVP_FLAG = Object.freeze({ lockMs: 60_000, level: 30, sayMs: 10_000 });",
+    "new": "export const PVP_FLAG = Object.freeze({ lockMs: 30_000, level: 30, sayMs: 10_000 });",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ],
+    "why": "the owner's minute"
+  },
+  {
+    "name": "PVP-FLAG-the-edge",
+    "file": "src/systems/wild/pvpFlag.js",
+    "old": "export const pvpFlagCanDrop = (fightAt, now) => !(now - fightAt < PVP_FLAG.lockMs);",
+    "new": "export const pvpFlagCanDrop = (fightAt, now) => !(now - fightAt <= PVP_FLAG.lockMs);",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ],
+    "why": "free at the minute itself"
+  },
+  {
+    "name": "PVP-FLAG-the-blow-unasked",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  if (!a.flag) return { ok: false, dealt: 0, fell: false, fall: null, why: 'unflagged' }; // PVP-FLAG: an unflagged striker touches no player - the struck one's flag never shields it",
+    "new": "  if (false) return { ok: false, dealt: 0, fell: false, fall: null, why: 'unflagged' }; // PVP-FLAG: an unflagged striker touches no player - the struck one's flag never shields it",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ],
+    "why": "flagged on flagged alone"
+  },
+  {
+    "name": "PVP-FLAG-the-lock-unheld",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  else if (fl === 0 && pvpFlagCanDrop(Math.max(x.fightAt, x.struckAt), now)) x.flag = false;",
+    "new": "  else if (fl === 0) x.flag = false;",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ],
+    "why": "a drop inside the lock is held up"
+  },
+  {
+    "name": "PVP-FLAG-the-word-unread",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  else if (fl === 1 || x.flag === undefined) x.flag = true;",
+    "new": "  else if (x.flag === undefined) x.flag = true;",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ],
+    "why": "up at once"
+  },
+  {
+    "name": "PVP-FLAG-the-wire-unprojected",
+    "file": "src/net/wire.js",
+    "old": "...(d.z === 1 && d.fl !== undefined ? { fl: d.fl } : {}), ...(d.z === 1 && d.ed === 1 ? { ed: 1 } : {}), ",
+    "new": "...(d.z === 1 && d.ed === 1 ? { ed: 1 } : {}), ",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ],
+    "why": "the word carries the flag"
+  },
+  {
+    "name": "PVP-FLAG-the-move-unsaid",
+    "file": "server/src/index.js",
+    "old": "    if (x.flag !== flagWas || !wasIn || (fl === 0 && x.flag) || (fl === 1 && !x.flag)) this._wildFan(",
+    "new": "    if (false) this._wildFan(",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ],
+    "why": "the room hears each flag"
+  },
+  {
+    "name": "PVP-FLAG-the-newcomer-untold",
+    "file": "server/src/index.js",
+    "old": "if (sub !== a.sub && o.zone && o.flag) this._send(",
+    "new": "if (false) this._send(",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ],
+    "why": "one entering hears every flag up"
+  },
+  {
+    "name": "PVP-FLAG-the-refused-drop-unsaid",
+    "file": "server/src/index.js",
+    "old": "    if (x.flag !== flagWas || !wasIn || (fl === 0 && x.flag) || (fl === 1 && !x.flag)) this._wildFan(",
+    "new": "    if (x.flag !== flagWas || !wasIn || (fl === 1 && !x.flag)) this._wildFan(",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ],
+    "why": "a held drop is said back"
+  },
+  {
+    "name": "PVP-FLAG-the-fair-unflagged",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "    fair: () => on,",
+    "new": "    fair: () => true,",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ],
+    "why": "unflagged, my blows touch no player"
+  },
+  {
+    "name": "PVP-FLAG-my-word-unheld",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "        on = g.f === 1;\n        paint();",
+    "new": "        paint();",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ],
+    "why": "the referee holds mine"
+  },
+  {
+    "name": "PVP-FLAG-the-lock-unstarted",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "      fightAt = now();",
+    "new": "      void now;",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ],
+    "why": "a blow on me starts the lock"
+  },
+  {
+    "name": "PVP-PORTAL-the-stone-asks-the-zone",
+    "file": "src/scenes/portalStoneHost.js",
+    "old": "const teleportRefused = (to) => host.veilRefused(to) || ",
+    "new": "const teleportRefused = (to) => host.wildTeleportRefused(to) || host.veilRefused(to) || ",
+    "tests": [
+      "test/net/pvpflag.test.js",
+      "test/systems/portal1_stone.test.js",
+      "test/systems/portalbay_stone.test.js"
+    ],
+    "why": "PVP-PORTAL: the zone's law is not a stone's, flagged or not"
+  },
+  {
+    "name": "PVP-FLAG-the-field-unread",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "      if (e.repeat || el?.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el?.tagName ?? '')) return;",
+    "new": "      if (e.repeat) return;",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ],
+    "why": "Caps Lock typed in the chat box never flags"
+  },
+  {
+    "name": "PVP-FLAG-CAPS-the-game-press-unread",
+    "file": "src/ui/capsFix.js",
+    "old": "  if (by !== 'game' || ch.length !== 1 || e.ctrlKey || e.altKey || e.metaKey || ch.toLowerCase() === ch.toUpperCase())\n    return false;",
+    "new": "  if (ch.length !== 1 || e.ctrlKey || e.altKey || e.metaKey || ch.toLowerCase() === ch.toUpperCase()) return false;",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ],
+    "why": "only the flag's own Caps Lock is undone"
+  },
+  {
+    "name": "PVP-FLAG-CAPS-the-field-press-unheard",
+    "file": "src/ui/capsFix.js",
+    "old": "  if (e.code === 'CapsLock') {\n    noteCaps('field');\n    return false;\n  }",
+    "new": "  if (e.code === 'CapsLock') return false;",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ],
+    "why": "a Caps Lock pressed in chat is the player's own"
+  },
+  {
+    "name": "PVP-SKULL-the-aggro-unsaid",
+    "file": "server/src/index.js",
+    "old": "    this._wildAggroSay(st, [a.sub, tb.sub], now);",
+    "new": "    void st;",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ],
+    "why": "a blow turns both skulls gold"
+  },
+  {
+    "name": "PVP-SKULL-said-each-blow",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  if (!x?.flag || now - (x.aggroSaid ?? -Infinity) < PVP_FLAG.sayMs) return null;",
+    "new": "  if (!x?.flag) return null;",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ],
+    "why": "once each ten seconds"
+  },
+  {
+    "name": "PVP-SKULL-the-unflagged-gold",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  if (!x?.flag || now - (x.aggroSaid ?? -Infinity) < PVP_FLAG.sayMs) return null;",
+    "new": "  if (!x || now - (x.aggroSaid ?? -Infinity) < PVP_FLAG.sayMs) return null;",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ],
+    "why": "no skull for the unflagged"
+  },
+  {
+    "name": "PVP-SKULL-the-newcomer-white",
+    "file": "server/src/index.js",
+    "old": "JSON.stringify(wildFlagWord(o, Date.now()))",
+    "new": "JSON.stringify({ t: 'wref', k: 'flag', id: o.id, f: 1 })",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ],
+    "why": "one entering hears the aggro left"
+  },
+  {
+    "name": "PVP-SKULL-the-wire-drops-a",
+    "file": "src/net/wire.js",
+    "old": "f: m.f, ...(m.f === 1 && Number.isInteger(m.a) && m.a > 0 && m.a <= 60_000 ? { a: m.a } : {}), ...(m.f === 1 && m.v === 1 ? { v: 1 } : {}) }",
+    "new": "f: m.f, ...(m.f === 1 && m.v === 1 ? { v: 1 } : {}) }",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ],
+    "why": "the aggro rides the wire"
+  },
+  {
+    "name": "PVP-SKULL-the-gold-unread",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "  const skullOf = (id) => (peers.has(id) ? (reds.has(id) ? 'red' : peers.get(id) > now() ? 'gold' : 'white') : null);",
+    "new": "  const skullOf = (id) => (peers.has(id) ? (reds.has(id) ? 'red' : 'white') : null);",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ],
+    "why": "a peer in aggro is gold"
+  },
+  {
+    "name": "PVP-SKULL-the-mask-unworn",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "        if (!k) return q && near ? { ...q, near } : q;",
+    "new": "        return q && near ? { ...q, near } : q;",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ],
+    "why": "each name wears its skull"
+  },
+  {
+    "name": "PVP-SKULL-a-tint-lost",
+    "file": "src/ui/pvpSkull.js",
+    "old": "  red: ['#d42a1e', '#86120a', '#ff7d6b'],",
+    "new": "  red: ['#ece6d6', '#86120a', '#ff7d6b'],",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ],
+    "why": "the villain's red"
+  },
   {
     "name": "PVP-30-the-young-unread",
     "file": "src/net/wild/wildRef.js",
-    "old": "if (pvpYoung(a.cl) || pvpYoung(t.cl)) return",
-    "new": "if (pvpYoung(a.cl) && pvpYoung(t.cl)) return",
-    "tests": ["test/net/pvpflag.test.js"]
+    "old": "  if (pvpYoung(a.cl) || pvpYoung(t.cl)) return { ok: false, dealt: 0, fell: false, fall: null, why: 'young' }; // PVP-30: under level 30 no player strikes or is struck",
+    "new": "  if (pvpYoung(a.cl) && pvpYoung(t.cl)) return { ok: false, dealt: 0, fell: false, fall: null, why: 'young' }; // PVP-30: under level 30 no player strikes or is struck",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   },
   {
     "name": "PVP-30-the-level",
     "file": "src/systems/wild/pvpFlag.js",
-    "old": "Number.isSafeInteger(cl) && cl < PVP_FLAG.level;",
-    "new": "Number.isSafeInteger(cl) && cl <= PVP_FLAG.level;",
-    "tests": ["test/net/pvpflag.test.js"]
+    "old": "export const pvpYoung = (cl) => Number.isSafeInteger(cl) && cl < PVP_FLAG.level;",
+    "new": "export const pvpYoung = (cl) => Number.isSafeInteger(cl) && cl <= PVP_FLAG.level;",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   },
   {
     "name": "PVP-30-the-flag-up-young",
     "file": "src/net/wild/wildRef.js",
     "old": "  if (pvpYoung(x.cl)) x.flag = false;",
     "new": "  if (false) x.flag = false;",
-    "tests": ["test/net/pvpflag.test.js"]
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   },
   {
     "name": "PVP-30-the-level-unkept",
     "file": "src/net/wild/wildRef.js",
-    "old": "if (Number.isSafeInteger(cl)) x.cl = cl;",
-    "new": "if (false) x.cl = cl;",
-    "tests": ["test/net/pvpflag.test.js"]
+    "old": "  if (Number.isSafeInteger(cl)) x.cl = cl; // PVP-30: the character level its token signs",
+    "new": "  if (false) x.cl = cl; // PVP-30: the character level its token signs",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   },
   {
     "name": "PVP-30-the-level-unpassed",
     "file": "server/src/index.js",
     "old": "lv: a.lv, cl: a.cl ?? null, ci: a.ci ?? ''",
     "new": "lv: a.lv, ci: a.ci ?? ''",
-    "tests": ["test/net/pvpflag.test.js"]
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   },
   {
     "name": "PVP-30-the-refusal-unsaid",
     "file": "server/src/index.js",
     "old": " || (fl === 1 && !x.flag))",
     "new": ")",
-    "tests": ["test/net/pvpflag.test.js"]
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   },
   {
     "name": "PVP-30-the-ask-level",
     "file": "src/ui/levelUp/pvp30Ask.js",
-    "old": "e.level === PVP_FLAG.level - 1",
-    "new": "e.level < PVP_FLAG.level",
-    "tests": ["test/net/pvpflag.test.js"]
+    "old": "  e?._online === true && e.readyToLevelUp === true && !e.oghmaLevelUp && e.level === PVP_FLAG.level - 1 && !said.has(e);",
+    "new": "  e?._online === true && e.readyToLevelUp === true && !e.oghmaLevelUp && e.level < PVP_FLAG.level && !said.has(e);",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   },
   {
     "name": "PVP-30-offline-asked",
     "file": "src/ui/levelUp/pvp30Ask.js",
-    "old": "e?._online === true && e.readyToLevelUp",
-    "new": "e?.readyToLevelUp",
-    "tests": ["test/net/pvpflag.test.js"]
+    "old": "  e?._online === true && e.readyToLevelUp === true && !e.oghmaLevelUp && e.level === PVP_FLAG.level - 1 && !said.has(e);",
+    "new": "  e?.readyToLevelUp === true && !e.oghmaLevelUp && e.level === PVP_FLAG.level - 1 && !said.has(e);",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   },
   {
     "name": "PVP-30-the-rollout-unguarded",
     "file": "src/ui/charSheetDoor.js",
     "old": "if (!entity?.readyToLevelUp || pvp30Asks(entity)) return null;",
     "new": "if (!entity?.readyToLevelUp) return null;",
-    "tests": ["test/net/pvpflag.test.js"]
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   },
   {
     "name": "PVP-30-yes-unheard",
     "file": "src/ui/levelUp/pvp30Ask.js",
-    "old": "onYes: () => { pvp30Said(e); open",
-    "new": "onYes: () => { open",
-    "tests": ["test/net/pvpflag.test.js"]
+    "old": "      pvp30Said(e);\n      open({ defer: true });",
+    "new": "      open({ defer: true });",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   },
   {
     "name": "PVP-30-the-door",
     "file": "src/ui/charSheetDoor.js",
     "old": "    if (pvp30Asks(deps.entity)) return pvp30Box(deps.entity);\n",
     "new": "",
-    "tests": ["test/net/pvpflag.test.js"]
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   },
   {
     "name": "PVP-30-the-tab",
     "file": "src/ui/growth/growthTab.js",
     "old": "  if (owed && pvp30Asks(entity)) { pvp30Page(detail, ctx); return; }\n",
     "new": "",
-    "tests": ["test/net/pvpflag.test.js"]
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   },
   {
     "name": "PVP-SKULL-OW-the-door-shut",
     "file": "src/scenes/pvpFlagHost.js",
     "old": "export const pvpSkullOf = (id) => _current?.skullOf(id) ?? null;",
     "new": "export const pvpSkullOf = (id) => null;",
-    "tests": ["test/net/pvpflag.test.js"]
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   },
   {
     "name": "PVP-SKULL-OW-a-mark-bare",
     "file": "src/scenes/travelViewMarks.js",
     "old": "lv: t.lv ?? null, skull: pvpSkullOf(t.id) });",
     "new": "lv: t.lv ?? null });",
-    "tests": ["test/net/pvpflag.test.js"]
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   },
   {
     "name": "PVP-SKULL-OW-the-carry-dropped",
     "file": "src/scenes/travelView.js",
-    "old": ", ...(m.skull ? { skull: m.skull } : {}) });",
-    "new": " });",
-    "tests": ["test/net/pvpflag.test.js"]
+    "old": "        ...(m.skull ? { skull: m.skull } : {}),\n      }); // AUDIT NAMES N2-1: and the player's badge - dropped here, every marker was a bare name; AUDIT GATHER-OW: and a group's colour (every diamond was brass); FIELD BUGS 2026-10-04e: OW-KIN's kin, OW-WHO's Renown, OW-NODE-KM's distance, OW-HUBS' wheel and SEAT-TIP's card - each field the readout reads is carried, or it is dropped here; WAYPOINTS: a flag's kind and whether it is followed",
+    "new": "      }); // AUDIT NAMES N2-1: and the player's badge - dropped here, every marker was a bare name; AUDIT GATHER-OW: and a group's colour (every diamond was brass); FIELD BUGS 2026-10-04e: OW-KIN's kin, OW-WHO's Renown, OW-NODE-KM's distance, OW-HUBS' wheel and SEAT-TIP's card - each field the readout reads is carried, or it is dropped here; WAYPOINTS: a flag's kind and whether it is followed",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   },
   {
     "name": "PVP-SKULL-OW-undrawn",
     "file": "src/ui/travel/travelViewHud.js",
     "old": "    else if (sk) g.drawImage(sk,",
     "new": "    else if (false) g.drawImage(sk,",
-    "tests": ["test/net/pvpflag.test.js"]
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   },
   {
     "name": "PVP-EDGE-the-distance-unread",
     "file": "src/systems/wild/zoneEdge.js",
-    "old": " && Math.hypot(x - out.x, z - out.z) <= ZONE_EDGE.m) walkedAt = now;",
-    "new": ") walkedAt = now;",
-    "tests": ["test/net/pvpflag.test.js"]
+    "old": "  if (!inside && out && now - out.at <= ZONE_EDGE.ms && Math.hypot(x - out.x, z - out.z) <= ZONE_EDGE.m) walkedAt = now;",
+    "new": "  if (!inside && out && now - out.at <= ZONE_EDGE.ms) walkedAt = now;",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   },
   {
     "name": "PVP-EDGE-the-time-unread",
     "file": "src/systems/wild/zoneEdge.js",
-    "old": "if (!inside && out && now - out.at <= ZONE_EDGE.ms &&",
-    "new": "if (!inside && out &&",
-    "tests": ["test/net/pvpflag.test.js"]
+    "old": "  if (!inside && out && now - out.at <= ZONE_EDGE.ms && Math.hypot(x - out.x, z - out.z) <= ZONE_EDGE.m) walkedAt = now;",
+    "new": "  if (!inside && out && Math.hypot(x - out.x, z - out.z) <= ZONE_EDGE.m) walkedAt = now;",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   },
   {
     "name": "PVP-EDGE-the-walk-unspent",
     "file": "src/systems/wild/zoneEdge.js",
-    "old": "inside = false; walkedAt = -Infinity; return false; }",
-    "new": "inside = false; return false; }",
-    "tests": ["test/net/pvpflag.test.js"]
+    "old": "    walkedAt = -Infinity;\n    return false;",
+    "new": "    return false;",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   },
   {
     "name": "PVP-EDGE-on-every-keepalive",
     "file": "src/net/online.js",
     "old": "this._sayZone(this._ws, v, !v && dead, entry && edge);",
     "new": "this._sayZone(this._ws, v, !v && dead, edge);",
-    "tests": ["test/net/pvpflag.test.js"]
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   },
   {
     "name": "PVP-EDGE-the-wire-dropped",
     "file": "src/net/wire.js",
     "old": ", ...(d.z === 1 && d.ed === 1 ? { ed: 1 } : {}), ...(d.z === 1 && d.sf",
     "new": ", ...(d.z === 1 && d.sf",
-    "tests": ["test/net/pvpflag.test.js"]
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   },
   {
     "name": "PVP-EDGE-the-relay-unpassed",
     "file": "server/src/index.js",
     "old": "m.data.fl ?? null, m.data.ed === 1, m.data.sf === 1); return; }",
     "new": "m.data.fl ?? null, false, m.data.sf === 1); return; }",
-    "tests": ["test/net/pvpflag.test.js"]
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   },
   {
     "name": "PVP-EDGE-the-referee-unasking",
     "file": "src/net/wild/wildRef.js",
-    "old": "else if (!x.down && !rose && ed && now",
-    "new": "else if (!x.down && !rose && now",
-    "tests": ["test/net/pvpflag.test.js"]
+    "old": "      ed &&\n      now - x.outAt >= WILD_GRACE.awayMs &&",
+    "new": "      now - x.outAt >= WILD_GRACE.awayMs &&",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   },
   {
     "name": "PVP-EDGE-the-host-unsaid",
     "file": "src/scenes/world.js",
     "old": ", zoneEdgeSee(wildHere(), player.pos, Date.now()));",
     "new": ");",
-    "tests": ["test/net/pvpflag.test.js"]
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   },
   {
     "name": "PVP-FLAG-SPOT-back-on-the-decorate-button",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "top: `calc(50% - ${PVP_FLAG_SPOT.lift}px)`, right: '8px', transform: 'none',",
-    "new": "top: '50%', right: '8px', transform: 'translateY(-50%)',",
-    "tests": ["test/net/pvpflag.test.js"]
+    "old": "      top: `calc(50% - ${PVP_FLAG_SPOT.lift}px)`,\n      right: '8px',\n      transform: 'none',",
+    "new": "      top: '50%',\n      right: '8px',\n      transform: 'translateY(-50%)',",
+    "tests": [
+      "test/net/pvpflag.test.js"
+    ]
   }
 ]

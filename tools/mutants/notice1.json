@@ -56,7 +56,7 @@
   {
     "name": "NOTICE1-7-a-recruit-recruits",
     "file": "server-account/src/board.js",
-    "old": "    if (!guildMay(a.me.rank, 'invite')) return { error: 'guild-rank' };",
+    "old": "    if (!guildMay(a.me.rank, 'invite', a.powers)) return { error: 'guild-rank' };",
     "new": "    if (false) return { error: 'guild-rank' };",
     "tests": [
       "test/net/notice1.test.js"
@@ -155,8 +155,8 @@
   {
     "name": "NOTICE1-18-the-cache-a-moment-long",
     "file": "src/net/noticeBook.js",
-    "old": "nowMs() - e.at < BOARD_CACHE_MS) return Promise.resolve({ board: e.board",
-    "new": "nowMs() - e.at <= BOARD_CACHE_MS) return Promise.resolve({ board: e.board",
+    "old": "    boards.set(map, e);\n    if (!force && nowMs() - e.at < BOARD_CACHE_MS)",
+    "new": "    boards.set(map, e);\n    if (!force && nowMs() - e.at <= BOARD_CACHE_MS)",
     "tests": [
       "test/net/notice1.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "NOTICE1-19-a-closed-board-still-shown",
     "file": "src/net/noticeBook.js",
-    "old": "      if (SHUT.includes(r?.error)) { open = false; e.board = null; }   // AUDIT 28 N11: not this account's now",
-    "new": "      if (SHUT.includes(r?.error)) { open = false; }   // AUDIT 28 N11: not this account's now",
+    "old": "        e.board = null;\n      } // AUDIT 28 N11: not this account's now - DFU's box",
+    "new": "      } // AUDIT 28 N11: not this account's now - DFU's box",
     "tests": [
       "test/net/notice1.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "NOTICE1-20-a-retry-a-new-note",
     "file": "src/net/noticeBook.js",
-    "old": "    pin: (map, note) => once(`pin:${map}`, note, (id) => door.pin({ map, ...note }, id), 'Your note is pinned up.', map),",
-    "new": "    pin: (map, note) => once(`pin:${map}`, note, () => door.pin({ map, ...note }, rid()), 'Your note is pinned up.', map),",
+    "old": "      once(`pin:${map}`, note, (id) => door.pin({ map, ...note }, id), 'Your note is pinned up.', map),",
+    "new": "      once(`pin:${map}`, note, () => door.pin({ map, ...note }, rid()), 'Your note is pinned up.', map),",
     "tests": [
       "test/net/notice1.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "NOTICE1-21-read-to-the-oldest",
     "file": "src/net/noticeBook.js",
-    "old": "    const newest = Math.max(0, ...",
-    "new": "    const newest = Math.min(Infinity, ...",
+    "old": "    const newest = Math.max(\n      0,",
+    "new": "    const newest = Math.min(\n      Infinity,",
     "tests": [
       "test/net/notice1.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "NOTICE1-22-the-name-row-on-the-card",
     "file": "src/scenes/townPanelHost.js",
-    "old": "rows.map((r) => r.text).filter((t, i) => !(i === 0 && t === town.shown))",
-    "new": "rows.map((r) => r.text)",
+    "old": "        rows.map((r) => r.text).filter((t, i) => !(i === 0 && t === town.shown)),",
+    "new": "        rows.map((r) => r.text),",
     "tests": [
       "test/scenes/fb1029g_townpanel.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "NOTICE1-26-a-refusal-asked-every-frame",
     "file": "src/net/noticeBook.js",
-    "old": "      e.at = nowMs();   // a refusal is an answer too: asked again after the minute, not on the next frame\n",
-    "new": "",
+    "old": "      e.at = nowMs(); // a refusal is an answer too: asked again after the minute, not on the next frame\n      return { board: e.board, error: e.error, stale: !!e.board };",
+    "new": "      return { board: e.board, error: e.error, stale: !!e.board };",
     "tests": [
       "test/net/notice1.test.js"
     ]

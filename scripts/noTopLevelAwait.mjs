@@ -13,7 +13,8 @@ export function topLevelAwaits(text) {
   const visit = (node, inFn) => {
     if (!node || typeof node.type !== 'string') return;
     if (/Function/.test(node.type) || node.type === 'StaticBlock') inFn = true;
-    if (!inFn && (node.type === 'AwaitExpression' || (node.type === 'ForOfStatement' && node.await))) out.push(node.loc.start.line);
+    if (!inFn && (node.type === 'AwaitExpression' || (node.type === 'ForOfStatement' && node.await)))
+      out.push(node.loc.start.line);
     for (const k in node) {
       const v = node[k];
       if (Array.isArray(v)) for (const c of v) visit(c, inFn);
@@ -44,7 +45,10 @@ export function noImportedTopLevelAwait() {
     /** @this {{ error: (msg: string) => never }} @param {any} _o @param {Record<string, any>} bundle */
     generateBundle(_o, bundle) {
       const bad = importedAwaitingChunks(bundle);
-      if (bad.length) this.error(`WEBKIT-TLA: a chunk another imports awaits at its top level - ${bad.join(', ')}. WebKit before Safari 27 runs its importers first.`);
+      if (bad.length)
+        this.error(
+          `WEBKIT-TLA: a chunk another imports awaits at its top level - ${bad.join(', ')}. WebKit before Safari 27 runs its importers first.`,
+        );
     },
   };
 }

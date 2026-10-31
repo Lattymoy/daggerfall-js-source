@@ -36,6 +36,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { reviewLines, modAiOn, modAiModeOf, flagActs, FLAG_SEVERITY, AI_WAITS } from './modAi.js';
+import { postLogoCards } from './guildLogos.js'; // GUILD-LOGO: the logo reviews' cards
 import { discordOn, sendCard, cardOf } from './discord.js';
 import { openCaseFor, keepCaseLines } from './safety.js';
 import { autoMute, autoMutable, lawOrder, pushLaw } from './sanctions.js';
@@ -75,11 +76,18 @@ const more = (ctx) => (typeof ctx.budget === 'function' ? ctx.budget() : true);
 /** `?1, ?2, ...` for `n` ids. */
 const slots = (n, from = 1) => Array.from({ length: n }, (_, i) => `?${i + from}`).join(', ');
 /** A worse flag first: severity, then confidence. */
-const worse = (a, b) => (b.severity - a.severity) || (b.confidence - a.confidence);
+const worse = (a, b) => b.severity - a.severity || b.confidence - a.confidence;
 /** The worst of a set of flags, or null. @param {any[]} flags */
 const worstOf = (flags) => [...flags].sort(worse)[0] ?? null;
 /** A batch's lines, as kept. @param {unknown} json */
-const linesOf = (json) => { try { const v = JSON.parse(String(json ?? '[]')); return Array.isArray(v) ? v : []; } catch { return []; } };
+const linesOf = (json) => {
+  try {
+    const v = JSON.parse(String(json ?? '[]'));
+    return Array.isArray(v) ? v : [];
+  } catch {
+    return [];
+  }
+};
 
 /**
  * A verdict that acts, acted on - with MOD_AI "on", on an open case, on an account an automatic mute may fall on, and
@@ -99,10 +107,19 @@ async function actOn(ctx, env, fetchFn, caseId, targetId, flag, lines) {
     const again = await reviewLines(ctx.db, env, fetchFn, { lines: own, focus: targetId, nowS: ctx.nowS });
     if (!('flags' in again) || !flagActs(worstOf(again.flags))) return 0;
   }
-  const claimed = await ctx.db.prepare("UPDATE mod_cases SET auto = 'review', auto_at = ?2 WHERE id = ?1 AND status = 'open' AND COALESCE(auto_at, 0) = ?3")
-    .bind(caseId, ctx.nowS, Number(c.auto_at ?? 0)).run();
+  const claimed = await ctx.db
+    .prepare(
+      "UPDATE mod_cases SET auto = 'review', auto_at = ?2 WHERE id = ?1 AND status = 'open' AND COALESCE(auto_at, 0) = ?3",
+    )
+    .bind(caseId, ctx.nowS, Number(c.auto_at ?? 0))
+    .run();
   if (!claimed?.meta?.changes) return 0;
-  const until = await autoMute(ctx.db, env, row, { actor: 'auto:review', reason: `reviewer: ${flag.category}, severity ${flag.severity}`, caseId, nowS: ctx.nowS });
+  const until = await autoMute(ctx.db, env, row, {
+    actor: 'auto:review',
+    reason: `reviewer: ${flag.category}, severity ${flag.severity}`,
+    caseId,
+    nowS: ctx.nowS,
+  });
   if (!until) return 0;
   await pushLaw(env, fetchFn, await lawOrder(env, crypto.subtle, ctx.nowS, { s: targetId, mu: until }));
   return 1;
@@ -116,13 +133,31 @@ async function actOn(ctx, env, fetchFn, caseId, targetId, flag, lines) {
  * @param {string} mode @param {number} nowS @param {{ read: boolean }} how
  */
 async function keepVerdict(db, caseId, flag, line, mode, nowS, { read }) {
-  await db.prepare(`UPDATE mod_cases SET ai_category = ?2, ai_severity = ?3, ai_confidence = ?4, ai_reason = ?5, ai_mode = ?6, ai_at = ?7,
+  await db
+    .prepare(
+      `UPDATE mod_cases SET ai_category = ?2, ai_severity = ?3, ai_confidence = ?4, ai_reason = ?5, ai_mode = ?6, ai_at = ?7,
       ai_line_at = ?8, ai_line_sub = ?9, updated_at = ?7, discord_state = CASE WHEN discord_state = 'off' THEN 'off' ELSE 'due' END
-    WHERE id = ?1 AND (ai_severity IS NULL OR ai_severity < ?3 OR (ai_severity = ?3 AND COALESCE(ai_confidence, 0) <= ?4))`)
-    .bind(caseId, flag?.category ?? null, flag?.severity ?? 0, flag?.confidence ?? null, flag?.reason ?? null, mode, nowS, line?.at ?? null, line?.sub ?? null).run();
+    WHERE id = ?1 AND (ai_severity IS NULL OR ai_severity < ?3 OR (ai_severity = ?3 AND COALESCE(ai_confidence, 0) <= ?4))`,
+    )
+    .bind(
+      caseId,
+      flag?.category ?? null,
+      flag?.severity ?? 0,
+      flag?.confidence ?? null,
+      flag?.reason ?? null,
+      mode,
+      nowS,
+      line?.at ?? null,
+      line?.sub ?? null,
+    )
+    .run();
   if (read) {
-    await db.prepare("UPDATE mod_cases SET ai_state = 'done', ai_mode = ?2, ai_at = ?3, discord_state = CASE WHEN discord_state = 'off' THEN 'off' ELSE 'due' END WHERE id = ?1 AND ai_state = 'reading'")
-      .bind(caseId, mode, nowS).run();
+    await db
+      .prepare(
+        "UPDATE mod_cases SET ai_state = 'done', ai_mode = ?2, ai_at = ?3, discord_state = CASE WHEN discord_state = 'off' THEN 'off' ELSE 'due' END WHERE id = ?1 AND ai_state = 'reading'",
+      )
+      .bind(caseId, mode, nowS)
+      .run();
   }
 }
 
@@ -131,50 +166,96 @@ async function triageCases(ctx, env, fetchFn) {
   let n = 0;
   for (let i = 0; i < TRIAGE_MAX && more(ctx); i++) {
     // an open case is due when a report grew it, or when it opened while the reviewer was off and was never read
-    const c = await ctx.db.prepare(`UPDATE mod_cases SET ai_state = 'reading', ai_at = ?1 WHERE id = (SELECT id FROM mod_cases WHERE status = 'open'
+    const c = await ctx.db
+      .prepare(
+        `UPDATE mod_cases SET ai_state = 'reading', ai_at = ?1 WHERE id = (SELECT id FROM mod_cases WHERE status = 'open'
         AND (ai_state = 'due' OR (ai_state = 'off' AND ai_at IS NULL) OR (ai_state = 'reading' AND ai_at < ?2))
-        ORDER BY credible DESC, reports DESC, updated_at LIMIT 1) RETURNING id, target`).bind(ctx.nowS, ctx.nowS - CLAIM_STALE_S).first();
+        ORDER BY credible DESC, reports DESC, updated_at LIMIT 1) RETURNING id, target`,
+      )
+      .bind(ctx.nowS, ctx.nowS - CLAIM_STALE_S)
+      .first();
     if (!c) break;
-    const lines = (await ctx.db.prepare('SELECT at, sub, tab, text FROM mod_case_lines WHERE case_id = ?1 ORDER BY at, sub').bind(c.id).all())?.results ?? [];
+    const lines =
+      (
+        await ctx.db
+          .prepare('SELECT at, sub, tab, text FROM mod_case_lines WHERE case_id = ?1 ORDER BY at, sub')
+          .bind(c.id)
+          .all()
+      )?.results ?? [];
     const r = await reviewLines(ctx.db, env, fetchFn, { lines, focus: c.target, nowS: ctx.nowS });
     if ('error' in r && AI_WAITS.includes(r.error)) {
-      await ctx.db.prepare("UPDATE mod_cases SET ai_state = 'due' WHERE id = ?1 AND ai_state = 'reading'").bind(c.id).run();
+      await ctx.db
+        .prepare("UPDATE mod_cases SET ai_state = 'due' WHERE id = ?1 AND ai_state = 'reading'")
+        .bind(c.id)
+        .run();
       break;
     }
     n++;
     if (!('flags' in r)) {
-      await ctx.db.prepare("UPDATE mod_cases SET ai_state = 'failed', ai_at = ?2, discord_state = CASE WHEN discord_state = 'off' THEN 'off' ELSE 'due' END WHERE id = ?1 AND ai_state = 'reading'").bind(c.id, ctx.nowS).run();
+      await ctx.db
+        .prepare(
+          "UPDATE mod_cases SET ai_state = 'failed', ai_at = ?2, discord_state = CASE WHEN discord_state = 'off' THEN 'off' ELSE 'due' END WHERE id = ?1 AND ai_state = 'reading'",
+        )
+        .bind(c.id, ctx.nowS)
+        .run();
       continue;
     }
     const worst = worstOf(r.flags.filter((f) => lines[f.line]?.sub === c.target));
-    await keepVerdict(ctx.db, c.id, worst, worst ? lines[worst.line] : null, modAiModeOf(env), ctx.nowS, { read: true });
+    await keepVerdict(ctx.db, c.id, worst, worst ? lines[worst.line] : null, modAiModeOf(env), ctx.nowS, {
+      read: true,
+    });
     await actOn(ctx, env, fetchFn, c.id, c.target, worst, lines);
   }
   return n;
 }
 
 /** The batches a read took, marked: back to waiting (`due`), or read (`done`, their lines dropped). */
-const markFeed = (db, ids, state) => db.prepare(state === 'done'
-  ? `UPDATE mod_feed SET state = 'done', lines = NULL, read_at = NULL WHERE id IN (${slots(ids.length)})`
-  : `UPDATE mod_feed SET state = 'due', read_at = NULL WHERE id IN (${slots(ids.length)})`).bind(...ids).run();
+const markFeed = (db, ids, state) =>
+  db
+    .prepare(
+      state === 'done'
+        ? `UPDATE mod_feed SET state = 'done', lines = NULL, read_at = NULL WHERE id IN (${slots(ids.length)})`
+        : `UPDATE mod_feed SET state = 'due', read_at = NULL WHERE id IN (${slots(ids.length)})`,
+    )
+    .bind(...ids)
+    .run();
 /** Lines sent back to the feed to be read on their own - a new waiting batch. */
-const requeue = (db, id, at, lines) => db.prepare("INSERT OR IGNORE INTO mod_feed (id, at, lines, state) VALUES (?1, ?2, ?3, 'due')").bind(id, at, JSON.stringify(lines));
+const requeue = (db, id, at, lines) =>
+  db
+    .prepare("INSERT OR IGNORE INTO mod_feed (id, at, lines, state) VALUES (?1, ?2, ?3, 'due')")
+    .bind(id, at, JSON.stringify(lines));
 
 /** The cases one feed read opens: the worst speakers first, each with its flagged lines and the context before them;
  *  speakers past FEED_SPEAKERS_MAX go back to the feed with their own lines and the context they need. */
 async function openFeedCases(ctx, env, fetchFn, head, lines, flags) {
   /** @type {Map<string, any[]>} */
   const bySpeaker = new Map();
-  for (const f of flags) if (f.severity >= FLAG_SEVERITY) bySpeaker.set(lines[f.line].sub, [...(bySpeaker.get(lines[f.line].sub) ?? []), f]);
+  for (const f of flags)
+    if (f.severity >= FLAG_SEVERITY) bySpeaker.set(lines[f.line].sub, [...(bySpeaker.get(lines[f.line].sub) ?? []), f]);
   const ranked = [...bySpeaker].sort(([, a], [, b]) => worse(worstOf(a), worstOf(b)));
-  const kept = (fs) => { const keep = new Set(); for (const f of fs) for (let i = Math.max(0, f.line - CONTEXT_BEFORE); i <= f.line; i++) keep.add(i); return [...keep].sort((x, y) => x - y); };
+  const kept = (fs) => {
+    const keep = new Set();
+    for (const f of fs) for (let i = Math.max(0, f.line - CONTEXT_BEFORE); i <= f.line; i++) keep.add(i);
+    return [...keep].sort((x, y) => x - y);
+  };
   const later = ranked.slice(FEED_SPEAKERS_MAX);
-  if (later.length) await requeue(ctx.db, `${head.id}.r`, head.at, [...new Set(later.flatMap(([, fs]) => kept(fs)))].sort((x, y) => x - y).map((i) => lines[i])).run();
+  if (later.length)
+    await requeue(
+      ctx.db,
+      `${head.id}.r`,
+      head.at,
+      [...new Set(later.flatMap(([, fs]) => kept(fs)))].sort((x, y) => x - y).map((i) => lines[i]),
+    ).run();
   for (const [sub, fs] of ranked.slice(0, FEED_SPEAKERS_MAX)) {
     if (!(await ctx.db.prepare('SELECT 1 AS y FROM players WHERE id = ?1').bind(sub).first())) continue;
     const mine = kept(fs).map((i) => lines[i]);
     const caseId = await openCaseFor(ctx, env, sub, 'review');
-    await keepCaseLines(ctx.db, caseId, mine.map((l) => ({ ...l, sg: null })), sub);
+    await keepCaseLines(
+      ctx.db,
+      caseId,
+      mine.map((l) => ({ ...l, sg: null })),
+      sub,
+    );
     const worst = worstOf(fs);
     await keepVerdict(ctx.db, caseId, worst, lines[worst.line], modAiModeOf(env), ctx.nowS, { read: false });
     await actOn(ctx, env, fetchFn, caseId, sub, worst, mine);
@@ -185,11 +266,20 @@ async function openFeedCases(ctx, env, fetchFn, head, lines, flags) {
 async function readFeed(ctx, env, fetchFn) {
   let n = 0;
   for (let read = 0; read < FEED_READS_MAX && more(ctx); read++) {
-    const rows = ((await ctx.db.prepare(`UPDATE mod_feed SET state = 'reading', read_at = ?1 WHERE id IN (SELECT id FROM mod_feed
-        WHERE state = 'due' OR (state = 'reading' AND read_at < ?2) ORDER BY at, id LIMIT ?3) RETURNING id, at, lines`)
-      .bind(ctx.nowS, ctx.nowS - CLAIM_STALE_S, FEED_COMBINE_ROWS).all())?.results ?? []).sort((a, b) => (a.at - b.at) || (a.id < b.id ? -1 : 1));
+    const rows = (
+      (
+        await ctx.db
+          .prepare(
+            `UPDATE mod_feed SET state = 'reading', read_at = ?1 WHERE id IN (SELECT id FROM mod_feed
+        WHERE state = 'due' OR (state = 'reading' AND read_at < ?2) ORDER BY at, id LIMIT ?3) RETURNING id, at, lines`,
+          )
+          .bind(ctx.nowS, ctx.nowS - CLAIM_STALE_S, FEED_COMBINE_ROWS)
+          .all()
+      )?.results ?? []
+    ).sort((a, b) => a.at - b.at || (a.id < b.id ? -1 : 1));
     if (!rows.length) break;
-    const take = [], lines = [];
+    const take = [],
+      lines = [];
     for (const r of rows) {
       const ls = linesOf(r.lines);
       if (take.length && lines.length + ls.length > FEED_LINES_MAX) break;
@@ -199,19 +289,31 @@ async function readFeed(ctx, env, fetchFn) {
     const back = rows.slice(take.length).map((r) => r.id);
     if (back.length) await markFeed(ctx.db, back, 'due');
     const ids = take.map((r) => r.id);
-    const r = lines.length ? await reviewLines(ctx.db, env, fetchFn, { lines, nowS: ctx.nowS, feed: true }) : { ok: true, flags: [] };
-    if ('error' in r && AI_WAITS.includes(r.error)) { await markFeed(ctx.db, ids, 'due'); break; }
+    const r = lines.length
+      ? await reviewLines(ctx.db, env, fetchFn, { lines, nowS: ctx.nowS, feed: true })
+      : { ok: true, flags: [] };
+    if ('error' in r && AI_WAITS.includes(r.error)) {
+      await markFeed(ctx.db, ids, 'due');
+      break;
+    }
     n++;
     if ('flags' in r) await openFeedCases(ctx, env, fetchFn, take[0], lines, r.flags);
     else if (lines.length > 1) {
       const mid = Math.ceil(lines.length / 2);
-      await ctx.db.batch([requeue(ctx.db, `${take[0].id}.a`, take[0].at, lines.slice(0, mid)), requeue(ctx.db, `${take[0].id}.b`, take[0].at, lines.slice(mid))]);
+      await ctx.db.batch([
+        requeue(ctx.db, `${take[0].id}.a`, take[0].at, lines.slice(0, mid)),
+        requeue(ctx.db, `${take[0].id}.b`, take[0].at, lines.slice(mid)),
+      ]);
     } else if (await ctx.db.prepare('SELECT 1 AS y FROM players WHERE id = ?1').bind(lines[0].sub).first()) {
       // ONE LINE THE REVIEWER WOULD NOT READ: the moderators read it - a case of its own, marked unread
       const caseId = await openCaseFor(ctx, env, lines[0].sub, 'review');
       await keepCaseLines(ctx.db, caseId, [{ ...lines[0], sg: null }], lines[0].sub);
-      await ctx.db.prepare("UPDATE mod_cases SET ai_state = 'failed', ai_at = ?2, updated_at = ?2, discord_state = CASE WHEN discord_state = 'off' THEN 'off' ELSE 'due' END WHERE id = ?1 AND ai_severity IS NULL")
-        .bind(caseId, ctx.nowS).run();
+      await ctx.db
+        .prepare(
+          "UPDATE mod_cases SET ai_state = 'failed', ai_at = ?2, updated_at = ?2, discord_state = CASE WHEN discord_state = 'off' THEN 'off' ELSE 'due' END WHERE id = ?1 AND ai_severity IS NULL",
+        )
+        .bind(caseId, ctx.nowS)
+        .run();
     }
     await markFeed(ctx.db, ids, 'done');
   }
@@ -224,20 +326,38 @@ async function readFeed(ctx, env, fetchFn) {
  *  whose message is gone is posted again; only an unreachable Discord waits the minute out. A card drawn before a
  *  press or a report changed its case is drawn again (DISCORD-8). */
 async function postCards(ctx, env, fetchFn) {
-  const due = (await ctx.db.prepare(`SELECT id, discord_msg, updated_at, status FROM mod_cases
+  const due =
+    (
+      await ctx.db
+        .prepare(
+          `SELECT id, discord_msg, updated_at, status FROM mod_cases
       WHERE (discord_state = 'due' OR (discord_state = 'off' AND status = 'open'))
         AND (status != 'open' OR ai_state NOT IN ('due', 'reading') OR opened_at < ?1)
-      ORDER BY credible DESC, reports DESC, updated_at LIMIT ?2`).bind(ctx.nowS - REVIEW_WAIT_S, POSTS_MAX).all())?.results ?? [];
+      ORDER BY credible DESC, reports DESC, updated_at LIMIT ?2`,
+        )
+        .bind(ctx.nowS - REVIEW_WAIT_S, POSTS_MAX)
+        .all()
+    )?.results ?? [];
   let n = 0;
   for (const c of due) {
     const card = await cardOf(ctx.db, c.id, ctx.nowS);
     if (!card) continue;
     const sent = await sendCard(env, fetchFn, card, c.discord_msg ?? null, { nonce: c.id });
     if ('down' in sent) break;
-    if ('gone' in sent) { await ctx.db.prepare('UPDATE mod_cases SET discord_msg = NULL WHERE id = ?1').bind(c.id).run(); continue; }
-    if ('refused' in sent) { await ctx.db.prepare("UPDATE mod_cases SET discord_state = 'failed' WHERE id = ?1").bind(c.id).run(); continue; }
-    await ctx.db.prepare("UPDATE mod_cases SET discord_msg = ?2, discord_state = CASE WHEN updated_at = ?3 AND status = ?4 THEN 'posted' ELSE 'due' END WHERE id = ?1")
-      .bind(c.id, sent.id, c.updated_at, c.status).run();
+    if ('gone' in sent) {
+      await ctx.db.prepare('UPDATE mod_cases SET discord_msg = NULL WHERE id = ?1').bind(c.id).run();
+      continue;
+    }
+    if ('refused' in sent) {
+      await ctx.db.prepare("UPDATE mod_cases SET discord_state = 'failed' WHERE id = ?1").bind(c.id).run();
+      continue;
+    }
+    await ctx.db
+      .prepare(
+        "UPDATE mod_cases SET discord_msg = ?2, discord_state = CASE WHEN updated_at = ?3 AND status = ?4 THEN 'posted' ELSE 'due' END WHERE id = ?1",
+      )
+      .bind(c.id, sent.id, c.updated_at, c.status)
+      .run();
     n++;
   }
   return n;
@@ -251,7 +371,7 @@ async function postCards(ctx, env, fetchFn) {
 export async function safetyMinute(ctx, env, { fetchFn = (u, i) => globalThis.fetch(u, i) } = {}) {
   let n = 0;
   if (modAiOn(env)) n += (await triageCases(ctx, env, fetchFn)) + (await readFeed(ctx, env, fetchFn));
-  if (discordOn(env)) n += await postCards(ctx, env, fetchFn);
+  if (discordOn(env)) n += (await postCards(ctx, env, fetchFn)) + (await postLogoCards(ctx, env, fetchFn)); // GUILD-LOGO: a guild's logo for review
   return n;
 }
 
@@ -262,24 +382,46 @@ export async function safetySweep(ctx) {
   const paged = async (sql, ...args) => {
     let n = 0;
     for (let i = 0; i < SAFETY_SWEEP_ROUNDS; i++) {
-      const got = Number((await db.prepare(sql).bind(...args, SAFETY_SWEEP_ROWS).run())?.meta?.changes ?? 0);
+      const got = Number(
+        (
+          await db
+            .prepare(sql)
+            .bind(...args, SAFETY_SWEEP_ROWS)
+            .run()
+        )?.meta?.changes ?? 0,
+      );
       n += got;
       if (got < SAFETY_SWEEP_ROWS || !more(ctx)) break;
     }
     return n;
   };
   let n = 0;
-  n += await paged('DELETE FROM mod_feed WHERE id IN (SELECT id FROM mod_feed WHERE at < ?1 LIMIT ?2)', nowS - FEED_KEEP_S);
-  n += await paged(`UPDATE mod_cases SET status = 'dismissed', resolved_by = 'the clock', resolved_at = ?1, resolution = 'expired', updated_at = ?1, claimed_at = NULL,
+  n += await paged(
+    'DELETE FROM mod_feed WHERE id IN (SELECT id FROM mod_feed WHERE at < ?1 LIMIT ?2)',
+    nowS - FEED_KEEP_S,
+  );
+  n += await paged(
+    `UPDATE mod_cases SET status = 'dismissed', resolved_by = 'the clock', resolved_at = ?1, resolution = 'expired', updated_at = ?1, claimed_at = NULL,
       ai_state = CASE WHEN ai_state IN ('due', 'reading') THEN 'off' ELSE ai_state END,
       discord_state = CASE WHEN discord_msg IS NULL THEN 'off' ELSE 'due' END
-    WHERE id IN (SELECT id FROM mod_cases WHERE status = 'open' AND opened_at < ?2 LIMIT ?3)`, nowS, nowS - CASE_OPEN_MAX_S);
-  n += await paged(`UPDATE mod_cases SET lines_kept = 0, ai_reason = NULL, discord_state = CASE WHEN discord_msg IS NULL THEN discord_state ELSE 'due' END
-    WHERE id IN (SELECT id FROM mod_cases WHERE lines_kept = 1 AND resolved_at IS NOT NULL AND resolved_at < ?1 AND status != 'open' LIMIT ?2)`, nowS - RESOLVED_LINES_KEEP_S);
-  n += await paged(`DELETE FROM mod_case_lines WHERE rowid IN (SELECT l.rowid FROM mod_case_lines l JOIN mod_cases c ON c.id = l.case_id
+    WHERE id IN (SELECT id FROM mod_cases WHERE status = 'open' AND opened_at < ?2 LIMIT ?3)`,
+    nowS,
+    nowS - CASE_OPEN_MAX_S,
+  );
+  n += await paged(
+    `UPDATE mod_cases SET lines_kept = 0, ai_reason = NULL, discord_state = CASE WHEN discord_msg IS NULL THEN discord_state ELSE 'due' END
+    WHERE id IN (SELECT id FROM mod_cases WHERE lines_kept = 1 AND resolved_at IS NOT NULL AND resolved_at < ?1 AND status != 'open' LIMIT ?2)`,
+    nowS - RESOLVED_LINES_KEEP_S,
+  );
+  n +=
+    await paged(`DELETE FROM mod_case_lines WHERE rowid IN (SELECT l.rowid FROM mod_case_lines l JOIN mod_cases c ON c.id = l.case_id
     WHERE c.lines_kept = 0 LIMIT ?1)`);
-  n += await paged(`UPDATE mod_reports SET note = NULL WHERE rowid IN (SELECT r.rowid FROM mod_reports r JOIN mod_cases c ON c.id = r.case_id
+  n +=
+    await paged(`UPDATE mod_reports SET note = NULL WHERE rowid IN (SELECT r.rowid FROM mod_reports r JOIN mod_cases c ON c.id = r.case_id
     WHERE c.lines_kept = 0 AND r.note IS NOT NULL LIMIT ?1)`);
-  n += await paged('DELETE FROM mod_ai_days WHERE day IN (SELECT day FROM mod_ai_days WHERE day < ?1 LIMIT ?2)', new Date((nowS - AI_DAYS_KEEP * 86400) * 1000).toISOString().slice(0, 10));
+  n += await paged(
+    'DELETE FROM mod_ai_days WHERE day IN (SELECT day FROM mod_ai_days WHERE day < ?1 LIMIT ?2)',
+    new Date((nowS - AI_DAYS_KEEP * 86400) * 1000).toISOString().slice(0, 10),
+  );
   return n;
 }

@@ -27,8 +27,8 @@
 // none - which the measure exists to replace.
 // ═══════════════════════════════════════════════════════════════════
 
-import { DB_ROOT } from './service.js';   // the binding a request's counted Proxy wraps - what the config is kept by (budget.js's way)
-import { stepBudget } from './budget.js';   // one bucket law, the wealth budget's
+import { DB_ROOT } from './service.js'; // the binding a request's counted Proxy wraps - what the config is kept by (budget.js's way)
+import { stepBudget } from './budget.js'; // one bucket law, the wealth budget's
 import { RAID_CLAIMS_DAY_MAX } from './raids.js';
 import { RENOWN_XP_HOUR_MAX } from '../../src/net/renown.js';
 import { WATCH_DAY_CAP, BOUNTY_CAMPS_DAY } from '../../src/net/townSeatLaw.js';
@@ -36,6 +36,8 @@ import { WATCH_TICK_MS } from '../../src/net/watchReceipt.js';
 import { TIDE_EFFECTS } from '../../src/net/tideLaw.js';
 import { MARKS_FAUCETS } from '../../src/net/marksLaw.js';
 import { writXp } from '../../src/net/professionLaw.js';
+import { PASS_DAY_ASKS } from '../../src/net/battlePassLaw.js';
+import { FIND_ASKS_PER_DAY } from '../../src/net/festivalLaw.js';
 
 /** A raid's game day is two real hours (systems/raidingParties.js GAME_DAY_REAL_HOURS - the test holds the two equal). */
 const RAID_GAME_DAY_HOURS = 2;
@@ -47,14 +49,16 @@ const RAID_GAME_DAY_HOURS = 2;
 export const PROGRESS_LINE = Object.freeze({
   enforce: false,
   streams: Object.freeze({
-    renown: Object.freeze({ rate: RENOWN_XP_HOUR_MAX, cap: RENOWN_XP_HOUR_MAX }),   // Renown's clock hour, read per hour of play
-    raid: Object.freeze({ rate: RAID_CLAIMS_DAY_MAX / RAID_GAME_DAY_HOURS, cap: RAID_CLAIMS_DAY_MAX }),   // a game day's six cleanses
-    bounty: Object.freeze({ rate: BOUNTY_CAMPS_DAY, cap: BOUNTY_CAMPS_DAY }),   // a seat's Bounty camps, and (HUNTERS-MARK) the boards' clears
-    camp: Object.freeze({ rate: TIDE_EFFECTS.orcsCampsDay, cap: TIDE_EFFECTS.orcsCampsDay }),   // an Orc Raid's camps
-    watch: Object.freeze({ rate: 3_600_000 / WATCH_TICK_MS, cap: WATCH_DAY_CAP }),   // a tick for each two minutes stood
-    find: Object.freeze({ rate: MARKS_FAUCETS.find.perDay, cap: MARKS_FAUCETS.find.perDay }),   // silver finds
-    gather: Object.freeze({ rate: MARKS_FAUCETS.gather.perDay, cap: MARKS_FAUCETS.gather.perDay }),   // a harvest's silver
-    prof: Object.freeze({ rate: 10_000, cap: 20_000 }),   // profession XP - no route bounded it by the hour; a guess
+    renown: Object.freeze({ rate: RENOWN_XP_HOUR_MAX, cap: RENOWN_XP_HOUR_MAX }), // Renown's clock hour, read per hour of play
+    raid: Object.freeze({ rate: RAID_CLAIMS_DAY_MAX / RAID_GAME_DAY_HOURS, cap: RAID_CLAIMS_DAY_MAX }), // a game day's six cleanses
+    bounty: Object.freeze({ rate: BOUNTY_CAMPS_DAY, cap: BOUNTY_CAMPS_DAY }), // a seat's Bounty camps, and (HUNTERS-MARK) the boards' clears
+    camp: Object.freeze({ rate: TIDE_EFFECTS.orcsCampsDay, cap: TIDE_EFFECTS.orcsCampsDay }), // an Orc Raid's camps
+    watch: Object.freeze({ rate: 3_600_000 / WATCH_TICK_MS, cap: WATCH_DAY_CAP }), // a tick for each two minutes stood
+    find: Object.freeze({ rate: MARKS_FAUCETS.find.perDay, cap: MARKS_FAUCETS.find.perDay }), // silver finds
+    gather: Object.freeze({ rate: MARKS_FAUCETS.gather.perDay, cap: MARKS_FAUCETS.gather.perDay }), // a harvest's silver
+    prof: Object.freeze({ rate: 10_000, cap: 20_000 }), // profession XP - no route bounded it by the hour; a guess
+    pass: Object.freeze({ rate: PASS_DAY_ASKS, cap: PASS_DAY_ASKS }), // AUDIT PASS 3: the Battle Pass's finds - the day's asks
+    festival: Object.freeze({ rate: FIND_ASKS_PER_DAY, cap: FIND_ASKS_PER_DAY }), // and the Witches' Festival's, the same way
   }),
 });
 /** The streams, in the line's order. */
@@ -68,7 +72,7 @@ export const PROGRESS_ROUTES = Object.freeze({
   '/v1/renown/xp': Object.freeze(['renown', true]),
   '/v1/raid/claim': Object.freeze(['raid', true]),
   '/v1/seats/bounty': Object.freeze(['bounty', true]),
-  '/v1/hunt/clear': Object.freeze(['bounty', true]),   // HUNTERS-MARK: a bounty board's clear (hunts.js)
+  '/v1/hunt/clear': Object.freeze(['bounty', true]), // HUNTERS-MARK: a bounty board's clear (hunts.js)
   '/v1/seats/orc-camp': Object.freeze(['camp', true]),
   '/v1/seats/watch': Object.freeze(['watch', true]),
   // AUDIT TOWN-ECON 2 SVC-2: the town Watch's footsteps too - asked of the account's seat (the body names none), as every
@@ -76,33 +80,58 @@ export const PROGRESS_ROUTES = Object.freeze({
   // whose Watch bucket is empty refuses it as it refuses the seats'
   '/v1/towns/watch': Object.freeze(['watch', false]),
   '/v1/marks/find': Object.freeze(['find', false]),
+  // AUDIT PASS 3: a Battle Pass find (battlePass.js) and a Soul Cake's (festival.js) - a session's secret alone farmed
+  // them with no game running. Each its own stream: an honest page asks both for one kill, and the silver finds' twenty
+  // a day would refuse it
+  '/v1/pass/find': Object.freeze(['pass', false]),
+  '/v1/festival/find': Object.freeze(['festival', false]),
+  // AUDIT-STOREFRONT (lane 5 W2): the Resonant Maul's day (seasonClaim.js) - asked of the account's seated character as the
+  // season's finds are, on their stream; the UTC day bounds it, and its answer (no `xp`) spends nothing
+  '/v1/season/maul': Object.freeze(['pass', false]),
+  '/v1/aurum/cache': Object.freeze(['pass', false]), // AURUM-CACHES: a cache claimed, asked of the seat as the Maul's day is (aurumCache.js)
   '/v1/prof/harvest': Object.freeze(['prof', true]),
   '/v1/prof/smelt': Object.freeze(['prof', true]),
   '/v1/prof/craft': Object.freeze(['prof', true]),
   '/v1/prof/brew': Object.freeze(['prof', true]),
   '/v1/prof/disenchant': Object.freeze(['prof', true]),
   '/v1/prof/temper': Object.freeze(['prof', true]),
-  '/v1/prof/master': Object.freeze(['prof', true]),   // MASTER-ART: a Master's work - a piece of the seated character's
+  '/v1/prof/master': Object.freeze(['prof', true]), // MASTER-ART: a Master's work - a piece of the seated character's
   '/v1/writs/deliver': Object.freeze(['prof', true]),
-  '/v1/writs/craft': Object.freeze(['prof', true]),   // CRAFT-WRITS: a crafting writ's XP and Renown
+  '/v1/writs/craft': Object.freeze(['prof', true]), // CRAFT-WRITS: a crafting writ's XP and Renown
 });
 
 /** A line's shape - whole, unsigned numbers. */
-const validLine = (/** @type {any} */ l) => !!l && typeof l === 'object' && Number.isSafeInteger(l.rate) && l.rate >= 0 && Number.isSafeInteger(l.cap) && l.cap >= 0;
+const validLine = (/** @type {any} */ l) =>
+  !!l &&
+  typeof l === 'object' &&
+  Number.isSafeInteger(l.rate) &&
+  l.rate >= 0 &&
+  Number.isSafeInteger(l.cap) &&
+  l.cap >= 0;
 /** A config staff may write, or null: `enforce` a boolean, `streams` every stream's line and nothing else. */
 export function progressConfigOf(/** @type {unknown} */ v) {
   if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
   const c = /** @type {any} */ (v);
-  if (typeof c.enforce !== 'boolean' || !c.streams || typeof c.streams !== 'object' || Array.isArray(c.streams)) return null;
+  if (typeof c.enforce !== 'boolean' || !c.streams || typeof c.streams !== 'object' || Array.isArray(c.streams))
+    return null;
   const keys = Object.keys(c.streams);
   if (keys.length !== PROGRESS_STREAMS.length || !PROGRESS_STREAMS.every((k) => validLine(c.streams[k]))) return null;
-  return { enforce: c.enforce, streams: Object.fromEntries(PROGRESS_STREAMS.map((k) => [k, { rate: c.streams[k].rate, cap: c.streams[k].cap }])) };
+  return {
+    enforce: c.enforce,
+    streams: Object.fromEntries(PROGRESS_STREAMS.map((k) => [k, { rate: c.streams[k].rate, cap: c.streams[k].cap }])),
+  };
 }
+/** AUDIT PASS 3: a line staff wrote before a stream was added reads that stream's first line - the whole line was refused
+ *  for the stream it lacked, and an enforced line stood measuring again unsaid. A write still names every stream. */
+const withStreamsAdded = (/** @type {any} */ v) =>
+  v && typeof v === 'object' && v.streams && typeof v.streams === 'object' && !Array.isArray(v.streams)
+    ? { ...v, streams: { ...PROGRESS_LINE.streams, ...v.streams } }
+    : v;
 /** How long an isolate keeps the config it read - a change staff make is read at once where they made it, within a minute everywhere. */
 export const PROGRESS_CONFIG_KEEP_MS = 60_000;
 /** @type {WeakMap<object, { at: number, config: any }>} */
 const kept = new WeakMap();
-const keyOf = (/** @type {any} */ db) => (db && typeof db === 'object' ? db[DB_ROOT] ?? db : null);
+const keyOf = (/** @type {any} */ db) => (db && typeof db === 'object' ? (db[DB_ROOT] ?? db) : null);
 /** The config standing: staff's, else the first line. */
 export async function progressConfig(/** @type {any} */ db) {
   const key = keyOf(db);
@@ -110,13 +139,20 @@ export async function progressConfig(/** @type {any} */ db) {
   if (k && Date.now() - k.at < PROGRESS_CONFIG_KEEP_MS) return k.config;
   const row = await db.prepare("SELECT value FROM realm_config WHERE key = 'progress'").first();
   let c = null;
-  try { c = progressConfigOf(JSON.parse(row?.value ?? 'null')); } catch { c = null; }
+  try {
+    c = progressConfigOf(withStreamsAdded(JSON.parse(row?.value ?? 'null')));
+  } catch {
+    c = null;
+  }
   const config = c ?? PROGRESS_LINE;
   if (key) kept.set(key, { at: Date.now(), config });
   return config;
 }
 /** A staff change made here: the next read asks the database. */
-export const forgetProgressConfig = (/** @type {any} */ db) => { const key = keyOf(db); if (key) kept.delete(key); };
+export const forgetProgressConfig = (/** @type {any} */ db) => {
+  const key = keyOf(db);
+  if (key) kept.delete(key);
+};
 
 /**
  * INT16: THE SEAT A CLAIM IS ASKED OF - the account's realm character holding its lease, alive. Answers null when it may
@@ -135,7 +171,10 @@ const seatRead = (/** @type {any} */ db, /** @type {string} */ playerId) =>
 /** AUDIT PLAN-1000 C2: THE SEAT'S ONE WHERE (?1 the account) - the account's realm character holding its lease, alive:
  *  progressRefusal's and the door's (door.js DOOR_SQL), never two literals. */
 export const SEAT_WHERE = 'player = ?1 AND lease IS NOT NULL AND dead_at IS NULL';
-export function seatRefusalOf(/** @type {any} */ row, /** @type {{ named: boolean, character?: unknown }} */ { named, character }) {
+export function seatRefusalOf(
+  /** @type {any} */ row,
+  /** @type {{ named: boolean, character?: unknown }} */ { named, character },
+) {
   if (!row || (named && character !== row.id)) return { error: 'progress-seat' };
   if (row.held) return { error: 'trade-held', held: row.held };
   return null;
@@ -149,20 +188,35 @@ async function bucketOf(/** @type {any} */ db, /** @type {string} */ playerId, /
  *  the route's own stream, door.js doorReads; the spend steps the bucket where it stands - spendProgress, AUDIT PLAN-1000
  *  C1). */
 const bucketRead = (/** @type {any} */ db, /** @type {string} */ playerId, /** @type {string} */ stream) =>
-  db.prepare('SELECT p.played_s AS now, b.allowance, b.played_at FROM players p LEFT JOIN progress_play b ON b.player = p.id AND b.stream = ?2 WHERE p.id = ?1')
+  db
+    .prepare(
+      'SELECT p.played_s AS now, b.allowance, b.played_at FROM players p LEFT JOIN progress_play b ON b.player = p.id AND b.stream = ?2 WHERE p.id = ?1',
+    )
     .bind(playerId, stream);
 export function bucketFrom(/** @type {any} */ row) {
   if (!row) return null;
-  return { now: Number(row.now) || 0, allowance: row.allowance == null ? null : Number(row.allowance), playedAt: row.played_at == null ? null : Number(row.played_at) };
+  return {
+    now: Number(row.now) || 0,
+    allowance: row.allowance == null ? null : Number(row.allowance),
+    playedAt: row.played_at == null ? null : Number(row.played_at),
+  };
 }
 /** The play since the bucket last moved - none for a bucket never filled (its first claim starts it full). */
-const playedSince = (/** @type {{ now: number, playedAt: number | null }} */ b) => (b.playedAt == null ? 0 : Math.max(0, b.now - b.playedAt));
+const playedSince = (/** @type {{ now: number, playedAt: number | null }} */ b) =>
+  b.playedAt == null ? 0 : Math.max(0, b.now - b.playedAt);
 
 /** What a stream's bucket holds now - what an enforced line lets the next claim take. */
-export async function progressRoom(/** @type {any} */ db, /** @type {string} */ playerId, /** @type {string} */ stream, /** @type {any} */ config, /** @type {any} */ bucket = undefined) {
-  const b = bucket !== undefined ? bucket : await bucketOf(db, playerId, stream);   // PRIMARY-FOLD: the door's read, when it asked it
+export async function progressRoom(
+  /** @type {any} */ db,
+  /** @type {string} */ playerId,
+  /** @type {string} */ stream,
+  /** @type {any} */ config,
+  /** @type {any} */ bucket = undefined,
+) {
+  const b = bucket !== undefined ? bucket : await bucketOf(db, playerId, stream); // PRIMARY-FOLD: the door's read, when it asked it
   if (!b) return 0;
-  return stepBudget({ allowance: b.allowance, played: playedSince(b), gain: 0, band: config.streams[stream] }).allowance;
+  return stepBudget({ allowance: b.allowance, played: playedSince(b), gain: 0, band: config.streams[stream] })
+    .allowance;
 }
 
 /**
@@ -187,14 +241,22 @@ export async function spendProgress(db, playerId, stream, amount, nowS, config) 
   // ?1 the account, ?2 the stream, ?3 the claim's clock, ?4 the cap, ?5 the rate an hour, ?6 the claim, ?7 enforce, ?8 the hour
   const args = [playerId, stream, nowS, line.cap, line.rate, Math.trunc(amount), config.enforce ? 1 : 0, hour];
   const [, play] = await db.batch([
-    db.prepare(`INSERT INTO progress_hours (player, stream, hour, amount, played_s, over, claims)
+    db
+      .prepare(
+        `INSERT INTO progress_hours (player, stream, hour, amount, played_s, over, claims)
       SELECT ?1, ?2, ?8, ?6, s.played, CASE WHEN s.left < 0 THEN -s.left ELSE 0 END, 1 FROM (${BUCKET_STEP_SQL}) s WHERE true
       ON CONFLICT (player, stream, hour) DO UPDATE SET amount = amount + excluded.amount, played_s = played_s + excluded.played_s,
-        over = over + excluded.over, claims = claims + 1`).bind(...args),
-    db.prepare(`INSERT INTO progress_play (player, stream, allowance, played_at, at)
+        over = over + excluded.over, claims = claims + 1`,
+      )
+      .bind(...args),
+    db
+      .prepare(
+        `INSERT INTO progress_play (player, stream, allowance, played_at, at)
       SELECT ?1, ?2, CASE WHEN ?7 THEN s.left ELSE MAX(0, s.left) END, s.now, ?3 FROM (${BUCKET_STEP_SQL}) s WHERE true
       ON CONFLICT (player, stream) DO UPDATE SET allowance = excluded.allowance, played_at = excluded.played_at, at = excluded.at
-      RETURNING allowance`).bind(...args.slice(0, 7)),   // its parameters end at ?7 (the hour is the measure's alone)
+      RETURNING allowance`,
+      )
+      .bind(...args.slice(0, 7)), // its parameters end at ?7 (the hour is the measure's alone)
   ]);
   const row = play?.results?.[0];
   return row ? { allowance: Number(row.allowance) } : null;
@@ -216,22 +278,59 @@ const BUCKET_STEP_SQL = `SELECT t.now, t.played, (CASE WHEN t.start >= ?4 THEN t
  */
 export function progressSpentOf(path, a) {
   if (!a || typeof a !== 'object' || a.error || a.repeat) return [];
-  const n = (/** @type {unknown} */ v) => (Number.isFinite(v) && /** @type {number} */ (v) > 0 ? Math.trunc(/** @type {number} */ (v)) : 0);
+  const n = (/** @type {unknown} */ v) =>
+    Number.isFinite(v) && /** @type {number} */ (v) > 0 ? Math.trunc(/** @type {number} */ (v)) : 0;
   /** @type {Array<[string, number]>} */
   const out = [];
-  const add = (/** @type {string} */ stream, /** @type {number} */ amount) => { if (amount > 0) out.push([stream, amount]); };
+  const add = (/** @type {string} */ stream, /** @type {number} */ amount) => {
+    if (amount > 0) out.push([stream, amount]);
+  };
   switch (path) {
-    case '/v1/renown/xp': add('renown', n(a.credited)); break;
-    case '/v1/raid/claim': if (a.recorded === true) { add('raid', 1); add('renown', n(a.renown?.credited)); } break;
-    case '/v1/star/claim': if (a.recorded === true) add('renown', n(a.renown?.credited)); break;   // STAR7: the Renown a star paid (its count is bounded by the day - stars.js STAR_CLAIMS_DAY_MAX)
-    case '/v1/seats/bounty': if (n(a.paid)) add('bounty', 1); break;
-    case '/v1/hunt/clear': if (a.recorded === true) add('bounty', 1); break;   // HUNTERS-MARK: a clear recorded
-    case '/v1/seats/orc-camp': if (a.counted === true) add('camp', 1); break;
-    case '/v1/seats/watch': add('watch', n(a.counted)); break;
-    case '/v1/towns/watch': break;   // AUDIT TOWN-ECON 2 SVC-2: a town's share, never its player's progress
-    case '/v1/marks/find': if (n(a.struck)) add('find', 1); break;
-    case '/v1/writs/deliver': if (a.ok) { add('prof', writXp(n(a.pay))); add('renown', n(a.renown?.credited)); } break;
-    case '/v1/writs/craft': if (a.ok) { add('prof', n(a.xp)); add('renown', n(a.renown?.credited)); } break;   // CRAFT-WRITS: the XP the crafter's limit let in
+    case '/v1/renown/xp':
+      add('renown', n(a.credited));
+      break;
+    case '/v1/raid/claim':
+      if (a.recorded === true) {
+        add('raid', 1);
+        add('renown', n(a.renown?.credited));
+      }
+      break;
+    case '/v1/star/claim':
+      if (a.recorded === true) add('renown', n(a.renown?.credited));
+      break; // STAR7: the Renown a star paid (its count is bounded by the day - stars.js STAR_CLAIMS_DAY_MAX)
+    case '/v1/seats/bounty':
+      if (n(a.paid)) add('bounty', 1);
+      break;
+    case '/v1/hunt/clear':
+      if (a.recorded === true) add('bounty', 1);
+      break; // HUNTERS-MARK: a clear recorded
+    case '/v1/seats/orc-camp':
+      if (a.counted === true) add('camp', 1);
+      break;
+    case '/v1/seats/watch':
+      add('watch', n(a.counted));
+      break;
+    case '/v1/towns/watch':
+      break; // AUDIT TOWN-ECON 2 SVC-2: a town's share, never its player's progress
+    case '/v1/marks/find':
+      if (n(a.struck)) add('find', 1);
+      break;
+    case '/v1/pass/find':
+    case '/v1/festival/find':
+      add(PROGRESS_ROUTES[path][0], 1);
+      break; // AUDIT PASS 3: an ask answered (PASS-PANELS: a pass's Aurum is the account's, never a profession's)
+    case '/v1/writs/deliver':
+      if (a.ok) {
+        add('prof', writXp(n(a.pay)));
+        add('renown', n(a.renown?.credited));
+      }
+      break;
+    case '/v1/writs/craft':
+      if (a.ok) {
+        add('prof', n(a.xp));
+        add('renown', n(a.renown?.credited));
+      }
+      break; // CRAFT-WRITS: the XP the crafter's limit let in
     default:
       if (path in PROGRESS_ROUTES) {
         add('prof', n(a.xp));
@@ -243,7 +342,12 @@ export function progressSpentOf(path, a) {
 
 /** A route's answer, spent: every stream it took from (progressSpentOf), each its own bucket - stepped where it stands
  *  (AUDIT PLAN-1000 C1: spendProgress asks no read, so no claim overlapping it loses a debit). */
-export async function progressSpent(/** @type {any} */ ctx, /** @type {string} */ playerId, /** @type {string} */ path, /** @type {any} */ answer) {
+export async function progressSpent(
+  /** @type {any} */ ctx,
+  /** @type {string} */ playerId,
+  /** @type {string} */ path,
+  /** @type {any} */ answer,
+) {
   const spent = progressSpentOf(path, answer);
   if (!spent.length) return;
   const config = await progressConfig(ctx.db);

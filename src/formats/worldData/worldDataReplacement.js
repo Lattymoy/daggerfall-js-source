@@ -24,17 +24,26 @@
 // Northrock Fort (a new location in the Wrothgarian Mountains), its
 // RRFORT01.RMB, and the armorer's shop as the quest rebuilds it.
 import { getBool } from '../../systems/settings/settings.js';
-import { isOnlinePage } from '../../systems/online/onlineLane.js';   // WD3: online the door is the room's
-import { NO_VARIANT, makeLocationKey, getLocationVariant, getBlockVariantHere, getBuildingVariantHere, setNewLocationIndexResolver, readingLocationKeyOf, noteReadingLocation } from '../../systems/worldDataVariants.js';
+import { isOnlinePage } from '../../systems/online/onlineLane.js'; // WD3: online the door is the room's
+import {
+  NO_VARIANT,
+  makeLocationKey,
+  getLocationVariant,
+  getBlockVariantHere,
+  getBuildingVariantHere,
+  setNewLocationIndexResolver,
+  readingLocationKeyOf,
+  noteReadingLocation,
+} from '../../systems/worldDataVariants.js';
 import { LOCATION_TYPES, DUNGEON_TYPES, getWorldClimateSettings, REGION_NAMES } from '../mapsFile.js';
 import { BLOCK_TYPES, RDB_RESOURCE_TYPES } from '../blocksFile.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
 import { setWorldDataDoor } from './worldDataDoor.js';
-import { curateBlockPeople } from '../../world/curatedPeople.js';   // QUEST-AUDIT II TEMPLE-SUMMONER: the temples' summoners, at the one door
-import { curateBlockPlacements } from '../../world/curatedPlacements.js';   // FIELD BUGS 2026-10-09e HILL-HOUSE: a house the pack's hills bury, at the same door
+import { curateBlockPeople } from '../../world/curatedPeople.js'; // QUEST-AUDIT II TEMPLE-SUMMONER: the temples' summoners, at the one door
+import { curateBlockPlacements } from '../../world/curatedPlacements.js'; // FIELD BUGS 2026-10-09e HILL-HOUSE: a house the pack's hills bury, at the same door
 
-export const AUTO_MAP_DATA_SIZE = 64 * 64;   // :45
-const NO_REPLACEMENT = Symbol('noReplacement');   // the C#'s noReplacementRegion/Location/Block/Building sentinels
+export const AUTO_MAP_DATA_SIZE = 64 * 64; // :45
+const NO_REPLACEMENT = Symbol('noReplacement'); // the C#'s noReplacementRegion/Location/Block/Building sentinels
 export { makeLocationKey };
 
 /** DaggerfallUnity.Settings.AssetInjection. */
@@ -52,7 +61,10 @@ export const assetInjectionOn = () => getBool('Enhancements', 'AssetInjection');
 // mid-game would stand holes in every town. The mod loader latches it beside the mods' switches
 // (scenes/modWorldData.js), and a closed door loads no pack and stamps no town with a layout it does not show.
 let _doorLatched = null;
-export function latchWorldDataDoor() { _doorLatched = assetInjectionOn() || isOnlinePage(); return _doorLatched; }
+export function latchWorldDataDoor() {
+  _doorLatched = assetInjectionOn() || isOnlinePage();
+  return _doorLatched;
+}
 export const worldDataDoorOpen = () => _doorLatched ?? (assetInjectionOn() || isOnlinePage());
 const worldDataOn = worldDataDoorOpen;
 
@@ -62,11 +74,11 @@ const worldDataOn = worldDataDoorOpen;
 // the asset (ModManager.cs:404-427, EnumerateEnabledModsReverse) - so each name keeps every mod's entry, highest
 // load priority first, and the live one answers: a switched-off mod never hides the one under it, and two mods'
 // order is the load order's, never the order their files happened to arrive in.
-const _assets = new Map();   // file name -> [{ json, get, isOn, priority, vendor }], highest priority first
+const _assets = new Map(); // file name -> [{ json, get, isOn, priority, vendor }], highest priority first
 function addAssetEntry(fileName, entry) {
   const list = _assets.get(fileName) ?? [];
   const mine = list.findIndex((e) => (e.vendor ?? null) === (entry.vendor ?? null));
-  if (mine >= 0) list.splice(mine, 1);   // a mod registering its own file again replaces it (a registration naming no mod, WD1's, replaces the last that named none - the C#'s one asset a name)
+  if (mine >= 0) list.splice(mine, 1); // a mod registering its own file again replaces it (a registration naming no mod, WD1's, replaces the last that named none - the C#'s one asset a name)
   // a later registration of equal priority stands in front (the C# Map.set's last-writer rule, kept for WD1's files)
   let at = list.findIndex((e) => e.priority <= entry.priority);
   if (at < 0) at = list.length;
@@ -87,7 +99,14 @@ export function registerWorldDataPack(pack, isOn = null, { priority = 0 } = {}) 
   if (!pack?.names) return 0;
   let n = 0;
   for (const name of pack.names()) {
-    addAssetEntry(name, { json: null, get: (maps) => pack.rebuild(name, maps), isOn: typeof isOn === 'function' ? isOn : null, priority, vendor: pack.vendor, version: pack.mod?.version ?? null });   // FIRST-VISIT: the pack's version names its files in worldDataBlocksServing
+    addAssetEntry(name, {
+      json: null,
+      get: (maps) => pack.rebuild(name, maps),
+      isOn: typeof isOn === 'function' ? isOn : null,
+      priority,
+      vendor: pack.vendor,
+      version: pack.mod?.version ?? null,
+    }); // FIRST-VISIT: the pack's version names its files in worldDataBlocksServing
     n++;
   }
   return n;
@@ -95,13 +114,14 @@ export function registerWorldDataPack(pack, isOn = null, { priority = 0 } = {}) 
 function assetOn(a) {
   if (!a) return false;
   const pin = a.vendor ? pinHere() : null;
-  if (pin?.in?.has(a.vendor)) return true;     // WD3: a town a save made in this mod's layout keeps it
-  if (pin?.out?.has(a.vendor)) return false;   // WD3: and one made without it stays without it
+  if (pin?.in?.has(a.vendor)) return true; // WD3: a town a save made in this mod's layout keeps it
+  if (pin?.out?.has(a.vendor)) return false; // WD3: and one made without it stays without it
   return a.isOn?.() ?? true;
 }
 /** WD3: whether a mod carries a world-data file - the layout pins ask which mods a town's files come from
  *  (systems/layoutPins.js). Answers for the mods on the door: one never loaded carries nothing here. */
-export const worldDataVendorCarries = (vendor, fileName) => (_assets.get(fileName) ?? []).some((a) => a.vendor === vendor);
+export const worldDataVendorCarries = (vendor, fileName) =>
+  (_assets.get(fileName) ?? []).some((a) => a.vendor === vendor);
 function liveAsset(fileName) {
   for (const a of _assets.get(fileName) ?? []) if (assetOn(a)) return a;
   return null;
@@ -121,7 +141,7 @@ export function worldDataBlocksServing() {
     if (a) parts.push(`${name}=${a.vendor ?? ''}@${a.priority}:${a.version ?? ''}`);
   }
   for (const name of _portBlocks.keys()) parts.push(`port:${name}`);
-  for (const name of _portBuildings.keys()) parts.push(`port:${name}`);   // AUDIT SHIP-REFIT: the port's own building files
+  for (const name of _portBuildings.keys()) parts.push(`port:${name}`); // AUDIT SHIP-REFIT: the port's own building files
   for (const l of _layers) if (l.isOn?.() ?? true) parts.push(`layer:${l.vendor}`);
   return parts.sort().join('|');
 }
@@ -133,14 +153,20 @@ function assetJson(a, fileName, maps) {
   try {
     return a.get(maps);
   } catch (e) {
-    if (!_refused.has(fileName)) { _refused.add(fileName); console.error(`[worlddata] ${fileName} (${a.vendor}): ${e?.message ?? e} - not served`); }
+    if (!_refused.has(fileName)) {
+      _refused.add(fileName);
+      console.error(`[worlddata] ${fileName} (${a.vendor}): ${e?.message ?? e} - not served`);
+    }
     return null;
   }
 }
 /** ModManager.TryGetAsset(fileName): the JSON, or null. `maps` is the
  *  MapsFile asking (a location file of a pack is an edit of its classic
  *  location). IT1: with every live layer laid on it. */
-function tryGetAsset(fileName, maps = null) { const a = liveAsset(fileName); return layered(fileName, a ? assetJson(a, fileName, maps) : null); }
+function tryGetAsset(fileName, maps = null) {
+  const a = liveAsset(fileName);
+  return layered(fileName, a ? assetJson(a, fileName, maps) : null);
+}
 
 // ---- IT1: A LAYER - one mod's records laid onto whichever file the door serves under a name ----
 // DFU serves one mod's file a name, whole: the last loaded wins (TryGetAsset above). Immersive Travel ships Daggerfall's
@@ -156,7 +182,7 @@ const _layers = [];
 export function registerWorldDataLayer(layer) {
   if (!layer || typeof layer.match !== 'function' || typeof layer.apply !== 'function') return false;
   const at = _layers.findIndex((l) => l.vendor === layer.vendor);
-  if (at >= 0) _layers.splice(at, 1);   // a mod registering its layer again replaces it
+  if (at >= 0) _layers.splice(at, 1); // a mod registering its layer again replaces it
   _layers.push(layer);
   return true;
 }
@@ -178,7 +204,13 @@ function findAssets(extension) {
   for (const [name] of _assets) {
     if (!name.endsWith(extension)) continue;
     const a = liveAsset(name);
-    if (a) out.push({ name, get json() { return assetJson(a, name, null); } });
+    if (a)
+      out.push({
+        name,
+        get json() {
+          return assetJson(a, name, null);
+        },
+      });
   }
   return out;
 }
@@ -190,17 +222,19 @@ function findAssets(extension) {
 // location by its own key; a block or a building by the town whose grid named it - WorldDataVariants'
 // readingLocationKeyOf, which MapsFile.getRmbBlockName notes and a location read takes back), the vendors pinned out
 // of it and pinned into it, or null.
-let _pinAt = () => null;   // (locationKey) -> { out:Set<vendor>, in:Set<vendor> } | null
+let _pinAt = () => null; // (locationKey) -> { out:Set<vendor>, in:Set<vendor> } | null
 /** The pin oracle (systems/layoutPins.js installs it). */
-export function setLayoutPinOracle(fn) { _pinAt = typeof fn === 'function' ? fn : () => null; }
-let _pinKey = null;   // the location a pin is being asked for; null = the town whose blocks are being read
+export function setLayoutPinOracle(fn) {
+  _pinAt = typeof fn === 'function' ? fn : () => null;
+}
+let _pinKey = null; // the location a pin is being asked for; null = the town whose blocks are being read
 const pinLocationKey = () => _pinKey ?? readingLocationKeyOf();
 const pinHere = () => _pinAt(pinLocationKey());
 
 // ---- the caches (:57-65) ----
-let regions = new Map();          // regionIndex -> dfRegion | NO_REPLACEMENT
-let locations = new Map();        // `${locationKey}${variant}` -> dfLocation | NO_REPLACEMENT
-let blocks = new Map();           // `${blockName}${variant}` -> dfBlock | NO_REPLACEMENT
+let regions = new Map(); // regionIndex -> dfRegion | NO_REPLACEMENT
+let locations = new Map(); // `${locationKey}${variant}` -> dfLocation | NO_REPLACEMENT
+let blocks = new Map(); // `${blockName}${variant}` -> dfBlock | NO_REPLACEMENT
 /** WD3 (AUDIT WD3 B4): the blocks served, the most recently asked kept - DFU keeps every one for the session, and a
  *  walk across the Bay with the town packs on built some 260 MB of them; a block let go is rebuilt when next asked
  *  (the same JSON, the same block). A town of 8 x 8 blocks and its neighbours stand well inside it. */
@@ -209,27 +243,55 @@ function cacheBlock(key, value) {
   blocks.set(key, value);
   if (blocks.size > BLOCK_CACHE_MAX) blocks.delete(blocks.keys().next().value);
 }
-let buildings = new Map();        // `${blockIndex}|${recordIndex}|${variant}` -> data | NO_REPLACEMENT
+let buildings = new Map(); // `${blockIndex}|${recordIndex}|${variant}` -> data | NO_REPLACEMENT
 let nextBlockIndex = 0;
-let newBlockNames = new Map();    // block index -> name
-let newBlockIndices = new Map();  // name -> block index
-let _blocksFile = null;           // ContentReader.BlockFileReader (AssignBlockIndices' read of BsaFile.Count)
+let newBlockNames = new Map(); // block index -> name
+let newBlockIndices = new Map(); // name -> block index
+let _blocksFile = null; // ContentReader.BlockFileReader (AssignBlockIndices' read of BsaFile.Count)
 
 /** The host's BlocksFile - what AssignBlockIndices asks for the BSA's
  *  count and a name's classic index. */
-export function bindWorldDataBlocks(blocksFile) { _blocksFile = blocksFile ?? null; }
+export function bindWorldDataBlocks(blocksFile) {
+  _blocksFile = blocksFile ?? null;
+}
 /** WD1: the bound BlocksFile, for the world-data patches' classic reads (scenes/modWorldData.js). */
 export const boundWorldDataBlocks = () => _blocksFile;
 /** Once: the readers' door. Tests reset with `_resetWorldDataReplacement`. */
 export function installWorldDataReplacement() {
-  setNewLocationIndexResolver(getNewDFLocationIndex);   // AUDIT-RR F33: SetNewLocationVariant -> GetNewDFLocationIndex (WorldDataVariants.cs:101) - RR3a's seam, wired
-  setWorldDataDoor({ getDFRegionAdditionalLocationData, getDFLocationReplacementData, getDFBlockReplacementData, getBuildingReplacementData, getNewDFBlockName, getNewDFBlockIndex, applyBuildingReplacementAutoMapData, noteReadingLocation, editLocation, locationPinned });   // WD3: MapsFile.getRmbBlockName names the town whose blocks come next; ARENA1: the port's own edits of a location read; BOOT-RECTS: a walk's pinned towns
+  setNewLocationIndexResolver(getNewDFLocationIndex); // AUDIT-RR F33: SetNewLocationVariant -> GetNewDFLocationIndex (WorldDataVariants.cs:101) - RR3a's seam, wired
+  setWorldDataDoor({
+    getDFRegionAdditionalLocationData,
+    getDFLocationReplacementData,
+    getDFBlockReplacementData,
+    getBuildingReplacementData,
+    getNewDFBlockName,
+    getNewDFBlockIndex,
+    applyBuildingReplacementAutoMapData,
+    noteReadingLocation,
+    editLocation,
+    locationPinned,
+  }); // WD3: MapsFile.getRmbBlockName names the town whose blocks come next; ARENA1: the port's own edits of a location read; BOOT-RECTS: a walk's pinned towns
 }
 export function _resetWorldDataReplacement({ assets = true } = {}) {
-  regions = new Map(); locations = new Map(); blocks = new Map(); buildings = new Map();
-  nextBlockIndex = 0; newBlockNames = new Map(); newBlockIndices = new Map(); _blocksFile = null;
-  _refused.clear(); _quietLocations = false; _doorLatched = null;
-  if (assets) { _assets.clear(); _portBlocks.clear(); _portBuildings.clear(); _blockFamilies.length = 0; _locationEdits.length = 0; _layers.length = 0; }   // IT1: the layers with the assets
+  regions = new Map();
+  locations = new Map();
+  blocks = new Map();
+  buildings = new Map();
+  nextBlockIndex = 0;
+  newBlockNames = new Map();
+  newBlockIndices = new Map();
+  _blocksFile = null;
+  _refused.clear();
+  _quietLocations = false;
+  _doorLatched = null;
+  if (assets) {
+    _assets.clear();
+    _portBlocks.clear();
+    _portBuildings.clear();
+    _blockFamilies.length = 0;
+    _locationEdits.length = 0;
+    _layers.length = 0;
+  } // IT1: the layers with the assets
 }
 
 // ---- ARENA1: THE PORT'S OWN WORLD DATA - not a mod's, so behind no switch ----
@@ -238,7 +300,7 @@ export function _resetWorldDataReplacement({ assets = true } = {}) {
 // a mod's switch or a save's pin says - and outside DFU's new-block sequence: a port block takes a FIXED index past
 // any BSA (world/gate/gateArena.js's made block is the precedent), so the first block a mod's file names still takes
 // BsaFile.Count (DFU's AssignBlockIndices, RR3b) and no pack's new block moves.
-const _portBlocks = new Map();   // name -> { index, json, block }
+const _portBlocks = new Map(); // name -> { index, json, block }
 /** A block of the port's own, by name, at a fixed index (>= 900000): its JSON, or (AUDIT-TESA A6-2) a function answering
  *  it, called when the block is first read. */
 export function registerPortBlock(name, json, index) {
@@ -250,12 +312,12 @@ export function registerPortBlock(name, json, index) {
 // port's content, never a mod's: served whatever Replace Game Artwork says, as a port block is, and kept apart from the
 // mods' files, so no file of a mod's can take its place in the list. A live mod's own file of the same name answers
 // first (a player's world data before the port's, as a player's own texture pack is).
-const _portBuildings = new Map();   // building file name -> its JSON
+const _portBuildings = new Map(); // building file name -> its JSON
 /** A building file of the port's own, by DFU's name (`<block>-<index>-building<record>.json`). */
 export function registerPortBuilding(fileName, json) {
   if (!fileName || json == null) return false;
   _portBuildings.set(fileName, json);
-  buildings.clear();   // a record read before it was registered answered without it
+  buildings.clear(); // a record read before it was registered answered without it
   return true;
 }
 /** WW7-4: a block of the port's own MADE OF ANOTHER - `make(blocksFile)` answers the block itself (world/capitalCastles.js:
@@ -273,20 +335,38 @@ export function registerPortBlockOf(name, make, index) {
 const _blockFamilies = [];
 /** @param {{ indexOf: (name: string) => number, nameOf: (index: number) => string | null, make: (name: string, blocksFile: any) => any, keep?: number }} f */
 export function registerPortBlockFamily(f) {
-  if (!f || typeof f.indexOf !== 'function' || typeof f.nameOf !== 'function' || typeof f.make !== 'function') return false;
+  if (!f || typeof f.indexOf !== 'function' || typeof f.nameOf !== 'function' || typeof f.make !== 'function')
+    return false;
   _blockFamilies.push({ ...f, keep: Math.max(1, f.keep ?? 512), cache: new Map() });
   return true;
 }
-const familyIndex = (name) => { for (const f of _blockFamilies) { const i = f.indexOf(name); if (i >= 0) return i; } return -1; };
+const familyIndex = (name) => {
+  for (const f of _blockFamilies) {
+    const i = f.indexOf(name);
+    if (i >= 0) return i;
+  }
+  return -1;
+};
 /** IC-STUTTER (bible/03-World/Arena-Provinces.md IC-STUTTER): whether a family's block is made and kept - a read of it
  *  makes nothing (scenes/capitalPrebuild.js asks before a build). @param {string} name */
-export const portBlockFamilyHas = (name) => _blockFamilies.some((f) => f.cache.has(name));   // a family's cache holds its own names alone
-const familyName = (index) => { for (const f of _blockFamilies) { const n = f.nameOf(index); if (n) return n; } return null; };
+export const portBlockFamilyHas = (name) => _blockFamilies.some((f) => f.cache.has(name)); // a family's cache holds its own names alone
+const familyName = (index) => {
+  for (const f of _blockFamilies) {
+    const n = f.nameOf(index);
+    if (n) return n;
+  }
+  return null;
+};
 function familyBlock(name) {
   for (const f of _blockFamilies) {
     const index = f.indexOf(name);
     if (index < 0) continue;
-    if (f.cache.has(name)) { const b = f.cache.get(name); f.cache.delete(name); f.cache.set(name, b); return b; }
+    if (f.cache.has(name)) {
+      const b = f.cache.get(name);
+      f.cache.delete(name);
+      f.cache.set(name, b);
+      return b;
+    }
     const made = f.make(name, _blocksFile);
     const block = made && (made.rmbBlock || made.rdbBlock) ? made : made ? blockFromJson(made, index) : null;
     f.cache.set(name, block);
@@ -295,14 +375,17 @@ function familyBlock(name) {
   }
   return null;
 }
-const portBlockByIndex = (index) => { for (const [name, b] of _portBlocks) if (b.index === index) return name; return familyName(index); };
+const portBlockByIndex = (index) => {
+  for (const [name, b] of _portBlocks) if (b.index === index) return name;
+  return familyName(index);
+};
 function portBlock(name) {
   const b = _portBlocks.get(name);
   if (!b) return familyBlock(name);
   if (b.block) return b.block;
   if (b.make) return (b.block = b.make(_blocksFile));
   const json = typeof b.json === 'function' ? b.json() : b.json;
-  const block = blockFromJson(json, b.index);   // AUDIT-TESA A6-2: a block built when first read
+  const block = blockFromJson(json, b.index); // AUDIT-TESA A6-2: a block built when first read
   // ROAD-FOLLOW: a block its maker calls provisional (a city's wall still waiting for its pixel's roads -
   // world/townWalls.js) is answered and not kept: its next read builds it again
   if (!json?.Provisional) b.block = block;
@@ -312,20 +395,28 @@ function portBlock(name) {
  *  location is read (MAPS.BSA's, a mod's file, a pinned town's), with its indices set. Never on readClassicLocation:
  *  that is the location a pack's edit is taken against. */
 const _locationEdits = [];
-export function registerLocationEdit(fn) { if (typeof fn === 'function' && !_locationEdits.includes(fn)) _locationEdits.push(fn); }
-let _editing = false;   // a location read inside an edit (a pin oracle asking a town's type) is answered unedited
+export function registerLocationEdit(fn) {
+  if (typeof fn === 'function' && !_locationEdits.includes(fn)) _locationEdits.push(fn);
+}
+let _editing = false; // a location read inside an edit (a pin oracle asking a town's type) is answered unedited
 export function editLocation(dfLocation, maps = null) {
   if (_editing || !dfLocation) return dfLocation;
   _editing = true;
-  try { for (const fn of _locationEdits) fn(dfLocation, maps, _blocksFile); } finally { _editing = false; }
+  try {
+    for (const fn of _locationEdits) fn(dfLocation, maps, _blocksFile);
+  } finally {
+    _editing = false;
+  }
   return dfLocation;
 }
 
 // ---- file names (:76-94) ----
 export const regionReplacementFilename = (regionIndex) => `region-${regionIndex}.json`;
-export const locationReplacementFilename = (regionIndex, locationIndex, variant = NO_VARIANT) => `location-${regionIndex}-${locationIndex}${variant}.json`;
+export const locationReplacementFilename = (regionIndex, locationIndex, variant = NO_VARIANT) =>
+  `location-${regionIndex}-${locationIndex}${variant}.json`;
 export const blockReplacementFilename = (blockName, variant = NO_VARIANT) => `${blockName}${variant}.json`;
-export const buildingReplacementFilename = (blockName, blockIndex, recordIndex, variant = NO_VARIANT) => `${blockName}-${blockIndex}-building${recordIndex}${variant}.json`;
+export const buildingReplacementFilename = (blockName, blockIndex, recordIndex, variant = NO_VARIANT) =>
+  `${blockName}-${blockIndex}-building${recordIndex}${variant}.json`;
 
 // ---- GetNewDFLocationIndex (:106-125) ----
 export function getNewDFLocationIndex(regionIndex, locationName) {
@@ -342,7 +433,10 @@ export function getDFRegionAdditionalLocationData(regionIndex, dfRegion) {
   if (!worldDataOn() || !dfRegion) return false;
   const cached = regions.get(regionIndex);
   if (cached !== undefined) {
-    if (cached !== NO_REPLACEMENT) { copyRegionInto(cached, dfRegion); return true; }
+    if (cached !== NO_REPLACEMENT) {
+      copyRegionInto(cached, dfRegion);
+      return true;
+    }
     return false;
   }
   const dataLocationCount = dfRegion.locationCount;
@@ -350,18 +444,23 @@ export function getDFRegionAdditionalLocationData(regionIndex, dfRegion) {
   for (const asset of findAssets(`-${regionIndex}.json`)) {
     const { name } = asset;
     if (!name.startsWith('locationnew-')) continue;
-    const json = asset.json;   // WD3: read only now - a pack's `location-<r>-<i>.json` ending in this region's number is passed over unread
+    const json = asset.json; // WD3: read only now - a pack's `location-<r>-<i>.json` ending in this region's number is passed over unread
     // AUDIT-RR2 G3: DFU's throw escapes this one region's read (MapsFile.cs:984, outside ReadRegion's catch) when the
     // region is first loaded; the port's boot index reads EVERY region, so one bad mod file is said and its location
     // skipped rather than the whole world host dying at boot - a departure, recorded
     try {
       const dfLocation = locationFromJson(json, regionIndex);
       locationAssignmentSuccess = addLocationToRegion(regionIndex, dfRegion, dfLocation) && locationAssignmentSuccess;
-    } catch (e) { console.error(`[worlddata] ${name}: ${e?.message ?? e}`); locationAssignmentSuccess = false; }
+    } catch (e) {
+      console.error(`[worlddata] ${name}: ${e?.message ?? e}`);
+      locationAssignmentSuccess = false;
+    }
   }
   if (dfRegion.locationCount > dataLocationCount) {
     if (locationAssignmentSuccess) regions.set(regionIndex, snapshotRegion(dfRegion));
-    console.log(`[worlddata] Added ${dfRegion.locationCount - dataLocationCount} new DFLocation's to region ${regionIndex}, indexes: ${dataLocationCount} - ${dfRegion.locationCount - 1}`);
+    console.log(
+      `[worlddata] Added ${dfRegion.locationCount - dataLocationCount} new DFLocation's to region ${regionIndex}, indexes: ${dataLocationCount} - ${dfRegion.locationCount - 1}`,
+    );
     return true;
   }
   regions.set(regionIndex, NO_REPLACEMENT);
@@ -380,7 +479,13 @@ function copyRegionInto(cached, dfRegion) {
   }
   dfRegion.locationCount = cached.locationCount;
 }
-const snapshotRegion = (r) => ({ locationCount: r.locationCount, mapNames: r.mapNames.slice(), mapTable: r.mapTable.slice(), mapNameLookup: new Map(r.mapNameLookup), mapIdLookup: new Map(r.mapIdLookup) });
+const snapshotRegion = (r) => ({
+  locationCount: r.locationCount,
+  mapNames: r.mapNames.slice(),
+  mapTable: r.mapTable.slice(),
+  mapNameLookup: new Map(r.mapNameLookup),
+  mapIdLookup: new Map(r.mapIdLookup),
+});
 
 // ---- AddLocationToRegion (:510-530) ----
 function addLocationToRegion(regionIndex, dfRegion, dfLocation) {
@@ -388,8 +493,14 @@ function addLocationToRegion(regionIndex, dfRegion, dfLocation) {
   // the region load fails loudly in DFU, and a silent remap of the vanilla entry would be the port's own invention.
   // Asked BEFORE any write: the C# pushes to LOCAL lists copied back only on success (:176-177), so its DFRegion is
   // left whole; the port writes the region's own arrays and must not leave a row its lookups do not know
-  if (dfRegion.mapIdLookup.has(dfLocation.mapTableData.mapId)) throw new Error(`[worlddata] region ${regionIndex}: mapId ${dfLocation.mapTableData.mapId} is already a location's (${dfLocation.name})`);
-  if (dfRegion.mapNameLookup.has(dfLocation.name)) throw new Error(`[worlddata] region ${regionIndex}: a location named ${JSON.stringify(dfLocation.name)} already stands`);
+  if (dfRegion.mapIdLookup.has(dfLocation.mapTableData.mapId))
+    throw new Error(
+      `[worlddata] region ${regionIndex}: mapId ${dfLocation.mapTableData.mapId} is already a location's (${dfLocation.name})`,
+    );
+  if (dfRegion.mapNameLookup.has(dfLocation.name))
+    throw new Error(
+      `[worlddata] region ${regionIndex}: a location named ${JSON.stringify(dfLocation.name)} already stands`,
+    );
   // Copy the location id for ReadLocationIdFast() to use instead of peeking the classic data files
   dfLocation.mapTableData.locationId = dfLocation.exterior.recordElement.header.locationId;
   const locationIndex = dfRegion.locationCount++;
@@ -413,12 +524,12 @@ export function getDFLocationReplacementData(regionIndex, locationIndex, maps = 
   const { variant, newLocation } = getLocationVariant(locationKey);
   let locationVariantKey = `${locationKey}${variant}`;
   if (newLocation && !locations.has(locationVariantKey)) {
-    if (!loadNewDFLocationVariant(regionIndex, locationIndex, variant)) locationVariantKey = String(locationKey);   // Fall back to non-variant if load fails
+    if (!loadNewDFLocationVariant(regionIndex, locationIndex, variant)) locationVariantKey = String(locationKey); // Fall back to non-variant if load fails
   }
   // WD3: a pinned town is asked fresh - its answer is the save's, never the cache's
   const fileName = locationReplacementFilename(regionIndex, locationIndex, variant);
   if (pinnedHere(locationKey, fileName)) {
-    if (newLocation) return locations.get(locationVariantKey) ?? null;   // a location a mod ADDED is no town's layout to keep
+    if (newLocation) return locations.get(locationVariantKey) ?? null; // a location a mod ADDED is no town's layout to keep
     const json = withPinKey(locationKey, () => tryGetAsset(fileName, maps));
     if (!json) return null;
     const dfLocation = locationFromJson(json, regionIndex);
@@ -436,13 +547,18 @@ export function getDFLocationReplacementData(regionIndex, locationIndex, maps = 
   const dfLocation = locationFromJson(json, regionIndex);
   dfLocation.locationIndex = locationIndex;
   if (assignBlockIndices(dfLocation)) locations.set(locationVariantKey, dfLocation);
-  if (!_quietLocations) console.log(`[worlddata] Found DFLocation override, region:${regionIndex}, index:${locationIndex} variant:${variant}`);
+  if (!_quietLocations)
+    console.log(
+      `[worlddata] Found DFLocation override, region:${regionIndex}, index:${locationIndex} variant:${variant}`,
+    );
   return dfLocation;
 }
 /** WD3: a pack's thousands of locations, and the hundreds of new blocks their grids name, are not each logged (the
  *  loader counts the files once). */
 let _quietLocations = false;
-export function quietLocationOverrides(on) { _quietLocations = !!on; }
+export function quietLocationOverrides(on) {
+  _quietLocations = !!on;
+}
 /** WD3: whether a pin turns away a mod that carries this file at this location - only then is the cache bypassed. */
 function pinnedHere(locationKey, fileName) {
   const pin = _pinAt(locationKey);
@@ -458,7 +574,11 @@ function locationPinned(regionIndex, locationIndex) {
 function withPinKey(key, fn) {
   const was = _pinKey;
   _pinKey = key;
-  try { return fn(); } finally { _pinKey = was; }
+  try {
+    return fn();
+  } finally {
+    _pinKey = was;
+  }
 }
 /** LoadNewDFLocationVariant (:263-298): the variant of a NEW location,
  *  from `locationnew-*-<region><variant>.json`. */
@@ -478,17 +598,30 @@ export function loadNewDFLocationVariant(regionIndex, locationIndex, variant) {
   }
   return false;
 }
-function addNewDFLocationVariant(locationIndex, locationVariantKey, variantLocation) {   // :299-310
+function addNewDFLocationVariant(locationIndex, locationVariantKey, variantLocation) {
+  // :299-310
   variantLocation.locationIndex = locationIndex;
   variantLocation.exterior.recordElement.header.unknown2 = locationIndex >>> 0;
   locations.set(locationVariantKey, variantLocation);
 }
 
 // ---- the new block indices (:312-340, :531-573) ----
-export const getNewDFBlockIndex = (blockName) => _portBlocks.get(blockName)?.index ?? (familyIndex(blockName) >= 0 ? familyIndex(blockName) : null) ?? newBlockIndices.get(blockName) ?? -1;   // ARENA1: a port block first; IC-GRAND: or a family's
+export const getNewDFBlockIndex = (blockName) =>
+  _portBlocks.get(blockName)?.index ??
+  (familyIndex(blockName) >= 0 ? familyIndex(blockName) : null) ??
+  newBlockIndices.get(blockName) ??
+  -1; // ARENA1: a port block first; IC-GRAND: or a family's
 export const getNewDFBlockName = (block) => portBlockByIndex(block) ?? newBlockNames.get(block) ?? null;
+/** FOUNDATION F1 (world/atlas/atlasServed.js): whether the door serves a block's content under a name - the port's own, a
+ *  family's, or a live mod's file (its plain name; a variant a location picks is not asked). A name a location gave an
+ *  index to (assignBlockIndices) and nothing serves reads as null at its layout. AUDIT FOUNDATION II A3: asked as at a
+ *  town no save pinned (assetOn, its pins aside) - never under the pin of the town read last. @param {string} blockName */
+export const worldDataServesBlock = (blockName) =>
+  _portBlocks.has(blockName) ||
+  familyIndex(blockName) >= 0 ||
+  (worldDataOn() && (_assets.get(blockReplacementFilename(blockName)) ?? []).some((a) => a.isOn?.() ?? true));
 function assignBlockIndices(dfLocation) {
-  if (!_blocksFile) return false;   // ContentReader/BlockFileReader null: nothing assigned, and the region is not cached
+  if (!_blocksFile) return false; // ContentReader/BlockFileReader null: nothing assigned, and the region is not cached
   if (nextBlockIndex === 0) nextBlockIndex = _blocksFile.count;
   for (const blockName of dfLocation.exterior?.exteriorData?.blockNames ?? []) {
     if (_blocksFile.getBlockIndex(blockName) === -1) assignNextIndex(blockName);
@@ -501,7 +634,8 @@ function assignBlockIndices(dfLocation) {
 function assignNextIndex(blockName) {
   newBlockNames.set(nextBlockIndex, blockName);
   newBlockIndices.set(blockName, nextBlockIndex);
-  if (!_quietLocations) console.log(`[worlddata] Found a new DFBlock: ${blockName}, (assigned index: ${nextBlockIndex})`);   // WD3: a pack's 439 new blocks are not each logged either
+  if (!_quietLocations)
+    console.log(`[worlddata] Found a new DFBlock: ${blockName}, (assigned index: ${nextBlockIndex})`); // WD3: a pack's 439 new blocks are not each logged either
   nextBlockIndex++;
 }
 
@@ -510,7 +644,7 @@ function assignNextIndex(blockName) {
  *  with its RMB buildings replaced where a building file says so; null
  *  when the mod ships none. */
 export function getDFBlockReplacementData(block, blockName) {
-  if (blockName && (_portBlocks.has(blockName) || familyIndex(blockName) >= 0)) return portBlock(blockName);   // ARENA1: the port's own, behind no door; IC-GRAND: a family's too
+  if (blockName && (_portBlocks.has(blockName) || familyIndex(blockName) >= 0)) return portBlock(blockName); // ARENA1: the port's own, behind no door; IC-GRAND: a family's too
   if (!worldDataOn() || !blockName) return null;
   const variant = getBlockVariantHere(blockName);
   const blockKey = `${blockName}${variant}`;
@@ -520,12 +654,16 @@ export function getDFBlockReplacementData(block, blockName) {
     if (!json) return null;
     const dfBlock = blockFromJson(json, block, blockName);
     if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);
-    curateBlockPeople(dfBlock, liveAsset(blockReplacementFilename(blockName, variant))?.vendor);   // QUEST-AUDIT II TEMPLE-SUMMONER
-    curateBlockPlacements(dfBlock, liveAsset(blockReplacementFilename(blockName, variant))?.vendor);   // HILL-HOUSE
+    curateBlockPeople(dfBlock, liveAsset(blockReplacementFilename(blockName, variant))?.vendor); // QUEST-AUDIT II TEMPLE-SUMMONER
+    curateBlockPlacements(dfBlock, liveAsset(blockReplacementFilename(blockName, variant))?.vendor); // HILL-HOUSE
     return dfBlock;
   }
   const cached = blocks.get(blockKey);
-  if (cached !== undefined) { blocks.delete(blockKey); blocks.set(blockKey, cached); return cached === NO_REPLACEMENT ? null : cached; }   // AUDIT WD3 B4: the most recent last
+  if (cached !== undefined) {
+    blocks.delete(blockKey);
+    blocks.set(blockKey, cached);
+    return cached === NO_REPLACEMENT ? null : cached;
+  } // AUDIT WD3 B4: the most recent last
   const json = tryGetAsset(blockReplacementFilename(blockName, variant));
   if (!json) {
     if (variant === NO_VARIANT) cacheBlock(blockName, NO_REPLACEMENT);
@@ -534,7 +672,7 @@ export function getDFBlockReplacementData(block, blockName) {
   // WD1: the whole DFBlock, RdbBlock and RdiBlock included (:363-369) - the
   // AUDIT-RR2 G14 refusal of RDB/RDI files is lifted now that the converters below read both halves
   const dfBlock = blockFromJson(json, block, blockName);
-  if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);   // :382-384 - RMB blocks only
+  if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock); // :382-384 - RMB blocks only
   // QUEST-AUDIT II TEMPLE-SUMMONER: a Beautiful Villages temple stands its deity's Daedra summoner (world/curatedPeople.js)
   curateBlockPeople(dfBlock, liveAsset(blockReplacementFilename(blockName, variant))?.vendor);
   // FIELD BUGS 2026-10-09e HILL-HOUSE: TEMPASD1's House2 #6, out of the author's hills (world/curatedPlacements.js)
@@ -569,16 +707,21 @@ function replaceRmbBlockBuildingData(blockName, blockIndex, dfBlock) {
  *  WorldDataVariants answer for the last location). */
 export function getBuildingReplacementData(blockName, blockIndex, recordIndex) {
   if (!blockName) return null;
-  if (!worldDataOn()) return portBuilding(blockName, blockIndex, recordIndex);   // AUDIT SHIP-REFIT: the port's own, behind no door
+  if (!worldDataOn()) return portBuilding(blockName, blockIndex, recordIndex); // AUDIT SHIP-REFIT: the port's own, behind no door
   const variant = getBuildingVariantHere(blockName, recordIndex, NO_VARIANT);
   const key = `${blockIndex}|${recordIndex}|${variant}`;
   const file = buildingReplacementFilename(blockName, blockIndex, recordIndex, variant);
-  if (pinnedHere(pinLocationKey(), file)) { const json = tryGetAsset(file); return json ? buildingReplacementFromJson(json) : null; }   // WD3
+  if (pinnedHere(pinLocationKey(), file)) {
+    const json = tryGetAsset(file);
+    return json ? buildingReplacementFromJson(json) : null;
+  } // WD3
   const cached = buildings.get(key);
   if (cached !== undefined) return cached === NO_REPLACEMENT ? null : cached;
-  const json = tryGetAsset(buildingReplacementFilename(blockName, blockIndex, recordIndex, variant)) ?? (variant === NO_VARIANT ? _portBuildings.get(file) : null);   // AUDIT SHIP-REFIT: a mod's own first
+  const json =
+    tryGetAsset(buildingReplacementFilename(blockName, blockIndex, recordIndex, variant)) ??
+    (variant === NO_VARIANT ? _portBuildings.get(file) : null); // AUDIT SHIP-REFIT: a mod's own first
   if (!json) {
-    if (variant === NO_VARIANT) buildings.set(key, NO_REPLACEMENT);   // Only look for replacement data once, non variant
+    if (variant === NO_VARIANT) buildings.set(key, NO_REPLACEMENT); // Only look for replacement data once, non variant
     return null;
   }
   const data = buildingReplacementFromJson(json);
@@ -609,10 +752,30 @@ export function applyBuildingReplacementAutoMapData(buildingData, blockAutoMapDa
 // enums as numbers), field for field.
 // ======================================================================
 const enumOf = (table, v, fallback = 0) => (typeof v === 'number' ? v : (table[v] ?? fallback));
-const emptyBuildingData = () => ({ nameSeed: 0, serviceTimeLimit: 0, unknown: 0, unknown2: 0, unknown3: 0, unknown4: 0, factionId: 0, sector: 0, locationId: 0, buildingType: 0, quality: 0 });
+const emptyBuildingData = () => ({
+  nameSeed: 0,
+  serviceTimeLimit: 0,
+  unknown: 0,
+  unknown2: 0,
+  unknown3: 0,
+  unknown4: 0,
+  factionId: 0,
+  sector: 0,
+  locationId: 0,
+  buildingType: 0,
+  quality: 0,
+});
 /** DFLocation.BuildingData (the 26-byte record) from its JSON. */
 export function buildingDataFromJson(b) {
-  return { ...emptyBuildingData(), nameSeed: b.NameSeed ?? 0, factionId: b.FactionId ?? 0, sector: b.Sector ?? 0, locationId: b.LocationId ?? 0, buildingType: enumOf(BUILDING_TYPES, b.BuildingType, -1), quality: b.Quality ?? 0 };
+  return {
+    ...emptyBuildingData(),
+    nameSeed: b.NameSeed ?? 0,
+    factionId: b.FactionId ?? 0,
+    sector: b.Sector ?? 0,
+    locationId: b.LocationId ?? 0,
+    buildingType: enumOf(BUILDING_TYPES, b.BuildingType, -1),
+    quality: b.Quality ?? 0,
+  };
 }
 /** DFLocation from `locationnew-*` / `location-*` JSON: the port's
  *  `_readLocation` shape, the climate by the JSON's WorldClimate through
@@ -633,31 +796,62 @@ export function locationFromJson(json, regionIndex = json.RegionIndex ?? 0) {
     politic: json.Politic ?? 0,
     climate: getWorldClimateSettings(json.Climate?.WorldClimate ?? 231),
     mapTableData: {
-      mapId: mt.MapId ?? 0, longitude: mt.Longitude ?? 0, locationType: enumOf(LOCATION_TYPES, mt.LocationType, LOCATION_TYPES.None),
-      discovered: !!mt.Discovered, latitude: mt.Latitude ?? 0, dungeonType: enumOf(DUNGEON_TYPES, mt.DungeonType, DUNGEON_TYPES.NoDungeon), key: mt.Key ?? 0, locationId: 0,
+      mapId: mt.MapId ?? 0,
+      longitude: mt.Longitude ?? 0,
+      locationType: enumOf(LOCATION_TYPES, mt.LocationType, LOCATION_TYPES.None),
+      discovered: !!mt.Discovered,
+      latitude: mt.Latitude ?? 0,
+      dungeonType: enumOf(DUNGEON_TYPES, mt.DungeonType, DUNGEON_TYPES.NoDungeon),
+      key: mt.Key ?? 0,
+      locationId: 0,
     },
     exterior: {
       recordElement: {
-        doorCount: 0, doors: [],
+        doorCount: 0,
+        doors: [],
         header: recordHeaderFromJson(h, json.Name),
       },
-      buildingCount: ext.BuildingCount ?? (ext.Buildings?.length ?? 0),
+      buildingCount: ext.BuildingCount ?? ext.Buildings?.length ?? 0,
       unknown1: null,
       buildings: (ext.Buildings ?? []).map(buildingDataFromJson),
       exteriorData: {
-        anotherName: ed.AnotherName ?? '', mapId: ed.MapId ?? 0, locationId: ed.LocationId ?? 0, width: ed.Width ?? 1, height: ed.Height ?? 1,
-        unknown2: null, letter1ForRMBName: 0, portTownAndUnknown: ed.PortTownAndUnknown ?? 0, unknown3: 0,
-        blockIndex: null, blockNumber: null, blockCharacter: null, unknown4: null, unknown5: null, unknown6: 0, blockNames,
+        anotherName: ed.AnotherName ?? '',
+        mapId: ed.MapId ?? 0,
+        locationId: ed.LocationId ?? 0,
+        width: ed.Width ?? 1,
+        height: ed.Height ?? 1,
+        unknown2: null,
+        letter1ForRMBName: 0,
+        portTownAndUnknown: ed.PortTownAndUnknown ?? 0,
+        unknown3: 0,
+        blockIndex: null,
+        blockNumber: null,
+        blockCharacter: null,
+        unknown4: null,
+        unknown5: null,
+        unknown6: 0,
+        blockNames,
       },
     },
-    dungeon: json.Dungeon ? dungeonFromJson(json.Dungeon, json.Name) : { recordElement: null, header: null, blocks: null },
+    dungeon: json.Dungeon
+      ? dungeonFromJson(json.Dungeon, json.Name)
+      : { recordElement: null, header: null, blocks: null },
   };
 }
 /** LocationRecordElementHeader from its JSON (DFLocation.cs) - the exterior's and the dungeon's alike. */
 function recordHeaderFromJson(h, name) {
   return {
-    alwaysOne1: 1, x: h.X ?? 0, y: h.Y ?? 0, isExterior: h.IsExterior ?? 0, unknown1: 0, unknown2: h.Unknown2 ?? 0, alwaysOne2: 1,
-    locationId: h.LocationId ?? 0, isInterior: h.IsInterior ?? 0, exteriorLocationId: h.ExteriorLocationId ?? 0, locationName: h.LocationName ?? name ?? '',
+    alwaysOne1: 1,
+    x: h.X ?? 0,
+    y: h.Y ?? 0,
+    isExterior: h.IsExterior ?? 0,
+    unknown1: 0,
+    unknown2: h.Unknown2 ?? 0,
+    alwaysOne2: 1,
+    locationId: h.LocationId ?? 0,
+    isInterior: h.IsInterior ?? 0,
+    exteriorLocationId: h.ExteriorLocationId ?? 0,
+    locationName: h.LocationName ?? name ?? '',
   };
 }
 // WD3 (AUDIT WD3 P1): LocationDungeon.RecordElement is a public field DFU keeps (DFLocation.cs) and every dungeon
@@ -666,29 +860,84 @@ function recordHeaderFromJson(h, name) {
 function dungeonFromJson(d, name) {
   return {
     recordElement: { doorCount: 0, doors: [], header: recordHeaderFromJson(d.RecordElement?.Header ?? {}, name) },
-    header: d.Header ? { nullValue1: 0, unknown1: 0, unknown2: 0, blockCount: d.Header.BlockCount ?? (d.Blocks?.length ?? 0), unknown3: null } : null,
-    blocks: (d.Blocks ?? []).map((b) => ({ x: b.X ?? 0, z: b.Z ?? 0, isStartingBlock: !!b.IsStartingBlock, blockName: b.BlockName ?? '', blockIndex: b.BlockIndex ?? 0, blockNumber: b.BlockNumber ?? 0, blockCharacter: b.BlockCharacter ?? 0 })),
+    header: d.Header
+      ? {
+          nullValue1: 0,
+          unknown1: 0,
+          unknown2: 0,
+          blockCount: d.Header.BlockCount ?? d.Blocks?.length ?? 0,
+          unknown3: null,
+        }
+      : null,
+    blocks: (d.Blocks ?? []).map((b) => ({
+      x: b.X ?? 0,
+      z: b.Z ?? 0,
+      isStartingBlock: !!b.IsStartingBlock,
+      blockName: b.BlockName ?? '',
+      blockIndex: b.BlockIndex ?? 0,
+      blockNumber: b.BlockNumber ?? 0,
+      blockCharacter: b.BlockCharacter ?? 0,
+    })),
   };
 }
 /** The RMB model, flat, section-3, people and door records (the
  *  `_readRmb*` shapes with the fields the JSON does not carry zeroed). */
 const modelFromJson = (m) => ({
-  position: 0, modelIdNum: m.ModelIdNum ?? Number(m.ModelId ?? 0), modelId: String(m.ModelId ?? m.ModelIdNum ?? 0), objectType: m.ObjectType ?? 0,
-  unknown1: 0, unknown2: 0, unknown3: 0, xPos1: 0, yPos1: 0, zPos1: 0,
-  xPos: m.XPos ?? 0, yPos: m.YPos ?? 0, zPos: m.ZPos ?? 0,
+  position: 0,
+  modelIdNum: m.ModelIdNum ?? Number(m.ModelId ?? 0),
+  modelId: String(m.ModelId ?? m.ModelIdNum ?? 0),
+  objectType: m.ObjectType ?? 0,
+  unknown1: 0,
+  unknown2: 0,
+  unknown3: 0,
+  xPos1: 0,
+  yPos1: 0,
+  zPos1: 0,
+  xPos: m.XPos ?? 0,
+  yPos: m.YPos ?? 0,
+  zPos: m.ZPos ?? 0,
   // WD1: RmbBlock3dObjectRecord's XScale/YScale/ZScale (DFBlock.cs:407-420) - a JSON record's own; zero (absent) is
   // "unscaled" at the layout (RMBLayout.GetModelScaleVector; world/rmbLayout.js modelScale). Float32 fields.
-  xScale: Math.fround(m.XScale ?? 0), yScale: Math.fround(m.YScale ?? 0), zScale: Math.fround(m.ZScale ?? 0),
+  xScale: Math.fround(m.XScale ?? 0),
+  yScale: Math.fround(m.YScale ?? 0),
+  zScale: Math.fround(m.ZScale ?? 0),
   nullValue2: 0,
-  xRotation: m.XRotation ?? 0, yRotation: m.YRotation ?? 0, zRotation: m.ZRotation ?? 0, unknown4: 0, unknown5: 0,
+  xRotation: m.XRotation ?? 0,
+  yRotation: m.YRotation ?? 0,
+  zRotation: m.ZRotation ?? 0,
+  unknown4: 0,
+  unknown5: 0,
 });
 const flatFromJson = (f) => ({
-  position: f.Position ?? 0, xPos: f.XPos ?? 0, yPos: f.YPos ?? 0, zPos: f.ZPos ?? 0,
+  position: f.Position ?? 0,
+  xPos: f.XPos ?? 0,
+  yPos: f.YPos ?? 0,
+  zPos: f.ZPos ?? 0,
   textureBitfield: (((f.TextureArchive ?? 0) << 7) | ((f.TextureRecord ?? 0) & 0x7f)) & 0xffff,
-  textureArchive: f.TextureArchive ?? 0, textureRecord: f.TextureRecord ?? 0, factionID: f.FactionID ?? 0, flags: f.Flags ?? 0,
+  textureArchive: f.TextureArchive ?? 0,
+  textureRecord: f.TextureRecord ?? 0,
+  factionID: f.FactionID ?? 0,
+  flags: f.Flags ?? 0,
 });
-const section3FromJson = (s) => ({ xPos: s.XPos ?? 0, yPos: s.YPos ?? 0, zPos: s.ZPos ?? 0, unknown1: 0, unknown2: 0, unknown3: 0 });
-const doorFromJson = (d) => ({ position: d.Position ?? 0, xPos: d.XPos ?? 0, yPos: d.YPos ?? 0, zPos: d.ZPos ?? 0, yRotation: d.YRotation ?? 0, openRotation: d.OpenRotation ?? 0, doorModelIndex: 0, unknown: 0, nullValue1: 0 });
+const section3FromJson = (s) => ({
+  xPos: s.XPos ?? 0,
+  yPos: s.YPos ?? 0,
+  zPos: s.ZPos ?? 0,
+  unknown1: 0,
+  unknown2: 0,
+  unknown3: 0,
+});
+const doorFromJson = (d) => ({
+  position: d.Position ?? 0,
+  xPos: d.XPos ?? 0,
+  yPos: d.YPos ?? 0,
+  zPos: d.ZPos ?? 0,
+  yRotation: d.YRotation ?? 0,
+  openRotation: d.OpenRotation ?? 0,
+  doorModelIndex: 0,
+  unknown: 0,
+  nullValue1: 0,
+});
 /** One RmbBlockData half (exterior or interior). */
 export function rmbBlockDataFromJson(j) {
   const models = (j?.Block3dObjectRecords ?? []).map(modelFromJson);
@@ -699,17 +948,33 @@ export function rmbBlockDataFromJson(j) {
   const hd = j?.Header ?? {};
   return {
     header: {
-      position: 0, num3dObjectRecords: hd.Num3dObjectRecords ?? models.length, numFlatObjectRecords: hd.NumFlatObjectRecords ?? flats.length,
-      numSection3Records: hd.NumSection3Records ?? s3.length, numPeopleRecords: hd.NumPeopleRecords ?? people.length, numDoorRecords: hd.NumDoorRecords ?? doors.length,
-      unknown1: 0, unknown2: 0, unknown3: 0, unknown4: 0, unknown5: 0, unknown6: 0,
+      position: 0,
+      num3dObjectRecords: hd.Num3dObjectRecords ?? models.length,
+      numFlatObjectRecords: hd.NumFlatObjectRecords ?? flats.length,
+      numSection3Records: hd.NumSection3Records ?? s3.length,
+      numPeopleRecords: hd.NumPeopleRecords ?? people.length,
+      numDoorRecords: hd.NumDoorRecords ?? doors.length,
+      unknown1: 0,
+      unknown2: 0,
+      unknown3: 0,
+      unknown4: 0,
+      unknown5: 0,
+      unknown6: 0,
     },
-    block3dObjectRecords: models, blockFlatObjectRecords: flats, blockSection3Records: s3, blockPeopleRecords: people, blockDoorRecords: doors,
+    block3dObjectRecords: models,
+    blockFlatObjectRecords: flats,
+    blockSection3Records: s3,
+    blockPeopleRecords: people,
+    blockDoorRecords: doors,
   };
 }
 /** RmbSubRecord: position and rotation, the two halves. */
 export const rmbSubRecordFromJson = (s) => ({
-  xPos: s.XPos ?? 0, zPos: s.ZPos ?? 0, yRotation: s.YRotation ?? 0,
-  exterior: rmbBlockDataFromJson(s.Exterior), interior: rmbBlockDataFromJson(s.Interior),
+  xPos: s.XPos ?? 0,
+  zPos: s.ZPos ?? 0,
+  yRotation: s.YRotation ?? 0,
+  exterior: rmbBlockDataFromJson(s.Exterior),
+  interior: rmbBlockDataFromJson(s.Interior),
 });
 /** The ground data: DFBlock.RmbGroundDataConverter (DFBlock.cs:1124-1185)
  *  flattens the two 16x16 arrays y-outer, x-inner; the port stores them
@@ -717,13 +982,19 @@ export const rmbSubRecordFromJson = (s) => ({
 export function groundDataFromJson(g) {
   const tiles = Array.from({ length: 16 }, () => new Array(16));
   const scenery = Array.from({ length: 16 }, () => new Array(16));
-  const T = g?.GroundTiles ?? [], S = g?.GroundScenery ?? [];
+  const T = g?.GroundTiles ?? [],
+    S = g?.GroundScenery ?? [];
   let i = 0;
   for (let y = 0; y < 16; y++) {
     for (let x = 0; x < 16; x++, i++) {
       const t = T[i] ?? {};
       const bitfield = t.TileBitfield ?? 0;
-      tiles[x][y] = { tileBitfield: bitfield, textureRecord: t.TextureRecord ?? (bitfield & 0x3f), isRotated: t.IsRotated ?? ((bitfield & 0x40) === 0x40), isFlipped: t.IsFlipped ?? ((bitfield & 0x80) === 0x80) };
+      tiles[x][y] = {
+        tileBitfield: bitfield,
+        textureRecord: t.TextureRecord ?? bitfield & 0x3f,
+        isRotated: t.IsRotated ?? (bitfield & 0x40) === 0x40,
+        isFlipped: t.IsFlipped ?? (bitfield & 0x80) === 0x80,
+      };
       const s = S[i] ?? {};
       const record = s.TextureRecord ?? -1;
       scenery[x][y] = { tileBitfield: record < 0 ? 255 : (record + 1) * 4, unknown1: 0, textureRecord: record };
@@ -736,15 +1007,32 @@ export function groundDataFromJson(g) {
  *  dfBlock.Index = block). An RMB's FLD header takes its positions from
  *  the subrecords (the JSON carries them there) and its record counts
  *  from the arrays; an RDB or RDI file serves its own half (WD1). */
-export function blockFromJson(json, index, servedName = json.Name ?? '') {   // AUDIT QA2 B1: `servedName`, the name the door served it under
+export function blockFromJson(json, index, servedName = json.Name ?? '') {
+  // AUDIT QA2 B1: `servedName`, the name the door served it under
   const name = json.Name ?? '';
-  const type = enumOf(BLOCK_TYPES, json.Type, name.endsWith('.RMB') ? BLOCK_TYPES.Rmb : name.endsWith('.RDB') ? BLOCK_TYPES.Rdb : name.endsWith('.RDI') ? BLOCK_TYPES.Rdi : BLOCK_TYPES.Unknown);
+  const type = enumOf(
+    BLOCK_TYPES,
+    json.Type,
+    name.endsWith('.RMB')
+      ? BLOCK_TYPES.Rmb
+      : name.endsWith('.RDB')
+        ? BLOCK_TYPES.Rdb
+        : name.endsWith('.RDI')
+          ? BLOCK_TYPES.Rdi
+          : BLOCK_TYPES.Unknown,
+  );
   if (type === BLOCK_TYPES.Rdb || type === BLOCK_TYPES.Rdi) {
     return {
-      position: json.Position ?? 0, index, name, servedName, type, fromWorldData: true,   // WD3: served from a mod's JSON, not BLOCKS.BSA
+      position: json.Position ?? 0,
+      index,
+      name,
+      servedName,
+      type,
+      fromWorldData: true, // WD3: served from a mod's JSON, not BLOCKS.BSA
       rmbBlock: null,
       rdbBlock: type === BLOCK_TYPES.Rdb ? rdbBlockFromJson(json.RdbBlock ?? {}) : null,
-      rdiBlock: type === BLOCK_TYPES.Rdi ? { data: json.RdiBlock?.Data ? Uint8Array.from(json.RdiBlock.Data) : null } : null,
+      rdiBlock:
+        type === BLOCK_TYPES.Rdi ? { data: json.RdiBlock?.Data ? Uint8Array.from(json.RdiBlock.Data) : null } : null,
     };
   }
   const rmb = json.RmbBlock ?? {};
@@ -752,27 +1040,43 @@ export function blockFromJson(json, index, servedName = json.Name ?? '') {   // 
   const subRecords = (rmb.SubRecords ?? []).map(rmbSubRecordFromJson);
   const misc3d = (rmb.Misc3dObjectRecords ?? []).map(modelFromJson);
   const miscFlat = (rmb.MiscFlatObjectRecords ?? []).map(flatFromJson);
-  const blockPositions = new Array(32).fill(null).map((_, i) => ({ unknown1: 0, unknown2: 0, xPos: subRecords[i]?.xPos ?? 0, zPos: subRecords[i]?.zPos ?? 0, yRotation: subRecords[i]?.yRotation ?? 0 }));
+  const blockPositions = new Array(32).fill(null).map((_, i) => ({
+    unknown1: 0,
+    unknown2: 0,
+    xPos: subRecords[i]?.xPos ?? 0,
+    zPos: subRecords[i]?.zPos ?? 0,
+    yRotation: subRecords[i]?.yRotation ?? 0,
+  }));
   const buildingDataList = (fh.BuildingDataList ?? []).map(buildingDataFromJson);
-  while (buildingDataList.length < 32) buildingDataList.push({ ...emptyBuildingData(), buildingType: -1 });   // AUDIT-RR2 G19: DFU's list is the JSON's length; the port's 32-slot shape pads with BuildingTypes.None (-1), not Alchemist (0)
+  while (buildingDataList.length < 32) buildingDataList.push({ ...emptyBuildingData(), buildingType: -1 }); // AUDIT-RR2 G19: DFU's list is the JSON's length; the port's 32-slot shape pads with BuildingTypes.None (-1), not Alchemist (0)
   return {
     position: json.Position ?? 0,
     index,
     name,
     type,
-    fromWorldData: true, servedName,   // WD3: served from a mod's JSON, not BLOCKS.BSA (world/rmbLayout.js: its own mills, not Kamer's); AUDIT QA2 B1: and under the name the town lays - a pack's JSON names itself (TEMPASA2's says TEMPAS2.RMB), and the port's curations key on the town's
+    fromWorldData: true,
+    servedName, // WD3: served from a mod's JSON, not BLOCKS.BSA (world/rmbLayout.js: its own mills, not Kamer's); AUDIT QA2 B1: and under the name the town lays - a pack's JSON names itself (TEMPASA2's says TEMPAS2.RMB), and the port's curations key on the town's
     rmbBlock: {
       fldHeader: {
-        numBlockDataRecords: subRecords.length, numMisc3dObjectRecords: misc3d.length, numMiscFlatObjectRecords: miscFlat.length,
-        blockPositions, buildingDataList, section2UnknownData: new Array(32).fill(0), blockDataSizes: new Array(32).fill(0),
-        groundData: groundDataFromJson(fh.GroundData), autoMapData: Uint8Array.from(fh.AutoMapData ?? new Array(AUTO_MAP_DATA_SIZE).fill(0)),
+        numBlockDataRecords: subRecords.length,
+        numMisc3dObjectRecords: misc3d.length,
+        numMiscFlatObjectRecords: miscFlat.length,
+        blockPositions,
+        buildingDataList,
+        section2UnknownData: new Array(32).fill(0),
+        blockDataSizes: new Array(32).fill(0),
+        groundData: groundDataFromJson(fh.GroundData),
+        autoMapData: Uint8Array.from(fh.AutoMapData ?? new Array(AUTO_MAP_DATA_SIZE).fill(0)),
         // WD3: FldHeader.OtherNames is a public field FullSerializer writes and reads (DFBlock.cs), so a block served
         // from JSON keeps it - and RMBLayout's Order of the Raven case (KRAVE01.HS2 -> GuildHall, faction 414,
         // RMBLayout.cs:677-683; talkTopics.mergeNamedBuildings) fires for Beautiful Cities' knightly blocks as in DFU.
         // A file that leaves it out (RRFORT01) carries none.
-        name: fh.Name ?? name, otherNames: Array.isArray(fh.OtherNames) ? [...fh.OtherNames] : null,
+        name: fh.Name ?? name,
+        otherNames: Array.isArray(fh.OtherNames) ? [...fh.OtherNames] : null,
       },
-      subRecords, misc3dObjectRecords: misc3d, miscFlatObjectRecords: miscFlat,
+      subRecords,
+      misc3dObjectRecords: misc3d,
+      miscFlatObjectRecords: miscFlat,
     },
     rdbBlock: null,
     rdiBlock: null,
@@ -780,29 +1084,50 @@ export function blockFromJson(json, index, servedName = json.Name ?? '') {   // 
 }
 // ---- the RDB half (WD1) ----
 /** DFBlock.RdbResourceTypes by name. */
-const RDB_RESOURCE_BY_NAME = Object.freeze({ Model: RDB_RESOURCE_TYPES.Model, Light: RDB_RESOURCE_TYPES.Light, Flat: RDB_RESOURCE_TYPES.Flat });
+const RDB_RESOURCE_BY_NAME = Object.freeze({
+  Model: RDB_RESOURCE_TYPES.Model,
+  Light: RDB_RESOURCE_TYPES.Light,
+  Flat: RDB_RESOURCE_TYPES.Flat,
+});
 /** RdbActionResource: a Model object's own, or DFU's default struct (every field zero) when the JSON leaves the resource out. */
 const actionResourceFromJson = (a) => ({
-  position: a?.Position ?? 0, axis: a?.Axis ?? 0, duration: a?.Duration ?? 0, magnitude: a?.Magnitude ?? 0,
-  nextObjectOffset: a?.NextObjectOffset ?? 0, flags: a?.Flags ?? 0,
-  previousObjectOffset: a?.PreviousObjectOffset ?? 0, nextObjectIndex: a?.NextObjectIndex ?? 0,
+  position: a?.Position ?? 0,
+  axis: a?.Axis ?? 0,
+  duration: a?.Duration ?? 0,
+  magnitude: a?.Magnitude ?? 0,
+  nextObjectOffset: a?.NextObjectOffset ?? 0,
+  flags: a?.Flags ?? 0,
+  previousObjectOffset: a?.PreviousObjectOffset ?? 0,
+  nextObjectIndex: a?.NextObjectIndex ?? 0,
 });
 /** RdbResources: the one resource RdbObjectProcessor wrote, the other two left at DFU's default struct. */
 function rdbResourcesFromJson(r) {
-  const m = r?.ModelResource, f = r?.FlatResource, l = r?.LightResource;
+  const m = r?.ModelResource,
+    f = r?.FlatResource,
+    l = r?.LightResource;
   return {
     modelResource: {
-      xRotation: m?.XRotation ?? 0, yRotation: m?.YRotation ?? 0, zRotation: m?.ZRotation ?? 0, modelIndex: m?.ModelIndex ?? 0,
-      triggerFlagStartingLock: m?.TriggerFlag_StartingLock ?? 0, soundIndex: m?.SoundIndex ?? 0, actionOffset: 0,
+      xRotation: m?.XRotation ?? 0,
+      yRotation: m?.YRotation ?? 0,
+      zRotation: m?.ZRotation ?? 0,
+      modelIndex: m?.ModelIndex ?? 0,
+      triggerFlagStartingLock: m?.TriggerFlag_StartingLock ?? 0,
+      soundIndex: m?.SoundIndex ?? 0,
+      actionOffset: 0,
       actionResource: actionResourceFromJson(m?.ActionResource),
     },
     flatResource: {
       position: f?.Position ?? 0,
       textureBitfield: (((f?.TextureArchive ?? 0) << 7) | ((f?.TextureRecord ?? 0) & 0x7f)) & 0xffff,
-      textureArchive: f?.TextureArchive ?? 0, textureRecord: f?.TextureRecord ?? 0, flags: f?.Flags ?? 0,
-      magnitude: f?.Magnitude ?? 0, soundIndex: f?.SoundIndex ?? 0, factionOrMobileId: f?.FactionOrMobileId ?? 0,
-      nextObjectOffset: f?.NextObjectOffset ?? 0, action: f?.Action ?? 0,
-      isCustomData: !!f?.IsCustomData,   // DFU's own field (DFBlock.cs:1064): a custom marker's whole FactionOrMobileId is its MobileType
+      textureArchive: f?.TextureArchive ?? 0,
+      textureRecord: f?.TextureRecord ?? 0,
+      flags: f?.Flags ?? 0,
+      magnitude: f?.Magnitude ?? 0,
+      soundIndex: f?.SoundIndex ?? 0,
+      factionOrMobileId: f?.FactionOrMobileId ?? 0,
+      nextObjectOffset: f?.NextObjectOffset ?? 0,
+      action: f?.Action ?? 0,
+      isCustomData: !!f?.IsCustomData, // DFU's own field (DFBlock.cs:1064): a custom marker's whole FactionOrMobileId is its MobileType
     },
     lightResource: { unknown1: l?.Unknown1 ?? 0, unknown2: l?.Unknown2 ?? 0, radius: l?.Radius ?? 0 },
   };
@@ -813,16 +1138,32 @@ function rdbResourcesFromJson(r) {
  *  not serialised and come back at their defaults, as in the C#. */
 export function rdbBlockFromJson(j) {
   return {
-    position: 0, header: null, modelDataList: null, objectHeader: null, unknownObjectList: null,
-    modelReferenceList: (j.ModelReferenceList ?? []).map((m) => ({ modelId: m.ModelId ?? '', modelIdNum: m.ModelIdNum ?? 0, description: m.Description ?? '' })),
+    position: 0,
+    header: null,
+    modelDataList: null,
+    objectHeader: null,
+    unknownObjectList: null,
+    modelReferenceList: (j.ModelReferenceList ?? []).map((m) => ({
+      modelId: m.ModelId ?? '',
+      modelIdNum: m.ModelIdNum ?? 0,
+      description: m.Description ?? '',
+    })),
     objectRootList: (j.ObjectRootList ?? []).map((g) => ({
       rootOffset: 0,
-      rdbObjects: g?.RdbObjects ? g.RdbObjects.map((o) => ({
-        position: o.Position ?? 0, next: 0, previous: 0, index: o.Index ?? 0,
-        xPos: o.XPos ?? 0, yPos: o.YPos ?? 0, zPos: o.ZPos ?? 0,
-        type: enumOf(RDB_RESOURCE_BY_NAME, o.Type, 0), resourceOffset: 0,
-        resources: rdbResourcesFromJson(o.Resources),
-      })) : null,
+      rdbObjects: g?.RdbObjects
+        ? g.RdbObjects.map((o) => ({
+            position: o.Position ?? 0,
+            next: 0,
+            previous: 0,
+            index: o.Index ?? 0,
+            xPos: o.XPos ?? 0,
+            yPos: o.YPos ?? 0,
+            zPos: o.ZPos ?? 0,
+            type: enumOf(RDB_RESOURCE_BY_NAME, o.Type, 0),
+            resourceOffset: 0,
+            resources: rdbResourcesFromJson(o.Resources),
+          }))
+        : null,
     })),
   };
 }

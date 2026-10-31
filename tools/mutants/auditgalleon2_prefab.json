@@ -23,8 +23,8 @@
   {
     "name": "AUDIT-GN2-PF4-her-model-after-the-five",
     "file": "src/systems/comeSailAway/comeSailAwayModels.js",
-    "old": "    const own = (url) => (url ? get(url, false).then(",
-    "new": "    const own = (url) => (url ? new Promise((r) => setTimeout(r, 60)).then(() => get(url, false)).then(",
+    "old": "        ? get(url, false).then(\n            (json) => ({ ok: true, json, error: null }),\n            (error) => ({ ok: false, json: null, error }),\n          )",
+    "new": "        ? new Promise((r) => setTimeout(r, 60))\n            .then(() => get(url, false))\n            .then(\n              (json) => ({ ok: true, json, error: null }),\n              (error) => ({ ok: false, json: null, error }),\n            )",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -33,8 +33,8 @@
   {
     "name": "AUDIT-GN2-PF4-built-every-time",
     "file": "src/systems/comeSailAway/comeSailAwayModels.js",
-    "old": "  if (was && was.sha256 === json.sha256 && was.bake === bake && was.base === base && was.old === old) return was.built;\n",
-    "new": "",
+    "old": "  if (was && was.sha256 === json.sha256 && was.bake === bake && was.base === base && was.old === old) return was.built;\n  if (ship.key === 'galleon' && base !== prefabs.components.length)",
+    "new": "  if (ship.key === 'galleon' && base !== prefabs.components.length)",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -43,8 +43,8 @@
   {
     "name": "AUDIT-GN2-PF4-keyed-by-the-hash-alone",
     "file": "src/systems/comeSailAway/comeSailAwayModels.js",
-    "old": "  if (was && was.sha256 === json.sha256 && was.bake === bake && ",
-    "new": "  if (was && was.sha256 === json.sha256 && ",
+    "old": "  if (was && was.sha256 === json.sha256 && was.bake === bake && was.base === base && was.old === old) return was.built;",
+    "new": "  if (was && was.sha256 === json.sha256 && was.base === base && was.old === old) return was.built;",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js",
       "test/world/ships/galleon_model.test.js"
@@ -54,8 +54,8 @@
   {
     "name": "AUDIT-GN2-PF4-another-table-its-components",
     "file": "src/systems/comeSailAway/comeSailAwayModels.js",
-    "old": " && was.base === base && was.old === old) return",
-    "new": " && was.old === old) return",
+    "old": "  if (was && was.sha256 === json.sha256 && was.bake === bake && was.base === base && was.old === old) return was.built;",
+    "new": "  if (was && was.sha256 === json.sha256 && was.bake === bake && was.old === old) return was.built;",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -64,8 +64,8 @@
   {
     "name": "AUDIT-GN2-PF4-another-table-its-galleon",
     "file": "src/systems/comeSailAway/comeSailAwayModels.js",
-    "old": " && was.old === old) return",
-    "new": ") return",
+    "old": "  if (was && was.sha256 === json.sha256 && was.bake === bake && was.base === base && was.old === old) return was.built;",
+    "new": "  if (was && was.sha256 === json.sha256 && was.bake === bake && was.base === base) return was.built;",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -125,8 +125,8 @@
   {
     "name": "AUDIT-GN2-PF8-hinged-mid-leaf",
     "file": "src/world/ships/galleonModel.js",
-    "old": "  box(bench, TEX.door, [w / 2, h / 2, t / 2], [w / 2, h / 2, t / 2], { uvFace: (fi, k) => {",
-    "new": "  box(bench, TEX.door, [w / 2, h / 2, 0], [w / 2, h / 2, t / 2], { uvFace: (fi, k) => {",
+    "old": "  box(bench, TEX.door, [w / 2, h / 2, t / 2], [w / 2, h / 2, t / 2], {",
+    "new": "  box(bench, TEX.door, [w / 2, h / 2, 0], [w / 2, h / 2, t / 2], {",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -145,8 +145,8 @@
   {
     "name": "AUDIT-GN2-PF8-the-shut-leaf-off-the-middle",
     "file": "src/world/ships/galleonModel.js",
-    "old": "p: [-d.halfX + 0.02, foot, d.z - DOOR_THICK / 2]",
-    "new": "p: [-d.halfX + 0.02, foot, d.z]",
+    "old": "      p: [-d.halfX + 0.02, foot, d.z - DOOR_THICK / 2],",
+    "new": "      p: [-d.halfX + 0.02, foot, d.z],",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -195,8 +195,8 @@
   {
     "name": "AUDIT-GN2-TS8-a-box-side-inward",
     "file": "src/world/ships/galleonMesh.js",
-    "old": "[scl(X, -1), [[-1, -1, 1], [-1, 1, 1], [-1, 1, -1], [-1, -1, -1]]]",
-    "new": "[X, [[-1, -1, 1], [-1, 1, 1], [-1, 1, -1], [-1, -1, -1]]]",
+    "old": "      scl(X, -1),",
+    "new": "      X,",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -205,8 +205,8 @@
   {
     "name": "AUDIT-GN2-TS12-corner-normals-left-behind",
     "file": "src/world/ships/galleonMesh.js",
-    "old": "if (normals) normals = [normals[0], normals[2], normals[1]]; ",
-    "new": "",
+    "old": "      if (normals) normals = [normals[0], normals[2], normals[1]];\n      n = scl(n, -1);",
+    "new": "      n = scl(n, -1);",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -215,8 +215,8 @@
   {
     "name": "AUDIT-GN2-TS12-port-side-mirrored",
     "file": "src/world/ships/galleonMesh.js",
-    "old": "u = n[0] >= 0 ? p[2] : -p[2];",
-    "new": "u = p[2];",
+    "old": "    u = n[0] >= 0 ? p[2] : -p[2];",
+    "new": "    u = p[2];",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -225,8 +225,8 @@
   {
     "name": "AUDIT-GN2-TS12-stern-mirrored",
     "file": "src/world/ships/galleonMesh.js",
-    "old": "u = n[2] >= 0 ? -p[0] : p[0];",
-    "new": "u = -p[0];",
+    "old": "    u = n[2] >= 0 ? -p[0] : p[0];",
+    "new": "    u = -p[0];",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],

@@ -12,8 +12,8 @@
   {
     "name": "QUEST-FOE-LINE-before-the-journal",
     "file": "src/systems/quest/questFoeLine.js",
-    "old": "  if (!quest.getLogMessages?.()?.length) return null;   // Quest.GetLogMessages: none once the quest has ended, too\n",
-    "new": "",
+    "old": "  if (!quest.getLogMessages?.()?.length) return null; // Quest.GetLogMessages: none once the quest has ended, too\n  const title = questTitleOf(quest.displayName);",
+    "new": "  const title = questTitleOf(quest.displayName);",
     "tests": [
       "test/systems/quest/fb1004f_questfoe.test.js"
     ],

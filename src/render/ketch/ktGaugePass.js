@@ -29,12 +29,25 @@ export const KT_GAUGE_MEANING_STRIDE = 10;
 /** The face's colours (display): its signal by meaning (L3), the bezel and a dark stud (L2), the face's dark (L1), the
  *  dial's red sector; the texels a face is posterized on, across. */
 export const KT_GAUGE_LOOK = Object.freeze({
-  signal: Object.freeze([Object.freeze([0.95, 0.76, 0.42]), Object.freeze([0.5, 0.82, 0.98]), Object.freeze([1.0, 0.56, 0.14]), Object.freeze([0.88, 0.18, 0.14])]),
-  bezel: Object.freeze([0.5, 0.42, 0.2]), stud: Object.freeze([0.2, 0.16, 0.1]), face: Object.freeze([0.07, 0.07, 0.08]), red: Object.freeze([0.62, 0.16, 0.12]),
-  texels: 32, steps: Object.freeze({ lane: 10, classic: 8 }),
+  signal: Object.freeze([
+    Object.freeze([0.95, 0.76, 0.42]),
+    Object.freeze([0.5, 0.82, 0.98]),
+    Object.freeze([1.0, 0.56, 0.14]),
+    Object.freeze([0.88, 0.18, 0.14]),
+  ]),
+  bezel: Object.freeze([0.5, 0.42, 0.2]),
+  stud: Object.freeze([0.2, 0.16, 0.1]),
+  face: Object.freeze([0.07, 0.07, 0.08]),
+  red: Object.freeze([0.62, 0.16, 0.12]),
+  texels: 32,
+  steps: Object.freeze({ lane: 10, classic: 8 }),
 });
 /** The dial's sweep (radians from up, clockwise): its pin at the lower left, full at the lower right; its red sector. */
-export const KT_DIAL = Object.freeze({ from: (-135 * Math.PI) / 180, sweep: (270 * Math.PI) / 180, red: (24 * Math.PI) / 180 });
+export const KT_DIAL = Object.freeze({
+  from: (-135 * Math.PI) / 180,
+  sweep: (270 * Math.PI) / 180,
+  red: (24 * Math.PI) / 180,
+});
 
 /** The parts a face's point is (ktGaugeAt's `part`). */
 export const KT_GAUGE_PART = Object.freeze({ none: 0, face: 1, bezel: 2, signal: 3, dark: 4, red: 5 });
@@ -44,17 +57,20 @@ export const KT_GAUGE_PART = Object.freeze({ none: 0, face: 1, bezel: 2, signal:
  * it is (KT_GAUGE_PART). Pure; the fragment shader's twin, term for term.
  */
 export function ktGaugeAt(k, a, b, u, v) {
-  const kind = k % KT_GAUGE_MEANING_STRIDE, r = Math.hypot(u, v), P = KT_GAUGE_PART;
+  const kind = k % KT_GAUGE_MEANING_STRIDE,
+    r = Math.hypot(u, v),
+    P = KT_GAUGE_PART;
   switch (kind) {
     case KT_GAUGE_KIND.dial: {
       if (r > 1) return P.none;
       if (r > 0.86) return P.bezel;
-      const th = Math.atan2(u, v);   // from up, clockwise
+      const th = Math.atan2(u, v); // from up, clockwise
       const needle = KT_DIAL.from + KT_DIAL.sweep * Math.max(0, Math.min(1, a));
       const off = Math.abs(Math.atan2(Math.sin(th - needle), Math.cos(th - needle)));
       if (r < 0.1) return P.signal;
       if (r < 0.78 && off * r < 0.05) return P.signal;
-      const s = th - KT_DIAL.from, inSweep = ((s % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+      const s = th - KT_DIAL.from,
+        inSweep = ((s % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
       if (r > 0.7 && r < 0.82 && inSweep <= KT_DIAL.red) return P.red;
       return P.face;
     }
@@ -65,16 +81,19 @@ export function ktGaugeAt(k, a, b, u, v) {
       return v <= top ? P.signal : P.dark;
     }
     case KT_GAUGE_KIND.lamps: {
-      const n = Math.max(1, Math.min(16, Math.round(b))), cell = 2 / n;
-      const i = Math.min(n - 1, Math.floor((u + 1) / cell)), cu = -1 + cell * (i + 0.5);
-      const rr = Math.hypot(u - cu, v) / Math.min(1, cell / 2);   // round studs on the plate, whatever their count
+      const n = Math.max(1, Math.min(16, Math.round(b))),
+        cell = 2 / n;
+      const i = Math.min(n - 1, Math.floor((u + 1) / cell)),
+        cu = -1 + cell * (i + 0.5);
+      const rr = Math.hypot(u - cu, v) / Math.min(1, cell / 2); // round studs on the plate, whatever their count
       if (rr > 0.8) return Math.abs(v) <= 1 ? P.bezel : P.none;
       return i < Math.round(Math.max(0, Math.min(1, a)) * n) ? P.signal : P.dark;
     }
     case KT_GAUGE_KIND.ring: {
       if (r > 1) return P.none;
       if (r < 0.62 || r > 0.9) return r > 0.9 ? P.bezel : P.face;
-      const th = Math.atan2(u, v), turned = ((th % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+      const th = Math.atan2(u, v),
+        turned = ((th % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
       return turned <= 2 * Math.PI * Math.max(0, Math.min(1, a)) ? P.signal : P.dark;
     }
     case KT_GAUGE_KIND.pulse: {
@@ -82,7 +101,8 @@ export function ktGaugeAt(k, a, b, u, v) {
       if (Math.abs(v) > 0.22) return P.bezel;
       return Math.abs(u - (-1 + 2 * Math.max(0, Math.min(1, a)))) < 0.12 ? P.signal : P.dark;
     }
-    default: return P.none;
+    default:
+      return P.none;
   }
 }
 
@@ -168,9 +188,13 @@ void main() {
 }`;
 
 /** FIRST-USE: the pass's one program, as its constructor builds it. */
-export const KT_GAUGE_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[KT_GAUGE_VS, KT_GAUGE_FS]]));
+export const KT_GAUGE_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (
+  Object.freeze([[KT_GAUGE_VS, KT_GAUGE_FS]])
+);
 const QUAD = new Float32Array([-1, -1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1]);
-const NO_RANGE = new Float32Array([0, 1]), NO_CAM = new Float32Array(3), NO_FOG = new Float32Array(3);
+const NO_RANGE = new Float32Array([0, 1]),
+  NO_CAM = new Float32Array(3),
+  NO_FOG = new Float32Array(3);
 
 /** The gauges, one foreign pass. `instances` a Float32Array of `count` faces, KT_GAUGE_FLOATS each. */
 export class KtGaugeRenderer {
@@ -180,18 +204,45 @@ export class KtGaugeRenderer {
     const [[vs, fs]] = KT_GAUGE_PROGRAMS;
     this.prog = buildProgram(gl, vs, fs, 'kt gauge');
     this.u = {};
-    for (const n of ['uView', 'uProj', 'uSignal', 'uBezel', 'uStud', 'uFace', 'uRed', 'uSteps', 'uTexels', 'uLane', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFogColor']) this.u[n] = gl.getUniformLocation(this.prog, n);
+    for (const n of [
+      'uView',
+      'uProj',
+      'uSignal',
+      'uBezel',
+      'uStud',
+      'uFace',
+      'uRed',
+      'uSteps',
+      'uTexels',
+      'uLane',
+      'uFogMode',
+      'uFogDensity',
+      'uFogRange',
+      'uCamPos',
+      'uFogColor',
+    ])
+      this.u[n] = gl.getUniformLocation(this.prog, n);
     this.vao = gl.createVertexArray();
     gl.bindVertexArray(this.vao);
     this.quad = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.quad);
     gl.bufferData(gl.ARRAY_BUFFER, QUAD, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     this.inst = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.inst);
     gl.bufferData(gl.ARRAY_BUFFER, KT_GAUGE_MAX * KT_GAUGE_FLOATS * 4, gl.DYNAMIC_DRAW);
     const S = KT_GAUGE_FLOATS * 4;
-    for (const [loc, off] of [[1, 0], [2, 12], [3, 24], [4, 36]]) { gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 3, gl.FLOAT, false, S, off); gl.vertexAttribDivisor(loc, 1); }
+    for (const [loc, off] of [
+      [1, 0],
+      [2, 12],
+      [3, 24],
+      [4, 36],
+    ]) {
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, 3, gl.FLOAT, false, S, off);
+      gl.vertexAttribDivisor(loc, 1);
+    }
     gl.bindVertexArray(null);
     this.signal = new Float32Array(KT_GAUGE_LOOK.signal.flat());
     this.drawn = 0;
@@ -199,14 +250,23 @@ export class KtGaugeRenderer {
   /** Draw `count` faces of `instances` (the world frame), `lane` the enhanced lane's (linear light, its steps). Answers
    *  whether any drew. */
   draw(proj, view, instances, count, { lane = false, fog = null } = {}) {
-    const gl = this.gl, U = this.u, n = Math.min(count | 0, KT_GAUGE_MAX), L = KT_GAUGE_LOOK;
+    const gl = this.gl,
+      U = this.u,
+      n = Math.min(count | 0, KT_GAUGE_MAX),
+      L = KT_GAUGE_LOOK;
     this.drawn = 0;
     if (!n || !this.prog) return false;
     gl.useProgram(this.prog);
-    gl.uniformMatrix4fv(U.uView, false, view); gl.uniformMatrix4fv(U.uProj, false, proj);
+    gl.uniformMatrix4fv(U.uView, false, view);
+    gl.uniformMatrix4fv(U.uProj, false, proj);
     gl.uniform3fv(U.uSignal, this.signal);
-    gl.uniform3fv(U.uBezel, L.bezel); gl.uniform3fv(U.uStud, L.stud); gl.uniform3fv(U.uFace, L.face); gl.uniform3fv(U.uRed, L.red);
-    gl.uniform1f(U.uSteps, lane ? L.steps.lane : L.steps.classic); gl.uniform1f(U.uTexels, L.texels); gl.uniform1f(U.uLane, lane ? 1 : 0);
+    gl.uniform3fv(U.uBezel, L.bezel);
+    gl.uniform3fv(U.uStud, L.stud);
+    gl.uniform3fv(U.uFace, L.face);
+    gl.uniform3fv(U.uRed, L.red);
+    gl.uniform1f(U.uSteps, lane ? L.steps.lane : L.steps.classic);
+    gl.uniform1f(U.uTexels, L.texels);
+    gl.uniform1f(U.uLane, lane ? 1 : 0);
     gl.uniform1i(U.uFogMode, fog ? fog.mode : 0);
     gl.uniform1f(U.uFogDensity, fog?.density ?? 0);
     gl.uniform2fv(U.uFogRange, fog?.range ?? NO_RANGE);
@@ -215,7 +275,10 @@ export class KtGaugeRenderer {
     gl.bindVertexArray(this.vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.inst);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, instances, 0, n * KT_GAUGE_FLOATS);
-    gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.CULL_FACE); gl.disable(gl.BLEND);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthMask(true);
+    gl.disable(gl.CULL_FACE);
+    gl.disable(gl.BLEND);
     gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, n);
     gl.bindVertexArray(null);
     gl.enable(gl.CULL_FACE);
@@ -226,7 +289,10 @@ export class KtGaugeRenderer {
   destroy() {
     const gl = this.gl;
     if (!this.prog) return;
-    gl.deleteBuffer(this.quad); gl.deleteBuffer(this.inst); gl.deleteVertexArray(this.vao); gl.deleteProgram(this.prog);
+    gl.deleteBuffer(this.quad);
+    gl.deleteBuffer(this.inst);
+    gl.deleteVertexArray(this.vao);
+    gl.deleteProgram(this.prog);
     this.prog = /** @type {any} */ (null);
   }
 }
@@ -237,9 +303,17 @@ export class KtGaugeRenderer {
  */
 export function ktGaugePut(out, i, at, right, up, kind, meaning, a, b = 0) {
   const o = i * KT_GAUGE_FLOATS;
-  out[o] = at[0]; out[o + 1] = at[1]; out[o + 2] = at[2];
-  out[o + 3] = right[0]; out[o + 4] = right[1]; out[o + 5] = right[2];
-  out[o + 6] = up[0]; out[o + 7] = up[1]; out[o + 8] = up[2];
-  out[o + 9] = kind + KT_GAUGE_MEANING_STRIDE * meaning; out[o + 10] = a; out[o + 11] = b;
+  out[o] = at[0];
+  out[o + 1] = at[1];
+  out[o + 2] = at[2];
+  out[o + 3] = right[0];
+  out[o + 4] = right[1];
+  out[o + 5] = right[2];
+  out[o + 6] = up[0];
+  out[o + 7] = up[1];
+  out[o + 8] = up[2];
+  out[o + 9] = kind + KT_GAUGE_MEANING_STRIDE * meaning;
+  out[o + 10] = a;
+  out[o + 11] = b;
   return i + 1;
 }

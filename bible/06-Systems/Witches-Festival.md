@@ -62,6 +62,16 @@ another machine runs), once a body, never the watch or an ally. Acts are `system
 Redoubt, the Heart-Star held with its star) ask once, and an elite foe's act never beside its kill's. A find whose ask never reached the service was a die
 never rolled: nothing is kept to ask again.
 
+AUDIT PASS 1 (2026-10-29, `06-Systems/Battle-Pass.md` section 8): the Sky-Ketch's lift ridden and a cell banked are no
+find, since each is said again at will with no receipt behind it. The acts no find pays are one list, `qlActs.js`
+ACT_NOT_FOUND, which the festival and the Battle Pass both read.
+
+AUDIT PASS 2 and 3, the festival's twins (2026-10-29, the same section): `open` in the account's festival is the switch's
+word alone (`festival.js` festivalOf), because a page that read it before the festival's days kept `false` after them.
+A page told the festival is shut says `closed` for ten minutes, then reads it again on its next find, and a refusal
+rests its finds as the pass's do (`src/net/askRest.js`). A find is a progression claim (`progress.js` PROGRESS_ROUTES),
+asked of the seated realm character on a stream of its own, `festival`: the day's 1,500 asks an hour of play.
+
 ## The Wyrd Sister
 
 A witch of the Glenmoril Wyrd stands beside a tavern's door wherever one side of it is clear (FLATS.CFG's "mysterious
@@ -185,7 +195,8 @@ is tied to the festival's own parts (AUDIT STAR8, `11-Multiplayer/Starfall.md` s
 
 - **A Wyrd Sister hands over Morwen's letter.** Her window opened is the act `wyrd-met` (`scenes/witchesHost.js` shop),
   which The Thirteenth of Frostfall's first step waits on; a star held before any Sister is met brings Morwen's raven
-  instead. The act is never a find (`festivalClient.js` ACT_NOT_FOUND): a press at her door is no Soul Cake.
+  instead. The act is never a find (`qlActs.js` ACT_NOT_FOUND, the Battle Pass's list too): a press at her door is no Soul
+  Cake.
 - **The Heart-Star** is Three Stars' optional objective - held, the step's greater pay and Morwen's Heart-Star Ring.
 - **The Wyrd know the Starwarden**: the line's title stands in her window's insignia, beside Hearthkeeper.
 
@@ -193,12 +204,12 @@ is tied to the festival's own parts (AUDIT STAR8, `11-Multiplayer/Starfall.md` s
 
 The Thirteenth of Frostfall pays its title, Starwarden, on QLTF03's witnessed end - and, in the same write, 30 Soul Cakes
 (`QL_STARWARDEN_CAKES`, `src/net/festivalLaw.js`) onto `players.fest_cakes`
-(`server-account/src/questlines.js:"export const QL_PURSES = Object.freeze({ thirteenthFrostfall: QL_STARWARDEN_CAKES });"`).
+(`server-account/src/questlines.js:"export const QL_PURSES"`).
 The title's own UPDATE carries it, so the title row's guard is the purse's: once an account, never on a re-claim (which
 answers the title held). Only while the festival is open for the account at the claim's clock - its days
 (`festivalOpen`) and its switch (`festivalOpenFor`) - and never to a guest (a guest's end is refused before the batch).
 The answer says `purse`, the cakes paid; the page hears it at the questlines' door
-(`src/scenes/quest/questlineHost.js:"export function hearPurse(answer, { say = (line) => festivalDoors().say(line), refresh = refreshFestival } = {}) {"`):
+(`src/scenes/quest/questlineHost.js:"export function hearPurse"`):
 "+30 Soul Cakes", said as a find is, and the account's count read again through the festival's own door
 (`refreshFestival`), which restacks the pack's Soul Cakes to it. A purse whose answer was lost is on the count all the
 same, and the pack's face follows at the festival's next answer.

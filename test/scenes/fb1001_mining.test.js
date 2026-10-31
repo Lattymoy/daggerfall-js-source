@@ -27,6 +27,7 @@ import { createForagingItem, setForagingHost } from '../../src/systems/foraging/
 import { FT } from '../../src/systems/foraging/foragingLaw.js';
 import { CLIMATES, LOCATION_TYPES } from '../../src/formats/mapsFile.js';
 import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } from '../../src/world/terrain/terrainSampler.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const WOODS = CLIMATES.Woodlands, GLENUMBRA = 59;
 const PX = 405, PY = 150;
@@ -186,7 +187,7 @@ test('ACT-TOUCH: Logging\'s chop by a finger - the press as the ring meets the n
 });
 
 test('ACT-TOUCH: the world host hands every hooks press to the act before its gates - the street\'s and, through the same hook, the dungeon\'s and a building\'s (mutants: the hook never calls it; called after the act\'s own refusal)', () => {
-  const src = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+  const src = hostText('src/scenes/world.js');
   const at = src.indexOf('    attack: (dx, dy, held, o = null) => {');   // PIN MOVED (AUDIT 2026-10-01 part four, PAD-PULSE): the hook hears a held stroke's repeat
   assert.ok(at > 0, 'the hooks object\'s attack');
   const body = src.slice(at, src.indexOf('\n    },', at));
@@ -282,7 +283,7 @@ test('VEIN-CLEAR: a vein with no rock left to claim stands on stone outside ever
 });
 
 test('ACT-CLICK: the act\'s strike is either button - the world host\'s input reads the swing\'s and the activation\'s press off the edge ring (a left click, Mouse0, strikes; E does not) (mutants: the click left out; the hold read for the press)', () => {
-  const src = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+  const src = hostText('src/scenes/world.js');
   const at = src.indexOf('gatherHost = createGatherHost({');
   const line = src.slice(src.indexOf('        input: () => ({', at), src.indexOf('\n', src.indexOf('        input: () => ({', at)));
   const body = line.slice(line.indexOf('() =>'), line.indexOf('}),') + 2);
@@ -290,7 +291,8 @@ test('ACT-CLICK: the act\'s strike is either button - the world host\'s input re
   const latch = { edge: keyEdges() };
   const keys = new Set();
   const csaRuntime = null;
-  const input = new Function('held', 'pressed', 'latch', 'keys', 'csaRuntime', `return (${body});`)(held, pressed, latch, keys, csaRuntime);
+  // PIN MOVED (HOST-SPLIT PROFESSIONS): the closure reads the ring and the keys live through its host
+  const input = new Function('held', 'pressed', 'host', 'csaRuntime', `return (${body});`)(held, pressed, { latch, keys }, csaRuntime);
   const frame = (code) => { if (code) { keys.add(code); noteKeyDown(latch.edge, code); } beginInputFrame(latch.edge); const r = input(); if (code) keys.delete(code); return r.attack; };
   assert.equal(frame('Mouse1'), true, 'the right button (SwingWeapon) strikes, as before');
   assert.equal(frame('Mouse0'), true, 'the left (ActivateCenterObject) strikes too');

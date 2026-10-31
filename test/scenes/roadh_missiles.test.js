@@ -307,7 +307,7 @@ test('ROAD-H H1c: BOTH arrow spawn seams apply it, so every host inherits the bo
   assert.match(src('systems/spellcast.js'),
     /export function playerShotOrigin\(eye, lookDir, muzzle\) \{\n\s*if \(muzzle\?\.world\) return \[\.\.\.muzzle\.world\];\n\s*return muzzle \? playerMuzzleOrigin\(eye, lookDir, muzzle\) : playerArrowOrigin\(eye, lookDir\);\n\}/);
   assert.match(src('combat/arrowFlight.js'),
-    /const origin = meta\.fromPlayer\s*\n\s*\? playerShotOrigin\(from, dir, meta\.muzzle\)\s*\n\s*: \[\.\.\.from\];/);
+    /const origin = meta\.fromPlayer\n\s*\? playerShotOrigin\(from, dir, meta\.muzzle\)\n\s*: \[\.\.\.from\];/);
   assert.match(src('combat/arrowFlight.js'), /this\.arrows\.push\(\{ pos: origin,/);
   assert.match(src('scenes/dungeonContext.js'),
     /const pos = fromPlayer\s*\n\s*\? playerShotOrigin\(from, dir, muzzle\)[^\n]*\n\s*: \[\.\.\.from\];/);
@@ -367,7 +367,7 @@ test('ROAD-H H2: DoAreaOfEffect is an OverlapSphere against CAPSULES - the rim i
       `missileHitsCapsule is sphereOverlapsCapsule at the missile radius (y=${y})`);
   }
   assert.match(src('systems/spellcast.js'),
-    /export function missileHitsCapsule\(pos, feet, height, bodyRadius = BODY_CAPSULE_RADIUS\) \{\n\s*return sphereOverlapsCapsule\(pos, MISSILE_COLLIDER_RADIUS, feet, height, bodyRadius\);\n\}/,
+    /export function missileHitsCapsule\(pos, feet, height, bodyRadius = BODY_CAPSULE_RADIUS, from = null\) \{\n\s*return from\n\s*\? sweptSphereOverlapsCapsule\(from, pos, MISSILE_COLLIDER_RADIUS, feet, height, bodyRadius\)\n\s*: sphereOverlapsCapsule\(pos, MISSILE_COLLIDER_RADIUS, feet, height, bodyRadius\);\n\s*\}/,
     'and it is a call, not a second copy - carrying the measured body through (AUDIT 65 CV-2)');
 });
 

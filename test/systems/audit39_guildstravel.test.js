@@ -307,5 +307,5 @@ test('F114: the host routes the travel map AND the quest clock through the origi
   // playerTravelPixel stays PlayerGPS itself - loot piles, the climate
   // read and the location index all want the live pixel.
   assert.ok(w.includes('function playerTravelPixel() {'));
-  assert.match(src('systems/quest/clock.js'), /calculateTravelTime\(world\.playerPixel\(\), endPos,/);
+  assert.match(src('systems/quest/clock.js'), /calculateTravelTime\(\n\s*world\.playerPixel\(\),\n\s*endPos,/);
 });

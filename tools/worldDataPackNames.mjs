@@ -22,9 +22,13 @@ export function withClassicNames(text, blockName) {
 
 if (isMain(import.meta.url)) {
   const [arena2, ...packs] = process.argv.slice(2);
-  if (!arena2 || !packs.length) { console.error('usage: node tools/worldDataPackNames.mjs <arena2> <pack.json.gz>...'); process.exit(1); }
+  if (!arena2 || !packs.length) {
+    console.error('usage: node tools/worldDataPackNames.mjs <arena2> <pack.json.gz>...');
+    process.exit(1);
+  }
   const blocks = new BlocksFile();
-  if (!blocks.load(new Uint8Array(readFileSync(join(arena2, 'BLOCKS.BSA'))))) throw new Error('BLOCKS.BSA did not load');
+  if (!blocks.load(new Uint8Array(readFileSync(join(arena2, 'BLOCKS.BSA')))))
+    throw new Error('BLOCKS.BSA did not load');
   for (const file of packs) {
     const text = withClassicNames(zlib.gunzipSync(readFileSync(file)).toString('utf8'), (i) => blocks.getBlockName(i));
     writeFileSync(file, zlib.gzipSync(Buffer.from(text, 'utf8'), { level: 9 }));

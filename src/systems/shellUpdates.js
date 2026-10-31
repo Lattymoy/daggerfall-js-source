@@ -21,7 +21,8 @@
 // SRV-N's (net/updateNotice.js).
 
 /** A version is only ever spoken in the one shape the release carries. */
-const versionOf = (info) => (typeof info?.version === 'string' && /^\d+\.\d+\.\d+$/.test(info.version) ? info.version : null);
+const versionOf = (info) =>
+  typeof info?.version === 'string' && /^\d+\.\d+\.\d+$/.test(info.version) ? info.version : null;
 
 /** The HUD line for an update the shell reports. */
 export function updateReadyText(info) {
@@ -55,7 +56,8 @@ export function listenForShellUpdates(shell, say) {
 // (`manual`: macOS, the portable exe) cannot put it in place by itself and keeps the HUD line above.
 
 /** Whether the shell can put this update in place and restart by itself. */
-export const shellRestartsFor = (shell, info) => !!info && !info.manual && typeof shell?.restartForUpdate === 'function';
+export const shellRestartsFor = (shell, info) =>
+  !!info && !info.manual && typeof shell?.restartForUpdate === 'function';
 
 /** @type {((info: any) => void) | null} the newest host's start; @type {any} the update heard, for a host that comes later */
 let _start = null;
@@ -71,9 +73,17 @@ let _listening = false;
  * @param {(info: any) => void} start
  */
 export function forceShellUpdates(shell, start) {
-  if (typeof shell?.onUpdateReady !== 'function' || typeof shell?.restartForUpdate !== 'function' || typeof start !== 'function') return false;
+  if (
+    typeof shell?.onUpdateReady !== 'function' ||
+    typeof shell?.restartForUpdate !== 'function' ||
+    typeof start !== 'function'
+  )
+    return false;
   _start = start;
-  if (_listening) { if (_heard) start(_heard); return true; }
+  if (_listening) {
+    if (_heard) start(_heard);
+    return true;
+  }
   _listening = true;
   shell.onUpdateReady((info) => {
     if (!shellRestartsFor(shell, info)) return;

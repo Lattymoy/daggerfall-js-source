@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-QL-REWARD-3-settle-deleted",
     "file": "src/systems/questlines/qlLayer.js",
-    "old": "      const owed = goldStillOwed(paidGold, outcome);   // REWARD-3",
-    "new": "      const owed = 0;   // REWARD-3",
+    "old": "      const owed = goldStillOwed(paidGold, outcome); // REWARD-3",
+    "new": "      const owed = 0; // REWARD-3",
     "tests": [
       "test/systems/questlines/ql3_rewards.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "AUDIT-QL-REWARD-3-record-not-saved",
     "file": "src/systems/questlines/qlLayer.js",
-    "old": "      gold: Object.fromEntries([...golds]",
-    "new": "      kept: Object.fromEntries([...golds]",
+    "old": "      gold: Object.fromEntries(",
+    "new": "      kept: Object.fromEntries(",
     "tests": [
       "test/systems/questlines/ql3_rewards.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-QL-REWARD-9-named-every-time",
     "file": "src/systems/questlines/qlLayer.js",
-    "old": "const named = outcome.named && !history[`named:${line}`] && !offers.some(",
-    "new": "const named = outcome.named && !offers.some(",
+    "old": "        outcome.named &&\n        !history[`named:${line}`] &&\n        !offers.some((x) => x.questName === line && x.pieces.some((p) => p.named))",
+    "new": "        outcome.named && !offers.some((x) => x.questName === line && x.pieces.some((p) => p.named))",
     "tests": [
       "test/systems/questlines/ql3_rewards.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-QL-LINES-20-spent-on-take-deleted",
     "file": "src/systems/questlines/qlLayer.js",
-    "old": "      if (piece.named) history[`named:${offer.questName}`] = String(piece.item.name);\n",
-    "new": "",
+    "old": "      if (piece.named) history[`named:${offer.questName}`] = String(piece.item.name);\n      return piece.item;",
+    "new": "      return piece.item;",
     "tests": [
       "test/systems/questlines/ql3_rewards.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-QL-REWARD-8-drop-unsaid",
     "file": "src/systems/questlines/qlLayer.js",
-    "old": "      for (const gone of dropped) ctx.onOfferDropped?.(gone);\n",
-    "new": "",
+    "old": "      for (const gone of dropped) ctx.onOfferDropped?.(gone);\n      if (dropped.includes(offer)) return null; // twelve named pieces wait: this one, naming none, is the one that goes",
+    "new": "      if (dropped.includes(offer)) return null; // twelve named pieces wait: this one, naming none, is the one that goes",
     "tests": [
       "test/systems/questlines/ql3_rewards.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-QL-REWARD-13-door-check-deleted",
     "file": "src/systems/questlines/qlLayer.js",
-    "old": "    take(id, index) {\n      if (!hasDoor()) return null;\n",
-    "new": "    take(id, index) {\n",
+    "old": "      if (!hasDoor()) return null;\n      const i = offers.findIndex((o) => o.id === id);",
+    "new": "      const i = offers.findIndex((o) => o.id === id);",
     "tests": [
       "test/systems/questlines/ql3_rewards.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "AUDIT-QL-REWARD-6-sheet-gear-unread",
     "file": "src/systems/questlines/qlLayer.js",
-    "old": "  if (!(o ? pays(o) : (sheet.outcomes ?? []).some(pays))) return false;\n",
-    "new": "",
+    "old": "  if (!(o ? pays(o) : (sheet.outcomes ?? []).some(pays))) return false;\n  return !!(quest.ql.paid || quest.questSuccess || (!quest.questComplete && scriptPays(quest)));",
+    "new": "  return !!(quest.ql.paid || quest.questSuccess || (!quest.questComplete && scriptPays(quest)));",
     "tests": [
       "test/systems/questlines/ql3_rewards.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "AUDIT-QL-LAW-10-kind-dropped",
     "file": "src/systems/questlines/qlLayer.js",
-    "old": "export const sheetTextKey = (sheet, kind, id, choice = null) => `${sheet?.quest}.${kind}.${id}",
-    "new": "export const sheetTextKey = (sheet, kind, id, choice = null) => `${sheet?.quest}.${id}",
+    "old": "  `${sheet?.quest}.${kind}.${id}${choice != null ? `.${choice}` : ''}`;",
+    "new": "  `${sheet?.quest}.${id}${choice != null ? `.${choice}` : ''}`;",
     "tests": [
       "test/systems/questlines/ql3_rewards.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "AUDIT-QL-LAW-11-states-unkeyed",
     "file": "src/systems/questlines/qlLayer.js",
-    "old": "|${read.map((x) => `${x.id}:${x.state}`).join(',')}|",
-    "new": "||",
+    "old": "      const sig = `${rev}|${quest.ql.tier}|${read.map((x) => `${x.id}:${x.state}`).join(',')}|${JSON.stringify(quest.ql.choices)}|${o?.id ?? ''}|${gear}|${names}`;",
+    "new": "      const sig = `${rev}|${quest.ql.tier}||${JSON.stringify(quest.ql.choices)}|${o?.id ?? ''}|${gear}|${names}`;",
     "tests": [
       "test/systems/questlines/ql3_rewards.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "AUDIT-QL-LAW-6-letter-rule-deleted",
     "file": "src/systems/questlines/qlLayer.js",
-    "old": "      if (resource?.itemName === 'letter') { runner.lettered(quest); return; }   // FB1020c LETTER-PACE: the next courier waits an hour from it\n",
-    "new": "",
+    "old": "      if (resource?.itemName === 'letter') {\n        runner.lettered(quest);\n        return;\n      } // FB1020c LETTER-PACE: the next courier waits an hour from it\n      const sheet = sheetFor(quest.questName);",
+    "new": "      const sheet = sheetFor(quest.questName);",
     "tests": [
       "test/systems/questlines/ql1_layer.test.js",
       "test/systems/questlines/ql3_rewards.test.js"
@@ -366,8 +366,8 @@
   {
     "name": "AUDIT-QL-DOC-11-L3-offers-hoard",
     "file": "src/systems/questlines/qlLayer.js",
-    "old": "      const dropped = trimOffers(offers);\n",
-    "new": "      const dropped = [];\n",
+    "old": "      const dropped = trimOffers(offers);",
+    "new": "      const dropped = [];",
     "tests": [
       "test/systems/questlines/ql3_rewards.test.js"
     ]
@@ -375,8 +375,8 @@
   {
     "name": "AUDIT-QL-DOC-12-L4-legal-unmoved",
     "file": "src/systems/questlines/qlLayer.js",
-    "old": "      if (Number.isSafeInteger(outcome.legal) && outcome.legal !== 0) ctx.changeLegalRep?.(outcome.legal);\n",
-    "new": "",
+    "old": "      if (Number.isSafeInteger(outcome.legal) && outcome.legal !== 0) ctx.changeLegalRep?.(outcome.legal);\n      const owed = goldStillOwed(paidGold, outcome); // REWARD-3",
+    "new": "      const owed = goldStillOwed(paidGold, outcome); // REWARD-3",
     "tests": [
       "test/systems/questlines/ql3_rewards.test.js"
     ]
@@ -384,7 +384,7 @@
   {
     "name": "AUDIT-QL-DOC-11-L6-restore-ids-reset",
     "file": "src/systems/questlines/qlLayer.js",
-    "old": "      nextOffer = Math.max(Number.isSafeInteger(data?.nextOffer) ? data.nextOffer : 1, ...offers.map((o) => o.id + 1), 1);",
+    "old": "      nextOffer = Math.max(\n        Number.isSafeInteger(data?.nextOffer) ? data.nextOffer : 1,\n        ...offers.map((o) => o.id + 1),\n        1,\n      );",
     "new": "      nextOffer = 1;",
     "tests": [
       "test/systems/questlines/ql3_rewards.test.js"
@@ -393,8 +393,8 @@
   {
     "name": "AUDIT-QL-DOC-14-L7-failure-struck-on-ladder",
     "file": "src/systems/questlines/qlLayer.js",
-    "old": "if (outcome ? !outcome.failure : quest.questSuccess) history[",
-    "new": "if (true) history[",
+    "old": "      if (outcome ? !outcome.failure : quest.questSuccess)\n        history[String(quest.questName).toUpperCase()] = outcome?.id ?? 'done';",
+    "new": "      if (true) history[String(quest.questName).toUpperCase()] = outcome?.id ?? 'done';",
     "tests": [
       "test/systems/questlines/ql3_rewards.test.js"
     ]
@@ -402,8 +402,8 @@
   {
     "name": "AUDIT-QL-REWARD-14-failure-standing-online",
     "file": "src/systems/questlines/qlLayer.js",
-    "old": "const failureFree = !!outcome.failure && !!quest.hooks?.sharedClock?.();",
-    "new": "const failureFree = false;",
+    "old": "      const failureFree = !!outcome.failure && !!quest.hooks?.sharedClock?.();",
+    "new": "      const failureFree = false;",
     "tests": [
       "test/systems/questlines/ql3_rewards.test.js"
     ]

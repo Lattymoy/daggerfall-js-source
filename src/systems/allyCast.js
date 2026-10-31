@@ -22,7 +22,7 @@
 // lands nothing from anyone. So friendly fire is off by construction, and the relay never has to judge a spell.
 import { MAX_EFFECTS_PER_SPELL, SPELL_ICON_COUNT } from './spell/spellMaker.js';
 import { TOUCH_RANGE, TOUCH_SPHERE_CAST_RADIUS } from './spellcast.js';
-import { CAST_LEVEL_MAX } from '../net/wire.js';   // PEER-CAST: the frame's level bound, clamped to at the sender
+import { CAST_LEVEL_MAX } from '../net/wire.js'; // PEER-CAST: the frame's level bound, clamped to at the sender
 
 /** A person's controller radius (scenes/townTalk.js PERSON_HIT_RADIUS, MobilePersonNPC's) - the lateral band the
  *  ray must pass within to be "on" someone; written here so systems/ does not import a scene. */
@@ -44,7 +44,9 @@ export const ALLY_RANGE_REACH = 24;
  *  (44). NOT here, deliberately: Paralyze, Continuous Damage, Damage, Disintegrate, Drain, Transfer (it drains the
  *  target to heal the caster), Soul Trap, Silence, Lock/Open, Pacify/Charm, Dispel (a mate stripping your buffs),
  *  Create Item, Identify, Teleport, Morph Self. */
-export const ALLY_CAST_TYPES = Object.freeze(new Set([3, 8, 9, 10, 13, 14, 15, 18, 20, 21, 22, 23, 24, 25, 26, 27, 28, 30, 31, 35, 39, 44]));
+export const ALLY_CAST_TYPES = Object.freeze(
+  new Set([3, 8, 9, 10, 13, 14, 15, 18, 20, 21, 22, 23, 24, 25, 26, 27, 28, 30, 31, 35, 39, 44]),
+);
 
 /** An effect entry that is one of the beneficial families (an empty slot, type -1, is neither). */
 export const allyEffect = (e) => !!e && Number.isInteger(e.type) && e.type >= 0 && ALLY_CAST_TYPES.has(e.type);
@@ -52,7 +54,9 @@ export const allyEffect = (e) => !!e && Number.isInteger(e.type) && e.type >= 0 
 /** Whether a spell may be cast on an ally at all: it carries at least one real effect and EVERY real effect is
  *  beneficial - a Heal + Damage Health spell is not a gift, and goes the ordinary way. */
 export function allyCastable(spell) {
-  const fx = Array.isArray(spell?.effects) ? spell.effects.filter((e) => e && Number.isInteger(e.type) && e.type >= 0) : [];
+  const fx = Array.isArray(spell?.effects)
+    ? spell.effects.filter((e) => e && Number.isInteger(e.type) && e.type >= 0)
+    : [];
   return fx.length > 0 && fx.every(allyEffect);
 }
 
@@ -86,7 +90,8 @@ export const ALLY_ARM_RADIUS = 10;
 /** ...and what the armed ready says under DFU's own "Press button to fire spell." - where the click will land. */
 export const ALLY_ARMED_LINE = 'Aim at a party member to cast it on them, or anywhere else to cast it on yourself.';
 /** COMPANION-KIT: ...and the same word with my companion near (scenes/hostMagic.js companionNear). */
-export const COMPANION_ARMED_LINE = 'Aim at your companion to cast it on them, or anywhere else to cast it on yourself.';
+export const COMPANION_ARMED_LINE =
+  'Aim at your companion to cast it on them, or anywhere else to cast it on yourself.';
 /** GIFT-QUIET (2026-10-04: "sometimes theres notification spam when putting a spell on companion"): a gift's lines - the
  *  armed ready's ("Press button to fire spell." and the line above it), the caster's ("You cast Heal on Hilda.") and a
  *  party mate's on the receiving end ("Bran casts Heal on you.") - are said at most once in this many seconds of real
@@ -126,7 +131,9 @@ export const strangerEffect = (e) => allyEffect(e) && STRANGER_CAST_TYPES.has(e.
 /** Whether a spell may be cast on a stranger: EVERY real effect is on the stranger's list, as allyCastable asks of
  *  the party's. */
 export function strangerCastable(spell) {
-  const fx = Array.isArray(spell?.effects) ? spell.effects.filter((e) => e && Number.isInteger(e.type) && e.type >= 0) : [];
+  const fx = Array.isArray(spell?.effects)
+    ? spell.effects.filter((e) => e && Number.isInteger(e.type) && e.type >= 0)
+    : [];
   return fx.length > 0 && fx.every(strangerEffect);
 }
 
@@ -142,10 +149,20 @@ export function strangerCastable(spell) {
  *  frame took. Now the receiver decides that too. The icon rides so the HUD's row can show it. */
 export function allyCastSpell(d, { stranger = false, companion = false } = {}) {
   if (!d || !Array.isArray(d.effects)) return null;
-  const effects = d.effects.filter(stranger ? strangerEffect : companion ? companionEffect : allyEffect).slice(0, MAX_EFFECTS_PER_SPELL);   // SPELL-GIFT: a stranger's cast keeps the stranger's list alone; AUDIT WK-M4: my companion's gift, what he can use
+  const effects = d.effects
+    .filter(stranger ? strangerEffect : companion ? companionEffect : allyEffect)
+    .slice(0, MAX_EFFECTS_PER_SPELL); // SPELL-GIFT: a stranger's cast keeps the stranger's list alone; AUDIT WK-M4: my companion's gift, what he can use
   if (!effects.length) return null;
   const icon = Number.isInteger(d.icon) && d.icon >= 0 && d.icon < SPELL_ICON_COUNT ? d.icon : 0;
-  return { name: typeof d.name === 'string' ? d.name : '', element: d.element ?? 4, rangeType: 0, effects, icon, index: -1, custom: true };
+  return {
+    name: typeof d.name === 'string' ? d.name : '',
+    element: d.element ?? 4,
+    rangeType: 0,
+    effects,
+    icon,
+    index: -1,
+    custom: true,
+  };
 }
 
 /** The reach a cast on an ally is looked for at, by the spell's range type - null for the two area types and any
@@ -175,7 +192,9 @@ export function allyCastFrame(spell, level, to) {
       element: spell?.element ?? 4,
       rangeType: spell?.rangeType === 2 ? 2 : 1,
       icon: Number.isInteger(spell?.icon) && spell.icon >= 0 && spell.icon < SPELL_ICON_COUNT ? spell.icon : 0,
-      effects: (Array.isArray(spell?.effects) ? spell.effects : []).filter((e) => e && Number.isInteger(e.type) && e.type >= 0).slice(0, MAX_EFFECTS_PER_SPELL),
+      effects: (Array.isArray(spell?.effects) ? spell.effects : [])
+        .filter((e) => e && Number.isInteger(e.type) && e.type >= 0)
+        .slice(0, MAX_EFFECTS_PER_SPELL),
     },
   };
 }

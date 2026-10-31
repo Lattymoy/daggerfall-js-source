@@ -44,11 +44,14 @@
 import { itemFindings, itemWorth, lawTemplate, classicPiece, PROVENANCE_RE, ITEM_LAW_VERSION, GOLD_INT_MAX } from '../../src/systems/item/itemLaw.js';
 import { ledgerKeyOf } from '../../src/systems/item/itemIds.js';
 import { armsOf } from '../../src/net/siege/siegeRef.js';   // INT7: the arms the token signs
+import { kitMightOf } from '../../src/net/kitMight.js';   // EG-MIGHT: the kit's might the token signs
+import { MIGHT_NONE } from '../../src/net/mightLaw.js';
 import { liquidWorthOf, deedsOf } from '../../src/net/realm/realmGoldLaw.js';
 import { possessedItemLists } from '../../src/systems/item/possessedItems.js';   // AUDIT AUTO-HOLD: one home, the client's shelf reads it too
 import { MAX_STAT_VALUE } from '../../src/systems/statMods.js';
 import { SKILL_HARD_CAP } from '../../src/systems/skillSoftcap.js';
 import { STAT_KEYS_ORDER } from '../../src/systems/statMods.js';
+import { ROLLED_START_MIN } from '../../src/systems/levelClimb.js';   // LEVEL-45: a start no creation gives holds trade
 import { pathFindings } from '../../src/systems/arcanePaths.js';   // SCHOOLS5: a save's specialisation
 import { isMasterWork, masterSignature, masterLinesOfRecord } from '../../src/net/masterLaw.js';   // MASTER-ART: a Master's work's lines, its record's
 import { readProductRecord } from '../../src/net/productRecord.js';
@@ -143,8 +146,9 @@ const goldWord = (/** @type {unknown} */ v) => v == null || (Number.isSafeIntege
 const purseWord = (/** @type {unknown} */ v) => goldWord(v) && !(/** @type {number} */ (v) > GOLD_INT_MAX);
 
 /**
- * THE CHARACTER LAW: a level the summary agrees with, attributes and skills inside the port's own caps, its gold - the
- * purse, each account and each loan - written as gold is. Answers the findings, as `{ code }` records.
+ * THE CHARACTER LAW: a level the summary agrees with, attributes and skills inside the port's own caps, a starting skill
+ * sum a creation gives (LEVEL-45: below ROLLED_START_MIN holds trade), its gold - the purse, each account and each loan -
+ * written as gold is. Answers the findings, as `{ code }` records.
  * @param {any} save @param {{ level?: unknown } | null} summary
  */
 export function characterFindings(save, summary) {
@@ -168,6 +172,10 @@ export function characterFindings(save, summary) {
       if (v != null && !(typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= SKILL_HARD_CAP)) out.push({ code: 'skill', at: i });
     });
   }
+  // LEVEL-45: a start no creation gives (skills zeroed before the first save) - the join converts it; a checkpoint that
+  // keeps or writes one below the floor holds trade
+  const start = save?.startingLevelUpSkillSum;
+  if (start != null && !(Number.isFinite(start) && /** @type {number} */ (start) >= ROLLED_START_MIN)) out.push({ code: 'skill-start' });
   for (const f of pathFindings(save)) out.push(f);   // SCHOOLS5: an honest save never breaks it - only the choice writes the path
   return out;
 }
@@ -182,6 +190,7 @@ function lawValueOf(/** @type {any} */ save, /** @type {any} */ summary, /** @ty
   if (f.code === 'bank') { const a = arrayOf(save?.bankAccounts)[f.at]; return [a?.accountGold, a?.loanTotal]; }
   if (f.code === 'stat') return save?.stats?.[f.at];
   if (f.code === 'skill') return save?.skills?.[f.at];
+  if (f.code === 'skill-start') return save?.startingLevelUpSkillSum;
   if (f.code === 'path') return save?.arcanePath;
   return undefined;
 }
@@ -214,15 +223,15 @@ const findingsOf = (/** @type {any} */ it) => { try { return itemFindings(it); }
  * count, wealth, items, provenances, pieces, arms }` - `findings` the first FINDINGS_KEPT of them (`{ code, list, at, t }`
  * an item's), `items` the count judged, `provenances` every crafted piece's provenance, template, material and quality
  * (judgeProducts reads them), `pieces` INT4's: every valuable piece it holds, by its ledger key (ledgerPieces); `arms`
- * INT7's `[reach, bow]` (net/siege/siegeRef.js armsOf - the pack's lawful weapons alone).
- * @param {any} save @param {{ level?: unknown } | null} [summary] @param {{ level?: number }} [o] the level its wealth's debt is read at
+ * INT7's `[reach, bow]` (net/siege/siegeRef.js armsOf - the pack's lawful weapons alone); `might` EG-MIGHT's (net/kitMight.js).
+ * @param {any} save @param {{ level?: unknown } | null} [summary] @param {{ level?: number, firm?: Record<string, number> }} [o] its debt's level; its sky
  */
 export function judgeSave(save, summary = null, o = {}) {
   /** @type {any[]} */
   const findings = [];
   let count = 0;
   const keep = (/** @type {any} */ f) => { count++; if (findings.length < FINDINGS_KEPT) findings.push(f); };
-  if (!save || typeof save !== 'object' || Array.isArray(save)) return { findings: [{ code: 'save' }], count: 1, wealth: 0, items: 0, provenances: [], pieces: [], arms: [0, 0], dragons: [] };
+  if (!save || typeof save !== 'object' || Array.isArray(save)) return { findings: [{ code: 'save' }], count: 1, wealth: 0, items: 0, provenances: [], pieces: [], arms: [0, 0], might: MIGHT_NONE, dragons: [] };
   for (const f of characterFindings(save, summary)) keep(f);
   let items = 0;
   /** @type {{ provenance: string, t: number, m: unknown, q: unknown, w: number, l?: string }[]} */
@@ -239,8 +248,11 @@ export function judgeSave(save, summary = null, o = {}) {
   });
   // INT7: THE ARMS - the most reach of the weapons in the pack the law takes, and whether a lawful bow is among them
   // (net/siege/siegeRef.js armsOf); the identity mint signs them (`wa`), and every referee clips a blow between players to them
-  const arms = armsOf(save.items, (it) => findingsOf(it).length === 0);
-  return { findings, count, wealth: wealthOf(save, o), items, provenances, pieces: ledgerPieces(save), arms, dragons };
+  const lawful = (/** @type {any} */ it) => findingsOf(it).length === 0;
+  const arms = armsOf(save.items, lawful);
+  // EG-MIGHT: AND ITS MIGHT - the most its lawful kit worn at once, and its sky, can grow a blow or a spell over the gate's
+  // reference (net/kitMight.js); the mint signs it (`mg`) and an Elite Breach's purse grows by it
+  return { findings, count, wealth: wealthOf(save, o), items, provenances, pieces: ledgerPieces(save), arms, might: kitMightOf(save, lawful, { firm: o.firm ?? {} }), dragons };
 }
 
 /** INT4: A PIECE'S KEY IN THE LEDGER - systems/item/itemIds.js ledgerKeyOf, its one home since AUTO-HOLD (the client's room

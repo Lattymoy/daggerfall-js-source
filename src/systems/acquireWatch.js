@@ -87,10 +87,16 @@ export const isAcquired = (item) => item?.[ACQUIRED_FIELD] === true;
 // never imports the codex and the codex never imports a face (systems/notify.js's law: the model decides, the face draws).
 let _findPresenter = null;
 /** The banner's presenter, or null to take it away. */
-export function setCodexFindPresenter(fn) { _findPresenter = typeof fn === 'function' ? fn : null; }
+export function setCodexFindPresenter(fn) {
+  _findPresenter = typeof fn === 'function' ? fn : null;
+}
 /** Hand a first find to the presenter: true when it said it (and the codex says nothing), false otherwise. */
 export function presentCodexFind(item, kind) {
-  try { return !!_findPresenter?.(item, kind); } catch { return false; }
+  try {
+    return !!_findPresenter?.(item, kind);
+  } catch {
+    return false;
+  }
 }
 
 const listsOf = (entity) => [entity?.items, entity?.wagonItems, entity?.bagItems].filter(Array.isArray);
@@ -130,7 +136,10 @@ export function createAcquireWatch() {
     for (const list of listsOf(entity)) {
       for (const item of list) {
         if (!item || typeof item !== 'object' || never.has(item)) continue;
-        if (!markable(item)) { never.add(item); continue; }
+        if (!markable(item)) {
+          never.add(item);
+          continue;
+        }
         if (isIliacCard(item)) {
           const id = item.card;
           const n = countOf(item);
@@ -165,6 +174,12 @@ export function createAcquireWatch() {
   return {
     observe,
     /** Forget the baseline: the next frame is a new one (tests, a host's reset). */
-    reset() { lastEntity = null; lastItems = null; lastDone = null; totals = new Map(); held = new Set(); },
+    reset() {
+      lastEntity = null;
+      lastItems = null;
+      lastDone = null;
+      totals = new Map();
+      held = new Set();
+    },
   };
 }

@@ -164,6 +164,34 @@ began and pinned (`test/world/dlv56_audit.test.js`, `tools/mutants/dlv56.json`, 
 - **NOT A FINDING.** The fire law keeps 12 m from an anchor that a fire or the way in then stands down: a campfire
   fewer in a block whose encounter gave way, never one in a ward.
 
+## I - LITANY-STAND and DELVE-VAULT (2026-10-31)
+
+The owner: *"Audit"*, of `cb7def4b6` and `b2b3faf53` (`03-World/Delve-II.md` section 16). One cold lane read the diff
+with the code alone; the session ran the new pins six times, the whole suite and the census for a Litany to probe.
+Each finding below is fixed; I1 to I5 are pinned, and each pin failed on the code it was found in. On the audited code the
+probe won The Agryn Prison's Litany again in the real game (83 s, the vault 8 items).
+
+| ID | Sev | Finding | Fix |
+|---|---|---|---|
+| I1 | Major | **In a party, a lit plate stood on through another member's wrong plate never lit again**: the law kept it as judged, so its member had to step off and on - the field bug again, in a party. | A plate a member stays on is heard again when it would light (`delveLaw.js` litanyWord). |
+| I2 | Major | At a relay before `world298`, the new page's words would make an Elite Litany wake two foes at each showing while a member stood on a wrong plate. The record said the site may deploy first. | DELVE_RELAY_MIN is 298: a page at an older relay stands no site online. Deploy the relay first. |
+| I3 | Minor | A plate stood on as the order ended was judged with no step: in an Elite fight, a member on a wrong plate woke two more foes. | A plate stood on through the show counts only when it would light. |
+| I4 | Minor | A Legendary from a vault did not empty the drought: the piece was never marked as a source door's. | Marked `untaken`, as a pile's piece. |
+| I5 | Minor | Online, the vault's weapon took no sigil, though the pile's weapons do (SIGIL1). | `stampWonWeapons`, last. |
+| I6 | Nit | Section 13's row was rewritten instead of marked, and section 12's left saying a step is said once. | Both marked as history. |
+
+- **OPEN, THE OWNER'S CALL: THE RATE.** A Litany is won in about two minutes, and its vault now always holds a Magic or
+  better piece and 40 gold a level. A dungeon stands one to three sites, each back in 20 minutes, and online every
+  earner takes a share. That is more pieces an hour than the Starfall gives (three stars an hour, one piece each). The
+  reward is the owner's ask and is not changed here. The ways open: the piece once a day, as the Rite chest; the piece
+  by the kind's work (waves always, puzzles by chance); or as it stands.
+- **NOT A FINDING.** `sendPose` keeps the pose every frame even when it sends none, and `sendDelve` says it before the
+  word, so the room hears last frame's feet. The wire takes `st` from -1 to 5. A ledger kept by `world297` holds `pl`
+  -1, and no plate lights twice. The piece takes no curse, socket, finder or the opener's luck, as the raids' spoils.
+  The whole suite at the audit's head, in eight shards: 39,197 tests, three failing and none of them this change's.
+  `fb1002_audit`'s step-back fails the same on main at `1ecc2e5c7`; `staffpanel5message_client` and `staffpanel5bench`
+  pass alone.
+
 ## Pins and mutants
 
 `test/net/delve/dlv1_law.test.js`, `test/world/dlv1_sites.test.js`, `test/systems/delve/dlv2_words.test.js`,
@@ -182,3 +210,7 @@ DLV3: `test/net/delve/dlv3_relay.test.js`, `test/scenes/delve/dlv3_online.test.j
 
 DLV5 and DLV6: `test/world/dlv5_curated.test.js`, `test/world/dlv6_blocks.test.js`, `test/world/dlv56_audit.test.js`;
 `tools/mutants/dlv5.json`, `dlv6.json` and `dlv56.json`, 45, 28 and 47 records, every one dead.
+
+LITANY-STAND, DELVE-VAULT and their audit: `test/net/delve/dlv1_law.test.js`, `test/scenes/delve/dlv2_host.test.js`,
+`test/scenes/delve/dlv3_e2e.test.js`, `test/net/delve/dlv3_relay.test.js`, `test/systems/delve/delvevault.test.js`;
+`tools/mutants/litanystand.json` and `delvevault.json`, 5 and 12 records, every one dead.

@@ -36,7 +36,11 @@ const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 const clampInt = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
 const lerp = (a, b, t) => a + (b - a) * clamp01(t);
 /** Mathf.SmoothStep. */
-const smoothStep = (from, to, t) => { t = clamp01(t); t = -2 * t * t * t + 3 * t * t; return to * t + from * (1 - t); };
+const smoothStep = (from, to, t) => {
+  t = clamp01(t);
+  t = -2 * t * t * t + 3 * t * t;
+  return to * t + from * (1 - t);
+};
 
 export const TILE_WORLD_SIZE = 819.2;
 /** AUDIT PRE-MERGE 0928 H4: terrainData.size.x / .z as Unity holds it, a float (819.2f = 819.20001220703125), for the C#'s float products over it. */
@@ -82,13 +86,24 @@ export function computeHoleMask(mapData, tile, bake) {
     for (let j = 0; j < num; j++) {
       holes[i * num + j] = 1;
       const fracX = f32(f32(j + 0.5) * num2);
-      const flag2 = !flag && isLocalPointPureWaterTile(mapData, fracX, fracZ) && bake.isWaterAt(tile.mapPixelX, tile.mapPixelY, fracX, fracZ);
-      if (isLocalPointWater(mapData, fracX, fracZ)
-        && ((heightSample(mapData, i, j) <= lim && heightSample(mapData, i, j + 1) <= lim
-          && heightSample(mapData, i + 1, j) <= lim && heightSample(mapData, i + 1, j + 1) <= lim) || flag2)) {
+      const flag2 =
+        !flag &&
+        isLocalPointPureWaterTile(mapData, fracX, fracZ) &&
+        bake.isWaterAt(tile.mapPixelX, tile.mapPixelY, fracX, fracZ);
+      if (
+        isLocalPointWater(mapData, fracX, fracZ) &&
+        ((heightSample(mapData, i, j) <= lim &&
+          heightSample(mapData, i, j + 1) <= lim &&
+          heightSample(mapData, i + 1, j) <= lim &&
+          heightSample(mapData, i + 1, j + 1) <= lim) ||
+          flag2)
+      ) {
         let flag3 = true;
         if (flag3 && flag) flag3 = tile.isCarvedWater(tile.mapPixelX, tile.mapPixelY, fracX, fracZ);
-        if (flag3) { holes[i * num + j] = 0; any = true; }
+        if (flag3) {
+          holes[i * num + j] = 0;
+          any = true;
+        }
       }
     }
   }
@@ -98,9 +113,12 @@ export function computeHoleMask(mapData, tile, bake) {
 /** IsFloorQuadWater: a floor quad covers 2 x 2 hole cells; it is drawn when any is carved. */
 export function isFloorQuadWater(holes, quadX, quadZ, quadResolution) {
   if (!holes || quadResolution <= 0) return true;
-  const length = HOLES_RESOLUTION, length2 = HOLES_RESOLUTION;
-  const num = f32(quadX / quadResolution), num2 = f32((quadX + 1) / quadResolution);
-  const num3 = f32(quadZ / quadResolution), num4 = f32((quadZ + 1) / quadResolution);
+  const length = HOLES_RESOLUTION,
+    length2 = HOLES_RESOLUTION;
+  const num = f32(quadX / quadResolution),
+    num2 = f32((quadX + 1) / quadResolution);
+  const num3 = f32(quadZ / quadResolution),
+    num4 = f32((quadZ + 1) / quadResolution);
   const num5 = clampInt(Math.floor(f32(num * length2)), 0, length2 - 1);
   const num6 = clampInt(Math.ceil(f32(num2 * length2)) - 1, 0, length2 - 1);
   const num7 = clampInt(Math.floor(f32(num3 * length)), 0, length - 1);
@@ -130,7 +148,10 @@ export function buildFloorMesh(ctx) {
   const nearbyLocalY = ctx.nearbyLocalY ?? (() => null);
   const num = TILE_WORLD_SIZE;
   const num2 = VERTEX_GRID_SIZE;
-  const positions = [], colors = [], uvs = [], indices = [];
+  const positions = [],
+    colors = [],
+    uvs = [],
+    indices = [];
   const vertexLocalY = new Float32Array(num2 * num2);
   const floorQuadWater = new Uint8Array((num2 - 1) * (num2 - 1));
   const num3 = num / (num2 - 1);
@@ -139,20 +160,27 @@ export function buildFloorMesh(ctx) {
 
   const sampleVanillaLocalY = (fracX, fracZ) => {
     if (!mapData.samples || oceanThreshold <= 1e-6) return oceanLocalY;
-    const length = HEIGHTMAP_DIMENSION, length2 = HEIGHTMAP_DIMENSION;
+    const length = HEIGHTMAP_DIMENSION,
+      length2 = HEIGHTMAP_DIMENSION;
     const n = clamp01(fracZ) * (length - 1);
     const n2 = clamp01(fracX) * (length2 - 1);
     const n3 = clampInt(Math.floor(n), 0, length - 2);
     const n4 = clampInt(Math.floor(n2), 0, length2 - 2);
-    const n5 = n - n3, n6 = n2 - n4;
+    const n5 = n - n3,
+      n6 = n2 - n4;
     const n7 = lerp(heightSample(mapData, n3, n4), heightSample(mapData, n3, n4 + 1), n6);
     const n8 = lerp(heightSample(mapData, n3 + 1, n4), heightSample(mapData, n3 + 1, n4 + 1), n6);
-    return lerp(n7, n8, n5) / oceanThreshold * oceanLocalY;
+    return (lerp(n7, n8, n5) / oceanThreshold) * oceanLocalY;
   };
   // SampleNearbyVanillaLocalY: the highest of four points a meter out, where a terrain is streamed there.
   const sampleNearbyVanillaLocalY = (localX, localZ, fallbackLocalY) => {
     let best = fallbackLocalY;
-    for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    for (const [dx, dz] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ]) {
       const y = nearbyLocalY(localX + dx, localZ + dz);
       if (y != null && y > best) best = y;
     }
@@ -160,7 +188,8 @@ export function buildFloorMesh(ctx) {
   };
   const fitSeafloorToShoreTerrain = (localY, localX, localZ, shoreDistance) => {
     if (shoreDistance >= SHORE_TERRAIN_FIT_METERS || num <= 0) return localY;
-    const fracX = localX / num, fracZ = localZ / num;
+    const fracX = localX / num,
+      fracZ = localZ / num;
     let n = sampleVanillaLocalY(fracX, fracZ);
     n = Math.max(n, sampleNearbyVanillaLocalY(localX, localZ, n));
     let n2 = Math.min(oceanLocalY - FLOOR_SURFACE_CLEARANCE, n - FLOOR_SURFACE_CLEARANCE);
@@ -201,13 +230,29 @@ export function buildFloorMesh(ctx) {
       const flag = isFloorQuadWater(holes, l, k, num2 - 1);
       floorQuadWater[k * (num2 - 1) + l] = flag ? 1 : 0;
       if (flag) {
-        const num7 = k * num2 + l, item = num7 + 1, num8 = num7 + num2, item2 = num8 + 1;
+        const num7 = k * num2 + l,
+          item = num7 + 1,
+          num8 = num7 + num2,
+          item2 = num8 + 1;
         indices.push(num7, num8, item2, num7, item2, item);
       }
     }
   }
   const floorGridIndexCount = indices.length;
-  appendHoleEdgeWalls({ holes, tile, positions, colors, uvs, indices, oceanLocalY, num, floor, sampleVanillaLocalY, sampleNearbyVanillaLocalY, sampleSeafloorLocalY });
+  appendHoleEdgeWalls({
+    holes,
+    tile,
+    positions,
+    colors,
+    uvs,
+    indices,
+    oceanLocalY,
+    num,
+    floor,
+    sampleVanillaLocalY,
+    sampleNearbyVanillaLocalY,
+    sampleSeafloorLocalY,
+  });
   return {
     positions: Float32Array.from(positions),
     colors: Float32Array.from(colors),
@@ -224,12 +269,15 @@ export function buildFloorMesh(ctx) {
 function appendHoleEdgeWalls(w) {
   const { holes, tile, positions, colors, uvs, indices, oceanLocalY, num: tileWorldSize, floor } = w;
   if (!holes || !tile) return;
-  const length = HOLES_RESOLUTION, length2 = HOLES_RESOLUTION;
+  const length = HOLES_RESOLUTION,
+    length2 = HOLES_RESOLUTION;
   const list = [];
   const across = (x, z, dx, dz) => {
     // IsBakedHoleAcrossBoundary: the cell centre one step over, in this pixel's local meters.
-    const n = tileWorldSize / length2, n2 = tileWorldSize / length;
-    const lx = (x + 0.5 + dx) * n, lz = (z + 0.5 + dz) * n2;
+    const n = tileWorldSize / length2,
+      n2 = tileWorldSize / length;
+    const lx = (x + 0.5 + dx) * n,
+      lz = (z + 0.5 + dz) * n2;
     if (tile.usesLocalWaterFallback) return true;
     return tile.isCarvedWaterLocal(lx, lz);
   };
@@ -244,20 +292,24 @@ function appendHoleEdgeWalls(w) {
   }
   if (list.length === 0) return;
   const stride = length2 + 1;
-  const n2 = tileWorldSize / length2, n3 = tileWorldSize / length;
+  const n2 = tileWorldSize / length2,
+    n3 = tileWorldSize / length;
   const inward = new Map();
   for (const [ax, az, bx, bz] of list) {
-    const n4 = (bx - ax) * n2, n5 = (bz - az) * n3;
+    const n4 = (bx - ax) * n2,
+      n5 = (bz - az) * n3;
     const n6 = Math.sqrt(n4 * n4 + n5 * n5);
     if (n6 < 0.0001) continue;
-    const vx = n5 / n6, vz = -n4 / n6;
+    const vx = n5 / n6,
+      vz = -n4 / n6;
     for (const key of [az * stride + ax, bz * stride + bx]) {
       const v = inward.get(key) ?? [0, 0];
       inward.set(key, [v[0] + vx, v[1] + vz]);
     }
   }
   const skirtTopY = oceanLocalY - SHORE_WALL_SURFACE_INSET;
-  const top = new Map(), bottom = new Map();
+  const top = new Map(),
+    bottom = new Map();
   const ensure = (vx, vz) => {
     const key = vz * stride + vx;
     if (top.has(key)) return;
@@ -297,12 +349,23 @@ function appendHoleEdgeWalls(w) {
     colors.push(...createVertexColor(depth3, band3, dist3));
     uvs.push(n10, n11);
   };
-  for (const [ax, az, bx, bz] of list) { ensure(ax, az); ensure(bx, bz); }
   for (const [ax, az, bx, bz] of list) {
-    const k3 = az * stride + ax, k4 = bz * stride + bx;
-    const v2 = top.get(k3), v3 = top.get(k4), v4 = bottom.get(k3), v5 = bottom.get(k4);
+    ensure(ax, az);
+    ensure(bx, bz);
+  }
+  for (const [ax, az, bx, bz] of list) {
+    const k3 = az * stride + ax,
+      k4 = bz * stride + bx;
+    const v2 = top.get(k3),
+      v3 = top.get(k4),
+      v4 = bottom.get(k3),
+      v5 = bottom.get(k4);
     if (v2 == null || v3 == null || v4 == null || v5 == null) continue;
-    if (Math.max(positions[v2 * 3 + 1] - positions[v4 * 3 + 1], positions[v3 * 3 + 1] - positions[v5 * 3 + 1]) < WALL_MINIMUM_DROP) continue;
+    if (
+      Math.max(positions[v2 * 3 + 1] - positions[v4 * 3 + 1], positions[v3 * 3 + 1] - positions[v5 * 3 + 1]) <
+      WALL_MINIMUM_DROP
+    )
+      continue;
     indices.push(v2, v3, v5, v2, v5, v4, v2, v5, v3, v2, v4, v5);
   }
 }
@@ -317,7 +380,8 @@ const clampNum = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
 export function carvedFloorLocalY(dw, lx, lz) {
   if (!dw || !dw.holes || !dw.floor) return null;
   const n = HOLES_RESOLUTION;
-  const cx = Math.floor(lx / (TILE_WORLD_SIZE / n)), cz = Math.floor(lz / (TILE_WORLD_SIZE / n));
+  const cx = Math.floor(lx / (TILE_WORLD_SIZE / n)),
+    cz = Math.floor(lz / (TILE_WORLD_SIZE / n));
   if (cx < 0 || cz < 0 || cx >= n || cz >= n) return null;
   if (dw.holes[cz * n + cx]) return null;
   return sampleMeshLocalY(dw.floor, lx, lz);
@@ -329,17 +393,24 @@ export function carvedFloorLocalY(dw, lx, lz) {
  */
 export function sampleMeshLocalY(floor, lx, lz) {
   if (!floor || !floor.vertexLocalY) return null;
-  const num = lx / TILE_WORLD_SIZE, num2 = lz / TILE_WORLD_SIZE;
+  const num = lx / TILE_WORLD_SIZE,
+    num2 = lz / TILE_WORLD_SIZE;
   if (num < 0 || num > 1 || num2 < 0 || num2 > 1) return null;
   const num3 = VERTEX_GRID_SIZE;
-  const num4 = num * (num3 - 1), num5 = num2 * (num3 - 1);
+  const num4 = num * (num3 - 1),
+    num5 = num2 * (num3 - 1);
   const num6 = clampInt(Math.floor(num4), 0, num3 - 2);
   const num7 = clampInt(Math.floor(num5), 0, num3 - 2);
   if (floor.floorQuadWater && !floor.floorQuadWater[num7 * (num3 - 1) + num6]) return null;
-  const num8 = num6 + 1, num9 = num7 + 1;
-  const num10 = clamp01(num4 - num6), num11 = clamp01(num5 - num7);
+  const num8 = num6 + 1,
+    num9 = num7 + 1;
+  const num10 = clamp01(num4 - num6),
+    num11 = clamp01(num5 - num7);
   const v = floor.vertexLocalY;
-  const num12 = v[num7 * num3 + num6], num13 = v[num7 * num3 + num8], num14 = v[num9 * num3 + num6], num15 = v[num9 * num3 + num8];
+  const num12 = v[num7 * num3 + num6],
+    num13 = v[num7 * num3 + num8],
+    num14 = v[num9 * num3 + num6],
+    num15 = v[num9 * num3 + num8];
   if (num10 >= num11) return num12 * (1 - num10) + num13 * (num10 - num11) + num15 * num11;
   return num12 * (1 - num11) + num14 * (num11 - num10) + num15 * num10;
 }
@@ -347,21 +418,36 @@ export function sampleMeshLocalY(floor, lx, lz) {
 /** TrySampleMeshLocalYAndSlope: the height and the triangle's slope in degrees. */
 export function sampleMeshLocalYAndSlope(floor, lx, lz) {
   if (!floor || !floor.vertexLocalY) return null;
-  const num = lx / TILE_WORLD_SIZE, num2 = lz / TILE_WORLD_SIZE;
+  const num = lx / TILE_WORLD_SIZE,
+    num2 = lz / TILE_WORLD_SIZE;
   if (num < 0 || num > 1 || num2 < 0 || num2 > 1) return null;
   const num3 = VERTEX_GRID_SIZE;
-  const num4 = num * (num3 - 1), num5 = num2 * (num3 - 1);
+  const num4 = num * (num3 - 1),
+    num5 = num2 * (num3 - 1);
   const num6 = clampInt(Math.floor(num4), 0, num3 - 2);
   const num7 = clampInt(Math.floor(num5), 0, num3 - 2);
   if (floor.floorQuadWater && !floor.floorQuadWater[num7 * (num3 - 1) + num6]) return null;
-  const num8 = num6 + 1, num9 = num7 + 1;
-  const num10 = clamp01(num4 - num6), num11 = clamp01(num5 - num7);
+  const num8 = num6 + 1,
+    num9 = num7 + 1;
+  const num10 = clamp01(num4 - num6),
+    num11 = clamp01(num5 - num7);
   const v = floor.vertexLocalY;
-  const num12 = v[num7 * num3 + num6], num13 = v[num7 * num3 + num8], num14 = v[num9 * num3 + num6], num15 = v[num9 * num3 + num8];
+  const num12 = v[num7 * num3 + num6],
+    num13 = v[num7 * num3 + num8],
+    num14 = v[num9 * num3 + num6],
+    num15 = v[num9 * num3 + num8];
   let localY, num16, num17;
-  if (num10 >= num11) { localY = num12 * (1 - num10) + num13 * (num10 - num11) + num15 * num11; num16 = num13 - num12; num17 = num15 - num13; }
-  else { localY = num12 * (1 - num11) + num14 * (num11 - num10) + num15 * num10; num16 = num15 - num14; num17 = num14 - num12; }
+  if (num10 >= num11) {
+    localY = num12 * (1 - num10) + num13 * (num10 - num11) + num15 * num11;
+    num16 = num13 - num12;
+    num17 = num15 - num13;
+  } else {
+    localY = num12 * (1 - num11) + num14 * (num11 - num10) + num15 * num10;
+    num16 = num15 - num14;
+    num17 = num14 - num12;
+  }
   const num18 = TILE_WORLD_SIZE / (num3 - 1);
-  const num19 = num16 / num18, num20 = num17 / num18;
+  const num19 = num16 / num18,
+    num20 = num17 / num18;
   return { localY, slopeDegrees: Math.atan(Math.sqrt(num19 * num19 + num20 * num20)) * 57.29578 };
 }

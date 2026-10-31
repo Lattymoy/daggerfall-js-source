@@ -133,8 +133,8 @@
   {
     "name": "GRANT4-watch-record-early",
     "file": "src/scenes/grantHost.js",
-    "old": "    if (!g._grantDone && now() - g._grantAt < wait) return false;\n",
-    "new": "",
+    "old": "    if (!g._grantDone && now() - g._grantAt < wait) return false;\n    return !enforcing();",
+    "new": "    return !enforcing();",
     "why": "a watchman rides before his grant",
     "tests": [
       "test/scenes/grant4_lanes.test.js"
@@ -153,8 +153,8 @@
   {
     "name": "GRANT4-watch-grant-any-species",
     "file": "src/scenes/grantHost.js",
-    "old": "  if (gr.k === 'watch' && r.t !== KNIGHT_CITYWATCH_ID) return 'dice';",
-    "new": "",
+    "old": "  if (gr.k === 'watch' && r.t !== KNIGHT_CITYWATCH_ID) return 'dice'; // GRANT4: the watch's grant stands the watch alone",
+    "new": "  // GRANT4: the watch's grant stands the watch alone",
     "why": "a watch grant stands a monster",
     "tests": [
       "test/scenes/grant4_lanes.test.js"
@@ -163,8 +163,8 @@
   {
     "name": "GRANT4-watch-never-freed",
     "file": "src/scenes/grantHost.js",
-    "old": "{ watchmen.delete(g); ended(g); }",
-    "new": "{ watchmen.delete(g); }",
+    "old": "        ended(g);\n      }",
+    "new": "      }",
     "why": "a watchman gone, his grant still counted",
     "tests": [
       "test/scenes/grant4_lanes.test.js"
@@ -194,8 +194,8 @@
   {
     "name": "GRANT4-carry-into-room-client",
     "file": "src/scenes/grantHost.js",
-    "old": "carryTo = from && isCellRoom(s.room) ? s.room : null;",
-    "new": "carryTo = from ? s.room : null;",
+    "old": "        carryTo = from && isCellRoom(s.room) ? s.room : null;",
+    "new": "        carryTo = from ? s.room : null;",
     "why": "a cell's grants carried into a room",
     "tests": [
       "test/scenes/grant4_lanes.test.js"
@@ -204,8 +204,8 @@
   {
     "name": "GRANT4-carry-out-of-room-client",
     "file": "src/scenes/grantHost.js",
-    "old": "g.q !== room && isCellRoom(g.q) && grantPixelReadBack(g, worldOk()));",
-    "new": "g.q !== room && grantPixelReadBack(g, worldOk()));",
+    "old": "    const gs = [...live].filter((g) => !g._dead && g.q !== room && isCellRoom(g.q) && grantPixelReadBack(g, worldOk())); // AUDIT TESA II Z6: as the renewal",
+    "new": "    const gs = [...live].filter((g) => !g._dead && g.q !== room && grantPixelReadBack(g, worldOk())); // AUDIT TESA II Z6: as the renewal",
     "why": "a room's grants carried into a cell",
     "tests": [
       "test/scenes/grant4_lanes.test.js"
@@ -214,8 +214,8 @@
   {
     "name": "GRANT4-free-elsewhere",
     "file": "src/scenes/grantHost.js",
-    "old": "if (!gr._dead && gr.q === open()?.room) post('free', gr.g);",
-    "new": "if (!gr._dead) post('free', gr.g);",
+    "old": "    if (!gr._dead && gr.q === open()?.room) post('free', gr.g); // GRANT4: to the room that holds it - one left behind counts there to its expiry",
+    "new": "    if (!gr._dead) post('free', gr.g); // GRANT4: to the room that holds it - one left behind counts there to its expiry",
     "why": "a free sent to a room that does not hold it",
     "tests": [
       "test/scenes/grant4_lanes.test.js"
@@ -224,8 +224,8 @@
   {
     "name": "GRANT4-expired-kept",
     "file": "src/scenes/grantHost.js",
-    "old": "{ g._dead = true; live.delete(g); }",
-    "new": "g._dead = true;",
+    "old": "    for (const g of live)\n      if (t > g.x + GRANT_SKEW_MS) {\n        g._dead = true;\n        live.delete(g);\n      } // GRANT4: an expired grant is no longer mine to renew or free (a room left keeps none)",
+    "new": "    for (const g of live) if (t > g.x + GRANT_SKEW_MS) g._dead = true; // GRANT4: an expired grant is no longer mine to renew or free (a room left keeps none)",
     "why": "an expired grant kept as mine",
     "tests": [
       "test/scenes/grant4_lanes.test.js"
@@ -254,8 +254,8 @@
   {
     "name": "GRANT6-welcome-not-polled",
     "file": "src/scenes/grantHost.js",
-    "old": "    if (!open() && unsaid() && polls * MODE_POLL_MS < wait) { setTimeout(() => flush(kind, polls + 1), MODE_POLL_MS); return; }\n",
-    "new": "",
+    "old": "    if (!open() && unsaid() && polls * MODE_POLL_MS < wait) {\n      setTimeout(() => flush(kind, polls + 1), MODE_POLL_MS);\n      return;\n    }\n    const all = queue.get(kind) ?? [];",
+    "new": "    const all = queue.get(kind) ?? [];",
     "why": "the owed welcome not waited for",
     "tests": [
       "test/scenes/grant4_lanes.test.js"
@@ -264,8 +264,8 @@
   {
     "name": "GRANT6-closed-socket-waits",
     "file": "src/scenes/grantHost.js",
-    "old": "return !!s && s.status === 'open' && s.grantMode == null",
-    "new": "return !!s && s.grantMode == null",
+    "old": "    return !!s && s.status === 'open' && s.grantMode == null && typeof s.sendGrant === 'function';",
+    "new": "    return !!s && s.grantMode == null && typeof s.sendGrant === 'function';",
     "why": "a socket not open holds every stand",
     "tests": [
       "test/scenes/grant4_lanes.test.js"
@@ -274,8 +274,8 @@
   {
     "name": "GRANT6-verdict-not-awaited",
     "file": "src/scenes/grantHost.js",
-    "old": "const v = verdicts.get(`${from}|${g}`) ?? await heardOf(`${from}|${g}`);",
-    "new": "const v = verdicts.get(`${from}|${g}`);",
+    "old": "    const v = verdicts.get(`${from}|${g}`) ?? (await heardOf(`${from}|${g}`));",
+    "new": "    const v = verdicts.get(`${from}|${g}`);",
     "why": "a grant not yet heard called unheard at once",
     "tests": [
       "test/scenes/grant4_lanes.test.js"
@@ -284,8 +284,8 @@
   {
     "name": "GRANT6-level-slack-dropped",
     "file": "src/scenes/grantHost.js",
-    "old": "r.l > gr.l + GRANT_LEVEL_SLACK) return 'dice';",
-    "new": "r.l > gr.l) return 'dice';",
+    "old": "  if (\n    LEVELLED_KINDS.has(gr.k) &&\n    isClassEnemyId(r.t) &&\n    gr.l > 0 &&\n    Number.isInteger(r.l) &&\n    r.l > gr.l + GRANT_LEVEL_SLACK\n  )\n    return 'dice';",
+    "new": "  if (LEVELLED_KINDS.has(gr.k) && isClassEnemyId(r.t) && gr.l > 0 && Number.isInteger(r.l) && r.l > gr.l) return 'dice';",
     "why": "a level since its checkpoint refused",
     "tests": [
       "test/scenes/grant4_lanes.test.js"
@@ -294,8 +294,8 @@
   {
     "name": "GRANT6-every-refusal-stood-down",
     "file": "src/scenes/grantHost.js",
-    "old": "const standsDown = (why) => !!why && enforcing() && GRANT_STANDDOWN_REASONS.includes(why);",
-    "new": "const standsDown = (why) => !!why && enforcing();",
+    "old": "  const standsDown = (why) => !!why && enforcing() && GRANT_STANDDOWN_REASONS.includes(why);",
+    "new": "  const standsDown = (why) => !!why && enforcing();",
     "why": "an honest client's timing stood down",
     "tests": [
       "test/scenes/grant3_pool.test.js"
@@ -315,7 +315,7 @@
     "name": "GRANT8-reader-unchecked",
     "file": "src/scenes/grantHost.js",
     "old": "    if (r.t !== grantSpecies(gr, i, c, false, z) && r.t !== grantSpecies(gr, i, c, true, z)) return 'dice';",
-    "new": "      void c; void i; void z;",
+    "new": "    void c;\n    void i;\n    void z;",
     "why": "an encr member of another species believed",
     "tests": [
       "test/scenes/grant4_lanes.test.js"
@@ -394,8 +394,8 @@
   {
     "name": "GRANT7-timing-counted",
     "file": "server-account/src/grants.js",
-    "old": "AND at > ?2 AND reason IN (${inReasons}) GROUP BY",
-    "new": "AND at > ?2 AND (1 OR reason IN (${inReasons})) GROUP BY",
+    "old": "            `SELECT reader, reason, SUM(n) AS n FROM grant_tallies WHERE sender = ?1 AND at > ?2 AND reason IN (${inReasons}) GROUP BY reader, reason`,",
+    "new": "            `SELECT reader, reason, SUM(n) AS n FROM grant_tallies WHERE sender = ?1 AND at > ?2 AND (1 OR reason IN (${inReasons})) GROUP BY reader, reason`,",
     "why": "a timing word counted against a sender",
     "tests": [
       "test/server/grant7_case.test.js"
@@ -404,8 +404,8 @@
   {
     "name": "GRANT7-case-a-reports",
     "file": "server-account/src/grants.js",
-    "old": "const caseId = await openCaseFor(ctx, env, sender, 'review', 'spawn');",
-    "new": "const caseId = await openCaseFor(ctx, env, sender, 'report', 'spawn');",
+    "old": "    const caseId = await openCaseFor(ctx, env, sender, 'review', 'spawn'); // STAFF-PANEL2-FIX: a spawn case, never a chat report's",
+    "new": "    const caseId = await openCaseFor(ctx, env, sender, 'report', 'spawn'); // STAFF-PANEL2-FIX: a spawn case, never a chat report's",
     "why": "the grant case a report's",
     "tests": [
       "test/server/grant7_case.test.js"
@@ -414,8 +414,8 @@
   {
     "name": "GRANT7-line-every-batch",
     "file": "server-account/src/grants.js",
-    "old": "    if (await db.prepare('SELECT 1 AS y FROM mod_case_lines WHERE case_id = ?1 AND tab = ?2 AND at > ?3').bind(caseId, GRANT_CASE_TAB, since).first()) continue;   // one line a window\n",
-    "new": "",
+    "old": "    if (\n      await db\n        .prepare('SELECT 1 AS y FROM mod_case_lines WHERE case_id = ?1 AND tab = ?2 AND at > ?3')\n        .bind(caseId, GRANT_CASE_TAB, since)\n        .first()\n    )\n      continue; // one line a window\n    await keepCaseLines(",
+    "new": "    await keepCaseLines(",
     "why": "a line every batch",
     "tests": [
       "test/server/grant7_case.test.js"
@@ -424,8 +424,8 @@
   {
     "name": "GRANT5-rate-no-room",
     "file": "server-account/src/grants.js",
-    "old": "(/** @type {number} */ (perHour) * GRANT_SUGGEST_ROOM) / 3600",
-    "new": "/** @type {number} */ (perHour) / 3600",
+    "old": "  Number.isFinite(perHour) && /** @type {number} */ (perHour) > 0\n    ? /** @type {number} */ (perHour * GRANT_SUGGEST_ROOM) / 3600\n    : null;",
+    "new": "  Number.isFinite(perHour) && /** @type {number} */ (perHour) > 0 ? /** @type {number} */ (perHour) / 3600 : null;",
     "why": "a rate suggested at the measure itself",
     "tests": [
       "test/server/grant7_case.test.js"
@@ -434,8 +434,8 @@
   {
     "name": "GRANT5-ceiling-no-room",
     "file": "server-account/src/grants.js",
-    "old": "Math.ceil(/** @type {number} */ (most) * GRANT_SUGGEST_ROOM)",
-    "new": "Math.ceil(/** @type {number} */ (most))",
+    "old": "  Number.isFinite(most) && /** @type {number} */ (most) > 0\n    ? Math.ceil(/** @type {number} */ (most) * GRANT_SUGGEST_ROOM)\n    : null;",
+    "new": "  Number.isFinite(most) && /** @type {number} */ (most) > 0 ? Math.ceil(/** @type {number} */ (most)) : null;",
     "why": "a ceiling suggested at the most a cell held",
     "tests": [
       "test/server/grant7_case.test.js"

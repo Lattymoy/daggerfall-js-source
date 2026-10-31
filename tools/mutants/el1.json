@@ -11,8 +11,8 @@
   {
     "name": "encode-no-clamp",
     "file": "src/render/enhancedLighting.js",
-    "old": "  c = Math.min(Math.max(c, 0), 1);\n  return c <= 0.0031308",
-    "new": "  return c <= 0.0031308",
+    "old": "  c = Math.min(Math.max(c, 0), 1);\n  return c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;",
+    "new": "  return c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;",
     "tests": [
       "test/render/el1_enhancedlighting.test.js"
     ]
@@ -29,7 +29,7 @@
   {
     "name": "atten-no-window",
     "file": "src/render/enhancedLighting.js",
-    "old": "  return EL_LIGHT_GAIN / (1 + EL_LIGHT_KNEE * x2) * win;",
+    "old": "  return (EL_LIGHT_GAIN / (1 + EL_LIGHT_KNEE * x2)) * win;",
     "new": "  return EL_LIGHT_GAIN / (1 + EL_LIGHT_KNEE * x2);",
     "tests": [
       "test/render/el1_enhancedlighting.test.js"
@@ -76,7 +76,7 @@
   {
     "name": "tonemap-plain-reinhard",
     "file": "src/render/enhancedLighting.js",
-    "old": "  return x * (1 + x / (white * white)) / (1 + x);",
+    "old": "  return (x * (1 + x / (white * white))) / (1 + x);",
     "new": "  return x / (1 + x);",
     "tests": [
       "test/render/el1_enhancedlighting.test.js"
@@ -103,8 +103,8 @@
   {
     "name": "scatter-no-window",
     "file": "src/render/enhancedLighting.js",
-    "old": "  const ta = Math.max(0, t0 - chord), tb = Math.min(dist, t0 + chord);",
-    "new": "  const ta = 0, tb = dist;",
+    "old": "  const ta = Math.max(0, t0 - chord),\n    tb = Math.min(dist, t0 + chord);",
+    "new": "  const ta = 0,\n    tb = dist;",
     "tests": [
       "test/render/el1_enhancedlighting.test.js"
     ]
@@ -121,7 +121,7 @@
   {
     "name": "scatter-no-h-divide",
     "file": "src/render/enhancedLighting.js",
-    "old": "  return density * (Math.atan((tb - t0) / h) - Math.atan((ta - t0) / h)) / h;",
+    "old": "  return (density * (Math.atan((tb - t0) / h) - Math.atan((ta - t0) / h))) / h;",
     "new": "  return density * (Math.atan((tb - t0) / h) - Math.atan((ta - t0) / h));",
     "tests": [
       "test/render/el1_enhancedlighting.test.js"
@@ -157,8 +157,8 @@
   {
     "name": "switch-no-skin",
     "file": "src/render/enhancedLighting.js",
-    "old": "  return isEnhanced() && !!getPref('enhancedLighting') && pageParam('lighting', search) !== 'classic';",
-    "new": "  return !!getPref('enhancedLighting') && pageParam('lighting', search) !== 'classic';",
+    "old": "  return isEnhanced() && !!getPref('enhancedLighting') && pageParam('lighting', search) !== 'classic'; // PERF-URL",
+    "new": "  return !!getPref('enhancedLighting') && pageParam('lighting', search) !== 'classic'; // PERF-URL",
     "tests": [
       "test/render/el1_enhancedlighting.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "switch-no-door",
     "file": "src/render/enhancedLighting.js",
-    "old": "  return isEnhanced() && !!getPref('enhancedLighting') && pageParam('lighting', search) !== 'classic';",
-    "new": "  return isEnhanced() && !!getPref('enhancedLighting');",
+    "old": "  return isEnhanced() && !!getPref('enhancedLighting') && pageParam('lighting', search) !== 'classic'; // PERF-URL",
+    "new": "  return isEnhanced() && !!getPref('enhancedLighting'); // PERF-URL",
     "tests": [
       "test/render/el1_enhancedlighting.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "sync-no-exposure",
     "file": "src/render/enhancedLighting.js",
-    "old": "if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search));",
-    "new": "if (on) { renderer.setAir(airOn(search));",
+    "old": "    renderer.setExposure(exposureFor(search));\n    renderer.setAir(airOn(search));",
+    "new": "    renderer.setAir(airOn(search));",
     "tests": [
       "test/render/el1_enhancedlighting.test.js"
     ]

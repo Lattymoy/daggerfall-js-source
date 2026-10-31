@@ -1,26 +1,218 @@
 [
-  { "name": "CAPE-hidden-by-default", "file": "src/systems/uiPrefs.js", "old": "capeShown: true,", "new": "capeShown: false,", "tests": ["test/ui/capetoggle.test.js"] },
-  { "name": "CAPE-cloak-drawn-while-hidden", "file": "src/systems/capeShown.js", "old": "if (shown || entity?.isPlayer !== true ||", "new": "if (true || entity?.isPlayer !== true ||", "tests": ["test/ui/capetoggle.test.js"] },
-  { "name": "CAPE-the-real-table-emptied", "file": "src/systems/capeShown.js", "old": "const out = table.slice();", "new": "const out = table;", "tests": ["test/ui/capetoggle.test.js"] },
-  { "name": "CAPE-a-foe-cloak-taken", "file": "src/systems/capeShown.js", "old": "if (shown || entity?.isPlayer !== true ||", "new": "if (shown ||", "tests": ["test/ui/capetoggle.test.js"] },
-  { "name": "CAPE-any-hc-hides", "file": "src/systems/capeShown.js", "old": "look?.hc === 1;", "new": "!!look?.hc;", "tests": ["test/ui/capetoggle.test.js"] },
-  { "name": "CAPE-the-cloak-sent-while-hidden", "file": "src/net/remotePlayers.js", "old": "const table = entity ? drawnEquipTable(entity) : [];", "new": "const table = entity ? drawnEquipTable(entity, true) : [];", "tests": ["test/ui/capetoggle.test.js"] },
-  { "name": "CAPE-hc-never-said", "file": "src/net/remotePlayers.js", "old": "...(hc ? { hc: 1 } : {}), items };", "new": "items };", "tests": ["test/ui/capetoggle.test.js"] },
-  { "name": "CAPE-hc-on-a-foe", "file": "src/net/remotePlayers.js", "old": "const hc = entity?.isPlayer === true && !capeShown();", "new": "const hc = !capeShown();", "tests": ["test/ui/capetoggle.test.js"] },
-  { "name": "CAPE-the-wire-drops-hc", "file": "src/net/wire.js", "old": "...(hc ? { hc: 1 } : {}), items };", "new": "items };", "tests": ["test/ui/capetoggle.test.js"] },
-  { "name": "CAPE-the-wire-keeps-any-hc", "file": "src/net/wire.js", "old": "const hc = look.hc === 1;", "new": "const hc = !!look.hc;", "tests": ["test/ui/capetoggle.test.js"] },
-  { "name": "CAPE-lookOf-no-peer", "file": "src/net/online.js", "old": "return (this.peers.get(id) ?? this._known.get(id))?.look ?? null;", "new": "return null;", "tests": ["test/ui/capetoggle.test.js"] },
-  { "name": "CAPE-lookOf-not-mine", "file": "src/net/online.js", "old": "if (id === this.id) return this.look ?? null;", "new": "if (id === this.id) return null;", "tests": ["test/ui/capetoggle.test.js"] },
-  { "name": "CAPE-my-aura-drawn-while-hidden", "file": "src/scenes/auraHost.js", "old": "if (mine && spawned && capeShown()) {", "new": "if (mine && spawned) {", "tests": ["test/ui/capetoggle.test.js"] },
-  { "name": "CAPE-a-hidden-peer-aura-drawn", "file": "src/scenes/auraHost.js", "old": "const au = lookCapesHidden(online.lookOf?.(d.id)) ? null : online.auraOf?.(d.id) ?? null,", "new": "const au = online.auraOf?.(d.id) ?? null,", "tests": ["test/ui/capetoggle.test.js"] },
-  { "name": "CAPE-the-pieces-taken-with-it", "file": "src/scenes/auraHost.js", "old": "ak = online.armoryOf?.(d.id) ?? null;", "new": "ak = lookCapesHidden(online.lookOf?.(d.id)) ? null : online.armoryOf?.(d.id) ?? null;", "tests": ["test/ui/capetoggle.test.js"] },
-  { "name": "CAPE-the-frame-tick-on-the-raw-table", "file": "src/combat/weapon/weaponRig.js", "old": "fpArm.setWorn(dfWornEquipment(drawnEquipTable(entity), EQUIP_SLOTS, ARMOR_ENUM));", "new": "fpArm.setWorn(dfWornEquipment(equipTableOf(entity), EQUIP_SLOTS, ARMOR_ENUM));", "tests": ["test/ui/capetoggle.test.js"] },
-  { "name": "CAPE-the-arm-built-on-the-raw-table", "file": "src/combat/weapon/weaponRig.js", "old": "armor: dfWornEquipment(drawnEquipTable(entity), EQUIP_SLOTS, ARMOR_ENUM),", "new": "armor: dfWornEquipment(equipTableOf(entity), EQUIP_SLOTS, ARMOR_ENUM),", "tests": ["test/ui/capetoggle.test.js"] },
-  { "name": "CAPE-the-pack-on-the-raw-table", "file": "src/ui/enhanced/enhancedInventory.js", "old": "arm.setWorn(dfWornEquipment(drawnEquipTable(deps.entity), EQUIP_SLOTS, ARMOR_ENUM));", "new": "arm.setWorn(dfWornEquipment(equipTableOf(deps.entity), EQUIP_SLOTS, ARMOR_ENUM));", "tests": ["test/ui/capetoggle.test.js"] },
-  { "name": "CAPE-the-sprite-on-the-raw-table", "file": "src/player/eyeOfTheBeholder/eotbBody.js", "old": "slots = drawnEquipTable(playerEntity);", "new": "slots = equipTableOf(playerEntity);", "tests": ["test/ui/capetoggle.test.js"] },
-  { "name": "CAPE-the-switch-never-drawn", "file": "src/ui/enhanced/enhancedInventory.js", "old": "if (fam.id === 'cloaks') map.append(capeSwitch(fam.area));", "new": "", "tests": ["test/ui/capetoggle.test.js"] },
-  { "name": "CAPE-the-press-never-turns-it", "file": "src/ui/enhanced/enhancedInventory.js", "old": "setCapeShown(!capeShown()); refresh(); refreshFigure(); render();", "new": "refresh(); refreshFigure(); render();", "tests": ["test/ui/capetoggle.test.js"] },
-  { "name": "CAPE-the-body-not-dressed-again", "file": "src/ui/enhanced/enhancedInventory.js", "old": "setCapeShown(!capeShown()); refresh(); refreshFigure(); render();", "new": "setCapeShown(!capeShown()); refreshFigure(); render();", "tests": ["test/ui/capetoggle.test.js"] },
-  { "name": "CAPE-the-eye-never-struck", "file": "src/ui/enhanced/enhancedInventory.js", "old": "if (!on) eye.append(", "new": "if (false) eye.append(", "tests": ["test/ui/capetoggle.test.js"] },
-  { "name": "CAPE-not-a-tile-of-the-frame", "file": "src/ui/enhanced/enhancedFrame.js", "old": "'.pack-shell .wornmap .worncape', ", "new": "", "tests": ["test/ui/capetoggle.test.js"] }
+  {
+    "name": "CAPE-hidden-by-default",
+    "file": "src/systems/uiPrefs.js",
+    "old": "  capeShown: true,",
+    "new": "  capeShown: false,",
+    "tests": [
+      "test/ui/capetoggle.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-cloak-drawn-while-hidden",
+    "file": "src/systems/capeShown.js",
+    "old": "if (shown || entity?.isPlayer !== true ||",
+    "new": "if (true || entity?.isPlayer !== true ||",
+    "tests": [
+      "test/ui/capetoggle.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-the-real-table-emptied",
+    "file": "src/systems/capeShown.js",
+    "old": "const out = table.slice();",
+    "new": "const out = table;",
+    "tests": [
+      "test/ui/capetoggle.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-a-foe-cloak-taken",
+    "file": "src/systems/capeShown.js",
+    "old": "if (shown || entity?.isPlayer !== true ||",
+    "new": "if (shown ||",
+    "tests": [
+      "test/ui/capetoggle.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-any-hc-hides",
+    "file": "src/systems/capeShown.js",
+    "old": "look?.hc === 1;",
+    "new": "!!look?.hc;",
+    "tests": [
+      "test/ui/capetoggle.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-the-cloak-sent-while-hidden",
+    "file": "src/net/remotePlayers.js",
+    "old": "const table = entity ? drawnEquipTable(entity) : [];",
+    "new": "const table = entity ? drawnEquipTable(entity, true) : [];",
+    "tests": [
+      "test/ui/capetoggle.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-hc-never-said",
+    "file": "src/net/remotePlayers.js",
+    "old": "...(hc ? { hc: 1 } : {}), items };",
+    "new": "items };",
+    "tests": [
+      "test/ui/capetoggle.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-hc-on-a-foe",
+    "file": "src/net/remotePlayers.js",
+    "old": "const hc = entity?.isPlayer === true && !capeShown();",
+    "new": "const hc = !capeShown();",
+    "tests": [
+      "test/ui/capetoggle.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-the-wire-drops-hc",
+    "file": "src/net/wire.js",
+    "old": "...(hc ? { hc: 1 } : {}), items };",
+    "new": "items };",
+    "tests": [
+      "test/ui/capetoggle.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-the-wire-keeps-any-hc",
+    "file": "src/net/wire.js",
+    "old": "const hc = look.hc === 1;",
+    "new": "const hc = !!look.hc;",
+    "tests": [
+      "test/ui/capetoggle.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-lookOf-no-peer",
+    "file": "src/net/online.js",
+    "old": "return (this.peers.get(id) ?? this._known.get(id))?.look ?? null;",
+    "new": "return null;",
+    "tests": [
+      "test/ui/capetoggle.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-lookOf-not-mine",
+    "file": "src/net/online.js",
+    "old": "if (id === this.id) return this.look ?? null;",
+    "new": "if (id === this.id) return null;",
+    "tests": [
+      "test/ui/capetoggle.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-my-aura-dropped-while-hidden",
+    "file": "src/scenes/auraHost.js",
+    "old": "if (mine && spawned) {",
+    "new": "if (mine && spawned && getPref('capeShown') !== false) {",
+    "tests": [
+      "test/ui/capetoggle.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-a-hidden-peer-aura-dropped",
+    "file": "src/scenes/auraHost.js",
+    "old": "const au = online.auraOf?.(d.id) ?? null,",
+    "new": "const au = online.lookOf?.(d.id)?.hc === 1 ? null : online.auraOf?.(d.id) ?? null,",
+    "tests": [
+      "test/ui/capetoggle.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-the-pieces-taken-with-it",
+    "file": "src/scenes/auraHost.js",
+    "old": "ak = online.armoryOf?.(d.id) ?? null;",
+    "new": "ak = online.lookOf?.(d.id)?.hc === 1 ? null : online.armoryOf?.(d.id) ?? null;",
+    "tests": [
+      "test/ui/capetoggle.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-the-frame-tick-on-the-raw-table",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "fpArm.setWorn(dfWornEquipment(drawnEquipTable(entity), EQUIP_SLOTS, ARMOR_ENUM));",
+    "new": "fpArm.setWorn(dfWornEquipment(equipTableOf(entity), EQUIP_SLOTS, ARMOR_ENUM));",
+    "tests": [
+      "test/ui/capetoggle.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-the-arm-built-on-the-raw-table",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "armor: dfWornEquipment(drawnEquipTable(entity), EQUIP_SLOTS, ARMOR_ENUM),",
+    "new": "armor: dfWornEquipment(equipTableOf(entity), EQUIP_SLOTS, ARMOR_ENUM),",
+    "tests": [
+      "test/ui/capetoggle.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-the-pack-on-the-raw-table",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "arm.setWorn(dfWornEquipment(drawnEquipTable(deps.entity), EQUIP_SLOTS, ARMOR_ENUM));",
+    "new": "arm.setWorn(dfWornEquipment(equipTableOf(deps.entity), EQUIP_SLOTS, ARMOR_ENUM));",
+    "tests": [
+      "test/ui/capetoggle.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-the-sprite-on-the-raw-table",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "slots = drawnEquipTable(playerEntity);",
+    "new": "slots = equipTableOf(playerEntity);",
+    "tests": [
+      "test/ui/capetoggle.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-the-switch-never-drawn",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "if (fam.id === 'cloaks') map.append(capeSwitch(fam.area));",
+    "new": "",
+    "tests": [
+      "test/ui/capetoggle.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-the-press-never-turns-it",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "setCapeShown(!capeShown()); refresh(); refreshFigure(); render();",
+    "new": "refresh(); refreshFigure(); render();",
+    "tests": [
+      "test/ui/capetoggle.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-the-body-not-dressed-again",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "setCapeShown(!capeShown()); refresh(); refreshFigure(); render();",
+    "new": "setCapeShown(!capeShown()); refreshFigure(); render();",
+    "tests": [
+      "test/ui/capetoggle.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-the-eye-never-struck",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "if (!on) eye.append(",
+    "new": "if (false) eye.append(",
+    "tests": [
+      "test/ui/capetoggle.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-not-a-tile-of-the-frame",
+    "file": "src/ui/enhanced/enhancedFrame.js",
+    "old": "    '.pack-shell .wornmap .worncape',\n    '.pack-shell .wornsock', // CAPE-TOGGLE: the Cloaks panel's eye, a press on the panel's wood",
+    "new": "    '.pack-shell .wornsock', // CAPE-TOGGLE: the Cloaks panel's eye, a press on the panel's wood",
+    "tests": [
+      "test/ui/capetoggle.test.js"
+    ]
+  }
 ]

@@ -66,7 +66,9 @@ test('SHIP-LIVERY the law: fourteen paints and none; the port-built hulls take s
   const l = { strake: 4, accent: 11, sail: 3, stain: 14 };
   assert.equal(liveryCode(l), 4 | (11 << 4) | (3 << 8) | (14 << 12));
   assert.deepEqual(liveryOfCode(liveryCode(l)), l);
-  assert.deepEqual([liveryCode(null), liveryOfCode(0), liveryOfCode(-3), liveryOfCode((1 << 16) | 4), liveryOfCode(15)], [0, null, null, null, null], 'a nibble past the last paint refused');
+  // PIN MOVED: GUILD-SHOP - the sailcloth's byte rides over the four nibbles (systems/naval/sailCloth.js), so a number past
+  // them is refused at 1 << 24, and a byte that is no sailcloth with it
+  assert.deepEqual([liveryCode(null), liveryOfCode(0), liveryOfCode(-3), liveryOfCode((1 << 24) | 4), liveryOfCode((8 << 16) | 4), liveryOfCode(15), liveryOfCode(2 ** 32 + 4)], [0, null, null, null, null, null, null], 'a nibble past the last paint refused');
 });
 
 test('SHIP-LIVERY the painter: a texel of a family\'s takes its paint at its own lightness against the family\'s base - every other texel as built, clear ones untouched; a tint lays a paint over a whole picture at its strength, its grain kept (mutants: the nearest, the shade, the strength)', () => {
@@ -466,7 +468,7 @@ test('SHIP-LIVERY and DECK-PROPS on the boats\' word: `l` a number a boat and `d
   assert.notEqual(csaRecordKey(csaWireRecord([at({ livery: { strake: 5 } })])), csaRecordKey(csaWireRecord([at({ livery: { strake: 4 } })])));
   assert.notEqual(csaRecordKey(csaWireRecord([at({ fittings: [{ m: 41812, x: 1, z: 2, yaw: 4 }] })])), csaRecordKey(csaWireRecord([at({ fittings: [{ m: 41812, x: 1, z: 2, yaw: 3 }] })])));
   const peers = rd('src/scenes/comeSailAway/comeSailAwayPeers.js');
-  assert.match(peers, /s\.boat\.livery = liveryCode\(w\.livery\);/);
+  assert.match(peers, /s\.boat\.livery = flownLivery\(owner, w\.livery\);/);   // PIN MOVED (AUDIT GUILD-SHOP S2): her sailcloth flown only where her owner's token says it is theirs
   assert.match(peers, /s\.boat\.fittings = w\.fittings \?\? \[\];/);
   const world = rd('src/scenes/world.js');
   assert.match(world, /livery: b\.uid \? fleetShip\(b\.uid\)\?\.livery \?\? null : null, fittings: b\.uid \? fleetShip\(b\.uid\)\?\.deck \?\? \[\] : \[\],/);
@@ -494,7 +496,7 @@ test('CABIN-LOOK her cabin stained: none as built; each picture her room wears (
   assert.match(rd('src/scenes/interiorContext.js'), /if \(typeof opts\.restyle === 'function'\) await opts\.restyle\(texRemap, \[\.\.\.pending\.keys\(\)\]\.map\(\(id\) => cpuModels\.get\(id\)\?\.subMeshes \?\? \[\]\), \{ renderer, getTexture, palette \}\);/);
   const ic = rd('src/scenes/interiorContext.js');
   assert.ok(ic.indexOf('await opts.restyle(') < ic.indexOf('const drawList = [];'), 'before the room\'s batch is made');
-  assert.match(rd('src/scenes/sailingCabin.js'), /sailingCabin: cabin, restyle: cabinRestyle\(guest \? 0 : fleetShip\(cabin\.uid\)\?\.cabin \?\? 0\) \};/);   // PIN MOVED (AUDIT 2: another's cabin as built)
+  assert.match(rd('src/scenes/sailingCabin.js'), /sailingCabin: cabin,\n\s*restyle: cabinRestyle\(guest \? 0 : \(fleetShip\(cabin\.uid\)\?\.cabin \?\? 0\)\),\n\s*\};/);   // PIN MOVED (AUDIT 2: another's cabin as built)
   assert.match(rd('src/scenes/worldModes.js'), /restyle: hit\.restyle \?\? null,/);
 });
 

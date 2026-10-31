@@ -35,12 +35,24 @@ export const WILD_BODY_MS = 10_000;
  * @param {(peer: string) => boolean} [o.fair]      is this player one I may fight (in the zone, not of my party)
  * @param {(from: string, body: { s: string, items: any[], sub: string|null }) => void} [o.onBody]   my victim's offer
  */
-export function createWildFight({ send, now = () => Date.now(), can = () => false, fair = () => false, onBody = () => {} }) {
-  let n = 0;                                  // my blows' numbers
+export function createWildFight({
+  send,
+  now = () => Date.now(),
+  can = () => false,
+  fair = () => false,
+  onBody = () => {},
+}) {
+  let n = 0; // my blows' numbers
   /** @type {Map<string, { s: string, items: any[], sub: string|null, room: string|null, at: number, picked: boolean, offered: boolean }>} */
-  const bodies = new Map();                   // my victims' offers, by their peer id
+  const bodies = new Map(); // my victims' offers, by their peer id
 
-  const once = (data, opts) => { try { return send(data, opts) === true; } catch { return false; } };
+  const once = (data, opts) => {
+    try {
+      return send(data, opts) === true;
+    } catch {
+      return false;
+    }
+  };
 
   const mgr = {
     /** One of MY blows at a fair player: out as a numbered strike or spell, for the referee. The number when it left, 0
@@ -58,17 +70,25 @@ export function createWildFight({ send, now = () => Date.now(), can = () => fals
       return once({ k: 'worn', to: killer, s, items: records });
     },
     /** A victim's body I may take from (its offer come): `{ s, items, sub, room }`, or null. */
-    body(peer) { const b = bodies.get(peer); return b && b.offered && !b.picked && now() - b.at <= WILD_BODY_MS ? b : null; },
+    body(peer) {
+      const b = bodies.get(peer);
+      return b && b.offered && !b.picked && now() - b.at <= WILD_BODY_MS ? b : null;
+    },
     /** Every body I may take from, by peer id. */
-    bodies() { return [...bodies.keys()].filter((p) => mgr.body(p)); },
+    bodies() {
+      return [...bodies.keys()].filter((p) => mgr.body(p));
+    },
     /** Pick worn piece `i` off `peer`'s body - once a body, to the room that refereed the fall. True when the pick left. */
     pick(peer, i) {
       const b = mgr.body(peer);
       if (!b || !(Number.isInteger(i) && i >= 0 && i < b.items.length)) return false;
       // AUDIT INT9: and what the offer showed there - the relay signs it beside the place, and the service matches it
       // against what the fallen really wears
-      const it = b.items[i], t = it?.templateIndex, m = it?.material ?? 0;
-      const tm = Number.isInteger(t) && t >= 0 && t < 65536 && Number.isInteger(m) && m >= 0 && m < 65536 ? { t, m } : {};
+      const it = b.items[i],
+        t = it?.templateIndex,
+        m = it?.material ?? 0;
+      const tm =
+        Number.isInteger(t) && t >= 0 && t < 65536 && Number.isInteger(m) && m >= 0 && m < 65536 ? { t, m } : {};
       if (!once({ k: 'pick', r: b.s, w: i, ...tm }, { room: b.room })) return false;
       b.picked = true;
       return true;
@@ -89,12 +109,20 @@ export function createWildFight({ send, now = () => Date.now(), can = () => fals
       b.offered = true;
       b.items = Array.isArray(d.items) ? d.items : [];
       b.sub = sub ?? null;
-      try { onBody(peer, { s: d.s, items: b.items, sub: b.sub }); } catch { /* the host's */ }
+      try {
+        onBody(peer, { s: d.s, items: b.items, sub: b.sub });
+      } catch {
+        /* the host's */
+      }
     },
     /** The host's frame: a body past its time goes. */
-    tick() { for (const [p, b] of bodies) if (now() - b.at > WILD_BODY_MS) bodies.delete(p); },
+    tick() {
+      for (const [p, b] of bodies) if (now() - b.at > WILD_BODY_MS) bodies.delete(p);
+    },
     /** The player left the world: every body forgotten. */
-    reset() { bodies.clear(); },
+    reset() {
+      bodies.clear();
+    },
   };
   return mgr;
 }

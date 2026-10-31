@@ -489,7 +489,7 @@ such duds before, none now. A departure (Port-Ledger A, HELD-BASE). `test/system
 ## AFFIX-LINES (2026-10-25) - A LINE IS DRAWN OVER THE LINES, NOT THE KINDS
 
 A player, SaberGGaming: carrying capacity on four Rare pieces in five, found and crafted alike; the owner: "No band
-aids". Measured over 10,000 mints through the craft's own door (`smithItems.js:"applyRarity(item, eff.rarity, rolls, null, { fits, byLines: at(MINT_V_LINES), lean: at(MINT_V_ARMOR_LEAN), fists: at(MINT_V_JEWEL_KIN) });"`),
+aids". Measured over 10,000 mints through the craft's own door (`smithItems.js:"eff.rarity, rolls"`),
 no bias in the stream - the law made it, twice over. A pick drew a KIND at even weight and then its param
 (`lootRarity.js:"const draw = () => (byLines ? pickByLines(pool, (k) => drawWeight(k, item, out, lean), rolls) : pick(pool, rolls));"`,
 the old law's `pick`): carrying capacity is one line, the attributes eight, the resistances five and the skills 35, so

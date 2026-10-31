@@ -39,7 +39,12 @@
 // THE FOLLOW BUILDER'S HOOKS (Invisible follow): `isHidden(a)` is the one test of an attachment; `hiddenMay` the one
 // allow list (HIDDEN_FRAMES - a follow's frame type goes there); `hiddenLapse` closes by subject.
 import { verifyOrder } from '../../src/net/identityToken.js';
-import { sealHiddenSeen, HIDDEN_SEEN_V, HIDDEN_SEEN_SIG_HEADER, HIDDEN_SEEN_POST_MS } from '../../src/net/hiddenSeen.js';
+import {
+  sealHiddenSeen,
+  HIDDEN_SEEN_V,
+  HIDDEN_SEEN_SIG_HEADER,
+  HIDDEN_SEEN_POST_MS,
+} from '../../src/net/hiddenSeen.js';
 import { isChatRoom } from './relay.js';
 
 /** The hidden seats a room holds over its cap - a few staff watching, never a crowd. */
@@ -69,13 +74,20 @@ export const isHidden = (a) => a?.hid === 1;
 export function hiddenMay(message) {
   if (typeof message !== 'string' || message.length > HIDDEN_FRAME_MAX) return false;
   let m;
-  try { m = JSON.parse(message); } catch { return false; }
+  try {
+    m = JSON.parse(message);
+  } catch {
+    return false;
+  }
   if (!m || typeof m !== 'object') return false;
-  return HIDDEN_FRAMES.includes(m.t) || (m.t === 'chat' && m.ch === HIDDEN_CHAT)
+  return (
+    HIDDEN_FRAMES.includes(m.t) ||
+    (m.t === 'chat' && m.ch === HIDDEN_CHAT) ||
     // STAFF-PANEL5-HIDDEN-FIX (design doc, Invisible follow's Silent TP: "Arrive with Hide me on"): a /tp ASK, which the
     // hub answers a hidden asker from the target's where note alone (staffTeleport.js) - never the answer to a capture,
     // which only a target sends and a hidden socket is none
-    || (m.t === 'stp' && m.k === 'ask');
+    (m.t === 'stp' && m.k === 'ask')
+  );
 }
 
 /** Whether an upgrade asks for a hidden seat. @param {Request} request */
@@ -149,16 +161,22 @@ export async function hiddenLapse(room, order, now) {
   if (typeof order !== 'string' || !order || order.length > 1024) return false;
   await room._loadKey();
   if (!room._verifyKey) return false;
-  const r = await verifyOrder(order, room._verifyKey, { subtle: crypto.subtle, nowS: Math.floor(now / 1000), kind: 'hide' });
+  const r = await verifyOrder(order, room._verifyKey, {
+    subtle: crypto.subtle,
+    nowS: Math.floor(now / 1000),
+    kind: 'hide',
+  });
   if (!r.ok) return false;
   const { s, i } = r.claims;
-  for (const [ws, b] of [...room._all()]) if (isHidden(b) && b.sub === s && !(b.gio > i)) room._refuse(ws, HIDDEN_LAPSED);   // a token minted after the order is the service's newer word
+  for (const [ws, b] of [...room._all()])
+    if (isHidden(b) && b.sub === s && !(b.gio > i)) room._refuse(ws, HIDDEN_LAPSED); // a token minted after the order is the service's newer word
   return true;
 }
 
 /** Whether this relay reports a hidden socket's private home entry: HIDDEN_SEEN_URL (server/wrangler.toml) over https,
  *  and the receipt key it signs with. Off, no hidden socket enters a home (`hiddenHello`). @param {any} env */
-export const hiddenSeenOn = (env) => typeof env?.HIDDEN_SEEN_URL === 'string' && env.HIDDEN_SEEN_URL.startsWith('https://') && !!env.GATE_SIGNING_KEY;
+export const hiddenSeenOn = (env) =>
+  typeof env?.HIDDEN_SEEN_URL === 'string' && env.HIDDEN_SEEN_URL.startsWith('https://') && !!env.GATE_SIGNING_KEY;
 
 /**
  * A HIDDEN SOCKET ENTERED A PRIVATE HOME: its subject and the room, signed with the relay's receipt key and posted to
@@ -174,13 +192,25 @@ export function hiddenEntered(room, key, sub) {
   return (async () => {
     try {
       const id = [...crypto.getRandomValues(new Uint8Array(8))].map((x) => x.toString(16).padStart(2, '0')).join('');
-      const sealed = await sealHiddenSeen({ v: HIDDEN_SEEN_V, id, at: Date.now(), s: sub, r: key }, await room._receiptKeyOf(), { subtle: crypto.subtle });
+      const sealed = await sealHiddenSeen(
+        { v: HIDDEN_SEEN_V, id, at: Date.now(), s: sub, r: key },
+        await room._receiptKeyOf(),
+        { subtle: crypto.subtle },
+      );
       if (!sealed) return false;
-      const init = { method: 'POST', headers: { 'content-type': 'application/json', [HIDDEN_SEEN_SIG_HEADER]: sealed.sig }, body: sealed.body, signal: AbortSignal.timeout(HIDDEN_SEEN_POST_MS) };
+      const init = {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', [HIDDEN_SEEN_SIG_HEADER]: sealed.sig },
+        body: sealed.body,
+        signal: AbortSignal.timeout(HIDDEN_SEEN_POST_MS),
+      };
       const svc = room.env?.ACCOUNTS;
       const res = typeof svc?.fetch === 'function' ? await svc.fetch(new Request(url, init)) : await fetch(url, init);
       if (!res.ok) console.warn('[hidden] the service said', res.status);
       return res.ok;
-    } catch (e) { console.warn('[hidden] seen post failed', e?.message ?? e); return false; }
+    } catch (e) {
+      console.warn('[hidden] seen post failed', e?.message ?? e);
+      return false;
+    }
   })();
 }

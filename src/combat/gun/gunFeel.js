@@ -39,7 +39,8 @@ export const GUN_FEEL = Object.freeze({
   // design surface, and `raise` is the lab's offsetHeight - NEGATIVE
   // sits it lower on the screen, which is the classic rect's own
   // sign (`y = height - h - offsetHeight`).
-  widthPct: 0.49, raise: -8,
+  widthPct: 0.49,
+  raise: -8,
 
   // ── THE CADENCE (fps 14, reload 1700, hit on frame 1) ────────────
   // THE THREE THAT MATTER MOST, and the three that were missed: in
@@ -53,12 +54,20 @@ export const GUN_FEEL = Object.freeze({
   //
   // The frame clock and the hit frame stay fixed. BAL-ARCHERY: the Thunderlock's reload
   // scales with Speed from this 1700 ms (thunderlockReloadSeconds). A Pistolet's reload stays fixed.
-  fps: 14, reloadMs: 1700, hitFrame: 1,
+  fps: 14,
+  reloadMs: 1700,
+  hitFrame: 1,
 
   // ── THE SPRING (Mac: "kick 5, back 0, stiffness 400, damping 36")
-  kick: 5, back: 0, stiff: 400, damp: 36,
+  kick: 5,
+  back: 0,
+  stiff: 400,
+  damp: 36,
   // ── THE SHAKE ("All screenshake values max with decay at 5")
-  shake: 30, shakeRot: 4, shakeFreq: 60, shakeDecay: 5,
+  shake: 30,
+  shakeRot: 4,
+  shakeFreq: 60,
+  shakeDecay: 5,
   /** FIELD-GUN8: what the ROOM's shake is worth, in the camera
    *  shaker's own units rather than the lab's.
    *
@@ -88,7 +97,8 @@ export const GUN_FEEL = Object.freeze({
   // three times the pitch jitter, which is what 0.19 is. Tuned on the
   // lab's own sliders against the clips they are for, not adjusted in
   // the abstract.
-  sfxVolume: 1, sfxVary: 0.19,
+  sfxVolume: 1,
+  sfxVary: 0.19,
   // how far the weapon drops while the reload runs
   hiddenTarget: Object.freeze([0, 0.55]),
   /** FIELD-GUN13 (Mac: "The weapon should come up from the bottom
@@ -115,7 +125,8 @@ export const GUN_FEEL = Object.freeze({
    *  too, which is the half of the ask a multiply would quietly drop
    *  (0.15 x 2.14 is still dark). Everything below the peak rides the
    *  same curve down. */
-  flashLight: 0.6, flashGain: 1.9,
+  flashLight: 0.6,
+  flashGain: 1.9,
   /** How far the flash throws light into the room, at the peak. A
    *  JUDGEMENT stated as one, like `roomShake`: the classic torch is a
    *  14-unit radius and the lantern 16 (their templates' own
@@ -149,22 +160,43 @@ export const GUN_FEEL = Object.freeze({
 export const RELOAD_CLOSE_LEAD = 0.42;
 
 export const PISTOLET_FEEL = Object.freeze({
-  scale: 1.05, raise: -60, offset: 0,   // PISTOL-RAISE (Mac, 2026-10-25): "Placement needs to be -60 ... the raise"
-  fps: 12, reloadMs: 1400, hitFrame: 1,
-  kick: 3, back: 0, stiff: 400, damp: 36,
-  shake: 20, shakeRot: 2.5, shakeFreq: 60, shakeDecay: 5,
+  scale: 1.05,
+  raise: -60,
+  offset: 0, // PISTOL-RAISE (Mac, 2026-10-25): "Placement needs to be -60 ... the raise"
+  fps: 12,
+  reloadMs: 1400,
+  hitFrame: 1,
+  kick: 3,
+  back: 0,
+  stiff: 400,
+  damp: 36,
+  shake: 20,
+  shakeRot: 2.5,
+  shakeFreq: 60,
+  shakeDecay: 5,
   roomShake: 2,
-  sfxVolume: 1, sfxVary: 0.19,
+  sfxVolume: 1,
+  sfxVary: 0.19,
   sfx: Object.freeze({ fire: 'fire-shotgun', open: 'open-shell', close: 'close-ready' }),
   hiddenTarget: Object.freeze([0, 0.7]),
   sheathTarget: Object.freeze([0, 1]),
-  flashLight: 0.6, flashGain: 1.9, flashRange: 14,
+  flashLight: 0.6,
+  flashGain: 1.9,
+  flashRange: 14,
   alphaCut: 128,
   widget: Object.freeze({
     'Offset.Speed': 1,
-    'Bob.Length': 146, 'Bob.SizeX': 1, 'Bob.SizeY': 0.7, 'Bob.SpeedMove': 1, 'Bob.SpeedState': 1,
-    'Bob.Shape': 0, 'Bob.BobWhileIdle': true,
-    'Inertia.Scale': 2, 'Inertia.Speed': 2, 'Inertia.ForwardDepth': 0, 'Inertia.ForwardSpeed': 1,
+    'Bob.Length': 146,
+    'Bob.SizeX': 1,
+    'Bob.SizeY': 0.7,
+    'Bob.SpeedMove': 1,
+    'Bob.SpeedState': 1,
+    'Bob.Shape': 0,
+    'Bob.BobWhileIdle': true,
+    'Inertia.Scale': 2,
+    'Inertia.Speed': 2,
+    'Inertia.ForwardDepth': 0,
+    'Inertia.ForwardSpeed': 1,
   }),
 });
 /** The Pistolet's frame clock and reload in seconds (GUN_TICK_SECONDS's pair) - the cadence its machines run at
@@ -196,7 +228,7 @@ export function muzzleGlow(firing, frame, curve = MUZZLE_CURVE) {
 }
 
 /** The lab's pitch jitter, as the one line both sides read. */
-export const gunPitch = (rolls = Math.random, feel = GUN_FEEL) => 1 + (rolls() * 2 - 1) * feel.sfxVary;   // PISTOLET: a gun's own row
+export const gunPitch = (rolls = Math.random, feel = GUN_FEEL) => 1 + (rolls() * 2 - 1) * feel.sfxVary; // PISTOLET: a gun's own row
 
 /** The lab's frame clock as a tick, which is what the machine reads. */
 export const GUN_TICK_SECONDS = 1 / GUN_FEEL.fps;
@@ -219,9 +251,17 @@ export function thunderlockReloadSeconds(speed) {
  * A second shot fired into the recovery stacks on what is left, which
  * is the reason this is a spring at all rather than a curve.
  */
-export function createRecoil({ kick = GUN_FEEL.kick, stiff = GUN_FEEL.stiff, damp = GUN_FEEL.damp, back = GUN_FEEL.back } = {}) {
+export function createRecoil({
+  kick = GUN_FEEL.kick,
+  stiff = GUN_FEEL.stiff,
+  damp = GUN_FEEL.damp,
+  back = GUN_FEEL.back,
+} = {}) {
   const r = { x: 0, y: 0, vx: 0, vy: 0, kick, stiff, damp, back };
-  r.punch = (amount = r.kick) => { r.y += amount; r.x -= amount * r.back; };
+  r.punch = (amount = r.kick) => {
+    r.y += amount;
+    r.x -= amount * r.back;
+  };
   r.step = (dt) => {
     // sub-stepped: a spring this stiff integrated on a 30ms frame
     // explodes, and a weapon that only feels right at 120fps is no
@@ -231,9 +271,10 @@ export function createRecoil({ kick = GUN_FEEL.kick, stiff = GUN_FEEL.stiff, dam
     for (let i = 0; i < n; i++) {
       r.vx += (-r.stiff * r.x - r.damp * r.vx) * h;
       r.vy += (-r.stiff * r.y - r.damp * r.vy) * h;
-      r.x += r.vx * h; r.y += r.vy * h;
+      r.x += r.vx * h;
+      r.y += r.vy * h;
     }
-    return { x: r.x, y: -r.y };   // +y is up in the impulse, down on screen
+    return { x: r.x, y: -r.y }; // +y is up in the impulse, down on screen
   };
   return r;
 }
@@ -246,11 +287,8 @@ export function createRecoil({ kick = GUN_FEEL.kick, stiff = GUN_FEEL.stiff, dam
  * the shape of the motion Mac tuned against, so re-deriving it would
  * be tuning a different gun.
  */
-export const shakeNoise = (p, seed) => (
-  Math.sin(p * seed * 1.7) * 0.6
-  + Math.sin(p * seed * 3.1 + 1.3) * 0.3
-  + Math.sin(p * seed * 7.3 + 2.7) * 0.1
-);
+export const shakeNoise = (p, seed) =>
+  Math.sin(p * seed * 1.7) * 0.6 + Math.sin(p * seed * 3.1 + 1.3) * 0.3 + Math.sin(p * seed * 7.3 + 2.7) * 0.1;
 
 /**
  * THE SHAKE - trauma SQUARED, which is Eiserloh's own law and the
@@ -265,10 +303,15 @@ export const shakeNoise = (p, seed) => (
  * not the weapon".
  */
 export function createScreenShake({
-  amount = GUN_FEEL.shake, decay = GUN_FEEL.shakeDecay, freq = GUN_FEEL.shakeFreq, rot = GUN_FEEL.shakeRot,
+  amount = GUN_FEEL.shake,
+  decay = GUN_FEEL.shakeDecay,
+  freq = GUN_FEEL.shakeFreq,
+  rot = GUN_FEEL.shakeRot,
 } = {}) {
   const s = { trauma: 0, t: 0, amount, decay, freq, rot };
-  s.punch = (a = 1) => { s.trauma = Math.min(1, s.trauma + a); };
+  s.punch = (a = 1) => {
+    s.trauma = Math.min(1, s.trauma + a);
+  };
   s.step = (dt) => {
     s.t += dt;
     s.trauma = Math.max(0, s.trauma - s.decay * dt);
@@ -278,7 +321,7 @@ export function createScreenShake({
     return {
       x: s.amount * k * shakeNoise(p, 1),
       y: s.amount * k * shakeNoise(p, 1.7),
-      rot: s.rot * k * shakeNoise(p, 2.3) * Math.PI / 180,
+      rot: (s.rot * k * shakeNoise(p, 2.3) * Math.PI) / 180,
     };
   };
   return s;
@@ -303,13 +346,20 @@ export function createScreenShake({
  * fifth of the reload, back up over its last quarter - about the classic dip's weight on a 3D arm.
  */
 export const ARM_GUN_FEEL = Object.freeze({
-  kickDegPerPx: 0.6, kickBackPerPx: 0.005,
-  reloadPitchDeg: 20, reloadDropM: 0.12, reloadIn: 0.2, reloadOut: 0.25,
+  kickDegPerPx: 0.6,
+  kickBackPerPx: 0.005,
+  reloadPitchDeg: 20,
+  reloadDropM: 0.12,
+  reloadIn: 0.2,
+  reloadOut: 0.25,
   /** The shoulder the pose turns about, in the eye's own axes (right, up, toward the eye), metres. */
   pivot: Object.freeze([0, -0.22, -0.32]),
 });
 
-const smooth = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+const smooth = (a, b, x) => {
+  const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
 
 /** THE PUMP'S DEPTH, 0..1, at a share of the reload (0 the shot, 1 the weapon ready) - down over `reloadIn`, held,
  *  back up over the last `reloadOut`, nothing outside the reload. */
@@ -326,15 +376,21 @@ export const ARM_KICK_REST_PX = 1e-3;
 export function armGunPose(kickPx, reloadShare, f = ARM_GUN_FEEL) {
   const k = Number.isFinite(kickPx) && Math.abs(kickPx) >= ARM_KICK_REST_PX ? kickPx : 0;
   const d = reloadDip(reloadShare, f);
-  return { pitch: (k * f.kickDegPerPx - d * f.reloadPitchDeg) * (Math.PI / 180), back: k * f.kickBackPerPx, down: d * f.reloadDropM };
+  return {
+    pitch: (k * f.kickDegPerPx - d * f.reloadPitchDeg) * (Math.PI / 180),
+    back: k * f.kickBackPerPx,
+    down: d * f.reloadDropM,
+  };
 }
 
 /** The pose as a matrix in the VIEW's space (column-major, the port's mat4.js layout; the eye looks down -Z, +Y up):
  *  turned `pitch` about the shoulder, then moved `back` toward the eye and `down`. `unitsPerMetre` is the rig's scale.
  *  Laid in front of a view matrix (K x view), it moves the whole viewmodel and nothing else in the pass. */
 export function armKickMatrix({ pitch = 0, back = 0, down = 0 } = {}, unitsPerMetre = 1, pivot = ARM_GUN_FEEL.pivot) {
-  const c = Math.cos(pitch), s = Math.sin(pitch);
-  const py = pivot[1] * unitsPerMetre, pz = pivot[2] * unitsPerMetre;
+  const c = Math.cos(pitch),
+    s = Math.sin(pitch);
+  const py = pivot[1] * unitsPerMetre,
+    pz = pivot[2] * unitsPerMetre;
   const ty = py - (c * py - s * pz) - down * unitsPerMetre;
   const tz = pz - (s * py + c * pz) + back * unitsPerMetre;
   return new Float32Array([1, 0, 0, 0, 0, c, s, 0, 0, -s, c, 0, 0, ty, tz, 1]);

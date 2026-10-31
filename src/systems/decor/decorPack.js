@@ -7,7 +7,7 @@
 import { isFurnishing, ownBackLines } from './decorFurnish.js';
 import { applyTransfer } from '../item/itemTransfer.js';
 import { addItem } from '../inventory.js';
-import { t } from '../textManager.js';   // the room's words, in the player's language
+import { t } from '../textManager.js'; // the room's words, in the player's language
 
 /**
  * The doors over `entity()` (the player's entity, read at each call - a load replaces it).
@@ -25,7 +25,8 @@ export function createDecorPack(entity) {
    *  when it is no longer carried. AUDIT FB1025i E9: or worn - a piece in a slot is never pulled out of the pack from
    *  under its wearer (decorItems.js offers none to set down; a Discard asks after one taken down and put on since). */
   function decorPackTake(/** @type {any} */ item) {
-    if (isFurnishing(item)) {   // DECOR2b: a delivered piece leaves the deliveries whole
+    if (isFurnishing(item)) {
+      // DECOR2b: a delivered piece leaves the deliveries whole
       const list = decorHome(item);
       const i = list.indexOf(item);
       if (i < 0) return null;
@@ -40,7 +41,10 @@ export function createDecorPack(entity) {
    *  a piece of furniture delivered again. Answers the record that holds it now - AUDIT FB1025i E1: a candle given back
    *  joins the pack's stack of candles (inventory.js addItem), and the draft takes one off THAT stack to undo it. */
   function decorPackGive(/** @type {any} */ item) {
-    if (isFurnishing(item)) { decorHome(item).push(item); return item; }
+    if (isFurnishing(item)) {
+      decorHome(item).push(item);
+      return item;
+    }
     entity().items ??= [];
     return addItem(entity().items, item);
   }
@@ -61,9 +65,21 @@ export function createDecorPack(entity) {
  */
 export function returnUnstood(room, pieces, give, say) {
   const standing = new Set((pieces ?? []).map((p) => p?.id));
-  const own = (room.ownIds?.() ?? []).filter((/** @type {string} */ id) => !standing.has(id)).map((/** @type {string} */ id) => room.takeOwn(id)).filter(Boolean);
+  const own = (room.ownIds?.() ?? [])
+    .filter((/** @type {string} */ id) => !standing.has(id))
+    .map((/** @type {string} */ id) => room.takeOwn(id))
+    .filter(Boolean);
   const back = [...own, ...(room.takeUnserved?.(pieces) ?? [])];
   for (const it of back) give(it);
-  if (back.length) say?.(ownBackLines(back, (n) => t('decor.tool.strayBack', '{n, plural, one {One of your things was no longer here and went back to your pack.} other {# of your things were no longer here and went back to your pack.}}', { n })));
+  if (back.length)
+    say?.(
+      ownBackLines(back, (n) =>
+        t(
+          'decor.tool.strayBack',
+          '{n, plural, one {One of your things was no longer here and went back to your pack.} other {# of your things were no longer here and went back to your pack.}}',
+          { n },
+        ),
+      ),
+    );
   return back;
 }

@@ -26,10 +26,10 @@ whole of it is a departure, Ledger A (SHIPYARDS, SHIPYARDS-FOUND, THE PIER'S DRE
 **Which towns** (`systems/portPlaces.js` `isPortTown`). A city, a town or a village (`PORT_TOWN_TYPES`) that is a port
 by its own data - Travel Options' hand-written harbours (`systems/travel/travelPorts.js` `hasPort`) or Daggerfall's
 PortTownAndUnknown byte (`portTownByData`) - AND that the open sea bears on (INLAND-PORTS,
-`01-Overview/bugs/Field-Bugs-2026-10-14-inland-ports.md`; `portSites.js:"export function portTownOnSea(loc, hasPort, isSea) {"`,
+`01-Overview/bugs/Field-Bugs-2026-10-14-inland-ports.md`; `portSites.js:"export function portTownOnSea"`,
 the host's `portOnSea`): a pixel of the open sea within `SEA_RING` (2) of the town's, the ring the bearing below is read
 off, so every port town has a seaward edge. THE OPEN SEA is the map's water that reaches the map's border
-(`portSites.js:"export function openSeaOf(isWater, width, height) {"` - the one water law's pixels flooded eight-way from
+(`portSites.js:"export function openSeaOf"` - the one water law's pixels flooded eight-way from
 the map's edge, Deep Waters' own flood of the sea; past the Veil, the Eltheric Ocean's water round its isles). The data
 alone is no coast: the byte's 0x10 is the region capitals' mark and Travel Options' table copied the byte's list, so 36
 capitals in the hills and the deserts stood a shipyard and a lighthouse at their middle (Ilessan Hills beside its own

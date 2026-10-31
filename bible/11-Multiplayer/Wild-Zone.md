@@ -64,7 +64,7 @@ the two minutes down and the rise outside the zone.
 
 PVP-REWARD and PVP-NO-TENTH (2026-10-29, `PvP-Rework.md`) took the bag's drop and the tenths away. A player kill takes
 one worn piece, else one policy's gold, else its last roll: a tenth of the coin and letters together, the purse first,
-for the killer alone (`wildDropLaw.js:"export function takeWildLastRoll("`). No gold lies in the remains for anyone,
+for the killer alone (`wildDropLaw.js:"export function takeWildLastRoll"`). No gold lies in the remains for anyone,
 so WILD GOLD and LETTERS-TENTH in section 4 are history at a player kill.
 
 AUDIT PVP-EASE (2026-10-26, the owner: "Can we audit this"; `01-Overview/audits/Audit-PvP-Ease.md`): four cold lanes
@@ -80,14 +80,14 @@ across cells and wakes and kept by ships' guns (3b), the game's book read for th
 ## 1. What the zone is
 
 WW-C2: CYRODIIL, WHOLE - every map pixel the world's grid puts in the Imperial Province (`world/worldWide/worldGrid.js`
-theatreAt, theatre 9; region 70, `WILD_REGION`, `wildZone.js:"export const WILD_REGION = CYRODIIL_REGION;"`), and every
-place on it. Its mask is `systems/wild/cyrodiilZone.js` (`cyrodiilZone.js:"export function cyrodiilMask()"`): ZONE-LINE
+theatreAt, theatre 9; region 70, `WILD_REGION`, `wildZone.js:"export const WILD_REGION"`), and every
+place on it. Its mask is `systems/wild/cyrodiilZone.js` (`cyrodiilZone.js:"export function cyrodiilMask"`): ZONE-LINE
 (section 27), a map pixel is the zone's exactly when the world's grid puts it in the province or it lies in water the
 province encloses - the province's own law to the pixel, its border the player's own traced picture (a picture unit
 some fifteen to eighteen pixels), so every client with the same files cuts the same zone; kept while the trace and the
 fit stand. The mask keeps it on a grid of `CYRODIIL_CELL_PX` (4) pixel cells on one lattice over the world, each cell its
 sixteen pixels as bits, a cell inside where its middle pixel is (the rings' depth, the halls and the giants run on
-those cells), and the maps draw one line for it and for the province (`cyrodiilZone.js:"export function zoneLineOf("`). `buildWildMask`
+those cells), and the maps draw one line for it and for the province (`cyrodiilZone.js:"export function zoneLineOf"`). `buildWildMask`
 (`wildZone.js:"export function buildWildMask"`) lays any zone on such a grid - its origin, its cell - and every law
 that takes or answers a place takes and answers world map pixels (section 25). NEAR it is within `WILD_NEAR_PX` (6)
 map pixels of its edge (two cells). ONLINE ALONE: offline the province is the world's own (the death penalty's law). The
@@ -185,7 +185,7 @@ ZONE (never on a rise since PVP-DEATH, `PvP-Rework.md`), NO PLAYER'S BLOW OR CAS
 fighter under it is refused (`wildBlow`'s `grace`), and a striker under it loses it as its blow is judged
 (`graceEnded`). AN ENTRY GRANTS IT ONLY TO ONE AWAY AND QUIET: away from the zone `WILD_GRACE.awayMs` (30 s) and in no
 fight - a blow it landed or took - for `WILD_GRACE.fightMs` (60 s), so a step over the edge and back is no way out of a
-fight (`wildRef.js:"// ZONE-GRACE: an entry - away long enough, and out of every fight long enough"`). A CELL CROSSED IS NO
+fight (`wildRef.js:"ZONE-GRACE: an entry"`). A CELL CROSSED IS NO
 ENTRY, NOR A ROOM WOKEN FROM ITS SLEEP (AUDIT PVP-EASE L3-1, L3-2, L3-5 - `01-Overview/audits/Audit-PvP-Ease.md`): the hub
 keeps each fighter's carry (`wildCarry`) - its last fight (`fa`), whether it stands in the zone by the last room's word
 (`in`), when it left (`at`), the passage it has left (`gr`, none once ended) and a death the referee did not keep (`dd`) -
@@ -219,8 +219,8 @@ PVP-REWARD (2026-10-29) replaced the bag drop and the killer's pick below: a kil
 piece, or one policy's gold, or its last roll (`PvP-Rework.md` PVP-REWARD).
 
 PVP-WORDS (2026-10-29): the player's words say the same. Entering, "If another player kills you, they may take one
-uninsured worn piece, or gold." (`wildZone.js:"If another player kills you, they may take one uninsured worn piece, or gold.', { zone: WILD_NAME }); },"`);
-the chips, "A player's kill may cost uninsured gear or gold."; the sea's the same (`etherWild.js:"const ETHER_WILD_TEXT"`);
+uninsured worn piece, or gold." (`wildZone.js:"'You enter {zone"`);
+the chips, "A player's kill may cost uninsured gear or gold."; the sea's the same (`etherWild.js:"export const ETHER_WILD_TEXT"`);
 the legend, "nothing drops" (`wildZoneMap.js:"export const ZONE_RULES"`); the tutorial's page names all three rolls
 (`tutorialCatalogue.js:"t('tutorials.wildZone.body2'"`). A foe's death drops nothing and pays the usual death penalty
 at the rise (`world.js:"const goldLost = wildKilled ||"`), so its screen says "Nothing dropped. You pay the usual death
@@ -234,7 +234,7 @@ the fallen keeps the bag, the cart, the companions' packs and every worn piece, 
 purse at the rise, as a death outside the zone does (DEATH-PENALTY; `world.js:"wildKilled = wildDeathKill()"`).
 The first dead frame asks no drop (`world.js:"const wildDeathBegin"`), the fallen's tab asks one only against the
 relay's signed fall (`wildDropHost.js:"const key = readWildReceipt(rc)?.r;"`), and the account service refuses a foe's fall,
-nothing moved (`foe`, `server-account/src/wild.js:"return { error: 'foe' }"`) - so a tab from before the word takes
+nothing moved (`foe`, `server-account/src/wild.js:"if (body?.receipt === undefined)"`) - so a tab from before the word takes
 nothing either - and, its own rise skipping the usual tenth at any death in the zone, pays nothing until it reloads
 (AUDIT FOE-KEEPS L2, H3, P5, E4: left - a deploy's window, the gain the player's); a foe's fall the service took before the
 word is answered as it was taken. The death screen says so
@@ -252,7 +252,7 @@ Either death, at the first dead frame, while the room is still the player's (`wi
   Materials Bag, a vehicle, a deed, the spellbook). KEEP-WALLET (2026-10-09, the owner: "the wallet shouldnt drop in
   the zone"): the wallet, and the Deadlands Embers and Welkynd Shards it holds, stay with the fallen - the wallet is an
   organizer, its pieces lie in the pack itself, so the rule names each (`isWalletItem`, `walletHolds`;
-  `wildDropLaw.js:"if (isWalletItem(item) || walletHolds(item)) return false;"`). `src/systems/wild/wildDropLaw.js` (INT9:
+  `wildDropLaw.js:"if (isWalletItem(item) || walletHolds(item))"`). `src/systems/wild/wildDropLaw.js` (INT9:
   the law's home, a leaf the account Worker bundles; `src/systems/wild/wildDeath.js` re-exports it).
 - THE KILL IS THE REFEREE'S WORD (AUDIT FOE-KEEPS H1, with L1, P1, E5 and H2): a death is a kill when the referee says I
   fell at a player's hand - whenever that word is heard, before my first dead frame or after it, or a take against my
@@ -280,18 +280,18 @@ Either death, at the first dead frame, while the room is still the player's (`wi
   for anyone to take; the usual death penalty is not taken on top (`world.js:"const goldLost ="`). LETTERS-DROP (the
   owner: "letter of credits should be dropped"): a letter of credit is the one piece the wallet holds that the death
   takes, as it takes the purse's coin - into the same remains at its whole value, unless a quest's or one the trade
-  refuses (`wildDropLaw.js:"item.templateIndex === TEMPLATES.Letter_of_credit && !item.questItem"`) - answered ahead
+  refuses (`wildDropLaw.js:"=== 'MiscItems' && item.templateIndex"`) - answered ahead
   of the decor's kept-back list, which names the letter too. AUDIT FOE-KEEPS LETTERS-TENTH (the owner, asked whether a
   kill takes a letter whole, a tenth of its worth or none: "Your choice" - LETTERS-DROP's "letter of credits should be
   dropped" and FOE-KEEPS' "I dont want people to lose everything they have" both kept): a kill takes a TENTH OF EACH
-  LETTER'S WORTH into the same gold pile and the letter stays (`wildDropLaw.js:"export const WILD_FALL_LETTERS = 1;"`,
+  LETTER'S WORTH into the same gold pile and the letter stays (`wildDropLaw.js:"export const WILD_FALL_LETTERS"`,
   `gold.letters` by its id; a 50,000 letter cost 50,000 at a kill where the same gold as coin cost 5,000) - a quest's, one
   the ledger keeps and one worth under ten pay nothing; the death screen says it
-  (`wildZone.js:"deathLettersTenth: (gold) =>"`). The fallen's own ask carries the word (`letters` 1, wildFallWords) and a
+  (`wildZone.js:"deathLettersTenth:"`). The fallen's own ask carries the word (`letters` 1, wildFallWords) and a
   seizure takes the tenth; a tab from before the word is answered as before - its letters whole - since its game would
   never lower one. BURNT-SAID (FIELD BUGS 2026-10-18b,
   `01-Overview/bugs/Field-Bugs-2026-10-18b.md`): the death screen names the letters a death took by their worth
-  (`wildZone.js:"deathLetters: (n, gold) =>"`), and a held record's drop - taken and laid nowhere (Integrity-Arc, Lane
+  (`wildZone.js:"deathLetters: (n, gold)"`), and a held record's drop - taken and laid nowhere (Integrity-Arc, Lane
   1's freeze) - is said as lost, where it was said as nothing at all (`wildZone.js:"deathBurnt: (n) =>"`).
 - STORE-KEEPS (2026-10-26, PVP-EASE above; the owner: "Make it where you cant lose your wagon/horse or anything stored on
   death"; asked, "Wagon + companions' packs"): THE CART AND EVERY COMPANION'S PACK ARE STORAGE, AND NO DEATH TAKES THEM -
@@ -320,7 +320,7 @@ Either death, at the first dead frame, while the room is still the player's (`wi
   zone, made the drop optional - a fighter at 1 HP moved its bag, its purse and its letters into the cart and a kill cost
   it one worn piece at most. FOR `WILD_STORE_LOCK_MS` (60 s) AFTER A PLAYER'S BLOW - given or taken, a sword's, a spell's
   or a ship's gun's - NOTHING MAY BE STORED: the wagon, a companion's pack, a ship's hold, a chest (any list the host marks
-  `storage`), gold dropped into any of them and a sworn one's kit (`wildStoreLock.js:"export function wildStoreRefusal("` - a leaf of its own, as the account Worker bundles the inventory's law,
+  `storage`), gold dropped into any of them and a sworn one's kit (`wildStoreLock.js:"export function wildStoreRefusal"` - a leaf of its own, as the account Worker bundles the inventory's law,
   asked by `systems/inventorySession.js` `storeRefusalOf` for both inventories' every store, dry run and gold drop -
   `itemTransfer.js` `planStore` and `planDropGold`'s `store` refusal - and by `revenantCompanions.js` `giveSwornGear`).
   A fall at another's hand locks it a minute past the pick, so a Resurrect inside it stores nothing before the take.
@@ -342,10 +342,10 @@ Either death, at the first dead frame, while the room is still the player's (`wi
   socket plays), once, and says the same collect each time it is asked (`wildLaw.js:"export function collectAsk"`). The
   killer's tab carries it to the service as an act on its own record (`/v1/wild/collect`, wildCollect): the piece into
   that record and the escrow ended, one batch guarded to the one row - only then is it the killer's, and it arrives in
-  the service's answer, carried, never in a slot (`wildEscrowHost.js:"const wildCollected = (d) =>"`). NOBODY COLLECTING by the
+  the service's answer, carried, never in a slot (`wildEscrowHost.js:"const wildCollected"`). NOBODY COLLECTING by the
   remains' latest end (`until`: the order's minute and `WILD_REMAINS_MS`, WILD_ESCROW_HOLD_S) and a collect signed at
   that moment spent (`WILD_COLLECT_TTL_S`, `escrowBackAt`), the fallen's own tab takes it back into its record
-  (`/v1/wild/reclaim`, wildReclaim) - watched on the zone's frame (`wildEscrowHost.js:"const wildEscrowFrame = () =>"`), and a
+  (`/v1/wild/reclaim`, wildReclaim) - watched on the zone's frame (`wildEscrowHost.js:"const wildEscrowFrame"`), and a
   game closed meanwhile asks the service at its next play (`/v1/wild/escrows`). The piece is in the fallen's record, the
   escrow, or one record - never two, never none; an end asked twice moves nothing twice. What the fallen sees: the
   death screen says the piece is held until the killer collects it and comes back otherwise (`WILD_TEXT.deathHeld`), a
@@ -417,12 +417,12 @@ both ends read (`src/systems/wild/wildInsureLaw.js`):
 - IN FORCE `WILD_INSURE_SETTLE_S` (120 s) AFTER IT IS WRITTEN, against the fall's own signing (the receipt's `i`): the
   killer has `WILD_REF.pickMs` to pick and the fall is signed after it, so a policy written on the death screen keeps from
   nothing (`wildPolicyInForce`). The game writes one only outside the zone (`insureInZone`), where the walk in is longer.
-- AT A KILL (`server-account/src/wild.js:"const insured = pvpInsuredFor(live.map((p) => String(p.key)),"`; PVP-REWARD since, `PvP-Rework.md`):
+- AT A KILL (`server-account/src/wild.js:"const insured = pvpInsuredFor"`; PVP-REWARD since, `PvP-Rework.md`):
   a piece under a policy in force is kept as a piece the ledger bars is - never taken by the killer's pick, never
   dropped, never asked of the ledger - and (AUDIT PVP-EASE L1-3, L2-2, the owner: "Only when it saved the piece") A
   POLICY IS SPENT ONLY WHEN IT SAVED ITS PIECE: the worn piece the killer picked, or a bag piece the drop would have
   carried into the remains - takeWildDeath's `saved`, a dry run of the same law without the policies on the very save
-  it takes from (`wildDropLaw.js:"function wildSaved("`), spent in the fall's own batch (`spent_r`, `spent_at`). A
+  it takes from (`wildDropLaw.js:"function wildSaved"`), spent in the fall's own batch (`spent_r`, `spent_at`). A
   policy on a worn piece no pick named, in a hall that searches no body, or past the remains' bound stays in force.
   Before the audit every policy on a piece the fallen carried or wore was spent at any kill - a hall death burnt a fifth
   of every insured worn piece's worth for nothing. PVP-REWARD retired the killer's offer and pick
@@ -450,9 +450,9 @@ its worth. Before, a policy needed a ledger key, so a plain piece was never insu
 stack, a bound or quest piece, a letter of credit, or a piece `wildCanLose` refuses. A classic save's piece and a
 sigil's bound piece are never taken, so need none.
 
-A POLICY NAMES ITS PIECE BY `insureKeyOf` (`src/systems/wild/wildInsureLaw.js:"export function insureKeyOf(item) {"`):
+A POLICY NAMES ITS PIECE BY `insureKeyOf` (`src/systems/wild/wildInsureLaw.js:"export function insureKeyOf"`):
 its ledger key, or a plain piece's own id. The book mints that id when the piece is insured
-(`wildInsureBook.js:"const key = wildInsureKey(item), gold = wildPremium(item), at = region();"`) and the act's first
+(`wildInsureBook.js:"const key = wildInsureKey"`) and the act's first
 checkpoint carries it to the record. No ledger reads it: `ledgerKeyOf` answers null for a plain piece whatever it
 carries, so the judge, the wealth and the trade lock see the record as before (`insureall.test.js` judges it both ways).
 
@@ -481,7 +481,7 @@ AN HOUR TAKES NOTHING. A fall whose killer felled the same character within `WIL
 wrote - so a killer camping a rise keeps the shield up for as long as they camp) - measured between the KILLS, each
 fall's receipt signing (`ki`, AUDIT PVP-EASE L1-1), on either side: by when each was carried, a killer who held a second
 kill's receipt (good for an hour) until the first's row was half an hour old took it whole - takes no worn piece, no bag and no
-gold, spends no policy and moves no record (`server-account/src/wild.js:"async function wildShielded("`); it is written as a
+gold, spends no policy and moves no record (`server-account/src/wild.js:"async function wildShielded"`); it is written as a
 fall all the same (`tk.shield`, its sea kill's bounties with it - a bounty is its setter's gold, never the fallen's) and
 answered `shield`, so the death screen says it (`WILD_TEXT.deathShield`). Another hand takes as ever. Read by migration
 0181's `idx_wild_falls_pair` (`char_id`, `killer`, `ki`). A fall carried before `ki` (and a foe's) shields nothing.
@@ -503,7 +503,7 @@ with the minutes left.
 - WHOSE, AND BY WHAT NAME (WILD-REMAINS-LOSS, `01-Overview/bugs/Field-Bugs-2026-10-25h.md`): a remains is the fallen's
   by its order's account (`os`) and named for the fallen by its order's `wnm` (the name the fallen wears), whoever laid it - a seizure is
   laid by the killer, whose socket's name and peer had made it "Traveller" and the killer's own
-  (`wildRemains.js:"export const remainsMine = "`). The room checks a deposit's order with its verifying key loaded
+  (`wildRemains.js:"export const remainsMine"`). The room checks a deposit's order with its verifying key loaded
   first: a room woken from hibernation since its last hello refused every deposit, and the drop the service had taken
   lay nowhere. A game knows its own account in the zone by the hub's word, else by its signed-in session's
   (`wildSelf.js:"export const wildSelf = "`, WILD-HUBLESS): a game the hub had not seated never took its own drop, and
@@ -539,13 +539,13 @@ with the minutes left.
   `test/systems/wild/fb1009c_wildkeep.test.js`; `tools/mutants/fb1009c_wildkeep.json` (7, all dead).
 - THE GOLD PILE (FIELD BUGS 2026-10-20h, "the PvP remains and gold pile", `01-Overview/bugs/Field-Bugs-2026-10-20h.md`).
   REMAINS-GOLD: the pile's one coin record is minted by its count, to the item law's one count
-  (`wildRemains.js:"const mintOne = "`). The game's mint is the stranger's projection, whose stack bound is the wire's 65,535,
+  (`wildRemains.js:"const mintOne = (/** @type {any} */ r)"`). The game's mint is the stranger's projection, whose stack bound is the wire's 65,535,
   so a death that dropped more gold than that showed it to nobody, and the gold stayed in the room until the remains
   went. REMAINS-TAKE: a pile shows what the room holds, less the takes of mine still waiting on an answer
-  (`wildRemains.js:"const follow = "`). A take of part of a stack, such as the gold a pack has no room for, was taken off
+  (`wildRemains.js:"const follow = (rec, i)"`). A take of part of a stack, such as the gold a pack has no room for, was taken off
   the taker's pile twice, and a room word heard between the window's take and the frame set the count over that take,
   so the taker kept coin the room still held. A word now waits for the window's take to be asked first
-  (`wildRemains.js:"const settle = "`). Pinned by `test/net/fb1020h_remains.test.js`; `tools/mutants/fb1020h_remains.json`
+  (`wildRemains.js:"const settle = (rec)"`). Pinned by `test/net/fb1020h_remains.test.js`; `tools/mutants/fb1020h_remains.json`
   (10, all dead).
 
 ## 6. The maps
@@ -606,10 +606,10 @@ renumbered past main's SUPER-DUNGEONS (world176) - its parts written on their br
   WILD-REJOIN (world260 - world258 on its branch, renumbered past KETCH-LONGER and ASK-LONGER at the merges - account acct191, acct186 on its branch): `down` (`ms`, and `r` with `p` from the fall's own room - section 4), said
   before the receipts a socket is owed; an older client drops the kind. A fall receipt signed with its fallen gone from
   the room carries `g` 1. Deploy the account service first (an older one holds a `g` fall's killer to the grace - the
-  killer's tab then asks again past it, `wildSeizeHost.js:"a?.error === 'grace'"`), then the relay, then the site.
+  killer's tab then asks again past it, `wildSeizeHost.js:"else if (a?.error === 'grace' && !s.graceWaited)"`), then the relay, then the site.
   PVP-LOOT (world205 - world201 on its branch, one bump past main's world201 and world202 at the merge, and world203 on the integration, renumbered past main's world203 and world204 at the merge of main): the room's take asks the friend law of the drop's records alone (section 5); a guildmate is kin
   at the referee (section 3); and the two-phase handoff (section 4) - the order's `we`
-  (`identityToken.js:"if (c.we !== undefined && c.we !== 1) return false;"`), the room's `cr` word to the killer
+  (`identityToken.js:"if (c.we !== undefined && c.we !== 1)"`), the room's `cr` word to the killer
   (`validWildOut`, the collect `g1`, `WILD_COLLECT_MAX`), `WILD_COLLECT_RELAY_MIN` (205; 201 on its branch and 203 on the integration, and main's world201 to world204 hand the record) for a tab to ask the escrow - an
   older client drops `cr`, so it never takes the room's copy of a piece in escrow. Deploy the relay first, then the
   account service (acct136: `wild_escrow`, migration 0118 - acct133 and 0113 on its branch, acct134 and 0115 on the integration; `/v1/wild/collect`, `/v1/wild/reclaim`, `/v1/wild/escrows`),
@@ -681,6 +681,9 @@ fast door - the travel map's journey and the carriage drivers' and the ships' an
   zone map's card is down, and its pick had shown nothing): a journey picked on the zone map is always Cautiously, by land, at inns - no choices (`_forceZoneOpts`,
   `heldMap.js:"_forceZoneOpts(o)"`); a press on the zone map's ground or on a place is a destination, and the legend's
   Begin journey starts it.
+- ROAD-GRAPH (2026-10-30, the owner: "not allowing you to traverse to different locations reliably"): a journey by the
+  roads across Cyrodiil is planned to its end. 111 of 992 trips between the zone's towns had said "no way"
+  (`06-Systems/Travel-View.md` ROAD-GRAPH).
 
 ## 10. The pace (WILD3)
 
@@ -834,7 +837,7 @@ A hall is no row of the map files (it is spawned, by the day), so every door tha
   are"): a journey to the hall I stand at is no journey - "You are already there."
   (`world.js:"only when youre already"`).
 - HALL-PLATE (the owner: "it also shows as town right now too in white fonts"): on the Overworld a hall wears the
-  dungeons' plate alone, never a place's as well (`world.js:"if (!summary || summary.loc?.wildHall)"`).
+  dungeons' plate alone, never a place's as well (`world.js:"if (!summary || summary.loc?.wildHall || summary.loc?.spawned)"`; a spawn too since SPAWN-PLATE).
 
 ## 15. The Greater Giants (ZONE-GIANTS)
 
@@ -905,9 +908,12 @@ half health", "everyone in the zone should see the same ... that the big giant i
 
 ## 16. The zone's other laws (PVPDUNGEONS)
 
-- NO BANKS (the owner: "Players cant use banks in zone and cant buy houses"): the bank's door says "There are no banks
-  in the mountains." (`wildNoBank`, `world.js:"wildNoBank: () =>"`; `worldModes.js:"if (host.wildNoBank?.())"`). The
-  houses' half is retired: ZONE-HOMES (section 29) sells a house anywhere in the zone.
+- NO BANKS (the owner: "Players cant use banks in zone and cant buy houses"): the bank's door refuses in the zone
+  (`wildNoBank`, `world.js:"wildNoBank: () =>"`; `worldModes.js:"if (host.wildNoBank?.())"`). The houses' half is
+  retired: ZONE-HOMES (section 29) sells a house anywhere in the zone. ZONE-BANK (2026-10-30, the owner: banks "Work in
+  settlements"): a bank in a city, town or village of the zone serves, the Imperial City's among them; elsewhere the door
+  says "In the open zone, banks serve only cities, towns and villages." (`zoneSafe.js` zoneBankOpen), where it still
+  said the Wrothgarian Mountains' words (`01-Overview/bugs/Field-Bugs-2026-10-30b.md` section 3).
 - NO WORLD EVENTS (the owner: "Do not spawn world events in the PVP zone!"): the Oblivion Gate never takes region 16
   (`gateRegions`, `gateSite.js:"export const gateRegions"`) and every client drops its towns from the day's raids
   alike (`raidingParties.js:"state.raids = raidsForDay"`) - the whole region, cut or not.
@@ -943,7 +949,7 @@ half health", "everyone in the zone should see the same ... that the big giant i
   a zone of whole cells, are drawn as a pen would - resampled, relaxed toward their neighbours, corner-cut
   (`smoothContour`, `wildZoneMap.js:"export function smoothContour"`), and a wide soft shadow lies under the red line.
   ZONE-LINE (section 27): a zone kept to the pixel - Cyrodiil's - is drawn on its own line, never smoothed off it
-  (`wildZoneMap.js:"export const zoneLine ="`), and the fog is clipped by that line.
+  (`wildZoneMap.js:"export const zoneLine"`), and the fog is clipped by that line.
 - ZONEINK2 (the owner: "The tier colors when zoomed in on the zone map are overwriting the map too much make it look
   waaaay more high quality and take care of the performance"): the tiers are a WASH - `TIER_WASH`
   (`wildZoneMap.js:"export const TIER_WASH"`), a light pigment each laid with `multiply`, so the sheet's relief, roads
@@ -991,8 +997,8 @@ the planner its rock table (`tvWodRocks`, `world.js:"function tvWodRocks"`, whic
 on-foot rule outside the zone is removed - the patch had for a while let only roads and tracks be walked in region 16
 outside the cut), and the planner no longer reads it. Offline too: the law is the planner's, not the zone's. The
 words that promised the old rule say the new one: First Person Travel's roads switch is "planned by land"
-(`modSettings.js:"'GeneralOptions.FirstPersonTravelFollowsRoads': Object.freeze"`) and the Overworld's Free path is "straight across
-country" (`travelPathMode.js:"tipFree:"`), neither "round the mountains" any more.
+(`modSettings.js:"'GeneralOptions.FirstPersonTravelFollowsRoads':"`) and the Overworld's Free path is "straight across
+country" (`travelPathMode.js:"tipFree: 'Walk straight"`), neither "round the mountains" any more.
 
 ## 20. The test build (TESTBUILD)
 
@@ -1056,7 +1062,7 @@ each is a line here, findable by its tag.
   "dragging and dropping the left hand weapon to the right hand one or when empty should be possible in the
   inventory"): a hand's own panel is a drop target (`handIntent`, `enhancedInventory.js:"function handIntent"`).
   HANDS-COMPARE (the owner: "Damage comparison should now show left and right hand in the item info when hovering"): a
-  weapon's card sets it against each hand's (`armourCard.js:"comparison should now show left"`).
+  weapon's card sets it against each hand's (`armourCard.js:"comparison should"`).
 - HAND-DROP (FIELD BUGS 2026-10-29, #feature-feedback: "Dragging a weapon from the inventory to the L-Hand slot pushes
   the weapon that was previously there to the right hand and unequips what was your main weapon"): a pack piece dropped
   on a hand's panel goes in that hand and takes off only that hand's piece, in one equip act (`equipItem`'s `hand`,
@@ -1088,7 +1094,7 @@ each is a line here, findable by its tag.
   the pack for nowhere but the character's own wagon. The store ladder refuses it everywhere else - the ground, a pile,
   a body, a chest, a companion's pack - in its own words, "Your spellbook never leaves you." (`REFUSAL.spellbook`,
   `itemTransfer.js:"if (isKeptSpellbook(item) && !usingWagon)"`), and so does the shift-drop, ahead of a lock's
-  "unlock it first" (`shiftDropRefusal`, `physicalItems.js:"isKeptSpellbook(item) ? { text: SPELLBOOK_KEPT_TEXT }"`).
+  "unlock it first" (`shiftDropRefusal`, `physicalItems.js:": isKeptSpellbook"`).
   Neither counter puts it up for Sell or Sell Magic (`nativeTrade.js:"&& isKeptSpellbook(item)) {"`;
   `enhancedTrade.js:"if (selling() && isKeptSpellbook(item)) {"`, and the enhanced counter quotes it no price - its
   `saleRefused`). A death in the zone already kept it (section 4, `wildCanLose`). The player trade's table
@@ -1276,7 +1282,7 @@ Cryodil will be home to all abundent resources and everything else from the wrot
   a press on the zone and the zone map's legend say so (M5, `heldMap.js:"_zoneLaws() {"`); and the legend's travel law is
   Cyrodiil's - no fast travel or carriage reaches it or runs inside it - where the Wrothgarian zone's said its carriages
   ran every ten minutes and its journeys went from the zone map (`wildZoneMap.js:"export function zoneRules"`).
-- THE PIXEL PAST THE BAY: a world point's map pixel is FLOORED (`streamingWorld.js:"x: Math.floor(worldX / NATIVE_PIXEL),"`,
+- THE PIXEL PAST THE BAY: a world point's map pixel is FLOORED (`streamingWorld.js:"x: Math.floor(worldX / NATIVE_PIXEL)"`,
   `mapsFile.js` worldCoordToMapPixel, the wire's `mapPixelOfWire` and `cellRoomOfWire`, the serpent's
   `sitePixelOfNative`) - DFU's truncation to the bit on the Bay, where every coordinate is non-negative; past the
   Bay's west and south edges truncation named the next pixel toward the Bay, and a player standing on one of Cyrodiil's
@@ -1366,7 +1372,7 @@ The owner: "Also ensure the pvp border outlines cyrodil perfectly, currently it 
   theatreAt reads the picture at a pixel's middle, a picture pixel 15.5 map pixels a side, and the ground past the Bay
   stands on the same picture (`tamrielGround.js:"export function authoredHeightByte"`) - the province's own edge, the
   coast and the borders alike, is a staircase of 12.7 km steps.
-- THE ZONE TO THE PIXEL (`wildZone.js:"function pixelBits("`; `buildWildMask`'s `pixelIn`): each cell keeps its sixteen
+- THE ZONE TO THE PIXEL (`wildZone.js:"function pixelBits"`; `buildWildMask`'s `pixelIn`): each cell keeps its sixteen
   pixels as bits, and every ask of a place - `wildInside`, `wildRingAt`, a fast journey and its fee, a hall's, a
   dungeon's (`etherWild.js` wildRingAtPlace), the frame's word to the referee - reads its own pixel's bit. THE
   PRE-TEST: the law is asked at every cell's middle, and a cell whose eight neighbours' middles all answer as its own is
@@ -1378,12 +1384,12 @@ The owner: "Also ensure the pvp border outlines cyrodil perfectly, currently it 
   were on the freeware's picture - so the rings, the halls' picks and the giants' tiers stand where they stood. A zone
   pixel of a cell whose middle is out is the edge's ring (The Borderlands); a pixel past the line is in no ring,
   whatever its cell. The hiding band and the box take every cell the zone touches. A giant's walk and its leash ask the
-  pixel under it too (`wildGiants.js:"const giantIn ="`): a cell whose middle is the province's may hold a pixel or two
+  pixel under it too (`wildGiants.js:"const giantIn = (mask, cx, cy)"`): a cell whose middle is the province's may hold a pixel or two
   past the line, and a giant walked them: on the freeware's picture 68 of 691,200 places over thirty days (30 s apart)
   stood past it, none now; 4,121 of those places moved, a giant's walk by the border (every client's alike).
-- ONE LINE (`cyrodiilZone.js:"export function zoneLineOf("`): Cyrodiil's outline on the traced picture - its land and the
+- ONE LINE (`cyrodiilZone.js:"export function zoneLineOf"`): Cyrodiil's outline on the traced picture - its land and the
   water it encloses, against the rest - laid on the world. The red line, the fog's cut and the zone map's outer ring
-  and wash draw it unsmoothed (`wildZoneMap.js:"export const zoneLine ="`), and the province's own ink draws it in place
+  and wash draw it unsmoothed (`wildZoneMap.js:"export const zoneLine"`), and the province's own ink draws it in place
   of its own there: `tracedChains` keeps no border with Cyrodiil on one side (`keeps`), leaves Cyrodiil's open coast to
   the line (`cutCoast` - in a square of four pixel middles the line crosses, the coast is the pixels' own sides from the
   picture's corner, so a lake's shore stays and a neighbour's coast ends on the line's corner), and lays the line's
@@ -1406,7 +1412,7 @@ The owner: "Also ensure the pvp border outlines cyrodil perfectly, currently it 
   before the picture, and Cyrodiil's box lies 38 pixels east of it.
 - SMOOTH-LAND (2026-10-26, `03-World/Tamriel.md` SMOOTH-LAND; the owner: "Whatever is most detailed") made that call:
   the province's own law is the smoothed outline now - theatreAt, the ground, the regions and the zone with it - and the
-  zone's line is the law's own (`cyrodiilZone.js:"export function zoneLineOf("`): the law's line pieces (`world/tamriel/
+  zone's line is the law's own (`cyrodiilZone.js:"export function zoneLineOf"`): the law's line pieces (`world/tamriel/
   tamrielLines.js` lawLines) whose two pixels the zone parts, each a coast or a border by what lies past the zone. No
   `keeps`, no `cutCoast`: the held map's ink leaves the zone's pieces to it by their keys, so a neighbour's coast and
   border end where the law's three labels meet, on the line. The mask is built as before, a pixel at a time from

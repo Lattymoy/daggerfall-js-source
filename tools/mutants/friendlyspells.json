@@ -119,8 +119,8 @@
   {
     "name": "SNDREP1-name-loose",
     "file": "src/systems/soundReplacer.js",
-    "old": "if (base === `${name.toLowerCase()}.wav`) return name;",
-    "new": "if (base.startsWith(name.toLowerCase())) return name;",
+    "old": "  for (const name of Object.values(SOUND_REPLACEMENTS)) if (base === `${name.toLowerCase()}.wav`) return name;",
+    "new": "  for (const name of Object.values(SOUND_REPLACEMENTS)) if (base.startsWith(name.toLowerCase())) return name;",
     "tests": [
       "test/systems/friendlyspells.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PR29-supersede-dropped",
     "file": "src/systems/party/partyRestLaw.js",
-    "old": "    if (stampOf(m?.p?.voteAt, now) > t) continue;\n",
-    "new": "",
+    "old": "    if (stampOf(m?.p?.voteAt, now) > t) continue;\n    latest = Math.max(latest, t);",
+    "new": "    latest = Math.max(latest, t);",
     "tests": [
       "test/systems/friendlyspells.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "HEAL1-left-caster-only",
     "file": "src/systems/chargen.js",
-    "old": "    rangeType: 1,                                   // ByTouch",
-    "new": "    rangeType: 0,                                   // ByTouch",
+    "old": "    rangeType: 1, // ByTouch: another player, or a foe, in arm's reach",
+    "new": "    rangeType: 0, // ByTouch: another player, or a foe, in arm's reach",
     "tests": [
       "test/systems/friendlyspells.test.js"
     ]

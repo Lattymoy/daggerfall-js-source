@@ -346,7 +346,7 @@ that inks nothing.
   a building an NPC marked on a crowded plan had no mark at all: with
   both town packs, Daggerfall with 152 others found lettered 85 of its
   153 names at rest and not the marked one. Now the surrendered plate is
-  lettered `nameplateLayout.js:"export const STAR_PLATE = '*';"` - one
+  lettered `nameplateLayout.js:"export const STAR_PLATE"` - one
   word both maps read - where the solver left it
   (`townSheet.js:"          text: s.replaced ? STAR_PLATE : n.text, name: n.text,"`),
   ticked and inked as any name, and the pointer over it reads its
@@ -720,6 +720,33 @@ Code: `ui/town/townMapMarks.js` (the rows and the reading), `ui/ink/inkTown.js` 
 `test/ui/town/town_marks.test.js` (9). Mutants: `tools/mutants/town_marks.json` (35, all dead); `disc23a.json`'s breathing
 record and `survtiers3.json`'s two cite records re-aimed.
 
+## VENDOR-HOUSES (2026-10-30) - a trader's house is blue on the town plan
+
+Mac, forwarding #feature-feedback "Player Vendors": "trying to find a vendor in Daggerfall is insane"; "Literally just
+make them a different color like the Player's own houses are red. Make a marked vendor blue or something."
+
+- **Every house with a player's trader and goods up is filled blue** (`TOWN_PEN.vendor` - classic's shop blue, the map's
+  pen `PEN.vendor`, so EM4 holds: no colour invented) with a parchment door; the
+  waypoint's house is blue too. My own house stays my red, trader or not. Under the pointer a trader's house reads
+  "Gryphoth's home - trader"; the waypoint's keeps its own words.
+- **The read** is the Notice Board's Vendors tab's (`scenes/vendorHost.js` vendorReachable, its door law with it),
+  registered into `systems/vendorHouses.js`. Opening the town plan, by either key, asks for its region's traders,
+  once in `VENDOR_HOUSES_READ_S` (120 s). The sheet repaints when a read changes the marks. Regions past the Bay are
+  read the same way (TAMRIEL-WIDE): the key is the town's MapId and the house's key.
+- **The rest is unchanged:** the gold coin on the world maps, the compass and the Overworld's mark (HOME-VENDOR,
+  `06-Systems/Online-Arc.md`). The classic exterior automap draws no homes.
+
+AUDIT TECH-FEEDBACK (2026-10-30, `01-Overview/Audit-Log.md`): a read that failed is asked again after
+`VENDOR_HOUSES_RETRY_S` (15 s); a shut market marks nothing; a read unanswered after `VENDOR_HOUSES_HUNG_S` (30 s) is
+let go and its late answer ignored. The homes' version is a number again (the sheet asks it a frame). The waypoint's
+house is told by a flag, and "- trader" is the text core's (`town.home.trader`). AUDIT TECH-FEEDBACK II: a read that
+throws or rejects is a failure too; a load (another character, another door's law) forgets every read; nothing is
+marked while the market is shut (`registerVendorHouseReader`'s `open`).
+
+Code: `systems/vendorHouses.js`, `ui/town/townMapMarks.js`, `ui/town/townSheet.js`, `ui/ink/inkTown.js`
+(`paintHomeMark`), `scenes/exteriorAutomapToggle.js`, `scenes/vendorHost.js`. Pins: `test/ui/town/town_marks.test.js`
+(VENDOR-HOUSES, 5). Mutants: `tools/mutants/vendorhouses.json` (21, all dead).
+
 ## FINDME-TOWN (2026-10-19) - Find me finds the player on the sheet that is up
 
 A player's private report: the town map's Find me never found them. FINDME (`11-Multiplayer/Wild-Zone.md`) was built
@@ -780,7 +807,7 @@ town map painting none", its own comment says.
 - **The classic window painted it magenta.** Its ladder gives a byte in no group DFU's debug red, (255, 0, byte)
   (ExteriorAutomap.cs:1535-1540) - (255, 0, 254) here: 118,671 of the 262,144 pixels of a Market District slice, and the
   White-Gold Tower and the palace solid magenta. The closed byte paints nothing now, for every capital, as the held
-  map's sheet paints it (`exteriorAutomapWindow.js:"if (byte === 0 || byte === CAPITAL_CLOSED_BYTE) continue;"`). No
+  map's sheet paints it (`exteriorAutomapWindow.js:"if (byte === 0 || byte === CAPITAL_CLOSED_BYTE)"`). No
   Daggerfall block writes the byte - every RMB in BLOCKS.BSA reads 0 to 24, 117, 250 and 251 - so DFU's ladder is
   unchanged on DFU's own data, and a Bay town's map is the same byte for byte: no departure from DFU, only our blocks'
   byte taken out of its debug arm.
@@ -803,7 +830,7 @@ across, whose walls, avenues and landmarks are the port's own (`03-World/Arena-P
 streets and buildings are the fabric's (`world/imperialFabric.js`) - none of it in an automap byte.
 
 - **The sheet is the city.** The host hands the slice (`exteriorAutomapToggle.js:"imperialSlice: capitalViewOf(dfLoc) ? dfLoc.capital.s : null,"`),
-  the town sheet's bag carries it (`townMapDoor.js:"imperial: deps.imperialSlice ?? null,"`), and the town sheet answers
+  the town sheet's bag carries it (`townMapDoor.js:"imperial: deps.imperialSlice"`), and the town sheet answers
   with the city's (`townSheet.js:"if (deps.imperial != null) return createImperialSheet(deps, createTownSheet);"`,
   `ui/town/imperialSheet.js`). Its space is the town sheet's own unit, a layout pixel, over the whole plan, north up; the
   slice's own sheet stands at its slice's corner, so the player's caret, the plates and the marks cross by that offset
@@ -812,11 +839,11 @@ streets and buildings are the fabric's (`world/imperialFabric.js`) - none of it 
   it; the city wall and its gates, the palace wall and its gates, the district walls and theirs; Green Emperor Way, the
   three ring roads, the six avenues and twelve radials, the causeways and Talos Bridge; each district washed and named;
   the White-Gold Tower in its palace, the Arena, the Temple of the One, the Prison, the University. The plan is read off
-  `world/imperialCity.js`'s own laws once a session (`imperialSheet.js:"export function imperialCityPlan() {"`) and inked
+  `world/imperialCity.js`'s own laws once a session (`imperialSheet.js:"export function imperialCityPlan"`) and inked
   from it; every name goes through the text core (`t('icmap.*', en)`, L10N4).
 - **Zoomed in, near the player** (from `IC_FABRIC_ZOOM`): the district's own streets, buildings, squares, parks, canals
   and yards' walls - the cells of the player's district within `IC_FABRIC_REACH` of theirs, the port's own cells only,
-  built on demand a cell a tick, nearest first (`imperialSheet.js:"tick() { if (fabricPending()) buildFabric(IC_FABRIC_PER_TICK); },"`),
+  built on demand a cell a tick, nearest first (`imperialSheet.js:"tick() {"`),
   so no frame carries the district (a cell is some ten milliseconds, the first of a neighbourhood up to a hundred); and the
   slice's own Daggerfall blocks through the town sheet - their quarters' washes, their names, the quest rings, the party,
   the homes and the boards - where the slice stands.

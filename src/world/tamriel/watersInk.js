@@ -22,7 +22,10 @@ export const watersInk = () => _ink;
 /** Moves on every install: the map's tiles' word reads it (ui/tamrielInk.js pastBayStamp). */
 export const watersInkVersion = () => _version;
 /** Install (or, null, drop) the map's waters. */
-export function setWatersInk(ink) { _ink = ink; _version++; }
+export function setWatersInk(ink) {
+  _ink = ink;
+  _version++;
+}
 
 /**
  * The law's rivers and lakes packed for the map - Float32 points (Bay coordinates; a river's metres of width a point),
@@ -32,9 +35,17 @@ export function setWatersInk(ink) { _ink = ink; _version++; }
  */
 export function packWatersInk(law) {
   if (!law) return { ink: null, transfer: [] };
-  const rivers = law.rivers.map((r) => ({ key: r.key, n: r.n, pts: Float32Array.from(r.pts), width: Float32Array.from(r.width) }));
+  const rivers = law.rivers.map((r) => ({
+    key: r.key,
+    n: r.n,
+    pts: Float32Array.from(r.pts),
+    width: Float32Array.from(r.width),
+  }));
   const lakes = law.lakes.map((l) => Float32Array.from(l.ring));
-  return { ink: { rivers, lakes }, transfer: [...rivers.flatMap((r) => [r.pts.buffer, r.width.buffer]), ...lakes.map((l) => l.buffer)] };
+  return {
+    ink: { rivers, lakes },
+    transfer: [...rivers.flatMap((r) => [r.pts.buffer, r.width.buffer]), ...lakes.map((l) => l.buffer)],
+  };
 }
 
 /** The live law's waters packed (the worker's answer to 'waters'; the main thread's own with no worker). */

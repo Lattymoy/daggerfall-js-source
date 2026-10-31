@@ -121,8 +121,8 @@
   {
     "name": "SILVER-WAYS-svc-raid-unstruck",
     "file": "server-account/src/raids.js",
-    "old": "    ...(mint ? [mint] : []),\n",
-    "new": "",
+    "old": "    ...(mint ? [mint] : []),\n    ...(deed ?? []),",
+    "new": "    ...(deed ?? []),",
     "tests": [
       "test/net/silverways_service.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "SILVER-WAYS-svc-contract-any-region",
     "file": "server-account/src/contracts.js",
-    "old": "WHERE region = ?1 AND kind = 'raid' AND state = 'open'",
-    "new": "WHERE ?1 = ?1 AND kind = 'raid' AND state = 'open'",
+    "old": "    WHERE region = ?1 AND kind = 'raid' AND state = 'open' AND expires_at > ?2 AND left_deeds >= 1 AND NOT ${posters('guild_contracts.guild_id')}",
+    "new": "    WHERE ?1 = ?1 AND kind = 'raid' AND state = 'open' AND expires_at > ?2 AND left_deeds >= 1 AND NOT ${posters('guild_contracts.guild_id')}",
     "tests": [
       "test/net/silverways_service.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "SILVER-WAYS-svc-contract-escrow-undrawn",
     "file": "server-account/src/contracts.js",
-    "old": "SET left_deeds = left_deeds - 1, escrow = escrow - pay,",
-    "new": "SET left_deeds = left_deeds - 1, escrow = escrow,",
+    "old": "          `UPDATE guild_contracts SET left_deeds = left_deeds - 1, escrow = escrow - pay,",
+    "new": "          `UPDATE guild_contracts SET left_deeds = left_deeds - 1, escrow = escrow,",
     "tests": [
       "test/net/silverways_service.test.js"
     ]
@@ -176,8 +176,8 @@
   {
     "name": "SILVER-WAYS-svc-contract-budget-unshared",
     "file": "server-account/src/writs.js",
-    "old": "\n  + COALESCE((SELECT SUM(deeds * pay) FROM guild_contracts WHERE guild_id = ${g} AND week = ${week} AND officer = 1), 0))`;",
-    "new": "\n  + 0)`;",
+    "old": "  + COALESCE((SELECT SUM(deeds * pay) FROM guild_contracts WHERE guild_id = ${g} AND week = ${week} AND officer = 1), 0))`;",
+    "new": "  + 0)`;",
     "tests": [
       "test/net/silverways_service.test.js"
     ]
@@ -205,8 +205,8 @@
   {
     "name": "SILVER-WAYS-law-contract-region-segment",
     "file": "src/net/writLaw.js",
-    "old": "return Number(key.slice(0, key.indexOf(':')));",
-    "new": "return Number(key.slice(key.indexOf(':') + 1, key.lastIndexOf(':')));",
+    "old": "  return Number(key.slice(0, key.indexOf(':')));",
+    "new": "  return Number(key.slice(key.indexOf(':') + 1, key.lastIndexOf(':')));",
     "tests": [
       "test/net/silverways_service.test.js"
     ]
@@ -224,8 +224,8 @@
   {
     "name": "SILVER-WAYS-cli-deed-unsaid",
     "file": "src/net/marksBook.js",
-    "old": "      if (data.deed && Number.isSafeInteger(data.deed.struck) && data.deed.struck > 0) out.push(MARKS_TEXT.deed(data.deed.struck, data.deed.guild));\n",
-    "new": "",
+    "old": "      if (data.deed && Number.isSafeInteger(data.deed.struck) && data.deed.struck > 0)\n        out.push(MARKS_TEXT.deed(data.deed.struck, data.deed.guild));\n      for (const c of Array.isArray(data.contracts) ? data.contracts : []) {",
+    "new": "      for (const c of Array.isArray(data.contracts) ? data.contracts : []) {",
     "tests": [
       "test/net/silverways_client.test.js"
     ]
@@ -242,8 +242,8 @@
   {
     "name": "SILVER-WAYS-cli-raid-capped-the-breach",
     "file": "src/net/marksBook.js",
-    "old": "(kind === 'raid' ? MARKS_TEXT.cappedRaid : kind === 'serpent' ? MARKS_TEXT.cappedSerpent : kind === 'eg' ? MARKS_TEXT.cappedEg : kind === 'star' ? MARKS_TEXT.cappedStar() : MARKS_TEXT.capped)",
-    "new": "(kind === 'serpent' ? MARKS_TEXT.cappedSerpent : kind === 'eg' ? MARKS_TEXT.cappedEg : kind === 'star' ? MARKS_TEXT.cappedStar() : MARKS_TEXT.capped)",
+    "old": "        ? kind === 'raid'\n          ? MARKS_TEXT.cappedRaid\n          : kind === 'serpent'\n            ? MARKS_TEXT.cappedSerpent\n            : kind === 'eg'\n              ? MARKS_TEXT.cappedEg\n              : kind === 'star'\n                ? MARKS_TEXT.cappedStar()\n                : MARKS_TEXT.capped",
+    "new": "        ? kind === 'serpent'\n          ? MARKS_TEXT.cappedSerpent\n          : kind === 'eg'\n            ? MARKS_TEXT.cappedEg\n            : kind === 'star'\n              ? MARKS_TEXT.cappedStar()\n              : MARKS_TEXT.capped",
     "tests": [
       "test/net/silverways_client.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "SILVER-WAYS-cli-raid-lines-unsaid",
     "file": "src/net/raid/raidClaims.js",
-    "old": "          for (const line of Array.isArray(lines) ? lines : [lines]) if (typeof line === 'string' && line) say(line);\n",
-    "new": "",
+    "old": "          for (const line of Array.isArray(lines) ? lines : [lines]) if (typeof line === 'string' && line) say(line);\n          hear(onRecorded, answer.data, e);",
+    "new": "          hear(onRecorded, answer.data, e);",
     "tests": [
       "test/net/silverways_client.test.js"
     ]
@@ -261,8 +261,8 @@
   {
     "name": "SILVER-WAYS-cli-gate-lines-one",
     "file": "src/net/gate/gateClaims.js",
-    "old": "for (const line of Array.isArray(marksLine) ? marksLine : [marksLine]) if (typeof line === 'string' && line) say(line);",
-    "new": "if (typeof marksLine === 'string' && marksLine) say(marksLine);",
+    "old": "          for (const line of Array.isArray(marksLine) ? marksLine : [marksLine])\n            if (typeof line === 'string' && line) say(line);",
+    "new": "          if (typeof marksLine === 'string' && marksLine) say(marksLine);",
     "tests": [
       "test/net/silverways_client.test.js"
     ]

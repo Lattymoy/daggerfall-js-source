@@ -20,8 +20,8 @@
   {
     "name": "ql-all-reason-unsaid",
     "file": "src/systems/quickLoot.js",
-    "old": "    else if (n) say((n === 1 ? 'You take 1 item.' : `You take ${n} items.`) + (refusal?.text ? ` ${refusal.text}` : ''));",
-    "new": "    else if (n) say(n === 1 ? 'You take 1 item.' : `You take ${n} items.`);",
+    "old": "      say((n === 1 ? 'You take 1 item.' : `You take ${n} items.`) + (refusal?.text ? ` ${refusal.text}` : '')); // AUDIT: a refusal with no line (none the loop can meet today) adds nothing",
+    "new": "      say(n === 1 ? 'You take 1 item.' : `You take ${n} items.`); // AUDIT: a refusal with no line (none the loop can meet today) adds nothing",
     "tests": [
       "test/systems/quickloot.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "ao-slice-by-screen-signs",
     "file": "src/render/airPass.js",
-    "old": "    vec3 sliceDir = normalize(vec3(dir.x / uProjInfo.x, dir.y / uProjInfo.y, 0.0));",
-    "new": "    vec3 sliceDir = normalize(vec3(dir.x, dir.y, 0.0));",
+    "old": "    vec3 sliceDir = normalize(vec3(dir.x / uProjInfo.x, dir.y / uProjInfo.y, 0.0));   // AUDIT HQ1: exactly the view step a uv step of dir is (posAt divides by the same terms) - the sign and the aspect fall out of it",
+    "new": "    vec3 sliceDir = normalize(vec3(dir.x, dir.y, 0.0));   // AUDIT HQ1: exactly the view step a uv step of dir is (posAt divides by the same terms) - the sign and the aspect fall out of it",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "ao-empty-slice-counted",
     "file": "src/render/airPass.js",
-    "old": "    if (npl < 1e-4) continue;",
-    "new": "    if (npl < 1e-4) { vis += 1.0; continue; }",
+    "old": "    if (npl < 1e-4) continue;   // AUDIT HQ1: a slice the normal has no part in weighs nothing (the sum is weighted by the projected normal's length, and averages to one over the slices)",
+    "new": "    if (npl < 1e-4) { vis += 1.0; continue; }   // AUDIT HQ1: a slice the normal has no part in weighs nothing (the sum is weighted by the projected normal's length, and averages to one over the slices)",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "ao-strength-unapplied",
     "file": "src/render/airPass.js",
-    "old": "  ao = 1.0 - (1.0 - ao) * uStrength;\n",
-    "new": "",
+    "old": "  ao = 1.0 - (1.0 - ao) * uStrength;\n  outColor = vec4(vec3(ao), 1.0);",
+    "new": "  outColor = vec4(vec3(ao), 1.0);",
     "tests": [
       "test/render/el3_air.test.js"
     ]

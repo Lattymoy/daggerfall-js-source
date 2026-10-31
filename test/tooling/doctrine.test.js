@@ -179,6 +179,16 @@ const PUBLIC_ALLOWLIST = new Map([
   ['public/sfx/lock-false.wav', 'OURS - LOCKPICK: synthesised from noise and sine by tools/lockSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/lock-slip.wav', 'OURS - LOCKPICK: synthesised from noise and sine by tools/lockSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/lock-snap.wav', 'OURS - LOCKPICK: synthesised from noise and sine by tools/lockSfx.mjs, deterministically; no recording in it at all'],
+  ['public/sfx/fx-kill-ashen.wav', 'OURS - STOREFRONT: synthesised from noise and sine by tools/storefrontSfx.mjs, deterministically; no recording in it at all'],
+  ['public/sfx/fx-kill-voidrend.wav', 'OURS - STOREFRONT: synthesised from noise and sine by tools/storefrontSfx.mjs, deterministically; no recording in it at all'],
+  ['public/sfx/fx-kill-pyre.wav', 'OURS - STOREFRONT: synthesised from noise and sine by tools/storefrontSfx.mjs, deterministically; no recording in it at all'],
+  ['public/sfx/fx-kill-tonal.wav', 'OURS - STOREFRONT: synthesised from noise and sine by tools/storefrontSfx.mjs, deterministically; no recording in it at all'],
+  ['public/sfx/fx-portal-runic.wav', 'OURS - STOREFRONT: synthesised from noise and sine by tools/storefrontSfx.mjs, deterministically; no recording in it at all'],
+  ['public/sfx/fx-portal-daedric.wav', 'OURS - STOREFRONT: synthesised from noise and sine by tools/storefrontSfx.mjs, deterministically; no recording in it at all'],
+  ['public/sfx/fx-portal-aetheric.wav', 'OURS - STOREFRONT: synthesised from noise and sine by tools/storefrontSfx.mjs, deterministically; no recording in it at all'],
+  ['public/sfx/fx-portal-brass.wav', 'OURS - STOREFRONT: synthesised from noise and sine by tools/storefrontSfx.mjs, deterministically; no recording in it at all'],
+  ['public/sfx/fx-season-tremor.wav', 'OURS - STOREFRONT: synthesised from noise and sine by tools/storefrontSfx.mjs, deterministically; no recording in it at all'],
+  ['public/sfx/fx-season-hum.wav', 'OURS - STOREFRONT: synthesised from noise and sine by tools/storefrontSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/climb-grab-1.wav', 'OURS - CLIMB4: synthesised from noise and sine by tools/climbSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/climb-grab-2.wav', 'OURS - CLIMB4: synthesised from noise and sine by tools/climbSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/climb-catch.wav', 'OURS - CLIMB4: synthesised from noise and sine by tools/climbSfx.mjs, deterministically; no recording in it at all'],
@@ -807,6 +817,9 @@ const PUBLIC_ALLOWLIST = new Map([
   // tools/bakeWagons.mjs re-makes the three JSONs from it (tools/shipBake.mjs), and test/tooling/wagons1_bake.test.js holds them
   // to the bytes. Their pictures carry no file: world/wagonArt.js paints them at load.
   ['src/assets/wagons/source/Wagon_Cart_Tiny_1.fbx', "SUPPLIED - Mac's Blender export of his wagons' scene, the Wagon Cart, the Open Wagon and the Caravan among its stations (2026-10-09; the newest of the four he sent), committed so the three wagon JSONs are DERIVATIONS the gate can re-run"],
+  // CHEST3D (2026-10-31): the chest every chest model stands as (world/chestModel.js), in Daggerfall's pictures at run time
+  ['src/assets/chest/source/Low_Poly_Chest_Mimic.fbx', "SUPPLIED - the owner's FBX of the chest (CHEST3D, 2026-10-31: \"I want to implement this and ensure any chests use this\"), as sent, committed so chest.json is a DERIVATION the gate can re-run; no material, no picture, no ARENA2 data"],
+  ['src/assets/chest/chest.json', "SUPPLIED - Low_Poly_Chest_Mimic.fbx baked to the chest's frame by tools/bakeChest.mjs; geometry only, shut and open - its pictures are the player's own ARENA2 at run time"],
   ['src/assets/wagons/cart.json', "SUPPLIED - Wagon_Cart_Tiny_1.fbx's Wagon Cart baked to the wagon's frame by tools/bakeWagons.mjs; geometry only, no ARENA2 or Horse Cart and Cargo data"],
   ['src/assets/wagons/openWagon.json', "SUPPLIED - Wagon_Cart_Tiny_1.fbx's Open Wagon baked to the wagon's frame by tools/bakeWagons.mjs; geometry only, no ARENA2 or Horse Cart and Cargo data"],
   ['src/assets/wagons/caravan.json', "SUPPLIED - Wagon_Cart_Tiny_1.fbx's Caravan baked to the wagon's frame by tools/bakeWagons.mjs; geometry only, no ARENA2 or Horse Cart and Cargo data"],
@@ -1074,7 +1087,7 @@ const BUNDLE_ART = new Map([
   // manifest for them: the folder answers to the listing tools/layered-armor/listing.mjs writes (every picture, its sha256).
   ['vendor/layered-armor/',
     { manifest: 'vendor/layered-armor/layered-armor.files.json', derived: LAYERED_DERIVED,
-      why: "OURS - Layered Gearing (DFO, made for the game), carried under the owner's third exception; the worn-armor strips of both bodies, the cloak layer and the hood fixes, drawn from Daggerfall's class sprites 1540/1541 and the enemy frames of TEXTURE.475-490 - the 7,369 PNGs its listing names (see vendor/layered-armor/README.md)" }],
+      why: "OURS - Layered Gearing (DFO, made for the game), carried under the owner's third exception; the worn-armor strips of both bodies, the cloak layer, the hood fixes and the weapon rig cut from the strips' own hammer (LAYERED-WEAPONS), drawn from Daggerfall's class sprites 1540/1541 and the enemy frames of TEXTURE.475-490 - the 7,788 PNGs its listing names (see vendor/layered-armor/README.md)" }],
   // DEX0 (2026-10-19, Mac: "I want to implement this as our next mod 1:1"): DAGGERFALL ENEMY EXPANSION's pictures, in two
   // directories by what they are, each answering to the listing tools/dexExtract.mjs writes (every name and its sha256)
   // after measuring every picture against every TEXTURE record: the authors' own renders, and the repaints the fourth

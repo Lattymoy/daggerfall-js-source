@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-LOOT-II-A2-the-degrees-on-the-resistance",
     "file": "src/systems/survival/temperature.js",
-    "old": "    coldDegrees: Number(mods.coldDegrees) || 0, heatDegrees: Number(mods.heatDegrees) || 0,",
-    "new": "    frostResist: (ctx?.frostResist ?? 0) + (Number(mods.coldDegrees) || 0), fireResist: (ctx?.fireResist ?? 0) + (Number(mods.heatDegrees) || 0),",
+    "old": "    coldDegrees: Number(mods.coldDegrees) || 0,\n    heatDegrees: Number(mods.heatDegrees) || 0,",
+    "new": "    frostResist: (ctx?.frostResist ?? 0) + (Number(mods.coldDegrees) || 0),\n    fireResist: (ctx?.fireResist ?? 0) + (Number(mods.heatDegrees) || 0),",
     "tests": [
       "test/systems/auditloot2.test.js",
       "test/systems/loot15_garments.test.js",
@@ -49,8 +49,8 @@
   {
     "name": "AUDIT-LOOT-II-B1-a-quest-gem-loose",
     "file": "src/systems/reforge.js",
-    "old": "gemKindOf(it) === gem && !it.questItem && !isLocked(it)",
-    "new": "gemKindOf(it) === gem && !isLocked(it)",
+    "old": "const looseGem = (it, gem) =>\n  gemKindOf(it) === gem && !it.questItem && !isLocked(it) && !isEquipped(it) && !isEnchanted(it); // AUDIT GEM: never one the item maker enchanted (its powers would go into the socket and be lost)",
+    "new": "const looseGem = (it, gem) => gemKindOf(it) === gem && !isLocked(it) && !isEquipped(it) && !isEnchanted(it); // AUDIT GEM: never one the item maker enchanted (its powers would go into the socket and be lost)",
     "tests": [
       "test/systems/auditloot2.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "AUDIT-LOOT-II-A9-a-garment-ranks-off",
     "file": "src/systems/foeLootCap.js",
-    "old": "const garmentRank = (it) => (lootRarityOn() && isGarment(it)",
-    "new": "const garmentRank = (it) => (isGarment(it)",
+    "old": "  lootRarityOn() && isGarment(it) && rarityRank(it) > 0 && rarityRank(it) < RARITIES.legendary.rank\n    ? GARMENT_UNDER_SUPPLY\n    : null;",
+    "new": "  isGarment(it) && rarityRank(it) > 0 && rarityRank(it) < RARITIES.legendary.rank ? GARMENT_UNDER_SUPPLY : null;",
     "tests": [
       "test/systems/auditloot2.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "AUDIT-LOOT-II-A10-every-shirt-counts",
     "file": "src/systems/loot/lootDrought.js",
-    "old": "  if (isGarment(item) && !legendariesFor(item).length) return false;\n",
-    "new": "",
+    "old": "  if (isGarment(item) && !legendariesFor(item).length) return false;\n  if (droughtHeld(rollerLevel()) && rarityRank(item) < RARITIES.legendary.rank) return false; // LOOT-GATE (lootLevelGate.js): no drought builds under level 10 - the mark still clears; AUDIT UPDATE L6: a Legendary still empties it",
+    "new": "  if (droughtHeld(rollerLevel()) && rarityRank(item) < RARITIES.legendary.rank) return false; // LOOT-GATE (lootLevelGate.js): no drought builds under level 10 - the mark still clears; AUDIT UPDATE L6: a Legendary still empties it",
     "tests": [
       "test/systems/auditloot2.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "AUDIT-LOOT-II-B4-the-question-stays",
     "file": "src/ui/reforgeWindow.js",
-    "old": "const dropAsk = () => { if (asking) note = null; asking = null; };",
-    "new": "const dropAsk = () => { asking = null; };",
+    "old": "    if (asking) note = null;\n    asking = null;",
+    "new": "    asking = null;",
     "tests": [
       "test/systems/auditloot2.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "AUDIT-LOOT-II-B4-the-lapse-drawn-late",
     "file": "src/ui/reforgeWindow.js",
-    "old": "if (asking === EVERY_MAGIC) { dropAsk(); drawNote(); } return; }",
-    "new": "if (asking === EVERY_MAGIC) { dropAsk(); } return; }",
+    "old": "        drawNote();\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/auditloot2.test.js",
       "test/systems/loot18_seen.test.js"
@@ -213,8 +213,8 @@
   {
     "name": "AUDIT-LOOT-II-B6-the-handed-comparison-unread",
     "file": "src/ui/armourCard.js",
-    "old": "  const cmp = wear === undefined ? wearComparison(entity, item) : wear;\n  if (!cmp || !cmp.replaces.length) return null;",
-    "new": "  const cmp = wearComparison(entity, item);\n  if (!cmp || !cmp.replaces.length) return null;",
+    "old": "  if (!lootRarityOn()) return null;\n  const cmp = wear === undefined ? wearComparison(entity, item) : wear;",
+    "new": "  if (!lootRarityOn()) return null;\n  const cmp = wearComparison(entity, item);",
     "tests": [
       "test/systems/auditloot2.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "AUDIT-LOOT-II-B6-compared-with-the-ladder-off",
     "file": "src/ui/armourCard.js",
-    "old": "  if (!lootRarityOn()) return null;\n  const cmp = wear === undefined",
-    "new": "  const cmp = wear === undefined",
+    "old": "  if (!lootRarityOn()) return null;\n  const cmp = wear === undefined ? wearComparison(entity, item) : wear;",
+    "new": "  const cmp = wear === undefined ? wearComparison(entity, item) : wear;",
     "tests": [
       "test/systems/auditloot2.test.js"
     ]
@@ -241,8 +241,8 @@
   {
     "name": "AUDIT-LOOT-II-C1-a-hone-minted-back",
     "file": "src/systems/smithItems.js",
-    "old": "  if (item.honed !== undefined) return false;",
-    "new": "",
+    "old": "  if (item.honed !== undefined) return false; // AUDIT LOOT II C1: nor a line honed past its roll (LOOT17) - the market's mint would hand back the roll, the shards and the gold gone",
+    "new": "  // AUDIT LOOT II C1: nor a line honed past its roll (LOOT17) - the market's mint would hand back the roll, the shards and the gold gone",
     "tests": [
       "test/systems/auditloot2.test.js"
     ]

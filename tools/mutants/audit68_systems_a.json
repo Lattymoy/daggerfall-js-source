@@ -11,8 +11,8 @@
   {
     "name": "S24-gate-delay-press-keeps-last-cast",
     "file": "src/systems/activateGate.js",
-    "old": "    if (started) gate.pressCast = false;",
-    "new": "",
+    "old": "    if (started) gate.pressCast = false; // AUDIT 68 S24-gate-stale-presscast: a press begun here cast nothing - its release must not report the last press's cast",
+    "new": "    // AUDIT 68 S24-gate-stale-presscast: a press begun here cast nothing - its release must not report the last press's cast",
     "tests": [
       "test/systems/audit68_systems_a.test.js",
       "test/systems/auditdisc7.test.js"
@@ -21,8 +21,8 @@
   {
     "name": "S24-namira-copied-scan",
     "file": "src/systems/artifactEffects.js",
-    "old": "  if (!isWearingArtifact(target, ARTIFACTS.RingOfNamira)) return;",
-    "new": "  if (!Object.values(equipTableOf(target)).some((item) => item && (item.enchantments ?? []).some((e) => e?.type === ENCHANTMENT_TYPES.SpecialArtifactEffect && e.param === ARTIFACTS.RingOfNamira))) return;",
+    "old": "  if (!isWearingArtifact(target, ARTIFACTS.RingOfNamira)) return; // AUDIT 68 S24-namira-duplicate-reader: the one hardened scan, not a copy of it",
+    "new": "  if (\n    !Object.values(equipTableOf(target)).some(\n      (item) =>\n        item &&\n        (item.enchantments ?? []).some(\n          (e) => e?.type === ENCHANTMENT_TYPES.SpecialArtifactEffect && e.param === ARTIFACTS.RingOfNamira,\n        ),\n    )\n  )\n    return; // AUDIT 68 S24-namira-duplicate-reader: the one hardened scan, not a copy of it",
     "tests": [
       "test/systems/audit68_systems_a.test.js",
       "test/systems/artifacts.test.js"

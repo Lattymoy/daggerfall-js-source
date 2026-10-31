@@ -313,9 +313,9 @@ test('SHOT-KINDS the captains: a pirate who means to board loads her broadsides 
   captainLoads(navy, at(20));
   assert.equal(navy.guns.load('port'), 'round');
   const ai = rd('src/systems/naval/navalAI.js');
-  assert.match(ai, /captainLoads\(ship, enemy\);\n\s+if \(!ship\.guns\.braced && !\(enemy\?\.crippled && enemy\.kind === 'player'\)\) \{\n\s+gunnery\(ship, world, enemy \?\? \(ship\.cls\.faction === 'merchant' \? threat : null\), out, \{ broadsides: boarderBroadsides\(ship\) \}\);/);
+  assert.match(ai, /captainLoads\(ship, enemy\);\n\s*if \(!ship\.guns\.braced && !\(enemy\?\.crippled && enemy\.kind === 'player'\)\) \{\n\s*gunnery\(ship, world, enemy \?\? \(ship\.cls\.faction === 'merchant' \? threat : null\), out, \{\n\s*broadsides: boarderBroadsides\(ship\),\n\s*\}\);/);
   assert.match(ai, /const shot = ship\.guns\.load\(side\);[^\n]*\n\s+const g = shotGun\(bat\.gun, GUNS\[bat\.gun\], shot\);/, 'laid and led for her load');
-  assert.match(ai, /targetY: aimY, shot \}\);/);
+  assert.match(ai, /targetY: aimY,\n\s*shot,\n\s*\}\);/);
 });
 
 test('SHOT-KINDS the HUD and the picture: each battery\'s load under its count (the chasers named as the bore they are), the aim\'s line naming it; each load its own ball - grape\'s pellets, chain\'s two halves and its links, heated shot\'s glow and trail - and its own splash and hit (mutants: the load word, the aim\'s load, each picture)', () => {
@@ -358,7 +358,7 @@ test('SHOT-KINDS the HUD and the picture: each battery\'s load under its count (
 });
 
 test('SHOT-KINDS the world: the key appended unbound in Combat (no mod\'s row - those ship keys) and a pad button\'s to choose; the wheel\'s rung before the camera\'s; the key read at the helm; the helm panel\'s Shot button with its label (mutants: the rung, the key unread, the button, the label)', () => {
-  assert.equal(ACTIONS.at(-3), 'ShotCycle');   // PIN MOVED (PARTY-PING: PartyPing appended after; Decorate after that)
+  assert.equal(ACTIONS.at(-5), 'ShotCycle');   // PIN MOVED (TECH-KEY2: SignatureTechnique appended last; PARTY-PING: PartyPing appended after; Decorate after that)   // PIN MOVED (PVP-KEY: PvpFlag appended last)
   assert.ok(!DEFAULT_BINDINGS.some(([, a]) => a === 'ShotCycle'), 'no key ships on it');
   assert.ok(ACTION_GROUPS.find((g) => g.title === 'Combat').rows.some((r) => r.action === 'ShotCycle' && r.label === 'Shot (aboard)'));
   assert.ok(!Object.values(MOD_ACTIONS).flat().some((r) => r.action === 'ShotCycle'));

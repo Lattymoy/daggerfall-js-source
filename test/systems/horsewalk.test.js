@@ -284,8 +284,8 @@ test('HORSE-WALK THE 3D HORSE UNDER ITS RIDER: a slow ride (gallops false - the 
   assert.equal(h.gait.gait, 'trot', 'its rider\'s slow ride');
   rig.release(h);
   // the player's horse holds to the host's slow ride, a peer's to its pose's hs
-  assert.match(rd('src/player/mwView.js'), /look: horse\.look \| 0, gallops: !horse\.slow \}\);/);
-  assert.match(rd('src/net/peer/peerBodies.js'), /look: shown\.rc \| 0, gallops: !shown\.hs, pose: false \}\);/);   // PIN MOVED (HORSE-VIEW): the gait alone stepped here - the pose waits for the rider's
+  assert.match(rd('src/player/mwView.js'), /look: horse\.look \| 0,\n\s*gallops: !horse\.slow,\n\s*\}\);/);
+  assert.match(rd('src/net/peer/peerBodies.js'), /look: peerMountLook\(b\.id, shown\.rc \| 0, f\),\n\s*gallops: !shown\.hs,\n\s*pose: false,\n\s*\}\);/);   // PIN MOVED (STOREFRONT): the look in its rider's mount look (systems/horse/mountLook.js); PIN MOVED (the wire audit): where it stands, for the Others' effects choice   // PIN MOVED (HORSE-VIEW): the gait alone stepped here - the pose waits for the rider's
 });
 
 test('HORSE-WALK THE SADDLE PANEL SAYS IT: Walking where horse care walks the horse, Galloping on the run, Trotting at DFU\'s ride (care off, or on the road), Rolling on a bench, Standing still; the host reads the very walk the motor took (its rideWalking, handed by the host\'s frame - HORSE-TIERS, PIN MOVED: the motor alone knows a gallop asked and refused), and the panel draws it (mutants: HORSEWALK-saddle-trots, -saddle-cart-walks, -saddle-host-unread, -saddle-panel-unread)', () => {
@@ -324,7 +324,7 @@ test('HORSE-WALK THE HOSTS (world.js, exterior.js): the walk installed beside th
     // HORSE-TIERS (PIN MOVED): the run asked rides with the question
     const install = host.endsWith('world.js') ? 'setRideWalk\\(\\(mode, runAsked\\) => !rideOnTheRoad\\(\\) && upkeep\\.rideWalks\\(mode, runAsked\\)\\);' : 'setRideWalk\\(\\(mode, runAsked\\) => upkeep\\.rideWalks\\(mode, runAsked\\)\\);';
     assert.match(s, new RegExp(`\\n\\s*${install}[^\\n]*\\n\\s*setGallopGate\\(\\(mode, mods\\) => upkeep\\.gallopGate\\(mode, mods\\)\\);`), `${host}: the walk beside the gallop (world.js never on the road - the Overworld's view and the journeys are its alone)`);
-    assert.match(s, /\{ look: riddenHorseLook\(playerEntity\.items \?\? \[\]\), slow: player\.slowRide \}/, `${host}: the 3D horse held on a slow ride`);
+    assert.match(s, /\{ look: ownMountLook\(riddenHorseLook\(playerEntity\.items \?\? \[\]\)\), slow: player\.slowRide \}/, `${host}: the 3D horse held on a slow ride`);   // PIN MOVED (STOREFRONT): my mount look over the horse's own
   }
   assert.match(rd('src/scenes/world.js'), /_hsLatch = player\.slowRide; \}/, 'the peers hear the slow ride');
   assert.match(rd('src/player/mountRig.js'), /\n\s*walking: !!player\.rideWalking,/, 'the riding sprite and its clop');

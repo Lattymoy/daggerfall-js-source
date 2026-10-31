@@ -6,16 +6,26 @@
 // group's j-th entry is GROUP_TEMPLATE_INDICES[group][j]
 // (ItemHelper.GetEnumArray/GetItemTemplate).
 
-import { clampArmorVariant, isPlate, plateMetal } from '../armorMaterials.js';   // AUDIT 23 (items-6); BAL6-GAUNTLETS: a plate piece's metal
-import { conditionMultipliersByMaterial, valueMultipliersByMaterial, WEAPONS, WEAPON_CONDITION_POOL } from '../../characters/weapons.js';   // AUDIT 23 (items-5); AUDIT 68 S27-weightForMaterial-dup: ItemBuilder's value ladder and the Weapons enum, one home each; WEAPON-POOL: the one pool
+import { clampArmorVariant, isPlate, plateMetal } from '../armorMaterials.js'; // AUDIT 23 (items-6); BAL6-GAUNTLETS: a plate piece's metal
+import {
+  conditionMultipliersByMaterial,
+  valueMultipliersByMaterial,
+  WEAPONS,
+  WEAPON_CONDITION_POOL,
+} from '../../characters/weapons.js'; // AUDIT 23 (items-5); AUDIT 68 S27-weightForMaterial-dup: ItemBuilder's value ladder and the Weapons enum, one home each; WEAPON-POOL: the one pool
 import { GROUP_TEMPLATE_INDICES } from './itemTemplatesData.js';
-import { HAND_WRAPS_TEMPLATE } from '../../characters/handWrapsIds.js';   // HAND-WRAPS: minted cloth (a leaf)
-import { WAGON_KINDS, wagonKindOf } from '../wagon/wagonKinds.js';   // WAGONS1: a wagon's picture is Mac's wagon of its kind (read at call time - wagonKinds.js reads this module's TRANSPORT_SMALL_CART)
+import { HAND_WRAPS_TEMPLATE } from '../../characters/handWrapsIds.js'; // HAND-WRAPS: minted cloth (a leaf)
+import { WAGON_KINDS, wagonKindOf } from '../wagon/wagonKinds.js'; // WAGONS1: a wagon's picture is Mac's wagon of its kind (read at call time - wagonKinds.js reads this module's TRANSPORT_SMALL_CART)
 import TEMPLATES_JSON from '../../characters/itemTemplates.json' with { type: 'json' };
-import { playerArchiveFor, resolvePaperdollRecord } from '../../characters/paperdoll/paperdollArt.js';   // AUDIT 17f: SetRace, one home; NT3 (F006): the record law too
+import { playerArchiveFor, resolvePaperdollRecord } from '../../characters/paperdoll/paperdollArt.js'; // AUDIT 17f: SetRace, one home; NT3 (F006): the record law too
 import { itemDyeColor, itemDyeTarget } from './itemDye.js';
-import { DYE_TARGETS } from '../../characters/dyes.js';   // PROF2: a new material's picture dyed on DFU's metal swatch
-import { customItemClass, rriVariantFields, rriStoredWeight, rriCustomItemsForGroup } from '../roleplayRealismItems/rriItems.js';   // RRI1: DFU's custom-item dispatch, asked first   // DW3: GetItemImage's `color = (int)item.dyeColor` (ItemHelper.cs:402) rides the image
+import { DYE_TARGETS } from '../../characters/dyes.js'; // PROF2: a new material's picture dyed on DFU's metal swatch
+import {
+  customItemClass,
+  rriVariantFields,
+  rriStoredWeight,
+  rriCustomItemsForGroup,
+} from '../roleplayRealismItems/rriItems.js'; // RRI1: DFU's custom-item dispatch, asked first   // DW3: GetItemImage's `color = (int)item.dyeColor` (ItemHelper.cs:402) rides the image
 
 export { GROUP_TEMPLATE_INDICES };
 
@@ -29,7 +39,7 @@ const _rows = new Array(288).fill(null);
 for (const t of TEMPLATES_JSON) {
   _rows[t.index] = Object.freeze({
     ...t,
-    weight: t.baseWeight,                 // the port's alias
+    weight: t.baseWeight, // the port's alias
     worldTexArchive: t.worldTextureArchive,
     worldTexRecord: t.worldTextureRecord,
   });
@@ -45,7 +55,22 @@ const _custom = new Map();
 export function registerCustomTemplates(rows) {
   for (const t of rows ?? []) {
     if (!Number.isFinite(t?.index) || t.index < ITEM_TEMPLATES.length) continue;
-    _custom.set(t.index, Object.freeze({ custom: true, variants: 0, rarity: 1, enchantmentPoints: 0, playerTextureArchive: 0, playerTextureRecord: 0, isIngredient: false, ...t, weight: t.baseWeight, worldTexArchive: t.worldTextureArchive, worldTexRecord: t.worldTextureRecord }));
+    _custom.set(
+      t.index,
+      Object.freeze({
+        custom: true,
+        variants: 0,
+        rarity: 1,
+        enchantmentPoints: 0,
+        playerTextureArchive: 0,
+        playerTextureRecord: 0,
+        isIngredient: false,
+        ...t,
+        weight: t.baseWeight,
+        worldTexArchive: t.worldTextureArchive,
+        worldTexRecord: t.worldTextureRecord,
+      }),
+    );
   }
   return _custom.size;
 }
@@ -65,7 +90,15 @@ export function registerTemplateOverrides(rows) {
     const base = ITEM_TEMPLATES[r?.index];
     if (!base) continue;
     const t = { ...base, ...r };
-    _overrides.set(r.index, Object.freeze({ ...t, weight: t.baseWeight, worldTexArchive: t.worldTextureArchive, worldTexRecord: t.worldTextureRecord }));
+    _overrides.set(
+      r.index,
+      Object.freeze({
+        ...t,
+        weight: t.baseWeight,
+        worldTexArchive: t.worldTextureArchive,
+        worldTexRecord: t.worldTextureRecord,
+      }),
+    );
   }
   return _overrides.size;
 }
@@ -75,12 +108,12 @@ export const templateByIndex = (i) => _overrides.get(i) ?? ITEM_TEMPLATES[i] ?? 
 /** GetItemTemplate(group, groupIndex) - the group's j-th template. */
 export function templateFor(group, groupIndex) {
   const idx = GROUP_TEMPLATE_INDICES[group]?.[groupIndex];
-  return idx == null ? null : (_overrides.get(idx) ?? ITEM_TEMPLATES[idx]);   // AUDIT-RR2 G9: GetItemTemplate reads the MERGED table (ItemHelper.cs:1494) - a mod's rarity patch
+  return idx == null ? null : (_overrides.get(idx) ?? ITEM_TEMPLATES[idx]); // AUDIT-RR2 G9: GetItemTemplate reads the MERGED table (ItemHelper.cs:1494) - a mod's rarity patch
 }
 
 /** The group's template metas in enum order (GetEnumArray + lookups). */
 export function groupTemplates(group) {
-  return (GROUP_TEMPLATE_INDICES[group] ?? []).map((i) => _overrides.get(i) ?? ITEM_TEMPLATES[i]);   // AUDIT-RR2 G9: the shelf's rarity gate (DaggerfallLoot.cs:219-222) reads the patched row
+  return (GROUP_TEMPLATE_INDICES[group] ?? []).map((i) => _overrides.get(i) ?? ITEM_TEMPLATES[i]); // AUDIT-RR2 G9: the shelf's rarity gate (DaggerfallLoot.cs:219-222) reads the patched row
 }
 
 /** AMMUNITION SKIPS THE MATERIAL LADDER. CreateWeapon's arrow arm never
@@ -124,9 +157,9 @@ export function itemBaseValue(item, lookup = templateByIndex) {
   if (item.group === 'Weapons') return materialValue(t.basePrice, item.material ?? 0);
   if (item.group === 'Armor') {
     const m = item.material ?? 0;
-    if (m === 0x0100) return t.basePrice * 2;                     // chain
-    if (isPlate(m)) return materialValue(t.basePrice, plateMetal(m));   // plate (AUDIT CLAWS B2: the decode's one home)
-    return t.basePrice;                                           // leather
+    if (m === 0x0100) return t.basePrice * 2; // chain
+    if (isPlate(m)) return materialValue(t.basePrice, plateMetal(m)); // plate (AUDIT CLAWS B2: the decode's one home)
+    return t.basePrice; // leather
   }
   return t.basePrice;
 }
@@ -152,7 +185,7 @@ export function itemBaseValue(item, lookup = templateByIndex) {
  *  and answers a COPY, as the copies it replaces did. */
 export function setItemFields(item) {
   const named = { ...item, name: item.name ?? templateByIndex(item.templateIndex)?.name };
-  if (named.templateIndex === HAND_WRAPS_TEMPLATE) named.material = 0;   // HAND-WRAPS: cloth, no metal (a shelf mints at a random one)
+  if (named.templateIndex === HAND_WRAPS_TEMPLATE) named.material = 0; // HAND-WRAPS: cloth, no metal (a shelf mints at a random one)
   // RRI1: a custom class's CurrentVariant setter runs ONCE at the mint
   // (ApplyArmorSettings -> SetVariant): the name's prefix, and for fur
   // the material folded to Leather with `message` 1. Marked, so a
@@ -160,7 +193,7 @@ export function setItemFields(item) {
   const variant = named.rriVariant ? null : rriVariantFields(named);
   // AUDIT-RR2 G7: a fur piece folded before AUDIT-RR F5 carries no weightInKg (its save predates the field) and would
   // read the derived leather half; the fold's stored number is written once on the way in
-  const legacyWeight = (named.rriVariant && !Number.isFinite(named.weightInKg)) ? rriStoredWeight(named) : null;
+  const legacyWeight = named.rriVariant && !Number.isFinite(named.weightInKg) ? rriStoredWeight(named) : null;
   return {
     ...named,
     ...(variant ? { ...variant, rriVariant: true } : {}),
@@ -182,19 +215,21 @@ export const itemValueOf = (item) => (Number.isFinite(item?.value) ? item.value 
 // PLAYER texture for most items; only these groups keep the world
 // sprite. Ingredients are the isIngredient flag, not a group.
 const WORLD_TEXTURE_GROUPS = new Set(['UselessItems1', 'ReligiousItems', 'MiscItems']);
-export const TRANSPORT_SMALL_CART = 93;   // Transportation.Small_cart (template)
-export const TRANSPORT_HORSE = 94;        // Transportation.Horse (template)
+export const TRANSPORT_SMALL_CART = 93; // Transportation.Small_cart (template)
+export const TRANSPORT_HORSE = 94; // Transportation.Horse (template)
 /** MAC-D2 / DISC24-B: the ItemGroups.Transportation rows whose inventory
  *  columns name ANOTHER item's art - the Small Cart and the four boats,
  *  all pointing at 213/1, the Wine Rack. Read off the group table less
  *  the one row whose columns are its own: the Horse's 201/0 is the
  *  animal archive's horse (TEXTURE.201 records 0-1 are the horses the
  *  world draws - systems/soundClips.js keys their neigh by it). */
-const BORROWED_ART_INDICES = new Set((GROUP_TEMPLATE_INDICES.Transportation ?? []).filter((i) => i !== TRANSPORT_HORSE));
+const BORROWED_ART_INDICES = new Set(
+  (GROUP_TEMPLATE_INDICES.Transportation ?? []).filter((i) => i !== TRANSPORT_HORSE),
+);
 
 /** UseWorldTexture verbatim. */
 export function usesWorldTexture(item, template = templateByIndex(item.templateIndex)) {
-  if (template?.custom) return true;   // SURV2: a custom template draws its world icon (the item's own fields first, as DFU's world arm does)
+  if (template?.custom) return true; // SURV2: a custom template draws its world icon (the item's own fields first, as DFU's world arm does)
   if (WORLD_TEXTURE_GROUPS.has(item.group)) return true;
   if (template?.isIngredient) return true;
   if (item.group === 'Weapons' && item.templateIndex === WEAPONS.Arrow) return true;
@@ -239,7 +274,8 @@ export const rollPaintingMessage = (rolls = Math.random) => Math.floor(rolls() *
 
 /** DaggerfallUnityItem.ConditionPercentage (:460-463): `maxCondition > 0
  *  ? 100 * currentCondition / maxCondition : 100`, C# integer division. */
-export const conditionPercentage = (item) => ((item?.maxCondition ?? 0) > 0 ? Math.trunc(100 * (item.currentCondition ?? 0) / item.maxCondition) : 100);
+export const conditionPercentage = (item) =>
+  (item?.maxCondition ?? 0) > 0 ? Math.trunc((100 * (item.currentCondition ?? 0)) / item.maxCondition) : 100;
 
 /** A piece's condition as a share of its maximum - the mend order's key, and a kit's before and after. */
 export const conditionShare = (item) => item.currentCondition / item.maxCondition;
@@ -258,7 +294,7 @@ export const mendOrder = (a, b) => wornFirst(b) - wornFirst(a) || conditionShare
  *  weapon and armour rolls (ItemBuilder.cs:382-390). Each mod registers ONE provider, which answers from its own
  *  switch (a mod switched off has nothing registered, as an unloaded mod has not). RRI1 kept this list as its own
  *  until a second mod had items to shelve. */
-const _customItemProviders = [rriCustomItemsForGroup];   // RRI1's, the first mod to register (its module is this one's import)
+const _customItemProviders = [rriCustomItemsForGroup]; // RRI1's, the first mod to register (its module is this one's import)
 export function registerCustomItemsForGroup(provider) {
   if (typeof provider === 'function' && !_customItemProviders.includes(provider)) _customItemProviders.push(provider);
 }
@@ -272,7 +308,8 @@ export const customItemsForGroup = (group) => _customItemProviders.flatMap((p) =
  *  THE MERGE (main's CSA-H into FORAGE1's one home): the rows are one provider, taking its place in the providers'
  *  order when the first row registers. */
 const _otherModItems = [];
-const otherModItemsForGroup = (group) => _otherModItems.filter((r) => r.group === group && r.isOn()).map((r) => r.templateIndex);
+const otherModItemsForGroup = (group) =>
+  _otherModItems.filter((r) => r.group === group && r.isOn()).map((r) => r.templateIndex);
 export function registerCustomItemGroup(templateIndex, group, isOn = () => true) {
   if (_otherModItems.some((r) => r.templateIndex === templateIndex && r.group === group)) return;
   _otherModItems.push({ templateIndex, group, isOn });
@@ -287,19 +324,25 @@ const _useHandlers = new Map();
 /** PROF3: the Repair Kit's dye by its metal - profTemplates.js registers it (it imports this module, so this one
  *  cannot import it). */
 let _kitDye = null;
-export function registerKitDye(fn) { _kitDye = typeof fn === 'function' ? fn : null; }
-export function registerItemUseHandler(templateIndex, handler) { if (typeof handler === 'function') _useHandlers.set(templateIndex, handler); else _useHandlers.delete(templateIndex); }
+export function registerKitDye(fn) {
+  _kitDye = typeof fn === 'function' ? fn : null;
+}
+export function registerItemUseHandler(templateIndex, handler) {
+  if (typeof handler === 'function') _useHandlers.set(templateIndex, handler);
+  else _useHandlers.delete(templateIndex);
+}
 export const itemUseHandler = (templateIndex) => _useHandlers.get(templateIndex) ?? null;
 
 export function mintCondition(item) {
   if (item.maxCondition != null) return item;
-  if (!Object.isExtensible(item)) return item;   // C-slice: the frozen pre-chargen stand-ins (INTERIM_WEAPON) carry no condition
+  if (!Object.isExtensible(item)) return item; // C-slice: the frozen pre-chargen stand-ins (INTERIM_WEAPON) carry no condition
   const t = templateByIndex(item.templateIndex);
-  let max = t && item.group === 'Weapons' && !isAmmunition(item) ? WEAPON_CONDITION_POOL : (t?.hitPoints ?? 0);   // WEAPON-POOL: one pool for every weapon type
+  let max = t && item.group === 'Weapons' && !isAmmunition(item) ? WEAPON_CONDITION_POOL : (t?.hitPoints ?? 0); // WEAPON-POOL: one pool for every weapon type
   const mat = item.material;
   if (mat != null && max > 0) {
     if (item.group === 'Weapons') max = Math.trunc((max * (conditionMultipliersByMaterial[mat] ?? 4)) / 4);
-    else if (item.group === 'Armor' && isPlate(mat)) max = Math.trunc((max * (conditionMultipliersByMaterial[plateMetal(mat)] ?? 4)) / 4);   // BAL6-GAUNTLETS: the plate decode's one home (armorMaterials.js plateMetal)
+    else if (item.group === 'Armor' && isPlate(mat))
+      max = Math.trunc((max * (conditionMultipliersByMaterial[plateMetal(mat)] ?? 4)) / 4); // BAL6-GAUNTLETS: the plate decode's one home (armorMaterials.js plateMetal)
   }
   item.maxCondition = max;
   item.currentCondition = max;
@@ -327,7 +370,10 @@ export function inventoryItemModel(item) {
  *  answers `{ archive, record }` for an item - `forPaperDoll` true on the doll, false in a list - or null, and DFU's
  *  ladder answers as before. Registered by the item's home (systems/thunderlock.js), which imports this file. */
 const _ownImages = new Map();
-export function registerOwnItemImage(templateIndex, fn) { if (typeof fn === 'function') _ownImages.set(templateIndex, fn); else _ownImages.delete(templateIndex); }
+export function registerOwnItemImage(templateIndex, fn) {
+  if (typeof fn === 'function') _ownImages.set(templateIndex, fn);
+  else _ownImages.delete(templateIndex);
+}
 /** The port's own picture for an item and a job, or null for every item DFU's ladder answers. */
 export function ownItemImage(item, { forPaperDoll = false } = {}) {
   const fn = _ownImages.get(item?.templateIndex);
@@ -341,7 +387,10 @@ export function ownItemImage(item, { forPaperDoll = false } = {}) {
  *  template, whatever its tier. DFU's templates have none to say (its weapons carry no description; a book's are its
  *  pages), so only a home of the port's own registers one (systems/thunderlock.js, systems/pistolet.js). */
 const _templateLore = new Map();
-export function registerTemplateLore(templateIndex, text) { if (typeof text === 'string' && text) _templateLore.set(templateIndex, text); else _templateLore.delete(templateIndex); }
+export function registerTemplateLore(templateIndex, text) {
+  if (typeof text === 'string' && text) _templateLore.set(templateIndex, text);
+  else _templateLore.delete(templateIndex);
+}
 /** The words an item's template says of itself, or null. */
 export const templateLore = (item) => _templateLore.get(item?.templateIndex) ?? null;
 
@@ -349,7 +398,11 @@ export function inventoryItemImage(item, identity = undefined) {
   const t = templateByIndex(item.templateIndex);
   if (!t) return null;
   // THUNDERLOCK-ART: a weapon of the port's own draws its own picture in a list, never its doll layer
-  { const own = ownItemImage(item); if (own) return { archive: own.archive, record: own.record, dye: itemDyeColor(item), dyeTarget: itemDyeTarget(item) }; }
+  {
+    const own = ownItemImage(item);
+    if (own)
+      return { archive: own.archive, record: own.record, dye: itemDyeColor(item), dyeTarget: itemDyeTarget(item) };
+  }
   // MAC-D2 (Skibbster on Discord, 2026-09-21, with a screenshot of a
   // TOMATO on the "Small Cart" card): TRANSPORTATION HAS NO INVENTORY
   // ART, AND THE FIELDS THAT LOOK LIKE IT ARE ANOTHER ITEM'S.
@@ -386,7 +439,9 @@ export function inventoryItemImage(item, identity = undefined) {
   if (cls) {
     const bodyArchive = playerArchiveFor(item, t, identity);
     const archive = cls.inventoryTextureArchive ?? bodyArchive;
-    const record = cls.inventoryTextureRecord ? cls.inventoryTextureRecord(item, { playerTextureArchive: bodyArchive }) : t.playerTextureRecord;
+    const record = cls.inventoryTextureRecord
+      ? cls.inventoryTextureRecord(item, { playerTextureArchive: bodyArchive })
+      : t.playerTextureRecord;
     return { archive, record, dye: itemDyeColor(item), dyeTarget: itemDyeTarget(item) };
   }
   let archive, record;
@@ -414,7 +469,9 @@ export function inventoryItemImage(item, identity = undefined) {
     // (:1733), which SetArtifact wrote from GetArtifactTextureIndices
     // (432/433 by gender). The port recomputed both from the base
     // template, so the Oghma Infinium really did draw 209/2.
-    archive = Number.isFinite(item.playerTextureArchive) ? item.playerTextureArchive : playerArchiveFor(item, t, identity);
+    archive = Number.isFinite(item.playerTextureArchive)
+      ? item.playerTextureArchive
+      : playerArchiveFor(item, t, identity);
     record = item.playerTextureRecord;
   } else {
     archive = playerArchiveFor(item, t, identity);
@@ -423,9 +480,10 @@ export function inventoryItemImage(item, identity = undefined) {
       // their interior-first record. AUDIT 23 (items-6): armor rides
       // ItemBuilder.SetVariant's material-family clamps exactly as the
       // paperdoll does - chain/plate armor drew the leather-look icon.
-      const v = item.group === 'Armor'
-        ? clampArmorVariant(item.templateIndex, item.material ?? 0, item.variant ?? 0)
-        : Math.min(item.variant ?? 0, t.variants - 1);
+      const v =
+        item.group === 'Armor'
+          ? clampArmorVariant(item.templateIndex, item.material ?? 0, item.variant ?? 0)
+          : Math.min(item.variant ?? 0, t.variants - 1);
       // NT3 (F006): the record law runs from its ONE home now -
       // resolvePaperdollRecord IS GetInventoryTextureRecord's variant
       // resolution (start + variant, cloaks skipping their
@@ -447,7 +505,10 @@ export function inventoryItemImage(item, identity = undefined) {
   // "Use world texture archive if inventory texture not set" - and the
   // TEMPLATE's, deliberately (ItemHelper.cs:425-429 reads
   // item.ItemTemplate, not the item).
-  if (archive === 0 && record === 0) { archive = t.worldTextureArchive; record = t.worldTextureRecord; }
+  if (archive === 0 && record === 0) {
+    archive = t.worldTextureArchive;
+    record = t.worldTextureRecord;
+  }
   // DW3: the DYE rides the image - GetItemImage reads item.dyeColor
   // first (:402) and asks the replacement door by it (:453, :458), so
   // an icon door that draws this must ask by it too. DYE-ICON: and the
@@ -456,6 +517,7 @@ export function inventoryItemImage(item, identity = undefined) {
   // swatch (systems/professions/profTemplates.js `iconDye`), as an Ebony blade is told from an Iron one
   if (Number.isFinite(t.iconDye)) return { archive, record, dye: t.iconDye, dyeTarget: DYE_TARGETS.WeaponsAndArmor };
   // PROF3: a Repair Kit's picture is the Warhammer's, dyed by the metal it mends (the item's `kitMetal`, profTemplates.js kitDye)
-  if (t.kitDye && Number.isFinite(_kitDye?.(item))) return { archive, record, dye: _kitDye(item), dyeTarget: DYE_TARGETS.WeaponsAndArmor };
+  if (t.kitDye && Number.isFinite(_kitDye?.(item)))
+    return { archive, record, dye: _kitDye(item), dyeTarget: DYE_TARGETS.WeaponsAndArmor };
   return { archive, record, dye: itemDyeColor(item), dyeTarget: itemDyeTarget(item) };
 }

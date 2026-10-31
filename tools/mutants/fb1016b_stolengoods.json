@@ -18,10 +18,10 @@
     ]
   },
   {
-    "name": "FB1016-STOLEN-GOODS-sold-stolen-shelved",
+    "name": "FB1016-STOLEN-GOODS-sold-shelved",
     "file": "src/systems/stolenGoods.js",
-    "old": "  if (isStolen(item)) return false;\n",
-    "new": "",
+    "old": "  void shelfItems;\n  void item;\n  return false;",
+    "new": "  shelfItems.push(item);\n  return true;",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "FB1016-STOLEN-GOODS-mark-not-true",
     "file": "src/systems/stolenGoods.js",
-    "old": "if (it && typeof it === 'object' && !Array.isArray(it)) it[STOLEN_MARK] = true;",
-    "new": "if (it && typeof it === 'object' && !Array.isArray(it)) it[STOLEN_MARK] = 1;",
+    "old": "  for (const it of items ?? []) if (it && typeof it === 'object' && !Array.isArray(it)) it[STOLEN_MARK] = true;",
+    "new": "  for (const it of items ?? []) if (it && typeof it === 'object' && !Array.isArray(it)) it[STOLEN_MARK] = 1;",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "FB1016-STOLEN-GOODS-count-a-stack-as-nothing",
     "file": "src/systems/stolenGoods.js",
-    "old": "it.stackCount > 0 ? it.stackCount : 1), 0);",
-    "new": "it.stackCount > 0 ? it.stackCount : 0), 0);",
+    "old": "  (items ?? []).reduce((n, it) => n + (Number.isInteger(it?.stackCount) && it.stackCount > 0 ? it.stackCount : 1), 0);",
+    "new": "  (items ?? []).reduce((n, it) => n + (Number.isInteger(it?.stackCount) && it.stackCount > 0 ? it.stackCount : 0), 0);",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "FB1016-STOLEN-GOODS-undeclared",
     "file": "src/systems/item/itemFields.js",
-    "old": "  stolen: bool(),\n",
-    "new": "",
+    "old": "  stolen: bool(),\n  // SELL-AS-FOUND (AUDIT ECON O1): the condition the world handed a piece over at - Roleplay & Realism: Items' rolls on",
+    "new": "  // SELL-AS-FOUND (AUDIT ECON O1): the condition the world handed a piece over at - Roleplay & Realism: Items' rolls on",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "FB1016-STOLEN-GOODS-a-receivers-mark",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "export const RECEIVER_MARKS = Object.freeze(['equipSlot', 'questItem', 'acquired', 'wagonEntry', 'horseBond', 'horseFed', 'appearance']);",
-    "new": "export const RECEIVER_MARKS = Object.freeze(['equipSlot', 'questItem', 'acquired', 'wagonEntry', 'horseBond', 'horseFed', 'appearance', 'stolen']);",
+    "old": "]); // APPEARANCES (bible/04-Characters/Wardrobe.md): the look a piece wears is its wearer's, who collected it - a piece handed over arrives in its own; WAGONS2-VISIT (AUDIT): who may enter a caravan is its owner's word - a buyer's caravan opens to its owner alone; STEED1: a horse's bond is with its owner - it comes to the next a stranger; AUDIT STEED1: and its food's clock is its owner's character's - it comes fed as a horse first seen (steedCare.js NEW_HORSE_FED), and an offer's record never mismatches its checkpoint for a minute's grazing",
+    "new": "  'stolen',\n]); // APPEARANCES (bible/04-Characters/Wardrobe.md): the look a piece wears is its wearer's, who collected it - a piece handed over arrives in its own; WAGONS2-VISIT (AUDIT): who may enter a caravan is its owner's word - a buyer's caravan opens to its owner alone; STEED1: a horse's bond is with its owner - it comes to the next a stranger; AUDIT STEED1: and its food's clock is its owner's character's - it comes fed as a horse first seen (steedCare.js NEW_HORSE_FED), and an offer's record never mismatches its checkpoint for a minute's grazing",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "FB1016-STOLEN-GOODS-worn-left-in-its-slot",
     "file": "src/systems/court.js",
-    "old": "      if (isEquipped(it)) unequipItem(player, it);\n",
-    "new": "",
+    "old": "      if (isEquipped(it)) unequipItem(player, it);\n      if (player.lightSource === it) setLightSource(player, null);",
+    "new": "      if (player.lightSource === it) setLightSource(player, null);",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "FB1016-STOLEN-GOODS-torch-left-lit",
     "file": "src/systems/court.js",
-    "old": "      if (player.lightSource === it) setLightSource(player, null);\n",
-    "new": "",
+    "old": "      if (player.lightSource === it) setLightSource(player, null);\n      list.splice(i, 1);",
+    "new": "      list.splice(i, 1);",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -302,8 +302,8 @@
   {
     "name": "FB1016B-SG-AUDIT-S1-every-take-marked",
     "file": "src/systems/stolenGoods.js",
-    "old": "  if (!(keeping instanceof Set) || !keeping.has(source)) return false;\n  markStolen([moved]);",
-    "new": "  if (!(keeping instanceof Set)) return false;\n  markStolen([moved]);",
+    "old": ") {\n  if (!(keeping instanceof Set) || !keeping.has(source)) return false;\n  markStolen([moved]);",
+    "new": ") {\n  if (!(keeping instanceof Set)) return false;\n  markStolen([moved]);",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "FB1016B-SG-AUDIT-S1-every-put-cleared",
     "file": "src/systems/stolenGoods.js",
-    "old": "  if (!(keeping instanceof Set) || !keeping.has(source)) return false;\n  clearStolen(moved);",
-    "new": "  if (!(keeping instanceof Set)) return false;\n  clearStolen(moved);",
+    "old": ") {\n  if (!(keeping instanceof Set) || !keeping.has(source)) return false;\n  clearStolen(moved);",
+    "new": ") {\n  if (!(keeping instanceof Set)) return false;\n  clearStolen(moved);",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "FB1016B-SG-AUDIT-S1-the-split-outside-the-keeping",
     "file": "src/systems/stolenGoods.js",
-    "old": "  markStolen([moved]);\n  keeping.add(moved);\n",
-    "new": "  markStolen([moved]);\n",
+    "old": "  keeping.add(moved);\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -338,8 +338,8 @@
   {
     "name": "FB1016B-SG-AUDIT-S1-a-merge-left-in-the-keeping",
     "file": "src/systems/stolenGoods.js",
-    "old": "  if (held !== moved) keeping.delete(moved);\n",
-    "new": "",
+    "old": "  if (held !== moved) keeping.delete(moved);\n  keeping.add(held);",
+    "new": "  keeping.add(held);",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -422,8 +422,8 @@
   {
     "name": "FB1016B-SG-AUDIT-S3-the-rooms-word-kept",
     "file": "src/world/interior/interiorShared.js",
-    "old": "    for (const it of items) clearStolen(it);\n",
-    "new": "",
+    "old": "    for (const it of items) clearStolen(it);\n    seen.add(canon);",
+    "new": "    seen.add(canon);",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -431,8 +431,8 @@
   {
     "name": "FB1016B-SG-AUDIT-S3-the-rooms-word-said",
     "file": "src/world/interior/interiorShared.js",
-    "old": "r: peerHanded(t.items).map((it) => clearStolen({ ...it })),",
-    "new": "r: peerHanded(t.items).map((it) => ({ ...it })),",
+    "old": "      r: peerHanded(t.items).map((it) => clearStolen({ ...it })),",
+    "new": "      r: peerHanded(t.items).map((it) => ({ ...it })),",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -440,8 +440,8 @@
   {
     "name": "FB1016B-SG-AUDIT-S3-the-buy-kept",
     "file": "src/systems/tradeModes.js",
-    "old": "  for (const it of items ?? []) clearStolen(it);\n",
-    "new": "",
+    "old": "  for (const it of items ?? []) clearStolen(it);\n  if (!online) return 0;",
+    "new": "  if (!online) return 0;",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "FB1016B-SG-AUDIT-S6-the-patron-a-fence",
     "file": "src/net/patronLaw.js",
-    "old": "  && item[PATRON_COUNTER_MARK] !== true && item.stolen !== true;",
-    "new": "  && item[PATRON_COUNTER_MARK] !== true;",
+    "old": "  item[PATRON_COUNTER_MARK] !== true &&\n  item.stolen !== true;",
+    "new": "  item[PATRON_COUNTER_MARK] !== true;",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]

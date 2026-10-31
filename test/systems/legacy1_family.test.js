@@ -28,6 +28,7 @@ import { MOD_SETTINGS } from '../../src/systems/modSettings.js';
 import { DEFAULT_BINDINGS, MOD_ACTIONS } from '../../src/systems/inputActions.js';
 import { LOCATION_TYPES } from '../../src/formats/mapsFile.js';
 import { _resetModSaveData, modSaveRecords, restoreModSaveRecords } from '../../src/systems/modSaveData.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT TEST-PRESET): the world host whole
 
 const rd = (f) => readFileSync(new URL(`../../${f}`, import.meta.url), 'utf8');
 
@@ -329,11 +330,12 @@ test('LEGACY2: the model question offers Enduring first - Enter without reading 
   const on = legacyModelOptions({ online: true, tollShare: 0.06 });
   // PIN MOVED (LEGACY7): AUDIT LEGACY B4 shut Bloodline online until the realm kept lineages - it does now (the tombstone)
   // PIN MOVED (LEGACY-CHOICE): and online a third answer after the two - no lineage, Enduring still first
-  assert.deepEqual(on.map((x) => [x.id, x.locked]), [[MODELS.enduring, false], [MODELS.bloodline, false], [NO_LINEAGE, false]], 'LEGACY7: online Bloodline is open - the realm holds the line');
+  // PIN MOVED (CASUAL-FIRST): online Casual leads the two
+  assert.deepEqual(on.map((x) => [x.id, x.locked]), [[NO_LINEAGE, false], [MODELS.enduring, false], [MODELS.bloodline, false]], 'LEGACY7: online Bloodline is open - the realm holds the line');
   // PIN MOVED (AUDIT LEGACY III U8): beside the line's end, never instead of it - the end holds online as off
   // PIN MOVED (CASUAL-LIFE): online Bloodline says it in three lines, so Casual's four fit the classic face
-  assert.deepEqual([on[1].lines[1], o[1].lines[3]], ['With no one left, the line ends.', 'With no one left, the line ends.']);
-  assert.match(on[1].lines[2], /^Online, a death is final on every device\.$/);
+  assert.deepEqual([on[2].lines[1], o[1].lines[3]], ['With no one left, the line ends.', 'With no one left, the line ends.']);
+  assert.match(on[2].lines[2], /^Online, a death is final on every device\.$/);
   assert.equal(o[1].lines.length, 4, 'offline, the four lines as before');
 });
 
@@ -476,7 +478,7 @@ test('LEGACY1: the save carries the family and a newer store copy wins at the lo
 });
 
 test('LEGACY1: THE FOUR HOSTS - the street and the modal hosts all reset a death through Project Legacy first', () => {
-  const src = rd('src/scenes/world.js');
+  const src = hostText('src/scenes/world.js');
   assert.match(src, /onReset: \(\) => \(legacyDeathReset\(\) \|\| \(_deathWasOnline \? respawnOnlinePlayer\(\) : endRunToTitleMenu\(renderer\)\)\)/);
   assert.match(src, /onlineRespawn: \(\) => \{ if \(legacyDeathReset\(\)\) return true;/);
   // the interior and the dungeon hosts reset through that one door

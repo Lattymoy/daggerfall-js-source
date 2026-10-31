@@ -1,9 +1,65 @@
 [
-  {"name":"L10N4-scan-counts-the-routed","file":"tools/l10nHardcoded.mjs","old":"const ROUTED = new Set(['t', 'tIn', ","new":"const ROUTED = new Set(['tIn', ","tests":["test/systems/l10n4_hardcoded.test.js"]},
-  {"name":"L10N4-scan-counts-console","file":"tools/l10nHardcoded.mjs","old":"if (c?.type === 'MemberExpression' && c.object?.name === 'console') q = true;","new":"","tests":["test/systems/l10n4_hardcoded.test.js"]},
-  {"name":"L10N4-scan-counts-thrown","file":"tools/l10nHardcoded.mjs","old":"if (n.type === 'ThrowStatement' || (n.type === 'NewExpression' && /Error$/.test(n.callee?.name ?? ''))) q = true;","new":"","tests":["test/systems/l10n4_hardcoded.test.js"]},
-  {"name":"L10N4-scan-counts-keys","file":"tools/l10nHardcoded.mjs","old":"if (k === 'key' && (n.type === 'Property' || n.type === 'MethodDefinition' || n.type === 'PropertyDefinition') && !n.computed) continue;","new":"","tests":["test/systems/l10n4_hardcoded.test.js"]},
-  {"name":"L10N4-scan-skips-templates","file":"tools/l10nHardcoded.mjs","old":"          if (isProse(s)) out.push({ file, line: n.loc.start.line, text: s });","new":"","tests":["test/systems/l10n4_hardcoded.test.js"]},
-  {"name":"L10N4-prose-takes-css","file":"tools/l10nHardcoded.mjs","old":"\\d(px|em|rem|vh|vw|ms|deg)\\b|","new":"","tests":["test/systems/l10n4_hardcoded.test.js"]},
-  {"name":"L10N4-prose-takes-one-word","file":"tools/l10nHardcoded.mjs","old":"  if (!/[A-Za-z]{2,}[\\s\\u00a0]+[A-Za-z]{2,}/.test(s)) return false;","new":"  if (!/[A-Za-z]{2,}/.test(s)) return false;","tests":["test/systems/l10n4_hardcoded.test.js"]}
+  {
+    "name": "L10N4-scan-counts-the-routed",
+    "file": "tools/l10nHardcoded.mjs",
+    "old": "  't',\n  'tIn',",
+    "new": "  'tIn',",
+    "tests": [
+      "test/systems/l10n4_hardcoded.test.js"
+    ]
+  },
+  {
+    "name": "L10N4-scan-counts-console",
+    "file": "tools/l10nHardcoded.mjs",
+    "old": "        if (c?.type === 'MemberExpression' && c.object?.name === 'console') q = true;\n      }",
+    "new": "      }",
+    "tests": [
+      "test/systems/l10n4_hardcoded.test.js"
+    ]
+  },
+  {
+    "name": "L10N4-scan-counts-thrown",
+    "file": "tools/l10nHardcoded.mjs",
+    "old": "      if (n.type === 'ThrowStatement' || (n.type === 'NewExpression' && /Error$/.test(n.callee?.name ?? ''))) q = true;",
+    "new": "",
+    "tests": [
+      "test/systems/l10n4_hardcoded.test.js"
+    ]
+  },
+  {
+    "name": "L10N4-scan-counts-keys",
+    "file": "tools/l10nHardcoded.mjs",
+    "old": "        if (\n          k === 'key' &&\n          (n.type === 'Property' || n.type === 'MethodDefinition' || n.type === 'PropertyDefinition') &&\n          !n.computed\n        )\n          continue;",
+    "new": "",
+    "tests": [
+      "test/systems/l10n4_hardcoded.test.js"
+    ]
+  },
+  {
+    "name": "L10N4-scan-skips-templates",
+    "file": "tools/l10nHardcoded.mjs",
+    "old": "          if (isProse(s) && !CLASS_LIST.test(asClasses)) out.push({ file, line: n.loc.start.line, text: s });\n        }",
+    "new": "        }",
+    "tests": [
+      "test/systems/l10n4_hardcoded.test.js"
+    ]
+  },
+  {
+    "name": "L10N4-prose-takes-css",
+    "file": "tools/l10nHardcoded.mjs",
+    "old": "    /(^|\\s)(px|em|rem|vh|vw)(\\s|;|$)|\\d(px|em|rem|vh|vw|ms|deg)\\b|rgba?\\(|hsla?\\(|var\\(--|calc\\(|linear-gradient|;\\s*$|=>|\\bfunction\\b|\\bimport\\b|\\bconst\\b|\\breturn\\b|https?:|\\.(js|mjs|json|png|wav|ttf|glb|bsa|img|cif)\\b/i.test(",
+    "new": "    /(^|\\s)(px|em|rem|vh|vw)(\\s|;|$)|rgba?\\(|hsla?\\(|var\\(--|calc\\(|linear-gradient|;\\s*$|=>|\\bfunction\\b|\\bimport\\b|\\bconst\\b|\\breturn\\b|https?:|\\.(js|mjs|json|png|wav|ttf|glb|bsa|img|cif)\\b/i.test(",
+    "tests": [
+      "test/systems/l10n4_hardcoded.test.js"
+    ]
+  },
+  {
+    "name": "L10N4-prose-takes-one-word",
+    "file": "tools/l10nHardcoded.mjs",
+    "old": "  if (!/[A-Za-z]{2,}[\\s\\u00a0]+[A-Za-z]{2,}/.test(s)) return false;",
+    "new": "  if (!/[A-Za-z]{2,}/.test(s)) return false;",
+    "tests": [
+      "test/systems/l10n4_hardcoded.test.js"
+    ]
+  }
 ]

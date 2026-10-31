@@ -29,10 +29,17 @@
 // keys the shipping SPELLS.STD uses has a class here.
 
 import { skillValue, SKILLS } from './skills.js';
-import { isOnlinePage } from './online/onlineLane.js';   // SPELL-COST-PAST: online, a skill past 100 never prices a spell under nothing
-import { pathCastSchool } from './arcanePaths.js';   // SCHOOLS3: a signature spell is cast in its path's two schools (a leaf)
+import { isOnlinePage } from './online/onlineLane.js'; // SPELL-COST-PAST: online, a skill past 100 never prices a spell under nothing
+import { pathCastSchool } from './arcanePaths.js'; // SCHOOLS3: a signature spell is cast in its path's two schools (a leaf)
 
-import { castLevels, castCostScale, budgetEffect, skillCasts, oneDamagePerKind, CAST_COST_PRICE_SKILL } from './spell/castLevel.js';   // SPELL-SKILL: a player's price follows the school's power
+import {
+  castLevels,
+  castCostScale,
+  budgetEffect,
+  skillCasts,
+  oneDamagePerKind,
+  CAST_COST_PRICE_SKILL,
+} from './spell/castLevel.js'; // SPELL-SKILL: a player's price follows the school's power
 
 export const CAST_COST_FLOOR = 5;
 
@@ -50,7 +57,7 @@ export const SPELL_COST_SKILL_REFERENCE = 100;
 export function skillScaledCost(value, skill, divisor, { online = isOnlinePage() } = {}) {
   const R = SPELL_COST_SKILL_REFERENCE;
   if (online && skill > R) return Math.trunc((value * (110 - R) * R) / (skill * divisor));
-  return Math.trunc(value * (110 - skill) / divisor);
+  return Math.trunc((value * (110 - skill)) / divisor);
 }
 
 const FUDGE = { A: 60, B: 100, offset: 160 };
@@ -61,82 +68,81 @@ const row = (skill, parts) => Object.freeze({ skill, ...parts });
 // The per-stat families (DFCareer.Stats order 0 Strength .. 7 Luck)
 // are eight sibling classes sharing one set of factors, so they are
 // expanded from one row rather than typed out eight times.
-const family = (type, subTypes, r) =>
-  Object.fromEntries(subTypes.map((s) => [`${type},${s}`, r]));
+const family = (type, subTypes, r) => Object.fromEntries(subTypes.map((s) => [`${type},${s}`, r]));
 const STATS = [0, 1, 2, 3, 4, 5, 6, 7];
 
 // classic 'type,subType' -> { skill, duration?, magnitude?, chance? }
 export const EFFECT_COST_TABLE = Object.freeze({
   // ---- Alteration ----
-  '0,255':  row(SKILLS.Alteration, { duration: costs(28, 100), chance: costs(28, 100) }),   // Paralyze - S19
-  ...family(8, [0, 1, 2, 3, 4], row(SKILLS.Alteration, { duration: costs(100, 100), chance: costs(8, 100) })),   // ElementalResistance Fire/Frost/DiseaseOrPoison/Shock/Magic
-  '25,255': row(SKILLS.Alteration, { duration: costs(20, 100) }),                           // Slowfall
-  '27,255': row(SKILLS.Alteration, { duration: costs(20, 8) }),                             // Jumping
-  '28,255': row(SKILLS.Alteration, { duration: costs(20, 20) }),                            // Climbing
-  '30,255': row(SKILLS.Alteration, { duration: costs(20, 8) }),                             // WaterBreathing - P12
-  '35,255': row(SKILLS.Alteration, { duration: costs(28, 8), magnitude: costs(80, 60) }),   // Shield
+  '0,255': row(SKILLS.Alteration, { duration: costs(28, 100), chance: costs(28, 100) }), // Paralyze - S19
+  ...family(8, [0, 1, 2, 3, 4], row(SKILLS.Alteration, { duration: costs(100, 100), chance: costs(8, 100) })), // ElementalResistance Fire/Frost/DiseaseOrPoison/Shock/Magic
+  '25,255': row(SKILLS.Alteration, { duration: costs(20, 100) }), // Slowfall
+  '27,255': row(SKILLS.Alteration, { duration: costs(20, 8) }), // Jumping
+  '28,255': row(SKILLS.Alteration, { duration: costs(20, 20) }), // Climbing
+  '30,255': row(SKILLS.Alteration, { duration: costs(20, 8) }), // WaterBreathing - P12
+  '35,255': row(SKILLS.Alteration, { duration: costs(28, 8), magnitude: costs(80, 60) }), // Shield
 
   // ---- Destruction ----
-  '1,0':    row(SKILLS.Destruction, { duration: costs(28, 8), magnitude: costs(40, 28) }),  // ContinuousDamageHealth
-  '1,1':    row(SKILLS.Destruction, { duration: costs(20, 8), magnitude: costs(40, 28) }),  // ContinuousDamageFatigue
-  '1,2':    row(SKILLS.Destruction, { duration: costs(40, 8), magnitude: costs(40, 28) }),  // ContinuousDamageSpellPoints
-  '4,0':    row(SKILLS.Destruction, { magnitude: costs(20, 28) }),                          // DamageHealth
-  '4,1':    row(SKILLS.Destruction, { magnitude: costs(20, 28) }),                          // DamageFatigue
-  '4,2':    row(SKILLS.Destruction, { magnitude: costs(20, 28) }),                          // DamageSpellPoints
-  '5,255':  row(SKILLS.Destruction, { chance: costs(80, 140) }),                            // Disintegrate
-  ...family(7, STATS, row(SKILLS.Destruction, { magnitude: costs(8, 100, 116) })),           // Drain{Attribute}
-  ...family(11, [...STATS, 8, 9], row(SKILLS.Destruction, { magnitude: costs(60, 100, 40) })),   // Transfer{Attribute} + TransferHealth (11,8) / TransferFatigue (11,9)
+  '1,0': row(SKILLS.Destruction, { duration: costs(28, 8), magnitude: costs(40, 28) }), // ContinuousDamageHealth
+  '1,1': row(SKILLS.Destruction, { duration: costs(20, 8), magnitude: costs(40, 28) }), // ContinuousDamageFatigue
+  '1,2': row(SKILLS.Destruction, { duration: costs(40, 8), magnitude: costs(40, 28) }), // ContinuousDamageSpellPoints
+  '4,0': row(SKILLS.Destruction, { magnitude: costs(20, 28) }), // DamageHealth
+  '4,1': row(SKILLS.Destruction, { magnitude: costs(20, 28) }), // DamageFatigue
+  '4,2': row(SKILLS.Destruction, { magnitude: costs(20, 28) }), // DamageSpellPoints
+  '5,255': row(SKILLS.Destruction, { chance: costs(80, 140) }), // Disintegrate
+  ...family(7, STATS, row(SKILLS.Destruction, { magnitude: costs(8, 100, 116) })), // Drain{Attribute}
+  ...family(11, [...STATS, 8, 9], row(SKILLS.Destruction, { magnitude: costs(60, 100, 40) })), // Transfer{Attribute} + TransferHealth (11,8) / TransferFatigue (11,9)
 
   // ---- Illusion ----
-  '13,0':   row(SKILLS.Illusion, { duration: costs(40, 120) }),                             // InvisibilityNormal - S21
-  '13,1':   row(SKILLS.Illusion, { duration: costs(60, 140) }),                             // InvisibilityTrue - S21
-  '15,255': row(SKILLS.Illusion, { duration: costs(8, 40) }),                               // LightNormal
-  '23,0':   row(SKILLS.Illusion, { duration: costs(20, 80) }),                              // ChameleonNormal
-  '23,1':   row(SKILLS.Illusion, { duration: costs(40, 120) }),                             // ChameleonTrue - S21
-  '24,0':   row(SKILLS.Illusion, { duration: costs(20, 80) }),                              // ShadowNormal - S21
-  '24,1':   row(SKILLS.Illusion, { duration: costs(40, 120) }),                             // ShadowTrue - S21
-  '29,255': row(SKILLS.Illusion, {}),                                                       // MorphSelf - NO components (the fudge, at Illusion)
-  '45,255': row(SKILLS.Restoration, {}),                                                    // RESURRECT1: Resurrect - the port's own; no components (the fudge, at Restoration)
+  '13,0': row(SKILLS.Illusion, { duration: costs(40, 120) }), // InvisibilityNormal - S21
+  '13,1': row(SKILLS.Illusion, { duration: costs(60, 140) }), // InvisibilityTrue - S21
+  '15,255': row(SKILLS.Illusion, { duration: costs(8, 40) }), // LightNormal
+  '23,0': row(SKILLS.Illusion, { duration: costs(20, 80) }), // ChameleonNormal
+  '23,1': row(SKILLS.Illusion, { duration: costs(40, 120) }), // ChameleonTrue - S21
+  '24,0': row(SKILLS.Illusion, { duration: costs(20, 80) }), // ShadowNormal - S21
+  '24,1': row(SKILLS.Illusion, { duration: costs(40, 120) }), // ShadowTrue - S21
+  '29,255': row(SKILLS.Illusion, {}), // MorphSelf - NO components (the fudge, at Illusion)
+  '45,255': row(SKILLS.Restoration, {}), // RESURRECT1: Resurrect - the port's own; no components (the fudge, at Restoration)
 
   // ---- Mysticism ----
-  '2,255':  row(SKILLS.Mysticism, { duration: costs(60, 120) }),                            // CreateItem
-  '6,0':    row(SKILLS.Mysticism, { chance: costs(120, 180) }),                             // DispelMagic
-  '6,1':    row(SKILLS.Mysticism, { chance: costs(80, 140) }),                              // DispelUndead
-  '6,2':    row(SKILLS.Mysticism, { chance: costs(120, 180) }),                             // DispelDaedra
-  '12,255': row(SKILLS.Mysticism, { duration: costs(60, 68), chance: costs(40, 68) }),      // SoulTrap
-  '16,255': row(SKILLS.Mysticism, { chance: costs(28, 120, 120) }),                         // Lock
-  '17,255': row(SKILLS.Mysticism, { chance: costs(20, 100) }),                              // Open
-  '19,255': row(SKILLS.Mysticism, { duration: costs(20, 100), chance: costs(20, 100) }),    // Silence
-  '43,255': row(SKILLS.Mysticism, {}),                                                      // Teleport - NO components (the fudge, at Mysticism)
-  '46,255': row(SKILLS.Mysticism, { duration: costs(8, 8) }),                               // PARTY-MAP: Shared Cartography - the port's own; Light's cheap per-round price, cheap enough to keep up
-  '44,255': row(SKILLS.Mysticism, { duration: costs(60, 68), chance: costs(40, 68) }),      // ComprehendLanguages
+  '2,255': row(SKILLS.Mysticism, { duration: costs(60, 120) }), // CreateItem
+  '6,0': row(SKILLS.Mysticism, { chance: costs(120, 180) }), // DispelMagic
+  '6,1': row(SKILLS.Mysticism, { chance: costs(80, 140) }), // DispelUndead
+  '6,2': row(SKILLS.Mysticism, { chance: costs(120, 180) }), // DispelDaedra
+  '12,255': row(SKILLS.Mysticism, { duration: costs(60, 68), chance: costs(40, 68) }), // SoulTrap
+  '16,255': row(SKILLS.Mysticism, { chance: costs(28, 120, 120) }), // Lock
+  '17,255': row(SKILLS.Mysticism, { chance: costs(20, 100) }), // Open
+  '19,255': row(SKILLS.Mysticism, { duration: costs(20, 100), chance: costs(20, 100) }), // Silence
+  '43,255': row(SKILLS.Mysticism, {}), // Teleport - NO components (the fudge, at Mysticism)
+  '46,255': row(SKILLS.Mysticism, { duration: costs(8, 8) }), // PARTY-MAP: Shared Cartography - the port's own; Light's cheap per-round price, cheap enough to keep up
+  '44,255': row(SKILLS.Mysticism, { duration: costs(60, 68), chance: costs(40, 68) }), // ComprehendLanguages
 
   // ---- Restoration ----
-  '3,0':    row(SKILLS.Restoration, { chance: costs(8, 100) }),                             // CureDisease - S19c
-  '3,1':    row(SKILLS.Restoration, { chance: costs(8, 100) }),                             // CurePoison - S19c
-  '3,2':    row(SKILLS.Restoration, { chance: costs(20, 140) }),                            // CureParalyzation - S19c
-  ...family(9, STATS, row(SKILLS.Restoration, { duration: costs(28, 100), magnitude: costs(40, 120) })),   // Fortify{Attribute}
-  ...family(10, STATS, row(SKILLS.Restoration, { magnitude: costs(40, 28) })),               // Heal{Attribute}
-  '10,8':   row(SKILLS.Restoration, { magnitude: costs(20, 28) }),                          // HealHealth
-  '10,9':   row(SKILLS.Restoration, { magnitude: costs(8, 28) }),                           // HealFatigue
-  '18,255': row(SKILLS.Restoration, { duration: costs(100, 20), magnitude: costs(8, 8) }),  // Regenerate
-  '20,255': row(SKILLS.Restoration, { duration: costs(28, 140), chance: costs(28, 140) }),  // SpellAbsorption
-  '26,255': row(SKILLS.Restoration, { duration: costs(20, 8) }),                            // FreeAction - S22
+  '3,0': row(SKILLS.Restoration, { chance: costs(8, 100) }), // CureDisease - S19c
+  '3,1': row(SKILLS.Restoration, { chance: costs(8, 100) }), // CurePoison - S19c
+  '3,2': row(SKILLS.Restoration, { chance: costs(20, 140) }), // CureParalyzation - S19c
+  ...family(9, STATS, row(SKILLS.Restoration, { duration: costs(28, 100), magnitude: costs(40, 120) })), // Fortify{Attribute}
+  ...family(10, STATS, row(SKILLS.Restoration, { magnitude: costs(40, 28) })), // Heal{Attribute}
+  '10,8': row(SKILLS.Restoration, { magnitude: costs(20, 28) }), // HealHealth
+  '10,9': row(SKILLS.Restoration, { magnitude: costs(8, 28) }), // HealFatigue
+  '18,255': row(SKILLS.Restoration, { duration: costs(100, 20), magnitude: costs(8, 8) }), // Regenerate
+  '20,255': row(SKILLS.Restoration, { duration: costs(28, 140), chance: costs(28, 140) }), // SpellAbsorption
+  '26,255': row(SKILLS.Restoration, { duration: costs(20, 8) }), // FreeAction - S22
 
   // ---- Thaumaturgy ----
-  '14,255': row(SKILLS.Thaumaturgy, { duration: costs(60, 100) }),                          // Levitate - P11
-  '21,255': row(SKILLS.Thaumaturgy, { duration: costs(28, 140), chance: costs(28, 140) }),  // SpellReflection
-  '22,255': row(SKILLS.Thaumaturgy, { duration: costs(20, 100), chance: costs(20, 100) }),  // SpellResistance
-  '31,255': row(SKILLS.Thaumaturgy, { duration: costs(20, 8) }),                            // WaterWalking
-  '33,0':   row(SKILLS.Thaumaturgy, { chance: costs(60, 100, 160) }),                       // Pacify-Animals
-  '33,1':   row(SKILLS.Thaumaturgy, { chance: costs(80, 140, 60) }),                        // Pacify-Undead
-  '33,2':   row(SKILLS.Thaumaturgy, { chance: costs(80, 140, 60) }),                        // Pacify-Humanoid
-  '33,3':   row(SKILLS.Thaumaturgy, { chance: costs(60, 120, 36) }),                        // Pacify-Daedra
-  '34,255': row(SKILLS.Thaumaturgy, { chance: costs(40, 60) }),     // Charm - AUDIT 23 (magic-6): CharmEffect.cs:36/:42 comment DURATION out; chance alone is priced
-  '39,0':   row(SKILLS.Thaumaturgy, { duration: costs(20, 8, 200) }),                       // DetectMagic
-  '39,1':   row(SKILLS.Thaumaturgy, { duration: costs(20, 8, 200) }),                       // DetectEnemy
-  '39,2':   row(SKILLS.Thaumaturgy, { duration: costs(20, 8, 160) }),                       // DetectTreasure
-  '40,255': row(SKILLS.Thaumaturgy, { chance: costs(40, 100, 28) }),                        // Identify
+  '14,255': row(SKILLS.Thaumaturgy, { duration: costs(60, 100) }), // Levitate - P11
+  '21,255': row(SKILLS.Thaumaturgy, { duration: costs(28, 140), chance: costs(28, 140) }), // SpellReflection
+  '22,255': row(SKILLS.Thaumaturgy, { duration: costs(20, 100), chance: costs(20, 100) }), // SpellResistance
+  '31,255': row(SKILLS.Thaumaturgy, { duration: costs(20, 8) }), // WaterWalking
+  '33,0': row(SKILLS.Thaumaturgy, { chance: costs(60, 100, 160) }), // Pacify-Animals
+  '33,1': row(SKILLS.Thaumaturgy, { chance: costs(80, 140, 60) }), // Pacify-Undead
+  '33,2': row(SKILLS.Thaumaturgy, { chance: costs(80, 140, 60) }), // Pacify-Humanoid
+  '33,3': row(SKILLS.Thaumaturgy, { chance: costs(60, 120, 36) }), // Pacify-Daedra
+  '34,255': row(SKILLS.Thaumaturgy, { chance: costs(40, 60) }), // Charm - AUDIT 23 (magic-6): CharmEffect.cs:36/:42 comment DURATION out; chance alone is priced
+  '39,0': row(SKILLS.Thaumaturgy, { duration: costs(20, 8, 200) }), // DetectMagic
+  '39,1': row(SKILLS.Thaumaturgy, { duration: costs(20, 8, 200) }), // DetectEnemy
+  '39,2': row(SKILLS.Thaumaturgy, { duration: costs(20, 8, 160) }), // DetectTreasure
+  '40,255': row(SKILLS.Thaumaturgy, { chance: costs(40, 100, 28) }), // Identify
 });
 
 export const TARGET_COST_MULT = Object.freeze({ 0: 1.0, 1: 1.0, 2: 1.5, 3: 2.0, 4: 2.5 });
@@ -184,7 +190,7 @@ export function effectCost(e, casterSkillOf, { online = isOnlinePage() } = {}) {
   }
   // "If there are no active components (e.g. Teleport) then fudge some costs"
   if (!activeComponents) gold += component(FUDGE, 1, 1, 1);
-  return { gold, sp: skillScaledCost(gold, skill, 400, { online }) };   // SPELL-COST-PAST
+  return { gold, sp: skillScaledCost(gold, skill, 400, { online }) }; // SPELL-COST-PAST
 }
 
 /** SPELL-SKILL (spell/castLevel.js): my effect's price under fixed PvE - the classic price at skill 50, grown with the
@@ -204,21 +210,31 @@ function skillPricedCost(made, casterSkillOf, { online = isOnlinePage() } = {}) 
 // recorded quirk), so it asks with `portMods: false` and a set of mine never makes a foe's spell cheaper. A modifier
 // never takes a cost under 1.
 const _costMods = new Map();
-export function registerSpellCostMod(name, fn) { if (typeof fn === 'function') _costMods.set(name, fn); else _costMods.delete(name); }
+export function registerSpellCostMod(name, fn) {
+  if (typeof fn === 'function') _costMods.set(name, fn);
+  else _costMods.delete(name);
+}
 // EG-ZS (bible/11-Multiplayer/Elite-Gates.md section 15, Spellweave: "every fourth damage spell costs nothing"): A FREE CAST -
 // named doors, `fn(entity, spell) -> boolean`, asked after the modifiers above under the same law (a player's own cast,
 // never a foe's): one that answers true prices the cast at nothing, the one cost under the modifiers' floor of 1.
 const _freeCasts = new Map();
-export function registerSpellFreeCast(name, fn) { if (typeof fn === 'function') _freeCasts.set(name, fn); else _freeCasts.delete(name); }
+export function registerSpellFreeCast(name, fn) {
+  if (typeof fn === 'function') _freeCasts.set(name, fn);
+  else _freeCasts.delete(name);
+}
 
 /** The full casting cost of a classic spell record for a caster:
  *  per-effect sums, target multiplier, the floor. SET2: and the port's cost modifiers, for a player's own cast. */
 export function calculateCastCost(spell, casterEntity, { portMods = true, online = isOnlinePage() } = {}) {
-  const skillOf = (id) => skillValue(casterEntity, pathCastSchool(casterEntity, spell, id));   // SCHOOLS3: the school it is cast in
-  let gold = 0, sp = 0;
-  for (const e of skillCasts(casterEntity) ? oneDamagePerKind(spell.effects) : spell.effects) {   // SPELL-SKILL: one damage of a kind
+  const skillOf = (id) => skillValue(casterEntity, pathCastSchool(casterEntity, spell, id)); // SCHOOLS3: the school it is cast in
+  let gold = 0,
+    sp = 0;
+  for (const e of skillCasts(casterEntity) ? oneDamagePerKind(spell.effects) : spell.effects) {
+    // SPELL-SKILL: one damage of a kind
     if (e.type <= -1) continue;
-    const c = castLevels(casterEntity, castSchool(casterEntity, spell, e)) ? skillPricedCost(e, skillOf, { online }) : effectCost(e, skillOf, { online });   // SPELL-SKILL
+    const c = castLevels(casterEntity, castSchool(casterEntity, spell, e))
+      ? skillPricedCost(e, skillOf, { online })
+      : effectCost(e, skillOf, { online }); // SPELL-SKILL
     gold += c.gold;
     sp += c.sp;
   }
@@ -234,13 +250,28 @@ export function calculateCastCost(spell, casterEntity, { portMods = true, online
   // full skill-scaled cost.
   if (spell.minimumCastingCost) sp = CAST_COST_FLOOR;
   if (sp < CAST_COST_FLOOR) sp = CAST_COST_FLOOR;
-  if (spell.pvpKitCost > 0) sp = Math.trunc(spell.pvpKitCost);   // PVP-KIT: the PvP bar's price, a share of maximum magicka (systems/wild/pvpKit.js kitCost)
+  if (spell.pvpKitCost > 0) sp = Math.trunc(spell.pvpKitCost); // PVP-KIT: the PvP bar's price, a share of maximum magicka (systems/wild/pvpKit.js kitCost)
   if (portMods && casterEntity?.isPlayer && _costMods.size) {
     for (const fn of _costMods.values()) {
-      try { const n = fn(casterEntity, sp, spell); if (Number.isFinite(n)) sp = Math.max(1, Math.round(n)); } catch { /* a set is not the cast's problem */ }   // LOOT15: and the spell, for a power that reads its school
+      try {
+        const n = fn(casterEntity, sp, spell);
+        if (Number.isFinite(n)) sp = Math.max(1, Math.round(n));
+      } catch {
+        /* a set is not the cast's problem */
+      } // LOOT15: and the spell, for a power that reads its school
     }
   }
-  if (portMods && casterEntity?.isPlayer) for (const fn of _freeCasts.values()) { try { if (fn(casterEntity, spell) === true) { sp = 0; break; } } catch { /* a door is not the cast's problem */ } }   // EG-ZS
+  if (portMods && casterEntity?.isPlayer)
+    for (const fn of _freeCasts.values()) {
+      try {
+        if (fn(casterEntity, spell) === true) {
+          sp = 0;
+          break;
+        }
+      } catch {
+        /* a door is not the cast's problem */
+      }
+    } // EG-ZS
   return { gold, sp };
 }
 
@@ -261,125 +292,126 @@ export function calculateCastCost(spell, casterEntity, { portMods = true, online
 // magnitude folds spends them.
 
 const CLASSIC_INDEX_ROWS = [
-  [0x00],                                    // Paralysis
-  [0x01, 0x02, 0x03],                        // Continuous Damage
-  [0x04],                                    // Create Item
-  [0x05, 0x05, 0x06],                        // Cure
-  [0x07, 0x07, 0x07],                        // Damage
-  [0x08],                                    // Disintegrate
-  [0x09, 0x08, 0x09],                        // Dispel
-  [0x0A, 0x0A, 0x0A, 0x0A, 0x0A, 0x0A, 0x0A, 0x0A],   // Drain
-  [0x0B, 0x0B, 0x0B, 0x0B, 0x0B],            // Elemental Resistance
-  [0x0C, 0x0C, 0x0C, 0x0C, 0x0C, 0x0C, 0x0C, 0x0C],   // Fortify Attribute
-  [0x0D, 0x0D, 0x0D, 0x0D, 0x0D, 0x0D, 0x0D, 0x0D, 0x07, 0x0E],   // Heal
-  [0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F],   // Transfer
-  [0x26],                                    // Soul Trap
-  [0x10, 0x11],                              // Invisibility
-  [0x12],                                    // Levitate
-  [0x13],                                    // Light
-  [0x14],                                    // Lock
-  [0x28],                                    // Open
-  [0x15],                                    // Regenerate
-  [0x16],                                    // Silence
-  [0x17],                                    // Spell Absorption
-  [0x17],                                    // Spell Reflection
-  [0x16],                                    // Spell Resistance
-  [0x18, 0x10],                              // Chameleon
-  [0x18, 0x10],                              // Shadow
-  [0x14],                                    // Slowfall
-  [0x02],                                    // Climbing
-  [0x02],                                    // Jumping
-  [0x19],                                    // Free Action
-  [0x1A, 0x1A, 0x1A, 0x1A, 0x1A, 0x1A, 0x1A],   // Lycanthropy/Polymorph
-  [0x02],                                    // Water Breathing
-  [0x02],                                    // Water Walking
-  [0x1B],                                    // Dimunition
-  [0x1A, 0x1C, 0x1C, 0x1D],                  // Calm
-  [0x1E],                                    // Charm
-  [0x1F],                                    // Shield
-  [0x27],                                    // Telekinesis
-  [0x20],                                    // Astral Travel
-  [0x20],                                    // Etherealness
-  [0x21, 0x21, 0x22],                        // Detect
-  [0x23],                                    // Identify
-  [0x24],                                    // Wizard Sight
-  [0x07],                                    // Darkness
-  [0x25],                                    // Recall
-  [0x29],                                    // Comprehend Languages
-  [0x2A],                                    // Intensify Fire
-  [0x2A],                                    // Diminish Fire
-  [0x2A],                                    // Wall of Stone?
-  [0x2A],                                    // Wall of Fire?
-  [0x2A],                                    // Wall of Frost?
-  [0x2A],                                    // Wall of Poison?
+  [0x00], // Paralysis
+  [0x01, 0x02, 0x03], // Continuous Damage
+  [0x04], // Create Item
+  [0x05, 0x05, 0x06], // Cure
+  [0x07, 0x07, 0x07], // Damage
+  [0x08], // Disintegrate
+  [0x09, 0x08, 0x09], // Dispel
+  [0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a], // Drain
+  [0x0b, 0x0b, 0x0b, 0x0b, 0x0b], // Elemental Resistance
+  [0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c], // Fortify Attribute
+  [0x0d, 0x0d, 0x0d, 0x0d, 0x0d, 0x0d, 0x0d, 0x0d, 0x07, 0x0e], // Heal
+  [0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f], // Transfer
+  [0x26], // Soul Trap
+  [0x10, 0x11], // Invisibility
+  [0x12], // Levitate
+  [0x13], // Light
+  [0x14], // Lock
+  [0x28], // Open
+  [0x15], // Regenerate
+  [0x16], // Silence
+  [0x17], // Spell Absorption
+  [0x17], // Spell Reflection
+  [0x16], // Spell Resistance
+  [0x18, 0x10], // Chameleon
+  [0x18, 0x10], // Shadow
+  [0x14], // Slowfall
+  [0x02], // Climbing
+  [0x02], // Jumping
+  [0x19], // Free Action
+  [0x1a, 0x1a, 0x1a, 0x1a, 0x1a, 0x1a, 0x1a], // Lycanthropy/Polymorph
+  [0x02], // Water Breathing
+  [0x02], // Water Walking
+  [0x1b], // Dimunition
+  [0x1a, 0x1c, 0x1c, 0x1d], // Calm
+  [0x1e], // Charm
+  [0x1f], // Shield
+  [0x27], // Telekinesis
+  [0x20], // Astral Travel
+  [0x20], // Etherealness
+  [0x21, 0x21, 0x22], // Detect
+  [0x23], // Identify
+  [0x24], // Wizard Sight
+  [0x07], // Darkness
+  [0x25], // Recall
+  [0x29], // Comprehend Languages
+  [0x2a], // Intensify Fire
+  [0x2a], // Diminish Fire
+  [0x2a], // Wall of Stone?
+  [0x2a], // Wall of Fire?
+  [0x2a], // Wall of Frost?
+  [0x2a], // Wall of Poison?
 ];
 const CLASSIC_EFFECT_INDICES = CLASSIC_INDEX_ROWS.map((r) => Object.assign(new Array(12).fill(0), r));
 
 const CLASSIC_COEFFICIENTS = [
-  [0x07, 0x19, 0x07, 0x19],   // 0x00 Paralysis / Cure Magic?
-  [0x07, 0x02, 0x0A, 0x07],   // 0x01 Continuous Damage - Health
-  [0x05, 0x02, 0x0A, 0x07],   // 0x02 CD-Stamina / Climbing / Jumping / Water Breathing / Water Walking
-  [0x0A, 0x02, 0x0A, 0x07],   // 0x03 CD-Spell Points
-  [0x0F, 0x1E, 0x00, 0x00],   // 0x04 Create Item
-  [0x02, 0x19, 0x00, 0x00],   // 0x05 Cure Disease / Cure Poison
-  [0x05, 0x23, 0x00, 0x00],   // 0x06 Cure Paralysis
-  [0x05, 0x07, 0x00, 0x00],   // 0x07 Damage H/S/SP / Heal Health / Darkness
-  [0x14, 0x23, 0x00, 0x00],   // 0x08 Disintegrate / Dispel Undead
-  [0x1E, 0x2D, 0x00, 0x00],   // 0x09 Dispel Magic / Dispel Daedra
-  [0x04, 0x19, 0x02, 0x19],   // 0x0A Drain Attribute
-  [0x19, 0x19, 0x02, 0x19],   // 0x0B Elemental Resistance
-  [0x07, 0x19, 0x0A, 0x1E],   // 0x0C Fortify Attribute
-  [0x0A, 0x07, 0x00, 0x00],   // 0x0D Heal Attribute
-  [0x02, 0x07, 0x00, 0x00],   // 0x0E Heal Stamina
-  [0x05, 0x05, 0x0F, 0x19],   // 0x0F Transfer
-  [0x0A, 0x1E, 0x00, 0x00],   // 0x10 Invisibility
-  [0x0F, 0x23, 0x00, 0x00],   // 0x11 True Invisibility
-  [0x0F, 0x19, 0x00, 0x00],   // 0x12 Levitate
-  [0x02, 0x0A, 0x00, 0x00],   // 0x13 Light
-  [0x05, 0x19, 0x07, 0x1E],   // 0x14 Lock / Slowfall
-  [0x19, 0x05, 0x02, 0x02],   // 0x15 Regenerate
-  [0x05, 0x19, 0x05, 0x19],   // 0x16 Silence / Spell Resistance
-  [0x07, 0x23, 0x07, 0x23],   // 0x17 Spell Absorption / Spell Reflection
-  [0x05, 0x14, 0x00, 0x00],   // 0x18 Chameleon / Shadow
-  [0x05, 0x05, 0x00, 0x00],   // 0x19 Free Action
-  [0x0F, 0x19, 0x0F, 0x19],   // 0x1A Lycanthropy / Polymorph / Calm Animal
-  [0x0A, 0x14, 0x14, 0x28],   // 0x1B Diminution
-  [0x0A, 0x05, 0x14, 0x23],   // 0x1C Calm Undead / Calm Humanoid
-  [0x07, 0x02, 0x0F, 0x1E],   // 0x1D Calm Daedra? (unused)
-  [0x05, 0x02, 0x0A, 0x0F],   // 0x1E Charm
-  [0x07, 0x02, 0x14, 0x0F],   // 0x1F Shield
-  [0x23, 0x02, 0x0A, 0x19],   // 0x20 Astral Travel / Etherealness
-  [0x05, 0x02, 0x14, 0x1E],   // 0x21 Detect Magic / Detect Enemy
-  [0x05, 0x02, 0x0F, 0x19],   // 0x22 Detect Treasure
-  [0x05, 0x02, 0x0A, 0x19],   // 0x23 Identify
-  [0x07, 0x0C, 0x05, 0x05],   // 0x24 Wizard Sight
-  [0x23, 0x2D, 0x00, 0x00],   // 0x25 Recall
-  [0x0F, 0x11, 0x0A, 0x11],   // 0x26 Soul Trap
-  [0x14, 0x11, 0x19, 0x23],   // 0x27 Telekinesis
-  [0x05, 0x19, 0x00, 0x00],   // 0x28 Open
-  [0x0F, 0x11, 0x0A, 0x11],   // 0x29 Comprehend Languages
-  [0x0F, 0x0F, 0x05, 0x05],   // 0x2A Intensify/Diminish Fire / the four Walls
+  [0x07, 0x19, 0x07, 0x19], // 0x00 Paralysis / Cure Magic?
+  [0x07, 0x02, 0x0a, 0x07], // 0x01 Continuous Damage - Health
+  [0x05, 0x02, 0x0a, 0x07], // 0x02 CD-Stamina / Climbing / Jumping / Water Breathing / Water Walking
+  [0x0a, 0x02, 0x0a, 0x07], // 0x03 CD-Spell Points
+  [0x0f, 0x1e, 0x00, 0x00], // 0x04 Create Item
+  [0x02, 0x19, 0x00, 0x00], // 0x05 Cure Disease / Cure Poison
+  [0x05, 0x23, 0x00, 0x00], // 0x06 Cure Paralysis
+  [0x05, 0x07, 0x00, 0x00], // 0x07 Damage H/S/SP / Heal Health / Darkness
+  [0x14, 0x23, 0x00, 0x00], // 0x08 Disintegrate / Dispel Undead
+  [0x1e, 0x2d, 0x00, 0x00], // 0x09 Dispel Magic / Dispel Daedra
+  [0x04, 0x19, 0x02, 0x19], // 0x0A Drain Attribute
+  [0x19, 0x19, 0x02, 0x19], // 0x0B Elemental Resistance
+  [0x07, 0x19, 0x0a, 0x1e], // 0x0C Fortify Attribute
+  [0x0a, 0x07, 0x00, 0x00], // 0x0D Heal Attribute
+  [0x02, 0x07, 0x00, 0x00], // 0x0E Heal Stamina
+  [0x05, 0x05, 0x0f, 0x19], // 0x0F Transfer
+  [0x0a, 0x1e, 0x00, 0x00], // 0x10 Invisibility
+  [0x0f, 0x23, 0x00, 0x00], // 0x11 True Invisibility
+  [0x0f, 0x19, 0x00, 0x00], // 0x12 Levitate
+  [0x02, 0x0a, 0x00, 0x00], // 0x13 Light
+  [0x05, 0x19, 0x07, 0x1e], // 0x14 Lock / Slowfall
+  [0x19, 0x05, 0x02, 0x02], // 0x15 Regenerate
+  [0x05, 0x19, 0x05, 0x19], // 0x16 Silence / Spell Resistance
+  [0x07, 0x23, 0x07, 0x23], // 0x17 Spell Absorption / Spell Reflection
+  [0x05, 0x14, 0x00, 0x00], // 0x18 Chameleon / Shadow
+  [0x05, 0x05, 0x00, 0x00], // 0x19 Free Action
+  [0x0f, 0x19, 0x0f, 0x19], // 0x1A Lycanthropy / Polymorph / Calm Animal
+  [0x0a, 0x14, 0x14, 0x28], // 0x1B Diminution
+  [0x0a, 0x05, 0x14, 0x23], // 0x1C Calm Undead / Calm Humanoid
+  [0x07, 0x02, 0x0f, 0x1e], // 0x1D Calm Daedra? (unused)
+  [0x05, 0x02, 0x0a, 0x0f], // 0x1E Charm
+  [0x07, 0x02, 0x14, 0x0f], // 0x1F Shield
+  [0x23, 0x02, 0x0a, 0x19], // 0x20 Astral Travel / Etherealness
+  [0x05, 0x02, 0x14, 0x1e], // 0x21 Detect Magic / Detect Enemy
+  [0x05, 0x02, 0x0f, 0x19], // 0x22 Detect Treasure
+  [0x05, 0x02, 0x0a, 0x19], // 0x23 Identify
+  [0x07, 0x0c, 0x05, 0x05], // 0x24 Wizard Sight
+  [0x23, 0x2d, 0x00, 0x00], // 0x25 Recall
+  [0x0f, 0x11, 0x0a, 0x11], // 0x26 Soul Trap
+  [0x14, 0x11, 0x19, 0x23], // 0x27 Telekinesis
+  [0x05, 0x19, 0x00, 0x00], // 0x28 Open
+  [0x0f, 0x11, 0x0a, 0x11], // 0x29 Comprehend Languages
+  [0x0f, 0x0f, 0x05, 0x05], // 0x2A Intensify/Diminish Fire / the four Walls
 ];
 
 // effectMagicSchools + magicSkills (:2500-2513): school index per
 // classic TYPE, then the school's skill.
 const CLASSIC_MAGIC_SCHOOLS = [
-  0, 2, 3, 1, 2, 2, 3, 2, 0, 1,
-  1, 2, 3, 5, 4, 5, 3, 3, 1, 3,
-  1, 4, 4, 5, 5, 0, 1, 0, 0, 5,
-  0, 4, 0, 4, 4, 0, 3, 3, 0, 4,
-  4, 4, 5, 3, 3, 0, 0, 4, 4, 4,
-  4];
-const CLASSIC_MAGIC_SKILLS = [SKILLS.Alteration, SKILLS.Restoration, SKILLS.Destruction, SKILLS.Mysticism, SKILLS.Thaumaturgy, SKILLS.Illusion];
+  0, 2, 3, 1, 2, 2, 3, 2, 0, 1, 1, 2, 3, 5, 4, 5, 3, 3, 1, 3, 1, 4, 4, 5, 5, 0, 1, 0, 0, 5, 0, 4, 0, 4, 4, 0, 3, 3, 0,
+  4, 4, 4, 5, 3, 3, 0, 0, 4, 4, 4, 4,
+];
+const CLASSIC_MAGIC_SKILLS = [
+  SKILLS.Alteration,
+  SKILLS.Restoration,
+  SKILLS.Destruction,
+  SKILLS.Mysticism,
+  SKILLS.Thaumaturgy,
+  SKILLS.Illusion,
+];
 
 // settingsTypes (:2515-2524): which of the seven folds each TYPE uses.
 const CLASSIC_SETTINGS_TYPES = [
-  1, 2, 3, 4, 5, 4, 4, 2, 1, 6,
-  5, 6, 1, 3, 3, 3, 1, 4, 2, 1,
-  1, 1, 1, 3, 3, 3, 3, 3, 3, 1,
-  3, 3, 1, 1, 1, 2, 2, 1, 1, 1,
-  1, 1, 3, 4, 1, 2, 2, 2, 2, 2,
-  2];
+  1, 2, 3, 4, 5, 4, 4, 2, 1, 6, 5, 6, 1, 3, 3, 3, 1, 4, 2, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 1, 3, 3, 1, 1, 1, 2, 2, 1, 1,
+  1, 1, 1, 3, 4, 1, 2, 2, 2, 2, 2, 2,
+];
 const CLASSIC_RANGE_MODIFIERS = [2, 2, 3, 4, 5];
 
 /** C# int division truncates; every field here is a u8, so floor and
@@ -395,18 +427,43 @@ function classicCostFromSettings(settingsType, e, c) {
   const magBase = Math.trunc((e.magnitudeBaseLow + e.magnitudeBaseHigh) / 2);
   const magPlus = Math.trunc((e.magnitudeLevelBase + e.magnitudeLevelHigh) / 2);
   switch (settingsType) {
-    case 1: return c[0] * e.durationBase + cdiv(e.durationMod, e.durationPerLevel) * c[1]
-      + c[2] * e.chanceBase + cdiv(e.chanceMod, e.chancePerLevel) * c[3];
-    case 2: return c[0] * e.durationBase + cdiv(e.durationMod, e.durationPerLevel) * c[1]
-      + magBase * c[2] + cdiv(magPlus, e.magnitudePerLevel) * c[3];
-    case 3: return c[0] * e.durationBase + cdiv(e.durationMod, e.durationPerLevel) * c[1];
-    case 4: return c[0] * e.chanceBase + cdiv(e.chanceMod, e.chancePerLevel) * c[1];
-    case 5: return c[0] * magBase + cdiv(magPlus, e.magnitudePerLevel) * c[1];
-    case 6: return c[0] * e.durationBase + cdiv(c[1] * e.durationMod, e.durationPerLevel)
-      + magBase * c[2] + cdiv(c[3], e.magnitudePerLevel) * magPlus;
-    case 7: return magBase * c[0]   // "supported in classic but no effect uses it"
-      + cdiv(cdiv(cdiv(c[1] * (e.magnitudeLevelBase + e.magnitudeLevelHigh), 2), e.magnitudePerLevel) * e.durationBase, e.durationMod);
-    default: return 0;
+    case 1:
+      return (
+        c[0] * e.durationBase +
+        cdiv(e.durationMod, e.durationPerLevel) * c[1] +
+        c[2] * e.chanceBase +
+        cdiv(e.chanceMod, e.chancePerLevel) * c[3]
+      );
+    case 2:
+      return (
+        c[0] * e.durationBase +
+        cdiv(e.durationMod, e.durationPerLevel) * c[1] +
+        magBase * c[2] +
+        cdiv(magPlus, e.magnitudePerLevel) * c[3]
+      );
+    case 3:
+      return c[0] * e.durationBase + cdiv(e.durationMod, e.durationPerLevel) * c[1];
+    case 4:
+      return c[0] * e.chanceBase + cdiv(e.chanceMod, e.chancePerLevel) * c[1];
+    case 5:
+      return c[0] * magBase + cdiv(magPlus, e.magnitudePerLevel) * c[1];
+    case 6:
+      return (
+        c[0] * e.durationBase +
+        cdiv(c[1] * e.durationMod, e.durationPerLevel) +
+        magBase * c[2] +
+        cdiv(c[3], e.magnitudePerLevel) * magPlus
+      );
+    case 7:
+      return (
+        magBase * c[0] + // "supported in classic but no effect uses it"
+        cdiv(
+          cdiv(cdiv(c[1] * (e.magnitudeLevelBase + e.magnitudeLevelHigh), 2), e.magnitudePerLevel) * e.durationBase,
+          e.durationMod,
+        )
+      );
+    default:
+      return 0;
   }
 }
 
@@ -427,7 +484,9 @@ export function classicCastingCost(spell, skillOf = null, { online = isOnlinePag
     const sub = e.subType === -1 || e.subType == null ? 0 : e.subType;
     const coef = CLASSIC_COEFFICIENTS[CLASSIC_EFFECT_INDICES[e.type]?.[sub] ?? 0] ?? CLASSIC_COEFFICIENTS[0];
     const skill = skillOf ? skillOf(CLASSIC_MAGIC_SKILLS[CLASSIC_MAGIC_SCHOOLS[e.type] ?? 0]) : 50;
-    cost += skillScaledCost(classicCostFromSettings(CLASSIC_SETTINGS_TYPES[e.type] ?? 0, e, coef), skill, 100, { online });   // SPELL-COST-PAST
+    cost += skillScaledCost(classicCostFromSettings(CLASSIC_SETTINGS_TYPES[e.type] ?? 0, e, coef), skill, 100, {
+      online,
+    }); // SPELL-COST-PAST
   }
   cost = (cost * (CLASSIC_RANGE_MODIFIERS[spell.rangeType] ?? 2)) >> 1;
   return cost < 5 ? 5 : cost;

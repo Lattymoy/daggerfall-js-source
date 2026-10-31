@@ -15,14 +15,18 @@ import { isSnowFreeClimate } from '../world/weather.js';
 
 // SoundClips.cs - the footstep pairs + the water steps.
 export const FOOTSTEP = Object.freeze({
-  Stone1: 309, Stone2: 330,       // PlayerFootstepStone (dungeon + exterior paths)
-  Outside1: 310, Outside2: 331,
-  Snow1: 311, Snow2: 332,
-  Wood1: 313, Wood2: 333,         // buildings
-  Shallow: 334,                   // SplashSmallLow - shallow dungeon water
-  Submerged: 346,                 // SplashSmall - swimming / exterior water
+  Stone1: 309,
+  Stone2: 330, // PlayerFootstepStone (dungeon + exterior paths)
+  Outside1: 310,
+  Outside2: 331,
+  Snow1: 311,
+  Snow2: 332,
+  Wood1: 313,
+  Wood2: 333, // buildings
+  Shallow: 334, // SplashSmallLow - shallow dungeon water
+  Submerged: 346, // SplashSmall - swimming / exterior water
 });
-export const WALK_STEP_INTERVAL = 2.5;    // PlayerFootsteps.cs:27-28 - run uses the same
+export const WALK_STEP_INTERVAL = 2.5; // PlayerFootsteps.cs:27-28 - run uses the same
 export const FOOTSTEP_VOLUME = 0.7;
 
 /** The sound-set decision (PlayerFootsteps.FixedUpdate:120-208).
@@ -45,7 +49,10 @@ export const FOOTSTEP_KIND = Object.freeze({ Outside: 0, Snow: 1, Wood: 2, Stone
 export function pickFootstepKind(ctx = {}) {
   let kind;
   if (!ctx.inside && !ctx.onStaticGeometry) {
-    kind = (ctx.winter && !isSnowFreeClimate(ctx.climateIndex ?? CLIMATES.Woodlands)) ? FOOTSTEP_KIND.Snow : FOOTSTEP_KIND.Outside;
+    kind =
+      ctx.winter && !isSnowFreeClimate(ctx.climateIndex ?? CLIMATES.Woodlands)
+        ? FOOTSTEP_KIND.Snow
+        : FOOTSTEP_KIND.Outside;
   } else if (ctx.inBuilding) kind = FOOTSTEP_KIND.Wood;
   else kind = FOOTSTEP_KIND.Stone;
   if (ctx.onExteriorWater) kind = FOOTSTEP_KIND.Submerged;
@@ -70,11 +77,11 @@ export const FOOTSTEP_CLIP_SETS = Object.freeze([
  *  motor state; returns a clip id to play or null. */
 export class FootstepMachine {
   constructor() {
-    this.last = null;           // [x, z]
+    this.last = null; // [x, z]
     this.distance = 0;
     this.alternate = false;
     this.lostGrounding = false;
-    this.ignoreLostGrounding = true;   // swallow the first landing (load/entry)
+    this.ignoreLostGrounding = true; // swallow the first landing (load/entry)
     // AUDIT 26 F090: the dungeon water HYSTERESIS is state, so it
     // lives with the machine that already carries some. See waterStep.
     this.dungeonShallow = false;
@@ -94,9 +101,9 @@ export class FootstepMachine {
    *  transform.position on a CharacterController; the hosts pass
    *  feet + half-height. Returns the latched shallow flag. */
   waterStep(centreY, surf, swimming) {
-    if (swimming) return this.dungeonShallow;   // the submerged arm owns this frame
-    if (surf == null || (centreY - 0.95) >= surf) this.dungeonShallow = false;
-    else if (!this.dungeonShallow && (centreY - 0.57) < surf) this.dungeonShallow = true;
+    if (swimming) return this.dungeonShallow; // the submerged arm owns this frame
+    if (surf == null || centreY - 0.95 >= surf) this.dungeonShallow = false;
+    else if (!this.dungeonShallow && centreY - 0.57 < surf) this.dungeonShallow = true;
     return this.dungeonShallow;
   }
 
@@ -109,7 +116,9 @@ export class FootstepMachine {
    *  the stride anchor so the next update re-seeds instead of
    *  accumulating the 819.2-unit shift as walked distance (which
    *  fired a spurious footstep at every map-pixel crossing). */
-  rebase() { this.last = null; }
+  rebase() {
+    this.last = null;
+  }
 
   update(pos, m, set) {
     const here = [pos[0], pos[2]];
@@ -147,13 +156,13 @@ export class FootstepMachine {
     // runs). Only `rebase()` above still clears the anchor - the
     // floating origin has no DFU counterpart.
     if (m.levitating || (m.onFoot === false && !m.onExteriorWater)) {
-      this.distance = 0;   // :223 - and no lastPosition write
+      this.distance = 0; // :223 - and no lastPosition write
       return null;
     }
     if (!m.swimming) {
       if (!m.grounded) {
-        this.distance = 0;          // :235-237 - distance and the flag,
-        this.lostGrounding = true;  // never the anchor
+        this.distance = 0; // :235-237 - distance and the flag,
+        this.lostGrounding = true; // never the anchor
         return null;
       }
       if (this.lostGrounding) {
@@ -162,18 +171,21 @@ export class FootstepMachine {
         this.distance = 0;
         this.last = here;
         this.lostGrounding = false;
-        if (this.ignoreLostGrounding) { this.ignoreLostGrounding = false; return null; }
+        if (this.ignoreLostGrounding) {
+          this.ignoreLostGrounding = false;
+          return null;
+        }
         const clip = this.alternate ? set[1] : set[0];
         this.alternate = !this.alternate;
         return { clip, volume: FOOTSTEP_VOLUME };
       }
     }
-    if (m.standingStill) return null;   // :264-265, a bare return
+    if (m.standingStill) return null; // :264-265, a bare return
     this.distance += Math.hypot(here[0] - this.last[0], here[1] - this.last[1]);
     this.last = here;
     if (this.distance <= WALK_STEP_INTERVAL) return null;
     let volume = FOOTSTEP_VOLUME;
-    if (m.halfSpeed) volume *= 0.5;   // IsMovingLessThanHalfSpeed
+    if (m.halfSpeed) volume *= 0.5; // IsMovingLessThanHalfSpeed
     const clip = this.alternate ? set[1] : set[0];
     this.alternate = !this.alternate;
     this.distance = 0;

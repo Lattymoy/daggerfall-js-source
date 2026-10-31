@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-CLAWS-C3-the-overhaul-metal-past-the-floor",
     "file": "src/combat/pcaao.js",
-    "old": "    damage += clawMetalDamage(attacker);\n  } else {\n    damage += damageModifier;\n  }\n  if (damage < 1) damage = 0;\n  if (damage >= 1) damage += pcaaoBonusOrPenaltyByEnemyType(attacker, target, rolls);\n",
-    "new": "  } else {\n    damage += damageModifier;\n  }\n  if (damage < 1) damage = 0;\n  if (player) damage += clawMetalDamage(attacker);\n  if (damage >= 1) damage += pcaaoBonusOrPenaltyByEnemyType(attacker, target, rolls);\n",
+    "old": "    damage += clawMetalDamage(attacker);\n  } else {\n    damage += damageModifier;\n  }\n  if (damage < 1) damage = 0;",
+    "new": "  } else {\n    damage += damageModifier;\n  }\n  if (damage < 1) damage = 0;\n  if (player) damage += clawMetalDamage(attacker);",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-CLAWS-C3-the-overhaul-metal-past-the-enemy-type-term",
     "file": "src/combat/pcaao.js",
-    "old": "    damage += clawMetalDamage(attacker);\n  } else {\n    damage += damageModifier;\n  }\n  if (damage < 1) damage = 0;\n  if (damage >= 1) damage += pcaaoBonusOrPenaltyByEnemyType(attacker, target, rolls);\n",
-    "new": "  } else {\n    damage += damageModifier;\n  }\n  if (damage < 1) damage = 0;\n  if (damage >= 1) damage += pcaaoBonusOrPenaltyByEnemyType(attacker, target, rolls);\n  if (player) damage += clawMetalDamage(attacker);\n",
+    "old": "    damage += clawMetalDamage(attacker);\n  } else {\n    damage += damageModifier;\n  }\n  if (damage < 1) damage = 0;\n  if (damage >= 1) damage += pcaaoBonusOrPenaltyByEnemyType(attacker, target, rolls);",
+    "new": "  } else {\n    damage += damageModifier;\n  }\n  if (damage < 1) damage = 0;\n  if (damage >= 1) damage += pcaaoBonusOrPenaltyByEnemyType(attacker, target, rolls);\n  if (player) damage += clawMetalDamage(attacker);",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-CLAWS-C7-the-overhaul-metal-outside-the-backstab",
     "file": "src/combat/pcaao.js",
-    "old": "        damage = pcaaoBackstabDamage(damage, backstab, rolls, say);\n        backstabbed(before, damage);\n      }\n    } else if (AIAttacker) {",
-    "new": "        damage = pcaaoBackstabDamage(damage, backstab, rolls, say);\n        if (before > 0 && damage === before * 3) damage -= 2 * clawMetalDamage(attacker);\n        backstabbed(before, damage + 2 * clawMetalDamage(attacker));\n      }\n    } else if (AIAttacker) {",
+    "old": "        backstabbed(before, damage);",
+    "new": "        if (before > 0 && damage === before * 3) damage -= 2 * clawMetalDamage(attacker);\n        backstabbed(before, damage + 2 * clawMetalDamage(attacker));",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-CLAWS-C5-the-card-metal-as-to-hit-classic",
     "file": "src/combat/combatStats.js",
-    "old": "    base = skill + swing.toHit + prof.toHitMod + racial.toHitMod;\n",
-    "new": "    base = skill + swing.toHit + prof.toHitMod + racial.toHitMod + (weapon ? 0 : clawMetalDamage(entity) * 10);\n",
+    "old": "    base = skill + swing.toHit + prof.toHitMod + racial.toHitMod;",
+    "new": "    base = skill + swing.toHit + prof.toHitMod + racial.toHitMod + (weapon ? 0 : clawMetalDamage(entity) * 10);",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-CLAWS-C5-the-card-metal-as-to-hit-overhaul",
     "file": "src/combat/combatStats.js",
-    "old": "+ racial.toHitMod + (weapon ? pcaaoWeaponToHit(weapon) : 0);",
-    "new": "+ racial.toHitMod + (weapon ? pcaaoWeaponToHit(weapon) : clawMetalDamage(entity) * 2);",
+    "old": "      (weapon ? pcaaoWeaponToHit(weapon) : 0);",
+    "new": "      (weapon ? pcaaoWeaponToHit(weapon) : clawMetalDamage(entity) * 2);",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-CLAWS-C3-the-card-metal-past-the-floor",
     "file": "src/combat/combatStats.js",
-    "old": "    if (!weapon) {\n      if (core.overhaul && d < 1) d = 0;\n      d += bonusOrPenaltyByEnemyType(entity, foe);",
-    "new": "    if (!weapon) {\n      d -= matMod; if (core.overhaul && d < 1) d = 0;\n      d += matMod + bonusOrPenaltyByEnemyType(entity, foe);",
+    "old": "      if (core.overhaul && d < 1) d = 0;\n      d += bonusOrPenaltyByEnemyType(entity, foe);",
+    "new": "      d -= matMod;\n      if (core.overhaul && d < 1) d = 0;\n      d += matMod + bonusOrPenaltyByEnemyType(entity, foe);",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-CLAWS-A1-the-sheet-without-it",
     "file": "src/combat/duelCombat.js",
-    "old": "    cm: clamp(clawMetalDamage(entity), 0, CLAW_METAL_MAX),\n",
-    "new": "    cm: 0,\n",
+    "old": "    cm: clamp(clawMetalDamage(entity), 0, CLAW_METAL_MAX),",
+    "new": "    cm: 0,",
     "tests": [
       "test/systems/auditclaws.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-CLAWS-A1-the-stub-dropping-it",
     "file": "src/combat/duelCombat.js",
-    "old": "    clawMetal: clamp(a.cm ?? 0, 0, CLAW_METAL_MAX),\n",
-    "new": "",
+    "old": "    clawMetal: clamp(a.cm ?? 0, 0, CLAW_METAL_MAX),\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/auditclaws.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-CLAWS-A1-the-stub-wearing-the-gauntlets",
     "file": "src/combat/duelCombat.js",
-    "old": "    activeEffects: [], items: [], equipTable: {},\n",
-    "new": "    activeEffects: [], items: [], equipTable: { 20: { group: 'Armor', templateIndex: 103, material: 0x0209 } },\n",
+    "old": "    equipTable: {},",
+    "new": "    equipTable: { 20: { group: 'Armor', templateIndex: 103, material: 0x0209 } },",
     "tests": [
       "test/systems/auditclaws.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "AUDIT-CLAWS-B2-the-value-one-metal-up",
     "file": "src/systems/item/itemTemplates.js",
-    "old": "materialValue(t.basePrice, plateMetal(m))",
-    "new": "materialValue(t.basePrice, plateMetal(m) + 1)",
+    "old": "    if (isPlate(m)) return materialValue(t.basePrice, plateMetal(m)); // plate (AUDIT CLAWS B2: the decode's one home)",
+    "new": "    if (isPlate(m)) return materialValue(t.basePrice, plateMetal(m) + 1); // plate (AUDIT CLAWS B2: the decode's one home)",
     "tests": [
       "test/systems/audit18_systems_items.test.js",
       "test/systems/shopstock.test.js"
@@ -183,8 +183,8 @@
   {
     "name": "AUDIT-CLAWS-B2-the-armour-value-one-metal-up",
     "file": "src/systems/armorMaterials.js",
-    "old": "PLATE_ARMOR_VALUES[plateMetal(material)]",
-    "new": "PLATE_ARMOR_VALUES[plateMetal(material) + 1]",
+    "old": "  if (isPlate(material)) return PLATE_ARMOR_VALUES[plateMetal(material)] ?? 0;",
+    "new": "  if (isPlate(material)) return PLATE_ARMOR_VALUES[plateMetal(material) + 1] ?? 0;",
     "tests": [
       "test/combat/audit18_combat.test.js",
       "test/systems/audit24_enemytable.test.js",

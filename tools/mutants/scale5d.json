@@ -62,8 +62,8 @@
   {
     "name": "SCALE5d-walk-stops",
     "file": "server/src/relayScale.js",
-    "old": "    if (res.status !== 503 || res.headers.get(LAYER_FULL_HEADER) !== '1') return res;\n  }\n  return res;",
-    "new": "    return res;\n  }\n  return res;",
+    "old": "    if (res.status !== 503 || res.headers.get(LAYER_FULL_HEADER) !== '1') return res;",
+    "new": "    return res;",
     "tests": [
       "test/net/scale5d.test.js"
     ],
@@ -83,7 +83,7 @@
     "name": "SCALE5d-no-wrap",
     "file": "server/src/relayScale.js",
     "old": "    const ly = (start + i) % LAYERS_MAX;",
-    "new": "    const ly = start + i; if (ly >= LAYERS_MAX) break;",
+    "new": "    const ly = start + i;\n    if (ly >= LAYERS_MAX) break;",
     "tests": [
       "test/net/scale5d.test.js"
     ],

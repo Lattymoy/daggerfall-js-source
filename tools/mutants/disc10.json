@@ -2,8 +2,8 @@
   {
     "name": "DISC10-the-cart-never-yields",
     "file": "src/player/mwView.js",
-    "old": "cart: !!frame.cart && !eotbCartYields(),",
-    "new": "cart: !!frame.cart,",
+    "old": "      cart: !!frame.cart && !eotbCartYields(),",
+    "new": "      cart: !!frame.cart,",
     "tests": [
       "test/systems/disc10.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DISC10-the-pick-ignores-the-turned-box",
     "file": "src/player/activate.js",
-    "old": "    let d = target.obb ? rayObb(eye, dir, target.obb.m, target.obb.box) : rayAabb(eye, dir, target.aabb);",
-    "new": "    let d = rayAabb(eye, dir, target.aabb);",
+    "old": "    let d = target.obb ? rayObb(eye, dir, target.obb.m, target.obb.box) : rayAabb(eye, dir, target.aabb); // DISC10: a turned body's own box where it has one",
+    "new": "    let d = rayAabb(eye, dir, target.aabb); // DISC10: a turned body's own box where it has one",
     "tests": [
       "test/systems/disc10.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DISC10-the-cart-offers-no-turned-box",
     "file": "src/player/eyeOfTheBeholder/eotbWagon.js",
-    "old": "obb: localBox ? { m, box: localBox } : null, noSurface: true,",
-    "new": "noSurface: true,",
+    "old": "          obb: localBox ? { m, box: localBox } : null,\n          noSurface: true,",
+    "new": "          noSurface: true,",
     "tests": [
       "test/systems/disc10.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "DISC10-the-cart-names-the-ground-inside-it",
     "file": "src/player/eyeOfTheBeholder/eotbWagon.js",
-    "old": "obb: localBox ? { m, box: localBox } : null, noSurface: true,",
-    "new": "obb: localBox ? { m, box: localBox } : null,",
+    "old": "          noSurface: true,\n          distance: rayDistance,",
+    "new": "          distance: rayDistance,",
     "tests": [
       "test/systems/disc10.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "DISC10-the-person-marks-only-the-person",
     "file": "src/systems/answerPipeline.js",
-    "old": "      if (item.questionType === QUESTION_TYPE.Person) {\n        const placeKey",
-    "new": "      if (false) {\n        const placeKey",
+    "old": "      if (item.questionType === QUESTION_TYPE.Person) {",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/disc10.test.js"
     ]
@@ -206,8 +206,8 @@
   {
     "name": "DISC10-D-V1-the-sun-reads-the-past-round",
     "file": "src/systems/passiveSpecials.js",
-    "old": "    && playerInSunlight(clockMinutes)) {\n    sinks?.hurt?.(SUN_DAMAGE_AMOUNT);",
-    "new": "    && playerInSunlight(nowMinutes)) {\n    sinks?.hurt?.(SUN_DAMAGE_AMOUNT);",
+    "old": "  if (nowMinutes % SUN_DAMAGE_PER_ROUNDS === 0 && careerSunAverse(entity) && playerInSunlight(clockMinutes)) {",
+    "new": "  if (nowMinutes % SUN_DAMAGE_PER_ROUNDS === 0 && careerSunAverse(entity) && playerInSunlight(nowMinutes)) {",
     "tests": [
       "test/systems/disc10_vampire.test.js"
     ]
@@ -224,8 +224,8 @@
   {
     "name": "DISC10-E-V1-the-moon-reads-the-past-round",
     "file": "src/systems/lycanthropy.js",
-    "old": "const moonForces = moonNight ? isFullMoonNightFromMinutes(skyMinutes) : isFullMoonFromMinutes(skyMinutes);",
-    "new": "const moonForces = moonNight ? isFullMoonNightFromMinutes(skyMinutes) : isFullMoonFromMinutes(nowMinutes);",
+    "old": "  const moonForces = moonNight ? isFullMoonNightFromMinutes(skyMinutes) : isFullMoonFromMinutes(skyMinutes);",
+    "new": "  const moonForces = moonNight ? isFullMoonNightFromMinutes(skyMinutes) : isFullMoonFromMinutes(nowMinutes);",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]
@@ -242,8 +242,8 @@
   {
     "name": "DISC10-D-V2-the-deploy-mints-nothing",
     "file": "src/systems/infection.js",
-    "old": "  if (entity && _curseDeployer && Number.isFinite(now)) _curseDeployer(entity, { now: Math.floor(now) });\n",
-    "new": "",
+    "old": "  if (entity && _curseDeployer && Number.isFinite(now)) _curseDeployer(entity, { now: Math.floor(now) });\n  if (key === INFECTION.Vampirism) messageBox?.(DEATH_IS_NOT_ETERNAL_TEXT_ID);",
+    "new": "  if (key === INFECTION.Vampirism) messageBox?.(DEATH_IS_NOT_ETERNAL_TEXT_ID);",
     "tests": [
       "test/systems/disc10_vampire.test.js"
     ]
@@ -305,8 +305,8 @@
   {
     "name": "DISC10-D-V3-the-deploy-hands-no-player",
     "file": "src/systems/infection.js",
-    "old": "pending.clan = clanOf ? clanOf(entry.regionIndex, entity) : VAMPIRE_CLANS.Lyrezi;",
-    "new": "pending.clan = clanOf ? clanOf(entry.regionIndex) : VAMPIRE_CLANS.Lyrezi;",
+    "old": "    pending.clan = clanOf ? clanOf(entry.regionIndex, entity) : VAMPIRE_CLANS.Lyrezi;",
+    "new": "    pending.clan = clanOf ? clanOf(entry.regionIndex) : VAMPIRE_CLANS.Lyrezi;",
     "tests": [
       "test/systems/disc10_vampire.test.js"
     ]
@@ -386,8 +386,8 @@
   {
     "name": "DISC10-D-V5-the-enhanced-sheet-reads-the-birth-race",
     "file": "src/ui/enhanced/enhancedCharSheet.js",
-    "old": "    race: processGrammar(liveRaceName(e) || 'Breton'),",
-    "new": "    race: processGrammar(e.race ?? 'Breton'),",
+    "old": "    race: processGrammar(liveRaceName(e) || 'Breton'), // L10N3d: shown in the player's language; L10N3g: through the grammar, as the classic sheet's raceLabel (:398)",
+    "new": "    race: processGrammar(e.race ?? 'Breton'), // L10N3d: shown in the player's language; L10N3g: through the grammar, as the classic sheet's raceLabel (:398)",
     "tests": [
       "test/systems/disc10_vampire.test.js"
     ]
@@ -404,8 +404,8 @@
   {
     "name": "DISC10-D-V8-the-turn-leaves-the-rest-window-up",
     "file": "src/systems/infection.js",
-    "old": "    cancelRest?.();\n",
-    "new": "",
+    "old": "    cancelRest?.();\n    // DISC10-D V3: GetVampireClan reads the PLAYER's own faction data",
+    "new": "    // DISC10-D V3: GetVampireClan reads the PLAYER's own faction data",
     "tests": [
       "test/systems/disc10_vampire.test.js"
     ]
@@ -449,8 +449,8 @@
   {
     "name": "DISC10-E-V9-a-hole-is-read-as-a-curse",
     "file": "src/systems/lycanthropy.js",
-    "old": "(entity?.activeEffects ?? []).find((a) => a?.kind === 'racialOverride'\n    && a.racial === 'lycanthropy'",
-    "new": "(entity?.activeEffects ?? []).find((a) => a.kind === 'racialOverride'\n    && a.racial === 'lycanthropy'",
+    "old": "  (entity?.activeEffects ?? []).find((a) => a?.kind === 'racialOverride' && a.racial === 'lycanthropy' && !a.ended) ??",
+    "new": "  (entity?.activeEffects ?? []).find((a) => a.kind === 'racialOverride' && a.racial === 'lycanthropy' && !a.ended) ??",
     "tests": [
       "test/systems/auditworld5.test.js",
       "test/systems/quest/world5.test.js",
@@ -470,8 +470,8 @@
   {
     "name": "DISC10-E-L2-the-claws-strike-as-a-weapon",
     "file": "src/combat/playerWeapon.js",
-    "old": "const opts = playerAttackOptions(this.strikingWeapon, this.machine.state",
-    "new": "const opts = playerAttackOptions(this.weapon, this.machine.state",
+    "old": "      const opts = playerAttackOptions(this.strikingWeapon, this.machine.state, back, rolls);",
+    "new": "      const opts = playerAttackOptions(this.weapon, this.machine.state, back, rolls);",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "DISC10-E-L2-the-striking-weapon-is-the-screens",
     "file": "src/combat/playerWeapon.js",
-    "old": "    if (!this.weapon?.werecreatureClaws) return this.weapon;\n    return this.handItem(this.activeHand);",
-    "new": "    if (!this.weapon?.werecreatureClaws) return this.weapon;\n    return this.weapon;",
+    "old": "    return this.handItem(this.activeHand); // TWO-HANDS: the used hand - the beast is always single, so its lead",
+    "new": "    return this.weapon; // TWO-HANDS: the used hand - the beast is always single, so its lead",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "DISC10-E-L3-the-counter-opens-for-the-beast",
     "file": "src/ui/tradeDoor.js",
-    "old": "  if (sup) { messageBox(sup.text); return null; }\n",
-    "new": "",
+    "old": "  if (sup) {\n    messageBox(sup.text);\n    return null;\n  }\n  noteFirstUse('shops'); // TUT1: a counter that opens (AUDIT TUT1: not the beast's refusal)",
+    "new": "  noteFirstUse('shops'); // TUT1: a counter that opens (AUDIT TUT1: not the beast's refusal)",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "WERE-POTIONS-the-beast-refused-every-potion",
     "file": "src/systems/quickslots.js",
-    "old": "  if (sup && !isPotion(r?.item)) { say?.(sup.text); return { kind: 'refused' }; }",
-    "new": "  if (sup) { say?.(sup.text); return { kind: 'refused' }; }",
+    "old": "  if (sup && !isPotion(r?.item)) {",
+    "new": "  if (sup) {",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]
@@ -515,7 +515,7 @@
   {
     "name": "WERE-POTIONS-any-pack-item-for-the-beast",
     "file": "src/systems/quickslots.js",
-    "old": "  if (sup && !isPotion(r?.item)) { say?.(sup.text); return { kind: 'refused' }; }",
+    "old": "  if (sup && !isPotion(r?.item)) {\n    say?.(sup.text);\n    return { kind: 'refused' };\n  }",
     "new": "",
     "tests": [
       "test/systems/disc10_lycan.test.js"
@@ -524,8 +524,8 @@
   {
     "name": "DISC10-E-L3-the-quickslot-swap-for-the-beast",
     "file": "src/systems/quickslots.js",
-    "old": "  // sword into the claws MorphSelf had just emptied (:463-467).\n  const sup = racialSuppressInventory(entity);\n  if (sup) { say?.(sup.text); return { kind: 'refused' }; }\n",
-    "new": "  // sword into the claws MorphSelf had just emptied (:463-467).\n",
+    "old": "  const sup = racialSuppressInventory(entity);\n  if (sup) {\n    say?.(sup.text);\n    return { kind: 'refused' };\n  }\n  const r = resolveSwap(entity);",
+    "new": "  const r = resolveSwap(entity);",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]
@@ -533,8 +533,35 @@
   {
     "name": "WERE-LOOT-the-beast-takes-nothing",
     "file": "src/systems/quickLoot.js",
-    "old": "  const beast = !!racialSuppressInventory(playerEntity);\n",
-    "new": "  const beast = false;\n",
+    "old": "  const beast = !!racialSuppressInventory(playerEntity);",
+    "new": "  const beast = false;",
+    "tests": [
+      "test/systems/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "WERE-PICK-every-beast-press-the-lot",
+    "file": "src/systems/quickLoot.js",
+    "old": "  if (how === 'all' || (beast && !quickLootOn())) {",
+    "new": "  if (how === 'all' || beast) {",
+    "tests": [
+      "test/systems/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "WERE-PICK-the-beast-never-takes-the-lot",
+    "file": "src/systems/quickLoot.js",
+    "old": "  if (how === 'all' || (beast && !quickLootOn())) {",
+    "new": "  if (how === 'all') {",
+    "tests": [
+      "test/systems/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WERE-PICK-P1-no-first-row",
+    "file": "src/systems/quickLoot.js",
+    "old": "  const item = quickLootItemAt(key, items) ?? (beast ? hoverItemAt(items, 0, Infinity) : null);",
+    "new": "  const item = quickLootItemAt(key, items);",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]
@@ -569,7 +596,7 @@
   {
     "name": "DISC10-E-L4-maxhealth-ignores-the-limiter",
     "file": "src/systems/chargen.js",
-    "old": "      const own = limiter >= 1 && limiter < stored ? limiter : stored;   // \"Limiter must be 1 or greater\"",
+    "old": "      const own = limiter >= 1 && limiter < stored ? limiter : stored; // \"Limiter must be 1 or greater\"",
     "new": "      const own = stored;",
     "tests": [
       "test/systems/disc10_lycan.test.js"
@@ -578,8 +605,8 @@
   {
     "name": "DISC10-E-L4-the-limit-ratchets-off-itself",
     "file": "src/systems/lycanthropy.js",
-    "old": "let limit = (entity.rawMaxHealth ?? entity.maxHealth ?? 0) -",
-    "new": "let limit = (entity.maxHealth ?? 0) -",
+    "old": "    let limit =\n      (entity.rawMaxHealth ?? entity.maxHealth ?? 0) - Math.round(urgeMinutes * NEED_TO_KILL_HEALTH_LOSS_PER_MINUTE);",
+    "new": "    let limit = (entity.maxHealth ?? 0) - Math.round(urgeMinutes * NEED_TO_KILL_HEALTH_LOSS_PER_MINUTE);",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]
@@ -605,8 +632,8 @@
   {
     "name": "DISC10-E-L4-chargen-installs-no-accessor",
     "file": "src/systems/chargen.js",
-    "old": "  defineLiveMaxHealth(playerEntity);   // DISC10-E L4: DaggerfallEntity.MaxHealth, the limiter applied\n",
-    "new": "",
+    "old": "  defineLiveMaxHealth(playerEntity); // DISC10-E L4: DaggerfallEntity.MaxHealth, the limiter applied\n  return playerEntity;",
+    "new": "  return playerEntity;",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]
@@ -614,8 +641,8 @@
   {
     "name": "DISC10-E-L4-the-level-adds-through-the-limiter",
     "file": "src/systems/advancement.js",
-    "old": "  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // PERMANENT",
-    "new": "  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // PERMANENT",
+    "old": "  entity.maxHealth =\n    (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls); // PERMANENT endurance, verbatim (audit F8 - DFU reads Stats.PermanentEndurance here, not the live value)",
+    "new": "  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls); // PERMANENT endurance, verbatim (audit F8 - DFU reads Stats.PermanentEndurance here, not the live value)",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]
@@ -623,8 +650,8 @@
   {
     "name": "DISC10-E-L4-the-virtue-level-adds-through-the-limiter",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);",
-    "new": "  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);",
+    "old": "  entity.maxHealth =\n    (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls); // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter",
+    "new": "  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls); // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]
@@ -803,8 +830,8 @@
   {
     "name": "WERE-WRAPS-the-change-strips-the-wraps",
     "file": "src/systems/lycanthropy.js",
-    "old": "if (!isHandWraps(equipTableOf(entity)[slot])) unequipSlot(entity, slot);",
-    "new": "unequipSlot(entity, slot);",
+    "old": "    for (const slot of [EQUIP_SLOTS.RightHand, EQUIP_SLOTS.LeftHand])\n      if (!isHandWraps(equipTableOf(entity)[slot])) unequipSlot(entity, slot);",
+    "new": "    for (const slot of [EQUIP_SLOTS.RightHand, EQUIP_SLOTS.LeftHand]) unequipSlot(entity, slot);",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]
@@ -812,8 +839,8 @@
   {
     "name": "WERE-WRAPS-the-claws-strike-bare",
     "file": "src/combat/playerWeapon.js",
-    "old": "  get wraps() { return this.wrapsOf(this.activeHand); }",
-    "new": "  get wraps() { return this.weapon?.werecreatureClaws ? null : this.wrapsOf(this.activeHand); }",
+    "old": "    return this.wrapsOf(this.activeHand);",
+    "new": "    return this.weapon?.werecreatureClaws ? null : this.wrapsOf(this.activeHand);",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]

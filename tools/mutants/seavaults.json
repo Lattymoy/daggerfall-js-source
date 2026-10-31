@@ -110,8 +110,8 @@
   {
     "name": "SEA-VAULTS-door-keys-instances",
     "file": "src/scenes/instanceDoor.js",
-    "old": "wdunHallOfRoom(base) != null || seaRoomCell(base) != null; };",
-    "new": "wdunHallOfRoom(base) != null; };",
+    "old": "  return !base || !!site.home || wdunHallOfRoom(base) != null || seaRoomCell(base) != null;",
+    "new": "  return !base || !!site.home || wdunHallOfRoom(base) != null;",
     "tests": [
       "test/systems/sea/seavaults.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "SEA-VAULTS-ring-shallows",
     "file": "src/systems/sea/seaVaults.js",
-    "old": "        if (v) { out.push({ ...v, ring: bi + 1 }); break; }",
-    "new": "        if (v) { out.push({ ...v, ring: bi }); break; }",
+    "old": "          out.push({ ...v, ring: bi + 1 });",
+    "new": "          out.push({ ...v, ring: bi });",
     "tests": [
       "test/systems/sea/seavaults.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "SEA-VAULTS-abyss-deeper",
     "file": "src/systems/sea/seaVaults.js",
-    "old": "  const from = BANDS[i].from, to = BANDS[i + 1]?.from ?? from + ABYSS_HAUNT_LEAGUES;",
-    "new": "  const from = BANDS[i].from, to = BANDS[i + 1]?.from ?? from + 2 * ABYSS_HAUNT_LEAGUES;",
+    "old": "    to = BANDS[i + 1]?.from ?? from + ABYSS_HAUNT_LEAGUES;",
+    "new": "    to = BANDS[i + 1]?.from ?? from + 2 * ABYSS_HAUNT_LEAGUES;",
     "tests": [
       "test/systems/sea/seavaults.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SEA-VAULTS-corridor-wide",
     "file": "src/systems/sea/seaVaults.js",
-    "old": "  const row = veilhaven().py, spread = HAUNT_SPREAD[band] ?? HAUNT_SPREAD.deep;",
-    "new": "  const row = veilhaven().py, spread = 2 * (HAUNT_SPREAD[band] ?? HAUNT_SPREAD.deep);",
+    "old": "    spread = HAUNT_SPREAD[band] ?? HAUNT_SPREAD.deep;",
+    "new": "    spread = 2 * (HAUNT_SPREAD[band] ?? HAUNT_SPREAD.deep);",
     "tests": [
       "test/systems/sea/seavaults.test.js"
     ]

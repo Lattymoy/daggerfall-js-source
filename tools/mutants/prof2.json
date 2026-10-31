@@ -119,7 +119,7 @@
   {
     "name": "PROF2-13-steel-without-charcoal",
     "file": "src/net/professionLaw.js",
-    "old": "  ingot('ingot:steel', [['ingot:iron', 1], ['wood:charcoal', 1]]),",
+    "old": "  ingot('ingot:steel', [\n    ['ingot:iron', 1],\n    ['wood:charcoal', 1],\n  ]),",
     "new": "  ingot('ingot:steel', [['ingot:iron', 1]]),",
     "tests": [
       "test/net/prof2_law.test.js",
@@ -250,8 +250,8 @@
   {
     "name": "PROF2-28-the-glint-stays",
     "file": "src/systems/mineAct.js",
-    "old": "      if (st.points >= st.need) { st.done = true; return; }\n      moveGlint();",
-    "new": "      if (st.points >= st.need) { st.done = true; return; }",
+    "old": "      moveGlint();\n    },",
+    "new": "    },",
     "tests": [
       "test/net/prof2_client.test.js"
     ]
@@ -259,8 +259,8 @@
   {
     "name": "PROF2-29-gentle-glints",
     "file": "src/systems/mineAct.js",
-    "old": "    if (gentle) { st.glint = -1; return; }\n",
-    "new": "",
+    "old": "    if (gentle) {\n      st.glint = -1;\n      return;\n    }\n    let g;",
+    "new": "    let g;",
     "tests": [
       "test/net/prof2_client.test.js"
     ]
@@ -341,8 +341,8 @@
   {
     "name": "PROF2-38-iron-counted",
     "file": "src/systems/professions/profItems.js",
-    "old": "'Lead', 'Iron', 'Copper',",
-    "new": "'Lead', 'Copper',",
+    "old": "  'Iron',\n  'Copper',",
+    "new": "  'Copper',",
     "tests": [
       "test/net/prof2_client.test.js"
     ]
@@ -350,8 +350,8 @@
   {
     "name": "PROF2-39-a-forge-for-nothing",
     "file": "src/net/decorLaw.js",
-    "old": "enchant: 200_000, forge: 50_000, workbench: 50_000, cooking: 50_000, loom: 50_000, mason: 50_000, jeweller: 50_000, vendor: 25_000 });",
-    "new": "enchant: 200_000, forge: 0, workbench: 50_000, cooking: 50_000, loom: 50_000, mason: 50_000, jeweller: 50_000, vendor: 25_000 });",
+    "old": "  forge: 50_000,",
+    "new": "  forge: 0,",
     "tests": [
       "test/net/prof2_client.test.js",
       "test/ui/homestations.test.js"
@@ -369,8 +369,8 @@
   {
     "name": "DAEDRIC-SMELT-embers-dropped",
     "file": "src/net/professionLaw.js",
-    "old": "  ingot('ingot:daedric', [['ingot:ebony', 1], [DAEDRA_HEART.key, 1, true]], { embers: DAEDRIC_EMBERS }),",
-    "new": "  ingot('ingot:daedric', [['ingot:ebony', 1], [DAEDRA_HEART.key, 1, true]]),",
+    "old": "  ingot(\n    'ingot:daedric',\n    [\n      ['ingot:ebony', 1],\n      [DAEDRA_HEART.key, 1, true],\n    ],\n    { embers: DAEDRIC_EMBERS },\n  ),",
+    "new": "  ingot('ingot:daedric', [\n    ['ingot:ebony', 1],\n    [DAEDRA_HEART.key, 1, true],\n  ]),",
     "tests": [
       "test/net/daedricsmelt_law.test.js",
       "test/net/daedricsmelt_service.test.js"
@@ -379,8 +379,8 @@
   {
     "name": "DAEDRIC-SMELT-catalyst-unmarked",
     "file": "src/net/professionLaw.js",
-    "old": "  ingot('ingot:daedric', [['ingot:ebony', 1], [DAEDRA_HEART.key, 1, true]], { embers: DAEDRIC_EMBERS }),",
-    "new": "  ingot('ingot:daedric', [['ingot:ebony', 1], [DAEDRA_HEART.key, 1]], { embers: DAEDRIC_EMBERS }),",
+    "old": "      [DAEDRA_HEART.key, 1, true],",
+    "new": "      [DAEDRA_HEART.key, 1],",
     "tests": [
       "test/net/daedricsmelt_law.test.js",
       "test/net/daedricsmelt_service.test.js"
@@ -389,8 +389,8 @@
   {
     "name": "DAEDRIC-SMELT-the-smelt-gone",
     "file": "src/net/professionLaw.js",
-    "old": "  ingot('ingot:daedric', [['ingot:ebony', 1], [DAEDRA_HEART.key, 1, true]], { embers: DAEDRIC_EMBERS }),\n",
-    "new": "",
+    "old": "  ingot(\n    'ingot:daedric',\n    [\n      ['ingot:ebony', 1],\n      [DAEDRA_HEART.key, 1, true],\n    ],\n    { embers: DAEDRIC_EMBERS },\n  ),\n]);",
+    "new": "]);",
     "tests": [
       "test/net/daedricsmelt_law.test.js",
       "test/net/daedricsmelt_service.test.js"
@@ -399,8 +399,8 @@
   {
     "name": "DAEDRIC-SMELT-origin-catalyst-counted",
     "file": "src/net/professionLaw.js",
-    "old": "  r.inputs.forEach((inp, i) => { if (!inp.catalyst) b = Math.max(b,",
-    "new": "  r.inputs.forEach((inp, i) => { if (inp) b = Math.max(b,",
+    "old": "    if (!inp.catalyst) b = Math.max(b, Math.ceil(Math.min(Math.max(0, bought[i] ?? 0), inp.n * count) / inp.n));",
+    "new": "    if (inp) b = Math.max(b, Math.ceil(Math.min(Math.max(0, bought[i] ?? 0), inp.n * count) / inp.n));",
     "tests": [
       "test/net/daedricsmelt_law.test.js"
     ]
@@ -408,8 +408,8 @@
   {
     "name": "DAEDRIC-SMELT-no-work-spends-embers",
     "file": "src/net/professionLaw.js",
-    "old": "export const workEmbers = (r, count) => (Number.isSafeInteger(r?.embers) && r.embers > 0 && Number.isSafeInteger(count) && count > 0 ? r.embers * count : 0);",
-    "new": "export const workEmbers = (r, count) => (Number.isSafeInteger(r?.embers) && r.embers > 0 && Number.isSafeInteger(count) && count > 0 ? r.embers : 0);",
+    "old": "  Number.isSafeInteger(r?.embers) && r.embers > 0 && Number.isSafeInteger(count) && count > 0 ? r.embers * count : 0;",
+    "new": "  Number.isSafeInteger(r?.embers) && r.embers > 0 && Number.isSafeInteger(count) && count > 0 ? r.embers : 0;",
     "tests": [
       "test/net/daedricsmelt_law.test.js",
       "test/net/daedricsmelt_service.test.js"
@@ -418,7 +418,7 @@
   {
     "name": "DAEDRIC-SMELT-ember-made-empty",
     "file": "src/net/professionLaw.js",
-    "old": "export const EMBER_MADE = Object.freeze([...new Set(WORK_RECIPES.filter((r) => workEmbers(r, 1) > 0).map((r) => r.out))]);",
+    "old": "export const EMBER_MADE = Object.freeze([\n  ...new Set(WORK_RECIPES.filter((r) => workEmbers(r, 1) > 0).map((r) => r.out)),\n]);",
     "new": "export const EMBER_MADE = Object.freeze([]);",
     "tests": [
       "test/net/daedricsmelt_law.test.js",
@@ -478,8 +478,8 @@
   {
     "name": "DAEDRIC-SMELT-a-writ-asks-its-kit",
     "file": "src/net/craftWritLaw.js",
-    "old": " || EMBER_MADE.includes(i.key))));",
-    "new": ")));",
+    "old": "  RECIPES.filter(\n    (r) => r.product === 'kit' && !r.inputs.some((i) => UNYIELDED.includes(i.key) || EMBER_MADE.includes(i.key)),\n  ),",
+    "new": "  RECIPES.filter((r) => r.product === 'kit' && !r.inputs.some((i) => UNYIELDED.includes(i.key))),",
     "tests": [
       "test/net/daedricsmelt_law.test.js",
       "test/net/craftwrits_law.test.js"

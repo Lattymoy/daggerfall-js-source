@@ -146,9 +146,9 @@ test('SEAT-HALL the hosts by source: the visit\'s palace latched at the door for
   // PIN MOVED (DOMAIN2, HOST-SPLIT): the seat's halls moved out of bootWorld, into their own host (scenes/seatHallHost.js)
   const w = src('src/scenes/seatHallHost.js');
   const here = w.slice(w.indexOf('    here(mapId) {'), w.indexOf('    crown(mapId, instance = null) {'));
-  assert.match(here, /const g = seat\?\.tier === 'palace' \? seat\.holder\?\.guild \?\? null : null;/, 'a crown\'s castle is no Charter Room');
+  assert.match(here, /const g = seat\?\.tier === 'palace' \? \(seat\.holder\?\.guild \?\? null\) : null;/, 'a crown\'s castle is no Charter Room');
   assert.match(here, /const member = seatHallOf\(seat, mine\?\.id \?\? null\);/);
-  assert.match(here, /keeper: member && hallMay\(Number\(mine\?\.rank\), 'decorate'\)/);
+  assert.match(here, /keeper: member && guildMay\(Number\(mine\?\.rank\), 'decorate', mine\?\.powers \?\? null\)/);   // PIN MOVED (GUILD-RANKS): the guild's own table
   const svc = src('server-account/src/index.js');
   assert.match(svc, /if \(\(path === '\/v1\/homes\/decor' \|\| path\.startsWith\('\/v1\/homes\/decor\/'\)\) && body\?\.seat === true && !seatsOpenFor\(who\.player, env\)\) return no\('seats-closed', 403, origin\);/);
 });

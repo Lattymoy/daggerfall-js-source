@@ -2,8 +2,8 @@
   {
     "name": "TS9-guard-unwidened",
     "file": "src/world/road/roadPainter.js",
-    "old": "yMax)\n        && !locationRect?.ring?.[i]) continue;",
-    "new": "yMax)) continue;",
+    "old": "        ) &&\n        !locationRect?.ring?.[i]",
+    "new": "        )",
     "tests": [
       "test/world/terrain/townring.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TS9-notch-turned",
     "file": "src/world/road/roadCurves.js",
-    "old": "[RING.NW]: [false, true]",
-    "new": "[RING.NW]: [false, false]",
+    "old": "  [RING.NW]: [false, true],",
+    "new": "  [RING.NW]: [false, false],",
     "tests": [
       "test/world/terrain/townring.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TS9-half-over-the-sea",
     "file": "src/world/road/roadPainter.js",
-    "old": "  if (half && !has && ctx.ground !== TILE.water) return",
-    "new": "  if (half && !has) return",
+    "old": "  if (half && !has && ctx.ground !== TILE.water) return tile(ctx, T[DIAG_OUT], half[0], half[1]);",
+    "new": "  if (half && !has) return tile(ctx, T[DIAG_OUT], half[0], half[1]);",
     "tests": [
       "test/world/terrain/townring.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "TS9-half-over-an-arm",
     "file": "src/world/road/roadPainter.js",
-    "old": "  if (half && !has && ctx.ground !== TILE.water) return",
-    "new": "  if (half && ctx.ground !== TILE.water) return",
+    "old": "  if (half && !has && ctx.ground !== TILE.water) return tile(ctx, T[DIAG_OUT], half[0], half[1]);",
+    "new": "  if (half && ctx.ground !== TILE.water) return tile(ctx, T[DIAG_OUT], half[0], half[1]);",
     "tests": [
       "test/world/terrain/townring.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "F2-the-halves-unlaid-past-the-Bay",
     "file": "src/world/road/roadCurves.js",
-    "old": "!(rect.ring ? code === RING.road || half :",
-    "new": "!(rect.ring ? code === RING.road :",
+    "old": "          !(rect.ring ? code === RING.road || half : x > rect.xMin && x < rect.xMax && y > rect.yMin && y < rect.yMax)",
+    "new": "          !(rect.ring ? code === RING.road : x > rect.xMin && x < rect.xMax && y > rect.yMin && y < rect.yMax)",
     "tests": [
       "test/world/terrain/townring.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "F2-a-half-turned-past-the-Bay",
     "file": "src/world/road/roadCurves.js",
-    "old": "(half[0] ? 64 : 0) + (half[1] ? 128 : 0)",
-    "new": "(half[1] ? 64 : 0) + (half[0] ? 128 : 0)",
+    "old": "        tilemap[t] = half ? FLANK[ground > 3 ? 2 : ground] + (half[0] ? 64 : 0) + (half[1] ? 128 : 0) : ROAD_TILE;",
+    "new": "        tilemap[t] = half ? FLANK[ground > 3 ? 2 : ground] + (half[1] ? 64 : 0) + (half[0] ? 128 : 0) : ROAD_TILE;",
     "tests": [
       "test/world/terrain/townring.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "F2-the-flank-by-another-ground",
     "file": "src/world/road/roadCurves.js",
-    "old": "tilemap[t] = half ? FLANK[ground > 3 ? 2 : ground] +",
-    "new": "tilemap[t] = half ? FLANK[2] +",
+    "old": "        tilemap[t] = half ? FLANK[ground > 3 ? 2 : ground] + (half[0] ? 64 : 0) + (half[1] ? 128 : 0) : ROAD_TILE;",
+    "new": "        tilemap[t] = half ? FLANK[2] + (half[0] ? 64 : 0) + (half[1] ? 128 : 0) : ROAD_TILE;",
     "tests": [
       "test/world/terrain/townring.test.js"
     ]

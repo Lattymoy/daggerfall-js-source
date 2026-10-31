@@ -42,9 +42,15 @@ if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
   const at = args.indexOf('--arena2');
   const dir = at >= 0 ? args[at + 1] : null;
-  if (!dir) { console.error('usage: node tools/raidTowns.mjs --arena2 <path to ARENA2>'); process.exit(2); }
+  if (!dir) {
+    console.error('usage: node tools/raidTowns.mjs --arena2 <path to ARENA2>');
+    process.exit(2);
+  }
   const { regions, text, hash } = await raidTownsOf(dir);
-  if (!regions.length || !readRaidTowns(text)) { console.error('no towns table read back - are these the game\'s own files?'); process.exit(1); }
+  if (!regions.length || !readRaidTowns(text)) {
+    console.error("no towns table read back - are these the game's own files?");
+    process.exit(1);
+  }
   const towns = regions.reduce((n, g) => n + g.towns.length, 0);
   console.log(`${regions.length} regions, ${towns} towns, ${text.length} bytes`);
   console.log(`RAID_TOWNS_SHA256 = "${hash}"`);

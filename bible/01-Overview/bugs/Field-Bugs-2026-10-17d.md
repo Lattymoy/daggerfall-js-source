@@ -31,7 +31,7 @@ where it stands. Where both books hold one (a classic import can carry both), ea
 four groups - the Fighters and Mages Guilds, the temples and the knightly orders - still swap: those can be joined
 again, so the curse's cost there stays DFU's. The move happens on the read, like the book pick beside it, so the curse
 and the book cannot disagree. The online Roll's door carries before it reads
-(`npcRollTracker.js:"carryInvitationOnly(entity?.guildMemberships, rollVampireOf(entity));"`), so a vampire's claim
+(`npcRollTracker.js:"carryInvitationOnly(entity?.guildMemberships, rollVampireOf(entity))"`), so a vampire's claim
 never marks the carried guild dormant (`11-Multiplayer/Chapters-Arc.md`, AUDIT CHAP4 D1) in the window before anything
 else has read the books since the turn.
 

@@ -50,19 +50,70 @@ export const HERALDRY_UNHELD = 'ash';
  *  sixteen (bible/11-Multiplayer/Guild-Overhaul.md) - the guilds' own trades and creeds: the thieves' key and dagger, the
  *  sailors' anchor and ship, the mages' book and flame, the knights' horse and crossed swords, the smiths' anvil. */
 export const HERALDRY_DEVICES = Object.freeze([
-  'wolf', 'bear', 'boar', 'stag', 'lion', 'eagle', 'raven', 'dragon', 'serpent', 'fish', 'tower', 'gate',
-  'crown', 'sword', 'axe', 'hammer', 'bow', 'shield', 'sun', 'moon', 'star', 'eye', 'rose', 'tree',
-  'skull', 'key', 'anchor', 'ship', 'horse', 'spider', 'hand', 'flame', 'scales', 'book', 'chalice', 'dagger',
-  'owl', 'bat', 'swords', 'anvil',
+  'wolf',
+  'bear',
+  'boar',
+  'stag',
+  'lion',
+  'eagle',
+  'raven',
+  'dragon',
+  'serpent',
+  'fish',
+  'tower',
+  'gate',
+  'crown',
+  'sword',
+  'axe',
+  'hammer',
+  'bow',
+  'shield',
+  'sun',
+  'moon',
+  'star',
+  'eye',
+  'rose',
+  'tree',
+  'skull',
+  'key',
+  'anchor',
+  'ship',
+  'horse',
+  'spider',
+  'hand',
+  'flame',
+  'scales',
+  'book',
+  'chalice',
+  'dagger',
+  'owl',
+  'bat',
+  'swords',
+  'anvil',
 ]);
 /** GUILD2c: THE FIELD'S DIVISIONS - plain (one colour, GUILD1d's every banner), or parted in two by a line: down the
  *  middle (per pale), across it (per fess), corner to corner (per bend, per bend sinister), in four (quarterly), by an
  *  inverted V (per chevron) or an X (per saltire). A divided field's second colour is `field2`. */
-export const HERALDRY_DIVISIONS = Object.freeze(['plain', 'pale', 'fess', 'bend', 'bend-sinister', 'quarterly', 'chevron', 'saltire']);
+export const HERALDRY_DIVISIONS = Object.freeze([
+  'plain',
+  'pale',
+  'fess',
+  'bend',
+  'bend-sinister',
+  'quarterly',
+  'chevron',
+  'saltire',
+]);
 /** Each division's words. */
 export const HERALDRY_DIVISION_NAMES = Object.freeze({
-  plain: 'Plain', pale: 'Per pale', fess: 'Per fess', bend: 'Per bend', 'bend-sinister': 'Per bend sinister',
-  quarterly: 'Quarterly', chevron: 'Per chevron', saltire: 'Per saltire',
+  plain: 'Plain',
+  pale: 'Per pale',
+  fess: 'Per fess',
+  bend: 'Per bend',
+  'bend-sinister': 'Per bend sinister',
+  quarterly: 'Quarterly',
+  chevron: 'Per chevron',
+  saltire: 'Per saltire',
 });
 /** What a change after the first costs, in Drakes from the guild's Drake treasury - burnt. */
 export const HERALDRY_CHANGE_DRAKES = 500;
@@ -75,7 +126,7 @@ const DEVICE = new Set(HERALDRY_DEVICES);
 const DIVISION = new Set(HERALDRY_DIVISIONS);
 
 /** A colour's record by its key, or null. */
-export const heraldryColourOf = (key) => (typeof key === 'string' ? COLOUR.get(key) ?? null : null);
+export const heraldryColourOf = (key) => (typeof key === 'string' ? (COLOUR.get(key) ?? null) : null);
 
 /**
  * A HERALDRY, projected: `{ field, border, device }` - the field any colour but Ash, the border any colour but the
@@ -88,11 +139,13 @@ export const heraldryColourOf = (key) => (typeof key === 'string' ? COLOUR.get(k
 export function heraldryOf(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const { field, border, device, division = 'plain', field2 = null, charge = null } = /** @type {any} */ (raw);
-  if (!heraldryColourOf(field) || !heraldryColourOf(border) || typeof device !== 'string' || !DEVICE.has(device)) return null;
+  if (!heraldryColourOf(field) || !heraldryColourOf(border) || typeof device !== 'string' || !DEVICE.has(device))
+    return null;
   if (field === HERALDRY_UNHELD || field === border) return null;
   if (typeof division !== 'string' || !DIVISION.has(division)) return null;
   const parted = division !== 'plain';
-  if (parted ? !heraldryColourOf(field2) || field2 === HERALDRY_UNHELD || field2 === field : field2 != null) return null;
+  if (parted ? !heraldryColourOf(field2) || field2 === HERALDRY_UNHELD || field2 === field : field2 != null)
+    return null;
   // AUDIT GUILD2 G13: nor the border's - a border is the field's edge (`field === border` refused above), and one of the
   // second colour ran into that half of the field, the cloth's edge gone along it
   if (parted && field2 === border) return null;
@@ -100,7 +153,10 @@ export function heraldryOf(raw) {
   const ink = charge ?? border;
   if (ink === field || (parted && ink === field2)) return null;
   const out = /** @type {any} */ ({ field, border, device });
-  if (parted) { out.division = division; out.field2 = field2; }
+  if (parted) {
+    out.division = division;
+    out.field2 = field2;
+  }
   if (charge != null && charge !== border) out.charge = charge;
   return Object.freeze(out);
 }
@@ -109,17 +165,25 @@ export const heraldryInk = (h) => h?.charge ?? h?.border ?? null;
 
 /** Whether two heraldries are the same (null is none). */
 export const heraldrySame = (a, b) => {
-  const x = heraldryOf(a), y = heraldryOf(b);
+  const x = heraldryOf(a),
+    y = heraldryOf(b);
   return !!x && !!y
-    ? x.field === y.field && x.border === y.border && x.device === y.device
-      && (x.division ?? 'plain') === (y.division ?? 'plain') && (x.field2 ?? null) === (y.field2 ?? null) && (x.charge ?? null) === (y.charge ?? null)
+    ? x.field === y.field &&
+        x.border === y.border &&
+        x.device === y.device &&
+        (x.division ?? 'plain') === (y.division ?? 'plain') &&
+        (x.field2 ?? null) === (y.field2 ?? null) &&
+        (x.charge ?? null) === (y.charge ?? null)
     : !x && !y;
 };
 
 /** AUDIT GUILD2 G14: the devices named as no single word says them - "a Swords" read as no heraldry does. */
 const DEVICE_NAMES = Object.freeze({ swords: 'Pair of Swords', scales: 'Pair of Scales' });
 /** A device's name in words - "Wolf", "Pair of Swords". */
-export const heraldryDeviceName = (device) => (typeof device === 'string' && DEVICE.has(device) ? DEVICE_NAMES[device] ?? device[0].toUpperCase() + device.slice(1) : '');
+export const heraldryDeviceName = (device) =>
+  typeof device === 'string' && DEVICE.has(device)
+    ? (DEVICE_NAMES[device] ?? device[0].toUpperCase() + device.slice(1))
+    : '';
 
 /** A heraldry in words: "Azure bordered Gold, a Wolf" - or '' for none. GUILD2c: a divided field first ("Per pale Azure
  *  and Gold, bordered Sable, a Wolf"), a device's own colour after it ("a Wolf Argent"). */
@@ -129,7 +193,8 @@ export function heraldryText(raw) {
   const device = heraldryDeviceName(h.device);
   const name = (k) => heraldryColourOf(k)?.name;
   const charged = `${/^[AEIOU]/.test(device) ? 'an' : 'a'} ${device}${h.charge ? ` ${name(h.charge)}` : ''}`;
-  if (h.division) return `${HERALDRY_DIVISION_NAMES[h.division]} ${name(h.field)} and ${name(h.field2)}, bordered ${name(h.border)}, ${charged}`;
+  if (h.division)
+    return `${HERALDRY_DIVISION_NAMES[h.division]} ${name(h.field)} and ${name(h.field2)}, bordered ${name(h.border)}, ${charged}`;
   return `${name(h.field)} bordered ${name(h.border)}, ${charged}`;
 }
 /** GUILD2c: a heraldry's one spelling as a key - a banner's texture, a draft's identity: GUILD1d's `field|border|device`
@@ -157,10 +222,27 @@ export function ribbonClaimOf(raw) {
 export function ribbonClaimOk(rb) {
   if (!Array.isArray(rb) || rb.length !== 2) return false;
   const [f, b] = rb;
-  return Number.isInteger(f) && Number.isInteger(b) && f !== b && f >= 0 && b >= 0 && f < HERALDRY_COLOURS.length && b < HERALDRY_COLOURS.length;
+  return (
+    Number.isInteger(f) &&
+    Number.isInteger(b) &&
+    f !== b &&
+    f >= 0 &&
+    b >= 0 &&
+    f < HERALDRY_COLOURS.length &&
+    b < HERALDRY_COLOURS.length
+  );
 }
 /** A ribbon's claim read back as its two colours - `{ field, border }`, hexes - or null for anything but a claim. */
-export const ribbonColours = (rb) => (ribbonClaimOk(rb) ? { field: HERALDRY_COLOURS[rb[0]].hex, border: HERALDRY_COLOURS[rb[1]].hex } : null);
-const rgbaOf = (hex) => [parseInt(hex.slice(1, 3), 16) / 255, parseInt(hex.slice(3, 5), 16) / 255, parseInt(hex.slice(5, 7), 16) / 255, 1];
+export const ribbonColours = (rb) =>
+  ribbonClaimOk(rb) ? { field: HERALDRY_COLOURS[rb[0]].hex, border: HERALDRY_COLOURS[rb[1]].hex } : null;
+const rgbaOf = (hex) => [
+  parseInt(hex.slice(1, 3), 16) / 255,
+  parseInt(hex.slice(3, 5), 16) / 255,
+  parseInt(hex.slice(5, 7), 16) / 255,
+  1,
+];
 /** A ribbon's claim as the bitmap face's two tints - `{ field, border }`, each RGBA from 0 to 1 - or null. */
-export const ribbonRgba = (rb) => { const c = ribbonColours(rb); return c ? { field: rgbaOf(c.field), border: rgbaOf(c.border) } : null; };
+export const ribbonRgba = (rb) => {
+  const c = ribbonColours(rb);
+  return c ? { field: rgbaOf(c.field), border: rgbaOf(c.border) } : null;
+};

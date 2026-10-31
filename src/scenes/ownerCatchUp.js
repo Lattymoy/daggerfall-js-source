@@ -70,14 +70,19 @@ export const FRAME_MS_MAX = 2000;
  *  one step gave a foe's body. */
 export function catchUpPlan(foeDt, extraMax = OWNER_CATCHUP_STEPS_MAX) {
   if (!(foeDt > FOE_MAX_FRAME_DT)) return { n: 1, dt: foeDt };
-  const n = Math.min(OWNER_CATCHUP_STEPS_MAX, Math.ceil(foeDt / FOE_MAX_FRAME_DT - 1e-9), 1 + Math.max(0, Math.floor(extraMax) || 0));
+  const n = Math.min(
+    OWNER_CATCHUP_STEPS_MAX,
+    Math.ceil(foeDt / FOE_MAX_FRAME_DT - 1e-9),
+    1 + Math.max(0, Math.floor(extraMax) || 0),
+  );
   return n < 2 ? { n: 1, dt: foeDt } : { n, dt: Math.min(FOE_MAX_FRAME_DT, foeDt / n) };
 }
 
 /** The extra calls a frame `rawMs` long affords at `perCall` ms a call: OWNER_CATCHUP_SHARE of it - none for a frame
  *  past FRAME_MS_MAX (the page was away), none for the first (0 ms), and none at a price unread: nothing measured yet
  *  (Infinity buys nothing) or a clock too coarse to see a call (a reading of 0, or NaN, is no price - never a free one). */
-export const extrasAfforded = (rawMs, perCall) => (rawMs <= FRAME_MS_MAX && perCall > 0 ? (rawMs * OWNER_CATCHUP_SHARE) / perCall : 0);
+export const extrasAfforded = (rawMs, perCall) =>
+  rawMs <= FRAME_MS_MAX && perCall > 0 ? (rawMs * OWNER_CATCHUP_SHARE) / perCall : 0;
 
 /**
  * THE CATCH-UP (HOST-CLOCK: one plan a frame for every pool it steps). `step(key, dt, call, mine)` steps one pool's foes
@@ -90,49 +95,74 @@ export const extrasAfforded = (rawMs, perCall) => (rawMs <= FRAME_MS_MAX && perC
  * `clock()` ms (the page's performance.now()); `tick` the tactics brain's clock; `mark` the owner clock's.
  * @param {{ shared?: () => boolean, clock?: () => number, tick?: (dt: number) => void, mark?: (ms: number) => void }} [o]
  */
-export function createOwnerCatchUp({ shared = () => false, clock = () => performance.now(), tick = tickTactics, mark = (ms) => ownerClock.mark(ms) } = {}) {
-  const price = new WeakMap();   // a pool -> the dearest of its calls in the last frame it stepped (ms)
-  let stepped = new Set(), before = new Set();   // the pools this frame has stepped, and the frame before's
-  let open = false, frameAt = null, caught = false, extraMax = 0, ticked = 0, shareMs = 0, spent = 0;
+export function createOwnerCatchUp({
+  shared = () => false,
+  clock = () => performance.now(),
+  tick = tickTactics,
+  mark = (ms) => ownerClock.mark(ms),
+} = {}) {
+  const price = new WeakMap(); // a pool -> the dearest of its calls in the last frame it stepped (ms)
+  let stepped = new Set(),
+    before = new Set(); // the pools this frame has stepped, and the frame before's
+  let open = false,
+    frameAt = null,
+    caught = false,
+    extraMax = 0,
+    ticked = 0,
+    shareMs = 0,
+    spent = 0;
   /** The frame's plan, at its first step: the time since the last frame's first step, priced at every pool of that frame. */
   const opens = (at, dt) => {
     const rawMs = frameAt == null ? 0 : at - frameAt;
     frameAt = at;
-    before = stepped; stepped = new Set();
-    let cost = 0;   // none stepped before: a price of nothing, which buys nothing
+    before = stepped;
+    stepped = new Set();
+    let cost = 0; // none stepped before: a price of nothing, which buys nothing
     for (const k of before) cost += price.get(k);
     caught = shared();
     extraMax = extrasAfforded(rawMs, cost);
-    ticked = foeFrameDt(dt);   // the host ticked the brain the frame's capped step before any pool moved
-    shareMs = rawMs * OWNER_CATCHUP_SHARE; spent = 0; open = true;
+    ticked = foeFrameDt(dt); // the host ticked the brain the frame's capped step before any pool moved
+    shareMs = rawMs * OWNER_CATCHUP_SHARE;
+    spent = 0;
+    open = true;
   };
   const catchUp = {
-    frame() { open = false; },
+    frame() {
+      open = false;
+    },
     step(key, dt, call, mine = true) {
       const at = clock();
       if (!open || stepped.has(key)) opens(at, dt);
       stepped.add(key);
       mark(at);
       const plan = caught && mine && before.has(key) ? catchUpPlan(dt, extraMax) : { n: 1, dt };
-      let out, cost = 0, extrasFrom = null;
+      let out,
+        cost = 0,
+        extrasFrom = null;
       for (let i = 1; i <= plan.n; i++) {
-        if (i === 2) { if (spent >= shareMs) break; extrasFrom = clock(); }   // AUDIT HOST-CLOCK 3: a later pool's extras only while the frame's share holds
-        else if (i > 2 && spent + clock() - extrasFrom >= shareMs) break;   // the frame's extras have spent its share: the forecast was wrong
+        if (i === 2) {
+          if (spent >= shareMs) break;
+          extrasFrom = clock();
+        } // AUDIT HOST-CLOCK 3: a later pool's extras only while the frame's share holds
+        else if (i > 2 && spent + clock() - extrasFrom >= shareMs) break; // the frame's extras have spent its share: the forecast was wrong
         const want = i * plan.dt;
-        if (i > 1 && want > ticked) { tick(want - ticked); ticked = want; }   // each later call carries the brain to its end
+        if (i > 1 && want > ticked) {
+          tick(want - ticked);
+          ticked = want;
+        } // each later call carries the brain to its end
         const t0 = clock();
         out = call(plan.dt);
         cost = Math.max(cost, clock() - t0);
       }
       if (extrasFrom !== null) spent += clock() - extrasFrom;
-      price.set(key, cost);   // the dearest of the frame's calls prices the next frame's
+      price.set(key, cost); // the dearest of the frame's calls prices the next frame's
       return out;
     },
     /** @param {...{ update: (dt: number, ...rest: any[]) => any }} list */
     pools(...list) {
       for (const p of list) {
         const update = p.update;
-        p.update = (dt, ...rest) => catchUp.step(p, dt, (d) => update.call(p, d, ...rest));   // AUDIT HOST-CLOCK 5: a method's own `this`
+        p.update = (dt, ...rest) => catchUp.step(p, dt, (d) => update.call(p, d, ...rest)); // AUDIT HOST-CLOCK 5: a method's own `this`
       }
     },
   };

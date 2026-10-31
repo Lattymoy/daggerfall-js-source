@@ -85,8 +85,8 @@
   {
     "name": "WW7-7-ways-no-wait",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "    if (!epoch) return undefined;   // a region still to land",
-    "new": "    if (!epoch && false) return undefined;   // a region still to land",
+    "old": "    if (!epoch) return undefined; // a region still to land: no way is the one every client will walk yet",
+    "new": "    if (!epoch && false) return undefined; // a region still to land: no way is the one every client will walk yet",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "WW7-7-ways-over-the-edge",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "      if (pastA !== pastB && !beyond) return null;   // WW7-7: across the Bay's edge with no land past it - no trip's way\n",
-    "new": "",
+    "old": "      if (pastA !== pastB && !beyond) return null; // WW7-7: across the Bay's edge with no land past it - no trip's way\n      if ((pastA || pastB) && beyond) {",
+    "new": "      if ((pastA || pastB) && beyond) {",
     "tests": [
       "test/world/worldWide/ww7_cross.test.js"
     ],
@@ -104,8 +104,8 @@
   {
     "name": "WW7-7-ways-unflipped",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "      if ((pastA || pastB) && beyond) { const flip = a.mapId > b.mapId;",
-    "new": "      if ((pastA || pastB) && beyond) { const flip = false;",
+    "old": "        const flip = a.mapId > b.mapId;",
+    "new": "        const flip = false;",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ],
@@ -114,8 +114,8 @@
   {
     "name": "WW7-7-ways-kept-past-the-epoch",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "if (farAt) { far.clear(); edge.clear(); beyond?.clear?.(); generation++; }",
-    "new": "if (farAt) { edge.clear(); beyond?.clear?.(); generation++; }",
+    "old": "        far.clear();\n        edge.clear();",
+    "new": "        edge.clear();",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ],
@@ -124,8 +124,8 @@
   {
     "name": "WW7-7-ways-generation-unmoved",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "if (farAt) { far.clear(); edge.clear(); beyond?.clear?.(); generation++; }",
-    "new": "if (farAt) { far.clear(); edge.clear(); beyond?.clear?.(); }",
+    "old": "        beyond?.clear?.();\n        generation++;\n      }",
+    "new": "        beyond?.clear?.();\n      }",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ],
@@ -134,8 +134,8 @@
   {
     "name": "WW7-7-ways-ground-uncleared",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "if (farAt) { far.clear(); edge.clear(); beyond?.clear?.(); generation++; }",
-    "new": "if (farAt) { far.clear(); edge.clear(); generation++; }",
+    "old": "        beyond?.clear?.();\n        generation++;",
+    "new": "        generation++;",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ],
@@ -144,8 +144,8 @@
   {
     "name": "WW7-7-ways-wait-kept",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "      if (way === undefined) return undefined;   // its ground still being read (a tile a frame)\n",
-    "new": "",
+    "old": "      if (way === undefined) return undefined; // its ground still being read (a tile a frame)\n      budget--;",
+    "new": "      budget--;",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ]
@@ -153,8 +153,8 @@
   {
     "name": "WW7-7-ways-frame-unrenewed",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "spendMs = ms; beyond?.frame?.(); },",
-    "new": "spendMs = ms; },",
+    "old": "      beyond?.frame?.();\n    },",
+    "new": "    },",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ]
@@ -162,8 +162,8 @@
   {
     "name": "WW7-7-ways-floor-unshared",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "      if (budget <= 0 && (spent >= spendMs || asked >= WAYS_MAX_PER_FRAME)) return undefined;   // PERF-WAYS1's floor, its time and its cap, as a Bay pair's\n",
-    "new": "",
+    "old": "      if (budget <= 0 && (spent >= spendMs || asked >= WAYS_MAX_PER_FRAME)) return undefined; // PERF-WAYS1's floor, its time and its cap, as a Bay pair's\n      const t0 = now();",
+    "new": "      const t0 = now();",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ]
@@ -171,8 +171,8 @@
   {
     "name": "WW7-7-planner-the-bay-walked",
     "file": "src/systems/livingWorld/beyondWays.js",
-    "old": "      if (inBay(X, Y)) { t.water[i] = 1; continue; }",
-    "new": "      if (false) { t.water[i] = 1; continue; }",
+    "old": "        if (inBay(X, Y)) {",
+    "new": "        if (false) {",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ]
@@ -189,7 +189,7 @@
   {
     "name": "WW7-7-planner-the-narrow-trusted",
     "file": "src/systems/livingWorld/beyondWays.js",
-    "old": "      if (near && near.cost <= 2 * (BEYOND_NEAR_MARGINS[BEYOND_NEAR_MARGINS.length - 1] + 1) * ROUTE_COST.road) return near;",
+    "old": "      if (near && near.cost <= 2 * (BEYOND_NEAR_MARGINS[BEYOND_NEAR_MARGINS.length - 1] + 1) * ROUTE_COST.road)\n        return near;",
     "new": "      if (near) return near;",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
@@ -198,8 +198,8 @@
   {
     "name": "WW7-7-planner-the-tiles-unbudgeted",
     "file": "src/systems/livingWorld/beyondWays.js",
-    "old": "    if (budget <= 0) return undefined;\n    budget--;\n",
-    "new": "    budget--;\n",
+    "old": "    if (budget <= 0) return undefined;\n    budget--;",
+    "new": "    budget--;",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ]
@@ -207,8 +207,8 @@
   {
     "name": "WW7-7-planner-a-tile-roadless",
     "file": "src/systems/livingWorld/beyondWays.js",
-    "old": "t.roads[i] = layerByte(net, 'roads', X, Y);",
-    "new": "t.roads[i] = 0;",
+    "old": "          t.roads[i] = layerByte(net, 'roads', X, Y);",
+    "new": "          t.roads[i] = 0;",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ]
@@ -216,8 +216,8 @@
   {
     "name": "WW7-7-planner-a-tile-dry",
     "file": "src/systems/livingWorld/beyondWays.js",
-    "old": "      t.water[i] = dry(X, Y) ? 0 : 1;",
-    "new": "      t.water[i] = 0;",
+    "old": "        t.water[i] = dry(X, Y) ? 0 : 1;",
+    "new": "        t.water[i] = 0;",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "WW7-8-wire-unsaid",
     "file": "src/systems/naval/navalWire.js",
-    "old": "    if (named) r.push([sh.n | 0, ...named]);\n",
-    "new": "",
+    "old": "    if (named) r.push([sh.n | 0, ...named]);\n  }",
+    "new": "  }",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "WW7-8-reader-region-unread",
     "file": "src/systems/naval/navalWire.js",
-    "old": "    if (sh.region < 0 && nm.region >= 0) sh.region = nm.region;\n",
-    "new": "",
+    "old": "    if (sh.region < 0 && nm.region >= 0) sh.region = nm.region;\n    sh.area = nm.area;",
+    "new": "    sh.area = nm.area;",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "WW7-8-reader-area-unread",
     "file": "src/systems/naval/navalWire.js",
-    "old": "    sh.area = nm.area;\n",
-    "new": "",
+    "old": "    sh.area = nm.area;\n  }",
+    "new": "  }",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "WW7-8-door-length",
     "file": "src/systems/naval/navalWire.js",
-    "old": "if (!Array.isArray(w) || w.length !== 3 || !int(w[0], 0, 0xffff) || !(w[1] === -1 || provinceRegionOk(w[1]))",
-    "new": "if (!Array.isArray(w) || w.length < 2 || !int(w[0], 0, 0xffff) || !(w[1] === -1 || provinceRegionOk(w[1]))",
+    "old": "      w.length !== 3 ||",
+    "new": "      w.length < 2 ||",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "WW7-8-door-says-nothing",
     "file": "src/systems/naval/navalWire.js",
-    "old": " || (w[1] === -1 && w[2] === -1)) return null;",
-    "new": ") return null;",
+    "old": "      !(w[2] === -1 || provinceAreaOk(w[2])) ||\n      (w[1] === -1 && w[2] === -1)",
+    "new": "      !(w[2] === -1 || provinceAreaOk(w[2]))",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "WW7-8-door-count",
     "file": "src/systems/naval/navalWire.js",
-    "old": "  if (!Array.isArray(raw) || raw.length > NAVAL_WIRE_SHIPS) return null;\n  for (const w of raw) {\n    if (!Array.isArray(w) || w.length !== 3",
-    "new": "  if (!Array.isArray(raw) || raw.length > 99) return null;\n  for (const w of raw) {\n    if (!Array.isArray(w) || w.length !== 3",
+    "old": "function validNaming(raw) {\n  const out = new Map();\n  if (raw === undefined) return out;\n  if (!Array.isArray(raw) || raw.length > NAVAL_WIRE_SHIPS) return null;\n  for (const w of raw) {\n    if (",
+    "new": "function validNaming(raw) {\n  const out = new Map();\n  if (raw === undefined) return out;\n  if (!Array.isArray(raw) || raw.length > 99) return null;\n  for (const w of raw) {\n    if (",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ]

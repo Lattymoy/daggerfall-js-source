@@ -101,8 +101,8 @@
   {
     "name": "LOAN-AMNESTY-customs-unmarked",
     "file": "src/systems/realmCustoms.js",
-    "old": "  snap.loanAmnesty = LOAN_AMNESTY;   // LOAN-AMNESTY",
-    "new": "  // LOAN-AMNESTY",
+    "old": "  snap.loanAmnesty = LOAN_AMNESTY; // LOAN-AMNESTY: a character crossing now is past every amnesty - its offline loans are called in below, never forgiven",
+    "new": "  // LOAN-AMNESTY: a character crossing now is past every amnesty - its offline loans are called in below, never forgiven",
     "tests": [
       "test/systems/loan_amnesty.test.js"
     ]

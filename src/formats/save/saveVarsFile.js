@@ -34,8 +34,8 @@ const BIOGRAPHY_MODIFIERS_OFFSET = 0x30;
 const EMPEROR_SON_NAME_OFFSET = 0x7c;
 const TRAVEL_FLAGS_OFFSET = 0xf5;
 const MACE_OF_MOLAG_BAL_VARS_OFFSET = 0x33f;
-const GLOBAL_VARS_COUNT = 64;               // at 0x34F, straight after the mace vars
-const LAST_SPELL_COST_OFFSET = 0x38f;       // straight after the global vars
+const GLOBAL_VARS_COUNT = 64; // at 0x34F, straight after the mace vars
+const LAST_SPELL_COST_OFFSET = 0x38f; // straight after the global vars
 const IS_DAY_OFFSET = 0x391;
 const CRIME_COMMITTED_OFFSET = 0x3a3;
 const IN_DUNGEON_WATER_OFFSET = 0x3a6;
@@ -56,20 +56,24 @@ const FACTION_DATA_OFFSET = 0x17d0;
 const FACTION_DATA_LENGTH = 92;
 
 /** SaveVars.emperorSonNames - randomly chosen per game; fills %imp. */
-export const EMPEROR_SON_NAMES = Object.freeze([
-  'Pelagius', 'Cephorus', 'Uriel', 'Cassynder', 'Voragiel', 'Trabbatus',
-]);
+export const EMPEROR_SON_NAMES = Object.freeze(['Pelagius', 'Cephorus', 'Uriel', 'Cassynder', 'Voragiel', 'Trabbatus']);
 
 /** SaveVars.TravelFlags. */
 export const TRAVEL_FLAGS = Object.freeze({
-  Cautiously: 0x01, Recklessly: 0x02, FootOrHorse: 0x04,
-  Ship: 0x08, Inns: 0x10, CampOut: 0x20,
+  Cautiously: 0x01,
+  Recklessly: 0x02,
+  FootOrHorse: 0x04,
+  Ship: 0x08,
+  Inns: 0x10,
+  CampOut: 0x20,
 });
 
 /** SaveVars.CheatFlags. */
 export const CHEAT_FLAGS = Object.freeze({
-  AllMapLocationsRevealedMode: 0x08, NoCollision: 0x20,
-  GodMode: 0x40, EnemiesCantCastSpells: 0x80,
+  AllMapLocationsRevealedMode: 0x08,
+  NoCollision: 0x20,
+  GodMode: 0x40,
+  EnemiesCantCastSpells: 0x80,
 });
 
 // DaggerfallBankManager.ShipType lives in systems/banking.js, its DFU
@@ -78,7 +82,7 @@ export const CHEAT_FLAGS = Object.freeze({
 // dependency rather than minting a second table. Re-exported so the
 // reader's API is whole.
 import { SHIP_TYPES } from '../../systems/banking.js';
-import { readCStringFixed } from '../fileProxy.js';   // FileProxy.ReadCString(reader, n) - AUDIT 68: the one home
+import { readCStringFixed } from '../fileProxy.js'; // FileProxy.ReadCString(reader, n) - AUDIT 68: the one home
 export { SHIP_TYPES };
 
 /** Represents a SAVEVARS.DAT file (SaveVars.cs). */
@@ -98,7 +102,7 @@ export class SaveVars {
     this.maceOfMolagBalSpellPointBonusTimeLimit = 0;
     this.maceOfMolagBalStrengthBonusTimeLimit = 0;
     this.globalVars = new Uint8Array(GLOBAL_VARS_COUNT);
-    this.lastSpellCost = 0;     // returned to the pool if the readied spell is aborted
+    this.lastSpellCost = 0; // returned to the pool if the readied spell is aborted
     this.isDay = false;
     this.crimeCommitted = 0;
     this.inDungeonWater = false;
@@ -150,8 +154,10 @@ export class SaveVars {
 
     // ReadGlobalVars (0x34F) + ReadLastSpellCost (0x38F) - sequential
     // after the mace vars in DFU; the offsets are its own comments.
-    this.globalVars = bytes.slice(MACE_OF_MOLAG_BAL_VARS_OFFSET + 16,
-      MACE_OF_MOLAG_BAL_VARS_OFFSET + 16 + GLOBAL_VARS_COUNT);
+    this.globalVars = bytes.slice(
+      MACE_OF_MOLAG_BAL_VARS_OFFSET + 16,
+      MACE_OF_MOLAG_BAL_VARS_OFFSET + 16 + GLOBAL_VARS_COUNT,
+    );
     this.lastSpellCost = v.getInt16(LAST_SPELL_COST_OFFSET, true);
 
     // The one-byte state flags.
@@ -163,8 +169,7 @@ export class SaveVars {
     // ReadClimateWeathers - "classic reads from both the first and then
     // overwrites with the duplicate, so effectively the duplicate is
     // what is used". Six weather-climate zones.
-    this.climateWeathers = bytes.slice(CLIMATE_WEATHERS_DUPLICATE_OFFSET,
-      CLIMATE_WEATHERS_DUPLICATE_OFFSET + 6);
+    this.climateWeathers = bytes.slice(CLIMATE_WEATHERS_DUPLICATE_OFFSET, CLIMATE_WEATHERS_DUPLICATE_OFFSET + 6);
 
     // ReadWeaponDrawn - of the UI-layering flag byte only 0x40 matters.
     if ((bytes[WEAPON_DRAWN_OFFSET] & 0x40) !== 0) this.weaponDrawn = true;
@@ -198,17 +203,26 @@ export class SaveVars {
       const values = new Uint8Array(29);
       for (let j = 0; j < 29; j++) values[j] = bytes[o++];
       const flags = new Array(29);
-      for (let j = 0; j < 29; j++) flags[j] = bytes[o++] !== 0;   // BinaryReader.ReadBoolean
+      for (let j = 0; j < 29; j++) flags[j] = bytes[o++] !== 0; // BinaryReader.ReadBoolean
       const flags2 = new Array(14);
       for (let j = 0; j < 14; j++) flags2[j] = bytes[o++] !== 0;
       const precipitationOverride = bytes[o++];
       const severePunishmentFlags = bytes[o++];
-      const legalRep = v.getInt16(o, true); o += 2;
-      const idOfPersecutedTemple = v.getUint16(o, true); o += 2;
-      const priceAdjustment = v.getUint16(o, true); o += 2;
+      const legalRep = v.getInt16(o, true);
+      o += 2;
+      const idOfPersecutedTemple = v.getUint16(o, true);
+      o += 2;
+      const priceAdjustment = v.getUint16(o, true);
+      o += 2;
       this.regionData.push({
-        values, flags, flags2, precipitationOverride,
-        severePunishmentFlags, legalRep, idOfPersecutedTemple, priceAdjustment,
+        values,
+        flags,
+        flags2,
+        precipitationOverride,
+        severePunishmentFlags,
+        legalRep,
+        idOfPersecutedTemple,
+        priceAdjustment,
       });
     }
   }
@@ -233,7 +247,7 @@ export class SaveVars {
         vam: v.getInt16(o + 35, true),
         flags: v.getInt16(o + 37, true),
         rulerNameSeed: v.getUint32(o + 39, true),
-        rulerPowerBonus: v.getInt32(o + 43, true),   // Random(0, 50) + 20
+        rulerPowerBonus: v.getInt32(o + 43, true), // Random(0, 50) + 20
         flat1: v.getInt16(o + 47, true),
         flat2: v.getInt16(o + 49, true),
         face: v.getInt8(o + 51),

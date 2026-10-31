@@ -54,7 +54,7 @@ test('TO-LIVE THE HOST READS IT AGAIN: the world keeps its load\'s bag and, on a
   assert.match(fn, /travelOptionsSettings = readTravelOptionsSettings\(modSetting, travelOptionsBoot\);/);
   assert.match(fn, /if \(travelOptions\) travelOptions\.settings = travelOptionsSettings;/);
   assert.doesNotMatch(fn, /setAccelerationLimit/, 'RATE-LAW: the panel has no limit');
-  assert.match(w, /travelOptions: \(\) => \{ refreshTravelOptionsSettings\(\); return host\.travelOptions; \},/, 'the maps\' handle');   // PIN MOVED (HOST-SPLIT, DRAGON5b): the host's live `let`, through `host`
+  assert.match(w, /travelOptions: \(\) => \{\n\s*refreshTravelOptionsSettings\(\);\n\s*return host\.travelOptions;\n\s*\},/, 'the maps\' handle');   // PIN MOVED (HOST-SPLIT, DRAGON5b): the host's live `let`, through `host`
   assert.match(w, /refreshTravelOptionsSettings\(\);[^\n]*\n\s+const report = travelOptions\.update\(\{/, 'the journey\'s frame');
 });
 

@@ -2,8 +2,8 @@
   {
     "name": "EGSPAN-a-generous-reach",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "const flat = run * ((2 * EG_JUMP_MPS) / EG_JUMP_G) + 2 * EG_BODY_R, reach = run * air + 2 * EG_BODY_R;",
-    "new": "const flat = run * ((2 * EG_JUMP_MPS) / EG_JUMP_G) + 4 * EG_BODY_R, reach = run * air + 4 * EG_BODY_R;",
+    "old": "  const flat = run * ((2 * EG_JUMP_MPS) / EG_JUMP_G) + 2 * EG_BODY_R,\n    reach = run * air + 2 * EG_BODY_R;",
+    "new": "  const flat = run * ((2 * EG_JUMP_MPS) / EG_JUMP_G) + 4 * EG_BODY_R,\n    reach = run * air + 4 * EG_BODY_R;",
     "tests": [
       "test/net/eliteGates/egfull_span.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "EGSPAN-a-drop-flies-far",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "h < 0 ? Math.min(reach, flat - EG_DROP_GAIN * h) : reach",
-    "new": "h < 0 ? reach * 1.2 : reach",
+    "old": "  return { reach: h < 0 ? Math.min(reach, flat - EG_DROP_GAIN * h) : reach, air };",
+    "new": "  return { reach: h < 0 ? reach * 1.2 : reach, air };",
     "tests": [
       "test/net/eliteGates/egfull_span.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EGSPAN-a-rail-across",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "else if (s.kind === 'rail' && s.period > 0) out.dz =",
-    "new": "else if (s.kind === 'rail' && s.period > 0) out.dx =",
+    "old": "  else if (s.kind === 'rail' && s.period > 0) out.dz = s.amp * sin((TAU * t) / s.period + s.phase);",
+    "new": "  else if (s.kind === 'rail' && s.period > 0) out.dx = s.amp * sin((TAU * t) / s.period + s.phase);",
     "tests": [
       "test/net/eliteGates/egfull_span.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EGSPAN-a-beat-always-there",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "out.solid = egBeatAt(s, t) < EG_BEAT_SOLID_S;",
-    "new": "out.solid = true;",
+    "old": "  else if (s.kind === 'beat') out.solid = egBeatAt(s, t) < EG_BEAT_SOLID_S;",
+    "new": "  else if (s.kind === 'beat') out.solid = true;",
     "tests": [
       "test/net/eliteGates/egfull_span.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EGSPAN-a-vent-untold",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "  if (u >= fireAt - EG_VENT_TELL_S) return { tell: (u - (fireAt - EG_VENT_TELL_S)) / EG_VENT_TELL_S, fire: false };\n",
-    "new": "",
+    "old": "  if (u >= fireAt - EG_VENT_TELL_S) return { tell: (u - (fireAt - EG_VENT_TELL_S)) / EG_VENT_TELL_S, fire: false };\n  return { tell: 0, fire: false };",
+    "new": "  return { tell: 0, fire: false };",
     "tests": [
       "test/net/eliteGates/egfull_span.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "EGSPAN-a-wait-unbounded",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "    else if (w.wait > EG_WAIT_MAX / k) why.push(",
-    "new": "    else if (false) why.push(",
+    "old": "    else if (w.wait > EG_WAIT_MAX / k)\n      why.push(`${at}: a wait of ${w.wait.toFixed(2)} s${k > 1 ? \", past a set piece's margin\" : ''}`);",
+    "new": "    else if (false) why.push(`${at}: a wait of ${w.wait.toFixed(2)} s${k > 1 ? \", past a set piece's margin\" : ''}`);",
     "tests": [
       "test/net/eliteGates/egfull_span.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "EGSPAN-a-rail-unbounded",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "      if (s.amp > Math.min(s.gap ?? 0, moving ? Infinity : after) - EG_RAIL_CLEAR) why.push(",
-    "new": "      if (false) why.push(",
+    "old": "      if (s.amp > Math.min(s.gap ?? 0, moving ? Infinity : after) - EG_RAIL_CLEAR) why.push(closes);",
+    "new": "      if (false) why.push(closes);",
     "tests": [
       "test/net/eliteGates/egfull_span.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "EGSPAN-a-vent-every-frame",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "        if (st.fire && !ventJudged.has(cycle) && standing",
-    "new": "        if (st.fire && standing",
+    "old": "        if (st.fire && !ventJudged.has(cycle) && standing && Math.abs(fy - s.y) < 1.5 && egInVentDisc(s, f[0], f[1])) {",
+    "new": "        if (st.fire && standing && Math.abs(fy - s.y) < 1.5 && egInVentDisc(s, f[0], f[1])) {",
     "tests": [
       "test/net/eliteGates/egfull_span.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "EGSPAN-a-vent-everywhere",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "Math.abs(fy - s.y) < 1.5 && egInVentDisc(s, f[0], f[1])",
-    "new": "Math.abs(fy - s.y) < 1.5",
+    "old": "        if (st.fire && !ventJudged.has(cycle) && standing && Math.abs(fy - s.y) < 1.5 && egInVentDisc(s, f[0], f[1])) {",
+    "new": "        if (st.fire && !ventJudged.has(cycle) && standing && Math.abs(fy - s.y) < 1.5) {",
     "tests": [
       "test/net/eliteGates/egfull_span.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "EGSPAN-a-floor-under-the-wall",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "    for (const b of spec.bands) if (!egWallBand(spec, b) && !egTubeBand(b)) quad(",
-    "new": "    for (const b of spec.bands) if (!egTubeBand(b)) quad(",
+    "old": "      if (!egWallBand(spec, b) && !egTubeBand(b))",
+    "new": "      if (!egTubeBand(b))",
     "tests": [
       "test/net/eliteGates/egfull_span.test.js"
     ]

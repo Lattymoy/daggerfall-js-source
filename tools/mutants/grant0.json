@@ -142,8 +142,8 @@
   {
     "name": "GRANT0-spells-level-ignored",
     "file": "src/systems/enemySpells.js",
-    "old": "return ENEMY_CLASS_SPELLS[Math.min(6, Math.trunc(level / 3))] ?? [];",
-    "new": "return ENEMY_CLASS_SPELLS[Math.min(6, Math.trunc(entity.level / 3))] ?? [];",
+    "old": "  return ENEMY_CLASS_SPELLS[Math.min(6, Math.trunc(level / 3))] ?? [];",
+    "new": "  return ENEMY_CLASS_SPELLS[Math.min(6, Math.trunc(entity.level / 3))] ?? [];",
     "why": "the level asked is ignored - a copy's own level again",
     "tests": [
       "test/scenes/grant0_reader.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "GRANT0-spells-noncaster-casts",
     "file": "src/systems/enemySpells.js",
-    "old": "  if (!entity.basics?.castsMagic) return [];\n  return ENEMY_CLASS_SPELLS",
-    "new": "  return ENEMY_CLASS_SPELLS",
+    "old": "  if (!entity.basics?.castsMagic) return [];\n  return ENEMY_CLASS_SPELLS[Math.min(6, Math.trunc(level / 3))] ?? [];",
+    "new": "  return ENEMY_CLASS_SPELLS[Math.min(6, Math.trunc(level / 3))] ?? [];",
     "why": "a class that casts nothing given a caster's list",
     "tests": [
       "test/scenes/grant0_reader.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "GRANT0-spells-past-the-table",
     "file": "src/systems/enemySpells.js",
-    "old": "Math.min(6, Math.trunc(level / 3))",
-    "new": "Math.trunc(level / 3)",
+    "old": "  return ENEMY_CLASS_SPELLS[Math.min(6, Math.trunc(level / 3))] ?? [];",
+    "new": "  return ENEMY_CLASS_SPELLS[Math.trunc(level / 3)] ?? [];",
     "why": "a level past 18 reads past EnemyClassSpells",
     "tests": [
       "test/scenes/grant0_reader.test.js"

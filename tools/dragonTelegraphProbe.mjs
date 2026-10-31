@@ -14,7 +14,10 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const out = [];
-const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
+const check = (n, ok, d = '') => {
+  out.push(ok);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`);
+};
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=640 height=480></canvas><script type=module>
 import { DragonTelegraphPass, drapeGrid, drapeBounds } from '/src/render/dragon/dragonTelegraph.js';
@@ -52,26 +55,53 @@ window.__probe = res;
 
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
-  if (url === '/probe/') { res.writeHead(200, { 'content-type': 'text/html' }); res.end(PAGE); return; }   // not the root: U60 keeps that the landing page's
+  if (url === '/probe/') {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(PAGE);
+    return;
+  } // not the root: U60 keeps that the landing page's
   const p = join(ROOT, url);
-  if (!p.startsWith(ROOT) || !existsSync(p)) { res.writeHead(404); res.end(); return; }
-  res.writeHead(200, { 'content-type': extname(p) === '.js' ? 'text/javascript' : extname(p) === '.json' ? 'application/json' : 'application/octet-stream' });   // a JSON module served as JSON (the gate probe's WB9e)
+  if (!p.startsWith(ROOT) || !existsSync(p)) {
+    res.writeHead(404);
+    res.end();
+    return;
+  }
+  res.writeHead(200, {
+    'content-type':
+      extname(p) === '.js'
+        ? 'text/javascript'
+        : extname(p) === '.json'
+          ? 'application/json'
+          : 'application/octet-stream',
+  }); // a JSON module served as JSON (the gate probe's WB9e)
   res.end(readFileSync(p));
 });
 await new Promise((done) => server.listen(0, '127.0.0.1', done));
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'], ...(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {}) });   // a browser of the machine's own, as the armory's probe takes one
+const browser = await chromium.launch({
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+  ...(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {}),
+}); // a browser of the machine's own, as the armory's probe takes one
 try {
   const page = await browser.newPage();
   page.on('pageerror', (e) => console.log('page error:', e.message));
-  page.on('console', (m) => { if (m.type() === 'error') console.log('console:', m.text()); });
+  page.on('console', (m) => {
+    if (m.type() === 'error') console.log('console:', m.text());
+  });
   await page.goto(`http://127.0.0.1:${server.address().port}/probe/`);
   await page.waitForFunction(() => window.__probe, null, { timeout: 60_000 });
   const r = await page.evaluate(() => window.__probe);
-  check('the draped stage compiles and links against the gate\'s fragment stage', !r.error, r.error ?? '');
-  check('the shape is drawn, the pass marked foreign', r.drew === true && r.shapes > 0 && r.marked === 1, JSON.stringify({ drew: r.drew, shapes: r.shapes, marked: r.marked }));
+  check("the draped stage compiles and links against the gate's fragment stage", !r.error, r.error ?? '');
+  check(
+    'the shape is drawn, the pass marked foreign',
+    r.drew === true && r.shapes > 0 && r.marked === 1,
+    JSON.stringify({ drew: r.drew, shapes: r.shapes, marked: r.marked }),
+  );
   check('no GL error', r.err === 0, String(r.err));
   check('it lies ON the hillside: lit where the slope is', r.onSlope > 150, `brightness ${r.onSlope}`);
   check('not on the flat floor under it', r.flat < 30, `brightness ${r.flat}`);
   check('and dark away from it', r.away < 30, `brightness ${r.away}`);
-} finally { await browser.close(); server.close(); }
+} finally {
+  await browser.close();
+  server.close();
+}
 process.exit(out.every(Boolean) ? 0 : 1);

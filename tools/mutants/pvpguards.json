@@ -1,28 +1,236 @@
 [
-  {"name": "PVP-GUARDS-first-one", "file": "src/systems/wild/villainHunt.js", "old": "export const VILLAIN_HUNT = Object.freeze({ first: 2, stepMs: 30_000, max: 6, taken: 0.05 });", "new": "export const VILLAIN_HUNT = Object.freeze({ first: 1, stepMs: 30_000, max: 6, taken: 0.05 });", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-step-minute", "file": "src/systems/wild/villainHunt.js", "old": "export const VILLAIN_HUNT = Object.freeze({ first: 2, stepMs: 30_000, max: 6, taken: 0.05 });", "new": "export const VILLAIN_HUNT = Object.freeze({ first: 2, stepMs: 60_000, max: 6, taken: 0.05 });", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-cap-seven", "file": "src/systems/wild/villainHunt.js", "old": "export const VILLAIN_HUNT = Object.freeze({ first: 2, stepMs: 30_000, max: 6, taken: 0.05 });", "new": "export const VILLAIN_HUNT = Object.freeze({ first: 2, stepMs: 30_000, max: 7, taken: 0.05 });", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-share-half", "file": "src/systems/wild/villainHunt.js", "old": "export const VILLAIN_HUNT = Object.freeze({ first: 2, stepMs: 30_000, max: 6, taken: 0.05 });", "new": "export const VILLAIN_HUNT = Object.freeze({ first: 2, stepMs: 30_000, max: 6, taken: 0.5 });", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-refused-arrival-owed", "file": "src/systems/wild/villainHunt.js", "old": "sent: Math.max(sent, due) };", "new": "sent: sent + Math.max(0, Math.min(due - sent, VILLAIN_HUNT.max - standing)) };", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-destruction-left-out", "file": "src/systems/wild/villainHunt.js", "old": "  SKILLS.HandToHand, SKILLS.Archery, SKILLS.Destruction]);", "new": "  SKILLS.HandToHand, SKILLS.Archery]);", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-dodging-alone", "file": "src/systems/wild/villainHunt.js", "old": "  skillOverrides[SKILLS.Dodging] = best(HUNT_DEFENCE_SKILLS);", "new": "  skillOverrides[SKILLS.Dodging] = best([SKILLS.Dodging]);", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-level-guards-own", "file": "src/scenes/cityGuards.js", "old": "spawnGuardAt(spot.pos, spot.yaw, playerFeet, { level: mirror.level, mirror })", "new": "spawnGuardAt(spot.pos, spot.yaw, playerFeet, { mirror })", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-raw-skill", "file": "src/systems/wild/villainHunt.js", "old": "export function villainMirror(villain, { skill = skillValue, stat = liveStat } = {}) {", "new": "export function villainMirror(villain, { skill = (e, id) => e.skills[id], stat = liveStat } = {}) {", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-attribute-lowered", "file": "src/systems/wild/villainHunt.js", "old": "if (v > (entity.stats[k] ?? 0)) entity.stats[k] = v;", "new": "entity.stats[k] = v;", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-no-floor", "file": "src/systems/wild/villainHunt.js", "old": "Math.max(1, Math.round(damage * VILLAIN_HUNT.taken))", "new": "Math.round(damage * VILLAIN_HUNT.taken)", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-every-foe-resists", "file": "src/systems/wild/villainHunt.js", "old": "  entity?.villainHunter && damage > 0 ?", "new": "  damage > 0 ?", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-term-dropped", "file": "src/systems/wild/villainHunt.js", "old": "  !!(o.meterRed && o.zone && o.outdoors && o.settled && o.alive));", "new": "  !!(o.meterRed && o.zone && o.outdoors && o.alive));", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-peace-for-villain", "file": "src/systems/wild/villainHunt.js", "old": "export const peaceFor = (/** @type {boolean} */ settled, /** @type {boolean} */ red) => !!settled && !red;", "new": "export const peaceFor = (/** @type {boolean} */ settled, /** @type {boolean} */ red) => !!settled;", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-tenfold-kept", "file": "src/scenes/cityGuards.js", "old": "      if (mirror) mirrorOnto(entity, mirror);", "new": "      if (mirror) mirrorOnto(entity, mirror);\n      if (mirror) { entity.zoneWatch = true; entity.damageScale = 10; }", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-share-unread-at-door", "file": "src/scenes/cityGuards.js", "old": "    damage = hunterTaken(g.entity, damage);", "new": "", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-despawn-takes-hunter", "file": "src/scenes/cityGuards.js", "old": "if (!g.dead && !g.defender && !g.hunter) { g.dead = true;", "new": "if (!g.dead && !g.defender) { g.dead = true;", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-host-meter-unread", "file": "src/scenes/pvpGuardsHost.js", "old": "meterRed: isVillain(rules.flag?.villainy?.())", "new": "meterRed: true", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-host-zone-unread", "file": "src/scenes/pvpGuardsHost.js", "old": "zone: !!zone(), outdoors", "new": "zone: true, outdoors", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-host-settled-unread", "file": "src/scenes/pvpGuardsHost.js", "old": "settled: !!settled, alive", "new": "settled: true, alive", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-host-stand-down-skipped", "file": "src/scenes/pvpGuardsHost.js", "old": "    for (const g of hunters) watch?.removeGuard?.(g);\n", "new": "", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-host-poll-never-set", "file": "src/scenes/pvpGuardsHost.js", "old": "  every?.(tick, PVP_GUARDS_POLL_MS);", "new": "", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-wildcan-exception-unread", "file": "src/scenes/world.js", "old": "!peaceFor(settledAt(campToWire(player.feetAt()), locationIndex), isVillain(pvpFlag.villainy())) : modes?.mode === 'dungeon')", "new": "!peaceFor(settledAt(campToWire(player.feetAt()), locationIndex), false) : modes?.mode === 'dungeon')", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-wildfair-red-unread", "file": "src/scenes/world.js", "old": "!peaceFor(settledAt(duelWorldOf(peerId), locationIndex), pvpFlag.skullOf(peerId) === 'red')", "new": "!peaceFor(settledAt(duelWorldOf(peerId), locationIndex), false)", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-frame-exception-unread", "file": "src/scenes/world.js", "old": "here && wildOutdoors() && peaceFor(settledAt(campToWire(player.feetAt()), locationIndex), isVillain(pvpFlag.villainy()))", "new": "here && wildOutdoors() && peaceFor(settledAt(campToWire(player.feetAt()), locationIndex), false)", "tests": ["test/systems/wild/pvpguards.test.js"]},
-  {"name": "PVP-GUARDS-host-unwired", "file": "src/scenes/world.js", "old": "  const pvpFlag = createPvpGuardsHost(createPvpRulesHost(", "new": "  const pvpFlag = ((r) => r)(createPvpRulesHost(", "tests": ["test/systems/wild/pvpguards.test.js"]}
+  {
+    "name": "PVP-GUARDS-first-one",
+    "file": "src/systems/wild/villainHunt.js",
+    "old": "export const VILLAIN_HUNT = Object.freeze({ first: 2, stepMs: 30_000, max: 6, taken: 0.05 });",
+    "new": "export const VILLAIN_HUNT = Object.freeze({ first: 1, stepMs: 30_000, max: 6, taken: 0.05 });",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-step-minute",
+    "file": "src/systems/wild/villainHunt.js",
+    "old": "export const VILLAIN_HUNT = Object.freeze({ first: 2, stepMs: 30_000, max: 6, taken: 0.05 });",
+    "new": "export const VILLAIN_HUNT = Object.freeze({ first: 2, stepMs: 60_000, max: 6, taken: 0.05 });",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-cap-seven",
+    "file": "src/systems/wild/villainHunt.js",
+    "old": "export const VILLAIN_HUNT = Object.freeze({ first: 2, stepMs: 30_000, max: 6, taken: 0.05 });",
+    "new": "export const VILLAIN_HUNT = Object.freeze({ first: 2, stepMs: 30_000, max: 7, taken: 0.05 });",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-share-half",
+    "file": "src/systems/wild/villainHunt.js",
+    "old": "export const VILLAIN_HUNT = Object.freeze({ first: 2, stepMs: 30_000, max: 6, taken: 0.05 });",
+    "new": "export const VILLAIN_HUNT = Object.freeze({ first: 2, stepMs: 30_000, max: 6, taken: 0.5 });",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-refused-arrival-owed",
+    "file": "src/systems/wild/villainHunt.js",
+    "old": "  return { send: Math.max(0, Math.min(due - sent, VILLAIN_HUNT.max - standing)), sent: Math.max(sent, due) };",
+    "new": "  return {\n    send: Math.max(0, Math.min(due - sent, VILLAIN_HUNT.max - standing)),\n    sent: sent + Math.max(0, Math.min(due - sent, VILLAIN_HUNT.max - standing)),\n  };",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-destruction-left-out",
+    "file": "src/systems/wild/villainHunt.js",
+    "old": "  SKILLS.Destruction,\n]);",
+    "new": "]);",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-dodging-alone",
+    "file": "src/systems/wild/villainHunt.js",
+    "old": "  skillOverrides[SKILLS.Dodging] = best(HUNT_DEFENCE_SKILLS);",
+    "new": "  skillOverrides[SKILLS.Dodging] = best([SKILLS.Dodging]);",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-level-guards-own",
+    "file": "src/scenes/cityGuards.js",
+    "old": "spawnGuardAt(spot.pos, spot.yaw, playerFeet, { level: mirror.level, mirror })",
+    "new": "spawnGuardAt(spot.pos, spot.yaw, playerFeet, { mirror })",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-raw-skill",
+    "file": "src/systems/wild/villainHunt.js",
+    "old": "export function villainMirror(villain, { skill = skillValue, stat = liveStat } = {}) {",
+    "new": "export function villainMirror(villain, { skill = (e, id) => e.skills[id], stat = liveStat } = {}) {",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-attribute-lowered",
+    "file": "src/systems/wild/villainHunt.js",
+    "old": "  for (const [k, v] of Object.entries(mirror.stats)) if (v > (entity.stats[k] ?? 0)) entity.stats[k] = v;",
+    "new": "  for (const [k, v] of Object.entries(mirror.stats)) entity.stats[k] = v;",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-no-floor",
+    "file": "src/systems/wild/villainHunt.js",
+    "old": "  entity?.villainHunter && damage > 0 ? Math.max(1, Math.round(damage * VILLAIN_HUNT.taken)) : damage;",
+    "new": "  entity?.villainHunter && damage > 0 ? Math.round(damage * VILLAIN_HUNT.taken) : damage;",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-every-foe-resists",
+    "file": "src/systems/wild/villainHunt.js",
+    "old": "  entity?.villainHunter && damage > 0 ? Math.max(1, Math.round(damage * VILLAIN_HUNT.taken)) : damage;",
+    "new": "  damage > 0 ? Math.max(1, Math.round(damage * VILLAIN_HUNT.taken)) : damage;",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-term-dropped",
+    "file": "src/systems/wild/villainHunt.js",
+    "old": ") => !!(o.meterRed && o.zone && o.outdoors && o.settled && o.alive);",
+    "new": ") => !!(o.meterRed && o.zone && o.outdoors && o.alive);",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-peace-for-villain",
+    "file": "src/systems/wild/villainHunt.js",
+    "old": "export const peaceFor = (/** @type {boolean} */ settled, /** @type {boolean} */ red) => !!settled && !red;",
+    "new": "export const peaceFor = (/** @type {boolean} */ settled, /** @type {boolean} */ red) => !!settled;",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-tenfold-kept",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      if (mirror) mirrorOnto(entity, mirror);",
+    "new": "      if (mirror) mirrorOnto(entity, mirror);\n      if (mirror) { entity.zoneWatch = true; entity.damageScale = 10; }",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-share-unread-at-door",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    damage = hunterTaken(g.entity, damage);",
+    "new": "",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-despawn-takes-hunter",
+    "file": "src/scenes/cityGuards.js",
+    "old": "if (!g.dead && !g.defender && !g.hunter) { g.dead = true;",
+    "new": "if (!g.dead && !g.defender) { g.dead = true;",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-host-meter-unread",
+    "file": "src/scenes/pvpGuardsHost.js",
+    "old": "        meterRed: isVillain(rules.flag?.villainy?.()),",
+    "new": "        meterRed: true,",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-host-zone-unread",
+    "file": "src/scenes/pvpGuardsHost.js",
+    "old": "        zone: !!zone(),",
+    "new": "        zone: true,",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-host-settled-unread",
+    "file": "src/scenes/pvpGuardsHost.js",
+    "old": "        settled: !!settled,",
+    "new": "        settled: true,",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-host-stand-down-skipped",
+    "file": "src/scenes/pvpGuardsHost.js",
+    "old": "    for (const g of hunters) watch?.removeGuard?.(g);\n    hunters.clear();",
+    "new": "    hunters.clear();",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-host-poll-never-set",
+    "file": "src/scenes/pvpGuardsHost.js",
+    "old": "  every?.(tick, PVP_GUARDS_POLL_MS);",
+    "new": "",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-wildcan-exception-unread",
+    "file": "src/scenes/world.js",
+    "old": "!peaceFor(settledAt(campToWire(player.feetAt()), locationIndex), isVillain(pvpFlag.villainy())) : modes?.mode === 'dungeon')",
+    "new": "!peaceFor(settledAt(campToWire(player.feetAt()), locationIndex), false) : modes?.mode === 'dungeon')",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-wildfair-red-unread",
+    "file": "src/scenes/world.js",
+    "old": "!peaceFor(settledAt(duelWorldOf(peerId), locationIndex), pvpFlag.skullOf(peerId) === 'red')",
+    "new": "!peaceFor(settledAt(duelWorldOf(peerId), locationIndex), false)",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-frame-exception-unread",
+    "file": "src/scenes/world.js",
+    "old": "here && wildOutdoors() && peaceFor(settledAt(campToWire(player.feetAt()), locationIndex), isVillain(pvpFlag.villainy()))",
+    "new": "here && wildOutdoors() && peaceFor(settledAt(campToWire(player.feetAt()), locationIndex), false)",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  },
+  {
+    "name": "PVP-GUARDS-host-unwired",
+    "file": "src/scenes/world.js",
+    "old": "  const pvpFlag = createPvpGuardsHost(createPvpRulesHost(",
+    "new": "  const pvpFlag = ((r) => r)(createPvpRulesHost(",
+    "tests": [
+      "test/systems/wild/pvpguards.test.js"
+    ]
+  }
 ]

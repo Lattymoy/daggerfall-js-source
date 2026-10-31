@@ -23,9 +23,10 @@ import { mineKind } from '../../src/scenes/mineHost.js';
 import { createHerbAct } from '../../src/systems/herbAct.js';
 import { veins, utcDayOfMs } from '../../src/net/nodeLaw.js';
 import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } from '../../src/world/terrain/terrainSampler.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 installForaging({ fetchBytes: async () => new Uint8Array(0) });
-const WORLD = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+const WORLD = hostText('src/scenes/world.js');
 const RETICLE = readFileSync(new URL('../../src/ui/professions/profReticle.js', import.meta.url), 'utf8');
 
 const WOODS = CLIMATES.Woodlands, GLENUMBRA = 59;
@@ -126,10 +127,12 @@ function worldEscapeUp(scope) {
 }
 /** The names the seam reads: every gate open, the Escape up, no pad; `requestLook` the real one over the fake canvas. */
 function seamScope(canvas, over = {}) {
-  return {
+  const scope = {
     cursorActive, setCursorActive, requestLook, holdCursor, canvas, gamePaused: () => false, pointerSurfaces: new Set(), modes: null,
     overlayOpen: () => false, travelView: null, controllerLook: () => false, backButtonHeld: false, escRelock: null, ...over,
   };
+  scope.host = scope;   // PIN MOVED (HOST-SPLIT PROFESSIONS): the seam reads the host's live names through `host`
+  return scope;
 }
 
 // ─── A: the mouse and the lock ──────────────────────────────────────────
@@ -297,5 +300,5 @@ test('AUDIT HERB-CURSOR C3: the Basket says to click the glint - "tap the glint"
     s.host.tick(0.016);
     assert.equal(s.label, 'click the glint');
   } finally { s.done(); }
-  assert.match(RETICLE, /hint: \(st, label\) => \(st\.gentle \? t\('prof\.reticle\.basket\.searching', 'searching\.\.\.'\) : label \|\| t\('prof\.reticle\.basket\.glint', 'click the glint'\)\),/);   // PIN MOVED (L10N4): the words through t()
+  assert.match(RETICLE, /hint: \(st, label\) =>\n\s*st\.gentle\n\s*\? t\('prof\.reticle\.basket\.searching', 'searching\.\.\.'\)\n\s*: label \|\| t\('prof\.reticle\.basket\.glint', 'click the glint'\),/);   // PIN MOVED (L10N4): the words through t()
 });

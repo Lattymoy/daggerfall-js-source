@@ -6,4 +6,5 @@
 /** The capitals' lane - after the country places' 64 (0x300-0x33f) and the lairs' (0x340). */
 export const CAPITAL_LANE = 0x341;
 /** Is a map id a capital's - any slice's (world/tamrielCapitals.js capitalPlaceId). */
-export const isCapitalPlaceId = (id) => ((Number(id) >>> 20) & 0xfff) === CAPITAL_LANE && ((Number(id) >>> 0) & 0x80000) !== 0;
+export const isCapitalPlaceId = (id) =>
+  ((Number(id) >>> 20) & 0xfff) === CAPITAL_LANE && ((Number(id) >>> 0) & 0x80000) !== 0;

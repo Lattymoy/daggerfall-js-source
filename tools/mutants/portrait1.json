@@ -29,8 +29,8 @@
   {
     "name": "PORTRAIT1-the-billboard-stops-overwriting-the-factions-face",
     "file": "src/systems/npcSession.js",
-    "old": "  const fromBillboard = flatFaceIndex?.(data?.billboardArchiveIndex ?? 0, data?.billboardRecordIndex ?? 0) ?? -1;\n  if (fromBillboard >= 0) record = fromBillboard;",
-    "new": "  const fromBillboard = -1;\n  if (fromBillboard >= 0) record = fromBillboard;",
+    "old": "  const fromBillboard = flatFaceIndex?.(data?.billboardArchiveIndex ?? 0, data?.billboardRecordIndex ?? 0) ?? -1;",
+    "new": "  const fromBillboard = -1;",
     "tests": [
       "test/systems/nativetalk.test.js"
     ]

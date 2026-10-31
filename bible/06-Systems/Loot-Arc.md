@@ -452,7 +452,7 @@ sentence, a `kind` and its numbers. The card and the tooltip say it after the en
 | The Warden | Last Stand | Under a quarter of your health, the damage you take is lessened by a quarter |
 | Titanheart | Unyielding | No single hurt takes more than a quarter of your health |
 | Aegis of Dawn | Dawnward | Each foe's blow that lands on you charges it; at five charges, the next foe's blow is turned aside whole |
-| Foxglove | Fortune's Favour | While you wear it, every Legendary you find is half again as likely - its source's own chance, times one and a half |
+| Foxglove | Fortune's Favour | While you wear it, every Legendary you find is a quarter again as likely - its source's own chance, times one and a quarter (FOX-STACK, section 22; it was a half) |
 | King's Mark | Tribute | Each foe you kill pays you 5 gold for each of its levels |
 | Archmage's Loop | Spell Mastery | Your spells cost 15% less magicka, and 30% less while your magicka is under half |
 | Ansei's Edge | Way of the Sword | Each of its blows that lands grants Flow for 6 s, up to five: +6% weapon damage a stack |
@@ -478,7 +478,7 @@ sentence, a `kind` and its numbers. The card and the tooltip say it after the en
 
 **Who.** `systems/loot/lootPowers.js` `wornPowers(entity)`: MY entity's worn pieces - a Legendary's record (a piece that is
 a Legendary; an id on anything else wakes nothing) and, from LOOT10, a Rare's imprint - ONE entry a power, however many
-pieces carry it. A WEAPON's power rides that weapon's own blows (`blowPowers`: the one that struck); the rest of it
+pieces carry it (and since FOX-STACK, section 22, a record's lines too). A WEAPON's power rides that weapon's own blows (`blowPowers`: the one that struck); the rest of it
 while it is wielded; armour's and jewellery's ride every blow of mine, my fists' too. Asleep in a duel (the sets' own
 word, `setsDueling`), nothing with the switch off, and offline as online.
 
@@ -515,7 +515,7 @@ shows nothing). The arc landed - half the shaft, as shock, on the nearest other 
 pool's door, which runs no formula, so HN1's numbers (`10-UI/UI-Arc.md`) never heard it: no number, no word, while
 `again()`'s follow-up beside it raised its own since ROSE-SEEN. Every reach of a blow on another foe was the same
 omission - Earthshaker's quake, Dragonfire's burst - and Dragonfire's own second burn rose untagged. Each lands through
-one door now (`lootPowers.js:"function reachOn(door, f, n, word) {"`), its number risen and tagged with its power's name
+one door now (`lootPowers.js:"function reachOn"`), its number risen and tagged with its power's name
 (`showFollowUp`), before the foe takes it; enhanced only, as HN1 is. NOT the same omission, left: thorns, an affix line
 that answers a foe's blow where its attacker stands (as the sets' Spite of the Spurned does), not a reach of my blow at the
 reticle - a number of its own is the owner's call; and the arcane paths' arcs (`arcanePowers.js` - Rift Lance, the
@@ -1192,3 +1192,19 @@ Pinned: `test/systems/audit625_loot.test.js` (6); moved: `search1_searchables` (
 copy; the keep's threshold itself, not a band), `sigil1` and `survtiers3` (the copies' cap), and the mounted dungeon
 harnesses' stubs (`audit68_dungeonctx`, `loot7check`, `corpsegold`, `seatheal`). `tools/mutants/audit625.json` (the L
 records); `lootease.json`'s KIT-ROLL records re-aimed by content (the reversed law's record says so).
+
+## 22. FOX-STACK - a Legendary counts once (2026-10-30)
+
+A player wrote that some players wear six Foxgloves and get Legendaries "constantly". Fortune's Favour already counted
+once (`wornPowers`). Each Foxglove's +15 Luck did not, and Luck multiplies every rarity threshold (LOOT13, section 5 of
+`Loot-II-Arc.md`) up to x1.5 at Luck 100. One Foxglove made a Legendary 1.72x as likely, four or more 2.25x.
+
+- **A record's lines count once.** `lootRarity.js` `countedPieces` drops a later copy of a Legendary record worn. Both
+  `wornItems` (the affix fold, the card's resistance and its compare) and `lootPowers.js` `wornPieces` (wornSum's
+  lines, the powers) read through it. The first copy in the equip table counts. Two different records, and two Rares,
+  still add up.
+- **Fortune's Favour is a quarter** (`mult: 1.25`): the owner, "Yeah reduce the change and fix", then "Chance". One Foxglove now makes a
+  Legendary 1.44x as likely at Luck 50, and a second adds nothing.
+
+Pinned: `test/systems/loot/foxstack.test.js`; moved: `loot5_powers` (the find). `tools/mutants/foxstack.json`, 5, all
+dead.

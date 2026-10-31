@@ -132,8 +132,8 @@
   {
     "name": "AS2-R1-5-last-unmarked",
     "file": "server/src/relayScale.js",
-    "old": "    else if (i === LAYERS_MAX - 1) headers[LAYER_LAST_HEADER] = '1';",
-    "new": "",
+    "old": "    else if (i === LAYERS_MAX - 1) headers[LAYER_LAST_HEADER] = '1'; // AUDIT SCALE II R1-5: the refusal nothing walks past - the one a room counts (double13)",
+    "new": "    // AUDIT SCALE II R1-5: the refusal nothing walks past - the one a room counts (double13)",
     "tests": [
       "test/net/auditscale2_relay.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "AS2-R1-5-page-last-believed",
     "file": "server/src/relayScale.js",
-    "old": "  delete page[LAYER_ASK_HEADER]; delete page[LAYER_LAST_HEADER];",
-    "new": "  delete page[LAYER_ASK_HEADER];",
+    "old": "  delete page[LAYER_LAST_HEADER];\n  // AUDIT SCALE II R3-3: AN ASKED LAYER IS THE PAGE'S ONLY WHILE SOMEONE STANDS IN IT. Every `?ly=` was honoured, so any",
+    "new": "  // AUDIT SCALE II R3-3: AN ASKED LAYER IS THE PAGE'S ONLY WHILE SOMEONE STANDS IN IT. Every `?ly=` was honoured, so any",
     "tests": [
       "test/net/auditscale2_relay.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "AS2-R3-3-empty-answered",
     "file": "server/src/relayScale.js",
-    "old": "{ start = 0; i = -1; continue; }",
-    "new": "{ return res; }",
+    "old": "        start = 0;\n        i = -1;\n        continue;",
+    "new": "        return res;",
     "tests": [
       "test/net/auditscale2_relay.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "AS2-R3-3-again-from-asked",
     "file": "server/src/relayScale.js",
-    "old": "{ start = 0; i = -1; continue; }",
-    "new": "{ i = -1; continue; }",
+    "old": "        start = 0;\n        i = -1;",
+    "new": "        i = -1;",
     "tests": [
       "test/net/auditscale2_relay.test.js"
     ],
@@ -202,7 +202,7 @@
   {
     "name": "AS2-R3-3-page-ask-believed",
     "file": "server/src/relayScale.js",
-    "old": "  delete page[LAYER_ASK_HEADER]; delete page[LAYER_LAST_HEADER];",
+    "old": "  delete page[LAYER_ASK_HEADER];\n  delete page[LAYER_LAST_HEADER];",
     "new": "  delete page[LAYER_LAST_HEADER];",
     "tests": [
       "test/net/auditscale2_relay.test.js"

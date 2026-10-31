@@ -40,9 +40,32 @@
 //
 // Pure but for the player's hands (liftPiece, givePiece through the claim ledger). Not a DFU member: Daggerfall has one player.
 import {
-  baseSignature, claimOf, claimWord, composeRoomView, isRoomWord, judgeRoomClaim, legacyCounts, legacyDelta, legacySig, liftPiece, givePiece,
-  listMovesSince, mergeRoomWord, pieceCount, roomClaimId, roomClaimOrder, roomState, roomWord, roomTermsBeat, sameRoomTerms, validRoomWord,
-  ROOM_ANSWERS_KEPT, ROOM_CLAIM_TIMEOUT_MS, ROOM_CLAIMS_MAX, ROOM_PUT_RESAY_MS, ROOM_TAKEN_TEXT,
+  baseSignature,
+  claimOf,
+  claimWord,
+  composeRoomView,
+  isRoomWord,
+  judgeRoomClaim,
+  legacyCounts,
+  legacyDelta,
+  legacySig,
+  liftPiece,
+  givePiece,
+  listMovesSince,
+  mergeRoomWord,
+  pieceCount,
+  roomClaimId,
+  roomClaimOrder,
+  roomState,
+  roomWord,
+  roomTermsBeat,
+  sameRoomTerms,
+  validRoomWord,
+  ROOM_ANSWERS_KEPT,
+  ROOM_CLAIM_TIMEOUT_MS,
+  ROOM_CLAIMS_MAX,
+  ROOM_PUT_RESAY_MS,
+  ROOM_TAKEN_TEXT,
 } from '../../systems/roomLoot.js';
 import { createClaimLedger, CLAIM_KEEP_MS } from '../../systems/loot/claimLedger.js';
 import { validLootList, LOOT_LIST_MAX } from '../../systems/loot/loot.js';
@@ -82,13 +105,20 @@ export function createInteriorRoomLoot(net, bag) {
   let claimN = 0;
   let wasSeat = false;
   const entity = net.entity();
-  const ledger = createClaimLedger({ entity, say: (t) => net.say(t), newId: () => roomClaimId(net.selfId() ?? 'self', bag.stamp, ++claimN) });
+  const ledger = createClaimLedger({
+    entity,
+    say: (t) => net.say(t),
+    newId: () => roomClaimId(net.selfId() ?? 'self', bag.stamp, ++claimN),
+  });
 
   const live = () => net.selfId() != null;
   /** Whether this client judges: it holds the relay's seat - or no other holds it that it knows of (no welcome yet, a socket
    *  dead; WORLD2's own rule for the dungeon: the authority is self unless a live other host is known), so a take is never
    *  left waiting on a seat that is not there. */
-  const isSeat = () => { const s = net.seat(); return s == null || s === net.selfId(); };
+  const isSeat = () => {
+    const s = net.seat();
+    return s == null || s === net.selfId();
+  };
   /** Whose word the room's state is: the memory's (no sender - the seat publishes it) and the SEAT's. A birth is anyone's, a claim and a put their claimer's own. */
   const hostWord = (from) => from == null || (net.seat() != null && from === net.seat());
   /** R-3: the SHARED clock - the relay's, the same on every client - never Date.now() or performance.now(), which are this machine's own. */
@@ -96,7 +126,24 @@ export function createInteriorRoomLoot(net, bag) {
   const targetOf = (ctx, canon) => (ctx?.containers ?? [])[Number(canon.split(':')[1])] ?? null;
   const cupOf = (canon) => {
     let c = cups.get(canon);
-    if (!c) { c = { canon, st: null, roll: null, composed: null, win: null, keeping: null, birthAt: null, birthSays: 0, legacy: new Map(), took: [], gave: [], local: false, spoke: false }; cups.set(canon, c); }
+    if (!c) {
+      c = {
+        canon,
+        st: null,
+        roll: null,
+        composed: null,
+        win: null,
+        keeping: null,
+        birthAt: null,
+        birthSays: 0,
+        legacy: new Map(),
+        took: [],
+        gave: [],
+        local: false,
+        spoke: false,
+      };
+      cups.set(canon, c);
+    }
     return c;
   };
 
@@ -104,12 +151,19 @@ export function createInteriorRoomLoot(net, bag) {
   /** AUTO-HOLD: the places (and stored pieces) whose piece this reader already CARRIES are read as taken in its view - it is
    *  never offered a second, which is a copy the ledger would lock with the original; everyone else's list has them. */
   function hidden(cup) {
-    const places = new Map(), stored = new Map();
+    const places = new Map(),
+      stored = new Map();
     const carried = net.carried?.();
     if (typeof carried?.keyOf !== 'function') return { places, stored };
     const keys = new Set(carried.keys ?? []);
-    cup.st.base.items.forEach((it, i) => { const k = carried.keyOf(it); if (k && keys.has(k) && !cup.st.taken.has(i)) places.set(i, cup.st.base.full[i] ?? 1); });
-    cup.st.stored.forEach((it, i) => { const k = carried.keyOf(it); if (k && keys.has(k)) stored.set(cup.st.ids[i], pieceCount(it)); });
+    cup.st.base.items.forEach((it, i) => {
+      const k = carried.keyOf(it);
+      if (k && keys.has(k) && !cup.st.taken.has(i)) places.set(i, cup.st.base.full[i] ?? 1);
+    });
+    cup.st.stored.forEach((it, i) => {
+      const k = carried.keyOf(it);
+      if (k && keys.has(k)) stored.set(cup.st.ids[i], pieceCount(it));
+    });
     return { places, stored };
   }
   /** This player's claims in flight and puts the seat has not landed, as composeRoomView reads its `pending`. */
@@ -118,7 +172,9 @@ export function createInteriorRoomLoot(net, bag) {
     const h = hidden(cup);
     for (const [i, n] of h.places) p.places.set(i, (p.places.get(i) ?? 0) + n);
     for (const [id, n] of h.stored) p.stored.set(id, (p.stored.get(id) ?? 0) + n);
-    for (const pu of puts.values()) if (pu.canon === cup.canon && !pu.refused && pu.mint === mintOf(cup.st)) p.puts.push({ it: pu.item, id: pu.put.id });
+    for (const pu of puts.values())
+      if (pu.canon === cup.canon && !pu.refused && pu.mint === mintOf(cup.st))
+        p.puts.push({ it: pu.item, id: pu.put.id });
     return p;
   }
   /** THE LIST, composed IN PLACE into the container's `items` (a window already bound to the array keeps its rows) - never
@@ -127,11 +183,18 @@ export function createInteriorRoomLoot(net, bag) {
   function compose(ctx, cup) {
     const t = targetOf(ctx, cup.canon);
     if (!t || !cup.st?.base || cup.win) return false;
-    for (const [id, p] of [...puts]) if (p.canon === cup.canon && p.refused) { puts.delete(id); givePiece(entity, p.item, pieceCount(p.item)); }
+    for (const [id, p] of [...puts])
+      if (p.canon === cup.canon && p.refused) {
+        puts.delete(id);
+        givePiece(entity, p.item, pieceCount(p.item));
+      }
     const { list, seen } = composeRoomView(cup.st.base.items, cup.st.base.full, cup.st, [], pendingOf(cup));
-    if (Array.isArray(t.items)) { t.items.length = 0; t.items.push(...list); } else t.items = list;
-    markRoomCarried(t.items);   // GOLD-WIRE: a gold drop into it stops at the most one stack rides the room's word in
-    t.stockedDate = Math.max(Number.isFinite(t.stockedDate) ? t.stockedDate : 0, cup.st.terms.g);   // the day it was stocked, which only moves forward (AUDIT WORLD6a A3)
+    if (Array.isArray(t.items)) {
+      t.items.length = 0;
+      t.items.push(...list);
+    } else t.items = list;
+    markRoomCarried(t.items); // GOLD-WIRE: a gold drop into it stops at the most one stack rides the room's word in
+    t.stockedDate = Math.max(Number.isFinite(t.stockedDate) ? t.stockedDate : 0, cup.st.terms.g); // the day it was stocked, which only moves forward (AUDIT WORLD6a A3)
     cup.composed = { list: t.items, seen, base: cup.st.base };
     return true;
   }
@@ -147,21 +210,42 @@ export function createInteriorRoomLoot(net, bag) {
   /** The seat's word: terms, takes, stored pieces - and `base` the carried base's records (the birth's, and the memory's);
    *  `verdicts` in words of ROOM_ANSWERS_KEPT, so the answers to a Take all of more are consecutive words and none is pushed out. */
   function stateRecords(cup, { base = false, verdicts = [] } = {}) {
-    const word = (y) => dayOf(roomWord(cup.canon, cup.st, cup.st.base.h, storedOf(cup), null, y, base ? cup.st.base.records : null), cup.st);
+    const word = (y) =>
+      dayOf(
+        roomWord(cup.canon, cup.st, cup.st.base.h, storedOf(cup), null, y, base ? cup.st.base.records : null),
+        cup.st,
+      );
     if (!verdicts.length) return [word([])];
     const out = [];
-    for (let i = 0; i < verdicts.length; i += ROOM_ANSWERS_KEPT) out.push(word(verdicts.slice(i, i + ROOM_ANSWERS_KEPT)));
+    for (let i = 0; i < verdicts.length; i += ROOM_ANSWERS_KEPT)
+      out.push(word(verdicts.slice(i, i + ROOM_ANSWERS_KEPT)));
     return out;
   }
   /** A claimer's words: its claims and puts in flight on THIS mint, consecutive words of ROOM_CLAIMS_MAX - never the room's state. */
   function claimRecords(cup) {
     const mint = mintOf(cup.st);
-    const q = [], a = [];
-    for (const c of ledger.open(cup.canon)) if (c.meta.mint === mint) q.push({ id: c.id, ...(c.p !== undefined ? { p: c.p } : { sp: c.sp }), n: c.n, tm: c.meta.tm });
-    for (const p of puts.values()) if (p.canon === cup.canon && !p.refused && p.mint === mint) a.push({ id: p.put.id, it: p.put.it, tm: p.put.tm });
+    const q = [],
+      a = [];
+    for (const c of ledger.open(cup.canon))
+      if (c.meta.mint === mint)
+        q.push({ id: c.id, ...(c.p !== undefined ? { p: c.p } : { sp: c.sp }), n: c.n, tm: c.meta.tm });
+    for (const p of puts.values())
+      if (p.canon === cup.canon && !p.refused && p.mint === mint) a.push({ id: p.put.id, it: p.put.it, tm: p.put.tm });
     const out = [];
     for (let i = 0; i < Math.max(q.length, a.length); i += ROOM_CLAIMS_MAX) {
-      out.push(dayOf(claimWord(cup.canon, cup.st, cup.st.base.h, q.slice(i, i + ROOM_CLAIMS_MAX), a.slice(i, i + ROOM_CLAIMS_MAX), null), cup.st));
+      out.push(
+        dayOf(
+          claimWord(
+            cup.canon,
+            cup.st,
+            cup.st.base.h,
+            q.slice(i, i + ROOM_CLAIMS_MAX),
+            a.slice(i, i + ROOM_CLAIMS_MAX),
+            null,
+          ),
+          cup.st,
+        ),
+      );
     }
     return out;
   }
@@ -179,7 +263,11 @@ export function createInteriorRoomLoot(net, bag) {
   function say(cup, opts) {
     const recs = wordsOf(cup, opts);
     if (!recs.length || !bag.locationKey) return false;
-    if (!cup.spoke) { cup.spoke = true; bag.seen.add(cup.canon); net.claimed?.(); }
+    if (!cup.spoke) {
+      cup.spoke = true;
+      bag.seen.add(cup.canon);
+      net.claimed?.();
+    }
     let ok = true;
     for (const rec of recs) ok = !!net.send({ k: bag.locationKey, l: [rec] }) && ok;
     return ok;
@@ -190,7 +278,14 @@ export function createInteriorRoomLoot(net, bag) {
    *  put waits to go home (never from under an open window). */
   function resolveMine(id, g) {
     const p = puts.get(id);
-    if (p) { if (g) { puts.delete(id); const cup = cups.get(p.canon); if (cup) gaveIn(cup, p.item, p.mint, id); } else p.refused = true; return; }
+    if (p) {
+      if (g) {
+        puts.delete(id);
+        const cup = cups.get(p.canon);
+        if (cup) gaveIn(cup, p.item, p.mint, id);
+      } else p.refused = true;
+      return;
+    }
     ledger.resolve(id, g);
   }
   /** THE SEAT GRANTS: every claim and put the state holds unanswered, in the order they reached it (or, at a seat's change,
@@ -201,8 +296,19 @@ export function createInteriorRoomLoot(net, bag) {
     const claims = [...st.claims.values()];
     if (order) claims.sort(order);
     const now = wall();
-    const verdicts = claims.map((cl) => [cl.id, judgeRoomClaim(st, st.base.items.length, st.base.full, !('it' in cl) && Number.isFinite(cl.tm) && now - cl.tm >= CLAIM_KEEP_MS / 2 ? { ...cl, stale: true } : cl, admit)]);   // AUDIT OUTDOOR-LOOT D5: a take claim old enough that its claimer may have given it up (CLAIM_KEEP_MS) is refused - granted, its piece left the room for nobody
-    for (const id of reanswer) if (st.answers.has(id) && !verdicts.some(([v]) => v === id)) verdicts.push([id, /** @type {number} */ (st.answers.get(id))]);
+    const verdicts = claims.map((cl) => [
+      cl.id,
+      judgeRoomClaim(
+        st,
+        st.base.items.length,
+        st.base.full,
+        !('it' in cl) && Number.isFinite(cl.tm) && now - cl.tm >= CLAIM_KEEP_MS / 2 ? { ...cl, stale: true } : cl,
+        admit,
+      ),
+    ]); // AUDIT OUTDOOR-LOOT D5: a take claim old enough that its claimer may have given it up (CLAIM_KEEP_MS) is refused - granted, its piece left the room for nobody
+    for (const id of reanswer)
+      if (st.answers.has(id) && !verdicts.some(([v]) => v === id))
+        verdicts.push([id, /** @type {number} */ (st.answers.get(id))]);
     for (const [id, g] of verdicts) resolveMine(id, g);
     compose(ctx, cup);
     return verdicts;
@@ -211,7 +317,11 @@ export function createInteriorRoomLoot(net, bag) {
   // ── a word lands ────────────────────────────────────────────────────────────────────────────────────────────────────
   /** The pieces of a word a peer may hand us, aligned: no bound piece, no letter, no theft's mark (SS3, HACKED-GOLD, STOLEN-GOODS S3). */
   const landed = (list) => peerHanded(list).map((it) => clearStolen(it));
-  function unreadable(cup) { bag.seen.add(cup.canon); bag.unreadable.add(cup.canon); return 0; }
+  function unreadable(cup) {
+    bag.seen.add(cup.canon);
+    bag.unreadable.add(cup.canon);
+    return 0;
+  }
   /** The state's mint changed. `lost`: it was a LOST tie-break (the other first-open of the day won) - this client's claims on it
    *  are refused (the piece lifted stays out) and so are the seat's own takes from it, lifted back out of its pack (a piece of a
    *  roll that never was the room's). Else a NEW DAY's stock replaced it (a restock): what was taken stays taken, and a claim in
@@ -222,14 +332,21 @@ export function createInteriorRoomLoot(net, bag) {
     for (const p of puts.values()) if (p.canon === cup.canon && p.mint !== mint) p.refused = true;
     if (lost) {
       let said = false;
-      const now = net.now(), cross = birthCrossMs();
-      for (const t of cup.took) if (t.mint !== mint && now - t.at <= cross) { liftPiece(entity, t.obj, t.k); said = true; }
-      for (const g of cup.gave) if (g.mint !== mint && now - g.at <= cross && was?.ids?.includes(g.id)) givePiece(entity, g.item, pieceCount(g.item));   // AUDIT OUTDOOR-LOOT C3: a put the losing roll still stored goes home - the roll that won never held it (one another took from it meanwhile is that taker's)
+      const now = net.now(),
+        cross = birthCrossMs();
+      for (const t of cup.took)
+        if (t.mint !== mint && now - t.at <= cross) {
+          liftPiece(entity, t.obj, t.k);
+          said = true;
+        }
+      for (const g of cup.gave)
+        if (g.mint !== mint && now - g.at <= cross && was?.ids?.includes(g.id))
+          givePiece(entity, g.item, pieceCount(g.item)); // AUDIT OUTDOOR-LOOT C3: a put the losing roll still stored goes home - the roll that won never held it (one another took from it meanwhile is that taker's)
       if (said) net.say(ROOM_TAKEN_TEXT);
     }
     cup.took = cup.took.filter((t) => t.mint === mint);
     cup.gave = cup.gave.filter((g) => g.mint === mint);
-    cup.birthAt = null;   // the birth this client was saying is not the room's
+    cup.birthAt = null; // the birth this client was saying is not the room's
   }
 
   /** Answers 1 when the word was the room's about this cupboard, else 0 (a word refused whole, or one about nothing here). */
@@ -239,33 +356,50 @@ export function createInteriorRoomLoot(net, bag) {
     const cup = cupOf(canon);
     // AUDIT WORLD6a A2/B2: the day is projected like the list - a generation that is no whole number, or past tomorrow, refuses the word WHOLE
     // (not unreadable: M2's word is for a list this build cannot READ); the day only moves forward (A3: roomTermsBeat's newer generation wins)
-    if (rec.g !== undefined && !(Number.isSafeInteger(rec.g) && rec.g >= 0 && (today == null || rec.g <= today + 1))) return 0;
+    if (rec.g !== undefined && !(Number.isSafeInteger(rec.g) && rec.g >= 0 && (today == null || rec.g <= today + 1)))
+      return 0;
     if (isRoomWord(rec)) return landWord(ctx, cup, rec, from);
     if (rec.g !== undefined) return 0;
     return landLegacy(ctx, cup, rec, from, today);
   }
   function landWord(ctx, cup, rec, from) {
     const w = validRoomWord(rec);
-    if (!w) return unreadable(cup);   // a piece from a newer game, a base with no signature: AUDIT SETS M2
+    if (!w) return unreadable(cup); // a piece from a newer game, a base with no signature: AUDIT SETS M2
     if (w.b) {
       w.b = landed(w.b);
-      if (baseSignature(w.b) !== w.h) return unreadable(cup);   // a base this build reads differently, or a hostile one: never landed as a list
+      if (baseSignature(w.b) !== w.h) return unreadable(cup); // a base this build reads differently, or a hostile one: never landed as a list
     }
     const fromHost = hostWord(from);
     // WHO SAYS WHAT: the state - the takes, the stored pieces, the verdicts - is the SEAT's word (and the memory's); a birth is
     // anyone's; a claim and a put are their claimer's own, in their claimer's name (claimOf)
-    if (!fromHost) { w.x = []; w.c = []; w.y = []; w.s = null; w.si = null; }
+    if (!fromHost) {
+      w.x = [];
+      w.c = [];
+      w.y = [];
+      w.s = null;
+      w.si = null;
+    }
     w.q = from == null ? [] : w.q.filter((cl) => claimOf(cl.id, from));
-    w.a = from == null ? [] : w.a.filter((p) => claimOf(p.id, from)).map((p) => (p.it ? { ...p, it: clearStolen(p.it) } : p));   // a put of nothing is refused at the verdict
-    if (w.s) { const keep = w.s.map((it) => admit(it)); w.si = w.si.filter((_, i) => keep[i]); w.s = landed(w.s); }
+    w.a =
+      from == null
+        ? []
+        : w.a.filter((p) => claimOf(p.id, from)).map((p) => (p.it ? { ...p, it: clearStolen(p.it) } : p)); // a put of nothing is refused at the verdict
+    if (w.s) {
+      const keep = w.s.map((it) => admit(it));
+      w.si = w.si.filter((_, i) => keep[i]);
+      w.s = landed(w.s);
+    }
     const mine = isSeat();
     const before = cup.st;
-    if (!before && !w.b) return 0;   // terms with no base: UNBORN here until the base arrives
+    if (!before && !w.b) return 0; // terms with no base: UNBORN here until the base arrives
     const reanswer = mine && before ? [...w.q, ...w.a].map((c) => c.id).filter((id) => before.answers.has(id)) : [];
     const { state, answered } = mergeRoomWord(before, w);
     const adopted = state !== before;
     cup.st = state;
-    if (adopted) { cup.local = false; dropOld(cup, before?.terms.g === state.terms.g, before); }
+    if (adopted) {
+      cup.local = false;
+      dropOld(cup, before?.terms.g === state.terms.g, before);
+    }
     if (!adopted && before && !(sameRoomTerms(w, state.terms) && w.h === state.terms.h)) {
       // another mint that loses: its claims are on a base that is gone (heard as stale); the seat refuses them now - and a
       // competing BIRTH is answered with the base that won, so its minter (who may have missed the seat's) converges on it
@@ -277,13 +411,13 @@ export function createInteriorRoomLoot(net, bag) {
     }
     bag.unreadable.delete(cup.canon);
     bag.seen.add(cup.canon);
-    if (fromHost && from != null && cup.birthAt != null) cup.birthAt = null;   // the seat's word is heard for this birth
+    if (fromHost && from != null && cup.birthAt != null) cup.birthAt = null; // the seat's word is heard for this birth
     for (const [id, g] of answered) resolveMine(id, g);
     let verdicts = [];
     if (mine && (state.claims.size || reanswer.length)) verdicts = judge(ctx, cup, null, reanswer);
     else compose(ctx, cup);
     // R-1: the seat's verdicts leave ON RECEIPT, here, in the act handler's own path - and a birth the seat adopted is its state now
-    const birth = !!w.b && !fromHost;   // a minter keeps saying its birth until the seat's word is heard for it: answered every time, with the base that stands
+    const birth = !!w.b && !fromHost; // a minter keeps saying its birth until the seat's word is heard for it: answered every time, with the base that stands
     if (mine && (verdicts.length || birth)) say(cup, { verdicts, base: birth });
     return 1;
   }
@@ -295,38 +429,67 @@ export function createInteriorRoomLoot(net, bag) {
     if (!list) return unreadable(cup);
     const items = landed(list);
     const who = from ?? 'memory';
-    if (cup.st && cup.st.terms.g > Math.floor(rec.d)) return 1;   // A3: yesterday's word never beats today's
-    if (!cup.st || cup.st.terms.g < Math.floor(rec.d)) {   // no state for that day: the BIRTH - its terms no mint beats, its list the carried base
-      const w = { g: Math.floor(rec.d), lv: 1, n: 1, tm: -1, h: baseSignature(items), b: clone(items), x: [], c: [], s: null, si: null, q: [], a: [], y: [] };
+    if (cup.st && cup.st.terms.g > Math.floor(rec.d)) return 1; // A3: yesterday's word never beats today's
+    if (!cup.st || cup.st.terms.g < Math.floor(rec.d)) {
+      // no state for that day: the BIRTH - its terms no mint beats, its list the carried base
+      const w = {
+        g: Math.floor(rec.d),
+        lv: 1,
+        n: 1,
+        tm: -1,
+        h: baseSignature(items),
+        b: clone(items),
+        x: [],
+        c: [],
+        s: null,
+        si: null,
+        q: [],
+        a: [],
+        y: [],
+      };
       const was = cup.st;
       cup.st = mergeRoomWord(was, w).state;
-      cup.local = false; cup.legacy = new Map();
+      cup.local = false;
+      cup.legacy = new Map();
       if (was) dropOld(cup, false);
-      bag.unreadable.delete(cup.canon); bag.seen.add(cup.canon);
+      bag.unreadable.delete(cup.canon);
+      bag.seen.add(cup.canon);
       cup.legacy.set(who, legacyCounts(items));
       compose(ctx, cup);
       return 1;
     }
-    bag.unreadable.delete(cup.canon); bag.seen.add(cup.canon);
+    bag.unreadable.delete(cup.canon);
+    bag.seen.add(cup.canon);
     const prev = cup.legacy.get(who) ?? null;
     const delta = legacyDelta(prev, items);
     cup.legacy.set(who, delta.counts);
-    if (from == null || !prev || !isSeat()) return 1;   // the memory's and a peer's first word are baselines; the seat's next word carries the change
+    if (from == null || !prev || !isSeat()) return 1; // the memory's and a peer's first word are baselines; the seat's next word carries the change
     const st = cup.st;
     const judged = (cl) => judgeRoomClaim(st, st.base.items.length, st.base.full, cl, admit);
     for (const { sig, n } of delta.takes) {
       let left = n;
       st.base.items.forEach((it, i) => {
         if (left <= 0 || st.taken.has(i) || legacySig(it) !== sig) return;
-        const g = judged({ id: `legacy:${from}:${++claimN}`, p: i, n: Math.min(left, st.counts.get(i) ?? st.base.full[i] ?? 1) });
+        const g = judged({
+          id: `legacy:${from}:${++claimN}`,
+          p: i,
+          n: Math.min(left, st.counts.get(i) ?? st.base.full[i] ?? 1),
+        });
         left -= g;
       });
-      st.stored.map((it, i) => [it, st.ids[i]]).forEach(([it, id]) => {
-        if (left <= 0 || legacySig(it) !== sig) return;
-        left -= judged({ id: `legacy:${from}:${++claimN}`, sp: id, n: Math.min(left, pieceCount(it)) });
-      });
+      st.stored
+        .map((it, i) => [it, st.ids[i]])
+        .forEach(([it, id]) => {
+          if (left <= 0 || legacySig(it) !== sig) return;
+          left -= judged({ id: `legacy:${from}:${++claimN}`, sp: id, n: Math.min(left, pieceCount(it)) });
+        });
     }
-    for (const { n, it } of delta.puts) judged({ id: `legacy:${from}:${++claimN}`, it: Number.isInteger(it.stackCount) ? { ...it, stackCount: n } : { ...it }, tm: wall() });
+    for (const { n, it } of delta.puts)
+      judged({
+        id: `legacy:${from}:${++claimN}`,
+        it: Number.isInteger(it.stackCount) ? { ...it, stackCount: n } : { ...it },
+        tm: wall(),
+      });
     compose(ctx, cup);
     say(cup);
     return 1;
@@ -341,7 +504,7 @@ export function createInteriorRoomLoot(net, bag) {
     if (!cup.st?.base || !cup.composed || !t || cup.composed.list !== t.items) return false;
     const { takes, grows, puts: laid } = listMovesSince(cup.composed.seen, t.items, () => false);
     for (const tk of takes) takeOne(cup, tk);
-    for (const g of grows) putOne(cup, g.obj, g.by, false);   // laid onto one of the room's stacks: its own entry stands
+    for (const g of grows) putOne(cup, g.obj, g.by, false); // laid onto one of the room's stacks: its own entry stands
     for (const obj of laid) putOne(cup, obj, pieceCount(obj), true);
     return takes.length > 0 || grows.length > 0 || laid.length > 0;
   }
@@ -349,21 +512,41 @@ export function createInteriorRoomLoot(net, bag) {
    *  the half a split minted off it - marked as the window marked it (a stranger's cupboard: stolenGoods.js takenFromKeeping).
    *  The record left in the cupboard is never marked, and a stolen piece stacks only with stolen kin, so a refused split lifted
    *  nothing (the taker kept the pieces) or lifted an honest stack of its kind in place of the marked half. */
-  const takenAs = (cup, obj) => (cup.keeping?.has(obj) && ![entity.items, entity.bagItems].some((l) => Array.isArray(l) && l.includes(obj)) ? { ...obj, [STOLEN_MARK]: true } : obj);
+  const takenAs = (cup, obj) =>
+    cup.keeping?.has(obj) && ![entity.items, entity.bagItems].some((l) => Array.isArray(l) && l.includes(obj))
+      ? { ...obj, [STOLEN_MARK]: true }
+      : obj;
   /** `k` of a shared piece taken. A base that is gone (the other mint won) refuses it: lifted back out of the pack and said.
    *  The seat judges its own where it stands; anyone else lifts the piece and claims it, and has it on the grant alone. */
   function takeOne(cup, { obj: shown, info, k }) {
-    const st = cup.st, obj = takenAs(cup, shown);
-    if (cup.composed.base !== st.base) { liftPiece(entity, obj, k); net.say(ROOM_TAKEN_TEXT); return; }
+    const st = cup.st,
+      obj = takenAs(cup, shown);
+    if (cup.composed.base !== st.base) {
+      liftPiece(entity, obj, k);
+      net.say(ROOM_TAKEN_TEXT);
+      return;
+    }
     const ref = info.p !== undefined ? { p: info.p } : { sp: info.sp };
     if (isSeat()) {
-      const g = judgeRoomClaim(st, st.base.items.length, st.base.full, { id: roomClaimId(net.selfId() ?? 'self', bag.stamp, ++claimN), ...ref, n: k, tm: wall() }, admit);
-      if (g < k) { liftPiece(entity, obj, k - g); if (!g) net.say(ROOM_TAKEN_TEXT); }
-      if (g > 0) { cup.took.push({ obj, k: g, mint: mintOf(st), at: net.now() }); if (cup.took.length > LOOT_LIST_MAX) cup.took.shift(); }
+      const g = judgeRoomClaim(
+        st,
+        st.base.items.length,
+        st.base.full,
+        { id: roomClaimId(net.selfId() ?? 'self', bag.stamp, ++claimN), ...ref, n: k, tm: wall() },
+        admit,
+      );
+      if (g < k) {
+        liftPiece(entity, obj, k - g);
+        if (!g) net.say(ROOM_TAKEN_TEXT);
+      }
+      if (g > 0) {
+        cup.took.push({ obj, k: g, mint: mintOf(st), at: net.now() });
+        if (cup.took.length > LOOT_LIST_MAX) cup.took.shift();
+      }
       return;
     }
     const c = ledger.take(cup.canon, ref, obj, k, { mint: mintOf(st), tm: wall() }, net.now());
-    st.claims.set(c.id, { id: c.id, ...ref, n: k, tm: c.meta.tm });   // heard here too: a seat that comes to this client judges it with the rest
+    st.claims.set(c.id, { id: c.id, ...ref, n: k, tm: c.meta.tm }); // heard here too: a seat that comes to this client judges it with the rest
   }
   /** AUDIT OUTDOOR-LOOT C3: a put the room stored on this mint (the seat's own, or one it granted this client) - given home if the mint
    *  loses its tie-break (dropOld), as `took` is lifted. */
@@ -375,15 +558,47 @@ export function createInteriorRoomLoot(net, bag) {
   function putOne(cup, obj, n, laid) {
     const st = cup.st;
     const piece = n === pieceCount(obj) ? obj : { ...obj, stackCount: n };
-    const put = { id: roomClaimId(net.selfId() ?? 'self', bag.stamp, ++claimN), it: clearStolen(clone(piece)), tm: wall() };
-    if (laid) cup.composed.seen.set(obj, { sp: put.id, n: pieceCount(obj) });   // the piece is the container's now, and a take of it is read as one
-    if (cup.composed.base !== st.base || !admit(obj)) { puts.set(put.id, { canon: cup.canon, mint: mintOf(st), put, item: piece, saidAt: net.now(), at: net.now(), refused: true }); return; }   // a mint that is gone, a piece no peer may be handed: back to the pack
+    const put = {
+      id: roomClaimId(net.selfId() ?? 'self', bag.stamp, ++claimN),
+      it: clearStolen(clone(piece)),
+      tm: wall(),
+    };
+    if (laid) cup.composed.seen.set(obj, { sp: put.id, n: pieceCount(obj) }); // the piece is the container's now, and a take of it is read as one
+    if (cup.composed.base !== st.base || !admit(obj)) {
+      puts.set(put.id, {
+        canon: cup.canon,
+        mint: mintOf(st),
+        put,
+        item: piece,
+        saidAt: net.now(),
+        at: net.now(),
+        refused: true,
+      });
+      return;
+    } // a mint that is gone, a piece no peer may be handed: back to the pack
     if (isSeat()) {
-      if (!judgeRoomClaim(st, st.base.items.length, st.base.full, { ...put, it: put.it }, admit)) puts.set(put.id, { canon: cup.canon, mint: mintOf(st), put, item: piece, saidAt: net.now(), at: net.now(), refused: true });
+      if (!judgeRoomClaim(st, st.base.items.length, st.base.full, { ...put, it: put.it }, admit))
+        puts.set(put.id, {
+          canon: cup.canon,
+          mint: mintOf(st),
+          put,
+          item: piece,
+          saidAt: net.now(),
+          at: net.now(),
+          refused: true,
+        });
       else gaveIn(cup, piece, mintOf(st), put.id);
       return;
     }
-    puts.set(put.id, { canon: cup.canon, mint: mintOf(st), put, item: piece, saidAt: net.now(), at: net.now(), refused: false });
+    puts.set(put.id, {
+      canon: cup.canon,
+      mint: mintOf(st),
+      put,
+      item: piece,
+      saidAt: net.now(),
+      at: net.now(),
+      refused: false,
+    });
     st.claims.set(put.id, put);
   }
 
@@ -397,9 +612,19 @@ export function createInteriorRoomLoot(net, bag) {
     cup.roll = null;
     if (!roll || !t) return false;
     if (cup.st && cup.st.terms.g >= roll.today) return false;
-    const own = () => { cup.local = true; t.items = roll.items; t.stockedDate = roll.today; return true; };
+    const own = () => {
+      cup.local = true;
+      t.items = roll.items;
+      t.stockedDate = roll.today;
+      return true;
+    };
     if (roll.items.length > LOOT_LIST_MAX) {
-      if (!bag.tooBig.has(cup.canon)) { bag.tooBig.add(cup.canon); console.warn(`[loot] ${cup.canon} holds ${roll.items.length} items, more than the room can carry (${LOOT_LIST_MAX}); it stays yours alone`); }
+      if (!bag.tooBig.has(cup.canon)) {
+        bag.tooBig.add(cup.canon);
+        console.warn(
+          `[loot] ${cup.canon} holds ${roll.items.length} items, more than the room can carry (${LOOT_LIST_MAX}); it stays yours alone`,
+        );
+      }
       return own();
     }
     const records = peerHanded(roll.items).map((it) => clearStolen({ ...it }));
@@ -407,11 +632,27 @@ export function createInteriorRoomLoot(net, bag) {
     if (!one || one.length !== records.length) return own();
     const base = landed(one);
     const was = cup.st;
-    cup.st = mergeRoomWord(was, { g: roll.today, lv: 1, n: 1, tm: wall(), h: baseSignature(base), b: base, x: [], c: [], s: null, si: null, q: [], a: [], y: [] }).state;
+    cup.st = mergeRoomWord(was, {
+      g: roll.today,
+      lv: 1,
+      n: 1,
+      tm: wall(),
+      h: baseSignature(base),
+      b: base,
+      x: [],
+      c: [],
+      s: null,
+      si: null,
+      q: [],
+      a: [],
+      y: [],
+    }).state;
     cup.local = false;
-    bag.unreadable.delete(cup.canon); bag.seen.add(cup.canon);
-    if (was) dropOld(cup, false);   // a restock: the new day's stock replaces yesterday's
-    cup.birthAt = net.now(); cup.birthSays = 0;   // said again until a seat's word is heard for it (a seat is not heard - the frame says it again only for a client that is none)
+    bag.unreadable.delete(cup.canon);
+    bag.seen.add(cup.canon);
+    if (was) dropOld(cup, false); // a restock: the new day's stock replaces yesterday's
+    cup.birthAt = net.now();
+    cup.birthSays = 0; // said again until a seat's word is heard for it (a seat is not heard - the frame says it again only for a client that is none)
     compose(ctx, cup);
     say(cup, { base: true });
     return true;
@@ -426,25 +667,42 @@ export function createInteriorRoomLoot(net, bag) {
       if (!live() || !targetOf(ctx, canon)) return false;
       const cup = cupOf(canon);
       cup.roll = { items, today };
-      if (!items.length) mint(ctx, cup);   // a roll of nothing is the room's at once: the arm does nothing (DFU: "If no contents, do nothing"), asks no Yes, and the empty cupboard stands for the day - a press never re-rolls it
+      if (!items.length) mint(ctx, cup); // a roll of nothing is the room's at once: the arm does nothing (DFU: "If no contents, do nothing"), asks no Yes, and the empty cupboard stands for the day - a press never re-rolls it
       return true;
     },
     /** Yes: the held roll is MINTED as the room's. */
-    birth(ctx, canon) { const cup = cups.get(canon); return !!cup?.roll && live() && mint(ctx, cup); },
+    birth(ctx, canon) {
+      const cup = cups.get(canon);
+      return !!cup?.roll && live() && mint(ctx, cup);
+    },
     /** A window stands open on the container: nothing is composed under it, and its takes are claimed as they are made. */
-    open(canon, win, keeping = null) { const cup = cupOf(canon); cup.win = win; cup.keeping = keeping instanceof Set ? keeping : null; bag.openKey = canon; bag.openWin = win; },   // `keeping`: a stranger's cupboard's theft keeping (stolenGoods.js) - what a take of it marked
+    open(canon, win, keeping = null) {
+      const cup = cupOf(canon);
+      cup.win = win;
+      cup.keeping = keeping instanceof Set ? keeping : null;
+      bag.openKey = canon;
+      bag.openWin = win;
+    }, // `keeping`: a stranger's cupboard's theft keeping (stolenGoods.js) - what a take of it marked
     /** A cupboard no word has made the room's here and that holds no list of its own: its plaque is a name. */
-    unborn(canon) { return !cups.get(canon)?.st; },
+    unborn(canon) {
+      return !cups.get(canon)?.st;
+    },
     land: (ctx, rec, { from = null, today = null } = {}) => land(ctx, rec, from, today),
     /** The mount: the scene cache's list of a stranger's cupboard - or whatever the context was built with - is not the
      *  room's word. Set aside (the cupboard is unborn here until the room speaks or this client's own birth); a cupboard
      *  the room has spoken for is recomposed over whatever the cache laid. */
     aside(ctx) {
-      if (!live()) return;   // offline the cache's list IS the player's own cupboard
+      if (!live()) return; // offline the cache's list IS the player's own cupboard
       (ctx?.containers ?? []).forEach((t, i) => {
         const cup = cups.get(`container:${i}`);
-        if (cup?.st?.base) { compose(ctx, cup); return; }
-        if (t && Array.isArray(t.items) && !cup?.local) { t.items = null; t.stockedDate = 0; }
+        if (cup?.st?.base) {
+          compose(ctx, cup);
+          return;
+        }
+        if (t && Array.isArray(t.items) && !cup?.local) {
+          t.items = null;
+          t.stockedDate = 0;
+        }
       });
     },
     /** What this client would say of the cupboard now: the seat's state with the base (the memory's word, and the heal of a
@@ -459,25 +717,49 @@ export function createInteriorRoomLoot(net, bag) {
     frame(ctx, now, open) {
       if (!live()) return;
       const nowSeat = isSeat();
-      if (nowSeat && !wasSeat) for (const cup of cups.values()) if (cup.st?.claims.size && cup.st.base) say(cup, { verdicts: judge(ctx, cup, roomClaimOrder) });   // the last seat's unanswered claims, in one order whoever takes the seat
+      if (nowSeat && !wasSeat)
+        for (const cup of cups.values())
+          if (cup.st?.claims.size && cup.st.base) say(cup, { verdicts: judge(ctx, cup, roomClaimOrder) }); // the last seat's unanswered claims, in one order whoever takes the seat
       wasSeat = nowSeat;
       const due = new Set();
       for (const cup of cups.values()) {
         if (cup.win && (!open(cup.win) || cup.win.done)) {
           // AUDIT WORLD6a A3: gone means gone from the STACK, not from the slot - a window laid over this one leaves it open
-          if (bag.openWin === cup.win) { bag.openKey = null; bag.openWin = null; }
+          if (bag.openWin === cup.win) {
+            bag.openKey = null;
+            bag.openWin = null;
+          }
           cup.win = null;
-          if (cup.st?.base) { if (settle(ctx, cup)) due.add(cup); compose(ctx, cup); }
-          cup.keeping = null;   // the window's keeping read its last takes in that settle
+          if (cup.st?.base) {
+            if (settle(ctx, cup)) due.add(cup);
+            compose(ctx, cup);
+          }
+          cup.keeping = null; // the window's keeping read its last takes in that settle
         } else if (cup.st?.base && settle(ctx, cup)) due.add(cup);
       }
       const { lapsed, resay, expired } = ledger.due(now);
-      for (const c of expired) cups.get(c.container)?.st?.claims.delete(c.id);   // given up: a seat that comes to this client must not judge it, and the room lose the piece to a claimer who let it go
-      for (const c of lapsed) { const cup = cups.get(c.container); if (cup?.st?.base) compose(ctx, cup); }   // the piece comes back to the claimer's LIST, not its pack
-      for (const c of resay) { const cup = cups.get(c.container); if (cup) due.add(cup); }
+      for (const c of expired) cups.get(c.container)?.st?.claims.delete(c.id); // given up: a seat that comes to this client must not judge it, and the room lose the piece to a claimer who let it go
+      for (const c of lapsed) {
+        const cup = cups.get(c.container);
+        if (cup?.st?.base) compose(ctx, cup);
+      } // the piece comes back to the claimer's LIST, not its pack
+      for (const c of resay) {
+        const cup = cups.get(c.container);
+        if (cup) due.add(cup);
+      }
       if (!nowSeat) {
-        for (const p of puts.values()) if (!p.refused && now - p.saidAt >= ROOM_PUT_RESAY_MS) { p.saidAt = now; const cup = cups.get(p.canon); if (cup) due.add(cup); }
-        for (const cup of cups.values()) if (cup.birthAt != null && cup.birthSays < BIRTH_SAYS_MAX && now - cup.birthAt >= ROOM_PUT_RESAY_MS) { cup.birthAt = now; cup.birthSays++; due.add(cup); }
+        for (const p of puts.values())
+          if (!p.refused && now - p.saidAt >= ROOM_PUT_RESAY_MS) {
+            p.saidAt = now;
+            const cup = cups.get(p.canon);
+            if (cup) due.add(cup);
+          }
+        for (const cup of cups.values())
+          if (cup.birthAt != null && cup.birthSays < BIRTH_SAYS_MAX && now - cup.birthAt >= ROOM_PUT_RESAY_MS) {
+            cup.birthAt = now;
+            cup.birthSays++;
+            due.add(cup);
+          }
       }
       for (const cup of due) say(cup);
     },
@@ -490,9 +772,15 @@ export function createInteriorRoomLoot(net, bag) {
       ledger.keep(() => true, now);
       // AUDIT OUTDOOR-LOOT C2: a put the seat refused, or never answered in ROOM_CLAIM_TIMEOUT_MS of saying it again (an older seat
       // judges nothing; a dead one before the relay's handover), goes home with its putter - it was in no list but the putter's
-      for (const [id, p] of [...puts]) if (p.refused || now - p.at >= ROOM_CLAIM_TIMEOUT_MS) { puts.delete(id); givePiece(entity, p.item, pieceCount(p.item)); }
+      for (const [id, p] of [...puts])
+        if (p.refused || now - p.at >= ROOM_CLAIM_TIMEOUT_MS) {
+          puts.delete(id);
+          givePiece(entity, p.item, pieceCount(p.item));
+        }
     },
     /** Tests only. */
-    cups, puts, ledger,
+    cups,
+    puts,
+    ledger,
   };
 }

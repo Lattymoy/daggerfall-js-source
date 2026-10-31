@@ -137,6 +137,38 @@ export function givePortalGift(entity) {
   _giftNotice += PORTAL_GIFT_STONES;
   return PORTAL_GIFT_STONES;
 }
+/** PORTAL-BOOK (2026-10-31, systems/portalBook.js): THE PORTAL BOOK - where a character keeps the house doors its stones
+ *  open on. Its own row beside the stone's: bound and pack-only (the Wallet's two laws), one a pack, no weight, the Holy
+ *  Tome's art (TEXTURE.209 record 0). The kept spots are the character's (`portalBook` on the save), never the item's. */
+export const PORTAL_BOOK_TEMPLATE = 577;
+export const PORTAL_BOOK_TEMPLATES = Object.freeze([{
+  index: PORTAL_BOOK_TEMPLATE,
+  name: 'Portal Book',
+  baseWeight: 0,
+  hitPoints: 0,
+  basePrice: 1,
+  rarity: 20,
+  worldTextureArchive: 209,
+  worldTextureRecord: 0,
+  hasNoEncumbrance: true,
+  bound: true, packOnly: true,
+}]);
+registerCustomTemplates(PORTAL_BOOK_TEMPLATES);
+export const isPortalBook = (item) => item?.templateIndex === PORTAL_BOOK_TEMPLATE && item?.group === 'UselessItems2';
+/** A Portal Book, minted on its own row. */
+export const mintPortalBook = () => mintCondition(setItemFields({ group: 'UselessItems2', templateIndex: PORTAL_BOOK_TEMPLATE }));
+/** PORTAL-BOOK's gift, the Wallet's shape (walletItem.js giveWalletGift): every character is given one book, once - a new
+ *  character as its first save is restored, an older one at its next load. Answers 1 for a book given, 0 for none. */
+export const PORTAL_BOOK_GIFT = 1;
+export function givePortalBookGift(entity) {
+  if (!entity || typeof entity !== 'object') return 0;
+  if ((Number.isSafeInteger(entity.portalBookGift) ? entity.portalBookGift : 0) >= PORTAL_BOOK_GIFT) return 0;
+  entity.portalBookGift = PORTAL_BOOK_GIFT;
+  if (!Array.isArray(entity.items)) entity.items = [];
+  if (entity.items.some(isPortalBook)) return 0;
+  addItem(entity.items, mintPortalBook());
+  return 1;
+}
 /** The stones given since the last ask (0: none), and the notice cleared - the host says it once. */
 export const takePortalGiftNotice = () => { const n = _giftNotice; _giftNotice = 0; return n; };
 /** `n` Portal Stones (at least one), one stack. */

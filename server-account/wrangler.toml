@@ -108,7 +108,7 @@ crons = ["* * * * *", "41 * * * *"]
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/service.js.
-ACCOUNT_VERSION = "acct227"
+ACCOUNT_VERSION = "acct235"
 # WB5b: THE RELAY'S PUBLIC HALF, GATE_PUBLIC_KEY - the key an Oblivion
 # Gate's kill receipts verify with (src/net/gate/gateReceipt.js) - is NOT a
 # var here. GATE-KEYS (2026-09-26): the account deploy mints the pair
@@ -270,6 +270,15 @@ HOURS_FIRST_HANDLES = "aether,ArtemisGodfrey,CycleD0se,Duck,Kobakk,MackyWackyDee
 # this list is matched against the account's handle, never the name the
 # room reads. A handle goes here, never a name off the herald.
 EG_FIRST_HANDLES = "Serveride"
+# FIRST-WYRM (2026-10-31, the owner: "Seasoning needs to be granted the
+# first dragon rider. He hasnt recieved it"): FIRST WYRM RIDER by name, as
+# First of the Spire is (titles.js isNamedFirstWyrm). While this list names
+# anyone, it names the First: the earliest brass tame (hunts.js FIRST_OF)
+# holds the title only if listed here. An account's handle, never a
+# character's name. Comma-separated, case-insensitive; held while listed.
+# FIRST-WYRM-NAME (2026-10-31, the owner: "His name is Seanobi"): the
+# account is Seanobi.
+FIRST_WYRM_RIDER_HANDLES = "Seanobi"
 # TITLE-N (2026-09-24, Mac): the Dungeon Master - the orange title, the
 # die beside the name, and /dm's orange line (the relay reads the right
 # off the `dm` glyph in the signed token, as /red reads `dev`). "This
@@ -346,6 +355,14 @@ QUESTLINES_OPEN = "on"
 # and the Hearth Offerings (server-account/src/festival.js); outside them the days shut it whatever this says. Shut,
 # nothing is found, sold or set out, and every count is kept. "on" - the owner's ask is the event live for everyone.
 FESTIVAL_OPEN = "on"
+# STOREFRONT (bible/06-Systems/Battle-Pass.md): the Battle Pass - its finds, its tracks opened and its items bought - "off",
+# "dev" (DEVELOPER_HANDLES alone) or "on". A season's own days (src/net/battlePassLaw.js PASS_SEASONS) bound its
+# challenges; its tracks and the finds' Aurum never close.
+PASS_OPEN = "on"
+# AURUM (bible/06-Systems/Aurum.md): the Aurum - its daily wares and its packs - "off", "dev" (DEVELOPER_HANDLES alone) or
+# "on". Its packs are sold only "on" (and named in SHOP_ON_SALE). Shut, nothing is bought for Aurum or sold as Aurum;
+# what is struck and held is kept.
+AURUM_OPEN = "on"
 # CHAP4c (Chapters-Arc 6): THE CHAPTERS' TITLES - a seat's Master, officer and Former Master signed on the token - by
 # this switch, "on" or anything else for off. Shipped OFF: the relay must carry the five ids first (RELAY_VERSION
 # world183, which relay-deploy.yml deploys on the merge to main - AUDIT CHAP4 R2; CHAP6e's High Master and Season
@@ -425,6 +442,16 @@ WIKIMAID_HANDLES = "SylviaBun"
 # glowing in a ring round the feet. A list that grants an aura (titles.js
 # TIER_AURA); taking the handle off takes all three on the next token.
 NIRNROOT_SAGE_HANDLES = "Blob-Marley"
+# BLOOD-OF-COLDHARBOUR (2026-10-30, for trakel, a $200 patron - the owner: "Travel
+# is a $200 patron but isnt listed. All $200 patrons ingame have custom stuff";
+# Trakel's own words: the title "Blood of Coldharbour", "violet and crimson",
+# a rose for the glyph, and "a haze like effect around the sprite, that has
+# blood like particles rising up like embers" that "drift off into daedric
+# runes"): Blood of Coldharbour - the title crimson into violet, the
+# coldharbour glyph (a rose in a ring of thorns, a drop of blood at its foot)
+# and the Vampiric Haze. A list that grants an aura (titles.js TIER_AURA);
+# taking the handle off takes all three on the next token.
+COLDHARBOUR_HANDLES = "trakel"
 # PATREON-LINK (2026-10-01, Mac: "With patron and having to manually hand
 # out titles. Im running into a workflow where its really hard to keep up
 # with it"; asked, "Patreon auto-link"): A PATRON'S TITLE FOLLOWS THEIR
@@ -454,6 +481,11 @@ PATREON_CLIENT_ID = "xyF8_xJg78YwVgT0xRhs6uhPVeAdOzJu7_dcpaGqvqH-5DNdbLp-gugahtf
 # too - its pledge holds TITLE-N's Hierophant, the rose title and the
 # crown. A title made for one patron is still granted by name, beside it.
 PATREON_TIERS = "29666211:disciple,29666234:herald,29666221:hierophant"
+# AUDIT PATRON-AURUM H1 (2026-10-31): the campaign whose patrons' totals are paid as Aurum - its id on
+# Patreon (public, not a secret). Set, a link pays that campaign's member's total and no other; empty, a link
+# pays only where Patreon granted the `identity` scope alone, and the member webhook (signed, this campaign's
+# own) pays the rest at the next charge.
+PATREON_CAMPAIGN_ID = ""
 # SHOP (2026-10-28, the owner: "A new glyph panel alongside the timer and
 # mailbox that will be used for our monetization shop"; bible/06-Systems/
 # Shop.md): WHAT THE SHOP SELLS NOW - ware ids (src/net/shopLaw.js
@@ -463,7 +495,33 @@ PATREON_TIERS = "29666211:disciple,29666234:herald,29666221:hierophant"
 # deploy has put STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET from the
 # repository's own secrets (.github/workflows/account-deploy.yml).
 # ARMORY (2026-10-28, bible/04-Characters/Aura-Armory.md): and the Aura Armory's Eternal line, a piece a slot.
-SHOP_ON_SALE = "title:genesis,glyph:origin,aura:eternal,armory:eternalset,armory:eternalhalo,armory:eternalsigil,armory:eternalarmlets,armory:eternalgreaves,armory:eternaledge"
+# STOREFRONT (2026-10-29, bible/06-Systems/Storefront.md): and the sheet's wares - the kill effects, portal skins, mount
+# looks, name visuals and bundles. PASS-PANELS: the Battle Pass is no ware - its tracks are bought with Aurum.
+# AURUM (bible/06-Systems/Aurum.md): and the Aurum's packs, and the profile icons the daily wares sell - this one list
+# says what the daily wares may draw from too.
+SHOP_ON_SALE = "title:genesis,glyph:origin,aura:eternal,armory:eternalset,armory:eternalhalo,armory:eternalsigil,armory:eternalarmlets,armory:eternalgreaves,armory:eternaledge,kill:ashen,kill:voidrend,kill:pyre,portal:runic,portal:daedric,portal:aetheric,mount:spectral,mount:dawnfire,mount:warhorse,title:dawnbringer,title:voidwalker,title:eternalchampion,bundle:daedricchampion,bundle:portalmaster,bundle:lordofoblivion,aurum:500,aurum:1100,aurum:2400,aurum:3900,icon:gatefire,icon:aurbis,icon:elderscroll,icon:azurastar,icon:redmountain,icon:hourglass,icon:sanguinerose,icon:whitegold"
+# STOREFRONT: THE LAUNCH WINDOWS - what the shop's carousel features and when, a line a window: `<ware> <from> <to>`, UTC
+# days, the last day inside; `limited` after it sells the ware only inside that window. One feature a fortnight, as the
+# developer asked ("every step in Donate Shop should be rethinked 5 times before ship and in exact right moment").
+# OPEN-ALL (2026-10-31, the owner: "Why not just open everything?"): every ware on SHOP_ON_SALE sells now. A window only
+# features its ware, and no bundle is limited. The portal skins are featured from 31 October, not 13 November.
+SHOP_FEATURED = """
+kill:ashen 2026-10-30 2026-11-12
+kill:voidrend 2026-10-30 2026-11-12
+kill:pyre 2026-10-30 2026-11-12
+portal:runic 2026-10-31 2026-11-26
+portal:daedric 2026-10-31 2026-11-26
+portal:aetheric 2026-10-31 2026-11-26
+title:dawnbringer 2026-11-27 2026-12-10
+title:voidwalker 2026-11-27 2026-12-10
+title:eternalchampion 2026-11-27 2026-12-10
+bundle:portalmaster 2026-11-27 2026-12-10
+mount:spectral 2026-12-11 2026-12-24
+mount:dawnfire 2026-12-11 2026-12-24
+mount:warhorse 2026-12-11 2026-12-24
+bundle:daedricchampion 2026-12-25 2027-01-08
+bundle:lordofoblivion 2026-12-25 2027-01-08
+"""
 
 [[d1_databases]]
 binding = "DB"

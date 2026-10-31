@@ -20,7 +20,13 @@
 //
 // The shapes and bounds BOTH ends read. Pure: no clock, no DOM, no network.
 // ═══════════════════════════════════════════════════════════════════
-import { GUILD_RANK_MASTER, GUILD_RANK_OFFICER, GUILD_RANK_MEMBER, GUILD_RANK_RECRUIT, guildRankOk } from './guildLaw.js';
+import {
+  GUILD_RANK_MASTER,
+  GUILD_RANK_OFFICER,
+  GUILD_RANK_MEMBER,
+  GUILD_RANK_RECRUIT,
+  guildRankOk,
+} from './guildLaw.js';
 
 /** A vault's shelves: this many slots, and this many more while the guild holds a hall (its cupboards, Seats-Arc 8.2). */
 export const GUILD_VAULT_SLOTS = 50;
@@ -54,14 +60,29 @@ export const VAULT_RANK_DEFAULTS = Object.freeze({
  * @param {number} rank @param {{ level?: string|null, limit?: number|null }|null} [grant]
  */
 export function vaultStanding(rank, grant = null) {
-  const def = VAULT_RANK_DEFAULTS[guildRankOk(rank) ? rank : GUILD_RANK_RECRUIT];
-  if (rank === GUILD_RANK_MASTER || !grant || !vaultLevelOk(grant.level)) return { level: def.level, limit: def.limit, granted: false };
-  return { level: grant.level, limit: grant.level === 'withdraw' && vaultLimitOk(grant.limit) ? grant.limit : 0, granted: true };
+  const def =
+    VAULT_RANK_DEFAULTS[guildRankOk(rank) ? rank : GUILD_RANK_RECRUIT] ?? VAULT_RANK_DEFAULTS[GUILD_RANK_RECRUIT]; // GUILD-RANKS: a rank under the Recruit stands as one
+  if (rank === GUILD_RANK_MASTER || !grant || !vaultLevelOk(grant.level))
+    return { level: def.level, limit: def.limit, granted: false };
+  return {
+    level: grant.level,
+    limit: grant.level === 'withdraw' && vaultLimitOk(grant.limit) ? grant.limit : 0,
+    granted: true,
+  };
+}
+/** AUDIT GUILD-RANKS A2: whether standing `next` is no more than `own` - a granter below the guildmaster gives no more
+ *  of the vault than it has: no higher level, and a withdrawer's limit no looser than its own (0 is none). */
+export function vaultGrantWithin(own, next) {
+  const at = (s) => VAULT_LEVELS.indexOf(s?.level ?? 'none');
+  if (at(next) > at(own)) return false;
+  if (next?.level !== 'withdraw') return true;
+  return own.limit === 0 || (next.limit !== 0 && next.limit <= own.limit);
 }
 /** Whether a standing may put a piece in. */
 export const vaultMayPut = (s) => s?.level === 'deposit' || s?.level === 'withdraw';
 /** Whether a standing may take one out, having taken `takenToday` today. */
-export const vaultMayTake = (s, takenToday = 0) => s?.level === 'withdraw' && (s.limit === 0 || (takenToday | 0) < s.limit);
+export const vaultMayTake = (s, takenToday = 0) =>
+  s?.level === 'withdraw' && (s.limit === 0 || (takenToday | 0) < s.limit);
 
 /** AUDIT2 GUILD2 S6: a withdrawer's limit where the grant names none - an officer's ten (never "no limit", which is the
  *  guildmaster's to choose: 0). */

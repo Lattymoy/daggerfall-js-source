@@ -2,8 +2,8 @@
   {
     "name": "BASEHIDE-a-name-any-spelling",
     "file": "src/net/decorLaw.js",
-    "old": "export const DECOR_BASE_KEY_RE = /^(?:m(?:0|[1-9]\\d{0,3}):",
-    "new": "export const DECOR_BASE_KEY_RE = /^(?:m(?:\\d{1,4}):",
+    "old": "  /^(?:m(?:0|[1-9]\\d{0,3}):(?:0|[1-9]\\d{0,5})|f(?:0|[1-9]\\d{0,3}):(?:0|[1-9]\\d{0,4})\\.(?:0|[1-9]\\d{0,2})|intdoor:(?:0|[1-9]\\d{0,2}))$/;",
+    "new": "  /^(?:m(?:\\d{1,4}):(?:0|[1-9]\\d{0,5})|f(?:0|[1-9]\\d{0,3}):(?:0|[1-9]\\d{0,4})\\.(?:0|[1-9]\\d{0,2})|intdoor:(?:0|[1-9]\\d{0,2}))$/;",
     "tests": [
       "test/server/basehide.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "BASEHIDE-out-but-solid",
     "file": "src/scenes/decor/decorBase.js",
-    "old": "    if (p.draw) { drop(drawList, p.draw); lateSolidsOf(collider)?.remove(baseBucketOf(key)); }",
-    "new": "    if (p.draw) { drop(drawList, p.draw); }",
+    "old": "      lateSolidsOf(collider)?.remove(baseBucketOf(key));\n    } // DECOR-CLEAR: or its triangles withheld",
+    "new": "    } // DECOR-CLEAR: or its triangles withheld",
     "tests": [
       "test/server/basehide.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "BASEHIDE-back-but-a-ghost",
     "file": "src/scenes/decor/decorBase.js",
-    "old": "      if (p.cpu?.positions && p.cpu?.indices) lateSolidsOf(collider)?.add(baseBucketOf(key), p.cpu.positions, p.cpu.indices, p.matrix);\n",
-    "new": "",
+    "old": "      if (p.cpu?.positions && p.cpu?.indices)\n        lateSolidsOf(collider)?.add(baseBucketOf(key), p.cpu.positions, p.cpu.indices, p.matrix);\n    }",
+    "new": "    }",
     "tests": [
       "test/server/basehide.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "BASEHIDE-the-list-unread",
     "file": "server-account/src/decor.js",
-    "old": "return { mapId, buildingKey, pieces, hidden: hiddenListOf(hidden?.results?.[0] ?? null), rev, cap, measured: home?.ground != null };",
-    "new": "return { mapId, buildingKey, pieces, hidden: [], rev, cap, measured: home?.ground != null };",
+    "old": "return { mapId, buildingKey, pieces, hidden: hiddenListOf(hidden?.results?.[0] ?? null), rev, cap, measured: home?.ground != null, ...arms };",
+    "new": "return { mapId, buildingKey, pieces, hidden: [], rev, cap, measured: home?.ground != null, ...arms };",
     "tests": [
       "test/server/basehide.test.js"
     ],
@@ -247,8 +247,8 @@
   {
     "name": "BASEHIDE-the-save-forgets",
     "file": "src/systems/sceneCache.js",
-    "old": "  hiddenBase: (Array.isArray(d.hiddenBase) ? d.hiddenBase : []).filter((k) => typeof k === 'string'),\n",
-    "new": "",
+    "old": "  hiddenBase: (Array.isArray(d.hiddenBase) ? d.hiddenBase : []).filter((k) => typeof k === 'string'),\n  // GUILD-SHELF: a guild's day's Buy shelves, by service, as bought down (scenes/worldModes.js guildShelf) - so",
+    "new": "  // GUILD-SHELF: a guild's day's Buy shelves, by service, as bought down (scenes/worldModes.js guildShelf) - so",
     "tests": [
       "test/server/basehide.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "BASEHIDE-a-sale-clears-nothing",
     "file": "src/systems/sceneCache.js",
-    "old": "  if (d) d.hiddenBase = [];\n",
-    "new": "",
+    "old": "  if (d) d.hiddenBase = [];\n  return n;",
+    "new": "  return n;",
     "tests": [
       "test/server/basehide.test.js"
     ]

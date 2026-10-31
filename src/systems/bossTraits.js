@@ -39,12 +39,24 @@
 import { t } from './textManager.js';
 import { weaponSkillUsed } from '../characters/weapons.js';
 import { SKILLS } from './skills.js';
-import { eliteHash, eliteRng } from './eliteFoes.js';   // the seeded draw every client draws alike (a leaf of this one: it imports nothing of here)
-import { setTraitTitleFormat } from './foeTitle.js';   // AUDIT WORLD-EVENTS L5-12: the title's word composed in the player's language (a leaf)
-import { isHandWraps } from '../characters/handWrapsIds.js';   // HAND-WRAPS
+import { eliteHash, eliteRng } from './eliteFoes.js'; // the seeded draw every client draws alike (a leaf of this one: it imports nothing of here)
+import { setTraitTitleFormat } from './foeTitle.js'; // AUDIT WORLD-EVENTS L5-12: the title's word composed in the player's language (a leaf)
+import { isHandWraps } from '../characters/handWrapsIds.js'; // HAND-WRAPS
 
 /** Every trait, in the mask's bit order (append only: the mask is on the wire). */
-export const BOSS_TRAITS = Object.freeze(['warded', 'flameproof', 'frostproof', 'venomproof', 'stormproof', 'spellproof', 'bladeturning', 'stoneskin', 'curbing', 'wrathful', 'thorned']);
+export const BOSS_TRAITS = Object.freeze([
+  'warded',
+  'flameproof',
+  'frostproof',
+  'venomproof',
+  'stormproof',
+  'spellproof',
+  'bladeturning',
+  'stoneskin',
+  'curbing',
+  'wrathful',
+  'thorned',
+]);
 /** The element each resistance answers - the spells' own order (systems/effects.js ELEMENT_EFFECT_FLAG: fire, frost,
  *  poison, shock, magic). */
 export const ELEMENT_TRAITS = Object.freeze(['flameproof', 'frostproof', 'venomproof', 'stormproof', 'spellproof']);
@@ -81,12 +93,24 @@ export function tickBossClock(nowMs, paused = false) {
   _clockAt = nowMs;
   return _clockS;
 }
-let _clockS = 0, /** @type {number|null} */ _clockAt = null;
+let _clockS = 0,
+  /** @type {number|null} */ _clockAt = null;
 export const bossClockS = () => _clockS;
 
-/** The traits as a mask, and back - unknown names dropped, an unknown bit dropped; `most` the most a reader stands (AUDIT
- *  WORLD-EVENTS L2-11: an elite one, a raid's leader two), the later of an exclusive pair dropped. */
-export const bossTraitMask = (traits) => (Array.isArray(traits) ? traits : []).reduce((m, id) => { const i = BOSS_TRAITS.indexOf(id); return i >= 0 ? m | (1 << i) : m; }, 0);
+/** AUDIT WORLD-EVENTS L2-11: the most traits a reader stands off an owner's mask - an elite's one, a raid's leader's two.
+ *  STOREFRONT (AUDIT LANE 5): and a leader on a Heart Fissure's site, the season's Brass Colossus, its three
+ *  (scenes/seasonHost.js COLOSSUS_TRAITS) - capped at two, every copy and its heir lost Blade-turning. One law for every
+ *  reader (scenes/exteriorFoes.js, scenes/foeTraitsHost.js) and the save's restore. */
+export const BOSS_TRAITS_MOST = Object.freeze({ elite: 1, leader: 2, colossus: 3 });
+export const bossTraitsMost = (/** @type {boolean} */ leader, colossus = false) =>
+  !leader ? BOSS_TRAITS_MOST.elite : colossus ? BOSS_TRAITS_MOST.colossus : BOSS_TRAITS_MOST.leader;
+/** The traits as a mask, and back - unknown names dropped, an unknown bit dropped; `most` the most a reader stands
+ *  (bossTraitsMost), the later of an exclusive pair dropped. */
+export const bossTraitMask = (traits) =>
+  (Array.isArray(traits) ? traits : []).reduce((m, id) => {
+    const i = BOSS_TRAITS.indexOf(id);
+    return i >= 0 ? m | (1 << i) : m;
+  }, 0);
 export function bossTraitsOfMask(mask, most = Infinity) {
   if (!Number.isInteger(mask) || mask <= 0) return [];
   const out = [];
@@ -112,7 +136,12 @@ export function rollBossTraits(n, roll = Math.random, from = BOSS_TRAITS) {
   while (out.length < n && pool.length) {
     const id = pool.splice(Math.min(pool.length - 1, Math.floor(roll() * pool.length)), 1)[0];
     out.push(id);
-    for (const pair of EXCLUSIVE) if (pair.includes(id)) for (const o of pair) { const k = pool.indexOf(o); if (k >= 0) pool.splice(k, 1); }
+    for (const pair of EXCLUSIVE)
+      if (pair.includes(id))
+        for (const o of pair) {
+          const k = pool.indexOf(o);
+          if (k >= 0) pool.splice(k, 1);
+        }
   }
   return out;
 }
@@ -125,7 +154,7 @@ export function rollBossTraits(n, roll = Math.random, from = BOSS_TRAITS) {
 export function giveBossTraits(entity, traits, { own = true } = {}) {
   if (!entity || !Array.isArray(traits) || !traits.length || bossTraitsOf(entity).length) return false;
   entity.bossTraits = BOSS_TRAITS.filter((id) => traits.includes(id));
-  entity.bossTitle = BOSS_TRAIT_WORDS[entity.bossTraits[0]]?.() ?? '';   // systems/foeTitle.js (a leaf) reads the word
+  entity.bossTitle = BOSS_TRAIT_WORDS[entity.bossTraits[0]]?.() ?? ''; // systems/foeTitle.js (a leaf) reads the word
   if (own) standBossWard(entity, _clockS);
   return entity.bossTraits.length > 0;
 }
@@ -142,8 +171,12 @@ const wardMax = (entity) => Math.max(1, Math.round((entity?.maxHealth || 1) * WA
 /** The ward as it stands at `nowS` (s) - grown back since the last blow that touched it - or null for none; a puppet's
  *  as its owner last said it (`bv` - AUDIT WORLD-EVENTS L2-7). */
 export function bossWardNow(entity, nowS) {
-  const w = entity?.bossWard, max = wardMax(entity);
-  if (!w) return hasBossTrait(entity, 'warded') && Number.isFinite(entity?.bossWardShown) ? { now: max * entity.bossWardShown, max } : null;
+  const w = entity?.bossWard,
+    max = wardMax(entity);
+  if (!w)
+    return hasBossTrait(entity, 'warded') && Number.isFinite(entity?.bossWardShown)
+      ? { now: max * entity.bossWardShown, max }
+      : null;
   const since = nowS - w.at - WARD_REGROW_S;
   const f = since > 0 ? Math.min(1, w.f + since / WARD_REFILL_S) : w.f;
   return { now: max * f, max };
@@ -157,9 +190,15 @@ export function bossWardShare(entity, nowS = _clockS) {
 }
 
 /** Is a blow a blunt one - a blunt weapon, or none (a fist, a claw)? An arrow is no blunt blow. */
-const bluntBlow = (kind, weapon) => kind === 'melee' && (!weapon || isHandWraps(weapon) || weaponSkillUsed(weapon.templateIndex) === SKILLS.BluntWeapon);   // HAND-WRAPS (AUDIT B3): a fist in wraps is a fist
+const bluntBlow = (kind, weapon) =>
+  kind === 'melee' && (!weapon || isHandWraps(weapon) || weaponSkillUsed(weapon.templateIndex) === SKILLS.BluntWeapon); // HAND-WRAPS (AUDIT B3): a fist in wraps is a fist
 /** Is a blow a blade's (any weapon but a blunt one) or an arrow's? */
-const bladeBlow = (kind, weapon) => kind === 'arrow' || (kind === 'melee' && !!weapon && !isHandWraps(weapon) && weaponSkillUsed(weapon.templateIndex) !== SKILLS.BluntWeapon);
+const bladeBlow = (kind, weapon) =>
+  kind === 'arrow' ||
+  (kind === 'melee' &&
+    !!weapon &&
+    !isHandWraps(weapon) &&
+    weaponSkillUsed(weapon.templateIndex) !== SKILLS.BluntWeapon);
 
 /**
  * THE STRIKER'S HALF: a blow of `damage` on a foe with traits, as the striker's machine lands it - its resistances
@@ -172,11 +211,15 @@ export function bossStrike(entity, damage, { kind = 'melee', weapon = null, elem
   const traits = bossTraitsOf(entity);
   if (!traits.length || whole || !(damage > 0)) return { damage, thorns: 0 };
   let d = damage;
-  if (kind === 'spell' && Number.isInteger(element) && traits.includes(ELEMENT_TRAITS[/** @type {number} */ (element)])) d *= RESIST_SHARE;
+  if (kind === 'spell' && Number.isInteger(element) && traits.includes(ELEMENT_TRAITS[/** @type {number} */ (element)]))
+    d *= RESIST_SHARE;
   if (traits.includes('bladeturning') && bladeBlow(kind, weapon)) d *= WEAPON_RESIST_SHARE;
   if (traits.includes('stoneskin') && bluntBlow(kind, weapon)) d *= WEAPON_RESIST_SHARE;
   const landed = d < damage ? Math.max(1, Math.round(d)) : damage;
-  const thorns = traits.includes('thorned') && (kind === 'melee' || kind === 'arrow') ? Math.max(1, Math.round(landed * THORN_SHARE)) : 0;
+  const thorns =
+    traits.includes('thorned') && (kind === 'melee' || kind === 'arrow')
+      ? Math.max(1, Math.round(landed * THORN_SHARE))
+      : 0;
   return { damage: landed, thorns };
 }
 
@@ -193,8 +236,13 @@ export function bossTake(entity, damage, { whole = false, nowS = 0, blow = true,
   if (!traits.length || whole || !blow || !(damage > 0)) return { damage, ward: 0, broke: false };
   let d = damage;
   if (traits.includes('curbing')) d = Math.min(d, Math.max(1, Math.round((entity.maxHealth || 1) * CURB_SHARE)));
-  if (mine) { bossTraitsTick(entity, nowS); entity.bossFoughtS = nowS; if (traits.includes('wrathful') && entity.bossWrathFrom == null) entity.bossWrathFrom = nowS; }
-  let ward = 0, broke = false;
+  if (mine) {
+    bossTraitsTick(entity, nowS);
+    entity.bossFoughtS = nowS;
+    if (traits.includes('wrathful') && entity.bossWrathFrom == null) entity.bossWrathFrom = nowS;
+  }
+  let ward = 0,
+    broke = false;
   const w = bossWardNow(entity, nowS);
   if (w && entity.bossWard) {
     ward = Math.min(w.now, d);
@@ -225,7 +273,10 @@ export function bossWrathDue(entity, nowS) {
  */
 export function bossTraitsTick(entity, nowS) {
   if (!entity || entity.bossWrath || entity.bossWrathFrom == null) return null;
-  if (nowS - (entity.bossFoughtS ?? entity.bossWrathFrom) > WRATH_COOL_S) { entity.bossWrathFrom = null; return null; }
+  if (nowS - (entity.bossFoughtS ?? entity.bossWrathFrom) > WRATH_COOL_S) {
+    entity.bossWrathFrom = null;
+    return null;
+  }
   return bossWrathDue(entity, nowS) ? 'wrath' : null;
 }
 /** Turn a foe wrathful (its blows WRATH_X as hard), once. */
@@ -260,10 +311,17 @@ export const BOSS_TRAIT_RULES = Object.freeze({
   venomproof: () => t('bossTraits.rule.venomproof', 'Poison spells do a quarter of their damage.'),
   stormproof: () => t('bossTraits.rule.stormproof', 'Shock spells do a quarter of their damage.'),
   spellproof: () => t('bossTraits.rule.spellproof', 'Magic spells do a quarter of their damage.'),
-  bladeturning: () => t('bossTraits.rule.bladeturning', 'Blades and arrows do half damage. Blunt weapons and fists do full.'),
+  bladeturning: () =>
+    t('bossTraits.rule.bladeturning', 'Blades and arrows do half damage. Blunt weapons and fists do full.'),
   stoneskin: () => t('bossTraits.rule.stoneskin', 'Blunt weapons and fists do half damage. Blades do full.'),
-  curbing: () => t('bossTraits.rule.curbing', 'No single blow takes more than {pct}% of its health.', { pct: Math.round(CURB_SHARE * 100) }),
-  wrathful: () => t('bossTraits.rule.wrathful', 'It hits much harder once the fight has gone on for {s} seconds.', { s: WRATH_AFTER_S }),
+  curbing: () =>
+    t('bossTraits.rule.curbing', 'No single blow takes more than {pct}% of its health.', {
+      pct: Math.round(CURB_SHARE * 100),
+    }),
+  wrathful: () =>
+    t('bossTraits.rule.wrathful', 'It hits much harder once the fight has gone on for {s} seconds.', {
+      s: WRATH_AFTER_S,
+    }),
   thorned: () => t('bossTraits.rule.thorned', 'Some of every weapon blow that lands comes back at you.'),
 });
 /** AUDIT WORLD-EVENTS L5-12: a traited foe's title - its first trait's word and its name, in the player's language's order. */
@@ -271,7 +329,10 @@ setTraitTitleFormat((word, name) => t('bossTraits.title', '{trait} {name}', { tr
 /** The traits' words, in their order. */
 export const bossTraitWords = (entity) => bossTraitsOf(entity).map((id) => BOSS_TRAIT_WORDS[id]?.() ?? id);
 /** The traits' rules, in their order. */
-export const bossTraitRules = (entity) => bossTraitsOf(entity).map((id) => BOSS_TRAIT_RULES[id]?.() ?? '').filter(Boolean);
+export const bossTraitRules = (entity) =>
+  bossTraitsOf(entity)
+    .map((id) => BOSS_TRAIT_RULES[id]?.() ?? '')
+    .filter(Boolean);
 /** AUDIT WORLD-EVENTS L5-6: EACH TRAIT TAUGHT ONCE - the rules of a foe's traits this player has not been told yet this
  *  session ("Warded: A ward takes every blow first..."), said by the host at my first blow on it; then never again. */
 const _taught = new Set();
@@ -280,7 +341,12 @@ export function bossTraitsTaught(entity) {
   for (const id of bossTraitsOf(entity)) {
     if (_taught.has(id)) continue;
     _taught.add(id);
-    out.push(t('bossTraits.say.learn', '{trait}: {rule}', { trait: BOSS_TRAIT_WORDS[id]?.() ?? id, rule: BOSS_TRAIT_RULES[id]?.() ?? '' }));
+    out.push(
+      t('bossTraits.say.learn', '{trait}: {rule}', {
+        trait: BOSS_TRAIT_WORDS[id]?.() ?? id,
+        rule: BOSS_TRAIT_RULES[id]?.() ?? '',
+      }),
+    );
   }
   return out;
 }
@@ -324,7 +390,16 @@ export function eliteTraits(entity, seed = null) {
 /** The relay bosses' traits - the striker's alone (the relay keeps their health: no ward, no curb, no wrath here): one
  *  element's proof, and one answer to a blow (AUDIT WORLD-EVENTS L2-14 - any two of eight drew two proofs a third of the
  *  time, and none a twelfth). */
-export const RELAY_BOSS_TRAITS = Object.freeze(['flameproof', 'frostproof', 'venomproof', 'stormproof', 'spellproof', 'bladeturning', 'stoneskin', 'thorned']);
+export const RELAY_BOSS_TRAITS = Object.freeze([
+  'flameproof',
+  'frostproof',
+  'venomproof',
+  'stormproof',
+  'spellproof',
+  'bladeturning',
+  'stoneskin',
+  'thorned',
+]);
 export const RELAY_BOSS_BLOW_TRAITS = Object.freeze(['bladeturning', 'stoneskin', 'thorned']);
 /** A relay boss's two traits, off a stream seeded by its name and kind - the same on every machine. */
 export function relayBossTraits(name, kind) {
@@ -333,4 +408,5 @@ export function relayBossTraits(name, kind) {
   return [pick(ELEMENT_TRAITS), pick(RELAY_BOSS_BLOW_TRAITS)];
 }
 /** The line a relay boss's traits are said in, once when the fight is met. */
-export const bossTraitsMetLine = (name, words) => t('bossTraits.say.met', '{name}: {traits}.', { name, traits: words.join(', ') });
+export const bossTraitsMetLine = (name, words) =>
+  t('bossTraits.say.met', '{name}: {traits}.', { name, traits: words.join(', ') });

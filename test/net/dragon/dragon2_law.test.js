@@ -5,8 +5,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  DRAGON_WATCH_MS, DRAGON_WATCH_ONE_IN, DRAGON_LAND_AT_MS, DRAGON_STAY_MS, DRAGON_CLIMB_MS, DRAGON_SHINY_ONE_IN, dragonWatchAt, isDragonWatch,
-  dragonShinyOf, dragonLookOf, dragonTimes, dragonAt, dragonAdmits, dragonHolds, dragonSiteDay, dragonLaneOf, DRAGON_SITE_BASE, dragonFightId, dragonSiteKey,
+  DRAGON_WATCH_MS, DRAGON_WATCH_ONE_IN, DRAGON_LAND_SPAN_MS, DRAGON_STAY_MS, dragonLandOf, dragonQuietAt, dragonAskEnd, DRAGON_CLIMB_MS, DRAGON_SHINY_ONE_IN, dragonWatchAt, isDragonOmen, dragonOmenOk,
+  dragonShinyOf, dragonLookOf, dragonTimes, dragonSeedTold, dragonWatchesAbout, dragonAdmits, dragonHolds, dragonCellOf, dragonSitePick, DRAGON_CELLS, DRAGON_CELL_PX, dragonFightId, dragonSiteKey,
 } from '../../../src/net/dragon/dragonLaw.js';
 import { lineLeg, orbitLeg, dragonLegAt, planAt, planEnd, orbitFrom, fallLeg, roostLeg, ROOST_ALT, ROOST_R, FLY_V, EASE, DRAGON_BODY_R } from '../../../src/net/dragon/dragonBody.js';
 import * as B from '../../../src/net/dragon/dragonBrain.js';
@@ -14,9 +14,9 @@ import { judgeDragon } from '../../../src/net/bossRef.js';
 import { DRAGON_SEAM, BOSS_SEAM_KEYS } from '../../../src/net/bossSeam.js';
 import { egWindupFloorMs, egInShape } from '../../../src/net/eliteGates/egShape.js';
 import { HIT_KINDS, dpsRef, BUCKET_DEPTH_X, HIT_CAP_X } from '../../../src/net/gate/gateBrain.js';
-import { gameDayAt, GATE_LANE_SPAN, gateLaneOf } from '../../../src/net/gate/gateLaw.js';
+import { BAY_ORIGIN, TAMRIEL_W, TAMRIEL_H } from '../../../src/world/tamriel/tamrielFrame.js';   // DRAGON-CELL: the frame the cells are drawn from
 import {
-  GATE_LANES_OPEN, validDragonIn, validDragonOut, parseClient, DRAGON_KINDS, DRAGON_OUT_KINDS, DRAGON_NO_WORDS, DRAGON_LEGS_MAX,
+  validDragonIn, validDragonOut, parseClient, DRAGON_KINDS, DRAGON_OUT_KINDS, DRAGON_NO_WORDS, DRAGON_LEGS_MAX,
   DRAGON_BLOWS_WIRE_MAX, DRAGON_BLOW_KINDS, DRAGON_CHART_MAX, DRAGON_RECEIPT_WIRE_MAX, relaySupportsDragon, DRAGON_RELAY_MIN, DRAGON_RIDE_RELAY_MIN, RELAY_VERSION,
 } from '../../../src/net/wire.js';
 import { DRAGON_RECEIPT_V, DRAGON_RECEIPT_TTL_S, DRAGON_RECEIPT_MAX, dragonReceiptValid, mintDragonReceipt, readDragonReceipt, verifyDragonReceipt } from '../../../src/net/dragon/dragonReceipt.js';
@@ -24,48 +24,73 @@ import { mintSerpentReceipt, verifySerpentReceipt } from '../../../src/net/serpe
 import { mintReceipt, verifyReceipt } from '../../../src/net/gate/gateReceipt.js';
 
 const seeded = (s = 7) => () => ((s = (Math.imul(s, 1103515245) + 12345) >>> 0) / 4294967296);
+/** DRAGON-HIDDEN: a watch's omen under the tests' seed (the relay's is HMAC of its secret - net/dragon/dragonSeed.js). */
+const SEED = 0x5eed1234;
+const om = (w, s = SEED) => ({ w, s });
+const isDragonWatch = (w) => isDragonOmen(om(w));
 const firstWatch = (from, pred = isDragonWatch) => { let w = from; while (!pred(w)) w++; return w; };
 const W = firstWatch(500_000);
 
 // ═══ THE CLOCK ═══════════════════════════════════════════════════════════════════════════════════
 
-test('DRAGON2 law: one watch in three brings a dragon down, one dragon in twenty is the Aetherbright, a quarter past its watch it lands and forty minutes on it climbs away (mutants: every watch a dragon; the shiny every dragon; the stay unbounded)', () => {
-  assert.deepEqual([DRAGON_WATCH_MS, DRAGON_WATCH_ONE_IN, DRAGON_LAND_AT_MS, DRAGON_STAY_MS, DRAGON_CLIMB_MS, DRAGON_SHINY_ONE_IN], [3_600_000, 3, 900_000, 2_400_000, 15_000, 20]);
+test('DRAGON2 law: one watch in three brings a dragon down, one dragon in twenty is the Aetherbright, its landing a second its seed rolls in the first twenty minutes of its watch and forty minutes on it climbs away (mutants: every watch a dragon; the shiny every dragon; the stay unbounded)', () => {
+  assert.deepEqual([DRAGON_WATCH_MS, DRAGON_WATCH_ONE_IN, DRAGON_LAND_SPAN_MS, DRAGON_STAY_MS, DRAGON_CLIMB_MS, DRAGON_SHINY_ONE_IN], [3_600_000, 3, 1_200_000, 2_400_000, 15_000, 20]);
   let n = 0, shiny = 0;
   const N = 30_000;
-  for (let w = 400_000; w < 400_000 + N; w++) if (isDragonWatch(w)) { n++; if (dragonShinyOf(w)) shiny++; }
+  const seeds = seeded(11);
+  for (let w = 400_000; w < 400_000 + N; w++) { const o = om(w, Math.floor(seeds() * 4294967296)); if (isDragonOmen(o)) { n++; if (dragonShinyOf(o)) shiny++; } }
   assert.ok(Math.abs(n / N - 1 / 3) < 0.02, `about a third (${n / N})`);
   assert.ok(Math.abs(shiny / n - 1 / 20) < 0.012, `about one in twenty (${shiny / n})`);
-  assert.equal(isDragonWatch(-1), false);
-  assert.equal(isDragonWatch(1.5), false);
-  const t = dragonTimes(W);
-  assert.deepEqual(t, { w: W, landAt: W * DRAGON_WATCH_MS + DRAGON_LAND_AT_MS, leaveAt: W * DRAGON_WATCH_MS + DRAGON_LAND_AT_MS + DRAGON_STAY_MS });
+  assert.equal(isDragonOmen(om(-1)), false);
+  assert.equal(isDragonOmen(om(1.5)), false);
+  assert.equal(isDragonOmen({ w: W }), false, 'no seed, no dragon');
+  assert.equal(dragonOmenOk(om(W, 2 ** 32)), false, 'a seed past 32 bits is none');
+  const t = dragonTimes(om(W));
+  assert.deepEqual(t, { w: W, landAt: W * DRAGON_WATCH_MS + dragonLandOf(om(W)), leaveAt: W * DRAGON_WATCH_MS + dragonLandOf(om(W)) + DRAGON_STAY_MS });
+  // DRAGON-HIDDEN-TIME: its landing is the seed's, a whole second in the watch's first twenty minutes, spread over them
+  const lands = new Set();
+  for (let s = 1; s <= 400; s++) { const l = dragonLandOf(om(W, s * 0x9e3779b1 >>> 0)); assert.ok(l >= 0 && l < DRAGON_LAND_SPAN_MS && l % 1000 === 0); lands.add(Math.floor(l / 60_000)); }
+  assert.equal(lands.size, 20, 'every minute of the span lands some dragon');
+  assert.equal(dragonQuietAt(W), W * DRAGON_WATCH_MS + DRAGON_LAND_SPAN_MS);
+  assert.ok(dragonAskEnd(W) >= t.leaveAt + DRAGON_CLIMB_MS);
   assert.equal(dragonWatchAt(t.landAt), W);
-  assert.equal(dragonLookOf(W), dragonShinyOf(W) ? 1 : 0);
-  // the dragon the clock is about: this watch's until its climb is over, then the next
-  assert.equal(dragonAt(t.landAt).w, W);
-  assert.equal(dragonAt(t.leaveAt + DRAGON_CLIMB_MS - 1).w, W);
-  assert.ok(dragonAt(t.leaveAt + DRAGON_CLIMB_MS).w > W && isDragonWatch(dragonAt(t.leaveAt + DRAGON_CLIMB_MS).w));
+  assert.equal(dragonLookOf(om(W)), dragonShinyOf(om(W)) ? 1 : 0);
+  // DRAGON-HIDDEN: a watch's seed is told only once its landing is past, and only for the watches about
+  assert.equal(dragonSeedTold(om(W), W, t.landAt - 1), false, 'never before it lands');
+  assert.equal(dragonSeedTold(om(W), W, t.landAt), true);
+  assert.equal(dragonSeedTold(om(W + 1), W + 1, t.landAt), false, 'never a watch to come');
+  const Q = firstWatch(W + 1, (w) => !isDragonWatch(w));
+  assert.equal(dragonSeedTold(om(Q), Q, dragonQuietAt(Q) - 1), false, 'a quiet watch is told no sooner than the latest landing');
+  assert.equal(dragonSeedTold(om(Q), Q, dragonQuietAt(Q)), true);
+  assert.equal(dragonSeedTold(null, Q, dragonQuietAt(Q)), true, 'no secret: told quiet at the latest landing');
+  assert.deepEqual(dragonWatchesAbout(t.landAt), [W, W - 1]);
   // a fight begins from its landing until it leaves; one already joined holds through the climb
-  assert.equal(dragonAdmits(W, t.landAt - 1), false);
-  assert.equal(dragonAdmits(W, t.landAt), true);
-  assert.equal(dragonAdmits(W, t.leaveAt), false);
-  assert.equal(dragonHolds(W, t.leaveAt), true);
-  assert.equal(dragonHolds(W, t.leaveAt + DRAGON_CLIMB_MS), false);
-  assert.equal(dragonAdmits(firstWatch(W + 1, (w) => !isDragonWatch(w)), t.landAt), false, 'a watch with no dragon admits none');
+  assert.equal(dragonAdmits(om(W), t.landAt - 1), false);
+  assert.equal(dragonAdmits(om(W), t.landAt), true);
+  assert.equal(dragonAdmits(om(W), t.leaveAt), false);
+  assert.equal(dragonHolds(om(W), t.leaveAt), true);
+  assert.equal(dragonHolds(om(W), t.leaveAt + DRAGON_CLIMB_MS), false);
+  assert.equal(dragonAdmits(om(firstWatch(W + 1, (w) => !isDragonWatch(w))), t.landAt), false, 'a watch with no dragon admits none');
+  // the same watch under another seed is another fate - nothing in the source rolls it
+  const fates = new Set();
+  for (let s = 1; s <= 64; s++) fates.add(isDragonOmen(om(W, s * 0x9e3779b1 >>> 0)));
+  assert.deepEqual([...fates].sort(), [false, true]);
 });
 
-test('DRAGON2 law: its site is rolled by the gate\'s site law under a number no gate, star or Hollow names, on any lane that stands; a fight is named by its watch and its site to the whole unit (mutants: the site day a gate\'s; a lane past the open ones)', () => {
-  const today = gameDayAt(Date.parse('2026-10-29T12:00:00Z'));
-  for (const w of [0, W, 49_999_999, 50_000_000, 123_456_789]) {
-    const d = dragonSiteDay(w);
-    assert.ok(d >= DRAGON_SITE_BASE && d < GATE_LANE_SPAN, 'below the lanes\' span, so every lane reads it as its own day');
-    assert.ok(d > today * 100, 'past every game day the gate will see for millennia');
-    assert.equal(gateLaneOf(d + 3 * GATE_LANE_SPAN), 3);
+test('DRAGON2 law: its site is in the cell its omen rolls (DRAGON-CELL - PIN MOVED: the gate\'s site law on a lane, until the relay told the omen to the whole world) - any cell of the continent\'s frame at its authored fit, the Bay\'s and past it, its own roll and never the watch\'s number; a fight is named by its watch and its site to the whole unit (mutants: the cell\'s roll the watch\'s; the frame shrunk)', () => {
+  const frame = { cx0: Math.floor(-BAY_ORIGIN.x / DRAGON_CELL_PX), cy0: Math.floor(-BAY_ORIGIN.y / DRAGON_CELL_PX) };
+  assert.deepEqual(DRAGON_CELLS, { ...frame, cols: Math.ceil((TAMRIEL_W - BAY_ORIGIN.x) / DRAGON_CELL_PX) - frame.cx0, rows: Math.ceil((TAMRIEL_H - BAY_ORIGIN.y) / DRAGON_CELL_PX) - frame.cy0 });
+  let bay = 0, past = 0, x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (let w = 0; w < 20_000; w++) {
+    const { cx, cy } = dragonCellOf(om(w));
+    x0 = Math.min(x0, cx); x1 = Math.max(x1, cx); y0 = Math.min(y0, cy); y1 = Math.max(y1, cy);
+    if (cx >= 0 && cy >= 0 && cx * DRAGON_CELL_PX < 1000 && cy * DRAGON_CELL_PX < 500) bay++; else past++;
   }
-  const lanes = new Set();
-  for (let w = 0; w < 2000; w++) lanes.add(dragonLaneOf(w));
-  assert.deepEqual([...lanes].sort((a, b) => a - b), [...GATE_LANES_OPEN]);
+  assert.ok(x0 >= DRAGON_CELLS.cx0 && y0 >= DRAGON_CELLS.cy0 && x1 < DRAGON_CELLS.cx0 + DRAGON_CELLS.cols && y1 < DRAGON_CELLS.cy0 + DRAGON_CELLS.rows, 'inside the frame');
+  assert.ok(x0 <= DRAGON_CELLS.cx0 + 2 && x1 >= DRAGON_CELLS.cx0 + DRAGON_CELLS.cols - 3 && y0 <= DRAGON_CELLS.cy0 + 2 && y1 >= DRAGON_CELLS.cy0 + DRAGON_CELLS.rows - 3, 'and over the whole of it');
+  assert.ok(bay > 0 && past > bay * 10, `the Bay\'s cells and the world\'s (${bay}, ${past})`);
+  assert.notDeepEqual(dragonCellOf(om(W, 1)), dragonCellOf(om(W, 2)), 'the cell is the seed\'s, never the watch\'s number');
+  assert.notEqual(dragonSitePick(om(W, 1)), dragonSitePick(om(W, 2)), 'and its ground\'s pick');
   assert.equal(dragonSiteKey(1234.4, -5.6), '1234,-6');
   assert.equal(dragonFightId(W, 1234.4, -5.6), `${W}@1234,-6`);
 });
@@ -96,14 +121,14 @@ test('DRAGON2 body: a path, not a physics - a line eased at both ends or falling
   const fl = fallLeg({ x: 3, z: 4, a: 45, yw: 0 }, 100);
   assert.deepEqual([dragonLegAt(fl, 1e6).x, dragonLegAt(fl, 1e6).z, dragonLegAt(fl, 1e6).a], [3, 4, 0]);
   assert.ok(fl.ms >= 3000 && fl.ms <= 3100, 'forty-five metres under gravity, about three seconds');
-  const r = roostLeg(W);
-  assert.deepEqual([r.k, r.at, r.r, r.a], [1, dragonTimes(W).landAt, ROOST_R, ROOST_ALT]);
+  const r = roostLeg(om(W));
+  assert.deepEqual([r.k, r.at, r.r, r.a], [1, dragonTimes(om(W)).landAt, ROOST_R, ROOST_ALT]);
 });
 
 // ═══ THE BRAIN ═══════════════════════════════════════════════════════════════════════════════════
 
-const T = dragonTimes(W);
-const birth = (now = T.landAt + 60_000) => DRAGON_SEAM.new({ w: W, b: 0, sx: 0, sz: 0, now, leaveAt: T.leaveAt, roost: roostLeg(W) });
+const T = dragonTimes(om(W));
+const birth = (now = T.landAt + 60_000) => DRAGON_SEAM.new({ w: W, b: 0, sx: 0, sz: 0, now, leaveAt: T.leaveAt, roost: roostLeg(om(W)) });
 const BODIES = [{ sub: 'a', x: 10, z: 0 }, { sub: 'b', x: -15, z: 20 }, { sub: 'c', x: 5, z: -25 }];
 function fightOf(n = 3, lv = 20) {
   const now = T.landAt + 60_000, f = birth(now);
@@ -113,9 +138,9 @@ function fightOf(n = 3, lv = 20) {
 
 test('DRAGON2 brain: the seam keeps every member; a fighter brings DRAGON_TTK_S of its reference, a late one at the fraction it stands at with an empty bucket; a full fight frees a seat of one with no part and not about (mutants: the share the gate\'s; the late bucket full; a seat freed from one with a part)', () => {
   for (const k of BOSS_SEAM_KEYS) assert.equal(typeof DRAGON_SEAM[k], 'function');
-  assert.equal(B.DRAGON_TTK_S, 200);
+  assert.equal(B.DRAGON_TTK_S, 720);   // PIN MOVED: DRAGON-HARDER, 200 before
   const { f, now } = fightOf(2);
-  assert.equal(f.max, 2 * 200 * dpsRef(20));
+  assert.equal(f.max, 2 * B.DRAGON_TTK_S * dpsRef(20));   // PIN MOVED: DRAGON-HARDER, by its own constant
   assert.equal(f.players.a.bucket, BUCKET_DEPTH_X * dpsRef(20));
   f.hp = f.max / 2;
   assert.equal(B.joinDragonFight(f, 'late', 'L', 30, now, true), true);
@@ -257,7 +282,9 @@ test('DRAGON2 receipt: z1, minted by the relay and verified by its public half -
 // ═══ THE WIRE ════════════════════════════════════════════════════════════════════════════════════
 
 test('DRAGON2 wire: the client says two things, `in` and `hit`, projected field by field after a hello; the cell\'s every word projected for the client - the brain\'s own state passes whole, its bounds pinned equal to the brain\'s; a refusal a closed list (mutants: a field carried; a leg unbounded; a word invented)', () => {
-  assert.deepEqual(DRAGON_KINDS, ['in', 'hit']);
+  assert.deepEqual(DRAGON_KINDS, ['in', 'hit', 'ask']);   // PIN MOVED: DRAGON-HIDDEN, the `ask` for a watch's omen
+  assert.deepEqual(validDragonIn({ k: 'ask', w: W, s: 5 }), { k: 'ask', w: W }, 'an ask names a watch alone - never a seed');
+  assert.equal(validDragonIn({ k: 'ask', w: -1 }), null);
   assert.deepEqual(validDragonIn({ k: 'in', w: W, bv: 1, lv: 20, sx: 1, sz: 2, junk: 9 }), { k: 'in', w: W, bv: 1, lv: 20, sx: 1, sz: 2 });
   assert.deepEqual(validDragonIn({ k: 'hit', d: 30, r: 2, z: 9 }), { k: 'hit', d: 30, r: 2 });
   assert.equal(validDragonIn({ k: 'hit', d: 30, r: 3 }), null);
@@ -267,8 +294,12 @@ test('DRAGON2 wire: the client says two things, `in` and `hit`, projected field 
   assert.ok('error' in parseClient(JSON.stringify({ t: 'dragon', k: 'hit', d: 9, r: 1 }), { hasHello: false }));
   assert.equal(relaySupportsDragon(RELAY_VERSION), true);
   assert.equal(relaySupportsDragon(`world${DRAGON_RELAY_MIN - 1}`), false);
-  assert.equal(DRAGON_RELAY_MIN, DRAGON_RIDE_RELAY_MIN, 'AUDIT DRAGON: one relay, one number - the fight\'s gate is the ride\'s');
-  assert.equal(relaySupportsDragon('world287'), false, 'FRONTS\' relay closes the socket on the frame');   // PIN MOVED: world288, past the world287 of main at the merge
+  assert.deepEqual([DRAGON_RELAY_MIN, DRAGON_RIDE_RELAY_MIN], [299, 288], 'PIN MOVED (DRAGON-CELL, world299, world298 on its branch until LITANY-STAND took it: the relay that tells an omen near its cell alone; DRAGON-HIDDEN, world294 past WYRM-RIDER and PVP-VITALS): the fight past the ride - the first relay that answers `ask` (290, 291 then 292 on its branch, renumbered past PVP-LINGER, GILDED-GLOW and DELVE II)');
+  assert.equal(relaySupportsDragon('world289'), false, 'HAND-WRAPS\' relay closes the socket on `ask`');
+  assert.equal(relaySupportsDragon('world290'), false, 'and PVP-LINGER\'s');
+  assert.equal(relaySupportsDragon('world291'), false, 'and GILDED-GLOW\'s');
+  assert.equal(relaySupportsDragon('world292'), false, 'and DELVE II\'s');
+  assert.equal(relaySupportsDragon('world293'), false, 'and PVP-VITALS\'');
   assert.deepEqual([DRAGON_BLOWS_WIRE_MAX, DRAGON_BLOW_KINDS], [B.DRAGON_BLOWS_KEPT, B.DRAGON_BLOWS.length]);
   const { f, words } = runFight({ ms: 4 * 60_000 });
   const site = { w: W, sx: 1e6, sz: 2e6 };
@@ -286,4 +317,7 @@ test('DRAGON2 wire: the client says two things, `in` and `hit`, projected field 
   assert.equal(validDragonOut({ k: 'no', m: 'go away' }), null);
   assert.equal(validDragonOut({ k: 'dance', ...site }), null);
   assert.ok(DRAGON_OUT_KINDS.includes('bd'));
+  assert.deepEqual(validDragonOut({ k: 'omen', w: W, s: 7, x: 1 }), { k: 'omen', w: W, s: 7 }, 'DRAGON-HIDDEN: a watch\'s seed, of no site');
+  assert.deepEqual(validDragonOut({ k: 'omen', w: W, s: null }), { k: 'omen', w: W, s: null }, 'none at this relay');
+  assert.equal(validDragonOut({ k: 'omen', w: W, s: 2 ** 32 }), null);
 });

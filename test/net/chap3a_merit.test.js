@@ -369,7 +369,7 @@ test('CHAP3a the wiring: the writs\' kind and owner in the rebuild, Merit\'s tab
   const world = src('src/scenes/world.js');
   assert.match(world, /const merit = hall && Number\(d\.merit\) > 0 \? `, \$\{Number\(d\.merit\)\.toLocaleString\('en-US'\)\} Merit to its chapter here` : '';/);
   // PIN MOVED: GUILD3d - a Merit line on its chapter's card; above the cards only for a chapter the board draws none for
-  assert.match(src('src/ui/noticeWindow.js'), /for \(const m of writs\?\.merit \?\? \[\]\) if \(!carded\.has\(m\.faction\)\) body\.append\(el\('p', 'notice-merit', meritLineOf\(m, nowS\(\)\)\)\);/);
+  assert.match(src('src/ui/noticeWindow.js'), /for \(const m of writs\?\.merit \?\? \[\]\)\n\s*if \(!carded\.has\(m\.faction\)\) body\.append\(el\('p', 'notice-merit', meritLineOf\(m, nowS\(\)\)\)\);/);
   assert.match(src('src/ui/noticeWindow.js'), /if \(merit\) card\.append\(el\('p', 'notice-merit', `\$\{meritLineOf\(merit, nowS\(\)\)\}\.`\)\);/);
   assert.match(src('server-account/src/service.js'), /CHAP3a \(Mac: "Keep going with the arc\/slices"; migration 0101_npc_merit/);
 });

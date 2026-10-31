@@ -21,9 +21,10 @@
 import { CLIMATES } from '../../formats/mapsTables.js';
 import { tamrielBiomeAt } from '../tamriel/tamrielBiomes.js';
 import { bayEdgeDistance, SEAM_PX } from '../tamriel/tamrielGround.js';
-import { redMountainLiftAt } from '../tamriel/redMountain.js';   // RED-MOUNTAIN: its fire raises the line with the cone
+import { landLayer } from '../land/landLayer.js'; // AUDIT FOUNDATION II L4: a row's climate past the Bay
+import { redMountainLiftAt } from '../tamriel/redMountain.js'; // RED-MOUNTAIN: its fire raises the line with the cone
 import { STREAMING_TERRAIN_SCALE } from '../terrain/terrainSampler.js';
-import { CAP_FACE } from '../../render/snowCapGlsl.js';   // the face's dials: their home is the shader's leaf (boot2)
+import { CAP_FACE } from '../../render/snowCapGlsl.js'; // the face's dials: their home is the shader's leaf (boot2)
 
 const C = CLIMATES;
 /** A line no ground reaches (metres above the sea): the land's ceiling (world/landforms.js LANDFORM_CEILING) is under
@@ -48,22 +49,62 @@ export const CAP_NONE = 9000;
  */
 export const SNOWCAP = Object.freeze({
   zones: Object.freeze({
-    skyrimFrozenCoast: 900, skyrimTundra: 1300, skyrimPinewood: 1700, skyrimReach: 1650, skyrimPeaks: 1250,
-    highRockWrothgar: 1300, highRockBangkorai: 1850, highRockRivenspire: 1500, highRockNorthpoint: 1600,
-    hammerfellAlikr: CAP_NONE, hammerfellCraglorn: 3200, hammerfellCoast: CAP_NONE, hammerfellDragontail: 2250,
-    summersetVineCoast: CAP_NONE, summersetAuridon: CAP_NONE, summersetEtonNir: 1850,
-    valenwoodGrahtwood: CAP_NONE, valenwoodMalabal: CAP_NONE, valenwoodGreenshade: CAP_NONE, valenwoodReapersMarch: CAP_NONE,
-    elsweyrAnequina: CAP_NONE, elsweyrPlains: CAP_NONE, elsweyrPellitine: CAP_NONE, elsweyrTenmar: CAP_NONE,
-    blackMarshHist: CAP_NONE, blackMarshFens: CAP_NONE, blackMarshMurkmire: CAP_NONE, blackMarshGloomire: CAP_NONE,
-    morrowindAshlands: 2500, morrowindGrazelands: 2200, morrowindRedMountain: CAP_NONE, morrowindAscadian: 2200,
-    morrowindBitterCoast: CAP_NONE, morrowindStonefalls: 2400, morrowindDeshaan: 2100, morrowindTelvanni: 1750,
-    morrowindVelothiFoot: 1700, morrowindVelothi: 1500,
-    cyrodiilNibenayValley: 2300, cyrodiilNibenay: 2500, cyrodiilBlackwood: CAP_NONE, cyrodiilColovia: 1900,
-    cyrodiilGoldCoast: 2400, cyrodiilJerall: 1500,
+    skyrimFrozenCoast: 900,
+    skyrimTundra: 1300,
+    skyrimPinewood: 1700,
+    skyrimReach: 1650,
+    skyrimPeaks: 1250,
+    highRockWrothgar: 1300,
+    highRockBangkorai: 1850,
+    highRockRivenspire: 1500,
+    highRockNorthpoint: 1600,
+    hammerfellAlikr: CAP_NONE,
+    hammerfellCraglorn: 3200,
+    hammerfellCoast: CAP_NONE,
+    hammerfellDragontail: 2250,
+    summersetVineCoast: CAP_NONE,
+    summersetAuridon: CAP_NONE,
+    summersetEtonNir: 1850,
+    valenwoodGrahtwood: CAP_NONE,
+    valenwoodMalabal: CAP_NONE,
+    valenwoodGreenshade: CAP_NONE,
+    valenwoodReapersMarch: CAP_NONE,
+    elsweyrAnequina: CAP_NONE,
+    elsweyrPlains: CAP_NONE,
+    elsweyrPellitine: CAP_NONE,
+    elsweyrTenmar: CAP_NONE,
+    blackMarshHist: CAP_NONE,
+    blackMarshFens: CAP_NONE,
+    blackMarshMurkmire: CAP_NONE,
+    blackMarshGloomire: CAP_NONE,
+    morrowindAshlands: 2500,
+    morrowindGrazelands: 2200,
+    morrowindRedMountain: CAP_NONE,
+    morrowindAscadian: 2200,
+    morrowindBitterCoast: CAP_NONE,
+    morrowindStonefalls: 2400,
+    morrowindDeshaan: 2100,
+    morrowindTelvanni: 1750,
+    morrowindVelothiFoot: 1700,
+    morrowindVelothi: 1500,
+    cyrodiilNibenayValley: 2300,
+    cyrodiilNibenay: 2500,
+    cyrodiilBlackwood: CAP_NONE,
+    cyrodiilColovia: 1900,
+    cyrodiilGoldCoast: 2400,
+    cyrodiilJerall: 1500,
   }),
   climates: Object.freeze({
-    [C.Mountain]: 1350, [C.MountainWoods]: 1600, [C.Woodlands]: 2100, [C.HauntedWoodlands]: 2100,
-    [C.Desert]: CAP_NONE, [C.Desert2]: CAP_NONE, [C.Rainforest]: CAP_NONE, [C.Subtropical]: CAP_NONE, [C.Swamp]: CAP_NONE, [C.Ocean]: CAP_NONE,
+    [C.Mountain]: 1350,
+    [C.MountainWoods]: 1600,
+    [C.Woodlands]: 2100,
+    [C.HauntedWoodlands]: 2100,
+    [C.Desert]: CAP_NONE,
+    [C.Desert2]: CAP_NONE,
+    [C.Rainforest]: CAP_NONE,
+    [C.Subtropical]: CAP_NONE,
+    [C.Swamp]: CAP_NONE,
+    [C.Ocean]: CAP_NONE,
   }),
   bay: Object.freeze({ north: 100, south: 420, rise: 500 }),
   winter: 450,
@@ -87,9 +128,13 @@ const smoothstep = (a, b, v) => smooth01((v - a) / (b - a));
  */
 export function capLineOfPixel(px, py, climateAt) {
   if (bayEdgeDistance(px, py) > SEAM_PX) {
-    const z = tamrielBiomeAt(px, py);
+    const row = landLayer().climateAt(px, py),
+      z = row === undefined ? tamrielBiomeAt(px, py) : null; // AUDIT FOUNDATION II L4: a row's climate its line
     const v = z ? SNOWCAP.zones[/** @type {keyof typeof SNOWCAP.zones} */ (z.key)] : undefined;
-    const line = v !== undefined ? v : SNOWCAP.climates[z ? z.climate : climateAt(px, py)] ?? SNOWCAP.climates[C.Woodlands];
+    const line =
+      v !== undefined
+        ? v
+        : (SNOWCAP.climates[z ? z.climate : (row ?? climateAt(px, py))] ?? SNOWCAP.climates[C.Woodlands]);
     // RED-MOUNTAIN: the volcano's fire - its ash never holds snow, so the line rides up its cone (the land's own line
     // over the land under it), and the Ashlands on its foot stay as bare as the plateau they were
     return line >= CAP_NONE ? line : line + redMountainLiftAt(px, py) * STREAMING_TERRAIN_SCALE;
@@ -103,8 +148,13 @@ export function capLineOfPixel(px, py, climateAt) {
 /** THE LINE AT A MAP PIXEL CORNER - the north-west corner of pixel (cx, cy): the mean of the four pixels about it, so a
  *  border is a slope over a pixel and both pixels on an edge read one number. Pure. */
 export function capLineAt(cx, cy, climateAt) {
-  return (capLineOfPixel(cx - 1, cy - 1, climateAt) + capLineOfPixel(cx, cy - 1, climateAt)
-    + capLineOfPixel(cx - 1, cy, climateAt) + capLineOfPixel(cx, cy, climateAt)) / 4;
+  return (
+    (capLineOfPixel(cx - 1, cy - 1, climateAt) +
+      capLineOfPixel(cx, cy - 1, climateAt) +
+      capLineOfPixel(cx - 1, cy, climateAt) +
+      capLineOfPixel(cx, cy, climateAt)) /
+    4
+  );
 }
 
 /** How deep in winter the sky's `day` (0..359) stands: 1 on the coldest day, 0 at midsummer, a cosine between. Pure. */
@@ -136,8 +186,12 @@ export function capShare(h, ny, line) {
  *  reader (coverAtHeight, and the shader's snowAtHeight) reads the cap's band through the line: 10 % a little over its
  *  foot, half at the line's middle, 90 % a little under its top. Pure. */
 export function capSnowline(line, out = [0, 0, 0]) {
-  const { below, above } = SNOWCAP.band, mid = line + (above - below) / 2, half = (above + below) / 2;
-  out[0] = mid - 0.6 * half; out[1] = mid; out[2] = mid + 0.6 * half;
+  const { below, above } = SNOWCAP.band,
+    mid = line + (above - below) / 2,
+    half = (above + below) / 2;
+  out[0] = mid - 0.6 * half;
+  out[1] = mid;
+  out[2] = mid + 0.6 * half;
   return out;
 }
 /** THE PACK OVER THE CAP: a lattice point's snowline the lower of the pack's and the cap's at each crossing (`pack`
@@ -155,7 +209,13 @@ const _cap = [0, 0, 0];
  *  Mountain's zone (tamrielBiomes.js morrowindRedMountain), whose heat keeps the ground bare under any fall. Pure. */
 export function ashShareAt(cx, cy) {
   let n = 0;
-  for (const [x, y] of [[cx - 1, cy - 1], [cx, cy - 1], [cx - 1, cy], [cx, cy]]) if (bayEdgeDistance(x, y) > SEAM_PX && tamrielBiomeAt(x, y)?.key === 'morrowindRedMountain') n++;
+  for (const [x, y] of [
+    [cx - 1, cy - 1],
+    [cx, cy - 1],
+    [cx - 1, cy],
+    [cx, cy],
+  ])
+    if (bayEdgeDistance(x, y) > SEAM_PX && tamrielBiomeAt(x, y)?.key === 'morrowindRedMountain') n++;
   return n / 4;
 }
 /** A snowline [h10, h50, h90] lifted toward `bare` (a line no ground reaches) by `share`, in place. */

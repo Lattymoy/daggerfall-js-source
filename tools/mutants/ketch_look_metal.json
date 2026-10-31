@@ -2,8 +2,8 @@
   {
     "name": "KTM2-a-dwarven-step-off-the-table",
     "file": "src/world/ketch/ketchLook.js",
-    "old": "dwarven: ramp([159, 158, 156, 154, 152, 150, 148],",
-    "new": "dwarven: ramp([159, 158, 156, 154, 152, 150, 143],",
+    "old": "    [159, 158, 156, 154, 152, 150, 148],",
+    "new": "    [159, 158, 156, 154, 152, 150, 143],",
     "tests": [
       "test/world/ketch/kt_look_palette.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "KTM2-two-indices-one-colour",
     "file": "src/world/ketch/ketchLook.js",
-    "old": "steel: ramp([223, 220, 95, 93, 91, 89, 87, 85], [[12, 12, 14],",
-    "new": "steel: ramp([223, 220, 95, 93, 91, 89, 87, 85], [[32, 22, 14],",
+    "old": "      [12, 12, 14],",
+    "new": "      [32, 22, 14],",
     "tests": [
       "test/world/ketch/kt_look_palette.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "KTM2-the-glow-on-the-old-colour",
     "file": "src/world/ketch/ketchArt.js",
-    "old": "emission.colors[j + k] = was > 0 ? Math.min(255, Math.round((e[j + k] * now) / was)) : 0;",
-    "new": "emission.colors[j + k] = e[j + k];",
+    "old": "      emission.colors[j + k] = was > 0 ? Math.min(255, Math.round((e[j + k] * now) / was)) : 0;",
+    "new": "      emission.colors[j + k] = e[j + k];",
     "tests": [
       "test/world/ketch/kt_look_palette.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "KTM2-the-net-as-bright-as-the-sky",
     "file": "src/world/ketch/ketchArt.js",
-    "old": "putTexel(albedo, x, y, knot ? step(Dw, 1) : u === 0 || v === 0 ? step(Dw, 3) : step(Dw, 2));",
-    "new": "putTexel(albedo, x, y, knot ? step(Dw, 4) : u === 0 || v === 0 ? step(Dw, 6) : step(Dw, 5));",
+    "old": "      putTexel(albedo, x, y, knot ? step(Dw, 1) : u === 0 || v === 0 ? step(Dw, 3) : step(Dw, 2));",
+    "new": "      putTexel(albedo, x, y, knot ? step(Dw, 4) : u === 0 || v === 0 ? step(Dw, 6) : step(Dw, 5));",
     "tests": [
       "test/world/ketch/kt_look_palette.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "KTM2-the-hold-in-strakes",
     "file": "src/world/ketch/ketchModel.js",
-    "old": "  wall(R.inner, [HD.x0, HD.z0], [HD.x0, HD.z1], hy, hc, [1, 0, 0]);",
-    "new": "  wall(R.hull, [HD.x0, HD.z0], [HD.x0, HD.z1], hy, hc, [1, 0, 0]);",
+    "old": "  wall(R.inner, [HD.x0, HD.z0], [HD.x0, HD.z1], hy, hc, [1, 0, 0]); // KETCH-LOOK KL2: the plates' backs (its outside's strakes read as shelves)",
+    "new": "  wall(R.hull, [HD.x0, HD.z0], [HD.x0, HD.z1], hy, hc, [1, 0, 0]); // KETCH-LOOK KL2: the plates' backs (its outside's strakes read as shelves)",
     "tests": [
       "test/world/ketch/kt_look_palette.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "KTM2-the-header-read-as-colour",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "const h = pal.headerLength; return pal.paletteBuffer.slice(h, h + 768);",
-    "new": "return pal.paletteBuffer.slice(0, 768);",
+    "old": "      const h = pal.headerLength;\n      return pal.paletteBuffer.slice(h, h + 768);",
+    "new": "      return pal.paletteBuffer.slice(0, 768);",
     "tests": [
       "test/world/ketch/kt_look_palette.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "KTM2-the-vane-uncut",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "(Object.freeze([KT_REC.net, KT_REC.vane]));",
-    "new": "(Object.freeze([KT_REC.net]));",
+    "old": "export const KT_CUTOUT_RECS = /** @type {ReadonlyArray<number>} */ (Object.freeze([KT_REC.net, KT_REC.vane]));",
+    "new": "export const KT_CUTOUT_RECS = /** @type {ReadonlyArray<number>} */ (Object.freeze([KT_REC.net]));",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]
@@ -146,7 +146,7 @@
   {
     "name": "KTM2-the-classic-unscaled",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "    for (let i = 0; i < 3; i++) { L.ambient[i] *= k; L.tri.sky[i] *= k; L.tri.equator[i] *= k; L.tri.ground[i] *= k; }",
+    "old": "    for (let i = 0; i < 3; i++) {\n      L.ambient[i] *= k;\n      L.tri.sky[i] *= k;\n      L.tri.equator[i] *= k;\n      L.tri.ground[i] *= k;\n    }",
     "new": "",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
@@ -155,8 +155,8 @@
   {
     "name": "KTM2-the-classic-lamps-unscaled",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "    L.sunScale *= k; L.key.scale *= k; L.lamps *= L.classic.lamps;",
-    "new": "    L.sunScale *= k; L.key.scale *= k;",
+    "old": "    L.lamps *= L.classic.lamps;\n  }",
+    "new": "  }",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "KTM2-the-classic-on-the-lane",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "  if (!lane) {   // the classic set",
-    "new": "  if (true) {   // the classic set",
+    "old": "  if (!lane) {",
+    "new": "  if (true) {",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]

@@ -26,12 +26,20 @@
 // writes; nothing here asks the network.
 // ═══════════════════════════════════════════════════════════════════
 import { BAG_KG_LIMIT, BAG_WORDS, CARRIED_MAX, hasBag, isBagItem, depositOrderOk } from '../net/bagLaw.js';
-import { PLANT_GROUP_TEMPLATES, FOOD_KEYS, MINED_KEYS, LOOSE_ONLY_KEYS, withdrawable } from '../net/professionLaw.js';   // CLOTH-GEMS: and the loose door's graded gems
+import { PLANT_GROUP_TEMPLATES, FOOD_KEYS, MINED_KEYS, LOOSE_ONLY_KEYS, withdrawable } from '../net/professionLaw.js'; // CLOTH-GEMS: and the loose door's graded gems
 import { material } from '../net/nodeLaw.js';
 import { mintMaterialItem, withdrawIntoPack } from './professions/profItems.js';
-import { addItem, totalWeight, effectiveUnitWeightInKg, canHoldAmount, carriedWeight, isSummoned, isEnchanted } from './inventory.js';
+import {
+  addItem,
+  totalWeight,
+  effectiveUnitWeightInKg,
+  canHoldAmount,
+  carriedWeight,
+  isSummoned,
+  isEnchanted,
+} from './inventory.js';
 import { entityMaxEncumbrance } from '../combat/formulas.js';
-import { PATRON_COUNTER_MARK } from '../net/patronLaw.js';   // AUDIT TOWN-ECON 2 PRICE-2: a counter's piece is no service unit
+import { PATRON_COUNTER_MARK } from '../net/patronLaw.js'; // AUDIT TOWN-ECON 2 PRICE-2: a counter's piece is no service unit
 
 /** AUDIT TOWN-ECON 2 PRICE-2: A PIECE AN NPC COUNTER SOLD ONLINE (tradeModes.js markCounterBought) - never the service's
  *  unit: a Stores put-in of it came back out of a withdrawal minted fresh, its LAW-3 price and its counter's mark gone,
@@ -68,7 +76,11 @@ function byItem() {
     if (!withdrawable(key)) continue;
     for (const cc of key.startsWith('food:') ? [true, false] : [undefined]) {
       let it = null;
-      try { it = mintMaterialItem(key, cc); } catch { it = null; }
+      try {
+        it = mintMaterialItem(key, cc);
+      } catch {
+        it = null;
+      }
       if (it && !m.has(itemKey(it))) m.set(itemKey(it), key);
     }
   }
@@ -80,7 +92,15 @@ function byItem() {
  *  it is not what the mint makes. AUDIT BAG1 B7: nor a food on its way to putrid (survival/food.js foodStage) - the
  *  mint makes it fresh, and a rotting haunch held as the Basket's meat went into the Stores as fresh. */
 export function materialKeyOfItem(item) {
-  if (!item || item.questItem || isSummoned(item) || item.equipSlot != null || isEnchanted(item) || (item.foodStage ?? 0) > 0) return null;
+  if (
+    !item ||
+    item.questItem ||
+    isSummoned(item) ||
+    item.equipSlot != null ||
+    isEnchanted(item) ||
+    (item.foodStage ?? 0) > 0
+  )
+    return null;
   return byItem().get(itemKey(item)) ?? null;
 }
 export const isMaterialItem = (item) => materialKeyOfItem(item) != null;
@@ -91,7 +111,7 @@ export const isMaterialItem = (item) => materialKeyOfItem(item) != null;
 export function heldOf(entity, key, { counter = true } = {}) {
   let n = 0;
   for (const list of [entity?.items ?? [], entity?.bagItems ?? [], entity?.wagonItems ?? []]) {
-    for (const it of list) if (materialKeyOfItem(it) === key && (counter || !counterPiece(it))) n += it.stackCount ?? 1;   // AUDIT TOWN-ECON 2 PRICE-2: `counter` false, a counter's pieces not
+    for (const it of list) if (materialKeyOfItem(it) === key && (counter || !counterPiece(it))) n += it.stackCount ?? 1; // AUDIT TOWN-ECON 2 PRICE-2: `counter` false, a counter's pieces not
   }
   return n;
 }
@@ -101,7 +121,10 @@ export function heldOf(entity, key, { counter = true } = {}) {
 export function heldKeysOf(entity) {
   const keys = new Set();
   for (const list of [entity?.items ?? [], entity?.bagItems ?? [], entity?.wagonItems ?? []]) {
-    for (const it of list) { const k = materialKeyOfItem(it); if (k) keys.add(k); }
+    for (const it of list) {
+      const k = materialKeyOfItem(it);
+      if (k) keys.add(k);
+    }
   }
   return [...keys];
 }
@@ -118,7 +141,9 @@ export const bagWeight = (entity) => totalWeight(entity?.bagItems ?? []);
  *  integer law (inventory.js canHoldAmount), never past the service's count's bound. */
 export function roomFor(entity, key) {
   const kg = unitKgOf(key);
-  const inBag = hasBag(entity?.items) ? Math.max(0, canHoldAmount(CARRIED_MAX, kg, BAG_KG_LIMIT, bagWeight(entity))) : 0;
+  const inBag = hasBag(entity?.items)
+    ? Math.max(0, canHoldAmount(CARRIED_MAX, kg, BAG_KG_LIMIT, bagWeight(entity)))
+    : 0;
   const inPack = Math.max(0, canHoldAmount(CARRIED_MAX, kg, entityMaxEncumbrance(entity), carriedWeight(entity)));
   return Math.min(CARRIED_MAX, inBag + inPack);
 }
@@ -136,16 +161,30 @@ export function mintCarried(entity, key, n, { cc, slowRot = false, noRot = false
   if (!entity || !Number.isSafeInteger(n) || n < 1) return out;
   // AUDIT2 BAG1 H12: only what has a pack form (professionLaw.js withdrawable) - an Arcane Essence or a Ram Kit minted as
   // an item was a shop's gold (PROF12 E1's closed faucet) and a held count of none
-  if (!withdrawable(key)) { out.left = n; return out; }
+  if (!withdrawable(key)) {
+    out.left = n;
+    return out;
+  }
   if (!Array.isArray(entity.items)) entity.items = [];
   const kg = unitKgOf(key);
   for (let i = 0; i < n; i++) {
     const item = mintMaterialItem(key, cc);
-    if (!item) { out.left += n - i; break; }
+    if (!item) {
+      out.left += n - i;
+      break;
+    }
     if (slowRot === true) item.slowRot = true;
     if (noRot === true && key.startsWith('food:')) item.noRot = true;
-    if (hasBag(entity.items) && canHoldAmount(1, kg, BAG_KG_LIMIT, bagWeight(entity)) >= 1) { addItem(bagItemsOf(entity), item, 'back'); out.bag++; continue; }
-    if (canHoldAmount(1, kg, entityMaxEncumbrance(entity), carriedWeight(entity)) >= 1) { addItem(entity.items, item, 'back'); out.pack++; continue; }
+    if (hasBag(entity.items) && canHoldAmount(1, kg, BAG_KG_LIMIT, bagWeight(entity)) >= 1) {
+      addItem(bagItemsOf(entity), item, 'back');
+      out.bag++;
+      continue;
+    }
+    if (canHoldAmount(1, kg, entityMaxEncumbrance(entity), carriedWeight(entity)) >= 1) {
+      addItem(entity.items, item, 'back');
+      out.pack++;
+      continue;
+    }
     out.left++;
   }
   return out;
@@ -176,18 +215,30 @@ export function takeCarried(entity, key, n, stamp = null, order = null, { counte
   const moves = [];
   let left = Math.max(0, n | 0);
   // AUDIT TOWN-ECON 2 PRICE-2: a counter's pieces last, and only for a station's own put-in (`counter`)
-  for (const marked of counter ? [false, true] : [false]) for (const [role, list] of /** @type {[string, any[]][]} */ ([['bag', bagItemsOf(entity)], ['items', entity?.items ?? []], ['wagon', entity?.wagonItems ?? []]])) {
-    for (let i = list.length - 1; i >= 0 && left > 0; i--) {
-      const it = list[i];
-      if (materialKeyOfItem(it) !== key || counterPiece(it) !== marked) continue;
-      const count = it.stackCount ?? 1;
-      const take = Math.min(left, count);
-      if (take === count) { list.splice(i, 1); moves.push({ role, item: it, count, whole: true }); } else { it.stackCount = count - take; moves.push({ role, item: it, count: take, whole: false }); }
-      left -= take;
+  for (const marked of counter ? [false, true] : [false])
+    for (const [role, list] of /** @type {[string, any[]][]} */ ([
+      ['bag', bagItemsOf(entity)],
+      ['items', entity?.items ?? []],
+      ['wagon', entity?.wagonItems ?? []],
+    ])) {
+      for (let i = list.length - 1; i >= 0 && left > 0; i--) {
+        const it = list[i];
+        if (materialKeyOfItem(it) !== key || counterPiece(it) !== marked) continue;
+        const count = it.stackCount ?? 1;
+        const take = Math.min(left, count);
+        if (take === count) {
+          list.splice(i, 1);
+          moves.push({ role, item: it, count, whole: true });
+        } else {
+          it.stackCount = count - take;
+          moves.push({ role, item: it, count: take, whole: false });
+        }
+        left -= take;
+      }
     }
-  }
   const taken = moves.reduce((a, m) => a + m.count, 0);
-  if (stamp && taken > 0) (entity.bagTakes ??= {})[stamp] = { material: key, qty: taken, ...(depositOrderOk(order) ? { order } : {}) };
+  if (stamp && taken > 0)
+    (entity.bagTakes ??= {})[stamp] = { material: key, qty: taken, ...(depositOrderOk(order) ? { order } : {}) };
   const back = () => {
     for (const m of moves.reverse()) {
       const list = listOf(entity, m.role);
@@ -213,7 +264,11 @@ export const bagTakesOf = (entity) => (entity?.bagTakes && typeof entity.bagTake
 export function giveCarried(entity, key, n, opts = {}) {
   const got = mintCarried(entity, key, n, opts);
   let over = 0;
-  if (got.left > 0 && withdrawable(key)) over = withdrawIntoPack(entity, key, got.left, opts.cc, { slowRot: opts.slowRot === true, noRot: opts.noRot === true });
+  if (got.left > 0 && withdrawable(key))
+    over = withdrawIntoPack(entity, key, got.left, opts.cc, {
+      slowRot: opts.slowRot === true,
+      noRot: opts.noRot === true,
+    });
   return { bag: got.bag, pack: got.pack, over };
 }
 
@@ -243,7 +298,10 @@ export function emptyBagIntoPack(entity) {
   for (const it of order) {
     const count = it.stackCount ?? 1;
     const kg = effectiveUnitWeightInKg(it);
-    const fit = kg > 0 ? Math.max(0, Math.min(count, canHoldAmount(count, kg, entityMaxEncumbrance(entity), carriedWeight(entity)))) : count;
+    const fit =
+      kg > 0
+        ? Math.max(0, Math.min(count, canHoldAmount(count, kg, entityMaxEncumbrance(entity), carriedWeight(entity))))
+        : count;
     if (fit >= count) {
       bag.splice(bag.indexOf(it), 1);
       addItem(entity.items, it, 'back');

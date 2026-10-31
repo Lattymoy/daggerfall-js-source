@@ -62,6 +62,9 @@ export const SEA_HELM = Object.freeze({
   deadDeg: 4,
   /** Beating: the mark's bearing may swing this far past the wind's eye (degrees) before the boat goes about. */
   laneDeg: 20,
+  /** BEAT-LANE: ...or until she stands this far (m) past the wind's line through the mark. An angle's lane widens with
+   *  the mark's distance: SEA-TAUT's legs run 29 to 43 km in the Eltheric Ocean, and a tack ran 9 km off the line. */
+  laneM: 400,
   /** How close to the wind a rig with a lateen, a gaff or a staysail sails (degrees off its eye). */
   noGoFore: 35,
   /** ...and square sails alone: past 68 their pull falls faster than the course gains (GetSailPower's square law). */
@@ -95,7 +98,10 @@ export const seaHelmReach = (way) => Math.max(SEA_HELM.avoidM, Math.max(0, way) 
 export const seaHelmLook = (st, way) => Math.max(seaHelmReach(way), st?.reach ?? 0);
 
 /** An angle folded into (-180, 180]. */
-export const foldDeg = (d) => { const a = ((d % 360) + 540) % 360 - 180; return a === -180 ? 180 : a; };
+export const foldDeg = (d) => {
+  const a = (((d % 360) + 540) % 360) - 180;
+  return a === -180 ? 180 : a;
+};
 /** A flat direction's heading - degrees clockwise from north (+z), as the port's yaw counts. */
 export const headingOf = (x, z) => (Math.atan2(x, z) * 180) / Math.PI;
 
@@ -107,14 +113,14 @@ export const createSeaHelm = () => ({ tack: 0, stall: 0, oars: 0, reach: 0 });
  * @param {{ tack: number, stall: number, oars: number, reach?: number }} st
  * @param {{ heading: number, bearing: number, wind: number[], hasSails: boolean, squareOnly?: boolean, sailsUp: boolean,
  *   canSail: boolean, way: number, dt: number, landfall?: boolean, landAhead?: number, freer?: number, crewed?: boolean,
- *   oarWay?: number, sailWay?: number, free?: boolean, markAhead?: number, hullAhead?: number }} q
+ *   oarWay?: number, sailWay?: number, free?: boolean, markAhead?: number, hullAhead?: number, dist?: number }} q
  *   `heading` the bow's and `bearing` the mark's (degrees, clockwise from north); `wind` the wind's flat vector (where
  *   it blows); `way` the boat's speed along its bow (m/s, astern negative); `landAhead` the metres to land along the
  *   bow (Infinity: none seen); `freer` the hand with more water (-1 left, 1 right); `landfall` this leg ends ashore;
  *   `crewed` a crew at the oars, whose speed is `oarWay` against the sails' `sailWay` in this wind (m/s); `free` the
  *   responsive helm's SAIL-FREE, under which no course is too near the wind to sail; `markAhead` the metres to land
  *   along the mark's own bearing (AUDIT SHIPS A2 - Infinity: none seen; a landfall's, its hulls alone); `hullAhead` the
- *   metres to a ship's hull along her looks (AUDIT FERRY-CLEAR F1 - Infinity: none).
+ *   metres to a ship's hull along her looks (AUDIT FERRY-CLEAR F1 - Infinity: none); `dist` the metres to the mark (BEAT-LANE).
  * @returns {{ turn: -1|0|1, sails: 'raise'|'lower'|null, row: boolean, course: number }}
  */
 export function seaHelmStep(st, q) {
@@ -122,7 +128,7 @@ export function seaHelmStep(st, q) {
   const windLen = Math.hypot(q.wind[0] ?? 0, q.wind[1] ?? 0);
   const ahead = q.landAhead ?? Infinity;
   const reach = seaHelmLook(st, q.way);
-  const avoiding = (!q.landfall && ahead <= reach) || (q.hullAhead ?? Infinity) <= reach;   // AUDIT FERRY-CLEAR F1: a hull on any leg
+  const avoiding = (!q.landfall && ahead <= reach) || (q.hullAhead ?? Infinity) <= reach; // AUDIT FERRY-CLEAR F1: a hull on any leg
   // AUDIT SHIPS A2: her bow clear, the mark's line still running onto land within reach - she holds the heading that
   // cleared it (let go as her bow cleared it, the hand turned her straight back onto the islet she was turning off).
   // AUDIT FERRY-CLEAR F1: a landfall's line is read for its hulls alone (the host's), so it holds off a ship there too
@@ -136,27 +142,32 @@ export function seaHelmStep(st, q) {
   const sailable = q.hasSails && (q.free ? windLen > 0 : windLen >= H.calm) && !rowingIn && !avoiding && !crewRows;
   let course = foldDeg(q.bearing);
   if (sailable) {
-    const eye = headingOf(-(q.wind[0] ?? 0), -(q.wind[1] ?? 0));   // where the wind comes from
-    const noGo = q.free ? 0 : q.squareOnly ? H.noGoSquare : H.noGoFore;   // SAIL-FREE: the responsive helm sails straight up
+    const eye = headingOf(-(q.wind[0] ?? 0), -(q.wind[1] ?? 0)); // where the wind comes from
+    const noGo = q.free ? 0 : q.squareOnly ? H.noGoSquare : H.noGoFore; // SAIL-FREE: the responsive helm sails straight up
     const off = foldDeg(q.bearing - eye);
     if (Math.abs(off) < noGo) {
       if (st.tack === 0) st.tack = off >= 0 ? 1 : -1;
-      else if (st.tack * off < -H.laneDeg) st.tack = -st.tack;   // the mark swung past the eye: go about
+      else if (st.tack * off < -H.laneDeg || -st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM)
+        st.tack = -st.tack; // the mark swung past the eye, or she stands past the lane: go about
       course = foldDeg(eye + st.tack * noGo);
     } else st.tack = 0;
   } else st.tack = 0;
-  if (avoiding) course = foldDeg(q.heading + (q.freer ?? 1) * 90);   // land close ahead: hard over to the freer hand
+  if (avoiding)
+    course = foldDeg(q.heading + (q.freer ?? 1) * 90); // land close ahead: hard over to the freer hand
   else if (blocked) course = foldDeg(q.heading);
   const err = foldDeg(course - q.heading);
   // the stall: under sail, on the course, and making no way ahead
   if (q.sailsUp && q.way < H.stallMps && Math.abs(err) <= H.sailTurnMax) {
     st.stall += q.dt;
-    if (st.stall >= H.stallS) { st.stall = 0; st.oars = H.oarsS; }
+    if (st.stall >= H.stallS) {
+      st.stall = 0;
+      st.oars = H.oarsS;
+    }
   } else st.stall = 0;
   const sailsWanted = sailable && st.oars <= 0 && Math.abs(err) <= H.sailTurnMax;
   const sails = sailsWanted && !q.sailsUp && q.canSail ? 'raise' : !sailsWanted && q.sailsUp ? 'lower' : null;
   const turn = err > H.deadDeg ? 1 : err < -H.deadDeg ? -1 : 0;
-  return { turn, sails, row: !sailsWanted || (!q.sailsUp && !q.canSail), course };   // AUDIT FERRY-CLEAR F2: no sail to raise, the oars
+  return { turn, sails, row: !sailsWanted || (!q.sailsUp && !q.canSail), course }; // AUDIT FERRY-CLEAR F2: no sail to raise, the oars
 }
 
 /**
@@ -164,4 +175,5 @@ export function seaHelmStep(st, q) {
  * `noGoFore`. `boat` is Come Sail Away's Boat (its sails' lists).
  * @param {{ Sails?: any[], SailsSquare?: any[] }} boat
  */
-export const squareOnly = (boat) => (boat?.Sails?.length ?? 0) > 0 && (boat?.SailsSquare?.length ?? 0) === (boat?.Sails?.length ?? 0);
+export const squareOnly = (boat) =>
+  (boat?.Sails?.length ?? 0) > 0 && (boat?.SailsSquare?.length ?? 0) === (boat?.Sails?.length ?? 0);

@@ -41,11 +41,18 @@ export function literalSql(sql, args = []) {
     const c = sql[i];
     if (quote) {
       out += c;
-      if (c === quote) quote = null;   // a doubled quote closes and opens again: the same text either way
+      if (c === quote) quote = null; // a doubled quote closes and opens again: the same text either way
       continue;
     }
-    if (c === "'" || c === '"') { quote = c; out += c; continue; }
-    if (c !== '?') { out += c; continue; }
+    if (c === "'" || c === '"') {
+      quote = c;
+      out += c;
+      continue;
+    }
+    if (c !== '?') {
+      out += c;
+      continue;
+    }
     const digits = /^\d*/.exec(sql.slice(i + 1))[0];
     const n = digits ? Number(digits) : top + 1;
     if (!(n >= 1 && n <= args.length)) throw new Error(`literalSql: ?${n} binds nothing (${args.length} bound)`);
@@ -68,12 +75,22 @@ export function wranglerExec({ command = process.env.WRANGLER || 'npx --yes wran
   return (/** @type {string[]} */ args) => {
     try {
       return execFileSync(bin, [...pre, ...args], {
-        cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 256 * 1024 * 1024,
+        cwd,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+        maxBuffer: 256 * 1024 * 1024,
         env: { ...process.env, WRANGLER_SEND_METRICS: 'false', FORCE_COLOR: '0' },
       });
     } catch (e) {
-      const said = String(e?.stderr ?? '').split('\n').filter((l) => /error|exist/i.test(l)).map((l) => l.trim()).join(' ');
-      throw Object.assign(new Error(`wrangler ${args.slice(0, 3).join(' ')} failed (exit ${e?.status ?? '?'}): ${said || 'no words'}`), { stderr: String(e?.stderr ?? '') });
+      const said = String(e?.stderr ?? '')
+        .split('\n')
+        .filter((l) => /error|exist/i.test(l))
+        .map((l) => l.trim())
+        .join(' ');
+      throw Object.assign(
+        new Error(`wrangler ${args.slice(0, 3).join(' ')} failed (exit ${e?.status ?? '?'}): ${said || 'no words'}`),
+        { stderr: String(e?.stderr ?? '') },
+      );
     }
   };
 }
@@ -85,7 +102,8 @@ export function wranglerExec({ command = process.env.WRANGLER || 'npx --yes wran
 export function wranglerD1({ database, exec, where = 'remote', dry = false, held = [] }) {
   const ask = (/** @type {string} */ sql) => {
     const out = JSON.parse(exec(['d1', 'execute', database, `--${where}`, '--json', '--yes', '--command', sql]));
-    if (!Array.isArray(out) || out.some((r) => r?.success === false)) throw new Error('wrangler d1 execute: an answer that is no success');
+    if (!Array.isArray(out) || out.some((r) => r?.success === false))
+      throw new Error('wrangler d1 execute: an answer that is no success');
     return out;
   };
   const rows = (/** @type {string} */ sql, /** @type {unknown[]} */ args) => {
@@ -97,12 +115,17 @@ export function wranglerD1({ database, exec, where = 'remote', dry = false, held
       /** @type {unknown[]} */
       let args = [];
       const api = {
-        bind(/** @type {unknown[]} */ ...a) { args = a; return api; },
+        bind(/** @type {unknown[]} */ ...a) {
+          args = a;
+          return api;
+        },
         async first(/** @type {string} */ col) {
           const row = rows(sql, args)[0] ?? null;
-          return col ? row?.[col] ?? null : row;
+          return col ? (row?.[col] ?? null) : row;
         },
-        async all() { return { results: rows(sql, args), meta: {} }; },
+        async all() {
+          return { results: rows(sql, args), meta: {} };
+        },
         async run() {
           const text = literalSql(sql, args);
           if (dry && WRITES.test(sql)) {
@@ -117,7 +140,9 @@ export function wranglerD1({ database, exec, where = 'remote', dry = false, held
       };
       return api;
     },
-    async batch() { throw new Error('wranglerD1: no batch - one statement a command, and no act run here asks one'); },
+    async batch() {
+      throw new Error('wranglerD1: no batch - one statement a command, and no act run here asks one');
+    },
   };
 }
 
@@ -133,12 +158,15 @@ export function wranglerR2({ bucket, exec, dir, where = 'remote', dry = false, h
       try {
         exec(['r2', 'object', 'get', `${bucket}/${key}`, `--${where}`, '--file', file]);
         const bytes = readFileSync(file);
-        return { size: bytes.byteLength, arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) };
+        return {
+          size: bytes.byteLength,
+          arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+        };
       } catch (e) {
         if (MISSING.test(String(e?.stderr ?? '')) || MISSING.test(String(e?.message ?? ''))) return null;
         throw e;
       } finally {
-        rmSync(file, { force: true });   // wrangler leaves an empty file behind a key that holds nothing
+        rmSync(file, { force: true }); // wrangler leaves an empty file behind a key that holds nothing
       }
     },
     async delete(/** @type {string} */ key) {

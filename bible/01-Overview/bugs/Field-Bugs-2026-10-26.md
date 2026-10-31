@@ -88,7 +88,7 @@ Balfiera's seven crypts are built small: Darkivaron and Ruins of Old Barbara's P
 reporter's "second dungeon of this type".
 
 FIXED. Where a quest of mine names the place and the shared world builds it smaller (`dungeonSite`'s `relaid`), Public
-is the LAST row (`instancePlaces.js:"  const publicLast = questHere && relaid;"`): the party's rooms, then mine, then
+is the LAST row (`instancePlaces.js:"const publicLast"`): the party's rooms, then mine, then
 Public - so "1" is a room the quest can be done in, the crypt whole with its upper hall and its mummy. Everywhere else
 the order stands (a quest's dungeon laid whole in public, a re-laid one with no quest of mine, the Hold). The line still
 says why. HEIR-WHOLE's remains in a re-laid dungeon are a quest's place by the same law (`instanceDoor.js` questHere),

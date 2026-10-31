@@ -22,31 +22,61 @@
 // keeps facing bookkeeping on foes.
 
 import {
-  createWeaponMachine, machineAttack, machineStep, gestureDirection, strikeTicks, getMeleeWeaponAnimTime,
-  MAX_GESTURE_SECONDS, BOW_DRAWN_HOLD_FRAME, machineCancelBowDraw, THUNDERLOCK_NUM_FRAMES, CLASSIC_UPDATE_INTERVAL,
-  blowSchedule,   // MW-PACE1: the strike just begun, timed - what the Morrowind arm fits its blow into
-  shotSchedule,   // MW-SHOT-PACE: and a bow's shot, timed the same way
+  createWeaponMachine,
+  machineAttack,
+  machineStep,
+  gestureDirection,
+  strikeTicks,
+  getMeleeWeaponAnimTime,
+  MAX_GESTURE_SECONDS,
+  BOW_DRAWN_HOLD_FRAME,
+  machineCancelBowDraw,
+  THUNDERLOCK_NUM_FRAMES,
+  CLASSIC_UPDATE_INTERVAL,
+  blowSchedule, // MW-PACE1: the strike just begun, timed - what the Morrowind arm fits its blow into
+  shotSchedule, // MW-SHOT-PACE: and a bow's shot, timed the same way
 } from '../characters/weaponStates.js';
-import { GUN_FEEL, GUN_TICK_SECONDS, thunderlockReloadSeconds, PISTOLET_FEEL } from './gun/gunFeel.js';   // FIELD-GUN7: the lab's cadence, from the one home
+import { GUN_FEEL, GUN_TICK_SECONDS, thunderlockReloadSeconds, PISTOLET_FEEL } from './gun/gunFeel.js'; // FIELD-GUN7: the lab's cadence, from the one home
 import { DIRECTION_TO_STRIKE, ATTACKS_FP, sampleClip } from '../characters/anims.js';
 import { combinePose } from '../characters/animate.js';
 import { weaponTypeForItem, WEAPON_TYPES, isGunType, isPistoletType } from './fpsWeapon.js';
-import { createPair, PAIR_TRIGGER } from './gun/pistolPair.js';   // PISTOL-PORT: a Pistolet fires on the pistol lab's own machines
+import { createPair, PAIR_TRIGGER } from './gun/pistolPair.js'; // PISTOL-PORT: a Pistolet fires on the pistol lab's own machines
 import { WEAPONS } from '../characters/weapons.js';
 import { POSES } from '../characters/poses.js';
 import { calculateAttackDamage } from './formulas.js';
-import { isShieldTemplate } from '../systems/armorMaterials.js';   // a12: UpdateHands' IsShield leg
-import { equipDelayFor } from '../systems/equip.js';               // a12: ToggleHand's EquipDelayTimes[GroupIndex]
-import { getBool, getFloat, getInt } from '../systems/settings/settings.js';   // AUDIT 28 W2b: MeleeAttackFriendlyProtection; W11: WeaponAttackThreshold, WeaponSwingMode
-import { blowReaches, blowMult, scaleBlowDamage, playerBody, tellTechniqueLanded } from './technique/techniqueBlow.js';   // TECH1: a technique's blow - its shape and its weight, a leaf; MARTIAL3: and its landing told
-import { HANDS_MODE, handsModeOf, strikeHandOf, twoHanded, offHandToHit, OFF_HAND_BLOW, offHandBurden, offHandHold, DUAL, gunHandOf, mixedStrike, otherHand, MIXED } from './twoHands/handsLaw.js';   // TWO-HANDS: which hand strikes, and what the off hand costs; MIXED-PAIR: a blade and a gun
-import { isHandWraps, fistWrapsOf } from '../characters/handWrapsIds.js';   // HAND-WRAPS: the wraps are no weapon; both fists wear them
-import { getItemHands } from '../systems/equip.js';   // TWO-HANDS: a hand's item as the law reads it (one-handed or not)
-import { readSwing } from './swingLaw.js';   // TWO-HANDS: the striking weapon's weight and the Strength, for the off hand's burden
-import { liveStat } from '../systems/statMods.js';   // TWO-HANDS: the off hand's sureness reads the live Agility
+import { isShieldTemplate } from '../systems/armorMaterials.js'; // a12: UpdateHands' IsShield leg
+import { equipDelayFor } from '../systems/equip.js'; // a12: ToggleHand's EquipDelayTimes[GroupIndex]
+import { getBool, getFloat, getInt } from '../systems/settings/settings.js'; // AUDIT 28 W2b: MeleeAttackFriendlyProtection; W11: WeaponAttackThreshold, WeaponSwingMode
+import {
+  blowReaches,
+  blowMult,
+  scaleBlowDamage,
+  playerBody,
+  tellTechniqueLanded,
+  techniqueBackstab,
+} from './technique/techniqueBlow.js'; // TECH1: a technique's blow - its shape and its weight, a leaf; MARTIAL3: and its landing told
+import {
+  HANDS_MODE,
+  handsModeOf,
+  strikeHandOf,
+  twoHanded,
+  offHandToHit,
+  OFF_HAND_BLOW,
+  offHandBurden,
+  offHandHold,
+  DUAL,
+  gunHandOf,
+  mixedStrike,
+  otherHand,
+  MIXED,
+} from './twoHands/handsLaw.js'; // TWO-HANDS: which hand strikes, and what the off hand costs; MIXED-PAIR: a blade and a gun
+import { isHandWraps, fistWrapsOf } from '../characters/handWrapsIds.js'; // HAND-WRAPS: the wraps are no weapon; both fists wear them
+import { getItemHands } from '../systems/equip.js'; // TWO-HANDS: a hand's item as the law reads it (one-handed or not)
+import { readSwing } from './swingLaw.js'; // TWO-HANDS: the striking weapon's weight and the Strength, for the off hand's burden
+import { liveStat } from '../systems/statMods.js'; // TWO-HANDS: the off hand's sureness reads the live Agility
 
-export const DEFAULT_WEAPON_REACH = 2.25;   // WeaponManager.cs:35
-export const SPHERE_CAST_RADIUS = 0.25;     // WeaponManager.cs:51
+export const DEFAULT_WEAPON_REACH = 2.25; // WeaponManager.cs:35
+export const SPHERE_CAST_RADIUS = 0.25; // WeaponManager.cs:51
 export const WEAPON_REACH = DEFAULT_WEAPON_REACH + SPHERE_CAST_RADIUS;
 
 // FormulaHelper.CalculateSwingModifiers verbatim ({damage, toHit})
@@ -76,8 +106,8 @@ export const SWING_MODS = Object.freeze({
  *  the bit by intent and had the rule exactly inverted. */
 export const INTERIM_WEAPON = Object.freeze({
   name: 'Dagger',
-  templateIndex: WEAPONS.Dagger,   // audit 2026-08-17: without this, weaponTypeForItem -> None and the STARTING dagger drew no weapon art at all
-  material: 0,        // Iron
+  templateIndex: WEAPONS.Dagger, // audit 2026-08-17: without this, weaponTypeForItem -> None and the STARTING dagger drew no weapon art at all
+  material: 0, // Iron
 });
 
 /**
@@ -86,7 +116,7 @@ export const INTERIM_WEAPON = Object.freeze({
  */
 // WeaponManager.cs:343's click draw lives in characters/weaponStates.js beside the gesture's own ways (AUDIT
 // TOUCH-BUTTONS A7: the touch Attack button draws from it too, and the door's menu reads that module)
-import { CLICK_ATTACK_DIRECTIONS } from '../characters/weaponStates.js';
+import { CLICK_ATTACK_DIRECTIONS, machineCut } from '../characters/weaponStates.js'; // TECH-CANCEL: a technique cuts the swing
 export { CLICK_ATTACK_DIRECTIONS };
 
 export function playerMeleeCanHit(dist, inView, losClear) {
@@ -110,8 +140,8 @@ export function playerMeleeCanHit(dist, inView, losClear) {
 // here - so binding that ONE field to the used hand carries them all.
 
 /** WeaponManager.cs:45 - the switch-delay divisor, a float. */
-import { BOW_SWITCH_DIVISOR, bowReloadSeconds } from '../characters/weaponStates.js';   // ONE home (WeaponManager.cs:45); a12's switch law reads it here
-import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { BOW_SWITCH_DIVISOR, bowReloadSeconds } from '../characters/weaponStates.js'; // ONE home (WeaponManager.cs:45); a12's switch law reads it here
+import { noteFirstUse } from '../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 export { BOW_SWITCH_DIVISOR };
 
 /** Internal_Strings.csv: usingRightHand / usingLeftHand - the two
@@ -178,14 +208,17 @@ export const usingRightHandFromSaveVars = (saveVars) => !saveVars?.usingLeftHand
  * leaving it to be discovered: if a caller ever does pass null, the
  * pin says what changed and when.
  */
-export const weaponPoseOf = (w) => (w ? { weaponDrawn: !w.sheathed, usingRightHand: w.usingRightHand, handKept: true } : null);   // AUDIT FB1029f D4: a hand chosen under HAND-FOLLOWS
+export const weaponPoseOf = (w) =>
+  w ? { weaponDrawn: !w.sheathed, usingRightHand: w.usingRightHand, handKept: true } : null; // AUDIT FB1029f D4: a hand chosen under HAND-FOLLOWS
 
 /** RR1: WeaponManager.Sheathed / ScreenWeapon.WeaponType, asked by a law
  *  that lives nowhere near the rig (Roleplay & Realism's climbing gate
  *  reads both, RoleplayRealism.cs:323). The rig registers a probe when
  *  it stands; a host with no rig answers null. */
 let _poseProbe = null;
-export function setWeaponPoseProbe(fn) { _poseProbe = typeof fn === 'function' ? fn : null; }
+export function setWeaponPoseProbe(fn) {
+  _poseProbe = typeof fn === 'function' ? fn : null;
+}
 export const currentWeaponPose = () => _poseProbe?.() ?? null;
 
 /**
@@ -211,7 +244,10 @@ export function applyWeaponPose(w, pose) {
   if (pose.weaponDrawn != null) w.sheathed = !pose.weaponDrawn;
   // HAND-FOLLOWS: the next UpdateHands keeps a hand chosen under it; AUDIT FB1029f D4: a pose from before it (`handKept`
   // unsaid) follows once - a save made with a lone weapon left beside an empty hand in use loaded to fists
-  if (pose.usingRightHand != null) { w.usingRightHand = !!pose.usingRightHand; w.handRestored = pose.handKept === true; }
+  if (pose.usingRightHand != null) {
+    w.usingRightHand = !!pose.usingRightHand;
+    w.handRestored = pose.handKept === true;
+  }
   return true;
 }
 
@@ -269,7 +305,10 @@ const SHIELD_HAND = Object.freeze({ item: true, shield: true });
  *  own step ends it (the machine's `ready`); nothing else reads it. */
 const RELOAD_EPS_MS = 1e-6;
 function settleReload(g) {
-  if (g?.state === 'Cooling' && g.cooldownMs - g.cooledMs <= RELOAD_EPS_MS) { g._cool = g.cooldownMs; g.step(0); }
+  if (g?.state === 'Cooling' && g.cooldownMs - g.cooledMs <= RELOAD_EPS_MS) {
+    g._cool = g.cooldownMs;
+    g.step(0);
+  }
 }
 
 /** Per-player weapon driver over the shared machine + gesture input. */
@@ -281,7 +320,7 @@ export class PlayerWeapon {
   toggleSheath() {
     this.sheathed = !this.sheathed;
     if (this.sheathed) return false;
-    noteFirstUse('combat');   // TUT1: the first weapon drawn
+    noteFirstUse('combat'); // TUT1: the first weapon drawn
     const t = weaponTypeForItem(this.weapon);
     return t !== WEAPON_TYPES.Melee && t !== WEAPON_TYPES.None;
   }
@@ -292,8 +331,12 @@ export class PlayerWeapon {
    *  the bow's cooldown asks the same stat. The rig hands a reader; a plain number is still accepted (a fixed-speed
    *  weapon, every test that pins the formula at 50). The weapon used to take a NUMBER once, and the rig gave it none,
    *  so every player swung at the default 50 while the third-person body and the widget's clone read the real stat. */
-  get liveSpeed() { return this._liveSpeed(); }
-  set liveSpeed(v) { this._liveSpeed = typeof v === 'function' ? v : () => v; }
+  get liveSpeed() {
+    return this._liveSpeed();
+  }
+  set liveSpeed(v) {
+    this._liveSpeed = typeof v === 'function' ? v : () => v;
+  }
 
   constructor({ liveSpeed = 50, weapon = INTERIM_WEAPON } = {}) {
     this.machine = createWeaponMachine(false);
@@ -306,27 +349,27 @@ export class PlayerWeapon {
     this.holdingShield = false;
     this.currentRightHandWeapon = null;
     this.currentLeftHandWeapon = null;
-    this.handRestored = false;   // HAND-FOLLOWS: a pose just restored, kept through the next UpdateHands
+    this.handRestored = false; // HAND-FOLLOWS: a pose just restored, kept through the next UpdateHands
     // TWO-HANDS (bible/05-Combat/Two-Hands.md): how the hands are held (combat/twoHands/handsLaw.js HANDS_MODE - DFU's one used
     // hand, both fists, or a pair), the strike in flight ({ hand, flurry, off } - strikeHandOf's answer as it began), and the
     // last strike's hand and the machine time it ended, which the next one alternates from. `usingRightHand` keeps
     // DFU's meaning and its saves: with both hands up it is the LEAD - the hand an exchange opens with.
     this.handsMode = HANDS_MODE.Single;
-    this.leftBusy = false;   // a light carried in a hand - the rig's word, per frame (handsLaw.js handsModeOf)
+    this.leftBusy = false; // a light carried in a hand - the rig's word, per frame (handsLaw.js handsModeOf)
     this.strike = null;
     this._lastHand = null;
     this._lastEnd = -Infinity;
-    this._burdenCarry = 0;   // AUDIT 2: the fraction of a tick the off hand's last blow owed its burden, paid on its next (handsLaw.js offHandHold)
+    this._burdenCarry = 0; // AUDIT 2: the fraction of a tick the off hand's last blow owed its burden, paid on its next (handsLaw.js offHandHold)
     /** PISTOL-PORT: the pistol lab's pair a Pistolet fires on (one pistol or two - `_pistolsFor`), each hand's strike as it
      *  was pulled and its direction - null for every other weapon. */
     this.pistols = null;
-    this._pistolsAway = null;   // the pistols while another weapon is in use - their reloads run on (AUDIT PISTOLET A3)
-    this._bladeTurn = false;   // MIXED-PAIR: the classic machine stepped as the pair's blade's last update, not as the pistols' mirror
-    this._shotMirror = false;   // AUDIT MIXED-PAIR L1-4: the classic machine mirrors a shot - from its pull to its frames' end (`_pistolsStep`'s 'done')
-    this._shotHand = null;   // AUDIT MIXED-PAIR L1-1: the hand whose shot's hit was last handed to the host - a gun pair's, while the arm holds it
-    this._pistolHeld = null;   // AUDIT PISTOL-PORT A3: the items in each hand last frame, so a pistol moved takes its machine
-    this._pistolHits = [];   // AUDIT PISTOL-PORT A2: the hands whose hit is due, handed to the host one an update
-    this._classicCooldown = 0;   // AUDIT PISTOL-PORT C1: what the classic machine was owed when the pistols took it over
+    this._pistolsAway = null; // the pistols while another weapon is in use - their reloads run on (AUDIT PISTOLET A3)
+    this._bladeTurn = false; // MIXED-PAIR: the classic machine stepped as the pair's blade's last update, not as the pistols' mirror
+    this._shotMirror = false; // AUDIT MIXED-PAIR L1-4: the classic machine mirrors a shot - from its pull to its frames' end (`_pistolsStep`'s 'done')
+    this._shotHand = null; // AUDIT MIXED-PAIR L1-1: the hand whose shot's hit was last handed to the host - a gun pair's, while the arm holds it
+    this._pistolHeld = null; // AUDIT PISTOL-PORT A3: the items in each hand last frame, so a pistol moved takes its machine
+    this._pistolHits = []; // AUDIT PISTOL-PORT A2: the hands whose hit is due, handed to the host one an update
+    this._classicCooldown = 0; // AUDIT PISTOL-PORT C1: what the classic machine was owed when the pistols took it over
     this._pistolStrikes = { R: null, L: null };
     this._pistolDir = { R: 'StrikeDown', L: 'StrikeDown' };
     /** MIXED-PAIR: may a mixed pair's gun fire a pull - the rig's word (a Pellet for the shot, combat/weapon/weaponRig.js
@@ -335,17 +378,21 @@ export class PlayerWeapon {
     /** MIXED-PAIR: is a shot's hit still held for the Morrowind arm's release (MW-D42) - the rig's word; the gun's strike
      *  is not over, and the classic machine not the blade's, until it lands. */
     this.shotHeld = () => false;
-    this.sheathed = true;   // classic starts sheathed; Z readies (WeaponManager.Sheathed)
-    this.lastDrawMs = 0;   // PCO1: the last bow shot's weaponAnimTime (_bowAnimTimeMs)
+    this.sheathed = true; // classic starts sheathed; Z readies (WeaponManager.Sheathed)
+    this.lastDrawMs = 0; // PCO1: the last bow shot's weaponAnimTime (_bowAnimTimeMs)
     // TECH1 (bible/05-Combat/Weapon-Techniques.md): the swing in flight is a technique's - its blow (combat/technique/techniqueBlow.js:
     // the reach, the arc, the weight), set as the technique starts the swing and taken down once the machine is idle again
     // (combat/techniques.js), so every pool the ONE swing is offered to reads the same blow. Null for every other swing.
     this.techniqueBlow = null;
-    this.animCtx = null;   // AUDIT-RR F1: the rig's thunk answering { entity, weaponType, usingRightHand } - what GetMeleeWeaponAnimTime's C# signature carries (player, weaponType, weaponHands)
+    this.animCtx = null; // AUDIT-RR F1: the rig's thunk answering { entity, weaponType, usingRightHand } - what GetMeleeWeaponAnimTime's C# signature carries (player, weaponType, weaponHands)
     // DFU's Gesture: the timestamped trail, its vector sum and its
     // TRAVEL length (WeaponManager.cs:93-155).
     this._gpoints = [];
-    this._gx = 0; this._gy = 0; this._gtravel = 0; this._gnow = 0; this._tracking = false;
+    this._gx = 0;
+    this._gy = 0;
+    this._gtravel = 0;
+    this._gnow = 0;
+    this._tracking = false;
   }
 
   /**
@@ -394,8 +441,14 @@ export class PlayerWeapon {
    * @returns true when the hand moved.
    */
   followHeldHand() {
-    if (this.usingRightHand && !this.currentRightHandWeapon && this.currentLeftHandWeapon) { this.usingRightHand = false; return true; }
-    if (!this.usingRightHand && !this.currentLeftHandWeapon && this.currentRightHandWeapon) { this.usingRightHand = true; return true; }
+    if (this.usingRightHand && !this.currentRightHandWeapon && this.currentLeftHandWeapon) {
+      this.usingRightHand = false;
+      return true;
+    }
+    if (!this.usingRightHand && !this.currentLeftHandWeapon && this.currentRightHandWeapon) {
+      this.usingRightHand = true;
+      return true;
+    }
     return false;
   }
 
@@ -416,12 +469,17 @@ export class PlayerWeapon {
   applyWeapon(racialWeapon = null) {
     // TWO-HANDS: the hands' mode follows the caches UpdateHands just wrote (a shield is not an empty hand - it reads as
     // the left hand's, a shield) and the beast's claws are always one hand
-    this.handsMode = racialWeapon ? HANDS_MODE.Single : handsModeOf({
-      right: handDesc(this.currentRightHandWeapon),
-      left: this.holdingShield ? SHIELD_HAND : handDesc(this.currentLeftHandWeapon),
-      leftBusy: this.leftBusy,
-    });
-    if (racialWeapon) { this.weapon = racialWeapon; return this.weapon; }
+    this.handsMode = racialWeapon
+      ? HANDS_MODE.Single
+      : handsModeOf({
+          right: handDesc(this.currentRightHandWeapon),
+          left: this.holdingShield ? SHIELD_HAND : handDesc(this.currentLeftHandWeapon),
+          leftBusy: this.leftBusy,
+        });
+    if (racialWeapon) {
+      this.weapon = racialWeapon;
+      return this.weapon;
+    }
     // TWO-HANDS: the hand in use is the STRIKING hand while a strike of both hands is in flight, else the used hand -
     // so everything that reads `weapon` at the blow (the skill tallied, the swing's sound, the art) reads the weapon that
     // struck it, as DFU's every read of the used hand's item does (WeaponManager.cs:430-433, :909)
@@ -430,7 +488,9 @@ export class PlayerWeapon {
   }
 
   /** TWO-HANDS: the hand H leads with - DFU's used hand. */
-  get leadHand() { return this.usingRightHand ? 'R' : 'L'; }
+  get leadHand() {
+    return this.usingRightHand ? 'R' : 'L';
+  }
   /** TWO-HANDS: the hand in use this frame - the striking hand while a strike is in flight, else the lead. AUDIT MIXED-PAIR
    *  L1-1: A SHOT IS ITS GUN'S UNTIL IT LANDS - its frames, and a hit the Morrowind arm holds for its release after them
    *  (`shotHeld`, MW-D42): a mixed pair's gun hand wherever its strike was named, a gun pair's held shot's own hand - so
@@ -448,31 +508,49 @@ export class PlayerWeapon {
   }
   /** HAND-WRAPS: the Hand Wraps a fist strikes with (characters/handWrapsIds.js fistWrapsOf), or null. */
   wrapsOf(hand) {
-    const R = this.currentRightHandWeapon ?? null, L = this.currentLeftHandWeapon ?? null;
+    const R = this.currentRightHandWeapon ?? null,
+      L = this.currentLeftHandWeapon ?? null;
     return hand === 'L' ? fistWrapsOf(L, R) : fistWrapsOf(R, L);
   }
   /** HAND-WRAPS: the wraps of the hand in use - what a fist's blow carries (combat/formulas.js `wraps`) and its glow. */
-  get wraps() { return this.wrapsOf(this.activeHand); }   // WERE-WRAPS: the claws strike in theirs too
+  get wraps() {
+    return this.wrapsOf(this.activeHand);
+  } // WERE-WRAPS: the claws strike in theirs too
   /** TWO-HANDS (AUDIT): the strike in flight is the OFF hand's - the blow a player-vs-player arm rolls carries the off
    *  hand's terms as resolveHit's does (combat/duelCombat.js resolveDuelStrike `off`). */
-  get offStrike() { return !!(this.handsMode === HANDS_MODE.Dual && this.strike && this.machine.state !== 'Idle' && this.strike.off); }
+  get offStrike() {
+    return !!(this.handsMode === HANDS_MODE.Dual && this.strike && this.machine.state !== 'Idle' && this.strike.off);
+  }
   /** TWO-HANDS (AUDIT): the weapon AT REST - the lead hand's with both hands up, else the weapon in use. What the HUD's
    *  diamond and a technique read, so neither flickers to the off hand's item for its blows (the weapon in use is the
    *  striking hand's mid-blow - its art, its skill, its swing). */
-  get restingWeapon() { return twoHanded(this.handsMode) && !this.weapon?.werecreatureClaws ? this.handItem(this.leadHand) : this.weapon; }
+  get restingWeapon() {
+    return twoHanded(this.handsMode) && !this.weapon?.werecreatureClaws ? this.handItem(this.leadHand) : this.weapon;
+  }
   /** TWO-HANDS (AUDIT 2): the blow in flight AS A BLOW - the off hand's OFF_HAND_BLOW.blowWeight, every other 1: what the
    *  hosts' tally counts a swing as (scenes/hostCombat.js tallySwingSkills), as the formula counts its riders. */
-  get blowWeight() { return this.offStrike ? OFF_HAND_BLOW.blowWeight : 1; }
+  get blowWeight() {
+    return this.offStrike ? OFF_HAND_BLOW.blowWeight : 1;
+  }
   /** AUDIT PISTOLET A1: is this item the OFF hand's in a pair - a shot's own weapon read at its impact (combat/arrowFlight.js
    *  playerArrowHitFoe). A shot lands after its strike is done, when `offStrike` has gone back to the lead, so the gun it
    *  left is what says whose shot it was: two Pistolets are two items. */
-  isOffHandItem(item) { return !!item && this.handsMode === HANDS_MODE.Dual && item === this.handItem(this.leadHand === 'L' ? 'R' : 'L'); }
+  isOffHandItem(item) {
+    return !!item && this.handsMode === HANDS_MODE.Dual && item === this.handItem(this.leadHand === 'L' ? 'R' : 'L');
+  }
   /** TWO-HANDS: the strike in flight, or null - `{ hand, flurry, off }`. */
-  get strikeInFlight() { return this.machine.state !== 'Idle' ? this.strike : null; }
+  get strikeInFlight() {
+    return this.machine.state !== 'Idle' ? this.strike : null;
+  }
 
   /** TWO-HANDS: the next strike, as the law answers it from the hands, the lead and the last blow. */
   _nextStrike() {
-    return strikeHandOf({ mode: this.handsMode, lead: this.leadHand, last: this._lastHand, sinceLast: this.machine.now - this._lastEnd });
+    return strikeHandOf({
+      mode: this.handsMode,
+      lead: this.leadHand,
+      last: this._lastHand,
+      sinceLast: this.machine.now - this._lastEnd,
+    });
   }
 
   /**
@@ -482,21 +560,33 @@ export class PlayerWeapon {
    * loaded one (a sword can always swing; a pistol mid-reload cannot fire).
    */
   get gunPair() {
-    return this.handsMode === HANDS_MODE.Dual && isGunType(weaponTypeForItem(this.handItem('R'))) && isGunType(weaponTypeForItem(this.handItem('L')));
+    return (
+      this.handsMode === HANDS_MODE.Dual &&
+      isGunType(weaponTypeForItem(this.handItem('R'))) &&
+      isGunType(weaponTypeForItem(this.handItem('L')))
+    );
   }
   /** MIXED-PAIR (handsLaw.js gunHandOf): the hand of a blade-and-Pistolet pair that holds the gun, or null. */
   get gunHand() {
-    return this.handsMode === HANDS_MODE.Dual ? gunHandOf(handDesc(this.handItem('R')), handDesc(this.handItem('L'))) : null;
+    return this.handsMode === HANDS_MODE.Dual
+      ? gunHandOf(handDesc(this.handItem('R')), handDesc(this.handItem('L')))
+      : null;
   }
   /** MIXED-PAIR: a blade in one hand and a Pistolet in the other. */
-  get mixedPair() { return this.gunHand !== null; }
+  get mixedPair() {
+    return this.gunHand !== null;
+  }
   /** MIXED-PAIR: the strike in flight is the mixed pair's gun's - its shot on the pistol's machine, mirrored on the classic
    *  one until its frames end (`_pistolsStep`'s 'done') - or its hit still held for the arm's release (`shotHeld`). AUDIT
    *  MIXED-PAIR L1-4: read off the mirror itself, not the strike's hand - a gun moved to the other hand (or a gun pair's
    *  pistol swapped for a blade) mid-shot is still a shot to its frames' end, never continued as the blade's swing. */
-  _gunStriking() { return !!this.gunHand && (this._shotMirror || this.shotHeld() === true); }
+  _gunStriking() {
+    return !!this.gunHand && (this._shotMirror || this.shotHeld() === true);
+  }
   /** PISTOLET: is a hand's pistol loaded - its own machine Idle (a hand with no pistol is never waiting). */
-  handLoaded(hand) { return this.pistols ? this.pistols[hand].state === 'Idle' : true; }
+  handLoaded(hand) {
+    return this.pistols ? this.pistols[hand].state === 'Idle' : true;
+  }
   /** PISTOLET: the machine time a hand's pistol is loaded again (0 when it is). */
   handReloadUntil(hand) {
     const left = this.pistols ? this._pistolLeft(hand) : 0;
@@ -515,32 +605,50 @@ export class PlayerWeapon {
    * never skipped by drawing a sword and the pistol back); sheathed, the pistols in the hands keep theirs.
    */
   _pistolsFor() {
-    const pair = this.gunPair, gh = this.gunHand;   // MIXED-PAIR: a blade-and-gun pair's one pistol is the gun hand's, whichever hand strikes
-    const held = pair ? this.handItem('R') : gh ? this.handItem(gh) : (this.weapon ?? (this.sheathed ? this.handItem(this.leadHand) : null));
+    const pair = this.gunPair,
+      gh = this.gunHand; // MIXED-PAIR: a blade-and-gun pair's one pistol is the gun hand's, whichever hand strikes
+    const held = pair
+      ? this.handItem('R')
+      : gh
+        ? this.handItem(gh)
+        : (this.weapon ?? (this.sheathed ? this.handItem(this.leadHand) : null));
     if (!isPistoletType(weaponTypeForItem(held))) {
       if (this.pistols) this._pistolsPutBy();
       return null;
     }
     const trigger = pair ? PAIR_TRIGGER.Alternate : PAIR_TRIGGER.Single;
-    if (!this.pistols) this._classicCooldown = this.machine.cooldownUntil;   // AUDIT PISTOL-PORT C1: kept for the weapon put by
-    this.pistols ??= this._pistolsAway ?? createPair({ trigger, fps: PISTOLET_FEEL.fps, cooldownMs: PISTOLET_FEEL.reloadMs, hitFrame: PISTOLET_FEEL.hitFrame });
+    if (!this.pistols) this._classicCooldown = this.machine.cooldownUntil; // AUDIT PISTOL-PORT C1: kept for the weapon put by
+    this.pistols ??=
+      this._pistolsAway ??
+      createPair({
+        trigger,
+        fps: PISTOLET_FEEL.fps,
+        cooldownMs: PISTOLET_FEEL.reloadMs,
+        hitFrame: PISTOLET_FEEL.hitFrame,
+      });
     this._pistolsAway = null;
     this.pistols.trigger = trigger;
     // AUDIT PISTOL-PORT A3: A RELOAD IS THE PISTOL'S, NOT THE HAND'S - a pistol moved to the other hand (unequipped and
     // worn in the other, its equip delay nought) takes its own machine with it; on the hand's, one Pistolet juggled
     // between the hands fired a pair's rate at full damage
-    const R = this.handItem('R'), L = this.handItem('L'), was = this._pistolHeld;
-    if (was && ((R && R === was.L && R !== was.R) || (L && L === was.R && L !== was.L))) [this.pistols.R, this.pistols.L] = [this.pistols.L, this.pistols.R];
+    const R = this.handItem('R'),
+      L = this.handItem('L'),
+      was = this._pistolHeld;
+    if (was && ((R && R === was.L && R !== was.R) || (L && L === was.R && L !== was.L)))
+      [this.pistols.R, this.pistols.L] = [this.pistols.L, this.pistols.R];
     this._pistolHeld = { R, L };
     // one pistol is the page's single, on the machine of the hand that HOLDS it - a pair broken mid-reload keeps the
     // pistol left its own reload (AUDIT PISTOLET A3); where it is drawn is the rig's (pistolLane.js flipOf)
-    this.pistols.lead = pair ? this.leadHand : gh ?? (held === this.handItem('L') && held !== this.handItem('R') ? 'L' : 'R');
-    this.pistols.inPair = !!gh;   // MIXED-PAIR: one pistol, a hand of a pair - drawn on its own hand's side (combat/gun/pistolLane.js)
+    this.pistols.lead = pair
+      ? this.leadHand
+      : (gh ?? (held === this.handItem('L') && held !== this.handItem('R') ? 'L' : 'R'));
+    this.pistols.inPair = !!gh; // MIXED-PAIR: one pistol, a hand of a pair - drawn on its own hand's side (combat/gun/pistolLane.js)
     // MIXED-PAIR (handsLaw.js MIXED.RELOAD): the gun beside a blade reloads one-handed - each machine's own reload, so a
     // pair that stops being mixed (the blade put away mid-reload) loads at a free hand's pace from there
     // AUDIT MIXED-PAIR L1-6: a reload under way keeps the share it has loaded - the rest loads at the new pace
     for (const h of /** @type {const} */ (['R', 'L'])) {
-      const g = this.pistols[h], ms = PISTOLET_FEEL.reloadMs * (h === gh ? MIXED.RELOAD : 1);
+      const g = this.pistols[h],
+        ms = PISTOLET_FEEL.reloadMs * (h === gh ? MIXED.RELOAD : 1);
       if (g.cooldownMs === ms) continue;
       if (g.state === 'Cooling' && g.cooldownMs > 0) g._cool *= ms / g.cooldownMs;
       g.cooldownMs = ms;
@@ -552,27 +660,37 @@ export class PlayerWeapon {
     const g = this.pistols[hand];
     if (g.state === 'Idle') return 0;
     if (g.state === 'Cooling') return Math.max(0, g.cooldownMs - g.cooledMs) / 1000;
-    return Math.max(0, g.frames / g.fps - g._t) + g.cooldownMs / 1000;   // THUNDERLOCK-ART2's audit: the machine's own cycle length, never the lab sheet's
+    return Math.max(0, g.frames / g.fps - g._t) + g.cooldownMs / 1000; // THUNDERLOCK-ART2's audit: the machine's own cycle length, never the lab sheet's
   }
   /** PISTOL-PORT: the classic machine as the pistols' mirror - in the latest firing pistol's strike while any fires. */
   _pistolsMirror() {
-    const m = this.machine, p = this.pistols, hands = p.hands();
+    const m = this.machine,
+      p = this.pistols,
+      hands = p.hands();
     const firing = hands.filter((h) => p[h].state === 'Firing');
     const h = firing.includes(p.last) ? p.last : firing[0];
     m.state = h ? this._pistolDir[h] : 'Idle';
     m.frame = h ? p[h].frame : 0;
-    m.tick = 1 / p.R.fps; m.hitFrame = p.R.hitFrame;   // AUDIT PISTOL-PORT C4: the pistols' own frame clock - the arm's flash runs on it
+    m.tick = 1 / p.R.fps;
+    m.hitFrame = p.R.hitFrame; // AUDIT PISTOL-PORT C4: the pistols' own frame clock - the arm's flash runs on it
     // MIXED-PAIR: the gun's reload is the gun's alone - the blade beside it swings as soon as the shot's frames end
-    m.cooldownUntil = this.mixedPair ? Math.max(m.now, this._classicCooldown) : m.now + Math.min(...hands.map((x) => this._pistolLeft(x)));   // AUDIT MIXED-PAIR L1-5: and what the machine was owed when the pistols took it (AUDIT PISTOL-PORT C1)
+    m.cooldownUntil = this.mixedPair
+      ? Math.max(m.now, this._classicCooldown)
+      : m.now + Math.min(...hands.map((x) => this._pistolLeft(x))); // AUDIT MIXED-PAIR L1-5: and what the machine was owed when the pistols took it (AUDIT PISTOL-PORT C1)
   }
   /** PISTOL-PORT: a pull - the page's (`pull`), or a technique's the lead hand's (`fireHand`). True when a pistol fired. */
   _pistolShot(state, lead, s = null) {
-    const p = this.pistols, pair = this.gunPair;
+    const p = this.pistols,
+      pair = this.gunPair;
     const fired = lead ? p.fireHand(p.lead) : p.pull(0);
     if (!fired.length) return false;
     const h = fired[0];
     // MIXED-PAIR: `s` is the law's strike for the gun hand (its flurry and its off), the pair's exchange the classic clock's
-    this._pistolStrikes[h] = s ?? { hand: pair ? h : this.leadHand, flurry: !!p.lastShot?.flurry, off: pair && h !== this.leadHand };
+    this._pistolStrikes[h] = s ?? {
+      hand: pair ? h : this.leadHand,
+      flurry: !!p.lastShot?.flurry,
+      off: pair && h !== this.leadHand,
+    };
     this._pistolDir[h] = state;
     this.strike = this._pistolStrikes[h];
     this._shotMirror = true;
@@ -587,16 +705,27 @@ export class PlayerWeapon {
    *  quickslot key, its equip delay nought, fired again at once: three times its rate). */
   _pistolsPutBy() {
     const m = this.machine;
-    this._pistolsAway = this.pistols; this.pistols = null; this._pistolHits.length = 0; this._shotMirror = false;
+    this._pistolsAway = this.pistols;
+    this.pistols = null;
+    this._pistolHits.length = 0;
+    this._shotMirror = false;
     // MIXED-PAIR: a blade-and-gun pair's gun put by mid-blow - the machine is the blade's, its blow lands as a swap never cut
     // one; AUDIT MIXED-PAIR L1-5: owing what it was owed when the pistols took it (AUDIT PISTOL-PORT C1)
-    if (this._bladeTurn) { m.cooldownUntil = Math.max(this._classicCooldown, m.cooldownUntil); return; }
-    m.state = 'Idle'; m.frame = 0; m.cooldownUntil = Math.max(this._classicCooldown, m.now); this.strike = null;
+    if (this._bladeTurn) {
+      m.cooldownUntil = Math.max(this._classicCooldown, m.cooldownUntil);
+      return;
+    }
+    m.state = 'Idle';
+    m.frame = 0;
+    m.cooldownUntil = Math.max(this._classicCooldown, m.now);
+    this.strike = null;
   }
   /** AUDIT PISTOL-PORT A5: the pistol shots pulled whose hit is not yet handed to the host - each owes its Pellet. */
   pistolShotsDue() {
     const p = this.pistols;
-    return p ? this._pistolHits.length + p.hands().filter((h) => p[h].state === 'Firing' && p[h].frame < p[h].hitFrame).length : 0;
+    return p
+      ? this._pistolHits.length + p.hands().filter((h) => p[h].state === 'Firing' && p[h].frame < p[h].hitFrame).length
+      : 0;
   }
   /**
    * PISTOL-PORT: one step of the pistols, on the machine's clock - each pistol's hit, the mirror, and the strike's end.
@@ -607,12 +736,13 @@ export class PlayerWeapon {
    * AUDIT PISTOL-PORT A6: a pistol no longer drawn (a pair broken between a pull and its hit) fires nothing.
    */
   _pistolsStep(dt) {
-    const m = this.machine, p = this.pistols;
+    const m = this.machine,
+      p = this.pistols;
     m.now += dt;
     m.ranged = true;
     const ev = p.step(dt);
     const due = ['R', 'L'].filter((h) => ev[h] === 'hit');
-    if (due.length === 2 && due[0] === p.last) due.reverse();   // the earlier shot first - `last` fired most recently
+    if (due.length === 2 && due[0] === p.last) due.reverse(); // the earlier shot first - `last` fired most recently
     this._pistolHits.push(...due);
     const evs = [];
     while (this._pistolHits.length) {
@@ -629,9 +759,12 @@ export class PlayerWeapon {
       evs.push('done');
       // MIXED-PAIR: a blade-and-gun pair's exchange is the classic clock's, the blade's and the shot's alike - the shot's end
       // is the one the blade answers from
-      if (this.mixedPair) { this._lastHand = this.strike.hand; this._lastEnd = m.now; }
+      if (this.mixedPair) {
+        this._lastHand = this.strike.hand;
+        this._lastEnd = m.now;
+      }
       this._shotMirror = false;
-      this.strike = null;   // the pistols keep their own flurry clock (pistolPair.js `last`, `lastEnd`) - the classic one is a sword's
+      this.strike = null; // the pistols keep their own flurry clock (pistolPair.js `last`, `lastEnd`) - the classic one is a sword's
     }
     return evs;
   }
@@ -640,8 +773,8 @@ export class PlayerWeapon {
    *  its weapon is never touched). Every door that starts a melee strike comes through here; `lead` makes it the lead
    *  hand's whatever the exchange (a technique: the weapon it was chosen for). */
   _attack(state, { lead = false } = {}) {
-    if (this.mixedPair) return this._mixedAttack(state, lead);   // MIXED-PAIR: the hands take turns, each by its own kind
-    if (this._pistolsFor()) return this._pistolShot(state, lead);   // PISTOL-PORT: a Pistolet's pull is the page's
+    if (this.mixedPair) return this._mixedAttack(state, lead); // MIXED-PAIR: the hands take turns, each by its own kind
+    if (this._pistolsFor()) return this._pistolShot(state, lead); // PISTOL-PORT: a Pistolet's pull is the page's
     return this._swing(state, lead ? { hand: this.leadHand, flurry: false, off: false } : this._nextStrike());
   }
 
@@ -663,7 +796,7 @@ export class PlayerWeapon {
     const named = lead ? { hand: this.leadHand, flurry: false, off: false } : this._nextStrike();
     const s = lead ? named : mixedStrike(named, { gunHand: gh, gunReady, lead: this.leadHand });
     if (s.hand === gh) return gunReady && this._pistolShot(state, true, s);
-    this._tuneClassic(weaponTypeForItem(this.handItem(s.hand)));   // the blade's law - the gun's last shot left the machine on its own clock
+    this._tuneClassic(weaponTypeForItem(this.handItem(s.hand))); // the blade's law - the gun's last shot left the machine on its own clock
     return this._swing(state, s);
   }
 
@@ -683,8 +816,14 @@ export class PlayerWeapon {
       const w = ctx ? readSwing(ctx) : null;
       if (w) {
         const tick = this.machine.tick ?? getMeleeWeaponAnimTime(this.liveSpeed, ctx);
-        const owed = offHandHold({ burden: offHandBurden(w.weight, w.strength), ticks: strikeTicks(this.machine), tick, carry: this._burdenCarry });
-        this.machine.hold = owed.hold; this._burdenCarry = owed.carry;
+        const owed = offHandHold({
+          burden: offHandBurden(w.weight, w.strength),
+          ticks: strikeTicks(this.machine),
+          tick,
+          carry: this._burdenCarry,
+        });
+        this.machine.hold = owed.hold;
+        this._burdenCarry = owed.carry;
       }
     }
     return true;
@@ -720,7 +859,7 @@ export class PlayerWeapon {
    */
   get strikingWeapon() {
     if (!this.weapon?.werecreatureClaws) return this.weapon;
-    return this.handItem(this.activeHand);   // TWO-HANDS: the used hand - the beast is always single, so its lead
+    return this.handItem(this.activeHand); // TWO-HANDS: the used hand - the beast is always single, so its lead
   }
 
   /**
@@ -742,11 +881,7 @@ export class PlayerWeapon {
    *
    * @returns the popup line, or null when the shield refused the switch.
    */
-  toggleHand({
-    bowSwitching = getBool('Enhancements', 'BowLeftHandWithSwitching'),
-    entity = null,
-    apply = true,
-  } = {}) {
+  toggleHand({ bowSwitching = getBool('Enhancements', 'BowLeftHandWithSwitching'), entity = null, apply = true } = {}) {
     if (this.usingRightHand && this.holdingShield) return null;
     this.usingRightHand = !this.usingRightHand;
     const message = this.usingRightHand ? USING_RIGHT_HAND_TEXT : USING_LEFT_HAND_TEXT;
@@ -754,12 +889,16 @@ export class PlayerWeapon {
     // and the exchange in progress ENDS: the next blow opens a new one with the new lead (handsLaw.js strikeHandOf). Left
     // running, the blow after H was the old exchange's answer thrown by the new lead - a flurry's quickness with none of
     // the off hand's costs, every blow, for a key press between swings.
-    if (twoHanded(this.handsMode)) { this._lastHand = null; this._lastEnd = -Infinity; }
+    if (twoHanded(this.handsMode)) {
+      this._lastHand = null;
+      this._lastEnd = -Infinity;
+    }
     if (bowSwitching && !twoHanded(this.handsMode)) {
       let switchDelay = 0;
       if (this.currentRightHandWeapon) switchDelay += equipDelayFor(this.currentRightHandWeapon) - 500;
       if (this.currentLeftHandWeapon) switchDelay += equipDelayFor(this.currentLeftHandWeapon) - 500;
-      if (switchDelay > 0 && entity) entity.equipCountdown = (entity.equipCountdown ?? 0) + switchDelay / BOW_SWITCH_DIVISOR;
+      if (switchDelay > 0 && entity)
+        entity.equipCountdown = (entity.equipCountdown ?? 0) + switchDelay / BOW_SWITCH_DIVISOR;
     }
     // AUDIT 2: re-applied as ApplyWeapon does it - the racial arm first (WeaponManager.cs:735-739): the beast's claws stay
     // the weapon in use, one hand, so a transformed lycanthrope's H says DFU's line, not the fists'
@@ -773,13 +912,20 @@ export class PlayerWeapon {
    *  longest screen dimension (AUDIT 28 W11 - the field default
    *  weaponStates.ATTACK_THRESHOLD is what StartGameBehaviour overwrites).
    *  Returns the strike state when an attack starts. */
-  gesture(dx, dy, held, dt, longestDim, {
-    attackThreshold = getFloat('Controls', 'WeaponAttackThreshold', 0.001, 1.0),
-    swingMode = getInt('Controls', 'WeaponSwingMode', 0, 2),
-    bowDrawback = getBool('Controls', 'BowDrawback'),
-    cancelHeld = false,
-    rolls = Math.random,
-  } = {}) {
+  gesture(
+    dx,
+    dy,
+    held,
+    dt,
+    longestDim,
+    {
+      attackThreshold = getFloat('Controls', 'WeaponAttackThreshold', 0.001, 1.0),
+      swingMode = getInt('Controls', 'WeaponSwingMode', 0, 2),
+      bowDrawback = getBool('Controls', 'BowDrawback'),
+      cancelHeld = false,
+      rolls = Math.random,
+    } = {},
+  ) {
     // AUDIT 23 (combat-2) - WeaponManager.cs:355-358: a bow never
     // tracks a swing; the attack input itself fires, forced to
     // StrikeDown (the BowDrawback-off classic instant shot - the
@@ -798,7 +944,10 @@ export class PlayerWeapon {
         // an arrow (the >10 s timeout is the machine's own 'undraw'),
         // and letting the button go RELEASES (StrikeDown).
         if (m.state === 'StrikeUp' && m.frame === BOW_DRAWN_HOLD_FRAME) {
-          if (cancelHeld) { machineCancelBowDraw(m, this.liveSpeed); return null; }
+          if (cancelHeld) {
+            machineCancelBowDraw(m, this.liveSpeed);
+            return null;
+          }
           if (!held && machineAttack(m, 'StrikeDown')) {
             // PCO1: the draw's length in milliseconds - FPSWeapon's
             // animTime, which WeaponManager hands CalculateAttackDamage
@@ -817,7 +966,10 @@ export class PlayerWeapon {
       // and its Idle refuse every frame until the bow is ready, so a held button looses the moment it is, at DFU's own
       // rate - and a press made early is not lost for being early. The drawn bow above keeps DFU's gate: it looses on
       // the button's release, so it cannot repeat on a hold.
-      if (held && machineAttack(m, 'StrikeDown')) { this.lastDrawMs = this._bowAnimTimeMs(); return 'StrikeDown'; }   // PCO1: the instant shot has no draw (0 ticks held)
+      if (held && machineAttack(m, 'StrikeDown')) {
+        this.lastDrawMs = this._bowAnimTimeMs();
+        return 'StrikeDown';
+      } // PCO1: the instant shot has no draw (0 ticks held)
       return null;
     }
     this._bowHeld = false;
@@ -829,16 +981,29 @@ export class PlayerWeapon {
     if (swingMode !== 0) {
       const rise = held && !this._clickHeld;
       this._clickHeld = held;
-      if (!held) { this._gestureClear(); return null; }
-      if (!(rise || swingMode === 2)) { this._gestureClear(); return null; }
+      if (!held) {
+        this._gestureClear();
+        return null;
+      }
+      if (!(rise || swingMode === 2)) {
+        this._gestureClear();
+        return null;
+      }
       const strike = this._rollClickStrike(rolls);
-      return this._attack(strike) ? strike : null;   // TWO-HANDS: the law picks the hand
+      return this._attack(strike) ? strike : null; // TWO-HANDS: the law picks the hand
     }
     this._clickHeld = false;
     // Gesture.Clear (:149-154) on release, and on the frame tracking
     // starts (:312, :328 - "Reset tracking if user not holding down").
-    if (!held) { this._tracking = false; this._gestureClear(); return null; }
-    if (!this._tracking) { this._tracking = true; this._gestureClear(); }
+    if (!held) {
+      this._tracking = false;
+      this._gestureClear();
+      return null;
+    }
+    if (!this._tracking) {
+      this._tracking = true;
+      this._gestureClear();
+    }
     const sum = this._gestureAdd(dx, dy, dt);
     // AUDIT 24 combat: the gate is TravelDist, the length of the TRAIL,
     // not the magnitude of the sum. DFU's Gesture keeps both and its
@@ -854,10 +1019,10 @@ export class PlayerWeapon {
     // is 0.005. The port gated on the field default: ten times the
     // travel DFU asks for before a swing fires.
     if (this._gtravel / longestDim < attackThreshold) return null;
-    const angle = Math.atan2(-sum[1], sum[0]) * 180 / Math.PI;   // screen-up positive
+    const angle = (Math.atan2(-sum[1], sum[0]) * 180) / Math.PI; // screen-up positive
     const strike = DIRECTION_TO_STRIKE[gestureDirection(angle)];
     this._gestureClear();
-    if (strike && this._attack(strike)) return strike;   // TWO-HANDS: the law picks the hand
+    if (strike && this._attack(strike)) return strike; // TWO-HANDS: the law picks the hand
     return null;
   }
 
@@ -881,7 +1046,9 @@ export class PlayerWeapon {
   /** Gesture.Clear (WeaponManager.cs:149-154). */
   _gestureClear() {
     this._gpoints.length = 0;
-    this._gx = 0; this._gy = 0; this._gtravel = 0;
+    this._gx = 0;
+    this._gy = 0;
+    this._gtravel = 0;
   }
 
   /** Gesture.Add (:132-146), TrimOld (:111-123) first. AUDIT 24 combat:
@@ -898,21 +1065,36 @@ export class PlayerWeapon {
     for (const p of this._gpoints) {
       if (this._gnow - p.t <= MAX_GESTURE_SECONDS) continue;
       old++;
-      this._gx -= p.dx; this._gy -= p.dy;
+      this._gx -= p.dx;
+      this._gy -= p.dy;
       this._gtravel -= p.mag;
     }
     if (old) this._gpoints.splice(0, old);
     const mag = Math.hypot(dx, dy);
     this._gpoints.push({ t: this._gnow, dx, dy, mag });
-    this._gx += dx; this._gy += dy; this._gtravel += mag;
+    this._gx += dx;
+    this._gy += dy;
+    this._gtravel += mag;
     return [this._gx, this._gy];
+  }
+
+  /** AUDIT TECH-FEEDBACK II F3: a leap's or a dash's launch cuts the swing in flight (its strike is the landing's), so
+   *  one press is never two blows. True when there was one to cut - the rig cuts the Morrowind arm's with it. */
+  cutSwing() {
+    return !!machineCut(this.machine);
   }
 
   /** TECH1 (bible/05-Combat/Weapon-Techniques.md): A TECHNIQUE'S STRIKE - the machine's own strike `strike` begun for a
    *  weapon's technique (combat/techniques.js), by the same machineAttack a click takes; a bow's loose writes its draw
-   *  time as the click's does (PCO1). True when it began - never mid-swing or in a bow's recovery. */
+   *  time as the click's does (PCO1). True when it began. TECH-CANCEL: a swing in flight and the attack's cooldown are
+   *  cut first (weaponStates.js machineCut) - and put back as they were if the strike still cannot begin (AUDIT
+   *  TECH-FEEDBACK F2: a gun's reload, a pair's other hand), so a refused technique costs the swing nothing. */
   techniqueStrike(strike) {
-    if (!this._attack(strike, { lead: true })) return false;   // TWO-HANDS: a technique is the lead hand's - its weapon's (techniques.js reads it), never a flurry's
+    const was = machineCut(this.machine);
+    if (!this._attack(strike, { lead: true })) {
+      if (was) Object.assign(this.machine, was);
+      return false;
+    } // TWO-HANDS: a technique is the lead hand's - its weapon's (techniques.js reads it), never a flurry's
     if (this.machine.isBow) this.lastDrawMs = this._bowAnimTimeMs();
     return true;
   }
@@ -934,7 +1116,7 @@ export class PlayerWeapon {
       return 'StrikeDown';
     }
     const strike = this._rollClickStrike(rolls);
-    return this._attack(strike) ? strike : null;   // TWO-HANDS: the law picks the hand
+    return this._attack(strike) ? strike : null; // TWO-HANDS: the law picks the hand
   }
 
   /** @returns machine events; the caller resolves 'hit' via resolveHit. */
@@ -957,12 +1139,16 @@ export class PlayerWeapon {
     this.machine.bowIdleDrawn = this.machine.isBow && !getBool('Controls', 'BowDrawback');
     const pistols = this._pistolsFor();
     this._bladeTurn = !!blade;
-    if (pistols && !blade) return this._pistolsStep(dt);   // PISTOL-PORT: a Pistolet steps on the pistol lab's machines
-    (pistols ?? this._pistolsAway)?.step(dt);   // and pistols put by for another weapon reload on (MIXED-PAIR: the pair's gun beside its blade)
+    if (pistols && !blade) return this._pistolsStep(dt); // PISTOL-PORT: a Pistolet steps on the pistol lab's machines
+    (pistols ?? this._pistolsAway)?.step(dt); // and pistols put by for another weapon reload on (MIXED-PAIR: the pair's gun beside its blade)
     this._tuneClassic(t);
     const evs = machineStep(this.machine, dt, this.liveSpeed, this.animCtx?.() ?? null);
     // TWO-HANDS: a strike that ends is the one the next alternates from - its hand, and the machine time it ended
-    if (evs.includes('done')) { this._lastHand = this.strike?.hand ?? this.leadHand; this._lastEnd = this.machine.now; this.strike = null; }
+    if (evs.includes('done')) {
+      this._lastHand = this.strike?.hand ?? this.leadHand;
+      this._lastEnd = this.machine.now;
+      this.strike = null;
+    }
     return evs;
   }
 
@@ -978,7 +1164,7 @@ export class PlayerWeapon {
     // the cooldown, and a shot that spends ammunition - through
     // `machine.ranged`. The skill it is scored on is Archery either
     // way; that is weaponSkillUsed's answer, not the machine's.
-    const thunderlock = isGunType(t);   // PISTOL-PORT: the Thunderlock - a Pistolet never steps this machine (`_pistolsStep`, above)
+    const thunderlock = isGunType(t); // PISTOL-PORT: the Thunderlock - a Pistolet never steps this machine (`_pistolsStep`, above)
     this.machine.ranged = t === WEAPON_TYPES.Bow || thunderlock;
     this.machine.frames = thunderlock ? THUNDERLOCK_NUM_FRAMES : null;
     // FIELD-GUN7: the frame clock (14fps) and the hit frame (the muzzle flash) stay the lab's.
@@ -986,8 +1172,11 @@ export class PlayerWeapon {
     // when the shot ends, so a Speed change mid-pump does not move the pump already running.
     this.machine.tick = thunderlock ? GUN_TICK_SECONDS : null;
     // BOW-LAW: and the bow's reload is the swing's (characters/weaponStates.js bowReloadSeconds), read as the shot steps
-    this.machine.cooldown = thunderlock ? thunderlockReloadSeconds(this.liveSpeed)
-      : t === WEAPON_TYPES.Bow ? bowReloadSeconds(this.liveSpeed, this.animCtx?.() ?? null) : null;
+    this.machine.cooldown = thunderlock
+      ? thunderlockReloadSeconds(this.liveSpeed)
+      : t === WEAPON_TYPES.Bow
+        ? bowReloadSeconds(this.liveSpeed, this.animCtx?.() ?? null)
+        : null;
     this.machine.hitFrame = thunderlock ? GUN_FEEL.hitFrame : null;
   }
 
@@ -1007,7 +1196,7 @@ export class PlayerWeapon {
     if (m.state === 'Idle') return base;
     const clip = ATTACKS_FP[m.state];
     if (!clip) return base;
-    const frames = 5;   // MELEE_NUM_FRAMES - all melee strikes
+    const frames = 5; // MELEE_NUM_FRAMES - all melee strikes
     // sampleClip takes SECONDS (u = t/dur; anims tests pin it): map the
     // frame phase through clip.dur or the back half of every strike dies
     // at the base pose (units bug, audit 2026-08-16).
@@ -1026,7 +1215,16 @@ export class PlayerWeapon {
    * @param playerCombat the player entity
    * @returns [{foe, damage}] - one entry per foe in reach
    */
-  resolveHit(foes, playerCombat, canSee, rolls = Math.random, backstabOf = () => 0, say = null, onPoison = null, { protection } = {}) {
+  resolveHit(
+    foes,
+    playerCombat,
+    canSee,
+    rolls = Math.random,
+    backstabOf = () => 0,
+    say = null,
+    onPoison = null,
+    { protection } = {},
+  ) {
     const results = [];
     // AUDIT 28 W2b: TWO ARMS, as MeleeDamage has them. The box pass
     // strikes every unprotected foe in reach; the protected ones it
@@ -1048,26 +1246,31 @@ export class PlayerWeapon {
     // TWO-HANDS (combat/twoHands/handsLaw.js DUAL): THE OFF HAND'S BLOW - in a pair, the hand that is not the lead strikes less
     // surely (a to-hit term by the live Agility, on the swing's own channel) and less hard (a share of the rolled damage,
     // a miss staying a miss). The lead's blow, every single weapon's and every fist's are DFU's own.
-    const off = this.offStrike;   // AUDIT 2: the one predicate every arm reads (the duel's, the wild's, this)
+    const off = this.offStrike; // AUDIT 2: the one predicate every arm reads (the duel's, the wild's, this)
     const offToHit = off ? offHandToHit(playerCombat ? liveStat(playerCombat, 'agility') : 50) : 0;
     const strike = (foe) => {
-      const opts = playerAttackOptions(this.strikingWeapon, this.machine.state, backstabOf(foe), rolls);
-      if (!opts.weapon) opts.wraps = this.wraps;   // HAND-WRAPS (AUDIT B): a fist's blow carries its wraps' lines
-      if (off) { opts.toHitMod += offToHit; Object.assign(opts, OFF_HAND_BLOW); }   // TWO-HANDS (AUDIT): the share inside the formula, ahead of every report; AUDIT 2: and the blow's weight
-      if (techOn(foe) && Number.isFinite(tb.toHit)) opts.toHitMod += tb.toHit;   // the technique's own term beside the swing's
+      const back = backstabOf(foe) || (techOn(foe) ? techniqueBackstab(tb, playerCombat, foe) : 0); // TECH-BACKSTAB: its back was to me at the press
+      const opts = playerAttackOptions(this.strikingWeapon, this.machine.state, back, rolls);
+      if (!opts.weapon) opts.wraps = this.wraps; // HAND-WRAPS (AUDIT B): a fist's blow carries its wraps' lines
+      if (off) {
+        opts.toHitMod += offToHit;
+        Object.assign(opts, OFF_HAND_BLOW);
+      } // TWO-HANDS (AUDIT): the share inside the formula, ahead of every report; AUDIT 2: and the blow's weight
+      if (techOn(foe) && Number.isFinite(tb.toHit)) opts.toHitMod += tb.toHit; // the technique's own term beside the swing's
       const rolled = calculateAttackDamage(playerCombat, foe.entity, {
-        ...opts, say,   // DISC10-E L2: the hand's item, never the claws marker
-        unaware: foeUnaware(foe),   // SET2: the foe had not noticed me - read here, where its AI is in hand
+        ...opts,
+        say, // DISC10-E L2: the hand's item, never the claws marker
+        unaware: foeUnaware(foe), // SET2: the foe had not noticed me - read here, where its AI is in hand
         // C2-slice (AUDIT 23 combat-11): the PLAYER's poisoned blade
         // infects ITS victim - the formulas clear the weapon's poison
         // either way, so without this hook the dose vanished unspent.
         onInflictPoison: onPoison ? (att, tgt, pt) => onPoison(foe, pt) : null,
       });
-      const blow = techOn(foe) ? scaleBlowDamage(rolled, blowMult(tb, foe)) : rolled;   // TECH1: a miss stays a miss
-      if (techOn(foe)) tellTechniqueLanded(tb, foe, blow);   // MARTIAL3: a path's rider answers its signature's blow
-      const damage = blow;   // TWO-HANDS (AUDIT): the off hand's share was laid inside the formula (blowShare)
+      const blow = techOn(foe) ? scaleBlowDamage(rolled, blowMult(tb, foe)) : rolled; // TECH1: a miss stays a miss
+      if (techOn(foe)) tellTechniqueLanded(tb, foe, blow); // MARTIAL3: a path's rider answers its signature's blow
+      const damage = blow; // TWO-HANDS (AUDIT): the off hand's share was laid inside the formula (blowShare)
       results.push({ foe, damage });
-      this.onAttackResult?.({ foe, damage });   // WW1: OnAttackDamageCalculated's one consumer, the weapon widget's recoil
+      this.onAttackResult?.({ foe, damage }); // WW1: OnAttackDamageCalculated's one consumer, the weapon widget's recoil
     };
     for (const foe of foes) {
       if (foe.dead || !foe.entity) continue;
@@ -1076,18 +1279,33 @@ export class PlayerWeapon {
       if (!(techOn(foe) ? blowReaches(tb, foe, sight) : playerMeleeCanHit(dist, inView, losClear))) continue;
       // AUDIT TECH1: the fallback below stands in for DFU's look ray (the first collider it meets) - a technique's
       // all-round reach never widens it, so an ally or a foe at peace is struck only where a plain swing would strike it
-      if (friendlyProtected(foe, protection === undefined ? {} : { protection })) { if (!techOn(foe) || playerMeleeCanHit(dist, inView, losClear)) protectedInReach.push({ foe, dist }); continue; }
-      if (tb?.single && techOn(foe)) { singles.push({ foe, dist }); continue; }   // TECH1: the one blow waits for the nearest
+      if (friendlyProtected(foe, protection === undefined ? {} : { protection })) {
+        if (!techOn(foe) || playerMeleeCanHit(dist, inView, losClear)) protectedInReach.push({ foe, dist });
+        continue;
+      }
+      if (tb?.single && techOn(foe)) {
+        singles.push({ foe, dist });
+        continue;
+      } // TECH1: the one blow waits for the nearest
       strike(foe);
     }
-    if (singles.length) { singles.sort((a, b) => a.dist - b.dist); strike(singles[0].foe); }
+    if (singles.length) {
+      singles.sort((a, b) => a.dist - b.dist);
+      strike(singles[0].foe);
+    }
     if (results.length === 0 && protectedInReach.length) {
       protectedInReach.sort((a, b) => a.dist - b.dist);
       strike(protectedInReach[0].foe);
     }
     // ARENA-FIX 9: the swing told, struck or not - a swing that reached nobody is a miss on the arena's sand (a blow
     // that reached a foe is told by the formula's own resolution)
-    for (const fn of _swingListeners.values()) { try { fn(results.length); } catch { /* a listener is not the swing's problem */ } }
+    for (const fn of _swingListeners.values()) {
+      try {
+        fn(results.length);
+      } catch {
+        /* a listener is not the swing's problem */
+      }
+    }
     return results;
   }
 }
@@ -1115,9 +1333,13 @@ export class PlayerWeapon {
 const _swingListeners = new Map();
 /** ARENA-FIX 9: NAMED listeners told each melee hit frame's count of foes struck (PlayerWeapon.resolveHit - every host
  *  resolves the player's swing through it). A name re-registered replaces, `null` removes. */
-export function registerPlayerSwingListener(name, fn) { if (typeof fn === 'function') _swingListeners.set(name, fn); else _swingListeners.delete(name); }
+export function registerPlayerSwingListener(name, fn) {
+  if (typeof fn === 'function') _swingListeners.set(name, fn);
+  else _swingListeners.delete(name);
+}
 
-export const foeUnaware = (foe) => !!foe?.ai && !foe.puppet && foe.ai.detected === false && foe.entity?.revenant?.edge?.watchful !== true;   // RVN2: a Watchful revenant is never unaware
+export const foeUnaware = (foe) =>
+  !!foe?.ai && !foe.puppet && foe.ai.detected === false && foe.entity?.revenant?.edge?.watchful !== true; // RVN2: a Watchful revenant is never unaware
 
 export function playerAttackOptions(weapon, machineState, backstabChance = 0, rolls = Math.random) {
   const swing = SWING_MODS[machineState] ?? { damage: 0, toHit: 0 };

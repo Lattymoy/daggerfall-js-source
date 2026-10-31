@@ -82,7 +82,7 @@
 // a wave before anyone wrote it down, which is the AUDIT 17m shape.
 
 import { ControlsWindow, preloadControlsArt, controlsArtLoaded } from './controlsWindow.js';
-import { SaveWindow } from './saveWindow.js';   // SAV4: the slot window rides the pause seam
+import { SaveWindow } from './saveWindow.js'; // SAV4: the slot window rides the pause seam
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './native/nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
 import { drawMenuBackdrop } from './chargenArt.js';
@@ -92,9 +92,9 @@ import { ENUM_LAW } from './settings/settingsLaw.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { BUILD_TAG, UPDATE } from '../buildTag.js';
-import { bindings, eventMeans } from './input.js';   // KB1: the live registry, for the toggle-close binding; AUDIT DISC28 UI-1: the event's own read of it
-import { getBinding } from '../systems/inputActions.js';   // KB1: InputManager.GetBinding(Actions.Escape)
-import { localizedText, t } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { bindings, eventMeans } from './input.js'; // KB1: the live registry, for the toggle-close binding; AUDIT DISC28 UI-1: the event's own read of it
+import { getBinding } from '../systems/inputActions.js'; // KB1: InputManager.GetBinding(Actions.Escape)
+import { localizedText, t } from '../systems/textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** barMaxLength (:28). */
 export const BAR_MAX = 109.1;
@@ -107,7 +107,7 @@ export const PAUSE_RECTS = Object.freeze({
   save: [4, 4, 45, 16],
   load: [52, 4, 46, 16],
   exit: [101, 4, 45, 16],
-  soundBar: [6.15, 23.20, BAR_MAX, 5.5],
+  soundBar: [6.15, 23.2, BAR_MAX, 5.5],
   musicBar: [6.15, 30.85, BAR_MAX, 5.5],
   detailBar: [6.15, 39, BAR_MAX, 5.5],
   fullScreen: [5, 47, 70, 8],
@@ -156,9 +156,9 @@ export async function preloadPauseArt(deps) {
 }
 export const pauseArtLoaded = () => !!_img;
 
-const panelX = () => Math.round((320 - (_img?.w ?? 150)) / 2);   // OPTN00I0 ships 150x84
-const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + panelX() && y >= ry + PAUSE_PANEL_Y
-  && x < rx + panelX() + rw && y < ry + PAUSE_PANEL_Y + rh;
+const panelX = () => Math.round((320 - (_img?.w ?? 150)) / 2); // OPTN00I0 ships 150x84
+const inRect = ([rx, ry, rw, rh], x, y) =>
+  x >= rx + panelX() && y >= ry + PAUSE_PANEL_Y && x < rx + panelX() + rw && y < ry + PAUSE_PANEL_Y + rh;
 
 export class PauseOptionsWindow {
   /** hooks: { quickSave(), quickLoad(), exitToMenu(), textLines(id),
@@ -173,10 +173,10 @@ export class PauseOptionsWindow {
   constructor(hooks) {
     this.hooks = hooks;
     this.done = false;
-    this.isChoiceWindow = true;   // raw codes through the overlay channel
-    this.top = null;              // 'exit' | 'note' - the stacked box
+    this.isChoiceWindow = true; // raw codes through the overlay channel
+    this.top = null; // 'exit' | 'note' - the stacked box
     this._noteRows = null;
-    this._box = null;             // laid out at draw (the U23 shape)
+    this._box = null; // laid out at draw (the U23 shape)
     // The automap windows' latch (automapWindow.js:"this.automapBinding =".."this.isCloseWindowDeferred = false;",
     // DaggerfallAutomapWindow.cs:703-713's `isCloseWindowDeferred`), and
     // this window needs it for the reason those two do: DFU opens the
@@ -210,30 +210,43 @@ export class PauseOptionsWindow {
     // enhanced face closes through (ui/enhanced/enhancedMenu.js onKey) - the event's modifier flags, both dicts, a shared key.
     // The literal Escape stays GetBackButtonUp's; a caller that hands no event keeps the codes read at push.
     if (code !== 'Escape' && e?.code) return eventMeans(e, 'Escape');
-    return code === 'Escape' || (!!this.toggleClosedBinding && code === this.toggleClosedBinding)
-      || (!!this.toggleClosedSecondary && code === this.toggleClosedSecondary);
+    return (
+      code === 'Escape' ||
+      (!!this.toggleClosedBinding && code === this.toggleClosedBinding) ||
+      (!!this.toggleClosedSecondary && code === this.toggleClosedSecondary)
+    );
   }
 
-  _click() { audio.playOneShot(SOUND.ButtonClick, 1); }
+  _click() {
+    audio.playOneShot(SOUND.ButtonClick, 1);
+  }
 
   _closeWith() {
-    if (this._saveSettings) saveSettings();   // OnPop (:212-215)
+    if (this._saveSettings) saveSettings(); // OnPop (:212-215)
     this.done = true;
   }
 
   _confirmExit() {
-    if (this._saveSettings) saveSettings();   // ConfirmExitBox (:254-257)
+    if (this._saveSettings) saveSettings(); // ConfirmExitBox (:254-257)
     this.done = true;
     this.hooks.exitToMenu?.();
   }
 
   input(code, e = null) {
     if (this.top === 'exit') {
-      if (code === 'KeyY') { this._confirmExit(); return; }
-      if (code === 'KeyN' || code === 'Escape') { this.top = null; }
+      if (code === 'KeyY') {
+        this._confirmExit();
+        return;
+      }
+      if (code === 'KeyN' || code === 'Escape') {
+        this.top = null;
+      }
       return;
     }
-    if (this.top) { this.top = null; return; }   // any key clears a note
+    if (this.top) {
+      this.top = null;
+      return;
+    } // any key clears a note
     // :703-708's arming edge - the press this window SAW, which the
     // press that opened it never is.
     // AUDIT DISC28 UI-2: ...and a PRESS, never its auto-repeat. The hosts hand this window every keydown under it, the
@@ -257,13 +270,13 @@ export class PauseOptionsWindow {
    *  the press, exactly as `input` above has them. */
   keyup(code, e = null) {
     if (this.top) return;
-    if (!this._isCloseKey(code, e)) return;   // AUDIT DISC28 UI-1: the release's own event too - GetKeyUp's combo wants its modifier held
+    if (!this._isCloseKey(code, e)) return; // AUDIT DISC28 UI-1: the release's own event too - GetKeyUp's combo wants its modifier held
     // :709's `&& isCloseWindowDeferred` - the press that opened this
     // window was consumed by the host and never reached here, so its
     // release finds nothing armed and closes nothing.
     if (!this.isCloseWindowDeferred) return;
     this.isCloseWindowDeferred = false;
-    this._click();   // ContinueButton's sound, which this port's two close doors share
+    this._click(); // ContinueButton's sound, which this port's two close doors share
     this._closeWith();
     // MAC1 J, the classic twin (ui/pauseDoor.js:"return (action) =>"): the close runs
     // inside this click/keyup, the activation requestPointerLock needs.
@@ -277,7 +290,10 @@ export class PauseOptionsWindow {
       else if (hit === MB_BUTTONS.No) this.top = null;
       return true;
     }
-    if (this.top) { this.top = null; return true; }
+    if (this.top) {
+      this.top = null;
+      return true;
+    }
     const R = PAUSE_RECTS;
     if (inRect(R.continue, vx, vy)) {
       this._click();
@@ -302,7 +318,7 @@ export class PauseOptionsWindow {
       this._click();
       if (this.hooks.savingPrevented?.()) {
         this.top = 'note';
-        this._noteRows = [localizedText('cannotSaveNow', 'You cannot save now.')];   // cannotSaveNow (Internal_Strings, recovered)
+        this._noteRows = [localizedText('cannotSaveNow', 'You cannot save now.')]; // cannotSaveNow (Internal_Strings, recovered)
       } else if (this.hooks.openSave) {
         // SAV4: DFU's SAVE GAME opens the slot window (:302), with
         // this window as its previous.
@@ -350,7 +366,8 @@ export class PauseOptionsWindow {
       }
       return true;
     }
-    const bx = vx - panelX(), by = vy - PAUSE_PANEL_Y;
+    const bx = vx - panelX(),
+      by = vy - PAUSE_PANEL_Y;
     if (inRect(R.soundBar, vx, vy)) {
       this._click();
       setValue('Controls', 'SoundVolume', barClickValue(bx - R.soundBar[0]));
@@ -398,13 +415,16 @@ export class PauseOptionsWindow {
       return true;
     }
     void by;
-    return true;   // an open window owns the pointer
+    return true; // an open window owns the pointer
   }
 
   draw(renderer, canvas, font) {
-    if (!_img) { this.done = true; return; }
+    if (!_img) {
+      this.done = true;
+      return;
+    }
     const m = nativeMetrics(canvas);
-    drawMenuBackdrop(renderer, canvas);   // ScreenDimColor (:71)
+    drawMenuBackdrop(renderer, canvas); // ScreenDimColor (:71)
     const px = panelX();
     drawImg(renderer, _img, m, px, PAUSE_PANEL_Y);
     const R = PAUSE_RECTS;
@@ -416,8 +436,16 @@ export class PauseOptionsWindow {
     fill(R.musicBar, getFloat('Controls', 'MusicVolume', 0, 1) * BAR_MAX);
     fill(R.detailBar, detailBarWidth(Math.min(QUALITY_COUNT - 1, Math.max(0, effInt('Video', 'QualityLevel')))));
     // the ticks (fullScreen shows !LargeHUD - :138)
-    const tick = (r) => drawRect(renderer, m,
-      px + r[0] + TICK_RECT[0], PAUSE_PANEL_Y + r[1] + TICK_RECT[1], TICK_RECT[2], TICK_RECT[3], TOGGLE_COLOR);
+    const tick = (r) =>
+      drawRect(
+        renderer,
+        m,
+        px + r[0] + TICK_RECT[0],
+        PAUSE_PANEL_Y + r[1] + TICK_RECT[1],
+        TICK_RECT[2],
+        TICK_RECT[3],
+        TOGGLE_COLOR,
+      );
     if (!effBool('GUI', 'LargeHUD')) tick(R.fullScreen);
     if (effBool('Controls', 'HeadBobbing')) tick(R.headBobbing);
     // the version line, right-aligned at the top (:146-152) - the
@@ -425,21 +453,22 @@ export class PauseOptionsWindow {
     // PAUSE WINDOW'S VERSION LINE IS THE PORT'S OWN BUILD TAG)
     // REL8: the player's update number first (scripts/updateNumber.mjs), the commit beside it for a report; a build
     // that cannot know its number (a dev serve, a shallow clone) says the commit alone, as before
-    const ver = UPDATE ? `DFO Online ${UPDATE} (${BUILD_TAG})` : `DFO Online ${BUILD_TAG}`;   // BR1: the PRODUCT's name here, not the working name - this line is the whole of the branding surface a player sees in game
-    shadowText(renderer, font, ver, m, 320 - 2 - measureText(font.fnt, ver), 2,
-      { color: [0.75, 0.75, 0.75, 1] });
+    const ver = UPDATE ? `DFO Online ${UPDATE} (${BUILD_TAG})` : `DFO Online ${BUILD_TAG}`; // BR1: the PRODUCT's name here, not the working name - this line is the whole of the branding surface a player sees in game
+    shadowText(renderer, font, ver, m, 320 - 2 - measureText(font.fnt, ver), 2, { color: [0.75, 0.75, 0.75, 1] });
     // the stacked box (exit confirm / note), the U23 shape: laid out
     // here where the font lives, hit-tested from the stored layout
     if (this.top) {
       const got = this.top === 'exit' ? this.hooks.textLines?.(ARE_YOU_SURE_ID) : null;
-      const rows = this.top === 'exit'
-        ? (got?.length ? got : [t('pause.quitConfirm', 'Are you sure you want to quit?')])   // townTalk.lines answers [] without data
-        : this._noteRows;
+      const rows =
+        this.top === 'exit'
+          ? got?.length
+            ? got
+            : [t('pause.quitConfirm', 'Are you sure you want to quit?')] // townTalk.lines answers [] without data
+          : this._noteRows;
       const buttons = this.top === 'exit' ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : [];
       this._box = layoutMessageBox(font, rows, buttons);
       if (!drawMessageBox(renderer, m, font, this._box)) {
-        (this._box.rows ?? []).forEach((r, i) =>
-          shadowText(renderer, font, r.text, m, 20, 20 + i * this._box.rowH));
+        (this._box.rows ?? []).forEach((r, i) => shadowText(renderer, font, r.text, m, 20, 20 + i * this._box.rowH));
       }
     } else this._box = null;
   }
@@ -480,7 +509,10 @@ export function openClassicPauseFlow(show, hooks = {}) {
   // rebuilt pause window re-reads the settings store and loses
   // anything the open one was holding.
   const push = hooks.pushWindow ?? null;
-  const mount = (win) => { if (push) push(win); else show(win); };
+  const mount = (win) => {
+    if (push) push(win);
+    else show(win);
+  };
   // ROAD-S: ...and the OTHER half of that push. The slot window has
   // three exits, and only ONE of them is CloseWindow: Cancel (:526).
   // SaveGame (:422) and LoadGame (:428) both end in
@@ -514,22 +546,25 @@ export function openClassicPauseFlow(show, hooks = {}) {
     // the HUD, inside the slot window's own click - so this exit is a
     // resume too, and the enhanced twin relocks on exactly it
     // (ui/pauseDoor.js:"if (action !== 'exit')" fires for 'save' and 'load', not 'exit').
-    popToHUD: push ? () => { win?._closeWith(); hooks.relock?.(); } : null,
+    popToHUD: push
+      ? () => {
+          win?._closeWith();
+          hooks.relock?.();
+        }
+      : null,
     ...extra,
   });
   win = new PauseOptionsWindow({
     ...hooks,
-    saveLoadPushes: !!push,   // C1: does this host's door stack, or replace?
+    saveLoadPushes: !!push, // C1: does this host's door stack, or replace?
     // DISC22-B: the port's whole settings screen where the host can mount it (ui/pauseDoor.js), else DFU's grid
-    openControls: hooks.openSettings ?? (controlsArtLoaded()
-      ? () => show(new ControlsWindow({ onBack: () => openClassicPauseFlow(show, hooks) }))
-      : null),
-    openSave: hooks.saveAs
-      ? () => mount(new SaveWindow('save', saveWindowHooks({ saveAs: hooks.saveAs })))
-      : null,
-    openLoad: hooks.loadKey
-      ? () => mount(new SaveWindow('load', saveWindowHooks({ loadKey: hooks.loadKey })))
-      : null,
+    openControls:
+      hooks.openSettings ??
+      (controlsArtLoaded()
+        ? () => show(new ControlsWindow({ onBack: () => openClassicPauseFlow(show, hooks) }))
+        : null),
+    openSave: hooks.saveAs ? () => mount(new SaveWindow('save', saveWindowHooks({ saveAs: hooks.saveAs }))) : null,
+    openLoad: hooks.loadKey ? () => mount(new SaveWindow('load', saveWindowHooks({ loadKey: hooks.loadKey }))) : null,
   });
   show(win);
   return win;

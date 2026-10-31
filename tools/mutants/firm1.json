@@ -32,8 +32,8 @@
   {
     "name": "FIRM1-keystone-walked-through",
     "file": "src/net/firmament/firmamentLaw.js",
-    "old": "const passable = (key, start) => { const n = firmNode(key); return !!n && n.kind !== 'keystone' && (n.kind !== 'start' || key === start); };",
-    "new": "const passable = (key, start) => { const n = firmNode(key); return !!n && (n.kind !== 'start' || key === start); };",
+    "old": "  return !!n && n.kind !== 'keystone' && (n.kind !== 'start' || key === start);",
+    "new": "  return !!n && (n.kind !== 'start' || key === start);",
     "tests": [
       "test/net/firmament/firm1_law.test.js"
     ],
@@ -61,7 +61,7 @@
   {
     "name": "FIRM1-refund-always-free",
     "file": "src/net/firmament/firmamentLaw.js",
-    "old": "export const refundSilver = (removed, renown) => (clampInt(renown ?? 1, 1, FIRM_RENOWN_MAX) < REFUND_FREE_BELOW_RENOWN ? 0 : Math.max(0, removed | 0) * REFUND_SILVER_PER_STAR);",
+    "old": "export const refundSilver = (removed, renown) =>\n  clampInt(renown ?? 1, 1, FIRM_RENOWN_MAX) < REFUND_FREE_BELOW_RENOWN\n    ? 0\n    : Math.max(0, removed | 0) * REFUND_SILVER_PER_STAR;",
     "new": "export const refundSilver = () => 0;",
     "tests": [
       "test/net/firmament/firm1_law.test.js",
@@ -125,7 +125,7 @@
   {
     "name": "FIRM1-book-drops-queued",
     "file": "src/net/firmament/firmamentBook.js",
-    "old": "      while (queued) { const next = queued; queued = null; r = await send(next); }",
+    "old": "      while (queued) {\n        const next = queued;\n        queued = null;\n        r = await send(next);\n      }",
     "new": "      queued = null;",
     "tests": [
       "test/net/firmament/firm1_book.test.js"
@@ -143,8 +143,8 @@
   {
     "name": "FIRM1-respec-gold-not-given-back",
     "file": "src/net/firmament/firmamentBook.js",
-    "old": "r = await realm.act({ reserve: walletReserve(w, FIRM_RESPEC_GOLD).reserve,",
-    "new": "r = await realm.act({ reserve: () => { w.pay(FIRM_RESPEC_GOLD); return () => {}; },",
+    "old": "          reserve: walletReserve(w, FIRM_RESPEC_GOLD).reserve,",
+    "new": "          reserve: () => {\n            w.pay(FIRM_RESPEC_GOLD);\n            return () => {};\n          },",
     "tests": [
       "test/net/firmament/firm1_book.test.js"
     ]
@@ -161,8 +161,8 @@
   {
     "name": "FIRM1-wild-strike-with-the-sky",
     "file": "src/systems/firmamentPowers.js",
-    "old": "  try { computeEntityMods(entity); return fn(); } finally { _quiet = false; entity._mods = kept; }",
-    "new": "  try { return fn(); } finally { _quiet = false; entity._mods = kept; }",
+    "old": "    computeEntityMods(entity);\n    return fn();",
+    "new": "    return fn();",
     "tests": [
       "test/systems/firm1_powers.test.js"
     ]
@@ -188,8 +188,8 @@
   {
     "name": "FIRM-MAX-no-lift",
     "file": "src/systems/firmamentPowers.js",
-    "old": "    if (v > 0) mods.statMax[a] = v;",
-    "new": "",
+    "old": "    if (v > 0) mods.statMax[a] = v;\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/firm1_powers.test.js"
     ]
@@ -197,8 +197,8 @@
   {
     "name": "FIRM-MAX-ceiling-unread",
     "file": "src/systems/statMods.js",
-    "old": "  maxMod += entity._mods?.statMax?.[statName] ?? 0;",
-    "new": "",
+    "old": "  maxMod += entity._mods?.statMax?.[statName] ?? 0; // FIRM-MAX: a channel's lift of the ceiling (entityMods.js statMax)",
+    "new": "  // FIRM-MAX: a channel's lift of the ceiling (entityMods.js statMax)",
     "tests": [
       "test/systems/firm1_powers.test.js"
     ]

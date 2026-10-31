@@ -37,8 +37,8 @@ const PLACE = Object.freeze({ pos: [1, 0, 2], rot: [90, 0, 0], scale: 1, light: 
 
 test('HOME-STATIONS the law: a piece serves one of three crafts, carried only when it serves one; a craft it does not know, a piece that holds things, and one\'s own item serve none (mutants: any word taken; storage and a station together; the key always written)', () => {
   // PIN MOVED (PROF11): the mason's bench a seventh station, at the loom's licence
-  assert.deepEqual([...DECOR_STATIONS], ['alchemy', 'spells', 'enchant', 'forge', 'workbench', 'cooking', 'loom', 'mason', 'jeweller', 'vendor']);   // PIN MOVED (DECOR-USE): the cooking station, a ninth   // HOME-VENDOR: a hired trader   // PROF2: the forge, a fourth (Professions-Arc 23); PROF4: the workbench, a fifth (25); PROF7: the loom, a sixth (29); PROF11: the mason's bench, a seventh; PIN MOVED (PROF10): the jeweller's bench, an eighth
-  assert.deepEqual({ ...DECOR_STATION_FEES }, { alchemy: 50000, spells: 100000, enchant: 200000, forge: 50000, workbench: 50000, cooking: 50000, loom: 50000, mason: 50000, jeweller: 50000, vendor: 25000 });   // HOME-VENDOR: a trader's licence;   // STATION-FEES: ten times the first pass; PROF2: a forge as the alchemy station; PROF4: a workbench as the forge; PROF7: a loom as the workbench; PROF11: a mason's bench as the loom; PIN MOVED (PROF10): a jeweller's bench as the mason's
+  assert.deepEqual([...DECOR_STATIONS], ['alchemy', 'spells', 'enchant', 'forge', 'workbench', 'cooking', 'music', 'loom', 'mason', 'jeweller', 'vendor']);   // PIN MOVED (MUSIC-BOX): the music box after the cooking station   // PIN MOVED (DECOR-USE): the cooking station, a ninth   // HOME-VENDOR: a hired trader   // PROF2: the forge, a fourth (Professions-Arc 23); PROF4: the workbench, a fifth (25); PROF7: the loom, a sixth (29); PROF11: the mason's bench, a seventh; PIN MOVED (PROF10): the jeweller's bench, an eighth
+  assert.deepEqual({ ...DECOR_STATION_FEES }, { alchemy: 50000, spells: 100000, enchant: 200000, forge: 50000, workbench: 50000, cooking: 50000, music: 5000, loom: 50000, mason: 50000, jeweller: 50000, vendor: 25000 });   // HOME-VENDOR: a trader's licence;   // STATION-FEES: ten times the first pass; PROF2: a forge as the alchemy station; PROF4: a workbench as the forge; PROF7: a loom as the workbench; PROF11: a mason's bench as the loom; PIN MOVED (PROF10): a jeweller's bench as the mason's
   assert.deepEqual({ ...DECOR_STATION_SERVICES }, { alchemy: 'guildServicePotionMaker', spells: 'guildServiceSpellMaker', enchant: 'guildServiceItemMaker' }, 'the forge is no guild\'s service - it opens the Stores\' forge');
   assert.deepEqual(decorStationWords(null, 'forge'), { pick: 'Station: Forge >', act: 'Make station - 50,000 gold', what: 'station:forge' });
   assert.equal(DECOR_STATION_NAMES.spells, 'Spellmaking station');
@@ -225,7 +225,7 @@ test('AUDIT HOME-STATIONS S3 + S6 + S9: the room\'s view repaints when a piece\'
   assert.equal(rig.standing[0].station, undefined);
   assert.equal(btn(root, /^Make station/)?.textContent, 'Make station - 50,000 gold', 'the button says what the piece now is');
   const P = src('src/ui/decorPanel.js');
-  assert.match(P, /const what = stationBtn\.dataset\.what;\s*\n\s*if \(what === 'arm'\) \{ stationArmed = it\.piece\.id; paintRoomSide\(\); return; \}\s*\n\s*stationArmed = null;\s*\n\s*if \(what\) onToggle\(it\.piece, what\);/, 'the act the button says');
+  assert.match(P, /const what = stationBtn\.dataset\.what;\n\s*if \(what === 'arm'\) \{ stationArmed = it\.piece\.id; paintRoomSide\(\); return; \}\n\s*stationArmed = null;\n\s*if \(what\) onToggle\(it\.piece, what\);/, 'the act the button says');
   assert.match(P, /stationBtn\.dataset\.what = words\.what;/);
 });
 

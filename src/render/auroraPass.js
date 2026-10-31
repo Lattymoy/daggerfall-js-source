@@ -22,7 +22,11 @@ export const AURORA_DEPTH = 1.5;
 export const AURORA_ARC_GAP = 1.3;
 /** Each arc's waves: [amplitude, radians a hem height, radians a second] - a second of the sky's walk clock (a game minute
  *  is five, render/enhancedSky.js WIND_SECONDS_PER_MINUTE). */
-export const AURORA_WAVES = Object.freeze([Object.freeze([0.55, 0.62, 0.035]), Object.freeze([0.3, 1.37, -0.05]), Object.freeze([0.35, 2.9, 0.07])]);
+export const AURORA_WAVES = Object.freeze([
+  Object.freeze([0.55, 0.62, 0.035]),
+  Object.freeze([0.3, 1.37, -0.05]),
+  Object.freeze([0.35, 2.9, 0.07]),
+]);
 /** The swell along an arc and the hem's rise and fall (radians a second), and the rays' drift (noise rows a second). */
 export const AURORA_RATES = Object.freeze({ swell: -0.06, hem: 0.02, rays: 0.16 });
 /** The rays' noise repeats every this many rows, so their clock wraps there without a seam; each arc's row is this far on. */
@@ -163,10 +167,24 @@ out vec4 outColor;
 void main() { outColor = vec4(texture(uMap, vNdc * 0.5 + 0.5).rgb, 0.0); }`;
 
 /** The march's uniforms, both programs': the screen's camera besides. */
-export const AURORA_ALONG_UNIFORMS = Object.freeze(['uWeight', 'uHang', 'uWave', 'uDrift', 'uRayLo', 'uRayHi', 'uRayF', 'uPixel', 'uSteps']);
+export const AURORA_ALONG_UNIFORMS = Object.freeze([
+  'uWeight',
+  'uHang',
+  'uWave',
+  'uDrift',
+  'uRayLo',
+  'uRayHi',
+  'uRayF',
+  'uPixel',
+  'uSteps',
+]);
 export const AURORA_UNIFORMS = Object.freeze(['uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', ...AURORA_ALONG_UNIFORMS]);
 /** The pass's three programs, as render/playPrograms.js starts them at the boot's idle and its door builds them. */
-export const AURORA_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([VS, AURORA_FS])), Object.freeze(/** @type {const} */ ([VS, AURORA_ADD_FS])), Object.freeze(/** @type {const} */ ([VS, AURORA_DOME_FS]))]);
+export const AURORA_PROGRAMS = Object.freeze([
+  Object.freeze(/** @type {const} */ ([VS, AURORA_FS])),
+  Object.freeze(/** @type {const} */ ([VS, AURORA_ADD_FS])),
+  Object.freeze(/** @type {const} */ ([VS, AURORA_DOME_FS])),
+]);
 /** THE DOME MAP the water reflects: its size (azimuth x height), its march's steps, and every how many frames it is
  *  marched again (the curtains move slowly; a reflection a few frames old is the same). */
 export const AURORA_DOME = Object.freeze({ width: 256, height: 64, steps: 6, every: 3 });
@@ -175,14 +193,26 @@ export const AURORA_DOME = Object.freeze({ width: 256, height: 64, steps: 6, eve
  *  never jump: the three waves' and [the swell's, the hem's] in radians, and each arc's rays' noise rows - the two
  *  whole rows it lies between, wrapped on the noise's period, and the smoothed share of the second. */
 export function auroraPhases(seconds) {
-  const t = Number.isFinite(seconds) ? seconds : 0, wrap = (r) => wrapAngle(t * r);
-  const lo = [], hi = [], share = [];
+  const t = Number.isFinite(seconds) ? seconds : 0,
+    wrap = (r) => wrapAngle(t * r);
+  const lo = [],
+    hi = [],
+    share = [];
   for (let k = 0; k < 3; k++) {
-    const row = ((t * AURORA_RATES.rays + k * AURORA_ARC_ROW) % AURORA_RAY_ROWS + AURORA_RAY_ROWS) % AURORA_RAY_ROWS;
-    const r0 = Math.floor(row), u = row - r0;
-    lo.push(r0); hi.push((r0 + 1) % AURORA_RAY_ROWS); share.push(u * u * (3 - 2 * u));
+    const row = (((t * AURORA_RATES.rays + k * AURORA_ARC_ROW) % AURORA_RAY_ROWS) + AURORA_RAY_ROWS) % AURORA_RAY_ROWS;
+    const r0 = Math.floor(row),
+      u = row - r0;
+    lo.push(r0);
+    hi.push((r0 + 1) % AURORA_RAY_ROWS);
+    share.push(u * u * (3 - 2 * u));
   }
-  return { wave: AURORA_WAVES.map((w) => wrap(w[2])), drift: [wrap(AURORA_RATES.swell), wrap(AURORA_RATES.hem)], lo, hi, share };
+  return {
+    wave: AURORA_WAVES.map((w) => wrap(w[2])),
+    drift: [wrap(AURORA_RATES.swell), wrap(AURORA_RATES.hem)],
+    lo,
+    hi,
+    share,
+  };
 }
 
 export class AuroraPass {
@@ -216,7 +246,9 @@ export class AuroraPass {
   }
 
   /** The dome map's texture once a march is in it, or null - the water's reflection (render/waterSurface.js). */
-  get domeTex() { return this.domeDrawn ? this.dome?.tex ?? null : null; }
+  get domeTex() {
+    return this.domeDrawn ? (this.dome?.tex ?? null) : null;
+  }
 
   /** The march's uniforms on the program whose table `u` is: the weight, the arcs, the clock's phases, the texel's span. */
   _along(u, weight, hang, ph, pixel, steps) {
@@ -234,7 +266,8 @@ export class AuroraPass {
 
   /** The map for a world image `w` x `h`, made or made again at the tier's share of it. */
   _mapFor(w, h) {
-    const mw = Math.max(1, Math.round(w * this.scale)), mh = Math.max(1, Math.round(h * this.scale));
+    const mw = Math.max(1, Math.round(w * this.scale)),
+      mh = Math.max(1, Math.round(h * this.scale));
     if (this.map && this.map.width === mw && this.map.height === mh) return this.map;
     this._freeMap();
     return (this.map = createRenderTarget(this.gl, mw, mh));
@@ -252,15 +285,22 @@ export class AuroraPass {
    *  was not the frame before, so the water's map is marched now, never left from then. */
   draw(yaw, pitch, fovY, aspect, weight, hang, seconds, viewport, freshDome = false) {
     if (!(weight > 0)) return;
-    const gl = this.gl, u = this.u, ph = auroraPhases(seconds), tanHalf = Math.tan(fovY / 2);
+    const gl = this.gl,
+      u = this.u,
+      ph = auroraPhases(seconds),
+      tanHalf = Math.tan(fovY / 2);
     const map = this._mapFor(viewport[2], viewport[3]);
-    gl.disable(gl.BLEND); gl.disable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE);
+    gl.disable(gl.BLEND);
+    gl.disable(gl.DEPTH_TEST);
+    gl.disable(gl.CULL_FACE);
     gl.bindVertexArray(this.vao);
     withTarget(gl, map, viewport, () => {
       gl.useProgram(this.program);
-      gl.uniform1f(u.uYaw, yaw); gl.uniform1f(u.uPitch, pitch);
-      gl.uniform1f(u.uTanHalfFov, tanHalf); gl.uniform1f(u.uAspect, aspect);
-      this._along(u, weight, hang, ph, 2 * tanHalf / map.height, this.steps);
+      gl.uniform1f(u.uYaw, yaw);
+      gl.uniform1f(u.uPitch, pitch);
+      gl.uniform1f(u.uTanHalfFov, tanHalf);
+      gl.uniform1f(u.uAspect, aspect);
+      this._along(u, weight, hang, ph, (2 * tanHalf) / map.height, this.steps);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     });
     // the dome map the water reflects, every few frames: by direction, so a reflection a frame or two old still lines up
@@ -276,9 +316,10 @@ export class AuroraPass {
     }
     gl.useProgram(this.addProgram);
     gl.depthMask(false);
-    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);   // only where nothing nearer has drawn - z is the far plane
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL); // only where nothing nearer has drawn - z is the far plane
     gl.enable(gl.BLEND);
-    gl.blendFuncSeparate(gl.ONE, gl.ONE, gl.ZERO, gl.ONE);   // light added to the sky; the buffer's alpha untouched
+    gl.blendFuncSeparate(gl.ONE, gl.ONE, gl.ZERO, gl.ONE); // light added to the sky; the buffer's alpha untouched
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, map.tex);
     gl.uniform1i(this.uMap, 0);
@@ -301,6 +342,11 @@ export class AuroraPass {
     gl.deleteBuffer(this.vb);
     gl.deleteVertexArray(this.vao);
     this._freeMap();
-    if (this.dome) { gl.deleteTexture(this.dome.tex); gl.deleteFramebuffer(this.dome.fbo); this.dome = null; this.domeDrawn = false; }
+    if (this.dome) {
+      gl.deleteTexture(this.dome.tex);
+      gl.deleteFramebuffer(this.dome.fbo);
+      this.dome = null;
+      this.domeDrawn = false;
+    }
   }
 }

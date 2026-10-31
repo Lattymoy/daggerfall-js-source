@@ -11,8 +11,8 @@
   {
     "name": "HACKED-GOLD-the-put-refused-offline-too",
     "file": "src/systems/peerWord.js",
-    "old": "  online && isLetterOfCredit(item) && container && !own;",
-    "new": "  isLetterOfCredit(item) && container && !own;",
+    "old": ") => online && isLetterOfCredit(item) && container && !own;",
+    "new": ") => isLetterOfCredit(item) && container && !own;",
     "tests": [
       "test/systems/hackedgold.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "HACKED-GOLD-the-own-pile-refused",
     "file": "src/systems/peerWord.js",
-    "old": "  online && isLetterOfCredit(item) && container && !own;",
-    "new": "  online && isLetterOfCredit(item) && container;",
+    "old": ") => online && isLetterOfCredit(item) && container && !own;",
+    "new": ") => online && isLetterOfCredit(item) && container;",
     "tests": [
       "test/systems/hackedgold.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "HACKED-GOLD-a-letter-priced",
     "file": "src/systems/loot/loot.js",
-    "old": "if (_priceCeiling && !VALUE_IS_IDENTITY_TEMPLATES.includes(it.templateIndex) && !BOAT_TEMPLATES.includes(it.templateIndex)) {",
-    "new": "if (_priceCeiling && !BOAT_TEMPLATES.includes(it.templateIndex)) {",
+    "old": "  if (\n    _priceCeiling &&\n    !VALUE_IS_IDENTITY_TEMPLATES.includes(it.templateIndex) &&\n    !BOAT_TEMPLATES.includes(it.templateIndex)\n  ) {",
+    "new": "  if (_priceCeiling && !BOAT_TEMPLATES.includes(it.templateIndex)) {",
     "tests": [
       "test/systems/hackedgold.test.js"
     ]
@@ -206,8 +206,8 @@
   {
     "name": "HACKED-GOLD-account-version-unmoved",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct227';",
-    "new": "export const ACCOUNT_VERSION = 'acct123';",
+    "old": "export const ACCOUNT_VERSION = 'acct235'; // acct235: CACHE-SPREAD (2026-10-31, acct234 on its branch, renumbered past EG-MIGHT's acct234 at the merge of main; Mac: \"no daily cap ... value finds from 5 to 10\"; bible/06-Systems/Aurum.md section 3a) - POST /v1/aurum/cache pays a cache its own 5 to 10 Aurum (net/aurumCacheLaw.js aurumCacheAurumOf) and holds no day's bound; `cache-capped` gone. No migration.",
+    "new": "export const ACCOUNT_VERSION = 'acct123'; // acct235: CACHE-SPREAD (2026-10-31, acct234 on its branch, renumbered past EG-MIGHT's acct234 at the merge of main; Mac: \"no daily cap ... value finds from 5 to 10\"; bible/06-Systems/Aurum.md section 3a) - POST /v1/aurum/cache pays a cache its own 5 to 10 Aurum (net/aurumCacheLaw.js aurumCacheAurumOf) and holds no day's bound; `cache-capped` gone. No migration.",
     "tests": [
       "test/systems/tech1_roster.test.js",
       "test/server/realm1.test.js"
@@ -253,8 +253,8 @@
   {
     "name": "HACKED-GOLD-the-gains-unlisted",
     "file": "server-account/src/review.js",
-    "old": "  if (act === 'gains') return gainsMeasure(db, nowS, Number.isSafeInteger(body.days) && body.days >= 1 && body.days <= 30 ? body.days : 7);\n",
-    "new": "",
+    "old": "  if (act === 'gains')\n    return gainsMeasure(db, nowS, Number.isSafeInteger(body.days) && body.days >= 1 && body.days <= 30 ? body.days : 7);\n  if (act === 'characters') {",
+    "new": "  if (act === 'characters') {",
     "tests": [
       "test/systems/hackedgold.test.js"
     ]
@@ -271,8 +271,8 @@
   {
     "name": "HACKED-GOLD-the-trades-unlisted",
     "file": "server-account/src/review.js",
-    "old": "  if (act === 'trades') return tradesOf(db, row);\n",
-    "new": "",
+    "old": "  if (act === 'trades') return tradesOf(db, row);\n  if (act === 'findings') {",
+    "new": "  if (act === 'findings') {",
     "tests": [
       "test/systems/hackedgold.test.js"
     ]
@@ -280,8 +280,8 @@
   {
     "name": "HACKED-GOLD-gave-and-got-crossed",
     "file": "server-account/src/review.js",
-    "old": "      gave: receiptOf(r[theirs]), got: receiptOf(r[mine]),",
-    "new": "      gave: receiptOf(r[mine]), got: receiptOf(r[theirs]),",
+    "old": "      gave: receiptOf(r[theirs]),\n      got: receiptOf(r[mine]),",
+    "new": "      gave: receiptOf(r[mine]),\n      got: receiptOf(r[theirs]),",
     "tests": [
       "test/systems/hackedgold.test.js"
     ]
@@ -289,8 +289,8 @@
   {
     "name": "HACKED-GOLD-the-gains-route-unserved",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/mod/realm-gains',    // HACKED-GOLD: who gained past the bucket (review.js gainsMeasure)\n",
-    "new": "",
+    "old": "  '/v1/mod/realm-gains', // HACKED-GOLD: who gained past the bucket (review.js gainsMeasure)\n  '/v1/mod/realm-progress', // INT17: the progression claims' measure and their line (review.js progressMeasure)",
+    "new": "  '/v1/mod/realm-progress', // INT17: the progression claims' measure and their line (review.js progressMeasure)",
     "tests": [
       "test/systems/hackedgold.test.js"
     ]
@@ -307,8 +307,8 @@
   {
     "name": "HACKED-GOLD-PRICE-CAP-a-deed-capped",
     "file": "src/systems/loot/loot.js",
-    "old": "if (_priceCeiling && !VALUE_IS_IDENTITY_TEMPLATES.includes(it.templateIndex) && !BOAT_TEMPLATES.includes(it.templateIndex)) {",
-    "new": "if (_priceCeiling && !VALUE_IS_IDENTITY_TEMPLATES.includes(it.templateIndex)) {",
+    "old": "  if (\n    _priceCeiling &&\n    !VALUE_IS_IDENTITY_TEMPLATES.includes(it.templateIndex) &&\n    !BOAT_TEMPLATES.includes(it.templateIndex)\n  ) {",
+    "new": "  if (_priceCeiling && !VALUE_IS_IDENTITY_TEMPLATES.includes(it.templateIndex)) {",
     "tests": [
       "test/systems/item/int1_itemlaw.test.js"
     ]

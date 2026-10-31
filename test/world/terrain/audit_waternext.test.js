@@ -100,7 +100,7 @@ test('AUDIT WATER-NEXT P1: the bed is the kernel\'s - carved with the grid by re
   const w = hostText('src/scenes/world.js');
   assert.doesNotMatch(w, /waterBedOf\(/, 'the streaming host carves nothing on its own thread');
   assert.match(w, /bed: waterOn,   \/\/ AUDIT WATER-NEXT P1/, 'the build asks the kernel');
-  assert.match(w, /terrainGen\.grid\(\{ \.\.\.gridGround\(p\), stride: 1, landform, bed: bedBytes \}\)/, 'the promotion asks the worker');   // PIN MOVED (FB1029 ACROSS-EDGE): the pixel's ground gridGround's
+  assert.match(w, /terrainGen\.grid\(\{ \.\.\.gridGround\(p\), stride, landform, bed: bedBytes \}\)/, 'the promotion asks the worker');   // PIN MOVED (OW-DEMOTE): a demotion too, at its stride; PIN MOVED (FB1029 ACROSS-EDGE): the pixel's ground gridGround's
   // PIN MOVED (BAY-LEFT-GROUND, D1): and the sites past the Bay beside the Bay's (test/world/terrain/bayleftground_sites.test.js)
   assert.match(w, /roads: terrainGen\.roads\(\), sites: _landformSites, beyond: beyondSites\.beyond\(\), climates: _landformClimates, bed: waterOn \? bedBytesOf\(p\) : null \}\)\) \{/, 'the restride asks the kernel');   // LANDFORM4/6: beside the landforms' sites and climates
 });
@@ -322,7 +322,7 @@ test('AUDIT WATER-NEXT M1/G13/P2: a field with live rings slides with the eye an
   const rr = rd('src/render/renderer.js');
   assert.match(rr, /gl\.uniform3f\(L\.rippleRect, r\.packed\[0\], r\.packed\[1\], this\._rippleSpan\);/);
   const src = rd('src/world/water/waterRipples.js');
-  assert.match(src, /origin\[0\] = ox; origin\[1\] = oz;\n[^\n]*\n[^\n]*\n\s*if \(!live\) return true;/, 'asleep, the slide is the origin alone');
+  assert.match(src, /origin\[0\] = ox;\n\s*origin\[1\] = oz;\n\s*\/\/ AUDIT WATER-NEXT P2: asleep, the field is still water everywhere - there is nothing to slide\. Every outdoor frame\n\s*\/\/ the eye crossed a cell in had slid two arrays of zeros \(0\.13 ms a frame walking anywhere, water or none\)\n\s*if \(!live\) return true;/, 'asleep, the slide is the origin alone');
   assert.match(src, /for \(let z = 1; z < cells - 1; z\+\+\) \{\n\s*const sz = z \+ dz;/, 'the slide writes the inside only');
 });
 

@@ -21,8 +21,8 @@
   {
     "name": "RESTX2-online-banks-no-real-time-RESTX1s-skip-back",
     "file": "src/systems/rest/restSession.js",
-    "old": "  _accrue(dt) {\n    this._timer += dt;\n  }",
-    "new": "  _accrue(dt) {\n    if (!Number.isFinite(this.deps.sharedMinutes?.())) this._timer += dt;\n  }",
+    "old": "    this._timer += dt;",
+    "new": "    if (!Number.isFinite(this.deps.sharedMinutes?.())) this._timer += dt;",
     "tests": [
       "test/systems/rest/restx2_online_rest.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "RESTX2-F1s-full-health-guard-put-back",
     "file": "src/systems/rest/restSession.js",
-    "old": "        this.deps.tickVitals();\n        if (--this.hoursRemaining < 1) done = REST_TEXT.wakeUp;",
-    "new": "        if (!this.deps.fullyHealed?.()) this.deps.tickVitals();\n        if (--this.hoursRemaining < 1) done = REST_TEXT.wakeUp;",
+    "old": "        this.deps.tickVitals();",
+    "new": "        if (!this.deps.fullyHealed?.()) this.deps.tickVitals();",
     "tests": [
       "test/systems/rest/restx2_online_rest.test.js"
     ]
@@ -86,8 +86,8 @@
   {
     "name": "CAMP1-the-timer-path-rolls-the-five-percent-after-all",
     "file": "src/systems/campEncounters.js",
-    "old": "  if (!campWindowOpen(ctx.gameMinutes)) return null;\n  // GUARANTEED: no chance check here any more - every open window (once\n  // per 15 real minutes) spawns a group. See the header note above.\n  return rollGroupComposition(ctx, rolls);",
-    "new": "  if (!campWindowOpen(ctx.gameMinutes)) return null;\n  if (!rollCampChance(rolls())) return null;\n  return rollGroupComposition(ctx, rolls);",
+    "old": "  // GUARANTEED: no chance check here any more - every open window (once\n  // per 15 real minutes) spawns a group. See the header note above.",
+    "new": "  if (!rollCampChance(rolls())) return null;",
     "tests": [
       "test/systems/camp1_groups.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "CAMP1-the-ring-excludes-its-own-edge",
     "file": "src/systems/campEncounters.js",
-    "old": "  const near = (a, b) => { const dx = a[0] - b[0], dz = a[2] - b[2]; return dx * dx + dz * dz <= r2; };",
-    "new": "  const near = (a, b) => { const dx = a[0] - b[0], dz = a[2] - b[2]; return dx * dx + dz * dz < r2; };",
+    "old": "    return dx * dx + dz * dz <= r2;",
+    "new": "    return dx * dx + dz * dz < r2;",
     "tests": [
       "test/systems/camp1_groups.test.js"
     ]
@@ -204,7 +204,7 @@
   {
     "name": "D-ONLINE1-any-graveyard-is-a-safe-landing",
     "file": "src/systems/deathRespawn.js",
-    "old": "  { kind: 'graveyard', match: (e) => e.locationType === LOCATION_TYPES.Graveyard && e.dungeonType === DUNGEON_TYPES.Cemetery },",
+    "old": "  {\n    kind: 'graveyard',\n    match: (e) => e.locationType === LOCATION_TYPES.Graveyard && e.dungeonType === DUNGEON_TYPES.Cemetery,\n  },",
     "new": "  { kind: 'graveyard', match: (e) => e.locationType === LOCATION_TYPES.Graveyard },",
     "tests": [
       "test/scenes/donline1_respawn.test.js"
@@ -250,8 +250,8 @@
   {
     "name": "D-ONLINE1-the-snapshot-is-taken-after-the-leave-cleared-the-room",
     "file": "src/scenes/world.js",
-    "old": "      if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room\n      { const hourSlot = modes?.sdRealmSlot?.() ?? null; if (hourSlot != null) _sdFallen.add(hourSlot); }   // SD-ONELIFE: a death in the Hour is final for its Hollow (AUDIT SD III: under D-ONLINE1's capture, the block's first statement as AUDIT WORLD B6 and MWBODY1 hold it)\n      if (_wildGhost && online.room) online.tick();   // WILD1: the ghost's socket kept alive (its pings, its reconnect) - it sends no pose\n      if (_wildGhost && _wildGhostEndAt != null && Date.now() >= _wildGhostEndAt && !_wildDeposits.length) wildGhostLeave();   // AUDIT INT9: a hall's or a building's ghost, its deposit gone\n      if (online.room && !_wildGhost) {\n        // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure\n        _deadMark = online._pose ? { k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() } : null;\n        _partyComposedAt = -Infinity;\n        // PDEATH-FOES, AUDIT CONTRIB P1: my foes are the survivors' now (handOverFoes), named on my last frame BEFORE the\n        // death pose; what nobody took stays mine\n        const _handed = handOverFoes() || handOverRoomFoes();   // QUEST-PARTY phase 3b: or my building's\n        if (_handed) console.info(`[foes] handed ${_handed} foe(s) to the survivors`);\n        online.sendDeath?.();\n        // WILD1: a death in the open zone - at another player's hand (FOE-KEEPS: a foe's drops nothing) the bag and the\n        // cart dropped to the room's remains while the room is still mine, and my worn gear offered to them: then my socket stays in the cell (a cell has\n        // no host to hand over) while my body lies, so their pick reaches me (wildDeathBegin sets _wildGhost)\n        wildDeathBegin();\n      }\n      if (online.room && !_wildGhost) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); modes?.clearOwnPuppets?.(); _foesRoom = null; }\n",
-    "new": "      { const hourSlot = modes?.sdRealmSlot?.() ?? null; if (hourSlot != null) _sdFallen.add(hourSlot); }   // SD-ONELIFE: a death in the Hour is final for its Hollow (AUDIT SD III: under D-ONLINE1's capture, the block's first statement as AUDIT WORLD B6 and MWBODY1 hold it)\n      if (_wildGhost && online.room) online.tick();   // WILD1: the ghost's socket kept alive (its pings, its reconnect) - it sends no pose\n      if (_wildGhost && _wildGhostEndAt != null && Date.now() >= _wildGhostEndAt && !_wildDeposits.length) wildGhostLeave();   // AUDIT INT9: a hall's or a building's ghost, its deposit gone\n      if (online.room && !_wildGhost) {\n        // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure\n        _deadMark = online._pose ? { k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() } : null;\n        _partyComposedAt = -Infinity;\n        // PDEATH-FOES, AUDIT CONTRIB P1: my foes are the survivors' now (handOverFoes), named on my last frame BEFORE the\n        // death pose; what nobody took stays mine\n        const _handed = handOverFoes() || handOverRoomFoes();   // QUEST-PARTY phase 3b: or my building's\n        if (_handed) console.info(`[foes] handed ${_handed} foe(s) to the survivors`);\n        online.sendDeath?.();\n        // WILD1: a death in the open zone - at another player's hand (FOE-KEEPS: a foe's drops nothing) the bag and the\n        // cart dropped to the room's remains while the room is still mine, and my worn gear offered to them: then my socket stays in the cell (a cell has\n        // no host to hand over) while my body lies, so their pick reaches me (wildDeathBegin sets _wildGhost)\n        wildDeathBegin();\n      }\n      if (online.room && !_wildGhost) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); modes?.clearOwnPuppets?.(); _foesRoom = null; }\n      if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room\n",
+    "old": "      if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room\n      { const hourSlot = modes?.sdRealmSlot?.() ?? null; if (hourSlot != null) _sdFallen.add(hourSlot); }   // SD-ONELIFE: a death in the Hour is final for its Hollow (AUDIT SD III: under D-ONLINE1's capture, the block's first statement as AUDIT WORLD B6 and MWBODY1 hold it)\n      if (_wildGhost && online.room) online.tick();   // WILD1: the ghost's socket kept alive (its pings, its reconnect) - it sends no pose\n      if (_wildGhost && _wildGhostEndAt != null && Date.now() >= _wildGhostEndAt && !_wildDeposits.length) wildGhostLeave();   // AUDIT INT9: a hall's or a building's ghost, its deposit gone\n      if (online.room && !_wildGhost) {\n        // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure\n        _deadMark = online._pose ? keepIndoorFloor({ k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() }, online._pose) : null;   // AUDIT FB1030 N1: the room's floor too\n        _partyComposedAt = -Infinity;\n        // PDEATH-FOES, AUDIT CONTRIB P1: my foes are the survivors' now (handOverFoes), named on my last frame BEFORE the\n        // death pose; what nobody took stays mine\n        const _handed = handOverFoes() || handOverRoomFoes();   // QUEST-PARTY phase 3b: or my building's\n        if (_handed) console.info(`[foes] handed ${_handed} foe(s) to the survivors`);\n        online.sendDeath?.();\n        // WILD1: a death in the open zone - at another player's hand (FOE-KEEPS: a foe's drops nothing) the bag and the\n        // cart dropped to the room's remains while the room is still mine, and my worn gear offered to them: then my socket stays in the cell (a cell has\n        // no host to hand over) while my body lies, so their pick reaches me (wildDeathBegin sets _wildGhost)\n        wildDeathBegin();\n      }\n      if (online.room && !_wildGhost) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); modes?.clearOwnPuppets?.(); _foesRoom = null; }\n",
+    "new": "      { const hourSlot = modes?.sdRealmSlot?.() ?? null; if (hourSlot != null) _sdFallen.add(hourSlot); }   // SD-ONELIFE: a death in the Hour is final for its Hollow (AUDIT SD III: under D-ONLINE1's capture, the block's first statement as AUDIT WORLD B6 and MWBODY1 hold it)\n      if (_wildGhost && online.room) online.tick();   // WILD1: the ghost's socket kept alive (its pings, its reconnect) - it sends no pose\n      if (_wildGhost && _wildGhostEndAt != null && Date.now() >= _wildGhostEndAt && !_wildDeposits.length) wildGhostLeave();   // AUDIT INT9: a hall's or a building's ghost, its deposit gone\n      if (online.room && !_wildGhost) {\n        // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure\n        _deadMark = online._pose ? keepIndoorFloor({ k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() }, online._pose) : null;   // AUDIT FB1030 N1: the room's floor too\n        _partyComposedAt = -Infinity;\n        // PDEATH-FOES, AUDIT CONTRIB P1: my foes are the survivors' now (handOverFoes), named on my last frame BEFORE the\n        // death pose; what nobody took stays mine\n        const _handed = handOverFoes() || handOverRoomFoes();   // QUEST-PARTY phase 3b: or my building's\n        if (_handed) console.info(`[foes] handed ${_handed} foe(s) to the survivors`);\n        online.sendDeath?.();\n        // WILD1: a death in the open zone - at another player's hand (FOE-KEEPS: a foe's drops nothing) the bag and the\n        // cart dropped to the room's remains while the room is still mine, and my worn gear offered to them: then my socket stays in the cell (a cell has\n        // no host to hand over) while my body lies, so their pick reaches me (wildDeathBegin sets _wildGhost)\n        wildDeathBegin();\n      }\n      if (online.room && !_wildGhost) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); modes?.clearOwnPuppets?.(); _foesRoom = null; }\n      if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room\n",
     "tests": [
       "test/scenes/donline1_respawn.test.js",
       "test/net/auditworld.test.js"

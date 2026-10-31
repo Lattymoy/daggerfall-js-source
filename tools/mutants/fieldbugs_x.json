@@ -29,8 +29,8 @@
   {
     "name": "X2-rows-shape-lost",
     "file": "src/systems/quest/questMacros.js",
-    "old": "    : row && typeof row === 'object' ? { ...row, text: one(row.text ?? '') } : row));",
-    "new": "    : row && typeof row === 'object' ? one(row.text ?? '') : row));",
+    "old": "    typeof row === 'string' ? one(row) : row && typeof row === 'object' ? { ...row, text: one(row.text ?? '') } : row,",
+    "new": "    typeof row === 'string' ? one(row) : row && typeof row === 'object' ? one(row.text ?? '') : row,",
     "tests": [
       "test/systems/fieldbugs_x.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "X3-fon-dropped",
     "file": "src/systems/guild/guildServiceActions.js",
-    "old": "    fon: factionName, kno: factionName,\n",
-    "new": "",
+    "old": "    fon: factionName,\n    kno: factionName,\n  });",
+    "new": "  });",
     "tests": [
       "test/systems/fieldbugs_x.test.js"
     ]

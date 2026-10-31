@@ -2,8 +2,8 @@
   {
     "name": "KTS-the-gold-unvaried",
     "file": "src/systems/ketch/ketchSpoils.js",
-    "old": "(0.8 + 0.4 * rolls())",
-    "new": "(1 + 0 * rolls())",
+    "old": "  const gold = Math.round(KT_SPOILS_GOLD_PER_LEVEL * lv * (0.8 + 0.4 * rolls()));",
+    "new": "  const gold = Math.round(KT_SPOILS_GOLD_PER_LEVEL * lv * (1 + 0 * rolls()));",
     "tests": [
       "test/systems/ketch/ketch_spoils.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "KTS-the-first-piece-rare-always",
     "file": "src/systems/ketch/ketchSpoils.js",
-    "old": "rolls() < KT_SPOILS_LEGENDARY ? 'legendary' : 'rare'",
-    "new": "rolls() < 0 ? 'legendary' : 'rare'",
+    "old": "  pieces.push(graded(spoilsBase(lv, rolls), rolls() < KT_SPOILS_LEGENDARY ? 'legendary' : 'rare', rolls));",
+    "new": "  pieces.push(graded(spoilsBase(lv, rolls), rolls() < 0 ? 'legendary' : 'rare', rolls));",
     "tests": [
       "test/systems/ketch/ketch_spoils.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "KTS-the-pellets-one-short",
     "file": "src/systems/ketch/ketchSpoils.js",
-    "old": "Math.floor(rolls() * (P.max - P.min + 1))",
-    "new": "Math.floor(rolls() * (P.max - P.min))",
+    "old": "  const pellets = P.min + Math.min(P.max - P.min, Math.floor(rolls() * (P.max - P.min + 1)));",
+    "new": "  const pellets = P.min + Math.min(P.max - P.min, Math.floor(rolls() * (P.max - P.min)));",
     "tests": [
       "test/systems/ketch/ketch_spoils.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "KTS-the-pellets-after-the-gold",
     "file": "src/systems/ketch/ketchSpoils.js",
-    "old": "    { kind: 'item', item: createPellets(s.pellets), tier: 'common', record: flat() },\n    { kind: 'gold', gold: s.gold, tier: 'common', record: flat() },\n",
-    "new": "    { kind: 'gold', gold: s.gold, tier: 'common', record: flat() },\n    { kind: 'item', item: createPellets(s.pellets), tier: 'common', record: flat() },\n",
+    "old": "    { kind: 'item', item: createPellets(s.pellets), tier: 'common', record: flat() },\n    { kind: 'gold', gold: s.gold, tier: 'common', record: flat() },",
+    "new": "    { kind: 'gold', gold: s.gold, tier: 'common', record: flat() },\n    { kind: 'item', item: createPellets(s.pellets), tier: 'common', record: flat() },",
     "tests": [
       "test/systems/ketch/ketch_spoils.test.js"
     ]

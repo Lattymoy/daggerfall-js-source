@@ -11,11 +11,12 @@
   {
     "name": "RENOWN-CHAR-the-card-sends-one-track",
     "file": "server-account/src/index.js",
-    "old": "renown: await renownTracksOf(ctx, who.player.id),",
-    "new": "renown: await renownTracksOf(ctx, who.player.id, 1),",
+    "old": "renownTracksOf(ctx, who.player.id), marksCardOf",
+    "new": "renownTracksOf(ctx, who.player.id, 1), marksCardOf",
     "tests": [
       "test/server/renown_char.test.js"
-    ]
+    ],
+    "note": "AURA-FAST (re-aimed by content): the reads asked together, the field dropped from the answer."
   },
   {
     "name": "RENOWN-CHAR-the-founding-asks-the-best",
@@ -30,7 +31,7 @@
     "name": "RENOWN-CHAR-the-raid-read-at-the-best",
     "file": "server-account/src/raids.js",
     "old": "  const before = await renownTrackOf({ db }, player.id, character);",
-    "new": "  const before = await renownTrackOf({ db }, player.id, (await db.prepare('SELECT char_id FROM renown_tracks WHERE player = ?1 ORDER BY xp DESC LIMIT 1').bind(player.id).first())?.char_id ?? character);",
+    "new": "  const before = await renownTrackOf(\n    { db },\n    player.id,\n    (\n      await db\n        .prepare('SELECT char_id FROM renown_tracks WHERE player = ?1 ORDER BY xp DESC LIMIT 1')\n        .bind(player.id)\n        .first()\n    )?.char_id ?? character,\n  );",
     "tests": [
       "test/server/renown_char.test.js"
     ]

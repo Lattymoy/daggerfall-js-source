@@ -32,8 +32,13 @@ const counted = (it, template) => it?.templateIndex === template && !isSummoned(
 export function markQuiver(items) {
   const mark = [];
   for (const template of QUIVER_TEMPLATES) {
-    let count = 0, proto = null;
-    for (const it of items ?? []) if (counted(it, template)) { count += Math.max(0, it.stackCount ?? 1); proto ??= it; }
+    let count = 0,
+      proto = null;
+    for (const it of items ?? [])
+      if (counted(it, template)) {
+        count += Math.max(0, it.stackCount ?? 1);
+        proto ??= it;
+      }
     if (count > 0) mark.push({ template, count, proto: { ...proto } });
   }
   return mark;

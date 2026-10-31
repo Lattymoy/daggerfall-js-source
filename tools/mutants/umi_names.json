@@ -2,8 +2,8 @@
   {
     "name": "UMI-NAMES-raw-name-field",
     "file": "src/ui/useMagicItemWindow.js",
-    "old": "nameOf = (it) => itemLongName(it) } = {}) {",
-    "new": "nameOf = (it) => it?.name ?? '' } = {}) {",
+    "old": "  nameOf = (it) => itemLongName(it),",
+    "new": "  nameOf = (it) => it?.name ?? '',",
     "tests": [
       "test/systems/ui1_usemagicitem.test.js"
     ]

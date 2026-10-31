@@ -18,7 +18,8 @@ import { createBountyHost, BOUNTY_RETRY_S } from '../../../src/scenes/bountyHost
 
 const world = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
 const camp = world.slice(world.indexOf('  const _standCampEncounter ='), world.indexOf('  // BOUNTY1: A BOUNTY\'S PACK'));
-const bounty = world.slice(world.indexOf('  const _standBountyPack ='), world.indexOf('  // BOUNTY1 (Mac: "Dungeon bounties'));
+// PIN MOVED (STOREFRONT): the dungeon pack that followed it moved out to scenes/bountyDungeonPack.js (HOST-SPLIT)
+const bounty = world.slice(world.indexOf('  const _standBountyPack ='), world.indexOf('  const _standLooseFoe ='));
 
 export function worldStand({collider, feet, inRock=(x,y,z)=>collider.insideSolid([x,y+0.5,z]), inBuilding=()=>false, random=()=>0.5}) {
   const spawned=[];

@@ -83,10 +83,10 @@ export const shieldSpriteUrl = (index) => {
  *  size draws nothing. The four archives each hold one size, so the
  *  table is four rows and not six hundred. */
 export const SHIELD_ARCHIVE_SIZES = Object.freeze({
-  112360: Object.freeze({ width: 134, height: 131 }),   // Buckler
-  112361: Object.freeze({ width: 157, height: 132 }),   // Round
-  112362: Object.freeze({ width: 157, height: 125 }),   // Kite
-  112363: Object.freeze({ width: 196, height: 146 }),   // Tower
+  112360: Object.freeze({ width: 134, height: 131 }), // Buckler
+  112361: Object.freeze({ width: 157, height: 132 }), // Round
+  112362: Object.freeze({ width: 157, height: 125 }), // Kite
+  112363: Object.freeze({ width: 196, height: 146 }), // Tower
 });
 
 /** The sprite's size. Known up front for every one of the 600. */
@@ -95,7 +95,7 @@ export function shieldWidgetSize(index) {
   return SHIELD_ARCHIVE_SIZES[shieldTextureName(index).archive] ?? null;
 }
 
-const _images = new Map();   // flat index -> Promise<image | null>
+const _images = new Map(); // flat index -> Promise<image | null>
 
 /** One sprite - `{ width, height, colors }` RGBA in the port's color32
  *  shape, which is what `renderer.uploadTexture` reads (TEX1). The rows
@@ -106,16 +106,19 @@ const _images = new Map();   // flat index -> Promise<image | null>
 export function shieldWidgetImage(index) {
   if (!(index >= 0 && index < SHIELD_TEXTURE_COUNT)) return Promise.resolve(null);
   if (!_images.has(index)) {
-    _images.set(index, (async () => {
-      try {
-        const res = await fetch(shieldSpriteUrl(index));
-        if (!res.ok) return null;
-        return toScreenOrder(await decodePng(new Uint8Array(await res.arrayBuffer())));
-      } catch (e) {
-        console.warn(`[shield widget] ${shieldTextureFileName(index)} would not load:`, e?.message ?? e);
-        return null;
-      }
-    })());
+    _images.set(
+      index,
+      (async () => {
+        try {
+          const res = await fetch(shieldSpriteUrl(index));
+          if (!res.ok) return null;
+          return toScreenOrder(await decodePng(new Uint8Array(await res.arrayBuffer())));
+        } catch (e) {
+          console.warn(`[shield widget] ${shieldTextureFileName(index)} would not load:`, e?.message ?? e);
+          return null;
+        }
+      })(),
+    );
   }
   return _images.get(index);
 }

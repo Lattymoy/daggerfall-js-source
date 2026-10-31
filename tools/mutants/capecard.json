@@ -1,0 +1,74 @@
+[
+  {
+    "name": "CAPE-CARD-the-view-turned-the-wrong-way",
+    "file": "src/characters/mobile/mobileUnit.js",
+    "old": "  const y = Math.atan2(dx, dz) + (orientation * Math.PI) / 4;",
+    "new": "  const y = Math.atan2(dx, dz) - (orientation * Math.PI) / 4;",
+    "tests": [
+      "test/render/capecard.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-CARD-a-doll-faced-on-the-pose",
+    "file": "src/net/remotePlayers.js",
+    "old": "      : eye[0] !== at[0] || eye[2] !== at[2] ? Math.atan2(eye[0] - at[0], eye[2] - at[2]) : null;",
+    "new": "      : peerBodyYaw(e.peer?.shown);",
+    "tests": [
+      "test/render/capecard.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-CARD-the-card-unsaid",
+    "file": "src/net/remotePlayers.js",
+    "old": "(e.face = { yaw: 0, turn: 0, card: true, front: false, at })",
+    "new": "(e.face = { yaw: 0, turn: 0, front: false, at })",
+    "tests": [
+      "test/render/capecard.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-CARD-the-card-ignored",
+    "file": "src/render/auraRing.js",
+    "old": "card: !fig && face?.card === true,",
+    "new": "card: false,",
+    "tests": [
+      "test/render/capecard.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-CARD-the-card-pose-not-hung",
+    "file": "src/render/auraRing.js",
+    "old": "w.cape = card ? CLOAK_CARD_POSE : CLOAK_REST_POSE;",
+    "new": "w.cape = CLOAK_REST_POSE;",
+    "tests": [
+      "test/render/capecard.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-CARD-a-card-in-the-saddle-at-the-body",
+    "file": "src/render/auraRing.js",
+    "old": "c.wingBack = card ? WING_SPRITE_BACK : 0;",
+    "new": "c.wingBack = 0;",
+    "tests": [
+      "test/render/capecard.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-CARD-a-shared-pose-written",
+    "file": "src/render/auraRing.js",
+    "old": "(p && p !== CLOAK_REST_POSE && p !== CLOAK_CARD_POSE ? p : null)",
+    "new": "(p && p !== CLOAK_REST_POSE ? p : null)",
+    "tests": [
+      "test/render/capecard.test.js"
+    ]
+  },
+  {
+    "name": "CAPE-CARD-the-classic-layer-left-out",
+    "file": "src/scenes/world.js",
+    "old": "sprites: () => [peerWalkers, peerRiders, remotePlayers], bodies: () => peerBodies,",
+    "new": "sprites: () => [peerWalkers, peerRiders], bodies: () => peerBodies,",
+    "tests": [
+      "test/render/capecard.test.js"
+    ]
+  }
+]

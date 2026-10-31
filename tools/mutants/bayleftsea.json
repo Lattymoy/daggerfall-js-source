@@ -20,8 +20,8 @@
   {
     "name": "BLS-hub-only-provinces",
     "file": "src/systems/region/marketHubs.js",
-    "old": "  if (!PROVINCE_HUB_REGIONS.includes(region)) return null;",
-    "new": "",
+    "old": "  if (!PROVINCE_HUB_REGIONS.includes(region)) return null;\n  const key = seats?.powers?.get(region);",
+    "new": "  const key = seats?.powers?.get(region);",
     "tests": [
       "test/world/worldWide/bayleftsea_market.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "BLS-hub-region-unfiltered",
     "file": "src/systems/region/marketHubs.js",
-    "old": "    if (p.region !== region) continue;",
-    "new": "",
+    "old": "    if (p.region !== region) continue;\n    const kind = settlementRank(p.type);",
+    "new": "    const kind = settlementRank(p.type);",
     "tests": [
       "test/world/worldWide/bayleftsea_market.test.js"
     ]
@@ -57,7 +57,7 @@
     "name": "BLS-hub-tie-higher-id",
     "file": "src/systems/region/marketHubs.js",
     "old": "    const c = [kind, p.blocks, -(p.mapId >>> 0)];",
-    "new": "    const c = [kind, p.blocks, (p.mapId >>> 0)];",
+    "new": "    const c = [kind, p.blocks, p.mapId >>> 0];",
     "tests": [
       "test/world/worldWide/bayleftsea_market.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "BLS-hub-host-stall-old",
     "file": "src/scenes/vendorHost.js",
-    "old": "    const hub = marketHubs()[row.region];",
-    "new": "    const hub = marketHubs[row.region];",
+    "old": "    const hub = marketHubs()[row.region]; // BAY-LEFT-SEA: the hubs as they stand now (systems/region/marketHubs.js)",
+    "new": "    const hub = marketHubs[row.region]; // BAY-LEFT-SEA: the hubs as they stand now (systems/region/marketHubs.js)",
     "tests": [
       "test/world/worldWide/bayleftsea_market.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "BLS-port-crown-never-asked",
     "file": "src/world/worldWide/worldPorts.js",
-    "old": "theatre: p.theatre, crown: crownAt(p.px, p.py),",
-    "new": "theatre: p.theatre, crown: null,",
+    "old": "      crown: crownAt(p.px, p.py), // AUDIT TESA II P7: its province's region (WW-R); BAY-LEFT-SEA: the nearest Bay crown's office",
+    "new": "      crown: null, // AUDIT TESA II P7: its province's region (WW-R); BAY-LEFT-SEA: the nearest Bay crown's office",
     "tests": [
       "test/world/worldWide/bayleftsea_harbour.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "BLS-port-crown-other-pixel",
     "file": "src/world/worldWide/worldPorts.js",
-    "old": "theatre: p.theatre, crown: crownAt(p.px, p.py),",
-    "new": "theatre: p.theatre, crown: crownAt(p.py, p.px),",
+    "old": "      crown: crownAt(p.px, p.py), // AUDIT TESA II P7: its province's region (WW-R); BAY-LEFT-SEA: the nearest Bay crown's office",
+    "new": "      crown: crownAt(p.py, p.px), // AUDIT TESA II P7: its province's region (WW-R); BAY-LEFT-SEA: the nearest Bay crown's office",
     "tests": [
       "test/world/worldWide/bayleftsea_harbour.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "BLS-audit-by-location-again",
     "file": "server-account/src/townEcon.js",
-    "old": "ORDER BY ${AUDIT_ORDER_SQL} LIMIT ?2 OFFSET ?3`)",
-    "new": "ORDER BY location LIMIT ?2 OFFSET ?3`)",
+    "old": "      `SELECT map, px, py, location, at FROM town_econ_towns WHERE region = ?1 ORDER BY ${AUDIT_ORDER_SQL} LIMIT ?2 OFFSET ?3`,",
+    "new": "      `SELECT map, px, py, location, at FROM town_econ_towns WHERE region = ?1 ORDER BY location LIMIT ?2 OFFSET ?3`,",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "BLS-audit-bay-unranked",
     "file": "server-account/src/townEcon.js",
-    "old": "const AUDIT_ORDER_SQL = `CASE WHEN location >= 0 THEN 0 WHEN",
-    "new": "const AUDIT_ORDER_SQL = `CASE WHEN",
+    "old": "const AUDIT_ORDER_SQL = `CASE WHEN location >= 0 THEN 0 WHEN ((map >> 20) & 4095) = ${TOWN_AUDIT_CAPITAL_LANE} THEN 1 ELSE 2 END, ABS(location), map`;",
+    "new": "const AUDIT_ORDER_SQL = `CASE WHEN ((map >> 20) & 4095) = ${TOWN_AUDIT_CAPITAL_LANE} THEN 1 ELSE 2 END, ABS(location), map`;",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "BLS-audit-capital-lane-unread",
     "file": "server-account/src/townEcon.js",
-    "old": "= ${TOWN_AUDIT_CAPITAL_LANE} THEN 1",
-    "new": "= -1 THEN 1",
+    "old": "const AUDIT_ORDER_SQL = `CASE WHEN location >= 0 THEN 0 WHEN ((map >> 20) & 4095) = ${TOWN_AUDIT_CAPITAL_LANE} THEN 1 ELSE 2 END, ABS(location), map`;",
+    "new": "const AUDIT_ORDER_SQL = `CASE WHEN location >= 0 THEN 0 WHEN ((map >> 20) & 4095) = -1 THEN 1 ELSE 2 END, ABS(location), map`;",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "BLS-audit-index-size-unread",
     "file": "server-account/src/townEcon.js",
-    "old": "ELSE 2 END, ABS(location), map`;",
-    "new": "ELSE 2 END, map`;",
+    "old": "const AUDIT_ORDER_SQL = `CASE WHEN location >= 0 THEN 0 WHEN ((map >> 20) & 4095) = ${TOWN_AUDIT_CAPITAL_LANE} THEN 1 ELSE 2 END, ABS(location), map`;",
+    "new": "const AUDIT_ORDER_SQL = `CASE WHEN location >= 0 THEN 0 WHEN ((map >> 20) & 4095) = ${TOWN_AUDIT_CAPITAL_LANE} THEN 1 ELSE 2 END, map`;",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "BLS-audit-page-unread",
     "file": "server-account/src/townEcon.js",
-    "old": "    .bind(region, TOWN_AUDIT_PAGE + 1, page * TOWN_AUDIT_PAGE).all();",
-    "new": "    .bind(region, TOWN_AUDIT_PAGE + 1, 0).all();",
+    "old": "    .bind(region, TOWN_AUDIT_PAGE + 1, page * TOWN_AUDIT_PAGE)",
+    "new": "    .bind(region, TOWN_AUDIT_PAGE + 1, 0)",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "BLS-audit-more-unsaid",
     "file": "server-account/src/townEcon.js",
-    "old": "  const more = rows.length > TOWN_AUDIT_PAGE, towns = rows.slice(0, TOWN_AUDIT_PAGE);",
-    "new": "  const more = false, towns = rows.slice(0, TOWN_AUDIT_PAGE);",
+    "old": "  const more = rows.length > TOWN_AUDIT_PAGE,",
+    "new": "  const more = false,",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "BLS-audit-page-unbounded",
     "file": "server-account/src/townEcon.js",
-    "old": "!Number.isSafeInteger(page) || page < 0 || page > 9999)",
-    "new": "!Number.isSafeInteger(page) || page < 0)",
+    "old": "  if (!seatRegionOk(region) || !Number.isSafeInteger(page) || page < 0 || page > 9999) return { error: 'bad-town' }; // WW7-5: any region's town, the provinces' too",
+    "new": "  if (!seatRegionOk(region) || !Number.isSafeInteger(page) || page < 0) return { error: 'bad-town' }; // WW7-5: any region's town, the provinces' too",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "BLS-audit-witnesses-region-first",
     "file": "server-account/src/townEcon.js",
-    "old": "    WHERE w.kind = ?1 AND w.key IN (SELECT '1:' || value FROM json_each(?2)) ORDER BY w.at LIMIT 4000`).bind(TOWN_WITNESS_KIND, JSON.stringify(towns.map((r) => Number(r.map)))).all();",
-    "new": "    JOIN town_econ_towns t ON w.key = '1:' || t.map WHERE w.kind = ?1 AND t.region = ?2 ORDER BY w.at LIMIT 4000`).bind(TOWN_WITNESS_KIND, region).all();",
+    "old": "    WHERE w.kind = ?1 AND w.key IN (SELECT '1:' || value FROM json_each(?2)) ORDER BY w.at LIMIT 4000`,\n    )\n    .bind(TOWN_WITNESS_KIND, JSON.stringify(towns.map((r) => Number(r.map))))",
+    "new": "    JOIN town_econ_towns t ON w.key = '1:' || t.map WHERE w.kind = ?1 AND t.region = ?2 ORDER BY w.at LIMIT 4000`,\n    )\n    .bind(TOWN_WITNESS_KIND, region)",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "BLS-audit-rank-capital",
     "file": "src/net/townEconLaw.js",
-    "old": "=== CAPITAL_LANE ? 1 :",
-    "new": "=== CAPITAL_LANE ? 2 :",
+    "old": "export const townAuditRank = (map, location) => (location >= 0 ? 0 : ((map >>> 20) & 0xfff) === CAPITAL_LANE ? 1 : 2);",
+    "new": "export const townAuditRank = (map, location) => (location >= 0 ? 0 : ((map >>> 20) & 0xfff) === CAPITAL_LANE ? 2 : 2);",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "BLS-audit-client-page-off-by-one",
     "file": "src/net/townEconBook.js",
-    "old": "return { op: 'audit', page: k - 1 };",
-    "new": "return { op: 'audit', page: k };",
+    "old": "  if (o === 'audit' && /^\\d{1,4}$/.test(key ?? '') && k >= 1 && !more.length) return { op: 'audit', page: k - 1 }; // BAY-LEFT-SEA: a page past the first",
+    "new": "  if (o === 'audit' && /^\\d{1,4}$/.test(key ?? '') && k >= 1 && !more.length) return { op: 'audit', page: k }; // BAY-LEFT-SEA: a page past the first",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js",
       "test/net/townecon_client.test.js"
@@ -282,8 +282,8 @@
   {
     "name": "BLS-audit-client-page-zero",
     "file": "src/net/townEconBook.js",
-    "old": "&& k >= 1 && !more.length) return { op: 'audit', page: k - 1 };",
-    "new": "&& k >= 0 && !more.length) return { op: 'audit', page: k - 1 };",
+    "old": "  if (o === 'audit' && /^\\d{1,4}$/.test(key ?? '') && k >= 1 && !more.length) return { op: 'audit', page: k - 1 }; // BAY-LEFT-SEA: a page past the first",
+    "new": "  if (o === 'audit' && /^\\d{1,4}$/.test(key ?? '') && k >= 0 && !more.length) return { op: 'audit', page: k - 1 }; // BAY-LEFT-SEA: a page past the first",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "BLS-audit-client-more-unsaid",
     "file": "src/net/townEconBook.js",
-    "old": "  if (data?.more === true) lines.push(",
-    "new": "  if (false) lines.push(",
+    "old": "  if (data?.more === true)\n    lines.push(`More confirmed towns of this region: /town audit ${(Number(data.page) || 0) + 2}`);",
+    "new": "  if (false) lines.push(`More confirmed towns of this region: /town audit ${(Number(data.page) || 0) + 2}`);",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "BLS-audit-client-more-page",
     "file": "src/net/townEconBook.js",
-    "old": "/town audit ${(Number(data.page) || 0) + 2}`);",
-    "new": "/town audit ${(Number(data.page) || 0) + 1}`);",
+    "old": "    lines.push(`More confirmed towns of this region: /town audit ${(Number(data.page) || 0) + 2}`);",
+    "new": "    lines.push(`More confirmed towns of this region: /town audit ${(Number(data.page) || 0) + 1}`);",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "BLS-audit-host-page-unhanded",
     "file": "src/scenes/townEconHost.js",
-    "old": "      towns.audit(regionHere(), cmd.page ?? 0).then((r) => {",
-    "new": "      towns.audit(regionHere(), 0).then((r) => {",
+    "old": "      towns.audit(regionHere(), cmd.page ?? 0).then(",
+    "new": "      towns.audit(regionHere(), 0).then(",
     "tests": [
       "test/net/townecon_client.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "BLS-den-id-any-kind",
     "file": "src/net/townSeatLaw.js",
-    "old": "export const bountyDenId = (kind, px, py) => (BOUNTY_DEN_KINDS.includes(kind) && Number.isSafeInteger(px)",
-    "new": "export const bountyDenId = (kind, px, py) => (Number.isSafeInteger(px)",
+    "old": "  BOUNTY_DEN_KINDS.includes(kind) && Number.isSafeInteger(px) && Number.isSafeInteger(py)\n    ? `${px},${py}:${kind}`\n    : null;",
+    "new": "  Number.isSafeInteger(px) && Number.isSafeInteger(py) ? `${px},${py}:${kind}` : null;",
     "tests": [
       "test/net/bayleftsea_bounty.test.js"
     ]
@@ -390,8 +390,8 @@
   {
     "name": "BLS-den-id-fractions",
     "file": "src/net/townSeatLaw.js",
-    "old": "(BOUNTY_DEN_KINDS.includes(kind) && Number.isSafeInteger(px) && Number.isSafeInteger(py) ?",
-    "new": "(BOUNTY_DEN_KINDS.includes(kind) ?",
+    "old": "export const bountyDenId = (kind, px, py) =>\n  BOUNTY_DEN_KINDS.includes(kind) && Number.isSafeInteger(px) && Number.isSafeInteger(py)\n    ? `${px},${py}:${kind}`\n    : null;",
+    "new": "export const bountyDenId = (kind, px, py) => (BOUNTY_DEN_KINDS.includes(kind) ? `${px},${py}:${kind}` : null);",
     "tests": [
       "test/net/bayleftsea_bounty.test.js"
     ]
@@ -444,8 +444,8 @@
   {
     "name": "BLS-edict-den-pay-unsaid",
     "file": "src/net/townSeatLaw.js",
-    "old": "a den cleared, from what is set aside.', { silver: BOUNTY_MARKS });",
-    "new": "a den cleared, from what is set aside.', { silver: 0 });",
+    "old": "    { silver: BOUNTY_MARKS },",
+    "new": "    { silver: 0 },",
     "tests": [
       "test/net/bayleftsea_bounty.test.js"
     ]
@@ -507,8 +507,8 @@
   {
     "name": "BLS-se-gap-for-camps-too",
     "file": "src/systems/seatEdicts.js",
-    "old": "    if (!camp) {\n      const now = host.nowMs?.() ?? Date.now(), was = denAsked.get(site);",
-    "new": "    if (true) {\n      const now = host.nowMs?.() ?? Date.now(), was = denAsked.get(site);",
+    "old": "    if (!camp) {",
+    "new": "    if (true) {",
     "tests": [
       "test/net/bayleftsea_bounty.test.js"
     ]
@@ -516,8 +516,8 @@
   {
     "name": "BLS-se-gap-unremembered",
     "file": "src/systems/seatEdicts.js",
-    "old": "      denAsked.set(site, now);",
-    "new": "      ;",
+    "old": "      denAsked.set(site, now);\n    }",
+    "new": "    }",
     "tests": [
       "test/net/bayleftsea_bounty.test.js"
     ]
@@ -525,8 +525,8 @@
   {
     "name": "BLS-se-gap-the-game-clock",
     "file": "src/systems/seatEdicts.js",
-    "old": "      const now = host.nowMs?.() ?? Date.now(), was = denAsked.get(site);",
-    "new": "      const now = Date.now(), was = denAsked.get(site);",
+    "old": "      const now = host.nowMs?.() ?? Date.now(),",
+    "new": "      const now = Date.now(),",
     "tests": [
       "test/net/bayleftsea_bounty.test.js"
     ]
@@ -543,7 +543,7 @@
   {
     "name": "BLS-se-rout-unclaimed",
     "file": "src/systems/seatEdicts.js",
-    "old": "    hideoutRouted: (h) => { denCleared('hideout', h?.px, h?.py).catch(() => {}); },",
+    "old": "    hideoutRouted: (h) => {\n      denCleared('hideout', h?.px, h?.py).catch(() => {});\n    },",
     "new": "    hideoutRouted: () => {},",
     "tests": [
       "test/net/bayleftsea_bounty.test.js"
@@ -562,7 +562,7 @@
     "name": "BLS-se-lair-a-hideout",
     "file": "src/systems/seatEdicts.js",
     "old": "export const lairDenOf = (loc) => (loc?.country?.dungeon ? bountyDenId('lair', loc.country.px, loc.country.py) : null);",
-    "new": "export const lairDenOf = (loc) => (loc?.country?.dungeon ? bountyDenId('hideout', loc.country.px, loc.country.py) : null);",
+    "new": "export const lairDenOf = (loc) =>\n  loc?.country?.dungeon ? bountyDenId('hideout', loc.country.px, loc.country.py) : null;",
     "tests": [
       "test/net/bayleftsea_bounty.test.js"
     ]
@@ -579,8 +579,8 @@
   {
     "name": "BLS-rout-untold",
     "file": "src/scenes/hideouts.js",
-    "old": "    deps.routed?.(s.h);   // BAY-LEFT-SEA",
-    "new": "    void s.h;   // BAY-LEFT-SEA",
+    "old": "    deps.routed?.(s.h); // BAY-LEFT-SEA: a den cleared - a Bounty past the Bay pays for it (systems/seatEdicts.js hideoutRouted)",
+    "new": "    void s.h; // BAY-LEFT-SEA: a den cleared - a Bounty past the Bay pays for it (systems/seatEdicts.js hideoutRouted)",
     "tests": [
       "test/net/bayleftsea_bounty.test.js"
     ]
@@ -617,8 +617,8 @@
   {
     "name": "BLS-tab-seat-unhanded",
     "file": "src/ui/seatTab.js",
-    "old": "    const words = edictLine(chosen, seat.tier, data?.tides?.next ?? 'calm', seat);",
-    "new": "    const words = edictLine(chosen, seat.tier, data?.tides?.next ?? 'calm');",
+    "old": "    const words = edictLine(chosen, seat.tier, data?.tides?.next ?? 'calm', seat); // SEASON1 part two: the coming week's Tide on its cost; BAY-LEFT-SEA: a Bounty past the Bay its dens'",
+    "new": "    const words = edictLine(chosen, seat.tier, data?.tides?.next ?? 'calm'); // SEASON1 part two: the coming week's Tide on its cost; BAY-LEFT-SEA: a Bounty past the Bay its dens'",
     "tests": [
       "test/net/bayleftsea_bounty.test.js"
     ]
@@ -680,8 +680,8 @@
   {
     "name": "BLS-rows-port-old-law",
     "file": "src/world/pastBayRows.js",
-    "old": "          port: capitalSlicePort(k, s, pin?.port),",
-    "new": "          port: capitalSlicePort(k, s, false),",
+    "old": "          port: capitalSlicePort(k, s, pin?.port), // NIBEN-SEA: its harbour's slice (the Imperial City's Waterfront, on its canal); BAY-LEFT-SEA: the slice's own port byte's law",
+    "new": "          port: capitalSlicePort(k, s, false), // NIBEN-SEA: its harbour's slice (the Imperial City's Waterfront, on its canal); BAY-LEFT-SEA: the slice's own port byte's law",
     "tests": [
       "test/world/worldWide/bayleftsea_capitals.test.js"
     ]

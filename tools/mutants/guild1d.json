@@ -11,8 +11,8 @@
   {
     "name": "GUILD1d-price-rounded-down",
     "file": "src/net/hallLaw.js",
-    "old": "price + Math.ceil(price / 2)",
-    "new": "price + Math.floor(price / 2)",
+    "old": "export const guildHallPrice = (price) => (Number.isSafeInteger(price) && price > 0 ? price + Math.ceil(price / 2) : 0);",
+    "new": "export const guildHallPrice = (price) => (Number.isSafeInteger(price) && price > 0 ? price + Math.floor(price / 2) : 0);",
     "tests": [
       "test/net/guild1d_client.test.js",
       "test/net/guild1d_service.test.js"
@@ -113,7 +113,7 @@
   {
     "name": "GUILD1d-entry-rank-unasked",
     "file": "server-account/src/halls.js",
-    "old": "  if (!hallMay(a.me.rank, 'hallEntry')) return { error: 'guild-rank' };\n",
+    "old": "  if (!guildMay(a.me.rank, 'hallEntry', a.powers)) return { error: 'guild-rank' };   // GUILD-RANKS: as the guild set it\n",
     "new": "",
     "tests": [
       "test/net/guild1d_service.test.js",
@@ -160,8 +160,8 @@
   {
     "name": "GUILD1d-ash-a-field",
     "file": "src/net/heraldryLaw.js",
-    "old": "if (field === HERALDRY_UNHELD || field === border) return null;",
-    "new": "if (field === border) return null;",
+    "old": "  if (field === HERALDRY_UNHELD || field === border) return null;",
+    "new": "  if (field === border) return null;",
     "tests": [
       "test/net/guild1d_client.test.js",
       "test/net/guild1d_service.test.js"
@@ -170,8 +170,8 @@
   {
     "name": "GUILD1d-hall-rule-gone",
     "file": "src/net/homeLaw.js",
-    "old": "  if (home.hall) return home.member === true || home.entry === 'public';\n",
-    "new": "",
+    "old": "  if (home.hall) return home.member === true || home.entry === 'public';\n  if (home.mine) return true;",
+    "new": "  if (home.mine) return true;",
     "tests": [
       "test/net/guild1d_client.test.js",
       "test/net/guild1d_service.test.js"
@@ -180,8 +180,8 @@
   {
     "name": "GUILD1d-guildmate-unread",
     "file": "src/net/homeLaw.js",
-    "old": "  if (home.entry === 'guild') return home.guildmate === true;",
-    "new": "  if (home.entry === 'guild') return false;",
+    "old": "  if (home.entry === 'guild') return home.guildmate === true; // GUILD1d: the playing character shares the owner's character's guild (the service's word)",
+    "new": "  if (home.entry === 'guild') return false; // GUILD1d: the playing character shares the owner's character's guild (the service's word)",
     "tests": [
       "test/net/guild1d_client.test.js",
       "test/net/guild1d_service.test.js"
@@ -190,7 +190,7 @@
   {
     "name": "GUILD1d-every-member-a-keeper",
     "file": "server-account/src/homes.js",
-    "old": "...(hallMay(rank, 'decorate') && h.me_realm === 1 ? { keeper: true } : {})",
+    "old": "...(guildMay(rank, 'decorate', powers) && h.me_realm === 1 ? { keeper: true } : {})",
     "new": "...({ keeper: true })",
     "tests": [
       "test/net/guild1d_service.test.js"
@@ -209,7 +209,7 @@
   {
     "name": "GUILD1d-owns-any-member",
     "file": "server-account/src/decor.js",
-    "old": "AND g.char_id = k.c\n      AND g.rank IN (${HALL_POWERS.decorate.join(', ')})\n      AND EXISTS (SELECT 1 FROM realm_characters rc",
+    "old": "AND g.char_id = k.c\n      AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}\n      AND EXISTS (SELECT 1 FROM realm_characters rc",
     "new": "AND g.char_id = k.c\n      AND EXISTS (SELECT 1 FROM realm_characters rc",
     "tests": [
       "test/net/guild1d_service.test.js"
@@ -259,8 +259,8 @@
   {
     "name": "GUILD1d-officer-offered-the-buy",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "if (!guild || guild.rank !== 0 || guild.hall) return null;",
-    "new": "if (!guild || guild.hall) return null;",
+    "old": "  if (!guild || guild.rank !== 0 || guild.hall) return null;",
+    "new": "  if (!guild || guild.hall) return null;",
     "tests": [
       "test/net/guild1d_client.test.js"
     ]
@@ -268,8 +268,8 @@
   {
     "name": "GUILD1d-entry-row-to-a-member",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "...(hallEntryTurnable(home) ? [{ id: HALL_VERB.entry,",
-    "new": "...(true ? [{ id: HALL_VERB.entry,",
+    "old": "    ...(hallEntryTurnable(home)",
+    "new": "    ...(true",
     "tests": [
       "test/net/guild1d_client.test.js"
     ]
@@ -277,8 +277,8 @@
   {
     "name": "GUILD1d-hall-town-untold",
     "file": "src/net/guild/guildBook.js",
-    "old": "    if (r?.ok && Number.isSafeInteger(mapId)) { try { this.onHall?.(mapId);",
-    "new": "    if (false) { try { this.onHall?.(mapId);",
+    "old": "    if (r?.ok && Number.isSafeInteger(mapId)) {",
+    "new": "    if (false) {",
     "tests": [
       "test/net/guild1d_client.test.js"
     ]
@@ -322,8 +322,8 @@
   {
     "name": "GUILD1d-banners-version-unread",
     "file": "src/scenes/hallBanners.js",
-    "old": "      if (v !== seen || now() - at >= BANNER_REFRESH_MS)",
-    "new": "      if (now() - at >= BANNER_REFRESH_MS)",
+    "old": "      if (lv !== seen || now() - at >= BANNER_REFRESH_MS) {",
+    "new": "      if (now() - at >= BANNER_REFRESH_MS) {",
     "tests": [
       "test/net/guild1d_client.test.js"
     ]
@@ -349,8 +349,8 @@
   {
     "name": "GUILD1d-hole-in-the-device-colour",
     "file": "src/ui/heraldryArt.js",
-    "old": "drawDevice(ctx, P, h.device, ink, field, BANNER_DEVICE, div, f2,",
-    "new": "drawDevice(ctx, P, h.device, ink, ink, BANNER_DEVICE, div, f2,",
+    "old": "      ink,\n      field,\n      BANNER_DEVICE,",
+    "new": "      ink,\n      ink,\n      BANNER_DEVICE,",
     "tests": [
       "test/net/guild1d_client.test.js"
     ],

@@ -38,7 +38,8 @@ const KIND_RANK = Object.freeze({
   [LOCATION_TYPES.TownVillage]: 1,
 });
 
-const same = (a, b) => typeof a === 'string' && typeof b === 'string' && a.trim().toLowerCase() === b.trim().toLowerCase();
+const same = (a, b) =>
+  typeof a === 'string' && typeof b === 'string' && a.trim().toLowerCase() === b.trim().toLowerCase();
 /** BAY-LEFT-SEA (systems/region/marketHubs.js): a settlement kind's rank - 3 a city, 2 a town, 1 a village, 0 no
  *  settlement - the claim's first word, read by a province's market hub off a registry row's type. */
 export const settlementRank = (type) => KIND_RANK[type] ?? 0;
@@ -105,11 +106,14 @@ export function pickRegionHubs(locations, { regionNameOf = (r) => REGION_NAMES[r
 /** The hub of a region, or null. */
 export const hubOfRegion = (hubs, regionIndex) => hubs?.byRegion?.get(regionIndex) ?? null;
 /** The hub a location IS, by its map id (signed as MAPS.BSA reads it, or not), or null. */
-export const hubAtMapId = (hubs, mapId) => (mapId == null || !Number.isFinite(Number(mapId)) ? null : hubs?.byMapId?.get(Number(mapId) >>> 0) ?? null);
+export const hubAtMapId = (hubs, mapId) =>
+  mapId == null || !Number.isFinite(Number(mapId)) ? null : (hubs?.byMapId?.get(Number(mapId) >>> 0) ?? null);
 
 /** What a hub is: "Capital of the Kingdom of Daggerfall", "Hub of Dragontail Mountains". */
-export const hubTitle = (hub) => (hub.capital ? `Capital of the Kingdom of ${hub.regionName}` : `Hub of ${hub.regionName}`);
+export const hubTitle = (hub) =>
+  hub.capital ? `Capital of the Kingdom of ${hub.regionName}` : `Hub of ${hub.regionName}`;
 /** The map's word for one, beside its "Region : Location". */
 export const hubMapWord = (hub) => (hub.capital ? 'Capital' : 'Hub');
 /** The line a player reads walking into one. */
-export const hubArrivalLine = (hub) => `${hub.name}, ${hub.capital ? 'capital of the Kingdom of' : 'hub of'} ${hub.regionName}.`;
+export const hubArrivalLine = (hub) =>
+  `${hub.name}, ${hub.capital ? 'capital of the Kingdom of' : 'hub of'} ${hub.regionName}.`;

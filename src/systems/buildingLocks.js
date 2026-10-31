@@ -15,8 +15,8 @@
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { isShop } from './shopStock.js';
 import { HOLIDAYS } from './holidays.js';
-import { sharedClockOn } from './worldTick.js';   // OL4 (AUDIT ALL O1): the shared clock IS the reason for the shift, and every other online law keys on it
-import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { sharedClockOn } from './worldTick.js'; // OL4 (AUDIT ALL O1): the shared clock IS the reason for the shift, and every other online law keys on it
+import { localizedText } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** Opening and closing hours by building type (PlayerActivate.cs:
  *  91-92), indexed by DFLocation.BuildingTypes 0..24. closeHours 25
@@ -24,8 +24,12 @@ import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_St
  *  always open (taverns, temples); open 0 + close 0 is NEVER open -
  *  House1's row, so a House1 is permanently locked and only a pick
  *  or a quest opens it, classic's own shape. */
-export const OPEN_HOURS = Object.freeze([7, 8, 9, 8, 0, 9, 10, 10, 9, 6, 9, 11, 9, 9, 0, 0, 10, 0, 6, 6, 6, 6, 6, 6, 0]);
-export const CLOSE_HOURS = Object.freeze([22, 16, 19, 15, 25, 21, 19, 20, 18, 23, 23, 23, 20, 20, 25, 25, 16, 0, 18, 18, 18, 18, 18, 18, 25]);
+export const OPEN_HOURS = Object.freeze([
+  7, 8, 9, 8, 0, 9, 10, 10, 9, 6, 9, 11, 9, 9, 0, 0, 10, 0, 6, 6, 6, 6, 6, 6, 0,
+]);
+export const CLOSE_HOURS = Object.freeze([
+  22, 16, 19, 15, 25, 21, 19, 20, 18, 23, 23, 23, 20, 20, 25, 25, 16, 0, 18, 18, 18, 18, 18, 18, 25,
+]);
 
 /** Effective IsBuildingOpen; offline is :102-106, online shops layer OL4. */
 export function isBuildingOpen(buildingType, hour, opts = {}) {
@@ -77,11 +81,18 @@ export const buildingLockValue = (quality) => Math.trunc((quality ?? 0) / 2);
  *                                   shipyard now sells the ship whose
  *                                   door it opens)
  */
-export function buildingIsUnlocked(building, {
-  hour = 12, holidayId = -1, online = sharedClockOn(),
-  isHouseOwned = null, isActiveQuestBuilding = null,
-  guildForBuilding = null, ownsShip = false,
-} = {}) {
+export function buildingIsUnlocked(
+  building,
+  {
+    hour = 12,
+    holidayId = -1,
+    online = sharedClockOn(),
+    isHouseOwned = null,
+    isActiveQuestBuilding = null,
+    guildForBuilding = null,
+    ownsShip = false,
+  } = {},
+) {
   const type = building?.buildingType ?? BUILDING_TYPES.None;
   // Player owned house is always unlocked (:1262)
   if (isHouseOwned?.(building?.buildingKey) ?? false) return true;
@@ -143,9 +154,12 @@ export function buildingIsUnlocked(building, {
  * override's sentence is the mod's own, so it stays English.
  */
 export function buildingClosedText(buildingType, { subject = null } = {}) {
-  const text = subject != null ? `${subject} is closed. Open from %d1:00 to %d2:00.`
-    : buildingType === BUILDING_TYPES.GuildHall ? localizedText('guildClosed', 'Guild is closed. Open from %d1:00 to %d2:00.')
-      : localizedText('storeClosed', 'Store is closed. Open from %d1:00 to %d2:00.');
+  const text =
+    subject != null
+      ? `${subject} is closed. Open from %d1:00 to %d2:00.`
+      : buildingType === BUILDING_TYPES.GuildHall
+        ? localizedText('guildClosed', 'Guild is closed. Open from %d1:00 to %d2:00.')
+        : localizedText('storeClosed', 'Store is closed. Open from %d1:00 to %d2:00.');
   return text.replaceAll('%d1', String(OPEN_HOURS[buildingType])).replaceAll('%d2', String(CLOSE_HOURS[buildingType]));
 }
 
@@ -200,8 +214,12 @@ export const lockedExteriorDoorText = () => localizedText('lockedExteriorDoor', 
  * earns the shift it is named here and every caller - the door, the people,
  * the shelves - follows, because they all ask buildingHoursState.
  */
-export const onlineReliefBuilding = (type) => isShop(type) || type === BUILDING_TYPES.GuildHall
-  || type === BUILDING_TYPES.Bank || type === BUILDING_TYPES.Library || type === BUILDING_TYPES.Palace;
+export const onlineReliefBuilding = (type) =>
+  isShop(type) ||
+  type === BUILDING_TYPES.GuildHall ||
+  type === BUILDING_TYPES.Bank ||
+  type === BUILDING_TYPES.Library ||
+  type === BUILDING_TYPES.Palace;
 
 /** The staffing answer. OL4 minted it for shops; OL5 widened its subjects to
  *  `onlineReliefBuilding` - the name is kept because the OL4 Ledger row cites
@@ -229,14 +247,17 @@ export function classicBuildingOpen(buildingType, hour) {
  * clock standing (worldTick.sharedClockOn) - the one predicate every
  * clock-derived online law reads (RESTX2, OL3, ECON1).
  */
-export function buildingHoursState(buildingType, {
-  hour = 12,
-  holidayId = -1,
-  online = sharedClockOn(),   // AUDIT ALL O1: the clock, not the URL - a page that says ?online with no clock installed (the fixed city's dev door) is not the shared world
-} = {}) {
+export function buildingHoursState(
+  buildingType,
+  {
+    hour = 12,
+    holidayId = -1,
+    online = sharedClockOn(), // AUDIT ALL O1: the clock, not the URL - a page that says ?online with no clock installed (the fixed city's dev door) is not the shared world
+  } = {},
+) {
   const type = buildingType ?? BUILDING_TYPES.None;
   const shop = isShop(type);
-  const relieved = onlineReliefBuilding(type);   // OL5 and OL6: shops, the guild hall, the bank, the library, the palace
+  const relieved = onlineReliefBuilding(type); // OL5 and OL6: shops, the guild hall, the bank, the library, the palace
   // Suns Rest is a SHOP closure in DFU (:1294-1302) and stays one - a guild
   // hall keeps its doors on the holiday because classic never shut them.
   const holidayClosed = shop && holidayId === HOLIDAYS.Suns_Rest;

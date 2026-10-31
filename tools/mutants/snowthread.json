@@ -11,8 +11,8 @@
   {
     "name": "SNOW-THREAD-ground-floor-read-with-the-switch-off",
     "file": "src/systems/snowfall/snowGroundLaw.js",
-    "old": "  if (floors && p.deepWaters) {   // DW-B: the floor is drawn there",
-    "new": "  if (p.deepWaters) {   // DW-B: the floor is drawn there",
+    "old": "  if (floors && p.deepWaters) {",
+    "new": "  if (p.deepWaters) {",
     "tests": [
       "test/systems/snowthread.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SNOW-THREAD-ground-bed-dropped",
     "file": "src/systems/snowfall/snowGroundLaw.js",
-    "old": "  return drawnGroundAt(p.samples, lx, lz, p._stride ?? 1, p._bed?.depths ?? null);",
-    "new": "  return drawnGroundAt(p.samples, lx, lz, p._stride ?? 1, null);",
+    "old": "  return drawnGroundAt(p.samples, lx, lz, p._stride ?? 1, p._bed?.depths ?? null); // WATER-NEXT 2: and the bed carved under a shore - FLORA-GROUND: the ground the pixel draws, the plants' (terrainSurface.js drawnGroundAt)",
+    "new": "  return drawnGroundAt(p.samples, lx, lz, p._stride ?? 1, null); // WATER-NEXT 2: and the bed carved under a shore - FLORA-GROUND: the ground the pixel draws, the plants' (terrainSurface.js drawnGroundAt)",
     "tests": [
       "test/systems/snowthread.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SNOW-THREAD-ground-stride-dropped",
     "file": "src/systems/snowfall/snowGroundLaw.js",
-    "old": "  return drawnGroundAt(p.samples, lx, lz, p._stride ?? 1, p._bed?.depths ?? null);",
-    "new": "  return drawnGroundAt(p.samples, lx, lz, 1, p._bed?.depths ?? null);",
+    "old": "  return drawnGroundAt(p.samples, lx, lz, p._stride ?? 1, p._bed?.depths ?? null); // WATER-NEXT 2: and the bed carved under a shore - FLORA-GROUND: the ground the pixel draws, the plants' (terrainSurface.js drawnGroundAt)",
+    "new": "  return drawnGroundAt(p.samples, lx, lz, 1, p._bed?.depths ?? null); // WATER-NEXT 2: and the bed carved under a shore - FLORA-GROUND: the ground the pixel draws, the plants' (terrainSurface.js drawnGroundAt)",
     "tests": [
       "test/systems/snowthread.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SNOW-THREAD-snapshot-loses-the-floor",
     "file": "src/systems/snowfall/snowGroundLaw.js",
-    "old": "floor: floor ? { vertexLocalY: floor.vertexLocalY ?? null, floorQuadWater: floor.floorQuadWater ?? null } : null } : null,",
-    "new": "floor: null } : null,",
+    "old": "    deepWaters: dw\n      ? {\n          holes: dw.holes ?? null,\n          floor: floor\n            ? { vertexLocalY: floor.vertexLocalY ?? null, floorQuadWater: floor.floorQuadWater ?? null }\n            : null,\n        }\n      : null,",
+    "new": "    deepWaters: dw ? { holes: dw.holes ?? null, floor: null } : null,",
     "tests": [
       "test/systems/snowthread.test.js"
     ]
@@ -66,7 +66,7 @@
     "name": "SNOW-THREAD-worker-roads-not-the-prepared-ones",
     "file": "src/systems/snowfall/snowBuildKernel.js",
     "old": "      roads.push({ data, x: r.x, z: r.z, tileMetres: r.tileMetres, archive: r.archive, mapX: r.mapX, mapY: r.mapY });",
-    "new": "      roads.push({ data, x: r.x + 1, z: r.z, tileMetres: r.tileMetres, archive: r.archive, mapX: r.mapX, mapY: r.mapY });",
+    "new": "      roads.push({\n        data,\n        x: r.x + 1,\n        z: r.z,\n        tileMetres: r.tileMetres,\n        archive: r.archive,\n        mapX: r.mapX,\n        mapY: r.mapY,\n      });",
     "tests": [
       "test/systems/snowthread.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SNOW-THREAD-worker-window-handed-over-ignored",
     "file": "src/systems/snowfall/snowBuildKernel.js",
-    "old": "    if (m.arrays) {\n      L.pos.set(m.arrays.pos);",
-    "new": "    if (m.arrays) {\n      void 0;",
+    "old": "      L.pos.set(m.arrays.pos);",
+    "new": "      void 0;",
     "tests": [
       "test/systems/snowthread.test.js"
     ]
@@ -92,7 +92,7 @@
   {
     "name": "SNOW-THREAD-client-fault-never-answered",
     "file": "src/systems/snowfall/snowBuildClient.js",
-    "old": "    if (m.t === 'error') { this._down(m.message); return; }",
+    "old": "    if (m.t === 'error') {\n      this._down(m.message);\n      return;\n    }",
     "new": "    if (m.t === 'error') return;",
     "tests": [
       "test/systems/snowthread.test.js"
@@ -110,8 +110,8 @@
   {
     "name": "SNOW-THREAD-client-let-go-answer-kept",
     "file": "src/systems/snowfall/snowBuildClient.js",
-    "old": "    this._forget(this._latest.mid);\n",
-    "new": "",
+    "old": "    this._forget(this._latest.mid);\n    this._latest.mid = id; // before the post: an answer is taken for the newest build of its kind alone",
+    "new": "    this._latest.mid = id; // before the post: an answer is taken for the newest build of its kind alone",
     "tests": [
       "test/systems/snowthread.test.js"
     ]
@@ -119,7 +119,7 @@
   {
     "name": "SNOW-THREAD-runtime-ring-left-on-this-thread",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "    M.job = this.builds?.postMid(this) ?? 0;   // SNOW-THREAD: sampled on the build worker when it can be (0: on this thread)",
+    "old": "    M.job = this.builds?.postMid(this) ?? 0; // SNOW-THREAD: sampled on the build worker when it can be (0: on this thread)",
     "new": "    M.job = 0;",
     "tests": [
       "test/systems/snowthread.test.js"
@@ -128,8 +128,8 @@
   {
     "name": "SNOW-THREAD-step1-run-past-the-row",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "        const run = Math.min(sres - j, sres - sj), from = (si * sres + sj) * 4;",
-    "new": "        const run = Math.min(sres - j + 1, sres - sj), from = (si * sres + sj) * 4;",
+    "old": "        const run = Math.min(sres - j, sres - sj),",
+    "new": "        const run = Math.min(sres - j + 1, sres - sj),",
     "tests": [
       "test/systems/snowthread.test.js",
       "test/systems/audit_environs.test.js"
@@ -166,8 +166,8 @@
   {
     "name": "SNOW-THREAD-VERIFY-stale-pixel-not-named",
     "file": "src/systems/snowfall/snowBuildVerify.js",
-    "old": "      if (fields.length) stale.push(",
-    "new": "      if (false) stale.push(",
+    "old": "      if (fields.length) stale.push({ pixel: [px, py], fields });",
+    "new": "      if (false) stale.push({ pixel: [px, py], fields });",
     "tests": [
       "test/systems/snowthread.test.js"
     ]

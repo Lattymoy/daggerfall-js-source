@@ -29,7 +29,7 @@
   {
     "name": "GUILD-YARD-keepers-any-rank",
     "file": "server-account/src/decor.js",
-    "old": "      AND g.rank IN (${HALL_POWERS.decorate.join(', ')})\n      AND EXISTS",
+    "old": "      AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}\n      AND EXISTS",
     "new": "      AND g.rank >= 0\n      AND EXISTS",
     "tests": [
       "test/net/guild_yard.test.js"
@@ -66,8 +66,8 @@
   {
     "name": "GUILD-YARD-a-member-keeps-the-outside",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "(home.own === true || (!!home.hall && home.keeper === true))",
-    "new": "(home.own === true || (!!home.hall && home.member === true))",
+    "old": "export const homeOutsideKept = (home) => !!home && (home.own === true || (!!home.hall && home.keeper === true));",
+    "new": "export const homeOutsideKept = (home) => !!home && (home.own === true || (!!home.hall && home.member === true));",
     "tests": [
       "test/net/guild_yard.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "GUILD-YARD-a-keeper-keeps-none",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "(home.own === true || (!!home.hall && home.keeper === true))",
-    "new": "(home.own === true)",
+    "old": "export const homeOutsideKept = (home) => !!home && (home.own === true || (!!home.hall && home.keeper === true));",
+    "new": "export const homeOutsideKept = (home) => !!home && home.own === true;",
     "tests": [
       "test/net/guild_yard.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "GUILD-YARD-the-yards-name",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "(home?.hall ? \"Your guild's yard\" : 'Your yard')",
-    "new": "('Your yard')",
+    "old": "export const homeYardWhere = (home) => (home?.hall ? \"Your guild's yard\" : 'Your yard');",
+    "new": "export const homeYardWhere = (home) => 'Your yard';",
     "tests": [
       "test/net/guild_yard.test.js"
     ]
@@ -204,8 +204,8 @@
   {
     "name": "AUDIT-PROF-541-G1-the-ranks-move-untold",
     "file": "src/net/guild/guildBook.js",
-    "old": "const moved = ranked !== this._ranked;",
-    "new": "const moved = false;",
+    "old": "    const moved = ranked !== this._ranked;",
+    "new": "    const moved = false;",
     "tests": [
       "test/net/guild_yard.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "AUDIT-GUILD-YARD-Y1-the-keeper-off-the-rank-alone",
     "file": "server-account/src/homes.js",
-    "old": "hallMay(rank, 'decorate') && h.me_realm === 1 ? { keeper: true }",
-    "new": "hallMay(rank, 'decorate') ? { keeper: true }",
+    "old": "guildMay(rank, 'decorate', powers) && h.me_realm === 1 ? { keeper: true }",
+    "new": "guildMay(rank, 'decorate', powers) ? { keeper: true }",
     "tests": [
       "test/net/guild_yard.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "AUDIT-PROF-541-G2-hallEntry-asks-a-realm-character",
     "file": "server-account/src/homes.js",
-    "old": "hallMay(rank, 'hallEntry') ? { hallEntry: true }",
-    "new": "hallMay(rank, 'hallEntry') && h.me_realm === 1 ? { hallEntry: true }",
+    "old": "guildMay(rank, 'hallEntry', powers) ? { hallEntry: true }",
+    "new": "guildMay(rank, 'hallEntry', powers) && h.me_realm === 1 ? { hallEntry: true }",
     "tests": [
       "test/net/guild_yard.test.js"
     ]
@@ -240,8 +240,8 @@
   {
     "name": "AUDIT-PROF-541-G2-the-registrys-hallEntry-the-keepers",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "hallEntry: h.hallEntry === true,",
-    "new": "hallEntry: h.keeper === true,",
+    "old": "              hallEntry: h.hallEntry === true, // AUDIT PROF-541 G2: may say who walks in - the rank's, no realm record asked",
+    "new": "              hallEntry: h.keeper === true, // AUDIT PROF-541 G2: may say who walks in - the rank's, no realm record asked",
     "tests": [
       "test/net/guild_yard.test.js"
     ]
@@ -249,8 +249,8 @@
   {
     "name": "AUDIT-PROF-541-G2-the-rows-gate-the-keepers",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "...(hallEntryTurnable(home) ? [{ id: HALL_VERB.entry,",
-    "new": "...(home.keeper ? [{ id: HALL_VERB.entry,",
+    "old": "    ...(hallEntryTurnable(home)",
+    "new": "    ...(home.keeper",
     "tests": [
       "test/net/guild_yard.test.js"
     ]

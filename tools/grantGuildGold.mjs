@@ -25,14 +25,15 @@ export const GRANT_BY = 'The developers';
 function keyOf(name) {
   const n = guildNameOf(name);
   if (!n) throw new Error(`not a guild name: ${JSON.stringify(name)}`);
-  return guildNameKey(n);   // [a-z0-9]+ alone: nothing in it can end an SQL string
+  return guildNameKey(n); // [a-z0-9]+ alone: nothing in it can end an SQL string
 }
 
 /** The award: digits only, at least one gold piece, never past the treasury's own cap. */
 export function grantGold(raw) {
   const s = String(raw ?? '').trim();
   const gold = /^[1-9][0-9]*$/.test(s) ? Number(s) : NaN;
-  if (!Number.isSafeInteger(gold) || gold > GUILD_TREASURY_MAX) throw new Error(`not an award: ${JSON.stringify(raw)} - digits only, 1 to ${GUILD_TREASURY_MAX}`);
+  if (!Number.isSafeInteger(gold) || gold > GUILD_TREASURY_MAX)
+    throw new Error(`not an award: ${JSON.stringify(raw)} - digits only, 1 to ${GUILD_TREASURY_MAX}`);
   return gold;
 }
 
@@ -62,5 +63,10 @@ function main(argv) {
 }
 
 if (isMain(import.meta.url)) {
-  try { main(process.argv.slice(2)); } catch (e) { console.error(e.message); process.exit(1); }
+  try {
+    main(process.argv.slice(2));
+  } catch (e) {
+    console.error(e.message);
+    process.exit(1);
+  }
 }

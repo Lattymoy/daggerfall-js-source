@@ -41,8 +41,8 @@
   {
     "name": "SEAT1c-law-standing-above",
     "file": "src/net/townSeatLaw.js",
-    "old": "(s - STANDING_START) * 0.005 : (s - STANDING_START) * 0.01);",
-    "new": "(s - STANDING_START) * 0.01 : (s - STANDING_START) * 0.01);",
+    "old": "  s >= STANDING_START ? (s - STANDING_START) * 0.005 : (s - STANDING_START) * 0.01;",
+    "new": "  s >= STANDING_START ? (s - STANDING_START) * 0.01 : (s - STANDING_START) * 0.01;",
     "tests": [
       "test/net/seat1c_service.test.js",
       "test/ui/seat1c_client.test.js"
@@ -51,8 +51,8 @@
   {
     "name": "SEAT1c-law-standing-below",
     "file": "src/net/townSeatLaw.js",
-    "old": "(s - STANDING_START) * 0.005 : (s - STANDING_START) * 0.01);",
-    "new": "(s - STANDING_START) * 0.005 : (s - STANDING_START) * 0.005);",
+    "old": "  s >= STANDING_START ? (s - STANDING_START) * 0.005 : (s - STANDING_START) * 0.01;",
+    "new": "  s >= STANDING_START ? (s - STANDING_START) * 0.005 : (s - STANDING_START) * 0.005;",
     "tests": [
       "test/ui/seat1c_client.test.js"
     ]
@@ -70,8 +70,8 @@
   {
     "name": "SEAT1c-law-tie-pledge-order",
     "file": "src/net/townSeatLaw.js",
-    "old": "  || (a.pledgedAt ?? Infinity) - (b.pledgedAt ?? Infinity) ||",
-    "new": "  || (b.pledgedAt ?? Infinity) - (a.pledgedAt ?? Infinity) ||",
+    "old": "  (a.pledgedAt ?? Infinity) - (b.pledgedAt ?? Infinity) ||",
+    "new": "  (b.pledgedAt ?? Infinity) - (a.pledgedAt ?? Infinity) ||",
     "tests": [
       "test/ui/seat1c_client.test.js"
     ]
@@ -79,8 +79,8 @@
   {
     "name": "SEAT1c-law-tie-legacy",
     "file": "src/net/townSeatLaw.js",
-    "old": "export const bySeatStanding = (a, b) => claimTotal(b) - claimTotal(a) || (b.legacy ?? 0) - (a.legacy ?? 0)",
-    "new": "export const bySeatStanding = (a, b) => claimTotal(b) - claimTotal(a)",
+    "old": "  (b.legacy ?? 0) - (a.legacy ?? 0) ||\n  (a.pledgedAt ?? Infinity) - (b.pledgedAt ?? Infinity) ||",
+    "new": "  (a.pledgedAt ?? Infinity) - (b.pledgedAt ?? Infinity) ||",
     "tests": [
       "test/ui/seat1c_client.test.js"
     ]
@@ -88,8 +88,8 @@
   {
     "name": "SEAT1c-law-defence-no-legacy",
     "file": "src/net/townSeatLaw.js",
-    "old": "  + Math.max(0, own?.legacy ?? 0);\n",
-    "new": "  + 0;\n",
+    "old": "  Math.max(0, own?.legacy ?? 0);",
+    "new": "  0;",
     "tests": [
       "test/net/seat1c_service.test.js",
       "test/ui/seat1c_client.test.js"
@@ -98,8 +98,8 @@
   {
     "name": "SEAT1c-law-defence-no-standing",
     "file": "src/net/townSeatLaw.js",
-    "old": "Math.floor(Math.max(0, own?.influence ?? 0) * (1 + standingModifier(standing)) * overreachDefence(extra) * (held ? SIEGE_DEFENCE_BONUS : 1) + 1e-9)",
-    "new": "Math.floor(Math.max(0, own?.influence ?? 0) * overreachDefence(extra) * (held ? SIEGE_DEFENCE_BONUS : 1) + 1e-9)",
+    "old": "  Math.floor(\n    Math.max(0, own?.influence ?? 0) *\n      (1 + standingModifier(standing)) *\n      overreachDefence(extra) *\n      (held ? SIEGE_DEFENCE_BONUS : 1) +\n      1e-9,\n  ) +",
+    "new": "  Math.floor(Math.max(0, own?.influence ?? 0) * overreachDefence(extra) * (held ? SIEGE_DEFENCE_BONUS : 1) + 1e-9) +",
     "tests": [
       "test/ui/seat1c_client.test.js"
     ]
@@ -117,8 +117,8 @@
   {
     "name": "SEAT1c-law-purse-not-spent",
     "file": "src/net/townSeatLaw.js",
-    "old": "    purse.set(taker.guild, (purse.get(taker.guild) ?? 0) - fee);\n",
-    "new": "",
+    "old": "    purse.set(taker.guild, (purse.get(taker.guild) ?? 0) - fee);\n    claims.push({ key: s.key, guild: taker.guild, fee, total: claimTotal(taker) });",
+    "new": "    claims.push({ key: s.key, guild: taker.guild, fee, total: claimTotal(taker) });",
     "tests": [
       "test/ui/seat1c_client.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "SEAT1c-law-defence-not-beaten",
     "file": "src/net/townSeatLaw.js",
-    "old": "      if (total >= CLAIM_THRESHOLD[s.tier] && total > defence) candidates.push",
-    "new": "      if (total >= CLAIM_THRESHOLD[s.tier]) candidates.push",
+    "old": "      if (total >= CLAIM_THRESHOLD[s.tier] && total > defence)\n        candidates.push({ ...risen, key: s.key, total, defence });",
+    "new": "      if (total >= CLAIM_THRESHOLD[s.tier]) candidates.push({ ...risen, key: s.key, total, defence });",
     "tests": [
       "test/net/seat1c_service.test.js",
       "test/ui/seat1c_client.test.js"
@@ -194,8 +194,8 @@
   {
     "name": "SEAT1c-law-holder-line",
     "file": "src/net/townSeatLaw.js",
-    "old": "  ? `Held by ${guildWords(holder.guild)} since ${seatWeekName(holder.since)}. Standing ${holder.standing}${standingTrendWords(standingTrend(holder))}.`",
-    "new": "  ? `Held since ${seatWeekName(holder.since)}. Standing ${holder.standing}${standingTrendWords(standingTrend(holder))}.`",
+    "old": "    ? `Held by ${guildWords(holder.guild)} since ${seatWeekName(holder.since)}. Standing ${holder.standing}${standingTrendWords(standingTrend(holder))}.`",
+    "new": "    ? `Held since ${seatWeekName(holder.since)}. Standing ${holder.standing}${standingTrendWords(standingTrend(holder))}.`",
     "tests": [
       "test/ui/seat1c_client.test.js"
     ]
@@ -212,8 +212,8 @@
   {
     "name": "SEAT1c-law-mark-no-split",
     "file": "src/net/townSeatLaw.js",
-    "old": "  const split = !seat.holder && b?.kind === 'tourney' ?",
-    "new": "  const split = false ?",
+    "old": "  const split =\n    !seat.holder && b?.kind === 'tourney'\n      ? [\n          heraldryHex(b.guild?.heraldry?.field) ?? SEAT_RING_UNHELD,\n          heraldryHex(b.against?.heraldry?.field) ?? SEAT_RING_UNHELD,\n        ]\n      : null;",
+    "new": "  const split = false\n    ? [\n        heraldryHex(b.guild?.heraldry?.field) ?? SEAT_RING_UNHELD,\n        heraldryHex(b.against?.heraldry?.field) ?? SEAT_RING_UNHELD,\n      ]\n    : null;",
     "tests": [
       "test/ui/seat1c_client.test.js"
     ]
@@ -349,8 +349,8 @@
   {
     "name": "SEAT1c-book-undressed",
     "file": "src/net/townSeatBook.js",
-    "old": "      const out = { ...seat, holder: d?.holder ?? null, battle: d?.battle ?? null, forts: d?.forts ?? null };",
-    "new": "      const out = { ...seat, holder: null, battle: null, forts: d?.forts ?? null };",
+    "old": "      const out = { ...seat, holder: d?.holder ?? null, battle: d?.battle ?? null, forts: d?.forts ?? null }; // SEAT2b part two: and its works",
+    "new": "      const out = { ...seat, holder: null, battle: null, forts: d?.forts ?? null }; // SEAT2b part two: and its works",
     "tests": [
       "test/ui/seat1c_client.test.js"
     ],
@@ -359,8 +359,8 @@
   {
     "name": "SEAT1c-tab-relinquish-unarmed",
     "file": "src/ui/seatTab.js",
-    "old": "          if (!armed()) { armedAt = ui.nowS() * 1000; ui.rerender(); disarmLater(); return null; }",
-    "new": "",
+    "old": "              if (!armed()) {\n                armedAt = ui.nowS() * 1000;\n                ui.rerender();\n                disarmLater();\n                return null;\n              }\n              armedAt = -Infinity;",
+    "new": "              armedAt = -Infinity;",
     "tests": [
       "test/ui/seat1c_client.test.js"
     ]
@@ -377,8 +377,8 @@
   {
     "name": "SEAT1c-tab-no-chronicle",
     "file": "src/ui/seatTab.js",
-    "old": "      const lines = (data.chronicle ?? []).map((r) => chronicleLine(r, seat, book.zero ?? null)).filter(Boolean);",
-    "new": "      const lines = [];",
+    "old": "      const lines = (data.chronicle ?? []).map((r) => chronicleLine(r, seat, book.zero ?? null)).filter(Boolean); // SEASON1 part three: in its Season's words",
+    "new": "      const lines = []; // SEASON1 part three: in its Season's words",
     "tests": [
       "test/ui/seat1c_client.test.js"
     ]
@@ -422,8 +422,8 @@
   {
     "name": "SEAT1c-token-claim-unbounded",
     "file": "src/net/identityToken.js",
-    "old": "  && Number.isSafeInteger(ts[1]) && ts[1] >= 0 && ts[1] <= 9999;",
-    "new": "  && Number.isSafeInteger(ts[1]) && ts[1] >= 0;",
+    "old": "  ts[1] >= 0 &&\n  ts[1] <= 9999;",
+    "new": "  ts[1] >= 0;",
     "tests": [
       "test/net/seat1c_titles.test.js"
     ]
@@ -476,7 +476,7 @@
   {
     "name": "SEAT1c-law-crown-glyph-tower",
     "file": "src/net/townSeatLaw.js",
-    "old": "    if (h.tier === 'crown') { const g = SEAT_CROWN_GLYPHS[CROWN_SEAT_REGIONS[h.region]]; if (g) out.add(g); } else out.add('tower');",
+    "old": "    if (h.tier === 'crown') {\n      const g = SEAT_CROWN_GLYPHS[CROWN_SEAT_REGIONS[h.region]];\n      if (g) out.add(g);\n    } else out.add('tower');",
     "new": "    out.add('tower');",
     "tests": [
       "test/net/seat1c_titles.test.js"
@@ -494,8 +494,8 @@
   {
     "name": "SEAT1c-member-no-glyph",
     "file": "server-account/src/index.js",
-    "old": "          g: [...glyphsOf(who.player, env, nowS), ...(seatBadge?.glyphs ?? [])],",
-    "new": "          g: glyphsOf(who.player, env, nowS),",
+    "old": "          g: glyphsInOrder([...glyphsOf(who.player, env, nowS), ...(seatBadge?.glyphs ?? [])]),",
+    "new": "          g: glyphsInOrder(glyphsOf(who.player, env, nowS)),",
     "tests": [
       "test/net/seat1c_titles.test.js"
     ]
@@ -503,7 +503,7 @@
   {
     "name": "SEAT1c-wardrobe-no-seat-titles",
     "file": "server-account/src/titles.js",
-    "old": "  if (Array.isArray(player?.seatTitles)) for (const t of player.seatTitles) if (SEAT_TITLES.includes(t) && !held.includes(t)) held.push(t);",
+    "old": "  if (Array.isArray(player?.seatTitles))\n    for (const t of player.seatTitles) if (SEAT_TITLES.includes(t) && !held.includes(t)) held.push(t);",
     "new": "",
     "tests": [
       "test/net/seat1c_titles.test.js"
@@ -521,8 +521,8 @@
   {
     "name": "SEAT1c-client-plain-word",
     "file": "src/ui/playerBadge.js",
-    "old": "const text = (SEAT_TITLES.includes(key) ? seatTitleText(key, peer?.ts, _seatPlace) : CHAPTER_TITLES.includes(key)",
-    "new": "const text = (SEAT_TITLES.includes(key) ? null : CHAPTER_TITLES.includes(key)",
+    "old": "    (SEAT_TITLES.includes(key)\n      ? seatTitleText(key, peer?.ts, _seatPlace)\n      : CHAPTER_TITLES.includes(key)\n        ? chapterTitleText(key, peer?.ts)\n        : null) ?? TITLE_TEXT[key];",
+    "new": "    (SEAT_TITLES.includes(key) ? null : CHAPTER_TITLES.includes(key) ? chapterTitleText(key, peer?.ts) : null) ??\n    TITLE_TEXT[key];",
     "tests": [
       "test/net/seat1c_titles.test.js"
     ]

@@ -66,7 +66,7 @@
     "name": "HORSE-VIEW-rig-fresh-out-of-view",
     "file": "src/world/horseRig.js",
     "old": "    if (!seen(h, view, proj, bx)) return false;",
-    "new": "    if (fresh) pose(h); if (!seen(h, view, proj, bx)) return false;",
+    "new": "    if (fresh) pose(h);\n    if (!seen(h, view, proj, bx)) return false;",
     "tests": [
       "test/systems/horse/fb1021_horses.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "HORSE-VIEW-pool-step-posing",
     "file": "src/scenes/horseCartPool.js",
-    "old": "look: lookOfOwner(owner), pose: false });",
-    "new": "look: lookOfOwner(owner) });",
+    "old": "look: lookOfOwner(owner, h.position), pose: false });",
+    "new": "look: lookOfOwner(owner, h.position) });",
     "tests": [
       "test/systems/horse/fb1021_horses.test.js"
     ]
@@ -132,7 +132,7 @@
     "name": "HORSE-VIEW-pool-height-counted",
     "file": "src/net/peer/peerBodies.js",
     "old": "export const cadenceD2 = (at, eye, lens = 1) => ((at[0] - eye[0]) ** 2 + (at[2] - eye[2]) ** 2) / (lens * lens);",
-    "new": "export const cadenceD2 = (at, eye, lens = 1) => ((at[0] - eye[0]) ** 2 + (at[2] - eye[2]) ** 2 + (at[1] - eye[1]) ** 2) / (lens * lens);",
+    "new": "export const cadenceD2 = (at, eye, lens = 1) =>\n  ((at[0] - eye[0]) ** 2 + (at[2] - eye[2]) ** 2 + (at[1] - eye[1]) ** 2) / (lens * lens);",
     "tests": [
       "test/systems/horse/fb1021_horses.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "HORSE-VIEW-saddle-step-posing",
     "file": "src/net/peer/peerBodies.js",
-    "old": "gallops: !shown.hs, pose: false });",
-    "new": "gallops: !shown.hs });",
+    "old": "      pose: false,\n    }); // STOREFRONT: in its rider's mount look, by the Others' effects choice; HORSE-WALK: the pose's slow ride (its `hs` - walked, or under half) never gallops",
+    "new": "    }); // STOREFRONT: in its rider's mount look, by the Others' effects choice; HORSE-WALK: the pose's slow ride (its `hs` - walked, or under half) never gallops",
     "tests": [
       "test/systems/horse/fb1021_horses.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "HORSE-VIEW-body-pose-without-its-horse",
     "file": "src/net/peer/peerBodies.js",
-    "old": "      if (pose) this._poseHorse(b);   // HORSE-VIEW: astride, its horse first",
-    "new": "      // HORSE-VIEW: astride, its horse first",
+    "old": "      if (pose) this._poseHorse(b); // HORSE-VIEW: astride, its horse first - the skin is posed to the seat of the horse's own new pose",
+    "new": "      // HORSE-VIEW: astride, its horse first - the skin is posed to the seat of the horse's own new pose",
     "tests": [
       "test/systems/horse/fb1021_horses.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "HORSE-VIEW-draw-catch-up-without-its-horse",
     "file": "src/net/peer/peerBodies.js",
-    "old": "        try { this._poseHorse(b); b.rig.update(0, { pose: true, effectsDt: b.bank });",
-    "new": "        try { b.rig.update(0, { pose: true, effectsDt: b.bank });",
+    "old": "          this._poseHorse(b);\n          b.rig.update(0, { pose: true, effectsDt: b.bank });",
+    "new": "          b.rig.update(0, { pose: true, effectsDt: b.bank });",
     "tests": [
       "test/systems/horse/fb1021_horses.test.js"
     ]
@@ -253,8 +253,8 @@
   {
     "name": "HORSE-VIEW-AUDIT-bodies-the-heads-distance",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    const eye = this._cam?.eye ?? null, lens = this._cam?.lens ?? 1;",
-    "new": "    const eye = null, lens = this._cam?.lens ?? 1;",
+    "old": "    const eye = this._cam?.eye ?? null,",
+    "new": "    const eye = null,",
     "tests": [
       "test/systems/horse/fb1021_horses.test.js"
     ]
@@ -262,8 +262,8 @@
   {
     "name": "HORSE-VIEW-AUDIT-bodies-lens-ignored",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    const eye = this._cam?.eye ?? null, lens = this._cam?.lens ?? 1;",
-    "new": "    const eye = this._cam?.eye ?? null, lens = 1;",
+    "old": "      lens = this._cam?.lens ?? 1; // HORSE-VIEW (AUDIT): the last pass's camera, as the view is (cadenceD2); before any - or for a body never placed (ONE-BAD-BODY) - the distance from `near`",
+    "new": "      lens = 1; // HORSE-VIEW (AUDIT): the last pass's camera, as the view is (cadenceD2); before any - or for a body never placed (ONE-BAD-BODY) - the distance from `near`",
     "tests": [
       "test/systems/horse/fb1021_horses.test.js"
     ]
@@ -271,8 +271,8 @@
   {
     "name": "HORSE-VIEW-AUDIT-bodies-lens-never-read-off-the-pass",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    c.lens = lensOf(proj);",
-    "new": "    c.lens = 1;",
+    "old": "    c.lens = lensOf(proj); // HORSE-VIEW (AUDIT): this pass's magnification - the next frame's cadence (_stepDue), with its eye",
+    "new": "    c.lens = 1; // HORSE-VIEW (AUDIT): this pass's magnification - the next frame's cadence (_stepDue), with its eye",
     "tests": [
       "test/systems/horse/fb1021_horses.test.js"
     ]
@@ -280,8 +280,8 @@
   {
     "name": "HORSE-VIEW-AUDIT-bodies-no-distance-before-a-pass",
     "file": "src/net/peer/peerBodies.js",
-    "old": ": b.d2) === 0 ? 1 : 0;",
-    "new": ": 0) === 0 ? 1 : 0;",
+    "old": "            : (this._frame + b.phase) % poseCadenceFor(eye && b.feet ? cadenceD2(b.feet, eye, lens) : b.d2) === 0",
+    "new": "            : (this._frame + b.phase) % poseCadenceFor(eye && b.feet ? cadenceD2(b.feet, eye, lens) : 0) === 0",
     "tests": [
       "test/net/peer/peercadence.test.js"
     ]
@@ -316,8 +316,8 @@
   {
     "name": "HORSE-VIEW-AUDIT-must-pose-horse-only-in-view",
     "file": "src/net/peer/peerBodies.js",
-    "old": "      if (pose) this._poseHorse(b);   // HORSE-VIEW: astride, its horse first",
-    "new": "      if (pose && b.inView) this._poseHorse(b);   // HORSE-VIEW: astride, its horse first",
+    "old": "      if (pose) this._poseHorse(b); // HORSE-VIEW: astride, its horse first - the skin is posed to the seat of the horse's own new pose",
+    "new": "      if (pose && b.inView) this._poseHorse(b); // HORSE-VIEW: astride, its horse first - the skin is posed to the seat of the horse's own new pose",
     "tests": [
       "test/systems/horse/fb1021_horses.test.js"
     ]
@@ -325,8 +325,8 @@
   {
     "name": "HORSE-VIEW-AUDIT-bodies-the-camera-read-off-no-feet",
     "file": "src/net/peer/peerBodies.js",
-    "old": "poseCadenceFor(eye && b.feet ? cadenceD2(b.feet, eye, lens) : b.d2)",
-    "new": "poseCadenceFor(eye ? cadenceD2(b.feet, eye, lens) : b.d2)",
+    "old": "            : (this._frame + b.phase) % poseCadenceFor(eye && b.feet ? cadenceD2(b.feet, eye, lens) : b.d2) === 0",
+    "new": "            : (this._frame + b.phase) % poseCadenceFor(eye ? cadenceD2(b.feet, eye, lens) : b.d2) === 0",
     "tests": [
       "test/systems/horse/fb1021_horses.test.js"
     ]

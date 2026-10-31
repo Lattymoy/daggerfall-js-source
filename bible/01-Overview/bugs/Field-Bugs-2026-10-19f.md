@@ -75,7 +75,7 @@ all along, and the rust took the faces it never counted. The same thing happened
 allowed to go.
 
 THE FIX - THE FACE IS THE PACK'S ALONE. The row is pack-only
-(`weirKeyRow.js:"  packOnly: true,   // KEY-FACE: the face never leaves the pack"`), the Wallet's and the Card Binder's
+(`weirKeyRow.js:"packOnly: true, //"`), the Wallet's and the Card Binder's
 law (WALLET1, `06-Systems/Wallet.md`; `itemBound.js:"export const isPackOnly = "`). Every door that already reads it
 now keeps the face in the pack:
 - both skins' put to the wagon, to storage, to a container, to the ground and to a reward tray, and the enhanced pack's
@@ -463,7 +463,7 @@ A Disintegrate deals its target the health it has left
 (`effects.js:"if (left > 0 && sinks.hurt) { out.damage += left; sinks.hurt(left, { whole: true }); }"`), so the cast
 claimed 1e9 - and every wire refuses that: the gate's `hit`, `ahit`, `xhit` and the Abyss's at GATE_DMG_WIRE_MAX
 (`wire.js:"if (!finite(m.d) || m.d <= 0 || m.d > GATE_DMG_WIRE_MAX) return null;"`, 100,000), an Elite Breach's at 1e6
-(`validEgIn`), a bout's at 10,000 (`arenaLaw.js:"const d = num(m.d, 10000), r = int(m.r, 0, 2);"`). The relay dropped the
+(`validEgIn`), a bout's at 10,000 (`arenaLaw.js:"const d = num(m.d, 10000),"`). The relay dropped the
 whole cast while the spell door popped `Math.round(dealt)`: a nine-digit number, a bar that never moved. The relay caps
 a blow anyway (`gateBrain.js:"const got = Math.max(0, Math.min(want, HIT_CAP_X * ref, p.bucket, f.hp, H ? H.h * f.max : Infinity));"`, spendPurse
 the same, an Elite Breach's bucket grown by the Vestiges' declared factor up to 1.25) - so the number was never what a
@@ -472,15 +472,15 @@ whole blow can land, at most ~300 at level 20 and 780 at 60. Duels had met the s
 had been patched at its own producer (AUDIT WBX F1).
 
 THE FIX - ONE WHOLE, ONE DOOR.
-- **The whole** (`gateBoss.js:"export const STAND_IN_WHOLE = HIT_CAP_X * dpsRef(LV_MAX) * EG_BUCKET_X_MAX;"`, 975), at the
-  stand-in (`gateBoss.js:"e.maxHealth = e.health = STAND_IN_WHOLE;"`): the most one blow lands at any relay - the gate's cap
+- **The whole** (`gateBoss.js:"export const STAND_IN_WHOLE"`, 975), at the
+  stand-in (`gateBoss.js:"e.maxHealth = e.health = STAND_IN_WHOLE"`): the most one blow lands at any relay - the gate's cap
   at LV_MAX (780) grown by the most a breach's bucket grows - over the serpent's (182) and a bout's (122), under the least
   ceiling nobody clamps (the bout's 10,000) with the rest of a spell's room beside it. A Disintegrate counts it whole, every
   wire carries it, and the relay weighs and clips it by its own law (a stun heavier; an Unyielding ward 15% lighter, 975 of
   it still past the cap at the level cap; the bucket). Pinned against the real constants and every validator.
 - **The number** says what can land (`standInSpell.js:"const shown = standInShown(dealt, standInBlowCap(body.entity, player.level));"`):
   min(the claim, my one-blow cap at my level) - an Elite Breach's grown by my Vestiges' declared factor, which egFight hands its
-  stand-ins (`egFight.js:"const myBlowX = () =>"`, at most EG_BUCKET_X_MAX); on my opponent the referee's spell cap
+  stand-ins (`egFight.js:"const myBlowX = ()"`, at most EG_BUCKET_X_MAX); on my opponent the referee's spell cap
   (ARENA_SPELL_MAX, 60). The paths' riders are told the same (`took` - what the foe could lose, AUDIT SCHOOLS L1 M6). The claim
   still goes out whole: clipped here, it would lose what the relay weighs before its cap.
 - **The door is one** (HOST-SPLIT): `spellOnBoss`, `spellOnCrystal`, `spellOnHost` and `spellOnRival` were four copies in
@@ -597,7 +597,7 @@ blow on ANOTHER foe in the file was the same omission: Earthshaker's quake (a qu
 Dragonfire's burst (a third to every other Daedra within 3 m) landed silent, and Dragonfire's own second burn on the struck
 one rose with no name (`again(target, amount)` - the only `again` without its power's word).
 
-THE FIX. One door for a blow's reach on another foe (`lootPowers.js:"function reachOn(door, f, n, word) {"`): its number
+THE FIX. One door for a blow's reach on another foe (`lootPowers.js:"function reachOn"`): its number
 rises through `showFollowUp`, tagged with its power's name, then the foe takes it - Chain Lightning's arc, Earthshaker's
 quake (a number for each foe it reaches) and Dragonfire's burst; Dragonfire's burn on the struck one is tagged as Many
 Endings' echo is. Enhanced only, as HN1 is (the classic skin registers no numbers; the harm lands there as before); none
@@ -633,7 +633,7 @@ times, and the door opened. So the law held, and everything that tells it pointe
 - The words: the objective was `gauntlet: 'Silence the casters.'` (`EG_OBJECTIVES`) and the line
   `` `Casters left: ${pg.left ?? 0}` `` (`egProgressText`). Neither named a plate, and "left" read as a body count.
 - The screen: nothing on the client read `spots.pillar[].plate`. WINCH-PLATES (2026-10-18d) marked the Winch's plates
-  (`egFight.js:"  function winchPlates(F, t) {"`) and recorded the Gauntlet's as left, "on sloped stairs where a flat quad
+  (`egFight.js:"function winchPlates"`) and recorded the Gauntlet's as left, "on sloped stairs where a flat quad
   would cut the slope". That was law 9's lay. From spec law 10 (THE BROKEN WAY) each plate stands on its pillar's flat top,
   beside its stair's head.
 
@@ -643,17 +643,17 @@ THE FIX.
   (`egBrain.js:"P.obj = 'gauntlet'; P.left = F.gauntlet.length; P.silenced = F.gauntlet.map((g) => g.done);"`) and at
   every beat (`egBrain.js:"      F.pg.silenced = F.gauntlet.map((g) => g.done);"`). The wire's `egProgress` already
   passes a short list of numbers (DUEL-RING's `ring` rides the same way), and `left` is unchanged.
-- THE SCREEN MARKS THEM. `egFight.js:"  function gauntletPlates(F, t) {"`, beside `winchPlates`, draws each plate in play
+- THE SCREEN MARKS THEM. `egFight.js:"function gauntletPlates"`, beside `winchPlates`, draws each plate in play
   as the Winch's are drawn through the trial: gold, `EG_TOUCH_M` about, on its own surface. Its height is its ground's,
-  `egFight.js:"export function egPlateY(spec, q) {"`: the pillar's top (2 m) from law 10, the stair's height under it at
+  `egFight.js:"export function egPlateY"`: the pillar's top (2 m) from law 10, the stair's height under it at
   laws 8 and 9, and the walkway's floor before them. A plate whose word says silenced dims to the unlit rune's 0.35
-  (`egFight.js:"sh.alpha = said?.[j] ? 0.35 : 0.85;"`), so a company sees which plates are still to hold. A pillar the
+  (`egFight.js:"sh.alpha = said?.[j]"`), so a company sees which plates are still to hold. A pillar the
   company was not given is not marked (the hall lays six, and a company of n is given `2 + ceil(n/2)`). A screen facing a
   relay before world232 gets no `silenced`, so it draws every plate the hall lays while `left` is above nought
-  (`egFight.js:"    if (!said && !(F.pg.left > 0)) return;"`).
+  (`egFight.js:"if (!said && !(F.pg.left > 0))"`).
 - THE WORDS NAME BOTH WAYS. The objective is *Silence each caster: stand on its plate, or slay it.* and the line is
   *Casters left: 3. Hold a plate 3 s or slay its caster*, its seconds `EG_SILENCE_MS`'s. Both are said in the player's language through the catalog
-  (`eg.objective.gauntlet`, `eg.progress.gauntlet`). The objective goes through `egHud.js:"export const egObjectiveText = (spec) =>"`,
+  (`eg.objective.gauntlet`, `eg.progress.gauntlet`). The objective goes through `egHud.js:"export const egObjectiveText"`,
   which the tracker's line, the Spire HUD's chip and the arrival card all read. It is the first objective said in the
   player's language; the rest stay the law's English. The English catalog was regenerated (`tools/l10nExtract.mjs`), the
   thirteen finished languages were drafted in-session (`tools/l10nInSession.mjs`, recorded as the machine's), and the
@@ -994,7 +994,7 @@ six-hour reroll untouched. One landed blow does. AUDIT 24 wave 31's break - at t
 `formulas.js:"if (damage > 0) breakNormalPowerConcealment(attacker);"`, and at every FromSource damage door
 (`handleAttackFromSource`) - ran a filter that DELETED every normal-power concealment entry, a spell's and a worn item's
 alike, and the worn one's pin went with it. The reroll that recasts a worn item's spell visits only an item that still
-holds a pin (`enchantments.js:"if (!entity.activeEffects.some((a) => a.heldItem === item)) continue;"`), so the piece
+holds a pin (`enchantments.js:"if (!entity.activeEffects.some((a) => a.heldItem === item))"`), so the piece
 stood worn and inert until it came off: 48 hours after the blow, still worn, not invisible, no pin. A blow in a
 journey's ambush is the likely travel trigger - not proven, and the fix does not need it. DFU never lost it:
 EndIncumbentEffect<T> (EntityEffectManager.cs:759-766) ENDS the effect - `RoundsRemaining = 0; End()` - and removes
@@ -1008,7 +1008,7 @@ EnemyAttack.cs:316-318, all at the formula's tail), the FromSource damage of a s
 DaggerfallEntityBehaviour.cs:196-201) and Silence's aggro; casting a spell breaks nothing, in DFU or here.
 `breakNormalPowerConcealment` ends every LIVE normal power (Invisibility, Chameleon, Shadow; the TRUE three never): a
 spell's entry is removed, as before - DFU's end, a round sooner - and a worn item's is ENDED in place and keeps its pin,
-`concealment.js:"if (a.heldItem) { a.roundsRemaining = 0; a.ended = true; }"`. `hasActiveEffect` reads an ended entry
+`concealment.js:"if (a.heldItem) {"`. `hasActiveEffect` reads an ended entry
 as absent (DFU's HasEnded skip), so IsInvisible, IsBlending and IsAShade, the senses' closures and the pose's
 concealment bits all read it broken; `mysticism.js` liveBundles already skipped an ended entry, so the HUD's icon goes
 with it. The reroll recasts it once the item's six hours since its last roll are out (REROLL_MINIMUM_HOURS, E2's
@@ -1090,7 +1090,7 @@ warnings are unchanged. Recorded in `10-UI/Slots-Hotbar-Status.md`
 
 ## DUEL-BAR: the health bar shows the duel's vitality while a duel is on
 
-`src/net/duel/duelBar.js` (`duelVitality`, new), `src/ui/hud/hudVitals.js` (`hudHealth`, the detector's turn),
+`src/net/duel/duelBar.js` (`duelVitality`, DELETED), `src/ui/hud/hudVitals.js` (`hudHealth`, the detector's turn),
 `src/ui/hud/hud.js` (drawHud's `healthBar`), `src/ui/enhanced/enhancedHud.js` (the bar's pair, its held loss, falling
 piece and heal reading at the turn), `src/scenes/world.js` (its import and the one entry in its drawHud call).
 
@@ -1130,14 +1130,14 @@ nor is the open zone (its foes hurt the save, and a bar that read its referee wo
 - DFU has no other player to duel. Recorded in `06-Systems/Integrity-Arc.md` section 5, "Decisions (2026-10-19, FIELD
 BUGS DUEL-BAR)".
 
-- **Pinned**: `test/ui/fb1019f_duelbar.test.js` (4: on the real relay Room refereeing a real bout into a real duel
+- **Pinned**: `test/ui/fb1019f_duelbar.test.js` (DELETED; 4: on the real relay Room refereeing a real bout into a real duel
   manager - my vitality none before the bout, the bout's whole, what a blow leaves, none once it is over though the
   manager holds it a moment yet; the classic HUD's bar read off it and the save's again at its end, the turn each way no
   loss and no gain to the detector, a save's heal under the duel no change of the bar; the enhanced HUD's fill and figure
   the same, the turn breaking no piece off, holding no pale loss and floating no heal, a heal after the duel floating as
   ever; the host's one entry by my own id, the leaf outside the relay's bundle, the readout's line, no host writing the
   referee's word into a health). PIN MOVED: `test/ui/enhanced/enhancedHud.test.js` (PX30d: the enhanced HUD's health
-  row reads drawHud's pair). `tools/mutants/duel_bar.json` (15, all dead).
+  row reads drawHud's pair). `tools/mutants/duel_bar.json` (15, DELETED).
 
 ## DISENCHANT-SAID: the Enchanting Station says why a piece gives nothing
 
@@ -1166,8 +1166,8 @@ piece and stays off the list as before (a judgment within the decision: the repo
 listing every stew as "under one Essence" would bury it). HOST-SPLIT: the list is made by the page's own module,
 `disenchantableOf(items, { kept, book })` - the pack's crafted pieces (a provenance and a recipe) that may leave the pack
 (`tradeRefusal`, `isLocked`) and carry no market act (`kept`, the host's `pieceKept`), each its points, its Essence (a
-Disenchanter's twice, read off `book`'s Enchanting) and its recipe (AUDIT PROF12 E2). `world.js` keeps one line,
-`world.js:"disenchantable: () => disenchantableOf(playerEntity.items, { kept: pieceKept, book: profBook }),"`, and its
+Disenchanter's twice, read off `book`'s Enchanting) and its recipe (AUDIT PROF12 E2). `world.js` kept one line (since moved with the professions, HOST-SPLIT PROFESSIONS),
+`professionsHost.js:"disenchantable: () => disenchantableOf(playerEntity.items, { kept: pieceKept, book: profBook }),"`, and its
 alchemyLaw import went with the list: bootWorld 36,190 -> 36,182 logical lines, its ceiling 36,233 -> 36,225
 (`test/scenes/hostceiling.test.js`). The four hosts: the station's hooks are bootWorld's alone (worldModes' `enchantHere`
 says where the station stands and is untouched; exterior.js and dungeonContext.js draw no station) - none other wired.
@@ -1266,21 +1266,21 @@ read, `06-Systems/Integrity-Arc.md`). A rollback loses every hour played since t
 could not see the purse at all: the wealth counts a purse below nothing as none.
 
 THE FIX. The review's third act on one character, `realm-mend { id, ticket, was, gold, note? }`
-(`review.js:"async function mendAct(ctx, row, by, note, body) {"`; its law
+(`review.js:"async function mendAct"`; its law
 `repairLaw.js:"export function applyPurseMend(save, { was, gold }) {"`, the service's and the tool's). The record's
 purse, still the `was` staff reckoned from (`mend-moved` otherwise: played since, or the wrong character) and below
 nothing (`mend-not-negative` otherwise), is SET to nothing - never added to - and `gold`, what the character is owed (0
 to one int's worth), comes as ONE LETTER OF CREDIT at the front of the pack. That is what the trade window itself pays
 for a sum the pack cannot carry (`tradeModes.js:"export function sellProceeds(tradePrice,"`, DaggerfallTradeWindow's
 sell arm), so it is how an honest sale of a lot that big pays; a purse of coin would weigh tonnes. The act shares the
-repair's machinery, which both run now (`review.js:"async function staffMend(ctx, row, kind, ticket, change, steps, answer) {"`):
+repair's machinery, which both run now (`review.js:"async function staffMend"`):
 a developer's alone, the dead never, once a ticket in `realm_repairs` (a mend's row names no faction and no bit, 0 and 0,
 `was` the purse it found and `gold` the letter - so no migration; a ticket names one act, and the other kind's is
 `repair-ticket`), the record seized one sequence on with its seat taken from any tab, the gold witnessed and counted as
 the `repair` faucet, the act written among the findings. AND THE HOLD THE PURSE MADE GOES WITH IT. When the hold is the
 law's, the finding it stands on is the purse's alone (`PURSE_SIG`, `lawSigOf` of the judge's `gold`) and no timed hold
 stands, the mend lifts it as the next clean checkpoint would
-(`review.js:"const lift = row.held === 'law' && row.law_sig === PURSE_SIG && !(row.held_until > nowS);"`): the hold
+(`review.js:"const lift = row.held"`): the hold
 and its signature go, `judge_rev` moves one on, guarded on the judgement the act read. The strike stands and fades as
 every strike does - which strike the purse struck, the row does not say. Any other hold stands: the law's beside another
 finding and a timed one are the next checkpoint's, and staff's own is staff's. `realm-findings` says the purse
@@ -1301,7 +1301,7 @@ temple's alike.
 
 What PURSE-MEND does not reach. A purse a payment has since set to nothing is no longer below nothing. The service's
 payFromSave counts a purse below nothing as none, and where the letters fall short it pays the rest from the bank and
-writes the purse 0 (`realmGoldLaw.js:"else { owed -= purse; save.goldPieces = 0; }"`). The sale's loss then stands with
+writes the purse 0 (`realmGoldLaw.js:"owed -= purse;"`). The sale's loss then stands with
 nothing in the record to show it, the mend refuses it (`mend-not-negative`), and no act gives gold alone: the repair's
 needs a faction's flag. An offline character's purse is its own device's save, which no judge reads and no staff act
 reaches. And an online lot the old arithmetic overpaid left a purse above nothing, with no finding; the budget's measure

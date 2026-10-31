@@ -34,7 +34,9 @@ export const SILVER_FINDS_KEPT = 4096;
 /** @type {((kind: string) => void) | null} */
 let _finder = null;
 /** The host's finder - `(kind) => void`: the book's ask, its card and its line - or null (offline, the bench). */
-export function setSilverFinder(fn) { _finder = typeof fn === 'function' ? fn : null; }
+export function setSilverFinder(fn) {
+  _finder = typeof fn === 'function' ? fn : null;
+}
 export const silverFinderSet = () => _finder !== null;
 
 /** What a container is, as the roll remembers it: its own object (a body's entity, a pile's list) - weakly held, so a
@@ -43,7 +45,10 @@ let _rolledObjects = new WeakSet();
 let _rolledKeys = new Set();
 const seen = (c) => (typeof c === 'string' ? _rolledKeys.has(c) : _rolledObjects.has(c));
 function remember(c) {
-  if (typeof c !== 'string') { _rolledObjects.add(c); return; }
+  if (typeof c !== 'string') {
+    _rolledObjects.add(c);
+    return;
+  }
   _rolledKeys.add(c);
   if (_rolledKeys.size > SILVER_FINDS_KEPT) _rolledKeys.delete(_rolledKeys.values().next().value);
 }
@@ -56,16 +61,25 @@ function remember(c) {
  */
 export function silverFindAt(kind, container, roll = Math.random) {
   if (!_finder || !FIND_KINDS.includes(kind)) return false;
-  if (container == null || (typeof container !== 'string' && typeof container !== 'object') || container === '') return false;
+  if (container == null || (typeof container !== 'string' && typeof container !== 'object') || container === '')
+    return false;
   // FB1013d: a container that holds no find - the remains of the house's fallen (scenes/legacyRemainsStand.js), the line's
   // own list stood afresh at every visit, where a find rolled each time would pay for coming back
   if (typeof container === 'object' && /** @type {any} */ (container).noFind === true) return false;
   if (seen(container)) return false;
   remember(container);
   if (!(roll() < findChanceOf(kind))) return false;
-  try { _finder(kind); } catch (e) { console.warn('[silver] a find', /** @type {any} */ (e)?.message ?? e); }
+  try {
+    _finder(kind);
+  } catch (e) {
+    console.warn('[silver] a find', /** @type {any} */ (e)?.message ?? e);
+  }
   return true;
 }
 
 /** Tests only: no finder, nothing rolled. */
-export function _resetSilverFindsForTests() { _finder = null; _rolledObjects = new WeakSet(); _rolledKeys = new Set(); }
+export function _resetSilverFindsForTests() {
+  _finder = null;
+  _rolledObjects = new WeakSet();
+  _rolledKeys = new Set();
+}

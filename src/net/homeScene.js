@@ -6,4 +6,5 @@
 // law hashes (test/net/relayversion.test.js): the relay never reads a save's scenes.
 
 /** The home's scene name: the town's unsigned map id and the building's key. */
-export const homeSceneName = (mapId, buildingKey) => `OnlineHome [MapID=${Number(mapId) >>> 0}, BuildingKey=${buildingKey}]`;
+export const homeSceneName = (mapId, buildingKey) =>
+  `OnlineHome [MapID=${Number(mapId) >>> 0}, BuildingKey=${buildingKey}]`;

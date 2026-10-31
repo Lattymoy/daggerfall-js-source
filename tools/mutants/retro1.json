@@ -2,8 +2,8 @@
   {
     "name": "RETRO1-mode-clamp-widened",
     "file": "src/systems/retroMode.js",
-    "old": "getInt('Video', 'RetroRenderingMode', 0, 2)",
-    "new": "getInt('Video', 'RetroRenderingMode', 0, 3)",
+    "old": "export const retroRenderingMode = () => getInt('Video', 'RetroRenderingMode', 0, 2);",
+    "new": "export const retroRenderingMode = () => getInt('Video', 'RetroRenderingMode', 0, 3);",
     "tests": [
       "test/render/retro1.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RETRO1-post-read-raw",
     "file": "src/systems/retroMode.js",
-    "old": "getInt('Video', 'PostProcessingInRetroMode', 0, 4)",
-    "new": "getInt('Video', 'PostProcessingInRetroMode')",
+    "old": "export const retroPostProcessing = () => getInt('Video', 'PostProcessingInRetroMode', 0, 4); // RETRO1 departure: DFU reads it unclamped",
+    "new": "export const retroPostProcessing = () => getInt('Video', 'PostProcessingInRetroMode'); // RETRO1 departure: DFU reads it unclamped",
     "tests": [
       "test/render/retro1.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RETRO1-lut-shift-clamp-widened",
     "file": "src/systems/retroMode.js",
-    "old": "getInt('Video', 'PalettizationLUTShift', 0, 7)",
-    "new": "getInt('Video', 'PalettizationLUTShift', 0, 8)",
+    "old": "export const palettizationLutShift = () => getInt('Video', 'PalettizationLUTShift', 0, 7); // RETRO1 departure: DFU reads it unclamped (AUDIT RETRO1 C7: 8 is a black world)",
+    "new": "export const palettizationLutShift = () => getInt('Video', 'PalettizationLUTShift', 0, 8); // RETRO1 departure: DFU reads it unclamped (AUDIT RETRO1 C7: 8 is a black world)",
     "tests": [
       "test/render/retro1.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RETRO1-hud-twin-full-height",
     "file": "src/systems/retroMode.js",
-    "old": "1: Object.freeze([320, 154])",
-    "new": "1: Object.freeze([320, 200])",
+    "old": "export const RETRO_TARGETS_HUD = Object.freeze({ 1: Object.freeze([320, 154]), 2: Object.freeze([640, 308]) });",
+    "new": "export const RETRO_TARGETS_HUD = Object.freeze({ 1: Object.freeze([320, 200]), 2: Object.freeze([640, 308]) });",
     "tests": [
       "test/render/retro1.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "RETRO1-four-three-is-sixteen-ten",
     "file": "src/systems/retroMode.js",
-    "old": "aspect === RETRO_ASPECT.FOUR_THREE ? 5 : 6",
-    "new": "aspect === RETRO_ASPECT.FOUR_THREE ? 6 : 5",
+    "old": "    Math.fround(Math.fround(320 * (aspect === RETRO_ASPECT.FOUR_THREE ? 5 : 6)) * heightRatio),",
+    "new": "    Math.fround(Math.fround(320 * (aspect === RETRO_ASPECT.FOUR_THREE ? 6 : 5)) * heightRatio),",
     "tests": [
       "test/render/retro1.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "RETRO1-view-width-not-truncated",
     "file": "src/systems/retroMode.js",
-    "old": "  const viewWidth = Math.trunc(Math.fround(",
-    "new": "  const viewWidth = (Math.fround(",
+    "old": "  const viewWidth = Math.trunc(\n    Math.fround(Math.fround(320 * (aspect === RETRO_ASPECT.FOUR_THREE ? 5 : 6)) * heightRatio),\n  );",
+    "new": "  const viewWidth = Math.fround(Math.fround(320 * (aspect === RETRO_ASPECT.FOUR_THREE ? 5 : 6)) * heightRatio);",
     "tests": [
       "test/render/retro1.test.js"
     ]
@@ -408,8 +408,8 @@
   {
     "name": "RETRO1-slot-swap-keeps-the-other-image",
     "file": "src/render/airPass.js",
-    "old": "      if (this.frame !== kept) { this.frame = kept; this.prevValid = false; }",
-    "new": "      if (this.frame !== kept) { this.prevValid = false; }",
+    "old": "        this.frame = kept;\n        this.prevValid = false;",
+    "new": "        this.prevValid = false;",
     "tests": [
       "test/render/retro1.test.js"
     ]
@@ -444,8 +444,8 @@
   {
     "name": "RETRO1-shift-f11-unbound",
     "file": "src/ui/hud/hudShortcuts.js",
-    "old": "  if (hotkeyHit('ToggleRetroPP', e.code, e, keys)) {\n    toggleRetroPostprocessing();\n    return true;\n  }\n",
-    "new": "",
+    "old": "  if (hotkeyHit('ToggleRetroPP', e.code, e, keys)) {\n    toggleRetroPostprocessing();\n    return true;\n  }\n  return false;",
+    "new": "  return false;",
     "tests": [
       "test/render/retro1.test.js"
     ]
@@ -453,8 +453,8 @@
   {
     "name": "RETRO1-bolt-canvas-pixels",
     "file": "src/render/lightningBolts.js",
-    "old": "Math.max(1, viewH || gl.drawingBufferHeight)",
-    "new": "Math.max(1, gl.drawingBufferHeight)",
+    "old": "    gl.uniform1f(U.uPx, 2 / (proj[5] * Math.max(1, viewH || gl.drawingBufferHeight))); // proj[5] = 1 / tan(fov / 2)",
+    "new": "    gl.uniform1f(U.uPx, 2 / (proj[5] * Math.max(1, gl.drawingBufferHeight))); // proj[5] = 1 / tan(fov / 2)",
     "tests": [
       "test/render/retro1.test.js"
     ]
@@ -462,8 +462,8 @@
   {
     "name": "RETRO1-mode-not-live",
     "file": "src/systems/settings/settings.js",
-    "old": "  'Video/RetroRenderingMode': 'src/systems/retroMode.js',\n",
-    "new": "",
+    "old": "  'Video/RetroRenderingMode': 'src/systems/retroMode.js',\n  'Video/PostProcessingInRetroMode': 'src/systems/retroMode.js',",
+    "new": "  'Video/PostProcessingInRetroMode': 'src/systems/retroMode.js',",
     "tests": [
       "test/render/retro1.test.js"
     ]
@@ -471,8 +471,8 @@
   {
     "name": "RETRO1-aspect-word-mangled",
     "file": "src/ui/settings/settingsLaw.js",
-    "old": "values: ['Off', '4:3', '16:10']",
-    "new": "values: ['Off', '4:03', '16:10']",
+    "old": "    values: ['Off', '4:3', '16:10'],",
+    "new": "    values: ['Off', '4:03', '16:10'],",
     "tests": [
       "test/render/retro1.test.js"
     ]

@@ -1,0 +1,192 @@
+[
+  {
+    "name": "AUDIT3-A1-the-folios-ask-pass-open-alone",
+    "file": "server-account/src/battlePass.js",
+    "old": "  if (!passOpenFor(player, env) || !aurumOpenFor(player, env)) return { error: 'pass-closed' };",
+    "new": "  if (!passOpenFor(player, env)) return { error: 'pass-closed' };",
+    "tests": [
+      "test/server/storefront_audit3_money.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-A3-the-window-read-at-the-first-instant",
+    "file": "server-account/src/aurum.js",
+    "old": "limits.some((e) => at >= e.fromMs && at + DAY_MS <= e.toMs);",
+    "new": "limits.some((e) => at >= e.fromMs && at < e.toMs);",
+    "tests": [
+      "test/server/storefront_audit3_money.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-A4-a-closed-word-opened-again",
+    "file": "server-account/src/shop.js",
+    "old": "      'INSERT INTO shop_charge_words (intent, kind, ref, open, at) VALUES (?1, ?2, ?3, ?4, ?5) ON CONFLICT (intent, kind, ref) DO UPDATE SET open = MIN(open, excluded.open), at = excluded.at',",
+    "new": "      'INSERT INTO shop_charge_words (intent, kind, ref, open, at) VALUES (?1, ?2, ?3, ?4, ?5) ON CONFLICT (intent, kind, ref) DO UPDATE SET open = excluded.open, at = excluded.at',",
+    "tests": [
+      "test/server/storefront_audit3_money.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-A4-created-revoking-whatever-its-word",
+    "file": "server-account/src/shop.js",
+    "old": "      if (Number(word?.open) !== 1) return { ok: true, applied: 0 }; // AUDIT-STOREFRONT III A4: closed in our favour before this word landed\n      return revokeOrder(ctx, o.payment_intent, 'disputed', { env, fetch });",
+    "new": "      return revokeOrder(ctx, o.payment_intent, 'disputed', { env, fetch });",
+    "tests": [
+      "test/server/storefront_audit3_money.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-A4-a-lost-dispute-closed",
+    "file": "server-account/src/shop.js",
+    "old": "      await keepWord(ctx.db, o.payment_intent, 'dispute', String(o.id ?? ''), ours ? 0 : 1, ctx.nowS);",
+    "new": "      await keepWord(ctx.db, o.payment_intent, 'dispute', String(o.id ?? ''), 0, ctx.nowS);",
+    "tests": [
+      "test/server/storefront_audit3_money.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-A5-the-aurum-buy-no-holder",
+    "file": "server-account/src/shop.js",
+    "old": "  return [\n    ...paid,\n    ...bought.map((/** @type {any} */ b) => ({\n      id: `aurum:${b.ref}`,\n      ware: String(b.ref),\n      credit: String(b.credit ?? ''),\n    })),\n  ]; // AUDIT AURUM-SPEND F1: its credit, as an order's",
+    "new": "  return paid;",
+    "tests": [
+      "test/server/storefront_audit3_money.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-A5-the-paid-line-asked-again",
+    "file": "server-account/src/aurum.js",
+    "old": "    const paid = !!(await db.prepare(\"SELECT 1 AS x FROM aurum_ledger WHERE account = ?1 AND kind = 'buy' AND ref = ?2\").bind(player.id, w.id).first());",
+    "new": "    const paid = false;",
+    "tests": [
+      "test/server/storefront_audit3_money.test.js"
+    ],
+    "note": "Re-aimed by content (AURUM-ONLY, 2026-10-30: every ware but a pack bought for Aurum, money buys the packs alone)."
+  },
+  {
+    "name": "AUDIT3-A6-the-aurum-buy-closing-nothing",
+    "file": "server-account/src/index.js",
+    "old": "        await closeStale(ctx, env, (u, i) => globalThis.fetch(u, i), who.player.id);   // AUDIT-STOREFRONT III A6: a money page for it left open\n",
+    "new": "",
+    "tests": [
+      "test/server/storefront_audit3_money.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-A7-the-pack-told-to-be-worn",
+    "file": "server-account/src/shop.js",
+    "old": "        shopRepeatable(w)",
+    "new": "        false",
+    "tests": [
+      "test/server/storefront_audit3_money.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-B4-the-day-left-off-a-find",
+    "file": "server-account/src/battlePass.js",
+    "old": "  const answer = { gained, found, today, day, ",
+    "new": "  const answer = { gained, found, today, ",
+    "tests": [
+      "test/server/storefront_audit3_money.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-B4-the-day-left-off-a-repeat",
+    "file": "server-account/src/battlePass.js",
+    "old": "  return { ...(a && typeof a === 'object' ? a : { gained: 0, done: [] }), day: int(row.day), repeat: true };",
+    "new": "  return { ...(a && typeof a === 'object' ? a : { gained: 0, done: [] }), repeat: true };",
+    "tests": [
+      "test/server/storefront_audit3_money.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-A2-a-tie-by-the-id",
+    "file": "src/net/aurumLaw.js",
+    "old": " || (run.get(b.id) ?? 0) - (run.get(a.id) ?? 0) || hashOf(d, a.id) - hashOf(d, b.id) || (a.id < b.id ? -1 : 1));",
+    "new": " || (a.id < b.id ? -1 : 1));",
+    "tests": [
+      "test/net/storefront_audit3_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-A2-the-run-not-kept",
+    "file": "src/net/aurumLaw.js",
+    "old": "    for (const id of picks) { if (seen.get(id) !== d - 1) run.set(id, d); seen.set(id, d); }",
+    "new": "    for (const id of picks) seen.set(id, d);",
+    "tests": [
+      "test/net/storefront_audit3_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-A2-the-short-count-dropped",
+    "file": "src/net/aurumLaw.js",
+    "old": "      short = n - take.length;",
+    "new": "      short = 0;",
+    "tests": [
+      "test/net/storefront_audit3_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-A7-the-first-days-wares-lent-back",
+    "file": "server-account/src/staffShop.js",
+    "old": "daily: d < AURUM_DAILY_FROM * DAY_S ? [] : dailyWaresAt(env, d)",
+    "new": "daily: dailyWaresAt(env, d)",
+    "tests": [
+      "test/server/storefront_audit3_money.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-B4-the-answers-day-unread",
+    "file": "src/systems/pass/passClient.js",
+    "old": "  const ofToday = !Number.isSafeInteger(d.day) || d.day === utcDay(Math.floor(_doors.nowMs() / 1000));",
+    "new": "  const ofToday = true;",
+    "tests": [
+      "test/systems/pass/passclient_audit3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-B4-the-card-not-read-again",
+    "file": "src/systems/pass/passClient.js",
+    "old": "        if (r.data?.repeat && !(Number.isSafeInteger(r.data?.today) && r.data?.day === utcDay(Math.floor(_doors.nowMs() / 1000)))) await readPass();\n",
+    "new": "",
+    "tests": [
+      "test/systems/pass/passclient_audit3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-B5-the-account-not-kept",
+    "file": "src/systems/pass/passClient.js",
+    "old": "  const mine = () => passLive() && account() === who;",
+    "new": "  const mine = () => passLive();",
+    "tests": [
+      "test/systems/pass/passclient_audit3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-B6-nothing-kept",
+    "file": "src/systems/pass/passClient.js",
+    "old": "  keepFinds(who, (l) => [...l, { rid, source, at: _doors.nowMs() }]);\n",
+    "new": "",
+    "tests": [
+      "test/systems/pass/passclient_audit3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-B6-kept-past-its-answer",
+    "file": "src/systems/pass/passClient.js",
+    "old": "  const settle = (/** @type {number} */ n) => { keepFinds(who, (l) => l.filter((x) => x?.rid !== rid)); return n; };",
+    "new": "  const settle = (/** @type {number} */ n) => n;",
+    "tests": [
+      "test/systems/pass/passclient_audit3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-B6-a-day-old-find-asked",
+    "file": "src/systems/pass/passClient.js",
+    "old": "  for (const x of keptFinds()[who] ?? []) if (x?.at >= since && isPassSource(x.source)",
+    "new": "  for (const x of keptFinds()[who] ?? []) if (isPassSource(x.source)",
+    "tests": [
+      "test/systems/pass/passclient_audit3.test.js"
+    ]
+  }
+]

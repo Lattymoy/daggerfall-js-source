@@ -2,8 +2,8 @@
   {
     "name": "AEGIS-the-gradient-turned-round",
     "file": "src/ui/playerBadge.js",
-    "old": "  aegis: Object.freeze([OBLIVION_VOID, OBLIVION_VIOLET, OBLIVION_LILAC]),",
-    "new": "  aegis: Object.freeze([OBLIVION_LILAC, OBLIVION_VIOLET, OBLIVION_VOID]),",
+    "old": "  aegis: Object.freeze([OBLIVION_VOID, OBLIVION_VIOLET, OBLIVION_LILAC]), // AEGIS: out of the void into the ward's light",
+    "new": "  aegis: Object.freeze([OBLIVION_LILAC, OBLIVION_VIOLET, OBLIVION_VOID]), // AEGIS: out of the void into the ward's light",
     "tests": [
       "test/net/aegis.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "AEGIS-glyph-in-another-colour",
     "file": "src/ui/playerBadge.js",
-    "old": "  aegis: TITLE_RGBA.aegis,             // AEGIS:",
-    "new": "  aegis: TITLE_RGBA.apostle,             // AEGIS:",
+    "old": "  aegis: TITLE_RGBA.aegis, // AEGIS: the pillars and the ring in the title's violet - the tendrils are its detail, below",
+    "new": "  aegis: TITLE_RGBA.apostle, // AEGIS: the pillars and the ring in the title's violet - the tendrils are its detail, below",
     "tests": [
       "test/net/aegis.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "AEGIS-the-edge-dropped",
     "file": "src/ui/playerBadge.js",
-    "old": "  aegis: Object.freeze([0, 0, 0, 1]),   // AEGIS: its lilac end is bright",
-    "new": "  // aegis: its lilac end is bright",
+    "old": "  aegis: Object.freeze([0, 0, 0, 1]), // AEGIS: its lilac end is bright - edged in black, as Penitent's and the Gatebreaker's",
+    "new": "  // aegis: its lilac end is bright - edged in black, as Penitent's and the Gatebreaker's",
     "tests": [
       "test/net/aegis.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "AEGIS-a-mark-another-glyph-has",
     "file": "src/ui/playerBadge.js",
-    "old": "  aegis: 'O',         // AEGIS:",
-    "new": "  aegis: '@',         // AEGIS:",
+    "old": "  aegis: 'O', // AEGIS: the ring the pillars stand through - and Oblivion's initial",
+    "new": "  aegis: '@', // AEGIS: the ring the pillars stand through - and Oblivion's initial",
     "tests": [
       "test/net/aegis.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "AEGIS-the-glyph-filled",
     "file": "src/ui/playerBadge.js",
-    "old": "laurel: true, aegis: true, primarch: false, crystalfist: false, wikimaid: false, nirnrootsage: false,",
-    "new": "laurel: true, aegis: false, primarch: false, crystalfist: false, wikimaid: false, nirnrootsage: false,",
+    "old": "  aegis: true,",
+    "new": "  aegis: false,",
     "tests": [
       "test/net/aegis.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "AEGIS-the-middle-pillar-short",
     "file": "src/ui/playerBadge.js",
-    "old": "aegis: 'M8 0.9V10.9M3",
-    "new": "aegis: 'M8 7.2V10.9M3",
+    "old": "  aegis: 'M8 0.9V10.9M3 7.2V12.8M13 7.2V12.8M3 10.2A5 2.6 0 1 0 13 10.2A5 2.6 0 1 0 3 10.2',",
+    "new": "  aegis: 'M8 7.2V10.9M3 7.2V12.8M13 7.2V12.8M3 10.2A5 2.6 0 1 0 13 10.2A5 2.6 0 1 0 3 10.2',",
     "tests": [
       "test/net/aegis.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "AEGIS-the-ring-off-the-pillars",
     "file": "src/ui/playerBadge.js",
-    "old": "M3 10.2A5 2.6 0 1 0 13 10.2A5 2.6 0 1 0 3 10.2",
-    "new": "M4 10.2A4 2.6 0 1 0 12 10.2A4 2.6 0 1 0 4 10.2",
+    "old": "  aegis: 'M8 0.9V10.9M3 7.2V12.8M13 7.2V12.8M3 10.2A5 2.6 0 1 0 13 10.2A5 2.6 0 1 0 3 10.2',",
+    "new": "  aegis: 'M8 0.9V10.9M3 7.2V12.8M13 7.2V12.8M4 10.2A4 2.6 0 1 0 12 10.2A4 2.6 0 1 0 4 10.2',",
     "tests": [
       "test/net/aegis.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "AEGIS-the-tendrils-over-the-ring",
     "file": "src/ui/playerBadge.js",
-    "old": "'M4.4 12.9Q2.2 13.2 0.3 14.6",
-    "new": "'M4.4 9.9Q2.2 13.2 0.3 14.6",
+    "old": "    path: 'M4.4 12.9Q2.2 13.2 0.3 14.6Q2.8 14.3 5 14.3Q4 15 3 15.8Q5.4 15.3 6.6 14.5L8 15.95L9.4 14.5Q10.6 15.3 13 15.8Q12 15 11 14.3Q13.2 14.3 15.7 14.6Q13.8 13.2 11.6 12.9Q8 14 4.4 12.9Z',",
+    "new": "    path: 'M4.4 9.9Q2.2 13.2 0.3 14.6Q2.8 14.3 5 14.3Q4 15 3 15.8Q5.4 15.3 6.6 14.5L8 15.95L9.4 14.5Q10.6 15.3 13 15.8Q12 15 11 14.3Q13.2 14.3 15.7 14.6Q13.8 13.2 11.6 12.9Q8 14 4.4 12.9Z',",
     "tests": [
       "test/net/aegis.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "AEGIS-the-wards-button-in-the-fire",
     "file": "src/ui/playerBadge.js",
-    "old": "oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
-    "new": "oblivionward: 'gatebreaker', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
+    "old": "  oblivionward: 'aegis',",
+    "new": "  oblivionward: 'gatebreaker',",
     "tests": [
       "test/net/aegis.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "AEGIS-the-ward-without-the-list",
     "file": "server-account/src/titles.js",
-    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
-    "new": "export const TIER_AURA = Object.freeze({ primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
+    "old": "  aegis: 'oblivionward',\n  primarch: 'radiance',",
+    "new": "  primarch: 'radiance',",
     "tests": [
       "test/net/aegis.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "AEGIS-the-brokers-first",
     "file": "server-account/src/titles.js",
-    "old": "  for (const [t, a] of Object.entries(TIER_AURA)) if (holdsTier(t, player, env) && !held.includes(a)) held.push(a);\n  if (isDeveloper(player, env) && !held.includes(DEVELOPER_AURA)) held.push(DEVELOPER_AURA);\n  // SD9c: THE TURNING HOUR - the Brass Remnant's second grant, rolled on a kill's first write and laid on the row (sds.js\n  // claimSd, `sd_honours`), held for good; a registered account's alone, as Hourbreaker is\n  if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_AURA)) held.push('turninghour');\n  if (isHoursFirst(player, env) && !held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA);   // HOURS-FIRST: with the title, by name\n  // EG-E2: the Spire's two auras with their titles' bits (Kynbane's Beaconlight, Wellhead-Walker's The Burning Stair), a\n  // registered account's alone; Firstlight with First of the Spire, by name\n  if (typeof player?.handle === 'string' && player.handle) for (const [t, a] of Object.entries(EG_HONOUR_AURA)) if ((Number(player?.eg_honours) & EG_HONOUR[t]) && !held.includes(a)) held.push(a);\n  if (isSpireFirst(player, env) && !held.includes(EG_FIRST_AURA)) held.push(EG_FIRST_AURA);\n  for (const a of insigniaKeys(player?.insignia, 'aura')) if (!held.includes(a)) held.push(a);",
-    "new": "  for (const a of insigniaKeys(player?.insignia, 'aura')) if (!held.includes(a)) held.push(a);\n  for (const [t, a] of Object.entries(TIER_AURA)) if (holdsTier(t, player, env) && !held.includes(a)) held.push(a);\n  if (isDeveloper(player, env) && !held.includes(DEVELOPER_AURA)) held.push(DEVELOPER_AURA);\n  // SD9c: THE TURNING HOUR - the Brass Remnant's second grant, rolled on a kill's first write and laid on the row (sds.js\n  // claimSd, `sd_honours`), held for good; a registered account's alone, as Hourbreaker is\n  if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_AURA)) held.push('turninghour');\n  if (isHoursFirst(player, env) && !held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA);   // HOURS-FIRST: with the title, by name\n  // EG-E2: the Spire's two auras with their titles' bits (Kynbane's Beaconlight, Wellhead-Walker's The Burning Stair), a\n  // registered account's alone; Firstlight with First of the Spire, by name\n  if (typeof player?.handle === 'string' && player.handle) for (const [t, a] of Object.entries(EG_HONOUR_AURA)) if ((Number(player?.eg_honours) & EG_HONOUR[t]) && !held.includes(a)) held.push(a);\n  if (isSpireFirst(player, env) && !held.includes(EG_FIRST_AURA)) held.push(EG_FIRST_AURA);",
+    "old": "  for (const [t, a] of Object.entries(TIER_AURA)) if (holdsTier(t, player, env) && !held.includes(a)) held.push(a);\n  if (isDeveloper(player, env) && !held.includes(DEVELOPER_AURA)) held.push(DEVELOPER_AURA);\n  // SD9c: THE TURNING HOUR - the Brass Remnant's second grant, rolled on a kill's first write and laid on the row (sds.js\n  // claimSd, `sd_honours`), held for good; a registered account's alone, as Hourbreaker is\n  if (typeof player?.handle === 'string' && player.handle && Number(player?.sd_honours) & SD_HONOUR_AURA)\n    held.push('turninghour');\n  if (isHoursFirst(player, env) && !held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA); // HOURS-FIRST: with the title, by name\n  // EG-E2: the Spire's two auras with their titles' bits (Kynbane's Beaconlight, Wellhead-Walker's The Burning Stair), a\n  // registered account's alone; Firstlight with First of the Spire, by name\n  if (typeof player?.handle === 'string' && player.handle)\n    for (const [t, a] of Object.entries(EG_HONOUR_AURA))\n      if (Number(player?.eg_honours) & EG_HONOUR[t] && !held.includes(a)) held.push(a);\n  if (isSpireFirst(player, env) && !held.includes(EG_FIRST_AURA)) held.push(EG_FIRST_AURA);\n  for (const a of insigniaKeys(player?.insignia, 'aura')) if (!held.includes(a)) held.push(a);",
+    "new": "  for (const a of insigniaKeys(player?.insignia, 'aura')) if (!held.includes(a)) held.push(a);\n  for (const [t, a] of Object.entries(TIER_AURA)) if (holdsTier(t, player, env) && !held.includes(a)) held.push(a);\n  if (isDeveloper(player, env) && !held.includes(DEVELOPER_AURA)) held.push(DEVELOPER_AURA);\n  // SD9c: THE TURNING HOUR - the Brass Remnant's second grant, rolled on a kill's first write and laid on the row (sds.js\n  // claimSd, `sd_honours`), held for good; a registered account's alone, as Hourbreaker is\n  if (typeof player?.handle === 'string' && player.handle && Number(player?.sd_honours) & SD_HONOUR_AURA)\n    held.push('turninghour');\n  if (isHoursFirst(player, env) && !held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA); // HOURS-FIRST: with the title, by name\n  // EG-E2: the Spire's two auras with their titles' bits (Kynbane's Beaconlight, Wellhead-Walker's The Burning Stair), a\n  // registered account's alone; Firstlight with First of the Spire, by name\n  if (typeof player?.handle === 'string' && player.handle)\n    for (const [t, a] of Object.entries(EG_HONOUR_AURA))\n      if (Number(player?.eg_honours) & EG_HONOUR[t] && !held.includes(a)) held.push(a);\n  if (isSpireFirst(player, env) && !held.includes(EG_FIRST_AURA)) held.push(EG_FIRST_AURA);",
     "tests": [
       "test/net/aegis.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "AEGIS-the-wardrobe-without-the-config",
     "file": "server-account/src/titles.js",
-    "old": "  auras: aurasHeld(player, env),   // AEGIS:",
-    "new": "  auras: aurasHeld(player),   // AEGIS:",
+    "old": "  auras: aurasHeld(player, env), // AEGIS: a list's aura beside the Broker's",
+    "new": "  auras: aurasHeld(player), // AEGIS: a list's aura beside the Broker's",
     "tests": [
       "test/net/aegis.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "AEGIS-the-vocabulary-without-the-ward",
     "file": "src/net/identityToken.js",
-    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal']);",
-    "new": "export const AURAS = Object.freeze(['dagonfire', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal']);",
+    "old": "  'oblivionward',\n  'radiance',",
+    "new": "  'radiance',",
     "tests": [
       "test/net/aegis.test.js"
     ],

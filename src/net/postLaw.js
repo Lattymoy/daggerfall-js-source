@@ -10,7 +10,8 @@
 // its words fixed (server-account/src/egHonours.js egFirstPost), and (EG-ZM) the service's hourly clock a spent Weir Key
 // stake's, its words fixed too (server-account/src/eg.js spendLapsedStakes).
 
-import { shopWareById } from './shopLaw.js';   // SHOP: a receipt names the ware it granted
+import { shopWareById } from './shopLaw.js'; // SHOP: a receipt names the ware it granted
+import { giftOf } from './giftLaw.js'; // THANKS-POST: a letter names the gift it brought
 
 /** A piece's id: the service's mintId shape, or the operator's statement's `lower(hex(randomblob(12)))` - 24 hex. */
 export const POST_ID_RE = /^[A-Za-z0-9_-]{16,40}$/;
@@ -50,12 +51,24 @@ export function postItemHead(rec) {
 export function postHead(p) {
   if (!p || typeof p !== 'object') return null;
   if (typeof p.id !== 'string' || !POST_ID_RE.test(p.id)) return null;
-  const from = text(p.from, 40), subject = text(p.subject, POST_SUBJECT_MAX);
+  const from = text(p.from, 40),
+    subject = text(p.subject, POST_SUBJECT_MAX);
   if (!from || !subject || !Number.isSafeInteger(p.sentAt)) return null;
   const item = p.item == null ? null : postItemHead(p.item);
   if (p.item != null && !item) return null;
-  const ware = shopWareById(p.ware)?.id ?? null;   // SHOP: a receipt's ware, one of the shop's
-  return { id: p.id, from, subject, sentAt: p.sentAt, read: p.read === true, item, claimed: item ? p.claimed === true : false, ...(ware ? { ware } : {}) };
+  const ware = shopWareById(p.ware)?.id ?? null; // SHOP: a receipt's ware, one of the shop's
+  const gift = giftOf(p.gift) ? /** @type {string} */ (p.gift) : null; // THANKS-POST: the gift a letter brought
+  return {
+    id: p.id,
+    from,
+    subject,
+    sentAt: p.sentAt,
+    read: p.read === true,
+    item,
+    claimed: item ? p.claimed === true : false,
+    ...(ware ? { ware } : {}),
+    ...(gift ? { gift } : {}),
+  };
 }
 
 /** A WHOLE PIECE (`/v1/post/read`'s answer): its head and its body, or null. */
@@ -66,4 +79,5 @@ export function postWhole(p) {
 }
 
 /** The pieces that hold an item not yet taken - the mailbox's mark lights for these as for unread words. */
-export const unclaimedOf = (/** @type {Array<{ item: any, claimed: boolean }>} */ heads) => heads.filter((h) => h.item && !h.claimed).length;
+export const unclaimedOf = (/** @type {Array<{ item: any, claimed: boolean }>} */ heads) =>
+  heads.filter((h) => h.item && !h.claimed).length;

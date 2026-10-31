@@ -17,7 +17,7 @@
 // has no display name says nothing. A departure (Port-Ledger A, QUEST-FOE-LINE). The classic skins' panel draws a
 // pile's rows and nothing else (ui/classicLootPanel.js), so a name frame - and this line on it - is the enhanced
 // skin's alone; and the machine is only read.
-import { questTitleOf } from '../../ui/quest/questRail.js';   // the journal's own title for a quest, one home
+import { questTitleOf } from '../../ui/quest/questRail.js'; // the journal's own title for a quest, one home
 
 /** What the line says before the quest's title. */
 export const QUEST_FOE_PREFIX = 'Quest: ';
@@ -31,7 +31,7 @@ export function questFoeLine(behaviour) {
   if (!behaviour) return null;
   const quest = behaviour.machine?.getQuest?.(behaviour.questUID) ?? null;
   if (!quest?.getResource?.(behaviour.targetSymbol)?.isFoe) return null;
-  if (!quest.getLogMessages?.()?.length) return null;   // Quest.GetLogMessages: none once the quest has ended, too
+  if (!quest.getLogMessages?.()?.length) return null; // Quest.GetLogMessages: none once the quest has ended, too
   const title = questTitleOf(quest.displayName);
   return title ? `${QUEST_FOE_PREFIX}${title}` : null;
 }

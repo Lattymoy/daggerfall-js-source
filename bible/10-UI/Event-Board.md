@@ -98,6 +98,7 @@ word, a frame or a promise is drawn once.
 | a star's omen and fall (its region), its hold (everyone) | `scenes/starfall/starfallHost.js` | chat | news, `star`, its id |
 | a raid's attack, withdrawal, cleansing | `systems/raidingParties.js` (`say`) | `AddHUDText` (hudText, the journal) | news, `raid`, its id; the journal |
 | the festival's open days and its nights | `scenes/witchesHost.js` | chat (online; offline nowhere) | news, `festival` |
+| the season's tremor, a Colossus waking and falling (STOREFRONT) | `scenes/seasonHost.js` (`say`) | - (new) | news, `season` |
 
 What stays in the chat: the claims, receipts and spoils (each a line to the player alone), the Motherlodes' regional
 lines (`net/motherlodeBook.js`), the server and build notices (SRV-N), the party's rest, and every player's words.
@@ -207,11 +208,15 @@ spared. With the board off, every line goes where it went before whatever its ki
 
 **ON THE PLATE** (`ui/eventBoard.js`). The chips are read every frame. A chip pressed has the source read again at once,
 so its rows leave with no wait for the next read; a line of it still waiting at the door is let go, and a news of it
-showing or waiting is taken down (`ui/eventBoard.js:"for (const k of hiddenKinds) toasts.drop(k);"`). Each of those
+showing or waiting is taken down (`ui/eventBoard.js:"for (const k of hiddenKinds)"`). Each of those
 lines is in the journal already, where the door filed it.
 
 **WHAT IT LEAVES.** The Timers window under the pause menu is the whole schedule, every kind, whatever the chips say.
 The plate takes no pointer still: the chips are the row's, never the HUD's.
+
+**THE SEASON** (STOREFRONT, 2026-10-29, `06-Systems/Battle-Pass.md` section 6). A seventh kind, `season`, joins
+`EVENT_KINDS`: the hourly tremor's line, the Brass Colossus waking and its fall. News alone and one at a time, as the
+festival's; its chip is `eventBoard-season`, its heading `events.kind.season`.
 
 **THE FOUR HOSTS.** No host grew a line (HOST-SPLIT): the filter is read where the board and the door read the player's
 prefs. `scenes/world.js` seats the source as section 5 says and is unchanged. `scenes/exterior.js` (the fixed-city

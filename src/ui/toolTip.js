@@ -31,10 +31,10 @@
 // - the colours are DaggerfallUI's own (:68-69), and the port reads
 //   them from the four GUI/ToolTip* settings, which ship those exact
 //   values and were stored-tier with no consumer until now.
-import { drawRect, NATIVE_W, NATIVE_H } from './native/nativePanel.js';   // ONE home for the virtual canvas size
+import { drawRect, NATIVE_W, NATIVE_H } from './native/nativePanel.js'; // ONE home for the virtual canvas size
 import { drawText, measureText } from './text.js';
 import { getBool, getFloat, getString } from '../systems/settings/settings.js';
-import { processGrammar } from '../systems/textManager.js';   // L10N3g: each row through the grammar as it is drawn (:215)
+import { processGrammar } from '../systems/textManager.js'; // L10N3g: each row through the grammar as it is drawn (:215)
 
 /** defaultMarginSize (:30). */
 export const TOOLTIP_MARGIN = 2;
@@ -72,13 +72,19 @@ export function wrapToolTipRows(rows, measure, maxW = TOOLTIP_WRAP_W, from = 0) 
   const out = [];
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
-    if (i < from || !(measure(row) > maxW)) { out.push(row); continue; }
+    if (i < from || !(measure(row) > maxW)) {
+      out.push(row);
+      continue;
+    }
     const lead = /^ */.exec(row)[0];
     let line = '';
     for (const word of row.slice(lead.length).split(/ +/)) {
       if (!word) continue;
       const next = line ? `${line} ${word}` : `${lead}${word}`;
-      if (!line || measure(next) <= maxW) { line = next; continue; }
+      if (!line || measure(next) <= maxW) {
+        line = next;
+        continue;
+      }
       out.push(line);
       line = `${lead}${WRAP_INDENT}${word}`;
     }
@@ -89,18 +95,15 @@ export function wrapToolTipRows(rows, measure, maxW = TOOLTIP_WRAP_W, from = 0) 
 
 /** Draw's sizing (:158-160) - the -1 is DFU's own. */
 export function toolTipSize(rows, widest, glyphHeight) {
-  return [
-    widest + TOOLTIP_MARGIN * 2,
-    glyphHeight * rows.length + TOOLTIP_MARGIN * 2 - 1,
-  ];
+  return [widest + TOOLTIP_MARGIN * 2, glyphHeight * rows.length + TOOLTIP_MARGIN * 2 - 1];
 }
 
 /** Draw's placement + the two edge shifts (:163-177). Native coords. */
 export function toolTipPosition(mouseX, mouseY, w, h) {
   let x = mouseX + TOOLTIP_MOUSE_OFFSET[0];
   let y = mouseY + TOOLTIP_MOUSE_OFFSET[1];
-  if (x + w > NATIVE_W) x -= (x + w) - NATIVE_W;
-  if (y + h > NATIVE_H) y -= (y + h) - NATIVE_H;
+  if (x + w > NATIVE_W) x -= x + w - NATIVE_W;
+  if (y + h > NATIVE_H) y -= y + h - NATIVE_H;
   return [x, y];
 }
 
@@ -128,7 +131,7 @@ export class ToolTip {
    *  own clock below carries. Null means the GUI setting. */
   constructor(delaySeconds = null, { wrapFrom = null } = {}) {
     this.delaySeconds = delaySeconds;
-    this.wrapFrom = wrapFrom;   // AUDIT SET U2: the first row of the port's own that may wrap (null: none - DFU's tooltip)
+    this.wrapFrom = wrapFrom; // AUDIT SET U2: the first row of the port's own that may wrap (null: none - DFU's tooltip)
     this.text = null;
     this._pending = null;
     this._elapsed = 0;
@@ -138,17 +141,30 @@ export class ToolTip {
 
   /** Called each frame with the hovered text, or via hide(). */
   show(text, vx, vy) {
-    if (!text) { this.hide(); return; }
-    if (text !== this._pending) { this._pending = text; this._elapsed = 0; }
+    if (!text) {
+      this.hide();
+      return;
+    }
+    if (text !== this._pending) {
+      this._pending = text;
+      this._elapsed = 0;
+    }
     this.x = vx;
     this.y = vy;
   }
 
-  hide() { this._pending = null; this._elapsed = 0; this.text = null; }
+  hide() {
+    this._pending = null;
+    this._elapsed = 0;
+    this.text = null;
+  }
 
   /** The rest clock. dt in seconds. */
   update(dt) {
-    if (!this._pending) { this.text = null; return; }
+    if (!this._pending) {
+      this.text = null;
+      return;
+    }
     this._elapsed += dt;
     this.text = this._elapsed >= (this.delaySeconds ?? toolTipDelay()) ? this._pending : null;
   }
@@ -180,7 +196,10 @@ export class ToolTip {
  */
 export function drawToolTipBox(renderer, m, font, text, vx, vy, { ignoreEnableSetting = false, wrapFrom = null } = {}) {
   if (!text || (!ignoreEnableSetting && !toolTipsEnabled())) return;
-  const rows = wrapFrom == null ? toolTipRows(text) : wrapToolTipRows(toolTipRows(text), (r) => measureText(font.fnt, r), TOOLTIP_WRAP_W, wrapFrom);   // AUDIT SET U2: the port's own rows may wrap
+  const rows =
+    wrapFrom == null
+      ? toolTipRows(text)
+      : wrapToolTipRows(toolTipRows(text), (r) => measureText(font.fnt, r), TOOLTIP_WRAP_W, wrapFrom); // AUDIT SET U2: the port's own rows may wrap
   // DaggerfallFont.GlyphHeight - the port's own fixedHeight, the
   // same reader messageBox's rowH uses.
   const glyph = font?.fnt?.fixedHeight ?? 6;
@@ -199,7 +218,15 @@ export function drawToolTipBox(renderer, m, font, text, vx, vy, { ignoreEnableSe
   // box above was sized off the rows as they stand, which is DFU's own
   // order (UpdateTextRows measures them, :257-264, before Draw runs the
   // grammar). English is the identity.
-  rows.forEach((r, i) => drawText(renderer, font, processGrammar(r),
-    m.ox + (x + TOOLTIP_MARGIN) * m.s,
-    m.oy + (y + TOOLTIP_MARGIN + i * glyph) * m.s, m.s, fg));
+  rows.forEach((r, i) =>
+    drawText(
+      renderer,
+      font,
+      processGrammar(r),
+      m.ox + (x + TOOLTIP_MARGIN) * m.s,
+      m.oy + (y + TOOLTIP_MARGIN + i * glyph) * m.s,
+      m.s,
+      fg,
+    ),
+  );
 }

@@ -2,8 +2,8 @@
   {
     "name": "MO1-the-stream-note-offs-sent-too",
     "file": "src/systems/midiOut.js",
-    "old": "    if (e.type === 'noteOff') return;   // the player's own (_voice, _release)\n",
-    "new": "",
+    "old": "    if (e.type === 'noteOff') return; // the player's own (_voice, _release)\n    if (e.type === 'controller' && e.controller === 7 && Number.isInteger(e.channel)) {",
+    "new": "    if (e.type === 'controller' && e.controller === 7 && Number.isInteger(e.channel)) {",
     "tests": [
       "test/systems/midiout1.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "MO1-cc7-unscaled",
     "file": "src/systems/midiOut.js",
-    "old": "    const v = scaledVolume(this._raw7[ch], this._scale(at));\n    this._send([0xb0 | ch, 7, v], at);",
-    "new": "    const v = this._raw7[ch];\n    this._send([0xb0 | ch, 7, v], at);",
+    "old": "    const v = scaledVolume(this._raw7[ch], this._scale(at));",
+    "new": "    const v = this._raw7[ch];",
     "tests": [
       "test/systems/midiout1.test.js"
     ],
@@ -32,7 +32,7 @@
   {
     "name": "MO1-resync-does-nothing",
     "file": "src/systems/midiOut.js",
-    "old": "  resyncGain() { this._relevel(this.ctx.currentTime); }",
+    "old": "  resyncGain() {\n    this._relevel(this.ctx.currentTime);\n  }",
     "new": "  resyncGain() {}",
     "tests": [
       "test/systems/midiout1.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "MO1-the-volume-dropped-from-the-scale",
     "file": "src/systems/midiOut.js",
-    "old": "  _scale(t) { return trackGain() * songLevel(this.song) * this._fadeAt(t); }",
-    "new": "  _scale(t) { return songLevel(this.song) * this._fadeAt(t); }",
+    "old": "    return trackGain() * songLevel(this.song) * this._fadeAt(t);",
+    "new": "    return songLevel(this.song) * this._fadeAt(t);",
     "tests": [
       "test/systems/midiout1.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "MO1-the-song-level-dropped",
     "file": "src/systems/midiOut.js",
-    "old": "  _scale(t) { return trackGain() * songLevel(this.song) * this._fadeAt(t); }",
-    "new": "  _scale(t) { return trackGain() * this._fadeAt(t); }",
+    "old": "    return trackGain() * songLevel(this.song) * this._fadeAt(t);",
+    "new": "    return trackGain() * this._fadeAt(t);",
     "tests": [
       "test/systems/midiout1.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "MO1-the-queued-note-released-before-it-sounds",
     "file": "src/systems/midiOut.js",
-    "old": "this._send([0x80 | n.channel, n.note, 0], Math.max(now, n.on + MIDI_GAP_S));",
-    "new": "this._send([0x80 | n.channel, n.note, 0], now);",
+    "old": "    for (const n of this._notes) this._send([0x80 | n.channel, n.note, 0], Math.max(now, n.on + MIDI_GAP_S));",
+    "new": "    for (const n of this._notes) this._send([0x80 | n.channel, n.note, 0], now);",
     "tests": [
       "test/systems/midiout1.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "MO1-the-quiet-sent-once-before-the-queue",
     "file": "src/systems/midiOut.js",
-    "old": "        if (quiet > now + MIDI_GAP_S) this._send(m, quiet);   // and again after anything the window had queued\n",
-    "new": "",
+    "old": "        if (quiet > now + MIDI_GAP_S) this._send(m, quiet); // and again after anything the window had queued\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/midiout1.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "MO1-the-stall-only-folded",
     "file": "src/systems/midiOut.js",
-    "old": "    for (const e of last.values()) this._control(e, now);\n",
-    "new": "",
+    "old": "    for (const e of last.values()) this._control(e, now);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/midiout1.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "MO1-a-velocity-sent-raw",
     "file": "src/systems/midiOut.js",
-    "old": "    case 'noteOn': return [0x90 | ch, clamp7(e.note), clamp7(e.velocity)];",
-    "new": "    case 'noteOn': return [0x90 | ch, clamp7(e.note), e.velocity];",
+    "old": "      return [0x90 | ch, clamp7(e.note), clamp7(e.velocity)];",
+    "new": "      return [0x90 | ch, clamp7(e.note), e.velocity];",
     "tests": [
       "test/systems/midiout1.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "MO1-a-status-nibble-wrong",
     "file": "src/systems/midiOut.js",
-    "old": "    case 'polyPressure': return [0xa0 | ch,",
-    "new": "    case 'polyPressure': return [0xb0 | ch,",
+    "old": "      return [0xa0 | ch, clamp7(e.note), clamp7(e.pressure)];",
+    "new": "      return [0xb0 | ch, clamp7(e.note), clamp7(e.pressure)];",
     "tests": [
       "test/systems/midiout1.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "MO1-the-device-row-unmapped",
     "file": "src/ui/settings/settingsMap.js",
-    "old": "      \"Audio/AlternateMusic\", \"Audio/SoundFont\", \"port:midiOut\"]),",
-    "new": "      \"Audio/AlternateMusic\", \"Audio/SoundFont\"]),",
+    "old": "    sec('music', 'Music', ['Audio/AlternateMusic', 'Audio/SoundFont', 'port:midiOut']),",
+    "new": "    sec('music', 'Music', ['Audio/AlternateMusic', 'Audio/SoundFont']),",
     "tests": [
       "test/systems/midiout1.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "MO1A-1-cc7-linear",
     "file": "src/systems/midiOut.js",
-    "old": "Math.round(clamp7(raw) * Math.sqrt(g))",
-    "new": "Math.round(clamp7(raw) * g)",
+    "old": "  return Math.max(0, Math.min(127, Math.round(clamp7(raw) * Math.sqrt(g))));",
+    "new": "  return Math.max(0, Math.min(127, Math.round(clamp7(raw) * g)));",
     "tests": [
       "test/systems/midiout1.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "MO1A-3-stall-order-first-seen",
     "file": "src/systems/midiOut.js",
-    "old": "      if (k) { last.delete(k); last.set(k, e); }",
-    "new": "      if (k) last.set(k, e);",
+    "old": "      if (k) {\n        last.delete(k);\n        last.set(k, e);\n      } // AUDIT: in the order of each LAST value - a bank select before its program",
+    "new": "      if (k) last.set(k, e); // AUDIT: in the order of each LAST value - a bank select before its program",
     "tests": [
       "test/systems/midiout1.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "MO1A-4-quiet-on-every-stop",
     "file": "src/systems/midiOut.js",
-    "old": "    if (quietAlready) return;\n",
-    "new": "",
+    "old": "    if (quietAlready) return;\n    const now = this.ctx.currentTime;",
+    "new": "    const now = this.ctx.currentTime;",
     "tests": [
       "test/systems/midiout1.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "MO1A-5-pending-left-waiting",
     "file": "src/systems/music.js",
-    "old": "    else if (output && this._pending && this.playSong(this._pending)) this._pending = null;\n",
-    "new": "",
+    "old": "    else if (output && this._pending && this.playSong(this._pending)) this._pending = null;\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/midiout1.test.js"
     ],

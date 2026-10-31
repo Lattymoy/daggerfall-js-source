@@ -71,6 +71,7 @@ was built on the Bay and stops at its edge. A survey of the tree on 2026-10-24 f
 | WW-C | Cyrodiil (the owner, 2026-10-24: "Each region becomes home to their own abundant harvesting resources with other resources sprinkled in. Cyrodil becomes the new open PvP area with the wrothgarian mountain area being retired in favor of this. Cryodil will be home to all abundent resources and everything else from the wrothgarian zone"): WW-C1 each province's ground rich in its own kinds and ore, Cyrodiil in all; WW-C2 the open zone moved from the Wrothgarian Mountains to Cyrodiil | BUILT (below) |
 | WW4 | The serpent in every sea: a serpent lane for each sea theatre | IN PART (WW7-12, below: the one serpent's site rolled over every lane of the world, the hub telling every game the site the accounts agree on; a serpent a sea theatre still planned) |
 | WW5 | The Hollows and the stars: an Abyss dungeon slot and a Starfall coven night in each theatre | BUILT (below, 2026-10-27: a coven night and a Hollow on the Bay's lane and each province's, Cyrodiil's open zone none); a province's on its turn since FRONTS |
+| STOREFRONT W14 | The season's Brass Fissures in every theatre WW5's stars stand in: a province's an area at a time over its theatre's scan, off its own roads and gate, its Colossus and Maul as the Bay's | BUILT (below, after WW5, 2026-10-29) |
 | WW6 | The raids past the Bay: the raids' towns off the registry by area, the wire's world pixels; a staff town event past the Bay | BUILT (below) |
 | WW7 | The roads' PEOPLE past the Bay - not the roads: the network past the Bay is TESA's (PR #1184, TESA14 and TESA15 - laid by the Bay's own law, drawn on the map). WW7 puts the living world's travellers, patrols, bands and the Watch on it (WW7-7: the ways' planner walks the roads past the Bay) and keys the town economy by the world's key; it lands on #1184 once that merges | IN PROGRESS on #1184 (2026-10-25; section WW7 below) |
 | WORLD-LANES | The world's lanes of map ids (AUDIT BAY-LEFT items 1, 25 and 35): the spawned dungeons and their Elite tier past the Bay in the spawn lane, the Ocean Holes' pits past the Bay and past the Veil in the abyss lane; neither in the open zone | BUILT (section WORLD-LANES below) |
@@ -1246,6 +1247,31 @@ step-down records (the stepped-down socket keeps `ww5Ok` beside `sdOk`).
 
 Section A, WW5 (OURS: DFU has no Starfall and no Abyss Dungeon - their lanes past the Bay are the port's own).
 
+## STOREFRONT W14 - the season's fissures in every theatre (BUILT, 2026-10-29)
+
+AUDIT-STOREFRONT's W14: the Battle Pass's season in the world (`06-Systems/Battle-Pass.md` section 6) stood on the Bay
+alone - its law walked the Bay's gate scan (`px = id % 1000`) and named a region from MAPS.BSA's table, and its host
+asked the Bay's scan and the Bay's gate. STOREFRONT began after TAMRIEL-WIDE, so it stands where WW5's stars stand: the
+Bay's lane and the eight provinces' (`net/wire.js` SITE_EVENT_LANES), Cyrodiil's open zone none, as the coven nights.
+
+- **The law** (`systems/pass/seasonWorld.js`): a fissure is drawn an AREA at a time, a Bay region or a province's
+  district (`areaFissures`, `theatreFissures`), a pixel read by the world's key. Its key, rolls and model are the area's,
+  its region the province's (62..69), its name its town's or the province's. The Bay's are the law before W14, to the byte.
+- **Its ground**: each theatre's own gate scan, warmed one theatre an idle moment (`scenes/eventTheatres.js`, the
+  Starfall's), and one theatre's fissures drawn a frame (`SEASON_LANE_DRAW_MS`).
+- **Its roads**: past the Bay an area is drawn once the roads past the Bay have landed over it (`world/arenaRoads.js`
+  keptArenaRoadsHost, `scenes/tamrielRoadsHost.js` landedIn), and keeps off them as the terrain draws them
+  (`world/road/roadBand.js` nearRoad); none stands while no host lays them.
+- **Its gate**: its own theatre's of the day (`systems/gate/theatreGateSite.js`). **Its map**: the held map over the
+  continent. **Its rock**: every theatre's clearings in one set, the sweep reading a key once a turn.
+- **No relay change**: the camp's sites carry the world's pixel (`px,py:brass.<stage>.<k>`), which the camp law reads
+  already; the relay reads none.
+
+THE FOUR HOSTS: `scenes/world.js` unchanged - the season's host reads the kept scans, places and roads itself.
+`scenes/exterior.js` (the bench), `scenes/worldModes.js` and `scenes/dungeonContext.js` stand no fissure, as before.
+Pins: `season_tamriel.test.js` (10, one on the freeware: every province's every stage). Mutants:
+`tools/mutants/storefront_seasontamriel.json` (18, all dead); three older records re-aimed by content.
+
 ## WW6 - the raids past the Bay, and a staff town event there (BUILT, 2026-10-27)
 
 The owner's call taken (2026-10-26, after the audit `01-Overview/audits/Audit-Left-In-The-Bay.md` item 27, "WW6 as
@@ -1613,7 +1639,7 @@ an interior - WW7-4; each province's crown a kingdom of its own, its own icon an
   `list` and pixel test are made again.
 - **The laws**: a seat's region any of the 71 (`seatRegionOk`), its pixel the world's grid's (`SEAT_PIXEL_SPAN`, the
   services' bundle reading no map), a crown's name its capital's; a gate's kill counts at its own lane's province alone
-  (`townSeatLaw.js:"export const gateRegionOk = (day, region) => {"` - the account service's ledger and influence read
+  (`townSeatLaw.js:"export const gateRegionOk"` - the account service's ledger and influence read
   it, so a province's gate is its own seats' and no other's). The domain tables' CHECKs (migrations 0178-0180, 0177-0179 until main's WOVEN-PAYS took 0177, - 0167-0169 before main's own took those numbers - not yet
   deployed) take regions to 70; the renown tracker with them.
 - Relay world256 and account acct182 changed in place (neither deployed). Mutant records re-aimed by content (7).

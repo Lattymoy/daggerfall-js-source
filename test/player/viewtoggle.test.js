@@ -34,14 +34,14 @@ test('VIEW-TOGGLE seam: the sprite lane flips first to third and back, one press
   // PIN MOVED (SPYGLASS, 2026-10-11): nor while the glass holds the head (mwViewHoldFirst) - in the one predicate (STEED-UI)
   // PIN MOVED (STEED-UI, 2026-10-11): the toggle's refusals are one predicate now, mwViewCanTogglePerspective - the saddle
   // panel's View button stands on the same word the toggle turns on (ui/enhanced/enhancedSaddle.js)
-  assert.match(src, /export function mwViewTogglePerspective\(\) \{\n\s*if \(!mwViewCanTogglePerspective\(\)\) return false;\n\s*if \(eotbLane\(\)\) \{ eotbCamera\.toggleOffset\(!eotbCamera\.thirdPerson\(\)\); return true; \}\n\s*if \(mwCamera\.thirdPerson\(\)\) return mwIntoHead\(\);\n\s*mwCamera\.restore\(\{ firstPerson: false, baseDistance: mwCamera\.baseDistance\(\) \}\);\n\s*fpArm\.setViewMode\('third'\);/,
+  assert.match(src, /export function mwViewTogglePerspective\(\) \{\n\s*if \(!mwViewCanTogglePerspective\(\)\) return false;\n\s*if \(eotbLane\(\)\) \{\n\s*eotbCamera\.toggleOffset\(!eotbCamera\.thirdPerson\(\)\);\n\s*return true;\n\s*\}\n\s*if \(mwCamera\.thirdPerson\(\)\) return mwIntoHead\(\);\n\s*mwCamera\.restore\(\{ firstPerson: false, baseDistance: mwCamera\.baseDistance\(\) \}\);\n\s*fpArm\.setViewMode\('third'\);/,
     'the Morrowind lane: in by the head\'s own door, out by the restore door, never in the saddle (RIDE-POV)');
   assert.match(src, /export function mwViewCanTogglePerspective\(\) \{\n\s*if \(heldThird \|\| heldFirst\) return false;[^\n]*\n\s*if \(eotbLane\(\) \|\| mwCamera\.thirdPerson\(\)\) return true;\n\s*return !!fpArm\.canThirdPerson\(\) && !mounted;\n\}/,
     'held, never; a lane with its third person, or already out, yes; else a body that can be shown, never in the saddle');
 });
 
 test('VIEW-TOGGLE action: a port action, appended, on the mouse\'s forward side button (a binding code since VOICE1, kept when voice was reverted - and never the browser\'s Forward), drawn in Movement; the world host polls its press edge under no window and hands it to the seam before the view frame', () => {
-  assert.deepEqual(ACTIONS.slice(-14, -4), ['TogglePerspective', 'ActChoice', 'BoatSailUp', 'BoatSailDown', 'Professions', 'LegacyFamily', 'ModeWheel', 'WeaponTechnique', 'Spyglass', 'SaddlePanel'],   // PIN MOVED (Decorate appended)   // PIN MOVED (PARTY-PING: PartyPing after ShotCycle)   // PIN MOVED (SHOT-KINDS: ShotCycle appended after ShipHold)   // PIN MOVED (CARGO-ANYWHERE: ShipHold appended after)
+  assert.deepEqual(ACTIONS.slice(-16, -6), ['TogglePerspective', 'ActChoice', 'BoatSailUp', 'BoatSailDown', 'Professions', 'LegacyFamily', 'ModeWheel', 'WeaponTechnique', 'Spyglass', 'SaddlePanel'],   // PIN MOVED (Decorate appended)   // PIN MOVED (PARTY-PING: PartyPing after ShotCycle)   // PIN MOVED (SHOT-KINDS: ShotCycle appended after ShipHold)   // PIN MOVED (CARGO-ANYWHERE: ShipHold appended after)   // PIN MOVED (PVP-KEY: PvpFlag appended last)
       // PIN MOVED (UI-CALM)
     'appended - MERGE 2: the professions branch\'s act choice after it, main\'s shipped first; HELM-KEYS\' two after them; CLASSIC-PAGES\' key; LEGACY1\'s family tree; MODE-WHEEL\'s wheel; TECH1\'s technique; SPYGLASS\' glass last (PIN MOVED)');
   assert.ok(PORT_ACTIONS.includes('TogglePerspective'));

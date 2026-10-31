@@ -135,7 +135,7 @@ test('AUDIT BANTHA1 TREE-3: a jungle tree\'s Logging mark stands outside what th
   nodeGlows(marks, [0, 1.7, 10], 0, st, out);
   nodeGlows(marks, [0, 1.7, 10], 0.2, st, out);   // kindled
   assert.deepEqual(out.map((g) => g.pull), [kapok.pull, NODE_GLOW_PULL], 'a glow its mark\'s pull, or the node\'s own');
-  assert.match(text('src/render/nodeGlow.js'), /if \(g\.pull !== pull\) \{ pull = g\.pull \?\? NODE_GLOW_PULL; gl\.uniform1f\(U\.uPull, pull\); \}/, 'sent a glow at a time');
+  assert.match(text('src/render/nodeGlow.js'), /if \(g\.pull !== pull\) \{\n\s*pull = g\.pull \?\? NODE_GLOW_PULL;\n\s*gl\.uniform1f\(U\.uPull, pull\);\n\s*\}/, 'sent a glow at a time');
   assert.match(text('src/scenes/treeHost.js'), /n\.flat\?\.jungle != null \? jungleTreeMark\(n\.flat\) : TREE_MARK/);
 });
 
@@ -532,7 +532,7 @@ test('AUDIT BANTHA1 HAZE-3: every fogged pass that draws where the haze is armed
   const fogged = [], unhazed = [], bare = [];
   for (const f of walk(join(ROOT, 'src'))) {
     const rel = f.slice(join(ROOT, 'src').length + 1).split('\\').join('/'), s = readFileSync(f, 'utf8');
-    for (const l of s.split('\n')) if (/mode: [\w.]*_fogMode, density/.test(l) && !/haze: [\w.]*_haze\b/.test(l)) bare.push(`${rel}: ${l.trim().slice(0, 90)}`);
+    for (const l of s.split('\n')) if (/mode: renderer\._fogMode,\n\s*density/.test(l) && !/haze: [\w.]*_haze\b/.test(l)) bare.push(`${rel}: ${l.trim().slice(0, 90)}`);
     if (!/'uFogMode'|u\('uFogMode'\)/.test(s)) continue;
     fogged.push(rel);
     if (!s.includes("'uJungleHaze'") && !MODE_FRAMES_ONLY.has(rel)) unhazed.push(rel);

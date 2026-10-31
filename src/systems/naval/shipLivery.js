@@ -21,6 +21,7 @@
 //
 // THE WORD: a livery is one number on the boats' word (`liveryCode`, four nibbles; systems/comeSailAway/
 // comeSailAwayWire.js `l`) - a reader takes it through the door (`liveryOfCode`), one it refuses as built.
+import { sailClothOf, sailClothCode, sailClothOfCode } from './sailCloth.js'; // GUILD-SHOP: her sailcloth
 
 /** The paints, index 1 up (0 is none - as she was built): each in Daggerfall's own earths and dyes. */
 export const SHIP_PAINTS = Object.freeze([
@@ -57,6 +58,9 @@ export function liveryPartsOf(hull) {
   if (hull === 0) return ['stain'];
   return [];
 }
+/** GUILD-SHOP: whether a hull's sail takes a sailcloth - a port hull's, its canvas one picture over the whole sail. AUDIT
+ *  GUILD-SHOP N1: the galley's classic sail tiles its picture dozens of times, a pattern and the arms with it. */
+export const clothHull = (hull) => hull === 1 || hull === 2 || hull === 4;
 const paintIndex = (v) => (Number.isInteger(v) && v >= 0 && v <= PAINT_MAX ? v : null);
 /** Whether `v` is a paint's index (0 none - as built). */
 export const isPaint = (v) => paintIndex(v) != null;
@@ -74,15 +78,39 @@ export function liveryOf(raw, hull) {
     if (i == null) return null;
     out[p] = i;
   }
-  if (hull != null) { const takes = liveryPartsOf(hull); for (const p of LIVERY_PARTS) if (!takes.includes(p)) out[p] = 0; }
-  return LIVERY_PARTS.some((p) => out[p]) ? out : null;
+  // GUILD-SHOP: her sailcloth (systems/naval/sailCloth.js) - a pattern, a second paint and the guild's arms - on a sail she has
+  const cloth = raw.cloth == null ? null : sailClothOf(raw.cloth); // one that is none (or no cloth at all) is none
+  const sails = hull == null || clothHull(hull);
+  if (hull != null) {
+    const takes = liveryPartsOf(hull);
+    for (const p of LIVERY_PARTS) if (!takes.includes(p)) out[p] = 0;
+  }
+  if (cloth && sails) /** @type {any} */ (out).cloth = cloth;
+  return LIVERY_PARTS.some((p) => out[p]) || /** @type {any} */ (out).cloth ? out : null;
 }
-/** A livery as the word's one number (0 as built): a nibble a part. */
-export const liveryCode = (l) => { const v = liveryOf(l); return v ? v.strake | (v.accent << 4) | (v.sail << 8) | (v.stain << 12) : 0; };
-/** The word's number as a livery - null as built, or a number that is not one. */
+/** A livery as the word's one number (0 as built): a nibble a part, and GUILD-SHOP's sailcloth byte over them. */
+export const liveryCode = (l) => {
+  const v = liveryOf(l);
+  return v
+    ? v.strake |
+        (v.accent << 4) |
+        (v.sail << 8) |
+        ((v.stain << 12) + sailClothCode(/** @type {any} */ (v).cloth) * 0x10000)
+    : 0;
+};
+/** The word's number as a livery - null as built, or a number that is not one. A build before GUILD-SHOP reads a number
+ *  with a sailcloth as no livery, and draws her as built. */
 export function liveryOfCode(n) {
-  if (!Number.isInteger(n) || n <= 0 || n >= 1 << 16) return null;
-  return liveryOf({ strake: n & 15, accent: (n >> 4) & 15, sail: (n >> 8) & 15, stain: (n >> 12) & 15 });
+  if (!Number.isInteger(n) || n <= 0 || n >= 1 << 24) return null;
+  const cloth = sailClothOfCode(n >> 16);
+  if (n >> 16 && !cloth) return null;
+  return liveryOf({
+    strake: n & 15,
+    accent: (n >> 4) & 15,
+    sail: (n >> 8) & 15,
+    stain: (n >> 12) & 15,
+    ...(cloth ? { cloth } : {}),
+  });
 }
 
 // ── the painter ──────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -110,12 +138,16 @@ export function paintFamilies(pic, palette, families) {
   if (!live.length) return { picture: { ...pic, data: out }, changed: false };
   // the palette and each family's members as one list, each entry the family it paints (-1 none)
   const anchors = [...palette.map((c) => ({ c, f: -1 }))];
-  live.forEach((f, i) => { for (const c of f.members) anchors.push({ c, f: i }); });
+  live.forEach((f, i) => {
+    for (const c of f.members) anchors.push({ c, f: i });
+  });
   const memo = new Map();
   let changed = false;
   for (let i = 0; i < out.length; i += 4) {
     if (out[i + 3] === 0) continue;
-    const r = out[i], g = out[i + 1], b = out[i + 2];
+    const r = out[i],
+      g = out[i + 1],
+      b = out[i + 2];
     const key = (r << 16) | (g << 8) | b;
     let f = memo.get(key);
     if (f === undefined) {
@@ -123,13 +155,18 @@ export function paintFamilies(pic, palette, families) {
       f = -1;
       for (const a of anchors) {
         const d = (a.c[0] - r) ** 2 + (a.c[1] - g) ** 2 + (a.c[2] - b) ** 2;
-        if (d < best || (d === best && a.f >= 0)) { best = d; f = a.f; }
+        if (d < best || (d === best && a.f >= 0)) {
+          best = d;
+          f = a.f;
+        }
       }
       memo.set(key, f);
     }
     if (f < 0) continue;
     const c = shadeAs(live[f].paint, [r, g, b], live[f].base);
-    out[i] = c[0]; out[i + 1] = c[1]; out[i + 2] = c[2];
+    out[i] = c[0];
+    out[i + 1] = c[1];
+    out[i + 2] = c[2];
     changed = true;
   }
   return { picture: { ...pic, data: out }, changed };
@@ -137,15 +174,21 @@ export function paintFamilies(pic, palette, families) {
 
 /** The mean lightness of a picture's opaque texels. */
 export function meanLum(pic) {
-  let s = 0, n = 0;
-  for (let i = 0; i < pic.data.length; i += 4) if (pic.data[i + 3]) { s += lumOf([pic.data[i], pic.data[i + 1], pic.data[i + 2]]); n++; }
+  let s = 0,
+    n = 0;
+  for (let i = 0; i < pic.data.length; i += 4)
+    if (pic.data[i + 3]) {
+      s += lumOf([pic.data[i], pic.data[i + 1], pic.data[i + 2]]);
+      n++;
+    }
   return n ? s / n : 0;
 }
 /** A picture with `paint` laid over it at `strength`: each texel the paint at its lightness against the picture's mean
  *  (its grain kept), mixed over its own colour. A new picture. */
 export function tintPicture(pic, paint, strength) {
   const out = new Uint8Array(pic.data);
-  const mean = Math.max(1, meanLum(pic)), base = [mean, mean, mean];
+  const mean = Math.max(1, meanLum(pic)),
+    base = [mean, mean, mean];
   for (let i = 0; i < out.length; i += 4) {
     if (out[i + 3] === 0) continue;
     const c = shadeAs(paint, [out[i], out[i + 1], out[i + 2]], base);

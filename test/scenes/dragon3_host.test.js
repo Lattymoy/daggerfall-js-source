@@ -9,8 +9,9 @@ import { readFileSync } from 'node:fs';
 import { createDragonHost, DRAGON_TARGET, DRAGON_IN_RESEND_MS, DRAGON_IN_RETRY_MS, DRAGON_HIT_GAP_MS, DRAGON_NOTICE_WAIT_MS, DRAGON_SCALE, REMAINS_WASH } from '../../src/scenes/dragonHost.js';
 import { installDwarvenDragon } from '../../src/characters/dwarvenDragon.js';
 import { createDragonLink } from '../../src/net/dragon/dragonLink.js';
-import { pixelCentreNative } from '../../src/systems/dragon/dragonSite.js';
-import { isDragonWatch, dragonTimes, DRAGON_BRAIN_V, DRAGON_REMAINS_MS } from '../../src/net/dragon/dragonLaw.js';
+import { isDragonOmen, dragonTimes, DRAGON_BRAIN_V, pixelCentreNative, DRAGON_REMAINS_MS } from '../../src/net/dragon/dragonLaw.js';
+/** DRAGON-HIDDEN: a watch's omen under the tests' seed, as its cell would tell it. */
+const om = (w, s = 0x5eed1234) => ({ w, s });
 import { orbitLeg, lineLeg, fallLeg, planAt } from '../../src/net/dragon/dragonBody.js';
 import { DRAGON_ADMIT_R, DRAGON_BLOW } from '../../src/net/dragon/dragonBrain.js';
 import { HIT_KINDS } from '../../src/net/gate/gateBrain.js';
@@ -20,8 +21,8 @@ import { hostText } from '../hostText.mjs';
 
 installDwarvenDragon({ fetchBytes: async () => new Uint8Array(0) });   // its row, as the game's boot registers it (scenes/shared.js)
 let W = 500_000;
-while (!isDragonWatch(W)) W++;
-const TT = dragonTimes(W);
+while (!isDragonOmen(om(W))) W++;
+const TT = dragonTimes(om(W));
 const SITE = { w: W, lane: 0, px: 205, py: 214, ...pixelCentreNative(205, 214), near: 'Here' };
 const CELL = cellRoomOfWire(SITE.sx, SITE.sz);
 const M = 40;   // the scene's metre in native units (the fakes' scene is the native world over 40)
@@ -31,7 +32,7 @@ function screen(t0, me = [0, -200], o = {}) {
   const link = createDragonLink({ now: () => S.t, site: () => S.host.site(), say: (c) => S.host.refused(c) });
   S.link = link;
   S.host = createDragonHost({
-    now: () => S.t, link, sites: { of: (w) => (w === W ? SITE : null) },
+    now: () => S.t, link, sites: { of: (o) => (o.w === W ? SITE : null) },
     online: { ready: () => S.ready, send: (w, cell) => { S.sent.push({ ...w, cell }); return true; } },
     local: (nx, nz) => [nx / M, nz / M], native: (x, z) => [x * M, z * M],
     ground: () => 0, feet: () => [SITE.sx / M + S.me[0], 0, SITE.sz / M + S.me[1]], eye: () => [SITE.sx / M + S.me[0], 1.6, SITE.sz / M + S.me[1]], level: () => 20,
@@ -43,6 +44,7 @@ function screen(t0, me = [0, -200], o = {}) {
   S.run = (ms, step = 50) => { let r; for (let k = 0; k < ms; k += step) { r = S.host.frame(); S.t += step; } return r; };
   /** As the cell says it: a whole state every five seconds (DRAGON_STATE_SEND_MS). */
   S.heard = (ms, x = {}) => { for (let k = 0; k < ms; k += 5000) { S.st(x); S.run(Math.min(5000, ms - k)); } };
+  S.host.omen(om(W));   // DRAGON-HIDDEN: its cell's answer to the `ask`
   S.host.frame();   // the site found: the link folds its words from here
   return S;
 }
@@ -173,13 +175,13 @@ test('DRAGON3 world: the host\'s wiring - its sites, link and host made online; 
     "if (dragonSky && _mode() === 'exterior') livePersonBatches.push(...dragonSky.batches());",
     "if (dragonSky && _mode() === 'exterior') { try { dragonSky.drawMarks(); }",
     'dragonSky?.onlineFrame();', 'dragonSky?.away(!onlineOn);',   // PIN MOVED (AUDIT DRAGON): its frame and away the sky's (createDragonSky)
-    "dragonSky = params.has('online') ? createDragonSky({", 'bayScan: () => (warmGateScan(), _gateScan), theatres: () => theatreGates,',
+    "dragonSky = params.has('online') ? createDragonSky({", 'bayScan: () => { warmGateScan(); return _gateScan; }, theatres: () => theatreGates,',
     "street: () => (modes?.mode ?? 'exterior') === 'exterior' && playerSpawned, barBlocked: () => _serpentBarUp, barHidden: () => gamePaused() || !!townTalk.hudHidden, drawBar: drawGateBossBar,",
   ]) assert.ok(w.includes(wired), wired);
   const o = readFileSync('src/net/online.js', 'utf8');
   assert.match(o, /if \(primary\) this\.dragonOk = relaySupportsDragon\(relayV\);/);
-  assert.match(o, /if \(r && \(isSocialRoom\(room\) \? r\.k === 'rcpt' : isCellRoom\(room\)\)\) this\._deliver\('dragon', \(\) => this\.onDragon\?\.\(r, room\)\);/);
-  assert.match(o, /const w = validDragonIn\(word\);\n\s+if \(!w \|\| !this\.dragonReady\(cell\)\) return false;/);
+  assert.match(o, /if \(r && \(isSocialRoom\(room\) \? r\.k === 'rcpt' : isCellRoom\(room\) \|\| r\.k === 'omen'\)\) this\._deliver\('dragon', \(\) => this\.onDragon\?\.\(r, room\)\);/);   // PIN MOVED (AUDIT DRAGON-HIDDEN B1): and an omen from any room
+  assert.match(o, /const w = validDragonIn\(word\);\n\s+const ask = w\?\.k === 'ask';\n\s+if \(!w \|\| \(ask \? [^\n]+ : !this\.dragonReady\(cell\)\)\) return false;/);   // PIN MOVED (AUDIT DRAGON-HIDDEN B1): an ask down my primary
 });
 
 test('AUDIT DRAGON the sky made whole (HOST-SPLIT): its online frame ticks its claims, runs its fight on the street alone (leaving it off the street), draws its bar unless another boss\'s is up, and its away puts the bar away; bootWorld keeps none of its state (mutants: the bar over the serpent\'s; the bar left up; the fight off the street)', async () => {

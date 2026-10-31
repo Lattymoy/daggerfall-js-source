@@ -675,8 +675,8 @@
   {
     "name": "REZ-BLOODLINE-R2-the-screen-counts-the-frames",
     "file": "src/ui/deathScreen.js",
-    "old": "    if (this.online) this.clock = Math.max(this.clock, (Number(this._wall()) - this._fellAt) / 1000 || 0);\n",
-    "new": "",
+    "old": "    if (this.online) this.clock = Math.max(this.clock, (Number(this._wall()) - this._fellAt) / 1000 || 0);\n    if (this.online && this.clock >= this.holdSeconds) {",
+    "new": "    if (this.online && this.clock >= this.holdSeconds) {",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ],
@@ -685,8 +685,8 @@
   {
     "name": "REZ-BLOODLINE-R2-the-screen-the-wall-alone",
     "file": "src/ui/deathScreen.js",
-    "old": "this.clock = Math.max(this.clock, (Number(this._wall()) - this._fellAt) / 1000 || 0);",
-    "new": "this.clock = (Number(this._wall()) - this._fellAt) / 1000 || 0;",
+    "old": "    if (this.online) this.clock = Math.max(this.clock, (Number(this._wall()) - this._fellAt) / 1000 || 0);",
+    "new": "    if (this.online) this.clock = (Number(this._wall()) - this._fellAt) / 1000 || 0;",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]
@@ -712,8 +712,8 @@
   {
     "name": "REZ-BLOODLINE-svc-the-raise-route-unlisted",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/realm/raise',\n",
-    "new": "",
+    "old": "  '/v1/realm/raise',\n  // LEGACY7 part three: a half of one wedding between two players' characters, and the account's unions",
+    "new": "  // LEGACY7 part three: a half of one wedding between two players' characters, and the account's unions",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]
@@ -974,8 +974,8 @@
   {
     "name": "REZ-BLOODLINE-svc-cron-no-rez-holds",
     "file": "server-account/src/cron.js",
-    "old": "  ['rez-holds', (ctx) => rounds(() => settleHolds(ctx), REZ_SETTLE_MAX, ctx.budget)],\n",
-    "new": "",
+    "old": "  ['rez-holds', (ctx) => rounds(() => settleHolds(ctx), REZ_SETTLE_MAX, ctx.budget)],\n  // SAFE5 + SAFE8 (bible/11-Multiplayer/Chat-Safety-Arc.md): the reviewer reads the relay's feed and the reported cases,",
+    "new": "  // SAFE5 + SAFE8 (bible/11-Multiplayer/Chat-Safety-Arc.md): the reviewer reads the relay's feed and the reported cases,",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]
@@ -1028,8 +1028,8 @@
   {
     "name": "REZ-BLOODLINE-the-refusal-nameless",
     "file": "src/systems/resurrect.js",
-    "old": "{ name: name || t('resurrect.companion', 'Your companion') }",
-    "new": "{ name: t('resurrect.companion', 'Your companion') }",
+    "old": "      name: name || t('resurrect.companion', 'Your companion'),",
+    "new": "      name: t('resurrect.companion', 'Your companion'),",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]

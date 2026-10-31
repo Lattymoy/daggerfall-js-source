@@ -22,6 +22,7 @@
 //   baseCollider() - the collider to restore on exit.
 
 import { DecisionBoxWindow } from '../ui/decisionBox.js';   // REST-WARN2: the Plus decision box
+import { hallPiecePress } from './guildHallPress.js';   // GUILD-SHOP: a hall's board and its banker pressed
 import { markInteriorLoad } from '../ui/interiorLoadMark.js';   // a building's load is a ring over the hotbar, not the full screen
 import { restAilmentLines } from '../systems/rest/restWarning.js';   // REST-WARN
 import { healCurseOffer, healCursePaid, healCurseText } from '../systems/healCurse.js';   // HEAL-CURSE: the temple's second row
@@ -35,7 +36,7 @@ import { isOnlinePage } from '../systems/online/onlineLane.js';   // RESURRECT1:
 import { horseCareRules } from '../systems/upkeep/upkeepSwitch.js';   // STEED1: a Stable prices its horses by what they are while horses are cared for (HORSE-TIERS: any tier but Off, through the one accessor)
 import { bloodDecalDeps } from '../combat/blood/bloodSwitch.js';   // BLOOD1a
 import { createBloodMarks } from '../combat/blood/bloodMarks.js';   // BLOOD1a
-import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding, repositionFeetY, standsOnFloor, interiorVoidRescue, standFromVoid, NOTHING_OF_VALUE_TEXT, INTERIOR_VOID_TEXT, dungeonVoidText } from '../player/enterExit.js';   // FIELD BUGS 2026-10-04d VOID-ENTRY: the floor a landing stands on, the failsafe, and their two lines; FIELD BUGS 2026-10-19f VOID-DUNGEON: the dungeon's line
+import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding, repositionFeetY, dungeonExitFeet, standsOnFloor, interiorVoidRescue, standFromVoid, NOTHING_OF_VALUE_TEXT, INTERIOR_VOID_TEXT, dungeonVoidText } from '../player/enterExit.js';   // FIELD BUGS 2026-10-04d VOID-ENTRY: the floor a landing stands on, the failsafe, and their two lines; FIELD BUGS 2026-10-19f VOID-DUNGEON: the dungeon's line
 import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
 import { STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE } from '../world/terrain/terrainSampler.js';   // TERRAIN-SCALE1: the interior cache's frame and the ground its legacy heights stood on
 import { climbRigInput } from '../player/climb/climbPose.js';   // CLIMB6: the body's limbs on the climb
@@ -322,6 +323,8 @@ import { createDecorPack, returnUnstood } from '../systems/decor/decorPack.js'; 
 import { decorItemName, decorOwnBackLine } from '../systems/decor/decorItems.js';   // DECOR2a: an own item's piece named from its numbers
 import { isFurnishing, furnishingDeliveredLine, ownBackLines } from '../systems/decor/decorFurnish.js';   // DECOR2b: furniture delivered, never carried
 import { useDecorPiece } from '../systems/decor/decorUse.js';   // DECOR-USE: a placed bed slept in, a placed fire cooked on
+import { MUSIC_STATION } from '../systems/musicBox.js';   // MUSIC-BOX: a placed music box
+import { openMusicBox } from './musicBoxPress.js';
 import { goldAmount, totalGoldAmount, deductGold, addGold, payUndoable, setCrimeCommitted, CRIMES } from '../systems/court.js';   // PT1: the ONE crime write (V4's SuppressCrime gate rides it)
 // Q4-v: the quest layer's host wiring. The BRIDGE (scenes/quest/questBridge.js)
 // is created by the outer host (world.js) and rides in; this machine owns
@@ -385,6 +388,7 @@ import { crownRulerFactionId, crownRulerHere, crownHallPlan, CROWN_HALL_TEXT } f
 import { hallPlaquePlan, PLAQUE_MODEL, PLAQUE_BARE_MODEL } from '../world/arena/arenaPlaques.js';   // ARENA5: the Hall of Champions' plaque wall
 import { bannerKeyOf } from './hallBanners.js';   // CROWN-HALL: the throne room's cloth, keyed as the street's
 import { HOME_ENTRIES, homePriceOk, homeOnlinePrice, rentCost, rentDaysLeft } from '../net/homeLaw.js';   // HOME-PRICE: what a home costs online
+import { homeListedPrice } from '../net/homeListingLaw.js';   // FOUNDATION F3: a row's price
 // HOME-RENT: a home's rooms, rented at its door and offered, priced and collected in its owner's decorator
 import {
   homeRooms, rentable, rentHomeRoom, collectHomeRent, rentPickLines, rentDaysLines, rentConfirmLines, rentDoneLine, rentShortLine,
@@ -411,6 +415,7 @@ import { isTouchDevice } from '../ui/touch/touchDevice.js';
 import { holdCursor, cursorKeyClaimed } from '../player/pointerLock.js';
 import { decorKey } from '../systems/decor/decorCatalogue.js';
 import { decorBuiltInPlaque, decorPlaque, decorVerbKey } from '../systems/decor/decorLook.js';
+import { bookHouseOf } from './portalBookHost.js';   // PORTAL-BOOK: the house a Portal Book keeps
 import { BULLETIN_BOARD_MODEL_ID } from '../world/rmbLayout.js';   // GUILD1e: Daggerfall's own board, placed in a guild's hall
 import { accountRefusalText } from '../net/accountClient.js';
 // P1: the scene cache - what an interior remembers across a visit.
@@ -3968,7 +3973,7 @@ export function createWorldModes(host) {
       // mode IS the merchant's collection, so the goods are already on
       // the shelf by now and `remoteItems.Clear()` (:1051) only drops
       // the window's view of them. The port stages into the window and
-      // lands them here, which is what makes a sold item buyable back.
+      // lands them here; SOLD-POOF: landSold shelves nothing, so it is gone.
       for (const it of staged) {
         const i = playerEntity.items.indexOf(it);
         if (i >= 0) playerEntity.items.splice(i, 1);
@@ -5008,9 +5013,10 @@ export function createWorldModes(host) {
     const piece = interiorDecor.pieceOf(id);
     if (piece?.station === VENDOR_STATION) { openHomeVendor(piece, id); return; }   // HOME-VENDOR: anyone may trade with it
     if (useDecorPiece(piece, interiorCamps, getInteractionMode, restFromInteriorBed, () => forgeOffered() && (interiorKeyCtx.togglePause({ at: stationDoorAt('fire') }), true))) return;   // DECOR-USE (systems/decor/decorUse.js): a placed fire or the cooking station opens what a brazier opens (a fire is nobody's), a placed bed is slept in as the room's own are (the rest window says who may)
+    if (piece?.station === MUSIC_STATION) return void openMusicBox(piece.id ?? id, { show: mountInterior, say });   // MUSIC-BOX: anyone may play it, their own tunes
     if (piece?.station) { useDecorStation(piece); return; }   // HOME-STATIONS
     if (piece?.storage && caravanGuestHere()) { say(homeBelongsLine({ owner: privateVisitOwner })); return; }   // WAGONS2-VISIT: a caravan's storage is its owner's, as a home's cupboards are - shut to its visitor, in its owner's name
-    if (isHallBoard(piece)) { openHallBoard(); return; }   // GUILD1e: the board in a guild's hall
+    if (hallPiecePress(piece, isHallBoard(piece), openHallBoard, openHallChest, !!(interiorHome?.hall && interiorHome.member), say)) return;   // GUILD1e: the board in a guild's hall; GUILD-SHOP: its banker, the vault (scenes/guildHallPress.js)
     if (!piece?.storage) return;
     if ((interiorHome?.hall && interiorHome.member) || interiorSeatHall?.member) { (interiorHome?.hall ? openSharedChest(piece.id) : openHallChest()); return; } else if (interiorSeatHall && !interiorHome) { say(CROWN_HALL_TEXT.chestShut(interiorSeatHall.name)); return; }   // AUDIT SEATS-2 C6: a visitor told whose it is   // GUILD1d: a placed chest is that piece's bin; the cupboards stay the Stores. SEAT-HALL: a palace's too
     if (decorIsShared(piece.id) || !decorOwnerHere()) {
@@ -5444,7 +5450,7 @@ export function createWorldModes(host) {
    *  they ride the save with everything else; the array is minted on
    *  first use at the map reader's region count. */
   function openBank() {
-    if (host.wildNoBank?.()) return false;   // PVPDUNGEONS: no banks in the zone
+    if (host.wildNoBank?.()) return false;   // PVPDUNGEONS: no banks in the zone - ZONE-BANK: but a settlement's
     if (!bankArtLoaded() || !_shopFont) return false;
     // MapFileReader.RegionCount (:237-246). The host has no map
     // reader in scope, so the count comes from the accounts already
@@ -7186,7 +7192,7 @@ export function createWorldModes(host) {
     // 2026-10-16): measured from the BODY to the stone's box (searchReachFor), as the dungeon's searchables are.
     const graves = host.graveTargets?.() ?? [];
     graves.forEach((aabb, i) => targets.push({ key: `grave:${i}`, aabb, distance: RAY_DISTANCE, reach: searchReachFor(aabb, player.pos, player.eye[1]) }));
-    // LEFAY1 (scenes/lefayMonumentHost.js): the monument to Julian LeFay outside Privateer's Hold - both exterior hosts stand it
+    // LEFAY1 (scenes/lefayMonumentHost.js): the monuments - Julian LeFay's, Patrick Stewart's - both exterior hosts stand them
     // (their `monumentTargets`), its steps' box and its column's met at its stone, its reach a static NPC's beside the ray's
     for (const t of host.monumentTargets?.() ?? []) targets.push(t);
     // MERCHANT-YARDS (scenes/merchantYardsHost.js): every city's and town's Stable and Wagon Yard - the streaming host's
@@ -7521,7 +7527,7 @@ export function createWorldModes(host) {
    *  nobody can measure. */
   function homeListPrice(bd) {
     const price = homeOnlinePrice(houseFootprintM2(bd), bd?.townBlocks ?? 0);
-    return homePriceOk(price) ? price : 0;
+    return homePriceOk(price) ? homeListedPrice(homeTownOf(bd), bd?.buildingKey, price, undefined, homeClaimLayout(homeTownOf(bd))) : 0;   // FOUNDATION F3: its row's price, where one sets it
   }
   /** What a house I could buy costs - online, its town known, nobody's home, for sale (no quest in it) - at its online
    *  price (homeListPrice); 0 for none. */
@@ -7725,7 +7731,7 @@ export function createWorldModes(host) {
       if (_hitDist > _hitReach) { setMidScreenText(tooFarAwayText()); return true; }
       return host.activateGrave?.(graves[Number(key.split(':')[1])], getInteractionMode()) ?? true;
     }
-    if (typeof key === 'string' && key.startsWith('lefay:')) {   // LEFAY1: the monument - too far speaks the refusal; the plaque's lit row is the verb
+    if (typeof key === 'string' && key.startsWith('monument:')) {   // LEFAY1: a monument - too far speaks the refusal; the plaque's lit row is the verb
       if (_hitDist > _hitReach) { setMidScreenText(tooFarAwayText()); return true; }
       return host.activateMonument?.(key, getInteractionMode(), plaqueActionFor(key)) ?? true;
     }
@@ -9717,7 +9723,7 @@ export function createWorldModes(host) {
           onArenaHit: (hit) => !!host.onArenaHit?.(hit),   // ARENA4: and the door a blow's number on them leaves through - to the referee
           spoilContents: (key) => host.spoilContents?.(key) ?? null,   // WB9f: a piece of his spoils, listed on the plaque
           onActions: (data) => host.onActions?.(data), peers: () => host.peers?.() ?? null, selfId: () => host.selfId?.() ?? null, party: () => host.partyNear?.() ?? [], nodeMarks: (feet) => host.professionMarks?.(feet) ?? null, questMarks: () => dungeonQuestMarksHere(), grants: () => host.grants?.() ?? null,   // GUIDE8: the Exact tier's quest resources, on the dungeon's map and compass; NODE-MARKS: the dungeon's nodes on its compass, at its own feet; WORLD3: a door moved goes out; the peers the foes see; whose blow a puppet's is
-          postItem: (text, item) => host.postItem?.(text, item) ?? false, linkItem: (item) => host.linkItem?.(item) ?? false, canPostItem: () => host.canPostItem?.() ?? false,   // CHAT-POST: the dungeon's pack posts through the outer host
+          linkItem: (item) => host.linkItem?.(item) ?? false, canPostItem: () => host.canPostItem?.() ?? false,   // CHAT-POST: the dungeon's pack links through the outer host
           allyMarks: (sp) => host.allyMarks?.(sp) ?? null,   // AID1 onto ALLY-CAST: the party mates' bodies, in the dungeon's frame - SPELL-GIFT: with the spell
           companionBodies: () => host.companionBodies?.() ?? null,   // COMPANION-KIT: my companions underground (the dungeon's own records)
           fates: !!host.openRevenantFate, shakeCamera: (k) => host.shakeCamera?.(k),   // REVENANT-FATE: the host opens a beaten revenant's choice; an execution's blow felt
@@ -10154,7 +10160,7 @@ export function createWorldModes(host) {
     if (key.startsWith('plaque:')) { readPlaque(key); return true; }   // ARENA5: a plaque in the Hall of Champions reads its champion
     // U26: droppedLoot: is the player's own pile - the same three-way
     // arm the standalone dungeon scene carries, kept in step here.
-    if (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:') || key.startsWith('droppedTorch:') || key.startsWith('camp:') || key.startsWith('hearth:') || key.startsWith('search:') || key.startsWith('delve:')) {   // SEARCH1: a searchable takes the mode (Steal picks its lock); AUDIT-WH2 L2-F1: hearth: - HEARTH1's fourth host, stood and named down here since it shipped and never answered
+    if (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:') || key.startsWith('droppedTorch:') || key.startsWith('camp:') || key.startsWith('hearth:') || key.startsWith('search:') || key.startsWith('delve:') || key.startsWith('aurum:')) {   // AURUM-CACHES: today's coffer, answered by the context's takeLoot; SEARCH1: a searchable takes the mode (Steal picks its lock); AUDIT-WH2 L2-F1: hearth: - HEARTH1's fourth host, stood and named down here since it shipped and never answered
       dungeonCtx.takeLoot(key, getInteractionMode());   // SURV3: a camp's fire takes the mode too   // opens the inventory with the pile as the remote target; HT1: a dropped torch takes the mode
       return true;
     }
@@ -10232,7 +10238,7 @@ export function createWorldModes(host) {
   const returnLanding = () => (dungeonReturn.gate ? host.gateLanding?.(dungeonReturn.gate) ?? null : dungeonReturn.arena ? host.arenaLanding?.() ?? dungeonReturn.arenaFrom ?? null : dungeonEntranceLanding(dungeonReturn.sdHollow ? host.sdHollowDoors?.(dungeonReturn.sdHollow) ?? [] : dungeonReturn.candidates.map((e) => e.door)) ?? dungeonReturn.from ?? null);   // ARENA2: out of the floor, before the Herald (AUDIT PRE-MERGE 1003b C7: or back where it was entered)
   function exitDungeonNow() {
     unleveledLootPreTransition();   // UL1: OnPreTransition (TransitionDungeonExterior) - and NO OnTransitionExterior here, bug for bug
-    // Verbatim PositionPlayerToDungeonExit; the camera faces the normal.
+    // PositionPlayerToDungeonExit, but for its height (TALL-DOOR, player/enterExit.js dungeonExitFeet); the camera faces the normal.
     const landing = returnLanding();   // WB3b: before the gate, out of the court
     dungeonCtx.overlayWindow?.()?.dispose?.();   // AUDIT SD II (L1 F1): forceExitToExterior's OnPop - a Hollow's end casts out under any window (AUDIT SD III: above the packing)
     const carried = dungeonCtx.camps?.packOwnFires?.({ quiet: true }) ?? 0;   // AUDIT REST-PARTY B3: before the room's memory goes - AUDIT REST II H4: said outside, below
@@ -10266,7 +10272,7 @@ export function createWorldModes(host) {
     if (landing) {
       // RepositionPlayer(DungeonEntrance): same law as the building
       // door - the door centre is the controller's centre, not the feet.
-      player.spawn(landing.pos[0], repositionFeetY(player.collider.heightAt(landing.pos[0], landing.pos[2]), landing.pos[1]), landing.pos[2]);
+      player.spawn(landing.pos[0], dungeonExitFeet(player.collider, landing), landing.pos[2]);   // TALL-DOOR: never over the floor before the door
       cam.yaw = Math.atan2(landing.normal[0], landing.normal[2]);
       // DE2: PositionPlayerToDungeonExit ends on
       // SetHorizontalFacing(foundDoorNormal) (StreamingWorld.cs
@@ -11252,7 +11258,6 @@ export function createWorldModes(host) {
       magic.firePending([...cam.pos], eyeDir(), overlayHeld);   // AUDIT SPELL-HAND L4-6: a kept press never leaves under a window
       magic.update(dt, player.pos, eyeDir(), player.height, player.feetAt());   // X11: the candle hangs off the look direction; DISC13-A off the render feet
       if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);
-      magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes
     }
     // LM1: the transformed move-sound loop, in this host's INTERIOR
     // arm (dungeon mode runs dungeonContext's frame, which carries its
@@ -11261,6 +11266,7 @@ export function createWorldModes(host) {
     { const mv = lycanthropeMoveSound(playerEntity, dt); if (mv != null) audio.playOneShot(mv, 1); }
     if (interiorCtx.animateChars) interiorCtx.animateChars((performance.now() - _charT0) / 1000, _charAnimMode);
     for (const d of interiorCtx.charDraws) renderer.drawCharacter(d.mesh, d.matrix);
+    magic?.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes; STOREFRONT (AUDIT STOREFRONT RENDER L3): with the kill effects, after the room's last opaque draw (its characters) - no depth written, so a body drawn after them painted over them
     host.drawVeiledPeerBodies?.();   // INVIS-LOOK: the concealed peers' bodies, translucent - after the room's opaque draws, before the weapon's screen quads
     interiorFoes?.drawVeiledBodies();   // MWNPC5c: the concealed foes' bodies, beside the peers'
     interiorGuards?.drawVeiledBodies();   // MWNPC6: and the watch's
@@ -13547,6 +13553,7 @@ export function createWorldModes(host) {
      *  land the player one building offset away from where they set
      *  it. Same distinction the interior save half draws (IS1's
      *  `restore.pos` lands raw over the door landing). */
+    portalBookHere: () => bookHouseOf(interiorHome, mode === 'interior' && !!interiorBuilding && houseOwnedAt(interiorBuilding, interiorBuilding.buildingKey), interiorBuilding, homeTownOf(interiorBuilding), exitReturn?.siblings, player.pos, !!(interiorCabin || privateVisitRoom) || mode !== 'interior'),   // PORTAL-BOOK (scenes/portalBookHost.js): the house I stand in and the landing outside its front door, or null
     setPlayerLocalPosition(p) {
       player.spawn(p[0], p[1], p[2]);
       cam.pos = player.eyeAt();   // EV1: the interpolated render eye
@@ -13735,6 +13742,7 @@ export function createWorldModes(host) {
     attackInput(dx, dy, held) { if (held && decorTool.flying()) return; modalAttackSink()?.(dx, dy, held); },
     /** DECOR1e: the decorator's camera flies - the hosts' finger taps activate nothing under it. */
     decorFlying: () => decorTool.flying(),
+    musicBoxHere: (id) => mode === 'interior' && interiorDecor.pieceOf(id)?.station === MUSIC_STATION,   // MUSIC-BOX: a box in this room, for the world host's music chain (systems/musicBox.js createMusicBoxScore)
     /** CARDS-TOUCH (Tavern-Cards section 31): the player sits at a card table - the hosts' touch layer stands its look,
      *  swing and tap down (ui/touch/touch.js `cardTable`): the table's own listeners read the finger. */
     cardSeated: () => mode === 'interior' && !!cardSeat,

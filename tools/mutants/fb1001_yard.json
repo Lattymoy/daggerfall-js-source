@@ -161,8 +161,8 @@
   {
     "name": "YARD-CORNER-the-house-asked-at-its-corners",
     "file": "src/scenes/homeYards.js",
-    "old": "  if ((lot.walls ?? [lot.house]).some(meets)) return YARD_IN_HOUSE;",
-    "new": "  if ((lot.walls ?? [lot.house]).some((r) => ground.some(([px, pz]) => inRect(px, pz, r, -YARD_EDGE_PAD)))) return YARD_IN_HOUSE;",
+    "old": "  if ((lot.walls ?? [lot.house]).some(meets) && yardInHouse(lot, pos, ground, pos[1] + (/** @type {any} */ (foot)?.bottom ?? 0))) return YARD_IN_HOUSE;",
+    "new": "  if ((lot.walls ?? [lot.house]).some((r) => ground.some(([px, pz]) => inRect(px, pz, r, -YARD_EDGE_PAD))) && yardInHouse(lot, pos, ground, pos[1] + (/** @type {any} */ (foot)?.bottom ?? 0))) return YARD_IN_HOUSE;",
     "tests": [
       "test/scenes/fb1001_yard.test.js",
       "test/scenes/homeyard.test.js"
@@ -182,9 +182,9 @@
   {
     "name": "YARD-CORNER-touching-the-wall-is-in-it",
     "file": "src/scenes/homeYards.js",
-    "old": "  if ((lot.walls ?? [lot.house]).some(meets)) return YARD_IN_HOUSE;",
-    "new": "  if ((lot.walls ?? [lot.house]).some((r) => inRect(x, z, r) || yardFootMeets(ground, r, -YARD_EDGE_PAD))) return YARD_IN_HOUSE;",
-    "tests": [
+    "old": "  if ((lot.walls ?? [lot.house]).some(meets) && yardInHouse(lot, pos, ground, pos[1] + (/** @type {any} */ (foot)?.bottom ?? 0))) return YARD_IN_HOUSE;",
+    "new": "  if ((lot.walls ?? [lot.house]).some((r) => inRect(x, z, r) || yardFootMeets(ground, r, -YARD_EDGE_PAD)) && yardInHouse(lot, pos, ground, pos[1] + (/** @type {any} */ (foot)?.bottom ?? 0))) return YARD_IN_HOUSE;",
+    "tests": ["test/world/fb1030_yarddeck.test.js", 
       "test/scenes/fb1001_yard.test.js",
       "test/scenes/homeyard.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "YARD-STALE-the-write-unrecorded",
     "file": "src/scenes/yardCellSync.js",
-    "old": "{ turn: ++turn, at: now(), list }",
-    "new": "{ turn, at: now(), list }",
+    "old": "      writes.set(`${mapId}:${buildingKey}`, { turn: ++turn, at: now(), list });",
+    "new": "      writes.set(`${mapId}:${buildingKey}`, { turn, at: now(), list });",
     "tests": [
       "test/scenes/fb1001_yard.test.js"
     ],
@@ -211,8 +211,8 @@
   {
     "name": "YARD-STALE-the-old-answer-believed",
     "file": "src/scenes/yardCellSync.js",
-    "old": "      if (write && writeStands(write, held)) return write.list;\n",
-    "new": "",
+    "old": "      if (write && writeStands(write, held)) return write.list;\n      return held ? (held.byKey.get(buildingKey) ?? null) : null;",
+    "new": "      return held ? (held.byKey.get(buildingKey) ?? null) : null;",
     "tests": [
       "test/scenes/fb1001_yard.test.js"
     ],
@@ -221,8 +221,8 @@
   {
     "name": "YARD-STALE-every-answer-after-a-write-overruled",
     "file": "src/scenes/yardCellSync.js",
-    "old": "write.turn > held.askedTurn",
-    "new": "write.turn >= held.askedTurn",
+    "old": "    !held || write.turn > held.askedTurn || now() - write.at < YARD_WRITE_HOLD_MS;",
+    "new": "    !held || write.turn >= held.askedTurn || now() - write.at < YARD_WRITE_HOLD_MS;",
     "tests": [
       "test/scenes/fb1001_yard.test.js"
     ],
@@ -231,8 +231,8 @@
   {
     "name": "YARD-STALE-the-answers-turn",
     "file": "src/scenes/yardCellSync.js",
-    "old": "write.turn > held.askedTurn",
-    "new": "write.turn > turn",
+    "old": "    !held || write.turn > held.askedTurn || now() - write.at < YARD_WRITE_HOLD_MS;",
+    "new": "    !held || write.turn > turn || now() - write.at < YARD_WRITE_HOLD_MS;",
     "tests": [
       "test/scenes/fb1001_yard.test.js"
     ],
@@ -277,8 +277,8 @@
   {
     "name": "YARD-RECENTRE-the-bucket-left-behind",
     "file": "src/player/lateSolid.js",
-    "old": "      collider.removeBucket?.(key);\n      if (was) held.set(key, [h]); else stand(key, h);",
-    "new": "      if (was) held.set(key, [h]); else stand(key, h);",
+    "old": "      collider.removeBucket?.(key);\n      if (was) held.set(key, [h]);",
+    "new": "      if (was) held.set(key, [h]);",
     "tests": [
       "test/scenes/fb1001_yard.test.js"
     ]

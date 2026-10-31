@@ -26,9 +26,10 @@ const DECL = /(Clock|clock) (?<symbol>[a-zA-Z0-9_.-]+)/;
 // shape matched. One combined scan with distinct names works here.
 // NOTE the ddhhmm separator is `.` = ANY CHARACTER, as in the C# -
 // bug-for-bug, not a typo fix.
-const OPTIONS = /(?<ddhhmm>\d+.\d+:\d+)|(?<hhmm>\d+:\d+)|(?<mm>\d+)|flag (?<flag>\d+)|range (?<minRange>\d+) (?<maxRange>\d+)/g;
+const OPTIONS =
+  /(?<ddhhmm>\d+.\d+:\d+)|(?<hhmm>\d+:\d+)|(?<mm>\d+)|flag (?<flag>\d+)|range (?<minRange>\d+) (?<maxRange>\d+)/g;
 const TIME_VALUE = [
-  /(?<days>\d+).(?<hours>\d+):(?<minutes>\d+)/,   // C# uses `.` (any char) here too - kept verbatim
+  /(?<days>\d+).(?<hours>\d+):(?<minutes>\d+)/, // C# uses `.` (any char) here too - kept verbatim
   /(?<h2>\d+):(?<m2>\d+)/,
   /(?<m3>\d+)/,
 ];
@@ -50,7 +51,7 @@ const wholeSeconds = (caller) => Math.floor(caller?.nowSeconds?.() ?? 0);
  *  (int-truncated). The no-place overload SUMS one-way times over
  *  every Place resource and applies the multiplier once. A place
  *  whose location cannot resolve logs and counts 0, as C#. */
-export function travelTimeSeconds(quest, place = null, returnTrip = true) {
+export function travelTimeSeconds(quest, place = null, returnTrip = true, { home = false } = {}) {
   const world = quest?.hooks?.world;
   if (!world) return null;
   if (place === null) {
@@ -61,19 +62,55 @@ export function travelTimeSeconds(quest, place = null, returnTrip = true) {
     }
     let total = 0;
     for (const p of places) total += travelTimeSeconds(quest, p, false) ?? 0;
+    if (home) for (const seat of questorSeats(quest, world)) total += tripSeconds(world, seat, false); // TRIP-HOME
     if (returnTrip) total = Math.trunc(total * 2.5);
     return total;
   }
   const sd = place.siteDetails;
   const location = sd ? world.maps.getLocationByName(sd.regionName, sd.locationName) : null;
-  if (!location) {
+  if (!location && !sd?.worldPixel) {
     console.warn(`[quest] Could not find Quest Place ${sd?.regionName}/${sd?.locationName}`);
     return 0;
   }
-  const endPos = worldCoordToMapPixel(location.exterior.recordElement.header.x, location.exterior.recordElement.header.y);
-  const { minutes } = calculateTravelTime(world.playerPixel(), endPos,
+  // TRIP-PIXEL (FIELD BUGS 2026-10-30f): a site past the Bay stands on its own pixel (place.js siteWorldPixel); its
+  // row's world coords read a pixel in the Bay, so a manor near Solitude measured 149 days
+  const endPos =
+    sd.worldPixel ??
+    worldCoordToMapPixel(location.exterior.recordElement.header.x, location.exterior.recordElement.header.y);
+  return tripSeconds(world, endPos, returnTrip);
+}
+
+/** TRIP-HOME (FIELD BUGS 2026-10-30f): the seats of the at-home individuals a quest makes its questors (`add X as
+ *  questor`), each the town named for its court's region, that the player is not standing in - for a deadline as it
+ *  starts. S0000006 offers Elysana's errand wherever level 6 finds the player and starts its clock there; the way back
+ *  to her in Wayrest counted nothing. A delay (S0000012's messenger) and a parse keep DFU's sum. A region with no town
+ *  of its name (Medora's Balfiera, every province past the Bay - no script names a court there) has no seat. */
+function questorSeats(quest, world) {
+  const here = world.playerPixel();
+  const seats = new Map();
+  for (const task of quest.tasks?.values?.() ?? []) {
+    for (const action of task.actions ?? []) {
+      if (action?.typeName !== 'AddAsQuestor') continue;
+      const person = quest.resources.get(action.target?.name);
+      if (!person?.isPerson || !person.isIndividualNPC || !person.isIndividualAtHome) continue;
+      const region = world.maps.getRegion?.(person.factionData?.region ?? -1)?.name;
+      const seat = region ? world.maps.getLocationByName(region, region) : null;
+      if (!seat?.exterior) continue;
+      const at = worldCoordToMapPixel(seat.exterior.recordElement.header.x, seat.exterior.recordElement.header.y);
+      if (at.x !== here?.x || at.y !== here?.y) seats.set(`${at.x},${at.y}`, at);
+    }
+  }
+  return [...seats.values()];
+}
+
+/** The one trip: cautious by cart from the player's pixel, 2.5 times for a return, never under a day. */
+function tripSeconds(world, endPos, returnTrip) {
+  const { minutes } = calculateTravelTime(
+    world.playerPixel(),
+    endPos,
     { speedCautious: true, sleepModeInn: false, travelShip: false, hasHorse: false, hasCart: true },
-    (x, y) => world.maps.getClimateIndex(x, y));
+    (x, y) => world.maps.getClimateIndex(x, y),
+  );
   let travelTimeMinutes = minutes;
   if (returnTrip) travelTimeMinutes = Math.trunc(travelTimeMinutes * 2.5);
   if (travelTimeMinutes < 1440) travelTimeMinutes = 1440;
@@ -110,8 +147,8 @@ export function clockCounts(quest, clock) {
   if (!task) return false;
   if (task.actions.some((a) => !a.isTriggerCondition) || task.pendingActionLines?.length) return true;
   for (const t of quest.tasks.values()) {
-    if (t.targetSymbol?.name === name) return true;   // until _x_ performed
-    for (const a of t.actions) if (a.evaluations?.some((e) => new QuestSymbol(e.task).name === name)) return true;   // when _x_ / and _x_ / or not _x_ (the script's spelling, `_x_`)
+    if (t.targetSymbol?.name === name) return true; // until _x_ performed
+    for (const a of t.actions) if (a.evaluations?.some((e) => new QuestSymbol(e.task).name === name)) return true; // when _x_ / and _x_ / or not _x_ (the script's spelling, `_x_`)
   }
   return false;
 }
@@ -167,8 +204,14 @@ function reached(quest, name, { conditional = true, alone = false, live = false 
   const seen = new Set([name]);
   const queue = [name];
   const types = new Set();
-  let lowers = false, settles = false;
-  const visit = (next) => { if (next && !seen.has(next)) { seen.add(next); queue.push(next); } };
+  let lowers = false,
+    settles = false;
+  const visit = (next) => {
+    if (next && !seen.has(next)) {
+      seen.add(next);
+      queue.push(next);
+    }
+  };
   while (queue.length) {
     const n = queue.shift();
     for (const a of quest.tasks.get(n)?.actions ?? []) {
@@ -176,13 +219,21 @@ function reached(quest, name, { conditional = true, alone = false, live = false 
       const type = a.constructor?.typeName;
       if (type) types.add(type);
       if ((type === 'ChangeReputeWith' || type === 'LegalRepute') && Number(a.amount) < 0) lowers = true;
-      if ((type === 'GivePc' && (a.isNothing || (!a.textId && !a.silently))) || type === 'TrainPc' || type === 'StartQuest') settles = true;
-      if (type === 'StartTask') visit(a.taskSymbol?.name);   // (a clock it starts is not followed: that clock is asked on its own)
+      if (
+        (type === 'GivePc' && (a.isNothing || (!a.textId && !a.silently))) ||
+        type === 'TrainPc' ||
+        type === 'StartQuest'
+      )
+        settles = true;
+      if (type === 'StartTask') visit(a.taskSymbol?.name); // (a clock it starts is not followed: that clock is asked on its own)
     }
-    if (!conditional) continue;   // (the starter's own reach: what it does, not what a later `when` may)
+    if (!conditional) continue; // (the starter's own reach: what it does, not what a later `when` may)
     for (const [tn, t] of quest.tasks) {
       if (seen.has(tn)) continue;
-      const reader = t.actions.find((a) => a.isTriggerCondition && a.evaluations?.some((e) => !NEGATED.has(e.op) && new QuestSymbol(e.task).name === n));
+      const reader = t.actions.find(
+        (a) =>
+          a.isTriggerCondition && a.evaluations?.some((e) => !NEGATED.has(e.op) && new QuestSymbol(e.task).name === n),
+      );
       if (!reader) continue;
       // AUDIT TIMEFREE T3: `alone` follows a `when` only if the end ALONE sets it off - the engine's own reading of the
       // condition (WhenTask._checkEvals), with what this end has set so far true and every other task not set:
@@ -213,8 +264,16 @@ function readsAsDeadline(quest, name) {
   // TIMEFREE too, whose delays were cut the same); the only two clocks of the 399 the change moves.
   const alone = reached(quest, name, { alone: true }).types;
   if (alone.has('EndQuest') && ![...PROGRESS].some((t) => alone.has(t))) return true;
-  for (const [tn, t] of quest.tasks) {   // ...or shuts a reward that waits on it not having run out
-    if (!t.actions.some((a) => a.isTriggerCondition && a.evaluations?.some((e) => NEGATED.has(e.op) && new QuestSymbol(e.task).name === name))) continue;
+  for (const [tn, t] of quest.tasks) {
+    // ...or shuts a reward that waits on it not having run out
+    if (
+      !t.actions.some(
+        (a) =>
+          a.isTriggerCondition &&
+          a.evaluations?.some((e) => NEGATED.has(e.op) && new QuestSymbol(e.task).name === name),
+      )
+    )
+      continue;
     // AUDIT TIMEFREE T2: the reader's own reward, not one a chain of later `when`s reaches - M0B11Y18's "not yet" line
     // (`when _S.18_ and not _S.02_`: say 1054) pays nothing; read whole, the traitor's arrival never came. T4: and a
     // reward it SETTLES (`give pc`, the next quest) outranks what the end leads to - O0B00Y11 pays the heist only
@@ -230,7 +289,12 @@ function startersOf(quest, name) {
   const out = [];
   for (const [tn, t] of quest.tasks) {
     if (/^\d+$/.test(tn)) continue;
-    if (t.actions.some((a) => a.constructor?.typeName === 'StartStopTimer' && a.isStartTimer && a.targetSymbol?.name === name)) out.push(tn);
+    if (
+      t.actions.some(
+        (a) => a.constructor?.typeName === 'StartStopTimer' && a.isStartTimer && a.targetSymbol?.name === name,
+      )
+    )
+      out.push(tn);
   }
   return out;
 }
@@ -286,7 +350,12 @@ const QUIET_CLOSE = new Set(['EndQuest', 'MakePermanent', 'DropAsQuestor']);
  *  (the Clock's isDeadline), not cached with the script's reading. */
 function closesStartUp(quest, name) {
   const startUp = [...(quest.tasks?.keys() ?? [])].filter((tn) => /^\d+$/.test(tn));
-  const starts = (tn) => quest.tasks.get(tn)?.actions.some((a) => a.constructor?.typeName === 'StartStopTimer' && a.isStartTimer && a.targetSymbol?.name === name);
+  const starts = (tn) =>
+    quest.tasks
+      .get(tn)
+      ?.actions.some(
+        (a) => a.constructor?.typeName === 'StartStopTimer' && a.isStartTimer && a.targetSymbol?.name === name,
+      );
   if (!startUp.some(starts)) return false;
   if (startUp.some((tn) => reached(quest, tn, { conditional: false }).settles)) return false;
   const end = reached(quest, name, { alone: true, live: true });
@@ -321,7 +390,12 @@ export function clockIsDeadline(quest, clock) {
 export function waveIsAwaited(quest, foeName) {
   if (!foeName || !quest?.tasks) return false;
   for (const [tn, t] of quest.tasks) {
-    if (!t.actions.some((a) => a.isTriggerCondition && a.constructor?.typeName === 'KilledFoe' && a.foeSymbol?.name === foeName)) continue;
+    if (
+      !t.actions.some(
+        (a) => a.isTriggerCondition && a.constructor?.typeName === 'KilledFoe' && a.foeSymbol?.name === foeName,
+      )
+    )
+      continue;
     const r = reached(quest, tn);
     if (r.settles || r.types.has('Prompt')) return true;
   }
@@ -374,14 +448,14 @@ export const ONLINE_DEADLINES = Object.freeze({
   U0C00Y00: Object.freeze(['escapetime']),
   M0B11Y18: Object.freeze(['S.05']),
   _BRISIEN: Object.freeze(['remindpc']),
-  N0B00Y17: Object.freeze(['time2']),   // AUDIT REST-PARTY D2: the scholar's "Please be prompt"
-  K0C30Y03: Object.freeze(['S.13']),   // AUDIT REST-PARTY D2: the guard's lead
-  B0B81Y02: Object.freeze(['S.30']),   // AUDIT REST-PARTY D1: the artifact hunt, through the knight's reward
-  S0000011: Object.freeze(['S.01']),   // AUDIT REST II Q2: Barenziah's chapter, before the Necromancers steal it
-  O0B00Y12: Object.freeze(['S.01']),   // AUDIT REST II Q2: the drop, "as soon as possible"
-  K0C00Y07: Object.freeze(['2ransom']),   // AUDIT REST III D2: "The ransom must be paid in =2ransom_ days or they will kill _victim_"
-  B0B71Y03: Object.freeze(['finddaughter']),   // AUDIT REST III D2: "within =finddaughter_ days and I will tell you"
-  N0B20Y02: Object.freeze(['S.12']),   // GUARD-WINDOW (FIELD BUGS 2026-10-06c): "I must guard %g2 for 3 hours" - the attack comes inside it
+  N0B00Y17: Object.freeze(['time2']), // AUDIT REST-PARTY D2: the scholar's "Please be prompt"
+  K0C30Y03: Object.freeze(['S.13']), // AUDIT REST-PARTY D2: the guard's lead
+  B0B81Y02: Object.freeze(['S.30']), // AUDIT REST-PARTY D1: the artifact hunt, through the knight's reward
+  S0000011: Object.freeze(['S.01']), // AUDIT REST II Q2: Barenziah's chapter, before the Necromancers steal it
+  O0B00Y12: Object.freeze(['S.01']), // AUDIT REST II Q2: the drop, "as soon as possible"
+  K0C00Y07: Object.freeze(['2ransom']), // AUDIT REST III D2: "The ransom must be paid in =2ransom_ days or they will kill _victim_"
+  B0B71Y03: Object.freeze(['finddaughter']), // AUDIT REST III D2: "within =finddaughter_ days and I will tell you"
+  N0B20Y02: Object.freeze(['S.12']), // GUARD-WINDOW (FIELD BUGS 2026-10-06c): "I must guard %g2 for 3 hours" - the attack comes inside it
 });
 
 /** REST8: whether the quest's DELAYS take the short wait - online (the shared clock standing), the quest's own word.
@@ -391,7 +465,8 @@ export const questWaitsShort = (quest) => !!quest?.hooks?.sharedClock?.();
 /** Clock.cs's travel arm (setResource): flag&16, or the flag&1 HACK - bit 0, a range, and a zero time. AUDIT REST-PARTY
  *  D3: one predicate for the parse and for a restore from a save older than the "at once" mark, which has no
  *  declaration to read - only the flag, the range and the starting time the save kept. */
-const travelArmed = (flag, maxRange, seconds) => (flag & 16) === 16 || ((flag & 1) === 1 && maxRange > 0 && seconds === 0);
+const travelArmed = (flag, maxRange, seconds) =>
+  (flag & 16) === 16 || ((flag & 1) === 1 && maxRange > 0 && seconds === 0);
 
 export class Clock extends QuestResource {
   constructor(parentQuest, line = null) {
@@ -404,12 +479,13 @@ export class Clock extends QuestResource {
     this.clockEnabled = false;
     this.clockFinished = false;
     this._lastWorldTimeSample = 0;
-    this._lastRaisedSample = null;   // TIME3: the session's raised seconds at that sample - transient: a restore is a resume
-    this.travelTimePending = false;   // Q1: the flag&16 / flag&1-hack arms pend Place resolution (Q3)
-    this._deadline = null;   // REST8 (TIMEFREE's reading): asked on first need (isDeadline)
-    this._closesOnSuccess = false;   // AUDIT TIMEFREE T1: a task started it, so a success makes it a closing
-    this.declaredAtOnce = false;   // AUDIT TIMEFREE T3: `Clock _x_ 00:00`, no travel arm (setResource; saved - AUDIT REST-PARTY D3)
-    this.startedAfterSuccess = false;   // AUDIT TIMEFREE T5: started once the quest was already a success (saved)
+    this._lastRaisedSample = null; // TIME3: the session's raised seconds at that sample - transient: a restore is a resume
+    this.travelTimePending = false; // Q1: the flag&16 / flag&1-hack arms pend Place resolution (Q3)
+    this._deadline = null; // REST8 (TIMEFREE's reading): asked on first need (isDeadline)
+    this._closesOnSuccess = false; // AUDIT TIMEFREE T1: a task started it, so a success makes it a closing
+    this.declaredAtOnce = false; // AUDIT TIMEFREE T3: `Clock _x_ 00:00`, no travel arm (setResource; saved - AUDIT REST-PARTY D3)
+    this.startedAfterSuccess = false; // AUDIT TIMEFREE T5: started once the quest was already a success (saved)
+    this.travelArm = false; // TRIP-FROM-START: armed by its trip (travelArmed at the parse; saved)
     if (line !== null) this.setResource(line);
   }
 
@@ -420,14 +496,20 @@ export class Clock extends QuestResource {
     this.symbol = new QuestSymbol(match.groups.symbol);
     const optionsLine = line.slice(match.index + match[0].length);
 
-    let timeValue0 = -1, timeValue1 = -1, currentTimeValue = 0;
+    let timeValue0 = -1,
+      timeValue1 = -1,
+      currentTimeValue = 0;
     for (const option of optionsLine.matchAll(OPTIONS)) {
       const g = option.groups;
       if (g.ddhhmm != null || g.hhmm != null || g.mm != null) {
         const timeValue = matchTimeValue(option[0]);
-        if (currentTimeValue === 0) { timeValue0 = timeValue; currentTimeValue++; }
-        else if (currentTimeValue === 1) { timeValue1 = timeValue; currentTimeValue++; }
-        else throw new Error('Clock cannot specify more than 2 time values.');
+        if (currentTimeValue === 0) {
+          timeValue0 = timeValue;
+          currentTimeValue++;
+        } else if (currentTimeValue === 1) {
+          timeValue1 = timeValue;
+          currentTimeValue++;
+        } else throw new Error('Clock cannot specify more than 2 time values.');
       }
       if (g.flag != null) this.flag = questParseInt(g.flag);
       if (g.minRange != null) this.minRange = questParseInt(g.minRange);
@@ -435,11 +517,12 @@ export class Clock extends QuestResource {
     }
 
     const roll = this.parentQuest?.rolls ?? Math.random;
-    const fromRange = (min, max) => min + Math.floor(roll() * (max + 1 - min));   // Random.Range(min, max+1)
+    const fromRange = (min, max) => min + Math.floor(roll() * (max + 1 - min)); // Random.Range(min, max+1)
 
     // AUDIT TIMEFREE T3: a clock declared at an explicit zero with no travel arm (`Clock _end_ 00:00`) is the script's
     // "at once" - never a deadline, whatever its end does (S0000106's start-up favour, M0B40Y05's close)
-    this.declaredAtOnce = (currentTimeValue === 1 && timeValue0 === 0) || (currentTimeValue === 2 && timeValue0 === 0 && timeValue1 <= 0);
+    this.declaredAtOnce =
+      (currentTimeValue === 1 && timeValue0 === 0) || (currentTimeValue === 2 && timeValue0 === 0 && timeValue1 <= 0);
     let clockTimeInSeconds = 0;
     if (currentTimeValue === 0) {
       // "clock _symbol_": random between 1 minute and 1 week
@@ -453,17 +536,23 @@ export class Clock extends QuestResource {
     // flag&16: 2.5x cautious travel time of the quest's Places; the
     // flag&1 + maxRange>0 + zero-time HACK forces the same check.
     if (travelArmed(this.flag, this.maxRange, clockTimeInSeconds)) {
-      this.declaredAtOnce = false;   // (a travel clock: 2.5 trips, not "at once")
+      this.declaredAtOnce = false; // (a travel clock: 2.5 trips, not "at once")
+      this.travelArm = true;
       const travel = this.parentQuest?.travelSeconds?.();
       if (travel != null) clockTimeInSeconds = travel;
-      else { this.travelTimePending = true; clockTimeInSeconds = 0; }
+      else {
+        this.travelTimePending = true;
+        clockTimeInSeconds = 0;
+      }
     }
 
     this.startingTimeInSeconds = clockTimeInSeconds;
     this.remainingTimeInSeconds = clockTimeInSeconds;
   }
 
-  get isClock() { return true; }
+  get isClock() {
+    return true;
+  }
 
   /** TIMEFREE (REST8's reading): this clock is a deadline. The script's reading is asked once (the tasks do not change
    *  after the parse); AUDIT TIMEFREE T1's run-time half is asked every time: once the quest is a SUCCESS (`give pc`,
@@ -478,17 +567,25 @@ export class Clock extends QuestResource {
     const q = this.parentQuest;
     if (this._deadline == null) {
       const name = this.symbol?.name;
-      const atOnce = this.declaredAtOnce && !/^_2.*_$/.test(this.symbol?.original ?? '');   // (a `_2place_` clock's zero is its trip, StartTimer's)
-      this._deadline = (ONLINE_DEADLINES[q?.questName] ?? []).includes(name)
-        || (!atOnce && clockIsDeadline(q, this));   // (AUDIT REST II Q1: no closings table - see `closes`)
+      const atOnce = this.declaredAtOnce && !/^_2.*_$/.test(this.symbol?.original ?? ''); // (a `_2place_` clock's zero is its trip, StartTimer's)
+      this._deadline = (ONLINE_DEADLINES[q?.questName] ?? []).includes(name) || (!atOnce && clockIsDeadline(q, this)); // (AUDIT REST II Q1: no closings table - see `closes`)
       // AUDIT REST-PARTY D1/D4: never a table entry - the hand's word stands through the success (B0B81Y02's artifact
       // hunt outlives the knight's reward), and until D4 nothing failed when the exemption went
-      this._closesOnSuccess = this._deadline && !(ONLINE_DEADLINES[q?.questName] ?? []).includes(name)
-        && !!q?.tasks && startersOf(q, name).length > 0;
+      this._closesOnSuccess =
+        this._deadline &&
+        !(ONLINE_DEADLINES[q?.questName] ?? []).includes(name) &&
+        !!q?.tasks &&
+        startersOf(q, name).length > 0;
     }
     // BODYGUARD-CLOSE, RAVEN-CLOSE: a start-up closing - its end, as the quest stands, a quiet close - on the success
-    if (this._deadline && !this._closesOnSuccess && q?.questSuccess
-      && !(ONLINE_DEADLINES[q?.questName] ?? []).includes(this.symbol?.name) && closesStartUp(q, this.symbol?.name)) return false;
+    if (
+      this._deadline &&
+      !this._closesOnSuccess &&
+      q?.questSuccess &&
+      !(ONLINE_DEADLINES[q?.questName] ?? []).includes(this.symbol?.name) &&
+      closesStartUp(q, this.symbol?.name)
+    )
+      return false;
     return this._deadline && !(this._closesOnSuccess && q?.questSuccess && !this.startedAfterSuccess);
   }
 
@@ -496,7 +593,9 @@ export class Clock extends QuestResource {
    *  (tick, liveRemainingSeconds), its day count "a few" (expandMacro), no "Time remains" for it (questBridge's walk).
    *  A deadline answers false, online and off, and is QCLOCK-WORLD's: played time, DFU's end. (Online asked first, so
    *  an offline or headless quest never reads its script.) */
-  get waitsShort() { return questWaitsShort(this.parentQuest) && !this.isDeadline; }
+  get waitsShort() {
+    return questWaitsShort(this.parentQuest) && !this.isDeadline;
+  }
 
   /** Q2 - Clock.cs Tick: whole world-seconds since the last sample
    *  come off the remainder; at zero the SAME-NAMED task starts and
@@ -508,13 +607,14 @@ export class Clock extends QuestResource {
    *  starting; DFU default false = the STARTING time), Ceiling of
    *  seconds/86400. */
   expandMacro(macroType) {
-    if (macroType !== 5) return false;   // DetailsMacro
+    if (macroType !== 5) return false; // DetailsMacro
     // REST8 (TIMEFREE's words, for a delay alone): online a wait is no count of days - "come back in =wait_ days" reads
     // "come back in a few days" and lands about two real minutes on; a deadline's "you have =x_ days" keeps its number,
     // the days it runs in play
     if (this.waitsShort) return 'a few';
     const secs = this.parentQuest?.hooks?.world?.showClocksAsCountdown?.()
-      ? this.remainingTimeInSeconds : this.startingTimeInSeconds;
+      ? this.remainingTimeInSeconds
+      : this.startingTimeInSeconds;
     return String(Math.ceil(secs / 86400));
   }
 
@@ -535,7 +635,7 @@ export class Clock extends QuestResource {
     const raw = now - this._lastWorldTimeSample;
     if (!Number.isFinite(step)) return Math.trunc(raw);
     const raised = raisedSince(caller.raisedSeconds?.(), this._lastRaisedSample);
-    return Math.trunc(Math.min(Math.max(raw - raised, 0), step));   // QCLOCK-WORLD: the lived step, never the raise
+    return Math.trunc(Math.min(Math.max(raw - raised, 0), step)); // QCLOCK-WORLD: the lived step, never the raise
   }
 
   /** QT-LIVE1 (Mac, 2026-09-21: "The time doesn't print out live?"): the remainder AS OF NOW. The machine ticks off
@@ -546,7 +646,8 @@ export class Clock extends QuestResource {
    *  delay online reads from the short wait, the cut the next tick makes - the one arithmetic still. */
   liveRemainingSeconds(caller) {
     if (!this.clockEnabled || this.clockFinished) return this.remainingTimeInSeconds;
-    if (this.waitsShort) return Math.max(0, Math.min(this.remainingTimeInSeconds, ONLINE_DELAY_SECONDS) - this.chargeSeconds(caller));
+    if (this.waitsShort)
+      return Math.max(0, Math.min(this.remainingTimeInSeconds, ONLINE_DELAY_SECONDS) - this.chargeSeconds(caller));
     return Math.max(0, this.remainingTimeInSeconds - this.chargeSeconds(caller));
   }
 
@@ -576,7 +677,7 @@ export class Clock extends QuestResource {
       this.remainingTimeInSeconds = 0;
     }
     this._lastWorldTimeSample = now;
-    this._lastRaisedSample = caller.raisedSeconds?.() ?? null;   // TIME3
+    this._lastRaisedSample = caller.raisedSeconds?.() ?? null; // TIME3
   }
 
   /** StartTimer, with the "_2place_" arm: a clock named _2X_ over a
@@ -585,7 +686,11 @@ export class Clock extends QuestResource {
    *  skipped loudly via travelTimePending. */
   startTimer() {
     if (this.clockEnabled) return;
-    if (this.symbol.original.startsWith('_2') && this.symbol.original.endsWith('_') && this.startingTimeInSeconds === 0) {
+    if (
+      this.symbol.original.startsWith('_2') &&
+      this.symbol.original.endsWith('_') &&
+      this.startingTimeInSeconds === 0
+    ) {
       const inner = this.symbol.original.slice(2, -1);
       const targetPlace = this.parentQuest.getPlace?.(new QuestSymbol(inner));
       if (targetPlace) {
@@ -596,6 +701,26 @@ export class Clock extends QuestResource {
         } else {
           this.travelTimePending = true;
         }
+      }
+    }
+    // TRIP-FROM-START (FIELD BUGS 2026-10-30f): a travel clock measures its trip again as it starts, from where the
+    // player stands, and keeps the longer. Clock.cs arms it at the parse: S0000002 is parsed wherever level 4 finds the
+    // player, its manor drawn in that region, and Helseth starts the clock in Wayrest - 2.5 days for weeks of road.
+    if (this.travelArm && !this.clockFinished && this.remainingTimeInSeconds === this.startingTimeInSeconds) {
+      let travel = null;
+      // a world that cannot measure keeps the parse's number: a throw here would cut the starting task short
+      try {
+        travel = this.parentQuest.travelSeconds?.({ home: this.isDeadline });
+      } catch (ex) {
+        // TRIP-HOME: a deadline's way back too
+        console.warn(
+          `[quest] clock ${this.symbol?.name}: its trip could not be measured as it started (${ex?.message ?? ex})`,
+        );
+      }
+      if (Number.isFinite(travel) && travel > this.startingTimeInSeconds) {
+        this.startingTimeInSeconds = travel;
+        this.remainingTimeInSeconds = travel;
+        this.travelTimePending = false;
       }
     }
     // AUDIT quest-P15: a flag&16 / hack clock whose travel time pends
@@ -609,9 +734,9 @@ export class Clock extends QuestResource {
     }
     if (!this.clockFinished) {
       this.clockEnabled = true;
-      this.startedAfterSuccess = !!this.parentQuest?.questSuccess;   // AUDIT TIMEFREE T5
+      this.startedAfterSuccess = !!this.parentQuest?.questSuccess; // AUDIT TIMEFREE T5
       this._lastWorldTimeSample = wholeSeconds(this.parentQuest);
-      this._lastRaisedSample = this.parentQuest.raisedSeconds?.() ?? null;   // TIME3
+      this._lastRaisedSample = this.parentQuest.raisedSeconds?.() ?? null; // TIME3
     }
   }
 
@@ -637,8 +762,9 @@ export class Clock extends QuestResource {
       maxRange: this.maxRange,
       clockEnabled: this.clockEnabled,
       clockFinished: this.clockFinished,
-      startedAfterSuccess: this.startedAfterSuccess,   // AUDIT TIMEFREE T5 (the port's; absent from a save before it - false)
-      declaredAtOnce: this.declaredAtOnce,   // AUDIT REST-PARTY D3 (the port's; a restore has no declaration to read)
+      startedAfterSuccess: this.startedAfterSuccess, // AUDIT TIMEFREE T5 (the port's; absent from a save before it - false)
+      declaredAtOnce: this.declaredAtOnce, // AUDIT REST-PARTY D3 (the port's; a restore has no declaration to read)
+      travelArm: this.travelArm, // TRIP-FROM-START (the port's, for the same reason)
     };
   }
 
@@ -647,8 +773,10 @@ export class Clock extends QuestResource {
    *  clears. */
   restoreSaveData(dataIn) {
     if (dataIn == null) return;
-    this._lastWorldTimeSample = Number.isFinite(dataIn.lastWorldTimeSample) ? dataIn.lastWorldTimeSample : wholeSeconds(this.parentQuest);   // AUDIT WORLD7/8 A11: a save from before the field stamped NaN into the remainder
-    this._lastRaisedSample = this.parentQuest?.raisedSeconds?.() ?? null;   // TIME3: a restore (a load, a party member's copy) is a resume - no raise counted ACROSS it (AUDIT TIME: the count now, so a raise after it, before the first tick, is a raise - QCLOCK-WORLD: charged nothing)
+    this._lastWorldTimeSample = Number.isFinite(dataIn.lastWorldTimeSample)
+      ? dataIn.lastWorldTimeSample
+      : wholeSeconds(this.parentQuest); // AUDIT WORLD7/8 A11: a save from before the field stamped NaN into the remainder
+    this._lastRaisedSample = this.parentQuest?.raisedSeconds?.() ?? null; // TIME3: a restore (a load, a party member's copy) is a resume - no raise counted ACROSS it (AUDIT TIME: the count now, so a raise after it, before the first tick, is a raise - QCLOCK-WORLD: charged nothing)
     this.startingTimeInSeconds = dataIn.startingTimeInSeconds;
     this.remainingTimeInSeconds = dataIn.remainingTimeInSeconds;
     this.flag = dataIn.flag;
@@ -656,14 +784,18 @@ export class Clock extends QuestResource {
     this.maxRange = dataIn.maxRange;
     this.clockEnabled = dataIn.clockEnabled;
     this.clockFinished = dataIn.clockFinished;
-    this.startedAfterSuccess = dataIn.startedAfterSuccess === true;   // AUDIT TIMEFREE T5
+    this.startedAfterSuccess = dataIn.startedAfterSuccess === true; // AUDIT TIMEFREE T5
     // AUDIT REST-PARTY D3: the "at once" mark rides the save. A restored clock is built bare (Quest.restoreSaveData) and
     // has no declaration to read, so it came back false and S0000106's start-up favour (`Clock _delay_ 00:00`) read as a
     // deadline after every load, a party member's copy and a resync. A save from before the mark: the parse's own
     // predicate over what the save kept - a zero starting time and no travel arm. All 399 vendored clocks read the same
     // either way; only a two-value range drawn at zero (`00:00 01:00`) could differ, and no script declares one.
-    this.declaredAtOnce = typeof dataIn.declaredAtOnce === 'boolean' ? dataIn.declaredAtOnce
-      : this.startingTimeInSeconds === 0 && !travelArmed(this.flag, this.maxRange, 0);
+    this.declaredAtOnce =
+      typeof dataIn.declaredAtOnce === 'boolean'
+        ? dataIn.declaredAtOnce
+        : this.startingTimeInSeconds === 0 && !travelArmed(this.flag, this.maxRange, 0);
+    // TRIP-FROM-START: a save from before the mark - flag 16 alone, which no declared time defeats (the bit-0 hack needs one)
+    this.travelArm = typeof dataIn.travelArm === 'boolean' ? dataIn.travelArm : (this.flag & 16) === 16;
     this.travelTimePending = false;
   }
 }

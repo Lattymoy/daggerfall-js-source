@@ -11,8 +11,8 @@
   {
     "name": "CAMPFIRE-the-lane-stands-it",
     "file": "src/world/travellerSprites.js",
-    "old": "        if (!b.body) continue;   // CAMP-FIRE (FIELD BUGS 2026-10-11b): its flame drawn, never one of the fallen",
-    "new": "",
+    "old": "        if (!b.body) continue; // CAMP-FIRE (FIELD BUGS 2026-10-11b): its flame drawn, never one of the fallen\n        if (b.look === undefined) b.look = residentLook(b, b.res, { still: !!b.flat && b.talk });",
+    "new": "        if (b.look === undefined) b.look = residentLook(b, b.res, { still: !!b.flat && b.talk });",
     "tests": [
       "test/systems/livingWorld/fb1011b_campfire.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CAMPFIRE-its-word-unread",
     "file": "src/world/travellerSprites.js",
-    "old": "b.body = m.body !== false;",
-    "new": "b.body = true;",
+    "old": "      b.body = m.body !== false; // CAMP-FIRE: a camp's fire is a flame, nobody's body",
+    "new": "      b.body = true; // CAMP-FIRE: a camp's fire is a flame, nobody's body",
     "tests": [
       "test/systems/livingWorld/fb1011b_campfire.test.js"
     ]
@@ -92,7 +92,7 @@
   {
     "name": "LEGENDHELD-a-legendary-billed",
     "file": "src/systems/enchantments.js",
-    "old": "  if (item?.rarity === 'legendary') return 0;   // LEGEND-HELD",
+    "old": "  if (item?.rarity === 'legendary') return 0; // LEGEND-HELD",
     "new": "",
     "tests": [
       "test/systems/fb1011b_legendheld.test.js"
@@ -101,8 +101,8 @@
   {
     "name": "LEGENDHELD-every-tier-free",
     "file": "src/systems/enchantments.js",
-    "old": "  if (item?.rarity === 'legendary') return 0;   // LEGEND-HELD",
-    "new": "  if (item?.rarity) return 0;   // LEGEND-HELD",
+    "old": "  if (item?.rarity === 'legendary') return 0; // LEGEND-HELD",
+    "new": "  if (item?.rarity) return 0; // LEGEND-HELD",
     "tests": [
       "test/systems/fb1011b_legendheld.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "FULLGUARD-the-probe-unset",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "setFoeBlowProbe(() => _pending != null);",
-    "new": "",
+    "old": "setFoeBlowProbe(() => _pending != null); // FULL-GUARD (FIELD BUGS 2026-10-11b): the door asks this file's law of what a blow is",
+    "new": "// FULL-GUARD (FIELD BUGS 2026-10-11b): the door asks this file's law of what a blow is",
     "tests": [
       "test/systems/sigil/fb1011b_fullguard.test.js"
     ]

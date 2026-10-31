@@ -11,8 +11,8 @@
   {
     "name": "STUDIO1-the-stand-in-mark-not-taken",
     "file": "src/systems/textureReplacement.js",
-    "old": "  if (under.standIn) studio.standIn = true;\n",
-    "new": "",
+    "old": "  if (under.standIn) studio.standIn = true;\n  if (under.lazy) studio.lazy = true;",
+    "new": "  if (under.lazy) studio.lazy = true;",
     "tests": [
       "test/systems/studioArt/studio1_door.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "STUDIO1-the-offset-not-taken",
     "file": "src/systems/textureReplacement.js",
-    "old": "  studio.offset ??= under.offset ?? null;\n",
-    "new": "",
+    "old": "  studio.offset ??= under.offset ?? null;\n}",
+    "new": "}",
     "tests": [
       "test/systems/studioArt/studio1_door.test.js",
       "test/systems/studioArt/auditstudio1.test.js"
@@ -40,8 +40,8 @@
   {
     "name": "STUDIO1-a-late-cover-kept-undecoded",
     "file": "src/systems/textureReplacement.js",
-    "old": "      dropDecoded(key);   // decoded again with what it covers\n",
-    "new": "",
+    "old": "      dropDecoded(key); // decoded again with what it covers\n      n++;",
+    "new": "      n++;",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -140,8 +140,8 @@
   {
     "name": "STUDIO1-no-side-limit",
     "file": "scripts/studioArtIndex.mjs",
-    "old": "size.width > STUDIO_MAX_SIDE ||",
-    "new": "size.width > STUDIO_MAX_SIDE * 2 ||",
+    "old": "    if (!size.width || !size.height || size.width > STUDIO_MAX_SIDE || size.height > STUDIO_MAX_SIDE) {",
+    "new": "    if (!size.width || !size.height || size.width > STUDIO_MAX_SIDE * 2 || size.height > STUDIO_MAX_SIDE) {",
     "tests": [
       "test/systems/studioArt/studio1_folder.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "STUDIO1-a-stray-file-unsaid",
     "file": "scripts/studioArtIndex.mjs",
-    "old": "      if (path !== STUDIO_ROSTER && path !== STUDIO_README) problems.push(",
-    "new": "      if (false) problems.push(",
+    "old": "      if (path !== STUDIO_ROSTER && path !== STUDIO_README)",
+    "new": "      if (false)",
     "tests": [
       "test/systems/studioArt/studio1_folder.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "STUDIO1-the-listing-not-built",
     "file": "scripts/studioArtIndex.mjs",
-    "old": "      this.emitFile({ type: 'asset', fileName: `${STUDIO_DIR}/${STUDIO_INDEX}`, source: studioIndexJson(listing) });",
-    "new": "",
+    "old": "      this.emitFile({ type: 'asset', fileName: `${STUDIO_DIR}/${STUDIO_INDEX}`, source: studioIndexJson(listing) });\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/studioArt/studio1_folder.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "STUDIO1-an-artist-twice-by-case",
     "file": "scripts/studioArtIndex.mjs",
-    "old": "x.folder.toLowerCase() === a.folder.toLowerCase()",
-    "new": "x.folder === a.folder",
+    "old": "    if (artists.some((x) => x.folder.toLowerCase() === a.folder.toLowerCase())) {",
+    "new": "    if (artists.some((x) => x.folder === a.folder)) {",
     "tests": [
       "test/systems/studioArt/studio1_folder.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "STUDIO1-the-check-decodes-nothing",
     "file": "tools/studioArt.mjs",
-    "old": "    try { png = PNG.sync.read(readFileSync(join(at, STUDIO_TREE, e.path))); } catch (err) {",
-    "new": "    try { png = { width: 1, height: 1 }; void PNG; void readFileSync; } catch (err) {",
+    "old": "      png = PNG.sync.read(readFileSync(join(at, STUDIO_TREE, e.path)));",
+    "new": "      png = { width: 1, height: 1 };\n      void PNG;\n      void readFileSync;",
     "tests": [
       "test/systems/studioArt/studio1_folder.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "STUDIO1-a-stretched-picture-unsaid",
     "file": "tools/studioArt.mjs",
-    "old": "Math.abs(png.width / png.height - p.width / p.height) > 0.01",
-    "new": "false",
+    "old": "      if (p && Math.abs(png.width / png.height - p.width / p.height) > 0.01)",
+    "new": "      if (p && false)",
     "tests": [
       "test/systems/studioArt/studio1_folder.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "STUDIO1-a-label-unreadable",
     "file": "src/systems/studioArt/studioSlots.js",
-    "old": ".replace(/[^a-z0-9]+/g, '-')",
-    "new": ".replace(/[^a-z0-9]+/g, '--')",
+    "old": "    .replace(/[^a-z0-9]+/g, '-')",
+    "new": "    .replace(/[^a-z0-9]+/g, '--')",
     "tests": [
       "test/systems/studioArt/studio1_folder.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "STUDIO1-lazy-not-inherited",
     "file": "src/systems/textureReplacement.js",
-    "old": "  if (under.lazy) studio.lazy = true;\n",
-    "new": "",
+    "old": "  if (under.lazy) studio.lazy = true;\n  if (under.readOnly) studio.readOnly = true; // AUDIT DEX B5",
+    "new": "  if (under.readOnly) studio.readOnly = true; // AUDIT DEX B5",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -338,8 +338,8 @@
   {
     "name": "STUDIO1-absorbed-uncounted",
     "file": "src/systems/textureReplacement.js",
-    "old": "      dropDecoded(key);   // decoded again with what it covers\n      n++;\n      continue;",
-    "new": "      dropDecoded(key);   // decoded again with what it covers\n      continue;",
+    "old": "      n++;\n      continue;",
+    "new": "      continue;",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -347,8 +347,8 @@
   {
     "name": "STUDIO1-studio-records-any",
     "file": "src/systems/textureReplacement.js",
-    "old": "if (e.studio && e.archive === a && e.frame === 0 && e.map === 'Albedo' && e.dye == null) out.push(e.record);",
-    "new": "if (e.archive === a && e.frame === 0 && e.map === 'Albedo' && e.dye == null) out.push(e.record);",
+    "old": "    if (e.studio && e.archive === a && e.frame === 0 && e.map === 'Albedo' && e.dye == null) out.push(e.record);",
+    "new": "    if (e.archive === a && e.frame === 0 && e.map === 'Albedo' && e.dye == null) out.push(e.record);",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -356,8 +356,8 @@
   {
     "name": "STUDIO1-hold-never-let-go",
     "file": "src/systems/textureReplacement.js",
-    "old": "    .then(() => { clearTimeout(timer); _holds.delete(held); });",
-    "new": "    .then(() => { clearTimeout(timer); });",
+    "old": "    _holds.delete(held);\n  });",
+    "new": "  });",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -374,8 +374,8 @@
   {
     "name": "STUDIO1-hold-unbounded",
     "file": "src/systems/textureReplacement.js",
-    "old": "new Promise((r) => { timer = setTimeout(r, atMost); })",
-    "new": "new Promise((r) => { timer = setTimeout(r, atMost * 1000); })",
+    "old": "      timer = setTimeout(r, atMost);",
+    "new": "      timer = setTimeout(r, atMost * 1000);",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -392,7 +392,7 @@
   {
     "name": "STUDIO1-no-box-no-scale",
     "file": "src/systems/textureReplacement.js",
-    "old": "    if (base) { own.box = { width: base.width, height: base.height }; if (base.recordScale && !own.recordScale) own.recordScale = base.recordScale; }",
+    "old": "    if (base) {\n      own.box = { width: base.width, height: base.height };\n      if (base.recordScale && !own.recordScale) own.recordScale = base.recordScale;\n    }",
     "new": "    void base;",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
@@ -401,8 +401,8 @@
   {
     "name": "STUDIO1-no-scale",
     "file": "src/systems/textureReplacement.js",
-    "old": "if (base.recordScale && !own.recordScale) own.recordScale = base.recordScale; }",
-    "new": "}",
+    "old": "      if (base.recordScale && !own.recordScale) own.recordScale = base.recordScale;\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "STUDIO1-size-not-the-box",
     "file": "src/systems/textureReplacement.js",
-    "old": "return d ? (d.box ?? { width: d.width, height: d.height }) : { width: 1, height: 1 }; };",
-    "new": "return d ? { width: d.width, height: d.height } : { width: 1, height: 1 }; };",
+    "old": "    return d ? (d.box ?? { width: d.width, height: d.height }) : { width: 1, height: 1 };",
+    "new": "    return d ? { width: d.width, height: d.height } : { width: 1, height: 1 };",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -419,8 +419,8 @@
   {
     "name": "STUDIO1-bitmap-at-the-box",
     "file": "src/systems/textureReplacement.js",
-    "old": "return { ...(m ? { width: m.width, height: m.height } : size(record)), data: null, rgba: topDownRgba(d), record, frame }; },",
-    "new": "return { ...size(record), data: null, rgba: topDownRgba(d), record, frame }; },",
+    "old": "      return {\n        ...(m ? { width: m.width, height: m.height } : size(record)),\n        data: null,\n        rgba: topDownRgba(d),\n        record,\n        frame,\n      };",
+    "new": "      return { ...size(record), data: null, rgba: topDownRgba(d), record, frame };",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -437,8 +437,8 @@
   {
     "name": "STUDIO1-a-dyed-studio-makes-a-set",
     "file": "src/systems/textureReplacement.js",
-    "old": "e.map === bare.map && e.dye != null && !e.studio) return dye;",
-    "new": "e.map === bare.map && e.dye != null) return dye;",
+    "old": "      e.dye != null &&\n      !e.studio",
+    "new": "      e.dye != null",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -689,8 +689,8 @@
   {
     "name": "STUDIO1-ground-ignores-the-studio",
     "file": "src/systems/dfmodTextures.js",
-    "old": "  const studio = n ? studioRecordsOf(archive).filter((r) => r < n) : [];",
-    "new": "  const studio = [];",
+    "old": "  const studio = n ? studioRecordsOf(archive).filter((r) => r < n) : []; // STUDIO1: the studio's records, worn with the gate shut too",
+    "new": "  const studio = []; // STUDIO1: the studio's records, worn with the gate shut too",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -707,8 +707,8 @@
   {
     "name": "STUDIO1-ground-at-its-own-size",
     "file": "src/systems/dfmodTextures.js",
-    "old": "  for (const p of pics) if (p && p.width * p.height > width * height) ({ width, height } = p);\n",
-    "new": "",
+    "old": "  for (const p of pics) if (p && p.width * p.height > width * height) ({ width, height } = p);\n  const out = base.map((l) => classicAt(l, width, height));",
+    "new": "  const out = base.map((l) => classicAt(l, width, height));",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -716,8 +716,8 @@
   {
     "name": "STUDIO1-ground-records-unlaid",
     "file": "src/systems/dfmodTextures.js",
-    "old": "  records.forEach((r, k) => { if (pics[k]) out[r] = classicAt(pics[k], width, height); });\n",
-    "new": "",
+    "old": "  records.forEach((r, k) => {\n    if (pics[k]) out[r] = classicAt(pics[k], width, height);\n  });\n  return { layers: out, whole: whole && pics.every(Boolean) };",
+    "new": "  return { layers: out, whole: whole && pics.every(Boolean) };",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -735,7 +735,7 @@
     "name": "STUDIO1-icons-blind-to-the-studio",
     "file": "src/ui/textureCanvas.js",
     "old": "const iconsGeneration = () => `${dfmodGeneration()}:${studioGeneration()}`;",
-    "new": "const iconsGeneration = () => `${dfmodGeneration()}`; void studioGeneration;",
+    "new": "const iconsGeneration = () => `${dfmodGeneration()}`;\nvoid studioGeneration;",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -833,8 +833,8 @@
   {
     "name": "STUDIO1-roster-name-unread",
     "file": "scripts/studioArtIndex.mjs",
-    "old": " || typeof a.name !== 'string' || !a.name || typeof a.approved",
-    "new": " || typeof a.approved",
+    "old": "      typeof a.name !== 'string' ||\n      !a.name ||\n      typeof a.approved !== 'string' ||",
+    "new": "      typeof a.approved !== 'string' ||",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -842,8 +842,8 @@
   {
     "name": "STUDIO1-roster-approved-empty",
     "file": "scripts/studioArtIndex.mjs",
-    "old": "typeof a.approved !== 'string' || !a.approved) {",
-    "new": "typeof a.approved !== 'string') {",
+    "old": "      typeof a.approved !== 'string' ||\n      !a.approved",
+    "new": "      typeof a.approved !== 'string'",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -851,8 +851,8 @@
   {
     "name": "STUDIO1-roster-reserved-kept",
     "file": "scripts/studioArtIndex.mjs",
-    "old": "    if (!STUDIO_NAME.test(a?.folder ?? '') || STUDIO_RESERVED.test(a.folder) || typeof",
-    "new": "    if (!STUDIO_NAME.test(a?.folder ?? '') || typeof",
+    "old": "      STUDIO_RESERVED.test(a.folder) ||\n      typeof a.name !== 'string' ||",
+    "new": "      typeof a.name !== 'string' ||",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -896,8 +896,8 @@
   {
     "name": "STUDIO1-height-zero-ok",
     "file": "scripts/studioArtIndex.mjs",
-    "old": "    if (!size.width || !size.height || size.width",
-    "new": "    if (!size.width || size.width",
+    "old": "    if (!size.width || !size.height || size.width > STUDIO_MAX_SIDE || size.height > STUDIO_MAX_SIDE) {",
+    "new": "    if (!size.width || size.width > STUDIO_MAX_SIDE || size.height > STUDIO_MAX_SIDE) {",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -905,8 +905,8 @@
   {
     "name": "STUDIO1-height-unbounded",
     "file": "scripts/studioArtIndex.mjs",
-    "old": " || size.height > STUDIO_MAX_SIDE) {",
-    "new": ") {",
+    "old": "    if (!size.width || !size.height || size.width > STUDIO_MAX_SIDE || size.height > STUDIO_MAX_SIDE) {",
+    "new": "    if (!size.width || !size.height || size.width > STUDIO_MAX_SIDE) {",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -914,8 +914,8 @@
   {
     "name": "STUDIO1-png-short-21",
     "file": "scripts/studioArtIndex.mjs",
-    "old": "  if (b.length < 24 || sig.some",
-    "new": "  if (b.length < 21 || sig.some",
+    "old": "  if (b.length < 24 || sig.some((v, i) => b[i] !== v) || b.toString('latin1', 12, 16) !== 'IHDR') return null;",
+    "new": "  if (b.length < 21 || sig.some((v, i) => b[i] !== v) || b.toString('latin1', 12, 16) !== 'IHDR') return null;",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -923,8 +923,8 @@
   {
     "name": "STUDIO1-png-ihdr-unread",
     "file": "scripts/studioArtIndex.mjs",
-    "old": " || b.toString('latin1', 12, 16) !== 'IHDR') return null;",
-    "new": ") return null;",
+    "old": "  if (b.length < 24 || sig.some((v, i) => b[i] !== v) || b.toString('latin1', 12, 16) !== 'IHDR') return null;",
+    "new": "  if (b.length < 24 || sig.some((v, i) => b[i] !== v)) return null;",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -968,8 +968,8 @@
   {
     "name": "STUDIO1-check-drops-the-listing",
     "file": "tools/studioArt.mjs",
-    "old": "  const problems = [...listing.problems], notes = [];",
-    "new": "  const problems = [], notes = [];",
+    "old": "  const problems = [...listing.problems],",
+    "new": "  const problems = [],",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -977,8 +977,8 @@
   {
     "name": "STUDIO1-stretch-by-half",
     "file": "tools/studioArt.mjs",
-    "old": "p.width / p.height) > 0.01)",
-    "new": "p.width / p.height) > 0.5)",
+    "old": "      if (p && Math.abs(png.width / png.height - p.width / p.height) > 0.01)",
+    "new": "      if (p && Math.abs(png.width / png.height - p.width / p.height) > 0.5)",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -986,8 +986,8 @@
   {
     "name": "STUDIO1-stretch-one-way",
     "file": "tools/studioArt.mjs",
-    "old": "Math.abs(png.width / png.height - p.width / p.height) > 0.01",
-    "new": "(png.width / png.height - p.width / p.height) > 0.01",
+    "old": "      if (p && Math.abs(png.width / png.height - p.width / p.height) > 0.01)",
+    "new": "      if (p && png.width / png.height - p.width / p.height > 0.01)",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -1004,8 +1004,8 @@
   {
     "name": "STUDIO1-no-slot-only-a-note",
     "file": "tools/studioArt.mjs",
-    "old": "      problems.push(`${e.path}: ${sets.get(e.archive).title} has no picture",
-    "new": "      notes.push(`${e.path}: ${sets.get(e.archive).title} has no picture",
+    "old": "    } else if (e.map === 'Albedo' && sets.has(e.archive)) {\n      problems.push(",
+    "new": "    } else if (e.map === 'Albedo' && sets.has(e.archive)) {\n      notes.push(",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -1031,8 +1031,8 @@
   {
     "name": "STUDIO1-list-studio-unsaid",
     "file": "tools/studioArt.mjs",
-    "old": "${by ? `   <- studio: ${by.path}` : ''}",
-    "new": "${''}",
+    "old": "      log(\n        `  ${s.key.padEnd(12)} ${`${p.width} x ${p.height}`.padEnd(10)} ${s.name}${s.cutout ? ' (glass)' : ''}${by ? `   <- studio: ${by.path}` : ''}`,\n      );",
+    "new": "      log(`  ${s.key.padEnd(12)} ${`${p.width} x ${p.height}`.padEnd(10)} ${s.name}${s.cutout ? ' (glass)' : ''}${''}`);",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -1040,8 +1040,8 @@
   {
     "name": "STUDIO1-templates-in-the-checkout",
     "file": "tools/studioArt.mjs",
-    "old": "  const out = dir ? resolve(dir) : join(at, 'studio-templates');",
-    "new": "  const out = join(at, 'studio-templates'); void dir; void resolve;",
+    "old": "  const out = dir ? resolve(dir) : join(at, 'studio-templates'); // a folder named is the caller's; the default is the checkout's (ignored)",
+    "new": "  const out = join(at, 'studio-templates');\n  void dir;\n  void resolve; // a folder named is the caller's; the default is the checkout's (ignored)",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -1049,8 +1049,8 @@
   {
     "name": "STUDIO1-wagon-glass-solid",
     "file": "src/systems/studioArt/studioSlots.js",
-    "old": ", cutout: isGlassRecord(rec), picture: () => pic });",
-    "new": ", cutout: false, picture: () => pic });",
+    "old": "      cutout: isGlassRecord(rec),",
+    "new": "      cutout: false,",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -1058,8 +1058,8 @@
   {
     "name": "STUDIO1-ship-windows-solid",
     "file": "src/systems/studioArt/studioSlots.js",
-    "old": "    cutout: Object.hasOwn(night, e.record),",
-    "new": "    cutout: false,",
+    "old": "      cutout: Object.hasOwn(night, e.record), // a stern window by day: its glass a hole (the pool's cutOf)",
+    "new": "      cutout: false, // a stern window by day: its glass a hole (the pool's cutOf)",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -1067,8 +1067,8 @@
   {
     "name": "STUDIO1-flame-solid",
     "file": "src/systems/studioArt/studioSlots.js",
-    "old": "cutout: PORT_HOW[record]?.cutout === true, picture: paint",
-    "new": "cutout: false, picture: paint",
+    "old": "        cutout: PORT_HOW[record]?.cutout === true,",
+    "new": "        cutout: false,",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -1076,8 +1076,8 @@
   {
     "name": "STUDIO1-label-untrimmed",
     "file": "src/systems/studioArt/studioSlots.js",
-    "old": ".replace(/^-+|-+$/g, '');",
-    "new": ";",
+    "old": "    .replace(/[^a-z0-9]+/g, '-')\n    .replace(/^-+|-+$/g, '');",
+    "new": "    .replace(/[^a-z0-9]+/g, '-');",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -1103,8 +1103,8 @@
   {
     "name": "STUDIO1-wagon-name-dropped",
     "file": "src/systems/studioArt/studioSlots.js",
-    "old": "  roomFloor: 'caravan room floor', harness: 'harness straps',",
-    "new": "  roomFloor: 'caravan room floor',",
+    "old": "  harness: 'harness straps',\n});",
+    "new": "});",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -1112,8 +1112,8 @@
   {
     "name": "STUDIO1-wagons-unsorted",
     "file": "src/systems/studioArt/studioSlots.js",
-    "old": "  return out.sort((a, b) => a.record - b.record);\n}",
-    "new": "  return out;\n}",
+    "old": "  return out.sort((a, b) => a.record - b.record);",
+    "new": "  return out;",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -1121,8 +1121,8 @@
   {
     "name": "STUDIO1-ships-no-night",
     "file": "src/systems/studioArt/studioSlots.js",
-    "old": "records: Object.values(tex), art: (r) => made.get(r) ?? null, night, glow });",
-    "new": "records: Object.values(tex), art: (r) => made.get(r) ?? null, night: {}, glow });",
+    "old": "    night,",
+    "new": "    night: {},",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -1130,8 +1130,8 @@
   {
     "name": "STUDIO1-night-unnamed",
     "file": "src/systems/studioArt/studioSlots.js",
-    "old": "`${words(nameOf(tex, dayOf.get(e.record)))} - at night`",
-    "new": "`${words(nameOf(tex, dayOf.get(e.record)))}`",
+    "old": "      name: dayOf.has(e.record)\n        ? `${words(nameOf(tex, dayOf.get(e.record)))} - at night`\n        : words(nameOf(tex, e.record)),",
+    "new": "      name: dayOf.has(e.record) ? `${words(nameOf(tex, dayOf.get(e.record)))}` : words(nameOf(tex, e.record)),",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -1139,8 +1139,8 @@
   {
     "name": "STUDIO1-ships-unsorted",
     "file": "src/systems/studioArt/studioSlots.js",
-    "old": "  })).sort((a, b) => a.record - b.record);\n}",
-    "new": "  }));\n}",
+    "old": "  return entries\n    .map((e) => ({\n      record: e.record,\n      name: dayOf.has(e.record)\n        ? `${words(nameOf(tex, dayOf.get(e.record)))} - at night`\n        : words(nameOf(tex, e.record)),\n      cutout: Object.hasOwn(night, e.record), // a stern window by day: its glass a hole (the pool's cutOf)\n      picture: () => e.build(),\n    }))\n    .sort((a, b) => a.record - b.record);",
+    "new": "  return entries.map((e) => ({\n    record: e.record,\n    name: dayOf.has(e.record) ? `${words(nameOf(tex, dayOf.get(e.record)))} - at night` : words(nameOf(tex, e.record)),\n    cutout: Object.hasOwn(night, e.record), // a stern window by day: its glass a hole (the pool's cutOf)\n    picture: () => e.build(),\n  }));",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -1148,8 +1148,8 @@
   {
     "name": "STUDIO1-carrack-glow-galleon",
     "file": "src/systems/studioArt/studioSlots.js",
-    "old": "CARRACK_TEX, carrackArt, CARRACK_NIGHT, carrackGlow)",
-    "new": "CARRACK_TEX, carrackArt, CARRACK_NIGHT, galleonGlow)",
+    "old": "    slots: () => shipSlots(CARRACK_ARCHIVE, CARRACK_TEX, carrackArt, CARRACK_NIGHT, carrackGlow),",
+    "new": "    slots: () => shipSlots(CARRACK_ARCHIVE, CARRACK_TEX, carrackArt, CARRACK_NIGHT, galleonGlow),",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -1157,8 +1157,8 @@
   {
     "name": "STUDIO1-lefay-name",
     "file": "src/systems/studioArt/studioSlots.js",
-    "old": "[LEFAY_GILT]: 'gilt point',",
-    "new": "[LEFAY_GILT]: 'gilt',",
+    "old": "  [LEFAY_GILT]: 'gilt point',",
+    "new": "  [LEFAY_GILT]: 'gilt',",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -1166,8 +1166,8 @@
   {
     "name": "STUDIO1-hangings-record-off",
     "file": "src/systems/studioArt/studioSlots.js",
-    "old": "TOWN_PICTURES.map((p, record) => ({ record, name: p.name, picture: () => p.draw() }))",
-    "new": "TOWN_PICTURES.map((p, record) => ({ record: record + 1, name: p.name, picture: () => p.draw() }))",
+    "old": "    slots: () => TOWN_PICTURES.map((p, record) => ({ record, name: p.name, picture: () => p.draw() })),",
+    "new": "    slots: () => TOWN_PICTURES.map((p, record) => ({ record: record + 1, name: p.name, picture: () => p.draw() })),",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -1175,8 +1175,8 @@
   {
     "name": "STUDIO1-port-picture-first",
     "file": "src/systems/studioArt/studioSlots.js",
-    "old": "picture: paint })) },",
-    "new": "picture: PORT_PAINTERS[0][1] })) },",
+    "old": "        picture: paint,",
+    "new": "        picture: PORT_PAINTERS[0][1],",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -1184,8 +1184,8 @@
   {
     "name": "STUDIO1-yards-archive",
     "file": "src/systems/studioArt/studioSlots.js",
-    "old": "archive: YARD_ARCHIVE, door: 'painted'",
-    "new": "archive: YARD_ARCHIVE + 1, door: 'painted'",
+    "old": "    archive: YARD_ARCHIVE,",
+    "new": "    archive: YARD_ARCHIVE + 1,",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -1193,8 +1193,8 @@
   {
     "name": "STUDIO1-galleon-archive",
     "file": "src/systems/studioArt/studioSlots.js",
-    "old": "archive: GALLEON_ARCHIVE, door: 'vendor', slots: () => shipSlots(GALLEON_ARCHIVE",
-    "new": "archive: GALLEON_ARCHIVE + 1, door: 'vendor', slots: () => shipSlots(GALLEON_ARCHIVE",
+    "old": "    archive: GALLEON_ARCHIVE,",
+    "new": "    archive: GALLEON_ARCHIVE + 1,",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -1202,8 +1202,8 @@
   {
     "name": "STUDIO1-hangings-archive",
     "file": "src/systems/studioArt/studioSlots.js",
-    "old": "archive: TOWN_PICTURE_ARCHIVE, door: 'vendor'",
-    "new": "archive: TOWN_PICTURE_ARCHIVE + 1, door: 'vendor'",
+    "old": "    archive: TOWN_PICTURE_ARCHIVE,",
+    "new": "    archive: TOWN_PICTURE_ARCHIVE + 1,",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -1211,8 +1211,8 @@
   {
     "name": "STUDIO1-lefay-archive",
     "file": "src/systems/studioArt/studioSlots.js",
-    "old": "archive: LEFAY_ARCHIVE, door: 'painted'",
-    "new": "archive: LEFAY_ARCHIVE + 1, door: 'painted'",
+    "old": "    archive: LEFAY_ARCHIVE,",
+    "new": "    archive: LEFAY_ARCHIVE + 1,",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]

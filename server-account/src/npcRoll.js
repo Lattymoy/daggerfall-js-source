@@ -55,11 +55,23 @@
 import { isDeveloper } from './titles.js';
 import { REALM_ID_RE, LEASE_RE } from './realm.js';
 import {
-  ROLL_FACTIONS, ROLL_EVENTS_KEEP_S, chaptersSwitchOf, rollRidOf, rollSeedOk, rollDeltasOk, rollMembersOk, rollSeedCapOf, rollSeedOf,
-  rollCredit, rollDrain, rollBookRankOf, joinRecordable, ROLL_CLAIMS_HOUR,
+  ROLL_FACTIONS,
+  ROLL_EVENTS_KEEP_S,
+  chaptersSwitchOf,
+  rollRidOf,
+  rollSeedOk,
+  rollDeltasOk,
+  rollMembersOk,
+  rollSeedCapOf,
+  rollSeedOf,
+  rollCredit,
+  rollDrain,
+  rollBookRankOf,
+  joinRecordable,
+  ROLL_CLAIMS_HOUR,
 } from '../../src/net/npcChapterLaw.js';
 import { utcDay } from '../../src/net/marksLaw.js';
-import { overRate } from './accounts.js';   // AUDIT CHAP2 E2: the claims' own hour
+import { overRate } from './accounts.js'; // AUDIT CHAP2 E2: the claims' own hour
 
 /** CHAPTERS_OPEN: the Roll for everyone ("on"), the developers alone ("dev"), or nobody ("off" - the save keeps the
  *  standing, as before CHAP1). */
@@ -70,7 +82,8 @@ export function chaptersOpenFor(/** @type {any} */ player, /** @type {any} */ en
 
 /** The realm character a write may move: the account's own, standing, under the lease - asked INSIDE the write
  *  (`?` character, `?` player, `?` lease). */
-const HELD_SQL = 'EXISTS (SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND lease = ? AND dead_at IS NULL)';
+const HELD_SQL =
+  'EXISTS (SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND lease = ? AND dead_at IS NULL)';
 /** Every statement after a write's first stands only while the head carries the write's own tag (`?` character, `?` tag). */
 const TAGGED_SQL = 'EXISTS (SELECT 1 FROM npc_roll_heads WHERE char_id = ? AND tag = ?)';
 
@@ -85,9 +98,23 @@ function mintTag(/** @type {((b: Uint8Array) => Uint8Array) | undefined} */ rand
 /** The realm character an act names: the account's own, standing, its first save landed, under `lease`. `{ createdAt,
  *  origin }` or `{ error }`: 'body', 'no-realm-character', 'dead', 'lease', 'no-data' (AUDIT CHAP S3: no Roll before the
  *  realm holds a save of it - a customs never landed is undone whole). */
-async function heldUnder(/** @type {any} */ db, /** @type {string} */ playerId, /** @type {unknown} */ character, /** @type {unknown} */ lease) {
-  if (typeof character !== 'string' || !REALM_ID_RE.test(character) || typeof lease !== 'string' || !LEASE_RE.test(lease)) return { error: 'body' };
-  const row = await db.prepare('SELECT lease, created_at, dead_at, origin_id, bytes FROM realm_characters WHERE id = ? AND player = ?').bind(character, playerId).first();
+async function heldUnder(
+  /** @type {any} */ db,
+  /** @type {string} */ playerId,
+  /** @type {unknown} */ character,
+  /** @type {unknown} */ lease,
+) {
+  if (
+    typeof character !== 'string' ||
+    !REALM_ID_RE.test(character) ||
+    typeof lease !== 'string' ||
+    !LEASE_RE.test(lease)
+  )
+    return { error: 'body' };
+  const row = await db
+    .prepare('SELECT lease, created_at, dead_at, origin_id, bytes FROM realm_characters WHERE id = ? AND player = ?')
+    .bind(character, playerId)
+    .first();
   if (!row) return { error: 'no-realm-character' };
   if (row.dead_at != null) return { error: 'dead' };
   if (row.lease !== lease) return { error: 'lease' };
@@ -103,14 +130,24 @@ async function rowsOf(/** @type {any} */ db, /** @type {string} */ character) {
   return rowsFrom((await rowsRead(db, character).all())?.results ?? []);
 }
 /** PRIMARY-FOLD: the Roll's rows' question, as a statement a claim's batch carries, and its rows read as rowsOf answers. */
-const rowsRead = (/** @type {any} */ db, /** @type {string} */ character) => db.prepare('SELECT faction_id, rep, gained_day, gained, owed, member, rank, joined_at, dormant FROM npc_roll WHERE char_id = ?').bind(character);
+const rowsRead = (/** @type {any} */ db, /** @type {string} */ character) =>
+  db
+    .prepare(
+      'SELECT faction_id, rep, gained_day, gained, owed, member, rank, joined_at, dormant FROM npc_roll WHERE char_id = ?',
+    )
+    .bind(character);
 function rowsFrom(/** @type {any[]} */ results) {
   /** @type {Map<number, RollRow>} */
   const rows = new Map();
   for (const x of results) {
     rows.set(Number(x.faction_id), {
-      rep: Number(x.rep), gainedDay: Number(x.gained_day), gained: Number(x.gained), owed: Number(x.owed),
-      member: !!x.member, rank: x.rank == null ? null : Number(x.rank), joinedAt: x.joined_at == null ? null : Number(x.joined_at),
+      rep: Number(x.rep),
+      gainedDay: Number(x.gained_day),
+      gained: Number(x.gained),
+      owed: Number(x.owed),
+      member: !!x.member,
+      rank: x.rank == null ? null : Number(x.rank),
+      joinedAt: x.joined_at == null ? null : Number(x.joined_at),
       dormant: !!x.dormant,
     });
   }
@@ -143,18 +180,57 @@ export async function rollViewOf(/** @type {any} */ db, /** @type {string} */ ch
 }
 
 /** One row's UPDATE, standing only under the write's tag. */
-const rowWrite = (/** @type {any} */ db, /** @type {string} */ character, /** @type {number} */ f, /** @type {RollRow} */ r, /** @type {string} */ tag) =>
-  db.prepare(`UPDATE npc_roll SET rep = ?, gained_day = ?, gained = ?, owed = ?, member = ?, rank = ?, joined_at = ?, dormant = ? WHERE char_id = ? AND faction_id = ? AND ${TAGGED_SQL}`)
-    .bind(r.rep, r.gainedDay, r.gained, r.owed, r.member ? 1 : 0, r.rank, r.joinedAt, r.dormant ? 1 : 0, character, f, character, tag);
+const rowWrite = (
+  /** @type {any} */ db,
+  /** @type {string} */ character,
+  /** @type {number} */ f,
+  /** @type {RollRow} */ r,
+  /** @type {string} */ tag,
+) =>
+  db
+    .prepare(
+      `UPDATE npc_roll SET rep = ?, gained_day = ?, gained = ?, owed = ?, member = ?, rank = ?, joined_at = ?, dormant = ? WHERE char_id = ? AND faction_id = ? AND ${TAGGED_SQL}`,
+    )
+    .bind(
+      r.rep,
+      r.gainedDay,
+      r.gained,
+      r.owed,
+      r.member ? 1 : 0,
+      r.rank,
+      r.joinedAt,
+      r.dormant ? 1 : 0,
+      character,
+      f,
+      character,
+      tag,
+    );
 /** The head moved on from `seq` under a write's tag (and `rid`, a claim's id, where one is taken; `claimed`, the claim
  *  sequence moved with it, where a claim credits a line - AUDIT CHAP2 C1) - while the character is still the caller's,
  *  standing, under its lease. */
-const headWrite = (/** @type {any} */ db, /** @type {{ character: string, player: string, lease: string }} */ who, /** @type {number} */ seq,
-  /** @type {string} */ tag, /** @type {number} */ nowS, /** @type {string | null} */ rid = null, claimed = false) =>
-  db.prepare(`UPDATE npc_roll_heads SET seq = seq + 1, kseq = kseq + ?, tag = ?, last_rid = COALESCE(?, last_rid), updated_at = ? WHERE char_id = ? AND seq = ? AND ${HELD_SQL}`)
+const headWrite = (
+  /** @type {any} */ db,
+  /** @type {{ character: string, player: string, lease: string }} */ who,
+  /** @type {number} */ seq,
+  /** @type {string} */ tag,
+  /** @type {number} */ nowS,
+  /** @type {string | null} */ rid = null,
+  claimed = false,
+) =>
+  db
+    .prepare(
+      `UPDATE npc_roll_heads SET seq = seq + 1, kseq = kseq + ?, tag = ?, last_rid = COALESCE(?, last_rid), updated_at = ? WHERE char_id = ? AND seq = ? AND ${HELD_SQL}`,
+    )
     .bind(claimed ? 1 : 0, tag, rid, nowS, who.character, seq, who.character, who.player, who.lease);
-const same = (/** @type {RollRow} */ a, /** @type {RollRow} */ b) => a.rep === b.rep && a.gainedDay === b.gainedDay && a.gained === b.gained
-  && a.owed === b.owed && a.member === b.member && a.rank === b.rank && a.joinedAt === b.joinedAt && a.dormant === b.dormant;
+const same = (/** @type {RollRow} */ a, /** @type {RollRow} */ b) =>
+  a.rep === b.rep &&
+  a.gainedDay === b.gainedDay &&
+  a.gained === b.gained &&
+  a.owed === b.owed &&
+  a.member === b.member &&
+  a.rank === b.rank &&
+  a.joinedAt === b.joinedAt &&
+  a.dormant === b.dormant;
 
 /**
  * THE ROLL, READ - SEEDED the first time, and what is owed PAID: `body` `{ character, lease, seed?: { factions, members } }`.
@@ -169,10 +245,15 @@ export async function readRoll({ db, nowS, rand }, player, body) {
   if (!Number.isSafeInteger(nowS)) throw new TypeError('readRoll needs an integer epoch-seconds clock');
   const held = await heldUnder(db, player.id, body?.character, body?.lease);
   if ('error' in held) return held;
-  const who = { character: /** @type {string} */ (body.character), player: player.id, lease: /** @type {string} */ (body.lease) };
+  const who = {
+    character: /** @type {string} */ (body.character),
+    player: player.id,
+    lease: /** @type {string} */ (body.lease),
+  };
   const head = await db.prepare('SELECT seq, kseq FROM npc_roll_heads WHERE char_id = ?').bind(who.character).first();
   if (head) {
-    const seq = Number(head.seq), kseq = Number(head.kseq);
+    const seq = Number(head.seq),
+      kseq = Number(head.kseq);
     const rows = await rowsOf(db, who.character);
     const day = utcDay(nowS);
     /** @type {Array<[number, RollRow]>} */
@@ -182,26 +263,33 @@ export async function readRoll({ db, nowS, rand }, player, body) {
     for (const [f, row] of rows) {
       if (!(row.owed > 0)) continue;
       const d = rollDrain(row, day);
-      if (d.credited !== 0 || d.owed !== row.owed) paid.push([f, { ...row, rep: d.rep, gainedDay: d.gainedDay, gained: d.gained, owed: d.owed }]);
+      if (d.credited !== 0 || d.owed !== row.owed)
+        paid.push([f, { ...row, rep: d.rep, gainedDay: d.gainedDay, gained: d.gained, owed: d.owed }]);
       if (d.credited > 0) drained[f] = d.credited;
     }
     if (!paid.length) return { roll: viewOf(kseq, rows), from: kseq, paid: drained };
     const tag = mintTag(rand);
-    const [moved] = await db.batch([headWrite(db, who, seq, tag, nowS), ...paid.map(([f, r]) => rowWrite(db, who.character, f, r, tag))]);
+    const [moved] = await db.batch([
+      headWrite(db, who, seq, tag, nowS),
+      ...paid.map(([f, r]) => rowWrite(db, who.character, f, r, tag)),
+    ]);
     if (!moved?.meta?.changes) {
       const why = await heldUnder(db, player.id, who.character, who.lease);
       return 'error' in why ? why : { error: 'roll-busy' };
     }
     for (const [f, r] of paid) rows.set(f, r);
-    return { roll: viewOf(kseq, rows), from: kseq, paid: drained };   // AUDIT CHAP2 C1: owed paid is the service's own credit
+    return { roll: viewOf(kseq, rows), from: kseq, paid: drained }; // AUDIT CHAP2 C1: owed paid is the service's own credit
   }
   const seed = body?.seed;
   if (seed == null) return { roll: null };
-  if (!rollSeedOk(seed?.factions) || !(seed?.members === null || rollMembersOk(seed?.members))) return { error: 'roll-seed' };
+  if (!rollSeedOk(seed?.factions) || !(seed?.members === null || rollMembersOk(seed?.members)))
+    return { error: 'roll-seed' };
   const cap = rollSeedCapOf(held);
   /** @type {Map<number, number>} */
   const reported = new Map((seed.members ?? []).map((/** @type {{ f: number, rank: number }} */ m) => [m.f, m.rank]));
-  const asleep = new Set((seed.members ?? []).filter((/** @type {any} */ m) => m.d === 1).map((/** @type {any} */ m) => m.f));   // AUDIT CHAP4 D1
+  const asleep = new Set(
+    (seed.members ?? []).filter((/** @type {any} */ m) => m.d === 1).map((/** @type {any} */ m) => m.f),
+  ); // AUDIT CHAP4 D1
   const values = rollSeedOf(seed.factions, cap, reported);
   const tag = mintTag(rand);
   /** @type {Map<number, RollRow>} */
@@ -209,17 +297,40 @@ export async function readRoll({ db, nowS, rand }, player, body) {
   for (const f of ROLL_FACTIONS) {
     const member = reported.has(f);
     rows.set(f, {
-      rep: values[f], gainedDay: 0, gained: 0, owed: 0, member,
-      rank: member ? rollBookRankOf(reported.get(f), values[f]) : null, joinedAt: member ? nowS : null,   // CHAP4a: never a seat's rank
+      rep: values[f],
+      gainedDay: 0,
+      gained: 0,
+      owed: 0,
+      member,
+      rank: member ? rollBookRankOf(reported.get(f), values[f]) : null,
+      joinedAt: member ? nowS : null, // CHAP4a: never a seat's rank
       dormant: member && asleep.has(f),
     });
   }
   await db.batch([
-    db.prepare(`INSERT OR IGNORE INTO npc_roll_heads (char_id, player, cap, seq, last_rid, tag, seeded_at, updated_at) SELECT ?, ?, ?, 0, NULL, ?, ?, ? WHERE ${HELD_SQL}`)
+    db
+      .prepare(
+        `INSERT OR IGNORE INTO npc_roll_heads (char_id, player, cap, seq, last_rid, tag, seeded_at, updated_at) SELECT ?, ?, ?, 0, NULL, ?, ?, ? WHERE ${HELD_SQL}`,
+      )
       .bind(who.character, player.id, cap, tag, nowS, nowS, who.character, who.player, who.lease),
-    ...[...rows].map(([f, r]) => db.prepare(
-      `INSERT OR IGNORE INTO npc_roll (char_id, faction_id, player, rep, gained_day, gained, owed, member, rank, joined_at, dormant) SELECT ?, ?, ?, ?, 0, 0, 0, ?, ?, ?, ? WHERE ${TAGGED_SQL}`,
-    ).bind(who.character, f, player.id, r.rep, r.member ? 1 : 0, r.rank, r.joinedAt, r.dormant ? 1 : 0, who.character, tag)),
+    ...[...rows].map(([f, r]) =>
+      db
+        .prepare(
+          `INSERT OR IGNORE INTO npc_roll (char_id, faction_id, player, rep, gained_day, gained, owed, member, rank, joined_at, dormant) SELECT ?, ?, ?, ?, 0, 0, 0, ?, ?, ?, ? WHERE ${TAGGED_SQL}`,
+        )
+        .bind(
+          who.character,
+          f,
+          player.id,
+          r.rep,
+          r.member ? 1 : 0,
+          r.rank,
+          r.joinedAt,
+          r.dormant ? 1 : 0,
+          who.character,
+          tag,
+        ),
+    ),
   ]);
   const after = await db.prepare('SELECT tag FROM npc_roll_heads WHERE char_id = ?').bind(who.character).first();
   if (!after) {
@@ -247,26 +358,35 @@ export async function claimRoll({ db, nowS, rand }, player, body) {
   if (!Number.isSafeInteger(nowS)) throw new TypeError('claimRoll needs an integer epoch-seconds clock');
   const held = await heldUnder(db, player.id, body?.character, body?.lease);
   if ('error' in held) return held;
-  const who = { character: /** @type {string} */ (body.character), player: player.id, lease: /** @type {string} */ (body.lease) };
+  const who = {
+    character: /** @type {string} */ (body.character),
+    player: player.id,
+    lease: /** @type {string} */ (body.lease),
+  };
   const rid = rollRidOf(body?.rid);
   const deltas = body?.deltas ?? {};
   const empty = deltas && typeof deltas === 'object' && !Array.isArray(deltas) && Object.keys(deltas).length === 0;
   const members = body?.members;
-  if (!rid || !(empty || rollDeltasOk(deltas)) || !(members === null || rollMembersOk(members))) return { error: 'roll-claim' };
+  if (!rid || !(empty || rollDeltasOk(deltas)) || !(members === null || rollMembersOk(members)))
+    return { error: 'roll-claim' };
   // AUDIT CHAP2 E2: THE CLAIMS' HOUR, the service's own - the tab's minute was the client's word alone, and a client
   // sending ±1 on all twenty-two as fast as the account's door allowed wrote 22 record lines a claim. An honest tab sends
   // sixty an hour at most, and a hall writ's refresh three a day
-  if (await overRate({ db, nowS }, `roll-claim:${who.character}`, ROLL_CLAIMS_HOUR, 3600)) return { error: 'roll-rate' };
+  if (await overRate({ db, nowS }, `roll-claim:${who.character}`, ROLL_CLAIMS_HOUR, 3600))
+    return { error: 'roll-rate' };
   // PRIMARY-FOLD (bible/11-Multiplayer/Scale-Arc.md THE PLAN PAST 1,000): the head, the Roll's rows and the record's
   // word of this claim's id in one trip, each asked as it was alone
   const [headQ, rowsQ, takenQ] = await db.batch([
-    db.prepare('SELECT seq, kseq, last_rid FROM npc_roll_heads WHERE char_id = ? AND player = ?').bind(who.character, player.id),
+    db
+      .prepare('SELECT seq, kseq, last_rid FROM npc_roll_heads WHERE char_id = ? AND player = ?')
+      .bind(who.character, player.id),
     rowsRead(db, who.character),
     db.prepare('SELECT 1 FROM npc_rep_events WHERE char_id = ? AND rid = ? LIMIT 1').bind(who.character, rid),
   ]);
   const head = headQ?.results?.[0] ?? null;
   if (!head) return { error: 'roll-unseeded' };
-  const seq = Number(head.seq), kseq = Number(head.kseq);
+  const seq = Number(head.seq),
+    kseq = Number(head.kseq);
   const rows = rowsFrom(rowsQ?.results ?? []);
   // AUDIT CHAP S6: a repeat is the head's last id, or any id the record still holds - an older claim replayed after a
   // newer one is the same claim
@@ -274,8 +394,11 @@ export async function claimRoll({ db, nowS, rand }, player, body) {
   if (taken) return { roll: viewOf(kseq, rows), repeat: true };
   const day = utcDay(nowS);
   /** @type {Map<number, number> | null} */
-  const ranks = members === null ? null : new Map(members.map((/** @type {{ f: number, rank: number }} */ m) => [m.f, m.rank]));
-  const asleep = new Set((members ?? []).filter((/** @type {any} */ m) => m.d === 1).map((/** @type {any} */ m) => m.f));   // AUDIT CHAP4 D1
+  const ranks =
+    members === null ? null : new Map(members.map((/** @type {{ f: number, rank: number }} */ m) => [m.f, m.rank]));
+  const asleep = new Set(
+    (members ?? []).filter((/** @type {any} */ m) => m.d === 1).map((/** @type {any} */ m) => m.f),
+  ); // AUDIT CHAP4 D1
   /** @type {Record<number, number>} */
   const credited = {};
   /** @type {Record<number, number>} AUDIT GUILD-WORDS II (B-4): what this claim paid of what was owed, apart from its own credit */
@@ -301,15 +424,17 @@ export async function claimRoll({ db, nowS, rand }, player, body) {
       // at any standing) - one already on the Roll stays, whatever its standing since
       // AUDIT GUILD-WORDS (L6): the standing before the claim's lines or after them - a join the client made at 0 and a loss
       // in the same claim's minute (a quest's script, a crime) left a real member off the Roll, and off its own writ
-      const member = ranks.has(f) && (row.member || joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f));
+      const member =
+        ranks.has(f) && (row.member || joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f));
       // the tenure: kept while a member stays one, begun the first time the service sees one, ended when it leaves; the
       // rank never past what the Roll's own reputation allows (AUDIT CHAP S5), nor past the book's 7 (CHAP4a: 8 and 9 are
       // seats, Chapters-Arc 3.5)
       line = {
-        ...line, member,
+        ...line,
+        member,
         rank: member ? rollBookRankOf(ranks.get(f), line.rep) : null,
         joinedAt: member ? (row.member ? row.joinedAt : nowS) : null,
-        dormant: member && asleep.has(f),   // AUDIT CHAP4 D1: the active book's or not, as the claim says it now
+        dormant: member && asleep.has(f), // AUDIT CHAP4 D1: the active book's or not, as the claim says it now
       };
     } else if (line.member && line.rank != null && line.rank > rollBookRankOf(line.rank, line.rep)) {
       // AUDIT CHAP2 E8: a claim with no book still never leaves a recorded rank past what the Roll's reputation allows
@@ -328,16 +453,26 @@ export async function claimRoll({ db, nowS, rand }, player, body) {
   const [moved] = await db.batch([
     headWrite(db, who, seq, tag, nowS, rid, lines.length > 0),
     ...changed.map(([f, r]) => rowWrite(db, who.character, f, r, tag)),
-    ...record.map(([f, asked, cr]) => db.prepare(`INSERT INTO npc_rep_events (char_id, player, faction_id, asked, credited, rid, at) SELECT ?, ?, ?, ?, ?, ?, ? WHERE ${TAGGED_SQL}`)
-      .bind(who.character, player.id, f, asked, cr, rid, nowS, who.character, tag)),
+    ...record.map(([f, asked, cr]) =>
+      db
+        .prepare(
+          `INSERT INTO npc_rep_events (char_id, player, faction_id, asked, credited, rid, at) SELECT ?, ?, ?, ?, ?, ?, ? WHERE ${TAGGED_SQL}`,
+        )
+        .bind(who.character, player.id, f, asked, cr, rid, nowS, who.character, tag),
+    ),
     // AUDIT CHAP S7: the record is kept ROLL_EVENTS_KEEP_S, pruned by the character's own claims
-    db.prepare(`DELETE FROM npc_rep_events WHERE char_id = ? AND at < ? AND ${TAGGED_SQL}`).bind(who.character, nowS - ROLL_EVENTS_KEEP_S, who.character, tag),
+    db
+      .prepare(`DELETE FROM npc_rep_events WHERE char_id = ? AND at < ? AND ${TAGGED_SQL}`)
+      .bind(who.character, nowS - ROLL_EVENTS_KEEP_S, who.character, tag),
   ]);
   if (!moved?.meta?.changes) {
     const why = await heldUnder(db, player.id, who.character, who.lease);
     if ('error' in why) return why;
-    const now = await db.prepare('SELECT seq, last_rid FROM npc_roll_heads WHERE char_id = ?').bind(who.character).first();
-    if (now?.last_rid === rid) return { roll: await rollViewOf(db, who.character), repeat: true };   // its twin landed first
+    const now = await db
+      .prepare('SELECT seq, last_rid FROM npc_roll_heads WHERE char_id = ?')
+      .bind(who.character)
+      .first();
+    if (now?.last_rid === rid) return { roll: await rollViewOf(db, who.character), repeat: true }; // its twin landed first
     return { error: 'roll-busy' };
   }
   for (const [f, r] of changed) rows.set(f, r);

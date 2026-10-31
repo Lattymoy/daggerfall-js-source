@@ -149,12 +149,17 @@ globalThis.__ghost = () => pic(document.querySelector('.dragghost .tile img'), S
 </script></body></html>`;
 
 mkdirSync(OUT, { recursive: true });
-const vite = process.env.PROBE_PORT ? null : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
+const vite = process.env.PROBE_PORT
+  ? null
+  : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
 if (vite) await vite.listen();
 const port = process.env.PROBE_PORT ?? vite.config.server.port ?? vite.httpServer.address().port;
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 let failures = 0;
-const check = (name, ok, detail = '') => { if (!ok) failures++; console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`); };
+const check = (name, ok, detail = '') => {
+  if (!ok) failures++;
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`);
+};
 const VIEWS = [
   { name: 'desktop-1x', viewport: { width: 1440, height: 900 }, dpr: 1 },
   { name: 'desktop-2x', viewport: { width: 1440, height: 900 }, dpr: 2 },
@@ -164,84 +169,185 @@ const VIEWS = [
 try {
   await writeFile(join(ROOT, `tools/${PAGE_NAME}`), PAGE);
   for (const v of VIEWS) {
-    const ctx = await browser.newContext({ viewport: v.viewport, isMobile: !!v.isMobile, hasTouch: !!v.hasTouch, deviceScaleFactor: v.dpr });
+    const ctx = await browser.newContext({
+      viewport: v.viewport,
+      isMobile: !!v.isMobile,
+      hasTouch: !!v.hasTouch,
+      deviceScaleFactor: v.dpr,
+    });
     const page = await ctx.newPage();
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
     // a page under tools/ asks for ./arena2/ relatively: the dev server's one mount answers it
-    await page.route('**/tools/arena2/**', (route) => route.continue({ url: route.request().url().replace('/tools/arena2/', '/arena2/') }));
-    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+    await page.route('**/tools/arena2/**', (route) =>
+      route.continue({ url: route.request().url().replace('/tools/arena2/', '/arena2/') }),
+    );
+    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 90000,
+    });
     await page.waitForFunction(() => typeof globalThis.__openPack === 'function', null, { timeout: 90000 });
     await page.evaluate(() => globalThis.__openPack(false));
     const tag = `${v.name}`;
     // EVERY PAGE OF THE PACK, one after another: each picture made (the pack repaints as each lands), then read
-    await page.waitForFunction(() => globalThis.__tabs().length > 0, null, { timeout: 60000 });   // the pack mounts after its module loads
+    await page.waitForFunction(() => globalThis.__tabs().length > 0, null, { timeout: 60000 }); // the pack mounts after its module loads
     const tabs = await page.evaluate(() => globalThis.__tabs());
     const all = { rows: [], perRow: 99, phone: false, dpr: v.dpr, want: 0 };
     for (let i = 0; i < tabs.length; i++) {
       await page.evaluate((k) => globalThis.__tabAt(k), i);
-      await page.waitForFunction(() => {
-        const g = globalThis.__grid();
-        return g.rows.every((r) => r.pic?.nat?.[0] > 0);
-      }, null, { timeout: 30000 }).catch(() => {});
+      await page
+        .waitForFunction(
+          () => {
+            const g = globalThis.__grid();
+            return g.rows.every((r) => r.pic?.nat?.[0] > 0);
+          },
+          null,
+          { timeout: 30000 },
+        )
+        .catch(() => {});
       await page.waitForTimeout(150);
       const gi = await page.evaluate(() => globalThis.__grid());
       if (!gi.rows.length) continue;
       Object.assign(all, { phone: gi.phone, want: gi.want, dpr: gi.dpr });
-      if (gi.rows.length >= 7) all.perRow = Math.min(all.perRow, gi.perRow);   // a page with a row to fill
+      if (gi.rows.length >= 7) all.perRow = Math.min(all.perRow, gi.perRow); // a page with a row to fill
       all.rows.push(...gi.rows.map((r) => ({ ...r, tab: tabs[i] })));
       if (v.name === 'desktop-1x' || v.name === 'desktop-2x' || v.isMobile) {
-        await page.locator('#enhanced-inventory .pack-dock').screenshot({ path: join(OUT, `ui1-grid-${tag}-tab${i}.png`) }).catch(() => {});
+        await page
+          .locator('#enhanced-inventory .pack-dock')
+          .screenshot({ path: join(OUT, `ui1-grid-${tag}-tab${i}.png`) })
+          .catch(() => {});
       }
     }
     await page.evaluate(() => globalThis.__tabAt(0));
     await page.waitForTimeout(200);
     const g = all;
-    const slot = g.phone ? 56 : 64, well = g.phone ? 44 : 52;
-    check(`${tag}: every grid slot is ${slot}px around a ${well}px well`, g.rows.every((r) => Math.round(r.row.w) === slot && Math.round(r.row.h) === slot && Math.round(r.tile.w) === well),
-      g.rows.filter((r) => Math.round(r.row.w) !== slot || Math.round(r.tile.w) !== well).map((r) => `${r.name} ${r.row.w}/${r.tile.w}`).join('; '));
+    const slot = g.phone ? 56 : 64,
+      well = g.phone ? 44 : 52;
+    check(
+      `${tag}: every grid slot is ${slot}px around a ${well}px well`,
+      g.rows.every(
+        (r) => Math.round(r.row.w) === slot && Math.round(r.row.h) === slot && Math.round(r.tile.w) === well,
+      ),
+      g.rows
+        .filter((r) => Math.round(r.row.w) !== slot || Math.round(r.tile.w) !== well)
+        .map((r) => `${r.name} ${r.row.w}/${r.tile.w}`)
+        .join('; '),
+    );
     check(`${tag}: ${g.perRow} a row`, g.phone ? g.perRow >= 6 : g.perRow >= 5);
     const pics = g.rows.filter((r) => r.pic);
-    check(`${tag}: every slot has its picture (${pics.length}/${g.rows.length})`, pics.length === g.rows.length, g.rows.filter((r) => !r.pic).map((r) => `${r.name}=${r.initials}`).join(', '));
-    check(`${tag}: every picture is a fitted one`, pics.every((r) => r.pic.fit));
-    check(`${tag}: the page resamples none of them (bitmap = drawn size x ${g.dpr})`, pics.every((r) => !r.pic.resampled),
-      pics.filter((r) => r.pic.resampled).map((r) => `${r.name} ${r.pic.nat} @ ${r.pic.css.map((x) => x.toFixed(1))}`).join('; '));
+    check(
+      `${tag}: every slot has its picture (${pics.length}/${g.rows.length})`,
+      pics.length === g.rows.length,
+      g.rows
+        .filter((r) => !r.pic)
+        .map((r) => `${r.name}=${r.initials}`)
+        .join(', '),
+    );
+    check(
+      `${tag}: every picture is a fitted one`,
+      pics.every((r) => r.pic.fit),
+    );
+    check(
+      `${tag}: the page resamples none of them (bitmap = drawn size x ${g.dpr})`,
+      pics.every((r) => !r.pic.resampled),
+      pics
+        .filter((r) => r.pic.resampled)
+        .map((r) => `${r.name} ${r.pic.nat} @ ${r.pic.css.map((x) => x.toFixed(1))}`)
+        .join('; '),
+    );
     const small = pics.filter((r) => r.pic.fill < 0.74);
-    check(`${tag}: every picture fills at least three quarters of its box, or stands at the cap (a gem)`, small.every((r) => /Ruby|Emerald|Sapphire|Diamond|Jade|Turquoise|Malachite|Amber/.test(r.name)),
-      small.map((r) => `${r.name} ${(r.pic.fill * 100).toFixed(0)}%`).join(', '));
-    check(`${tag}: none past its box`, pics.every((r) => r.pic.fill <= 1.001), pics.filter((r) => r.pic.fill > 1.001).map((r) => r.name).join(', '));
+    check(
+      `${tag}: every picture fills at least three quarters of its box, or stands at the cap (a gem)`,
+      small.every((r) => /Ruby|Emerald|Sapphire|Diamond|Jade|Turquoise|Malachite|Amber/.test(r.name)),
+      small.map((r) => `${r.name} ${(r.pic.fill * 100).toFixed(0)}%`).join(', '),
+    );
+    check(
+      `${tag}: none past its box`,
+      pics.every((r) => r.pic.fill <= 1.001),
+      pics
+        .filter((r) => r.pic.fill > 1.001)
+        .map((r) => r.name)
+        .join(', '),
+    );
     const stacks = g.rows.filter((r) => /×\d+/.test(r.name ?? ''));
-    check(`${tag}: every stack wears its count (${stacks.length})`, stacks.length >= 5 && stacks.every((r) => r.count && r.name.endsWith(`×${r.count.text}`)),
-      stacks.filter((r) => !r.count || !r.name.endsWith(`×${r.count.text}`)).map((r) => r.name).join(', '));
+    check(
+      `${tag}: every stack wears its count (${stacks.length})`,
+      stacks.length >= 5 && stacks.every((r) => r.count && r.name.endsWith(`×${r.count.text}`)),
+      stacks
+        .filter((r) => !r.count || !r.name.endsWith(`×${r.count.text}`))
+        .map((r) => r.name)
+        .join(', '),
+    );
     // the corners: the count clear of the padlock (a locked stack) and lifted over the wear bar
     const lockedStacks = g.rows.filter((r) => r.count && r.locked);
-    check(`${tag}: a locked stack's count stands clear of the padlock (${lockedStacks.length})`, lockedStacks.every((r) => r.row.x + r.row.w - (r.count.box.x + r.count.box.w) >= 14));
-    console.log(`     fills: ${pics.map((r) => `${r.name.replace(/ ×\d+/, '')}=${(r.pic.fill * 100).toFixed(0)}%${r.pic.css ? `(${r.pic.nat.join('x')})` : ''}`).join(', ')}`);
+    check(
+      `${tag}: a locked stack's count stands clear of the padlock (${lockedStacks.length})`,
+      lockedStacks.every((r) => r.row.x + r.row.w - (r.count.box.x + r.count.box.w) >= 14),
+    );
+    console.log(
+      `     fills: ${pics.map((r) => `${r.name.replace(/ ×\d+/, '')}=${(r.pic.fill * 100).toFixed(0)}%${r.pic.css ? `(${r.pic.nat.join('x')})` : ''}`).join(', ')}`,
+    );
     await page.locator('#enhanced-inventory').screenshot({ path: join(OUT, `ui1-pack-${tag}.png`) });
     const fr = await page.evaluate(() => globalThis.__frames());
-    const plain = await page.evaluate(() => getComputedStyle(document.querySelector('#enhanced-inventory .equipped .wornrow:not([data-rarity])') ?? document.body).borderTopColor);
-    check(`${tag}: every tiered slot and worn panel wears its tier on its own border, its picture in no box (${fr.length})`,
-      fr.length >= 3 && fr.some((f) => f.kind === 'worn') && fr.every((f) => f.border !== plain && f.tileBorder === 0 && f.tileBg === 'none' && f.tileShadow === 'none'),
-      JSON.stringify(fr.filter((f) => !(f.border !== plain && f.tileBorder === 0 && f.tileBg === 'none' && f.tileShadow === 'none'))));
+    const plain = await page.evaluate(
+      () =>
+        getComputedStyle(
+          document.querySelector('#enhanced-inventory .equipped .wornrow:not([data-rarity])') ?? document.body,
+        ).borderTopColor,
+    );
+    check(
+      `${tag}: every tiered slot and worn panel wears its tier on its own border, its picture in no box (${fr.length})`,
+      fr.length >= 3 &&
+        fr.some((f) => f.kind === 'worn') &&
+        fr.every((f) => f.border !== plain && f.tileBorder === 0 && f.tileBg === 'none' && f.tileShadow === 'none'),
+      JSON.stringify(
+        fr.filter((f) => !(f.border !== plain && f.tileBorder === 0 && f.tileBg === 'none' && f.tileShadow === 'none')),
+      ),
+    );
     const o = await page.evaluate(() => globalThis.__others());
     check(`${tag}: no enhanced picture left at the old cap`, o.oldCap === 0, `${o.oldCap}`);
     for (const k of ['worn', 'shelf']) {
-      check(`${tag}: the ${k} pictures are fitted (${o[k].length})`, o[k].length > 0 && o[k].every((p) => p.fit), JSON.stringify(o[k].filter((p) => !p.fit)));
-      check(`${tag}: the ${k} wells stand inside their panels`, o[k].every((p) => p.tile.y >= p.row.y - 0.5 && p.tile.y + p.tile.h <= p.row.y + p.row.h + 0.5 && p.tile.x + p.tile.w <= p.row.x + p.row.w + 0.5));
-      console.log(`     ${k}: ${o[k].map((p) => `${p.name.slice(0, 12)} well ${p.tile.w.toFixed(0)}x${p.tile.h.toFixed(0)} inner ${p.inner.map((x) => x.toFixed(0)).join('x')} pic ${p.css.map((x) => x.toFixed(1)).join('x')} nat ${p.nat.join('x')}${p.resampled ? ' RESAMPLED' : ''} in ${p.row.w.toFixed(0)}x${p.row.h.toFixed(0)}`).join(' | ')}`);
+      check(
+        `${tag}: the ${k} pictures are fitted (${o[k].length})`,
+        o[k].length > 0 && o[k].every((p) => p.fit),
+        JSON.stringify(o[k].filter((p) => !p.fit)),
+      );
+      check(
+        `${tag}: the ${k} wells stand inside their panels`,
+        o[k].every(
+          (p) =>
+            p.tile.y >= p.row.y - 0.5 &&
+            p.tile.y + p.tile.h <= p.row.y + p.row.h + 0.5 &&
+            p.tile.x + p.tile.w <= p.row.x + p.row.w + 0.5,
+        ),
+      );
+      console.log(
+        `     ${k}: ${o[k].map((p) => `${p.name.slice(0, 12)} well ${p.tile.w.toFixed(0)}x${p.tile.h.toFixed(0)} inner ${p.inner.map((x) => x.toFixed(0)).join('x')} pic ${p.css.map((x) => x.toFixed(1)).join('x')} nat ${p.nat.join('x')}${p.resampled ? ' RESAMPLED' : ''} in ${p.row.w.toFixed(0)}x${p.row.h.toFixed(0)}`).join(' | ')}`,
+      );
     }
     // the hover card, over the longsword's neighbour in the pack (a staff: the tallest record)
     if (!v.isMobile) {
       await page.evaluate(() => globalThis.__hoverName('Staff'));
       await page.waitForFunction(() => globalThis.__card()?.nat?.[0] > 0, null, { timeout: 20000 }).catch(() => {});
       const c = await page.evaluate(() => globalThis.__card());
-      check(`${tag}: the hover card's picture is fitted, unresampled, its box filled`, !!c && c.fit && !c.resampled && c.fill > 0.74 && c.fill <= 1.001, JSON.stringify(c));
-      await page.locator('.inv-tip').screenshot({ path: join(OUT, `ui1-card-${tag}.png`) }).catch(() => {});
+      check(
+        `${tag}: the hover card's picture is fitted, unresampled, its box filled`,
+        !!c && c.fit && !c.resampled && c.fill > 0.74 && c.fill <= 1.001,
+        JSON.stringify(c),
+      );
+      await page
+        .locator('.inv-tip')
+        .screenshot({ path: join(OUT, `ui1-card-${tag}.png`) })
+        .catch(() => {});
       await page.evaluate(() => document.querySelectorAll('.inv-tip').forEach((n) => n.remove()));
       // the drag ghost: a held press carried off a slot
       const row = page.locator('#enhanced-inventory .pack-dock .itemrow').nth(2);
       const rb = await row.boundingBox({ timeout: 5000 }).catch(() => null);
-      if (!rb) { check(`${tag}: a slot to carry`, false); await ctx.close(); continue; }
+      if (!rb) {
+        check(`${tag}: a slot to carry`, false);
+        await ctx.close();
+        continue;
+      }
       await page.mouse.move(rb.x + rb.width / 2, rb.y + rb.height / 2);
       await page.mouse.down();
       await page.mouse.move(rb.x + rb.width / 2 + 30, rb.y + rb.height / 2 + 12, { steps: 6 });
@@ -252,11 +358,30 @@ try {
       await page.mouse.up();
     }
     // the loot window beside the pack: a pile's rows, each its picture fitted to the row's box
-    await page.evaluate(() => { globalThis.__closePack(); globalThis.__openPack(true); });
-    await page.waitForFunction(() => { const o = globalThis.__others(); return o.loot.length >= 5 && o.loot.every((p) => p.nat[0] > 0); }, null, { timeout: 30000 }).catch(() => {});
+    await page.evaluate(() => {
+      globalThis.__closePack();
+      globalThis.__openPack(true);
+    });
+    await page
+      .waitForFunction(
+        () => {
+          const o = globalThis.__others();
+          return o.loot.length >= 5 && o.loot.every((p) => p.nat[0] > 0);
+        },
+        null,
+        { timeout: 30000 },
+      )
+      .catch(() => {});
     const lo = await page.evaluate(() => globalThis.__others());
-    check(`${tag}: the loot rows' pictures are fitted, unresampled (${lo.loot.length})`, lo.loot.length >= 5 && lo.loot.every((p) => p.fit && !p.resampled), JSON.stringify(lo.loot));
-    await page.locator('.loot-win').screenshot({ path: join(OUT, `ui1-loot-${tag}.png`) }).catch(() => {});
+    check(
+      `${tag}: the loot rows' pictures are fitted, unresampled (${lo.loot.length})`,
+      lo.loot.length >= 5 && lo.loot.every((p) => p.fit && !p.resampled),
+      JSON.stringify(lo.loot),
+    );
+    await page
+      .locator('.loot-win')
+      .screenshot({ path: join(OUT, `ui1-loot-${tag}.png`) })
+      .catch(() => {});
     check(`${tag}: no page errors`, errors.length === 0, errors.join(' | '));
     await ctx.close();
   }

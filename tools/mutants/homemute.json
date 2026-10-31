@@ -2,8 +2,8 @@
   {
     "name": "HOMEMUTE-own-hidden",
     "file": "src/systems/online/homeMute.js",
-    "old": "export const homeMutable = (home) => !!home && !home.own && home.mine !== true && home.deed !== true",
-    "new": "export const homeMutable = (home) => !!home && home.deed !== true",
+    "old": "  !!home &&\n  !home.own &&\n  home.mine !== true &&\n  home.deed !== true &&\n  !(home.hall && (home.member === true || home.insider === true));",
+    "new": "  !!home && home.deed !== true && !(home.hall && (home.member === true || home.insider === true));",
     "tests": [
       "test/systems/online/homemute.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "HOMEMUTE-unkept",
     "file": "src/systems/online/homeMute.js",
-    "old": "else all.splice(at, 1);\n  keep();",
-    "new": "else all.splice(at, 1);",
+    "old": "  keep();\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/systems/online/homemute.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "HOMEMUTE-uncapped",
     "file": "src/systems/online/homeMute.js",
-    "old": "  if (on) { all.push(k); if (all.length > HOME_MUTE_MAX) all.splice(0, all.length - HOME_MUTE_MAX); }",
-    "new": "  if (on) { all.push(k); }",
+    "old": "    if (all.length > HOME_MUTE_MAX) all.splice(0, all.length - HOME_MUTE_MAX);\n  } else all.splice(at, 1);",
+    "new": "  } else all.splice(at, 1);",
     "tests": [
       "test/systems/online/homemute.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "HOMEMUTE-row-stuck",
     "file": "src/systems/online/homeMute.js",
-    "old": "  ? [homeMuted(mapId, home) ? { id: HOME_MUTE_VERB.show, label: HOME_MUTE_TEXT.show } : { id: HOME_MUTE_VERB.hide, label: HOME_MUTE_TEXT.hide }]",
-    "new": "  ? [{ id: HOME_MUTE_VERB.hide, label: HOME_MUTE_TEXT.hide }]",
+    "old": "  homeMutable(home)\n    ? [\n        homeMuted(mapId, home)\n          ? { id: HOME_MUTE_VERB.show, label: HOME_MUTE_TEXT.show }\n          : { id: HOME_MUTE_VERB.hide, label: HOME_MUTE_TEXT.hide },\n      ]\n    : [];",
+    "new": "  homeMutable(home) ? [{ id: HOME_MUTE_VERB.hide, label: HOME_MUTE_TEXT.hide }] : [];",
     "tests": [
       "test/systems/online/homemute.test.js"
     ],
@@ -57,8 +57,8 @@
   {
     "name": "HOMEMUTE-verb-unread",
     "file": "src/systems/online/homeMute.js",
-    "old": "  if (verb !== HOME_MUTE_VERB.hide && verb !== HOME_MUTE_VERB.show) return false;\n",
-    "new": "",
+    "old": "  if (verb !== HOME_MUTE_VERB.hide && verb !== HOME_MUTE_VERB.show) return false;\n  const on = verb === HOME_MUTE_VERB.hide;",
+    "new": "  const on = verb === HOME_MUTE_VERB.hide;",
     "tests": [
       "test/systems/online/homemute.test.js"
     ]

@@ -1,390 +1,390 @@
 [
- {
-  "name": "WW7-1-the-registry-unasked",
-  "file": "src/world/worldWide/townTable.js",
-  "old": "const p = places()?.byMapId(id);",
-  "new": "const p = null;",
-  "tests": [
-   "test/world/worldWide/ww7_places.test.js"
-  ]
- },
- {
-  "name": "WW7-1-the-table-s-row-overridden",
-  "file": "src/world/worldWide/townTable.js",
-  "old": "      if (row) return row;",
-  "new": "      if (row && false) return row;",
-  "tests": [
-   "test/world/worldWide/ww7_places.test.js"
-  ]
- },
- {
-  "name": "WW7-1-a-source-unregistered",
-  "file": "src/scenes/tamrielPlacesHost.js",
-  "old": "    if (_countryTemplates) worldPlaces.registerPixels(TESA_SOURCES.country, countryRow, countryPixelOfId);   // AUDIT FB1029g P1: its id read back to its pixel\n",
-  "new": "",
-  "tests": [
-   "test/world/worldWide/ww7_places.test.js"
-  ]
- },
- {
-  "name": "WW7-1-the-version-unkept",
-  "file": "src/scenes/tamrielPlacesHost.js",
-  "old": "    if (key === _registered) return false;",
-  "new": "    if (false) return false;",
-  "tests": [
-   "test/world/worldWide/ww7_places.test.js"
-  ]
- },
- {
-  "name": "WW7-2-the-beyond-unwalked",
-  "file": "src/scenes/livingWorld/livingTrips.js",
-  "old": "    beyond: { epoch, plan: beyondWays.plan, frame: beyondWays.frame, clear: beyondWays.clear },\n",
-  "new": "",
-  "tests": [
-   "test/world/worldWide/ww7_places.test.js"
-  ],
-  "note": "Re-aimed by content (WW7-7): WW7-2's walk past the Bay's table retired - a pair past the Bay the window planner's on the roads past the Bay."
- },
- {
-  "name": "WW7-3-a-crown-unseated",
-  "file": "src/net/kingdomLaw.js",
-  "old": "export const kingdomSeatName = (id) => KINGDOMS[id]?.seat ?? KINGDOMS[id]?.name ?? null;",
-  "new": "export const kingdomSeatName = (id) => KINGDOMS[id]?.name ?? null;",
-  "tests": [
-   "test/world/worldWide/ww7_seats.test.js"
-  ]
- },
- {
-  "name": "WW7-3-a-province-a-tide-s-land",
-  "file": "src/net/tideLaw.js",
-  "old": "const k = kingdomOf(region); return k && TIDE_LANDS.includes(k) ? k :",
-  "new": "const k = kingdomOf(region); return k ? k :",
-  "tests": [
-   "test/world/worldWide/ww7_seats.test.js"
-  ]
- },
- {
-  "name": "WW7-3-the-regions-the-bay-s",
-  "file": "src/net/townSeatLaw.js",
-  "old": "r >= 0 && r < REGION_NAMES.length;",
-  "new": "r >= 0 && r < BAY_REGION_COUNT;",
-  "tests": [
-   "test/world/worldWide/ww7_seats.test.js"
-  ]
- },
- {
-  "name": "WW7-3-the-lane-unasked",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  return lane === 0 ? region < BAY_REGION_COUNT : region === BAY_REGION_COUNT - 1 + lane;",
-  "new": "  return true;",
-  "tests": [
-   "test/world/worldWide/ww7_seats.test.js"
-  ]
- },
- {
-  "name": "WW7-3-a-source-never-replaced",
-  "file": "src/systems/town/townSeats.js",
-  "old": "  for (const key of book.extra.get(source) ?? []) { const s = book.byMapId.get(key); if (s) touched.add(s.region); book.byMapId.delete(key); }\n",
-  "new": "",
-  "tests": [
-   "test/world/worldWide/ww7_seats.test.js"
-  ]
- },
- {
-  "name": "WW7-3-the-power-left-stale",
-  "file": "src/systems/town/townSeats.js",
-  "old": "    if (best) book.powers.set(region, best.key); else book.powers.delete(region);",
-  "new": "    if (best && !book.powers.has(region)) book.powers.set(region, best.key);",
-  "tests": [
-   "test/world/worldWide/ww7_seats.test.js"
-  ]
- },
- {
-  "name": "WW7-3-the-pixel-test-kept",
-  "file": "src/systems/town/townSeats.js",
-  "old": "    if (list !== of) { of = list;",
-  "new": "    if (!of) { of = list;",
-  "tests": [
-   "test/world/worldWide/ww7_seats.test.js"
-  ]
- },
- {
-  "name": "WW7-3-the-seats-never-added",
-  "file": "src/scenes/tamrielPlacesHost.js",
-  "old": "    if (townSeats) replaceSeats(townSeats, 'tesa', tamrielSeatsOf(seatPlaces()));",
-  "new": "    if (false) replaceSeats(townSeats, 'tesa', tamrielSeatsOf(seatPlaces()));",
-  "tests": [
-   "test/world/worldWide/ww7_seats.test.js"
-  ]
- },
- {
-  "name": "WW7-4-a-side-left-open",
-  "file": "src/world/capitalCastles.js",
-  "old": "      if (at.has(key) || closed.has(key)) continue;",
-  "new": "      if (at.has(key) || closed.has(key) || dz > 0) continue;",
-  "tests": [
-   "test/world/worldWide/ww7_castles.test.js"
-  ]
- },
- {
-  "name": "WW7-4-a-hall-under-the-bay-s-name",
-  "file": "src/world/capitalCastles.js",
-  "old": "i) => ({ blockName: castleBlockName(name), x, z,",
-  "new": "i) => ({ blockName: name, x, z,",
-  "tests": [
-   "test/world/worldWide/ww7_castles.test.js"
-  ]
- },
- {
-  "name": "WW7-4-the-start-moved",
-  "file": "src/world/capitalCastles.js",
-  "old": "x, z, isStartingBlock: i === 0 }));",
-  "new": "x, z, isStartingBlock: i === src.halls.length - 1 }));",
-  "tests": [
-   "test/world/worldWide/ww7_castles.test.js"
-  ]
- },
- {
-  "name": "WW7-4-the-royals-kept",
-  "file": "src/world/capitalCastles.js",
-  "old": "  return !isNpcFlat(f.textureArchive) || CASTLE_FOLK.has(f.factionOrMobileId) || !!castleSeatOf(f.factionOrMobileId);",
-  "new": "  return true;",
-  "tests": [
-   "test/world/worldWide/ww7_castles.test.js"
-  ]
- },
- {
-  "name": "WW7-4-the-guards-taken",
-  "file": "src/world/capitalCastles.js",
-  "old": "  if (f.textureArchive === 199) return !QUEST_MARKERS.has(f.textureRecord);",
-  "new": "  if (f.textureArchive === 199) return f.textureRecord === 10;",
-  "tests": [
-   "test/world/worldWide/ww7_castles.test.js"
-  ]
- },
- {
-  "name": "WW7-4-a-chain-broken",
-  "file": "src/world/capitalCastles.js",
-  "old": "g.rdbObjects.filter((o) => linked.has(o.position) || castleKeeps(o))",
-  "new": "g.rdbObjects.filter((o) => castleKeeps(o))",
-  "tests": [
-   "test/world/worldWide/ww7_castles.test.js"
-  ]
- },
- {
-  "name": "WW7-4-made-unbound",
-  "file": "src/formats/worldData/worldDataReplacement.js",
-  "old": "  if (b.make) return (b.block = b.make(_blocksFile));",
-  "new": "  if (b.make) return (b.block = b.make(null));",
-  "tests": [
-   "test/world/worldWide/ww7_castles.test.js"
-  ]
- },
- {
-  "name": "WW7-4-made-each-read",
-  "file": "src/formats/worldData/worldDataReplacement.js",
-  "old": "  if (b.block) return b.block;",
-  "new": "  if (b.block && !b.make) return b.block;",
-  "tests": [
-   "test/world/worldWide/ww7_castles.test.js"
-  ]
- },
- {
-  "name": "WW7-4-every-slice-a-castle",
-  "file": "src/world/tamrielCapitals.js",
-  "old": "const castle = so === 0 ? capitalCastleDungeon(k, mapId) : null;",
-  "new": "const castle = capitalCastleDungeon(k, mapId);",
-  "tests": [
-   "test/world/worldWide/ww7_castles.test.js"
-  ]
- },
- {
-  "name": "WW7-4-the-castle-shrunk",
-  "file": "src/world/smallerDungeons.js",
-  "old": "  if (dfLocation.capital) return 'full';\n",
-  "new": "",
-  "tests": [
-   "test/world/worldWide/ww7_castles.test.js"
-  ]
- },
- {
-  "name": "WW7-4-no-door",
-  "file": "src/world/capitalSolitude.js",
-  "old": "doors: [entranceDoor(ex, Hh.z, 4, 6.5, [1, 0], y)]",
-  "new": "doors: []",
-  "tests": [
-   "test/world/worldWide/ww7_castles.test.js"
-  ]
- },
- {
-  "name": "WW7-4-the-door-s-z-left-map-wise",
-  "file": "src/world/capitalModels.js",
-  "old": "const flip = (v) => ({ ...v, z: -v.z });",
-  "new": "const flip = (v) => ({ ...v });",
-  "tests": [
-   "test/world/worldWide/ww7_castles.test.js"
-  ]
- },
- {
-  "name": "WW7-4-the-imperial-city-a-castle",
-  "file": "src/net/instanceRoom.js",
-  "old": "Object.freeze([1, 2, 3, 4, 5, 6].map((k)",
-  "new": "Object.freeze([0, 1, 2, 3, 4, 5, 6].map((k)",
-  "tests": [
-   "test/world/worldWide/ww7_castles.test.js"
-  ]
- },
- {
-  "name": "WW7-4-a-province-s-none",
-  "file": "src/net/instanceRoom.js",
-  "old": "Object.freeze([1, 2, 3, 4, 5, 6].map((k)",
-  "new": "Object.freeze([1, 2, 3, 4, 5].map((k)",
-  "tests": [
-   "test/world/worldWide/ww7_castles.test.js"
-  ]
- },
- {
-  "name": "WW7-4-the-tower-sealed",
-  "file": "src/scenes/world.js",
-  "old": "!seaVentures.vaultHere()) || hit?.dfLocation?.capital) return true;",
-  "new": "!seaVentures.vaultHere())) return true;",
-  "tests": [
-   "test/world/worldWide/ww7_castles.test.js"
-  ]
- },
- {
-  "name": "WW7-6-the-capital-keyed-as-a-city",
-  "file": "src/ui/tamrielInk.js",
-  "old": "mapId: k >= 0 ? capitalPlaceId(k, 0) : arenaPlaceId(p), port });",
-  "new": "mapId: arenaPlaceId(p), port });",
-  "tests": [
-   "test/ui/ww7_seatrings.test.js"
-  ]
- },
- {
-  "name": "WW7-6-the-bay-s-capitals-keyless",
-  "file": "src/ui/tamrielInk.js",
-  "old": "mapId: m.summary?.mapID ?? m.summary?.mapId ?? null }));",
-  "new": "mapId: null }));",
-  "tests": [
-   "test/ui/ww7_seatrings.test.js"
-  ]
- },
- {
-  "name": "WW7-6-no-ring",
-  "file": "src/ui/tamrielInk.js",
-  "old": "for (const m of marks) if (m.seat) paintSeatRing(",
-  "new": "for (const m of marks) if (false) paintSeatRing(",
-  "tests": [
-   "test/ui/ww7_seatrings.test.js"
-  ]
- },
- {
-  "name": "WW7-6-the-ring-over-the-glyph",
-  "file": "src/ui/tamrielInk.js",
-  "old": "  for (const m of marks) if (m.seat) paintSeatRing(ctx, m.x, m.y, markReach(m), seatMapMark(m.seat));\n  for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, true);\n  for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, false, opts.inks?.[m.kind]);",
-  "new": "  for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, true);\n  for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, false, opts.inks?.[m.kind]);\n  for (const m of marks) if (m.seat) paintSeatRing(ctx, m.x, m.y, markReach(m), seatMapMark(m.seat));",
-  "tests": [
-   "test/ui/ww7_seatrings.test.js"
-  ]
- },
- {
-  "name": "WW7-6-the-seats-unasked",
-  "file": "src/ui/heldMap.js",
-  "old": "seatAt: (c) => this.deps.seatAt?.({ mapId: c.mapId }) ?? null,",
-  "new": "seatAt: () => null,",
-  "tests": [
-   "test/ui/ww7_seatrings.test.js"
-  ]
- },
- {
-  "name": "WW7-5-a-book-the-bay-s",
-  "file": "server-account/src/cards.js",
-  "old": "import { regionOk } from '../../src/net/nodeLaw.js';",
-  "new": "import { bayRegionOk as regionOk } from '../../src/net/nodeLaw.js';",
-  "tests": [
-   "test/server/ww7_books.test.js"
-  ]
- },
- {
-  "name": "WW7-5-a-home-the-bay-s",
-  "file": "src/net/homeLaw.js",
-  "old": "export const HOME_REGION_MAX = 70;",
-  "new": "export const HOME_REGION_MAX = 61;",
-  "tests": [
-   "test/server/ww7_books.test.js"
-  ]
- },
- {
-  "name": "WW7-5-the-watch-the-bay-s",
-  "file": "src/net/watchReceipt.js",
-  "old": "Number.isSafeInteger(y) && worldPixelOk(x) && worldPixelOk(y)\n",
-  "new": "Number.isSafeInteger(y) && x >= 0 && x < 1000 && y >= 0 && y < 500\n",
-  "tests": [
-   "test/server/ww7_books.test.js"
-  ]
- },
- {
-  "name": "WW7-5-the-board-the-bay-s",
-  "file": "src/net/marketLaw.js",
-  "old": "/^(-?\\d{1,4}),(-?\\d{1,4})$/.exec(s)",
-  "new": "/^(\\d{1,3}),(\\d{1,3})$/.exec(s)",
-  "tests": [
-   "test/server/ww7_books.test.js"
-  ]
- },
- {
-  "name": "WW7-5-a-maps-id-past-the-bay",
-  "file": "src/net/townEconLaw.js",
-  "old": "townPixelIdOf(map) < TOWN_PLACE_ID_MIN || ",
-  "new": "",
-  "tests": [
-   "test/server/ww7_books.test.js"
-  ]
- },
- {
-  "name": "WW7-5-a-bay-location-past-it",
-  "file": "src/net/townEconLaw.js",
-  "old": "!Number.isSafeInteger(location) || location >= 0 ||",
-  "new": "!Number.isSafeInteger(location) ||",
-  "tests": [
-   "test/server/ww7_books.test.js"
-  ]
- },
- {
-  "name": "WW7-5-the-index-dropped",
-  "file": "src/world/worldWide/worldPlaces.js",
-  "old": "location: Number.isSafeInteger(row.location) ? /** @type {number} */ (row.location) : null,",
-  "new": "location: null,",
-  "tests": [
-   "test/server/ww7_books.test.js"
-  ]
- },
- {
-  "name": "WW7-5-a-child-lost",
-  "file": "server-account/migrations/0186_world_books.sql",
-  "old": "FROM market_reports_keep k WHERE EXISTS (SELECT 1 FROM market_listings l WHERE l.id = k.listing);",
-  "new": "FROM market_reports_keep k WHERE 0;",
-  "tests": [
-   "test/server/ww7_books.test.js"
-  ]
- },
- {
-  "name": "WW7-5-a-trigger-dropped",
-  "file": "server-account/migrations/0186_world_books.sql",
-  "old": "CREATE TRIGGER IF NOT EXISTS vendor_board_listed ",
-  "new": "CREATE TRIGGER IF NOT EXISTS vendor_board_listed_lost ",
-  "tests": [
-   "test/server/ww7_books.test.js"
-  ]
- },
- {
-  "name": "WW7-5-the-bound-the-bay-s",
-  "file": "server-account/migrations/0186_world_books.sql",
-  "old": "  region      INTEGER NOT NULL CHECK (region >= 0 AND region <= 70),\n  recipe",
-  "new": "  region      INTEGER NOT NULL CHECK (region >= 0 AND region <= 61),\n  recipe",
-  "tests": [
-   "test/server/ww7_books.test.js"
-  ]
- }
+  {
+    "name": "WW7-1-the-registry-unasked",
+    "file": "src/world/worldWide/townTable.js",
+    "old": "      const p = places()?.byMapId(id);",
+    "new": "      const p = null;",
+    "tests": [
+      "test/world/worldWide/ww7_places.test.js"
+    ]
+  },
+  {
+    "name": "WW7-1-the-table-s-row-overridden",
+    "file": "src/world/worldWide/townTable.js",
+    "old": "      if (row) return row;",
+    "new": "      if (row && false) return row;",
+    "tests": [
+      "test/world/worldWide/ww7_places.test.js"
+    ]
+  },
+  {
+    "name": "WW7-1-a-source-unregistered",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "    if (_countryTemplates) worldPlaces.registerPixels(TESA_SOURCES.country, countryRow, countryPixelOfId);   // AUDIT FB1029g P1: its id read back to its pixel\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww7_places.test.js"
+    ]
+  },
+  {
+    "name": "WW7-1-the-version-unkept",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "    if (key === _registered) return false;",
+    "new": "    if (false) return false;",
+    "tests": [
+      "test/world/worldWide/ww7_places.test.js"
+    ]
+  },
+  {
+    "name": "WW7-2-the-beyond-unwalked",
+    "file": "src/scenes/livingWorld/livingTrips.js",
+    "old": "    beyond: { epoch, plan: beyondWays.plan, frame: beyondWays.frame, clear: beyondWays.clear },\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww7_places.test.js"
+    ],
+    "note": "Re-aimed by content (WW7-7): WW7-2's walk past the Bay's table retired - a pair past the Bay the window planner's on the roads past the Bay."
+  },
+  {
+    "name": "WW7-3-a-crown-unseated",
+    "file": "src/net/kingdomLaw.js",
+    "old": "export const kingdomSeatName = (id) => KINGDOMS[id]?.seat ?? KINGDOMS[id]?.name ?? null;",
+    "new": "export const kingdomSeatName = (id) => KINGDOMS[id]?.name ?? null;",
+    "tests": [
+      "test/world/worldWide/ww7_seats.test.js"
+    ]
+  },
+  {
+    "name": "WW7-3-a-province-a-tide-s-land",
+    "file": "src/net/tideLaw.js",
+    "old": "  return k && TIDE_LANDS.includes(k) ? k : isMarch(region) ? 'marches' : isFreeLand(region) ? 'free' : null;",
+    "new": "  return k ? k : isMarch(region) ? 'marches' : isFreeLand(region) ? 'free' : null;",
+    "tests": [
+      "test/world/worldWide/ww7_seats.test.js"
+    ]
+  },
+  {
+    "name": "WW7-3-the-regions-the-bay-s",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const seatRegionOk = (r) => Number.isSafeInteger(r) && r >= 0 && r < REGION_NAMES.length;",
+    "new": "export const seatRegionOk = (r) => Number.isSafeInteger(r) && r >= 0 && r < BAY_REGION_COUNT;",
+    "tests": [
+      "test/world/worldWide/ww7_seats.test.js"
+    ]
+  },
+  {
+    "name": "WW7-3-the-lane-unasked",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  return lane === 0 ? region < BAY_REGION_COUNT : region === BAY_REGION_COUNT - 1 + lane;",
+    "new": "  return true;",
+    "tests": [
+      "test/world/worldWide/ww7_seats.test.js"
+    ]
+  },
+  {
+    "name": "WW7-3-a-source-never-replaced",
+    "file": "src/systems/town/townSeats.js",
+    "old": "  for (const key of book.extra.get(source) ?? []) {\n    const s = book.byMapId.get(key);\n    if (s) touched.add(s.region);\n    book.byMapId.delete(key);\n  }\n  const keys = [];",
+    "new": "  const keys = [];",
+    "tests": [
+      "test/world/worldWide/ww7_seats.test.js"
+    ]
+  },
+  {
+    "name": "WW7-3-the-power-left-stale",
+    "file": "src/systems/town/townSeats.js",
+    "old": "    if (best) book.powers.set(region, best.key);\n    else book.powers.delete(region);",
+    "new": "    if (best && !book.powers.has(region)) book.powers.set(region, best.key);",
+    "tests": [
+      "test/world/worldWide/ww7_seats.test.js"
+    ]
+  },
+  {
+    "name": "WW7-3-the-pixel-test-kept",
+    "file": "src/systems/town/townSeats.js",
+    "old": "    if (list !== of) {",
+    "new": "    if (!of) {",
+    "tests": [
+      "test/world/worldWide/ww7_seats.test.js"
+    ]
+  },
+  {
+    "name": "WW7-3-the-seats-never-added",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "    if (townSeats) replaceSeats(townSeats, 'tesa', tamrielSeatsOf(seatPlaces()));",
+    "new": "    if (false) replaceSeats(townSeats, 'tesa', tamrielSeatsOf(seatPlaces()));",
+    "tests": [
+      "test/world/worldWide/ww7_seats.test.js"
+    ]
+  },
+  {
+    "name": "WW7-4-a-side-left-open",
+    "file": "src/world/capitalCastles.js",
+    "old": "      if (at.has(key) || closed.has(key)) continue;",
+    "new": "      if (at.has(key) || closed.has(key) || dz > 0) continue;",
+    "tests": [
+      "test/world/worldWide/ww7_castles.test.js"
+    ]
+  },
+  {
+    "name": "WW7-4-a-hall-under-the-bay-s-name",
+    "file": "src/world/capitalCastles.js",
+    "old": "i) => ({ blockName: castleBlockName(name), x, z,",
+    "new": "i) => ({ blockName: name, x, z,",
+    "tests": [
+      "test/world/worldWide/ww7_castles.test.js"
+    ]
+  },
+  {
+    "name": "WW7-4-the-start-moved",
+    "file": "src/world/capitalCastles.js",
+    "old": "x, z, isStartingBlock: i === 0 }));",
+    "new": "x, z, isStartingBlock: i === src.halls.length - 1 }));",
+    "tests": [
+      "test/world/worldWide/ww7_castles.test.js"
+    ]
+  },
+  {
+    "name": "WW7-4-the-royals-kept",
+    "file": "src/world/capitalCastles.js",
+    "old": "  return !isNpcFlat(f.textureArchive) || CASTLE_FOLK.has(f.factionOrMobileId) || !!castleSeatOf(f.factionOrMobileId);",
+    "new": "  return true;",
+    "tests": [
+      "test/world/worldWide/ww7_castles.test.js"
+    ]
+  },
+  {
+    "name": "WW7-4-the-guards-taken",
+    "file": "src/world/capitalCastles.js",
+    "old": "  if (f.textureArchive === 199) return !QUEST_MARKERS.has(f.textureRecord);",
+    "new": "  if (f.textureArchive === 199) return f.textureRecord === 10;",
+    "tests": [
+      "test/world/worldWide/ww7_castles.test.js"
+    ]
+  },
+  {
+    "name": "WW7-4-a-chain-broken",
+    "file": "src/world/capitalCastles.js",
+    "old": "g.rdbObjects.filter((o) => linked.has(o.position) || chainHead(o) || castleKeeps(o))",
+    "new": "g.rdbObjects.filter((o) => chainHead(o) || castleKeeps(o))",
+    "tests": [
+      "test/world/worldWide/ww7_castles.test.js"
+    ]
+  },
+  {
+    "name": "WW7-4-made-unbound",
+    "file": "src/formats/worldData/worldDataReplacement.js",
+    "old": "  if (b.make) return (b.block = b.make(_blocksFile));",
+    "new": "  if (b.make) return (b.block = b.make(null));",
+    "tests": [
+      "test/world/worldWide/ww7_castles.test.js"
+    ]
+  },
+  {
+    "name": "WW7-4-made-each-read",
+    "file": "src/formats/worldData/worldDataReplacement.js",
+    "old": "  if (b.block) return b.block;",
+    "new": "  if (b.block && !b.make) return b.block;",
+    "tests": [
+      "test/world/worldWide/ww7_castles.test.js"
+    ]
+  },
+  {
+    "name": "WW7-4-every-slice-a-castle",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "const castle = so === 0 ? capitalCastleDungeon(k, mapId) : null;",
+    "new": "const castle = capitalCastleDungeon(k, mapId);",
+    "tests": [
+      "test/world/worldWide/ww7_castles.test.js"
+    ]
+  },
+  {
+    "name": "WW7-4-the-castle-shrunk",
+    "file": "src/world/smallerDungeons.js",
+    "old": "  if (dfLocation.capital) return 'full';\n  // AUDIT SD (Super-Dungeons.md section 5): A HOLLOW IS LAID WHOLE - its feat is the longest walk its template has, the",
+    "new": "  // AUDIT SD (Super-Dungeons.md section 5): A HOLLOW IS LAID WHOLE - its feat is the longest walk its template has, the",
+    "tests": [
+      "test/world/worldWide/ww7_castles.test.js"
+    ]
+  },
+  {
+    "name": "WW7-4-no-door",
+    "file": "src/world/capitalSolitude.js",
+    "old": "  return { ...mb.build(), doors: [entranceDoor(ex, Hh.z, 4, 6.5, [1, 0], y)] }; // WW7-4: the palace's halls (world/capitalCastles.js)",
+    "new": "  return { ...mb.build(), doors: [] }; // WW7-4: the palace's halls (world/capitalCastles.js)",
+    "tests": [
+      "test/world/worldWide/ww7_castles.test.js"
+    ]
+  },
+  {
+    "name": "WW7-4-the-door-s-z-left-map-wise",
+    "file": "src/world/capitalModels.js",
+    "old": "const flip = (v) => ({ ...v, z: -v.z });",
+    "new": "const flip = (v) => ({ ...v });",
+    "tests": [
+      "test/world/worldWide/ww7_castles.test.js"
+    ]
+  },
+  {
+    "name": "WW7-4-the-imperial-city-a-castle",
+    "file": "src/net/instanceRoom.js",
+    "old": "  [1, 2, 3, 4, 5, 6].map((k) => ((0x341 << 20) | 0x80000 | k) >>> 0),",
+    "new": "  [0, 1, 2, 3, 4, 5, 6].map((k) => ((0x341 << 20) | 0x80000 | k) >>> 0),",
+    "tests": [
+      "test/world/worldWide/ww7_castles.test.js"
+    ]
+  },
+  {
+    "name": "WW7-4-a-province-s-none",
+    "file": "src/net/instanceRoom.js",
+    "old": "export const PROVINCE_CASTLE_MAP_IDS = Object.freeze(\n  [1, 2, 3, 4, 5, 6].map((k) => ((0x341 << 20) | 0x80000 | k) >>> 0),\n);",
+    "new": "export const PROVINCE_CASTLE_MAP_IDS = Object.freeze([1, 2, 3, 4, 5].map((k) => ((0x341 << 20) | 0x80000 | k) >>> 0));",
+    "tests": [
+      "test/world/worldWide/ww7_castles.test.js"
+    ]
+  },
+  {
+    "name": "WW7-4-the-tower-sealed",
+    "file": "src/scenes/world.js",
+    "old": "!seaVentures.vaultHere()) || hit?.dfLocation?.capital) return true;",
+    "new": "!seaVentures.vaultHere())) return true;",
+    "tests": [
+      "test/world/worldWide/ww7_castles.test.js"
+    ]
+  },
+  {
+    "name": "WW7-6-the-capital-keyed-as-a-city",
+    "file": "src/ui/tamrielInk.js",
+    "old": "mapId: k >= 0 ? capitalPlaceId(k, 0) : arenaPlaceId(p), port });",
+    "new": "mapId: arenaPlaceId(p), port });",
+    "tests": [
+      "test/ui/ww7_seatrings.test.js"
+    ]
+  },
+  {
+    "name": "WW7-6-the-bay-s-capitals-keyless",
+    "file": "src/ui/tamrielInk.js",
+    "old": "mapId: m.summary?.mapID ?? m.summary?.mapId ?? null }));",
+    "new": "mapId: null }));",
+    "tests": [
+      "test/ui/ww7_seatrings.test.js"
+    ]
+  },
+  {
+    "name": "WW7-6-no-ring",
+    "file": "src/ui/tamrielInk.js",
+    "old": "for (const m of marks) if (m.seat) paintSeatRing(",
+    "new": "for (const m of marks) if (false) paintSeatRing(",
+    "tests": [
+      "test/ui/ww7_seatrings.test.js"
+    ]
+  },
+  {
+    "name": "WW7-6-the-ring-over-the-glyph",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  for (const m of marks) if (m.seat) paintSeatRing(ctx, m.x, m.y, markReach(m), seatMapMark(m.seat));\n  for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, true);\n  for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, false, opts.inks?.[m.kind]);",
+    "new": "  for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, true);\n  for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, false, opts.inks?.[m.kind]);\n  for (const m of marks) if (m.seat) paintSeatRing(ctx, m.x, m.y, markReach(m), seatMapMark(m.seat));",
+    "tests": [
+      "test/ui/ww7_seatrings.test.js"
+    ]
+  },
+  {
+    "name": "WW7-6-the-seats-unasked",
+    "file": "src/ui/heldMap.js",
+    "old": "seatAt: (c) => this.deps.seatAt?.({ mapId: c.mapId }) ?? null,",
+    "new": "seatAt: () => null,",
+    "tests": [
+      "test/ui/ww7_seatrings.test.js"
+    ]
+  },
+  {
+    "name": "WW7-5-a-book-the-bay-s",
+    "file": "server-account/src/cards.js",
+    "old": "import { regionOk } from '../../src/net/nodeLaw.js';",
+    "new": "import { bayRegionOk as regionOk } from '../../src/net/nodeLaw.js';",
+    "tests": [
+      "test/server/ww7_books.test.js"
+    ]
+  },
+  {
+    "name": "WW7-5-a-home-the-bay-s",
+    "file": "src/net/homeLaw.js",
+    "old": "export const HOME_REGION_MAX = 70;",
+    "new": "export const HOME_REGION_MAX = 61;",
+    "tests": [
+      "test/server/ww7_books.test.js"
+    ]
+  },
+  {
+    "name": "WW7-5-the-watch-the-bay-s",
+    "file": "src/net/watchReceipt.js",
+    "old": "  worldPixelOk(x) &&\n  worldPixelOk(y) &&",
+    "new": "  x >= 0 &&\n  x < 1000 &&\n  y >= 0 &&\n  y < 500 &&",
+    "tests": [
+      "test/server/ww7_books.test.js"
+    ]
+  },
+  {
+    "name": "WW7-5-the-board-the-bay-s",
+    "file": "src/net/marketLaw.js",
+    "old": "  const m = typeof s === 'string' ? /^(-?\\d{1,4}),(-?\\d{1,4})$/.exec(s) : null;",
+    "new": "  const m = typeof s === 'string' ? /^(\\d{1,3}),(\\d{1,3})$/.exec(s) : null;",
+    "tests": [
+      "test/server/ww7_books.test.js"
+    ]
+  },
+  {
+    "name": "WW7-5-a-maps-id-past-the-bay",
+    "file": "src/net/townEconLaw.js",
+    "old": "    if (\n      !grid(px) ||\n      !grid(py) ||\n      townPixelIdOf(map) < TOWN_PLACE_ID_MIN ||\n      !Number.isSafeInteger(location) ||\n      location >= 0 ||\n      location < -0x7fffffff\n    )",
+    "new": "    if (!grid(px) || !grid(py) || !Number.isSafeInteger(location) || location >= 0 || location < -0x7fffffff)",
+    "tests": [
+      "test/server/ww7_books.test.js"
+    ]
+  },
+  {
+    "name": "WW7-5-a-bay-location-past-it",
+    "file": "src/net/townEconLaw.js",
+    "old": "      location >= 0 ||\n      location < -0x7fffffff",
+    "new": "      location < -0x7fffffff",
+    "tests": [
+      "test/server/ww7_books.test.js"
+    ]
+  },
+  {
+    "name": "WW7-5-the-index-dropped",
+    "file": "src/world/worldWide/worldPlaces.js",
+    "old": "    location: Number.isSafeInteger(row.location) ? /** @type {number} */ (row.location) : null, // WW7-5",
+    "new": "    location: null, // WW7-5",
+    "tests": [
+      "test/server/ww7_books.test.js"
+    ]
+  },
+  {
+    "name": "WW7-5-a-child-lost",
+    "file": "server-account/migrations/0186_world_books.sql",
+    "old": "FROM market_reports_keep k WHERE EXISTS (SELECT 1 FROM market_listings l WHERE l.id = k.listing);",
+    "new": "FROM market_reports_keep k WHERE 0;",
+    "tests": [
+      "test/server/ww7_books.test.js"
+    ]
+  },
+  {
+    "name": "WW7-5-a-trigger-dropped",
+    "file": "server-account/migrations/0186_world_books.sql",
+    "old": "CREATE TRIGGER IF NOT EXISTS vendor_board_listed ",
+    "new": "CREATE TRIGGER IF NOT EXISTS vendor_board_listed_lost ",
+    "tests": [
+      "test/server/ww7_books.test.js"
+    ]
+  },
+  {
+    "name": "WW7-5-the-bound-the-bay-s",
+    "file": "server-account/migrations/0186_world_books.sql",
+    "old": "  region      INTEGER NOT NULL CHECK (region >= 0 AND region <= 70),\n  recipe",
+    "new": "  region      INTEGER NOT NULL CHECK (region >= 0 AND region <= 61),\n  recipe",
+    "tests": [
+      "test/server/ww7_books.test.js"
+    ]
+  }
 ]
