@@ -2,8 +2,8 @@
   {
     "name": "ARENA5-REPLAY-DRIFT",
     "file": "src/systems/arena/arenaReplay.js",
-    "old": "L[0] += dx; L[1] += dz; L[2] = (L[2] + dy + 256) & 255;",
-    "new": "L[0] = q[i][0]; L[1] += dz; L[2] = (L[2] + dy + 256) & 255;",
+    "old": "        L[0] += dx;",
+    "new": "        L[0] = q[i][0];",
     "tests": [
       "test/systems/arena/arena5_replay.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ARENA5-REPLAY-RUN-DROPPED",
     "file": "src/systems/arena/arenaReplay.js",
-    "old": "        if (dx === 0 && dz === 0 && dy === 0) { R.zeros[i]++; continue; }\n",
-    "new": "",
+    "old": "        if (dx === 0 && dz === 0 && dy === 0) {\n          R.zeros[i]++;\n          continue;\n        }\n        flushRun(R, i);",
+    "new": "        flushRun(R, i);",
     "tests": [
       "test/systems/arena/arena5_replay.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ARENA5-REPLAY-CAP",
     "file": "src/systems/arena/arenaReplay.js",
-    "old": "    if (R.ticks >= REPLAY_MAX_TICKS) { R.full = true; break; }\n",
-    "new": "",
+    "old": "    if (R.ticks >= REPLAY_MAX_TICKS) {\n      R.full = true;\n      break;\n    }\n    const q = R.f.map((_, i) => {",
+    "new": "    const q = R.f.map((_, i) => {",
     "tests": [
       "test/systems/arena/arena5_replay.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ARENA5-REPLAY-EVENT-IDS",
     "file": "src/systems/arena/arenaReplay.js",
-    "old": "const fi = (id) => (id == null ? -1 : R.ids.indexOf(id));",
-    "new": "const fi = () => -1;",
+    "old": "  const fi = (id) => (id == null ? -1 : R.ids.indexOf(id));",
+    "new": "  const fi = () => -1;",
     "tests": [
       "test/systems/arena/arena5_replay.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ARENA5-REPLAY-STRIKE-GAP",
     "file": "src/systems/arena/arenaReplay.js",
-    "old": "if (i < 0 || t - R.lastStrike[i] < 300) return R;",
-    "new": "if (i < 0) return R;",
+    "old": "  if (i < 0 || t - R.lastStrike[i] < 300) return R;",
+    "new": "  if (i < 0) return R;",
     "tests": [
       "test/systems/arena/arena5_replay.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "ARENA5-REPLAY-KEEP",
     "file": "src/systems/arena/arenaReplay.js",
-    "old": "[rec, ...arenaReplaysRestore(list)].slice(0, REPLAY_KEEP)",
-    "new": "[...arenaReplaysRestore(list), rec].slice(0, REPLAY_KEEP)",
+    "old": "  replayOk(rec) ? [rec, ...arenaReplaysRestore(list)].slice(0, REPLAY_KEEP) : arenaReplaysRestore(list);",
+    "new": "  replayOk(rec) ? [...arenaReplaysRestore(list), rec].slice(0, REPLAY_KEEP) : arenaReplaysRestore(list);",
     "tests": [
       "test/systems/arena/arena5_replay.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "ARENA5-FEED-ORDER",
     "file": "src/systems/arena/arenaReplay.js",
-    "old": "  words.sort((a, b) => a.t - b.t);",
-    "new": "",
+    "old": "  words.sort((a, b) => a.t - b.t); // stable: a tick's walks, then its blows, its health and its events, as pushed",
+    "new": "  // stable: a tick's walks, then its blows, its health and its events, as pushed",
     "tests": [
       "test/systems/arena/arena5_replay.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "ARENA5-HERALD-NO-REPLAY",
     "file": "src/systems/arena/arenaHerald.js",
-    "old": "  if (replays > 0) options.push({ code: 'KeyR', label: ARENA_TEXT.replay.herald, act: 'replay' });",
-    "new": "",
+    "old": "  if (replays > 0) options.push({ code: 'KeyR', label: ARENA_TEXT.replay.herald, act: 'replay' }); // ARENA5: your ladder replay, the newest",
+    "new": "  // ARENA5: your ladder replay, the newest",
     "tests": [
       "test/systems/arena/arena5_replay.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "ARENA5-RECORDS-NO-PRESS",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "banner: b.team, replay: replayOf(b),",
-    "new": "banner: b.team, replay: null,",
+    "old": "    replay: replayOf(b),",
+    "new": "    replay: null,",
     "tests": [
       "test/systems/arena/arena5_replay.test.js"
     ]

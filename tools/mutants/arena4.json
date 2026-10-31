@@ -943,8 +943,8 @@
   {
     "name": "ARENA4-BOARD-OFFER-PRESSES",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "acts = left > 0 ? [{ act: 'accept', label: O().accept, why: null }, { act: 'decline', label: O().decline, why: null }] : [];",
-    "new": "acts = [];",
+    "old": "    acts =\n      left > 0\n        ? [\n            { act: 'accept', label: O().accept, why: null },\n            { act: 'decline', label: O().decline, why: null },\n          ]\n        : [];",
+    "new": "    acts = [];",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -952,8 +952,8 @@
   {
     "name": "ARENA4-BOARD-OFFLINE-PRESS",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "const why = st === 'off' ? O().whyOffline :",
-    "new": "const why = st === 'off' ? null :",
+    "old": "  const why = st === 'off' ? O().whyOffline : guest ? O().whyGuest : busy ? busyWhy : null;",
+    "new": "  const why = st === 'off' ? null : guest ? O().whyGuest : busy ? busyWhy : null;",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -961,8 +961,8 @@
   {
     "name": "ARENA4-BOARD-ACCOUNT-LADDER",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "const oo = { ...o, ladder: on.board.me?.ladder ?? o.ladder };",
-    "new": "const oo = { ...o };",
+    "old": "  const oo = { ...o, ladder: on.board.me?.ladder ?? o.ladder };",
+    "new": "  const oo = { ...o };",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -970,8 +970,8 @@
   {
     "name": "ARENA4-BOARD-OFFER-CLOCK",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "Math.ceil(((hall.offer.until ?? 0) - now) / 1000)",
-    "new": "Math.ceil((hall.offer.until ?? 0) / 1000)",
+    "old": "    const left = Math.max(0, Math.ceil(((hall.offer.until ?? 0) - now) / 1000));",
+    "new": "    const left = Math.max(0, Math.ceil((hall.offer.until ?? 0) / 1000));",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -979,8 +979,8 @@
   {
     "name": "ARENA4-BOARD-UNQUEUE",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "if (st === 'queued') { acts = [{ act: 'unqueue',",
-    "new": "if (st === 'queued') { acts = [{ act: 'queue',",
+    "old": "    acts = [{ act: 'unqueue', label: O().leaveQueue, why: null }];",
+    "new": "    acts = [{ act: 'queue', label: O().leaveQueue, why: null }];",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -988,8 +988,8 @@
   {
     "name": "ARENA4-BOARD-RATING-CHIP",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "rating: me.pvp ? O().ratingChip(me.pvp.rating) : null,",
-    "new": "rating: null,",
+    "old": "    rating: me.pvp ? O().ratingChip(me.pvp.rating) : null,",
+    "new": "    rating: null,",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -997,8 +997,8 @@
   {
     "name": "ARENA4-BOARD-LAUREL-YOURS",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "laurelYou: !!me.banner && t.laurel === me.banner,",
-    "new": "laurelYou: !!me.banner && t.laurel !== me.banner,",
+    "old": "    laurelYou: !!me.banner && t.laurel === me.banner,",
+    "new": "    laurelYou: !!me.banner && t.laurel !== me.banner,",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1006,8 +1006,8 @@
   {
     "name": "ARENA4-BOARD-TITLE-PER-TIER",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "const tiers = Math.floor(Math.max(0, n | 0) / (BOUTS_PER_TIER + 1));",
-    "new": "const tiers = Math.floor(Math.max(0, n | 0) / BOUTS_PER_TIER);",
+    "old": "  const tiers = Math.floor(Math.max(0, n | 0) / (BOUTS_PER_TIER + 1));",
+    "new": "  const tiers = Math.floor(Math.max(0, n | 0) / BOUTS_PER_TIER);",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1015,8 +1015,8 @@
   {
     "name": "ARENA4-BOARD-ONLINE-RULES",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "  rules.push({ head: O().rules.head, lines: [...O().rules.lines] });\n",
-    "new": "",
+    "old": "  rules.push({ head: O().rules.head, lines: [...O().rules.lines] });\n  return {",
+    "new": "  return {",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1024,8 +1024,8 @@
   {
     "name": "ARENA4-BOARD-WATCH",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "acts: [{ act: 'spectate', label: W().watch, why: busy ? busyWhy : null }],",
-    "new": "acts: [],",
+    "old": "    acts: [{ act: 'spectate', label: W().watch, why: busy ? busyWhy : null }],",
+    "new": "    acts: [],",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1033,8 +1033,8 @@
   {
     "name": "ARENA4-BOARD-CHAMPION-NAMED",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "champion: board.champion ? O().champion(board.champion.name) : O().noChampion },",
-    "new": "champion: O().noChampion },",
+    "old": "      champion: board.champion ? O().champion(board.champion.name) : O().noChampion,",
+    "new": "      champion: O().noChampion,",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1042,8 +1042,8 @@
   {
     "name": "ARENA4-BOARD-ME-PINNED",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "pinned: b.pinned ? row(b.pinned, cells(b.pinned)) : null, total: b.total });",
-    "new": "pinned: null, total: b.total });",
+    "old": "  const map = (b, cells) => ({\n    rows: b.rows.map((r) => row(r, cells(r))),\n    pinned: b.pinned ? row(b.pinned, cells(b.pinned)) : null,\n    total: b.total,\n  });",
+    "new": "  const map = (b, cells) => ({ rows: b.rows.map((r) => row(r, cells(r))), pinned: null, total: b.total });",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]

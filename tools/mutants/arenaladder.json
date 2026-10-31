@@ -152,8 +152,8 @@
   {
     "name": "ARENA-LADDER-run-kept",
     "file": "src/systems/arena/arenaLadder.js",
-    "old": "    out.runLost = s.won > 0;\n    s.won = 0;",
-    "new": "    out.runLost = s.won > 0;",
+    "old": "    s.won = 0;\n    if (how === 'yield') r.yields++;",
+    "new": "    if (how === 'yield') r.yields++;",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "ARENA-LADDER-champion-plain",
     "file": "src/systems/arena/arenaLadder.js",
-    "old": "champion: [champ(M.Knight, 5)]",
-    "new": "champion: [b(M.Knight, 5)]",
+    "old": "    Object.freeze({ bouts: [[b(M.Warrior, 3)], [b(M.Monk, 4)], [b(M.Archer, 5)]], champion: [champ(M.Knight, 5)] }),",
+    "new": "    Object.freeze({ bouts: [[b(M.Warrior, 3)], [b(M.Monk, 4)], [b(M.Archer, 5)]], champion: [b(M.Knight, 5)] }),",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "ARENA-LADDER-kit-strip-unread",
     "file": "src/systems/arena/arenaKit.js",
-    "old": "  for (const k of SAND_BARRED_KINDS) {\n    if (!hasActiveEffect(entity, k)) continue;",
-    "new": "  for (const k of SAND_BARRED_KINDS.slice(1)) {\n    if (!hasActiveEffect(entity, k)) continue;",
+    "old": "  for (const k of SAND_BARRED_KINDS) {",
+    "new": "  for (const k of SAND_BARRED_KINDS.slice(1)) {",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -722,8 +722,8 @@
   {
     "name": "ARENA-LADDER-2-held-unmarked",
     "file": "src/systems/arena/arenaKit.js",
-    "old": "    if (entity.activeEffects.some((a) => a.kind === k && a.heldItem)) entity._sandHeld = true;\n",
-    "new": "",
+    "old": "    if (entity.activeEffects.some((a) => a.kind === k && a.heldItem)) entity._sandHeld = true;\n    cureAllOfKind(entity, k);",
+    "new": "    cureAllOfKind(entity, k);",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -752,8 +752,8 @@
   {
     "name": "ARENA-LADDER-2-paid-unkept",
     "file": "src/systems/arena/arenaLadder.js",
-    "old": "  L.paid = Math.max(L.won, int(raw.paid, 0, BOUTS_PER_TIER, L.won));",
-    "new": "  L.paid = int(raw.paid, 0, BOUTS_PER_TIER, L.won);",
+    "old": "  L.paid = Math.max(L.won, int(raw.paid, 0, BOUTS_PER_TIER, L.won)); // AUDIT ARENA-LADDER 2: a save before it - what is won was paid",
+    "new": "  L.paid = int(raw.paid, 0, BOUTS_PER_TIER, L.won); // AUDIT ARENA-LADDER 2: a save before it - what is won was paid",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -762,8 +762,8 @@
   {
     "name": "ARENA-LADDER-2-repeat-purse",
     "file": "src/systems/arena/arenaLadder.js",
-    "old": "    purse: champion ? CHAMPION_PURSE[s.tier] : repeat ? 0 : BOUT_PURSE[s.tier], repeat,",
-    "new": "    purse: champion ? CHAMPION_PURSE[s.tier] : BOUT_PURSE[s.tier], repeat,",
+    "old": "    purse: champion ? CHAMPION_PURSE[s.tier] : repeat ? 0 : BOUT_PURSE[s.tier],",
+    "new": "    purse: champion ? CHAMPION_PURSE[s.tier] : BOUT_PURSE[s.tier],",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -772,8 +772,8 @@
   {
     "name": "ARENA-LADDER-2-repeat-points",
     "file": "src/systems/arena/arenaLeague.js",
-    "old": "(!won || repeat ? 0 :",
-    "new": "(!won ? 0 :",
+    "old": "  !won || repeat ? 0 : grand ? TEAM_POINTS.grand : champion ? TEAM_POINTS.champion : TEAM_POINTS.bout;",
+    "new": "  !won ? 0 : grand ? TEAM_POINTS.grand : champion ? TEAM_POINTS.champion : TEAM_POINTS.bout;",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -792,8 +792,8 @@
   {
     "name": "ARENA-LADDER-2-tie-first",
     "file": "src/systems/arena/arenaBout.js",
-    "old": "      side = ai.length ? judgeBout(ai) : null;",
-    "new": "      side = ai.length ? judgeBout(ai) ?? ai[0].side : null;",
+    "old": "      side = ai.length ? judgeBout(ai) : null; // AUDIT ARENA-LADDER 2: fighters level on the card - a draw, never the first one's",
+    "new": "      side = ai.length ? (judgeBout(ai) ?? ai[0].side) : null; // AUDIT ARENA-LADDER 2: fighters level on the card - a draw, never the first one's",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],

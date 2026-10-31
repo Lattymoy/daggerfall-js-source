@@ -245,8 +245,8 @@
   {
     "name": "SD20D-A3-the-seam-stepped",
     "file": "src/systems/arena/arenaSound.js",
-    "old": "  for (let i = 0; i < x.length; i++) y += a * (x[i] - y);\n",
-    "new": "",
+    "old": "  for (let i = 0; i < x.length; i++) y += a * (x[i] - y);\n  for (let i = 0; i < x.length; i++) {",
+    "new": "  for (let i = 0; i < x.length; i++) {",
     "tests": [
       "test/scenes/superDungeon/sd20d_audio.test.js"
     ]

@@ -246,8 +246,8 @@
   {
     "name": "ARENA4b-MIR-LIST-TITLE",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "title: b.kind === 'ex' ? O().liveExhibition(",
-    "new": "title: false ? O().liveExhibition(",
+    "old": "    title:\n      b.kind === 'ex'\n        ? O().liveExhibition(ARENA_TEXT.tiers[b.tier ?? 0] ?? '')\n        : b.kind === 'pve'\n          ? O().liveLadder(ARENA_TEXT.tiers[b.tier ?? 0] ?? '')\n          : b.u === 1\n            ? O().liveCasual\n            : O().livePlayers, // ARENA4b: a casual bout listed as one   // ARENA4b: the hour's exhibition, the relay's",
+    "new": "    title: false\n      ? O().liveExhibition(ARENA_TEXT.tiers[b.tier ?? 0] ?? '')\n      : b.kind === 'pve'\n        ? O().liveLadder(ARENA_TEXT.tiers[b.tier ?? 0] ?? '')\n        : b.u === 1\n          ? O().liveCasual\n          : O().livePlayers, // ARENA4b: a casual bout listed as one   // ARENA4b: the hour's exhibition, the relay's",
     "tests": [
       "test/scenes/arena4b_mirror.test.js"
     ]

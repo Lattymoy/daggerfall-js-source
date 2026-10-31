@@ -185,8 +185,8 @@
   {
     "name": "ARENA1-MOVE-HELD",
     "file": "src/systems/arena/arenaMove.js",
-    "old": "&& !held.has(s.buildingKey)",
-    "new": "",
+    "old": "    .filter(\n      (s) =>\n        s.buildingKey > 0 &&\n        !inArenaCell(s.buildingKey) &&\n        !held.has(s.buildingKey) &&\n        !(isActiveQuestBuilding?.(s) ?? false),\n    )",
+    "new": "    .filter((s) => s.buildingKey > 0 && !inArenaCell(s.buildingKey) && !(isActiveQuestBuilding?.(s) ?? false))",
     "tests": [
       "test/systems/arena1_move.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "ARENA1-MOVE-NO-SCENE",
     "file": "src/systems/arena/arenaMove.js",
-    "old": "  const emptied = scenes ? emptyArenaScene(",
-    "new": "  const emptied = null ? emptyArenaScene(",
+    "old": "  const emptied = scenes",
+    "new": "  const emptied = null",
     "tests": [
       "test/systems/arena1_move.test.js"
     ]

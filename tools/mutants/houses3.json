@@ -211,8 +211,8 @@
   {
     "name": "HOUSES3-arena-the-first-alone",
     "file": "src/systems/arena/arenaMove.js",
-    "old": "    first ??= moved;\n",
-    "new": "    first ??= moved;\n    break;\n",
+    "old": "    first ??= moved;\n  }",
+    "new": "    first ??= moved;\n    break;\n  }",
     "tests": [
       "test/systems/houses3.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "HOUSES3-arena-own-free",
     "file": "src/systems/arena/arenaMove.js",
-    "old": "held: new Set([...held, ...own])",
-    "new": "held",
+    "old": "    const moved = moveArenaDeed(\n      slot,\n      { summaries, oldTypeOf, held: new Set([...held, ...own]), isActiveQuestBuilding, scenes },\n      hooks,\n    );",
+    "new": "    const moved = moveArenaDeed(slot, { summaries, oldTypeOf, held, isActiveQuestBuilding, scenes }, hooks);",
     "tests": [
       "test/systems/houses3.test.js"
     ]

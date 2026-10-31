@@ -119,8 +119,8 @@
   {
     "name": "ARENA-WAIT-the-save-s-banners",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "      m.team = { ...teamPageOnline(wait), lines: [away ?? O().rollWait] };\n",
-    "new": "",
+    "old": "      m.team = { ...teamPageOnline(wait), lines: [away ?? O().rollWait] };\n      /** @type {any} */",
+    "new": "      /** @type {any} */",
     "tests": [
       "test/systems/arena/fb1016b_arenawait.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "ARENA-WAIT-the-save-s-boards",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "      /** @type {any} */ (m).boards = boards;\n",
-    "new": "",
+    "old": "      /** @type {any} */ (m).boards = boards;\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/arena/fb1016b_arenawait.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "ARENA-WAIT-A1-the-save-s-ladder-page",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "      /** @type {any} */ (m).ladder = ladderPageWaiting(away ?? O().climbWait);\n",
-    "new": "",
+    "old": "      /** @type {any} */ (m).ladder = ladderPageWaiting(away ?? O().climbWait);\n      m.bouts.cards = m.bouts.cards.map((c) => (c.kind === 'ladder' ? ladderCardWaiting(away ?? O().climbWait) : c));",
+    "new": "      m.bouts.cards = m.bouts.cards.map((c) => (c.kind === 'ladder' ? ladderCardWaiting(away ?? O().climbWait) : c));",
     "tests": [
       "test/systems/arena/fb1016b_arenawait.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "ARENA-WAIT-A1-the-save-s-ladder-card",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "      m.bouts.cards = m.bouts.cards.map((c) => (c.kind === 'ladder' ? ladderCardWaiting(away ?? O().climbWait) : c));\n",
-    "new": "",
+    "old": "      m.bouts.cards = m.bouts.cards.map((c) => (c.kind === 'ladder' ? ladderCardWaiting(away ?? O().climbWait) : c));\n      // a shut door's Watch says why on its card - the hour's bout is the relay's (the press closed the window to say it)",
+    "new": "      // a shut door's Watch says why on its card - the hour's bout is the relay's (the press closed the window to say it)",
     "tests": [
       "test/systems/arena/fb1016b_arenawait.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "ARENA-WAIT-A1-a-current-tier",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "    current: null, grand: false, titles: [], next: null, online: line, waiting: true,",
-    "new": "    current: law.current, grand: false, titles: [], next: null, online: line, waiting: true,",
+    "old": "    current: null,",
+    "new": "    current: law.current,",
     "tests": [
       "test/systems/arena/fb1016b_arenawait.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "ARENA-WAIT-A1-a-next-bout-offered",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "    current: null, grand: false, titles: [], next: null, online: line, waiting: true,",
-    "new": "    current: null, grand: false, titles: [], next: law.next, online: line, waiting: true,",
+    "old": "    next: null,",
+    "new": "    next: law.next,",
     "tests": [
       "test/systems/arena/fb1016b_arenawait.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "ARENA-WAIT-A1-the-line-unsaid",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "    current: null, grand: false, titles: [], next: null, online: line, waiting: true,",
-    "new": "    current: null, grand: false, titles: [], next: null, online: null, waiting: true,",
+    "old": "    online: line,",
+    "new": "    online: null,",
     "tests": [
       "test/systems/arena/fb1016b_arenawait.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "ARENA-WAIT-A1-the-card-s-fight-open",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "acts: [{ act: 'fight', label: W().fight, why: line }], lines: [],",
-    "new": "acts: [{ act: 'fight', label: W().fight, why: null }], lines: [],",
+    "old": "  acts: [{ act: 'fight', label: W().fight, why: line }],",
+    "new": "  acts: [{ act: 'fight', label: W().fight, why: null }],",
     "tests": [
       "test/systems/arena/fb1016b_arenawait.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "ARENA-WAIT-A4-the-boards-say-loading",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "rows: [], pinned: null, total: 0, empty: away ?? O().rollWait };",
-    "new": "rows: [], pinned: null, total: 0, empty: O().rollWait };",
+    "old": "        boards[k] = { ...boards[k], rows: [], pinned: null, total: 0, empty: away ?? O().rollWait };",
+    "new": "        boards[k] = { ...boards[k], rows: [], pinned: null, total: 0, empty: O().rollWait };",
     "tests": [
       "test/systems/arena/fb1016b_arenawait.test.js"
     ]

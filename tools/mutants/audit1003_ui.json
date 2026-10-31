@@ -256,8 +256,8 @@
   {
     "name": "AUDIT-1003-U10-one-seconds",
     "file": "src/systems/arena/arenaText.js",
-    "old": "`Accept within ${s} second${s === 1 ? '' : 's'}.`",
-    "new": "`Accept within ${s} seconds.`",
+    "old": "    offerClock: (s) => (s > 0 ? `Accept within ${s} second${s === 1 ? '' : 's'}.` : 'The offer expired.'),",
+    "new": "    offerClock: (s) => (s > 0 ? `Accept within ${s} seconds.` : 'The offer expired.'),",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "AUDIT-1003-U10-accept-at-zero",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "acts = left > 0 ? [",
-    "new": "acts = left >= 0 ? [",
+    "old": "      left > 0",
+    "new": "      left >= 0",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js",
       "test/net/arena/arena4_client.test.js"
@@ -275,8 +275,8 @@
   {
     "name": "AUDIT-1003-U10-lapsed-unsaid",
     "file": "src/systems/arena/arenaText.js",
-    "old": " : 'The offer expired.'),",
-    "new": " : `Accept within ${s} seconds.`),",
+    "old": "    offerClock: (s) => (s > 0 ? `Accept within ${s} second${s === 1 ? '' : 's'}.` : 'The offer expired.'),",
+    "new": "    offerClock: (s) => (s > 0 ? `Accept within ${s} second${s === 1 ? '' : 's'}.` : `Accept within ${s} seconds.`),",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ]
@@ -284,8 +284,8 @@
   {
     "name": "AUDIT-1003-U11-the-banners-board-ranked",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "sub: W().boards.teamSub, heads: [W().season], ",
-    "new": "sub: W().boards.teamSub, ",
+    "old": "      sub: W().boards.teamSub,\n      heads: [W().season],\n      cols: W().cols.team,",
+    "new": "      sub: W().boards.teamSub,\n      cols: W().cols.team,",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ]
@@ -293,8 +293,8 @@
   {
     "name": "AUDIT-1003-U11-online-ranked",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "sub: O().teamSub, heads: [W().season], ",
-    "new": "sub: O().teamSub, ",
+    "old": "      sub: O().teamSub,\n      heads: [W().season],\n      cols: W().cols.team,",
+    "new": "      sub: O().teamSub,\n      cols: W().cols.team,",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ]

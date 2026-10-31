@@ -500,8 +500,8 @@
   {
     "name": "AUDIT-HOME-PRICE-C4-the-arena-refund-bare",
     "file": "src/systems/arena/arenaText.js",
-    "old": "refund: (gold) => `${goldSum(gold)} gold for your catalog pieces",
-    "new": "refund: (gold) => `${gold} gold for your catalog pieces",
+    "old": "    refund: (gold) => `${goldSum(gold)} gold for your catalog pieces was refunded to your bank account.`,",
+    "new": "    refund: (gold) => `${gold} gold for your catalog pieces was refunded to your bank account.`,",
     "tests": [
       "test/systems/homeprice.test.js"
     ]

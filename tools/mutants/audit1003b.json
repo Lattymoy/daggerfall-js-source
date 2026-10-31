@@ -297,8 +297,8 @@
   {
     "name": "AUDIT1003b-U3-CARD-NO-WORD",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "  if (v.word) lines.push(v.word);   // AUDIT PRE-MERGE 1003b U3",
-    "new": "  // gone",
+    "old": "  if (v.word) lines.push(v.word); // AUDIT PRE-MERGE 1003b U3: the relay's answer to the last press, in the window",
+    "new": "  // gone: the relay's answer to the last press, in the window",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -306,8 +306,8 @@
   {
     "name": "AUDIT1003b-U4-NO-KEY",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "data: { r: id }, key: `aw-priv-${id}-r` }",
-    "new": "data: { r: id } }",
+    "old": "        key: `aw-priv-${id}-r`,\n      });",
+    "new": "      });",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js",
       "test/ui/enhanced/audit1003b_ui.test.js"
@@ -325,8 +325,8 @@
   {
     "name": "AUDIT1003b-U4-PICKED-DROPPED",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "why: no ?? (id === w.r ? T.privIsRed : null), data: { r: id }",
-    "new": "why: no, data: { r: id }",
+    "old": "      acts.push({\n        act: 'privPick',\n        label: T.privMakeRed,\n        why: no ?? (id === w.r ? T.privIsRed : null),\n        data: { r: id },\n        key: `aw-priv-${id}-r`,\n      });",
+    "new": "      acts.push({ act: 'privPick', label: T.privMakeRed, why: no, data: { r: id }, key: `aw-priv-${id}-r` });",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js",
       "test/ui/enhanced/audit1003b_ui.test.js"
@@ -335,8 +335,8 @@
   {
     "name": "AUDIT1003b-U6-CARD-LAST",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "if (c.code) cards.unshift(c); else cards.push(c);",
-    "new": "cards.push(c);",
+    "old": "  if (c.code) cards.unshift(c);\n  else cards.push(c);",
+    "new": "  cards.push(c);",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "AUDIT1003b-U7-SESSION-AS-BOUT",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "const busyWhy = inSession ? O().privIn : O().whyBusy;",
-    "new": "const busyWhy = O().whyBusy;",
+    "old": "  const busyWhy = inSession ? O().privIn : O().whyBusy; // AUDIT PRE-MERGE 1003b U7: in a session, said as one",
+    "new": "  const busyWhy = O().whyBusy; // AUDIT PRE-MERGE 1003b U7: in a session, said as one",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "AUDIT1003b-U7-QUEUE-UNSAID",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "const wait = busy ? T.whyBusy : queued ? T.privQueued : null;",
-    "new": "const wait = busy ? T.whyBusy : null;",
+    "old": "    const wait = busy ? T.whyBusy : queued ? T.privQueued : null;",
+    "new": "    const wait = busy ? T.whyBusy : null;",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "AUDIT1003b-U7-FIGHTER-IN-STANDS",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "  if (on && w.f.includes(w.me)) head.state = T.privState.fighter;",
-    "new": "  // gone",
+    "old": "  if (on && w.f.includes(w.me)) head.state = T.privState.fighter; // AUDIT PRE-MERGE 1003b U7",
+    "new": "  // gone   // AUDIT PRE-MERGE 1003b U7",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "AUDIT1003b-U9-DRAW-NO-RESULT",
     "file": "src/systems/arena/arenaText.js",
-    "old": ": `${red} (Red) and ${blue} (Blue) drew`;",
-    "new": ": `${red} (Red) and ${blue} (Blue) - no result`;",
+    "old": "          : `${red} (Red) and ${blue} (Blue) drew`;",
+    "new": "          : `${red} (Red) and ${blue} (Blue) - no result`;",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "AUDIT1003b-U10-NO-YOU",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "    if (id === w.me) roles.push(T.privRole.you);",
-    "new": "",
+    "old": "    if (id === w.me) roles.push(T.privRole.you); // AUDIT PRE-MERGE 1003b U10: your own row, in words",
+    "new": "    // AUDIT PRE-MERGE 1003b U10: your own row, in words",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "AUDIT1003b-S4-NO-LOCK-PRESS",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "      { act: 'privLock', label: w.lo ? T.privUnlock : T.privLock, why: null, data: { l: w.lo ? 0 : 1 }, key: 'aw-priv-lock' },\n",
-    "new": "",
+    "old": "        {\n          act: 'privLock',\n          label: w.lo ? T.privUnlock : T.privLock,\n          why: null,\n          data: { l: w.lo ? 0 : 1 },\n          key: 'aw-priv-lock',\n        },\n        { act: 'privClose', label: T.privClose, why: null, key: 'aw-priv-close' },",
+    "new": "        { act: 'privClose', label: T.privClose, why: null, key: 'aw-priv-close' },",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]

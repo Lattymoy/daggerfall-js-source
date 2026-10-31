@@ -209,8 +209,8 @@
   {
     "name": "ARENA6-CARD-EVERYONE-HOSTS",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "  const host = w.h === 1;\n  const name = (id) =>",
-    "new": "  const host = true;\n  const name = (id) =>",
+    "old": "  const host = w.h === 1;",
+    "new": "  const host = true;",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "ARENA6-CARD-NO-JOIN",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "      join: { label: T.privJoin,",
-    "new": "      xjoin: { label: T.privJoin,",
+    "old": "      join: { label: T.privJoin, field: T.privCodeLabel, hint: T.privCodeHint, why: wait },",
+    "new": "      xjoin: { label: T.privJoin, field: T.privCodeLabel, hint: T.privCodeHint, why: wait },",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "ARENA6-CARD-MISSING-ONLINE",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "    if (o.online?.session) placeSession(",
-    "new": "    if (false) placeSession(",
+    "old": "    if (o.online?.session)",
+    "new": "    if (false)",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]

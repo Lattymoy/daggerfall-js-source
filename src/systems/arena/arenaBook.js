@@ -45,13 +45,55 @@ export const BOUT_LEFT = 'left';
 /** A verdict seen as the book keeps it: a side, a draw (null), or the bout left. */
 const seenSide = (side) => (side === 0 || side === 1 || side === BOUT_LEFT ? side : null);
 /** THE BOOKMAKER'S PRICES (net to one), longest-standing first - the house rounds a price down to the one under it. */
-export const ODDS_LADDER = Object.freeze([
-  [1, 5], [2, 9], [1, 4], [2, 7], [1, 3], [4, 11], [2, 5], [4, 9], [1, 2], [8, 15], [4, 7], [8, 13], [4, 6], [8, 11],
-  [4, 5], [5, 6], [10, 11], [1, 1], [11, 10], [6, 5], [5, 4], [11, 8], [6, 4], [13, 8], [7, 4], [15, 8], [2, 1], [9, 4],
-  [5, 2], [11, 4], [3, 1], [10, 3], [7, 2], [4, 1], [9, 2], [5, 1], [6, 1], [7, 1], [8, 1], [10, 1],
-].map((x) => Object.freeze(x)));
+export const ODDS_LADDER = Object.freeze(
+  [
+    [1, 5],
+    [2, 9],
+    [1, 4],
+    [2, 7],
+    [1, 3],
+    [4, 11],
+    [2, 5],
+    [4, 9],
+    [1, 2],
+    [8, 15],
+    [4, 7],
+    [8, 13],
+    [4, 6],
+    [8, 11],
+    [4, 5],
+    [5, 6],
+    [10, 11],
+    [1, 1],
+    [11, 10],
+    [6, 5],
+    [5, 4],
+    [11, 8],
+    [6, 4],
+    [13, 8],
+    [7, 4],
+    [15, 8],
+    [2, 1],
+    [9, 4],
+    [5, 2],
+    [11, 4],
+    [3, 1],
+    [10, 3],
+    [7, 2],
+    [4, 1],
+    [9, 2],
+    [5, 1],
+    [6, 1],
+    [7, 1],
+    [8, 1],
+    [10, 1],
+  ].map((x) => Object.freeze(x)),
+);
 
-const int = (v, lo, hi, d = lo) => { const n = Math.trunc(Number(v)); return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : d; };
+const int = (v, lo, hi, d = lo) => {
+  const n = Math.trunc(Number(v));
+  return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : d;
+};
 const B = () => ARENA_TEXT.book;
 
 // ── THE SAVE ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -64,13 +106,31 @@ const STATUS = new Set(['open', 'won', 'lost', 'draw']);
 export function bookRestore(raw) {
   const b = newArenaBook();
   if (!raw || typeof raw !== 'object') return b;
-  b.owed = int(raw.owed, 0, 1e9); b.won = int(raw.won, 0, 1e9); b.lost = int(raw.lost, 0, 1e9); b.staked = int(raw.staked, 0, 1e9);
-  b.wagers = (Array.isArray(raw.wagers) ? raw.wagers : []).slice(0, WAGERS_KEPT).filter((w) => w && Number.isFinite(Number(w.hour))).map((w) => ({
-    hour: int(w.hour, 0, 1e9), side: w.side === 1 ? 1 : 0, stake: int(w.stake, 0, 1e9), num: int(w.num, 1, 100, 1), den: int(w.den, 1, 100, 1),
-    names: Array.isArray(w.names) ? [String(w.names[0] ?? '').slice(0, 60), String(w.names[1] ?? '').slice(0, 60)] : ['', ''],
-    at: int(w.at, 0, 1e12), status: STATUS.has(w.status) ? w.status : 'open', paid: int(w.paid, 0, 1e9), seen: w.seen === true,
-  }));
-  b.seen = (Array.isArray(raw.seen) ? raw.seen : []).slice(0, WAGERS_KEPT).filter((s) => s && Number.isFinite(Number(s.hour))).map((s) => ({ hour: int(s.hour, 0, 1e9), side: seenSide(s.side) }));   // AUDIT PRE-MERGE 1003 B3: and the bout left
+  b.owed = int(raw.owed, 0, 1e9);
+  b.won = int(raw.won, 0, 1e9);
+  b.lost = int(raw.lost, 0, 1e9);
+  b.staked = int(raw.staked, 0, 1e9);
+  b.wagers = (Array.isArray(raw.wagers) ? raw.wagers : [])
+    .slice(0, WAGERS_KEPT)
+    .filter((w) => w && Number.isFinite(Number(w.hour)))
+    .map((w) => ({
+      hour: int(w.hour, 0, 1e9),
+      side: w.side === 1 ? 1 : 0,
+      stake: int(w.stake, 0, 1e9),
+      num: int(w.num, 1, 100, 1),
+      den: int(w.den, 1, 100, 1),
+      names: Array.isArray(w.names)
+        ? [String(w.names[0] ?? '').slice(0, 60), String(w.names[1] ?? '').slice(0, 60)]
+        : ['', ''],
+      at: int(w.at, 0, 1e12),
+      status: STATUS.has(w.status) ? w.status : 'open',
+      paid: int(w.paid, 0, 1e9),
+      seen: w.seen === true,
+    }));
+  b.seen = (Array.isArray(raw.seen) ? raw.seen : [])
+    .slice(0, WAGERS_KEPT)
+    .filter((s) => s && Number.isFinite(Number(s.hour)))
+    .map((s) => ({ hour: int(s.hour, 0, 1e9), side: seenSide(s.side) })); // AUDIT PRE-MERGE 1003 B3: and the bout left
   return b;
 }
 
@@ -92,7 +152,8 @@ export function exhibitionRecord(ex, i) {
 }
 /** THE CHANCES: `[pA, pB]`, each fighter's to win (a draw aside), from the two strengths. */
 export function exhibitionOdds(ex) {
-  const a = exhibitionRecord(ex, 0).strength, b = exhibitionRecord(ex, 1).strength;
+  const a = exhibitionRecord(ex, 0).strength,
+    b = exhibitionRecord(ex, 1).strength;
   const pa = 1 / (1 + Math.exp(-(a - b) / STRENGTH_SPREAD));
   return [pa, 1 - pa];
 }
@@ -112,7 +173,8 @@ export function priceFor(p) {
 /** A price said: "evens", "7 to 4" - AUDIT PRE-MERGE 1003 B4: "no price" for a side he will not lay. */
 export const oddsText = (pr) => (!pr ? B().noPrice : pr[0] === pr[1] ? B().evens : B().price(pr[0], pr[1]));
 /** What a winning stake pays back, stake and winnings, in whole gold. */
-export const payoutFor = (stake, [num, den]) => Math.max(0, Math.floor(stake)) + Math.floor((Math.max(0, Math.floor(stake)) * num) / den);
+export const payoutFor = (stake, [num, den]) =>
+  Math.max(0, Math.floor(stake)) + Math.floor((Math.max(0, Math.floor(stake)) * num) / den);
 
 /**
  * THE HOUSE'S RECORD of a bout nobody here saw: 0 or 1 (the side that won) or null (a draw), seeded by the bout - the
@@ -150,12 +212,23 @@ export function wagerRefusal(book, ex, stake, { gold = 0, begun = false, side = 
 export function placeWager(book, ex, side, stake, { gold = 0, begun = false, gameMinutes = 0 } = {}) {
   const b = bookRestore(book);
   const s = Math.floor(Number(stake) || 0);
-  const reason = wagerRefusal(b, ex, s, { gold, begun, side: side === 1 ? 1 : 0 });   // AUDIT PRE-MERGE 1003 B4: the side's price
+  const reason = wagerRefusal(b, ex, s, { gold, begun, side: side === 1 ? 1 : 0 }); // AUDIT PRE-MERGE 1003 B4: the side's price
   if (reason) return { ok: false, book: b, reason, cost: 0 };
   const odds = exhibitionOdds(ex);
   const [num, den] = /** @type {[number, number]} */ (priceFor(odds[side === 1 ? 1 : 0]));
   const names = ex.opponents.map((o, i) => fighterIdentity(ex.seed, i, o.mobile).name);
-  b.wagers.unshift({ hour: ex.hour, side: side === 1 ? 1 : 0, stake: s, num, den, names: [names[0], names[1]], at: Math.floor(gameMinutes), status: 'open', paid: 0, seen: false });
+  b.wagers.unshift({
+    hour: ex.hour,
+    side: side === 1 ? 1 : 0,
+    stake: s,
+    num,
+    den,
+    names: [names[0], names[1]],
+    at: Math.floor(gameMinutes),
+    status: 'open',
+    paid: 0,
+    seen: false,
+  });
   b.wagers = b.wagers.slice(0, WAGERS_KEPT);
   b.staked += s;
   return { ok: true, book: b, reason: null, cost: s };
@@ -182,12 +255,23 @@ export function settleBook(book, gameMinutes, { liveHour = null } = {}) {
     const seen = b.seen.find((s) => s.hour === w.hour);
     let side;
     if (seen) side = seen.side;
-    else if (liveHour !== w.hour && gameMinutes >= (w.hour + 1) * 60) { const ex = exhibitionFor(w.hour * 60); side = ex ? houseOutcome(ex) : null; }
-    else continue;
+    else if (liveHour !== w.hour && gameMinutes >= (w.hour + 1) * 60) {
+      const ex = exhibitionFor(w.hour * 60);
+      side = ex ? houseOutcome(ex) : null;
+    } else continue;
     w.seen = !!seen;
-    if (side === null) { w.status = 'draw'; w.paid = w.stake; }
-    else if (side === w.side) { w.status = 'won'; w.paid = payoutFor(w.stake, [w.num, w.den]); b.won += w.paid - w.stake; }
-    else { w.status = 'lost'; w.paid = 0; b.lost += w.stake; }
+    if (side === null) {
+      w.status = 'draw';
+      w.paid = w.stake;
+    } else if (side === w.side) {
+      w.status = 'won';
+      w.paid = payoutFor(w.stake, [w.num, w.den]);
+      b.won += w.paid - w.stake;
+    } else {
+      w.status = 'lost';
+      w.paid = 0;
+      b.lost += w.stake;
+    }
     b.owed += w.paid;
     settled.push(w);
   }
@@ -213,9 +297,11 @@ export function wagerLine(w) {
   return `${on} - ${B().lostLine}`;
 }
 /** AUDIT PRE-MERGE 1003 B4: the line for each fighter of `ex` he lays no price on (`prices` theirs, priceFor's). */
-const notLaid = (ex, prices) => prices.flatMap((pr, i) => (pr ? [] : [B().notLaid(fighterIdentity(ex.seed, i, ex.opponents[i].mobile).name)]));
+const notLaid = (ex, prices) =>
+  prices.flatMap((pr, i) => (pr ? [] : [B().notLaid(fighterIdentity(ex.seed, i, ex.opponents[i].mobile).name)]));
 /** The book's lines for a page: each wager, newest first. */
-export const bookLines = (league, _gameMinutes) => bookRestore(league?.book).wagers.map((w) => ({ text: wagerLine(w), status: w.status, hour: w.hour }));
+export const bookLines = (league, _gameMinutes) =>
+  bookRestore(league?.book).wagers.map((w) => ({ text: wagerLine(w), status: w.status, hour: w.hour }));
 
 /**
  * THE EXHIBITION'S CARD, as the book sees it: each fighter's record and price, the favourite, the wager standing on it,
@@ -227,12 +313,26 @@ export function exhibitionCard(league, ex, gameMinutes, { gold = 0, begun = fals
   const prices = odds.map(priceFor);
   const recs = [0, 1].map((i) => exhibitionRecord(ex, i));
   const w = wagerOn(book, ex.hour);
-  const why = !ex.open || begun || bookSaw(book, ex.hour) ? B().whyClosed : w ? B().whyPlaced : !atGate ? ARENA_TEXT.window.whyGate : gold < STAKE_MIN ? B().whyGold : null;   // AUDIT PRE-MERGE 1003 B3: a bout seen here
+  const why =
+    !ex.open || begun || bookSaw(book, ex.hour)
+      ? B().whyClosed
+      : w
+        ? B().whyPlaced
+        : !atGate
+          ? ARENA_TEXT.window.whyGate
+          : gold < STAKE_MIN
+            ? B().whyGold
+            : null; // AUDIT PRE-MERGE 1003 B3: a bout seen here
   return {
-    records: recs.map((r) => ARENA_TEXT.window.wl(r.wins, r.losses)), odds: prices.map(oddsText), prices,
-    favourite: odds[0] >= odds[1] ? 0 : 1, chances: odds, why, wager: w ? wagerLine(w) : '',
+    records: recs.map((r) => ARENA_TEXT.window.wl(r.wins, r.losses)),
+    odds: prices.map(oddsText),
+    prices,
+    favourite: odds[0] >= odds[1] ? 0 : 1,
+    chances: odds,
+    why,
+    wager: w ? wagerLine(w) : '',
     stakes: STAKES.filter((s) => s <= gold),
-    lines: notLaid(ex, prices),   // AUDIT PRE-MERGE 1003 B4: a side he lays no price on, said
+    lines: notLaid(ex, prices), // AUDIT PRE-MERGE 1003 B4: a side he lays no price on, said
     kinds: ex.opponents.map((o) => enemyDisplayName(o.mobile) ?? ''),
   };
 }
@@ -247,7 +347,10 @@ export function bookmakerChoice({ league, gameMinutes, gold, begun = false, wind
   const ex = exhibitionFor(gameMinutes);
   const lines = [...B().greet, ''];
   const options = [];
-  if (book.owed > 0) { lines.push(B().owes(book.owed)); options.push({ code: 'KeyC', label: B().collect(book.owed), act: 'collect' }); }
+  if (book.owed > 0) {
+    lines.push(B().owes(book.owed));
+    options.push({ code: 'KeyC', label: B().collect(book.owed), act: 'collect' });
+  }
   if (!ex) lines.push(B().shut);
   else {
     const names = ex.opponents.map((o, i) => fighterIdentity(ex.seed, i, o.mobile).name);
@@ -263,7 +366,7 @@ export function bookmakerChoice({ league, gameMinutes, gold, begun = false, wind
     else if (why === 'gold' || why === 'stake') lines.push(B().whyGold);
     else {
       lines.push(B().edge);
-      lines.push(...notLaid(ex, prices));   // AUDIT PRE-MERGE 1003 B4: a side he lays no price on is not offered, and said
+      lines.push(...notLaid(ex, prices)); // AUDIT PRE-MERGE 1003 B4: a side he lays no price on is not offered, and said
       if (prices[0]) options.push({ code: 'KeyA', label: B().back('A', names[0], oddsText(prices[0])), act: 'back0' });
       if (prices[1]) options.push({ code: 'KeyB', label: B().back('B', names[1], oddsText(prices[1])), act: 'back1' });
     }
@@ -280,7 +383,8 @@ export function stakeChoice({ name, price, gold }) {
     lines: [B().howMuch(name, price)],
     options: [
       ...can.map((s, i) => ({ code: `Digit${i + 1}`, label: B().stake(i + 1, s), act: 'stake', stake: s })),
-      { code: 'KeyN', label: B().never, act: 'stay' }, { code: 'Escape', label: null, act: 'stay' },
+      { code: 'KeyN', label: B().never, act: 'stay' },
+      { code: 'Escape', label: null, act: 'stay' },
     ],
   };
 }

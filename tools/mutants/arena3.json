@@ -11,8 +11,8 @@
   {
     "name": "ARENA3-POINTS-UNWORN",
     "file": "src/systems/arena/arenaLeague.js",
-    "old": "const pts = s.team ? boutPoints(o) : 0;",
-    "new": "const pts = boutPoints(o);",
+    "old": "  const pts = s.team ? boutPoints(o) : 0;",
+    "new": "  const pts = boutPoints(o);",
     "tests": [
       "test/systems/arena/arena3_teams.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ARENA3-POINTS-LOSS",
     "file": "src/systems/arena/arenaLeague.js",
-    "old": "export const boutPoints = ({ won, champion = false, grand = false, repeat = false }) => (!won || repeat ? 0 :",
-    "new": "export const boutPoints = ({ won, champion = false, grand = false, repeat = false }) => (repeat ? 0 :",
+    "old": "  !won || repeat ? 0 : grand ? TEAM_POINTS.grand : champion ? TEAM_POINTS.champion : TEAM_POINTS.bout;",
+    "new": "  repeat ? 0 : grand ? TEAM_POINTS.grand : champion ? TEAM_POINTS.champion : TEAM_POINTS.bout;",
     "tests": [
       "test/systems/arena/arena3_teams.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ARENA3-SWITCH-FREE",
     "file": "src/systems/arena/arenaLeague.js",
-    "old": "if (s.left && s.left.banner !== banner && s.left.season >= s.season) return 'season';",
-    "new": "if (false) return 'season';",
+    "old": "  if (s.left && s.left.banner !== banner && s.left.season >= s.season) return 'season';",
+    "new": "  if (false) return 'season';",
     "tests": [
       "test/systems/arena/arena3_teams.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ARENA3-REJOIN-WAITS",
     "file": "src/systems/arena/arenaLeague.js",
-    "old": "if (s.left && s.left.banner !== banner && s.left.season >= s.season) return 'season';",
-    "new": "if (s.left && s.left.season >= s.season) return 'season';",
+    "old": "  if (s.left && s.left.banner !== banner && s.left.season >= s.season) return 'season';",
+    "new": "  if (s.left && s.left.season >= s.season) return 'season';",
     "tests": [
       "test/systems/arena/arena3_teams.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ARENA3-JOIN-OVER-OTHER",
     "file": "src/systems/arena/arenaLeague.js",
-    "old": "  if (s.team) return 'other';\n",
-    "new": "",
+    "old": "  if (s.team) return 'other';\n  if (s.left && s.left.banner !== banner && s.left.season >= s.season) return 'season';",
+    "new": "  if (s.left && s.left.banner !== banner && s.left.season >= s.season) return 'season';",
     "tests": [
       "test/systems/arena/arena3_teams.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "ARENA3-QUIT-NO-LOCK",
     "file": "src/systems/arena/arenaLeague.js",
-    "old": "  s.left = { banner: s.team, season: s.season ?? seasonOf(gameMinutes) };\n",
-    "new": "",
+    "old": "  s.left = { banner: s.team, season: s.season ?? seasonOf(gameMinutes) };\n  s.team = null;",
+    "new": "  s.team = null;",
     "tests": [
       "test/systems/arena/arena3_teams.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "ARENA3-GRAND-RESTAMPED",
     "file": "src/systems/arena/arenaLeague.js",
-    "old": "if (o.won && o.grand && s.grandAt == null) s.grandAt = gm;",
-    "new": "if (o.won && o.grand) s.grandAt = gm;",
+    "old": "  if (o.won && o.grand && s.grandAt == null) s.grandAt = gm;",
+    "new": "  if (o.won && o.grand) s.grandAt = gm;",
     "tests": [
       "test/systems/arena/arena3_teams.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "ARENA3-RECRUITER-WAIT-UNSAID",
     "file": "src/systems/arena/arenaHerald.js",
-    "old": "  else if (why === 'season') lines.push(R.wait(T.the[otherBanner(banner)]));",
-    "new": "",
+    "old": "  else if (why === 'season') lines.push(R.wait(T.the[otherBanner(banner)]));\n  else {",
+    "new": "  else {",
     "tests": [
       "test/systems/arena/arena3_teams.test.js"
     ]
@@ -173,7 +173,7 @@
   {
     "name": "ARENA3-HERALD-NO-WINDOW",
     "file": "src/systems/arena/arenaHerald.js",
-    "old": "  if (window) options.push({ code: 'KeyA', label: H.window, act: 'window' });   // ARENA3: the Arena window's first door",
+    "old": "  if (window) options.push({ code: 'KeyA', label: H.window, act: 'window' }); // ARENA3: the Arena window's first door",
     "new": "",
     "tests": [
       "test/systems/arena/arena3_window.test.js",
@@ -259,7 +259,7 @@
     "name": "ARENA3-BOOK-ROUND-UP",
     "file": "src/systems/arena/arenaBook.js",
     "old": "  for (const x of ODDS_LADDER) if (x[0] / x[1] <= net + 1e-9) best = x;",
-    "new": "  for (const x of ODDS_LADDER) { best = x; if (x[0] / x[1] >= net) break; }",
+    "new": "  for (const x of ODDS_LADDER) {\n    best = x;\n    if (x[0] / x[1] >= net) break;\n  }",
     "tests": [
       "test/systems/arena/arena3_book.test.js"
     ]
@@ -277,8 +277,8 @@
   {
     "name": "ARENA3-BOOK-TWO-WAGERS",
     "file": "src/systems/arena/arenaBook.js",
-    "old": "  if (wagerOn(book, ex.hour)) return 'placed';\n",
-    "new": "",
+    "old": "  if (wagerOn(book, ex.hour)) return 'placed';\n  if (side != null && !priceFor(exhibitionOdds(ex)[side === 1 ? 1 : 0])) return 'price';",
+    "new": "  if (side != null && !priceFor(exhibitionOdds(ex)[side === 1 ? 1 : 0])) return 'price';",
     "tests": [
       "test/systems/arena/arena3_book.test.js"
     ]
@@ -286,8 +286,8 @@
   {
     "name": "ARENA3-BOOK-NO-PURSE",
     "file": "src/systems/arena/arenaBook.js",
-    "old": "  if (stake > gold) return 'gold';\n",
-    "new": "",
+    "old": "  if (stake > gold) return 'gold';\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/systems/arena/arena3_book.test.js"
     ]
@@ -313,8 +313,8 @@
   {
     "name": "ARENA3-BOOK-DRAW-KEPT",
     "file": "src/systems/arena/arenaBook.js",
-    "old": "    if (side === null) { w.status = 'draw'; w.paid = w.stake; }",
-    "new": "    if (side === null) { w.status = 'draw'; w.paid = 0; }",
+    "old": "      w.paid = w.stake;",
+    "new": "      w.paid = 0;",
     "tests": [
       "test/systems/arena/arena3_book.test.js"
     ]
@@ -322,7 +322,7 @@
   {
     "name": "ARENA3-BOOK-STAKE-NOT-BACK",
     "file": "src/systems/arena/arenaBook.js",
-    "old": "export const payoutFor = (stake, [num, den]) => Math.max(0, Math.floor(stake)) + Math.floor((Math.max(0, Math.floor(stake)) * num) / den);",
+    "old": "export const payoutFor = (stake, [num, den]) =>\n  Math.max(0, Math.floor(stake)) + Math.floor((Math.max(0, Math.floor(stake)) * num) / den);",
     "new": "export const payoutFor = (stake, [num, den]) => Math.floor((Math.max(0, Math.floor(stake)) * num) / den);",
     "tests": [
       "test/systems/arena/arena3_book.test.js"
@@ -385,8 +385,8 @@
   {
     "name": "ARENA3-BOARD-EXHIBITION-SIDES",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "name: who.name, billing: who.beast ? who.billing : `${who.home}, ${who.epithet}`, banner: i === 0 ? 'red' : 'blue',",
-    "new": "name: who.name, billing: who.beast ? who.billing : `${who.home}, ${who.epithet}`, banner: 'red',",
+    "old": "        banner: i === 0 ? 'red' : 'blue',",
+    "new": "        banner: 'red',",
     "tests": [
       "test/systems/arena/arena3_window.test.js"
     ]
@@ -421,7 +421,7 @@
   {
     "name": "ARENA3-BOARD-RECORDS-HOW",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "  const how = (b) => (b.how === 'draw' ? W().how.draw : W().how[b.how] ?? '');",
+    "old": "  const how = (b) => (b.how === 'draw' ? W().how.draw : (W().how[b.how] ?? ''));",
     "new": "  const how = () => '';",
     "tests": [
       "test/systems/arena/arena3_window.test.js"
@@ -530,8 +530,8 @@
   {
     "name": "ARENA3-HALL-NO-THEIRS",
     "file": "src/systems/arena/arenaLadder.js",
-    "old": "  if (theirs.length) {\n    lines.push('', U.hallTheirs);",
-    "new": "  if (false) {\n    lines.push('', U.hallTheirs);",
+    "old": "  if (theirs.length) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/arena/arena3_titles.test.js"
     ]

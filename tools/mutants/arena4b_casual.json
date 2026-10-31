@@ -83,8 +83,8 @@
   {
     "name": "ARENA4b-CAS-CARD-PRESS",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "  else { acts = [{ act: 'queue', label: O().findMatch, why }, { act: 'casual', label: O().casualMatch, why }]; lines.push(O().casualLine); }",
-    "new": "  else { acts = [{ act: 'queue', label: O().findMatch, why }]; lines.push(O().casualLine); }",
+    "old": "    acts = [\n      { act: 'queue', label: O().findMatch, why },\n      { act: 'casual', label: O().casualMatch, why },\n    ];",
+    "new": "    acts = [{ act: 'queue', label: O().findMatch, why }];",
     "tests": [
       "test/systems/arena/arena4b_casual.test.js"
     ]

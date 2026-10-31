@@ -292,8 +292,8 @@
   {
     "name": "ARENAARROWS-the-tally-unread",
     "file": "src/systems/arena/arenaQuiver.js",
-    "old": "loosed?.get(m.template) ?? 0",
-    "new": "loosed?.get(m.template) ?? Infinity",
+    "old": "    const owed = Math.min(m.count - now, loosed?.get(m.template) ?? 0);",
+    "new": "    const owed = Math.min(m.count - now, loosed?.get(m.template) ?? Infinity);",
     "tests": [
       "test/systems/arena/fb1004e_arena.test.js"
     ],

@@ -56,8 +56,8 @@
   {
     "name": "ARENA5-HALVES-SIDE",
     "file": "src/systems/arena/arenaCrowd.js",
-    "old": "out[f.side] = b;",
-    "new": "out[0] = b;",
+    "old": "    if ((f.side === 0 || f.side === 1) && out[f.side] == null && (b === 'red' || b === 'blue')) out[f.side] = b;",
+    "new": "    if ((f.side === 0 || f.side === 1) && out[f.side] == null && (b === 'red' || b === 'blue')) out[0] = b;",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "ARENA5-HALF-OF-FLIPPED",
     "file": "src/systems/arena/arenaCrowd.js",
-    "old": "(x < 0 ? 0 : 1)",
-    "new": "(x < 0 ? 1 : 0)",
+    "old": "export const crowdHalfOf = (x) => (x < 0 ? 0 : 1);",
+    "new": "export const crowdHalfOf = (x) => (x < 0 ? 1 : 0);",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "ARENA5-WASH-ANY-BANNER",
     "file": "src/systems/arena/arenaCrowd.js",
-    "old": "(banner === 'red' || banner === 'blue' ? CROWD_WASH[banner] : null)",
-    "new": "(banner ? CROWD_WASH[banner] ?? CROWD_WASH.red : null)",
+    "old": "export const crowdWash = (banner) => (banner === 'red' || banner === 'blue' ? CROWD_WASH[banner] : null);",
+    "new": "export const crowdWash = (banner) => (banner ? (CROWD_WASH[banner] ?? CROWD_WASH.red) : null);",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]
