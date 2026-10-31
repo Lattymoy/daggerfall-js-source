@@ -168,8 +168,8 @@
   {
     "name": "ROBES-share-click-lost",
     "file": "src/systems/quest/machine.js",
-    "old": "      if (was?.clicked && !r.hasPlayerClicked) r.setPlayerClicked();\n",
-    "new": "",
+    "old": "      if (was?.clicked && !r.hasPlayerClicked) r.setPlayerClicked();\n      if (was?.hidden && r.isItem) r.isHidden = true;",
+    "new": "      if (was?.hidden && r.isItem) r.isHidden = true;",
     "tests": [
       "test/systems/fb1004c_robes.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "ROBES-share-pickup-lost",
     "file": "src/systems/quest/machine.js",
-    "old": "      if (was?.hidden && r.isItem) r.isHidden = true;\n",
-    "new": "",
+    "old": "      if (was?.hidden && r.isItem) r.isHidden = true;\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/fb1004c_robes.test.js"
     ]

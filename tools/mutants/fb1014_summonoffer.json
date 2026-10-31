@@ -38,8 +38,8 @@
   {
     "name": "SUMMON-OFFER-the-offer-flow-closes-silently-again",
     "file": "src/systems/quest/offerFlow.js",
-    "old": "    if (!this.offeredQuest) return null;\n    return this._offerQuest();",
-    "new": "    if (!this.offeredQuest) return { kind: 'close' };\n    return this._offerQuest();",
+    "old": "    if (!this.offeredQuest) return null;",
+    "new": "    if (!this.offeredQuest) return { kind: 'close' };",
     "tests": [
       "test/systems/fb1014_summonoffer.test.js"
     ]

@@ -512,8 +512,8 @@
   {
     "name": "AUDITREST3-D2-the-ransom-out-of-the-table",
     "file": "src/systems/quest/clock.js",
-    "old": "  K0C00Y07: Object.freeze(['2ransom']),",
-    "new": "",
+    "old": "  K0C00Y07: Object.freeze(['2ransom']), // AUDIT REST III D2: \"The ransom must be paid in =2ransom_ days or they will kill _victim_\"",
+    "new": "  // AUDIT REST III D2: \"The ransom must be paid in =2ransom_ days or they will kill _victim_\"",
     "tests": [
       "test/systems/auditrest3.test.js",
       "test/systems/quest/rest8_questwaits.test.js",
@@ -523,8 +523,8 @@
   {
     "name": "AUDITREST3-D2-the-daughter-out-of-the-table",
     "file": "src/systems/quest/clock.js",
-    "old": "  B0B71Y03: Object.freeze(['finddaughter']),",
-    "new": "",
+    "old": "  B0B71Y03: Object.freeze(['finddaughter']), // AUDIT REST III D2: \"within =finddaughter_ days and I will tell you\"",
+    "new": "  // AUDIT REST III D2: \"within =finddaughter_ days and I will tell you\"",
     "tests": [
       "test/systems/auditrest3.test.js",
       "test/systems/quest/rest8_questwaits.test.js",

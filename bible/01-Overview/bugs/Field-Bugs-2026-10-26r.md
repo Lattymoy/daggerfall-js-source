@@ -1803,7 +1803,7 @@ row: the guild shut, and nothing to abandon. Driven on current main with two mac
 the partner both close on the short wait and both get the outcome's gear (RAVEN-CLOSE, FIELD BUGS 2026-10-21d): the
 reward and the long wait the reports met are already gone; the lock was not.
 
-FIXED. `machine.js:"export const holdsQuestorDoor = (quest) =>"` names a running quest that holds the door - a Person its
+FIXED. `machine.js:"export const holdsQuestorDoor"` names a running quest that holds the door - a Person its
 questor by the click, the one lastNPCClickedQuestorOf asks of. Each is a row
 (`questBridge.js:"if (!ql?.objectives?.length && !holdsQuestorDoor(q)) continue;"`), its Abandon drawn
 (`ui/enhanced/enhancedMenu.js:"} else if (sel.entries && sel.id != null && clean.abandon && clean.canAbandon?.(sel.id)) {"`), its
@@ -1862,7 +1862,7 @@ back in the pack and the Queen never asks again.
 WHAT THE PORT DID. NO-ASKS-AGAIN re-arms an inert No and the author's clearing No; a No that does something else stayed
 DFU's.
 
-FIXED. `noAsksAgain.js:"export function givesBackNo(quest, task, prompt) {"`: a No whose every action is a `get item` of
+FIXED. `noAsksAgain.js:"export function givesBackNo"`: a No whose every action is a `get item` of
 the item its asking click toted, named by nothing but the prompt, asks again once that item is back in the pack. The
 corpus has four (M0B11Y18 `_S.20_`, 80C0XY00 `_school_`, $CUREWER `_S.15_`, N0B00Y09 `_nononono_`). A departure,
 Port-Ledger A, NO-ASKS-AGAIN's row, widened.
@@ -1876,7 +1876,7 @@ as the player's choice - N0B00Y09's `_nononono_` is its "Keep it for the Guild" 
 tick after the No, N0B00Y09 settled `loyal` (+2, nothing to the Brotherhood) under a journal that still named the choice,
 and $CUREWER's refusal ended `failed` - with the questlines on, as they are by default and always online. A stamped
 quest's No that its sheet reads (a choice's `sets`, a task an objective or an outcome binds:
-`noAsksAgain.js:"export function sheetReadTasks(quest) {"`) is DFU's again, asked once. The reported queen's
+`noAsksAgain.js:"export function sheetReadTasks"`) is DFU's again, asked once. The reported queen's
 (M0B11Y18's sheet reads nothing of `_S.20_`) still asks again, and while the questlines are off all four do. Pinned by
 `test/systems/quest/audit_rpt1026_quests.test.js` (the stamped and unstamped census, N0B00Y09 and $CUREWER through the
 real bridge and layer; red at the batch head); `tools/mutants/audit_rpt1026_quests.json`.
@@ -2952,7 +2952,7 @@ raw (A0C01Y09's "_sister_ was found dead! And on the eve of %g3 wedding day too.
 character's clock, and the next load is far.
 
 FIXED. removeQuest drops the quest's progress rumor with it
-(`machine.js:"this.deps.removeProgressRumors?.(quest.uid);"`). A departure in WHEN (Port-Ledger A, RUMOR-ORPHAN;
+(`machine.js:"this.deps.removeProgressRumors?.(quest.uid)"`). A departure in WHEN (Port-Ledger A, RUMOR-ORPHAN;
 `06-Systems/Quest-Arc.md`).
 
 PINS. `test/systems/quest/rpt1026_misc_rumor.test.js` (1: the real machine and mill, wired as the world host wires

@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-QL-VOICE-the-share-s-dash-back",
     "file": "src/systems/quest/questShare.js",
-    "old": "'A questline is your own road. Its steps cannot be shared.'",
-    "new": "'A questline is your own road - its steps cannot be shared.'",
+    "old": "    return t('quest.share.questline', 'A questline is your own road. Its steps cannot be shared.');",
+    "new": "    return t('quest.share.questline', 'A questline is your own road - its steps cannot be shared.');",
     "tests": [
       "test/systems/questlines/qlvoice.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-QL-VOICE-the-receiver-s",
     "file": "src/systems/quest/questShare.js",
-    "old": "'cannot be given a step of a questline. Each player walks their own.'",
-    "new": "'cannot be given a step of a questline - each walks their own.'",
+    "old": "    return t('quest.share.questline.receiver', 'cannot be given a step of a questline. Each player walks their own.');",
+    "new": "    return t('quest.share.questline.receiver', 'cannot be given a step of a questline - each walks their own.');",
     "tests": [
       "test/systems/questlines/qlvoice.test.js"
     ]

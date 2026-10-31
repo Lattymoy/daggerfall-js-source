@@ -81,7 +81,7 @@ test('WORLD7: the chain by source - the hosts hand the played step under the sha
   }
   assert.match(rd('src/scenes/quest/questBridge.js'), /questClockStepMax: \(\) => ctx\.questClockStepMax\?\.\(\) \?\? Infinity,/);
   assert.equal((rd('src/systems/quest/machine.js').match(/questClockStepMax: \(\) => this\.deps\.questClockStepMax\?\.\(\) \?\? Infinity/g) ?? []).length, 5);   // QUEST1: receiveSharedQuest is the fourth door; PIN MOVED (QUEST-AUDIT III START-HELD): a save's scheduled children the fifth
-  assert.match(rd('src/systems/quest/parser.js'), /const quest = new Quest\(\{ rolls, actionFactory, nowSeconds, skySeconds, worldSeconds, raisedSeconds, hooks, questClockStepMax \}\);/);
+  assert.match(rd('src/systems/quest/parser.js'), /const quest = new Quest\(\{\n\s*rolls,\n\s*actionFactory,\n\s*nowSeconds,\n\s*skySeconds,\n\s*worldSeconds,\n\s*raisedSeconds,\n\s*hooks,\n\s*questClockStepMax,\n\s*\}\);/);
   assert.match(rd('src/systems/quest/quest.js'), /this\.questClockStepMax = questClockStepMax;/);
   assert.match(rd('src/systems/quest/clock.js'), /const step = caller\.questClockStepMax\?\.\(\) \?\? Infinity;\s*\n\s*const raw = now - this\._lastWorldTimeSample;\s*\n\s*if \(!Number\.isFinite\(step\)\) return Math\.trunc\(raw\);\s*\n\s*const raised = raisedSince\(caller\.raisedSeconds\?\.\(\), this\._lastRaisedSample\);\s*\n\s*return Math\.trunc\(Math\.min\(Math\.max\(raw - raised, 0\), step\)\);/);
   assert.match(rd('src/systems/quest/actions.js'), /const step = this\.parentQuest\.questClockStepMax\?\.\(\) \?\? Infinity;/);

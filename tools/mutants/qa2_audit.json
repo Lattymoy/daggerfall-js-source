@@ -32,8 +32,8 @@
   {
     "name": "QA2A-marker-json-name",
     "file": "src/systems/quest/markerCuration.js",
-    "old": "  const name = dfBlock?.servedName ?? dfBlock?.name;",
-    "new": "  const name = dfBlock?.name;",
+    "old": "  const name = dfBlock?.servedName ?? dfBlock?.name; // AUDIT QA2 B1: the name the town lays (the door's), not the JSON's own",
+    "new": "  const name = dfBlock?.name; // AUDIT QA2 B1: the name the town lays (the door's), not the JSON's own",
     "tests": [
       "test/systems/qa2_summoners.test.js",
       "test/systems/quest/fb1004d_questmarkers.test.js"
@@ -53,8 +53,8 @@
   {
     "name": "QA2A-link-town-left",
     "file": "src/systems/quest/machine.js",
-    "old": "Object.assign(link, linkSiteOf(place));   // AUDIT QA2: the whole site, its town with it",
-    "new": "link.buildingKey = place.siteDetails.buildingKey;",
+    "old": "        Object.assign(link, linkSiteOf(place)); // AUDIT QA2: the whole site, its town with it",
+    "new": "        link.buildingKey = place.siteDetails.buildingKey;",
     "tests": [
       "test/systems/quest/qa2_nearsite.test.js"
     ],
@@ -225,8 +225,8 @@
   {
     "name": "QA2A-home-first-ask",
     "file": "src/systems/quest/person.js",
-    "old": "`Place ${symbolName} ${scopeString} ${buildingTypeString}`, { nearTowns: false });",
-    "new": "`Place ${symbolName} ${scopeString} ${buildingTypeString}`);",
+    "old": "      homePlace = new Place(this.parentQuest, `Place ${symbolName} ${scopeString} ${buildingTypeString}`, {\n        nearTowns: false,\n      });",
+    "new": "      homePlace = new Place(this.parentQuest, `Place ${symbolName} ${scopeString} ${buildingTypeString}`);",
     "tests": [
       "test/systems/quest/qa2_nearsite.test.js"
     ],
@@ -255,8 +255,8 @@
   {
     "name": "QA2A-rung0",
     "file": "src/systems/quest/person.js",
-    "old": "    const to = buildings.find((b) => b.buildingKey === q.buildingKey && b.npcs.some(ownself))\n      ?? buildings.find(",
-    "new": "    const to = buildings.find(",
+    "old": "      buildings.find((b) => b.buildingKey === q.buildingKey && b.npcs.some(ownself)) ??\n      buildings.find((b) => b.isNamedBuilding && b.buildingName === hall.siteDetails.buildingName && b.npcs.length) ??",
+    "new": "      buildings.find((b) => b.isNamedBuilding && b.buildingName === hall.siteDetails.buildingName && b.npcs.length) ??",
     "tests": [
       "test/systems/quest/qa2_layouts.test.js"
     ],
@@ -356,8 +356,8 @@
   {
     "name": "QA2A-arrival-unshared",
     "file": "src/systems/quest/machine.js",
-    "old": "    this.sharedQuestNames.add(quest.questName);   // AUDIT QA2: a shared copy from its arrival on - the arrival's re-seat draws the share's die (Place.reseatMovedSite)\n    this.quests.set(quest.uid, quest); this._reseatArrived(quest);   // QUESTOR-MOVED: a copy from before the town mods, mended on arrival (its links made after)\n",
-    "new": "    this.quests.set(quest.uid, quest); this._reseatArrived(quest);   // QUESTOR-MOVED: a copy from before the town mods, mended on arrival (its links made after)\n    this.sharedQuestNames.add(quest.questName);\n",
+    "old": "    this.sharedQuestNames.add(quest.questName); // AUDIT QA2: a shared copy from its arrival on - the arrival's re-seat draws the share's die (Place.reseatMovedSite)\n    this.quests.set(quest.uid, quest);\n    this._reseatArrived(quest); // QUESTOR-MOVED: a copy from before the town mods, mended on arrival (its links made after)",
+    "new": "    this.quests.set(quest.uid, quest);\n    this._reseatArrived(quest); // QUESTOR-MOVED: a copy from before the town mods, mended on arrival (its links made after)\n    this.sharedQuestNames.add(quest.questName);",
     "tests": [
       "test/systems/quest/qa2_layouts.test.js"
     ],
@@ -396,8 +396,8 @@
   {
     "name": "QA2A-guild-look-order",
     "file": "src/systems/quest/person.js",
-    "old": "?? (guild ? halls.find((b) => b.npcs.some(sameLook)) ?? halls.find((b) => b.npcs.some((n) => n.factionID === q.factionID)) : null);",
-    "new": "?? (guild ? halls.find((b) => b.npcs.some((n) => n.factionID === q.factionID)) ?? halls.find((b) => b.npcs.some(sameLook)) : null);",
+    "old": "        ? (halls.find((b) => b.npcs.some(sameLook)) ??\n          halls.find((b) => b.npcs.some((n) => n.factionID === q.factionID)))",
+    "new": "        ? (halls.find((b) => b.npcs.some((n) => n.factionID === q.factionID)) ??\n          halls.find((b) => b.npcs.some(sameLook)))",
     "tests": [
       "test/systems/quest/qa2_layouts.test.js"
     ],

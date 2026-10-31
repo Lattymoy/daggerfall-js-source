@@ -177,8 +177,8 @@
   {
     "name": "RR3-20-the-registered-list-is-not-loaded",
     "file": "src/systems/quest/questLists.js",
-    "old": "    for (const questList of registeredQuestLists()) this._loadQuestList(questList);   // :160-161 - the registered lists\n",
-    "new": "",
+    "old": "    for (const questList of registeredQuestLists()) this._loadQuestList(questList); // :160-161 - the registered lists\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/quest/rr3_questline.test.js"
     ]

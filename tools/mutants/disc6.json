@@ -20,8 +20,8 @@
   {
     "name": "DISC6-quest-resync-wipes-kills",
     "file": "src/systems/quest/machine.js",
-    "old": "      r.killCount = Math.max(brought, was.killCount);\n",
-    "new": "",
+    "old": "      r.killCount = Math.max(brought, was.killCount);\n      r.learnedKills = was.learned; // AUDIT QA3 E3: by the envelope's sender (Foe.creditPartnerKill)",
+    "new": "      r.learnedKills = was.learned; // AUDIT QA3 E3: by the envelope's sender (Foe.creditPartnerKill)",
     "tests": [
       "test/systems/disc6.test.js"
     ]

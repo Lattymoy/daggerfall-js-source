@@ -952,7 +952,7 @@ they had just replaced (unseen in an interior's one slot, but the same null the 
 been fixed for).
 
 THE FIX. The popups' doors close saying why and naming the quest still open:
-`offerFlow.js:"export function questorBusy(machine) {"` - `{ kind: 'close', reason: 'activeQuestor', quest }`, the quest
+`offerFlow.js:"export function questorBusy"` - `{ kind: 'close', reason: 'activeQuestor', quest }`, the quest
 off the very scan `IsLastNPCClickedAnActiveQuestor` makes (`machine.js:"lastNPCClickedQuestorOf() {"`; the DFU member
 answers from it, its mcp stamp, log line and QUEST-SHELF's set-aside skip unchanged). The bridge boxes it
 (`questBridge.js:"case 'close': return step.reason === ACTIVE_QUESTOR ? [{ rows: questorBusyRows(step.quest) }] : [];"`):

@@ -51,8 +51,8 @@
   {
     "name": "TIME3-the-lived-part-unbounded",
     "file": "src/systems/quest/clock.js",
-    "old": "Math.min(Math.max(raw - raised, 0), step));   // QCLOCK-WORLD",
-    "new": "Math.max(raw - raised, 0));   // QCLOCK-WORLD",
+    "old": "    return Math.trunc(Math.min(Math.max(raw - raised, 0), step)); // QCLOCK-WORLD: the lived step, never the raise",
+    "new": "    return Math.trunc(Math.max(raw - raised, 0)); // QCLOCK-WORLD: the lived step, never the raise",
     "tests": [
       "test/systems/quest/time3_quests.test.js",
       "test/systems/quest/world7.test.js",
@@ -64,8 +64,8 @@
   {
     "name": "QCLOCK-WORLD-the-raise-charged-whole",
     "file": "src/systems/quest/clock.js",
-    "old": "Math.min(Math.max(raw - raised, 0), step));   // QCLOCK-WORLD",
-    "new": "Math.min(Math.max(raw - raised, 0), step) + raised);   // QCLOCK-WORLD",
+    "old": "    return Math.trunc(Math.min(Math.max(raw - raised, 0), step)); // QCLOCK-WORLD: the lived step, never the raise",
+    "new": "    return Math.trunc(Math.min(Math.max(raw - raised, 0), step) + raised); // QCLOCK-WORLD: the lived step, never the raise",
     "tests": [
       "test/systems/quest/time3_quests.test.js",
       "test/systems/quest/world7.test.js",
@@ -77,8 +77,8 @@
   {
     "name": "TIME3-the-tick-forgets-the-raise-sample",
     "file": "src/systems/quest/clock.js",
-    "old": "    this._lastRaisedSample = caller.raisedSeconds?.() ?? null;   // TIME3\n",
-    "new": "",
+    "old": "    this._lastRaisedSample = caller.raisedSeconds?.() ?? null; // TIME3\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/quest/time3_quests.test.js",
       "test/systems/quest/world7.test.js",
@@ -89,8 +89,8 @@
   {
     "name": "TIME3-the-start-forgets-the-raise-sample",
     "file": "src/systems/quest/clock.js",
-    "old": "      this._lastRaisedSample = this.parentQuest.raisedSeconds?.() ?? null;   // TIME3\n",
-    "new": "",
+    "old": "      this._lastRaisedSample = this.parentQuest.raisedSeconds?.() ?? null; // TIME3\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/quest/time3_quests.test.js",
       "test/systems/quest/world7.test.js",
@@ -101,8 +101,8 @@
   {
     "name": "TIME3-the-restore-keeps-a-raise-sample",
     "file": "src/systems/quest/clock.js",
-    "old": "    this._lastRaisedSample = this.parentQuest?.raisedSeconds?.() ?? null;   // TIME3: a restore (a load, a party member's copy) is a resume - no raise counted ACROSS it (AUDIT TIME: the count now, so a raise after it, before the first tick, is a raise - QCLOCK-WORLD: charged nothing)\n",
-    "new": "",
+    "old": "    this._lastRaisedSample = this.parentQuest?.raisedSeconds?.() ?? null; // TIME3: a restore (a load, a party member's copy) is a resume - no raise counted ACROSS it (AUDIT TIME: the count now, so a raise after it, before the first tick, is a raise - QCLOCK-WORLD: charged nothing)\n    this.startingTimeInSeconds = dataIn.startingTimeInSeconds;",
+    "new": "    this.startingTimeInSeconds = dataIn.startingTimeInSeconds;",
     "tests": [
       "test/systems/quest/time3_quests.test.js",
       "test/systems/quest/world7.test.js",
@@ -181,8 +181,8 @@
   {
     "name": "TIME3-until-the-characters-hour",
     "file": "src/systems/quest/questActionsExtension.js",
-    "old": "const now = Math.floor(((hooks?.skySeconds ?? hooks?.nowSeconds)?.() ?? 0) / 60);",
-    "new": "const now = Math.floor((hooks?.nowSeconds?.() ?? 0) / 60);",
+    "old": "      const now = Math.floor(((hooks?.skySeconds ?? hooks?.nowSeconds)?.() ?? 0) / 60); // classic minutes: midnight on a whole day - TIME3: the time of day is the sky's",
+    "new": "      const now = Math.floor((hooks?.nowSeconds?.() ?? 0) / 60); // classic minutes: midnight on a whole day - TIME3: the time of day is the sky's",
     "tests": [
       "test/systems/quest/time3_quests.test.js"
     ]
@@ -217,8 +217,8 @@
   {
     "name": "TIME3-the-start-on-the-characters-clock",
     "file": "src/systems/quest/quest.js",
-    "old": "    this.questStartTime = this.worldSeconds?.() ?? 0;",
-    "new": "    this.questStartTime = this.nowSeconds?.() ?? 0;",
+    "old": "    this.questStartTime = this.worldSeconds?.() ?? 0; // TIME3: a date the journal shows - the event clock's, read on the sky's calendar (%qdt)",
+    "new": "    this.questStartTime = this.nowSeconds?.() ?? 0; // TIME3: a date the journal shows - the event clock's, read on the sky's calendar (%qdt)",
     "tests": [
       "test/systems/quest/time3_quests.test.js"
     ]
@@ -226,8 +226,8 @@
   {
     "name": "TIME3-a-step-on-the-characters-clock",
     "file": "src/systems/quest/quest.js",
-    "old": "time: this.worldSeconds?.() ?? 0 });",
-    "new": "time: this.nowSeconds?.() ?? 0 });",
+    "old": "    this.activeLogMessages.set(stepID, { stepID, messageID, time: this.worldSeconds?.() ?? 0 }); // TIME3: the step's date, as the start's",
+    "new": "    this.activeLogMessages.set(stepID, { stepID, messageID, time: this.nowSeconds?.() ?? 0 }); // TIME3: the step's date, as the start's",
     "tests": [
       "test/systems/quest/time3_quests.test.js"
     ]
@@ -244,8 +244,8 @@
   {
     "name": "TIME3-the-sky-is-the-countdowns",
     "file": "src/systems/quest/quest.js",
-    "old": "    this.skySeconds = skySeconds ?? nowSeconds;",
-    "new": "    this.skySeconds = nowSeconds;",
+    "old": "    this.skySeconds = skySeconds ?? nowSeconds; // TIME3: () => the sky's seconds - an hour, a date, a season (DailyFrom, a notice's daytime); the one clock offline",
+    "new": "    this.skySeconds = nowSeconds; // TIME3: () => the sky's seconds - an hour, a date, a season (DailyFrom, a notice's daytime); the one clock offline",
     "tests": [
       "test/systems/quest/time3_quests.test.js"
     ]
@@ -253,8 +253,8 @@
   {
     "name": "TIME3-the-journal-on-the-countdowns",
     "file": "src/systems/quest/quest.js",
-    "old": "    this.worldSeconds = worldSeconds ?? nowSeconds;",
-    "new": "    this.worldSeconds = nowSeconds;",
+    "old": "    this.worldSeconds = worldSeconds ?? nowSeconds; // TIME3: () => the event clock's seconds - the journal's dates are stamped on it",
+    "new": "    this.worldSeconds = nowSeconds; // TIME3: () => the event clock's seconds - the journal's dates are stamped on it",
     "tests": [
       "test/systems/quest/time3_quests.test.js"
     ]
@@ -289,8 +289,8 @@
   {
     "name": "TIME3-a-copy-on-the-senders-clock",
     "file": "src/systems/quest/machine.js",
-    "old": "    questData = { ...this._onThisClock(questData), ...NO_SHELF, ...NO_INSTANCE, ql: receivedState(questData.ql) };   // TIME3: the sender's countdowns, on this character's clock; QL1: the party's progress, this holder's reward unpaid\n    const quest = this._newQuest();",
-    "new": "    questData = { ...questData, ...NO_SHELF, ...NO_INSTANCE, ql: receivedState(questData.ql) };\n    const quest = this._newQuest();",
+    "old": "    questData = { ...this._onThisClock(questData), ...NO_SHELF, ...NO_INSTANCE, ql: receivedState(questData.ql) }; // TIME3: the sender's countdowns, on this character's clock; QL1: the party's progress, this holder's reward unpaid",
+    "new": "    questData = { ...questData, ...NO_SHELF, ...NO_INSTANCE, ql: receivedState(questData.ql) };",
     "tests": [
       "test/systems/quest/time3_quests.test.js"
     ]
@@ -298,8 +298,8 @@
   {
     "name": "TIME3-a-resync-on-the-senders-clock",
     "file": "src/systems/quest/machine.js",
-    "old": "    questData = { ...this._onThisClock(questData), ...NO_SHELF };   // TIME3: the sender's countdowns, on this character's clock\n    const scratch = this._newQuest();",
-    "new": "    questData = { ...questData, ...NO_SHELF };\n    const scratch = this._newQuest();",
+    "old": "    questData = { ...this._onThisClock(questData), ...NO_SHELF }; // TIME3: the sender's countdowns, on this character's clock",
+    "new": "    questData = { ...questData, ...NO_SHELF };",
     "tests": [
       "test/systems/quest/time3_quests.test.js"
     ]
@@ -307,8 +307,8 @@
   {
     "name": "TIME3-a-resync-takes-the-senders-days",
     "file": "src/systems/quest/machine.js",
-    "old": "      r.remainingTimeInSeconds = was.remaining;\n",
-    "new": "",
+    "old": "      r.remainingTimeInSeconds = was.remaining;\n      r._lastWorldTimeSample = was.sample;",
+    "new": "      r._lastWorldTimeSample = was.sample;",
     "tests": [
       "test/systems/quest/time3_quests.test.js"
     ]
@@ -316,8 +316,8 @@
   {
     "name": "TIME3-a-resync-takes-the-senders-sample",
     "file": "src/systems/quest/machine.js",
-    "old": "      r._lastWorldTimeSample = was.sample;\n",
-    "new": "",
+    "old": "      r._lastWorldTimeSample = was.sample;\n      r._lastRaisedSample = was.raised;",
+    "new": "      r._lastRaisedSample = was.raised;",
     "tests": [
       "test/systems/quest/time3_quests.test.js"
     ]
@@ -325,8 +325,8 @@
   {
     "name": "TIME3-a-resync-forgets-the-raise-sample",
     "file": "src/systems/quest/machine.js",
-    "old": "      r._lastRaisedSample = was.raised;\n",
-    "new": "",
+    "old": "      r._lastRaisedSample = was.raised;\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/quest/time3_quests.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "TIME3-AUDIT-the-restore-forgives-a-raise-after-it",
     "file": "src/systems/quest/clock.js",
-    "old": "    this._lastRaisedSample = this.parentQuest?.raisedSeconds?.() ?? null;   // TIME3: a restore",
-    "new": "    this._lastRaisedSample = null;   // TIME3: a restore",
+    "old": "    this._lastRaisedSample = this.parentQuest?.raisedSeconds?.() ?? null; // TIME3: a restore (a load, a party member's copy) is a resume - no raise counted ACROSS it (AUDIT TIME: the count now, so a raise after it, before the first tick, is a raise - QCLOCK-WORLD: charged nothing)",
+    "new": "    this._lastRaisedSample = null; // TIME3: a restore (a load, a party member's copy) is a resume - no raise counted ACROSS it (AUDIT TIME: the count now, so a raise after it, before the first tick, is a raise - QCLOCK-WORLD: charged nothing)",
     "tests": [
       "test/systems/quest/time3_quests.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "TIME3-AUDIT-a-partner-behind-unfires-the-task",
     "file": "src/systems/quest/machine.js",
-    "old": "        if (task && was?.triggered) { task.triggered = true; task.prevTriggered = was.prev; }",
-    "new": "        void task; void was;",
+    "old": "        if (task && was?.triggered) {\n          task.triggered = true;\n          task.prevTriggered = was.prev;\n        }",
+    "new": "        void task;\n        void was;",
     "tests": [
       "test/systems/quest/time3_quests.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "TIME3-AUDIT-a-resync-restarts-the-wave",
     "file": "src/systems/quest/machine.js",
-    "old": "if (w && w.last) { action.lastSpawnTime = w.last;",
-    "new": "if (w && w.last) { void w.last;",
+    "old": "            action.lastSpawnTime = w.last;",
+    "new": "            void w.last;",
     "tests": [
       "test/systems/quest/time3_quests.test.js"
     ]
@@ -588,8 +588,8 @@
   {
     "name": "TIME3-AUDIT2-the-kept-clock-loses-its-edge",
     "file": "src/systems/quest/machine.js",
-    "old": "{ task.triggered = true; task.prevTriggered = was.prev; }",
-    "new": "{ task.triggered = true; }",
+    "old": "          task.prevTriggered = was.prev;\n        }",
+    "new": "        }",
     "tests": [
       "test/systems/quest/time3_quests.test.js"
     ]
@@ -597,8 +597,8 @@
   {
     "name": "TIME3-AUDIT2-the-wave-count-is-the-partners",
     "file": "src/systems/quest/machine.js",
-    "old": "action.spawnCounter = w.count | 0; }",
-    "new": "}",
+    "old": "            action.spawnCounter = w.count | 0;\n          }",
+    "new": "          }",
     "tests": [
       "test/systems/quest/time3_quests.test.js"
     ]

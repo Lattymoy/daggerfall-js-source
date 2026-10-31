@@ -232,8 +232,8 @@
   {
     "name": "HEART-KEPT-no-clone-mark",
     "file": "src/systems/quest/foe.js",
-    "old": "return this.itemQueue.map((it) => (it?.questItem ? { ...it, questClone: true } : { ...it }));",
-    "new": "return this.itemQueue.map((it) => ({ ...it }));",
+    "old": "    return this.itemQueue.map((it) => (it?.questItem ? { ...it, questClone: true } : { ...it }));",
+    "new": "    return this.itemQueue.map((it) => ({ ...it }));",
     "tests": [
       "test/systems/questlines/fb1025i_daedraheart.test.js"
     ],

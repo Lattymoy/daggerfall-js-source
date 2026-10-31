@@ -21,8 +21,8 @@
   {
     "name": "GUARD-WINDOW-the-guard-a-wait",
     "file": "src/systems/quest/clock.js",
-    "old": "  N0B20Y02: Object.freeze(['S.12']),   // GUARD-WINDOW (FIELD BUGS 2026-10-06c): \"I must guard %g2 for 3 hours\" - the attack comes inside it\n",
-    "new": "",
+    "old": "  N0B20Y02: Object.freeze(['S.12']), // GUARD-WINDOW (FIELD BUGS 2026-10-06c): \"I must guard %g2 for 3 hours\" - the attack comes inside it\n});",
+    "new": "});",
     "tests": [
       "test/systems/quest/fb1006c_guardwindow.test.js",
       "test/systems/quest/rest8_questwaits.test.js",

@@ -210,8 +210,8 @@
   {
     "name": "BODYGUARD-no-startup",
     "file": "src/systems/quest/clock.js",
-    "old": "      && !(ONLINE_DEADLINES[q?.questName] ?? []).includes(this.symbol?.name) && closesStartUp(q, this.symbol?.name)) return false;",
-    "new": "      && !(ONLINE_DEADLINES[q?.questName] ?? []).includes(this.symbol?.name) && false) return false;",
+    "old": "      closesStartUp(q, this.symbol?.name)",
+    "new": "      false",
     "tests": [
       "test/systems/quest/fb1003_bodyguard.test.js",
       "test/systems/quest/fb1021d_ravenclose.test.js"
@@ -220,8 +220,8 @@
   {
     "name": "BODYGUARD-settles",
     "file": "src/systems/quest/clock.js",
-    "old": "  if (startUp.some((tn) => reached(quest, tn, { conditional: false }).settles)) return false;\n",
-    "new": "",
+    "old": "  if (startUp.some((tn) => reached(quest, tn, { conditional: false }).settles)) return false;\n  const end = reached(quest, name, { alone: true, live: true });",
+    "new": "  const end = reached(quest, name, { alone: true, live: true });",
     "tests": [
       "test/systems/quest/fb1003_bodyguard.test.js"
     ]

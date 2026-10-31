@@ -22,10 +22,10 @@ stand's click.
 FOUND. "The First Printing" is A0C00Y12. "Mordastyr Moorford" is its `Person _thief_ face 97 faction
 The_Thieves_Guild local`: no line places him and no task answers a click on him. The Thieves Guild's faction row
 (`The_Thieves_Guild, 0, -1, 42`) is no building type, so the person is given a generated home, a random house
-(`person.js:"_assignHomeTown(world, scopeString) {"`), and Person.Tick stands him there the first time the player walks
+(`person.js:"_assignHomeTown(world, scopeString)"`), and Person.Tick stands him there the first time the player walks
 in - once: DFU's Person.cs asks `lastAssignedPlaceSymbol == null && homePlaceSymbol != null && !assignedToHome`, "will
 not be called again as assignment is permanent for duration of quest", and the port does the same
-(`person.js:"  tick(caller) {"`, `person.js:"placeAtHome() {"`). A click on a quest resource that answers ends the
+(`person.js:"tick(caller) {"`, `person.js:"placeAtHome() {"`). A click on a quest resource that answers ends the
 activation (PlayerActivate.cs:1523-1528; `worldModes.js:"const foundInActiveQuest = s.behaviour?.doClick() ?? false;"`),
 so no talk window opens - DFU's own. The confrontation is `Foe _thiefFoe_ is Thief`: `_S.02_`-`_S.04_` are `daily from`
 windows, each `pc at _house_ / _inn_ / _store_` placing the foe in that building (00:00-08:00 the house the rumours name,

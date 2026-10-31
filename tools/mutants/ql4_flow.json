@@ -209,8 +209,8 @@
   {
     "name": "AUDIT-QL-FLOW-BRANCH-12-shape-read-by-the-switch-share",
     "file": "src/systems/quest/questShare.js",
-    "old": "{ questlines: data.ql?.stamp === QL_STAMP }",
-    "new": "{}",
+    "old": "  const local =\n    machine.parseQuestShape?.(questName, data.factionId, { questlines: data.ql?.stamp === QL_STAMP }) ?? null;",
+    "new": "  const local = machine.parseQuestShape?.(questName, data.factionId, {}) ?? null;",
     "tests": [
       "test/systems/questlines/ql4_flow.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "AUDIT-QL-FLOW-BRANCH-14-restart-stamped-by-the-switch",
     "file": "src/systems/quest/machine.js",
-    "old": "    if (stamped) fresh.ql = this.deps.questlinesStamp?.(fresh) ?? { ...freshState(), tier: old.ql.tier };\n",
-    "new": "",
+    "old": "    if (stamped) fresh.ql = this.deps.questlinesStamp?.(fresh) ?? { ...freshState(), tier: old.ql.tier };\n    // AUDIT QA3 A2: the gold the old copy paid is paid - its new copy's `get item` and `give pc` of it pay nothing more",
+    "new": "    // AUDIT QA3 A2: the gold the old copy paid is paid - its new copy's `get item` and `give pc` of it pay nothing more",
     "tests": [
       "test/systems/questlines/ql4_flow.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "AUDIT-QL-FLOW-BRANCH-14-restart-read-by-the-switch",
     "file": "src/systems/quest/machine.js",
-    "old": "this.deps.getQuestSourceLines?.(old.questName, stamped || undefined);",
-    "new": "this.deps.getQuestSourceLines?.(old.questName);",
+    "old": "    const lines = this.deps.getQuestSourceLines?.(old.questName, stamped || undefined);",
+    "new": "    const lines = this.deps.getQuestSourceLines?.(old.questName);",
     "tests": [
       "test/systems/questlines/ql4_flow.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "AUDIT-QL-FLOW-REWARD-1-copy-not-re-tiered",
     "file": "src/systems/quest/machine.js",
-    "old": "    if (quest.ql) quest.ql.tier = this.deps.questlinesStamp?.(quest)?.tier ?? 1;\n",
-    "new": "",
+    "old": "    if (quest.ql) quest.ql.tier = this.deps.questlinesStamp?.(quest)?.tier ?? 1;\n    for (const r of quest.resources.values()) if (r.isItem) r.goldPaid = false; // QUEST-AUDIT III GOLD-ONCE: the holder's own - this copy has paid nothing",
+    "new": "    for (const r of quest.resources.values()) if (r.isItem) r.goldPaid = false; // QUEST-AUDIT III GOLD-ONCE: the holder's own - this copy has paid nothing",
     "tests": [
       "test/systems/questlines/ql4_flow.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "AUDIT-QL-FLOW-REWARD-2-sender-gate-gone",
     "file": "src/systems/quest/questShare.js",
-    "old": "  if (lineStepOf(data.questName)) return { ok: false, reason: 'questline' };\n",
-    "new": "",
+    "old": "  if (lineStepOf(data.questName)) return { ok: false, reason: 'questline' };\n  // SHARE-MEND: the markers travel slim (slimShareMarkers) and the envelope says which build made it",
+    "new": "  // SHARE-MEND: the markers travel slim (slimShareMarkers) and the envelope says which build made it",
     "tests": [
       "test/systems/questlines/ql4_flow.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "AUDIT-QL-FLOW-REWARD-2-receiver-gate-gone",
     "file": "src/systems/quest/questShare.js",
-    "old": "  if (lineStepOf(questName)) return { ok: false, reason: 'questline' };",
-    "new": "",
+    "old": "  if (lineStepOf(questName)) return { ok: false, reason: 'questline' }; // AUDIT QUESTLINES REWARD-2: a line's step, on receipt too (prepareShareData)",
+    "new": "  // AUDIT QUESTLINES REWARD-2: a line's step, on receipt too (prepareShareData)",
     "tests": [
       "test/systems/questlines/ql4_flow.test.js"
     ]

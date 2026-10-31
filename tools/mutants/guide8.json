@@ -56,7 +56,7 @@
   {
     "name": "GUIDE8-a-person-named-as-an-item",
     "file": "src/systems/quest/questGuidance.js",
-    "old": "    const name = res.isPerson === true ? (res.displayName || 'Someone') : (itemName(s, res) || 'Quest item');",
+    "old": "    const name = res.isPerson === true ? res.displayName || 'Someone' : itemName(s, res) || 'Quest item';",
     "new": "    const name = itemName(s, res) || 'Quest item';",
     "tests": [
       "test/ui/automap/guide8_questguidance.test.js"
@@ -65,8 +65,8 @@
   {
     "name": "GUIDE8-the-foes-unmarked",
     "file": "src/systems/quest/questGuidance.js",
-    "old": "    out.push({ at: [feet[0], feet[1], feet[2]], name: b.targetResource?.displayName || foeName(f) || 'Quest foe', followed: followed(b.questUID) });\n",
-    "new": "",
+    "old": "    out.push({\n      at: [feet[0], feet[1], feet[2]],\n      name: b.targetResource?.displayName || foeName(f) || 'Quest foe',\n      followed: followed(b.questUID),\n    });\n  }",
+    "new": "  }",
     "tests": [
       "test/ui/automap/guide8_questguidance.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-DELVE-TOWN-any-town",
     "file": "src/systems/quest/questGuidance.js",
-    "old": " || (Number(b.mapId) >>> 0) !== here) continue;",
-    "new": ") continue;",
+    "old": "    if (!b || !(b.buildingKey > 0) || Number(b.mapId) >>> 0 !== here) continue;",
+    "new": "    if (!b || !(b.buildingKey > 0)) continue;",
     "tests": [
       "test/ui/automap/guide8_questguidance.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-DELVE-TOWN-the-follow-lost",
     "file": "src/systems/quest/questGuidance.js",
-    "old": "followed: followed || !!had?.followed",
-    "new": "followed",
+    "old": "    out.set(b.buildingKey, { buildingKey: b.buildingKey, followed: followed || !!had?.followed });",
+    "new": "    out.set(b.buildingKey, { buildingKey: b.buildingKey, followed });",
     "tests": [
       "test/ui/automap/guide8_questguidance.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "AUDIT-DELVE-E6-the-people-unmarked",
     "file": "src/systems/quest/questGuidance.js",
-    "old": "    out.push({ at: [p.x, p.y, p.z], name: res.displayName || 'Someone', followed: followed(b.questUID) });\n",
-    "new": "",
+    "old": "    out.push({ at: [p.x, p.y, p.z], name: res.displayName || 'Someone', followed: followed(b.questUID) });\n  }",
+    "new": "  }",
     "tests": [
       "test/ui/automap/guide8_questguidance.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "AUDIT-DELVE-C6-the-nearest-over-the-followed",
     "file": "src/systems/quest/questGuidance.js",
-    "old": "    if (best) break;",
-    "new": "",
+    "old": "    if (best) break;\n  }",
+    "new": "  }",
     "tests": [
       "test/ui/automap/guide8_questguidance.test.js"
     ]

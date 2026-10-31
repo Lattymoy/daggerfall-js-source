@@ -2,8 +2,8 @@
   {
     "name": "SHARE-REVEAL-the-reveal-stays-the-clickers",
     "file": "src/systems/quest/machine.js",
-    "old": "'GetItem', 'RevealLocation']);",
-    "new": "'GetItem']);",
+    "old": "const REPLAYABLE_ONE_TIME_ACTIONS = new Set(['TeleportPc', 'GivePc', 'TrainPc', 'GetItem', 'RevealLocation']);",
+    "new": "const REPLAYABLE_ONE_TIME_ACTIONS = new Set(['TeleportPc', 'GivePc', 'TrainPc', 'GetItem']);",
     "tests": [
       "test/systems/quest/fb1013e_sharereveal.test.js"
     ]

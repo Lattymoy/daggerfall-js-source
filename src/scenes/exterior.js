@@ -2905,7 +2905,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     surfacePlayer,
     // QG1: the ready-spell doors - EntityEffectManager's two events
     // (hostMagic.js:"onNewReadySpell ="), which are the ONLY route into the quest
-    // machine's CastSpellDo / CastEffectDo latches (machine.js:"LATCHES this on the"/machine.js:"PlayerEffectManager.OnCastReadySpell";
+    // machine's CastSpellDo / CastEffectDo latches (machine.js:"LATCHES this on the"machine.js:"PlayerEffectManager.OnCastReadySpell";
     // actions.js:"machine's notifyNewReadySpell/notifyCastReadySpell"). This host owns its own cast engine and passed
     // neither key, so on this route - and, because worldModes takes THIS
     // instance indoors, in every shop entered from it - `cast X spell do`

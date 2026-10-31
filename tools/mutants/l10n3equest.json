@@ -2,8 +2,8 @@
   {
     "name": "L10N3e-quest-foe-NameMacro1",
     "file": "src/systems/quest/foe.js",
-    "old": "return getLocalizedEnemyName(this.foeType, this.typeName);",
-    "new": "return this.typeName;",
+    "old": "    if (macroType === 1) return getLocalizedEnemyName(this.foeType, this.typeName); // NameMacro1",
+    "new": "    if (macroType === 1) return this.typeName; // NameMacro1",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "L10N3e-quest-person-shownPersonName-lookup",
     "file": "src/systems/quest/person.js",
-    "old": "? getLocalizedFactionName(person.factionData.id, person.displayName) : person?.displayName",
-    "new": "? person.displayName : person?.displayName",
+    "old": "  namedByFaction(person?.factionData)\n    ? getLocalizedFactionName(person.factionData.id, person.displayName)\n    : person?.displayName;",
+    "new": "  namedByFaction(person?.factionData) ? person.displayName : person?.displayName;",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "L10N3e-quest-person-zero-record-guard",
     "file": "src/systems/quest/person.js",
-    "old": "&& fd?.id !== 0;",
-    "new": ";",
+    "old": "const namedByFaction = (fd) =>\n  (fd?.type === FACTION_TYPES.Individual || fd?.type === FACTION_TYPES.Daedra) && fd?.id !== 0;",
+    "new": "const namedByFaction = (fd) => fd?.type === FACTION_TYPES.Individual || fd?.type === FACTION_TYPES.Daedra;",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "L10N3e-quest-person-NameMacro1-shown",
     "file": "src/systems/quest/person.js",
-    "old": "return shownPersonName(this);",
-    "new": "return this.displayName;",
+    "old": "        return shownPersonName(this);",
+    "new": "        return this.displayName;",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]
@@ -38,7 +38,7 @@
   {
     "name": "L10N3e-quest-person-NPC-gender-getter",
     "file": "src/systems/quest/person.js",
-    "old": "GrammarManager.grammarProcessor.setNPCGenderGetter(() => (quest.lastResourceReferenced?.gender === GENDERS.Female ? 'female' : 'male'));",
+    "old": "    GrammarManager.grammarProcessor.setNPCGenderGetter(() =>\n      quest.lastResourceReferenced?.gender === GENDERS.Female ? 'female' : 'male',\n    );",
     "new": "",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "L10N3e-quest-person-guild-name",
     "file": "src/systems/quest/person.js",
-    "old": "getLocalizedFactionName(quest.factionId, guild.name)",
-    "new": "guild.name",
+    "old": "          return guild ? getLocalizedFactionName(quest.factionId, guild.name) : false;",
+    "new": "          return guild ? guild.name : false;",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "L10N3e-quest-person-own-faction-name",
     "file": "src/systems/quest/person.js",
-    "old": "getLocalizedFactionName(this.factionData.id, name)",
-    "new": "name",
+    "old": "        return name != null ? getLocalizedFactionName(this.factionData.id, name) : false;",
+    "new": "        return name != null ? name : false;",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "L10N3e-quest-person-flat-caption",
     "file": "src/systems/quest/person.js",
-    "old": "if (caption != null) return localizedText(String((archive << 7) + record), caption, TextCollections.TextFlats);",
-    "new": "if (caption != null) return caption;",
+    "old": "        if (caption != null) return localizedText(String((archive << 7) + record), caption, TextCollections.TextFlats);",
+    "new": "        if (caption != null) return caption;",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "L10N3e-quest-person-race-name",
     "file": "src/systems/quest/person.js",
-    "old": "return race ? raceDisplayName(race.key) : false;",
-    "new": "return race ? race.name : false;",
+    "old": "        return race ? raceDisplayName(race.key) : false;",
+    "new": "        return race ? race.name : false;",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "L10N3e-quest-item-artifact",
     "file": "src/systems/quest/item.js",
-    "old": "it.shortName ?? shownItemName(it) ?? false",
-    "new": "it.shortName ?? it.name ?? false",
+    "old": "    if (this.artifact) return it.shortName ?? shownItemName(it) ?? false;",
+    "new": "    if (this.artifact) return it.shortName ?? it.name ?? false;",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]

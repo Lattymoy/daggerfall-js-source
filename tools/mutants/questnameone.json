@@ -29,8 +29,8 @@
   {
     "name": "QUEST-NAME-ONE-the-faction-test-dropped",
     "file": "src/systems/quest/person.js",
-    "old": "(person?.isPerson === true && !namedByFaction(person.factionData) && person.displayName)",
-    "new": "(person?.isPerson === true && person.displayName)",
+    "old": "export const personOwnName = (person) =>\n  (person?.isPerson === true && !namedByFaction(person.factionData) && person.displayName) || null;",
+    "new": "export const personOwnName = (person) => (person?.isPerson === true && person.displayName) || null;",
     "tests": [
       "test/systems/fb1020_questnameone.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "QUEST-NAME-ONE-anything-carries-a-name",
     "file": "src/systems/quest/person.js",
-    "old": "(person?.isPerson === true && !namedByFaction(person.factionData) && person.displayName)",
-    "new": "(!namedByFaction(person?.factionData) && person?.displayName)",
+    "old": "export const personOwnName = (person) =>\n  (person?.isPerson === true && !namedByFaction(person.factionData) && person.displayName) || null;",
+    "new": "export const personOwnName = (person) => (!namedByFaction(person?.factionData) && person?.displayName) || null;",
     "tests": [
       "test/systems/fb1020_questnameone.test.js"
     ]

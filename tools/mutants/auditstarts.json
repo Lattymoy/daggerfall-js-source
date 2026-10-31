@@ -448,8 +448,8 @@
   {
     "name": "AUDIT-STARTS-Q5-restores-uncounted",
     "file": "src/systems/quest/machine.js",
-    "old": "    this.restores = (this.restores ?? 0) + 1;",
-    "new": "",
+    "old": "    this.restores = (this.restores ?? 0) + 1; // AUDIT STARTS Q5: a load landed - what a start still on its way reads (scenes/startsHost.js begin)",
+    "new": "    // AUDIT STARTS Q5: a load landed - what a start still on its way reads (scenes/startsHost.js begin)",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -467,8 +467,8 @@
   {
     "name": "AUDIT-STARTS-Q3-the-letter-at-sea",
     "file": "src/systems/quest/questPatches.js",
-    "old": "    { old: ' most appreciative.\\n    Before landing in Daggerfall, a sudden storm\\n capsized the ship. I barely made it into this cave.\\n', new: ' most appreciative.\\n', count: 1 },\n",
-    "new": "",
+    "old": "      old: ' most appreciative.\\n    Before landing in Daggerfall, a sudden storm\\n capsized the ship. I barely made it into this cave.\\n',\n      new: ' most appreciative.\\n',\n      count: 1,\n    },\n    {\n      old: \"     I heard about your accident at sea, and feared the\\n worst. Now that I've heard you're alive and well, I\\n would like the opportunity to meet with you and discuss\\n our beloved Emperor's mission in the Iliac Bay.\\n\",",
+    "new": "      old: \"     I heard about your accident at sea, and feared the\\n worst. Now that I've heard you're alive and well, I\\n would like the opportunity to meet with you and discuss\\n our beloved Emperor's mission in the Iliac Bay.\\n\",",
     "tests": [
       "test/systems/starts/start1_bay.test.js"
     ]

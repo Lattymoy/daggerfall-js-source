@@ -2,8 +2,8 @@
   {
     "name": "QRESET-removed-before-parse",
     "file": "src/systems/quest/machine.js",
-    "old": "    const fresh = lines ? this.parseQuestForLists(lines, old.factionId) : null;\n    if (!fresh) return { ok: false, reason: 'unparsed' };\n    if (stamped) fresh.ql = this.deps.questlinesStamp?.(fresh) ?? { ...freshState(), tier: old.ql.tier };\n    // AUDIT QA3 A2: the gold the old copy paid is paid - its new copy's `get item` and `give pc` of it pay nothing more\n    for (const [key, r] of old.resources) if (r?.isItem && r.goldPaid && fresh.resources.get(key)?.isItem) fresh.resources.get(key).goldPaid = true;\n    if (this.sharedCandidateNamed(old.questName) === old) this.sharedQuestNames.delete(old.questName);\n    this.removeQuest(old);\n",
-    "new": "    if (this.sharedCandidateNamed(old.questName) === old) this.sharedQuestNames.delete(old.questName);\n    this.removeQuest(old);\n    const fresh = lines ? this.parseQuestForLists(lines, old.factionId) : null;\n    if (!fresh) return { ok: false, reason: 'unparsed' };\n    if (stamped) fresh.ql = this.deps.questlinesStamp?.(fresh) ?? { ...freshState(), tier: old.ql.tier };\n    // AUDIT QA3 A2: the gold the old copy paid is paid - its new copy's `get item` and `give pc` of it pay nothing more\n    for (const [key, r] of old.resources) if (r?.isItem && r.goldPaid && fresh.resources.get(key)?.isItem) fresh.resources.get(key).goldPaid = true;\n",
+    "old": "    const fresh = lines ? this.parseQuestForLists(lines, old.factionId) : null;\n    if (!fresh) return { ok: false, reason: 'unparsed' };\n    if (stamped) fresh.ql = this.deps.questlinesStamp?.(fresh) ?? { ...freshState(), tier: old.ql.tier };\n    // AUDIT QA3 A2: the gold the old copy paid is paid - its new copy's `get item` and `give pc` of it pay nothing more\n    for (const [key, r] of old.resources)\n      if (r?.isItem && r.goldPaid && fresh.resources.get(key)?.isItem) fresh.resources.get(key).goldPaid = true;\n    if (this.sharedCandidateNamed(old.questName) === old) this.sharedQuestNames.delete(old.questName);\n    this.removeQuest(old);",
+    "new": "    if (this.sharedCandidateNamed(old.questName) === old) this.sharedQuestNames.delete(old.questName);\n    this.removeQuest(old);\n    const fresh = lines ? this.parseQuestForLists(lines, old.factionId) : null;\n    if (!fresh) return { ok: false, reason: 'unparsed' };\n    if (stamped) fresh.ql = this.deps.questlinesStamp?.(fresh) ?? { ...freshState(), tier: old.ql.tier };\n    // AUDIT QA3 A2: the gold the old copy paid is paid - its new copy's `get item` and `give pc` of it pay nothing more\n    for (const [key, r] of old.resources)\n      if (r?.isItem && r.goldPaid && fresh.resources.get(key)?.isItem) fresh.resources.get(key).goldPaid = true;",
     "tests": [
       "test/scenes/quest/questreset1.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "QRESET-old-kept",
     "file": "src/systems/quest/machine.js",
-    "old": "    this.removeQuest(old);\n    try {\n      this.startQuestImmediate(fresh);",
-    "new": "    try {\n      this.startQuestImmediate(fresh);",
+    "old": "    this.removeQuest(old);\n    try {",
+    "new": "    try {",
     "tests": [
       "test/scenes/quest/questreset1.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "QRESET-start-skipped",
     "file": "src/systems/quest/machine.js",
-    "old": "      this.startQuestImmediate(fresh);\n    } catch (e) {\n      console.warn(`[quest] QuestMachine failed to restart",
-    "new": "      void fresh;\n    } catch (e) {\n      console.warn(`[quest] QuestMachine failed to restart",
+    "old": "      this.startQuestImmediate(fresh);",
+    "new": "      void fresh;",
     "tests": [
       "test/scenes/quest/questreset1.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "QRESET-abandon-ladder-unread",
     "file": "src/systems/quest/machine.js",
-    "old": "    const why = this.shelveRefusal(uid);   // Abandon's own rungs: gone, set aside, ending, the world's own\n    if (why) return why;",
-    "new": "    const why = this.shelveRefusal(uid);   // Abandon's own rungs: gone, set aside, ending, the world's own\n    if (why === 'gone') return why;",
+    "old": "    if (why) return why;",
+    "new": "    if (why === 'gone') return why;",
     "tests": [
       "test/scenes/quest/questreset1.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "QRESET-questor-rung",
     "file": "src/systems/quest/machine.js",
-    "old": "    if (holdsQuestorDoor(quest)) return 'questor';\n",
-    "new": "",
+    "old": "    if (holdsQuestorDoor(quest)) return 'questor';\n    // QUEST-AUDIT III RESTART-PAID: a quest that has paid out runs on to its end - restarted, it paid again (S0000015's",
+    "new": "    // QUEST-AUDIT III RESTART-PAID: a quest that has paid out runs on to its end - restarted, it paid again (S0000015's",
     "tests": [
       "test/scenes/quest/questreset1.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "QRESET-child-rung",
     "file": "src/systems/quest/machine.js",
-    "old": "&& !a.isComplete && a.questUId === quest.uid)) return 'child';",
-    "new": "&& a.questUId === quest.uid)) return 'child';",
+    "old": "        if (task.actions?.some((a) => a?.typeName === 'RunQuest' && !a.isComplete && a.questUId === quest.uid))\n          return 'child';",
+    "new": "        if (task.actions?.some((a) => a?.typeName === 'RunQuest' && a.questUId === quest.uid)) return 'child';",
     "tests": [
       "test/scenes/quest/questreset1.test.js"
     ]
@@ -65,7 +65,7 @@
   {
     "name": "QRESET-host-refuse-unasked",
     "file": "src/systems/quest/machine.js",
-    "old": "    return refuse ? refuse(quest) ?? null : null;",
+    "old": "    return refuse ? (refuse(quest) ?? null) : null;",
     "new": "    return null;",
     "tests": [
       "test/scenes/quest/questreset1.test.js"

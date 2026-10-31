@@ -3,7 +3,7 @@
     "name": "AUDITREST2-Q-Q1-a-starter-that-lowers-a-standing-closes",
     "file": "src/systems/quest/clock.js",
     "old": "  for (const tn of startersOf(quest, name)) {\n    if (reached(quest, tn, { conditional: false }).settles) return true;",
-    "new": "  for (const tn of startersOf(quest, name)) {\n    if (reached(quest, tn, { conditional: false }).settles || reached(quest, tn, { conditional: false }).lowers) return true;",
+    "new": "  for (const tn of startersOf(quest, name)) {\n    if (reached(quest, tn, { conditional: false }).settles || reached(quest, tn, { conditional: false }).lowers)\n      return true;",
     "tests": [
       "test/systems/quest/auditrest2_quests.test.js",
       "test/systems/quest/rest8_audit_timefree.test.js"
@@ -13,8 +13,8 @@
   {
     "name": "AUDITREST2-Q-Q2-the-chapter-out-of-the-table",
     "file": "src/systems/quest/clock.js",
-    "old": "  S0000011: Object.freeze(['S.01']),   // AUDIT REST II Q2: Barenziah's chapter, before the Necromancers steal it\n",
-    "new": "",
+    "old": "  S0000011: Object.freeze(['S.01']), // AUDIT REST II Q2: Barenziah's chapter, before the Necromancers steal it\n  O0B00Y12: Object.freeze(['S.01']), // AUDIT REST II Q2: the drop, \"as soon as possible\"",
+    "new": "  O0B00Y12: Object.freeze(['S.01']), // AUDIT REST II Q2: the drop, \"as soon as possible\"",
     "tests": [
       "test/systems/quest/auditrest2_quests.test.js",
       "test/systems/quest/rest8_questwaits.test.js",
@@ -26,8 +26,8 @@
   {
     "name": "AUDITREST2-Q-Q2-the-drop-out-of-the-table",
     "file": "src/systems/quest/clock.js",
-    "old": "  O0B00Y12: Object.freeze(['S.01']),   // AUDIT REST II Q2: the drop, \"as soon as possible\"\n",
-    "new": "",
+    "old": "  O0B00Y12: Object.freeze(['S.01']), // AUDIT REST II Q2: the drop, \"as soon as possible\"\n  K0C00Y07: Object.freeze(['2ransom']), // AUDIT REST III D2: \"The ransom must be paid in =2ransom_ days or they will kill _victim_\"",
+    "new": "  K0C00Y07: Object.freeze(['2ransom']), // AUDIT REST III D2: \"The ransom must be paid in =2ransom_ days or they will kill _victim_\"",
     "tests": [
       "test/systems/quest/auditrest2_quests.test.js",
       "test/systems/quest/rest8_questwaits.test.js",
@@ -103,8 +103,8 @@
   {
     "name": "AUDITREST2-Q-Q4-frozen-again-in-the-doc",
     "file": "src/systems/quest/clock.js",
-    "old": "and stays a deadline, on played time (it was frozen under TIMEFREE).",
-    "new": "and stays frozen.",
+    "old": " *  late\" line) is a loss even then, and stays a deadline, on played time (it was frozen under TIMEFREE).",
+    "new": " *  late\" line) is a loss even then, and stays frozen.",
     "tests": [
       "test/systems/quest/auditrest2_quests.test.js"
     ]

@@ -11,8 +11,8 @@
   {
     "name": "AD28Q-S1-final-never-pending",
     "file": "src/systems/quest/machine.js",
-    "old": "  nextFinishedShare() { return this._finishedShares[0] ?? null; }",
-    "new": "  nextFinishedShare() { return null; }",
+    "old": "    return this._finishedShares[0] ?? null;",
+    "new": "    return null;",
     "tests": [
       "test/systems/quest/auditdisc28_quests.test.js",
       "test/systems/quest/disc28_quest.test.js"
@@ -57,8 +57,8 @@
   {
     "name": "AD28Q-S4-grace-resynced",
     "file": "src/systems/quest/machine.js",
-    "old": "    if (quest.ticksToEnd > 0) return quest;\n",
-    "new": "",
+    "old": "    if (quest.ticksToEnd > 0) return quest;\n    // AUDIT DROPS A3: DRY RUN first - restoreSaveData clears as it goes, so an envelope it chokes on halfway",
+    "new": "    // AUDIT DROPS A3: DRY RUN first - restoreSaveData clears as it goes, so an envelope it chokes on halfway",
     "tests": [
       "test/systems/quest/auditdisc28_quests.test.js"
     ]
@@ -67,7 +67,7 @@
     "name": "AD28Q-S4-arming-spends-the-once",
     "file": "src/systems/quest/machine.js",
     "old": "        if (!was && action.isComplete && REPLAYABLE_ONE_TIME_ACTIONS.has(action.typeName)) action.isComplete = false;",
-    "new": "        if (!was && action.isComplete && REPLAYABLE_ONE_TIME_ACTIONS.has(action.typeName) && !(quest._armed ??= new Set()).has(`${t}:${a}`)) { quest._armed.add(`${t}:${a}`); action.isComplete = false; }",
+    "new": "        if (\n          !was &&\n          action.isComplete &&\n          REPLAYABLE_ONE_TIME_ACTIONS.has(action.typeName) &&\n          !(quest._armed ??= new Set()).has(`${t}:${a}`)\n        ) {\n          quest._armed.add(`${t}:${a}`);\n          action.isComplete = false;\n        }",
     "tests": [
       "test/systems/quest/auditdisc28_quests.test.js",
       "test/systems/quest/auditdrops.test.js"
@@ -85,8 +85,8 @@
   {
     "name": "AD28Q-S5-any-end-quest-reads-ending",
     "file": "src/systems/quest/questShare.js",
-    "old": "if (action?.type === 'EndQuest' && action.isComplete === true) return true;",
-    "new": "if (action?.type === 'EndQuest') return true;",
+    "old": "    for (const action of Array.isArray(task?.actions) ? task.actions : [])\n      if (action?.type === 'EndQuest' && action.isComplete === true) return true;",
+    "new": "    for (const action of Array.isArray(task?.actions) ? task.actions : []) if (action?.type === 'EndQuest') return true;",
     "tests": [
       "test/systems/quest/auditdisc28_quests.test.js",
       "test/systems/quest/disc28_quest.test.js"
@@ -512,8 +512,8 @@
   {
     "name": "AD28Q-S1b-host-requeues-a-sync",
     "file": "src/systems/quest/questShare.js",
-    "old": "  if (quest?.data?.final === 1) { machine?.pendFinishedShare?.(quest.data); return; }",
-    "new": "  if (quest?.data) { machine?.pendFinishedShare?.(quest.data); return; }",
+    "old": "  if (quest?.data?.final === 1) {",
+    "new": "  if (quest?.data) {",
     "tests": [
       "test/systems/quest/auditdisc28_quests.test.js"
     ]
@@ -521,8 +521,8 @@
   {
     "name": "AD28Q-S1b-machine-drops-it",
     "file": "src/systems/quest/machine.js",
-    "old": "    if (data && this.finishedSharedQuestNames.has(data.questName) && !this._finishedShares.includes(data)) this._finishedShares.unshift(data);\n",
-    "new": "",
+    "old": "  pendFinishedShare(data) {\n    if (data && this.finishedSharedQuestNames.has(data.questName) && !this._finishedShares.includes(data))\n      this._finishedShares.unshift(data);\n  }",
+    "new": "  pendFinishedShare(data) {}",
     "tests": [
       "test/systems/quest/auditdisc28_quests.test.js"
     ]
@@ -530,8 +530,8 @@
   {
     "name": "AD28Q-S1b-a-load-brings-it-back",
     "file": "src/systems/quest/machine.js",
-    "old": "    if (data && this.finishedSharedQuestNames.has(data.questName) && !this._finishedShares.includes(data))",
-    "new": "    if (data && !this._finishedShares.includes(data))",
+    "old": "    if (data && this.finishedSharedQuestNames.has(data.questName) && !this._finishedShares.includes(data))\n      this._finishedShares.unshift(data);",
+    "new": "    if (data && !this._finishedShares.includes(data)) this._finishedShares.unshift(data);",
     "tests": [
       "test/systems/quest/auditdisc28_quests.test.js"
     ]

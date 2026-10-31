@@ -172,8 +172,8 @@
   {
     "name": "L10N3d2-systems-quest-offerFlow-203-gettingQuests1",
     "file": "src/systems/quest/offerFlow.js",
-    "old": "        textLines: [localizedText('gettingQuests1', GETTING_QUESTS_1), localizedText('gettingQuests2', GETTING_QUESTS_2)],   // :578-579",
-    "new": "        textLines: [GETTING_QUESTS_1, localizedText('gettingQuests2', GETTING_QUESTS_2)],   // :578-579",
+    "old": "        textLines: [\n          localizedText('gettingQuests1', GETTING_QUESTS_1),\n          localizedText('gettingQuests2', GETTING_QUESTS_2),\n        ], // :578-579",
+    "new": "        textLines: [GETTING_QUESTS_1, localizedText('gettingQuests2', GETTING_QUESTS_2)], // :578-579",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_services.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "L10N3d2-systems-quest-offerFlow-203-gettingQuests2",
     "file": "src/systems/quest/offerFlow.js",
-    "old": "        textLines: [localizedText('gettingQuests1', GETTING_QUESTS_1), localizedText('gettingQuests2', GETTING_QUESTS_2)],   // :578-579",
-    "new": "        textLines: [localizedText('gettingQuests1', GETTING_QUESTS_1), GETTING_QUESTS_2],   // :578-579",
+    "old": "        textLines: [\n          localizedText('gettingQuests1', GETTING_QUESTS_1),\n          localizedText('gettingQuests2', GETTING_QUESTS_2),\n        ], // :578-579",
+    "new": "        textLines: [localizedText('gettingQuests1', GETTING_QUESTS_1), GETTING_QUESTS_2], // :578-579",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_services.test.js"

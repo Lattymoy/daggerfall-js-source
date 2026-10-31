@@ -20,8 +20,8 @@
   {
     "name": "CS-name-test-case-sensitive",
     "file": "src/systems/quest/machine.js",
-    "old": "return list.some((x) => x.toLowerCase() === n); };",
-    "new": "return list.some((x) => x === n); };",
+    "old": "  return list.some((x) => x.toLowerCase() === n);",
+    "new": "  return list.some((x) => x === n);",
     "tests": [
       "test/systems/quest/cursesync.test.js"
     ]

@@ -79,7 +79,7 @@
   {
     "name": "L10N3e-systems-quest-person-194-Location",
     "file": "src/systems/quest/person.js",
-    "old": "        return dialogPlace ? getLocalizedLocationName(dialogPlace.siteDetails.mapId, dialogPlace.siteDetails.locationName) : 'BLANK';",
+    "old": "        return dialogPlace\n          ? getLocalizedLocationName(dialogPlace.siteDetails.mapId, dialogPlace.siteDetails.locationName)\n          : 'BLANK';",
     "new": "        return dialogPlace ? dialogPlace.siteDetails.locationName : 'BLANK';",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
@@ -91,7 +91,7 @@
     "name": "L10N3e-systems-quest-person-199-Region",
     "file": "src/systems/quest/person.js",
     "old": "        return Number.isInteger(index) ? getLocalizedRegionName(index, canonical) : canonical(index);",
-    "new": "        return Number.isInteger(index) ? (canonical)(index) : canonical(index);",
+    "new": "        return Number.isInteger(index) ? canonical(index) : canonical(index);",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3e_places.test.js",

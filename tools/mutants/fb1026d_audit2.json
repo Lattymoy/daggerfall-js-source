@@ -52,8 +52,8 @@
   {
     "name": "MAIN-SPINE-II-curse-unread",
     "file": "src/systems/quest/mainSpine.js",
-    "old": "opened: saved?.opened === true || has(SPINE_OPENER) || has(SPINE_CURSE),",
-    "new": "opened: saved?.opened === true || has(SPINE_OPENER),",
+    "old": "  return {\n    opened: saved?.opened === true || has(SPINE_OPENER) || has(SPINE_CURSE),\n    ran: saved?.ran === true || has(SPINE),\n  };",
+    "new": "  return { opened: saved?.opened === true || has(SPINE_OPENER), ran: saved?.ran === true || has(SPINE) };",
     "tests": [
       "test/systems/quest/fb1026d_mainspine.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "MAIN-SPINE-II-said-started",
     "file": "src/systems/quest/machine.js",
-    "old": "was owed - scheduled (try ${this.spineTries})",
-    "new": "was owed - started (try ${this.spineTries})",
+    "old": "      console.warn(`[quest] ${SPINE} (the main quest's backbone) was owed - scheduled (try ${this.spineTries})`);",
+    "new": "      console.warn(`[quest] ${SPINE} (the main quest's backbone) was owed - started (try ${this.spineTries})`);",
     "tests": [
       "test/systems/quest/fb1026d_mainspine.test.js"
     ],

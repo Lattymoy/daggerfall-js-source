@@ -47,8 +47,8 @@
   {
     "name": "VERMIN-shared-copy-any-instance",
     "file": "src/systems/quest/machine.js",
-    "old": "this.sharedQuestNames.has(quest.questName) && this.sharedCandidateNamed(quest.questName) === quest,",
-    "new": "this.sharedQuestNames.has(quest.questName),",
+    "old": "      sharedCopy: (quest) =>\n        !!quest && this.sharedQuestNames.has(quest.questName) && this.sharedCandidateNamed(quest.questName) === quest,",
+    "new": "      sharedCopy: (quest) => !!quest && this.sharedQuestNames.has(quest.questName),",
     "tests": [
       "test/systems/quest/fb1003b_vermin.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "VERMIN-shared-copy-unshared",
     "file": "src/systems/quest/machine.js",
-    "old": "sharedCopy: (quest) => !!quest && this.sharedQuestNames.has(quest.questName) && ",
-    "new": "sharedCopy: (quest) => !!quest && ",
+    "old": "      sharedCopy: (quest) =>\n        !!quest && this.sharedQuestNames.has(quest.questName) && this.sharedCandidateNamed(quest.questName) === quest,",
+    "new": "      sharedCopy: (quest) => !!quest && this.sharedCandidateNamed(quest.questName) === quest,",
     "tests": [
       "test/systems/quest/fb1003b_vermin.test.js"
     ]

@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-STAR8-S1-the-fallen-standing",
     "file": "src/systems/quest/machine.js",
-    "old": "b.targetSymbol?.name === foe?.symbol?.name && !b.isFoeDead && this.beat",
-    "new": "b.targetSymbol?.name === foe?.symbol?.name && this.beat",
+    "old": "          (b) =>\n            b.targetSymbol?.name === foe?.symbol?.name && !b.isFoeDead && this.beat - (b.beat ?? 0) <= FOE_STANDS_TICKS,",
+    "new": "          (b) => b.targetSymbol?.name === foe?.symbol?.name && this.beat - (b.beat ?? 0) <= FOE_STANDS_TICKS,",
     "tests": [
       "test/systems/questlines/star8_frostfall.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-STAR8-S1-the-beat-unread",
     "file": "src/systems/quest/machine.js",
-    "old": " && !b.isFoeDead && this.beat - (b.beat ?? 0) <= FOE_STANDS_TICKS),",
-    "new": " && !b.isFoeDead),",
+    "old": "        this._liveBehaviours(q?.uid).some(\n          (b) =>\n            b.targetSymbol?.name === foe?.symbol?.name && !b.isFoeDead && this.beat - (b.beat ?? 0) <= FOE_STANDS_TICKS,\n        ),",
+    "new": "        this._liveBehaviours(q?.uid).some((b) => b.targetSymbol?.name === foe?.symbol?.name && !b.isFoeDead),",
     "tests": [
       "test/systems/questlines/star8_frostfall.test.js"
     ]
@@ -101,7 +101,7 @@
   {
     "name": "AUDIT-STAR8-S1-the-machine-unbeaten",
     "file": "src/systems/quest/machine.js",
-    "old": "    this.beat++;   // AUDIT STAR8 S1 (questFoeStands)",
+    "old": "    this.beat++; // AUDIT STAR8 S1 (questFoeStands)",
     "new": "    // AUDIT STAR8 S1 (questFoeStands)",
     "tests": [
       "test/systems/questlines/star8_frostfall.test.js"

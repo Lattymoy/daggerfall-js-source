@@ -38,8 +38,8 @@
   {
     "name": "C3-spell-queue-replaced",
     "file": "src/systems/quest/machine.js",
-    "old": "      if ((was.spellQueue?.length ?? 0) > (r.spellQueue?.length ?? 0)) r.spellQueue = was.spellQueue;\n",
-    "new": "",
+    "old": "      if ((was.spellQueue?.length ?? 0) > (r.spellQueue?.length ?? 0)) r.spellQueue = was.spellQueue;\n      if ((was.itemQueue?.length ?? 0) > (r.itemQueue?.length ?? 0)) r.itemQueue = was.itemQueue;",
+    "new": "      if ((was.itemQueue?.length ?? 0) > (r.itemQueue?.length ?? 0)) r.itemQueue = was.itemQueue;",
     "tests": [
       "test/systems/auditdisc7.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "C3-item-queue-replaced",
     "file": "src/systems/quest/machine.js",
-    "old": "      if ((was.itemQueue?.length ?? 0) > (r.itemQueue?.length ?? 0)) r.itemQueue = was.itemQueue;\n",
-    "new": "",
+    "old": "      if ((was.itemQueue?.length ?? 0) > (r.itemQueue?.length ?? 0)) r.itemQueue = was.itemQueue;\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/auditdisc7.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "D7-pending-kill-dropped",
     "file": "src/systems/quest/machine.js",
-    "old": "      if (was.dying) r.deathTrigger = true;\n",
-    "new": "",
+    "old": "      if (was.dying) r.deathTrigger = true;\n      if ((was.spellQueue?.length ?? 0) > (r.spellQueue?.length ?? 0)) r.spellQueue = was.spellQueue;",
+    "new": "      if ((was.spellQueue?.length ?? 0) > (r.spellQueue?.length ?? 0)) r.spellQueue = was.spellQueue;",
     "tests": [
       "test/systems/auditdisc7.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "D7-injury-dropped",
     "file": "src/systems/quest/machine.js",
-    "old": "      if (was.injured) r.injuredTrigger = true;\n      if (was.dying)",
-    "new": "      if (was.dying)",
+    "old": "      if (was.injured) r.injuredTrigger = true;\n      if (was.dying) r.deathTrigger = true;",
+    "new": "      if (was.dying) r.deathTrigger = true;",
     "tests": [
       "test/systems/auditdisc7.test.js"
     ]

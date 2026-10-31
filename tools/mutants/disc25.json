@@ -535,8 +535,8 @@
   {
     "name": "D25D-refusal-names-no-guild",
     "file": "src/systems/quest/questShare.js",
-    "old": "return { ok: false, reason: 'guild', guild: guild.name };",
-    "new": "return { ok: false, reason: 'guild' };",
+    "old": "    if (guild && !hasJoined(memberships, guild)) return { ok: false, reason: 'guild', guild: guild.name }; // DISC25-D: WHICH guild",
+    "new": "    if (guild && !hasJoined(memberships, guild)) return { ok: false, reason: 'guild' }; // DISC25-D: WHICH guild",
     "tests": [
       "test/systems/quest/disc25d_guild_share.test.js"
     ]
@@ -544,8 +544,8 @@
   {
     "name": "D25D-text-ignores-guild",
     "file": "src/systems/quest/questShare.js",
-    "old": "  if (named) return t('quest.share.guildNamed', 'are not a member of {guild}, which this quest requires.', { guild: named });\n",
-    "new": "",
+    "old": "  if (named)\n    return t('quest.share.guildNamed', 'are not a member of {guild}, which this quest requires.', { guild: named });\n  const base = RECEIVER_REFUSAL_TEXT[result?.reason] ?? SHARE_REFUSAL_TEXT[result?.reason] ?? null;",
+    "new": "  const base = RECEIVER_REFUSAL_TEXT[result?.reason] ?? SHARE_REFUSAL_TEXT[result?.reason] ?? null;",
     "tests": [
       "test/systems/quest/disc25d_guild_share.test.js"
     ]

@@ -149,8 +149,8 @@
   {
     "name": "FB1005C-sealed-old-spot-unkept",
     "file": "src/systems/quest/markerCuration.js",
-    "old": "    m.curatedFrom = { ...p };",
-    "new": "",
+    "old": "    m.curatedFrom = { ...p }; // SEALED-SAVE (FIELD BUGS 2026-10-05c): where it stood - a foe a save stood there follows it (mendedFoeSpot)",
+    "new": "    // SEALED-SAVE (FIELD BUGS 2026-10-05c): where it stood - a foe a save stood there follows it (mendedFoeSpot)",
     "tests": [
       "test/systems/quest/fb1004d_questmarkers.test.js"
     ]

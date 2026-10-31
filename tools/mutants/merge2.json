@@ -32,8 +32,8 @@
   {
     "name": "MERGE2-qae-online-no-own-time",
     "file": "src/systems/quest/questActionsExtension.js",
-    "old": "      if (hooks?.sharedClock?.()) hooks?.waitOnline?.(seconds, this.parentQuest);\n      hooks?.raiseTime?.(seconds);",
-    "new": "      if (hooks?.sharedClock?.()) hooks?.waitOnline?.(seconds, this.parentQuest);\n      else hooks?.raiseTime?.(seconds);",
+    "old": "      hooks?.raiseTime?.(seconds);",
+    "new": "      else hooks?.raiseTime?.(seconds);",
     "tests": [
       "test/systems/quest/forage4_wait.test.js"
     ],

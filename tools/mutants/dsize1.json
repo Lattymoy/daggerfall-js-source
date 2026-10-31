@@ -188,8 +188,8 @@
   {
     "name": "AUDIT-DELVE-E1-agreeing-markers-relaid",
     "file": "src/systems/quest/questRepair.js",
-    "old": "    if (markerAddresses(markers.questSpawnMarkers) === markerAddresses(sd.questSpawnMarkers)\n      && markerAddresses(markers.questItemMarkers) === markerAddresses(sd.questItemMarkers)) continue;\n",
-    "new": "",
+    "old": "    if (\n      markerAddresses(markers.questSpawnMarkers) === markerAddresses(sd.questSpawnMarkers) &&\n      markerAddresses(markers.questItemMarkers) === markerAddresses(sd.questItemMarkers)\n    )\n      continue;\n    r.siteDetails = {",
+    "new": "    r.siteDetails = {",
     "tests": [
       "test/systems/quest/dsize1_mediumdungeons.test.js"
     ]
@@ -216,8 +216,8 @@
   {
     "name": "SD-ONLINE-E1-a-world-sized-quest-relaid",
     "file": "src/systems/quest/questRepair.js",
-    "old": "  if (!quest || quest.smallerDungeonsState === SMALLER_DUNGEONS_STATE.Disabled) return false;",
-    "new": "  if (!quest) return false;",
+    "old": "  if (!quest || quest.smallerDungeonsState === SMALLER_DUNGEONS_STATE.Disabled) return false; // INSTANCES: the whole dungeon's, as its markers know it",
+    "new": "  if (!quest) return false; // INSTANCES: the whole dungeon's, as its markers know it",
     "tests": [
       "test/systems/quest/dsize1_mediumdungeons.test.js"
     ],
@@ -245,7 +245,7 @@
   {
     "name": "SD-ONLINE-E1-an-unread-dungeon-restamped",
     "file": "src/systems/quest/questRepair.js",
-    "old": "    if (!location?.dungeon?.blocks) { unread = true; continue; }",
+    "old": "    if (!location?.dungeon?.blocks) {\n      unread = true;\n      continue;\n    }",
     "new": "    if (!location?.dungeon?.blocks) continue;",
     "tests": [
       "test/systems/quest/dsize1_mediumdungeons.test.js"

@@ -21,7 +21,7 @@
     "name": "AD-A1-no-local-source-accepted",
     "file": "src/systems/quest/questShare.js",
     "old": "  if (!local) return { ok: false, reason: 'unknown' };",
-    "new": "  if (!local) return check.resync ? { ok: true, quest: machine.updateSharedQuest(questName, data), resync: true } : { ok: true, quest: machine.receiveSharedQuest(data) };",
+    "new": "  if (!local)\n    return check.resync\n      ? { ok: true, quest: machine.updateSharedQuest(questName, data), resync: true }\n      : { ok: true, quest: machine.receiveSharedQuest(data) };",
     "tests": [
       "test/systems/quest/auditdrops.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AD-A1-action-types-not-compared",
     "file": "src/systems/quest/questShare.js",
-    "old": "    for (let j = 0; j < acts.length; j++) if (!sharedActionMatches(r.actions[j], acts[j])) return 'action';",
-    "new": "",
+    "old": "    for (let j = 0; j < acts.length; j++) if (!sharedActionMatches(r.actions[j], acts[j])) return 'action';\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/quest/auditdrops.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "AD-A1-resource-set-not-compared",
     "file": "src/systems/quest/questShare.js",
-    "old": "    if (want.has(sym)) { if (want.get(sym) !== r.type) return 'resource'; continue; }",
+    "old": "    if (want.has(sym)) {\n      if (want.get(sym) !== r.type) return 'resource';\n      continue;\n    }",
     "new": "    continue;",
     "tests": [
       "test/systems/quest/auditdrops.test.js"
@@ -65,8 +65,8 @@
   {
     "name": "AD-A1-main-quest-received",
     "file": "src/systems/quest/questShare.js",
-    "old": "  if (isMainQuestName(questName)) return { ok: false, reason: 'mainQuest' };\n  // QUEST-SHELF",
-    "new": "  // QUEST-SHELF",
+    "old": "  if (isMainQuestName(questName)) return { ok: false, reason: 'mainQuest' };\n  // QUEST-SHELF (2026-10-08): a copy I set aside takes no partner's share or step - reclaimed, it is as I left it",
+    "new": "  // QUEST-SHELF (2026-10-08): a copy I set aside takes no partner's share or step - reclaimed, it is as I left it",
     "tests": [
       "test/systems/quest/auditdrops.test.js"
     ]
@@ -74,7 +74,7 @@
   {
     "name": "AD-A2-finished-received-again",
     "file": "src/systems/quest/questShare.js",
-    "old": "  if (shareId !== undefined ? machine.hasFinishedSharedCopy?.(questName, shareId) : machine.hasFinishedSharedQuestNamed?.(questName)) return { ok: false, reason: 'done' };",
+    "old": "  if (\n    shareId !== undefined\n      ? machine.hasFinishedSharedCopy?.(questName, shareId)\n      : machine.hasFinishedSharedQuestNamed?.(questName)\n  )\n    return { ok: false, reason: 'done' };",
     "new": "",
     "tests": [
       "test/systems/quest/auditdrops.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "AD-A2-completion-not-monotonic",
     "file": "src/systems/quest/machine.js",
-    "old": "      for (const action of task.actions) { if (before.get(`${t}:${a}`) === true && !action.isComplete) action.isComplete = true; a++; }",
-    "new": "      for (const action of task.actions) { a++; }",
+    "old": "        if (before.get(`${t}:${a}`) === true && !action.isComplete) action.isComplete = true;\n        a++;",
+    "new": "        a++;",
     "tests": [
       "test/systems/quest/auditdrops.test.js"
     ]
@@ -110,7 +110,7 @@
   {
     "name": "AD-A2-tombstone-keeps-the-name-in-sync",
     "file": "src/systems/quest/machine.js",
-    "old": "    if (this.sharedQuestNames.has(quest.questName)) { this.sharedQuestNames.delete(quest.questName); this.finishedSharedQuestNames.add(quest.questName); }",
+    "old": "    if (this.sharedQuestNames.has(quest.questName)) {\n      this.sharedQuestNames.delete(quest.questName);\n      this.finishedSharedQuestNames.add(quest.questName);\n    }",
     "new": "",
     "tests": [
       "test/systems/quest/auditdrops.test.js"
@@ -119,7 +119,7 @@
   {
     "name": "AD-A3-no-dry-run",
     "file": "src/systems/quest/machine.js",
-    "old": "    try { scratch.restoreSaveData({ ...questData, uid }, this._saveResolvers()); } catch (e) { console.warn(`[quest] shared quest resync refused: ${e?.message ?? e}`); return null; }",
+    "old": "    try {\n      scratch.restoreSaveData({ ...questData, uid }, this._saveResolvers());\n    } catch (e) {\n      console.warn(`[quest] shared quest resync refused: ${e?.message ?? e}`);\n      return null;\n    }",
     "new": "",
     "tests": [
       "test/systems/quest/auditdrops.test.js"
@@ -128,8 +128,8 @@
   {
     "name": "AD-A3-fresh-receipt-throws-through",
     "file": "src/systems/quest/machine.js",
-    "old": "    try { quest.restoreSaveData({ ...questData, uid }, this._saveResolvers()); } catch (e) { console.warn(`[quest] shared quest refused: ${e?.message ?? e}`); return null; }",
-    "new": "    try { quest.restoreSaveData({ ...questData, uid }, this._saveResolvers()); } catch (e) { console.warn(`[quest] shared quest refused: ${e?.message ?? e}`); }",
+    "old": "      console.warn(`[quest] shared quest refused: ${e?.message ?? e}`);\n      return null;\n    }",
+    "new": "      console.warn(`[quest] shared quest refused: ${e?.message ?? e}`);\n    }",
     "tests": [
       "test/systems/quest/auditdrops.test.js"
     ]

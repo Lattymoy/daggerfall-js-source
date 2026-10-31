@@ -247,8 +247,8 @@
   {
     "name": "QUEST-ELSEWHERE-repair-deaf",
     "file": "src/systems/quest/questRepair.js",
-    "old": "    try { if (env.mountCurrentSite?.() === 'elsewhere') report.elsewhere = true; } catch { report.failed++; }",
-    "new": "    try { env.mountCurrentSite?.(); } catch { report.failed++; }",
+    "old": "      if (env.mountCurrentSite?.() === 'elsewhere') report.elsewhere = true;",
+    "new": "      env.mountCurrentSite?.();",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],
@@ -257,8 +257,8 @@
   {
     "name": "QUEST-ELSEWHERE-repair-mute",
     "file": "src/systems/quest/questRepair.js",
-    "old": "    : r.elsewhere ? questElsewhereLine() : `Nothing was missing",
-    "new": "    : false ? questElsewhereLine() : `Nothing was missing",
+    "old": "    : r.elsewhere",
+    "new": "    : false",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],

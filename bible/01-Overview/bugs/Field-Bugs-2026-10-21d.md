@@ -83,8 +83,8 @@ gear), each waiting to be taken: measured, one run mints one offer, even saved i
 The rail names a reward by its quest's title, so two read alike. Not a fault; nothing changed.
 
 THE LAW NOW. A start-up closing is read AS THE QUEST STANDS, at run time, on the success: the clock's own task and every
-`when` its end sets off alone with what is set now (`clock.js:"const end = reached(quest, name, { alone: true, live: true });"`,
-`reached`'s `live`: `clock.js:"const isSet = (sym) => seen.has(sym.name) || (live"`). A quiet close (`end quest`, `make
+`when` its end sets off alone with what is set now (`clock.js:"const end = reached"`,
+`reached`'s `live`: `clock.js:"const isSet = (sym)"`). A quiet close (`end quest`, `make
 permanent`, `drop as questor`) is the script closing a paid quest - the short wait; a `when` that would say or send
 anything keeps it a deadline. BODYGUARD-CLOSE's own docstring already said so ("An end that ... says or sends anything
 ... stays a deadline") and its own-task reading could not see such a `when`; the one reading replaces it

@@ -14,8 +14,8 @@
   {
     "name": "START1-start-not-protected",
     "file": "src/systems/quest/machine.js",
-    "old": "export const PROTECTED_QUESTS = Object.freeze(['S0000999', 'S0000977', '_BRISIEN', ...START_QUESTS]);",
-    "new": "export const PROTECTED_QUESTS = Object.freeze(['S0000999', 'S0000977', '_BRISIEN']);",
+    "old": "export const PROTECTED_QUESTS = Object.freeze(['S0000999', 'S0000977', '_BRISIEN', ...START_QUESTS]); // START1: a start holds the commission the main quest waits on",
+    "new": "export const PROTECTED_QUESTS = Object.freeze(['S0000999', 'S0000977', '_BRISIEN']); // START1: a start holds the commission the main quest waits on",
     "tests": [
       "test/systems/starts/start1_bay.test.js"
     ]
@@ -23,8 +23,8 @@
   {
     "name": "START1-start-not-main-quest",
     "file": "src/systems/quest/questLists.js",
-    "old": "questName === '_BRISIEN' || isStartQuestName(questName);",
-    "new": "questName === '_BRISIEN';",
+    "old": "export const isMainQuestName = (questName) =>\n  /^S0000/.test(questName ?? '') || questName === '_BRISIEN' || isStartQuestName(questName);",
+    "new": "export const isMainQuestName = (questName) => /^S0000/.test(questName ?? '') || questName === '_BRISIEN';",
     "tests": [
       "test/systems/starts/start1_bay.test.js",
       "test/ui/enhanced/enhancedPause.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "START1-brisien-patch-dropped",
     "file": "src/systems/quest/questPatches.js",
-    "old": "    { old: '\\tpc at PiratesHold set _exitstarter_ \\n\\tsay 1025 \\n', new: '\\tpc at PiratesHold set _exitstarter_ \\n', count: 1 },\n",
-    "new": "",
+    "old": "      old: '\\tpc at PiratesHold set _exitstarter_ \\n\\tsay 1025 \\n',\n      new: '\\tpc at PiratesHold set _exitstarter_ \\n',\n      count: 1,\n    },\n    {\n      old: ' most appreciative.\\n    Before landing in Daggerfall, a sudden storm\\n capsized the ship. I barely made it into this cave.\\n',",
+    "new": "      old: ' most appreciative.\\n    Before landing in Daggerfall, a sudden storm\\n capsized the ship. I barely made it into this cave.\\n',",
     "tests": [
       "test/systems/starts/start1_bay.test.js"
     ],

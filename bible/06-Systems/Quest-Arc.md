@@ -6733,7 +6733,7 @@ the machine no longer holds, and the expansion's null-parent bail hands the word
 orphan until its next load, whose RestoreConversationData sweep (TalkManager.cs:2522-2533; the port's
 `removeOrphanedQuestRumors`) takes it - and a session online is days of a character's clock.
 
-- removeQuest calls the machine's `removeProgressRumors` dep with the quest's uid (`machine.js:"this.deps.removeProgressRumors?.(quest.uid);"`).
+- removeQuest calls the machine's `removeProgressRumors` dep with the quest's uid (`machine.js:"this.deps.removeProgressRumors?.(quest.uid)"`).
 - A DEPARTURE in WHEN only (Port-Ledger A, RUMOR-ORPHAN): the rumor goes with its quest, not at the next load.
 - Pinned by `test/systems/quest/rpt1026_misc_rumor.test.js` (1); `tools/mutants/rpt1026_misc.json` (1).
 
@@ -6861,7 +6861,7 @@ sentence, which says the service is unbuilt.
 - **THE LAW IS DFU'S, THE WORDS ARE THE PORT'S.** A questor whose quest is open offers nothing:
   `DaggerfallGuildServicePopupWindow.GetQuest` (`DaggerfallGuildServicePopupWindow.cs:550-553`) and the coven's
   (`DaggerfallWitchesCovenPopupWindow.cs:125-129`) ask `IsLastNPCClickedAnActiveQuestor` and close. DFU closes in silence; the popups' two doors now say why
-  (`offerFlow.js:"export function questorBusy(machine) {"` - `{ kind: 'close', reason: 'activeQuestor', quest }`), and
+  (`offerFlow.js:"export function questorBusy"` - `{ kind: 'close', reason: 'activeQuestor', quest }`), and
   the bridge boxes it (`questBridge.js:"case 'close': return step.reason === ACTIVE_QUESTOR ? [{ rows: questorBusyRows(step.quest) }] : [];"`):
   "You have not finished the work you were given here: The Offered Errand." - the quest by the name the journal gives it
   (its DisplayName, a translation's -LOC one where it has one), the work alone where it has none. The text core's
@@ -6912,7 +6912,7 @@ mutation-checked by `tools/mutants/rpt1026_quests.json` (29 - 25 here, two the a
   death with `give pc nothing` and `remove log step 0` and the quest runs on under `_2dung_` (RAVEN-CLOSE closes it
   online on the short wait); N0B21Y14 writes its first entry only when its letter is read. A quest with nothing in its
   journal was no row: the bridge's walk listed only a stamped quest with objectives, and AUDIT QUESTLINES UI-8 drew no
-  Abandon on one. Now `machine.js:"export const holdsQuestorDoor = (quest) =>"` names the quests that hold the door (a
+  Abandon on one. Now `machine.js:"export const holdsQuestorDoor"` names the quests that hold the door (a
   Person its questor by the click), each is a row whether or not it has written anything
   (`questBridge.js:"if (!ql?.objectives?.length && !holdsQuestorDoor(q)) continue;"`), an Abandoned row once set aside
   (so its Reclaim stands), its detail says "Nothing is written in your journal for this quest yet." where it has no
@@ -6935,13 +6935,13 @@ mutation-checked by `tools/mutants/rpt1026_quests.json` (29 - 25 here, two the a
   Sentinel, No pressed, and she never spoke of it again. M0B11Y18 asks under `toting _I.03_ and _ruler_ clicked` and its
   No (`_S.20_`) is a `get item _I.03_` - not inert, not a clear, so NO-ASKS-AGAIN left it DFU's: the prompt spent, the
   click a set task's. Now a No whose every action hands back the item its asking click toted
-  (`noAsksAgain.js:"export function givesBackNo(quest, task, prompt) {"`) asks again once that item is back in the pack.
+  (`noAsksAgain.js:"export function givesBackNo"`) asks again once that item is back in the pack.
   The corpus has four: M0B11Y18 `_S.20_`, 80C0XY00 `_school_`, $CUREWER `_S.15_`, N0B00Y09 `_nononono_`
   (`test/systems/quest/fb1013e_noasks.test.js`'s census, PIN MOVED to six). Port-Ledger A, NO-ASKS-AGAIN's row, widened.
   AUDIT RPT1026 H1, NARROWED: three of the four are answers the questlines' sheets read as the player's choice
   (N0B00Y09's "Keep it for the Guild" and its `refused` ending, $CUREWER's `spared`, 80C0XY00's kept secret); forgotten,
   N0B00Y09 ended `loyal` and lost the standing its refusal moves, and $CUREWER's refusal ended as a failure. A stamped
-  quest's No that its sheet reads (`noAsksAgain.js:"export function sheetReadTasks(quest) {"`) is DFU's, asked once; the
+  quest's No that its sheet reads (`noAsksAgain.js:"export function sheetReadTasks"`) is DFU's, asked once; the
   queen's still asks again, and with the questlines off all four do (`test/systems/quest/audit_rpt1026_quests.test.js`).
 - **QUEST-ZONE** - online a quest's remote dungeon is never one the open zone seals. The report: a vampire's lair in the
   middle of the open zone, its door sealed ("The way in is sealed. Only the halls marked on the map are open today."). Of

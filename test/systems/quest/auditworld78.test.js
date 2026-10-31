@@ -61,7 +61,7 @@ test('AUDIT WORLD7/8 A1/A2/A11: the Clock - a backward sample online charges not
   assert.equal(nan.remainingTimeInSeconds, 3540, 'and the remainder is a number');
   const src = rd('src/systems/quest/clock.js');
   assert.match(src, /const raw = now - this\._lastWorldTimeSample;\s*\n\s*if \(!Number\.isFinite\(step\)\) return Math\.trunc\(raw\);\s*\n\s*const raised = raisedSince\(caller\.raisedSeconds\?\.\(\), this\._lastRaisedSample\);\s*\n\s*return Math\.trunc\(Math\.min\(Math\.max\(raw - raised, 0\), step\)\);/);
-  assert.match(src, /this\._lastWorldTimeSample = Number\.isFinite\(dataIn\.lastWorldTimeSample\) \? dataIn\.lastWorldTimeSample : wholeSeconds\(this\.parentQuest\);/);
+  assert.match(src, /this\._lastWorldTimeSample = Number\.isFinite\(dataIn\.lastWorldTimeSample\)\n\s*\? dataIn\.lastWorldTimeSample\n\s*: wholeSeconds\(this\.parentQuest\);/);
 });
 
 test('AUDIT WORLD7/8 A3/A6: CreateFoe - a marker ahead of the world online is a resume (the first wave waits a full interval from here, not the whole offset); a backward gap mid-session the same; an away while a wave is in flight is forgiven too (one wave after the interval, not two at once); offline the marker arithmetic is DFU\'s own', () => {

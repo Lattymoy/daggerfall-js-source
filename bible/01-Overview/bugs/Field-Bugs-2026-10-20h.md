@@ -40,7 +40,7 @@ in the pool: it selects the last questor it adds (`npcSession.js:"this.selectedN
 TalkManager.cs:2869). The other two writers did not:
 - THE OFFER. A click on a pool member opens the quest offer, and the offer window's constructor takes them out of the
   pool, whether the job is accepted, declined or never drawn:
-  `offerFlow.js:"    if (!this.deps.isPlayerInsideCastle?.()) this.deps.removeNpcQuestor?.(npcData.nameSeed);"`,
+  `offerFlow.js:"this.deps.removeNpcQuestor?.(npcData.nameSeed)"`,
   DaggerfallQuestOfferWindow.cs:33-35. Nothing moved the selection off the spent questor. The selection is a uniform pick
   made after the previous answer, so a player who goes to the person that answer named, and takes or declines their
   job, makes the next answer blank with a chance of 1 in N, N being the pool's size. Pools are small where most players
@@ -329,7 +329,7 @@ every caller passes its own (place.js the site's town, person.js the questor's).
 outside a town (`rebuildDirectory`'s own gate). This restores DFU and departs from nothing.
 
 A save that already holds the blank has it named at the load. The load's re-seat (`world.js` applyLayoutPins ->
-`reseatMovedSites` -> `machine.js:"    for (const resource of quest.resources.values()) if (resource.isPlace) resource.nameSiteAgain?.(world);   // FB1020h SITE-NAMED: a site the bag named '' off a town - not counted: no site moved"`)
+`reseatMovedSites` -> `machine.js:"if (resource.isPlace) resource.nameSiteAgain?.(world)"`)
 names it from its building through the same bag (`place.js:"  nameSiteAgain(world) {"`). That applies only to a
 Building site named exactly '' whose record stands in its town's layout. A residence is never renamed (its surname is a
 roll), and a kind DFU names '' itself stays ''. GetName seeds DFRandom, so the state is put back afterwards. If the

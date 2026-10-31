@@ -236,8 +236,8 @@
   {
     "name": "IC-INTERIORS-markers-laid-in-reverse",
     "file": "src/systems/quest/castMarkers.js",
-    "old": "held.forEach((m, n) => { if (m?.flatPosition) move(m, laid[n]); });",
-    "new": "held.forEach((m, n) => { if (m?.flatPosition) move(m, laid[laid.length - 1 - n]); });",
+    "old": "      if (m?.flatPosition) move(m, laid[n]);",
+    "new": "      if (m?.flatPosition) move(m, laid[laid.length - 1 - n]);",
     "tests": [
       "test/world/icinteriors.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "IC-INTERIORS-selected-marker-left-behind",
     "file": "src/systems/quest/castMarkers.js",
-    "old": "if (selTo) move(sel, selTo);",
-    "new": "if (selTo && !sel) move(sel, selTo);",
+    "old": "  if (selTo) move(sel, selTo);",
+    "new": "  if (selTo && !sel) move(sel, selTo);",
     "tests": [
       "test/world/icinteriors.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "IC-INTERIORS-markers-laid-at-every-mount",
     "file": "src/systems/quest/castMarkers.js",
-    "old": "    if (same(m.flatPosition, p)) return;\n",
-    "new": "",
+    "old": "    if (same(m.flatPosition, p)) return;\n    m.curatedFrom ??= { ...m.flatPosition };",
+    "new": "    m.curatedFrom ??= { ...m.flatPosition };",
     "tests": [
       "test/world/icinteriors.test.js"
     ]

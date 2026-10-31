@@ -133,7 +133,7 @@ a plain heart on the same body about half the time (201 of 400 bodies through sp
 struck and one "Daedra's Heart" row ("3.00 kg", if read right, is three hearts, and a quest's item never stacks).
 
 FIXED. HEART-KEPT (B1, a return to DFU's law): a foe's clone says it is one (`questClone`, declared in `itemFields.js`,
-`foe.js:"return this.itemQueue.map((it) => (it?.questItem ? { ...it, questClone: true } : { ...it }));"`), and the read of
+`foe.js:"return this.itemQueue.map"`), and the read of
 a quest's own record in the pack is one law beside keepsQuestItem
 (`itemTransfer.js:"export function heldQuestRecordIndex"`) - the record, or a
 restored copy that is no clone; playerHasItem never takes a clone for it

@@ -182,8 +182,8 @@
   {
     "name": "QUEST-HOME-the-reach-unmarked",
     "file": "src/systems/quest/machine.js",
-    "old": "        sd.reached = true;\n",
-    "new": "",
+    "old": "        sd.reached = true;\n        n++;",
+    "new": "        n++;",
     "tests": [
       "test/net/fb1014_questhome.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "QUEST-HOME-the-link-left-behind",
     "file": "src/systems/quest/machine.js",
-    "old": "        this._followSite(quest, resource);\n",
-    "new": "",
+    "old": "        this._followSite(quest, resource);\n        try {",
+    "new": "        try {",
     "tests": [
       "test/net/fb1014_questhome.test.js"
     ]

@@ -52,8 +52,8 @@
   {
     "name": "SEALEDCELLAR-gemsal-unlisted",
     "file": "src/systems/quest/markerCuration.js",
-    "old": "['beautiful-cities', 'GEMSAL00.RMB', 7],",
-    "new": "",
+    "old": "      ['beautiful-cities', 'GEMSAL00.RMB', 7],\n      ['beautiful-cities', 'GEMSAL00.RMB', 8],",
+    "new": "      ['beautiful-cities', 'GEMSAL00.RMB', 8],",
     "tests": [
       "test/formats/worldData/fb1005_sealedcellar.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "SEALEDCELLAR-spot-at-the-door",
     "file": "src/systems/quest/markerCuration.js",
-    "old": "{ record: 11, at: [-118, 127, -324], to: [-38, 0, -152] }",
-    "new": "{ record: 11, at: [-118, 127, -324], to: [-128, 0, -102] }",
+    "old": "    markers: [{ record: 11, at: [-118, 127, -324], to: [-38, 0, -152] }],",
+    "new": "    markers: [{ record: 11, at: [-118, 127, -324], to: [-128, 0, -102] }],",
     "tests": [
       "test/formats/worldData/fb1005_sealedcellar.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "SEALEDCELLAR-spot-far-from-hatch",
     "file": "src/systems/quest/markerCuration.js",
-    "old": "{ record: 11, at: [-24, 125, 52], to: [28, -2, 216] }",
-    "new": "{ record: 11, at: [-24, 125, 52], to: [28, -2, 416] }",
+    "old": "    markers: [{ record: 11, at: [-24, 125, 52], to: [28, -2, 216] }],",
+    "new": "    markers: [{ record: 11, at: [-24, 125, 52], to: [28, -2, 416] }],",
     "tests": [
       "test/formats/worldData/fb1005_sealedcellar.test.js"
     ],

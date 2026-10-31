@@ -22,8 +22,8 @@
   {
     "name": "RPT1026-QUESTS-ABANDON-ALWAYS-any-questor",
     "file": "src/systems/quest/machine.js",
-    "old": "some((r) => r?.isPerson && r.isQuestor && boundByClick(r));",
-    "new": "some((r) => r?.isPerson && r.isQuestor);",
+    "old": "  [...(quest?.resources?.values?.() ?? [])].some((r) => r?.isPerson && r.isQuestor && boundByClick(r));",
+    "new": "  [...(quest?.resources?.values?.() ?? [])].some((r) => r?.isPerson && r.isQuestor);",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],
@@ -174,8 +174,8 @@
   {
     "name": "RPT1026-QUESTS-NO-GIVES-BACK-verdict-unread",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "gives ? { no: gives, clears: false, gives: true } : null",
-    "new": "null",
+    "old": "    verdicts.set(\n      prompt,\n      inert\n        ? { no: inert, clears: false }\n        : clears\n          ? { no: clears, clears: true }\n          : gives\n            ? { no: gives, clears: false, gives: true }\n            : null,\n    );",
+    "new": "    verdicts.set(prompt, inert ? { no: inert, clears: false } : clears ? { no: clears, clears: true } : null);",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js",
       "test/systems/quest/fb1013e_noasks.test.js"
@@ -185,8 +185,8 @@
   {
     "name": "RPT1026-QUESTS-NO-GIVES-BACK-cleared-before-back",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "      if (law.gives && !no.actions.every((/** @type {any} */ a) => a.isComplete)) continue;",
-    "new": "",
+    "old": "      if (law.gives && !no.actions.every((/** @type {any} */ a) => a.isComplete)) continue; // NO-GIVES-BACK: its item back in the pack first",
+    "new": "      // NO-GIVES-BACK: its item back in the pack first",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],

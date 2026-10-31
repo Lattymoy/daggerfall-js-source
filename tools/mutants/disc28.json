@@ -274,8 +274,8 @@
   {
     "name": "DISC28-I-finish-never-queued",
     "file": "src/systems/quest/machine.js",
-    "old": "      if (data) this._finishedShares.push(data);",
-    "new": "",
+    "old": "      if (data) this._finishedShares.push(data);\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/quest/disc28_quest.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "DISC28-I-finish-echoed",
     "file": "src/systems/quest/machine.js",
-    "old": "!quest._finishedBySync && this.sharedQuestNames",
-    "new": "this.sharedQuestNames",
+    "old": "    if (\n      quest.questComplete &&\n      !quest.questTombstoned &&\n      !quest._finishedBySync &&\n      this.sharedQuestNames.has(quest.questName)\n    ) {",
+    "new": "    if (quest.questComplete && !quest.questTombstoned && this.sharedQuestNames.has(quest.questName)) {",
     "tests": [
       "test/systems/quest/disc28_quest.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "DISC28-I-error-removal-sent",
     "file": "src/systems/quest/machine.js",
-    "old": "if (quest.questComplete && !quest.questTombstoned && !quest._finishedBySync",
-    "new": "if (!quest.questTombstoned && !quest._finishedBySync",
+    "old": "    if (\n      quest.questComplete &&\n      !quest.questTombstoned &&\n      !quest._finishedBySync &&\n      this.sharedQuestNames.has(quest.questName)\n    ) {",
+    "new": "    if (!quest.questTombstoned && !quest._finishedBySync && this.sharedQuestNames.has(quest.questName)) {",
     "tests": [
       "test/systems/quest/disc28_quest.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "DISC28-I-finish-restored-complete",
     "file": "src/systems/quest/machine.js",
-    "old": "    if (finishing) questData = { ...questData, questComplete: false, questTombstoned: false };\n",
-    "new": "",
+    "old": "    if (finishing) questData = { ...questData, questComplete: false, questTombstoned: false };\n    questData = { ...this._onThisClock(questData), ...NO_SHELF }; // TIME3: the sender's countdowns, on this character's clock",
+    "new": "    questData = { ...this._onThisClock(questData), ...NO_SHELF }; // TIME3: the sender's countdowns, on this character's clock",
     "tests": [
       "test/systems/quest/disc28_quest.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "DISC28-I-finish-never-ended",
     "file": "src/systems/quest/machine.js",
-    "old": "    if (finishing) { quest._finishedBySync = true; quest.endQuest(); }",
-    "new": "    if (finishing) { quest._finishedBySync = true; }",
+    "old": "      quest.endQuest();\n    } // DISC28-I: the partner's word, not an echo to send back",
+    "new": "    } // DISC28-I: the partner's word, not an echo to send back",
     "tests": [
       "test/systems/quest/disc28_quest.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "DISC28-I-getitem-not-replayed",
     "file": "src/systems/quest/machine.js",
-    "old": "'TrainPc', 'GetItem', 'RevealLocation']);",
-    "new": "'TrainPc', 'RevealLocation']);",
+    "old": "const REPLAYABLE_ONE_TIME_ACTIONS = new Set(['TeleportPc', 'GivePc', 'TrainPc', 'GetItem', 'RevealLocation']);",
+    "new": "const REPLAYABLE_ONE_TIME_ACTIONS = new Set(['TeleportPc', 'GivePc', 'TrainPc', 'RevealLocation']);",
     "tests": [
       "test/systems/quest/disc28_quest.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "DISC28-I-final-makes-a-copy",
     "file": "src/systems/quest/questShare.js",
-    "old": "  if (safe.questComplete === true || shareEnvelopeEnding(safe)) return { ok: false, reason: 'finished' };\n",
-    "new": "",
+    "old": "  if (safe.questComplete === true || shareEnvelopeEnding(safe)) return { ok: false, reason: 'finished' };\n  const quest = machine.receiveSharedQuest(safe);",
+    "new": "  const quest = machine.receiveSharedQuest(safe);",
     "tests": [
       "test/systems/quest/disc28_quest.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "DISC28-I-signature-log-only",
     "file": "src/systems/quest/questShare.js",
-    "old": "    for (const action of task.actions ?? []) parts.push(action.isComplete ? 1 : 0);\n",
-    "new": "",
+    "old": "    for (const action of task.actions ?? []) parts.push(action.isComplete ? 1 : 0);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/quest/disc28_quest.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "DISC28-I-signature-no-trigger",
     "file": "src/systems/quest/questShare.js",
-    "old": "    parts.push(task.triggered ? 1 : 0);\n",
-    "new": "",
+    "old": "    parts.push(task.triggered ? 1 : 0);\n    for (const action of task.actions ?? []) parts.push(action.isComplete ? 1 : 0);",
+    "new": "    for (const action of task.actions ?? []) parts.push(action.isComplete ? 1 : 0);",
     "tests": [
       "test/systems/quest/disc28_quest.test.js"
     ]
@@ -355,8 +355,8 @@
   {
     "name": "DISC28-I-rung-any-building",
     "file": "src/systems/quest/machine.js",
-    "old": "    if (residencesOnly && !(buildingType >= HOUSE1 && buildingType <= HOUSE6)) return false;\n",
-    "new": "",
+    "old": "    if (residencesOnly && !(buildingType >= HOUSE1 && buildingType <= HOUSE6)) return false;\n    return this.getAllActiveQuestSites().some((site) => site.buildingKey === buildingKey && site.mapId === mapId);",
+    "new": "    return this.getAllActiveQuestSites().some((site) => site.buildingKey === buildingKey && site.mapId === mapId);",
     "tests": [
       "test/systems/quest/disc28_quest.test.js"
     ]
@@ -364,8 +364,8 @@
   {
     "name": "DISC28-I-rung-house1-4",
     "file": "src/systems/quest/machine.js",
-    "old": "buildingType <= HOUSE6)",
-    "new": "buildingType <= BUILDING_TYPES.House4)",
+    "old": "    if (residencesOnly && !(buildingType >= HOUSE1 && buildingType <= HOUSE6)) return false;",
+    "new": "    if (residencesOnly && !(buildingType >= HOUSE1 && buildingType <= BUILDING_TYPES.House4)) return false;",
     "tests": [
       "test/systems/quest/disc28_quest.test.js"
     ]
@@ -373,8 +373,8 @@
   {
     "name": "DISC28-I-rung-any-town",
     "file": "src/systems/quest/machine.js",
-    "old": "site.buildingKey === buildingKey && site.mapId === mapId",
-    "new": "site.buildingKey === buildingKey",
+    "old": "    return this.getAllActiveQuestSites().some((site) => site.buildingKey === buildingKey && site.mapId === mapId);",
+    "new": "    return this.getAllActiveQuestSites().some((site) => site.buildingKey === buildingKey);",
     "tests": [
       "test/systems/quest/disc28_quest.test.js"
     ]

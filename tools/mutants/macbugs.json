@@ -94,8 +94,8 @@
   {
     "name": "MAC-D-the-quest-names-the-raw-field-again-so-a-book-is-Book",
     "file": "src/systems/quest/item.js",
-    "old": "    const long = itemLongName(it, {",
-    "new": "    const long = (it.name ?? '') && itemLongName(it, {",
+    "old": "    const long = itemLongName(it, {\n      differentiatePlantIngredients: false,\n      getQuest: (uid) => (uid === this.parentQuest?.uid ? this.parentQuest : null),\n    });",
+    "new": "    const long =\n      (it.name ?? '') &&\n      itemLongName(it, {\n        differentiatePlantIngredients: false,\n        getQuest: (uid) => (uid === this.parentQuest?.uid ? this.parentQuest : null),\n      });",
     "tests": [
       "test/systems/quest/macd_quest_item_name.test.js"
     ]

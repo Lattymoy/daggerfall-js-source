@@ -360,8 +360,8 @@
   {
     "name": "AUDIT-D3-mend-first",
     "file": "src/systems/quest/questShare.js",
-    "old": "  if (!data || typeof data !== 'object' || data.questName !== questName) return { ok: false, reason: 'mismatch' };\n  const local",
-    "new": "  if (!data || typeof data !== 'object' || data.questName !== questName) return { ok: false, reason: 'mismatch' };\n  data = fullShareMarkers(data);\n  const local",
+    "old": "  const local =",
+    "new": "  data = fullShareMarkers(data);\n  const local =",
     "tests": [
       "test/systems/quest/sharemend.test.js"
     ]
@@ -369,8 +369,8 @@
   {
     "name": "AUDIT-D4-every-failure-gone",
     "file": "src/systems/quest/questShare.js",
-    "old": "return { ok: false, reason: still && !still.questComplete && !still.questTombstoned ? 'restore' : 'gone' };",
-    "new": "return { ok: false, reason: 'gone' };",
+    "old": "    return { ok: false, reason: still && !still.questComplete && !still.questTombstoned ? 'restore' : 'gone' };",
+    "new": "    return { ok: false, reason: 'gone' };",
     "tests": [
       "test/systems/quest/sharemend.test.js"
     ]
@@ -378,8 +378,8 @@
   {
     "name": "AUDIT-D4-every-failure-restore",
     "file": "src/systems/quest/questShare.js",
-    "old": "return { ok: false, reason: still && !still.questComplete && !still.questTombstoned ? 'restore' : 'gone' };",
-    "new": "return { ok: false, reason: 'restore' };",
+    "old": "    return { ok: false, reason: still && !still.questComplete && !still.questTombstoned ? 'restore' : 'gone' };",
+    "new": "    return { ok: false, reason: 'restore' };",
     "tests": [
       "test/systems/quest/sharemend.test.js"
     ]
@@ -387,8 +387,8 @@
   {
     "name": "AUDIT-D5-deliberate-unrecorded",
     "file": "src/systems/quest/questShare.js",
-    "old": "  said.add(key);\n  return !sync || fresh;",
-    "new": "  if (sync) said.add(key);\n  return !sync || fresh;",
+    "old": "  said.add(key);",
+    "new": "  if (sync) said.add(key);",
     "tests": [
       "test/systems/quest/sharemend.test.js"
     ]
@@ -396,8 +396,8 @@
   {
     "name": "AUDIT-D5-copy-out-of-key",
     "file": "src/systems/quest/questShare.js",
-    "old": "|${result?.guild ?? ''}|${copy}`;",
-    "new": "|${result?.guild ?? ''}`;",
+    "old": "  const key = `${acct}|${questName}|${result?.reason}|${result?.guild ?? ''}|${copy}`;",
+    "new": "  const key = `${acct}|${questName}|${result?.reason}|${result?.guild ?? ''}`;",
     "tests": [
       "test/systems/quest/sharemend.test.js"
     ]

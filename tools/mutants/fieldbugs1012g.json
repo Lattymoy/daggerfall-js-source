@@ -373,7 +373,7 @@
   {
     "name": "QUEST-TOWN-the-reveal-never-made",
     "file": "src/systems/quest/machine.js",
-    "old": "    revealNearSites(quest);   // FIELD BUGS 2026-10-12g QUEST-TOWN: its town on the map, once the quest is the machine's",
+    "old": "    revealNearSites(quest); // FIELD BUGS 2026-10-12g QUEST-TOWN: its town on the map, once the quest is the machine's",
     "new": "",
     "tests": [
       "test/systems/quest/qa2_nearsite.test.js"

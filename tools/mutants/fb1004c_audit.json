@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-ROBES-hidden-not-kept-alone",
     "file": "src/systems/quest/machine.js",
-    "old": "      if (r.hasPlayerClicked || hidden) actsBefore.set(",
-    "new": "      if (r.hasPlayerClicked) actsBefore.set(",
+    "old": "      if (r.hasPlayerClicked || hidden) actsBefore.set(r.symbol?.name, { clicked: !!r.hasPlayerClicked, hidden });",
+    "new": "      if (r.hasPlayerClicked) actsBefore.set(r.symbol?.name, { clicked: !!r.hasPlayerClicked, hidden });",
     "tests": [
       "test/systems/fb1004c_audit.test.js"
     ]
