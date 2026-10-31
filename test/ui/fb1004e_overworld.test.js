@@ -171,7 +171,7 @@ test('OW-WHO travel map legend: the legend speaks for the players the sheet draw
   globalThis.document = { createElement: mk };
   try {
     const leg = mk('div');
-    const self = { _chrome: { legend: leg }, _party: [], _gate: null, _gates: [], _ketches: [], _bounties: [], _revenants: [], _lodes: [], _pois: [], _raids: [], _stars: [], _fissures: [], _quests: [],   // PIN MOVED (STOREFRONT): the season's Brass Fissures too; PIN MOVED (STAR6): the night's fallen stars are the window's too; PIN MOVED (FEUD's merge of main): RVN7c's lairs are the window's too; PIN MOVED (MINE-PERKS): and a Motherlode Sense's Motherlodes; PIN MOVED (POI-2): and the approved POIs' marks
+    const self = { _chrome: { legend: leg }, _party: [], _gate: null, _gates: [], _ketches: [], _bounties: [], _revenants: [], _lodes: [], _witnessed: [], _pois: [], _raids: [], _stars: [], _fissures: [], _quests: [],   // PIN MOVED (WITNESS-MAP): and the witnessed ground's pixels; PIN MOVED (STOREFRONT): the season's Brass Fissures too; PIN MOVED (STAR6): the night's fallen stars are the window's too; PIN MOVED (FEUD's merge of main): RVN7c's lairs are the window's too; PIN MOVED (MINE-PERKS): and a Motherlode Sense's Motherlodes; PIN MOVED (POI-2): and the approved POIs' marks
       _trav: [{ name: 'Fren', kin: 'friend', lv: 3 }, { name: 'Gilda', kin: 'guild', lv: 3 }],
       _top: null, _info: null, _phase: 'map', _renderKey() {} };   // PIN MOVED (KETCH-EVERYWHERE): the Sky-Ketch's rings a list, every station's (`_ketches`)
     const said = () => leg.children.filter((n) => n.className === 'hmlegtext').map((n) => n.textContent);

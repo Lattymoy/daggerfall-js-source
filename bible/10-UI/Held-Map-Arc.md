@@ -1352,6 +1352,14 @@ card under the province's name - the pixel's veins, its dungeons', its kingdom's
 witnessed (`ui/oreMapTip.js`, the host's `oreAt`; its witnessed state asked once a pixel, after the pointer rests).
 A place keeps its own answer. The record: `01-Overview/bugs/Field-Bugs-2026-10-11d.md`.
 
+WITNESS-MAP (2026-10-31, Sammy in #feature-feedback: "Display on the world map 'witnessed areas' for stuff like ores
+and pearls."): online, the professions open, from the mid band in, the world sheet washes each confirmed pixel of the
+regions in view in copper, under every ring (`ui/witnessMapMark.js`, the host's `witnessed`). The legend names it, and
+the key's "Ground" row hides it (`filterWitnessed`, kept in the save). The ORE-MAP card still answers a hover. The far
+band draws none: a pixel there is a speck, and every region of the Bay would be asked. The classic region page draws
+none either: its marks overwrite its place dots texel by texel, so a wash would hide them. The record:
+`06-Systems/Professions-Arc.md` section 61.
+
 ## MAP-PAN - the world sheet's places move as one layer (2026-10-18)
 
 A pan redrew every place. The kept ink is keyed by the view, so each step of a drag painted the coast and, inside that, walked every mark onto the paper again. The place marks are a layer of their own now (`inkMap.js:"export function syncMarksLayer(prev, spec) {"`): the glyphs, a hub's circle, a seat's ring, a port's anchor, a carriage town's wheel, and the marked place's ring. A pan that stays inside what that layer baked — half a paper past each edge, and never a bitmap over 8192 device pixels on a side or 16777216 device pixels in area — is one blit (`inkMap.js:"export function blitMarksLayer(ctx, layer, view) {"`), and only while that blit still covers the whole view. A zoom, a band change, or a pan that walks off the bake paints the marks again: a glyph is a paper-pixel size, so the layer is not scaled. The coast, the roads and the breathing rings are as they were. With no 2D context on the layer the sheet inks the marks where it always did.

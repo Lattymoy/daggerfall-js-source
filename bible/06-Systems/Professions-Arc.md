@@ -6831,6 +6831,43 @@ Butcher's meat still spoils half as fast when it is withdrawn (29).
 ACCOUNT_VERSION acct232 (acct231 on its branch; SMITH-RRI's recipes, section 59, in the same release); migration 0203, applied by the deploy
 before the Worker; no relay change. Pins: `test/net/butcherstores.test.js`, `tools/mutants/butcherstores.json`; the
 version pins moved to acct232.
+## 61. WITNESS-MAP - the witnessed ground on the held map (BUILT 2026-10-31)
+
+Sammy in #feature-feedback: "Display on the world map 'witnessed areas' for stuff like ores and pearls." It is the
+original ORE-MAP ask again (`01-Overview/bugs/Field-Bugs-2026-10-11d.md`: "how are we supposed to tell if higher tier
+veins have been unlocked in an area?"). ORE-MAP's card answered for the one pixel under the pointer, and nothing showed
+where confirmed ground lies. Confirmed ground (section 6, three accounts a week old) is where a vein past
+UNCONFIRMED_VEIN_TIER, a region's own ore, a gem, Heartwood and a Pearl can appear.
+
+**On the service**: `POST /v1/prof/ground { character, region }` (`server-account/src/professions.js:"export async function profGround"`) answers
+the region's confirmed pixels as `[x, y]`, by row then column, GROUND_PIXELS_MAX (8,192) at most, with `more` past it.
+Any region of the world's 0..70 is asked (regionOk), the provinces' too. It reads the writ board's kept ground
+(GROUND-KEPT's regionGround, `server-account/src/professions.js:"async function regionGroundRead"`), which now keeps each pixel's x and y. The writ
+table reads the climate and the word alone, so the board is unchanged. The route is a busy read (`busyLaw.js`
+BUSY_READS) and stays on the binding, not a replica route: an isolate keeps its ground (DISPLAY-REPLICA's law). The
+service is acct235, with no migration, and deploys before the site.
+
+**On the client**: the professions' book keeps a region's ground for its UTC day (`profBook.js:"async askGround(region)"`): one read in
+flight, a failed read waited out for PROF_REFRESH_BACKOFF_MS, and none while the professions are shut. The map's
+reader (`witnessMapMark.js:"export function witnessMapReader"`) samples the view on a 7 x 7 grid, the middle first, for six regions at most
+(WITNESS_VIEW_REGIONS); past the Bay through the host's maps, whose politic map is WW-R's. The world host hands it to
+the map in one entry (`world.js:"witnessed: profBook"`), online alone.
+
+**On the map**: the world sheet reads it on its poll from the mid band in (`heldMap.js:"const wit = this.filters.witnessed"`) and paints each pixel as
+one copper square under every ring (`inkMap.js:"WITNESS-MAP: the witnessed ground under"`). The legend names it "Witnessed ground", and the key's "Ground"
+row holds its one switch, on by default, kept in the travel map's filter store and the save (`filterWitnessed`, as
+ROADS 12's are). The ORE-MAP card still answers a hover. The classic region page draws no wash
+(`10-UI/Held-Map-Arc.md` WITNESS-MAP).
+
+The four hosts: `scenes/world.js` wired, the held map's one construction seam; `scenes/exterior.js`,
+`scenes/worldModes.js` and `scenes/dungeonContext.js` build no world map (test/ui/heldmap.test.js U61), so nothing
+there changes. Not a DFU member: DFU has no witnessed world, and no ledger row moves.
+
+Pins: `test/ui/witness_map.test.js` (9: Daggerfall's ground and Skyrim's at Solitude, the cap, the kept read, the
+book, the reader over the Bay and past it, the paint, the map, the wiring). Mutants `tools/mutants/witness_map.json`
+(36, all dead). PIN MOVED: `test/net/busy_gate.test.js` (BUSY_READS), `test/systems/travel/travelmapwindow.test.js` and
+`test/systems/save/sessionsave.test.js` (the filter store and the save), the account version's pins and
+`test/server/auditscale2_acct.test.js`'s history (acct235); eleven version mutant records re-aimed by content.
 
 ## Appendix A - a day of a gatherer
 

@@ -1,0 +1,362 @@
+[
+ {
+  "name": "WM-unconfirmed-sent",
+  "file": "server-account/src/professions.js",
+  "old": ".filter((p) => p.confirmed && pixelOk(p.x, p.y))",
+  "new": ".filter((p) => pixelOk(p.x, p.y))",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "an unconfirmed pixel tinted - ground two accounts walked shown as witnessed"
+ },
+ {
+  "name": "WM-xy-lost",
+  "file": "server-account/src/professions.js",
+  "old": "out.push({ x, y, climate: f.climate, confirmed: factConfirmed(f) });",
+  "new": "out.push({ climate: f.climate, confirmed: factConfirmed(f) });",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "the kept ground without its pixels - nothing to tint"
+ },
+ {
+  "name": "WM-order-dropped",
+  "file": "server-account/src/professions.js",
+  "old": "    .sort((a, b) => (a[1] - b[1]) || (a[0] - b[0]));",
+  "new": "    .sort((a, b) => a[0] - b[0]);",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "the answer in no stable order - a capped answer a different subset each read"
+ },
+ {
+  "name": "WM-other-region",
+  "file": "server-account/src/professions.js",
+  "old": "if (f.region === region && f.climate !== null) out.push({ x, y,",
+  "new": "if (f.climate !== null) out.push({ x, y,",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "a pixel three confirmed for another region tinted as this one's"
+ },
+ {
+  "name": "WM-region-past-world",
+  "file": "server-account/src/professions.js",
+  "old": "  if (!regionOk(region)) return { error: 'bad-region' };\n  const pixels = (await regionGround(",
+  "new": "  if (!(Number.isSafeInteger(region) && region >= 0)) return { error: 'bad-region' };\n  const pixels = (await regionGround(",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "a region past the world's 0..70 read"
+ },
+ {
+  "name": "WM-bay-only",
+  "file": "server-account/src/professions.js",
+  "old": "  if (!regionOk(region)) return { error: 'bad-region' };\n  const pixels = (await regionGround(",
+  "new": "  if (!(Number.isSafeInteger(region) && region >= 0 && region < 62)) return { error: 'bad-region' };\n  const pixels = (await regionGround(",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "the Bay's 62 regions alone - a province's ground never on the map"
+ },
+ {
+  "name": "WM-switch-unasked",
+  "file": "server-account/src/professions.js",
+  "old": "export async function profGround({ db }, player, env, { character, region } = {}) {\n  const refused = asks(player, { character, needRid: false }) ?? shut(player, env);",
+  "new": "export async function profGround({ db }, player, env, { character, region } = {}) {\n  const refused = asks(player, { character, needRid: false });",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "the ground read with the professions shut"
+ },
+ {
+  "name": "WM-cap-gone",
+  "file": "server-account/src/professions.js",
+  "old": "pixels: pixels.slice(0, GROUND_PIXELS_MAX),",
+  "new": "pixels,",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "an answer of any size"
+ },
+ {
+  "name": "WM-more-unsaid",
+  "file": "server-account/src/professions.js",
+  "old": "more: pixels.length > GROUND_PIXELS_MAX };",
+  "new": "more: false };",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "a capped answer read as the whole region"
+ },
+ {
+  "name": "WM-map-past-keep",
+  "file": "server-account/src/professions.js",
+  "old": "  const pixels = (await regionGround(db, region)).filter(",
+  "new": "  const pixels = (await regionGroundRead(db, region)).filter(",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "every map's ask a scan of the region's witnesses (GROUND-KEPT's 123,000 rows)"
+ },
+ {
+  "name": "WM-route-unserved",
+  "file": "server-account/src/index.js",
+  "old": "          '/v1/prof/ground': () => profGround(ctx, who.player, env, body),",
+  "new": "",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "the route not served"
+ },
+ {
+  "name": "WM-not-busy",
+  "file": "src/net/busyLaw.js",
+  "old": "  ['/v1/prof/ground', 'POST'],",
+  "new": "",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "the map's read asked through an overload"
+ },
+ {
+  "name": "WM-book-every-poll",
+  "file": "src/net/profBook.js",
+  "old": "|| !c || this.ground(region) ||",
+  "new": "|| !c ||",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "a region asked again on every poll of the map"
+ },
+ {
+  "name": "WM-book-asked-shut",
+  "file": "src/net/profBook.js",
+  "old": "if (_groundBusy || state.open !== true ||",
+  "new": "if (_groundBusy || state.open === false ||",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "asked before the professions are known open"
+ },
+ {
+  "name": "WM-book-backoff-gone",
+  "file": "src/net/profBook.js",
+  "old": "|| (g && !g.pixels && now() - g.at < PROF_REFRESH_BACKOFF_MS)) return false;",
+  "new": ") return false;",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "a failed read asked four times a second"
+ },
+ {
+  "name": "WM-book-stale-day",
+  "file": "src/net/profBook.js",
+  "old": "return g?.pixels && g.day >= heldDay() ? g : null; },",
+  "new": "return g?.pixels ? g : null; },",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "yesterday's ground kept"
+ },
+ {
+  "name": "WM-book-in-flight",
+  "file": "src/net/profBook.js",
+  "old": "      if (_groundBusy || state.open !== true",
+  "new": "      if (state.open !== true",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "a read for each region in view at once"
+ },
+ {
+  "name": "WM-book-malformed",
+  "file": "src/net/profBook.js",
+  "old": ".filter((p) => Array.isArray(p) && pixelOk(p[0], p[1])).map(([x, y]) => [x, y]);",
+  "new": ".map(([x, y]) => [x, y]);",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "a malformed pixel painted"
+ },
+ {
+  "name": "WM-middle-not-first",
+  "file": "src/ui/witnessMapMark.js",
+  "old": "  points.sort((a, b) => (a[0] ** 2 + a[1] ** 2) - (b[0] ** 2 + b[1] ** 2));\n",
+  "new": "",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "the view's corner region asked first, the middle's last or never"
+ },
+ {
+  "name": "WM-no-bound",
+  "file": "src/ui/witnessMapMark.js",
+  "old": "    if (out.length >= max) break;\n",
+  "new": "",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "every region of a wide view asked"
+ },
+ {
+  "name": "WM-nothing-asked",
+  "file": "src/ui/witnessMapMark.js",
+  "old": "        else book.askGround(r).catch(() => {});",
+  "new": "        else void 0;",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "a region not heard never asked"
+ },
+ {
+  "name": "WM-key-never-moving",
+  "file": "src/ui/witnessMapMark.js",
+  "old": "      if (key !== last.key) last = key",
+  "new": "      if (!last.key) last = key",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "a second region's ground never painted"
+ },
+ {
+  "name": "WM-open-always",
+  "file": "src/ui/witnessMapMark.js",
+  "old": "    open: () => book?.state?.open === true,",
+  "new": "    open: () => true,",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "the switch shown with the professions shut"
+ },
+ {
+  "name": "WM-cull-gone",
+  "file": "src/ui/witnessMapMark.js",
+  "old": "for (const [x, y] of pixels) if (visible(x + 0.5, y + 0.5, 1)) ctx.rect(",
+  "new": "for (const [x, y] of pixels) ctx.rect(",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "every pixel of the region stroked each frame, the view's or not"
+ },
+ {
+  "name": "WM-square-off-pixel",
+  "file": "src/ui/witnessMapMark.js",
+  "old": "ctx.rect((x - view.ox) * s, (y - view.oy) * s, s, s);",
+  "new": "ctx.rect((x - view.ox) * s, (y - view.oy) * s, 1, 1);",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "a paper pixel where a map pixel stands"
+ },
+ {
+  "name": "WM-wash-over-rings",
+  "file": "src/ui/ink/inkMap.js",
+  "old": "  // WITNESS-MAP: the witnessed ground under every ring and mark - it is the land's, not a thing standing on it\n  paintWitnessedGround(ctx, view, opts.witnessed ?? [], visible);\n  // WB1: the gate's ring under everything else that breathes - a party member standing in it reads over it\n  if (opts.gate && visible(opts.gate.cx, opts.gate.cy, opts.gate.r + 2)) paintGateRing(ctx, view, opts.gate, pulse);\n  // WW2: and the gates past the Bay, in the gate's own colours\n  for (const g of opts.gates ?? []) if (visible(g.cx, g.cy, g.r + 2)) paintGateRing(ctx, view, g, pulse);\n  // SERPENT1: the sea serpent's ring beside it, in the sea's colours\n  if (opts.serpent && visible(opts.serpent.cx, opts.serpent.cy, opts.serpent.r + 2)) paintGateRing(ctx, view, opts.serpent, pulse, SERPENT_MAP_INK);\n  // SD2c: the Super dungeon's ring once it is found, in its omen's brass - WW5: every theatre's (`sds`; `sd` the one ring a\n  // caller from before WW5 hands)\n  for (const m of opts.sds ?? (opts.sd ? [opts.sd] : [])) if (m && visible(m.cx, m.cy, m.r + 2)) paintGateRing(ctx, view, m, pulse, SD_MAP_INK);\n  // EG-F: my company's Elite arch while it stands, in its gold\n  if (opts.arch && visible(opts.arch.cx, opts.arch.cy, opts.arch.r + 2)) paintGateRing(ctx, view, opts.arch, pulse, EG_ARCH_MAP_INK);\n  // KETCH: the Sky-Ketch while she is in Daggerfall's sky, in the aether's blue\n  for (const k of opts.ketches ?? (opts.ketch ? [opts.ketch] : [])) if (k && visible(k.cx, k.cy, k.r + 2)) paintGateRing(ctx, view, k, pulse, KT_MAP_INK);   // KETCH-EVERYWHERE: every station's ring\n  // BOUNTY1: each held bounty's black circle, under the party too\n  for (const b of opts.bounties ?? []) if (visible(b.cx, b.cy, b.r + 2)) paintBountyRing(ctx, view, b, pulse);\n  // RVN7c: each revenant lair the player has heard of - the same circle in blood red, under the party too\n  for (const b of opts.revenants ?? []) if (visible(b.cx, b.cy, b.r + 2)) paintBountyRing(ctx, view, b, pulse, REVENANT_INK);\n  // MINE-PERKS: a Motherlode Sense's day's Motherlodes - the same circle in the compass's aqua, its ore and its hour over it\n  for (const b of opts.lodes ?? []) if (visible(b.cx, b.cy, b.r + 2)) paintBountyRing(ctx, view, b, pulse, LODE_INK);\n",
+  "new": "  // WB1: the gate's ring under everything else that breathes - a party member standing in it reads over it\n  if (opts.gate && visible(opts.gate.cx, opts.gate.cy, opts.gate.r + 2)) paintGateRing(ctx, view, opts.gate, pulse);\n  // WW2: and the gates past the Bay, in the gate's own colours\n  for (const g of opts.gates ?? []) if (visible(g.cx, g.cy, g.r + 2)) paintGateRing(ctx, view, g, pulse);\n  // SERPENT1: the sea serpent's ring beside it, in the sea's colours\n  if (opts.serpent && visible(opts.serpent.cx, opts.serpent.cy, opts.serpent.r + 2)) paintGateRing(ctx, view, opts.serpent, pulse, SERPENT_MAP_INK);\n  // SD2c: the Super dungeon's ring once it is found, in its omen's brass - WW5: every theatre's (`sds`; `sd` the one ring a\n  // caller from before WW5 hands)\n  for (const m of opts.sds ?? (opts.sd ? [opts.sd] : [])) if (m && visible(m.cx, m.cy, m.r + 2)) paintGateRing(ctx, view, m, pulse, SD_MAP_INK);\n  // EG-F: my company's Elite arch while it stands, in its gold\n  if (opts.arch && visible(opts.arch.cx, opts.arch.cy, opts.arch.r + 2)) paintGateRing(ctx, view, opts.arch, pulse, EG_ARCH_MAP_INK);\n  // KETCH: the Sky-Ketch while she is in Daggerfall's sky, in the aether's blue\n  for (const k of opts.ketches ?? (opts.ketch ? [opts.ketch] : [])) if (k && visible(k.cx, k.cy, k.r + 2)) paintGateRing(ctx, view, k, pulse, KT_MAP_INK);   // KETCH-EVERYWHERE: every station's ring\n  // BOUNTY1: each held bounty's black circle, under the party too\n  for (const b of opts.bounties ?? []) if (visible(b.cx, b.cy, b.r + 2)) paintBountyRing(ctx, view, b, pulse);\n  // RVN7c: each revenant lair the player has heard of - the same circle in blood red, under the party too\n  for (const b of opts.revenants ?? []) if (visible(b.cx, b.cy, b.r + 2)) paintBountyRing(ctx, view, b, pulse, REVENANT_INK);\n  // MINE-PERKS: a Motherlode Sense's day's Motherlodes - the same circle in the compass's aqua, its ore and its hour over it\n  for (const b of opts.lodes ?? []) if (visible(b.cx, b.cy, b.r + 2)) paintBountyRing(ctx, view, b, pulse, LODE_INK);\n  paintWitnessedGround(ctx, view, opts.witnessed ?? [], visible);\n",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "the wash over the gates', the bounties' and the Motherlodes' rings"
+ },
+ {
+  "name": "WM-overlay-unpainted",
+  "file": "src/ui/ink/inkMap.js",
+  "old": "  paintWitnessedGround(ctx, view, opts.witnessed ?? [], visible);\n",
+  "new": "",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "the overlay paints no ground"
+ },
+ {
+  "name": "WM-switch-unread",
+  "file": "src/ui/heldMap.js",
+  "old": "    const wit = this.filters.witnessed || zoomBand(v.scale) === 'far' ? null",
+  "new": "    const wit = zoomBand(v.scale) === 'far' ? null",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "the key's switch hides nothing"
+ },
+ {
+  "name": "WM-far-read",
+  "file": "src/ui/heldMap.js",
+  "old": "    const wit = this.filters.witnessed || zoomBand(v.scale) === 'far' ? null",
+  "new": "    const wit = this.filters.witnessed ? null",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "the far band asks every region of the Bay"
+ },
+ {
+  "name": "WM-legend-gone",
+  "file": "src/ui/heldMap.js",
+  "old": "    if (this._witnessed.length) {   // WITNESS-MAP",
+  "new": "    if (false) {   // WITNESS-MAP",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "the wash unexplained"
+ },
+ {
+  "name": "WM-legend-hidden",
+  "file": "src/ui/heldMap.js",
+  "old": " && !this._witnessed.length && !this._vendor",
+  "new": " && !this._vendor",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "a legend of the wash alone never shown"
+ },
+ {
+  "name": "WM-key-row-shut",
+  "file": "src/ui/heldMap.js",
+  "old": "    if (this.deps.witnessed?.open?.()) {",
+  "new": "    if (this.deps.witnessed) {",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "the switch shown with the professions shut"
+ },
+ {
+  "name": "WM-overlay-never-handed",
+  "file": "src/ui/heldMap.js",
+  "old": "          witnessed: this._witnessed,   // WITNESS-MAP",
+  "new": "          witnessed: [],   // WITNESS-MAP",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "the poll's ground never painted"
+ },
+ {
+  "name": "WM-store-not-saved",
+  "file": "src/systems/travel/travelMapState.js",
+  "old": "    filterWitnessed: _filters.witnessed,   // WITNESS-MAP\n",
+  "new": "",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "the switch forgotten across a save"
+ },
+ {
+  "name": "WM-store-no-flag",
+  "file": "src/systems/travel/travelMapState.js",
+  "old": "streams: false, witnessed: false });",
+  "new": "streams: false });",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "the switch no flag of the store - its press refused"
+ },
+ {
+  "name": "WM-world-unwired",
+  "file": "src/scenes/world.js",
+  "old": "      witnessed: profBook ? witnessMapReader(profBook, maps) : null,",
+  "new": "      witnessed: null,",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "the live game's map handed no reader"
+ }
+]

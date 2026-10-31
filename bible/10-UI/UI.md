@@ -95,7 +95,8 @@ ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABL
 - and FIGUREHEAD's ONE (`figureheadPanel.js`: a ship's carving on her Fleet card - `03-World/Naval-Refit.md` FIGUREHEAD);
 - and PASS-PANELS' ONE (`enhanced/enhancedPass.js`: the shop's Folios - their covers and their pages - `06-Systems/Battle-Pass.md` section 7);
 - and PACK-SORT's ORDER (`packSort.js`: the order one press of Sort puts the pack or a store of the player's own in - `10-UI/UI-Arc.md` PACK-SORT);
-496 modules
+- and WITNESS-MAP's ONE (`witnessMapMark.js`: the held map's witnessed ground - `06-Systems/Professions-Arc.md` section 61);
+497 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

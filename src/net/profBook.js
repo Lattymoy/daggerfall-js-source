@@ -62,7 +62,7 @@ import { potionById, brewSpends } from './alchemyLaw.js';   // BAG1: a brew's
 import { chainPlan, chainNeeded, storesRoom } from './chainLaw.js';   // CRAFT1: the works a craft's inputs want first
 import { temperableRecipe, temperCost } from './temperLaw.js';   // CRAFT4: a temper's input, moved in from the bag first
 import { MASTER_CATALYSTS, masterDayOf } from './masterLaw.js';   // MASTER-ART: a Master's work's catalysts, moved in from the bag first; its day
-import { pixelKey, parseNodeKey } from './nodeLaw.js';
+import { pixelKey, parseNodeKey, pixelOk } from './nodeLaw.js';   // WITNESS-MAP: a ground's pixel the world's
 import { accountRefusalText } from './accountClient.js';
 import { ASK_AGAIN_NOW, jittered } from './backoff.js';   // SCALE1: asks again spread out, and never at once into a minute's refusal
 import { t } from '../systems/textManager.js';   // L10N4: the Stores' words in the player's language
@@ -339,6 +339,10 @@ export function createProfBook({ door, storage = null, character = () => null, n
   /** PROF2: the dungeons' states the same way: id -> { day, state, climate?, region?, stale? }. */
   const dungeons = new Map();
   let _pixelsBusy = null;
+  /** WITNESS-MAP: each region's witnessed ground as the service last said it - region -> { day, pixels: [[x, y]...], more },
+   *  or { at } for a read that failed (asked again after PROF_REFRESH_BACKOFF_MS). */
+  const grounds = new Map();
+  let _groundBusy = null;
   /**
    * GROUND-STALE (AUDIT 2026-10-01 part four): A HARVEST'S ANSWER IS WHEN ITS GROUND CAN MOVE. The service reads a
    * pixel's or a dungeon's witnesses fresh at every harvest, and the third week-old account's harvest confirms it in that
@@ -585,6 +589,29 @@ export function createProfBook({ door, storage = null, character = () => null, n
         return !before || before.day !== day || before.state !== (d?.state ?? 'none') ? [id] : [];   // GROUND-MIDNIGHT: yesterday's is no word
       })().finally(() => { _pixelsBusy = null; });
       return (await _pixelsBusy).length > 0;
+    },
+
+    // ─── WITNESS-MAP: A REGION'S WITNESSED GROUND ───────────────────
+    /** A region's confirmed pixels today (`{ day, pixels: [[x, y]...], more }`), or null not yet heard. */
+    ground(region) { const g = grounds.get(region); return g?.pixels && g.day >= heldDay() ? g : null; },
+    /** Asks a region's witnessed ground once a UTC day, while the professions are open - one read in flight, and one the
+     *  service did not answer not asked again inside PROF_REFRESH_BACKOFF_MS (a map polls four times a second). Answers
+     *  whether the ground landed. */
+    async askGround(region) {
+      const c = character();
+      const g = grounds.get(region);
+      if (_groundBusy || state.open !== true || !c || this.ground(region) || (g && !g.pixels && now() - g.at < PROF_REFRESH_BACKOFF_MS)) return false;
+      const day = dayOf(now());
+      const owner = slot();
+      _groundBusy = (async () => {
+        const r = await ask(() => door.ground(c, region));
+        if (owner !== slot()) return false;
+        if (!r?.ok) { shutBy(r); grounds.set(region, { at: now() }); return false; }
+        const pixels = (Array.isArray(r.data?.pixels) ? r.data.pixels : []).filter((p) => Array.isArray(p) && pixelOk(p[0], p[1])).map(([x, y]) => [x, y]);
+        grounds.set(region, { day, pixels, more: r.data?.more === true });
+        return true;
+      })().finally(() => { _groundBusy = null; });
+      return _groundBusy;
     },
 
     // ─── A HARVEST ──────────────────────────────────────────────────

@@ -23,12 +23,13 @@ test('BUSY-GATE the law: the reads that stand back are the fourteen display read
     ['/v1/towns/econ', 'POST'],   // PIN MOVED (AUDIT TOWN-ECON 2 CLI-8): and the towns' shares, an isolate's kept read
     ['/v1/festival/town', 'POST'],   // PIN MOVED (WITCH1): and a town's Hearth Offerings, a replica's read
     ['/v1/hunt/state', 'POST'],   // PIN MOVED (HUNT-LEAN): and a character's hunt, a replica's read (test/server/lode_herd.test.js)
+    ['/v1/prof/ground', 'POST'],   // PIN MOVED (WITNESS-MAP): and a region's witnessed ground, an isolate's kept read (test/ui/witness_map.test.js)
   ]);
   for (const [path, method] of BUSY_READS) {
     assert.ok(ROUTES.has(path), `${path}: a route the service serves`);
     // PIN MOVED (DISPLAY-REPLICA, 2026-10-13): each was no replica's read; each is one now (service.js REPLICA_ROUTES), and
     // still stands back - without the tab's bookmark its first statement is the primary's
-    assert.equal(REPLICA_ROUTES.get(path) === method || ['/v1/homes/yards/cells', '/v1/homes/layouts', '/v1/seats/list', '/v1/towns/econ'].includes(path), true, `${path}: a replica's read, or one an isolate keeps`);
+    assert.equal(REPLICA_ROUTES.get(path) === method || ['/v1/homes/yards/cells', '/v1/homes/layouts', '/v1/seats/list', '/v1/towns/econ', '/v1/prof/ground'].includes(path), true, `${path}: a replica's read, or one an isolate keeps`);
     assert.equal(busyRead(path, method), true);
     assert.equal(busyRead(path, method === 'GET' ? 'POST' : 'GET'), false, `${path}: by its method alone`);
   }

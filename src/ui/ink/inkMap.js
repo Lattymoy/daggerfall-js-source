@@ -54,6 +54,7 @@ import { RAID_MARK_CSS } from '../eventMapMarks.js';   // EVENT-TIP: a town unde
 import { QUEST_MARK_CSS, QUEST_MARK_LIFT } from '../quest/questMarks.js';   // GUIDE5: where a quest points
 import { wheelPath } from '../carriageWheel.js';   // OW-HUBS: a carriage town's wheel beside its mark
 import { paintVendorMark } from '../vendor/vendorMapMark.js';   // HOME-VENDOR: the trader's waypoint's coin
+import { paintWitnessedGround } from '../witnessMapMark.js';   // WITNESS-MAP: the witnessed ground's copper wash
 import { seatMapMark, SEAT_RING_SIEGE } from '../../net/townSeatLaw.js';   // SEAT1a: how a seat is marked - its ring, a crown, a second ring; SEAT1c: held, Contested, a siege week
 import { STAR_VIOLET_CSS } from '../starfall/starMapMark.js';   // STAR6: a fallen star's violet
 import { FISSURE_BRASS_CSS, FISSURE_AETHER_CSS } from '../fissureMapMark.js';   // STOREFRONT: a Brass Fissure's brass and its crack's blue
@@ -1276,6 +1277,8 @@ export function paintInkOverlay(ctx, view, opts) {
   ctx.lineJoin = 'round';
   const { visible } = penOf(ctx, view, paperW, paperH);
   const pulse = opts.pulse ?? 0;
+  // WITNESS-MAP: the witnessed ground under every ring and mark - it is the land's, not a thing standing on it
+  paintWitnessedGround(ctx, view, opts.witnessed ?? [], visible);
   // WB1: the gate's ring under everything else that breathes - a party member standing in it reads over it
   if (opts.gate && visible(opts.gate.cx, opts.gate.cy, opts.gate.r + 2)) paintGateRing(ctx, view, opts.gate, pulse);
   // WW2: and the gates past the Bay, in the gate's own colours
