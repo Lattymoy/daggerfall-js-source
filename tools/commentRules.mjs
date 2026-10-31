@@ -100,8 +100,7 @@ function cleanParagraph(text) {
   const words = out.trim().split(/[\s,/&+:;.()]+/).filter(Boolean);
   if (words.some((w) => isTag(w) || w === 'AUDIT') && words.every((w) => isTag(w) || /^(?:AUDIT|FIELD|BUGS|\d+[a-z]?|[IVX]+)$/.test(w))) return '';
   // tidy what the cuts left
-  out = out.replace(/,[ \t]*;/g, ';').replace(/\([ \t]*[,;][ \t]*/g, '(').replace(/[ \t]*[,;][ \t]*\)/g, ')')
-    .replace(/(\S) ([,;:.])(?=\s|$)/g, '$1$2').replace(/^[ \t]*[-–—:;,][ \t]*/, '');
+  out = out.replace(/,[ \t]*;/g, ';').replace(/\([ \t]*[,;][ \t]*/g, '(').replace(/[ \t]*[,;][ \t]*\)/g, ')').replace(/^[ \t]*[-–—:;,][ \t]*/, '');
   if (tagged) out = out.replace(/^(\s*)([a-z])(?=[a-z]*(?:[\s,;:.!?'-]|$))/, (_, s, c) => s + c.toUpperCase());   // a plain word, never an identifier
   return /[A-Za-z0-9]/.test(out) ? out : '';
 }

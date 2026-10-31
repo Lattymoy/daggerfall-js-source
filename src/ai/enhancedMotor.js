@@ -188,7 +188,7 @@ export class EnhancedEnemyAI extends EnemyAI {
   }
 
   /** A goal findPath cannot place - off the mesh past its locate's
-   *  half-metre snap (navmesh.js:"return bestD <= 2 ? best: -1;"), a player between two shelves 0.8 m deep or in a
+   *  half-metre snap (navmesh.js:"return bestD <= 2 ? best : -1;"), a player between two shelves 0.8 m deep or in a
    *  closet the erosion kept no floor of. The host's `navGoal` names the mesh's point a route there ends at (the room's
    *  meshPointNear, never through a wall); the route runs to it and its last leg is the straight walk in. No hook, or
    *  no point, or no route to it: null, the classic line. Departure from his repathToward, named: it answered null. */
