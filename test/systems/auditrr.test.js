@@ -87,7 +87,7 @@ test('AUDIT-RR F2: a guild joined through its initiation quest\'s end runs the c
 
 test('AUDIT-RR F4: the expulsion squad places with CreateFoeSpawner\'s own arguments - no line-of-sight check, the mod\'s distances, a long attempt budget - and standLooseFoe takes all four', () => {
   const he = rd('src/scenes/hostEnchant.js');
-  assert.match(he, /mobileType, \{ allied = false, lineOfSightCheck = true, minDistance = 4, maxDistance = 20, attempts = LOOSE_FOE_PLACE_ATTEMPTS, open = false \} = \{\}\)/);   // PIN MOVED (PACK-OPEN: and `open`, a raid stand's)
+  assert.match(he, /mobileType, \{ allied = false, lineOfSightCheck = true, minDistance = 4, maxDistance = 20, attempts = LOOSE_FOE_PLACE_ATTEMPTS, open = false, reach = null \} = \{\}\)/);   // PIN MOVED (PACK-OPEN: and `open`, a raid stand's; RAID-REACH: and `reach`)
   assert.match(he, /for \(let i = 0; i < attempts && !spot; i\+\+\) \{\s+spot = placeFoeFreely\(env, \{ minDistance, maxDistance, lineOfSightCheck \}\);/);
   const ri = rd('src/systems/roleplayRealism/rrInstall.js');
   assert.match(ri, /export const RR_SQUAD_PLACE_ATTEMPTS = 600;/);

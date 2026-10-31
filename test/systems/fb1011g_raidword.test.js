@@ -121,8 +121,8 @@ test('RAID-WORD: a jump\'s sweep - the pool emptied, no one dead - frees the rai
   at.town = null; frame(1);
   at.town = { regionIndex: 3, locationIndex: 7 };
   assert.equal(raidState().raids[0].killed, 1, 'the one that fell is tallied');
-  for (let i = 0; i < 6; i++) { frame(1); await tick(); }
-  assert.ok(log.raiders.length >= MAX_RAID_ENEMIES + 4, `back in the town the raid stands raiders again, one a clock - the swept hold no place (${log.raiders.length - MAX_RAID_ENEMIES} new)`);
+  for (let i = 0; i < 12; i++) { frame(1); await tick(); }   // PIN MOVED (RAID-PACKS): a pack, its gap, the next
+  assert.ok(log.raiders.length >= MAX_RAID_ENEMIES + 4, `back in the town the raid stands raiders again, pack on pack - the swept hold no place (${log.raiders.length - MAX_RAID_ENEMIES} new)`);
 });
 
 test('RAID-WORD by source: the world host tells the raid of its sweep beside the sweep itself - every jump, load and respawn runs it', () => {

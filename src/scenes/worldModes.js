@@ -323,6 +323,8 @@ import { createDecorPack, returnUnstood } from '../systems/decor/decorPack.js'; 
 import { decorItemName, decorOwnBackLine } from '../systems/decor/decorItems.js';   // DECOR2a: an own item's piece named from its numbers
 import { isFurnishing, furnishingDeliveredLine, ownBackLines } from '../systems/decor/decorFurnish.js';   // DECOR2b: furniture delivered, never carried
 import { useDecorPiece } from '../systems/decor/decorUse.js';   // DECOR-USE: a placed bed slept in, a placed fire cooked on
+import { MUSIC_STATION } from '../systems/musicBox.js';   // MUSIC-BOX: a placed music box
+import { openMusicBox } from './musicBoxPress.js';
 import { goldAmount, totalGoldAmount, deductGold, addGold, payUndoable, setCrimeCommitted, CRIMES } from '../systems/court.js';   // PT1: the ONE crime write (V4's SuppressCrime gate rides it)
 // Q4-v: the quest layer's host wiring. The BRIDGE (scenes/quest/questBridge.js)
 // is created by the outer host (world.js) and rides in; this machine owns
@@ -413,6 +415,7 @@ import { isTouchDevice } from '../ui/touch/touchDevice.js';
 import { holdCursor, cursorKeyClaimed } from '../player/pointerLock.js';
 import { decorKey } from '../systems/decor/decorCatalogue.js';
 import { decorBuiltInPlaque, decorPlaque, decorVerbKey } from '../systems/decor/decorLook.js';
+import { bookHouseOf } from './portalBookHost.js';   // PORTAL-BOOK: the house a Portal Book keeps
 import { BULLETIN_BOARD_MODEL_ID } from '../world/rmbLayout.js';   // GUILD1e: Daggerfall's own board, placed in a guild's hall
 import { accountRefusalText } from '../net/accountClient.js';
 // P1: the scene cache - what an interior remembers across a visit.
@@ -5010,6 +5013,7 @@ export function createWorldModes(host) {
     const piece = interiorDecor.pieceOf(id);
     if (piece?.station === VENDOR_STATION) { openHomeVendor(piece, id); return; }   // HOME-VENDOR: anyone may trade with it
     if (useDecorPiece(piece, interiorCamps, getInteractionMode, restFromInteriorBed, () => forgeOffered() && (interiorKeyCtx.togglePause({ at: stationDoorAt('fire') }), true))) return;   // DECOR-USE (systems/decor/decorUse.js): a placed fire or the cooking station opens what a brazier opens (a fire is nobody's), a placed bed is slept in as the room's own are (the rest window says who may)
+    if (piece?.station === MUSIC_STATION) return void openMusicBox(piece.id ?? id, { show: mountInterior, say });   // MUSIC-BOX: anyone may play it, their own tunes
     if (piece?.station) { useDecorStation(piece); return; }   // HOME-STATIONS
     if (piece?.storage && caravanGuestHere()) { say(homeBelongsLine({ owner: privateVisitOwner })); return; }   // WAGONS2-VISIT: a caravan's storage is its owner's, as a home's cupboards are - shut to its visitor, in its owner's name
     if (hallPiecePress(piece, isHallBoard(piece), openHallBoard, openHallChest, !!(interiorHome?.hall && interiorHome.member), say)) return;   // GUILD1e: the board in a guild's hall; GUILD-SHOP: its banker, the vault (scenes/guildHallPress.js)
@@ -13549,6 +13553,7 @@ export function createWorldModes(host) {
      *  land the player one building offset away from where they set
      *  it. Same distinction the interior save half draws (IS1's
      *  `restore.pos` lands raw over the door landing). */
+    portalBookHere: () => bookHouseOf(interiorHome, mode === 'interior' && !!interiorBuilding && houseOwnedAt(interiorBuilding, interiorBuilding.buildingKey), interiorBuilding, homeTownOf(interiorBuilding), exitReturn?.siblings, player.pos, !!(interiorCabin || privateVisitRoom) || mode !== 'interior'),   // PORTAL-BOOK (scenes/portalBookHost.js): the house I stand in and the landing outside its front door, or null
     setPlayerLocalPosition(p) {
       player.spawn(p[0], p[1], p[2]);
       cam.pos = player.eyeAt();   // EV1: the interpolated render eye
@@ -13737,6 +13742,7 @@ export function createWorldModes(host) {
     attackInput(dx, dy, held) { if (held && decorTool.flying()) return; modalAttackSink()?.(dx, dy, held); },
     /** DECOR1e: the decorator's camera flies - the hosts' finger taps activate nothing under it. */
     decorFlying: () => decorTool.flying(),
+    musicBoxHere: (id) => mode === 'interior' && interiorDecor.pieceOf(id)?.station === MUSIC_STATION,   // MUSIC-BOX: a box in this room, for the world host's music chain (systems/musicBox.js createMusicBoxScore)
     /** CARDS-TOUCH (Tavern-Cards section 31): the player sits at a card table - the hosts' touch layer stands its look,
      *  swing and tap down (ui/touch/touch.js `cardTable`): the table's own listeners read the finger. */
     cardSeated: () => mode === 'interior' && !!cardSeat,

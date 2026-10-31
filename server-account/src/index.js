@@ -1418,20 +1418,29 @@ const service = {
         // account, because it is a different KIND of fact. An account
         // view is the row; a wardrobe is the row read against this
         // service's config and clock, which is why it alone takes env.
+        // AURA-FAST: every read below is its own and asks D1 in the same breath - one after another they were some twenty
+        // round trips, and the account card and the Collections page waited on all of them in turn
+        const [duels, gates, raids, serpents, dragons, sds, stars, ketch, renown, marks, worn, purse, devices, patreon, shop, pass, aurum] = await Promise.all([
+          duelRecordOf(ctx, who.player.id), gateRecordOf(ctx, who.player.id), raidRecordOf(ctx, who.player.id), serpentRecordOf(ctx, who.player.id),
+          dragonRecordOf(ctx, who.player.id), sdRecordOf(ctx, who.player.id), starRecordOf(ctx, who.player.id), ketchRecordOf(ctx, who.player.id),
+          renownTracksOf(ctx, who.player.id), marksCardOf(ctx, who.player, env), withSeatTitles(ctx, who.player, env), insigniaPurse(ctx, who.player),
+          devicesOf(ctx, who.player.id), patreonCardOf(who.player, env, { subtle, rand, nowS, origin: url.origin }),
+          shopCardOf(who.player, env, { subtle, rand, nowS, origin: url.origin }), passOf(ctx, who.player, env), aurumCardOf(ctx, who.player, env),
+        ]);
         return json({
           // DUEL1: and the duelling record, counted off the results (the profile card's K/D); WB5b: and the gates closed
           // RENOWN1: and Renown's tracks, the most recently earned first (the card's level and its row) - RENOWN-CHAR: a
           // list of the characters' tracks again (RENOWN-ACCOUNT sent the account's one, `{ xp, level }`)
           // MARKS1: and the Marks balance, where Marks are this account's (null where not - a guest, the switch)
-          account: { ...accountView(who.player, nowS), duels: await duelRecordOf(ctx, who.player.id), gates: await gateRecordOf(ctx, who.player.id), raids: await raidRecordOf(ctx, who.player.id), serpents: await serpentRecordOf(ctx, who.player.id), dragons: await dragonRecordOf(ctx, who.player.id), sds: await sdRecordOf(ctx, who.player.id), stars: await starRecordOf(ctx, who.player.id), ketch: await ketchRecordOf(ctx, who.player.id), renown: await renownTracksOf(ctx, who.player.id), marks: await marksCardOf(ctx, who.player, env) },
-          wardrobe: { ...accountWardrobe(await withSeatTitles(ctx, who.player, env), env, nowS), purse: await insigniaPurse(ctx, who.player), annals: Number(who.player.eg_annals) || 0 },   // HUNTERS-MARK: the Annals' pages kept, the Collections page's   // SEAT1c: and a Charter's titles   // WB9g: and what the account's closed gates could still pay the Broker's insignia
-          devices: await devicesOf(ctx, who.player.id),
+          account: { ...accountView(who.player, nowS), duels, gates, raids, serpents, dragons, sds, stars, ketch, renown, marks },
+          wardrobe: { ...accountWardrobe(worn, env, nowS), purse, annals: Number(who.player.eg_annals) || 0 },   // HUNTERS-MARK: the Annals' pages kept, the Collections page's   // SEAT1c: and a Charter's titles   // WB9g: and what the account's closed gates could still pay the Broker's insignia
+          devices,
           // PATREON-LINK: the card's Patreon row - whether linking is on, whether this account is linked, the titles its
           // pledge holds, and the link to follow (a state sealed for this account, under the origin that served this)
-          patreon: await patreonCardOf(who.player, env, { subtle, rand, nowS, origin: url.origin }),
-          shop: await shopCardOf(who.player, env, { subtle, rand, nowS, origin: url.origin }),   // SHOP: the wares, what is held, and a Buy link each
-          pass: await passOf(ctx, who.player, env).then((c) => ('error' in c ? null : c)),   // STOREFRONT: the season's card - a guest's, or none, null
-          aurum: await aurumCardOf(ctx, who.player, env),   // AURUM: the balance, the day's wares, the week's deeds - a guest's null
+          patreon,
+          shop,   // SHOP: the wares, what is held, and a Buy link each
+          pass: 'error' in pass ? null : pass,   // STOREFRONT: the season's card - a guest's, or none, null
+          aurum,   // AURUM: the balance, the day's wares, the week's deeds - a guest's null
         }, 200, origin);
       }
 
@@ -1516,7 +1525,9 @@ const service = {
         const known = await db.prepare('SELECT 1 AS x FROM players WHERE id = ?1').bind(body.id).first();
         if (!known) return no('no-player', 404, origin);
         // WB5b: the gates closed ride the same answer - the Inspect card asks once and says both
-        return json({ id: body.id, ...(await duelRecordOf(ctx, body.id)), gates: await gateRecordOf(ctx, body.id), raids: await raidRecordOf(ctx, body.id), serpents: await serpentRecordOf(ctx, body.id), dragons: await dragonSlainOf(ctx, body.id), sds: await sdRecordOf(ctx, body.id), stars: await starRecordOf(ctx, body.id), ketch: await ketchRecordOf(ctx, body.id) }, 200, origin);   // RAID4: and the towns defended; SERPENT1: and the serpents slain; SD9b: and the Hours broken; STAR7: and the fallen stars held; KETCH: and the voyages sailed
+        // AURA-FAST: the counts asked together, not one round trip after another
+        const [duels, gates, raids, serpents, dragons, sds, stars, ketch] = await Promise.all([duelRecordOf(ctx, body.id), gateRecordOf(ctx, body.id), raidRecordOf(ctx, body.id), serpentRecordOf(ctx, body.id), dragonSlainOf(ctx, body.id), sdRecordOf(ctx, body.id), starRecordOf(ctx, body.id), ketchRecordOf(ctx, body.id)]);
+        return json({ id: body.id, ...duels, gates, raids, serpents, dragons, sds, stars, ketch }, 200, origin);   // RAID4: and the towns defended; SERPENT1: and the serpents slain; SD9b: and the Hours broken; STAR7: and the fallen stars held; KETCH: and the voyages sailed
       }
 
       if (path === '/v1/gate/claim' && request.method === 'POST') {

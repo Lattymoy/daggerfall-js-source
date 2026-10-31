@@ -714,7 +714,7 @@
   {
     "name": "SOUNDSCAPE-HOST-the-score-ahead-of-the-gates",
     "file": "src/scenes/world.js",
-    "old": "if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame() && !soundscape.scoreFrame()) musicDirector.update({",
+    "old": "if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame() && !soundscape.scoreFrame() && !musicBoxScore.frame()) musicDirector.update({",
     "new": "if (!soundscape.scoreFrame() && !hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame()) musicDirector.update({",
     "tests": [
       "test/scenes/soundscapehost.test.js"
