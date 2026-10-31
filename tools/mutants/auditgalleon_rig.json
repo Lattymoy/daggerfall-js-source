@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-GALLEON-R1-the-head-bellied",
     "file": "src/world/ships/galleonRig.js",
-    "old": "const belly = sail.belly * sail.footW * arch * Math.sin(0.8 * Math.PI * v);",
-    "new": "const belly = sail.belly * sail.footW * arch * Math.sin(Math.PI * (0.15 + 0.8 * v));",
+    "old": "        const belly = sail.belly * sail.footW * arch * Math.sin(0.8 * Math.PI * v);",
+    "new": "        const belly = sail.belly * sail.footW * arch * Math.sin(Math.PI * (0.15 + 0.8 * v));",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "AUDIT-GALLEON-R1-the-head-off-the-arms-taper",
     "file": "src/world/ships/galleonRig.js",
-    "old": "    const rh = yardRadius(sail, x0) + HEAD_OFF;",
-    "new": "    const rh = YARD_R[0] + HEAD_OFF;",
+    "old": "      const rh = yardRadius(sail, x0) + HEAD_OFF;",
+    "new": "      const rh = YARD_R[0] + HEAD_OFF;",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-GALLEON-R1-the-roll-hung-off-the-yard",
     "file": "src/world/ships/galleonRig.js",
-    "old": "      const D = yardRadius(sail, xr) + HEAD_OFF + FURL_R;",
-    "new": "      const D = yardRadius(sail, xr) + HEAD_OFF + FURL_R + 0.1;",
+    "old": "        const D = yardRadius(sail, xr) + HEAD_OFF + FURL_R;",
+    "new": "        const D = yardRadius(sail, xr) + HEAD_OFF + FURL_R + 0.1;",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "AUDIT-GALLEON-R2-the-old-yard",
     "file": "src/world/ships/galleonRig.js",
-    "old": "yardY: 16.0, drop: 3.4,",
-    "new": "yardY: 16.35, drop: 3.75,",
+    "old": "    yardY: 16.0,\n    drop: 3.4,",
+    "new": "    yardY: 16.35,\n    drop: 3.75,",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "AUDIT-GALLEON-R2-the-old-stay",
     "file": "src/world/ships/galleonRig.js",
-    "old": "const foreHead = 16.8, mainHead = 18.6, mainFoot = 13.2;",
-    "new": "const foreHead = 16.3, mainHead = 18.6, mainFoot = 13.2;",
+    "old": "  const foreHead = 16.8,",
+    "new": "  const foreHead = 16.3,",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "AUDIT-GALLEON-R2-the-old-clew",
     "file": "src/world/ships/galleonRig.js",
-    "old": "clew: Object.freeze([0, 7.85, 19.6])",
-    "new": "clew: Object.freeze([0, 7.85, 16.6])",
+    "old": "  clew: Object.freeze([0, 7.85, 19.6]),",
+    "new": "  clew: Object.freeze([0, 7.85, 16.6]),",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "AUDIT-GALLEON-R2-the-full-belly",
     "file": "src/world/ships/galleonRig.js",
-    "old": "yardY: 16.0, drop: 3.4, headW: 8.0, footW: 10.0, yardSpan: 9.4, belly: 0.075",
-    "new": "yardY: 16.0, drop: 3.4, headW: 8.0, footW: 10.0, yardSpan: 9.4, belly: 0.15",
+    "old": "    yardSpan: 9.4,\n    belly: 0.075,",
+    "new": "    yardSpan: 9.4,\n    belly: 0.15,",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "AUDIT-GALLEON-R3-the-old-main-stay",
     "file": "src/world/ships/galleonRig.js",
-    "old": "mainstay: { head: [0, mainHead, RIG.mainZ + mastRadius('main', mainHead)], foot: [0, mainFoot, RIG.foreZ - 0.809 * mastRadius('fore', mainFoot)], r: 0.05 },",
-    "new": "mainstay: { head: [0, RIG.nestFloorY - 0.4, RIG.mainZ + 0.5], foot: [0, RIG.deckY + 1.6, RIG.foreZ - 0.55], r: 0.05 },",
+    "old": "      head: [0, mainHead, RIG.mainZ + mastRadius('main', mainHead)],\n      foot: [0, mainFoot, RIG.foreZ - 0.809 * mastRadius('fore', mainFoot)],",
+    "new": "      head: [0, RIG.nestFloorY - 0.4, RIG.mainZ + 0.5],\n      foot: [0, RIG.deckY + 1.6, RIG.foreZ - 0.55],",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "AUDIT-GALLEON-R3-the-full-belly",
     "file": "src/world/ships/galleonRig.js",
-    "old": "yardY: 17.65, drop: 4.2, headW: 8.6, footW: 10.4, yardSpan: 10.0, belly: 0.075",
-    "new": "yardY: 17.65, drop: 4.2, headW: 8.6, footW: 10.4, yardSpan: 10.0, belly: 0.15",
+    "old": "    yardSpan: 10.0,\n    belly: 0.075,",
+    "new": "    yardSpan: 10.0,\n    belly: 0.15,",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-GALLEON-R4-the-shrouds-forward-again",
     "file": "src/world/ships/galleonRig.js",
-    "old": "feet: Object.freeze([2.75, 3.4, 4.05])",
-    "new": "feet: Object.freeze([6.2, 7.0, 7.8])",
+    "old": "    feet: Object.freeze([2.75, 3.4, 4.05]),",
+    "new": "    feet: Object.freeze([6.2, 7.0, 7.8]),",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "AUDIT-GALLEON-R4-a-yards-footropes-before-it",
     "file": "src/world/ships/galleonRig.js",
-    "old": "sagging([s * 0.25, -0.1, d - 0.22], [s * (half - 0.15), -0.06, d - 0.16], 0.45, 6)",
-    "new": "sagging([s * 0.25, -0.1, d + 0.02], [s * (half - 0.15), -0.06, d + 0.02], 0.45, 6)",
+    "old": "      rope(bench, TEX.rope, sagging([s * 0.25, -0.1, d - 0.22], [s * (half - 0.15), -0.06, d - 0.16], 0.45, 6), 0.022);",
+    "new": "      rope(bench, TEX.rope, sagging([s * 0.25, -0.1, d + 0.02], [s * (half - 0.15), -0.06, d + 0.02], 0.45, 6), 0.022);",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "AUDIT-GALLEON-R4-the-course-sheets-aft",
     "file": "src/world/ships/galleonRig.js",
-    "old": "courseSheet: Object.freeze([5.2, RIG.railY, 5.4]),",
-    "new": "courseSheet: Object.freeze([5.25, RIG.railY, 3.0]),",
+    "old": "  courseSheet: Object.freeze([5.2, RIG.railY, 5.4]),",
+    "new": "  courseSheet: Object.freeze([5.25, RIG.railY, 3.0]),",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "AUDIT-GALLEON-R4-the-fore-braces-forward-of-the-gangway",
     "file": "src/world/ships/galleonRig.js",
-    "old": "foreBrace: Object.freeze([5.3, RIG.railY, -0.7]),",
-    "new": "foreBrace: Object.freeze([5.3, RIG.railY, 1.75]),",
+    "old": "  foreBrace: Object.freeze([5.3, RIG.railY, -0.7]),",
+    "new": "  foreBrace: Object.freeze([5.3, RIG.railY, 1.75]),",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "AUDIT-GALLEON-R6-the-old-belay",
     "file": "src/world/ships/galleonRig.js",
-    "old": "mainSheet: Object.freeze([1.3, RIG.deckY, -9.8]),",
-    "new": "mainSheet: Object.freeze([0, 11.05, -10.6]),",
+    "old": "  mainSheet: Object.freeze([1.3, RIG.deckY, -9.8]),",
+    "new": "  mainSheet: Object.freeze([0, 11.05, -10.6]),",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "AUDIT-GALLEON-R6-the-belay-in-the-doorway",
     "file": "src/world/ships/galleonRig.js",
-    "old": "mainSheet: Object.freeze([1.3, RIG.deckY, -9.8]),",
-    "new": "mainSheet: Object.freeze([0, RIG.deckY, -9.8]),",
+    "old": "  mainSheet: Object.freeze([1.3, RIG.deckY, -9.8]),",
+    "new": "  mainSheet: Object.freeze([0, RIG.deckY, -9.8]),",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "AUDIT-GALLEON-R6-the-belay-under-the-stair",
     "file": "src/world/ships/galleonRig.js",
-    "old": "mainSheet: Object.freeze([1.3, RIG.deckY, -9.8]),",
-    "new": "mainSheet: Object.freeze([1.3, RIG.deckY, -10.0]),",
+    "old": "  mainSheet: Object.freeze([1.3, RIG.deckY, -9.8]),",
+    "new": "  mainSheet: Object.freeze([1.3, RIG.deckY, -10.0]),",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "AUDIT-GALLEON-R7-a-lift-in-the-air",
     "file": "src/world/ships/galleonRig.js",
-    "old": "RIG.foreTopY - 0.12 : RIG.nestFloorY - 0.17",
-    "new": "RIG.foreTopY + 0.5 : RIG.nestFloorY - 0.17",
+    "old": "  return [0, (sail.mast === 'fore' ? RIG.foreTopY - 0.12 : RIG.nestFloorY - 0.17) - sail.yardY, 0];",
+    "new": "  return [0, (sail.mast === 'fore' ? RIG.foreTopY + 0.5 : RIG.nestFloorY - 0.17) - sail.yardY, 0];",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "AUDIT-GALLEON-R7-the-main-lifts-through-the-nest",
     "file": "src/world/ships/galleonRig.js",
-    "old": "RIG.foreTopY - 0.12 : RIG.nestFloorY - 0.17",
-    "new": "RIG.foreTopY - 0.12 : RIG.nestFloorY + 0.18",
+    "old": "  return [0, (sail.mast === 'fore' ? RIG.foreTopY - 0.12 : RIG.nestFloorY - 0.17) - sail.yardY, 0];",
+    "new": "  return [0, (sail.mast === 'fore' ? RIG.foreTopY - 0.12 : RIG.nestFloorY + 0.18) - sail.yardY, 0];",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -272,8 +272,8 @@
   {
     "name": "AUDIT-GALLEON-R7-the-jib-sheets-in-the-air",
     "file": "src/world/ships/galleonRig.js",
-    "old": "jibSheet: Object.freeze([4.7, 6.959, 13.6]),",
-    "new": "jibSheet: Object.freeze([3.4, 6.95, 13.6]),",
+    "old": "  jibSheet: Object.freeze([4.7, 6.959, 13.6]),",
+    "new": "  jibSheet: Object.freeze([3.4, 6.95, 13.6]),",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -282,8 +282,8 @@
   {
     "name": "AUDIT-GALLEON-R7-a-brace-off-the-rail",
     "file": "src/world/ships/galleonRig.js",
-    "old": "mainBrace: Object.freeze([5.15, 12.297, -17.0]),",
-    "new": "mainBrace: Object.freeze([5.3, 11.9, -10.6]),",
+    "old": "  mainBrace: Object.freeze([5.15, 12.297, -17.0]),",
+    "new": "  mainBrace: Object.freeze([5.3, 11.9, -10.6]),",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -292,8 +292,8 @@
   {
     "name": "AUDIT-GALLEON-R7-a-backstay-off-it",
     "file": "src/world/ships/galleonRig.js",
-    "old": "foot: [s * 5.2, RIG.railY, 2.1], r: 0.032",
-    "new": "foot: [s * 5.38, 6.85, 3.2], r: 0.032",
+    "old": "      foot: [s * 5.2, RIG.railY, 2.1],",
+    "new": "      foot: [s * 5.38, 6.85, 3.2],",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -302,8 +302,8 @@
   {
     "name": "AUDIT-GALLEON-R9-the-old-head",
     "file": "src/world/ships/galleonRig.js",
-    "old": "bobstay: { head: [...RIG.bowspritUnder],",
-    "new": "bobstay: { head: [...RIG.bowspritEnd],",
+    "old": "    bobstay: { head: [...RIG.bowspritUnder], foot: [...RIG.stem], r: 0.04 },",
+    "new": "    bobstay: { head: [...RIG.bowspritEnd], foot: [...RIG.stem], r: 0.04 },",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -312,8 +312,8 @@
   {
     "name": "AUDIT-GALLEON-R9-the-old-foot",
     "file": "src/world/ships/galleonRig.js",
-    "old": "stem: Object.freeze([0, 2.1, 21.735]),",
-    "new": "stem: Object.freeze([0, 2.1, 21.6]),",
+    "old": "  stem: Object.freeze([0, 2.1, 21.735]),",
+    "new": "  stem: Object.freeze([0, 2.1, 21.6]),",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -322,8 +322,8 @@
   {
     "name": "AUDIT-GALLEON-R10-the-channel-off-her-side",
     "file": "src/world/ships/galleonRig.js",
-    "old": "fore: Object.freeze({ feet: Object.freeze([2.75, 3.4, 4.05]), headY: 16.09, inX: Object.freeze([5.325, 5.325]),",
-    "new": "fore: Object.freeze({ feet: Object.freeze([2.75, 3.4, 4.05]), headY: 16.09, inX: Object.freeze([5.355, 5.355]),",
+    "old": "    headY: 16.09,\n    inX: Object.freeze([5.325, 5.325]),",
+    "new": "    headY: 16.09,\n    inX: Object.freeze([5.355, 5.355]),",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -332,8 +332,8 @@
   {
     "name": "AUDIT-GALLEON-R10-a-chainplate-in-the-air",
     "file": "src/world/ships/galleonRig.js",
-    "old": "plateX: Object.freeze([5.387, 5.387])",
-    "new": "plateX: Object.freeze([5.8, 5.8])",
+    "old": "    plateX: Object.freeze([5.387, 5.387]),",
+    "new": "    plateX: Object.freeze([5.8, 5.8]),",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -342,8 +342,8 @@
   {
     "name": "AUDIT-GALLEON-R10-the-ratlines-off-the-rope",
     "file": "src/world/ships/galleonRig.js",
-    "old": "const at = (l, y) => lerp3(l.foot, l.head,",
-    "new": "const at = (l, y) => lerp3(l.deadeye, l.head,",
+    "old": "        const at = (l, y) => lerp3(l.foot, l.head, (y - l.foot[1]) / (l.head[1] - l.foot[1]));",
+    "new": "        const at = (l, y) => lerp3(l.deadeye, l.head, (y - l.foot[1]) / (l.head[1] - l.foot[1]));",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -352,8 +352,8 @@
   {
     "name": "AUDIT-GALLEON-R10-the-old-axes",
     "file": "src/world/ships/galleonRig.js",
-    "old": "mainZ: -0.191, foreZ: 8.772,",
-    "new": "mainZ: -0.1225, foreZ: 8.8375,",
+    "old": "  mainZ: -0.191,\n  foreZ: 8.772,",
+    "new": "  mainZ: -0.1225,\n  foreZ: 8.8375,",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -362,8 +362,8 @@
   {
     "name": "AUDIT-GALLEON-R13-the-gaffs-rows-foot-first",
     "file": "src/world/ships/galleonRig.js",
-    "old": "v = 1 - j / (NV - 1);   // AUDIT GN-R13: v 1 at the head (row 0), 0 at the foot\n    const foot = lerp3(tack, clew, u), head = lerp3(throat, peak, u);",
-    "new": "v = j / (NV - 1);   // AUDIT GN-R13: v 1 at the head (row 0), 0 at the foot\n    const foot = lerp3(tack, clew, u), head = lerp3(throat, peak, u);",
+    "old": "      const u = i / (NU - 1),\n        v = 1 - j / (NV - 1); // AUDIT GN-R13: v 1 at the head (row 0), 0 at the foot\n      const foot = lerp3(tack, clew, u),",
+    "new": "      const u = i / (NU - 1),\n        v = j / (NV - 1); // AUDIT GN-R13: v 1 at the head (row 0), 0 at the foot\n      const foot = lerp3(tack, clew, u),",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -372,8 +372,8 @@
   {
     "name": "AUDIT-GALLEON-R13-the-jibs-foot-first",
     "file": "src/world/ships/galleonRig.js",
-    "old": "v = 1 - j / (NV - 1);   // AUDIT GN-R13: v 1 at the head (row 0), 0 at the foot\n    const foot = lerp3(tack, clew, u);\n",
-    "new": "v = j / (NV - 1);   // AUDIT GN-R13: v 1 at the head (row 0), 0 at the foot\n    const foot = lerp3(tack, clew, u);\n",
+    "old": "      const u = i / (NU - 1),\n        v = 1 - j / (NV - 1); // AUDIT GN-R13: v 1 at the head (row 0), 0 at the foot\n      const foot = lerp3(tack, clew, u);",
+    "new": "      const u = i / (NU - 1),\n        v = j / (NV - 1); // AUDIT GN-R13: v 1 at the head (row 0), 0 at the foot\n      const foot = lerp3(tack, clew, u);",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],
@@ -382,8 +382,8 @@
   {
     "name": "AUDIT-GALLEON-ZERO-the-jib-to-a-point",
     "file": "src/world/ships/galleonRig.js",
-    "old": "let p = lerp3(foot, head, v * top);",
-    "new": "let p = lerp3(foot, head, v);",
+    "old": "      let p = lerp3(foot, head, v * top);",
+    "new": "      let p = lerp3(foot, head, v);",
     "tests": [
       "test/systems/naval/auditgalleon_rig.test.js"
     ],

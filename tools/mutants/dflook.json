@@ -92,8 +92,8 @@
   {
     "name": "DFLOOK-the-ships-painted",
     "file": "src/world/ships/galleonArt.js",
-    "old": "      const paint = () => { const p = built(record); return p && dfLook(p, lookSeed(archive, dayOf.get(record) ?? record)); };",
-    "new": "      const paint = () => { const p = built(record); return p && (void dfLook, void lookSeed, p); };",
+    "old": "        return p && dfLook(p, lookSeed(archive, dayOf.get(record) ?? record));",
+    "new": "        return p && (void dfLook, void lookSeed, p);",
     "tests": [
       "test/world/dflook.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "DFLOOK-a-twin-its-own-grain",
     "file": "src/world/ships/galleonArt.js",
-    "old": "dfLook(p, lookSeed(archive, dayOf.get(record) ?? record))",
-    "new": "dfLook(p, lookSeed(archive, record))",
+    "old": "        return p && dfLook(p, lookSeed(archive, dayOf.get(record) ?? record));",
+    "new": "        return p && dfLook(p, lookSeed(archive, record));",
     "tests": [
       "test/world/dflook.test.js"
     ]
@@ -295,7 +295,7 @@
   {
     "name": "DFLOOK-the-carrack-unlit",
     "file": "src/world/ships/carrackArt.js",
-    "old": "export const CARRACK_NIGHT = Object.freeze(Object.fromEntries(BANDS.transom.recs.map((r) => [r, r + NIGHT_RECORD_OFFSET])));",
+    "old": "export const CARRACK_NIGHT = Object.freeze(\n  Object.fromEntries(BANDS.transom.recs.map((r) => [r, r + NIGHT_RECORD_OFFSET])),\n);",
     "new": "export const CARRACK_NIGHT = Object.freeze({});",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js",

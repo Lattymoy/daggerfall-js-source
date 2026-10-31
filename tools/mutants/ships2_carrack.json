@@ -2,8 +2,8 @@
   {
     "name": "SHIPS2-C-a-muzzle-off-its-port",
     "file": "src/world/ships/carrackModel.js",
-    "old": "MEASURED.portZ.map((z) => Object.freeze([MEASURED.hullOuterX + 0.09, GUN.axisY, z]))",
-    "new": "MEASURED.portZ.map((z) => Object.freeze([MEASURED.hullOuterX + 0.09, GUN.axisY, z + 0.6]))",
+    "old": "  broadside: Object.freeze(MEASURED.portZ.map((z) => Object.freeze([MEASURED.hullOuterX + 0.09, GUN.axisY, z]))),",
+    "new": "  broadside: Object.freeze(MEASURED.portZ.map((z) => Object.freeze([MEASURED.hullOuterX + 0.09, GUN.axisY, z + 0.6]))),",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "SHIPS2-C-a-muzzle-inside-her-planking",
     "file": "src/world/ships/carrackModel.js",
-    "old": "MEASURED.portZ.map((z) => Object.freeze([MEASURED.hullOuterX + 0.09, GUN.axisY, z]))",
-    "new": "MEASURED.portZ.map((z) => Object.freeze([MEASURED.hullOuterX - 0.25, GUN.axisY, z]))",
+    "old": "  broadside: Object.freeze(MEASURED.portZ.map((z) => Object.freeze([MEASURED.hullOuterX + 0.09, GUN.axisY, z]))),",
+    "new": "  broadside: Object.freeze(MEASURED.portZ.map((z) => Object.freeze([MEASURED.hullOuterX - 0.25, GUN.axisY, z]))),",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "SHIPS2-C-the-galleons-stations",
     "file": "src/world/ships/carrackModel.js",
-    "old": "comp({ type: 'GunCarriage', runInX: GUN.runInX, runOutX: GUN.runOutX })",
-    "new": "comp({ type: 'GunCarriage', runInX: GALLEON_GUN.runInX, runOutX: GALLEON_GUN.runOutX })",
+    "old": "            comp({ type: 'GunCarriage', runInX: GUN.runInX, runOutX: GUN.runOutX }),",
+    "new": "            comp({ type: 'GunCarriage', runInX: GALLEON_GUN.runInX, runOutX: GALLEON_GUN.runOutX }),",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "SHIPS2-C-one-sides-fit-both",
     "file": "src/world/ships/carrackModel.js",
-    "old": "    const at = LID.cols.map((dz) => sideAt(hull, yy, zc + dz, s));",
-    "new": "    const at = LID.cols.map((dz) => sideAt(hull, yy, zc + dz, 1));",
+    "old": "      const at = LID.cols.map((dz) => sideAt(hull, yy, zc + dz, s));",
+    "new": "      const at = LID.cols.map((dz) => sideAt(hull, yy, zc + dz, 1));",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "SHIPS2-C-the-knuckles-row-dropped",
     "file": "src/world/ships/carrackModel.js",
-    "old": "  rows: Object.freeze([MEASURED.portTopY + 0.07, MEASURED.knuckleY, ",
-    "new": "  rows: Object.freeze([MEASURED.portTopY + 0.07, ",
+    "old": "    MEASURED.knuckleY,\n    ...[2, 1].map((k) => MEASURED.portSillY + (k * (MEASURED.knuckleY - MEASURED.portSillY)) / 3),",
+    "new": "    ...[2, 1].map((k) => MEASURED.portSillY + (k * (MEASURED.knuckleY - MEASURED.portSillY)) / 3),",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "SHIPS2-C-the-sills-row-misread",
     "file": "src/world/ships/carrackModel.js",
-    "old": "    const yy = r === LID_SILL_ROW ? y - 0.001 : y;",
-    "new": "    const yy = y;",
+    "old": "      const yy = r === LID_SILL_ROW ? y - 0.001 : y;",
+    "new": "      const yy = y;",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "SHIPS2-C-one-leaf",
     "file": "src/world/ships/carrackModel.js",
-    "old": "  for (const [s, side] of /** @type {const} */ ([[-1, 'Port'], [1, 'Starboard']])) {\n    const leaf = own(",
-    "new": "  for (const [s, side] of /** @type {const} */ ([[-1, 'Port']])) {\n    const leaf = own(",
+    "old": "  for (const [s, side] of /** @type {const} */ ([\n    [-1, 'Port'],\n    [1, 'Starboard'],\n  ])) {",
+    "new": "  for (const [s, side] of /** @type {const} */ ([[-1, 'Port']])) {",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "SHIPS2-C-the-leaves-swinging-alike",
     "file": "src/world/ships/carrackModel.js",
-    "old": "animator(s < 0 ? 'Door Controller' : 'carrack2/DoorStarboard')",
-    "new": "animator('Door Controller')",
+    "old": "        c: [animator(s < 0 ? 'Door Controller' : 'carrack2/DoorStarboard')],",
+    "new": "        c: [animator('Door Controller')],",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "SHIPS2-C-a-shutter-unclipped",
     "file": "src/world/ships/carrackModel.js",
-    "old": "animator(s > 0 ? 'carrack2/Gunport' : 'carrack2/GunportPort')",
-    "new": "animator('carrack2/Gunport')",
+    "old": "            animator(s > 0 ? 'carrack2/Gunport' : 'carrack2/GunportPort'),",
+    "new": "            animator('carrack2/Gunport'),",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "SHIPS2-C-the-rudder-still",
     "file": "src/world/ships/carrackModel.js",
-    "old": "eulerCurve('HelmRudder', [0, -t * RUDDER_DEG, 0])",
-    "new": "eulerCurve('HelmRudder', [0, 0, 0])",
+    "old": "        eulerCurve('HelmRudder', [0, -t * RUDDER_DEG, 0]),",
+    "new": "        eulerCurve('HelmRudder', [0, 0, 0]),",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "SHIPS2-C-the-helm-sides-swapped",
     "file": "src/world/ships/carrackModel.js",
-    "old": "for (const [side, sign] of /** @type {const} */ ([['Left', -1], ['Right', 1]])) {",
-    "new": "for (const [side, sign] of /** @type {const} */ ([['Left', 1], ['Right', -1]])) {",
+    "old": "    ['Left', -1],\n    ['Right', 1],",
+    "new": "    ['Left', 1],\n    ['Right', -1],",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "SHIPS2-C-a-kind-misnamed",
     "file": "src/world/ships/carrackRig.js",
-    "old": "key: 'MainTopsail', kind: 'square', size: ''",
-    "new": "key: 'MainTopsail', kind: 'square', size: 'Large'",
+    "old": "    kind: 'square',\n    size: '',",
+    "new": "    kind: 'square',\n    size: 'Large',",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "SHIPS2-C-the-canvas-still",
     "file": "src/world/ships/carrackRig.js",
-    "old": "const poses = { stowed: squareSailPose(s, d, mastR, 'stowed'), left: squareSailPose(s, d, mastR, 'aback'), center: squareSailPose(s, d, mastR, 'center'), right: squareSailPose(s, d, mastR, 'full') };",
-    "new": "const poses = { stowed: squareSailPose(s, d, mastR, 'stowed'), left: squareSailPose(s, d, mastR, 'stowed'), center: squareSailPose(s, d, mastR, 'stowed'), right: squareSailPose(s, d, mastR, 'stowed') };",
+    "old": "      left: squareSailPose(s, d, mastR, 'aback'),\n      center: squareSailPose(s, d, mastR, 'center'),\n      right: squareSailPose(s, d, mastR, 'full'),",
+    "new": "      left: squareSailPose(s, d, mastR, 'stowed'),\n      center: squareSailPose(s, d, mastR, 'stowed'),\n      right: squareSailPose(s, d, mastR, 'stowed'),",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "SHIPS2-C-the-main-topsails-yard-raised",
     "file": "src/world/ships/carrackRig.js",
-    "old": "key: 'MainTopsail', kind: 'square', size: '', mast: 'main', yardY: 18.9,",
-    "new": "key: 'MainTopsail', kind: 'square', size: '', mast: 'main', yardY: 19.6,",
+    "old": "    yardY: 18.9,",
+    "new": "    yardY: 19.6,",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "SHIPS2-C-a-shrouds-foot-forward",
     "file": "src/world/ships/carrackRig.js",
-    "old": "main: Object.freeze({ feet: Object.freeze([1.2, 1.8, 2.4, 3.0])",
-    "new": "main: Object.freeze({ feet: Object.freeze([1.2, 1.8, 2.4, 4.4])",
+    "old": "    feet: Object.freeze([1.2, 1.8, 2.4, 3.0]),",
+    "new": "    feet: Object.freeze([1.2, 1.8, 2.4, 4.4]),",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "SHIPS2-C-the-lateens-halyard-to-the-axis",
     "file": "src/world/ships/galleonRig.js",
-    "old": "[-(mast.radius(mast.top - 0.15) + rr), mast.top - 0.15 - y0, 0]",
-    "new": "[0, mast.top - 0.15 - y0, 0]",
+    "old": "  rope(\n    bench,\n    TEX.rope,\n    [add(slings, [0, sail.yardR[0], 0]), [-(mast.radius(mast.top - 0.15) + rr), mast.top - 0.15 - y0, 0]],\n    rr * 0.86,\n  );",
+    "new": "  rope(bench, TEX.rope, [add(slings, [0, sail.yardR[0], 0]), [0, mast.top - 0.15 - y0, 0]], rr * 0.86);",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "SHIPS2-C-the-ladder-against-her-side",
     "file": "src/world/ships/carrackModel.js",
-    "old": "[s * (xAt(y) + 0.04), y, LADDER_Z]",
-    "new": "[s * (xAt(y) - 0.06), y, LADDER_Z]",
+    "old": "    box(bench, TEX.trim, [s * (xAt(y) + 0.04), y, LADDER_Z], [0.03, 0.025, 0.25], { tile: CARRACK_TILE.trim });",
+    "new": "    box(bench, TEX.trim, [s * (xAt(y) - 0.06), y, LADDER_Z], [0.03, 0.025, 0.25], { tile: CARRACK_TILE.trim });",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "SHIPS2-C-the-anchor-in-her-bow",
     "file": "src/world/ships/carrackModel.js",
-    "old": "letGo: Object.freeze([4.244, 7.2, 18.2])",
-    "new": "letGo: Object.freeze([4.094, 7.2, 18.2])",
+    "old": "  letGo: Object.freeze([4.244, 7.2, 18.2]),",
+    "new": "  letGo: Object.freeze([4.094, 7.2, 18.2]),",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "SHIPS2-C-a-picture-seeded-off-the-clock",
     "file": "src/world/ships/carrackArt.js",
-    "old": "ph: 7, seed: 0xc52,",
-    "new": "ph: 7, seed: Math.floor(Math.random() * 1e6),",
+    "old": "    seed: 0xc52,",
+    "new": "    seed: Math.floor(Math.random() * 1e6),",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "SHIPS2-C-registered-twice",
     "file": "src/world/ships/carrackArt.js",
-    "old": "  if (_registered) return 0;\n  _registered = true;\n",
-    "new": "",
+    "old": "  if (_registered) return 0;\n  _registered = true;\n  const made = new Map();",
+    "new": "  const made = new Map();",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -253,7 +253,7 @@
     "name": "SHIPS2-C-the-glow-everywhere",
     "file": "src/world/ships/carrackArt.js",
     "old": "  const k = BANDS.transom.recs.indexOf(record >= NIGHT_RECORD_OFFSET ? record - NIGHT_RECORD_OFFSET : record);",
-    "new": "  const k = Math.max(0, BANDS.transom.recs.indexOf(record >= NIGHT_RECORD_OFFSET ? record - NIGHT_RECORD_OFFSET : record));",
+    "new": "  const k = Math.max(\n    0,\n    BANDS.transom.recs.indexOf(record >= NIGHT_RECORD_OFFSET ? record - NIGHT_RECORD_OFFSET : record),\n  );",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "SHIPS2-C-a-face-on-no-picture",
     "file": "src/world/ships/carrackModel.js",
-    "old": "    case 'rudder': return tiled(TEX.hullBottom);",
-    "new": "    case 'rudder': return { rec: 99, uv: () => [0, 0] };",
+    "old": "      return tiled(TEX.hullBottom);",
+    "new": "      return { rec: 99, uv: () => [0, 0] };",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],

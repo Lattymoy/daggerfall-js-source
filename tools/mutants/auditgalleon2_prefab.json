@@ -125,8 +125,8 @@
   {
     "name": "AUDIT-GN2-PF8-hinged-mid-leaf",
     "file": "src/world/ships/galleonModel.js",
-    "old": "  box(bench, TEX.door, [w / 2, h / 2, t / 2], [w / 2, h / 2, t / 2], { uvFace: (fi, k) => {",
-    "new": "  box(bench, TEX.door, [w / 2, h / 2, 0], [w / 2, h / 2, t / 2], { uvFace: (fi, k) => {",
+    "old": "  box(bench, TEX.door, [w / 2, h / 2, t / 2], [w / 2, h / 2, t / 2], {",
+    "new": "  box(bench, TEX.door, [w / 2, h / 2, 0], [w / 2, h / 2, t / 2], {",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -145,8 +145,8 @@
   {
     "name": "AUDIT-GN2-PF8-the-shut-leaf-off-the-middle",
     "file": "src/world/ships/galleonModel.js",
-    "old": "p: [-d.halfX + 0.02, foot, d.z - DOOR_THICK / 2]",
-    "new": "p: [-d.halfX + 0.02, foot, d.z]",
+    "old": "      p: [-d.halfX + 0.02, foot, d.z - DOOR_THICK / 2],",
+    "new": "      p: [-d.halfX + 0.02, foot, d.z],",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-GN2-TS7-the-whole-stern-glows",
     "file": "src/world/ships/galleonArt.js",
-    "old": "put(out, x, y, glassy ? [255, 186, 96] : [0, 0, 0]);",
-    "new": "put(out, x, y, [255, 186, 96]);",
+    "old": "      put(out, x, y, glassy ? [255, 186, 96] : [0, 0, 0]);",
+    "new": "      put(out, x, y, [255, 186, 96]);",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -165,8 +165,8 @@
   {
     "name": "AUDIT-GN2-TS7-the-glint-dark",
     "file": "src/world/ships/galleonArt.js",
-    "old": " || (c[0] === C.glassLit[0] && c[1] === C.glassLit[1]);",
-    "new": ";",
+    "old": "      const glassy = (c[0] === C.glass[0] && c[1] === C.glass[1]) || (c[0] === C.glassLit[0] && c[1] === C.glassLit[1]);",
+    "new": "      const glassy = c[0] === C.glass[0] && c[1] === C.glass[1];",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -195,8 +195,8 @@
   {
     "name": "AUDIT-GN2-TS8-a-box-side-inward",
     "file": "src/world/ships/galleonMesh.js",
-    "old": "[scl(X, -1), [[-1, -1, 1], [-1, 1, 1], [-1, 1, -1], [-1, -1, -1]]]",
-    "new": "[X, [[-1, -1, 1], [-1, 1, 1], [-1, 1, -1], [-1, -1, -1]]]",
+    "old": "      scl(X, -1),",
+    "new": "      X,",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -205,8 +205,8 @@
   {
     "name": "AUDIT-GN2-TS12-corner-normals-left-behind",
     "file": "src/world/ships/galleonMesh.js",
-    "old": "if (normals) normals = [normals[0], normals[2], normals[1]]; ",
-    "new": "",
+    "old": "      if (normals) normals = [normals[0], normals[2], normals[1]];\n      n = scl(n, -1);",
+    "new": "      n = scl(n, -1);",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -215,8 +215,8 @@
   {
     "name": "AUDIT-GN2-TS12-port-side-mirrored",
     "file": "src/world/ships/galleonMesh.js",
-    "old": "u = n[0] >= 0 ? p[2] : -p[2];",
-    "new": "u = p[2];",
+    "old": "    u = n[0] >= 0 ? p[2] : -p[2];",
+    "new": "    u = p[2];",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -225,8 +225,8 @@
   {
     "name": "AUDIT-GN2-TS12-stern-mirrored",
     "file": "src/world/ships/galleonMesh.js",
-    "old": "u = n[2] >= 0 ? -p[0] : p[0];",
-    "new": "u = -p[0];",
+    "old": "    u = n[2] >= 0 ? -p[0] : p[0];",
+    "new": "    u = -p[0];",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],

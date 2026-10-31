@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-GN-G1-port-shutters-on-the-starboard-clip",
     "file": "src/world/ships/galleonModel.js",
-    "old": "animator(s > 0 ? 'galleon2/Gunport' : 'galleon2/GunportPort')",
-    "new": "animator('galleon2/Gunport')",
+    "old": "            animator(s > 0 ? 'galleon2/Gunport' : 'galleon2/GunportPort'),",
+    "new": "            animator('galleon2/Gunport'),",
     "tests": [
       "test/systems/naval/auditgalleon_guns.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-GN-G1-port-shutters-unmirrored",
     "file": "src/world/ships/galleonModel.js",
-    "old": "lidComps(s > 0 ? `galleon:gunportLid${i}` : `galleon:gunportLidPort${i}`)",
-    "new": "lidComps(`galleon:gunportLid${i}`)",
+    "old": "          c: [\n            ...lidComps(s > 0 ? `galleon:gunportLid${i}` : `galleon:gunportLidPort${i}`),\n            animator(s > 0 ? 'galleon2/Gunport' : 'galleon2/GunportPort'),\n          ],",
+    "new": "          c: [...lidComps(`galleon:gunportLid${i}`), animator(s > 0 ? 'galleon2/Gunport' : 'galleon2/GunportPort')],",
     "tests": [
       "test/systems/naval/auditgalleon_guns.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-GN-G1-port-clip-swung-inboard",
     "file": "src/world/ships/galleonModel.js",
-    "old": "pair('galleon2/GunportPort', [0, 0, 0], [0, 0, -LID_OPEN_DEG]);",
-    "new": "pair('galleon2/GunportPort', [0, 0, 0], [0, 0, LID_OPEN_DEG]);",
+    "old": "  pair('galleon2/GunportPort', [0, 0, 0], [0, 0, -LID_OPEN_DEG]);",
+    "new": "  pair('galleon2/GunportPort', [0, 0, 0], [0, 0, LID_OPEN_DEG]);",
     "tests": [
       "test/systems/naval/auditgalleon_guns.test.js"
     ]

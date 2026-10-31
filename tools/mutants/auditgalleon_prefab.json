@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-GALLEON-P1-helmsman-on-the-roof",
     "file": "src/world/ships/galleonModel.js",
-    "old": "stand: Object.freeze([0, MEASURED.castleRoofY + CAPSULE_HEIGHT / 2, -14.25])",
-    "new": "stand: Object.freeze([0, MEASURED.castleRoofY, -14.25])",
+    "old": "  stand: Object.freeze([0, MEASURED.castleRoofY + CAPSULE_HEIGHT / 2, -14.25]),",
+    "new": "  stand: Object.freeze([0, MEASURED.castleRoofY, -14.25]),",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js",
       "test/world/ships/galleon_model.test.js"
@@ -13,8 +13,8 @@
   {
     "name": "AUDIT-GALLEON-P1-the-old-hub",
     "file": "src/world/ships/galleonModel.js",
-    "old": "hub: Object.freeze([0, MEASURED.castleRoofY + 0.72, -12.9])",
-    "new": "hub: Object.freeze([0, MEASURED.castleRoofY + 0.92, -12.9])",
+    "old": "  hub: Object.freeze([0, MEASURED.castleRoofY + 0.72, -12.9]),",
+    "new": "  hub: Object.freeze([0, MEASURED.castleRoofY + 0.92, -12.9]),",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -23,8 +23,8 @@
   {
     "name": "AUDIT-GALLEON-P1-the-old-wheel",
     "file": "src/world/ships/galleonModel.js",
-    "old": "wheelR: 0.4 });",
-    "new": "wheelR: 0.54 });",
+    "old": "  wheelR: 0.4,",
+    "new": "  wheelR: 0.54,",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -33,8 +33,8 @@
   {
     "name": "AUDIT-GALLEON-P1-the-old-hood",
     "file": "src/world/ships/galleonModel.js",
-    "old": "prism(bench, TEX.gilt, [hx, y0 + 1.02, hz + 0.42], [hx, y0 + 1.3, hz + 0.42]",
-    "new": "prism(bench, TEX.gilt, [hx, y0 + 1.02, hz + 0.42], [hx, y0 + 1.42, hz + 0.42]",
+    "old": "  prism(bench, TEX.gilt, [hx, y0 + 1.02, hz + 0.42], [hx, y0 + 1.3, hz + 0.42], 0.16, 0.06, 8, { smooth: true });",
+    "new": "  prism(bench, TEX.gilt, [hx, y0 + 1.02, hz + 0.42], [hx, y0 + 1.42, hz + 0.42], 0.16, 0.06, 8, { smooth: true });",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -43,8 +43,8 @@
   {
     "name": "AUDIT-GALLEON-P2-ropes-up-through-the-cover",
     "file": "src/world/ships/galleonModel.js",
-    "old": "const headY = MEASURED.hatchCoverUnderY - MANROPE.clear - MANROPE.r;",
-    "new": "const headY = MEASURED.mainDeckY + 0.85;",
+    "old": "  const headY = MEASURED.hatchCoverUnderY - MANROPE.clear - MANROPE.r;",
+    "new": "  const headY = MEASURED.mainDeckY + 0.85;",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -53,8 +53,8 @@
   {
     "name": "AUDIT-GALLEON-P2-ropes-not-made-fast",
     "file": "src/world/ships/galleonModel.js",
-    "old": "rope(bench, TEX.rope, [foot, head, [s * holeHalfX, headY, head[2]]], MANROPE.r);",
-    "new": "rope(bench, TEX.rope, [foot, head], MANROPE.r);",
+    "old": "    rope(bench, TEX.rope, [foot, head, [s * holeHalfX, headY, head[2]]], MANROPE.r);",
+    "new": "    rope(bench, TEX.rope, [foot, head], MANROPE.r);",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -63,8 +63,8 @@
   {
     "name": "AUDIT-GALLEON-P2-no-clearance",
     "file": "src/world/ships/galleonModel.js",
-    "old": "MANROPE = Object.freeze({ r: 0.03, clear: 0.02 })",
-    "new": "MANROPE = Object.freeze({ r: 0.03, clear: -0.03 })",
+    "old": "export const MANROPE = Object.freeze({ r: 0.03, clear: 0.02 });",
+    "new": "export const MANROPE = Object.freeze({ r: 0.03, clear: -0.03 });",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -73,8 +73,8 @@
   {
     "name": "AUDIT-GALLEON-P3-anchors-unturned",
     "file": "src/world/ships/galleonModel.js",
-    "old": "yawDeg: -31,",
-    "new": "yawDeg: 0,",
+    "old": "  yawDeg: -31,",
+    "new": "  yawDeg: 0,",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-GALLEON-P3-anchors-turned-the-other-way",
     "file": "src/world/ships/galleonModel.js",
-    "old": "yawDeg: -31,",
-    "new": "yawDeg: 31,",
+    "old": "  yawDeg: -31,",
+    "new": "  yawDeg: 31,",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -93,8 +93,8 @@
   {
     "name": "AUDIT-GALLEON-P3-weighed-anchor-in-her-side",
     "file": "src/world/ships/galleonModel.js",
-    "old": "weighed: Object.freeze([5.452, 5.85, 15.9])",
-    "new": "weighed: Object.freeze([5.43, 5.85, 15.9])",
+    "old": "  weighed: Object.freeze([5.452, 5.85, 15.9]),",
+    "new": "  weighed: Object.freeze([5.43, 5.85, 15.9]),",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -103,8 +103,8 @@
   {
     "name": "AUDIT-GALLEON-P3-cable-against-her-side",
     "file": "src/world/ships/galleonModel.js",
-    "old": "letGo: Object.freeze([5.366, 5.85, 15.9])",
-    "new": "letGo: Object.freeze([5.346, 5.85, 15.9])",
+    "old": "  letGo: Object.freeze([5.366, 5.85, 15.9]),",
+    "new": "  letGo: Object.freeze([5.346, 5.85, 15.9]),",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -113,8 +113,8 @@
   {
     "name": "AUDIT-GALLEON-P3-the-cable-unturned",
     "file": "src/world/ships/galleonModel.js",
-    "old": "fromOld('GalleonAnchorDeployed', { p: ANCHOR.letGo, r: yaw(ANCHOR.yawDeg) })",
-    "new": "fromOld('GalleonAnchorDeployed', { p: ANCHOR.letGo })",
+    "old": "        fromOld('GalleonAnchorDeployed', { p: ANCHOR.letGo, r: yaw(ANCHOR.yawDeg) }),",
+    "new": "        fromOld('GalleonAnchorDeployed', { p: ANCHOR.letGo }),",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -143,8 +143,8 @@
   {
     "name": "AUDIT-GALLEON-P5-poles-on-the-roof",
     "file": "src/world/ships/galleonModel.js",
-    "old": "position: [s * 2.35, M.railCapY + 0.003, -18.7]",
-    "new": "position: [s * 2.35, R, -18.7]",
+    "old": "  for (const s of [-1, 1])\n    kids.push({ ...clone(pole), position: [s * 2.35, M.railCapY + 0.003, -18.7], rotation: yaw(s * -150) });",
+    "new": "  for (const s of [-1, 1]) kids.push({ ...clone(pole), position: [s * 2.35, R, -18.7], rotation: yaw(s * -150) });",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -153,8 +153,8 @@
   {
     "name": "AUDIT-GALLEON-P5-poles-sunk-in-the-cap",
     "file": "src/world/ships/galleonModel.js",
-    "old": "position: [s * 2.35, M.railCapY + 0.003, -18.7]",
-    "new": "position: [s * 2.35, M.railCapY - 0.02, -18.7]",
+    "old": "    kids.push({ ...clone(pole), position: [s * 2.35, M.railCapY + 0.003, -18.7], rotation: yaw(s * -150) });",
+    "new": "    kids.push({ ...clone(pole), position: [s * 2.35, M.railCapY - 0.02, -18.7], rotation: yaw(s * -150) });",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -163,8 +163,8 @@
   {
     "name": "AUDIT-GALLEON-P6-port-4-foot-plumb",
     "file": "src/world/ships/galleonModel.js",
-    "old": "[5.758, 5.741, 5.623, 5.505, 5.387]",
-    "new": "[5.758, 5.758, 5.758, 5.758, 5.758]",
+    "old": "    [5.758, 5.741, 5.623, 5.505, 5.387],",
+    "new": "    [5.758, 5.758, 5.758, 5.758, 5.758],",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-GALLEON-P6-the-gap-too-wide",
     "file": "src/world/ships/galleonModel.js",
-    "old": "thick: 0.098, gap: 0.003, eyeR: 0.04,",
-    "new": "thick: 0.098, gap: 0.025, eyeR: 0.04,",
+    "old": "  gap: 0.003,",
+    "new": "  gap: 0.025,",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -183,8 +183,8 @@
   {
     "name": "AUDIT-GALLEON-P6-the-hinge-off-her-side",
     "file": "src/world/ships/galleonModel.js",
-    "old": "const xh = Math.max(...fit[0]);",
-    "new": "const xh = MEASURED.hullOuterX + 0.02;",
+    "old": "  const xh = Math.max(...fit[0]); // the hinge's pin: on her side at the lintel, nowhere inside it along the port",
+    "new": "  const xh = MEASURED.hullOuterX + 0.02; // the hinge's pin: on her side at the lintel, nowhere inside it along the port",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -193,8 +193,8 @@
   {
     "name": "AUDIT-GALLEON-P6-port-side-unmirrored",
     "file": "src/world/ships/galleonModel.js",
-    "old": "[s * (fit[r][k] + LID.gap - xh), y - LID.rows[0], dz]",
-    "new": "[fit[r][k] + LID.gap - xh, y - LID.rows[0], dz]",
+    "old": "  const inner = LID.rows.map((y, r) => LID.cols.map((dz, k) => [s * (fit[r][k] + LID.gap - xh), y - LID.rows[0], dz]));",
+    "new": "  const inner = LID.rows.map((y, r) => LID.cols.map((dz, k) => [fit[r][k] + LID.gap - xh, y - LID.rows[0], dz]));",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -213,8 +213,8 @@
   {
     "name": "AUDIT-GALLEON-P6-the-knuckle-row-off-the-knuckle",
     "file": "src/world/ships/galleonModel.js",
-    "old": "rows: Object.freeze([MEASURED.portTopY + 0.07, MEASURED.knuckleY, MEASURED.portSillY,",
-    "new": "rows: Object.freeze([MEASURED.portTopY + 0.07, MEASURED.knuckleY - 0.3, MEASURED.portSillY,",
+    "old": "    MEASURED.knuckleY,",
+    "new": "    MEASURED.knuckleY - 0.3,",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -233,8 +233,8 @@
   {
     "name": "AUDIT-GALLEON-P8-pivot-at-the-blade",
     "file": "src/world/ships/galleonModel.js",
-    "old": "rudderPivotZ: -18.8472,",
-    "new": "rudderPivotZ: -18.228,",
+    "old": "  rudderPivotZ: -18.8472,",
+    "new": "  rudderPivotZ: -18.228,",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -243,8 +243,8 @@
   {
     "name": "AUDIT-GALLEON-P8-the-blade-uncut",
     "file": "src/world/ships/galleonModel.js",
-    "old": "const rudderPart = rudderBlade(part('rudder'), M.rudderPivotZ - RUDDER_CLEAR);",
-    "new": "const rudderPart = part('rudder');",
+    "old": "  const rudderPart = rudderBlade(part('rudder'), M.rudderPivotZ - RUDDER_CLEAR);",
+    "new": "  const rudderPart = part('rudder');",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -283,8 +283,8 @@
   {
     "name": "AUDIT-GALLEON-P9-the-hinge-at-its-top",
     "file": "src/world/ships/galleonModel.js",
-    "old": "const hinge = [cover.half[0], fmax[1] - drop, zc];",
-    "new": "const hinge = [cover.half[0], fmax[1], zc];",
+    "old": "    const hinge = [cover.half[0], fmax[1] - drop, zc];",
+    "new": "    const hinge = [cover.half[0], fmax[1], zc];",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -303,8 +303,8 @@
   {
     "name": "AUDIT-GALLEON-P10-shutters-hollow",
     "file": "src/world/ships/galleonModel.js",
-    "old": ", comp({ type: 'MeshCollider', m_Enabled: true, m_IsTrigger: false, m_Convex: false, m_Mesh: { mesh: `${key}:collider` } })];",
-    "new": "];",
+    "old": "  const lidComps = (key) => [\n    comp({ type: 'MeshFilter', m_Mesh: { mesh: key } }),\n    renderer(meshes[key]),\n    comp({\n      type: 'MeshCollider',\n      m_Enabled: true,\n      m_IsTrigger: false,\n      m_Convex: false,\n      m_Mesh: { mesh: `${key}:collider` },\n    }),\n  ];",
+    "new": "  const lidComps = (key) => [comp({ type: 'MeshFilter', m_Mesh: { mesh: key } }), renderer(meshes[key])];",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -313,8 +313,8 @@
   {
     "name": "AUDIT-GALLEON-P10-the-foot-strip-solid",
     "file": "src/world/ships/galleonModel.js",
-    "old": "for (let r = 0; r < 2; r++) for (let k = 0; k < K - 1; k++) {",
-    "new": "for (let r = 0; r < R - 1; r++) for (let k = 0; k < K - 1; k++) {",
+    "old": "  for (let r = 0; r < 2; r++)",
+    "new": "  for (let r = 0; r < R - 1; r++)",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -333,8 +333,8 @@
   {
     "name": "AUDIT-GALLEON-P12-bed-at-the-deck",
     "file": "src/world/ships/galleonModel.js",
-    "old": "kids.push(nodeOf('BedObject', { p: [3.55, D + BED_OVER_DECK, -16.2]",
-    "new": "kids.push(nodeOf('BedObject', { p: [3.55, D, -16.2]",
+    "old": "  kids.push(nodeOf('BedObject', { p: [3.55, D + BED_OVER_DECK, -16.2], r: yaw(-90) }));",
+    "new": "  kids.push(nodeOf('BedObject', { p: [3.55, D, -16.2], r: yaw(-90) }));",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -343,8 +343,8 @@
   {
     "name": "AUDIT-GALLEON-STOVE-cowl-left-low",
     "file": "src/world/ships/galleonModel.js",
-    "old": "const raise = M.mainDeckUnderY - STOVE.headGap - (G + cowl.position[1] + STOVE.cowlTop);",
-    "new": "const raise = 0;",
+    "old": "  const raise = M.mainDeckUnderY - STOVE.headGap - (G + cowl.position[1] + STOVE.cowlTop);",
+    "new": "  const raise = 0;",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -353,8 +353,8 @@
   {
     "name": "AUDIT-GALLEON-STOVE-cowl-at-the-deckhead",
     "file": "src/world/ships/galleonModel.js",
-    "old": "STOVE = Object.freeze({ headGap: 0.136,",
-    "new": "STOVE = Object.freeze({ headGap: 0.036,",
+    "old": "export const STOVE = Object.freeze({ headGap: 0.136, cowlTop: 0.54, r: 0.14, seat: 0.03 });",
+    "new": "export const STOVE = Object.freeze({ headGap: 0.036, cowlTop: 0.54, r: 0.14, seat: 0.03 });",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -363,8 +363,8 @@
   {
     "name": "AUDIT-GALLEON-STOVE-flue-short",
     "file": "src/world/ships/galleonModel.js",
-    "old": "raise + STOVE.seat)));",
-    "new": "raise - STOVE.seat)));",
+    "old": "      stoveFlueGeometry([cowl.position[0], cowl.position[1], cowl.position[2]], raise + STOVE.seat),",
+    "new": "      stoveFlueGeometry([cowl.position[0], cowl.position[1], cowl.position[2]], raise - STOVE.seat),",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -373,8 +373,8 @@
   {
     "name": "AUDIT-GALLEON-CROWSNEST-mast-open",
     "file": "src/world/ships/galleonModel.js",
-    "old": "const extras = { mainMast: mastCap, crowsNest:",
-    "new": "const extras = { crowsNest:",
+    "old": "  const extras = { mainMast: mastCap, crowsNest: (bench, p) => nestUnderside(bench, p, part('mainMast')) };",
+    "new": "  const extras = { crowsNest: (bench, p) => nestUnderside(bench, p, part('mainMast')) };",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -383,8 +383,8 @@
   {
     "name": "AUDIT-GALLEON-CROWSNEST-nest-open",
     "file": "src/world/ships/galleonModel.js",
-    "old": "const extras = { mainMast: mastCap, crowsNest: (bench, p) => nestUnderside(bench, p, part('mainMast')) };",
-    "new": "const extras = { mainMast: mastCap };",
+    "old": "  const extras = { mainMast: mastCap, crowsNest: (bench, p) => nestUnderside(bench, p, part('mainMast')) };",
+    "new": "  const extras = { mainMast: mastCap };",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -403,8 +403,8 @@
   {
     "name": "AUDIT-GALLEON-R8-throats-in-the-lid-picture",
     "file": "src/world/ships/galleonModel.js",
-    "old": "Math.abs(n[0]) < 0.3) return tiled(TEX.dark);",
-    "new": "Math.abs(n[0]) < 0.3) return tiled(TEX.lid);",
+    "old": "        return tiled(TEX.dark);",
+    "new": "        return tiled(TEX.lid);",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -413,8 +413,8 @@
   {
     "name": "AUDIT-GALLEON-R11-dark-tile-a-metre",
     "file": "src/world/ships/galleonArt.js",
-    "old": "dark: [2, 2]",
-    "new": "dark: [1, 1]",
+    "old": "  dark: [2, 2],",
+    "new": "  dark: [1, 1],",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -423,8 +423,8 @@
   {
     "name": "AUDIT-GALLEON-R11-dark-seamed",
     "file": "src/world/ships/galleonArt.js",
-    "old": "planks(img, { ph: 8, lenMin: 20, lenMax: 44, seed: 0xd4b,",
-    "new": "planks(img, { ph: 7, lenMin: 20, lenMax: 44, seed: 0xd4b,",
+    "old": "  planks(img, {\n    ph: 8,\n    lenMin: 20,",
+    "new": "  planks(img, {\n    ph: 7,\n    lenMin: 20,",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -433,8 +433,8 @@
   {
     "name": "AUDIT-GALLEON-R12-a-texel-misstated",
     "file": "src/world/ships/galleonArt.js",
-    "old": "a shutter's face 1.4 by 2.4",
-    "new": "a shutter's face 1.4 by 2.5",
+    "old": "// jib's 8.0 by 25.3); a shutter's face 1.4 by 2.4, a door's 2.4 by 4.0.",
+    "new": "// jib's 8.0 by 25.3); a shutter's face 1.4 by 2.5, a door's 2.4 by 4.0.",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -453,8 +453,8 @@
   {
     "name": "AUDIT-GALLEON-R14-no-slice-cuts",
     "file": "src/world/ships/galleonModel.js",
-    "old": "const cuts = sliceCuts(faces.map((f) => f.skin));",
-    "new": "const cuts = [];",
+    "old": "  const cuts = sliceCuts(faces.map((f) => f.skin));",
+    "new": "  const cuts = [];",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -463,8 +463,8 @@
   {
     "name": "AUDIT-GALLEON-R14-bake-corners-unsplit",
     "file": "src/world/ships/galleonModel.js",
-    "old": "for (const [k, a, b, cc] of splitAtCorners(part, pts)) {",
-    "new": "for (const [k, a, b, cc] of part.triangleOf.map((q, t) => [q, ...[0, 1, 2].map((j) => pts[part.triangles[t * 3 + j]])])) {",
+    "old": "  for (const [k, a, b, cc] of splitAtCorners(part, pts)) {",
+    "new": "  for (const [k, a, b, cc] of part.triangleOf.map((q, t) => [\n    q,\n    ...[0, 1, 2].map((j) => pts[part.triangles[t * 3 + j]]),\n  ])) {",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -473,8 +473,8 @@
   {
     "name": "AUDIT-GALLEON-B1-triangle-normals",
     "file": "src/world/ships/galleonModel.js",
-    "old": "skin.uv(add(piece[i + 1], offset)), n, [n, n, n]);",
-    "new": "skin.uv(add(piece[i + 1], offset)), n);",
+    "old": "            [n, n, n],\n          );",
+    "new": "          );",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -483,8 +483,8 @@
   {
     "name": "AUDIT-GALLEON-B1-band-triangle-normals",
     "file": "src/world/ships/galleonModel.js",
-    "old": "uv(piece[0]), uv(piece[i]), uv(piece[i + 1]), n, [n, n, n]);",
-    "new": "uv(piece[0]), uv(piece[i]), uv(piece[i + 1]), n);",
+    "old": "    bench.tri(band.recs[k], piece[0], piece[i], piece[i + 1], uv(piece[0]), uv(piece[i]), uv(piece[i + 1]), n, [\n      n,\n      n,\n      n,\n    ]);",
+    "new": "    bench.tri(band.recs[k], piece[0], piece[i], piece[i + 1], uv(piece[0]), uv(piece[i]), uv(piece[i + 1]), n);",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -493,8 +493,8 @@
   {
     "name": "AUDIT-GALLEON-NITS-gun-deck",
     "file": "src/world/ships/galleonModel.js",
-    "old": "gunDeckY: 1.0829,",
-    "new": "gunDeckY: 1.085,",
+    "old": "  gunDeckY: 1.0829,",
+    "new": "  gunDeckY: 1.085,",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -503,8 +503,8 @@
   {
     "name": "AUDIT-GALLEON-NITS-castle-door",
     "file": "src/world/ships/galleonModel.js",
-    "old": "castleDoor: Object.freeze({ halfX: 0.7745,",
-    "new": "castleDoor: Object.freeze({ halfX: 0.777,",
+    "old": "  castleDoor: Object.freeze({ halfX: 0.7745, y0: 6.1784, y1: 8.7713, z: -10.3963 }),",
+    "new": "  castleDoor: Object.freeze({ halfX: 0.777, y0: 6.1784, y1: 8.7713, z: -10.3963 }),",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -513,8 +513,8 @@
   {
     "name": "AUDIT-GALLEON-NITS-bulkhead-door",
     "file": "src/world/ships/galleonModel.js",
-    "old": "y1: 3.6785,",
-    "new": "y1: 3.675,",
+    "old": "  bulkheadDoor: Object.freeze({ halfX: 0.7804, y0: 1.0829, y1: 3.6785, z: -10.158 }),",
+    "new": "  bulkheadDoor: Object.freeze({ halfX: 0.7804, y0: 1.0829, y1: 3.675, z: -10.158 }),",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -523,8 +523,8 @@
   {
     "name": "AUDIT-GALLEON-NITS-gangway",
     "file": "src/world/ships/galleonModel.js",
-    "old": "z1: 1.5781,",
-    "new": "z1: 1.575,",
+    "old": "  gangway: Object.freeze({ z0: -0.5818, z1: 1.5781, sillY: 6.3156 }),",
+    "new": "  gangway: Object.freeze({ z0: -0.5818, z1: 1.575, sillY: 6.3156 }),",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -533,8 +533,8 @@
   {
     "name": "AUDIT-GALLEON-NITS-castle-aft",
     "file": "src/world/ships/galleonModel.js",
-    "old": "castleAftZ: -19.9049",
-    "new": "castleAftZ: -19.908",
+    "old": "  castleAftZ: -19.9049,",
+    "new": "  castleAftZ: -19.908,",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -543,8 +543,8 @@
   {
     "name": "AUDIT-GALLEON-NITS-castle-inner",
     "file": "src/world/ships/galleonModel.js",
-    "old": "castleFrontInnerZ: -10.4961",
-    "new": "castleFrontInnerZ: -10.493",
+    "old": "  castleFrontInnerZ: -10.4961,",
+    "new": "  castleFrontInnerZ: -10.493,",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],

@@ -92,8 +92,8 @@
   {
     "name": "FA-trim-oak",
     "file": "src/world/ships/figureheadArt.js",
-    "old": "[ROLE.trim]: CARVING_REC.gilt",
-    "new": "[ROLE.trim]: CARVING_REC.oak",
+    "old": "    [ROLE.trim]: CARVING_REC.gilt,",
+    "new": "    [ROLE.trim]: CARVING_REC.oak,",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "FA-built-oak",
     "file": "src/world/ships/figureheadArt.js",
-    "old": "[ROLE.body]: p || CARVING_REC.gilt",
-    "new": "[ROLE.body]: p || CARVING_REC.oak",
+    "old": "    [ROLE.body]: p || CARVING_REC.gilt,",
+    "new": "    [ROLE.body]: p || CARVING_REC.oak,",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "FA-paint-past-last",
     "file": "src/world/ships/figureheadArt.js",
-    "old": "paint > 0 && paint <= PAINT_MAX ? paint : 0",
-    "new": "paint > 0 && paint <= PAINT_MAX + 1 ? paint : 0",
+    "old": "  const p = Number.isInteger(paint) && paint > 0 && paint <= PAINT_MAX ? paint : 0;",
+    "new": "  const p = Number.isInteger(paint) && paint > 0 && paint <= PAINT_MAX + 1 ? paint : 0;",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "FA-paint-shifted",
     "file": "src/world/ships/figureheadArt.js",
-    "old": "out.push([i, paintedArt(SHIP_PAINTS[i].rgb",
-    "new": "out.push([i, paintedArt(SHIP_PAINTS[Math.max(1, i - 1)].rgb",
+    "old": "  for (let i = 1; i <= PAINT_MAX; i++) out.push([i, paintedArt(SHIP_PAINTS[i].rgb, 0xf1600 + i * 97)]);",
+    "new": "  for (let i = 1; i <= PAINT_MAX; i++) out.push([i, paintedArt(SHIP_PAINTS[Math.max(1, i - 1)].rgb, 0xf1600 + i * 97)]);",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "FM-wound-inward",
     "file": "src/world/ships/figureheadModels.js",
-    "old": "if (dot(n, out) >= 0) f.tri(rec, a, b, c",
-    "new": "if (dot(n, out) < 0) f.tri(rec, a, b, c",
+    "old": "  if (dot(n, out) >= 0) f.tri(rec, a, b, c, [0, 0], [1, 0], [0.5, 1]);",
+    "new": "  if (dot(n, out) < 0) f.tri(rec, a, b, c, [0, 0], [1, 0], [0.5, 1]);",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "FM-roles-unworn",
     "file": "src/world/ships/figureheadModels.js",
-    "old": "textureRecord: recs[s.textureRecord] }",
-    "new": "textureRecord: s.textureRecord }",
+    "old": "  return {\n    ...m,\n    subMeshes: m.subMeshes.map((s) => ({ ...s, role: s.textureRecord, textureRecord: recs[s.textureRecord] })),\n  };",
+    "new": "  return { ...m, subMeshes: m.subMeshes.map((s) => ({ ...s, role: s.textureRecord, textureRecord: s.textureRecord })) };",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]

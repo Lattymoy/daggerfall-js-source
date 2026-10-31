@@ -178,7 +178,7 @@
     "name": "SLA-cloth-families",
     "file": "src/world/ships/shipLiveryArt.js",
     "old": "      else if (sail) out.push({ record, picture: shadeCloth(pic, sail), glow: null, night: null });",
-    "new": "      else if (sail) out.push({ record, picture: paintFamilies(pic, a.palette, [{ members: CANVAS, base: C.canvas, paint: sail }]).picture, glow: null, night: null });",
+    "new": "      else if (sail)\n        out.push({\n          record,\n          picture: paintFamilies(pic, a.palette, [{ members: CANVAS, base: C.canvas, paint: sail }]).picture,\n          glow: null,\n          night: null,\n        });",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "SLA-glass-lost",
     "file": "src/world/ships/shipLiveryArt.js",
-    "old": "glow: night != null ? a.glow(record) : null, night });",
-    "new": "glow: null, night });",
+    "old": "    out.push({ record, picture, glow: night != null ? a.glow(record) : null, night });",
+    "new": "    out.push({ record, picture, glow: null, night });",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -204,8 +204,8 @@
   {
     "name": "SLA-cloth-base",
     "file": "src/world/ships/shipLiveryArt.js",
-    "old": "const data = new Uint8Array(pic.data), base = lumOf(C.canvas);",
-    "new": "const data = new Uint8Array(pic.data), base = 160;",
+    "old": "    base = lumOf(C.canvas);",
+    "new": "    base = 160;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -213,8 +213,8 @@
   {
     "name": "SLA-accent-carrack-gilt",
     "file": "src/world/ships/shipLiveryArt.js",
-    "old": "    accent: [CARRACK_K.ochre, CARRACK_K.ochreLit, CARRACK_K.ochreDark, ...GILT], accentBase: CARRACK_K.ochre,",
-    "new": "    accent: [CARRACK_K.ochre, CARRACK_K.ochreLit, CARRACK_K.ochreDark], accentBase: CARRACK_K.ochre,",
+    "old": "    accent: [CARRACK_K.ochre, CARRACK_K.ochreLit, CARRACK_K.ochreDark, ...GILT],",
+    "new": "    accent: [CARRACK_K.ochre, CARRACK_K.ochreLit, CARRACK_K.ochreDark],",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]

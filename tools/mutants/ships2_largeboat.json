@@ -2,8 +2,8 @@
   {
     "name": "SHIPS2-L-a-part-keyed-by-its-sails-name",
     "file": "src/world/ships/largeBoatRig.js",
-    "old": ".replace(/^Skiff/, '').replace(/Sail/g, '')",
-    "new": ".replace(/^Skiff/, '')",
+    "old": "export const sailKey = (v, name) =>\n  `V${v}${name\n    .replace(/^Skiff/, '')\n    .replace(/Sail/g, '')\n    .replace(/[^A-Za-z0-9]/g, '')}`;",
+    "new": "export const sailKey = (v, name) => `V${v}${name.replace(/^Skiff/, '').replace(/[^A-Za-z0-9]/g, '')}`;",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
     ],
@@ -12,7 +12,7 @@
   {
     "name": "SHIPS2-L-a-plan-dropped",
     "file": "src/world/ships/largeBoatRig.js",
-    "old": "  Object.freeze({ top: true, sails: Object.freeze([{ ...largeSquare, boom: 'SkiffLargeSquareBoom', name: 'SkiffLargeSquareSail' }, { ...smallSquare, boom: 'SkiffSmallSquareBoom', name: 'SkiffSmallSquareSail' }]) }),\n]);",
+    "old": "  Object.freeze({\n    top: true,\n    sails: Object.freeze([\n      { ...largeSquare, boom: 'SkiffLargeSquareBoom', name: 'SkiffLargeSquareSail' },\n      { ...smallSquare, boom: 'SkiffSmallSquareBoom', name: 'SkiffSmallSquareSail' },\n    ]),\n  }),\n]);",
     "new": "]);",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "SHIPS2-L-a-sail-out-of-the-mods-order",
     "file": "src/world/ships/largeBoatRig.js",
-    "old": "Object.freeze([{ ...smallSquare, boom: 'SkiffSmallSquareBoom', name: 'SkiffSmallSquareSail' }, { ...lateen, boom: 'SkiffLateenBoom', name: 'SkiffLargeLateenSail' }])",
-    "new": "Object.freeze([{ ...lateen, boom: 'SkiffLateenBoom', name: 'SkiffLargeLateenSail' }, { ...smallSquare, boom: 'SkiffSmallSquareBoom', name: 'SkiffSmallSquareSail' }])",
+    "old": "      { ...smallSquare, boom: 'SkiffSmallSquareBoom', name: 'SkiffSmallSquareSail' },\n      { ...lateen, boom: 'SkiffLateenBoom', name: 'SkiffLargeLateenSail' },",
+    "new": "      { ...lateen, boom: 'SkiffLateenBoom', name: 'SkiffLargeLateenSail' },\n      { ...smallSquare, boom: 'SkiffSmallSquareBoom', name: 'SkiffSmallSquareSail' },",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "SHIPS2-L-a-plans-sails-mis-sorted",
     "file": "src/world/ships/largeBoatRig.js",
-    "old": "Object.freeze([{ ...smallGaff(5.75, 6.1), boom: 'SkiffSmallGaffBoom', name: 'SkiffSmallGaffSail2' }, { ...smallStay, name: 'SkiffSmallStaySail' }])",
-    "new": "Object.freeze([{ ...smallStay, name: 'SkiffSmallStaySail' }, { ...smallGaff(5.75, 6.1), boom: 'SkiffSmallGaffBoom', name: 'SkiffSmallGaffSail2' }])",
+    "old": "      { ...smallGaff(5.75, 6.1), boom: 'SkiffSmallGaffBoom', name: 'SkiffSmallGaffSail2' },\n      { ...smallStay, name: 'SkiffSmallStaySail' },",
+    "new": "      { ...smallStay, name: 'SkiffSmallStaySail' },\n      { ...smallGaff(5.75, 6.1), boom: 'SkiffSmallGaffBoom', name: 'SkiffSmallGaffSail2' },",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "SHIPS2-L-the-canvas-still",
     "file": "src/world/ships/largeBoatRig.js",
-    "old": "const poses = { stowed: squareSailPose(s, d, 0, 'stowed'), left: squareSailPose(s, d, 0, 'aback'), center: squareSailPose(s, d, 0, 'center'), right: squareSailPose(s, d, 0, 'full') };",
-    "new": "const poses = { stowed: squareSailPose(s, d, 0, 'stowed'), left: squareSailPose(s, d, 0, 'stowed'), center: squareSailPose(s, d, 0, 'stowed'), right: squareSailPose(s, d, 0, 'stowed') };",
+    "old": "          left: squareSailPose(s, d, 0, 'aback'),\n          center: squareSailPose(s, d, 0, 'center'),\n          right: squareSailPose(s, d, 0, 'full'),",
+    "new": "          left: squareSailPose(s, d, 0, 'stowed'),\n          center: squareSailPose(s, d, 0, 'stowed'),\n          right: squareSailPose(s, d, 0, 'stowed'),",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "SHIPS2-L-the-topsails-yard-under-the-stay",
     "file": "src/world/ships/largeBoatRig.js",
-    "old": "const smallSquare = Object.freeze({ kind: 'square', yardY: 8.8,",
-    "new": "const smallSquare = Object.freeze({ kind: 'square', yardY: 9.3,",
+    "old": "  yardY: 8.8,",
+    "new": "  yardY: 9.3,",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "SHIPS2-L-the-gaff-topsails-luff-through-the-cap",
     "file": "src/world/ships/largeBoatRig.js",
-    "old": "-(capR + 0.06)]",
-    "new": "-(capR - 0.04)]",
+    "old": "  const throat = [0, g.throatY - g.boomY + 0.12, -(capR + 0.06)],",
+    "new": "  const throat = [0, g.throatY - g.boomY + 0.12, -(capR - 0.04)],",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "SHIPS2-L-the-bow-swivel-in-the-bowsprit",
     "file": "src/world/ships/largeBoatModel.js",
-    "old": "bow: Object.freeze([-0.35, 5.3]) });",
-    "new": "bow: Object.freeze([0, 5.9]) });",
+    "old": "  bow: Object.freeze([-0.35, 5.3]),",
+    "new": "  bow: Object.freeze([0, 5.9]),",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "SHIPS2-L-the-tiller-off-level",
     "file": "src/world/ships/largeBoatModel.js",
-    "old": "const d = sub(p, MEASURED.postFoot), a = (-POST_RAKE_DEG * Math.PI) / 180,",
-    "new": "const d = sub(p, MEASURED.postFoot), a = 0,",
+    "old": "    a = (-POST_RAKE_DEG * Math.PI) / 180,",
+    "new": "    a = 0,",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "SHIPS2-L-the-helm-sides-swapped",
     "file": "src/world/ships/largeBoatModel.js",
-    "old": "[['Rudder Sailing Left', RUDDER_DEG], ['Rudder Sailing Right', -RUDDER_DEG]",
-    "new": "[['Rudder Sailing Left', -RUDDER_DEG], ['Rudder Sailing Right', RUDDER_DEG]",
+    "old": "    ['Rudder Sailing Left', RUDDER_DEG],\n    ['Rudder Sailing Right', -RUDDER_DEG],",
+    "new": "    ['Rudder Sailing Left', -RUDDER_DEG],\n    ['Rudder Sailing Right', RUDDER_DEG],",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "SHIPS2-L-the-post-unraked",
     "file": "src/world/ships/largeBoatModel.js",
-    "old": "kids: [nodeOf('RudderPost', { p: M.postFoot, r: [Math.sin((POST_RAKE_DEG * Math.PI) / 360), 0, 0, Math.cos((POST_RAKE_DEG * Math.PI) / 360)], kids: [",
-    "new": "kids: [nodeOf('RudderPost', { p: M.postFoot, r: [0, 0, 0, 1], kids: [",
+    "old": "          r: [Math.sin((POST_RAKE_DEG * Math.PI) / 360), 0, 0, Math.cos((POST_RAKE_DEG * Math.PI) / 360)],",
+    "new": "          r: [0, 0, 0, 1],",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "SHIPS2-L-a-muzzle-at-the-post",
     "file": "src/world/ships/largeBoatModel.js",
-    "old": "Object.freeze([SWIVELS.postX + SWIVELS.muzzle, SWIVELS.y, z])",
-    "new": "Object.freeze([SWIVELS.postX, SWIVELS.y, z])",
+    "old": "  broadside: Object.freeze(SWIVELS.z.map((z) => Object.freeze([SWIVELS.postX + SWIVELS.muzzle, SWIVELS.y, z]))),",
+    "new": "  broadside: Object.freeze(SWIVELS.z.map((z) => Object.freeze([SWIVELS.postX, SWIVELS.y, z]))),",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "SHIPS2-L-the-bows-on-her-stem",
     "file": "src/world/ships/largeBoatModel.js",
-    "old": "Object.freeze([SWIVELS.bow[0], SWIVELS.y, SWIVELS.bow[1] + SWIVELS.muzzle])",
-    "new": "Object.freeze([0, SWIVELS.y, SWIVELS.bow[1] + SWIVELS.muzzle])",
+    "old": "  bow: Object.freeze([Object.freeze([SWIVELS.bow[0], SWIVELS.y, SWIVELS.bow[1] + SWIVELS.muzzle])]),",
+    "new": "  bow: Object.freeze([Object.freeze([0, SWIVELS.y, SWIVELS.bow[1] + SWIVELS.muzzle])]),",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "SHIPS2-L-a-picture-seeded-off-the-clock",
     "file": "src/world/ships/largeBoatArt.js",
-    "old": "const weed = noise(0xb51, S, S, 8, 8);",
-    "new": "const weed = noise(Math.floor(Math.random() * 1e6), S, S, 8, 8);",
+    "old": "  const weed = noise(0xb51, S, S, 8, 8);",
+    "new": "  const weed = noise(Math.floor(Math.random() * 1e6), S, S, 8, 8);",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "SHIPS2-L-registered-twice",
     "file": "src/world/ships/largeBoatArt.js",
-    "old": "  if (_registered) return 0;\n  _registered = true;\n",
-    "new": "",
+    "old": "  if (_registered) return 0;\n  _registered = true;\n  const made = new Map();",
+    "new": "  const made = new Map();",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "SHIPS2-L-a-picture-off-64",
     "file": "src/world/ships/largeBoatArt.js",
-    "old": "[TEX.transom0, transomArt()]",
-    "new": "[TEX.transom0, picture(32, 32)]",
+    "old": "    [TEX.transom0, transomArt()],",
+    "new": "    [TEX.transom0, picture(32, 32)],",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "SHIPS2-L-a-face-on-no-picture",
     "file": "src/world/ships/largeBoatModel.js",
-    "old": "    case 'mast': case 'bowsprit': return tiled(TEX.spar);",
-    "new": "    case 'mast': case 'bowsprit': return { rec: 99, uv: () => [0, 0] };",
+    "old": "      return tiled(TEX.spar);",
+    "new": "      return { rec: 99, uv: () => [0, 0] };",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
     ],
