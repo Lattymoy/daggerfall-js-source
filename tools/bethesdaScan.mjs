@@ -271,20 +271,35 @@ const thumbFar = (a, b) => {
   return s / (THUMB * THUMB);
 };
 
-/** The share of the union of drawn pixels where `a` and `b` (one size) agree within NEAR_DIFF, mirrored or not. */
+/** A near match must follow the record's light and dark too: two smooth pictures of one colour agree pixel for pixel
+ *  and share nothing (our studio's hair against a plain brown wall). The record needs this much spread in its light,
+ *  and the two lights this correlation. */
+export const NEAR_SPREAD = 8;
+export const NEAR_CORRELATION = 0.6;
+const light = (d, i) => 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+
+/** The share of the union of drawn pixels where `a` and `b` (one size) agree within NEAR_DIFF, mirrored or not - 0
+ *  where `b` is flat or the two lights do not move together. */
 export function nearShare(a, b, mirrored = false) {
   const { width: w, height: h } = a;
-  let both = 0, either = 0;
+  let both = 0, either = 0, n = 0, sa = 0, sb = 0, saa = 0, sbb = 0, sab = 0;
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = (y * w + x) * 4, j = (y * w + (mirrored ? w - 1 - x : x)) * 4;
       const p = a.data[i + 3] >= 128, q = b.data[j + 3] >= 128;
       if (!(p || q)) continue;
       either++;
-      if (p && q && Math.abs(a.data[i] - b.data[j]) + Math.abs(a.data[i + 1] - b.data[j + 1]) + Math.abs(a.data[i + 2] - b.data[j + 2]) <= NEAR_DIFF) both++;
+      if (!(p && q)) continue;
+      const la = light(a.data, i), lb = light(b.data, j);
+      n++; sa += la; sb += lb; saa += la * la; sbb += lb * lb; sab += la * lb;
+      if (Math.abs(a.data[i] - b.data[j]) + Math.abs(a.data[i + 1] - b.data[j + 1]) + Math.abs(a.data[i + 2] - b.data[j + 2]) <= NEAR_DIFF) both++;
     }
   }
-  return either ? both / either : 0;
+  if (!either || !n) return 0;
+  const va = saa / n - (sa / n) ** 2, vb = sbb / n - (sb / n) ** 2;
+  if (vb < NEAR_SPREAD ** 2 || va <= 0) return 0;
+  if ((sab / n - (sa / n) * (sb / n)) / Math.sqrt(va * vb) < NEAR_CORRELATION) return 0;
+  return both / either;
 }
 
 /** The classic index of the player's ARENA2. */

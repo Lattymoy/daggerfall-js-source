@@ -102,6 +102,23 @@ test('NO-BETHESDA: a copy is exact at 1x to 4x, mirrored or not; a repaint is ne
   assert.equal(matchPicture(picture(40, 40, 21), index), null, 'a picture of no classic size');
 });
 
+test('NO-BETHESDA: two smooth pictures of one colour are not a repaint - the light must follow the record\'s', () => {
+  const flat = (w, h, seed, base, spread) => {
+    const n = noise(w * h * 4, seed), data = new Uint8Array(w * h * 4);
+    for (let i = 0; i < data.length; i += 4) { for (let c = 0; c < 3; c++) data[i + c] = base[c] + (n[i + c] % spread); data[i + 3] = 255; }
+    return { width: w, height: h, data };
+  };
+  // a plain brown wall, and a brown picture four times its size with grain of its own (our studio's hair, measured)
+  const wall = flat(16, 16, 3, [60, 40, 30], 4);
+  const index = pictureIndex([{ from: 'TEXTURE.001 record 63 frame 0', rgba: wall }]);
+  assert.equal(matchPicture(flat(64, 64, 9, [58, 41, 31], 20), index), null);
+  // the same wall with a pattern of its own is matched by a copy of that pattern, repainted a little
+  const brick = picture(16, 16, 31);
+  const paint = up(brick, 4);
+  for (let i = 0; i < paint.data.length; i += 4) paint.data[i] = Math.min(255, paint.data[i] + 12);
+  assert.equal(matchPicture(paint, pictureIndex([{ from: 'brick', rgba: brick }]))?.kind, 'near');
+});
+
 test('NO-BETHESDA: the exceptions are Port-Doctrine\'s directories, and nothing else is one', () => {
   for (const d of EXCEPTION_DIRS) assert.ok(inException(`${d}x.png`), d);
   assert.equal(inException('public/art/diverse-weapons/x.png'), false);
