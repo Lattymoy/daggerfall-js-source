@@ -11,8 +11,8 @@
   {
     "name": "TB-the-corner-open",
     "file": "src/world/townOutline.js",
-    "old": "(!border(i) ? n : i === 0 ? townWallBlockName(mapId) : TOWN_OUTLINE_BLOCK)",
-    "new": "(!border(i) ? n : TOWN_OUTLINE_BLOCK)",
+    "old": "  ed.blockNames = names.map((n, i) => (!border(i) ? n : i === 0 ? townWallBlockName(mapId) : TOWN_OUTLINE_BLOCK));",
+    "new": "  ed.blockNames = names.map((n, i) => (!border(i) ? n : TOWN_OUTLINE_BLOCK));",
     "tests": [
       "test/world/baywalls.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TB-a-wall-inside-taken",
     "file": "src/world/townOutline.js",
-    "old": "CLASSIC_WALL.test(String(n ?? '')) : !isWallBlock(n)",
-    "new": "CLASSIC_WALL.test(String(n ?? '')) : true",
+    "old": "  if (!names.every((n, i) => (border(i) ? CLASSIC_WALL.test(String(n ?? '')) : !isWallBlock(n)))) return false;",
+    "new": "  if (!names.every((n, i) => (border(i) ? CLASSIC_WALL.test(String(n ?? '')) : true))) return false;",
     "tests": [
       "test/world/baywalls.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "TB-a-capital-walled",
     "file": "src/world/townOutline.js",
-    "old": "  if (!ed?.blockNames || !blocksFile || dfLocation.capital) return false;",
-    "new": "  if (!ed?.blockNames || !blocksFile) return false;",
+    "old": "  if (!ed?.blockNames || !blocksFile || dfLocation.capital) return false; // a grid read again after its edit has no wall ring left: refused below",
+    "new": "  if (!ed?.blockNames || !blocksFile) return false; // a grid read again after its edit has no wall ring left: refused below",
     "tests": [
       "test/world/baywalls.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TB-the-outline-unwalled",
     "file": "src/world/townOutline.js",
-    "old": "walled: true, bay: true",
-    "new": "walled: false, bay: true",
+    "old": "  dfLocation.outline = Object.freeze({ kept: (w - 2) * (h - 2), left: 2 * (w + h) - 4, walled: true, bay: true });",
+    "new": "  dfLocation.outline = Object.freeze({ kept: (w - 2) * (h - 2), left: 2 * (w + h) - 4, walled: false, bay: true });",
     "tests": [
       "test/world/baywalls.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "TB-the-clone-unwalled",
     "file": "src/world/townOutline.js",
-    "old": "  dfLocation = unwalledLocation(dfLocation);   // TS7: a Bay city's template is its own ring",
-    "new": "",
+    "old": "  dfLocation = unwalledLocation(dfLocation); // TS7: a Bay city's template is its own ring\n  const ed = dfLocation?.exterior?.exteriorData;",
+    "new": "  const ed = dfLocation?.exterior?.exteriorData;",
     "tests": [
       "test/world/baywalls.test.js"
     ]

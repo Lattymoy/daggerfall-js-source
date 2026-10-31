@@ -2307,6 +2307,7 @@
 !/src/world/terrain/townMeet.js
 !/src/world/texRemap.js
 !/src/world/townGates.js
+!/src/world/townOutline.js
 !/src/world/townPictures.js
 !/src/world/townShape.js
 !/src/world/townStandIns.js

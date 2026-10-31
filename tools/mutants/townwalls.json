@@ -155,8 +155,8 @@
   {
     "name": "TW-the-corner-open",
     "file": "src/world/townOutline.js",
-    "old": "(walled && i === 0 ? townWallBlockName(seed) : TOWN_OUTLINE_BLOCK)",
-    "new": "(TOWN_OUTLINE_BLOCK)",
+    "old": "  const open = (i) => (walled && i === 0 ? townWallBlockName(seed) : TOWN_OUTLINE_BLOCK); // TS4: its ring's corner (world/townWalls.js)",
+    "new": "  const open = (i) => TOWN_OUTLINE_BLOCK; // TS4: its ring's corner (world/townWalls.js)",
     "tests": [
       "test/world/townwalls.test.js",
       "test/world/townoutline.test.js"

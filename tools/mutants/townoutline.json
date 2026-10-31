@@ -2,8 +2,8 @@
   {
     "name": "TO-the-seed-unread",
     "file": "src/world/townOutline.js",
-    "old": "  const s = seed >>> 0, [dLo, dHi] = O.depth",
-    "new": "  const s = 0, [dLo, dHi] = O.depth",
+    "old": "  const s = seed >>> 0,",
+    "new": "  const s = 0,",
     "tests": [
       "test/world/townoutline.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "TO-the-turn-unread",
     "file": "src/world/townOutline.js",
-    "old": " + (turn * Math.PI) / O.turns;",
-    "new": ";",
+    "old": "    phase = (((s >>> 3) % 360) * Math.PI) / 180 + (turn * Math.PI) / O.turns;",
+    "new": "    phase = (((s >>> 3) % 360) * Math.PI) / 180;",
     "tests": [
       "test/world/townoutline.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TO-a-small-grid-shaped",
     "file": "src/world/townOutline.js",
-    "old": "  if (!(iw >= O.min || ih >= O.min)) return keep;\n",
-    "new": "",
+    "old": "  if (!(iw >= O.min || ih >= O.min)) return keep;\n  const s = seed >>> 0,",
+    "new": "  const s = seed >>> 0,",
     "tests": [
       "test/world/townoutline.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TO-no-kind-given-back",
     "file": "src/world/townOutline.js",
-    "old": "  for (const [k, i] of holders) if (!kept.has(k)) keep[i] = 1;\n",
-    "new": "",
+    "old": "  for (const [k, i] of holders) if (!kept.has(k)) keep[i] = 1;\n  const open = (i) => !isWall(i % w, Math.floor(i / w));",
+    "new": "  const open = (i) => !isWall(i % w, Math.floor(i / w));",
     "tests": [
       "test/world/townoutline.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "TO-the-farther-holder",
     "file": "src/world/townOutline.js",
-    "old": "far(i) < far(holders.get(k))",
-    "new": "far(i) > far(holders.get(k))",
+    "old": "      else if (!holders.has(k) || far(i) < far(holders.get(k))) holders.set(k, i);",
+    "new": "      else if (!holders.has(k) || far(i) > far(holders.get(k))) holders.set(k, i);",
     "tests": [
       "test/world/townoutline.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TO-a-piece-left-apart",
     "file": "src/world/townOutline.js",
-    "old": "parts.length > 1; parts = pieces(keep, w, h)",
-    "new": "parts.length > 99; parts = pieces(keep, w, h)",
+    "old": "  for (let parts = pieces(keep, w, h); parts.length > 1; parts = pieces(keep, w, h)) {",
+    "new": "  for (let parts = pieces(keep, w, h); parts.length > 99; parts = pieces(keep, w, h)) {",
     "tests": [
       "test/world/townoutline.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "TO-the-way-through-a-wall",
     "file": "src/world/townOutline.js",
-    "old": "from[n] >= 0 || !open(n)) continue;",
-    "new": "from[n] >= 0) continue;",
+    "old": "        if (nx < 0 || ny < 0 || nx >= w || ny >= h || from[n] >= 0 || !open(n)) continue;",
+    "new": "        if (nx < 0 || ny < 0 || nx >= w || ny >= h || from[n] >= 0) continue;",
     "tests": [
       "test/world/townoutline.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "TO-the-first-turn-always",
     "file": "src/world/townOutline.js",
-    "old": "turn < O.turns && bestMissing > 0; turn++",
-    "new": "turn < 1; turn++",
+    "old": "  for (let turn = 0; turn < O.turns && bestMissing > 0; turn++) {",
+    "new": "  for (let turn = 0; turn < 1; turn++) {",
     "tests": [
       "test/world/townoutline.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "TO-the-pool-unkeyed",
     "file": "src/world/townOutline.js",
-    "old": "const at = pool.findIndex((b, i) => !used[i] && b.buildingType === r.type);",
-    "new": "const at = pool.findIndex((b, i) => !used[i]);",
+    "old": "      const at = pool.findIndex((b, i) => !used[i] && b.buildingType === r.type);",
+    "new": "      const at = pool.findIndex((b, i) => !used[i]);",
     "tests": [
       "test/world/townoutline.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "TO-the-uncarried-guild-drawn",
     "file": "src/world/townOutline.js",
-    "old": "isNamedBuildingType(b.buildingType) && !(b.buildingType === BUILDING_TYPES.GuildHall && UNCARRIED_GUILD_FACTIONS.has(b.factionId)));",
-    "new": "isNamedBuildingType(b.buildingType));",
+    "old": "  const pool = buildings.filter(\n    (b) =>\n      isNamedBuildingType(b.buildingType) &&\n      !(b.buildingType === BUILDING_TYPES.GuildHall && UNCARRIED_GUILD_FACTIONS.has(b.factionId)),\n  );",
+    "new": "  const pool = buildings.filter((b) => isNamedBuildingType(b.buildingType));",
     "tests": [
       "test/world/townoutline.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "TO-the-raven-unread",
     "file": "src/world/townOutline.js",
-    "old": "      if (r.raven) kinds.push(",
-    "new": "      if (false) kinds.push(",
+    "old": "      if (r.raven) kinds.push(buildingKind({ buildingType: BUILDING_TYPES.GuildHall, factionId: 414 }));",
+    "new": "      if (false) kinds.push(buildingKind({ buildingType: BUILDING_TYPES.GuildHall, factionId: 414 }));",
     "tests": [
       "test/world/townoutline.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "TO-the-kept-cells-stripped",
     "file": "src/world/townOutline.js",
-    "old": "for (const [b, entries] of drawn) if (!keep[",
-    "new": "for (const [b, entries] of drawn) if (keep[",
+    "old": "    if (!keep[/** @type {number} */ (cellOf.get(b))]) for (const e of entries) strip.add(e);",
+    "new": "    if (keep[/** @type {number} */ (cellOf.get(b))]) for (const e of entries) strip.add(e);",
     "tests": [
       "test/world/townoutline.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "TO-the-grid-renamed-in-place",
     "file": "src/world/townOutline.js",
-    "old": "exteriorData: { ...ed, blockNames: ed.blockNames.map((n, i) => (keep[i] ? n : open(i))) },",
-    "new": "exteriorData: Object.assign(ed, { blockNames: ed.blockNames.map((n, i) => (keep[i] ? n : open(i))) }),",
+    "old": "      exteriorData: { ...ed, blockNames: ed.blockNames.map((n, i) => (keep[i] ? n : open(i))) },",
+    "new": "      exteriorData: Object.assign(ed, { blockNames: ed.blockNames.map((n, i) => (keep[i] ? n : open(i))) }),",
     "tests": [
       "test/world/townoutline.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "TO-no-block-read",
     "file": "src/world/townOutline.js",
-    "old": "  if (!list.length) return dfLocation;\n",
-    "new": "",
+    "old": "  if (!list.length) return dfLocation;\n  const keep = townOutlineCells(w, h, seed, (i) => kinds[i], isWall, round ? ROUND_OUTLINE : TOWN_OUTLINE);",
+    "new": "  const keep = townOutlineCells(w, h, seed, (i) => kinds[i], isWall, round ? ROUND_OUTLINE : TOWN_OUTLINE);",
     "tests": [
       "test/world/townoutline.test.js"
     ]

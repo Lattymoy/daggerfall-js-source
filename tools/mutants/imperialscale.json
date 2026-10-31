@@ -193,8 +193,8 @@
   {
     "name": "IS-the-round-unread",
     "file": "src/world/townOutline.js",
-    "old": "isWall, round ? ROUND_OUTLINE : TOWN_OUTLINE);",
-    "new": "isWall, TOWN_OUTLINE);",
+    "old": "  const keep = townOutlineCells(w, h, seed, (i) => kinds[i], isWall, round ? ROUND_OUTLINE : TOWN_OUTLINE);",
+    "new": "  const keep = townOutlineCells(w, h, seed, (i) => kinds[i], isWall, TOWN_OUTLINE);",
     "tests": [
       "test/world/imperialscale.test.js"
     ]
