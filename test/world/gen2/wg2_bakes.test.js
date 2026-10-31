@@ -85,3 +85,31 @@ test('WG2 BLACK MARSH: a wetland - most of its ground waterlogged, scores of poo
   assert.ok(slope[slope.length >> 1] < 0.02, `median slope ${slope[slope.length >> 1]}`);
   assert.ok(share(M.fields.biome, ['swamp', 'marsh']) > 0.3);
 });
+
+test('WG2 NO CELL EDGES: the ground is read between cells - a dune field ends without a step - and a lake\'s water reaches wherever its ground is under the level beside it, its shore never a cell\'s edge (mutants: the dunes by the nearest cell, the lake by the nearest cell)', () => {
+  const DUNE = BIOMES.findIndex((b) => b.key === 'dunes'), e = H.fields.elev, bio = H.fields.biome, eps = 1e-7;
+  let edges = 0, worst = 0;
+  for (let j = 0; j < e.h; j += 3) for (let i = 1; i < e.w; i++) {
+    if ((bio.get(i - 1, j) === DUNE) === (bio.get(i, j) === DUNE)) continue;
+    const x = e.x0 + i / e.res, y = e.y0 + (j + 0.5) / e.res;
+    worst = Math.max(worst, Math.abs(hs.heightAt(x + eps, y) - hs.heightAt(x - eps, y))); edges++;
+  }
+  assert.ok(edges > 50 && worst < 0.25, `${edges} dune edges, the worst step ${worst} m`);
+  for (const [bake, s] of [[H, hs], [M, ms]]) {
+    const L = bake.fields.lake;
+    let under = 0;
+    for (let j = 1; j < L.h - 1; j++) for (let i = 1; i < L.w - 1; i++) {
+      const id = L.get(i, j);
+      if (!id || bake.header.lakes[id - 1].kind === 'playa') continue;
+      for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        if (L.get(i + di, j + dj)) continue;
+        // just across the edge, on the dry cell's side
+        const x = L.x0 + (i + 0.5 + di * (0.5 + 1e-4)) / L.res, y = L.y0 + (j + 0.5 + dj * (0.5 + 1e-4)) / L.res;
+        if (s.heightAt(x, y) >= bake.header.lakes[id - 1].level || s.channel(x, y)) continue;
+        under++;
+        assert.equal(s.waterAt(x, y)?.kind, 'lake', `${bake.header.id}: ground under lake ${id}'s level at ${x}, ${y} is dry`);
+      }
+    }
+    assert.ok(under > 0, `${bake.header.id}: no shore crosses a cell's edge`);
+  }
+});

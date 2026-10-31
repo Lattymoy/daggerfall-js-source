@@ -88,7 +88,7 @@ export async function bootWorldEditor(doc) {
       for (const c of list) { ctx.beginPath(); c.pts.forEach((p, n) => ctx[n ? 'lineTo' : 'moveTo'](...P(p[0], p[1]))); ctx.stroke(); }
     }
     if (st.course.length) { ctx.strokeStyle = '#ffffff'; ctx.setLineDash([4, 3]); ctx.beginPath(); st.course.forEach((p, n) => ctx[n ? 'lineTo' : 'moveTo'](...P(p[0], p[1]))); ctx.stroke(); ctx.setLineDash([]); }
-    for (const t of towns()) {
+    for (const t of [...(st.region.header.towns ?? []), ...towns()]) {   // the towns the bake ships, then the document's
       ctx.strokeStyle = '#e0c080'; ctx.lineWidth = 1;
       for (const r of t.roads) { ctx.beginPath(); r.pts.forEach((p, n) => ctx[n ? 'lineTo' : 'moveTo'](...P(p[0], p[1]))); ctx.stroke(); }
       ctx.fillStyle = '#d06040';

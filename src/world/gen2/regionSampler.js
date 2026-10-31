@@ -41,6 +41,9 @@ export function regionSampler(bake, o = {}) {
     const gx = (elev.get(i + 1, j) - elev.get(i - 1, j)) / (2 * cellM), gy = (elev.get(i, j + 1) - elev.get(i, j - 1)) / (2 * cellM);
     grain.data[j * elev.w + i] = (GRAIN_M[biome.data[j * elev.w + i]] ?? 2) + GRAIN_SLOPE_M * Math.min(1, Math.sqrt(gx * gx + gy * gy));
   }
+  // the dunes' share, read between cell centres: a dune field fades out across a cell, never steps at its edge
+  const dunes = new Field(elev.w, elev.h, elev.frame, Float32Array);
+  for (let k = 0; k < dunes.data.length; k++) dunes.data[k] = biome.data[k] === DUNES ? 1 : 0;
   // the rivers' segments, filed by every world pixel their channel and banks reach
   const segs = [];
   /** @type {Map<number, number[]>} */
@@ -88,7 +91,8 @@ export function regionSampler(bake, o = {}) {
     let h = elev.cubicAt(x, y);
     const g = grain.at(x, y);
     if (g > 0.05) h += g * fbm(seed, x * 24, y * 24, 3);
-    if (biome.get(...elev.cellOf(x, y)) === DUNES) h += 5 * ridged(seed + 1, x * 6, y * 1.5, 2);
+    const dune = dunes.at(x, y);
+    if (dune > 0) h += 5 * dune * ridged(seed + 1, x * 6, y * 1.5, 2);
     return h;
   };
   // the towns' pads (padLaw.js), filed by every world pixel they reach
@@ -139,10 +143,17 @@ export function regionSampler(bake, o = {}) {
       if (pool && api.heightAt(x, y) < pool.p.level) return { kind: 'spring', surface: pool.p.level, name: pool.p.name };
       const c = channel(x, y);
       if (c && c.d < c.half) return { kind: 'river', surface: c.surface, river: c.river, q: c.q };
-      const id = lake.get(...lake.cellOf(x, y));
-      if (id) {
+      // a lake's water wherever the ground is under its level among the four cells the ground is read between - its
+      // shore the level's own line, never a cell's edge
+      const fx = (x - lake.x0) * lake.res - 0.5, fy = (y - lake.y0) * lake.res - 0.5, i = Math.floor(fx), j = Math.floor(fy);
+      let h = null;
+      for (let c = 0; c < 4; c++) {
+        const id = lake.get(i + (c & 1), j + (c >> 1));
+        if (!id) continue;
         const lk = header.lakes[id - 1];
-        if (lk.kind !== 'playa' && api.heightAt(x, y) < lk.level) return { kind: 'lake', surface: lk.level, lake: id };
+        if (lk.kind === 'playa') continue;
+        if (h === null) h = api.heightAt(x, y);
+        if (h < lk.level) return { kind: 'lake', surface: lk.level, lake: id };
       }
       return null;
     },

@@ -397,5 +397,23 @@
     "tests": [
       "test/world/gen2/wg2_seam.test.js"
     ]
+  },
+  {
+    "name": "WG2-dunes-nearest-cell",
+    "file": "src/world/gen2/regionSampler.js",
+    "old": "const dune = dunes.at(x, y);",
+    "new": "const dune = biome.get(...elev.cellOf(x, y)) === DUNES ? 1 : 0;",
+    "tests": [
+      "test/world/gen2/wg2_bakes.test.js"
+    ]
+  },
+  {
+    "name": "WG2-lake-nearest-cell",
+    "file": "src/world/gen2/regionSampler.js",
+    "old": "const id = lake.get(i + (c & 1), j + (c >> 1));",
+    "new": "const id = c ? 0 : lake.get(...lake.cellOf(x, y));",
+    "tests": [
+      "test/world/gen2/wg2_bakes.test.js"
+    ]
   }
 ]

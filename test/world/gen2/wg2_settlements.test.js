@@ -67,7 +67,7 @@ test('WG2 SETTLEMENT: one spec makes one town, and the culture shapes it - stilt
   assert.ok(hold.features.some((f) => f.kind === 'wall') && hold.features.filter((f) => f.kind === 'gate').length >= 2, 'a fortified town walls itself');
   assert.ok(tava.features.some((f) => f.kind === 'field'), 'an oasis farms');
   // a town on a pixel's edge spills into the next pixel, and the streamed world stands one pixel a location
-  const spill = generateSettlement(S['hammerfell-test'], { ...TEST_SETTLEMENTS[3], x: 1101.02, y: 408.5 });
+  const spill = generateSettlement(S['hammerfell-test'], { ...TEST_SETTLEMENTS[2], x: 1095.02, y: 420.5 });   // Sentry Hold on its pixel's west edge, dry ground
   assert.ok(settlementProblems(S['hammerfell-test'], spill).some((p) => /the town's pixel/.test(p)));
 });
 

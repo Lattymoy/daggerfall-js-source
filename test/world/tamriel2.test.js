@@ -321,5 +321,7 @@ test('TAMRIEL2-WORKER: every module the terrain worker reaches, at any depth, li
   // PIN MOVED (WG2, bible/03-World/World-2-Canon.md the seam): 84 - a published region's ground, asked by the ground's reads
   // (world/gen2/gen2Ground.js and what it decodes and samples with: bakeCodec.js, regionSampler.js, riverLaw.js, field.js,
   // exact.js, formats/fnv1a.js), all pure
-  assert.ok(seen.size > 20 && seen.size < 85, `${seen.size} modules`);
+  // PIN MOVED (WG2 baked towns): 85 - a town's terrace pad, one law for the generator and the streamed ground
+  // (world/gen2/padLaw.js), pure
+  assert.ok(seen.size > 20 && seen.size < 86, `${seen.size} modules`);
 });

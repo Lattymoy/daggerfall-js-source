@@ -85,7 +85,9 @@ overlap, and a generator this build cannot read. Publishing changes `groundPrint
 Rivers carry discharge from runoff (`hydrology.js` `runoff`, Budyko's shape), lose water in a dry land, and need
 `RIVER_KM2` of drainage. A course's surface never rises; its bed is under it by `riverDepth`. A closed hollow holds
 water to where evaporation meets inflow: brimful and spilling, a terminal lake, or a salt flat. A spring's pool is
-`POOL_PX` across. Channels are carved by the sampler from the courses (WG-6).
+`POOL_PX` across. Channels are carved by the sampler from the courses (WG-6). The sampler reads the ground between
+cells: a lake's shore is where the ground meets its level, and a dune field fades out - never a step or a straight
+shore at a cell's edge (`regionSampler.js` `waterAt`).
 
 Inside a closed hollow the water runs down the real ground to its floor, and the lake is one node of the network
 (`hydrology.js` `basinNet`, Kahn's order): no river crosses the flood's flat in a straight line. A flat the geology
