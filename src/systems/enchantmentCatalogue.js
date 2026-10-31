@@ -411,14 +411,10 @@ export function pickEnchantment(type, param, { powers = [], sideEffects = [] } =
  *  Removing a PARENT takes its children out of both lists with it. A
  *  child is never removed on its own - the window's click handler
  *  only fires on panels whose ParentEnchantment == 0
- *  (EnchantmentListPicker.cs:266-271).
- *  SOUL-KEPT: `parent` is the removed row's own (0 for a row the player
- *  chose). DFU's List.Remove matches the whole settings struct, its
- *  ParentEnchantment with it, so a chosen row never takes a bound
- *  soul's forced row of the same kind. Matching on the key alone did:
- *  a player who took User Takes Damage in holy places, bound a Daedra
- *  Lord (whose set forces that very row) and took theirs back lost the
- *  soul's too - a piece the item law holds as one no client makes. */
+ *  (EnchantmentListPicker.cs:266-271). SOUL-KEPT: `parent` is the
+ *  removed row's own (0 when chosen) - DFU's List.Remove matches the
+ *  ParentEnchantment too, so a chosen row never takes a soul's forced
+ *  row of its kind (the item law held such a piece as forged). */
 export function removeEnchantment(list, key, parent = 0) {
   return list.filter((e) => !(e.key === key && (e.parentEnchantment ?? 0) === parent) && (parent !== 0 || e.parentEnchantment !== key));
 }
