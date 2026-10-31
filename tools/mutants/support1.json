@@ -2,8 +2,8 @@
   {
     "name": "SUPPORT1-kofi-at-u64s-page",
     "file": "src/ui/supportAsks.js",
-    "old": "url: 'https://ko-fi.com/daggerfallonline'",
-    "new": "url: 'https://ko-fi.com/dfjs'",
+    "old": "  Object.freeze({\n    id: 'kofi',\n    name: 'Ko-fi',\n    label: 'Support on Ko-fi',\n    url: 'https://ko-fi.com/daggerfallonline',\n    art: KOFI_ART,\n  }),",
+    "new": "  Object.freeze({ id: 'kofi', name: 'Ko-fi', label: 'Support on Ko-fi', url: 'https://ko-fi.com/dfjs', art: KOFI_ART }),",
     "tests": [
       "test/ui/enhanced/support1_asks.test.js",
       "test/ui/enhanced/landing.test.js"
@@ -13,8 +13,8 @@
   {
     "name": "SUPPORT1-asks-swapped",
     "file": "src/ui/supportAsks.js",
-    "old": "  Object.freeze({ id: 'patreon', name: 'Patreon', label: 'Support on Patreon', url: 'https://www.patreon.com/c/dfenhanced', art: PATREON_ART }),\n  Object.freeze({ id: 'kofi', name: 'Ko-fi', label: 'Support on Ko-fi', url: 'https://ko-fi.com/daggerfallonline', art: KOFI_ART }),",
-    "new": "  Object.freeze({ id: 'kofi', name: 'Ko-fi', label: 'Support on Ko-fi', url: 'https://ko-fi.com/daggerfallonline', art: KOFI_ART }),\n  Object.freeze({ id: 'patreon', name: 'Patreon', label: 'Support on Patreon', url: 'https://www.patreon.com/c/dfenhanced', art: PATREON_ART }),",
+    "old": "    id: 'patreon',\n    name: 'Patreon',\n    label: 'Support on Patreon',\n    url: 'https://www.patreon.com/c/dfenhanced',\n    art: PATREON_ART,\n  }),\n  Object.freeze({\n    id: 'kofi',\n    name: 'Ko-fi',\n    label: 'Support on Ko-fi',\n    url: 'https://ko-fi.com/daggerfallonline',\n    art: KOFI_ART,",
+    "new": "    id: 'kofi',\n    name: 'Ko-fi',\n    label: 'Support on Ko-fi',\n    url: 'https://ko-fi.com/daggerfallonline',\n    art: KOFI_ART,\n  }),\n  Object.freeze({\n    id: 'patreon',\n    name: 'Patreon',\n    label: 'Support on Patreon',\n    url: 'https://www.patreon.com/c/dfenhanced',\n    art: PATREON_ART,",
     "tests": [
       "test/ui/enhanced/support1_asks.test.js",
       "test/ui/enhanced/landing.test.js"
@@ -24,8 +24,8 @@
   {
     "name": "SUPPORT1-patreon-disc-pixel",
     "file": "src/ui/supportAsks.js",
-    "old": "  '+..###.',\n  '+.#####',",
-    "new": "  '+..##..',\n  '+.#####',",
+    "old": "const PATREON_ART = Object.freeze(['+..###.', '+.#####', '+.#####', '+.#####', '+..###.']);",
+    "new": "const PATREON_ART = Object.freeze(['+..##..', '+.#####', '+.#####', '+.#####', '+..###.']);",
     "tests": [
       "test/ui/enhanced/support1_asks.test.js"
     ],
@@ -34,8 +34,8 @@
   {
     "name": "SUPPORT1-mug-hole-filled",
     "file": "src/ui/supportAsks.js",
-    "old": "  '####.#',",
-    "new": "  '######',",
+    "old": "const KOFI_ART = Object.freeze(['.+.+..', '+.+...', '......', '####..', '######', '####.#', '######', '####..']);",
+    "new": "const KOFI_ART = Object.freeze(['.+.+..', '+.+...', '......', '####..', '######', '######', '######', '####..']);",
     "tests": [
       "test/ui/enhanced/support1_asks.test.js"
     ],
@@ -44,8 +44,8 @@
   {
     "name": "SUPPORT1-steam-in-brass",
     "file": "src/ui/supportAsks.js",
-    "old": "  '.+.+..',",
-    "new": "  '.#.#..',",
+    "old": "const KOFI_ART = Object.freeze(['.+.+..', '+.+...', '......', '####..', '######', '####.#', '######', '####..']);",
+    "new": "const KOFI_ART = Object.freeze(['.#.#..', '+.+...', '......', '####..', '######', '####.#', '######', '####..']);",
     "tests": [
       "test/ui/enhanced/support1_asks.test.js"
     ],
@@ -65,8 +65,8 @@
   {
     "name": "SUPPORT1-corner-pixel-dropped",
     "file": "src/ui/supportAsks.js",
-    "old": "    if (x === 0 && y === 0) { ground = colour(ch); return; }",
-    "new": "    if (x === 0 && y === 0) { return; }",
+    "old": "        ground = colour(ch);\n        return;",
+    "new": "        return;",
     "tests": [
       "test/ui/enhanced/support1_asks.test.js"
     ],

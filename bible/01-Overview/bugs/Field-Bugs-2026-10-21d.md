@@ -415,6 +415,6 @@ day against the grace, so the record goes stale the day a grace outlasts a sente
 live one, pinned there). The other seven survive on main as here and are not this change's: `rep2_sentences`
 REP2-no-charge-coming-quietly, `csa_together` CSAL-pad-bare-dpad and `auditships_sail` AUDIT-SHIPS-A5-the-gain-on-every-coast
 (named after the first campaign), and AUDIT DISC28 AR-1's two and WERE-FRIGHT's two withdrawn-box records, equivalent
-since PLEA-LOOP (2026-10-13b): `talkWindow.js:"if (this.done) return;"` refuses a box already answered, the withdrawal
+since PLEA-LOOP (2026-10-13b): `talkWindow.js:"if (this.done) return"` refuses a box already answered, the withdrawal
 marks it so, and every door reaches an arm through `input`, so the arms' own `surrenderBox` reads refuse nothing more.
 

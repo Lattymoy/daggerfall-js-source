@@ -294,8 +294,8 @@
   {
     "name": "BR5-kofi-moved",
     "file": "src/ui/supportAsks.js",
-    "old": "url: 'https://ko-fi.com/daggerfallonline'",
-    "new": "url: 'https://ko-fi.com/dfoonline'",
+    "old": "    url: 'https://ko-fi.com/daggerfallonline',",
+    "new": "    url: 'https://ko-fi.com/dfoonline',",
     "tests": [
       "test/ui/brand.test.js"
     ],

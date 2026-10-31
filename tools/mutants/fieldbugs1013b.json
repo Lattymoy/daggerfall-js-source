@@ -83,8 +83,8 @@
   {
     "name": "PLEA-LOOP-the-box-answers-twice",
     "file": "src/ui/talkWindow.js",
-    "old": "    if (this.done) return;\n    if (!this.options.length && (code === 'back'",
-    "new": "    if (!this.options.length && (code === 'back'",
+    "old": "    if (this.done) return;\n    if (",
+    "new": "    if (",
     "tests": [
       "test/ui/fb1013b_plealoop.test.js"
     ]

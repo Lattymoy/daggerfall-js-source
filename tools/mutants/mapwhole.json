@@ -110,8 +110,8 @@
   {
     "name": "MAP-WHOLE-base-unpainted",
     "file": "src/ui/tamrielTiles.js",
-    "old": "if (base) {",
-    "new": "if (false && base) {",
+    "old": "      if (base) {",
+    "new": "      if (false && base) {",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "MAP-WHOLE-base-not-a-stand-in",
     "file": "src/ui/tamrielTiles.js",
-    "old": "return standBase(ctx, view, dpr, x0, y0, span);",
-    "new": "return false;",
+    "old": "    return standBase(ctx, view, dpr, x0, y0, span);",
+    "new": "    return false;",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "MAP-WHOLE-base-words-every-frame",
     "file": "src/ui/tamrielTiles.js",
-    "old": "const settled = baseWordsAt !== null && baseWordsAt === base.version &&",
-    "new": "const settled = false &&",
+    "old": "        const settled =\n          baseWordsAt !== null &&\n          baseWordsAt === base.version &&\n          [...baseTiles.values()].every((t) => t.canvas && !t.job);",
+    "new": "        const settled = false && [...baseTiles.values()].every((t) => t.canvas && !t.job);",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "MAP-WHOLE-base-version-unkept",
     "file": "src/ui/tamrielTiles.js",
-    "old": "if (whole) baseWordsAt = base.version ?? null;",
-    "new": "if (!whole) baseWordsAt = base.version ?? null;",
+    "old": "          if (whole) baseWordsAt = base.version ?? null;",
+    "new": "          if (!whole) baseWordsAt = base.version ?? null;",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "MAP-WHOLE-base-kept-on-close",
     "file": "src/ui/tamrielTiles.js",
-    "old": "clear() { tiles.clear(); baseTiles.clear();",
-    "new": "clear() { tiles.clear();",
+    "old": "      baseTiles.clear();\n      baseFor = '';",
+    "new": "      baseFor = '';",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "MAP-WHOLE-base-dpr-ignored",
     "file": "src/ui/tamrielTiles.js",
-    "old": "tileLevelIndex(BASE_SCALE / dpr)",
-    "new": "tileLevelIndex(BASE_SCALE)",
+    "old": "export const baseLevelIndex = (dpr = 1) => tileLevelIndex(BASE_SCALE / dpr);",
+    "new": "export const baseLevelIndex = (dpr = 1) => tileLevelIndex(BASE_SCALE);",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "MAP-WHOLE-holes-counted-as-stood",
     "file": "src/ui/tamrielTiles.js",
-    "old": "else holes++;",
-    "new": "else stood++;",
+    "old": "        else holes++;",
+    "new": "        else stood++;",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "MAP-WHOLE-mask-half-a-tile",
     "file": "src/ui/tamrielTiles.js",
-    "old": "createCoverage(TILE_PX, TILE_PX)",
-    "new": "createCoverage(TILE_PX, TILE_PX / 2)",
+    "old": "      coverage: () => (job.cov ??= covSpare.pop() ?? createCoverage(TILE_PX, TILE_PX)), // MAP-WHOLE",
+    "new": "      coverage: () => (job.cov ??= covSpare.pop() ?? createCoverage(TILE_PX, TILE_PX / 2)), // MAP-WHOLE",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "MAP-WHOLE-mask-unpooled",
     "file": "src/ui/tamrielTiles.js",
-    "old": "if (job?.cov && covSpare.length < COV_SPARE) covSpare.push(job.cov);",
-    "new": "if (false) covSpare.push(job.cov);",
+    "old": "    if (job?.cov && covSpare.length < COV_SPARE) covSpare.push(job.cov);",
+    "new": "    if (false) covSpare.push(job.cov);",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "MAP-WHOLE-pixels-a-job",
     "file": "src/ui/tamrielTiles.js",
-    "old": "pixels: () => (pixels ??= new Uint8ClampedArray(TILE_PX * TILE_PX * 4)),",
-    "new": "pixels: () => new Uint8ClampedArray(TILE_PX * TILE_PX * 4),",
+    "old": "      pixels: () => (pixels ??= new Uint8ClampedArray(TILE_PX * TILE_PX * 4)),",
+    "new": "      pixels: () => new Uint8ClampedArray(TILE_PX * TILE_PX * 4),",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]

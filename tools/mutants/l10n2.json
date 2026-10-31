@@ -218,8 +218,8 @@
   {
     "name": "L10N2-cjk-unbroken",
     "file": "src/ui/talkWindow.js",
-    "old": "  if (!CJK.test(run)) return [run];\n",
-    "new": "  return [run];\n",
+    "old": "  if (!CJK.test(run)) return [run];",
+    "new": "  return [run];",
     "tests": [
       "test/ui/l10n2.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "L10N2-kinsoku-start-ignored",
     "file": "src/ui/talkWindow.js",
-    "old": " && !NO_LINE_START.has(g) && !NO_LINE_END.has(prev);",
-    "new": " && !NO_LINE_END.has(prev);",
+    "old": "    const breaks = prev !== null && (CJK.test(g) || CJK.test(prev)) && !NO_LINE_START.has(g) && !NO_LINE_END.has(prev);",
+    "new": "    const breaks = prev !== null && (CJK.test(g) || CJK.test(prev)) && !NO_LINE_END.has(prev);",
     "tests": [
       "test/ui/l10n2.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "L10N2-kinsoku-end-ignored",
     "file": "src/ui/talkWindow.js",
-    "old": " && !NO_LINE_START.has(g) && !NO_LINE_END.has(prev);",
-    "new": " && !NO_LINE_START.has(g);",
+    "old": "    const breaks = prev !== null && (CJK.test(g) || CJK.test(prev)) && !NO_LINE_START.has(g) && !NO_LINE_END.has(prev);",
+    "new": "    const breaks = prev !== null && (CJK.test(g) || CJK.test(prev)) && !NO_LINE_START.has(g);",
     "tests": [
       "test/ui/l10n2.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "L10N2-latin-in-cjk-split",
     "file": "src/ui/talkWindow.js",
-    "old": "(CJK.test(g) || CJK.test(prev))",
-    "new": "true",
+    "old": "    const breaks = prev !== null && (CJK.test(g) || CJK.test(prev)) && !NO_LINE_START.has(g) && !NO_LINE_END.has(prev);",
+    "new": "    const breaks = prev !== null && true && !NO_LINE_START.has(g) && !NO_LINE_END.has(prev);",
     "tests": [
       "test/ui/l10n2.test.js"
     ]

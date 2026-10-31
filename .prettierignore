@@ -2003,8 +2003,15 @@
 !/src/ui/startChoice.js
 !/src/ui/startWindow.js
 !/src/ui/statsCard.js
+!/src/ui/storeBulk.js
+!/src/ui/storeFilter.js
+!/src/ui/storesWalled.js
 !/src/ui/superDungeon/
 /src/ui/superDungeon/*/
+!/src/ui/supportAsks.js
+!/src/ui/talkDoor.js
+!/src/ui/talkWindow.js
+!/src/ui/tamrielTiles.js
 !/src/ui/teleportPopUp.js
 !/src/ui/temperatureCard.js
 !/src/ui/textFont.js

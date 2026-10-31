@@ -66,7 +66,7 @@ test('ET1 door: townTalk opens every conversation through createTalkWindow, and 
   assert.match(door, /import\('\.\/enhanced\/enhancedTalk\.js'\)/, 'dynamic: classic pays nothing');
   assert.match(door, /unregister = registerOverlay\(goodbye\);/, 'PX28: Tab says goodbye');
   assert.match(door, /if \(!model\.done\) model\.press\('goodbye'\);/, 'and goodbye goes THROUGH the model, so the note is filed and onClose fires');
-  assert.match(door, /click\(\) \{ return true; \}/, 'a press beside the panel is consumed, never a pointer grab');
+  assert.match(door, /click\(\) \{\n\s*return true;\n\s*\}/, 'a press beside the panel is consumed, never a pointer grab');
   // headless: the door hands back the classic window and it is live
   const w = createTalkWindow('Hello.', mkHooks());
   assert.ok(w instanceof NativeTalkWindow);
@@ -210,7 +210,7 @@ test('ET1 keys: Enter asks and the arrows move (ours); the classic accelerators 
   assert.doesNotMatch(talk, /code === 'KeyT'|code === 'KeyP'/, 'the port\'s T and P are gone - DFU binds both');
   const door = read('src/ui/talkDoor.js');
   assert.match(door, /hooks\.relock\?\.\(\);\s*\n\s*teardown\(\);/, 'ET1-AUDIT F3: Tab\'s goodbye relocks in its gesture');
-  assert.match(door, /else if \(code !== 'Enter'\) \{ model\.input\(code, e\);/, 'ET1-AUDIT F4: a pre-mount Enter is held, not a goodbye');
+  assert.match(door, /else if \(code !== 'Enter'\) \{\n\s*model\.input\(code, e\);/, 'ET1-AUDIT F4: a pre-mount Enter is held, not a goodbye');
 });
 
 test('ET1 panel: a bottom rectangle over the world, the pixel frame, no art, and the phone stacks it', () => {

@@ -320,8 +320,8 @@
   {
     "name": "RPT1026-MARKET-STORES-SAID-loose-units-unsaid",
     "file": "src/ui/storesWalled.js",
-    "old": "(currency === 'gold' ? (s.bought | 0) : (s.gold | 0)) + (s[LOOSE_ORIGIN] | 0) : 0);",
-    "new": "(currency === 'gold' ? (s.bought | 0) : (s.gold | 0)) : 0);",
+    "old": "  s ? (currency === 'gold' ? s.bought | 0 : s.gold | 0) + (s[LOOSE_ORIGIN] | 0) : 0;",
+    "new": "  s ? (currency === 'gold' ? s.bought | 0 : s.gold | 0) : 0;",
     "tests": [
       "test/ui/rpt1026_market_walled.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "RPT1026-MARKET-STORES-SAID-gold-s-units-let-through-the-silver-line",
     "file": "src/ui/storesWalled.js",
-    "old": "(currency === 'gold' ? (s.bought | 0) : (s.gold | 0))",
-    "new": "(currency === 'gold' ? (s.bought | 0) : 0)",
+    "old": "  s ? (currency === 'gold' ? s.bought | 0 : s.gold | 0) + (s[LOOSE_ORIGIN] | 0) : 0;",
+    "new": "  s ? (currency === 'gold' ? s.bought | 0 : 0) + (s[LOOSE_ORIGIN] | 0) : 0;",
     "tests": [
       "test/ui/rpt1026_market_walled.test.js"
     ]
@@ -338,8 +338,8 @@
   {
     "name": "RPT1026-MARKET-STORES-SAID-the-guild-said-as-a-sale",
     "file": "src/ui/storesWalled.js",
-    "old": "  if (whose === 'guild') return t('market.list.walledGuild',",
-    "new": "  if (whose === 'nobody') return t('market.list.walledGuild',",
+    "old": "  if (whose === 'guild')",
+    "new": "  if (whose === 'nobody')",
     "tests": [
       "test/ui/rpt1026_market_walled.test.js"
     ]

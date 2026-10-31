@@ -119,8 +119,8 @@
   {
     "name": "UXB1-M-the-click-rows-sit-a-row-high-again",
     "file": "src/ui/talkWindow.js",
-    "old": "y0: ty - ROW_LEAD * s, y1: ty - ROW_LEAD * s + lineH });",
-    "new": "y0: ty - lineH, y1: ty });",
+    "old": "      if (i >= bodyCount)\n        this._hitRows.push({\n          code: optLines[i - bodyCount]?.code ?? null,\n          y0: ty - ROW_LEAD * s,\n          y1: ty - ROW_LEAD * s + lineH,\n        });",
+    "new": "      if (i >= bodyCount) this._hitRows.push({ code: optLines[i - bodyCount]?.code ?? null, y0: ty - lineH, y1: ty });",
     "tests": [
       "test/ui/uxb1m_privateproperty.test.js"
     ]
