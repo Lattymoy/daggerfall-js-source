@@ -182,8 +182,8 @@
   {
     "name": "SET2-a-throw-aborting-the-blow",
     "file": "src/systems/entityMods.js",
-    "old": "    try { const next = fn(weapon, d, attacker, target, info ?? NO_BLOW_INFO); if (Number.isFinite(next)) d = next; } catch (e) { console.warn('[entityMods] a blow modifier threw', e?.message ?? e); }",
-    "new": "    const next = fn(weapon, d, attacker, target, info ?? NO_BLOW_INFO); if (Number.isFinite(next)) d = next;",
+    "old": "      try {\n        const next = fn(weapon, d, attacker, target, info ?? NO_BLOW_INFO);\n        if (Number.isFinite(next)) d = next;\n      } catch (e) {\n        console.warn('[entityMods] a blow modifier threw', e?.message ?? e);\n      }",
+    "new": "      const next = fn(weapon, d, attacker, target, info ?? NO_BLOW_INFO);\n      if (Number.isFinite(next)) d = next;",
     "tests": [
       "test/systems/set2_seams.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "SET2-a-nan-kept",
     "file": "src/systems/entityMods.js",
-    "old": "if (Number.isFinite(next)) d = next; }",
-    "new": "d = next; }",
+    "old": "        if (Number.isFinite(next)) d = next;",
+    "new": "        d = next;",
     "tests": [
       "test/systems/set2_seams.test.js"
     ]

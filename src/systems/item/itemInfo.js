@@ -305,7 +305,7 @@ export const itemArmourLine = (item) => (item?.group === 'Armor' ? armourModStri
  *  plate piece's name says its METAL ("Iron Cuirass"), never the word "plate", and below Rare the metal is withheld.
  *
  *  NO NEW LAW. It reads the class's NativeMaterialValue (rriItems.js rriNativeMaterialValue), the SAME read the equip
- *  gate's armour-type test takes (equip.js:"if (!shield && ((1 << (rriNativeMaterialValue(item) >> 8)) & forbiddenArmors) !== 0) return true;"):
+ *  gate's armour-type test takes (equip.js:"&& ((1 << (rriNativeMaterialValue(item) >> 8)) & forbiddenArmors)"):
  *  `>> 8` is 0 leather, 1 chain, 2 plate. So a Roleplay &
  *  Realism mail hauberk says Chain and a brigandine or fur jerkin says Leather, exactly as a class restriction treats
  *  them - the card cannot call a piece Plate that the equip table refuses as Chain. A shield says its family too (it

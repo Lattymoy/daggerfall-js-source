@@ -242,8 +242,8 @@
   {
     "name": "HITCH-KEEP-clock-sample-unstamped",
     "file": "src/systems/frameClock.js",
-    "old": "samples.push([now, busy, inFrame, before, stream, stamp]);",
-    "new": "samples.push([now, busy, inFrame, before, stream]);",
+    "old": "  samples.push([now, busy, inFrame, before, stream, stamp]);",
+    "new": "  samples.push([now, busy, inFrame, before, stream]);",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "HITCH-KEEP-clock-sample-misread",
     "file": "src/systems/frameClock.js",
-    "old": "return { ms: b, inFrameMs: f, beforeMs: w, streamMs: l };",
-    "new": "return { ms: b, inFrameMs: f, beforeMs: f, streamMs: l };",
+    "old": "    if (at === stamp) return { ms: b, inFrameMs: f, beforeMs: w, streamMs: l };",
+    "new": "    if (at === stamp) return { ms: b, inFrameMs: f, beforeMs: f, streamMs: l };",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "HITCH-KEEP-clock-oldest-first",
     "file": "src/systems/frameClock.js",
-    "old": "if (at === stamp) return",
-    "new": "if (at !== stamp) return",
+    "old": "    if (at === stamp) return { ms: b, inFrameMs: f, beforeMs: w, streamMs: l };",
+    "new": "    if (at !== stamp) return { ms: b, inFrameMs: f, beforeMs: w, streamMs: l };",
     "tests": [
       "test/ui/fb1018d_hitchkeep.test.js"
     ],

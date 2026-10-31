@@ -657,7 +657,7 @@ pack, received by a real session and drawn by the real window).
 
 Both reports are of build 0.0.235 (2026-10-18). SIDE-ONCE (`01-Overview/bugs/Field-Bugs-2026-10-19f.md`, the owner: "One
 copy per setting"; on main with #1054, merged 2026-10-20 13:06 UTC) took User Takes Damage's and Item Deteriorates' `AllowMultipleSecondaryInstances`
-away (`enchantmentCatalogue.js:"  UserTakesDamage: 1,   // SIDE-ONCE: DFU's 1 | 2 - a setting once"`), so a setting is
+away (`enchantmentCatalogue.js:"UserTakesDamage: 1"`), so a setting is
 picked once, and the primary list leaves out an effect with no setting left - Health Leech with all three taken (checked
 on main: `primaryPickerList` drops it with three, keeps it with two; User Takes Damage offers "sunlight" alone after "holy
 places"). `test/systems/fb1019f_sideonce.test.js`.
@@ -678,7 +678,7 @@ which spend the budget; every negative-cost side effect has two settings or more
 
 AUDIT PROF10 J2 (`06-Systems/Professions-Arc.md`, "Audited (2026-10-03, AUDIT PROF10)"; Mac: "Item maker can add to it"):
 the item maker takes a crafted piece of jewellery with the enchantments it carries (`enchanting.js` keptEnchantments), each
-kept row costed as the maker costs a row and counted against the piece's points (`enchanting.js:"  const cost = totalEnchantmentCost(powers, sideEffects) + enchantmentListCost(keptEnchantments(item) ?? []);"`
+kept row costed as the maker costs a row and counted against the piece's points (`enchanting.js:"const cost = totalEnchantmentCost"`
 in enchantDecision, the "used/available" label), in DFU's eleven-row guard and the picker's filters, never removed, at no
 gold. MAKER-RARE took identified Rares the same way. Tell the player: a crafted jewel stays open to the item maker by
 design - it can take more enchantments until its enchantment points are used up, and what it has always counts.
@@ -1041,7 +1041,7 @@ So the trap failed whichever of the two killed it, as reported.
 
 FIXED. The cast engine sends a cast's Soul Trap effects through the session's door to the foe's runner
 (`hostMagic.js:"if (trapToOwner?.(foe, { ...spell, effects: trapFx }, casterLevel))"`; the door is
-`enchantments.js:"export const spellToFoeOwner = "`, the mounted enchantment ctx's `spellToOwner`, routed by the pool as
+`enchantments.js:"export const spellToFoeOwner"`, the mounted enchantment ctx's `spellToOwner`, routed by the pool as
 a strike's is). The rest of the spell lands here as before. The runner lands the trap marked as the caster's, names the
 caster on the body as it falls (`j`, `q`), and the caster rolls it against its own pack. And the runner's own trap is
 read whoever struck: `exteriorFoes.js:"if (!trap.allowDeath && !peer) { f.entity.health = 1; return; }"` and its
@@ -1284,9 +1284,9 @@ WHAT THE PORT DID. The same: the copy's spawn rolled its table and kit (`hostCom
 the kit and ran the death's handlers. With Repairs Objects the Skull never breaks, so a player set copy after copy on a
 Daedra and looted each.
 
-FIXED. The enchant ctx's allied door marks the foe its host's stand answers (`foeLootCap.js:"export function summonedBody(f) {"`:
+FIXED. The enchant ctx's allied door marks the foe its host's stand answers (`foeLootCap.js:"export function summonedBody"`:
 its carried list emptied - its hand and worn kit still fight), and the last word every body door asks
-(`foeLootCap.js:"  if (entity?.summoned === true && Array.isArray(entity.items)) return entity.items.splice(0);"`)
+(`foeLootCap.js:"if (entity?.summoned === true && Array.isArray(entity.items))"`)
 empties whatever its death laid on it. Elite and revenant drops were never an ally's. Port-Ledger A.
 
 THE FOUR HOSTS. `scenes/hostEnchant.js` createEnchantCtx is the one ctx body; `world.js`, `exterior.js` and
@@ -1297,7 +1297,7 @@ so no host changed.
 AND EVERY OTHER PLAYER'S COPY OF IT. In a dungeon online the room's other players stand the copy as a loose stand's
 puppet (SUMMON-SYNC), built on their own machine - and that build rolled its kind's loot there (buildFoeAt's
 spawnEnemyLoot), its stream death its kit, food and card, so the farm reopened with a second player. The owner's own frame
-names its summons beside its loose stands (`sm`: `foeLootCap.js:"export function summonedWord(src, out) {"`); a reader
+names its summons beside its loose stands (`sm`: `foeLootCap.js:"export function summonedWord"`); a reader
 flags the record (`dungeonContext.js:"      const r = summonedRecord(validFoeRecord(raw), summ);"`) and marks the puppet
 it stands (`dungeonContext.js:"    applyFoeRecord(markSummoned(f, r), r);"`, in applyOwnRecord) - bare alive, its death's
 finds emptied by capFoeLoot. Both ways at once (my summon on a friend's machine, theirs on mine), and the mark rides the
@@ -1623,7 +1623,7 @@ enchantment is DFU's: Wyrmbane rolls Cast When Strikes, so its own blows wore it
 
 FIXED. A piece the rarity ladder stamped (`rarityTier.js` stampedTier: Magic, Rare, Legendary, Aetheric, Gilded)
 breaks at that door as a blow breaks it. It says "has broken", is taken off, and stays, repairable
-(`enchantments.js:"if (broke && !stampedTier(item) && !(ctx?.allowMagicRepairs ?? false)) {"`). DFU's own enchanted items
+(`enchantments.js:"if (broke && !stampedTier(item) && !(ctx?.allowMagicRepairs ?? false))"`). DFU's own enchanted items
 (MAGIC.DEF's, the item maker's, soul-bound) keep DFU's law. A departure: Port-Ledger A, RARE-KEPT.
 
 AUDIT RPT1026 G2: NOT THE REPORT'S CAUSE. The report's dungeon was an elite one - a spawned dungeon, which stands on an
@@ -2690,7 +2690,7 @@ report measured the result: a thousand frames a second and more, about 3,760 gar
 
 FIXED - A DEPARTURE. Where the shell lifted the wait (`installFramePacer`), Off holds at `LIFTED_OFF_FPS`, the row's own
 top, `FRAME_CAP_MAX` (300): never faster than any rate the row offers, past every screen the stops name
-(`frameCap.js:"  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300)) || (_lifted ? LIFTED_OFF_FPS : 0);"`).
+(`frameCap.js:"return frameCapRate"`).
 A cap the player chose stands; a browser and the app with VSync on are unchanged (the screen paces them, and Off is no
 cap). The FPS counter's pace line reads `vsync off  cap 300`. The report's other asks are not done: a warning beside the
 two rows (the ceiling takes its case away) and the crash log's lines.

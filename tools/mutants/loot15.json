@@ -281,7 +281,7 @@
   {
     "name": "LOOT15-cold-channel-unsummed",
     "file": "src/systems/entityMods.js",
-    "old": "export const WARDROBE_CHANNELS = Object.freeze(['warmth', 'dry', 'coldDegrees', 'heatDegrees', 'fatigueLess', 'fallLess']);",
+    "old": "export const WARDROBE_CHANNELS = Object.freeze([\n  'warmth',\n  'dry',\n  'coldDegrees',\n  'heatDegrees',\n  'fatigueLess',\n  'fallLess',\n]);",
     "new": "export const WARDROBE_CHANNELS = Object.freeze(['warmth', 'dry', 'heatDegrees', 'fatigueLess', 'fallLess']);",
     "tests": [
       "test/systems/loot15_garments.test.js"
@@ -290,7 +290,7 @@
   {
     "name": "LOOT15-heat-channel-unsummed",
     "file": "src/systems/entityMods.js",
-    "old": "export const WARDROBE_CHANNELS = Object.freeze(['warmth', 'dry', 'coldDegrees', 'heatDegrees', 'fatigueLess', 'fallLess']);",
+    "old": "export const WARDROBE_CHANNELS = Object.freeze([\n  'warmth',\n  'dry',\n  'coldDegrees',\n  'heatDegrees',\n  'fatigueLess',\n  'fallLess',\n]);",
     "new": "export const WARDROBE_CHANNELS = Object.freeze(['warmth', 'dry', 'coldDegrees', 'fatigueLess', 'fallLess']);",
     "tests": [
       "test/systems/loot15_garments.test.js"
@@ -299,7 +299,7 @@
   {
     "name": "LOOT15-fatigue-channel-unsummed",
     "file": "src/systems/entityMods.js",
-    "old": "export const WARDROBE_CHANNELS = Object.freeze(['warmth', 'dry', 'coldDegrees', 'heatDegrees', 'fatigueLess', 'fallLess']);",
+    "old": "export const WARDROBE_CHANNELS = Object.freeze([\n  'warmth',\n  'dry',\n  'coldDegrees',\n  'heatDegrees',\n  'fatigueLess',\n  'fallLess',\n]);",
     "new": "export const WARDROBE_CHANNELS = Object.freeze(['warmth', 'dry', 'coldDegrees', 'heatDegrees', 'fallLess']);",
     "tests": [
       "test/systems/loot15_garments.test.js"
@@ -308,7 +308,7 @@
   {
     "name": "LOOT15-fall-channel-unsummed",
     "file": "src/systems/entityMods.js",
-    "old": "export const WARDROBE_CHANNELS = Object.freeze(['warmth', 'dry', 'coldDegrees', 'heatDegrees', 'fatigueLess', 'fallLess']);",
+    "old": "export const WARDROBE_CHANNELS = Object.freeze([\n  'warmth',\n  'dry',\n  'coldDegrees',\n  'heatDegrees',\n  'fatigueLess',\n  'fallLess',\n]);",
     "new": "export const WARDROBE_CHANNELS = Object.freeze(['warmth', 'dry', 'coldDegrees', 'heatDegrees', 'fatigueLess']);",
     "tests": [
       "test/systems/loot15_garments.test.js"

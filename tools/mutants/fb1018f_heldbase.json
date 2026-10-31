@@ -152,8 +152,8 @@
   {
     "name": "HELD-BASE-enchanted-unworn",
     "file": "src/systems/enchantments.js",
-    "old": "& PAYLOAD.Used) !== 0;",
-    "new": "& (PAYLOAD.Used | PAYLOAD.Enchanted)) !== 0;",
+    "old": "export const worksUnworn = (e) => ((REGISTRY.get(e?.type)?.flags ?? 0) & PAYLOAD.Used) !== 0;",
+    "new": "export const worksUnworn = (e) => ((REGISTRY.get(e?.type)?.flags ?? 0) & (PAYLOAD.Used | PAYLOAD.Enchanted)) !== 0;",
     "tests": [
       "test/systems/loot/fb1018f_heldbase.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "HELD-BASE-unknown-unworn",
     "file": "src/systems/enchantments.js",
-    "old": "REGISTRY.get(e?.type)?.flags ?? 0",
-    "new": "REGISTRY.get(e?.type)?.flags ?? PAYLOAD.Used",
+    "old": "export const worksUnworn = (e) => ((REGISTRY.get(e?.type)?.flags ?? 0) & PAYLOAD.Used) !== 0;",
+    "new": "export const worksUnworn = (e) => ((REGISTRY.get(e?.type)?.flags ?? PAYLOAD.Used) & PAYLOAD.Used) !== 0;",
     "tests": [
       "test/systems/loot/fb1018f_heldbase.test.js"
     ],

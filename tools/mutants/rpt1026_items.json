@@ -1,22 +1,183 @@
 [
-  {"name": "HELD-OUT-save-reads-the-pack-alone", "file": "src/systems/save/save.js", "old": "  snap.items = [...(entity.items ?? []), ...heldOutOf(entity)].map((it) => ({ ...it }));", "new": "  snap.items = (entity.items ?? []).map((it) => ({ ...it }));", "tests": ["test/systems/rpt1026_items.test.js"]},
-  {"name": "HELD-OUT-classic-counter-holds-nothing", "file": "src/ui/native/nativeTrade.js", "old": "    this._releaseHeld = holdOut(hooks.entity, () => this.staged);", "new": "    this._releaseHeld = holdOut(hooks.entity, () => []);", "tests": ["test/systems/rpt1026_items.test.js"]},
-  {"name": "HELD-OUT-enhanced-counter-holds-nothing", "file": "src/ui/enhanced/enhancedTrade.js", "old": "  releaseHeld = holdOut(hooks.entity, () => staged);", "new": "  releaseHeld = holdOut(hooks.entity, () => []);", "tests": ["test/systems/rpt1026_items.test.js"]},
-  {"name": "HELD-OUT-every-entity", "file": "src/systems/item/heldOut.js", "old": "    if (h.entity !== entity) continue;", "new": "", "tests": ["test/systems/rpt1026_items.test.js"]},
-  {"name": "RARE-KEPT-ladder-piece-consumed", "file": "src/systems/enchantments.js", "old": "  if (broke && !stampedTier(item) && !(ctx?.allowMagicRepairs ?? false)) {", "new": "  if (broke && !(ctx?.allowMagicRepairs ?? false)) {", "tests": ["test/systems/rpt1026_items.test.js"]},
-  {"name": "RARE-KEPT-dfu-magic-kept-too", "file": "src/systems/enchantments.js", "old": "  if (broke && !stampedTier(item) && !(ctx?.allowMagicRepairs ?? false)) {", "new": "  if (broke && false) {", "tests": ["test/systems/rpt1026_items.test.js"]},
-  {"name": "LOOT-SKEW-never-marked", "file": "src/scenes/roomLootHost.js", "old": "        _roomSkew.add(canon);   // RPT1026-ITEMS LOOT-SKEW: another build's base, whichever is newer\n", "new": "", "tests": ["test/scenes/rpt1026_items_skew.test.js"]},
-  {"name": "LOOT-SKEW-m2-line-for-both", "file": "src/scenes/roomLootHost.js", "old": "  const roomUnreadableText = (canon) => (_roomSkew.has(canon) ? LOOT_SKEW_TEXT() : LOOT_NEWER_TEXT);", "new": "  const roomUnreadableText = (canon) => LOOT_NEWER_TEXT;", "tests": ["test/scenes/rpt1026_items_skew.test.js"]},
-  {"name": "LOOT-SKEW-kept-past-a-newer-piece", "file": "src/scenes/roomLootHost.js", "old": "    _roomSkew.delete(canon);   // RPT1026-ITEMS LOOT-SKEW: a word this build cannot read at all - M2's own line\n", "new": "", "tests": ["test/scenes/rpt1026_items_skew.test.js"]},
-  {"name": "LOOT-SKEW-lapse-unsaid", "file": "src/scenes/roomLootHost.js", "old": " composeRoomContainer(m.canon); setMidScreenText(ROOM_LAPSED_TEXT()); }", "new": " composeRoomContainer(m.canon); }", "tests": ["test/scenes/rpt1026_items_skew.test.js"]},
-  {"name": "LOOT-SKEW-dungeon-press-says-m2", "file": "src/scenes/dungeonContext.js", "old": "setMidScreenText(roomUnreadableText(lootKeyOf(_u)))", "new": "setMidScreenText('Something in here is from a newer version of the game. Reload to open it.')", "tests": ["test/systems/auditsetsonline.test.js"]},
-  {"name": "LOOT-SKEW-kept-past-a-newer-legacy-piece", "file": "src/scenes/roomLootHost.js", "old": "    if (!items) _roomSkew.delete(canon);   // RPT1026-ITEMS LOOT-SKEW: a piece no build of this one reads - M2's own line, as unreadableWord's\n", "new": "", "tests": ["test/scenes/rpt1026_items_skew.test.js"]},
-  {"name": "BODY-CAP-the-cap-frame-whole", "file": "src/scenes/dungeonContext.js", "old": "    if (full && n === shared.length) frame.xf = shared.length < _sharedById.size ? XF_STANDING : XF_WHOLE;", "new": "    if (full && n === shared.length) frame.xf = 1;", "tests": ["test/net/rpt1026_items_bodycap.test.js"]},
-  {"name": "BODY-CAP-bodies-taken-down", "file": "src/scenes/dungeonContext.js", "old": "if (!seen.has(id) && !_sharedPending.has(id) && !(full === XF_STANDING && f.dead)) dropSharedFoe(id, f);", "new": "if (!seen.has(id) && !_sharedPending.has(id)) dropSharedFoe(id, f);", "tests": ["test/net/rpt1026_items_bodycap.test.js"]},
-  {"name": "BODY-CAP-a-capped-frame-takes-nothing-down", "file": "src/scenes/dungeonContext.js", "old": "data.xf === XF_WHOLE || data.xf === XF_STANDING ? data.xf : 0);", "new": "data.xf === XF_WHOLE ? XF_WHOLE : 0);", "tests": ["test/net/rpt1026_items_bodycap.test.js"]},
-  {"name": "RE-ENTRY-the-builders-champion", "file": "src/scenes/roomLootHost.js", "old": "      e.champion = e.eliteFoe ? undefined : championTraitFor(e, f.src?.champion)?.id;\n", "new": "", "tests": ["test/scenes/rpt1026_items_reentry.test.js"], "why": "the base before CHAMP-BASE (10-25): a champion body read at each builder's level - the level-2 partner holds the host's word unread, its memory leaves the body out, and the looter walks back in to the pieces again"},
-  {"name": "RE-ENTRY-the-memory-forgets-the-words", "file": "src/scenes/dungeonContext.js", "old": "      w.loot = [...lootRecords([..._lootSeen]), ...searchRoom.records((c) => _roomState.has(c))];", "new": "      w.loot = [];", "tests": ["test/scenes/rpt1026_items_reentry.test.js"]},
-  {"name": "RE-ENTRY-a-taken-piece-granted-again", "file": "src/systems/roomLoot.js", "old": "    if (cl.p < baseLength && !state.taken.has(cl.p)) {", "new": "    if (cl.p < baseLength) {", "tests": ["test/scenes/rpt1026_items_reentry.test.js"]},
-  {"name": "DEX-CORPSE-the-rows-corpse-left-unread", "file": "src/systems/enemyExpansion/dexTables.js", "old": "  if (has('CorpseTextureArchive') && has('CorpseTextureRecord')) mobile.corpseTexture = { archive: int('CorpseTextureArchive'), record: int('CorpseTextureRecord') };", "new": "  if (false) mobile.corpseTexture = { archive: int('CorpseTextureArchive'), record: int('CorpseTextureRecord') };", "tests": ["test/systems/enemyExpansion/rpt1026_items_dexcorpse.test.js"]},
-  {"name": "DEX-CORPSE-no-morrowind-body", "file": "src/systems/enemyExpansion/dexBodies.js", "old": "  285: { creature: ['dremora'] },", "new": "  285: { miss: 'none' },", "tests": ["test/systems/enemyExpansion/rpt1026_items_dexcorpse.test.js"]}
+  {
+    "name": "HELD-OUT-save-reads-the-pack-alone",
+    "file": "src/systems/save/save.js",
+    "old": "  snap.items = [...(entity.items ?? []), ...heldOutOf(entity)].map((it) => ({ ...it }));",
+    "new": "  snap.items = (entity.items ?? []).map((it) => ({ ...it }));",
+    "tests": [
+      "test/systems/rpt1026_items.test.js"
+    ]
+  },
+  {
+    "name": "HELD-OUT-classic-counter-holds-nothing",
+    "file": "src/ui/native/nativeTrade.js",
+    "old": "    this._releaseHeld = holdOut(hooks.entity, () => this.staged);",
+    "new": "    this._releaseHeld = holdOut(hooks.entity, () => []);",
+    "tests": [
+      "test/systems/rpt1026_items.test.js"
+    ]
+  },
+  {
+    "name": "HELD-OUT-enhanced-counter-holds-nothing",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "  releaseHeld = holdOut(hooks.entity, () => staged);",
+    "new": "  releaseHeld = holdOut(hooks.entity, () => []);",
+    "tests": [
+      "test/systems/rpt1026_items.test.js"
+    ]
+  },
+  {
+    "name": "HELD-OUT-every-entity",
+    "file": "src/systems/item/heldOut.js",
+    "old": "    if (h.entity !== entity) continue;",
+    "new": "",
+    "tests": [
+      "test/systems/rpt1026_items.test.js"
+    ]
+  },
+  {
+    "name": "RARE-KEPT-ladder-piece-consumed",
+    "file": "src/systems/enchantments.js",
+    "old": "  if (broke && !stampedTier(item) && !(ctx?.allowMagicRepairs ?? false)) {",
+    "new": "  if (broke && !(ctx?.allowMagicRepairs ?? false)) {",
+    "tests": [
+      "test/systems/rpt1026_items.test.js"
+    ]
+  },
+  {
+    "name": "RARE-KEPT-dfu-magic-kept-too",
+    "file": "src/systems/enchantments.js",
+    "old": "  if (broke && !stampedTier(item) && !(ctx?.allowMagicRepairs ?? false)) {",
+    "new": "  if (broke && false) {",
+    "tests": [
+      "test/systems/rpt1026_items.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-SKEW-never-marked",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "        _roomSkew.add(canon);   // RPT1026-ITEMS LOOT-SKEW: another build's base, whichever is newer\n",
+    "new": "",
+    "tests": [
+      "test/scenes/rpt1026_items_skew.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-SKEW-m2-line-for-both",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "  const roomUnreadableText = (canon) => (_roomSkew.has(canon) ? LOOT_SKEW_TEXT() : LOOT_NEWER_TEXT);",
+    "new": "  const roomUnreadableText = (canon) => LOOT_NEWER_TEXT;",
+    "tests": [
+      "test/scenes/rpt1026_items_skew.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-SKEW-kept-past-a-newer-piece",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "    _roomSkew.delete(canon);   // RPT1026-ITEMS LOOT-SKEW: a word this build cannot read at all - M2's own line\n",
+    "new": "",
+    "tests": [
+      "test/scenes/rpt1026_items_skew.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-SKEW-lapse-unsaid",
+    "file": "src/scenes/roomLootHost.js",
+    "old": " composeRoomContainer(m.canon); setMidScreenText(ROOM_LAPSED_TEXT()); }",
+    "new": " composeRoomContainer(m.canon); }",
+    "tests": [
+      "test/scenes/rpt1026_items_skew.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-SKEW-dungeon-press-says-m2",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "setMidScreenText(roomUnreadableText(lootKeyOf(_u)))",
+    "new": "setMidScreenText('Something in here is from a newer version of the game. Reload to open it.')",
+    "tests": [
+      "test/systems/auditsetsonline.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-SKEW-kept-past-a-newer-legacy-piece",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "    if (!items) _roomSkew.delete(canon);   // RPT1026-ITEMS LOOT-SKEW: a piece no build of this one reads - M2's own line, as unreadableWord's\n",
+    "new": "",
+    "tests": [
+      "test/scenes/rpt1026_items_skew.test.js"
+    ]
+  },
+  {
+    "name": "BODY-CAP-the-cap-frame-whole",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (full && n === shared.length) frame.xf = shared.length < _sharedById.size ? XF_STANDING : XF_WHOLE;",
+    "new": "    if (full && n === shared.length) frame.xf = 1;",
+    "tests": [
+      "test/net/rpt1026_items_bodycap.test.js"
+    ]
+  },
+  {
+    "name": "BODY-CAP-bodies-taken-down",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "if (!seen.has(id) && !_sharedPending.has(id) && !(full === XF_STANDING && f.dead)) dropSharedFoe(id, f);",
+    "new": "if (!seen.has(id) && !_sharedPending.has(id)) dropSharedFoe(id, f);",
+    "tests": [
+      "test/net/rpt1026_items_bodycap.test.js"
+    ]
+  },
+  {
+    "name": "BODY-CAP-a-capped-frame-takes-nothing-down",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "data.xf === XF_WHOLE || data.xf === XF_STANDING ? data.xf : 0);",
+    "new": "data.xf === XF_WHOLE ? XF_WHOLE : 0);",
+    "tests": [
+      "test/net/rpt1026_items_bodycap.test.js"
+    ]
+  },
+  {
+    "name": "RE-ENTRY-the-builders-champion",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "      e.champion = e.eliteFoe ? undefined : championTraitFor(e, f.src?.champion)?.id;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/rpt1026_items_reentry.test.js"
+    ],
+    "why": "the base before CHAMP-BASE (10-25): a champion body read at each builder's level - the level-2 partner holds the host's word unread, its memory leaves the body out, and the looter walks back in to the pieces again"
+  },
+  {
+    "name": "RE-ENTRY-the-memory-forgets-the-words",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      w.loot = [...lootRecords([..._lootSeen]), ...searchRoom.records((c) => _roomState.has(c))];",
+    "new": "      w.loot = [];",
+    "tests": [
+      "test/scenes/rpt1026_items_reentry.test.js"
+    ]
+  },
+  {
+    "name": "RE-ENTRY-a-taken-piece-granted-again",
+    "file": "src/systems/roomLoot.js",
+    "old": "    if (cl.p < baseLength && !state.taken.has(cl.p)) {",
+    "new": "    if (cl.p < baseLength) {",
+    "tests": [
+      "test/scenes/rpt1026_items_reentry.test.js"
+    ]
+  },
+  {
+    "name": "DEX-CORPSE-the-rows-corpse-left-unread",
+    "file": "src/systems/enemyExpansion/dexTables.js",
+    "old": "  if (has('CorpseTextureArchive') && has('CorpseTextureRecord')) mobile.corpseTexture = { archive: int('CorpseTextureArchive'), record: int('CorpseTextureRecord') };",
+    "new": "  if (false) mobile.corpseTexture = { archive: int('CorpseTextureArchive'), record: int('CorpseTextureRecord') };",
+    "tests": [
+      "test/systems/enemyExpansion/rpt1026_items_dexcorpse.test.js"
+    ]
+  },
+  {
+    "name": "DEX-CORPSE-no-morrowind-body",
+    "file": "src/systems/enemyExpansion/dexBodies.js",
+    "old": "  285: { creature: ['dremora'] },",
+    "new": "  285: { miss: 'none' },",
+    "tests": [
+      "test/systems/enemyExpansion/rpt1026_items_dexcorpse.test.js"
+    ]
+  }
 ]

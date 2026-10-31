@@ -902,7 +902,7 @@ NOT CHANGED:
 - THE ITEM MAKER OVER AZURA'S STAR. EnumerateFilledTraps counts a Star's soul unbounded
   (`mysticism.js:"    else if (isAzurasStar(it)) found.add(soul);   // :121-125, unbounded"`, SoulBound.cs:121-125), so a
   Star holding one of the fifty lists Bound Soul, and its chooser, held to SoulBound's 43 costed souls
-  (`enchantmentCatalogue.js:"    params = params.filter((p) => soulSet.has(p.param));   // SoulBound.cs:52-55"`), is empty:
+  (`enchantmentCatalogue.js:"params = params.filter"`), is empty:
   pressing it does nothing. DFU with the mod throws IndexOutOfRangeException there (SoulBound.cs:125). A gem's soul past
   43 is counted in neither game (`mysticism.js:"    if (isSoulTrap(it) && soul < SOUL_BOUND_MONSTER_ID_COUNT) found.add(soul);"`,
   SoulBound.cs:115); the mod's souls bind nothing. Whether the Star should refuse or say so is the owner's call.

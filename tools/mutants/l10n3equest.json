@@ -290,8 +290,8 @@
   {
     "name": "L10N3e-quest-equip-nameOf",
     "file": "src/systems/equip.js",
-    "old": "const name = nameOf?.(item) ?? item.name",
-    "new": "const name = item.name",
+    "old": "  const name = nameOf?.(item) ?? item.name ?? templateByIndex(item.templateIndex)?.name ?? 'Item';",
+    "new": "  const name = item.name ?? templateByIndex(item.templateIndex)?.name ?? 'Item';",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]

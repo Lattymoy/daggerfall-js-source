@@ -460,7 +460,7 @@ maker refused a Gilded piece in the Aetheric's words. In the hand the glow read 
 DFU's enchantment, never the rung: three records glowed violet shock off their +10 shock line, and the Dragonfire Oath
 and the Sunken Sovereign glowed nothing.
 
-**The maker.** A Gilded piece is the item maker's, as a Rare is (`systems/enchanting.js:"export function gildedKeeps(item) {"`).
+**The maker.** A Gilded piece is the item maker's, as a Rare is (`systems/enchanting.js:"export function gildedKeeps"`).
 Its record's lines stay as minted. The maker lays DFU rows beside them at the catalogue's cost, paid from the piece's own
 points - its make's, as any piece of that make has: 525 on the bow Hourlock, 2,100 on the Oath - and the player's gold,
 ten rows at most. Only the maker's own rows are lawful on it: the wire (`systems/gilded.js:"export function validGildedMarks(item) {"`)
@@ -469,7 +469,7 @@ the account service to acct225 (15 and acct220 on its branch). With the ladder s
 The Aetheric keeps its refusal and its own line.
 
 **The name.** The maker never renames a Gilded piece: its name is its record's, as an artifact's is, and its codex row,
-card and lore read that record (`systems/enchanting.js:"export const makerKeepsName = (item) => item?.rarity === 'gilded';"`).
+card and lore read that record (`systems/enchanting.js:"export const makerKeepsName"`).
 The classic window says "A Gilded piece keeps its own name."; the Enhanced skin's Rename button is off.
 
 **The ceiling holds.** No line moves, and no rung or power is added. The rows are DFU's own magic: the same rows, on the

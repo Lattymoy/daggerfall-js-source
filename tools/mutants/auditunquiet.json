@@ -620,8 +620,8 @@
   {
     "name": "AUQ-B5-title-zone",
     "file": "src/systems/foeTitle.js",
-    "old": "entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && entity.eventFoe !== true ?",
-    "new": "entity?.unquiet === true && entity.eventFoe !== true ?",
+    "old": "  return entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && entity.eventFoe !== true\n    ? `Unquiet ${traited}`\n    : traited; // UNQUIET: the mark - it may rise (unquietMark.js isUnquiet's own test: AUDIT UNQUIET, never the zone's or the sand's; STAR-MASTER-FLED, nor an event's own - isEventFoe)",
+    "new": "  return entity?.unquiet === true && entity.eventFoe !== true ? `Unquiet ${traited}` : traited; // UNQUIET: the mark - it may rise (unquietMark.js isUnquiet's own test: AUDIT UNQUIET, never the zone's or the sand's; STAR-MASTER-FLED, nor an event's own - isEventFoe)",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]

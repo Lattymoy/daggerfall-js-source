@@ -326,8 +326,8 @@
   {
     "name": "DAMNED-kit-unpassed",
     "file": "src/systems/foeLootCap.js",
-    "old": "  damnPass(kit, opts.rolls ?? Math.random);   // TRUE-CURSE: a cursed Legendary weapon damned, after every draw the kit made (law 9)\n",
-    "new": "",
+    "old": "  damnPass(kit, opts.rolls ?? Math.random); // TRUE-CURSE: a cursed Legendary weapon damned, after every draw the kit made (law 9)\n  techniquePass(kit, opts.rolls ?? Math.random); // TECH1: and a weapon's technique, LAST of the kit's draws (law 9)",
+    "new": "  techniquePass(kit, opts.rolls ?? Math.random); // TECH1: and a weapon's technique, LAST of the kit's draws (law 9)",
     "tests": [
       "test/systems/fb1010_truecurse.test.js"
     ]

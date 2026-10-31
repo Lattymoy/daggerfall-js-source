@@ -92,8 +92,8 @@
   {
     "name": "HELD-CONCEAL-the-reroll-passes-the-broken-item",
     "file": "src/systems/enchantments.js",
-    "old": "      if (!entity.activeEffects.some((a) => a.heldItem === item)) continue;\n",
-    "new": "      if (!entity.activeEffects.some((a) => a.heldItem === item && !a.ended)) continue;\n",
+    "old": "      if (!entity.activeEffects.some((a) => a.heldItem === item)) continue;",
+    "new": "      if (!entity.activeEffects.some((a) => a.heldItem === item && !a.ended)) continue;",
     "tests": [
       "test/systems/fb1019f_heldconceal.test.js",
       "test/systems/enchantload.test.js"

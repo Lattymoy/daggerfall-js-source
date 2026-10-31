@@ -148,8 +148,8 @@
   {
     "name": "ELITE-FLOOR-no-floor",
     "file": "src/systems/eliteFoes.js",
-    "old": "  && (!checkLevel || (entity.level | 0) >= ELITE_FOE_MIN_LEVEL)\n",
-    "new": "\n",
+    "old": "  (!checkLevel || (entity.level | 0) >= ELITE_FOE_MIN_LEVEL) &&\n  entity.mobileType !== KNIGHT_CITY_WATCH &&",
+    "new": "  entity.mobileType !== KNIGHT_CITY_WATCH &&",
     "tests": [
       "test/systems/elitefloor_foetitle.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "FOE-TITLE-the-elite-unnamed",
     "file": "src/systems/foeTitle.js",
-    "old": ": lead ?? (entity?.eliteFoe ? `Elite ${named}` : named);",
-    "new": ": lead ?? named;",
+    "old": "  const special = entity?.staffBoss ? `Mighty ${named}` : (lead ?? (entity?.eliteFoe ? `Elite ${named}` : named)); // STAFF-EVENT: a staff event's mini boss (systems/eliteFoes.js promoteStaffBoss)",
+    "new": "  const special = entity?.staffBoss ? `Mighty ${named}` : (lead ?? named); // STAFF-EVENT: a staff event's mini boss (systems/eliteFoes.js promoteStaffBoss)",
     "tests": [
       "test/systems/elitefloor_foetitle.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "ELITE-FLOOR-the-kind-floor-dropped",
     "file": "src/systems/eliteFoes.js",
-    "old": "e.champion == null && kindLevel(e.mobileType) >= ELITE_FOE_MIN_LEVEL) pool.push(i);",
-    "new": "e.champion == null) pool.push(i);",
+    "old": "    if (\n      e &&\n      !e.allied &&\n      e.reaction !== 'passive' &&\n      e.champion == null &&\n      kindLevel(e.mobileType) >= ELITE_FOE_MIN_LEVEL\n    )\n      pool.push(i);",
+    "new": "    if (e && !e.allied && e.reaction !== 'passive' && e.champion == null) pool.push(i);",
     "tests": [
       "test/systems/elitefloor_foetitle.test.js",
       "test/systems/revenant_card.test.js"

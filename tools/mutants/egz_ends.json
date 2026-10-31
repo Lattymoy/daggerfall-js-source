@@ -213,8 +213,8 @@
   {
     "name": "EGZM-season-row-unstood",
     "file": "src/systems/eventTimers.js",
-    "old": "    coming(`elite:season:${season}`, 'elite',",
-    "new": "    void (`elite:season:${season}`, 'elite',",
+    "old": "    coming(\n      `elite:season:${season}`,\n      'elite',\n      `The Spire's season ${season} ends`,\n      arenaSeasonEndsS(season) * 1000,\n      null,\n      \"Each Descent bracket's top ten hold the title Spire Champion through the next season\",\n    );",
+    "new": "    void (`elite:season:${season}`,\n    'elite',\n    `The Spire's season ${season} ends`,\n    arenaSeasonEndsS(season) * 1000,\n    null,\n    \"Each Descent bracket's top ten hold the title Spire Champion through the next season\");",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "EGZM-season-end-the-next",
     "file": "src/systems/eventTimers.js",
-    "old": "arenaSeasonEndsS(season) * 1000, null,",
-    "new": "arenaSeasonEndsS(season + 1) * 1000, null,",
+    "old": "      arenaSeasonEndsS(season) * 1000,",
+    "new": "      arenaSeasonEndsS(season + 1) * 1000,",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "EGZM-season-of-ms",
     "file": "src/systems/eventTimers.js",
-    "old": "const season = arenaSeasonOf(Math.floor(now / 1000));",
-    "new": "const season = arenaSeasonOf(now);",
+    "old": "    const season = arenaSeasonOf(Math.floor(now / 1000));",
+    "new": "    const season = arenaSeasonOf(now);",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -240,8 +240,8 @@
   {
     "name": "EGZM-door-on-every-row",
     "file": "src/systems/eventTimers.js",
-    "old": "for (const r of rows) if (r.kind === 'elite') r.door = 'board';",
-    "new": "for (const r of rows) if (true) r.door = 'board';",
+    "old": "    for (const r of rows) if (r.kind === 'elite') r.door = 'board';",
+    "new": "    for (const r of rows) if (true) r.door = 'board';",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]

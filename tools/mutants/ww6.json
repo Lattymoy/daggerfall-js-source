@@ -485,8 +485,8 @@
   {
     "name": "WW6-board-home-unread",
     "file": "src/systems/eventBoard.js",
-    "old": "    announce: (r.home ?? (!!src?.region && r.region === src.region)) ||",
-    "new": "    announce: ((!!src?.region && r.region === src.region)) ||",
+    "old": "    announce: (r.home ?? (!!src?.region && r.region === src.region)) || (!!way && way.m <= EVENT_RAID_REACH_M), // WW6: a raid past the Bay says whether it is the player's own (its district - raidingParties.js raidTimerList `home`), its region naming the whole province",
+    "new": "    announce: (!!src?.region && r.region === src.region) || (!!way && way.m <= EVENT_RAID_REACH_M), // WW6: a raid past the Bay says whether it is the player's own (its district - raidingParties.js raidTimerList `home`), its region naming the whole province",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -494,8 +494,8 @@
   {
     "name": "WW6-timers-home-unread",
     "file": "src/systems/eventTimers.js",
-    "old": "  for (const r of raids) ((r.home ?? (home && r.region === home)) ? raidRow(r) : elsewhere.push(r));",
-    "new": "  for (const r of raids) ((home && r.region === home) ? raidRow(r) : elsewhere.push(r));",
+    "old": "  for (const r of raids) (r.home ?? (home && r.region === home)) ? raidRow(r) : elsewhere.push(r); // WW6: a raid past the Bay is the player's own by its district (raidingParties.js raidTimerList `home`), not its province's name",
+    "new": "  for (const r of raids) home && r.region === home ? raidRow(r) : elsewhere.push(r); // WW6: a raid past the Bay is the player's own by its district (raidingParties.js raidTimerList `home`), not its province's name",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]

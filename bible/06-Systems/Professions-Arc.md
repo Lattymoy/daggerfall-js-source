@@ -6643,7 +6643,7 @@ possible. No exceptions and no band aids." The decisions below are the record's,
   HORIZONTAL B2: so does a plain craft's Masterwork reshaped to a Legendary of three band-top lines - its record names no
   lines, and this clause alone finds it (pinned).
 
-- **The item maker** refuses every Legendary (`enchanting.js:"if (item?.rarity === 'legendary') return null;"`): a
+- **The item maker** refuses every Legendary (`enchanting.js:"if (item?.rarity === 'legendary')"`): a
   Master's work carries no rows, and DFU's refusal of an enchanted item never reached it.
 
 - Law 7's tiers keep it from the temper and the Reforge (TEMPER_SHUT); it salvages to nothing, as every made piece.

@@ -74,8 +74,8 @@
   {
     "name": "POWER-CEILING-the-blow-runner-left-open",
     "file": "src/systems/entityMods.js",
-    "old": "  } finally { closeBlowCeiling(was); }",
-    "new": "  } finally { void was; }",
+    "old": "    closeBlowCeiling(was);",
+    "new": "    void was;",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "POWER-CEILING-the-sky-not-asking",
     "file": "src/systems/firmamentPowers.js",
-    "old": "blowRoom(blowPct(c, { skill, group: foeGroup(target), unaware: !!info?.unaware, wounded }), 'firmament')",
-    "new": "(blowPct(c, { skill, group: foeGroup(target), unaware: !!info?.unaware, wounded }))",
+    "old": "  const pct = blowRoom(blowPct(c, { skill, group: foeGroup(target), unaware: !!info?.unaware, wounded }), 'firmament'); // POWER-CEILING",
+    "new": "  const pct = blowPct(c, { skill, group: foeGroup(target), unaware: !!info?.unaware, wounded }); // POWER-CEILING",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "POWER-CEILING-the-skys-guard-not-asking",
     "file": "src/systems/firmamentPowers.js",
-    "old": "-guardRoom(-(ch === 'blow' ? (c.blowTaken ?? 0) : (c.spellTaken ?? 0)), 'firmament')",
-    "new": "-(-(ch === 'blow' ? (c.blowTaken ?? 0) : (c.spellTaken ?? 0)))",
+    "old": "  const pct = -guardRoom(-(ch === 'blow' ? (c.blowTaken ?? 0) : (c.spellTaken ?? 0)), 'firmament'); // POWER-CEILING: a share off is the guards'; a price is taken whole",
+    "new": "  const pct = -(-(ch === 'blow' ? (c.blowTaken ?? 0) : (c.spellTaken ?? 0))); // POWER-CEILING: a share off is the guards'; a price is taken whole",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]
@@ -562,8 +562,8 @@
   {
     "name": "AUDIT-HORIZONTAL-D2-the-sky-spends-its-raw-blow",
     "file": "src/systems/firmamentPowers.js",
-    "old": "  const pct = blowRoom(blowPct(c, { skill, group: foeGroup(target), unaware: !!info?.unaware, wounded }), 'firmament');",
-    "new": "  const pct = blowPct(c, { skill, group: foeGroup(target), unaware: !!info?.unaware, wounded }); blowRoom(pct, 'firmament');",
+    "old": "  const pct = blowRoom(blowPct(c, { skill, group: foeGroup(target), unaware: !!info?.unaware, wounded }), 'firmament'); // POWER-CEILING",
+    "new": "  const pct = blowPct(c, { skill, group: foeGroup(target), unaware: !!info?.unaware, wounded });\n  blowRoom(pct, 'firmament'); // POWER-CEILING",
     "tests": [
       "test/combat/powerceiling_rooms.test.js"
     ]
@@ -571,8 +571,8 @@
   {
     "name": "AUDIT-HORIZONTAL-D2-the-sky-spends-its-raw-guard",
     "file": "src/systems/firmamentPowers.js",
-    "old": "  const pct = -guardRoom(-(ch === 'blow' ? (c.blowTaken ?? 0) : (c.spellTaken ?? 0)), 'firmament');",
-    "new": "  const pct = ch === 'blow' ? (c.blowTaken ?? 0) : (c.spellTaken ?? 0); guardRoom(-pct, 'firmament');",
+    "old": "  const pct = -guardRoom(-(ch === 'blow' ? (c.blowTaken ?? 0) : (c.spellTaken ?? 0)), 'firmament'); // POWER-CEILING: a share off is the guards'; a price is taken whole",
+    "new": "  const pct = ch === 'blow' ? (c.blowTaken ?? 0) : (c.spellTaken ?? 0);\n  guardRoom(-pct, 'firmament'); // POWER-CEILING: a share off is the guards'; a price is taken whole",
     "tests": [
       "test/combat/powerceiling_rooms.test.js"
     ]

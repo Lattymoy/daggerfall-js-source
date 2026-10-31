@@ -254,8 +254,8 @@
   {
     "name": "SIGIL1-blow-mods-ignored",
     "file": "src/systems/entityMods.js",
-    "old": "try { const next = fn(weapon, d, attacker, target, info ?? NO_BLOW_INFO); if (Number.isFinite(next)) d = next; }",
-    "new": "try { void fn; }",
+    "old": "        const next = fn(weapon, d, attacker, target, info ?? NO_BLOW_INFO);\n        if (Number.isFinite(next)) d = next;",
+    "new": "        void fn;",
     "tests": [
       "test/systems/sigil/sigil1.test.js"
     ]

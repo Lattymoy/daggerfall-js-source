@@ -199,7 +199,7 @@ FOUND. Since MAKER-RARE the item maker took an identified Rare, but a Gilded pie
 only its element.
 
 FIXED. A Gilded piece is the item maker's, as a Rare is: its record's lines stay as minted, the maker's own rows are
-laid beside them, and it keeps its name (`systems/enchanting.js:"export function gildedKeeps(item) {"`). A Gilded weapon
+laid beside them, and it keeps its name (`systems/enchanting.js:"export function gildedKeeps"`). A Gilded weapon
 wears a crimson look of its own over its element, the Aura Armory's piece and the arcane look (weapon glow law 8,
 `05-Combat/Weapon-Glow.md`; `06-Systems/Gilded.md` section 11). ITEM_LAW_VERSION 16, the account service acct225, the relay
 world291 (law 15, acct220 to acct223 and world286 to world290 on its branch, renumbered at the merges of main). No line, rung or power number moves.

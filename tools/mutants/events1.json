@@ -2,8 +2,8 @@
   {
     "name": "EVENTS1-the-pixel-unscaled",
     "file": "src/systems/eventBoard.js",
-    "old": "  const dx = (/** @type {any} */ (to).px - from.x) * PIXEL_M, dy",
-    "new": "  const dx = (/** @type {any} */ (to).px - from.x) * 800, dy",
+    "old": "  const dx = /** @type {any} */ (to.px - from.x) * PIXEL_M,",
+    "new": "  const dx = /** @type {any} */ (to.px - from.x) * 800,",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "EVENTS1-north-is-south",
     "file": "src/systems/eventBoard.js",
-    "old": "Math.atan2(dx, -dy)",
-    "new": "Math.atan2(dx, dy)",
+    "old": "  const deg = ((Math.atan2(dx, -dy) * 180) / Math.PI + 360) % 360; // 0 north, clockwise (y runs south)",
+    "new": "  const deg = ((Math.atan2(dx, dy) * 180) / Math.PI + 360) % 360; // 0 north, clockwise (y runs south)",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EVENTS1-tenths-past-ten",
     "file": "src/systems/eventBoard.js",
-    "old": "const km = tenths < 10 ? tenths : Math.round(m / 1000);",
-    "new": "const km = tenths;",
+    "old": "  const km = tenths < 10 ? tenths : Math.round(m / 1000);",
+    "new": "  const km = tenths;",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EVENTS1-a-place-not-needed",
     "file": "src/systems/eventBoard.js",
-    "old": "const near = (r) => r.live || (!!r.where && r.at - now <= soonMs);",
-    "new": "const near = (r) => r.live || r.at - now <= soonMs;",
+    "old": "  const near = (r) => r.live || (!!r.where && r.at - now <= soonMs);",
+    "new": "  const near = (r) => r.live || r.at - now <= soonMs;",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EVENTS1-the-horizon-shut",
     "file": "src/systems/eventBoard.js",
-    "old": "const near = (r) => r.live || (!!r.where && r.at - now <= soonMs);",
-    "new": "const near = (r) => r.live || (!!r.where && r.at - now < soonMs);",
+    "old": "  const near = (r) => r.live || (!!r.where && r.at - now <= soonMs);",
+    "new": "  const near = (r) => r.live || (!!r.where && r.at - now < soonMs);",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "EVENTS1-the-shut-shown",
     "file": "src/systems/eventBoard.js",
-    "old": "r.shut || !near(r)",
-    "new": "!near(r)",
+    "old": "    if (r.kind === 'raid' || !EVENT_BOARD_KINDS.includes(r.kind) || r.shut || !near(r)) continue;",
+    "new": "    if (r.kind === 'raid' || !EVENT_BOARD_KINDS.includes(r.kind) || !near(r)) continue;",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "EVENTS1-every-raid",
     "file": "src/systems/eventBoard.js",
-    "old": "...raidRows.filter(on).slice(0, Math.max(0, raids))]",
-    "new": "...raidRows.filter(on)]",
+    "old": "  const rows = [...timers.filter(on), ...raidRows.filter(on).slice(0, Math.max(0, raids))].sort(byTime);",
+    "new": "  const rows = [...timers.filter(on), ...raidRows.filter(on)].sort(byTime);",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "EVENTS1-the-farthest-raids",
     "file": "src/systems/eventBoard.js",
-    "old": ".sort((a, b) => (a.way && b.way ? a.way.m - b.way.m : a.at - b.at));",
-    "new": ".sort((a, b) => (a.way && b.way ? b.way.m - a.way.m : a.at - b.at));",
+    "old": "    .sort((a, b) => (a.way && b.way ? a.way.m - b.way.m : a.at - b.at));",
+    "new": "    .sort((a, b) => (a.way && b.way ? b.way.m - a.way.m : a.at - b.at));",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "EVENTS1-the-count-past-its-target",
     "file": "src/systems/eventBoard.js",
-    "old": "EVENT_BOARD_TEXT.raidCount(Math.min(r.n, r.tg), r.tg)",
-    "new": "EVENT_BOARD_TEXT.raidCount(r.n, r.tg)",
+    "old": "    live && Number.isFinite(r.n) && Number.isFinite(r.tg) && r.tg > 0\n      ? EVENT_BOARD_TEXT.raidCount(Math.min(r.n, r.tg), r.tg)\n      : null;",
+    "new": "    live && Number.isFinite(r.n) && Number.isFinite(r.tg) && r.tg > 0 ? EVENT_BOARD_TEXT.raidCount(r.n, r.tg) : null;",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "EVENTS1-every-raid-announced",
     "file": "src/systems/eventBoard.js",
-    "old": "announce: (r.home ?? (!!src?.region && r.region === src.region)) || (!!way && way.m <= EVENT_RAID_REACH_M),",
-    "new": "announce: true,",
+    "old": "    announce: (r.home ?? (!!src?.region && r.region === src.region)) || (!!way && way.m <= EVENT_RAID_REACH_M), // WW6: a raid past the Bay says whether it is the player's own (its district - raidingParties.js raidTimerList `home`), its region naming the whole province",
+    "new": "    announce: true, // WW6: a raid past the Bay says whether it is the player's own (its district - raidingParties.js raidTimerList `home`), its region naming the whole province",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "EVENTS1-a-raid-since-its-start",
     "file": "src/systems/eventBoard.js",
-    "old": "since: live ? r.startMs : r.startMs - soonMs,",
-    "new": "since: r.startMs,",
+    "old": "    since: live ? r.startMs : r.startMs - soonMs,",
+    "new": "    since: r.startMs,",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "EVENTS1-a-star-since-never",
     "file": "src/systems/eventBoard.js",
-    "old": "row.since = r.live ? T.fallAt : T.fallAt - STAR_WARN_MS;",
-    "new": "row.since = NaN;",
+    "old": "    row.since = r.live ? T.fallAt : T.fallAt - STAR_WARN_MS;",
+    "new": "    row.since = NaN;",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "EVENTS1-what-stood-is-news",
     "file": "src/systems/eventBoard.js",
-    "old": "Number.isFinite(r.since) && r.since >= /** @type {number} */ (watchFrom) - EVENT_SEED_GRACE_MS",
-    "new": "true",
+    "old": "      if (Number.isFinite(r.since) && r.since >= /** @type {number} */ (watchFrom) - EVENT_SEED_GRACE_MS)\n        out.push({ id: r.id, kind: r.kind, phase: r.live ? 'begun' : 'soon' });",
+    "new": "      if (true) out.push({ id: r.id, kind: r.kind, phase: r.live ? 'begun' : 'soon' });",
     "tests": [
       "test/systems/events1_board.test.js",
       "test/ui/events1_board_ui.test.js"
@@ -139,8 +139,8 @@
   {
     "name": "EVENTS1-a-line-on-any-of-its-kind",
     "file": "src/systems/eventBoard.js",
-    "old": "const mine = (x) => x.notes.length < notes && (id ? x.id === id : single(kind) && x.kind === kind);",
-    "new": "const mine = (x) => x.notes.length < notes && x.kind === kind;",
+    "old": "      const mine = (x) => x.notes.length < notes && (id ? x.id === id : single(kind) && x.kind === kind);",
+    "new": "      const mine = (x) => x.notes.length < notes && x.kind === kind;",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "EVENTS1-the-omen-a-card-apart",
     "file": "src/systems/eventBoard.js",
-    "old": "?? (single(kind) ? list.find((x) => x.kind === kind && x.id === null) : null);\n      if (c) { c.id = id;",
-    "new": "?? null;\n      if (c) { c.id = id;",
+    "old": "      const c =\n        list.find((x) => x.id === id) ?? (single(kind) ? list.find((x) => x.kind === kind && x.id === null) : null);",
+    "new": "      const c = list.find((x) => x.id === id) ?? null;",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "EVENTS1-the-same-line-twice",
     "file": "src/systems/eventBoard.js",
-    "old": "if (Number.isFinite(last) && nowMs - /** @type {number} */ (last) < EVENT_NOTE_SAME_MS) return null;",
-    "new": "if (false) return null;",
+    "old": "      if (Number.isFinite(last) && nowMs - /** @type {number} */ (last) < EVENT_NOTE_SAME_MS) return null;",
+    "new": "      if (false) return null;",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "EVENTS1-a-late-line-unread",
     "file": "src/systems/eventBoard.js",
-    "old": "if (isShown(c)) c.age = Math.min(c.age, Math.max(0, lifeMs - EVENT_NOTE_MIN_MS));",
-    "new": "if (isShown(c)) void 0;",
+    "old": "        if (isShown(c)) c.age = Math.min(c.age, Math.max(0, lifeMs - EVENT_NOTE_MIN_MS));",
+    "new": "        if (isShown(c)) void 0;",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "EVENTS1-the-waiting-age",
     "file": "src/systems/eventBoard.js",
-    "old": "for (let i = 0; i < Math.min(shown, list.length); i++) list[i].age += d;",
-    "new": "for (let i = 0; i < list.length; i++) list[i].age += d;",
+    "old": "      for (let i = 0; i < Math.min(shown, list.length); i++) list[i].age += d;",
+    "new": "      for (let i = 0; i < list.length; i++) list[i].age += d;",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "EVENTS1-a-line-dropped-first",
     "file": "src/systems/eventBoard.js",
-    "old": "list.splice(list.indexOf(bare ?? waiting[0]), 1);",
-    "new": "list.splice(list.indexOf(waiting[0]), 1);",
+    "old": "      list.splice(list.indexOf(bare ?? waiting[0]), 1);",
+    "new": "      list.splice(list.indexOf(waiting[0]), 1);",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -293,8 +293,8 @@
   {
     "name": "EVENTS1-every-kind-on-the-board",
     "file": "src/systems/eventBoard.js",
-    "old": "r.kind === 'raid' || !EVENT_BOARD_KINDS.includes(r.kind) || r.shut",
-    "new": "r.kind === 'raid' || r.shut",
+    "old": "    if (r.kind === 'raid' || !EVENT_BOARD_KINDS.includes(r.kind) || r.shut || !near(r)) continue;",
+    "new": "    if (r.kind === 'raid' || r.shut || !near(r)) continue;",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -302,8 +302,8 @@
   {
     "name": "EVENTS1-the-serpent-nowhere",
     "file": "src/systems/eventBoard.js",
-    "old": "row.where = EVENT_BOARD_TEXT.off(src.serpent.place); row.way = isPixel(site) ? eventWay(src?.pixel, site) : null;",
-    "new": "row.where = EVENT_BOARD_TEXT.off(src.serpent.place); row.way = null;",
+    "old": "      row.where = EVENT_BOARD_TEXT.off(src.serpent.place);\n      row.way = isPixel(site) ? eventWay(src?.pixel, site) : null;",
+    "new": "      row.where = EVENT_BOARD_TEXT.off(src.serpent.place);\n      row.way = null;",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "EVENTS1-the-hollow-unmeasured",
     "file": "src/systems/eventBoard.js",
-    "old": "row.where = EVENT_BOARD_TEXT.near(place); row.way = isPixel(site) ? eventWay(src?.pixel, site) : null;",
-    "new": "row.where = EVENT_BOARD_TEXT.near(place); row.way = null;",
+    "old": "      row.where = EVENT_BOARD_TEXT.near(place);\n      row.way = isPixel(site) ? eventWay(src?.pixel, site) : null;",
+    "new": "      row.where = EVENT_BOARD_TEXT.near(place);\n      row.way = null;",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "EVENTS1-the-find-forgotten",
     "file": "src/systems/eventBoard.js",
-    "old": "since: Number.isFinite(rec?.foundAt) ? rec.foundAt : NaN",
-    "new": "since: NaN",
+    "old": "      since: Number.isFinite(rec?.foundAt) ? rec.foundAt : NaN,",
+    "new": "      since: NaN,",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "EVENTS1-the-reach-alone",
     "file": "src/systems/eventBoard.js",
-    "old": "announce: (r.home ?? (!!src?.region && r.region === src.region)) || (!!way && way.m <= EVENT_RAID_REACH_M),",
-    "new": "announce: (!!way && way.m <= EVENT_RAID_REACH_M),",
+    "old": "    announce: (r.home ?? (!!src?.region && r.region === src.region)) || (!!way && way.m <= EVENT_RAID_REACH_M), // WW6: a raid past the Bay says whether it is the player's own (its district - raidingParties.js raidTimerList `home`), its region naming the whole province",
+    "new": "    announce: !!way && way.m <= EVENT_RAID_REACH_M, // WW6: a raid past the Bay says whether it is the player's own (its district - raidingParties.js raidTimerList `home`), its region naming the whole province",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -338,8 +338,8 @@
   {
     "name": "EVENTS1-the-raid-horizon-shut",
     "file": "src/systems/eventBoard.js",
-    "old": "r.endMs > now && r.startMs - now <= soonMs)",
-    "new": "r.endMs > now && r.startMs - now < soonMs)",
+    "old": "        r.startMs - now <= soonMs,",
+    "new": "        r.startMs - now < soonMs,",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -347,8 +347,8 @@
   {
     "name": "EVENTS1-live-after-its-start",
     "file": "src/systems/eventBoard.js",
-    "old": "const live = r.startMs <= now;",
-    "new": "const live = r.startMs < now;",
+    "old": "  const live = r.startMs <= now;",
+    "new": "  const live = r.startMs < now;",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -356,8 +356,8 @@
   {
     "name": "EVENTS1-uncut",
     "file": "src/systems/eventBoard.js",
-    "old": "return { rows: rows.slice(0, cut), more: all.length - Math.min(cut, rows.length), all, every, now };",
-    "new": "return { rows, more: all.length - Math.min(cut, rows.length), all, every, now };",
+    "old": "  return { rows: rows.slice(0, cut), more: all.length - Math.min(cut, rows.length), all, every, now };",
+    "new": "  return { rows, more: all.length - Math.min(cut, rows.length), all, every, now };",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -365,8 +365,8 @@
   {
     "name": "EVENTS1-no-more",
     "file": "src/systems/eventBoard.js",
-    "old": "return { rows: rows.slice(0, cut), more: all.length - Math.min(cut, rows.length), all, every, now };",
-    "new": "return { rows: rows.slice(0, cut), more: 0, all, every, now };",
+    "old": "  return { rows: rows.slice(0, cut), more: all.length - Math.min(cut, rows.length), all, every, now };",
+    "new": "  return { rows: rows.slice(0, cut), more: 0, all, every, now };",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -374,8 +374,8 @@
   {
     "name": "EVENTS1-the-grace-gone",
     "file": "src/systems/eventBoard.js",
-    "old": "r.since >= /** @type {number} */ (watchFrom) - EVENT_SEED_GRACE_MS)",
-    "new": "r.since >= /** @type {number} */ (watchFrom))",
+    "old": "      if (Number.isFinite(r.since) && r.since >= /** @type {number} */ (watchFrom) - EVENT_SEED_GRACE_MS)",
+    "new": "      if (Number.isFinite(r.since) && r.since >= /** @type {number} */ (watchFrom))",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -383,8 +383,8 @@
   {
     "name": "EVENTS1-announced-every-read",
     "file": "src/systems/eventBoard.js",
-    "old": "    seen.set(r.id, !!r.live);\n",
-    "new": "",
+    "old": "    seen.set(r.id, !!r.live);\n    if (!watching || !r.announce || !shown(r.kind)) continue;",
+    "new": "    if (!watching || !r.announce || !shown(r.kind)) continue;",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -455,8 +455,8 @@
   {
     "name": "EVENTS1-the-switch-ignored",
     "file": "src/systems/eventNotices.js",
-    "old": "    if (getPref(EVENT_BOARD_PREF) === false) return false;\n",
-    "new": "",
+    "old": "    if (getPref(EVENT_BOARD_PREF) === false) return false;\n    return !(isEnhanced() && getPref('hudLayout')?.[EVENT_BOARD_PIECE]?.off === true);",
+    "new": "    return !(isEnhanced() && getPref('hudLayout')?.[EVENT_BOARD_PIECE]?.off === true);",
     "tests": [
       "test/systems/events1_board.test.js",
       "test/ui/events1_board_ui.test.js"
@@ -465,8 +465,8 @@
   {
     "name": "EVENTS1-the-piece-put-away-ignored",
     "file": "src/systems/eventNotices.js",
-    "old": "return !(isEnhanced() && getPref('hudLayout')?.[EVENT_BOARD_PIECE]?.off === true);",
-    "new": "return true;",
+    "old": "    return !(isEnhanced() && getPref('hudLayout')?.[EVENT_BOARD_PIECE]?.off === true);",
+    "new": "    return true;",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -474,8 +474,8 @@
   {
     "name": "EVENTS1-the-raid-to-the-chat-off",
     "file": "src/systems/eventNotices.js",
-    "old": "if (_off && kind !== 'raid') _off(text); else if (filed)",
-    "new": "if (_off) _off(text); else if (filed)",
+    "old": "    if (_off && kind !== 'raid') _off(text);",
+    "new": "    if (_off) _off(text);",
     "tests": [
       "test/systems/events1_board.test.js",
       "test/ui/events1_board_ui.test.js"
@@ -484,8 +484,8 @@
   {
     "name": "EVENTS1-no-journal",
     "file": "src/systems/eventNotices.js",
-    "old": "try { if (typeof _log === 'function') _log(s); else _log?.hudMessageSink?.(s); }",
-    "new": "try { void 0; }",
+    "old": "    if (typeof _log === 'function') _log(s);\n    else _log?.hudMessageSink?.(s);",
+    "new": "    void 0;",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -493,8 +493,8 @@
   {
     "name": "EVENTS1-every-line-kept",
     "file": "src/systems/eventNotices.js",
-    "old": "  if (_waiting.length > EVENT_NOTICES_KEPT) _waiting = _waiting.slice(-EVENT_NOTICES_KEPT);\n",
-    "new": "",
+    "old": "  if (_waiting.length > EVENT_NOTICES_KEPT) _waiting = _waiting.slice(-EVENT_NOTICES_KEPT);\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -502,8 +502,8 @@
   {
     "name": "EVENTS1-no-source-seated",
     "file": "src/systems/eventNotices.js",
-    "old": "_source = typeof source === 'function' ? source : null;",
-    "new": "_source = null;",
+    "old": "  _source = typeof source === 'function' ? source : null;",
+    "new": "  _source = null;",
     "tests": [
       "test/systems/events1_board.test.js",
       "test/ui/events1_board_ui.test.js"
@@ -512,8 +512,8 @@
   {
     "name": "EVENTS1-filed-twice",
     "file": "src/systems/eventNotices.js",
-    "old": "  if (sink) holder.hudMessageSink = null;\n",
-    "new": "",
+    "old": "  if (sink) holder.hudMessageSink = null;\n  try {",
+    "new": "  try {",
     "tests": [
       "test/systems/events1_board.test.js",
       "test/ui/events1_board_ui.test.js"
@@ -522,8 +522,8 @@
   {
     "name": "EVENTS1-the-journal-lost",
     "file": "src/systems/eventNotices.js",
-    "old": "  try { hudText(text); } finally { if (sink) holder.hudMessageSink = sink; }",
-    "new": "  try { hudText(text); } finally { void 0; }",
+    "old": "    if (sink) holder.hudMessageSink = sink;",
+    "new": "    void 0;",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -531,8 +531,8 @@
   {
     "name": "EVENTS1-a-filed-raid-filed-again",
     "file": "src/systems/eventNotices.js",
-    "old": "else if (filed) eventHudLine(text); else hudText(text);",
-    "new": "else hudText(text);",
+    "old": "    else if (filed) eventHudLine(text);\n    else hudText(text);",
+    "new": "    else hudText(text);",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -540,8 +540,8 @@
   {
     "name": "EVENTS1-the-id-dropped",
     "file": "src/systems/eventNotices.js",
-    "old": "id: typeof id === 'string' && id ? id : null });",
-    "new": "id: null });",
+    "old": "  _waiting.push({ kind: k, text: s, at: Date.now(), id: typeof id === 'string' && id ? id : null });",
+    "new": "  _waiting.push({ kind: k, text: s, at: Date.now(), id: null });",
     "tests": [
       "test/systems/events1_board.test.js",
       "test/ui/events1_board_ui.test.js"
@@ -923,8 +923,8 @@
   {
     "name": "EVENTS2-the-filter-after-the-cut",
     "file": "src/systems/eventBoard.js",
-    "old": "const rows = [...timers.filter(on), ...raidRows.filter(on).slice(0, Math.max(0, raids))].sort(byTime);",
-    "new": "const rows = [...timers, ...raidRows.slice(0, Math.max(0, raids))].sort(byTime).slice(0, Math.max(0, max)).filter(on);",
+    "old": "  const rows = [...timers.filter(on), ...raidRows.filter(on).slice(0, Math.max(0, raids))].sort(byTime);",
+    "new": "  const rows = [...timers, ...raidRows.slice(0, Math.max(0, raids))].sort(byTime).slice(0, Math.max(0, max)).filter(on);",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -932,8 +932,8 @@
   {
     "name": "EVENTS2-the-rows-unfiltered",
     "file": "src/systems/eventBoard.js",
-    "old": "const rows = [...timers.filter(on), ...raidRows.filter(on).slice(0, Math.max(0, raids))].sort(byTime);",
-    "new": "const rows = [...timers, ...raidRows.slice(0, Math.max(0, raids))].sort(byTime);",
+    "old": "  const rows = [...timers.filter(on), ...raidRows.filter(on).slice(0, Math.max(0, raids))].sort(byTime);",
+    "new": "  const rows = [...timers, ...raidRows.slice(0, Math.max(0, raids))].sort(byTime);",
     "tests": [
       "test/systems/events1_board.test.js",
       "test/ui/events1_board_ui.test.js"
@@ -952,8 +952,8 @@
   {
     "name": "EVENTS2-every-is-the-shown",
     "file": "src/systems/eventBoard.js",
-    "old": "more: all.length - Math.min(cut, rows.length), all, every, now };",
-    "new": "more: all.length - Math.min(cut, rows.length), all, every: all, now };",
+    "old": "  return { rows: rows.slice(0, cut), more: all.length - Math.min(cut, rows.length), all, every, now };",
+    "new": "  return { rows: rows.slice(0, cut), more: all.length - Math.min(cut, rows.length), all, every: all, now };",
     "tests": [
       "test/systems/events1_board.test.js",
       "test/ui/events1_board_ui.test.js"
@@ -972,8 +972,8 @@
   {
     "name": "EVENTS2-the-memory-of-the-shown",
     "file": "src/systems/eventBoard.js",
-    "old": "    here.add(r.id);\n    const was = seen.get(r.id);",
-    "new": "    if (!shown(r.kind)) continue;\n    here.add(r.id);\n    const was = seen.get(r.id);",
+    "old": "    here.add(r.id);",
+    "new": "    if (!shown(r.kind)) continue;\n    here.add(r.id);",
     "tests": [
       "test/systems/events1_board.test.js",
       "test/ui/events1_board_ui.test.js"
@@ -982,8 +982,8 @@
   {
     "name": "EVENTS2-the-drop-undone",
     "file": "src/systems/eventBoard.js",
-    "old": "    drop(kind) { list = list.filter((c) => c.kind !== kind); },",
-    "new": "    drop(kind) { void kind; },",
+    "old": "      list = list.filter((c) => c.kind !== kind);",
+    "new": "      void kind;",
     "tests": [
       "test/systems/events1_board.test.js",
       "test/ui/events1_board_ui.test.js"
@@ -992,8 +992,8 @@
   {
     "name": "EVENTS2-the-heading-not-the-home",
     "file": "src/systems/eventBoard.js",
-    "old": "Object.fromEntries(EVENT_KIND_ORDER.map((k) => [k, () => EVENT_KINDS[k].label]))",
-    "new": "Object.fromEntries(EVENT_BOARD_KINDS.map((k) => [k, () => EVENT_KINDS[k].label]))",
+    "old": "  Object.fromEntries(EVENT_KIND_ORDER.map((k) => [k, () => EVENT_KINDS[k].label])),",
+    "new": "  Object.fromEntries(EVENT_BOARD_KINDS.map((k) => [k, () => EVENT_KINDS[k].label])),",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -1010,8 +1010,8 @@
   {
     "name": "EVENTS2-the-single-kinds-not-the-home",
     "file": "src/systems/eventBoard.js",
-    "old": "Object.freeze(EVENT_KIND_ORDER.filter((k) => EVENT_KINDS[k].single));",
-    "new": "Object.freeze(EVENT_KIND_ORDER.filter((k) => EVENT_KINDS[k].row));",
+    "old": "export const EVENT_SINGLE_KINDS = Object.freeze(EVENT_KIND_ORDER.filter((k) => EVENT_KINDS[k].single));",
+    "new": "export const EVENT_SINGLE_KINDS = Object.freeze(EVENT_KIND_ORDER.filter((k) => EVENT_KINDS[k].row));",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -1019,8 +1019,8 @@
   {
     "name": "EVENTS2-the-door-open",
     "file": "src/systems/eventNotices.js",
-    "old": "  if (!eventKindShown(k)) return true;   // EVENTS2: a kind the player turned off - filed in the journal, and nowhere else\n",
-    "new": "",
+    "old": "  if (!eventKindShown(k)) return true; // EVENTS2: a kind the player turned off - filed in the journal, and nowhere else\n  _waiting.push({ kind: k, text: s, at: Date.now(), id: typeof id === 'string' && id ? id : null });",
+    "new": "  _waiting.push({ kind: k, text: s, at: Date.now(), id: typeof id === 'string' && id ? id : null });",
     "tests": [
       "test/systems/events1_board.test.js",
       "test/ui/events1_board_ui.test.js"
@@ -1029,8 +1029,8 @@
   {
     "name": "EVENTS2-the-door-unfiled",
     "file": "src/systems/eventNotices.js",
-    "old": "  try { if (typeof _log === 'function') _log(s); else _log?.hudMessageSink?.(s); } catch { /* the log refusing a line never costs the board it */ }\n  const k = EVENT_NOTICE_KINDS.includes(kind) ? kind : 'gate';\n  if (!eventKindShown(k)) return true;",
-    "new": "  const k = EVENT_NOTICE_KINDS.includes(kind) ? kind : 'gate';\n  if (!eventKindShown(k)) return true;\n  try { if (typeof _log === 'function') _log(s); else _log?.hudMessageSink?.(s); } catch { /* the log refusing a line never costs the board it */ }",
+    "old": "  try {\n    if (typeof _log === 'function') _log(s);\n    else _log?.hudMessageSink?.(s);\n  } catch {\n    /* the log refusing a line never costs the board it */\n  }\n  const k = EVENT_NOTICE_KINDS.includes(kind) ? kind : 'gate';\n  if (!eventKindShown(k)) return true; // EVENTS2: a kind the player turned off - filed in the journal, and nowhere else",
+    "new": "  const k = EVENT_NOTICE_KINDS.includes(kind) ? kind : 'gate';\n  if (!eventKindShown(k)) return true;\n  try {\n    if (typeof _log === 'function') _log(s);\n    else _log?.hudMessageSink?.(s);\n  } catch {\n    /* the log refusing a line never costs the board it */\n  } // EVENTS2: a kind the player turned off - filed in the journal, and nowhere else",
     "tests": [
       "test/systems/events1_board.test.js",
       "test/ui/events1_board_ui.test.js"
@@ -1039,8 +1039,8 @@
   {
     "name": "EVENTS2-the-hidden-to-the-chat",
     "file": "src/systems/eventNotices.js",
-    "old": "  if (!eventKindShown(k)) return true;",
-    "new": "  if (!eventKindShown(k)) { eventNoticeElsewhere(k, s); return true; }",
+    "old": "  if (!eventKindShown(k)) return true; // EVENTS2: a kind the player turned off - filed in the journal, and nowhere else",
+    "new": "  if (!eventKindShown(k)) {\n    eventNoticeElsewhere(k, s);\n    return true;\n  } // EVENTS2: a kind the player turned off - filed in the journal, and nowhere else",
     "tests": [
       "test/systems/events1_board.test.js",
       "test/ui/events1_board_ui.test.js"
@@ -1049,8 +1049,8 @@
   {
     "name": "EVENTS2-the-kind-before-the-board",
     "file": "src/systems/eventNotices.js",
-    "old": "  if (!eventBoardOn()) { eventNoticeElsewhere(kind, s); return true; }",
-    "new": "  if (!eventBoardOn() && eventKindShown(EVENT_NOTICE_KINDS.includes(kind) ? kind : 'gate')) { eventNoticeElsewhere(kind, s); return true; }",
+    "old": "  if (!eventBoardOn()) {",
+    "new": "  if (!eventBoardOn() && eventKindShown(EVENT_NOTICE_KINDS.includes(kind) ? kind : 'gate')) {",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -1058,8 +1058,8 @@
   {
     "name": "EVENTS2-the-switch-inverted",
     "file": "src/systems/eventNotices.js",
-    "old": "  try { return getPref(eventKindPref(kind)) !== false; } catch { return true; }",
-    "new": "  try { return getPref(eventKindPref(kind)) === false; } catch { return true; }",
+    "old": "    return getPref(eventKindPref(kind)) !== false;",
+    "new": "    return getPref(eventKindPref(kind)) === false;",
     "tests": [
       "test/systems/events1_board.test.js",
       "test/ui/events1_board_ui.test.js"

@@ -149,8 +149,8 @@
   {
     "name": "AUDIT-LOOT-II-A9-a-garment-ranks-off",
     "file": "src/systems/foeLootCap.js",
-    "old": "const garmentRank = (it) => (lootRarityOn() && isGarment(it)",
-    "new": "const garmentRank = (it) => (isGarment(it)",
+    "old": "  lootRarityOn() && isGarment(it) && rarityRank(it) > 0 && rarityRank(it) < RARITIES.legendary.rank\n    ? GARMENT_UNDER_SUPPLY\n    : null;",
+    "new": "  isGarment(it) && rarityRank(it) > 0 && rarityRank(it) < RARITIES.legendary.rank ? GARMENT_UNDER_SUPPLY : null;",
     "tests": [
       "test/systems/auditloot2.test.js"
     ]

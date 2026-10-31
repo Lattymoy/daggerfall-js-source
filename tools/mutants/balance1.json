@@ -115,8 +115,8 @@
   {
     "name": "BALANCE1-seam-never-restores",
     "file": "src/systems/equip.js",
-    "old": "export function _wearScaleForTests(scale = CONDITION_WEAR_SCALE) { _wearScale = scale; }",
-    "new": "export function _wearScaleForTests(scale = 0.6) { _wearScale = scale; }",
+    "old": "export function _wearScaleForTests(scale = CONDITION_WEAR_SCALE) {",
+    "new": "export function _wearScaleForTests(scale = 0.6) {",
     "tests": [
       "test/systems/balance1.test.js"
     ]

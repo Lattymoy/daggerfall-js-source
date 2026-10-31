@@ -116,8 +116,8 @@
   {
     "name": "RPT1026-PROGRESS-law-soul-gone-unrefused",
     "file": "src/systems/enchanting.js",
-    "old": "    if ([...powers, ...sideEffects].some((e) => e?.type === 'SoulBound' && !held.has(e.param))) return",
-    "new": "    if (false && [...powers, ...sideEffects].some((e) => e?.type === 'SoulBound' && !held.has(e.param))) return",
+    "old": "    if ([...powers, ...sideEffects].some((e) => e?.type === 'SoulBound' && !held.has(e.param)))",
+    "new": "    if (false && [...powers, ...sideEffects].some((e) => e?.type === 'SoulBound' && !held.has(e.param)))",
     "tests": [
       "test/ui/rpt1026_progress_ui.test.js"
     ],
@@ -126,8 +126,8 @@
   {
     "name": "RPT1026-PROGRESS-law-soul-asked-unnamed",
     "file": "src/systems/enchanting.js",
-    "old": "  if (souls !== null) {\n    const held",
-    "new": "  {\n    const held",
+    "old": "  if (souls !== null) {",
+    "new": "  {",
     "tests": [
       "test/ui/rpt1026_progress_ui.test.js"
     ],
@@ -147,8 +147,8 @@
   {
     "name": "RPT1026-PROGRESS-summon-body-kept",
     "file": "src/systems/foeLootCap.js",
-    "old": "  if (entity?.summoned === true && Array.isArray(entity.items)) return entity.items.splice(0);   // RPT1026-PROGRESS: a summon's body (summonedBody)\n",
-    "new": "",
+    "old": "  if (entity?.summoned === true && Array.isArray(entity.items)) return entity.items.splice(0); // RPT1026-PROGRESS: a summon's body (summonedBody)\n  const cap = entity?.lootCap;",
+    "new": "  const cap = entity?.lootCap;",
     "tests": [
       "test/scenes/rpt1026_progress_summon.test.js"
     ],
@@ -157,8 +157,8 @@
   {
     "name": "RPT1026-PROGRESS-summon-items-kept",
     "file": "src/systems/foeLootCap.js",
-    "old": "  e.summoned = true;\n  e.items = [];",
-    "new": "  e.summoned = true;",
+    "old": "  e.items = [];\n  return f;",
+    "new": "  return f;",
     "tests": [
       "test/scenes/rpt1026_progress_summon.test.js"
     ],
@@ -310,8 +310,8 @@
   {
     "name": "RPT1026-PROGRESS-peer-word-every-loose",
     "file": "src/systems/foeLootCap.js",
-    "old": "if (!qt && f?.entity?.summoned === true && out[k]) sm.push(out[k].i);",
-    "new": "if (!qt && out[k]) sm.push(out[k].i);",
+    "old": "    if (!qt && f?.entity?.summoned === true && out[k]) sm.push(out[k].i);",
+    "new": "    if (!qt && out[k]) sm.push(out[k].i);",
     "tests": [
       "test/scenes/rpt1026_progress_peersummon.test.js"
     ],

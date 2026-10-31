@@ -448,8 +448,8 @@
   {
     "name": "BOSS-HIT-SHARE-unsplit",
     "file": "src/systems/eliteFoes.js",
-    "old": "* STAFF_BOSS_HIT_SHARE) / Math.max(1, fighters))));",
-    "new": "* STAFF_BOSS_HIT_SHARE))));",
+    "old": "  Math.min(\n    damage,\n    Math.max(1, Math.round(((maxHealth > 0 ? maxHealth : 1) * STAFF_BOSS_HIT_SHARE) / Math.max(1, fighters))),\n  );",
+    "new": "  Math.min(damage, Math.max(1, Math.round((maxHealth > 0 ? maxHealth : 1) * STAFF_BOSS_HIT_SHARE)));",
     "tests": [
       "test/systems/auditpscale1.test.js"
     ]

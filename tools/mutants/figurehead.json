@@ -335,8 +335,8 @@
   {
     "name": "FL-door-stemless",
     "file": "src/systems/fleet.js",
-    "old": "if (!r || n == null || n !== raw) return false;",
-    "new": "if (!r || n == null) return false;",
+    "old": "  if (!r || n == null || n !== raw) return false;",
+    "new": "  if (!r || n == null) return false;",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "FL-save-always",
     "file": "src/systems/fleet.js",
-    "old": "...(r.figurehead ? { figurehead: r.figurehead } : {})",
-    "new": "...({ figurehead: r.figurehead })",
+    "old": "      ...(r.figurehead ? { figurehead: r.figurehead } : {}),",
+    "new": "      ...{ figurehead: r.figurehead },",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "FL-restore-unread",
     "file": "src/systems/fleet.js",
-    "old": "r.figurehead = figureheadOf(s.figurehead, r.hull) ?? 0;",
-    "new": "r.figurehead = s.figurehead | 0;",
+    "old": "    r.figurehead = figureheadOf(s.figurehead, r.hull) ?? 0; // FIGUREHEAD: her carving, as the door takes it (one it refuses: none)",
+    "new": "    r.figurehead = s.figurehead | 0; // FIGUREHEAD: her carving, as the door takes it (one it refuses: none)",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "FL-of-stranger",
     "file": "src/systems/fleet.js",
-    "old": "fleetShip(boat.uid)?.figurehead ?? 0 : 0);",
-    "new": "fleetShip(boat.uid)?.figurehead ?? 0 : 1);",
+    "old": "export const shipFigureheadOf = (boat) => (boat?.uid ? (fleetShip(boat.uid)?.figurehead ?? 0) : 0);",
+    "new": "export const shipFigureheadOf = (boat) => (boat?.uid ? (fleetShip(boat.uid)?.figurehead ?? 0) : 1);",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]

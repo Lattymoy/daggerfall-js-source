@@ -268,8 +268,8 @@
   {
     "name": "BAL4-no-elite-offline",
     "file": "src/systems/eliteFoes.js",
-    "old": "!!(onlinePage || inRoom) || lootRarityOn();",
-    "new": "!!(onlinePage || inRoom);",
+    "old": "export const elitesAllowed = ({ onlinePage = false, inRoom = false } = {}) =>\n  !!(onlinePage || inRoom) || lootRarityOn();",
+    "new": "export const elitesAllowed = ({ onlinePage = false, inRoom = false } = {}) => !!(onlinePage || inRoom);",
     "tests": [
       "test/systems/bal_arc.test.js"
     ]
@@ -277,8 +277,8 @@
   {
     "name": "BAL4-elites-whatever-the-ladder",
     "file": "src/systems/eliteFoes.js",
-    "old": "!!(onlinePage || inRoom) || lootRarityOn();",
-    "new": "!!(onlinePage || inRoom) || true;",
+    "old": "export const elitesAllowed = ({ onlinePage = false, inRoom = false } = {}) =>\n  !!(onlinePage || inRoom) || lootRarityOn();",
+    "new": "export const elitesAllowed = ({ onlinePage = false, inRoom = false } = {}) => !!(onlinePage || inRoom) || true;",
     "tests": [
       "test/systems/bal_arc.test.js"
     ]
@@ -481,8 +481,8 @@
   {
     "name": "AUDIT-BAL-a-class-elite-at-level-one",
     "file": "src/systems/eliteFoes.js",
-    "old": "const kindLevel = (t) => (isClassEnemyId(t) ? classLevel : (ENEMY_BASICS[t]?.level ?? 0));",
-    "new": "const kindLevel = (t) => (isClassEnemyId(t) ? Infinity : (ENEMY_BASICS[t]?.level ?? 0));",
+    "old": "  const kindLevel = (t) => (isClassEnemyId(t) ? classLevel : (ENEMY_BASICS[t]?.level ?? 0));",
+    "new": "  const kindLevel = (t) => (isClassEnemyId(t) ? Infinity : (ENEMY_BASICS[t]?.level ?? 0));",
     "tests": [
       "test/systems/bal_arc.test.js"
     ]

@@ -135,8 +135,8 @@
   {
     "name": "RENOWN-LOOT-kit-ladder-whole",
     "file": "src/systems/foeLootCap.js",
-    "old": "weights: plainFoeRarityWeights(quarters) };   // RENOWN-LOOT",
-    "new": "weights: plainFoeRarityWeights(4) };   // RENOWN-LOOT",
+    "old": "    weights: plainFoeRarityWeights(quarters),",
+    "new": "    weights: plainFoeRarityWeights(4),",
     "why": "the kit's ladder never read at the Renown",
     "tests": [
       "test/systems/renownloot.test.js"
@@ -145,8 +145,8 @@
   {
     "name": "RENOWN-LOOT-ladder-before",
     "file": "src/systems/foeLootCap.js",
-    "old": "  magic:     Object.freeze({ base: 40,  perTier: 4,    cap: 150 }),",
-    "new": "  magic:     Object.freeze({ base: 45,  perTier: 4,    cap: 150 }),",
+    "old": "  magic: Object.freeze({ base: 40, perTier: 4, cap: 150 }),",
+    "new": "  magic: Object.freeze({ base: 45, perTier: 4, cap: 150 }),",
     "why": "the ladder's step from the wrong before",
     "tests": [
       "test/systems/renownloot.test.js"
@@ -165,8 +165,8 @@
   {
     "name": "RENOWN-LOOT-ladder-whole-shortcut",
     "file": "src/systems/foeLootCap.js",
-    "old": "  if (quarters === 4) return PLAIN_FOE_RARITY_WEIGHTS;\n",
-    "new": "",
+    "old": "  if (quarters === 4) return PLAIN_FOE_RARITY_WEIGHTS;\n  let w = _ladders.get(quarters);",
+    "new": "  let w = _ladders.get(quarters);",
     "why": "a fresh ladder for LOOT-EASE's own (not the very table)",
     "tests": [
       "test/systems/renownloot.test.js"

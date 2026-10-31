@@ -219,8 +219,8 @@
   {
     "name": "MASTER-ART-maker-takes-a-legendary",
     "file": "src/systems/enchanting.js",
-    "old": "if (item?.rarity === 'legendary') return null;",
-    "new": "if (item?.rarity === 'artifact') return null;",
+    "old": "  if (item?.rarity === 'legendary') return null; // MASTER-ART: a Master's work carries no rows, and is refused with every Legendary",
+    "new": "  if (item?.rarity === 'artifact') return null; // MASTER-ART: a Master's work carries no rows, and is refused with every Legendary",
     "tests": [
       "test/net/masterart_law.test.js"
     ]

@@ -142,7 +142,7 @@ test('MW-EARLY fillEquipTable: rebuildEquipState is it plus the armor values and
   assert.equal(slots.filter((s) => s === 'stale').length, 0, 'every slot emptied first');
   const src = rd('src/systems/equip.js');
   assert.match(src, /export function rebuildEquipState\(entity\) \{\n\s*const slots = fillEquipTable\(equipTableOf\(entity\), entity\.items\);/);
-  assert.equal((src.match(/if \(slots\[it\.equipSlot\]\) \{ delete it\.equipSlot; continue; \}/g) ?? []).length, 1, 'the fill loop has one home');
+  assert.equal((src.match(/if \(slots\[it\.equipSlot\]\) \{\n\s*delete it\.equipSlot;\n\s*continue;\n\s*\}/g) ?? []).length, 1, 'the fill loop has one home');
 });
 
 test('MW-EARLY prebuildArmsForSave: counts a store nobody counted, builds the save\'s entity, and never throws - a null snapshot builds nothing', async () => {

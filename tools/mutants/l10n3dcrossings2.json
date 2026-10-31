@@ -72,8 +72,8 @@
   {
     "name": "L10N3d2-systems-enchanting-191-noEnchantments",
     "file": "src/systems/enchanting.js",
-    "old": "    return { kind: 'noEnchantments', text: localizedText('noEnchantments', NO_ENCHANTMENTS_PREPARED) };   // L10N3d: DaggerfallItemMakerWindow.cs:724",
-    "new": "    return { kind: 'noEnchantments', text: NO_ENCHANTMENTS_PREPARED };   // L10N3d: DaggerfallItemMakerWindow.cs:724",
+    "old": "    return { kind: 'noEnchantments', text: localizedText('noEnchantments', NO_ENCHANTMENTS_PREPARED) }; // L10N3d: DaggerfallItemMakerWindow.cs:724",
+    "new": "    return { kind: 'noEnchantments', text: NO_ENCHANTMENTS_PREPARED }; // L10N3d: DaggerfallItemMakerWindow.cs:724",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_crossings.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "L10N3d2-systems-equip-451-itemHasBrokenPlural",
     "file": "src/systems/equip.js",
-    "old": "  say?.((PLURAL_BREAK_TEMPLATES.has(item.templateIndex) ? localizedText('itemHasBrokenPlural', '%s have broken.') : localizedText('itemHasBroken', '%s has broken.')).replace('%s', name));",
-    "new": "  say?.((PLURAL_BREAK_TEMPLATES.has(item.templateIndex) ? '%s have broken.' : localizedText('itemHasBroken', '%s has broken.')).replace('%s', name));",
+    "old": "      ? localizedText('itemHasBrokenPlural', '%s have broken.')",
+    "new": "      ? '%s have broken.'",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_crossings.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "L10N3d2-systems-equip-451-itemHasBroken",
     "file": "src/systems/equip.js",
-    "old": "  say?.((PLURAL_BREAK_TEMPLATES.has(item.templateIndex) ? localizedText('itemHasBrokenPlural', '%s have broken.') : localizedText('itemHasBroken', '%s has broken.')).replace('%s', name));",
-    "new": "  say?.((PLURAL_BREAK_TEMPLATES.has(item.templateIndex) ? localizedText('itemHasBrokenPlural', '%s have broken.') : '%s has broken.').replace('%s', name));",
+    "old": "      : localizedText('itemHasBroken', '%s has broken.')",
+    "new": "      : '%s has broken.'",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_crossings.test.js"

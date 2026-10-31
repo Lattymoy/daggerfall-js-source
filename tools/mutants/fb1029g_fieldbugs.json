@@ -42,8 +42,8 @@
   {
     "name": "STAR-MASTER-FLED-title",
     "file": "src/systems/foeTitle.js",
-    "old": "!entity.bout && entity.eventFoe !== true ? `Unquiet ${traited}`",
-    "new": "!entity.bout ? `Unquiet ${traited}`",
+    "old": "  return entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && entity.eventFoe !== true",
+    "new": "  return entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ],

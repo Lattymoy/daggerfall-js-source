@@ -290,8 +290,8 @@
   {
     "name": "SD19-timers-no-next",
     "file": "src/systems/eventTimers.js",
-    "old": "  else if (sdNow === 'gone' && Number.isFinite(sdRec?.next) && sdRec.next > now) coming(",
-    "new": "  else if (false) coming(",
+    "old": "  else if (sdNow === 'gone' && Number.isFinite(sdRec?.next) && sdRec.next > now)",
+    "new": "  else if (false)",
     "tests": [
       "test/systems/superDungeon/sd19_presence.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "SD19-timers-next-forever",
     "file": "src/systems/eventTimers.js",
-    "old": "Number.isFinite(sdRec?.next) && sdRec.next > now) coming(",
-    "new": "Number.isFinite(sdRec?.next)) coming(",
+    "old": "  else if (sdNow === 'gone' && Number.isFinite(sdRec?.next) && sdRec.next > now)",
+    "new": "  else if (sdNow === 'gone' && Number.isFinite(sdRec?.next))",
     "tests": [
       "test/systems/superDungeon/sd19_presence.test.js"
     ]

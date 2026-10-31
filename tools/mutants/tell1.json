@@ -308,8 +308,8 @@
   {
     "name": "TELL1-elite-unmarked",
     "file": "src/systems/eliteFoes.js",
-    "old": "    entity.healthMult = (entity.healthMult ?? 1) * hm;",
-    "new": "    entity.healthMult = 1;",
+    "old": "    entity.healthMult = (entity.healthMult ?? 1) * hm; // TELL1: what was stood on the kind's own health (ai/tells.js kindHealth - its poise)",
+    "new": "    entity.healthMult = 1; // TELL1: what was stood on the kind's own health (ai/tells.js kindHealth - its poise)",
     "tests": [
       "test/systems/tell1_poise.test.js"
     ]

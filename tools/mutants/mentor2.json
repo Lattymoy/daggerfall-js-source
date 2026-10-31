@@ -173,8 +173,8 @@
   {
     "name": "MENTOR2-a-life-star-at-a-share",
     "file": "src/systems/firmamentLive.js",
-    "old": "(k === 1 || statDef(key)?.kind === 'life' ? v : Math.round(v * k))",
-    "new": "(k === 1 ? v : Math.round(v * k))",
+    "old": "const atScale = (key, v, k) => (k === 1 || statDef(key)?.kind === 'life' ? v : Math.round(v * k));",
+    "new": "const atScale = (key, v, k) => (k === 1 ? v : Math.round(v * k));",
     "tests": [
       "test/systems/mentor2.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "MENTOR2-the-combat-stars-whole",
     "file": "src/systems/firmamentLive.js",
-    "old": "(k === 1 || statDef(key)?.kind === 'life' ? v : Math.round(v * k))",
-    "new": "v",
+    "old": "const atScale = (key, v, k) => (k === 1 || statDef(key)?.kind === 'life' ? v : Math.round(v * k));",
+    "new": "const atScale = (key, v, k) => v;",
     "tests": [
       "test/systems/mentor2.test.js"
     ]

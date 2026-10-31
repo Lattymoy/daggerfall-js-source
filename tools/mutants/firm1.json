@@ -161,8 +161,8 @@
   {
     "name": "FIRM1-wild-strike-with-the-sky",
     "file": "src/systems/firmamentPowers.js",
-    "old": "  try { computeEntityMods(entity); return fn(); } finally { _quiet = false; entity._mods = kept; }",
-    "new": "  try { return fn(); } finally { _quiet = false; entity._mods = kept; }",
+    "old": "    computeEntityMods(entity);\n    return fn();",
+    "new": "    return fn();",
     "tests": [
       "test/systems/firm1_powers.test.js"
     ]
@@ -188,8 +188,8 @@
   {
     "name": "FIRM-MAX-no-lift",
     "file": "src/systems/firmamentPowers.js",
-    "old": "    if (v > 0) mods.statMax[a] = v;",
-    "new": "",
+    "old": "    if (v > 0) mods.statMax[a] = v;\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/firm1_powers.test.js"
     ]

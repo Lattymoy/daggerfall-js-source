@@ -605,8 +605,8 @@
   {
     "name": "EGF-the-row-past-the-end",
     "file": "src/systems/eventTimers.js",
-    "old": "if (el && Number.isFinite(el.op) && !el.end) {",
-    "new": "if (el && Number.isFinite(el.op)) {",
+    "old": "  if (el && Number.isFinite(el.op) && !el.end) {",
+    "new": "  if (el && Number.isFinite(el.op)) {",
     "tests": [
       "test/net/eliteGates/egarch_law.test.js"
     ]

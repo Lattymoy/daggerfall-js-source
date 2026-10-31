@@ -92,8 +92,8 @@
   {
     "name": "MWEARLY-fill-keeps-the-losers-mark",
     "file": "src/systems/equip.js",
-    "old": "if (slots[it.equipSlot]) { delete it.equipSlot; continue; }",
-    "new": "if (slots[it.equipSlot]) { continue; }",
+    "old": "      delete it.equipSlot;\n      continue;",
+    "new": "      continue;",
     "tests": [
       "test/systems/mwearly.test.js"
     ]

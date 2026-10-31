@@ -2,8 +2,8 @@
   {
     "name": "RVN1-gate-ignored",
     "file": "src/systems/feudLedger.js",
-    "old": "  if (!ok) return null;\n",
-    "new": "",
+    "old": "  if (!ok) return null;\n  let c = null;",
+    "new": "  let c = null;",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RVN1-silver-unkept",
     "file": "src/systems/feudLedger.js",
-    "old": "  if (silver) l.silver += n;\n",
-    "new": "",
+    "old": "  if (silver) l.silver += n;\n  if (feudWeakBlow(entity, { cls, metal })) {",
+    "new": "  if (feudWeakBlow(entity, { cls, metal })) {",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RVN1-a-count-by-any-name",
     "file": "src/systems/feudLedger.js",
-    "old": "  if (!COUNTS.includes(what)) return;\n",
-    "new": "",
+    "old": "  if (!COUNTS.includes(what)) return;\n  const l = feudOf(entity);",
+    "new": "  const l = feudOf(entity);",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "RVN1-taken-twice",
     "file": "src/systems/feudLedger.js",
-    "old": "  if (entity && typeof entity === 'object') entity._feud = null;\n",
-    "new": "",
+    "old": "  if (entity && typeof entity === 'object') entity._feud = null;\n  return l;",
+    "new": "  return l;",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RVN1-night-never-read",
     "file": "src/systems/feudLedger.js",
-    "old": "night: !!c?.night,",
-    "new": "night: false,",
+    "old": "    night: !!c?.night,",
+    "new": "    night: false,",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]

@@ -573,8 +573,8 @@
   {
     "name": "FLEET-livery-refusal-strips",
     "file": "src/systems/fleet.js",
-    "old": "  if (raw != null && !l && !LIVERY_PARTS.every((p) => !raw[p])) return false;",
-    "new": "  if (raw != null && typeof raw !== 'object') return false;",
+    "old": "  if (raw != null && !l && !LIVERY_PARTS.every((p) => !raw[p])) return false; // a paint that is none at all is as built; one the door refuses is refused",
+    "new": "  if (raw != null && typeof raw !== 'object') return false; // a paint that is none at all is as built; one the door refuses is refused",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -582,8 +582,8 @@
   {
     "name": "FLEET-livery-string",
     "file": "src/systems/fleet.js",
-    "old": "  if (!r || (raw != null && typeof raw !== 'object')) return false;\n  const l = raw == null",
-    "new": "  if (!r) return false;\n  const l = raw == null",
+    "old": "  if (!r || (raw != null && typeof raw !== 'object')) return false;",
+    "new": "  if (!r) return false;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -591,8 +591,8 @@
   {
     "name": "FLEET-cabin-any",
     "file": "src/systems/fleet.js",
-    "old": "  if (!r || !isPaint(paint)) return false;\n  r.cabin = paint;",
-    "new": "  if (!r) return false;\n  r.cabin = paint;",
+    "old": "  if (!r || !isPaint(paint)) return false;",
+    "new": "  if (!r) return false;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -600,8 +600,8 @@
   {
     "name": "FLEET-fittings-door",
     "file": "src/systems/fleet.js",
-    "old": "  r.deck = fittingsOf(raw);\n  return true;",
-    "new": "  r.deck = raw;\n  return true;",
+    "old": "  r.deck = fittingsOf(raw);",
+    "new": "  r.deck = raw;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -609,8 +609,8 @@
   {
     "name": "FLEET-fittings-string",
     "file": "src/systems/fleet.js",
-    "old": "  if (!r || !Array.isArray(raw)) return false;\n  r.deck = fittingsOf(raw);",
-    "new": "  if (!r) return false;\n  r.deck = fittingsOf(raw);",
+    "old": "  if (!r || !Array.isArray(raw)) return false;",
+    "new": "  if (!r) return false;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -618,8 +618,8 @@
   {
     "name": "FLEET-livery-unsaved",
     "file": "src/systems/fleet.js",
-    "old": ", ...(r.livery ? { livery: { ...r.livery } } : {})",
-    "new": "",
+    "old": "      ...(r.livery ? { livery: { ...r.livery } } : {}),\n      ...(r.cabin ? { cabin: r.cabin } : {}),",
+    "new": "      ...(r.cabin ? { cabin: r.cabin } : {}),",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -627,8 +627,8 @@
   {
     "name": "FLEET-cabin-unsaved",
     "file": "src/systems/fleet.js",
-    "old": ", ...(r.cabin ? { cabin: r.cabin } : {})",
-    "new": "",
+    "old": "      ...(r.cabin ? { cabin: r.cabin } : {}),\n      ...(r.deck?.length ? { deck: r.deck.map((f) => ({ ...f })) } : {}),",
+    "new": "      ...(r.deck?.length ? { deck: r.deck.map((f) => ({ ...f })) } : {}),",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -636,8 +636,8 @@
   {
     "name": "FLEET-cabin-saved-always",
     "file": "src/systems/fleet.js",
-    "old": ", ...(r.cabin ? { cabin: r.cabin } : {})",
-    "new": ", cabin: r.cabin",
+    "old": "      ...(r.cabin ? { cabin: r.cabin } : {}),",
+    "new": "      cabin: r.cabin,",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -645,8 +645,8 @@
   {
     "name": "FLEET-deck-unsaved",
     "file": "src/systems/fleet.js",
-    "old": ", ...(r.deck?.length ? { deck: r.deck.map((f) => ({ ...f })) } : {})",
-    "new": "",
+    "old": "      ...(r.deck?.length ? { deck: r.deck.map((f) => ({ ...f })) } : {}),\n      ...(r.plaque ? { plaque: true } : {}),",
+    "new": "      ...(r.plaque ? { plaque: true } : {}),",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -654,8 +654,8 @@
   {
     "name": "FLEET-livery-restored-raw",
     "file": "src/systems/fleet.js",
-    "old": "    r.livery = liveryOf(s.livery, r.hull);",
-    "new": "    r.livery = s.livery ?? null;",
+    "old": "    r.livery = liveryOf(s.livery, r.hull); // SHIP-LIVERY: her paint, as it may be (none, or one the door refuses: as built)",
+    "new": "    r.livery = s.livery ?? null; // SHIP-LIVERY: her paint, as it may be (none, or one the door refuses: as built)",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -663,8 +663,8 @@
   {
     "name": "FLEET-cabin-restored-raw",
     "file": "src/systems/fleet.js",
-    "old": "    r.cabin = isPaint(s.cabin) ? s.cabin : 0;",
-    "new": "    r.cabin = s.cabin ?? 0;",
+    "old": "    r.cabin = isPaint(s.cabin) ? s.cabin : 0; // CABIN-LOOK: her cabin's stain",
+    "new": "    r.cabin = s.cabin ?? 0; // CABIN-LOOK: her cabin's stain",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -672,8 +672,8 @@
   {
     "name": "FLEET-deck-restored-raw",
     "file": "src/systems/fleet.js",
-    "old": "    r.deck = fittingsOf(s.deck);",
-    "new": "    r.deck = s.deck ?? [];",
+    "old": "    r.deck = fittingsOf(s.deck); // DECK-PROPS: her fittings, as the door takes them",
+    "new": "    r.deck = s.deck ?? []; // DECK-PROPS: her fittings, as the door takes them",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]

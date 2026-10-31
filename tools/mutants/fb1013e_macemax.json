@@ -65,8 +65,8 @@
   {
     "name": "MACE-MAX-the-registry-row-takes-no-unequip",
     "file": "src/systems/enchantments.js",
-    "old": "    unequipped: artifactHook('unequipped'),",
-    "new": "",
+    "old": "      unequipped: artifactHook('unequipped'), // MACE-MAX: the Held bundle's removal (UnequipHeldItem) - ungated by the flags, as the dispatcher runs every row's",
+    "new": "      // MACE-MAX: the Held bundle's removal (UnequipHeldItem) - ungated by the flags, as the dispatcher runs every row's",
     "tests": [
       "test/systems/fb1013e_macemax.test.js"
     ]

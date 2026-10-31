@@ -83,7 +83,7 @@
   {
     "name": "FLEET-name-unfiltered",
     "file": "src/systems/fleet.js",
-    "old": "  return v.ok ? { ok: true, name: s, reason: null } : { ok: false, name: '', reason: v.reason ?? 'That name will not do.' };",
+    "old": "  return v.ok\n    ? { ok: true, name: s, reason: null }\n    : { ok: false, name: '', reason: v.reason ?? 'That name will not do.' };",
     "new": "  return { ok: true, name: s, reason: null };",
     "tests": [
       "test/systems/naval/fleet.test.js"
@@ -93,7 +93,7 @@
     "name": "FLEET-name-unbounded",
     "file": "src/systems/fleet.js",
     "old": "  s = s.replace(/\\s+/g, ' ').trim().slice(0, SHIP_NAME_MAX).trim();",
-    "new": "  s = s.replace(/\\s+/g, ' ').trim().slice(0, SHIP_NAME_MAX + 8).trim();",
+    "new": "  s = s\n    .replace(/\\s+/g, ' ')\n    .trim()\n    .slice(0, SHIP_NAME_MAX + 8)\n    .trim();",
     "tests": [
       "test/systems/naval/fleet.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "FLEET-loan-due-unread",
     "file": "src/systems/fleet.js",
-    "old": "  for (const r of _ships.values()) if (r.credit && !(accounts[r.credit.region]?.loanTotal > 0)) { r.credit = null; n++; }",
-    "new": "  for (const r of _ships.values()) if (false) { r.credit = null; n++; }",
+    "old": "    if (r.credit && !(accounts[r.credit.region]?.loanTotal > 0)) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/naval/fleet.test.js"
     ],
@@ -148,8 +148,8 @@
   {
     "name": "FLEET-title-left-in-the-pack",
     "file": "src/systems/fleet.js",
-    "old": "  if (from) { const i = from.indexOf(deed); if (i >= 0) from.splice(i, 1); }",
-    "new": "  if (false) { const i = from.indexOf(deed); if (i >= 0) from.splice(i, 1); }",
+    "old": "  if (from) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/naval/fleet.test.js"
     ]

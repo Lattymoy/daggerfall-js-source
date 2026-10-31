@@ -383,8 +383,8 @@
   {
     "name": "SERPENT2-timers-place-before-bells",
     "file": "src/systems/eventTimers.js",
-    "old": "`${sName} rises`, s.riseAt, null, 'The harbor bells ring",
-    "new": "`${sName} rises`, s.riseAt, off, 'The harbor bells ring",
+    "old": "    coming(`serpent:${s.day}`, 'serpent', `${sName} rises`, s.riseAt, null, 'The harbor bells ring 15 minutes before');",
+    "new": "    coming(`serpent:${s.day}`, 'serpent', `${sName} rises`, s.riseAt, off, 'The harbor bells ring 15 minutes before');",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -392,8 +392,8 @@
   {
     "name": "SERPENT2-timers-hunt-to-storm",
     "file": "src/systems/eventTimers.js",
-    "old": "`${sName} hunts`, s.soundAt,",
-    "new": "`${sName} hunts`, s.sealAt,",
+    "old": "      s.soundAt,",
+    "new": "      s.sealAt,",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "SERPENT2-timers-late-row-dropped",
     "file": "src/systems/eventTimers.js",
-    "old": "sPhase === 'hunt' || sPhase === 'late') live(",
-    "new": "sPhase === 'hunt') live(",
+    "old": "  else if (sPhase === 'rising' || sPhase === 'hunt' || sPhase === 'late')",
+    "new": "  else if (sPhase === 'rising' || sPhase === 'hunt')",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "SERPENT2-timers-no-next",
     "file": "src/systems/eventTimers.js",
-    "old": "if (sPhase !== 'quiet') {",
-    "new": "if (false) {",
+    "old": "  if (sPhase !== 'quiet') {",
+    "new": "  if (false) {",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -419,8 +419,8 @@
   {
     "name": "SERPENT2-timers-kill-ignored",
     "file": "src/systems/eventTimers.js",
-    "old": "serpentPhase(s, now, src?.serpent?.fellAt?.(s.day) ?? null)",
-    "new": "serpentPhase(s, now, null)",
+    "old": "  const sPhase = serpentPhase(s, now, src?.serpent?.fellAt?.(s.day) ?? null);",
+    "new": "  const sPhase = serpentPhase(s, now, null);",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]

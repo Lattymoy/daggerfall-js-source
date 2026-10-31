@@ -514,8 +514,8 @@
   {
     "name": "PERF-EXT24-the-lent-slice-is-dropped-not-sampled",
     "file": "src/systems/frameClock.js",
-    "old": "  const busy = lastOwn + lent;",
-    "new": "  const busy = lastOwn;",
+    "old": "  const busy = lastOwn + lent; // PERF-EXT24: and the stream's slices since the last sample",
+    "new": "  const busy = lastOwn; // PERF-EXT24: and the stream's slices since the last sample",
     "tests": [
       "test/systems/buildslice.test.js"
     ]
@@ -532,8 +532,8 @@
   {
     "name": "PERF-EXT24-a-lent-slice-is-counted-in-every-sample-after",
     "file": "src/systems/frameClock.js",
-    "old": "  lent = 0;\n  const stamp = open;",
-    "new": "  const stamp = open;",
+    "old": "  lent = 0;\n  const stamp = open; // FB1018D HITCH-KEEP (AUDIT FB1018D L2-1): the rAF stamp the frame began at - the counter's own for that frame",
+    "new": "  const stamp = open; // FB1018D HITCH-KEEP (AUDIT FB1018D L2-1): the rAF stamp the frame began at - the counter's own for that frame",
     "tests": [
       "test/systems/buildslice.test.js"
     ],
@@ -899,8 +899,8 @@
   {
     "name": "PERF-EXT24-review-the-frame-clock-counts-no-frame",
     "file": "src/systems/frameClock.js",
-    "old": "  begun++;   // PERF-EXT24 (the review)",
-    "new": "",
+    "old": "  begun++; // PERF-EXT24 (the review)\n}",
+    "new": "}",
     "tests": [
       "test/systems/buildslice.test.js"
     ]

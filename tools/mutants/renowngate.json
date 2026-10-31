@@ -65,8 +65,8 @@
   {
     "name": "RENOWN-GATE-world-roll-ungated",
     "file": "src/systems/eliteFoes.js",
-    "old": "rolls() < ELITE_FOE_OVERWORLD_CHANCE && eliteRenownOpen();",
-    "new": "rolls() < ELITE_FOE_OVERWORLD_CHANCE;",
+    "old": "export const rollOverworldElite = (rolls = Math.random) => rolls() < ELITE_FOE_OVERWORLD_CHANCE && eliteRenownOpen();",
+    "new": "export const rollOverworldElite = (rolls = Math.random) => rolls() < ELITE_FOE_OVERWORLD_CHANCE;",
     "tests": [
       "test/systems/renowngate.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RENOWN-GATE-world-roll-gate-before-the-draw",
     "file": "src/systems/eliteFoes.js",
-    "old": "rolls() < ELITE_FOE_OVERWORLD_CHANCE && eliteRenownOpen();",
-    "new": "eliteRenownOpen() && rolls() < ELITE_FOE_OVERWORLD_CHANCE;",
+    "old": "export const rollOverworldElite = (rolls = Math.random) => rolls() < ELITE_FOE_OVERWORLD_CHANCE && eliteRenownOpen();",
+    "new": "export const rollOverworldElite = (rolls = Math.random) => eliteRenownOpen() && rolls() < ELITE_FOE_OVERWORLD_CHANCE;",
     "tests": [
       "test/systems/renowngate.test.js"
     ]

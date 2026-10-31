@@ -2563,8 +2563,8 @@
   {
     "name": "BLOOD2g-the-row-forgets-a-tier",
     "file": "src/systems/featureLanes.js",
-    "old": "['heavy', 'Heavy'], ['abattoir', 'Abattoir']]);",
-    "new": "['heavy', 'Heavy']]);",
+    "old": "  ['abattoir', 'Abattoir'],\n]);",
+    "new": "]);",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]

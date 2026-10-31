@@ -101,8 +101,8 @@
   {
     "name": "AF2-W3-peer-unflagged",
     "file": "src/systems/feudLedger.js",
-    "old": "_onWeak(entity, { peer: true })",
-    "new": "_onWeak(entity)",
+    "old": "    _onWeak(entity, { peer: true });",
+    "new": "    _onWeak(entity);",
     "tests": [
       "test/systems/auditfeud2.test.js"
     ]

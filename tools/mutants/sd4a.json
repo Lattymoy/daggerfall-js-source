@@ -56,8 +56,8 @@
   {
     "name": "SD4A-the-Elite-Dungeon's-stack-in-a-Super",
     "file": "src/systems/eliteFoes.js",
-    "old": "    const hm = superDungeon ? ELITE_FOE_SUPER_DUNGEON_HEALTH_MULT : eliteDungeon ?",
-    "new": "    const hm = eliteDungeon ?",
+    "old": "    const hm = superDungeon\n      ? ELITE_FOE_SUPER_DUNGEON_HEALTH_MULT\n      : eliteDungeon\n        ? ELITE_FOE_ELITE_DUNGEON_HEALTH_MULT\n        : ELITE_FOE_HEALTH_MULT; // SD4a: a Super dungeon's",
+    "new": "    const hm = eliteDungeon ? ELITE_FOE_ELITE_DUNGEON_HEALTH_MULT : ELITE_FOE_HEALTH_MULT; // SD4a: a Super dungeon's",
     "tests": [
       "test/systems/sd4a_super.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SD4A-the-Elite-Dungeon's-blow-in-a-Super",
     "file": "src/systems/eliteFoes.js",
-    "old": "  entity.damageScale = prior * (superDungeon ? ELITE_FOE_SUPER_DUNGEON_DAMAGE_MULT : eliteDungeon ?",
-    "new": "  entity.damageScale = prior * (eliteDungeon ?",
+    "old": "  entity.damageScale =\n    prior *\n    (superDungeon\n      ? ELITE_FOE_SUPER_DUNGEON_DAMAGE_MULT\n      : eliteDungeon\n        ? ELITE_FOE_ELITE_DUNGEON_DAMAGE_MULT\n        : ELITE_FOE_DAMAGE_MULT); // SD4a: a Super dungeon's",
+    "new": "  entity.damageScale = prior * (eliteDungeon ? ELITE_FOE_ELITE_DUNGEON_DAMAGE_MULT : ELITE_FOE_DAMAGE_MULT); // SD4a: a Super dungeon's",
     "tests": [
       "test/systems/sd4a_super.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SD4A-the-pick's-count-lost",
     "file": "src/systems/eliteFoes.js",
-    "old": "  const want = Number.isInteger(count) ? Math.max(0, count) : elite\n",
-    "new": "  const want = elite\n",
+    "old": "  const want = Number.isInteger(count)\n    ? Math.max(0, count)\n    : elite\n      ? ELITE_FOE_DUNGEON_MIN + Math.floor(rng() * (ELITE_FOE_DUNGEON_MAX - ELITE_FOE_DUNGEON_MIN + 1))\n      : rng() < ELITE_FOE_NORMAL_DUNGEON_CHANCE\n        ? 1\n        : 0;",
+    "new": "  const want = elite\n    ? ELITE_FOE_DUNGEON_MIN + Math.floor(rng() * (ELITE_FOE_DUNGEON_MAX - ELITE_FOE_DUNGEON_MIN + 1))\n    : rng() < ELITE_FOE_NORMAL_DUNGEON_CHANCE\n      ? 1\n      : 0;",
     "tests": [
       "test/systems/sd4a_super.test.js"
     ]

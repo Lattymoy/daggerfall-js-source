@@ -772,8 +772,8 @@
   {
     "name": "FPS-VSYNC-pacer-holds-its-own-frame",
     "file": "src/systems/frameCap.js",
-    "old": "    take(stamp);   // this frame is the slot: drawn, the next one booked\n",
-    "new": "",
+    "old": "    take(stamp); // this frame is the slot: drawn, the next one booked\n    const batch = [...queue.values()];",
+    "new": "    const batch = [...queue.values()];",
     "tests": [
       "test/ui/settings/disc28e_vsync.test.js"
     ]
@@ -799,8 +799,8 @@
   {
     "name": "FPS-VSYNC-pacer-one-ask-a-frame",
     "file": "src/systems/frameCap.js",
-    "old": "    const batch = [...queue.values()];\n    queue.clear();",
-    "new": "    const [first] = queue.keys();\n    const batch = first == null ? [] : [queue.get(first)];\n    queue.delete(first);",
+    "old": "    const batch = [...queue.values()];\n    queue.clear(); // a request made while the batch runs is the NEXT slot's",
+    "new": "    const [first] = queue.keys();\n    const batch = first == null ? [] : [queue.get(first)];\n    queue.delete(first); // a request made while the batch runs is the NEXT slot's",
     "tests": [
       "test/ui/settings/disc28e_vsync.test.js"
     ]
@@ -808,8 +808,8 @@
   {
     "name": "FPS-VSYNC-pacer-a-throw-stops-the-rest",
     "file": "src/systems/frameCap.js",
-    "old": "    for (const cb of batch) { try { cb(stamp); } catch (e) { report(e); } }",
-    "new": "    for (const cb of batch) cb(stamp);",
+    "old": "    for (const cb of batch) {\n      try {\n        cb(stamp);\n      } catch (e) {\n        report(e);\n      }\n    } // one callback's throw is not the others'",
+    "new": "    for (const cb of batch) cb(stamp); // one callback's throw is not the others'",
     "tests": [
       "test/ui/settings/disc28e_vsync.test.js"
     ]
@@ -817,8 +817,8 @@
   {
     "name": "FPS-VSYNC-pacer-cancel-lost",
     "file": "src/systems/frameCap.js",
-    "old": "    cancel(id) { if (!queue.delete(id)) caf(id); },",
-    "new": "    cancel(id) { caf(id); },",
+    "old": "      if (!queue.delete(id)) caf(id);",
+    "new": "      caf(id);",
     "tests": [
       "test/ui/settings/disc28e_vsync.test.js"
     ]
@@ -826,8 +826,8 @@
   {
     "name": "FPS-VSYNC-pacer-in-every-shell",
     "file": "src/systems/frameCap.js",
-    "old": "  if (!win?.daggerShell?.framesLifted || typeof win.requestAnimationFrame",
-    "new": "  if (!win?.daggerShell || typeof win.requestAnimationFrame",
+    "old": "  if (!win?.daggerShell?.framesLifted || typeof win.requestAnimationFrame !== 'function' || win.__framePacer)\n    return false;",
+    "new": "  if (!win?.daggerShell || typeof win.requestAnimationFrame !== 'function' || win.__framePacer) return false;",
     "tests": [
       "test/ui/settings/disc28e_vsync.test.js"
     ]
@@ -835,8 +835,8 @@
   {
     "name": "FPS-VSYNC-take-books-from-the-stamp",
     "file": "src/systems/frameCap.js",
-    "old": "  state.due = state.due && stamp - state.due < interval ? state.due + interval : stamp + interval;\n}",
-    "new": "  state.due = stamp + interval;\n}",
+    "old": "  state.due = state.due && stamp - state.due < interval ? state.due + interval : stamp + interval;",
+    "new": "  state.due = stamp + interval;",
     "tests": [
       "test/ui/settings/disc28e_vsync.test.js"
     ]

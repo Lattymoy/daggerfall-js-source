@@ -610,8 +610,8 @@
   {
     "name": "PROF10-light-fixed",
     "file": "src/systems/facetAct.js",
-    "old": "const light = () => FACET_ACT.lightLo + (FACET_ACT.lightHi - FACET_ACT.lightLo) * Math.max(0, Math.min(1, Number(rng()) || 0));",
-    "new": "const light = () => FACET_ACT.lightLo;",
+    "old": "  const light = () =>\n    FACET_ACT.lightLo + (FACET_ACT.lightHi - FACET_ACT.lightLo) * Math.max(0, Math.min(1, Number(rng()) || 0));",
+    "new": "  const light = () => FACET_ACT.lightLo;",
     "tests": [
       "test/net/prof10_law.test.js"
     ]
@@ -619,8 +619,8 @@
   {
     "name": "PROF10-light-unclamped",
     "file": "src/systems/facetAct.js",
-    "old": "* Math.max(0, Math.min(1, Number(rng()) || 0));",
-    "new": "* (Number(rng()) || 0);",
+    "old": "  const light = () =>\n    FACET_ACT.lightLo + (FACET_ACT.lightHi - FACET_ACT.lightLo) * Math.max(0, Math.min(1, Number(rng()) || 0));",
+    "new": "  const light = () => FACET_ACT.lightLo + (FACET_ACT.lightHi - FACET_ACT.lightLo) * (Number(rng()) || 0);",
     "tests": [
       "test/net/prof10_law.test.js"
     ]
@@ -628,8 +628,8 @@
   {
     "name": "PROF10-window-whole-each-side",
     "file": "src/systems/facetAct.js",
-    "old": "half: Math.max(0, Number(windowDeg) || 0) / 2,",
-    "new": "half: Math.max(0, Number(windowDeg) || 0),",
+    "old": "    half: Math.max(0, Number(windowDeg) || 0) / 2,",
+    "new": "    half: Math.max(0, Number(windowDeg) || 0),",
     "tests": [
       "test/net/prof10_law.test.js",
       "test/systems/prof10_client.test.js"
@@ -638,8 +638,8 @@
   {
     "name": "PROF10-gentle-catches",
     "file": "src/systems/facetAct.js",
-    "old": "const inWindow = (turned) => !gentle && bearingGap(",
-    "new": "const inWindow = (turned) => bearingGap(",
+    "old": "  const inWindow = (turned) => !gentle && bearingGap(bearing(turned), st.light) <= st.half;",
+    "new": "  const inWindow = (turned) => bearingGap(bearing(turned), st.light) <= st.half;",
     "tests": [
       "test/net/prof10_law.test.js",
       "test/systems/prof10_client.test.js"
@@ -648,8 +648,8 @@
   {
     "name": "PROF10-never-lost-round",
     "file": "src/systems/facetAct.js",
-    "old": "if (st.turned >= 360 * FACET_ACT.turns) { st.passed++; end(false, st.t); }",
-    "new": "if (st.turned >= 360 * (FACET_ACT.turns + 1)) { st.passed++; end(false, st.t); }",
+    "old": "      if (st.turned >= 360 * FACET_ACT.turns) {",
+    "new": "      if (st.turned >= 360 * (FACET_ACT.turns + 1)) {",
     "tests": [
       "test/net/prof10_law.test.js",
       "test/systems/prof10_client.test.js"
@@ -658,8 +658,8 @@
   {
     "name": "PROF10-passed-uncounted",
     "file": "src/systems/facetAct.js",
-    "old": "{ st.passed++; end(false, st.t); }",
-    "new": "{ end(false, st.t); }",
+    "old": "        st.passed++;\n        end(false, st.t);",
+    "new": "        end(false, st.t);",
     "tests": [
       "test/net/prof10_law.test.js",
       "test/systems/prof10_client.test.js"
@@ -668,8 +668,8 @@
   {
     "name": "PROF10-next-facet-carries-the-turn",
     "file": "src/systems/facetAct.js",
-    "old": "    st.turned = 0;\n    st.light = light();\n",
-    "new": "    st.light = light();\n",
+    "old": "    st.turned = 0;\n    st.light = light();",
+    "new": "    st.light = light();",
     "tests": [
       "test/net/prof10_law.test.js"
     ]
@@ -677,8 +677,8 @@
   {
     "name": "PROF10-one-light-a-piece",
     "file": "src/systems/facetAct.js",
-    "old": "    st.turned = 0;\n    st.light = light();\n",
-    "new": "    st.turned = 0;\n",
+    "old": "    st.light = light();\n  };",
+    "new": "  };",
     "tests": [
       "test/net/prof10_law.test.js"
     ]
@@ -686,8 +686,8 @@
   {
     "name": "PROF10-stop-no-gap",
     "file": "src/systems/facetAct.js",
-    "old": "if (st.done || at - st.lastAt < FACET_ACT.gapS) return null;",
-    "new": "if (st.done) return null;",
+    "old": "      if (st.done || at - st.lastAt < FACET_ACT.gapS) return null;",
+    "new": "      if (st.done) return null;",
     "tests": [
       "test/net/prof10_law.test.js"
     ]
@@ -695,8 +695,8 @@
   {
     "name": "PROF10-stop-at-the-frame",
     "file": "src/systems/facetAct.js",
-    "old": "const ok = inWindow(st.turned + FACET_ACT.degPerS * l);",
-    "new": "const ok = inWindow(st.turned);",
+    "old": "      const ok = inWindow(st.turned + FACET_ACT.degPerS * l);",
+    "new": "      const ok = inWindow(st.turned);",
     "tests": [
       "test/net/prof10_law.test.js"
     ]
@@ -704,8 +704,8 @@
   {
     "name": "PROF10-lead-unbounded",
     "file": "src/systems/facetAct.js",
-    "old": "const l = Math.max(0, Math.min(PRESS_LEAD_MAX_S, Number(lead) || 0));",
-    "new": "const l = Math.max(0, Number(lead) || 0);",
+    "old": "      const l = Math.max(0, Math.min(PRESS_LEAD_MAX_S, Number(lead) || 0));",
+    "new": "      const l = Math.max(0, Number(lead) || 0);",
     "tests": [
       "test/net/prof10_law.test.js"
     ]
@@ -713,8 +713,8 @@
   {
     "name": "PROF10-clean-short",
     "file": "src/systems/facetAct.js",
-    "old": "clean: st.cuts.length >= st.need && hits === st.cuts.length",
-    "new": "clean: hits === st.cuts.length",
+    "old": "      return {\n        facets: st.cuts.length,\n        hits,\n        passed: st.passed,\n        clean: st.cuts.length >= st.need && hits === st.cuts.length,\n      };",
+    "new": "      return { facets: st.cuts.length, hits, passed: st.passed, clean: hits === st.cuts.length };",
     "tests": [
       "test/net/prof10_law.test.js"
     ]
@@ -722,7 +722,7 @@
   {
     "name": "PROF10-cancel-goes-on",
     "file": "src/systems/facetAct.js",
-    "old": "    cancel() { st.done = true; },",
+    "old": "    cancel() {\n      st.done = true;\n    },",
     "new": "    cancel() {},",
     "tests": [
       "test/net/prof10_law.test.js",
@@ -732,8 +732,8 @@
   {
     "name": "PROF10-ticks-when-done",
     "file": "src/systems/facetAct.js",
-    "old": "if (st.done || !Number.isFinite(dt) || dt <= 0) return;",
-    "new": "if (!Number.isFinite(dt) || dt <= 0) return;",
+    "old": "      if (st.done || !Number.isFinite(dt) || dt <= 0) return;",
+    "new": "      if (!Number.isFinite(dt) || dt <= 0) return;",
     "tests": [
       "test/net/prof10_law.test.js"
     ]
@@ -741,8 +741,8 @@
   {
     "name": "PROF10-no-facets",
     "file": "src/systems/facetAct.js",
-    "old": "need: Math.max(1, facets | 0),",
-    "new": "need: facets | 0,",
+    "old": "    need: Math.max(1, facets | 0),",
+    "new": "    need: facets | 0,",
     "tests": [
       "test/net/prof10_law.test.js"
     ]
@@ -822,8 +822,8 @@
   {
     "name": "PROF10-maker-reads-the-template",
     "file": "src/systems/enchanting.js",
-    "old": "const basePower = craftedJewelPoints(item) ?? lookup(",
-    "new": "const basePower = lookup(",
+    "old": "  const basePower = craftedJewelPoints(item) ?? lookup(item.templateIndex)?.enchantmentPoints ?? 0;",
+    "new": "  const basePower = lookup(item.templateIndex)?.enchantmentPoints ?? 0;",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -831,8 +831,8 @@
   {
     "name": "PROF10-maker-any-group",
     "file": "src/systems/enchanting.js",
-    "old": "item?.group !== 'Jewellery' || !/^[0-9a-f]{16}$/.test(",
-    "new": "!/^[0-9a-f]{16}$/.test(",
+    "old": "  if (item?.group !== 'Jewellery' || !/^[0-9a-f]{16}$/.test(item.provenance ?? '') || typeof item.recipe !== 'string')\n    return null;",
+    "new": "  if (!/^[0-9a-f]{16}$/.test(item.provenance ?? '') || typeof item.recipe !== 'string') return null;",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -840,8 +840,8 @@
   {
     "name": "PROF10-maker-any-provenance",
     "file": "src/systems/enchanting.js",
-    "old": "|| !/^[0-9a-f]{16}$/.test(item.provenance ?? '') ||",
-    "new": "||",
+    "old": "  if (item?.group !== 'Jewellery' || !/^[0-9a-f]{16}$/.test(item.provenance ?? '') || typeof item.recipe !== 'string')\n    return null;",
+    "new": "  if (item?.group !== 'Jewellery' || typeof item.recipe !== 'string') return null;",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -849,8 +849,8 @@
   {
     "name": "PROF10-maker-negative-points",
     "file": "src/systems/enchanting.js",
-    "old": "|| item.enchantmentPoints < 0) return null;",
-    "new": ") return null;",
+    "old": "  if (!r || !Number.isSafeInteger(item.enchantmentPoints) || item.enchantmentPoints < 0) return null;",
+    "new": "  if (!r || !Number.isSafeInteger(item.enchantmentPoints)) return null;",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1301,8 +1301,8 @@
   {
     "name": "AUDIT-PROF10-J1-any-recipe-kind",
     "file": "src/systems/enchanting.js",
-    "old": "return r?.kind === 'jewel' && r.templateIndex === item.templateIndex ? r : null;",
-    "new": "return r ? r : null;",
+    "old": "  return r?.kind === 'jewel' && r.templateIndex === item.templateIndex ? r : null;",
+    "new": "  return r ? r : null;",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1310,8 +1310,8 @@
   {
     "name": "AUDIT-PROF10-J1-any-template",
     "file": "src/systems/enchanting.js",
-    "old": "return r?.kind === 'jewel' && r.templateIndex === item.templateIndex ? r : null;",
-    "new": "return r?.kind === 'jewel' ? r : null;",
+    "old": "  return r?.kind === 'jewel' && r.templateIndex === item.templateIndex ? r : null;",
+    "new": "  return r?.kind === 'jewel' ? r : null;",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1319,8 +1319,8 @@
   {
     "name": "AUDIT-PROF10-J1-no-cap",
     "file": "src/systems/enchanting.js",
-    "old": "return Math.min(item.enchantmentPoints, jewelPoints(r, tpl, item.hand ?? null));",
-    "new": "return item.enchantmentPoints;",
+    "old": "  return Math.min(item.enchantmentPoints, jewelPoints(r, tpl, item.hand ?? null));",
+    "new": "  return item.enchantmentPoints;",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1328,8 +1328,8 @@
   {
     "name": "AUDIT-PROF10-J1-cap-max",
     "file": "src/systems/enchanting.js",
-    "old": "return Math.min(item.enchantmentPoints, jewelPoints(r, tpl, item.hand ?? null));",
-    "new": "return Math.max(item.enchantmentPoints, jewelPoints(r, tpl, item.hand ?? null));",
+    "old": "  return Math.min(item.enchantmentPoints, jewelPoints(r, tpl, item.hand ?? null));",
+    "new": "  return Math.max(item.enchantmentPoints, jewelPoints(r, tpl, item.hand ?? null));",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1337,8 +1337,8 @@
   {
     "name": "AUDIT-PROF-541-J6-hand-ignored",
     "file": "src/systems/enchanting.js",
-    "old": "jewelPoints(r, tpl, item.hand ?? null)",
-    "new": "jewelPoints(r, tpl, null)",
+    "old": "  return Math.min(item.enchantmentPoints, jewelPoints(r, tpl, item.hand ?? null));",
+    "new": "  return Math.min(item.enchantmentPoints, jewelPoints(r, tpl, null));",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1346,8 +1346,8 @@
   {
     "name": "AUDIT-PROF-541-J6-goldsmith-assumed",
     "file": "src/systems/enchanting.js",
-    "old": "jewelPoints(r, tpl, item.hand ?? null)",
-    "new": "jewelPoints(r, tpl, item.hand ?? 1)",
+    "old": "  return Math.min(item.enchantmentPoints, jewelPoints(r, tpl, item.hand ?? null));",
+    "new": "  return Math.min(item.enchantmentPoints, jewelPoints(r, tpl, item.hand ?? 1));",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1374,8 +1374,8 @@
   {
     "name": "AUDIT-PROF10-J2-kept-skips-uncostable",
     "file": "src/systems/enchanting.js",
-    "old": "    if (!row) return null;\n    out.push({ ...row, kept: true });",
-    "new": "    if (!row) continue;\n    out.push({ ...row, kept: true });",
+    "old": "    if (!row) return null;",
+    "new": "    if (!row) continue;",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1383,8 +1383,8 @@
   {
     "name": "AUDIT-PROF10-J2-kept-never-forced",
     "file": "src/systems/enchanting.js",
-    "old": "const parent = typeof e?.parentEnchantment === 'string' ? e.parentEnchantment : 0;",
-    "new": "const parent = 0;",
+    "old": "    const parent = typeof e?.parentEnchantment === 'string' ? e.parentEnchantment : 0;",
+    "new": "    const parent = 0;",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1392,8 +1392,8 @@
   {
     "name": "AUDIT-PROF10-J2-decision-kept-free",
     "file": "src/systems/enchanting.js",
-    "old": "const cost = totalEnchantmentCost(powers, sideEffects) + enchantmentListCost(keptEnchantments(item) ?? []);",
-    "new": "const cost = totalEnchantmentCost(powers, sideEffects);",
+    "old": "  const cost = totalEnchantmentCost(powers, sideEffects) + enchantmentListCost(keptEnchantments(item) ?? []);",
+    "new": "  const cost = totalEnchantmentCost(powers, sideEffects);",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1410,8 +1410,8 @@
   {
     "name": "AUDIT-PROF10-J2-apply-overwrites",
     "file": "src/systems/enchanting.js",
-    "old": "item.enchantments = [...kept, ...applied.map(",
-    "new": "item.enchantments = [...applied.map(",
+    "old": "  item.enchantments = [...kept, ...applied.map((e) => ({ ...e, type: classicEnchantmentType(e.type) }))];",
+    "new": "  item.enchantments = [...applied.map((e) => ({ ...e, type: classicEnchantmentType(e.type) }))];",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1601,8 +1601,8 @@
   {
     "name": "PROF-541-R2-C5-uncapped",
     "file": "src/systems/enchanting.js",
-    "old": "  applied.length = Math.min(applied.length, Math.max(0, MAX_ENCHANTMENTS + 1 - kept.length));\n",
-    "new": "",
+    "old": "  applied.length = Math.min(applied.length, Math.max(0, MAX_ENCHANTMENTS + 1 - kept.length));\n  doEnchantedPayloads(item, applied, { entity: owner, ctx, nowMinutes });",
+    "new": "  doEnchantedPayloads(item, applied, { entity: owner, ctx, nowMinutes });",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]

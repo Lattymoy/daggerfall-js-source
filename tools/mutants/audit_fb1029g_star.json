@@ -134,8 +134,8 @@
   {
     "name": "AFB-STAR-F4-promote-unstamped",
     "file": "src/systems/eliteFoes.js",
-    "old": "  entity.eventFoe = true;   // STAR-MASTER-FLED",
-    "new": "  // STAR-MASTER-FLED",
+    "old": "  entity.eventFoe = true; // STAR-MASTER-FLED: an event's own - never a revenant (revenant/unquietMark.js isEventFoe)",
+    "new": "  // STAR-MASTER-FLED: an event's own - never a revenant (revenant/unquietMark.js isEventFoe)",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ],

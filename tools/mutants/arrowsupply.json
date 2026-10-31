@@ -335,8 +335,8 @@
   {
     "name": "ARROW-LODGE-arrows-counted",
     "file": "src/systems/foeLootCap.js",
-    "old": "const keep = [...(gold ? [gold] : []), ...quest];",
-    "new": "const keep = [...(gold ? [gold] : []), ...quest, ...quiver];",
+    "old": "  const keep = [...(gold ? [gold] : []), ...quest];",
+    "new": "  const keep = [...(gold ? [gold] : []), ...quest, ...quiver];",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "ARROW-LODGE-arrows-dropped",
     "file": "src/systems/foeLootCap.js",
-    "old": "const kept = new Set([...keep, ...quiver]);",
-    "new": "const kept = new Set(keep);",
+    "old": "  const kept = new Set([...keep, ...quiver]);",
+    "new": "  const kept = new Set(keep);",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "ARROW-LODGE-arrows-ranked",
     "file": "src/systems/foeLootCap.js",
-    "old": " && !it.questItem && !isQuiverArrow(it))",
-    "new": " && !it.questItem)",
+    "old": "    .filter((it) => it && it !== gold && !isGoldPieces(it) && !it.questItem && !isQuiverArrow(it))",
+    "new": "    .filter((it) => it && it !== gold && !isGoldPieces(it) && !it.questItem)",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "FLETCH-a-count-table",
     "file": "src/systems/fletching.js",
-    "old": "Math.floor(wood / arrow + 1e-9) : 0;",
-    "new": "2 : 0;",
+    "old": "  return wood > 0 && arrow > 0 ? Math.floor(wood / arrow + 1e-9) : 0;",
+    "new": "  return wood > 0 && arrow > 0 ? 2 : 0;",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "FLETCH-the-whole-stack",
     "file": "src/systems/fletching.js",
-    "old": "if ((item.stackCount ?? 1) > 1) item.stackCount -= 1;",
-    "new": "if ((item.stackCount ?? 1) > 1) item.stackCount = 1;",
+    "old": "  if ((item.stackCount ?? 1) > 1) item.stackCount -= 1;",
+    "new": "  if ((item.stackCount ?? 1) > 1) item.stackCount = 1;",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "FLETCH-into-the-list-it-lay-in",
     "file": "src/systems/fletching.js",
-    "old": "const pack = ctx?.localItems ?? list;",
-    "new": "const pack = list;",
+    "old": "  const pack = ctx?.localItems ?? list;",
+    "new": "  const pack = list;",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "FLETCH-a-quest-piece",
     "file": "src/systems/fletching.js",
-    "old": "if (!n || item.questItem) return null;",
-    "new": "if (!n) return null;",
+    "old": "  if (!n || item.questItem) return null;",
+    "new": "  if (!n) return null;",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]

@@ -11,8 +11,8 @@
   {
     "name": "AUF-L1H1-skill-apart",
     "file": "src/systems/firmamentPowers.js",
-    "old": "const v = capAt(`skill.${n}`, read(`skill.${n}`) + (share ? pctOf(permanentSkillValue(entity, id), share) : 0));",
-    "new": "const v = read(`skill.${n}`) + (share ? pctOf(permanentSkillValue(entity, id), share) : 0);",
+    "old": "    const v = capAt(`skill.${n}`, read(`skill.${n}`) + (share ? pctOf(permanentSkillValue(entity, id), share) : 0));",
+    "new": "    const v = read(`skill.${n}`) + (share ? pctOf(permanentSkillValue(entity, id), share) : 0);",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUF-L1H1-hp-apart",
     "file": "src/systems/firmamentPowers.js",
-    "old": "hp: capAt('hp', (c.hp ?? 0) + pctOf(floored, c.hpPct ?? 0))",
-    "new": "hp: (c.hp ?? 0) + pctOf(floored, c.hpPct ?? 0)",
+    "old": "    hp: capAt('hp', (c.hp ?? 0) + pctOf(floored, c.hpPct ?? 0)),",
+    "new": "    hp: (c.hp ?? 0) + pctOf(floored, c.hpPct ?? 0),",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUF-L1L2-MENTOR2-a-life-star-scaled",
     "file": "src/systems/firmamentLive.js",
-    "old": "(k === 1 || statDef(key)?.kind === 'life' ? v : Math.round(v * k))",
-    "new": "(k === 1 ? v : Math.round(v * k))",
+    "old": "const atScale = (key, v, k) => (k === 1 || statDef(key)?.kind === 'life' ? v : Math.round(v * k));",
+    "new": "const atScale = (key, v, k) => (k === 1 ? v : Math.round(v * k));",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AUF-L1L2-mentor-untold",
     "file": "src/systems/firmamentLive.js",
-    "old": "  _mentorScale = v;\n  tell();",
-    "new": "  _mentorScale = v;",
+    "old": "  tell();\n}",
+    "new": "}",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -471,8 +471,8 @@
   {
     "name": "AUF-L5H5-player-kill-counts",
     "file": "src/systems/firmamentPowers.js",
-    "old": "const neverCounts = (e) => !!e?.isPlayer || !!e?.peer ||",
-    "new": "const neverCounts = (e) =>",
+    "old": "  !!e?.isPlayer ||\n  !!e?.peer ||\n  e?.mobileType === KNIGHT_CITY_WATCH ||\n  e?.team === 'PlayerAlly' ||\n  e?.mobileTeam === 'PlayerAlly'; // a player felled is no beast's kill",
+    "new": "  e?.mobileType === KNIGHT_CITY_WATCH || e?.team === 'PlayerAlly' || e?.mobileTeam === 'PlayerAlly'; // a player felled is no beast's kill",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -480,8 +480,8 @@
   {
     "name": "AUF-L5H5-regen-tenfold",
     "file": "src/systems/firmamentPowers.js",
-    "old": "regenShare((entity.maxHealth * c.hpRegen) / 1000, ",
-    "new": "regenShare((entity.maxHealth * c.hpRegen) / 100, ",
+    "old": "    const held = regenShare((entity.maxHealth * c.hpRegen) / 1000, 'firmament', entity);",
+    "new": "    const held = regenShare((entity.maxHealth * c.hpRegen) / 100, 'firmament', entity);",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -499,7 +499,7 @@
     "name": "AUF-L5H5-layer-off-the-layer",
     "file": "src/systems/firmamentPowers.js",
     "old": "  const baseMp = (entity.maxMagicka ?? 0) - renownMpOf(entity);",
-    "new": "  const baseMp = (entity.maxMagicka ?? 0);",
+    "new": "  const baseMp = entity.maxMagicka ?? 0;",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]

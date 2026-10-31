@@ -236,8 +236,8 @@
   {
     "name": "SC-ledger-unsaved",
     "file": "src/systems/fleet.js",
-    "old": ", ...(r.colours ? { colours: { ...r.colours } } : {}), ...(r.livery",
-    "new": ", ...(r.livery",
+    "old": "      ...(r.colours ? { colours: { ...r.colours } } : {}),\n      ...(r.livery ? { livery: { ...r.livery } } : {}),",
+    "new": "      ...(r.livery ? { livery: { ...r.livery } } : {}),",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]
@@ -245,7 +245,7 @@
   {
     "name": "SC-ledger-unread",
     "file": "src/systems/fleet.js",
-    "old": "    r.colours = shipFlagOf(s.colours);   // SHIP-COLOURS: her flag, as it may be (none, or one the door refuses: her pennant)",
+    "old": "    r.colours = shipFlagOf(s.colours); // SHIP-COLOURS: her flag, as it may be (none, or one the door refuses: her pennant)",
     "new": "",
     "tests": [
       "test/systems/naval/shipcolours.test.js"

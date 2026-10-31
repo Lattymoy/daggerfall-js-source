@@ -299,7 +299,7 @@
   {
     "name": "KTE-the-timers-province-unasked",
     "file": "src/systems/eventTimers.js",
-    "old": "  if (kHere) ketchRows(now, coming, live, kHere);",
+    "old": "  if (kHere) ketchRows(now, coming, live, kHere);\n",
     "new": "",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
@@ -308,8 +308,8 @@
   {
     "name": "KTE-the-timers-standing-unread",
     "file": "src/systems/eventTimers.js",
-    "old": "const kHere = ketchStationsStanding() && src?.pixel ?",
-    "new": "const kHere = src?.pixel ?",
+    "old": "  const kHere = ketchStationsStanding() && src?.pixel ? ketchStationHere(src.pixel.x, src.pixel.y) : null;",
+    "new": "  const kHere = src?.pixel ? ketchStationHere(src.pixel.x, src.pixel.y) : null;",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "KTE-the-timers-where-the-bays",
     "file": "src/systems/eventTimers.js",
-    "old": "kWhere = theatre ? t('ketch.timers.whereAt',",
-    "new": "kWhere = false ? t('ketch.timers.whereAt',",
+    "old": "    kWhere = theatre",
+    "new": "    kWhere = false",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]

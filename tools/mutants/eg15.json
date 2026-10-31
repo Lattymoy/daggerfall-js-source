@@ -242,8 +242,8 @@
   {
     "name": "EG15-magicka-unsummed",
     "file": "src/systems/entityMods.js",
-    "old": "    out.magicka += m.magicka | 0;   // EG15: whole points\n",
-    "new": "",
+    "old": "    out.magicka += m.magicka | 0; // EG15: whole points\n  }",
+    "new": "  }",
     "why": "the channel folds nothing",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "EG15-magicka-fractional",
     "file": "src/systems/entityMods.js",
-    "old": "out.magicka += m.magicka | 0;",
-    "new": "out.magicka += Number(m.magicka) || 0;",
+    "old": "    out.magicka += m.magicka | 0; // EG15: whole points",
+    "new": "    out.magicka += Number(m.magicka) || 0; // EG15: whole points",
     "why": "a fraction of a point on the maximum",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"

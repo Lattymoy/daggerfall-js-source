@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-WE-L2-6-the-drop-never-given",
     "file": "src/systems/eliteFoes.js",
-    "old": "  if (own) grantEliteLoot(entity, entity.level);",
-    "new": "",
+    "old": "  if (own) grantEliteLoot(entity, entity.level); // AUDIT WORLD-EVENTS L2-6: an elite's drop - the pool grants it at a stand that rolled the elite, and a leader is promoted after its stand (once, whichever came first)",
+    "new": "  // AUDIT WORLD-EVENTS L2-6: an elite's drop - the pool grants it at a stand that rolled the elite, and a leader is promoted after its stand (once, whichever came first)",
     "tests": [
       "test/scenes/auditwe_traits.test.js"
     ]

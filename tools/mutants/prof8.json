@@ -184,8 +184,8 @@
   {
     "name": "PROF8-act-held-is-a-press",
     "file": "src/systems/fishAct.js",
-    "old": "  const pressed = attack || (held && !st.wasHeld);",
-    "new": "  const pressed = attack || held;",
+    "old": "      const pressed = attack || (held && !st.wasHeld); // an edge of E, or of attack",
+    "new": "      const pressed = attack || held; // an edge of E, or of attack",
     "tests": [
       "test/world/terrain/prof8_client.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "PROF8-act-never-slips",
     "file": "src/systems/fishAct.js",
-    "old": "      else st.slip = Math.min(1, st.slip + step / FISH_ACT.slipS);\n",
-    "new": "",
+    "old": "      else st.slip = Math.min(1, st.slip + step / FISH_ACT.slipS);\n      if (st.fill >= 1) land(true);",
+    "new": "      if (st.fill >= 1) land(true);",
     "tests": [
       "test/world/terrain/prof8_client.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "PROF8-act-gentle-tugs",
     "file": "src/systems/fishAct.js",
-    "old": "          if (gentle) { land(false); return st; }   // no moment: the net comes in plain\n",
-    "new": "",
+    "old": "          if (gentle) {\n            land(false);\n            return st;\n          } // no moment: the net comes in plain\n          st.phase = 'tug';",
+    "new": "          st.phase = 'tug';",
     "tests": [
       "test/world/terrain/prof8_client.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "PROF8-act-tug-unfelt",
     "file": "src/systems/fishAct.js",
-    "old": "          try { onTug?.(); } catch { /* the host's own */ }\n",
-    "new": "",
+    "old": "          try {\n            onTug?.();\n          } catch {\n            /* the host's own */\n          }\n        }",
+    "new": "        }",
     "tests": [
       "test/world/terrain/prof8_client.test.js"
     ]

@@ -85,8 +85,8 @@
   {
     "name": "AUDITGATHER-F6-band-unread",
     "file": "src/systems/fishAct.js",
-    "old": "tugS: tugWindow(angler) * firmActMult('fishing') * band,",
-    "new": "tugS: tugWindow(angler) * firmActMult('fishing'),",
+    "old": "    tugS: tugWindow(angler) * firmActMult('fishing') * band,",
+    "new": "    tugS: tugWindow(angler) * firmActMult('fishing'),",
     "tests": [
       "test/systems/auditgather.test.js"
     ]

@@ -402,7 +402,7 @@
   {
     "name": "AUDIT-1019-L2-4-share-of-stored",
     "file": "src/systems/firmamentPowers.js",
-    "old": "  const floored = baseHp + (Number.isFinite(entity.rawMaxHealth) ? evenHpOf(entity, (entity.stats?.endurance ?? NaN) + end) : 0);",
+    "old": "  const floored =\n    baseHp + (Number.isFinite(entity.rawMaxHealth) ? evenHpOf(entity, (entity.stats?.endurance ?? NaN) + end) : 0);",
     "new": "  const floored = baseHp;",
     "tests": [
       "test/systems/fb1019b_audit.test.js"

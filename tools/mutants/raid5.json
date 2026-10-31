@@ -282,8 +282,8 @@
   {
     "name": "RAID5-the-board-detail-dropped",
     "file": "src/systems/eventBoard.js",
-    "old": "const count = live && r.obj ? [r.obj, counted].filter(Boolean).join(' - ') : counted;",
-    "new": "const count = counted;",
+    "old": "  const count = live && r.obj ? [r.obj, counted].filter(Boolean).join(' - ') : counted; // RAID5: its kind's objective first (systems/raidingParties.js raidTimerList)",
+    "new": "  const count = counted; // RAID5: its kind's objective first (systems/raidingParties.js raidTimerList)",
     "tests": [
       "test/systems/raid5_kinds.test.js"
     ]

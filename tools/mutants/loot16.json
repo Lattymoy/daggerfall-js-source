@@ -394,8 +394,8 @@
   {
     "name": "LOOT16-the-kit-never-cursed",
     "file": "src/systems/foeLootCap.js",
-    "old": "  cursePass(kit, opts.rolls ?? Math.random);",
-    "new": "  void cursePass;",
+    "old": "  cursePass(kit, opts.rolls ?? Math.random); // LOOT16: a body's own Rares and Legendaries, one in twelve cursed - after all of it",
+    "new": "  void cursePass; // LOOT16: a body's own Rares and Legendaries, one in twelve cursed - after all of it",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]

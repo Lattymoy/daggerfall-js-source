@@ -87,7 +87,7 @@ and the player describes the drops during play).
 FIXED. A `visibilitychange` starts the counter's second again at the first frame shown. The counter keeps every second
 that held a frame of HITCH_MS (50 ms) or more for HITCH_KEEP_MS (60 s), and while the minute holds one prints its
 worst, how long ago and how many, and the frame clock's split of the frame that opened that gap, asked by the rAF
-stamp it began at (`frameClock.js:"export function frameSampleAt(stamp) {"`: script, `frame` the game's callback,
+stamp it began at (`frameClock.js:"export function frameSampleAt"`: script, `frame` the game's callback,
 `before` a timer, message or collection, `stream` the world's build). A hitch with
 little script under it is the GPU, the compositor or untimed work; one that is nearly all script is the game's.
 `window.__fpsStats().hitch` carries the same.

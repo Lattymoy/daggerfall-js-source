@@ -425,8 +425,8 @@
   {
     "name": "RO-metal-arrow-melted",
     "file": "src/systems/fleet.js",
-    "old": "return item.templateIndex !== WEAPONS.Arrow && m >= 0 && m <= 9 ? m : null;",
-    "new": "return m >= 0 && m <= 9 ? m : null;",
+    "old": "  if (item.group === 'Weapons') return item.templateIndex !== WEAPONS.Arrow && m >= 0 && m <= 9 ? m : null;",
+    "new": "  if (item.group === 'Weapons') return m >= 0 && m <= 9 ? m : null;",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "RO-melt-worn",
     "file": "src/systems/fleet.js",
-    "old": "!!item && item.equipSlot == null && !isLocked(item)",
-    "new": "!!item && !isLocked(item)",
+    "old": "  item.equipSlot == null &&\n  !isLocked(item) &&",
+    "new": "  !isLocked(item) &&",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "RO-melt-enchanted",
     "file": "src/systems/fleet.js",
-    "old": "  && !listed(item.enchantments) && !listed(item.customEnchantments)",
-    "new": "  && !listed(item.customEnchantments)",
+    "old": "  !listed(item.enchantments) &&\n  !listed(item.customEnchantments) &&",
+    "new": "  !listed(item.customEnchantments) &&",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "RO-melt-artifact",
     "file": "src/systems/fleet.js",
-    "old": "  && !item.artifact && !item.sigil && typeof",
-    "new": "  && !item.sigil && typeof",
+    "old": "  !item.artifact &&\n  !item.sigil &&",
+    "new": "  !item.sigil &&",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "RO-melt-sigil",
     "file": "src/systems/fleet.js",
-    "old": "  && !item.artifact && !item.sigil && typeof",
-    "new": "  && !item.artifact && typeof",
+    "old": "  !item.sigil &&\n  typeof item.provenance !== 'string' &&",
+    "new": "  typeof item.provenance !== 'string' &&",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "RO-ingots-not-first",
     "file": "src/systems/fleet.js",
-    "old": "for (const take of [...ingots, (it) => isOf(it, kind)]) for (const list of lists) {",
-    "new": "for (const take of [(it) => isOf(it, kind)]) for (const list of lists) {",
+    "old": "  for (const take of [...ingots, (it) => isOf(it, kind)])",
+    "new": "  for (const take of [(it) => isOf(it, kind)])",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "RO-joint-on-originals",
     "file": "src/systems/fleet.js",
-    "old": "  const copy = lists.map((l) => (l ?? []).map((it) => (it ? { ...it } : it)));\n  return takeOrder(mats).every",
-    "new": "  const copy = lists;\n  return takeOrder(mats).every",
+    "old": "export function materialsFor(lists, mats) {\n  const copy = lists.map((l) => (l ?? []).map((it) => (it ? { ...it } : it)));",
+    "new": "export function materialsFor(lists, mats) {\n  const copy = lists;",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "RO-ore-level-free",
     "file": "src/systems/fleet.js",
-    "old": "mats: [{ kind: ore.ore, n: n(ore.n) }, { kind: line.mats[0], n: n(TIER_MATS[BASE_TIERS - 1]) }], level: ore.level };",
-    "new": "mats: [{ kind: ore.ore, n: n(ore.n) }, { kind: line.mats[0], n: n(TIER_MATS[BASE_TIERS - 1]) }], level: 1 };",
+    "old": "    level: ore.level,",
+    "new": "    level: 1,",
     "tests": [
       "test/systems/naval/captaintree.test.js",
       "test/systems/naval/fleet.test.js"
@@ -516,8 +516,8 @@
   {
     "name": "RO-ore-no-line-store",
     "file": "src/systems/fleet.js",
-    "old": "mats: [{ kind: ore.ore, n: n(ore.n) }, { kind: line.mats[0], n: n(TIER_MATS[BASE_TIERS - 1]) }], level: ore.level };",
-    "new": "mats: [{ kind: ore.ore, n: n(ore.n) }], level: ore.level };",
+    "old": "  return {\n    gold: Math.round((ore.gold * k) / 10) * 10,\n    mats: [\n      { kind: ore.ore, n: n(ore.n) },\n      { kind: line.mats[0], n: n(TIER_MATS[BASE_TIERS - 1]) },\n    ],\n    level: ore.level,\n  };",
+    "new": "  return { gold: Math.round((ore.gold * k) / 10) * 10, mats: [{ kind: ore.ore, n: n(ore.n) }], level: ore.level };",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -667,8 +667,8 @@
   {
     "name": "RO-melt-locked",
     "file": "src/systems/fleet.js",
-    "old": "item.equipSlot == null && !isLocked(item) && !isBound(item)",
-    "new": "item.equipSlot == null && !isBound(item)",
+    "old": "  !isLocked(item) &&\n  !isBound(item) &&",
+    "new": "  !isBound(item) &&",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -676,8 +676,8 @@
   {
     "name": "RO-melt-bound",
     "file": "src/systems/fleet.js",
-    "old": "!isLocked(item) && !isBound(item) && !isSummoned(item) && !item.questItem",
-    "new": "!isLocked(item) && !isSummoned(item) && !item.questItem",
+    "old": "  !isBound(item) &&\n  !isSummoned(item) &&",
+    "new": "  !isSummoned(item) &&",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -685,8 +685,8 @@
   {
     "name": "RO-melt-made",
     "file": "src/systems/fleet.js",
-    "old": "!item.sigil && typeof item.provenance !== 'string'",
-    "new": "!item.sigil",
+    "old": "  typeof item.provenance !== 'string' &&\n  !listed(item.enchantments) &&",
+    "new": "  !listed(item.enchantments) &&",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -694,8 +694,8 @@
   {
     "name": "RO-melt-custom",
     "file": "src/systems/fleet.js",
-    "old": "  && !listed(item.enchantments) && !listed(item.customEnchantments)",
-    "new": "  && !listed(item.enchantments)",
+    "old": "  !listed(item.customEnchantments) &&\n  !item.magic &&",
+    "new": "  !item.magic &&",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -703,8 +703,8 @@
   {
     "name": "RO-melt-graded",
     "file": "src/systems/fleet.js",
-    "old": "(item.rarity == null || item.rarity === 'common')",
-    "new": "true",
+    "old": "  (item.rarity == null || item.rarity === 'common') &&",
+    "new": "  true &&",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -712,8 +712,8 @@
   {
     "name": "RO-melt-affixed",
     "file": "src/systems/fleet.js",
-    "old": "&& !listed(item.affixes) && !item.legendary",
-    "new": "&& !item.legendary",
+    "old": "  !listed(item.affixes) &&\n  !item.legendary &&",
+    "new": "  !item.legendary &&",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -721,8 +721,8 @@
   {
     "name": "RO-melt-legendary",
     "file": "src/systems/fleet.js",
-    "old": "&& !listed(item.affixes) && !item.legendary",
-    "new": "&& !listed(item.affixes)",
+    "old": "  !item.legendary &&\n  item.socket == null &&",
+    "new": "  item.socket == null &&",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -730,8 +730,8 @@
   {
     "name": "RO-melt-magic",
     "file": "src/systems/fleet.js",
-    "old": "  && !item.magic && (item.rarity",
-    "new": "  && (item.rarity",
+    "old": "  !item.magic &&\n  (item.rarity == null || item.rarity === 'common') &&",
+    "new": "  (item.rarity == null || item.rarity === 'common') &&",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -739,8 +739,8 @@
   {
     "name": "RO-melt-socket",
     "file": "src/systems/fleet.js",
-    "old": "  && item.socket == null && !listed(item.sockets);",
-    "new": "  && !listed(item.sockets);",
+    "old": "  item.socket == null &&\n  !listed(item.sockets);",
+    "new": "  !listed(item.sockets);",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -748,8 +748,8 @@
   {
     "name": "RO-melt-sockets",
     "file": "src/systems/fleet.js",
-    "old": "  && item.socket == null && !listed(item.sockets);",
-    "new": "  && item.socket == null;",
+    "old": "  item.socket == null &&\n  !listed(item.sockets);",
+    "new": "  item.socket == null;",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]

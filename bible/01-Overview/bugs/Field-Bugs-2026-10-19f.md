@@ -994,7 +994,7 @@ six-hour reroll untouched. One landed blow does. AUDIT 24 wave 31's break - at t
 `formulas.js:"if (damage > 0) breakNormalPowerConcealment"`, and at every FromSource damage door
 (`handleAttackFromSource`) - ran a filter that DELETED every normal-power concealment entry, a spell's and a worn item's
 alike, and the worn one's pin went with it. The reroll that recasts a worn item's spell visits only an item that still
-holds a pin (`enchantments.js:"if (!entity.activeEffects.some((a) => a.heldItem === item)) continue;"`), so the piece
+holds a pin (`enchantments.js:"if (!entity.activeEffects.some((a) => a.heldItem === item))"`), so the piece
 stood worn and inert until it came off: 48 hours after the blow, still worn, not invisible, no pin. A blow in a
 journey's ambush is the likely travel trigger - not proven, and the fix does not need it. DFU never lost it:
 EndIncumbentEffect<T> (EntityEffectManager.cs:759-766) ENDS the effect - `RoundsRemaining = 0; End()` - and removes

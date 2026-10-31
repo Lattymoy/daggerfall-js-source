@@ -162,8 +162,8 @@
   {
     "name": "AUDIT-RPT1026-F4-mark-unsaved",
     "file": "src/systems/foeLootCap.js",
-    "old": "(f?.entity?.summoned === true ? { ...rec, summoned: true } : rec)",
-    "new": "(rec)",
+    "old": "export const savedSummon = (f, rec) => (f?.entity?.summoned === true ? { ...rec, summoned: true } : rec);",
+    "new": "export const savedSummon = (f, rec) => rec;",
     "tests": [
       "test/scenes/audit_rpt1026_progress.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "AUDIT-RPT1026-F4-mark-unrestored",
     "file": "src/systems/foeLootCap.js",
-    "old": "(sf?.summoned === true && f?.entity ? summonedBody(f) : f)",
-    "new": "(f)",
+    "old": "export const restoredSummon = (f, sf) => (sf?.summoned === true && f?.entity ? summonedBody(f) : f);",
+    "new": "export const restoredSummon = (f, sf) => f;",
     "tests": [
       "test/scenes/audit_rpt1026_progress.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "AUDIT-RPT1026-F4-death-finds-kept",
     "file": "src/systems/foeLootCap.js",
-    "old": "  if (entity?.summoned === true && Array.isArray(entity.items)) return entity.items.splice(0);",
-    "new": "",
+    "old": "  if (entity?.summoned === true && Array.isArray(entity.items)) return entity.items.splice(0); // RPT1026-PROGRESS: a summon's body (summonedBody)",
+    "new": "  // RPT1026-PROGRESS: a summon's body (summonedBody)",
     "tests": [
       "test/scenes/audit_rpt1026_progress.test.js"
     ],

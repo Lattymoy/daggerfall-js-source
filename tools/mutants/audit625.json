@@ -2,7 +2,7 @@
   {
     "name": "AUDIT625-L1-kit-by-the-table",
     "file": "src/systems/foeLootCap.js",
-    "old": "    if (!it || it.untaken === true || !rarityEligible(it)) return;   // AUDIT 625 L1: no mark - the kit the spawn's roll passed by",
+    "old": "    if (!it || it.untaken === true || !rarityEligible(it)) return; // AUDIT 625 L1: no mark - the kit the spawn's roll passed by",
     "new": "    if (!it || it.untaken === true || !rarityEligible(it) || !(entity.equip?.slots ?? []).includes(it)) return;",
     "why": "the kit found by the table's objects again - no foe restored from a save rolls it",
     "tests": [
@@ -12,7 +12,7 @@
   {
     "name": "AUDIT625-L2-the-live-piece-laddered",
     "file": "src/systems/foeLootCap.js",
-    "old": "    const piece = { ...it, untaken: true };   // AUDIT 625 L2: a copy in the body; the table's piece stays as it was minted",
+    "old": "    const piece = { ...it, untaken: true }; // AUDIT 625 L2: a copy in the body; the table's piece stays as it was minted",
     "new": "    const piece = Object.assign(it, { untaken: true });",
     "why": "the table's own piece laddered - a foe revived in place swings it",
     "tests": [
@@ -22,8 +22,8 @@
   {
     "name": "AUDIT625-L3-the-boss-ladder",
     "file": "src/systems/foeLootCap.js",
-    "old": "entity.level, entity.mobileType), boss: false, weights: plainFoeRarityWeights(quarters) };",
-    "new": "entity.level, entity.mobileType), weights: plainFoeRarityWeights(quarters) };",
+    "old": "    boss: false,\n    weights: plainFoeRarityWeights(quarters),",
+    "new": "    weights: plainFoeRarityWeights(quarters),",
     "why": "a boss's kit on its multiplied ladder",
     "tests": [
       "test/systems/audit625_loot.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "AUDIT625-L6-family-dropped",
     "file": "src/systems/foeLootCap.js",
-    "old": "applyRarity(piece, tier, rolls, null, { family: source.family ?? null })",
-    "new": "applyRarity(piece, tier, rolls, null, { family: null })",
+    "old": "      applyRarity(piece, tier, rolls, null, { family: source.family ?? null });",
+    "new": "      applyRarity(piece, tier, rolls, null, { family: null });",
     "why": "the foe's family unread at a Legendary's pick",
     "tests": [
       "test/systems/audit625_loot.test.js"

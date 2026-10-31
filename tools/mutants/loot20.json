@@ -279,8 +279,8 @@
   {
     "name": "LOOT20-the-kit-no-sockets",
     "file": "src/systems/foeLootCap.js",
-    "old": "  socketPass(kit, opts.rolls ?? Math.random);   // LOOT20: and a socket, after the curse\n",
-    "new": "",
+    "old": "  socketPass(kit, opts.rolls ?? Math.random); // LOOT20: and a socket, after the curse\n  weaponSocketPass(kit, opts.rolls ?? Math.random); // GEM1: and a weapon's own sockets, after that (law 9)",
+    "new": "  weaponSocketPass(kit, opts.rolls ?? Math.random); // GEM1: and a weapon's own sockets, after that (law 9)",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ]

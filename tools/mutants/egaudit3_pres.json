@@ -255,8 +255,8 @@
   {
     "name": "EGA3P-season-line",
     "file": "src/systems/eventTimers.js",
-    "old": "top ten hold the title Spire Champion through the next season');",
-    "new": "top ten hold Spire Champion through the next');",
+    "old": "      \"Each Descent bracket's top ten hold the title Spire Champion through the next season\",",
+    "new": "      \"Each Descent bracket's top ten hold Spire Champion through the next\",",
     "tests": [
       "test/net/eliteGates/egaudit3_pres.test.js"
     ],

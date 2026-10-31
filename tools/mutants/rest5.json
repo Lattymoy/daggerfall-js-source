@@ -2,8 +2,8 @@
   {
     "name": "REST5-the-follower-rolls-an-ambush-too",
     "file": "src/systems/encounters.js",
-    "old": "  if (_quiet > 0) return null;",
-    "new": "  if (_quiet > 99) return null;",
+    "old": "  if (_quiet > 0) return null; // REST5: a night carried for a party member wakes to no ambush (quietNights)",
+    "new": "  if (_quiet > 99) return null; // REST5: a night carried for a party member wakes to no ambush (quietNights)",
     "tests": [
       "test/systems/rest5_partynight.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "REST5-quiet-never-comes-back-down",
     "file": "src/systems/encounters.js",
-    "old": "  try { return fn(); } finally { _quiet--; }",
-    "new": "  try { return fn(); } finally { if (_quiet > 1) _quiet--; }",
+    "old": "    _quiet--;",
+    "new": "    if (_quiet > 1) _quiet--;",
     "tests": [
       "test/systems/rest5_partynight.test.js"
     ]

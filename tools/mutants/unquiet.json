@@ -83,8 +83,8 @@
   {
     "name": "UNQUIET-door-elite-unmarked",
     "file": "src/systems/eliteFoes.js",
-    "old": "  if (own) markUnquiet(entity);",
-    "new": "",
+    "old": "  if (own) markUnquiet(entity); // UNQUIET: the mark that lets it rise, drawn on its own",
+    "new": "  // UNQUIET: the mark that lets it rise, drawn on its own",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "UNQUIET-door-elite-puppet",
     "file": "src/systems/eliteFoes.js",
-    "old": "  if (own) markUnquiet(entity);",
-    "new": "  markUnquiet(entity);",
+    "old": "  if (own) markUnquiet(entity); // UNQUIET: the mark that lets it rise, drawn on its own",
+    "new": "  markUnquiet(entity); // UNQUIET: the mark that lets it rise, drawn on its own",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "UNQUIET-title-unsaid",
     "file": "src/systems/foeTitle.js",
-    "old": "return entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && entity.eventFoe !== true ? `Unquiet ${traited}` : traited;",
-    "new": "return traited;",
+    "old": "  return entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && entity.eventFoe !== true\n    ? `Unquiet ${traited}`\n    : traited; // UNQUIET: the mark - it may rise (unquietMark.js isUnquiet's own test: AUDIT UNQUIET, never the zone's or the sand's; STAR-MASTER-FLED, nor an event's own - isEventFoe)",
+    "new": "  return traited; // UNQUIET: the mark - it may rise (unquietMark.js isUnquiet's own test: AUDIT UNQUIET, never the zone's or the sand's; STAR-MASTER-FLED, nor an event's own - isEventFoe)",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -741,8 +741,8 @@
   {
     "name": "UNQUIET-ledger-last-unkept",
     "file": "src/systems/feudLedger.js",
-    "old": "  l.last = FEUD_CLASSES.includes(cls) ? cls : 'other';",
-    "new": "",
+    "old": "  l.last = FEUD_CLASSES.includes(cls) ? cls : 'other'; // UNQUIET (bible/06-Systems/Revenants.md section 46): the blow that broke it",
+    "new": "  // UNQUIET (bible/06-Systems/Revenants.md section 46): the blow that broke it",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]

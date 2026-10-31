@@ -131,8 +131,8 @@
   {
     "name": "AH-F4-settled-while-owed",
     "file": "src/systems/fleet.js",
-    "old": "  for (const r of _ships.values()) if (r.credit && !(accounts[r.credit.region]?.loanTotal > 0)) { r.credit = null; n++; }",
-    "new": "  for (const r of _ships.values()) if (r.credit) { r.credit = null; n++; }",
+    "old": "    if (r.credit && !(accounts[r.credit.region]?.loanTotal > 0)) {",
+    "new": "    if (r.credit) {",
     "tests": [
       "test/systems/naval/auditholdings.test.js",
       "test/systems/naval/fleet.test.js"
@@ -150,8 +150,8 @@
   {
     "name": "AH-F7-her-worth-unbounded",
     "file": "src/systems/fleet.js",
-    "old": "Number.isFinite(s.value) ? Math.max(0, Math.min(SHIP_VALUE_MAX, s.value)) : undefined);",
-    "new": "Number.isFinite(s.value) ? s.value : undefined);",
+    "old": "    const r = recordFor(\n      s.uid,\n      s.hull,\n      variant,\n      Number.isFinite(s.value) ? Math.max(0, Math.min(SHIP_VALUE_MAX, s.value)) : undefined,\n    );",
+    "new": "    const r = recordFor(s.uid, s.hull, variant, Number.isFinite(s.value) ? s.value : undefined);",
     "tests": [
       "test/systems/naval/fleet.test.js"
     ]
@@ -160,7 +160,7 @@
     "name": "AH-F7-no-cap",
     "file": "src/systems/fleet.js",
     "old": "  for (const s of (Array.isArray(data?.ships) ? data.ships : []).slice(0, FLEET_MAX)) {",
-    "new": "  for (const s of (Array.isArray(data?.ships) ? data.ships : [])) {",
+    "new": "  for (const s of Array.isArray(data?.ships) ? data.ships : []) {",
     "tests": [
       "test/systems/naval/fleet.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "AH-F7-a-line-break-dropped",
     "file": "src/systems/fleet.js",
-    "old": "if (c >= 32 && c <= 126) t += ch; else if (/\\s/.test(ch)) t += ' '; }",
-    "new": "if (c >= 32 && c <= 126) t += ch; }",
+    "old": "    else if (/\\s/.test(ch)) t += ' ';\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/naval/fleet.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "AH-F8-the-failed-claim-remembered",
     "file": "src/systems/fleet.js",
-    "old": "export function forgetShip(uid) {\n  _ships.delete(uid);",
-    "new": "export function forgetShip(uid) {\n  void uid;",
+    "old": "  _ships.delete(uid);",
+    "new": "  void uid;",
     "tests": [
       "test/systems/naval/auditholdings.test.js"
     ]

@@ -1,47 +1,152 @@
 [
-  { "name": "OFFHAND-equip-ignores-hand", "file": "src/systems/equip.js",
-    "old": "  const slot = hand == null ? getEquipSlot(entity, item) : mayHold(item, hand) ? hand : EQUIP_SLOTS.None;", "new": "  const slot = getEquipSlot(entity, item);",
-    "tests": ["test/ui/enhanced/offhanddrop.test.js"], "why": "the report: the table's first open hand, else the right - the main weapon goes to the pack" },
-  { "name": "OFFHAND-equip-hand-unchecked", "file": "src/systems/equip.js",
-    "old": ": mayHold(item, hand) ? hand : EQUIP_SLOTS.None;", "new": ": hand;",
-    "tests": ["test/ui/enhanced/offhanddrop.test.js"], "why": "equipItem puts a two-hander in the left hand, a shield in the right" },
-  { "name": "OFFHAND-left-bumps-leftonly-alone", "file": "src/systems/equip.js",
-    "old": "  if (slot === EQUIP_SLOTS.LeftHand) {", "new": "  if (getItemHands(item) === ITEM_HANDS.LeftOnly) {",
-    "tests": ["test/ui/enhanced/offhanddrop.test.js"], "why": "DFU's arm alone: a sword dropped on the left hand stands beside a held two-hander" },
-  { "name": "OFFHAND-left-bumps-nothing", "file": "src/systems/equip.js",
-    "old": "  if (slot === EQUIP_SLOTS.LeftHand) {", "new": "  if (false) {",
-    "tests": ["test/ui/enhanced/offhanddrop.test.js"], "why": "nothing put in the left hand takes a two-hander off" },
-  { "name": "OFFHAND-left-refuses-shield", "file": "src/systems/equip.js",
-    "old": "  if (hand === EQUIP_SLOTS.LeftHand) return h === ITEM_HANDS.Either || h === ITEM_HANDS.LeftOnly;", "new": "  if (hand === EQUIP_SLOTS.LeftHand) return h === ITEM_HANDS.Either;",
-    "tests": ["test/ui/enhanced/offhanddrop.test.js"], "why": "a shield refused on its own hand" },
-  { "name": "OFFHAND-left-takes-twohander", "file": "src/systems/equip.js",
-    "old": "  if (hand === EQUIP_SLOTS.LeftHand) return h === ITEM_HANDS.Either || h === ITEM_HANDS.LeftOnly;", "new": "  if (hand === EQUIP_SLOTS.LeftHand) return h !== ITEM_HANDS.None;",
-    "tests": ["test/ui/enhanced/offhanddrop.test.js"], "why": "a two-hander labelled and worn in the left hand" },
-  { "name": "OFFHAND-right-refuses-twohander", "file": "src/systems/equip.js",
-    "old": "  if (hand === EQUIP_SLOTS.RightHand) return h === ITEM_HANDS.Either || h === ITEM_HANDS.RightOnly || h === ITEM_HANDS.Both;", "new": "  if (hand === EQUIP_SLOTS.RightHand) return h === ITEM_HANDS.Either || h === ITEM_HANDS.RightOnly;",
-    "tests": ["test/ui/enhanced/offhanddrop.test.js"], "why": "a two-hander refused on the right hand, its only one" },
-  { "name": "OFFHAND-right-takes-shield", "file": "src/systems/equip.js",
-    "old": "  if (hand === EQUIP_SLOTS.RightHand) return h === ITEM_HANDS.Either || h === ITEM_HANDS.RightOnly || h === ITEM_HANDS.Both;", "new": "  if (hand === EQUIP_SLOTS.RightHand) return h !== ITEM_HANDS.None;",
-    "tests": ["test/ui/enhanced/offhanddrop.test.js"], "why": "a shield accepted on the right hand's panel" },
-  { "name": "OFFHAND-any-slot-a-hand", "file": "src/systems/equip.js",
-    "old": "h === ITEM_HANDS.RightOnly || h === ITEM_HANDS.Both;\n  return false;", "new": "h === ITEM_HANDS.RightOnly || h === ITEM_HANDS.Both;\n  return h !== ITEM_HANDS.None;",
-    "tests": ["test/ui/enhanced/offhanddrop.test.js"], "why": "a sword held in a slot that is no hand" },
-  { "name": "OFFHAND-swap-right-unchecked", "file": "src/systems/equip.js",
-    "old": "  if (R && !mayHold(R, EQUIP_SLOTS.LeftHand)) return", "new": "  if (false) return",
-    "tests": ["test/ui/enhanced/offhanddrop.test.js"], "why": "SWAP-HANDS puts a two-hander in the left hand" },
-  { "name": "OFFHAND-swap-left-unchecked", "file": "src/systems/equip.js",
-    "old": "  if (L && !mayHold(L, EQUIP_SLOTS.RightHand)) return", "new": "  if (false) return",
-    "tests": ["test/ui/enhanced/offhanddrop.test.js"], "why": "SWAP-HANDS puts a shield in the right hand" },
-  { "name": "OFFHAND-intent-ignores-hand-law", "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  const at = mayHold(item, to) ? to : [EQUIP_SLOTS.RightHand, EQUIP_SLOTS.LeftHand].find((h) => mayHold(item, h));", "new": "  const at = to;",
-    "tests": ["test/ui/enhanced/offhanddrop.test.js"], "why": "a two-hander labelled Left hand, a shield Right hand" },
-  { "name": "OFFHAND-drop-untargeted", "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  if (!isEquipped(item)) return wear(item, to);", "new": "  if (!isEquipped(item)) return wear(item);",
-    "tests": ["test/ui/enhanced/offhanddrop.test.js"], "why": "the drop wears where the table puts it, not in the hand it landed on" },
-  { "name": "OFFHAND-wear-drops-hand", "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  if (equipItem(deps.entity, item, hand) === null)", "new": "  if (equipItem(deps.entity, item) === null)",
-    "tests": ["test/ui/enhanced/offhanddrop.test.js"], "why": "the pack's wear door loses the hand on the way to the table" },
-  { "name": "OFFHAND-held-no-trade", "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  notice = null;\n  if (item.equipSlot !== to) {", "new": "  notice = null;\n  if (false) {",
-    "tests": ["test/ui/enhanced/offhanddrop.test.js"], "why": "a held piece dragged to the other hand stays where it was (SWAP-HANDS kept)" }
+  {
+    "name": "OFFHAND-equip-ignores-hand",
+    "file": "src/systems/equip.js",
+    "old": "  const slot = hand == null ? getEquipSlot(entity, item) : mayHold(item, hand) ? hand : EQUIP_SLOTS.None; // computed ONCE up front (the DFU order)",
+    "new": "  const slot = getEquipSlot(entity, item); // computed ONCE up front (the DFU order)",
+    "tests": [
+      "test/ui/enhanced/offhanddrop.test.js"
+    ],
+    "why": "the report: the table's first open hand, else the right - the main weapon goes to the pack"
+  },
+  {
+    "name": "OFFHAND-equip-hand-unchecked",
+    "file": "src/systems/equip.js",
+    "old": "  const slot = hand == null ? getEquipSlot(entity, item) : mayHold(item, hand) ? hand : EQUIP_SLOTS.None; // computed ONCE up front (the DFU order)",
+    "new": "  const slot = hand == null ? getEquipSlot(entity, item) : hand; // computed ONCE up front (the DFU order)",
+    "tests": [
+      "test/ui/enhanced/offhanddrop.test.js"
+    ],
+    "why": "equipItem puts a two-hander in the left hand, a shield in the right"
+  },
+  {
+    "name": "OFFHAND-left-bumps-leftonly-alone",
+    "file": "src/systems/equip.js",
+    "old": "  if (slot === EQUIP_SLOTS.LeftHand) {",
+    "new": "  if (getItemHands(item) === ITEM_HANDS.LeftOnly) {",
+    "tests": [
+      "test/ui/enhanced/offhanddrop.test.js"
+    ],
+    "why": "DFU's arm alone: a sword dropped on the left hand stands beside a held two-hander"
+  },
+  {
+    "name": "OFFHAND-left-bumps-nothing",
+    "file": "src/systems/equip.js",
+    "old": "  if (slot === EQUIP_SLOTS.LeftHand) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/ui/enhanced/offhanddrop.test.js"
+    ],
+    "why": "nothing put in the left hand takes a two-hander off"
+  },
+  {
+    "name": "OFFHAND-left-refuses-shield",
+    "file": "src/systems/equip.js",
+    "old": "  if (hand === EQUIP_SLOTS.LeftHand) return h === ITEM_HANDS.Either || h === ITEM_HANDS.LeftOnly;",
+    "new": "  if (hand === EQUIP_SLOTS.LeftHand) return h === ITEM_HANDS.Either;",
+    "tests": [
+      "test/ui/enhanced/offhanddrop.test.js"
+    ],
+    "why": "a shield refused on its own hand"
+  },
+  {
+    "name": "OFFHAND-left-takes-twohander",
+    "file": "src/systems/equip.js",
+    "old": "  if (hand === EQUIP_SLOTS.LeftHand) return h === ITEM_HANDS.Either || h === ITEM_HANDS.LeftOnly;",
+    "new": "  if (hand === EQUIP_SLOTS.LeftHand) return h !== ITEM_HANDS.None;",
+    "tests": [
+      "test/ui/enhanced/offhanddrop.test.js"
+    ],
+    "why": "a two-hander labelled and worn in the left hand"
+  },
+  {
+    "name": "OFFHAND-right-refuses-twohander",
+    "file": "src/systems/equip.js",
+    "old": "  if (hand === EQUIP_SLOTS.RightHand)\n    return h === ITEM_HANDS.Either || h === ITEM_HANDS.RightOnly || h === ITEM_HANDS.Both;",
+    "new": "  if (hand === EQUIP_SLOTS.RightHand) return h === ITEM_HANDS.Either || h === ITEM_HANDS.RightOnly;",
+    "tests": [
+      "test/ui/enhanced/offhanddrop.test.js"
+    ],
+    "why": "a two-hander refused on the right hand, its only one"
+  },
+  {
+    "name": "OFFHAND-right-takes-shield",
+    "file": "src/systems/equip.js",
+    "old": "  if (hand === EQUIP_SLOTS.RightHand)\n    return h === ITEM_HANDS.Either || h === ITEM_HANDS.RightOnly || h === ITEM_HANDS.Both;",
+    "new": "  if (hand === EQUIP_SLOTS.RightHand) return h !== ITEM_HANDS.None;",
+    "tests": [
+      "test/ui/enhanced/offhanddrop.test.js"
+    ],
+    "why": "a shield accepted on the right hand's panel"
+  },
+  {
+    "name": "OFFHAND-any-slot-a-hand",
+    "file": "src/systems/equip.js",
+    "old": "    return h === ITEM_HANDS.Either || h === ITEM_HANDS.RightOnly || h === ITEM_HANDS.Both;\n  return false;",
+    "new": "    return h === ITEM_HANDS.Either || h === ITEM_HANDS.RightOnly || h === ITEM_HANDS.Both;\n  return h !== ITEM_HANDS.None;",
+    "tests": [
+      "test/ui/enhanced/offhanddrop.test.js"
+    ],
+    "why": "a sword held in a slot that is no hand"
+  },
+  {
+    "name": "OFFHAND-swap-right-unchecked",
+    "file": "src/systems/equip.js",
+    "old": "  if (R && !mayHold(R, EQUIP_SLOTS.LeftHand))\n    return { ok: false, why: `${R.name ?? 'That'} can only be held in the right hand.` };",
+    "new": "  if (false) return { ok: false, why: `${R.name ?? 'That'} can only be held in the right hand.` };",
+    "tests": [
+      "test/ui/enhanced/offhanddrop.test.js"
+    ],
+    "why": "SWAP-HANDS puts a two-hander in the left hand"
+  },
+  {
+    "name": "OFFHAND-swap-left-unchecked",
+    "file": "src/systems/equip.js",
+    "old": "  if (L && !mayHold(L, EQUIP_SLOTS.RightHand))\n    return { ok: false, why: `${L.name ?? 'That'} can only be held in the left hand.` };",
+    "new": "  if (false) return { ok: false, why: `${L.name ?? 'That'} can only be held in the left hand.` };",
+    "tests": [
+      "test/ui/enhanced/offhanddrop.test.js"
+    ],
+    "why": "SWAP-HANDS puts a shield in the right hand"
+  },
+  {
+    "name": "OFFHAND-intent-ignores-hand-law",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  const at = mayHold(item, to) ? to : [EQUIP_SLOTS.RightHand, EQUIP_SLOTS.LeftHand].find((h) => mayHold(item, h));",
+    "new": "  const at = to;",
+    "tests": [
+      "test/ui/enhanced/offhanddrop.test.js"
+    ],
+    "why": "a two-hander labelled Left hand, a shield Right hand"
+  },
+  {
+    "name": "OFFHAND-drop-untargeted",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (!isEquipped(item)) return wear(item, to);",
+    "new": "  if (!isEquipped(item)) return wear(item);",
+    "tests": [
+      "test/ui/enhanced/offhanddrop.test.js"
+    ],
+    "why": "the drop wears where the table puts it, not in the hand it landed on"
+  },
+  {
+    "name": "OFFHAND-wear-drops-hand",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (equipItem(deps.entity, item, hand) === null)",
+    "new": "  if (equipItem(deps.entity, item) === null)",
+    "tests": [
+      "test/ui/enhanced/offhanddrop.test.js"
+    ],
+    "why": "the pack's wear door loses the hand on the way to the table"
+  },
+  {
+    "name": "OFFHAND-held-no-trade",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  notice = null;\n  if (item.equipSlot !== to) {",
+    "new": "  notice = null;\n  if (false) {",
+    "tests": [
+      "test/ui/enhanced/offhanddrop.test.js"
+    ],
+    "why": "a held piece dragged to the other hand stays where it was (SWAP-HANDS kept)"
+  }
 ]

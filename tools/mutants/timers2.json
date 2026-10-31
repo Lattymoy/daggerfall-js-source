@@ -11,8 +11,8 @@
   {
     "name": "TIMERS2-a-kind-in-two-groups",
     "file": "src/systems/eventTimers.js",
-    "old": "Object.freeze(['gate', 'serpent', 'super', 'star', 'ketch', 'front'])",
-    "new": "Object.freeze(['gate', 'serpent', 'super', 'star', 'ketch', 'front', 'elite'])",
+    "old": "  Object.freeze({ id: 'world', kinds: Object.freeze(['gate', 'serpent', 'super', 'star', 'ketch', 'front']) }),",
+    "new": "  Object.freeze({ id: 'world', kinds: Object.freeze(['gate', 'serpent', 'super', 'star', 'ketch', 'front', 'elite']) }),",
     "tests": [
       "test/ui/enhanced/timers2.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "TIMERS2-an-unknown-kind-lost",
     "file": "src/systems/eventTimers.js",
-    "old": "?.id ?? 'resets';",
-    "new": "?.id ?? 'lost';",
+    "old": "export const timerGroupOf = (kind) => TIMER_GROUPS.find((g) => g.kinds.includes(kind))?.id ?? 'resets';",
+    "new": "export const timerGroupOf = (kind) => TIMER_GROUPS.find((g) => g.kinds.includes(kind))?.id ?? 'lost';",
     "tests": [
       "test/ui/enhanced/timers2.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TIMERS2-the-live-count-off",
     "file": "src/systems/eventTimers.js",
-    "old": "live: of.filter((r) => r.live && !r.sched).length",
-    "new": "live: of.length",
+    "old": "    return { id: g.id, rows: of, live: of.filter((r) => r.live && !r.sched).length }; // AUDIT FRONTS B4: a schedule is not under way",
+    "new": "    return { id: g.id, rows: of, live: of.length }; // AUDIT FRONTS B4: a schedule is not under way",
     "tests": [
       "test/ui/enhanced/timers2.test.js"
     ]

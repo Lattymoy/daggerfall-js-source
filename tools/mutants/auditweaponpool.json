@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-WEAPON-POOL-P2-no-move-before-wear",
     "file": "src/systems/equip.js",
-    "old": "  repoolWeapon(item);\n",
-    "new": "",
+    "old": "  repoolWeapon(item);\n  if ((item.maxCondition ?? 0) <= 0) return false; // no condition to lower: the frozen stand-ins and 0-hitPoint templates cannot break",
+    "new": "  if ((item.maxCondition ?? 0) <= 0) return false; // no condition to lower: the frozen stand-ins and 0-hitPoint templates cannot break",
     "tests": [
       "test/systems/auditweaponpool.test.js"
     ]

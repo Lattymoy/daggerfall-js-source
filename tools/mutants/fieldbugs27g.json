@@ -110,8 +110,8 @@
   {
     "name": "HOME-MAGIC-item-spends",
     "file": "src/systems/enchantments.js",
-    "old": "      if (ctx?.castBarred?.()) return null;\n",
-    "new": "",
+    "old": "        if (ctx?.castBarred?.()) return null;\n        const record = ctx?.spellsByIndex?.()?.get?.(param);",
+    "new": "        const record = ctx?.spellsByIndex?.()?.get?.(param);",
     "tests": [
       "test/systems/homemagic.test.js"
     ]

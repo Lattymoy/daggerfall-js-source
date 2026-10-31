@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-NAV2-F55-the-drain-skips-no-one",
     "file": "src/systems/enchantments.js",
-    "old": "      for (const foe of nearby.filter((n) => !n.spared)) {",
-    "new": "      for (const foe of nearby) {",
+    "old": "        for (const foe of nearby.filter((n) => !n.spared)) {",
+    "new": "        for (const foe of nearby) {",
     "tests": [
       "test/scenes/auditnav2_combat.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-NAV2-F55-the-drain-the-players-attack-again",
     "file": "src/systems/enchantments.js",
-    "old": "        foe.hurt?.(1, { fromPlayer: false });",
-    "new": "        foe.hurt?.(1);",
+    "old": "          foe.hurt?.(1, { fromPlayer: false }); // AUDIT NAV2 F55: DFU writes CurrentHealth and raises no attack (no HandleAttackFromSource) - as the player's blow the drain woke the area (a prize's yielded men) and turned a drained ally on the wearer",
+    "new": "          foe.hurt?.(1); // AUDIT NAV2 F55: DFU writes CurrentHealth and raises no attack (no HandleAttackFromSource) - as the player's blow the drain woke the area (a prize's yielded men) and turned a drained ally on the wearer",
     "tests": [
       "test/scenes/auditnav2_combat.test.js"
     ]

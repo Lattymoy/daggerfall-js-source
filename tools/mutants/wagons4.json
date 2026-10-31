@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-WAGONS4-enchantment-mends",
     "file": "src/systems/enchantments.js",
-    "old": "    if (it.templateIndex === TRANSPORT_SMALL_CART || it.templateIndex === TRANSPORT_HORSE) continue;",
-    "new": "",
+    "old": "    if (it.templateIndex === TRANSPORT_SMALL_CART || it.templateIndex === TRANSPORT_HORSE) continue; // AUDIT WAGONS4: a wagon's condition is its upkeep - a Wagon Yard's or a kit's, never a held enchantment's (DFU's wagon never wore)",
+    "new": "    // AUDIT WAGONS4: a wagon's condition is its upkeep - a Wagon Yard's or a kit's, never a held enchantment's (DFU's wagon never wore)",
     "tests": [
       "test/systems/wagons4_upkeep.test.js"
     ]

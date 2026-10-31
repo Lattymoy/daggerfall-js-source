@@ -274,8 +274,8 @@
   {
     "name": "LOOT14-the-garment-a-gear-piece",
     "file": "src/systems/foeLootCap.js",
-    "old": "if (g != null) return g; return r > 0",
-    "new": "if (g != null) void 0; return r > 0",
+    "old": "  if (g != null) return g;",
+    "new": "  if (g != null) void 0;",
     "tests": [
       "test/systems/loot14_wardrobe.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "LOOT14-the-kit-garments-never-roll",
     "file": "src/systems/foeLootCap.js",
-    "old": "  const kit = [...rollKitPieces(entity, opts), ...rollKitGarments(entity, opts)];",
-    "new": "  const kit = [...rollKitPieces(entity, opts)];",
+    "old": "  const kit = [...rollKitPieces(entity, opts), ...rollKitGarments(entity, opts)]; // LOOT14: the garments after every draw the kit made",
+    "new": "  const kit = [...rollKitPieces(entity, opts)]; // LOOT14: the garments after every draw the kit made",
     "tests": [
       "test/systems/loot14_wardrobe.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "LOOT14-the-kit-takes-garments-first",
     "file": "src/systems/foeLootCap.js",
-    "old": "    if (isGarment(it)) return;   // LOOT14: the kit's garments roll after all of this (rollKitGarments)\n",
-    "new": "\n",
+    "old": "    if (isGarment(it)) return; // LOOT14: the kit's garments roll after all of this (rollKitGarments)\n    if (!it || it.untaken === true || !rarityEligible(it)) return; // AUDIT 625 L1: no mark - the kit the spawn's roll passed by",
+    "new": "    if (!it || it.untaken === true || !rarityEligible(it)) return; // AUDIT 625 L1: no mark - the kit the spawn's roll passed by",
     "tests": [
       "test/systems/loot14_wardrobe.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "LOOT14-the-live-garment-laddered",
     "file": "src/systems/foeLootCap.js",
-    "old": "    const copy = { ...g, untaken: true };\n    entity.items[i] = copy;",
-    "new": "    const copy = g; g.untaken = true;\n    entity.items[i] = copy;",
+    "old": "    const copy = { ...g, untaken: true };",
+    "new": "    const copy = g;\n    g.untaken = true;",
     "tests": [
       "test/systems/loot14_wardrobe.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "LOOT14-the-kit-garment-a-bosses",
     "file": "src/systems/foeLootCap.js",
-    "old": "  kit.boss = false;\n",
-    "new": "\n",
+    "old": "  kit.boss = false;",
+    "new": "",
     "tests": [
       "test/systems/loot14_wardrobe.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "LOOT14-the-kit-garment-on-the-whole-ladder",
     "file": "src/systems/foeLootCap.js",
-    "old": "  kit.weights = plainFoeRarityWeights(quarters);\n",
-    "new": "\n",
+    "old": "  kit.weights = plainFoeRarityWeights(quarters);",
+    "new": "",
     "tests": [
       "test/systems/loot14_wardrobe.test.js"
     ]

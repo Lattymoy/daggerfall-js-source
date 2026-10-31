@@ -133,8 +133,8 @@
   {
     "name": "RPT1026-FRAMECAP-off-free",
     "file": "src/systems/frameCap.js",
-    "old": "  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300)) || (_lifted ? LIFTED_OFF_FPS : 0);",
-    "new": "  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300));",
+    "old": "  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300)) || (_lifted ? LIFTED_OFF_FPS : 0); // spelled out: MENU T5 reads this clamp against the row's range",
+    "new": "  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300)); // spelled out: MENU T5 reads this clamp against the row's range",
     "tests": [
       "test/systems/rpt1026_client_framecap.test.js"
     ],
@@ -143,8 +143,8 @@
   {
     "name": "RPT1026-FRAMECAP-browser-capped",
     "file": "src/systems/frameCap.js",
-    "old": "  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300)) || (_lifted ? LIFTED_OFF_FPS : 0);",
-    "new": "  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300)) || LIFTED_OFF_FPS;",
+    "old": "  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300)) || (_lifted ? LIFTED_OFF_FPS : 0); // spelled out: MENU T5 reads this clamp against the row's range",
+    "new": "  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300)) || LIFTED_OFF_FPS; // spelled out: MENU T5 reads this clamp against the row's range",
     "tests": [
       "test/systems/rpt1026_client_framecap.test.js"
     ],
@@ -153,8 +153,8 @@
   {
     "name": "RPT1026-FRAMECAP-never-lifted",
     "file": "src/systems/frameCap.js",
-    "old": "  _lifted = true;   // RPT1026-CLIENT: Off has its ceiling from here (LIFTED_OFF_FPS)\n",
-    "new": "",
+    "old": "  _lifted = true; // RPT1026-CLIENT: Off has its ceiling from here (LIFTED_OFF_FPS)\n  const raf = win.requestAnimationFrame.bind(win),",
+    "new": "  const raf = win.requestAnimationFrame.bind(win),",
     "tests": [
       "test/systems/rpt1026_client_framecap.test.js"
     ],

@@ -308,8 +308,8 @@
   {
     "name": "RVN13-reveal-unwired",
     "file": "src/systems/feudLedger.js",
-    "old": "  try { _onWeak(entity, { peer: true }); } catch { /* the reveal is no blow's business */ }",
-    "new": "",
+    "old": "  try {\n    _onWeak(entity, { peer: true });\n  } catch {\n    /* the reveal is no blow's business */\n  } // AUDIT FEUD 2: no word of mine for it",
+    "new": "  // AUDIT FEUD 2: no word of mine for it",
     "tests": [
       "test/systems/rvn13_wire.test.js"
     ]

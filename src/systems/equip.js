@@ -20,26 +20,35 @@
 // directly, which is the port's shape of DFU's playEquipSounds=false
 // load arm.
 
-import { mintCondition, templateByIndex } from './item/itemTemplates.js';   // AUDIT 23
-import { repoolWeapon } from './conditionRepair.js';   // AUDIT WEAPON-POOL P2: a weapon on its row's pool moves before it wears
+import { mintCondition, templateByIndex } from './item/itemTemplates.js'; // AUDIT 23
+import { repoolWeapon } from './conditionRepair.js'; // AUDIT WEAPON-POOL P2: a weapon on its row's pool moves before it wears
 import { EQUIP_SLOTS } from '../characters/paperdoll/paperdoll.js';
 import { ITEM_GROUPS, SLOT_RULES } from '../characters/equipRules.js';
 import { customItemClass, rriNativeMaterialValue, rriEquipSound } from './roleplayRealismItems/rriItems.js';
-import { SOUND } from './soundClips.js';   // AUDIT-RR F8: the class's equip sound, by name   // RRI1: a custom armor's slot, for the body part its value lands on; AUDIT-RR F7/F8: the class's two virtuals
+import { SOUND } from './soundClips.js'; // AUDIT-RR F8: the class's equip sound, by name   // RRI1: a custom armor's slot, for the body part its value lands on; AUDIT-RR F7/F8: the class's two virtuals
 import { createEquipTable, getItemHands as handsOf, ITEM_HANDS } from '../characters/equipTable.js';
-import { BODY_PARTS, NUMBER_BODY_PARTS, materialArmorValue, itemArmorValue, SHIELD_VALUES, SHIELD_PARTS, isShieldTemplate } from './armorMaterials.js';
-import { weaponSkillUsed, WEAPONS } from '../characters/weapons.js';   // wave 29: GetWeaponSkillUsed keys on the TEMPLATE
-import { SKILLS, WEAPON_SKILL } from './skills.js';   // S23: the weapon partition, single-sourced
-import { EQUIP_DELAY_TIMES } from '../characters/weaponStates.js';   // CH3 (characters-13): the swap-pause table gains its consumer
-import { startingProvisions } from './survival/items.js';   // SURV2: the new character's kit
-import { survivalOn } from './survival/switch.js';   // SURV2: the one switch
-import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
-import { ARMOR_BITS_SHIFT } from './specialAdvantages.js';   // the armour field's place, one home
+import {
+  BODY_PARTS,
+  NUMBER_BODY_PARTS,
+  materialArmorValue,
+  itemArmorValue,
+  SHIELD_VALUES,
+  SHIELD_PARTS,
+  isShieldTemplate,
+} from './armorMaterials.js';
+import { weaponSkillUsed, WEAPONS } from '../characters/weapons.js'; // wave 29: GetWeaponSkillUsed keys on the TEMPLATE
+import { SKILLS, WEAPON_SKILL } from './skills.js'; // S23: the weapon partition, single-sourced
+import { EQUIP_DELAY_TIMES } from '../characters/weaponStates.js'; // CH3 (characters-13): the swap-pause table gains its consumer
+import { startingProvisions } from './survival/items.js'; // SURV2: the new character's kit
+import { survivalOn } from './survival/switch.js'; // SURV2: the one switch
+import { localizedText } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
+import { ARMOR_BITS_SHIFT } from './specialAdvantages.js'; // the armour field's place, one home
 
 export { EQUIP_SLOTS, ITEM_HANDS };
 
 /** The bag speaks string groups; C5c speaks the numeric enum. */
-const numeric = (item) => (typeof item.group === 'string' ? { ...item, group: ITEM_GROUPS[item.group] ?? ITEM_GROUPS.None } : item);
+const numeric = (item) =>
+  typeof item.group === 'string' ? { ...item, group: ITEM_GROUPS[item.group] ?? ITEM_GROUPS.None } : item;
 export const getItemHands = (item) => handsOf(numeric(item));
 
 /** The entity's live equip table (lazy; C5c's shape). */
@@ -76,10 +85,10 @@ export const wearableItem = (item) => !!item && createEquipTable().getEquipSlot(
 export function equipDelayFor(item) {
   // AUDIT-RR2 G8: `EquipDelayTimes[item.GroupIndex]` (DaggerfallInventoryWindow.cs:1168-1182) - a custom class answers its
   // own GroupIndex virtual (ItemArchersAxe.cs:28-31 -> 3, ItemLightFlail.cs:28-31 -> 6); 513 - 113 fell off the table
-  const gi = customItemClass(item?.templateIndex)?.groupIndex
-    ?? (item?.group === 'Weapons' ? item.templateIndex - 113
-      : item?.group === 'Armor' ? item.templateIndex - 102 : -1);
-  return (gi >= 0 && gi < EQUIP_DELAY_TIMES.length) ? EQUIP_DELAY_TIMES[gi] : 0;
+  const gi =
+    customItemClass(item?.templateIndex)?.groupIndex ??
+    (item?.group === 'Weapons' ? item.templateIndex - 113 : item?.group === 'Armor' ? item.templateIndex - 102 : -1);
+  return gi >= 0 && gi < EQUIP_DELAY_TIMES.length ? EQUIP_DELAY_TIMES[gi] : 0;
 }
 
 /** SetEquipDelayTime(setTime: false) - the window-push snapshot of
@@ -120,9 +129,9 @@ export function unequipSlot(entity, slot) {
   if (!item) return null;
   slots[slot] = null;
   delete item.equipSlot;
-  updateEquippedArmorValues(entity, item, false);   // U8h: the armor table adds back
-  equipChanged(entity);   // E1: the fold follows the worn set (LR2: and every listener's)
-  _hooks.onItemUnequipped?.(entity, item);   // E2: StopEquippedItem - the Unequipped payloads (ItemEquipTable.cs:163/:202/:231)
+  updateEquippedArmorValues(entity, item, false); // U8h: the armor table adds back
+  equipChanged(entity); // E1: the fold follows the worn set (LR2: and every listener's)
+  _hooks.onItemUnequipped?.(entity, item); // E2: StopEquippedItem - the Unequipped payloads (ItemEquipTable.cs:163/:202/:231)
   return item;
 }
 
@@ -182,9 +191,9 @@ export function isForbiddenEquip(career, item) {
     // returned at the shield arm and never reached the material test.
     const shield = isShieldTemplate(item.templateIndex);
     if (shield && ((1 << (item.templateIndex - SHIELD_TEMPLATE_START)) & forbiddenShields) !== 0) return true;
-    if (!shield && ((1 << (rriNativeMaterialValue(item) >> 8)) & forbiddenArmors) !== 0) return true;   // AUDIT-RR F7: `item.NativeMaterialValue >> 8` (:1352) - the class's virtual: a mail hauberk is chain, a brigandine jerkin leather
+    if (!shield && ((1 << (rriNativeMaterialValue(item) >> 8)) & forbiddenArmors) !== 0) return true; // AUDIT-RR F7: `item.NativeMaterialValue >> 8` (:1352) - the class's virtual: a mail hauberk is chain, a brigandine jerkin leather
     // the plate-only gate on the material test - shields included
-    return (item.material >> 8) === 2 && ((1 << (item.material & 0xff)) & forbiddenMaterials) !== 0;
+    return item.material >> 8 === 2 && ((1 << (item.material & 0xff)) & forbiddenMaterials) !== 0;
   }
   if (item.group === 'Weapons') {
     if ((weaponProficiencyFlag(item) & forbiddenProficiencies) !== 0) return true;
@@ -213,8 +222,12 @@ export function weaponProficiencyFlag(item) {
   return flag ?? -1;
 }
 const PROFICIENCY_OF_SKILL = Object.freeze({
-  [SKILLS.ShortBlade]: 1, [SKILLS.LongBlade]: 2, [SKILLS.HandToHand]: 4,
-  [SKILLS.Axe]: 8, [SKILLS.BluntWeapon]: 16, [SKILLS.Archery]: 32,
+  [SKILLS.ShortBlade]: 1,
+  [SKILLS.LongBlade]: 2,
+  [SKILLS.HandToHand]: 4,
+  [SKILLS.Axe]: 8,
+  [SKILLS.BluntWeapon]: 16,
+  [SKILLS.Archery]: 32,
 });
 /** Armor.Buckler - the shield block's base template index. */
 const SHIELD_TEMPLATE_START = 109;
@@ -248,9 +261,9 @@ export const isBrokenItem = (item) => item?.currentCondition != null && item.cur
  *  target: GetEquipSlot takes the first open hand, else the right. */
 export function equipItem(entity, item, hand = null) {
   const slots = equipTableOf(entity);
-  const slot = hand == null ? getEquipSlot(entity, item) : mayHold(item, hand) ? hand : EQUIP_SLOTS.None;   // computed ONCE up front (the DFU order)
+  const slot = hand == null ? getEquipSlot(entity, item) : mayHold(item, hand) ? hand : EQUIP_SLOTS.None; // computed ONCE up front (the DFU order)
   if (slot === EQUIP_SLOTS.None) return null;
-  if (item.group === 'Weapons' && item.templateIndex === WEAPONS.Arrow) return null;   // cannot equip arrows
+  if (item.group === 'Weapons' && item.templateIndex === WEAPONS.Arrow) return null; // cannot equip arrows
   // AUDIT 63 F23: NO condition gate here. ItemEquipTable.cs:94-154
   // has none; the refusal is the inventory WINDOW's (:1330-1341) and
   // lives at the two window callers - see isBrokenItem above.
@@ -270,17 +283,21 @@ export function equipItem(entity, item, hand = null) {
     // Read once, before the first goes: the arms are exclusive (a two-hander is never LeftOnly), so the shield's look
     // at the right hand sees what the old arm saw.
     for (const s of wearLeavers(entity, item, slot)) {
-      const it = unequipSlot(entity, s); if (it) unequipped.push(it);
+      const it = unequipSlot(entity, s);
+      if (it) unequipped.push(it);
     }
     item.equipSlot = slot;
     slots[slot] = item;
-    updateEquippedArmorValues(entity, item, true);   // U8h: the armor table subtracts
-    equipChanged(entity);   // E1: the fold follows the worn set (LR2: and every listener's)
+    updateEquippedArmorValues(entity, item, true); // U8h: the armor table subtracts
+    equipChanged(entity); // E1: the fold follows the worn set (LR2: and every listener's)
   });
   // ES2: "Play equip sound" (ItemEquipTable.cs:144-146) - BEFORE
   // StartEquippedItem, C#'s own order. SoundClips.None plays nothing.
-  { const clip = getEquipSound(item); if (clip != null) _equipSoundSink?.(clip); }
-  _hooks.onItemEquipped?.(entity, item);   // E2: StartEquippedItem - the Equipped|Held payloads (ItemEquipTable.cs:149)
+  {
+    const clip = getEquipSound(item);
+    if (clip != null) _equipSoundSink?.(clip);
+  }
+  _hooks.onItemEquipped?.(entity, item); // E2: StartEquippedItem - the Equipped|Held payloads (ItemEquipTable.cs:149)
   return unequipped;
 }
 
@@ -292,7 +309,8 @@ export const isEquipped = (item) => item.equipSlot != null;
 export function mayHold(item, hand) {
   const h = getItemHands(item);
   if (hand === EQUIP_SLOTS.LeftHand) return h === ITEM_HANDS.Either || h === ITEM_HANDS.LeftOnly;
-  if (hand === EQUIP_SLOTS.RightHand) return h === ITEM_HANDS.Either || h === ITEM_HANDS.RightOnly || h === ITEM_HANDS.Both;
+  if (hand === EQUIP_SLOTS.RightHand)
+    return h === ITEM_HANDS.Either || h === ITEM_HANDS.RightOnly || h === ITEM_HANDS.Both;
   return false;
 }
 
@@ -304,17 +322,21 @@ export function mayHold(item, hand) {
  *  pack. One equip act (oneEquipAct), so every listener hears the table once, settled. */
 export function canSwapHands(entity) {
   const slots = equipTableOf(entity);
-  const R = slots[EQUIP_SLOTS.RightHand], L = slots[EQUIP_SLOTS.LeftHand];
+  const R = slots[EQUIP_SLOTS.RightHand],
+    L = slots[EQUIP_SLOTS.LeftHand];
   if (!R && !L) return { ok: false, why: 'Your hands are empty.' };
-  if (R && !mayHold(R, EQUIP_SLOTS.LeftHand)) return { ok: false, why: `${R.name ?? 'That'} can only be held in the right hand.` };
-  if (L && !mayHold(L, EQUIP_SLOTS.RightHand)) return { ok: false, why: `${L.name ?? 'That'} can only be held in the left hand.` };
+  if (R && !mayHold(R, EQUIP_SLOTS.LeftHand))
+    return { ok: false, why: `${R.name ?? 'That'} can only be held in the right hand.` };
+  if (L && !mayHold(L, EQUIP_SLOTS.RightHand))
+    return { ok: false, why: `${L.name ?? 'That'} can only be held in the left hand.` };
   return { ok: true };
 }
 export function swapHands(entity) {
   const can = canSwapHands(entity);
   if (!can.ok) return can;
   const slots = equipTableOf(entity);
-  const R = slots[EQUIP_SLOTS.RightHand], L = slots[EQUIP_SLOTS.LeftHand];
+  const R = slots[EQUIP_SLOTS.RightHand],
+    L = slots[EQUIP_SLOTS.LeftHand];
   oneEquipAct(() => {
     slots[EQUIP_SLOTS.RightHand] = L ?? null;
     slots[EQUIP_SLOTS.LeftHand] = R ?? null;
@@ -340,7 +362,7 @@ export function swapHands(entity) {
 export function rebuildEquipState(entity) {
   const slots = fillEquipTable(equipTableOf(entity), entity.items);
   const av = armorValuesOf(entity);
-  av.fill(100);   // "Initialize body part armor values to 100 (no armor)"
+  av.fill(100); // "Initialize body part armor values to 100 (no armor)"
   for (const it of slots) if (it) updateEquippedArmorValues(entity, it, true);
   // LR2: the listeners' folds follow the rebuilt set at once (the affix
   // fold reads at liveStat before any magic round has run). The
@@ -361,7 +383,10 @@ export function fillEquipTable(slots, items) {
   slots.fill(null);
   for (const it of items ?? []) {
     if (it.equipSlot == null) continue;
-    if (slots[it.equipSlot]) { delete it.equipSlot; continue; }   // two items claiming one slot: the first wins
+    if (slots[it.equipSlot]) {
+      delete it.equipSlot;
+      continue;
+    } // two items claiming one slot: the first wins
     slots[it.equipSlot] = it;
   }
   return slots;
@@ -384,7 +409,15 @@ export function fillEquipTable(slots, items) {
 export function seedStartingEquipment(entity) {
   if (entity.equip || (entity.items ?? []).length) return;
   entity.items = entity.items ?? [];
-  const dagger = mintCondition({ group: 'Weapons', templateIndex: 113, name: 'Dagger', material: 0, flags: 0, minDamage: 1, maxDamage: 6 });   // AUDIT 23 (items-13/C13): no port site mints bit 0x10 (the claim is true again); items-5 condition
+  const dagger = mintCondition({
+    group: 'Weapons',
+    templateIndex: 113,
+    name: 'Dagger',
+    material: 0,
+    flags: 0,
+    minDamage: 1,
+    maxDamage: 6,
+  }); // AUDIT 23 (items-13/C13): no port site mints bit 0x10 (the claim is true again); items-5 condition
   entity.items.push(dagger);
   equipItem(entity, dagger);
   // SURV2: a new character sets out with provisions - two sacks of
@@ -404,12 +437,13 @@ export function seedStartingEquipment(entity) {
 export function wearLeavers(entity, item, slot = getEquipSlot(entity, item)) {
   if (!item || slot === EQUIP_SLOTS.None) return [];
   const out = [];
-  if (item.group === 'Weapons' && getItemHands(item) === ITEM_HANDS.Both) out.push(EQUIP_SLOTS.LeftHand, EQUIP_SLOTS.RightHand);   // 2H clears both hands
+  if (item.group === 'Weapons' && getItemHands(item) === ITEM_HANDS.Both)
+    out.push(EQUIP_SLOTS.LeftHand, EQUIP_SLOTS.RightHand); // 2H clears both hands
   if (slot === EQUIP_SLOTS.LeftHand) {
     const right = equipTableOf(entity)[EQUIP_SLOTS.RightHand];
-    if (right && getItemHands(right) === ITEM_HANDS.Both) out.push(EQUIP_SLOTS.RightHand);   // a shield bumps a held 2H
+    if (right && getItemHands(right) === ITEM_HANDS.Both) out.push(EQUIP_SLOTS.RightHand); // a shield bumps a held 2H
   }
-  out.push(slot);   // swap the occupant out (alwaysEquip)
+  out.push(slot); // swap the occupant out (alwaysEquip)
   return out;
 }
 
@@ -433,11 +467,17 @@ export { BODY_PARTS, NUMBER_BODY_PARTS, materialArmorValue, itemArmorValue };
 /** GetBodyPartForEquipSlot (DaggerfallUnityItem.cs:1131-1153): only
  *  these seven slots map to an armor body part. */
 /** RRI1: the slot rule for an armor template - a custom class's own slot (GetEquipSlot) ahead of the generated table. */
-const armorSlotRule = (templateIndex) => { const slot = customItemClass(templateIndex)?.equipSlot; return slot ? { slot } : SLOT_RULES.Armor[templateIndex]; };
+const armorSlotRule = (templateIndex) => {
+  const slot = customItemClass(templateIndex)?.equipSlot;
+  return slot ? { slot } : SLOT_RULES.Armor[templateIndex];
+};
 const SLOT_BODY_PART = new Map([
-  [EQUIP_SLOTS.Head, BODY_PARTS.Head], [EQUIP_SLOTS.RightArm, BODY_PARTS.RightArm],
-  [EQUIP_SLOTS.LeftArm, BODY_PARTS.LeftArm], [EQUIP_SLOTS.ChestArmor, BODY_PARTS.Chest],
-  [EQUIP_SLOTS.Gloves, BODY_PARTS.Hands], [EQUIP_SLOTS.LegsArmor, BODY_PARTS.Legs],
+  [EQUIP_SLOTS.Head, BODY_PARTS.Head],
+  [EQUIP_SLOTS.RightArm, BODY_PARTS.RightArm],
+  [EQUIP_SLOTS.LeftArm, BODY_PARTS.LeftArm],
+  [EQUIP_SLOTS.ChestArmor, BODY_PARTS.Chest],
+  [EQUIP_SLOTS.Gloves, BODY_PARTS.Hands],
+  [EQUIP_SLOTS.LegsArmor, BODY_PARTS.Legs],
   [EQUIP_SLOTS.Feet, BODY_PARTS.Feet],
 ]);
 
@@ -466,8 +506,8 @@ export function updateEquippedArmorValues(entity, item, equipping) {
   // (150/189) map to Feet but sit OUTSIDE the window and get nothing -
   // preserved as DFU has it. Their material is Leather (3), so a pair
   // of boots is worth 15 on the Feet part; the port granted 0.
-  const FOOTWEAR = item.group === 'MensClothing' ? [147, 148, 149]
-    : item.group === 'WomensClothing' ? [186, 187, 188] : null;
+  const FOOTWEAR =
+    item.group === 'MensClothing' ? [147, 148, 149] : item.group === 'WomensClothing' ? [186, 187, 188] : null;
   if (item.group !== 'Armor' && !(FOOTWEAR && FOOTWEAR.includes(item.templateIndex))) return;
   const av = armorValuesOf(entity);
   const sign = equipping ? -1 : 1;
@@ -475,8 +515,7 @@ export function updateEquippedArmorValues(entity, item, equipping) {
     // a non-shield armor piece's slot is FIXED by template (the C5c
     // rule table) - no equip-table state involved (DFU GetArmorSlot)
     const rule = armorSlotRule(item.templateIndex);
-    const part = rule ? SLOT_BODY_PART.get(EQUIP_SLOTS[rule.slot])
-      : (FOOTWEAR ? BODY_PARTS.Feet : null);   // clothing footwear -> Feet
+    const part = rule ? SLOT_BODY_PART.get(EQUIP_SLOTS[rule.slot]) : FOOTWEAR ? BODY_PARTS.Feet : null; // clothing footwear -> Feet
     if (part == null) return;
     // AUDIT 63 F18/F32: DaggerfallEntity.cs:608/:612 call
     // `armor.GetMaterialArmorValue() * 5`, the WHOLE member - so the
@@ -513,7 +552,7 @@ export const bodyPartForSlot = (slot) => SLOT_BODY_PART.get(slot) ?? -1;
  *  L10N3e: `nameOf(item)` is the caller's name AS SHOWN (shownItemName -
  *  itemInfo.js imports this module, so it cannot import that back); the
  *  line names the item by it, and by the canonical name without one. */
-const PLURAL_BREAK_TEMPLATES = new Set([103, 104, 108]);   // Armor.Gauntlets, Greaves, Boots
+const PLURAL_BREAK_TEMPLATES = new Set([103, 104, 108]); // Armor.Gauntlets, Greaves, Boots
 
 /** THE SCALE ON A BLOW'S WEAR - 1, Daggerfall Unity's own. BALANCE1
  *  (2026-09-27) set it to 0.6 because the default game wore gear through
@@ -531,7 +570,9 @@ let _wearScale = CONDITION_WEAR_SCALE;
 /** TEST SEAM: any scale, for the pins of the roll below (balance1.test.js);
  *  a scale of 1 draws no roll, so a scripted DFU roll sequence stays DFU's.
  *  No argument puts the port's scale back. */
-export function _wearScaleForTests(scale = CONDITION_WEAR_SCALE) { _wearScale = scale; }
+export function _wearScaleForTests(scale = CONDITION_WEAR_SCALE) {
+  _wearScale = scale;
+}
 
 /** WEAR-TWICE (2026-10-02, the field, of the economy triage: "maybe we overdid it too much. Good changes all around but
  *  I still want there to be some challenge"; asked which lever, "Faster wear"): THE PORT'S OWN WEAR IS TWICE DFU'S. A
@@ -550,9 +591,12 @@ export const DFU_WEAR_MULTIPLE = 1;
 let _dfuMultiple = DFU_WEAR_MULTIPLE;
 /** TEST SEAM: the files that pin DFU's DamageEquipment verbatim run it at 1, beside the scale's own seam above
  *  (wear_vanilla.test.js pins the port's 1 - WEAR-ONE). No argument puts the port's back. */
-export function _dfuWearMultipleForTests(m = DFU_WEAR_MULTIPLE) { _dfuMultiple = m; }
+export function _dfuWearMultipleForTests(m = DFU_WEAR_MULTIPLE) {
+  _dfuMultiple = m;
+}
 /** WEAR-TWICE: a blow's DFU amount as the port wears it - the multiple, then the scale (blowWear). */
-export const dfuBlowWear = (amount, rolls = Math.random) => (amount > 0 ? blowWear(amount * _dfuMultiple, rolls) : amount);
+export const dfuBlowWear = (amount, rolls = Math.random) =>
+  amount > 0 ? blowWear(amount * _dfuMultiple, rolls) : amount;
 
 /** A blow's wear on the port's scale. The amounts are small (a blade's is
  *  0-2 a hit), so under a fractional scale the fraction is ROLLED rather
@@ -572,14 +616,19 @@ export function lowerCondition(item, amount, owner = null, say = null, removeFro
   // AUDIT WEAPON-POOL P2: a weapon still on its row's pool - back from a store the load does not walk (hung in a room, a
   // revenant's take, a quest's prize, an heir's bequest, a market or vault record) - moves to the one pool before it wears
   repoolWeapon(item);
-  if ((item.maxCondition ?? 0) <= 0) return false;   // no condition to lower: the frozen stand-ins and 0-hitPoint templates cannot break
+  if ((item.maxCondition ?? 0) <= 0) return false; // no condition to lower: the frozen stand-ins and 0-hitPoint templates cannot break
   item.currentCondition -= amount;
   if (item.currentCondition > 0) return false;
   item.currentCondition = 0;
   const name = nameOf?.(item) ?? item.name ?? templateByIndex(item.templateIndex)?.name ?? 'Item';
   // L10N3d: ItemBreaks' rows (DaggerfallUnityItem.cs:1203-1207), %s filled after the lookup - here with the port's
   // short name, where DFU passes LongName
-  say?.((PLURAL_BREAK_TEMPLATES.has(item.templateIndex) ? localizedText('itemHasBrokenPlural', '%s have broken.') : localizedText('itemHasBroken', '%s has broken.')).replace('%s', name));
+  say?.(
+    (PLURAL_BREAK_TEMPLATES.has(item.templateIndex)
+      ? localizedText('itemHasBrokenPlural', '%s have broken.')
+      : localizedText('itemHasBroken', '%s has broken.')
+    ).replace('%s', name),
+  );
   // E2 corrected E1's order to ItemBreaks' own (DaggerfallUnityItem):
   // the popup, THEN the unequip (which fires the Unequipped payloads
   // and strips any held bundle), THEN the Breaks payload - both
@@ -602,7 +651,10 @@ export function lowerCondition(item, amount, owner = null, say = null, removeFro
   // (DaggerfallUnityItem.cs) - ItemBreaks removes the item from that
   // collection. The port's one caller is the mod's fading enchanted
   // items module: the PLAYER's enchanted piece is destroyed on breaking.
-  if (removeFrom) { const i = removeFrom.indexOf(item); if (i >= 0) removeFrom.splice(i, 1); }
+  if (removeFrom) {
+    const i = removeFrom.indexOf(item);
+    if (i >= 0) removeFrom.splice(i, 1);
+  }
   _hooks.onItemBroken?.(item, owner, say);
   return true;
 }
@@ -626,29 +678,48 @@ export function getEquipSound(item) {
   switch (item?.group) {
     case 'MensClothing':
     case 'WomensClothing':
-      return 381;   // EquipClothing
+      return 381; // EquipClothing
     case 'Jewellery':
     case 'Gems':
-      return 383;   // EquipJewellery
+      return 383; // EquipJewellery
     case 'Armor': {
-      const own = rriEquipSound(item);   // AUDIT-RR F8: the class's GetEquipSound override comes first
+      const own = rriEquipSound(item); // AUDIT-RR F8: the class's GetEquipSound override comes first
       if (own != null && SOUND[own] != null) return SOUND[own];
-      if (isShieldTemplate(item.templateIndex) || item.templateIndex === 107) return 419;   // GetIsShield() || Helm
-      if (item.material === 0x0000) return 417;   // ArmorMaterialTypes.Leather
-      if (item.material === 0x0100) return 418;   // ArmorMaterialTypes.Chain, exactly
-      return 419;   // EquipPlate
+      if (isShieldTemplate(item.templateIndex) || item.templateIndex === 107) return 419; // GetIsShield() || Helm
+      if (item.material === 0x0000) return 417; // ArmorMaterialTypes.Leather
+      if (item.material === 0x0100) return 418; // ArmorMaterialTypes.Chain, exactly
+      return 419; // EquipPlate
     }
     case 'Weapons':
       switch (item.templateIndex) {
-        case 127: case 128: return 415;              // Battle_Axe, War_Axe
-        case 118: case 120: case 119: case 121: return 378;   // Broadsword, Longsword, Saber, Katana
-        case 122: case 123: return 379;              // Claymore, Dai_Katana
-        case 113: case 114: case 117: case 116: return 377;   // Dagger, Tanto, Wakazashi, Shortsword
-        case 125: return 414;                        // Flail
-        case 124: case 126: return 413;              // Mace, Warhammer
-        case 115: return 380;                        // Staff
-        case 129: case 130: return 416;              // Short_Bow, Long_Bow
-        default: return null;
+        case 127:
+        case 128:
+          return 415; // Battle_Axe, War_Axe
+        case 118:
+        case 120:
+        case 119:
+        case 121:
+          return 378; // Broadsword, Longsword, Saber, Katana
+        case 122:
+        case 123:
+          return 379; // Claymore, Dai_Katana
+        case 113:
+        case 114:
+        case 117:
+        case 116:
+          return 377; // Dagger, Tanto, Wakazashi, Shortsword
+        case 125:
+          return 414; // Flail
+        case 124:
+        case 126:
+          return 413; // Mace, Warhammer
+        case 115:
+          return 380; // Staff
+        case 129:
+        case 130:
+          return 416; // Short_Bow, Long_Bow
+        default:
+          return null;
       }
     default:
       return null;
@@ -657,10 +728,17 @@ export function getEquipSound(item) {
 
 /** ES2: the host's one audio door for the equip moment. */
 let _equipSoundSink = null;
-export function setEquipSoundSink(fn) { _equipSoundSink = fn; }
+export function setEquipSoundSink(fn) {
+  _equipSoundSink = fn;
+}
 
 const _hooks = { onEquipChange: null, onItemBroken: null, onItemEquipped: null, onItemUnequipped: null };
-export function setEnchantmentHooks({ onEquipChange = null, onItemBroken = null, onItemEquipped = null, onItemUnequipped = null } = {}) {
+export function setEnchantmentHooks({
+  onEquipChange = null,
+  onItemBroken = null,
+  onItemEquipped = null,
+  onItemUnequipped = null,
+} = {}) {
   _hooks.onEquipChange = onEquipChange;
   _hooks.onItemBroken = onItemBroken;
   _hooks.onItemEquipped = onItemEquipped;
@@ -670,7 +748,9 @@ export function setEnchantmentHooks({ onEquipChange = null, onItemBroken = null,
  *  fold), beside the enchantment hook - a listener list, so a second
  *  fold never has to overwrite the first's door. */
 const _equipListeners = [];
-export function addEquipChangeListener(fn) { if (typeof fn === 'function' && !_equipListeners.includes(fn)) _equipListeners.push(fn); }
+export function addEquipChangeListener(fn) {
+  if (typeof fn === 'function' && !_equipListeners.includes(fn)) _equipListeners.push(fn);
+}
 function fireEquipChange(entity) {
   _hooks.onEquipChange?.(entity);
   for (const fn of _equipListeners) fn(entity);
@@ -690,8 +770,10 @@ function equipChanged(entity) {
 }
 export function oneEquipAct(fn) {
   if (_heldTellings) return fn();
-  const held = _heldTellings = new Set();
-  try { return fn(); } finally {
+  const held = (_heldTellings = new Set());
+  try {
+    return fn();
+  } finally {
     _heldTellings = null;
     for (const entity of held) fireEquipChange(entity);
   }

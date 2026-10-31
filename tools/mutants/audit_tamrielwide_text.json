@@ -231,8 +231,8 @@
   {
     "name": "AUDIT-TW-D6-the-raids-timer",
     "file": "src/systems/eventTimers.js",
-    "old": "`${more} more today across Tamriel`",
-    "new": "`${more} more today across the Iliac Bay`",
+    "old": "    const rest = more ? `${more} more today across Tamriel` : null;",
+    "new": "    const rest = more ? `${more} more today across the Iliac Bay` : null;",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js",
       "test/ui/enhanced/timers1.test.js"

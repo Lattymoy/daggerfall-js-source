@@ -68,8 +68,8 @@
   {
     "name": "AUDIT657-T4-a-ships-name-read-whole",
     "file": "src/systems/fleet.js",
-    "old": "const caught = v.ok ? textCaught(s) : null;",
-    "new": "const caught = null;",
+    "old": "  const caught = v.ok ? textCaught(s) : null;",
+    "new": "  const caught = null;",
     "tests": [
       "test/net/audit657_filter.test.js"
     ]

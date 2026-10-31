@@ -213,8 +213,8 @@
   {
     "name": "AUDIT-FRONTS-B7-row-instant",
     "file": "src/systems/eventTimers.js",
-    "old": "      const rise = sdRiseNotBefore(lr, now, recs);",
-    "new": "      const rise = Math.max(lr.next, now);",
+    "old": "      const rise = sdRiseNotBefore(lr, now, recs); // FRONTS: not before its province's turn, nor while two stand past the Bay (AUDIT FRONTS B1)",
+    "new": "      const rise = Math.max(lr.next, now); // FRONTS: not before its province's turn, nor while two stand past the Bay (AUDIT FRONTS B1)",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],
@@ -293,8 +293,8 @@
   {
     "name": "AUDIT-FRONTS-B4-sched-live",
     "file": "src/systems/eventTimers.js",
-    "old": "of.filter((r) => r.live && !r.sched).length",
-    "new": "of.filter((r) => r.live).length",
+    "old": "    return { id: g.id, rows: of, live: of.filter((r) => r.live && !r.sched).length }; // AUDIT FRONTS B4: a schedule is not under way",
+    "new": "    return { id: g.id, rows: of, live: of.filter((r) => r.live).length }; // AUDIT FRONTS B4: a schedule is not under way",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],
@@ -303,8 +303,8 @@
   {
     "name": "AUDIT-FRONTS-C1-names-swapped",
     "file": "src/systems/frontWords.js",
-    "old": "t('fronts.timers.next', 'Next: {a} and {b}', pairOf(day + 1))",
-    "new": "t('fronts.timers.next', 'Next: {a} and {b}', pairOf(day))",
+    "old": "      title: t('fronts.timers.next', 'Next: {a} and {b}', pairOf(day + 1)),",
+    "new": "      title: t('fronts.timers.next', 'Next: {a} and {b}', pairOf(day)),",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],
@@ -313,8 +313,8 @@
   {
     "name": "AUDIT-FRONTS-C1-province",
     "file": "src/systems/frontWords.js",
-    "old": "const provinceName = (lane) => { const r = regionOfTheatre(lane);",
-    "new": "const provinceName = (lane) => { const r = regionOfTheatre(lane % 8 + 1);",
+    "old": "  const r = regionOfTheatre(lane);",
+    "new": "  const r = regionOfTheatre((lane % 8) + 1);",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],

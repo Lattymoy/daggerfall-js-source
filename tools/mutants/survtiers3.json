@@ -400,8 +400,8 @@
   {
     "name": "SURVTIERS3-hard-falls-back-to-nothing",
     "file": "src/systems/equip.js",
-    "old": "import { survivalOn } from './survival/switch.js';",
-    "new": "import { survivalTier } from './survival/switch.js'; const survivalOn = () => survivalTier() === 'casual';",
+    "old": "import { survivalOn } from './survival/switch.js'; // SURV2: the one switch",
+    "new": "import { survivalTier } from './survival/switch.js';\nconst survivalOn = () => survivalTier() === 'casual'; // SURV2: the one switch",
     "tests": [
       "test/systems/survival/survtiers3.test.js"
     ]
@@ -409,8 +409,8 @@
   {
     "name": "SURVTIERS3-the-kit-cite-startingGear-rots",
     "file": "src/systems/equip.js",
-    "old": "systems/startingGear.js:\"export function assignStartingGear\" assignStartingGear",
-    "new": "systems/startingGear.js:\"const mint = (item)\" assignStartingGear",
+    "old": " *  systems/startingGear.js:\"export function assignStartingGear\" assignStartingGear (ItemHelper's",
+    "new": " *  systems/startingGear.js:\"const mint = (item)\" assignStartingGear (ItemHelper's",
     "tests": [
       "test/scenes/citedrift.test.js"
     ],
@@ -419,8 +419,8 @@
   {
     "name": "SURVTIERS3-the-kit-cite-headless-chargen-rots",
     "file": "src/systems/equip.js",
-    "old": "chargenSession.js:\"assignStartingEquipment(playerEntity, { classIndex })\" (?class= headless)",
-    "new": "chargenSession.js:\"S3d: the same kit\"..\"// Enemies essentially could not hit a new character.\" (?class= headless)",
+    "old": " *  chargenSession.js:\"assignStartingEquipment(playerEntity, { classIndex })\" (?class= headless) and chargenSession.js:\"classIndex: result.careerIndex\" (the wizard) -",
+    "new": " *  chargenSession.js:\"S3d: the same kit\"..\"// Enemies essentially could not hit a new character.\" (?class= headless) and chargenSession.js:\"classIndex: result.careerIndex\" (the wizard) -",
     "tests": [
       "test/scenes/citedrift.test.js"
     ],
@@ -429,8 +429,8 @@
   {
     "name": "SURVTIERS3-the-kit-cite-wizard-rots",
     "file": "src/systems/equip.js",
-    "old": "chargenSession.js:\"classIndex: result.careerIndex\" (the wizard)",
-    "new": "chargenSession.js:\"AssignCharacter seeds\"..\"// biography effect adds to them.\" (the wizard)",
+    "old": " *  chargenSession.js:\"assignStartingEquipment(playerEntity, { classIndex })\" (?class= headless) and chargenSession.js:\"classIndex: result.careerIndex\" (the wizard) -",
+    "new": " *  chargenSession.js:\"assignStartingEquipment(playerEntity, { classIndex })\" (?class= headless) and chargenSession.js:\"AssignCharacter seeds\"..\"// biography effect adds to them.\" (the wizard) -",
     "tests": [
       "test/scenes/citedrift.test.js"
     ],
@@ -439,8 +439,8 @@
   {
     "name": "SURVTIERS3-the-kit-cite-world-seed-rots",
     "file": "src/systems/equip.js",
-    "old": "(world.js:\"if (playerEntity.chargenDone)\", exterior.js:\"if (playerEntity.chargenDone)\")",
-    "new": "(world.js:\"shape of the seam\", exterior.js:\"if (playerEntity.chargenDone)\")",
+    "old": " *  residue at the two host calls (world.js:\"if (playerEntity.chargenDone)\", exterior.js:\"if (playerEntity.chargenDone)\"):",
+    "new": " *  residue at the two host calls (world.js:\"shape of the seam\", exterior.js:\"if (playerEntity.chargenDone)\"):",
     "tests": [
       "test/scenes/citedrift.test.js"
     ],

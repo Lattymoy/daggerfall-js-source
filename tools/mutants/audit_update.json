@@ -457,8 +457,8 @@
   {
     "name": "AUDIT-UPDATE-P3-an-elites-Rare-ungated",
     "file": "src/systems/eliteFoes.js",
-    "old": "eliteRareChance(lv) * (at == null ? 1 : rareGate(at))",
-    "new": "eliteRareChance(lv) * 1",
+    "old": "  if (rolls() < eliteRareChance(lv) * (at == null ? 1 : rareGate(at))) {",
+    "new": "  if (rolls() < eliteRareChance(lv) * 1) {",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],
@@ -467,8 +467,8 @@
   {
     "name": "AUDIT-UPDATE-P3-an-elites-Legendary-ungated",
     "file": "src/systems/eliteFoes.js",
-    "old": "ELITE_FOE_LOOT.legendaryChance * (at == null ? 1 : legendaryGate(at))",
-    "new": "ELITE_FOE_LOOT.legendaryChance * 1",
+    "old": "  if (rolls() < ELITE_FOE_LOOT.legendaryChance * (at == null ? 1 : legendaryGate(at))) {",
+    "new": "  if (rolls() < ELITE_FOE_LOOT.legendaryChance * 1) {",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],
@@ -698,8 +698,8 @@
   {
     "name": "AUDIT-UPDATE-II-A3-an-elites-share-ungated-early",
     "file": "src/systems/eliteFoes.js",
-    "old": "  const at = rollerLevel() ?? lv;   // LOOT-GATE; AUDIT UPDATE II A3",
-    "new": "  const at = rollerLevel();   // LOOT-GATE; AUDIT UPDATE II A3",
+    "old": "  const at = rollerLevel() ?? lv; // LOOT-GATE; AUDIT UPDATE II A3: none registered yet (a scene's first foes, before any host frame) - the level the drop is minted at, the player's at every host",
+    "new": "  const at = rollerLevel(); // LOOT-GATE; AUDIT UPDATE II A3: none registered yet (a scene's first foes, before any host frame) - the level the drop is minted at, the player's at every host",
     "tests": [
       "test/systems/audit_update_ii.test.js"
     ],

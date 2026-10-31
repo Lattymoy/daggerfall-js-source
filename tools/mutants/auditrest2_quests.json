@@ -171,8 +171,8 @@
   {
     "name": "AUDITREST2-Q-Q5-encounters-range-back",
     "file": "src/systems/encounters.js",
-    "old": "systems/quest/actions.js:\"this.pendingFoes = world.createFoeGameObjects\" here.",
-    "new": "systems/quest/actions.js:\"CreatePendingFoeSpawn\" here.",
+    "old": " * CreateFoe.cs), which is systems/quest/actions.js:\"this.pendingFoes = world.createFoeGameObjects\" here.",
+    "new": " * CreateFoe.cs), which is systems/quest/actions.js:\"CreatePendingFoeSpawn\" here.",
     "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e, its audit pass): the cites moved with the lines they name (citeShift), the rot one line back as before",
     "tests": [
       "test/systems/quest/auditrest2_quests.test.js"

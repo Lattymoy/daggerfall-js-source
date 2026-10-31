@@ -1491,8 +1491,8 @@
   {
     "name": "ACS-P5-side-kept",
     "file": "src/systems/fleet.js",
-    "old": "r.port = port ? { name: String(port.name ?? ''), ...(port.ether ? { ether: true } : {}) } : null; }",
-    "new": "r.port = port ? { name: String(port.name ?? '') } : null; }",
+    "old": "  if (r) r.port = port ? { name: String(port.name ?? ''), ...(port.ether ? { ether: true } : {}) } : null;",
+    "new": "  if (r) r.port = port ? { name: String(port.name ?? '') } : null;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1500,8 +1500,8 @@
   {
     "name": "ACS-P5-side-saved",
     "file": "src/systems/fleet.js",
-    "old": "...(s.port.ether === true ? { ether: true } : {})",
-    "new": "...{}",
+    "old": "    r.port =\n      s.port && typeof s.port.name === 'string'\n        ? { name: port, ...(s.port.ether === true ? { ether: true } : {}) }\n        : null; // AUDIT CAPTAIN'S SEA P5: her side of the Veil kept",
+    "new": "    r.port = s.port && typeof s.port.name === 'string' ? { name: port, ...{} } : null; // AUDIT CAPTAIN'S SEA P5: her side of the Veil kept",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

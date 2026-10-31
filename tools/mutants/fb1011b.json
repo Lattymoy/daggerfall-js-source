@@ -92,7 +92,7 @@
   {
     "name": "LEGENDHELD-a-legendary-billed",
     "file": "src/systems/enchantments.js",
-    "old": "  if (item?.rarity === 'legendary') return 0;   // LEGEND-HELD",
+    "old": "  if (item?.rarity === 'legendary') return 0; // LEGEND-HELD",
     "new": "",
     "tests": [
       "test/systems/fb1011b_legendheld.test.js"
@@ -101,8 +101,8 @@
   {
     "name": "LEGENDHELD-every-tier-free",
     "file": "src/systems/enchantments.js",
-    "old": "  if (item?.rarity === 'legendary') return 0;   // LEGEND-HELD",
-    "new": "  if (item?.rarity) return 0;   // LEGEND-HELD",
+    "old": "  if (item?.rarity === 'legendary') return 0; // LEGEND-HELD",
+    "new": "  if (item?.rarity) return 0; // LEGEND-HELD",
     "tests": [
       "test/systems/fb1011b_legendheld.test.js"
     ]

@@ -92,8 +92,8 @@
   {
     "name": "STAR6-any-row-taken",
     "file": "src/systems/eventTimers.js",
-    "old": "if (r?.kind === 'star' && typeof r.id === 'string' && Number.isFinite(r.at)) rows.push(r);",
-    "new": "if (r) rows.push(r);",
+    "old": "  for (const r of src?.stars ?? [])\n    if (r?.kind === 'star' && typeof r.id === 'string' && Number.isFinite(r.at)) rows.push(r);",
+    "new": "  for (const r of src?.stars ?? []) if (r) rows.push(r);",
     "tests": [
       "test/systems/starfall/star6_words.test.js"
     ]

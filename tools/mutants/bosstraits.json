@@ -160,8 +160,8 @@
   {
     "name": "BOSS-TRAITS-the-title-bare",
     "file": "src/systems/foeTitle.js",
-    "old": "const traited = traits && typeof entity?.bossTitle === 'string' && entity.bossTitle ? _traitTitle(entity.bossTitle, special) : special;",
-    "new": "const traited = special;",
+    "old": "  const traited =\n    traits && typeof entity?.bossTitle === 'string' && entity.bossTitle\n      ? _traitTitle(entity.bossTitle, special)\n      : special; // BOSS-TRAITS: its first trait's word (systems/bossTraits.js giveBossTraits)",
+    "new": "  const traited = special; // BOSS-TRAITS: its first trait's word (systems/bossTraits.js giveBossTraits)",
     "tests": [
       "test/systems/bosstraits.test.js"
     ]

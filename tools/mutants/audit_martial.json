@@ -284,8 +284,8 @@
   {
     "name": "AUDIT-MARTIAL-L2F7-the-sky-carries-the-estimate",
     "file": "src/systems/firmamentPowers.js",
-    "old": "shareOf(weapon ?? attacker, damage, pct, !info?.estimate)",
-    "new": "shareOf(weapon ?? attacker, damage, pct, true)",
+    "old": "  return Math.max(1, damage + shareOf(weapon ?? attacker, damage, pct, !info?.estimate));",
+    "new": "  return Math.max(1, damage + shareOf(weapon ?? attacker, damage, pct, true));",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"

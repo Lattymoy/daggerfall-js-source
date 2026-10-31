@@ -20,8 +20,8 @@
   {
     "name": "A2-melt-conjured",
     "file": "src/systems/fleet.js",
-    "old": " && !isSummoned(item) && !item.questItem",
-    "new": " && !item.questItem",
+    "old": "  !isSummoned(item) &&\n  !item.questItem &&",
+    "new": "  !item.questItem &&",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "A2-ingots-lent-first",
     "file": "src/systems/fleet.js",
-    "old": "const ingots = [own, lent].filter",
-    "new": "const ingots = [lent, own].filter",
+    "old": "  const ingots = [own, lent].filter((ts) => ts.length).map((ts) => (it) => !!it && ts.includes(it.templateIndex));",
+    "new": "  const ingots = [lent, own].filter((ts) => ts.length).map((ts) => (it) => !!it && ts.includes(it.templateIndex));",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "A2-stores-ore-first",
     "file": "src/systems/fleet.js",
-    "old": "Number(MATERIALS[a.kind]?.metal != null) - Number(MATERIALS[b.kind]?.metal != null)",
-    "new": "Number(MATERIALS[b.kind]?.metal != null) - Number(MATERIALS[a.kind]?.metal != null)",
+    "old": "  [...mats].sort((a, b) => Number(MATERIALS[a.kind]?.metal != null) - Number(MATERIALS[b.kind]?.metal != null));",
+    "new": "  [...mats].sort((a, b) => Number(MATERIALS[b.kind]?.metal != null) - Number(MATERIALS[a.kind]?.metal != null));",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "A2-melt-unordered",
     "file": "src/systems/fleet.js",
-    "old": "  for (const m of takeOrder(mats)) { melt.set(m, meltCount(copy, m.kind, m.n));",
-    "new": "  for (const m of mats) { melt.set(m, meltCount(copy, m.kind, m.n));",
+    "old": "  for (const m of takeOrder(mats)) {",
+    "new": "  for (const m of mats) {",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]

@@ -65,8 +65,8 @@
   {
     "name": "FIRM-STATUS-seat-ignored",
     "file": "src/systems/firmamentLive.js",
-    "old": "  if (!_online) return 'seat';\n",
-    "new": "",
+    "old": "  if (!_online) return 'seat';\n  if (!_tree.start) return read ? 'no-sign' : 'unread';",
+    "new": "  if (!_tree.start) return read ? 'no-sign' : 'unread';",
     "tests": [
       "test/systems/firm_status.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "FIRM-STATUS-read-ignored",
     "file": "src/systems/firmamentLive.js",
-    "old": "return read ? 'no-sign' : 'unread';",
-    "new": "return 'no-sign';",
+    "old": "  if (!_tree.start) return read ? 'no-sign' : 'unread';",
+    "new": "  if (!_tree.start) return 'no-sign';",
     "tests": [
       "test/systems/firm_status.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "FIRM-STATUS-mentoring-ignored",
     "file": "src/systems/firmamentLive.js",
-    "old": "  if (_mentorScale < 1) return 'mentoring';\n",
-    "new": "",
+    "old": "  if (_mentorScale < 1) return 'mentoring';\n  return 'active';",
+    "new": "  return 'active';",
     "tests": [
       "test/systems/firm_status.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "FIRM-STATUS-duel-ignored",
     "file": "src/systems/firmamentLive.js",
-    "old": "  if (dueling) return 'duel';   // MENTOR2: the duel first - it puts the combat stars to sleep, mentoring only scales them\n",
-    "new": "",
+    "old": "  if (dueling) return 'duel'; // MENTOR2: the duel first - it puts the combat stars to sleep, mentoring only scales them\n  if (_mentorScale < 1) return 'mentoring';",
+    "new": "  if (_mentorScale < 1) return 'mentoring';",
     "tests": [
       "test/systems/firm_status.test.js"
     ]

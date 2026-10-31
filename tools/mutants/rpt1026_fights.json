@@ -202,7 +202,7 @@
   {
     "name": "TRAP-TO-OWNER-session-door-dead",
     "file": "src/systems/enchantments.js",
-    "old": "export const spellToFoeOwner = (foe, record, level) => { try { return !!_defaultCtx?.spellToOwner?.(foe, record, level); } catch { return false; } };",
+    "old": "export const spellToFoeOwner = (foe, record, level) => {\n  try {\n    return !!_defaultCtx?.spellToOwner?.(foe, record, level);\n  } catch {\n    return false;\n  }\n};",
     "new": "export const spellToFoeOwner = (foe, record, level) => false;",
     "tests": [
       "test/scenes/rpt1026_fights_trap.test.js"

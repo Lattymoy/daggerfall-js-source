@@ -795,7 +795,7 @@
     "name": "WORLD-HOVER-a-frame-memo-outlives-its-frame",
     "file": "src/systems/frameClock.js",
     "old": "export const frameMark = () => open;",
-    "new": "let _lastMark = 0;\nexport const frameMark = () => (open ?? ++_lastMark);",
+    "new": "let _lastMark = 0;\nexport const frameMark = () => open ?? ++_lastMark;",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -1051,8 +1051,8 @@
   {
     "name": "AUDIT-WH2-frameAbort-does-nothing",
     "file": "src/systems/frameClock.js",
-    "old": "export function frameAbort() { open = null; openAt = null; }",
-    "new": "export function frameAbort() { }",
+    "old": "export function frameAbort() {\n  open = null;\n  openAt = null;\n}",
+    "new": "export function frameAbort() {}",
     "tests": [
       "test/systems/worldhover.test.js"
     ]

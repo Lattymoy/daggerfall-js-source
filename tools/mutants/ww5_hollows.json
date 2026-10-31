@@ -515,8 +515,8 @@
   {
     "name": "WW5-SD-every-lanes-coming-row",
     "file": "src/systems/eventTimers.js",
-    "old": "lp === 'gone' && L.mine && Number.isFinite(lr.next)",
-    "new": "lp === 'gone' && Number.isFinite(lr.next)",
+    "old": "    } else if (lp === 'gone' && L.mine && Number.isFinite(lr.next)) {",
+    "new": "    } else if (lp === 'gone' && Number.isFinite(lr.next)) {",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "WW5-SD-the-boards-site-the-bays",
     "file": "src/systems/eventBoard.js",
-    "old": "sd = src?.sd?.lanes?.find((x) => x?.rec?.s === s) ?? src?.sd;",
-    "new": "sd = src?.sd;",
+    "old": "      sd = src?.sd?.lanes?.find((x) => x?.rec?.s === s) ?? src?.sd;",
+    "new": "      sd = src?.sd;",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]

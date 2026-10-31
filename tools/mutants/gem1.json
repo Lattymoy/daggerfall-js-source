@@ -274,8 +274,8 @@
   {
     "name": "GEM1-the-kit-no-weapon-sockets",
     "file": "src/systems/foeLootCap.js",
-    "old": "  weaponSocketPass(kit, opts.rolls ?? Math.random);   // GEM1: and a weapon's own sockets, after that (law 9)\n",
-    "new": "",
+    "old": "  weaponSocketPass(kit, opts.rolls ?? Math.random); // GEM1: and a weapon's own sockets, after that (law 9)\n  damnPass(kit, opts.rolls ?? Math.random); // TRUE-CURSE: a cursed Legendary weapon damned, after every draw the kit made (law 9)",
+    "new": "  damnPass(kit, opts.rolls ?? Math.random); // TRUE-CURSE: a cursed Legendary weapon damned, after every draw the kit made (law 9)",
     "tests": [
       "test/systems/gem1_sockets.test.js"
     ]

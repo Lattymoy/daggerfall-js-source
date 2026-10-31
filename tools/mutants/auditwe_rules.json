@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-WE-L1-3-the-sky-unheld",
     "file": "src/systems/firmamentPowers.js",
-    "old": "{ const held = regenShare((entity.maxHealth * c.hpRegen) / 1000, 'firmament', entity); if (held > 0) healMine(entity, held); }",
-    "new": "healMine(entity, (entity.maxHealth * c.hpRegen) / 1000);",
+    "old": "  if (c.hpRegen && entity.health > 0 && entity.health < entity.maxHealth) {\n    const held = regenShare((entity.maxHealth * c.hpRegen) / 1000, 'firmament', entity);\n    if (held > 0) healMine(entity, held);\n  } // AUDIT WORLD-EVENTS L1-3: held in a made level (systems/courtRules.js)",
+    "new": "  if (c.hpRegen && entity.health > 0 && entity.health < entity.maxHealth)\n    healMine(entity, (entity.maxHealth * c.hpRegen) / 1000); // AUDIT WORLD-EVENTS L1-3: held in a made level (systems/courtRules.js)",
     "tests": [
       "test/systems/auditwe_rules.test.js"
     ]

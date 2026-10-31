@@ -2,8 +2,8 @@
   {
     "name": "SPLIT-stamp-read-as-start",
     "file": "src/systems/frameClock.js",
-    "old": "const at = Math.min(Math.max(openAt ?? open, open), Math.max(open, now));",
-    "new": "const at = open;",
+    "old": "  const at = Math.min(Math.max(openAt ?? open, open), Math.max(open, now));",
+    "new": "  const at = open;",
     "tests": [
       "test/systems/scriptsplit.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SPLIT-clamp-dropped",
     "file": "src/systems/frameClock.js",
-    "old": "const at = Math.min(Math.max(openAt ?? open, open), Math.max(open, now));",
-    "new": "const at = openAt ?? open;",
+    "old": "  const at = Math.min(Math.max(openAt ?? open, open), Math.max(open, now));",
+    "new": "  const at = openAt ?? open;",
     "tests": [
       "test/systems/scriptsplit.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SPLIT-start-ignored",
     "file": "src/systems/frameClock.js",
-    "old": "openAt = startedAt;   // SCRIPT-SPLIT",
-    "new": "openAt = now;   // SCRIPT-SPLIT",
+    "old": "  openAt = startedAt; // SCRIPT-SPLIT",
+    "new": "  openAt = now; // SCRIPT-SPLIT",
     "tests": [
       "test/systems/scriptsplit.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SPLIT-lent-dropped",
     "file": "src/systems/frameClock.js",
-    "old": "  const stream = lent;\n",
-    "new": "  const stream = 0;\n",
+    "old": "  const stream = lent;",
+    "new": "  const stream = 0;",
     "tests": [
       "test/systems/scriptsplit.test.js"
     ]

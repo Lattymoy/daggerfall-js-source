@@ -520,8 +520,8 @@
   {
     "name": "SURVTIERS-a-count-that-is-no-number-asks-nothing",
     "file": "src/systems/encounters.js",
-    "old": "Math.max(1, Math.trunc(ctx.restAsks)) : 1;",
-    "new": "Math.max(1, Math.trunc(ctx.restAsks)) : 0;",
+    "old": "  const asks = Number.isFinite(ctx.restAsks) ? Math.max(1, Math.trunc(ctx.restAsks)) : 1;",
+    "new": "  const asks = Number.isFinite(ctx.restAsks) ? Math.max(1, Math.trunc(ctx.restAsks)) : 0;",
     "tests": [
       "test/systems/survival/survtiers.test.js"
     ]
@@ -925,8 +925,8 @@
   {
     "name": "SURVTIERS-an-infinite-count-asks-for-ever",
     "file": "src/systems/encounters.js",
-    "old": "const asks = Number.isFinite(ctx.restAsks) ? Math.max(1, Math.trunc(ctx.restAsks)) : 1;",
-    "new": "const asks = Number.isFinite(ctx.restAsks) || ctx.restAsks === Infinity ? Math.max(1, Math.trunc(ctx.restAsks)) : 1;",
+    "old": "  const asks = Number.isFinite(ctx.restAsks) ? Math.max(1, Math.trunc(ctx.restAsks)) : 1;",
+    "new": "  const asks = Number.isFinite(ctx.restAsks) || ctx.restAsks === Infinity ? Math.max(1, Math.trunc(ctx.restAsks)) : 1;",
     "tests": [
       "test/systems/survival/survtiers.test.js"
     ]

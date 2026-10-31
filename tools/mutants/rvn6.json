@@ -380,8 +380,8 @@
   {
     "name": "RVN6-title-unnamed",
     "file": "src/systems/foeTitle.js",
-    "old": "  if (typeof band === 'string' && band) return `${base} of ${band}`;\n",
-    "new": "",
+    "old": "  if (typeof band === 'string' && band) return `${base} of ${band}`;\n  const c = entity?.champion;",
+    "new": "  const c = entity?.champion;",
     "tests": [
       "test/systems/rvn6_band.test.js"
     ]

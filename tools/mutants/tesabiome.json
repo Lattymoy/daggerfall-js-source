@@ -590,8 +590,8 @@
   {
     "name": "TESA-BIOME-66-fauna-unread",
     "file": "src/systems/encounters.js",
-    "old": "const band = ctx.fauna ?? CLIMATE_TABLE.get(ctx.climateIndex);",
-    "new": "const band = CLIMATE_TABLE.get(ctx.climateIndex);",
+    "old": "  const band = ctx.fauna ?? CLIMATE_TABLE.get(ctx.climateIndex);",
+    "new": "  const band = CLIMATE_TABLE.get(ctx.climateIndex);",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]

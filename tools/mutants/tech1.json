@@ -614,8 +614,8 @@
   {
     "name": "TECH1-the-corpse-kit-untechniqued",
     "file": "src/systems/foeLootCap.js",
-    "old": "  techniquePass(kit, opts.rolls ?? Math.random);",
-    "new": "",
+    "old": "  techniquePass(kit, opts.rolls ?? Math.random); // TECH1: and a weapon's technique, LAST of the kit's draws (law 9)",
+    "new": "  // TECH1: and a weapon's technique, LAST of the kit's draws (law 9)",
     "tests": [
       "test/systems/tech1_roster.test.js"
     ]

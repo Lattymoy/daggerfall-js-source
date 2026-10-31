@@ -75,7 +75,7 @@ is held at today's cap: a weapon channel 30, the blow's whole 50, a blow taken 1
 ## 5. The composite ceilings
 
 `src/systems/powerCeiling.js` holds two products. Each registry asks it for its room, under its own name, before it
-adds its share, and the runners (`systems/entityMods.js:"export function weaponBlowMods(weapon, damage, attacker, target, info = NO_BLOW_INFO) {"`,
+adds its share, and the runners (`systems/entityMods.js:"export function weaponBlowMods"`,
 `characters/playerEntity.js:"export function playerDamageMods(entity, dmg) {"`) open the product for each blow and each
 hurt. Each registry is held at its own top, and each ceiling is the product of the tops, measured from the records and
 laws the code reads, so no blow or hurt today is cut.

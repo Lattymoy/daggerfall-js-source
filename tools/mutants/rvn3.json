@@ -92,8 +92,8 @@
   {
     "name": "RVN3-never-counted",
     "file": "src/systems/feudLedger.js",
-    "old": "  if (feudWeakBlow(entity, { cls, metal })) {\n    l.weak++;",
-    "new": "  if (feudWeakBlow(entity, { cls, metal })) {",
+    "old": "    l.weak++;\n    try {",
+    "new": "    try {",
     "tests": [
       "test/systems/rvn3_weak.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RVN3-never-told",
     "file": "src/systems/feudLedger.js",
-    "old": "    try { _onWeak?.(entity); } catch { /* the reveal is not the blow's problem */ }\n",
-    "new": "",
+    "old": "    try {\n      _onWeak?.(entity);\n    } catch {\n      /* the reveal is not the blow's problem */\n    }\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/rvn3_weak.test.js"
     ]

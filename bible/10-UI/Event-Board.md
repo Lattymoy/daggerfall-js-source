@@ -200,7 +200,7 @@ keeps its memory over `every` and announces no kind turned off, so a kind turned
 that stood while it was off: a star that fell then comes back onto the board, never as news, and one that falls after
 it is news again.
 
-**AT THE DOOR** (`systems/eventNotices.js`). `systems/eventNotices.js:"export const eventKindShown ="` stands beside
+**AT THE DOOR** (`systems/eventNotices.js`). `systems/eventNotices.js:"export const eventKindShown"` stands beside
 `eventBoardOn`, and `eventNotice` reads it after the board's switch: a line of a kind turned off is filed in the
 journal's Messages page and said nowhere else - no news, and not back on the chat, which is what the players asked to be
 spared. With the board off, every line goes where it went before whatever its kind (section 2, THE SWITCH).

@@ -101,8 +101,8 @@
   {
     "name": "HUNTERS-MARK-II-the-record-never-kept",
     "file": "src/systems/eliteFoes.js",
-    "old": "  _eliteLaid.set(entity, laid);",
-    "new": "  ;",
+    "old": "  _eliteLaid.set(entity, laid);\n  entity.items.push(...laid);",
+    "new": "  entity.items.push(...laid);",
     "tests": [
       "test/scenes/huntersmark2_wire.test.js"
     ]

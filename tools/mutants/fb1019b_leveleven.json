@@ -72,8 +72,8 @@
   {
     "name": "LEVEL-EVEN-round-hands-no-endurance",
     "file": "src/systems/firmamentPowers.js",
-    "old": ", mp: capAt('mp', (c.mp ?? 0) + pctOf(baseMp, c.mpPct ?? 0)), end });",
-    "new": ", mp: capAt('mp', (c.mp ?? 0) + pctOf(baseMp, c.mpPct ?? 0)) });",
+    "old": "    end,\n  });",
+    "new": "  });",
     "tests": [
       "test/systems/fb1019b_leveleven.test.js"
     ],

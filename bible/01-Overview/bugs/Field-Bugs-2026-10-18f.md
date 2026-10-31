@@ -285,7 +285,7 @@ and one call site in `test/net/eliteGates/law9_height.test.js`.
 `src/systems/enchantments.js`. FOUND: Vampiric Effect was the only heal of a landed blow that ignored the ward - it
 healed the whole claim of blows into the Warden's ward and into the Brass Remnant while shut; Gortwog's Cleaver, as the
 loot maker mints it, healed every point of 20 blows into the Warden's ward. FIXED
-(`enchantments.js:"if (param !== 1 || target?.warded) return null;"`): VampiricEffect.cs's own law told what the blow
+(`enchantments.js:"if (param !== 1 || target?.warded)"`): VampiricEffect.cs's own law told what the blow
 dealt, not a departure. AUDIT FB1018f L1: the Mace of Molag Bal's drain had the same hole and gives nothing off a ward
 or a blow of none (`artifactEffects.js:"if (!entity || !target || damage === 0 || target.warded)"`). AUDIT FB1018f L3-2,
 L3-3: a spell into a ward, Cast When Strikes and the sets' strike refuse it too (TURNED-BLOW). Pins:
