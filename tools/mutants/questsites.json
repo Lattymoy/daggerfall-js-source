@@ -848,8 +848,8 @@
   {
     "name": "QF-the-records-unread",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "  const json = { Name: name, RmbBlock: { FldHeader: { BuildingDataList: fabricRecordsJson(r, c, recs) }, SubRecords:",
-    "new": "  const json = { Name: name, RmbBlock: { FldHeader: { BuildingDataList: [] }, SubRecords:",
+    "old": "      FldHeader: { BuildingDataList: fabricRecordsJson(r, c, recs) },",
+    "new": "      FldHeader: { BuildingDataList: [] },",
     "tests": [
       "test/systems/quest/questfabric.test.js"
     ]
@@ -866,8 +866,8 @@
   {
     "name": "QF-a-far-cell-viewed",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "  if (!b || b.kind !== 'own' || !blocksFile) return null;\n  const { r, c } = b, recs = fabricCellBuildings(r, c);\n  const json",
-    "new": "  if (!b || !blocksFile) return null;\n  const { r, c } = b, recs = fabricCellBuildings(r, c);\n  const json",
+    "old": "  if (!b || b.kind !== 'own' || !blocksFile) return null;",
+    "new": "  if (!b || !blocksFile) return null;",
     "tests": [
       "test/systems/quest/questfabric.test.js"
     ]
@@ -903,8 +903,8 @@
   {
     "name": "QF-a-baked-kind-dropped",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "    out = Object.freeze(FABRIC_SITE_SETS[set].split(' ').filter(Boolean).map(",
-    "new": "    out = Object.freeze(FABRIC_SITE_SETS[set].split(' ').filter(Boolean).slice(1).map(",
+    "old": "        .map((k) => {",
+    "new": "        .slice(1)\n        .map((k) => {",
     "tests": [
       "test/systems/quest/questfabric.test.js",
       "test/systems/quest/auditrelease_r25f.test.js"
@@ -923,8 +923,8 @@
   {
     "name": "QF-an-unmarked-donor-counted",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "    if (rc) for (const b of fabricCellBuildings(rc[0], rc[1])) if (marked[b.donor]) kinds.add(`${b.type}:${b.factionId}`);",
-    "new": "    if (rc) for (const b of fabricCellBuildings(rc[0], rc[1])) kinds.add(`${b.type}:${b.factionId}`);",
+    "old": "      if (rc)\n        for (const b of fabricCellBuildings(rc[0], rc[1])) if (marked[b.donor]) kinds.add(`${b.type}:${b.factionId}`);",
+    "new": "      if (rc) for (const b of fabricCellBuildings(rc[0], rc[1])) kinds.add(`${b.type}:${b.factionId}`);",
     "tests": [
       "test/systems/quest/questfabric.test.js"
     ]

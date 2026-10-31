@@ -402,7 +402,7 @@ The Imperial City's own buildings (the fabric, `03-World/Arena-Provinces.md`
 BLD) had no price: a house is priced off its model's ARCH3D box, and a fabric
 building's one model is its door (`fabricDoorModelId`, no ARCH3D record), so
 each measured 0 - not for sale. Each fabric subrecord now carries its plot's
-ground (`imperialFabricBuildings.js:"sub.footprintM2 = areaOf(b.plot.q);"`), the
+ground (`imperialFabricBuildings.js:"sub.footprintM2 ="`), the
 door's record carries it (`talkTopics.js:"const footprintOf"`), and
 the door prices a house by it. The castle stays the owner's call (DOMAIN2).
 Pins: the IC-HOMES tests in `test/world/icbld_buildings.test.js` and

@@ -20,8 +20,8 @@
   {
     "name": "HOUSESIGN-the-sign-range-closed",
     "file": "src/world/houseSigns.js",
-    "old": "modelIdNum <= SHOP_SIGN_LAST_MODEL;",
-    "new": "modelIdNum < SHOP_SIGN_LAST_MODEL;",
+    "old": "export const isShopSignModel = (modelIdNum) =>\n  modelIdNum >= SHOP_SIGN_FIRST_MODEL && modelIdNum <= SHOP_SIGN_LAST_MODEL;",
+    "new": "export const isShopSignModel = (modelIdNum) => modelIdNum >= SHOP_SIGN_FIRST_MODEL && modelIdNum < SHOP_SIGN_LAST_MODEL;",
     "tests": [
       "test/world/housesign.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "HOUSESIGN-the-farthest-door-kept",
     "file": "src/world/houseSigns.js",
-    "old": "      nearestDistance = distance;\n",
-    "new": "",
+    "old": "      nearestDistance = distance;\n      nearestRecord = building.recordIndex;",
+    "new": "      nearestRecord = building.recordIndex;",
     "tests": [
       "test/world/housesign.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "HOUSESIGN-a-building-model-asked",
     "file": "src/world/houseSigns.js",
-    "old": "  if (placed.recordIndex != null) return false;\n",
-    "new": "",
+    "old": "  if (placed.recordIndex != null) return false;\n  if (!isShopSignModel(placed.modelIdNum)) return false;",
+    "new": "  if (!isShopSignModel(placed.modelIdNum)) return false;",
     "tests": [
       "test/world/housesign.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "HOUSESIGN-the-door-type-ignored",
     "file": "src/world/houseSigns.js",
-    "old": "      if (door.type !== DOOR_TYPE.BUILDING) continue;\n",
-    "new": "",
+    "old": "      if (door.type !== DOOR_TYPE.BUILDING) continue;\n      // the door's centre, placed in the block's frame (only its x and z are read)",
+    "new": "      // the door's centre, placed in the block's frame (only its x and z are read)",
     "tests": [
       "test/world/housesign.test.js"
     ]

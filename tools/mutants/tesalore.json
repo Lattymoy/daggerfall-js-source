@@ -2,8 +2,8 @@
   {
     "name": "TESA-LORE-prison-north",
     "file": "src/world/imperialCity.js",
-    "old": "  prison: Object.freeze({ b: 45,",
-    "new": "  prison: Object.freeze({ b: 12,",
+    "old": "  prison: Object.freeze({ b: 45, r: 7400, half: 300, h: 22, tower: 18, bastionR: 30, bastionH: 100 }),",
+    "new": "  prison: Object.freeze({ b: 12, r: 7400, half: 300, h: 22, tower: 18, bastionR: 30, bastionH: 100 }),",
     "tests": [
       "test/tesalore_capitals.test.js",
       "test/tesa11_imperial.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "TESA-LORE-prison-gate-old",
     "file": "src/world/imperialCity.js",
-    "old": "gates: Object.freeze([30, 45, 90, 135, 150, 195, 210, 270, 330])",
-    "new": "gates: Object.freeze([30, 12, 90, 135, 150, 195, 210, 270, 330])",
+    "old": "    gates: Object.freeze([30, 45, 90, 135, 150, 195, 210, 270, 330]),",
+    "new": "    gates: Object.freeze([30, 12, 90, 135, 150, 195, 210, 270, 330]),",
     "tests": [
       "test/tesalore_capitals.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "TESA-LORE-prison-carried-north",
     "file": "src/world/imperialCity.js",
-    "old": "[IMPERIAL_MODELS.prison]: (x0, z0, x1, z1) => rectBox(x0, z0, x1, z1, prisonAt(),",
-    "new": "[IMPERIAL_MODELS.prison]: (x0, z0, x1, z1) => rectBox(x0, z0, x1, z1, polar(0, IMPERIAL.prison.r),",
+    "old": "    rectBox(x0, z0, x1, z1, prisonAt(), IMPERIAL.prison.half + IMPERIAL.prison.tower + 8),",
+    "new": "    rectBox(x0, z0, x1, z1, polar(0, IMPERIAL.prison.r), IMPERIAL.prison.half + IMPERIAL.prison.tower + 8),",
     "tests": [
       "test/tesalore_capitals.test.js"
     ]
@@ -41,8 +41,8 @@
   {
     "name": "TESA-LORE-watch-towers-low",
     "file": "src/world/imperialCity.js",
-    "old": "watchR: 26, watchH: 100",
-    "new": "watchR: 26, watchH: 40",
+    "old": "    watchH: 100,",
+    "new": "    watchH: 40,",
     "tests": [
       "test/tesalore_capitals.test.js"
     ],
@@ -51,8 +51,8 @@
   {
     "name": "TESA-LORE-court-unpaved",
     "file": "src/world/imperialCity.js",
-    "old": "  if (Math.hypot(x - G.divines[0], z - G.divines[1]) < I.divines.court) return 3;   // TESA-LORE: the Divines' court\n",
-    "new": "",
+    "old": "  if (Math.hypot(x - G.divines[0], z - G.divines[1]) < I.divines.court) return 3; // TESA-LORE: the Divines' court\n  if (G.ways.some(([a, b]) => pointSeg(x, z, a, b) <= I.causeway / 2)) return 3;",
+    "new": "  if (G.ways.some(([a, b]) => pointSeg(x, z, a, b) <= I.causeway / 2)) return 3;",
     "tests": [
       "test/tesalore_capitals.test.js"
     ]
@@ -60,8 +60,8 @@
   {
     "name": "TESA-LORE-court-unreserved",
     "file": "src/world/imperialCity.js",
-    "old": "  if (rectPoint(x0, z0, x1, z1, divinesAt(I)) < I.divines.court + 4) return true;   // TESA-LORE: the Divines' court\n",
-    "new": "",
+    "old": "  if (rectPoint(x0, z0, x1, z1, divinesAt(I)) < I.divines.court + 4) return true; // TESA-LORE: the Divines' court\n  if (",
+    "new": "  if (",
     "tests": [
       "test/tesalore_capitals.test.js"
     ]
@@ -69,8 +69,8 @@
   {
     "name": "TESA-LORE-divine-plinths-open",
     "file": "src/world/imperialCity.js",
-    "old": "  if (Math.abs(x - ax) < D.court && Math.abs(z - az) < D.court) for (const [px, pz] of G.plinths) if (Math.abs(x - px) < D.plinth / 2 + 0.5 && Math.abs(z - pz) < D.plinth / 2 + 0.5) return true;\n",
-    "new": "",
+    "old": "  if (Math.abs(x - ax) < D.court && Math.abs(z - az) < D.court)\n    for (const [px, pz] of G.plinths)\n      if (Math.abs(x - px) < D.plinth / 2 + 0.5 && Math.abs(z - pz) < D.plinth / 2 + 0.5) return true;\n  if (Math.hypot(x - G.pool[0], z - G.pool[1]) < I.pool.r0) return true; // IC-GRAND: the pool - its water no walker's",
+    "new": "  if (Math.hypot(x - G.pool[0], z - G.pool[1]) < I.pool.r0) return true; // IC-GRAND: the pool - its water no walker's",
     "tests": [
       "test/tesalore_capitals.test.js"
     ]
@@ -78,8 +78,8 @@
   {
     "name": "TESA-LORE-talos-plinth-open",
     "file": "src/world/imperialCity.js",
-    "old": "  if (Math.abs(x - ax) < D.talosPlinth / 2 + 1.5 && Math.abs(z - az) < D.talosPlinth / 2 + 1.5) return true;\n",
-    "new": "",
+    "old": "  if (Math.abs(x - ax) < D.talosPlinth / 2 + 1.5 && Math.abs(z - az) < D.talosPlinth / 2 + 1.5) return true;\n  if (Math.abs(x - ax) < D.court && Math.abs(z - az) < D.court)",
+    "new": "  if (Math.abs(x - ax) < D.court && Math.abs(z - az) < D.court)",
     "tests": [
       "test/tesalore_capitals.test.js"
     ]
@@ -87,8 +87,8 @@
   {
     "name": "TESA-LORE-seven-divines",
     "file": "src/world/imperialCity.js",
-    "old": "Array.from({ length: 8 }, (_, i) => { const [dx, dz] = polar(I.divines.b + 22.5 + i * 45, I.divines.ring);",
-    "new": "Array.from({ length: 7 }, (_, i) => { const [dx, dz] = polar(I.divines.b + 22.5 + i * 45, I.divines.ring);",
+    "old": "  return Array.from({ length: 8 }, (_, i) => {",
+    "new": "  return Array.from({ length: 7 }, (_, i) => {",
     "tests": [
       "test/tesalore_capitals.test.js"
     ]
@@ -114,8 +114,8 @@
   {
     "name": "TESA-LORE-divines-carried-centre",
     "file": "src/world/imperialCity.js",
-    "old": "[IMPERIAL_MODELS.nineDivines]: (x0, z0, x1, z1) => rectPoint(x0, z0, x1, z1, divinesAt())",
-    "new": "[IMPERIAL_MODELS.nineDivines]: (x0, z0, x1, z1) => rectPoint(x0, z0, x1, z1, [0, 0])",
+    "old": "  [IMPERIAL_MODELS.nineDivines]: (x0, z0, x1, z1) =>\n    rectPoint(x0, z0, x1, z1, divinesAt()) < IMPERIAL.divines.court + 8,",
+    "new": "  [IMPERIAL_MODELS.nineDivines]: (x0, z0, x1, z1) => rectPoint(x0, z0, x1, z1, [0, 0]) < IMPERIAL.divines.court + 8,",
     "tests": [
       "test/tesalore_capitals.test.js"
     ]

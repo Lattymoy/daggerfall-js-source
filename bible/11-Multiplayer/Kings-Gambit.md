@@ -363,7 +363,7 @@ structure ours.
   fifteen columns across and thirteen rows along, 6.13 cm cells. The guest's side is the head, whatever chair the guest
   takes (Iliac Hand's rule for the opponent's side, which "still lays its side opposite"); each viewer reads the board
   from its own chair (the lean, 10.7). NOT CHOSEN: Iliac Hand's lay, square to the line from the cloth's middle to seat
-  0's chair (`iliacCloth.js:"export function iliacPlaces(frame, seat0, seat1, viewer = 0) {"`, AUDIT CARDS-6 B3), which
+  0's chair (`iliacCloth.js:"export function iliacPlaces"`, AUDIT CARDS-6 B3), which
   this record had cited as the line between the two chairs: a long-side chair's line is 23.8 degrees off the table's
   short axis, and a board square to it lies askew on the felt in 5.13 cm cells. MEASURE (KG4): the cell from the chair.
   KG5 says where a guest's chair stands (the head faces the guest only across from the host).

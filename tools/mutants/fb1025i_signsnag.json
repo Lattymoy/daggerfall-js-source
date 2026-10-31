@@ -93,8 +93,8 @@
   {
     "name": "SIGN-PASS-the-range-closed-below",
     "file": "src/world/houseSigns.js",
-    "old": "modelIdNum >= SHOP_SIGN_FIRST_MODEL &&",
-    "new": "modelIdNum > SHOP_SIGN_FIRST_MODEL &&",
+    "old": "export const isShopSignModel = (modelIdNum) =>\n  modelIdNum >= SHOP_SIGN_FIRST_MODEL && modelIdNum <= SHOP_SIGN_LAST_MODEL;",
+    "new": "export const isShopSignModel = (modelIdNum) => modelIdNum > SHOP_SIGN_FIRST_MODEL && modelIdNum <= SHOP_SIGN_LAST_MODEL;",
     "tests": [
       "test/world/fb1025i_signsnag.test.js"
     ],
@@ -103,8 +103,8 @@
   {
     "name": "SIGN-PASS-the-range-closed-above",
     "file": "src/world/houseSigns.js",
-    "old": "&& modelIdNum <= SHOP_SIGN_LAST_MODEL;",
-    "new": "&& modelIdNum < SHOP_SIGN_LAST_MODEL;",
+    "old": "export const isShopSignModel = (modelIdNum) =>\n  modelIdNum >= SHOP_SIGN_FIRST_MODEL && modelIdNum <= SHOP_SIGN_LAST_MODEL;",
+    "new": "export const isShopSignModel = (modelIdNum) => modelIdNum >= SHOP_SIGN_FIRST_MODEL && modelIdNum < SHOP_SIGN_LAST_MODEL;",
     "tests": [
       "test/world/fb1025i_signsnag.test.js"
     ],

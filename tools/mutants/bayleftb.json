@@ -317,8 +317,8 @@
   {
     "name": "BAY-LEFT-B-KEY-shop-bit",
     "file": "src/world/locationKey.js",
-    "old": "[T.Tavern]: 8, [T.WeaponSmith]: 9,",
-    "new": "[T.Tavern]: 9, [T.WeaponSmith]: 8,",
+    "old": "  [T.Tavern]: 8,\n  [T.WeaponSmith]: 9,",
+    "new": "  [T.Tavern]: 9,\n  [T.WeaponSmith]: 8,",
     "tests": [
       "test/world/locationkey.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "BAY-LEFT-B-KEY-guild-bit",
     "file": "src/world/locationKey.js",
-    "old": "[GUILD_FACTION_IDS.MagesGuild]: 18, [GUILD_FACTION_IDS.FightersGuild]: 21,",
-    "new": "[GUILD_FACTION_IDS.MagesGuild]: 21, [GUILD_FACTION_IDS.FightersGuild]: 18,",
+    "old": "  [GUILD_FACTION_IDS.MagesGuild]: 18,\n  [GUILD_FACTION_IDS.FightersGuild]: 21,",
+    "new": "  [GUILD_FACTION_IDS.MagesGuild]: 21,\n  [GUILD_FACTION_IDS.FightersGuild]: 18,",
     "tests": [
       "test/world/locationkey.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "BAY-LEFT-B-KEY-divine-bit",
     "file": "src/world/locationKey.js",
-    "old": "[DIVINES.Kynareth]: 4, [DIVINES.Mara]: 5,",
-    "new": "[DIVINES.Kynareth]: 5, [DIVINES.Mara]: 4,",
+    "old": "  [DIVINES.Kynareth]: 4,\n  [DIVINES.Mara]: 5,",
+    "new": "  [DIVINES.Kynareth]: 5,\n  [DIVINES.Mara]: 4,",
     "tests": [
       "test/world/locationkey.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "BAY-LEFT-B-KEY-temple-order",
     "file": "src/world/locationKey.js",
-    "old": "DIVINE_KEY_BITS[TEMPLE_ORDER_DIVINE[f] ?? f]",
-    "new": "DIVINE_KEY_BITS[f]",
+    "old": "      type === T.Temple\n        ? DIVINE_KEY_BITS[TEMPLE_ORDER_DIVINE[f] ?? f]\n        : type === T.GuildHall\n          ? GUILD_KEY_BITS[f]\n          : BUILDING_KEY_BITS[type];",
+    "new": "      type === T.Temple ? DIVINE_KEY_BITS[f] : type === T.GuildHall ? GUILD_KEY_BITS[f] : BUILDING_KEY_BITS[type];",
     "tests": [
       "test/world/locationkey.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "BAY-LEFT-B-KEY-general-store",
     "file": "src/world/locationKey.js",
-    "old": "[T.Palace]: 23, [T.GeneralStore]: 24,",
-    "new": "[T.Palace]: 23,",
+    "old": "  [T.GeneralStore]: 24,\n});",
+    "new": "});",
     "tests": [
       "test/world/locationkey.test.js"
     ]

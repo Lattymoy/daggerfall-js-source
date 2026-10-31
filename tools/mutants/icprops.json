@@ -84,8 +84,8 @@
   {
     "name": "IC-PROPS-gate-way-unread",
     "file": "src/world/imperialYards.js",
-    "old": "const onWay = along(x, z) > -IMPERIAL_YARD_LANE && across(x, z) < IMPERIAL_YARD_LANE;",
-    "new": "const onWay = false;",
+    "old": "      const onWay = along(x, z) > -IMPERIAL_YARD_LANE && across(x, z) < IMPERIAL_YARD_LANE;",
+    "new": "      const onWay = false;",
     "tests": [
       "test/world/icprops_yards.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "IC-PROPS-gate-wall-unread",
     "file": "src/world/imperialYards.js",
-    "old": "const ground = Math.hypot(x, z) >= IMPERIAL_YARD_WALL && imperialLand(x, z)",
-    "new": "const ground = imperialLand(x, z)",
+    "old": "        Math.hypot(x, z) >= IMPERIAL_YARD_WALL &&\n        imperialLand(x, z) &&",
+    "new": "        imperialLand(x, z) &&",
     "tests": [
       "test/world/icprops_yards.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "IC-PROPS-gate-yards-over-one-another",
     "file": "src/world/imperialYards.js",
-    "old": " || sumTaken(i - pad, j - pad, i + nx + pad, j + nz + pad) !== 0) continue;",
-    "new": ") continue;",
+    "old": "        if (\n          sumIn(i, j, i + nx, j + nz) !== 0 ||\n          sumRing(i - pad, j - pad, i + nx + pad, j + nz + pad) !== 0 ||\n          sumTaken(i - pad, j - pad, i + nx + pad, j + nz + pad) !== 0\n        )\n          continue;",
+    "new": "        if (sumIn(i, j, i + nx, j + nz) !== 0 || sumRing(i - pad, j - pad, i + nx + pad, j + nz + pad) !== 0) continue;",
     "tests": [
       "test/world/icprops_yards.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "IC-PROPS-a-trade-cell-back",
     "file": "src/world/imperialCity.js",
-    "old": "  if (r === ar && c === ac) return IMPERIAL_ARENA_CODE;\n  return imperialCode(r, c);\n}",
-    "new": "  if (r === ar && c === ac) return IMPERIAL_ARENA_CODE;\n  return land === 2 && d === 'Market District' && hash32(SALT, c, r, 11) % 7 === 0 ? 'GENR' : imperialCode(r, c);\n}",
+    "old": "  return imperialCode(r, c);",
+    "new": "  return land === 2 && d === 'Market District' && hash32(SALT, c, r, 11) % 7 === 0 ? 'GENR' : imperialCode(r, c);",
     "tests": [
       "test/world/icprops_city.test.js",
       "test/tesa11_imperial.test.js"
@@ -166,8 +166,8 @@
   {
     "name": "IC-PROPS-halls-unread",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "  if (door.street === 'main') for (const [pool, every] of trade?.halls ?? []) if (hash32(SALT, h, 14) % every === 0) return pool;\n",
-    "new": "",
+    "old": "  if (door.street === 'main')\n    for (const [pool, every] of trade?.halls ?? []) if (hash32(SALT, h, 14) % every === 0) return pool;\n  if (trade?.guild && door.street === 'main' && hash32(SALT, h, 3) % FABRIC_GUILD_EVERY === 0) return trade.guild;",
+    "new": "  if (trade?.guild && door.street === 'main' && hash32(SALT, h, 3) % FABRIC_GUILD_EVERY === 0) return trade.guild;",
     "tests": [
       "test/world/icprops_city.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "IC-PROPS-a-temple-by-its-size",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "  if (pool === 'temple') return list[hash32(SALT, p.key, 9) % list.length];\n",
-    "new": "",
+    "old": "  if (pool === 'temple') return list[hash32(SALT, p.key, 9) % list.length];\n  const near = Math.min(...list.map((i) => Math.abs(FABRIC_DONORS[i].size[0] * FABRIC_DONORS[i].size[1] - area)));",
+    "new": "  const near = Math.min(...list.map((i) => Math.abs(FABRIC_DONORS[i].size[0] * FABRIC_DONORS[i].size[1] - area)));",
     "tests": [
       "test/world/icprops_city.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "IC-PROPS-a-temple-of-no-god",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "factionId: GUILD_FACTION[pool] ?? FABRIC_DONORS[donor].faction,   // IC-PROPS",
-    "new": "factionId: GUILD_FACTION[pool] ?? 0,   // IC-PROPS",
+    "old": "        factionId: GUILD_FACTION[pool] ?? FABRIC_DONORS[donor].faction, // IC-PROPS: a temple its god's, the Thieves Guild's house the guild's (its donor's record's)",
+    "new": "        factionId: GUILD_FACTION[pool] ?? 0, // IC-PROPS: a temple its god's, the Thieves Guild's house the guild's (its donor's record's)",
     "tests": [
       "test/world/icprops_city.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "IC-PROPS-university-kept-clear",
     "file": "src/world/imperialFabric.js",
-    "old": " && !(uni && U.in(x, z)) && ",
-    "new": " && ",
+    "old": "        rr >= I.cityWall.r &&\n        !(uni && U.in(x, z)) &&\n        (imperialDistrictAt(x, z) !== 'Waterfront District' || rr > I.waterfront.r1 - C.quay),",
+    "new": "        rr >= I.cityWall.r && (imperialDistrictAt(x, z) !== 'Waterfront District' || rr > I.waterfront.r1 - C.quay),",
     "tests": [
       "test/world/icprops_city.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "IC-PROPS-walks-unread",
     "file": "src/world/imperialFabric.js",
-    "old": "\n      || walks.some((w) => (w.x !== undefined ? Math.abs(x - w.x) : Math.abs(z - /** @type {number} */ (w.z))) < C.uniWalk),",
-    "new": ",",
+    "old": "      Math.hypot(x - tx, z - tz) < U.spireR + C.uniTower ||\n      (Math.abs(x - hx) < hh && Math.abs(z - hz) < hh) ||\n      walks.some(\n        (w) => (w.x !== undefined ? Math.abs(x - w.x) : Math.abs(z - /** @type {number} */ (w.z))) < C.uniWalk,\n      ),",
+    "new": "      Math.hypot(x - tx, z - tz) < U.spireR + C.uniTower || (Math.abs(x - hx) < hh && Math.abs(z - hz) < hh),",
     "tests": [
       "test/world/icprops_city.test.js"
     ]

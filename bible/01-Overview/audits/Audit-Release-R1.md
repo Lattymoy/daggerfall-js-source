@@ -43,7 +43,7 @@ world or moves a server's cost. R1-1 is the one a player meets - a city's street
 ### R1-1 - a town's wall model and the Imperial City's cells (HIGH, FIXED)
 
 `townWalls.js:"export const TOWN_WALL_MODEL_BASE = 1000000;"` (was `3000000 + ((mapId >>> 0) & 0xfffff)`),
-`imperialBlocks.js:"export const IMPERIAL_FABRIC_MODEL = 7_000_000;"` (was `3_000_000` when this lane read it), `customModels.js:"export function customModelFor"`.
+`imperialBlocks.js:"export const IMPERIAL_FABRIC_MODEL"` (was `3_000_000` when this lane read it), `customModels.js:"export function customModelFor"`.
 AT THE MERGE (2026-10-26): IC-GRAND's own perf pass found the same overlap from the city's side and moved its fabric's and
 skylines' models to 7,000,000 and 7,100,000 (`03-World/Arena-Provinces.md` "THE ID RUNS"); with this lane's walls at
 1,000,000 the two ranges are clear from both sides, and both pins hold.
@@ -140,7 +140,7 @@ ON THE HORIZON (PIN MOVED: it read each slice's foot at its own pixel's ground);
 
 ### R1-5 - the Red Ring Road and the two Lake Rumares (NOTE)
 
-`cyrodiilRoads.js:"export function ringPoints(ring, walkable, wet) {"`, `world/imperialCity.js:"lake: 10000,"`. VOYAGER-CYRODIIL
+`cyrodiilRoads.js:"export function ringPoints(ring, walkable, wet) {"`, `world/imperialCity.js:"lake: 10000, // AUDIT"`. VOYAGER-CYRODIIL
 rings the Imperial City "along Lake Rumare's shore": the first water each of twelve bearings meets past the span. IC-GRAND
 puts the city's own isle and Lake Rumare's far shore (10 km) INSIDE its 25 pixels, and the trace's ring of water (IC-RING's
 "circle river") stands 36 to 56 pixels out. On the freeware, on SMOOTH-LAND's land (ad2a8d71de), the ring's twelve points

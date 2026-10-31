@@ -122,8 +122,8 @@
   {
     "name": "ICS-need-after-the-list",
     "file": "src/world/imperialPrebuildWorker.js",
-    "old": "      const need = needs.shift(), w = need ?? queue.shift();",
-    "new": "      const q = queue.shift(), need = q ? undefined : needs.shift(), w = q ?? need;",
+    "old": "      const need = needs.shift(),\n        w = need ?? queue.shift();",
+    "new": "      const q = queue.shift(),\n        need = q ? undefined : needs.shift(),\n        w = q ?? need;",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "ICS-need-made-before-skipped",
     "file": "src/world/imperialPrebuildWorker.js",
-    "old": "          done.delete(keyOf(w));   // made before and let go by the page: made again\n",
-    "new": "",
+    "old": "          done.delete(keyOf(w)); // made before and let go by the page: made again\n          needs.push(w);",
+    "new": "          needs.push(w);",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "ICS-need-dropped-by-a-list",
     "file": "src/world/imperialPrebuildWorker.js",
-    "old": "      if (msg?.t === 'want') { queue =",
-    "new": "      if (msg?.t === 'want') { needs = []; queue =",
+    "old": "        queue = (msg.slices ?? []).flatMap(({ s, near }) => sliceWork(s, !!near)).filter((w) => !done.has(keyOf(w)));",
+    "new": "        needs = [];\n        queue = (msg.slices ?? []).flatMap(({ s, near }) => sliceWork(s, !!near)).filter((w) => !done.has(keyOf(w)));",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "ICS-made-need-kept",
     "file": "src/world/imperialPrebuildWorker.js",
-    "old": " needs = needs.filter((w) => keyOf(w) !== msg.key); }",
-    "new": " }",
+    "old": "        needs = needs.filter((w) => keyOf(w) !== msg.key);\n      } else if (msg?.t === 'need') {",
+    "new": "      } else if (msg?.t === 'need') {",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "ICS-failure-waited-on",
     "file": "src/world/imperialPrebuildClient.js",
-    "old": "else if (m?.t === 'error' && m.key) { asked.delete(m.key); failed.add(m.key); }",
-    "new": "else if (m?.t === 'error' && m.key) { asked.delete(m.key); }",
+    "old": "        failed.add(m.key);\n      } // IC-STUTTER: never waited on for ever - the page makes it",
+    "new": "      } // IC-STUTTER: never waited on for ever - the page makes it",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -372,8 +372,8 @@
   {
     "name": "ICS-layout-in-one",
     "file": "src/world/locationLayout.js",
-    "old": "        originZ: y * RMB_SIDE,\n      });\n      yield;\n",
-    "new": "        originZ: y * RMB_SIDE,\n      });\n",
+    "old": "      yield;\n    }",
+    "new": "    }",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],

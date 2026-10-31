@@ -214,8 +214,8 @@
   {
     "name": "BR5-land-tier-the-game",
     "file": "src/world/landView.js",
-    "old": "[3, 'Classic (3)']",
-    "new": "[3, 'Daggerfall\\u2019s (3)']",
+    "old": "  [3, 'Classic (3)'],",
+    "new": "  [3, 'Daggerfall\\u2019s (3)'],",
     "tests": [
       "test/ui/brand.test.js"
     ],

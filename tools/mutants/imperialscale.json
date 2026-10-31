@@ -12,8 +12,8 @@
   {
     "name": "IS-the-shore-a-district",
     "file": "src/world/imperialCity.js",
-    "old": "  if (r >= I.lake) return SHORE;\n",
-    "new": "",
+    "old": "  if (r >= I.lake) return SHORE;\n  const b = imperialBearing(x, z);",
+    "new": "  const b = imperialBearing(x, z);",
     "tests": [
       "test/world/imperialscale.test.js",
       "test/tesa11_imperial.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "IS-the-open-cells-own",
     "file": "src/world/imperialCity.js",
-    "old": "if (land === 2 && d === SHORE) return 'O';",
-    "new": "if (false) return 'O';",
+    "old": "  if (land === 2 && d === SHORE) return 'O'; // TS5: the far shore wholly - open ground, the land's own",
+    "new": "  if (false) return 'O'; // TS5: the far shore wholly - open ground, the land's own",
     "tests": [
       "test/world/imperialscale.test.js",
       "test/tesa11_imperial.test.js"
@@ -43,8 +43,8 @@
   {
     "name": "IS-the-bridge-to-the-edge",
     "file": "src/world/imperialCity.js",
-    "old": "polar(I.bridge.b, I.lake + I.bridge.landing)];",
-    "new": "[-(HALF * BLOCK_M), 0]];",
+    "old": "export const bridgeLine = (I = IMPERIAL) => [\n  polar(I.bridge.b, I.cityWall.r),\n  polar(I.bridge.b, I.lake + I.bridge.landing),\n];",
+    "new": "export const bridgeLine = (I = IMPERIAL) => [polar(I.bridge.b, I.cityWall.r), [-(HALF * BLOCK_M), 0]];",
     "tests": [
       "test/world/imperialscale.test.js",
       "test/tesa11_imperial.test.js"
@@ -53,8 +53,8 @@
   {
     "name": "IS-the-sand-unlaid",
     "file": "src/world/imperialCity.js",
-    "old": "  if (r >= I.lake) return r < I.lake + 10 ? 1 : OPEN_TILE;",
-    "new": "  if (r >= I.lake) return OPEN_TILE;",
+    "old": "  if (r >= I.lake) return r < I.lake + 10 ? 1 : OPEN_TILE; // TS5: the far shore's sand, then the land's own",
+    "new": "  if (r >= I.lake) return OPEN_TILE; // TS5: the far shore's sand, then the land's own",
     "tests": [
       "test/tesa11_imperial.test.js"
     ]
@@ -62,8 +62,8 @@
   {
     "name": "IS-the-least-unread",
     "file": "src/world/imperialCity.js",
-    "old": "if ((count.get(d) ?? 0) >= NAMED_LEAST && (count.get(d) ?? 0) > (best ? count.get(best) : 0)) best = d;",
-    "new": "if ((count.get(d) ?? 0) > (best ? count.get(best) : 0)) best = d;",
+    "old": "    for (const d of NAMED_DISTRICTS)\n      if ((count.get(d) ?? 0) >= NAMED_LEAST && (count.get(d) ?? 0) > (best ? count.get(best) : 0)) best = d;",
+    "new": "    for (const d of NAMED_DISTRICTS) if ((count.get(d) ?? 0) > (best ? count.get(best) : 0)) best = d;",
     "tests": [
       "test/world/imperialscale.test.js",
       "test/tesa11_imperial.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "IS-a-part-missed",
     "file": "src/world/imperialCity.js",
-    "old": "[IMPERIAL_MODELS.whiteGoldTower]: (x0, z0, x1, z1) => rectPoint(x0, z0, x1, z1, [0, 0]) < IMPERIAL.tower.plinthR + 6,",
-    "new": "[IMPERIAL_MODELS.whiteGoldTower]: (x0, z0, x1, z1) => rectPoint(x0, z0, x1, z1, [0, 0]) < 0,",
+    "old": "  [IMPERIAL_MODELS.whiteGoldTower]: (x0, z0, x1, z1) => rectPoint(x0, z0, x1, z1, [0, 0]) < IMPERIAL.tower.plinthR + 6,",
+    "new": "  [IMPERIAL_MODELS.whiteGoldTower]: (x0, z0, x1, z1) => rectPoint(x0, z0, x1, z1, [0, 0]) < 0,",
     "tests": [
       "test/tesa11_imperial.test.js",
       "test/world/imperialscale.test.js"

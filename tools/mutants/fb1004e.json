@@ -642,8 +642,8 @@
   {
     "name": "OWHUBS-a-gate-block-missed",
     "file": "src/world/immersiveTravelGates.js",
-    "old": "IT_GATE_FILE.test(`${String(n ?? '').toUpperCase()}.json`)",
-    "new": "IT_GATE_FILE.test(String(n ?? ''))",
+    "old": "  (loc?.exterior?.exteriorData?.blockNames ?? []).some(\n    (n) => IT_GATE_FILE.test(`${String(n ?? '').toUpperCase()}.json`) || isWallCarrier(n),\n  ); // TS7: or the carrier of a wall on its outline (world/townWalls.js gateFurniture); a capital's: world/capitalCarriages.js isCarriageTown",
+    "new": "  (loc?.exterior?.exteriorData?.blockNames ?? []).some((n) => IT_GATE_FILE.test(String(n ?? '')) || isWallCarrier(n)); // TS7: or the carrier of a wall on its outline (world/townWalls.js gateFurniture); a capital's: world/capitalCarriages.js isCarriageTown",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],

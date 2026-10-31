@@ -273,8 +273,8 @@
   {
     "name": "TB-the-carrier-no-carriage-town",
     "file": "src/world/immersiveTravelGates.js",
-    "old": " || isWallCarrier(n));",
-    "new": ");",
+    "old": "  (loc?.exterior?.exteriorData?.blockNames ?? []).some(\n    (n) => IT_GATE_FILE.test(`${String(n ?? '').toUpperCase()}.json`) || isWallCarrier(n),",
+    "new": "  (loc?.exterior?.exteriorData?.blockNames ?? []).some((n) =>\n    IT_GATE_FILE.test(`${String(n ?? '').toUpperCase()}.json`),",
     "tests": [
       "test/world/baywalls.test.js"
     ]

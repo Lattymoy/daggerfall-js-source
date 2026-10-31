@@ -209,8 +209,8 @@
   {
     "name": "JUNGLE-ROADSIDE-the-turn-ignored",
     "file": "src/world/lowPolyTrees.js",
-    "old": "trees[o + 5] = g.turn ? g.turn[i] : v.yaw;",
-    "new": "trees[o + 5] = v.yaw;",
+    "old": "      trees[o + 5] = g.turn ? g.turn[i] : v.yaw; // JUNGLE-ROADSIDE",
+    "new": "      trees[o + 5] = v.yaw; // JUNGLE-ROADSIDE",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]
@@ -751,8 +751,8 @@
   {
     "name": "JUNGLE-ROADSIDE-the-cut-blind-to-several",
     "file": "src/world/lowPolyTrees.js",
-    "old": "(Array.isArray(proto) ? proto.some((h) => cut.has(h)) : cut.has(proto))",
-    "new": "cut.has(proto)",
+    "old": "export const lptCuts = (cut, proto) => (Array.isArray(proto) ? proto.some((h) => cut.has(h)) : cut.has(proto));",
+    "new": "export const lptCuts = (cut, proto) => cut.has(proto);",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]

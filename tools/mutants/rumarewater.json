@@ -2,8 +2,8 @@
   {
     "name": "RW-PLAN-the-mouth-uncut",
     "file": "src/world/imperialCity.js",
-    "old": "  if (r >= I.lake && z > 0 && Math.abs(x) < I.mouth) return false;   // RUMARE-WATER: the Waterfront's mouth, through the far shore\n",
-    "new": "",
+    "old": "  if (r >= I.lake && z > 0 && Math.abs(x) < I.mouth) return false; // RUMARE-WATER: the Waterfront's mouth, through the far shore\n  if (r <= I.isle || r >= I.lake) return true;",
+    "new": "  if (r <= I.isle || r >= I.lake) return true;",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RW-PLAN-cut-north",
     "file": "src/world/imperialCity.js",
-    "old": "if (r >= I.lake && z > 0 && Math.abs(x) < I.mouth) return false;",
-    "new": "if (r >= I.lake && z < 0 && Math.abs(x) < I.mouth) return false;",
+    "old": "  if (r >= I.lake && z > 0 && Math.abs(x) < I.mouth) return false; // RUMARE-WATER: the Waterfront's mouth, through the far shore",
+    "new": "  if (r >= I.lake && z < 0 && Math.abs(x) < I.mouth) return false; // RUMARE-WATER: the Waterfront's mouth, through the far shore",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -445,8 +445,8 @@
   {
     "name": "RW-F1-the-compounds-turned",
     "file": "src/world/imperialCity.js",
-    "old": "c = [polar(I.prison.b, I.prison.r), polar(I.university.b, I.university.r)]",
-    "new": "c = [polar(I.university.b, I.university.r), polar(I.prison.b, I.prison.r)]",
+    "old": "  if (!c) _landCompounds.set(I, (c = [polar(I.prison.b, I.prison.r), polar(I.university.b, I.university.r)]));",
+    "new": "  if (!c) _landCompounds.set(I, (c = [polar(I.university.b, I.university.r), polar(I.prison.b, I.prison.r)]));",
     "tests": [
       "test/world/rumarewater.test.js"
     ]

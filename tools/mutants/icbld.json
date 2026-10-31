@@ -2,8 +2,8 @@
   {
     "name": "BLD-windows-upside-down",
     "file": "src/world/imperialFabricModels.js",
-    "old": "const v0 = (y0 - vTop) / STOREY, v1 = (y1 - vTop) / STOREY;",
-    "new": "const v0 = (vTop - y0) / STOREY, v1 = (vTop - y1) / STOREY;",
+    "old": "  const v0 = (y0 - vTop) / STOREY,\n    v1 = (y1 - vTop) / STOREY; // BLD: the picture's top row at vTop, v falling down the wall",
+    "new": "  const v0 = (vTop - y0) / STOREY,\n    v1 = (vTop - y1) / STOREY; // BLD: the picture's top row at vTop, v falling down the wall",
     "tests": [
       "test/world/icbld_fabric.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "BLD-storeys-counted-to-the-ground",
     "file": "src/world/imperialFabricModels.js",
-    "old": "k = Math.floor((h - y0) / STOREY + 1e-6)",
-    "new": "k = Math.ceil((h - y0) / STOREY - 1e-6)",
+    "old": "    k = Math.floor((h - y0) / STOREY + 1e-6),",
+    "new": "    k = Math.ceil((h - y0) / STOREY - 1e-6),",
     "tests": [
       "test/world/icbld_fabric.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "BLD-gable-in-storeys",
     "file": "src/world/imperialFabricModels.js",
-    "old": "const top = Math.min(ridge, bot + STOREY / 2), v0",
-    "new": "const top = Math.min(ridge, bot + STOREY), v0",
+    "old": "    const top = Math.min(ridge, bot + STOREY / 2),",
+    "new": "    const top = Math.min(ridge, bot + STOREY),",
     "tests": [
       "test/world/icbld_fabric.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "BLD-party-walls-windowed",
     "file": "src/world/imperialFabricModels.js",
-    "old": "{ bits |= 1 << e; break; }",
-    "new": "{ break; }",
+    "old": "        bits |= 1 << e;\n        break;",
+    "new": "        break;",
     "tests": [
       "test/world/icbld_fabric.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "BLD-bay-unstretched",
     "file": "src/world/imperialFabricModels.js",
-    "old": "return len / Math.max(1, Math.round(len / BAY)); };",
-    "new": "return BAY; };",
+    "old": "  return len / Math.max(1, Math.round(len / BAY));",
+    "new": "  return BAY;",
     "tests": [
       "test/world/icbld_fabric.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "BLD-balcony-across-a-window",
     "file": "src/world/imperialFabricModels.js",
-    "old": "% 2 === 0 ? 1 : 0]",
-    "new": "% 2 === 0 ? 0 : 1]",
+    "old": "const balconyFloor = (h) => BALCONY_FLOORS[Math.round(h / (STOREY / 2)) % 2 === 0 ? 1 : 0];",
+    "new": "const balconyFloor = (h) => BALCONY_FLOORS[Math.round(h / (STOREY / 2)) % 2 === 0 ? 0 : 1];",
     "tests": [
       "test/world/icbld_fabric.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "BLD-party-wall-off-the-ground",
     "file": "src/world/imperialFabricModels.js",
-    "old": "plainBand(mb, wallT, a, b, -0.5, p.h, n);",
-    "new": "plainBand(mb, wallT, a, b, 0.3, p.h, n);",
+    "old": "    if (!front && party & (1 << e)) plainBand(mb, wallT, a, b, -0.5, p.h, n);",
+    "new": "    if (!front && party & (1 << e)) plainBand(mb, wallT, a, b, 0.3, p.h, n);",
     "tests": [
       "test/world/icbld_fabric.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "BLD-plain-run-into-the-window",
     "file": "src/world/imperialArt.js",
-    "old": "+ FACADE_WINDOW.rect[1] - 9 });",
-    "new": "+ FACADE_WINDOW.rect[1] + 9 });",
+    "old": "  rows: FACADE_TEXELS.h - (FACADE_WINDOW.rect[3] + 6) + FACADE_WINDOW.rect[1] - 9,",
+    "new": "  rows: FACADE_TEXELS.h - (FACADE_WINDOW.rect[3] + 6) + FACADE_WINDOW.rect[1] + 9,",
     "tests": [
       "test/world/icbld_fabric.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "BLD-a-building-over-another",
     "file": "src/world/imperialFabric.js",
-    "old": "rects.push({ s0: 0, s1: D, t0: 0, t1: D, out: 0b1001 });",
-    "new": "rects.push({ s0: 0, s1: D + 1.5, t0: 0, t1: D, out: 0b1001 });",
+    "old": "        rects.push({ s0: 0, s1: D, t0: 0, t1: D, out: 0b1001 });",
+    "new": "        rects.push({ s0: 0, s1: D + 1.5, t0: 0, t1: D, out: 0b1001 });",
     "tests": [
       "test/world/icbld_fabric.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "BLD-lamps-cap-lifted",
     "file": "src/world/imperialFabricLights.js",
-    "old": "if (kept.length >= FABRIC_LAMPS.perCell) break;",
-    "new": "if (kept.length >= 99) break;",
+    "old": "    if (kept.length >= FABRIC_LAMPS.perCell) break;",
+    "new": "    if (kept.length >= 99) break;",
     "tests": [
       "test/world/icbld_lights.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "BLD-lamps-unspaced",
     "file": "src/world/imperialFabricLights.js",
-    "old": "Math.hypot(k.at[0] - x, k.at[1] - z) < FABRIC_LAMPS.spacing)) continue;",
-    "new": "Math.hypot(k.at[0] - x, k.at[1] - z) < 0)) continue;",
+    "old": "    if (kept.some((k) => Math.hypot(k.at[0] - x, k.at[1] - z) < FABRIC_LAMPS.spacing)) continue;",
+    "new": "    if (kept.some((k) => Math.hypot(k.at[0] - x, k.at[1] - z) < 0)) continue;",
     "tests": [
       "test/world/icbld_lights.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "BLD-lamp-on-a-building",
     "file": "src/world/imperialFabricLights.js",
-    "old": "if (g !== GROUND.street && g !== GROUND.square) continue;",
-    "new": "if (g === GROUND.canal) continue;",
+    "old": "    if (g !== GROUND.street && g !== GROUND.square) continue;",
+    "new": "    if (g === GROUND.canal) continue;",
     "tests": [
       "test/world/icbld_lights.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "BLD-block-without-lamps",
     "file": "src/world/imperialBlocks.js",
-    "old": "deps.startMarkerAt(at[0] + dx, at[1] - dz)), ...lamps] });",
-    "new": "deps.startMarkerAt(at[0] + dx, at[1] - dz))] });",
+    "old": "    flats: [...markers.map(([dx, dz]) => deps.startMarkerAt(at[0] + dx, at[1] - dz)), ...lamps],",
+    "new": "    flats: [...markers.map(([dx, dz]) => deps.startMarkerAt(at[0] + dx, at[1] - dz))],",
     "tests": [
       "test/world/icbld_lights.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "BLD-window-mask-top-down",
     "file": "src/world/imperialWindows.js",
-    "old": "return m ? toColor32({ width: m.width, height: m.height, data: m.data.slice() }) : null;",
-    "new": "return m ? { width: m.width, height: m.height, colors: new Uint8ClampedArray(m.data) } : null;",
+    "old": "  return m ? toColor32({ width: m.width, height: m.height, data: m.data.slice() }) : null;",
+    "new": "  return m ? { width: m.width, height: m.height, colors: new Uint8ClampedArray(m.data) } : null;",
     "tests": [
       "test/world/icbld_lights.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "BLD-arcade-glows",
     "file": "src/world/imperialWindows.js",
-    "old": "'facadeTimber', 'groundShop'].map",
-    "new": "'facadeTimber', 'groundShop', 'groundArcade'].map",
+    "old": "  ['facadeOchre', 'facadeBrick', 'facadeWhite', 'facadeStone', 'facadeTimber', 'groundShop'].map((k) => CAPITAL_ART[k]),",
+    "new": "  ['facadeOchre', 'facadeBrick', 'facadeWhite', 'facadeStone', 'facadeTimber', 'groundShop', 'groundArcade'].map(\n    (k) => CAPITAL_ART[k],\n  ),",
     "tests": [
       "test/world/icbld_lights.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "BLD-door-before-a-way-up",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "if (DOOR_GROUND.includes(g) && DOOR_GROUND.includes(g2)) return",
-    "new": "if (g !== GROUND.canal) return",
+    "old": "      if (DOOR_GROUND.includes(g) && DOOR_GROUND.includes(g2))\n        return { edge: e, at, n, street: streetKind(p.sw?.[e] ?? 0) }; // IC-STAIRS: under a stair's upper flights too",
+    "new": "      if (g !== GROUND.canal) return { edge: e, at, n, street: streetKind(p.sw?.[e] ?? 0) }; // IC-STAIRS: under a stair's upper flights too",
     "tests": [
       "test/world/icbld_buildings.test.js"
     ],
@@ -165,8 +165,8 @@
   {
     "name": "BLD-quality-off-district",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "quality: qlo + (hash32(SALT, p.key, 11) % (qhi - qlo + 1))",
-    "new": "quality: qlo + (hash32(SALT, p.key, 11) % (qhi - qlo + 4))",
+    "old": "        quality: qlo + (hash32(SALT, p.key, 11) % (qhi - qlo + 1)),",
+    "new": "        quality: qlo + (hash32(SALT, p.key, 11) % (qhi - qlo + 4)),",
     "tests": [
       "test/world/icbld_buildings.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "BLD-guild-of-no-faction",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "factionId: GUILD_FACTION[pool] ?? FABRIC_DONORS[donor].faction,",
-    "new": "factionId: 0,",
+    "old": "        factionId: GUILD_FACTION[pool] ?? FABRIC_DONORS[donor].faction, // IC-PROPS: a temple its god's, the Thieves Guild's house the guild's (its donor's record's)",
+    "new": "        factionId: 0, // IC-PROPS: a temple its god's, the Thieves Guild's house the guild's (its donor's record's)",
     "tests": [
       "test/world/icbld_buildings.test.js"
     ],
@@ -184,8 +184,8 @@
   {
     "name": "BLD-guild-anywhere",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "if (trade?.guild && door.street === 'main' && hash32(SALT, h, 3) % FABRIC_GUILD_EVERY === 0) return trade.guild;",
-    "new": "if (door.street === 'main' && hash32(SALT, h, 3) % FABRIC_GUILD_EVERY === 0) return 'mages';",
+    "old": "  if (trade?.guild && door.street === 'main' && hash32(SALT, h, 3) % FABRIC_GUILD_EVERY === 0) return trade.guild;",
+    "new": "  if (door.street === 'main' && hash32(SALT, h, 3) % FABRIC_GUILD_EVERY === 0) return 'mages';",
     "tests": [
       "test/world/icbld_buildings.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "BLD-frame-turned-the-other-way",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "yRotation = Math.round(-phi * ROTATION_DIVISOR);",
-    "new": "yRotation = Math.round(phi * ROTATION_DIVISOR);",
+    "old": "    yRotation = Math.round(-phi * ROTATION_DIVISOR);",
+    "new": "    yRotation = Math.round(phi * ROTATION_DIVISOR);",
     "tests": [
       "test/world/icbld_buildings.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "BLD-door-off-the-entrance",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "const P = (s, y, e) => [E.door[0] + t[0] * s + o[0] * e, y, E.door[1] + t[1] * s + o[1] * e];",
-    "new": "const P = (s, y, e) => [E.door[0] + 0.5 + t[0] * s + o[0] * e, y, E.door[1] + t[1] * s + o[1] * e];",
+    "old": "  const P = (s, y, e) => [E.door[0] + t[0] * s + o[0] * e, y, E.door[1] + t[1] * s + o[1] * e];",
+    "new": "  const P = (s, y, e) => [E.door[0] + 0.5 + t[0] * s + o[0] * e, y, E.door[1] + t[1] * s + o[1] * e];",
     "tests": [
       "test/world/icbld_buildings.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "BLD-no-building-door",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "type: DOOR_TYPE.BUILDING, vert0",
-    "new": "type: DOOR_TYPE.DUNGEON_ENTRANCE, vert0",
+    "old": "        type: DOOR_TYPE.BUILDING,",
+    "new": "        type: DOOR_TYPE.DUNGEON_ENTRANCE,",
     "tests": [
       "test/world/icbld_buildings.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "BLD-automap-left-closed",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "if (inQuad(q, px, pz)) auto[ay * 64 + ax] = byte;",
-    "new": "if (inQuad(q, px, pz)) auto[ay * 64 + ax] = auto[ay * 64 + ax];",
+    "old": "          if (inQuad(q, px, pz)) auto[ay * 64 + ax] = byte;",
+    "new": "          if (inQuad(q, px, pz)) auto[ay * 64 + ax] = auto[ay * 64 + ax];",
     "tests": [
       "test/world/icbld_buildings.test.js"
     ]
@@ -230,8 +230,8 @@
   {
     "name": "BLD-donor-wrong-record",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "subRecords?.[d.record]?.interior",
-    "new": "subRecords?.[0]?.interior",
+    "old": "    byDonor.set(k, blocksFile.getBlockByName?.(d.block)?.rmbBlock?.subRecords?.[d.record]?.interior ?? null);",
+    "new": "    byDonor.set(k, blocksFile.getBlockByName?.(d.block)?.rmbBlock?.subRecords?.[0]?.interior ?? null);",
     "tests": [
       "test/world/icbld_buildings.test.js"
     ]

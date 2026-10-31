@@ -7173,13 +7173,13 @@ no quest site landed in one: the Temple District's first quarter holds 865 marke
 blocks the walk read; the Arena District's eighteenth holds 1,189, and 28. Now every block is read, the city's own
 cells too, in three parts:
 
-- **A cell read as a quest reads it** (`src/world/imperialFabricBuildings.js:"export function fabricQuestBlock(name, blocksFile) {"`,
+- **A cell read as a quest reads it** (`src/world/imperialFabricBuildings.js:"export function fabricQuestBlock"`,
   the quest world's `questBlock`): withFabricBuildings' records, subrecords and donors' interiors over an empty block,
   without the cell's ground, models, lamps or town-map bytes. Made by the scene's door a cell is its whole fabric, some
   15 ms, and never a block the scene's cache needs evicted for a search.
 - **A slice's index takes its fabric baked** (`src/scenes/questWorld.js:"const sitesIndexOf = (loc) => {"`): its
   Daggerfall blocks walked, its own cells read as holding none, and the kinds its fabric gives a quest
-  (`src/world/imperialFabricBuildings.js:"export function fabricSliceSites(s) {"`) read off
+  (`src/world/imperialFabricBuildings.js:"export function fabricSliceSites"`) read off
   `src/world/imperialFabricSites.js`, which `tools/bakeFabricSites.mjs` writes from the plan and BLOCKS.BSA's donors
   (43 of the 53 marked; 625 slices, 50 distinct sets) and holds with `--check`. Laid out cell by cell the fabric's half is
   some 0.1 s a slice, and a temple's darts over the city read some ninety slices' indexes.

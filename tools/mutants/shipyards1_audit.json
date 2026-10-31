@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-SHIPYARDS-the-cottage-gable-in-its-roof",
     "file": "src/world/lighthouseModel.js",
-    "old": "[xm - 0.01, C.ridge - t, a], [xm + 0.01, C.ridge - t, a], [xm + 0.01, C.ridge - t, b], [xm - 0.01, C.ridge - t, b]]",
-    "new": "[xm - 0.01, C.ridge, a], [xm + 0.01, C.ridge, a], [xm + 0.01, C.ridge, b], [xm - 0.01, C.ridge, b]]",
+    "old": "      [xm - 0.01, C.ridge - t, a],\n      [xm + 0.01, C.ridge - t, a],\n      [xm + 0.01, C.ridge - t, b],\n      [xm - 0.01, C.ridge - t, b],",
+    "new": "      [xm - 0.01, C.ridge, a],\n      [xm + 0.01, C.ridge, a],\n      [xm + 0.01, C.ridge, b],\n      [xm - 0.01, C.ridge, b],",
     "tests": [
       "test/systems/shipyards1_audit_port.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-SHIPYARDS-the-hatch-lid-flush",
     "file": "src/world/lighthouseModel.js",
-    "old": "[hx - 0.38, y1 + 0.07, hz + 0.33], [hx + 0.38, y1 + 0.07, hz + 0.33], [hx + 0.38, y1 + 0.07, hz - 0.33], [hx - 0.38, y1 + 0.07, hz - 0.33]",
-    "new": "[hx - 0.38, y1 + 0.065, hz + 0.33], [hx + 0.38, y1 + 0.065, hz + 0.33], [hx + 0.38, y1 + 0.065, hz - 0.33], [hx - 0.38, y1 + 0.065, hz - 0.33]",
+    "old": "    [hx - 0.38, y1 + 0.07, hz + 0.33],\n    [hx + 0.38, y1 + 0.07, hz + 0.33],\n    [hx + 0.38, y1 + 0.07, hz - 0.33],\n    [hx - 0.38, y1 + 0.07, hz - 0.33],",
+    "new": "    [hx - 0.38, y1 + 0.065, hz + 0.33],\n    [hx + 0.38, y1 + 0.065, hz + 0.33],\n    [hx + 0.38, y1 + 0.065, hz - 0.33],\n    [hx - 0.38, y1 + 0.065, hz - 0.33],",
     "tests": [
       "test/systems/shipyards1_audit_port.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-SHIPYARDS-the-door-laid-flat",
     "file": "src/world/lighthouseModel.js",
-    "old": "  const za = faceZ(zSide, y0, out), zb = faceZ(zSide, y1, out);",
-    "new": "  const za = faceZ(zSide, y0, out), zb = za;",
+    "old": "    zb = faceZ(zSide, y1, out);",
+    "new": "    zb = za;",
     "tests": [
       "test/systems/shipyards1_audit_port.test.js"
     ]

@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-IT1-G1-a-classic-insert-laid",
     "file": "src/world/immersiveTravelGates.js",
-    "old": "    if (counts && !(path[2] >= (counts[path[1]] ?? 0))) continue;\n",
-    "new": "",
+    "old": "    if (counts && !(path[2] >= (counts[path[1]] ?? 0))) continue;\n    out[path[1]].push(value);",
+    "new": "    out[path[1]].push(value);",
     "tests": [
       "test/systems/auditit1.test.js"
     ]
@@ -165,7 +165,7 @@
     "name": "AUDIT-IT1-G2-an-op-refused",
     "file": "src/world/immersiveTravelGates.js",
     "old": "    if (kind !== 'i' || path?.length !== 3 || path[0] !== 'RmbBlock' || !ARRAYS.includes(path[1])) continue;",
-    "new": "    if (kind !== 'i' || path?.length !== 3 || path[0] !== 'RmbBlock' || !ARRAYS.includes(path[1])) throw new Error('cannot lay');",
+    "new": "    if (kind !== 'i' || path?.length !== 3 || path[0] !== 'RmbBlock' || !ARRAYS.includes(path[1]))\n      throw new Error('cannot lay');",
     "tests": [
       "test/systems/auditit1.test.js"
     ]

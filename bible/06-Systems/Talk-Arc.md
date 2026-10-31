@@ -1732,7 +1732,7 @@ WHAT IT IS NOW:
   standing it (`scenes/tamrielPlacesHost.js` tableKeyAt): a stood location's own; an Arena place's, a country place's and
   a lair's template's (the clone keeps it - all 276 Arena places past the Bay on the freeware, stood, carry exactly it); a
   capital's slice its own once it stands (the province's warm stands them in idle time, R2-5d), none before.
-- **THE KEY IS THE LOCATION'S BUILDINGS' DIRECTORY** (`world/locationKey.js:"export function locationKeyOf(buildings) {"`).
+- **THE KEY IS THE LOCATION'S BUILDINGS' DIRECTORY** (`world/locationKey.js:"export function locationKeyOf"`).
   DFU reads MapTable.Key (CheckLocationKeyForRegionalBuilding, :1920-1990, `systems/answerPipeline.js`) and never writes
   it. Measured on the freeware's MAPS.BSA, all 15,251 rows (7,351 with a key) carry exactly the key their own building
   lists make: byte 0 a temple of each of the eight divines (the building's faction, or its temple order's - FACTION.TXT's

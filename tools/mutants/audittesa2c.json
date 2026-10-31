@@ -66,8 +66,8 @@
   {
     "name": "AUDIT-TESA-II-C1-bridge-to-the-edge",
     "file": "src/world/imperialCity.js",
-    "old": "polar(I.bridge.b, I.lake + I.bridge.landing)];",
-    "new": "polar(I.bridge.b, I.lake + I.bridge.landing + 60)];",
+    "old": "  polar(I.bridge.b, I.lake + I.bridge.landing),",
+    "new": "  polar(I.bridge.b, I.lake + I.bridge.landing + 60),",
     "tests": [
       "test/world/audittesa2c_capitals.test.js",
       "test/tesa11_imperial.test.js"
@@ -85,8 +85,8 @@
   {
     "name": "AUDIT-TESA-II-C1-piers-into-the-rim",
     "file": "src/world/imperialCity.js",
-    "old": "piers: Object.freeze(Array.from({ length: 21 }, (_, i) => 160 + i * 2)), pierTo: 8450,",
-    "new": "piers: Object.freeze(Array.from({ length: 21 }, (_, i) => 160 + i * 2)), pierTo: 10180,",
+    "old": "    pierTo: 8450,",
+    "new": "    pierTo: 10180,",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ],
@@ -205,8 +205,8 @@
   {
     "name": "AUDIT-TESA-II-C3-west-gate-from-the-south",
     "file": "src/world/imperialCity.js",
-    "old": ": [x - half - out, z - half + along]);",
-    "new": ": [x - half - out, z + half - along]);",
+    "old": "        : [x - half - out, z - half + along];",
+    "new": "        : [x - half - out, z + half - along];",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]
@@ -251,8 +251,8 @@
   {
     "name": "AUDIT-TESA-II-C5-tombs-band-narrow",
     "file": "src/world/imperialCity.js",
-    "old": "if (Math.abs(r - I.tombs.r) < I.tombs.w) { const [f, s] = tombFrame(",
-    "new": "if (Math.abs(r - I.tombs.r) < I.tombs.w / 4) { const [f, s] = tombFrame(",
+    "old": "  if (Math.abs(r - I.tombs.r) < I.tombs.w) {",
+    "new": "  if (Math.abs(r - I.tombs.r) < I.tombs.w / 4) {",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ],
@@ -261,8 +261,8 @@
   {
     "name": "AUDIT-TESA-II-C5-plinths-ring-short",
     "file": "src/world/imperialCity.js",
-    "old": "if (Math.abs(x - ax) < D.court && Math.abs(z - az) < D.court) for",
-    "new": "if (Math.abs(x - ax) < D.ring && Math.abs(z - az) < D.ring) for",
+    "old": "  if (Math.abs(x - ax) < D.court && Math.abs(z - az) < D.court)",
+    "new": "  if (Math.abs(x - ax) < D.ring && Math.abs(z - az) < D.ring)",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]
@@ -270,8 +270,8 @@
   {
     "name": "AUDIT-TESA-II-C5-points-not-kept",
     "file": "src/world/imperialCity.js",
-    "old": "    _geo.set(I, g);\n",
-    "new": "",
+    "old": "    _geo.set(I, g);\n  }",
+    "new": "  }",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ],
@@ -317,8 +317,8 @@
   {
     "name": "AUDIT-TESA-II-C7-outside-the-wall",
     "file": "src/world/imperialBlocks.js",
-    "old": "const best = nearest(inside, side, picks) ?? nearest(lattice, side, picks);",
-    "new": "const best = nearest(lattice, side, picks);",
+    "old": "    const best = nearest(inside, side, picks) ?? nearest(lattice, side, picks);",
+    "new": "    const best = nearest(lattice, side, picks);",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ],

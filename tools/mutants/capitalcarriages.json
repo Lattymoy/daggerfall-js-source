@@ -128,8 +128,8 @@
   {
     "name": "CC-a-frame-moved",
     "file": "src/world/immersiveTravelGates.js",
-    "old": "WALLAA09: Object.freeze({ at: Object.freeze([11.2, 64])",
-    "new": "WALLAA09: Object.freeze({ at: Object.freeze([11.2, 64.8])",
+    "old": "  WALLAA09: Object.freeze({ at: Object.freeze([11.2, 64]), out: Object.freeze([1, 0]) }),",
+    "new": "  WALLAA09: Object.freeze({ at: Object.freeze([11.2, 64.8]), out: Object.freeze([1, 0]) }),",
     "tests": [
       "test/world/capitalcarriages.test.js"
     ]
