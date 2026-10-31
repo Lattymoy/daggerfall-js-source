@@ -6839,35 +6839,68 @@ veins have been unlocked in an area?"). ORE-MAP's card answered for the one pixe
 where confirmed ground lies. Confirmed ground (section 6, three accounts a week old) is where a vein past
 UNCONFIRMED_VEIN_TIER, a region's own ore, a gem, Heartwood and a Pearl can appear.
 
-**On the service**: `POST /v1/prof/ground { character, region }` (`server-account/src/professions.js:"export async function profGround"`) answers
-the region's confirmed pixels as `[x, y]`, by row then column, GROUND_PIXELS_MAX (8,192) at most, with `more` past it.
-Any region of the world's 0..70 is asked (regionOk), the provinces' too. It reads the writ board's kept ground
-(GROUND-KEPT's regionGround, `server-account/src/professions.js:"async function regionGroundRead"`), which now keeps each pixel's x and y. The writ
-table reads the climate and the word alone, so the board is unchanged. The route is a busy read (`busyLaw.js`
-BUSY_READS) and stays on the binding, not a replica route: an isolate keeps its ground (DISPLAY-REPLICA's law). The
-service is acct235, with no migration, and deploys before the site.
+**On the service** (AUDIT FB1031 W3, W4): the confirmed ground is laid once a UTC day in tiles of 64 x 64 map pixels,
+keyed by the world pixel (`tx = floor(x / 64)`, `ty = floor(y / 64)`), one row a tile holding any (`witness_tiles`,
+migration 0205). The day's Motherlodes pick already scans every pixel confirmed before the day began
+(`server-account/src/motherlodes.js:"export async function confirmedGroundBefore"`); its batch lays that ground as
+tiles and drops yesterday's (`server-account/src/witnessTiles.js:"export function witnessTileStatements"`), under the
+day's mark (`witness_tile_days`), so two racing layings keep one. A day picked before the tiles, the deploy's, is laid
+by the minute's job with a scan of its own (`server-account/src/cron.js:"await layWitnessTiles(ctx, day"`). A
+province, the sea past the Bay and the grid's corner are tiles like the Bay's: no region and no Bay bound.
 
-**On the client**: the professions' book keeps a region's ground for its UTC day (`profBook.js:"async askGround(region)"`): one read in
-flight, a failed read waited out for PROF_REFRESH_BACKOFF_MS, and none while the professions are shut. The map's
-reader (`witnessMapMark.js:"export function witnessMapReader"`) samples the view on a 7 x 7 grid, the middle first, for six regions at most
-(WITNESS_VIEW_REGIONS); past the Bay through the host's maps, whose politic map is WW-R's. The world host hands it to
+**The read**: `POST /v1/prof/ground { character, tiles: [[tx, ty]...] }`
+(`server-account/src/witnessTiles.js:"export async function profGround"`) answers up to 64 tiles as `{ day, laid:
+true, tiles: [[tx, ty, px]...] }` (a tile asked and not answered holds none), or `{ day, laid: false }` before the day
+is laid. A pixel is two characters, its row and its column in the tile
+(`src/net/witnessTileLaw.js:"export function packTile"`). The read is two primary-key reads in one round trip and
+never touches `world_witness`. It writes nothing and keeps nothing an isolate shares, so it is a replica route as well
+as a busy read (`busyLaw.js` BUSY_READS). The service is acct236 with migration 0205, and deploys before the site. The
+writ board's kept ground is as it was before acct235.
+
+**On the client**: the professions' book keeps each tile for its UTC day (`src/net/profBook.js:"async askGround(list)"`):
+64 tiles an ask, one read in flight, and none for PROF_REFRESH_BACKOFF_MS after a read that failed, came before the day
+was laid, or answered an older day. A pixel a read hears confirmed (the harvest's read again, GROUND-STALE's, or the
+ore card's) joins its tile at once (`src/net/profBook.js:"function hearGround(x, y, day)"`, W6). The map's reader asks
+every tile the view touches, the middle first (`src/ui/witnessMapMark.js:"export function tilesInView"`), and hands on
+the held tiles two tiles past the view, a range it holds while the view stays inside it. The world host hands it to
 the map in one entry (`world.js:"witnessed: profBook"`), online alone.
 
-**On the map**: the world sheet reads it on its poll from the mid band in (`heldMap.js:"const wit = this.filters.witnessed"`) and paints each pixel as
-one copper square under every ring (`inkMap.js:"WITNESS-MAP: the witnessed ground under"`). The legend names it "Witnessed ground", and the key's "Ground"
-row holds its one switch, on by default, kept in the travel map's filter store and the save (`filterWitnessed`, as
-ROADS 12's are). The ORE-MAP card still answers a hover. The classic region page draws no wash
-(`10-UI/Held-Map-Arc.md` WITNESS-MAP).
+**On the map**: the world sheet reads it on its poll from the mid band in (`heldMap.js:"const wit = this.filters.witnessed"`).
+The wash is painted on the sheet's kept layer, over its ink and under every ring the overlay breathes
+(`src/ui/heldMap.js:"_paintWash(ctx, env) {"`), from a kept bitmap of one texel a map pixel
+(`src/ui/witnessMapMark.js:"export function syncWashLayer"`) drawn in one drawImage with smoothing off. The read is in
+the kept layer's key and never in the marks' bake. The legend names it "Witnessed ground", and the key's "Ground" row
+holds its one switch, on by default, kept in the travel map's filter store and the save (`filterWitnessed`, as ROADS
+12's are). The ORE-MAP card still answers a hover. The classic region page draws no wash (`10-UI/Held-Map-Arc.md`
+WITNESS-MAP).
+
+**The far band draws none** (W1). The map opens there. A tile is some 95 paper pixels at the Bay's fit, so a square a
+tile would wash 4,096 times the ground one pixel holds, and the Bay is 16 by 8 tiles: the square would claim ground no
+one witnessed. The key's switch is dimmed there and says to zoom in. Ground confirmed today by other players shows the
+next UTC day.
 
 The four hosts: `scenes/world.js` wired, the held map's one construction seam; `scenes/exterior.js`,
 `scenes/worldModes.js` and `scenes/dungeonContext.js` build no world map (test/ui/heldmap.test.js U61), so nothing
 there changes. Not a DFU member: DFU has no witnessed world, and no ledger row moves.
 
-Pins: `test/ui/witness_map.test.js` (9: Daggerfall's ground and Skyrim's at Solitude, the cap, the kept read, the
-book, the reader over the Bay and past it, the paint, the map, the wiring). Mutants `tools/mutants/witness_map.json`
-(36, all dead). PIN MOVED: `test/net/busy_gate.test.js` (BUSY_READS), `test/systems/travel/travelmapwindow.test.js` and
-`test/systems/save/sessionsave.test.js` (the filter store and the save), the account version's pins and
-`test/server/auditscale2_acct.test.js`'s history (acct235); eleven version mutant records re-aimed by content.
+**AUDIT FB1031** (2026-10-31, before the slice deployed). W1: the reader sampled six of up to 35 regions in view, so
+55% of the land in a mid-band view at 1920 x 1080 was never asked. W2: the overlay painted the wash at every pulse and
+pan frame - 600 pixels some 5 ms, 6,000 some 15, 49,152 some 84 (Chromium, the lane's probe). Now a pulse frame paints
+none of it, a pan frame's blit takes 1 to 2 ms, and a rebuild after a landing 5 to 13 ms. W3: the route read through
+the writ board's ten-minute keep, which keeps no empty region, so most asks scanned. W4: a province is one region and
+the sea past the Bay region 0; an answer was cut at 8,192 pixels, and the client never read `more`. W5, W7: pins. W6:
+a pixel confirmed today stayed unwashed until the next day.
+
+Pins: `test/ui/fb1031_witness.test.js` (12: the laying against a scan by hand over the Bay, a province, the sea past
+the Bay and the grid's corner; the deploy's day and the race; the read's statements and plan; its door; the law; the
+book; a pixel heard; the reader over the Bay, Morrowind and the sea; the kept wash; the held map's kept layer; the
+switch in the save and the key; ARENA2: the sea and Morrowind as the host's maps read them). Mutants
+`tools/mutants/fb1031_witness.json` (49, all dead). `test/ui/witness_map.test.js` keeps the held map's two pins and
+`tools/mutants/witness_map.json` 14 records (22 retired with the code they named). PIN MOVED: the account version's
+pins and `test/server/auditscale2_acct.test.js`'s history (acct236), `test/net/busy_gate.test.js` and
+`test/server/scale4g.test.js` (a replica's read), `test/server/accountworker.test.js` (the two tables),
+`test/ui/mappan.test.js` (the marks' key); twelve version mutant records re-aimed by content. The account deploy's
+paths name `src/net/witnessTileLaw.js`.
 
 ## Appendix A - a day of a gatherer
 

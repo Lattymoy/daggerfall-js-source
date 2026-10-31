@@ -166,7 +166,7 @@
   {
     "name": "INSURE-ALL-the-service-version",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct235';",
+    "old": "export const ACCOUNT_VERSION = 'acct236';",
     "new": "export const ACCOUNT_VERSION = 'acct216';",
     "tests": [
       "test/server/realm1.test.js"

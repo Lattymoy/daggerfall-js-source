@@ -89,6 +89,7 @@ Four read-only audits covered the relay (`server/src/index.js`), the account ser
 | KEEP-MARK | The overload held after LODE-HERD, HUNT-LEAN and GROUND-KEPT deployed (2026-10-29, 47-55% of requests 503): the read replicas served 0% of statements from 01:15, against a fifth to a half while the service was well. A shed or refused replica read said no bookmark and a read past its wait timed out, and the page forgets its bookmark on both (AUDIT SCALE II A-6, C-7) - so every next read started at the primary. Such an answer hands back the bookmark it carried; a read that timed out keeps the page's | No | **Built** (2026-10-29; acct211) |
 | SHED-REPLICA | KEEP-MARK deployed and the replica still served 0%: overloaded, the primary outran its replica, so no replica was as new as a page's bookmark and D1 sent every read to the primary. A replica read an isolate would shed asks any instance instead - a display its replica's lag old, never a 503; a busy read no replica may serve is shed as before | No | **Built** (2026-10-29; acct212) |
 | MINT-TITLE-GATE, TOMB-RIDES, ORPHAN-GATE, RETRY-SEEN | The overload held at about 23% of requests 503 (2026-10-29). The mint reads a title family only for a title of it worn; a town's tombstone rides its homes batch; a festival read with no offering writes nothing; the 503's Retry-After is exposed to the page | No | **Built** (2026-10-29; acct213) |
+| WITNESS-TILES | WITNESS-MAP's held map (acct235, never deployed) asked a region's ground through GROUND-KEPT's ten-minute keep: every ask past it, and every ask of a region with none, a scan of the region's witness rows on the primary. The day's Motherlodes pick lays the confirmed ground as tiles once a day; the map reads tiles by their keys, on a replica | No | **Built** (2026-10-31, AUDIT FB1031 W1 W3 W4; acct236, migration 0205) |
 | SCALE6 | Abuse and backups: Turnstile on guest creation, /64 IPv6 rate keys, bans, report and ignore, `ALLOWED_ORIGIN`, R2 snapshots, a hub export | Some | Alongside |
 
 **Relay deploy policy (SCALE):** relay changes are batched into as few deploys as possible, each in a window announced beforehand. A deploy drops every player, and until SCALE2 every reconnect is a D1 write storm.
@@ -4724,3 +4725,23 @@ Work tab's eligible read (`writs.js` eligibleHere) ran 871 ms on average and rea
 
 The answers are the same. A bench of 3,000 crafts, 50,000 decor rows and 20 commissions ran 15.9 s, now 13 ms. Pins:
 `test/server/craft_set.test.js`; mutants: `tools/mutants/craft_set.json`. The version pins to acct216.
+
+## WITNESS-TILES: built (2026-10-31, AUDIT FB1031 W1 W3 W4 - acct236, migration 0205, no relay change)
+
+WITNESS-MAP (acct235, never deployed) answered the held map a region's confirmed pixels through GROUND-KEPT's
+regionGround. Its keep is ten minutes and a region with none is never kept, so a map's ask past the keep, and every ask
+of an empty region, scanned the region's witness rows on the primary (123,000 rows in 409 ms for one region at
+GROUND-KEPT's reading). A province is one region and the sea past the Bay region 0, so an answer was cut at 8,192.
+
+- **The laying** (`server-account/src/witnessTiles.js:"export function witnessTileStatements"`): the Motherlodes
+  pick's own scan, LODE-HERD's once a day, is laid as 64-pixel tiles keyed by the world pixel, in the pick's batch;
+  yesterday's tiles go in it. A day picked before the tiles is laid by the minute's job with one scan of its own
+  (`server-account/src/witnessTiles.js:"export async function layWitnessTiles"`); a laid day costs that job one read.
+- **The read** (`server-account/src/witnessTiles.js:"export async function profGround"`): up to 64 tiles, two
+  primary-key reads in one round trip, on a replica (REPLICA_ROUTES, the client's D1_BOOKMARK_READS) and a busy read.
+  It never touches `world_witness`, and before the day is laid it says so (the client asks again later).
+- **Sizes**: a tile row is 8,192 characters at most, a laying statement binds 100,000 at most (TILES_LAID_CHARS), and
+  a day holds 65,536 tiles at most (the world's grid). The client asks 64 tiles at a time, one ask in flight.
+
+Pins: `test/ui/fb1031_witness.test.js`; `tools/mutants/fb1031_witness.json` (all dead). The record:
+`06-Systems/Professions-Arc.md` section 61.

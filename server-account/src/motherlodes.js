@@ -44,6 +44,7 @@ import {
 } from '../../src/net/professionLaw.js';
 import { WITNESS, witnessedFact, factConfirmed } from '../../src/net/nodeLaw.js';
 import { verifyWatchReceipt } from '../../src/net/watchReceipt.js';
+import { witnessTileStatements } from './witnessTiles.js';   // AUDIT FB1031 W3: the held map's tiles, laid off the pick's scan
 import {
   MOTHERLODE_STRIKERS, MOTHERLODE_SILVER, MOTHERLODE_RANK, MOTHERLODE_TIER,
   motherlodeSites, motherlodeOpen, motherlodeYield, parseMotherlodeKey, motherlodeKey, motherlodeWatchOk,
@@ -90,6 +91,27 @@ export async function motherlodesOf({ db: read, primary = read, rand, nowS = Mat
   // the mark ran the scan - 33 of 1.8 s at the turn of 2026-10-29. One read a minute holds the claim, so a holder that
   // dies is followed a minute on; the rest answer none until the mark is kept. The clock never asks.
   if (!clock && await overRate({ db, nowS }, `${LODE_PICK_CLAIM}${day}`, 1, LODE_PICK_WINDOW_S)) return [];
+  const candidates = await confirmedGroundBefore(db, day);
+  const sites = motherlodeSites(day, candidates);
+  const n = mintId(rand);
+  await db.batch([
+    db.prepare('INSERT OR IGNORE INTO motherlode_days (day, picked, n) VALUES (?1, ?2, ?3)').bind(day, sites.length, n),
+    ...sites.map((s) => db.prepare(`INSERT OR IGNORE INTO motherlodes (day, k, x, y, climate, region, material, opens_at, closes_at)
+      SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9 WHERE EXISTS (SELECT 1 FROM motherlode_days WHERE day = ?1 AND n = ?10)`)
+      .bind(day, s.k, s.x, s.y, s.climate, s.region, s.material, s.opensAt, s.closesAt, n)),
+    // AUDIT FB1031 W3 (witnessTiles.js): the held map's tiles laid off this one scan, in the pick's own transaction
+    ...witnessTileStatements(db, day, candidates, n).statements,
+  ]);
+  return keptOf(db);
+}
+
+/**
+ * THE GROUND CONFIRMED BEFORE `day` BEGAN - each pixel whose reports before it three accounts agree on (nodeLaw
+ * witnessedFact; a disputed one too, as factConfirmed), `[{ x, y, climate, region }]`: the day's one scan of
+ * world_witness, read by the pick above and by the held map's tiles (witnessTiles.js; cron.js lays a day the pick left).
+ * @param {any} db @param {number} day
+ */
+export async function confirmedGroundBefore(db, day) {
   const before = day * 86400;
   const { results = [] } = await db.prepare(`SELECT key, account, report, at FROM world_witness
     WHERE kind = 'pixel' AND at < ?1 AND key IN (SELECT key FROM world_witness WHERE kind = 'pixel' AND at < ?1
@@ -103,15 +125,7 @@ export async function motherlodesOf({ db: read, primary = read, rand, nowS = Mat
     const [x, y] = String(key).split(',').map(Number);
     candidates.push({ x, y, climate: /** @type {number} */ (f.climate), region: /** @type {number} */ (f.region) });
   }
-  const sites = motherlodeSites(day, candidates);
-  const n = mintId(rand);
-  await db.batch([
-    db.prepare('INSERT OR IGNORE INTO motherlode_days (day, picked, n) VALUES (?1, ?2, ?3)').bind(day, sites.length, n),
-    ...sites.map((s) => db.prepare(`INSERT OR IGNORE INTO motherlodes (day, k, x, y, climate, region, material, opens_at, closes_at)
-      SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9 WHERE EXISTS (SELECT 1 FROM motherlode_days WHERE day = ?1 AND n = ?10)`)
-      .bind(day, s.k, s.x, s.y, s.climate, s.region, s.material, s.opensAt, s.closesAt, n)),
-  ]);
-  return keptOf(db);
+  return candidates;
 }
 
 /**

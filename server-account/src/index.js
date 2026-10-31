@@ -122,7 +122,7 @@
 //   POST /v1/board/notice { subject, body, days } | /v1/board/notice/remove { id }       (a developer's)
 // PROF1, the professions - a registered account's character's, behind PROFESSIONS_OPEN (professions.js); `rid` the act's id:
 //   POST /v1/prof/state { character }                                  -> { tracks, today, taken, stores, writs, caps, hunt }   (PROF7: the account's hides today)
-//   POST /v1/prof/pixels { character, pixels: [[x, y]...] }            -> { pixels: [{ x, y, state, climate?, region? }] }   (WITNESS-MAP: /v1/prof/ground { character, region } -> { region, pixels: [[x, y]...], more })
+//   POST /v1/prof/pixels { character, pixels: [[x, y]...] }            -> { pixels: [{ x, y, state, climate?, region? }] }   (WITNESS-MAP, AUDIT FB1031 W3: /v1/prof/ground { character, tiles: [[tx, ty]...] } -> { day, laid, tiles?: [[tx, ty, px]...] })
 //   POST /v1/prof/harvest { character, node, kind, climate, region, act, at, rid, foe? } -> { ok, material, qty, xp, track, today, store, gem?, extra?, extraQty?, hunt? } | { repeat, ... }   (PROF7: a body's `foe`, no ground)
 //        BAG1: { carry: true, held, heldKey?, seen? } lands the goods in the carried count - `held` what the bag and pack
 //        hold of `heldKey`, the count cut to it only when `seen` (the count the client last heard) is the service's own,
@@ -338,7 +338,7 @@ import { DECOR_BATCH_BYTES } from '../../src/net/decorLaw.js';
 import { gateStrikeStatement, gateStrikeAnswer, raidStrikeStatement, combatStrikeAnswer, raidStrikeRid, deedStatements, deedAnswer, deedEvent, marksOf, marksCardOf, exchangeMarks, depositGuildMarks, withdrawGuildMarks, marksReport, serpentStrikeStatement, serpentStrikeAnswer, findMarks, starStrikeStatement, starStrikeRid } from './marks.js';   // MARKS1: the server's currency; SILVER-WAYS: a raid's silver and a guild's deeds
 import { readBoard, pinNote, takeDownNote, reportNote, moderateNote, postNotice, removeNotice } from './board.js';   // NOTICE1: the Notice Board
 import { craftWritBoard, deliverCraftWrit } from './craftWrits.js';   // CRAFT-WRITS: the guilds' asks of a crafter
-import { profState, profPixels, profGround, harvestNode, chooseSpec, withdrawStores, depositStores, smeltAtForge, craftAtAnvil, temperPiece, buyStock, listWrits, deliverWrit } from './professions.js';   // BAG1: a deposit   // PROF1: the professions; PROF2: the forge; PROF3: the anvil and the smith's stock
+import { profState, profPixels, harvestNode, chooseSpec, withdrawStores, depositStores, smeltAtForge, craftAtAnvil, temperPiece, buyStock, listWrits, deliverWrit } from './professions.js';   // BAG1: a deposit   // PROF1: the professions; PROF2: the forge; PROF3: the anvil and the smith's stock
 import { masterWork } from './masterWork.js';   // MASTER-ART: a Master's work (bible/06-Systems/Professions-Arc.md section 57)
 import { brewAtStation, disenchantPiece, reforgeWithEssence } from './alchemy.js';   // PROF12: Alchemy's brew, Enchanting's disenchant
 import {
@@ -347,6 +347,7 @@ import {
 } from './writs.js';   // PROF6: guild writs, commissions and the guild Stores
 import { contractBoard, postContract, withdrawContract, contractPayStatements, contractPaysOf } from './contracts.js';   // SILVER-WAYS: guild contracts
 import { motherlodesRead, strikeMotherlode, isMotherlodeNode } from './motherlodes.js';   // PROF2b: the Motherlodes
+import { profGround } from './witnessTiles.js';   // AUDIT FB1031 W3: the held map's witnessed tiles
 import { marketRead, marketList, marketBuy, marketCancel, marketOrder, marketFill, marketUnorder, marketCollect, marketReport, marketRemove, marketAuction, marketBid, marketGoldCollect, marketVendor, marketVendors, marketMyVendors, marketRoad } from './market.js';   // PROF5: the market; PROF5b: its auctions; GOLD-MARKET: gold held collected; RPT1026-MARKET: the road alone
 import {
   listRealm, createRealm, customsRealm, joinRealm, checkpointRealm, getRealmBlob, leaveRealm, deleteRealm, undoRealm,
@@ -2178,7 +2179,7 @@ const service = {
         const act = {
           '/v1/prof/state': () => profState(ctx, who.player, env, body),
           '/v1/prof/pixels': () => profPixels(ctx, who.player, env, body),
-          '/v1/prof/ground': () => profGround(ctx, who.player, env, body),   // WITNESS-MAP: a region's witnessed ground, for the held map
+          '/v1/prof/ground': () => profGround(ctx, who.player, env, body),   // WITNESS-MAP: the held map's witnessed ground, a day's tiles (witnessTiles.js)
           // PROF2b: a Motherlode is struck through the harvest's own route - its node names it (motherlodes.js)
           '/v1/prof/harvest': () => (isMotherlodeNode(body?.node) ? strikeMotherlode(ctx, who.player, env, body) : harvestNode(ctx, who.player, env, body)),
           '/v1/prof/motherlodes': () => motherlodesRead(ctx, who.player, env, body),   // PROF2b: today's three

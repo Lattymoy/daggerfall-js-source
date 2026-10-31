@@ -111,6 +111,7 @@ on:
       - "src/systems/bounty/bountyBoard.js"
       - "src/net/trophyLaw.js"
       - "src/net/nodeLaw.js"
+      - "src/net/witnessTileLaw.js"
       - "src/net/provinceNodes.js"
       - "src/world/ethericSea.js"
       - "src/world/jungle/banthaArea.js"

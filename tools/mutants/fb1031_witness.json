@@ -1,0 +1,494 @@
+[
+ {
+  "name": "FB1031W-lay-off-the-pick",
+  "file": "server-account/src/motherlodes.js",
+  "old": "    ...witnessTileStatements(db, day, candidates, n).statements,\n",
+  "new": "",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "the pick's scan unshared - the minute scans world_witness again for the tiles"
+ },
+ {
+  "name": "FB1031W-clock-unwired",
+  "file": "server-account/src/cron.js",
+  "old": "    await layWitnessTiles(ctx, day, () => confirmedGroundBefore(ctx.db, day));\n",
+  "new": "",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "a day picked before the tiles (the deploy's) never laid - the map empty all day"
+ },
+ {
+  "name": "FB1031W-laid-day-scanned",
+  "file": "server-account/src/witnessTiles.js",
+  "old": "  if (await db.prepare('SELECT 1 FROM witness_tile_days WHERE day = ?1').bind(day).first()) return 0;\n",
+  "new": "",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "every isolate's first minute of a day scans world_witness again"
+ },
+ {
+  "name": "FB1031W-grid-unbounded-laid",
+  "file": "server-account/src/witnessTiles.js",
+  "old": "    if (!pixelOk(p?.x, p?.y)) continue;\n",
+  "new": "",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "a key off the world's grid laid as a tile"
+ },
+ {
+  "name": "FB1031W-bay-only",
+  "file": "server-account/src/witnessTiles.js",
+  "old": "    if (!pixelOk(p?.x, p?.y)) continue;\n",
+  "new": "    if (!pixelOk(p?.x, p?.y) || p.x < 0 || p.y < 0) continue;\n",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "the laying the Bay's alone - the sea and the provinces past it unwashed"
+ },
+ {
+  "name": "FB1031W-yesterday-kept",
+  "file": "server-account/src/witnessTiles.js",
+  "old": "    db.prepare(`DELETE FROM witness_tiles WHERE day < ?1 AND ${laid}`).bind(day, n),\n",
+  "new": "",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "yesterday's tiles kept for ever"
+ },
+ {
+  "name": "FB1031W-mark-yesterday-kept",
+  "file": "server-account/src/witnessTiles.js",
+  "old": "    db.prepare(`DELETE FROM witness_tile_days WHERE day < ?1 AND ${laid}`).bind(day, n),\n",
+  "new": "",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "every day's mark kept for ever"
+ },
+ {
+  "name": "FB1031W-laying-unguarded",
+  "file": "server-account/src/witnessTiles.js",
+  "old": "FROM json_each(?3) AS j WHERE ${laid}`)",
+  "new": "FROM json_each(?3) AS j`)",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "two layings racing the day's turn keep a mix"
+ },
+ {
+  "name": "FB1031W-statement-unbounded",
+  "file": "server-account/src/witnessTiles.js",
+  "old": "    if (chunk.length && chars + r[2].length > TILES_LAID_CHARS) {",
+  "new": "    if (false) {",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "every tile bound in one statement, past D1's string"
+ },
+ {
+  "name": "FB1031W-laid-unsaid",
+  "file": "server-account/src/witnessTiles.js",
+  "old": "  if (!mark.length) return { day, laid: false };\n",
+  "new": "",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "a day not yet laid answered as empty ground - the client keeps none all day"
+ },
+ {
+  "name": "FB1031W-read-scans",
+  "file": "server-account/src/witnessTiles.js",
+  "old": "db.prepare('SELECT 1 AS laid FROM witness_tile_days WHERE day = ?1').bind(day),",
+  "new": "db.prepare('SELECT 1 AS laid FROM witness_tile_days WHERE day = ?1 AND EXISTS (SELECT 1 FROM world_witness)').bind(day),",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "the map's read touching world_witness"
+ },
+ {
+  "name": "FB1031W-plan-a-scan",
+  "file": "server-account/src/witnessTiles.js",
+  "old": "AND t.tx = json_extract(j.value, '$[0]') AND t.ty",
+  "new": "AND +t.tx = json_extract(j.value, '$[0]') AND +t.ty",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "the tiles read by a scan of the day's rows, not their keys"
+ },
+ {
+  "name": "FB1031W-asked-twice",
+  "file": "server-account/src/witnessTiles.js",
+  "old": "    out.set(tileKey(t[0], t[1]), [t[0], t[1]]);",
+  "new": "    out.set(String(out.size), [t[0], t[1]]);",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "a tile asked twice answered twice"
+ },
+ {
+  "name": "FB1031W-grid-unbounded-asked",
+  "file": "server-account/src/witnessTiles.js",
+  "old": "if (!Array.isArray(t) || t.length !== 2 || !tileOk(t[0], t[1])) return null;",
+  "new": "if (!Array.isArray(t) || t.length !== 2) return null;",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "a tile off the world's grid asked"
+ },
+ {
+  "name": "FB1031W-ask-unbounded",
+  "file": "server-account/src/witnessTiles.js",
+  "old": "tiles.length > WITNESS_TILES_ASK) return null;",
+  "new": "tiles.length > 4 * WITNESS_TILES_ASK) return null;",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "an ask past 64 tiles read"
+ },
+ {
+  "name": "FB1031W-switch-unasked",
+  "file": "server-account/src/witnessTiles.js",
+  "old": "  const refused = profAsks(player, { character, needRid: false }) ?? profShut(player, env);\n  if (refused) return refused;\n  const asked",
+  "new": "  const refused = profAsks(player, { character, needRid: false });\n  if (refused) return refused;\n  const asked",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "the map's read answered with the professions shut"
+ },
+ {
+  "name": "FB1031W-off-replica",
+  "file": "server-account/src/service.js",
+  "old": "  ['/v1/prof/ground', 'POST'],   // AUDIT FB1031 W3: the held map's tiles - two key reads, nothing kept (witnessTiles.js profGround)\n",
+  "new": "",
+  "tests": [
+   "test/ui/fb1031_witness.test.js",
+   "test/server/auditscale2_acct.test.js"
+  ],
+  "note": "the map's read on the primary"
+ },
+ {
+  "name": "FB1031W-client-no-bookmark",
+  "file": "src/net/accountClient.js",
+  "old": "  ['/v1/prof/ground', 'POST'],   // AUDIT FB1031 W3: the held map's witnessed tiles\n",
+  "new": "",
+  "tests": [
+   "test/ui/fb1031_witness.test.js",
+   "test/server/auditscale2_acct.test.js"
+  ],
+  "note": "the page carries no bookmark on the map's read - its first statement the primary's"
+ },
+ {
+  "name": "FB1031W-pack-order",
+  "file": "src/net/witnessTileLaw.js",
+  "old": ".sort((a, b) => (DIGIT_OF.get(a[0]) - DIGIT_OF.get(b[0])) || (DIGIT_OF.get(a[1]) - DIGIT_OF.get(b[1]))).join('');",
+  "new": ".sort().join('');",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "a tile's pixels in the characters' order, not the map's"
+ },
+ {
+  "name": "FB1031W-pack-off-tile",
+  "file": "src/net/witnessTileLaw.js",
+  "old": "if (r >= 0 && r < WITNESS_TILE && c >= 0 && c < WITNESS_TILE) cells.add(",
+  "new": "if (r >= 0 && c >= 0) cells.add(",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "a pixel off its tile packed"
+ },
+ {
+  "name": "FB1031W-unpack-lax",
+  "file": "src/net/witnessTileLaw.js",
+  "old": "    if (r === undefined || c === undefined) return null;\n",
+  "new": "",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "a string no packTile wrote read as pixels"
+ },
+ {
+  "name": "FB1031W-book-every-poll",
+  "file": "src/net/profBook.js",
+  "old": "if (tileOk(tx, ty) && !this.groundTile(tx, ty)) want.set(",
+  "new": "if (tileOk(tx, ty)) want.set(",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "a heard tile asked again every poll"
+ },
+ {
+  "name": "FB1031W-book-64-unbounded",
+  "file": "src/net/profBook.js",
+  "old": "        if (want.size >= WITNESS_TILES_ASK) break;\n",
+  "new": "",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "every tile in view in one ask, past the service's 64"
+ },
+ {
+  "name": "FB1031W-book-unlaid-kept",
+  "file": "src/net/profBook.js",
+  "old": "if (!r?.ok || r.data?.laid !== true || !Number.isSafeInteger(day)",
+  "new": "if (!r?.ok || !Number.isSafeInteger(day)",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "an answer before the day was laid kept as empty ground all day"
+ },
+ {
+  "name": "FB1031W-book-older-day",
+  "file": "src/net/profBook.js",
+  "old": "|| !Number.isSafeInteger(day) || day < heldDay()) {",
+  "new": "|| !Number.isSafeInteger(day)) {",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "an older day's answer asked again every poll"
+ },
+ {
+  "name": "FB1031W-book-wait-gone",
+  "file": "src/net/profBook.js",
+  "old": "          _groundWait = now() + PROF_REFRESH_BACKOFF_MS;",
+  "new": "          _groundWait = now();",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "a refused or unlaid ask asked again every poll"
+ },
+ {
+  "name": "FB1031W-book-slot-unchecked",
+  "file": "src/net/profBook.js",
+  "old": "        if (owner !== slot()) return false;\n        const day = r?.data?.day;",
+  "new": "        const day = r?.data?.day;",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "an answer for another character's slot kept"
+ },
+ {
+  "name": "FB1031W-book-key-no-day",
+  "file": "src/net/profBook.js",
+  "old": "groundKey() { return `${heldDay()}:${groundGen}`; },",
+  "new": "groundKey() { return `${groundGen}`; },",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "the day's turn moves no key - yesterday's wash stays painted"
+ },
+ {
+  "name": "FB1031W-heard-unkept",
+  "file": "src/net/profBook.js",
+  "old": "          if (factConfirmed(p)) hearGround(p.x, p.y, day);   // AUDIT FB1031 W6: on the map's wash the moment it is heard\n",
+  "new": "",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "a pixel confirmed today unwashed until tomorrow"
+ },
+ {
+  "name": "FB1031W-heard-held-unmoved",
+  "file": "src/net/profBook.js",
+  "old": "if (t && t.day >= day && !t.pixels.some((p) => p[0] === x && p[1] === y)) {",
+  "new": "if (false) {",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "a heard pixel kept off its held tile"
+ },
+ {
+  "name": "FB1031W-heard-key-unmoved",
+  "file": "src/net/profBook.js",
+  "old": "t.pixels = [...t.pixels, [x, y]]; groundGen++; }",
+  "new": "t.pixels = [...t.pixels, [x, y]]; }",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "a heard pixel the map never reads again"
+ },
+ {
+  "name": "FB1031W-heard-not-merged",
+  "file": "src/net/profBook.js",
+  "old": "            if (d >= day && !pixels.some((p) => p[0] === x && p[1] === y)) pixels.push([x, y]);",
+  "new": "            if (false) pixels.push([x, y]);",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "a heard pixel lost when its tile lands after"
+ },
+ {
+  "name": "FB1031W-middle-not-first",
+  "file": "src/ui/witnessMapMark.js",
+  "old": "  return out.sort((a, b) => ((a[0] - cx) ** 2 + (a[1] - cy) ** 2) - ((b[0] - cx) ** 2 + (b[1] - cy) ** 2));",
+  "new": "  return out;",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "the view's corner asked first"
+ },
+ {
+  "name": "FB1031W-tile-unasked",
+  "file": "src/ui/witnessMapMark.js",
+  "old": "      book.askGround(tilesInView(box)).catch(() => {});",
+  "new": "      book.askGround(tilesInView(box).slice(0, 6)).catch(() => {});",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "a sample of the view asked - its land unwashed (W1's 55%)"
+ },
+ {
+  "name": "FB1031W-margin-dropped",
+  "file": "src/ui/witnessMapMark.js",
+  "old": "range = tileRange(box, WITNESS_WASH_MARGIN);",
+  "new": "range = tileRange(box);",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "the bitmap no wider than the view - a pan between polls unwashed"
+ },
+ {
+  "name": "FB1031W-range-never-held",
+  "file": "src/ui/witnessMapMark.js",
+  "old": "if (!range || v.tx0 < range.tx0 ||",
+  "new": "if (true || v.tx0 < range.tx0 ||",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "the bitmap built again at every tile a pan crosses"
+ },
+ {
+  "name": "FB1031W-key-never-moving",
+  "file": "src/ui/witnessMapMark.js",
+  "old": "      if (key === seen) return last;",
+  "new": "      if (seen) return last;",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "a landing never read"
+ },
+ {
+  "name": "FB1031W-built-every-frame",
+  "file": "src/ui/witnessMapMark.js",
+  "old": "  if (prev && prev.key === read.key && prev.canvas === canvas) return prev;\n",
+  "new": "",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "the bitmap built on every frame"
+ },
+ {
+  "name": "FB1031W-texel-off",
+  "file": "src/ui/witnessMapMark.js",
+  "old": "      const i = 4 * (row * w + col);",
+  "new": "      const i = 4 * (col * w + row);",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "a texel off its pixel"
+ },
+ {
+  "name": "FB1031W-blit-off-box",
+  "file": "src/ui/witnessMapMark.js",
+  "old": "layer.w * s, layer.h * s);",
+  "new": "layer.w, layer.h);",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "the bitmap drawn unscaled"
+ },
+ {
+  "name": "FB1031W-smoothing-on",
+  "file": "src/ui/witnessMapMark.js",
+  "old": "  ctx.imageSmoothingEnabled = false;\n  ctx.drawImage(layer.canvas,",
+  "new": "  ctx.drawImage(layer.canvas,",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "each pixel's edge blurred"
+ },
+ {
+  "name": "FB1031W-static-paint-unwashed",
+  "file": "src/ui/heldMap.js",
+  "old": "          paintOver(ctx);\n          this._paintWash(ctx, env);\n          return;",
+  "new": "          paintOver(ctx);\n          return;",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "the sheet held on the Bay paints no wash"
+ },
+ {
+  "name": "FB1031W-read-out-of-static-key",
+  "file": "src/ui/heldMap.js",
+  "old": "      staticKey: () => `${sheet.marksKey()}|${this._witnessKey}`,",
+  "new": "      staticKey: () => sheet.marksKey(),",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "a landing never repaints the kept layer"
+ },
+ {
+  "name": "FB1031W-read-in-marks-key",
+  "file": "src/ui/heldMap.js",
+  "old": "env.paperW, env.paperH, sheet.marksKey()].join('|'),",
+  "new": "env.paperW, env.paperH, sheet.staticKey()].join('|'),",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "every landing bakes the place marks again"
+ },
+ {
+  "name": "FB1031W-read-unkept",
+  "file": "src/ui/heldMap.js",
+  "old": "this._witnessRead = wit; ",
+  "new": "",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "the wash painted from no read"
+ },
+ {
+  "name": "FB1031W-restore-ignored",
+  "file": "src/systems/travel/travelMapState.js",
+  "old": "witnessed: !!d.filterWitnessed,",
+  "new": "witnessed: false,",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "a save that hid the ground shows it"
+ },
+ {
+  "name": "FB1031W-sig-switch-gone",
+  "file": "src/ui/heldMap.js",
+  "old": "this.deps.witnessed?.open?.() ? 1 : 0, this.filters.witnessed ? 1 : 0].join('|');",
+  "new": "this.deps.witnessed?.open?.() ? 1 : 0].join('|');",
+  "tests": [
+   "test/ui/fb1031_witness.test.js"
+  ],
+  "note": "the key's switch pressed and drawn as it was"
+ },
+ {
+  "name": "FB1031W-legend-swatch-round",
+  "file": "src/ui/heldMap.js",
+  "old": "      dot.style.borderRadius = '2px';\n      leg.append(dot, el('span', 'hmlegtext', witnessLegendText()));",
+  "new": "      leg.append(dot, el('span', 'hmlegtext', witnessLegendText()));",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "the swatch a ring's round dot"
+ },
+ {
+  "name": "FB1031W-key-far-not-dim",
+  "file": "src/ui/heldMap.js",
+  "old": "const on = !this.filters.witnessed, far = band === 'far';",
+  "new": "const on = !this.filters.witnessed, far = false;",
+  "tests": [
+   "test/ui/witness_map.test.js"
+  ],
+  "note": "the far band's switch drawn live over nothing washed"
+ }
+]

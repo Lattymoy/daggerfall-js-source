@@ -1771,8 +1771,7 @@ async function regionGround(db, region) {
   asking.set(region, ask);
   return ask;
 }
-/** A region's witnessed pixels: each pixel whose witnesses name this region, with whether it is confirmed. WITNESS-MAP:
- *  and where it is (`x`, `y`, its key's) - the writ table reads the climate and the word alone. */
+/** A region's witnessed pixels: each pixel whose witnesses name this region, with whether it is confirmed. */
 async function regionGroundRead(db, region) {
   // AUDIT 29 A11: the pixels any report names for the region, each read over ALL its reports - a pixel one early report
   // named for this region and three confirmed for another is the other's
@@ -1781,28 +1780,11 @@ async function regionGroundRead(db, region) {
   const rowsBy = new Map();
   for (const r of results) { const a = rowsBy.get(r.key) ?? []; a.push({ account: r.account, report: r.report, at: Number(r.at) }); rowsBy.set(r.key, a); }
   const out = [];
-  for (const [key, rows] of rowsBy) {
+  for (const rows of rowsBy.values()) {
     const f = witnessedFact(rows);
-    const [x, y] = String(key).split(',').map(Number);
-    if (f.region === region && f.climate !== null) out.push({ x, y, climate: f.climate, confirmed: factConfirmed(f) });
+    if (f.region === region && f.climate !== null) out.push({ climate: f.climate, confirmed: factConfirmed(f) });
   }
   return out;
-}
-/** WITNESS-MAP: the most pixels one answer of a region's witnessed ground holds. */
-export const GROUND_PIXELS_MAX = 8192;
-/**
- * WITNESS-MAP (bible/06-Systems/Professions-Arc.md section 61): A REGION'S WITNESSED GROUND for the held map -
- * `{ region, pixels: [[x, y]...], more }`, each pixel the witnesses confirmed for it (a disputed one too, as factConfirmed),
- * by row then column, GROUND_PIXELS_MAX at most (`more` past it). Any region of the world's (regionOk, the provinces' too).
- * Read off the writ board's kept ground (regionGround), so a map's ask costs no scan the board did not.
- */
-export async function profGround({ db }, player, env, { character, region } = {}) {
-  const refused = asks(player, { character, needRid: false }) ?? shut(player, env);
-  if (refused) return refused;
-  if (!regionOk(region)) return { error: 'bad-region' };
-  const pixels = (await regionGround(db, region)).filter((p) => p.confirmed && pixelOk(p.x, p.y)).map((p) => [p.x, p.y])
-    .sort((a, b) => (a[1] - b[1]) || (a[0] - b[0]));
-  return { region, pixels: pixels.slice(0, GROUND_PIXELS_MAX), more: pixels.length > GROUND_PIXELS_MAX };
 }
 /** The registered accounts that played online in the seven days before `dayStartS` (ACC4's beat) - `active`. */
 async function activeBefore(db, dayStartS) {

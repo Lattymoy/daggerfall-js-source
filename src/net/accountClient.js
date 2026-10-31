@@ -1105,6 +1105,7 @@ export const D1_BOOKMARK_READS = new Map([
   ['/v1/arena/board', 'POST'],
   ['/v1/festival/town', 'POST'],   // WITCH1: a town's Hearth Offerings
   ['/v1/hunt/state', 'POST'],   // HUNT-LEAN: a character's hunt
+  ['/v1/prof/ground', 'POST'],   // AUDIT FB1031 W3: the held map's witnessed tiles
 ]);
 let _d1Mark = { secret: null, mark: null };
 /** AUDIT SCALE II A-2: how many times the page's bookmark has been forgotten - a read's answer is kept only under the
@@ -2550,7 +2551,7 @@ export function accountProf({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     account: () => storedSession(storage)?.id ?? null,
     state: (character) => post('/v1/prof/state', { character }),
     pixels: (character, pixels, dungeons = []) => post('/v1/prof/pixels', { character, pixels, dungeons }),   // PROF2: the dungeon stood in
-    ground: (character, region) => post('/v1/prof/ground', { character, region }),   // WITNESS-MAP: a region's witnessed ground
+    ground: (character, tiles) => post('/v1/prof/ground', { character, tiles }),   // WITNESS-MAP, AUDIT FB1031 W1: the day's witnessed tiles asked
     harvest: (req) => post('/v1/prof/harvest', req),
     spec: (character, profession, rank, spec, from, rid, trial = false) => post('/v1/prof/spec', { character, profession, rank, spec, from, rid, ...(trial ? { trial: true } : {}) }),   // AUDIT 29 A15: `from`, the choice the client saw standing; PERK-TRIAL: `trial`, asked as the choice's free day
     // BAG1: `carry` - the units counted as carried, into the bag or the pack - with what the client holds of it (`held`)

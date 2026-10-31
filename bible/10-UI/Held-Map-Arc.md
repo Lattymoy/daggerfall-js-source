@@ -1353,12 +1353,16 @@ witnessed (`ui/oreMapTip.js`, the host's `oreAt`; its witnessed state asked once
 A place keeps its own answer. The record: `01-Overview/bugs/Field-Bugs-2026-10-11d.md`.
 
 WITNESS-MAP (2026-10-31, Sammy in #feature-feedback: "Display on the world map 'witnessed areas' for stuff like ores
-and pearls."): online, the professions open, from the mid band in, the world sheet washes each confirmed pixel of the
-regions in view in copper, under every ring (`ui/witnessMapMark.js`, the host's `witnessed`). The legend names it, and
-the key's "Ground" row hides it (`filterWitnessed`, kept in the save). The ORE-MAP card still answers a hover. The far
-band draws none: a pixel there is a speck, and every region of the Bay would be asked. The classic region page draws
-none either: its marks overwrite its place dots texel by texel, so a wash would hide them. The record:
+and pearls."): online, the professions open, from the mid band in, the world sheet washes each confirmed pixel in view
+in copper, under every ring (`ui/witnessMapMark.js`, the host's `witnessed`). The legend names it, and the key's
+"Ground" row hides it (`filterWitnessed`, kept in the save). The ORE-MAP card still answers a hover. The classic region
+page draws none: its marks overwrite its place dots texel by texel, so a wash would hide them. The record:
 `06-Systems/Professions-Arc.md` section 61.
+
+AUDIT FB1031 (W1, W2): every tile of the day's ground the view touches is read, and the wash is painted on the kept
+layer from a bitmap of one texel a map pixel, so a pulse frame paints none of it and a pan frame blits it in one
+drawImage. The far band, where the map opens, draws none: a 64-pixel tile is some 95 paper pixels at the Bay's fit, so
+a square a tile would claim ground no one witnessed. Its switch is dimmed there.
 
 ## MAP-PAN - the world sheet's places move as one layer (2026-10-18)
 

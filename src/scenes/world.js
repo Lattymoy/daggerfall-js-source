@@ -16147,7 +16147,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // MINE-PERKS (Professions-Arc 43): a Motherlode Sense's day's Motherlodes - each on its pixel from the day's start,
       // its ore and its hour (ui/lodeMapMark.js); none without the Sense, nor with the professions shut
       lodes: () => lodeMapMarksNow(),
-      witnessed: profBook ? witnessMapReader(profBook, maps) : null,   // WITNESS-MAP (ui/witnessMapMark.js): the regions in view's witnessed ground - online, the professions open
+      witnessed: profBook ? witnessMapReader(profBook) : null,   // WITNESS-MAP (ui/witnessMapMark.js): the witnessed tiles in view - online, the professions open (AUDIT FB1031 W1: no region)
       pois: () => poiMapMarks(poiHost?.marks() ?? []),   // POI-2: the approved POIs that ask to be marked
       // HOME-VENDOR: the trader's waypoint - its town's pixel, the house's owner and the town, on both maps (ui/vendor/vendorMapMark.js)
       vendor: () => { const wp = vendorWaypoint(); const t = wp ? _townOfMapId.get(wp.map) : null; return t ? { px: t.px, py: t.py, label: `Trader: ${wp.owner || 'a'}'s house`, town: t.name } : null; },
