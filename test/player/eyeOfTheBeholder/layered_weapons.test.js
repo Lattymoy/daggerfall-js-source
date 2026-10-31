@@ -9,7 +9,7 @@ import {
   SWING_CUTS, swingCutOf, thrustRigOf, artBowPx, dropSpecks, heldPictureExpected, LOOSE_BOW_FROM,
 } from '../../../src/player/eyeOfTheBeholder/layeredWeapon.js';
 import { worldOrderLayered } from '../../../src/player/eyeOfTheBeholder/eotbSprite.js';
-import { heldOf, heldGlowRecord, evictHeld, HELD_SUFFIX, OFF_SUFFIX } from '../../../src/player/eyeOfTheBeholder/eotbGlow.js';
+import { heldGlowPx, heldGlowRecord, evictHeld, HELD_SUFFIX, OFF_SUFFIX } from '../../../src/player/eyeOfTheBeholder/eotbGlow.js';
 import { inventoryItemImage } from '../../../src/systems/item/itemTemplates.js';
 import { layeredSprite, outfitPieces, outfitCombo, decodeLayered } from '../../../src/player/eyeOfTheBeholder/layeredArmor.js';
 import { SPELL_COLOURS } from '../../../src/player/eyeOfTheBeholder/layeredSpell.js';
@@ -873,7 +873,7 @@ test('AUDIT the glow: none in empty hands, round the loose\'s own bow, round the
   }
   assert.ok(off > 5 && pair.held.some((v) => v === 1), `both weapons: ${off} px the second's`);
   const w = pair.width, h = pair.height, colors = new Uint32Array(w * h).fill(7);
-  const main = heldOf(colors, pair.held, w, h), second = heldOf(colors, pair.held, w, h, false, 2);
+  const main = heldGlowPx(colors, pair.held, w, h), second = heldGlowPx(colors, pair.held, w, h, false, 2);
   assert.equal(second.idx.length, off);
   assert.equal(main.idx.length + second.idx.length, pair.held.filter((v) => v > 0).length);
   const up = new Map(), renderer = { textures: up, uploadTexture: (a, r) => up.set(`${a}_${r}`, 1), evictTexture: (k) => up.delete(k) };

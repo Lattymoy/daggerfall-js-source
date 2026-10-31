@@ -42,7 +42,7 @@ import {
 import {
   createHolsterArt, loadHolsterPicture, createSpriteHolster, hangSpriteHolster, mintSpriteHolster, dropSpriteHolster, holstersOnBack, holsterItemOfLook,
 } from '../../player/eyeOfTheBeholder/eotbHolster.js';   // BACK-HOLSTER: the sheathed weapon on every EOTB sprite's back, one home
-import { peerWeaponGlow, createSpriteGlow, setSpriteGlow, heldOf, heldGlowRecord, evictHeld, OFF_SUFFIX, PICTURE_RETRY_MS } from '../../player/eyeOfTheBeholder/eotbGlow.js';   // BACK-HOLSTER GLOW: its glow, on the back and in the hand
+import { peerWeaponGlow, createSpriteGlow, setSpriteGlow, heldGlowPx, heldGlowRecord, evictHeld, OFF_SUFFIX, PICTURE_RETRY_MS } from '../../player/eyeOfTheBeholder/eotbGlow.js';   // BACK-HOLSTER GLOW: its glow, on the back and in the hand
 import { createQuiverArt, loadQuiverArrow, quiverRidesWith, BACK_QUIVER } from '../../player/eyeOfTheBeholder/eotbQuiver.js';   // QUIVER: a bow's quiver on the back
 import { quadHalfDiagonal } from '../../render/bounds.js';   // AUDIT FLICKER R1: a sprite's reach, as the batch was made with
 import { stepPeerPace } from './peerPace.js';   // HT-WAIST-BACK: the pace off the drawn pose, MWBODY1's law
@@ -155,7 +155,7 @@ export function createEotbArt({ renderer = null, urlFor = eotbSpriteUrl, decode 
       const { width, height, colors } = lookedPixels(s, raw, riders);   // COATS1: a rider's mount in its look
       const px = s.mirror ? flipRows(colors, width, height) : colors;
       renderer.uploadTexture(s.archive, s.rec, { width, height, colors: px });
-      return { w: width, h: height, marks: spriteMarks(px, width, height, { arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }), held: heldOf(px, raw.held, width, height, s.mirror), heldOff: heldOf(px, raw.held, width, height, s.mirror, 2), ...(raw.provisional ? { retryAt: clock() + PICTURE_RETRY_MS } : {}) };   // ARMORY: the body's place in the picture, read once; LAYERED-GLOW: the weapon's own px
+      return { w: width, h: height, marks: spriteMarks(px, width, height, { arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }), held: heldGlowPx(px, raw.held, width, height, s.mirror), heldOff: heldGlowPx(px, raw.held, width, height, s.mirror, 2), ...(raw.provisional ? { retryAt: clock() + PICTURE_RETRY_MS } : {}) };   // ARMORY: the body's place in the picture, read once; LAYERED-GLOW: the weapon's own px
     });
     tex.set(k, p);
     p.then((r) => { if (tex.get(k) === p) tex.set(k, r); }, () => { if (tex.get(k) === p) tex.set(k, { failedAt: clock() }); });

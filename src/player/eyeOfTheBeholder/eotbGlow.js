@@ -54,7 +54,7 @@ export const PICTURE_RETRY_MS = 5000;
 /** LAYERED-GLOW: a worn-armour picture's weapon px as uploaded - `held` the compose's mask (top row first; `part` 1 the
  *  line's weapon, 2 a pair's second), `colors` the upload (row 0 the bottom, mirrored as `mirror` says): { idx, col }, or
  *  null for a picture with no weapon of its own. */
-export function heldOf(colors, held, w, h, mirror = false, part = 1) {
+export function heldGlowPx(colors, held, w, h, mirror = false, part = 1) {
   if (!held || held.length !== w * h) return null;
   const idx = [];
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (held[y * w + x] === part) idx.push((h - 1 - y) * w + (mirror ? w - 1 - x : x));
@@ -62,7 +62,7 @@ export function heldOf(colors, held, w, h, mirror = false, part = 1) {
   return { idx: at, col: Uint32Array.from(at, (i) => colors[i]), of: /** @type {any} */ (null), rec: '', key: '' };
 }
 
-/** LAYERED-GLOW: the record a hand glow outlines - the weapon's own picture (`held`, heldOf), uploaded once under the
+/** LAYERED-GLOW: the record a hand glow outlines - the weapon's own picture (`held`, heldGlowPx), uploaded once under the
  *  sprite's record and HELD_SUFFIX; '' where this frame shows none of it (no glow); null where the picture has no
  *  weapon of its own (a skin, a bare hand: the whole sprite). */
 export function heldGlowRecord(renderer, archive, rec, held, w, h, suffix = HELD_SUFFIX) {
