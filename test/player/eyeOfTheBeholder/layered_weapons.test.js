@@ -596,7 +596,9 @@ test('a flail\'s chain swings: in a walk it lags the hand\'s move since the fram
   // a swing that flings the ball off the picture's top, and a walk's toward its side: it stays inside
   const W = 40, H = 80, colors = new Uint8Array(W * H * 4);
   for (let x = 0; x < 30; x++) if (x < 4 || x > 7) colors.set([0, 0, 255, 255], (20 * W + x) * 4);
-  for (let y = 21; y < 70; y++) for (let x = 27; x <= 31; x++) colors.set([255, 0, 0, 255], (y * W + x) * 4);
+  // PIN MOVED (FLAIL-LINK): the chain is drawn from its first link, a little shorter on screen - four px longer, so
+  // a ball not turned back still leaves male 8-1's picture
+  for (let y = 21; y < 74; y++) for (let x = 27; x <= 31; x++) colors.set([255, 0, 0, 255], (y * W + x) * 4);
   for (const [body, rf] of [['male', '8-1'], ['male', '6-1'], ['male', '0-0'], ['female', '0-0']]) {
     const f = await decodeLayered(`LA:${body}:leather_leather_leather:${rf}:lll@fl1`, decodePng, { ...opts, heldArt: async () => ({ width: W, height: H, colors }) });
     let red = 0, edge = 0;
@@ -1040,4 +1042,35 @@ test('IRON-LEFT (the owner, 2026-10-31: "this glob of texture where the hammer w
     }
     assert.equal(left, 0, `${body} ${rf}: the hammer's iron left (${left} px)`);
   }
+});
+
+test('THE PLACEMENT AUDIT (2026-10-31, the owner: "Ensure placements are perfect including shields"): a weapon held where the trace took the fist, or snapped off it, is drawn in the hand - every piece of it touches the body', { skip: !PNG && 'no pngjs' }, async () => {
+  const piecesOff = (img) => {
+    const W = img.width, H = img.height, held = img.held, op = (i) => img.data[i * 4 + 3] > 0, seen = new Uint8Array(W * H);
+    let off = 0;
+    for (let s = 0; s < W * H; s++) {
+      if (!held?.[s] || seen[s] || !op(s)) continue;
+      let n = 0, touch = false;
+      for (const st = [s], _ = (seen[s] = 1); st.length;) {
+        const i = st.pop(), x = i % W, y = (i / W) | 0; n++;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const X = x + dx, Y = y + dy, j = Y * W + X;
+          if (X < 0 || Y < 0 || X >= W || Y >= H || !op(j)) continue;
+          if (held[j]) { if (!seen[j]) { seen[j] = 1; st.push(j); } } else touch = true;
+        }
+      }
+      if (!touch && n >= 3) off++;
+    }
+    return off;
+  };
+  const cases = [['female', '10-0', 'mc1'], ['female', '10-0', 'sf0'], ['male', '9-0', 'mc1'], ['male', '9-3', 'dg1'], ['female', '8-2', 'dg1'], ['male', '5-1', 'ls1']];
+  for (const [body, rf, w] of cases) for (const outfit of ['lll', 'p2p2p2']) {
+    const img = await decodeLayered(`LA:${body}:${outfitCombo(outfitPieces(outfit))}:${rf}:${outfit}@${w}`, decodePng, opts);
+    assert.equal(piecesOff(img), 0, `${body} ${rf} ${outfit} ${w}: no piece off the body`);
+  }
+  // the fist kept: female 10-0's hand, which the trace took as a piece of the hammer left floating, is drawn empty-handed
+  const bare = await decodeLayered('LA:female:leather_leather_leather:10-0:lll@0', decodePng, opts);
+  let skin = 0;
+  for (let y = 43; y <= 49; y++) for (let x = 29; x <= 34; x++) { const i = (y * bare.width + x) * 4; if (bare.data[i + 3] && bare.data[i] > 180 && bare.data[i] > bare.data[i + 2] + 40) skin++; }
+  assert.ok(skin >= 4, `female 10-0: the hand kept (${skin} px)`);
 });

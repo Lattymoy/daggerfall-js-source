@@ -432,8 +432,8 @@
   {
     "name": "LAYERED-WEAPONS-chain-hangs-up",
     "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
-    "old": "    const c = ((x - hx) * gx + (y - hy) * gy) / ka, v = ((x - hx) * gy - (y - hy) * gx) / k;",
-    "new": "    const c = -((x - hx) * gx + (y - hy) * gy) / ka, v = ((x - hx) * gy - (y - hy) * gx) / k;",
+    "old": "    const c = ((x - hx) * gx + (y - hy) * gy) / ka + (C.lead ?? 0), v = ((x - hx) * gy - (y - hy) * gx) / k;",
+    "new": "    const c = -((x - hx) * gx + (y - hy) * gy) / ka + (C.lead ?? 0), v = ((x - hx) * gy - (y - hy) * gx) / k;",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],

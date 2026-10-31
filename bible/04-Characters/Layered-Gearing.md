@@ -282,7 +282,8 @@ cast's frames with its outfit's.
 **Known limits of the hands.** A pair shows one weapon where the art has no free hand. A weapon's glow stands round the
 weapon alone (LAYERED-GLOW, `05-Combat/Weapon-Glow.md` "Round the weapon"). Verified by
 `test/player/eyeOfTheBeholder/layered_weapons.test.js`, `spriteglow.test.js` and `tools/mutants/layered_weapons.json`
-(147 mutants, all dead); the peer-art pins moved to the new codes (`test/net/peer/fb1022d_peerart.test.js`).
+(150 mutants, all dead), with THE PLACEMENT AUDIT and FLAIL-LINK (`tools/mutants/flaillink.json`, 3, all dead); the
+peer-art pins moved to the new codes (`test/net/peer/fb1022d_peerart.test.js`).
 
 ## The shield (LAYERED-SHIELD, 2026-10-31)
 
