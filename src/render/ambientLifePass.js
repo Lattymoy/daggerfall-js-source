@@ -161,7 +161,7 @@ void main() {
   float f = fogFactorAt(vWorld);
   if (uGlowPass == 1) {
     float r = length(vUV - 0.5) * 2.0;
-    float a = smoothstep(0.4, 0.0, r) + pow(max(0.0, 1.0 - r), 2.0) * 0.35;   // a hot core in a soft halo
+    float a = 1.0 - smoothstep(0.0, 0.4, r) + pow(max(0.0, 1.0 - r), 2.0) * 0.35;   // a hot core in a soft halo
     o = vec4(dwWaterFogAdd(vColor * a * f, vWorld), 0.0);
     return;
   }

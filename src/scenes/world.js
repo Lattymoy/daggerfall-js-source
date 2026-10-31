@@ -13373,9 +13373,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // places - and the leaves in the air blew on at the new pixel. The arrival's haze reads its layer afresh.
     snowfall.offsetOrigin(state.initOffset);
     windfall.offsetOrigin(state.initOffset);
-    ambientLife.offsetOrigin(state.initOffset);   // AMBIENT-LIFE: the creatures stand on the land
     hazeGl?.offsetOrigin(state.initOffset);
     heatHaze.reset();
+    ambientLife.offsetOrigin(state.initOffset);   // AMBIENT-LIFE: the creatures stand on the land
     _streamSince = null;   // PERF-EXT24 (the review): the sweep ended the old world's stream - the new one's two seconds start at its first pump
     // RESPAWN-GROUND (FIELD BUGS 2026-09-30, "Respawning high in the air after death"): THE EYE STANDS ON THE NEW PIXEL
     // WHILE IT BUILDS. The frames of the awaits below feed `cam.pos` to the streamer, which reads it in the new frame -

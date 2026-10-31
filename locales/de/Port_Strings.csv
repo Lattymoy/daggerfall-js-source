@@ -2700,6 +2700,8 @@ features.weatherEvents.note,"Regen, Stürme und Schnee ziehen mit dem Wind über
 features.weatherEvents.title,"Wetter als Orte"
 features.wildernessCamps.note,"Draußen in der Wildnis triffst du manchmal auf eine kleine Gruppe von Gegnern, ein Lager oder ein umherstreifendes Rudel, statt immer nur auf einen. Aus behält die klassischen Einzelbegegnungen."
 features.wildernessCamps.title,"Lager & Rudel in der Wildnis"
+features.wildlife.note,"Vögel, Fledermäuse und kleine Tiere leben draußen. Schwärme ziehen über den Himmel, Vögel sitzen auf Dächern und fliegen auf, wenn du näherkommst, und kleine Tiere huschen vor deinen Füßen davon."
+features.wildlife.title,"Tierwelt"
 features.wind.note,"Sieh den Wind im verbesserten Außenbereich: Bäume und Pflanzen neigen und wiegen sich mit ihm, und feine Luftschlieren zeigen, in welche Richtung und wie stark er weht."
 features.wind.sway,"Wiegen"
 features.wind.title,"Wind"

@@ -2700,6 +2700,8 @@ features.weatherEvents.note,"Chuva, tempestades e neve se movem pela terra com o
 features.weatherEvents.title,"Clima com lugar"
 features.wildernessCamps.note,"Nos ermos você às vezes encontra um pequeno grupo de inimigos, um acampamento ou um bando errante, em vez de só um por vez. Desligado mantém os encontros únicos clássicos."
 features.wildernessCamps.title,"Acampamentos e bandos nos ermos"
+features.wildlife.note,"Pássaros, morcegos e pequenos animais vivem ao ar livre. Bandos cruzam o céu, pássaros pousam nos telhados e voam quando você se aproxima, e pequenos animais fogem dos seus pés."
+features.wildlife.title,"Vida selvagem"
 features.wind.note,"Veja o vento nos exteriores aprimorados: árvores e plantas se inclinam e balançam com ele, e leves rastros de ar mostram para onde ele sopra e com que força."
 features.wind.sway,"Balanço"
 features.wind.title,"Vento"

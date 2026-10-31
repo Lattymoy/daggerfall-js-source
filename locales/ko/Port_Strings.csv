@@ -2700,6 +2700,8 @@ features.weatherEvents.note,"비, 폭풍, 눈이 바람을 따라 땅 위를 움
 features.weatherEvents.title,"움직이는 날씨"
 features.wildernessCamps.note,"야생에서 적을 하나씩만 만나는 대신, 가끔 작은 무리, 야영지, 떠도는 무리를 만납니다. 끄면 클래식의 단일 조우를 유지합니다."
 features.wildernessCamps.title,"야생 야영지 및 무리"
+features.wildlife.note,"야외에 새와 박쥐, 작은 동물이 삽니다. 새 떼가 하늘을 가로지르고, 지붕에 앉은 새는 가까이 가면 날아가며, 작은 동물은 발밑에서 달아납니다."
+features.wildlife.title,"야생 동물"
 features.wind.note,"향상된 야외에서 바람이 보입니다. 나무와 식물이 바람에 기울고 흔들리며, 희미한 공기 줄기가 바람의 방향과 세기를 보여 줍니다."
 features.wind.sway,"흔들림"
 features.wind.title,"바람"
