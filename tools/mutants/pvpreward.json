@@ -151,8 +151,8 @@
   {
     "name": "PVP-REWARD-the-weight-unsaid",
     "file": "src/scenes/wildEscrowHost.js",
-    "old": "realm: at, free: entityMaxEncumbrance(playerEntity) - carriedWeight(playerEntity) }),",
-    "new": "realm: at }),",
+    "old": "        call: (at) =>\n          wildAccount.collect({\n            receipt: c.cr,\n            realm: at,\n            free: entityMaxEncumbrance(playerEntity) - carriedWeight(playerEntity),\n          }),",
+    "new": "        call: (at) => wildAccount.collect({ receipt: c.cr, realm: at }),",
     "tests": [
       "test/systems/wild/pvpreward.test.js",
       "test/systems/fb1014_pvpescrow.test.js"

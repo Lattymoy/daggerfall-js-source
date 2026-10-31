@@ -958,8 +958,13 @@
 !/src/scenes/travelFareHost.js
 !/src/scenes/travelHorizon.js
 !/src/scenes/travelView.js
+!/src/scenes/travelViewDungeonModels.js
+!/src/scenes/vampireCrypt.js
+!/src/scenes/vendorHost.js
 !/src/scenes/wagon/
 /src/scenes/wagon/*/
+!/src/scenes/wardrobeCounter.js
+!/src/scenes/wildEscrowHost.js
 !/src/scenes/windowWorld.js
 !/src/scenes/witchesHost.js
 !/src/scenes/worldShotHooks.js

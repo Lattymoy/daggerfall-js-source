@@ -416,7 +416,7 @@
   {
     "name": "MENUORDER-host-traders-unpictured",
     "file": "src/scenes/vendorHost.js",
-    "old": "    picture: (it, wake) => itemPicture(it, { onReady: wake }),   // MENU-ORDER: a piece's picture on its row\n    waypoint: vendorWaypointOn,",
+    "old": "    picture: (it, wake) => itemPicture(it, { onReady: wake }), // MENU-ORDER: a piece's picture on its row\n    waypoint: vendorWaypointOn,",
     "new": "    waypoint: vendorWaypointOn,",
     "tests": [
       "test/ui/menuorder.test.js"

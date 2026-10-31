@@ -851,7 +851,7 @@ receipt's carrier); `scenes/dungeonContext.js` and `scenes/worldModes.js` NO DUE
   pieces were lost and that the character's trading is frozen, and names any letters of credit among them by their worth.
 - **THE FOUR HOSTS.** `scenes/world.js` WIRED (the zone word, the blows, the referee's readout, the fall, the drop, the
   deposit, the seizure, the escrow - the killer's collect carried, the fallen's piece taken back, both on the zone's
-  frame, `wildEscrowHost.js:"const wildEscrowFrame = () =>"`); `scenes/dungeonContext.js` (the zone's halls) WIRED through world.js's own `wildStrike` and
+  frame, `wildEscrowHost.js:"const wildEscrowFrame"`); `scenes/dungeonContext.js` (the zone's halls) WIRED through world.js's own `wildStrike` and
   `wildSpellOut`, refereed alike, its pool holding the remains, its ghost leaving once its deposit has gone; `scenes/
   worldModes.js` (a building) no fight - the zone word is 0 indoors - its pool holding the remains;
   `scenes/exterior.js`, the offline fixed city, NOT WIRED on purpose: the zone is online's alone.

@@ -103,8 +103,8 @@
   {
     "name": "PVP-NO-TENTH-said-as-policy",
     "file": "src/scenes/wildEscrowHost.js",
-    "old": "const words = d.last ? [WILD_TEXT.lastGold, WILD_TEXT.lastLetter] : [WILD_TEXT.policyGold, WILD_TEXT.policyLetter];",
-    "new": "const words = [WILD_TEXT.policyGold, WILD_TEXT.policyLetter];",
+    "old": "    const words = d.last ? [WILD_TEXT.lastGold, WILD_TEXT.lastLetter] : [WILD_TEXT.policyGold, WILD_TEXT.policyLetter];",
+    "new": "    const words = [WILD_TEXT.policyGold, WILD_TEXT.policyLetter];",
     "tests": [
       "test/systems/wild/pvpreward.test.js"
     ],

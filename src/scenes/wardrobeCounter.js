@@ -24,9 +24,20 @@ export const WARDROBE_ROW = () => t('wardrobe.row', 'Wardrobe');
  *   `mount` the host's overlay slot's door (the interior's mountServiceWindow), `entity` the wearer (the player's own,
  *   by default), `onDressed` told after a look is worn or cleared (the doll recomposed, by default)
  */
-export function createWardrobeCounter({ mount, entity = playerEntity, onDressed = (e) => { Promise.resolve().then(() => refreshPaperDoll(e)).catch(() => { /* the doll composes at its next open */ }); } }) {
+export function createWardrobeCounter({
+  mount,
+  entity = playerEntity,
+  onDressed = (e) => {
+    Promise.resolve()
+      .then(() => refreshPaperDoll(e))
+      .catch(() => {
+        /* the doll composes at its next open */
+      });
+  },
+}) {
   /** The popup's row in a building of `buildingType` - `{ label, onOpen }` at the three shops, undefined elsewhere. */
-  const row = (/** @type {unknown} */ buildingType) => (isWardrobeShop(buildingType) ? { label: WARDROBE_ROW(), onOpen: () => open() } : undefined);
+  const row = (/** @type {unknown} */ buildingType) =>
+    isWardrobeShop(buildingType) ? { label: WARDROBE_ROW(), onOpen: () => open() } : undefined;
   /** The window, the pack's looks read first (a piece bought a moment ago is a look already). Answers the overlay. */
   function open() {
     noteHeldLooks(entity);
@@ -36,7 +47,10 @@ export function createWardrobeCounter({ mount, entity = playerEntity, onDressed 
   /** A look laid over a worn piece, its fee paid - the law's answer. */
   function wear(/** @type {any} */ item, /** @type {any} */ look) {
     const done = wearAppearance(entity, item, look);
-    if (done.ok) { audio.playOneShot(SOUND.GoldPieces, 1); dressed(); }
+    if (done.ok) {
+      audio.playOneShot(SOUND.GoldPieces, 1);
+      dressed();
+    }
     return done;
   }
   /** A worn piece's own look back, for nothing. */
@@ -45,6 +59,9 @@ export function createWardrobeCounter({ mount, entity = playerEntity, onDressed 
     if (done.ok) dressed();
     return done;
   }
-  const dressed = () => { surfacePlayer(); onDressed(entity); };
+  const dressed = () => {
+    surfacePlayer();
+    onDressed(entity);
+  };
   return { row, open, wear, clear };
 }

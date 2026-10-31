@@ -128,8 +128,8 @@
   {
     "name": "RPT1026-MARKET-ARRIVE-soon-never-asked",
     "file": "src/scenes/vendorHost.js",
-    "old": "    if (c?.ok || c?.error === 'market-gone') return true;\n    arrivals.soon();",
-    "new": "    if (c?.ok || c?.error === 'market-gone') return true;",
+    "old": "    arrivals.soon();\n    return false;",
+    "new": "    return false;",
     "tests": [
       "test/net/rpt1026_market_arrive.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "RPT1026-MARKET-ARRIVE-the-press-s-word-unchanged",
     "file": "src/scenes/vendorHost.js",
-    "old": "    if (r?.ok && r.data?.delivery?.id && !(await collectedAtPress(r.data.delivery.id))) {\n      return { ok: true, text: t('vendor.buy.onWay'",
-    "new": "    if (false) {\n      return { ok: true, text: t('vendor.buy.onWay'",
+    "old": "    );\n    if (r?.ok && r.data?.delivery?.id && !(await collectedAtPress(r.data.delivery.id))) {",
+    "new": "    );\n    if (false) {",
     "tests": [
       "test/net/rpt1026_market_arrive.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "RPT1026-MARKET-ARRIVE-the-stall-settling-unread",
     "file": "src/scenes/vendorHost.js",
-    "old": "        settle: () => arrivals.sweep(),",
-    "new": "        settle: () => marketBook.settle(marketMint, marketPutBack, marketDrop),",
+    "old": "        settle: () => arrivals.sweep(), // VENDOR-LOST: a kept buy's piece collected as the stall opens; RPT1026-MARKET ARRIVE: the road read first, so every piece arrived for this character is collected",
+    "new": "        settle: () => marketBook.settle(marketMint, marketPutBack, marketDrop), // VENDOR-LOST: a kept buy's piece collected as the stall opens; RPT1026-MARKET ARRIVE: the road read first, so every piece arrived for this character is collected",
     "tests": [
       "test/net/rpt1026_market_arrive.test.js",
       "test/net/fb1025_vendorlost.test.js"

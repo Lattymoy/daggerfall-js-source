@@ -137,8 +137,8 @@
   {
     "name": "BLS-hub-host-stall-old",
     "file": "src/scenes/vendorHost.js",
-    "old": "    const hub = marketHubs()[row.region];",
-    "new": "    const hub = marketHubs[row.region];",
+    "old": "    const hub = marketHubs()[row.region]; // BAY-LEFT-SEA: the hubs as they stand now (systems/region/marketHubs.js)",
+    "new": "    const hub = marketHubs[row.region]; // BAY-LEFT-SEA: the hubs as they stand now (systems/region/marketHubs.js)",
     "tests": [
       "test/world/worldWide/bayleftsea_market.test.js"
     ]

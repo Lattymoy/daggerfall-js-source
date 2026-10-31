@@ -541,8 +541,8 @@
   {
     "name": "APPEARANCES-the-row-at-every-shop",
     "file": "src/scenes/wardrobeCounter.js",
-    "old": "(isWardrobeShop(buildingType) ? { label",
-    "new": "(buildingType != null ? { label",
+    "old": "    isWardrobeShop(buildingType) ? { label: WARDROBE_ROW(), onOpen: () => open() } : undefined;",
+    "new": "    buildingType != null ? { label: WARDROBE_ROW(), onOpen: () => open() } : undefined;",
     "tests": [
       "test/ui/wardrobe_window.test.js"
     ]
@@ -550,8 +550,8 @@
   {
     "name": "APPEARANCES-the-doll-never-told",
     "file": "src/scenes/wardrobeCounter.js",
-    "old": "const dressed = () => { surfacePlayer(); onDressed(entity); };",
-    "new": "const dressed = () => { surfacePlayer(); };",
+    "old": "    onDressed(entity);\n  };",
+    "new": "  };",
     "tests": [
       "test/ui/wardrobe_window.test.js"
     ]
@@ -559,8 +559,8 @@
   {
     "name": "APPEARANCES-the-doll-told-of-a-refusal",
     "file": "src/scenes/wardrobeCounter.js",
-    "old": "    if (done.ok) { audio.playOneShot(SOUND.GoldPieces, 1); dressed(); }",
-    "new": "    { audio.playOneShot(SOUND.GoldPieces, 1); dressed(); }",
+    "old": "    if (done.ok) {",
+    "new": "    {",
     "tests": [
       "test/ui/wardrobe_window.test.js"
     ]
@@ -568,8 +568,8 @@
   {
     "name": "APPEARANCES-the-counter-reads-no-pack",
     "file": "src/scenes/wardrobeCounter.js",
-    "old": "    noteHeldLooks(entity);\n",
-    "new": "",
+    "old": "    noteHeldLooks(entity);\n    const o = createWardrobeOverlay({ entity, wear, clear, nameOf: (/** @type {any} */ it) => itemLongName(it) });",
+    "new": "    const o = createWardrobeOverlay({ entity, wear, clear, nameOf: (/** @type {any} */ it) => itemLongName(it) });",
     "tests": [
       "test/ui/wardrobe_window.test.js"
     ]

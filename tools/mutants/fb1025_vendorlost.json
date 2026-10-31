@@ -140,8 +140,8 @@
   {
     "name": "VENDORLOST-the-host-handing-no-settle",
     "file": "src/scenes/vendorHost.js",
-    "old": "        settle: () => arrivals.sweep(),   // VENDOR-LOST: a kept buy's piece collected as the stall opens; RPT1026-MARKET ARRIVE: the road read first, so every piece arrived for this character is collected\n",
-    "new": "",
+    "old": "        settle: () => arrivals.sweep(), // VENDOR-LOST: a kept buy's piece collected as the stall opens; RPT1026-MARKET ARRIVE: the road read first, so every piece arrived for this character is collected\n      },",
+    "new": "      },",
     "tests": [
       "test/net/fb1025_vendorlost.test.js"
     ]

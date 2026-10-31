@@ -473,8 +473,8 @@
   {
     "name": "AUDIT-PACK-PICK-C53-stall-host-look-unwired",
     "file": "src/scenes/vendorHost.js",
-    "old": "nameOf: vendorNameOf, stats: vendorItemStats, purse:",
-    "new": "nameOf: vendorNameOf, stats: () => null, purse:",
+    "old": "        stats: vendorItemStats,",
+    "new": "        stats: () => null,",
     "tests": [
       "test/ui/packpick.test.js",
       "test/net/fb1025_vendorlost.test.js",

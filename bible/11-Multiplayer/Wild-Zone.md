@@ -342,10 +342,10 @@ Either death, at the first dead frame, while the room is still the player's (`wi
   socket plays), once, and says the same collect each time it is asked (`wildLaw.js:"export function collectAsk"`). The
   killer's tab carries it to the service as an act on its own record (`/v1/wild/collect`, wildCollect): the piece into
   that record and the escrow ended, one batch guarded to the one row - only then is it the killer's, and it arrives in
-  the service's answer, carried, never in a slot (`wildEscrowHost.js:"const wildCollected = (d) =>"`). NOBODY COLLECTING by the
+  the service's answer, carried, never in a slot (`wildEscrowHost.js:"const wildCollected"`). NOBODY COLLECTING by the
   remains' latest end (`until`: the order's minute and `WILD_REMAINS_MS`, WILD_ESCROW_HOLD_S) and a collect signed at
   that moment spent (`WILD_COLLECT_TTL_S`, `escrowBackAt`), the fallen's own tab takes it back into its record
-  (`/v1/wild/reclaim`, wildReclaim) - watched on the zone's frame (`wildEscrowHost.js:"const wildEscrowFrame = () =>"`), and a
+  (`/v1/wild/reclaim`, wildReclaim) - watched on the zone's frame (`wildEscrowHost.js:"const wildEscrowFrame"`), and a
   game closed meanwhile asks the service at its next play (`/v1/wild/escrows`). The piece is in the fallen's record, the
   escrow, or one record - never two, never none; an end asked twice moves nothing twice. What the fallen sees: the
   death screen says the piece is held until the killer collects it and comes back otherwise (`WILD_TEXT.deathHeld`), a

@@ -269,7 +269,7 @@ DECIDED (Mac, 2026-10-14), asked what this fix left open:
   mutants at 201 and 204 dead).
 
 THE FOUR HOSTS, the escrow. `scenes/world.js` WIRED - the fall's and the seizure's `collect`, the killer's collect
-carried and the fallen's piece taken back on the zone's frame (`wildEscrowHost.js:"const wildEscrowFrame = () =>"`), the death
+carried and the fallen's piece taken back on the zone's frame (`wildEscrowHost.js:"const wildEscrowFrame"`), the death
 screen's word on it; `scenes/dungeonContext.js` and `scenes/worldModes.js` name no piece (above), so they hold none in
 escrow; `scenes/exterior.js`, offline, NOT WIRED on purpose.
 

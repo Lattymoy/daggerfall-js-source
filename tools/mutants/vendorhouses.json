@@ -112,8 +112,8 @@
   {
     "name": "VENDOR-HOUSES-unregistered",
     "file": "src/scenes/vendorHost.js",
-    "old": "  registerVendorHouseReader((region) => (vendorMarketOpen() ? vendorReachable(region) : null), { open: vendorMarketOpen });",
-    "new": "  registerVendorHouseReader(null);",
+    "old": "  registerVendorHouseReader((region) => (vendorMarketOpen() ? vendorReachable(region) : null), {\n    open: vendorMarketOpen,\n  }); // VENDOR-HOUSES: the houses the town map inks blue",
+    "new": "  registerVendorHouseReader(null); // VENDOR-HOUSES: the houses the town map inks blue",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ],

@@ -293,8 +293,8 @@
   {
     "name": "AEOW-T-models-rows-bay",
     "file": "src/scenes/travelViewDungeonModels.js",
-    "old": "    const near = nearDungeons({ at, dungeons: tvDungeonRowsAt(at), locAt: tvDungeonAt, isFound: (x, y) => !!tvPlaceSummary(x, y),",
-    "new": "    const near = nearDungeons({ at, dungeons: (_tvDungeonRows ??= dungeonRows(mapDict)), locAt: tvDungeonAt, isFound: (x, y) => !!tvPlaceSummary(x, y),",
+    "old": "      dungeons: tvDungeonRowsAt(at),",
+    "new": "      dungeons: (_tvDungeonRows ??= dungeonRows(mapDict)),",
     "tests": [
       "test/systems/travel/ether_ow.test.js"
     ],
@@ -303,8 +303,8 @@
   {
     "name": "AEOW-T-models-loc-index",
     "file": "src/scenes/travelViewDungeonModels.js",
-    "old": "    const near = nearDungeons({ at, dungeons: tvDungeonRowsAt(at), locAt: tvDungeonAt, isFound: (x, y) => !!tvPlaceSummary(x, y),",
-    "new": "    const near = nearDungeons({ at, dungeons: tvDungeonRowsAt(at), locAt: (x, y) => locationIndex.get(`${x},${y}`), isFound: (x, y) => !!tvPlaceSummary(x, y),",
+    "old": "      locAt: tvDungeonAt,",
+    "new": "      locAt: (x, y) => locationIndex.get(`${x},${y}`),",
     "tests": [
       "test/systems/travel/ether_ow.test.js"
     ],

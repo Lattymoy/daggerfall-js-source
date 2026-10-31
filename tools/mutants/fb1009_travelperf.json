@@ -95,8 +95,8 @@
   {
     "name": "TVB-host-drop-keeps-the-map",
     "file": "src/scenes/travelViewDungeonModels.js",
-    "old": "    for (const e of _tvDngModel.values()) e.hold.release();\n    _tvDngModel.clear();",
-    "new": "    for (const e of _tvDngModel.values()) e.hold.release();",
+    "old": "    _tvDngModel.clear();\n  }",
+    "new": "  }",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "TVP-the-pinned-door-again",
     "file": "src/scenes/travelViewDungeonModels.js",
-    "old": "(a, r) => applyClimate(a, r, climate, host.season), { getTexture: pipeline.getTexture, uploadRecord: e.hold.uploadRecord });",
-    "new": "(a, r) => applyClimate(a, r, climate, host.season), pipeline);",
+    "old": "        await remapSubMeshes(gpu.subMeshes, texRemap, (a, r) => applyClimate(a, r, climate, host.season), {\n          getTexture: pipeline.getTexture,\n          uploadRecord: e.hold.uploadRecord,\n        });",
+    "new": "        await remapSubMeshes(gpu.subMeshes, texRemap, (a, r) => applyClimate(a, r, climate, host.season), pipeline);",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js",
       "test/world/owdungeons.test.js"
@@ -114,8 +114,8 @@
   {
     "name": "TVP-the-holds-door-unasked",
     "file": "src/scenes/travelViewDungeonModels.js",
-    "old": "{ getTexture: pipeline.getTexture, uploadRecord: e.hold.uploadRecord });",
-    "new": "{ getTexture: pipeline.getTexture, uploadRecord: pipeline.uploadRecord });",
+    "old": "          uploadRecord: e.hold.uploadRecord,",
+    "new": "          uploadRecord: pipeline.uploadRecord,",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js",
       "test/world/owdungeons.test.js"
