@@ -36,10 +36,12 @@ import { LOYALTY, DEVOTED, movedLoyalty, isDevoted, sameKin, BETRAY, mayBetray }
 import { registerPlayerHurtListener } from '../../characters/playerEntity.js';   // RVN11c: the hurt that leaves me under a quarter   // RVN11 (bible/12-Enhanced-AI/Feud-Arc.md 22.1): its loyalty
 import { MINUTES_PER_DAY } from '../gameDate.js';   // RVN11: "twice in a day"
 import { ownMinutes, raisedMinutes, sharedClockOn, trustedWorldMinutes, sharedClockHeardMark } from '../worldTick.js';   // AUDIT RVN F1: an errand on the lived step; OFFLINE-ROAD: online, on the world's
-import { applySwornGear, gearKeyOf, gearRefusal, gearItems, isGearKey } from './revenantGear.js';   // RVN-GEAR: its kit
+import { applySwornGear, gearKeyOf, gearRefusal, gearItems, isGearKey, wornGear, gearMetal, gearTier } from './revenantGear.js';   // RVN-GEAR: its kit
 import { ERRAND, errandPlace, newErrand, errandUntil, errandOnWorld, errandWorldMinute, errandStep, errandHaul, deliverHaul, errandHaulWords, errandWords, errandLeftWords } from './revenantErrands.js';   // RVN-ERRAND: one abroad
 import { swornArtStep, swornMendStep, forgetSwornArt } from './revenantArts.js';   // RVN-ARTS: its art, for me
 import { playerDoor } from '../playerDoor.js';   // RVN-ARTS: the scene its art reaches through
+import { fixedPveOn } from '../pve/pveSwitch.js';
+import { standSworn, swornWeaponGrow } from '../pve/pveSworn.js';   // SWORN-BOOST: with fixed PvE, a booster at the player's level
 import { rvnStatsOf, rvnStatScale, rvnLoyaltyMove, rvnRestMinutes, rvnXpWon, rvnXpErrand, rvnStarsOf, rvnHeldStars, rvnXpOf, RVN_XP } from './revenantStars.js';   // RVN-STARS: its sky
 import { PAID_KEEP } from './revenant.js';   // AUDIT RVN-STARS S4: the errands' seeds kept as paid
 import { t } from '../textManager.js';   // L10N4: RVN-GEAR's and RVN-ERRAND's words through the text core
@@ -404,7 +406,7 @@ export function swornStarsBook(id) {
  *  (RVN-STARS) its Blade's stars over them. Its health once - a body standing with a carried whole (crewAshore) keeps it
  *  (setSwornStars rescales that whole when its sky changes - AUDIT RVN-STARS S1), and is told what was stood on its kind's
  *  own health all the same (TELL1's `healthMult`, once a body - S1: a carried stand read the inflated whole as the kind's). */
-export function applySwornStrength(entity, r, { fresh = true } = {}) {
+export function applySwornStrength(entity, r, { fresh = true, pve = fixedPveOn(), level = playerDoor()?.player?.()?.level } = {}) {   // SWORN-BOOST: `pve` the switch, `level` the player's
   if (!entity || !r) return;
   const rank = Math.max(1, r.rank | 0), stars = rvnStatsOf(r);
   const starHealth = rvnStatScale(stars, 'health');
@@ -417,6 +419,11 @@ export function applySwornStrength(entity, r, { fresh = true } = {}) {
   entity.damageScale = (1 + SWORN_DAMAGE_PER_RANK * rank) * (isDevoted(r.companion?.loyalty) ? DEVOTED.BLOWS : 1) * rvnStatScale(stars, 'blows');   // RVN11 (22.1): a Devoted one's blows
   entity.revenant = { id: r.id, name: r.name, rank, sworn: true };   // FOE-TITLE: called by its own name everywhere
   applySwornGear(entity, r);   // RVN-GEAR: its kit over the one its stand rolled
+  if (!pve) return;
+  const weapon = wornGear(r).find(([k]) => k === 'weapon')?.[1];
+  const arm = weapon ? swornWeaponGrow(gearMetal(weapon), gearTier(weapon)) : 1;   // SWORN-BOOST: the weapon I gave it
+  const grow = { blow: (entity.damageScale / (1 + SWORN_DAMAGE_PER_RANK)) * arm, health: entity._swornWhole / (1 + SWORN_HEALTH_PER_RANK) };   // over a fresh rank 1's
+  standSworn(entity, level ?? entity.level ?? 1, grow, fresh);   // SWORN-BOOST: on the reference player
 }
 
 // ── THE PARTY, in the crew's shape (crewAshore.js reads `party`, `wake`, `knock`, `hurt`, `isAshore`) ──────────────

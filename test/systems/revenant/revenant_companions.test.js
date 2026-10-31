@@ -9,6 +9,9 @@
 // art and life; the dissolve on the sprite in both billboard shaders; the roster page; the held pose.
 
 import '../../modsOff.js';
+import { referencePlayer } from '../../../src/systems/pve/pveCategories.js';
+import { SWORN_BLOW, SWORN_HEALTH, swornWeaponGrow } from '../../../src/systems/pve/pveSworn.js';
+import { weaponOfMaterial } from '../../../src/combat/enemyEquipment.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -103,6 +106,35 @@ test('REVENANT-COMPANION a sworn one\'s strength: its rank\'s health once (a car
   const again = { maxHealth: 175, health: 120 };
   RC.applySwornStrength(again, r, { fresh: false });
   assert.deepEqual([again.maxHealth, again.health], [175, 120], 'a door neither heals nor boosts it again');
+});
+
+test('SWORN-BOOST with fixed PvE a sworn one stands on the reference player at my level: a fifth of my blow and three fifths of my health fresh, grown by rank, stars and devotion to at most 35% and 100%; off, its kind\'s numbers (mutants: no cap; the switch ignored)', () => {
+  fresh();
+  const ref = referencePlayer(30);
+  const r1 = sworn('with', { rank: 1 });
+  const e = { maxHealth: 100, health: 100 };
+  RC.applySwornStrength(e, r1, { fresh: true, pve: true, level: 30 });
+  const mid = (b) => (b[0] + b[1]) / 2;
+  assert.ok(Math.abs(mid(e.pveBlow) / ref.blow - SWORN_BLOW.fresh) < 0.01, `blow ${e.pveBlow}`);
+  assert.equal(e.maxHealth, Math.round(ref.health * SWORN_HEALTH.fresh));
+  assert.equal(e.damageScale, 1);
+  const big = sworn('with', { rank: 15 });
+  const g = { maxHealth: 100, health: 100 };
+  RC.applySwornStrength(g, big, { fresh: true, pve: true, level: 30 });
+  assert.ok(mid(g.pveBlow) <= ref.blow * SWORN_BLOW.most + 1 && mid(g.pveBlow) > mid(e.pveBlow), `grown blow ${g.pveBlow}`);
+  assert.ok(g.maxHealth <= ref.health * SWORN_HEALTH.most && g.maxHealth > e.maxHealth);
+  const carried = { maxHealth: g.maxHealth, health: 40 };
+  RC.applySwornStrength(carried, big, { fresh: false, pve: true, level: 30 });
+  assert.equal(carried.health, 40, 'a door does not heal it');
+  const off = { maxHealth: 100, health: 100 };
+  RC.applySwornStrength(off, r1, { fresh: true, pve: false });
+  assert.equal(off.pveBlow, undefined);
+  const blade = weaponOfMaterial(120, 2);
+  me.items = [...(me.items ?? []), blade];
+  assert.equal(RC.giveSwornGear(r1.id, blade), null);
+  const armed = { maxHealth: 100, health: 100 };
+  RC.applySwornStrength(armed, RC.revenantsWithYou().find((x) => x.id === r1.id) ?? r1, { fresh: true, pve: true, level: 30 });
+  assert.ok(Math.abs(mid(armed.pveBlow) / mid(e.pveBlow) - swornWeaponGrow(2, 0)) < 0.02, `a Silver blade grows its blow: ${armed.pveBlow} over ${e.pveBlow}`);
 });
 
 // ── the layer through portals ──────────────────────────────────────────────────────────────────────────────────

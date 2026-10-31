@@ -285,3 +285,13 @@ hold any foe, so a custom spell could skip a boss. On a template foe (`pve/pveSp
 Daggerfall's law. A ranked one (Strong, Elite, Champion, an elite or a boss) is immune to all six. A Dispel kills a
 Normal template foe, so it drops its loot, where Daggerfall destroys it. Other targets keep Daggerfall's law. The
 tests: `pve_spellrank.test.js`.
+
+## 18. A sworn revenant is a booster (SWORN-BOOST, 2026-10-31)
+
+The owner: "we need them to be hlepful but not op", "more a booster". A sworn revenant kept its kind's Daggerfall
+numbers, so past the low levels it did next to nothing to a template foe. With fixed PvE on, `applySwornStrength` stands it on the reference player at the player's level
+(`pve/pveSworn.js`): a fresh one lands a fifth of the player's blow and has three fifths of the player's health. Its
+rank, stars and devotion grow both, and the weapon the player gave it ("u can give them gewr aswell") grows its blow 3%
+a step of metal and 10% a tier. Both stop at 35% of the blow and the player's whole health, so it always hits for less
+than the player and never outlasts them. Its armour guards it as Daggerfall's does. Daggerfall Unity has no sworn foes. The tests:
+`revenant_companions.test.js`.

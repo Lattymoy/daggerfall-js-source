@@ -24,7 +24,7 @@ const TOP = ZONE_BANDS.length - 1;
  *  character wakes (systems/starts/starts.js STARTS: a province's start near its capital, else the Bay's Privateer's
  *  Hold) and climbs band by band toward the Imperial City, the top. Cyrodiil is the heart: its start is the center
  *  itself, so it reads its distance against the other areas' mean reach and all of it stands high. */
-export const ZONE_CENTER = 'Imperial City';
+export const ZONE_CENTER = 'Imperial';   // the heart's province: its capital, the Imperial City, is the center
 /** BAY-OWN: Privateer's Hold's own pixel in MAPS.BSA (the Daggerfall region), where the Bay's start wakes. */
 const BAY_START_PX = Object.freeze([109, 158]);
 /** Each province's region (62..70, REGION_NAMES) to its key in PROVINCES. */
@@ -48,7 +48,7 @@ export function zoneStartPx(area) {
   if (ZONE_STARTS[area] === "Privateer's Hold") return BAY_START_PX;
   return area === 'Imperial' ? null : cityPx(CITIES.find((c) => c.name === ZONE_STARTS[area]));
 }
-export const zoneCenterPx = () => cityPx(CITIES.find((c) => c.name === ZONE_CENTER));
+export const zoneCenterPx = () => cityPx(CITIES.find((c) => c.capital && c.province === ZONE_CENTER));
 const reachOf = (s, c) => Math.hypot(s[0] - c[0], s[1] - c[1]);
 /** An area's reach: its start's distance to the center; the heart's, the mean of the others'. @param {string} area */
 export function zoneReach(area) {

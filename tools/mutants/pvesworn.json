@@ -1,0 +1,8 @@
+[
+  {"name": "SWORN-BOOST-no-blow-cap", "file": "src/systems/pve/pveSworn.js", "old": "  const blow = ref.blow * Math.min(SWORN_BLOW.most, SWORN_BLOW.fresh * Math.max(1, grow.blow));", "new": "  const blow = ref.blow * SWORN_BLOW.fresh * Math.max(1, grow.blow);", "tests": ["test/systems/revenant/revenant_companions.test.js"]},
+  {"name": "SWORN-BOOST-no-health-cap", "file": "src/systems/pve/pveSworn.js", "old": "Math.min(SWORN_HEALTH.most, SWORN_HEALTH.fresh * Math.max(1, grow.health))", "new": "SWORN_HEALTH.fresh * Math.max(1, grow.health)", "tests": ["test/systems/revenant/revenant_companions.test.js"]},
+  {"name": "SWORN-BOOST-door-heals", "file": "src/systems/pve/pveSworn.js", "old": "  entity.health = fresh || !(entity.health > 0) ? whole : Math.min(entity.health, whole);", "new": "  entity.health = whole;", "tests": ["test/systems/revenant/revenant_companions.test.js"]},
+  {"name": "SWORN-BOOST-switch-ignored", "file": "src/systems/revenant/revenantCompanions.js", "old": "  if (!pve) return;\n", "new": "", "tests": ["test/systems/revenant/revenant_companions.test.js"]},
+  {"name": "SWORN-BOOST-no-growth", "file": "src/systems/revenant/revenantCompanions.js", "old": "  standSworn(entity, level ?? entity.level ?? 1, grow, fresh);", "new": "  standSworn(entity, level ?? entity.level ?? 1, { blow: 1, health: 1 }, fresh);", "tests": ["test/systems/revenant/revenant_companions.test.js"]},
+  {"name": "SWORN-BOOST-weapon-unread", "file": "src/systems/revenant/revenantCompanions.js", "old": "  const arm = weapon ? swornWeaponGrow(gearMetal(weapon), gearTier(weapon)) : 1;", "new": "  const arm = 1;", "tests": ["test/systems/revenant/revenant_companions.test.js"]}
+]
