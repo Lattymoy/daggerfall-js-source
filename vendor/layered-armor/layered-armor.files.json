@@ -15560,9 +15560,9 @@
     "weapon/male/5-3.png": "494d1d48219335b57de655a2d33c95d08b5fcbbefb608808898b81de3b694a4a",
     "weapon/male/5-4.png": "0ffdf730608b2b30a4bdaa06cbf73503bd5f279e35165f9fceedde3cbf942f7a",
     "weapon/male/5-5.png": "788206ee5fa3544e15c7a21af36902136f9d52012a7b4db73bd64ffe9ad6b136",
-    "weapon/male/6-0-arm.png": "4f820efca6a03171c28eb3eb29f893ce72a669c8c4ed1e51085ff47078070541",
+    "weapon/male/6-0-arm.png": "331aac95b2a145a7a799781d748e5caaf48afc3453549cd6ceed6a323c72a576",
     "weapon/male/6-0.png": "db8ade3a7dc47c4dd40635b9d8dde799bd0b6539c6d0ca2423dfde7797525fd0",
-    "weapon/male/6-1-arm.png": "93df18f2b4fe63776392c580d6ccf37a16ea7684a761034e76d7bd7477b12de8",
+    "weapon/male/6-1-arm.png": "508b8c1dfd2b49dbaa5507344ca898ef247819764d0abeba84202ab069c62bac",
     "weapon/male/6-1.png": "43ab31c52aadb49233a4fc27c1b50ef2af34040d699a9d6ec9fd8e40e1d40acf",
     "weapon/male/6-2-arm.png": "0794ec3cd17bf072e30d54c5221d61f52f0e37cb32fddc7fae2bd841cdb0efda",
     "weapon/male/6-2.png": "3fbccf8cb507928ff6d60e17b10b46de3923c908928afccd4051df742dc8b163",
@@ -15589,6 +15589,6 @@
     "weapon/male/9-3.png": "df3590dc7c72ffcbe12b8254b93d8c3a47f3563b379793abac942003035a6a96",
     "weapon/male/9-4.png": "d7f3418076e744426893d05a3b96932ecaffb2742a739360acffba156791eaa7",
     "weapon/male/9-5.png": "390bd1d562a6e26fd43b7c7fad2bd27bd8cd04ec1d124ecf3cadd905b89071e1",
-    "weapon/manifest.json": "ab7665300ffeb14e6093a5b31989514561776c11423d5c6c409116d6678faade"
+    "weapon/manifest.json": "0d49897abf95d2d7373cb8d7f03ab63d377cbb6cc8fd6eeb20e80d776aa8ffdb"
   }
 }

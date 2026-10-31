@@ -283,7 +283,8 @@ The far hand that shows behind the back from aside (male 2-2 and 17-0, female 2-
 (female 5-0 and 5-1, male 5-1), the outline takes the raised shoulder and the elbow out too: left in, the elbow
 floated by the head, and the inpaint copied the shoulder down into the hole as a pale block. A fourth entry in `sg` then
 lays the idle's shoulder as well (`ss`: the pauldron, or the hood's fall, and the arm under it). Female 5-2 keeps its
-own shoulder: its outline stops under the pauldron, which it had cut in two.
+own shoulder: its outline stops under the pauldron, which it had cut in two. Male 6-0 and 6-1 take the free upper
+arm out too: its highlights, left beside the outline, were copied into the chest.
 
 **What it leaves alone.** The weapon is drawn after the shield: before it, or behind it where it is behind the body; its
 glow is the weapon's alone. Where the body stands in its picture (ARMORY's marks) is read without the air the shield
