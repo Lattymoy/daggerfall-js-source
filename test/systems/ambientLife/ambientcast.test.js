@@ -2,7 +2,7 @@
 // DFU's AmbientEffectsPlayer presets (the birds seen fly when the birds are heard), in every province's climates.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ambientCast, paletteOf, AL_KINDS, AL_KIND_LIST, AL_BASE, AL_SHAPE, NO_CAST } from '../../../src/systems/ambientLife/ambientCast.js';
+import { ambientCast, climatePalette, AL_KINDS, AL_KIND_LIST, AL_BASE, AL_SHAPE, NO_CAST } from '../../../src/systems/ambientLife/ambientCast.js';
 import { presetForExterior } from '../../../src/systems/ambientEffects.js';
 import { CLIMATES } from '../../../src/formats/mapsTables.js';
 import { BIOMES } from '../../../src/world/tamriel/tamrielBiomes.js';
@@ -53,14 +53,14 @@ test('AMBIENT-LIFE: winter takes the insects and thins the runners and the soare
 test('AMBIENT-LIFE: each climate its own creatures', () => {
   const d = cast({ climate: CLIMATES.Desert });
   assert.deepEqual([d.flocks, d.soarKind, d.runnerKind, d.butterflies, d.perchKind], [0, 'vulture', 'lizard', 0, 'crow']);
-  assert.deepEqual(paletteOf(CLIMATES.Desert2), paletteOf(CLIMATES.Desert));
+  assert.deepEqual(climatePalette(CLIMATES.Desert2), climatePalette(CLIMATES.Desert));
   const o = cast({ climate: CLIMATES.Ocean });
   assert.deepEqual([o.flockKind, o.wanderKind, o.runnerKind], ['gull', 'gull', 'crab']);
   const h = cast({ climate: CLIMATES.HauntedWoodlands, minuteOfDay: MIDNIGHT });
   assert.deepEqual([h.bats, h.fireflies, h.runnerKind], [7, 0, 'rat']);
   assert.equal(cast({ climate: CLIMATES.Rainforest }).flockKind, 'parrot');
   assert.equal(cast({ climate: CLIMATES.Swamp, minuteOfDay: MIDNIGHT }).fireflies, 36);
-  assert.equal(paletteOf(999), paletteOf(CLIMATES.Woodlands), 'an index no palette holds reads as the woods');
+  assert.equal(climatePalette(999), climatePalette(CLIMATES.Woodlands), 'an index no palette holds reads as the woods');
 });
 
 test('AMBIENT-LIFE: a town puts pigeons on its roofs and rats in its streets at night; water near brings gulls', () => {
@@ -88,7 +88,7 @@ test('AMBIENT-LIFE: past the Bay - every zone of every province reads a climate 
   for (const b of BIOMES) {
     provinces.add(b.province);
     assert.ok(Object.values(CLIMATES).includes(b.climate), `${b.province}: climate ${b.climate}`);
-    assert.ok(b.climate === CLIMATES.Woodlands || paletteOf(b.climate) !== paletteOf(CLIMATES.Woodlands), `${b.province}'s ${b.climate} has its own palette`);
+    assert.ok(b.climate === CLIMATES.Woodlands || climatePalette(b.climate) !== climatePalette(CLIMATES.Woodlands), `${b.province}'s ${b.climate} has its own palette`);
     const c = cast({ climate: b.climate });
     assert.ok(c.wanderers > 0 && c.perched > 0 && c.runners > 0, `${b.province}'s ${b.climate}: a day with birds and runners`);
   }
@@ -108,9 +108,39 @@ test('AMBIENT-LIFE: the kinds - one id each, under the pass\'s sixteen, every na
     assert.ok(k.colors.length > 0 && k.colors.every((c) => c.length === 3));
   }
   for (const c of Object.values(CLIMATES)) {
-    const p = paletteOf(c);
+    const p = climatePalette(c);
     for (const name of [p.flock, p.wander, p.perch, p.soar, p.runner]) if (name) assert.ok(AL_KINDS[name], `${c}: ${name}`);
     assert.equal(AL_KINDS[p.runner].shape, AL_SHAPE.ground);
     assert.equal(AL_KINDS[p.wander].shape, AL_SHAPE.wing);
   }
+});
+
+// ---- AUDIT AMBIENT-LIFE: the cast's numbers held whole --------------------------------------------------------------
+test('AUDIT AMBIENT-LIFE (A8, C3): a town\'s roofs are the climate\'s own town bird - pigeons, the rainforest\'s parrots, the haunted woods\' crows, the sea\'s gulls', () => {
+  const at = Object.fromEntries(Object.entries(CLIMATES).map(([name, c]) => [name, cast({ climate: c, town: true }).perchKind]));
+  assert.deepEqual(at, { Ocean: 'gull', Desert: 'pigeon', Desert2: 'pigeon', Mountain: 'pigeon', Rainforest: 'parrot', Swamp: 'pigeon', Subtropical: 'pigeon',
+    MountainWoods: 'pigeon', Woodlands: 'pigeon', HauntedWoodlands: 'crow' });
+  assert.equal(cast({ climate: CLIMATES.Mountain }).perchKind, 'crow', 'out of town the climate\'s own');
+});
+
+test('AUDIT AMBIENT-LIFE (A7, C7): snow, fog, a rainy night, a winter night and a doubled density, whole', () => {
+  assert.deepEqual(cast({ weather: 'snow' }), { flocks: 1, flockKind: 'starling', wanderers: 3, wanderKind: 'sparrow', perched: 8, perchKind: 'pigeon',
+    soarers: 1, soarKind: 'hawk', bats: 0, runners: 0, runnerKind: 'squirrel', butterflies: 0, fireflies: 0, roost: false });
+  assert.deepEqual(cast({ weather: 'fog' }), { flocks: 1, flockKind: 'starling', wanderers: 3, wanderKind: 'sparrow', perched: 8, perchKind: 'pigeon',
+    soarers: 1, soarKind: 'hawk', bats: 0, runners: 5, runnerKind: 'squirrel', butterflies: 0, fireflies: 0, roost: false });
+  assert.deepEqual(cast({ weather: 'rain', minuteOfDay: MIDNIGHT }), { flocks: 0, flockKind: 'starling', wanderers: 0, wanderKind: 'sparrow', perched: 4,
+    perchKind: 'pigeon', soarers: 0, soarKind: 'hawk', bats: 0, runners: 0, runnerKind: 'squirrel', butterflies: 0, fireflies: 0, roost: true });
+  const wn = cast({ minuteOfDay: MIDNIGHT, winter: true });
+  assert.deepEqual([wn.bats, wn.fireflies, wn.runners], [1, 0, 2]);
+  const two = cast({ density: 2 });
+  assert.deepEqual([two.flocks, two.wanderers, two.soarers, two.butterflies], [1, 10, 4, 16], 'one flock at most');
+  assert.equal(cast({ climate: CLIMATES.Ocean, minuteOfDay: MIDNIGHT }).bats, 2, 'the sea\'s half the bats');
+});
+
+test('AUDIT AMBIENT-LIFE (C2): the cast\'s base counts and flock sizes are the record\'s', async () => {
+  const { AL_FLOCK_SIZE } = await import('../../../src/systems/ambientLife/ambientCast.js');
+  assert.deepEqual({ ...AL_BASE }, { flocks: 1, wanderers: 5, perched: 8, soarers: 2, bats: 4, runners: 5, butterflies: 8, fireflies: 28 });
+  assert.deepEqual(JSON.parse(JSON.stringify(AL_FLOCK_SIZE)), { starling: [14, 26], crow: [6, 14], gull: [5, 10], parrot: [6, 12] });
+  assert.deepEqual(Object.fromEntries(Object.entries(AL_KINDS).map(([n, k]) => [n, k.flush])),
+    { sparrow: 9, starling: 14, crow: 14, pigeon: 8, gull: 12, parrot: 11, hawk: 25, vulture: 30, bat: 3, butterfly: 1.2, rat: 4.5, lizard: 4, squirrel: 5.5, crab: 3, firefly: 0 });
 });

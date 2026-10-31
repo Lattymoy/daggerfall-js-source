@@ -41,25 +41,25 @@ export const AL_KINDS = Object.freeze({
 export const AL_KIND_LIST = Object.freeze(Object.values(AL_KINDS).sort((p, q) => p.id - q.id));
 
 /** @typedef {{ flock: string|null, wander: string, perch: string, soar: string|null, runner: string,
- *    butterflies: number, fireflies: number, bats: number }} AmbientPalette */
-const palette = (p) => Object.freeze({ bats: 1, ...p });
+ *    butterflies: number, fireflies: number, bats: number, town: string }} AmbientPalette - `town` its towns' roof bird */
+const palette = (p) => Object.freeze({ bats: 1, town: 'pigeon', ...p });
 const WOODS = palette({ flock: 'starling', wander: 'sparrow', perch: 'pigeon', soar: 'hawk', runner: 'squirrel', butterflies: 1, fireflies: 0.8 });
 const DESERT = palette({ flock: null, wander: 'sparrow', perch: 'crow', soar: 'vulture', runner: 'lizard', butterflies: 0, fireflies: 0 });
 /** Each climate's (MapsFile.Climates - the same ten past the Bay, so a province reads its own). */
 const PALETTES = /** @type {Map<number, AmbientPalette>} */ (new Map([
-  [CLIMATES.Ocean, palette({ flock: 'gull', wander: 'gull', perch: 'gull', soar: 'gull', runner: 'crab', butterflies: 0, fireflies: 0, bats: 0.5 })],
+  [CLIMATES.Ocean, palette({ flock: 'gull', wander: 'gull', perch: 'gull', soar: 'gull', runner: 'crab', butterflies: 0, fireflies: 0, bats: 0.5, town: 'gull' })],
   [CLIMATES.Desert, DESERT],
   [CLIMATES.Desert2, DESERT],
   [CLIMATES.Mountain, palette({ flock: 'crow', wander: 'sparrow', perch: 'crow', soar: 'hawk', runner: 'lizard', butterflies: 0.4, fireflies: 0 })],
-  [CLIMATES.Rainforest, palette({ flock: 'parrot', wander: 'parrot', perch: 'parrot', soar: 'hawk', runner: 'lizard', butterflies: 1.3, fireflies: 1.2 })],
+  [CLIMATES.Rainforest, palette({ flock: 'parrot', wander: 'parrot', perch: 'parrot', soar: 'hawk', runner: 'lizard', butterflies: 1.3, fireflies: 1.2, town: 'parrot' })],
   [CLIMATES.Swamp, palette({ flock: 'crow', wander: 'sparrow', perch: 'crow', soar: null, runner: 'rat', butterflies: 0.3, fireflies: 1.3 })],
   [CLIMATES.Subtropical, palette({ flock: 'starling', wander: 'sparrow', perch: 'pigeon', soar: 'hawk', runner: 'lizard', butterflies: 1, fireflies: 0.6 })],
   [CLIMATES.MountainWoods, palette({ flock: 'starling', wander: 'sparrow', perch: 'crow', soar: 'hawk', runner: 'squirrel', butterflies: 0.6, fireflies: 0.4 })],
   [CLIMATES.Woodlands, WOODS],
-  [CLIMATES.HauntedWoodlands, palette({ flock: 'crow', wander: 'crow', perch: 'crow', soar: null, runner: 'rat', butterflies: 0, fireflies: 0, bats: 1.8 })],
+  [CLIMATES.HauntedWoodlands, palette({ flock: 'crow', wander: 'crow', perch: 'crow', soar: null, runner: 'rat', butterflies: 0, fireflies: 0, bats: 1.8, town: 'crow' })],
 ]));
 /** A climate's palette; an index the map does not hold reads as the woods. @param {number} climate @returns {AmbientPalette} */
-export const paletteOf = (climate) => PALETTES.get(climate) ?? WOODS;
+export const climatePalette = (climate) => PALETTES.get(climate) ?? WOODS;
 
 /** The counts at full life, before the weather, the season and the player's `density`. */
 export const AL_BASE = Object.freeze({ flocks: 1, wanderers: 5, perched: 8, soarers: 2, bats: 4, runners: 5, butterflies: 8, fireflies: 28 });
@@ -76,7 +76,7 @@ export const AL_FLOCK_SIZE = Object.freeze({ starling: [14, 26], crow: [6, 14], 
 export function ambientCast({ minuteOfDay, weather, climate, winter = false, town = false, coast = false, density = 1 }) {
   const night = isNight(minuteOfDay);
   const preset = presetForExterior(weather, night);
-  const p = paletteOf(climate);
+  const p = climatePalette(climate);
   // what DFU's ear folds into a clear day or night (snow, fog, a cloudy sky) still thins what flies here
   const shelter = preset === 'rain' || preset === 'storm' || weather === 'sandstorm' || weather === 'ashfall';
   const snow = weather === 'snow', fog = weather === 'fog';
@@ -85,7 +85,6 @@ export function ambientCast({ minuteOfDay, weather, climate, winter = false, tow
   const day = preset === 'sunnyDay' && !shelter;
   const dusk = !shelter && hourOf(minuteOfDay) === DUSK_HOUR - 1;
   const n = (v) => Math.round(v);
-  const perchKind = town && p.perch !== 'crow' && p.perch !== 'gull' && p.perch !== 'parrot' ? 'pigeon' : p.perch;
   const gulls = coast && !shelter && p.wander !== 'gull';
   return {
     flocks: day && p.flock ? n(AL_BASE.flocks * Math.min(1, air)) : 0,
@@ -94,13 +93,13 @@ export function ambientCast({ minuteOfDay, weather, climate, winter = false, tow
     wanderKind: gulls ? 'gull' : p.wander,
     // birds sit out a rain on the roofs, and roost there at night
     perched: n(AL_BASE.perched * (town ? 1.5 : 1) * (shelter ? 0.5 : night ? 0.5 : 1) * d),
-    perchKind: gulls && !town ? 'gull' : perchKind,
+    perchKind: town ? p.town : gulls ? 'gull' : p.perch,   // a town's roofs are its pigeons' (or the climate's own town bird)
     soarers: day && (p.soar || gulls) ? n(AL_BASE.soarers * air * (winter ? 0.5 : 1)) : 0,
     soarKind: gulls ? 'gull' : p.soar,
     bats: night || dusk ? n(AL_BASE.bats * p.bats * (shelter || snow ? 0 : 1) * (winter ? 0.3 : 1) * d) : 0,
     runners: snow || shelter ? 0 : n(AL_BASE.runners * (winter ? 0.4 : 1) * (night && town ? 1.4 : 1) * d),
     runnerKind: night && town ? 'rat' : p.runner,
-    butterflies: day && !winter && !fog ? n(AL_BASE.butterflies * p.butterflies * d) : 0,
+    butterflies: day && !winter && !fog && !snow ? n(AL_BASE.butterflies * p.butterflies * d) : 0,
     fireflies: night && !winter && !shelter && !snow ? n(AL_BASE.fireflies * p.fireflies * d) : 0,
     roost: night,
   };

@@ -269,7 +269,7 @@ import { windDrive, floraSwayOf, floraSwayOn } from '../systems/wind/windDrive.j
 import { WindWispsRenderer, wispsOn } from '../render/windWisps.js'; import { DryFallRenderer } from '../render/dryFall.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program - ASHFALL1: the dry falls, the sand and the ash, one renderer
 import { HeatHazeRenderer } from '../render/heatHaze.js';   // HAZE1: Heat Haze's ring, drawn
 import { createHeatHaze, hazeFrameSettings } from '../systems/heatHaze.js';   // HAZE1: Heat Haze's law (demifiend000, vendor/heat-haze/)
-import { createAmbientLifeHost, colliderRoof } from './ambientLifeHost.js';   // AMBIENT-LIFE: world.js's twin
+import { createAmbientLifeHost, benchWorld } from './ambientLifeHost.js';   // AMBIENT-LIFE: world.js's twin
 import { createWindfallHost } from './windfallHost.js';   // WINDFALL1: Windfall (demifiend000, vendor/windfall/) - world.js's twin
 import { createSnowfallHost, settlementsIn } from './snowfallHost.js';   // SNOWFALL1: Snowfall (demifiend000, vendor/snowfall/) - world.js's twin
 import { getLocationTerrainTileOrigin } from '../world/terrain/terrainTiles.js';   // SNOWFALL1: the town's tiles in its map pixel, where the streamed world lays them
@@ -713,8 +713,8 @@ export async function bootExterior(canvas, renderer, params, status) {
    *  tests these against the activation ray's hit point and, on a hit,
    *  runs ActivateBuilding (:340-361). */
   const staticBuildings = [];
-  // AMBIENT-LIFE (world.js's twin): the bench's one town on its flat ground - no sea and no floating origin to move it
-  const ambientLife = createAmbientLifeHost({ gl: renderer.gl, world: { ground: (x, z) => collider.heightAt(x, z), wet: () => false, roof: colliderRoof(collider), boxes: () => staticBuildings.map((b) => b.aabb) } });
+  // AMBIENT-LIFE (world.js's twin): the bench's one town on its flat ground, its water its tilemap's - no floating origin
+  const ambientLife = createAmbientLifeHost({ gl: renderer.gl, enhanced: !!sky.enhanced, world: benchWorld((x, z) => collider.heightAt(x, z), (x, z) => tileUnder(x, z), collider, () => staticBuildings.map((b) => b.aabb)) });
   const animalAmbience = createAnimalAmbience(audio, () => ambientAnimals);
   const cityNav = new CityNavigation(loc.width, loc.height);   // T1 towns
   let lefaySpot = null;   // LEFAY1: world.js's spot (world/lefayMonument.js monumentSpotOf) - this host's frame is the location's own
@@ -1080,6 +1080,11 @@ export async function bootExterior(canvas, renderer, params, status) {
    *  and anywhere outside the location), which isOutdoorWaterTile
    *  reads as DFU's -1: not water, so the fall bills normally. */
   const TILE_WORLD = RMB_SIDE / GROUND_TILE_DIM;
+  /** The raw tile at a scene point, null off the tilemap (AMBIENT-LIFE: the creatures' water). */
+  const tileUnder = (x, z) => {
+    const tx = Math.floor(x / TILE_WORLD), ty = Math.floor(z / TILE_WORLD);
+    return tx < 0 || ty < 0 || tx >= tilemapDim || ty >= tilemapDim ? null : locationTilemap[tx + ty * tilemapDim];
+  };
   const playerGroundSampleRaw = () => {
     const u = player.pos[0] / TILE_WORLD, v = player.pos[2] / TILE_WORLD;
     const tx = Math.floor(u);
@@ -5784,7 +5789,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     const windfallLaw = windfall.frame({ dt: gamePaused() ? 0 : dt * hccTimeScale(), outside: true, weather, minutes: skyMinutes(), climate: locClimateIndex, mapPixel: _locPixel,
       heading: wd.on ? wd.dir : null, feet: walkMode ? player.pos : cam.pos, height: player.height });   // WINDFALL1: world.js's twin (AUDIT ENVIRONS W1)
     snowfall.frame({ now: now / 1000, inside: false, player: snowPlayer(), weather, seconds: worldMinutes() * 60, winter: season === SEASON.Winter, climate: locClimateIndex, npcs: snowNpcs, corpses: snowBodies });   // SNOWFALL1: world.js's twin
-    ambientLife.frame(gamePaused() ? 0 : dt * hccTimeScale(), walkMode ? player.pos : cam.pos, minute, ambientWord, locClimateIndex, season === SEASON.Winter);   // AMBIENT-LIFE: world.js's twin
+    ambientLife.frame(gamePaused() ? 0 : dt * hccTimeScale(), walkMode ? player.pos : cam.pos, minute, ambientWord, weather, locClimateIndex, season === SEASON.Winter);   // AMBIENT-LIFE: world.js's twin
     animalAmbience.update(dt, eye);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
     // Storm lightning strobe. AUDIT 39 (#14): ENHANCED-SKIN ONLY.
     // Shipped DFU renders no flash at all - PlayEffects starts the
@@ -6214,7 +6219,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     }
     // WINDFALL1: the leaves and the snow, with the opaque world (world.js's twin note)
     if (windfall.particles && windfall.draw(proj, view, renderer.flatLightAt(walkMode ? player.pos : cam.pos))) renderer.markForeignPass();
-    if (ambientLife.draw(renderer, proj, view, renderer.flatLightAt(walkMode ? player.pos : cam.pos))) renderer.markForeignPass();   // AMBIENT-LIFE: world.js's twin
+    if (ambientLife.draw(renderer, proj, view, walkMode ? player.pos : cam.pos)) renderer.markForeignPass();   // AMBIENT-LIFE: world.js's twin - its lights too, the people and the veiled bodies drawn above
     // HAZE1: HEAT HAZE once the opaque world is whole, before what falls (world.js's twin note)
     if (hazeGl) {
       const hz = heatHaze.tick({ dt, time: gamePaused() ? 0 : dt * hccTimeScale(), exterior: true, climate: locClimateIndex, weather, minuteOfDay: minute, foot: walkMode ? player.pos : cam.pos,

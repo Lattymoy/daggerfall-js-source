@@ -3,7 +3,7 @@
 // a few metres in bursts and bolt from the player; butterflies flutter about a patch of ground by day, and fireflies
 // drift and blink over it at night. Nothing stands on water, under a roof or on a slope too steep to keep to.
 import { AL_KINDS } from './ambientCast.js';
-import { makeBody, offsetBody, ringPoint, turnToward } from './ambientBody.js';
+import { makeCreature, offsetBody, ringPoint, headingToward, sweep } from './ambientBody.js';
 
 /** @typedef {import('./ambientBody.js').AmbientBody} AmbientBody */
 /** @typedef {import('./ambientCast.js').AmbientCast} AmbientCast */
@@ -32,13 +32,19 @@ export class Ground {
     this._xz = [0, 0];
   }
 
-  /** Ground a runner may stand on: built, dry, under no roof and not too steep. Answers its height, or NaN. */
-  standable(x, z) {
+  /** Open ground: built, dry and under no roof. Answers its height, or NaN. */
+  open(x, z) {
     const w = this.world, g = w.ground(x, z);
     if (!Number.isFinite(g) || w.wet(x, z)) return NaN;
-    if (Math.abs(w.ground(x + 0.4, z) - g) > G.slope || Math.abs(w.ground(x, z + 0.4) - g) > G.slope) return NaN;
     const h = w.roof(x, z, g + 25);
     return Number.isFinite(h) && h > g + 0.3 ? NaN : g;
+  }
+
+  /** Ground a runner may stand on: open, and not too steep. Answers its height, or NaN. */
+  standable(x, z) {
+    const w = this.world, g = this.open(x, z);
+    if (!Number.isFinite(g)) return NaN;
+    return Math.abs(w.ground(x + 0.4, z) - g) > G.slope || Math.abs(w.ground(x, z + 0.4) - g) > G.slope ? NaN : g;
   }
 
   /** A frame. `ctx.fast` the player is running. @param {AmbientCast} cast */
@@ -48,43 +54,48 @@ export class Ground {
     for (const b of this.runners) this.run(b, dt, feet, ctx);
     for (const b of this.butterflies) this.flutter(b, dt, feet);
     for (const b of this.fireflies) this.drift(b, dt, feet);
-    if (this.runners.some((b) => b.gone)) this.runners = this.runners.filter((b) => !b.gone);
-    if (this.butterflies.some((b) => b.gone)) this.butterflies = this.butterflies.filter((b) => !b.gone);
-    if (this.fireflies.some((b) => b.gone)) this.fireflies = this.fireflies.filter((b) => !b.gone);
+    sweep(this.runners); sweep(this.butterflies); sweep(this.fireflies);
   }
 
   /** One arrival a group a frame toward the cast; past it, the furthest goes. @param {AmbientCast} cast */
   keep(feet, cast) {
     const R = this.R;
-    const live = (list) => list.filter((b) => b.state !== RUNNER.burrow).length;
-    if (live(this.runners) < cast.runners) {
+    let live = 0;
+    for (const b of this.runners) if (b.state !== RUNNER.burrow) live++;
+    if (live < cast.runners) {
       ringPoint(feet, G.runnerRing[0], G.runnerRing[1], R, this._xz);
       const g = this.standable(this._xz[0], this._xz[1]);
       if (Number.isFinite(g)) {
-        const b = makeBody(AL_KINDS[cast.runnerKind] ?? AL_KINDS.rat, R);
+        const b = makeCreature(AL_KINDS[cast.runnerKind] ?? AL_KINDS.rat, R);
         b.x = this._xz[0]; b.z = this._xz[1]; b.y = g; b.state = RUNNER.idle; b.t = between(G.idle, R); b.fade = 0;
+        b.reach = G.runnerLeave;
         this.runners.push(b);
       }
-    } else if (live(this.runners) > cast.runners) this.farthest(this.runners, feet).state = RUNNER.burrow;
-    if (this.butterflies.length < cast.butterflies) this.spawnFlier(this.butterflies, AL_KINDS.butterfly, feet, G.butterflyRing, G.butterflyAlt);
-    else if (this.butterflies.length > cast.butterflies) this.farthest(this.butterflies, feet).gone = true;
-    if (this.fireflies.length < cast.fireflies) this.spawnFlier(this.fireflies, AL_KINDS.firefly, feet, G.fireflyRing, G.fireflyAlt);
-    else if (this.fireflies.length > cast.fireflies) this.farthest(this.fireflies, feet).gone = true;
+    } else if (live > cast.runners) { const b = this.farthest(this.runners, feet); if (b) b.state = RUNNER.burrow; }
+    if (this.butterflies.length < cast.butterflies) this.spawnFlier(this.butterflies, AL_KINDS.butterfly, feet, G.butterflyRing, G.butterflyAlt, G.butterflyLeave);
+    else if (this.butterflies.length > cast.butterflies) { const b = this.farthest(this.butterflies, feet); if (b) b.gone = true; }
+    if (this.fireflies.length < cast.fireflies) this.spawnFlier(this.fireflies, AL_KINDS.firefly, feet, G.fireflyRing, G.fireflyAlt, G.fireflyLeave);
+    else if (this.fireflies.length > cast.fireflies) { const b = this.farthest(this.fireflies, feet); if (b) b.gone = true; }
   }
 
+  /** The farthest of `list` from the player that is neither gone nor already slipping away, or null. */
   farthest(list, feet) {
-    let best = list[0], bd = -1;
-    for (const b of list) { const d = Math.hypot(b.x - feet[0], b.z - feet[2]); if (d > bd && !b.gone) { bd = d; best = b; } }
+    let best = null, bd = -1;
+    for (const b of list) {
+      if (b.gone || b.state === RUNNER.burrow) continue;   // insects never burrow: their state stays 0
+      const d = Math.hypot(b.x - feet[0], b.z - feet[2]);
+      if (d > bd) { bd = d; best = b; }
+    }
     return best;
   }
 
-  spawnFlier(list, kind, feet, ring, alt) {
+  spawnFlier(list, kind, feet, ring, alt, reach) {
     const R = this.R;
     ringPoint(feet, ring[0], ring[1], R, this._xz);
-    const g = this.world.ground(this._xz[0], this._xz[1]);
-    if (!Number.isFinite(g) || this.world.wet(this._xz[0], this._xz[1])) return;
-    const b = makeBody(kind, R);
-    b.x = b.cx = this._xz[0]; b.z = b.cz = this._xz[1]; b.y = g + between(alt, R); b.fade = 0;
+    const g = this.open(this._xz[0], this._xz[1]);
+    if (!Number.isFinite(g)) return;
+    const b = makeCreature(kind, R);
+    b.x = b.cx = this._xz[0]; b.z = b.cz = this._xz[1]; b.y = g + between(alt, R); b.fade = 0; b.reach = reach;
     b.rad = 2 + R() * 4; b.t2 = R() * 5;   // a firefly's blink: its period, and where in it
     list.push(b);
   }
@@ -132,11 +143,20 @@ export class Ground {
     const g = this.world.ground(b.x, b.z);
     if (Number.isFinite(g)) b.y = g;
     // a crab goes sideways
-    b.yaw = turnToward(b.yaw, Math.atan2(dx, dz) + (k.b[3] ? Math.PI / 2 : 0), 14 * dt);
+    b.yaw = headingToward(b.yaw, Math.atan2(dx, dz) + (k.b[3] ? Math.PI / 2 : 0), 14 * dt);
     b.phase += dt * speed * 14; b.amp = 1;
   }
 
   // ---- fliers -------------------------------------------------------------------------------------------------------
+  /** A flier's way for the next `for` seconds, looked at where it ends (and a metre on): over no roof and no water, or
+   *  it turns back to the patch it came from, which was open when it was chosen; there it holds still. */
+  keepOpen(b, forS) {
+    const s = forS + 1 / Math.max(0.2, Math.hypot(b.vx, b.vz));
+    if (Number.isFinite(this.open(b.x + b.vx * s, b.z + b.vz * s))) return;
+    const dx = b.cx - b.x, dz = b.cz - b.z, l = Math.hypot(dx, dz), v = Math.hypot(b.vx, b.vz);
+    if (l > 0.05) { b.vx = (dx / l) * v; b.vz = (dz / l) * v; } else { b.vx = 0; b.vz = 0; }
+  }
+
   flutter(b, dt, feet) {
     const R = this.R;
     b.fade = Math.min(1, b.fade + dt);
@@ -148,13 +168,14 @@ export class Ground {
       if (Math.hypot(b.x - feet[0], b.z - feet[2]) < 1.2) a = Math.atan2(b.x - feet[0], b.z - feet[2]);
       const v = 0.6 + R();
       b.vx = Math.sin(a) * v; b.vz = Math.cos(a) * v; b.vy = (R() - 0.45) * 1.2;
+      this.keepOpen(b, b.t);
     }
     b.x += b.vx * dt; b.y += b.vy * dt; b.z += b.vz * dt;
     const g = this.world.ground(b.x, b.z);
     if (Number.isFinite(g)) {
       if (b.y < g + 0.25) { b.y = g + 0.25; b.vy = Math.abs(b.vy); } else if (b.y > g + 2.6) b.vy = -Math.abs(b.vy);
     }
-    b.yaw = turnToward(b.yaw, Math.atan2(b.vx, b.vz), 8 * dt); b.pitch = 0.2; b.bank = 0;
+    b.yaw = headingToward(b.yaw, Math.atan2(b.vx, b.vz), 8 * dt); b.pitch = 0.2; b.bank = 0;
     b.phase += dt * b.flapHz * TAU * (0.6 + 0.8 * Math.abs(Math.sin(this.clock * 3 + b.cx)));
     b.spread = 1; b.amp = 1.2;
   }
@@ -167,6 +188,7 @@ export class Ground {
       b.t = 1 + R() * 2;
       const a = R() * TAU, v = 0.2 + R() * 0.3;
       b.vx = Math.sin(a) * v; b.vz = Math.cos(a) * v; b.vy = (R() - 0.5) * 0.3;
+      this.keepOpen(b, b.t);
     }
     b.x += b.vx * dt; b.y += b.vy * dt; b.z += b.vz * dt;
     const g = this.world.ground(b.x, b.z);

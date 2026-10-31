@@ -125,7 +125,8 @@ test('AMBIENT-LIFE: a flock gathers out of scattered birds, and bursts up off th
   assert.ok(spread() < first * 0.5, `the flock draws together: ${first.toFixed(1)} -> ${spread().toFixed(1)}`);
   // down to feed in the open, past the houses
   flock.mode = FLOCK.land; flock.t = 25; flock.life = 1e9;
-  for (const b of flock.members) { b.tx = -40 + Math.random(); b.tz = 40.5; b.ty = 0; }
+  const R = seeded(23);
+  for (const b of flock.members) { b.tx = -40 + R(); b.tz = 40.5; b.ty = 0; }
   flock.ax = -40; flock.az = 40.5; flock.ay = 0;
   for (let t = 0; t < 30 && flock.mode !== FLOCK.ground; t += 1 / 30) life.step(1 / 30, [0, 0, 0], castAt(life));
   assert.equal(flock.mode, FLOCK.ground);

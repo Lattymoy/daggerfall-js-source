@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { glslFunctions } from '../glsl.mjs';
 import { AMBIENT_LIFE_PROGRAMS, AL_BODY_VERTS, kindTables } from '../../src/render/ambientLifePass.js';
 import { AL_KINDS, AL_KIND_LIST } from '../../src/systems/ambientLife/ambientCast.js';
-import { faceVelocity, makeBody } from '../../src/systems/ambientLife/ambientBody.js';
+import { faceVelocity, makeCreature } from '../../src/systems/ambientLife/ambientBody.js';
 
 const [VS] = AMBIENT_LIFE_PROGRAMS[0];
 const fns = glslFunctions(VS, {});
@@ -18,7 +18,7 @@ const faceNormal = (corners) => { const [a, b, c] = corners; const n = cross(b.m
 
 test('AMBIENT-LIFE: the pass turns a body the way the sim heads it (+z forward at yaw 0, the yaw atan2(vx, vz))', () => {
   for (const yaw of [0, 0.7, -2.1, Math.PI]) assert.ok(near(fns.turn([0, 0, 1], [yaw, 0, 0]), [Math.sin(yaw), 0, Math.cos(yaw)]), `yaw ${yaw}`);
-  const b = makeBody(AL_KINDS.crow, () => 0.5);
+  const b = makeCreature(AL_KINDS.crow, () => 0.5);
   b.yaw = 0; b.vx = 3; b.vz = 4;
   for (let i = 0; i < 60; i++) faceVelocity(b, 1 / 30, 10);
   assert.ok(near(fns.turn([0, 0, 1], [b.yaw, 0, 0]), [0.6, 0, 0.8], 1e-3), 'the sim\'s heading is the pass\'s forward');
@@ -26,7 +26,7 @@ test('AMBIENT-LIFE: the pass turns a body the way the sim heads it (+z forward a
 });
 
 test('AMBIENT-LIFE: a turn toward +x banks the +x wing down', () => {
-  const b = makeBody(AL_KINDS.crow, () => 0.5);
+  const b = makeCreature(AL_KINDS.crow, () => 0.5);
   b.yaw = 0; b.vx = 0; b.vz = 5;
   for (let i = 0; i < 4; i++) { b.vx += 1.5; faceVelocity(b, 1 / 30, 4); }
   assert.ok(b.bank < 0, `bank ${b.bank}`);
@@ -68,4 +68,86 @@ test('AMBIENT-LIFE: the kinds\' tables put each kind\'s measures at its id', () 
   }
   assert.match(VS, /uniform vec4 uKindA\[16\]/);
   assert.ok(t.shape.length >= AL_KIND_LIST.length);
+});
+
+// ---- the whole vertex stage, and the draws on a recording context (AUDIT AMBIENT-LIFE B3) ---------------------------
+const tables = kindTables();
+const vec4s = (f) => Array.from({ length: f.length / 4 }, (_, i) => [...f.subarray(i * 4, i * 4 + 4)]);
+const I4 = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+/** main() for vertex `v` of a body: its world point and colour. */
+function vertex({ kind, v, place = [0, 0, 0, 1], turn = [0, 0, 0, 0], wing = [1, 0.9], color = [0.2, 0.3, 0.4, 1], eye = [0, 10, 0], glow = 0, pixel = 0 }) {
+  const f = glslFunctions(VS, {
+    uKindA: vec4s(tables.a), uKindB: vec4s(tables.b), uShape: [...tables.shape], uProj: I4, uView: I4, uCamPos: eye, uLight: [1, 1, 1],
+    uGlowPass: glow, uRight: [1, 0, 0], uUp: [0, 1, 0], uPixel: pixel,
+    aVertex: v, aPlace: place, aTurn: turn, aWing: [wing[0], wing[1], kind.id, 1], aColor: color,
+  });
+  f.main();
+  return { w: f.globals.vWorld, c: f.globals.vColor };
+}
+
+test('AMBIENT-LIFE (AUDIT B3): the eye under a wing sees its kind\'s pale underside, the eye over it the back\'s colour', () => {
+  const k = AL_KINDS.gull, back = [0.2, 0.3, 0.4];
+  const above = vertex({ kind: k, v: 3 * 3, eye: [0, 10, 0], color: [...back, 1] }).c;   // the first wing's first face (triangle 3)
+  const below = vertex({ kind: k, v: 3 * 3, eye: [0, -10, 0], color: [...back, 1] }).c;
+  assert.ok(above[0] < above[2] && above[2] > 0.3, `the back's own blue: ${above}`);
+  // the pale (0.9, 0.88, 0.82) at 0.85, shaded as a face turned down past its dihedral (0.72 + 0.28 x its up share)
+  const shade = 0.85 * (0.72 + 0.28 * (0.5 - 0.5 * Math.cos(k.b[3])));
+  assert.ok(Math.abs(below[0] - 0.9 * shade) < 1e-5 && Math.abs(below[2] - 0.82 * shade) < 1e-5, `the underside pale: ${below}`);
+  const unlifted = vertex({ kind: k, v: 3 * 3, eye: [0, -10, 0], color: [...back, 0] }).c;
+  assert.ok(unlifted[0] < 0.25, 'a kind with no lift keeps its colour under');
+});
+
+test('AMBIENT-LIFE (AUDIT B5): a bird with its wings shut sits on its perch, nothing of it under the roof; a flying one is not lifted', () => {
+  for (const k of [AL_KINDS.pigeon, AL_KINDS.crow, AL_KINDS.gull, AL_KINDS.sparrow]) {
+    let low = Infinity;
+    for (let v = 0; v < AL_BODY_VERTS; v++) low = Math.min(low, vertex({ kind: k, v, place: [0, 5, 0, 1.15], turn: [0.3, 0, 0, 0], wing: [0, 0] }).w[1]);
+    assert.ok(low >= 5 - 0.01, `${k.name}: lowest point ${low.toFixed(3)} on a roof at 5`);
+  }
+  const flying = vertex({ kind: AL_KINDS.crow, v: 0, wing: [1, 0.9] }).w;   // the nose, at the body's own height
+  assert.ok(Math.abs(flying[1]) < 1e-6);
+});
+
+test('AMBIENT-LIFE (AUDIT B4): a far firefly\'s hot core is never under three pixels across', () => {
+  const k = AL_KINDS.firefly, pixel = 0.002, d = 200;   // 2 mm a pixel a metre: the core spans 3 px at any distance
+  const c0 = vertex({ kind: k, v: 0, place: [0, 0, -d, 1], eye: [0, 0, 0], glow: 1, pixel }).w;
+  const c5 = vertex({ kind: k, v: 5, place: [0, 0, -d, 1], eye: [0, 0, 0], glow: 1, pixel }).w;
+  const quad = c5[0] - c0[0], corePx = (quad * 0.4) / (d * pixel);
+  assert.ok(Math.abs(corePx - 3) < 1e-6, `core ${corePx} px`);
+});
+
+test('AMBIENT-LIFE (AUDIT B3): the draws leave the state every other pass assumes, and draw what they say', async () => {
+  const { fakeGl } = await import('./fakeGl.mjs');
+  const { AmbientLifePass } = await import('../../src/render/ambientLifePass.js');
+  const gl = fakeGl(), st = gl.state, pass = new AmbientLifePass(gl);
+  const r = { _camPos: [0, 0, 0], _fogColor: [0, 0, 0] };
+  const proj = new Float32Array(16), view = new Float32Array(16);
+  proj[5] = 2; view[0] = 1; view[4] = 2; view[8] = 3; view[1] = 4; view[5] = 5; view[9] = 6;
+  const inst = new Float32Array(10 * 16);
+  const settled = () => {
+    assert.ok(!st.on.has(gl.BLEND) && st.on.has(gl.CULL_FACE) && st.on.has(gl.DEPTH_TEST), 'no blend, faces culled, depth tested');
+    assert.equal(st.depthMask, true, 'depth written');
+    assert.equal(st.vao, null); assert.equal(st.buffer, null);
+    for (let i = 1; i <= 4; i++) assert.equal(st.attribs.get(i).offset, (i - 1) * 16, `attribute ${i} back at the first instance`);
+    assert.deepEqual(st.blend.at(-1), [gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA], 'the usual blend function');
+  };
+  assert.equal(pass.drawBodies(r, proj, view, [1, 1, 1], inst, 0), false, 'nothing to draw, nothing drawn');
+  assert.equal(pass.drawBodies(r, proj, view, [1, 1, 1], inst, 6), true);
+  assert.deepEqual(st.draws.at(-1), { mode: gl.TRIANGLES, first: 0, count: AL_BODY_VERTS, n: 6, depthMask: true, blend: false, glow: 0 });
+  settled();
+  assert.equal(pass.drawLights(r, proj, view, inst, 6, 4, 400), true);
+  assert.deepEqual(st.draws.at(-1), { mode: gl.TRIANGLES, first: 0, count: 6, n: 4, depthMask: false, blend: true, glow: 1 }, 'added, never depth-written');
+  assert.equal(st.uniforms.get('uPixel'), 2 / (2 * 400), 'metres a pixel a metre off the projection\'s y');
+  assert.deepEqual(st.uniforms.get('uRight'), [1, 2, 3]); assert.deepEqual(st.uniforms.get('uUp'), [4, 5, 6]);
+  settled();
+  pass.dispose();
+  assert.equal(st.deleted.length, 4, 'the program, both buffers and the vertex array');
+});
+
+test('AUDIT AMBIENT-LIFE (C2): the outer wing lags the inner through the stroke - its bend 0.55 of the beat, 1.1 radians behind', () => {
+  const k = AL_KINDS.crow, amp = 0.9;
+  const tilt = (t, c0, c1, phase) => { const a = wingAt(k, t, c0, 1, amp, phase), b = wingAt(k, t, c1, 1, amp, phase); return Math.atan2(b[1] - a[1], Math.abs(b[0] - a[0])); };
+  const bend = (phase) => tilt(5, 0, 2, phase) - tilt(3, 0, 2, phase);   // mid to tip, less root to mid
+  assert.ok(Math.abs(bend(1.1)) < 1e-6, 'straight as the lag crosses zero');
+  assert.ok(Math.abs(bend(1.1 + Math.PI / 2) - 0.55 * amp) < 1e-6, `bent ${bend(1.1 + Math.PI / 2).toFixed(3)} a quarter beat on`);
+  assert.ok(Math.abs(bend(1.1 - Math.PI / 2) + 0.55 * amp) < 1e-6);
 });

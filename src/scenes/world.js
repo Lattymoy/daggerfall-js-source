@@ -13098,7 +13098,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   };
   const playerGroundTile = () => playerGroundSample()?.tile ?? null;
   // AMBIENT-LIFE (scenes/ambientLifeHost.js): the creatures on this host's ground, sea and lakes, roofs and buildings
-  const ambientLife = createAmbientLifeHost({ gl: renderer.gl, world: streamedWorld(heightAt, tvSeaY, groundSampleAt, collider, built, state) });
+  const ambientLife = createAmbientLifeHost({ gl: renderer.gl, enhanced: !!sky.enhanced, world: streamedWorld(heightAt, tvSeaY, groundSampleAt, collider, built, state) });
   const footsteps = new FootstepMachine();   // FS-slice
   // PEER-FS1 (Mac, 2026-09-18: "footstep sounds depending where they walk
   // on... like you have" for online peers): the kind computed below at the
@@ -32584,7 +32584,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const _wfPx = playerTravelPixel();
     const windfallLaw = windfall.frame({ dt: gamePaused() ? 0 : dt * worldTimeScale(), outside: true, weather, minutes: skyMinutes(), climate: maps.getClimateIndex(_wfPx.x, _wfPx.y), mapPixel: _wfPx,
       heading: wd.on ? wd.dir : null, feet: walkMode && playerSpawned ? player.pos : cam.pos, height: player.height });   // WINDFALL1: the mod's frame - its sounds and leaves, and the law the flora lean by (one wind: WIND1's heading); AUDIT ENVIRONS W1: WindMod.Update's Time.deltaTime, held by a pause and scaled with the world
-    if (!tvf) ambientLife.frame(gamePaused() ? 0 : dt * worldTimeScale(), walkMode && playerSpawned ? player.pos : cam.pos, minute, ambientWord, maps.getClimateIndex(_wfPx.x, _wfPx.y), season === SEASON.Winter);   // AMBIENT-LIFE: the birds fly when DFU's ambience hears them (presetForExterior on the same word); none under the travel view's camera
+    if (!tvf) ambientLife.frame(gamePaused() ? 0 : dt * worldTimeScale(), walkMode && playerSpawned ? player.pos : cam.pos, minute, ambientWord, weather, maps.getClimateIndex(_wfPx.x, _wfPx.y), season === SEASON.Winter);   // AMBIENT-LIFE: the birds fly when DFU's ambience hears them (presetForExterior on the same word); none under the travel view's camera
     soundscape.frame(dt, { wd, weather: ambientWord, minute, climate: maps.getClimateIndex(_wfPx.x, _wfPx.y), winter: season === SEASON.Winter, paused: gamePaused() });   // SOUNDSCAPE: beside the wind and DFU's ambience, never inside it - its ear the listener's, set above
     meterFor(renderer.gl)?.markCpu('snow');   // PERF-SIM1: the snow layer's frame
     _snowPixels.clear();
@@ -33799,7 +33799,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // WINDFALL1: WINDFALL's LEAVES AND SNOW - cutouts that write depth, so with the opaque world and before the haze grabs
     // it; lit as the flats round the player are. Not under the travel view's camera (they ride the player's place).
     if (windfall.particles && !tvf && windfall.draw(proj, view, renderer.flatLightAt(walkMode && playerSpawned ? player.pos : cam.pos))) renderer.markForeignPass();
-    if (!tvf && ambientLife.draw(renderer, proj, view, renderer.flatLightAt(walkMode && playerSpawned ? player.pos : cam.pos))) renderer.markForeignPass();   // AMBIENT-LIFE: the creatures, opaque and lit as the flats round the player
+    if (!tvf && ambientLife.draw(renderer, proj, view, walkMode && playerSpawned ? player.pos : cam.pos, false)) renderer.markForeignPass();   // AMBIENT-LIFE: the creatures, opaque and lit as the flats round the player - their lights after the blended passes, below
     const frameHaze = () => {   // PERF-V8
     if (hazeGl) {
       const _hzFoot = walkMode && playerSpawned ? player.pos : cam.pos;
@@ -33821,6 +33821,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     folkStreet.drawVeiled();   // MWNPC7: and the walkers'
     drawVeiledPeerBodies();   // INVIS-LOOK: the concealed peers' bodies, translucent - after the opaque world, the flats and the grass
     hcc.drawVeiled3d();   // AUDIT COATS3D A5: and a concealed owner's 3D horses beside them
+    if (!tvf && ambientLife.drawLights(renderer, proj, view)) renderer.markForeignPass();   // AMBIENT-LIFE (AUDIT B7): the fireflies' light, added once the blended flats and the veiled bodies stand, which would paint over it
     // DUEL1: THE RINGS' WALLS - my own duel's, rising in and dying away, and every duel the cells around me say stands
     // (each once: both duellists say it). After the grass, from the view's own eye (mwv.eye, the bolts' law), fogged as
     // the ground is; a foreign pass.

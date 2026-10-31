@@ -3,7 +3,8 @@
 // instanced draw of 39 vertices each, the body built in the vertex stage from its kind's measures (systems/ambientLife/
 // ambientCast.js AL_KINDS) - wings that beat, fold and glide, legs that step - so no picture is loaded and no ARENA2
 // art is drawn. Two-sided: the eye under a wing sees its underside's colour. Lit by the flats' light at the player
-// (renderer.flatLightAt) and fogged as the terrain is; the fireflies a second, added draw of glowing points.
+// (renderer.flatLightAt) and fogged as the terrain is; the fireflies a second, added draw of glowing points, which a
+// host makes after its blended passes.
 import { buildProgram } from './glProgram.js';
 import { FOG_GLSL } from './fogGlsl.js';
 import { AL_KIND_LIST } from '../systems/ambientLife/ambientCast.js';
@@ -123,7 +124,8 @@ void main() {
   if (uGlowPass == 1) {
     int k = int(aVertex + 0.5);
     vec2 c = k == 0 ? vec2(0.0) : k == 1 || k == 4 ? vec2(1.0, 0.0) : k == 2 || k == 3 ? vec2(0.0, 1.0) : vec2(1.0);
-    float s = max(A.x * aPlace.w * 4.0, length(aPlace.xyz - uCamPos) * uPixel * 3.0);   // never under three pixels
+    // never under three pixels across its hot core (the inner 0.4 of the quad), so a far light holds steady
+    float s = max(A.x * aPlace.w * 4.0, length(aPlace.xyz - uCamPos) * uPixel * 3.0 / 0.4);
     vec3 w = aPlace.xyz + (uRight * (c.x - 0.5) + uUp * (c.y - 0.5)) * s;
     vUV = c; vWorld = w; vColor = aColor.rgb * aWing.w;
     gl_Position = uProj * uView * vec4(w, 1.0);
@@ -133,6 +135,8 @@ void main() {
   float shape = uShape[kind];
   vec3 p0 = corner(t, 0, shape, A, B), p1 = corner(t, 1, shape, A, B), p2 = corner(t, 2, shape, A, B);
   vec3 p = pick(v - t * 3, p0, p1, p2);
+  // a bird with its wings shut stands on its feet: lifted by its belly and its folded tips, it sits on a roof
+  if (shape < 0.5) p.y += (max(0.17 * A.y, 0.16 * A.x) + 0.005) * (1.0 - aWing.x);
   vec3 w = aPlace.xyz + turn(p * aPlace.w, aTurn.xyz);
   // the face's own normal, turned to the eye: an underside seen from below wears the underside's colour
   vec3 n = cross(p1 - p0, p2 - p0);
@@ -221,56 +225,80 @@ export class AmbientLifePass {
     for (let i = 0; i < 4; i++) gl.vertexAttribPointer(1 + i, 4, gl.FLOAT, false, STRIDE, first * STRIDE + i * 16);
   }
 
-  /**
-   * Draw `solid` bodies, then `glow` lights after them, from `instances`. `r` the renderer (its fog, its eye), `light`
-   * the flats' light, `heightPx` the world image's height (a light's least size). Answers whether it drew.
-   * @param {any} r @param {Float32Array|number[]} proj @param {Float32Array|number[]} view @param {ArrayLike<number>} light
-   * @param {Float32Array} instances @param {number} solid @param {number} glow @param {number} heightPx
-   */
-  draw(r, proj, view, light, instances, solid, glow, heightPx) {
-    const gl = this.gl, L = this.loc, n = solid + glow;
-    if (!n) return false;
+  /** The frame's uniforms, the program, the vertex array and the instances [first, first + n) uploaded where they
+   *  stand. @param {any} r */
+  begin(r, proj, view, instances, first, n) {
+    const gl = this.gl, L = this.loc;
     gl.useProgram(this.prog);
     gl.uniformMatrix4fv(L.uProj, false, proj);
     gl.uniformMatrix4fv(L.uView, false, view);
     gl.uniform3fv(L.uCamPos, r._camPos);
-    gl.uniform3f(L.uLight, light[0], light[1], light[2]);
-    gl.uniform3f(L.uRight, view[0], view[4], view[8]);
-    gl.uniform3f(L.uUp, view[1], view[5], view[9]);
-    gl.uniform1f(L.uPixel, 2 / (Math.abs(proj[5]) * Math.max(1, heightPx)));
     gl.uniform3fv(L.uFogColor, r._fogColor);
     gl.uniform1i(L.uFogMode, r._fogMode ?? 0);
     gl.uniform1f(L.uFogDensity, r._fogDensity ?? 0);
     gl.uniform2fv(L.uFogRange, r._fogRange ?? NO_FOG_RANGE);
     if (L.uFocus) gl.uniform4fv(L.uFocus, r._focus ?? NO_FOCUS);
-    if (L.uJungleHaze) gl.uniform4fv(L.uJungleHaze, r._haze ?? NO_HAZE);
+    const haze = r._haze;   // BANTHA1: the jungle's haze, the frame's
+    if (L.uJungleHaze) gl.uniform4fv(L.uJungleHaze, haze ?? NO_HAZE);
     if (L.uDwFog) gl.uniform4fv(L.uDwFog, r._dwFog ?? NO_WATER_FOG);
     gl.bindVertexArray(this.vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.buf);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, instances, 0, n * AL_INSTANCE_FLOATS);
+    gl.bufferSubData(gl.ARRAY_BUFFER, first * STRIDE, instances, first * AL_INSTANCE_FLOATS, n * AL_INSTANCE_FLOATS);
     gl.disable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
-    if (solid) {
-      gl.disable(gl.BLEND);
-      gl.depthMask(true);
-      gl.uniform1i(L.uGlowPass, 0);
-      gl.drawArraysInstanced(gl.TRIANGLES, 0, AL_BODY_VERTS, solid);
-    }
-    if (glow) {
-      this.point(solid);
-      gl.enable(gl.BLEND);
-      gl.blendFuncSeparate(gl.ONE, gl.ONE, gl.ZERO, gl.ONE);
-      gl.depthMask(false);
-      gl.uniform1i(L.uGlowPass, 1);
-      gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, glow);
-      this.point(0);
-      gl.disable(gl.BLEND);
-      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-      gl.depthMask(true);
-    }
+  }
+
+  /** Back to the state every other pass assumes: no blend (its usual function), depth written, faces culled. */
+  end() {
+    const gl = this.gl;
+    gl.disable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.depthMask(true);
     gl.bindVertexArray(null);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     gl.enable(gl.CULL_FACE);
+  }
+
+  /**
+   * The bodies: `solid` instances from the first of `instances`, opaque and depth-written, lit by `light` (the flats'
+   * light). `r` the renderer (its fog, its eye). Answers whether it drew.
+   * @param {any} r @param {Float32Array|number[]} proj @param {Float32Array|number[]} view @param {ArrayLike<number>} light
+   * @param {Float32Array} instances @param {number} solid
+   */
+  drawBodies(r, proj, view, light, instances, solid) {
+    if (!(solid > 0)) return false;
+    const gl = this.gl, L = this.loc;
+    this.begin(r, proj, view, instances, 0, solid);
+    gl.uniform3f(L.uLight, light[0], light[1], light[2]);
+    gl.disable(gl.BLEND);
+    gl.depthMask(true);
+    gl.uniform1i(L.uGlowPass, 0);
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, AL_BODY_VERTS, solid);
+    this.end();
+    return true;
+  }
+
+  /**
+   * The lights: `glow` instances after the `solid` bodies, added and never depth-written, so a host draws them after
+   * the blended passes that would paint over them. `heightPx` the world image's height (a light's least size).
+   * @param {any} r @param {Float32Array|number[]} proj @param {Float32Array|number[]} view
+   * @param {Float32Array} instances @param {number} solid @param {number} glow @param {number} heightPx
+   */
+  drawLights(r, proj, view, instances, solid, glow, heightPx) {
+    if (!(glow > 0)) return false;
+    const gl = this.gl, L = this.loc;
+    this.begin(r, proj, view, instances, solid, glow);
+    gl.uniform3f(L.uRight, view[0], view[4], view[8]);
+    gl.uniform3f(L.uUp, view[1], view[5], view[9]);
+    gl.uniform1f(L.uPixel, 2 / (Math.abs(proj[5]) * Math.max(1, heightPx)));
+    this.point(solid);
+    gl.enable(gl.BLEND);
+    gl.blendFuncSeparate(gl.ONE, gl.ONE, gl.ZERO, gl.ONE);
+    gl.depthMask(false);
+    gl.uniform1i(L.uGlowPass, 1);
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, glow);
+    this.point(0);
+    this.end();
     return true;
   }
 

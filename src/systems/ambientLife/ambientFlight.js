@@ -3,7 +3,7 @@
 // player comes near, and their neighbours follow a moment after. Flocks gather out of scattered birds, wheel, come
 // down to feed and burst up when startled. Soarers circle high by day and bats hunt low at night.
 import { AL_KINDS, AL_FLOCK_SIZE } from './ambientCast.js';
-import { makeBody, faceVelocity, offsetBody, ringPoint, steer } from './ambientBody.js';
+import { makeCreature, faceVelocity, offsetBody, ringPoint, steerBody, sweep } from './ambientBody.js';
 
 /** @typedef {import('./ambientBody.js').AmbientBody} AmbientBody */
 /** @typedef {import('./ambientCast.js').AmbientCast} AmbientCast */
@@ -12,11 +12,12 @@ import { makeBody, faceVelocity, offsetBody, ringPoint, steer } from './ambientB
 const TAU = Math.PI * 2;
 /** Distances in metres, times in seconds. */
 export const AL_FLIGHT = Object.freeze({
-  wanderRing: [35, 60], wanderAlt: [8, 28], townLift: 6, wanderLeave: 95, fleeLeave: 85,
+  wanderRing: [35, 60], wanderAlt: [8, 28], townLift: 6, wanderLeave: 95, fleeLeave: 85, fleeOn: 60,
   perchRing: [6, 75], perchKeep: 100, sitesMax: 28, siteGap: 1.0, siteTall: 2.5, siteRest: [20, 45], perchSpawnFrom: 30,
+  perchMisses: 12, perchLookEvery: 0.5,
   flushNeighbour: 6, flushDelay: [0.08, 0.6], roostFlush: 0.6, fastFlush: 1.6,
-  soarAlt: [45, 95], soarRadius: [25, 65], soarDrift: 120,
-  batRing: 26, batAlt: [3, 16],
+  soarAlt: [45, 95], soarRadius: [25, 65], soarDrift: 120, soarLeave: 180, soarFollow: 6,
+  batRing: 26, batAlt: [3, 16], batLeave: 78,
   flockRing: [70, 110], flockAlt: [25, 48], flockScatter: 35, flockLife: [70, 140], flockForm: 10,
   flockLandRing: [28, 60], flockGroundFor: [15, 35], flockStartle: 16, flockLeave: 220,
   fadeIn: 0.8, boxesEvery: 2, avoidEvery: 0.5, perchCheck: 1,
@@ -41,6 +42,8 @@ export class Flight {
     /** @type {{ x: number, y: number, z: number, yaw: number, bird: AmbientBody|null, rest: number }[]} */ this.sites = [];
     /** @type {{ min: ArrayLike<number>, max: ArrayLike<number> }[]} */ this.boxes = [];
     this.boxesAt = -Infinity; this.clock = 0; this.flockWait = 3; this.perchWait = 0; this.leaveWait = 0;
+    this.town = false;   // buildings stand round the player: held across an origin move, read again with the boxes
+    this.misses = 0; this.lookWait = 0;   // perch probes that found nothing new, and the wait once they keep missing
     this._xz = [0, 0];
   }
 
@@ -50,10 +53,11 @@ export class Flight {
   /** A frame. `ctx.fast` the player is running; `ctx.town` buildings stand round them. @param {AmbientCast} cast */
   step(dt, feet, cast, ctx) {
     this.clock += dt;
-    if (this.clock - this.boxesAt >= F.boxesEvery) this.refreshBoxes(feet);
-    this.findSite(feet);
+    this.survey(feet);
+    this.findSite(feet, dt);
     this.keep(dt, feet, cast, ctx);
     for (const b of this.birds) {
+      if (b.gone) continue;   // pruned with its perch this frame
       b.fade = Math.min(1, b.fade + dt / F.fadeIn);
       switch (b.state) {
         case BIRD.wander: this.wander(b, dt, feet, ctx); break;
@@ -67,24 +71,30 @@ export class Flight {
       }
     }
     for (const fl of this.flocks) fl.step(dt, feet, ctx);
-    if (this.birds.some((b) => b.gone)) this.birds = this.birds.filter((b) => !b.gone);
-    if (this.flocks.some((f) => f.gone)) this.flocks = this.flocks.filter((f) => !f.gone);
+    sweep(this.birds); sweep(this.flocks);
   }
+
+  /** The buildings round the player, read again every `boxesEvery` seconds (the host's frame calls it before the cast). */
+  survey(feet) { if (this.clock - this.boxesAt >= F.boxesEvery) this.refreshBoxes(feet); }
 
   // ---- the roofs ----------------------------------------------------------------------------------------------------
   refreshBoxes(feet) {
     this.boxesAt = this.clock;
-    const all = this.world.boxes?.() ?? [];
+    const all = this.world.boxes?.() ?? [], had = this.boxes.length;
     this.boxes = [];
     for (let i = 0; i < all.length; i++) {
       const b = all[i], cx = (b.min[0] + b.max[0]) / 2, cz = (b.min[2] + b.max[2]) / 2;
       if (b.max[1] - b.min[1] >= 3 && Math.hypot(cx - feet[0], cz - feet[2]) < F.perchKeep - 15) this.boxes.push(b);
     }
+    this.town = this.boxes.length >= 3;
+    if (this.boxes.length !== had) this.misses = 0;   // new roofs round the player: look for perches at once again
   }
 
   /** One look a frame for a perch: down onto a building's top (or anywhere in the ring), kept where the surface stands
-   *  `siteTall` over the ground, then walked up to the ridge or peak (the highest of its neighbours, CLIMB's steps). */
-  findSite(feet) {
+   *  `siteTall` over the ground, then walked up to the ridge or peak (the highest of its neighbours, CLIMB's steps).
+   *  A hamlet's few roofs fill before the cap: past `perchMisses` looks in a row that found nothing new, one look in
+   *  `perchLookEvery` seconds. */
+  findSite(feet, dt = 0) {
     const sites = this.sites;
     for (let i = sites.length - 1; i >= 0; i--) {
       const s = sites[i];
@@ -94,6 +104,9 @@ export class Flight {
       sites.splice(i, 1);
     }
     if (sites.length >= F.sitesMax) return;
+    if (this.misses >= F.perchMisses && (this.lookWait -= dt) > 0) return;
+    this.lookWait = F.perchLookEvery;
+    this.misses++;
     const R = this.R, roof = this.world.roof;
     let x, z, top;
     if (this.boxes.length && R() < 0.8) {
@@ -122,6 +135,7 @@ export class Flight {
     }
     for (const s of sites) if (Math.hypot(s.x - x, s.y - h, s.z - z) < F.siteGap) return;
     sites.push({ x, y: h, z, yaw, bird: null, rest: 0 });
+    this.misses = 0;
   }
 
   /** A free perch at least `from` metres from the player, the nearest to `near` (any, without). */
@@ -171,7 +185,8 @@ export class Flight {
     if (bats < cast.bats) this.spawnBat(feet);
     else if (bats > cast.bats) { const b = this.birds.find((q) => q.state === BIRD.bat); if (b) this.leave(b, feet); }
     this.flockWait -= dt;
-    const flying = this.flocks.filter((f) => f.mode !== FLOCK.leave).length;
+    let flying = 0;
+    for (const f of this.flocks) if (f.mode !== FLOCK.leave) flying++;
     if (flying < cast.flocks && cast.flockKind && this.flockWait <= 0) {
       this.flockWait = 20 + R() * 40;
       this.flocks.push(new Flock(this, AL_KINDS[cast.flockKind] ?? AL_KINDS.starling, feet));
@@ -179,7 +194,7 @@ export class Flight {
   }
 
   spawnWanderer(feet, kind, ctx) {
-    const b = makeBody(kind, this.R);
+    const b = makeCreature(kind, this.R);
     ringPoint(feet, F.wanderRing[0], F.wanderRing[1], this.R, this._xz);
     b.x = this._xz[0]; b.z = this._xz[1];
     b.y = this.groundAt(b.x, b.z, feet) + between(F.wanderAlt, this.R) + (ctx.town ? F.townLift : 0);
@@ -189,27 +204,28 @@ export class Flight {
     this.birds.push(b);
   }
   spawnPerched(site, kind) {
-    const b = makeBody(kind, this.R);
+    const b = makeCreature(kind, this.R);
     b.x = site.x; b.y = site.y; b.z = site.z; b.yaw = site.yaw; b.ang = 0; b.spread = 0; b.amp = 0;
     b.state = BIRD.perch; b.site = site; b.t = 1 + this.R() * 3;
     site.bird = b;
     this.birds.push(b);
   }
   spawnSoarer(feet, kind) {
-    const b = makeBody(kind, this.R), R = this.R;
+    const b = makeCreature(kind, this.R), R = this.R;
     ringPoint(feet, 0, 40, R, this._xz);
     b.cx = this._xz[0]; b.cz = this._xz[1];
     b.rad = between(F.soarRadius, R) * (R() < 0.5 ? -1 : 1); b.ang = R() * TAU;
-    b.ty = this.groundAt(b.cx, b.cz, feet) + between(F.soarAlt, R) * (kind === AL_KINDS.gull ? 0.6 : 1);
+    b.alt = between(F.soarAlt, R) * (kind === AL_KINDS.gull ? 0.6 : 1);
+    b.ty = this.groundAt(b.cx, b.cz, feet) + b.alt;
     b.x = b.cx + Math.sin(b.ang) * Math.abs(b.rad); b.z = b.cz + Math.cos(b.ang) * Math.abs(b.rad); b.y = b.ty;
-    b.state = BIRD.soar; b.fade = 0;
+    b.state = BIRD.soar; b.fade = 0; b.reach = Infinity;
     this.birds.push(b);
   }
   spawnBat(feet) {
-    const b = makeBody(AL_KINDS.bat, this.R);
+    const b = makeCreature(AL_KINDS.bat, this.R);
     ringPoint(feet, 15, F.batRing + 6, this.R, this._xz);
     b.x = this._xz[0]; b.z = this._xz[1]; b.y = this.groundAt(b.x, b.z, feet) + between(F.batAlt, this.R);
-    b.state = BIRD.bat; b.amp = 1.1;
+    b.state = BIRD.bat; b.amp = 1.1; b.reach = F.batLeave;
     this.birds.push(b);
   }
 
@@ -233,14 +249,20 @@ export class Flight {
     else b.phase += (Math.round(b.phase / TAU) * TAU + 0.3 - b.phase) * Math.min(1, dt * 3);   // the wings eased level
   }
 
-  /** A body heading into a wall, a roof or a hillside climbs over it (one ray down ahead of it and the ground there,
-   *  every `avoidEvery` seconds). */
+  /** A body heading into a wall, a tower or a hillside 1.5 s ahead climbs over it, or turns back where the rise is too
+   *  steep to climb in time (one ray down from well over it, and the ground there, every `avoidEvery` seconds); and
+   *  it never stands under the ground, whatever streamed in under it. */
   clearAhead(b, dt) {
+    const here = this.world.ground(b.x, b.z);
+    if (Number.isFinite(here) && b.y < here + 1) { b.y = here + 1; b.vy = Math.max(b.vy, 0); }
     if ((b.look -= dt) > 0) return;
     b.look = F.avoidEvery;
     const x = b.x + b.vx * 1.5, z = b.z + b.vz * 1.5, g = this.world.ground(x, z);
-    const h = Math.max(this.world.roof(x, z, b.y + 3), Number.isFinite(g) ? g + 1.5 : -Infinity);
-    if (h > b.y - 1.5) { b.vy = Math.max(b.vy, 4); b.ty = Math.max(b.ty, h + 4); }
+    const h = Math.max(this.world.roof(x, z, b.y + 60), Number.isFinite(g) ? g + 1.5 : -Infinity);
+    if (!(h > b.y - 1.5)) return;
+    if (h + 4 - b.y > Math.hypot(b.vx, b.vz) * 1.5 * 0.8) {
+      b.vx = -b.vx; b.vz = -b.vz; b.tx = 2 * b.x - b.tx; b.tz = 2 * b.z - b.tz;   // back the way it came
+    } else { b.vy = Math.max(b.vy, 4); b.ty = Math.max(b.ty, h + 4); }
   }
 
   wander(b, dt, feet, ctx) {
@@ -248,7 +270,7 @@ export class Flight {
     const big = !SMALL.has(b.kind.name);
     this.beat(b, dt, big ? 1.6 : 0.5, big ? 2 : 0.3);
     this.clearAhead(b, dt);
-    steer(b, dt, b.tx, b.ty, b.tz, b.kind.speed, 1.4);
+    steerBody(b, dt, b.tx, b.ty, b.tz, b.kind.speed, 1.4);
     faceVelocity(b, dt, 3);
     if (Math.hypot(b.x - feet[0], b.z - feet[2]) > F.wanderLeave) b.gone = true;
   }
@@ -268,13 +290,13 @@ export class Flight {
       // the run-in: above and short of the perch, then down onto it
       const k = 3 / h;
       this.beat(b, dt, 0.8, 0.6);
-      steer(b, dt, s.x - (s.x - b.x) * k, s.y + 2.5, s.z - (s.z - b.z) * k, b.kind.speed, 2);
+      steerBody(b, dt, s.x - (s.x - b.x) * k, s.y + 2.5, s.z - (s.z - b.z) * k, b.kind.speed, 2);
       faceVelocity(b, dt, 4);
       return;
     }
     const d = Math.hypot(h, s.y - b.y);
     b.spread += (1 - b.spread) * Math.min(1, dt * 8); b.amp = 0.6; b.phase += dt * b.flapHz * 1.3 * TAU;
-    steer(b, dt, s.x, s.y, s.z, Math.max(1.2, Math.min(6, d * 1.4)), 4);
+    steerBody(b, dt, s.x, s.y, s.z, Math.max(1.2, Math.min(6, d * 1.4)), 4);
     faceVelocity(b, dt, 5);
     b.pitch += (0.55 - b.pitch) * Math.min(1, dt * 6);   // the flare
     if (d < 0.3) {
@@ -290,7 +312,9 @@ export class Flight {
     if (s && (b.look -= dt) <= 0) {
       b.look = F.perchCheck;
       if (!(Math.abs(this.world.roof(s.x, s.z, s.y + 1.5) - s.y) < 0.3)) {
-        this.sites.splice(this.sites.indexOf(s), 1); s.bird = null; b.site = null;
+        const i = this.sites.indexOf(s);
+        if (i >= 0) this.sites.splice(i, 1);
+        s.bird = null; b.site = null;
         this.flush(b, feet, false);
         return;
       }
@@ -310,7 +334,7 @@ export class Flight {
     }
     b.y = y;
     b.spread += (spread - b.spread) * Math.min(1, dt * 14); b.amp = 0.5; b.phase += dt * 20;
-    b.pitch += (0.15 - b.pitch) * Math.min(1, dt * 6); b.bank = 0;
+    b.pitch += (0 - b.pitch) * Math.min(1, dt * 6); b.bank = 0;   // level: tilted, its shut wingtips would dip into the roof
   }
 
   /** The bird on its roof leaves, and its neighbours on the roofs go a moment after it (`spread` false: it alone). */
@@ -348,17 +372,25 @@ export class Flight {
   flee(b, dt, feet) {
     this.beat(b, dt, 2, SMALL.has(b.kind.name) ? 0.25 : 1);
     this.clearAhead(b, dt);
-    steer(b, dt, b.tx, b.ty, b.tz, b.kind.speed * 1.25, 1.1);
+    // a bird the player follows never arrives: its way goes on ahead of it, so it never hangs where it was going
+    if (Math.hypot(b.tx - b.x, b.tz - b.z) < 6) {
+      const h = Math.hypot(b.vx, b.vz) || 1;
+      b.tx = b.x + (b.vx / h) * F.fleeOn; b.tz = b.z + (b.vz / h) * F.fleeOn;
+    }
+    steerBody(b, dt, b.tx, b.ty, b.tz, b.kind.speed * 1.25, 1.1);
     faceVelocity(b, dt, 3.5);
     if (Math.hypot(b.x - feet[0], b.z - feet[2]) > F.fleeLeave) b.gone = true;
   }
 
   soar(b, dt, feet) {
     const R = this.R, r = Math.abs(b.rad), dir = Math.sign(b.rad) || 1, v = b.kind.speed;
-    if (Math.hypot(b.cx - feet[0], b.cz - feet[2]) > F.soarDrift) {
+    const away = Math.hypot(b.cx - feet[0], b.cz - feet[2]);
+    if (away > F.soarLeave) { this.leave(b, feet); return; }   // left behind: another rises near the player
+    if (away > F.soarDrift) {
       const a = Math.atan2(feet[0] - b.cx, feet[2] - b.cz);
-      b.cx += Math.sin(a) * 4 * dt; b.cz += Math.cos(a) * 4 * dt;
+      b.cx += Math.sin(a) * F.soarFollow * dt; b.cz += Math.cos(a) * F.soarFollow * dt;
     }
+    b.ty += (this.groundAt(b.cx, b.cz, feet) + b.alt - b.ty) * Math.min(1, dt * 0.3);   // its height kept over the land below
     b.ang += (v / r) * dt * dir;
     const nx = b.cx + Math.sin(b.ang) * r, nz = b.cz + Math.cos(b.ang) * r, ny = b.ty + Math.sin(this.clock * 0.15 + b.phase) * 5;
     b.vx = (nx - b.x) / Math.max(dt, 1e-3); b.vy = (ny - b.y) / Math.max(dt, 1e-3); b.vz = (nz - b.z) / Math.max(dt, 1e-3);
@@ -373,13 +405,14 @@ export class Flight {
 
   bat(b, dt, feet) {
     const R = this.R;
+    if (Math.hypot(b.x - feet[0], b.z - feet[2]) > F.batLeave) { b.gone = true; return; }   // outrun: another comes
     if ((b.t -= dt) <= 0) {
       ringPoint(feet, 3, F.batRing, R, this._xz);
       b.tx = this._xz[0]; b.tz = this._xz[1]; b.ty = this.groundAt(b.tx, b.tz, feet) + between(F.batAlt, R);
       b.t = 0.25 + R() * 0.7;
     }
     this.clearAhead(b, dt);
-    steer(b, dt, b.tx, b.ty, b.tz, b.kind.speed, 5);
+    steerBody(b, dt, b.tx, b.ty, b.tz, b.kind.speed, 5);
     faceVelocity(b, dt, 9);
     b.phase += dt * b.flapHz * TAU; b.spread = 1;
   }
@@ -394,9 +427,12 @@ export class Flight {
     for (const b of this.birds) offsetBody(b, o);
     for (const f of this.flocks) f.offset(o);
     for (const s of this.sites) { s.x += o[0]; s.y += o[1]; s.z += o[2]; }
-    this.boxes = []; this.boxesAt = -Infinity;   // the host's boxes are read again in the new frame
+    this.boxes = []; this.boxesAt = -Infinity;   // the host's boxes are read again in the new frame; `town` holds till then
   }
-  clear() { this.birds = []; this.flocks = []; this.sites = []; this.boxes = []; this.boxesAt = -Infinity; this.flockWait = 3; }
+  clear() {
+    this.birds = []; this.flocks = []; this.sites = []; this.boxes = []; this.boxesAt = -Infinity; this.flockWait = 3;
+    this.town = false; this.misses = 0; this.lookWait = 0;
+  }
   /** Every bird drawn. */
   *bodies() { yield* this.birds; for (const f of this.flocks) yield* f.members; }
 }
@@ -419,10 +455,10 @@ export class Flock {
     this.gx = this.ax; this.gy = this.ay; this.gz = this.az;   // where the anchor heads
     /** @type {AmbientBody[]} */ this.members = [];
     for (let i = 0; i < n; i++) {
-      const b = makeBody(kind, R), a = R() * TAU, r = F.flockScatter * Math.sqrt(R());
+      const b = makeCreature(kind, R), a = R() * TAU, r = F.flockScatter * Math.sqrt(R());
       b.x = this.ax + Math.sin(a) * r; b.z = this.az + Math.cos(a) * r; b.y = this.ay + (R() - 0.5) * 16;
       const h = R() * TAU; b.vx = Math.sin(h) * kind.speed; b.vz = Math.cos(h) * kind.speed;
-      b.state = 0; b.fade = 0;
+      b.state = 0; b.fade = 0; b.reach = F.flockLeave;
       this.members.push(b);
     }
     this.retarget(feet);
@@ -438,16 +474,21 @@ export class Flock {
     this.gx = xz[0]; this.gz = xz[1]; this.gy = this.flight.groundAt(xz[0], xz[1], feet) + between(F.flockAlt, R);
   }
 
-  /** Open ground to feed on: dry, under no roof, not too near the player. */
+  /** The ground's height at a point a bird may stand on - built, dry, under no roof - or NaN. */
+  openGround(x, z) {
+    const w = this.flight.world, g = w.ground(x, z);
+    if (!Number.isFinite(g) || w.wet(x, z)) return NaN;
+    const h = w.roof(x, z, g + 40);
+    return Number.isFinite(h) && h > g + 0.3 ? NaN : g;
+  }
+
+  /** Open ground to feed on, not too near the player (four tries), or null. */
   feedingGround(feet) {
-    const w = this.flight.world, xz = [0, 0];
+    const xz = [0, 0];
     for (let k = 0; k < 4; k++) {
       ringPoint(feet, F.flockLandRing[0], F.flockLandRing[1], this.flight.R, xz);
-      const g = w.ground(xz[0], xz[1]);
-      if (!Number.isFinite(g) || w.wet(xz[0], xz[1])) continue;
-      const h = w.roof(xz[0], xz[1], g + 40);
-      if (Number.isFinite(h) && h > g + 0.3) continue;
-      return [xz[0], g, xz[1]];
+      const g = this.openGround(xz[0], xz[1]);
+      if (Number.isFinite(g)) return [xz[0], g, xz[1]];
     }
     return null;
   }
@@ -483,10 +524,9 @@ export class Flock {
       const spot = this.formed > F.flockForm && this.age - this.landed > 30 && R() < 0.3 ? this.feedingGround(feet) : null;
       if (spot) {
         this.mode = FLOCK.land; this.ax = spot[0]; this.ay = spot[1]; this.az = spot[2]; this.t = 25;
-        for (const b of m) {   // each its own patch of the ground
-          const a = R() * TAU, r = 1 + R() * 5;
-          b.tx = spot[0] + Math.sin(a) * r; b.tz = spot[2] + Math.cos(a) * r;
-          const g = fl.world.ground(b.tx, b.tz); b.ty = Number.isFinite(g) ? g : spot[1];
+        for (const b of m) {   // each its own patch of open ground, or the spot itself
+          const a = R() * TAU, r = 1 + R() * 5, x = spot[0] + Math.sin(a) * r, z = spot[2] + Math.cos(a) * r, g = this.openGround(x, z);
+          if (Number.isFinite(g)) { b.tx = x; b.tz = z; b.ty = g; } else { b.tx = spot[0]; b.tz = spot[2]; b.ty = spot[1]; }
         }
       } else this.retarget(feet);
     }
@@ -571,8 +611,8 @@ export class Flock {
     if ((b.t -= dt) <= 0) {
       b.t = 0.6 + R() * 2;
       b.t2 = 0.25; b.yaw += (R() - 0.5) * 2.4;
-      const x = b.x + Math.sin(b.yaw) * 0.4, z = b.z + Math.cos(b.yaw) * 0.4, g = this.flight.world.ground(x, z);
-      if (Number.isFinite(g) && !this.flight.world.wet(x, z)) { b.tx = x; b.tz = z; b.ty = g; } else { b.tx = b.x; b.tz = b.z; }
+      const x = b.x + Math.sin(b.yaw) * 0.4, z = b.z + Math.cos(b.yaw) * 0.4, g = this.openGround(x, z);
+      if (Number.isFinite(g)) { b.tx = x; b.tz = z; b.ty = g; } else { b.tx = b.x; b.tz = b.z; }
     }
     if (b.t2 > 0) {
       const k = Math.min(1, dt / b.t2);
