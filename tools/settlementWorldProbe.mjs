@@ -88,10 +88,10 @@ try {
   }
   console.log(JSON.stringify({ doorsSeen, entered }));
   const after = await until(() => (window.__mode?.() === 'interior' ? 'interior' : null), 180000) ?? await page.evaluate(() => window.__mode?.() ?? null);
-  await drain(); await frames(20);
-  await page.screenshot({ path: join(out, 'inside.png') });
   page.off('console', hear);
   console.log(JSON.stringify({ door: d.type, modeBefore: before, modeAfter: after }));
+  await drain(); await frames(20, 180000);
+  await page.screenshot({ path: join(out, 'inside.png'), timeout: 240000 }).catch((e) => console.log('no shot inside:', e.message.split('\n')[0]));
   if (after !== 'interior') console.log(said.slice(0, 15).join('\n'));
 } catch (e) { console.log('FAIL:', e.message); }
 console.log(errors.length ? `errors:\n${errors.slice(0, 12).join('\n')}` : 'no page errors');
