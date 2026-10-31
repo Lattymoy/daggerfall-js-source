@@ -29,8 +29,8 @@
   {
     "name": "AUDIT0929-S3-rr-weightless",
     "file": "src/systems/roleplayRealism/rrRealism.js",
-    "old": "  return swingFrameSeconds(blend, { heft: swingHeft(weight, liveStrength), handling",
-    "new": "  return swingFrameSeconds(blend, { handling",
+    "old": "  return swingFrameSeconds(blend, {\n    heft: swingHeft(weight, liveStrength),\n    handling: swingHandling(weaponType, hands === 'Both', shortBlade),\n  });",
+    "new": "  return swingFrameSeconds(blend, { handling: swingHandling(weaponType, hands === 'Both', shortBlade) });",
     "tests": [
       "test/systems/rr1_realism.test.js",
       "test/systems/swinglaw.test.js"

@@ -171,8 +171,8 @@
   {
     "name": "SWING-LAW-RR-blend-blind-to-hands",
     "file": "src/systems/roleplayRealism/rrRealism.js",
-    "old": "  return swingFrameSeconds(blend, { heft: swingHeft(weight, liveStrength), handling: swingHandling(weaponType, hands === 'Both', shortBlade) });",
-    "new": "  return swingFrameSeconds(blend, { heft: swingHeft(weight, liveStrength), handling: swingHandling(weaponType, false, shortBlade) });",
+    "old": "    handling: swingHandling(weaponType, hands === 'Both', shortBlade),",
+    "new": "    handling: swingHandling(weaponType, false, shortBlade),",
     "tests": [
       "test/systems/rr1_realism.test.js",
       "test/systems/swinglaw.test.js"
@@ -181,7 +181,7 @@
   {
     "name": "SWING-LAW-RR-keeps-its-hyperbola",
     "file": "src/systems/roleplayRealism/rrRealism.js",
-    "old": "  return swingFrameSeconds(blend, { heft: swingHeft(weight, liveStrength), handling: swingHandling(weaponType, hands === 'Both', shortBlade) });",
+    "old": "  return swingFrameSeconds(blend, {\n    heft: swingHeft(weight, liveStrength),\n    handling: swingHandling(weaponType, hands === 'Both', shortBlade),\n  });",
     "new": "  return (3 * (115 - blend)) / 980;",
     "tests": [
       "test/systems/rr1_realism.test.js",

@@ -1251,6 +1251,11 @@
 !/src/systems/riding.js
 !/src/systems/riteChest.js
 !/src/systems/roadEncounters.js
+!/src/systems/roleplayRealism/
+/src/systems/roleplayRealism/*
+!/src/systems/roleplayRealism/rrQuestLine.js
+!/src/systems/roleplayRealism/rrRealism.js
+!/src/systems/roleplayRealism/rrVariants.js
 !/src/systems/roomLoot.js
 !/src/systems/rumorMill.js
 !/src/systems/sailingCabin.js

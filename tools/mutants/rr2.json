@@ -38,8 +38,8 @@
   {
     "name": "RR2-5-the-face-forgets-its-variant",
     "file": "src/systems/roleplayRealism/rrVariants.js",
-    "old": "faceIndex: faces[sex][outfitVariant] + faceVariant, gender };",
-    "new": "faceIndex: faces[sex][outfitVariant], gender };",
+    "old": "    faceIndex: faces[sex][outfitVariant] + faceVariant,",
+    "new": "    faceIndex: faces[sex][outfitVariant],",
     "tests": [
       "test/systems/rr2_realism.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RR2-9-the-face-override-is-not-written",
     "file": "src/systems/roleplayRealism/rrVariants.js",
-    "old": "      setFlatFaceOverride(pn.textureArchive, pn.textureRecord, v.faceIndex);",
-    "new": "",
+    "old": "      setFlatFaceOverride(pn.textureArchive, pn.textureRecord, v.faceIndex); // flatsDict[flatId] = { faceIndex } (:1017-1023), keyed by the flat the person was born as",
+    "new": "      // flatsDict[flatId] = { faceIndex } (:1017-1023), keyed by the flat the person was born as",
     "tests": [
       "test/systems/rr2_realism.test.js"
     ]
@@ -119,7 +119,7 @@
   {
     "name": "RR2-14-the-lift-forgets-the-ten",
     "file": "src/systems/roleplayRealism/rrRealism.js",
-    "old": "export const rrRidingYAdj = (pitchDegrees, terrainAngle) => (pitchDegrees - terrainAngle - 10) * RR_RIDING.lookPitchRatio;",
+    "old": "export const rrRidingYAdj = (pitchDegrees, terrainAngle) =>\n  (pitchDegrees - terrainAngle - 10) * RR_RIDING.lookPitchRatio;",
     "new": "export const rrRidingYAdj = (pitchDegrees, terrainAngle) => (pitchDegrees - terrainAngle) * RR_RIDING.lookPitchRatio;",
     "tests": [
       "test/systems/rr2_realism.test.js"
@@ -155,8 +155,8 @@
   {
     "name": "RR2-18-the-variable-price-rounds",
     "file": "src/systems/roleplayRealism/rrRealism.js",
-    "old": "  return baseCost - Math.trunc(Math.fround(baseCost * skillOfMax / 2));",
-    "new": "  return baseCost - Math.round(Math.fround(baseCost * skillOfMax / 2));",
+    "old": "  return baseCost - Math.trunc(Math.fround((baseCost * skillOfMax) / 2));",
+    "new": "  return baseCost - Math.round(Math.fround((baseCost * skillOfMax) / 2));",
     "tests": [
       "test/systems/rr2_realism.test.js"
     ]

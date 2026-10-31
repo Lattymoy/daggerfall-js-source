@@ -615,8 +615,8 @@
   {
     "name": "BAL10-the-realism-arm-reads-no-short-blade",
     "file": "src/systems/roleplayRealism/rrRealism.js",
-    "old": "handling: swingHandling(weaponType, hands === 'Both', shortBlade) });",
-    "new": "handling: swingHandling(weaponType, hands === 'Both') });",
+    "old": "    handling: swingHandling(weaponType, hands === 'Both', shortBlade),",
+    "new": "    handling: swingHandling(weaponType, hands === 'Both'),",
     "tests": [
       "test/systems/martial_paths.test.js"
     ]

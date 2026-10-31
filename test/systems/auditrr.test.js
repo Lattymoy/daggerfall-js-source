@@ -127,7 +127,7 @@ test('AUDIT-RR F26: TrainingSkillPicker_OnItemPicked\'s `(float)skillValue / tra
 });
 
 test('AUDIT-RR F10: an ENEMY_BASICS row the mod cannot write is said, not skipped in silence', () => {
-  assert.match(rd('src/systems/roleplayRealism/rrRealism.js'), /if \(!target \|\| Object\.isFrozen\(target\)\) \{ if \(target\) console\.warn\(`\[rr\] enemyAppearance: ENEMY_BASICS row \$\{id\} is frozen/);
+  assert.match(rd('src/systems/roleplayRealism/rrRealism.js'), /if \(!target \|\| Object\.isFrozen\(target\)\) \{\n\s*if \(target\)\n\s*console\.warn\(`\[rr\] enemyAppearance: ENEMY_BASICS row \$\{id\} is frozen/);
 });
 
 test('AUDIT-RR F13: the sprite-variant race reads the location\'s climate SETTINGS\' worldClimate (223-232), not the climate type 0-3 that fell to the Breton arm everywhere', () => {

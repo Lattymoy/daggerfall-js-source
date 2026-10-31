@@ -350,8 +350,8 @@
   {
     "name": "AUDIT-MARTIAL-L2F11-the-long-blades-blend",
     "file": "src/systems/roleplayRealism/rrRealism.js",
-    "old": "else if (shortBlade || weaponType === 4 || weaponType === 5)",
-    "new": "else if (weaponType === 4 || weaponType === 5)",
+    "old": "  } else if (shortBlade || weaponType === 4 || weaponType === 5) {",
+    "new": "  } else if (weaponType === 4 || weaponType === 5) {",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"

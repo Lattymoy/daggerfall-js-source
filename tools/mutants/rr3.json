@@ -2,8 +2,8 @@
   {
     "name": "RR3-1-the-fort-pixel-answers-near-not-verynear",
     "file": "src/systems/roleplayRealism/rrQuestLine.js",
-    "old": "  if (mapPixelX === 938 && mapPixelY === 51) return [RR_TEXT.fortVerynear1, RR_TEXT.fortVerynear2];\n",
-    "new": "",
+    "old": "  if (mapPixelX === 938 && mapPixelY === 51) return [RR_TEXT.fortVerynear1, RR_TEXT.fortVerynear2];\n  const dir = FORT_NEAR_DIRECTION[`${mapPixelX},${mapPixelY}`];",
+    "new": "  const dir = FORT_NEAR_DIRECTION[`${mapPixelX},${mapPixelY}`];",
     "tests": [
       "test/systems/quest/rr3_questline.test.js"
     ]
@@ -22,8 +22,8 @@
   {
     "name": "RR3-3-west-and-east-swapped",
     "file": "src/systems/roleplayRealism/rrQuestLine.js",
-    "old": "'939,51': 'west'",
-    "new": "'939,51': 'east'",
+    "old": "  '939,51': 'west',",
+    "new": "  '939,51': 'east',",
     "tests": [
       "test/systems/quest/rr3_questline.test.js"
     ]
@@ -31,8 +31,8 @@
   {
     "name": "RR3-4-penmore-gets-pjigas-key",
     "file": "src/systems/roleplayRealism/rrQuestLine.js",
-    "old": "    case 18: return 197134;",
-    "new": "    case 18: return 131342;",
+    "old": "      return 197134;",
+    "new": "      return 131342;",
     "tests": [
       "test/systems/quest/rr3_questline.test.js"
     ]
@@ -40,8 +40,8 @@
   {
     "name": "RR3-5-the-discovery-ignores-the-variant",
     "file": "src/systems/roleplayRealism/rrQuestLine.js",
-    "old": "  if (variantOf(location.regionIndex, location.locationIndex, RR_ARMORER_BLOCK, RR_ARMORER_RECORD) == null) return null;\n",
-    "new": "",
+    "old": "  if (variantOf(location.regionIndex, location.locationIndex, RR_ARMORER_BLOCK, RR_ARMORER_RECORD) == null) return null;\n  return { buildingKey: rrMasterArmBuildingKeyIn(location), name: RR_TEXT.dharjenCustomArmor };",
+    "new": "  return { buildingKey: rrMasterArmBuildingKeyIn(location), name: RR_TEXT.dharjenCustomArmor };",
     "tests": [
       "test/systems/quest/rr3_questline.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "RR3-7-daedric-at-15",
     "file": "src/systems/roleplayRealism/rrQuestLine.js",
-    "old": "      || (level < 18 && material >= ARMOR_MATERIAL.Daedric)) break;",
-    "new": "      ) break;",
+    "old": "      (level < 15 && material >= ARMOR_MATERIAL.Orcish) ||\n      (level < 18 && material >= ARMOR_MATERIAL.Daedric)",
+    "new": "      (level < 15 && material >= ARMOR_MATERIAL.Orcish)",
     "tests": [
       "test/systems/quest/rr3_questline.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "RR3-8-the-ladder-continues-instead-of-breaking",
     "file": "src/systems/roleplayRealism/rrQuestLine.js",
-    "old": "      || (level < 18 && material >= ARMOR_MATERIAL.Daedric)) break;\n    out.push(material);",
-    "new": "      || (level < 18 && material >= ARMOR_MATERIAL.Daedric)) continue;\n    out.push(material);",
+    "old": "      break;",
+    "new": "      continue;",
     "tests": [
       "test/systems/quest/rr3_questline.test.js"
     ],
@@ -78,8 +78,8 @@
   {
     "name": "RR3-9-greaves-start-at-1",
     "file": "src/systems/roleplayRealism/rrQuestLine.js",
-    "old": "    case 104: return [2, 5];                        // Greaves",
-    "new": "    case 104: return [1, 5];                        // Greaves",
+    "old": "      return [2, 5]; // Greaves",
+    "new": "      return [1, 5]; // Greaves",
     "tests": [
       "test/systems/quest/rr3_questline.test.js"
     ]
@@ -87,8 +87,8 @@
   {
     "name": "RR3-10-the-helm-includes-its-last-variant",
     "file": "src/systems/roleplayRealism/rrQuestLine.js",
-    "old": "    case 108: case 107: return [1, templateVariants - 1];   // Boots, Helm",
-    "new": "    case 108: case 107: return [1, templateVariants];   // Boots, Helm",
+    "old": "      return [1, templateVariants - 1]; // Boots, Helm",
+    "new": "      return [1, templateVariants]; // Boots, Helm",
     "tests": [
       "test/systems/quest/rr3_questline.test.js"
     ]
@@ -96,8 +96,8 @@
   {
     "name": "RR3-11-shields-are-sold",
     "file": "src/systems/roleplayRealism/rrQuestLine.js",
-    "old": "    default: return null;\n  }\n}\n/** The shelf",
-    "new": "    default: return [1, 1];\n  }\n}\n/** The shelf",
+    "old": "      return null;",
+    "new": "      return [1, 1];",
     "tests": [
       "test/systems/quest/rr3_questline.test.js"
     ]
@@ -105,8 +105,8 @@
   {
     "name": "RR3-12-the-custom-classes-are-not-stocked",
     "file": "src/systems/roleplayRealism/rrQuestLine.js",
-    "old": "    for (const templateIndex of customTemplates) items.push(mint({ group: 'Armor', templateIndex, material }));\n",
-    "new": "",
+    "old": "    for (const templateIndex of customTemplates) items.push(mint({ group: 'Armor', templateIndex, material }));\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/quest/rr3_questline.test.js"
     ]
@@ -114,8 +114,8 @@
   {
     "name": "RR3-13-the-service-opens-the-shelf-under-9",
     "file": "src/systems/roleplayRealism/rrQuestLine.js",
-    "old": "  if (!rrCustomArmorOffered(level)) { window.messageBox?.(RR_TEXT.notEnoughMaterials); return false; }\n",
-    "new": "",
+    "old": "  if (!rrCustomArmorOffered(level)) {\n    window.messageBox?.(RR_TEXT.notEnoughMaterials);\n    return false;\n  }\n  window.openBuy?.(rrCustomArmorStock(level));",
+    "new": "  window.openBuy?.(rrCustomArmorStock(level));",
     "tests": [
       "test/systems/quest/rr3_questline.test.js"
     ]
@@ -123,8 +123,8 @@
   {
     "name": "RR3-14-the-captain-is-orphaned",
     "file": "src/systems/roleplayRealism/rrQuestLine.js",
-    "old": "  Object.freeze({ id: 1021, parent: 1020,",
-    "new": "  Object.freeze({ id: 1021, parent: 0,",
+    "old": "    parent: 1020,",
+    "new": "    parent: 0,",
     "tests": [
       "test/systems/quest/rr3_questline.test.js"
     ]
