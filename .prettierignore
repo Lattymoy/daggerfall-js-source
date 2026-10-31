@@ -1680,6 +1680,10 @@
 !/src/ui/titleFlame.js
 !/src/ui/titleScreen.js
 !/src/ui/toolTip.js
+!/src/ui/touch/
+/src/ui/touch/*
+!/src/ui/touch/touchDevice.js
+!/src/ui/touch/touchGestures.js
 !/src/ui/tradeDoor.js
 !/src/ui/transportWindow.js
 !/src/ui/tutorialPopup.js
