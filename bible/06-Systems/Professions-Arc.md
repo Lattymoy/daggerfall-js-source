@@ -6931,3 +6931,12 @@ writs and the Bank's exchange, and all of them are in the weekly report the re-r
 
 MEASURED: the model's players are assumptions. After four weeks of MARKS1 the weekly report (10.5) replaces them
 with the server's own, and the model is re-run on those.
+
+## FIRST-HIGHLIGHT: a moving edge on what still owes a first-time bonus
+
+A player asked for a mark on the items not yet made. CRAFT-HALL already knows which first-time bonuses are spent. This adds a slow dashed blue edge to two things on a station page.
+
+- A **material** button (`materialRow`, class `prof-owed`) while that grade still owes its bonus. The edge is bright.
+- A **pattern** card (`patternRows`, class `prof-owed-pattern`) while any open grade of it still owes a bonus. The edge is faint and slower.
+
+Nothing shows when the service sends no list of what was made. The animation stops under reduced motion. Style: `ui/enhanced/enhancedPlusStyle.js`. Pins: `test/ui/firsthighlight.test.js`. Mutants: `tools/mutants/firsthighlight.json` (5, all dead).

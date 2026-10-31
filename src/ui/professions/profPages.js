@@ -1680,11 +1680,11 @@ export function patternRows(detail, el, list, state, rerender, { stand, word, lo
   for (const pt of shown) {
     const lead = patternLead(pt, stand);
     const s = stand(lead);
-    const row = el('button', `prof-recipe${state.pattern === pt.id ? ' on' : ''}${s.can || s.raw ? '' : ' prof-locked'}`);
+    const f = patternFirst(pt, stand, first);
+    const row = el('button', `prof-recipe${state.pattern === pt.id ? ' on' : ''}${s.can || s.raw ? '' : ' prof-locked'}${f === 'owed' ? ' prof-owed-pattern' : ''}`);   // FIRST-HIGHLIGHT: a moving dashed edge while a grade's first-time bonus is owed
     row.type = 'button';
     row.disabled = locked;
     row.append(el('b', null, pt.name), el('span', 'prof-split', word(lead, s)));
-    const f = patternFirst(pt, stand, first);
     if (f) row.append(el('span', `prof-first${f === 'made' ? ' made' : ''}`, firstBadge(f === 'owed')));
     row.onclick = () => { const r = pickedOf(pt, stand, state.madeOf); state.pattern = pt.id; state.picked = r.id; state.madeOf = r.madeOf; rerender(); };
     grid.append(row);
@@ -1708,7 +1708,7 @@ export function materialRow(box, el, list, r, state, rerender, stand, locked = f
   for (const x of made) {
     const s = stand(x);
     const star = s.open && first?.(x) === true ? ` ${FIRST_STAR}` : '';
-    const b = el('button', `prof-family${x.id === r.id ? ' on' : ''}${s.can || s.raw ? '' : ' prof-locked'}`, s.open ? `${x.madeOf}${star}` : `${x.madeOf} - rank ${x.rank}`);
+    const b = el('button', `prof-family${x.id === r.id ? ' on' : ''}${s.can || s.raw ? '' : ' prof-locked'}${star ? ' prof-owed' : ''}`, s.open ? `${x.madeOf}${star}` : `${x.madeOf} - rank ${x.rank}`);   // FIRST-HIGHLIGHT: and a moving dashed edge
     b.type = 'button';
     b.disabled = locked;
     b.onclick = () => { state.picked = x.id; state.madeOf = x.madeOf; rerender(); };

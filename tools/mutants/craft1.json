@@ -309,8 +309,8 @@
   {
     "name": "AUDIT-CRAFT1-R2-anvil-locked-anyway",
     "file": "src/ui/professions/profPages.js",
-    "old": "    const row = el('button', `prof-recipe${state.pattern === pt.id ? ' on' : ''}${s.can || s.raw ? '' : ' prof-locked'}`);",
-    "new": "    const row = el('button', `prof-recipe${state.pattern === pt.id ? ' on' : ''}${s.can ? '' : ' prof-locked'}`);",
+    "old": "`prof-recipe${state.pattern === pt.id ? ' on' : ''}${s.can || s.raw ? '' : ' prof-locked'}",
+    "new": "`prof-recipe${state.pattern === pt.id ? ' on' : ''}${s.can ? '' : ' prof-locked'}",
     "tests": [
       "test/net/craft1_chain.test.js"
     ],
@@ -376,8 +376,8 @@
   {
     "name": "AUDIT-CRAFT1-R2-loom-raw",
     "file": "src/ui/professions/profPages.js",
-    "old": "    const b = el('button', `prof-family${x.id === r.id ? ' on' : ''}${s.can || s.raw ? '' : ' prof-locked'}`,",
-    "new": "    const b = el('button', `prof-family${x.id === r.id ? ' on' : ''}${s.can ? '' : ' prof-locked'}`,",
+    "old": "`prof-family${x.id === r.id ? ' on' : ''}${s.can || s.raw ? '' : ' prof-locked'}",
+    "new": "`prof-family${x.id === r.id ? ' on' : ''}${s.can ? '' : ' prof-locked'}",
     "tests": [
       "test/net/craft1_chain.test.js"
     ],
