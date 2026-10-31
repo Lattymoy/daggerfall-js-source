@@ -236,8 +236,8 @@
   {
     "name": "PVP-HUD-the-bar-edge-moved",
     "file": "src/ui/nameLayer.js",
-    "old": "b.h > 0 && b.h < PVP_BAR_LOW;",
-    "new": "b.h > 0 && b.h <= PVP_BAR_LOW;",
+    "old": "export const pvpBarLow = (/** @type {{ h: number } | null | undefined} */ b) => !!b && b.h > 0 && b.h < PVP_BAR_LOW;",
+    "new": "export const pvpBarLow = (/** @type {{ h: number } | null | undefined} */ b) => !!b && b.h > 0 && b.h <= PVP_BAR_LOW;",
     "tests": [
       "test/ui/pvphud.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "PVP-HUD-the-bar-unflashed",
     "file": "src/ui/nameLayer.js",
-    "old": "pvpBarLow(b) ? 'dfname-bar low' : 'dfname-bar'",
-    "new": "'dfname-bar'",
+    "old": "    setCls(tag.bar, !b ? 'dfname-bar off' : pvpBarLow(b) ? 'dfname-bar low' : 'dfname-bar');",
+    "new": "    setCls(tag.bar, !b ? 'dfname-bar off' : 'dfname-bar');",
     "tests": [
       "test/ui/pvphud.test.js"
     ]

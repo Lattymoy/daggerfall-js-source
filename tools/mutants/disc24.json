@@ -79,8 +79,8 @@
   {
     "name": "D24B-picture-not-color32-order",
     "file": "src/ui/modelIcon.js",
-    "old": "colors.set(rgba.subarray(from, from + cw * 4), (ch - 1 - y) * cw * 4);",
-    "new": "colors.set(rgba.subarray(from, from + cw * 4), y * cw * 4);",
+    "old": "    colors.set(rgba.subarray(from, from + cw * 4), (ch - 1 - y) * cw * 4);",
+    "new": "    colors.set(rgba.subarray(from, from + cw * 4), y * cw * 4);",
     "tests": [
       "test/ui/enhanced/disc24b_transport_pictures.test.js",
       "test/systems/audit63_items_loot.test.js"
@@ -89,8 +89,8 @@
   {
     "name": "D24B-texture-read-top-down",
     "file": "src/ui/modelIcon.js",
-    "old": "const ti = ((tex.height - 1 - rowTop) * tex.width + col) * 4;",
-    "new": "const ti = (rowTop * tex.width + col) * 4;",
+    "old": "            const ti = ((tex.height - 1 - rowTop) * tex.width + col) * 4; // color32: row 0 is the texture's bottom",
+    "new": "            const ti = (rowTop * tex.width + col) * 4; // color32: row 0 is the texture's bottom",
     "tests": [
       "test/ui/enhanced/disc24b_transport_pictures.test.js",
       "test/systems/audit63_items_loot.test.js"
@@ -99,8 +99,8 @@
   {
     "name": "D24B-v-sign-dropped",
     "file": "src/ui/modelIcon.js",
-    "old": "const v = -(w0 * uvs[a * 2 + 1] + w1 * uvs[b * 2 + 1] + w2 * uvs[c * 2 + 1]);",
-    "new": "const v = (w0 * uvs[a * 2 + 1] + w1 * uvs[b * 2 + 1] + w2 * uvs[c * 2 + 1]);",
+    "old": "            const v = -(w0 * uvs[a * 2 + 1] + w1 * uvs[b * 2 + 1] + w2 * uvs[c * 2 + 1]); // meshReader stores -(V / height)",
+    "new": "            const v = w0 * uvs[a * 2 + 1] + w1 * uvs[b * 2 + 1] + w2 * uvs[c * 2 + 1]; // meshReader stores -(V / height)",
     "tests": [
       "test/ui/enhanced/disc24b_transport_pictures.test.js",
       "test/systems/audit63_items_loot.test.js"
@@ -109,8 +109,8 @@
   {
     "name": "D24B-no-depth-test",
     "file": "src/ui/modelIcon.js",
-    "old": "          if (z <= depth[o]) continue;   // the nearer face wins: z grows toward the viewer\n",
-    "new": "",
+    "old": "          if (z <= depth[o]) continue; // the nearer face wins: z grows toward the viewer\n          depth[o] = z;",
+    "new": "          depth[o] = z;",
     "tests": [
       "test/ui/enhanced/disc24b_transport_pictures.test.js",
       "test/systems/audit63_items_loot.test.js"
@@ -119,8 +119,8 @@
   {
     "name": "D24B-no-crop",
     "file": "src/ui/modelIcon.js",
-    "old": "const cw = bx1 - bx0 + 1, ch = by1 - by0 + 1;",
-    "new": "const cw = w, ch = w; bx0 = 0; by0 = 0;",
+    "old": "  const cw = bx1 - bx0 + 1,\n    ch = by1 - by0 + 1;",
+    "new": "  const cw = w,\n    ch = w;\n  bx0 = 0;\n  by0 = 0;",
     "tests": [
       "test/ui/enhanced/disc24b_transport_pictures.test.js",
       "test/systems/audit63_items_loot.test.js"
@@ -129,8 +129,8 @@
   {
     "name": "D24B-unlit",
     "file": "src/ui/modelIcon.js",
-    "old": "const shade = ICON_AMBIENT + (1 - ICON_AMBIENT) * Math.abs(",
-    "new": "const shade = 1 + 0 * Math.abs(",
+    "old": "      const shade = ICON_AMBIENT + (1 - ICON_AMBIENT) * Math.abs((nx * L[0] + ny * L[1] + nz * L[2]) / (nl * ll));",
+    "new": "      const shade = 1 + 0 * Math.abs((nx * L[0] + ny * L[1] + nz * L[2]) / (nl * ll));",
     "tests": [
       "test/ui/enhanced/disc24b_transport_pictures.test.js",
       "test/systems/audit63_items_loot.test.js"
@@ -139,8 +139,8 @@
   {
     "name": "D24B-second-list-never-woken",
     "file": "src/ui/modelIcon.js",
-    "old": "if (waiting) { if (onReady) waiting.push(onReady); return null; }",
-    "new": "if (waiting) { return null; }",
+    "old": "    if (onReady) waiting.push(onReady);\n    return null;",
+    "new": "    return null;",
     "tests": [
       "test/ui/enhanced/disc24b_transport_pictures.test.js",
       "test/systems/audit63_items_loot.test.js"
@@ -149,8 +149,8 @@
   {
     "name": "D24B-miss-asked-again",
     "file": "src/ui/modelIcon.js",
-    "old": "    _pictures.set(id, pic);\n",
-    "new": "    if (pic) _pictures.set(id, pic);\n",
+    "old": "        _pictures.set(id, pic);",
+    "new": "        if (pic) _pictures.set(id, pic);",
     "tests": [
       "test/ui/enhanced/disc24b_transport_pictures.test.js",
       "test/systems/audit63_items_loot.test.js"

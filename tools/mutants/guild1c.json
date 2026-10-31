@@ -494,8 +494,8 @@
   {
     "name": "GUILD1c-the-tag-never-written",
     "file": "src/ui/nameLayer.js",
-    "old": "        if (tag.gtOf !== p.gt) { tag.gtOf = p.gt; setText(tag.guild, guildTagText(p.gt) ?? ''); }   // GUILD1c: \"<HND>\", or nothing\n",
-    "new": "",
+    "old": "        if (tag.gtOf !== p.gt) {\n          tag.gtOf = p.gt;\n          setText(tag.guild, guildTagText(p.gt) ?? '');\n        } // GUILD1c: \"<HND>\", or nothing\n        if (tag.houseOf !== p.house) {",
+    "new": "        if (tag.houseOf !== p.house) {",
     "tests": [
       "test/net/guild1c.test.js"
     ]

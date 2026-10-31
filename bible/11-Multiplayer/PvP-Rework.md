@@ -139,7 +139,7 @@ it shows a dim skull, never a green ring (PVP-FLAG-LOOK, "The green one looks ba
 ## PVP-SKULL: the mark over a flagged player
 
 "no skull when not", "when you agro skull turns gold", "make the gold and red glow sloightly": a 16-pixel skull
-(`pvpSkull.js:"export const SKULL_ROWS"`) over the name (`nameLayer.js:"put(tag, 'skullOf', p.skull ?? '',"`)
+(`pvpSkull.js:"export const SKULL_ROWS"`) over the name (`nameLayer.js:"'skullOf', p.skull"`)
 and on the flag button - none unflagged, white flagged, gold in aggro, red a villain. The referee says a flagged fighter's
 aggro to the room on a blow, its ms left in the flag word's `a`, once each ten seconds
 (`wildRef.js:"export function wildAggroWord"`). "overwold should show skulls": the Overworld's player marks
@@ -173,7 +173,7 @@ no map, so the word is the client's own, as the streets' peace is.
 ## PVP-BAR: health over a flagged player
 
 "How does the health and shield bar look", then "Perfect" to its mockup: a red health bar with a thin blue Shield strip
-on top, between the skull and the name (`nameLayer.js:"const paintBar = (tag, b) => {"`), on flagged players alone. The
+on top, between the skull and the name (`nameLayer.js:"const paintBar ="`), on flagged players alone. The
 referee says each flagged fighter's bar to the room when it moves, in whole per cent, at most once each half second
 (`wildRef.js:"export function wildBarWords"`), off the zone's beat
 (`server/src/index.js:"_wildBarSay(st, now) {"`), and every bar to one entering. The referee knows a Shield spell as on
@@ -188,9 +188,9 @@ Invisible player whose skull is gold is drawn faint, with skull and bar and no n
 
 "Was thinking we needed to make them not visible less u look within a angle", and "Yes" to everywhere: another player's
 tag - its skull, its bars and its bubble with it - shows only within about 20 degrees of the crosshair, full inside 17
-and gone past 23 (`nameCone.js:"export const NAME_CONE = Object.freeze({ deg: 20, band: 6, fadeMs: 250 });"`). Each name
+and gone past 23 (`nameCone.js:"export const NAME_CONE"`). Each name
 point carries its angle off the camera's forward (`remotePlayers.js:"off: nameOffDeg(view, head)"`), and the DOM layer
-eases the whole tag toward the cone's answer over 250 ms, so a tag never pops (`nameLayer.js:"tag.cone = nameConeStep("`).
+eases the whole tag toward the cone's answer over 250 ms, so a tag never pops (`nameLayer.js:"tag.cone = nameConeStep"`).
 
 My party and my foe - a peer I struck or was struck by within the flag's lock - always show
 (`pvpFlagHost.js:"const foeOf = (id)"`), passed through the name mask the host already wore. The client draws it;
@@ -476,7 +476,7 @@ its holds. The guild's teleport, Recall and a party's journey keep the zone's la
 "Last hits", bottom right: my three newest PvP blows, flagged in the zone while the lock runs
 (`pvpHud.js:"export function pvpHitLine"`). The referee's `hp` word carries who, on whom and what was dealt, so a Shield's
 share and a resist are not shown. A name is the one my name layer shows; a stranger's is "a player". My party wears its
-green name and bar, no skull, and a bar under 20% flashes (`nameLayer.js:"export const pvpBarLow = "`).
+green name and bar, no skull, and a bar under 20% flashes (`nameLayer.js:"export const pvpBarLow"`).
 
 My kill says "You slew" (`pvpHud.js:"export const pvpSlewText"`); the fallen's screen heads its lines "Slain by"
 (`wildZone.js:"export const wildDeathSlain"`). A villain the room says is red is marked on the Overworld where the

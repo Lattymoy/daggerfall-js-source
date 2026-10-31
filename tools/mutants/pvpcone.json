@@ -2,8 +2,8 @@
   {
     "name": "PVP-CONE-band-unread",
     "file": "src/ui/nameCone.js",
-    "old": "1 - (p.off - lo) / NAME_CONE.band",
-    "new": "1 - (p.off - lo)",
+    "old": "  return Math.max(0, Math.min(1, 1 - (p.off - lo) / NAME_CONE.band));",
+    "new": "  return Math.max(0, Math.min(1, 1 - (p.off - lo)));",
     "tests": [
       "test/ui/pvpcone.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PVP-CONE-near-unread",
     "file": "src/ui/nameCone.js",
-    "old": "if (!p || p.near || !Number.isFinite(p.off)) return 1;",
-    "new": "if (!p || !Number.isFinite(p.off)) return 1;",
+    "old": "  if (!p || p.near || !Number.isFinite(p.off)) return 1;",
+    "new": "  if (!p || !Number.isFinite(p.off)) return 1;",
     "tests": [
       "test/ui/pvpcone.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PVP-CONE-step-unclamped",
     "file": "src/ui/nameCone.js",
-    "old": "return was + Math.max(-most, Math.min(most, want - was));",
-    "new": "return want;",
+    "old": "  return was + Math.max(-most, Math.min(most, want - was));",
+    "new": "  return want;",
     "tests": [
       "test/ui/pvpcone.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PVP-CONE-depth-sign",
     "file": "src/ui/nameCone.js",
-    "old": "Math.atan2(Math.hypot(x, y), -z)",
-    "new": "Math.atan2(Math.hypot(x, y), z)",
+    "old": "  return (Math.atan2(Math.hypot(x, y), -z) * 180) / Math.PI;",
+    "new": "  return (Math.atan2(Math.hypot(x, y), z) * 180) / Math.PI;",
     "tests": [
       "test/ui/pvpcone.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PVP-CONE-cone-unworn",
     "file": "src/ui/nameLayer.js",
-    "old": "(v) => { tag.node.style.opacity = v === '1.00' ? '' : v; tag.node.style.visibility = v === '0.00' ? 'hidden' : ''; }",
-    "new": "() => {}",
+    "old": "        put(tag, 'coneAlpha', tag.cone.toFixed(2), (v) => {\n          tag.node.style.opacity = v === '1.00' ? '' : v;\n          tag.node.style.visibility = v === '0.00' ? 'hidden' : '';\n        });",
+    "new": "        put(tag, 'coneAlpha', tag.cone.toFixed(2), () => {});",
     "tests": [
       "test/ui/pvpcone.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PVP-CONE-ease-skipped",
     "file": "src/ui/nameLayer.js",
-    "old": "tag.cone = nameConeStep(tag.cone, nameConeTarget(p), t - tag.coneAt);",
-    "new": "tag.cone = nameConeTarget(p);",
+    "old": "        tag.cone = nameConeStep(tag.cone, nameConeTarget(p), t - tag.coneAt);",
+    "new": "        tag.cone = nameConeTarget(p);",
     "tests": [
       "test/ui/pvpcone.test.js"
     ]

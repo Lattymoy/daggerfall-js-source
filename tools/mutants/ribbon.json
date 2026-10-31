@@ -399,8 +399,8 @@
   {
     "name": "RIBBON-nl-off",
     "file": "src/ui/nameLayer.js",
-    "old": "setCls(tag.ribbon, band ? 'dfname-ribbon' : 'dfname-ribbon off');",
-    "new": "setCls(tag.ribbon, 'dfname-ribbon');",
+    "old": "          setCls(tag.ribbon, band ? 'dfname-ribbon' : 'dfname-ribbon off');",
+    "new": "          setCls(tag.ribbon, 'dfname-ribbon');",
     "tests": [
       "test/net/season1_ribbon.test.js"
     ]
@@ -408,8 +408,8 @@
   {
     "name": "RIBBON-nl-field",
     "file": "src/ui/nameLayer.js",
-    "old": "tag.ribbon.style.background = band?.field ?? '';",
-    "new": "tag.ribbon.style.background = band?.border ?? '';",
+    "old": "          tag.ribbon.style.background = band?.field ?? '';",
+    "new": "          tag.ribbon.style.background = band?.border ?? '';",
     "tests": [
       "test/net/season1_ribbon.test.js"
     ]
@@ -417,8 +417,8 @@
   {
     "name": "RIBBON-nl-border",
     "file": "src/ui/nameLayer.js",
-    "old": "tag.ribbon.style.borderBottomColor = band?.border ?? '';",
-    "new": "tag.ribbon.style.borderBottomColor = band?.field ?? '';",
+    "old": "          tag.ribbon.style.borderBottomColor = band?.border ?? '';",
+    "new": "          tag.ribbon.style.borderBottomColor = band?.field ?? '';",
     "tests": [
       "test/net/season1_ribbon.test.js"
     ]
@@ -426,8 +426,8 @@
   {
     "name": "RIBBON-nl-changed",
     "file": "src/ui/nameLayer.js",
-    "old": "        if (tag.banded !== banded) {\n          tag.banded = banded;",
-    "new": "        {\n          tag.banded = banded;",
+    "old": "        if (tag.banded !== banded) {",
+    "new": "        {",
     "tests": [
       "test/net/season1_ribbon.test.js"
     ]

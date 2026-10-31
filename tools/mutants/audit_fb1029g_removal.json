@@ -12,8 +12,8 @@
   {
     "name": "AFB-REMOVAL-R4-a-board-outside-the-cone",
     "file": "src/ui/nameCone.js",
-    "old": "if (!p || p.near || !Number.isFinite(p.off)) return 1;",
-    "new": "if (!p || p.near || p.kind === 'board' || !Number.isFinite(p.off)) return 1;",
+    "old": "  if (!p || p.near || !Number.isFinite(p.off)) return 1;",
+    "new": "  if (!p || p.near || p.kind === 'board' || !Number.isFinite(p.off)) return 1;",
     "tests": [
       "test/ui/pvpcone.test.js"
     ],

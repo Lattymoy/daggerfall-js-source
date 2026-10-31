@@ -182,8 +182,8 @@
   {
     "name": "PVP-BAR-the-tag-unpainted",
     "file": "src/ui/nameLayer.js",
-    "old": "() => paintBar(tag, p.bar));   // PVP-BAR",
-    "new": "() => {});   // PVP-BAR",
+    "old": "        put(tag, 'barOf', p.bar ? `${p.bar.h}/${p.bar.s ?? 0}` : '', () => paintBar(tag, p.bar)); // PVP-BAR",
+    "new": "        put(tag, 'barOf', p.bar ? `${p.bar.h}/${p.bar.s ?? 0}` : '', () => {}); // PVP-BAR",
     "tests": [
       "test/net/pvpbar.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "PVP-BAR-the-shield-width-unread",
     "file": "src/ui/nameLayer.js",
-    "old": "tag.barS.style.width = `${Math.max(0, Math.min(100, b.s ?? 0))}%`;",
-    "new": "tag.barS.style.width = '100%';",
+    "old": "    tag.barS.style.width = `${Math.max(0, Math.min(100, b.s ?? 0))}%`;",
+    "new": "    tag.barS.style.width = '100%';",
     "tests": [
       "test/net/pvpbar.test.js"
     ]

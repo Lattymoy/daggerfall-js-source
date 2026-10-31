@@ -313,8 +313,8 @@
   {
     "name": "CC-aside-bubbles",
     "file": "src/ui/nameLayer.js",
-    "old": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll' || line.kind === 'me') return false;",
-    "new": "  if (line.system || line.mine || line.kind === 'roll' || line.kind === 'me') return false;",
+    "old": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll' || line.kind === 'me') return false; // DICE1: a roll is the table's, not the character's words; EMOTE1: an action is done, not said",
+    "new": "  if (line.system || line.mine || line.kind === 'roll' || line.kind === 'me') return false; // DICE1: a roll is the table's, not the character's words; EMOTE1: an action is done, not said",
     "tests": [
       "test/net/name1_bubbles.test.js"
     ]
@@ -322,8 +322,8 @@
   {
     "name": "CC-bubbles-world-alone",
     "file": "src/ui/nameLayer.js",
-    "old": "    for (const tab of log?.tabs ?? []) {\n      const msgs",
-    "new": "    for (const tab of (log?.tabs ?? []).filter((t) => t.id === 'world')) {\n      const msgs",
+    "old": "    for (const tab of log?.tabs ?? []) {",
+    "new": "    for (const tab of (log?.tabs ?? []).filter((t) => t.id === 'world')) {",
     "tests": [
       "test/net/name1_bubbles.test.js"
     ]

@@ -86,7 +86,7 @@ test('JOURNAL1 the cut falls between the characters a reader counts - EMOTE1\'s 
     assert.equal(graphemeCut(`a${FAMILY}`, 3), `a${ch(0x1f468)}`, 'the bubble\'s cut reads the same law');
   } finally { Intl.Segmenter = Seg; }
   assert.equal(graphemeCut(`a${FAMILY}`, 3), 'a', 'with the segmenter a family is one - and does not fit');
-  assert.match(rd('src/ui/nameLayer.js'), /for \(const g of graphemesOf\(text\)\) \{ if \(out\.length \+ g\.length > max\) break; out \+= g; \}/, 'the bubble reads the one law');
+  assert.match(rd('src/ui/nameLayer.js'), /for \(const g of graphemesOf\(text\)\) \{\n\s*if \(out\.length \+ g\.length > max\) break;\n\s*out \+= g;\n\s*\}/, 'the bubble reads the one law');
   assert.match(rd('src/systems/notebook.js'), /for \(const g of graphemesOf\(run\)\) \{/, 'and so does the notebook');
 });
 

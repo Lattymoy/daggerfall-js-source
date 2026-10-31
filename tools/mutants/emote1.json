@@ -110,8 +110,8 @@
   {
     "name": "EM-action-bubbled",
     "file": "src/ui/nameLayer.js",
-    "old": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll' || line.kind === 'me') return false;",
-    "new": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll') return false;",
+    "old": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll' || line.kind === 'me') return false; // DICE1: a roll is the table's, not the character's words; EMOTE1: an action is done, not said",
+    "new": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll') return false; // DICE1: a roll is the table's, not the character's words; EMOTE1: an action is done, not said",
     "tests": [
       "test/net/emote1.test.js"
     ]

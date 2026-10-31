@@ -254,8 +254,8 @@
   {
     "name": "HS-tag-never-armed",
     "file": "src/ui/nameLayer.js",
-    "old": "setCls(tag.guild, arms ? 'dfname-guild armed' : 'dfname-guild');",
-    "new": "setCls(tag.guild, 'dfname-guild');",
+    "old": "          setCls(tag.guild, arms ? 'dfname-guild armed' : 'dfname-guild');",
+    "new": "          setCls(tag.guild, 'dfname-guild');",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "HS-tag-field-edge",
     "file": "src/ui/nameLayer.js",
-    "old": "heraldryColourOf(arms.border)?.hex ?? ''",
-    "new": "heraldryColourOf(arms.field)?.hex ?? ''",
+    "old": "          tag.guild.style.borderColor = arms ? (heraldryColourOf(arms.border)?.hex ?? '') : '';",
+    "new": "          tag.guild.style.borderColor = arms ? (heraldryColourOf(arms.field)?.hex ?? '') : '';",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "HS-tag-shield-kept",
     "file": "src/ui/nameLayer.js",
-    "old": "tag.guild.style.backgroundImage = arms ? `url(\"${heraldrySwatchSrc(arms)}\")` : '';",
-    "new": "tag.guild.style.backgroundImage = arms ? `url(\"${heraldrySwatchSrc(arms)}\")` : tag.guild.style.backgroundImage;",
+    "old": "          tag.guild.style.backgroundImage = arms ? `url(\"${heraldrySwatchSrc(arms)}\")` : '';",
+    "new": "          tag.guild.style.backgroundImage = arms\n            ? `url(\"${heraldrySwatchSrc(arms)}\")`\n            : tag.guild.style.backgroundImage;",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "HS-tag-every-frame",
     "file": "src/ui/nameLayer.js",
-    "old": "        if (tag.armed !== armed) {\n",
-    "new": "        if (true) {\n",
+    "old": "        if (tag.armed !== armed) {",
+    "new": "        if (true) {",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "HS-tag-ungated",
     "file": "src/ui/nameLayer.js",
-    "old": "const arms = guildTagText(p.gt) && armsOf ? heraldryOf(armsOf(p.gt)) : null;",
-    "new": "const arms = armsOf ? heraldryOf(armsOf(p.gt)) : null;",
+    "old": "        const arms = guildTagText(p.gt) && armsOf ? heraldryOf(armsOf(p.gt)) : null;",
+    "new": "        const arms = armsOf ? heraldryOf(armsOf(p.gt)) : null;",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "HS-tag-lookup-any",
     "file": "src/ui/nameLayer.js",
-    "old": "armsOf = typeof fn === 'function' ? fn : null;",
-    "new": "armsOf = fn;",
+    "old": "      armsOf = typeof fn === 'function' ? fn : null;",
+    "new": "      armsOf = fn;",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]

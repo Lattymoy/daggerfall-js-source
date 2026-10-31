@@ -280,8 +280,8 @@
   {
     "name": "midscreen-enhanced-arm-dropped",
     "file": "src/ui/midScreenText.js",
-    "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      // AUDIT FONT F11",
-    "new": "    if (false && typeof document !== 'undefined') {\n      // AUDIT FONT F11",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined') {",
+    "new": "    if (false && typeof document !== 'undefined') {",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]
@@ -289,8 +289,8 @@
   {
     "name": "midscreen-enhanced-arm-taken-on-both-skins",
     "file": "src/ui/midScreenText.js",
-    "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      // AUDIT FONT F11",
-    "new": "    if (typeof document !== 'undefined') {\n      // AUDIT FONT F11",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined') {",
+    "new": "    if (typeof document !== 'undefined') {",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]
@@ -733,8 +733,8 @@
   {
     "name": "AUDIT-FONT-F11-the-large-HUD-lift-never-reaches-the-label",
     "file": "src/ui/midScreenText.js",
-    "old": "top: midTextTopPx(canvas, this.y) });",
-    "new": "top: midTextTopPx(canvas, MID_SCREEN_TEXT_DEFAULT_Y) });",
+    "old": "      drawEnhancedMidText({ text: this.text, visible: true, top: midTextTopPx(canvas, this.y) });",
+    "new": "      drawEnhancedMidText({ text: this.text, visible: true, top: midTextTopPx(canvas, MID_SCREEN_TEXT_DEFAULT_Y) });",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]

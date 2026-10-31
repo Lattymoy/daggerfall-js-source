@@ -1898,6 +1898,14 @@
 /src/ui/menu/*/
 !/src/ui/merchant/
 /src/ui/merchant/*/
+!/src/ui/meshStamp.js
+!/src/ui/midScreenText.js
+!/src/ui/modeIcons.js
+!/src/ui/modeWheel.js
+!/src/ui/modelIcon.js
+!/src/ui/nameCone.js
+!/src/ui/nameLayer.js
+!/src/ui/namePlate.js
 !/src/ui/naval/
 /src/ui/naval/*
 !/src/ui/naval/navalHud.js

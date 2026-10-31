@@ -83,8 +83,8 @@
   {
     "name": "JRN-the-bubble-its-own-law",
     "file": "src/ui/nameLayer.js",
-    "old": "  for (const g of graphemesOf(text)) { if (out.length + g.length > max) break; out += g; }",
-    "new": "  for (const g of Array.from(text)) { if (out.length + g.length > max) break; out += g; }",
+    "old": "  for (const g of graphemesOf(text)) {",
+    "new": "  for (const g of Array.from(text)) {",
     "tests": [
       "test/net/journal1.test.js",
       "test/net/emote1.test.js"

@@ -412,7 +412,7 @@
   {
     "name": "WWAUDIT-A10-colour-diffed-against-a-read-back",
     "file": "src/ui/nameLayer.js",
-    "old": "        if (tag.inked !== ink) { tag.inked = ink; tag.name.style.color = ink; }",
+    "old": "        if (tag.inked !== ink) {\n          tag.inked = ink;\n          tag.name.style.color = ink;\n        }",
     "new": "        tag.name.style.color = ink;",
     "tests": [
       "test/ui/shadowfang.test.js"
