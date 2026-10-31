@@ -446,22 +446,22 @@
   {
     "name": "BLM-C9-the-rows-unread",
     "file": "src/ui/heldMap.js",
-    "old": "    for (const row of tamrielFindRows(ink)) {",
-    "new": "    for (const row of []) {",
+    "old": "[...tamrielFindRows(ink), ...tamrielFoundRows(foundMadePlaces())]",
+    "new": "[...tamrielFoundRows(foundMadePlaces())]",
     "tests": [
       "test/ui/bayleft_find.test.js"
     ],
-    "note": "the find box finds no place past the Bay (lane C's p1: 296 of 296 names never found)"
+    "note": "the find box finds no place past the Bay (lane C's p1: 296 of 296 names never found) - re-aimed by content (FIND-FOUND: the listed rows beside the found)"
   },
   {
     "name": "BLM-C9-the-index-kept-for-good",
     "file": "src/ui/heldMap.js",
-    "old": "    if (this._searchIndex && this._searchIndex.ink === ink) return this._searchIndex;",
-    "new": "    if (this._searchIndex) return this._searchIndex;",
+    "old": "if (this._searchIndex && this._searchIndex.ink === ink && this._searchIndex.gen === gen) return this._searchIndex;",
+    "new": "if (this._searchIndex) return this._searchIndex;",
     "tests": [
       "test/ui/bayleft_find.test.js"
     ],
-    "note": "the index made before the continent came on (or before its places stood) is kept"
+    "note": "the index made before the continent came on (or before its places stood) is kept - re-aimed by content (FIND-FOUND: the index keyed by the store's generation too)"
   },
   {
     "name": "BLM-C9-the-continent-off-read",

@@ -1424,6 +1424,20 @@ x2, homevendor, lairworld, mineperks, start3, wb1, audittesa2m M7 x2, map1 searc
 tesa13 marks-at-far, tesa15 tiles-keyless, ww7 WW7-6-the-capital-keyed-as-a-city. A departure from DFU's travel map,
 whose places and find are MAPS.BSA's: Port-Ledger A, BAY-LEFT-MAPS.
 
+## FIND-FOUND - a found place past the Bay is in the Find box (2026-10-31, from Discord)
+
+A player's Commoners quest said "Bring the courier's letter to Virena Ulailnas in Helbenar". Helbenar is a Morrowind
+village of the countryside's (TESA7), where the questor gave the quest, and the Find box had no such name. C9 indexed the
+listed rows alone: the countryside's and the lairs' places are a pixel's roll and no list, too many to roll for a box.
+
+The box now finds one once the player has found it, as the Bay's box finds a discovered place. The discovery store keeps
+each one's whole map id and name (`systems/discovery.js` foundMadePlaces); `ui/tamrielInk.js` tamrielFoundRows reads its
+pixel back off the id (`countryPixelOfId`, and `world/tamrielDungeons.js` lairPixelOfId). The index is read again when the
+store moves, so a place found with the sheet open is in the box at once. An Arena place keeps no name in the store and is
+listed already. The four hosts: as C9, no host line changed.
+
+Pins `test/ui/findfound.test.js` (4); mutants `tools/mutants/findfound.json`, 8 dead.
+
 ## PAD-CAPTURE - a pad's press on the map never throws (RPT1026-CLIENT, 2026-10-26)
 
 A private report: a pad's A pressed anywhere on the open world map threw a NotFoundError out of

@@ -144,7 +144,8 @@ import { dungeonMap3dOn, tamrielMapOn } from './map/mapSkin.js';   // EM3-3D: th
 // TAMRIEL1 (2026-10-08, Mac: "the entirety of tamriel ... connected as a gigantic map ... seen by players ingame"): the
 // continent inked round the Bay on the world sheet - the sheet's pan box grows to the whole frame, the home view stays
 // the Bay's own fit, and past that fit the sheet is on the continent (ui/tamrielInk.js; bible/03-World/Tamriel.md)
-import { tamrielInkFor, paintTamrielInk, paintPastBay, pastBayStamp, tamrielHoverAt, tamrielCityAt, tamrielCityBucket, onContinent, ARENA_KIND_GLYPHS, releasePastBayInk, viewLeavesBay, tamrielFindRows } from './tamrielInk.js';   // TESA2: the press's city beside the hover's; BAY-LEFT-MAPS C9: the find box's places past the Bay
+import { tamrielInkFor, paintTamrielInk, paintPastBay, pastBayStamp, tamrielHoverAt, tamrielCityAt, tamrielCityBucket, onContinent, ARENA_KIND_GLYPHS, releasePastBayInk, viewLeavesBay, tamrielFindRows, tamrielFoundRows } from './tamrielInk.js';   // TESA2: the press's city beside the hover's; BAY-LEFT-MAPS C9: the find box's places past the Bay (FIND-FOUND: and the found)
+import { foundMadePlaces, discoveryGeneration } from '../systems/discovery.js';   // FIND-FOUND: the places past the Bay found, and when that moves
 import { tamrielFrameInBay, inBay } from '../world/tamriel/tamrielFrame.js';
 import { tamrielLandVersion } from '../world/tamriel/tamrielLand.js';   // TAMRIEL3: the trace's version, in the static key
 import { arenaPlacesVersion } from '../world/arenaPlaces.js';   // TESA1: the places' version past the Bay, beside it
@@ -3544,7 +3545,8 @@ export class HeldMapWindow {
     // places stand. The box read MAPS.BSA's regions alone, so Solitude, Whiterun, the Imperial City - every one of the 296
     // names past the Bay - was never found.
     const ink = this._tamriel ? tamrielInkFor(this._model) : null;
-    if (this._searchIndex && this._searchIndex.ink === ink) return this._searchIndex;
+    const gen = ink ? discoveryGeneration() : 0;   // FIND-FOUND: a place found while the sheet stands is in the box at once
+    if (this._searchIndex && this._searchIndex.ink === ink && this._searchIndex.gen === gen) return this._searchIndex;
     const byName = new Map();   // display name -> [entry]
     const maps = this.deps.maps;
     const count = maps?.regionCount ?? 0;
@@ -3562,14 +3564,16 @@ export class HeldMapWindow {
         byName.set(name, list);
       });
     }
-    for (const row of tamrielFindRows(ink)) {
+    // FIND-FOUND: and the countryside's and the lairs' places the player has found - no list holds them (ui/tamrielInk.js
+    // tamrielFoundRows); a quest's town past the Bay, found when its questor gave the quest there, was never in the box
+    for (const row of ink ? [...tamrielFindRows(ink), ...tamrielFoundRows(foundMadePlaces())] : []) {
       const list = byName.get(row.name) ?? [];
       list.push({ name: row.name, regionName: row.regionName, pastBay: true, port: row.port, pos: { x: row.x, y: row.y } });
       byName.set(row.name, list);
     }
     const distance = getDaggerfallDistance();
     distance.setDictionary([...byName.keys()]);
-    this._searchIndex = { byName, distance, ink };
+    this._searchIndex = { byName, distance, ink, gen };
     return this._searchIndex;
   }
 
