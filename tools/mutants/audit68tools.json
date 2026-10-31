@@ -30,8 +30,8 @@
   {
     "name": "AUDIT68-X5-a-foreign-path-is-this-targets-cite",
     "file": "tools/citeShift.mjs",
-    "old": "        if (dir && dir !== target && !target.endsWith('/' + dir) && !dir.endsWith('/' + target)) continue;\n",
-    "new": "",
+    "old": "        if (dir && dir !== target && !target.endsWith('/' + dir) && !dir.endsWith('/' + target)) continue;\n        const a = +m[1],",
+    "new": "        const a = +m[1],",
     "tests": [
       "test/tooling/audit68_tools.test.js",
       "test/tooling/citemerge.test.js"
@@ -49,8 +49,8 @@
   {
     "name": "AUDIT68-X5-a-regex-delimiter-hides-the-escaped-cite",
     "file": "tools/citeShift.mjs",
-    "old": "new RegExp(`(?<![\\\\w\\\\\\\\])(?:[\\\\w.-]+\\\\\\\\/)*${esc(stem)}",
-    "new": "new RegExp(`(?<![\\\\w/])(?:[\\\\w.-]+\\\\\\\\/)*${esc(stem)}",
+    "old": "    new RegExp(`(?<![\\\\w\\\\\\\\])(?:[\\\\w.-]+\\\\\\\\/)*${esc(stem)}\\\\\\\\${esc(ext)}:(\\\\d+)(?:-(\\\\d+))?`, 'g'),",
+    "new": "    new RegExp(`(?<![\\\\w/])(?:[\\\\w.-]+\\\\\\\\/)*${esc(stem)}\\\\\\\\${esc(ext)}:(\\\\d+)(?:-(\\\\d+))?`, 'g'),",
     "tests": [
       "test/tooling/audit68_tools.test.js"
     ]

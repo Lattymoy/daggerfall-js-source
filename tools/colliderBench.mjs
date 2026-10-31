@@ -19,13 +19,20 @@ import { multiply, trs } from '../src/world/mat4.js';
 
 const A2 = process.env.ARENA2_PATH;
 const bytes = (n) => new Uint8Array(readFileSync(`${A2}/${n}`));
-const blocks = new BlocksFile(); blocks.load(bytes('BLOCKS.BSA'));
-const arch = new Arch3dFile(); arch.load(bytes('ARCH3D.BSA'));
-const maps = new MapsFile(); maps.load(bytes('MAPS.BSA'), bytes('CLIMATE.PAK'), bytes('POLITIC.PAK'));
+const blocks = new BlocksFile();
+blocks.load(bytes('BLOCKS.BSA'));
+const arch = new Arch3dFile();
+arch.load(bytes('ARCH3D.BSA'));
+const maps = new MapsFile();
+maps.load(bytes('MAPS.BSA'), bytes('CLIMATE.PAK'), bytes('POLITIC.PAK'));
 const dfLocation = maps.getLocationByName('Daggerfall', "Privateer's Hold");
 const pre = new Map();
 const getModel = (id) => {
-  if (!pre.has(id)) pre.set(id, dfMeshToModel(arch.getMesh(arch.getRecordIndex(id)), () => ({ width: 1, height: 1 })));
+  if (!pre.has(id))
+    pre.set(
+      id,
+      dfMeshToModel(arch.getMesh(arch.getRecordIndex(id)), () => ({ width: 1, height: 1 })),
+    );
   return pre.get(id);
 };
 const dungeon = layoutDungeon(dfLocation, blocks, getModel);
@@ -39,10 +46,14 @@ for (const b of dungeon.blocks) {
 }
 // Foes at the real monster spawn spread (from the probe): mix of
 // grounded + flyers across the dungeon.
-const enemies = dungeon.blocks.flatMap((b) => (b.layout.flats ?? []).map((e) => ({ x: e.x + b.originX, y: e.y, z: e.z + b.originZ })));
+const enemies = dungeon.blocks.flatMap((b) =>
+  (b.layout.flats ?? []).map((e) => ({ x: e.x + b.originX, y: e.y, z: e.z + b.originZ })),
+);
 console.log('enemy spawns:', enemies.length);
-const mkFoes = (behaviour) => enemies.slice(0, 29).map((e, i) =>
-  new EnemyAI(collider, [e.x, e.y + 0.2, e.z], (i % 8) * Math.PI / 4, { liveSpeed: 50, behaviour }));
+const mkFoes = (behaviour) =>
+  enemies
+    .slice(0, 29)
+    .map((e, i) => new EnemyAI(collider, [e.x, e.y + 0.2, e.z], ((i % 8) * Math.PI) / 4, { liveSpeed: 50, behaviour }));
 
 function bench(label, foes, playerFeet, renderDt, seconds) {
   const frames = Math.round(seconds / renderDt);
@@ -52,8 +63,8 @@ function bench(label, foes, playerFeet, renderDt, seconds) {
   console.log(`${label}: ${(total / frames).toFixed(2)} ms/frame (${frames} frames, ${total.toFixed(0)}ms total)`);
 }
 
-const far = [500, 0, 500];             // undetected: idle foes
-const near = [enemies[0].x, enemies[0].y, enemies[0].z + 8];   // some pursue
+const far = [500, 0, 500]; // undetected: idle foes
+const near = [enemies[0].x, enemies[0].y, enemies[0].z + 8]; // some pursue
 
 bench('IDLE   60fps', mkFoes('General'), far, 1 / 60, 5);
 bench('IDLE   10fps', mkFoes('General'), far, 1 / 10, 5);

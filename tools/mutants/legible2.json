@@ -101,8 +101,8 @@
   {
     "name": "LEGIBLE2-a-comments-inner-lines-lost",
     "file": "tools/carryPins.mjs",
-    "old": "        if (a[k].line < line && line <= a[k].endLine && matched[k] >= 0 && a[k].endLine - a[k].line === b[matched[k]].endLine - b[matched[k]].line) {",
-    "new": "        if (false && a[k].line < line && line <= a[k].endLine && matched[k] >= 0 && a[k].endLine - a[k].line === b[matched[k]].endLine - b[matched[k]].line) {",
+    "old": "          a[k].line < line &&",
+    "new": "          false &&\n          a[k].line < line &&",
     "tests": [
       "test/tooling/legible2_carrypins.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LEGIBLE2-an-anchor-in-code-written",
     "file": "tools/carryPins.mjs",
-    "old": "        if (!forbid) { fail('the anchor stands in code, outside a comment - a person writes it'); continue; }",
-    "new": "        if (false) { fail('the anchor stands in code, outside a comment - a person writes it'); continue; }",
+    "old": "        if (!forbid) {",
+    "new": "        if (false) {",
     "tests": [
       "test/tooling/legible2_carrypins.test.js"
     ]

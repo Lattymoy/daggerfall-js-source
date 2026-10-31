@@ -444,8 +444,8 @@
   {
     "name": "CLIMB4-sfx-whoosh-unseeded",
     "file": "tools/climbSfx.mjs",
-    "old": "const rand = rng(0x700511);",
-    "new": "const rand = Math.random;",
+    "old": "  const rand = rng(0x700511);",
+    "new": "  const rand = Math.random;",
     "tests": [
       "test/player/climb4.test.js"
     ]

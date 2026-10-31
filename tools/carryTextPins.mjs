@@ -16,15 +16,19 @@ function tokensOf(source) {
   const comments = [];
   const options = { ecmaVersion: 'latest', allowHashBang: true, onComment: comments };
   let list;
-  try { list = [...tokenizer(source, { ...options, sourceType: 'module' })]; } catch {
+  try {
+    list = [...tokenizer(source, { ...options, sourceType: 'module' })];
+  } catch {
     comments.length = 0;
     list = [...tokenizer(source, { ...options, sourceType: 'script' })];
   }
   const out = list.map((t) => ({
     key: `${t.type.label}:${t.type.label === 'regexp' ? `${t.value.pattern}/${t.value.flags}` : String(t.value ?? '')}`,
-    start: t.start, end: t.end,
+    start: t.start,
+    end: t.end,
   }));
-  for (const c of comments) out.push({ key: `comment:${c.value.replace(/\s+/g, ' ').trim()}`, start: c.start, end: c.end });
+  for (const c of comments)
+    out.push({ key: `comment:${c.value.replace(/\s+/g, ' ').trim()}`, start: c.start, end: c.end });
   return out.sort((a, b) => a.start - b.start);
 }
 
@@ -33,18 +37,38 @@ const REACH = 64;
 
 /** Old offsets to new ones, by the tokens the two versions share: `at(o, 'start')` for a span's start, `'end'` for its end. */
 export function offsetMap(oldSource, newSource) {
-  const a = tokensOf(oldSource), b = tokensOf(newSource);
+  const a = tokensOf(oldSource),
+    b = tokensOf(newSource);
   const matched = new Array(a.length).fill(-1);
-  let i = 0, j = 0;
+  let i = 0,
+    j = 0;
   while (i < a.length && j < b.length) {
-    if (a[i].key === b[j].key) { matched[i++] = j++; continue; }
-    if (OPTIONAL.has(a[i].key)) { i++; continue; }
-    if (OPTIONAL.has(b[j].key)) { j++; continue; }
+    if (a[i].key === b[j].key) {
+      matched[i++] = j++;
+      continue;
+    }
+    if (OPTIONAL.has(a[i].key)) {
+      i++;
+      continue;
+    }
+    if (OPTIONAL.has(b[j].key)) {
+      j++;
+      continue;
+    }
     let found = false;
     for (let r = 1; r <= REACH && !found; r++) {
-      if (i + r < a.length && a[i + r].key === b[j].key) { i += r; found = true; } else if (j + r < b.length && a[i].key === b[j + r].key) { j += r; found = true; }
+      if (i + r < a.length && a[i + r].key === b[j].key) {
+        i += r;
+        found = true;
+      } else if (j + r < b.length && a[i].key === b[j + r].key) {
+        j += r;
+        found = true;
+      }
     }
-    if (!found) { i++; j++; }
+    if (!found) {
+      i++;
+      j++;
+    }
   }
   const same = (k) => oldSource.slice(a[k].start, a[k].end) === newSource.slice(b[matched[k]].start, b[matched[k]].end);
   return (o, side) => {
@@ -54,7 +78,8 @@ export function offsetMap(oldSource, newSource) {
         return a[k].start < o ? (same(k) ? b[matched[k]].start + (o - a[k].start) : null) : b[matched[k]].start;
       }
       if (side === 'end' && a[k].end >= o) {
-        if (a[k].start < o && a[k].end > o) return matched[k] >= 0 && same(k) ? b[matched[k]].start + (o - a[k].start) : null;
+        if (a[k].start < o && a[k].end > o)
+          return matched[k] >= 0 && same(k) ? b[matched[k]].start + (o - a[k].start) : null;
         if (a[k].end === o) return matched[k] >= 0 ? b[matched[k]].end : null;
         const p = k - 1;
         return p >= 0 && matched[p] >= 0 ? b[matched[p]].end : null;
@@ -65,7 +90,8 @@ export function offsetMap(oldSource, newSource) {
 }
 
 const escapeRegex = (s) => s.replace(/[\\^$.*+?()[\]{}|/]/g, '\\$&').replace(/\n[ \t]*/g, '\\n\\s*');
-const quoteAs = (q, s) => `${q}${s.replace(/\\/g, '\\\\').replace(new RegExp(q, 'g'), `\\${q}`).replace(/\n/g, '\\n')}${q}`;
+const quoteAs = (q, s) =>
+  `${q}${s.replace(/\\/g, '\\\\').replace(new RegExp(q, 'g'), `\\${q}`).replace(/\n/g, '\\n')}${q}`;
 const hasCapture = (pattern) => /(^|[^\\])\((?!\?)/.test(pattern.replace(/\[(?:\\.|[^\]])*\]/g, '[]'));
 
 /** The literals of a test that the change left behind, each with its carried spelling (or why it has none). */
@@ -76,29 +102,58 @@ export function carriedIn(testSource, sources) {
   const out = [];
   const walk = (n, parent) => {
     if (!n || typeof n.type !== 'string') return;
-    if (n.type === 'CallExpression' && n.callee.type === 'MemberExpression' && /^(match|doesNotMatch)$/.test(n.callee.property.name ?? '')
-      && n.callee.object.name === 'assert' && n.arguments[1]?.regex) asserted.add(n.arguments[1]);
+    if (
+      n.type === 'CallExpression' &&
+      n.callee.type === 'MemberExpression' &&
+      /^(match|doesNotMatch)$/.test(n.callee.property.name ?? '') &&
+      n.callee.object.name === 'assert' &&
+      n.arguments[1]?.regex
+    )
+      asserted.add(n.arguments[1]);
     if (n.type === 'VariableDeclarator' && n.init?.regex) named.add(n.init);
     if (n.type === 'Literal' && (typeof n.value === 'string' || n.regex)) out.push(n);
     if (n.type === 'TemplateLiteral' && n.expressions.length === 0) out.push(n);
-    for (const k of Object.keys(n)) { const v = n[k]; if (Array.isArray(v)) v.forEach((c) => walk(c, n)); else if (v && typeof v.type === 'string') walk(v, n); }
+    for (const k of Object.keys(n)) {
+      const v = n[k];
+      if (Array.isArray(v)) v.forEach((c) => walk(c, n));
+      else if (v && typeof v.type === 'string') walk(v, n);
+    }
   };
   walk(ast, null);
   const found = [];
   for (const lit of out) {
-    const regex = lit.regex ? (() => { try { return new RegExp(lit.regex.pattern, lit.regex.flags.replace('g', '')); } catch { return null; } })() : null;
+    const regex = lit.regex
+      ? (() => {
+          try {
+            return new RegExp(lit.regex.pattern, lit.regex.flags.replace('g', ''));
+          } catch {
+            return null;
+          }
+        })()
+      : null;
     const text = lit.type === 'TemplateLiteral' ? lit.quasis[0].value.cooked : lit.value;
     if (!regex && (typeof text !== 'string' || text.length < 12)) continue;
-    const hit = (s) => (regex ? regex.exec(s) : (s.includes(text) ? { index: s.indexOf(text), 0: text } : null));
+    const hit = (s) => (regex ? regex.exec(s) : s.includes(text) ? { index: s.indexOf(text), 0: text } : null);
     const before = sources.map((s) => ({ s, m: hit(s.old) })).find((x) => x.m);
     if (!before || sources.some((s) => hit(s.new))) continue;
     const map = offsetMap(before.s.old, before.s.new);
-    const from = map(before.m.index, 'start'), to = map(before.m.index + before.m[0].length, 'end');
+    const from = map(before.m.index, 'start'),
+      to = map(before.m.index + before.m[0].length, 'end');
     const raw = testSource.slice(lit.start, lit.end);
-    if (from == null || to == null || to < from) { found.push({ start: lit.start, end: lit.end, raw, why: 'its code found no place in the new text' }); continue; }
+    if (from == null || to == null || to < from) {
+      found.push({ start: lit.start, end: lit.end, raw, why: 'its code found no place in the new text' });
+      continue;
+    }
     const now = before.s.new.slice(from, to);
-    if (regex && hasCapture(lit.regex.pattern) && !asserted.has(lit)) { found.push({ start: lit.start, end: lit.end, raw, why: 'a capture group read outside an assertion' }); continue; }
-    const spelled = regex ? `/${named.has(lit) ? `(?:${lit.regex.pattern}|${escapeRegex(now)})` : escapeRegex(now)}/${lit.regex.flags}` : lit.type === 'TemplateLiteral' ? `\`${now.replace(/[`\\]|\$\{/g, '\\$&')}\`` : quoteAs(raw[0], now);
+    if (regex && hasCapture(lit.regex.pattern) && !asserted.has(lit)) {
+      found.push({ start: lit.start, end: lit.end, raw, why: 'a capture group read outside an assertion' });
+      continue;
+    }
+    const spelled = regex
+      ? `/${named.has(lit) ? `(?:${lit.regex.pattern}|${escapeRegex(now)})` : escapeRegex(now)}/${lit.regex.flags}`
+      : lit.type === 'TemplateLiteral'
+        ? `\`${now.replace(/[`\\]|\$\{/g, '\\$&')}\``
+        : quoteAs(raw[0], now);
     found.push({ start: lit.start, end: lit.end, raw, spelled });
   }
   return found;
@@ -106,15 +161,30 @@ export function carriedIn(testSource, sources) {
 
 /** Each test's literals carried: the new test text, and what was left. */
 export function carryTests(tests, changed, read = (f) => readFileSync(f, 'utf8')) {
-  const sources = changed.map((f) => ({ file: f, old: execFileSync('git', ['show', `HEAD:${f}`], { encoding: 'utf8', maxBuffer: 1 << 28 }), new: read(f) }));
+  const sources = changed.map((f) => ({
+    file: f,
+    old: execFileSync('git', ['show', `HEAD:${f}`], { encoding: 'utf8', maxBuffer: 1 << 28 }),
+    new: read(f),
+  }));
   const results = [];
   for (const t of tests) {
     const src = read(t);
     let found;
-    try { found = carriedIn(src, sources); } catch (e) { results.push({ test: t, error: e.message }); continue; }
+    try {
+      found = carriedIn(src, sources);
+    } catch (e) {
+      results.push({ test: t, error: e.message });
+      continue;
+    }
     let text = src;
-    for (const f of [...found].sort((x, y) => y.start - x.start)) if (f.spelled) text = text.slice(0, f.start) + f.spelled + text.slice(f.end);
-    results.push({ test: t, text, carried: found.filter((f) => f.spelled).length, left: found.filter((f) => !f.spelled) });
+    for (const f of [...found].sort((x, y) => y.start - x.start))
+      if (f.spelled) text = text.slice(0, f.start) + f.spelled + text.slice(f.end);
+    results.push({
+      test: t,
+      text,
+      carried: found.filter((f) => f.spelled).length,
+      left: found.filter((f) => !f.spelled),
+    });
   }
   return results;
 }
@@ -124,11 +194,19 @@ if (isMain(import.meta.url)) {
   const at = args.indexOf('--tests');
   const changed = args.slice(0, at).filter((a) => !a.startsWith('--'));
   const tests = args.slice(at + 1).filter((a) => !a.startsWith('--'));
-  let carried = 0, left = 0;
+  let carried = 0,
+    left = 0;
   for (const r of carryTests(tests, changed)) {
-    if (r.error) { console.log(`ERROR ${r.test}: ${r.error}`); left++; continue; }
+    if (r.error) {
+      console.log(`ERROR ${r.test}: ${r.error}`);
+      left++;
+      continue;
+    }
     carried += r.carried;
-    for (const l of r.left) { console.log(`LEFT  ${r.test}: ${l.why} - ${l.raw.slice(0, 100)}`); left++; }
+    for (const l of r.left) {
+      console.log(`LEFT  ${r.test}: ${l.why} - ${l.raw.slice(0, 100)}`);
+      left++;
+    }
     if (args.includes('--write') && r.carried) writeFileSync(r.test, r.text);
   }
   console.log(`${carried} text pin(s) carried, ${left} not`);

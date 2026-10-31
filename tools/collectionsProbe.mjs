@@ -21,38 +21,75 @@ const LANG = process.env.COLL_LANG ?? '';
 mkdirSync(OUT, { recursive: true });
 
 const results = [];
-const check = (name, ok, detail = '') => { results.push({ name, ok }); console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`); };
+const check = (name, ok, detail = '') => {
+  results.push({ name, ok });
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`);
+};
 
 /** The wardrobe the mocked service answers - a founder who bought the Broker's fire, wears the Gatebreaker, broke the
  *  Remnant once and took the Spire's second Redoubt. */
 const WARDROBE_AT_START = () => ({
-  titles: ['founder', 'gatebreaker', 'hourbreaker', 'spirewalker', 'kynbane'], title: 'gatebreaker',
-  glyphs: ['sprout'], auras: ['dagonfire', 'beaconlight'], aura: 'dagonfire', insignia: ['title:gatebreaker', 'aura:dagonfire'],
-  icons: ['twinmoons'], icon: null,
+  titles: ['founder', 'gatebreaker', 'hourbreaker', 'spirewalker', 'kynbane'],
+  title: 'gatebreaker',
+  glyphs: ['sprout'],
+  auras: ['dagonfire', 'beaconlight'],
+  aura: 'dagonfire',
+  insignia: ['title:gatebreaker', 'aura:dagonfire'],
+  icons: ['twinmoons'],
+  icon: null,
 });
 /** The visit's wardrobe - each browser context's own, so one context's Wear is never the next one's start. */
 let WARDROBE = WARDROBE_AT_START();
-const CORS = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'GET, POST, OPTIONS' };
+const CORS = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-headers': '*',
+  'access-control-allow-methods': 'GET, POST, OPTIONS',
+};
 
 async function serve(page) {
   await page.route(/\/v1\/account(\/.*)?$/, async (route) => {
     const req = route.request();
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: CORS });
-    if (req.method() === 'GET') return route.fulfill({ status: 200, headers: { ...CORS, 'content-type': 'application/json' }, body: JSON.stringify({ account: { id: 'a1', name: 'Aelwyn', kind: 'linked' }, wardrobe: WARDROBE }) });
+    if (req.method() === 'GET')
+      return route.fulfill({
+        status: 200,
+        headers: { ...CORS, 'content-type': 'application/json' },
+        body: JSON.stringify({ account: { id: 'a1', name: 'Aelwyn', kind: 'linked' }, wardrobe: WARDROBE }),
+      });
     const body = JSON.parse(req.postData() || '{}');
     if ('title' in body) WARDROBE.title = body.title;
     if ('aura' in body) WARDROBE.aura = body.aura;
     if ('icon' in body) WARDROBE.icon = body.icon;
-    return route.fulfill({ status: 200, headers: { ...CORS, 'content-type': 'application/json' }, body: JSON.stringify(WARDROBE) });
+    return route.fulfill({
+      status: 200,
+      headers: { ...CORS, 'content-type': 'application/json' },
+      body: JSON.stringify(WARDROBE),
+    });
   });
 }
 
 async function toPause(page, signedIn) {
   await page.addInitScript((on) => {
     try {
-      localStorage.setItem('dagger.quicksave', JSON.stringify({ v: 1, name: 'Aelwyn', chargenDone: true, career: { name: 'Spellsword' }, level: 4, items: [] }));
-      if (on) localStorage.setItem('dagger.account.session', JSON.stringify({ id: 'a1', name: 'Aelwyn', kind: 'linked', sessionId: 's1', secret: 'probe-secret' }));
-    } catch { /* storage off */ }
+      localStorage.setItem(
+        'dagger.quicksave',
+        JSON.stringify({
+          v: 1,
+          name: 'Aelwyn',
+          chargenDone: true,
+          career: { name: 'Spellsword' },
+          level: 4,
+          items: [],
+        }),
+      );
+      if (on)
+        localStorage.setItem(
+          'dagger.account.session',
+          JSON.stringify({ id: 'a1', name: 'Aelwyn', kind: 'linked', sessionId: 's1', secret: 'probe-secret' }),
+        );
+    } catch {
+      /* storage off */
+    }
   }, signedIn);
   // the front door drawn (no game started - the world's boot is not this page's business), then the pause door over it
   await page.goto(`${BASE}/play/?nointro${LANG ? `&lang=${LANG}` : ''}`, { waitUntil: 'domcontentloaded' });
@@ -66,7 +103,10 @@ async function toPause(page, signedIn) {
 }
 
 const browser = await chromium.launch();
-for (const [label, opts] of [['desktop', { viewport: { width: 1280, height: 860 } }], ['phone', devices['iPhone 13']]]) {
+for (const [label, opts] of [
+  ['desktop', { viewport: { width: 1280, height: 860 } }],
+  ['phone', devices['iPhone 13']],
+]) {
   for (const signedIn of [true, false]) {
     const ctx = await browser.newContext(opts);
     const page = await ctx.newPage();
@@ -76,10 +116,19 @@ for (const [label, opts] of [['desktop', { viewport: { width: 1280, height: 860 
     if (signedIn) await serve(page);
     await toPause(page, signedIn);
     const tag = `${LANG ? `${LANG}-` : ''}${label}-${signedIn ? 'in' : 'out'}`;
-    if (signedIn) await page.waitForFunction(() => /\d+ \/ \d+/.test(document.querySelector('.coll-part')?.textContent ?? ''), null, { timeout: 10000 }).catch(() => {});
+    if (signedIn)
+      await page
+        .waitForFunction(() => /\d+ \/ \d+/.test(document.querySelector('.coll-part')?.textContent ?? ''), null, {
+          timeout: 10000,
+        })
+        .catch(() => {});
     const tiles = await page.$$eval('.coll-part', (ns) => ns.map((n) => n.textContent));
     check(`${tag}: the parts' tiles`, tiles.length >= 4, tiles.join(' | '));
-    check(`${tag}: the titles' count`, signedIn ? new RegExp(`(^|\\D)${WARDROBE.titles.length} / \\d+`).test(tiles[0]) : /– \//.test(tiles[0]), tiles[0]);
+    check(
+      `${tag}: the titles' count`,
+      signedIn ? new RegExp(`(^|\\D)${WARDROBE.titles.length} / \\d+`).test(tiles[0]) : /– \//.test(tiles[0]),
+      tiles[0],
+    );
     await page.screenshot({ path: `${OUT}/${tag}-titles.png` });
     // the Held filter: the account's titles alone - offered only where the account is read
     if (signedIn) {
@@ -88,7 +137,8 @@ for (const [label, opts] of [['desktop', { viewport: { width: 1280, height: 860 
       check(`${tag}: Held lists what is held`, held === WARDROBE.titles.length, `${held} rows`);
       await page.screenshot({ path: `${OUT}/${tag}-held.png` });
       await page.locator('[data-focus="coll-filter-all"]').click();
-    } else check(`${tag}: no Held filter unread`, (await page.locator('[data-focus="coll-filter-held"]').count()) === 0);
+    } else
+      check(`${tag}: no Held filter unread`, (await page.locator('[data-focus="coll-filter-held"]').count()) === 0);
     // a row opened whole
     await page.locator('[data-wardrobe="title:gatebreaker"]').click();
     await page.locator('.coll-whole').first().scrollIntoViewIfNeeded();
@@ -108,21 +158,52 @@ for (const [label, opts] of [['desktop', { viewport: { width: 1280, height: 860 
       // Wear from the keyboard: the service answers, the row says it, and the keyboard keeps its place
       await page.locator('.coll-wear').focus();
       await page.keyboard.press('Enter');
-      await page.waitForFunction(() => !document.querySelector('[data-wardrobe="title:gatebreaker"] .is-worn'), null, { timeout: 10000 }).catch(() => {});
-      const after = await page.evaluate(() => ({ worn: !!document.querySelector('[data-wardrobe="title:gatebreaker"] .is-worn'), focus: document.activeElement?.getAttribute('data-focus') ?? document.activeElement?.tagName }));
-      check(`${tag}: Take off answered`, !after.worn && WARDROBE.title === null, JSON.stringify({ ...after, served: WARDROBE.title }));
-      check(`${tag}: the keyboard kept on the press`, after.focus === 'coll-wear-title-gatebreaker', String(after.focus));
+      await page
+        .waitForFunction(() => !document.querySelector('[data-wardrobe="title:gatebreaker"] .is-worn'), null, {
+          timeout: 10000,
+        })
+        .catch(() => {});
+      const after = await page.evaluate(() => ({
+        worn: !!document.querySelector('[data-wardrobe="title:gatebreaker"] .is-worn'),
+        focus: document.activeElement?.getAttribute('data-focus') ?? document.activeElement?.tagName,
+      }));
+      check(
+        `${tag}: Take off answered`,
+        !after.worn && WARDROBE.title === null,
+        JSON.stringify({ ...after, served: WARDROBE.title }),
+      );
+      check(
+        `${tag}: the keyboard kept on the press`,
+        after.focus === 'coll-wear-title-gatebreaker',
+        String(after.focus),
+      );
       // a "comes with": Kynbane's Beaconlight, in the Auras part, its row in view and the keyboard on it
       await page.locator('[data-wardrobe="title:kynbane"]').click();
       await page.locator('[data-focus="coll-with-aura-beaconlight"]').click();
-      await page.waitForFunction(() => document.activeElement?.getAttribute('data-focus') === 'coll-row-aura-beaconlight', null, { timeout: 5000 }).catch(() => {});
+      await page
+        .waitForFunction(
+          () => document.activeElement?.getAttribute('data-focus') === 'coll-row-aura-beaconlight',
+          null,
+          { timeout: 5000 },
+        )
+        .catch(() => {});
       const landed = await page.evaluate(() => {
         const row = document.querySelector('[data-wardrobe="aura:beaconlight"]');
         const pane = document.querySelector('.px-qdetail');
-        const r = row?.getBoundingClientRect(), p = pane?.getBoundingClientRect();
-        return { part: document.querySelector('[data-focus="coll-part-auras"]')?.classList.contains('on'), open: row?.classList.contains('on'), inView: !!(r && p && r.top >= p.top - 1 && r.bottom <= p.bottom + 1), focus: document.activeElement?.getAttribute('data-focus') };
+        const r = row?.getBoundingClientRect(),
+          p = pane?.getBoundingClientRect();
+        return {
+          part: document.querySelector('[data-focus="coll-part-auras"]')?.classList.contains('on'),
+          open: row?.classList.contains('on'),
+          inView: !!(r && p && r.top >= p.top - 1 && r.bottom <= p.bottom + 1),
+          focus: document.activeElement?.getAttribute('data-focus'),
+        };
       });
-      check(`${tag}: a "comes with" lands its row in view, focused`, landed.part && landed.open && landed.inView && landed.focus === 'coll-row-aura-beaconlight', JSON.stringify(landed));
+      check(
+        `${tag}: a "comes with" lands its row in view, focused`,
+        landed.part && landed.open && landed.inView && landed.focus === 'coll-row-aura-beaconlight',
+        JSON.stringify(landed),
+      );
       await page.screenshot({ path: `${OUT}/${tag}-comes-with.png` });
     }
     // the auras, the icons, the glyphs
@@ -136,7 +217,10 @@ for (const [label, opts] of [['desktop', { viewport: { width: 1280, height: 860 
     await page.locator('.coll-whole').first().scrollIntoViewIfNeeded();
     await page.screenshot({ path: `${OUT}/${tag}-aura-opened.png` });
     // the page as wide as its pane - nothing wider
-    const wide = await page.evaluate(() => { const d = document.querySelector('.px-qdetail'); return d ? [d.scrollWidth, d.clientWidth] : [0, 0]; });
+    const wide = await page.evaluate(() => {
+      const d = document.querySelector('.px-qdetail');
+      return d ? [d.scrollWidth, d.clientWidth] : [0, 0];
+    });
     check(`${tag}: nothing wider than the pane`, wide[0] <= wide[1] + 1, `${wide[0]} in ${wide[1]}`);
     check(`${tag}: no page error`, errors.length === 0, errors.join(' / '));
     await ctx.close();
