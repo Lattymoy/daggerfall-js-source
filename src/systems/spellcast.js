@@ -458,10 +458,18 @@ export function flightBodies(foes, playerFeet, playerHeight) {
 /** AUDIT FB1031 F2: the bodies a dungeon missile `m` may strike, and no other (dungeonContext.js's flight: both sides'
  *  shafts, the foes' spells, a peer's drawn ones) - a body it flies through held cover open for it. A drawn one stops on
  *  any body; mine on a foe but a companion and one my technique struck, never me; a foe's shaft on me and every foe but
- *  its shooter; a foe's spell on the foe it was loosed at while that stands, else on me (never at a peer's word). */
-export function dungeonMissileBodies(m, foes, playerFeet, playerHeight) {
+ *  its shooter; a foe's spell on the foe it was loosed at while that stands, else on me (never at a peer's word).
+ *  AUDIT FB1031 II K4: mine on `standIns` too - the bodies the relay runs that the flight strikes (the court's boss, his
+ *  crystals and host, my opponent on the sand): none but one my technique struck, and the opponent never for a
+ *  technique's (TECH law 3). Unlisted, the boss at a flat's middle was shielded from my shaft. */
+export function dungeonMissileBodies(m, foes, playerFeet, playerHeight, standIns = null) {
   if (m.visual) return flightBodies(foes, playerFeet, playerHeight);
-  if (m.fromPlayer) return flightBodies(foes?.filter((f) => f.companion == null && !m.technique?.struck?.includes(f)), null, playerHeight);
+  if (m.fromPlayer) {
+    const struck = (f) => !!m.technique?.struck?.includes(f);
+    const out = flightBodies(foes?.filter((f) => f.companion == null && !struck(f)), null, playerHeight);
+    for (const b of standIns ?? []) if (b && !b.dead && b.ai?.feet && !struck(b) && !(m.technique && b.rival != null)) out.push(b.ai);
+    return out;
+  }
   if (m.arrow) return flightBodies(foes?.filter((f) => f !== m.shooterFoe), playerFeet, playerHeight);
   if (m.aimFoe && !m.aimFoe.dead) return flightBodies([m.aimFoe], null, playerHeight);
   return flightBodies(null, m.aimFoe?.isPeer ? null : playerFeet, playerHeight);

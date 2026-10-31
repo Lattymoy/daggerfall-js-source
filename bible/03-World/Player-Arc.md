@@ -2523,9 +2523,8 @@ shot.
 inside the cover of a flat drawn wider than its foot (35 nature records of ARENA2's climate archives - 504.19, a rock:
 foot 0.68 m, cover 1.29 m) and a young tree's low crown. A foe pressed behind the rock or a young banyan's trunk was
 shot through it, and a foe's arrow and bolt hit me pressed behind the rock. Now a ray with an end in a proxy -
-its start, a sight ray's end, a struck body's point - meets it at its MIDDLE, where the ray passes nearest its axis
-(`cover.js:"export const COVER_MIDDLE_GRACE = 0.35;"`, a body's radius about it). Near side of the middle, a body
-sees and is seen, shoots and is shot; behind it, neither. No pair is one-way.
+its start, a sight ray's end, a struck body's point - stops only where it crosses its MIDDLE inside it, where the
+ray passes nearest its axis (`cover.js:"export const COVER_MIDDLE_GRACE = 0.35;"`, a body's radius about it). Near side of the middle, a body sees and is seen, shoots and is shot; behind it, neither.
 
 **AUDIT FB1031 F2, F3 - what a missile may strike.** Each flight lists only that (`hostMagic.js` `missileBodies`,
 `arrowFlight.js` `shaftBodies`, `spellcast.js` `dungeonMissileBodies`): a foe's bolt the player alone, a foe's shaft
@@ -2543,6 +2542,34 @@ the line ahead are pinned.
 Pins `test/characters/fb1031_foes.test.js`, `tools/mutants/fb1031_foes.json` (40, all dead). PIN MOVED: the old index's
 fixture asks the live ray law (`test/ai/fixtures/coverIndexBefore.mjs`), the flight call's source pins (tact1,
 groundbolt, wallshaft, roadh_tail), nine mutant records re-aimed by content.
+
+**AUDIT FB1031 II K1 - either end, alike.** "Enemies just hide in them": still, in a young tree's crown. F1 said a ray
+with an end in a proxy "meets it at its MIDDLE" and "No pair is one-way", but a ray from outside to an end past the
+middle was met at its side or its floor; the way back, from inside, only where it crossed the middle in the proxy's
+span. So a foe standing in a young flame tree's crown saw a crouched player under its edge and shot him, while his
+shot at its head was lost on the crown: 0.4-3.8% of pairs round the young trees were one-way.
+
+Now an end in a proxy, either end, hides only where the line crosses the middle inside the proxy (its span and its
+radius - a struck body's axis is beside the line): from inside the ray stops at the middle, from outside where it
+enters. A line to a body past the middle stops a grace short of the middle at the latest, so a foe's contact reach
+(0.45 m) never catches one there whose own shot out is lost. Measured after: 0 one-way of 119,435 sight pairs round six young trees (1,656 under F1's law), and 0 of 4,222 lines
+shot both ways - my shaft out of my bow hand, a foe's back along it (341 before). Every reader asks the one law:
+canSeeTarget, the clear shot, the charge's lane, the watch's witnesses.
+
+**AUDIT FB1031 II K2-K5.** K2: F1's two-way pin sampled one full-height rock, every end in its span; it samples the
+same lifted 1.4 m with ends under its floor and over its top (22 one-way pairs under the old law). K3: a side step off
+the ground (a ledge, a pier's edge) was refused and took the push with it, so the foe stood in the trunk every frame;
+the push alone then (`foeSpacing.js` `keepFoesOffBodies`). K4: the dungeon's shaft of mine names the bodies the relay
+runs that it strikes - the court's boss, his crystals and host, my opponent on the sand (`spellcast.js`
+`dungeonMissileBodies` `standIns`, handed in the host's call in place); unnamed, the boss at a flat's middle was
+shielded from my arrow while my spell reached him. A bolt names DEX5's corpse prefabs (`corpseMarker.js`
+`corpsePrefabBodies`). K5: F2's lists' five unpinned laws pinned.
+
+Pins `test/characters/fb1031ii_cover.test.js`, `tools/mutants/fb1031ii_cover.json` (24, all dead). PIN MOVED: the
+dungeon flight's call in five source pins; mutant records re-aimed by content (fb1031_foes, tact1, trunkfoes,
+groundbolt, tv7). Not changed: a shot leaves DFU's bow hand (0.15 m to the side), not its body's axis, and a missile
+meets cover by touch (TACT B5). Over 3,749 lines round four shapes, either body in the cover, 14 still differ: a hand
+just inside a rock's rim while the body stands out, or a body at a crown's rim whose own shot enters it at once.
 
 Pinned by `test/characters/trunkfoes.test.js` (a foe in a banyan's trunk at its edge in one frame, alone or in a pack;
 the Bay's trees and rocks, a graht-oak and a Hist out, a barrel and a statue not; the edge; the real encounter pool;

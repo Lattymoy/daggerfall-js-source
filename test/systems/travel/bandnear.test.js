@@ -43,6 +43,7 @@ test('BAND-NEAR BN2 host run: WITH THE VIEW DOWN A CHASE STOPS THE JOURNEY AT TH
       journeyMet: () => { at.met.push(c.dist); return null; }, wildBands: { step: () => ({ alerted: false }) }, wildStealth: () => 50,
       wildFoes: { alert: () => {} }, exteriorFoes: { noticedPlayer: () => {}, encounterRoom: () => Infinity },
       cam: { yaw: Math.PI / 4 }, fieldOfView: () => 0.5,   // AUDIT FB1031 B1 (PIN MOVED): a view turned off its bearing
+      largeHudWorldAspect: (w, h) => w / h, canvas: { clientWidth: 16, clientHeight: 9 },   // AUDIT FB1031 II K6: the frame's shape (PIN MOVED)
       _standCampEncounter: (hit) => { at.stood.push([hit.minDistance, hit.maxDistance]); return { foes: Promise.resolve([]) }; },
     };
     const f = new Function('d', 'law', 'PACK_SPACING', `const { ${Object.keys(d).join(', ')} } = d;

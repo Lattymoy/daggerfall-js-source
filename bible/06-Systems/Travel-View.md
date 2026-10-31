@@ -4089,9 +4089,18 @@ from above is still never met in play.
 `bearingDegrees` 0), past CAMP-FAR's rule: with the camera facing the way the band came, every anchor stood in the view
 39-51 m off and popped up mid-screen (2,000 of 2,000 in a 65-degree view). Now it keeps its bearing only outside the
 view; inside it the band stands just outside the view's edge on its own side, CAMP-FAR's FOV plus 0-4 degrees
-(`travelBands.js:"export function bandStandBearing(yaw, camYaw, fovDegrees, seen = false) {"`, called in place in
-`world.js` bandStand, so the host does not grow). Under the Overworld a band still stands where it was watched coming
-(OW5b B2). It reads the camera, never the place: every province's.
+(`travelBands.js:"export function bandStandBearing(yaw, camYaw, fovDegrees, seen = false, aspect = 1, nearM = Infinity, spacingM = 0) {"`,
+called in place in `world.js` bandStand, so the host does not grow). Under the Overworld a band still stands where it
+was watched coming (OW5b B2). It reads the camera, never the place: every province's.
+
+**AUDIT FB1031 II K6 - the view's width.** The edge was the vertical FOV plus 2 degrees, and the view's half-width is
+wider on a wide screen: at 32:9 and 60 degrees (a half-width of 64) 94% of bands stood a member in view, at 21:9 1.6%.
+Now the edge is the horizontal half-view (the frame's aspect, `largeHudWorldAspect` of the canvas, as the frame's lens
+reads it) plus the pack's spread about its nearest anchor (`PACK_SPACING` at `minDistance`) plus the anchor's 2-degree
+jitter, and FOV plus 2 at the least - 16:9 is unchanged (62 at 60 degrees). Pins `test/characters/fb1031ii_cover.test.js`
+(K6: 32:9 and 16:9, the lifted bandStand on the real campAnchorSpot, no member in view); PIN MOVED: the lifted runs
+hand a 16:9 canvas. Not changed: a lone camp's CAMP-FAR edge (`campAnchorSpot`, FOV plus 0-4) reads the vertical FOV
+too.
 
 Pins `test/characters/fb1031_foes.test.js` (B1: the lifted bandStand on the real campAnchorSpot), `tools/mutants/fb1031_foes.json`.
 PIN MOVED: the lifted bandStand runs in `tv7_bands.test.js`, `bandnear.test.js` and `wildalertfix.test.js` hand it a

@@ -63,48 +63,60 @@ export function coverProxies(base, size, { tree = false } = {}) {
 }
 
 /** The first distance along a unit ray from `o` (in the cylinder's frame) at which it meets the upright cylinder
- *  { c: base, r, h, lift }, within `maxDist`; Infinity for none. From outside a ray meets its side. AUDIT FB1031 F1: a
- *  ray with an end inside it meets it at its MIDDLE (COVER_MIDDLE_GRACE) - a ray that STARTS inside, there; a SIGHT
- *  ray (`endAt`, its length) that ENDS inside in front of the middle (AUDIT TACT B2) not at all. A felled tree (FELLED)
- *  and a person (`c.noCover`) are no cover at all. */
+ *  { c: base, r, h, lift }, within `maxDist`; Infinity for none. From outside a ray meets its side or a cap. AUDIT FB1031
+ *  F1, II K1: a ray with an end inside it (its start, or a SIGHT ray's end at `endAt`, its length) meets it only where it
+ *  crosses its MIDDLE inside it, that end past the middle (COVER_MIDDLE_GRACE) - from inside at the middle, from outside
+ *  where it enters; an end in front of the middle (AUDIT TACT B2) opens it. A felled tree (FELLED) and a person
+ *  (`c.noCover`) are no cover at all. */
 export function rayCylinder(o, d, cyl, maxDist, endAt = null) {
   return rayUpright(o, d, cyl.c, cyl.r, cyl.h, cyl.lift ?? 0, maxDist, endAt);
 }
 /** AUDIT FB1031 F1: A PROXY'S MIDDLE - where a ray passes nearest its axis, where the flat's picture stands. A body in a
- *  proxy on the far side of its middle from another is behind it both ways (unseen and blind, unshot and shooting
- *  nothing); on the near side it sees and is seen both ways. A hold opened the whole proxy, and a clamp leaves a body
- *  inside a wide flat's cover or a low crown: one pressed behind a rock or a young tree's trunk was shot through it.
- *  Within this of the middle (a body's own radius, motor.js CAPSULE_RADIUS) a body is at it: the near side for both. */
+ *  proxy on the far side of its middle from another, the line between them crossing the middle inside it, is behind it
+ *  both ways (unseen and blind, unshot and shooting nothing); else it sees and is seen both ways - a line under a crown's
+ *  floor at the middle too (AUDIT FB1031 II K1). A hold opened the whole proxy, and a clamp leaves a body inside a wide
+ *  flat's cover or a low crown: one pressed behind a rock or a young tree's trunk was shot through it. Within this of
+ *  the middle (a body's own radius, motor.js CAPSULE_RADIUS) a body is at it: the near side for both. */
 export const COVER_MIDDLE_GRACE = 0.35;
 /** COVER-COMPACT: rayCylinder over a proxy's own numbers - the index's columns ask it with no object a proxy. TRUNK-FOES:
  *  `holds` the points (flat x, y, z, in the cylinder's frame) of the bodies a missile's line strikes - a proxy holding one
- *  in front of its middle (AUDIT FB1031 F1) is not in front of it, as the sight law sees. */
+ *  in front of its middle (AUDIT FB1031 F1) is not in front of it, and one past it is an end in it (II K1), as the sight
+ *  law sees. */
 function rayUpright(o, d, c0, r, h, lift, maxDist, endAt, holds = null, nHolds = 0) {
   if (FELLED.has(c0) || c0.noCover) return Infinity;
   const cx = c0[0], cy = c0[1] + lift, cz = c0[2], top = cy + h, rr = r * r;
   const ox = o[0] - cx, oz = o[2] - cz;
   const a = d[0] * d[0] + d[2] * d[2];
-  const behind = (a > 1e-12 ? -(ox * d[0] + oz * d[2]) / a : Infinity) + COVER_MIDDLE_GRACE;   // AUDIT FB1031 F1: past its middle (a ray straight up or down crosses none)
+  const mid = a > 1e-12 ? -(ox * d[0] + oz * d[2]) / a : Infinity;   // AUDIT FB1031 F1: its middle (a ray straight up or down crosses none)
+  let endIn = false;   // AUDIT FB1031 II K1: an end in it past its middle - read as a start in it is
   if (endAt != null) {   // the sight ray's own end (its target's eye), however short the search has been cut
     const ex = ox + d[0] * endAt, ey = o[1] + d[1] * endAt, ez = oz + d[2] * endAt;
-    if (ex * ex + ez * ez <= rr && ey >= cy && ey <= top && !(endAt > behind)) return Infinity;
+    if (ex * ex + ez * ez <= rr && ey >= cy && ey <= top) { if (!(endAt - mid > COVER_MIDDLE_GRACE)) return Infinity; endIn = true; }
   }
   for (let k = 0; k < nHolds; k += 3) {
     const hx = holds[k] - cx, hz = holds[k + 2] - cz, hy = holds[k + 1];
-    if (hx * hx + hz * hz <= rr && hy >= cy && hy <= top && !(((hx - ox) * d[0] + (hz - oz) * d[2]) / a > behind)) return Infinity;
+    if (hx * hx + hz * hz <= rr && hy >= cy && hy <= top) { if (!(((hx - ox) * d[0] + (hz - oz) * d[2]) / a - mid > COVER_MIDDLE_GRACE)) return Infinity; endIn = true; }
   }
-  if (ox * ox + oz * oz <= rr && o[1] >= cy && o[1] <= top) {   // from inside: met at its middle, where that lies ahead
-    const mid = behind - COVER_MIDDLE_GRACE, y = o[1] + d[1] * mid;
-    return mid > COVER_MIDDLE_GRACE && mid <= maxDist && y >= cy && y <= top ? mid : Infinity;
-  }
+  // AUDIT FB1031 II K1: an end in it - either end, alike - hides only where the line crosses the middle inside it. One
+  // from outside had stopped at its side whatever the middle, so under a crown's floor a foe in the crown saw and shot a
+  // crouched player whose shot back was lost. A line to a body past the middle stops a grace short of it at the latest:
+  // at the middle a foe's contact reach (0.45 m, past the grace) struck one whose own shot out was lost.
+  const startIn = ox * ox + oz * oz <= rr && o[1] >= cy && o[1] <= top;
   let best = Infinity;
+  if (startIn || endIn) {
+    const y = o[1] + d[1] * mid, mx = ox + d[0] * mid, mz = oz + d[2] * mid;   // a hold is a body's axis, beside the line
+    if (!((!startIn || mid > COVER_MIDDLE_GRACE) && mid >= 0 && y >= cy && y <= top && mx * mx + mz * mz <= rr)) return Infinity;
+    const at = endIn ? Math.max(0, mid - COVER_MIDDLE_GRACE) : mid;
+    if (startIn) return at <= maxDist ? at : Infinity;
+    if (at <= maxDist) best = at;   // from outside: where it enters, if sooner
+  }
   // the side
   if (a > 1e-12) {
     const b = ox * d[0] + oz * d[2], c = ox * ox + oz * oz - r * r;
     const disc = b * b - a * c;
     if (disc >= 0) {
       const s = (-b - Math.sqrt(disc)) / a;
-      if (s >= 0 && s <= maxDist) {
+      if (s >= 0 && s <= maxDist && s < best) {
         const y = o[1] + d[1] * s;
         if (y >= cy && y <= top) best = s;
       }

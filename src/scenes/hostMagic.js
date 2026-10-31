@@ -45,7 +45,7 @@ import {
   MISSILE_LIFESPAN_S, EXPLOSION_RADIUS, BODY_CAPSULE_RADIUS, pickTouchTarget, sweepFoes, sphereOverlapsCapsule,   // ROAD-H H2: DoAreaOfEffect's OverlapSphere, against the player's capsule too
   missileHitsCapsule, PLAYER_BODY_RADIUS, flightBodies, struckPoints,   // TRUNK-FOES: the bodies a flight strikes   // AUDIT 62 F21 (review): the SphereCast contact test   // AUDIT 65 CV-2: the PLAYER's own controller radius (motor.js CAPSULE_RADIUS), not the foe's
 } from '../systems/spellcast.js';
-import { corpsePrefabStruck } from './corpseMarker.js';   // DEX5: a body a mod's corpse prefab stands, which my missile meets
+import { corpsePrefabStruck, corpsePrefabBodies } from './corpseMarker.js';   // DEX5: a body a mod's corpse prefab stands, which my missile meets (AUDIT FB1031 II K4: and its line names)
 import { toBoxLocal } from '../systems/naval/navalBallistics.js';   // SERPENT4: a missile inside a box mark
 import { silenceBlocksCast, silencedText, pressButtonToFireSpellText, DOOR_SPELL_TEXT, SOUL_TRAP_TEXT } from '../systems/mysticism.js';
 import { calculateCastCost, castSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';   // SCHOOLS3: castSchool - the school a signature spell teaches
@@ -1527,12 +1527,13 @@ export function createPlayerMagic({
    *  mate's, my companion's, my duel's at a person's capsule, the court's boss at his own; a peer's drawn one any body. */
   function missileBodies(m, playerFeet, playerHeight) {
     const person = (feet, height) => ({ ai: { feet, height: height ?? CAPSULE_HEIGHT, radius: PLAYER_BODY_RADIUS } });
-    if (m.visual) return flightBodies([...foes(), ...(peerBodies?.() ?? []).filter((q) => q && q.id !== m.casterId && Array.isArray(q.feet)).map((q) => person(q.feet, q.height))], playerFeet, playerHeight);
+    // AUDIT FB1031 II K4: and DEX5's corpse prefabs, which the drawn one and mine (never a dragon's bolt) meet below
+    if (m.visual) return flightBodies([...foes(), ...(peerBodies?.() ?? []).filter((q) => q && q.id !== m.casterId && Array.isArray(q.feet)).map((q) => person(q.feet, q.height)), ...corpsePrefabBodies(foes())], playerFeet, playerHeight);
     const byFoe = m.fromPlayer === false;
     if (byFoe) return flightBodies(null, isShipmate(m.casterFoe) ? null : playerFeet, playerHeight);
     const people = m.ally ? allyMarksFor(m.spell, false).concat(companionMarksFor(m.spell, false)) : [];
     if (m.duel) people.push(...duelMarksFor(m.spell));
-    return flightBodies([...playerTargets(), ...people.map((p) => person(p.ai.feet, p.ai.height)), ...((m.boss ?? m.duel) ? bossMarksFor(m.spell) : [])], null, playerHeight);
+    return flightBodies([...playerTargets(), ...people.map((p) => person(p.ai.feet, p.ai.height)), ...((m.boss ?? m.duel) ? bossMarksFor(m.spell) : []), ...(m.dragon ? [] : corpsePrefabBodies(foes()))], null, playerHeight);
   }
 
   /** PLAYER spell missile flight: lifespan, the wall raycast (an

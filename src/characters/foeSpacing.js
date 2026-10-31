@@ -119,7 +119,9 @@ export function keepFoesOffBodies(foes, collider, skip = spacingSkips) {
       // one walking at a trunk's middle on the spot for good
       const dest = ai.destination, wx = dest ? dest[0] - feet[0] : 0, wz = dest ? dest[2] - feet[2] : 0;
       const side = wx * nx + wz * nz < 0 ? (wz * nx - wx * nz < 0 ? -push : push) : 0;
-      if (nudge(ai, nx * push - nz * side, nz * push + nx * side, R, collider)) moved++;   // to its edge in one frame
+      // AUDIT FB1031 II K3: a side step off the ground (a ledge, a pier, a cliff's lip) is refused, and took the push
+      // with it - the foe stood in the trunk every frame; the push alone then
+      if (nudge(ai, nx * push - nz * side, nz * push + nx * side, R, collider) || (side !== 0 && nudge(ai, nx * push, nz * push, R, collider))) moved++;   // to its edge in one frame
     });
   }
   return moved;

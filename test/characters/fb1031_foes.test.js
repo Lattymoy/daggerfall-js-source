@@ -109,18 +109,23 @@ test('AUDIT FB1031 F1 the law: a ray with an end in a proxy meets it at its midd
   const col = field([coverProxy([0, 0, 10], { w: 3.68, h: 4.13 })]);
   assert.ok(Math.abs(coverDistance(col, [0, 1.4, 0], [0, 0, 1], 20, false, [0, 1.4, 11.03]) - (10 - 0.35 * 3.68)) < 1e-9, 'a body struck behind the middle opens nothing');
   assert.equal(coverDistance(col, [0, 1.4, 0], [0, 0, 1], 20, false, [0, 1.4, 8.97]), Infinity, 'one in front opens it');
-  // no pair is one-way: for any two points in and round it, hidden one way exactly when the other
+  // no pair is one-way: for any two points in and round it, hidden one way exactly when the other - AUDIT FB1031 II K2:
+  // over the rock and the same lifted 1.4 m (a crown), ends sampled under its floor and over its top as well as in it
+  // (the rock's every sampled end lay in its span, so a cap never mattered: the lifted crown's 22 one-way pairs passed)
   let seed = 7, pairs = 0, both = 0;
   const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
-  const at = () => [(rnd() - 0.5) * 5, 0.5 + rnd() * 3, 10 + (rnd() - 0.5) * 5];
-  for (let i = 0; i < 4000; i++) {
-    const a = at(), b = rnd() < 0.5 ? at() : [(rnd() - 0.5) * 30, 1.6, rnd() * 30];
-    if (Math.hypot(a[0] - b[0], a[2] - b[2]) < 0.05) continue;
-    const ab = hidden(a, b);
-    assert.equal(hidden(b, a), ab, `one-way between ${a.map((v) => v.toFixed(2))} and ${b.map((v) => v.toFixed(2))}`);
-    pairs++; if (ab) both++;
+  for (const [cyl, lo, hi] of [[rock, 0.5, 3.5], [{ ...rock, lift: 1.4 }, 0.3, 5.8]]) {
+    const hid = (a, b) => { const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], l = Math.hypot(...d); return rayCylinder(a, d.map((v) => v / l), cyl, l, l) < l - 1e-3; };
+    const at = () => [(rnd() - 0.5) * 5, lo + rnd() * (hi - lo), 10 + (rnd() - 0.5) * 5];
+    for (let i = 0; i < 4000; i++) {
+      const a = at(), b = rnd() < 0.5 ? at() : [(rnd() - 0.5) * 30, lo + rnd() * (hi - lo), rnd() * 30];
+      if (Math.hypot(a[0] - b[0], a[2] - b[2]) < 0.05) continue;
+      const ab = hid(a, b);
+      assert.equal(hid(b, a), ab, `one-way between ${a.map((v) => v.toFixed(2))} and ${b.map((v) => v.toFixed(2))} (lift ${cyl.lift})`);
+      pairs++; if (ab) both++;
+    }
   }
-  assert.ok(pairs > 3500 && both > 300, `the pairs reach both answers (${both} hidden of ${pairs})`);
+  assert.ok(pairs > 7000 && both > 600, `the pairs reach both answers (${both} hidden of ${pairs})`);
 });
 
 test('AUDIT FB1031 F1 executed: a foe the clamp pressed behind 504.19 or a young banyan\'s trunk is shielded from my shaft and sees nothing; me pressed behind the rock, a foe\'s shaft and bolt are stopped and mine out is lost on it; one pressed in front of either, or beside the trunk, is struck', () => {
@@ -205,7 +210,7 @@ test('AUDIT FB1031 F2: a body a missile flies through holds no cover open for it
   assert.deepEqual(feet(dmb({}, [a, b], me, 1.8)), [me], 'a foe\'s spell at me: me alone');
   assert.deepEqual(feet(dmb({ visual: true }, [a], me, 1.8)), [a.ai.feet, me], 'a peer\'s drawn one: any body');
   assert.deepEqual(feet(dmb({ aimFoe: { isPeer: true, dead: true, ai: { feet: [5, 0, 5] } } }, [a], me, 1.8)), [], 'one loosed at a peer: never me');
-  assert.match(hostText('src/scenes/dungeonContext.js'), /const _cs = flightStop\(collider, m\.pos, _unit, reach, step \* _len, !!m\.fromPlayer, dungeonMissileBodies\(m, foes, playerFeet, playerHeight\)\);/, 'the dungeon\'s flight reads it');
+  assert.match(hostText('src/scenes/dungeonContext.js'), /const _cs = flightStop\(collider, m\.pos, _unit, reach, step \* _len, !!m\.fromPlayer, dungeonMissileBodies\(m, foes, playerFeet, playerHeight, m\.fromPlayer \? \[gateBossBody\(\), arenaRivalBody\(\), \.\.\.gateCrystalBodies\(\), \.\.\.gateHostBodies\(\)\] : null\)\);/, 'the dungeon\'s flight reads it');
 });
 
 test('AUDIT FB1031 F3: my bolt meets a duel opponent, a party mate and the court\'s boss standing in a crown as it meets a foe there - spells are no longer one-way between players (mutants: the duel\'s, the mates\', the companion\'s, the boss\'s marks unlisted)', () => {
@@ -296,6 +301,7 @@ test('AUDIT FB1031 B1: a band met with the view down keeps its own bearing only 
       bandRoom: () => true, player: { feetAt: () => [0, 0, 0] }, BAND_STAND_MIN_M: bands.BAND_STAND_MIN_M, PACK_SPACING, PACK_ALERT_RADIUS,
       wildFoes: { alert() {} }, exteriorFoes: { noticedPlayer() {} }, performance: { now: () => 0 }, bandStandBearing: bsb,
       cam: { yaw: camYaw }, fieldOfView: () => FOV * Math.PI / 180, travelView: { active: up },
+      largeHudWorldAspect: (w, h) => w / h, canvas: { clientWidth: 16, clientHeight: 9 },   // AUDIT FB1031 II K6: a 16:9 frame (PIN MOVED)
       _standCampEncounter: (hit, feet) => {   // world.js _standCampEncounter's own call of the anchor law
         anchors.push(campAnchorSpot({ feet, yawRad: hit.yawRad ?? camYaw, fovDegrees: FOV, groundAt: () => 0, minDistance: hit.minDistance, maxDistance: hit.maxDistance, bearingDegrees: hit.bearingDegrees }));
         return { foes: Promise.resolve([]) };

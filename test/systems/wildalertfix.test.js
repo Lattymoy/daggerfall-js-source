@@ -91,6 +91,7 @@ test('WILD-ALERT-FIX a band that caught the traveller stands ON them - each memb
   const scope = {
     bandRoom: () => true, player: { feetAt: () => [3, 0, 4] }, BAND_STAND_MIN_M, PACK_SPACING, PACK_ALERT_RADIUS, wildFoes, performance: { now: () => 0 },
     bandStandBearing, cam: { yaw: Math.PI / 4 }, fieldOfView: () => 0.5, travelView: { active: false },   // AUDIT FB1031 B1: the view down, turned off every bearing tried (PIN MOVED)
+    largeHudWorldAspect: (w, h) => w / h, canvas: { clientWidth: 16, clientHeight: 9 },   // AUDIT FB1031 II K6: the frame's shape (PIN MOVED)
     exteriorFoes: { noticedPlayer: (f, feet) => told.push([f, feet]) },
     _standCampEncounter: () => (asked++ === 0 ? null : { foes: Promise.resolve([fa, null, fb]), anchorFeet: [0, 0, 0] }),
   };

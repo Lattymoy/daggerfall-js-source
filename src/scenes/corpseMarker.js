@@ -243,6 +243,17 @@ export function corpsePrefabStruck(pos, foes, reach) {
   }
   return null;
 }
+/** AUDIT FB1031 II K4: the bodies corpsePrefabStruck meets, as the bodies a flight names (systems/spellcast.js
+ *  flightBodies' records: a sphere is a capsule as tall as it is wide). Unnamed, a prefab lying in a rock's cover in
+ *  front of its middle opened nothing, and my bolt was lost on the rock short of it. */
+export function corpsePrefabBodies(foes) {
+  const out = [];
+  for (const f of foes ?? []) {
+    const s = f?.dead && f.corpse ? f.corpsePrefab?.sphere?.() : null;
+    if (s) out.push({ ai: { feet: [s.center[0], s.center[1] - s.radius, s.center[2]], height: 2 * s.radius, radius: s.radius } });
+  }
+  return out;
+}
 
 export function sayEnemyDied(say, mobileType, entity = null) {
   // AUDIT 28 W1: the gate the comment above quotes was never read - the

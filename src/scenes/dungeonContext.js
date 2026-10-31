@@ -4804,7 +4804,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const { unit: _unit, reach } = missileReach(m.dir, step);   // ROAD-H tail: DaggerfallMissile.cs:333/:337-339's reach along the normalised direction
       // TACT1: cover stops a bolt, and an area spell bursts on it; AUDIT TACT B5: by touch, the bodies before it tested first
       const _len = Math.hypot(m.dir[0], m.dir[1], m.dir[2]) || 1;
-      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, !!m.fromPlayer, dungeonMissileBodies(m, foes, playerFeet, playerHeight));   // AUDIT GROUND-BOLT C6: the cast engine's one flight law (no terrain underground: the meshes and cover)   // WALL-SHAFT: a player's shaft is swept, so a foe before a wall is met first   // TRUNK-FOES: never short of a body in cover
+      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, !!m.fromPlayer, dungeonMissileBodies(m, foes, playerFeet, playerHeight, m.fromPlayer ? [gateBossBody(), arenaRivalBody(), ...gateCrystalBodies(), ...gateHostBodies()] : null));   // AUDIT FB1031 II K4: and the relay's bodies my shaft strikes   // AUDIT GROUND-BOLT C6: the cast engine's one flight law (no terrain underground: the meshes and cover)   // WALL-SHAFT: a player's shaft is swept, so a foe before a wall is met first   // TRUNK-FOES: never short of a body in cover
       const hitWall = _cs.stop;
       if (Number.isFinite(hitWall) && hitWall <= reach) {
         // AUDIT 23 (magic-2) - DaggerfallMissile.cs:399-402 DoCollision:

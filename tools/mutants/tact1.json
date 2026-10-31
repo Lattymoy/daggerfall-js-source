@@ -29,8 +29,8 @@
   {
     "name": "TACT1-inside-blocks",
     "file": "src/ai/cover.js",
-    "old": "  if (ox * ox + oz * oz <= rr && o[1] >= cy && o[1] <= top) {   // from inside: met at its middle, where that lies ahead",
-    "new": "  if (false) {   // from inside: met at its middle, where that lies ahead",
+    "old": "  const startIn = ox * ox + oz * oz <= rr && o[1] >= cy && o[1] <= top;",
+    "new": "  const startIn = false;",
     "tests": [
       "test/scenes/tact1.test.js"
     ],
@@ -48,8 +48,8 @@
   {
     "name": "TACT1-side-reach-ignored",
     "file": "src/ai/cover.js",
-    "old": "      if (s >= 0 && s <= maxDist) {",
-    "new": "      if (s >= 0) {",
+    "old": "      if (s >= 0 && s <= maxDist && s < best) {",
+    "new": "      if (s >= 0 && s < best) {",
     "tests": [
       "test/scenes/tact1.test.js"
     ]

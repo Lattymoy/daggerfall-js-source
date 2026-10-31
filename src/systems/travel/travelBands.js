@@ -62,9 +62,14 @@ export const BAND_STAND_TRIES = 5;
  *  while that lies outside the camera's view, else just outside the view's edge on its own side (a fixed side dead
  *  ahead), as CAMP-FAR stands a camp: FOV plus 0..4 degrees (campEncounters.js campAnchorSpot, whose 2-degree jitter
  *  either way this allows for). At its own bearing every band stood mid-screen. Under the Overworld (`seen`) it stands
- *  where it was watched coming (AUDIT OW5b B2). Answers campAnchorSpot's `yawRad` and `bearingDegrees`. */
-export function bandStandBearing(yaw, camYaw, fovDegrees, seen = false) {
-  const edge = fovDegrees + 2, off = ((((yaw - camYaw) * 180) / Math.PI % 360) + 540) % 360 - 180;
+ *  where it was watched coming (AUDIT OW5b B2). Answers campAnchorSpot's `yawRad` and `bearingDegrees`.
+ *  AUDIT FB1031 II K6: the view's edge is its HORIZONTAL half-view (`fovDegrees` is the vertical, `aspect` the frame's
+ *  width over its height) and the pack's spread past it (`spacingM` about an anchor `nearM` off at the nearest), FOV
+ *  plus 2 at the least: at 32:9 the vertical FOV's edge stood 94% of bands with a member in view. */
+export function bandStandBearing(yaw, camYaw, fovDegrees, seen = false, aspect = 1, nearM = Infinity, spacingM = 0) {
+  const half = (Math.atan(Math.tan((fovDegrees * Math.PI) / 360) * (aspect > 0 ? aspect : 1)) * 180) / Math.PI;
+  const spread = (Math.asin(Math.min(1, spacingM / nearM)) * 180) / Math.PI;
+  const edge = Math.max(fovDegrees + 2, half + spread + 2), off = ((((yaw - camYaw) * 180) / Math.PI % 360) + 540) % 360 - 180;
   return seen || Math.abs(off) >= edge ? { yawRad: yaw, bearingDegrees: 0 } : { yawRad: camYaw, bearingDegrees: off < 0 ? -edge : edge };
 }
 /** The bands the host is asked about: the cells within this many map pixels of the traveller. */
