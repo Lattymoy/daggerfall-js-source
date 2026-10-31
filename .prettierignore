@@ -1620,6 +1620,9 @@
 !/src/ui/naval/navalHud.js
 !/src/ui/naval/navalPlunderWindow.js
 !/src/ui/naval/navalYardWindow.js
+!/src/ui/plus/
+/src/ui/plus/*
+!/src/ui/plus/plusCursor.js
 !/src/ui/poi/
 /src/ui/poi/*/
 !/src/ui/profileIcons.js
