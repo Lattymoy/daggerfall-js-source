@@ -34,13 +34,13 @@ import { SKILLS, skillModOf } from './skills.js';
 import { SKILL_SOFT_CAP } from './skillSoftcap.js';
 import { isOnlinePage } from './online/onlineLane.js';
 import { sigilDueling } from './sigil/sigil.js';
-import { SCHOOL_POTENCY_PER_POINT, fightingClimb } from './spell/spellPower.js';   // CLIMB-PAST's one number: a point past 100 is 1%; MENTOR2: the climb fought with
+import { SCHOOL_POTENCY_PER_POINT, fightingClimb } from './spell/spellPower.js'; // CLIMB-PAST's one number: a point past 100 is 1%; MENTOR2: the climb fought with
 import { registerWeaponBlowMod } from './entityMods.js';
-import { blowRoom } from './powerCeiling.js';   // POWER-CEILING: the blow's one product
+import { blowRoom } from './powerCeiling.js'; // POWER-CEILING: the blow's one product
 import { registerSwingPaceMod } from '../characters/weaponStates.js';
-import { swingFamily } from '../combat/swingLaw.js';   // AUDIT MARTIAL L2 F3: the swing's family, no record built
+import { swingFamily } from '../combat/swingLaw.js'; // AUDIT MARTIAL L2 F3: the swing's family, no record built
 import { techniqueFamily } from '../combat/technique/techniqueRoster.js';
-import { healthShare } from '../combat/healthShare.js';   // FIELD BUGS 2026-10-18f RELAY-SHARE: a body's share of its health, the one law
+import { healthShare } from '../combat/healthShare.js'; // FIELD BUGS 2026-10-18f RELAY-SHARE: a body's share of its health, the one law
 
 /** Each effective point of a weapon's climb past 100 is this much more of what it does (BAL9b's per point). */
 export const WEAPON_POTENCY_PER_POINT = SCHOOL_POTENCY_PER_POINT;
@@ -57,10 +57,16 @@ export const WEAPON_GEAR_PCT_MOST = 320;
 /** The skill a blow is struck with, by its family (combat/technique/techniqueRoster.js techniqueFamily - an RRI class's
  *  own included): the bare hand Hand-to-Hand, the Thunderlock Archery (it is scored on it). Null for anything else. */
 const SKILL_OF_FAMILY = Object.freeze({
-  longBlade: SKILLS.LongBlade, shortBlade: SKILLS.ShortBlade, axe: SKILLS.Axe, blunt: SKILLS.BluntWeapon,
-  archery: SKILLS.Archery, thunderlock: SKILLS.Archery, handToHand: SKILLS.HandToHand,
+  longBlade: SKILLS.LongBlade,
+  shortBlade: SKILLS.ShortBlade,
+  axe: SKILLS.Axe,
+  blunt: SKILLS.BluntWeapon,
+  archery: SKILLS.Archery,
+  thunderlock: SKILLS.Archery,
+  handToHand: SKILLS.HandToHand,
 });
-export const blowSkillOf = (weapon) => (weapon ? SKILL_OF_FAMILY[techniqueFamily(weapon) ?? ''] ?? null : SKILLS.HandToHand);
+export const blowSkillOf = (weapon) =>
+  weapon ? (SKILL_OF_FAMILY[techniqueFamily(weapon) ?? ''] ?? null) : SKILLS.HandToHand;
 
 /** The effective points of `skill`'s CLIMB past 100 that pay for `entity` now (0 to 40): mine, online, not the beast -
  *  MENTOR2: the mentored climb while mentoring. */
@@ -82,7 +88,16 @@ const shareOf = healthShare;
  *  weapon skill adds 0.44% to its blow, from the first point (GEAR-ADDS, mob: "they should both just stack
  *  additively", "help the begingin"): the percent here, 0 to 320. Online, mine, never the fists. */
 export function weaponGearPct(entity, skill, { online = isOnlinePage() } = {}) {
-  if (!online || !entity?.isPlayer || entity.peer || entity._mentor || entity.isInBeastForm || !Number.isInteger(skill) || skill === SKILLS.HandToHand) return 0;
+  if (
+    !online ||
+    !entity?.isPlayer ||
+    entity.peer ||
+    entity._mentor ||
+    entity.isInBeastForm ||
+    !Number.isInteger(skill) ||
+    skill === SKILLS.HandToHand
+  )
+    return 0;
   const gear = skillModOf(entity, skill);
   return gear > 0 ? Math.min(WEAPON_GEAR_PCT_MOST, gear * WEAPON_GEAR_PER_POINT) : 0;
 }
@@ -99,13 +114,19 @@ function climbPastPct(skill, attacker, target, opts) {
   const climb = weaponClimb(attacker, skill, opts);
   if (!(climb > 0)) return 0;
   switch (skill) {
-    case SKILLS.LongBlade: case SKILLS.Archery: return climb * (WEAPON_POTENCY_PER_POINT * 100);
-    case SKILLS.Axe: case SKILLS.BluntWeapon: {
+    case SKILLS.LongBlade:
+    case SKILLS.Archery:
+      return climb * (WEAPON_POTENCY_PER_POINT * 100);
+    case SKILLS.Axe:
+    case SKILLS.BluntWeapon: {
       const share = shareOf(target);
-      if (share === null) return climb * (WEAPON_POTENCY_PER_POINT * 100);   // the line unread: the halves' mean (x1.4), the sword's own
-      return (skill === SKILLS.Axe ? share < WEAPON_HALF_LINE : share >= WEAPON_HALF_LINE) ? climb * (WEAPON_HALF_PER_POINT * 100) : 0;
+      if (share === null) return climb * (WEAPON_POTENCY_PER_POINT * 100); // the line unread: the halves' mean (x1.4), the sword's own
+      return (skill === SKILLS.Axe ? share < WEAPON_HALF_LINE : share >= WEAPON_HALF_LINE)
+        ? climb * (WEAPON_HALF_PER_POINT * 100)
+        : 0;
     }
-    default: return 0;
+    default:
+      return 0;
   }
 }
 
@@ -113,13 +134,22 @@ function climbPastPct(skill, attacker, target, opts) {
 let _carry = new WeakMap();
 /** THE BLOW: my blow at a foe, its skill past 100 - the fraction carried, never past the blow's whole. */
 export function weaponMasteryBlow(weapon, damage, attacker, target, info = null) {
-  if (!(damage > 0) || !attacker?.isPlayer || attacker.peer || !target || target.isPlayer || target.warded || sigilDueling()) return damage;
-  const pct = blowRoom(weaponPastPct(weapon, attacker, target), 'mastery');   // POWER-CEILING
+  if (
+    !(damage > 0) ||
+    !attacker?.isPlayer ||
+    attacker.peer ||
+    !target ||
+    target.isPlayer ||
+    target.warded ||
+    sigilDueling()
+  )
+    return damage;
+  const pct = blowRoom(weaponPastPct(weapon, attacker, target), 'mastery'); // POWER-CEILING
   if (!(pct > 0)) return damage;
   const key = weapon ?? attacker;
   const exact = (damage * pct) / 100 + (_carry.get(key) ?? 0);
   const more = Math.floor(exact + 1e-9);
-  if (!info?.estimate) _carry.set(key, Math.max(0, exact - more));   // AUDIT MARTIAL L2 F7: the Stats page's estimate keeps nothing
+  if (!info?.estimate) _carry.set(key, Math.max(0, exact - more)); // AUDIT MARTIAL L2 F7: the Stats page's estimate keeps nothing
   return damage + more;
 }
 
@@ -137,4 +167,6 @@ registerWeaponBlowMod(WEAPON_MASTERY, weaponMasteryBlow);
 registerSwingPaceMod(WEAPON_MASTERY, weaponMasteryPace);
 
 /** Tests only: no fraction carried. */
-export function _resetWeaponMasteryForTests() { _carry = new WeakMap(); }
+export function _resetWeaponMasteryForTests() {
+  _carry = new WeakMap();
+}

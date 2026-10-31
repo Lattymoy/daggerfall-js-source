@@ -254,8 +254,8 @@
   {
     "name": "ASH-windfall-sunny",
     "file": "src/systems/windfall.js",
-    "old": "ashfall: WEATHER.overcast });",
-    "new": "ashfall: WEATHER.sunny });",
+    "old": "const WORD_TO_WEATHER = Object.freeze({ ...WEATHER, sandstorm: WEATHER.thunder, ashfall: WEATHER.overcast });",
+    "new": "const WORD_TO_WEATHER = Object.freeze({ ...WEATHER, sandstorm: WEATHER.thunder, ashfall: WEATHER.sunny });",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]

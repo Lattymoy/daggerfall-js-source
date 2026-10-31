@@ -218,8 +218,8 @@
   {
     "name": "SENSE1-a-special-door-is-a-door",
     "file": "src/systems/worldTooltips.js",
-    "old": "  if (isActionDoorObject(o)) return actionDoorName(",
-    "new": "  if (o.kind === 'door') return actionDoorName(",
+    "old": "  if (isActionDoorObject(o)) return actionDoorName((o.currentLockValue ?? 0) > 0, o.currentLockValue ?? 0);",
+    "new": "  if (o.kind === 'door') return actionDoorName((o.currentLockValue ?? 0) > 0, o.currentLockValue ?? 0);",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "SENSE1-the-door-band-first",
     "file": "src/systems/worldTooltips.js",
-    "old": "  if (t) return { title: t };\n  if (isActionDoorObject(o))",
-    "new": "  if (t && !isActionDoorObject(o)) return { title: t };\n  if (isActionDoorObject(o))",
+    "old": "  if (t) return { title: t };",
+    "new": "  if (t && !isActionDoorObject(o)) return { title: t };",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]

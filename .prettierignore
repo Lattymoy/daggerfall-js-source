@@ -1119,8 +1119,15 @@
 !/src/systems/warmAshesShips.js
 !/src/systems/wayOut.js
 !/src/systems/weaponGlow.js
+!/src/systems/weaponMastery.js
+!/src/systems/weaponSheathing.js
+!/src/systems/weaponSheathingAssets.js
 !/src/systems/wind/
 /src/systems/wind/*/
+!/src/systems/windfall.js
+!/src/systems/windfallEffects.js
+!/src/systems/worldDataVariants.js
+!/src/systems/worldTooltips.js
 !/src/ui/
 /src/ui/*
 !/src/ui/arena/

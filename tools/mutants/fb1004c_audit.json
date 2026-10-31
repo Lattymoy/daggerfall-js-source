@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-ROBES-N1-resolver-dropped",
     "file": "src/systems/worldTooltips.js",
-    "old": "itemLongName(item, { differentiatePlantIngredients: false, getQuest })",
-    "new": "itemLongName(item, { differentiatePlantIngredients: false })",
+    "old": "  return itemLongName(item, { differentiatePlantIngredients: false, getQuest }) || null;",
+    "new": "  return itemLongName(item, { differentiatePlantIngredients: false }) || null;",
     "tests": [
       "test/systems/fb1004c_audit.test.js"
     ]

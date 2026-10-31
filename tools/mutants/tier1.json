@@ -72,8 +72,8 @@
   {
     "name": "TIER1-the-plaque-takes-any-tier",
     "file": "src/systems/worldTooltips.js",
-    "old": "if (kind === 'dungeonEntrance' && Object.hasOwn(DUNGEON_TIER_TEXT, tier ?? '')) {",
-    "new": "if (kind === 'dungeonEntrance' && tier) {",
+    "old": "  if (kind === 'dungeonEntrance' && Object.hasOwn(DUNGEON_TIER_TEXT, tier ?? '')) {",
+    "new": "  if (kind === 'dungeonEntrance' && tier) {",
     "tests": [
       "test/world/tier1_dungeontiers.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "TIER1-the-plaque-loses-the-size",
     "file": "src/systems/worldTooltips.js",
-    "old": "    if (size) subs.push(String(size));\n",
-    "new": "",
+    "old": "    if (size) subs.push(String(size));\n    return { title: DUNGEON_TIER_TEXT[tier], subs };",
+    "new": "    return { title: DUNGEON_TIER_TEXT[tier], subs };",
     "tests": [
       "test/world/tier1_dungeontiers.test.js",
       "test/scenes/elitedungeons.test.js"

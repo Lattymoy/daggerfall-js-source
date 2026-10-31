@@ -508,8 +508,8 @@
   {
     "name": "SD11D-the-plaques-article-kept",
     "file": "src/systems/worldTooltips.js",
-    "old": "subs.push(`To ${tier === 'super' ? name.replace(/^The /, 'the ') : name}`);",
-    "new": "subs.push(`To ${name}`);",
+    "old": "    if (name) subs.push(`To ${tier === 'super' ? name.replace(/^The /, 'the ') : name}`); // AUDIT SD II (L6 F20): \"To the Brass Hollow\"",
+    "new": "    if (name) subs.push(`To ${name}`); // AUDIT SD II (L6 F20): \"To the Brass Hollow\"",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]
@@ -517,8 +517,8 @@
   {
     "name": "SD11D-every-plaques-article-small",
     "file": "src/systems/worldTooltips.js",
-    "old": "subs.push(`To ${tier === 'super' ? name.replace(/^The /, 'the ') : name}`);",
-    "new": "subs.push(`To ${name.replace(/^The /, 'the ')}`);",
+    "old": "    if (name) subs.push(`To ${tier === 'super' ? name.replace(/^The /, 'the ') : name}`); // AUDIT SD II (L6 F20): \"To the Brass Hollow\"",
+    "new": "    if (name) subs.push(`To ${name.replace(/^The /, 'the ')}`); // AUDIT SD II (L6 F20): \"To the Brass Hollow\"",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]

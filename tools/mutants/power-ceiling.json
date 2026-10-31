@@ -137,8 +137,8 @@
   {
     "name": "POWER-CEILING-mastery-not-asking",
     "file": "src/systems/weaponMastery.js",
-    "old": "  const pct = blowRoom(weaponPastPct(weapon, attacker, target), 'mastery');",
-    "new": "  const pct = (weaponPastPct(weapon, attacker, target));",
+    "old": "  const pct = blowRoom(weaponPastPct(weapon, attacker, target), 'mastery'); // POWER-CEILING",
+    "new": "  const pct = weaponPastPct(weapon, attacker, target); // POWER-CEILING",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]
@@ -580,8 +580,8 @@
   {
     "name": "AUDIT-HORIZONTAL-D2-mastery-spends-its-raw-blow",
     "file": "src/systems/weaponMastery.js",
-    "old": "  const pct = blowRoom(weaponPastPct(weapon, attacker, target), 'mastery');",
-    "new": "  const pct = weaponPastPct(weapon, attacker, target); blowRoom(pct, 'mastery');",
+    "old": "  const pct = blowRoom(weaponPastPct(weapon, attacker, target), 'mastery'); // POWER-CEILING",
+    "new": "  const pct = weaponPastPct(weapon, attacker, target);\n  blowRoom(pct, 'mastery'); // POWER-CEILING",
     "tests": [
       "test/combat/powerceiling_rooms.test.js"
     ]

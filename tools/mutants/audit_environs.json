@@ -247,8 +247,8 @@
   {
     "name": "AUDIT-ENVIRONS-I8-frame-gusts-replayed",
     "file": "src/systems/windfall.js",
-    "old": "      const started = events;\n      events = [];",
-    "new": "      const started = events;",
+    "old": "      const started = events;\n      events = []; // AUDIT ENVIRONS I8: the frame's gusts are handed over with it - the console's (triggerGust) start a list of their own",
+    "new": "      const started = events; // AUDIT ENVIRONS I8: the frame's gusts are handed over with it - the console's (triggerGust) start a list of their own",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]

@@ -304,7 +304,7 @@
   {
     "name": "AUDIT-MARTIAL-L2F7-the-climb-carries-the-estimate",
     "file": "src/systems/weaponMastery.js",
-    "old": "  if (!info?.estimate) _carry.set(key, Math.max(0, exact - more));   // AUDIT MARTIAL L2 F7: the Stats page's estimate keeps nothing",
+    "old": "  if (!info?.estimate) _carry.set(key, Math.max(0, exact - more)); // AUDIT MARTIAL L2 F7: the Stats page's estimate keeps nothing",
     "new": "  _carry.set(key, Math.max(0, exact - more));",
     "tests": [
       "test/systems/audit_martial.test.js",
@@ -784,8 +784,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-duel-swing-paced",
     "file": "src/systems/weaponMastery.js",
-    "old": "  if (sigilDueling()) return 0;\n  const climb",
-    "new": "  const climb",
+    "old": "  if (sigilDueling()) return 0;\n  const climb = weaponClimb(ctx?.entity, SKILLS.ShortBlade);",
+    "new": "  const climb = weaponClimb(ctx?.entity, SKILLS.ShortBlade);",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -794,8 +794,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-thunderlock-unpaid",
     "file": "src/systems/weaponMastery.js",
-    "old": "  archery: SKILLS.Archery, thunderlock: SKILLS.Archery, handToHand: SKILLS.HandToHand,",
-    "new": "  archery: SKILLS.Archery, handToHand: SKILLS.HandToHand,",
+    "old": "  thunderlock: SKILLS.Archery,\n  handToHand: SKILLS.HandToHand,",
+    "new": "  handToHand: SKILLS.HandToHand,",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"

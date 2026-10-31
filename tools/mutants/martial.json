@@ -434,8 +434,8 @@
   {
     "name": "MARTIAL2-the-axe-at-the-fresh-foe",
     "file": "src/systems/weaponMastery.js",
-    "old": "(skill === SKILLS.Axe ? share < WEAPON_HALF_LINE :",
-    "new": "(skill === SKILLS.Axe ? share >= WEAPON_HALF_LINE :",
+    "old": "      return (skill === SKILLS.Axe ? share < WEAPON_HALF_LINE : share >= WEAPON_HALF_LINE)",
+    "new": "      return (skill === SKILLS.Axe ? share >= WEAPON_HALF_LINE : share >= WEAPON_HALF_LINE)",
     "tests": [
       "test/systems/martial_paths.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "MARTIAL2-the-hammer-at-the-wounded-foe",
     "file": "src/systems/weaponMastery.js",
-    "old": ": share >= WEAPON_HALF_LINE) ?",
-    "new": ": share < WEAPON_HALF_LINE) ?",
+    "old": "      return (skill === SKILLS.Axe ? share < WEAPON_HALF_LINE : share >= WEAPON_HALF_LINE)",
+    "new": "      return (skill === SKILLS.Axe ? share < WEAPON_HALF_LINE : share < WEAPON_HALF_LINE)",
     "tests": [
       "test/systems/martial_paths.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "MARTIAL2-MENTOR2-mentoring-unpaid",
     "file": "src/systems/weaponMastery.js",
-    "old": " || entity.peer || entity.isInBeastForm || !Number.isInteger(skill)) return 0;",
-    "new": " || entity.peer || entity._mentor || entity.isInBeastForm || !Number.isInteger(skill)) return 0;",
+    "old": "  if (!online || !entity?.isPlayer || entity.peer || entity.isInBeastForm || !Number.isInteger(skill)) return 0;",
+    "new": "  if (!online || !entity?.isPlayer || entity.peer || entity._mentor || entity.isInBeastForm || !Number.isInteger(skill))\n    return 0;",
     "tests": [
       "test/systems/martial_paths.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "MARTIAL2-the-beast-paid",
     "file": "src/systems/weaponMastery.js",
-    "old": " || entity.isInBeastForm || !Number.isInteger(skill)) return 0;",
-    "new": " || !Number.isInteger(skill)) return 0;",
+    "old": "  if (!online || !entity?.isPlayer || entity.peer || entity.isInBeastForm || !Number.isInteger(skill)) return 0;",
+    "new": "  if (!online || !entity?.isPlayer || entity.peer || !Number.isInteger(skill)) return 0;",
     "tests": [
       "test/systems/martial_paths.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "MARTIAL2-a-player-struck-harder",
     "file": "src/systems/weaponMastery.js",
-    "old": " || !target || target.isPlayer || target.warded || sigilDueling()) return damage;",
-    "new": " || !target || target.warded || sigilDueling()) return damage;",
+    "old": "  if (\n    !(damage > 0) ||\n    !attacker?.isPlayer ||\n    attacker.peer ||\n    !target ||\n    target.isPlayer ||\n    target.warded ||\n    sigilDueling()\n  )",
+    "new": "  if (!(damage > 0) || !attacker?.isPlayer || attacker.peer || !target || target.warded || sigilDueling())",
     "tests": [
       "test/systems/martial_paths.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "MARTIAL2-the-duel-paid",
     "file": "src/systems/weaponMastery.js",
-    "old": " || !target || target.isPlayer || target.warded || sigilDueling()) return damage;",
-    "new": " || !target || target.isPlayer || target.warded) return damage;",
+    "old": "  if (\n    !(damage > 0) ||\n    !attacker?.isPlayer ||\n    attacker.peer ||\n    !target ||\n    target.isPlayer ||\n    target.warded ||\n    sigilDueling()\n  )",
+    "new": "  if (!(damage > 0) || !attacker?.isPlayer || attacker.peer || !target || target.isPlayer || target.warded)",
     "tests": [
       "test/systems/martial_paths.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "MARTIAL2-the-archer-unpaid",
     "file": "src/systems/weaponMastery.js",
-    "old": "    case SKILLS.LongBlade: case SKILLS.Archery: return",
-    "new": "    case SKILLS.LongBlade: return",
+    "old": "    case SKILLS.Archery:\n      return climb * (WEAPON_POTENCY_PER_POINT * 100);",
+    "new": "      return climb * (WEAPON_POTENCY_PER_POINT * 100);",
     "tests": [
       "test/systems/martial_paths.test.js"
     ]

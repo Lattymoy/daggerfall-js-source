@@ -216,8 +216,8 @@
   {
     "name": "WORLD-HOVER-hideInteract-knob-ignored",
     "file": "src/systems/worldTooltips.js",
-    "old": "  if (named) return named;\n  return hideInteract ? null : INTERACT_TEXT;",
-    "new": "  if (named) return named;\n  return INTERACT_TEXT;",
+    "old": "  return hideInteract ? null : INTERACT_TEXT;",
+    "new": "  return INTERACT_TEXT;",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -234,8 +234,8 @@
   {
     "name": "WORLD-HOVER-daedra-table-reordered",
     "file": "src/systems/worldTooltips.js",
-    "old": "  'Peryite', 'Sanguine', 'Sheogorath', 'Vaermina',",
-    "new": "  'Peryite', 'Sanguine', 'Vaermina', 'Sheogorath',",
+    "old": "  'Sheogorath',\n  'Vaermina',",
+    "new": "  'Vaermina',\n  'Sheogorath',",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -270,8 +270,8 @@
   {
     "name": "WORLD-HOVER-lock-level-shown-when-unlocked",
     "file": "src/systems/worldTooltips.js",
-    "old": "  if (!unlocked) subs.push(`Lock Level: ${buildingLockValue(quality)}`);",
-    "new": "  if (unlocked) subs.push(`Lock Level: ${buildingLockValue(quality)}`);",
+    "old": "  if (!unlocked) subs.push(`Lock Level: ${buildingLockValue(quality)}`); // .cs:735-738",
+    "new": "  if (unlocked) subs.push(`Lock Level: ${buildingLockValue(quality)}`); // .cs:735-738",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -279,8 +279,8 @@
   {
     "name": "WORLD-HOVER-mod-closed-gate-reverted-to-DFU",
     "file": "src/systems/worldTooltips.js",
-    "old": "  if (!unlocked && buildingType <= BUILDING_TYPES.Palace",
-    "new": "  if (!unlocked && buildingType < BUILDING_TYPES.Temple",
+    "old": "  if (!unlocked && buildingType <= BUILDING_TYPES.Palace && buildingType !== BUILDING_TYPES.HouseForSale) {",
+    "new": "  if (!unlocked && buildingType < BUILDING_TYPES.Temple && buildingType !== BUILDING_TYPES.HouseForSale) {",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -288,8 +288,8 @@
   {
     "name": "WORLD-HOVER-palace-substitution-dropped",
     "file": "src/systems/worldTooltips.js",
-    "old": "      { subject: buildingType === BUILDING_TYPES.Palace ? 'Palace' : null }));",
-    "new": "      { subject: null }));",
+    "old": "    subs.push(buildingClosedText(buildingType, { subject: buildingType === BUILDING_TYPES.Palace ? 'Palace' : null })); // .cs:747-748",
+    "new": "    subs.push(buildingClosedText(buildingType, { subject: null })); // .cs:747-748",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -297,8 +297,8 @@
   {
     "name": "WORLD-HOVER-houseForSale-told-it-is-shut",
     "file": "src/systems/worldTooltips.js",
-    "old": "    && buildingType !== BUILDING_TYPES.HouseForSale) {",
-    "new": "    && true) {",
+    "old": "  if (!unlocked && buildingType <= BUILDING_TYPES.Palace && buildingType !== BUILDING_TYPES.HouseForSale) {",
+    "new": "  if (!unlocked && buildingType <= BUILDING_TYPES.Palace && true) {",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -306,7 +306,7 @@
   {
     "name": "WORLD-HOVER-dungeon-exit-always-names-its-town",
     "file": "src/systems/worldTooltips.js",
-    "old": "    const to = inTown ? locationName : (regionName ? `${regionName} Region` : '');",
+    "old": "    const to = inTown ? locationName : regionName ? `${regionName} Region` : '';",
     "new": "    const to = locationName;",
     "tests": [
       "test/systems/worldhover.test.js"
@@ -315,7 +315,7 @@
   {
     "name": "WORLD-HOVER-city-walls-lose-their-special-case",
     "file": "src/systems/worldTooltips.js",
-    "old": "  const to = buildingType === BUILDING_TYPES.Town23\n    ? (locationName ? `${locationName} City Walls` : '')\n    : displayName || locationName;",
+    "old": "  const to =\n    buildingType === BUILDING_TYPES.Town23\n      ? locationName\n        ? `${locationName} City Walls`\n        : ''\n      : displayName || locationName;",
     "new": "  const to = displayName || locationName;",
     "note": "Re-aimed by content (IC-PROPS): a nameless building of another kind says its place; the mutant still drops the city walls' own word.",
     "tests": [
@@ -334,8 +334,8 @@
   {
     "name": "WORLD-HOVER-container-default-stops-being-Interact",
     "file": "src/systems/worldTooltips.js",
-    "old": "export function houseContainerName(modelIdNum) {\n  return HOUSE_CONTAINER_NAMES[modelIdNum] ?? INTERACT_TEXT;\n}",
-    "new": "export function houseContainerName(modelIdNum) {\n  return HOUSE_CONTAINER_NAMES[modelIdNum] ?? null;\n}",
+    "old": "  return HOUSE_CONTAINER_NAMES[modelIdNum] ?? INTERACT_TEXT;",
+    "new": "  return HOUSE_CONTAINER_NAMES[modelIdNum] ?? null;",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -478,8 +478,8 @@
   {
     "name": "WORLD-HOVER-a-hostile-foe-is-named",
     "file": "src/systems/worldTooltips.js",
-    "old": "export function mobileEntityName(entityName, { hostile = false } = {}) {\n  if (hostile) return null;",
-    "new": "export function mobileEntityName(entityName, { hostile = false } = {}) {\n  if (false) return null;",
+    "old": "  if (hostile) return null;",
+    "new": "  if (false) return null;",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -487,8 +487,8 @@
   {
     "name": "WORLD-HOVER-a-nameless-townsperson-draws-an-empty-plaque",
     "file": "src/systems/worldTooltips.js",
-    "old": "export const mobilePersonName = (nameNPC) => (nameNPC || null);",
-    "new": "export const mobilePersonName = (nameNPC) => (nameNPC ?? '');",
+    "old": "export const mobilePersonName = (nameNPC) => nameNPC || null;",
+    "new": "export const mobilePersonName = (nameNPC) => nameNPC ?? '';",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -694,8 +694,8 @@
   {
     "name": "WORLD-HOVER-the-container-default-takes-the-knob-again",
     "file": "src/systems/worldTooltips.js",
-    "old": "export function houseContainerName(modelIdNum) {\n  return HOUSE_CONTAINER_NAMES[modelIdNum] ?? INTERACT_TEXT;\n}",
-    "new": "export function houseContainerName(modelIdNum, { hideInteract = false } = {}) {\n  const named = HOUSE_CONTAINER_NAMES[modelIdNum] ?? null;\n  if (named) return named;\n  return hideInteract ? null : INTERACT_TEXT;\n}",
+    "old": "export function houseContainerName(modelIdNum) {\n  return HOUSE_CONTAINER_NAMES[modelIdNum] ?? INTERACT_TEXT;",
+    "new": "export function houseContainerName(modelIdNum, { hideInteract = false } = {}) {\n  const named = HOUSE_CONTAINER_NAMES[modelIdNum] ?? null;\n  if (named) return named;\n  return hideInteract ? null : INTERACT_TEXT;",
     "tests": [
       "test/systems/worldhover.test.js"
     ]

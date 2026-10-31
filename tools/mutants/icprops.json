@@ -220,8 +220,8 @@
   {
     "name": "IC-PROPS-a-nameless-building-says-nothing",
     "file": "src/systems/worldTooltips.js",
-    "old": "    : displayName || locationName;",
-    "new": "    : displayName;",
+    "old": "  const to =\n    buildingType === BUILDING_TYPES.Town23\n      ? locationName\n        ? `${locationName} City Walls`\n        : ''\n      : displayName || locationName;",
+    "new": "  const to = buildingType === BUILDING_TYPES.Town23 ? (locationName ? `${locationName} City Walls` : '') : displayName;",
     "tests": [
       "test/systems/icprops_doors.test.js"
     ]

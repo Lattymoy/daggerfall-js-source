@@ -222,8 +222,8 @@
   {
     "name": "RR3-25-the-location-key-is-region-first",
     "file": "src/systems/worldDataVariants.js",
-    "old": "export const makeLocationKey = (regionIndex, locationIndex) => (locationIndex * 100) + regionIndex;",
-    "new": "export const makeLocationKey = (regionIndex, locationIndex) => (regionIndex * 100) + locationIndex;",
+    "old": "export const makeLocationKey = (regionIndex, locationIndex) => locationIndex * 100 + regionIndex;",
+    "new": "export const makeLocationKey = (regionIndex, locationIndex) => regionIndex * 100 + locationIndex;",
     "tests": [
       "test/systems/quest/rr3_questline.test.js"
     ]
@@ -231,7 +231,7 @@
   {
     "name": "RR3-26-the-any-fallback-is-gone",
     "file": "src/systems/worldDataVariants.js",
-    "old": "  return buildingVariants.get(buildingKey(lastLocationKey, blockName, recordIndex)) ?? buildingVariants.get(buildingKey(ANY_LOCATION_KEY, blockName, recordIndex)) ?? NO_VARIANT;",
+    "old": "  return (\n    buildingVariants.get(buildingKey(lastLocationKey, blockName, recordIndex)) ??\n    buildingVariants.get(buildingKey(ANY_LOCATION_KEY, blockName, recordIndex)) ??\n    NO_VARIANT\n  );",
     "new": "  return buildingVariants.get(buildingKey(lastLocationKey, blockName, recordIndex)) ?? NO_VARIANT;",
     "tests": [
       "test/systems/quest/rr3_questline.test.js"
@@ -249,8 +249,8 @@
   {
     "name": "RR3-28-getlocationvariant-forgets-the-last-key",
     "file": "src/systems/worldDataVariants.js",
-    "old": "  lastLocationKey = locationKey;\n  readingLocationKey = null;",
-    "new": "  readingLocationKey = null;",
+    "old": "  lastLocationKey = locationKey;\n  readingLocationKey = null; // WD3: a location just read is the town its blocks come from",
+    "new": "  readingLocationKey = null; // WD3: a location just read is the town its blocks come from",
     "tests": [
       "test/systems/quest/rr3_questline.test.js"
     ]

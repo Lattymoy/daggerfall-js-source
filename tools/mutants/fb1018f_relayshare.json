@@ -243,7 +243,7 @@
     "name": "RELAY-SHARE-the-masteries-keep-their-own-copy",
     "file": "src/systems/weaponMastery.js",
     "old": "const shareOf = healthShare;",
-    "new": "const shareOf = (e) => (e?.relayHealth ? null : Number.isFinite(e?.health) && e.maxHealth > 0 ? e.health / e.maxHealth : 1);",
+    "new": "const shareOf = (e) =>\n  e?.relayHealth ? null : Number.isFinite(e?.health) && e.maxHealth > 0 ? e.health / e.maxHealth : 1;",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
     ],

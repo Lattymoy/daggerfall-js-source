@@ -515,8 +515,8 @@
   {
     "name": "AUDIT-S8-hover-unnamed",
     "file": "src/systems/worldTooltips.js",
-    "old": "return t ? { title: craft ? `${t} (${craft})` : t } : craft ? { title: craft } : null;",
-    "new": "return t ? { title: t } : null;",
+    "old": "  return t ? { title: craft ? `${t} (${craft})` : t } : craft ? { title: craft } : null;",
+    "new": "  return t ? { title: t } : null;",
     "tests": [
       "test/ui/homestations.test.js"
     ]

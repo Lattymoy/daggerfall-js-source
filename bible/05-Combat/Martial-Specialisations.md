@@ -147,7 +147,7 @@ struck ~390 to a fist's ~1,360.
 
 Now every weapon's blow - the four melee families' and the bow's, the Thunderlock's on
 Archery - is also worth 0.44% for each point of gear on its skill (`skills.js` skillModOf), from the first point, ADDED
-to the climb's (`weaponMastery.js:"export function weaponGearPct("`; GEAR-ADDS, mob: "they should both just stack
+to the climb's (`weaponMastery.js:"export function weaponGearPct"`; GEAR-ADDS, mob: "they should both just stack
 additively", "need to be the same end result but also help the begingin" - the first build took the greater of the
 two, and gear paid nothing below a live 200):
 

@@ -2652,7 +2652,7 @@ issue. They have no logical placements"*, and *"No band aids or half assed work"
 - EVERY HOUSE DOOR A "RESIDENCE" (`online/onlineHomes.js:"export const homeDoorName = (name, hasVerbs, type = null) =>"`):
   a House1 to House6 with no name of its own is named as DFU discovers it - DFU's own `residence` text, no new string -
   whatever its verbs; a quest's home, a player's home and a guild's hall keep theirs. A building of no house type with no
-  name (a ship's deck) says the place it stands in (`worldTooltips.js:"    : displayName || locationName;"` - the mod
+  name (a ship's deck) says the place it stands in (`worldTooltips.js:": displayName ||"` - the mod
   would print "To" and nothing). The Info say reads the same word.
 - A DOOR IS ITS OWN TOWN'S (`scenes/townTalk.js:"const doorTownOf = (place, data) =>"`, from `scenes/world.js:"...townTalk.doorTownOf(dfLoc, d) };"`): the host's record
   for a door carries the town it stands in - its book of buildings, its name, and its building's name in that town
