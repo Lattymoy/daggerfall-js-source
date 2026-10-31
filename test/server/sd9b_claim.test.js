@@ -290,8 +290,9 @@ test('SD9b the hosts and the service by source: the world host keeps a book onli
   assert.match(w, /sdClaims\?\.tick\(\);/);
   const idx = src('server-account/src/index.js');
   assert.match(idx, /if \(path === '\/v1\/sd\/claim' && request\.method === 'POST'\) \{/);
-  assert.match(idx, /sds: await sdRecordOf\(ctx, who\.player\.id\)/);
-  assert.match(idx, /sds: await sdRecordOf\(ctx, body\.id\)/);
+  assert.match(idx, /dragonRecordOf\(ctx, who\.player\.id\), sdRecordOf\(ctx, who\.player\.id\),/);   // PIN MOVED (AURA-FAST): asked together, sixth of the list
+  assert.match(idx, /dragonSlainOf\(ctx, body\.id\), sdRecordOf\(ctx, body\.id\),/);
+  assert.match(idx, /account: \{ \.\.\.accountView\(who\.player, nowS\), duels, gates, raids, serpents, dragons, sds,/);
   assert.match(src('server-account/migrations/0090_sd_kills.sql'), /PRIMARY KEY \(slot, account\)/);
   assert.match(src('server-account/migrations/0090_sd_kills.sql'), /ALTER TABLE players ADD COLUMN sd_honours INTEGER NOT NULL DEFAULT 0;/);
   const deploy = src('.github/workflows/account-deploy.yml');

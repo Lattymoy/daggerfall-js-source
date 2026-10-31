@@ -20,6 +20,7 @@ import { decodedTexture, preloadTextureArchive, isVendorArchive, vendorTextureSt
 import { classicRecordRgba } from '../formats/derivedTexture.js';   // WD2: a mod sprite rebuilt from the player's own record
 import { setDfLookPalette } from '../world/dfLook.js';   // DF-LOOK: the port's own painted pictures in this palette's colours
 import { customModelBuilt, customAliasFor, aliasSubMeshes, customModelNeeds } from '../world/customModels.js';   // DS1: models no ARCH3D carries; WD3: a classic model with its pictures swapped
+import { registerChestModels } from '../world/chestModel.js';   // CHEST3D: the owner's chest over ARCH3D's three, on the model door
 import { dyeToken, changeDyeBitmap } from '../characters/dyes.js';   // DW3: the per-dye UI variant; DYE-ICON: and the classic arm's ChangeDye
 import { ROTOR, MACHINERY, MACHINERY_MODEL_ID, MACHINERY_CHILDREN, PLANK_GEAR, ROLLER } from '../world/windmillMesh.js';   // WM2b/WM2d/WM4b: the vendored mill and its machinery, uploaded like any other model
 import { skinnedBody } from '../world/windmills.js';   // WM2e: its walls and roof follow the climate
@@ -35,6 +36,7 @@ import { createPlaceHolds } from './placeHolds.js';   // FIELD BUGS 2026-10-04d 
 export { LAST_CLASSIC_TEXTURE_ARCHIVE };   // DS1's, kept here for its importers (formats/textureFile.js since STUDIO1: the studio reads it too)
 
 export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes }) {
+  registerChestModels();   // CHEST3D: before any chest is asked for
   const textureFiles = new Map();
   const texturePromises = new Map();
   // WL1 (render/windowLight.js): which pictures may hold glass, asked before they are up - a mesh measures its windows at

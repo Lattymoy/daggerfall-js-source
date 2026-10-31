@@ -282,9 +282,9 @@
   {
     "name": "RAID1-a-twenty-sixth-raider",
     "file": "src/systems/raidingParties.js",
-    "old": "    if (standing < MAX_RAID_ENEMIES) {",
-    "new": "    if (standing <= MAX_RAID_ENEMIES) {",
-    "tests": ["test/systems/raid1_raidingParties.test.js"]
+    "old": "    if (standing < raidCap()) return kindPackStep(raid, raidCap() - standing,",
+    "new": "    if (standing <= raidCap()) return kindPackStep(raid, raidCap() + 1 - standing,",
+    "tests": ["test/systems/raidpacks_town.test.js", "test/systems/fb1011g_raidword.test.js"]
   },
   {
     "name": "RAID1-the-fallen-still-counted",

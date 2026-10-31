@@ -88,8 +88,9 @@ client stands it in the same spot. Where no pile has room no coffer stands: the 
 fifty that has a pile (AUDIT-STOREFRONT III lane D, on the freeware over the Bay and every theatre).
 
 **Found and opened.** Where the account has not emptied the coffer, the HUD says "An Aurum coffer is hidden in this
-dungeon." The coffer is an oak chest bound in gold, the Aurum coin's sun on its lock plate (`src/world/aurumCofferArt.js`,
-a billboard as Daggerfall's treasure is). The activate key opens it at a treasure pile's reach: the page asks the
+dungeon." The coffer is the owner's chest in dark oak with a gold hinge and latch (CHEST3D, `bible/03-World/Chests.md`),
+its front away from its pile; where a host hands no mesh door, its picture (`src/world/aurumCofferArt.js`, an oak chest
+bound in gold, the Aurum coin's sun on its lock plate). The activate key opens it at a treasure pile's reach: the page asks the
 service, and on a yes the coffer stands open and empty and the HUD says "+10 Aurum". A refusal says why. A coffer the
 account emptied stands open for it on every visit, for good. The device keeps a note of each, and the service's answer
 is what counts. A coffer the service does not know (a page and a service of two laws) is taken away.

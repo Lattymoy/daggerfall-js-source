@@ -239,6 +239,12 @@ On, the pause screen draws no gem (`enhancedMenu.js` shopGem), so the window has
 account's Aurum, its items and the Folios are untouched, and a coffer or a gift still pays. `test/ui/shop_hide.test.js`;
 `tools/mutants/shop_hide.json`.
 
+**Read again at every open** (SHOP-REREAD, 2026-10-31). A pause visit reads the account once, at the shop's first open.
+At the launch the game's new build went out 13 minutes before the account service, and a player who opened the shop in
+that gap was shown the older service's card - no Aurum, no Folios ("The Folios are not open yet"). Every press of the
+gem now reads the account again, as the window's focus does (`enhancedShop.js` shopReread), so a card from a deploy's
+gap mends at the next open. `test/ui/shop_hide.test.js`; `tools/mutants/shop_hide.json`.
+
 ## 10. Online
 
 The token's new claim is `fx`, the effects kit: three characters, the kill effect, the portal skin and the mount look,
