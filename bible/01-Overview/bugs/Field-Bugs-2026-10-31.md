@@ -106,9 +106,9 @@ which the player takes from the body.
 
 ## 12. Daedric, rarely (DAEDRIC-RARE)
 
-FIXED. A granted Daedra drop is Daedric one draw in ten at any level, Ebony otherwise; how often Daedra drop is
-unchanged (`06-Systems/Unleveled-Loot.md`). OPEN (AUDIT FB1031 C2): the gate Warden's Regalia, Daedric on a sixth of
-its kills, is now the largest Daedric source; it is the owner's call.
+FIXED. A granted Daedra drop that METAL-RAMP makes Daedric is Daedric one draw in ten at any level, Ebony otherwise
+(AUDIT FB1031 III: below level 20 the ramp's own metals stand as before); how often Daedra drop is unchanged (`06-Systems/Unleveled-Loot.md`). OPEN (AUDIT FB1031 C2, III X1): the gate Warden's kill (its
+Regalia and its ordinary pieces) and main's Delve vault are Daedric sources DAEDRIC-RARE does not reach; it is the owner's call.
 
 ## Deploy
 

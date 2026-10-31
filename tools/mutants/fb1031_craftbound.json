@@ -2,15 +2,15 @@
   {
     "name": "AUDIT-FB1031-C1-the-repeat-names-the-meat-to-every-build",
     "file": "server-account/src/professions.js",
-    "old": "    if (Number(prior.extra_stores) === 1 && body?.butcheryStores !== true) { delete again.extra; delete again.extraQty; delete again.extraStore; }",
+    "old": "  if (Number(row.extra_stores) === 1 && body?.butcheryStores !== true) { delete again.extra; delete again.extraQty; delete again.extraStore; }",
     "new": "",
     "tests": ["test/net/butcherstores.test.js"]
   },
   {
     "name": "AUDIT-FB1031-C1-the-new-build-told-nothing-either",
     "file": "server-account/src/professions.js",
-    "old": "    if (Number(prior.extra_stores) === 1 && body?.butcheryStores !== true) {",
-    "new": "    if (Number(prior.extra_stores) === 1) {",
+    "old": "  if (Number(row.extra_stores) === 1 && body?.butcheryStores !== true) {",
+    "new": "  if (Number(row.extra_stores) === 1) {",
     "tests": ["test/net/butcherstores.test.js"]
   },
   {

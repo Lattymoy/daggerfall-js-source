@@ -173,3 +173,30 @@ test('AUDIT FB1031 C1: a Stores row asked again by an older build names no meat,
   assert.deepEqual([newer.body.extra, newer.body.extraStore?.own], ['food:meat', 1], 'the new build still hears where its meat went');
   assert.deepEqual([t.stores('food:meat'), t.carried('food:meat')], [[['own', 1]], []]);
 });
+
+// AUDIT FB1031 III I1: the same id from two tabs at once - an older build's and the new one's (one kept harvest). The new
+// build wins the insert, its meat in the Stores; the older build's answer comes by the race's repeat, which named the meat,
+// and that build mints any `extra` it hears.
+test('AUDIT FB1031 III I1: a Stores row answered by the race\'s repeat to an older build names no meat - its prior read held back until the new build\'s batch has run (mutant: the race\'s repeat unguarded)', async () => {
+  const t = await stand();
+  t.setXp('hunting');
+  const ask = t.skin({ ...CARRY });
+  const PRIOR = 'SELECT * FROM node_harvests WHERE player = ?1 AND rid = ?2';
+  const realPrep = t.s.env.DB.prepare.bind(t.s.env.DB);
+  let open = null, held = 0;
+  const opened = new Promise((go) => { open = go; });
+  t.s.env.DB.prepare = (sql) => {
+    const st = realPrep(sql);
+    if (sql === PRIOR && held++ === 0) { const first = st.first.bind(st); st.first = async () => { const v = await first(); await opened; return v; }; }
+    return st;
+  };
+  const olderP = t.harvest(ask);
+  await new Promise((go) => setTimeout(go, 50));
+  t.s.env.DB.prepare = realPrep;
+  const newer = await t.harvest({ ...ask, butcheryStores: true });
+  open();
+  const older = await olderP;
+  assert.deepEqual([newer.status, newer.body.extra, newer.body.extraStore?.own], [200, 'food:meat', 1], 'the new build won the insert, its meat in the Stores');
+  assert.deepEqual([older.status, older.body.repeat, older.body.extra ?? null, older.body.extraQty ?? null, 'extraCarried' in older.body], [200, true, null, null, false], 'the older build hears no meat');
+  assert.deepEqual([t.stores('food:meat'), t.carried('food:meat')], [[['own', 1]], []]);
+});

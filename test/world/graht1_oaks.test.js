@@ -463,8 +463,8 @@ test('GRAHT1: the host - a pixel\'s trees stood whole by the keep, their bodies 
   assert.equal(host.stats.drawn, 1, 'the haze hides what it hides whole');
   hidden = null;
   r._focus = new Float32Array([110, 5, 100, 1]);
-  host.frame([p], [110, 400, -150], null);
-  assert.equal(host.stats.drawn, 3, 'CANOPY-SEE: the crown between the eye and the traveller drawn - the trees\' fragment half sees through it (render/lowPolyTreesGlsl.js)');
+  host.frame([p], [110, 5, 100], null);   // AUDIT CANOPY-SEE C1: the eye the world hands the host under the travel view is the traveller's head, the focus itself (world.js trees.frame's cam.pos)
+  assert.equal(host.stats.drawn, 3, 'CANOPY-SEE: every crown drawn - the trees\' fragment half sees through the one over the traveller (render/lowPolyTreesGlsl.js)');
   r._focus = null;
   // nothing standing: the slot emptied once
   host.frame([], [0, 0, 0], null);

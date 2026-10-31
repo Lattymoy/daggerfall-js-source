@@ -180,10 +180,10 @@ over water's, the flats still on the three alone - at the lowest ground under it
 steep step, every draw the world tile's; the storeys and the roadside pairs off their feet, the floor off their trunks,
 the jungle as it stood without them; the sky from the floor (rays against the drawn LOD 0 over a 3 x 3 of whole canopy
 pixels: over 86% covered overhead and under 99%, over 92% lower); the bodies on the drawn buttresses; the pictures; the
-host (the stand and its keep, the GPU on the slice clock, the runs, the instances uploaded (the trees met out of their runs' order), the culls, the well, the
-casters nearest first and capped, the teardown, a teardown mid-making); the well and the fog's reach exactly; the GPU's
+host (the stand and its keep, the GPU on the slice clock, the runs, the instances uploaded (the trees met out of their runs' order), the culls, no travel-view cull, the
+casters nearest first and capped, the teardown, a teardown mid-making); the fog's reach exactly; the GPU's
 pack; the wiring. `test/world/valenwood_canopy.test.js`'s law, host and wiring pins moved with it (PIN MOVED, GRAHT1),
-and `test/render/volumetricClouds.test.js`'s sky span. `tools/mutants/graht1.json` (75); `tools/mutants/valenwoodcanopy.json`
+and `test/render/volumetricClouds.test.js`'s sky span. `tools/mutants/graht1.json` (72); `tools/mutants/valenwoodcanopy.json`
 re-aimed by content (31).
 
 ### Seen in the game (2026-10-26)

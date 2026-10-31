@@ -30315,7 +30315,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const minDistance = Math.max(BAND_STAND_MIN_M, dist - PACK_SPACING), maxDistance = Math.max(BAND_STAND_MIN_M, dist) + PACK_SPACING;
     for (const turn of [0, Math.PI / 2, -Math.PI / 2, Math.PI]) {
       const stood = _standCampEncounter({ kind: 'band', mobileTypes: mk.mobileTypes, spacing: PACK_SPACING, alertRadius: PACK_ALERT_RADIUS,
-        minDistance, maxDistance, ...bandStandBearing(yaw + turn, cam.yaw, fieldOfView() * 180 / Math.PI, !!travelView?.active, largeHudWorldAspect(canvas.clientWidth, canvas.clientHeight), minDistance, PACK_SPACING) }, fx);   // AUDIT FB1031 B1: never stood in the view (II K6: its width, the pack's spread)
+        minDistance, maxDistance, ...bandStandBearing(yaw + turn, cam.yaw, fieldOfView() * 180 / Math.PI, !!travelView?.active, largeHudWorldAspect(canvas.clientWidth, canvas.clientHeight), minDistance, PACK_SPACING, Math.hypot(renderer._camPos[0] - fx[0], renderer._camPos[2] - fx[2])) }, fx);   // AUDIT FB1031 B1: never stood in the view (II K6: its width, the pack's spread; III W1: from the eye drawn, behind the feet)
       if (!stood) continue;
       // AUDIT-F2: A BAND THAT CAUGHT ME STANDS ON ME - it chased me: each member alerted (never the gate's) and come for me,
       // as a noticed foe comes (exteriorFoes.js noticedPlayer). Stood unaware, the gate held them off me and the keys'

@@ -4089,7 +4089,7 @@ from above is still never met in play.
 `bearingDegrees` 0), past CAMP-FAR's rule: with the camera facing the way the band came, every anchor stood in the view
 39-51 m off and popped up mid-screen (2,000 of 2,000 in a 65-degree view). Now it keeps its bearing only outside the
 view; inside it the band stands just outside the view's edge on its own side, CAMP-FAR's FOV plus 0-4 degrees
-(`travelBands.js:"export function bandStandBearing(yaw, camYaw, fovDegrees, seen = false, aspect = 1, nearM = Infinity, spacingM = 0) {"`,
+(`travelBands.js:"export function bandStandBearing(yaw, camYaw, fovDegrees, seen = false, aspect = 1, nearM = Infinity, spacingM = 0, backM = 0) {"`,
 called in place in `world.js` bandStand, so the host does not grow). Under the Overworld a band still stands where it
 was watched coming (OW5b B2). It reads the camera, never the place: every province's.
 
@@ -4112,8 +4112,9 @@ Mac, 2026-10-31: *"Can you also add a sort of transparency when your overworld t
 trees"*.
 
 **Found.** From 150-450 m up, Valenwood's trees stand between the eye and the traveller: the graht-oaks' crowns (134-215
-m, `03-World/Graht-Oaks.md`) and the jungle's storeys under them. GRAHT1's well left a crown on the sight line undrawn,
-so it popped out whole as the view turned. Nothing cut the jungle's trees or a landmark.
+m, `03-World/Graht-Oaks.md`) and the jungle's storeys under them, so the traveller was hidden. GRAHT1's well meant to
+leave such a crown undrawn, but it never fired: the eye `world.js` hands the trees' host is the traveller's head, the
+focus itself (AUDIT CANOPY-SEE C1). Nothing cut the jungle's trees or a landmark.
 
 **Fixed.** The trees' fragment half sees through them (`render/lowPolyTreesGlsl.js` TREE_SEE, both lanes' billboard
 shaders): a cone from the eye about its sight line to the traveller (uFocus), open to 0.11 rad and shut by 0.17, from
@@ -4128,8 +4129,20 @@ THE FOUR HOSTS: `scenes/world.js` WIRED, through its travel view's focus, with n
 **Not changed.** A flat (Daggerfall's own trees, a 3D tree's far picture) is drawn whole: from the air it is low and
 thin. A node's glint is never drawn under the travel view.
 
-**Pins.** `test/render/canopysee.test.js` (4, on the shader's own text: on and off the line, the rim, the near end,
-the handover, both lanes' declarations), `test/world/graht1_oaks.test.js` (PIN MOVED: every crown drawn under the
-focus), `tools/mutants/canopysee.json` (13, all dead; G-63 and G-71 retired from `graht1.json` with the well).
+**Pins.** `test/render/canopysee.test.js` (6, on the shader's own text: on and off the line, the rim, the near end,
+the handover, both lanes' declarations, C2 and C3 below), `test/world/graht1_oaks.test.js` (PIN MOVED: every crown drawn under the
+focus), `tools/mutants/canopysee.json` (15, all dead; G-63, G-71 and G-72 retired from `graht1.json` with the well).
 `tools/canopySeeProbe.mjs` drew it in real WebGL2 on both lanes: a traveller under a crown showed 24 of 108 pixels
 without the focus, 87 with it, and a crown off the line stayed whole.
+
+**AUDIT CANOPY-SEE (2026-10-31, Mac: "Audit everything").** Read cold in a frozen worktree with the rest of the branch
+(`01-Overview/audits/Audit-FB1031.md`, lane III). **C1.** The well never fired, as Found now says; the graht pin hands
+the host the world's own eye. **C2.** Every 3D plant on the eye's side of the traveller, a bush or a reed 25 m under the
+sight line, was thinned: the window opens only from the head to TREE_SEE.above (3 m) over it. **C3.** The rise from a
+third-person eye, up to 11.4 m from the head, cut the leaves by it on its first frame: the window opens as the eye
+climbs from TREE_SEE.rise to risen (12 to 30 m). **C4.** The counts above. `tools/canopySeeProbe.mjs` drew the same 87 of
+108 after.
+
+Seen, not changed: the crowns still cover 95-97% of the picture from every height and tilt, and the window
+clears about 1.5% of it round the traveller - how much of the canopy to open is the owner's call.
+

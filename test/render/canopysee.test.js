@@ -30,7 +30,7 @@ function keptOf(world, { fade = 3, focus = [...HEAD, 1], eye = EYE } = {}) {
 const KEEP = Math.round(TREE_SEE.keep * 16);
 
 test('CANOPY-SEE the window: a tree on the sight line keeps 4 of 16 - near the eye, midway, and over the traveller\'s head; off the cone, behind the eye and at the traveller it is whole; the rim and the near end ease (mutants: no window; the keep; the cone; the near end; the eye\'s back)', () => {
-  assert.deepEqual({ ...TREE_SEE }, { core: 0.11, rim: 0.06, near: 2, ease: 10, keep: 0.25 }, 'about 6 degrees open, shut by 10; whole 2 m short of the traveller');
+  assert.deepEqual({ ...TREE_SEE }, { core: 0.11, rim: 0.06, near: 2, ease: 10, above: 3, rise: 12, risen: 30, keep: 0.25 }, 'about 6 degrees open, shut by 10; whole 2 m short of the traveller; open 3 m over the head; risen by 30 m');
   for (const along of [20, D / 2, D - TREE_SEE.near - TREE_SEE.ease - 1]) assert.equal(keptOf(at(along)), KEEP, `on the line at ${along.toFixed(0)} m`);
   const mid = D / 2, side = (ang) => at(mid, Math.tan(ang) * mid);
   assert.equal(keptOf(side(TREE_SEE.core * 0.9)), KEEP, 'inside the core');
@@ -72,4 +72,20 @@ test('CANOPY-SEE both lanes\' billboard shaders declare what the window reads be
     const fog = ['${FOG_GLSL}', '${EL_FOG_GLSL}', 'uniform vec4 uFocus;'].map((k) => src.indexOf(k)).filter((i) => i >= 0);
     assert.ok(fog.length && Math.min(...fog) < texel, `${name}: uFocus (the fog's block) before it`);
   }
+});
+
+test('AUDIT CANOPY-SEE C2: a bush in front of the traveller, under the sight line, is whole - only what stands over the head is seen through; a crown over the same spot still is (mutant: the height unasked)', () => {
+  assert.equal(keptOf([0, 1.5, -20]), 16, 'a 1.5 m bush 20 m toward the eye: whole');
+  assert.equal(keptOf([0, 12, -20]), KEEP, 'a crown 12 m up over the same spot: seen through');
+  const edge = keptOf([0, HEAD[1] + TREE_SEE.above / 2, -20]);
+  assert.ok(edge > KEEP && edge < 16, `easing in over the head (${edge})`);
+});
+
+test('AUDIT CANOPY-SEE C3: the rise from a third-person eye (11.4 m behind the head) cuts nothing on its first frame, and opens as the eye climbs (mutant: the rise unasked)', () => {
+  const eyeAt = (d) => HEAD.map((h, i) => h - dir[i] * d);
+  const leaf = (d) => { const e = eyeAt(d); return e.map((v, i) => v + dir[i] * d * 0.3); };
+  assert.equal(keptOf(leaf(11.4), { eye: eyeAt(11.4) }), 16, 'the first frame: whole');
+  const mid = keptOf(leaf(21), { eye: eyeAt(21) });
+  assert.ok(mid > KEEP && mid < 16, `half way up the ease (${mid})`);
+  assert.equal(keptOf(leaf(40), { eye: eyeAt(40) }), KEEP, 'risen: the window open');
 });

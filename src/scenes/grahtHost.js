@@ -21,7 +21,7 @@
 //     either lane; and the nearest few recorded as the sun's casters (renderer.recordShadowMesh), so their crowns throw
 //     their shade, and their gaps their light, on the ground, the buildings and the jungle under them (the enhanced lane);
 //     under the travel view every tree is drawn, and the trees' fragment half sees through a crown over the traveller
-//     (render/lowPolyTreesGlsl.js CANOPY-SEE - it took the place of GRAHT1's well, which left such a crown undrawn);
+//     (render/lowPolyTreesGlsl.js CANOPY-SEE; GRAHT1's well never fired, its eye the focus - AUDIT CANOPY-SEE C1);
 //   - THE TEARDOWN (destroy): the buffers, the pictures and the casters - EVERY ALLOCATION HAS AN OWNER. The world holds
 //     the host for the session, as it holds the trees' doors (leaving it reloads the page); destroy is the test host's.
 // `?graht=off` is the kill door, offline (grahtOaksOn): online the graht-oaks stand for everyone, since every storey of

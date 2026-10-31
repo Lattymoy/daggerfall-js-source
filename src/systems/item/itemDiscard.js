@@ -89,6 +89,8 @@ export const destroyAsk = (/** @type {string} */ name, /** @type {number} */ n) 
 ];
 export const destroyInstead = (/** @type {number} */ n) => t('inventory.destroy.instead', '{n, plural, one {Destroy it instead? It is gone for good.} other {Destroy all # instead? They are gone for good.}}', { n });
 export const destroyedText = (/** @type {string} */ name) => t('inventory.destroy.done', 'Destroyed: {name}.', { name });
-/** A refusal's words by its reason - the lock's and the worn piece's; null where the act was never offered. */
+/** A refusal's words by its reason - the lock's and the worn piece's; null where the act was never offered. AUDIT FB1031
+ *  III I4: and 'gone' - a festival answer restacks the faces while the question stands, and Yes destroyed nothing unsaid. */
 export const destroyRefusalText = (/** @type {string} */ name, /** @type {string|undefined} */ why) => (why === 'locked' ? lockedText(name)
-  : why === 'worn' ? t('inventory.destroy.worn', 'Take off {name} before destroying it.', { name }) : null);
+  : why === 'worn' ? t('inventory.destroy.worn', 'Take off {name} before destroying it.', { name })
+    : why === 'gone' ? t('inventory.destroy.moved', '{name} has moved in your pack. Nothing was destroyed.', { name }) : null);

@@ -18224,6 +18224,11 @@
   "tr": "e8381c0441d6",
   "by": "claude-in-session"
  },
+ "inventory.destroy.moved": {
+  "en": "5bd80bc5ba61",
+  "tr": "518e0870b741",
+  "by": "claude-in-session"
+ },
  "inventory.destroy.worn": {
   "en": "1ff1048606ff",
   "tr": "e8e57aa2d56e",
@@ -34269,6 +34274,16 @@
   "tr": "ca363613e7e1",
   "by": "claude-in-session"
  },
+ "prof.page.stores.allIn": {
+  "en": "c2d4598710b0",
+  "tr": "48c7b5bd45e9",
+  "by": "claude-in-session"
+ },
+ "prof.page.stores.allInDone": {
+  "en": "1496902cff40",
+  "tr": "79e84b062870",
+  "by": "claude-in-session"
+ },
  "prof.page.stores.bought": {
   "en": "ae284ff8ef81",
   "tr": "b46aaf65abbf",
@@ -34332,6 +34347,11 @@
  "prof.page.stores.noMatch": {
   "en": "5e819085784c",
   "tr": "0c6249d26054",
+  "by": "claude-in-session"
+ },
+ "prof.page.stores.notPutIn": {
+  "en": "159ca8955625",
+  "tr": "8f2201fcd933",
   "by": "claude-in-session"
  },
  "prof.page.stores.own": {

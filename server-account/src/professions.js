@@ -462,6 +462,14 @@ function readsBy(/** @type {Array<[string, any]>} */ q, /** @type {any[][]} */ r
 /** The answer a harvest's row gives - the first time (`rankBefore` the track's rank before it, so a rise is said), or
  *  again to a request asked twice. PROF2: a gem the strikes found, and its Stores. GATHER-SPEED: its reads one round trip
  *  (answerReads), its find's beside them. */
+/** A harvest answered again - asked again, or racing itself. AUDIT FB1031 C1: a row whose butchery went to the Stores,
+ *  asked by a build that never asks so, names no meat: that build mints any `extra` it hears, and the meat is counted in
+ *  the Stores. III I1: the race's repeat too - an older tab losing the insert to a newer one minted it twice. */
+async function repeatAnswer(db, player, env, row, nowS, body) {
+  const again = await harvestAnswer(db, player, env, row, nowS, { repeat: true });
+  if (Number(row.extra_stores) === 1 && body?.butcheryStores !== true) { delete again.extra; delete again.extraQty; delete again.extraStore; }
+  return again;
+}
 async function harvestAnswer(db, player, env, row, nowS, extra, rankBefore = null) {
   const q = answerReads(db, player, env, specOf(row), row.rid, nowS);
   return answerOf(row, readsBy(q, await readAll(db, q.map(([, st]) => st))), nowS, extra, rankBefore);
@@ -585,13 +593,7 @@ export async function harvestNode(ctx, player, env, body = {}) {
   const T = carry ? 'prof_carried' : 'prof_stores';
   const ROOM = carry ? CARRIED_MAX : STORES_MAX;
   const prior = await db.prepare('SELECT * FROM node_harvests WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();
-  if (prior) {   // before the switch: a harvest made is a harvest answered
-    const again = await harvestAnswer(db, player, env, prior, nowS, { repeat: true });
-    // AUDIT FB1031 C1: a row whose butchery went to the Stores, asked again by a build that never asks so, names no
-    // meat - that build mints any `extra` it hears, and the meat is already counted in the Stores
-    if (Number(prior.extra_stores) === 1 && body?.butcheryStores !== true) { delete again.extra; delete again.extraQty; delete again.extraStore; }
-    return again;
-  }
+  if (prior) return repeatAnswer(db, player, env, prior, nowS, body);   // before the switch: a harvest made is a harvest answered
   const closed = shut(player, env);
   if (closed) return closed;
   const n = parseNodeKey(node);
@@ -856,7 +858,7 @@ export async function harvestNode(ctx, player, env, body = {}) {
   const rows = await readAll(db, [...decided, ...answer.map(([, st]) => st)]);
   const made = rows[decided.length - 1][0] ?? null;
   if (made?.n === nonce) return answerOf(made, readsBy(answer, rows, decided.length), nowS, levy > 0 ? { levy: { qty: levy, key: levyKey } } : {}, rank);
-  if (made) return harvestAnswer(db, player, env, made, nowS, { repeat: true });   // the same request, racing itself
+  if (made) return repeatAnswer(db, player, env, made, nowS, body);   // the same request, racing itself (AUDIT FB1031 III I1)
   if (await db.prepare('SELECT 1 FROM node_harvests WHERE day = ?1 AND node = ?2 AND kind = ?3 AND player = ?4 AND char_id = ?5')
     .bind(day, node, kind, player.id, character).first()) return { error: 'node-taken' };
   // CAP-OFF: no day's cap to say - `prof-cap`, `prof-account-cap`, `prof-hunt-cap` and `prof-fish-cap` are said no more

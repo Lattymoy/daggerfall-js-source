@@ -2,14 +2,16 @@
 // PACK-SORT (2026-10-31, Sammy on Discord: "Add a sort button to the inventory!"). THE ORDER ONE PRESS OF SORT PUTS A
 // LIST IN: the pack's pages in the spine's order (packPages.js), then rarity high to low (lootRarity.js RARITY_ORDER),
 // then the row's own name, then value high to low. Quest items stay at the front in their own order, where DFU's
-// transfer puts them (itemTransfer.js, AddPosition.Front). A tie keeps the list's order, so two records of one
-// quickslot kind never swap and a slot still uses the same one (quickslots.js uses the first of its kind in the pack).
+// transfer puts them (itemTransfer.js, AddPosition.Front). A tie keeps the list's order, and the records of one
+// quickslot kind keep theirs among the places they land, so a slot still uses the same one (quickslots.js uses the first
+// of its kind in the pack) - AUDIT FB1031 III I3: a maker's mark sorted a Masterwork after its plain twin.
 // One shot: nothing keeps a list sorted, so a drag after it stands and the save carries what the player left.
 import { PAGE_IDS, pageOf } from './packPages.js';
 import { RARITY_ORDER, rarityOf } from '../systems/loot/lootRarity.js';
 import { itemNameParts } from '../systems/item/itemInfo.js';
 import { itemValueOf } from '../systems/item/itemTemplates.js';
 import { isHorseItem } from '../systems/horse/horseCoats.js';
+import { quickslotKey } from '../systems/quickslots.js';
 
 /** The side window's lists a Sort is offered on: the player's own wagon, Materials Bag and storage (enhancedInventory.js
  *  remoteModel's kinds). Never a container, the ground or a reward tray - those are not the player's to arrange. */
@@ -50,6 +52,14 @@ function compareKeys(a, b) {
 export function sortedItems(items, { nameOf = rowName } = {}) {
   const keyed = (items ?? []).map((it, at) => keyOf(it, at, nameOf));
   keyed.sort(compareKeys);
+  // AUDIT FB1031 III I3: each quickslot kind's records dealt back, in their old order, into the places the sort gave them
+  const kinds = new Map();
+  keyed.forEach((k, i) => { const q = k.hole ? null : quickslotKey(k.it); if (q != null) { if (!kinds.has(q)) kinds.set(q, []); kinds.get(q).push(i); } });
+  for (const places of kinds.values()) {
+    if (places.length < 2) continue;
+    const old = places.map((i) => keyed[i]).sort((a, b) => a.at - b.at);
+    places.forEach((i, n) => { keyed[i] = old[n]; });
+  }
   return keyed.map((k) => k.it);
 }
 

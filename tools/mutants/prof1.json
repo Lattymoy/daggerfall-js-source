@@ -257,8 +257,8 @@
   {
     "name": "PROF1-28-a-harvest-asked-twice-twice",
     "file": "server-account/src/professions.js",
-    "old": "  if (prior) {   // before the switch: a harvest made is a harvest answered",
-    "new": "  if (false) {   // before the switch: a harvest made is a harvest answered",
+    "old": "  if (prior) return repeatAnswer(db, player, env, prior, nowS, body);   // before the switch: a harvest made is a harvest answered",
+    "new": "  if (false) return repeatAnswer(db, player, env, prior, nowS, body);   // before the switch: a harvest made is a harvest answered",
     "tests": [
       "test/net/prof1_service.test.js"
     ],

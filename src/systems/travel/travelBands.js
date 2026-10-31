@@ -66,10 +66,14 @@ export const BAND_STAND_TRIES = 5;
  *  AUDIT FB1031 II K6: the view's edge is its HORIZONTAL half-view (`fovDegrees` is the vertical, `aspect` the frame's
  *  width over its height) and the pack's spread past it (`spacingM` about an anchor `nearM` off at the nearest), FOV
  *  plus 2 at the least: at 32:9 the vertical FOV's edge stood 94% of bands with a member in view. */
-export function bandStandBearing(yaw, camYaw, fovDegrees, seen = false, aspect = 1, nearM = Infinity, spacingM = 0) {
+export function bandStandBearing(yaw, camYaw, fovDegrees, seen = false, aspect = 1, nearM = Infinity, spacingM = 0, backM = 0) {
   const half = (Math.atan(Math.tan((fovDegrees * Math.PI) / 360) * (aspect > 0 ? aspect : 1)) * 180) / Math.PI;
   const spread = (Math.asin(Math.min(1, spacingM / nearM)) * 180) / Math.PI;
-  const edge = Math.max(fovDegrees + 2, half + spread + 2), off = ((((yaw - camYaw) * 180) / Math.PI % 360) + 540) % 360 - 180;
+  // AUDIT FB1031 III W1: the eye stands `backM` behind the feet in third person (11.4 m zoomed out), so the edge turns out
+  // by the law of sines till the nearest member clears it from the eye: at 21:9 zoomed out 96% of bands stood one in view
+  const base = Math.max(fovDegrees + 2, half + spread + 2), r = Math.max(1, nearM - spacingM);
+  const turn = backM > 0 ? (Math.asin(Math.min(1, (backM * Math.sin((base * Math.PI) / 180)) / r)) * 180) / Math.PI : 0;
+  const edge = base + turn, off = ((((yaw - camYaw) * 180) / Math.PI % 360) + 540) % 360 - 180;
   return seen || Math.abs(off) >= edge ? { yawRad: yaw, bearingDegrees: 0 } : { yawRad: camYaw, bearingDegrees: off < 0 ? -edge : edge };
 }
 /** The bands the host is asked about: the cells within this many map pixels of the traveller. */

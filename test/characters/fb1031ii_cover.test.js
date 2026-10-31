@@ -271,7 +271,7 @@ test('AUDIT FB1031 II K6: a band met with the view down stands outside the view\
     const scope = {
       bandRoom: () => true, player: { feetAt: () => [0, 0, 0] }, BAND_STAND_MIN_M: bands.BAND_STAND_MIN_M, PACK_SPACING, PACK_ALERT_RADIUS,
       wildFoes: { alert() {} }, exteriorFoes: { noticedPlayer() {} }, performance: { now: () => 0 }, bandStandBearing: bsb,
-      cam: { yaw: camYaw }, fieldOfView: () => FOV * deg, travelView: { active: false },
+      cam: { yaw: camYaw }, fieldOfView: () => FOV * deg, travelView: { active: false }, renderer: { _camPos: [0, 0, 0] },
       largeHudWorldAspect: (cwi, chi) => cwi / chi, canvas: { clientWidth: cw, clientHeight: ch },
       _standCampEncounter: (hit, feet) => {
         anchors.push(campAnchorSpot({ feet, yawRad: hit.yawRad ?? camYaw, fovDegrees: FOV, groundAt: () => 0, minDistance: hit.minDistance, maxDistance: hit.maxDistance, bearingDegrees: hit.bearingDegrees, rolls: rnd }));

@@ -292,7 +292,8 @@ export const BAG_PAGE_WORDS = Object.freeze({
   noBag: 'You have no Materials Bag: what you gather goes into your pack. Every General Store sells one.',
   // AUDIT2 BAG1 U11: the pack takes what the bag has no room for too, and a deposit takes from the wagon last
   takenNote: 'A material you take out goes into your Materials Bag, then your pack. Put it back from your bag, pack or wagon in any town.',
-  allIn: 'Put everything in',
+  /** AUDIT FB1031 III I2: the bench bar draws it too (STORES-AT-BENCH), so it is the catalog's */
+  get allIn() { return t('prof.page.stores.allIn', 'Put everything in'); },
   /** AUDIT2 BAG1 H1/U2: the bag emptied into the pack - the classic inventory draws no bag, and a food rotted in it held it */
   emptyBag: 'Empty your bag into your pack',
   emptied: (moved, left) => `${moved.toLocaleString('en-US')} moved into your pack.${left > 0 ? ` ${left.toLocaleString('en-US')} stay in your bag: your pack can carry no more.` : ''}`,
@@ -304,8 +305,8 @@ export const BAG_PAGE_WORDS = Object.freeze({
   /** AUDIT BAG1: what went in, and each material that would not with its reason - a refusal partway said only itself, and
    *  the units that had gone in were never said; `stop` the counting-house's silence, which ends the run */
   allInDone: (n, refused = [], stop = null) => [
-    `${n.toLocaleString('en-US')} put in the Stores.`,
-    ...refused.map((r) => `${r.name}: ${r.text ?? 'not put in.'}`),
+    t('prof.page.stores.allInDone', '{n, number} put in the Stores.', { n }),
+    ...refused.map((r) => `${r.name}: ${r.text ?? t('prof.page.stores.notPutIn', 'not put in.')}`),
     ...(stop ? [stop] : []),
   ].join(' '),
   /** UNCOUNTED (FIELD BUGS 2026-10-09c, "Some ingredients won't let you store them": Troll's Blood and Orc's Blood from a
@@ -1289,7 +1290,7 @@ function putAllButton(kit, rerender, wordKey = 'word') {
   const all = carryRows(book, p.carriedHeld, p.heldKeys);
   const carriedAny = [...all.values()].some((r) => r.carried + (r.uncounted | 0) > 0);   // LOOT-LOOSE: and the loose
   if (!carriedAny) return null;
-  const allIn = el('button', 'act', _stores.busy ? 'Sending...' : BAG_PAGE_WORDS.allIn);
+  const allIn = el('button', 'act', _stores.busy ? t('prof.page.stores.sending', 'Sending...') : BAG_PAGE_WORDS.allIn);
   allIn.type = 'button';
   allIn.disabled = _stores.busy || !town || !p.deposit;
   if (!town) allIn.title = BAG_WORDS.town;

@@ -23,12 +23,12 @@ in float vFade;
 `;
 
 /** CANOPY-SEE (Mac, 2026-10-31: "a sort of transparency when your overworld traveling in valenwood. Under the tall
- *  trees"): under the travel view a 3D tree between the eye and the traveller (render/fogGlsl.js uFocus) is a veil, never
- *  a wall. The window is a cone about the sight line: open inside `core` (rad), shut past `core + rim`; open to `near`
- *  plus `ease` m short of the traveller, whole by `near`, so what stands at the traveller is whole. A tree in it keeps
- *  `keep` of its fragments by the screen-door (EG-ZN's 4 of 16, scenes/eliteGates/egOcclude.js). LPT_FS_TEXEL reads it,
- *  and wants vBBWorld, uCamPos and uFocus above main. */
-export const TREE_SEE = Object.freeze({ core: 0.11, rim: 0.06, near: 2, ease: 10, keep: 0.25 });
+ *  trees"): under the travel view a 3D tree between the eye and the traveller (render/fogGlsl.js uFocus, the head) is a
+ *  veil. A cone about the sight line, open inside `core` (rad) and shut past `core + rim`; whole by `near` m short of the
+ *  traveller, easing over `ease`; open from the head to `above` m over it, so a bush is whole (AUDIT CANOPY-SEE C2); and
+ *  opening as the eye climbs from `rise` to `risen` m, so the rise from a third-person eye pops nothing (C3). A tree in
+ *  it keeps `keep` of its fragments by the screen-door (EG-ZN's 4 of 16). Wants vBBWorld, uCamPos and uFocus. */
+export const TREE_SEE = Object.freeze({ core: 0.11, rim: 0.06, near: 2, ease: 10, above: 3, rise: 12, risen: 30, keep: 0.25 });
 const f4 = (v) => v.toFixed(4);
 
 /** The texel as sampled, kept before the flats' margin clear - straight after both maps are sampled. */
@@ -50,7 +50,8 @@ export const LPT_FS_TEXEL = `
     float seeD = max(length(seeAx), 1e-3), seeAlong = dot(seeR, seeAx) / seeD;
     float seeOff = length(seeR - seeAx * (seeAlong / seeD));
     float seeOpen = step(0.0, seeAlong) * (1.0 - smoothstep(${f4(TREE_SEE.core)}, ${f4(TREE_SEE.core + TREE_SEE.rim)}, atan(seeOff, max(seeAlong, 1e-3))))
-      * (1.0 - smoothstep(seeD - ${f4(TREE_SEE.near + TREE_SEE.ease)}, seeD - ${f4(TREE_SEE.near)}, seeAlong));
+      * (1.0 - smoothstep(seeD - ${f4(TREE_SEE.near + TREE_SEE.ease)}, seeD - ${f4(TREE_SEE.near)}, seeAlong))
+      * smoothstep(uFocus.y, uFocus.y + ${f4(TREE_SEE.above)}, vBBWorld.y) * smoothstep(${f4(TREE_SEE.rise)}, ${f4(TREE_SEE.risen)}, seeD);
     if (bayer4(gl_FragCoord.xy) + 0.03125 < ${f4(1 - TREE_SEE.keep)} * seeOpen) discard;
   }
 `;

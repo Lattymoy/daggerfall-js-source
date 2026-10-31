@@ -141,9 +141,10 @@ named here and in Port-Ledger A.
   Sigil Broker sells, so it is not a drop. Pinned by `test/systems/daedricrare.test.js`, `tools/mutants/daedricrare.json`.
 - **OPEN (AUDIT FB1031 C2): the gate Warden.** At level 20 a Lord's kill now gives Daedric 3 times in 100, where it gave
   about 30. The Oblivion Gate's spoils (`gate/gateSpoils.js` rollSpoils) are not this mod's: a Warden kill gives each
-  fighter Ruhn's Regalia, Daedric make, on a sixth of kills, and the Dragonfire Oath (Daedric) on 1 in 250. That is now
-  the largest Daedric source, about five times a Lord's. The gate is built round that set, so it is kept until the
-  owner says otherwise.
+  fighter Ruhn's Regalia, Daedric make, on a sixth of kills, and the Dragonfire Oath (Daedric) on 1 in 250. AUDIT FB1031
+  III X1: the same kill's three ordinary pieces roll DFU's material table, Daedric on 10.5% of kills at level 20, 20% at
+  30 and 29% at 40; main's Delve vault (DELVE-VAULT) holds a Daedric piece in 3-10% of vaults over the same levels.
+  DAEDRIC-RARE reaches none of them. The gate is built round its spoils, so they are kept until the owner says otherwise.
 - **ASF-DEATH**. Both death drops leave the condition they roll as `foundCondition`, SELL-AS-FOUND's mark, so online a
   drop mended at a smith sells as it fell, and its owner's own mends a third more (MEND-THIRD, `Economy-Arc.md`). The
   rolls and the draws are the mod's.

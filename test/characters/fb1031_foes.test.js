@@ -300,7 +300,7 @@ test('AUDIT FB1031 B1: a band met with the view down keeps its own bearing only 
     const scope = {
       bandRoom: () => true, player: { feetAt: () => [0, 0, 0] }, BAND_STAND_MIN_M: bands.BAND_STAND_MIN_M, PACK_SPACING, PACK_ALERT_RADIUS,
       wildFoes: { alert() {} }, exteriorFoes: { noticedPlayer() {} }, performance: { now: () => 0 }, bandStandBearing: bsb,
-      cam: { yaw: camYaw }, fieldOfView: () => FOV * Math.PI / 180, travelView: { active: up },
+      cam: { yaw: camYaw }, fieldOfView: () => FOV * Math.PI / 180, travelView: { active: up }, renderer: { _camPos: [0, 0, 0] },
       largeHudWorldAspect: (w, h) => w / h, canvas: { clientWidth: 16, clientHeight: 9 },   // AUDIT FB1031 II K6: a 16:9 frame (PIN MOVED)
       _standCampEncounter: (hit, feet) => {   // world.js _standCampEncounter's own call of the anchor law
         anchors.push(campAnchorSpot({ feet, yawRad: hit.yawRad ?? camYaw, fovDegrees: FOV, groundAt: () => 0, minDistance: hit.minDistance, maxDistance: hit.maxDistance, bearingDegrees: hit.bearingDegrees }));
