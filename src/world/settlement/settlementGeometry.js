@@ -3,8 +3,8 @@
 // A point is [east, north] in metres. Touching is not overlap: row houses share a wall and terraces share a rim.
 // Pure, and imports nothing. Not a DFU member.
 
-/** How near counts as on a line, metres. */
-export const GEOM_EPS = 0.01;
+/** How near counts as on a line, metres: past the 1.4 cm a point and a line rounded to the centimetre can stand apart. */
+export const GEOM_EPS = 0.02;
 
 /** @typedef {readonly [number, number]} Pt */
 
@@ -51,10 +51,13 @@ export const strictlyIn = (p, ring, eps = GEOM_EPS) => pointInRing(p, ring) && e
 /** Inside or on the edge. @param {Pt} p @param {readonly Pt[]} ring */
 export const inOrOn = (p, ring, eps = GEOM_EPS) => pointInRing(p, ring) || edgeDistance(p, ring) <= eps;
 
-/** The two segments cross at a point inside both (an end on the other's line is not a crossing). @param {Pt} a @param {Pt} b @param {Pt} c @param {Pt} d */
+/** Which side of the line c-d p stands, by more than eps: 1, -1, or 0 on it. @param {Pt} c @param {Pt} d @param {Pt} p */
+const side = (c, d, p) => { const s = cross(c, d, p) / (Math.hypot(d[0] - c[0], d[1] - c[1]) || 1); return s > GEOM_EPS ? 1 : s < -GEOM_EPS ? -1 : 0; };
+
+/** The two segments cross at a point inside both. An end within GEOM_EPS of the other's line is on it, not across it:
+ *  points rounded to the centimetre leave a shared wall a hair off true. @param {Pt} a @param {Pt} b @param {Pt} c @param {Pt} d */
 export function segmentsCross(a, b, c, d) {
-  const d1 = cross(c, d, a), d2 = cross(c, d, b), d3 = cross(a, b, c), d4 = cross(a, b, d);
-  return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
+  return side(c, d, a) * side(c, d, b) < 0 && side(a, b, c) * side(a, b, d) < 0;
 }
 
 /** A ring a plan can use: three or more finite points, an area, and no edge meeting another but its neighbours. @param {unknown} ring */

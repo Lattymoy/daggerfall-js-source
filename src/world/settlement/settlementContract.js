@@ -7,18 +7,19 @@
 import { HOME_KEY_MAX, homeBuildingKeyOk } from '../../net/homeLaw.js';
 import { worldPixelOk } from '../../net/wire.js';
 import { fnv1a } from '../../formats/fnv1a.js';
-import { ringOk, ringWithin, ringsOverlap, inOrOn, pointInRing, edgeDistance } from './settlementGeometry.js';
+import { ringOk, ringWithin, ringsOverlap, inOrOn, pointInRing, edgeDistance, ringArea2 } from './settlementGeometry.js';
 
 /** Raised when the plan's shape changes, so a reader can refuse a plan it does not know. */
 export const SETTLEMENT_CONTRACT_VERSION = 1;
 /**
  * @typedef {readonly [number, number]} Pt - [east, north], metres from the plan's origin
- * @typedef {{ id: string, poly: Pt[], y: number, rim?: 'grade'|'wall' }} Pad - flat ground y metres over the datum
+ * @typedef {{ id: string, poly: Pt[], y: number, rim?: 'grade'|'wall', base?: 'cut'|'raised' }} Pad - flat ground y metres over the datum
  * @typedef {{ id: string, kind: 'grade'|'stairs'|'ramp'|'bridge', from: string, to: string, a: Pt, b: Pt, width: number }} Link
  * @typedef {{ id: string, rank: string, width: number, pad: string, path: Pt[] }} Street
  * @typedef {{ id: string, purpose: string, poly: Pt[] }} District
  * @typedef {{ id: string, pad: string, at: Pt }} Gate
  */
+export const PAD_BASES = Object.freeze(['cut', 'raised']);
 export const SETTLEMENT_SOURCES = Object.freeze(['legacy', 'procedural', 'authored']);
 export const LINK_KINDS = Object.freeze(['grade', 'stairs', 'ramp', 'bridge']);
 export const STREET_RANKS = Object.freeze(['main', 'side', 'alley', 'path']);
@@ -36,8 +37,13 @@ export const INTERIOR_KINDS = Object.freeze(['rmb', 'generated', 'prefab']);
  * @typedef {{ px: number, py: number, east: number, north: number }} Origin - a world pixel's south-west corner and metres past it
  * @typedef {{ contract: number, place: number, source: string, generator: { id: string, version: number, seed: number }|null,
  *   revision: number, origin: Origin, footprint: Pt[], pads: Pad[], links: Link[], gates: Gate[], streets: Street[],
- *   districts: District[], buildings: Building[] }} SettlementPlan
+ *   districts: District[], buildings: Building[], plots?: Plot[], features?: Feature[] }} SettlementPlan
  * @typedef {{ code: string, at: string, why: string }} Problem
+ */
+export const FEATURE_KINDS = Object.freeze(['well', 'fountain', 'market', 'garden', 'field', 'tree', 'statue', 'wall', 'tower', 'fence', 'dock']);
+/**
+ * @typedef {{ id: string, pad: string, poly: Pt[], street?: string, district?: string }} Plot - a building's ground, or open land
+ * @typedef {{ id: string, kind: string, pad?: string, at?: Pt, path?: Pt[], yaw?: number, size?: number }} Feature
  */
 const fin = (/** @type {unknown} */ v) => typeof v === 'number' && Number.isFinite(v);
 const ptOk = (/** @type {any} */ p) => Array.isArray(p) && p.length === 2 && fin(p[0]) && fin(p[1]);
@@ -75,10 +81,25 @@ export function rmbPartsOfKey(key) {
 /** A building's name in logs and the editor: its place and key. @param {number} place @param {number} key */
 export const buildingIdText = (place, key) => `b:${place >>> 0}.${key}`;
 
+/**
+ * The pad a point stands on: the smallest pad that holds it, since a pad may stand inside another (a raised square, a
+ * keep's mound) and is then the ground there. Null off every pad.
+ * @param {readonly Pad[]} pads @param {Pt} p @returns {Pad|null}
+ */
+export function padAt(pads, p) {
+  let best = null, bestArea = Infinity;
+  for (const pad of pads) {
+    if (!inOrOn(p, pad.poly)) continue;
+    const a = Math.abs(ringArea2(pad.poly));
+    if (a < bestArea) { best = pad; bestArea = a; }
+  }
+  return best;
+}
+
 /** The pad under a point and its height, or null off every pad. @param {SettlementPlan} plan @param {number} east @param {number} north */
 export function groundAt(plan, east, north) {
-  for (const pad of plan.pads) if (inOrOn([east, north], pad.poly)) return { pad: pad.id, y: pad.y };
-  return null;
+  const pad = padAt(plan.pads, [east, north]);
+  return pad ? { pad: pad.id, y: pad.y } : null;
 }
 
 /** A building's floor over the datum: its pad's height and its own lift. @param {SettlementPlan} plan @param {Building} b */
@@ -118,12 +139,23 @@ export function validateSettlement(plan) {
     const at = `pad:${pad.id}`;
     if (pads.has(pad.id)) { bad('id-dup', at, 'two pads share this id'); continue; }
     if (!ringOk(pad.poly) || !fin(pad.y)) { bad('poly', at, 'not a simple ring at a finite height'); continue; }
+    if (pad.base !== undefined && !PAD_BASES.includes(pad.base)) bad('pad', at, `base '${pad.base}' is not one of ${PAD_BASES}`);
     if (foot && !ringWithin(pad.poly, foot)) bad('outside', at, 'reaches past the footprint');
-    for (const other of pads.values()) if (ringsOverlap(pad.poly, other.poly)) bad('pad-overlap', at, `overlaps pad ${other.id}: ground has one height`);
+    for (const other of pads.values()) {
+      if (!ringsOverlap(pad.poly, other.poly)) continue;
+      const nested = Math.abs(ringArea2(pad.poly)) !== Math.abs(ringArea2(other.poly)) && (ringWithin(pad.poly, other.poly) || ringWithin(other.poly, pad.poly));
+      if (!nested) bad('pad-overlap', at, `crosses pad ${other.id}'s rim: pads touch or one stands wholly inside the other`);
+    }
     pads.set(pad.id, pad);
   }
+  const padList = [...pads.values()];
   /** @param {Pt} p */
-  const padOf = (p) => { for (const pad of pads.values()) if (inOrOn(p, pad.poly)) return pad; return null; };
+  const padOf = (p) => padAt(padList, p);
+  /** A ring on `pad` crosses no smaller pad's rim (the ground inside it would be another height). @param {Pt[]} ring @param {Pad} pad */
+  const onePad = (ring, pad) => {
+    const a = Math.abs(ringArea2(pad.poly));
+    return ringWithin(ring, pad.poly) && !padList.some((q) => q !== pad && Math.abs(ringArea2(q.poly)) < a && ringsOverlap(ring, q.poly));
+  };
 
   // the walk: gates are the roots, links the only ways between pads
   /** @type {Map<string, string[]>} */ const ways = new Map([...pads.keys()].map((id) => [id, []]));
@@ -135,7 +167,7 @@ export function validateSettlement(plan) {
     const from = pads.get(l.from), to = pads.get(l.to);
     if (!from || !to) { bad('pad-missing', at, `joins pad '${from ? l.to : l.from}', which the plan does not have`); continue; }
     if (!LINK_KINDS.includes(l.kind) || !ptOk(l.a) || !ptOk(l.b) || !(l.width > 0)) { bad('link', at, 'needs a kind, two ends and a width'); continue; }
-    if (!inOrOn(l.a, from.poly) || !inOrOn(l.b, to.poly)) bad('link-end', at, `its ends must stand on pads ${l.from} and ${l.to}`);
+    if (padOf(l.a) !== from || padOf(l.b) !== to) bad('link-end', at, `its ends must stand on pads ${l.from} and ${l.to}`);
     const rise = Math.abs(to.y - from.y), run = Math.hypot(l.b[0] - l.a[0], l.b[1] - l.a[1]);
     if (l.kind === 'grade' ? rise > STEP_MAX : rise > PITCH_MAX[l.kind] * run) {
       bad('link-steep', at, `rises ${rise.toFixed(2)} m over ${run.toFixed(2)} m, past what a ${l.kind} allows`);
@@ -149,7 +181,7 @@ export function validateSettlement(plan) {
     const at = `gate:${g.id}`;
     if (gateIds.has(g.id)) { bad('id-dup', at, 'two gates share this id'); continue; }
     gateIds.add(g.id);
-    if (!pads.has(g.pad) || !ptOk(g.at) || !inOrOn(g.at, /** @type {Pad} */ (pads.get(g.pad)).poly)) { bad('gate', at, `does not stand on pad '${g.pad}'`); continue; }
+    if (!pads.has(g.pad) || !ptOk(g.at) || padOf(g.at) !== pads.get(g.pad)) { bad('gate', at, `does not stand on pad '${g.pad}'`); continue; }
     for (const stack = [g.pad]; stack.length;) {
       const id = /** @type {string} */ (stack.pop());
       if (reached.has(id)) continue;
@@ -165,7 +197,8 @@ export function validateSettlement(plan) {
     streetIds.add(s.id);
     const pad = pads.get(s.pad);
     if (!STREET_RANKS.includes(s.rank) || !(s.width > 0) || !Array.isArray(s.path) || s.path.length < 2 || !s.path.every(ptOk)) { bad('street', at, 'needs a rank, a width and a path of two or more points'); continue; }
-    if (!pad || !s.path.every((p) => inOrOn(p, pad.poly))) bad('street-off-pad', at, `every point must stand on pad '${s.pad}'; a change of height is a link`);
+    const mids = s.path.slice(1).map((p, i) => /** @type {Pt} */ ([(p[0] + s.path[i][0]) / 2, (p[1] + s.path[i][1]) / 2]));
+    if (!pad || ![...s.path, ...mids].every((p) => padOf(p) === pad)) bad('street-off-pad', at, `every point must stand on pad '${s.pad}'; a change of height is a link`);
   }
   const districtIds = new Set();
   for (const d of plan.districts ?? []) {
@@ -173,6 +206,27 @@ export function validateSettlement(plan) {
     if (districtIds.has(d.id)) bad('id-dup', at, 'two districts share this id');
     else if (!ringOk(d.poly) || typeof d.purpose !== 'string' || !d.purpose) bad('poly', at, 'needs a purpose and a simple ring');
     districtIds.add(d.id);
+  }
+
+  /** @type {Map<string, Plot>} */ const plots = new Map();
+  for (const pl of plan.plots ?? []) {
+    const at = `plot:${pl.id}`;
+    if (plots.has(pl.id)) { bad('id-dup', at, 'two plots share this id'); continue; }
+    const pad = pads.get(pl.pad);
+    if (!ringOk(pl.poly)) { bad('poly', at, 'not a simple ring'); continue; }
+    if (!pad) { bad('pad-missing', at, `lies on pad '${pl.pad}', which the plan does not have`); continue; }
+    if (!onePad(pl.poly, pad)) bad('off-pad', at, `reaches past pad '${pl.pad}'`);
+    for (const other of plots.values()) if (ringsOverlap(pl.poly, other.poly)) bad('overlap', at, `overlaps plot ${other.id}`);
+    plots.set(pl.id, pl);
+  }
+  const featureIds = new Set();
+  for (const f of plan.features ?? []) {
+    const at = `feature:${f.id}`;
+    if (featureIds.has(f.id)) { bad('id-dup', at, 'two features share this id'); continue; }
+    featureIds.add(f.id);
+    if (!FEATURE_KINDS.includes(f.kind)) { bad('feature', at, `kind '${f.kind}' is not one of ${FEATURE_KINDS}`); continue; }
+    if (f.at !== undefined && (!ptOk(f.at) || (f.pad !== undefined ? padOf(f.at) !== pads.get(f.pad) : !foot || !inOrOn(f.at, foot)))) bad('feature', at, f.pad !== undefined ? `does not stand on pad '${f.pad}'` : 'stands past the footprint');
+    if (f.path !== undefined && (!Array.isArray(f.path) || f.path.length < 2 || !f.path.every((p) => ptOk(p) && !!foot && inOrOn(p, foot)))) bad('feature', at, 'its path must run inside the footprint');
   }
 
   /** @type {Map<number, Building>} */ const keys = new Map();
@@ -201,9 +255,11 @@ export function validateSettlement(plan) {
     }
     if (!ringOk(b.footprint)) { bad('poly', at, 'footprint is not a simple ring'); continue; }
     if (foot && !ringWithin(b.footprint, foot)) bad('outside', at, 'reaches past the settlement footprint');
-    if (!ringWithin(b.footprint, pad.poly)) bad('off-pad', at, `reaches past pad '${b.pad}': it would float over lower ground or sink into higher`);
+    if (!onePad(b.footprint, pad)) bad('off-pad', at, `reaches past pad '${b.pad}': it would float over lower ground or sink into higher`);
     for (const other of walled) if (ringsOverlap(b.footprint, /** @type {Pt[]} */ (other.footprint))) bad('overlap', at, `overlaps building ${other.key}`);
     walled.push(b);
+    const plot = plots.get(b.anchor);
+    if (plot && !ringWithin(b.footprint, plot.poly)) bad('off-plot', at, `reaches past its plot '${plot.id}'`);
     if (b.access === 'none') continue;
     if (!Array.isArray(b.entrances) || !b.entrances.length) { bad('no-entrance', at, `is ${b.access} but has no door`); continue; }
     const floor = pad.y + b.lift;

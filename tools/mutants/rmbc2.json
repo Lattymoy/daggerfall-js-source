@@ -1,0 +1,308 @@
+[
+  {
+    "name": "RMBC2-padat-not-smallest",
+    "file": "src/world/settlement/settlementContract.js",
+    "old": "    if (a < bestArea) { best = pad; bestArea = a; }",
+    "new": "    if (true) { best = pad; bestArea = a; }",
+    "tests": [
+      "test/world/settlement/rmbc2_contract.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-one-ring-nested",
+    "file": "src/world/settlement/settlementContract.js",
+    "old": "const nested = Math.abs(ringArea2(pad.poly)) !== Math.abs(ringArea2(other.poly)) && (",
+    "new": "const nested = (",
+    "tests": [
+      "test/world/settlement/rmbc2_contract.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-half-over-nested",
+    "file": "src/world/settlement/settlementContract.js",
+    "old": "(ringWithin(pad.poly, other.poly) || ringWithin(other.poly, pad.poly))",
+    "new": "true",
+    "tests": [
+      "test/world/settlement/rmbc2_contract.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-onepad-smaller-unread",
+    "file": "src/world/settlement/settlementContract.js",
+    "old": " && !padList.some((q) => q !== pad && Math.abs(ringArea2(q.poly)) < a && ringsOverlap(ring, q.poly))",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc2_contract.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-base-unchecked",
+    "file": "src/world/settlement/settlementContract.js",
+    "old": "if (pad.base !== undefined && !PAD_BASES.includes(pad.base)) bad('pad'",
+    "new": "if (false) bad('pad'",
+    "tests": [
+      "test/world/settlement/rmbc2_contract.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-plot-overlap-gone",
+    "file": "src/world/settlement/settlementContract.js",
+    "old": "    for (const other of plots.values()) if (ringsOverlap(pl.poly, other.poly)) bad('overlap'",
+    "new": "    for (const other of plots.values()) if (false) bad('overlap'",
+    "tests": [
+      "test/world/settlement/rmbc2_contract.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-plot-pad-gone",
+    "file": "src/world/settlement/settlementContract.js",
+    "old": "    if (!onePad(pl.poly, pad)) bad('off-pad'",
+    "new": "    if (false) bad('off-pad'",
+    "tests": [
+      "test/world/settlement/rmbc2_contract.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-off-plot-gone",
+    "file": "src/world/settlement/settlementContract.js",
+    "old": "if (plot && !ringWithin(b.footprint, plot.poly)) bad('off-plot'",
+    "new": "if (false) bad('off-plot'",
+    "tests": [
+      "test/world/settlement/rmbc2_contract.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-feature-kind-gone",
+    "file": "src/world/settlement/settlementContract.js",
+    "old": "if (!FEATURE_KINDS.includes(f.kind)) { bad('feature'",
+    "new": "if (false) { bad('feature'",
+    "tests": [
+      "test/world/settlement/rmbc2_contract.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-feature-pad-unread",
+    "file": "src/world/settlement/settlementContract.js",
+    "old": "f.pad !== undefined ? padOf(f.at) !== pads.get(f.pad) : !foot || !inOrOn(f.at, foot)",
+    "new": "f.pad !== undefined ? false : !foot || !inOrOn(f.at, foot)",
+    "tests": [
+      "test/world/settlement/rmbc2_contract.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-feature-path-unread",
+    "file": "src/world/settlement/settlementContract.js",
+    "old": "!f.path.every((p) => ptOk(p) && !!foot && inOrOn(p, foot))",
+    "new": "false",
+    "tests": [
+      "test/world/settlement/rmbc2_contract.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-gate-pad-unread",
+    "file": "src/world/settlement/settlementContract.js",
+    "old": "!ptOk(g.at) || padOf(g.at) !== pads.get(g.pad)",
+    "new": "!ptOk(g.at)",
+    "tests": [
+      "test/world/settlement/rmbc2_contract.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-relax-gone",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "      f.h = Math.max(least(f), f.h + s * share);\n      t.h = Math.max(least(t), t.h - s * (1 - share));\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-deck-floor-gone",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "const least = (c) => (c.raised ? c.top + DECK_CLEAR : -Infinity);",
+    "new": "const least = (c) => -Infinity;",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-terrace-cap-gone",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "max: (f.raised || t.raised ? pitch : Math.min(st.terrace, pitch)) * 0.95 - 0.02,",
+    "new": "max: pitch * 0.95 - 0.02,",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-bridge-gone",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "const bridge = f.raised && t.raised && gap > 0;",
+    "new": "const bridge = false;",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-landing-gone",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "if (g && islands && deck > STEP_MAX) { g.raised = false; g.h = g.natural; }",
+    "new": "if (false) { g.raised = false; g.h = g.natural; }",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-front-sag-gone",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "const half = (p1 - p0) / 2, sag = rf * (1 - Math.cos(half));",
+    "new": "const half = (p1 - p0) / 2, sag = 0;",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-back-sag-gone",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "backSag = (rf + depth) * (1 - Math.cos(Math.min(half, step / 2)));",
+    "new": "backSag = 0;",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-services-gone",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "  for (const s of A.services) {",
+    "new": "  for (const s of []) {",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-temple-divine-gone",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "factionId: type === T.Temple ? st.temple :",
+    "new": "factionId: type === T.Temple ? 0 :",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-ledger-unread",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "reconcileBuildingIds(input.ledger ?? emptyIdLedger(place), buildings,",
+    "new": "reconcileBuildingIds(emptyIdLedger(place), buildings,",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-unseeded",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "const rng = (...ns) => hash32(seed >>> 0, place >>> 0, ...ns) / 0x100000000;",
+    "new": "const rng = (...ns) => hash32(place >>> 0, ...ns) / 0x100000000;",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-shore-sag-gone",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "back = shore.at - 2 - sag;",
+    "new": "back = shore.at - 2;",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-docks-gone",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "const n = Math.max(1, Math.floor(size / 24));",
+    "new": "const n = 0;",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-roads-unread",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "const wants = roads.length ? roads.map(",
+    "new": "const wants = false ? roads.map(",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-fit-few-gone",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "fit.buildings >= fit.least && ",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-fit-cut-gone",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": " && fit.cutMax <= fit.cutLimit",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-open-gone",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "|| rng(17, i) < openShare",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-keep-gone",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "if (A.keep && cells.has('plaza')) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-valenwood-cut",
+    "file": "src/world/settlement/settlementStyles.js",
+    "old": "deck: 4,",
+    "new": "deck: 0,",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-elsweyr-dropped",
+    "file": "src/world/settlement/settlementStyles.js",
+    "old": "  Elsweyr: style({",
+    "new": "  ElsweyrGone: style({",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-side-exact",
+    "file": "src/world/settlement/settlementGeometry.js",
+    "old": "return s > GEOM_EPS ? 1 : s < -GEOM_EPS ? -1 : 0;",
+    "new": "return s > 0 ? 1 : s < 0 ? -1 : 0;",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "RMBC2-eps-centimetre",
+    "file": "src/world/settlement/settlementGeometry.js",
+    "old": "export const GEOM_EPS = 0.02;",
+    "new": "export const GEOM_EPS = 0.01;",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  }
+]

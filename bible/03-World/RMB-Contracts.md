@@ -7,8 +7,8 @@ freedom of new buildings, among many other things."* The specification's terrain
 arc. This page is the settlements', and it starts with the contracts every later slice builds on.
 
 RMBC0 is the audit and the decision records. RMBC1 is the contract: the plan, the key bands, the ground pads, the key
-ledger and the legacy adapter. RMBC1 is pure and unwired: no host, save, wire or service reads it yet, so no player sees
-a change.
+ledger and the legacy adapter. RMBC2 is the generator: six archetypes in every theatre's style, laid out on their ground.
+Both are pure and unwired: no host, save, wire or service reads them yet, so no player sees a change.
 
 ## Decision records
 
@@ -43,6 +43,27 @@ Each is dated, says what was decided and why, and names what it costs.
 - **RD-7 (2026-10-31) One check, both ends.** `validateSettlement` is pure, so the client, a tool and the account service
   run the same law. Each problem has a code, what it names and a plain reason. A plan carries its contract version, and
   `settlementPrint` (FNV-1a of its canonical form) is what two clients on one revision compare.
+- **RD-8 (2026-10-31) One place a pixel stays.** The registry's law is the game's location index, and every pixel lookup
+  reads it. A place inside a settlement (a farm, a shrine, a quarter) is one of its plan's sites, named by the place and
+  its own id, so travel, quests and the editor can address it without a registry change. A farm out in the country takes
+  its own pixel's place, as the countryside's places do today. The owner gave this call to the arc ("You have
+  autonomy"). Cost: two settlements cannot share a pixel.
+- **RD-9 (2026-10-31) An occupied town is never replaced; it grows.** A town that holds homes keeps every legacy building
+  and its key. Generated buildings take its open ground (TS3's dropped cells, the land past its walls) in a mixed plan,
+  as the specification's 6.1 allows. Generated settlements go first where no home stands (its Phase 6). The ledger's
+  protected keys hold it. Cost: the clone towns past the Bay keep their borrowed layouts until a mixed plan grows them.
+- **RD-10 (2026-10-31) A plan is made once and served as data.** `Math.sin` and `Math.cos` may differ in their last bit
+  between engines. A plan the toolchain makes in Node and serves as data is the same for every client, and its print
+  proves it. Clients never regenerate gameplay geometry. The generator rounds every point to the centimetre, so a re-run
+  elsewhere almost always agrees as well. Cost: a new settlement ships through publication (RMBC6), not as a seed.
+- **RD-11 (2026-10-31) Two layouts, one geometry; the land decides.** A ring town wraps a square; a row town follows an
+  arc round a hillside or along a shore. Both are cut in one polar frame, so one set of cells, links and plots serves
+  both, and a straight row is an arc of a large circle. An archetype names its layout, or `auto` reads the ground: a hill
+  is a ring on its top, a slope a row along it, flat ground a ring. A third layout (a branching street tree, a planned
+  grid) adds cells, not contract. Cost: the first towns are rings and arcs.
+- **RD-12 (2026-10-31) A site that does not suit says so.** The generator reports its fit: the buildings it stood and its
+  deepest cut. A site too wet or too steep for the archetype answers `ok: false`, so the slice that places settlements
+  picks another site instead of shipping a poor town. Cost: none.
 
 ## RMBC0 - what stands (AUDITED, 2026-10-31)
 
@@ -149,27 +170,63 @@ back as the game's building lists read it, with each building's floor on its pad
 cell. On the player's own files the city of Daggerfall is 647 buildings over 64 blocks, 632 with rooms, and its clone
 under a Hammerfell town's id keeps every key.
 
+## RMBC2 - the generator (BUILT, 2026-10-31)
+
+`src/world/settlement/settlementStyles.js` is the data. A style for every theatre (`THEATRE_KEYS`: the Bay and the nine
+provinces) gives its buildings' storeys and roof, a plot's frontage and depth, the gap between neighbours (0 a terraced
+row), its street and lane, its deck (Valenwood's 4 m platforms and Black Marsh's 1.4 m stilts, 0 elsewhere), its terrace
+step and its temple's divine. An archetype gives its layout, centre, size, bands and sectors, gates, walls, keep, docks,
+wealth, services and the feature at its heart. The six are the specification's Phase 3 five (an oasis village, a mining
+settlement, a fortified mountain town, a river trade settlement, a wetland village on decks) and a plain village.
+
+`src/world/settlement/settlementGen.js` `generateSettlement` reads the ground through `env.heightAt` (and `waterAt`) and
+lays out a plan in the specification's stages. A, the site: the layout and its centre (a fort on the highest point, an
+oasis round the lowest, a river town's quay on the shore, found by the weighted middle of the water near it). B, the
+cells: sectors round or along the frame, bands of street, plots and yard. C, the terraces: each cell's pad starts at its
+natural height and neighbours are pulled together until every step is climbable by its link, a step between cut
+terraces never past the style's terrace. A deck never sinks within `DECK_CLEAR` of its ground and moves four times as
+readily as cut ground.
+
+D, the streets and lanes; E, the plots, a frontage at a time; F, a building on each plot big enough, its front wall and
+back corners clear of the chords that bend round the arc, its door to its street; the services take the plots that suit
+them, the temple its style's divine and the fort's keep its mound, a pad standing in the square. G, the features: the
+heart's well or market, yard trees, open plots as gardens, a fort's walls and towers broken at its gate, a river town's
+docks. Keys come from the ledger. Regenerated with its ledger, a plan keeps every key; with new parameters it keeps the
+anchors that still stand. The editor's controls are `params`: size, density, bands, sectors and the share left open.
+
+### What RMBC2 added to the contract
+
+A pad may stand wholly inside another (a raised square, a keep's mound), and the smaller is the ground where it stands
+(`padAt`); pads that cross each other's rims are refused. A pad's `base` is `cut` (the terrain is cut and filled to it)
+or `raised` (it stands on posts). `plots` are a building's ground or open land, and a building keeps to its own
+(`off-plot`). `features` are a closed set of kinds standing on their pad or inside the footprint. Nothing has been
+published, so these are part of contract version 1; RMBC6 freezes it. The geometry's tolerance rose from 1 cm to 2 cm:
+a point and a line each rounded to the centimetre stand up to 1.4 cm apart, and a shared wall read as a crossing.
+
+### Seen and measured
+
+Swept over six archetypes, ten styles, six grounds (a hill, a steep and a gentle slope, flat land, a shore, a marsh) and
+three seeds, 1,080 plans: every one keeps the contract. The fit tells the land apart. The wetland stands on all six; the
+mine needs a slope and the fort a hill; on the marsh only the styles that build on decks stand a town. The largest plan
+(a fort of about 120 buildings) takes 0.3 s. `tools/settlementProbe.mjs` draws each archetype from above. With ARENA2 it
+stands each one on a pixel of the Bay's own ground that suits it, the river town on a coast found in WOODS.WLD, and all
+six keep the contract and fit. The pictures stay in `scratch/` (a render of the player's ground is game data).
+
 ## Next slices
 
-- **RMBC2 the ground.** The terrain kernel stands a plan's pads instead of one flat height, with `GROUND_FRAME_LAW` 6
-  and a moved field.
-- **RMBC3 the directory in the game.** The streaming world reads its buildings through the plan, and the decoders listed
-  above ask `rmbPartsOfKey`, so a minted key reads its building from the plan.
-- **RMBC4 the first generated settlements.** The specification's five, past the Bay on ground no home stands on: an oasis
-  village, a mining settlement, a fortified mountain town, a river trade settlement and a wetland village on boardwalks.
-- **RMBC5 buildings past RMB.** Prefab and procedural exteriors and generated rooms (the fabric's interiors first), each
-  door leading to its building's room by key.
+- **RMBC3 the ground.** The terrain kernel stands a plan's pads, cut and filled, instead of one flat height, with
+  `GROUND_FRAME_LAW` 6 and a moved field.
+- **RMBC4 the buildings stood.** Procedural exteriors made by style, the streaming world's buildings read through the
+  plan, the decoders listed above asking `rmbPartsOfKey`, and each door leading to its building's generated room.
+- **RMBC5 the sites.** Settlements placed past the Bay on ground no home stands on, from the environment the WORLD 2.0
+  terrain arc builds, each site kept only where its fit is `ok`.
 - **RMBC6 publication.** The plan, its ledger and its print served as world data, and the protected keys checked before
   a revision goes out.
-
-Two calls are the owner's. First, the registry stands one place a pixel: several settlements in one pixel, as the
-specification's 3.3 asks, need that law changed. Second, whether a clone town past the Bay that holds homes may be
-replaced by a generated one. The ledger refuses it by default.
 
 ## THE FOUR HOSTS (Home.md)
 
 No host is wired. `scenes/exterior.js`, `scenes/world.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js` read no
-plan. FLAGGED here by name: RMBC2 and RMBC3 wire the streaming world first, and the fixed-city bench and the interior
+plan. FLAGGED here by name: RMBC3 and RMBC4 wire the streaming world first, and the fixed-city bench and the interior
 host follow.
 
 ## The whole of Tamriel
@@ -177,12 +234,16 @@ host follow.
 A plan is keyed by its place's map id from the registry and its origin is bounded by `worldPixelOk`. Nothing reads
 MAPS.BSA's rows. Every pin holds a Hammerfell case beside the Bay's: a terraced village in the contract's tests, a
 Hammerfell town's lane in the ledger's, and the Daggerfall city's layout cloned under a Hammerfell id in the corpus.
+The generator has a style for every theatre and is pinned in each, past the Bay and on it.
 
 ## Pins and mutants
 
-`test/world/settlement/`: `rmbc1_contract.test.js` (12), `rmbc1_ids.test.js` (7), `rmbc1_legacy.test.js` (3) and
-`rmbc1_legacy_corpus.test.js` (1, on ARENA2). `tools/mutants/rmbc1.json`: 51 mutants, 51 dead. The first run left two
-alive, a self-crossing ring with an area and an edge across a notch, and the geometry pin was added for both.
+`test/world/settlement/`: `rmbc1_contract.test.js` (12), `rmbc1_ids.test.js` (7), `rmbc1_legacy.test.js` (3),
+`rmbc1_legacy_corpus.test.js` (1, on ARENA2), `rmbc2_contract.test.js` (5) and `rmbc2_gen.test.js` (12).
+`tools/mutants/rmbc1.json`: 51 mutants, 51 dead. The first run left two alive, a self-crossing ring with an area and an
+edge across a notch, and the geometry pin was added for both. `tools/mutants/rmbc2.json`: 34 mutants, 34 dead. Its
+first run left the deck's floor alive (no pin pulled a deck toward its ground), and a town whose gate stands on the low
+side now does.
 
 ## Port-Ledger
 

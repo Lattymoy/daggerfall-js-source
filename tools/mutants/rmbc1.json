@@ -47,8 +47,8 @@
   {
     "name": "RMBC1-ground-y-unread",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "return { pad: pad.id, y: pad.y };",
-    "new": "return { pad: pad.id, y: 0 };",
+    "old": "  return pad ? { pad: pad.id, y: pad.y } : null;",
+    "new": "  return pad ? { pad: pad.id, y: 0 } : null;",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RMBC1-off-pad-gone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "    if (!ringWithin(b.footprint, pad.poly)) bad(",
-    "new": "    if (false) bad(",
+    "old": "    if (!onePad(b.footprint, pad)) bad('off-pad', at,",
+    "new": "    if (false) bad('off-pad', at,",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "RMBC1-pad-overlap-gone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "for (const other of pads.values()) if (ringsOverlap(pad.poly, other.poly))",
-    "new": "for (const other of pads.values()) if (false)",
+    "old": "      if (!nested) bad('pad-overlap', at,",
+    "new": "      if (false) bad('pad-overlap', at,",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "RMBC1-street-pad-gone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "if (!pad || !s.path.every((p) => inOrOn(p, pad.poly))) bad(",
-    "new": "if (!pad) bad(",
+    "old": "if (!pad || ![...s.path, ...mids].every((p) => padOf(p) === pad)) bad('street-off-pad'",
+    "new": "if (!pad) bad('street-off-pad'",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "RMBC1-link-end-gone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "if (!inOrOn(l.a, from.poly) || !inOrOn(l.b, to.poly)) bad('link-end'",
-    "new": "if (false) bad('link-end'",
+    "old": "    if (padOf(l.a) !== from || padOf(l.b) !== to) bad('link-end'",
+    "new": "    if (false) bad('link-end'",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
