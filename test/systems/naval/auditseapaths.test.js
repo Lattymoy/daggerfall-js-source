@@ -510,6 +510,9 @@ test('AUDIT SEA PATHS O2 with ARENA2: past the Bay a channel a picture cell wide
   const byName = (a, b) => past.find((l) => (l.a.name === a && l.b.name === b) || (l.a.name === b && l.b.name === a));
   assert.ok(wl.way(byName('Vivec', 'Ebonheart')), 'Vivec to Ebonheart: the channel sailed');
   assert.ok(served.has('Necrom') && served.has('Blacklight') && served.has('Lilmoth') && served.has('Soulrest'), [...served].join(', '));
+  // PIN MOVED (C1): Necrom's own lanes past its reach - the long lanes alone now serve it too
+  const lone = past.filter((l) => l.path && !l.long).map((l) => [l.a.name, l.b.name].sort().join(' - ')).sort();
+  assert.deepEqual(lone, ['Blacklight - Necrom', 'Necrom - Tear'], 'the lone port\'s nearest that join it');
   const roadsteaded = ports.list().filter((p) => past.some((l) => l.a.id === p.id || l.b.id === p.id)).map((p) => p.name);
   assert.deepEqual(roadsteaded.filter((n) => !served.has(n)), [], 'every port past the Bay a lane holds is served');
 });

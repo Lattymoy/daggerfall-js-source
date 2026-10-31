@@ -284,7 +284,7 @@
   {
     "name": "AUDIT-SEA-PATHS-PL-2-the-veil-refusal-gone",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  if (ether !== inEther(to.x, to.y)) return null;",
+    "old": "  if (from && to && inEther(from.x, from.y) !== inEther(to.x, to.y)) return null;",
     "new": "",
     "tests": [
       "test/systems/naval/auditseapaths.test.js"

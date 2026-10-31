@@ -687,7 +687,9 @@
     "tests": [
       "test/world/worldWide/ww7_cross.test.js"
     ],
-    "note": "the book kept past the crossing lanes moving"
+    "note": "the book kept past the crossing lanes moving",
+    "equivalent": true,
+    "why": "AUDIT SEA PATHS C1: the crossing lanes are made again only when the world's ports or the picture move, or the Bay's directory first stands - each of which makes the lanes past the Bay (or the Bay's) again in the same all(), so the book is made again by them"
   },
   {
     "name": "WW7-10-book-the-way-the-bays",

@@ -453,7 +453,10 @@ export const PLAN_YIELD_CELLS = 1024;
  * @returns {Generator<void, ReturnType<typeof planRoute>, void>}
  */
 export function* planRouteSteps(from, to, opts = {}) {
-  if (from && to && inEther(from.x, from.y) !== inEther(to.x, to.y)) return null;   // AUDIT SEA PATHS PL-2 (below)
+  // AUDIT SEA PATHS PL-2: THE VEIL IS CROSSED BY THE CROSSING ALONE (systems/naval/etherCrossing.js) - a plan with one end in
+  // the Eltheric Ocean's box and one out of it is none: Veilhaven's helm to Daggerfall sailed one leg of 3,466 pixels, 2,607
+  // of them over sea no ground streams. With both ends in it, its boxes keep to it (`ether`, below).
+  if (from && to && inEther(from.x, from.y) !== inEther(to.x, to.y)) return null;
   // AUDIT SEA PATHS O5: A BOAT TO HAND ASHORE WITH AN END PAST THE BAY'S TABLE also walks to the nearest shore and sails the
   // sea lanes from it (shoreLanesSteps) - the lanes were asked from a helm alone, and the box's search with the boat spent
   // its count (Rihad to Woodhearth, Wayrest to Northpoint: no plan). The cheaper of that and the box's plan is the plan.
@@ -468,11 +471,7 @@ export function* planRouteSteps(from, to, opts = {}) {
   // FREE, handed none, walks across country there too
   const beyond = roads || tracks ? pathsBeyond : null;
   if (!from || !to) return null;
-  // AUDIT SEA PATHS PL-2: THE VEIL IS CROSSED BY THE CROSSING ALONE (systems/naval/etherCrossing.js) - a plan with one end in
-  // the Eltheric Ocean's box and one out of it is none: Veilhaven's helm to Daggerfall sailed one leg of 3,466 pixels, 2,607
-  // of them over sea no ground streams. With both ends in it, its boxes keep to it (`ether`, below).
-  const ether = inEther(from.x, from.y);
-  if (ether !== inEther(to.x, to.y)) return null;
+  const ether = inEther(from.x, from.y);   // AUDIT SEA PATHS PL-2: both ends in the box, or neither (above)
   if (from.x === to.x && from.y === to.y && !(sea && (sea.start === 'sea') !== (sea.goal === 'sea'))) return { pixels: [{ x: from.x, y: from.y }], cost: 0, kinds: [] };
   // LONG-VOYAGE (START2, bible/06-Systems/Travel-View.md "LONG-VOYAGE"): A CROSSING FROM A HELM WITH AN END PAST THE BAY'S
   // TABLE SAILS THE SEA LANES (planSeaLanes) - the box below never leaves the map and its two ends, and a port past the
