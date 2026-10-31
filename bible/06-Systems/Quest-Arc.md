@@ -6490,7 +6490,7 @@ through DFU's C# (master, fetched for this reading):
   (`ParentQuest.StartTask` / `ParentQuest.ClearTask`; the port's `actions.js:"this.parentQuest.clearTask(this.taskSymbol);"`).
 - A clear is Task.SetTriggerValue(false), which calls RearmActions - the wave's IsComplete is lifted.
 - The next tick `_S.01_` runs set again, Task.Update's `if (!prevTriggered) action.InitialiseOnSet()` re-arms the wave
-  whole (the port's `task.js:"if (!this.prevTriggered) action.initialiseOnSet();"`).
+  whole (the port's `task.js:"if (!this.prevTriggered)"`).
 - CreateFoe.InitialiseOnSet zeroes lastSpawnTime and spawnCounter - Update's own comment on the count says "This can be
   cleared on next set/rearm" (the port's `actions.js:"InitialiseOnSet (CreateFoe.cs:61-65): a task rearm restarts the"`).
   The first Update after it backdates the timer a Range(0, interval) into the 55 minutes, and the 100% roll makes
@@ -6498,7 +6498,7 @@ through DFU's C# (master, fetched for this reading):
 
 CreateFoe reads no kill count. Foe.KillCount ("does not rearm") is read by the `killed` trigger, and by
 GameObjectHelper.AddQuestResourceObjects for a PLACED foe alone (`if (foe.KillCount < foe.SpawnCount)
-AddQuestFoe(...)`; the port's `sceneMount.js:"if (resource.killCount < resource.spawnCount) {"`). So a `place foe`
+AddQuestFoe(...)`; the port's `sceneMount.js:"if (resource.killCount < resource.spawnCount)"`). So a `place foe`
 killed stays dead on re-entry, and a `create foe` wave comes again whenever its task is set again. The Online-Waits page
 recorded the same re-arm already (`Online-Waits.md` W3: a guard stepping out for a minute every twenty met 2.8 waves of
 Nightblades offline over 400 rolls); online the re-armed wave keeps the script's full interval, never the short wait.
@@ -6927,9 +6927,9 @@ mutation-checked by `tools/mutants/rpt1026_quests.json` (29 - 25 here, two the a
   parsed before either starts take one building (the lines were started together before QL-OFFERED), and 215 of
   Daggerfall's 345 tavern interiors lay one spawn marker - GameObjectHelper.AddQuestNPC stood both on it, one billboard
   over the other. FB1020c CROWD-CLEAR moved a Person off a resident; another quest Person already stood in the room now
-  crowds as a resident does (`sceneMount.js:"export function crowdOf(people, stands = null, self = null) {"`), and with
+  crowds as a resident does (`sceneMount.js:"export function crowdOf"`), and with
   no spawn marker clear the Person stands beside its own, on the same floor and in plain line - never through a wall,
-  onto a table or past a ledge (`sceneMount.js:"export function besideSpot(at, collider, lift, w, crowd) {"`). Its layout
+  onto a table or past a ledge (`sceneMount.js:"export function besideSpot"`). Its layout
   data (its name, its click) stays the drawn marker's. Port-Ledger A, QUEST-MARKERS' row, widened.
 - **NO-GIVES-BACK** - a No that hands the letter back asks again. The report: Lord K'avar's letter given to the Queen of
   Sentinel, No pressed, and she never spoke of it again. M0B11Y18 asks under `toting _I.03_ and _ruler_ clicked` and its

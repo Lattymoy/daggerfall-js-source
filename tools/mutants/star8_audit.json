@@ -110,7 +110,7 @@
   {
     "name": "AUDIT-STAR8-S1-a-driven-body-unbeaten",
     "file": "src/systems/quest/resourceBehaviour.js",
-    "old": "    this.beat = this.machine?.beat ?? this.beat;   // AUDIT STAR8 S1: driven - its body stands",
+    "old": "    this.beat = this.machine?.beat ?? this.beat; // AUDIT STAR8 S1: driven - its body stands",
     "new": "    // AUDIT STAR8 S1: driven - its body stands",
     "tests": [
       "test/systems/questlines/star8_frostfall.test.js"

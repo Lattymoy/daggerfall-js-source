@@ -84,8 +84,8 @@
   {
     "name": "RPT1026-QUESTS-QUEST-CROWD-self-crowds",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "if (!s || s === self || !s.batch ||",
-    "new": "if (!s || !s.batch ||",
+    "old": "    if (!s || s === self || !s.batch || s.dead || s.active === false || !s.behaviour?.targetResource?.isPerson)\n      continue;",
+    "new": "    if (!s || !s.batch || s.dead || s.active === false || !s.behaviour?.targetResource?.isPerson) continue;",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],
@@ -94,8 +94,8 @@
   {
     "name": "RPT1026-QUESTS-QUEST-CROWD-undrawn-crowds",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "s === self || !s.batch || s.dead",
-    "new": "s === self || s.dead",
+    "old": "    if (!s || s === self || !s.batch || s.dead || s.active === false || !s.behaviour?.targetResource?.isPerson)\n      continue;",
+    "new": "    if (!s || s === self || s.dead || s.active === false || !s.behaviour?.targetResource?.isPerson) continue;",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],
@@ -104,8 +104,8 @@
   {
     "name": "RPT1026-QUESTS-QUEST-CROWD-dead-crowds",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "|| s.dead || s.active",
-    "new": "|| s.active",
+    "old": "    if (!s || s === self || !s.batch || s.dead || s.active === false || !s.behaviour?.targetResource?.isPerson)\n      continue;",
+    "new": "    if (!s || s === self || !s.batch || s.active === false || !s.behaviour?.targetResource?.isPerson) continue;",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],
@@ -114,8 +114,8 @@
   {
     "name": "RPT1026-QUESTS-QUEST-CROWD-hidden-crowds",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "|| s.active === false || !s.behaviour",
-    "new": "|| !s.behaviour",
+    "old": "    if (!s || s === self || !s.batch || s.dead || s.active === false || !s.behaviour?.targetResource?.isPerson)\n      continue;",
+    "new": "    if (!s || s === self || !s.batch || s.dead || !s.behaviour?.targetResource?.isPerson) continue;",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],
@@ -124,8 +124,8 @@
   {
     "name": "RPT1026-QUESTS-QUEST-CROWD-items-crowd",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "|| !s.behaviour?.targetResource?.isPerson) continue;",
-    "new": ") continue;",
+    "old": "    if (!s || s === self || !s.batch || s.dead || s.active === false || !s.behaviour?.targetResource?.isPerson)\n      continue;",
+    "new": "    if (!s || s === self || !s.batch || s.dead || s.active === false) continue;",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],
@@ -134,8 +134,8 @@
   {
     "name": "RPT1026-QUESTS-QUEST-CROWD-beside-never-asked",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "return besideSpot(at, collider, lift, w, crowd) ?? at;",
-    "new": "return at;",
+    "old": "  return besideSpot(at, collider, lift, w, crowd) ?? at;",
+    "new": "  return at;",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],
@@ -144,8 +144,8 @@
   {
     "name": "RPT1026-QUESTS-QUEST-CROWD-floor-unread",
     "file": "src/systems/quest/sceneMount.js",
-    "old": " || Math.abs((p[1] + lift - hit) - floor) > BESIDE_FLOOR_M) continue;",
-    "new": ") continue;",
+    "old": "      if (!Number.isFinite(hit) || Math.abs(p[1] + lift - hit - floor) > BESIDE_FLOOR_M) continue;",
+    "new": "      if (!Number.isFinite(hit)) continue;",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],
@@ -154,8 +154,8 @@
   {
     "name": "RPT1026-QUESTS-QUEST-CROWD-wall-unread",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "      if (Number.isFinite(wall) && wall < d) continue;\n",
-    "new": "",
+    "old": "      if (Number.isFinite(wall) && wall < d) continue;\n      if (!crowdingPerson(p, w, crowd)) return p;",
+    "new": "      if (!crowdingPerson(p, w, crowd)) return p;",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],
@@ -164,8 +164,8 @@
   {
     "name": "RPT1026-QUESTS-QUEST-CROWD-crowd-unread-beside",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "      if (!crowdingPerson(p, w, crowd)) return p;\n",
-    "new": "      return p;\n",
+    "old": "      if (!crowdingPerson(p, w, crowd)) return p;",
+    "new": "      return p;",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],

@@ -76,8 +76,8 @@
   {
     "name": "AUDITLIVED1-E-a-zero-never-becomes-a-date",
     "file": "src/systems/quest/questStamps.js",
-    "old": "if (QUEST_OWN_SECOND_KEYS.includes(k)) { if (ownBelow && Number.isFinite(v) && v !== 0) n[k] = v + deltaSeconds; }",
-    "new": "if (QUEST_OWN_SECOND_KEYS.includes(k)) { if (ownBelow && Number.isFinite(v)) n[k] = v + deltaSeconds; }",
+    "old": "        if (ownBelow && Number.isFinite(v) && v !== 0) n[k] = v + deltaSeconds;",
+    "new": "        if (ownBelow && Number.isFinite(v)) n[k] = v + deltaSeconds;",
     "tests": [
       "test/systems/auditlived1.test.js"
     ],

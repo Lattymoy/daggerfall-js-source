@@ -343,8 +343,8 @@
   {
     "name": "TIME3-a-marked-envelope-moves-as-legacy",
     "file": "src/systems/quest/questStamps.js",
-    "old": "const ownBelow = own === 'legacy' ? ownHere && !isOwnMarked(n) : ownHere;",
-    "new": "const ownBelow = ownHere;",
+    "old": "    const ownBelow = own === 'legacy' ? ownHere && !isOwnMarked(n) : ownHere;",
+    "new": "    const ownBelow = ownHere;",
     "tests": [
       "test/systems/quest/time3_quests.test.js",
       "test/systems/auditlived1.test.js",
@@ -354,8 +354,8 @@
   {
     "name": "TIME3-the-countdowns-move-with-the-journal",
     "file": "src/systems/quest/questStamps.js",
-    "old": "{ if (ownBelow && Number.isFinite(v) && v !== 0) n[k] = v + deltaSeconds; }",
-    "new": "{ if (Number.isFinite(v) && v !== 0) n[k] = v + deltaSeconds; }",
+    "old": "        if (ownBelow && Number.isFinite(v) && v !== 0) n[k] = v + deltaSeconds;",
+    "new": "        if (Number.isFinite(v) && v !== 0) n[k] = v + deltaSeconds;",
     "tests": [
       "test/systems/quest/time3_quests.test.js",
       "test/systems/auditlived1.test.js",
@@ -365,8 +365,8 @@
   {
     "name": "TIME3-the-journal-moves-with-the-countdowns",
     "file": "src/systems/quest/questStamps.js",
-    "old": "{ if (world && Number.isFinite(v) && v !== 0) n[k] = v + deltaSeconds; }",
-    "new": "{ if (Number.isFinite(v) && v !== 0) n[k] = v + deltaSeconds; }",
+    "old": "        if (world && Number.isFinite(v) && v !== 0) n[k] = v + deltaSeconds;",
+    "new": "        if (Number.isFinite(v) && v !== 0) n[k] = v + deltaSeconds;",
     "tests": [
       "test/systems/quest/time3_quests.test.js",
       "test/systems/auditlived1.test.js",
@@ -376,8 +376,8 @@
   {
     "name": "TIME3-the-steps-move-with-the-countdowns",
     "file": "src/systems/quest/questStamps.js",
-    "old": "        if (world) for (const m of v)",
-    "new": "        for (const m of v)",
+    "old": "        if (world) for (const m of v) if (m && Number.isFinite(m.time) && m.time !== 0) m.time += deltaSeconds;",
+    "new": "        for (const m of v) if (m && Number.isFinite(m.time) && m.time !== 0) m.time += deltaSeconds;",
     "tests": [
       "test/systems/quest/time3_quests.test.js",
       "test/systems/auditlived1.test.js",
@@ -387,8 +387,8 @@
   {
     "name": "TIME3-a-mark-overwritten",
     "file": "src/systems/quest/questStamps.js",
-    "old": "if ('questName' in n && 'questStartTime' in n && !isOwnMarked(n)) n.ownSecondsAt = ownSeconds;",
-    "new": "if ('questName' in n && 'questStartTime' in n) n.ownSecondsAt = ownSeconds;",
+    "old": "    if ('questName' in n && 'questStartTime' in n && !isOwnMarked(n)) n.ownSecondsAt = ownSeconds;",
+    "new": "    if ('questName' in n && 'questStartTime' in n) n.ownSecondsAt = ownSeconds;",
     "tests": [
       "test/systems/quest/time3_quests.test.js",
       "test/systems/auditlived1.test.js",
@@ -398,8 +398,8 @@
   {
     "name": "TIME3-the-load-moves-the-wrong-way",
     "file": "src/systems/quest/questStamps.js",
-    "old": "(Math.floor(Number(own)) - Math.floor(Number(world))) * 60",
-    "new": "(Math.floor(Number(world)) - Math.floor(Number(own))) * 60",
+    "old": "  shiftQuestStamps(copy, (Math.floor(Number(own)) - Math.floor(Number(world))) * 60, { own: 'legacy' });",
+    "new": "  shiftQuestStamps(copy, (Math.floor(Number(world)) - Math.floor(Number(own))) * 60, { own: 'legacy' });",
     "tests": [
       "test/systems/quest/time3_quests.test.js",
       "test/systems/auditlived1.test.js",
@@ -409,8 +409,8 @@
   {
     "name": "TIME3-the-load-moves-a-marked-envelope",
     "file": "src/systems/quest/questStamps.js",
-    "old": "* 60, { own: 'legacy' });\n  return markOwnClock(copy, Math.floor(Number(own)) * 60);",
-    "new": "* 60, { own: true });\n  return markOwnClock(copy, Math.floor(Number(own)) * 60);",
+    "old": "  shiftQuestStamps(copy, (Math.floor(Number(own)) - Math.floor(Number(world))) * 60, { own: 'legacy' });",
+    "new": "  shiftQuestStamps(copy, (Math.floor(Number(own)) - Math.floor(Number(world))) * 60, { own: true });",
     "tests": [
       "test/systems/quest/time3_quests.test.js",
       "test/systems/auditlived1.test.js",
@@ -420,8 +420,8 @@
   {
     "name": "TIME3-an-old-sender-unmoved",
     "file": "src/systems/quest/questStamps.js",
-    "old": "const from = isOwnMarked(copy) ? copy.ownSecondsAt : Math.floor(worldSeconds);",
-    "new": "const from = isOwnMarked(copy) ? copy.ownSecondsAt : now;",
+    "old": "  const from = isOwnMarked(copy) ? copy.ownSecondsAt : Math.floor(worldSeconds);",
+    "new": "  const from = isOwnMarked(copy) ? copy.ownSecondsAt : now;",
     "tests": [
       "test/systems/quest/time3_quests.test.js",
       "test/systems/auditlived1.test.js",
@@ -431,8 +431,8 @@
   {
     "name": "TIME3-a-copy-unmarked",
     "file": "src/systems/quest/questStamps.js",
-    "old": "  copy.ownSecondsAt = now;\n",
-    "new": "",
+    "old": "  copy.ownSecondsAt = now;\n  return copy;",
+    "new": "  return copy;",
     "tests": [
       "test/systems/quest/time3_quests.test.js",
       "test/systems/auditlived1.test.js",
@@ -442,8 +442,8 @@
   {
     "name": "TIME3-a-count-that-went-back-raises",
     "file": "src/systems/quest/questStamps.js",
-    "old": "Number.isFinite(sample) && now >= sample ? now - sample : 0",
-    "new": "Number.isFinite(sample) ? now - sample : 0",
+    "old": "export const raisedSince = (now, sample) =>\n  Number.isFinite(now) && Number.isFinite(sample) && now >= sample ? now - sample : 0;",
+    "new": "export const raisedSince = (now, sample) => (Number.isFinite(now) && Number.isFinite(sample) ? now - sample : 0);",
     "tests": [
       "test/systems/quest/time3_quests.test.js",
       "test/systems/auditlived1.test.js",

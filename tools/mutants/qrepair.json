@@ -164,8 +164,8 @@
   {
     "name": "QREPAIR-by-name-always",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "  { enableNPCs = true, enableFoes = true, enableItems = true, byName = !!machine?.mountByName } = {}) {",
-    "new": "  { enableNPCs = true, enableFoes = true, enableItems = true, byName = true } = {}) {",
+    "old": "  { enableNPCs = true, enableFoes = true, enableItems = true, byName = !!machine?.mountByName } = {},",
+    "new": "  { enableNPCs = true, enableFoes = true, enableItems = true, byName = true } = {},",
     "tests": [
       "test/systems/quest/qrepair.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "QREPAIR-by-name-never",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "    if (byName && behaviour.questUID === resource.parentQuest?.uid && behaviour.targetSymbol?.name === resource.symbol?.name) return true;",
-    "new": "",
+    "old": "    if (\n      byName &&\n      behaviour.questUID === resource.parentQuest?.uid &&\n      behaviour.targetSymbol?.name === resource.symbol?.name\n    )\n      return true;\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/quest/qrepair.test.js"
     ]
@@ -182,7 +182,7 @@
   {
     "name": "QREPAIR-by-name-the-quest-unread",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "    if (byName && behaviour.questUID === resource.parentQuest?.uid && behaviour.targetSymbol?.name === resource.symbol?.name) return true;",
+    "old": "    if (\n      byName &&\n      behaviour.questUID === resource.parentQuest?.uid &&\n      behaviour.targetSymbol?.name === resource.symbol?.name\n    )\n      return true;",
     "new": "    if (byName && behaviour.targetSymbol?.name === resource.symbol?.name) return true;",
     "tests": [
       "test/systems/quest/qrepair.test.js"

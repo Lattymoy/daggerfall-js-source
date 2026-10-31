@@ -1189,6 +1189,15 @@
 !/src/systems/quest/questRepair.js
 !/src/systems/quest/questRepute.js
 !/src/systems/quest/questShare.js
+!/src/systems/quest/questStamps.js
+!/src/systems/quest/resourceBehaviour.js
+!/src/systems/quest/sceneMount.js
+!/src/systems/quest/shareActions.js
+!/src/systems/quest/symbol.js
+!/src/systems/quest/table.js
+!/src/systems/quest/tables.js
+!/src/systems/quest/task.js
+!/src/systems/quest/videoQueue.js
 !/src/systems/quickLoot.js
 !/src/systems/quickslots.js
 !/src/systems/races.js

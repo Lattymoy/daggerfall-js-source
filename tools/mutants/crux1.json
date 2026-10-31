@@ -38,8 +38,8 @@
   {
     "name": "CRUX1-the-videos-overlap-again",
     "file": "src/systems/quest/videoQueue.js",
-    "old": "    const turn = chain.then(() => play(name)).catch(() => undefined).finally(() => { depth--; });",
-    "new": "    const turn = Promise.resolve().then(() => play(name)).catch(() => undefined).finally(() => { depth--; });",
+    "old": "    const turn = chain",
+    "new": "    const turn = Promise.resolve()",
     "tests": [
       "test/systems/quest/crux1.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "CRUX1-a-failed-video-holds-the-chain",
     "file": "src/systems/quest/videoQueue.js",
-    "old": "    const turn = chain.then(() => play(name)).catch(() => undefined).finally(() => { depth--; });\n    chain = turn;",
-    "new": "    const turn = chain.then(() => play(name)).finally(() => { depth--; });\n    chain = turn;",
+    "old": "      .catch(() => undefined)\n      .finally(() => {",
+    "new": "      .finally(() => {",
     "tests": [
       "test/systems/quest/crux1.test.js"
     ]

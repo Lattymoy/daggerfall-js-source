@@ -159,8 +159,8 @@
   {
     "name": "RR3-18-the-rows-registered-before-the-load-are-lost",
     "file": "src/systems/quest/tables.js",
-    "old": "      if (_extraRows[key]?.length) applyExtraRows(_tables[key], _extraRows[key]);   // RR3: the mod's rows ride the fresh table (DEX1: a keyed one where its key is new)\n",
-    "new": "",
+    "old": "      if (_extraRows[key]?.length) applyExtraRows(_tables[key], _extraRows[key]); // RR3: the mod's rows ride the fresh table (DEX1: a keyed one where its key is new)\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/quest/rr3_questline.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "RR3-19-the-rows-added-after-the-load-wait",
     "file": "src/systems/quest/tables.js",
-    "old": "    if (_tables[key]) applyExtraRows(_tables[key], lines);\n",
-    "new": "",
+    "old": "    if (_tables[key]) applyExtraRows(_tables[key], lines);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/quest/rr3_questline.test.js"
     ]

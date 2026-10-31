@@ -410,8 +410,8 @@
   {
     "name": "AUDITLIVED1B-R3-the-journal-stays",
     "file": "src/systems/quest/questStamps.js",
-    "old": "if (m && Number.isFinite(m.time) && m.time !== 0) m.time += deltaSeconds;",
-    "new": "void m;",
+    "old": "        if (world) for (const m of v) if (m && Number.isFinite(m.time) && m.time !== 0) m.time += deltaSeconds;",
+    "new": "        if (world) for (const m of v) void m;",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ],
@@ -420,8 +420,8 @@
   {
     "name": "AUDITLIVED1B-R3-a-zero-moves",
     "file": "src/systems/quest/questStamps.js",
-    "old": "if (m && Number.isFinite(m.time) && m.time !== 0) m.time += deltaSeconds;",
-    "new": "if (m && Number.isFinite(m.time)) m.time += deltaSeconds;",
+    "old": "        if (world) for (const m of v) if (m && Number.isFinite(m.time) && m.time !== 0) m.time += deltaSeconds;",
+    "new": "        if (world) for (const m of v) if (m && Number.isFinite(m.time)) m.time += deltaSeconds;",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ],

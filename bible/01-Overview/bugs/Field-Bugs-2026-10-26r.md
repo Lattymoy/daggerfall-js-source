@@ -1839,10 +1839,10 @@ Rhaneraza's "The Pig and Mug", one spawn marker and two item markers. FB1020c CR
 not off another quest's Person, and with no clear marker it kept DFU's stand.
 
 FIXED. Another quest Person already stood in the room crowds as a resident does
-(`sceneMount.js:"export function crowdOf(people, stands = null, self = null) {"` - drawn, standing, a Person's, never the
+(`sceneMount.js:"export function crowdOf"` - drawn, standing, a Person's, never the
 asker's own), and with no spawn marker clear the Person stands beside its own: the first of eight spots a box out (then
 1.6 boxes) on the same floor within 0.3 m, in plain line at waist height and clear of everyone
-(`sceneMount.js:"export function besideSpot(at, collider, lift, w, crowd) {"`); none, DFU's marker. Its layout data stays
+(`sceneMount.js:"export function besideSpot"`); none, DFU's marker. Its layout data stays
 the drawn marker's. Port-Ledger A, QUEST-MARKERS' row, widened.
 
 THE FOUR HOSTS. `worldModes.js` standQuestFlatIn's one logical line (CROWD-CLEAR's) hands the stands: no growth. world.js

@@ -20,8 +20,8 @@
   {
     "name": "C2-symbol-left-stale",
     "file": "src/systems/quest/resourceBehaviour.js",
-    "old": "    if (this.targetResource?.symbol) this.targetSymbol = this.targetResource.symbol;\n",
-    "new": "",
+    "old": "    if (this.targetResource?.symbol) this.targetSymbol = this.targetResource.symbol;\n    if (this.targetResource && !this.targetResource.questResourceBehaviour)",
+    "new": "    if (this.targetResource && !this.targetResource.questResourceBehaviour)",
     "tests": [
       "test/systems/auditdisc7.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "C2-behaviours-never-registered",
     "file": "src/systems/quest/resourceBehaviour.js",
-    "old": "    machine?._registerBehaviour?.(this);",
-    "new": "",
+    "old": "    machine?._registerBehaviour?.(this); // AUDIT DISC7 C2: the resync finds every behaviour standing on its quest",
+    "new": "    // AUDIT DISC7 C2: the resync finds every behaviour standing on its quest",
     "tests": [
       "test/systems/auditdisc7.test.js"
     ]

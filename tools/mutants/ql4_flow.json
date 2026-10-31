@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-QL-FLOW-BRANCH-2-qlact-not-in-the-law",
     "file": "src/systems/quest/shareActions.js",
-    "old": "  QlAct: { from: (v) => v === null || count(v) },\n",
-    "new": "",
+    "old": "  QlAct: { from: (v) => v === null || count(v) },\n  // QUEST-AUDIT III GUARD-HOLDER: GUARD-ONLINE's watch is the holder's arrival at the hall (onlineGuard.js), never the",
+    "new": "  // QUEST-AUDIT III GUARD-HOLDER: GUARD-ONLINE's watch is the holder's arrival at the hall (onlineGuard.js), never the",
     "tests": [
       "test/systems/questlines/ql4_flow.test.js"
     ]

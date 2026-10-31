@@ -200,8 +200,8 @@
   {
     "name": "QS-the-stamp-off-the-clock",
     "file": "src/systems/quest/questStamps.js",
-    "old": "'questTombstoneTime', 'shelvedAt']);",
-    "new": "'questTombstoneTime']);",
+    "old": "  'shelvedAt',\n]); // QUEST-SHELF: the second a quest was set aside, on the same clock",
+    "new": "]); // QUEST-SHELF: the second a quest was set aside, on the same clock",
     "tests": [
       "test/systems/quest/questshelf.test.js"
     ]

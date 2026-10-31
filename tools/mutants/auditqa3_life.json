@@ -245,8 +245,8 @@
   {
     "name": "QA3L2-D1-revive-health-unread",
     "file": "src/systems/quest/resourceBehaviour.js",
-    "old": "if (this.isFoeDead && this.enemy.currentHealth > 0 && foe.killCount",
-    "new": "if (this.isFoeDead && foe.killCount",
+    "old": "      if (this.isFoeDead && this.enemy.currentHealth > 0 && foe.killCount < foe.spawnCount) this.isFoeDead = false;",
+    "new": "      if (this.isFoeDead && foe.killCount < foe.spawnCount) this.isFoeDead = false;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "QA3L2-D1-revive-kills-unread",
     "file": "src/systems/quest/resourceBehaviour.js",
-    "old": " && foe.killCount < foe.spawnCount) this.isFoeDead = false;",
-    "new": ") this.isFoeDead = false;",
+    "old": "      if (this.isFoeDead && this.enemy.currentHealth > 0 && foe.killCount < foe.spawnCount) this.isFoeDead = false;",
+    "new": "      if (this.isFoeDead && this.enemy.currentHealth > 0) this.isFoeDead = false;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "QA3L2-D1-relink-destroyed",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "for (const b of resourceBehaviours) if (!b.isComponentDestroyed) b.relinkToLiveQuest?.();",
-    "new": "for (const b of resourceBehaviours) b.relinkToLiveQuest?.();",
+    "old": "    for (const b of resourceBehaviours) if (!b.isComponentDestroyed) b.relinkToLiveQuest?.();",
+    "new": "    for (const b of resourceBehaviours) b.relinkToLiveQuest?.();",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "QA3L2-D1-injected-destroyed",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "    if (behaviour.isComponentDestroyed) continue;   // AUDIT QA3 D1: Destroy() takes it out of the scene's objects, as C#'s does\n",
-    "new": "",
+    "old": "    if (behaviour.isComponentDestroyed) continue; // AUDIT QA3 D1: Destroy() takes it out of the scene's objects, as C#'s does\n    if (behaviour.targetSymbol === resource.symbol) return true;",
+    "new": "    if (behaviour.targetSymbol === resource.symbol) return true;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "QA3L2-D2-put-away-dropped",
     "file": "src/systems/quest/resourceBehaviour.js",
-    "old": "    if (this.questUID != null && this.machine?.getQuest && !this.machine.getQuest(this.questUID) && !this.enemy) {\n      if (!this.individualHome && !this.questorHost) this.setGameObjectActive(false);   // a guild's questor stays at their post\n      return;\n    }\n",
-    "new": "",
+    "old": "    if (this.questUID != null && this.machine?.getQuest && !this.machine.getQuest(this.questUID) && !this.enemy) {\n      if (!this.individualHome && !this.questorHost) this.setGameObjectActive(false); // a guild's questor stays at their post\n      return;\n    }\n    // Ensure target resource has this behaviour assigned - coupling",
+    "new": "    // Ensure target resource has this behaviour assigned - coupling",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "QA3L2-D2-foe-put-away",
     "file": "src/systems/quest/resourceBehaviour.js",
-    "old": "!this.machine.getQuest(this.questUID) && !this.enemy) {",
-    "new": "!this.machine.getQuest(this.questUID)) {",
+    "old": "    if (this.questUID != null && this.machine?.getQuest && !this.machine.getQuest(this.questUID) && !this.enemy) {",
+    "new": "    if (this.questUID != null && this.machine?.getQuest && !this.machine.getQuest(this.questUID)) {",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "QA3L2-D2-home-copy-put-away",
     "file": "src/systems/quest/resourceBehaviour.js",
-    "old": "      if (!this.individualHome && !this.questorHost) this.setGameObjectActive(false);   // a guild's questor stays at their post\n",
-    "new": "      if (!this.questorHost) this.setGameObjectActive(false);\n",
+    "old": "      if (!this.individualHome && !this.questorHost) this.setGameObjectActive(false); // a guild's questor stays at their post",
+    "new": "      if (!this.questorHost) this.setGameObjectActive(false);",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "QA3L2-D3-lift-dropped",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "  f[1] += height * 0.02;   // AUDIT QA3 D3: the stand's own lift off the ground plane (worldModes.js standQuestFlatIn), kept\n",
-    "new": "",
+    "old": "  f[1] += height * 0.02; // AUDIT QA3 D3: the stand's own lift off the ground plane (worldModes.js standQuestFlatIn), kept\n  return f;",
+    "new": "  return f;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "QA3L2-D2-the-questor-put-away",
     "file": "src/systems/quest/resourceBehaviour.js",
-    "old": "      if (!this.individualHome && !this.questorHost) this.setGameObjectActive(false);   // a guild's questor stays at their post\n",
-    "new": "      if (!this.individualHome) this.setGameObjectActive(false);\n",
+    "old": "      if (!this.individualHome && !this.questorHost) this.setGameObjectActive(false); // a guild's questor stays at their post",
+    "new": "      if (!this.individualHome) this.setGameObjectActive(false);",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]

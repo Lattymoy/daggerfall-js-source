@@ -373,8 +373,8 @@
   {
     "name": "AUDITQA3-SHARE-C1-legacy-unread",
     "file": "src/systems/quest/shareActions.js",
-    "old": " ?? holders[own.type]?.[key] ?? legacy[own.type]?.[key];",
-    "new": " ?? holders[own.type]?.[key];",
+    "old": "    const validate = progress[own.type]?.[key] ?? holders[own.type]?.[key] ?? legacy[own.type]?.[key];",
+    "new": "    const validate = progress[own.type]?.[key] ?? holders[own.type]?.[key];",
     "tests": [
       "test/systems/quest/auditqa3_share.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "AUDITQA3-SHARE-C1-legacy-any-number",
     "file": "src/systems/quest/shareActions.js",
-    "old": "Climate: { climate: (v, own) => v === LEGACY_CLIMATES[own] },",
-    "new": "Climate: { climate: (v, own) => Number.isInteger(v) && own in LEGACY_CLIMATES },",
+    "old": "  Climate: { climate: (v, own) => v === LEGACY_CLIMATES[own] }, // ClimateCondition's typeName",
+    "new": "  Climate: { climate: (v, own) => Number.isInteger(v) && own in LEGACY_CLIMATES }, // ClimateCondition's typeName",
     "tests": [
       "test/systems/quest/auditqa3_share.test.js"
     ]

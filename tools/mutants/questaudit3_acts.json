@@ -110,8 +110,8 @@
   {
     "name": "QA3A-MUTE-the-tasks-word",
     "file": "src/systems/quest/task.js",
-    "old": "      else this._rearmActions({ persist: true });",
-    "new": "      else this._rearmActions();",
+    "old": "      else this._rearmActions({ persist: true }); // QUEST-AUDIT III MUTE-HELD: the persisting re-arm (actions.js MuteNpc)",
+    "new": "      else this._rearmActions(); // QUEST-AUDIT III MUTE-HELD: the persisting re-arm (actions.js MuteNpc)",
     "tests": [
       "test/systems/quest/questaudit3_acts.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "QA3A-CAST-the-holders-entry",
     "file": "src/systems/quest/shareActions.js",
-    "old": "  CastSpellDo: { classicEffects: (v, own) => (own == null ? v === null || Array.isArray(v) : same(v, own)) },\n",
-    "new": "",
+    "old": "  CastSpellDo: { classicEffects: (v, own) => (own == null ? v === null || Array.isArray(v) : same(v, own)) },\n};",
+    "new": "};",
     "tests": [
       "test/systems/quest/questaudit3_acts.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "QA3A-CAST-the-effects-test",
     "file": "src/systems/quest/shareActions.js",
-    "old": "own == null ? v === null || Array.isArray(v) : same(v, own)",
-    "new": "own == null ? true : same(v, own)",
+    "old": "  CastSpellDo: { classicEffects: (v, own) => (own == null ? v === null || Array.isArray(v) : same(v, own)) },",
+    "new": "  CastSpellDo: { classicEffects: (v, own) => (own == null ? true : same(v, own)) },",
     "tests": [
       "test/systems/quest/questaudit3_acts.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "QA3A-CAST-the-held-compare",
     "file": "src/systems/quest/shareActions.js",
-    "old": "own == null ? v === null || Array.isArray(v) : same(v, own)",
-    "new": "own == null ? v === null || Array.isArray(v) : true",
+    "old": "  CastSpellDo: { classicEffects: (v, own) => (own == null ? v === null || Array.isArray(v) : same(v, own)) },",
+    "new": "  CastSpellDo: { classicEffects: (v, own) => (own == null ? v === null || Array.isArray(v) : true) },",
     "tests": [
       "test/systems/quest/questaudit3_acts.test.js"
     ]
