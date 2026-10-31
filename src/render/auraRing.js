@@ -1398,7 +1398,7 @@ vec3 radianceGround(vec2 p) {
   float sunA = a + uTime * TAU ${hzGlsl(RADIANCE_HZ.rays)};
   float points = pow(0.5 + 0.5 * cos(${RADIANCE_SUN.points.toFixed(1)} * sunA), 6.0);
   float star = (1.0 - smoothstep(0.0, ${g3(RADIANCE_SUN.r)}, r / (0.35 + 0.65 * points))) * smoothstep(0.03, 0.09, r);
-  float px = max(max(length(dFdx(vWorld)), length(dFdy(vWorld))), 0.002);   // a pixel on the ground (the Turning Hour's turnPixel, which stands after this)
+  float px = max(max(max(length(dFdx(vWorld)), length(dFdy(vWorld))), 0.002), auraPx);   // a pixel on the ground (the Turning Hour's turnPixel, which stands after this); AUDIT AURA-PIXEL A2: a texel under the law
   float rings = radianceLine(r, ${g3(RADIANCE_SUN.r)}, 0.006, px) + radianceLine(r, R - 0.071, 0.004, px) * 0.6;
   col += RAD_GOLD * star * 0.22 * breath + RAD_HEART * rings * 0.35 * breath;
   return col * (1.0 - smoothstep(uGroundR - 0.2, uGroundR, r));
@@ -1497,7 +1497,7 @@ vec4 resonanceGround(vec2 p) {
 /** SD9c: the wheel's helpers, one copy for every look cast from it. */
 const TURNING_HELPERS = `
 // the metres a pixel spans here, never under a few millimetres
-float turnPixel() { return max(max(length(dFdx(vWorld)), length(dFdy(vWorld))), 0.002); }
+float turnPixel() { return max(max(max(length(dFdx(vWorld)), length(dFdy(vWorld))), 0.002), auraPx); }   // AUDIT AURA-PIXEL A2: a texel under the law
 // a band between two radii (or heights), its edges a pixel wide
 float turnBand(float x, float lo, float hi, float px) { return clamp((x - lo) / px + 0.5, 0.0, 1.0) * clamp((hi - x) / px + 0.5, 0.0, 1.0); }
 // the wheel's turn: a step on the second, eased over its first quarter, held the rest - forward, clockwise on the screen (turningWheelAngle)
@@ -2573,7 +2573,7 @@ vec3 witchGround(vec2 p) {
     col += WF_TALLOW * exp(-dot(d, d) / 0.0016) * 1.1 * flick;
     // AURA DETAIL - THE COVEN'S CIRCLE: a seven-pointed star drawn candle to candle (each to the third on), a fine
     // ring of violet within the fire, both burning faint, and the candles' tallow pooled about their feet
-    float px = max(max(length(dFdx(vWorld)), length(dFdy(vWorld))), 0.002);
+    float px = max(max(max(length(dFdx(vWorld)), length(dFdy(vWorld))), 0.002), auraPx);   // AUDIT AURA-PIXEL A2
     float star = 1e3;
     for (int j = 0; j < ${WITCH_CANDLES}; j++) {
       float a0 = float(j) / ${WITCH_CANDLES.toFixed(1)} * TAU, a1 = float(j + 3) / ${WITCH_CANDLES.toFixed(1)} * TAU;
@@ -3448,9 +3448,18 @@ void auraLook(vec2 vP) {   // AURA-PIXEL: vP the surface's point the look answer
 // AURA-PIXEL: whether the look covers (premultiplied, AURA_LOOK shade) - its cover cut to the levels, its colour kept
 bool auraCovers() { return ${AURA_COVERS_GLSL}; }
 bool auraOwnPixels() { return ${AURA_OWN_PIXELS.map((k) => `uAura == ${k}`).join(' || ')}; }
+// AUDIT AURA-PIXEL A1/A5: a card, the cloth and a wing's strand at their own counts (render/auraPixel.js); the rest measured
+vec2 auraSnapOf() {
+  if (uKind == 2) return auraTexel(vP, vWorld, AURA_TEXEL, vec2(AURA_CARD_TEXELS));   // at least, a big glow measured
+  if (uKind == 1 && (uAura == 3 || uAura == 15)) return auraSnap(vP, vec2(AURA_CLOTH_TEXELS));
+  if (uKind == 1 && (uAura == 4 || uAura == 19)) return vec2(vP.x, auraSnap(vP, vec2(1.0, AURA_STRAND_TEXELS)).y);
+  return auraTexel(vP, vWorld, AURA_TEXEL, vec2(1.0));
+}
 void main() {
   if (uPixel > 0.5) {
-    vec2 t = auraTexel(vP, vWorld, AURA_TEXEL);
+    vec2 t = vP;
+    auraCell = floor(gl_FragCoord.xy);
+    if (uPixel < 1.5) t = auraSnapOf();   // AUDIT AURA-PIXEL D5: a probe's 2 cuts the levels alone, so it can see the snap
     auraLook(auraOwnPixels() ? vP : t);
     o = auraPixel(o, auraCovers());
   } else auraLook(vP);
@@ -3829,7 +3838,9 @@ export class AuraRingRenderer {
     this._sageLook = new Float32Array(SAGE_CARDS * 4);
     /** how many auras the last draw burned, for the stats and the tests */
     this.drawn = 0;
-    /** AURA-PIXEL: false draws every look per pixel (the probes read the designs so) - the game never sets it */
+    /** AURA-PIXEL: false draws every look per pixel, 'levels' with the levels alone (the probes read the designs and the
+     *  snap so) - the game never sets it */
+    /** @type {boolean | 'levels'} */
     this.pixel = true;
   }
 
@@ -3875,7 +3886,7 @@ export class AuraRingRenderer {
     gl.uniform3fv(U.uCamPos, fog?.camPos ?? eye);
     if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS);
     if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE);   // BANTHA1 (AUDIT BANTHA1 HAZE-3): the jungle's haze (renderer.setJungleHaze); none handed, off
-    if (U.uPixel) gl.uniform1f(U.uPixel, this.pixel === false ? 0 : 1);   // AURA-PIXEL: every look in Daggerfall's pixels (render/auraPixel.js)
+    if (U.uPixel) gl.uniform1f(U.uPixel, this.pixel === false ? 0 : this.pixel === 'levels' ? 2 : 1);   // AURA-PIXEL: every look in Daggerfall's pixels (render/auraPixel.js); AUDIT D5: a probe's 'levels' the levels alone
   }
 
   /**

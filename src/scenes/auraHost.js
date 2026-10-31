@@ -19,6 +19,7 @@ import { mwViewBodyBones, mwViewSpriteFigure, mwViewSpriteFacing } from '../play
 import { ownAura, ownArmory, ownEffects } from '../systems/ownGlyphs.js';
 import { bindPeerEffects } from '../net/peer/peerEffects.js';   // STOREFRONT: each peer's worn effects, for a face that holds only its id
 import { getPref } from '../systems/uiPrefs.js';
+import { ridingDragon } from '../systems/staffDragon.js';   // AUDIT AURA-PIXEL B2: an Admin's /dragon rides with no transport mode
 import { drawAurasThenBacks, SELF_OWNER } from '../player/eyeOfTheBeholder/eotbHolster.js';   // BACK-HOLSTER: a weapon on a sprite's back over its cape
 import { eotbBody } from '../player/eyeOfTheBeholder/eotbBody.js';
 import { createSpriteBacks } from '../player/eyeOfTheBeholder/eotbGlow.js';   // BACK-HOLSTER GLOW: the sprites' weapon glows, over the capes
@@ -54,6 +55,9 @@ export const spriteAnswer = (/** @type {any[]} */ layers, /** @type {string} */ 
   return null;
 };
 
+/** AUDIT AURA-PIXEL B1: a peer is mounted on a horse, a cart or a dragon (`rd`), or driving from a wagon's bench, where the
+ *  bench's glue sets `rd` 0 (scenes/horseCartPool.js driverGlue) - as my own Cart mode is (`player.riding`). Pure. */
+export const peerMounted = (/** @type {any} */ shown) => !!shown?.rd || shown?.bench === 2;
 /** AURA-ON-DRAGON: feet `f` lifted `lift` metres. Pure but for `f`. */
 const liftedFeet = (/** @type {number[]} */ f, /** @type {number} */ lift) => { f[1] += lift; return f; };
 
@@ -167,14 +171,14 @@ export function createAuraHost(deps) {
         const f = player.feetAt(); f[1] += lift;
         if (self.aura !== mine) self.since = t;
         self.at[0] = f[0]; self.at[1] = f[1]; self.at[2] = f[2]; self.aura = mine; self.yaw = faced?.yaw ?? player.bodyYawFor(deps.camYaw()); auraBeastStep(self, deps.beast(), t);   // SHADOW-CLOAK: the body's own facing, as its third person is drawn (SPRITE-FACE: a sprite's, as its picture faces); turned beast, the cloak torn
-        self.kindle = Math.min(1, (t - self.since) / AURA_KINDLE_S); /** @type {any} */ (self).mounted = !!player.riding || lift > 0;   // SHADOW-CLOAK: a rider's cape folded away; AURA-ON-DRAGON: a dragon's rider is one
+        self.kindle = Math.min(1, (t - self.since) / AURA_KINDLE_S); /** @type {any} */ (self).mounted = !!player.riding || ridingDragon() || lift > 0;   // SHADOW-CLOAK: a rider's cape folded away; AURA-ON-DRAGON: a dragon's rider is one; AUDIT AURA-PIXEL B2: and an Admin's /dragon in first person
         auraList.push(self);
       } else self.aura = null;
       if (kit && spawned) {
         const f = player.bodyFeetAt?.() ?? player.feetAt(); f[1] += lift;
         if (selfKit.kit !== kit) selfKit.since = t;
         selfKit.at[0] = f[0]; selfKit.at[1] = f[1]; selfKit.at[2] = f[2]; selfKit.kit = kit; selfKit.yaw = faced?.yaw ?? player.bodyYawFor(deps.camYaw());
-        selfKit.kindle = Math.min(1, (t - selfKit.since) / AURA_KINDLE_S); /** @type {any} */ (selfKit).mounted = !!player.riding || lift > 0; selfKit.torn = deps.beast() ? 1 : -1;
+        selfKit.kindle = Math.min(1, (t - selfKit.since) / AURA_KINDLE_S); /** @type {any} */ (selfKit).mounted = !!player.riding || ridingDragon() || lift > 0; selfKit.torn = deps.beast() ? 1 : -1;
         /** @type {any} */ (selfKit).arms = armoryKitPieces(kit).arms === 'insigniaarmlet' ? ownGuildArms() : null;   // GUILD-SHOP
         armoryList.push(selfKit);   // FOLLOW-NOW: placed, posed and stepped at the draw (draw's placeSelf)
       } else selfKit.kit = null;
@@ -190,13 +194,13 @@ export function createAuraHost(deps) {
           let w = auraPool.get(d.id);
           if (!w || w.aura !== au) { w = { id: d.id, at: [0, 0, 0], aura: au, seed: auraSeedOf(d.id), kindle: 0, since: t }; auraPool.set(d.id, w); }
           w.at[0] = p[0]; w.at[1] = p[1] + up; w.at[2] = p[2]; w.yaw = face; auraBeastStep(w, !!d.shown.wb, t);   // SHADOW-CLOAK: the peer's facing (to the wall on a climb); turned beast (the pose's `wb`), the cloak torn
-          w.kindle = Math.min(1, (t - w.since) / AURA_KINDLE_S); w.seen = t; w.mounted = !!d.shown.rd;   // SHADOW-CLOAK: a rider's (a horse, a cart) cape folded away
+          w.kindle = Math.min(1, (t - w.since) / AURA_KINDLE_S); w.seen = t; w.mounted = peerMounted(d.shown);   // SHADOW-CLOAK: a rider's (a horse, a cart) cape folded away
           auraList.push(w);
         }
         if (ak) {
           let w = armoryPool.get(d.id);
           if (!w || w.kit !== ak) { w = { id: d.id, at: [0, 0, 0], kit: ak, seed: auraSeedOf(d.id), kindle: 0, since: t, pose: newPose(), torn: -1 }; armoryPool.set(d.id, w); }
-          w.at[0] = p[0]; w.at[1] = p[1] + up; w.at[2] = p[2]; w.yaw = face; w.mounted = !!d.shown.rd; w.torn = d.shown.wb ? 1 : -1;
+          w.at[0] = p[0]; w.at[1] = p[1] + up; w.at[2] = p[2]; w.yaw = face; w.mounted = peerMounted(d.shown); w.torn = d.shown.wb ? 1 : -1;
           w.kindle = Math.min(1, (t - w.since) / AURA_KINDLE_S); w.seen = t;
           w.arms = armletArmsOf(ak, online.guildTagOf?.(d.id));   // GUILD-SHOP: the arms their token's guild bears
           peerPose(d.id, w, layers); armoryMotionStep(w, t, right);

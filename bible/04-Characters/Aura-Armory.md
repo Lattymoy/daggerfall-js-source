@@ -137,10 +137,14 @@ the picture hides behind the body (`armSide`) wears none.
 
 **The body's edge** (ARM-BEHIND, the owner, 2026-10-31: *"the arm auras dont really hide behind the torso"*). A piece
 lies on the card's near side, so the card hides none of it. Where an arm passes behind the painted torso (a
-three-quarter picture's far arm, its shoulder inside the body), the bracers ran from that shoulder over the chest. Each
-arm piece with its band read is cut at the screen's upright line through the band's inner edge (`armClip`, the shader's
-`uClip`), so nothing of it, its embers included, lands on the body's side of that line. A Morrowind body needs no cut:
-its own depth hides its far arm.
+three-quarter picture's far arm, its shoulder inside the body), the bracers ran from that shoulder over the chest.
+
+Every arm piece on a card is cut at its arm's inner edge as the eye sees it - the line half the arm's width in from the arm,
+shoulder to elbow, toward the chest on the card (`armClip`, the shader's `uClip`) - so nothing of it, its embers
+included, lands on the body's side. A far arm never read clear of the body (no band) wears none: the picture hides it,
+and its trace runs on the torso's edge (`armWornSide`). A Morrowind body needs no cut: its own depth hides its far arm.
+AUDIT AURA-PIXEL C1-C3 (`../01-Overview/audits/Audit-Aura-Pixel.md`): the first cut stood upright at the band's row, only
+where a band was read, and judged its side off the chest lifted before the card.
 
 **The pieces.** Tubes round a limb or the brow, a decal on the chest, cards for embers and motes. Light is added, the
 depth tested and never written, and the fog applied. One program a piece (the auras' AURA-SPLIT law), each started at
@@ -165,10 +169,15 @@ side and what stands behind the body is hidden by the card's own depth. A chest 
 eye; the Eternal Sigil also burns on the back, clear of a rig's torso.
 
 **The chest from every side** (CHEST-CENTRE, the owner, 2026-10-31: *"The aura armory chest piece also isnt centwrwd at
-some angles"*). On a card the chest's face stood 0.1 m before the card and the Sigil's back 0.24 m behind it, along the
+some angles"*). On a card the chest's face stood 0.1 m before the card and the Sigil's back 0.14 m behind it, along the
 body's facing, so at a three-quarter both slid 13 to 23 px off the painted chest. A card's depth is now laid on the
 eye's line through the picture's chest (`armoryPass.js` onCard): the piece stays on that column from every side, still
-before the card from its own side and behind it from the other. A rig keeps its chest's face.
+before the card from its own side and behind it from the other.
+
+Seen edge on, a card's chest piece is gone (its picture
+has no face there). From behind and to a side the chest mark takes in the near arm hanging over the back, so the Sigil's
+back stands mid-way between the back's far edge and that arm's inner edge (AUDIT AURA-PIXEL C4, D2). A rig keeps its
+chest's face.
 
 **The card's right** (ARMORY-MIRROR, `01-Overview/bugs/Field-Bugs-2026-10-30e.md`). A sprite's points move across its
 card along the billboard's own right (`render/armoryPass.js` cardRightOf). Under the world's mirrored lens that is the
@@ -279,6 +288,8 @@ peer's name lifts only over a head piece drawn in that frame, and a sprite's Cin
   discard, the pass's upload; and section 7's chest from every side. `tools/mutants/armbehind.json` mutates them. `tools/armorySpriteProbe.mjs` (SETS=1) reads
   nothing between the two arms' inner edges on every Layered Gearing body, and the Heart and the Sigil on the painted
   chest from every view they show.
+- `test/render/auditaurapixel.test.js` - the audit's findings, each pinned on the code that runs;
+  `tools/mutants/auditaurapixel.json` (18, all dead). `01-Overview/audits/Audit-Aura-Pixel.md` is the audit.
 - `test/render/aurapixel.test.js` - section 13's texel and levels run in the shader's own code, both passes' `main()`
   with the law on, the switch, and the rider's cards; `tools/mutants/aurapixel.json` mutates them. `tools/auraProbe.mjs`
   and `tools/armoryProbe.mjs` read every look and kit with the law on, beside the designs read per pixel.
@@ -303,25 +314,38 @@ The owner asked for the system built without further questions. These were chose
 The owner (2026-10-31): *"Can we do a comprehensive pass on all auras and while keeping their holographic designs, add
 some pixelation and bring it more inline with the daggerfall athestic."*
 
-**The texel.** Every aura and every armory piece is answered at the middle of its texel, not at each pixel
-(`src/render/auraPixel.js`). An aura's texel is a Daggerfall flat's pixel at most - `GLOBAL_SCALE`, 2.5 cm, the size
-DFU's GetScaledBillboardSize gives a flat's pixel - and half of it at least. It is a power of two to a unit of the
-surface, so a ring closes on whole texels and a curved cloth's grids nest. The shader measures the metres a unit of its
-surface spans from the screen's derivatives, so the ground, the strips, the cloak's and the wings' meshes and every card
-take one law. An armory piece takes half an aura's texel: at a whole flat's pixel the Ember Heart's veins and the
-Bracers' links were lost (section 6). Where a texel is no bigger than the screen's pixel, the look is answered per pixel.
+**The texel.** Every aura is answered at the middle of its texel, not at each pixel (`src/render/auraPixel.js`). Its
+texel is a Daggerfall flat's pixel at most - `GLOBAL_SCALE`, 2.5 cm, the size DFU's GetScaledBillboardSize gives a
+flat's pixel (the Layered Gearing bodies are drawn a little finer, 1.9 cm) - and half of it at least. It is a power of
+two to a unit of the surface, so a ring closes on whole texels. The ground and the strips measure it off the screen's
+derivatives. Where that measure misleads, a surface takes a count of its own: a card at least 32 a side (it grows; its
+runes and emblems were blocks at 8), the cloth 256 each way (curved; its clasp was a blob), a wing's strand 64 along it
+and none across (its core is narrower than a texel).
 
-**The levels.** An added look's brightest channel is cut to ten levels spaced by their square root, its hue kept,
-through the ordered dither (`bayer4`) at its texel. A linear cut dotted a dim glow out. A look that covers (AURA_LOOK
-`shade`, the armlet) has its cover cut to tenths and keeps its colour whole, so the Crystal Resonance stays its one
-purple. The Resonance's squares are its own pixels and are not resampled (`AURA_OWN_PIXELS`): its pitch is no whole
-number of texels, so a snapped square stood one texel wide or two by turns.
+Where a texel is no bigger than the screen's pixel, the look is
+answered per pixel. A look's own line widths are at least a texel (`auraPx`), so a fine ring is never lost between texels.
 
-**The switch.** `uPixel` is a uniform that both passes set to 1. A pass that never sets it draws per pixel. The probes
-set a renderer's `pixel` to false to read the designs, and read the law with it on. The designs themselves are
-unchanged: only where each is sampled and how many levels it shows.
+**The levels.** An added look's brightest channel is cut to one of ten levels, the squares of tenths, its hue kept,
+through the ordered dither (`bayer4`) at its texel, weighed in light so its mean holds (weighed by the root, a faint
+glow's card drew a dotted square). A look that covers (AURA_LOOK `shade`, the armlet) has its cover cut to tenths and
+keeps its colour whole, so the Crystal Resonance stays its one purple. The Resonance's squares are its own pixels and
+are not resampled (`AURA_OWN_PIXELS`).
+
+**The armory takes the levels alone** (AUDIT AURA-PIXEL D3). A piece is a hand's breadth of fine work - links, veins,
+facets - and snapped even to half a flat's pixel its detail was noise at the body's own distance. Its light is cut to the
+levels, dithered on the screen's pixels. The weapon slot's two pieces are the weapon glow's (section 8), outside this law.
+
+**The switch.** `uPixel` is a uniform the two passes set to 1, or 2 for a probe's `'levels'` (the levels without the
+snap). A pass that never sets it draws per pixel. The probes read the designs per pixel; `PIXEL=1 node
+tools/auraProbe.mjs` reads them with the law on (149 of 156 at the audit: the seven left are single-pixel reads between
+texels and wrap reads the levels amplify, the looks whole by eye). Only where each look is sampled and how many levels
+it shows changed.
 
 **GLYPHS-MOUNTED** (the owner, 2026-10-31: *"glyphs shouldnt show when mounted"*). No aura floats its cards over a rider
 on a horse, a cart or a dragon: the Oblivion Ward's symbols, the Lilac Warren's rabbits, Sage's Smoke's puffs and
 nirnroots, the Vampiric Haze's wisps and the wings' sparks (`render/auraRing.js`, the third draw). The ground and the
-wall draw as before. The cloak's emblems and Eternal's cards already folded away with their cloth.
+wall draw as before. The cloak's emblems and Eternal's cards already folded away with their cloth. A peer driving from a
+wagon's bench is a rider too, as my own Cart mode is (`scenes/auraHost.js` peerMounted; the bench's glue sets `rd` 0), and
+so is an Admin on /dragon in first person (AUDIT AURA-PIXEL B1, B2). The hosts: `scenes/world.js` draws the auras on the
+street, `scenes/worldModes.js` in a building and, through `lateWorldDraw`, in `scenes/dungeonContext.js`'s dungeon, where
+a door has put every rider afoot; `scenes/exterior.js` draws none.

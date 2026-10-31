@@ -17,6 +17,7 @@ process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const PORT = 5233;
 const SHOTS = process.argv.includes('--shots') ? process.argv[process.argv.indexOf('--shots') + 1] : null;
 const CLOSE = process.env.CLOSE === '1', SETS = process.env.SETS === '1', ONLY = process.env.ONLY ?? '';
+const [ANIM, FRAME] = (process.env.ANIM ?? 'Idle:0').split(':');   // AUDIT AURA-PIXEL C1: a walk's frames too (ANIM=Move:2)
 if (SHOTS) mkdirSync(SHOTS, { recursive: true });
 const results = [];
 const check = (name, ok, detail = '') => { results.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`); };
@@ -29,7 +30,7 @@ const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 await page.goto(`http://127.0.0.1:${PORT}/LICENSE`, { waitUntil: 'domcontentloaded', timeout: 180000 });
 const W = SETS ? 300 : CLOSE ? 400 : 240, H = SETS ? 500 : CLOSE ? 300 : 320;
-const out = await page.evaluate(async ({ W, H, CLOSE, SETS, ONLY }) => {
+const out = await page.evaluate(async ({ W, H, CLOSE, SETS, ONLY, ANIM, FRAME }) => {
   const [{ Renderer }, m4, bb, sp, ap, apass] = await Promise.all([
     import('/src/render/renderer.js'), import('/src/world/mat4.js'), import('/src/player/eyeOfTheBeholder/eotbBillboard.js'),
     import('/src/player/eyeOfTheBeholder/eotbSprite.js'), import('/src/render/armoryPose.js'), import('/src/render/armoryPass.js'),
@@ -55,7 +56,7 @@ const out = await page.evaluate(async ({ W, H, CLOSE, SETS, ONLY }) => {
   for (const [bodyName, who] of Object.entries(BODIES).filter(([n]) => !ONLY || ONLY.split('|').includes(n))) {
     const look = { onFoot: 0, wornArmour: true, ...who };
     for (let o = 0; o < 8; o++) {
-      const s = sp.spriteFor('Idle', o, 0, look);
+      const s = sp.spriteFor(ANIM, o, +FRAME || 0, look);
       if (!s) { rows.push({ body: bodyName, o, missing: true }); continue; }
       const raw = await sp.decodeSprite(sp.eotbSpriteUrl(s.key));
       const colors = s.mirror ? sp.flipRows(raw.colors, raw.width, raw.height) : raw.colors;   // eotbBody.js ensure()'s
@@ -121,9 +122,10 @@ const out = await page.evaluate(async ({ W, H, CLOSE, SETS, ONLY }) => {
           const back = fwd[0] * right[0] + fwd[2] * right[2] < 0 ? mk.flank.hi - ap.ARM_PX.half * mk.art : mk.flank.lo + ap.ARM_PX.half * mk.art;
           y = pose.flank.y; want = colOf(along(back, y)); tol = 1.5;
         }
-        // CHEST-CENTRE: the heart from the front and the three-quarters, the sigil from those and from behind - on the
-        // picture's chest from every view it shows
-        if (((name === 'heart' && [0, 1, 7].includes(o)) || (name === 'sigil' && [0, 1, 3, 4, 5, 7].includes(o))) && mk?.chest != null) { y = yOf('chest'); want = colOf(along(mk.chest, y)); }
+        // CHEST-CENTRE: the heart from the front and the three-quarters, the sigil from those and straight behind - on the
+        // picture's chest (AUDIT AURA-PIXEL D2: from behind and to a side that mark takes in the near arm, so there the
+        // Sigil's back is read clear of the arm instead, after the views)
+        if (((name === 'heart' && [0, 1, 7].includes(o)) || (name === 'sigil' && [0, 1, 4, 7].includes(o))) && mk?.chest != null) { y = yOf('chest'); want = colOf(along(mk.chest, y)); }
         if (name === 'greaves' && mk?.legs) { y = (yOf('knL') + yOf('ftL')) / 2; want = colOf(along((mk.legs.knee[0] + mk.legs.knee[1] + mk.legs.ankle[0] + mk.legs.ankle[1]) / 4, y)); tol = o % 4 === 2 ? 3 : 1.8; }
         const unit = pxAt(y);
         // the arms' pieces, each arm (armSide): none over an arm the picture hides (from behind, its line where it would
@@ -132,7 +134,7 @@ const out = await page.evaluate(async ({ W, H, CLOSE, SETS, ONLY }) => {
         if ((name === 'ashbound' || name === 'armlets') && mk?.arms) {
           const strong = (i) => Math.abs(worn[i * 4] - plain[i * 4]) + Math.abs(worn[i * 4 + 1] - plain[i * 4 + 1]) + Math.abs(worn[i * 4 + 2] - plain[i * 4 + 2]) > 90;
           for (const arm of ['left', 'right']) {
-            const sd = apass.armSide(pose, fwd, [0, 1.2, 0], eye, arm);
+            const sd = apass.armWornSide(pose, fwd, [0, 1.2, 0], eye, arm);
             if (!sd) {
               const ps = (arm === 'left') === (fwd[0] * eye[0] + fwd[2] * eye[2] > 0) ? 'R' : 'L', A = mk.arms[ps], yy = yOf(`sh${ps}`) + (yOf(`el${ps}`) - yOf(`sh${ps}`)) * 0.45;
               const c0 = colOf(along(A.sh + (A.el - A.sh) * 0.45, yy)), u = pxAt(yy), r0 = Math.round(rowOf(along(A.sh + (A.el - A.sh) * 0.45, yy)));
@@ -149,15 +151,25 @@ const out = await page.evaluate(async ({ W, H, CLOSE, SETS, ONLY }) => {
             for (let rr = r0 - Math.round(u); rr <= r0 + Math.round(u); rr++) for (let cc = Math.round(c0 - b.wd * u); cc <= Math.round(c0 + b.wd * u); cc++) if (rr >= 0 && rr < cv.height && cc >= 0 && cc < cv.width && strong(rr * cv.width + cc)) { l2 = Math.min(l2, cc); h2 = Math.max(h2, cc); }   // a chain's dark links leave a row bare
             armChecks.push({ what: `the ${arm} arm's band: on it, no wider`, ok: l2 <= h2 && l2 >= sp[0] - u && h2 <= sp[1] + u, detail: `${l2}..${h2} px, the arm ${sp[0].toFixed(1)}..${sp[1].toFixed(1)}` });
           }
-          // ARM-BEHIND: both arms' bands read and shown - nothing of the pieces between their inner edges, over the body
-          const shown = ['left', 'right'].map((arm) => apass.armSide(pose, fwd, [0, 1.2, 0], eye, arm)).filter(Boolean);
-          if (shown.length === 2 && mk.arms.L.band && mk.arms.R.band && mk.chest != null) {
-            const inner = (sd) => { const b = mk.arms[sd].band, way = Math.sign(b.c - mk.chest) || 1, yy = pose.bands[sd].y; return colOf(along(b.c - way * b.wd / 2, yy)); };
-            const [c0, c1] = [inner('L'), inner('R')].sort((p, q) => p - q), u = pxAt(pose.bands.L.y);
-            const r0 = Math.round(rowOf(along(0, yOf('elL')))), r1 = Math.round(rowOf(along(0, yOf('shL'))));
-            let hits = 0;
-            for (let rr = Math.min(r0, r1); rr <= Math.max(r0, r1); rr++) for (let cc = Math.ceil(c0 + 1.5 * u); cc <= Math.floor(c1 - 1.5 * u); cc++) if (rr >= 0 && rr < cv.height && cc >= 0 && cc < cv.width && strong(rr * cv.width + cc)) hits++;
-            armChecks.push({ what: 'nothing over the body between the arms', ok: hits === 0, detail: `${hits} px between ${c0.toFixed(1)} and ${c1.toFixed(1)}` });
+          // ARM-BEHIND: both arms shown - nothing of the pieces between their inner edges, over the body. AUDIT AURA-PIXEL C1/C2:
+          // every arm, its band read or not, its edge along the arm as the pose stands it (moved across onto its band)
+          const shown = ['left', 'right'].map((arm) => apass.armWornSide(pose, fwd, [0, 1.2, 0], eye, arm)).filter(Boolean);
+          if (shown.length === 2 && mk.chest != null) {
+            const innerAt = (sd, yy) => {
+              const A = mk.arms[sd], b = A.band, y0 = yOf(`sh${sd}`), y1 = yOf(`el${sd}`), t = (yy - y0) / ((y1 - y0) || 1);
+              let c = A.sh + (A.el - A.sh) * t;
+              if (b) { const tb = (pose.bands[sd].y - y0) / ((y1 - y0) || 1); c += b.c - (A.sh + (A.el - A.sh) * tb); }
+              const half = b ? b.wd / 2 : ap.ARM_PX.half * mk.art;
+              return colOf(along(c + Math.sign(mk.chest - c) * half, yy));
+            };
+            let hits = 0, rows = 0;
+            const y0 = Math.max(yOf('elL'), yOf('elR')), y1 = Math.min(yOf('shL'), yOf('shR'));
+            for (let q = 0; q <= 16; q++) {
+              const yy = y0 + (y1 - y0) * q / 16, rr = Math.round(rowOf(along(0, yy))), [c0, c1] = [innerAt('L', yy), innerAt('R', yy)].sort((p, q2) => p - q2), u = pxAt(yy);
+              rows++;
+              for (let cc = Math.ceil(c0 + 1.5 * u); cc <= Math.floor(c1 - 1.5 * u); cc++) if (rr >= 0 && rr < cv.height && cc >= 0 && cc < cv.width && strong(rr * cv.width + cc)) hits++;
+            }
+            armChecks.push({ what: 'nothing over the body between the arms', ok: hits === 0, detail: `${hits} px over ${rows} rows` });
           }
         }
         const col = name === 'halo' ? (hi >= lo ? (lo + hi) / 2 : null) : n ? sum / n : null;
@@ -167,7 +179,7 @@ const out = await page.evaluate(async ({ W, H, CLOSE, SETS, ONLY }) => {
     }
   }
   return rows;
-}, { W, H, CLOSE, SETS, ONLY });
+}, { W, H, CLOSE, SETS, ONLY, ANIM, FRAME });
 
 for (const row of out) {
   if (row.missing) { check(`${row.body} view ${row.o}: a picture`, false); continue; }
@@ -183,6 +195,12 @@ for (const row of out) {
     check(`${row.body} view ${row.o} ${name}: over its painted part`, off <= p.tol, `its middle ${p.col.toFixed(1)} px, the picture's ${p.want.toFixed(1)}, ${off.toFixed(1)} off of ${p.tol.toFixed(1)} (${Math.round(p.onBody * 100)}% on the body)`);
     if (p.span) check(`${row.body} view ${row.o} ${name}: no wider than the painted arm`, p.lo >= p.span[0] - p.unit && p.hi <= p.span[1] + p.unit, `${p.lo}..${p.hi} px, the arm ${p.span[0].toFixed(1)}..${p.span[1].toFixed(1)}, a pixel ${p.unit.toFixed(1)}`);
   }
+}
+// AUDIT AURA-PIXEL D2: from behind and to a side, the Sigil's back clear of the near arm - read against where the Eternal
+// Armlets draw on that arm, never against the chest mark the Sigil is placed by
+for (const row of out) {
+  const sg = row.pieces?.sigil, am = row.pieces?.armlets;
+  if ((row.o === 3 || row.o === 5) && sg && am && sg.hi >= sg.lo && am.hi >= am.lo) check(`${row.body} view ${row.o} sigil: clear of the near arm`, sg.hi < am.lo || sg.lo > am.hi, `the sigil ${sg.lo}..${sg.hi} px, the armlet ${am.lo}..${am.hi}`);
 }
 check('no page error', !errors.length, errors.join(' / '));
 if (SHOTS) {

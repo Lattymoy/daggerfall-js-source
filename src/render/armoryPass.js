@@ -470,15 +470,12 @@ void armoryLook() {
 }
 // AURA-PIXEL: the armlet covers (its crest's colour kept, its cover cut); every other piece adds light
 void main() {
-  if (dot(uClip.xyz, vWorld) + uClip.w < 0.0) discard;   // ARM-BEHIND: over the body, where the picture hides the arm
-  if (uPixel > 0.5) {
-    vP = auraTexel(vArm, vWorld, ARMORY_TEXEL);
-    armoryLook();
-    o = auraPixel(o, uPiece == ${ARMLET});
-  } else {
-    vP = vArm;
-    armoryLook();
-  }
+  if (dot(uClip.xyz, vWorld) + uClip.w < 0.0) discard;   // ARM-BEHIND: past the painted arm's inner edge
+  vP = vArm;
+  armoryLook();
+  // AUDIT AURA-PIXEL D3/A3/A4: a piece is a hand's breadth of fine work (links, veins, facets) - snapped even to half a
+  // flat's pixel its detail was noise at the body's own distance, so it takes the levels alone, dithered on the screen's
+  if (uPixel > 0.5) { auraCell = floor(gl_FragCoord.xy); o = auraPixel(o, uPiece == ${ARMLET}); }
 }
 `;
 
@@ -561,21 +558,34 @@ export function armSide(pose, fwd, chest, eye, arm = 'left') {
   if (pose.armsTurned) return own;
   return (ahead > 0) === (arm === 'left') ? 'R' : 'L';
 }
+/** AUDIT AURA-PIXEL C1: THE SIDE A PIECE IS WORN ON, or null - armSide's, and on a card none on an arm never read clear
+ *  of the body (no band) while the eye stands to the body's other side: that arm is the one the picture hides behind the
+ *  torso, and its trace runs on the torso's edge. Pure. @param {any} pose @param {number[]} fwd @param {number[]} chest
+ *  @param {ArrayLike<number>} eye @param {'left'|'right'} [arm] */
+export function armWornSide(pose, fwd, chest, eye, arm = 'left') {
+  const side = armSide(pose, fwd, chest, eye, arm);
+  if (!side || !pose?.card || pose.armsTurned || pose.bands?.[side]) return side;
+  const ex = eye[0] - chest[0], ez = eye[2] - chest[2], l = Math.hypot(ex, ez) || 1;
+  return (arm === 'left' ? 1 : -1) * (ex * fwd[2] - ez * fwd[0]) / l > ARM_HIDDEN_SIN ? null : side;
+}
 /** The Insignia Armlet's arm, the wearer's left. Pure. */
 export const armletSide = (/** @type {any} */ pose, /** @type {number[]} */ fwd, /** @type {number[]} */ chest, /** @type {ArrayLike<number>} */ eye) => armSide(pose, fwd, chest, eye, 'left');
 /** ARM-BEHIND (2026-10-31, the owner: "the arm auras dont really hide behind the torso"): A SPRITE'S ARM PIECE STOPS AT
- *  THE BODY'S EDGE. A piece lies on the card's near side, so where an arm passes behind the painted torso (a three-quarter
- *  picture's far arm, its shoulder inside the body) the card hid nothing and the piece ran over the chest. Its draws keep
- *  the arm's side of the screen's upright line at its band's inner edge (`band` the pose's, `mid` its middle in the
- *  world): a plane through the eye, [nx, 0, nz, d], kept where n.p + d >= 0. Pure.
- *  @param {{ dx: number, w: number }} band @param {number[]} mid @param {number[]} chest @param {ArrayLike<number>} at
- *  @param {ArrayLike<number>} right @param {ArrayLike<number>} eye @returns {number[]} */
-export function armClip(band, mid, chest, at, right, eye) {
-  const across = (chest[0] - at[0]) * right[0] + (chest[2] - at[2]) * right[2], way = Math.sign(band.dx - across) || 1;
-  const edge = band.dx - (way * band.w) / 2, ex = at[0] + right[0] * edge - eye[0], ez = at[2] + right[2] * edge - eye[2];
-  const l = Math.hypot(ex, ez) || 1, side = (mid[0] - eye[0]) * ez - (mid[2] - eye[2]) * ex >= 0 ? 1 : -1;
-  const nx = (side * ez) / l, nz = (-side * ex) / l;
-  return [nx, 0, nz, -(nx * eye[0] + nz * eye[2])];
+ *  ITS ARM'S INNER EDGE. A piece lies on the card's near side, so where an arm passes behind the painted torso the card hid
+ *  nothing and the piece ran over the chest. Its draws keep the arm's side of the line its inner edge runs along -
+ *  `half` in from `sh`..`el` toward the chest on the card - seen from the eye: [n, d], kept where n.p + d >= 0, or null
+ *  looking along the arm. AUDIT AURA-PIXEL C1-C3: every arm on a card, its band read or not; along the arm, not upright
+ *  at the band's row; the chest on the card, not lifted before it. Pure. @param {number[]} sh @param {number[]} el
+ *  @param {number} half @param {number[]} chest @param {ArrayLike<number>} right @param {ArrayLike<number>} eye */
+export function armClip(sh, el, half, chest, right, eye) {
+  const mid = mix(sh, el, 0.5), way = Math.sign((chest[0] - mid[0]) * right[0] + (chest[2] - mid[2]) * right[2]) || 1;
+  const E = [sh[0] + right[0] * way * half, sh[1], sh[2] + right[2] * way * half], D = sub(el, sh), V = sub(E, /** @type {any} */ (eye));
+  let n = [D[1] * V[2] - D[2] * V[1], D[2] * V[0] - D[0] * V[2], D[0] * V[1] - D[1] * V[0]];
+  const l = Math.hypot(n[0], n[1], n[2]);
+  if (!(l > 1e-9)) return null;
+  const toMid = sub(mid, /** @type {any} */ (eye)), side = n[0] * toMid[0] + n[1] * toMid[1] + n[2] * toMid[2] >= 0 ? 1 / l : -1 / l;
+  n = n.map((v) => v * side);
+  return [n[0], n[1], n[2], -(n[0] * eye[0] + n[1] * eye[1] + n[2] * eye[2])];
 }
 /** ARMORY-MIRROR: half an eighth of a turn's sine - past it, off the line straight behind, the picture is a three-quarter
  *  back view's (eotbBillboard.js RECORD_OFFSETS 3). */
@@ -592,7 +602,8 @@ export function armoryDraws(key, w, eye, near, right = null) {
   const pose = w.pose, s = pose.scale > 0 ? pose.scale : 1, at = w.at, yaw = Number.isFinite(w.yaw) ? w.yaw : 0;
   const pt = (/** @type {string} */ n) => /** @type {number[]} */ (poseWorld(pose, n, at, yaw, [0, 0, 0], 0, pose.card ? right : null));
   const fwd = [Math.sin(yaw), 0, Math.cos(yaw)];
-  const facing = (/** @type {number[]} */ p, /** @type {number[]} */ n) => { const e = unit(sub(/** @type {any} */ (eye), p)); return Math.max(0, Math.min(1, (n[0] * e[0] + n[1] * e[1] + n[2] * e[2]) * 1.6 + 0.35)); };
+  const floor = pose.card ? 0 : 0.35;   // AUDIT AURA-PIXEL C4: on a card a decal seen edge on is gone - its picture has no face there
+  const facing = (/** @type {number[]} */ p, /** @type {number[]} */ n) => { const e = unit(sub(/** @type {any} */ (eye), p)); return Math.max(0, Math.min(1, (n[0] * e[0] + n[1] * e[1] + n[2] * e[2]) * 1.6 + floor)); };
   const out = [];
   const tube = (part, A, B, r0, r1, N = fwd, spike = false) => out.push({ mesh: TUBE, part, A, B, N, U: UP, r: [r0 * s, r1 * s], size: 0, count: 0, face: 1, gain: 1, ...(spike ? { spike: true } : {}) });
   // embers and motes only near; a glow or the Origin's spark (`always`) at any distance the piece is drawn
@@ -608,7 +619,7 @@ export function armoryDraws(key, w, eye, near, right = null) {
    *  painted width over a piece `r0` round; a side view's onto the arm at the body's back edge, along the eye's line.
    *  `along(t)` its point `t` of the way from the shoulder to the elbow. */
   const upperArm = (/** @type {'left'|'right'} */ arm, /** @type {number} */ r0) => {
-    const side = armSide(pose, fwd, pt('chest'), eye, arm);
+    const side = armWornSide(pose, fwd, pt('chest'), eye, arm);   // AUDIT AURA-PIXEL C1: a far arm never read clear wears none
     if (!side) return null;
     const sh0 = pt(`sh${side}`), el0 = pt(`el${side}`);
     let sh = sh0, el = el0, mid = null, onArm = (/** @type {number[]} */ p) => p;
@@ -623,7 +634,8 @@ export function armoryDraws(key, w, eye, near, right = null) {
       sh = onArm(sh0); el = onArm(el0);
     }
     const along = (/** @type {number} */ t) => (flank && !band ? onArm(mix(sh0, el0, t)) : mix(sh, el, t));
-    return { side, sh, el, mid, along, k: band ? band.w / (2 * r0 * s) : 1, clip: band && right && mid ? armClip(band, mid, pt('chest'), at, right, eye) : null };
+    const k = band ? band.w / (2 * r0 * s) : 1, chestOn = add(pt('chest'), fwd, -pose.pts[POSE_AT.chest + 2]);   // AUDIT C3: the chest on the card
+    return { side, sh, el, mid, along, k, clip: pose.card && right ? armClip(sh, el, k * r0 * s, chestOn, right, eye) : null };
   };
   /** ARM-BEHIND: an arm's draws pushed since `from` take its clip (upperArm's) - none over the body. */
   const clipped = (/** @type {number} */ from, /** @type {number[]|null} */ clip) => { if (clip) for (let i = from; i < out.length; i++) out[i].clip = clip; };
@@ -642,10 +654,20 @@ export function armoryDraws(key, w, eye, near, right = null) {
     // slides across the picture as the eye goes round (the chest's face and the Sigil's back stood 0.1 m and 0.24 m off it)
     const cz = pose.pts[POSE_AT.chest + 2], onCard = (/** @type {number} */ z) => { const c = add(pt('chest'), fwd, -cz), e = unit(sub(/** @type {any} */ (eye), c)); return add(c, e, z * (fwd[0] * e[0] + fwd[2] * e[2])); };
     const chest = pose.card ? onCard(cz) : pt('chest'), f = facing(chest, fwd);
+    // AUDIT AURA-PIXEL D2: from behind, the run at the chest's rows takes in the near arm hanging over the back - the Sigil's
+    // back stands mid-way between the far edge and that arm's inner edge, never on the arm
+    const backOnCard = (/** @type {number[]} */ p) => {
+      const span = pose.chestSpan, worn = /** @type {const} */ (['left', 'right']).map((a) => armWornSide(pose, fwd, pt('chest'), eye, a)).filter(Boolean);
+      if (!span || !right || worn.length !== 1) return p;
+      const S = worn[0], c = pose.dx[POSE_AT.chest / 3], b = pose.bands?.[S], arm = b ? b.dx : (pose.dx[POSE_AT[`sh${S}`] / 3] + pose.dx[POSE_AT[`el${S}`] / 3]) / 2;
+      const half = b ? b.w / 2 : 0.06 * s, way = Math.sign(c - arm) || 1, inner = Math.max(span[0], Math.min(span[1], arm + way * half));
+      const shift = ((way > 0 ? span[1] : span[0]) + inner) / 2 - c;
+      return add(p, right, shift);
+    };
     decal(0, chest, fwd, (key === 'emberheart' ? 0.14 : 0.12) * s, f);
     cards(1, 1, chest, chest, UP, [0, 0], (key === 'emberheart' ? 0.3 : 0.2) * s, f, 1, true);
     if (key === 'emberheart') cards(2, 8, chest, chest, UP, [0, 0], 0, f);
-    else { const back = pose.card ? onCard(cz - 0.24 * s) : add(chest, fwd, -(pose.back > 0 ? pose.back : 0.27 * s)), nb = [-fwd[0], 0, -fwd[2]]; decal(0, back, nb, 0.13 * s, facing(back, nb)); }   // AUDIT ARMORY: a rig's back clear of its torso - a Morrowind body's back stands about 0.22 m behind its chest's face (WOLF-KIT: the wolf's its pose's `back`)
+    else { const back = pose.card ? backOnCard(onCard(cz - 0.24 * s)) : add(chest, fwd, -(pose.back > 0 ? pose.back : 0.27 * s)), nb = [-fwd[0], 0, -fwd[2]]; decal(0, back, nb, 0.13 * s, facing(back, nb)); }   // AUDIT ARMORY: a rig's back clear of its torso - a Morrowind body's back stands about 0.22 m behind its chest's face (WOLF-KIT: the wolf's its pose's `back`)
   } else if (key === 'ashbound' || key === 'eternalarmlets') {
     for (const arm of /** @type {const} */ (['left', 'right'])) {
       const u = upperArm(arm, key === 'ashbound' ? 0.06 : 0.064), from = out.length;

@@ -2,8 +2,8 @@
   {
     "name": "AURA-PIXEL-texel-rounded",
     "file": "src/render/auraPixel.js",
-    "old": "Math.ceil(Math.log2(metres / texel) - 1e-6)",
-    "new": "Math.round(Math.log2(metres / texel))",
+    "old": "Math.ceil(Math.log2(metres / AURA_TEXEL_M) - 1e-6)",
+    "new": "Math.round(Math.log2(metres / AURA_TEXEL_M))",
     "tests": [
       "test/render/aurapixel.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "AURA-PIXEL-levels-linear",
     "file": "src/render/auraPixel.js",
-    "old": "  float q = floor(sqrt(l) * AURA_STEPS + bayer4(auraCell) + 0.03125) / AURA_STEPS;\n  return c * (q * q / l);",
-    "new": "  float q = floor(l * AURA_STEPS + bayer4(auraCell) + 0.03125) / AURA_STEPS;\n  return c * (q / l);",
+    "old": "  float k = floor(sqrt(l) * AURA_STEPS), lo = k / AURA_STEPS, hi = (k + 1.0) / AURA_STEPS;\n  float q = (l - lo * lo) / (hi * hi - lo * lo) + bayer4(auraCell) + 0.03125 >= 1.0 ? hi : lo;\n  return c * (q * q / l);",
+    "new": "  float k = floor(l * AURA_STEPS), lo = k / AURA_STEPS, hi = (k + 1.0) / AURA_STEPS;\n  float q = (l - lo) / (hi - lo) + bayer4(auraCell) + 0.03125 >= 1.0 ? hi : lo;\n  return c * (q / l);",
     "tests": [
       "test/render/aurapixel.test.js"
     ],
@@ -92,32 +92,12 @@
   {
     "name": "AURA-PIXEL-aura-never-on",
     "file": "src/render/auraRing.js",
-    "old": "gl.uniform1f(U.uPixel, this.pixel === false ? 0 : 1);",
+    "old": "gl.uniform1f(U.uPixel, this.pixel === false ? 0 : this.pixel === 'levels' ? 2 : 1);",
     "new": "gl.uniform1f(U.uPixel, 0);",
     "tests": [
       "test/render/aurapixel.test.js"
     ],
     "why": "the auras' pass never turns the law on"
-  },
-  {
-    "name": "AURA-PIXEL-armory-at-fragment",
-    "file": "src/render/armoryPass.js",
-    "old": "    vP = auraTexel(vArm, vWorld, ARMORY_TEXEL);",
-    "new": "    vP = vArm;",
-    "tests": [
-      "test/render/aurapixel.test.js"
-    ],
-    "why": "an armory piece answered per pixel under the law"
-  },
-  {
-    "name": "AURA-PIXEL-armory-aura-texel",
-    "file": "src/render/armoryPass.js",
-    "old": "    vP = auraTexel(vArm, vWorld, ARMORY_TEXEL);",
-    "new": "    vP = auraTexel(vArm, vWorld, AURA_TEXEL);",
-    "tests": [
-      "test/render/aurapixel.test.js"
-    ],
-    "why": "the armory at the auras' coarser texel - its detail lost"
   },
   {
     "name": "AURA-PIXEL-armory-never-on",

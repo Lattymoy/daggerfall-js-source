@@ -6,44 +6,51 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { glslFunctions, GlslDiscard } from '../glsl.mjs';
-import { armClip, armoryDraws, armoryPrograms, ArmoryRenderer, ARMORY_PIECE_INDEX } from '../../src/render/armoryPass.js';
+import { armClip, armWornSide, armoryDraws, armoryPrograms, ArmoryRenderer, ARMORY_PIECE_INDEX } from '../../src/render/armoryPass.js';
 import { newPose, POSE_AT } from '../../src/render/armoryPose.js';
 
 const kept = (/** @type {number[]} */ c, /** @type {number[]} */ p) => c[0] * p[0] + c[1] * p[1] + c[2] * p[2] + c[3] >= 0;
 const towardEye = (/** @type {number[]} */ p, /** @type {number[]} */ eye, /** @type {number} */ t) => p.map((v, i) => v + (eye[i] - v) * t);
 
-test('ARM-BEHIND the clip: an arm\'s piece kept outside its band\'s inner edge, the body\'s side of it cut - for either arm, on a card turned any way, and a point lifted toward the eye on the same side (mutants: the edge at the band\'s middle; the side reversed; a plane not through the eye)', () => {
+test('ARM-BEHIND the clip (PIN MOVED, AUDIT AURA-PIXEL C2/C3): an arm\'s piece kept on the arm\'s side of its inner edge running along the arm, sh to el, half its width in toward the chest - for either arm, on a card turned any way, a slanted arm\'s own outline kept at the shoulder, and a point lifted toward the eye on the same side (mutants: the edge at the arm\'s middle; the side reversed; a plane not through the eye; the edge upright)', () => {
   for (const yaw of [0, 0.7, -2.1]) {
     const right = [Math.cos(yaw), 0, -Math.sin(yaw)], at = [2, 0, -1], eye = [at[0] + 3 * Math.sin(yaw), 1.4, at[2] + 3 * Math.cos(yaw)];
     const on = (/** @type {number} */ dx, /** @type {number} */ y) => [at[0] + right[0] * dx, y, at[2] + right[2] * dx];
     const chest = on(0.02, 1.3);
     for (const sgn of [1, -1]) {
-      const band = { dx: 0.3 * sgn, w: 0.1, y: 1.25 }, mid = on(band.dx, band.y), c = armClip(band, mid, chest, at, right, eye);
-      assert.ok(Math.abs(c[1]) < 1e-12 && Math.abs(Math.hypot(c[0], c[2]) - 1) < 1e-9, 'upright, unit');
-      assert.ok(Math.abs(c[0] * eye[0] + c[2] * eye[2] + c[3]) < 1e-9, 'through the eye');
-      for (const y of [0.9, 1.25, 1.6]) {
-        assert.ok(kept(c, on(0.26 * sgn, y)) && kept(c, on(0.4 * sgn, y)), `the arm kept (yaw ${yaw}, ${sgn})`);
-        assert.ok(!kept(c, on(0.24 * sgn, y)) && !kept(c, on(0.02, y)), `the body cut (yaw ${yaw}, ${sgn})`);
-        assert.ok(kept(c, towardEye(on(0.26 * sgn, y), eye, 0.02)) && !kept(c, towardEye(on(0.24 * sgn, y), eye, 0.02)), 'lifted toward the eye, the same');
+      // a slanted arm: its middle 0.22 m out at the shoulder (1.45 m), 0.32 m out at the elbow (1.05 m), 0.1 m wide
+      const sh = on(0.22 * sgn, 1.45), el = on(0.32 * sgn, 1.05), c = /** @type {number[]} */ (armClip(sh, el, 0.05, chest, right, eye));
+      assert.ok(Math.abs(Math.hypot(c[0], c[1], c[2]) - 1) < 1e-9 && Math.abs(c[0] * eye[0] + c[1] * eye[1] + c[2] * eye[2] + c[3]) < 1e-9, 'unit, through the eye');
+      for (const t of [0, 0.5, 1]) {
+        const y = 1.45 - 0.4 * t, mid = (0.22 + 0.1 * t) * sgn;
+        assert.ok(kept(c, on(mid, y)) && kept(c, on(mid - 0.04 * sgn, y)) && kept(c, on(mid + 0.2 * sgn, y)), `the arm kept, its own inner side too (yaw ${yaw}, ${sgn}, ${t})`);
+        assert.ok(!kept(c, on(mid - 0.06 * sgn, y)) && !kept(c, on(0.02, y)), `the body cut (yaw ${yaw}, ${sgn}, ${t})`);
+        assert.ok(kept(c, towardEye(on(mid - 0.04 * sgn, y), eye, 0.02)) && !kept(c, towardEye(on(mid - 0.06 * sgn, y), eye, 0.02)), 'lifted toward the eye, the same');
       }
     }
   }
+  assert.equal(armClip([0, 1.4, 0], [0, 1.0, 0], 0.05, [0.1, 1.3, 0], [1, 0, 0], [0.05, 3, 0]), null, 'the eye on the edge\'s own line: none');
 });
 
-test('ARM-BEHIND the draws: on a card with its bands read, every draw of an arm piece carries its arm\'s clip - the bracers, the armlets, the spurs, the Insignia Armlet; a rig\'s and a card\'s with no band read carry none, nor any other piece\'s (mutants: one arm\'s draws left bare; a rig clipped)', () => {
+test('ARM-BEHIND the draws (PIN MOVED, AUDIT AURA-PIXEL C1): on a card every arm piece\'s draws carry their arm\'s clip, its band read or not - the bracers, the armlets, the spurs, the Insignia Armlet; a far arm never read clear wears none; a rig\'s carry none, nor any other piece\'s (mutants: one arm\'s draws left bare; a rig clipped; the far bare arm worn)', () => {
   const card = newPose();
   Object.assign(card, { card: true, limbs: 'upper', bands: { L: { y: 1.3, dx: -0.3, w: 0.1 }, R: { y: 1.3, dx: 0.3, w: 0.1 } } });
   const w = (/** @type {any} */ pose) => ({ at: [0, 0, 0], yaw: 0, pose, seed: 0.37, kindle: 1, torn: -1, mounted: false, _d: 3 });
   const eye = [0, 1.4, 3], right = [1, 0, 0];
+  const bare = newPose();
+  Object.assign(bare, { card: true, limbs: 'upper', bands: { L: null, R: null } });
   for (const key of ['ashbound', 'eternalarmlets', 'crystalspurs', 'insigniaarmlet']) {
     const ds = armoryDraws(key, w(card), eye, true, right);
     assert.ok(ds.length > 0 && ds.every((d) => Array.isArray(d.clip)), `${key}: every draw clipped`);
     if (key !== 'insigniaarmlet') assert.equal(new Set(ds.map((d) => d.clip)).size, 2, `${key}: each arm its own`);
-    assert.ok(armoryDraws(key, w(newPose()), eye, true, right).every((d) => !d.clip), `${key}: a rig's never`);
-    const bare = newPose();
-    Object.assign(bare, { card: true, limbs: 'upper' });
-    assert.ok(armoryDraws(key, w(bare), eye, true, right).every((d) => !d.clip), `${key}: no band read, none`);
+    assert.ok(armoryDraws(key, w(newPose()), eye, true, right).every((d) => !d.clip), `${key}: a rig\'s never`);
+    assert.ok(armoryDraws(key, w(bare), eye, true, right).every((d) => Array.isArray(d.clip)), `${key}: no band read, clipped all the same`);
   }
+  // from the front and 45 degrees to the wearer's left, the right arm is the far one: never read clear, it wears none
+  const side = [3 * Math.sin(-Math.PI / 4), 1.4, 3 * Math.cos(-Math.PI / 4)];
+  assert.deepEqual([armWornSide(bare, [0, 0, 1], [0, 1.3, 0], side, 'left'), armWornSide(bare, [0, 0, 1], [0, 1.3, 0], side, 'right')].map((v) => !!v), [true, false]);
+  assert.deepEqual([armWornSide(card, [0, 0, 1], [0, 1.3, 0], side, 'right'), armWornSide(newPose(), [0, 0, 1], [0, 1.3, 0], side, 'right')].map((v) => !!v), [true, true], 'read clear, or a rig: worn');
+  assert.equal(armoryDraws('ashbound', w(bare), side, true, right).length < armoryDraws('ashbound', w(card), side, true, right).length, true, 'the bare far arm\'s bracer not drawn');
   for (const key of ['burningcrown', 'emberheart', 'cinderstride']) assert.ok(armoryDraws(key, w(card), eye, true, right).every((d) => !d.clip), key);
 });
 

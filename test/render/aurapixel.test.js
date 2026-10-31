@@ -8,7 +8,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { glslFunctions } from '../glsl.mjs';
 import { GLOBAL_SCALE } from '../../src/world/meshReader.js';
-import { AURA_PIXEL_GLSL, AURA_TEXEL_M, ARMORY_TEXEL_M, AURA_PIXEL_STEPS, auraTexelsPer } from '../../src/render/auraPixel.js';
+import { AURA_PIXEL_GLSL, AURA_TEXEL_M, AURA_PIXEL_STEPS, AURA_CARD_TEXELS, auraTexelsPer } from '../../src/render/auraPixel.js';
 import { AURA_FS, AURA_LOOK, AURA_OWN_PIXELS, AURA_RING_R, AURA_GROUND_R, AURA_LIFT_M, AuraRingRenderer, auraPrograms } from '../../src/render/auraRing.js';
 import { ArmoryRenderer, armoryPrograms, ARMORY_PIECE_INDEX } from '../../src/render/armoryPass.js';
 import { newPose } from '../../src/render/armoryPose.js';
@@ -23,11 +23,10 @@ const deriv = (/** @type {number[][]} */ dp, /** @type {number[][]} */ dw) => ({
 /** The ground's: its coordinate in metres, `s` metres a pixel. */
 const ground = (/** @type {number} */ s) => deriv([[s, 0], [0, s]], [[s, 0, 0], [0, 0, s]]);
 
-test('AURA-PIXEL the texel: a Daggerfall flat\'s pixel (GLOBAL_SCALE) at most and half of it at least, a power of two to a unit so grids nest and a ring closes on a whole number; the armory\'s half of it (mutants: rounded down, past the flat\'s pixel; not a power of two)', () => {
+test('AURA-PIXEL the texel: a Daggerfall flat\'s pixel (GLOBAL_SCALE) at most and half of it at least, a power of two to a unit so grids nest and a ring closes on a whole number; a card never under its least (PIN MOVED, AUDIT AURA-PIXEL D3: the armory\'s texel retired) (mutants: rounded down, past the flat\'s pixel; not a power of two)', () => {
   assert.equal(AURA_TEXEL_M, GLOBAL_SCALE);
-  assert.equal(ARMORY_TEXEL_M, GLOBAL_SCALE / 2);
+  assert.deepEqual([auraTexelsPer(0.16, AURA_CARD_TEXELS), auraTexelsPer(1.2, AURA_CARD_TEXELS)], [32, 64], 'a small card its least, a big glow measured');
   assert.deepEqual([auraTexelsPer(1), auraTexelsPer(AURA_TEXEL_M), auraTexelsPer(AURA_TEXEL_M * 1.01), auraTexelsPer(TAU * 0.95)], [64, 1, 2, 256]);
-  assert.equal(auraTexelsPer(0.4, ARMORY_TEXEL_M), 32);
   for (let m = 0.03; m < 12; m *= 1.37) {
     const n = auraTexelsPer(m), texel = m / n;
     assert.ok(Number.isInteger(Math.log2(n)), `${m} m: ${n} a power of two`);
@@ -36,16 +35,17 @@ test('AURA-PIXEL the texel: a Daggerfall flat\'s pixel (GLOBAL_SCALE) at most an
 });
 
 test('AURA-PIXEL the shader\'s texel RUN: a point on the ground answers at its texel\'s middle, the texel the dither\'s cell; a ring\'s strip in whole texels round it; a texel no bigger than the pixel, or a surface edge on, answered per pixel, the dither on the screen\'s (mutants: the scale inverted; the per-pixel fall-back gone; the texel not passed)', () => {
-  const at = (/** @type {any} */ d, /** @type {number[]} */ p, /** @type {number[]} */ w, texel = AURA_TEXEL_M) => {
+  const at = (/** @type {any} */ d, /** @type {number[]} */ p, /** @type {number[]} */ w, least = [1, 1]) => {
     const f = glslFunctions(AURA_PIXEL_GLSL, { gl_FragCoord: [100.5, 50.5, 0, 1], ...d });
-    return { p: f.auraTexel(p, w, texel), cell: f.globals.auraCell };
+    return { p: f.auraTexel(p, w, AURA_TEXEL_M, least), cell: f.globals.auraCell };
   };
   const n = auraTexelsPer(1), p = [0.1234, -0.567];
   const g = at(ground(0.002), p, [p[0], 0, p[1]]);
   assert.deepEqual(g.cell, [Math.floor(p[0] * n), Math.floor(p[1] * n)]);
   assert.ok(near(g.p[0], (Math.floor(p[0] * n) + 0.5) / n) && near(g.p[1], (Math.floor(p[1] * n) + 0.5) / n), `${g.p}`);
-  const fine = at(ground(0.002), p, [p[0], 0, p[1]], ARMORY_TEXEL_M), nf = auraTexelsPer(1, ARMORY_TEXEL_M);
-  assert.deepEqual(fine.cell, [Math.floor(p[0] * nf), Math.floor(p[1] * nf)], 'the armory\'s texel the finer');
+  // a card 0.16 m a side (its uv 0..1): its least, 32, over the 8 its measure would give
+  const cs = 0.0004, card = at(deriv([[cs / 0.16, 0], [0, cs / 0.16]], [[cs, 0, 0], [0, cs, 0]]), [0.37, 0.71], [0, 1, 0], [AURA_CARD_TEXELS, AURA_CARD_TEXELS]);
+  assert.deepEqual(card.cell, [Math.floor(0.37 * AURA_CARD_TEXELS), Math.floor(0.71 * AURA_CARD_TEXELS)], 'a card at its least');
   // a strip round a ring of radius R and height H: (the share round, the share up)
   const R = 0.85, H = 0.62, s = 0.003, u = [0.4321, 0.777];
   const strip = at(deriv([[s / (TAU * R), 0], [0, s / H]], [[s, 0, 0], [0, s, 0]]), u, [R, u[1] * H, 0]);
@@ -105,24 +105,21 @@ test('AURA-PIXEL an aura\'s main() RUN: with the law on, every point of a texel 
   assert.ok(armoryPrograms(ARMORY_PIECE_INDEX.emberheart)[0][1].includes('uniform float uPixel;'));
 });
 
-test('AURA-PIXEL an armory piece\'s main() RUN: the Crystal Spurs on their tube, the law on - every point of a texel answers as one, at the armory\'s finer texel; off, per pixel (mutants: the piece at the fragment; the aura\'s texel)', () => {
-  const fs = armoryPrograms(ARMORY_PIECE_INDEX.crystalspurs)[0][1], r = 0.012, L = 0.05, s = 0.0008;
+test('AURA-PIXEL an armory piece\'s main() RUN (PIN MOVED, AUDIT AURA-PIXEL D3/A3: a piece takes the levels alone): the Crystal Spurs with the law on - two points a texel apart answer apart, never snapped, each on a level; off, the piece as it was (mutants: the piece snapped; its levels uncut)', () => {
+  const fs = armoryPrograms(ARMORY_PIECE_INDEX.crystalspurs)[0][1];
   const at = (/** @type {number[]} */ vArm, /** @type {number} */ pixel) => {
     const f = glslFunctions(fs, {
       vArm, vS: [1, 0.1, 0, 0], vWorld: [0, 1, 0], uMesh: 0, uPart: 0, uTime: 3, uSeed: 0, uKindle: 1, uFogMode: 0, uFogDensity: 0, uFogRange: [0, 1], uCamPos: [0, 1, 3],
       uFace: 1, uScale: 1, uSize: 0, uGain: 1, uMirror: 1, uInk: [0, 0, 0], uField: [0, 0, 0], uPixel: pixel, gl_FragCoord: [10.5, 10.5, 0, 1],
-      ...deriv([[s / (TAU * r), 0], [0, s / L]], [[s, 0, 0], [0, s, 0]]),
     });
     f.main();
     return f.globals.o;
   };
-  const nu = auraTexelsPer(TAU * r, ARMORY_TEXEL_M), nv = auraTexelsPer(L, ARMORY_TEXEL_M);
-  assert.deepEqual([nu, nv], [8, 4], 'the spur\'s tube in the armory\'s texels');
-  const one = [(3 + 0.1) / nu, (2 + 0.15) / nv], two = [(3 + 0.85) / nu, (2 + 0.9) / nv];
-  assert.deepEqual(at(one, 1), at(two, 1), 'one texel, one answer');
-  assert.ok(Math.max(...at(one, 1).slice(0, 3)) > 0.02, 'lit');
-  assert.notDeepEqual(at([2.5 / nu, 2.5 / nv], 1), at([3.5 / nu, 2.5 / nv], 1), 'two of its texels within one of the auras\' - the finer');
-  assert.notDeepEqual(at(one, 0), at(two, 0), 'off, per pixel');
+  const one = [3.1 / 8, 2.15 / 4], two = [3.85 / 8, 2.9 / 4];
+  assert.notDeepEqual(at(one, 1), at(two, 1), 'never snapped');
+  const LV = Array.from({ length: AURA_PIXEL_STEPS + 1 }, (_, k) => (k / AURA_PIXEL_STEPS) ** 2);
+  for (const p of [one, two]) { const m = Math.max(...at(p, 1).slice(0, 3)); assert.ok(m > 0.02 && LV.some((v) => near(v, m, 1e-6)), `lit, on a level: ${m}`); }
+  assert.ok(LV.every((v) => !near(v, Math.max(...at(one, 0).slice(0, 3)), 1e-6)), 'off, its own light');
 });
 
 /** A GL that logs each call, its uniform locations their names. */

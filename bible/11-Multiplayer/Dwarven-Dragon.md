@@ -237,7 +237,9 @@ A tamed dragon is a third mount beside the horse and the cart (`06-Systems/Horse
 - **Its size** (DRAGON-KEEP-SIZE, the owner, 2026-10-31: *"the dragon when in possession of a player is too large
   unmounted"*). Off its back, a tamed dragon is drawn at its sprite's own size, the size it is ridden at
   (`scenes/dragonKeepHost.js` DRAGON_KEEP_SCALE). It stood at the boss's `DRAGON_SCALE`, 1.6 times its ridden self.
-  Its press still meets the boss's body box (`DRAGON_BODY_R`), a wide mark to press.
+  Its press still meets the boss's body box (`DRAGON_BODY_R`), which now roughly fits it: drawn 11.6 m wide side on,
+  5.1 m front on and 6.35 m tall. It is drawn by `scenes/world.js` alone, on the street; the other hosts never stand it.
+  Under the Overworld a peer's ridden dragon is grown and a waiting one is not, as before (AUDIT AURA-PIXEL B4, left open).
 - **Storage**: saddlebags of `DRAGON_BAGS_KG` (1,000 kg - between the Small Cart and the Open Wagon), a storage beside
   the pack, opened by activating it (Steal mode or the plaque's row) or from the Stable page while mounted or within 9 m
   of it. They save with the character, and the judge, the id ledger and customs read them as a held list.

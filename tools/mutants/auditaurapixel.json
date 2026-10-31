@@ -1,0 +1,182 @@
+[
+  {
+    "name": "AUDIT-AURA-PIXEL-A1-strand-snapped-across",
+    "file": "src/render/auraRing.js",
+    "old": "  if (uKind == 1 && (uAura == 4 || uAura == 19)) return vec2(vP.x, auraSnap(vP, vec2(1.0, AURA_STRAND_TEXELS)).y);",
+    "new": "  if (uKind == 1 && (uAura == 4 || uAura == 19)) return auraSnap(vP, vec2(AURA_STRAND_TEXELS));",
+    "tests": [
+      "test/render/auditaurapixel.test.js"
+    ],
+    "why": "a strand's core lost across it"
+  },
+  {
+    "name": "AUDIT-AURA-PIXEL-A5-card-measured-alone",
+    "file": "src/render/auraRing.js",
+    "old": "vec2(AURA_CARD_TEXELS));   // at least",
+    "new": "vec2(1.0));   // at least",
+    "tests": [
+      "test/render/auditaurapixel.test.js"
+    ],
+    "why": "a growing card jumps a texel size"
+  },
+  {
+    "name": "AUDIT-AURA-PIXEL-A5-cloth-measured",
+    "file": "src/render/auraRing.js",
+    "old": "  if (uKind == 1 && (uAura == 3 || uAura == 15)) return auraSnap(vP, vec2(AURA_CLOTH_TEXELS));\n",
+    "new": "",
+    "tests": [
+      "test/render/auditaurapixel.test.js"
+    ],
+    "why": "the cloth's triangles measured apart"
+  },
+  {
+    "name": "AUDIT-AURA-PIXEL-A2-texel-never-handed",
+    "file": "src/render/auraPixel.js",
+    "old": "  auraPx = q == p ? 0.0 : max(m.x / n.x, m.y / n.y);",
+    "new": "  auraPx = 0.0;",
+    "tests": [
+      "test/render/auditaurapixel.test.js"
+    ],
+    "why": "lines narrower than a texel point-sampled away"
+  },
+  {
+    "name": "AUDIT-AURA-PIXEL-A2-radiance-floor-gone",
+    "file": "src/render/auraRing.js",
+    "old": "0.002), auraPx);   // a pixel on the ground",
+    "new": "0.002), 0.0);   // a pixel on the ground",
+    "tests": [
+      "test/render/auditaurapixel.test.js"
+    ],
+    "why": "the radiance's fine rings dark between texels"
+  },
+  {
+    "name": "AUDIT-AURA-PIXEL-D3-levels-weighed-by-root",
+    "file": "src/render/auraPixel.js",
+    "old": "  float q = (l - lo * lo) / (hi * hi - lo * lo) + bayer4(auraCell) + 0.03125 >= 1.0 ? hi : lo;",
+    "new": "  float q = sqrt(l) * AURA_STEPS - k + bayer4(auraCell) + 0.03125 >= 1.0 ? hi : lo;",
+    "tests": [
+      "test/render/auditaurapixel.test.js"
+    ],
+    "why": "a faint glow dotted up to the first level"
+  },
+  {
+    "name": "AUDIT-AURA-PIXEL-D4-one-axis-snapped",
+    "file": "src/render/auraPixel.js",
+    "old": "  if (any(lessThanEqual(1.0 / n, foot))) return p;",
+    "new": "  if (all(lessThanEqual(1.0 / n, foot))) return p;",
+    "tests": [
+      "test/render/auditaurapixel.test.js"
+    ],
+    "why": "a texel under the pixel on one axis still snapped"
+  },
+  {
+    "name": "AUDIT-AURA-PIXEL-D4-resonance-resampled",
+    "file": "src/render/auraRing.js",
+    "old": "    auraLook(auraOwnPixels() ? vP : t);",
+    "new": "    auraLook(t);",
+    "tests": [
+      "test/render/auditaurapixel.test.js"
+    ],
+    "why": "the Resonance's squares resampled"
+  },
+  {
+    "name": "AUDIT-AURA-PIXEL-D4-armlet-not-covering",
+    "file": "src/render/armoryPass.js",
+    "old": "o = auraPixel(o, uPiece == ${ARMLET}); }",
+    "new": "o = auraPixel(o, false); }",
+    "tests": [
+      "test/render/auditaurapixel.test.js"
+    ],
+    "why": "the armlet's cover uncut, its colour posterized"
+  },
+  {
+    "name": "AUDIT-AURA-PIXEL-D5-levels-snap",
+    "file": "src/render/auraRing.js",
+    "old": "    if (uPixel < 1.5) t = auraSnapOf();",
+    "new": "    t = auraSnapOf();",
+    "tests": [
+      "test/render/auditaurapixel.test.js"
+    ],
+    "why": "the probe's levels alone snapped all the same"
+  },
+  {
+    "name": "AUDIT-AURA-PIXEL-D5-levels-never-asked",
+    "file": "src/render/auraRing.js",
+    "old": "this.pixel === 'levels' ? 2 : 1);",
+    "new": "1);",
+    "tests": [
+      "test/render/auditaurapixel.test.js"
+    ],
+    "why": "the probe's levels never reach the shader"
+  },
+  {
+    "name": "AUDIT-AURA-PIXEL-B1-bench-forgotten",
+    "file": "src/scenes/auraHost.js",
+    "old": "export const peerMounted = (/** @type {any} */ shown) => !!shown?.rd || shown?.bench === 2;",
+    "new": "export const peerMounted = (/** @type {any} */ shown) => !!shown?.rd;",
+    "tests": [
+      "test/render/auditaurapixel.test.js"
+    ],
+    "why": "a bench driver's cards float"
+  },
+  {
+    "name": "AUDIT-AURA-PIXEL-B2-staff-dragon-unmounted",
+    "file": "src/scenes/auraHost.js",
+    "old": "(self).mounted = !!player.riding || ridingDragon() || lift > 0;",
+    "new": "(self).mounted = !!player.riding || lift > 0;",
+    "tests": [
+      "test/net/shadowcloak.test.js"
+    ],
+    "why": "an Admin's /dragon in first person floats cards"
+  },
+  {
+    "name": "AUDIT-AURA-PIXEL-C1-far-bare-arm-worn",
+    "file": "src/render/armoryPass.js",
+    "old": "  return (arm === 'left' ? 1 : -1) * (ex * fwd[2] - ez * fwd[0]) / l > ARM_HIDDEN_SIN ? null : side;",
+    "new": "  return side;",
+    "tests": [
+      "test/render/armbehind.test.js"
+    ],
+    "why": "a far arm never read clear wears its piece on the torso"
+  },
+  {
+    "name": "AUDIT-AURA-PIXEL-C2-edge-upright",
+    "file": "src/render/armoryPass.js",
+    "old": "D = sub(el, sh), V =",
+    "new": "D = [0, -1, 0], V =",
+    "tests": [
+      "test/render/armbehind.test.js"
+    ],
+    "why": "the cut upright, through a slanted arm"
+  },
+  {
+    "name": "AUDIT-AURA-PIXEL-C3-chest-lifted",
+    "file": "src/render/armoryPass.js",
+    "old": "chestOn = add(pt('chest'), fwd, -pose.pts[POSE_AT.chest + 2]);",
+    "new": "chestOn = pt('chest');",
+    "tests": [
+      "test/render/auditaurapixel.test.js"
+    ],
+    "why": "the inner side judged off the lifted chest"
+  },
+  {
+    "name": "AUDIT-AURA-PIXEL-C4-edge-on-floor",
+    "file": "src/render/armoryPass.js",
+    "old": "  const floor = pose.card ? 0 : 0.35;",
+    "new": "  const floor = 0.35;",
+    "tests": [
+      "test/render/auditaurapixel.test.js"
+    ],
+    "why": "a card's decal streaks edge on"
+  },
+  {
+    "name": "AUDIT-AURA-PIXEL-D2-back-on-chest-mark",
+    "file": "src/render/armoryPass.js",
+    "old": "const back = pose.card ? backOnCard(onCard(cz - 0.24 * s))",
+    "new": "const back = pose.card ? onCard(cz - 0.24 * s)",
+    "tests": [
+      "test/render/auditaurapixel.test.js"
+    ],
+    "why": "the Sigil's back on the near arm"
+  }
+]

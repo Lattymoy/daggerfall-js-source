@@ -2,8 +2,8 @@
   {
     "name": "ARM-BEHIND-edge-at-middle",
     "file": "src/render/armoryPass.js",
-    "old": "const edge = band.dx - (way * band.w) / 2,",
-    "new": "const edge = band.dx,",
+    "old": "const E = [sh[0] + right[0] * way * half, sh[1], sh[2] + right[2] * way * half]",
+    "new": "const E = [sh[0], sh[1], sh[2]]",
     "tests": [
       "test/render/armbehind.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "ARM-BEHIND-side-reversed",
     "file": "src/render/armoryPass.js",
-    "old": "(mid[2] - eye[2]) * ex >= 0 ? 1 : -1;",
-    "new": "(mid[2] - eye[2]) * ex >= 0 ? -1 : 1;",
+    "old": "toMid[2] >= 0 ? 1 / l : -1 / l;",
+    "new": "toMid[2] >= 0 ? -1 / l : 1 / l;",
     "tests": [
       "test/render/armbehind.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "ARM-BEHIND-not-through-eye",
     "file": "src/render/armoryPass.js",
-    "old": "  return [nx, 0, nz, -(nx * eye[0] + nz * eye[2])];",
-    "new": "  return [nx, 0, nz, -(nx * at[0] + nz * at[2])];",
+    "old": "  return [n[0], n[1], n[2], -(n[0] * eye[0] + n[1] * eye[1] + n[2] * eye[2])];",
+    "new": "  return [n[0], n[1], n[2], -(n[0] * sh[0] + n[1] * sh[1] + n[2] * sh[2])];",
     "tests": [
       "test/render/armbehind.test.js"
     ],
@@ -92,7 +92,7 @@
   {
     "name": "CHEST-CENTRE-sigil-back-behind",
     "file": "src/render/armoryPass.js",
-    "old": "const back = pose.card ? onCard(cz - 0.24 * s) :",
+    "old": "const back = pose.card ? backOnCard(onCard(cz - 0.24 * s)) :",
     "new": "const back = pose.card ? add(chest, fwd, -0.24 * s) :",
     "tests": [
       "test/render/armbehind.test.js"

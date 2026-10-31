@@ -133,7 +133,7 @@ gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-20, -20, 20, -20, 20, 20, -20,
 gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0); gl.bindVertexArray(null);
 let pass = null, err = null;
 try { pass = new AuraRingRenderer(gl); } catch (e) { err = String(e.message ?? e); }
-if (pass) pass.pixel = false;   // AURA-PIXEL: the designs are read per pixel; the law's own reads (pixelShot) turn it on
+if (pass) pass.pixel = ${process.env.PIXEL === '1' ? 'true' : 'false'};   // AURA-PIXEL: the designs read per pixel - PIXEL=1 reads them with the law on (AUDIT AURA-PIXEL A6/D3); the law's own reads (pixelShot) turn it on
 const persp = (f, a, n, fa) => { const t = 1 / Math.tan(f / 2); return new Float32Array([t / a, 0, 0, 0, 0, t, 0, 0, 0, 0, (fa + n) / (n - fa), -1, 0, 0, 2 * fa * n / (n - fa), 0]); };
 const look = (e, c) => { const u = [0, 1, 0]; const z = [e[0] - c[0], e[1] - c[1], e[2] - c[2]]; let l = Math.hypot(...z); z.forEach((v, i) => { z[i] = v / l; }); const x = [u[1] * z[2] - u[2] * z[1], u[2] * z[0] - u[0] * z[2], u[0] * z[1] - u[1] * z[0]]; l = Math.hypot(...x); x.forEach((v, i) => { x[i] = v / l; }); const y = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]]; return new Float32Array([x[0], y[0], z[0], 0, x[1], y[1], z[1], 0, x[2], y[2], z[2], 0, -(x[0] * e[0] + x[1] * e[1] + x[2] * e[2]), -(y[0] * e[0] + y[1] * e[1] + y[2] * e[2]), -(z[0] * e[0] + z[1] * e[1] + z[2] * e[2]), 1]); };
 const mul = (a, b) => { const o = new Float32Array(16); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) for (let k = 0; k < 4; k++) o[c * 4 + r] += a[k * 4 + r] * b[c * 4 + k]; return o; };
@@ -162,9 +162,10 @@ window.draw = (eye, t, kindle, pts, aura, at = [0, 0.2, 0], yaw = 0, lit = 1, to
 /** AURA-PIXEL: \`aura\` drawn close over a black floor, the pixel law on or off, and the frame read whole: its lit pixels,
  *  the share the same as their right-hand neighbour, and the share whose brightest channel stands on a level. */
 window.pixelShot = (eye, aura, at, on) => {
+  const was = pass.pixel;
   pass.pixel = on;
   const r = window.draw(eye, 21.5, 1, [], aura, at, 0, 0);
-  pass.pixel = false;
+  pass.pixel = was;
   const d = new Uint8Array(640 * 480 * 4);
   gl.readPixels(0, 0, 640, 480, gl.RGBA, gl.UNSIGNED_BYTE, d);
   const LV = Array.from({ length: AURA_PIXEL_STEPS + 1 }, (_, k) => Math.round(255 * (k / AURA_PIXEL_STEPS) ** 2));
@@ -1432,15 +1433,15 @@ try {
     `${Math.max(...sgCold.px.map((c, i) => Math.abs(lum(c) - lum(sgColdBare.px[i]))))}`,
   );
   // AURA-PIXEL (2026-10-31): EVERY LOOK IN DAGGERFALL'S PIXELS - drawn close with the law on: no GL error; in texels (a lit
-  // pixel the same as its right-hand neighbour far more often than per pixel), but for a look of its own pixels; an added
-  // look's light on its levels more often than per pixel (where two of its surfaces overlap, their levels sum - the law
-  // itself is test/render/aurapixel.test.js's); a shot of each
+  // pixel the same as its right-hand neighbour more often than with the levels alone - AUDIT AURA-PIXEL D5: the levels
+  // alone made runs enough to pass against per pixel), but for a look of its own pixels; an added look's light on its
+  // levels more often than per pixel (overlapping surfaces sum - the law is test/render/aurapixel.test.js's); a shot of each
   for (const aura of await page.evaluate(() => window.auraNames)) {
     const shot = (on) => page.evaluate(([e, a, m, o]) => window.pixelShot(e, a, m, o), [[0, 1.3, 2.2], aura, [0, 0.7, 0], on]);
-    const flat = await shot(false), px = await shot(true);
+    const flat = await shot(false), lv = await shot('levels'), px = await shot(true);
     if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, `${aura}_pixel.png`) });
     check(`${aura} in pixels draws without a GL error`, px.error === 0 && px.drawn === 1 && px.lit > 200, `error ${px.error}, drawn ${px.drawn}, ${px.lit} lit`);
-    if (!px.own) check(`${aura} drawn in texels`, px.same >= 0.45 && px.same > flat.same + 0.1, `${px.same.toFixed(2)} of its lit pixels as their neighbour, per pixel ${flat.same.toFixed(2)}`);
+    if (!px.own) check(`${aura} drawn in texels`, px.same > lv.same + 0.1, `${px.same.toFixed(2)} of its lit pixels as their neighbour, the levels alone ${lv.same.toFixed(2)}, per pixel ${flat.same.toFixed(2)}`);
     if (!px.covers) check(`${aura}'s light on its levels`, px.level > flat.level + 0.1, `${px.level.toFixed(2)} on a level, per pixel ${flat.level.toFixed(2)}`);
   }
   check('no page error', errs.length === 0, errs.join('; '));
