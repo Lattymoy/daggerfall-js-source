@@ -52,7 +52,8 @@ function bound(pattern, out) {
   else if (pattern.type === 'AssignmentPattern') bound(pattern.left, out);
 }
 
-/** Every binding a source declares - variables, functions and their parameters, classes, catch parameters. */
+/** Every binding a source declares - variables, functions and their parameters, classes, catch parameters. Not an
+ *  import: its local name is the exporting module's word (`t` is textManager's), renamed with the export. */
 export function bindingsIn(source) {
   const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'module', locations: true, allowHashBang: true });
   const out = [];
@@ -62,7 +63,7 @@ export function bindingsIn(source) {
     else if (/Function/.test(node.type)) {
       if (node.id) out.push(node.id);
       for (const p of node.params) bound(p, out);
-    } else if (node.type === 'ClassDeclaration' && node.id) out.push(node.id);
+    } else if ((node.type === 'ClassDeclaration' || node.type === 'ClassExpression') && node.id) out.push(node.id);
     else if (node.type === 'CatchClause') bound(node.param, out);
     for (const key of Object.keys(node)) {
       if (key === 'loc') continue;
@@ -122,10 +123,11 @@ export function lowered(base, now) {
 }
 
 /** A host move's carry: the moved code's names go with it, so the new module is admitted at its count and the host
- *  lowered to its own - only while the two together hold no more than the host did (a move invents no name). */
-export function carried(base, hostFile, toFile, counts) {
+ *  lowered to its own - only while the two together hold no more than the host did (a move invents no name). The
+ *  `rebound` names are the module unpacking the host's own (`const { a } = host`): bound twice, invented never. */
+export function carried(base, hostFile, toFile, counts, rebound = 0) {
   const before = base[hostFile] ?? 0;
-  if ((counts[hostFile] ?? 0) + (counts[toFile] ?? 0) > before) return base;
+  if ((counts[hostFile] ?? 0) + (counts[toFile] ?? 0) - rebound > before) return base;
   const out = { ...base, [hostFile]: counts[hostFile] ?? 0, [toFile]: counts[toFile] ?? 0 };
   for (const f of [hostFile, toFile]) if (!out[f]) delete out[f];
   return Object.fromEntries(Object.entries(out).sort(([a], [b]) => a.localeCompare(b)));

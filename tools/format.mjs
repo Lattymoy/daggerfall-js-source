@@ -19,9 +19,11 @@ export const IGNORE = '.prettierignore';
 /** The folders the formatter owns. */
 export const formattedFolders = (root = ROOT) => JSON.parse(readFileSync(join(root, FORMATTED), 'utf8'));
 
-/** Every .js/.mjs file directly in a listed folder, repo-relative and sorted - a subfolder is listed on its own. */
+/** Every .js/.mjs file directly in a listed folder, repo-relative and sorted - a subfolder is listed on its own. A
+ *  listed path that is not there gives none (`missingEntries` names it). */
 export function formattedFiles(root = ROOT) {
   return formattedFolders(root)
+    .filter((d) => existsSync(join(root, d)))
     .flatMap((d) =>
       isFileEntry(d)
         ? [d]
@@ -32,11 +34,14 @@ export function formattedFiles(root = ROOT) {
     .sort();
 }
 
+/** The listed folders and files that are not there. */
+export const missingEntries = (root = ROOT) => formattedFolders(root).filter((d) => !existsSync(join(root, d)));
+
 /** An entry that names one file - a folder whose other files are not formatted yet lists its formatted ones. */
 export const isFileEntry = (entry) => /\.m?js$/.test(entry);
 
-/** .prettierignore's text: ignore everything, then open each listed folder's own files (its subfolders shut unless
- *  listed) and the parents on its way (their own contents shut). */
+/** .prettierignore's text: ignore everything, then open each listed folder's own .js and .mjs files (its other files
+ *  and its subfolders shut unless listed) and the parents on its way (their own contents shut). */
 export function ignoreText(folders) {
   const lines = ['# Written by node tools/format.mjs --ignore from tools/formatted.json - edit that, not this.', '/*'];
   const opened = new Set();
@@ -50,8 +55,8 @@ export function ignoreText(folders) {
         lines.push(`!/${path}`);
         continue;
       }
-      lines.push(`!/${path}/`);
-      lines.push(folders.includes(path) ? `/${path}/*/` : `/${path}/*`);
+      lines.push(`!/${path}/`, `/${path}/*`);
+      if (folders.includes(path)) lines.push(`!/${path}/*.js`, `!/${path}/*.mjs`);
     }
   }
   return `${lines.join('\n')}\n`;
@@ -117,7 +122,7 @@ if (isMainThread && isMain(import.meta.url)) {
     writeFileSync(join(ROOT, IGNORE), ignoreText(formattedFolders()));
     console.log(`${IGNORE} written for ${formattedFolders().length} folder(s)`);
   } else if (process.argv.includes('--check')) {
-    const missing = formattedFolders().filter((d) => !existsSync(join(ROOT, d)));
+    const missing = missingEntries();
     const bad = await unformatted();
     for (const d of missing) console.log(`MISSING  ${d}`);
     for (const f of bad) console.log(`UNFORMATTED  ${f}`);

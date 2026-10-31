@@ -27,7 +27,8 @@
 //
 // What it cannot see, it refuses; what it moved it prints. Read the diff.
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
-import { dirname, relative, basename } from 'node:path';
+import { dirname, relative, basename, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { parse } from 'acorn';
 import { isMain } from './lib/isMain.mjs';
 import { parseModule, findHostFunction, scopeOf } from './hostScope.mjs';
@@ -706,13 +707,45 @@ export function retargetRecords({ hostFile, toFile, handle = 'host', write = fal
   return report;
 }
 
-/** LEGIBLE 5: the short names' baseline carried with the code (tools/shortNames.mjs carried). */
-function carryShortNames(hostFile, toFile) {
-  const path = 'tools/shortNamesBaseline.json';
+const REPO = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+/** The module's short names that unpack the host's own off its handle (`const { a } = host`) - not new names. */
+export function reboundShort(moduleText, handle = 'host') {
+  const ast = parse(moduleText, { ecmaVersion: 'latest', sourceType: 'module' });
+  const spans = [];
+  const walk = (n) => {
+    if (!n || typeof n.type !== 'string') return;
+    if (
+      n.type === 'VariableDeclarator' &&
+      n.id.type === 'ObjectPattern' &&
+      n.init?.type === 'Identifier' &&
+      n.init.name === handle
+    )
+      spans.push([n.id.start, n.id.end]);
+    for (const k of childKeys(n)) {
+      const v = n[k];
+      if (Array.isArray(v)) v.forEach(walk);
+      else if (v && typeof v.type === 'string') walk(v);
+    }
+  };
+  walk(ast);
+  return shortIn(moduleText).filter((b) => spans.some(([a, z]) => b.start >= a && b.end <= z)).length;
+}
+
+/** LEGIBLE 5: the short names' baseline carried with the code (tools/shortNames.mjs carried), keyed repo-relative. */
+function carryShortNames(hostFile, toFile, handle = 'host') {
+  const path = join(REPO, 'tools/shortNamesBaseline.json');
   if (!existsSync(path)) return;
+  const key = (f) => relative(REPO, resolve(f)).split('\\').join('/');
   const base = JSON.parse(readFileSync(path, 'utf8'));
-  const counts = Object.fromEntries([hostFile, toFile].map((f) => [f, shortIn(readFileSync(f, 'utf8')).length]));
-  writeFileSync(path, `${JSON.stringify(carried(base, hostFile, toFile, counts), null, 1)}\n`);
+  const counts = {
+    [key(hostFile)]: shortIn(readFileSync(hostFile, 'utf8')).length,
+    [key(toFile)]: shortIn(readFileSync(toFile, 'utf8')).length,
+  };
+  const next = carried(base, key(hostFile), key(toFile), counts, reboundShort(readFileSync(toFile, 'utf8'), handle));
+  if (next === base)
+    console.log(`  SHORT NAMES NOT CARRIED - host and module hold more than the host did: ${JSON.stringify(counts)}`);
+  writeFileSync(path, `${JSON.stringify(next, null, 1)}\n`);
 }
 
 function main(args) {
@@ -779,7 +812,7 @@ function main(args) {
     writeFileSync(toFile, r.moduleText);
     writeFileSync(hostFile, hostText);
     const rec = retargetRecords({ hostFile, toFile, handle: opt('--handle') ?? 'host', write: true });
-    carryShortNames(hostFile, toFile);
+    carryShortNames(hostFile, toFile, opt('--handle') ?? 'host');
     console.log(
       `  written. Records retargeted: ${rec.records}; anchors: ${rec.anchors}${rec.unplaced.length ? `\n  UNPLACED - by hand:\n    ${rec.unplaced.join('\n    ')}` : ''}`,
     );

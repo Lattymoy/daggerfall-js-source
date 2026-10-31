@@ -113,31 +113,62 @@ export function hasCapture(pattern) {
   return false;
 }
 
-/** A regex's longest run of literal characters (an escaped punctuation mark counts as one), or null under six. */
+/** A regex's longest run of literal characters that every match holds (an escaped punctuation mark counts as one), or
+ *  null under six. AUDIT (2026-10-31): a run inside a group, a top-level alternation, an escape's digits or a counted
+ *  repeat's braces is not one every match holds, so none of those make a run. */
 export function literalRun(pattern) {
   const runs = [];
   let cur = '';
+  let depth = 0;
+  const cut = () => {
+    if (depth === 0) runs.push(cur);
+    cur = '';
+  };
+  const skipTo = (i, close) => {
+    const at = pattern.indexOf(close, i);
+    return at < 0 ? pattern.length : at;
+  };
   for (let i = 0; i < pattern.length; i++) {
     const c = pattern[i];
     if (c === '\\') {
       const e = pattern[++i];
-      if (e !== undefined && /[^A-Za-z0-9]/.test(e)) cur += e;
-      else {
-        runs.push(cur);
-        cur = '';
+      if (e !== undefined && /[^A-Za-z0-9]/.test(e)) {
+        cur += e;
+        continue;
       }
-    } else if ('^$.|()[]{}'.includes(c)) {
-      runs.push(cur);
-      cur = '';
-      if (c === '[') {
-        while (i < pattern.length && pattern[i] !== ']') i += pattern[i] === '\\' ? 2 : 1;
-      }
+      cut();
+      if (e === 'u') i = pattern[i + 1] === '{' ? skipTo(i, '}') : i + 4;
+      else if (e === 'x') i += 2;
+      else if (e === 'c') i += 1;
+      else if (e === 'p' || e === 'P') i = skipTo(i, '}');
+      else if (e === 'k') i = skipTo(i, '>');
+      else if (/[0-9]/.test(e ?? '')) while (/[0-9]/.test(pattern[i + 1] ?? '')) i++;
+    } else if (c === '|' && depth === 0) return null;
+    else if (c === '(') {
+      cut();
+      depth++;
+      if (pattern[i + 1] === '?')
+        i =
+          pattern[i + 2] === '<' && !'=!'.includes(pattern[i + 3])
+            ? skipTo(i, '>')
+            : i + (pattern[i + 2] === '<' ? 3 : 2);
+    } else if (c === ')') {
+      cut();
+      depth = Math.max(0, depth - 1);
+    } else if (c === '[') {
+      cut();
+      while (i < pattern.length && pattern[i] !== ']') i += pattern[i] === '\\' ? 2 : 1;
+    } else if (c === '{' && /^\{\d+(,\d*)?\}/.test(pattern.slice(i))) {
+      cur = cur.slice(0, -1);
+      cut();
+      i = skipTo(i, '}');
     } else if ('*+?'.includes(c)) {
-      runs.push(cur.slice(0, -1));
-      cur = '';
-    } else cur += c;
+      cur = cur.slice(0, -1);
+      cut();
+    } else if ('^$.{}|'.includes(c)) cut();
+    else cur += c;
   }
-  runs.push(cur);
+  cut();
   const best = runs.reduce((a, b) => (b.length > a.length ? b : a), '');
   return best.length >= 6 ? best : null;
 }
@@ -184,7 +215,7 @@ export function carriedIn(testSource, sources) {
     if (!regex && (typeof text !== 'string' || text.length < 12)) continue;
     // a regex is tried only on a text that holds its longest literal run - a pin's pattern over a file it was never
     // written for can backtrack for an hour
-    const frag = regex ? literalRun(lit.regex.pattern) : null;
+    const frag = regex && !regex.flags.includes('i') ? literalRun(lit.regex.pattern) : null;
     const hit = (s) =>
       regex
         ? frag && !s.includes(frag)

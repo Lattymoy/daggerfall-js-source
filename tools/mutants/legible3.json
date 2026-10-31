@@ -18,10 +18,10 @@
     ]
   },
   {
-    "name": "LEGIBLE3-a-parent-left-shut",
+    "name": "LEGIBLE3-a-parent-left-open",
     "file": "tools/format.mjs",
-    "old": "      lines.push(folders.includes(path) ? `/${path}/*/` : `/${path}/*`);",
-    "new": "      if (folders.includes(path)) lines.push(`/${path}/*/`);",
+    "old": "      lines.push(`!/${path}/`, `/${path}/*`);",
+    "new": "      lines.push(`!/${path}/`);",
     "tests": [
       "test/tooling/legible3_format.test.js"
     ]
@@ -36,10 +36,10 @@
     ]
   },
   {
-    "name": "LEGIBLE3-a-listed-folders-subfolders-opened",
+    "name": "LEGIBLE3-a-listed-folders-other-files-opened",
     "file": "tools/format.mjs",
-    "old": "      lines.push(folders.includes(path) ? `/${path}/*/` : `/${path}/*`);",
-    "new": "      lines.push(folders.includes(path) ? `/${path}/x/` : `/${path}/*`);",
+    "old": "      if (folders.includes(path)) lines.push(`!/${path}/*.js`, `!/${path}/*.mjs`);",
+    "new": "      if (folders.includes(path)) lines.push(`!/${path}/*`);",
     "tests": [
       "test/tooling/legible3_format.test.js"
     ]
@@ -65,8 +65,26 @@
   {
     "name": "LEGIBLE3-a-file-entry-opened-as-a-folder",
     "file": "tools/format.mjs",
-    "old": "      if (i === parts.length && isFileEntry(path)) {\n        lines.push(`!/${path}`);\n        continue;\n      }\n      lines.push(`!/${path}/`);",
-    "new": "      lines.push(`!/${path}/`);",
+    "old": "      if (i === parts.length && isFileEntry(path)) {\n        lines.push(`!/${path}`);\n        continue;\n      }\n      lines.push(`!/${path}/`, `/${path}/*`);",
+    "new": "      lines.push(`!/${path}/`, `/${path}/*`);",
+    "tests": [
+      "test/tooling/legible3_format.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE3-a-listed-folders-code-left-shut",
+    "file": "tools/format.mjs",
+    "old": "      if (folders.includes(path)) lines.push(`!/${path}/*.js`, `!/${path}/*.mjs`);",
+    "new": "      if (folders.includes(path)) lines.push(`!/${path}/*.js`);",
+    "tests": [
+      "test/tooling/legible3_format.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE3-a-missing-entry-read",
+    "file": "tools/format.mjs",
+    "old": "    .filter((d) => existsSync(join(root, d)))\n",
+    "new": "",
     "tests": [
       "test/tooling/legible3_format.test.js"
     ]

@@ -287,6 +287,14 @@ added since it began, in folders not yet on the list: 71 of main's, and three of
 **The relay.** 150 of the relay's 181 files are formatted, so its bytes changed though nothing it does did:
 world298 (`test/net/relayversion.test.js`). The 312 formatting commits are in `.git-blame-ignore-revs`.
 
+**The audit's tool findings** (2026-10-31, an independent read of the tools; each fixed with its tests and mutants,
+all dead). `.prettierignore` opened every file of a listed folder, so format-on-save rewrote two READMEs `--check`
+never reads: it opens only `.js` and `.mjs` now, and Prettier formats exactly the 3,268 listed files. A listed path
+gone named itself instead of crashing the check. The text-pin carrier's literal run could come from inside a group,
+an alternation, an escape or a counted repeat, or ignore the `i` flag, and skip a pin silently. `unreached.mjs` read
+a glob by its prefix and lost an import that followed a line with no semicolon. `shortNames.mjs` counts a class
+expression's name; an import's it leaves to the export, said in its header.
+
 ## LEGIBLE 4 - lint that holds the line (2026-10-30)
 
 - **No comma sequence** in shipped code (`no-sequences` over `src/`, the two Workers, `tools/` and `scripts/`). The
@@ -294,7 +302,11 @@ world298 (`test/net/relayversion.test.js`). The 312 formatting commits are in `.
   `townTalk.js` askWork, `world.js` bayScan, `tamrielTrace.js`, `pixelBuildSweep.mjs`); their five text pins and four
   mutant records were re-aimed, all dead. bayScan's two statements raised `bootWorld`'s ceiling by one, said beside it.
   The eighth, `egFragLaw.js`, is in the relay's bundle: it rode the undeployed `world295`, re-hashed in place (the
-  live relay answered `world294`), so the rule has no exception.
+  live relay answered `world294`), and is `world298` since the merge of main.
+- **And in parentheses** (AUDIT, 2026-10-31). At its default the rule lets `(act(), answer)` pass, the form the
+  formatter writes, so the eight were the bare ones only: 49 parenthesized stood in 26 files. The rule is strict now,
+  and `eslint.config.js` holds those 26 files at their counts (`SEQUENCES_HELD`). `test/tooling/legible4_sequences.test.js`
+  fails a count that rises or falls without its number (four mutants, dead), so the list only shrinks.
 - **One statement a line** (`max-statements-per-line`, 1) in the folders the formatter owns. `eslint.config.js` reads
   `tools/formatted.json`, so a folder takes the rule in the change that formats it. The rest of the tree held 37,500
   crowded lines when this was written; they go folder by folder with LEGIBLE 3.

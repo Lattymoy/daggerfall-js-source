@@ -10,7 +10,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parse } from 'acorn';
-import { planMove, renderMove, unusedImports, dropImports, retargetRecords } from '../../tools/hostMove.mjs';
+import { planMove, renderMove, unusedImports, dropImports, retargetRecords, reboundShort } from '../../tools/hostMove.mjs';
 
 const DEP = "export const K = 1;\n";
 /** [name, host source (exports `host`), the group, how to read the host's result] */
@@ -204,4 +204,10 @@ test('HOST-SPLIT SHOT-HOOKS A STATEMENT BY ITS LINE IS ONE STATEMENT: two that s
     assert.deepEqual(plan(['@3']), ['@3: 2 statements start on that line - name one by what it declares']);
     assert.deepEqual(plan(['@9']), ['@9 is not a member of host']);
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('HOST-SPLIT (AUDIT, 2026-10-31) the short names a module unpacks off its handle are the host\'s own, not new - only those off the handle count (mutant: the unpacking counted as new)', () => {
+  assert.equal(reboundShort('export function f(host) { const { ab, cd } = host; const { ef } = other; let gh; }'), 2);
+  assert.equal(reboundShort('export function f(boot) { const { ab } = boot; }', 'boot'), 1);
+  assert.equal(reboundShort('export function f(boot) { const { ab } = boot; }'), 0, 'another handle');
 });

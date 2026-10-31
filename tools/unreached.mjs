@@ -18,8 +18,31 @@ export const ENTRY_DIRS = Object.freeze(['server', 'server-account', 'app', 'scr
 const CODE = /\.(m?js|cjs|html)$/;
 
 const IMPORT =
-  /(?:import|export)\s[^;]*?from\s*['"]([^'"]+)['"]|import\(\s*['"`]([^'"`$]+)['"`]\s*\)|import\s*['"]([^'"]+)['"]|src=["']([^"']+\.m?js)["']|new URL\(\s*['"]([^'"]+)['"]|new (?:Shared)?Worker\(\s*['"]([^'"]+)['"]/g;
+  /(?:import|export)\s[^;'"]*?from\s*['"]([^'"]+)['"]|import\(\s*['"`]([^'"`$]+)['"`]\s*\)|import\s*['"]([^'"]+)['"]|src=["']([^"']+\.m?js)["']|new URL\(\s*['"]([^'"]+)['"]|new (?:Shared)?Worker\(\s*['"]([^'"]+)['"]/g;
 const GLOB = /import\.meta\.glob\(\s*(\[[^\]]*\]|['"][^'"]+['"])/g;
+
+/** A glob's pattern as a regex over repo-relative paths: `*` within a folder, `**` across them, `{a,b}` either. */
+export function globPattern(glob) {
+  let out = '';
+  let braces = 0;
+  for (let i = 0; i < glob.length; i++) {
+    const c = glob[i];
+    if (c === '*' && glob[i + 1] === '*') {
+      out += glob[i + 2] === '/' ? '(?:.*/)?' : '.*';
+      i += glob[i + 2] === '/' ? 2 : 1;
+    } else if (c === '*') out += '[^/]*';
+    else if (c === '?') out += '[^/]';
+    else if (c === '{') {
+      braces++;
+      out += '(?:';
+    } else if (c === '}' && braces) {
+      braces--;
+      out += ')';
+    } else if (c === ',' && braces) out += '|';
+    else out += c.replace(/[\\^$.+()[\]|]/g, '\\$&');
+  }
+  return new RegExp(`^${out}$`);
+}
 
 /** Every code file under `dir` (repo-relative), skipping installed packages. */
 function walk(root, dir) {
@@ -65,10 +88,14 @@ export function unreached(root = ROOT) {
     const { plain, globs } = specifiersIn(readFileSync(join(root, file), 'utf8'));
     const next = plain.map((s) => target(file, s)).filter(Boolean);
     for (const g of globs) {
-      const base = relative(root, resolve(root, dirname(file), g.split('*')[0]))
-        .split('\\')
-        .join('/');
-      next.push(...src.filter((f) => f.startsWith(base)));
+      // AUDIT (2026-10-31): the whole pattern, its extension with it, and a root-absolute glob from the root
+      const at = g.startsWith('/')
+        ? g.slice(1)
+        : relative(root, resolve(root, dirname(file), g))
+            .split('\\')
+            .join('/');
+      const pattern = globPattern(at);
+      next.push(...src.filter((f) => pattern.test(f)));
     }
     for (const t of next)
       if (!seen.has(t)) {

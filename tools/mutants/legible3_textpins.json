@@ -65,8 +65,8 @@
   {
     "name": "TEXTPINS-the-run-never-cut",
     "file": "tools/carryTextPins.mjs",
-    "old": "      runs.push(cur.slice(0, -1));\n      cur = '';\n    } else cur += c;",
-    "new": "      cur += c;\n    } else cur += c;",
+    "old": "    } else if ('*+?'.includes(c)) {\n      cur = cur.slice(0, -1);\n      cut();\n    }",
+    "new": "    } else if ('*+?'.includes(c)) {\n      cur += c;\n    }",
     "tests": [
       "test/tooling/legible3_textpins.test.js"
     ]
@@ -80,7 +80,7 @@
       "test/tooling/legible3_textpins.test.js"
     ],
     "equivalent": true,
-    "why": "the filter only spares the time: a regex whose literal run a text lacks cannot match it, so dropping the filter changes no answer"
+    "why": "the filter only spares the time: every match holds the run (AUDIT, 2026-10-31: none from a group, an alternation, an escape's digits or a counted repeat, none under the i flag), so a text without it cannot match, and dropping the filter changes no answer"
   },
   {
     "name": "TEXTPINS-an-escape-read",
@@ -96,6 +96,51 @@
     "file": "tools/carryTextPins.mjs",
     "old": "(pattern[i + 1] !== '?' || (pattern[i + 2] === '<' && !'=!'.includes(pattern[i + 3])))",
     "new": "pattern[i + 1] !== '?'",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-a-groups-run-kept",
+    "file": "tools/carryTextPins.mjs",
+    "old": "    if (depth === 0) runs.push(cur);",
+    "new": "    runs.push(cur);",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-an-alternation-read",
+    "file": "tools/carryTextPins.mjs",
+    "old": "    } else if (c === '|' && depth === 0) return null;\n",
+    "new": "    } else if (c === '|' && depth === 0) cut();\n",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-an-escapes-digits-kept",
+    "file": "tools/carryTextPins.mjs",
+    "old": "      if (e === 'u') i = pattern[i + 1] === '{' ? skipTo(i, '}') : i + 4;\n      else if",
+    "new": "      if",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-a-counted-repeats-letter-kept",
+    "file": "tools/carryTextPins.mjs",
+    "old": "    } else if (c === '{' && /^\\{\\d+(,\\d*)?\\}/.test(pattern.slice(i))) {\n      cur = cur.slice(0, -1);\n",
+    "new": "    } else if (c === '{' && /^\\{\\d+(,\\d*)?\\}/.test(pattern.slice(i))) {\n",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-the-i-flag-unread",
+    "file": "tools/carryTextPins.mjs",
+    "old": "    const frag = regex && !regex.flags.includes('i') ? literalRun(lit.regex.pattern) : null;",
+    "new": "    const frag = regex ? literalRun(lit.regex.pattern) : null;",
     "tests": [
       "test/tooling/legible3_textpins.test.js"
     ]

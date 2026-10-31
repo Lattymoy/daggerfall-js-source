@@ -124,5 +124,14 @@
     "tests": [
       "test/tooling/hostmove.test.js"
     ]
+  },
+  {
+    "name": "HOSTMOVE-the-unpacking-counted-new",
+    "file": "tools/hostMove.mjs",
+    "old": "  return shortIn(moduleText).filter((b) => spans.some(([a, z]) => b.start >= a && b.end <= z)).length;",
+    "new": "  return 0;",
+    "tests": [
+      "test/tooling/hostmove.test.js"
+    ]
   }
 ]

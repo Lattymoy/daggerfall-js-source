@@ -29,8 +29,8 @@
   {
     "name": "LEGIBLE5-a-parameter-unread",
     "file": "tools/shortNames.mjs",
-    "old": "      for (const p of node.params) bound(p, out);\n    } else if (node.type === 'ClassDeclaration' && node.id) out.push(node.id);",
-    "new": "    } else if (node.type === 'ClassDeclaration' && node.id) out.push(node.id);",
+    "old": "      for (const p of node.params) bound(p, out);\n    } else if ((node.type === 'ClassDeclaration' || node.type === 'ClassExpression') && node.id) out.push(node.id);",
+    "new": "    } else if ((node.type === 'ClassDeclaration' || node.type === 'ClassExpression') && node.id) out.push(node.id);",
     "tests": [
       "test/tooling/legible5_shortnames.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "LEGIBLE5-a-class-unread",
     "file": "tools/shortNames.mjs",
-    "old": "    } else if (node.type === 'ClassDeclaration' && node.id) out.push(node.id);\n    else if (node.type === 'CatchClause') bound(node.param, out);",
+    "old": "    } else if ((node.type === 'ClassDeclaration' || node.type === 'ClassExpression') && node.id) out.push(node.id);\n    else if (node.type === 'CatchClause') bound(node.param, out);",
     "new": "    } else if (node.type === 'CatchClause') bound(node.param, out);",
     "tests": [
       "test/tooling/legible5_shortnames.test.js"
@@ -119,8 +119,26 @@
   {
     "name": "LEGIBLE5-a-grown-pair-admitted",
     "file": "tools/shortNames.mjs",
-    "old": "  if ((counts[hostFile] ?? 0) + (counts[toFile] ?? 0) > before) return base;\n  const out = { ...base, [hostFile]: counts[hostFile] ?? 0, [toFile]: counts[toFile] ?? 0 };",
+    "old": "  if ((counts[hostFile] ?? 0) + (counts[toFile] ?? 0) - rebound > before) return base;\n  const out = { ...base, [hostFile]: counts[hostFile] ?? 0, [toFile]: counts[toFile] ?? 0 };",
     "new": "  const out = { ...base, [hostFile]: counts[hostFile] ?? 0, [toFile]: counts[toFile] ?? 0 };",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-a-class-expression-unread",
+    "file": "tools/shortNames.mjs",
+    "old": "(node.type === 'ClassDeclaration' || node.type === 'ClassExpression') && node.id",
+    "new": "node.type === 'ClassDeclaration' && node.id",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-the-rebound-unread",
+    "file": "tools/shortNames.mjs",
+    "old": "(counts[toFile] ?? 0) - rebound > before",
+    "new": "(counts[toFile] ?? 0) > before",
     "tests": [
       "test/tooling/legible5_shortnames.test.js"
     ]

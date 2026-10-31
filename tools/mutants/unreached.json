@@ -2,8 +2,8 @@
   {
     "name": "UNREACHED-dynamic-import-unread",
     "file": "tools/unreached.mjs",
-    "old": "  /(?:import|export)\\s[^;]*?from\\s*['\"]([^'\"]+)['\"]|import\\(\\s*['\"`]([^'\"`$]+)['\"`]\\s*\\)|import\\s*['\"]([^'\"]+)['\"]|src=[\"']([^\"']+\\.m?js)[\"']|new URL\\(\\s*['\"]([^'\"]+)['\"]|new (?:Shared)?Worker\\(\\s*['\"]([^'\"]+)['\"]/g;",
-    "new": "  /(?:import|export)\\s[^;]*?from\\s*['\"]([^'\"]+)['\"]|import\\s*['\"]([^'\"]+)['\"]|src=[\"']([^\"']+\\.m?js)[\"']|new URL\\(\\s*['\"]([^'\"]+)['\"]|new (?:Shared)?Worker\\(\\s*['\"]([^'\"]+)['\"]/g;",
+    "old": "  /(?:import|export)\\s[^;'\"]*?from\\s*['\"]([^'\"]+)['\"]|import\\(\\s*['\"`]([^'\"`$]+)['\"`]\\s*\\)|import\\s*['\"]([^'\"]+)['\"]|src=[\"']([^\"']+\\.m?js)[\"']|new URL\\(\\s*['\"]([^'\"]+)['\"]|new (?:Shared)?Worker\\(\\s*['\"]([^'\"]+)['\"]/g;",
+    "new": "  /(?:import|export)\\s[^;'\"]*?from\\s*['\"]([^'\"]+)['\"]|import\\s*['\"]([^'\"]+)['\"]|src=[\"']([^\"']+\\.m?js)[\"']|new URL\\(\\s*['\"]([^'\"]+)['\"]|new (?:Shared)?Worker\\(\\s*['\"]([^'\"]+)['\"]/g;",
     "tests": [
       "test/tooling/unreached.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "UNREACHED-glob-not-followed",
     "file": "tools/unreached.mjs",
-    "old": "      next.push(...src.filter((f) => f.startsWith(base)));\n    }",
-    "new": "    }",
+    "old": "      next.push(...src.filter((f) => pattern.test(f)));\n",
+    "new": "",
     "tests": [
       "test/tooling/unreached.test.js"
     ]
@@ -74,8 +74,44 @@
   {
     "name": "UNREACHED-page-script-unread",
     "file": "tools/unreached.mjs",
-    "old": "  /(?:import|export)\\s[^;]*?from\\s*['\"]([^'\"]+)['\"]|import\\(\\s*['\"`]([^'\"`$]+)['\"`]\\s*\\)|import\\s*['\"]([^'\"]+)['\"]|src=[\"']([^\"']+\\.m?js)[\"']|new URL\\(\\s*['\"]([^'\"]+)['\"]|new (?:Shared)?Worker\\(\\s*['\"]([^'\"]+)['\"]/g;",
-    "new": "  /(?:import|export)\\s[^;]*?from\\s*['\"]([^'\"]+)['\"]|import\\(\\s*['\"`]([^'\"`$]+)['\"`]\\s*\\)|import\\s*['\"]([^'\"]+)['\"]|new URL\\(\\s*['\"]([^'\"]+)['\"]|new (?:Shared)?Worker\\(\\s*['\"]([^'\"]+)['\"]/g;",
+    "old": "  /(?:import|export)\\s[^;'\"]*?from\\s*['\"]([^'\"]+)['\"]|import\\(\\s*['\"`]([^'\"`$]+)['\"`]\\s*\\)|import\\s*['\"]([^'\"]+)['\"]|src=[\"']([^\"']+\\.m?js)[\"']|new URL\\(\\s*['\"]([^'\"]+)['\"]|new (?:Shared)?Worker\\(\\s*['\"]([^'\"]+)['\"]/g;",
+    "new": "  /(?:import|export)\\s[^;'\"]*?from\\s*['\"]([^'\"]+)['\"]|import\\(\\s*['\"`]([^'\"`$]+)['\"`]\\s*\\)|import\\s*['\"]([^'\"]+)['\"]|new URL\\(\\s*['\"]([^'\"]+)['\"]|new (?:Shared)?Worker\\(\\s*['\"]([^'\"]+)['\"]/g;",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  },
+  {
+    "name": "UNREACHED-a-glob-read-by-its-prefix",
+    "file": "tools/unreached.mjs",
+    "old": "      next.push(...src.filter((f) => pattern.test(f)));",
+    "new": "      next.push(...src.filter((f) => f.startsWith(at.split('*')[0])));",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  },
+  {
+    "name": "UNREACHED-a-root-glob-read-from-the-file",
+    "file": "tools/unreached.mjs",
+    "old": "      const at = g.startsWith('/')\n",
+    "new": "      const at = false\n",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  },
+  {
+    "name": "UNREACHED-the-import-read-across-a-quote",
+    "file": "tools/unreached.mjs",
+    "old": "/(?:import|export)\\s[^;'\"]*?from",
+    "new": "/(?:import|export)\\s[^;]*?from",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  },
+  {
+    "name": "UNREACHED-a-comma-read-outside-braces",
+    "file": "tools/unreached.mjs",
+    "old": "    } else if (c === ',' && braces) out += '|';",
+    "new": "    } else if (c === ',') out += '|';",
     "tests": [
       "test/tooling/unreached.test.js"
     ]

@@ -4,10 +4,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 
-import { ROOT, IGNORE, formattedFolders, ignoreText, transform, unformatted } from '../../tools/format.mjs';
+import * as prettier from 'prettier';
+import { ROOT, IGNORE, formattedFolders, ignoreText, transform, unformatted, missingEntries } from '../../tools/format.mjs';
 
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
 
@@ -41,16 +42,41 @@ test('LEGIBLE 3 a listed file the formatter would change is named, and an unlist
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test('LEGIBLE 3 .prettierignore leaves every unlisted path alone and opens each listed folder through its parents, its own subfolders shut unless listed (mutants: a parent left shut; a listed folder\'s subfolders opened)', () => {
+test('LEGIBLE 3 a listed folder or file that is not there is named, and the check reads the rest (AUDIT, 2026-10-31; mutant: a missing entry read)', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'legible3-missing-'));
+  try {
+    mkdirSync(join(root, 'tools'));
+    mkdirSync(join(root, 'a'));
+    writeFileSync(join(root, 'a/messy.js'), 'const w={a:1}\n');
+    writeFileSync(join(root, 'tools/formatted.json'), '["a", "gone", "gone.js"]');
+    assert.deepEqual(missingEntries(root), ['gone', 'gone.js']);
+    assert.deepEqual(await unformatted(root), ['a/messy.js'], 'no throw on the missing ones');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('LEGIBLE 3 .prettierignore leaves every unlisted path alone and opens each listed folder through its parents - its own .js and .mjs files only, its subfolders shut unless listed (mutants: a parent left open; a listed folder\'s other files opened; its code left shut)', async () => {
+  const H = '# Written by node tools/format.mjs --ignore from tools/formatted.json - edit that, not this.';
+  const code = (d) => [`!/${d}/*.js`, `!/${d}/*.mjs`];
   assert.equal(ignoreText(['src/ui/ink', 'src/poi', 'src/poi/uv']), [
-    '# Written by node tools/format.mjs --ignore from tools/formatted.json - edit that, not this.',
-    '/*', '!/src/', '/src/*', '!/src/poi/', '/src/poi/*/', '!/src/poi/uv/', '/src/poi/uv/*/', '!/src/ui/', '/src/ui/*',
-    '!/src/ui/ink/', '/src/ui/ink/*/', '',
+    H, '/*', '!/src/', '/src/*', '!/src/poi/', '/src/poi/*', ...code('src/poi'), '!/src/poi/uv/', '/src/poi/uv/*', ...code('src/poi/uv'),
+    '!/src/ui/', '/src/ui/*', '!/src/ui/ink/', '/src/ui/ink/*', ...code('src/ui/ink'), '',
   ].join('\n'));
   assert.equal(ignoreText(['src/systems/a.js', 'src/systems/item']), [
-    '# Written by node tools/format.mjs --ignore from tools/formatted.json - edit that, not this.',
-    '/*', '!/src/', '/src/*', '!/src/systems/', '/src/systems/*', '!/src/systems/a.js', '!/src/systems/item/', '/src/systems/item/*/', '',
+    H, '/*', '!/src/', '/src/*', '!/src/systems/', '/src/systems/*', '!/src/systems/a.js', '!/src/systems/item/', '/src/systems/item/*', ...code('src/systems/item'), '',
   ].join('\n'), 'a file listed on its own opens alone, its folder shut round it');
+  // AUDIT (2026-10-31): read as Prettier reads it - a listed folder's README and page stay its own
+  const root = mkdtempSync(join(tmpdir(), 'legible3-ignore-'));
+  try {
+    for (const f of ['a/x.js', 'a/y.mjs', 'a/README.md', 'a/page.html', 'a/sub/z.js', 'b/w.js']) {
+      mkdirSync(dirname(join(root, f)), { recursive: true });
+      writeFileSync(join(root, f), '');
+    }
+    writeFileSync(join(root, '.prettierignore'), ignoreText(['a']));
+    const opened = [];
+    for (const f of ['a/x.js', 'a/y.mjs', 'a/README.md', 'a/page.html', 'a/sub/z.js', 'b/w.js'])
+      if (!(await prettier.getFileInfo(join(root, f), { ignorePath: join(root, '.prettierignore') })).ignored) opened.push(f);
+    assert.deepEqual(opened, ['a/x.js', 'a/y.mjs']);
+  } finally { rmSync(root, { recursive: true, force: true }); }
   assert.equal(read(IGNORE), ignoreText(formattedFolders()), 'written from the list: node tools/format.mjs --ignore');
 });
 

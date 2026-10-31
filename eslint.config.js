@@ -6,6 +6,37 @@ import { readFileSync } from 'node:fs';
 /** The folders the formatter owns (LEGIBLE 3). */
 const FORMATTED = JSON.parse(readFileSync(new URL('./tools/formatted.json', import.meta.url), 'utf8'));
 
+/** LEGIBLE 4 (AUDIT, 2026-10-31): the files that still hold a comma sequence in its own parentheses, `(act(), answer)`,
+ *  each at its count. test/tooling/legible4_sequences.test.js holds each count exactly, so the list only shrinks. */
+export const SEQUENCES_HELD = Object.freeze({
+  'src/combat/weapon/weaponRig.js': 1,
+  'src/net/gate/gateBrain.js': 1,
+  'src/render/farRing.js': 1,
+  'src/render/underwaterFog.js': 1,
+  'src/scenes/arena/arenaBouts.js': 1,
+  'src/scenes/comeSailAway/shipLiveryPaint.js': 1,
+  'src/scenes/dragonHost.js': 1,
+  'src/scenes/dungeonContext.js': 1,
+  'src/scenes/eliteGates/egSpan.js': 1,
+  'src/scenes/homeYards.js': 1,
+  'src/scenes/huntHost.js': 1,
+  'src/scenes/world.js': 1,
+  'src/scenes/worldModes.js': 4,
+  'src/systems/dragon/dragonFlight.js': 1,
+  'src/systems/item/itemTransfer.js': 1,
+  'src/systems/legacy/family.js': 1,
+  'src/systems/loot/lootRarity.js': 1,
+  'src/systems/naval/navalAI.js': 1,
+  'src/systems/quickslots.js': 1,
+  'src/systems/revenant/revenant.js': 3,
+  'src/ui/input.js': 19,
+  'src/ui/listPicker.js': 1,
+  'src/ui/marketTab.js': 1,
+  'src/world/prefabColliders.js': 1,
+  'tools/grassLookProbe.mjs': 1,
+  'tools/tellDuel.mjs': 1,
+});
+
 export default [
   {
     // ONLINE1 / AUDIT ONLINE A13: the relay's Worker is linted with the tree - its globals are the runtime's
@@ -88,9 +119,14 @@ export default [
   },
   {
     // LEGIBLE 4 (bible/01-Overview/Readability-Arc.md): no comma sequence in shipped code - `(a(), b)` hides a
-    // statement inside an expression.
+    // statement inside an expression - parenthesized or not, but in the files held above.
     files: ['src/**/*.js', 'server/src/**/*.js', 'server-account/src/**/*.js', 'tools/**/*.{js,mjs}', 'scripts/**/*.{js,mjs}'],
-    rules: { 'no-sequences': 'error' },
+    rules: { 'no-sequences': ['error', { allowInParentheses: false }] },
+  },
+  {
+    // LEGIBLE 4: a held file keeps its parenthesized sequences at their count; a bare one is refused there too.
+    files: Object.keys(SEQUENCES_HELD),
+    rules: { 'no-sequences': ['error', { allowInParentheses: true }] },
   },
   {
     // LEGIBLE 4: one statement a line in the folders and files the formatter owns (tools/formatted.json, LEGIBLE 3).

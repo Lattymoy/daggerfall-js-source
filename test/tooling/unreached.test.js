@@ -7,7 +7,7 @@ import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'nod
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 
-import { BASELINE, specifiersIn, unreached, verdict } from '../../tools/unreached.mjs';
+import { BASELINE, specifiersIn, unreached, verdict, globPattern } from '../../tools/unreached.mjs';
 
 const base = JSON.parse(readFileSync(new URL(`../../${BASELINE}`, import.meta.url), 'utf8'));
 
@@ -37,6 +37,23 @@ test('UNREACHED a module is reached through any depth from a page, main.js, a to
     put('src/byTool.js', '');
     put('src/orphan.js', "import './deep/two.js';");
     assert.deepEqual(unreached(root), ['src/orphan.js']);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('UNREACHED a glob reaches what its whole pattern names, from the root when it starts there, and an import with no semicolon before it is still read (AUDIT, 2026-10-31; mutants: a glob read by its prefix; a root glob read from the file; the import read across a quote; a comma read outside braces)', () => {
+  assert.deepEqual(specifiersIn("export { a }\nimport './side.js'\nimport b from './b.js'").plain, ['./side.js', './b.js']);
+  assert.equal(globPattern('src/a,b.js').test('src/a,b.js'), true, 'a comma outside braces is a comma');
+  assert.equal(globPattern('src/a,b.js').test('src/a'), false, 'and no alternation');
+  assert.equal(globPattern('src/{a,b}/*.js').test('src/b/x.js'), true);
+  const root = mkdtempSync(join(tmpdir(), 'unreached-glob-'));
+  const put = (p, s) => { mkdirSync(dirname(join(root, p)), { recursive: true }); writeFileSync(join(root, p), s); };
+  try {
+    put('src/main.js', "import.meta.glob('./g/*.txt'); import.meta.glob('/src/r/*.js');");
+    put('src/g/a.txt', '');
+    put('src/g/data.js', '');
+    put('src/gate.js', '');
+    put('src/r/y.js', '');
+    assert.deepEqual(unreached(root), ['src/g/data.js', 'src/gate.js']);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 

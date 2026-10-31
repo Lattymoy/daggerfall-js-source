@@ -43,6 +43,17 @@ test('LEGIBLE 3 text pins: a regex is tried only on a text holding its longest l
   assert.deepEqual(carried('assert.match(s, /nowhere at all[^x]*icon/);'), [], 'never run on a text without its run');
 });
 
+test('LEGIBLE 3 text pins: the run is one every match holds - none from inside a group, a top-level alternation, an escape\'s digits or a counted repeat, and none under the i flag (AUDIT, 2026-10-31; mutants: a group\'s run kept; an alternation read; an escape\'s digits kept; a counted repeat\'s letter kept; the i flag unread)', () => {
+  assert.equal(literalRun('(?:return x)\\+1'), null, 'a group');
+  assert.equal(literalRun('prefix_(?:optional stuff)?_suffix123'), '_suffix123', 'an optional group\'s words are not in every match');
+  assert.equal(literalRun('(?<=lookbehind)abcdefg'), 'abcdefg');
+  assert.equal(literalRun('not here at all|function f'), null, 'an alternation');
+  assert.equal(literalRun('abcdef\\u0069jklmno'), 'abcdef', 'an escape\'s digits');
+  assert.equal(literalRun('abcdefgh{0,1}xyz'), 'abcdefg', 'a counted repeat: its letter may be absent');
+  assert.deepEqual(carried('assert.match(s, /(?:return x)\\+1/);'), ['/return x \\+ 1/'], 'carried, not skipped');
+  assert.deepEqual(carried('assert.match(s, /RETURN X\\+1/i);'), ['/return x \\+ 1/i'], 'the i flag: the regex is tried');
+});
+
 test('LEGIBLE 3 text pins: a capture is a bare or a named group, never a class\'s bracket, an escape or a lookaround - and the scan is linear over a pin full of escaped brackets (mutants: an escape read; a named group missed)', () => {
   assert.equal(hasCapture('a(b)c'), true);
   assert.equal(hasCapture('a(?<n>b)'), true);

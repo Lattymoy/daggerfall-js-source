@@ -21,6 +21,7 @@ test('LEGIBLE 5 every way to bind a name is counted - a variable, a destructured
   assert.deepEqual(names('const p = 1;'), ['p']);
   assert.deepEqual(names('let { a: q, r = 2, ...s } = o; const [u, , v] = w;'), ['q', 'r', 's', 'u', 'v']);
   assert.deepEqual(names('function fx(m, [h]) {} const g = (c) => c; class K {}'), ['fx', 'm', 'h', 'g', 'c', 'K']);
+  assert.deepEqual(names("const W = class Q {}; import { t } from './x.js';"), ['W', 'Q'], 'AUDIT (2026-10-31): a class expression\'s name counted, an import\'s not');
   assert.deepEqual(names('try { f(); } catch (er) {}'), ['er']);
   assert.deepEqual(names('const csa = 1; const deepWaters = 2; const dwOn = 3;'), ['csa'], 'a retired abbreviation exactly, never a longer name');
   assert.deepEqual(names('const pixel = { p: 1 }; pixel.q = 2; for (let i = 0; i < n; i++) {} xs.sort((a, b) => a - b); el.on(\'x\', (e) => e);'), []);
@@ -37,6 +38,9 @@ test('LEGIBLE 5 a host move carries its names: the new module admitted at its co
   assert.deepEqual(carried(base, 'src/scenes/world.js', 'src/scenes/m.js', { 'src/scenes/world.js': 6, 'src/scenes/m.js': 4 }),
     { 'src/a.js': 1, 'src/scenes/m.js': 4, 'src/scenes/world.js': 6 });
   assert.equal(carried(base, 'src/scenes/world.js', 'src/scenes/m.js', { 'src/scenes/world.js': 7, 'src/scenes/m.js': 4 }), base, 'a move invents no name');
+  // AUDIT (2026-10-31): the module unpacking one of the host's own short names binds it twice and invents none
+  assert.deepEqual(carried(base, 'src/scenes/world.js', 'src/scenes/m.js', { 'src/scenes/world.js': 7, 'src/scenes/m.js': 4 }, 1),
+    { 'src/a.js': 1, 'src/scenes/m.js': 4, 'src/scenes/world.js': 7 }, 'the rebound name discounted');
 });
 
 test('LEGIBLE 5 the tree: no file holds more short names than the baseline says, and the baseline is no higher than the tree (node tools/shortNames.mjs --lower after a rename)', () => {
