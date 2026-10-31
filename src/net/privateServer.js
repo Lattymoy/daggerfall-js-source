@@ -17,10 +17,14 @@ export function privateServer(shell = /** @type {any} */ (globalThis).daggerShel
 export const PRIVATE_REALM_REFUSED = 'You are on a private server. To bring an online character, use Copy to offline on it first, then load the copy. Your online character stays as it is.';
 
 let running = false;
+/** @type {null | (() => Promise<string|null>)} */
+let runMinter = null;
 /** The world's boot on a private server starts the run: from then on the page reaches no account service. */
 export function startPrivateRun() { running = true; }
 /** Whether this page's world plays on a private server (accountClient.js serviceBase). */
 export const privateRunOn = () => running;
+/** The host's minter for this run, or null off a private run (accountClient.js accountTokenMinter). */
+export const privateRunMinter = () => (running ? runMinter : null);
 
 const SUBJECT_KEY = 'dfo.privateSubject';
 /** This device's account id on private servers: random, made once, kept in the app's storage (identityToken.js ID_RE).
@@ -56,8 +60,9 @@ export function privateMinter(server, { fetch, subject, name }) {
 }
 
 /**
- * The world's boot on a private server: starts the run and takes a local character online. Answers
- * `{ url, mint, refusal }` (`refusal` is a realm boot's answer when a realm character was opened), or null.
+ * The world's boot on a private server: starts the run, so the realm's door refuses a realm character (also one being
+ * born online) and the account minter hands over to the host's. Answers `{ url, online }` or null; `online` takes a
+ * local character online once the realm's checks have run.
  * @param {URLSearchParams} params  the boot's
  * @param {(p: URLSearchParams) => void} publish  the lane's publishBootParams
  * @param {() => unknown} name  the character's name, read at each mint
@@ -66,8 +71,11 @@ export function privateBoot(params, publish, name) {
   const server = privateServer();
   if (!server) return null;
   startPrivateRun();
-  const realm = params.has('realm') || params.has('realmnew');
-  if (!realm && !params.has('online')) { params.set('online', ''); publish(params); }
-  const mint = privateMinter(server, { fetch: (u, i) => globalThis.fetch(u, i), subject: () => privateSubject(appStorage()), name });
-  return { url: server.url, mint, refusal: realm ? { ok: false, error: 'private' } : null };
+  runMinter = privateMinter(server, { fetch: (u, i) => globalThis.fetch(u, i), subject: () => privateSubject(appStorage()), name });
+  if (params.has('realmnew')) { params.delete('realmnew'); params.set('online', ''); params.set('realm', 'private'); params.set('load', ''); }
+  const realm = params.has('realm');
+  return {
+    url: server.url,
+    online: () => { if (!realm && !params.has('online')) { params.set('online', ''); publish(params); } },
+  };
 }

@@ -38,7 +38,7 @@
 // once" a sentence rather than a fact.
 // ═══════════════════════════════════════════════════════════════════
 
-import { privateRunOn } from './privateServer.js';   // a private run reaches no account service (serviceBase)
+import { privateRunOn, privateRunMinter } from './privateServer.js';   // a private run reaches no account service (serviceBase)
 import { HANDLE_RE } from './handleShape.js';
 import { GUILD_RENAME_SILVER } from './guild/guildShopLaw.js';
 import { noteHallArms } from './guild/guildArmsBook.js';   // GUILD-SHOP: a hall's arms, read with its pieces   // GUILD-SHOP: a new name's price, in silver
@@ -1702,6 +1702,8 @@ export const lineHoldMs = (/** @type {unknown} */ wait, rand = Math.random) => {
  * @returns {((room?: string|null) => Promise<string|null>) & { lastWhy: string|null, coolMs: () => number, opened: (room: string|null, token: string) => void, unopened: (room: string|null, token: string) => void, ahead: (room?: string|null, withinMs?: number) => boolean, holds: (room: string|null) => boolean, forget: () => void }}
  */
 export function accountTokenMinter({ fetch, storage, onIssued = null, character = null, now = () => Date.now(), rand = Math.random }) {
+  const onPrivate = privateRunMinter();   // a private run signs in at its host (net/privateServer.js), never here
+  if (onPrivate) return Object.assign(onPrivate, { lastWhy: null, opened() {}, unopened() {}, coolMs: () => 0, ahead: () => false, forget() {}, holds: () => false });
   /** @type {{ token: string, secret: string, character: string|null, at: number, sent: number, rooms: Set<string> } | null} */
   let held = null;
   /** @type {Promise<string|null> | null} */

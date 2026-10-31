@@ -1351,14 +1351,15 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // address, a local slot) is refused online and plays offline. ?realmnew is a character being born online: the online
   // lane for its chargen and no relay until the realm holds it (realmBirth).
   // The desktop shell hosts or joined a private server: a local character plays online there, and a realm character is
-  // refused at the realm's own door below (privateBoot's `refusal`) - a private run never reaches the realm
+  // refused at the realm's own door below (openRealmBoot) - a private run never reaches the realm
   const privateHost = privateBoot(params, publishBootParams, () => playerEntity.name);
   const realmNew = params.has('online') && params.has('realmnew');
   const realmIoNow = () => realmIo({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
-  const realmBoot = privateHost?.refusal ?? (params.has('online') && params.has('realm') && params.has('load') ? await openRealmBoot({ io: realmIoNow(), id: params.get('realm') }) : null);
+  const realmBoot = params.has('online') && params.has('realm') && params.has('load') ? await openRealmBoot({ io: realmIoNow(), id: params.get('realm') }) : null;
   if (realmBoot && !realmBoot.ok) { setRealmNotice(globalThis.sessionStorage, realmRefusalText(realmBoot.error)); exitToTitleMenu(); return; }
-  const realmRefused = params.has('online') && !realmBoot && !realmNew && !privateHost;
+  const realmRefused = params.has('online') && !realmBoot && !realmNew;
   if (realmRefused) { params.delete('online'); publishBootParams(params); }
+  privateHost?.online();
   /** The playing tab's session over the realm character (systems/realmSaves.js): every save of it is the service's
    *  checkpoint (the composers' sink, scenes/shared.js realmSaveSink), and its end - another tab joined it, it was
    *  deleted, the account signed out - takes the player to the door with the reason. */
@@ -18880,8 +18881,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   }
   // AUDIT ONLINE 3 (the second read) B-F2-1: the minter on the sessions' clock - on Date.now a clock set back held a dead token fresh
   // (every new room's hello refused 'token expired', terminal) or a failed mint's hold for the length of the step
-  const identityMinter = privateHost ? privateHost.mint   // the private server's own sign-in
-    : accountTokenMinter({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage(), onIssued: adoptIssued, now: steadyNow,
+  const identityMinter = accountTokenMinter({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage(), onIssued: adoptIssued, now: steadyNow,
     character: () => (onlineOn ? realmSession?.id ?? null : null) });   // RENOWN1: the character coming online, whose level the token carries (RENOWN-CHAR: its own again). REALM-DOOR: it is the realm character this tab JOINED (online is never without one), which the service signs as the realm's and the relay's door reads - never an id the save carries or characterIdOf mints
   // RENOWN1: WHAT THIS CHARACTER EARNS (RENOWN-CHAR: its own track again) - online only (the tracker is never built offline, and earns only while a session
   // exists). A foe pays when it dies within RENOWN_ASSIST_MS of my own blow, whoever struck last (net/renownTracker.js - the one rule every kill door agrees
