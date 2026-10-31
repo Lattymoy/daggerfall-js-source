@@ -382,5 +382,5 @@ test('AUDIT 27h H2-H7: the field keeps the browser\'s keys swallowed, its focus 
   assert.match(port, /e\.stopPropagation\(\);\n\s*if \(b && !b\.disabled\) commitTyped\(\);/);
   assert.match(port, /const commitTyped = \(\) => \{\n\s*const f = doc\.activeElement;\n\s*if \(f && host\?\.contains\?\.\(f\) && f\.matches\?\.\('input\[data-s\]'\)\) f\.blur\(\);\n\s*\};/);
   // ...and H1's second half: every spinner act is its own editor's
-  assert.match(rd('src/ui/enhanced/enhancedPorts.js'), /const live =\n\s*\(fn\) =>\n\s*\(\.\.\.a\) =>\n\s*w\.editor === ed \? fn\(\.\.\.a\) : undefined;/);
+  assert.match(rd('src/ui/enhanced/enhancedPorts.js'), /const live = \(fn\) => \(\.\.\.a\) => \(w\.editor === ed \? fn\(\.\.\.a\) : undefined\);/);
 });
