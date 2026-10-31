@@ -239,6 +239,14 @@ export function shopUntilText(/** @type {number} */ untilMs, /** @type {boolean}
   return limited ? t('shop.until.limited', 'Limited: sold only until {day}. {left}.', { day: dayText(untilMs - 1), left }) : t('shop.until.featured', 'Featured until {day}. {left}.', { day: dayText(untilMs - 1), left });
 }
 
+/** SHOP-REREAD (2026-10-31): the signed-in account read again - the window's focus and every press of the gem ask it, so
+ *  a card read from an older service (a deploy's gap: no Aurum, no Folios) mends at the next open. Nothing for no flow. */
+export function shopReread(/** @type {any} */ fl) {
+  if (fl?.stage !== 'in' || typeof fl.refresh !== 'function') return false;
+  Promise.resolve(fl.refresh()).catch(() => {});
+  return true;
+}
+
 /** The gem: the button at the end of the row of marks. */
 export function shopMark(/** @type {Document} */ doc, { onOpen, open = false }) {
   injectShopStyle(doc);   // its place in the row is the sheet's - before the window was ever opened
@@ -873,7 +881,7 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
   draw();
   // BACK FROM THE BROWSER, the account is read again - a payment that landed shows here (the account card's way)
   const view = doc.defaultView;
-  const onFocus = () => { const fl = f(); if (win.isConnected && fl?.stage === 'in') Promise.resolve(fl.refresh?.()).catch(() => {}); };
+  const onFocus = () => { if (win.isConnected) shopReread(f()); };
   view?.addEventListener?.('focus', onFocus);
   if (focus) globalThis.requestAnimationFrame?.(() => tabOf.get(cat)?.focus?.({ preventScroll: true }));
   return {
