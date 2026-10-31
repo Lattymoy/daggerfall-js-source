@@ -46,8 +46,8 @@
   {
     "name": "LW-FIX4-arrival-unheld",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "  if (!turned && enc.leg === 'out' && enc.t1 > trip.outT1) return { ...trip, enc, halt, fallen, turned: false, outT1: Math.min(enc.t1, trip.backT0), ...robbed };\n",
-    "new": "",
+    "old": "  if (!turned && enc.leg === 'out' && enc.t1 > trip.outT1)\n    return { ...trip, enc, halt, fallen, turned: false, outT1: Math.min(enc.t1, trip.backT0), ...robbed };\n  if (!turned && enc.leg === 'back' && enc.t1 > trip.backT1)",
+    "new": "  if (!turned && enc.leg === 'back' && enc.t1 > trip.backT1)",
     "tests": [
       "test/systems/livingWorld/lwfix4_turns.test.js",
       "test/systems/livingWorld/lw4b_roadFights.test.js",
@@ -57,8 +57,8 @@
   {
     "name": "LW-FIX4-homecoming-unheld",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "  if (!turned && enc.leg === 'back' && enc.t1 > trip.backT1) return { ...trip, enc, halt, fallen, turned: false, backT1: enc.t1, ...robbed };\n",
-    "new": "",
+    "old": "  if (!turned && enc.leg === 'back' && enc.t1 > trip.backT1)\n    return { ...trip, enc, halt, fallen, turned: false, backT1: enc.t1, ...robbed };\n  if (!turned) return { ...trip, enc, halt, fallen, turned: false, ...robbed };",
+    "new": "  if (!turned) return { ...trip, enc, halt, fallen, turned: false, ...robbed };",
     "tests": [
       "test/systems/livingWorld/lwfix4_turns.test.js",
       "test/systems/livingWorld/lw4b_roadFights.test.js",
@@ -123,8 +123,8 @@
   {
     "name": "LW-FIX4-ended",
     "file": "src/scenes/roadFights.js",
-    "old": " || fights.has(trip.enc.id) || ended.has(trip.enc.id)) continue;",
-    "new": " || fights.has(trip.enc.id)) continue;",
+    "old": "          if (!at?.fight || !trip?.enc?.foes?.length || fights.has(trip.enc.id) || ended.has(trip.enc.id)) continue;",
+    "new": "          if (!at?.fight || !trip?.enc?.foes?.length || fights.has(trip.enc.id)) continue;",
     "tests": [
       "test/systems/livingWorld/lwfix4_turns.test.js",
       "test/systems/livingWorld/lw4b_roadFights.test.js",
@@ -145,7 +145,7 @@
   {
     "name": "LW-FIX4-fights-died",
     "file": "src/scenes/roadFights.js",
-    "old": "    if (deps.died) { deps.died(res, t); deps.onTurn?.(); } else turn('fallen', deps.turnKeyOf(res, trip));",
+    "old": "    if (deps.died) {\n      deps.died(res, t);\n      deps.onTurn?.();\n    } else turn('fallen', deps.turnKeyOf(res, trip));",
     "new": "    turn('fallen', deps.turnKeyOf(res, trip));",
     "tests": [
       "test/systems/livingWorld/lwfix4_turns.test.js",
@@ -156,8 +156,8 @@
   {
     "name": "LW-FIX4-fights-dead-kept",
     "file": "src/scenes/roadFights.js",
-    "old": "    for (const rec of f.allies.values()) if (!rec.dead) takeOut(rec);",
-    "new": "    for (const rec of f.allies.values()) takeOut(rec);",
+    "old": "    for (const rec of f.allies.values()) if (!rec.dead) takeOut(rec); // AUDIT-C4: one cut down is the pool's own (a corpse to search, as a foe's)",
+    "new": "    for (const rec of f.allies.values()) takeOut(rec); // AUDIT-C4: one cut down is the pool's own (a corpse to search, as a foe's)",
     "tests": [
       "test/systems/livingWorld/lwfix4_turns.test.js",
       "test/systems/livingWorld/lw4b_roadFights.test.js",
@@ -167,8 +167,8 @@
   {
     "name": "LW-FIX4-standing-allies",
     "file": "src/scenes/roadFights.js",
-    "old": "      for (const [id, rec] of f.allies) if (!rec.dead && deps.inPool(rec) && rec.living?.res) standing.set(id, rec.living.res);\n",
-    "new": "",
+    "old": "      for (const [id, rec] of f.allies)\n        if (!rec.dead && deps.inPool(rec) && rec.living?.res) standing.set(id, rec.living.res);\n      for (const m of standing.values()) {",
+    "new": "      for (const m of standing.values()) {",
     "tests": [
       "test/systems/livingWorld/lwfix4_turns.test.js",
       "test/systems/livingWorld/lw4b_roadFights.test.js",
@@ -200,8 +200,8 @@
   {
     "name": "LW-FIX4-divers-ended",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "        if (companies.has(trip.id) || ended.has(trip.id) || !own",
-    "new": "        if (companies.has(trip.id) || !own",
+    "old": "        if (companies.has(trip.id) || ended.has(trip.id) || !own || !members.some((m) => m.cls != null)) continue;",
+    "new": "        if (companies.has(trip.id) || !own || !members.some((m) => m.cls != null)) continue;",
     "tests": [
       "test/systems/livingWorld/lwfix4_turns.test.js",
       "test/systems/livingWorld/lw4b_roadFights.test.js",
@@ -211,7 +211,7 @@
   {
     "name": "LW-FIX4-divers-died",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "          if (deps.died) deps.died(rec.living.res, t); else turn('fallen', deps.turnKeyOf(rec.living.res, c.trip));",
+    "old": "          if (deps.died) deps.died(rec.living.res, t);\n          else turn('fallen', deps.turnKeyOf(rec.living.res, c.trip));",
     "new": "          turn('fallen', deps.turnKeyOf(rec.living.res, c.trip));",
     "tests": [
       "test/systems/livingWorld/lwfix4_turns.test.js",
@@ -222,8 +222,8 @@
   {
     "name": "LW-FIX4-divers-dead-kept",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "    for (const rec of c.allies.values()) if (!rec.dead) takeOut(rec);",
-    "new": "    for (const rec of c.allies.values()) takeOut(rec);",
+    "old": "    for (const rec of c.allies.values()) if (!rec.dead) takeOut(rec); // AUDIT-C4: one cut down is the pool's own (their body, to be found)",
+    "new": "    for (const rec of c.allies.values()) takeOut(rec); // AUDIT-C4: one cut down is the pool's own (their body, to be found)",
     "tests": [
       "test/systems/livingWorld/lwfix4_turns.test.js",
       "test/systems/livingWorld/lw4b_roadFights.test.js",
@@ -233,8 +233,8 @@
   {
     "name": "LW-FIX4-stands-dead",
     "file": "src/scenes/roadStands.js",
-    "old": "          if (deps.deadAt?.(c.res, t)) continue;",
-    "new": "          void t;",
+    "old": "          if (deps.deadAt?.(c.res, t)) continue; // AUDIT-B4: one a hand took - the roads' parties, read once a second, still walked them",
+    "new": "          void t; // AUDIT-B4: one a hand took - the roads' parties, read once a second, still walked them",
     "tests": [
       "test/systems/livingWorld/lwfix4_turns.test.js",
       "test/systems/livingWorld/lw4b_roadFights.test.js",

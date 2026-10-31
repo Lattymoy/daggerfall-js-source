@@ -2,8 +2,8 @@
   {
     "name": "BROKER-CAGE-a-faithful-short-counted-all",
     "file": "src/net/gate/gateRite.js",
-    "old": "if (!(Number.isSafeInteger(slain[career]) && slain[career] >= n)) return false;",
-    "new": "if (!(Number.isSafeInteger(slain[career]) && slain[career] >= n - 1)) return false;",
+    "old": "  for (const [career, n] of _roster) if (!(Number.isSafeInteger(slain[career]) && slain[career] >= n)) return false;",
+    "new": "  for (const [career, n] of _roster) if (!(Number.isSafeInteger(slain[career]) && slain[career] >= n - 1)) return false;",
     "tests": [
       "test/systems/brokercage.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "BROKER-CAGE-the-summoner-not-asked",
     "file": "src/net/gate/gateRite.js",
-    "old": "  if (!fell || !slain || typeof slain !== 'object') return false;\n  if (_rosterDay",
-    "new": "  if (!slain || typeof slain !== 'object') return false;\n  if (_rosterDay",
+    "old": "  if (!fell || !slain || typeof slain !== 'object') return false;",
+    "new": "  if (!slain || typeof slain !== 'object') return false;",
     "tests": [
       "test/systems/brokercage.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "BROKER-CAGE-a-career-missed",
     "file": "src/net/gate/gateRite.js",
-    "old": "for (const m of riteFaithfulOf(day)) if (!m.summoner) want.set(",
-    "new": "for (const m of riteFaithfulOf(day).slice(0, 2)) if (!m.summoner) want.set(",
+    "old": "    for (const m of riteFaithfulOf(day)) if (!m.summoner) want.set(m.career, (want.get(m.career) ?? 0) + 1);",
+    "new": "    for (const m of riteFaithfulOf(day).slice(0, 2)) if (!m.summoner) want.set(m.career, (want.get(m.career) ?? 0) + 1);",
     "tests": [
       "test/systems/brokercage.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "BROKER-CAGE-midnight-kept",
     "file": "src/net/gate/gateRite.js",
-    "old": "now >= t.omenAt && now < t.wrathAt; };",
-    "new": "now >= t.omenAt && now < t.wrathAt + GATE_COLLAPSE_MS; };",
+    "old": "  return isGateDay(day) && now >= t.omenAt && now < t.wrathAt;",
+    "new": "  return isGateDay(day) && now >= t.omenAt && now < t.wrathAt + GATE_COLLAPSE_MS;",
     "tests": [
       "test/systems/brokercage.test.js",
       "test/player/set7_broker_world.test.js"
@@ -48,8 +48,8 @@
   {
     "name": "BROKER-CAGE-the-omen-not-waited-for",
     "file": "src/net/gate/gateRite.js",
-    "old": "isGateDay(day) && now >= t.omenAt && now < t.wrathAt; };",
-    "new": "isGateDay(day) && now < t.wrathAt; };",
+    "old": "  return isGateDay(day) && now >= t.omenAt && now < t.wrathAt;",
+    "new": "  return isGateDay(day) && now < t.wrathAt;",
     "tests": [
       "test/systems/brokercage.test.js",
       "test/player/set7_broker_world.test.js"
@@ -149,8 +149,8 @@
   {
     "name": "BROKER-CAGE-the-word-never-says-c",
     "file": "src/scenes/riteHost.js",
-    "old": "c = riteRosterFell(C.day, mem.slain, mem.fell || brokenHere() ? 1 : 0) ? 1 : 0, k = s * 4 + f * 2 + c;",
-    "new": "c = 0, k = s * 4 + f * 2 + c;",
+    "old": "      c = riteRosterFell(C.day, mem.slain, mem.fell || brokenHere() ? 1 : 0) ? 1 : 0,",
+    "new": "      c = 0,",
     "tests": [
       "test/systems/brokercage.test.js",
       "test/net/gate/wb12d_rite_world.test.js"
@@ -160,8 +160,8 @@
   {
     "name": "BROKER-CAGE-c-not-said-at-once",
     "file": "src/scenes/riteHost.js",
-    "old": "c = riteRosterFell(C.day, mem.slain, mem.fell || brokenHere() ? 1 : 0) ? 1 : 0, k = s * 4 + f * 2 + c;",
-    "new": "c = riteRosterFell(C.day, mem.slain, mem.fell || brokenHere() ? 1 : 0) ? 1 : 0, k = s * 4 + f * 2;",
+    "old": "      k = s * 4 + f * 2 + c;",
+    "new": "      k = s * 4 + f * 2;",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ],
@@ -180,8 +180,8 @@
   {
     "name": "BROKER-CAGE-the-faithful-stood-again-after-it",
     "file": "src/scenes/riteHost.js",
-    "old": "    if (clearedHere()) return [];\n",
-    "new": "",
+    "old": "    if (clearedHere()) return [];\n    const mem = riteMemory(C.day),",
+    "new": "    const mem = riteMemory(C.day),",
     "tests": [
       "test/systems/brokercage.test.js"
     ]
@@ -225,8 +225,8 @@
   {
     "name": "BROKER-CAGE-a-cage-site-a-frame",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "      if (cage?.day !== c.t.day || cage.px !== s.px || cage.py !== s.py) cage = ",
-    "new": "      cage = ",
+    "old": "      if (cage?.day !== c.t.day || cage.px !== s.px || cage.py !== s.py)\n        cage = Object.freeze({ day: c.t.day, px: s.px, py: s.py });",
+    "new": "      cage = Object.freeze({ day: c.t.day, px: s.px, py: s.py });",
     "tests": [
       "test/systems/brokercage.test.js"
     ]
@@ -234,8 +234,8 @@
   {
     "name": "BROKER-CAGE-the-gates-bearing-for-hers",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "const facing = Math.atan2(gx - e, gz - n), a = facing + CAGE_TURN;",
-    "new": "const facing = Math.atan2(gx - e, gz - n), a = CAGE_TURN;",
+    "old": "    a = facing + CAGE_TURN;",
+    "new": "    a = CAGE_TURN;",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -253,8 +253,8 @@
   {
     "name": "BROKER-CAGE-a-caged-window-opened",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "      else if (!doorOpen) say(now() < riteWindow(at.day).to + RITE_GRACE_MS ? BROKER_TEXT.held : BROKER_TEXT.lost);",
-    "new": "      else if (false) say(BROKER_TEXT.held);",
+    "old": "      else if (!doorOpen)\n        say(now() < riteWindow(at.day).to + RITE_GRACE_MS ? BROKER_TEXT.held : BROKER_TEXT.lost); // AUDIT BROKER-CAGE C13: the relay hears the last fall RITE_GRACE_MS past the opening",
+    "new": "      else if (false)\n        say(BROKER_TEXT.held); // AUDIT BROKER-CAGE C13: the relay hears the last fall RITE_GRACE_MS past the opening",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ],
@@ -263,8 +263,8 @@
   {
     "name": "BROKER-CAGE-the-plaques-trade-while-caged",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "subs: [doorOpen ? BROKER_TEXT.trade : BROKER_TEXT.caged]",
-    "new": "subs: [BROKER_TEXT.trade]",
+    "old": "      return ours(key) ? { title: BROKER_TEXT.name, subs: [doorOpen ? BROKER_TEXT.trade : BROKER_TEXT.caged] } : null;",
+    "new": "      return ours(key) ? { title: BROKER_TEXT.name, subs: [BROKER_TEXT.trade] } : null;",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "BROKER-CAGE-the-held-line-after-the-opening",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "say(now() < riteWindow(at.day).to + RITE_GRACE_MS ? BROKER_TEXT.held : BROKER_TEXT.lost)",
-    "new": "say(BROKER_TEXT.held)",
+    "old": "        say(now() < riteWindow(at.day).to + RITE_GRACE_MS ? BROKER_TEXT.held : BROKER_TEXT.lost); // AUDIT BROKER-CAGE C13: the relay hears the last fall RITE_GRACE_MS past the opening",
+    "new": "        say(BROKER_TEXT.held); // AUDIT BROKER-CAGE C13: the relay hears the last fall RITE_GRACE_MS past the opening",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ],
@@ -282,8 +282,8 @@
   {
     "name": "BROKER-CAGE-the-cages-box-kept-when-free",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "box: [-BROKER_BOX_HX, 0, -BROKER_BOX_HZ, BROKER_BOX_HX, BROKER_BOX_H, BROKER_BOX_HZ] },",
-    "new": "box: [-0.45, 0, -0.45, 0.45, 2.15, 0.45] },",
+    "old": "              box: [-BROKER_BOX_HX, 0, -BROKER_BOX_HZ, BROKER_BOX_HX, BROKER_BOX_H, BROKER_BOX_HZ],",
+    "new": "              box: [-0.45, 0, -0.45, 0.45, 2.15, 0.45],",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ],
@@ -311,8 +311,8 @@
   {
     "name": "BROKER-CAGE-the-door-never-opened",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "    if (!freed(at.day, at.px, at.py)) { shutSince ??= t; return; }",
-    "new": "    shutSince ??= t; return;",
+    "old": "    if (!freed(at.day, at.px, at.py)) {\n      shutSince ??= t;\n      return;\n    }",
+    "new": "    shutSince ??= t;\n    return;",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "BROKER-CAGE-the-line-to-a-player-across-the-field",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "<= BROKER_FREED_SAY_M) say(BROKER_TEXT.freed);",
-    "new": "<= Infinity) say(BROKER_TEXT.freed);",
+    "old": "    if (saw && f && Math.hypot(f[0] - at.feet[0], f[2] - at.feet[2]) <= BROKER_FREED_SAY_M) say(BROKER_TEXT.freed);",
+    "new": "    if (saw && f && Math.hypot(f[0] - at.feet[0], f[2] - at.feet[2]) <= Infinity) say(BROKER_TEXT.freed);",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -338,8 +338,8 @@
   {
     "name": "BROKER-CAGE-the-line-to-a-page-just-opened",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "const saw = shutSince != null && t - shutSince >= BROKER_SHUT_SEEN_MS && !(when < shutSince);",
-    "new": "const saw = shutSince != null && !(when < shutSince);",
+    "old": "    const saw = shutSince != null && t - shutSince >= BROKER_SHUT_SEEN_MS && !(when < shutSince);",
+    "new": "    const saw = shutSince != null && !(when < shutSince);",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ],
@@ -348,8 +348,8 @@
   {
     "name": "BROKER-CAGE-yesterdays-door-left-open",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "    if (cageDay !== at.day) { cageDay = at.day; doorOpen = false;",
-    "new": "    if (cageDay !== at.day) { cageDay = at.day;",
+    "old": "      doorOpen = false;\n      openedAt = -Infinity;",
+    "new": "      openedAt = -Infinity;",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -357,8 +357,8 @@
   {
     "name": "BROKER-CAGE-no-walls",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "      col.addMesh(BROKER_CAGE_BUCKET, CAGE_WALLS.positions, CAGE_WALLS.indices, cageMat);\n",
-    "new": "",
+    "old": "      col.addMesh(BROKER_CAGE_BUCKET, CAGE_WALLS.positions, CAGE_WALLS.indices, cageMat);\n      cageAt = [f[0], f[1], f[2], at.rest];",
+    "new": "      cageAt = [f[0], f[1], f[2], at.rest];",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -366,8 +366,8 @@
   {
     "name": "BROKER-CAGE-the-door-left-up-once-open",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "    else if (doorOpen && doorUp) { col.removeBucket?.(BROKER_DOOR_BUCKET); doorUp = false; }",
-    "new": "",
+    "old": "    } else if (doorOpen && doorUp) {\n      col.removeBucket?.(BROKER_DOOR_BUCKET);\n      doorUp = false;\n    }",
+    "new": "    }",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -375,8 +375,8 @@
   {
     "name": "BROKER-CAGE-the-door-never-up",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "    if (!doorOpen && !doorUp) { col.addMesh(BROKER_DOOR_BUCKET, CAGE_DOOR_WALL.positions, CAGE_DOOR_WALL.indices, cageMat); doorUp = true; }",
-    "new": "    if (!doorOpen && !doorUp) { doorUp = true; }",
+    "old": "      col.addMesh(BROKER_DOOR_BUCKET, CAGE_DOOR_WALL.positions, CAGE_DOOR_WALL.indices, cageMat);\n      doorUp = true;",
+    "new": "      doorUp = true;",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -384,8 +384,8 @@
   {
     "name": "BROKER-CAGE-walls-stood-every-frame",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "    if (!(cageAt && f && cageAt[0] === f[0]",
-    "new": "    if (!(false && f && cageAt[0] === f[0]",
+    "old": "    if (!(cageAt && f && cageAt[0] === f[0] && cageAt[1] === f[1] && cageAt[2] === f[2] && cageAt[3] === at.rest)) {",
+    "new": "    if (!(false && f && cageAt[0] === f[0] && cageAt[1] === f[1] && cageAt[2] === f[2] && cageAt[3] === at.rest)) {",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -402,8 +402,8 @@
   {
     "name": "BROKER-CAGE-the-cages-footprint-missing-the-capsule",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "reach = CAGE_WALL_OUT + CAPSULE_RADIUS;",
-    "new": "reach = 0;",
+    "old": "    reach = CAGE_WALL_OUT + CAPSULE_RADIUS;",
+    "new": "    reach = 0;",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ],
@@ -412,8 +412,8 @@
   {
     "name": "BROKER-CAGE-the-cage-left-at-a-transition",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "      col?.removeBucket?.(BROKER_CAGE_BUCKET);\n      col?.removeBucket?.(BROKER_DOOR_BUCKET);\n",
-    "new": "",
+    "old": "      col?.removeBucket?.(BROKER_CAGE_BUCKET);\n      col?.removeBucket?.(BROKER_DOOR_BUCKET);\n      postAt = null;",
+    "new": "      postAt = null;",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -421,8 +421,8 @@
   {
     "name": "BROKER-CAGE-a-face-wound-in",
     "file": "src/world/cageModel.js",
-    "old": "  side(0, 1, 5, 4); side(1, 2, 6, 5);",
-    "new": "  side(4, 5, 1, 0); side(1, 2, 6, 5);",
+    "old": "  side(0, 1, 5, 4);",
+    "new": "  side(4, 5, 1, 0);",
     "tests": [
       "test/systems/brokercage.test.js"
     ]
@@ -439,8 +439,8 @@
   {
     "name": "BROKER-CAGE-the-back-wall-missing",
     "file": "src/world/cageModel.js",
-    "old": "  slabTris(out, -hx - o, y0, -hz - o, hx + o, y1, -hz + i);   // the back\n",
-    "new": "",
+    "old": "  slabTris(out, -hx - o, y0, -hz - o, hx + o, y1, -hz + i); // the back\n  slabTris(out, -hx - o, y0, -hz, -hx + i, y1, hz); // the sides",
+    "new": "  slabTris(out, -hx - o, y0, -hz, -hx + i, y1, hz); // the sides",
     "tests": [
       "test/systems/brokercage.test.js",
       "test/player/set7_broker_world.test.js"
@@ -450,8 +450,8 @@
   {
     "name": "BROKER-CAGE-the-doors-slab-missing",
     "file": "src/world/cageModel.js",
-    "old": "  slabTris(out, -dx, -CAGE_FOOT, hz - CAGE_WALL_IN, dx, CAGE_H, hz + CAGE_WALL_OUT);\n",
-    "new": "",
+    "old": "  slabTris(out, -dx, -CAGE_FOOT, hz - CAGE_WALL_IN, dx, CAGE_H, hz + CAGE_WALL_OUT);\n  return frozenMesh(out);",
+    "new": "  return frozenMesh(out);",
     "tests": [
       "test/systems/brokercage.test.js",
       "test/player/set7_broker_world.test.js"
@@ -526,8 +526,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-C1-the-broken-word-not-the-summoners-fall-in-the-word",
     "file": "src/scenes/riteHost.js",
-    "old": "riteRosterFell(C.day, mem.slain, mem.fell || brokenHere() ? 1 : 0)",
-    "new": "riteRosterFell(C.day, mem.slain, mem.fell)",
+    "old": "      c = riteRosterFell(C.day, mem.slain, mem.fell || brokenHere() ? 1 : 0) ? 1 : 0,",
+    "new": "      c = riteRosterFell(C.day, mem.slain, mem.fell) ? 1 : 0,",
     "tests": [
       "test/systems/brokercage.test.js"
     ]
@@ -535,8 +535,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-C1-the-broken-word-not-the-summoners-fall-in-the-cage",
     "file": "src/scenes/riteHost.js",
-    "old": "riteRosterFell(day, mem.slain, mem.fell || brokenWords.has(k) ? 1 : 0)",
-    "new": "riteRosterFell(day, mem.slain, mem.fell)",
+    "old": "      return !!mem && riteRosterFell(day, mem.slain, mem.fell || brokenWords.has(k) ? 1 : 0);",
+    "new": "      return !!mem && riteRosterFell(day, mem.slain, mem.fell);",
     "tests": [
       "test/systems/brokercage.test.js"
     ]
@@ -544,8 +544,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-C2-a-flats-box-the-doorway-pressed-for-nothing",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "distance: RAY_DISTANCE, reach: BROKER_REACH, noSurface: false,",
-    "new": "distance: RAY_DISTANCE, reach: BROKER_REACH, noSurface: true,",
+    "old": "            noSurface: false,",
+    "new": "            noSurface: true,",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -553,8 +553,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-C2-the-turned-box-dropped",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "          obb: { m: trs(",
-    "new": "          obbNone: { m: trs(",
+    "old": "            obb: {",
+    "new": "            obbNone: {",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -562,8 +562,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-C6-own-eyes-where-the-relay-says-it",
     "file": "src/scenes/riteHost.js",
-    "old": "      if (!ownEyes) return false;\n",
-    "new": "",
+    "old": "      if (!ownEyes) return false;\n      const mem = riteSeen(day);",
+    "new": "      const mem = riteSeen(day);",
     "tests": [
       "test/systems/brokercage.test.js"
     ]
@@ -589,8 +589,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-C7-the-ground-read-every-frame",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "frameN - groundAt[3] >= BROKER_GROUND_EVERY",
-    "new": "true",
+    "old": "        if (\n          x !== groundAt[0] ||\n          z !== groundAt[1] ||\n          s.day !== groundAt[2] ||\n          !Number.isFinite(groundY) ||\n          frameN - groundAt[3] >= BROKER_GROUND_EVERY\n        ) {",
+    "new": "        if (x !== groundAt[0] || z !== groundAt[1] || s.day !== groundAt[2] || !Number.isFinite(groundY) || true) {",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -598,8 +598,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-C8-a-stale-word-swung",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": " && !(when < shutSince);",
-    "new": ";",
+    "old": "    const saw = shutSince != null && t - shutSince >= BROKER_SHUT_SEEN_MS && !(when < shutSince);",
+    "new": "    const saw = shutSince != null && t - shutSince >= BROKER_SHUT_SEEN_MS;",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -607,8 +607,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-C10-no-roof",
     "file": "src/world/cageModel.js",
-    "old": "  slabTris(out, -hx - o, CAGE_H - CAGE_BEAM, -hz - o, hx + o, CAGE_H + CAGE_CAP, hz + o);   // the roof\n",
-    "new": "",
+    "old": "  slabTris(out, -hx - o, CAGE_H - CAGE_BEAM, -hz - o, hx + o, CAGE_H + CAGE_CAP, hz + o); // the roof\n  return frozenMesh(out);",
+    "new": "  return frozenMesh(out);",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -616,8 +616,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-C11-drawn-shut-when-the-clock-steps-back",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "    if (t < openedAt) openedAt = -Infinity;",
-    "new": "",
+    "old": "    if (t < openedAt) openedAt = -Infinity; // AUDIT BROKER-CAGE C11: the shared clock stepped back mid-swing - open, never drawn shut",
+    "new": "    // AUDIT BROKER-CAGE C11: the shared clock stepped back mid-swing - open, never drawn shut",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -625,8 +625,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-C12-yesterdays-window-left-open",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "if (was && (!due || s.day !== was.day) && gone())",
-    "new": "if (was && !due && gone())",
+    "old": "      if (was && (!due || s.day !== was.day) && gone()) say(BROKER_TEXT.gone);",
+    "new": "      if (was && !due && gone()) say(BROKER_TEXT.gone);",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -634,8 +634,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-C13-the-lost-line-in-the-grace",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "to + RITE_GRACE_MS ? BROKER_TEXT.held",
-    "new": "to ? BROKER_TEXT.held",
+    "old": "        say(now() < riteWindow(at.day).to + RITE_GRACE_MS ? BROKER_TEXT.held : BROKER_TEXT.lost); // AUDIT BROKER-CAGE C13: the relay hears the last fall RITE_GRACE_MS past the opening",
+    "new": "        say(now() < riteWindow(at.day).to ? BROKER_TEXT.held : BROKER_TEXT.lost); // AUDIT BROKER-CAGE C13: the relay hears the last fall RITE_GRACE_MS past the opening",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -643,7 +643,7 @@
   {
     "name": "BROKER-CAGE-AUDIT-C13-copies-left-standing",
     "file": "src/scenes/riteHost.js",
-    "old": "      if (foes && C.ownLive && clearedHere()) { foes.drop(C.site); C.ownLive = 0; }",
+    "old": "      if (foes && C.ownLive && clearedHere()) {\n        foes.drop(C.site);\n        C.ownLive = 0;\n      }",
     "new": "",
     "tests": [
       "test/systems/brokercage.test.js"
@@ -661,8 +661,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-G5-posts-flush-with-the-frame",
     "file": "src/world/cageModel.js",
-    "old": "bar(f, foot, x, z, H + CAGE_CAP, CAGE_POST",
-    "new": "bar(f, foot, x, z, H, CAGE_POST",
+    "old": "    bar(f, foot, x, z, H + CAGE_CAP, CAGE_POST, GATE_PLINTH_RECORD);",
+    "new": "    bar(f, foot, x, z, H, CAGE_POST, GATE_PLINTH_RECORD);",
     "tests": [
       "test/systems/brokercage.test.js"
     ]
@@ -670,8 +670,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-G5-jambs-through-the-beam",
     "file": "src/world/cageModel.js",
-    "old": "for (const x of [-dx, dx]) bar(f, foot, x, hz, top, CAGE_BEAM",
-    "new": "for (const x of [-dx, dx]) bar(f, foot, x, hz, H, CAGE_BEAM",
+    "old": "  for (const x of [-dx, dx]) bar(f, foot, x, hz, top, CAGE_BEAM, GATE_PLINTH_RECORD);",
+    "new": "  for (const x of [-dx, dx]) bar(f, foot, x, hz, H, CAGE_BEAM, GATE_PLINTH_RECORD);",
     "tests": [
       "test/systems/brokercage.test.js"
     ]
@@ -706,8 +706,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-G6-the-models-foot-fixed",
     "file": "src/world/cageModel.js",
-    "old": "slab(f, rec, x - w / 2, -foot, z - w / 2, x + w / 2, top, z + w / 2);",
-    "new": "slab(f, rec, x - w / 2, -CAGE_FOOT, z - w / 2, x + w / 2, top, z + w / 2);",
+    "old": "  slab(f, rec, x - w / 2, -foot, z - w / 2, x + w / 2, top, z + w / 2);",
+    "new": "  slab(f, rec, x - w / 2, -CAGE_FOOT, z - w / 2, x + w / 2, top, z + w / 2);",
     "tests": [
       "test/systems/brokercage.test.js",
       "test/player/set7_broker_world.test.js"
@@ -725,8 +725,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-T2-swung-linear",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "CAGE_DOOR_OPEN * k * k * (3 - 2 * k)",
-    "new": "CAGE_DOOR_OPEN * k",
+    "old": "    return k > 0 ? CAGE_DOOR_OPEN * k * k * (3 - 2 * k) : 0;",
+    "new": "    return k > 0 ? CAGE_DOOR_OPEN * k : 0;",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -743,8 +743,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-T5-no-top-bars",
     "file": "src/world/cageModel.js",
-    "old": "  for (const x of along(-hx, hx)) slab(f, GATE_STONE_RECORD, x - CAGE_BAR / 2, top + 0.02, -hz, x + CAGE_BAR / 2, H - 0.02, hz);\n",
-    "new": "",
+    "old": "  for (const x of along(-hx, hx))\n    slab(f, GATE_STONE_RECORD, x - CAGE_BAR / 2, top + 0.02, -hz, x + CAGE_BAR / 2, H - 0.02, hz);\n  return assemble(f);",
+    "new": "  return assemble(f);",
     "tests": [
       "test/systems/brokercage.test.js"
     ]
@@ -752,8 +752,8 @@
   {
     "name": "BROKER-CAGE-AUDIT-T5-no-front-bars",
     "file": "src/world/cageModel.js",
-    "old": "  for (const x of [...along(-hx, -dx), ...along(dx, hx)]) bar(f, foot, x, hz, H);\n",
-    "new": "",
+    "old": "  for (const x of [...along(-hx, -dx), ...along(dx, hx)]) bar(f, foot, x, hz, H);\n  // the frame round the top, and the bars across it",
+    "new": "  // the frame round the top, and the bars across it",
     "tests": [
       "test/systems/brokercage.test.js"
     ]
@@ -761,8 +761,8 @@
   {
     "name": "MERGE-B01-retried-past-the-open-cage",
     "file": "src/scenes/riteHost.js",
-    "old": "if (C.pupLive || peerSprang(C.site) || clearedHere()) C.retry.length = 0;",
-    "new": "if (C.pupLive || peerSprang(C.site)) C.retry.length = 0;",
+    "old": "    if (C.pupLive || peerSprang(C.site) || clearedHere()) C.retry.length = 0;",
+    "new": "    if (C.pupLive || peerSprang(C.site)) C.retry.length = 0;",
     "tests": [
       "test/net/gate/release532_regressions.test.js"
     ]

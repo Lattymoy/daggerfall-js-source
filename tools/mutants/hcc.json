@@ -38,8 +38,8 @@
   {
     "name": "HCC-orientation-no-mirror",
     "file": "src/systems/horse/horseCartLaw.js",
-    "old": "    case 5: return { view: 3, flip: true };",
-    "new": "    case 5: return { view: 3, flip: false };",
+    "old": "      return { view: 3, flip: true };",
+    "new": "      return { view: 3, flip: false };",
     "tests": [
       "test/systems/horse/hcc_law.test.js"
     ]
@@ -56,7 +56,7 @@
   {
     "name": "HCC-wheel-no-wrap",
     "file": "src/systems/horse/horseCartLaw.js",
-    "old": "export const wrapWheelAngle = (a) => { const r = a + 180; return (r - Math.floor(r / 360) * 360) - 180; };",
+    "old": "export const wrapWheelAngle = (a) => {\n  const r = a + 180;\n  return r - Math.floor(r / 360) * 360 - 180;\n};",
     "new": "export const wrapWheelAngle = (a) => a;",
     "tests": [
       "test/systems/horse/hcc_law.test.js"
@@ -65,8 +65,8 @@
   {
     "name": "HCC-persistence-off-hitches",
     "file": "src/systems/horse/horseCartLaw.js",
-    "old": "  return { WagonMode: hasCart ? WAGON_MODE.WithPlayer : WAGON_MODE.None, HorseMode: hasHorse ? HORSE_MODE.WithPlayer : HORSE_MODE.None, TransportMode: m, RequiresHorseMessage: false };",
-    "new": "  return { WagonMode: hasCart ? WAGON_MODE.WithPlayer : WAGON_MODE.None, HorseMode: hasHorse ? HORSE_MODE.HitchedToWagon : HORSE_MODE.None, TransportMode: m, RequiresHorseMessage: false };",
+    "old": "    WagonMode: hasCart ? WAGON_MODE.WithPlayer : WAGON_MODE.None,\n    HorseMode: hasHorse ? HORSE_MODE.WithPlayer : HORSE_MODE.None,\n    TransportMode: m,",
+    "new": "    WagonMode: hasCart ? WAGON_MODE.WithPlayer : WAGON_MODE.None,\n    HorseMode: hasHorse ? HORSE_MODE.HitchedToWagon : HORSE_MODE.None,\n    TransportMode: m,",
     "tests": [
       "test/systems/horse/hcc_law.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "HCC-mount-distances-wagon-only",
     "file": "src/systems/horse/horseCartLaw.js",
-    "old": "&& isWithinHorizontalDistance(horse, nearest ? nearest(horse) : wagon, HORSE_WAGON_HITCH_DISTANCE);",
-    "new": ";",
+    "old": "  isWithinHorizontalDistance(player, horse, HORSE_MENU_MOUNT_DISTANCE) &&\n  isWithinHorizontalDistance(horse, nearest ? nearest(horse) : wagon, HORSE_WAGON_HITCH_DISTANCE);",
+    "new": "  isWithinHorizontalDistance(player, horse, HORSE_MENU_MOUNT_DISTANCE);",
     "tests": [
       "test/systems/horse/hcc_law.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "HCC-path-never-reseeds",
     "file": "src/systems/horse/horseFollow.js",
-    "old": "    if (this.hasLastPlayerPosition && horizontalDistance(playerPosition, this.lastPlayerPosition) > PATH_DISCONTINUITY_DISTANCE) { this.seed(playerPosition, playerForward); return false; }",
-    "new": "    if (false) { this.seed(playerPosition, playerForward); return false; }",
+    "old": "    if (\n      this.hasLastPlayerPosition &&\n      horizontalDistance(playerPosition, this.lastPlayerPosition) > PATH_DISCONTINUITY_DISTANCE\n    ) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/horse/hcc_follow.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "HCC-ally-is-threat",
     "file": "src/systems/horse/horseFollow.js",
-    "old": "export const isQualifyingThreatState = (isEnemy, hostile, playerAlly, targetsPlayer, detected) => isEnemy && hostile && !playerAlly && targetsPlayer && detected;",
-    "new": "export const isQualifyingThreatState = (isEnemy, hostile, playerAlly, targetsPlayer, detected) => isEnemy && hostile && targetsPlayer && detected;",
+    "old": "  isEnemy && hostile && !playerAlly && targetsPlayer && detected;",
+    "new": "  isEnemy && hostile && targetsPlayer && detected;",
     "tests": [
       "test/systems/horse/hcc_follow.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "HCC-step-ignores-body",
     "file": "src/systems/horse/horseFollow.js",
-    "old": "export const isStepClear = (phys, start, direction, distance) => phys.sphereCastClear(vadd(start, [0, BODY_PROBE_HEIGHT, 0]), BODY_PROBE_RADIUS, direction, distance + 0.05);",
-    "new": "export const isStepClear = (phys, start, direction, distance) => phys.sphereCastClear(vadd(start, [0, BODY_PROBE_HEIGHT, 0]), 0, direction, distance);",
+    "old": "  phys.sphereCastClear(vadd(start, [0, BODY_PROBE_HEIGHT, 0]), BODY_PROBE_RADIUS, direction, distance + 0.05);",
+    "new": "  phys.sphereCastClear(vadd(start, [0, BODY_PROBE_HEIGHT, 0]), 0, direction, distance);",
     "tests": [
       "test/systems/horse/hcc_follow.test.js",
       "test/player/hcc_hosts.test.js"
@@ -165,8 +165,8 @@
   {
     "name": "HCC-threat-safe-always",
     "file": "src/systems/horse/horseFollow.js",
-    "old": "    for (const t of this.threats) { const dx = candidate[0] - t[0], dz = candidate[2] - t[2]; if (dx * dx + dz * dz < THREAT_CLEARANCE * THREAT_CLEARANCE) return false; }",
-    "new": "    for (const t of this.threats) { const dx = candidate[0] - t[0], dz = candidate[2] - t[2]; if (dx * dx + dz * dz < 1) return false; }",
+    "old": "      if (dx * dx + dz * dz < THREAT_CLEARANCE * THREAT_CLEARANCE) return false;",
+    "new": "      if (dx * dx + dz * dz < 1) return false;",
     "tests": [
       "test/systems/horse/hcc_follow.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "HCC-trail-no-prune",
     "file": "src/systems/horse/horseFollow.js",
-    "old": "    if (removeCount > 0) this.points.splice(0, removeCount);\n  }\n  /** TryGetTrailingPoint:",
-    "new": "    if (false) this.points.splice(0, removeCount);\n  }\n  /** TryGetTrailingPoint:",
+    "old": "      if (retained >= RETAINED_TRAIL_DISTANCE) break;\n    }\n    if (removeCount > 0) this.points.splice(0, removeCount);\n  }",
+    "new": "      if (retained >= RETAINED_TRAIL_DISTANCE) break;\n    }\n    if (false) this.points.splice(0, removeCount);\n  }",
     "tests": [
       "test/systems/horse/hcc_follow.test.js"
     ]
@@ -192,7 +192,7 @@
   {
     "name": "HCC-wheels-not-planar-test",
     "file": "src/systems/wagon/wagon41214.js",
-    "old": "  if (wheels[0].bounds.size[0] > WHEEL_PLANARITY_TOLERANCE || wheels[1].bounds.size[0] > WHEEL_PLANARITY_TOLERANCE) throw new Error('Model 41214 wheel components are no longer planar on local X.');",
+    "old": "  if (wheels[0].bounds.size[0] > WHEEL_PLANARITY_TOLERANCE || wheels[1].bounds.size[0] > WHEEL_PLANARITY_TOLERANCE)\n    throw new Error('Model 41214 wheel components are no longer planar on local X.');",
     "new": "  if (false) throw new Error('Model 41214 wheel components are no longer planar on local X.');",
     "tests": [
       "test/systems/wagon/hcc_wagon41214.test.js"
@@ -210,8 +210,8 @@
   {
     "name": "HCC-mesh-not-rebased",
     "file": "src/systems/wagon/wagon41214.js",
-    "old": "    positions[i * 3] = model.positions[s * 3] - pivot[0]; positions[i * 3 + 1] = model.positions[s * 3 + 1] - pivot[1]; positions[i * 3 + 2] = model.positions[s * 3 + 2] - pivot[2];",
-    "new": "    positions[i * 3] = model.positions[s * 3]; positions[i * 3 + 1] = model.positions[s * 3 + 1]; positions[i * 3 + 2] = model.positions[s * 3 + 2];",
+    "old": "    positions[i * 3] = model.positions[s * 3] - pivot[0];\n    positions[i * 3 + 1] = model.positions[s * 3 + 1] - pivot[1];\n    positions[i * 3 + 2] = model.positions[s * 3 + 2] - pivot[2];",
+    "new": "    positions[i * 3] = model.positions[s * 3];\n    positions[i * 3 + 1] = model.positions[s * 3 + 1];\n    positions[i * 3 + 2] = model.positions[s * 3 + 2];",
     "tests": [
       "test/systems/wagon/hcc_wagon41214.test.js"
     ]
@@ -354,8 +354,8 @@
   {
     "name": "HCC-horse-dismount-stays-with-player",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    } else if (horseParks(prev, mode)) {\n      deployHorseBehindPlayer();",
-    "new": "    } else if (false) {\n      deployHorseBehindPlayer();",
+    "old": "    } else if (horseParks(prev, mode)) {",
+    "new": "    } else if (false) {",
     "tests": [
       "test/systems/horse/hcc_runtime.test.js"
     ]
@@ -363,8 +363,8 @@
   {
     "name": "HCC-too-far-ignored",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    if (!ready() || !stationaryHorseVisual) return false;\n    if (distance > ACTIVATION_REACH) { tooFar(); return true; }",
-    "new": "    if (!ready() || !stationaryHorseVisual) return false;",
+    "old": "    if (distance > ACTIVATION_REACH) {\n      tooFar();\n      return true;\n    }\n    if (!tm().hasHorse()) {",
+    "new": "    if (!tm().hasHorse()) {",
     "tests": [
       "test/systems/horse/hcc_runtime.test.js"
     ]
@@ -372,8 +372,8 @@
   {
     "name": "HCC-selection-never-consumed",
     "file": "src/systems/horse/horseCart.js",
-    "old": "  function consumeWagonSelectionRequest() { const r = selectWagonOnNextInventoryOpen; selectWagonOnNextInventoryOpen = false; return r; }",
-    "new": "  function consumeWagonSelectionRequest() { return selectWagonOnNextInventoryOpen; }",
+    "old": "    const r = selectWagonOnNextInventoryOpen;\n    selectWagonOnNextInventoryOpen = false;\n    return r;",
+    "new": "    return selectWagonOnNextInventoryOpen;",
     "tests": [
       "test/systems/horse/hcc_runtime.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "HCC-failed-entry-keeps-parking",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    if (hadWagon) resetWagonState(WAGON_MODE.WithPlayer);\n    if (hadHorse) setHorseWithPlayer();",
-    "new": "    if (false) resetWagonState(WAGON_MODE.WithPlayer);\n    if (hadHorse) setHorseWithPlayer();",
+    "old": "    if (hadWagon) resetWagonState(WAGON_MODE.WithPlayer);",
+    "new": "    if (false) resetWagonState(WAGON_MODE.WithPlayer);",
     "tests": [
       "test/systems/horse/hcc_runtime.test.js"
     ],
@@ -392,8 +392,8 @@
   {
     "name": "HCC-exit-never-closes-access",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    clearInteriorAccess(); clearPendingInteriorState();\n    if (isHorseFollowing()) { followingTransitionSuspended = false; horseFollower.resetTransient(); }\n  }",
-    "new": "    clearPendingInteriorState();\n    if (isHorseFollowing()) { followingTransitionSuspended = false; horseFollower.resetTransient(); }\n  }",
+    "old": "    clearInteriorAccess();\n    clearPendingInteriorState();",
+    "new": "    clearPendingInteriorState();",
     "tests": [
       "test/systems/horse/hcc_runtime.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "HCC-fast-travel-never-relocates",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    fastTravelFollowingSuspended = true; pendingFastTravelHorseRelocation = true;\n  }\n  /** WAGONS2 (FINAL AUDIT): WHETHER THE WAGON GOES",
-    "new": "    fastTravelFollowingSuspended = false; pendingFastTravelHorseRelocation = false;\n  }\n  /** WAGONS2 (FINAL AUDIT): WHETHER THE WAGON GOES",
+    "old": "    }\n    fastTravelFollowingSuspended = true;\n    pendingFastTravelHorseRelocation = true;",
+    "new": "    }\n    fastTravelFollowingSuspended = false;\n    pendingFastTravelHorseRelocation = false;",
     "tests": [
       "test/systems/horse/hcc_runtime.test.js"
     ],
@@ -420,8 +420,8 @@
   {
     "name": "HCC-rebase-forgets-hitch",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    hitch.offset(d); if (hitchSeed) hitchSeed = vadd(hitchSeed, d); horseFollower.offset(d);",
-    "new": "    if (hitchSeed) hitchSeed = vadd(hitchSeed, d); horseFollower.offset(d);",
+    "old": "    hitch.offset(d);\n    if (hitchSeed) hitchSeed = vadd(hitchSeed, d);",
+    "new": "    if (hitchSeed) hitchSeed = vadd(hitchSeed, d);",
     "tests": [
       "test/systems/horse/hcc_runtime.test.js"
     ]
@@ -429,8 +429,8 @@
   {
     "name": "HCC-show-trailing-ignored",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    if (!showTrailingWagon) return false;\n    const teamOk",
-    "new": "    const teamOk",
+    "old": "    if (!showTrailingWagon) return false;\n    const teamOk = physicalPersistenceEnabled",
+    "new": "    const teamOk = physicalPersistenceEnabled",
     "tests": [
       "test/systems/horse/hcc_runtime.test.js"
     ]
@@ -609,8 +609,8 @@
   {
     "name": "AUDIT-HCC-K1-no-migration",
     "file": "src/systems/modSettings.js",
-    "old": "  Object.freeze({ vendor: 'horse-cart-and-cargo', key: 'Hotkeys.SummonTransport', was: 'F10' }),\n",
-    "new": "",
+    "old": "  Object.freeze({ vendor: 'horse-cart-and-cargo', key: 'Hotkeys.SummonTransport', was: 'F10' }),\n]);",
+    "new": "]);",
     "tests": [
       "test/systems/audit_hcc.test.js"
     ]
@@ -618,8 +618,8 @@
   {
     "name": "AUDIT-HCC-K1-summon-back-on-f10",
     "file": "src/systems/modSettings.js",
-    "old": "default: 'Alpha6', text: true,",
-    "new": "default: 'F10', text: true,",
+    "old": "        default: 'Alpha6',",
+    "new": "        default: 'F10',",
     "tests": [
       "test/systems/audit_hcc.test.js"
     ]

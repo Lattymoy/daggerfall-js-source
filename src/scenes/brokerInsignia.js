@@ -12,11 +12,25 @@ import { equipTitle, equipAura, equipArmory } from '../net/accountClient.js';
  *  piece's slot and line beside. `ins` the account's last word: `{ held, title, aura, armory }`. */
 export function insigniaRowOf(/** @type {any} */ o, /** @type {any} */ ins) {
   const piece = o.kind === 'armory' ? armoryPieceOf(o.key) : null;
-  const name = o.kind === 'title' ? TITLE_TEXT[/** @type {keyof typeof TITLE_TEXT} */ (o.key)] ?? o.key : piece ? armoryPieceName(o.key) : AURA_TEXT[/** @type {keyof typeof AURA_TEXT} */ (o.key)] ?? o.key;
-  const worn = o.kind === 'title' ? ins.title === o.key : piece ? armoryKitPieces(ins.armory)[piece.slot] === o.key : ins.aura === o.key;
+  const name =
+    o.kind === 'title'
+      ? (TITLE_TEXT[/** @type {keyof typeof TITLE_TEXT} */ (o.key)] ?? o.key)
+      : piece
+        ? armoryPieceName(o.key)
+        : (AURA_TEXT[/** @type {keyof typeof AURA_TEXT} */ (o.key)] ?? o.key);
+  const worn =
+    o.kind === 'title'
+      ? ins.title === o.key
+      : piece
+        ? armoryKitPieces(ins.armory)[piece.slot] === o.key
+        : ins.aura === o.key;
   return { ...o, name, owned: ins.held.includes(o.id), worn, ...(piece ? { slot: piece.slot, line: piece.line } : {}) };
 }
 
 /** An offer worn, or taken off (`want` null): the account card's own door for its kind - a piece in its own slot. */
-export const insigniaEquip = (/** @type {any} */ io, /** @type {any} */ offer, /** @type {string|null} */ want) => (offer.kind === 'title' ? equipTitle(io, want)
-  : offer.kind === 'armory' ? equipArmory(io, armoryPieceOf(offer.key)?.slot, want) : equipAura(io, want));
+export const insigniaEquip = (/** @type {any} */ io, /** @type {any} */ offer, /** @type {string|null} */ want) =>
+  offer.kind === 'title'
+    ? equipTitle(io, want)
+    : offer.kind === 'armory'
+      ? equipArmory(io, armoryPieceOf(offer.key)?.slot, want)
+      : equipAura(io, want);

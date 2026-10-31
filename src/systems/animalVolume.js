@@ -7,7 +7,7 @@
 // - Animal Volume: every other archive-201 animal flat - the dog, the cat, the pig, the cow (animalAmbience.js). A horse
 //   flat answers to Horse Volume alone, so one row silences every neigh.
 // The master bus still scales both (Sound Volume). The ambience's birds and crickets are neither (systems/ambientEffects.js).
-import { shelfVolume } from './monsterVolume.js';   // the one reader of a 0..1 volume on the shelf
+import { shelfVolume } from './monsterVolume.js'; // the one reader of a 0..1 volume on the shelf
 
 /** The Audio tab's Horse Volume, 0..1. */
 export const horseVolume = () => shelfVolume('horseVolume');

@@ -37,7 +37,11 @@ export function createLockpickOverlay(deps) {
   const host = document.createElement('div');
   host.id = 'lockpick-host';
   document.body.append(host);
-  try { if (document.pointerLockElement) document.exitPointerLock?.(); } catch { /* no lock to let go */ }   // the pins are clicked
+  try {
+    if (document.pointerLockElement) document.exitPointerLock?.();
+  } catch {
+    /* no lock to let go */
+  } // the pins are clicked
   let unregister = () => {};
   /** `self` - the window shut by the player (Esc, Leave, the pad's back, Tab's put-away) or its own hold's end; a
    *  replacement in the slot (the death screen, another window - its `dispose`) is not (AUDIT LOCKPICK A3) */
@@ -47,33 +51,57 @@ export function createLockpickOverlay(deps) {
     view?.unmount();
     view = null;
     host.remove();
-    fired = true;   // last: `done` must not read true while the DOM is up
+    fired = true; // last: `done` must not read true while the DOM is up
     if (_open === overlay) _open = null;
     deps.onClose?.(self);
   };
   unregister = registerOverlay(() => close(true));
   const overlay = {
     isChoiceWindow: true,
-    get done() { return fired; },
+    get done() {
+      return fired;
+    },
     /** A host's press: an action word, or - a choice window's - the raw key code a host hands it (townTalk's and
      *  input.js routeKey's `overlay.input(e.code, e)`); AUDIT LOCKPICK C3: both are read (LOCK_KEYS). The window's own
      *  capture takes a key first, so a code reaches here only from a host that met it elsewhere. */
     input(a) {
-      if (a === 'back' || a === 'Escape') { close(true); return; }
-      const k = a === 'up' || a === 'confirm' || a === 'select' ? 'press' : a === 'left' || a === 'right' ? a : lockKeyAct(String(a ?? ''));
+      if (a === 'back' || a === 'Escape') {
+        close(true);
+        return;
+      }
+      const k =
+        a === 'up' || a === 'confirm' || a === 'select'
+          ? 'press'
+          : a === 'left' || a === 'right'
+            ? a
+            : lockKeyAct(String(a ?? ''));
       if (k) view?.act(k);
     },
-    click() { /* the window is a fixed div over the canvas; pointers never get here */ },
+    click() {
+      /* the window is a fixed div over the canvas; pointers never get here */
+    },
     wheel() {},
     hover() {},
-    tick() { /* its own animation frame draws it */ },
-    draw() { /* DOM, not canvas */ },
-    dispose() { close(false); },
+    tick() {
+      /* its own animation frame draws it */
+    },
+    draw() {
+      /* DOM, not canvas */
+    },
+    dispose() {
+      close(false);
+    },
     /** The host's own end of a window: the opened lock's hold run out. */
-    shut() { close(true); },
-    repaint() { view?.repaint(); },
+    shut() {
+      close(true);
+    },
+    repaint() {
+      view?.repaint();
+    },
     /** The picks are gone: only Leave stays. */
-    out() { view?.out(); },
+    out() {
+      view?.out();
+    },
   };
   _open = overlay;
   view = mountLockpickWindow(host, { ...deps, onExit: () => close(true), onGone: () => close(false) });

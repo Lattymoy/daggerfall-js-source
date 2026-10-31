@@ -213,8 +213,8 @@
   {
     "name": "EGZM-season-row-unstood",
     "file": "src/systems/eventTimers.js",
-    "old": "    coming(`elite:season:${season}`, 'elite',",
-    "new": "    void (`elite:season:${season}`, 'elite',",
+    "old": "    coming(\n      `elite:season:${season}`,\n      'elite',\n      `The Spire's season ${season} ends`,\n      arenaSeasonEndsS(season) * 1000,\n      null,\n      \"Each Descent bracket's top ten hold the title Spire Champion through the next season\",\n    );",
+    "new": "    void (`elite:season:${season}`,\n    'elite',\n    `The Spire's season ${season} ends`,\n    arenaSeasonEndsS(season) * 1000,\n    null,\n    \"Each Descent bracket's top ten hold the title Spire Champion through the next season\");",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "EGZM-season-end-the-next",
     "file": "src/systems/eventTimers.js",
-    "old": "arenaSeasonEndsS(season) * 1000, null,",
-    "new": "arenaSeasonEndsS(season + 1) * 1000, null,",
+    "old": "      arenaSeasonEndsS(season) * 1000,",
+    "new": "      arenaSeasonEndsS(season + 1) * 1000,",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "EGZM-season-of-ms",
     "file": "src/systems/eventTimers.js",
-    "old": "const season = arenaSeasonOf(Math.floor(now / 1000));",
-    "new": "const season = arenaSeasonOf(now);",
+    "old": "    const season = arenaSeasonOf(Math.floor(now / 1000));",
+    "new": "    const season = arenaSeasonOf(now);",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -240,8 +240,8 @@
   {
     "name": "EGZM-door-on-every-row",
     "file": "src/systems/eventTimers.js",
-    "old": "for (const r of rows) if (r.kind === 'elite') r.door = 'board';",
-    "new": "for (const r of rows) if (true) r.door = 'board';",
+    "old": "    for (const r of rows) if (r.kind === 'elite') r.door = 'board';",
+    "new": "    for (const r of rows) if (true) r.door = 'board';",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -258,8 +258,8 @@
   {
     "name": "EGZM-button-never-drawn",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "        if (TIMER_DOOR_TEXT[r.door]) {",
-    "new": "        if (false) {",
+    "old": "          if (TIMER_DOOR_TEXT[r.door]) {",
+    "new": "          if (false) {",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -267,8 +267,8 @@
   {
     "name": "EGZM-press-past-the-caller",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "if (typeof fn === 'function') door(fn); });",
-    "new": "if (typeof fn === 'function') fn(); });",
+    "old": "              if (typeof fn === 'function') door(fn);",
+    "new": "              if (typeof fn === 'function') fn();",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -276,8 +276,8 @@
   {
     "name": "EGZM-press-with-no-door",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "if (typeof fn === 'function') door(fn); });",
-    "new": "door(fn); });",
+    "old": "              if (typeof fn === 'function') door(fn);",
+    "new": "              door(fn);",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -285,8 +285,8 @@
   {
     "name": "EGZM-shape-blind-to-the-door",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "r.where, r.detail, r.door ?? null])])]);",
-    "new": "r.where, r.detail])])]);",
+    "old": "      shown.map((g) => [g.id, g.live, g.rows.map((r) => [r.id, r.live, r.title, r.where, r.detail, r.door ?? null])]),",
+    "new": "      shown.map((g) => [g.id, g.live, g.rows.map((r) => [r.id, r.live, r.title, r.where, r.detail])]),",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ],
@@ -341,8 +341,8 @@
   {
     "name": "EGZM-list-left-in-the-slot",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "    if (r.kind === 'board') { shut(); let back = false;",
-    "new": "    if (r.kind === 'board') { let back = false;",
+    "old": "      shut();\n      let back = false;",
+    "new": "      let back = false;",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -350,8 +350,8 @@
   {
     "name": "EGZM-window-never-back",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "const again = () => { if (!back && !done) { back = true; showMain(); } };",
-    "new": "const again = () => {};",
+    "old": "      const again = () => {\n        if (!back && !done) {\n          back = true;\n          showMain();\n        }\n      };",
+    "new": "      const again = () => {};",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -359,8 +359,8 @@
   {
     "name": "EGZM-window-back-twice",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "const again = () => { if (!back && !done) { back = true; showMain(); } };",
-    "new": "const again = () => { if (!done) { back = true; showMain(); } };",
+    "old": "        if (!back && !done) {",
+    "new": "        if (!done) {",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -368,8 +368,8 @@
   {
     "name": "EGZM-window-back-after-its-end",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "const again = () => { if (!back && !done) { back = true; showMain(); } };",
-    "new": "const again = () => { if (!back) { back = true; showMain(); } };",
+    "old": "        if (!back && !done) {",
+    "new": "        if (!back) {",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -377,8 +377,8 @@
   {
     "name": "EGZM-none-opened-never-back",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "if (!o.board(again)) again(); return; }",
-    "new": "o.board(again); return; }",
+    "old": "      if (!o.board(again)) again();",
+    "new": "      o.board(again);",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -386,8 +386,8 @@
   {
     "name": "EGZM-two-boards-standing",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": "    standing?.close();\n    standing = open(",
-    "new": "    standing = open(",
+    "old": "    standing?.close();\n    standing = open({ mountWindow, closeWindow: slot.close, onClosed: () => onClosed?.() });",
+    "new": "    standing = open({ mountWindow, closeWindow: slot.close, onClosed: () => onClosed?.() });",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -395,8 +395,8 @@
   {
     "name": "EGZM-done-window-holds-the-slot",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": "const top = slot.top(); if (top?.done) slot.close(top); return !!slot.mount(w);",
-    "new": "return !!slot.mount(w);",
+    "old": "    const top = slot.top();\n    if (top?.done) slot.close(top);\n    return !!slot.mount(w);",
+    "new": "    return !!slot.mount(w);",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -404,8 +404,8 @@
   {
     "name": "EGZM-live-window-thrown-out",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": "const top = slot.top(); if (top?.done) slot.close(top);",
-    "new": "const top = slot.top(); if (top) slot.close(top);",
+    "old": "    if (top?.done) slot.close(top);",
+    "new": "    if (top) slot.close(top);",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -413,8 +413,8 @@
   {
     "name": "EGZM-close-untold",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": "onClosed: () => onClosed?.() });",
-    "new": "onClosed: () => {} });",
+    "old": "    standing = open({ mountWindow, closeWindow: slot.close, onClosed: () => onClosed?.() });",
+    "new": "    standing = open({ mountWindow, closeWindow: slot.close, onClosed: () => {} });",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -422,8 +422,8 @@
   {
     "name": "EGZM-door-mount-ignored",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": "    standing = open({ mountWindow, closeWindow: slot.close,",
-    "new": "    standing = open({ closeWindow: slot.close,",
+    "old": "    standing = open({ mountWindow, closeWindow: slot.close, onClosed: () => onClosed?.() });",
+    "new": "    standing = open({ closeWindow: slot.close, onClosed: () => onClosed?.() });",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ]
@@ -468,8 +468,8 @@
   {
     "name": "EGZM-clock-a-second-early",
     "file": "server-account/src/eg.js",
-    "old": ".bind(nowS - EG_STAKE_CLOCK_S, limit).all())",
-    "new": ".bind(nowS - EG_STAKE_CLOCK_S + 1, limit).all())",
+    "old": "        .bind(nowS - EG_STAKE_CLOCK_S, limit)",
+    "new": "        .bind(nowS - EG_STAKE_CLOCK_S + 1, limit)",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -477,8 +477,8 @@
   {
     "name": "EGZM-clock-a-second-late",
     "file": "server-account/src/eg.js",
-    "old": "WHERE state = 'held' AND until <= ?1 ORDER BY",
-    "new": "WHERE state = 'held' AND until < ?1 ORDER BY",
+    "old": "        .prepare(\"SELECT ez FROM eg_stakes WHERE state = 'held' AND until <= ?1 ORDER BY until, ez LIMIT ?2\")",
+    "new": "        .prepare(\"SELECT ez FROM eg_stakes WHERE state = 'held' AND until < ?1 ORDER BY until, ez LIMIT ?2\")",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -504,8 +504,8 @@
   {
     "name": "EGZM-settled-stake-spent",
     "file": "server-account/src/eg.js",
-    "old": "SELECT ez FROM eg_stakes WHERE state = 'held' AND until",
-    "new": "SELECT ez FROM eg_stakes WHERE state != 'spent' AND until",
+    "old": "        .prepare(\"SELECT ez FROM eg_stakes WHERE state = 'held' AND until <= ?1 ORDER BY until, ez LIMIT ?2\")",
+    "new": "        .prepare(\"SELECT ez FROM eg_stakes WHERE state != 'spent' AND until <= ?1 ORDER BY until, ez LIMIT ?2\")",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -513,8 +513,8 @@
   {
     "name": "EGZM-key-returned",
     "file": "server-account/src/eg.js",
-    "old": "UPDATE eg_stakes SET state = 'spent' WHERE state = 'held' AND ez IN",
-    "new": "UPDATE eg_stakes SET state = 'returned' WHERE state = 'held' AND ez IN",
+    "old": "      .prepare(\"UPDATE eg_stakes SET state = 'spent' WHERE state = 'held' AND ez IN (SELECT value FROM json_each(?1))\")",
+    "new": "      .prepare(\n        \"UPDATE eg_stakes SET state = 'returned' WHERE state = 'held' AND ez IN (SELECT value FROM json_each(?1))\",\n      )",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -522,8 +522,8 @@
   {
     "name": "EGZM-raced-stake-spent",
     "file": "server-account/src/eg.js",
-    "old": "UPDATE eg_stakes SET state = 'spent' WHERE state = 'held' AND ez IN",
-    "new": "UPDATE eg_stakes SET state = 'spent' WHERE ez IN",
+    "old": "    db\n      .prepare(\"UPDATE eg_stakes SET state = 'spent' WHERE state = 'held' AND ez IN (SELECT value FROM json_each(?1))\")\n      .bind(ez),",
+    "new": "    db.prepare(\"UPDATE eg_stakes SET state = 'spent' WHERE ez IN (SELECT value FROM json_each(?1))\").bind(ez),",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -531,8 +531,8 @@
   {
     "name": "EGZM-letter-unwritten",
     "file": "server-account/src/eg.js",
-    "old": "FROM eg_stakes WHERE state = 'held' AND rh = 0 AND ez IN",
-    "new": "FROM eg_stakes WHERE state = 'held' AND 0 AND ez IN",
+    "old": "      FROM eg_stakes WHERE state = 'held' AND rh = 0 AND ez IN (SELECT value FROM json_each(?1))`,",
+    "new": "      FROM eg_stakes WHERE state = 'held' AND 0 AND ez IN (SELECT value FROM json_each(?1))`,",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -540,8 +540,8 @@
   {
     "name": "EGZM-letter-to-a-rehearsal",
     "file": "server-account/src/eg.js",
-    "old": "FROM eg_stakes WHERE state = 'held' AND rh = 0 AND ez IN",
-    "new": "FROM eg_stakes WHERE state = 'held' AND 1 AND ez IN",
+    "old": "      FROM eg_stakes WHERE state = 'held' AND rh = 0 AND ez IN (SELECT value FROM json_each(?1))`,",
+    "new": "      FROM eg_stakes WHERE state = 'held' AND 1 AND ez IN (SELECT value FROM json_each(?1))`,",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -549,8 +549,8 @@
   {
     "name": "EGZM-raced-stake-told",
     "file": "server-account/src/eg.js",
-    "old": "FROM eg_stakes WHERE state = 'held' AND rh = 0 AND ez IN",
-    "new": "FROM eg_stakes WHERE rh = 0 AND ez IN",
+    "old": "      FROM eg_stakes WHERE state = 'held' AND rh = 0 AND ez IN (SELECT value FROM json_each(?1))`,",
+    "new": "      FROM eg_stakes WHERE rh = 0 AND ez IN (SELECT value FROM json_each(?1))`,",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -558,8 +558,8 @@
   {
     "name": "EGZM-letter-holds-the-clock",
     "file": "server-account/src/eg.js",
-    "old": "INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)\n      SELECT",
-    "new": "INSERT INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)\n      SELECT",
+    "old": "        `INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)",
+    "new": "        `INSERT INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -567,8 +567,8 @@
   {
     "name": "EGZM-letter-the-breachs-batch",
     "file": "server-account/src/eg.js",
-    "old": "account, ?2 || ez,",
-    "new": "account, ?2 || b,",
+    "old": "      SELECT lower(hex(randomblob(12))), account, ?2 || ez, ?3, ?4, replace(CASE WHEN EXISTS (SELECT 1 FROM eg_runs r WHERE r.b = eg_stakes.b AND r.account = eg_stakes.account) THEN ?7 ELSE ?5 END, '{day}', strftime('%Y-%m-%d', at, 'unixepoch')), NULL, ?6",
+    "new": "      SELECT lower(hex(randomblob(12))), account, ?2 || b, ?3, ?4, replace(CASE WHEN EXISTS (SELECT 1 FROM eg_runs r WHERE r.b = eg_stakes.b AND r.account = eg_stakes.account) THEN ?7 ELSE ?5 END, '{day}', strftime('%Y-%m-%d', at, 'unixepoch')), NULL, ?6",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -576,8 +576,8 @@
   {
     "name": "EGZM-letter-the-days-unsaid",
     "file": "server-account/src/eg.js",
-    "old": "replace(CASE WHEN EXISTS (SELECT 1 FROM eg_runs r WHERE r.b = eg_stakes.b AND r.account = eg_stakes.account) THEN ?7 ELSE ?5 END, '{day}', strftime('%Y-%m-%d', at, 'unixepoch'))",
-    "new": "CASE WHEN EXISTS (SELECT 1 FROM eg_runs r WHERE r.b = eg_stakes.b AND r.account = eg_stakes.account) THEN ?7 ELSE ?5 END",
+    "old": "      SELECT lower(hex(randomblob(12))), account, ?2 || ez, ?3, ?4, replace(CASE WHEN EXISTS (SELECT 1 FROM eg_runs r WHERE r.b = eg_stakes.b AND r.account = eg_stakes.account) THEN ?7 ELSE ?5 END, '{day}', strftime('%Y-%m-%d', at, 'unixepoch')), NULL, ?6",
+    "new": "      SELECT lower(hex(randomblob(12))), account, ?2 || ez, ?3, ?4, CASE WHEN EXISTS (SELECT 1 FROM eg_runs r WHERE r.b = eg_stakes.b AND r.account = eg_stakes.account) THEN ?7 ELSE ?5 END, NULL, ?6",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -585,8 +585,8 @@
   {
     "name": "EGZM-letter-the-ends-day",
     "file": "server-account/src/eg.js",
-    "old": "END, '{day}', strftime('%Y-%m-%d', at, 'unixepoch'))",
-    "new": "END, '{day}', strftime('%Y-%m-%d', until, 'unixepoch'))",
+    "old": "      SELECT lower(hex(randomblob(12))), account, ?2 || ez, ?3, ?4, replace(CASE WHEN EXISTS (SELECT 1 FROM eg_runs r WHERE r.b = eg_stakes.b AND r.account = eg_stakes.account) THEN ?7 ELSE ?5 END, '{day}', strftime('%Y-%m-%d', at, 'unixepoch')), NULL, ?6",
+    "new": "      SELECT lower(hex(randomblob(12))), account, ?2 || ez, ?3, ?4, replace(CASE WHEN EXISTS (SELECT 1 FROM eg_runs r WHERE r.b = eg_stakes.b AND r.account = eg_stakes.account) THEN ?7 ELSE ?5 END, '{day}', strftime('%Y-%m-%d', until, 'unixepoch')), NULL, ?6",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -594,8 +594,8 @@
   {
     "name": "EGZM-newest-first",
     "file": "server-account/src/eg.js",
-    "old": "ORDER BY until, ez LIMIT ?2",
-    "new": "ORDER BY until DESC, ez LIMIT ?2",
+    "old": "        .prepare(\"SELECT ez FROM eg_stakes WHERE state = 'held' AND until <= ?1 ORDER BY until, ez LIMIT ?2\")",
+    "new": "        .prepare(\"SELECT ez FROM eg_stakes WHERE state = 'held' AND until <= ?1 ORDER BY until DESC, ez LIMIT ?2\")",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -603,8 +603,8 @@
   {
     "name": "EGZM-page-unbounded",
     "file": "server-account/src/eg.js",
-    "old": "ORDER BY until, ez LIMIT ?2",
-    "new": "ORDER BY until, ez LIMIT -1",
+    "old": "        .prepare(\"SELECT ez FROM eg_stakes WHERE state = 'held' AND until <= ?1 ORDER BY until, ez LIMIT ?2\")",
+    "new": "        .prepare(\"SELECT ez FROM eg_stakes WHERE state = 'held' AND until <= ?1 ORDER BY until, ez LIMIT -1\")",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -612,8 +612,8 @@
   {
     "name": "EGZM-count-unsaid",
     "file": "server-account/src/eg.js",
-    "old": "  return Number(spent?.meta?.changes ?? 0);\n}",
-    "new": "  return 0;\n}",
+    "old": "  return Number(spent?.meta?.changes ?? 0);",
+    "new": "  return 0;",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -621,8 +621,8 @@
   {
     "name": "EGZM-quiet-hour-writes",
     "file": "server-account/src/eg.js",
-    "old": "  if (!due.length) return 0;\n",
-    "new": "",
+    "old": "  if (!due.length) return 0;\n  const ez = JSON.stringify(due.map((r) => r.ez));",
+    "new": "  const ez = JSON.stringify(due.map((r) => r.ez));",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js",
       "test/net/auditscale.test.js"

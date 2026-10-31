@@ -2,8 +2,8 @@
   {
     "name": "QA3L2-A2-gold-carry-dropped",
     "file": "src/systems/quest/machine.js",
-    "old": "    for (const [key, r] of old.resources) if (r?.isItem && r.goldPaid && fresh.resources.get(key)?.isItem) fresh.resources.get(key).goldPaid = true;\n",
-    "new": "",
+    "old": "    for (const [key, r] of old.resources)\n      if (r?.isItem && r.goldPaid && fresh.resources.get(key)?.isItem) fresh.resources.get(key).goldPaid = true;\n    if (this.sharedCandidateNamed(old.questName) === old) this.sharedQuestNames.delete(old.questName);",
+    "new": "    if (this.sharedCandidateNamed(old.questName) === old) this.sharedQuestNames.delete(old.questName);",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "QA3L2-A2-carry-every-item",
     "file": "src/systems/quest/machine.js",
-    "old": "if (r?.isItem && r.goldPaid && fresh.resources",
-    "new": "if (r?.isItem && fresh.resources",
+    "old": "      if (r?.isItem && r.goldPaid && fresh.resources.get(key)?.isItem) fresh.resources.get(key).goldPaid = true;",
+    "new": "      if (r?.isItem && fresh.resources.get(key)?.isItem) fresh.resources.get(key).goldPaid = true;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "QA3L2-A2-success-read-as-paid",
     "file": "src/systems/quest/machine.js",
-    "old": "export function questPaidOut(quest) {\n  for (const task",
-    "new": "export function questPaidOut(quest) {\n  if (quest?.questSuccess) return true;\n  for (const task",
+    "old": "  for (const task of quest?.tasks?.values?.() ?? []) {",
+    "new": "  if (quest?.questSuccess) return true;\n  for (const task of quest?.tasks?.values?.() ?? []) {",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "QA3L2-A2-make-permanent-read-as-paid",
     "file": "src/systems/quest/machine.js",
-    "old": "if (a.typeName === 'TrainPc') return true;",
-    "new": "if (a.typeName === 'TrainPc' || a.typeName === 'MakePermanent') return true;",
+    "old": "      if (a.typeName === 'TrainPc') return true;",
+    "new": "      if (a.typeName === 'TrainPc' || a.typeName === 'MakePermanent') return true;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "QA3L2-A2-permanent-resource-read-as-paid",
     "file": "src/systems/quest/machine.js",
-    "old": "(it.madePermanent || (df && !df.questItem))) return true;\n    }\n  }\n  return false;\n}",
-    "new": "(it.madePermanent || (df && !df.questItem))) return true;\n    }\n  }\n  return [...(quest?.resources?.values?.() ?? [])].some((r) => r?.isItem && r.madePermanent);\n}",
+    "old": "  }\n  return false;",
+    "new": "  }\n  return [...(quest?.resources?.values?.() ?? [])].some((r) => r?.isItem && r.madePermanent);",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "QA3L2-A2-gold-read-as-paid",
     "file": "src/systems/quest/machine.js",
-    "old": "if (it && !(df && isGoldPieces(df)) && (it.madePermanent",
-    "new": "if (it && (it.madePermanent",
+    "old": "      if (it && !(df && isGoldPieces(df)) && (it.madePermanent || (df && !df.questItem))) return true;",
+    "new": "      if (it && (it.madePermanent || (df && !df.questItem))) return true;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "QA3L2-B1-rung-dropped",
     "file": "src/systems/quest/machine.js",
-    "old": "    if ([...quest.tasks.values()].some((t) => t.actions?.some((a) => a?.typeName === 'StartQuest' && a.isComplete))) return 'started';\n",
-    "new": "",
+    "old": "    if ([...quest.tasks.values()].some((t) => t.actions?.some((a) => a?.typeName === 'StartQuest' && a.isComplete)))\n      return 'started';\n    for (const parent of this.quests.values()) {",
+    "new": "    for (const parent of this.quests.values()) {",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "QA3L2-B1-unrun-start-read",
     "file": "src/systems/quest/machine.js",
-    "old": "a?.typeName === 'StartQuest' && a.isComplete))) return 'started';",
-    "new": "a?.typeName === 'StartQuest'))) return 'started';",
+    "old": "    if ([...quest.tasks.values()].some((t) => t.actions?.some((a) => a?.typeName === 'StartQuest' && a.isComplete)))\n      return 'started';",
+    "new": "    if ([...quest.tasks.values()].some((t) => t.actions?.some((a) => a?.typeName === 'StartQuest'))) return 'started';",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "QA3L2-B1-before-paid",
     "file": "src/systems/quest/machine.js",
-    "old": "    if (questPaidOut(quest)) return 'paid';\n",
-    "new": "    if ([...quest.tasks.values()].some((t) => t.actions?.some((a) => a?.typeName === 'StartQuest' && a.isComplete))) return 'started';\n    if (questPaidOut(quest)) return 'paid';\n",
+    "old": "    if (questPaidOut(quest)) return 'paid';",
+    "new": "    if ([...quest.tasks.values()].some((t) => t.actions?.some((a) => a?.typeName === 'StartQuest' && a.isComplete)))\n      return 'started';\n    if (questPaidOut(quest)) return 'paid';",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "QA3L2-B3-standing-read-as-paid",
     "file": "src/systems/quest/machine.js",
-    "old": "      if (a.typeName === 'TrainPc') return true;\n",
-    "new": "      if (a.typeName === 'TrainPc') return true;\n      if ((a.typeName === 'ChangeReputeWith' || a.typeName === 'LegalRepute') && a.amount > 0) return true;\n",
+    "old": "      if (!((a.typeName === 'GivePc' && !a.isNothing) || a.typeName === 'GetItem')) continue;",
+    "new": "      if ((a.typeName === 'ChangeReputeWith' || a.typeName === 'LegalRepute') && a.amount > 0) return true;\n      if (!((a.typeName === 'GivePc' && !a.isNothing) || a.typeName === 'GetItem')) continue;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "QA3L2-B7-held-unread",
     "file": "src/ui/pendingOffer.js",
-    "old": " || (s.parentQuest?.tasks && !held(s.parentQuest))",
-    "new": "",
+    "old": "    (s.isComplete ||\n      s.parentQuest?.questComplete ||\n      s.parentQuest?.questTombstoned ||\n      s.parentQuest?.shelvedAt != null ||\n      (s.parentQuest?.tasks && !held(s.parentQuest)))",
+    "new": "    (s.isComplete || s.parentQuest?.questComplete || s.parentQuest?.questTombstoned || s.parentQuest?.shelvedAt != null)",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "QA3L2-B7-any-task-holds-it",
     "file": "src/ui/pendingOffer.js",
-    "old": "some((t) => t.actions?.includes(s));",
-    "new": "some((t) => !!t.actions);",
+    "old": "  const held = (q) => [...(q?.tasks?.values?.() ?? [])].some((t) => t.actions?.includes(s));",
+    "new": "  const held = (q) => [...(q?.tasks?.values?.() ?? [])].some((t) => !!t.actions);",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "QA3L2-B8-reclaim-reads-the-pack",
     "file": "src/systems/quest/machine.js",
-    "old": "(this.deps.keepsQuestItem ?? this.deps.carriesQuestItem)?.(res)) continue;",
-    "new": "this.deps.carriesQuestItem?.(res)) continue;",
+    "old": "      if (!res?.daggerfallUnityItem || (this.deps.keepsQuestItem ?? this.deps.carriesQuestItem)?.(res)) continue; // AUDIT QA3 B8: kept anywhere",
+    "new": "      if (!res?.daggerfallUnityItem || this.deps.carriesQuestItem?.(res)) continue; // AUDIT QA3 B8: kept anywhere",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "QA3L2-C2-dialog-place-unread",
     "file": "src/systems/quest/questMacros.js",
-    "old": "const at = r?.isPerson && !r.isQuestor ? r.getDialogPlace?.() : null;",
-    "new": "const at = r?.isPerson && !r.isQuestor && r.assignedPlaceSymbol ? quest.getPlace?.(r.assignedPlaceSymbol) : null;",
+    "old": "          const at = r?.isPerson && !r.isQuestor ? r.getDialogPlace?.() : null;",
+    "new": "          const at =\n            r?.isPerson && !r.isQuestor && r.assignedPlaceSymbol ? quest.getPlace?.(r.assignedPlaceSymbol) : null;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "QA3L2-C2-questor-read",
     "file": "src/systems/quest/questMacros.js",
-    "old": "const at = r?.isPerson && !r.isQuestor ? r.getDialogPlace?.() : null;",
-    "new": "const at = r?.isPerson ? r.getDialogPlace?.() : null;",
+    "old": "          const at = r?.isPerson && !r.isQuestor ? r.getDialogPlace?.() : null;",
+    "new": "          const at = r?.isPerson ? r.getDialogPlace?.() : null;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "QA3L2-C4-article-case",
     "file": "src/systems/quest/questMacros.js",
-    "old": "v.replace(/^the /i, '')",
-    "new": "v.replace(/^the /, '')",
+    "old": "      return /(^|[^a-z])the $/i.test(joke.slice(0, at)) ? v.replace(/^the /i, '') : v;",
+    "new": "      return /(^|[^a-z])the $/i.test(joke.slice(0, at)) ? v.replace(/^the /, '') : v;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "QA3L2-C4-article-whole-word",
     "file": "src/systems/quest/questMacros.js",
-    "old": "v.replace(/^the /i, '')",
-    "new": "v.replace(/^the/i, '')",
+    "old": "      return /(^|[^a-z])the $/i.test(joke.slice(0, at)) ? v.replace(/^the /i, '') : v;",
+    "new": "      return /(^|[^a-z])the $/i.test(joke.slice(0, at)) ? v.replace(/^the/i, '') : v;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "QA3L2-C4-joke-case",
     "file": "src/systems/quest/questMacros.js",
-    "old": "/(^|[^a-z])the $/i.test(joke.slice(",
-    "new": "/(^|[^a-z])the $/.test(joke.slice(",
+    "old": "      return /(^|[^a-z])the $/i.test(joke.slice(0, at)) ? v.replace(/^the /i, '') : v;",
+    "new": "      return /(^|[^a-z])the $/.test(joke.slice(0, at)) ? v.replace(/^the /i, '') : v;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "QA3L2-C4-the-window",
     "file": "src/systems/quest/questMacros.js",
-    "old": "joke.slice(0, at)",
-    "new": "joke.slice(Math.max(0, at - 4), at)",
+    "old": "      return /(^|[^a-z])the $/i.test(joke.slice(0, at)) ? v.replace(/^the /i, '') : v;",
+    "new": "      return /(^|[^a-z])the $/i.test(joke.slice(Math.max(0, at - 4), at)) ? v.replace(/^the /i, '') : v;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "QA3L2-C4-any-place",
     "file": "src/systems/quest/questMacros.js",
-    "old": "/(^|[^a-z])the $/i.test(joke.slice(0, at)) ? v.replace(",
-    "new": "true ? v.replace(",
+    "old": "      return /(^|[^a-z])the $/i.test(joke.slice(0, at)) ? v.replace(/^the /i, '') : v;",
+    "new": "      return true ? v.replace(/^the /i, '') : v;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "QA3L2-D1-revive-health-unread",
     "file": "src/systems/quest/resourceBehaviour.js",
-    "old": "if (this.isFoeDead && this.enemy.currentHealth > 0 && foe.killCount",
-    "new": "if (this.isFoeDead && foe.killCount",
+    "old": "      if (this.isFoeDead && this.enemy.currentHealth > 0 && foe.killCount < foe.spawnCount) this.isFoeDead = false;",
+    "new": "      if (this.isFoeDead && foe.killCount < foe.spawnCount) this.isFoeDead = false;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "QA3L2-D1-revive-kills-unread",
     "file": "src/systems/quest/resourceBehaviour.js",
-    "old": " && foe.killCount < foe.spawnCount) this.isFoeDead = false;",
-    "new": ") this.isFoeDead = false;",
+    "old": "      if (this.isFoeDead && this.enemy.currentHealth > 0 && foe.killCount < foe.spawnCount) this.isFoeDead = false;",
+    "new": "      if (this.isFoeDead && this.enemy.currentHealth > 0) this.isFoeDead = false;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "QA3L2-D1-relink-destroyed",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "for (const b of resourceBehaviours) if (!b.isComponentDestroyed) b.relinkToLiveQuest?.();",
-    "new": "for (const b of resourceBehaviours) b.relinkToLiveQuest?.();",
+    "old": "    for (const b of resourceBehaviours) if (!b.isComponentDestroyed) b.relinkToLiveQuest?.();",
+    "new": "    for (const b of resourceBehaviours) b.relinkToLiveQuest?.();",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "QA3L2-D1-injected-destroyed",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "    if (behaviour.isComponentDestroyed) continue;   // AUDIT QA3 D1: Destroy() takes it out of the scene's objects, as C#'s does\n",
-    "new": "",
+    "old": "    if (behaviour.isComponentDestroyed) continue; // AUDIT QA3 D1: Destroy() takes it out of the scene's objects, as C#'s does\n    if (behaviour.targetSymbol === resource.symbol) return true;",
+    "new": "    if (behaviour.targetSymbol === resource.symbol) return true;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "QA3L2-D2-put-away-dropped",
     "file": "src/systems/quest/resourceBehaviour.js",
-    "old": "    if (this.questUID != null && this.machine?.getQuest && !this.machine.getQuest(this.questUID) && !this.enemy) {\n      if (!this.individualHome && !this.questorHost) this.setGameObjectActive(false);   // a guild's questor stays at their post\n      return;\n    }\n",
-    "new": "",
+    "old": "    if (this.questUID != null && this.machine?.getQuest && !this.machine.getQuest(this.questUID) && !this.enemy) {\n      if (!this.individualHome && !this.questorHost) this.setGameObjectActive(false); // a guild's questor stays at their post\n      return;\n    }\n    // Ensure target resource has this behaviour assigned - coupling",
+    "new": "    // Ensure target resource has this behaviour assigned - coupling",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "QA3L2-D2-foe-put-away",
     "file": "src/systems/quest/resourceBehaviour.js",
-    "old": "!this.machine.getQuest(this.questUID) && !this.enemy) {",
-    "new": "!this.machine.getQuest(this.questUID)) {",
+    "old": "    if (this.questUID != null && this.machine?.getQuest && !this.machine.getQuest(this.questUID) && !this.enemy) {",
+    "new": "    if (this.questUID != null && this.machine?.getQuest && !this.machine.getQuest(this.questUID)) {",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "QA3L2-D2-home-copy-put-away",
     "file": "src/systems/quest/resourceBehaviour.js",
-    "old": "      if (!this.individualHome && !this.questorHost) this.setGameObjectActive(false);   // a guild's questor stays at their post\n",
-    "new": "      if (!this.questorHost) this.setGameObjectActive(false);\n",
+    "old": "      if (!this.individualHome && !this.questorHost) this.setGameObjectActive(false); // a guild's questor stays at their post",
+    "new": "      if (!this.questorHost) this.setGameObjectActive(false);",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "QA3L2-D3-lift-dropped",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "  f[1] += height * 0.02;   // AUDIT QA3 D3: the stand's own lift off the ground plane (worldModes.js standQuestFlatIn), kept\n",
-    "new": "",
+    "old": "  f[1] += height * 0.02; // AUDIT QA3 D3: the stand's own lift off the ground plane (worldModes.js standQuestFlatIn), kept\n  return f;",
+    "new": "  return f;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "QA3L2-C4-the-word-unbounded",
     "file": "src/systems/quest/questMacros.js",
-    "old": "(^|[^a-z])the $",
-    "new": "the $",
+    "old": "      return /(^|[^a-z])the $/i.test(joke.slice(0, at)) ? v.replace(/^the /i, '') : v;",
+    "new": "      return /the $/i.test(joke.slice(0, at)) ? v.replace(/^the /i, '') : v;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "QA3L2-D2-the-questor-put-away",
     "file": "src/systems/quest/resourceBehaviour.js",
-    "old": "      if (!this.individualHome && !this.questorHost) this.setGameObjectActive(false);   // a guild's questor stays at their post\n",
-    "new": "      if (!this.individualHome) this.setGameObjectActive(false);\n",
+    "old": "      if (!this.individualHome && !this.questorHost) this.setGameObjectActive(false); // a guild's questor stays at their post",
+    "new": "      if (!this.individualHome) this.setGameObjectActive(false);",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "QA3L2-D2-the-questor-unmarked",
     "file": "src/systems/quest/machine.js",
-    "old": "    behaviour.questorHost = true;   // AUDIT QA3 D2: the clicked NPC's own body - never put away with its quest\n",
-    "new": "",
+    "old": "    behaviour.questorHost = true; // AUDIT QA3 D2: the clicked NPC's own body - never put away with its quest\n    behaviour.assignResource(questorPerson);",
+    "new": "    behaviour.assignResource(questorPerson);",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]

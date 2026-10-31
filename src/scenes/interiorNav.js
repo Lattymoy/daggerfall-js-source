@@ -118,7 +118,8 @@ const _meshInfo = new WeakMap();
  *  not a special one (isActionDoorObject) - the dungeon's own rule (dungeonContext.js:"isActionDoorObject(o) && !(o.currentLockValue > 0)"). */
 export function doorsOutOfSoup(actions) {
   const out = new Set();
-  for (const o of actions?.objects?.values?.() ?? []) if (isActionDoorObject(o) && !(o.currentLockValue > 0)) out.add(o.key);
+  for (const o of actions?.objects?.values?.() ?? [])
+    if (isActionDoorObject(o) && !(o.currentLockValue > 0)) out.add(o.key);
   return out;
 }
 const soupWord = (actions) => [...doorsOutOfSoup(actions)].sort().join('|');
@@ -127,8 +128,18 @@ const soupWord = (actions) => [...doorsOutOfSoup(actions)].sort().join('|');
  *  player-radius and a tenth out along its normal, walked into the room) - every way the watch and the player come in. */
 export function doorArrivals(doors, collider) {
   return (doors ?? []).map((d) => {
-    const p = doorWorldPosition(d), n = doorWorldNormal(d);
-    return indoorWatchSpot([p[0] + n[0] * GUARD_INDOOR_DOOR_OFFSET, p[1] + n[1] * GUARD_INDOOR_DOOR_OFFSET, p[2] + n[2] * GUARD_INDOOR_DOOR_OFFSET], n, 0, collider);
+    const p = doorWorldPosition(d),
+      n = doorWorldNormal(d);
+    return indoorWatchSpot(
+      [
+        p[0] + n[0] * GUARD_INDOOR_DOOR_OFFSET,
+        p[1] + n[1] * GUARD_INDOOR_DOOR_OFFSET,
+        p[2] + n[2] * GUARD_INDOOR_DOOR_OFFSET,
+      ],
+      n,
+      0,
+      collider,
+    );
   });
 }
 
@@ -138,17 +149,37 @@ function meshInfo(chf) {
   const mesh = chf.mesh;
   let info = _meshInfo.get(mesh);
   if (info) return info;
-  const n = mesh.polys.length, island = new Int32Array(n).fill(-1);
+  const n = mesh.polys.length,
+    island = new Int32Array(n).fill(-1);
   for (let s = 0, k = 0; s < n; s++) {
     if (island[s] >= 0) continue;
-    const stack = [s]; island[s] = k;
-    while (stack.length) { const p = /** @type {number} */ (stack.pop()); for (const q of mesh.polys[p].neis) if (q >= 0 && island[q] < 0) { island[q] = k; stack.push(q); } }
+    const stack = [s];
+    island[s] = k;
+    while (stack.length) {
+      const p = /** @type {number} */ (stack.pop());
+      for (const q of mesh.polys[p].neis)
+        if (q >= 0 && island[q] < 0) {
+          island[q] = k;
+          stack.push(q);
+        }
+    }
     k++;
   }
   const polys = mesh.polys.map((p) => {
-    const pts = p.verts.map((gi) => { const v = mesh.verts[gi]; return [chf.xmin + v.x * chf.cs, v.y, chf.zmin + v.z * chf.cs]; });
-    let cx = 0, cz = 0, lo = Infinity, hi = -Infinity;
-    for (const q of pts) { cx += q[0]; cz += q[2]; lo = Math.min(lo, q[1]); hi = Math.max(hi, q[1]); }
+    const pts = p.verts.map((gi) => {
+      const v = mesh.verts[gi];
+      return [chf.xmin + v.x * chf.cs, v.y, chf.zmin + v.z * chf.cs];
+    });
+    let cx = 0,
+      cz = 0,
+      lo = Infinity,
+      hi = -Infinity;
+    for (const q of pts) {
+      cx += q[0];
+      cz += q[2];
+      lo = Math.min(lo, q[1]);
+      hi = Math.max(hi, q[1]);
+    }
     return { pts, cx: cx / pts.length, cz: cz / pts.length, lo, hi };
   });
   info = { island, polys };
@@ -159,16 +190,28 @@ function meshInfo(chf) {
 /** The nearest point of a convex poly to (x, z), in the plane: the point itself inside, else the nearest on its rim. */
 function nearestIn(poly, x, z) {
   const pts = poly.pts;
-  let pos = 0, neg = 0, best = null, bestD = Infinity;
+  let pos = 0,
+    neg = 0,
+    best = null,
+    bestD = Infinity;
   for (let i = 0; i < pts.length; i++) {
-    const a = pts[i], b = pts[(i + 1) % pts.length];
-    const ex = b[0] - a[0], ez = b[2] - a[2];
+    const a = pts[i],
+      b = pts[(i + 1) % pts.length];
+    const ex = b[0] - a[0],
+      ez = b[2] - a[2];
     const cr = ex * (z - a[2]) - (x - a[0]) * ez;
-    if (cr > 1e-9) pos++; else if (cr < -1e-9) neg++;
+    if (cr > 1e-9) pos++;
+    else if (cr < -1e-9) neg++;
     const l2 = ex * ex + ez * ez;
-    let t = l2 ? ((x - a[0]) * ex + (z - a[2]) * ez) / l2 : 0; t = t < 0 ? 0 : t > 1 ? 1 : t;
-    const qx = a[0] + t * ex, qz = a[2] + t * ez, d = Math.hypot(x - qx, z - qz);
-    if (d < bestD) { bestD = d; best = [qx, qz]; }
+    let t = l2 ? ((x - a[0]) * ex + (z - a[2]) * ez) / l2 : 0;
+    t = t < 0 ? 0 : t > 1 ? 1 : t;
+    const qx = a[0] + t * ex,
+      qz = a[2] + t * ez,
+      d = Math.hypot(x - qx, z - qz);
+    if (d < bestD) {
+      bestD = d;
+      best = [qx, qz];
+    }
   }
   return !pos || !neg ? { x, z, d: 0 } : { x: best[0], z: best[1], d: bestD };
 }
@@ -178,7 +221,10 @@ function nearestIn(poly, x, z) {
 function kneeLine(collider, from, to, skip = null) {
   if (!collider) return true;
   const a = [from[0], from[1] + KNEE_M, from[2]];
-  const dx = to[0] - a[0], dy = to[1] + KNEE_M - a[1], dz = to[2] - a[2], l = Math.hypot(dx, dy, dz);
+  const dx = to[0] - a[0],
+    dy = to[1] + KNEE_M - a[1],
+    dz = to[2] - a[2],
+    l = Math.hypot(dx, dy, dz);
   if (l < 1e-6) return true;
   return !(collider.raycast(a, [dx / l, dy / l, dz / l], l, skip ? { skip } : null) < l);
 }
@@ -199,7 +245,9 @@ export function meshPointUnder(chf, feet, { reach = ISLAND_REACH, collider = nul
     if (q.d <= reach) near.push({ i, s: q.d + dy, q, y: Math.min(Math.max(feet[1], p.lo), p.hi) });
   }
   near.sort((a, b) => a.s - b.s);
-  for (const n of near) if (n.q.d === 0 || kneeLine(collider, feet, [n.q.x, n.y, n.q.z], skip)) return { i: n.i, x: n.q.x, y: n.y, z: n.q.z, d: n.q.d };
+  for (const n of near)
+    if (n.q.d === 0 || kneeLine(collider, feet, [n.q.x, n.y, n.q.z], skip))
+      return { i: n.i, x: n.q.x, y: n.y, z: n.q.z, d: n.q.d };
   return null;
 }
 
@@ -210,7 +258,10 @@ export const polyUnder = (chf, feet, opts) => meshPointUnder(chf, feet, opts)?.i
  *  passage the bake's erosion trimmed to nothing - the nearest the knee's line reaches within GOAL_REACH, the mesh's
  *  edge it is walked in from; null when neither. */
 export function meshPointNear(chf, feet, opts = {}) {
-  return meshPointUnder(chf, feet, { ...opts, reach: ISLAND_REACH }) ?? meshPointUnder(chf, feet, { ...opts, reach: GOAL_REACH });
+  return (
+    meshPointUnder(chf, feet, { ...opts, reach: ISLAND_REACH }) ??
+    meshPointUnder(chf, feet, { ...opts, reach: GOAL_REACH })
+  );
 }
 
 /** INDOOR-WATCH AUDIT: THE MOTOR'S `navGoal` OVER A MESH - for a body findPath cannot place (past its half-metre snap:
@@ -228,7 +279,8 @@ export const islandOf = (chf, pi) => (pi >= 0 && chf?.mesh?.polys?.length ? mesh
 
 /** Whether two bodies stand on one island of the mesh (null when either stands on none). */
 export function sameIsland(chf, a, b, opts = {}) {
-  const pa = polyUnder(chf, a, opts), pb = polyUnder(chf, b, opts);
+  const pa = polyUnder(chf, a, opts),
+    pb = polyUnder(chf, b, opts);
   if (pa < 0 || pb < 0) return null;
   const { island } = meshInfo(chf);
   return island[pa] === island[pb];
@@ -240,7 +292,8 @@ export function feetAnchors(collider, feet) {
   for (const r of FEET_RINGS) {
     const n = Math.max(8, Math.ceil((2 * Math.PI * r) / FEET_ARC_M));
     for (let k = 0; k < n; k++) {
-      const a = (k * 2 * Math.PI) / n, p = [feet[0] + Math.sin(a) * r, feet[1], feet[2] + Math.cos(a) * r];
+      const a = (k * 2 * Math.PI) / n,
+        p = [feet[0] + Math.sin(a) * r, feet[1], feet[2] + Math.cos(a) * r];
       if (kneeLine(collider, feet, p)) out.push(p);
     }
   }
@@ -268,20 +321,30 @@ function floorSpot(collider, poly, x, z) {
 export function noRouteSpot(chf, collider, isl, from, playerFeet, others = []) {
   const { island, polys } = meshInfo(chf);
   const order = [];
-  for (let i = 0; i < polys.length; i++) if (island[i] === isl) order.push({ p: polys[i], near: nearestIn(polys[i], from[0], from[2]) });
-  order.sort((a, b) => a.near.d - b.near.d);   // nearest first: no point of a poly is nearer him than its nearest point
-  let best = null, bestD = Infinity;
+  for (let i = 0; i < polys.length; i++)
+    if (island[i] === isl) order.push({ p: polys[i], near: nearestIn(polys[i], from[0], from[2]) });
+  order.sort((a, b) => a.near.d - b.near.d); // nearest first: no point of a poly is nearer him than its nearest point
+  let best = null,
+    bestD = Infinity;
   for (const { p, near } of order) {
     if (near.d >= bestD) break;
-    const dx = p.cx - near.x, dz = p.cz - near.z, l = Math.hypot(dx, dz);
+    const dx = p.cx - near.x,
+      dz = p.cz - near.z,
+      l = Math.hypot(dx, dz);
     const k = l > 1e-6 ? Math.min(1, STAND_INSET / l) : 0;
-    for (const [x, z] of [[near.x + dx * k, near.z + dz * k], [p.cx, p.cz]]) {
+    for (const [x, z] of [
+      [near.x + dx * k, near.z + dz * k],
+      [p.cx, p.cz],
+    ]) {
       const spot = floorSpot(collider, p, x, z);
       if (!spot) continue;
       if (Math.hypot(spot[0] - playerFeet[0], spot[2] - playerFeet[2]) < STAND_CLEAR_M) continue;
       if (others.some((o) => Math.hypot(spot[0] - o[0], spot[2] - o[2]) < STAND_CROWD_M)) continue;
       const d = Math.hypot(spot[0] - from[0], spot[1] - from[1], spot[2] - from[2]);
-      if (d < bestD) { bestD = d; best = spot; }
+      if (d < bestD) {
+        bestD = d;
+        best = spot;
+      }
       break;
     }
   }
@@ -293,7 +356,8 @@ export function noRouteSpot(chf, collider, isl, from, playerFeet, others = []) {
  *  not walking off (WATCH-LEAVES), not running (WERE-FRIGHT), no defender, not talked down. */
 export function huntsThePlayer(g) {
   const ai = g?.ai;
-  if (!ai || g.dead || g.puppet || g.leaving || g.fleeing || g.defender || typeof ai.standAt !== 'function') return false;
+  if (!ai || g.dead || g.puppet || g.leaving || g.fleeing || g.defender || typeof ai.standAt !== 'function')
+    return false;
   if (ai.isHostile === false || ai.canAct === false || !(ai.giveUpTimer > 0) || !ai.predictedTargetPos) return false;
   return ai.target == null || isPlayerTarget(ai.target);
 }
@@ -307,69 +371,114 @@ export function huntsThePlayer(g) {
  *   frame(dt, playerFeet, watch, grounded)   before the pools step: the budget, the bake, NO ROUTE (answers how many stood)
  * `makeClient` the bake's client (a test's own); `enabled` the switch.
  */
-export function createInteriorNav({ makeClient = () => new NavClient({ store: null }), enabled = () => !!getPref('enhancedAI') } = {}) {
+export function createInteriorNav({
+  makeClient = () => new NavClient({ store: null }),
+  enabled = () => !!getPref('enhancedAI'),
+} = {}) {
   const world = makeNavWorld();
   /** @type {any} */
   let room = null;
   let gen = 0;
   let checkT = 0;
-  const cut = new WeakMap();   // a watchman -> seconds cut off from the player's island
+  const cut = new WeakMap(); // a watchman -> seconds cut off from the player's island
 
   function bake() {
     const r = room;
     if (!r) return;
-    if (r.flying) { r.again = true; return; }   // ASYNC NEVER DROPS: the latest soup and anchors, once this one lands
-    r.flying = true; r.again = false;
+    if (r.flying) {
+      r.again = true;
+      return;
+    } // ASYNC NEVER DROPS: the latest soup and anchors, once this one lands
+    r.flying = true;
+    r.again = false;
     r.soup = soupWord(r.actions);
     const g = gen;
     if (!r.client) r.client = makeClient();
-    Promise.resolve(r.client.bake({ collider: r.collider, anchor: r.anchor, anchors: [...r.anchors, ...r.feet], exclude: doorsOutOfSoup(r.actions), key: 'interior' }))
-      .then((b) => { if (g === gen && b?.chf) { r.chf = b.chf; world.navEpoch++; } })   // every held route is re-solved on the new mesh
-      .catch((e) => { if (g === gen) console.warn('[enhanced-ai] interior navmesh bake failed - the classic motor stands:', e?.message ?? e); })
-      .finally(() => { if (g !== gen) return; r.flying = false; if (r.again) bake(); });
+    Promise.resolve(
+      r.client.bake({
+        collider: r.collider,
+        anchor: r.anchor,
+        anchors: [...r.anchors, ...r.feet],
+        exclude: doorsOutOfSoup(r.actions),
+        key: 'interior',
+      }),
+    )
+      .then((b) => {
+        if (g === gen && b?.chf) {
+          r.chf = b.chf;
+          world.navEpoch++;
+        }
+      }) // every held route is re-solved on the new mesh
+      .catch((e) => {
+        if (g === gen)
+          console.warn('[enhanced-ai] interior navmesh bake failed - the classic motor stands:', e?.message ?? e);
+      })
+      .finally(() => {
+        if (g !== gen) return;
+        r.flying = false;
+        if (r.again) bake();
+      });
   }
 
   return {
     world,
-    chf: () => { if (room) room.read = true; return room?.chf ?? null; },
+    chf: () => {
+      if (room) room.read = true;
+      return room?.chf ?? null;
+    },
     /** The motor's second ask when findPath cannot place a goal (`navGoal`): a body off the mesh past findPath's own
      *  half-metre snap - between two deep shelves, in a closet - is routed to the room's point meshPointNear finds for
      *  it (never through a wall: the knee's line), and walked in from there; on the mesh, or nowhere near it, null. */
-    goal: (feet) => (room?.chf ? navGoalOn(room.chf, feet, { collider: room.collider, skip: doorsOutOfSoup(room.actions) }) : null),
+    goal: (feet) =>
+      room?.chf ? navGoalOn(room.chf, feet, { collider: room.collider, skip: doorsOutOfSoup(room.actions) }) : null,
     /** The room, as it is mounted: `feet` the player's arrival (the restore's own spot, else the door's landing). */
     mount(ctx, feet) {
       this.release();
       room = {
-        collider: ctx.collider, actions: ctx.actions,
+        collider: ctx.collider,
+        actions: ctx.actions,
         anchor: [feet[0], feet[1], feet[2]],
         anchors: [...(ctx.waysIn ?? []), ...doorArrivals(ctx.doors, ctx.collider)],
-        feet: [], tried: new Set(),
-        chf: null, client: null, read: false, asked: false, flying: false, again: false, soup: null,
+        feet: [],
+        tried: new Set(),
+        chf: null,
+        client: null,
+        read: false,
+        asked: false,
+        flying: false,
+        again: false,
+        soup: null,
       };
       checkT = 0;
     },
     /** The room's end: the slot emptied first (a bake landing late publishes nothing), then the worker let go. */
     release() {
       const r = room;
-      room = null; gen++;
+      room = null;
+      gen++;
       r?.client?.dispose?.();
     },
-    get mounted() { return !!room; },
-    get baking() { return !!room?.flying; },
+    get mounted() {
+      return !!room;
+    },
+    get baking() {
+      return !!room?.flying;
+    },
     frame(dt, playerFeet, watch = [], grounded = true) {
-      world.pathBudget = world.budgetPerFrame;   // his enemy.js:404, the dungeon's line
+      world.pathBudget = world.budgetPerFrame; // his enemy.js:404, the dungeon's line
       const r = room;
       if (!r || !enabled()) return 0;
       if (!r.asked) {
-        if (!r.read) return 0;   // nobody walks the mesh yet: nothing baked
+        if (!r.read) return 0; // nobody walks the mesh yet: nothing baked
         r.asked = true;
         if (grounded && playerFeet) r.feet.push(...feetAnchors(r.collider, playerFeet));
         bake();
         return 0;
       }
       if ((checkT += dt) < CHECK_S) return 0;
-      const step = checkT; checkT = 0;
-      if (soupWord(r.actions) !== r.soup) bake();   // a door locked or unlocked since: another soup
+      const step = checkT;
+      checkT = 0;
+      if (soupWord(r.actions) !== r.soup) bake(); // a door locked or unlocked since: another soup
       if (!r.chf || !playerFeet) return 0;
       const hunters = (watch ?? []).filter(huntsThePlayer);
       if (!hunters.length) return 0;
@@ -391,8 +500,11 @@ export function createInteriorNav({ makeClient = () => new NavClient({ store: nu
       let stood = 0;
       for (const g of hunters) {
         const at = meshPointNear(r.chf, g.ai.feet, near)?.i ?? -1;
-        if (at >= 0 && island[at] === island[me]) { cut.delete(g); continue; }
-        const t = cut.has(g) ? cut.get(g) + step : 0;   // cut off from this read on
+        if (at >= 0 && island[at] === island[me]) {
+          cut.delete(g);
+          continue;
+        }
+        const t = cut.has(g) ? cut.get(g) + step : 0; // cut off from this read on
         cut.set(g, t);
         if (t < CUT_OFF_S) continue;
         const others = hunters.filter((o) => o !== g).map((o) => o.ai.feet);

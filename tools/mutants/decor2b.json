@@ -31,8 +31,8 @@
   {
     "name": "DECOR2b-furniture-of-any-group",
     "file": "src/systems/decor/decorFurnish.js",
-    "old": "export const isFurnishing = (item) => item?.group === 'Furniture' && (FURNITURE_TEMPLATES.includes(item?.templateIndex) || STONE_DECOR_TEMPLATES.includes(item?.templateIndex));",
-    "new": "export const isFurnishing = (item) => (FURNITURE_TEMPLATES.includes(item?.templateIndex) || STONE_DECOR_TEMPLATES.includes(item?.templateIndex));",
+    "old": "  item?.group === 'Furniture' &&\n  (FURNITURE_TEMPLATES.includes(item?.templateIndex) || STONE_DECOR_TEMPLATES.includes(item?.templateIndex));",
+    "new": "  FURNITURE_TEMPLATES.includes(item?.templateIndex) || STONE_DECOR_TEMPLATES.includes(item?.templateIndex);",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -40,7 +40,7 @@
   {
     "name": "DECOR2b-furniture-of-any-template",
     "file": "src/systems/decor/decorFurnish.js",
-    "old": "export const isFurnishing = (item) => item?.group === 'Furniture' && (FURNITURE_TEMPLATES.includes(item?.templateIndex) || STONE_DECOR_TEMPLATES.includes(item?.templateIndex));",
+    "old": "export const isFurnishing = (item) =>\n  item?.group === 'Furniture' &&\n  (FURNITURE_TEMPLATES.includes(item?.templateIndex) || STONE_DECOR_TEMPLATES.includes(item?.templateIndex));",
     "new": "export const isFurnishing = (item) => item?.group === 'Furniture';",
     "tests": [
       "test/systems/decor/decor2b.test.js"
@@ -49,8 +49,8 @@
   {
     "name": "DECOR2b-a-pillow-given-looks",
     "file": "src/systems/decor/decorFurnish.js",
-    "old": "  if (FURNISH_PILLOWS.has(t) || stoneDecorModel(t) !== null) return null;",
-    "new": "  if (stoneDecorModel(t) !== null) return null;",
+    "old": "  if (FURNISH_PILLOWS.has(t) || stoneDecorModel(t) !== null) return null; // PROF11: a carving stands as its own model",
+    "new": "  if (stoneDecorModel(t) !== null) return null; // PROF11: a carving stands as its own model",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "DECOR2b-a-rug-a-decoration-alone",
     "file": "src/systems/decor/decorFurnish.js",
-    "old": "  return ['furniture', 'decor'];   // curtains, rugs, tapestries, skins",
-    "new": "  return ['decor'];   // curtains, rugs, tapestries, skins",
+    "old": "  return ['furniture', 'decor']; // curtains, rugs, tapestries, skins",
+    "new": "  return ['decor']; // curtains, rugs, tapestries, skins",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "DECOR2b-the-last-chair-forgotten",
     "file": "src/systems/decor/decorFurnish.js",
-    "old": "new Set([221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232])",
-    "new": "new Set([221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231])",
+    "old": "  new Set([221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232]),",
+    "new": "  new Set([221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231]),",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "DECOR2b-the-fanciest-bed-forgotten",
     "file": "src/systems/decor/decorFurnish.js",
-    "old": "new Set([217, 218, 219, 220])",
-    "new": "new Set([217, 218, 219])",
+    "old": "export const FURNISH_BEDS = Object.freeze(new Set([217, 218, 219, 220]));",
+    "new": "export const FURNISH_BEDS = Object.freeze(new Set([217, 218, 219]));",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "DECOR2b-the-looks-unfiltered",
     "file": "src/systems/decor/decorFurnish.js",
-    "old": "return kinds ? (entries ?? []).filter((e) => kinds.includes(e.kind)) : [];",
-    "new": "return kinds ? [...(entries ?? [])] : [];",
+    "old": "  return kinds ? (entries ?? []).filter((e) => kinds.includes(e.kind)) : [];",
+    "new": "  return kinds ? [...(entries ?? [])] : [];",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "DECOR2b-the-row-unnamed",
     "file": "src/systems/decor/decorFurnish.js",
-    "old": "name: itemLongName(item), model, flat,",
-    "new": "name: 'Furniture', model, flat,",
+    "old": "    name: itemLongName(item),",
+    "new": "    name: 'Furniture',",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "DECOR2b-the-rows-numbers-dropped",
     "file": "src/systems/decor/decorFurnish.js",
-    "old": "looks, light: null, item: descriptor, storage: false,",
-    "new": "looks, light: null, item: null, storage: false,",
+    "old": "    item: descriptor,",
+    "new": "    item: null,",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "DECOR2b-a-pillows-picture-lost",
     "file": "src/systems/decor/decorFurnish.js",
-    "old": "icon: pic ? { archive: pic[0], record: pic[1], dye: null } : null,",
-    "new": "icon: null,",
+    "old": "    icon: pic ? { archive: pic[0], record: pic[1], dye: null } : null,",
+    "new": "    icon: null,",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "DECOR2b-one-line-for-many",
     "file": "src/systems/decor/decorFurnish.js",
-    "old": "export const furnishingDeliveredLine = (names) => (names.length === 1\n",
-    "new": "export const furnishingDeliveredLine = (names) => (true\n",
+    "old": "  names.length === 1",
+    "new": "  true",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "DECOR2b-the-back-line-always-many",
     "file": "src/systems/decor/decorFurnish.js",
-    "old": "export const furnishingBackLine = (n) => (n === 1 ?",
-    "new": "export const furnishingBackLine = (n) => (false ?",
+    "old": "  n === 1",
+    "new": "  false",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "DECOR2b-the-store-unstocked",
     "file": "src/systems/shopStock.js",
-    "old": "  [BUILDING_TYPES.FurnitureStore]: [0x08, FURNISHER_CHANCE],\n",
-    "new": "",
+    "old": "  [BUILDING_TYPES.FurnitureStore]: [0x08, FURNISHER_CHANCE],\n});",
+    "new": "});",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "DECOR2b-the-store-skipping-its-own",
     "file": "src/systems/shopStock.js",
-    "old": "if ((group === 'Furniture' && buildingType !== BUILDING_TYPES.FurnitureStore) || group === 'UselessItems1') continue;",
-    "new": "if (group === 'Furniture' || group === 'UselessItems1') continue;",
+    "old": "    if ((group === 'Furniture' && buildingType !== BUILDING_TYPES.FurnitureStore) || group === 'UselessItems1')\n      continue; // DECOR2b: the furnisher's own",
+    "new": "    if (group === 'Furniture' || group === 'UselessItems1') continue; // DECOR2b: the furnisher's own",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "DECOR2b-every-shop-its-furniture",
     "file": "src/systems/shopStock.js",
-    "old": "if ((group === 'Furniture' && buildingType !== BUILDING_TYPES.FurnitureStore) || group === 'UselessItems1') continue;",
-    "new": "if (group === 'UselessItems1') continue;",
+    "old": "    if ((group === 'Furniture' && buildingType !== BUILDING_TYPES.FurnitureStore) || group === 'UselessItems1')\n      continue; // DECOR2b: the furnisher's own",
+    "new": "    if (group === 'UselessItems1') continue; // DECOR2b: the furnisher's own",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ],
@@ -358,8 +358,8 @@
   {
     "name": "DECOR2b-furniture-back-into-the-pack",
     "file": "src/systems/decor/decorPack.js",
-    "old": "    if (isFurnishing(item)) { decorHome(item).push(item); return item; }\n",
-    "new": "",
+    "old": "    if (isFurnishing(item)) {\n      decorHome(item).push(item);\n      return item;\n    }\n    entity().items ??= [];",
+    "new": "    entity().items ??= [];",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ],

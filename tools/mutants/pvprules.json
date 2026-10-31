@@ -1,36 +1,308 @@
 [
-  {"name": "PVP-RULES-run-cap-unread", "file": "src/player/motor.js", "old": "    if (rideBase == null && _moveCaps.size) speed = Math.min(speed, moveCapNow().mps);", "new": "    if (rideBase == null && _moveCaps.size) speed = Math.min(speed, Infinity);", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-gallop-capped", "file": "src/player/motor.js", "old": "    if (rideBase == null && _moveCaps.size) speed = Math.min(speed, moveCapNow().mps);", "new": "    if (_moveCaps.size) speed = Math.min(speed, moveCapNow().mps);", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-jump-uncapped", "file": "src/player/motor.js", "old": "return _moveCaps.size ? Math.min(b, moveCapNow().jump) : b; }", "new": "return b; }", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-run-cap-off-formula", "file": "src/systems/wild/pvpRules.js", "old": "export const PVP_LIMITS = Object.freeze({ mps: 11.71, jump: 1.6 });", "new": "export const PVP_LIMITS = Object.freeze({ mps: 13, jump: 1.6 });", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-jump-cap-with-spell", "file": "src/systems/wild/pvpRules.js", "old": "export const PVP_LIMITS = Object.freeze({ mps: 11.71, jump: 1.6 });", "new": "export const PVP_LIMITS = Object.freeze({ mps: 11.71, jump: 2.2 });", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-ward-unread", "file": "src/characters/playerEntity.js", "old": "return !!_levitateWard?.() || pvpLevitateBarred(); }", "new": "return !!_levitateWard?.(); }", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-spare-never-armed", "file": "src/systems/wild/pvpRules.js", "old": "  if (!_warded) { _warded = true; _spare = true; }", "new": "  if (!_warded) { _warded = true; }", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-spare-rearmed", "file": "src/systems/wild/pvpRules.js", "old": "  if (!_warded) { _warded = true; _spare = true; }", "new": "  { _warded = true; _spare = true; }", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-ground-not-spending", "file": "src/systems/wild/pvpRules.js", "old": "  if (grounded) _spare = false;", "new": "  if (grounded) _spare = _spare;", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-landing-not-spared", "file": "src/scenes/shared.js", "old": "  if (inOutdoorWater || takePvpFallSpare()) return;", "new": "  if (inOutdoorWater) return;", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-dungeon-bill-not-spared", "file": "src/scenes/shared.js", "old": "  if (pvpFallSpared()) return 0;", "new": "", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-levitate-let-through", "file": "src/systems/wild/pvpRules.js", "old": "  if (fx.some((e) => e?.type === PVP_LEVITATE)) return", "new": "  if (fx.some((e) => e?.type === -1)) return", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-touch-buff-refused", "file": "src/systems/wild/pvpRules.js", "old": "  if (sp?.rangeType === 0 && fx.some(", "new": "  if (fx.some(", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-shield-refused", "file": "src/systems/wild/pvpRules.js", "old": "export const PVP_SELF_BARRED = Object.freeze([8, 9, 13,", "new": "export const PVP_SELF_BARRED = Object.freeze([35, 8, 9, 13,", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-edge-read-as-later", "file": "src/systems/wild/pvpRules.js", "old": "(edge ? DISPEL.has(a.kind) :", "new": "(false ? DISPEL.has(a.kind) :", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-worn-item-kept", "file": "src/systems/wild/pvpRules.js", "old": "(a.heldItem ? DISPEL.has(a.kind) : a.kind", "new": "(a.heldItem ? false : a.kind", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-curse-stripped", "file": "src/systems/wild/pvpRules.js", "old": "const dispelled = (a, edge) => !a.permanent && !a.bundleDuel", "new": "const dispelled = (a, edge) => !a.bundleDuel", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-potion-stripped-after-edge", "file": "src/systems/wild/pvpRules.js", "old": "SELF_KINDS.has(a.kind) && (a.bundleSelfCast || a.bundleAlly)", "new": "SELF_KINDS.has(a.kind)", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-levitate-strip-unspared", "file": "src/systems/wild/pvpRules.js", "old": "!kept.includes(a))) { _warded = true; _spare = true; }", "new": "!kept.includes(a))) { _warded = true; }", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-zone-unread", "file": "src/scenes/pvpRulesHost.js", "old": "setPvpLimitedSource(() => !!flag?.on() && !!zone());", "new": "setPvpLimitedSource(() => !!flag?.on());", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-rest-unrefused", "file": "src/scenes/pvpRulesHost.js", "old": "  const rest = () => pvpLimited();", "new": "  const rest = () => false;", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-line-each-poll", "file": "src/scenes/pvpRulesHost.js", "old": "      if (!was && n) midScreen(pvpDispelText());", "new": "      midScreen(pvpDispelText());", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-paralyze-let-through", "file": "src/combat/siegeCombat.js", "old": "export const PVP_SPELL_TYPES = Object.freeze([4]);", "new": "export const PVP_SPELL_TYPES = Object.freeze([4, 0]);", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-second-effect-read", "file": "src/combat/siegeCombat.js", "old": "  const e = Array.isArray(sp?.effects) ? sp.effects[0] : null;", "new": "  const e = Array.isArray(sp?.effects) ? sp.effects.find((x) => x?.type === 4) ?? sp.effects[0] : null;", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-cast-engine-unasked", "file": "src/scenes/hostMagic.js", "old": "?? sandSpellRefusal(sp) ?? pvpSpellRefusal(sp); }", "new": "?? sandSpellRefusal(sp); }", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-worn-utility-stripped", "file": "src/systems/wild/pvpRules.js", "old": "(a.heldItem ? DISPEL.has(a.kind) : a.kind", "new": "(a.heldItem ? true : a.kind", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-ride-bar-unasked", "file": "src/player/mountRig.js", "old": "const barred = isRiding(mode) ? rideBarred() : null;", "new": "const barred = null;", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-ride-bar-unread", "file": "src/scenes/pvpRulesHost.js", "old": "setRideBar(() => (pvpLimited() ? pvpRideText() : null), midScreen);", "new": "setRideBar(() => null, midScreen);", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-rider-kept", "file": "src/scenes/pvpRulesHost.js", "old": "if (isRiding(motor?.transportMode)) { rideFoot(); midScreen(pvpRideText()); }", "new": "if (isRiding(motor?.transportMode)) { rideFoot(); }", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-recast-unasked", "file": "src/scenes/pvpRulesHost.js", "old": "} else if (takePvpHeldTaken()) restartHeldEnchantments(entity);", "new": "} else if (false) restartHeldEnchantments(entity);", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-worn-taken-unnoted", "file": "src/systems/wild/pvpRules.js", "old": "  if (list.some((a) => a?.heldItem && !kept.includes(a))) _heldTaken = true;\n", "new": "", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-kit-stripped", "file": "src/systems/wild/pvpRules.js", "old": " && !a.bundleDuel && !a.bundleKit", "new": " && !a.bundleDuel", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-kit-refused", "file": "src/systems/wild/pvpRules.js", "old": "if (!limited || sp?.pvpKit != null) return null;", "new": "if (!limited) return null;", "tests": ["test/systems/wild/pvprules.test.js"]},
-  {"name": "PVP-RULES-kit-unmarked", "file": "src/systems/effects.js", "old": "        if (spell?.pvpKit != null) list[i].bundleKit = true;", "new": "        if (false) list[i].bundleKit = true;", "tests": ["test/systems/wild/pvprules.test.js"]}
+  {
+    "name": "PVP-RULES-run-cap-unread",
+    "file": "src/player/motor.js",
+    "old": "    if (rideBase == null && _moveCaps.size) speed = Math.min(speed, moveCapNow().mps);",
+    "new": "    if (rideBase == null && _moveCaps.size) speed = Math.min(speed, Infinity);",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-gallop-capped",
+    "file": "src/player/motor.js",
+    "old": "    if (rideBase == null && _moveCaps.size) speed = Math.min(speed, moveCapNow().mps);",
+    "new": "    if (_moveCaps.size) speed = Math.min(speed, moveCapNow().mps);",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-jump-uncapped",
+    "file": "src/player/motor.js",
+    "old": "return _moveCaps.size ? Math.min(b, moveCapNow().jump) : b; }",
+    "new": "return b; }",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-run-cap-off-formula",
+    "file": "src/systems/wild/pvpRules.js",
+    "old": "export const PVP_LIMITS = Object.freeze({ mps: 11.71, jump: 1.6 });",
+    "new": "export const PVP_LIMITS = Object.freeze({ mps: 13, jump: 1.6 });",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-jump-cap-with-spell",
+    "file": "src/systems/wild/pvpRules.js",
+    "old": "export const PVP_LIMITS = Object.freeze({ mps: 11.71, jump: 1.6 });",
+    "new": "export const PVP_LIMITS = Object.freeze({ mps: 11.71, jump: 2.2 });",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-ward-unread",
+    "file": "src/characters/playerEntity.js",
+    "old": "return !!_levitateWard?.() || pvpLevitateBarred(); }",
+    "new": "return !!_levitateWard?.(); }",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-spare-never-armed",
+    "file": "src/systems/wild/pvpRules.js",
+    "old": "    _warded = true;\n    _spare = true;\n  }\n  return true;",
+    "new": "    _warded = true;\n  }\n  return true;",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-spare-rearmed",
+    "file": "src/systems/wild/pvpRules.js",
+    "old": "  if (!_warded) {",
+    "new": "  {",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-ground-not-spending",
+    "file": "src/systems/wild/pvpRules.js",
+    "old": "  if (grounded) _spare = false;",
+    "new": "  if (grounded) _spare = _spare;",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-landing-not-spared",
+    "file": "src/scenes/shared.js",
+    "old": "  if (inOutdoorWater || takePvpFallSpare()) return;",
+    "new": "  if (inOutdoorWater) return;",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-dungeon-bill-not-spared",
+    "file": "src/scenes/shared.js",
+    "old": "  if (pvpFallSpared()) return 0;",
+    "new": "",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-levitate-let-through",
+    "file": "src/systems/wild/pvpRules.js",
+    "old": "  if (fx.some((e) => e?.type === PVP_LEVITATE)) return t('pvp.rules.levitate', 'You cannot levitate with PvP on.');",
+    "new": "  if (fx.some((e) => e?.type === -1)) return t('pvp.rules.levitate', 'You cannot levitate with PvP on.');",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-touch-buff-refused",
+    "file": "src/systems/wild/pvpRules.js",
+    "old": "  if (sp?.rangeType === 0 && fx.some((e) => PVP_SELF_BARRED.includes(e?.type)))",
+    "new": "  if (fx.some((e) => PVP_SELF_BARRED.includes(e?.type)))",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-shield-refused",
+    "file": "src/systems/wild/pvpRules.js",
+    "old": "export const PVP_SELF_BARRED = Object.freeze([8, 9, 13, 18, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31]);",
+    "new": "export const PVP_SELF_BARRED = Object.freeze([35, 8, 9, 13, 18, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31]);",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-edge-read-as-later",
+    "file": "src/systems/wild/pvpRules.js",
+    "old": "      (edge ? DISPEL.has(a.kind) : SELF_KINDS.has(a.kind) && (a.bundleSelfCast || a.bundleAlly)));",
+    "new": "      (false ? DISPEL.has(a.kind) : SELF_KINDS.has(a.kind) && (a.bundleSelfCast || a.bundleAlly)));",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-worn-item-kept",
+    "file": "src/systems/wild/pvpRules.js",
+    "old": "    ? DISPEL.has(a.kind)",
+    "new": "    ? false",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-curse-stripped",
+    "file": "src/systems/wild/pvpRules.js",
+    "old": "  !a.permanent &&\n  !a.bundleDuel &&",
+    "new": "  !a.bundleDuel &&",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-potion-stripped-after-edge",
+    "file": "src/systems/wild/pvpRules.js",
+    "old": "  (a.heldItem\n    ? DISPEL.has(a.kind)\n    : a.kind === 'levitate' ||\n      (edge ? DISPEL.has(a.kind) : SELF_KINDS.has(a.kind) && (a.bundleSelfCast || a.bundleAlly)));",
+    "new": "  (a.heldItem ? DISPEL.has(a.kind) : a.kind === 'levitate' || (edge ? DISPEL.has(a.kind) : SELF_KINDS.has(a.kind)));",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-levitate-strip-unspared",
+    "file": "src/systems/wild/pvpRules.js",
+    "old": "    _spare = true;\n  } // the fall it ends is spared too",
+    "new": "  } // the fall it ends is spared too",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-zone-unread",
+    "file": "src/scenes/pvpRulesHost.js",
+    "old": "  setPvpLimitedSource(() => !!flag?.on() && !!zone());",
+    "new": "  setPvpLimitedSource(() => !!flag?.on());",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-rest-unrefused",
+    "file": "src/scenes/pvpRulesHost.js",
+    "old": "  const rest = () => pvpLimited();",
+    "new": "  const rest = () => false;",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-line-each-poll",
+    "file": "src/scenes/pvpRulesHost.js",
+    "old": "      if (!was && n) midScreen(pvpDispelText());",
+    "new": "      midScreen(pvpDispelText());",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-paralyze-let-through",
+    "file": "src/combat/siegeCombat.js",
+    "old": "export const PVP_SPELL_TYPES = Object.freeze([4]);",
+    "new": "export const PVP_SPELL_TYPES = Object.freeze([4, 0]);",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-second-effect-read",
+    "file": "src/combat/siegeCombat.js",
+    "old": "  const e = Array.isArray(sp?.effects) ? sp.effects[0] : null;",
+    "new": "  const e = Array.isArray(sp?.effects) ? (sp.effects.find((x) => x?.type === 4) ?? sp.effects[0]) : null;",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-cast-engine-unasked",
+    "file": "src/scenes/hostMagic.js",
+    "old": "?? sandSpellRefusal(sp) ?? pvpSpellRefusal(sp); }",
+    "new": "?? sandSpellRefusal(sp); }",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-worn-utility-stripped",
+    "file": "src/systems/wild/pvpRules.js",
+    "old": "    ? DISPEL.has(a.kind)",
+    "new": "    ? true",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-ride-bar-unasked",
+    "file": "src/player/mountRig.js",
+    "old": "const barred = isRiding(mode) ? rideBarred() : null;",
+    "new": "const barred = null;",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-ride-bar-unread",
+    "file": "src/scenes/pvpRulesHost.js",
+    "old": "  setRideBar(() => (pvpLimited() ? pvpRideText() : null), midScreen);",
+    "new": "  setRideBar(() => null, midScreen);",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-rider-kept",
+    "file": "src/scenes/pvpRulesHost.js",
+    "old": "        midScreen(pvpRideText());\n      } // the owner: \"No horse u demoibt\"",
+    "new": "      } // the owner: \"No horse u demoibt\"",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-recast-unasked",
+    "file": "src/scenes/pvpRulesHost.js",
+    "old": "    } else if (takePvpHeldTaken()) restartHeldEnchantments(entity); // the flag down: the worn set's buffs come back, recast (no durability billed)",
+    "new": "    } else if (false) restartHeldEnchantments(entity); // the flag down: the worn set's buffs come back, recast (no durability billed)",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-worn-taken-unnoted",
+    "file": "src/systems/wild/pvpRules.js",
+    "old": "  if (list.some((a) => a?.heldItem && !kept.includes(a))) _heldTaken = true;\n  if (n) entity.activeEffects = kept;",
+    "new": "  if (n) entity.activeEffects = kept;",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-kit-stripped",
+    "file": "src/systems/wild/pvpRules.js",
+    "old": "  !a.bundleKit &&\n  (a.heldItem",
+    "new": "  (a.heldItem",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-kit-refused",
+    "file": "src/systems/wild/pvpRules.js",
+    "old": "  if (!limited || sp?.pvpKit != null) return null; // PVP-KIT: the PvP bar's spells are the flag's own",
+    "new": "  if (!limited) return null; // PVP-KIT: the PvP bar's spells are the flag's own",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  },
+  {
+    "name": "PVP-RULES-kit-unmarked",
+    "file": "src/systems/effects.js",
+    "old": "        if (spell?.pvpKit != null) list[i].bundleKit = true;",
+    "new": "        if (false) list[i].bundleKit = true;",
+    "tests": [
+      "test/systems/wild/pvprules.test.js"
+    ]
+  }
 ]

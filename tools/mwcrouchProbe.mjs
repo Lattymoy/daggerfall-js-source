@@ -128,7 +128,10 @@ await vite.listen();
 const port = vite.httpServer.address().port;
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 const fails = [];
-const ok = (cond, what, got) => { console.log(`   ${cond ? 'ok  ' : 'FAIL'}  ${what}${got !== undefined ? `   (${JSON.stringify(got)})` : ''}`); if (!cond) fails.push(what); };
+const ok = (cond, what, got) => {
+  console.log(`   ${cond ? 'ok  ' : 'FAIL'}  ${what}${got !== undefined ? `   (${JSON.stringify(got)})` : ''}`);
+  if (!cond) fails.push(what);
+};
 
 try {
   // AUDIT 68 X2-probe-tmp-page-leak: written inside the try, so the finally that unlinks it always runs.
@@ -165,7 +168,10 @@ try {
   // and not a counter. An even count hides the bug behind its own parity.
   console.log('1. three taps of C at ~9 fps - the old derivation misses them, the ring does not');
   await start(110);
-  for (let i = 0; i < 3; i++) { await tap(); await page.waitForTimeout(260); }
+  for (let i = 0; i < 3; i++) {
+    await tap();
+    await page.waitForTimeout(260);
+  }
   await page.waitForTimeout(400);
   let r = await read();
   await stop();
@@ -174,8 +180,10 @@ try {
   ok(r.releases === 3, 'and GetKeyUp saw every release', r.releases);
   ok(r.latchPresses < 3, 'THE BUG: the held-ring derivation missed taps the browser delivered whole', r.latchPresses);
   ok(r.crouchedByEdge === true, 'three taps off the ring end CROUCHED - crouch, stand, crouch', r.crouchedByEdge);
-  ok(r.crouchedByLatch !== r.crouchedByEdge,
-    'and the old reader ended in the WRONG stance, which is the report', { latch: r.crouchedByLatch, edge: r.crouchedByEdge });
+  ok(r.crouchedByLatch !== r.crouchedByEdge, 'and the old reader ended in the WRONG stance, which is the report', {
+    latch: r.crouchedByLatch,
+    edge: r.crouchedByEdge,
+  });
 
   // ── 2. THE UNCROUCH, WHICH IS THE SENTENCE MAC WROTE ────────────────
   console.log('\n2. crouch, then UNCROUCH - one tap each, at the same frame rate');
@@ -196,7 +204,7 @@ try {
   console.log('\n3. C held down through the OS repeat storm - ONE press, one stance');
   await start(110);
   await page.keyboard.down('c');
-  await page.waitForTimeout(1400);        // long enough for the OS to repeat
+  await page.waitForTimeout(1400); // long enough for the OS to repeat
   await page.keyboard.up('c');
   await page.waitForTimeout(300);
   r = await read();
@@ -207,12 +215,22 @@ try {
   // ── 4. AT 60 fps THE TWO READERS AGREE ──────────────────────────────
   console.log('\n4. the same taps at a normal frame rate - the two readers agree, as they always did');
   await start(0);
-  for (let i = 0; i < 4; i++) { await page.keyboard.press('c', { delay: 40 }); await page.waitForTimeout(160); }
+  for (let i = 0; i < 4; i++) {
+    await page.keyboard.press('c', { delay: 40 });
+    await page.waitForTimeout(160);
+  }
   await page.waitForTimeout(300);
   r = await read();
   await stop();
-  ok(r.edgePresses === 4 && r.latchPresses === 4, 'both saw all four - the fix changes nothing where the old reader worked', { edge: r.edgePresses, latch: r.latchPresses });
-  ok(r.crouchedByEdge === r.crouchedByLatch, 'and they end in the same stance', { edge: r.crouchedByEdge, latch: r.crouchedByLatch });
+  ok(
+    r.edgePresses === 4 && r.latchPresses === 4,
+    'both saw all four - the fix changes nothing where the old reader worked',
+    { edge: r.edgePresses, latch: r.latchPresses },
+  );
+  ok(r.crouchedByEdge === r.crouchedByLatch, 'and they end in the same stance', {
+    edge: r.crouchedByEdge,
+    latch: r.crouchedByLatch,
+  });
 
   ok(errors.length === 0, 'no page errors', errors);
 } finally {

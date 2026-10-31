@@ -326,8 +326,8 @@
   {
     "name": "SIEGE-VOID-parse-more",
     "file": "src/net/townSeatBook.js",
-    "old": "!seatKeyOk(k) || more.length) return { error: SIEGE_USAGE };",
-    "new": "!seatKeyOk(k)) return { error: SIEGE_USAGE };",
+    "old": "  if (String(op ?? '').toLowerCase() !== 'void' || !/^\\d+$/.test(key ?? '') || !seatKeyOk(k) || more.length)",
+    "new": "  if (String(op ?? '').toLowerCase() !== 'void' || !/^\\d+$/.test(key ?? '') || !seatKeyOk(k))",
     "tests": [
       "test/net/siege_void.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "SIEGE-VOID-book-words",
     "file": "src/net/townSeatBook.js",
-    "old": "is voided${r.data?.restored ? ' - its Charter went back to the guild that held it' : ''}.` };",
-    "new": "is voided.` };",
+    "old": "      return {\n        ok: true,\n        text: `The ${what} at seat ${key} is voided${r.data?.restored ? ' - its Charter went back to the guild that held it' : ''}.`,\n      };",
+    "new": "      return { ok: true, text: `The ${what} at seat ${key} is voided.` };",
     "tests": [
       "test/net/siege_void.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "AUDIT529-V2-stockpile-kept",
     "file": "server-account/src/seatForts.js",
-    "old": "        db.prepare(`UPDATE town_seat_stockpile SET qty = qty - MIN(?6, qty) WHERE key = ?1 AND material = ?5 AND ${again}`).bind(key, work, building, guild, material, n),\n",
-    "new": "",
+    "old": "        db\n          .prepare(\n            `UPDATE town_seat_stockpile SET qty = qty - MIN(?6, qty) WHERE key = ?1 AND material = ?5 AND ${again}`,\n          )\n          .bind(key, work, building, guild, material, n),\n      );",
+    "new": "      );",
     "tests": [
       "test/net/siege_void.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "AUDIT529-V2-tier-unasked",
     "file": "server-account/src/seatForts.js",
-    "old": "      WHERE key = ?1 AND work = ?2 AND building IS NULL AND tier = ?3 - 1`)",
-    "new": "      WHERE key = ?1 AND work = ?2 AND building IS NULL`)",
+    "old": "      WHERE key = ?1 AND work = ?2 AND building IS NULL AND tier = ?3 - 1`,",
+    "new": "      WHERE key = ?1 AND work = ?2 AND building IS NULL`,",
     "tests": [
       "test/net/siege_void.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "AUDIT529-V5-words",
     "file": "src/net/townSeatLaw.js",
-    "old": "  'battle-settled': 'That battle\\'s week is settled and can no longer be voided.',\n",
-    "new": "",
+    "old": "  'battle-settled': \"That battle's week is settled and can no longer be voided.\",\n  // AUDIT-SEATS S10 (8.1: \"changing either ... is refused in a siege week\")",
+    "new": "  // AUDIT-SEATS S10 (8.1: \"changing either ... is refused in a siege week\")",
     "tests": [
       "test/net/siege_void.test.js"
     ]

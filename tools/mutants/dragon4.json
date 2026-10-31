@@ -47,8 +47,8 @@
   {
     "name": "DRAGON4-a-guest-counted",
     "file": "server-account/src/dragons.js",
-    "old": "  if (!player.handle) {   // a guest: never counted and never tamed",
-    "new": "  if (false) {   // a guest: never counted and never tamed",
+    "old": "  if (!player.handle) {",
+    "new": "  if (false) {",
     "tests": [
       "test/net/dragon/dragon4_service.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "DRAGON4-a-tame-forgotten",
     "file": "src/scenes/dragonRewards.js",
-    "old": "    writeTames([...readTames(), { id: t.id,",
-    "new": "    void ([...readTames(), { id: t.id,",
+    "old": "    writeTames([\n      ...readTames(),\n      {\n        id: t.id,\n        look: t.look === 1 ? 1 : 0,\n        character: typeof t.character === 'string' ? t.character : (entry?.ch ?? null),\n        w: c?.q ?? null,\n      },\n    ]);",
+    "new": "    void [\n      ...readTames(),\n      {\n        id: t.id,\n        look: t.look === 1 ? 1 : 0,\n        character: typeof t.character === 'string' ? t.character : (entry?.ch ?? null),\n        w: c?.q ?? null,\n      },\n    ];",
     "tests": [
       "test/net/dragon/dragon4_claims.test.js"
     ]

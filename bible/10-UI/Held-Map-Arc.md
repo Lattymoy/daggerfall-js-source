@@ -1366,7 +1366,7 @@ bitmap (AUDIT FB1031 II T4). Its switch is dimmed there.
 
 ## MAP-PAN - the world sheet's places move as one layer (2026-10-18)
 
-A pan redrew every place. The kept ink is keyed by the view, so each step of a drag painted the coast and, inside that, walked every mark onto the paper again. The place marks are a layer of their own now (`inkMap.js:"export function syncMarksLayer(prev, spec) {"`): the glyphs, a hub's circle, a seat's ring, a port's anchor, a carriage town's wheel, and the marked place's ring. A pan that stays inside what that layer baked — half a paper past each edge, and never a bitmap over 8192 device pixels on a side or 16777216 device pixels in area — is one blit (`inkMap.js:"export function blitMarksLayer(ctx, layer, view) {"`), and only while that blit still covers the whole view. A zoom, a band change, or a pan that walks off the bake paints the marks again: a glyph is a paper-pixel size, so the layer is not scaled. The coast, the roads and the breathing rings are as they were. With no 2D context on the layer the sheet inks the marks where it always did.
+A pan redrew every place. The kept ink is keyed by the view, so each step of a drag painted the coast and, inside that, walked every mark onto the paper again. The place marks are a layer of their own now (`inkMap.js:"export function syncMarksLayer"`): the glyphs, a hub's circle, a seat's ring, a port's anchor, a carriage town's wheel, and the marked place's ring. A pan that stays inside what that layer baked — half a paper past each edge, and never a bitmap over 8192 device pixels on a side or 16777216 device pixels in area — is one blit (`inkMap.js:"export function blitMarksLayer"`), and only while that blit still covers the whole view. A zoom, a band change, or a pan that walks off the bake paints the marks again: a glyph is a paper-pixel size, so the layer is not scaled. The coast, the roads and the breathing rings are as they were. With no 2D context on the layer the sheet inks the marks where it always did.
 
 Pins: `test/ui/mappan.test.js`.
 
@@ -1435,6 +1435,27 @@ points that are past the Bay now), `test/ui/mineperks.test.js`, `test/ui/wb1_gat
 x2, homevendor, lairworld, mineperks, start3, wb1, audittesa2m M7 x2, map1 search-no-focus, map2 ports-filter-skips-search,
 tesa13 marks-at-far, tesa15 tiles-keyless, ww7 WW7-6-the-capital-keyed-as-a-city. A departure from DFU's travel map,
 whose places and find are MAPS.BSA's: Port-Ledger A, BAY-LEFT-MAPS.
+
+## FIND-FOUND - a found place past the Bay is in the Find box (2026-10-31, from Discord)
+
+A player's Commoners quest said "Bring the courier's letter to Virena Ulailnas in Helbenar". Helbenar is a Morrowind
+village of the countryside's (TESA7), where the questor gave the quest, and the Find box had no such name. C9 indexed the
+listed rows alone: the countryside's and the lairs' places are a pixel's roll and no list, too many to roll for a box.
+
+The box now finds one once the player has found it, as the Bay's box finds a discovered place. The discovery store keeps
+each one's whole map id and name (`systems/discovery.js` foundMadePlaces); `ui/tamrielInk.js` tamrielFoundRows reads its
+pixel back off the id (`countryPixelOfId`, and `world/tamrielDungeons.js` lairPixelOfId). The index is read again when the
+store moves, so a place found with the sheet open is in the box at once. An Arena place keeps no name in the store and is
+listed already. The four hosts: as C9, no host line changed.
+
+Pins `test/ui/findfound.test.js` (4); mutants `tools/mutants/findfound.json`, 8 dead.
+
+AUDIT FIND-FOUND (2026-10-31, `01-Overview/audits/Audit-Dragon-Cell.md` F1-F3). One name stands for many places past the
+Bay: 103 Helbenars on the freeware, and 38,661 of 83,179 rolled names are shared. Found homonyms come nearest first, each
+with its way from the player in the event board's own words ("8.2 km E", `systems/eventBoard.js` eventWay). MAPS.BSA's
+rows and the listed ones are kept by the ink, so a find reads the found rows alone. AUDIT DRAGON-CELL II E8: a Bay
+homonym its way too, and no lone comma where a row has no region. Pinned by `findfound.test.js` (one
+more, 5); `tools/mutants/dragoncellaudit.json` AUDIT-FIND-FOUND-*, 3 dead.
 
 ## PAD-CAPTURE - a pad's press on the map never throws (RPT1026-CLIENT, 2026-10-26)
 

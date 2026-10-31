@@ -155,8 +155,8 @@
   {
     "name": "FOLIOS-get-aurum-a-bare-word-under-the-grimoire",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "  primary: ['.px-shopwin .sh-buy', '.px-shopwin .sh-getaurum',",
-    "new": "  primary: ['.px-shopwin .sh-buy',",
+    "old": "    '.px-shopwin .sh-buy',\n    '.px-shopwin .sh-getaurum', // AUDIT-STOREFRONT II: Buy - what the shop is for; PASS-PANELS: Get Aurum, its way when short",
+    "new": "    '.px-shopwin .sh-buy', // AUDIT-STOREFRONT II: Buy - what the shop is for; PASS-PANELS: Get Aurum, its way when short",
     "tests": [
       "test/ui/storefront_audit2_window.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "FOLIOS-an-item-retired-with-its-season",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "return !s ? 'retired' : passTracksOpen(s, nowMs) ? 'pass' : 'dormant';",
-    "new": "return !s || nowMs >= s.toMs ? 'retired' : passTracksOpen(s, nowMs) ? 'pass' : 'dormant';",
+    "old": "    return !s ? 'retired' : passTracksOpen(s, nowMs) ? 'pass' : 'dormant';",
+    "new": "    return !s || nowMs >= s.toMs ? 'retired' : passTracksOpen(s, nowMs) ? 'pass' : 'dormant';",
     "tests": [
       "test/ui/folios_window.test.js"
     ]

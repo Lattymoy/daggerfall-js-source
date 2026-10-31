@@ -24,7 +24,8 @@ export const ICON_CAP = 4;
 export const SNAP = 0.75;
 /** The device pixel ratios the law honours: a browser zoomed out reports under one (67% is 0.67 on a plain screen)
  *  and is drawn at it down to a half; a page zoomed past four draws what four draws. */
-const DPR_MIN = 0.5, DPR_MAX = 8;   // AUDIT UI A6: 8, not 4 - a 3x phone at HUD scale 1.5 draws at 4.5, and 4 made it 1.125 too small
+const DPR_MIN = 0.5,
+  DPR_MAX = 8; // AUDIT UI A6: 8, not 4 - a 3x phone at HUD scale 1.5 draws at 4.5, and 4 made it 1.125 too small
 
 /** A usable device pixel ratio: finite, within [0.5, 8] (a screen's ratio times the HUD's scale); anything else reads as 1. */
 export const clampDpr = (dpr) => (Number.isFinite(dpr) && dpr > 0 ? Math.min(DPR_MAX, Math.max(DPR_MIN, dpr)) : 1);
@@ -40,12 +41,20 @@ export function fitIcon(w, h, { box, dpr = 1, cap = ICON_CAP, snap = true } = /*
   const r = clampDpr(dpr);
   const boxDev = Math.max(1, Math.floor(box * r));
   const side = Math.max(w, h);
-  const s = Math.min(boxDev / side, (cap > 0 ? cap : ICON_CAP) * r);   // device pixels a source pixel
+  const s = Math.min(boxDev / side, (cap > 0 ? cap : ICON_CAP) * r); // device pixels a source pixel
   const whole = Math.floor(s + 1e-9);
   if (whole >= 1 && (Math.abs(whole - s) < 1e-9 || (snap && whole / s >= SNAP))) {
-    return { prescale: whole, outW: w * whole, outH: h * whole, smooth: false, cssW: (w * whole) / r, cssH: (h * whole) / r };
+    return {
+      prescale: whole,
+      outW: w * whole,
+      outH: h * whole,
+      smooth: false,
+      cssW: (w * whole) / r,
+      cssH: (h * whole) / r,
+    };
   }
-  const outW = Math.max(1, Math.round(w * s)), outH = Math.max(1, Math.round(h * s));
+  const outW = Math.max(1, Math.round(w * s)),
+    outH = Math.max(1, Math.round(h * s));
   return { prescale: s > 1 ? Math.ceil(s) : 1, outW, outH, smooth: true, cssW: outW / r, cssH: outH / r };
 }
 
@@ -55,7 +64,10 @@ export function fitIcon(w, h, { box, dpr = 1, cap = ICON_CAP, snap = true } = /*
  * @param {number} w @param {number} h @param {(x: number, y: number) => boolean} drawn
  */
 export function opaqueBounds(w, h, drawn) {
-  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  let x0 = w,
+    y0 = h,
+    x1 = -1,
+    y1 = -1;
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       if (!drawn(x, y)) continue;
@@ -75,17 +87,17 @@ export function opaqueBounds(w, h, drawn) {
  * smoothly (ui/textureCanvas.js fittedImg).
  */
 export const SLOT_BOX = Object.freeze({
-  grid: 48,           // the pack's grid: a 64px slot framed round a 52px room
-  gridPhone: 40,      // ...a phone's: a 56px slot round a 44px room, so a 390px screen keeps six a row
-  worn: 28,           // a worn panel's picture below a desktop: a 34px tile with no edge of its own (the panel is the frame) - three a side
-  wornHalf: 22,       // ...a half panel's there: a 28px tile over its name
-  wornWide: 48,       // a desktop's panel: a room up to 56px (54 inside its edge) - the grid's own box, one picture for both
-  wornHalfWide: 38,   // a desktop's half panel: a room up to 44px, over its name
-  loot: 30,           // a loot row's picture: a 38px tile in its frame
-  row: 26,            // the shop's and a player trade's rows: a 34px tile in its frame
-  socket: 32,         // the accessory shelf's socket: 44px on a desktop's shelf, 36 inside its frame and padding
-  card: 96,           // the hover card and the pack's detail card: the picture's own 96px box, no frame
-  broker: 32,         // the Sigil Broker's offer: a 36px tile inside its 44px frame
+  grid: 48, // the pack's grid: a 64px slot framed round a 52px room
+  gridPhone: 40, // ...a phone's: a 56px slot round a 44px room, so a 390px screen keeps six a row
+  worn: 28, // a worn panel's picture below a desktop: a 34px tile with no edge of its own (the panel is the frame) - three a side
+  wornHalf: 22, // ...a half panel's there: a 28px tile over its name
+  wornWide: 48, // a desktop's panel: a room up to 56px (54 inside its edge) - the grid's own box, one picture for both
+  wornHalfWide: 38, // a desktop's half panel: a room up to 44px, over its name
+  loot: 30, // a loot row's picture: a 38px tile in its frame
+  row: 26, // the shop's and a player trade's rows: a 34px tile in its frame
+  socket: 32, // the accessory shelf's socket: 44px on a desktop's shelf, 36 inside its frame and padding
+  card: 96, // the hover card and the pack's detail card: the picture's own 96px box, no frame
+  broker: 32, // the Sigil Broker's offer: a 36px tile inside its 44px frame
 });
 /** The pack's own phone line (ui/enhanced/enhancedStyle.js's `@media (max-width: 640px)`). */
 export const PHONE_QUERY = '(max-width: 640px)';
@@ -96,5 +108,11 @@ export const gridBox = () => (globalThis.matchMedia?.(PHONE_QUERY)?.matches ? SL
 /** The pack's desktop line (ui/enhanced/enhancedStyle.js's `@media (min-width: 1000px)`): the body's slots are plates there. */
 export const WIDE_QUERY = '(min-width: 1000px)';
 /** A worn panel's box on this screen - `half`, a split panel's. A page with no `matchMedia` (node) is not wide. */
-export const wornBox = (half = false) => (globalThis.matchMedia?.(WIDE_QUERY)?.matches
-  ? (half ? SLOT_BOX.wornHalfWide : SLOT_BOX.wornWide) : (half ? SLOT_BOX.wornHalf : SLOT_BOX.worn));
+export const wornBox = (half = false) =>
+  globalThis.matchMedia?.(WIDE_QUERY)?.matches
+    ? half
+      ? SLOT_BOX.wornHalfWide
+      : SLOT_BOX.wornWide
+    : half
+      ? SLOT_BOX.wornHalf
+      : SLOT_BOX.worn;

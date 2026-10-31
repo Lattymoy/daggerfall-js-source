@@ -158,5 +158,5 @@ test("audit24 wave22: the {0:00} pad rounds, so DFU prints ':60'", () => {
     /^01:02:60 /, 'the impossible reading, verbatim');
   assert.match(midDateTimeString({ year: 405, month: 0, day: 0, hour: 1, minute: 2, second: 59.49 }),
     /^01:02:59 /);
-  assert.match(rd('src/systems/gameDate.js'), /formatText\(localizedText\('midDateTimeFormatString', '\{0:00\}:\{1:00\}:\{2:00\} \{3:00\} \{4:00\} 3E\{5\}'\),/);
+  assert.match(rd('src/systems/gameDate.js'), /formatText\(\n\s*localizedText\('midDateTimeFormatString', '\{0:00\}:\{1:00\}:\{2:00\} \{3:00\} \{4:00\} 3E\{5\}'\),/);
 });

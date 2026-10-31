@@ -25,13 +25,14 @@ export function packNature(list) {
       keys.push(k);
     }
   }
-  const n = list.length, cols = keys.map(() => new Float64Array(n).fill(NaN));
+  const n = list.length,
+    cols = keys.map(() => new Float64Array(n).fill(NaN));
   for (let i = 0; i < n; i++) {
     const f = list[i];
     for (const k in f) {
       const v = f[k];
-      if (v === undefined) continue;   // a field written empty is a field lacked
-      if (typeof v !== 'number') return list;   // a field no column holds: the list crosses as it is
+      if (v === undefined) continue; // a field written empty is a field lacked
+      if (typeof v !== 'number') return list; // a field no column holds: the list crosses as it is
       cols[at.get(k)][i] = v;
     }
   }
@@ -49,17 +50,44 @@ export const natureBuffers = (packed) => (packed?.wire === 'nature' ? packed.col
  */
 export function unpackNature(packed) {
   if (packed?.wire !== 'nature') return packed;
-  const { n, keys, cols } = packed, out = new Array(n);
+  const { n, keys, cols } = packed,
+    out = new Array(n);
   // the fields every layout writes, in one order, each flat one shape (a field it lacks, undefined - never written); the
   // rest by name after
-  const col = (k) => { const j = keys.indexOf(k); return j < 0 ? null : cols[j]; };
-  const cr = col('record'), cx = col('x'), cy = col('y'), cz = col('z'), ca = col('archive'), cw = col('wood'), cj = col('jungle'), cs = col('js');
+  const col = (k) => {
+    const j = keys.indexOf(k);
+    return j < 0 ? null : cols[j];
+  };
+  const cr = col('record'),
+    cx = col('x'),
+    cy = col('y'),
+    cz = col('z'),
+    ca = col('archive'),
+    cw = col('wood'),
+    cj = col('jungle'),
+    cs = col('js');
   const rest = [];
   for (let k = 0; k < keys.length; k++) if (!SHAPED.has(keys[k])) rest.push(k);
-  const at = (c, i) => { if (!c) return undefined; const v = c[i]; return v === v ? v : undefined; };
+  const at = (c, i) => {
+    if (!c) return undefined;
+    const v = c[i];
+    return v === v ? v : undefined;
+  };
   for (let i = 0; i < n; i++) {
-    const f = { record: at(cr, i), x: at(cx, i), y: at(cy, i), z: at(cz, i), archive: at(ca, i), wood: at(cw, i), jungle: at(cj, i), js: at(cs, i) };
-    for (let r = 0; r < rest.length; r++) { const v = cols[rest[r]][i]; if (v === v) f[keys[rest[r]]] = v; }
+    const f = {
+      record: at(cr, i),
+      x: at(cx, i),
+      y: at(cy, i),
+      z: at(cz, i),
+      archive: at(ca, i),
+      wood: at(cw, i),
+      jungle: at(cj, i),
+      js: at(cs, i),
+    };
+    for (let r = 0; r < rest.length; r++) {
+      const v = cols[rest[r]][i];
+      if (v === v) f[keys[rest[r]]] = v;
+    }
     out[i] = f;
   }
   return out;

@@ -2,8 +2,8 @@
   {
     "name": "PVP-GUARD-a-row-swapped",
     "file": "src/combat/pcaao.js",
-    "old": "  const rows = kind === 'unarmed' ? UNARMED_ROWS : kind === 'blunt' ? BLUNT_ROWS : EDGED_ROWS;\n  return table(rows, pcaaoArmorMaterialIdentifier(armor), 100, condOf(armor, modules), naturalDamResist);",
-    "new": "  const rows = kind === 'unarmed' ? UNARMED_ROWS : kind === 'blunt' ? EDGED_ROWS : EDGED_ROWS;\n  return table(rows, pcaaoArmorMaterialIdentifier(armor), 100, condOf(armor, modules), naturalDamResist);",
+    "old": "  const rows = kind === 'unarmed' ? UNARMED_ROWS : kind === 'blunt' ? BLUNT_ROWS : EDGED_ROWS;",
+    "new": "  const rows = kind === 'unarmed' ? UNARMED_ROWS : kind === 'blunt' ? EDGED_ROWS : EDGED_ROWS;",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PVP-GUARD-the-guard-unread",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  const want = shieldedBlow(to, shaft, guardedBlow(to, pvpBlowKind(held.w), Math.trunc(Number(d) || 0)));",
-    "new": "  const want = shieldedBlow(to, shaft, Math.max(0, Math.trunc(Number(d) || 0)));",
+    "old": "  const want = shieldedBlow(to, shaft, guardedBlow(to, pvpBlowKind(held.w), Math.trunc(Number(d) || 0))); // PVP-GUARD: the armour first (none below 0), then PVP-SHIELD",
+    "new": "  const want = shieldedBlow(to, shaft, Math.max(0, Math.trunc(Number(d) || 0))); // PVP-GUARD: the armour first (none below 0), then PVP-SHIELD",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PVP-GUARD-the-floor-unread",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "    share.guard = report.guard.map((n) => Math.max(PVP_GUARD.min, Math.min(PVP_GUARD.max, Math.trunc(Number(n) || 0))));",
-    "new": "    share.guard = report.guard.map((n) => Math.max(0, Math.min(PVP_GUARD.max, Math.trunc(Number(n) || 0))));",
+    "old": "    share.guard = report.guard.map((n) => Math.max(PVP_GUARD.min, Math.min(PVP_GUARD.max, Math.trunc(Number(n) || 0)))); // PVP-GUARD",
+    "new": "    share.guard = report.guard.map((n) => Math.max(0, Math.min(PVP_GUARD.max, Math.trunc(Number(n) || 0)))); // PVP-GUARD",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PVP-GUARD-the-change-unseen",
     "file": "src/net/siege/refereeHealthMirror.js",
-    "old": "        || `${guard()}|${ward()}|${shieldWord()}` !== lastSentGuard   // PVP-GUARD, PVP-WARD, PVP-SHIELD: armour, a resistance or a Shield on or off\n",
-    "new": "        || false\n",
+    "old": "        `${guard()}|${ward()}|${shieldWord()}` !== lastSentGuard || // PVP-GUARD, PVP-WARD, PVP-SHIELD: armour, a resistance or a Shield on or off",
+    "new": "        false ||",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PVP-WARD-the-ward-unread",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  const hurt = wardedCast(to, el, want);   // PVP-WARD: the target's resistance first",
-    "new": "  const hurt = want;   // PVP-WARD: the target's resistance first",
+    "old": "  const hurt = wardedCast(to, el, want); // PVP-WARD: the target's resistance first",
+    "new": "  const hurt = want; // PVP-WARD: the target's resistance first",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PVP-WARD-the-floor-unread",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "    share.ward = report.ward.map((n) => Math.max(PVP_WARD.min, Math.min(PVP_WARD.max, Math.trunc(Number(n) || 0))));   // PVP-WARD",
-    "new": "    share.ward = report.ward.map((n) => Math.max(0, Math.min(PVP_WARD.max, Math.trunc(Number(n) || 0))));   // PVP-WARD",
+    "old": "    share.ward = report.ward.map((n) => Math.max(PVP_WARD.min, Math.min(PVP_WARD.max, Math.trunc(Number(n) || 0)))); // PVP-WARD",
+    "new": "    share.ward = report.ward.map((n) => Math.max(0, Math.min(PVP_WARD.max, Math.trunc(Number(n) || 0)))); // PVP-WARD",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "PVP-WARD-the-stand-in-saves",
     "file": "src/combat/siegeCombat.js",
-    "old": "  if (harmful && !run({ ...harmful, rangeType: 0 }, {",
-    "new": "  if (harmful && !run(harmful, {",
+    "old": "    !run(\n      { ...harmful, rangeType: 0 },\n      {\n        hurt: count('harm'),\n        heal: none,\n        drainFatigue: none,\n        restoreFatigue: none,\n        drainMagicka: none,\n        restoreMagicka: none,\n      },\n    )",
+    "new": "    !run(harmful, {\n      hurt: count('harm'),\n      heal: none,\n      drainFatigue: none,\n      restoreFatigue: none,\n      drainMagicka: none,\n      restoreMagicka: none,\n    })",
     "tests": [
       "test/systems/auditcc_pvp.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PVP-TRIANGLE-the-late-step-unread",
     "file": "src/combat/pvpTriangle.js",
-    "old": "export const pvpArrowScale = (level) => ((Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.arrowLate : PVP_TRIANGLE.arrow);",
-    "new": "export const pvpArrowScale = (level) => ((Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.arrow : PVP_TRIANGLE.arrow);",
+    "old": "  (Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.arrowLate : PVP_TRIANGLE.arrow;",
+    "new": "  (Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.arrow : PVP_TRIANGLE.arrow;",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "PVP-TRIANGLE-the-spell-late-unread",
     "file": "src/combat/pvpTriangle.js",
-    "old": "export const pvpSpellScale = (level) => ((Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.spellLate : PVP_TRIANGLE.spell);",
-    "new": "export const pvpSpellScale = (level) => ((Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.spell : PVP_TRIANGLE.spell);",
+    "old": "  (Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.spellLate : PVP_TRIANGLE.spell;",
+    "new": "  (Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.spell : PVP_TRIANGLE.spell;",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PVP-TRIANGLE-the-arrow-unscaled",
     "file": "src/combat/duelCombat.js",
-    "old": "  const n = d.by === 'arrow' ? bowFastDamage(d.relayCut ? { ...landingShaft(), fast: 0 } : landingShaft(), Math.floor(scaled * pvpArrowScale(d.a?.pl))) : scaled;",
-    "new": "  const n = scaled;",
+    "old": "  const n =\n    d.by === 'arrow'\n      ? bowFastDamage(\n          d.relayCut ? { ...landingShaft(), fast: 0 } : landingShaft(),\n          Math.floor(scaled * pvpArrowScale(d.a?.pl)),\n        )\n      : scaled; // PVP-TRIANGLE: an arrow's; BOW-FAST: its stacks (the relay's to cut, `relayCut`: its pull alone)",
+    "new": "  const n = scaled; // PVP-TRIANGLE: an arrow's; BOW-FAST: its stacks (the relay's to cut, `relayCut`: its pull alone)",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "PVP-TRIANGLE-the-capped-level-read",
     "file": "src/combat/duelCombat.js",
-    "old": "pvpArrowScale(d.a?.pl))",
-    "new": "pvpArrowScale(d.a?.lv))",
+    "old": "          Math.floor(scaled * pvpArrowScale(d.a?.pl)),",
+    "new": "          Math.floor(scaled * pvpArrowScale(d.a?.lv)),",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "PVP-TRIANGLE-the-spell-unscaled",
     "file": "src/combat/siegeCombat.js",
-    "old": "harm: Math.round(pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls) * pvpSpellScale(level))",
-    "new": "harm: Math.round(pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls))",
+    "old": "    harm: Math.round(\n      pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls) * pvpSpellScale(level),\n    ),",
+    "new": "    harm: Math.round(pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls)),",
     "tests": [
       "test/systems/auditcc_pvp.test.js",
       "test/combat/pvp_guard.test.js"
@@ -156,8 +156,8 @@
   {
     "name": "PVP-SHIELD-the-report-unread",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "  if (typeof report.shield === 'number') share.shield = report.shield;",
-    "new": "",
+    "old": "  if (typeof report.shield === 'number') share.shield = report.shield; // PVP-SHIELD; PVP-KIT: its share, 0 none",
+    "new": "  // PVP-SHIELD; PVP-KIT: its share, 0 none",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "PVP-SHIELD-the-shaft-read-as-a-swing",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "(shaft ? PVP_SHIELD.shaft : PVP_SHIELD.melee)",
-    "new": "(PVP_SHIELD.melee)",
+    "old": "  const off = ((100 - (shaft ? PVP_SHIELD.shaft : PVP_SHIELD.melee)) * Math.min(sh, PVP_SHIELD.max)) / PVP_SHIELD.max;",
+    "new": "  const off = ((100 - PVP_SHIELD.melee) * Math.min(sh, PVP_SHIELD.max)) / PVP_SHIELD.max;",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "PVP-SHIELD-a-spent-pool-counted",
     "file": "src/combat/pvpGuard.js",
-    "old": "a.kind === 'shield' && !a.ended && a.shieldRemaining > 0",
-    "new": "a.kind === 'shield'",
+    "old": "export const pvpShielded = (entity) =>\n  (entity?.activeEffects ?? []).some((a) => a.kind === 'shield' && !a.ended && a.shieldRemaining > 0);",
+    "new": "export const pvpShielded = (entity) => (entity?.activeEffects ?? []).some((a) => a.kind === 'shield');",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "PVP-SHIELD-the-change-unseen",
     "file": "src/net/siege/refereeHealthMirror.js",
-    "old": "`${guard()}|${ward()}|${shieldWord()}` !== lastSentGuard",
-    "new": "`${guard()}|${ward()}|0` !== lastSentGuard",
+    "old": "        `${guard()}|${ward()}|${shieldWord()}` !== lastSentGuard || // PVP-GUARD, PVP-WARD, PVP-SHIELD: armour, a resistance or a Shield on or off",
+    "new": "        `${guard()}|${ward()}|0` !== lastSentGuard || // PVP-GUARD, PVP-WARD, PVP-SHIELD: armour, a resistance or a Shield on or off",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "PVP-BUFFS-a-worn-item-cut",
     "file": "src/combat/pvpBuffs.js",
-    "old": "if (a.ended || a.heldItem || HARM.has(a.kind)",
-    "new": "if (a.ended || HARM.has(a.kind)",
+    "old": "    if (a.ended || a.heldItem || HARM.has(a.kind) || !(a.roundsRemaining > rounds)) continue;",
+    "new": "    if (a.ended || HARM.has(a.kind) || !(a.roundsRemaining > rounds)) continue;",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "PVP-BUFFS-harm-cut",
     "file": "src/combat/pvpBuffs.js",
-    "old": "if (a.ended || a.heldItem || HARM.has(a.kind)",
-    "new": "if (a.ended || a.heldItem",
+    "old": "    if (a.ended || a.heldItem || HARM.has(a.kind) || !(a.roundsRemaining > rounds)) continue;",
+    "new": "    if (a.ended || a.heldItem || !(a.roundsRemaining > rounds)) continue;",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -248,8 +248,8 @@
   {
     "name": "PVP-POTIONS-every-effect",
     "file": "src/combat/pvpPotions.js",
-    "old": "? { ...bundle, effects: bundle.effects.slice(0, 1) } : bundle);",
-    "new": "? { ...bundle, effects: bundle.effects } : bundle);",
+    "old": "  fight && bundle?.effects?.length > 1 ? { ...bundle, effects: bundle.effects.slice(0, 1) } : bundle;",
+    "new": "  fight && bundle?.effects?.length > 1 ? { ...bundle, effects: bundle.effects } : bundle;",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ],
@@ -258,8 +258,8 @@
   {
     "name": "PVP-POTIONS-always-a-fight",
     "file": "src/combat/pvpPotions.js",
-    "old": "export function setPvpFight(active) { fight = !!active; }",
-    "new": "export function setPvpFight(active) { fight = true; }",
+    "old": "  fight = !!active;",
+    "new": "  fight = true;",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ],
@@ -288,8 +288,8 @@
   {
     "name": "PVP-POTIONS-the-mirror-silent",
     "file": "src/net/siege/refereeHealthMirror.js",
-    "old": "    setPvpFight(active);   // PVP-POTIONS",
-    "new": "    void setPvpFight;   // PVP-POTIONS",
+    "old": "    setPvpFight(active); // PVP-POTIONS: the potion clocks run only in a fight",
+    "new": "    void setPvpFight; // PVP-POTIONS: the potion clocks run only in a fight",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ],
@@ -308,8 +308,8 @@
   {
     "name": "PVP-ARMOUR-CAST-plate-cheap",
     "file": "src/combat/pvpArmourCasting.js",
-    "old": "cost: Object.freeze([0, 3, 6])",
-    "new": "cost: Object.freeze([0, 3, 3])",
+    "old": "export const PVP_ARMOUR_CAST = Object.freeze({ cost: Object.freeze([0, 3, 6]), slow: Object.freeze([0, 1.5, 3]) });",
+    "new": "export const PVP_ARMOUR_CAST = Object.freeze({ cost: Object.freeze([0, 3, 3]), slow: Object.freeze([0, 1.5, 3]) });",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ],
@@ -318,8 +318,8 @@
   {
     "name": "PVP-ARMOUR-CAST-chain-free",
     "file": "src/combat/pvpArmourCasting.js",
-    "old": "cost: Object.freeze([0, 3, 6])",
-    "new": "cost: Object.freeze([0, 0, 6])",
+    "old": "export const PVP_ARMOUR_CAST = Object.freeze({ cost: Object.freeze([0, 3, 6]), slow: Object.freeze([0, 1.5, 3]) });",
+    "new": "export const PVP_ARMOUR_CAST = Object.freeze({ cost: Object.freeze([0, 0, 6]), slow: Object.freeze([0, 1.5, 3]) });",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ],
@@ -328,8 +328,8 @@
   {
     "name": "PVP-ARMOUR-CAST-no-slow",
     "file": "src/combat/pvpArmourCasting.js",
-    "old": "slow: Object.freeze([0, 1.5, 3])",
-    "new": "slow: Object.freeze([0, 1.5, 0])",
+    "old": "export const PVP_ARMOUR_CAST = Object.freeze({ cost: Object.freeze([0, 3, 6]), slow: Object.freeze([0, 1.5, 3]) });",
+    "new": "export const PVP_ARMOUR_CAST = Object.freeze({ cost: Object.freeze([0, 3, 6]), slow: Object.freeze([0, 1.5, 0]) });",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ],
@@ -338,8 +338,8 @@
   {
     "name": "PVP-ARMOUR-CAST-always",
     "file": "src/combat/pvpArmourCasting.js",
-    "old": "(playerInPvpFight() ? sp * (1 + pvpArmourCast(entity).cost / 100) : sp)",
-    "new": "(true ? sp * (1 + pvpArmourCast(entity).cost / 100) : sp)",
+    "old": "export const pvpArmourCastCost = (entity, sp) =>\n  playerInPvpFight() ? sp * (1 + pvpArmourCast(entity).cost / 100) : sp;",
+    "new": "export const pvpArmourCastCost = (entity, sp) => (true ? sp * (1 + pvpArmourCast(entity).cost / 100) : sp);",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ],
@@ -348,8 +348,8 @@
   {
     "name": "PVP-ARMOUR-CAST-a-piece-unread",
     "file": "src/combat/pvpArmourCasting.js",
-    "old": "const PIECES = ['Head', 'RightArm',",
-    "new": "const PIECES = ['RightArm',",
+    "old": "const PIECES = ['Head', 'RightArm', 'LeftArm', 'ChestArmor', 'Gloves', 'LegsArmor', 'Feet'];",
+    "new": "const PIECES = ['RightArm', 'LeftArm', 'ChestArmor', 'Gloves', 'LegsArmor', 'Feet'];",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ],
@@ -358,8 +358,8 @@
   {
     "name": "PVP-ARMOUR-CAST-the-material-not-the-class",
     "file": "src/combat/pvpArmourCasting.js",
-    "old": "const kind = Math.max(0, Math.min(2, rriNativeMaterialValue(it) >> 8));",
-    "new": "const kind = Math.max(0, Math.min(2, it.material >> 8));",
+    "old": "    const kind = Math.max(0, Math.min(2, rriNativeMaterialValue(it) >> 8));",
+    "new": "    const kind = Math.max(0, Math.min(2, it.material >> 8));",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ],
@@ -368,8 +368,8 @@
   {
     "name": "PVP-ARMOUR-CAST-unregistered",
     "file": "src/net/siege/refereeHealthMirror.js",
-    "old": "import '../../combat/pvpArmourCasting.js';",
-    "new": "import '../../combat/pvpPotions.js';",
+    "old": "import '../../combat/pvpArmourCasting.js'; // PVP-ARMOUR-CAST: its doors, registered where the fight flag is set",
+    "new": "import '../../combat/pvpPotions.js'; // PVP-ARMOUR-CAST: its doors, registered where the fight flag is set",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ],
@@ -408,8 +408,8 @@
   {
     "name": "PVP-SPELL-CRIT-uncalled",
     "file": "src/combat/siegeCombat.js",
-    "old": "harm: Math.round(pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls) * pvpSpellScale(level))",
-    "new": "harm: Math.round((caster ? Math.min(harm, pvpCastHold(caster)) : harm) * pvpSpellScale(level))",
+    "old": "    harm: Math.round(\n      pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls) * pvpSpellScale(level),\n    ),",
+    "new": "    harm: Math.round((caster ? Math.min(harm, pvpCastHold(caster)) : harm) * pvpSpellScale(level)),",
     "tests": [
       "test/systems/auditcc_pvp.test.js",
       "test/combat/pvp_guard.test.js"
@@ -419,8 +419,8 @@
   {
     "name": "PVP-CAST-SKILL-the-hold-off",
     "file": "src/combat/siegeCombat.js",
-    "old": "pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls)",
-    "new": "pvpCritHarm(harm, caster, rolls)",
+    "old": "  return {\n    harm: Math.round(\n      pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls) * pvpSpellScale(level),\n    ),\n    heal: Math.round(heal),\n  }; // PVP-CAST-SKILL, PVP-SPELL-CRIT, then PVP-TRIANGLE: a harm's",
+    "new": "  return { harm: Math.round(pvpCritHarm(harm, caster, rolls) * pvpSpellScale(level)), heal: Math.round(heal) }; // PVP-CAST-SKILL, PVP-SPELL-CRIT, then PVP-TRIANGLE: a harm's",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -437,8 +437,8 @@
   {
     "name": "PVP-CAST-SKILL-the-bar-on-level-dice",
     "file": "src/systems/wild/pvpKit.js",
-    "old": "case 'damage': return [{ ...FIREBALL, ...kitMagnitude(PVP_CAST_PER_SKILL * skill, level) }];",
-    "new": "case 'damage': return [{ ...FIREBALL }];",
+    "old": "      return [{ ...FIREBALL, ...kitMagnitude(PVP_CAST_PER_SKILL * skill, level) }]; // PVP-CAST-SKILL: sized by live Destruction, no dice",
+    "new": "      return [{ ...FIREBALL }]; // PVP-CAST-SKILL: sized by live Destruction, no dice",
     "tests": [
       "test/combat/pvp_guard.test.js",
       "test/systems/wild/pvpkit.test.js"

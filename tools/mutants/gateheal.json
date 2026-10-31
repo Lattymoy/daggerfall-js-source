@@ -11,8 +11,8 @@
   {
     "name": "GATE-HEAL-ones-own-heal-credited",
     "file": "src/net/gate/gateBrain.js",
-    "old": "if (!p || !q || sub === by || f.fell",
-    "new": "if (!p || !q || f.fell",
+    "old": "  if (!p || !q || sub === by || f.fell || f.wrath || now >= f.wrathAt || !Number.isFinite(n) || !(n > 0)) return 0;",
+    "new": "  if (!p || !q || f.fell || f.wrath || now >= f.wrathAt || !Number.isFinite(n) || !(n > 0)) return 0;",
     "tests": [
       "test/net/gate/gateheal.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "GATE-HEAL-the-bucket-uncapped",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  const got = Math.max(0, Math.min(n, p.hb));\n  p.hb -= got;\n  q.healed",
-    "new": "  const got = Math.max(0, n);\n  p.hb -= got;\n  q.healed",
+    "old": "  const got = Math.max(0, Math.min(n, p.hb));",
+    "new": "  const got = Math.max(0, n);",
     "tests": [
       "test/net/gate/gateheal.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "GATE-HEAL-never-refilled",
     "file": "src/net/gate/gateBrain.js",
-    "old": "+ (Math.max(0, now - (Number.isFinite(p.hbAt) ? p.hbAt : now)) / 1000) * (ref / HEAL_REFILL_S));",
-    "new": "+ 0);",
+    "old": "  p.hb = Math.min(\n    depth,\n    (Number.isFinite(p.hb) ? p.hb : depth) +\n      (Math.max(0, now - (Number.isFinite(p.hbAt) ? p.hbAt : now)) / 1000) * (ref / HEAL_REFILL_S),\n  );",
+    "new": "  p.hb = Math.min(depth, (Number.isFinite(p.hb) ? p.hb : depth) + 0);",
     "tests": [
       "test/net/gate/gateheal.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "GATE-HEAL-the-floor-unchecked",
     "file": "src/net/gate/gateBrain.js",
-    "old": "!onFloor(pose.x, pose.z, f.xa, now, POSE_SLACK, planOf(f))) return 0;\n  const ref = healRef(p.lv)",
-    "new": "!Number.isFinite(pose.z)) return 0;\n  const ref = healRef(p.lv)",
+    "old": "  if (\n    !pose ||\n    !Number.isFinite(pose.x) ||\n    !Number.isFinite(pose.z) ||\n    !onFloor(pose.x, pose.z, f.xa, now, POSE_SLACK, planOf(f))\n  )\n    return 0;",
+    "new": "  if (!pose || !Number.isFinite(pose.x) || !Number.isFinite(pose.z) || !Number.isFinite(pose.z)) return 0;",
     "tests": [
       "test/net/gate/gateheal.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "GATE-HEAL-after-the-fall",
     "file": "src/net/gate/gateBrain.js",
-    "old": "sub === by || f.fell || f.wrath || now >= f.wrathAt",
-    "new": "sub === by || f.wrath || now >= f.wrathAt",
+    "old": "  if (!p || !q || sub === by || f.fell || f.wrath || now >= f.wrathAt || !Number.isFinite(n) || !(n > 0)) return 0;",
+    "new": "  if (!p || !q || sub === by || f.wrath || now >= f.wrathAt || !Number.isFinite(n) || !(n > 0)) return 0;",
     "tests": [
       "test/net/gate/gateheal.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "GATE-HEAL-a-stranger-credited",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  const p = f.players[sub], q = f.players[by];",
-    "new": "  const p = f.players[sub], q = f.players[by] ?? f.players[sub];",
+    "old": "    q = f.players[by];",
+    "new": "    q = f.players[by] ?? f.players[sub];",
     "tests": [
       "test/net/gate/gateheal.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "GATE-HEAL-hl-on-every-row",
     "file": "src/net/gate/gateBrain.js",
-    "old": "...(q.healed >= 1 ? { hl: Math.round(q.healed) } : {})",
-    "new": "...{ hl: Math.round(q.healed ?? 0) }",
+    "old": "      ...(q.healed >= 1 ? { hl: Math.round(q.healed) } : {}),",
+    "new": "      ...{ hl: Math.round(q.healed ?? 0) },",
     "tests": [
       "test/net/gate/gateheal.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "GATE-HEAL-the-column-always",
     "file": "src/ui/gate/gateDamageChart.js",
-    "old": "const healed = dm.some((r) => r.hl !== undefined);",
-    "new": "const healed = true;",
+    "old": "  const healed = dm.some((r) => r.hl !== undefined); // GATE-HEAL: someone healed another in it",
+    "new": "  const healed = true; // GATE-HEAL: someone healed another in it",
     "tests": [
       "test/net/gate/gateheal.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "GATE-HEAL-the-column-never",
     "file": "src/ui/gate/gateDamageChart.js",
-    "old": "const healed = dm.some((r) => r.hl !== undefined);",
-    "new": "const healed = false;",
+    "old": "  const healed = dm.some((r) => r.hl !== undefined); // GATE-HEAL: someone healed another in it",
+    "new": "  const healed = false; // GATE-HEAL: someone healed another in it",
     "tests": [
       "test/net/gate/gateheal.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "GATE-HEAL-the-cell-unwritten",
     "file": "src/ui/gate/gateDamageChart.js",
-    "old": "  r.cells[9].textContent = m.heal ?? '';",
-    "new": "",
+    "old": "  r.cells[9].textContent = m.heal ?? ''; // GATE-HEAL",
+    "new": "  // GATE-HEAL",
     "tests": [
       "test/net/gate/gateheal.test.js"
     ]

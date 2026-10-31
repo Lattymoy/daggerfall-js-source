@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-LWSTIR-F1-home-every-word",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "const place = (inc.kind === 'gate' || inc.kind === 'challenge') && ctx.home ? ctx.home",
-    "new": "const place = ctx.home ? ctx.home",
+    "old": "  const place =\n    (inc.kind === 'gate' || inc.kind === 'challenge') && ctx.home\n      ? ctx.home\n      : ctx.places?.length\n        ? ctx.places[lwSeed(inc.seed, 0x706c6163) % ctx.places.length]\n        : null; // 'plac'",
+    "new": "  const place = ctx.home\n    ? ctx.home\n    : ctx.places?.length\n      ? ctx.places[lwSeed(inc.seed, 0x706c6163) % ctx.places.length]\n      : null; // 'plac'",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-LWSTIR-A1-halt-end-unslacked",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "if (end > o1 + slack(o1) ||",
-    "new": "if (end > o1 + 1e-9 ||",
+    "old": "      if (end > o1 + slack(o1) || end > r.end + slack(r.end)) continue; // (a gate's ends as its halt does: the clock's sums - AUDIT LW-STIR A1)",
+    "new": "      if (end > o1 + 1e-9 || end > r.end + slack(r.end)) continue; // (a gate's ends as its halt does: the clock's sums - AUDIT LW-STIR A1)",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-LWSTIR-A2-round-of-the-arrival",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "return { halt: start - inT + len, round: spotRound(spotKey, start, ROUND_S * perS).round };",
-    "new": "return { halt: start - inT + len, round: r.round };",
+    "old": "  return { halt: start - inT + len, round: spotRound(spotKey, start, ROUND_S * perS).round };",
+    "new": "  return { halt: start - inT + len, round: r.round };",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-LWSTIR-A3-guard-chosen-before",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "const g = guards?.find((w) => w.t0 <= from && w.t1 >= from + (script.length + steps.length) * lineMin + after)?.who ?? null;",
-    "new": "const g0 = guards?.find((w) => w.t0 < o1 && w.t1 > o0); const g = g0 && g0.t0 <= from && g0.t1 >= from + (script.length + steps.length) * lineMin + after ? g0.who : null;",
+    "old": "      const g =\n        guards?.find((w) => w.t0 <= from && w.t1 >= from + (script.length + steps.length) * lineMin + after)?.who ??\n        null;",
+    "new": "      const g0 = guards?.find((w) => w.t0 < o1 && w.t1 > o0);\n      const g = g0 && g0.t0 <= from && g0.t1 >= from + (script.length + steps.length) * lineMin + after ? g0.who : null;",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-LWSTIR-A4-beggar-stand-always",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "lay('plea', x.who, y.who, y.kind === 'stall' ? 1 : 0,",
-    "new": "lay('plea', x.who, y.who, 0,",
+    "old": "        lay(\n          'plea',\n          x.who,\n          y.who,\n          y.kind === 'stall' ? 1 : 0,\n          pick(strangerOf(y.who, mapId) ? PLEA_UNNAMED : PLEA_SCRIPTS, ps),\n          ps,\n          o0,\n          o1,\n        );",
+    "new": "        lay('plea', x.who, y.who, 0, pick(strangerOf(y.who, mapId) ? PLEA_UNNAMED : PLEA_SCRIPTS, ps), ps, o0, o1);",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-LWSTIR-A5-stranger-named",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "pick(strangerOf(y.who, mapId) ? PLEA_UNNAMED : PLEA_SCRIPTS, ps)",
-    "new": "pick(PLEA_SCRIPTS, ps)",
+    "old": "        lay(\n          'plea',\n          x.who,\n          y.who,\n          y.kind === 'stall' ? 1 : 0,\n          pick(strangerOf(y.who, mapId) ? PLEA_UNNAMED : PLEA_SCRIPTS, ps),\n          ps,\n          o0,\n          o1,\n        );",
+    "new": "        lay('plea', x.who, y.who, y.kind === 'stall' ? 1 : 0, pick(PLEA_SCRIPTS, ps), ps, o0, o1);",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-LWSTIR-A6-second-calls",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "(e.kind === 'watch' || e.kind === 'post') && e.pair !== 1 && hour in WATCH_HOURS",
-    "new": "(e.kind === 'watch' || e.kind === 'post') && hour in WATCH_HOURS",
+    "old": "  if (e.duty && (e.kind === 'watch' || e.kind === 'post') && e.pair !== 1 && hour in WATCH_HOURS) {",
+    "new": "  if (e.duty && (e.kind === 'watch' || e.kind === 'post') && hour in WATCH_HOURS) {",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-LWSTIR-A7-second-chosen",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "const watch = stays.filter((s) => s.duty && s.pair !== 1);",
-    "new": "const watch = stays.filter((s) => s.duty);",
+    "old": "  const watch = stays.filter((s) => s.duty && s.pair !== 1);",
+    "new": "  const watch = stays.filter((s) => s.duty);",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js"
     ]
@@ -450,8 +450,8 @@
   {
     "name": "AUDIT-LWSTIR-D-HUMOUR-rough-hostile-0.25",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "rough: Object.freeze([/** @type {const} */ (['civil', 0.3]), /** @type {const} */ (['curt', 0.35]), /** @type {const} */ (['hostile', 0.35])]),",
-    "new": "rough: Object.freeze([/** @type {const} */ (['civil', 0.3]), /** @type {const} */ (['curt', 0.45]), /** @type {const} */ (['hostile', 0.25])]),",
+    "old": "    /** @type {const} */ (['curt', 0.35]),\n    /** @type {const} */ (['hostile', 0.35]),",
+    "new": "    /** @type {const} */ (['curt', 0.45]),\n    /** @type {const} */ (['hostile', 0.25]),",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -460,8 +460,8 @@
   {
     "name": "AUDIT-LWSTIR-D-first-tie-flipped",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "(y.t0 === x.t0 && byId(y, x) < 0) ? 1 : 0",
-    "new": "(y.t0 === x.t0 && byId(y, x) > 0) ? 1 : 0",
+    "old": "    /** @type {0|1} */ (y.t0 < x.t0 || (y.t0 === x.t0 && byId(y, x) < 0) ? 1 : 0);",
+    "new": "    /** @type {0|1} */ (y.t0 < x.t0 || (y.t0 === x.t0 && byId(y, x) > 0) ? 1 : 0);",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -470,8 +470,8 @@
   {
     "name": "AUDIT-LWSTIR-D-gate-stopped-unadded",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "    stopped.add(s.who.id);\n  }\n  // the watch stops a stranger",
-    "new": "  }\n  // the watch stops a stranger",
+    "old": "    stopped.add(s.who.id);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -482,8 +482,8 @@
   {
     "name": "AUDIT-LWSTIR-D-gate-post-unsorted",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "const post = stays.filter((g) => g.duty && g.kind === 'post' && g.t0 <= t0 && g.t1 >= t1).sort(byId)[0];",
-    "new": "const post = stays.filter((g) => g.duty && g.kind === 'post' && g.t0 <= t0 && g.t1 >= t1).sort(byId).pop();",
+    "old": "    const post = stays.filter((g) => g.duty && g.kind === 'post' && g.t0 <= t0 && g.t1 >= t1).sort(byId)[0];",
+    "new": "    const post = stays\n      .filter((g) => g.duty && g.kind === 'post' && g.t0 <= t0 && g.t1 >= t1)\n      .sort(byId)\n      .pop();",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -492,8 +492,8 @@
   {
     "name": "AUDIT-LWSTIR-D-gate-party-draw-unread",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "const s = them.map((x) => ({ x, k: lwSeed(seed, textSeed(x.who.id)) })).sort((a, b) => a.k - b.k || byId(a.x, b.x))[0].x;",
-    "new": "const s = them[0];",
+    "old": "    const s = them\n      .map((x) => ({ x, k: lwSeed(seed, textSeed(x.who.id)) }))\n      .sort((a, b) => a.k - b.k || byId(a.x, b.x))[0].x;",
+    "new": "    const s = them[0];",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -502,8 +502,8 @@
   {
     "name": "AUDIT-LWSTIR-D-gate-post-t0-unread",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "const post = stays.filter((g) => g.duty && g.kind === 'post' && g.t0 <= t0 && g.t1 >= t1)",
-    "new": "const post = stays.filter((g) => g.duty && g.kind === 'post' && g.t1 >= t1)",
+    "old": "    const post = stays.filter((g) => g.duty && g.kind === 'post' && g.t0 <= t0 && g.t1 >= t1).sort(byId)[0];",
+    "new": "    const post = stays.filter((g) => g.duty && g.kind === 'post' && g.t1 >= t1).sort(byId)[0];",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -512,8 +512,8 @@
   {
     "name": "AUDIT-LWSTIR-D-gate-post-kind-unread",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "const post = stays.filter((g) => g.duty && g.kind === 'post' && g.t0 <= t0",
-    "new": "const post = stays.filter((g) => g.duty && g.t0 <= t0",
+    "old": "    const post = stays.filter((g) => g.duty && g.kind === 'post' && g.t0 <= t0 && g.t1 >= t1).sort(byId)[0];",
+    "new": "    const post = stays.filter((g) => g.duty && g.t0 <= t0 && g.t1 >= t1).sort(byId)[0];",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -522,8 +522,8 @@
   {
     "name": "AUDIT-LWSTIR-D-challenge-watch-kind-unread",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "if (!g.duty || g.kind !== 'watch' || g.pair === 1) continue;",
-    "new": "if (!g.duty || g.pair === 1) continue;",
+    "old": "    if (!g.duty || g.kind !== 'watch' || g.pair === 1) continue;",
+    "new": "    if (!g.duty || g.pair === 1) continue;",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -532,8 +532,8 @@
   {
     "name": "AUDIT-LWSTIR-D-challenge-stranger-draw-unread",
     "file": "src/systems/livingWorld/stir.js",
-    "old": ".map((s) => ({ s, k: lwSeed(seed, textSeed(s.who.id), Math.round(s.t0)) })).sort((x, y) => x.k - y.k || (x.s.who.id < y.s.who.id ? -1 : 1));",
-    "new": ".map((s) => ({ s, k: 0 })).sort((x, y) => x.k - y.k || (x.s.who.id < y.s.who.id ? -1 : 1));",
+    "old": "      .filter((s) => !s.duty && s.kind !== 'gate' && strangerOf(s.who, mapId) && !stopped.has(s.who.id))\n      .map((s) => ({ s, k: lwSeed(seed, textSeed(s.who.id), Math.round(s.t0)) }))",
+    "new": "      .filter((s) => !s.duty && s.kind !== 'gate' && strangerOf(s.who, mapId) && !stopped.has(s.who.id))\n      .map((s) => ({ s, k: 0 }))",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -542,8 +542,8 @@
   {
     "name": "AUDIT-LWSTIR-D-challenge-one-tried",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "      if (laid.length > n) { stopped.add(s.who.id); stoppedAt.add(`${g.who.id}|${g.t0}`); break; }   // one stop of a stranger a day at the spot",
-    "new": "      if (laid.length > n) { stopped.add(s.who.id); stoppedAt.add(`${g.who.id}|${g.t0}`); } break;   // one stop of a stranger a day at the spot",
+    "old": "        break;\n      } // one stop of a stranger a day at the spot",
+    "new": "      }\n      break; // one stop of a stranger a day at the spot",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -552,8 +552,8 @@
   {
     "name": "AUDIT-LWSTIR-D-challenge-no-break",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "      if (laid.length > n) { stopped.add(s.who.id); stoppedAt.add(`${g.who.id}|${g.t0}`); break; }   // one stop of a stranger a day at the spot",
-    "new": "      if (laid.length > n) { stopped.add(s.who.id); stoppedAt.add(`${g.who.id}|${g.t0}`); }   // one stop of a stranger a day at the spot",
+    "old": "        break;\n      } // one stop of a stranger a day at the spot",
+    "new": "      } // one stop of a stranger a day at the spot",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -572,8 +572,8 @@
   {
     "name": "AUDIT-LWSTIR-D-plea-met-unread",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "if (met.has(pair) || draw(ps, 0x706c6561) >= PLEA_SHARE) continue;   // 'plea'",
-    "new": "if (draw(ps, 0x706c6561) >= PLEA_SHARE) continue;   // 'plea'",
+    "old": "        if (met.has(pair) || draw(ps, 0x706c6561) >= PLEA_SHARE) continue; // 'plea'",
+    "new": "        if (draw(ps, 0x706c6561) >= PLEA_SHARE) continue; // 'plea'",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -582,8 +582,8 @@
   {
     "name": "AUDIT-LWSTIR-D-haggle-met-unread",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "      if (met.has(pair)) continue;\n      met.add(pair);\n      const [o0, o1] = overlap(x, y);\n      lay('haggle'",
-    "new": "      met.add(pair);\n      const [o0, o1] = overlap(x, y);\n      lay('haggle'",
+    "old": "      if (met.has(pair)) continue;\n      met.add(pair);",
+    "new": "      met.add(pair);",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -592,8 +592,8 @@
   {
     "name": "AUDIT-LWSTIR-D-haggle-falls-to-quarrel",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "      if (met.has(pair)) continue;\n      met.add(pair);\n      const [o0, o1] = overlap(x, y);\n      lay('haggle', x.who, y.who, 1, pick(HAGGLE_SCRIPTS, ps), ps, o0, o1);   // at the stall\n      continue;",
-    "new": "      if (met.has(pair)) continue;\n      met.add(pair);\n      const [o0, o1] = overlap(x, y);\n      lay('haggle', x.who, y.who, 1, pick(HAGGLE_SCRIPTS, ps), ps, o0, o1);   // at the stall\n      ",
+    "old": "      lay('haggle', x.who, y.who, 1, pick(HAGGLE_SCRIPTS, ps), ps, o0, o1); // at the stall\n      continue;\n    }",
+    "new": "      lay('haggle', x.who, y.who, 1, pick(HAGGLE_SCRIPTS, ps), ps, o0, o1); // at the stall\n    }",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -602,8 +602,8 @@
   {
     "name": "AUDIT-LWSTIR-D-haggle-stall-pick-first",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "const y = stalls[lwSeed(seed, 0x61742020) % stalls.length];",
-    "new": "const y = stalls[0];",
+    "old": "      const y = stalls[lwSeed(seed, 0x61742020) % stalls.length]; // 'at  '",
+    "new": "      const y = stalls[0]; // 'at  '",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -612,8 +612,8 @@
   {
     "name": "AUDIT-LWSTIR-D-quarrel-evening-19",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "(((o0 % 1440) + 1440) % 1440) >= 18 * 60)",
-    "new": "(((o0 % 1440) + 1440) % 1440) >= 19 * 60)",
+    "old": "      ((o0 % 1440) + 1440) % 1440 >= 18 * 60 && (x.who.drink ?? 0) > DRINKER && (y.who.drink ?? 0) > DRINKER;",
+    "new": "      ((o0 % 1440) + 1440) % 1440 >= 19 * 60 && (x.who.drink ?? 0) > DRINKER && (y.who.drink ?? 0) > DRINKER;",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -622,8 +622,8 @@
   {
     "name": "AUDIT-LWSTIR-D-quarrel-evening-17",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "(((o0 % 1440) + 1440) % 1440) >= 18 * 60)",
-    "new": "(((o0 % 1440) + 1440) % 1440) >= 17 * 60)",
+    "old": "      ((o0 % 1440) + 1440) % 1440 >= 18 * 60 && (x.who.drink ?? 0) > DRINKER && (y.who.drink ?? 0) > DRINKER;",
+    "new": "      ((o0 % 1440) + 1440) % 1440 >= 17 * 60 && (x.who.drink ?? 0) > DRINKER && (y.who.drink ?? 0) > DRINKER;",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -632,8 +632,8 @@
   {
     "name": "AUDIT-LWSTIR-D-gate-first-reversed",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "laid.sort((p, q) => (p.kind === 'gate' ? 0 : 1) - (q.kind === 'gate' ? 0 : 1) || p.t0 - q.t0 || p.seed - q.seed);",
-    "new": "laid.sort((p, q) => (p.kind === 'gate' ? 0 : 1) - (q.kind === 'gate' ? 0 : 1) || q.t0 - p.t0 || p.seed - q.seed);",
+    "old": "  laid.sort((p, q) => (p.kind === 'gate' ? 0 : 1) - (q.kind === 'gate' ? 0 : 1) || p.t0 - q.t0 || p.seed - q.seed);",
+    "new": "  laid.sort((p, q) => (p.kind === 'gate' ? 0 : 1) - (q.kind === 'gate' ? 0 : 1) || q.t0 - p.t0 || p.seed - q.seed);",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -642,8 +642,8 @@
   {
     "name": "AUDIT-LWSTIR-D-stirLine-from-le",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "if (!(lineMin > 0) || t < inc.from) return null;",
-    "new": "if (!(lineMin > 0) || t <= inc.from) return null;",
+    "old": "  if (!(lineMin > 0) || t < inc.from) return null;",
+    "new": "  if (!(lineMin > 0) || t <= inc.from) return null;",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -652,8 +652,8 @@
   {
     "name": "AUDIT-LWSTIR-D-call-weather-snow-unread",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "ctx.weather === 'rain' || ctx.weather === 'thunder' || ctx.weather === 'snow' || ctx.weather === 'fog' ? ctx.weather : 'fair'",
-    "new": "ctx.weather === 'rain' || ctx.weather === 'thunder' || ctx.weather === 'fog' ? ctx.weather : 'fair'",
+    "old": "    const w =\n      ctx.weather === 'rain' || ctx.weather === 'thunder' || ctx.weather === 'snow' || ctx.weather === 'fog'\n        ? ctx.weather\n        : 'fair';",
+    "new": "    const w = ctx.weather === 'rain' || ctx.weather === 'thunder' || ctx.weather === 'fog' ? ctx.weather : 'fair';",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -662,8 +662,8 @@
   {
     "name": "AUDIT-LWSTIR-D-call-weather-thunder-unread",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "ctx.weather === 'rain' || ctx.weather === 'thunder' || ctx.weather === 'snow'",
-    "new": "ctx.weather === 'rain' || ctx.weather === 'snow'",
+    "old": "    const w =\n      ctx.weather === 'rain' || ctx.weather === 'thunder' || ctx.weather === 'snow' || ctx.weather === 'fog'\n        ? ctx.weather\n        : 'fair';",
+    "new": "    const w = ctx.weather === 'rain' || ctx.weather === 'snow' || ctx.weather === 'fog' ? ctx.weather : 'fair';",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -672,8 +672,8 @@
   {
     "name": "AUDIT-LWSTIR-D-stall-from-9",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "if (e.kind === 'stall' && hour >= 8 && hour < 18) {",
-    "new": "if (e.kind === 'stall' && hour >= 9 && hour < 18) {",
+    "old": "  if (e.kind === 'stall' && hour >= 8 && hour < 18) {",
+    "new": "  if (e.kind === 'stall' && hour >= 9 && hour < 18) {",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -682,8 +682,8 @@
   {
     "name": "AUDIT-LWSTIR-D-stall-to-17",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "if (e.kind === 'stall' && hour >= 8 && hour < 18) {",
-    "new": "if (e.kind === 'stall' && hour >= 8 && hour < 17) {",
+    "old": "  if (e.kind === 'stall' && hour >= 8 && hour < 18) {",
+    "new": "  if (e.kind === 'stall' && hour >= 8 && hour < 17) {",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -692,8 +692,8 @@
   {
     "name": "AUDIT-LWSTIR-D-song-from-22",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "(hour >= 21 || hour < 3) && fromTavern(e)) {",
-    "new": "(hour >= 22 || hour < 3) && fromTavern(e)) {",
+    "old": "  if (e.kind === 'walk' && (who.drink ?? 0) > SONG_DRINK && (hour >= 21 || hour < 3) && fromTavern(e)) {",
+    "new": "  if (e.kind === 'walk' && (who.drink ?? 0) > SONG_DRINK && (hour >= 22 || hour < 3) && fromTavern(e)) {",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -702,8 +702,8 @@
   {
     "name": "AUDIT-LWSTIR-D-song-to-2",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "(hour >= 21 || hour < 3) && fromTavern(e)) {",
-    "new": "(hour >= 21 || hour < 2) && fromTavern(e)) {",
+    "old": "  if (e.kind === 'walk' && (who.drink ?? 0) > SONG_DRINK && (hour >= 21 || hour < 3) && fromTavern(e)) {",
+    "new": "  if (e.kind === 'walk' && (who.drink ?? 0) > SONG_DRINK && (hour >= 21 || hour < 2) && fromTavern(e)) {",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -712,8 +712,8 @@
   {
     "name": "AUDIT-LWSTIR-D-call-spread-unread",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "const at = dayHour * 60 + draw(seed, 1) * CALL_SPREAD_MIN;",
-    "new": "const at = dayHour * 60;",
+    "old": "    const at = dayHour * 60 + draw(seed, 1) * CALL_SPREAD_MIN;",
+    "new": "    const at = dayHour * 60;",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -722,8 +722,8 @@
   {
     "name": "AUDIT-LWSTIR-D-voice-at-unread",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "const at = k * every + draw(seed, 1) * Math.max(0, every - up);",
-    "new": "const at = k * every;",
+    "old": "    const at = k * every + draw(seed, 1) * Math.max(0, every - up);",
+    "new": "    const at = k * every;",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -732,8 +732,8 @@
   {
     "name": "AUDIT-LWSTIR-D-beg-unvoiced",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "    const seed = now(BEG_EVERY_MIN, BEG_SHARE, 0x62656720);   // 'beg '",
-    "new": "    const seed = now(CRY_EVERY_MIN, CRY_SHARE, 0x63727920);   // 'beg '",
+    "old": "    const seed = now(BEG_EVERY_MIN, BEG_SHARE, 0x62656720); // 'beg '",
+    "new": "    const seed = now(CRY_EVERY_MIN, CRY_SHARE, 0x63727920); // 'beg '",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -944,8 +944,8 @@
   {
     "name": "AUDIT-LWSTIR-D-DP-halt-end-of-day",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "if (back > 0 && Math.max(cursor, t1) + halt + back > D1) t1 = D1;",
-    "new": "if (back > 0 && Math.max(cursor, t1) + back > D1) t1 = D1;",
+    "old": "    if (back > 0 && Math.max(cursor, t1) + halt + back > D1) t1 = D1;",
+    "new": "    if (back > 0 && Math.max(cursor, t1) + back > D1) t1 = D1;",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -954,8 +954,8 @@
   {
     "name": "AUDIT-LWSTIR-D-DP-gate-past-D1",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "if (cursor < D1 && halt > 0) { push('gate', exit, cursor, cursor + halt); cursor += halt; atKind = 'gate'; }",
-    "new": "if (halt > 0) { push('gate', exit, cursor, cursor + halt); cursor += halt; atKind = 'gate'; }",
+    "old": "    if (cursor < D1 && halt > 0) {",
+    "new": "    if (halt > 0) {",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -964,8 +964,8 @@
   {
     "name": "AUDIT-LWSTIR-D-stall-cries-are-beggars",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "return seed == null ? null : { text: fill(pick(STALL_CRIES, seed), seed), kind: 'shout' };",
-    "new": "return seed == null ? null : { text: fill(pick(BEGGAR_CRIES, seed), seed), kind: 'shout' };",
+    "old": "    return seed == null ? null : { text: fill(pick(STALL_CRIES, seed), seed), kind: 'shout' };",
+    "new": "    return seed == null ? null : { text: fill(pick(BEGGAR_CRIES, seed), seed), kind: 'shout' };",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -974,8 +974,8 @@
   {
     "name": "AUDIT-LWSTIR-D-songs-are-cries",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "return seed == null ? null : { text: fill(pick(DRINKING_SONGS, seed), seed), kind: 'sing' };",
-    "new": "return seed == null ? null : { text: fill(pick(STALL_CRIES, seed), seed), kind: 'sing' };",
+    "old": "    return seed == null ? null : { text: fill(pick(DRINKING_SONGS, seed), seed), kind: 'sing' };",
+    "new": "    return seed == null ? null : { text: fill(pick(STALL_CRIES, seed), seed), kind: 'sing' };",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -984,8 +984,8 @@
   {
     "name": "AUDIT-LWSTIR-D-guard-t0-unread",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "guards?.find((w) => w.t0 <= from && w.t1 >=",
-    "new": "guards?.find((w) => w.t1 >=",
+    "old": "      const g =\n        guards?.find((w) => w.t0 <= from && w.t1 >= from + (script.length + steps.length) * lineMin + after)?.who ??\n        null;",
+    "new": "      const g = guards?.find((w) => w.t1 >= from + (script.length + steps.length) * lineMin + after)?.who ?? null;",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -994,8 +994,8 @@
   {
     "name": "AUDIT-LWSTIR-D-plea-met-unadded",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "        met.add(pair);\n        const [o0, o1] = overlap(x, y);\n        // the beggar keeps",
-    "new": "        const [o0, o1] = overlap(x, y);\n        // the beggar keeps",
+    "old": "        met.add(pair);\n        const [o0, o1] = overlap(x, y);",
+    "new": "        const [o0, o1] = overlap(x, y);",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"
@@ -1078,8 +1078,8 @@
   {
     "name": "AUDIT-LWSTIR-D-lay-o1-unread",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "if (end > o1 + slack(o1) || end > r.end + slack(r.end)) continue;",
-    "new": "if (end > r.end + slack(r.end)) continue;",
+    "old": "      if (end > o1 + slack(o1) || end > r.end + slack(r.end)) continue; // (a gate's ends as its halt does: the clock's sums - AUDIT LW-STIR A1)",
+    "new": "      if (end > r.end + slack(r.end)) continue; // (a gate's ends as its halt does: the clock's sums - AUDIT LW-STIR A1)",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"

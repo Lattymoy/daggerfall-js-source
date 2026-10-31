@@ -2,8 +2,8 @@
   {
     "name": "FIREFOX-FLIP-the-swap-at-half-the-turn",
     "file": "src/ui/statsCard.js",
-    "old": "{ transition: visibility 0s ${FLIP_EDGE_MS}ms; }",
-    "new": "{ transition: visibility 0s ${FLIP_MS / 2}ms; }",
+    "old": "    .pack-shell .statflip-front, .pack-shell .statflip-back { transition: visibility 0s ${FLIP_EDGE_MS}ms; }",
+    "new": "    .pack-shell .statflip-front, .pack-shell .statflip-back { transition: visibility 0s ${FLIP_MS / 2}ms; }",
     "tests": [
       "test/combat/combatStats.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "FIREFOX-FLIP-the-back-never-hidden",
     "file": "src/ui/statsCard.js",
-    "old": "    .pack-shell .statflip-back { visibility: hidden; }\n",
-    "new": "",
+    "old": "    .pack-shell .statflip-back { visibility: hidden; }\n    .pack-shell .statflip.is-back .statflip-back { visibility: visible; }",
+    "new": "    .pack-shell .statflip.is-back .statflip-back { visibility: visible; }",
     "tests": [
       "test/combat/combatStats.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "FIREFOX-FLIP-reduced-motion-swapped-too",
     "file": "src/ui/statsCard.js",
-    "old": "  @media (prefers-reduced-motion: no-preference) {\n    .pack-shell .statflip-front, .pack-shell .statflip-back",
-    "new": "  @media all {\n    .pack-shell .statflip-front, .pack-shell .statflip-back",
+    "old": "  @media (prefers-reduced-motion: no-preference) {",
+    "new": "  @media all {",
     "tests": [
       "test/combat/combatStats.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "FIREFOX-FLIP-the-keyframes-off-the-constants",
     "file": "src/ui/statsCard.js",
-    "old": "  ${FLIP_MID * 100}% { transform: rotateY(${90 + FLIP_PAST}deg)",
-    "new": "  ${FLIP_MID * 100}% { transform: rotateY(110deg)",
+    "old": "  ${FLIP_MID * 100}% { transform: rotateY(${90 + FLIP_PAST}deg) translateZ(70px) scale(1.05) rotateZ(-0.6deg); }",
+    "new": "  ${FLIP_MID * 100}% { transform: rotateY(110deg) translateZ(70px) scale(1.05) rotateZ(-0.6deg); }",
     "tests": [
       "test/combat/combatStats.test.js"
     ]

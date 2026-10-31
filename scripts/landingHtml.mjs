@@ -16,9 +16,9 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { ENHANCED_TOKENS, ENHANCED_FONTS_URL } from '../src/ui/enhanced/enhancedStyle.js';
-import { PIXELIFY_FIVE_FACE } from '../src/ui/pixelifyFive.js';   // TERMS1: the documents take the five from its home
-import { SUPPORT_MARKS_CSS } from '../src/ui/supportAsks.js';   // SUPPORT1: the asks' marks, the game door's own pixels
-import { SITE_KIT_CSS } from '../src/ui/enhanced/enhancedFrame.js';   // PLUS-SITE: the game's stone and brass, cut without a picture
+import { PIXELIFY_FIVE_FACE } from '../src/ui/pixelifyFive.js'; // TERMS1: the documents take the five from its home
+import { SUPPORT_MARKS_CSS } from '../src/ui/supportAsks.js'; // SUPPORT1: the asks' marks, the game door's own pixels
+import { SITE_KIT_CSS } from '../src/ui/enhanced/enhancedFrame.js'; // PLUS-SITE: the game's stone and brass, cut without a picture
 
 /** U63: the landing page asks for THE SKIN'S OWN REQUEST, not a subset.
  *  It used to load the brand + data faces, because the site was set in
@@ -38,11 +38,17 @@ export const GAME_PATH = '/play/index.html';
  *  page. No file, so nothing for the doctrine allow-list to weigh. */
 export function iconTag(tokens = ENHANCED_TOKENS) {
   const hex = (name) => tokens.match(new RegExp(`--${name}:\\s*(#[0-9a-fA-F]{6})`))?.[1];
-  const ink = hex('ink'); const brass = hex('brass');
+  const ink = hex('ink');
+  const brass = hex('brass');
   if (!ink || !brass) return null;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">`
-    + `<rect width="32" height="32" fill="${ink}"/><path d="M16 5l11 11-11 11L5 16z" fill="${brass}"/></svg>`;
-  return { tag: 'link', attrs: { rel: 'icon', type: 'image/svg+xml', href: `data:image/svg+xml,${encodeURIComponent(svg)}` }, injectTo: 'head' };
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">` +
+    `<rect width="32" height="32" fill="${ink}"/><path d="M16 5l11 11-11 11L5 16z" fill="${brass}"/></svg>`;
+  return {
+    tag: 'link',
+    attrs: { rel: 'icon', type: 'image/svg+xml', href: `data:image/svg+xml,${encodeURIComponent(svg)}` },
+    injectTo: 'head',
+  };
 }
 
 /** The build sha `scripts/buildTag.mjs` stamped at prebuild, or '' when
@@ -66,7 +72,8 @@ export function readBuildSha(read = (p) => readFileSync(p, 'utf8')) {
    under test/ (test/ui/enhanced/landing.test.js walks the tree to hold it). */
 export function countTests(dir = 'test', read = (p) => readFileSync(p, 'utf8')) {
   let n = 0;
-  for (const f of readdirSync(dir, { recursive: true })) {   // TIDY5: every folder under test/
+  for (const f of readdirSync(dir, { recursive: true })) {
+    // TIDY5: every folder under test/
     if (!f.endsWith('.test.js')) continue;
     n += (read(`${dir}/${f}`).match(/^test\(/gm) || []).length;
   }
@@ -80,7 +87,9 @@ export function countTests(dir = 'test', read = (p) => readFileSync(p, 'utf8')) 
 export function countSrcLines(read = (p) => readFileSync(p, 'utf8')) {
   let files;
   try {
-    files = execFileSync('git', ['ls-files', 'src'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).split('\n');
+    files = execFileSync('git', ['ls-files', 'src'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).split(
+      '\n',
+    );
   } catch {
     files = readdirSync('src', { recursive: true }).map((f) => `src/${String(f).replace(/\\/g, '/')}`);
   }
@@ -113,15 +122,17 @@ export const GROUND_SEED = 0xda66e4;
  *  the sky, density by area, a bright quarter. Returns CSS box-shadow
  *  parts, deterministic for a given size. */
 export function groundStars(w = 1920, h = 1080, scale = 4) {
-  const W = Math.ceil(w / scale), H = Math.ceil(h / scale);
+  const W = Math.ceil(w / scale),
+    H = Math.ceil(h / scale);
   let seed = GROUND_SEED;
   const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 0x100000000;
   const n = Math.round((W * H) / 1440);
   const out = [];
   for (let i = 0; i < n; i++) {
-    const x = (rnd() * W) | 0, y = (rnd() * H * 0.55) | 0;
+    const x = (rnd() * W) | 0,
+      y = (rnd() * H * 0.55) | 0;
     const bright = rnd() < 0.25;
-    rnd();                                  // the phase draw, kept so the stream matches pixelGround's
+    rnd(); // the phase draw, kept so the stream matches pixelGround's
     const b = bright ? 200 : 120;
     out.push(`${x * scale}px ${y * scale}px 0 0 rgb(${b},${b},${b - 10})`);
   }
@@ -131,7 +142,8 @@ export function groundStars(w = 1920, h = 1080, scale = 4) {
 /** The whole ground as one <style> block: ramp, fog, dither, stars. */
 export function groundCss(w, h) {
   const stops = GROUND_RAMP.map((c, i) => {
-    const a = Math.round((i / GROUND_RAMP.length) * 100), b = Math.round(((i + 1) / GROUND_RAMP.length) * 100);
+    const a = Math.round((i / GROUND_RAMP.length) * 100),
+      b = Math.round(((i + 1) / GROUND_RAMP.length) * 100);
     return `${c} ${a}% ${b}%`;
   }).join(', ');
   return `.night {
@@ -158,15 +170,15 @@ export function groundCss(w, h) {
  *  Returns Vite's { html, tags } shape. The stamp is a data attribute
  *  on the element the page styles as the build line, and the page hides
  *  it when empty, so a dev serve shows no stamp rather than a lie. */
-export function transformLanding(html, {
-  sha = '', tokens = ENHANCED_TOKENS, fonts = LANDING_FONTS_URL, stats = null,
-} = {}) {
+export function transformLanding(
+  html,
+  { sha = '', tokens = ENHANCED_TOKENS, fonts = LANDING_FONTS_URL, stats = null } = {},
+) {
   // Every empty stamp on the page, not the first: the rail's foot hides
   // on a phone and the page's end carries the same line for that case.
   // A stamp that links to `.../commit/` gets the sha on the end of it.
   let stamped = sha
-    ? html.replace(/<(\w+)([^>]*)\sdata-build=""([^>]*)>\s*<\/\1>/g,
-      (_m, tag, pre, post) => {
+    ? html.replace(/<(\w+)([^>]*)\sdata-build=""([^>]*)>\s*<\/\1>/g, (_m, tag, pre, post) => {
         const linked = post.replace(/href="([^"]*\/commit\/)"/, (_h, base) => `href="${base}${sha}"`);
         return `<${tag}${pre} data-build="${sha}"${linked}>${sha}</${tag}>`;
       })
@@ -175,8 +187,10 @@ export function transformLanding(html, {
   // element gets its number. Absent figures leave the element empty,
   // and the page hides an empty one, as it hides an empty stamp.
   for (const [key, value] of Object.entries(stats ?? {})) {
-    stamped = stamped.replace(new RegExp(`<(\\w+)([^>]*)\\sdata-stat="${key}"([^>]*)>\\s*<\\/\\1>`, 'g'),
-      (_m, tag, pre, post) => `<${tag}${pre} data-stat="${key}"${post}>${figure(value)}</${tag}>`);
+    stamped = stamped.replace(
+      new RegExp(`<(\\w+)([^>]*)\\sdata-stat="${key}"([^>]*)>\\s*<\\/\\1>`, 'g'),
+      (_m, tag, pre, post) => `<${tag}${pre} data-stat="${key}"${post}>${figure(value)}</${tag}>`,
+    );
   }
   return {
     html: stamped,
@@ -265,7 +279,12 @@ export function transformDocument(html, { tokens = ENHANCED_TOKENS, fonts = LAND
     html,
     tags: [
       { tag: 'style', attrs: { id: 'enhanced-tokens' }, children: tokens, injectTo: 'head-prepend' },
-      { tag: 'style', attrs: { id: 'document-style' }, children: `${PIXELIFY_FIVE_FACE}\n${DOCUMENT_CSS}`, injectTo: 'head' },
+      {
+        tag: 'style',
+        attrs: { id: 'document-style' },
+        children: `${PIXELIFY_FIVE_FACE}\n${DOCUMENT_CSS}`,
+        injectTo: 'head',
+      },
       ...skinTags(tokens, fonts),
     ],
   };
@@ -277,8 +296,8 @@ export function landingHtml() {
     transformIndexHtml: {
       order: 'pre',
       handler(html, ctx) {
-        if (ctx.path === GAME_PATH) return { html, tags: [iconTag()].filter(Boolean) };   // the tab's mark, nothing else
-        if (DOCUMENT_PATHS.includes(ctx.path)) return transformDocument(html);   // TERMS1: the Terms and the Privacy Policy
+        if (ctx.path === GAME_PATH) return { html, tags: [iconTag()].filter(Boolean) }; // the tab's mark, nothing else
+        if (DOCUMENT_PATHS.includes(ctx.path)) return transformDocument(html); // TERMS1: the Terms and the Privacy Policy
         if (ctx.path !== LANDING_PATH) return html;
         // BUILD ONLY for the stamp, as build-tag-meta is: on a dev serve
         // src/buildTag.js holds whatever the last build left behind, and

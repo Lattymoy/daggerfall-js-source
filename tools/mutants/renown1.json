@@ -47,8 +47,8 @@
   {
     "name": "RENOWN1-kill-level-unclamped",
     "file": "src/net/renown.js",
-    "old": "export const renownKillXp = (foeLevel, renown = null) => renownRate(RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel, 1, RENOWN_KILL_LEVEL_MAX), renownCeiling(renown)));",
-    "new": "export const renownKillXp = (foeLevel, renown = null) => renownRate(RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel, 0, 999), renownCeiling(renown)));",
+    "old": "  renownRate(RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel, 1, RENOWN_KILL_LEVEL_MAX), renownCeiling(renown)));",
+    "new": "  renownRate(RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel, 0, 999), renownCeiling(renown)));",
     "tests": [
       "test/net/renown1.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RENOWN1-hour-spend-matches-nothing",
     "file": "server-account/src/renownTracks.js",
-    "old": "       WHERE id = ?1\n       RETURNING renown_last_credit AS credit, (${track}) AS before, ${repeat} AS repeat, ${refused} AS refused, renown_hour_xp AS hour_xp`,",
-    "new": "       WHERE id = ?1 AND ?2 IS NULL\n       RETURNING renown_last_credit AS credit, (${track}) AS before, ${repeat} AS repeat, ${refused} AS refused, renown_hour_xp AS hour_xp`,",
+    "old": "         renown_hour = MAX(renown_hour, ?6)\n       WHERE id = ?1",
+    "new": "         renown_hour = MAX(renown_hour, ?6)\n       WHERE id = ?1 AND ?2 IS NULL",
     "tests": [
       "test/net/renown1.test.js"
     ],
@@ -111,8 +111,8 @@
   {
     "name": "RENOWN1-rose-always",
     "file": "server-account/src/renownTracks.js",
-    "old": "rose: level > renownForXp(before),",
-    "new": "rose: level >= renownForXp(before),",
+    "old": "    rose: level > renownForXp(before),",
+    "new": "    rose: level >= renownForXp(before),",
     "tests": [
       "test/net/renown1.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "RENOWN1-kill-paid-twice",
     "file": "src/net/renownTracker.js",
-    "old": "  e.paid = true;\n",
-    "new": "  e.paid = false;\n",
+    "old": "  e.paid = true;",
+    "new": "  e.paid = false;",
     "tests": [
       "test/net/renown1.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "RENOWN1-network-loss-drops-the-xp",
     "file": "src/net/renownTracker.js",
-    "old": "    else refused++;   // anything else (offline, a busy service, a rate, a service without the route yet) holds the report and waits",
-    "new": "    else { refused++; held = null; }",
+    "old": "    else refused++; // anything else (offline, a busy service, a rate, a service without the route yet) holds the report and waits",
+    "new": "    else {\n      refused++;\n      held = null;\n    }",
     "tests": [
       "test/net/renown1.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "RENOWN1-refusal-retried-forever",
     "file": "src/net/renownTracker.js",
-    "old": "    if (PERMANENT.has(r?.error)) { stopped = true; held = null; pend.clear(); vdPend = 0; try { onStop(r.error); } catch { /* the stop stands */ } }",
-    "new": "    if (PERMANENT.has(r?.error)) { held = null; pend.clear(); vdPend = 0; try { onStop(r.error); } catch { /* the stop stands */ } }",
+    "old": "      stopped = true;\n      held = null;",
+    "new": "      held = null;",
     "tests": [
       "test/net/renown1.test.js"
     ],
@@ -257,8 +257,8 @@
     "name": "RENOWN1-layer-in-the-stored-health",
     "note": "EG-ZR (PIN MOVED): re-aimed by content - the live maximum reads the Spire's Stoneskin beside Renown's (systems/renownLayer.js spireHpOf)",
     "file": "src/systems/chargen.js",
-    "old": "      return own + renownHpOf(this) + spireHpOf(this);",
-    "new": "      return own + spireHpOf(this);",
+    "old": "      return own + renownHpOf(this) + spireHpOf(this); // EG-ZR: and the Spire's Stoneskin, on the same terms",
+    "new": "      return own + spireHpOf(this); // EG-ZR: and the Spire's Stoneskin, on the same terms",
     "tests": [
       "test/net/renown1.test.js"
     ]
@@ -411,8 +411,8 @@
   {
     "name": "RENOWN1-card-plate-after-the-name",
     "file": "src/ui/profileWindow.js",
-    "old": "    if (v.level) { const lv = el('span', 'dfprofile-renown', v.level); if (v.levelTitle) lv.title = v.levelTitle; nm.append(lv); }   // RENOWN1: left of the name\n    nm.append(el('span', 'dfprofile-nametext', v.name));",
-    "new": "    nm.append(el('span', 'dfprofile-nametext', v.name));\n    if (v.level) { const lv = el('span', 'dfprofile-renown', v.level); if (v.levelTitle) lv.title = v.levelTitle; nm.append(lv); }   // RENOWN1: left of the name",
+    "old": "    if (v.level) {\n      const lv = el('span', 'dfprofile-renown', v.level);\n      if (v.levelTitle) lv.title = v.levelTitle;\n      nm.append(lv);\n    } // RENOWN1: left of the name\n    nm.append(el('span', 'dfprofile-nametext', v.name));",
+    "new": "    nm.append(el('span', 'dfprofile-nametext', v.name));\n    if (v.level) {\n      const lv = el('span', 'dfprofile-renown', v.level);\n      if (v.levelTitle) lv.title = v.levelTitle;\n      nm.append(lv);\n    } // RENOWN1: left of the name",
     "tests": [
       "test/net/renown1.test.js"
     ]

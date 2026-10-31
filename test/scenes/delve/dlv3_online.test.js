@@ -79,7 +79,7 @@ test('DLV3 THE WRONG PLATE ON MY CLOCK (AUDIT DLV3 8): its mark stamped on the h
   assert.equal(plateLooks(led, 4, wrong, [], 50_300)[1], PLATE_LOOK.wrong);
   assert.notEqual(plateLooks(led, 4, wrong, [], 50_700)[1], PLATE_LOOK.wrong, 'gone at 0.7 s');
   const host = rd('src/scenes/delve/delveHost.js');
-  assert.match(host, /case 'wrong': r\.wrong = \{ j: ev\.j, at: now \};/);
+  assert.match(host, /case 'wrong':\n\s*r\.wrong = \{ j: ev\.j, at: now \};/);
   assert.match(host, /plateLooks\(r\.led, r\.plates\.length, r\.wrong, r\.looks, now\)/);
 });
 

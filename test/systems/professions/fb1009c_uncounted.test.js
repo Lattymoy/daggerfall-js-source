@@ -20,6 +20,7 @@ import { BAG_PAGE_WORDS, setProfessionsPages, drawStoresPage, resetProfPages, ca
 import { heldOf, heldKeysOf, materialKeyOfItem, roomFor, mintCarried, bagWeight } from '../../../src/systems/materialsBag.js';
 import { setItemFields } from '../../../src/systems/item/itemTemplates.js';
 import { generateRandomLoot } from '../../../src/systems/loot/loot.js';
+import { hostText } from '../../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const noWait = () => Promise.resolve();
 const memStorage = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)) }; };
@@ -100,7 +101,7 @@ test('UNCOUNTED: the Stores page lists the looted blood and says what it is; LOO
 });
 
 test('UNCOUNTED wired: the world host hands the page every material held', () => {
-  const w = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /carriedHeld: \(k\) => bagHeldOf\(playerEntity, k, \{ counter: false \}\),[^\n]*\n\s+heldKeys: \(\) => bagHeldKeysOf\(playerEntity\),/);   // PIN MOVED (AUDIT TOWN-ECON 2 PRICE-2): the page never puts a counter's piece in
   // PIN MOVED (FB1020c ONE-SAVE): the page's plan reaches the book whole, each put-in with its own order
   assert.match(w, /deposit: async \(plan\) => \(await profBook\.depositMany\(plan\)\)\.map\(\(r, i\) => /, 'LOOT-LOOSE: the page\'s order reaches the book');

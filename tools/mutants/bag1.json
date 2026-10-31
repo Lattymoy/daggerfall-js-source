@@ -47,8 +47,8 @@
   {
     "name": "BAG1-the-pack-first",
     "file": "src/systems/materialsBag.js",
-    "old": "    if (hasBag(entity.items) && canHoldAmount(1, kg, BAG_KG_LIMIT, bagWeight(entity)) >= 1) { addItem(bagItemsOf(entity), item, 'back'); out.bag++; continue; }\n",
-    "new": "",
+    "old": "    if (hasBag(entity.items) && canHoldAmount(1, kg, BAG_KG_LIMIT, bagWeight(entity)) >= 1) {\n      addItem(bagItemsOf(entity), item, 'back');\n      out.bag++;\n      continue;\n    }\n    if (canHoldAmount(1, kg, entityMaxEncumbrance(entity), carriedWeight(entity)) >= 1) {",
+    "new": "    if (canHoldAmount(1, kg, entityMaxEncumbrance(entity), carriedWeight(entity)) >= 1) {",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "BAG1-the-bag-past-its-limit",
     "file": "src/systems/materialsBag.js",
-    "old": "canHoldAmount(1, kg, BAG_KG_LIMIT, bagWeight(entity)) >= 1)",
-    "new": "canHoldAmount(1, kg, BAG_KG_LIMIT * 2, bagWeight(entity)) >= 1)",
+    "old": "    if (hasBag(entity.items) && canHoldAmount(1, kg, BAG_KG_LIMIT, bagWeight(entity)) >= 1) {",
+    "new": "    if (hasBag(entity.items) && canHoldAmount(1, kg, BAG_KG_LIMIT * 2, bagWeight(entity)) >= 1) {",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "BAG1-a-deposit-takes-the-pack-first",
     "file": "src/systems/materialsBag.js",
-    "old": "([['bag', bagItemsOf(entity)], ['items', entity?.items ?? []], ['wagon', entity?.wagonItems ?? []]])",
-    "new": "([['items', entity?.items ?? []], ['bag', bagItemsOf(entity)], ['wagon', entity?.wagonItems ?? []]])",
+    "old": "      ['bag', bagItemsOf(entity)],\n      ['items', entity?.items ?? []],",
+    "new": "      ['items', entity?.items ?? []],\n      ['bag', bagItemsOf(entity)],",
     "tests": [
       "test/systems/bag1_client.test.js"
     ],
@@ -75,8 +75,8 @@
   {
     "name": "BAG1-a-quest-item-a-material",
     "file": "src/systems/materialsBag.js",
-    "old": "  if (!item || item.questItem || isSummoned(item)",
-    "new": "  if (!item || isSummoned(item)",
+    "old": "  if (\n    !item ||\n    item.questItem ||\n    isSummoned(item) ||\n    item.equipSlot != null ||\n    isEnchanted(item) ||\n    (item.foodStage ?? 0) > 0\n  )",
+    "new": "  if (!item || isSummoned(item) || item.equipSlot != null || isEnchanted(item) || (item.foodStage ?? 0) > 0)",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "BAG1-the-bag-traded",
     "file": "src/systems/tradePack.js",
-    "old": "  if (isBagItem(item)) return BAG_TRADE_TEXT;",
-    "new": "  void BAG_TRADE_TEXT;",
+    "old": "  if (isBagItem(item)) return BAG_TRADE_TEXT; // BAG1: the bag is its owner's",
+    "new": "  void BAG_TRADE_TEXT; // BAG1: the bag is its owner's",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -130,7 +130,7 @@
     "name": "BAG-SHELF-none-to-a-bag-owner",
     "file": "src/systems/shopStock.js",
     "old": "    if (isOnlinePage()) add({ group: 'UselessItems2', templateIndex: BAG_TEMPLATE });",
-    "new": "    if (isOnlinePage() && !(playerEntity.items ?? []).some((it) => it?.templateIndex === BAG_TEMPLATE)) add({ group: 'UselessItems2', templateIndex: BAG_TEMPLATE });",
+    "new": "    if (isOnlinePage() && !(playerEntity.items ?? []).some((it) => it?.templateIndex === BAG_TEMPLATE))\n      add({ group: 'UselessItems2', templateIndex: BAG_TEMPLATE });",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "BAG1-the-realm-blind-to-it",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": ", ...lists(snap?.wagonItems), ...lists(snap?.bagItems), ...lists(snap?.items)];",
-    "new": ", ...lists(snap?.wagonItems), ...lists(snap?.items)];",
+    "old": "  ...lists(snap?.bagItems),\n  ...lists(snap?.items),",
+    "new": "  ...lists(snap?.items),",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "BAG1-full-read-off-the-stores",
     "file": "src/net/professionLaw.js",
-    "old": "  if (book.carrying?.() === true) return book.carryFull(material);\n",
-    "new": "",
+    "old": "  if (book.carrying?.() === true) return book.carryFull(material);\n  const s = book.store?.(material) ?? { own: book.held(material) };",
+    "new": "  const s = book.store?.(material) ?? { own: book.held(material) };",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "AUDIT-BAG1-B6-the-wagon-unread",
     "file": "src/systems/materialsBag.js",
-    "old": "  for (const list of [entity?.items ?? [], entity?.bagItems ?? [], entity?.wagonItems ?? []]) {\n    for (const it of list) if (materialKeyOfItem(it) === key && (counter || !counterPiece(it))) n += it.stackCount ?? 1;",
-    "new": "  for (const list of [entity?.items ?? [], entity?.bagItems ?? []]) {\n    for (const it of list) if (materialKeyOfItem(it) === key && (counter || !counterPiece(it))) n += it.stackCount ?? 1;",
+    "old": "  let n = 0;\n  for (const list of [entity?.items ?? [], entity?.bagItems ?? [], entity?.wagonItems ?? []]) {",
+    "new": "  let n = 0;\n  for (const list of [entity?.items ?? [], entity?.bagItems ?? []]) {",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "AUDIT-BAG1-B6-the-wagon-first",
     "file": "src/systems/materialsBag.js",
-    "old": "([['bag', bagItemsOf(entity)], ['items', entity?.items ?? []], ['wagon', entity?.wagonItems ?? []]])",
-    "new": "([['wagon', entity?.wagonItems ?? []], ['bag', bagItemsOf(entity)], ['items', entity?.items ?? []]])",
+    "old": "      ['bag', bagItemsOf(entity)],\n      ['items', entity?.items ?? []],\n      ['wagon', entity?.wagonItems ?? []],",
+    "new": "      ['wagon', entity?.wagonItems ?? []],\n      ['bag', bagItemsOf(entity)],\n      ['items', entity?.items ?? []],",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "AUDIT-BAG1-B7-a-rotting-haunch-counted",
     "file": "src/systems/materialsBag.js",
-    "old": " || (item.foodStage ?? 0) > 0) return null;",
-    "new": ") return null;",
+    "old": "  if (\n    !item ||\n    item.questItem ||\n    isSummoned(item) ||\n    item.equipSlot != null ||\n    isEnchanted(item) ||\n    (item.foodStage ?? 0) > 0\n  )\n    return null;",
+    "new": "  if (!item || item.questItem || isSummoned(item) || item.equipSlot != null || isEnchanted(item)) return null;",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -500,8 +500,8 @@
   {
     "name": "AUDIT2-BAG1-K4-the-overflow-lost",
     "file": "src/systems/materialsBag.js",
-    "old": "  if (got.left > 0 && withdrawable(key)) over = withdrawIntoPack(",
-    "new": "  if (false) over = withdrawIntoPack(",
+    "old": "  if (got.left > 0 && withdrawable(key))",
+    "new": "  if (false)",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -608,8 +608,8 @@
   {
     "name": "AUDIT2-BAG1-H12-arcane-essence-minted",
     "file": "src/systems/materialsBag.js",
-    "old": "  if (!withdrawable(key)) { out.left = n; return out; }\n",
-    "new": "",
+    "old": "  if (!withdrawable(key)) {\n    out.left = n;\n    return out;\n  }\n  if (!Array.isArray(entity.items)) entity.items = [];",
+    "new": "  if (!Array.isArray(entity.items)) entity.items = [];",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -626,7 +626,7 @@
   {
     "name": "AUDIT2-BAG1-H1-the-pack-past-its-weight",
     "file": "src/systems/materialsBag.js",
-    "old": "    const fit = kg > 0 ? Math.max(0, Math.min(count, canHoldAmount(count, kg, entityMaxEncumbrance(entity), carriedWeight(entity)))) : count;",
+    "old": "    const fit =\n      kg > 0\n        ? Math.max(0, Math.min(count, canHoldAmount(count, kg, entityMaxEncumbrance(entity), carriedWeight(entity))))\n        : count;",
     "new": "    const fit = count;",
     "tests": [
       "test/systems/bag1_client.test.js"
@@ -761,8 +761,8 @@
   {
     "name": "AUDIT2-BAG1-H10-an-enchanted-herb-counted",
     "file": "src/systems/materialsBag.js",
-    "old": "item.equipSlot != null || isEnchanted(item) || (item.foodStage ?? 0) > 0) return null;",
-    "new": "item.equipSlot != null || (item.foodStage ?? 0) > 0) return null;",
+    "old": "  if (\n    !item ||\n    item.questItem ||\n    isSummoned(item) ||\n    item.equipSlot != null ||\n    isEnchanted(item) ||\n    (item.foodStage ?? 0) > 0\n  )\n    return null;",
+    "new": "  if (!item || item.questItem || isSummoned(item) || item.equipSlot != null || (item.foodStage ?? 0) > 0) return null;",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]

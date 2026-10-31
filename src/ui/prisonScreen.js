@@ -57,10 +57,10 @@
 
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText, NATIVE_W } from './native/nativePanel.js';
 import { DFPalette } from '../formats/dfPalette.js';
-import { localizedText as coreText, processGrammar } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
-import { isEnhanced } from '../systems/uiSkin.js';   // FONT3: the countdown in the enhanced face under that skin
-import { drawEnhancedHudLabel, midTextTopPx } from './enhanced/enhancedHudText.js';   // FONT3: the mid-screen label's DOM face, one node per id
-import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { localizedText as coreText, processGrammar } from '../systems/textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
+import { isEnhanced } from '../systems/uiSkin.js'; // FONT3: the countdown in the enhanced face under that skin
+import { drawEnhancedHudLabel, midTextTopPx } from './enhanced/enhancedHudText.js'; // FONT3: the mid-screen label's DOM face, one node per id
+import { noteFirstUse } from '../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 /** nativeImgName / nativeImgName2 (:31-32). */
 export const COURT_IMG = 'CORT01I0.IMG';
@@ -129,7 +129,9 @@ export async function preloadCourtScreenArt(deps) {
   return _courtArt;
 }
 export const courtScreenArtLoaded = () => !!_courtArt;
-export function _setCourtScreenArtForTests(art) { _courtArt = art; }
+export function _setCourtScreenArtForTests(art) {
+  _courtArt = art;
+}
 
 /**
  * The COURTROOM backdrop - Setup's courtPanel (:75-84), the window the
@@ -145,9 +147,9 @@ export function _setCourtScreenArtForTests(art) { _courtArt = art; }
  */
 export class CourtScreenWindow {
   constructor() {
-    noteFirstUse('crime');   // TUT1: the court is the law's first word to the player
+    noteFirstUse('crime'); // TUT1: the court is the law's first word to the player
     this.done = false;
-    this.isChoiceWindow = true;   // the overlay slot's modal flag
+    this.isChoiceWindow = true; // the overlay slot's modal flag
   }
 
   /** AllowCancel = false (:97). */
@@ -177,7 +179,9 @@ export async function preloadPrisonScreenArt(deps) {
 }
 export const prisonScreenArtLoaded = () => !!_art;
 /** Tests reach the loaded art through the same door the window does. */
-export function _setPrisonScreenArtForTests(art) { _art = art; }
+export function _setPrisonScreenArtForTests(art) {
+  _art = art;
+}
 
 export class PrisonScreenWindow {
   /** deps: { daysInPrison, localizedText, onEndPrisonTime, speedUp }.
@@ -200,7 +204,7 @@ export class PrisonScreenWindow {
     this.timer = 0;
     this.served = false;
     this.done = false;
-    this.isChoiceWindow = true;   // the overlay slot's modal flag
+    this.isChoiceWindow = true; // the overlay slot's modal flag
   }
 
   /** AllowCancel = false (:97). Nothing the player presses cuts a
@@ -247,7 +251,11 @@ export class PrisonScreenWindow {
     // picture. It is the mid-screen label's DOM face there now, at the label's own native row - the horse's name
     // (ui/horseNameTooltip.js) is the same seam. A DOM line stays painted until it is told, so dispose takes it down.
     if (isEnhanced() && typeof document !== 'undefined') {
-      const node = drawEnhancedHudLabel(ENHANCED_PRISON_DAYS_ID, { text: this.label, visible: true, top: midTextTopPx(canvas, DAYS_LABEL_POS[1]) });
+      const node = drawEnhancedHudLabel(ENHANCED_PRISON_DAYS_ID, {
+        text: this.label,
+        visible: true,
+        top: midTextTopPx(canvas, DAYS_LABEL_POS[1]),
+      });
       // AUDIT FONT3 F4: the panel's line, sized off the panel - the bitmap cell (FONT0003's 7 rows) at the panel's
       // scale, in CSS pixels, a tenth under it as every DOM line standing in for a bitmap one is (TEXT_LAYER_FIT)
       const dpr = canvas?.clientWidth > 0 ? canvas.width / canvas.clientWidth : 1;
@@ -261,12 +269,16 @@ export class PrisonScreenWindow {
     }
     if (!font) return;
     shadowText(renderer, font, this.label, m, 0, DAYS_LABEL_POS[1], {
-      color: DAYS_LABEL_COLOR, shadow: DAYS_LABEL_SHADOW, align: 'center', w: NATIVE_W,
+      color: DAYS_LABEL_COLOR,
+      shadow: DAYS_LABEL_SHADOW,
+      align: 'center',
+      w: NATIVE_W,
     });
   }
 
   /** townTalk's dropOverlay and showOverlay call this on the way out (the served sentence's close, a replacement). */
   dispose() {
-    if (isEnhanced() && typeof document !== 'undefined') drawEnhancedHudLabel(ENHANCED_PRISON_DAYS_ID, { text: '', visible: false });
+    if (isEnhanced() && typeof document !== 'undefined')
+      drawEnhancedHudLabel(ENHANCED_PRISON_DAYS_ID, { text: '', visible: false });
   }
 }

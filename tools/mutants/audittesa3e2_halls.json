@@ -2,8 +2,8 @@
   {
     "name": "E2-5-one-hall-unkept",
     "file": "src/net/wild/wildLaw.js",
-    "old": "  for (const [o, who] of Object.entries(st.inside)) if (o !== h && who[acct] != null) { delete who[acct]; if (!Object.keys(who).length) { delete st.inside[o]; st.empty[o] = now; } }\n",
-    "new": "",
+    "old": "  for (const [o, who] of Object.entries(st.inside))\n    if (o !== h && who[acct] != null) {\n      delete who[acct];\n      if (!Object.keys(who).length) {\n        delete st.inside[o];\n        st.empty[o] = now;\n      }\n    }\n  (st.inside[h] ??= {})[acct] = now;",
+    "new": "  (st.inside[h] ??= {})[acct] = now;",
     "tests": [
       "test/net/audittesa3e2_halls.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "E2-5-crows-kept-a-death",
     "file": "src/net/wild/wildLaw.js",
-    "old": "  if (st.piles[acct] && st.piles[acct].h !== h) wdunGone(st, acct, now);\n",
-    "new": "",
+    "old": "  if (st.piles[acct] && st.piles[acct].h !== h) wdunGone(st, acct, now);\n  st.piles[acct] = { h, until };",
+    "new": "  st.piles[acct] = { h, until };",
     "tests": [
       "test/net/audittesa3e2_halls.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "E2-5-acct-locks-uncapped",
     "file": "src/net/wild/wildLaw.js",
-    "old": "  for (const halls of Object.values(st.locks)) moved = capBy(halls, WDUN_ACCT_LOCKS_MAX, (u) => u) || moved;\n",
-    "new": "",
+    "old": "  for (const halls of Object.values(st.locks)) moved = capBy(halls, WDUN_ACCT_LOCKS_MAX, (u) => u) || moved;\n  const all = Object.entries(st.locks).flatMap(([a, halls]) =>",
+    "new": "  const all = Object.entries(st.locks).flatMap(([a, halls]) =>",
     "tests": [
       "test/net/audittesa3e2_halls.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "E2-5-piles-uncapped",
     "file": "src/net/wild/wildLaw.js",
-    "old": "  moved = capBy(st.piles, WDUN_PILES_MAX, (p) => p?.until ?? 0) || moved;\n",
-    "new": "",
+    "old": "  moved = capBy(st.piles, WDUN_PILES_MAX, (p) => p?.until ?? 0) || moved;\n  moved = capBy(st.inside, WDUN_HALLS_MAX, newest) || moved;",
+    "new": "  moved = capBy(st.inside, WDUN_HALLS_MAX, newest) || moved;",
     "tests": [
       "test/net/audittesa3e2_halls.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "E2-5-inside-halls-uncapped",
     "file": "src/net/wild/wildLaw.js",
-    "old": "  moved = capBy(st.inside, WDUN_HALLS_MAX, newest) || moved;\n",
-    "new": "",
+    "old": "  moved = capBy(st.inside, WDUN_HALLS_MAX, newest) || moved;\n  const inside = Object.entries(st.inside).flatMap(([h, who]) =>",
+    "new": "  const inside = Object.entries(st.inside).flatMap(([h, who]) =>",
     "tests": [
       "test/net/audittesa3e2_halls.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "E2-5-empty-uncapped",
     "file": "src/net/wild/wildLaw.js",
-    "old": "  moved = capBy(st.empty, WDUN_HALLS_MAX, (since) => since) || moved;\n",
-    "new": "",
+    "old": "  moved = capBy(st.empty, WDUN_HALLS_MAX, (since) => since) || moved;\n  moved = capBy(st.eps, WDUN_HALLS_MAX, (e) => e?.at ?? 0) || moved;",
+    "new": "  moved = capBy(st.eps, WDUN_HALLS_MAX, (e) => e?.at ?? 0) || moved;",
     "tests": [
       "test/net/audittesa3e2_halls.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "E2-5-eps-uncapped",
     "file": "src/net/wild/wildLaw.js",
-    "old": "  moved = capBy(st.eps, WDUN_HALLS_MAX, (e) => e?.at ?? 0) || moved;\n",
-    "new": "",
+    "old": "  moved = capBy(st.eps, WDUN_HALLS_MAX, (e) => e?.at ?? 0) || moved;\n  moved = capBy(st.crows, WDUN_HALLS_MAX, (u) => u) || moved;",
+    "new": "  moved = capBy(st.crows, WDUN_HALLS_MAX, (u) => u) || moved;",
     "tests": [
       "test/net/audittesa3e2_halls.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "E2-5-crows-uncapped",
     "file": "src/net/wild/wildLaw.js",
-    "old": "  moved = capBy(st.crows, WDUN_HALLS_MAX, (u) => u) || moved;\n",
-    "new": "",
+    "old": "  moved = capBy(st.crows, WDUN_HALLS_MAX, (u) => u) || moved;\n  return moved;",
+    "new": "  return moved;",
     "tests": [
       "test/net/audittesa3e2_halls.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "E2-5-meters-unbounded",
     "file": "src/net/wild/wildLaw.js",
-    "old": "  else { m = { b: null, d: wdunDay(now), n: 0 }; if (meters.size >= WDUN_ACCTS_MAX) meters.delete(meters.keys().next().value); }",
-    "new": "  else { m = { b: null, d: wdunDay(now), n: 0 }; }",
+    "old": "    if (meters.size >= WDUN_ACCTS_MAX) meters.delete(meters.keys().next().value);\n  }",
+    "new": "  }",
     "tests": [
       "test/net/audittesa3e2_halls.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "E2-5-day-never-turns",
     "file": "src/net/wild/wildLaw.js",
-    "old": "  if (m.d !== wdunDay(now)) { m.d = wdunDay(now); m.n = 0; }\n",
-    "new": "",
+    "old": "  if (m.d !== wdunDay(now)) {\n    m.d = wdunDay(now);\n    m.n = 0;\n  }\n  return m;",
+    "new": "  return m;",
     "tests": [
       "test/net/audittesa3e2_halls.test.js"
     ],

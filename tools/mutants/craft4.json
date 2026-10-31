@@ -38,8 +38,8 @@
   {
     "name": "CRAFT4-law-made-not-own",
     "file": "src/net/temperLaw.js",
-    "old": "if (typeof item.recipe === 'string') { const r = recipeById(item.recipe); return temperableRecipe(r) ? r : null; }",
-    "new": "if (typeof item.recipe === 'string') { const r = recipeById(item.recipe); return r ?? null; }",
+    "old": "    return temperableRecipe(r) ? r : null;",
+    "new": "    return r ?? null;",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "CRAFT4-law-weapon-any-metal",
     "file": "src/net/temperLaw.js",
-    "old": "RECIPES.find((r) => r.kind === 'weapon' && r.templateIndex === t && r.material === m)",
-    "new": "RECIPES.find((r) => r.kind === 'weapon' && r.templateIndex === t)",
+    "old": "  if (item.group === 'Weapons')\n    return RECIPES.find((r) => r.kind === 'weapon' && r.templateIndex === t && r.material === m) ?? null;",
+    "new": "  if (item.group === 'Weapons') return RECIPES.find((r) => r.kind === 'weapon' && r.templateIndex === t) ?? null;",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CRAFT4-law-leather-any",
     "file": "src/net/temperLaw.js",
-    "old": "r.kind === 'leather' && r.templateIndex === t && r.leather === 'leather:cured'",
-    "new": "r.kind === 'leather' && r.templateIndex === t",
+    "old": "    if (m === ARMOR_LEATHER)\n      return (\n        RECIPES.find((r) => r.kind === 'leather' && r.templateIndex === t && r.leather === 'leather:cured') ?? null\n      );",
+    "new": "    if (m === ARMOR_LEATHER) return RECIPES.find((r) => r.kind === 'leather' && r.templateIndex === t) ?? null;",
     "tests": [
       "test/net/craft4_temper.test.js"
     ],
@@ -67,8 +67,8 @@
   {
     "name": "CRAFT4-law-chain-as-plate",
     "file": "src/net/temperLaw.js",
-    "old": "if ((m & 0xff00) === ARMOR_CHAIN) return",
-    "new": "if (m === ARMOR_CHAIN + 1) return",
+    "old": "    if ((m & 0xff00) === ARMOR_CHAIN) return RECIPES.find((r) => r.kind === 'chain' && r.templateIndex === t) ?? null;",
+    "new": "    if (m === ARMOR_CHAIN + 1) return RECIPES.find((r) => r.kind === 'chain' && r.templateIndex === t) ?? null;",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "CRAFT4-law-plate-any-metal",
     "file": "src/net/temperLaw.js",
-    "old": "(r.kind === 'plate' || r.kind === 'shield') && r.templateIndex === t && r.material === m",
-    "new": "(r.kind === 'plate' || r.kind === 'shield') && r.templateIndex === t",
+    "old": "    return (\n      RECIPES.find((r) => (r.kind === 'plate' || r.kind === 'shield') && r.templateIndex === t && r.material === m) ??\n      null\n    );",
+    "new": "    return RECIPES.find((r) => (r.kind === 'plate' || r.kind === 'shield') && r.templateIndex === t) ?? null;",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "CRAFT4-law-no-shield",
     "file": "src/net/temperLaw.js",
-    "old": "(r.kind === 'plate' || r.kind === 'shield')",
-    "new": "(r.kind === 'plate')",
+    "old": "    return (\n      RECIPES.find((r) => (r.kind === 'plate' || r.kind === 'shield') && r.templateIndex === t && r.material === m) ??\n      null\n    );",
+    "new": "    return RECIPES.find((r) => r.kind === 'plate' && r.templateIndex === t && r.material === m) ?? null;",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "CRAFT4-law-womens-none",
     "file": "src/net/temperLaw.js",
-    "old": "if (item.group === 'MensClothing' || item.group === 'WomensClothing') {",
-    "new": "if (item.group === 'MensClothing') {",
+    "old": "  if (item.group === 'MensClothing' || item.group === 'WomensClothing') {",
+    "new": "  if (item.group === 'MensClothing') {",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "CRAFT4-law-garment-any-cloth",
     "file": "src/net/temperLaw.js",
-    "old": "r.kind === 'garment' && r.templateIndex === t && r.cloth === 'cloth:linen'",
-    "new": "r.kind === 'garment' && r.templateIndex === t",
+    "old": "    return RECIPES.find((r) => r.kind === 'garment' && r.templateIndex === t && r.cloth === 'cloth:linen') ?? null;",
+    "new": "    return RECIPES.find((r) => r.kind === 'garment' && r.templateIndex === t) ?? null;",
     "tests": [
       "test/net/craft4_temper.test.js"
     ],
@@ -114,8 +114,8 @@
   {
     "name": "CRAFT4-law-cost-down",
     "file": "src/net/temperLaw.js",
-    "old": "n: Math.ceil(r.inputs[0].n / 2)",
-    "new": "n: Math.floor(r.inputs[0].n / 2)",
+    "old": "export const temperCost = (r) => ({ key: r.inputs[0].key, n: Math.ceil(r.inputs[0].n / 2) });",
+    "new": "export const temperCost = (r) => ({ key: r.inputs[0].key, n: Math.floor(r.inputs[0].n / 2) });",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -123,8 +123,8 @@
   {
     "name": "CRAFT4-law-cost-whole",
     "file": "src/net/temperLaw.js",
-    "old": "n: Math.ceil(r.inputs[0].n / 2)",
-    "new": "n: r.inputs[0].n",
+    "old": "export const temperCost = (r) => ({ key: r.inputs[0].key, n: Math.ceil(r.inputs[0].n / 2) });",
+    "new": "export const temperCost = (r) => ({ key: r.inputs[0].key, n: r.inputs[0].n });",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "CRAFT4-law-sigil-open",
     "file": "src/net/temperLaw.js",
-    "old": "  if (item.sigil != null) return 'sigil';\n",
-    "new": "",
+    "old": "  if (item.sigil != null) return 'sigil';\n  if (TEMPER_SHUT.includes(item.rarity) || item.artifact) return 'rarity';",
+    "new": "  if (TEMPER_SHUT.includes(item.rarity) || item.artifact) return 'rarity';",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "CRAFT4-law-artifact-open",
     "file": "src/net/temperLaw.js",
-    "old": "if (TEMPER_SHUT.includes(item.rarity) || item.artifact) return 'rarity';",
-    "new": "if (TEMPER_SHUT.includes(item.rarity)) return 'rarity';",
+    "old": "  if (TEMPER_SHUT.includes(item.rarity) || item.artifact) return 'rarity';",
+    "new": "  if (TEMPER_SHUT.includes(item.rarity)) return 'rarity';",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "CRAFT4-law-masterwork-open",
     "file": "src/net/temperLaw.js",
-    "old": "  if (q === MASTERWORK) return 'masterwork';\n",
-    "new": "",
+    "old": "  if (q === MASTERWORK) return 'masterwork';\n  if (q >= TEMPER_TOP) return 'top';",
+    "new": "  if (q >= TEMPER_TOP) return 'top';",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "CRAFT4-law-top-open",
     "file": "src/net/temperLaw.js",
-    "old": "  if (q >= TEMPER_TOP) return 'top';\n",
-    "new": "",
+    "old": "  if (q >= TEMPER_TOP) return 'top';\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -204,8 +204,8 @@
   {
     "name": "CRAFT4-law-step-flat",
     "file": "src/net/temperLaw.js",
-    "old": "return { condition: to.condition / from.condition, weight: to.weight / from.weight };",
-    "new": "return { condition: to.condition, weight: to.weight };",
+    "old": "  return { condition: to.condition / from.condition, weight: to.weight / from.weight };",
+    "new": "  return { condition: to.condition, weight: to.weight };",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "CRAFT4-law-reforge-legendary",
     "file": "src/net/temperLaw.js",
-    "old": "  (tier === 'magic' || tier === 'rare') && Number.isSafeInteger(count) && count >= 0 && count <= REFORGES_MAX ? REFORGE_ESSENCE[tier] * 2 ** count : null);",
-    "new": "  (tier === 'magic' || tier === 'rare' || !!tier) && Number.isSafeInteger(count) && count >= 0 && count <= REFORGES_MAX ? (REFORGE_ESSENCE[tier] ?? 5) * 2 ** count : null);",
+    "old": "  (tier === 'magic' || tier === 'rare') && Number.isSafeInteger(count) && count >= 0 && count <= REFORGES_MAX\n    ? REFORGE_ESSENCE[tier] * 2 ** count",
+    "new": "  (tier === 'magic' || tier === 'rare' || !!tier) && Number.isSafeInteger(count) && count >= 0 && count <= REFORGES_MAX\n    ? (REFORGE_ESSENCE[tier] ?? 5) * 2 ** count",
     "tests": [
       "test/net/craft4_temper.test.js"
     ],
@@ -499,8 +499,8 @@
   {
     "name": "CRAFT4-piece-weight-kept",
     "file": "src/systems/smithItems.js",
-    "old": "    if (step.weight !== 1) item.weightInKg = Math.round(unitWeightInKg(item) * step.weight * 100) / 100;\n",
-    "new": "",
+    "old": "    if (step.weight !== 1) item.weightInKg = Math.round(unitWeightInKg(item) * step.weight * 100) / 100;\n    item.quality = quality;",
+    "new": "    item.quality = quality;",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -517,8 +517,8 @@
   {
     "name": "CRAFT4-piece-rarity-kept",
     "file": "src/systems/smithItems.js",
-    "old": "for (const k of TEMPER_MINTED) { if (fresh[k] === undefined) delete item[k]; else item[k] = fresh[k]; }",
-    "new": "for (const k of TEMPER_MINTED) { if (fresh[k] !== undefined && k !== 'rarity' && k !== 'affixes') item[k] = fresh[k]; }",
+    "old": "      if (fresh[k] === undefined) delete item[k];\n      else item[k] = fresh[k];",
+    "new": "      if (fresh[k] !== undefined && k !== 'rarity' && k !== 'affixes') item[k] = fresh[k];",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -526,8 +526,8 @@
   {
     "name": "CRAFT4-reforge-unknown",
     "file": "src/systems/smithItems.js",
-    "old": "  if (!itemIsIdentified(item)) return 'unknown';\n",
-    "new": "",
+    "old": "  if (!itemIsIdentified(item)) return 'unknown';\n  if (isEquipped(item)) return 'worn';",
+    "new": "  if (isEquipped(item)) return 'worn';",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -553,8 +553,8 @@
   {
     "name": "CRAFT4-reforge-own-rng",
     "file": "src/systems/smithItems.js",
-    "old": "reforgeAffix(item, index, seededRng(seed >>> 0)))",
-    "new": "reforgeAffix(item, index))",
+    "old": "  essenceReforgeRefusal(item, index) || !Number.isSafeInteger(seed)\n    ? null\n    : reforgeAffix(item, index, seededRng(seed >>> 0));",
+    "new": "  essenceReforgeRefusal(item, index) || !Number.isSafeInteger(seed) ? null : reforgeAffix(item, index);",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -562,8 +562,8 @@
   {
     "name": "CRAFT4-reforge-any-seed",
     "file": "src/systems/smithItems.js",
-    "old": "(essenceReforgeRefusal(item, index) || !Number.isSafeInteger(seed) ? null",
-    "new": "(essenceReforgeRefusal(item, index) ? null",
+    "old": "  essenceReforgeRefusal(item, index) || !Number.isSafeInteger(seed)\n    ? null\n    : reforgeAffix(item, index, seededRng(seed >>> 0));",
+    "new": "  essenceReforgeRefusal(item, index) ? null : reforgeAffix(item, index, seededRng(seed >>> 0));",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -643,7 +643,7 @@
   },
   {
     "name": "CRAFT4-host-worn-offered",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "filter((it) => it && !isEquipped(it) && !temperRefusal(it) && !(typeof it.provenance === 'string' && pieceKept(it.provenance)))",
     "new": "filter((it) => it && !temperRefusal(it) && !(typeof it.provenance === 'string' && pieceKept(it.provenance)))",
     "tests": [

@@ -64,20 +64,20 @@
 import { loadImg, nativeMetrics, drawImg, shadowText } from './native/nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
 import { drawText, measureText, makeFont } from './text.js';
-import { FntFile } from '../formats/fntFile.js';   // ROAD-D D10: FontPrefix's five faces
-import { wrapText } from './talkWindow.js';        // ROAD-D D10: TextLabel's word wrap, one home
+import { FntFile } from '../formats/fntFile.js'; // ROAD-D D10: FontPrefix's five faces
+import { wrapText } from './talkWindow.js'; // ROAD-D D10: TextLabel's word wrap, one home
 import { RSC, TOKEN_TEXT, RSC_CUSTOM, markupTokens } from '../formats/textRsc.js';
 import { BookFile } from '../formats/bookFile.js';
-import { loadBookPrices } from '../systems/books.js';   // A2: the book-price warm
+import { loadBookPrices } from '../systems/books.js'; // A2: the book-price warm
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 
 export const BOOK_RECTS = Object.freeze({
   nextPage: [208, 188, 14, 8],
-  previousPage: [181, 188, 14, 48],   // DFU's verbatim odd height
+  previousPage: [181, 188, 14, 48], // DFU's verbatim odd height
   exit: [277, 187, 32, 10],
 });
-export const PAGE_PANEL = Object.freeze({ x: 10, y: 21, w: 300, h: 159 });   // classic geometry
+export const PAGE_PANEL = Object.freeze({ x: 10, y: 21, w: 300, h: 159 }); // classic geometry
 export const SCROLL_AMOUNT = 24;
 /** MaxWidth = pagePanel.Size.x (:319) - the width every book label
  *  word-wraps at. */
@@ -102,8 +102,11 @@ export async function preloadBookArt(deps) {
   loadBookPrices(deps?.fetchBytes).catch(() => {});
   await loadBookFonts(deps);
   if (_art) return;
-  try { _art = await loadImg(deps, 'BOOK00I0.IMG'); }
-  catch { console.warn('[book] BOOK00I0.IMG unavailable; the text fallback stands in'); }
+  try {
+    _art = await loadImg(deps, 'BOOK00I0.IMG');
+  } catch {
+    console.warn('[book] BOOK00I0.IMG unavailable; the text fallback stands in');
+  }
 }
 export const bookArtLoaded = () => !!_art;
 
@@ -123,7 +126,9 @@ export async function loadBookFonts(deps) {
     try {
       _fonts.set(name, makeFont(deps.renderer, new FntFile().load(await deps.fetchBytes(`${name}.FNT`)), name));
       _fontsVersion++;
-    } catch (e) { console.warn(`[book] ${name}.FNT unavailable; that FontPrefix falls back to the host font`, e?.message ?? e); }
+    } catch (e) {
+      console.warn(`[book] ${name}.FNT unavailable; that FontPrefix falls back to the host font`, e?.message ?? e);
+    }
   }
 }
 
@@ -143,7 +148,10 @@ export function placeBookLabels(lines, fontFor, maxWidth = BOOK_WRAP_WIDTH) {
     // GlyphHeight * textScale` tall (TextLabel.cs:604, :708, :789).
     const scale = line.scale ?? 1;
     const rowH = (face?.fnt?.fixedHeight ?? 0) * scale;
-    const rows = line.text && face ? wrapText(face.fnt, line.text, scale === 1 ? maxWidth : Math.trunc(maxWidth / scale)) : [line.text ?? ''];
+    const rows =
+      line.text && face
+        ? wrapText(face.fnt, line.text, scale === 1 ? maxWidth : Math.trunc(maxWidth / scale))
+        : [line.text ?? ''];
     const h = rows.length * rowH;
     placed.push({ text: line.text, center: line.center, face, rows, rowH, y, h, color: line.color ?? null, scale });
     y += h;
@@ -173,7 +181,9 @@ export const bookLabelVisible = (posY, h, panelH = PAGE_PANEL.h) => posY < panel
  *     which bookFontName maps onto DaggerfallFont.FontName. */
 export function layoutBookLines(bookFile) {
   const lines = [];
-  let alignCenter = false, font = 0, lineTokens = 0;
+  let alignCenter = false,
+    font = 0,
+    lineTokens = 0;
   // AUDIT 24 ui: the stickiness holds only until an EMPTY LINE.
   // CreateBookLabels splits Content on '\n' and runs
   // ConvertStringToRSCTokens per line; an empty string converts to null
@@ -202,7 +212,8 @@ export function layoutBookLines(bookFile) {
       // alignment, colour and scale (:221-228). A line carrying only
       // a justify token is not this line - it converted to tokens.
       lines.push({ text: '', center: false, font: 0 });
-      alignCenter = false; font = 0;
+      alignCenter = false;
+      font = 0;
     }
     lineTokens = 0;
   };
@@ -259,12 +270,17 @@ export function parseBookScale(text) {
  */
 export function layoutLocalizedBookLines(content) {
   const lines = [];
-  let center = false, font = 0, color = null, scale = 1;
+  let center = false,
+    font = 0,
+    color = null,
+    scale = 1;
   for (const line of String(content ?? '').split('\n')) {
     const tokens = markupTokens(line);
     if (!tokens.length) {
       lines.push({ text: '', center: false, font: 0, color: null, scale: 1 });
-      center = false; color = null; scale = 1;
+      center = false;
+      color = null;
+      scale = 1;
       continue;
     }
     for (const t of tokens) {
@@ -300,10 +316,10 @@ export class BookReaderWindow {
     this._layoutFont = null;
     this._layoutVersion = -1;
     this.scrollPosition = 0;
-    this.currentPage = 0;   // page-turn sound only
+    this.currentPage = 0; // page-turn sound only
     this.done = false;
-    this.isChoiceWindow = true;   // raw codes through the overlay seam
-    audio.playOneShot(SOUND.OpenBook, 1);   // Setup/OnPush (:59, :90)
+    this.isChoiceWindow = true; // raw codes through the overlay seam
+    audio.playOneShot(SOUND.OpenBook, 1); // Setup/OnPush (:59, :90)
   }
 
   /** ScrollBook, clamps verbatim: down stops when the last panel-full
@@ -336,10 +352,20 @@ export class BookReaderWindow {
   }
 
   click(vx, vy) {
-    if (inRect(BOOK_RECTS.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.done = true; return true; }
-    if (inRect(BOOK_RECTS.nextPage, vx, vy)) { this.scrollBook(-SCROLL_AMOUNT); return true; }
-    if (inRect(BOOK_RECTS.previousPage, vx, vy)) { this.scrollBook(SCROLL_AMOUNT); return true; }
-    return true;   // an open window owns the pointer
+    if (inRect(BOOK_RECTS.exit, vx, vy)) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      this.done = true;
+      return true;
+    }
+    if (inRect(BOOK_RECTS.nextPage, vx, vy)) {
+      this.scrollBook(-SCROLL_AMOUNT);
+      return true;
+    }
+    if (inRect(BOOK_RECTS.previousPage, vx, vy)) {
+      this.scrollBook(SCROLL_AMOUNT);
+      return true;
+    }
+    return true; // an open window owns the pointer
   }
 
   /** LayoutBookLabels (:307-330). DFU runs it once, from Setup;
@@ -363,10 +389,15 @@ export class BookReaderWindow {
     const placed = this.layout(font);
     // RestrictedRenderArea over the page panel (:321-322): the pixel
     // cut, so a boundary label slides out instead of popping.
-    renderer.setScreenScissor?.(m.ox + PAGE_PANEL.x * m.s, m.oy + PAGE_PANEL.y * m.s, PAGE_PANEL.w * m.s, PAGE_PANEL.h * m.s);
+    renderer.setScreenScissor?.(
+      m.ox + PAGE_PANEL.x * m.s,
+      m.oy + PAGE_PANEL.y * m.s,
+      PAGE_PANEL.w * m.s,
+      PAGE_PANEL.h * m.s,
+    );
     try {
       for (const label of placed) {
-        const posY = label.y + this.scrollPosition;   // label.Position.y, panel-relative
+        const posY = label.y + this.scrollPosition; // label.Position.y, panel-relative
         if (!bookLabelVisible(posY, label.h)) continue;
         if (!label.text) continue;
         const face = label.face ?? font;
@@ -382,14 +413,17 @@ export class BookReaderWindow {
           }
         }
       }
-    } finally { renderer.clearScreenScissor?.(); }
+    } finally {
+      renderer.clearScreenScissor?.();
+    }
   }
 
   _drawFallback(renderer, canvas, font, s) {
-    const W = canvas.width, H = canvas.height;
+    const W = canvas.width,
+      H = canvas.height;
     renderer.drawScreenQuad(null, { x: 0, y: 0, w: W, h: H }, undefined, [0.04, 0.03, 0.02, 0.92]);
     const white = [0.9, 0.9, 0.85, 1];
-    const start = Math.max(0, Math.trunc(-this.scrollPosition / 10));   // the art-less panel keeps its own 10px row
+    const start = Math.max(0, Math.trunc(-this.scrollPosition / 10)); // the art-less panel keeps its own 10px row
     this.lines.slice(start, start + 16).forEach((line, i) => {
       const t = line.text || ' ';
       const x = line.center ? (W - measureText(font.fnt, t) * s) / 2 : 20 * s;

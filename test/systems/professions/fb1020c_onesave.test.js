@@ -15,6 +15,7 @@ import { createProfBook } from '../../../src/net/profBook.js';
 import { heldOf, roomFor, mintCarried, takeCarried, giveCarried, bagTakesOf, bagWeight, heldKeysOf } from '../../../src/systems/materialsBag.js';
 import { BAG_PAGE_WORDS, setProfessionsPages, drawStoresPage, resetProfPages } from '../../../src/ui/professions/profPages.js';
 import { withDom } from '../../invdrag.mjs';
+import { hostText } from '../../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const OAK = 'log:oak', HERB = 'p1:9', IRON = 'metal:iron', TIN = 'metal:tin';
 const KEYS = [OAK, HERB, IRON, TIN];
@@ -149,7 +150,7 @@ test('ONE-SAVE THE PAGE: Put everything in and Put in each hand the provider ONE
     assert.equal(root.querySelectorAll('button').some((b) => b.textContent === 'Sending...'), false, 'the buttons back');
   });
   setProfessionsPages(null);
-  const w = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /deposit: async \(plan\) => \(await profBook\.depositMany\(plan\)\)\.map\(\(r, i\) => /, 'the host\'s deposit is the batch');
   assert.match(w, /const BAG_DEPOSIT_KEPT_TEXT = BAG_PAGE_WORDS\.kept;/, 'the kept words\' one home');
 });

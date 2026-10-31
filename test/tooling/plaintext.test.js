@@ -5,10 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import {
-  measure, verdict, seeded, seedFrom, holdsLaw, stringBreach, renderings, messageWords, commentExcess, paragraphExcess, BASELINE, ROOT, PARTS,
-  STRING_WORDS_MAX, SENTENCE_WORDS_MAX, COMMENT_LINES_MAX, PARAGRAPH_WORDS_MAX,
-} from '../../tools/plainText.mjs';
+import { measure, verdict, seeded, seedFrom, holdsLaw, stringBreach, renderings, messageWords, commentExcess, paragraphExcess, BASELINE, ROOT, PARTS, STRING_WORDS_MAX, SENTENCE_WORDS_MAX, COMMENT_LINES_MAX, PARAGRAPH_WORDS_MAX } from '../../tools/plainText.mjs';
 
 const base = JSON.parse(readFileSync(new URL(`../../${BASELINE}`, import.meta.url), 'utf8'));
 const none = Object.fromEntries(PARTS.map((p) => [p, {}]));
@@ -97,4 +94,15 @@ test('PLAIN-TEXT the verdict: an entry the baseline does not list is over at its
   assert.deepEqual(verdict({ ...none, padding: { k: 1 } }, none).over, ['padding k: 1 (allowed 0)']);
   assert.deepEqual(verdict(none, { ...none, bible: { 'p.md': 2 } }), { over: [], stale: ['bible p.md: 0 (baseline 2)'] });
   assert.deepEqual(verdict({ ...none, comments: { 'a.js': 2 } }, { ...none, comments: { 'a.js': 2 } }), { over: [], stale: [] });
+});
+
+test('PLAIN-TEXT LEGIBLE 3: a cite into our code is one word however long its quote, and a code line that opens with a JSDoc cast is code, not comment (mutants: the anchor counted; the cast read as comment)', () => {
+  const words = Array.from({ length: 150 }, () => 'word').join(' ');
+  const cite = ['world.js', '"const a = b + c + d + e + f"'].join(':');
+  assert.equal(paragraphExcess(`${words} ${cite}`), 1, 'the anchor one word');
+  assert.equal(paragraphExcess(`${words} a b c d e f`), 6);
+  const block = Array.from({ length: 8 }, () => '// why').join('\n');
+  assert.equal(commentExcess(`/** @type {any} */ (x).y();\n${block}`), 0, 'the cast line is code');
+  assert.equal(commentExcess(`/** a note */\n${block}`), 1, 'a comment alone on its line is comment');
+  assert.equal(commentExcess(`/** a note */ // and more\n${block}`), 1);
 });

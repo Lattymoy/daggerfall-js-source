@@ -74,7 +74,7 @@ test('G8: the DarkBrotherhood reveals on EVERY promotion, whatever the rank', ()
 
 test('G8: the seam threads host-to-law', () => {
   const flow = readFileSync(new URL('../../../src/systems/guild/guildServiceFlow.js', import.meta.url), 'utf8');
-  assert.ok(flow.includes('updateRank(memberships, guild, entity, store, now, { revealLocation, ownsHouse, rankCeiling, promoteWhenEarned, owed: standingOwedOf(guild.factionId) })'),
+  assert.ok(flow.includes('updateRank(memberships, guild, entity, store, now, {\n    revealLocation,\n    ownsHouse,\n    rankCeiling,\n    promoteWhenEarned,\n    owed: standingOwedOf(guild.factionId),\n  })'),
     'onPushEffects hands the reveal seam to updateRank');   // PIN MOVED (OWED-PACE: and the Roll's owed beside them; CHAP4b: and the host's rank ceiling beside it; PROMO-NOW: and the online no-wait)
   const wm = readFileSync(new URL('../../../src/scenes/worldModes.js', import.meta.url), 'utf8');
   // MACRO-4: through the popup's own wrapper, which keeps the revealed name for %dng

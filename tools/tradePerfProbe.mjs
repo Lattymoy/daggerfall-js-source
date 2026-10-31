@@ -26,14 +26,14 @@ import { chromium } from 'playwright';
 import { createServer } from 'vite';
 
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
-const ROOT = process.env.TREE || normalize(join(dirname(fileURLToPath(import.meta.url)), '..'));   // TREE: another worktree, the before
+const ROOT = process.env.TREE || normalize(join(dirname(fileURLToPath(import.meta.url)), '..')); // TREE: another worktree, the before
 const ARENA2 = process.env.ARENA2_PATH || '/home/claude/dfdata/arena2';
 const PAGE_NAME = 'tradeperf.tmp.html';
 const SIZES = (process.env.SIZES ?? '30,100,300,700,1000').split(',').map(Number);
 const WINDOWS = (process.env.WINDOWS ?? 'sell,buy,p2p').split(',');
 const SETTLE_S = Number(process.env.SETTLE_S ?? 180);
-const REPAINTS = Number(process.env.REPAINTS || 0);   // a count: the window repainted that many times, each timed
-const PROFILE = process.env.PROFILE || null;   // a directory: the clicks' (and the repaints') CPU profile a run, <window>-<n>.cpuprofile
+const REPAINTS = Number(process.env.REPAINTS || 0); // a count: the window repainted that many times, each timed
+const PROFILE = process.env.PROFILE || null; // a directory: the clicks' (and the repaints') CPU profile a run, <window>-<n>.cpuprofile
 
 const PAGE = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>TRADE-VIRT probe</title>
 <style>html,body{margin:0;height:100%;overflow:hidden;background:#333}</style></head><body>
@@ -181,9 +181,16 @@ async function arena2Index() {
   return map;
 }
 
-const median = (a) => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : null; };
+const median = (a) => {
+  const s = [...a].sort((x, y) => x - y);
+  return s.length ? s[Math.floor(s.length / 2)] : null;
+};
 
-const server = await createServer({ root: ROOT, server: { port: Number(process.env.PROBE_PORT ?? 5247), strictPort: true, hmr: false, watch: null }, logLevel: 'error' });
+const server = await createServer({
+  root: ROOT,
+  server: { port: Number(process.env.PROBE_PORT ?? 5247), strictPort: true, hmr: false, watch: null },
+  logLevel: 'error',
+});
 await server.listen();
 const port = server.config.server.port;
 const browser = await chromium.launch();
@@ -204,41 +211,67 @@ try {
         if (!f) return route.fulfill({ status: 404, body: '' });
         return route.fulfill({ status: 200, body: await readFile(join(ARENA2, f)) });
       });
-      await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+      await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 120000,
+      });
       await page.waitForFunction(() => globalThis.__ready === true, null, { timeout: 120000 });
       out.kinds = await page.evaluate(() => globalThis.__kinds);
       // warm the modules (not the pictures): a three-piece window opened and shut
       await page.evaluate((w) => globalThis.__open(3, w), which);
       await page.evaluate(() => globalThis.__close());
-      await page.evaluate(() => { globalThis.__long = []; new PerformanceObserver((l) => { for (const t of l.getEntries()) globalThis.__long.push(t.duration); }).observe({ type: 'longtask' }); });
+      await page.evaluate(() => {
+        globalThis.__long = [];
+        new PerformanceObserver((l) => {
+          for (const t of l.getEntries()) globalThis.__long.push(t.duration);
+        }).observe({ type: 'longtask' });
+      });
       const r = { which, n, errors };
       const t0 = Date.now();
       r.cold = await page.evaluate(([k, w]) => globalThis.__open(k, w), [n, which]);
-      let last = null, still = 0;
+      let last = null,
+        still = 0;
       for (let i = 0; i < SETTLE_S * 10 && still < 30; i++) {
         await page.waitForTimeout(100);
         const s = await page.evaluate(() => globalThis.__state());
         if (!s) continue;
-        if (s.initials === 0) { last = s; break; }
+        if (s.initials === 0) {
+          last = s;
+          break;
+        }
         still = last && last.initials === s.initials && last.shells === s.shells ? still + 1 : 0;
         last = s;
       }
       r.settleMs = Date.now() - t0;
       r.settled = last;
-      r.longTasks = await page.evaluate(() => ({ count: globalThis.__long.length, ms: Math.round(globalThis.__long.reduce((a, b) => a + b, 0)), worst: Math.round(Math.max(0, ...globalThis.__long)) }));
+      r.longTasks = await page.evaluate(() => ({
+        count: globalThis.__long.length,
+        ms: Math.round(globalThis.__long.reduce((a, b) => a + b, 0)),
+        worst: Math.round(Math.max(0, ...globalThis.__long)),
+      }));
       r.warm = await page.evaluate(([k, w]) => globalThis.__open(k, w), [n, which]);
       r.warmState = await page.evaluate(() => globalThis.__state());
       const cdp = PROFILE ? await ctx.newCDPSession(page) : null;
-      if (cdp) { await cdp.send('Profiler.enable'); await cdp.send('Profiler.setSamplingInterval', { interval: 100 }); await cdp.send('Profiler.start'); }
+      if (cdp) {
+        await cdp.send('Profiler.enable');
+        await cdp.send('Profiler.setSamplingInterval', { interval: 100 });
+        await cdp.send('Profiler.start');
+      }
       r.selects = await page.evaluate(() => globalThis.__selects());
       if (REPAINTS) r.repaints = await page.evaluate((k) => globalThis.__repaints(k), REPAINTS);
-      if (cdp) await writeFile(join(PROFILE, `${which}-${n}.cpuprofile`), JSON.stringify((await cdp.send('Profiler.stop')).profile));
+      if (cdp)
+        await writeFile(
+          join(PROFILE, `${which}-${n}.cpuprofile`),
+          JSON.stringify((await cdp.send('Profiler.stop')).profile),
+        );
       r.placed = [];
       for (const f of [0, 0.25, 0.5, 0.9, 1]) r.placed.push(await page.evaluate((x) => globalThis.__placed(x), f));
       r.move = await page.evaluate((w) => globalThis.__move(w), which);
       out.runs.push(r);
       const sel = r.selects.map((s) => s.framed);
-      console.log(`${which.padEnd(4)} n=${String(n).padStart(4)}: cold ${r.cold.framed.toFixed(0)} ms to the frame, settled in ${r.settleMs} ms (${r.settled?.shells} repaints, long tasks ${r.longTasks.count} = ${r.longTasks.ms} ms, worst ${r.longTasks.worst}); rows ${r.warmState?.rows} (${r.warmState?.perCol?.join('/')}), nodes ${r.warmState?.nodes}; warm ${r.warm.framed.toFixed(0)} ms; a click ${median(sel).toFixed(1)} ms median, ${Math.max(...sel).toFixed(1)} worst; a move ${r.move.framed.toFixed(1)} ms;${r.repaints ? ` a repaint ${median(r.repaints).toFixed(1)} ms median;` : ''} errors ${errors.length}${r.move.did ? '' : ` (move: ${r.move.box ?? r.move.after})`}`);
+      console.log(
+        `${which.padEnd(4)} n=${String(n).padStart(4)}: cold ${r.cold.framed.toFixed(0)} ms to the frame, settled in ${r.settleMs} ms (${r.settled?.shells} repaints, long tasks ${r.longTasks.count} = ${r.longTasks.ms} ms, worst ${r.longTasks.worst}); rows ${r.warmState?.rows} (${r.warmState?.perCol?.join('/')}), nodes ${r.warmState?.nodes}; warm ${r.warm.framed.toFixed(0)} ms; a click ${median(sel).toFixed(1)} ms median, ${Math.max(...sel).toFixed(1)} worst; a move ${r.move.framed.toFixed(1)} ms;${r.repaints ? ` a repaint ${median(r.repaints).toFixed(1)} ms median;` : ''} errors ${errors.length}${r.move.did ? '' : ` (move: ${r.move.box ?? r.move.after})`}`,
+      );
       const bad = [];
       if (errors.length) bad.push(`threw: ${errors[0]}`);
       if (r.settled?.initials) bad.push(`${r.settled.initials} rows never took their picture`);
@@ -253,6 +286,7 @@ try {
   if (process.env.OUT) await writeFile(process.env.OUT, JSON.stringify(out, null, 1));
 } finally {
   await unlink(join(ROOT, `tools/${PAGE_NAME}`)).catch(() => {});
-  await browser.close(); await server.close();
+  await browser.close();
+  await server.close();
 }
 if (failed.length) throw new Error(`tradePerfProbe: ${failed.join(' | ')}`);

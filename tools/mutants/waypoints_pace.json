@@ -11,8 +11,8 @@
   {
     "name": "PACE-road-rule-never-drops",
     "file": "src/systems/travel/travelPace.js",
-    "old": "  return Math.min(v, topOn(ground));   // WILD3: under the zone's cap too",
-    "new": "  return v;   // WILD3: under the zone's cap too",
+    "old": "  return Math.min(v, topOn(ground)); // WILD3: under the zone's cap too",
+    "new": "  return v; // WILD3: under the zone's cap too",
     "tests": [
       "test/systems/travel/pacedials.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PACE-road-rule-leaves-the-foe-dial",
     "file": "src/systems/travel/travelPace.js",
-    "old": "  return Math.min(v, topOn(ground));   // WILD3: under the zone's cap too",
-    "new": "  return which === 'foe' ? v : Math.min(v, topOn(ground));   // WILD3: under the zone's cap too",
+    "old": "  return Math.min(v, topOn(ground)); // WILD3: under the zone's cap too",
+    "new": "  return which === 'foe' ? v : Math.min(v, topOn(ground)); // WILD3: under the zone's cap too",
     "tests": [
       "test/systems/travel/pacedials.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PACE-boot-reads-x100",
     "file": "src/systems/travel/travelPace.js",
-    "old": "if (Number.isFinite(v?.[k])) p[k] = clampPace(v[k], false);",
-    "new": "if (Number.isFinite(v?.[k])) p[k] = clampPace(v[k], true);",
+    "old": "      for (const k of TRAVEL_PACE_DIALS) if (Number.isFinite(v?.[k])) p[k] = clampPace(v[k], false); // a boot is on no known road: x100 is chosen again on one",
+    "new": "      for (const k of TRAVEL_PACE_DIALS) if (Number.isFinite(v?.[k])) p[k] = clampPace(v[k], true); // a boot is on no known road: x100 is chosen again on one",
     "tests": [
       "test/systems/travel/pacedials.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PACE-foe-floor-fixed",
     "file": "src/systems/travel/travelThreat.js",
-    "old": "Math.max(cap, paceNow('foe') ?? JOURNEY_FOE_PACE)",
-    "new": "Math.max(cap, JOURNEY_FOE_PACE)",
+    "old": "export const foePaced = (cap, want) => Math.min(want, Math.max(cap, paceNow('foe') ?? JOURNEY_FOE_PACE));",
+    "new": "export const foePaced = (cap, want) => Math.min(want, Math.max(cap, JOURNEY_FOE_PACE));",
     "tests": [
       "test/systems/travel/pacedials.test.js",
       "test/systems/travel/ow6_slowdown.test.js",
@@ -85,8 +85,8 @@
   {
     "name": "WP-another-moves-it",
     "file": "src/systems/map/mapWaypoints.js",
-    "old": "  if (!have || (have.src && src && have.src !== src)) return true;   // only its author moves a shared waypoint",
-    "new": "  if (!have) return true;   // only its author moves a shared waypoint",
+    "old": "  if (!have || (have.src && src && have.src !== src)) return true; // only its author moves a shared waypoint",
+    "new": "  if (!have) return true; // only its author moves a shared waypoint",
     "tests": [
       "test/systems/map/waypoints.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "WP-another-adds-over-it",
     "file": "src/systems/map/mapWaypoints.js",
-    "old": "      if (have.src && src && have.src !== src) return true;   // another's word on a waypoint they did not make\n",
-    "new": "",
+    "old": "      if (have.src && src && have.src !== src) return true; // another's word on a waypoint they did not make\n      have.mx = d.mx;",
+    "new": "      have.mx = d.mx;",
     "tests": [
       "test/systems/map/waypoints.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "WP-my-echo-stands-again",
     "file": "src/systems/map/mapWaypoints.js",
-    "old": "  if (line.mine) return true;\n",
-    "new": "",
+    "old": "  if (line.mine) return true;\n  const kind = line.ch === 'party' || line.ch === 'guild' ? line.ch : null;",
+    "new": "  const kind = line.ch === 'party' || line.ch === 'guild' ? line.ch : null;",
     "tests": [
       "test/systems/map/waypoints.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "WP-group-left-kept",
     "file": "src/systems/map/mapWaypoints.js",
-    "old": "      if (w.grp !== g) { st.list.splice(i, 1); st.follow = st.follow.filter((f) => f !== w.id); gone++; }",
-    "new": "      if (false) { gone++; }",
+    "old": "      if (w.grp !== g) {\n        st.list.splice(i, 1);\n        st.follow = st.follow.filter((f) => f !== w.id);",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/map/waypoints.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "WP-old-never-adopted",
     "file": "src/systems/map/mapWaypoints.js",
-    "old": "      if (w.grp == null && g != null) { w.grp = g; moved = true; continue; }   // kept from before: adopted\n",
-    "new": "",
+    "old": "      if (w.grp == null && g != null) {\n        w.grp = g;\n        moved = true;\n        continue;\n      } // kept from before: adopted\n      if (w.grp !== g) {",
+    "new": "      if (w.grp !== g) {",
     "tests": [
       "test/systems/map/waypoints.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "WP-menu-escape-reaches-the-host",
     "file": "src/ui/waypointMenu.js",
-    "old": "      e.preventDefault?.(); e.stopImmediatePropagation?.(); e.stopPropagation?.();\n      closeWaypointMenu();",
-    "new": "      e.preventDefault?.();\n      closeWaypointMenu();",
+    "old": "      e.stopImmediatePropagation?.();\n      e.stopPropagation?.();\n      closeWaypointMenu();",
+    "new": "      closeWaypointMenu();",
     "tests": [
       "test/systems/map/waypoints.test.js"
     ]

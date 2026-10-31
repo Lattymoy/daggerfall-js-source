@@ -2,8 +2,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-allow-any-type",
     "file": "server/src/staffHidden.js",
-    "old": "  return HIDDEN_FRAMES.includes(m.t) || (m.t === 'chat'",
-    "new": "  return true || (m.t === 'chat'",
+    "old": "    HIDDEN_FRAMES.includes(m.t) ||",
+    "new": "    true ||",
     "why": "every frame a hidden socket sends heard",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-allow-any-chat",
     "file": "server/src/staffHidden.js",
-    "old": "(m.t === 'chat' && m.ch === HIDDEN_CHAT)",
-    "new": "(m.t === 'chat')",
+    "old": "    (m.t === 'chat' && m.ch === HIDDEN_CHAT) ||",
+    "new": "    m.t === 'chat' ||",
     "why": "a hidden socket's line on any channel heard",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-allow-unbounded",
     "file": "server/src/staffHidden.js",
-    "old": "if (typeof message !== 'string' || message.length > HIDDEN_FRAME_MAX) return false;",
-    "new": "if (typeof message !== 'string') return false;",
+    "old": "  if (typeof message !== 'string' || message.length > HIDDEN_FRAME_MAX) return false;",
+    "new": "  if (typeof message !== 'string') return false;",
     "why": "a frame of any length parsed",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-ask-any-hd",
     "file": "server/src/staffHidden.js",
-    "old": ".searchParams.get('hd') === '1';",
-    "new": ".searchParams.get('hd') !== null;",
+    "old": "export const hiddenAsked = (request) => new URL(request.url).searchParams.get('hd') === '1';",
+    "new": "export const hiddenAsked = (request) => new URL(request.url).searchParams.get('hd') !== null;",
     "why": "any hd asks a hidden seat",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-seats-hid-uncounted",
     "file": "server/src/staffHidden.js",
-    "old": "if ((b.hid || b.hs) && !room._dead.has(ws)",
-    "new": "if ((b.hs) && !room._dead.has(ws)",
+    "old": "  for (const [ws, b] of room._all()) if ((b.hid || b.hs) && !room._dead.has(ws) && !room._gone.has(ws)) n++;",
+    "new": "  for (const [ws, b] of room._all()) if (b.hs && !room._dead.has(ws) && !room._gone.has(ws)) n++;",
     "why": "a hello'd hidden socket counted toward the cap",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-full-counts-hidden",
     "file": "server/src/staffHidden.js",
-    "old": "return all < cap ? all : all - hiddenSeats(room);",
-    "new": "return all;",
+    "old": "  if (!ask) return all < cap ? all : all - hiddenSeats(room);",
+    "new": "  if (!ask) return all;",
     "why": "hidden sockets in a visible socket's fullness",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -83,8 +83,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-seat-visible-token",
     "file": "server/src/staffHidden.js",
-    "old": "if (a.hs && !who.hid) return HIDDEN_LAPSED;",
-    "new": "if (false) return HIDDEN_LAPSED;",
+    "old": "  if (a.hs && !who.hid) return HIDDEN_LAPSED;",
+    "new": "  if (false) return HIDDEN_LAPSED;",
     "why": "a reserve seat said hello with a visible token",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -93,8 +93,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-hidden-on-visible-id",
     "file": "server/src/staffHidden.js",
-    "old": ".some(([, b]) => !isHidden(b))) return 'id taken';",
-    "new": ".some(() => false)) return 'id taken';",
+    "old": "  if (who.hid && room._withId(m.id, ws).some(([, b]) => !isHidden(b))) return 'id taken';",
+    "new": "  if (who.hid && room._withId(m.id, ws).some(() => false)) return 'id taken';",
     "why": "a hidden hello replaces a visible player's socket with no leave",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -103,8 +103,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-pose-not-kept",
     "file": "server/src/staffHidden.js",
-    "old": "{ pose: posed ? m.p : a.pose }",
-    "new": "{ pose: a.pose }",
+    "old": "  const met = room._meter(ws, a, Date.now(), { pose: posed ? m.p : a.pose }, {}, posed);",
+    "new": "  const met = room._meter(ws, a, Date.now(), { pose: a.pose }, {}, posed);",
     "why": "a hidden pose not kept - it hears nobody near it",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -113,8 +113,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-ping-unanswered",
     "file": "server/src/staffHidden.js",
-    "old": "if (met && m.t === 'ping') room._send(ws, '{\"t\":\"pong\"}');",
-    "new": "if (false) room._send(ws, '{\"t\":\"pong\"}');",
+    "old": "  if (met && m.t === 'ping') room._send(ws, '{\"t\":\"pong\"}');",
+    "new": "  if (false) room._send(ws, '{\"t\":\"pong\"}');",
     "why": "a hidden ping unanswered",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -123,8 +123,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-lapse-kind",
     "file": "server/src/staffHidden.js",
-    "old": "nowS: Math.floor(now / 1000), kind: 'hide' });",
-    "new": "nowS: Math.floor(now / 1000), kind: 'mute' });",
+    "old": "    kind: 'hide',",
+    "new": "    kind: 'mute',",
     "why": "a hide order verified as a mute - never taken",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -133,8 +133,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-lapse-any-subject",
     "file": "server/src/staffHidden.js",
-    "old": "if (isHidden(b) && b.sub === s && !(b.gio > i))",
-    "new": "if (isHidden(b) && !(b.gio > i))",
+    "old": "  for (const [ws, b] of [...room._all()])\n    if (isHidden(b) && b.sub === s && !(b.gio > i)) room._refuse(ws, HIDDEN_LAPSED); // a token minted after the order is the service's newer word",
+    "new": "  for (const [ws, b] of [...room._all()]) if (isHidden(b) && !(b.gio > i)) room._refuse(ws, HIDDEN_LAPSED); // a token minted after the order is the service's newer word",
     "why": "every hidden socket closed by one subject's order",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -143,8 +143,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-lapse-any-age",
     "file": "server/src/staffHidden.js",
-    "old": "if (isHidden(b) && b.sub === s && !(b.gio > i))",
-    "new": "if (isHidden(b) && b.sub === s)",
+    "old": "  for (const [ws, b] of [...room._all()])\n    if (isHidden(b) && b.sub === s && !(b.gio > i)) room._refuse(ws, HIDDEN_LAPSED); // a token minted after the order is the service's newer word",
+    "new": "  for (const [ws, b] of [...room._all()]) if (isHidden(b) && b.sub === s) room._refuse(ws, HIDDEN_LAPSED); // a token minted after the order is the service's newer word",
     "why": "an order older than the token closes it",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -153,8 +153,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-lapse-visible",
     "file": "server/src/staffHidden.js",
-    "old": "if (isHidden(b) && b.sub === s && !(b.gio > i))",
-    "new": "if (b.sub === s && !(b.gio > i))",
+    "old": "  for (const [ws, b] of [...room._all()])\n    if (isHidden(b) && b.sub === s && !(b.gio > i)) room._refuse(ws, HIDDEN_LAPSED); // a token minted after the order is the service's newer word",
+    "new": "  for (const [ws, b] of [...room._all()]) if (b.sub === s && !(b.gio > i)) room._refuse(ws, HIDDEN_LAPSED); // a token minted after the order is the service's newer word",
     "why": "a hide order closes a visible socket that bears its subject",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -163,8 +163,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-seen-http",
     "file": "server/src/staffHidden.js",
-    "old": "env.HIDDEN_SEEN_URL.startsWith('https://')",
-    "new": "env.HIDDEN_SEEN_URL.startsWith('http')",
+    "old": "  typeof env?.HIDDEN_SEEN_URL === 'string' && env.HIDDEN_SEEN_URL.startsWith('https://') && !!env.GATE_SIGNING_KEY;",
+    "new": "  typeof env?.HIDDEN_SEEN_URL === 'string' && env.HIDDEN_SEEN_URL.startsWith('http') && !!env.GATE_SIGNING_KEY;",
     "why": "the note posted over plain http",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -173,8 +173,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-seen-any-room",
     "file": "server/src/staffHidden.js",
-    "old": "|| !String(key).startsWith('owned:')) return null;",
-    "new": ") return null;",
+    "old": "  if (!hiddenSeenOn(room.env) || !String(key).startsWith('owned:')) return null;",
+    "new": "  if (!hiddenSeenOn(room.env)) return null;",
     "why": "every room a hidden socket enters asked to be reported as a home",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -183,8 +183,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-seen-unsigned",
     "file": "server/src/staffHidden.js",
-    "old": "[HIDDEN_SEEN_SIG_HEADER]: sealed.sig }",
-    "new": "[HIDDEN_SEEN_SIG_HEADER]: '' }",
+    "old": "        headers: { 'content-type': 'application/json', [HIDDEN_SEEN_SIG_HEADER]: sealed.sig },",
+    "new": "        headers: { 'content-type': 'application/json', [HIDDEN_SEEN_SIG_HEADER]: '' },",
     "why": "the note posted without its signature",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -193,8 +193,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-seen-room-lost",
     "file": "server/src/staffHidden.js",
-    "old": "s: sub, r: key }",
-    "new": "s: sub, r: 'owned:x' }",
+    "old": "        { v: HIDDEN_SEEN_V, id, at: Date.now(), s: sub, r: key },",
+    "new": "        { v: HIDDEN_SEEN_V, id, at: Date.now(), s: sub, r: 'owned:x' },",
     "why": "the note names another room",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -223,8 +223,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-hello-unmarked",
     "file": "server/src/staffHidden.js",
-    "old": "  if (room._hidHellos.has(m)) who.hid = 1;\n",
-    "new": "",
+    "old": "  if (room._hidHellos.has(m)) who.hid = 1;\n  if (a.hs && !who.hid) return HIDDEN_LAPSED;",
+    "new": "  if (a.hs && !who.hid) return HIDDEN_LAPSED;",
     "why": "the mark never reaches the hello",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -554,8 +554,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-claim-any",
     "file": "src/net/identityToken.js",
-    "old": "if (c.hd !== undefined && c.hd !== 1) return false;",
-    "new": "if (false) return false;",
+    "old": "  if (c.hd !== undefined && c.hd !== 1) return false;",
+    "new": "  if (false) return false;",
     "why": "any hd value signed",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -564,8 +564,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-mint-drops-mark",
     "file": "src/net/identityToken.js",
-    "old": "if (who?.hd !== undefined) claims.hd = who.hd;",
-    "new": "",
+    "old": "  if (who?.hd !== undefined) claims.hd = who.hd; // STAFF-PANEL5: a hidden staff spectator alone - a player mints the bytes they always did",
+    "new": "  // STAFF-PANEL5: a hidden staff spectator alone - a player mints the bytes they always did",
     "why": "the mark never minted",
     "tests": [
       "test/server/staffpanel5hidden.test.js",
@@ -575,8 +575,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-order-hd-elsewhere",
     "file": "src/net/identityToken.js",
-    "old": "if (c.o !== 'hide' && c.hd !== undefined) return false;",
-    "new": "if (false) return false;",
+    "old": "  if (c.o !== 'hide' && c.hd !== undefined) return false;",
+    "new": "  if (false) return false;",
     "why": "another order wears hd",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -585,8 +585,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-order-hd-value",
     "file": "src/net/identityToken.js",
-    "old": "if (c.o === 'hide' && (c.hd !== 0 || Object.keys(c)",
-    "new": "if (c.o === 'hide' && (Object.keys(c)",
+    "old": "  if (c.o === 'hide' && (c.hd !== 0 || Object.keys(c).some((k) => !HIDE_ORDER_KEYS.includes(k)))) return false;",
+    "new": "  if (c.o === 'hide' && Object.keys(c).some((k) => !HIDE_ORDER_KEYS.includes(k))) return false;",
     "why": "a hide order of any hd",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -595,8 +595,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-order-keys",
     "file": "src/net/identityToken.js",
-    "old": " || Object.keys(c).some((k) => !HIDE_ORDER_KEYS.includes(k)))) return false;",
-    "new": ")) return false;",
+    "old": "  if (c.o === 'hide' && (c.hd !== 0 || Object.keys(c).some((k) => !HIDE_ORDER_KEYS.includes(k)))) return false;",
+    "new": "  if (c.o === 'hide' && c.hd !== 0) return false;",
     "why": "a hide order carrying more",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -605,8 +605,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-order-kind",
     "file": "src/net/identityToken.js",
-    "old": "'staffcut', 'hide', 'freeze', 'staffline', 'sevent', 'yard']);",
-    "new": "'staffcut', 'freeze', 'staffline', 'sevent', 'yard']);",
+    "old": "  'hide',\n  'freeze',",
+    "new": "  'freeze',",
     "why": "no hide kind",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -615,8 +615,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-note-keys",
     "file": "src/net/hiddenSeen.js",
-    "old": "&& Object.keys(b).length === 5;",
-    "new": "&& true;",
+    "old": "    Object.keys(b).length === 5",
+    "new": "    true",
     "why": "a note with more",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -625,8 +625,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-note-room",
     "file": "src/net/hiddenSeen.js",
-    "old": "typeof b.r === 'string' && ROOM_RE.test(b.r)",
-    "new": "typeof b.r === 'string'",
+    "old": "    ROOM_RE.test(b.r) &&\n    Object.keys(b).length === 5",
+    "new": "    Object.keys(b).length === 5",
     "why": "a note for any room",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -635,7 +635,7 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-note-stale",
     "file": "src/net/hiddenSeen.js",
-    "old": "if (Math.abs(nowMs - note.at) > HIDDEN_SEEN_AGE_MAX_MS) return { error: 'seen-stale' };",
+    "old": "  if (Math.abs(nowMs - note.at) > HIDDEN_SEEN_AGE_MAX_MS) return { error: 'seen-stale' };",
     "new": "",
     "why": "a note of any age",
     "tests": [
@@ -645,8 +645,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-note-forged",
     "file": "src/net/hiddenSeen.js",
-    "old": "  if (!good) return { error: 'seen-signature' };\n",
-    "new": "",
+    "old": "  if (!good) return { error: 'seen-signature' };\n  let note;",
+    "new": "  let note;",
     "why": "a forged note believed",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -655,8 +655,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-switch-unread",
     "file": "server-account/src/staffHidden.js",
-    "old": "if (!live || live.staff_hide_on !== 1) return null;",
-    "new": "if (!live) return null;",
+    "old": "  if (!live || live.staff_hide_on !== 1) return null;",
+    "new": "  if (!live) return null;",
     "why": "Show myself still hidden",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -665,8 +665,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-cfg-key-unread",
     "file": "server-account/src/staffHidden.js",
-    "old": ".find((r) => !r.cfg || configKey(player, env, r.pub));",
-    "new": ".find(() => true);",
+    "old": "  ).find((r) => !r.cfg || configKey(player, env, r.pub));",
+    "new": "  ).find(() => true);",
     "why": "a key out of the config still hides",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -675,8 +675,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-idle-unread",
     "file": "server-account/src/staffHidden.js",
-    "old": "WHERE s.player_id = ?1 AND s.expires_at > ?2 AND s.last_act > ?3 ORDER BY",
-    "new": "WHERE s.player_id = ?1 AND s.expires_at > ?2 AND ?3 = ?3 ORDER BY",
+    "old": "  WHERE s.player_id = ?1 AND s.expires_at > ?2 AND s.last_act > ?3 ORDER BY s.created_at DESC, s.token_hash LIMIT ${SESSIONS_MAX}`;",
+    "new": "  WHERE s.player_id = ?1 AND s.expires_at > ?2 AND ?3 = ?3 ORDER BY s.created_at DESC, s.token_hash LIMIT ${SESSIONS_MAX}`;",
     "why": "an idle session still hides",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -685,8 +685,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-expiry-unread",
     "file": "server-account/src/staffHidden.js",
-    "old": "WHERE s.player_id = ?1 AND s.expires_at > ?2 AND s.last_act > ?3 ORDER BY",
-    "new": "WHERE s.player_id = ?1 AND ?2 = ?2 AND s.last_act > ?3 ORDER BY",
+    "old": "  WHERE s.player_id = ?1 AND s.expires_at > ?2 AND s.last_act > ?3 ORDER BY s.created_at DESC, s.token_hash LIMIT ${SESSIONS_MAX}`;",
+    "new": "  WHERE s.player_id = ?1 AND ?2 = ?2 AND s.last_act > ?3 ORDER BY s.created_at DESC, s.token_hash LIMIT ${SESSIONS_MAX}`;",
     "why": "an expired session still hides",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -695,8 +695,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-role-unread",
     "file": "server-account/src/staffHidden.js",
-    "old": "  if (!role) return null;   // every other account",
-    "new": "  if (false) return null;   // every other account",
+    "old": "  if (!role) return null; // every other account: nothing read, the bytes it always minted",
+    "new": "  if (false) return null; // every other account: nothing read, the bytes it always minted",
     "why": "a player with no role read for a session",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -705,8 +705,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-sub-account",
     "file": "server-account/src/staffHidden.js",
-    "old": "const token = await mintToken({ s: sub, n: HIDDEN_NAME,",
-    "new": "const token = await mintToken({ s: player.id, n: HIDDEN_NAME,",
+    "old": "    { s: sub, n: HIDDEN_NAME, k: accountKind(player), ...(g.length ? { g } : {}), ...(mu ? { mu } : {}), hd: 1 },",
+    "new": "    { s: player.id, n: HIDDEN_NAME, k: accountKind(player), ...(g.length ? { g } : {}), ...(mu ? { mu } : {}), hd: 1 },",
     "why": "the account's own subject",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -715,8 +715,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-name-account",
     "file": "server-account/src/staffHidden.js",
-    "old": "const token = await mintToken({ s: sub, n: HIDDEN_NAME,",
-    "new": "const token = await mintToken({ s: sub, n: displayName(player),",
+    "old": "    { s: sub, n: HIDDEN_NAME, k: accountKind(player), ...(g.length ? { g } : {}), ...(mu ? { mu } : {}), hd: 1 },",
+    "new": "    {\n      s: sub,\n      n: displayName(player),\n      k: accountKind(player),\n      ...(g.length ? { g } : {}),\n      ...(mu ? { mu } : {}),\n      hd: 1,\n    },",
     "why": "the account's own name",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -725,8 +725,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-glyph-cosmetic",
     "file": "server-account/src/staffHidden.js",
-    "old": "const g = glyphsOf(player, env, nowS).filter((x) => HIDDEN_GLYPHS.includes(x));",
-    "new": "const g = glyphsOf(player, env, nowS);",
+    "old": "  const g = glyphsOf(player, env, nowS).filter((x) => HIDDEN_GLYPHS.includes(x));",
+    "new": "  const g = glyphsOf(player, env, nowS);",
     "why": "a cosmetic glyph rides",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -735,8 +735,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-mark-unminted",
     "file": "server-account/src/staffHidden.js",
-    "old": "...(mu ? { mu } : {}), hd: 1 }, key,",
-    "new": "...(mu ? { mu } : {}) }, key,",
+    "old": "    { s: sub, n: HIDDEN_NAME, k: accountKind(player), ...(g.length ? { g } : {}), ...(mu ? { mu } : {}), hd: 1 },",
+    "new": "    { s: sub, n: HIDDEN_NAME, k: accountKind(player), ...(g.length ? { g } : {}), ...(mu ? { mu } : {}) },",
     "why": "the hidden token unmarked",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -745,8 +745,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-mint-unaudited",
     "file": "server-account/src/staffHidden.js",
-    "old": "  await auditStatement(db, nowS, { actor: player, role, act: 'hidden-token', detail: { sub }, keyId: live.key_id }).run();\n",
-    "new": "",
+    "old": "  await auditStatement(db, nowS, {\n    actor: player,\n    role,\n    act: 'hidden-token',\n    detail: { sub },\n    keyId: live.key_id,\n  }).run();\n  const g = glyphsOf(player, env, nowS).filter((x) => HIDDEN_GLYPHS.includes(x));",
+    "new": "  const g = glyphsOf(player, env, nowS).filter((x) => HIDDEN_GLYPHS.includes(x));",
     "why": "a hidden token minted without its row",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -755,8 +755,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-show-no-order",
     "file": "server-account/src/staffHidden.js",
-    "old": "if (!on) await hiddenEnd(ctx, env, me.id);",
-    "new": "if (false) await hiddenEnd(ctx, env, me.id);",
+    "old": "  if (!on) await hiddenEnd(ctx, env, me.id); // Show myself: the hidden sockets closed now, never shown",
+    "new": "  if (false) await hiddenEnd(ctx, env, me.id); // Show myself: the hidden sockets closed now, never shown",
     "why": "Show myself pushes nothing",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -765,8 +765,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-switch-unwritten",
     "file": "server-account/src/staffHidden.js",
-    "old": "db.prepare('UPDATE players SET staff_hide_on = ?1 WHERE id = ?2').bind(on, me.id),",
-    "new": "db.prepare('UPDATE players SET staff_hide_on = staff_hide_on WHERE id = ?2').bind(on, me.id),",
+    "old": "    db.prepare('UPDATE players SET staff_hide_on = ?1 WHERE id = ?2').bind(on, me.id),",
+    "new": "    db.prepare('UPDATE players SET staff_hide_on = staff_hide_on WHERE id = ?2').bind(on, me.id),",
     "why": "the switch never written",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -775,8 +775,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-switch-unaudited",
     "file": "server-account/src/staffHidden.js",
-    "old": "    audit('hide', null, { on: body.on }),\n",
-    "new": "",
+    "old": "  await db.batch([\n    db.prepare('UPDATE players SET staff_hide_on = ?1 WHERE id = ?2').bind(on, me.id),\n    audit('hide', null, { on: body.on }),\n  ]);",
+    "new": "  await db.batch([db.prepare('UPDATE players SET staff_hide_on = ?1 WHERE id = ?2').bind(on, me.id)]);",
     "why": "the switch without its row",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -785,7 +785,7 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-switch-body",
     "file": "server-account/src/staffHidden.js",
-    "old": "if (typeof body.on !== 'boolean') return { error: 'body' };",
+    "old": "  if (typeof body.on !== 'boolean') return { error: 'body' };",
     "new": "",
     "why": "any on taken",
     "tests": [
@@ -795,8 +795,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-end-wrong-sub",
     "file": "server-account/src/staffHidden.js",
-    "old": "mintHideOrder({ s: await hiddenSubOf(h, subtle) }, key,",
-    "new": "mintHideOrder({ s: playerId }, key,",
+    "old": "  const orders = await Promise.all(\n    hashes.map(async (h) => mintHideOrder({ s: await hiddenSubOf(h, subtle) }, key, { subtle, nowS })),\n  );",
+    "new": "  const orders = await Promise.all(hashes.map(async (h) => mintHideOrder({ s: playerId }, key, { subtle, nowS })));",
     "why": "the order names the account",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -805,8 +805,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-seen-unmatched",
     "file": "server-account/src/staffHidden.js",
-    "old": "if (await hiddenSubOf(row.s_hash, subtle) === s ||",
-    "new": "if (false ||",
+    "old": "    if ((await hiddenSubOf(row.s_hash, subtle)) === s || (await followSubject(row.s_hash, subtle)) === s) {",
+    "new": "    if (false || (await followSubject(row.s_hash, subtle)) === s) {",
     "why": "the home row names nobody",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -815,8 +815,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-seen-every-time",
     "file": "server-account/src/staffHidden.js",
-    "old": "keyId: actor?.s_key ?? null, onceIn: 60 }).run();",
-    "new": "keyId: actor?.s_key ?? null, onceIn: 0 }).run();",
+    "old": "    onceIn: 60,",
+    "new": "    onceIn: 0,",
     "why": "a row every note",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -825,8 +825,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-seen-unwritten",
     "file": "server-account/src/staffHidden.js",
-    "old": "  await auditStatement(db, nowS, { actor, role: actor ? staffRole(actor, env) : null, act: 'hidden-home'",
-    "new": "  if (false) await auditStatement(db, nowS, { actor, role: actor ? staffRole(actor, env) : null, act: 'hidden-home'",
+    "old": "  await auditStatement(db, nowS, {\n    actor,\n    role: actor ? staffRole(actor, env) : null,\n    act: 'hidden-home',\n    detail: { sub: s, room: r },\n    keyId: actor?.s_key ?? null,\n    onceIn: 60,\n  }).run();",
+    "new": "  if (false)\n    await auditStatement(db, nowS, {\n      actor,\n      role: actor ? staffRole(actor, env) : null,\n      act: 'hidden-home',\n      detail: { sub: s, room: r },\n      keyId: actor?.s_key ?? null,\n      onceIn: 60,\n    }).run();",
     "why": "the home row never written",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -935,8 +935,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-FIX-stp-ask-dropped",
     "file": "server/src/staffHidden.js",
-    "old": "    || (m.t === 'stp' && m.k === 'ask');",
-    "new": "    || false;",
+    "old": "    (m.t === 'stp' && m.k === 'ask')",
+    "new": "    false",
     "why": "finding 3: a hidden staff member's /tp ask dropped, so silent TP never answers with Hide me on",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -945,8 +945,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-FIX-stp-any",
     "file": "server/src/staffHidden.js",
-    "old": "(m.t === 'stp' && m.k === 'ask')",
-    "new": "(m.t === 'stp')",
+    "old": "    (m.t === 'stp' && m.k === 'ask')",
+    "new": "    m.t === 'stp'",
     "why": "finding 3: a hidden socket heard answering a capture, which only a target sends",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -955,8 +955,8 @@
   {
     "name": "STAFF-CHAT-RED-say-dropped",
     "file": "server/src/staffHidden.js",
-    "old": "Object.freeze(['ping', 'pose', 'lease', 'find', 'say'])",
-    "new": "Object.freeze(['ping', 'pose', 'lease', 'find'])",
+    "old": "export const HIDDEN_FRAMES = Object.freeze(['ping', 'pose', 'lease', 'find', 'say']);",
+    "new": "export const HIDDEN_FRAMES = Object.freeze(['ping', 'pose', 'lease', 'find']);",
     "why": "a hidden Admin's /red ask dropped, so the chat box's Red switch says nothing with Hide me on",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -965,8 +965,8 @@
   {
     "name": "STAFF-CHAT-RED-dm-too",
     "file": "server/src/staffHidden.js",
-    "old": "Object.freeze(['ping', 'pose', 'lease', 'find', 'say'])",
-    "new": "Object.freeze(['ping', 'pose', 'lease', 'find', 'say', 'narrate'])",
+    "old": "export const HIDDEN_FRAMES = Object.freeze(['ping', 'pose', 'lease', 'find', 'say']);",
+    "new": "export const HIDDEN_FRAMES = Object.freeze(['ping', 'pose', 'lease', 'find', 'say', 'narrate']);",
     "why": "a frame type past /red's let through with it - the allow list admits exactly the say ask",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -1005,8 +1005,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-FIX-tp-capture-hidden",
     "file": "server/src/staffTeleport.js",
-    "old": "    if (a.hid) { result(ws, m.nonce, { error: 'unavailable' }); return; }",
-    "new": "    if (false) { result(ws, m.nonce, { error: 'unavailable' }); return; }",
+    "old": "    if (a.hid) {",
+    "new": "    if (false) {",
     "why": "finding 3: a hidden asker's missing or unmatched note asks the target's game, which a modded game can see",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -1015,8 +1015,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-FIX-tp-capture-nobody",
     "file": "server/src/staffTeleport.js",
-    "old": "    if (a.hid) { result(ws, m.nonce, { error: 'unavailable' }); return; }",
-    "new": "    if (true) { result(ws, m.nonce, { error: 'unavailable' }); return; }",
+    "old": "    if (a.hid) {",
+    "new": "    if (true) {",
     "why": "finding 3: a visible Admin's missing note never falls back to the capture",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -1025,8 +1025,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-FIX-home-unreported-open",
     "file": "server/src/staffHidden.js",
-    "old": "  if (who.hid && String(a.key).startsWith('owned:') && !hiddenSeenOn(room.env)) return 'private room';\n",
-    "new": "",
+    "old": "  if (who.hid && String(a.key).startsWith('owned:') && !hiddenSeenOn(room.env)) return 'private room';\n  return null;",
+    "new": "  return null;",
     "why": "finding 16: a hidden socket let into a home the relay cannot report",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -1035,8 +1035,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-FIX-home-any-room-closed",
     "file": "server/src/staffHidden.js",
-    "old": "if (who.hid && String(a.key).startsWith('owned:') && !hiddenSeenOn(room.env))",
-    "new": "if (who.hid && !hiddenSeenOn(room.env))",
+    "old": "  if (who.hid && String(a.key).startsWith('owned:') && !hiddenSeenOn(room.env)) return 'private room';",
+    "new": "  if (who.hid && !hiddenSeenOn(room.env)) return 'private room';",
     "why": "finding 16: every room closed to a hidden socket while the report is off, not homes alone",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -1045,8 +1045,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-FIX-seen-keyless",
     "file": "server/src/staffHidden.js",
-    "old": " && !!env.GATE_SIGNING_KEY;",
-    "new": ";",
+    "old": "  typeof env?.HIDDEN_SEEN_URL === 'string' && env.HIDDEN_SEEN_URL.startsWith('https://') && !!env.GATE_SIGNING_KEY;",
+    "new": "  typeof env?.HIDDEN_SEEN_URL === 'string' && env.HIDDEN_SEEN_URL.startsWith('https://');",
     "why": "finding 16: a relay with no receipt key reads as reporting, so a home is entered unreported",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -1095,8 +1095,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-FIX-lapse-unread",
     "file": "server-account/src/staffHidden.js",
-    "old": "if (!live && await db.prepare(LAPSED_SQL).bind(player.id).first()) {",
-    "new": "if (false) {",
+    "old": "  if (!live && (await db.prepare(LAPSED_SQL).bind(player.id).first())) {",
+    "new": "  if (false) {",
     "why": "finding 14: a lapsed hidden session mints the visible token",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -1105,8 +1105,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-FIX-lapse-unaudited",
     "file": "server-account/src/staffHidden.js",
-    "old": "    await auditStatement(db, nowS, { actor: player, role, act: 'hidden-lapsed', outcome: 'denied', onceIn: 60 }).run();\n",
-    "new": "",
+    "old": "    await auditStatement(db, nowS, { actor: player, role, act: 'hidden-lapsed', outcome: 'denied', onceIn: 60 }).run();\n    return { error: 'staff-session-lapsed' };",
+    "new": "    return { error: 'staff-session-lapsed' };",
     "why": "finding 14: the refused mint never written",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -1115,8 +1115,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-FIX-lapse-every-time",
     "file": "server-account/src/staffHidden.js",
-    "old": "act: 'hidden-lapsed', outcome: 'denied', onceIn: 60 })",
-    "new": "act: 'hidden-lapsed', outcome: 'denied' })",
+    "old": "    await auditStatement(db, nowS, { actor: player, role, act: 'hidden-lapsed', outcome: 'denied', onceIn: 60 }).run();",
+    "new": "    await auditStatement(db, nowS, { actor: player, role, act: 'hidden-lapsed', outcome: 'denied' }).run();",
     "why": "finding 14: a refused mint written every time, not once a minute",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -1135,8 +1135,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-FIX-lapse-any-logout",
     "file": "server-account/src/staffHidden.js",
-    "old": "OR json_extract(e.detail, '$.sub') = h.sub))",
-    "new": "OR 1 = 1))",
+    "old": "    AND ((e.act = 'hide' AND e.detail = '{\"on\":false}') OR (e.act = 'logout' AND (e.detail = '{\"all\":true}' OR json_extract(e.detail, '$.sub') = h.sub))",
+    "new": "    AND ((e.act = 'hide' AND e.detail = '{\"on\":false}') OR (e.act = 'logout' AND (e.detail = '{\"all\":true}' OR 1 = 1))",
     "why": "finding 14: another key's sign-out ends a hidden session it never held",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -1145,8 +1145,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-FIX-lapse-own-key-unread",
     "file": "server-account/src/staffHidden.js",
-    "old": " OR json_extract(e.detail, '$.sub') = h.sub))",
-    "new": "))",
+    "old": "    AND ((e.act = 'hide' AND e.detail = '{\"on\":false}') OR (e.act = 'logout' AND (e.detail = '{\"all\":true}' OR json_extract(e.detail, '$.sub') = h.sub))",
+    "new": "    AND ((e.act = 'hide' AND e.detail = '{\"on\":false}') OR (e.act = 'logout' AND (e.detail = '{\"all\":true}'))",
     "why": "finding 14: the staff member's own sign-out shows nobody - the game stays refused",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -1155,8 +1155,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-FIX-lapse-all-unread",
     "file": "server-account/src/staffHidden.js",
-    "old": "(e.detail = '{\"all\":true}' OR json_extract(e.detail, '$.sub') = h.sub)",
-    "new": "(json_extract(e.detail, '$.sub') = h.sub)",
+    "old": "    AND ((e.act = 'hide' AND e.detail = '{\"on\":false}') OR (e.act = 'logout' AND (e.detail = '{\"all\":true}' OR json_extract(e.detail, '$.sub') = h.sub))",
+    "new": "    AND ((e.act = 'hide' AND e.detail = '{\"on\":false}') OR (e.act = 'logout' AND (json_extract(e.detail, '$.sub') = h.sub))",
     "why": "finding 14: a sign-out of every session by another key ends nothing",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -1165,8 +1165,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-FIX-lapse-show-unread",
     "file": "server-account/src/staffHidden.js",
-    "old": "(e.act = 'hide' AND e.detail = '{\"on\":false}')",
-    "new": "(0)",
+    "old": "    AND ((e.act = 'hide' AND e.detail = '{\"on\":false}') OR (e.act = 'logout' AND (e.detail = '{\"all\":true}' OR json_extract(e.detail, '$.sub') = h.sub))",
+    "new": "    AND ((0) OR (e.act = 'logout' AND (e.detail = '{\"all\":true}' OR json_extract(e.detail, '$.sub') = h.sub))",
     "why": "finding 14: Show myself does not end a hidden session's hold",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -1175,8 +1175,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-FIX-lapse-oldest",
     "file": "server-account/src/staffHidden.js",
-    "old": "act = 'hidden-token' ORDER BY at DESC, id DESC LIMIT 1) h",
-    "new": "act = 'hidden-token' ORDER BY at, id LIMIT 1) h",
+    "old": "const LAPSED_SQL = `SELECT 1 AS held FROM (SELECT id, at, key_id, json_extract(detail, '$.sub') AS sub FROM staff_audit WHERE actor = ?1 AND act = 'hidden-token' ORDER BY at DESC, id DESC LIMIT 1) h",
+    "new": "const LAPSED_SQL = `SELECT 1 AS held FROM (SELECT id, at, key_id, json_extract(detail, '$.sub') AS sub FROM staff_audit WHERE actor = ?1 AND act = 'hidden-token' ORDER BY at, id LIMIT 1) h",
     "why": "finding 14: the oldest hidden mint read, so a sign-out before a newer hiding ends it",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -1185,8 +1185,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-FIX-seen-follow-unmatched",
     "file": "server-account/src/staffHidden.js",
-    "old": " || await followSubject(row.s_hash, subtle) === s",
-    "new": "",
+    "old": "    if ((await hiddenSubOf(row.s_hash, subtle)) === s || (await followSubject(row.s_hash, subtle)) === s) {",
+    "new": "    if ((await hiddenSubOf(row.s_hash, subtle)) === s) {",
     "why": "findings 4/15: a follow eye's home entry written as nobody's",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -1195,8 +1195,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-FIX-follow-row-no-sub",
     "file": "server-account/src/staffFollow.js",
-    "old": "{ room, sub: eye } : { sub: eye };",
-    "new": "{ room } : null;",
+    "old": "  const detail = home ? { room, sub: eye } : { sub: eye }; // STAFF-PANEL5-HIDDEN-FIX: the subject, so a home the relay saw it enter is this row's member's",
+    "new": "  const detail = home ? { room } : null; // STAFF-PANEL5-HIDDEN-FIX: the subject, so a home the relay saw it enter is this row's member's",
     "why": "findings 4/15: the follow row never names the subject a home entry carries",
     "tests": [
       "test/server/staffpanel5hidden.test.js",
@@ -1226,8 +1226,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-R3-pending-unbounded",
     "file": "server/src/staffHidden.js",
-    "old": "return seats < cap && hiddenPending(room) >= HIDDEN_RESERVE ? cap : seats;",
-    "new": "return seats;",
+    "old": "  return seats < cap && hiddenPending(room) >= HIDDEN_RESERVE ? cap : seats;",
+    "new": "  return seats;",
     "why": "round 2 verifier: an anonymous page parks cap + HIDDEN_RESERVE silent hidden seats that player traffic never reaps",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -1236,8 +1236,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-R3-pending-one-late",
     "file": "server/src/staffHidden.js",
-    "old": "hiddenPending(room) >= HIDDEN_RESERVE ? cap : seats;",
-    "new": "hiddenPending(room) > HIDDEN_RESERVE ? cap : seats;",
+    "old": "  return seats < cap && hiddenPending(room) >= HIDDEN_RESERVE ? cap : seats;",
+    "new": "  return seats < cap && hiddenPending(room) > HIDDEN_RESERVE ? cap : seats;",
     "why": "HIDDEN_RESERVE + 1 silent hidden seats parked",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -1246,8 +1246,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-R3-pending-counts-hello",
     "file": "server/src/staffHidden.js",
-    "old": "if (b.hs && !b.hid && !room._dead.has(ws)",
-    "new": "if (b.hs && !room._dead.has(ws)",
+    "old": "  for (const [ws, b] of room._all()) if (b.hs && !b.hid && !room._dead.has(ws) && !room._gone.has(ws)) n++;",
+    "new": "  for (const [ws, b] of room._all()) if (b.hs && !room._dead.has(ws) && !room._gone.has(ws)) n++;",
     "why": "a hello'd hidden socket counted as a pending seat - HIDDEN_RESERVE watchers walk the eye off its target's layer again",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -1256,8 +1256,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-R3-pending-dead-counted",
     "file": "server/src/staffHidden.js",
-    "old": "if (b.hs && !b.hid && !room._dead.has(ws) && ",
-    "new": "if (b.hs && !b.hid && ",
+    "old": "  for (const [ws, b] of room._all()) if (b.hs && !b.hid && !room._dead.has(ws) && !room._gone.has(ws)) n++;",
+    "new": "  for (const [ws, b] of room._all()) if (b.hs && !b.hid && !room._gone.has(ws)) n++;",
     "why": "a silent seat the full path closed still counted - the eye refused after the reap",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -1266,8 +1266,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-R2-lapse-forget-unread",
     "file": "server-account/src/staffHidden.js",
-    "old": "\n      OR (e.act = 'key-forget' AND json_extract(e.detail, '$.id') = h.key_id)",
-    "new": "",
+    "old": "    AND ((e.act = 'hide' AND e.detail = '{\"on\":false}') OR (e.act = 'logout' AND (e.detail = '{\"all\":true}' OR json_extract(e.detail, '$.sub') = h.sub))\n      OR (e.act = 'key-forget' AND json_extract(e.detail, '$.id') = h.key_id)))`;",
+    "new": "    AND ((e.act = 'hide' AND e.detail = '{\"on\":false}') OR (e.act = 'logout' AND (e.detail = '{\"all\":true}' OR json_extract(e.detail, '$.sub') = h.sub))))`;",
     "why": "item 1: the key that hid the game forgotten - the game refused for good",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -1276,8 +1276,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-R2-lapse-forget-any-key",
     "file": "server-account/src/staffHidden.js",
-    "old": "AND json_extract(e.detail, '$.id') = h.key_id)",
-    "new": "AND 1 = 1)",
+    "old": "      OR (e.act = 'key-forget' AND json_extract(e.detail, '$.id') = h.key_id)))`;",
+    "new": "      OR (e.act = 'key-forget' AND 1 = 1)))`;",
     "why": "item 1: another key forgotten ends a hiding it never held",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -1286,8 +1286,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-R2-lapse-logout-by-key",
     "file": "server-account/src/staffHidden.js",
-    "old": "OR json_extract(e.detail, '$.sub') = h.sub))",
-    "new": "OR e.key_id IS h.key_id))",
+    "old": "    AND ((e.act = 'hide' AND e.detail = '{\"on\":false}') OR (e.act = 'logout' AND (e.detail = '{\"all\":true}' OR json_extract(e.detail, '$.sub') = h.sub))",
+    "new": "    AND ((e.act = 'hide' AND e.detail = '{\"on\":false}') OR (e.act = 'logout' AND (e.detail = '{\"all\":true}' OR e.key_id IS h.key_id))",
     "why": "item 2: a key's older session signing out ends its newer session's hiding - lapsed, the game is minted the visible token",
     "tests": [
       "test/server/staffpanel5hidden.test.js"

@@ -37,7 +37,7 @@ export const PIRATE_REWARD = Object.freeze({
   sunk: Object.freeze({ legal: 1, knightly: 1, temple: 0 }),
   taken: Object.freeze({ legal: 1, knightly: 2, temple: 0 }),
   flagship: Object.freeze({ legal: 3, knightly: 3, temple: 1 }),
-  repelled: Object.freeze({ legal: 1, knightly: 1, temple: 0 }),   // CAPT-PAY: boarders thrown back off my own deck
+  repelled: Object.freeze({ legal: 1, knightly: 1, temple: 0 }), // CAPT-PAY: boarders thrown back off my own deck
 });
 /** DFU's two factions WAQ_SHIP_ATTACK_PIRATE rewards: Generic_Knightly_Order and Generic_Temple (factionRep.js). */
 export const KNIGHTLY_FACTION = 844;
@@ -67,14 +67,21 @@ export function createNotoriety() {
     },
     decay(days) {
       if (!(days > 0)) return;
-      for (const [k, v] of by) { const w = Math.max(0, v - NOTORIETY.decayPerDay * days); if (w > 0) by.set(k, w); else by.delete(k); }
+      for (const [k, v] of by) {
+        const w = Math.max(0, v - NOTORIETY.decayPerDay * days);
+        if (w > 0) by.set(k, w);
+        else by.delete(k);
+      }
     },
     highest: () => Math.max(0, ...by.values()),
     snapshot: () => Object.fromEntries(by),
     restore(r) {
       by.clear();
       if (!r || typeof r !== 'object') return;
-      for (const c of CROWNS) { const v = Number(r[c.name]); if (Number.isFinite(v) && v > 0) by.set(c.name, Math.min(NOTORIETY.max, v)); }
+      for (const c of CROWNS) {
+        const v = Number(r[c.name]);
+        if (Number.isFinite(v) && v > 0) by.set(c.name, Math.min(NOTORIETY.max, v));
+      }
     },
   };
   return n;
@@ -105,7 +112,7 @@ export function lawOf(act, ship, { crown, firstStrike = false }) {
     const r = ship.flagship ? PIRATE_REWARD.flagship : act === 'board' ? PIRATE_REWARD.taken : PIRATE_REWARD.sunk;
     out.rewards.push({ ...r, region });
   } else if (ship.faction === 'pirate' && act === 'repel') {
-    out.rewards.push({ ...(ship.flagship ? PIRATE_REWARD.flagship : PIRATE_REWARD.repelled), region });   // CAPT-PAY: a flagship's raid beaten is her end
+    out.rewards.push({ ...(ship.flagship ? PIRATE_REWARD.flagship : PIRATE_REWARD.repelled), region }); // CAPT-PAY: a flagship's raid beaten is her end
   }
   return out;
 }

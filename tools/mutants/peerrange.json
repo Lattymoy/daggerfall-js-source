@@ -30,7 +30,7 @@
     "name": "PEERRANGE-stray-kept",
     "file": "src/net/peer/peerRange.js",
     "old": "export const peerRangeOf = (v) => (PEER_RANGE_TIERS.includes(v) ? v : PEER_RANGE_DEFAULT);",
-    "new": "export const peerRangeOf = (v) => (v ?? PEER_RANGE_DEFAULT);",
+    "new": "export const peerRangeOf = (v) => v ?? PEER_RANGE_DEFAULT;",
     "tests": [
       "test/systems/peerrange.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PEERRANGE-range-unread",
     "file": "src/net/peer/peerRange.js",
-    "old": "const near = range * range,",
-    "new": "const near = PEER_RANGE_DEFAULT * PEER_RANGE_DEFAULT,",
+    "old": "  const near = range * range,",
+    "new": "  const near = PEER_RANGE_DEFAULT * PEER_RANGE_DEFAULT,",
     "tests": [
       "test/systems/peerrange.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PEERRANGE-strictly-inside",
     "file": "src/net/peer/peerRange.js",
-    "old": "if (dx * dx + dz * dz <= (was?.has(p.id) ? kept : near)) { out.add(p.id); continue; }",
-    "new": "if (dx * dx + dz * dz < (was?.has(p.id) ? kept : near)) { out.add(p.id); continue; }",
+    "old": "      if (dx * dx + dz * dz <= (was?.has(p.id) ? kept : near)) {",
+    "new": "      if (dx * dx + dz * dz < (was?.has(p.id) ? kept : near)) {",
     "tests": [
       "test/systems/peerrange.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PEERRANGE-x-from-origin",
     "file": "src/net/peer/peerRange.js",
-    "old": "const dx = f[0] - me[0], dz = f[2] - me[2];",
-    "new": "const dx = f[0] - 0, dz = f[2] - me[2];",
+    "old": "      const dx = f[0] - me[0],",
+    "new": "      const dx = f[0] - 0,",
     "tests": [
       "test/systems/peerrange.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PEERRANGE-x-summed",
     "file": "src/net/peer/peerRange.js",
-    "old": "const dx = f[0] - me[0], dz = f[2] - me[2];",
-    "new": "const dx = f[0] + me[0], dz = f[2] - me[2];",
+    "old": "      const dx = f[0] - me[0],",
+    "new": "      const dx = f[0] + me[0],",
     "tests": [
       "test/systems/peerrange.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "PEERRANGE-z-from-origin",
     "file": "src/net/peer/peerRange.js",
-    "old": "const dx = f[0] - me[0], dz = f[2] - me[2];",
-    "new": "const dx = f[0] - me[0], dz = f[2] - 0;",
+    "old": "        dz = f[2] - me[2];",
+    "new": "        dz = f[2] - 0;",
     "tests": [
       "test/systems/peerrange.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "PEERRANGE-height-counted",
     "file": "src/net/peer/peerRange.js",
-    "old": "if (dx * dx + dz * dz <= (was?.has(p.id) ? kept : near))",
-    "new": "if (dx * dx + (f[1] - me[1]) ** 2 + dz * dz <= (was?.has(p.id) ? kept : near))",
+    "old": "      if (dx * dx + dz * dz <= (was?.has(p.id) ? kept : near)) {",
+    "new": "      if (dx * dx + (f[1] - me[1]) ** 2 + dz * dz <= (was?.has(p.id) ? kept : near)) {",
     "tests": [
       "test/systems/peerrange.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PEERRANGE-mate-unasked",
     "file": "src/net/peer/peerRange.js",
-    "old": "    if (mate(p.id)) out.add(p.id);",
-    "new": "    if (mate(p.id) && false) out.add(p.id);",
+    "old": "    if (mate(p.id)) out.add(p.id); // AUDIT A L5: the party asked of a player past the range alone (social's answer allocates)",
+    "new": "    if (mate(p.id) && false) out.add(p.id); // AUDIT A L5: the party asked of a player past the range alone (social's answer allocates)",
     "tests": [
       "test/systems/peerrange.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "PEERRANGE-party-asked-first",
     "file": "src/net/peer/peerRange.js",
-    "old": "    const f = at(p);\n    if (f) {",
-    "new": "    if (mate(p.id)) { out.add(p.id); continue; }\n    const f = at(p);\n    if (f) {",
+    "old": "    const f = at(p);",
+    "new": "    if (mate(p.id)) {\n      out.add(p.id);\n      continue;\n    }\n    const f = at(p);",
     "tests": [
       "test/systems/peerrange.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PEERRANGE-no-range-cutting",
     "file": "src/net/peer/peerRange.js",
-    "old": "if (!(range > 0) || !me) {\n    for (const p of peers) out.add(p.id);",
-    "new": "if (!me) {\n    for (const p of peers) out.add(p.id);",
+    "old": "  if (!(range > 0) || !me) {",
+    "new": "  if (!me) {",
     "tests": [
       "test/systems/peerrange.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "PEERRANGE-placeless-drawn",
     "file": "src/net/peer/peerRange.js",
-    "old": "    const f = at(p);\n    if (f) {",
-    "new": "    const f = at(p);\n    if (!f) { out.add(p.id); continue; }\n    if (f) {",
+    "old": "    if (f) {",
+    "new": "    if (!f) {\n      out.add(p.id);\n      continue;\n    }\n    if (f) {",
     "tests": [
       "test/systems/peerrange.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PEERRANGE-hold-to-newcomer",
     "file": "src/net/peer/peerRange.js",
-    "old": "(was?.has(p.id) ? kept : near)",
-    "new": "(was?.has(p.id) ? near : kept)",
+    "old": "      if (dx * dx + dz * dz <= (was?.has(p.id) ? kept : near)) {",
+    "new": "      if (dx * dx + dz * dz <= (was?.has(p.id) ? near : kept)) {",
     "tests": [
       "test/systems/peerrange.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "PEERRANGE-hold-sign-turned",
     "file": "src/net/peer/peerRange.js",
-    "old": "kept = range * hold * range * hold;",
-    "new": "kept = (range / hold) * (range / hold);",
+    "old": "    kept = range * hold * range * hold;",
+    "new": "    kept = (range / hold) * (range / hold);",
     "tests": [
       "test/systems/peerrange.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "PEERRANGE-hold-forgotten",
     "file": "src/net/peer/peerRange.js",
-    "old": "const now = rangeDrawn(peers, me, { at, range, mate, was: held }, spare);",
-    "new": "const now = rangeDrawn(peers, me, { at, range, mate, was: null }, spare);",
+    "old": "      const now = rangeDrawn(peers, me, { at, range, mate, was: held }, spare);",
+    "new": "      const now = rangeDrawn(peers, me, { at, range, mate, was: null }, spare);",
     "tests": [
       "test/systems/peerrange.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "PEERRANGE-shows-cut-true",
     "file": "src/net/peer/peerRange.js",
-    "old": "shows: (id) => !gone.has(id),",
-    "new": "shows: () => true,",
+    "old": "    shows: (id) => !gone.has(id),",
+    "new": "    shows: () => true,",
     "tests": [
       "test/systems/peerrange.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "PEERRANGE-shows-unseen-false",
     "file": "src/net/peer/peerRange.js",
-    "old": "shows: (id) => !gone.has(id),",
-    "new": "shows: (id) => !live || held.has(id),",
+    "old": "    shows: (id) => !gone.has(id),",
+    "new": "    shows: (id) => !live || held.has(id),",
     "tests": [
       "test/systems/peerrange.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "PEERRANGE-gone-kept",
     "file": "src/net/peer/peerRange.js",
-    "old": "      gone.clear();\n      live = !!on",
-    "new": "      live = !!on",
+    "old": "      gone.clear();\n      live = !!on && range > 0 && !!me;",
+    "new": "      live = !!on && range > 0 && !!me;",
     "tests": [
       "test/systems/peerrange.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "PEERRANGE-off-cutting",
     "file": "src/net/peer/peerRange.js",
-    "old": "live = !!on && range > 0 && !!me;",
-    "new": "live = range > 0 && !!me;",
+    "old": "      live = !!on && range > 0 && !!me;",
+    "new": "      live = range > 0 && !!me;",
     "tests": [
       "test/systems/peerrange.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "PEERRANGE-range-zero-live",
     "file": "src/net/peer/peerRange.js",
-    "old": "live = !!on && range > 0 && !!me;",
-    "new": "live = !!on && range >= 0 && !!me;",
+    "old": "      live = !!on && range > 0 && !!me;",
+    "new": "      live = !!on && range >= 0 && !!me;",
     "tests": [
       "test/systems/peerrange.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "PEERRANGE-no-place-live",
     "file": "src/net/peer/peerRange.js",
-    "old": "live = !!on && range > 0 && !!me;",
-    "new": "live = !!on && range > 0;",
+    "old": "      live = !!on && range > 0 && !!me;",
+    "new": "      live = !!on && range > 0;",
     "tests": [
       "test/systems/peerrange.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "PEERRANGE-off-keeps-held",
     "file": "src/net/peer/peerRange.js",
-    "old": "if (!live) { held.clear(); return peers; }",
-    "new": "if (!live) { return peers; }",
+    "old": "        held.clear();\n        return peers;",
+    "new": "        return peers;",
     "tests": [
       "test/systems/peerrange.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "PEERRANGE-cut-default",
     "file": "src/net/peer/peerRange.js",
-    "old": "cut(peers, { on = true, me, at, range = PEER_RANGE_DEFAULT, mate = () => false }) {",
-    "new": "cut(peers, { on = true, me, at, range = 150, mate = () => false }) {",
+    "old": "    cut(peers, { on = true, me, at, range = PEER_RANGE_DEFAULT, mate = () => false }) {",
+    "new": "    cut(peers, { on = true, me, at, range = 150, mate = () => false }) {",
     "tests": [
       "test/systems/peerrange.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "PEERRANGE-shelf-literal",
     "file": "src/systems/uiPrefs.js",
-    "old": "  peerRange: 300,\n",
-    "new": "  peerRange: 150,\n",
+    "old": "  peerRange: 300,",
+    "new": "  peerRange: 150,",
     "tests": [
       "test/systems/peerrange.test.js"
     ]

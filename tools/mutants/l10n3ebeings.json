@@ -13,7 +13,7 @@
   {
     "name": "L10N3e-player-mobileEnemyActivate-106-Enemy",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "    if (name) hud?.(own ? YOU_SEE_PROPER_TEXT.replace('%s', own.replace(/^The /, 'the ')) : youSeeEnemyText(getLocalizedEnemyName(mobileType, name)));",
+    "old": "    if (name)\n      hud?.(\n        own\n          ? YOU_SEE_PROPER_TEXT.replace('%s', own.replace(/^The /, 'the '))\n          : youSeeEnemyText(getLocalizedEnemyName(mobileType, name)),\n      );",
     "new": "    if (name) hud?.(own ? YOU_SEE_PROPER_TEXT.replace('%s', own.replace(/^The /, 'the ')) : youSeeEnemyText(name));",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
@@ -68,7 +68,7 @@
   {
     "name": "L10N3e-systems-daedraSummoning-108-Faction",
     "file": "src/systems/daedraSummoning.js",
-    "old": "export const summonMacroValues = (daedra) => Object.freeze({ dae: daedra?.name != null ? getLocalizedFactionName(daedra.factionId, daedra.name) : null });",
+    "old": "export const summonMacroValues = (daedra) =>\n  Object.freeze({ dae: daedra?.name != null ? getLocalizedFactionName(daedra.factionId, daedra.name) : null });",
     "new": "export const summonMacroValues = (daedra) => Object.freeze({ dae: daedra?.name != null ? daedra.name : null });",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
@@ -90,8 +90,8 @@
   {
     "name": "L10N3e-systems-npcSession-184-Faction",
     "file": "src/systems/npcSession.js",
-    "old": "  _factionName(id) { return getLocalizedFactionName(id, this.deps.factionName?.(id) ?? ''); }",
-    "new": "  _factionName(id) { return this.deps.factionName?.(id) ?? ''; }",
+    "old": "    return getLocalizedFactionName(id, this.deps.factionName?.(id) ?? '');",
+    "new": "    return this.deps.factionName?.(id) ?? '';",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3e_beings.test.js",

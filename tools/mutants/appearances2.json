@@ -4,279 +4,359 @@
     "file": "src/characters/foeBodies.js",
     "old": "    if (Array.isArray(it.ap)) la.push([lw.length, ...it.ap]);",
     "new": "    if (false) la.push([lw.length, ...it.ap]);",
-    "tests": ["test/net/appearances2_kit.test.js"]
+    "tests": [
+      "test/net/appearances2_kit.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-kit-look-never-decoded",
     "file": "src/characters/foeBodies.js",
-    "old": "if (items[i]) items[i].ap = [t, m, v];",
-    "new": "if (items[i]) void [t, m, v];",
-    "tests": ["test/net/appearances2_kit.test.js"]
+    "old": "  for (const [i, t, m, v] of la ?? []) if (items[i]) items[i].ap = [t, m, v];",
+    "new": "  for (const [i, t, m, v] of la ?? []) if (items[i]) void [t, m, v];",
+    "tests": [
+      "test/net/appearances2_kit.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-kit-decoder-index",
     "file": "src/characters/foeBodies.js",
-    "old": "if (items[i]) items[i].ap = [t, m, v];",
-    "new": "if (items[i + 1]) items[i + 1].ap = [t, m, v];",
-    "tests": ["test/net/appearances2_kit.test.js"]
+    "old": "  for (const [i, t, m, v] of la ?? []) if (items[i]) items[i].ap = [t, m, v];",
+    "new": "  for (const [i, t, m, v] of la ?? []) if (items[i + 1]) items[i + 1].ap = [t, m, v];",
+    "tests": [
+      "test/net/appearances2_kit.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-kit-la-unread-by-the-copy",
     "file": "src/characters/foeBodies.js",
     "old": "    const la = Array.isArray(r.la) ? r.la : null;",
     "new": "    const la = null;",
-    "tests": ["test/net/appearances2_kit.test.js"]
+    "tests": [
+      "test/net/appearances2_kit.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-body-key-blind-to-the-look",
     "file": "src/characters/foeBodies.js",
-    "old": ":${it.variant ?? ''}:${it.ap ?? ''}`).join('|');",
-    "new": ":${it.variant ?? ''}`).join('|');",
-    "tests": ["test/net/appearances2_kit.test.js"]
+    "old": "    .map(\n      (it) =>\n        `${it.equipSlot}:${it.templateIndex}:${it.material ?? ''}:${it.dye ?? ''}:${it.variant ?? ''}:${it.ap ?? ''}`,\n    )",
+    "new": "    .map((it) => `${it.equipSlot}:${it.templateIndex}:${it.material ?? ''}:${it.dye ?? ''}:${it.variant ?? ''}`)",
+    "tests": [
+      "test/net/appearances2_kit.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-record-key-blind-to-the-look",
     "file": "src/characters/foeBodies.js",
-    "old": "`${lw.map((w) => w.join(',')).join(';')}${la ? `|${la.map((w) => w.join(',')).join(';')}` : ''}`;",
-    "new": "`${lw.map((w) => w.join(',')).join(';')}`;",
-    "tests": ["test/net/appearances2_kit.test.js"]
+    "old": "  `${lw.map((w) => w.join(',')).join(';')}${la ? `|${la.map((w) => w.join(',')).join(';')}` : ''}`;",
+    "new": "  `${lw.map((w) => w.join(',')).join(';')}`;",
+    "tests": [
+      "test/net/appearances2_kit.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-heir-drops-the-look",
     "file": "src/characters/foeBodies.js",
-    "old": "    if (f._mwWornWireRaw) { worn = f._mwWornWireRaw; looks = f._mwWornWireLooks ?? null; }",
-    "new": "    if (f._mwWornWireRaw) { worn = f._mwWornWireRaw; looks = null; }",
-    "tests": ["test/net/appearances2_kit.test.js"]
+    "old": "      looks = f._mwWornWireLooks ?? null;",
+    "new": "      looks = null;",
+    "tests": [
+      "test/net/appearances2_kit.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-kit-sent-without-its-looks",
     "file": "src/scenes/exteriorFoes.js",
     "old": "if (lk.kit) Object.assign(r, lk.kit);",
     "new": "if (lk.worn) r.lw = lk.worn;",
-    "tests": ["test/net/appearances2_kit.test.js"]
+    "tests": [
+      "test/net/appearances2_kit.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-pending-build-forgets-the-look",
     "file": "src/scenes/exteriorFoes.js",
     "old": "...(r.lw ? null : kitWire(_pupPending.get(key))),",
     "new": "lw: r.lw ?? _pupPending.get(key).lw,",
-    "tests": ["test/net/appearances2_kit.test.js"]
+    "tests": [
+      "test/net/appearances2_kit.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-wire-la-unkept",
     "file": "src/net/wire.js",
     "old": "    if (la.length) out.la = la;",
     "new": "    void la;",
-    "tests": ["test/net/appearances2_kit.test.js"]
+    "tests": [
+      "test/net/appearances2_kit.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-wire-la-without-lw",
     "file": "src/net/wire.js",
     "old": "    if (!out.lw || !Array.isArray(r.la) || r.la.length > out.lw.length) return null;",
     "new": "    if (!out.lw) { out.la = r.la; return out; } if (!Array.isArray(r.la) || r.la.length > out.lw.length) return null;",
-    "tests": ["test/net/appearances2_kit.test.js"]
+    "tests": [
+      "test/net/appearances2_kit.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-wire-order-unchecked",
     "file": "src/net/wire.js",
     "old": "it[0] <= last || it[0] >= out.lw.length",
     "new": "it[0] < last || it[0] >= out.lw.length",
-    "tests": ["test/net/appearances2_kit.test.js"]
+    "tests": [
+      "test/net/appearances2_kit.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-wire-index-unbounded",
     "file": "src/net/wire.js",
     "old": "it[0] <= last || it[0] >= out.lw.length",
     "new": "it[0] <= last || it[0] >= out.lw.length + 1",
-    "tests": ["test/net/appearances2_kit.test.js"]
+    "tests": [
+      "test/net/appearances2_kit.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-wire-kind-unchecked",
     "file": "src/net/wire.js",
     "old": "      const ap = validWireAppearance({ templateIndex: piece[2], group: LOOK_GROUPS[piece[1]] }, it.slice(1));",
     "new": "      const ap = (void piece, it.slice(1));",
-    "tests": ["test/net/appearances2_kit.test.js"]
+    "tests": [
+      "test/net/appearances2_kit.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-wire-bad-look-refuses-the-record",
     "file": "src/net/wire.js",
     "old": "      if (ap) la.push([it[0], ...ap]);",
     "new": "      if (!ap) return null; la.push([it[0], ...ap]);",
-    "tests": ["test/net/appearances2_kit.test.js"]
+    "tests": [
+      "test/net/appearances2_kit.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-diverse-weapons-copy-read-as-the-artifact",
     "file": "src/combat/diverseWeapons/diverseWeapons.js",
     "old": "const isArtifact = (item) => !isLookCopy(item) && (item?.artifact === true || hasArtifactEffect(item));",
-    "new": "const isArtifact = (item) => (item?.artifact === true || hasArtifactEffect(item));",
-    "tests": ["test/ui/appearances2_render.test.js"]
+    "new": "const isArtifact = (item) => item?.artifact === true || hasArtifactEffect(item);",
+    "tests": [
+      "test/ui/appearances2_render.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-the-copy-never-marked",
     "file": "src/net/appearanceLaw.js",
     "old": "  _copies.add(drawn);",
     "new": "  void _copies;",
-    "tests": ["test/ui/appearances2_render.test.js"]
+    "tests": [
+      "test/ui/appearances2_render.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-doll-asks-in-the-piece-s-metal",
     "file": "src/ui/paperDoll.js",
     "old": "itemDyeColor(drawnPiece(it)), S);",
     "new": "itemDyeColor(it), S);",
-    "tests": ["test/systems/dw3_icons.test.js"]
+    "tests": [
+      "test/systems/dw3_icons.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-classic-info-line-unsaid",
     "file": "src/ui/native/nativeInventory.js",
     "old": "    const look = lookLine(it);",
     "new": "    const look = '';",
-    "tests": ["test/ui/appearances2_render.test.js"]
+    "tests": [
+      "test/ui/appearances2_render.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-classic-info-alignment-lost",
     "file": "src/ui/native/nativeInventory.js",
     "old": "{ text: look, center: infoRows.at(-1)?.center ?? true }",
     "new": "{ text: look, center: true }",
-    "tests": ["test/ui/appearances2_render.test.js"]
+    "tests": [
+      "test/ui/appearances2_render.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-wearer-holds-the-piece-itself",
     "file": "src/systems/appearances.js",
     "old": "  const slots = table.map((it) => (it && it === item ? previewPiece(item, look) : it));",
     "new": "  const slots = table.map((it) => (it && it === item ? item : it));",
-    "tests": ["test/ui/appearances2_preview.test.js"]
+    "tests": [
+      "test/ui/appearances2_preview.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-wearer-look-not-laid",
     "file": "src/systems/appearances.js",
     "old": "  return look ? { ...own, appearance: { t: look.t, m: look.m, v: look.v } } : own;",
     "new": "  return own;",
-    "tests": ["test/ui/appearances2_preview.test.js"]
+    "tests": [
+      "test/ui/appearances2_preview.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-wearer-own-look-not-stripped",
     "file": "src/systems/appearances.js",
     "old": "  return look ? { ...own, appearance: { t: look.t, m: look.m, v: look.v } } : own;",
     "new": "  return look ? { ...own, appearance: { t: look.t, m: look.m, v: look.v } } : { ...item };",
-    "tests": ["test/ui/appearances2_preview.test.js"]
+    "tests": [
+      "test/ui/appearances2_preview.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-preview-recomposes-the-inventory-s-doll",
     "file": "src/ui/paperDoll.js",
     "old": "    const { out, width, height } = await composeDoll(_art, _deps, entity, { scale: composeScale() });",
     "new": "    await refreshPaperDoll(entity); const { out, width, height } = await composeDoll(_art, _deps, entity, { scale: composeScale() });",
-    "tests": ["test/ui/appearances2_preview.test.js"]
+    "tests": [
+      "test/ui/appearances2_preview.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-preview-doll-reads-the-character",
     "file": "src/ui/wardrobe/wardrobePreview.js",
-    "old": "    Promise.resolve(composeDoll(stand)).then((px) => {",
-    "new": "    Promise.resolve(composeDoll(entity)).then((px) => {",
-    "tests": ["test/ui/appearances2_preview.test.js"]
+    "old": "    Promise.resolve(composeDoll(stand))",
+    "new": "    Promise.resolve(composeDoll(entity))",
+    "tests": [
+      "test/ui/appearances2_preview.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-preview-body-on-the-classic-skin",
     "file": "src/ui/wardrobe/wardrobePreview.js",
     "old": "    if (plus() && arm?.canThirdPerson?.()) {",
     "new": "    if (arm?.canThirdPerson?.()) {",
-    "tests": ["test/ui/appearances2_preview.test.js"]
+    "tests": [
+      "test/ui/appearances2_preview.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-preview-memo-blind-to-the-worn-table",
     "file": "src/ui/wardrobe/wardrobePreview.js",
-    "old": ".${it.dye}.${appearanceSig(it)}` : '')).join('|');",
-    "new": ".${it.dye}` : '')).join('|');",
-    "tests": ["test/ui/appearances2_preview.test.js"]
+    "old": "    .map((it) =>\n      it ? `${it.group}.${it.templateIndex}.${it.material}.${it.variant}.${it.dye}.${appearanceSig(it)}` : '',\n    )",
+    "new": "    .map((it) => (it ? `${it.group}.${it.templateIndex}.${it.material}.${it.variant}.${it.dye}` : ''))",
+    "tests": [
+      "test/ui/appearances2_preview.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-preview-drawing-never-told",
     "file": "src/ui/wardrobe/wardrobePreview.js",
-    "old": "      onReady?.();\n    }).catch(",
-    "new": "    }).catch(",
-    "tests": ["test/ui/appearances2_preview.test.js"]
+    "old": "        onReady?.();\n      })",
+    "new": "      })",
+    "tests": [
+      "test/ui/appearances2_preview.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-preview-drawn-with-no-art",
     "file": "src/ui/wardrobe/wardrobePreview.js",
     "old": "    if (!dollArt()) return null;",
     "new": "    if (false) return null;",
-    "tests": ["test/ui/appearances2_preview.test.js"]
+    "tests": [
+      "test/ui/appearances2_preview.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-preview-draws-on-after-shutting",
     "file": "src/ui/wardrobe/wardrobePreview.js",
     "old": "    if (!alive || !item) return null;",
     "new": "    if (!item) return null;",
-    "tests": ["test/ui/appearances2_preview.test.js"]
+    "tests": [
+      "test/ui/appearances2_preview.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-preview-rig-never-unloaded",
     "file": "src/ui/wardrobe/wardrobePreview.js",
     "old": "    if (!building) release();",
     "new": "    void building;",
-    "tests": ["test/ui/appearances2_preview.test.js"]
+    "tests": [
+      "test/ui/appearances2_preview.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-preview-a-second-build-on-top",
     "file": "src/ui/wardrobe/wardrobePreview.js",
     "old": "    if (building || !want || !alive) return;",
     "new": "    if (!want || !alive) return;",
-    "tests": ["test/ui/appearances2_preview.test.js"]
+    "tests": [
+      "test/ui/appearances2_preview.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-preview-passed-over-left-drawing",
     "file": "src/ui/wardrobe/wardrobePreview.js",
-    "old": "    if (want && want.key !== key) memo.delete(want.key);",
-    "new": "    void want;",
-    "tests": ["test/ui/appearances2_preview.test.js"]
+    "old": "    if (want && want.key !== key) memo.delete(want.key); // passed over before it was built",
+    "new": "    void want; // passed over before it was built",
+    "tests": [
+      "test/ui/appearances2_preview.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-preview-renderer-never-bound",
     "file": "src/combat/weapon/weaponRig.js",
     "old": "    _armRenderer = renderer ?? null;",
     "new": "    void _armRenderer;",
-    "tests": ["test/ui/appearances2_preview.test.js"]
+    "tests": [
+      "test/ui/appearances2_preview.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-window-preview-never-shown",
     "file": "src/ui/wardrobe/wardrobeWindow.js",
     "old": "    if (shown) box.append(shown);",
     "new": "    void shown;",
-    "tests": ["test/ui/appearances2_preview.test.js"]
+    "tests": [
+      "test/ui/appearances2_preview.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-window-try-dresses-the-piece",
     "file": "src/ui/wardrobe/wardrobeWindow.js",
-    "old": "tried = { item, look }; repaint(); };",
-    "new": "tried = { item, look }; deps.wear(item, look); repaint(); };",
-    "tests": ["test/ui/appearances2_preview.test.js"]
+    "old": "      tried = { item, look };\n      repaint();",
+    "new": "      tried = { item, look };\n      deps.wear(item, look);\n      repaint();",
+    "tests": [
+      "test/ui/appearances2_preview.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-window-try-look-not-handed-on",
     "file": "src/ui/wardrobe/wardrobeWindow.js",
     "old": "    const fig = preview?.figure(item, look, () => repaint()) ?? null;",
     "new": "    const fig = preview?.figure(item, null, () => repaint()) ?? null;",
-    "tests": ["test/ui/appearances2_preview.test.js"]
+    "tests": [
+      "test/ui/appearances2_preview.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-window-tried-kept-across-pieces",
     "file": "src/ui/wardrobe/wardrobeWindow.js",
-    "old": "picked = p.item; note = null; tried = null; repaint();",
-    "new": "picked = p.item; note = null; repaint();",
-    "tests": ["test/ui/appearances2_preview.test.js"]
+    "old": "        tried = null;\n        repaint();",
+    "new": "        repaint();",
+    "tests": [
+      "test/ui/appearances2_preview.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-window-wear-keeps-the-tried-look",
     "file": "src/ui/wardrobe/wardrobeWindow.js",
-    "old": "WARDROBE_WORDS.done(nameOf(item), name) } : { ok: false, text: wardrobeRefusal(done.reason ?? null) };\n          if (done.ok) tried = null;",
-    "new": "WARDROBE_WORDS.done(nameOf(item), name) } : { ok: false, text: wardrobeRefusal(done.reason ?? null) };",
-    "tests": ["test/ui/appearances2_preview.test.js"]
+    "old": "          if (done.ok) tried = null;\n          repaint();",
+    "new": "          repaint();",
+    "tests": [
+      "test/ui/appearances2_preview.test.js"
+    ]
   },
   {
     "name": "APPEARANCES2-window-preview-never-let-go",
     "file": "src/ui/wardrobe/wardrobeWindow.js",
-    "old": "      preview?.dispose?.();",
-    "new": "      void preview;",
-    "tests": ["test/ui/appearances2_preview.test.js"]
+    "old": "      preview?.dispose?.(); // APPEARANCES-II: the preview body's rig goes with the window",
+    "new": "      void preview; // APPEARANCES-II: the preview body's rig goes with the window",
+    "tests": [
+      "test/ui/appearances2_preview.test.js"
+    ]
   }
 ]

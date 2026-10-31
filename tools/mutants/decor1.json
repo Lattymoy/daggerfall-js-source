@@ -194,8 +194,8 @@
   {
     "name": "DECOR1-a-marker-kept",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "a === EDITOR_FLATS_ARCHIVE || r < 0) continue;\n        add({ model: null, flat: [a, r] });",
-    "new": "r < 0) continue;\n        add({ model: null, flat: [a, r] });",
+    "old": "        const r = f?.textureRecord;\n        if (!Number.isSafeInteger(a) || !Number.isSafeInteger(r) || a === EDITOR_FLATS_ARCHIVE || r < 0) continue;\n        add({ model: null, flat: [a, r] });",
+    "new": "        const r = f?.textureRecord;\n        if (!Number.isSafeInteger(a) || !Number.isSafeInteger(r) || r < 0) continue;\n        add({ model: null, flat: [a, r] });",
     "tests": [
       "test/server/decor1.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "DECOR1-the-ladder-kept",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "|| id === LADDER_MODEL_ID) continue;",
-    "new": ") continue;",
+    "old": "        if (!Number.isSafeInteger(id) || id <= 0 || id === LADDER_MODEL_ID) continue;",
+    "new": "        if (!Number.isSafeInteger(id) || id <= 0) continue;",
     "tests": [
       "test/server/decor1.test.js"
     ]
@@ -212,8 +212,8 @@
   {
     "name": "DECOR1-a-non-prop-kept",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "        if (m?.objectType !== PROP_MODEL_TYPE) continue;\n",
-    "new": "",
+    "old": "        if (m?.objectType !== PROP_MODEL_TYPE) continue;\n        const id = m.modelIdNum;",
+    "new": "        const id = m.modelIdNum;",
     "tests": [
       "test/server/decor1.test.js"
     ]
@@ -230,8 +230,8 @@
   {
     "name": "DECOR1-a-container-not-storage",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "storage: kind === 'storage', light, radius: null",
-    "new": "storage: false, light, radius: null",
+    "old": "      storage: kind === 'storage',",
+    "new": "      storage: false,",
     "tests": [
       "test/server/decor1.test.js"
     ]
@@ -257,8 +257,8 @@
   {
     "name": "DECOR1-the-kinds-unread",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    if (want && !want.has(e.kind)) return false;\n",
-    "new": "",
+    "old": "    if (want && !want.has(e.kind)) return false;\n    if (favourite && !favourite.has(e.key)) return false;",
+    "new": "    if (favourite && !favourite.has(e.key)) return false;",
     "tests": [
       "test/server/decor1.test.js"
     ]
@@ -266,8 +266,8 @@
   {
     "name": "DECOR1-one-word-enough",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "if (!words.every((w) => hay.includes(w))) return false;",
-    "new": "if (!words.some((w) => hay.includes(w))) return false;",
+    "old": "      if (!words.every((w) => hay.includes(w))) return false;",
+    "new": "      if (!words.some((w) => hay.includes(w))) return false;",
     "tests": [
       "test/server/decor1.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "DECOR1-the-size-unread",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    if (size !== null && decorSize(radiusOf(e)) !== size) return false;\n",
-    "new": "",
+    "old": "    if (size !== null && decorSize(radiusOf(e)) !== size) return false;\n    if (words.length) {",
+    "new": "    if (words.length) {",
     "tests": [
       "test/server/decor1.test.js"
     ]
@@ -419,7 +419,7 @@
   {
     "name": "DECOR1c-the-scene-drops-the-items",
     "file": "src/systems/sceneCache.js",
-    "old": "  decorItems: Object.fromEntries(Object.entries(d.decorItems ?? {}).map(([id, list]) => [id, (list ?? []).map((it) => ({ ...it }))])),",
+    "old": "  decorItems: Object.fromEntries(\n    Object.entries(d.decorItems ?? {}).map(([id, list]) => [id, (list ?? []).map((it) => ({ ...it }))]),\n  ),",
     "new": "  decorItems: {},",
     "tests": [
       "test/server/decor1.test.js"
@@ -428,8 +428,8 @@
   {
     "name": "DECOR1c-a-shallow-scene-copy",
     "file": "src/systems/sceneCache.js",
-    "old": "    ...p, pos: [...(p.pos ?? [])], rot: [...(p.rot ?? [])], flat: p.flat ? [...p.flat] : null,",
-    "new": "    ...p, rot: [...(p.rot ?? [])], flat: p.flat ? [...p.flat] : null,",
+    "old": "    pos: [...(p.pos ?? [])],\n    rot: [...(p.rot ?? [])],",
+    "new": "    rot: [...(p.rot ?? [])],",
     "tests": [
       "test/server/decor1.test.js"
     ]

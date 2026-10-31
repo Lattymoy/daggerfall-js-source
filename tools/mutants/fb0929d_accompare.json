@@ -66,8 +66,8 @@
   {
     "name": "ACCOMPARE-the-overhauls-table-off-its-switch",
     "file": "src/combat/pcaao.js",
-    "old": "registerFormulaOverride('struckBodyPartTable', () => (modules().armorHitFormulaRedone ? PCAAO_BODY_PARTS : undefined));",
-    "new": "registerFormulaOverride('struckBodyPartTable', () => PCAAO_BODY_PARTS);",
+    "old": "  registerFormulaOverride('struckBodyPartTable', () =>\n    modules().armorHitFormulaRedone ? PCAAO_BODY_PARTS : undefined,\n  );",
+    "new": "  registerFormulaOverride('struckBodyPartTable', () => PCAAO_BODY_PARTS);",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -75,7 +75,7 @@
   {
     "name": "ACCOMPARE-the-overhauls-table-never-registered",
     "file": "src/combat/pcaao.js",
-    "old": "registerFormulaOverride('struckBodyPartTable', () => (modules().armorHitFormulaRedone ? PCAAO_BODY_PARTS : undefined));",
+    "old": "  registerFormulaOverride('struckBodyPartTable', () =>\n    modules().armorHitFormulaRedone ? PCAAO_BODY_PARTS : undefined,\n  );",
     "new": "",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
@@ -84,8 +84,8 @@
   {
     "name": "ACCOMPARE-the-uninstall-leaves-the-table",
     "file": "src/combat/pcaao.js",
-    "old": "  registerFormulaOverride('struckBodyPartTable', null);   // AC-COMPARE\n",
-    "new": "",
+    "old": "  registerFormulaOverride('struckBodyPartTable', null); // AC-COMPARE\n  registerFormulaOverride('adjustWeaponHitChanceMod', null);",
+    "new": "  registerFormulaOverride('adjustWeaponHitChanceMod', null);",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "ACCOMPARE-part-names-off-their-enum",
     "file": "src/ui/armourCard.js",
-    "old": "  .map((k) => k.replace(/([a-z])([A-Z])/g, (_, lo, up) => `${lo} ${up.toLowerCase()}`)));",
-    "new": "  .map((k) => k));",
+    "old": "    .map((k) => k.replace(/([a-z])([A-Z])/g, (_, lo, up) => `${lo} ${up.toLowerCase()}`)),",
+    "new": "    .map((k) => k),",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "ACCOMPARE-the-doll-without-its-modifier",
     "file": "src/ui/armourCard.js",
-    "old": "(_, part) => armorLabelValue(entity?.armorValues?.[part] ?? 100, entityArmorDisplayMod(entity, part)));",
-    "new": "(_, part) => armorLabelValue(entity?.armorValues?.[part] ?? 100));",
+    "old": "  Array.from({ length: NUMBER_BODY_PARTS }, (_, part) =>\n    armorLabelValue(entity?.armorValues?.[part] ?? 100, entityArmorDisplayMod(entity, part)),\n  );",
+    "new": "  Array.from({ length: NUMBER_BODY_PARTS }, (_, part) => armorLabelValue(entity?.armorValues?.[part] ?? 100));",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "ACCOMPARE-the-counts-not-counted",
     "file": "src/ui/armourCard.js",
-    "old": "for (const part of table) out[part]++;",
-    "new": "for (const part of table) out[part] = 1;",
+    "old": "  for (const part of table) out[part]++;",
+    "new": "  for (const part of table) out[part] = 1;",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "ACCOMPARE-the-figure-over-seven-parts",
     "file": "src/ui/armourCard.js",
-    "old": "return parts.reduce((sum, v, part) => sum + v * counts[part], 0) / table.length;",
-    "new": "return parts.reduce((sum, v, part) => sum + v * counts[part], 0) / NUMBER_BODY_PARTS;",
+    "old": "  return parts.reduce((sum, v, part) => sum + v * counts[part], 0) / table.length;",
+    "new": "  return parts.reduce((sum, v, part) => sum + v * counts[part], 0) / NUMBER_BODY_PARTS;",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "ACCOMPARE-the-figure-unweighted",
     "file": "src/ui/armourCard.js",
-    "old": "return parts.reduce((sum, v, part) => sum + v * counts[part], 0) / table.length;",
-    "new": "return parts.reduce((sum, v) => sum + v, 0) / table.length;",
+    "old": "  return parts.reduce((sum, v, part) => sum + v * counts[part], 0) / table.length;",
+    "new": "  return parts.reduce((sum, v) => sum + v, 0) / table.length;",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "ACCOMPARE-the-careers-refusal-dropped",
     "file": "src/ui/armourCard.js",
-    "old": "if (isBrokenItem(item) || isForbiddenEquip(entity.career, item)) return null;",
-    "new": "if (isBrokenItem(item)) return null;",
+    "old": "  if (isBrokenItem(item) || isForbiddenEquip(entity.career, item)) return null;",
+    "new": "  if (isBrokenItem(item)) return null;",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "ACCOMPARE-the-unidentified-piece-read-whole",
     "file": "src/ui/armourCard.js",
-    "old": "slotsThen[slot] = asKnown(item);",
-    "new": "slotsThen[slot] = item;",
+    "old": "  slotsThen[slot] = asKnown(item); // AUDIT C&C S6: an unidentified piece's stand-in as its card knows it",
+    "new": "  slotsThen[slot] = item; // AUDIT C&C S6: an unidentified piece's stand-in as its card knows it",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "ACCOMPARE-the-folds-points-left-out",
     "file": "src/ui/armourCard.js",
-    "old": "armorLabelValue(now[p]) + pointsThen[p] - pointsNow[p]);",
-    "new": "armorLabelValue(now[p]));",
+    "old": "  const after = before.map(\n    (v, p) => v + armorLabelValue(then.armorValues[p]) - armorLabelValue(now[p]) + pointsThen[p] - pointsNow[p],\n  );",
+    "new": "  const after = before.map((v, p) => v + armorLabelValue(then.armorValues[p]) - armorLabelValue(now[p]));",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "ACCOMPARE-a-leavers-value-never-given-back",
     "file": "src/ui/armourCard.js",
-    "old": "  for (const it of replaces) updateEquippedArmorValues(then, it, false);\n",
-    "new": "",
+    "old": "  for (const it of replaces) updateEquippedArmorValues(then, it, false);\n  updateEquippedArmorValues(then, item, true);",
+    "new": "  updateEquippedArmorValues(then, item, true);",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "ACCOMPARE-only-the-covered-parts",
     "file": "src/ui/armourCard.js",
-    "old": "if (covered.has(part) || after[part] !== before[part]) parts.push",
-    "new": "if (covered.has(part)) parts.push",
+    "old": "    if (covered.has(part) || after[part] !== before[part])\n      parts.push({ part, before: before[part], after: after[part] });",
+    "new": "    if (covered.has(part)) parts.push({ part, before: before[part], after: after[part] });",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "ACCOMPARE-the-rival-any-leaver",
     "file": "src/ui/armourCard.js",
-    "old": "const rival = [table[slot], ...replaces].find(",
-    "new": "const rival = replaces.find(",
+    "old": "    const rival = [table[slot], ...replaces].find((it) => it && itemDamageLine(it) != null);",
+    "new": "    const rival = replaces.find((it) => it && itemDamageLine(it) != null);",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "ACCOMPARE-the-damage-set-against-itself",
     "file": "src/ui/armourCard.js",
-    "old": "before: weaponDamageRange(rival), after: weaponDamageRange(item) };",
-    "new": "before: weaponDamageRange(rival), after: weaponDamageRange(rival) };",
+    "old": "    if (rival) damage = { against: rival, before: weaponDamageRange(rival), after: weaponDamageRange(item) };",
+    "new": "    if (rival) damage = { against: rival, before: weaponDamageRange(rival), after: weaponDamageRange(rival) };",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "ACCOMPARE-a-leaver-named-twice",
     "file": "src/ui/armourCard.js",
-    "old": "if (it && !replaces.includes(it)) replaces.push(it);",
-    "new": "if (it) replaces.push(it);",
+    "old": "    if (it && !replaces.includes(it)) replaces.push(it);",
+    "new": "    if (it) replaces.push(it);",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "ACCOMPARE-a-block-for-a-piece-with-no-stat",
     "file": "src/ui/armourCard.js",
-    "old": "  if (!cmp.parts.length && !cmp.damage && item.group !== 'Armor' && itemDamageLine(item) == null) return null;\n",
-    "new": "",
+    "old": "  if (!cmp.parts.length && !cmp.damage && item.group !== 'Armor' && itemDamageLine(item) == null) return null;\n  const box = el('div', 'cmp');",
+    "new": "  const box = el('div', 'cmp');",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "ACCOMPARE-the-tones-swapped",
     "file": "src/ui/armourCard.js",
-    "old": "`cmp-d ${r > 0 ? 'up' : r < 0 ? 'down' : 'same'}`",
-    "new": "`cmp-d ${r > 0 ? 'down' : r < 0 ? 'up' : 'same'}`",
+    "old": "    `cmp-d ${r > 0 ? 'up' : r < 0 ? 'down' : 'same'}`,",
+    "new": "    `cmp-d ${r > 0 ? 'down' : r < 0 ? 'up' : 'same'}`,",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "ACCOMPARE-the-overall-difference-a-whole",
     "file": "src/ui/armourCard.js",
-    "old": "row('Overall', `${b.toFixed(1)} → ${a.toFixed(1)}`, delta(a - b, 1));",
-    "new": "row('Overall', `${b.toFixed(1)} → ${a.toFixed(1)}`, delta(a - b));",
+    "old": "    row('Overall', `${b.toFixed(1)} → ${a.toFixed(1)}`, delta(a - b, 1));",
+    "new": "    row('Overall', `${b.toFixed(1)} → ${a.toFixed(1)}`, delta(a - b));",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "ACCOMPARE-the-dimmed-zero",
     "file": "src/ui/armourCard.js",
-    "old": "el('span', `wornac${v ? '' : ' nil'}`, String(v));",
-    "new": "el('span', 'wornac', String(v));",
+    "old": "  const b = el('span', `wornac${v ? '' : ' nil'}`, String(v));",
+    "new": "  const b = el('span', 'wornac', String(v));",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]

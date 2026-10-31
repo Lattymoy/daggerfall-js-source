@@ -2,8 +2,8 @@
   {
     "name": "THUNDERLOCK-ART-the-dye-kept",
     "file": "src/systems/textureReplacement.js",
-    "old": "  for (const e of _vendor.values()) if (e.archive === bare.archive && e.record === bare.record && e.frame === bare.frame && e.map === bare.map && e.dye != null && !e.studio) return dye;   // STUDIO1: a studio picture of one dye makes no dyed set of a stand-in\n  return null;\n};",
-    "new": "  for (const e of _vendor.values()) if (e.archive === bare.archive && e.record === bare.record && e.frame === bare.frame && e.map === bare.map && e.dye != null && !e.studio) return dye;   // STUDIO1: a studio picture of one dye makes no dyed set of a stand-in\n  return dye;\n};",
+    "old": "      return dye; // STUDIO1: a studio picture of one dye makes no dyed set of a stand-in\n  return null;",
+    "new": "      return dye; // STUDIO1: a studio picture of one dye makes no dyed set of a stand-in\n  return dye;",
     "tests": [
       "test/systems/thunderlockart.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "THUNDERLOCK-ART-every-record-undyed",
     "file": "src/systems/textureReplacement.js",
-    "old": "  for (const e of _vendor.values()) if (e.archive === bare.archive && e.record === bare.record && e.frame === bare.frame && e.map === bare.map && e.dye != null && !e.studio) return dye;   // STUDIO1: a studio picture of one dye makes no dyed set of a stand-in\n  return null;\n};",
-    "new": "  return null;\n};",
+    "old": "  for (const e of _vendor.values())\n    if (\n      e.archive === bare.archive &&\n      e.record === bare.record &&\n      e.frame === bare.frame &&\n      e.map === bare.map &&\n      e.dye != null &&\n      !e.studio\n    )\n      return dye; // STUDIO1: a studio picture of one dye makes no dyed set of a stand-in\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/systems/thunderlockart.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "THUNDERLOCK-ART-a-real-archive-undyed",
     "file": "src/systems/textureReplacement.js",
-    "old": "  if (!bare?.standIn) return dye;\n",
-    "new": "  if (!bare) return dye;\n",
+    "old": "  if (!bare?.standIn) return dye;",
+    "new": "  if (!bare) return dye;",
     "tests": [
       "test/systems/thunderlockart.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "THUNDERLOCK-ART-the-doll-layer-in-a-list",
     "file": "src/systems/thunderlock.js",
-    "old": "  : (forPaperDoll ? ART_RECORDS.doll : ART_RECORDS.icon));",
-    "new": "  : (forPaperDoll ? ART_RECORDS.doll : ART_RECORDS.doll));",
+    "old": "      : ART_RECORDS.icon;",
+    "new": "      : ART_RECORDS.doll;",
     "tests": [
       "test/systems/thunderlockart.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "THUNDERLOCK-ART-the-list-door-bypassed",
     "file": "src/systems/item/itemTemplates.js",
-    "old": "  { const own = ownItemImage(item); if (own) return {",
-    "new": "  { const own = ownItemImage(item); if (own && false) return {",
+    "old": "    if (own)",
+    "new": "    if (own && false)",
     "tests": [
       "test/systems/thunderlockart.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "THUNDERLOCK-ART-the-gold-alpha",
     "file": "tools/gunIcons.mjs",
-    "old": "    out.data[o] = c[0]; out.data[o + 1] = c[1]; out.data[o + 2] = c[2];\n    bright.push([t, i]);",
-    "new": "    out.data[o] = c[0]; out.data[o + 1] = c[1]; out.data[o + 2] = c[2]; out.data[o + 3] = 255;\n    bright.push([t, i]);",
+    "old": "    bright.push([t, i]);",
+    "new": "    out.data[o + 3] = 255;\n    bright.push([t, i]);",
     "tests": [
       "test/systems/thunderlockart.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "THUNDERLOCK-ART-a-loop-left-open",
     "file": "tools/meshCap.mjs",
-    "old": "  for (const loop of loops) {\n    const pts",
-    "new": "  for (const loop of loops.slice(1)) {\n    const pts",
+    "old": "  for (const loop of loops) {",
+    "new": "  for (const loop of loops.slice(1)) {",
     "tests": [
       "test/systems/thunderlockart.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "THUNDERLOCK-ART-a-bar-under-the-shot",
     "file": "src/systems/quickslots.js",
-    "old": "const showsWear = (kind, item) => !isAmmunition(item) && (kind === 'weapon'",
-    "new": "const showsWear = (kind, item) => !!item && (kind === 'weapon'",
+    "old": "  !isAmmunition(item) &&\n  (kind === 'weapon' || kind === 'shield' || kind === 'light' || item.group === 'Armor' || isEnchanted(item)); // AUDIT UI B6: anything enchanted - the Sanguine Rose spends its condition as a ring does (the pack's wearPct)",
+    "new": "  !!item && (kind === 'weapon' || kind === 'shield' || kind === 'light' || item.group === 'Armor' || isEnchanted(item)); // AUDIT UI B6: anything enchanted - the Sanguine Rose spends its condition as a ring does (the pack's wearPct)",
     "tests": [
       "test/systems/thunderlockart.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "THUNDERLOCK-ART2-the-pistolet-on-the-thunderlocks",
     "file": "src/combat/fpsWeapon.js",
-    "old": "return PISTOLET_ANIMS;   // PISTOLET:",
-    "new": "return THUNDERLOCK_ANIMS;   // PISTOLET:",
+    "old": "  if (weaponType === T.Pistolet || weaponType === T.Pistolet_Magic) return PISTOLET_ANIMS; // PISTOLET: an idle and six fire frames, AlignRight, every direction alike (THUNDERLOCK-ART2: its own table now - the Thunderlock plays seven)",
+    "new": "  if (weaponType === T.Pistolet || weaponType === T.Pistolet_Magic) return THUNDERLOCK_ANIMS; // PISTOLET: an idle and six fire frames, AlignRight, every direction alike (THUNDERLOCK-ART2: its own table now - the Thunderlock plays seven)",
     "tests": [
       "test/systems/thunderlockart2.test.js"
     ],
@@ -141,8 +141,8 @@
   {
     "name": "THUNDERLOCK-ART2-every-hot-texel-averaged",
     "file": "src/combat/gun/gunFlash.js",
-    "old": "    if (n > size) { size = n; body = one; }",
-    "new": "    if (n) { size += n; body = body ? body.map((v, k) => v | one[k]) : one; }",
+    "old": "    if (n > size) {\n      size = n;\n      body = one;",
+    "new": "    if (n) {\n      size += n;\n      body = body ? body.map((v, k) => v | one[k]) : one;",
     "tests": [
       "test/systems/thunderlockart2.test.js"
     ],
@@ -181,8 +181,8 @@
   {
     "name": "THUNDERLOCK-ART2-the-last-body",
     "file": "src/combat/gun/gunFlash.js",
-    "old": "    if (n > size) { size = n; body = one; }",
-    "new": "    if (n) { size = n; body = one; }",
+    "old": "    if (n > size) {",
+    "new": "    if (n) {",
     "tests": [
       "test/systems/thunderlockart2.test.js"
     ],
@@ -211,8 +211,8 @@
   {
     "name": "THUNDERLOCK-ART2-the-lab-a-tick-early",
     "file": "src/combat/gun/gunMachine.js",
-    "old": "const adv = Math.floor(m._t * m.fps + 1e-9);",
-    "new": "const adv = Math.floor(m._t * m.fps);",
+    "old": "      const adv = Math.floor(m._t * m.fps + 1e-9); // THUNDERLOCK-ART2's audit: a frame's edge read on its later side - sixty 1/60s sum a hair short of 1",
+    "new": "      const adv = Math.floor(m._t * m.fps); // THUNDERLOCK-ART2's audit: a frame's edge read on its later side - sixty 1/60s sum a hair short of 1",
     "tests": [
       "test/systems/thunderlock.test.js"
     ],

@@ -13,7 +13,7 @@ export function nameOffDeg(view, p) {
   const x = view[0] * p[0] + view[4] * p[1] + view[8] * p[2] + view[12];
   const y = view[1] * p[0] + view[5] * p[1] + view[9] * p[2] + view[13];
   const z = view[2] * p[0] + view[6] * p[1] + view[10] * p[2] + view[14];
-  return Math.atan2(Math.hypot(x, y), -z) * 180 / Math.PI;
+  return (Math.atan2(Math.hypot(x, y), -z) * 180) / Math.PI;
 }
 
 /** A tag's wanted opacity: 1 for a point with no angle, my party or my foe; else the cone's band. (AUDIT FB1029g R4: a

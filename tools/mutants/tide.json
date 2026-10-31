@@ -12,8 +12,8 @@
   {
     "name": "TIDE-w-calm",
     "file": "src/net/tideLaw.js",
-    "old": "{ id: 'calm', name: 'Calm', weight: 40 }",
-    "new": "{ id: 'calm', name: 'Calm', weight: 45 }",
+    "old": "  Object.freeze({ id: 'calm', name: 'Calm', weight: 40 }),",
+    "new": "  Object.freeze({ id: 'calm', name: 'Calm', weight: 45 }),",
     "tests": [
       "test/net/tide_law.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "TIDE-w-harvest",
     "file": "src/net/tideLaw.js",
-    "old": "{ id: 'harvest', name: 'Harvest', weight: 10 }",
-    "new": "{ id: 'harvest', name: 'Harvest', weight: 5 }",
+    "old": "  Object.freeze({ id: 'harvest', name: 'Harvest', weight: 10 }),",
+    "new": "  Object.freeze({ id: 'harvest', name: 'Harvest', weight: 5 }),",
     "tests": [
       "test/net/tide_law.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "TIDE-w-orcs",
     "file": "src/net/tideLaw.js",
-    "old": "{ id: 'orcs', name: 'Orc Raids', weight: 10 }",
-    "new": "{ id: 'orcs', name: 'Orc Raids', weight: 5 }",
+    "old": "  Object.freeze({ id: 'orcs', name: 'Orc Raids', weight: 10 }),",
+    "new": "  Object.freeze({ id: 'orcs', name: 'Orc Raids', weight: 5 }),",
     "tests": [
       "test/net/tide_law.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "TIDE-w-revolt",
     "file": "src/net/tideLaw.js",
-    "old": "{ id: 'revolt', name: 'Tax Revolt', weight: 5 }",
-    "new": "{ id: 'revolt', name: 'Tax Revolt', weight: 10 }",
+    "old": "  Object.freeze({ id: 'revolt', name: 'Tax Revolt', weight: 5 }),",
+    "new": "  Object.freeze({ id: 'revolt', name: 'Tax Revolt', weight: 10 }),",
     "tests": [
       "test/net/tide_law.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "TIDE-land-march",
     "file": "src/net/tideLaw.js",
-    "old": "k && TIDE_LANDS.includes(k) ? k : isMarch(region) ? 'marches' :",
-    "new": "k && TIDE_LANDS.includes(k) ? k : false ? 'marches' :",
+    "old": "  return k && TIDE_LANDS.includes(k) ? k : isMarch(region) ? 'marches' : isFreeLand(region) ? 'free' : null;",
+    "new": "  return k && TIDE_LANDS.includes(k) ? k : false ? 'marches' : isFreeLand(region) ? 'free' : null;",
     "tests": [
       "test/net/tide_law.test.js",
       "test/net/tide_service.test.js"
@@ -113,8 +113,8 @@
   {
     "name": "TIDE-land-free",
     "file": "src/net/tideLaw.js",
-    "old": "isFreeLand(region) ? 'free' : null; };",
-    "new": "isFreeLand(region) ? 'marches' : null; };",
+    "old": "  return k && TIDE_LANDS.includes(k) ? k : isMarch(region) ? 'marches' : isFreeLand(region) ? 'free' : null;",
+    "new": "  return k && TIDE_LANDS.includes(k) ? k : isMarch(region) ? 'marches' : isFreeLand(region) ? 'marches' : null;",
     "tests": [
       "test/net/tide_law.test.js"
     ]
@@ -132,8 +132,8 @@
   {
     "name": "TIDE-line-next",
     "file": "src/net/tideLaw.js",
-    "old": "${next ? ` Next week: ${tideName(next)}.` : ''}",
-    "new": "",
+    "old": "  return `The Tide in ${land} this week: ${tideName(now)} - ${TIDE_WORDS[now][0].toLowerCase()}${TIDE_WORDS[now].slice(1)}${next ? ` Next week: ${tideName(next)}.` : ''}`;",
+    "new": "  return `The Tide in ${land} this week: ${tideName(now)} - ${TIDE_WORDS[now][0].toLowerCase()}${TIDE_WORDS[now].slice(1)}`;",
     "tests": [
       "test/net/tide_law.test.js",
       "test/ui/tide_client.test.js"
@@ -151,8 +151,8 @@
   {
     "name": "TIDE-land-name",
     "file": "src/net/tideLaw.js",
-    "old": "(KINGDOMS[land] ? `the Kingdom of ${KINGDOMS[land].name}` :",
-    "new": "(KINGDOMS[land] ? `${KINGDOMS[land].name}` :",
+    "old": "    ? `the Kingdom of ${KINGDOMS[land].name}`",
+    "new": "    ? `${KINGDOMS[land].name}`",
     "tests": [
       "test/net/tide_law.test.js",
       "test/ui/tide_client.test.js"
@@ -161,8 +161,8 @@
   {
     "name": "TIDE-n-plague-watch",
     "file": "src/net/tideLaw.js",
-    "old": "plagueWatch: 0.5, plagueFestival: 2,",
-    "new": "plagueWatch: 1, plagueFestival: 2,",
+    "old": "  plagueWatch: 0.5,",
+    "new": "  plagueWatch: 1,",
     "tests": [
       "test/net/tide_law.test.js",
       "test/net/tide_service.test.js"
@@ -171,8 +171,8 @@
   {
     "name": "TIDE-n-plague-fest",
     "file": "src/net/tideLaw.js",
-    "old": "plagueWatch: 0.5, plagueFestival: 2,",
-    "new": "plagueWatch: 0.5, plagueFestival: 1,",
+    "old": "  plagueFestival: 2,",
+    "new": "  plagueFestival: 1,",
     "tests": [
       "test/net/tide_law.test.js",
       "test/net/tide_service.test.js"
@@ -191,8 +191,8 @@
   {
     "name": "TIDE-n-wedding",
     "file": "src/net/tideLaw.js",
-    "old": "weddingFestival: 0.5, weddingStanding: 3,",
-    "new": "weddingFestival: 1, weddingStanding: 2,",
+    "old": "  weddingFestival: 0.5,\n  weddingStanding: 3,",
+    "new": "  weddingFestival: 1,\n  weddingStanding: 2,",
     "tests": [
       "test/net/tide_law.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "TIDE-n-revolt",
     "file": "src/net/tideLaw.js",
-    "old": "revoltTithe: 5, revoltStanding: -3,",
-    "new": "revoltTithe: 6, revoltStanding: -3,",
+    "old": "  revoltTithe: 5,",
+    "new": "  revoltTithe: 6,",
     "tests": [
       "test/net/tide_law.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "TIDE-acc-plague",
     "file": "src/net/townSeatLaw.js",
-    "old": "* (tide === 'plague' ? TIDE_EFFECTS.plagueWatch : 1) + 1e-9);",
-    "new": "+ 1e-9);",
+    "old": "  const w = Math.floor(\n    amountOf(watch) *\n      WATCH_INFLUENCE *\n      (1 + amountOf(watchBonus)) *\n      (tide === 'plague' ? TIDE_EFFECTS.plagueWatch : 1) +\n      1e-9,\n  );",
+    "new": "  const w = Math.floor(amountOf(watch) * WATCH_INFLUENCE * (1 + amountOf(watchBonus)) + 1e-9);",
     "tests": [
       "test/net/tide_law.test.js",
       "test/net/tide_service.test.js"
@@ -219,8 +219,8 @@
   {
     "name": "TIDE-acc-daedra",
     "file": "src/net/townSeatLaw.js",
-    "old": "Math.min(GATE_WEEK_CAP, amountOf(gates) * GATE_INFLUENCE) * (tide === 'daedra' ? TIDE_EFFECTS.daedraGates : 1);",
-    "new": "Math.min(GATE_WEEK_CAP, amountOf(gates) * GATE_INFLUENCE * (tide === 'daedra' ? TIDE_EFFECTS.daedraGates : 1));",
+    "old": "  const g =\n    Math.min(GATE_WEEK_CAP, amountOf(gates) * GATE_INFLUENCE) * (tide === 'daedra' ? TIDE_EFFECTS.daedraGates : 1); // SEASON1 part two: a Daedric Incursion's double, past the cap",
+    "new": "  const g = Math.min(\n    GATE_WEEK_CAP,\n    amountOf(gates) * GATE_INFLUENCE * (tide === 'daedra' ? TIDE_EFFECTS.daedraGates : 1),\n  ); // SEASON1 part two: a Daedric Incursion's double, past the cap",
     "tests": [
       "test/net/tide_law.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "TIDE-cost-plague",
     "file": "src/net/townSeatLaw.js",
-    "old": "(tide === 'plague' ? TIDE_EFFECTS.plagueFestival : tide === 'wedding'",
-    "new": "(false ? TIDE_EFFECTS.plagueFestival : tide === 'wedding'",
+    "old": "        ? tide === 'plague'",
+    "new": "        ? false",
     "tests": [
       "test/net/tide_law.test.js",
       "test/net/tide_service.test.js"
@@ -238,8 +238,8 @@
   {
     "name": "TIDE-cost-wedding",
     "file": "src/net/townSeatLaw.js",
-    "old": ": tide === 'wedding' ? TIDE_EFFECTS.weddingFestival : 1) : 1));",
-    "new": ": 1) : 1));",
+    "old": "      (edict === 'festival'\n        ? tide === 'plague'\n          ? TIDE_EFFECTS.plagueFestival\n          : tide === 'wedding'\n            ? TIDE_EFFECTS.weddingFestival\n            : 1\n        : 1),",
+    "new": "      (edict === 'festival' ? (tide === 'plague' ? TIDE_EFFECTS.plagueFestival : 1) : 1),",
     "tests": [
       "test/net/tide_law.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "TIDE-cost-festival",
     "file": "src/net/townSeatLaw.js",
-    "old": "* (edict === 'festival' ? (tide === 'plague'",
-    "new": "* (true ? (tide === 'plague'",
+    "old": "      (edict === 'festival'",
+    "new": "      (true",
     "tests": [
       "test/net/tide_law.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "TIDE-wed-row",
     "file": "src/net/townSeatLaw.js",
-    "old": "  if (tide === 'wedding') add('wedding', STANDING_CHANGES.wedding);",
-    "new": "",
+    "old": "  if (tide === 'wedding') add('wedding', STANDING_CHANGES.wedding); // SEASON1 part two: the week's Tide in the seat's land",
+    "new": "  // SEASON1 part two: the week's Tide in the seat's land",
     "tests": [
       "test/net/tide_law.test.js",
       "test/net/season1_service.test.js"
@@ -275,8 +275,8 @@
   {
     "name": "TIDE-plan-next",
     "file": "src/net/townSeatLaw.js",
-    "old": ": edictCost(e, s.tier, s.holder.tideNext), has",
-    "new": ": edictCost(e, s.tier, s.holder.tide), has",
+    "old": "      const cost = e === 'bounty' ? Math.max(0, s.holder.setAside ?? 0) : edictCost(e, s.tier, s.holder.tideNext),",
+    "new": "      const cost = e === 'bounty' ? Math.max(0, s.holder.setAside ?? 0) : edictCost(e, s.tier, s.holder.tide),",
     "tests": [
       "test/net/tide_law.test.js"
     ]
@@ -284,8 +284,8 @@
   {
     "name": "TIDE-plan-tide",
     "file": "src/net/townSeatLaw.js",
-    "old": "tide: s.holder.tide ?? 'calm', shrine:",
-    "new": "shrine:",
+    "old": "      tide: s.holder.tide ?? 'calm',\n      shrine: s.holder.shrine ?? 0, // SEAT2b part two: the Shrine's Standing",
+    "new": "      shrine: s.holder.shrine ?? 0, // SEAT2b part two: the Shrine's Standing",
     "tests": [
       "test/net/tide_law.test.js",
       "test/net/season1_service.test.js"
@@ -294,8 +294,8 @@
   {
     "name": "TIDE-line-cost",
     "file": "src/net/townSeatLaw.js",
-    "old": "  const cost = edictCost(edict, tier, tide);\n  const words =",
-    "new": "  const cost = edictCost(edict, tier);\n  const words =",
+    "old": "  const cost = edictCost(edict, tier, tide);",
+    "new": "  const cost = edictCost(edict, tier);",
     "tests": [
       "test/net/tide_law.test.js"
     ],
@@ -390,8 +390,8 @@
   {
     "name": "TIDE-tab-line",
     "file": "src/ui/seatTab.js",
-    "old": "      if (tide) week.append(el('p', 'notice-seat-week notice-seat-tide', tide));\n",
-    "new": "",
+    "old": "      if (tide) week.append(el('p', 'notice-seat-week notice-seat-tide', tide));\n      week.append(el('p', 'notice-seat-week', seatWeekLine(data, ui.nowS())));",
+    "new": "      week.append(el('p', 'notice-seat-week', seatWeekLine(data, ui.nowS())));",
     "tests": [
       "test/ui/tide_client.test.js"
     ]
@@ -399,8 +399,8 @@
   {
     "name": "TIDE-tab-edict",
     "file": "src/ui/seatTab.js",
-    "old": "edictLine(chosen, seat.tier, data?.tides?.next ?? 'calm', seat);",
-    "new": "edictLine(chosen, seat.tier, undefined, seat);",
+    "old": "    const words = edictLine(chosen, seat.tier, data?.tides?.next ?? 'calm', seat); // SEASON1 part two: the coming week's Tide on its cost; BAY-LEFT-SEA: a Bounty past the Bay its dens'",
+    "new": "    const words = edictLine(chosen, seat.tier, undefined, seat); // SEASON1 part two: the coming week's Tide on its cost; BAY-LEFT-SEA: a Bounty past the Bay its dens'",
     "tests": [
       "test/ui/tide_client.test.js"
     ],

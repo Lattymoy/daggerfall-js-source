@@ -27,11 +27,17 @@
 // measured across with the sky's own law (skyCalendar.js, which the shared clock switches on with the sky it installs).
 import { CRIMES } from './crimes.js';
 import {
-  legalRepOf, changeLegalRep, LEGAL_REP_MAX, BASE_PENALTY, PENALTY_PER_LEGAL_REP_POINT, MIN_PENALTY, MAX_PENALTY,
-  raisePeopleForAnswer,   // FIELD BUGS 2026-10-16b FINE-PEOPLE: a fine and a penance give back the People's half too
+  legalRepOf,
+  changeLegalRep,
+  LEGAL_REP_MAX,
+  BASE_PENALTY,
+  PENALTY_PER_LEGAL_REP_POINT,
+  MIN_PENALTY,
+  MAX_PENALTY,
+  raisePeopleForAnswer, // FIELD BUGS 2026-10-16b FINE-PEOPLE: a fine and a penance give back the People's half too
 } from './court.js';
 import { SEVERE_PUNISHMENT_BANISHED } from './encounters.js';
-import { skyMinuteOfEvent, eventMinuteOfSky } from './skyCalendar.js';   // BANISH-SKY: the calendar the player sees, against the event clock's stamps
+import { skyMinuteOfEvent, eventMinuteOfSky } from './skyCalendar.js'; // BANISH-SKY: the calendar the player sees, against the event clock's stamps
 
 /** DFU's own line (PlayerEntity.cs:500, `LegalRep < -10`): below it the watch knows your face. */
 export const KNOWN_CRIMINAL_BELOW = -10;
@@ -71,18 +77,26 @@ export const CONTRACT_LEGAL_GAIN = 2;
 export function standingOf(player) {
   if (!player.standing || typeof player.standing !== 'object') player.standing = {};
   const s = player.standing;
-  for (const k of ['challengeAt', 'graceUntil', 'penance', 'pardons', 'warned']) if (!s[k] || typeof s[k] !== 'object') s[k] = {};
+  for (const k of ['challengeAt', 'graceUntil', 'penance', 'pardons', 'warned'])
+    if (!s[k] || typeof s[k] !== 'object') s[k] = {};
   return s;
 }
 /** The save's copy: five plain maps. A pre-REP save restores empty; a pre-WATCH-KNOWS one, never warned. */
 export function snapshotStanding(player) {
   const s = standingOf(player);
-  return { challengeAt: { ...s.challengeAt }, graceUntil: { ...s.graceUntil }, penance: { ...s.penance }, pardons: { ...s.pardons }, warned: { ...s.warned } };
+  return {
+    challengeAt: { ...s.challengeAt },
+    graceUntil: { ...s.graceUntil },
+    penance: { ...s.penance },
+    pardons: { ...s.pardons },
+    warned: { ...s.warned },
+  };
 }
 export function restoreStanding(player, snap) {
   player.standing = {};
   const s = standingOf(player);
-  const num = (o) => Object.fromEntries(Object.entries(o && typeof o === 'object' ? o : {}).filter(([, v]) => Number.isFinite(v)));
+  const num = (o) =>
+    Object.fromEntries(Object.entries(o && typeof o === 'object' ? o : {}).filter(([, v]) => Number.isFinite(v)));
   Object.assign(s.challengeAt, num(snap?.challengeAt));
   Object.assign(s.graceUntil, num(snap?.graceUntil));
   Object.assign(s.penance, num(snap?.penance));
@@ -100,7 +114,7 @@ export function banish(player, regionIndex, worldNow) {
   if (!r) return false;
   r.severePunishmentFlags |= SEVERE_PUNISHMENT_BANISHED;
   // AUDIT REP F2: an untrusted clock (worldTick.js trustedWorldMinutes' NaN) stamps nothing - the first trusted read does
-  r.banishedUntil = Number.isFinite(worldNow) ? banishmentEnd(worldNow) : null;   // BANISH-SKY: the calendar's thirty days
+  r.banishedUntil = Number.isFinite(worldNow) ? banishmentEnd(worldNow) : null; // BANISH-SKY: the calendar's thirty days
   return true;
 }
 /** Lift a region's banishment (its term run out, or a pardon). */
@@ -118,14 +132,17 @@ export function isBanished(player, regionIndex, worldNow) {
   if (!r || (r.severePunishmentFlags & SEVERE_PUNISHMENT_BANISHED) === 0) return false;
   // AUDIT REP F2: the world's calendar not yet trusted (online, the relay unheard): banished, and nothing stamped or lifted
   if (!Number.isFinite(worldNow)) return true;
-  if (!Number.isFinite(r.banishedUntil)) r.banishedUntil = banishmentEnd(worldNow);   // BANISH-SKY: the calendar's thirty days
-  if (worldNow >= r.banishedUntil) { liftBanishment(player, regionIndex); return false; }
+  if (!Number.isFinite(r.banishedUntil)) r.banishedUntil = banishmentEnd(worldNow); // BANISH-SKY: the calendar's thirty days
+  if (worldNow >= r.banishedUntil) {
+    liftBanishment(player, regionIndex);
+    return false;
+  }
   return true;
 }
 /** The world's minutes a banishment has left, or 0. */
 export function banishmentLeft(player, regionIndex, worldNow) {
   if (!isBanished(player, regionIndex, worldNow)) return 0;
-  if (!Number.isFinite(worldNow)) return NaN;   // AUDIT REP F2: not known until the world's calendar is trusted
+  if (!Number.isFinite(worldNow)) return NaN; // AUDIT REP F2: not known until the world's calendar is trusted
   return player.regionConditions[regionIndex].banishedUntil - worldNow;
 }
 /** BANISH-SKY: the days a banishment has left in the calendar the player sees (the sky's, online), rounded up - its last
@@ -163,22 +180,31 @@ export function challengeDue(player, regionIndex, { ownNow, worldNow = ownNow })
   if (ownNow < (s.challengeAt[regionIndex] ?? -Infinity) + CHALLENGE_COOLDOWN_MINUTES) return false;
   return ownNow >= (s.graceUntil[regionIndex] ?? -Infinity);
 }
-export function noteChallenge(player, regionIndex, ownNow) { standingOf(player).challengeAt[regionIndex] = ownNow; }
-export function grantGrace(player, regionIndex, ownNow) { standingOf(player).graceUntil[regionIndex] = ownNow + CHALLENGE_GRACE_MINUTES; }
+export function noteChallenge(player, regionIndex, ownNow) {
+  standingOf(player).challengeAt[regionIndex] = ownNow;
+}
+export function grantGrace(player, regionIndex, ownNow) {
+  standingOf(player).graceUntil[regionIndex] = ownNow + CHALLENGE_GRACE_MINUTES;
+}
 /** FIELD BUGS 2026-10-21d PATROL-GRACE: whether a road patrol's knight draws on the character (LW9) - a known criminal
  *  in the patrol's region, and no grace standing there. The grace an answered law gives (a sentence served, a fine paid:
  *  "nobody stops a criminal on the courthouse steps") held the town's watch alone: a prisoner let out was met on the
  *  road outside by a knight who drew at once, could not be surrendered to, and whose death in the fight the road carried
  *  to the town as a Murder - a charge no court ever tried, so none could give it back. */
 export function patrolHalts(player, regionIndex, { ownNow, worldNow = ownNow }) {
-  return knownCriminal(player, regionIndex, { ownNow, worldNow }) && ownNow >= (standingOf(player).graceUntil[regionIndex] ?? -Infinity);
+  return (
+    knownCriminal(player, regionIndex, { ownNow, worldNow }) &&
+    ownNow >= (standingOf(player).graceUntil[regionIndex] ?? -Infinity)
+  );
 }
 /** FIELD BUGS 2026-10-14 FINE-MENDS (Dweme... on the Discord: stopped for 560 gold three times with no new crime; Mac:
  *  "Fine raises standing"). A fine paid on the spot mends the payer's name by a temple penance's step (PENANCE_POINTS),
  *  never past the watch's line - a fine bought a day's grace and nothing else, so the same standing stopped the player
  *  again the day after for the same sum. A name a step or two under the line is clear in a fine or two; one far under it
  *  pays more fines, each its standing's price. Answers the points moved. */
-export function settleChallenge(player, regionIndex) { return mendToLine(player, regionIndex, 'fine'); }
+export function settleChallenge(player, regionIndex) {
+  return mendToLine(player, regionIndex, 'fine');
+}
 /** FIELD BUGS 2026-10-21d SENTENCE-MENDS (the "Retaining criminal status even after going to prison and serving
  *  sentence" thread: "Guards will still chase you down and kill you, even if you have already been to prison"; today,
  *  "Does serving time NOT count as 'doing penance'?"). A sentence the court passed and the prisoner answered - days
@@ -204,7 +230,10 @@ export function sentenceMends(player, regionIndex, { from = null, ownNow = null 
 function mendToLine(player, regionIndex, kind, most = Infinity) {
   const rep = legalRepOf(player, regionIndex);
   const pts = rep < KNOWN_CRIMINAL_BELOW ? Math.min(PENANCE_POINTS, KNOWN_CRIMINAL_BELOW - rep, most) : 0;
-  if (pts) { changeLegalRep(player, regionIndex, pts, { kind }); raisePeopleForAnswer(player, regionIndex, pts); }   // FINE-PEOPLE
+  if (pts) {
+    changeLegalRep(player, regionIndex, pts, { kind });
+    raisePeopleForAnswer(player, regionIndex, pts);
+  } // FINE-PEOPLE
   return pts;
 }
 /** The fine the watch asks on the spot: the court's own Criminal Conspiracy penalty at this standing, every unit in coin
@@ -212,7 +241,10 @@ function mendToLine(player, regionIndex, kind, most = Infinity) {
 export function challengeFine(player, regionIndex, { ownNow = 0, worldNow = ownNow } = {}) {
   const t = CRIMES.Criminal_Conspiracy - 1;
   const rep = Math.min(0, legalRepOf(player, regionIndex));
-  const amount = Math.min(MAX_PENALTY[t], Math.max(MIN_PENALTY[t], BASE_PENALTY[t] - PENALTY_PER_LEGAL_REP_POINT[t] * rep));
+  const amount = Math.min(
+    MAX_PENALTY[t],
+    Math.max(MIN_PENALTY[t], BASE_PENALTY[t] - PENALTY_PER_LEGAL_REP_POINT[t] * rep),
+  );
   const fine = 40 * Math.trunc(amount / 40);
   return isBanished(player, regionIndex, worldNow) ? fine * 2 : fine;
 }
@@ -222,7 +254,12 @@ export function challengeFine(player, regionIndex, { ownNow = 0, worldNow = ownN
 /** WATCH-KNOWS: the minor offences the living world's watch warns a first offender for rather than arrests - a door tried,
  *  a trespass, a night in the street, a pocket picked: the court's least (BASE_PENALTY 100-300), none marked or
  *  banishable, the Thieves Guild's own petty three among them (court.js guildRescue). */
-export const WARNABLE_CRIMES = Object.freeze([CRIMES.Attempted_Breaking_And_Entering, CRIMES.Trespassing, CRIMES.Vagrancy, CRIMES.Pickpocketing]);
+export const WARNABLE_CRIMES = Object.freeze([
+  CRIMES.Attempted_Breaking_And_Entering,
+  CRIMES.Trespassing,
+  CRIMES.Vagrancy,
+  CRIMES.Pickpocketing,
+]);
 /** Whether the watch warns rather than arrests for `crime` in a region: a minor offence, the character's first warned
  *  there, and no known criminal (whose face the watch knows - REP1). */
 export function warningDue(player, regionIndex, crime, { ownNow = 0, worldNow = ownNow } = {}) {
@@ -230,7 +267,9 @@ export function warningDue(player, regionIndex, crime, { ownNow = 0, worldNow = 
   if (knownCriminal(player, regionIndex, { ownNow, worldNow })) return false;
   return !Number.isFinite(standingOf(player).warned[regionIndex]);
 }
-export function noteWarning(player, regionIndex, ownNow) { standingOf(player).warned[regionIndex] = ownNow; }
+export function noteWarning(player, regionIndex, ownNow) {
+  standingOf(player).warned[regionIndex] = ownNow;
+}
 
 // ---- REP4: the road back ----------------------------------------------------------------------------------------
 
@@ -244,7 +283,10 @@ export const penanceHelps = (player, regionIndex) => legalRepOf(player, regionIn
 export function doPenance(player, regionIndex) {
   const rep = legalRepOf(player, regionIndex);
   const points = rep < 0 ? Math.min(PENANCE_POINTS, -rep) : 0;
-  if (points) { changeLegalRep(player, regionIndex, points, { kind: 'penance' }); raisePeopleForAnswer(player, regionIndex, points); }   // FINE-PEOPLE
+  if (points) {
+    changeLegalRep(player, regionIndex, points, { kind: 'penance' });
+    raisePeopleForAnswer(player, regionIndex, points);
+  } // FINE-PEOPLE
   const s = standingOf(player);
   s.penance[regionIndex] = (s.penance[regionIndex] ?? 0) + 1;
   return points;

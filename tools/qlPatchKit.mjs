@@ -60,7 +60,10 @@ export function wrapRows(text, width = ASK_ROW) {
   for (const para of String(text).split('\n')) {
     let row = '';
     for (const word of para.split(/\s+/).filter(Boolean)) {
-      if (row && row.length + 1 + word.length > width) { rows.push(row); row = word; } else row = row ? `${row} ${word}` : word;
+      if (row && row.length + 1 + word.length > width) {
+        rows.push(row);
+        row = word;
+      } else row = row ? `${row} ${word}` : word;
     }
     if (row) rows.push(row);
   }
@@ -68,7 +71,8 @@ export function wrapRows(text, width = ASK_ROW) {
 }
 
 /** The message lines of one answer or question: DFU's own form (a spoken question `<ce>` centred, a row a line). */
-const messageBlock = (id, text, centred) => [`Message:  ${id}`, ...(centred ? wrapRows(text).map((l) => `<ce> ${l}`) : [String(text).trim()]), ''].join('\n');
+const messageBlock = (id, text, centred) =>
+  [`Message:  ${id}`, ...(centred ? wrapRows(text).map((l) => `<ce> ${l}`) : [String(text).trim()]), ''].join('\n');
 
 /** The tasks of `text` (its QBN's `_x_ task:` blocks): `[{ name, lines }]`, each block's lines trimmed, blanks dropped. */
 function taskBlocks(text) {
@@ -76,8 +80,15 @@ function taskBlocks(text) {
   let cur = null;
   for (const raw of text.split('\n')) {
     const head = /^\s*(_[A-Za-z0-9.]+_)\s+task:/.exec(raw);
-    if (head) { cur = { name: head[1], lines: [] }; out.push(cur); continue; }
-    if (/^\s*(variable\s|until\s|[A-Za-z]+\s+_[A-Za-z0-9.]+_\s*$)/.test(raw)) { cur = null; continue; }
+    if (head) {
+      cur = { name: head[1], lines: [] };
+      out.push(cur);
+      continue;
+    }
+    if (/^\s*(variable\s|until\s|[A-Za-z]+\s+_[A-Za-z0-9.]+_\s*$)/.test(raw)) {
+      cur = null;
+      continue;
+    }
     if (cur && raw.trim()) cur.lines.push(raw.trim());
   }
   return out;
@@ -95,21 +106,37 @@ export function handinPatches(quest, task, { ask, keep, alt }, { readers = 'refu
   if (!text) throw new Error(`${quest}: the pack holds no such quest`);
   // AUDIT QUESTLINES BRANCH-15: the guard reads the FILED patches - baseText is the script before them, so a guard on its
   // text never fired, and --write replaced a quest's branch without a word
-  if (hasQuestlinePatch(quest) && !replace) throw new Error(`${quest}: already carries a questlines branch (patches/<family>.json) - --replace to cut it again`);
+  if (hasQuestlinePatch(quest) && !replace)
+    throw new Error(
+      `${quest}: already carries a questlines branch (patches/<family>.json) - --replace to cut it again`,
+    );
   if (!ask || !keep || !alt) throw new Error('--ask, --keep and --alt are each required');
-  for (const [k, v] of [['keep', keep], ['alt', alt]]) if (String(v).trim().length > CHOICE_CHARS) throw new Error(`--${k}: "${v}" is over ${CHOICE_CHARS} characters - the classic pick list is 138 px wide`);
+  for (const [k, v] of [
+    ['keep', keep],
+    ['alt', alt],
+  ])
+    if (String(v).trim().length > CHOICE_CHARS)
+      throw new Error(`--${k}: "${v}" is over ${CHOICE_CHARS} characters - the classic pick list is 138 px wide`);
   const head = new RegExp(`(^|\\n)(${esc(task)} task:[^\\n]*\\n)([^\\n]*\\bwhen\\b[^\\n]*)\\n`);
   const m = head.exec(text);
   if (!m) throw new Error(`${quest}: no "${task} task:" whose first line is a "when" - write this branch by hand`);
-  const header = m[2], whenLine = m[3];
-  if (count(text, `${header}${whenLine}\n`) !== 1) throw new Error(`${quest}: "${task} task:" and its trigger are not on lines of their own once - write this branch by hand`);
+  const header = m[2],
+    whenLine = m[3];
+  if (count(text, `${header}${whenLine}\n`) !== 1)
+    throw new Error(
+      `${quest}: "${task} task:" and its trigger are not on lines of their own once - write this branch by hand`,
+    );
   const cond = whenLine.replace(/^\s*when\s+/, '').trimEnd();
   // the task's body after its trigger, up to the next task header or blank line
   const start = m.index + m[0].length;
   const rest = text.slice(start);
   const stop = rest.search(/\n\s*\n|\n(?=_[A-Za-z0-9.]+_ task:)|\n(?=variable )|\n(?=until )/);
-  const body = (stop < 0 ? rest : rest.slice(0, stop)).split('\n').map((l) => l.trim()).filter(Boolean);
-  if (body.some((l) => /^(when|clicked|killed|toting|pc at|injured|daily)\b/i.test(l))) throw new Error(`${quest}: ${task} has more than one trigger - write this branch by hand`);
+  const body = (stop < 0 ? rest : rest.slice(0, stop))
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+  if (body.some((l) => /^(when|clicked|killed|toting|pc at|injured|daily)\b/i.test(l)))
+    throw new Error(`${quest}: ${task} has more than one trigger - write this branch by hand`);
   const ending = body.filter((l) => !/^give pc\b/i.test(l) && !/^--/.test(l));
   const gives = body.filter((l) => /^give pc\b/i.test(l));
   if (!gives.length) throw new Error(`${quest}: ${task} gives nothing - no hand-in to branch`);
@@ -117,13 +144,30 @@ export function handinPatches(quest, task, { ask, keep, alt }, { readers = 'refu
   const paid = gives.every((l) => /^give pc nothing\b/i.test(l)) ? 'give pc nothing' : 'ql paid';
   // AUDIT QUESTLINES BRANCH-4: every other task that reads the reward task - the second answer must not lose it
   const sym = new RegExp(`(^|[^A-Za-z0-9_.])${esc(task)}($|[^A-Za-z0-9_.])`);
-  const found = taskBlocks(text).filter((t) => t.name !== task && t.lines.some((l) => /^when\b/i.test(l) && sym.test(l)));
+  const found = taskBlocks(text).filter(
+    (t) => t.name !== task && t.lines.some((l) => /^when\b/i.test(l) && sym.test(l)),
+  );
   const copies = [];
-  if (found.length && readers !== 'copy') throw new Error(`${quest}: ${task} is read by ${found.map((t) => `${t.name} ("${t.lines.find((l) => sym.test(l))}")`).join(', ')} - the second answer would lose it; --readers copy, or write this branch by hand`);
+  if (found.length && readers !== 'copy')
+    throw new Error(
+      `${quest}: ${task} is read by ${found.map((t) => `${t.name} ("${t.lines.find((l) => sym.test(l))}")`).join(', ')} - the second answer would lose it; --readers copy, or write this branch by hand`,
+    );
   for (const r of found) {
     const when = r.lines.find((l) => /^when\b/i.test(l) && sym.test(l));
-    if (r.lines.filter((l) => /^when\b/i.test(l)).length !== 1 || /\bor\b/i.test(when) || new RegExp(`\\bnot\\s+${esc(task)}`).test(when)) throw new Error(`${quest}: ${r.name} reads ${task} as "${when}" - not a copy the kit can make; write this branch by hand`);
-    copies.push('', `_qlalt${r.name.replace(/[_.]/g, '')}_ task:`, `\t${when.replace(sym, '$1_qlalt_$2')}`, ...r.lines.filter((l) => l !== when && !/^give pc\b/i.test(l) && !/^--/.test(l)).map((l) => `\t${l}`));
+    if (
+      r.lines.filter((l) => /^when\b/i.test(l)).length !== 1 ||
+      /\bor\b/i.test(when) ||
+      new RegExp(`\\bnot\\s+${esc(task)}`).test(when)
+    )
+      throw new Error(
+        `${quest}: ${r.name} reads ${task} as "${when}" - not a copy the kit can make; write this branch by hand`,
+      );
+    copies.push(
+      '',
+      `_qlalt${r.name.replace(/[_.]/g, '')}_ task:`,
+      `\t${when.replace(sym, '$1_qlalt_$2')}`,
+      ...r.lines.filter((l) => l !== when && !/^give pc\b/i.test(l) && !/^--/.test(l)).map((l) => `\t${l}`),
+    );
   }
   const [q, a, b] = [QL_MESSAGE_BASE, QL_MESSAGE_BASE + 1, QL_MESSAGE_BASE + 2];
   // 1. the reward task waits for the first answer
@@ -135,11 +179,22 @@ export function handinPatches(quest, task, { ask, keep, alt }, { readers = 'refu
   // 3. the tasks, at the end - anchored on the script's last two lines
   const trimmed = text.replace(/\s+$/, '');
   const tailLines = trimmed.split('\n').slice(-2).join('\n');
-  if (count(text, tailLines) !== 1) throw new Error(`${quest}: its last two lines are not unique - write this branch by hand`);
+  if (count(text, tailLines) !== 1)
+    throw new Error(`${quest}: its last two lines are not unique - write this branch by hand`);
   const tasks = [
-    '', '', '_qlask_ task:', `\twhen ${cond}`, `\task ${q} choices ${a} _qlkeep_ ${b} _qlalt_`,
-    '', 'variable _qlkeep_', 'variable _qlalt_',
-    '', '_qlaltpath_ task:', '\twhen _qlalt_', `\t${paid}`, ...ending.map((l) => `\t${l}`),
+    '',
+    '',
+    '_qlask_ task:',
+    `\twhen ${cond}`,
+    `\task ${q} choices ${a} _qlkeep_ ${b} _qlalt_`,
+    '',
+    'variable _qlkeep_',
+    'variable _qlalt_',
+    '',
+    '_qlaltpath_ task:',
+    '\twhen _qlalt_',
+    `\t${paid}`,
+    ...ending.map((l) => `\t${l}`),
     ...copies,
   ].join('\n');
   const p3 = { old: tailLines, new: `${tailLines}${tasks}`, count: 1 };
@@ -158,17 +213,34 @@ export function writePatches(family, quest, patches) {
 
 if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
-  const opt = (k) => { const i = args.indexOf(`--${k}`); return i >= 0 ? args[i + 1] : undefined; };
+  const opt = (k) => {
+    const i = args.indexOf(`--${k}`);
+    return i >= 0 ? args[i + 1] : undefined;
+  };
   if (args[0] !== 'handin' || !args[1] || !args[2]) {
-    console.error('usage: node tools/qlPatchKit.mjs handin <QUEST> <_rewardTask_> --ask "..." --keep "..." --alt "..." [--readers copy] [--replace] [--family <Name>] [--write]');
+    console.error(
+      'usage: node tools/qlPatchKit.mjs handin <QUEST> <_rewardTask_> --ask "..." --keep "..." --alt "..." [--readers copy] [--replace] [--family <Name>] [--write]',
+    );
     process.exit(1);
   }
-  const patches = handinPatches(args[1], args[2], { ask: opt('ask'), keep: opt('keep'), alt: opt('alt') }, { readers: opt('readers') === 'copy' ? 'copy' : 'refuse', replace: args.includes('--replace') });
+  const patches = handinPatches(
+    args[1],
+    args[2],
+    { ask: opt('ask'), keep: opt('keep'), alt: opt('alt') },
+    { readers: opt('readers') === 'copy' ? 'copy' : 'refuse', replace: args.includes('--replace') },
+  );
   if (args.includes('--write')) {
     const fam = opt('family');
-    if (!fam) { console.error('--write needs --family'); process.exit(1); }
+    if (!fam) {
+      console.error('--write needs --family');
+      process.exit(1);
+    }
     console.log(`written: ${writePatches(fam, args[1], patches)}`);
   } else console.log(JSON.stringify({ [args[1]]: patches }, null, 2));
-  console.log(`sheet: branches [{ "id": "payment", "text": <the question>, "choices": [{ "id": "keep", "text": <answer 1>, "sets": "_qlkeep_" }, { "id": "alt", "text": <answer 2>, "sets": "_qlalt_" }] }]`);
-  console.log('       outcomes bound { "task": "_qlkeep_" } and { "task": "_qlalt_" }, each with its own pay or standing, before the failure.');
+  console.log(
+    `sheet: branches [{ "id": "payment", "text": <the question>, "choices": [{ "id": "keep", "text": <answer 1>, "sets": "_qlkeep_" }, { "id": "alt", "text": <answer 2>, "sets": "_qlalt_" }] }]`,
+  );
+  console.log(
+    '       outcomes bound { "task": "_qlkeep_" } and { "task": "_qlalt_" }, each with its own pay or standing, before the failure.',
+  );
 }

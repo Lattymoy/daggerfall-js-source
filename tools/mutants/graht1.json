@@ -2,8 +2,8 @@
   {
     "name": "G-1-normal-not-unit",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "nx /= l; ny /= l; nz /= l;",
-    "new": "nx /= l; ny /= l;",
+    "old": "    nz /= l;\n    const m = sub(s);",
+    "new": "    const m = sub(s);",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "G-2-faces-inward",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "if (dot(cross(sub3(b, a), sub3(c, a)), out) >= 0) quad(s, a, b, c, d, ua, ub, uc, ud);",
-    "new": "if (dot(cross(sub3(b, a), sub3(c, a)), out) < 0) quad(s, a, b, c, d, ua, ub, uc, ud);",
+    "old": "    if (dot(cross(sub3(b, a), sub3(c, a)), out) >= 0) quad(s, a, b, c, d, ua, ub, uc, ud);",
+    "new": "    if (dot(cross(sub3(b, a), sub3(c, a)), out) < 0) quad(s, a, b, c, d, ua, ub, uc, ud);",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "G-3-masses-inward",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "return dot(cr, A) >= 0 ? [a, b, c] : [a, c, b];",
-    "new": "return dot(cr, A) >= 0 ? [a, c, b] : [a, b, c];",
+    "old": "    return dot(cr, A) >= 0 ? [a, b, c] : [a, c, b];",
+    "new": "    return dot(cr, A) >= 0 ? [a, c, b] : [a, b, c];",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "G-4-no-flare",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "+ t.flare * Math.exp(-yy / t.flareH);",
-    "new": "+ t.flare * Math.exp(-yy / t.flareH) * 0;",
+    "old": "  return t.rCrown + (t.r0 - t.rCrown) * Math.pow(1 - yy / t.crownFrom, 1.4) + t.flare * Math.exp(-yy / t.flareH);",
+    "new": "  return t.rCrown + (t.r0 - t.rCrown) * Math.pow(1 - yy / t.crownFrom, 1.4) + t.flare * Math.exp(-yy / t.flareH) * 0;",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "G-5-fin-profile",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "const out = r0 + (f.reach - r0) * Math.pow(1 - u, 1.7);",
-    "new": "const out = r0 + (f.reach - r0) * Math.pow(1 - u, 1.2);",
+    "old": "  const out = r0 + (f.reach - r0) * Math.pow(1 - u, 1.7);",
+    "new": "  const out = r0 + (f.reach - r0) * Math.pow(1 - u, 1.2);",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "G-6-top-flattened",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "const y = d[1] < 0 ? d[1] * GRAHT_SHAPE.blob.under : d[1];",
-    "new": "const y = d[1] > 0 ? d[1] * GRAHT_SHAPE.blob.under : d[1];",
+    "old": "  const y = d[1] < 0 ? d[1] * GRAHT_SHAPE.blob.under : d[1];",
+    "new": "  const y = d[1] > 0 ? d[1] * GRAHT_SHAPE.blob.under : d[1];",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "G-7-far-forks",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "if (D.forks) for (const f of L.forks)",
-    "new": "if (true) for (const f of L.forks)",
+    "old": "    if (D.forks)\n      for (const f of L.forks) tube(m, BARK, f.path, f.r0, f.r1, D.limbSides, Math.max(1, D.limbSegments >> 1));",
+    "new": "    if (true) for (const f of L.forks) tube(m, BARK, f.path, f.r0, f.r1, D.limbSides, Math.max(1, D.limbSegments >> 1));",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "G-8-no-cards",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "if (D.cards) {",
-    "new": "if (false) {",
+    "old": "    if (D.cards) {",
+    "new": "    if (false) {",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "G-9-far-unmerged",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "const blobs = D.merged ? mergedBlobs(sk) : sk.blobs;",
-    "new": "const blobs = sk.blobs;",
+    "old": "  const blobs = D.merged ? mergedBlobs(sk) : sk.blobs;",
+    "new": "  const blobs = sk.blobs;",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "G-10-trunk-sides",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "trunkSides: 16, limbSides: 6",
-    "new": "trunkSides: 15, limbSides: 6",
+    "old": "    trunkSides: 16,",
+    "new": "    trunkSides: 15,",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "G-11-jitter",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "under: 0.62, jitter: 0.14 }",
-    "new": "under: 0.62, jitter: 0.4 }",
+    "old": "  blob: Object.freeze({ r: Object.freeze([16, 24]), squash: Object.freeze([0.42, 0.52]), under: 0.62, jitter: 0.14 }),",
+    "new": "  blob: Object.freeze({ r: Object.freeze([16, 24]), squash: Object.freeze([0.42, 0.52]), under: 0.62, jitter: 0.4 }),",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "G-12-fewer-limbs",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "count: Object.freeze([7, 8]), from",
-    "new": "count: Object.freeze([5, 6]), from",
+    "old": "    count: Object.freeze([7, 8]),",
+    "new": "    count: Object.freeze([5, 6]),",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "G-13-small-masses",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "r: Object.freeze([16, 24])",
-    "new": "r: Object.freeze([10, 15])",
+    "old": "  blob: Object.freeze({ r: Object.freeze([16, 24]), squash: Object.freeze([0.42, 0.52]), under: 0.62, jitter: 0.14 }),",
+    "new": "  blob: Object.freeze({ r: Object.freeze([10, 15]), squash: Object.freeze([0.42, 0.52]), under: 0.62, jitter: 0.14 }),",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "G-40-canopy-share-whole",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "share: (mx, mz) => canopyShare(jungleDepthAt(px, py, jg.canopy, mx, mz)),",
-    "new": "share: () => 1,",
+    "old": "        share: (mx, mz) => canopyShare(jungleDepthAt(px, py, jg.canopy, mx, mz)),",
+    "new": "        share: () => 1,",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "G-41-canopy-on-foot",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "|| g2Of[ti] > TAN_MAX_SQ || onFoot?.[ti]) continue;",
-    "new": "|| g2Of[ti] > TAN_MAX_SQ) continue;",
+    "old": "      if (!groundOf[ti] || g2Of[ti] > TAN_MAX_SQ || onFoot?.[ti]) continue; // LAY-2: no canopy tree up a slope past 34; GRAHT1: nor on a graht-oak's foot",
+    "new": "      if (!groundOf[ti] || g2Of[ti] > TAN_MAX_SQ) continue; // LAY-2: no canopy tree up a slope past 34; GRAHT1: nor on a graht-oak's foot",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "G-42-young-on-foot",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "if (!ground || onFoot?.[ti]) continue;",
-    "new": "if (!ground) continue;",
+    "old": "      if (!ground || onFoot?.[ti]) continue; // GRAHT1: no young tree or palm on a graht-oak's foot",
+    "new": "      if (!ground) continue; // GRAHT1: no young tree or palm on a graht-oak's foot",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "G-43-floor-in-trunk",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "if (!ground || taken[ti] || onFoot?.[ti] === 2) continue;",
-    "new": "if (!ground || taken[ti]) continue;",
+    "old": "      if (!ground || taken[ti] || onFoot?.[ti] === 2) continue; // GRAHT1: no plant of the floor out of a graht-oak's trunk",
+    "new": "      if (!ground || taken[ti]) continue; // GRAHT1: no plant of the floor out of a graht-oak's trunk",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "G-44-pairs-on-foot",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "&& !onFoot[ty * tDim + tx])(pairTile(",
-    "new": "&& true)(pairTile(",
+    "old": "                ok(tx, ty) && !onFoot[ty * tDim + tx]",
+    "new": "                ok(tx, ty) && true",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "G-45-canopy-unasked",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "const graht = jg.canopy ? grahtSites({",
-    "new": "const graht = false ? grahtSites({",
+    "old": "  const graht = jg.canopy",
+    "new": "  const graht = false",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "G-101-leaves-unheld",
     "file": "src/world/jungle/jungleCanopy.js",
-    "old": "  out[3] = clamp01(w);\n  return out;\n}\n\n/** The sky the water",
-    "new": "  out[3] = w;\n  return out;\n}\n\n/** The sky the water",
+    "old": "  out[3] = clamp01(w);",
+    "new": "  out[3] = w;",
     "tests": [
       "test/world/valenwood_canopy.test.js"
     ]
@@ -614,8 +614,8 @@
   {
     "name": "G-102-the-edges-refused",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "(jg.canopy && GRAHT_LAND_RECORDS.includes(record))",
-    "new": "(jg.canopy && false)",
+    "old": "      if (!(ground || (jg.canopy && GRAHT_LAND_RECORDS.includes(record))) || paths?.[ti]) continue; // GRAHT1: a buttress lies on any land tile",
+    "new": "      if (!(ground || (jg.canopy && false)) || paths?.[ti]) continue; // GRAHT1: a buttress lies on any land tile",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -632,8 +632,8 @@
   {
     "name": "G-104-the-foot-on-the-flats-ground",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "    growsOn: (ti) => footOf[ti] > 0,",
-    "new": "    growsOn: (ti) => groundOf[ti] > 0,",
+    "old": "        growsOn: (ti) => footOf[ti] > 0,",
+    "new": "        growsOn: (ti) => groundOf[ti] > 0,",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -641,8 +641,8 @@
   {
     "name": "G-105-an-edge-tile-s-slope-unread",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "      g2Of[ti] = g2;\n      if (!ground) continue;",
-    "new": "      if (!ground) continue;\n      g2Of[ti] = g2;",
+    "old": "      g2Of[ti] = g2;\n      if (!ground) continue; // ...where the jungle's own flats grow on DFU's dirt, grass and stone alone",
+    "new": "      if (!ground) continue;\n      g2Of[ti] = g2; // ...where the jungle's own flats grow on DFU's dirt, grass and stone alone",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]

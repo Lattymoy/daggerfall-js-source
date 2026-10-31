@@ -48,7 +48,7 @@ import { preloadSpellIcons } from '../spell/spellIcons.js';   // U46: the sheet 
 import { drawEscortFaces, escortFacesBottom } from './hudEscortFaces.js';   // FE1: the quest escorts' portrait column
 import { drawText, measureText } from '../text.js';   // AUDIT 28 W2: the arrow counter's label
 import { HudFlickerController } from './hudFlicker.js';   // AUDIT 28 W2d: the near-death warning
-import { lastHealthLost, lastHealthLostPercent, hudHealth } from './hudVitals.js';   // BLOOD2e: HealthLostPercent, as CameraRecoiler reads it; DUEL-BAR: the health the HUD reads
+import { lastHealthLost, lastHealthLostPercent, hudHealth } from './hudVitals.js';   // BLOOD2e: HealthLostPercent, as CameraRecoiler reads it
 import { getBool } from '../../systems/settings/settings.js';   // AUDIT 28 W2: EnableArrowCounter, BowLeftHandWithSwitching
 import { getItem, isSummoned, ARROW_TEMPLATE } from '../../systems/inventory.js';   // AUDIT 28 W2: GetItem(Arrow, priorityToConjured)
 import { EQUIP_SLOTS } from '../../systems/equip.js';   // AUDIT 28 W2: the bow hand
@@ -540,7 +540,6 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
     serpent = null, sd = null, star = null,
     grip = null,   // CLIMB2: the enhanced climb's grip, { amount, low } or null
     steed = null,   // STEED1: the ridden horse's breath, the same shape (systems/upkeep/upkeepRuntime.js bar) - drawn in the grip's place, a rider holding no wall
-    healthBar = null,   // DUEL-BAR: a duel's referee's vitality, { health, maxHealth }, while one is live (net/duel/duelBar.js duelVitality) - the health both skins read (hudVitals.js hudHealth)
     readied = null, weapon = null, weaponSheathed = true, quickUse = null, quickSwap = null, quickOffHand = null, quickSpell = null, quickSwitchHand = null } = {}) {   // PX30b: for the enhanced HUD's hand plaques; AUDIT 28 W2: the arrow counter's gate; AUDIT 64 F35: the host's previousWindow answer; QS3: the diamond's sheathe state and its two phone taps; QS6: the caption's spell chip press
   // RETRO-UI (FIELD BUGS 2026-10-03): under retro mode's pillarbox the HUD lays out in DFU's CustomScreenRect - the
   // pillarbox's canvas, drawn at its place (ui/uiScreen.js) - not over the black bars. Once: a UI canvas answers itself.
@@ -568,11 +567,10 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // VB1: the one vitals snapshot both rigs read - the same fallbacks
   // the plain bars carried since S15. `cursorActive` stands in for
   // DFU's IsGamePaused at the detector (see hudVitals.js's header).
-  // DUEL-BAR: the health is hudHealth's - a duel's referee's vitality while the host hands one, else the save's - and
-  // `from` says which, so the detector re-primes on the turn rather than reading it as a blow or a heal.
-  const health = hudHealth(vitals, healthBar);
+  // The health both skins read (hudHealth).
+  const health = hudHealth(vitals);
   const cur = {
-    health: health.health, maxHealth: health.maxHealth || 1, from: health.from,
+    health: health.health, maxHealth: health.maxHealth || 1,
     fatigue: vitals.fatigue ?? 0, maxFatigue: maxFatigue(vitals) || 1,   // S15: the (Str+End) x 64 ceiling
     magicka: vitals.magicka ?? 0, maxMagicka: vitals.maxMagicka || 1,
   };
@@ -757,7 +755,7 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
       escortBottom: escortBottomPx(canvas),   // UI3: how far down the escort faces reach (CSS px) - the status widget keeps below them
       grip,   // CLIMB2
       steed,   // STEED1
-      health,   // DUEL-BAR: the health its bar reads - the classic's own pair (hudHealth)
+      health,   // the health its bar reads - the classic's own pair (hudHealth)
     });
     // FE1 + AUDIT 39 F133: the escort column is not the classic skin's
     // - DaggerfallHUD adds it unconditionally (:183-185) and even the

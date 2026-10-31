@@ -11,8 +11,8 @@
   {
     "name": "DOORKEPT-door-a-piece",
     "file": "src/scenes/decor/decorBase.js",
-    "old": "DECOR_BASE_KEY_RE.test(k) && !decorIsDoorKey(k)))]",
-    "new": "DECOR_BASE_KEY_RE.test(k)))]",
+    "old": "      const named = [\n        ...new Set(keys.filter((k) => typeof k === 'string' && DECOR_BASE_KEY_RE.test(k) && !decorIsDoorKey(k))),\n      ].slice(0, DECOR_HIDDEN_CAP);",
+    "new": "      const named = [...new Set(keys.filter((k) => typeof k === 'string' && DECOR_BASE_KEY_RE.test(k)))].slice(\n        0,\n        DECOR_HIDDEN_CAP,\n      );",
     "tests": [
       "test/server/basehide.test.js"
     ]

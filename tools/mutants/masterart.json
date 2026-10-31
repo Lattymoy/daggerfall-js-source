@@ -21,8 +21,8 @@
   {
     "name": "MASTER-ART-bows-dropped",
     "file": "src/net/masterLaw.js",
-    "old": "export const MASTER_KINDS = Object.freeze(['weapon', 'staff', 'bow', 'plate',",
-    "new": "export const MASTER_KINDS = Object.freeze(['weapon', 'staff', 'plate',",
+    "old": "  'bow',\n  'plate',",
+    "new": "  'plate',",
     "tests": [
       "test/net/masterart_law.test.js"
     ]
@@ -123,8 +123,8 @@
   {
     "name": "MASTER-ART-record-without-lines",
     "file": "src/net/productRecord.js",
-    "old": "...(l == null ? {} : { l }) };",
-    "new": "};",
+    "old": "    ...(l == null ? {} : { l }),\n  }; // PROF9: a dish's hand; CRAFT-PROCS: the mint's version; MASTER-ART: a Master's lines",
+    "new": "  }; // PROF9: a dish's hand; CRAFT-PROCS: the mint's version; MASTER-ART: a Master's lines",
     "tests": [
       "test/net/masterart_law.test.js",
       "test/net/masterart_service.test.js"
@@ -133,8 +133,8 @@
   {
     "name": "MASTER-ART-mint-any-version",
     "file": "src/systems/smithItems.js",
-    "old": "&& version >= MINT_V_MASTER && Array.isArray(lines) && applyMasterWork(item, lines);",
-    "new": "&& version >= MINT_V_LINES && Array.isArray(lines) && applyMasterWork(item, lines);",
+    "old": "      version >= MINT_V_MASTER &&",
+    "new": "      version >= MINT_V_LINES &&",
     "tests": [
       "test/net/masterart_law.test.js"
     ]
@@ -142,8 +142,8 @@
   {
     "name": "MASTER-ART-rare-roll-over-the-lines",
     "file": "src/systems/smithItems.js",
-    "old": "if (!master && eff.rarity && rarityEligible(item)) {",
-    "new": "if (eff.rarity && rarityEligible(item)) {",
+    "old": "    if (!master && eff.rarity && rarityEligible(item)) {",
+    "new": "    if (eff.rarity && rarityEligible(item)) {",
     "equivalent": true,
     "why": "rarityEligible refuses a piece that already wears a tier (LR4: one roll per item), so the Master's lines laid first keep the Rare roll off by that law too; the guard says it where it acts",
     "tests": [
@@ -237,8 +237,8 @@
   {
     "name": "MASTER-ART-service-catalysts-unspent",
     "file": "server-account/src/masterWork.js",
-    "old": "...spends.filter((s) => s.cat > 0).flatMap((s) => spendStatements(",
-    "new": "...spends.filter((s) => s.cat > 99).flatMap((s) => spendStatements(",
+    "old": "      .filter((s) => s.cat > 0)",
+    "new": "      .filter((s) => s.cat > 99)",
     "tests": [
       "test/net/masterart_service.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "MASTER-ART-service-record-without-lines",
     "file": "server-account/src/masterWork.js",
-    "old": "u: dye ?? null, v: MINT_V_MASTER, l: signed }",
-    "new": "u: dye ?? null, v: MINT_V_MASTER }",
+    "old": "      l: signed,\n    },",
+    "new": "    },",
     "tests": [
       "test/net/masterart_service.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "MASTER-ART-box-ready-two-lines",
     "file": "src/ui/professions/masterBox.js",
-    "old": "&& masterChoiceRefusal(r, picks) === null && needs.every",
-    "new": "&& masterChoiceRefusal(r, picks) !== 'procs' && needs.every",
+    "old": "    masterChoiceRefusal(r, picks) === null &&",
+    "new": "    masterChoiceRefusal(r, picks) !== 'procs' &&",
     "tests": [
       "test/ui/professions/masterart_ui.test.js"
     ]
@@ -363,7 +363,7 @@
   },
   {
     "name": "MASTER-ART-door-asks-dropped",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "seat, ...more }, profMintCraft);",
     "new": "seat }, profMintCraft);",
     "tests": [
@@ -401,8 +401,8 @@
   {
     "name": "AUDIT-HB1-record-signs-the-keys",
     "file": "server-account/src/masterWork.js",
-    "old": "u: dye ?? null, v: MINT_V_MASTER, l: signed }",
-    "new": "u: dye ?? null, v: MINT_V_MASTER, l: lines }",
+    "old": "      l: signed,",
+    "new": "      l: lines,",
     "tests": [
       "test/net/masterart_service.test.js"
     ]
@@ -437,8 +437,8 @@
   {
     "name": "AUDIT-HB1-record-value-any",
     "file": "src/net/masterLaw.js",
-    "old": "!LINE_WORD_RE.test(x[0]) || !Number.isSafeInteger(x[1])) return false;",
-    "new": "!LINE_WORD_RE.test(x[0]) || x[1] === undefined) return false;",
+    "old": "      !Number.isSafeInteger(x[1])",
+    "new": "      x[1] === undefined",
     "tests": [
       "test/net/masterart_law.test.js"
     ]
@@ -482,8 +482,8 @@
   {
     "name": "AUDIT-HB4-box-goods-unread",
     "file": "src/ui/professions/masterBox.js",
-    "old": "    && (goods.every((g) => g.have >= g.n) || goodsFromRaw(r, book, goods));",
-    "new": "    && (true || goodsFromRaw(r, book, goods));",
+    "old": "    (goods.every((g) => g.have >= g.n) || goodsFromRaw(r, book, goods));",
+    "new": "    (true || goodsFromRaw(r, book, goods));",
     "tests": [
       "test/ui/professions/masterart_ui.test.js"
     ]
@@ -491,8 +491,8 @@
   {
     "name": "AUDIT-HB4-box-stand-in-goods",
     "file": "src/ui/professions/masterBox.js",
-    "old": "return recipeInputs(r).map((/** @type {any} */ i) => ({ key: i.key, n: i.n,",
-    "new": "return recipeInputs(r, { heartwood: true }).map((/** @type {any} */ i) => ({ key: i.key, n: i.n,",
+    "old": "  return recipeInputs(r).map((/** @type {any} */ i) => ({",
+    "new": "  return recipeInputs(r, { heartwood: true }).map((/** @type {any} */ i) => ({",
     "tests": [
       "test/ui/professions/masterart_ui.test.js"
     ]
@@ -536,8 +536,8 @@
   {
     "name": "AUDIT-HB6-box-catalyst-asks-the-good",
     "file": "src/ui/professions/masterBox.js",
-    "old": "need: c.n, have: Math.max(0, held(c.key) | 0), pursuit: c.pursuit }));",
-    "new": "need: c.n + (c.key === 'gem:pearl' ? 1 : 0), have: Math.max(0, held(c.key) | 0), pursuit: c.pursuit }));",
+    "old": "    need: c.n,",
+    "new": "    need: c.n + (c.key === 'gem:pearl' ? 1 : 0),",
     "tests": [
       "test/ui/professions/masterart_ui.test.js"
     ]

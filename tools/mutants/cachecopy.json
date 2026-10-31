@@ -122,8 +122,8 @@
   {
     "name": "CACHE-COPY-the-check-control-unread",
     "file": "src/tools/depthCopyCheck.js",
-    "old": "  if (r.control.wrong !== r.texels || r.control.otherLayer !== r.texels) return",
-    "new": "  if (false) return",
+    "old": "  if (r.control.wrong !== r.texels || r.control.otherLayer !== r.texels)",
+    "new": "  if (false)",
     "tests": [
       "test/render/cachecopy.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "CACHE-COPY-the-check-blit-before-the-draw",
     "file": "src/tools/depthCopyCheck.js",
-    "old": "  if (r.draw.wrong) return",
-    "new": "  if (r.draw.wrong && !r.blit.wrong) return",
+    "old": "  if (r.draw.wrong)",
+    "new": "  if (r.draw.wrong && !r.blit.wrong)",
     "tests": [
       "test/render/cachecopy.test.js"
     ]

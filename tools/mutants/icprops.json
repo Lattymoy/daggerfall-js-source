@@ -2,8 +2,8 @@
   {
     "name": "IC-PROPS-plan-streets-unread",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "if (k === K.main || k === K.pave || k === K.side) { shut[i] = 1; street[i] = 1; }",
-    "new": "if (false) { shut[i] = 1; street[i] = 1; }",
+    "old": "      if (k === K.main || k === K.pave || k === K.side) {",
+    "new": "      if (false) {",
     "tests": [
       "test/world/icprops_yards.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "IC-PROPS-front-onto-nothing-as-good",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "const score = d + (street(s[0], s[1], s[2], s[3]) > 0 ? 0 : YARD_FRONT_COST);",
-    "new": "const score = d;",
+    "old": "        const score = d + (street(s[0], s[1], s[2], s[3]) > 0 ? 0 : YARD_FRONT_COST);",
+    "new": "        const score = d;",
     "tests": [
       "test/world/icprops_yards.test.js",
       "test/world/merchantyards1.test.js"
@@ -21,8 +21,8 @@
   {
     "name": "IC-PROPS-stable-nearest-the-middle",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "byExit = kind === 'stable', garden = false } = {}) {",
-    "new": "byExit = false, garden = false } = {}) {",
+    "old": "  { edge = kind === 'stable', square = kind !== 'stable', byExit = kind === 'stable', garden = false } = {},",
+    "new": "  { edge = kind === 'stable', square = kind !== 'stable', byExit = false, garden = false } = {},",
     "tests": [
       "test/world/icprops_yards.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "IC-PROPS-garden-unread",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "(!garden && gardens?.[y * W + x])",
-    "new": "false",
+    "old": "        shut[y * W + x] ||\n        (!edge && land?.[y * W + x]) ||\n        (!square && paving?.[y * W + x]) ||\n        (!garden && gardens?.[y * W + x])\n          ? 1\n          : 0,",
+    "new": "        shut[y * W + x] || (!edge && land?.[y * W + x]) || (!square && paving?.[y * W + x]) || false ? 1 : 0,",
     "tests": [
       "test/world/icprops_yards.test.js"
     ]
@@ -39,7 +39,7 @@
   {
     "name": "IC-PROPS-no-last-step",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "export const YARD_LAW_STEPS = Object.freeze([{}, { edge: true, byExit: true }, { edge: true, garden: true, square: true }]);",
+    "old": "export const YARD_LAW_STEPS = Object.freeze([\n  {},\n  { edge: true, byExit: true },\n  { edge: true, garden: true, square: true },\n]);",
     "new": "export const YARD_LAW_STEPS = Object.freeze([{}, { edge: true, byExit: true }]);",
     "tests": [
       "test/world/icprops_yards.test.js"
@@ -48,8 +48,8 @@
   {
     "name": "IC-PROPS-edge-land-unbounded",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "    for (let i = 0; i < n; i++) if (land[i] && near[i] > 3 * EDGE_LAND_CELLS) land[i] = 0;\n",
-    "new": "",
+    "old": "    for (let i = 0; i < n; i++) if (land[i] && near[i] > 3 * EDGE_LAND_CELLS) land[i] = 0;\n  } else land.fill(0);",
+    "new": "  } else land.fill(0);",
     "tests": [
       "test/world/icprops_yards.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "IC-PROPS-law-on-a-capitals-slice",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "      const s = g.fixed ? fixedSite(g, kind) : yield* lawSiteSteps(g, kind);   // IC-PROPS: a capital that names its own stands those",
-    "new": "      const s = yield* lawSiteSteps(g, kind);   // IC-PROPS: a capital that names its own stands those",
+    "old": "      const s = g.fixed ? fixedSite(g, kind) : yield* lawSiteSteps(g, kind); // IC-PROPS: a capital that names its own stands those",
+    "new": "      const s = yield* lawSiteSteps(g, kind); // IC-PROPS: a capital that names its own stands those",
     "tests": [
       "test/world/icprops_yards.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "IC-PROPS-fixed-over-a-closed-cell",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": " || g.blocked[gy * g.width + gx]) return null;",
-    "new": ") return null;",
+    "old": "    for (let gx = s.gx; gx < s.gx + s.nx; gx++)\n      if (gx < 0 || gy < 0 || gx >= g.width || gy >= g.height || g.blocked[gy * g.width + gx]) return null;",
+    "new": "    for (let gx = s.gx; gx < s.gx + s.nx; gx++) if (gx < 0 || gy < 0 || gx >= g.width || gy >= g.height) return null;",
     "tests": [
       "test/world/icprops_yards.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "IC-PROPS-city-names-none",
     "file": "src/world/merchantYards/townYards.js",
-    "old": "fixed: cap?.family ? imperialSliceYards(dfLocation.capital.s) : null };",
-    "new": "fixed: null };",
+    "old": "  return {\n    plan: townFabricOf(dfLocation)?.plan ?? null,\n    fixed: cap?.family ? imperialSliceYards(dfLocation.capital.s) : null,\n  };",
+    "new": "  return { plan: townFabricOf(dfLocation)?.plan ?? null, fixed: null };",
     "tests": [
       "test/world/icprops_yards.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "IC-PROPS-gate-way-unread",
     "file": "src/world/imperialYards.js",
-    "old": "const onWay = along(x, z) > -IMPERIAL_YARD_LANE && across(x, z) < IMPERIAL_YARD_LANE;",
-    "new": "const onWay = false;",
+    "old": "      const onWay = along(x, z) > -IMPERIAL_YARD_LANE && across(x, z) < IMPERIAL_YARD_LANE;",
+    "new": "      const onWay = false;",
     "tests": [
       "test/world/icprops_yards.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "IC-PROPS-gate-wall-unread",
     "file": "src/world/imperialYards.js",
-    "old": "const ground = Math.hypot(x, z) >= IMPERIAL_YARD_WALL && imperialLand(x, z)",
-    "new": "const ground = imperialLand(x, z)",
+    "old": "        Math.hypot(x, z) >= IMPERIAL_YARD_WALL &&\n        imperialLand(x, z) &&",
+    "new": "        imperialLand(x, z) &&",
     "tests": [
       "test/world/icprops_yards.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "IC-PROPS-gate-yards-over-one-another",
     "file": "src/world/imperialYards.js",
-    "old": " || sumTaken(i - pad, j - pad, i + nx + pad, j + nz + pad) !== 0) continue;",
-    "new": ") continue;",
+    "old": "        if (\n          sumIn(i, j, i + nx, j + nz) !== 0 ||\n          sumRing(i - pad, j - pad, i + nx + pad, j + nz + pad) !== 0 ||\n          sumTaken(i - pad, j - pad, i + nx + pad, j + nz + pad) !== 0\n        )\n          continue;",
+    "new": "        if (sumIn(i, j, i + nx, j + nz) !== 0 || sumRing(i - pad, j - pad, i + nx + pad, j + nz + pad) !== 0) continue;",
     "tests": [
       "test/world/icprops_yards.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "IC-PROPS-house-type-unread",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "name || (hasVerbs || isHouseType(type) ? localizedText('residence', 'Residence') : '')",
-    "new": "name || (hasVerbs ? localizedText('residence', 'Residence') : '')",
+    "old": "  name || (hasVerbs || isHouseType(type) ? localizedText('residence', 'Residence') : '');",
+    "new": "  name || (hasVerbs ? localizedText('residence', 'Residence') : '');",
     "tests": [
       "test/systems/icprops_doors.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "IC-PROPS-a-trade-cell-back",
     "file": "src/world/imperialCity.js",
-    "old": "  if (r === ar && c === ac) return IMPERIAL_ARENA_CODE;\n  return imperialCode(r, c);\n}",
-    "new": "  if (r === ar && c === ac) return IMPERIAL_ARENA_CODE;\n  return land === 2 && d === 'Market District' && hash32(SALT, c, r, 11) % 7 === 0 ? 'GENR' : imperialCode(r, c);\n}",
+    "old": "  return imperialCode(r, c);",
+    "new": "  return land === 2 && d === 'Market District' && hash32(SALT, c, r, 11) % 7 === 0 ? 'GENR' : imperialCode(r, c);",
     "tests": [
       "test/world/icprops_city.test.js",
       "test/tesa11_imperial.test.js"
@@ -166,8 +166,8 @@
   {
     "name": "IC-PROPS-halls-unread",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "  if (door.street === 'main') for (const [pool, every] of trade?.halls ?? []) if (hash32(SALT, h, 14) % every === 0) return pool;\n",
-    "new": "",
+    "old": "  if (door.street === 'main')\n    for (const [pool, every] of trade?.halls ?? []) if (hash32(SALT, h, 14) % every === 0) return pool;\n  if (trade?.guild && door.street === 'main' && hash32(SALT, h, 3) % FABRIC_GUILD_EVERY === 0) return trade.guild;",
+    "new": "  if (trade?.guild && door.street === 'main' && hash32(SALT, h, 3) % FABRIC_GUILD_EVERY === 0) return trade.guild;",
     "tests": [
       "test/world/icprops_city.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "IC-PROPS-a-temple-by-its-size",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "  if (pool === 'temple') return list[hash32(SALT, p.key, 9) % list.length];\n",
-    "new": "",
+    "old": "  if (pool === 'temple') return list[hash32(SALT, p.key, 9) % list.length];\n  const near = Math.min(...list.map((i) => Math.abs(FABRIC_DONORS[i].size[0] * FABRIC_DONORS[i].size[1] - area)));",
+    "new": "  const near = Math.min(...list.map((i) => Math.abs(FABRIC_DONORS[i].size[0] * FABRIC_DONORS[i].size[1] - area)));",
     "tests": [
       "test/world/icprops_city.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "IC-PROPS-a-temple-of-no-god",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "factionId: GUILD_FACTION[pool] ?? FABRIC_DONORS[donor].faction,   // IC-PROPS",
-    "new": "factionId: GUILD_FACTION[pool] ?? 0,   // IC-PROPS",
+    "old": "        factionId: GUILD_FACTION[pool] ?? FABRIC_DONORS[donor].faction, // IC-PROPS: a temple its god's, the Thieves Guild's house the guild's (its donor's record's)",
+    "new": "        factionId: GUILD_FACTION[pool] ?? 0, // IC-PROPS: a temple its god's, the Thieves Guild's house the guild's (its donor's record's)",
     "tests": [
       "test/world/icprops_city.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "IC-PROPS-university-kept-clear",
     "file": "src/world/imperialFabric.js",
-    "old": " && !(uni && U.in(x, z)) && ",
-    "new": " && ",
+    "old": "        rr >= I.cityWall.r &&\n        !(uni && U.in(x, z)) &&\n        (imperialDistrictAt(x, z) !== 'Waterfront District' || rr > I.waterfront.r1 - C.quay),",
+    "new": "        rr >= I.cityWall.r && (imperialDistrictAt(x, z) !== 'Waterfront District' || rr > I.waterfront.r1 - C.quay),",
     "tests": [
       "test/world/icprops_city.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "IC-PROPS-walks-unread",
     "file": "src/world/imperialFabric.js",
-    "old": "\n      || walks.some((w) => (w.x !== undefined ? Math.abs(x - w.x) : Math.abs(z - /** @type {number} */ (w.z))) < C.uniWalk),",
-    "new": ",",
+    "old": "      Math.hypot(x - tx, z - tz) < U.spireR + C.uniTower ||\n      (Math.abs(x - hx) < hh && Math.abs(z - hz) < hh) ||\n      walks.some(\n        (w) => (w.x !== undefined ? Math.abs(x - w.x) : Math.abs(z - /** @type {number} */ (w.z))) < C.uniWalk,\n      ),",
+    "new": "      Math.hypot(x - tx, z - tz) < U.spireR + C.uniTower || (Math.abs(x - hx) < hh && Math.abs(z - hz) < hh),",
     "tests": [
       "test/world/icprops_city.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "IC-PROPS-a-nameless-building-says-nothing",
     "file": "src/systems/worldTooltips.js",
-    "old": "    : displayName || locationName;",
-    "new": "    : displayName;",
+    "old": "  const to =\n    buildingType === BUILDING_TYPES.Town23\n      ? locationName\n        ? `${locationName} City Walls`\n        : ''\n      : displayName || locationName;",
+    "new": "  const to = buildingType === BUILDING_TYPES.Town23 ? (locationName ? `${locationName} City Walls` : '') : displayName;",
     "tests": [
       "test/systems/icprops_doors.test.js"
     ]

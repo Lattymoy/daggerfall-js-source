@@ -17,7 +17,17 @@ import { newBout, BOUT_LIMIT_MS } from '../../systems/arena/arenaBout.js';
 import { arenaBoutSeed } from './arenaBrain.js';
 
 /** The hall when nothing has been heard. */
-export const HALL_EMPTY = Object.freeze({ status: 'off', queue: 'idle', band: 0, n: 0, offer: null, go: null, live: [], said: null, heardAt: 0 });
+export const HALL_EMPTY = Object.freeze({
+  status: 'off',
+  queue: 'idle',
+  band: 0,
+  n: 0,
+  offer: null,
+  go: null,
+  live: [],
+  said: null,
+  heardAt: 0,
+});
 
 /**
  * ONE HALL WORD folded: `qd` queued (the band, how many wait), `qx` out of the queue (why - `said`), `of` an offer (its
@@ -28,13 +38,32 @@ export const HALL_EMPTY = Object.freeze({ status: 'off', queue: 'idle', band: 0,
 export function foldHall(s, w, now, off = 0) {
   if (!w) return s;
   switch (w.k) {
-    case 'qd': return { ...s, queue: 'queued', band: w.band, n: w.n, offer: null, heardAt: now };
-    case 'qx': return { ...s, queue: 'idle', offer: null, said: w.m, heardAt: now };
+    case 'qd':
+      return { ...s, queue: 'queued', band: w.band, n: w.n, offer: null, heardAt: now };
+    case 'qx':
+      return { ...s, queue: 'idle', offer: null, said: w.m, heardAt: now };
     // ARENA4b: a casual pair's offer and call carry `u` (net/arena/arenaLaw.js validArenaOut) - the bout counts nowhere
-    case 'of': return { ...s, queue: 'offer', offer: { o: w.o, vs: w.vs, until: w.until - off, casual: w.u === 1 }, said: null, heardAt: now };
-    case 'go': return { ...s, queue: 'going', offer: null, go: { o: w.o, side: w.side, vs: w.vs, at: now, casual: w.u === 1 }, said: null, heardAt: now };
-    case 'live': return { ...s, live: w.l, heardAt: now };
-    default: return s;
+    case 'of':
+      return {
+        ...s,
+        queue: 'offer',
+        offer: { o: w.o, vs: w.vs, until: w.until - off, casual: w.u === 1 },
+        said: null,
+        heardAt: now,
+      };
+    case 'go':
+      return {
+        ...s,
+        queue: 'going',
+        offer: null,
+        go: { o: w.o, side: w.side, vs: w.vs, at: now, casual: w.u === 1 },
+        said: null,
+        heardAt: now,
+      };
+    case 'live':
+      return { ...s, live: w.l, heardAt: now };
+    default:
+      return s;
   }
 }
 
@@ -57,27 +86,73 @@ export function mirrorOf(st, now, { prev = null, off = 0, names = () => null } =
   const seed = arenaBoutSeed(st.o);
   const fighters = st.f.map(([id, name, side, hp, max, out, ai, mob, tmp], k) => {
     const who = ai ? names(k - st.f.filter((x) => !x[6]).length, mob) : null;
-    return { id, name: who?.name ?? name, side, maxHealth: max, health: hp, temper: tmp / 100, ai: !!ai, home: who?.home ?? '', epithet: who?.epithet ?? '', out: out || null, mob };
+    return {
+      id,
+      name: who?.name ?? name,
+      side,
+      maxHealth: max,
+      health: hp,
+      temper: tmp / 100,
+      ai: !!ai,
+      home: who?.home ?? '',
+      epithet: who?.epithet ?? '',
+      out: out || null,
+      mob,
+    };
   });
-  const b = prev?.b && prev.b.id === st.o ? prev.b : newBout({ id: st.o, kind: st.kind === 'pvp' ? 'pvp' : st.kind === 'ex' ? 'exhibition' : 'ladder', fighters, ring: { centre: [0, 0], radius: 14 }, now, limitMs: st.lim || BOUT_LIMIT_MS, tier: st.tier ?? 0 });   // ARENA4b: the hour's exhibition is the law's own kind
+  const b =
+    prev?.b && prev.b.id === st.o
+      ? prev.b
+      : newBout({
+          id: st.o,
+          kind: st.kind === 'pvp' ? 'pvp' : st.kind === 'ex' ? 'exhibition' : 'ladder',
+          fighters,
+          ring: { centre: [0, 0], radius: 14 },
+          now,
+          limitMs: st.lim || BOUT_LIMIT_MS,
+          tier: st.tier ?? 0,
+        }); // ARENA4b: the hour's exhibition is the law's own kind
   b.events = [];
   for (const f of fighters) {
     const m = b.fighters.find((x) => x.id === f.id);
     if (!m) continue;
-    m.name = f.name; m.home = f.home; m.epithet = f.epithet; m.maxHealth = f.maxHealth; m.health = f.health; m.out = f.out; m.ai = f.ai;
+    m.name = f.name;
+    m.home = f.home;
+    m.epithet = f.epithet;
+    m.maxHealth = f.maxHealth;
+    m.health = f.health;
+    m.out = f.out;
+    m.ai = f.ai;
   }
   const ph = st.ph === 'wait' ? 'call' : st.ph === 'void' ? 'done' : st.ph;
-  if (b.phase !== ph) { b.phase = ph; b.phaseAt = st.pa - off; }
+  if (b.phase !== ph) {
+    b.phase = ph;
+    b.phaseAt = st.pa - off;
+  }
   if (st.fa != null) b.fightAt = st.fa - off;
   if (st.res && !b.result) b.result = resultOf(b, st.res.side, st.res.how);
   return {
-    b, me: st.me, kind: st.kind, tier: st.tier ?? null, bout: st.bout ?? null, seed, waiting: st.ph === 'wait', void: st.ph === 'void',
-    ai: st.f.filter((x) => x[6]).map((x, i) => ({ id: x[0], i, mobile: x[7] })), spectators: st.sp,
+    b,
+    me: st.me,
+    kind: st.kind,
+    tier: st.tier ?? null,
+    bout: st.bout ?? null,
+    seed,
+    waiting: st.ph === 'wait',
+    void: st.ph === 'void',
+    ai: st.f.filter((x) => x[6]).map((x, i) => ({ id: x[0], i, mobile: x[7] })),
+    spectators: st.sp,
   };
 }
 /** A result in the law's shape. */
 function resultOf(b, side, how) {
-  return { side, how, winners: side == null ? [] : b.fighters.filter((f) => f.side === side).map((f) => f.id), losers: b.fighters.filter((f) => f.side !== side).map((f) => f.id), judges: null };
+  return {
+    side,
+    how,
+    winners: side == null ? [] : b.fighters.filter((f) => f.side === side).map((f) => f.id),
+    losers: b.fighters.filter((f) => f.side !== side).map((f) => f.id),
+    judges: null,
+  };
 }
 
 /**
@@ -97,13 +172,38 @@ export function mirrorEvents(M, events, now, clock) {
     clock.off = clock.off == null ? e0.at - now : Math.max(e0.at - now, clock.off - 5);
     const at = e0.at - clock.off;
     const e = { ...e0, at };
-    if (PHASE_EVENTS.has(e.k) && b.phase !== e.k) { b.phase = e.k; b.phaseAt = at; }
-    if (e.k === 'fight') { b.fightAt = at; b.lastBlowAt = at; }
-    if (e.k === 'end') { b.endAt = at; if (!b.result) b.result = resultOf(b, e.side ?? null, e.how ?? ''); }
+    if (PHASE_EVENTS.has(e.k) && b.phase !== e.k) {
+      b.phase = e.k;
+      b.phaseAt = at;
+    }
+    if (e.k === 'fight') {
+      b.fightAt = at;
+      b.lastBlowAt = at;
+    }
+    if (e.k === 'end') {
+      b.endAt = at;
+      if (!b.result) b.result = resultOf(b, e.side ?? null, e.how ?? '');
+    }
     if (e.k === 'verdict' && !b.result) b.result = resultOf(b, e.side ?? null, e.how ?? '');
-    if (OUT_EVENTS.has(e.k)) { const f = b.fighters.find((x) => x.id === e.a); if (f && !f.out) { f.out = e.k; f.outAt = at; } }
-    if (e.k === 'hit') { const f = b.fighters.find((x) => x.id === e.a); if (f) { f.dealt += e.dmg ?? 0; f.hits++; } b.lastBlowAt = at; }
-    if (e.k === 'miss') { const f = b.fighters.find((x) => x.id === e.a); if (f) f.misses++; }
+    if (OUT_EVENTS.has(e.k)) {
+      const f = b.fighters.find((x) => x.id === e.a);
+      if (f && !f.out) {
+        f.out = e.k;
+        f.outAt = at;
+      }
+    }
+    if (e.k === 'hit') {
+      const f = b.fighters.find((x) => x.id === e.a);
+      if (f) {
+        f.dealt += e.dmg ?? 0;
+        f.hits++;
+      }
+      b.lastBlowAt = at;
+    }
+    if (e.k === 'miss') {
+      const f = b.fighters.find((x) => x.id === e.a);
+      if (f) f.misses++;
+    }
     out.push(e);
   }
   return out;
@@ -114,7 +214,10 @@ export function mirrorHealth(M, h) {
   let mine = null;
   for (const [id, hp, max] of h) {
     const f = M?.b?.fighters.find((x) => x.id === id);
-    if (f) { f.health = hp; f.maxHealth = max; }
+    if (f) {
+      f.health = hp;
+      f.maxHealth = max;
+    }
     if (id === M?.me) mine = [hp, max];
   }
   return mine;
@@ -131,13 +234,17 @@ export function walkAt(mv, now, off = 0) {
   return [mv.x + ((mv.tx - mv.x) / len) * along, mv.z + ((mv.tz - mv.z) / len) * along];
 }
 /** Whether a walk word's walk is done at `now`. */
-export const walkDone = (mv, now, off = 0) => !mv || !(mv.v > 0) || (Math.max(0, now - (mv.at - off)) / 1000) * mv.v >= Math.hypot(mv.tx - mv.x, mv.tz - mv.z);
+export const walkDone = (mv, now, off = 0) =>
+  !mv || !(mv.v > 0) || (Math.max(0, now - (mv.at - off)) / 1000) * mv.v >= Math.hypot(mv.tx - mv.x, mv.tz - mv.z);
 
 /** ARENA4b: THE VERDICT A RELAY'S WORD SAYS of its bout - a whole `st`'s result, or an `ev` word's end or verdict - as
  *  `{ side }` (0 / 1, null a draw), or null when the word says none. The bookmaker settles an exhibition's wager by it
  *  (scenes/arena/arenaOnline.js exhibitionVerdict). Pure. */
 export function verdictOfWord(w) {
   if (w?.k === 'st') return w.res ? { side: w.res.side ?? null } : null;
-  if (w?.k === 'ev') { const e = (w.e ?? []).find((x) => x.k === 'end' || x.k === 'verdict'); return e ? { side: e.side ?? null } : null; }
+  if (w?.k === 'ev') {
+    const e = (w.e ?? []).find((x) => x.k === 'end' || x.k === 'verdict');
+    return e ? { side: e.side ?? null } : null;
+  }
   return null;
 }

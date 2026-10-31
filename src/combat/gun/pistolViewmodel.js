@@ -27,8 +27,14 @@ export const PISTOL_HANDS = Object.freeze(['R', 'L']);
  *  kick it is drawn with this frame. */
 export function createPistolHands() {
   const hand = () => ({
-    rig: createGunRig(), recoil: createRecoil(), guard: 0, kick: { x: 0, y: 0 }, frame: 0, firing: false,
-    opened: false, closed: false,
+    rig: createGunRig(),
+    recoil: createRecoil(),
+    guard: 0,
+    kick: { x: 0, y: 0 },
+    frame: 0,
+    firing: false,
+    opened: false,
+    closed: false,
   });
   return { R: hand(), L: hand() };
 }
@@ -53,26 +59,56 @@ export function pistolHandFired(hands, h, kick) {
  * reloading holds still - and the reload lower while it is Cooling. `away` is the game's holster: the same lower, to
  * `awayTarget`.
  */
-export function pistolHandsStep(hands, dt, {
-  machines, drawn, guard = true, spring, restFrame = 0,
-  settings, screenRect, motion, look = [0, 0], liveSpeed = 50, cursorActive = false,
-  hiddenTarget, away = false, awayTarget = hiddenTarget, flipOf = (h) => h === 'L', lowered = () => false,
-}) {
+export function pistolHandsStep(
+  hands,
+  dt,
+  {
+    machines,
+    drawn,
+    guard = true,
+    spring,
+    restFrame = 0,
+    settings,
+    screenRect,
+    motion,
+    look = [0, 0],
+    liveSpeed = 50,
+    cursorActive = false,
+    hiddenTarget,
+    away = false,
+    awayTarget = hiddenTarget,
+    flipOf = (h) => h === 'L',
+    lowered = () => false,
+  },
+) {
   const dual = drawn.length === 2;
   for (const h of PISTOL_HANDS) {
-    const s = hands[h], m = machines[h], other = machines[otherHand(h)];
+    const s = hands[h],
+      m = machines[h],
+      other = machines[otherHand(h)];
     const rc = s.recoil;
-    rc.stiff = spring.stiff; rc.damp = spring.damp; rc.back = spring.back;
-    s.guard = guardStep(s.guard, (dual && guard && other.state === 'Firing' && m.state !== 'Firing') || (m.state !== 'Firing' && !!lowered(h)), dt);
+    rc.stiff = spring.stiff;
+    rc.damp = spring.damp;
+    rc.back = spring.back;
+    s.guard = guardStep(
+      s.guard,
+      (dual && guard && other.state === 'Firing' && m.state !== 'Firing') || (m.state !== 'Firing' && !!lowered(h)),
+      dt,
+    );
     s.kick = rc.step(dt);
     s.firing = m.state === 'Firing';
     s.frame = s.firing ? m.frame : restFrame;
   }
   for (const h of PISTOL_HANDS) {
     gunRigStep(hands[h].rig, settings, dt, {
-      screenRect, motion, look,
-      flip: flipOf(h), idle: machines[h].state === 'Idle',
-      shown: machines[h].state !== 'Cooling' && !away, hiddenTarget: away ? awayTarget : hiddenTarget, liveSpeed,
+      screenRect,
+      motion,
+      look,
+      flip: flipOf(h),
+      idle: machines[h].state === 'Idle',
+      shown: machines[h].state !== 'Cooling' && !away,
+      hiddenTarget: away ? awayTarget : hiddenTarget,
+      liveSpeed,
       cursorActive,
     });
   }
@@ -85,10 +121,24 @@ export function pistolHandsStep(hands, dt, {
  */
 export function pistolReloadVoice(hands, machines, cooldownMs, play) {
   for (const h of PISTOL_HANDS) {
-    const s = hands[h], m = machines[h];
-    if (m.state === 'Cooling' && !s.opened) { s.opened = true; play('open', 0.9); }
-    if (m.state === 'Cooling' && !s.closed && m.cooledMs >= Math.max(0, (m.cooldownMs ?? cooldownMs) - RELOAD_CLOSE_LEAD * 1000)) { s.closed = true; play('close', 0.95); }   // MIXED-PAIR: the machine's own reload (a gun beside a blade loads one-handed)
-    if (m.state !== 'Cooling') { s.opened = false; s.closed = false; }
+    const s = hands[h],
+      m = machines[h];
+    if (m.state === 'Cooling' && !s.opened) {
+      s.opened = true;
+      play('open', 0.9);
+    }
+    if (
+      m.state === 'Cooling' &&
+      !s.closed &&
+      m.cooledMs >= Math.max(0, (m.cooldownMs ?? cooldownMs) - RELOAD_CLOSE_LEAD * 1000)
+    ) {
+      s.closed = true;
+      play('close', 0.95);
+    } // MIXED-PAIR: the machine's own reload (a gun beside a blade loads one-handed)
+    if (m.state !== 'Cooling') {
+      s.opened = false;
+      s.closed = false;
+    }
   }
 }
 
@@ -98,13 +148,31 @@ export function pistolReloadVoice(hands, machines, cooldownMs, play) {
  * (gunViewmodel.js gunFrameRect) at the art's pose, right-aligned, the left hand in the mirror - and held to its corner
  * (holdToCorner).
  */
-export function pistolHandRect(hands, h, { canvasW, canvasH, anchor, union, widthPct, offset, raise, heightPx, flip = h === 'L' }) {
+export function pistolHandRect(
+  hands,
+  h,
+  { canvasW, canvasH, anchor, union, widthPct, offset, raise, heightPx, flip = h === 'L' },
+) {
   const s = hands[h];
   const [, guardY] = guardOffset(s.guard, flip ? 'left' : 'right', { height: heightPx });
-  return holdToCorner(gunFrameRect({
-    canvasW, canvasH, anchor, union, rig: s.rig, kick: { x: s.kick.x, y: s.kick.y + guardY }, flip,
-    widthPct, align: ALIGN.Right, offset, raise,
-  }), canvasW, canvasH, flip);
+  return holdToCorner(
+    gunFrameRect({
+      canvasW,
+      canvasH,
+      anchor,
+      union,
+      rig: s.rig,
+      kick: { x: s.kick.x, y: s.kick.y + guardY },
+      flip,
+      widthPct,
+      align: ALIGN.Right,
+      offset,
+      raise,
+    }),
+    canvasW,
+    canvasH,
+    flip,
+  );
 }
 
 /**
@@ -122,8 +190,14 @@ export function holdToCorner(fr, canvasW, canvasH, flip = false) {
   const { rect, anchorRect } = fr;
   const dx = flip ? Math.min(0, -rect.x) : Math.max(0, canvasW - (rect.x + rect.w));
   const dy = Math.max(0, canvasH - (rect.y + rect.h));
-  if (dx) { rect.x += dx; anchorRect.x += dx; }
-  if (dy) { rect.y += dy; anchorRect.y += dy; }
+  if (dx) {
+    rect.x += dx;
+    anchorRect.x += dx;
+  }
+  if (dy) {
+    rect.y += dy;
+    anchorRect.y += dy;
+  }
   return fr;
 }
 
@@ -133,7 +207,10 @@ export const pistolDrawOrder = (order, drawn) => order.filter((h) => drawn.inclu
 /** THE PANEL THE PAGE OPENS ON, as Weapon Widget settings: its three modules on and the owner's Bob and Inertia
  *  (gunFeel.js PISTOLET_FEEL.widget, PISTOL-LAB 2). */
 export const PISTOL_PANEL = Object.freeze({
-  'Modules.Offset': true, 'Modules.Bob': true, 'Modules.Inertia': true, ...PISTOLET_FEEL.widget,
+  'Modules.Offset': true,
+  'Modules.Bob': true,
+  'Modules.Inertia': true,
+  ...PISTOLET_FEEL.widget,
 });
 
 /**

@@ -42,12 +42,12 @@
 // port cleared both flags at the top of every update, which made them
 // edges: a blow the player should have taken on waking was dropped.
 
-import { rand } from '../../formats/dfRandom.js';   // NT2 (F210): the gender roll is a DFRandom draw
+import { rand } from '../../formats/dfRandom.js'; // NT2 (F210): the gender roll is a DFRandom draw
 import { MOBILE_TYPES } from './mobileTypes.js';
 
 // Speeds in frames-per-second (EnemyBasics).
 export const MOVE_ANIM_SPEED = 6;
-export const FLY_ANIM_SPEED = 10;   // flying enemies' move/idle clock (GetStateAnims override)
+export const FLY_ANIM_SPEED = 10; // flying enemies' move/idle clock (GetStateAnims override)
 export const PRIMARY_ATTACK_ANIM_SPEED = 10;
 export const HURT_ANIM_SPEED = 4;
 export const IDLE_ANIM_SPEED = 4;
@@ -57,48 +57,102 @@ const A = (record, fps, flip, bounce = false) => ({ record, fps, flip, bounce })
 // The standard orientation tables, verbatim (index = orientation 0..7:
 // south/front, SW, W, NW, N/back, NE, E, SE).
 export const MOVE_ANIMS = Object.freeze([
-  A(0, MOVE_ANIM_SPEED, false), A(1, MOVE_ANIM_SPEED, false), A(2, MOVE_ANIM_SPEED, false), A(3, MOVE_ANIM_SPEED, false),
-  A(4, MOVE_ANIM_SPEED, false), A(3, MOVE_ANIM_SPEED, true), A(2, MOVE_ANIM_SPEED, true), A(1, MOVE_ANIM_SPEED, true),
+  A(0, MOVE_ANIM_SPEED, false),
+  A(1, MOVE_ANIM_SPEED, false),
+  A(2, MOVE_ANIM_SPEED, false),
+  A(3, MOVE_ANIM_SPEED, false),
+  A(4, MOVE_ANIM_SPEED, false),
+  A(3, MOVE_ANIM_SPEED, true),
+  A(2, MOVE_ANIM_SPEED, true),
+  A(1, MOVE_ANIM_SPEED, true),
 ]);
 export const PRIMARY_ATTACK_ANIMS = Object.freeze([
-  A(5, PRIMARY_ATTACK_ANIM_SPEED, false), A(6, PRIMARY_ATTACK_ANIM_SPEED, false), A(7, PRIMARY_ATTACK_ANIM_SPEED, false), A(8, PRIMARY_ATTACK_ANIM_SPEED, false),
-  A(9, PRIMARY_ATTACK_ANIM_SPEED, false), A(8, PRIMARY_ATTACK_ANIM_SPEED, true), A(7, PRIMARY_ATTACK_ANIM_SPEED, true), A(6, PRIMARY_ATTACK_ANIM_SPEED, true),
+  A(5, PRIMARY_ATTACK_ANIM_SPEED, false),
+  A(6, PRIMARY_ATTACK_ANIM_SPEED, false),
+  A(7, PRIMARY_ATTACK_ANIM_SPEED, false),
+  A(8, PRIMARY_ATTACK_ANIM_SPEED, false),
+  A(9, PRIMARY_ATTACK_ANIM_SPEED, false),
+  A(8, PRIMARY_ATTACK_ANIM_SPEED, true),
+  A(7, PRIMARY_ATTACK_ANIM_SPEED, true),
+  A(6, PRIMARY_ATTACK_ANIM_SPEED, true),
 ]);
 export const HURT_ANIMS = Object.freeze([
-  A(10, HURT_ANIM_SPEED, false), A(11, HURT_ANIM_SPEED, false), A(12, HURT_ANIM_SPEED, false), A(13, HURT_ANIM_SPEED, false),
-  A(14, HURT_ANIM_SPEED, false), A(13, HURT_ANIM_SPEED, true), A(12, HURT_ANIM_SPEED, true), A(11, HURT_ANIM_SPEED, true),
+  A(10, HURT_ANIM_SPEED, false),
+  A(11, HURT_ANIM_SPEED, false),
+  A(12, HURT_ANIM_SPEED, false),
+  A(13, HURT_ANIM_SPEED, false),
+  A(14, HURT_ANIM_SPEED, false),
+  A(13, HURT_ANIM_SPEED, true),
+  A(12, HURT_ANIM_SPEED, true),
+  A(11, HURT_ANIM_SPEED, true),
 ]);
 export const IDLE_ANIMS = Object.freeze([
-  A(15, IDLE_ANIM_SPEED, false), A(16, IDLE_ANIM_SPEED, false), A(17, IDLE_ANIM_SPEED, false), A(18, IDLE_ANIM_SPEED, false),
-  A(19, IDLE_ANIM_SPEED, false), A(18, IDLE_ANIM_SPEED, true), A(17, IDLE_ANIM_SPEED, true), A(16, IDLE_ANIM_SPEED, true),
+  A(15, IDLE_ANIM_SPEED, false),
+  A(16, IDLE_ANIM_SPEED, false),
+  A(17, IDLE_ANIM_SPEED, false),
+  A(18, IDLE_ANIM_SPEED, false),
+  A(19, IDLE_ANIM_SPEED, false),
+  A(18, IDLE_ANIM_SPEED, true),
+  A(17, IDLE_ANIM_SPEED, true),
+  A(16, IDLE_ANIM_SPEED, true),
 ]);
 // Rat idle: the flips INVERT vs the standard idle (verbatim quirk).
 export const RAT_IDLE_ANIMS = Object.freeze([
-  A(15, IDLE_ANIM_SPEED, false), A(16, IDLE_ANIM_SPEED, true), A(17, IDLE_ANIM_SPEED, true), A(18, IDLE_ANIM_SPEED, true),
-  A(19, IDLE_ANIM_SPEED, false), A(18, IDLE_ANIM_SPEED, false), A(17, IDLE_ANIM_SPEED, false), A(16, IDLE_ANIM_SPEED, false),
+  A(15, IDLE_ANIM_SPEED, false),
+  A(16, IDLE_ANIM_SPEED, true),
+  A(17, IDLE_ANIM_SPEED, true),
+  A(18, IDLE_ANIM_SPEED, true),
+  A(19, IDLE_ANIM_SPEED, false),
+  A(18, IDLE_ANIM_SPEED, false),
+  A(17, IDLE_ANIM_SPEED, false),
+  A(16, IDLE_ANIM_SPEED, false),
 ]);
 // Ghost/wraith move (doubles as their idle) + attack: their own flip
 // patterns, verbatim.
 export const GHOST_WRAITH_MOVE_ANIMS = Object.freeze([
-  A(0, MOVE_ANIM_SPEED, false), A(1, MOVE_ANIM_SPEED, false), A(2, MOVE_ANIM_SPEED, true), A(3, MOVE_ANIM_SPEED, false),
-  A(4, MOVE_ANIM_SPEED, false), A(3, MOVE_ANIM_SPEED, true), A(2, MOVE_ANIM_SPEED, false), A(1, MOVE_ANIM_SPEED, true),
+  A(0, MOVE_ANIM_SPEED, false),
+  A(1, MOVE_ANIM_SPEED, false),
+  A(2, MOVE_ANIM_SPEED, true),
+  A(3, MOVE_ANIM_SPEED, false),
+  A(4, MOVE_ANIM_SPEED, false),
+  A(3, MOVE_ANIM_SPEED, true),
+  A(2, MOVE_ANIM_SPEED, false),
+  A(1, MOVE_ANIM_SPEED, true),
 ]);
 export const GHOST_WRAITH_ATTACK_ANIMS = Object.freeze([
-  A(5, PRIMARY_ATTACK_ANIM_SPEED, false), A(6, PRIMARY_ATTACK_ANIM_SPEED, false), A(7, PRIMARY_ATTACK_ANIM_SPEED, true), A(8, PRIMARY_ATTACK_ANIM_SPEED, false),
-  A(9, PRIMARY_ATTACK_ANIM_SPEED, false), A(8, PRIMARY_ATTACK_ANIM_SPEED, true), A(7, PRIMARY_ATTACK_ANIM_SPEED, false), A(6, PRIMARY_ATTACK_ANIM_SPEED, true),
+  A(5, PRIMARY_ATTACK_ANIM_SPEED, false),
+  A(6, PRIMARY_ATTACK_ANIM_SPEED, false),
+  A(7, PRIMARY_ATTACK_ANIM_SPEED, true),
+  A(8, PRIMARY_ATTACK_ANIM_SPEED, false),
+  A(9, PRIMARY_ATTACK_ANIM_SPEED, false),
+  A(8, PRIMARY_ATTACK_ANIM_SPEED, true),
+  A(7, PRIMARY_ATTACK_ANIM_SPEED, false),
+  A(6, PRIMARY_ATTACK_ANIM_SPEED, true),
 ]);
 // Slaughterfish move (also its idle): records 0-4 with BounceAnim.
 export const SLAUGHTERFISH_MOVE_ANIMS = Object.freeze([
-  A(0, MOVE_ANIM_SPEED, false, true), A(1, MOVE_ANIM_SPEED, false, true), A(2, MOVE_ANIM_SPEED, false, true), A(3, MOVE_ANIM_SPEED, false, true),
-  A(4, MOVE_ANIM_SPEED, false, true), A(3, MOVE_ANIM_SPEED, true, true), A(2, MOVE_ANIM_SPEED, true, true), A(1, MOVE_ANIM_SPEED, true, true),
+  A(0, MOVE_ANIM_SPEED, false, true),
+  A(1, MOVE_ANIM_SPEED, false, true),
+  A(2, MOVE_ANIM_SPEED, false, true),
+  A(3, MOVE_ANIM_SPEED, false, true),
+  A(4, MOVE_ANIM_SPEED, false, true),
+  A(3, MOVE_ANIM_SPEED, true, true),
+  A(2, MOVE_ANIM_SPEED, true, true),
+  A(1, MOVE_ANIM_SPEED, true, true),
 ]);
 // C14: RangedAttack1Anims (records 20-24, 10 fps) - for MONSTERS this
 // is the SPELL table when HasSpellAnimation (Orc Shaman 21 only);
 // actual ranged attacks belong to class enemies (rigs), N/A here.
 export const RANGED_ATTACK1_ANIM_SPEED = 10;
 export const RANGED_ATTACK1_ANIMS = Object.freeze([
-  A(20, RANGED_ATTACK1_ANIM_SPEED, false), A(21, RANGED_ATTACK1_ANIM_SPEED, false), A(22, RANGED_ATTACK1_ANIM_SPEED, false), A(23, RANGED_ATTACK1_ANIM_SPEED, false),
-  A(24, RANGED_ATTACK1_ANIM_SPEED, false), A(23, RANGED_ATTACK1_ANIM_SPEED, true), A(22, RANGED_ATTACK1_ANIM_SPEED, true), A(21, RANGED_ATTACK1_ANIM_SPEED, true),
+  A(20, RANGED_ATTACK1_ANIM_SPEED, false),
+  A(21, RANGED_ATTACK1_ANIM_SPEED, false),
+  A(22, RANGED_ATTACK1_ANIM_SPEED, false),
+  A(23, RANGED_ATTACK1_ANIM_SPEED, false),
+  A(24, RANGED_ATTACK1_ANIM_SPEED, false),
+  A(23, RANGED_ATTACK1_ANIM_SPEED, true),
+  A(22, RANGED_ATTACK1_ANIM_SPEED, true),
+  A(21, RANGED_ATTACK1_ANIM_SPEED, true),
 ]);
 
 // AUDIT 26 F009: RangedAttack2Anims (EnemyBasics.cs:103-113 - records
@@ -109,15 +163,27 @@ export const RANGED_ATTACK1_ANIMS = Object.freeze([
 // one-table 'ranged' state played its spell-casting sprite.
 export const RANGED_ATTACK2_ANIM_SPEED = 10;
 export const RANGED_ATTACK2_ANIMS = Object.freeze([
-  A(25, RANGED_ATTACK2_ANIM_SPEED, false), A(26, RANGED_ATTACK2_ANIM_SPEED, false), A(27, RANGED_ATTACK2_ANIM_SPEED, false), A(28, RANGED_ATTACK2_ANIM_SPEED, false),
-  A(29, RANGED_ATTACK2_ANIM_SPEED, false), A(28, RANGED_ATTACK2_ANIM_SPEED, true), A(27, RANGED_ATTACK2_ANIM_SPEED, true), A(26, RANGED_ATTACK2_ANIM_SPEED, true),
+  A(25, RANGED_ATTACK2_ANIM_SPEED, false),
+  A(26, RANGED_ATTACK2_ANIM_SPEED, false),
+  A(27, RANGED_ATTACK2_ANIM_SPEED, false),
+  A(28, RANGED_ATTACK2_ANIM_SPEED, false),
+  A(29, RANGED_ATTACK2_ANIM_SPEED, false),
+  A(28, RANGED_ATTACK2_ANIM_SPEED, true),
+  A(27, RANGED_ATTACK2_ANIM_SPEED, true),
+  A(26, RANGED_ATTACK2_ANIM_SPEED, true),
 ]);
 
 // C17: the female-thief idle (FemaleTexture 483) - record 11 rides
 // the front diagonals, verbatim quirk.
 export const FEMALE_THIEF_IDLE_ANIMS = Object.freeze([
-  A(15, IDLE_ANIM_SPEED, false), A(11, IDLE_ANIM_SPEED, false), A(17, IDLE_ANIM_SPEED, false), A(18, IDLE_ANIM_SPEED, false),
-  A(19, IDLE_ANIM_SPEED, false), A(18, IDLE_ANIM_SPEED, true), A(17, IDLE_ANIM_SPEED, true), A(11, IDLE_ANIM_SPEED, true),
+  A(15, IDLE_ANIM_SPEED, false),
+  A(11, IDLE_ANIM_SPEED, false),
+  A(17, IDLE_ANIM_SPEED, false),
+  A(18, IDLE_ANIM_SPEED, false),
+  A(19, IDLE_ANIM_SPEED, false),
+  A(18, IDLE_ANIM_SPEED, true),
+  A(17, IDLE_ANIM_SPEED, true),
+  A(11, IDLE_ANIM_SPEED, true),
 ]);
 
 // A5: the Seducer's four special tables (EnemyBasics.cs:167-212).
@@ -126,10 +192,10 @@ export const FEMALE_THIEF_IDLE_ANIMS = Object.freeze([
 // the same record and the same (false) flip whichever way the foe
 // stands. All four run at MoveAnimSpeed, the transforms included.
 const SEDUCER_ROW = (record) => Object.freeze(new Array(8).fill(null).map(() => A(record, MOVE_ANIM_SPEED, false)));
-export const SEDUCER_TRANSFORM1_ANIMS = SEDUCER_ROW(23);   // crouch and grow wings
-export const SEDUCER_TRANSFORM2_ANIMS = SEDUCER_ROW(22);   // stand and spread wings
-export const SEDUCER_IDLE_MOVE_ANIMS = SEDUCER_ROW(21);    // the winged form's move, idle AND hurt
-export const SEDUCER_ATTACK_ANIMS = SEDUCER_ROW(20);       // the winged form's attack AND spell
+export const SEDUCER_TRANSFORM1_ANIMS = SEDUCER_ROW(23); // crouch and grow wings
+export const SEDUCER_TRANSFORM2_ANIMS = SEDUCER_ROW(22); // stand and spread wings
+export const SEDUCER_IDLE_MOVE_ANIMS = SEDUCER_ROW(21); // the winged form's move, idle AND hurt
+export const SEDUCER_ATTACK_ANIMS = SEDUCER_ROW(20); // the winged form's attack AND spell
 
 // AUDIT 68 S05-mobile-id-literals: the generated table's ids, not copies.
 export const MOBILE_RAT = MOBILE_TYPES.Rat;
@@ -154,7 +220,18 @@ export const MOBILE_DAEDRA_SEDUCER = MOBILE_TYPES.DaedraSeducer;
  *  HasSpellAnimation ternary). The two transform states answer null
  *  when the mobile does not carry the flag, which is DFU's
  *  LogMobileError path - the caller falls back to Idle. */
-export function stateAnims(state, mobileType, hasIdle, hasSpellAnimation = false, femaleThief = false, hasRangedAttack1 = true, hasRangedAttack2 = false, seducerTransformed = false, hasSeducerTransform1 = false, hasSeducerTransform2 = false) {
+export function stateAnims(
+  state,
+  mobileType,
+  hasIdle,
+  hasSpellAnimation = false,
+  femaleThief = false,
+  hasRangedAttack1 = true,
+  hasRangedAttack2 = false,
+  seducerTransformed = false,
+  hasSeducerTransform1 = false,
+  hasSeducerTransform2 = false,
+) {
   const wingedSeducer = mobileType === MOBILE_DAEDRA_SEDUCER && seducerTransformed;
   if (state === 'transform1') return hasSeducerTransform1 ? SEDUCER_TRANSFORM1_ANIMS : null;
   if (state === 'transform2') return hasSeducerTransform2 ? SEDUCER_TRANSFORM2_ANIMS : null;
@@ -170,7 +247,7 @@ export function stateAnims(state, mobileType, hasIdle, hasSpellAnimation = false
     return PRIMARY_ATTACK_ANIMS;
   }
   if (state === 'spell') {
-    if (wingedSeducer) return SEDUCER_ATTACK_ANIMS;   // :845 - ahead of the HasSpellAnimation ternary
+    if (wingedSeducer) return SEDUCER_ATTACK_ANIMS; // :845 - ahead of the HasSpellAnimation ternary
     return hasSpellAnimation ? RANGED_ATTACK1_ANIMS : PRIMARY_ATTACK_ANIMS;
   }
   if (state === 'ranged') {
@@ -180,10 +257,10 @@ export function stateAnims(state, mobileType, hasIdle, hasSpellAnimation = false
     // Nightblade carry both flags plus hasSpellAnimation, so their
     // 20-24 records are spell frames - the one-table state drew them
     // for bow shots.
-    return (hasRangedAttack1 && !hasRangedAttack2) ? RANGED_ATTACK1_ANIMS : RANGED_ATTACK2_ANIMS;
+    return hasRangedAttack1 && !hasRangedAttack2 ? RANGED_ATTACK1_ANIMS : RANGED_ATTACK2_ANIMS;
   }
   if (state === 'hurt') {
-    if (wingedSeducer) return SEDUCER_IDLE_MOVE_ANIMS;   // :813-816 - the winged form has no hurt table of its own
+    if (wingedSeducer) return SEDUCER_IDLE_MOVE_ANIMS; // :813-816 - the winged form has no hurt table of its own
     return HURT_ANIMS;
   }
   // idle (branch order verbatim: ghost/wraith, the winged seducer, the
@@ -202,10 +279,13 @@ export function stateAnims(state, mobileType, hasIdle, hasSpellAnimation = false
  *  -round(angle / 45) wrapped 0..7. Facing convention matches the
  *  player motor: forward = (sin yaw, 0, cos yaw). */
 export function mobileOrientation(yaw, feet, cameraPos) {
-  const dx = cameraPos[0] - feet[0], dz = cameraPos[2] - feet[2];
+  const dx = cameraPos[0] - feet[0],
+    dz = cameraPos[2] - feet[2];
   const l = Math.hypot(dx, dz) || 1;
-  const dirX = dx / l, dirZ = dz / l;
-  const fwdX = Math.sin(yaw), fwdZ = Math.cos(yaw);
+  const dirX = dx / l,
+    dirZ = dz / l;
+  const fwdX = Math.sin(yaw),
+    fwdZ = Math.cos(yaw);
   const dot = Math.max(-1, Math.min(1, dirX * fwdX + dirZ * fwdZ));
   let angle = (Math.acos(dot) * 180) / Math.PI;
   const crossY = dirZ * fwdX - dirX * fwdZ;
@@ -218,9 +298,10 @@ export function mobileOrientation(yaw, feet, cameraPos) {
  *  to face from `cameraPos`, the middle of its bucket. An aura on a class sprite hangs on this, not on the pose's yaw.
  *  Null with no line of sight. Pure. */
 export function mobilePortrayedYaw(orientation, feet, cameraPos) {
-  const dx = cameraPos[0] - feet[0], dz = cameraPos[2] - feet[2];
+  const dx = cameraPos[0] - feet[0],
+    dz = cameraPos[2] - feet[2];
   if (!Number.isInteger(orientation) || (!dx && !dz)) return null;
-  const y = Math.atan2(dx, dz) + orientation * Math.PI / 4;
+  const y = Math.atan2(dx, dz) + (orientation * Math.PI) / 4;
   return Math.atan2(Math.sin(y), Math.cos(y));
 }
 
@@ -248,7 +329,9 @@ export function registerForcedGender(fn) {
   _forcedGenders.push(fn);
 }
 /** The test seam. */
-export function _resetForcedGenders() { _forcedGenders.length = 0; }
+export function _resetForcedGenders() {
+  _forcedGenders.length = 0;
+}
 
 /**
  * One monster's animation unit. The scene feeds intent each frame
@@ -272,7 +355,8 @@ export class MobileUnit {
     let resolved = 'unspecified';
     if (gender && gender !== 'unspecified') resolved = gender;
     else if (basics?.affinity === 'Human') resolved = rand() % 2 === 0 ? 'male' : 'female';
-    for (const fn of _forcedGenders) {   // DEX4b: a mod's forced gender, over what the unit resolved
+    for (const fn of _forcedGenders) {
+      // DEX4b: a mod's forced gender, over what the unit resolved
       const forced = fn(mobileType);
       if (forced) return forced;
     }
@@ -285,7 +369,7 @@ export class MobileUnit {
     /** AUDIT 63 F27: the SHARED row this unit stood on, kept so the
      *  save-restore rewind below can put it back. */
     this._sharedBasics = basics;
-    this.gender = gender;   // C17: the female-thief idle route + host archives
+    this.gender = gender; // C17: the female-thief idle route + host archives
     this.frameCount = frameCount;
     this.rolls = rolls;
     this.state = 'idle';
@@ -295,13 +379,13 @@ export class MobileUnit {
     this._reversed = false;
     this._attackFrames = null;
     this._iter = 0;
-    this.doMeleeDamage = false;   // LATCHED on the -1 marker; the consumer clears it (C16)
-    this.meleeSeq = 0;            // TELL2: one per -1 a melee swing reached (the LAND cue counts them; nothing else reads it)
-    this._hold = false;           // TELL2: the host's word this update - true holds a telegraphed swing, 'cancel' drops it
-    this._underHold = false;      // TELL2: the running attack began held (a telegraphed blow's wind-up)
-    this._heldSwing = false;      // TELL4: ...and stays so through its strike (the 'spent' word reads it)
-    this._struck = false;         // TELL4: that swing has struck - its follow-through on show
-    this.shootArrow = false;      // C17: the ranged -1
+    this.doMeleeDamage = false; // LATCHED on the -1 marker; the consumer clears it (C16)
+    this.meleeSeq = 0; // TELL2: one per -1 a melee swing reached (the LAND cue counts them; nothing else reads it)
+    this._hold = false; // TELL2: the host's word this update - true holds a telegraphed swing, 'cancel' drops it
+    this._underHold = false; // TELL2: the running attack began held (a telegraphed blow's wind-up)
+    this._heldSwing = false; // TELL4: ...and stays so through its strike (the 'spent' word reads it)
+    this._struck = false; // TELL4: that swing has struck - its follow-through on show
+    this.shootArrow = false; // C17: the ranged -1
     /** A5 - MobileUnit.SpecialTransformationCompleted (Base/MobileUnit
      *  .cs:50, DaggerfallMobileUnit.cs:121-124). Raised by
      *  setSpecialTransformationCompleted at the END of the second
@@ -321,7 +405,10 @@ export class MobileUnit {
    *  caller holding `mobile.basics === ENEMY_BASICS[id]` keeps that
    *  identity until the mobile really does diverge. */
   _ownBasics() {
-    if (!this._basicsOwned) { this.basics = { ...this.basics }; this._basicsOwned = true; }
+    if (!this._basicsOwned) {
+      this.basics = { ...this.basics };
+      this._basicsOwned = true;
+    }
     return this.basics;
   }
 
@@ -376,8 +463,14 @@ export class MobileUnit {
    *  PrimaryAttack, the two RangedAttacks, Spell and the two Seducer
    *  transforms. */
   isPlayingOneShot() {
-    return this.state === 'hurt' || this.state === 'attack' || this.state === 'ranged'
-      || this.state === 'spell' || this.state === 'transform1' || this.state === 'transform2';
+    return (
+      this.state === 'hurt' ||
+      this.state === 'attack' ||
+      this.state === 'ranged' ||
+      this.state === 'spell' ||
+      this.state === 'transform1' ||
+      this.state === 'transform2'
+    );
   }
 
   /** MobileUnit.OneShotPauseActionsWhilePlaying (:174-184) - the two
@@ -401,7 +494,9 @@ export class MobileUnit {
       const fr = frame < 0 ? n + frame : frame;
       const flip = this.mobileType === MOBILE_GIANT_SCORPION ? !a.flip : a.flip;
       return { record: a.record, frame: Math.max(0, Math.min(n - 1, fr)), flip: !!flip };
-    } finally { this.state = was; }
+    } finally {
+      this.state = was;
+    }
   }
 
   /** MobileUnit.IsAttacking (:190-201) - the three attack states. */
@@ -421,14 +516,27 @@ export class MobileUnit {
    *  else falls back to Idle. */
   _nextStateAfterOneShot() {
     if (this.state === 'transform1') return 'transform2';
-    if (this.state === 'transform2') { this.setSpecialTransformationCompleted(); return 'idle'; }
+    if (this.state === 'transform2') {
+      this.setSpecialTransformationCompleted();
+      return 'idle';
+    }
     return 'idle';
   }
 
   _anims() {
     const femaleThief = this.basics.femaleTexture === 483 && this.gender === 'female';
-    return stateAnims(this.state, this.mobileType, this.basics.hasIdle ?? false, this.basics.hasSpellAnimation ?? false, femaleThief, this.basics.hasRangedAttack1 ?? true, this.basics.hasRangedAttack2 ?? false,
-      this.specialTransformationCompleted, this.basics.hasSeducerTransform1 ?? false, this.basics.hasSeducerTransform2 ?? false);
+    return stateAnims(
+      this.state,
+      this.mobileType,
+      this.basics.hasIdle ?? false,
+      this.basics.hasSpellAnimation ?? false,
+      femaleThief,
+      this.basics.hasRangedAttack1 ?? true,
+      this.basics.hasRangedAttack2 ?? false,
+      this.specialTransformationCompleted,
+      this.basics.hasSeducerTransform1 ?? false,
+      this.basics.hasSeducerTransform2 ?? false,
+    );
   }
 
   _change(state) {
@@ -437,7 +545,10 @@ export class MobileUnit {
     const pair = (a, b) => (this.state === a && state === b) || (this.state === b && state === a);
     const keepFrame = !(this.basics.hasIdle ?? false) && pair('idle', 'move');
     this.state = state;
-    if (!keepFrame) { this.frame = 0; this._reversed = false; }
+    if (!keepFrame) {
+      this.frame = 0;
+      this._reversed = false;
+    }
     if (state === 'attack') {
       this._attackFrames = rollAttackFrames(this.basics, Math.floor(this.rolls() * 100) + 1);
       this.frame = this._attackFrames[0];
@@ -447,15 +558,18 @@ export class MobileUnit {
       // now and advance to the next frame (audit 08-17).
       if (this.frame === -1) {
         // TELL2: a held swing's strike waits for the release - the first frame drawn, the -1 next on the iterator
-        if (this._hold === true) { this.frame = 0; this._iter = 0; }
-        else {
+        if (this._hold === true) {
+          this.frame = 0;
+          this._iter = 0;
+        } else {
           this.doMeleeDamage = true;
           this.meleeSeq++;
           this.frame = this._iter < this._attackFrames.length ? this._attackFrames[this._iter++] : 0;
         }
       }
       this._underHold = this._hold === true;
-      this._heldSwing = this._underHold; this._struck = false;
+      this._heldSwing = this._underHold;
+      this._struck = false;
     }
     // C14: ApplyEnemyState's Spell branch SEEDS from SpellAnimFrames
     // (currentFrame = frames[0]; frameIterator = 1) - but AnimateEnemy's
@@ -488,7 +602,8 @@ export class MobileUnit {
     if (state === 'transform1' || state === 'transform2') {
       this._ownBasics().behaviour = state === 'transform1' ? 'Flying' : 'General';
       this._attackFrames = (state === 'transform1'
-        ? this.basics.seducerTransform1Frames : this.basics.seducerTransform2Frames) ?? [0];
+        ? this.basics.seducerTransform1Frames
+        : this.basics.seducerTransform2Frames) ?? [0];
       this.frame = Math.max(0, this._attackFrames[0]);
       this._iter = 1;
       this._reversed = false;
@@ -509,7 +624,13 @@ export class MobileUnit {
    * STARTS (EnemyAttack.MeleeAnimation fires ChangeEnemyState ONCE);
    * a level signal would replay the sequence inside one swing.
    */
-  update(dt, { moving = false, striking = false, hurting = false, casting = false, rangedStriking = false, hold = false } = {}, yaw, feet, cameraPos) {
+  update(
+    dt,
+    { moving = false, striking = false, hurting = false, casting = false, rangedStriking = false, hold = false } = {},
+    yaw,
+    feet,
+    cameraPos,
+  ) {
     // TELL2 (bible/12-Enhanced-AI/Feud-Arc.md section 4.1): A TELEGRAPHED BLOW'S SWING, HELD. The port's own beat - DFU
     // has none: `hold` true plays the swing that began under it up to the frame before its first -1 (the raised arm) and
     // stands there; false lets it strike on the next step; 'cancel' drops it (its wind-up broke, a paralysis). Only a
@@ -518,9 +639,15 @@ export class MobileUnit {
     // TELL4 (Feud-Arc.md 6.1): 'spent' - an overreach: the held swing strikes, then its follow-through STANDS (the frame
     // after its strike - the world boss's SPENT_FRAME; never the list's later strike or its rest pose); when the word
     // goes, the swing is over (to idle - a stagger's Hurt may take the same frame).
-    if (this._heldSwing && this._struck && this.state === 'attack' && this._hold === 'spent' && hold !== 'spent') { this._heldSwing = false; this._change('idle'); }
+    if (this._heldSwing && this._struck && this.state === 'attack' && this._hold === 'spent' && hold !== 'spent') {
+      this._heldSwing = false;
+      this._change('idle');
+    }
     this._hold = hold;
-    if (this._underHold && this.state === 'attack' && hold === 'cancel') { this._underHold = false; this._change('idle'); }
+    if (this._underHold && this.state === 'attack' && hold === 'cancel') {
+      this._underHold = false;
+      this._change('idle');
+    }
     // NO RESET HERE (wave 33). DoMeleeDamage/ShootArrow are latches that
     // only EnemyAttack.Update clears, after it has used them.
     // The DFU priority (audit 08-17): the attack edge overrides ANY
@@ -547,7 +674,8 @@ export class MobileUnit {
     // and can never enter a transform state).
     if (this.isPlayingOneShot() && this.oneShotPauseActionsWhilePlaying()) {
       // no intent this frame
-    } else if (striking && (this.state !== 'attack' || (hold === true && !this._underHold))) this._change('attack');   // TELL2: a wind-up's swing replaces a DFU swing in flight, as the attack machine's restart does (enemyAttack.js `_blowWind`)
+    } else if (striking && (this.state !== 'attack' || (hold === true && !this._underHold)))
+      this._change('attack'); // TELL2: a wind-up's swing replaces a DFU swing in flight, as the attack machine's restart does (enemyAttack.js `_blowWind`)
     else if (rangedStriking && this.state !== 'ranged' && this.state !== 'attack') this._change('ranged');
     else if (casting && this.state !== 'spell' && this.state !== 'attack') this._change('spell');
     else if (hurting && this.state !== 'hurt' && this.state !== 'attack') this._change('hurt');
@@ -575,14 +703,17 @@ export class MobileUnit {
     // override; audit 08-17) - the table stays frozen, the clock
     // overrides.
     let a = anims[this.orientation];
-    let fps = (this.basics.behaviour === 'Flying' && (this.state === 'move' || this.state === 'idle'))
-      ? FLY_ANIM_SPEED : a.fps;
+    let fps =
+      this.basics.behaviour === 'Flying' && (this.state === 'move' || this.state === 'idle') ? FLY_ANIM_SPEED : a.fps;
     // AUDIT 23 (characters-11) - DaggerfallMobileUnit.cs:530-534: the
     // anim clock divides by FrameSpeedDivisor (EnemyAttack.cs:70-77
     // mints PermanentSpeed / max(8, LiveSpeed), so a Drain-Speed foe
     // animates slower), floored at 4 fps when a custom divisor bites.
     const div = this.frameSpeedDivisor ?? 1;
-    if (div > 1) { fps = fps / div; if (fps < 4) fps = 4; }
+    if (div > 1) {
+      fps = fps / div;
+      if (fps < 4) fps = 4;
+    }
     this._timer += dt;
     const stepEvery = 1 / fps;
     while (this._timer >= stepEvery) {
@@ -605,16 +736,31 @@ export class MobileUnit {
     // doingAttackAnimation (AnimateEnemy): PrimaryAttack and the two
     // RangedAttack states only - Spell is deliberately NOT in it.
     if (this.state === 'attack' || this.state === 'ranged') {
-      if (this.state === 'attack' && this._heldSwing && this._struck && this._hold === 'spent') return;   // TELL4: the follow-through stands
-      if (this._iter >= this._attackFrames.length) { this._underHold = false; this._heldSwing = false; this._change('idle'); return; }
+      if (this.state === 'attack' && this._heldSwing && this._struck && this._hold === 'spent') return; // TELL4: the follow-through stands
+      if (this._iter >= this._attackFrames.length) {
+        this._underHold = false;
+        this._heldSwing = false;
+        this._change('idle');
+        return;
+      }
       // TELL2: held - the raised arm stands until the release; the strike is the next step after it
-      if (this.state === 'attack' && this._underHold && this._hold === true && this._attackFrames[this._iter] === -1) return;
+      if (this.state === 'attack' && this._underHold && this._hold === true && this._attackFrames[this._iter] === -1)
+        return;
       let f = this._attackFrames[this._iter++];
       if (f === -1) {
-        if (this.state === 'ranged') this.shootArrow = true;   // AnimateEnemy
-        else { this.doMeleeDamage = true; this.meleeSeq++; this._underHold = false; this._struck = this._heldSwing; }   // C16: the scene resolves on it, then clears it
+        if (this.state === 'ranged')
+          this.shootArrow = true; // AnimateEnemy
+        else {
+          this.doMeleeDamage = true;
+          this.meleeSeq++;
+          this._underHold = false;
+          this._struck = this._heldSwing;
+        } // C16: the scene resolves on it, then clears it
         if (this._iter < this._attackFrames.length) f = this._attackFrames[this._iter++];
-        else { this._change('idle'); return; }
+        else {
+          this._change('idle');
+          return;
+        }
       }
       this.frame = Math.min(f, n - 1);
       return;
@@ -627,8 +773,12 @@ export class MobileUnit {
       // through the iterator above. The chain is the source's:
       // transform1 -> transform2 -> SetSpecialTransformationCompleted
       // -> idle, everything else straight to idle.
-      if (this.state === 'hurt' || this.state === 'spell'
-        || this.state === 'transform1' || this.state === 'transform2') {
+      if (
+        this.state === 'hurt' ||
+        this.state === 'spell' ||
+        this.state === 'transform1' ||
+        this.state === 'transform2'
+      ) {
         this._change(this._nextStateAfterOneShot());
         return;
       }
@@ -704,7 +854,7 @@ export class SeducerTransformBehaviour {
 
   update(dt, targetIsPlayer = false) {
     const m = this.mobile;
-    if (!m || !this.entity) return;   // the :48-49 reference guard
+    if (!m || !this.entity) return; // the :48-49 reference guard
     if (m.specialTransformationCompleted) {
       this.entity.suppressInfighting = true;
       return;
@@ -717,7 +867,7 @@ export class SeducerTransformBehaviour {
       // "Check if if hurt" (:74-75) - CurrentHealth < MaxHealth, any
       // wound at all, not a threshold.
       const isHurt = (this.entity.health ?? 0) < (this.entity.maxHealth ?? 0);
-      this.transformCountdown -= dt;   // spent BEFORE the test, as C# spends it
+      this.transformCountdown -= dt; // spent BEFORE the test, as C# spends it
       if (isHurt || this.transformCountdown <= 0) this.startTransformation();
     }
   }

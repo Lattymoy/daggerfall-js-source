@@ -2,8 +2,8 @@
   {
     "name": "STAFF-PANEL3-REALM-role-check-dropped",
     "file": "server-account/src/staffRealm.js",
-    "old": "if (who.role !== 'admin') {",
-    "new": "if (false) {",
+    "old": "  if (who.role !== 'admin') {",
+    "new": "  if (false) {",
     "why": "a Moderator opens every Admin door",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "STAFF-PANEL3-REALM-note-blank-taken",
     "file": "server-account/src/staffRealm.js",
-    "old": "(typeof v === 'string' && v.trim() ? v.trim().slice(0, NOTE_MAX) : null)",
-    "new": "(typeof v === 'string' ? v.slice(0, NOTE_MAX) : null)",
+    "old": "const noteOf = (/** @type {unknown} */ v) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, NOTE_MAX) : null);",
+    "new": "const noteOf = (/** @type {unknown} */ v) => (typeof v === 'string' ? v.slice(0, NOTE_MAX) : null);",
     "why": "a blank note taken as one",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "STAFF-PANEL3-REALM-market-reason-unasked",
     "file": "server-account/src/staffRealm.js",
-    "old": "if (!reason) return said(act, row?.seller ?? null, detail, { error: 'staff-reason' });",
-    "new": "if (false) return said(act, row?.seller ?? null, detail, { error: 'staff-reason' });",
+    "old": "    if (!reason) return said(act, row?.seller ?? null, detail, { error: 'staff-reason' });",
+    "new": "    if (false) return said(act, row?.seller ?? null, detail, { error: 'staff-reason' });",
     "why": "a market removal with no reason",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "STAFF-PANEL3-REALM-market-note-unasked",
     "file": "server-account/src/staffRealm.js",
-    "old": "if (!note) return said(act, row?.seller ?? null, detail, { error: 'staff-note' });",
-    "new": "if (false) return said(act, row?.seller ?? null, detail, { error: 'staff-note' });",
+    "old": "    if (!note) return said(act, row?.seller ?? null, detail, { error: 'staff-note' });",
+    "new": "    if (false) return said(act, row?.seller ?? null, detail, { error: 'staff-note' });",
     "why": "a market removal with no note",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "STAFF-PANEL3-REALM-take-reason-unasked",
     "file": "server-account/src/staffRealm.js",
-    "old": "if (!reason) return said('item-take', row.player, detail, { error: 'staff-reason' });",
-    "new": "if (false) return said('item-take', row.player, detail, { error: 'staff-reason' });",
+    "old": "    if (!reason) return said('item-take', row.player, detail, { error: 'staff-reason' });",
+    "new": "    if (false) return said('item-take', row.player, detail, { error: 'staff-reason' });",
     "why": "a take with no reason",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "STAFF-PANEL3-REALM-take-seq-unchecked",
     "file": "server-account/src/staffRealm.js",
-    "old": "if (body.seq !== row.seq) return said('item-take'",
-    "new": "if (false) return said('item-take'",
+    "old": "    if (body.seq !== row.seq) return said('item-take', row.player, detail, { error: 'seq' }); // the record moved since staff looked",
+    "new": "    if (false) return said('item-take', row.player, detail, { error: 'seq' }); // the record moved since staff looked",
     "why": "a take of a save staff never looked at",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "STAFF-PANEL3-REALM-take-trail-unasked",
     "file": "server-account/src/staffRealm.js",
-    "old": "contested && (body.trail !== true || dupes.some(",
-    "new": "contested && (dupes.some(",
+    "old": "  ) => contested && (body.trail !== true || dupes.some((d) => d.char_id === charId && d.trail_at == null));",
+    "new": "  ) => contested && dupes.some((d) => d.char_id === charId && d.trail_at == null);",
     "why": "a contested piece taken with no trail check",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "STAFF-PANEL3-REALM-contested-copies-unseen",
     "file": "server-account/src/staffRealm.js",
-    "old": "(twice || dupes.length > 0 ||",
-    "new": "(twice ||",
+    "old": "      !!key &&\n      (twice ||\n        dupes.length > 0 ||\n        (!!uid && (uid.char_id !== row.id || uid.state !== 'held' || uid.claim_char != null)));",
+    "new": "      !!key && (twice || (!!uid && (uid.char_id !== row.id || uid.state !== 'held' || uid.claim_char != null)));",
     "why": "a piece with a copy written down read as uncontested",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "STAFF-PANEL3-REALM-take-not-take",
     "file": "server-account/src/staffRealm.js",
-    "old": "{ escrow: false, take: true }",
-    "new": "{ escrow: false, take: false }",
+    "old": "      { escrow: false, take: true },",
+    "new": "      { escrow: false, take: false },",
     "why": "a copy refused by INT4's rule, so staff cannot take it",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "STAFF-PANEL3-REALM-seized-upsert-any-row",
     "file": "server-account/src/staffRealm.js",
-    "old": "ON CONFLICT (uid) DO UPDATE SET state = 'escrow', char_id = ?3, claim_char = NULL, claim_at = NULL, at = excluded.at\n            WHERE item_uids.state = 'gone' AND item_uids.char_id = ?7`",
-    "new": "ON CONFLICT (uid) DO UPDATE SET state = 'escrow', char_id = ?3, claim_char = NULL, claim_at = NULL, at = excluded.at\n            WHERE item_uids.state != 'nothing' OR item_uids.char_id = ?7`",
+    "old": "            WHERE item_uids.state = 'gone' AND item_uids.char_id = ?7`,",
+    "new": "            WHERE item_uids.state != 'nothing' OR item_uids.char_id = ?7`,",
     "why": "the holder's row taken for a copy's take",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "STAFF-PANEL3-REALM-rollback-ignores-kept-removal",
     "file": "server-account/src/staffRealm.js",
-    "old": "kept ? 'staff-remove-pending' : null",
-    "new": "null",
+    "old": "            : kept\n              ? 'staff-remove-pending'\n              : null;",
+    "new": "            : null;",
     "why": "a rollback brings back a piece staff took",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "STAFF-PANEL3-REALM-rollback-confirm-unasked",
     "file": "server-account/src/staffRealm.js",
-    "old": "if (body.confirm === true) {\n      if (blocked)",
-    "new": "if (true) {\n      if (blocked)",
+    "old": "    if (body.confirm === true) {",
+    "new": "    if (true) {",
     "why": "a rollback run without its confirm",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "STAFF-PANEL3-REALM-rollback-blocked-runs",
     "file": "server-account/src/staffRealm.js",
-    "old": "if (blocked) return said('rollback', row.player, ch, { error: blocked });",
-    "new": "if (false) return said('rollback', row.player, ch, { error: blocked });",
+    "old": "      if (blocked) return said('rollback', row.player, ch, { error: blocked });",
+    "new": "      if (false) return said('rollback', row.player, ch, { error: blocked });",
     "why": "a rollback run where it must not",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "STAFF-PANEL3-REALM-rollback-purse-unsaid",
     "file": "server-account/src/staffRealm.js",
-    "old": "marketPurse: Number(purse?.gold ?? 0)",
-    "new": "marketPurse: 0",
+    "old": "        marketPurse: Number(purse?.gold ?? 0),",
+    "new": "        marketPurse: 0,",
     "why": "the market purse a rollback leaves unsaid",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "STAFF-PANEL3-REALM-urgency-budget-low",
     "file": "server-account/src/staffRealm.js",
-    "old": "if (c.held === 'budget') { rank = 2;",
-    "new": "if (c.held === 'budget') { rank = 1;",
+    "old": "  if (c.held === 'budget') {\n    rank = 2;",
+    "new": "  if (c.held === 'budget') {\n    rank = 1;",
     "why": "wealth past the allowance not high",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "STAFF-PANEL3-REALM-urgency-law-low",
     "file": "server-account/src/staffRealm.js",
-    "old": "rank = Math.max(rank, 1);",
-    "new": "rank = Math.max(rank, 0);",
+    "old": "    rank = Math.max(rank, 1);",
+    "new": "    rank = Math.max(rank, 0);",
     "why": "the law's hold read low",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "STAFF-PANEL3-REALM-urgency-copies-low",
     "file": "server-account/src/staffRealm.js",
-    "old": "if (Number(c.dupes) > 0) { rank = 2;",
-    "new": "if (Number(c.dupes) > 0) { rank = 0;",
+    "old": "  if (Number(c.dupes) > 0) {\n    rank = 2;",
+    "new": "  if (Number(c.dupes) > 0) {\n    rank = 0;",
     "why": "copies found not high",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -172,8 +172,8 @@
   {
     "name": "STAFF-PANEL3-REALM-urgency-outlier-unsaid",
     "file": "server-account/src/staffRealm.js",
-    "old": "if (c.review === 'outlier') why.push",
-    "new": "if (false) why.push",
+    "old": "  if (c.review === 'outlier') why.push('wealth far past its level when first judged');",
+    "new": "  if (false) why.push('wealth far past its level when first judged');",
     "why": "the cutover's flag says no why",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "STAFF-PANEL3-REALM-holds-unsorted",
     "file": "server-account/src/staffRealm.js",
-    "old": "if (sort === 'urgent') ranked.sort(",
-    "new": "if (false) ranked.sort(",
+    "old": "    if (sort === 'urgent')",
+    "new": "    if (false)",
     "why": "the trade holds not most urgent first",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "STAFF-PANEL3-REALM-page-from-dropped",
     "file": "server-account/src/staffRealm.js",
-    "old": "page: all.slice(from, from + REALM_PAGE)",
-    "new": "page: all.slice(0, REALM_PAGE)",
+    "old": "  page: all.slice(from, from + REALM_PAGE),",
+    "new": "  page: all.slice(0, REALM_PAGE),",
     "why": "every page the first",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "STAFF-PANEL3-REALM-account-hold-first-only",
     "file": "server-account/src/staffRealm.js",
-    "old": "const r = await reviewAct(c, me, env, 'hold', { id: ch.id, note });",
-    "new": "const r = await reviewAct(c, me, env, 'hold', { id: chars[0].id, note });",
+    "old": "      const r = await reviewAct(c, me, env, 'hold', { id: ch.id, note });",
+    "new": "      const r = await reviewAct(c, me, env, 'hold', { id: chars[0].id, note });",
     "why": "hold every character holds only the first",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "STAFF-PANEL3-REALM-unhold-refill-unsaid",
     "file": "server-account/src/staffRealm.js",
-    "old": "allowanceRefilled: true",
-    "new": "allowanceRefilled: false",
+    "old": "            allowanceRefilled: true,",
+    "new": "            allowanceRefilled: false,",
     "why": "the unhold does not say it refilled the allowance",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -222,8 +222,8 @@
   {
     "name": "STAFF-PANEL3-REALM-gains-goods-dropped",
     "file": "server-account/src/staffRealm.js",
-    "old": "const goods = Number.isSafeInteger(d.goods) ? d.goods : null;",
-    "new": "const goods = null;",
+    "old": "    const goods = Number.isSafeInteger(d.goods) ? d.goods : null;",
+    "new": "    const goods = null;",
     "why": "gold not apart from goods",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -232,8 +232,8 @@
   {
     "name": "STAFF-PANEL3-REALM-gains-uncached",
     "file": "server-account/src/staffRealm.js",
-    "old": "if (had && Date.now() - had.at < GAINS_KEEP_MS) return had.rows;",
-    "new": "if (false) return had.rows;",
+    "old": "  if (had && Date.now() - had.at < GAINS_KEEP_MS) return had.rows;",
+    "new": "  if (false) return had.rows;",
     "why": "the gains read on every call",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -242,8 +242,8 @@
   {
     "name": "STAFF-PANEL3-REALM-gains-xp-unscored",
     "file": "server-account/src/staffRealm.js",
-    "old": "a.score = Math.max(a.score, Number(x.over) / Math.max(1, Number(line.streams?.[x.stream]?.cap) || 1));",
-    "new": "a.score = 0;",
+    "old": "    a.score = Math.max(a.score, Number(x.over) / Math.max(1, Number(line.streams?.[x.stream]?.cap) || 1));",
+    "new": "    a.score = 0;",
     "why": "XP past the line never urgent",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "STAFF-PANEL3-REALM-gains-level-medium-off",
     "file": "server-account/src/staffRealm.js",
-    "old": "score >= GAINS_HIGH ? 'high' : score >= GAINS_MEDIUM ? 'medium' : 'low'",
-    "new": "score >= GAINS_HIGH ? 'high' : 'low'",
+    "old": "const levelBy = (/** @type {number} */ score) =>\n  score >= GAINS_HIGH ? 'high' : score >= GAINS_MEDIUM ? 'medium' : 'low';",
+    "new": "const levelBy = (/** @type {number} */ score) => (score >= GAINS_HIGH ? 'high' : 'low');",
     "why": "no gain is medium",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -262,8 +262,8 @@
   {
     "name": "STAFF-PANEL3-REALM-home-high-uncounted",
     "file": "server-account/src/staffRealm.js",
-    "old": "high: all.filter((r) => r.level === 'high').length",
-    "new": "high: 0",
+    "old": "      high: all.filter((r) => r.level === 'high').length,",
+    "new": "      high: 0,",
     "why": "the Home roll-up counts no high",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -272,8 +272,8 @@
   {
     "name": "STAFF-PANEL3-REALM-market-remove-not-kept",
     "file": "server-account/src/staffRealm.js",
-    "old": "await marketRemove(c, me, env, { listing: id }, { keep: true, also, audit: inside({ evidence: eid, key }) });",
-    "new": "await marketRemove(c, me, env, { listing: id }, { keep: false, also, audit: inside({ evidence: eid, key }) });",
+    "old": "      { keep: true, also, audit: inside({ evidence: eid, key }) },",
+    "new": "      { keep: false, also, audit: inside({ evidence: eid, key }) },",
     "why": "a Remove from market hands the goods back",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -282,8 +282,8 @@
   {
     "name": "STAFF-PANEL3-REALM-market-seized-unmarked",
     "file": "server-account/src/staffRealm.js",
-    "old": "WHERE uid = ?1 AND state = 'escrow' AND char_id = ''\n        AND EXISTS",
-    "new": "WHERE uid = ?1 AND state = 'escrow' AND char_id = 'none'\n        AND EXISTS",
+    "old": "                      `UPDATE item_uids SET char_id = ?2, claim_char = NULL, claim_at = NULL, at = ?3 WHERE uid = ?1 AND state = 'escrow' AND char_id = ''",
+    "new": "                      `UPDATE item_uids SET char_id = ?2, claim_char = NULL, claim_at = NULL, at = ?3 WHERE uid = ?1 AND state = 'escrow' AND char_id = 'none'",
     "why": "a market removal's piece not marked taken",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -292,8 +292,8 @@
   {
     "name": "STAFF-PANEL3-REALM-market-putback-ledger-kept",
     "file": "server-account/src/staffRealm.js",
-    "old": "db.prepare(\"UPDATE item_uids SET char_id = '' WHERE uid = ?1 AND state = 'escrow' AND char_id = ?2\").bind(ev.key, SEIZED)",
-    "new": "db.prepare(\"UPDATE item_uids SET char_id = '' WHERE uid = ?1 AND state = 'escrow' AND char_id = ?2\").bind(ev.key, 'none')",
+    "old": "                  .bind(ev.key, SEIZED),",
+    "new": "                  .bind(ev.key, 'none'),",
     "why": "a put back market piece stays marked taken",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -302,8 +302,8 @@
   {
     "name": "STAFF-PANEL3-REALM-putback-ledger-kept",
     "file": "server-account/src/staffRealm.js",
-    "old": "WHERE uid = ?1 AND state = 'escrow' AND char_id = ?2`).bind(ev.key, SEIZED, row.player",
-    "new": "WHERE uid = ?1 AND state = 'escrow' AND char_id = 'none'`).bind(ev.key, SEIZED, row.player",
+    "old": "            WHERE uid = ?1 AND state = 'escrow' AND char_id = ?2`,",
+    "new": "            WHERE uid = ?1 AND state = 'escrow' AND char_id = 'none'`,",
     "why": "a piece put back stays marked taken",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -312,8 +312,8 @@
   {
     "name": "STAFF-PANEL3-REALM-putback-copy-kept",
     "file": "server-account/src/staffRealm.js",
-    "old": "db.prepare('DELETE FROM item_dupes WHERE uid = ?1 AND char_id = ?2').bind(ev.key, row.id),",
-    "new": "db.prepare('DELETE FROM item_dupes WHERE uid = ?1 AND char_id = ?2').bind(ev.key, 'none'),",
+    "old": "              db.prepare('DELETE FROM item_dupes WHERE uid = ?1 AND char_id = ?2').bind(ev.key, row.id),",
+    "new": "              db.prepare('DELETE FROM item_dupes WHERE uid = ?1 AND char_id = ?2').bind(ev.key, 'none'),",
     "why": "a piece put back stays a copy, locked",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -322,8 +322,8 @@
   {
     "name": "STAFF-PANEL3-REALM-putback-shown-twice",
     "file": "server-account/src/staffRealm.js",
-    "old": "if (shown) return null;",
-    "new": "if (false) return null;",
+    "old": "        if (shown) return null;",
+    "new": "        if (false) return null;",
     "why": "a record that shows the piece again gets a second one",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -332,8 +332,8 @@
   {
     "name": "STAFF-PANEL3-REALM-putback-state-unchecked",
     "file": "server-account/src/staffRealm.js",
-    "old": "if (ev.state !== 'kept' || ev.until <= nowS) return said(",
-    "new": "if (false) return said(",
+    "old": "    if (ev.state !== 'kept' || ev.until <= nowS)\n      return said('evidence-return', ev.player, detail, { error: 'staff-evidence-gone' });",
+    "new": "    if (false) return said('evidence-return', ev.player, detail, { error: 'staff-evidence-gone' });",
     "why": "a removal put back twice or past its 30 days",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -402,8 +402,8 @@
   {
     "name": "STAFF-PANEL3-REALM-ledger-seized-not-copy",
     "file": "server-account/src/ledger.js",
-    "old": "if (r && r.state === 'escrow' && r.char_id === SEIZED) { copies.push(key); continue; }",
-    "new": "if (false) { copies.push(key); continue; }",
+    "old": "    if (r && r.state === 'escrow' && r.char_id === SEIZED) {",
+    "new": "    if (false) {",
     "why": "a save that shows a taken piece again keeps it as its own",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -412,8 +412,8 @@
   {
     "name": "STAFF-PANEL3-REALM-rollback-lifts-staff-hold",
     "file": "server-account/src/review.js",
-    "old": "\" held = CASE WHEN held = 'staff' THEN 'staff' END, held_at = CASE WHEN held = 'staff' THEN held_at END,\"",
-    "new": "\" held = NULL, held_at = NULL,\"",
+    "old": "          \" held = CASE WHEN held = 'staff' THEN 'staff' END, held_at = CASE WHEN held = 'staff' THEN held_at END,\" +",
+    "new": "          ' held = NULL, held_at = NULL,' +",
     "why": "a rollback lifts staff's own hold",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -422,8 +422,8 @@
   {
     "name": "STAFF-PANEL3-REALM-realm-take-asks-int4",
     "file": "server-account/src/realm.js",
-    "old": "const why = take ? null : twice.length",
-    "new": "const why = twice.length",
+    "old": "  const why = take\n    ? null\n    : twice.length\n      ? 'piece-dupe'\n      : leaving.length\n        ? await piecesRefusal(db, at.id, leaving)\n        : null;",
+    "new": "  const why = twice.length ? 'piece-dupe' : leaving.length ? await piecesRefusal(db, at.id, leaving) : null;",
     "why": "a copy refused by INT4's rule, so staff cannot take it",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -432,8 +432,8 @@
   {
     "name": "STAFF-PANEL3-REALM-verdict-goods-unwritten",
     "file": "server-account/src/verdict.js",
-    "old": "goods: goodsOf(save), ",
-    "new": "",
+    "old": "      goods: goodsOf(save),\n      ...(first ? { first: true } : {}),",
+    "new": "      ...(first ? { first: true } : {}),",
     "why": "the verdict writes no goods beside the wealth",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -452,8 +452,8 @@
   {
     "name": "STAFF-PANEL3-REALM-take-copy-unchecked",
     "file": "server-account/src/staffRealm.js",
-    "old": "contested && (body.trail !== true || dupes.some((d) => d.char_id === charId && d.trail_at == null))",
-    "new": "contested && body.trail !== true",
+    "old": "  ) => contested && (body.trail !== true || dupes.some((d) => d.char_id === charId && d.trail_at == null));",
+    "new": "  ) => contested && body.trail !== true;",
     "why": "a copy written down on the character taken with no recorded trail check",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -462,8 +462,8 @@
   {
     "name": "STAFF-PANEL3-REALM-FIX-putback-takes-any-row",
     "file": "server-account/src/staffRealm.js",
-    "old": "const mine = took.seized === true && uidNow?.state === 'escrow' && uidNow.char_id === SEIZED;",
-    "new": "const mine = true;",
+    "old": "    const mine = took.seized === true && uidNow?.state === 'escrow' && uidNow.char_id === SEIZED;",
+    "new": "    const mine = true;",
     "why": "Put back hands the record whatever row the key has - the holder's, the market's",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -472,8 +472,8 @@
   {
     "name": "STAFF-PANEL3-REALM-FIX-putback-seized-unread",
     "file": "server-account/src/staffRealm.js",
-    "old": "const mine = took.seized === true && uidNow?.state",
-    "new": "const mine = uidNow?.state",
+    "old": "    const mine = took.seized === true && uidNow?.state === 'escrow' && uidNow.char_id === SEIZED;",
+    "new": "    const mine = uidNow?.state === 'escrow' && uidNow.char_id === SEIZED;",
     "why": "Put back of a copy hands its record the row staff took from the holder",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -482,8 +482,8 @@
   {
     "name": "STAFF-PANEL3-REALM-FIX-putback-row-unrestored",
     "file": "server-account/src/staffRealm.js",
-    "old": ": uidNow ? [db.prepare(`UPDATE item_uids SET ${UID_COLS.map((k, i) => `${k} = ?${i + 2}`).join(', ')} WHERE uid = ?1`).bind(ev.key, ...uidVals)] : []),",
-    "new": ": []),",
+    "old": "                : uidNow\n                  ? [\n                      db\n                        .prepare(\n                          `UPDATE item_uids SET ${UID_COLS.map((k, i) => `${k} = ?${i + 2}`).join(', ')} WHERE uid = ?1`,\n                        )\n                        .bind(ev.key, ...uidVals),\n                    ]\n                  : []),",
+    "new": "                : []),",
     "why": "ledgerMoves' entered hands the holder's row to the copy's record",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -492,8 +492,8 @@
   {
     "name": "STAFF-PANEL3-REALM-FIX-putback-guard-dropped",
     "file": "server-account/src/staffRealm.js",
-    "old": "...(uidNow ? [db.prepare(`UPDATE item_uids SET at = at WHERE",
-    "new": "...(false ? [db.prepare(`UPDATE item_uids SET at = at WHERE",
+    "old": "        ...(uidNow",
+    "new": "        ...(false",
     "why": "a row moved while Put back reads is written back stale",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -502,8 +502,8 @@
   {
     "name": "STAFF-PANEL3-REALM-FIX-putback-copy-mark-cleared",
     "file": "server-account/src/staffRealm.js",
-    "old": "...(copyCols.length ? [db.prepare(`INSERT INTO item_dupes",
-    "new": "...(false ? [db.prepare(`INSERT INTO item_dupes",
+    "old": "              ...(copyCols.length",
+    "new": "              ...(false",
     "why": "Put back clears the copy mark the removal found",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -512,8 +512,8 @@
   {
     "name": "STAFF-PANEL3-REALM-FIX-putback-copy-mark-kept-always",
     "file": "server-account/src/staffRealm.js",
-    "old": "copyNow && (!mine || took.copy === true)",
-    "new": "copyNow",
+    "old": "    const copyCols = copyNow && (!mine || took.copy === true) ? Object.keys(copyNow) : [];",
+    "new": "    const copyCols = copyNow ? Object.keys(copyNow) : [];",
     "why": "the copy a save showing the taken piece was written is kept after Put back",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -522,8 +522,8 @@
   {
     "name": "STAFF-PANEL3-REALM-FIX-take-copy-unrecorded",
     "file": "server-account/src/staffRealm.js",
-    "old": "copy: !!own",
-    "new": "copy: false",
+    "old": "            JSON.stringify({ at, from: row.seq, to: prep.seq, seized: !uid || uid.char_id === row.id, copy: !!own }),",
+    "new": "            JSON.stringify({ at, from: row.seq, to: prep.seq, seized: !uid || uid.char_id === row.id, copy: false }),",
     "why": "the removal never says the record carried its own copy mark",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -532,8 +532,8 @@
   {
     "name": "STAFF-PANEL3-REALM-FIX-take-seized-unrecorded",
     "file": "server-account/src/staffRealm.js",
-    "old": "seized: !uid || uid.char_id === row.id",
-    "new": "seized: false",
+    "old": "            JSON.stringify({ at, from: row.seq, to: prep.seq, seized: !uid || uid.char_id === row.id, copy: !!own }),",
+    "new": "            JSON.stringify({ at, from: row.seq, to: prep.seq, seized: false, copy: !!own }),",
     "why": "the removal never says it took the record's own row",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -542,8 +542,8 @@
   {
     "name": "STAFF-PANEL3-REALM-FIX-market-trail-unasked",
     "file": "server-account/src/staffRealm.js",
-    "old": "if (trailRefused(contested, dupes, row?.char_id ?? null)) return said(act",
-    "new": "if (false) return said(act",
+    "old": "      if (trailRefused(contested, dupes, row?.char_id ?? null))\n        return said(act, row?.seller ?? null, { ...detail, key }, { error: 'staff-trail' });",
+    "new": "      if (false) return said(act, row?.seller ?? null, { ...detail, key }, { error: 'staff-trail' });",
     "why": "Remove from market seizes a contested piece with no trail check",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -552,8 +552,8 @@
   {
     "name": "STAFF-PANEL3-REALM-FIX-market-copies-unseen",
     "file": "server-account/src/staffRealm.js",
-    "old": "const contested = dupes.length > 0 || (!!uid &&",
-    "new": "const contested = (!!uid &&",
+    "old": "      const contested =\n        dupes.length > 0 || (!!uid && (uid.state !== 'escrow' || uid.char_id !== '' || uid.claim_char != null));",
+    "new": "      const contested = !!uid && (uid.state !== 'escrow' || uid.char_id !== '' || uid.claim_char != null);",
     "why": "a listed piece with a copy written down read as uncontested",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -562,8 +562,8 @@
   {
     "name": "STAFF-PANEL3-REALM-FIX-market-claim-unseen",
     "file": "server-account/src/staffRealm.js",
-    "old": "(uid.state !== 'escrow' || uid.char_id !== '' || uid.claim_char != null)",
-    "new": "(uid.state !== 'escrow' || uid.char_id !== '')",
+    "old": "      const contested =\n        dupes.length > 0 || (!!uid && (uid.state !== 'escrow' || uid.char_id !== '' || uid.claim_char != null));",
+    "new": "      const contested = dupes.length > 0 || (!!uid && (uid.state !== 'escrow' || uid.char_id !== ''));",
     "why": "a claim on a listed piece's row read as uncontested",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -572,8 +572,8 @@
   {
     "name": "STAFF-PANEL3-REALM-FIX-market-seller-copy-unchecked",
     "file": "server-account/src/staffRealm.js",
-    "old": "trailRefused(contested, dupes, row?.char_id ?? null)",
-    "new": "trailRefused(contested, dupes, null)",
+    "old": "      if (trailRefused(contested, dupes, row?.char_id ?? null))",
+    "new": "      if (trailRefused(contested, dupes, null))",
     "why": "a copy on the seller itself removed with no recorded trail check",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -582,8 +582,8 @@
   {
     "name": "STAFF-PANEL3-REALM-FIX-gains-items-gold",
     "file": "server-account/src/staffRealm.js",
-    "old": "now: wealth, gold, items: goods,",
-    "new": "now: wealth, gold, items: gold,",
+    "old": "        items: goods,",
+    "new": "        items: gold,",
     "why": "the goods read as the gold",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -602,8 +602,8 @@
   {
     "name": "STAFF-PANEL3-REALM-FIX-hold-note-any-act",
     "file": "server-account/src/staffRealm.js",
-    "old": " AND json_extract(f.detail, '$.act') = 'hold'",
-    "new": "",
+    "old": "        (SELECT json_object('at', f.at, 'detail', json(f.detail)) FROM realm_findings f WHERE f.char_id = c.id AND f.kind = 'staff' AND json_extract(f.detail, '$.act') = 'hold' ORDER BY f.id DESC LIMIT 1) AS staff",
+    "new": "        (SELECT json_object('at', f.at, 'detail', json(f.detail)) FROM realm_findings f WHERE f.char_id = c.id AND f.kind = 'staff' ORDER BY f.id DESC LIMIT 1) AS staff",
     "why": "the newest staff act's note read as the hold's",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -612,8 +612,8 @@
   {
     "name": "STAFF-PANEL3-REALM-FIX-take-early-unaudited",
     "file": "server-account/src/staffRealm.js",
-    "old": "const early = (/** @type {string} */ error) => (body.confirm === true",
-    "new": "const early = (/** @type {string} */ error) => (false",
+    "old": "    const early = (/** @type {string} */ error) =>\n      body.confirm === true",
+    "new": "    const early = (/** @type {string} */ error) =>\n      false",
     "why": "a confirmed removal refused early leaves no row",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -622,8 +622,8 @@
   {
     "name": "STAFF-PANEL3-REALM-FIX-take-no-piece-unaudited",
     "file": "server-account/src/staffRealm.js",
-    "old": "return early('staff-no-piece');",
-    "new": "return { error: 'staff-no-piece' };",
+    "old": "      return early('staff-no-piece');",
+    "new": "      return { error: 'staff-no-piece' };",
     "why": "a confirmed removal of a piece no longer there leaves no row",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -632,8 +632,8 @@
   {
     "name": "STAFF-PANEL3-REALM-FIX-take-dead-unaudited",
     "file": "server-account/src/staffRealm.js",
-    "old": "if (row.dead_at != null) return early('dead');",
-    "new": "if (row.dead_at != null) return { error: 'dead' };",
+    "old": "    if (row.dead_at != null) return early('dead');",
+    "new": "    if (row.dead_at != null) return { error: 'dead' };",
     "why": "a confirmed removal from the dead leaves no row",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -642,8 +642,8 @@
   {
     "name": "STAFF-PANEL3-REALM-FIX-account-hold-lookup-unaudited",
     "file": "server-account/src/staffRealm.js",
-    "old": "if ('error' in account) return said('trade-hold', null, { all: true, asked: String(body.target ?? body.name ?? '').slice(0, 64), note }, account);",
-    "new": "if ('error' in account) return account;",
+    "old": "    if ('error' in account)\n      return said(\n        'trade-hold',\n        null,\n        { all: true, asked: String(body.target ?? body.name ?? '').slice(0, 64), note },\n        account,\n      );",
+    "new": "    if ('error' in account) return account;",
     "why": "an account hold the lookup cannot name leaves no row",
     "tests": [
       "test/server/staffpanel3realm.test.js"

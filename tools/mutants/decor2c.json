@@ -77,8 +77,8 @@
   {
     "name": "DECOR2c-a-worn-blade-hung",
     "file": "src/systems/decor/decorItems.js",
-    "old": "  if (!item || item.questItem || item.equipSlot != null || isSummoned(item)) return null;\n  const descriptor = decorDescriptorOf(item);\n  if (!descriptor) return null;\n  const pic",
-    "new": "  if (!item || item.questItem || isSummoned(item)) return null;\n  const descriptor = decorDescriptorOf(item);\n  if (!descriptor) return null;\n  const pic",
+    "old": "  if (!item || item.questItem || item.equipSlot != null || isSummoned(item)) return null;",
+    "new": "  if (!item || item.questItem || isSummoned(item)) return null;",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ]
@@ -86,8 +86,8 @@
   {
     "name": "DECOR2c-a-quest-blade-hung",
     "file": "src/systems/decor/decorItems.js",
-    "old": "  if (!item || item.questItem || item.equipSlot != null || isSummoned(item)) return null;\n  const descriptor = decorDescriptorOf(item);\n  if (!descriptor) return null;\n  const pic",
-    "new": "  if (!item || item.equipSlot != null || isSummoned(item)) return null;\n  const descriptor = decorDescriptorOf(item);\n  if (!descriptor) return null;\n  const pic",
+    "old": "  if (!item || item.questItem || item.equipSlot != null || isSummoned(item)) return null;",
+    "new": "  if (!item || item.equipSlot != null || isSummoned(item)) return null;",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "DECOR2c-a-summoned-blade-hung",
     "file": "src/systems/decor/decorItems.js",
-    "old": "  if (!item || item.questItem || item.equipSlot != null || isSummoned(item)) return null;\n  const descriptor = decorDescriptorOf(item);\n  if (!descriptor) return null;\n  const pic",
-    "new": "  if (!item || item.questItem || item.equipSlot != null) return null;\n  const descriptor = decorDescriptorOf(item);\n  if (!descriptor) return null;\n  const pic",
+    "old": "  if (!item || item.questItem || item.equipSlot != null || isSummoned(item)) return null;",
+    "new": "  if (!item || item.questItem || item.equipSlot != null) return null;",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "DECOR2c-the-body-ignored",
     "file": "src/systems/decor/decorItems.js",
-    "old": "  const pic = inventoryItemImage(item, identity);\n  const flat = pic ? [pic.archive, pic.record] : null;",
-    "new": "  const pic = inventoryItemImage(item, undefined);\n  const flat = pic ? [pic.archive, pic.record] : null;",
+    "old": "  if (!descriptor) return null;\n  const pic = inventoryItemImage(item, identity);",
+    "new": "  if (!descriptor) return null;\n  const pic = inventoryItemImage(item, undefined);",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ]
@@ -113,8 +113,8 @@
   {
     "name": "DECOR2c-the-dye-the-templates",
     "file": "src/systems/decor/decorItems.js",
-    "old": "return itemDyeColor({ templateIndex: own.t, group, material: own.m ?? 0, artifact: own.a != null });",
-    "new": "return itemDyeColor({ templateIndex: own.t, group, material: 0, artifact: own.a != null });",
+    "old": "  return itemDyeColor({ templateIndex: own.t, group, material: own.m ?? 0, artifact: own.a != null });",
+    "new": "  return itemDyeColor({ templateIndex: own.t, group, material: 0, artifact: own.a != null });",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ]
@@ -122,8 +122,8 @@
   {
     "name": "DECOR2c-an-artifact-dyed",
     "file": "src/systems/decor/decorItems.js",
-    "old": "return itemDyeColor({ templateIndex: own.t, group, material: own.m ?? 0, artifact: own.a != null });",
-    "new": "return itemDyeColor({ templateIndex: own.t, group, material: own.m ?? 0, artifact: false });",
+    "old": "  return itemDyeColor({ templateIndex: own.t, group, material: own.m ?? 0, artifact: own.a != null });",
+    "new": "  return itemDyeColor({ templateIndex: own.t, group, material: own.m ?? 0, artifact: false });",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "DECOR2c-the-row-standing",
     "file": "src/systems/decor/decorItems.js",
-    "old": "light: as.light, item: as.item, storage: false, count: item.stackCount ?? 1, mount: !!hangs,",
-    "new": "light: as.light, item: as.item, storage: false, count: item.stackCount ?? 1, mount: false,",
+    "old": "    mount: !!hangs,",
+    "new": "    mount: false,",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ]

@@ -23,9 +23,12 @@ import { noteAct } from './qlActs.js';
 export const QL_ELITE_FOE = 'ql11-elite-foe';
 
 /** Whether a kill of mine in `loc` is the act: an elite foe of an Elite-tier dungeon's. Pure. */
-export const eliteFoeSlainIn = (/** @type {any} */ entity, /** @type {any} */ loc) => !!entity?.eliteFoe && !!entity.elite && dungeonTier(loc) === 'elite';
+export const eliteFoeSlainIn = (/** @type {any} */ entity, /** @type {any} */ loc) =>
+  !!entity?.eliteFoe && !!entity.elite && dungeonTier(loc) === 'elite';
 
 /** THE DUNGEON HOST'S ONE LINE: `loc` the place it built - the act said for each elite foe my blow kills there. */
 export function hearEliteFoesIn(/** @type {any} */ loc) {
-  registerPlayerKillListener(QL_ELITE_FOE, (/** @type {any} */ entity) => { if (eliteFoeSlainIn(entity, loc)) noteAct('elite-foe-slain'); });
+  registerPlayerKillListener(QL_ELITE_FOE, (/** @type {any} */ entity) => {
+    if (eliteFoeSlainIn(entity, loc)) noteAct('elite-foe-slain');
+  });
 }

@@ -5,7 +5,9 @@
     "old": "  if (pageHas('shot')) window.__playerEntity = playerEntity;",
     "new": "  if (true) window.__playerEntity = playerEntity;",
     "why": "every page is handed the live entity again, as before #955",
-    "tests": ["test/characters/anticheat_surface.test.js"]
+    "tests": [
+      "test/characters/anticheat_surface.test.js"
+    ]
   },
   {
     "name": "ANTICHEAT-A1-gate-word",
@@ -13,7 +15,9 @@
     "old": "if (pageHas('shot'))",
     "new": "if (pageHas('shots'))",
     "why": "the probes' boot is handed nothing - every tools/*Probe.mjs that reads the handle breaks",
-    "tests": ["test/characters/anticheat_surface.test.js"]
+    "tests": [
+      "test/characters/anticheat_surface.test.js"
+    ]
   },
   {
     "name": "ANTICHEAT-A1-stale-kept",
@@ -21,7 +25,9 @@
     "old": "  else if ('__playerEntity' in window) delete window.__playerEntity;",
     "new": "  else if ('__playerEntity' in window) void 0;",
     "why": "a handle published before the search lost ?shot stays on the page",
-    "tests": ["test/characters/anticheat_surface.test.js"]
+    "tests": [
+      "test/characters/anticheat_surface.test.js"
+    ]
   },
   {
     "name": "ANTICHEAT-A1-parse-a-call",
@@ -29,7 +35,10 @@
     "old": "if (pageHas('shot')) window.__playerEntity",
     "new": "if (new URLSearchParams(window.location?.search ?? '').has('shot')) window.__playerEntity",
     "why": "#955's own cut: a URLSearchParams minted every call, in the frame",
-    "tests": ["test/characters/anticheat_surface.test.js", "test/systems/perfurl_doors.test.js"]
+    "tests": [
+      "test/characters/anticheat_surface.test.js",
+      "test/systems/perfurl_doors.test.js"
+    ]
   },
   {
     "name": "ANTICHEAT-A1-a-copy",
@@ -37,15 +46,19 @@
     "old": "window.__playerEntity = playerEntity;",
     "new": "window.__playerEntity = { ...playerEntity };",
     "why": "the probes are handed a copy, and their writes land on nothing",
-    "tests": ["test/characters/anticheat_surface.test.js"]
+    "tests": [
+      "test/characters/anticheat_surface.test.js"
+    ]
   },
   {
     "name": "ANTICHEAT-A2-readyRanged-ungated",
-    "file": "src/scenes/world.js",
-    "old": "  if (shotMode) window.__readyRanged = () =>",
-    "new": "  window.__readyRanged = () =>",
+    "file": "src/scenes/worldShotProbes.js",
+    "old": "  if (shotMode)\n    window.__readyRanged = () => {\n      const sp = rangedDamageSpells(host.spellsByIndex)\n        .map((x) => [calculateCastCost(x, playerEntity).sp, x])\n        .sort((a, b) => a[0] - b[0])[0]?.[1];\n      magic.setReadied(sp);\n      return sp ? `${sp.name}:${calculateCastCost(sp, playerEntity).sp}` : null;\n    }; // M5: no classic starting set carries a missile spell - ready the cheapest flier for the flight leg (tools/castProbe.mjs); AUDIT ANTICHEAT A2: behind the shot gate, as exterior.js's twin always was",
+    "new": "  window.__readyRanged = () => {\n    const sp = rangedDamageSpells(host.spellsByIndex)\n      .map((x) => [calculateCastCost(x, playerEntity).sp, x])\n      .sort((a, b) => a[0] - b[0])[0]?.[1];\n    magic.setReadied(sp);\n    return sp ? `${sp.name}:${calculateCastCost(sp, playerEntity).sp}` : null;\n  }; // M5: no classic starting set carries a missile spell - ready the cheapest flier for the flight leg (tools/castProbe.mjs); AUDIT ANTICHEAT A2: behind the shot gate, as exterior.js's twin always was",
     "why": "the cast probe's hook on every boot again",
-    "tests": ["test/tree/probegate.test.js"]
+    "tests": [
+      "test/tree/probegate.test.js"
+    ]
   },
   {
     "name": "ANTICHEAT-A2-rig-ungated",
@@ -53,15 +66,19 @@
     "old": "    if (shotMode) window.__rig = rig;",
     "new": "    window.__rig = rig;",
     "why": "the bench's rig handle on every boot again",
-    "tests": ["test/tree/probegate.test.js"]
+    "tests": [
+      "test/tree/probegate.test.js"
+    ]
   },
   {
     "name": "ANTICHEAT-A2-installers-ungated",
-    "file": "src/scenes/world.js",
-    "old": "  if (shotMode) { modes.installShotProbes(); installTownProbes(); }",
-    "new": "  { modes.installShotProbes(); installTownProbes(); }",
+    "file": "src/scenes/worldShotProbes.js",
+    "old": "  } = host;\n  if (shotMode) {",
+    "new": "  } = host;\n  {",
     "why": "__addGold, __warpTo, __damageFoe and the rest of both installers on every boot, online too",
-    "tests": ["test/tree/probegate.test.js"]
+    "tests": [
+      "test/tree/probegate.test.js"
+    ]
   },
   {
     "name": "ANTICHEAT-A2-always-on-both-ways",
@@ -69,7 +86,9 @@
     "old": "  window.__weaponDebug = () => JSON.stringify({",
     "new": "  if (shotMode) window.__weaponDebug = () => JSON.stringify({",
     "why": "a seam gated while its always-on name stays listed - the list is counted both ways",
-    "tests": ["test/tree/probegate.test.js"]
+    "tests": [
+      "test/tree/probegate.test.js"
+    ]
   },
   {
     "name": "ANTICHEAT-devtools-packaged",
@@ -77,7 +96,9 @@
     "old": "        { role: 'toggleDevTools' },",
     "new": "        ...(!app.isPackaged ? [{ role: 'toggleDevTools' }] : []),",
     "why": "#955's own cut: the installed game loses the console a field report asks for",
-    "tests": ["test/tooling/anticheat_devtools.test.js"]
+    "tests": [
+      "test/tooling/anticheat_devtools.test.js"
+    ]
   },
   {
     "name": "ANTICHEAT-devtools-webprefs",
@@ -85,6 +106,8 @@
     "old": "      sandbox: false,",
     "new": "      sandbox: false,\n      devTools: !app.isPackaged,",
     "why": "the same, one level down: the game's window built with its DevTools off",
-    "tests": ["test/tooling/anticheat_devtools.test.js"]
+    "tests": [
+      "test/tooling/anticheat_devtools.test.js"
+    ]
   }
 ]

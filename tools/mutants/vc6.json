@@ -210,8 +210,8 @@
   {
     "name": "VC6c-thin-cloud-dims-the-shafts-politely-instead-of-taking-them",
     "file": "src/render/airPass.js",
-    "old": "uShaftParams.y * through * through);",
-    "new": "uShaftParams.y * through);",
+    "old": "  return uSunColor * (acc / ${AIR_SHAFT_TAPS}.0 * uShaftParams.y * through * through);",
+    "new": "  return uSunColor * (acc / ${AIR_SHAFT_TAPS}.0 * uShaftParams.y * through);",
     "tests": [
       "test/render/vc6_clouds.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "VC6c-a-missing-deck-uploads-an-amount-that-shadows",
     "file": "src/render/airPass.js",
-    "old": "    this._noDeck = new Float32Array([0, 0, 0, 0]);   // VC6c: no cloud field - amount 0, full sun",
-    "new": "    this._noDeck = new Float32Array([0, 0, 0, 1]);   // VC6c: no cloud field - amount 0, full sun",
+    "old": "    this._noDeck = new Float32Array([0, 0, 0, 0]); // VC6c: no cloud field - amount 0, full sun",
+    "new": "    this._noDeck = new Float32Array([0, 0, 0, 1]); // VC6c: no cloud field - amount 0, full sun",
     "tests": [
       "test/render/vc6_clouds.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "VC6d-a-null-unregisters-the-live-meter",
     "file": "src/render/perfMeter.js",
-    "old": "export function setMeter(gl, meter) { if (meter) METERS.set(gl, meter); return meter; }",
-    "new": "export function setMeter(gl, meter) { METERS.set(gl, meter); return meter; }",
+    "old": "  if (meter) METERS.set(gl, meter);",
+    "new": "  METERS.set(gl, meter);",
     "tests": [
       "test/render/el8_contact.test.js"
     ]

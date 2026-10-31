@@ -16,7 +16,13 @@ export const SPYGLASS_STYLE_ID = 'dfglass-style';
 /** The glass's own field: the share of the view's shorter side its circle spans. */
 export const GLASS_FIELD = 0.92;
 /** The tones a card's name wears, by `tone` (glassCard's). */
-export const GLASS_TONES = Object.freeze({ hostile: '#e8705e', pirate: '#d9a05a', friendly: '#9fd69a', neutral: '#e6dcb8', unknown: '#b8c2ca' });
+export const GLASS_TONES = Object.freeze({
+  hostile: '#e8705e',
+  pirate: '#d9a05a',
+  friendly: '#9fd69a',
+  neutral: '#e6dcb8',
+  unknown: '#b8c2ca',
+});
 
 const CSS = `
 .dfglass { position: fixed; left: var(--g-x, 0px); top: var(--g-y, 0px); width: var(--g-w, 100vw); height: var(--g-h, 100vh); --g-m: 1vmin;
@@ -84,13 +90,24 @@ export const GLASS_SEA_MARGIN = 0.6;
 export const GLASS_SEA_SHARE = 0.85;
 export function glassNear({ lens = 1, zoom = 1, fovY = 1, pitch = 0, eyeOverSea = 0, own = 0 } = {}) {
   if (!(lens > 1) || !(zoom > 1) || !(own > 0)) return GLASS_NEAR_MIN;
-  const t = Math.min(1, (lens - 1) / (zoom - 1)), half = fovY / 2, dip = half - pitch, h = eyeOverSea - GLASS_SEA_MARGIN;
+  const t = Math.min(1, (lens - 1) / (zoom - 1)),
+    half = fovY / 2,
+    dip = half - pitch,
+    h = eyeOverSea - GLASS_SEA_MARGIN;
   let reach = Math.min(GLASS_NEAR_MAX, own + GLASS_CLEAR_PAD);
-  if (dip > 1e-3) reach = h > 0 ? Math.min(reach, (GLASS_SEA_SHARE * h * Math.cos(half)) / Math.sin(dip)) : GLASS_NEAR_MIN;
+  if (dip > 1e-3)
+    reach = h > 0 ? Math.min(reach, (GLASS_SEA_SHARE * h * Math.cos(half)) / Math.sin(dip)) : GLASS_NEAR_MIN;
   return GLASS_NEAR_MIN + (Math.max(GLASS_NEAR_MIN, reach) - GLASS_NEAR_MIN) * t;
 }
 /** A box's faces, its corners numbered by their sides (bit 0 its x, 1 its y, 2 its z), each taken round. */
-const BOX_FACES = [[0, 1, 3, 2], [4, 5, 7, 6], [0, 1, 5, 4], [2, 3, 7, 6], [0, 2, 6, 4], [1, 3, 7, 5]];
+const BOX_FACES = [
+  [0, 1, 3, 2],
+  [4, 5, 7, 6],
+  [0, 1, 5, 4],
+  [2, 3, 7, 6],
+  [0, 2, 6, 4],
+  [1, 3, 7, 5],
+];
 /**
  * GLASS-CLEAR: how deep along the look (m) a box reaches into the glass's view - the square about its circle, `field`
  * its half-angle (the reticle's world.js field) - the deepest point of the box within it; 0 where none of it is. `box`
@@ -100,27 +117,53 @@ const BOX_FACES = [[0, 1, 3, 2], [4, 5, 7, 6], [0, 1, 5, 4], [2, 3, 7, 6], [0, 2
  */
 export function glassClearDepth({ box = null, eye = [0, 0, 0], yaw = 0, pitch = 0, field = 0 } = {}) {
   if (!box || !(field > 0)) return 0;
-  const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
-  const f = [sy * cp, sp, cy * cp], r = [cy, 0, -sy], u = [-sy * sp, cp, -cy * sp];
+  const cy = Math.cos(yaw),
+    sy = Math.sin(yaw),
+    cp = Math.cos(pitch),
+    sp = Math.sin(pitch);
+  const f = [sy * cp, sp, cy * cp],
+    r = [cy, 0, -sy],
+    u = [-sy * sp, cp, -cy * sp];
   const k = Math.tan(Math.min(field, 1.5));
   // her corners in the look's own frame: across, up, along
   const P = [];
   for (let i = 0; i < 8; i++) {
-    const w = [0, 1, 2].map((d) => box.c[d] - eye[d] + (i & 1 ? 1 : -1) * box.ax[d] * box.h[0] + (i & 2 ? 1 : -1) * box.ay[d] * box.h[1] + (i & 4 ? 1 : -1) * box.az[d] * box.h[2]);
-    P.push([w[0] * r[0] + w[1] * r[1] + w[2] * r[2], w[0] * u[0] + w[1] * u[1] + w[2] * u[2], w[0] * f[0] + w[1] * f[1] + w[2] * f[2]]);
+    const w = [0, 1, 2].map(
+      (d) =>
+        box.c[d] -
+        eye[d] +
+        (i & 1 ? 1 : -1) * box.ax[d] * box.h[0] +
+        (i & 2 ? 1 : -1) * box.ay[d] * box.h[1] +
+        (i & 4 ? 1 : -1) * box.az[d] * box.h[2],
+    );
+    P.push([
+      w[0] * r[0] + w[1] * r[1] + w[2] * r[2],
+      w[0] * u[0] + w[1] * u[1] + w[2] * u[2],
+      w[0] * f[0] + w[1] * f[1] + w[2] * f[2],
+    ]);
   }
   // the view's four sides, each a plane through the eye: n . p <= 0 within
-  const sides = [[1, 0, -k], [-1, 0, -k], [0, 1, -k], [0, -1, -k]];
+  const sides = [
+    [1, 0, -k],
+    [-1, 0, -k],
+    [0, 1, -k],
+    [0, -1, -k],
+  ];
   let deepest = 0;
   for (const face of BOX_FACES) {
     let poly = face.map((i) => P[i]);
     for (const n of sides) {
       const kept = [];
       for (let i = 0; i < poly.length; i++) {
-        const a = poly[i], b = poly[(i + 1) % poly.length];
-        const da = n[0] * a[0] + n[1] * a[1] + n[2] * a[2], db = n[0] * b[0] + n[1] * b[1] + n[2] * b[2];
+        const a = poly[i],
+          b = poly[(i + 1) % poly.length];
+        const da = n[0] * a[0] + n[1] * a[1] + n[2] * a[2],
+          db = n[0] * b[0] + n[1] * b[1] + n[2] * b[2];
         if (da <= 0) kept.push(a);
-        if ((da < 0 && db > 0) || (da > 0 && db < 0)) { const t = da / (da - db); kept.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]); }
+        if ((da < 0 && db > 0) || (da > 0 && db < 0)) {
+          const t = da / (da - db);
+          kept.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]);
+        }
       }
       poly = kept;
       if (!poly.length) break;
@@ -132,10 +175,21 @@ export function glassClearDepth({ box = null, eye = [0, 0, 0], yaw = 0, pitch = 
 /** GLASS-CLEAR: the eye's height over where the view's lower edge meets the sea - over the sea, or over the ground there
  *  where it stands higher (a shore, a shoal: one look along the look's bearing, `groundAt(x, z)`; none, the sea alone).
  *  `eyeX`, `eyeZ`, `eyeY` the eye, `yaw` the look's (forward [sin, 0, cos]), `seaY` the sea's level. Pure. */
-export function glassEyeOverSea({ eyeX = 0, eyeZ = 0, yaw = 0, eyeY = 0, seaY = 0, fovY = 1, pitch = 0, groundAt = null } = {}) {
-  const h = eyeY - seaY, dip = fovY / 2 - pitch;
+export function glassEyeOverSea({
+  eyeX = 0,
+  eyeZ = 0,
+  yaw = 0,
+  eyeY = 0,
+  seaY = 0,
+  fovY = 1,
+  pitch = 0,
+  groundAt = null,
+} = {}) {
+  const h = eyeY - seaY,
+    dip = fovY / 2 - pitch;
   if (!groundAt || !(h > 0) || !(dip > 1e-3)) return h;
-  const run = h / Math.tan(dip), g = groundAt(eyeX + Math.sin(yaw) * run, eyeZ + Math.cos(yaw) * run);
+  const run = h / Math.tan(dip),
+    g = groundAt(eyeX + Math.sin(yaw) * run, eyeZ + Math.cos(yaw) * run);
   return eyeY - (Number.isFinite(g) ? Math.max(seaY, g) : seaY);
 }
 
@@ -144,8 +198,8 @@ export function glassEyeOverSea({ eyeX = 0, eyeZ = 0, yaw = 0, eyeY = 0, seaY = 
  * @param {{ zoom?: number, keys?: { glass?: string|null, zoom?: string|null }, touch?: boolean, pad?: boolean }} [o]
  */
 export function glassFootWords({ zoom = 4, keys = {}, touch = false, pad = false } = {}) {
-  if (touch) return `x${Math.round(zoom)}`;   // AUDIT CAPTAIN'S SEA S3/S16: a finger's two presses are the foot's own buttons
-  const magnify = pad ? (keys.zoom ? `${keys.zoom}: magnify` : null) : 'Wheel: magnify';   // S3: the pad's, the look stick's click
+  if (touch) return `x${Math.round(zoom)}`; // AUDIT CAPTAIN'S SEA S3/S16: a finger's two presses are the foot's own buttons
+  const magnify = pad ? (keys.zoom ? `${keys.zoom}: magnify` : null) : 'Wheel: magnify'; // S3: the pad's, the look stick's click
   const lower = keys.glass ? `${keys.glass}: lower the glass` : 'Lower the glass';
   return [`x${Math.round(zoom)}`, magnify, lower].filter(Boolean).join(' - ');
 }
@@ -154,12 +208,27 @@ export const nextGlassZoom = (zoom) => (zoom >= 8 ? 2 : zoom >= 4 ? 8 : 4);
 /** AUDIT CAPTAIN'S SEA S3/S16: the foot's presses under a finger not yet read - Magnify and Lower (the glass is up on a
  *  deck too, where the plate's Glass is not, and no wheel turns under a finger). Read once each. */
 const taps = { zoom: 0, lower: 0 };
-export function spyglassTaps() { const t = { zoom: taps.zoom > 0, lower: taps.lower > 0 }; taps.zoom = 0; taps.lower = 0; return t; }
+export function spyglassTaps() {
+  const t = { zoom: taps.zoom > 0, lower: taps.lower > 0 };
+  taps.zoom = 0;
+  taps.lower = 0;
+  return t;
+}
 
-let root = null, parts = null;
+let root = null,
+  parts = null;
 const said = new Map();
-const set = (key, v, write) => { if (said.get(key) !== v) { said.set(key, v); write(v); } };
-function el(doc, tag, cls) { const n = doc.createElement(tag); if (cls) n.className = cls; return n; }
+const set = (key, v, write) => {
+  if (said.get(key) !== v) {
+    said.set(key, v);
+    write(v);
+  }
+};
+function el(doc, tag, cls) {
+  const n = doc.createElement(tag);
+  if (cls) n.className = cls;
+  return n;
+}
 function build(doc) {
   if (doc.head && !doc.getElementById?.(SPYGLASS_STYLE_ID)) {
     const st = el(doc, 'style', null);
@@ -170,17 +239,30 @@ function build(doc) {
   }
   root = el(doc, 'div', 'dfglass');
   root.setAttribute?.('aria-hidden', 'true');
-  const tube = el(doc, 'div', 'dfglass-tube'), ring = el(doc, 'div', 'dfglass-ring'), pip = el(doc, 'div', 'dfglass-pip');
+  const tube = el(doc, 'div', 'dfglass-tube'),
+    ring = el(doc, 'div', 'dfglass-ring'),
+    pip = el(doc, 'div', 'dfglass-pip');
   const hairs = ['h l', 'h r', 'v t', 'v b'].map((k) => el(doc, 'div', `dfglass-hair ${k}`));
-  const card = el(doc, 'div', 'dfglass-card'), title = el(doc, 'span', 'dfglass-title'), sub = el(doc, 'span', 'dfglass-sub');
-  const study = el(doc, 'span', 'dfglass-study'), fill = el(doc, 'i', null), rows = el(doc, 'div', 'dfglass-rows'), hint = el(doc, 'span', 'dfglass-hint');
+  const card = el(doc, 'div', 'dfglass-card'),
+    title = el(doc, 'span', 'dfglass-title'),
+    sub = el(doc, 'span', 'dfglass-sub');
+  const study = el(doc, 'span', 'dfglass-study'),
+    fill = el(doc, 'i', null),
+    rows = el(doc, 'div', 'dfglass-rows'),
+    hint = el(doc, 'span', 'dfglass-hint');
   study.append(fill);
   card.append(title, sub, study, rows, hint);
-  const foot = el(doc, 'div', 'dfglass-foot'), footText = el(doc, 'span', 'dfglass-foot-words');
-  const zoomBtn = el(doc, 'span', 'dfglass-btn zoom'), lowerBtn = el(doc, 'span', 'dfglass-btn lower');
+  const foot = el(doc, 'div', 'dfglass-foot'),
+    footText = el(doc, 'span', 'dfglass-foot-words');
+  const zoomBtn = el(doc, 'span', 'dfglass-btn zoom'),
+    lowerBtn = el(doc, 'span', 'dfglass-btn lower');
   zoomBtn.textContent = 'Magnify';
   lowerBtn.textContent = 'Lower';
-  const tapper = (k) => (e) => { e?.preventDefault?.(); e?.stopPropagation?.(); taps[k]++; };
+  const tapper = (k) => (e) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    taps[k]++;
+  };
   zoomBtn.addEventListener?.('touchstart', tapper('zoom'), { passive: false });
   lowerBtn.addEventListener?.('touchstart', tapper('lower'), { passive: false });
   foot.append(footText, zoomBtn, lowerBtn);
@@ -196,40 +278,79 @@ function build(doc) {
  * @param {{ card: any, zoom: number } | null} model
  * @param {{ doc?: any, keys?: { glass?: string|null, zoom?: string|null }, scale?: number, touch?: boolean, pad?: boolean, covered?: boolean, rect?: { x: number, y: number, w: number, h: number } | null }} [o]
  */
-export function drawSpyglass(model, { doc = globalThis.document, keys = {}, scale = 1, touch = false, pad = false, covered = false, rect = null } = {}) {
+export function drawSpyglass(
+  model,
+  { doc = globalThis.document, keys = {}, scale = 1, touch = false, pad = false, covered = false, rect = null } = {},
+) {
   const on = !!model && !covered;
   if (!root) {
     if (!on || !doc?.createElement) return;
     build(doc);
   }
-  set('on', on, (v) => { root.style.display = v ? '' : 'none'; });
-  if (!on) { taps.zoom = 0; taps.lower = 0; return; }
-  set('scale', String(scale), (v) => { root.style.setProperty?.('--g-scale', v); });
+  set('on', on, (v) => {
+    root.style.display = v ? '' : 'none';
+  });
+  if (!on) {
+    taps.zoom = 0;
+    taps.lower = 0;
+    return;
+  }
+  set('scale', String(scale), (v) => {
+    root.style.setProperty?.('--g-scale', v);
+  });
   // AUDIT CAPTAIN'S SEA S10: the world's strip - the docked bar's room left out, the reticle on the crosshair
-  const box = rect && rect.w > 0 && rect.h > 0 ? `${Math.round(rect.x)},${Math.round(rect.y)},${Math.round(rect.w)},${Math.round(rect.h)}` : '';
+  const box =
+    rect && rect.w > 0 && rect.h > 0
+      ? `${Math.round(rect.x)},${Math.round(rect.y)},${Math.round(rect.w)},${Math.round(rect.h)}`
+      : '';
   set('rect', box, (v) => {
     const [x, y, w, h] = v ? v.split(',').map(Number) : [];
-    for (const [k, n] of [['--g-x', x], ['--g-y', y], ['--g-w', w], ['--g-h', h]]) root.style.setProperty?.(k, v ? `${n}px` : '');
+    for (const [k, n] of [
+      ['--g-x', x],
+      ['--g-y', y],
+      ['--g-w', w],
+      ['--g-h', h],
+    ])
+      root.style.setProperty?.(k, v ? `${n}px` : '');
     root.style.setProperty?.('--g-m', v ? `${Math.min(w, h) / 100}px` : '');
   });
   const c = model.card;
-  set('held', `${!!c}|${!!touch}`, () => { root.className = `dfglass${c ? ' held' : ''}${touch ? ' touch' : ''}`; parts.card.style.display = c ? '' : 'none'; });
-  set('foot', glassFootWords({ zoom: model.zoom, keys, touch, pad }), (v) => { parts.foot.textContent = v; });
+  set('held', `${!!c}|${!!touch}`, () => {
+    root.className = `dfglass${c ? ' held' : ''}${touch ? ' touch' : ''}`;
+    parts.card.style.display = c ? '' : 'none';
+  });
+  set('foot', glassFootWords({ zoom: model.zoom, keys, touch, pad }), (v) => {
+    parts.foot.textContent = v;
+  });
   if (!c) return;
-  set('title', c.title, (v) => { parts.title.textContent = v; });
-  set('tone', GLASS_TONES[c.tone] ?? GLASS_TONES.neutral, (v) => { parts.title.style.color = v; });
-  set('sub', c.sub ?? '', (v) => { parts.sub.textContent = v; });
+  set('title', c.title, (v) => {
+    parts.title.textContent = v;
+  });
+  set('tone', GLASS_TONES[c.tone] ?? GLASS_TONES.neutral, (v) => {
+    parts.title.style.color = v;
+  });
+  set('sub', c.sub ?? '', (v) => {
+    parts.sub.textContent = v;
+  });
   const study = Math.max(0, Math.min(1, Number(c.study) || 0));
-  set('studying', study < 1, (v) => { parts.study.style.display = v ? '' : 'none'; });
-  set('study', Math.round(study * 100), (v) => { parts.fill.style.width = `${v}%`; });
+  set('studying', study < 1, (v) => {
+    parts.study.style.display = v ? '' : 'none';
+  });
+  set('study', Math.round(study * 100), (v) => {
+    parts.fill.style.width = `${v}%`;
+  });
   set('rows', JSON.stringify(c.rows ?? []), () => {
     parts.rows.textContent = '';
     for (const [label, text] of c.rows ?? []) {
-      const b = el(doc, 'b', null), s = el(doc, 'span', null);
+      const b = el(doc, 'b', null),
+        s = el(doc, 'span', null);
       b.textContent = label;
       s.textContent = text;
       parts.rows.append(b, s);
     }
   });
-  set('hint', c.hint ?? '', (v) => { parts.hint.textContent = v; parts.hint.style.display = v ? '' : 'none'; });
+  set('hint', c.hint ?? '', (v) => {
+    parts.hint.textContent = v;
+    parts.hint.style.display = v ? '' : 'none';
+  });
 }

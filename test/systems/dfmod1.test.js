@@ -186,7 +186,7 @@ test('DFMOD1-E: the Enhanced Plus avatar follows the attached mods - the composi
   assert.match(doll, /_composedGen = gen;/);
   assert.match(doll, /if \(!_live \|\| paperDollStale\(\)\) refreshPaperDoll\(entity\);/, 'the classic doll recomposes on its draw');
   assert.match(src('ui/enhanced/enhancedInventory.js'), /if \(paperDollStale\(\)\) refreshFigure\(\);\n\s*const figure = modelFigure\(\);/, 'the enhanced pack asks for a fresh avatar');
-  assert.match(src('ui/textureCanvas.js'), /if \(_iconsGen !== iconsGeneration\(\)\) \{ icons\.clear\(\); _iconsGen = iconsGeneration\(\); \}/, 'and its icons are drawn again');
+  assert.match(src('ui/textureCanvas.js'), /if \(_iconsGen !== iconsGeneration\(\)\) \{\n\s*icons\.clear\(\);\n\s*_iconsGen = iconsGeneration\(\);\n\s*\}/, 'and its icons are drawn again');
   assert.match(src('ui/textureCanvas.js'), /const iconsGeneration = \(\) => `\$\{dfmodGeneration\(\)\}:\$\{studioGeneration\(\)\}`;/, 'STUDIO1: the key is the attached-mod set\'s, and the studio\'s');
 });
 
@@ -219,7 +219,7 @@ test('DFMOD2 sources: a Uint8Array or a ranged source reads the same; a Blob is 
 test('DFMOD2 wiring: the boot never indexes on its way in, opens by range and warms, asks wait a bounded time, detail is the player\'s', () => {
   const door = src('systems/dfmodTextures.js');
   // PIN MOVED (AUDIT VE R6): what is indexed in the background is the missing AND the version before's rebuild
-  assert.match(door, /if \(todo\.length\) \{ if \(background\) indexMissing\(\); else await indexMissing\(\); \}/);
+  assert.match(door, /if \(todo\.length\) \{\n\s*if \(background\) indexMissing\(\);\n\s*else await indexMissing\(\);\n\s*\}/);
   assert.match(door, /if \(blob\?\.size\) return _opener\(blob, \{ maxTextureSize: maxSize\(\), knownTextures: knownOf\(key\) \}\);/);
   assert.match(door, /const b = await Promise\.race\(\[bundleFor\(key\), waited\]\);/);
   assert.match(src('scenes/dataSource.js'), /const index = await indexDfmodBytes\(f\);/, 'an attach reads the picked File by range, not whole');
@@ -337,7 +337,7 @@ test('DWHD1 crunch: a non-CRN stream is refused; formats 28/29 are known to the 
   assert.equal(F.DXT1Crunched, 28); assert.equal(F.DXT5Crunched, 29);
   assert.ok(!hasOwnDoor('dfmod/diverse weapons hd - handhelds i.dfmod') && !hasOwnDoor('dfmod/diverse weapons hd - inventory.dfmod'));
   assert.ok(hasOwnDoor('dfmod/diverse weapons.dfmod'), 'RealAKP\'s own bundle stays with its door');
-  assert.match(src('combat/diverseWeapons/diverseWeaponsAssets.js'), /&& !\/\\bhd\\b\/i\.test\(name\.slice\(name\.lastIndexOf\('\/'\) \+ 1\)\);/, 'and that door no longer opens the HD ones to read their GUID');
+  assert.match(src('combat/diverseWeapons/diverseWeaponsAssets.js'), /&&\n\s*!\/\\bhd\\b\/i\.test\(name\.slice\(name\.lastIndexOf\('\/'\) \+ 1\)\);/, 'and that door no longer opens the HD ones to read their GUID');
 });
 
 // The crunch decoder was checked block for block against texture2ddecoder's unpack_unity_crunch on 122 of Diverse

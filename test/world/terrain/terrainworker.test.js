@@ -310,6 +310,7 @@ test('EV7: the world host rides the client and the pinned build contracts stand'
   assert.ok(bp.includes('if (wantStride === 1) host.restridePending.set(pkey, entry);'), 'the dear direction queues');   // PIN MOVED (IC-SWAP-BEHIND): the pixel's own key
   assert.ok(bp.includes('else restrideTerrain(entry, wantStride);'), 'and the cheap one settles at once');
   // AUDIT EV F-SIM6: the probe's idle truth covers teleport builds too
-  assert.ok(world.includes('queue.length === 0 && !building && inFlight.size === 0'),
+  // PIN MOVED (HOST-SPLIT SHOT-HOOKS): the probe surface reads `building` live through its host
+  assert.ok(world.includes('queue.length === 0 && !host.building && inFlight.size === 0'),
     '__streamIdle counts every in-flight build');
 });

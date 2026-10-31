@@ -20,8 +20,8 @@
   {
     "name": "A2-melt-conjured",
     "file": "src/systems/fleet.js",
-    "old": " && !isSummoned(item) && !item.questItem",
-    "new": " && !item.questItem",
+    "old": "  !isSummoned(item) &&\n  !item.questItem &&",
+    "new": "  !item.questItem &&",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "A2-ingots-lent-first",
     "file": "src/systems/fleet.js",
-    "old": "const ingots = [own, lent].filter",
-    "new": "const ingots = [lent, own].filter",
+    "old": "  const ingots = [own, lent].filter((ts) => ts.length).map((ts) => (it) => !!it && ts.includes(it.templateIndex));",
+    "new": "  const ingots = [lent, own].filter((ts) => ts.length).map((ts) => (it) => !!it && ts.includes(it.templateIndex));",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "A2-stores-ore-first",
     "file": "src/systems/fleet.js",
-    "old": "Number(MATERIALS[a.kind]?.metal != null) - Number(MATERIALS[b.kind]?.metal != null)",
-    "new": "Number(MATERIALS[b.kind]?.metal != null) - Number(MATERIALS[a.kind]?.metal != null)",
+    "old": "  [...mats].sort((a, b) => Number(MATERIALS[a.kind]?.metal != null) - Number(MATERIALS[b.kind]?.metal != null));",
+    "new": "  [...mats].sort((a, b) => Number(MATERIALS[b.kind]?.metal != null) - Number(MATERIALS[a.kind]?.metal != null));",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "A2-melt-unordered",
     "file": "src/systems/fleet.js",
-    "old": "  for (const m of takeOrder(mats)) { melt.set(m, meltCount(copy, m.kind, m.n));",
-    "new": "  for (const m of mats) { melt.set(m, meltCount(copy, m.kind, m.n));",
+    "old": "  for (const m of takeOrder(mats)) {",
+    "new": "  for (const m of mats) {",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "A2-exchange-buys-back",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "buy: Math.max(1, Math.min(sell - 1, Math.round(p.mid * (1 - k) * pay))), exotic,",
-    "new": "buy: Math.max(1, Math.round(p.mid * (1 - k) * pay)), exotic,",
+    "old": "      buy: Math.max(1, Math.min(sell - 1, Math.round(p.mid * (1 - k) * pay))),",
+    "new": "      buy: Math.max(1, Math.round(p.mid * (1 - k) * pay)),",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "A2-tally-rounded-each",
     "file": "src/scenes/naval/navalTally.js",
-    "old": "      if (t) t.men += n;",
-    "new": "      if (t) t.men += Math.round(n);",
+    "old": "      if (t) t.men += n; // AUDIT 2: summed whole, rounded once as it is shown - a ball's share of a man is no man",
+    "new": "      if (t) t.men += Math.round(n); // AUDIT 2: summed whole, rounded once as it is shown - a ball's share of a man is no man",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "A2-tally-unrounded",
     "file": "src/scenes/naval/navalTally.js",
-    "old": "rig: last.rig, men: Math.round(last.men) } : null;",
-    "new": "rig: last.rig, men: last.men } : null;",
+    "old": "        ? { balls: last.balls, hits: last.hits, holed: last.holed, rig: last.rig, men: Math.round(last.men) }",
+    "new": "        ? { balls: last.balls, hits: last.hits, holed: last.holed, rig: last.rig, men: last.men }",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -156,7 +156,7 @@
     "name": "A2-wheel-throttled",
     "file": "src/scenes/naval/navalLoads.js",
     "old": "      wheelAt = now;\n      if (quiet) cycle(deltaY > 0 ? 1 : -1);",
-    "new": "      if (quiet) { wheelAt = now; cycle(deltaY > 0 ? 1 : -1); }",
+    "new": "      if (quiet) {\n        wheelAt = now;\n        cycle(deltaY > 0 ? 1 : -1);\n      }",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "A2-pass-first-kept",
     "file": "src/systems/naval/navalShots.js",
-    "old": "if (near.gap <= NEAR_MISS_M && (!was || near.gap < was.gap))",
-    "new": "if (near.gap <= NEAR_MISS_M && !was)",
+    "old": "      if (near.gap <= NEAR_MISS_M && (!was || near.gap < was.gap))\n        (b.near ??= new Map()).set(t.id, { point: near.point, gap: near.gap, dir });",
+    "new": "      if (near.gap <= NEAR_MISS_M && !was) (b.near ??= new Map()).set(t.id, { point: near.point, gap: near.gap, dir });",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "A2-pass-gone-untold",
     "file": "src/systems/naval/navalShots.js",
-    "old": "for (const id of [...(b.near?.keys() ?? [])]) passTold(b, id); ",
-    "new": "",
+    "old": "        for (const id of [...(b.near?.keys() ?? [])]) passTold(b, id);\n        emit({ type: 'gone', volley: b.volley, shooter: b.shooter, gun: b.gun });",
+    "new": "        emit({ type: 'gone', volley: b.volley, shooter: b.shooter, gun: b.gun });",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "A2-jar-any-boat",
     "file": "src/scenes/naval/navalFeel.js",
-    "old": "    if (feet && boxGap(best.h.box, feet) <= DRENCH_FEET_M) deps.shake?.",
-    "new": "    deps.shake?.",
+    "old": "    if (feet && boxGap(best.h.box, feet) <= DRENCH_FEET_M) deps.shake?.(NEAR_SHAKE * (0.4 + 0.6 * k));",
+    "new": "    deps.shake?.(NEAR_SHAKE * (0.4 + 0.6 * k));",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "A2-flags-uncapped",
     "file": "src/scenes/shipFlagHost.js",
-    "old": "if (!boat || !flag || list.length >= FLAGS_MAX) return;",
-    "new": "if (!boat || !flag) return;",
+    "old": "      if (!boat || !flag || list.length >= FLAGS_MAX) return; // AUDIT 2: one past the pass's cap flies her pennant - it was left out for cloth never drawn",
+    "new": "      if (!boat || !flag) return; // AUDIT 2: one past the pass's cap flies her pennant - it was left out for cloth never drawn",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "A2-flag-fade-lost",
     "file": "src/scenes/shipFlagHost.js",
-    "old": "fade: boat.fade ?? 1 });",
-    "new": "fade: 1 });",
+    "old": "      list.push({\n        key: flagKey(flag),\n        flag,\n        top,\n        fly: flyOf(node.forward),\n        size,\n        phase: flagPhaseOf(phase),\n        fade: boat.fade ?? 1,\n      }); // AUDIT 2: her fade, the cloth dissolving with her hull",
+    "new": "      list.push({ key: flagKey(flag), flag, top, fly: flyOf(node.forward), size, phase: flagPhaseOf(phase), fade: 1 }); // AUDIT 2: her fade, the cloth dissolving with her hull",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "A2-cloth-undissolved",
     "file": "src/render/shipFlagPass.js",
-    "old": "  dissolveCut();   // AUDIT 2",
-    "new": "  // AUDIT 2",
+    "old": "  dissolveCut();   // AUDIT 2: SHIP-FADE - a ship sailing into the world or out of it keeps her share of her cloth as of her hull",
+    "new": "  // AUDIT 2: SHIP-FADE - a ship sailing into the world or out of it keeps her share of her cloth as of her hull",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "A2-key-board-blind",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "rec.d ?? null, rec.p ?? null, rec.h ?? null] : rec.m",
-    "new": "rec.d ?? null, rec.h ?? null] : rec.m",
+    "old": "              rec.p ?? null,\n              rec.h ?? null,",
+    "new": "              rec.h ?? null,",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "A2-key-board-unkeyed",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "|| rec.d || rec.p || rec.h ? [",
-    "new": "|| rec.d || rec.h ? [",
+    "old": "        rec.u || rec.cabin || rec.n || rec.f || rec.l || rec.d || rec.p || rec.h",
+    "new": "        rec.u || rec.cabin || rec.n || rec.f || rec.l || rec.d || rec.h",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "A2-cabin-guest-stained",
     "file": "src/scenes/sailingCabin.js",
-    "old": "cabinRestyle(guest ? 0 : fleetShip(cabin.uid)?.cabin ?? 0)",
-    "new": "cabinRestyle(fleetShip(cabin.uid)?.cabin ?? 0)",
+    "old": "    restyle: cabinRestyle(guest ? 0 : (fleetShip(cabin.uid)?.cabin ?? 0)),",
+    "new": "    restyle: cabinRestyle(fleetShip(cabin.uid)?.cabin ?? 0),",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -318,8 +318,8 @@
   {
     "name": "A2-fit-over-rail",
     "file": "src/ui/deckPlanWindow.js",
-    "old": "  if (!box.every(([x, z]) => deck.walkable(x, z))) return",
-    "new": "  if (false) return",
+    "old": "  if (!box.every(([x, z]) => deck.walkable(x, z))) return t('naval.deck.offDeck', \"That spot isn't on the open deck.\");",
+    "new": "  if (false) return t('naval.deck.offDeck', \"That spot isn't on the open deck.\");",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "A2-fit-into-another",
     "file": "src/ui/deckPlanWindow.js",
-    "old": "  if (others.some((f) => { const o = footprint(f.m); return !!o && boxesMeet(",
-    "new": "  if (false && others.some((f) => { const o = footprint(f.m); return !!o && boxesMeet(",
+    "old": "    others.some((f) => {",
+    "new": "    false &&\n    others.some((f) => {",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -336,7 +336,7 @@
   {
     "name": "A2-fit-turn-free",
     "file": "src/ui/deckPlanWindow.js",
-    "old": "    if (why) { tell(why, true); return; }\n    list[picked] = { ...f, yaw };",
+    "old": "    if (why) {\n      tell(why, true);\n      return;\n    }\n    list[picked] = { ...f, yaw };",
     "new": "    list[picked] = { ...f, yaw };",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
@@ -345,8 +345,8 @@
   {
     "name": "A2-fit-loaded-unpinned",
     "file": "src/scenes/comeSailAway/deckFittingsHost.js",
-    "old": "    for (const f of list) { load(f.m); if (ctx.modelBounds?.(f.m)) loaded++; }",
-    "new": "    for (const f of list) { if (ctx.modelBounds?.(f.m)) loaded++; else load(f.m); }",
+    "old": "      load(f.m);\n      if (ctx.modelBounds?.(f.m)) loaded++;",
+    "new": "      if (ctx.modelBounds?.(f.m)) loaded++;\n      else load(f.m);",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -354,8 +354,8 @@
   {
     "name": "A2-hold-parts-lost",
     "file": "src/scenes/holdDoor.js",
-    "old": "      if (at >= 0) { items.splice(at, 1); deps.toPack?.(parts); }\n",
-    "new": "",
+    "old": "          if (at >= 0) {\n            items.splice(at, 1);\n            deps.toPack?.(parts);\n          }\n        }",
+    "new": "        }",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "A2-key-doorless",
     "file": "src/scenes/holdDoor.js",
-    "old": " && (afloat(s.uid) || deps.partsOf?.(s.uid) || titleDeedOf(s.uid)));",
-    "new": ");",
+    "old": "      const mine = ships().filter(\n        (s) => holdsCargo(s.hull) && (afloat(s.uid) || deps.partsOf?.(s.uid) || titleDeedOf(s.uid)),\n      );",
+    "new": "      const mine = ships().filter((s) => holdsCargo(s.hull));",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]

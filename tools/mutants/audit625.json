@@ -2,7 +2,7 @@
   {
     "name": "AUDIT625-L1-kit-by-the-table",
     "file": "src/systems/foeLootCap.js",
-    "old": "    if (!it || it.untaken === true || !rarityEligible(it)) return;   // AUDIT 625 L1: no mark - the kit the spawn's roll passed by",
+    "old": "    if (!it || it.untaken === true || !rarityEligible(it)) return; // AUDIT 625 L1: no mark - the kit the spawn's roll passed by",
     "new": "    if (!it || it.untaken === true || !rarityEligible(it) || !(entity.equip?.slots ?? []).includes(it)) return;",
     "why": "the kit found by the table's objects again - no foe restored from a save rolls it",
     "tests": [
@@ -12,7 +12,7 @@
   {
     "name": "AUDIT625-L2-the-live-piece-laddered",
     "file": "src/systems/foeLootCap.js",
-    "old": "    const piece = { ...it, untaken: true };   // AUDIT 625 L2: a copy in the body; the table's piece stays as it was minted",
+    "old": "    const piece = { ...it, untaken: true }; // AUDIT 625 L2: a copy in the body; the table's piece stays as it was minted",
     "new": "    const piece = Object.assign(it, { untaken: true });",
     "why": "the table's own piece laddered - a foe revived in place swings it",
     "tests": [
@@ -22,8 +22,8 @@
   {
     "name": "AUDIT625-L3-the-boss-ladder",
     "file": "src/systems/foeLootCap.js",
-    "old": "entity.level, entity.mobileType), boss: false, weights: plainFoeRarityWeights(quarters) };",
-    "new": "entity.level, entity.mobileType), weights: plainFoeRarityWeights(quarters) };",
+    "old": "    boss: false,\n    weights: plainFoeRarityWeights(quarters),",
+    "new": "    weights: plainFoeRarityWeights(quarters),",
     "why": "a boss's kit on its multiplied ladder",
     "tests": [
       "test/systems/audit625_loot.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "AUDIT625-L6-family-dropped",
     "file": "src/systems/foeLootCap.js",
-    "old": "applyRarity(piece, tier, rolls, null, { family: source.family ?? null })",
-    "new": "applyRarity(piece, tier, rolls, null, { family: null })",
+    "old": "      applyRarity(piece, tier, rolls, null, { family: source.family ?? null });",
+    "new": "      applyRarity(piece, tier, rolls, null, { family: null });",
     "why": "the foe's family unread at a Legendary's pick",
     "tests": [
       "test/systems/audit625_loot.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "AUDIT625-L4-the-jar-unsent",
     "file": "src/systems/survival/camp.js",
-    "old": "  if (camp.jar === true) out.j = 1;",
-    "new": "",
+    "old": "  if (camp.jar === true) out.j = 1; // AUDIT 625 L4: an Ember Jar's fire says so - a peer's copy is the jar, never a plain campfire",
+    "new": "  // AUDIT 625 L4: an Ember Jar's fire says so - a peer's copy is the jar, never a plain campfire",
     "why": "an Ember Jar's fire sent as a campfire",
     "tests": [
       "test/systems/audit625_loot.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "AUDIT625-L4-the-jar-unread",
     "file": "src/systems/survival/camp.js",
-    "old": "  if (r.j === 1 && camp.kind === CAMP_KIND.Fire) camp.jar = true;",
-    "new": "",
+    "old": "  if (r.j === 1 && camp.kind === CAMP_KIND.Fire) camp.jar = true; // AUDIT 625 L4: an Ember Jar's fire is a jar on every copy",
+    "new": "  // AUDIT 625 L4: an Ember Jar's fire is a jar on every copy",
     "why": "a peer's copy of a jar a plain campfire",
     "tests": [
       "test/systems/audit625_loot.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "AUDIT625-L4-the-jar-unprojected",
     "file": "src/systems/survival/camp.js",
-    "old": ", ...(r.j === 1 ? { j: 1 } : {}) };",
-    "new": " };",
+    "old": "  return {\n    i: r.i,\n    k: r.k,\n    p: [r.p[0], r.p[1], r.p[2]],\n    y: wrapAngle(r.y),\n    u: r.u,\n    w: r.w,\n    ...(d ? { d } : {}),\n    ...(r.j === 1 ? { j: 1 } : {}),\n  };",
+    "new": "  return { i: r.i, k: r.k, p: [r.p[0], r.p[1], r.p[2]], y: wrapAngle(r.y), u: r.u, w: r.w, ...(d ? { d } : {}) };",
     "why": "the jar dropped by the record's projection",
     "tests": [
       "test/systems/audit625_loot.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "AUDIT625-L4-the-jar-unchecked",
     "file": "src/systems/survival/camp.js",
-    "old": "  if (r.j !== undefined && r.j !== 1) return null;",
-    "new": "",
+    "old": "  if (r.j !== undefined && r.j !== 1) return null; // AUDIT 625 L4: an Ember Jar's fire, 1 or nothing",
+    "new": "  // AUDIT 625 L4: an Ember Jar's fire, 1 or nothing",
     "why": "a jar's field outside its law taken",
     "tests": [
       "test/systems/audit625_loot.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "AUDIT625-W5-the-wait-in-offline-words",
     "file": "src/systems/walletItem.js",
-    "old": "silverWhy: Number.isSafeInteger(silver) ? null : !here ? 'offline' : silver === false ? 'none' : 'asking',",
-    "new": "silverWhy: Number.isSafeInteger(silver) ? null : 'offline',",
+    "old": "    silverWhy: Number.isSafeInteger(silver) ? null : !here ? 'offline' : silver === false ? 'none' : 'asking',",
+    "new": "    silverWhy: Number.isSafeInteger(silver) ? null : 'offline',",
     "why": "online and not known yet, the offline words",
     "tests": [
       "test/systems/audit625_wallet.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "AUDIT625-W5-none-in-wait-words",
     "file": "src/systems/walletItem.js",
-    "old": "silverWhy: Number.isSafeInteger(silver) ? null : !here ? 'offline' : silver === false ? 'none' : 'asking',",
-    "new": "silverWhy: Number.isSafeInteger(silver) ? null : !here ? 'offline' : 'asking',",
+    "old": "    silverWhy: Number.isSafeInteger(silver) ? null : !here ? 'offline' : silver === false ? 'none' : 'asking',",
+    "new": "    silverWhy: Number.isSafeInteger(silver) ? null : !here ? 'offline' : 'asking',",
     "why": "an account that holds none said to be asking",
     "tests": [
       "test/systems/audit625_wallet.test.js"
@@ -222,8 +222,8 @@
   {
     "name": "AUDIT625-W5-none-unread",
     "file": "src/systems/walletItem.js",
-    "old": "    if (n === false) return false;\n",
-    "new": "",
+    "old": "    if (n === false) return false;\n    return Number.isSafeInteger(n) && n >= 0 ? n : null;",
+    "new": "    return Number.isSafeInteger(n) && n >= 0 ? n : null;",
     "why": "the host's none read as not known yet",
     "tests": [
       "test/systems/audit625_wallet.test.js"
@@ -232,8 +232,8 @@
   {
     "name": "AUDIT625-W5-asks-stacked",
     "file": "src/systems/walletItem.js",
-    "old": "  if (_asking) return _asking;\n",
-    "new": "",
+    "old": "  if (_asking) return _asking;\n  let ask;",
+    "new": "  let ask;",
     "why": "a look while an ask is out asks again beside it",
     "tests": [
       "test/systems/audit625_wallet.test.js"
@@ -282,8 +282,8 @@
   {
     "name": "AUDIT625-S1-young-asked-again",
     "file": "src/net/marksBook.js",
-    "old": "          findsMet = { account: me, day };   // AUDIT 625 S1",
-    "new": "          void 0;   // AUDIT 625 S1",
+    "old": "          findsMet = { account: me, day }; // AUDIT 625 S1: none of its finds struck today - none asked again until the day turns",
+    "new": "          void 0; // AUDIT 625 S1: none of its finds struck today - none asked again until the day turns",
     "why": "a young account asked again the same day",
     "tests": [
       "test/net/audit625_silver.test.js"
@@ -292,8 +292,8 @@
   {
     "name": "AUDIT625-S1-young-owed",
     "file": "src/net/marksBook.js",
-    "old": "          held = error;   // INT16: nor a character not seated here, nor one whose trade is held - none of these finds is owed\n        } else if (error === 'marks-need-account'",
-    "new": "          owe(f); held = error;   // INT16: nor a character not seated here, nor one whose trade is held - none of these finds is owed\n        } else if (error === 'marks-need-account'",
+    "old": "          held = error; // INT16: nor a character not seated here, nor one whose trade is held - none of these finds is owed",
+    "new": "          owe(f);\n          held = error; // INT16: nor a character not seated here, nor one whose trade is held - none of these finds is owed",
     "why": "a young account's find owed",
     "tests": [
       "test/net/audit625_silver.test.js"
@@ -302,8 +302,8 @@
   {
     "name": "AUDIT625-S3-closed-drops-the-rest",
     "file": "src/net/marksBook.js",
-    "old": "          owe(f); held = error;   // AUDIT 625 S3",
-    "new": "          keepOwed(); return out;   // AUDIT 625 S3",
+    "old": "          owe(f);\n          held = error; // AUDIT 625 S3: this find and the rest owed, asked when silver is this account's again",
+    "new": "          keepOwed();\n          return out; // AUDIT 625 S3: this find and the rest owed, asked when silver is this account's again",
     "why": "the switch shut drops the find and every owed behind it",
     "tests": [
       "test/net/audit625_silver.test.js"
@@ -332,8 +332,8 @@
   {
     "name": "AUDIT625-S3-the-store-believed",
     "file": "src/net/marksBook.js",
-    "old": "v.filter(owedFind).slice(-FINDS_OWED_MAX).map(",
-    "new": "v.map(",
+    "old": "    return Array.isArray(v)\n      ? v\n          .filter(owedFind)\n          .slice(-FINDS_OWED_MAX)\n          .map(({ rid: r, kind, account: a }) => ({ rid: r, kind, account: a }))\n      : [];",
+    "new": "    return Array.isArray(v) ? v.map(({ rid: r, kind, account: a }) => ({ rid: r, kind, account: a })) : [];",
     "why": "the store's list believed whole",
     "tests": [
       "test/net/audit625_silver.test.js"
@@ -342,8 +342,8 @@
   {
     "name": "AUDIT625-S3-the-rate-asks-the-rest",
     "file": "src/net/marksBook.js",
-    "old": "          held = error;   // its hour spent",
-    "new": "          void 0;   // its hour spent",
+    "old": "          held = error; // its hour spent (INT17: or the play that pays for it): this find let go (MARKS_FINAL's law), the rest wait owed",
+    "new": "          void 0; // its hour spent (INT17: or the play that pays for it): this find let go (MARKS_FINAL's law), the rest wait owed",
     "why": "the rest asked behind a spent hour",
     "tests": [
       "test/net/audit625_silver.test.js"
@@ -372,8 +372,8 @@
   {
     "name": "AUDIT625-S4-the-book-unhanded",
     "file": "src/net/marksBook.js",
-    "old": "door.find(f.kind, f.rid, f.account)",
-    "new": "door.find(f.kind, f.rid)",
+    "old": "        const r = await ask(() => door.find(f.kind, f.rid, f.account));",
+    "new": "        const r = await ask(() => door.find(f.kind, f.rid));",
     "why": "the book hands no account",
     "tests": [
       "test/net/audit625_silver.test.js"
@@ -522,8 +522,8 @@
   {
     "name": "AUDIT625-P1-shed-deaf",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  const v = tierOf(entity, 'coilscale', 2);\n  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || !(after > 0) || saved) return;",
-    "new": "  const v = tierOf(entity, 'coilscale', 2);\n  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || !(after > 0)) return;",
+    "old": "  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || !(after > 0) || saved) return;\n  const line = max * SHED_BELOW;",
+    "new": "  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || !(after > 0)) return;\n  const line = max * SHED_BELOW;",
     "why": "Shed Skin heals on top of a death save",
     "tests": [
       "test/systems/audit625_serpent.test.js"
@@ -553,8 +553,8 @@
   {
     "name": "AUDIT625-P2-the-sigil-deaf",
     "file": "src/systems/sigil/sigil.js",
-    "old": "|| target.isPlayer || _dueling) return damage;",
-    "new": "|| target.isPlayer) return damage;",
+    "old": "  if (!(damage > 0) || !held || !attacker?.isPlayer || attacker.peer || !target || target.isPlayer || _dueling)\n    return damage;",
+    "new": "  if (!(damage > 0) || !held || !attacker?.isPlayer || attacker.peer || !target || target.isPlayer) return damage;",
     "why": "the weapon's sigil bites a player's stand-in",
     "tests": [
       "test/systems/audit625_serpent.test.js"
@@ -563,8 +563,8 @@
   {
     "name": "AUDIT625-P2-the-word-twice",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "export function setSetsDueling(on) { setSigilDueling(on); }",
-    "new": "export function setSetsDueling(on) { void on; }",
+    "old": "  setSigilDueling(on);",
+    "new": "  void on;",
     "why": "the sets' word kept apart from the sigil's",
     "tests": [
       "test/systems/audit625_serpent.test.js"
@@ -573,8 +573,8 @@
   {
     "name": "AUDIT625-P3-one-coil-again",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  _s.coils.set(target, { n: Math.min(COIL_STACKS, coilStacksAt(target, now) + 1), until: now + COIL_SECONDS });",
-    "new": "  _s.coils = new WeakMap(); _s.coils.set(target, { n: Math.min(COIL_STACKS, coilStacksAt(target, now) + 1), until: now + COIL_SECONDS });",
+    "old": "  _s.coils.set(target, { n: Math.min(COIL_STACKS, coilStacksAt(target, now) + 1), until: now + COIL_SECONDS }); // AUDIT 625 P3: its own",
+    "new": "  _s.coils = new WeakMap();\n  _s.coils.set(target, { n: Math.min(COIL_STACKS, coilStacksAt(target, now) + 1), until: now + COIL_SECONDS }); // AUDIT 625 P3: its own",
     "why": "one coil, moved to the foe struck last",
     "tests": [
       "test/systems/audit625_serpent.test.js"
@@ -583,8 +583,8 @@
   {
     "name": "AUDIT625-P3-a-death-ends-every-coil",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (entity) _s.coils.delete(entity);",
-    "new": "  if (entity) _s.coils = new WeakMap();",
+    "old": "  if (entity) _s.coils.delete(entity); // SERPENT-SET: a coiled foe's death ends its coil (AUDIT 625 P3: its own - every other foe keeps theirs)",
+    "new": "  if (entity) _s.coils = new WeakMap(); // SERPENT-SET: a coiled foe's death ends its coil (AUDIT 625 P3: its own - every other foe keeps theirs)",
     "why": "a foe's death unwinds every coil",
     "tests": [
       "test/systems/audit625_serpent.test.js"
@@ -613,8 +613,8 @@
   {
     "name": "AUDIT625-P4-the-bound",
     "file": "server-account/src/serpents.js",
-    "old": "? Math.min(stones, SERPENT_EMBERS) : 0;",
-    "new": "? stones : 0;",
+    "old": "  const embers = Number.isSafeInteger(stones) && stones > 0 ? Math.min(stones, SERPENT_EMBERS) : 0;",
+    "new": "  const embers = Number.isSafeInteger(stones) && stones > 0 ? stones : 0;",
     "why": "a claim's embers past the law",
     "tests": [
       "test/net/serpent/serpentset_service.test.js"
@@ -623,8 +623,8 @@
   {
     "name": "AUDIT625-P4-the-answer-silent",
     "file": "server-account/src/serpents.js",
-    "old": "    recorded: true, slain, spoils, stones: embers, day: c.d,",
-    "new": "    recorded: true, slain, spoils, day: c.d,",
+    "old": "    stones: embers,\n    day: c.d,",
+    "new": "    day: c.d,",
     "why": "the answer silent on the row's embers",
     "tests": [
       "test/net/serpent/serpentset_service.test.js"
@@ -633,7 +633,7 @@
   {
     "name": "AUDIT625-P4-the-repeat-silent",
     "file": "server-account/src/serpents.js",
-    "old": "    return { recorded: false, why: 'claimed', slain, spoils, ...(Number.isSafeInteger(kept?.stones) ? { stones: kept.stones } : {}) };",
+    "old": "    return {\n      recorded: false,\n      why: 'claimed',\n      slain,\n      spoils,\n      ...(Number.isSafeInteger(kept?.stones) ? { stones: kept.stones } : {}),\n    };",
     "new": "    return { recorded: false, why: 'claimed', slain, spoils };",
     "why": "a repeat silent on the row's embers",
     "tests": [
@@ -673,8 +673,8 @@
   {
     "name": "AUDIT625-P5-the-silver-read-wrong",
     "file": "server-account/src/serpents.js",
-    "old": "Number(res[res.length - 1]?.meta?.changes ?? 0) > 0;",
-    "new": "Number(res[res.length - 2]?.meta?.changes ?? 0) > 0;",
+    "old": "  const struck = !!stmt && Number(res[res.length - 1]?.meta?.changes ?? 0) > 0;",
+    "new": "  const struck = !!stmt && Number(res[res.length - 2]?.meta?.changes ?? 0) > 0;",
     "why": "the silver read off the hoard's statement",
     "tests": [
       "test/net/serpent/serpentset_service.test.js"

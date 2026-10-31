@@ -2,8 +2,8 @@
   {
     "name": "CLIMB6-palm-flipped",
     "file": "src/combat/climbRig.js",
-    "old": "side === 'R' ? -1 : 1);",
-    "new": "side === 'R' ? 1 : -1);",
+    "old": "    if (len(lateral) > 1e-6) palm = scale(norm(cross(f, norm(lateral))), side === 'R' ? -1 : 1);",
+    "new": "    if (len(lateral) > 1e-6) palm = scale(norm(cross(f, norm(lateral))), side === 'R' ? 1 : -1);",
     "tests": [
       "test/player/climb/climb6.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CLIMB6-fit-farther-hand-at-full-reach",
     "file": "src/combat/climbRig.js",
-    "old": "+ len(sub(Wr, E))) * 0.97;",
-    "new": "+ len(sub(Wr, E))) * 1.2;",
+    "old": "      const reach = (len(sub(E, S)) + len(sub(Wr, E))) * 0.97;",
+    "new": "      const reach = (len(sub(E, S)) + len(sub(Wr, E))) * 1.2;",
     "tests": [
       "test/player/climb/climb6.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CLIMB6-fit-unbounded-down",
     "file": "src/combat/climbRig.js",
-    "old": "Math.min(up, Math.max(-down, need)) * w",
-    "new": "Math.min(up, need) * w",
+    "old": "      const dz = Math.min(up, Math.max(-down, need)) * w;",
+    "new": "      const dz = Math.min(up, need) * w;",
     "tests": [
       "test/player/climb/climb6.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CLIMB6-fit-farther-hand-not-deciding",
     "file": "src/combat/climbRig.js",
-    "old": "Math.max(need, rise);   // the farther hand decides",
-    "new": "Math.min(need, rise);   // the farther hand decides",
+    "old": "      need = need == null ? rise : Math.max(need, rise); // the farther hand decides",
+    "new": "      need = need == null ? rise : Math.min(need, rise); // the farther hand decides",
     "tests": [
       "test/player/climb/climb6.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "CLIMB6-shrug-after-nothing",
     "file": "src/combat/climbRig.js",
-    "old": "if (req.hands) for (const s of ['L', 'R']) if (req.hands[s]) shrug(",
-    "new": "if (false) for (const s of ['L', 'R']) if (req.hands[s]) shrug(",
+    "old": "  // 4. the shoulders drawn up toward the hands (before the fit: a shrug brings the shoulder nearer its hold)\n  if (req.hands)",
+    "new": "  // 4. the shoulders drawn up toward the hands (before the fit: a shrug brings the shoulder nearer its hold)\n  if (false)",
     "tests": [
       "test/player/climb/climb6.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CLIMB6-climb-foot-phase-same-side",
     "file": "src/player/climb/climbPose.js",
-    "old": "s === 'R' ? 0.75 : 0.25, POSE.CLIMB_DUTY",
-    "new": "s === 'R' ? 0.25 : 0.75, POSE.CLIMB_DUTY",
+    "old": "        s === 'R' ? 0.75 : 0.25,",
+    "new": "        s === 'R' ? 0.25 : 0.75,",
     "tests": [
       "test/player/climb/climb6.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CLIMB6-hang-legs-short",
     "file": "src/player/climb/climbPose.js",
-    "old": "HANG_LEG: 0.96,",
-    "new": "HANG_LEG: 0.5,",
+    "old": "  HANG_LEG: 0.96, // a hang's legs let out to this share of their length (the knees a little bent)...",
+    "new": "  HANG_LEG: 0.5, // a hang's legs let out to this share of their length (the knees a little bent)...",
     "tests": [
       "test/player/climb/climb6.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "CLIMB6-peer-move-ignores-time",
     "file": "src/net/peer/peerClimb.js",
-    "old": "shown.cd ? shown.cd / 100 : PEER_MOVE_DUR",
-    "new": "PEER_MOVE_DUR",
+    "old": "      this.move = peerMove(\n        kind,\n        base.feet,\n        fwd,\n        Number.isFinite(shown.cy) ? shown.cy / 100 : null,\n        shown.cd ? shown.cd / 100 : PEER_MOVE_DUR,\n      );",
+    "new": "      this.move = peerMove(kind, base.feet, fwd, Number.isFinite(shown.cy) ? shown.cy / 100 : null, PEER_MOVE_DUR);",
     "tests": [
       "test/player/climb/climb6.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "CLIMB6-shimmy-leader-swapped",
     "file": "src/player/climb/climbPose.js",
-    "old": "s === 'R' ? span / 2 : 1.5 * span, POSE.SHIMMY_REACH",
-    "new": "s === 'R' ? 1.5 * span : span / 2, POSE.SHIMMY_REACH",
+    "old": "      const g = shimmyGait(this.travel, stride, s === 'R' ? span / 2 : 1.5 * span, POSE.SHIMMY_REACH * span);",
+    "new": "      const g = shimmyGait(this.travel, stride, s === 'R' ? 1.5 * span : span / 2, POSE.SHIMMY_REACH * span);",
     "tests": [
       "test/player/climb/climb6.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "CLIMB6-shimmy-bands-together",
     "file": "src/player/climb/climbPose.js",
-    "old": "s === 'R' ? span / 2 : 1.5 * span, POSE.SHIMMY_REACH",
-    "new": "s === 'R' ? span / 2 : span / 2, POSE.SHIMMY_REACH",
+    "old": "      const g = shimmyGait(this.travel, stride, s === 'R' ? span / 2 : 1.5 * span, POSE.SHIMMY_REACH * span);",
+    "new": "      const g = shimmyGait(this.travel, stride, s === 'R' ? span / 2 : span / 2, POSE.SHIMMY_REACH * span);",
     "tests": [
       "test/player/climb/climb6.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "CLIMB6-shimmy-reach-whole-turn",
     "file": "src/player/climb/climbPose.js",
-    "old": "SHIMMY_REACH: 0.8,",
-    "new": "SHIMMY_REACH: 1.2,",
+    "old": "  SHIMMY_REACH: 0.8, // the share of a hand's turn (a span of travel) it is off the stone - both hold the rest of it",
+    "new": "  SHIMMY_REACH: 1.2, // the share of a hand's turn (a span of travel) it is off the stone - both hold the rest of it",
     "tests": [
       "test/player/climb/climb6.test.js"
     ]
@@ -200,7 +200,7 @@
   {
     "name": "CLIMB6-settle-follows-gait-going-on",
     "file": "src/player/climb/climbPose.js",
-    "old": "    else if (sw >= st.prev) st.v = st.prev < 1 ? st.v + (1 - st.v) * (sw - st.prev) / (1 - st.prev) : sw;",
+    "old": "    else if (sw >= st.prev) st.v = st.prev < 1 ? st.v + ((1 - st.v) * (sw - st.prev)) / (1 - st.prev) : sw;",
     "new": "    else if (sw >= st.prev) st.v = sw;",
     "tests": [
       "test/player/climb/climb6.test.js"
@@ -209,7 +209,7 @@
   {
     "name": "CLIMB6-settle-follows-gait-going-back",
     "file": "src/player/climb/climbPose.js",
-    "old": "    else st.v = st.prev > 0 ? st.v * sw / st.prev : sw;",
+    "old": "    else st.v = st.prev > 0 ? (st.v * sw) / st.prev : sw;",
     "new": "    else st.v = sw;",
     "tests": [
       "test/player/climb/climb6.test.js"
@@ -218,8 +218,8 @@
   {
     "name": "CLIMB6-settle-finished-back-to-the-anchor",
     "file": "src/player/climb/climbPose.js",
-    "old": "    if (sw <= 0) { st.v = 0; st.cycle = null; return 0; }",
-    "new": "    if (sw <= 0 || (!moving && st.v >= 1)) { st.v = 0; st.cycle = null; return 0; }",
+    "old": "    if (sw <= 0) {",
+    "new": "    if (sw <= 0 || (!moving && st.v >= 1)) {",
     "tests": [
       "test/player/climb/climb6.test.js"
     ]

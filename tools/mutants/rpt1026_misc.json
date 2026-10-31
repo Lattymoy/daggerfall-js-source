@@ -12,8 +12,8 @@
   {
     "name": "rpt1026-misc-toast-repeat-refreshes-front",
     "file": "src/ui/hud/hudText.js",
-    "old": "      if (this.lines.length > 1) return;\n",
-    "new": "",
+    "old": "      if (this.lines.length > 1) return;\n      if (this.timer >= 0) this.timer = Math.max(this.timer, delayInSeconds);",
+    "new": "      if (this.timer >= 0) this.timer = Math.max(this.timer, delayInSeconds);",
     "tests": [
       "test/ui/hud/rpt1026_misc_toasts.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "rpt1026-misc-face-gone-drawn",
     "file": "src/ui/hud/hudEscortFaces.js",
-    "old": " && !_questGone(_faces[i]?.questUID));",
-    "new": ");",
+    "old": "  const panels = _panels.filter((_, i) => !_questAway(_faces[i]?.questUID) && !_questGone(_faces[i]?.questUID)); // RPT1026-MISC FACE-ORPHAN: nor one whose quest is gone",
+    "new": "  const panels = _panels.filter((_, i) => !_questAway(_faces[i]?.questUID)); // RPT1026-MISC FACE-ORPHAN: nor one whose quest is gone",
     "tests": [
       "test/systems/quest/rpt1026_misc_faces.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "rpt1026-misc-face-gone-saved",
     "file": "src/ui/hud/hudEscortFaces.js",
-    "old": "  return _faces.filter((f) => !_questGone(f.questUID)).map((f) => ({ ...f }));",
-    "new": "  return _faces.map((f) => ({ ...f }));",
+    "old": "  return _faces.filter((f) => !_questGone(f.questUID)).map((f) => ({ ...f })); // RPT1026-MISC FACE-ORPHAN",
+    "new": "  return _faces.map((f) => ({ ...f })); // RPT1026-MISC FACE-ORPHAN",
     "tests": [
       "test/systems/quest/rpt1026_misc_faces.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "rpt1026-misc-heir-newborn-refused",
     "file": "src/systems/legacy/waitingHouses.js",
-    "old": "  if (newborn) {\n",
-    "new": "  if (false) {\n",
+    "old": "  if (newborn) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/legacy/rpt1026_misc_heir.test.js"
     ],
@@ -233,7 +233,7 @@
     "name": "rpt1026-misc-cast-pace-rateless",
     "file": "src/combat/fpsSpellCasting.js",
     "old": "export const castReleaseS = (rate = 1) => (RELEASE_FRAME * CAST_FRAME_PERIOD) / validCastRate(rate);",
-    "new": "export const castReleaseS = (rate = 1) => (RELEASE_FRAME * CAST_FRAME_PERIOD);",
+    "new": "export const castReleaseS = (rate = 1) => RELEASE_FRAME * CAST_FRAME_PERIOD;",
     "tests": [
       "test/combat/rpt1026_misc_cast.test.js"
     ],

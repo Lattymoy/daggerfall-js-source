@@ -2,8 +2,8 @@
   {
     "name": "FOLLOW-FRAME-pose-copied-across-frames",
     "file": "src/scenes/staffFollowHost.js",
-    "old": "const v = !entering && hook.locked() && followInFrame(hook.place(), mode()) ? hook.view() : null;",
-    "new": "const v = !entering && hook.locked() ? hook.view() : null;",
+    "old": "      const v = !entering && hook.locked() && followInFrame(hook.place(), mode()) ? hook.view() : null;",
+    "new": "      const v = !entering && hook.locked() ? hook.view() : null;",
     "why": "a dungeon pose is copied onto the open air when the staff member's scene did not enter their place, and the camera lands at the map's south-west corner (mob: \"u end up in the bottom left corner\" \"of the daggerfall map\")",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "FOLLOW-FRAME-failed-enter-never-tried-again",
     "file": "src/scenes/staffFollowHost.js",
-    "old": "failed = key; retryAt = now() + retryMs; entered = null;",
-    "new": "failed = key; retryAt = now() + retryMs; entered = key;",
+    "old": "              entered = null;",
+    "new": "              entered = key;",
     "why": "a place the follow could not enter is tried once and never again, and the follow sits outside for as long as the target stays in",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "FOLLOW-FRAME-retry-wait-never-grows",
     "file": "src/scenes/staffFollowHost.js",
-    "old": "else retryMs = Math.min(retryMs * 2, FOLLOW_RETRY_MAX_MS);",
-    "new": "else retryMs = Math.min(retryMs, FOLLOW_RETRY_MAX_MS);",
+    "old": "              } else retryMs = Math.min(retryMs * 2, FOLLOW_RETRY_MAX_MS);",
+    "new": "              } else retryMs = Math.min(retryMs, FOLLOW_RETRY_MAX_MS);",
     "why": "a place that cannot be entered is tried every five seconds for ever, each try a teleport and a load",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "STAFF-UNSEEN-page-never-says-hidden",
     "file": "src/scenes/staffFollowHost.js",
-    "old": "if (entity) entity.staffHidden = (hiddenNow || pilot.piloting()) && !!main();",
-    "new": "if (entity) entity.staffHidden = false;",
+    "old": "    if (entity) entity.staffHidden = (hiddenNow || pilot.piloting()) && !!main();",
+    "new": "    if (entity) entity.staffHidden = false;",
     "why": "the game never tells its foes the staff member hides",
     "tests": [
       "test/characters/enemy/staffunseen.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "CHAT-FOLLOW-CARD-no-card",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "if (ok !== false && card) post('follow', sub, name);",
-    "new": "if (ok !== false && card) void 0;",
+    "old": "                      if (ok !== false && card) post('follow', sub, name);",
+    "new": "                      if (ok !== false && card) void 0;",
     "why": "a follow from the chat line menu opens no card in the panel over the game (mob: \"no panel pops up when followingf from chat\")",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "CHAT-FOLLOW-CARD-twice-from-a-tag",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "onFollow ?? follow(), !onFollow);",
-    "new": "onFollow ?? follow(), true);",
+    "old": "      return staffRows({ id: p.id, sub: p.sub }, String(p.name ?? ''), onFollow ?? follow(), !onFollow);",
+    "new": "      return staffRows({ id: p.id, sub: p.sub }, String(p.name ?? ''), onFollow ?? follow(), true);",
     "why": "a tag menu's Follow hands the panel its card twice",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "CROWD-CHIPS-names-open-unasked",
     "file": "src/ui/staffTags.js",
-    "old": "list.style.display = b.hover || b.pinned ? 'block' : 'none';",
-    "new": "list.style.display = 'block';",
+    "old": "      list.style.display = b.hover || b.pinned ? 'block' : 'none';",
+    "new": "      list.style.display = 'block';",
     "why": "every crowd draws its whole name list, and a 95-player box covers the boxes around it",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "FOLLOW-BODIES-target-kept",
     "file": "src/net/staffHook.js",
-    "old": "others: () => (eye?.drawable?.() ?? []).filter((/** @type {any} */ p) => !(p?.sub === target || (pid && p?.id === pid))),",
-    "new": "others: () => (eye?.drawable?.() ?? []),",
+    "old": "    others: () =>\n      (eye?.drawable?.() ?? []).filter((/** @type {any} */ p) => !(p?.sub === target || (pid && p?.id === pid))),",
+    "new": "    others: () => eye?.drawable?.() ?? [],",
     "why": "the target's own body drawn round the camera at their eyes",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "FOLLOW-BODIES-socket-only",
     "file": "src/net/staffHook.js",
-    "old": "!(p?.sub === target || (pid && p?.id === pid))),",
-    "new": "!(pid && p?.id === pid)),",
+    "old": "    others: () =>\n      (eye?.drawable?.() ?? []).filter((/** @type {any} */ p) => !(p?.sub === target || (pid && p?.id === pid))),",
+    "new": "    others: () => (eye?.drawable?.() ?? []).filter((/** @type {any} */ p) => !(pid && p?.id === pid)),",
     "why": "the target known by account alone drawn over the camera",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "FOLLOW-BODIES-own-room-while-locked",
     "file": "src/scenes/staffFollowHost.js",
-    "old": "drawable: () => (hook.locked() ? hook.others() : main()?.drawable?.() ?? []),",
-    "new": "drawable: () => (main()?.drawable?.() ?? []),",
+    "old": "    drawable: () => (hook.locked() ? hook.others() : (main()?.drawable?.() ?? [])),",
+    "new": "    drawable: () => main()?.drawable?.() ?? [],",
     "why": "mob: \"cant see other players bodys\" - the game's own room is left while following, so nobody is drawn",
     "tests": [
       "test/net/staffpanel5hook.test.js"

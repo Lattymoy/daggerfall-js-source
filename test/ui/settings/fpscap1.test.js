@@ -142,7 +142,7 @@ test('FPS-CAP1: the FPS counter counts the frames the game drew, not the screen\
     assert.ok(stats && stats.fps >= 29 && stats.fps <= 31, `a 60 Hz screen capped at 30 counts 30: ${JSON.stringify(stats)}`);
     // PIN MOVED (AUDIT FB1018D L2-1): the counter reads the last stamp before it pushes this one (HITCH-KEEP's gap) - still
     // nothing counted before the gate
-    assert.match(read('src/ui/fpsCounter.js'), /if \(frameCapSkip\(now\)\) \{ if \(live && raf\) handle = raf\(tick\); return; \}\n\s+const prev = stamps\.length \? stamps\[stamps\.length - 1\] : null;\n\s+stamps\.push\(now\);/);
+    assert.match(read('src/ui/fpsCounter.js'), /if \(frameCapSkip\(now\)\) \{\n\s*if \(live && raf\) handle = raf\(tick\);\n\s*return;\n\s*\}\n\s*const prev = stamps\.length \? stamps\[stamps\.length - 1\] : null;\n\s*stamps\.push\(now\);/);
     c.dispose();
   } finally {
     globalThis.document = prev.d; globalThis.window = prev.w;

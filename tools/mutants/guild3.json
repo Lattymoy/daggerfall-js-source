@@ -2,8 +2,8 @@
   {
     "name": "GUILD3a-the-masters-seat",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const SEAT_WORDS = Object.freeze({ master: 'the Master\\'s chair',",
-    "new": "const SEAT_WORDS = Object.freeze({ master: 'the Master\\'s seat',",
+    "old": "const SEAT_WORDS = Object.freeze({ master: \"the Master's chair\", officer: 'a council chair' });",
+    "new": "const SEAT_WORDS = Object.freeze({ master: \"the Master's seat\", officer: 'a council chair' });",
     "tests": [
       "test/net/guild3_plain.test.js",
       "test/systems/guild/chap4b_seats.test.js",
@@ -13,8 +13,8 @@
   {
     "name": "GUILD3a-an-officer-again",
     "file": "src/net/npcChapterLaw.js",
-    "old": "chapterofficer: 'Councillor',",
-    "new": "chapterofficer: 'Officer',",
+    "old": "  chapterofficer: 'Councillor',",
+    "new": "  chapterofficer: 'Officer',",
     "tests": [
       "test/net/guild3_plain.test.js",
       "test/net/chap4c_titles.test.js"
@@ -23,8 +23,8 @@
   {
     "name": "GUILD3a-the-council-the-officers",
     "file": "src/net/npcChapterLaw.js",
-    "old": "officers.length ? `Its council: ${namesListed(officers)}.`",
-    "new": "officers.length ? `Its officers: ${namesListed(officers)}.`",
+    "old": "    officers.length ? `Its council: ${namesListed(officers)}.` : 'No council chair is held.', // GUILD3a: its council, never its \"officers\"",
+    "new": "    officers.length ? `Its officers: ${namesListed(officers)}.` : 'No council chair is held.', // GUILD3a: its council, never its \"officers\"",
     "tests": [
       "test/net/guild3_plain.test.js",
       "test/net/chap5a_roll.test.js"
@@ -33,8 +33,8 @@
   {
     "name": "GUILD3a-the-book-says-seats",
     "file": "src/net/npcChapterLaw.js",
-    "old": "ranks 8 and 9 for ${one ? 'its' : 'their'} chapters' Masters and councils",
-    "new": "ranks 8 and 9 as ${one ? 'its' : 'their'} chapters' seats",
+    "old": "  return `${said.charAt(0).toUpperCase()}${said.slice(1)} ${one ? 'keeps' : 'keep'} ranks 8 and 9 for ${one ? 'its' : 'their'} chapters' Masters and councils, won by Merit. Your rank there is 7.`;",
+    "new": "  return `${said.charAt(0).toUpperCase()}${said.slice(1)} ${one ? 'keeps' : 'keep'} ranks 8 and 9 as ${one ? 'its' : 'their'} chapters' seats, won by Merit. Your rank there is 7.`;",
     "tests": [
       "test/net/guild3_plain.test.js",
       "test/systems/guild/chap4b_seats.test.js"
@@ -43,8 +43,8 @@
   {
     "name": "GUILD3a-honour-in-marks",
     "file": "src/net/siege/siegeLink.js",
-    "old": "`Your Honor: ${marksText(Number(honours.marks))},",
-    "new": "`Your Honor: ${honours.marks} Marks,",
+    "old": "  return `Your Honor: ${marksText(Number(honours.marks))}, ${Number(honours.xp).toLocaleString('en-US')} Renown, one Spoils of War roll`; // GUILD3a: silver, as every sentence says it",
+    "new": "  return `Your Honor: ${honours.marks} Marks, ${Number(honours.xp).toLocaleString('en-US')} Renown, one Spoils of War roll`; // GUILD3a: silver, as every sentence says it",
     "tests": [
       "test/net/guild3_plain.test.js",
       "test/net/siege/seat2a_siege_play.test.js"
@@ -53,8 +53,8 @@
   {
     "name": "GUILD3a-a-refund-in-marks",
     "file": "src/net/townSeatLaw.js",
-    "old": "its claim fee of ${marksText(Number(d.refund))} refunded",
-    "new": "its claim fee of ${Number(d.refund).toLocaleString('en-US')} Marks refunded",
+    "old": "        ? `${when}, ${seat.name} was struck from the registry, and ${guildWords(d.guild)}'s Charter with it${Number(d.refund) > 0 ? ` - its claim fee of ${marksText(Number(d.refund))} refunded` : ''}.` // GUILD3a: silver, as every sentence says it",
+    "new": "        ? `${when}, ${seat.name} was struck from the registry, and ${guildWords(d.guild)}'s Charter with it${Number(d.refund) > 0 ? ` - its claim fee of ${Number(d.refund).toLocaleString('en-US')} Marks refunded` : ''}.` // GUILD3a: silver, as every sentence says it",
     "tests": [
       "test/net/guild3_plain.test.js",
       "test/net/audit_seats_service.test.js"
@@ -63,8 +63,8 @@
   {
     "name": "GUILD3a-your-writ-again",
     "file": "src/ui/noticeWindow.js",
-    "old": "'member' ? 'Your chapter writ' : isChapterWrit",
-    "new": "'member' ? 'Your writ' : isChapterWrit",
+    "old": "    return w.kind === 'member' ? 'Your chapter writ' : isChapterWrit(w.kind) ? 'Chapter writ' : 'Court writ';",
+    "new": "    return w.kind === 'member' ? 'Your writ' : isChapterWrit(w.kind) ? 'Chapter writ' : 'Court writ';",
     "tests": [
       "test/net/guild3_plain.test.js",
       "test/net/chap3a_merit.test.js"
@@ -127,8 +127,8 @@
   {
     "name": "GUILD3c-a-table-unread",
     "file": "src/net/guild/guildPowers.js",
-    "old": "return Object.hasOwn(table, row?.power) ? [...table[row.power]] : [];",
-    "new": "return [GUILD_RANK_MASTER];",
+    "old": "  return Object.hasOwn(table, row?.power) ? [...table[row.power]] : [];",
+    "new": "  return [GUILD_RANK_MASTER];",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -136,8 +136,8 @@
   {
     "name": "GUILD3c-the-levers-unread",
     "file": "src/net/guild/guildPowers.js",
-    "old": "if (row?.table === 'levers') return [...SEAT_LEVER_RANKS];",
-    "new": "if (row?.table === 'levers') return [GUILD_RANK_MASTER];",
+    "old": "  if (row?.table === 'levers') return [...SEAT_LEVER_RANKS];",
+    "new": "  if (row?.table === 'levers') return [GUILD_RANK_MASTER];",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -145,8 +145,8 @@
   {
     "name": "GUILD3c-a-power-unworded",
     "file": "src/net/guild/guildPowers.js",
-    "old": "  Object.freeze({ table: 'hall', power: 'heraldry', words: 'choose the guild\\'s arms' }),\n",
-    "new": "",
+    "old": "  Object.freeze({ table: 'hall', power: 'heraldry', words: \"choose the guild's arms\" }),\n  Object.freeze({ table: 'guild', power: 'vaultGrant', words: \"grant or take back each member's use of the vault\" }),",
+    "new": "  Object.freeze({ table: 'guild', power: 'vaultGrant', words: \"grant or take back each member's use of the vault\" }),",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -154,8 +154,8 @@
   {
     "name": "GUILD3c-the-vault-limit-unsaid",
     "file": "src/net/guild/guildPowers.js",
-    "old": "const takeWords = (/** @type {number} */ limit) => (limit > 0 ? `${limit} a day` : 'any number');",
-    "new": "const takeWords = (/** @type {number} */ limit) => '';",
+    "old": "const takeWords = (/** @type {number} */ limit) => (limit > 0 ? `${limit} a day` : 'any number'); // AUDIT GUILD3 W11: the vault grant's own words (guildVaultLaw.js vaultStandingText)",
+    "new": "const takeWords = (/** @type {number} */ limit) => ''; // AUDIT GUILD3 W11: the vault grant's own words (guildVaultLaw.js vaultStandingText)",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -163,8 +163,8 @@
   {
     "name": "GUILD3c-the-same-never-said",
     "file": "src/net/guild/guildPowers.js",
-    "old": "text = more.length ? `Everything ${them} may, and: ${more.join('; ')}.` : `The same as ${them}.`;",
-    "new": "text = `Everything ${them} may, and: ${more.join('; ')}.`;",
+    "old": "      if (!less.length)\n        text = more.length ? `Everything ${them} may, and: ${more.join('; ')}.` : `The same as ${them}.`;",
+    "new": "      if (!less.length) text = `Everything ${them} may, and: ${more.join('; ')}.`;",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -217,8 +217,8 @@
   {
     "name": "GUILD3c-the-book-drops-the-list",
     "file": "src/net/guild/guildBook.js",
-    "old": "...(Array.isArray(r?.keeps) ? { keeps: [...r.keeps] } : {}) };",
-    "new": "};",
+    "old": "            ...(Array.isArray(r?.keeps) ? { keeps: [...r.keeps] } : {}),\n          };",
+    "new": "          };",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -298,8 +298,8 @@
   {
     "name": "GUILD3d-the-price-unsaid",
     "file": "src/net/npcChapterLaw.js",
-    "old": "sells && b.price !== 1 ? `${sells} ${priceWords(b.price)}` : null,",
-    "new": "null,",
+    "old": "    sells && b.price !== 1 ? `${sells} ${priceWords(b.price)}` : null,",
+    "new": "    null,",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -307,8 +307,8 @@
   {
     "name": "GUILD3d-spells-at-mages-alone",
     "file": "src/net/npcChapterLaw.js",
-    "old": "faction === GUILD_FACTION_IDS.MagesGuild || faction === DIVINES.Kynareth ? 'training and spells'",
-    "new": "faction === GUILD_FACTION_IDS.MagesGuild ? 'training and spells'",
+    "old": "    ? faction === GUILD_FACTION_IDS.MagesGuild || faction === DIVINES.Kynareth",
+    "new": "    ? faction === GUILD_FACTION_IDS.MagesGuild",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -316,8 +316,8 @@
   {
     "name": "GUILD3d-a-shelf-promised-anywhere",
     "file": "src/net/npcChapterLaw.js",
-    "old": "sold.includes('shelf') && b.shelf !== 0 ?",
-    "new": "b.shelf !== 0 ?",
+    "old": "    sold.includes('shelf') && b.shelf !== 0 ? (b.shelf > 0 ? 'a richer shelf' : 'a poorer shelf') : null,",
+    "new": "    b.shelf !== 0 ? (b.shelf > 0 ? 'a richer shelf' : 'a poorer shelf') : null,",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -325,8 +325,8 @@
   {
     "name": "GUILD3d-a-hidden-high-master",
     "file": "src/net/npcChapterLaw.js",
-    "old": "b.band === 'ascendant' && isRollFaction(faction) && !hallHidden(faction) ?",
-    "new": "b.band === 'ascendant' ?",
+    "old": "  const high =\n    b.band === 'ascendant' && isRollFaction(faction) && !hallHidden(faction)\n      ? \"whoever holds its Master's chair is its High Master\"\n      : null;",
+    "new": "  const high = b.band === 'ascendant' ? \"whoever holds its Master's chair is its High Master\" : null;",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -334,8 +334,8 @@
   {
     "name": "GUILD3d-a-fifth-said-a-tenth",
     "file": "src/net/npcChapterLaw.js",
-    "old": "10: 'a tenth cheaper', 20: 'a fifth cheaper',",
-    "new": "10: 'a tenth cheaper', 20: 'a tenth cheaper',",
+    "old": "    20: 'a fifth cheaper',",
+    "new": "    20: 'a tenth cheaper',",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -343,8 +343,8 @@
   {
     "name": "GUILD3d-duties-to-a-stranger-as-a-member",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const member = mine.some((a) => a.member === true);",
-    "new": "const member = mine.length > 0;",
+    "old": "  const member = mine.some((a) => a.member === true);",
+    "new": "  const member = mine.length > 0;",
     "tests": [
       "test/net/guild3_plain.test.js",
       "test/net/chap2b_receipts.test.js"
@@ -353,8 +353,8 @@
   {
     "name": "GUILD3d-the-card-no-band-line",
     "file": "src/ui/noticeWindow.js",
-    "old": "    if (band) card.append(el('p', 'notice-chapter notice-band', band));\n",
-    "new": "",
+    "old": "    if (band) card.append(el('p', 'notice-chapter notice-band', band));\n    if (merit) card.append(el('p', 'notice-merit', `${meritLineOf(merit, nowS())}.`)); // CHAP3a: the account's Merit here (W12: a sentence)",
+    "new": "    if (merit) card.append(el('p', 'notice-merit', `${meritLineOf(merit, nowS())}.`)); // CHAP3a: the account's Merit here (W12: a sentence)",
     "tests": [
       "test/net/guild3_plain.test.js",
       "test/net/chap3b_strength.test.js"
@@ -363,8 +363,8 @@
   {
     "name": "GUILD3d-the-card-no-duties",
     "file": "src/ui/noticeWindow.js",
-    "old": "    if (duties) card.append(el('p', 'notice-chapter notice-duties', duties));\n",
-    "new": "",
+    "old": "    if (duties) card.append(el('p', 'notice-chapter notice-duties', duties));\n    return card;",
+    "new": "    return card;",
     "tests": [
       "test/net/guild3_plain.test.js",
       "test/net/chap2b_receipts.test.js"
@@ -373,8 +373,8 @@
   {
     "name": "GUILD3d-merit-said-twice",
     "file": "src/ui/noticeWindow.js",
-    "old": "for (const m of writs?.merit ?? []) if (!carded.has(m.faction)) body.append(",
-    "new": "for (const m of writs?.merit ?? []) body.append(",
+    "old": "    for (const m of writs?.merit ?? [])\n      if (!carded.has(m.faction)) body.append(el('p', 'notice-merit', meritLineOf(m, nowS())));",
+    "new": "    for (const m of writs?.merit ?? []) body.append(el('p', 'notice-merit', meritLineOf(m, nowS())));",
     "tests": [
       "test/net/guild3_plain.test.js",
       "test/net/chap3a_merit.test.js"
@@ -383,8 +383,8 @@
   {
     "name": "GUILD3d-the-card-no-heading",
     "file": "src/ui/noticeWindow.js",
-    "old": "    card.append(el('h3', null, `${hallPosterName(c.faction) ?? 'Guild'} - ${chapterBandOf(c.strength).name}`));\n",
-    "new": "",
+    "old": "    card.append(el('h3', null, `${hallPosterName(c.faction) ?? 'Guild'} - ${chapterBandOf(c.strength).name}`));\n    card.append(el('p', 'notice-chapter', `${chapterLineOf(c)}.`)); // CHAP3b: the chapter here, its Strength (AUDIT GUILD3 W12: a sentence, as the card's others)",
+    "new": "    card.append(el('p', 'notice-chapter', `${chapterLineOf(c)}.`)); // CHAP3b: the chapter here, its Strength (AUDIT GUILD3 W12: a sentence, as the card's others)",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -392,8 +392,8 @@
   {
     "name": "GUILD3e-ascendant-at-thrivings-tenth",
     "file": "src/net/npcChapterLaw.js",
-    "old": "Object.freeze({ band: 'ascendant', name: 'Ascendant', from: 90, price: 0.8,",
-    "new": "Object.freeze({ band: 'ascendant', name: 'Ascendant', from: 90, price: 0.9,",
+    "old": "  Object.freeze({ band: 'ascendant', name: 'Ascendant', from: 90, price: 0.8, writs: 1.5, shelf: 4 }),",
+    "new": "  Object.freeze({ band: 'ascendant', name: 'Ascendant', from: 90, price: 0.9, writs: 1.5, shelf: 4 }),",
     "tests": [
       "test/net/guild3_plain.test.js",
       "test/net/chap3b_strength.test.js",
@@ -403,8 +403,8 @@
   {
     "name": "GUILD3e-a-patron-charged-thrivings",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const band = chapterPatronMember(chapter, guildId) ? Math.min(own, CHAPTER_PATRON_PRICE) : own;",
-    "new": "const band = chapterPatronMember(chapter, guildId) ? CHAPTER_PATRON_PRICE : own;",
+    "old": "  const band = chapterPatronMember(chapter, guildId) ? Math.min(own, CHAPTER_PATRON_PRICE) : own;",
+    "new": "  const band = chapterPatronMember(chapter, guildId) ? CHAPTER_PATRON_PRICE : own;",
     "tests": [
       "test/net/guild3_plain.test.js",
       "test/net/chap7b_patrons_client.test.js"
@@ -413,8 +413,8 @@
   {
     "name": "GUILD3e-the-decline-talk-lost",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "    Object.freeze(['They say the chapter of {guild} here is in decline.', 'It needs its members, and soon.']),   // GUILD3e: a Decline's, the band's now\n",
-    "new": "",
+    "old": "    Object.freeze(['They say the chapter of {guild} here is in decline.', 'It needs its members, and soon.']), // GUILD3e: a Decline's, the band's now\n  ]),",
+    "new": "  ]),",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -422,8 +422,8 @@
   {
     "name": "GUILD3e-the-ascendancy-talk-lost",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "    Object.freeze(['The chapter of {guild} here is in its ascendancy, they say.', 'Everyone wants to be seen in that hall.']),   // GUILD3e: an Ascendancy's, the band's now\n",
-    "new": "",
+    "old": "    Object.freeze([\n      'The chapter of {guild} here is in its ascendancy, they say.',\n      'Everyone wants to be seen in that hall.',\n    ]), // GUILD3e: an Ascendancy's, the band's now\n  ]),",
+    "new": "  ]),",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]

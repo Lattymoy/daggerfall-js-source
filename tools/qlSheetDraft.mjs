@@ -21,14 +21,30 @@ import { familyQuests } from './qlCheck.mjs';
 /** The messages a script's QRC holds: id -> its lines (header words kept for the fixed ones). */
 export function qrcMessages(lines) {
   const out = new Map();
-  let id = null, buf = [], inQrc = false;
-  const flush = () => { if (id != null) out.set(id, buf.join('\n').trim()); id = null; buf = []; };
+  let id = null,
+    buf = [],
+    inQrc = false;
+  const flush = () => {
+    if (id != null) out.set(id, buf.join('\n').trim());
+    id = null;
+    buf = [];
+  };
   for (const l of lines) {
-    if (/^\s*QRC:/i.test(l)) { inQrc = true; continue; }
-    if (/^\s*QBN:/i.test(l)) { flush(); break; }
+    if (/^\s*QRC:/i.test(l)) {
+      inQrc = true;
+      continue;
+    }
+    if (/^\s*QBN:/i.test(l)) {
+      flush();
+      break;
+    }
     if (!inQrc) continue;
     const m = /^\s*(?:Message|[A-Za-z]+):\s*\[?(\d+)\]?\s*$/.exec(l);
-    if (m) { flush(); id = Number(m[1]); continue; }
+    if (m) {
+      flush();
+      id = Number(m[1]);
+      continue;
+    }
     if (/^\s*--/.test(l)) continue;
     if (id != null) buf.push(l.replace(/<ce>\s*/g, '').trim());
   }
@@ -43,15 +59,36 @@ export function qrcMessages(lines) {
 export function qbnTasks(lines) {
   loadTables();
   const out = new Map();
-  let cur = null, inQbn = false;
+  let cur = null,
+    inQbn = false;
   for (const l of lines) {
-    if (/^\s*QBN:/i.test(l)) { inQbn = true; cur = '(startup)'; out.set(cur, []); continue; }
+    if (/^\s*QBN:/i.test(l)) {
+      inQbn = true;
+      cur = '(startup)';
+      out.set(cur, []);
+      continue;
+    }
     if (!inQbn) continue;
-    const head = /^\s*(_[A-Za-z0-9.]+_)\s+task:|^\s*until\s+(_[A-Za-z0-9.]+_)\s+performed:|^\s*variable\s+(_[A-Za-z0-9.]+_)/.exec(l);
+    const head =
+      /^\s*(_[A-Za-z0-9.]+_)\s+task:|^\s*until\s+(_[A-Za-z0-9.]+_)\s+performed:|^\s*variable\s+(_[A-Za-z0-9.]+_)/.exec(
+        l,
+      );
     const linked = /^\s*([A-Za-z0-9_.]+)\s+(_[A-Za-z0-9.]+_)\s*$/.exec(l);
-    if (!head && linked && globalVarsTable().hasValue(linked[1])) { cur = linked[2]; out.set(cur, []); continue; }
-    if (head?.[3]) { out.set(`variable ${head[3]}`, []); cur = null; continue; }
-    if (head) { cur = head[1] ?? `until ${head[2]}`; out.set(cur, []); continue; }   // AUDIT QUESTLINES DOC-35: a `variable` is above - no third arm
+    if (!head && linked && globalVarsTable().hasValue(linked[1])) {
+      cur = linked[2];
+      out.set(cur, []);
+      continue;
+    }
+    if (head?.[3]) {
+      out.set(`variable ${head[3]}`, []);
+      cur = null;
+      continue;
+    }
+    if (head) {
+      cur = head[1] ?? `until ${head[2]}`;
+      out.set(cur, []);
+      continue;
+    } // AUDIT QUESTLINES DOC-35: a `variable` is above - no third arm
     if (cur && l.trim() && !/^\s*--/.test(l)) out.get(cur).push(l.trim());
   }
   return out;
@@ -63,7 +100,7 @@ const familyOf = (name) => {
   for (const [fam, list] of Object.entries(UNLISTED_FAMILY)) if (list.includes(name.toUpperCase())) return fam;
   if (/^S0000|^_BRISIEN$/i.test(name)) return 'MainQuest';
   if (name.toUpperCase() === 'CUSTOM01') return 'FightersGuild';
-  if (lineStepOf(name)) return 'Questlines';   // QL12-QL16: a line's step
+  if (lineStepOf(name)) return 'Questlines'; // QL12-QL16: a line's step
   return 'Mods';
 };
 
@@ -77,41 +114,76 @@ export function brief(name, { on = false } = {}) {
   const tasks = qbnTasks(lines);
   const row = classicRows().find((r) => r.name.toUpperCase() === name.toUpperCase());
   const out = [];
-  out.push(`# ${f.name} - ${quest?.displayName ?? '(no display name)'}  [${familyOf(f.name)}]${row ? `  row: ${row.group} ${row.membership} minReq ${row.minReq} flag ${row.flag}` : ''}`);
+  out.push(
+    `# ${f.name} - ${quest?.displayName ?? '(no display name)'}  [${familyOf(f.name)}]${row ? `  row: ${row.group} ${row.membership} minReq ${row.minReq} flag ${row.flag}` : ''}`,
+  );
   out.push('', '## resources');
   for (const r of quest?.resources?.values?.() ?? []) {
-    const kind = r.isPlace ? 'Place' : r.isPerson ? 'Person' : r.isItem ? 'Item' : r.isFoe ? 'Foe' : r.isClock ? 'Clock' : 'Other';
+    const kind = r.isPlace
+      ? 'Place'
+      : r.isPerson
+        ? 'Person'
+        : r.isItem
+          ? 'Item'
+          : r.isFoe
+            ? 'Foe'
+            : r.isClock
+              ? 'Clock'
+              : 'Other';
     out.push(`  ${kind.padEnd(6)} _${r.symbol.name}_`);
   }
   out.push('', '## tasks (S = something can set it)');
   for (const [t, body] of tasks) {
-    const nm = t.replace(/^variable /, '').replace(/^until /, '').replace(/^_|_$/g, '');
+    const nm = t
+      .replace(/^variable /, '')
+      .replace(/^until /, '')
+      .replace(/^_|_$/g, '');
     const can = quest?.tasks?.has?.(nm) ? (settable(quest, nm, lines) ? 'S' : '-') : ' ';
     out.push(`  [${can}] ${t}`);
     for (const l of body) out.push(`        ${l}`);
   }
   out.push('', '## journal steps');
-  for (const [t, body] of tasks) for (const l of body) {
-    const m = /\blog\s+(\d+)\s+step\s+(\d+)/i.exec(l);
-    if (m) out.push(`  step ${m[2]} (msg ${m[1]}, in ${t}): ${(msgs.get(Number(m[1])) ?? '?').replace(/\s+/g, ' ').slice(0, 300)}`);
-  }
+  for (const [t, body] of tasks)
+    for (const l of body) {
+      const m = /\blog\s+(\d+)\s+step\s+(\d+)/i.exec(l);
+      if (m)
+        out.push(
+          `  step ${m[2]} (msg ${m[1]}, in ${t}): ${(msgs.get(Number(m[1])) ?? '?').replace(/\s+/g, ' ').slice(0, 300)}`,
+        );
+    }
   out.push('', '## prompts, rewards, ends');
-  for (const [t, body] of tasks) for (const l of body) {
-    if (/^(prompt|promptmulti|ask|give pc|end quest|change repute|pick one of|start quest|run quest|outcome|legal repute)/i.test(l)) out.push(`  ${t}: ${l}`);
-  }
-  for (const [t, body] of tasks) for (const l of body) {
-    const m = /^prompt\s+(\d+)/i.exec(l);
-    if (m) out.push(`  prompt ${m[1]} says: ${(msgs.get(Number(m[1])) ?? '?').replace(/\s+/g, ' ').slice(0, 300)}`);
-  }
+  for (const [t, body] of tasks)
+    for (const l of body) {
+      if (
+        /^(prompt|promptmulti|ask|give pc|end quest|change repute|pick one of|start quest|run quest|outcome|legal repute)/i.test(
+          l,
+        )
+      )
+        out.push(`  ${t}: ${l}`);
+    }
+  for (const [t, body] of tasks)
+    for (const l of body) {
+      const m = /^prompt\s+(\d+)/i.exec(l);
+      if (m) out.push(`  prompt ${m[1]} says: ${(msgs.get(Number(m[1])) ?? '?').replace(/\s+/g, ' ').slice(0, 300)}`);
+    }
   out.push('', '## offer (1000)', `  ${(msgs.get(1000) ?? '').replace(/\s+/g, ' ').slice(0, 400)}`);
   // the draft: an objective a step, opening on its step and done on the next (the last on the reward)
   const steps = [];
-  for (const [, body] of tasks) for (const l of body) { const m = /\blog\s+\d+\s+step\s+(\d+)/i.exec(l); if (m && !steps.includes(Number(m[1]))) steps.push(Number(m[1])); }
+  for (const [, body] of tasks)
+    for (const l of body) {
+      const m = /\blog\s+\d+\s+step\s+(\d+)/i.exec(l);
+      if (m && !steps.includes(Number(m[1]))) steps.push(Number(m[1]));
+    }
   steps.sort((a, b) => a - b);
   const rewardTask = [...tasks].find(([, body]) => body.some((l) => /^give pc/i.test(l)))?.[0] ?? null;
   const draft = {
     quest: f.name,
-    objectives: steps.map((s, i) => ({ id: `step${s}`, text: `TODO step ${s}`, open: { step: s }, done: steps[i + 1] != null ? { step: steps[i + 1] } : rewardTask ? { task: rewardTask } : { ended: true } })),
+    objectives: steps.map((s, i) => ({
+      id: `step${s}`,
+      text: `TODO step ${s}`,
+      open: { step: s },
+      done: steps[i + 1] != null ? { step: steps[i + 1] } : rewardTask ? { task: rewardTask } : { ended: true },
+    })),
     outcomes: [
       ...(rewardTask ? [{ id: 'done', text: 'TODO', on: { task: rewardTask }, pay: 'standard' }] : []),
       { id: 'failed', text: 'TODO', on: { ended: true }, pay: 'none', failure: true },
@@ -131,7 +203,9 @@ export function familyBrief(family) {
     const lines = questSource(f.name, false);
     const steps = lines.filter((l) => /\blog\s+\d+\s+step\s+\d+/i.test(l)).length;
     const dn = (lines.find((l) => /^\s*DisplayName:/i.test(l)) ?? '').replace(/^\s*DisplayName:\s*/i, '');
-    out.push(`${f.name.padEnd(12)} ${String(lines.length).padStart(5)} lines  ${String(steps).padStart(2)} steps  ${dn}`);
+    out.push(
+      `${f.name.padEnd(12)} ${String(lines.length).padStart(5)} lines  ${String(steps).padStart(2)} steps  ${dn}`,
+    );
   }
   return out.join('\n');
 }
@@ -139,7 +213,13 @@ export function familyBrief(family) {
 if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
   if (args[0] === '--family') console.log(familyBrief(args[1]));
-  else if (args[0] && !QUEST_FILES.has(args[0].toUpperCase())) { console.error(`${args[0]}: the pack holds no such quest`); process.exit(1); }   // DOC-35
+  else if (args[0] && !QUEST_FILES.has(args[0].toUpperCase())) {
+    console.error(`${args[0]}: the pack holds no such quest`);
+    process.exit(1);
+  } // DOC-35
   else if (args[0]) console.log(brief(args[0], { on: args.includes('--on') }));
-  else { console.error('usage: node tools/qlSheetDraft.mjs <QUEST> [--on] | --family <Name>'); process.exit(1); }
+  else {
+    console.error('usage: node tools/qlSheetDraft.mjs <QUEST> [--on] | --family <Name>');
+    process.exit(1);
+  }
 }

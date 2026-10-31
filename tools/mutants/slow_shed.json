@@ -92,8 +92,8 @@
   {
     "name": "SLOWSHED-wait-unheard",
     "file": "server-account/src/metrics.js",
-    "old": "  noteD1Wait(tally.capped, tally.trips, Date.now());   // SLOW-SHED: the isolate's shed hears how long the database made it wait, a trip at a time\n",
-    "new": "",
+    "old": "  noteD1Wait(tally.capped, tally.trips, Date.now()); // SLOW-SHED: the isolate's shed hears how long the database made it wait, a trip at a time\n  const parts = typeof said.parts === 'string' ? said.parts : ''; // AUDIT SCALE II A-3: the service's own word on the body it read",
+    "new": "  const parts = typeof said.parts === 'string' ? said.parts : ''; // AUDIT SCALE II A-3: the service's own word on the body it read",
     "tests": [
       "test/net/slow_shed.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "SLOWSHED-batch-untripped",
     "file": "server-account/src/metrics.js",
-    "old": "          } finally { tripDone(tally, Date.now() - started); }   // SLOW-SHED (AUDIT LEAN-READS C1): and a batch one, whatever it carries",
-    "new": "          } finally { add(tally, 'ms', Date.now() - started); add(tally, 'capped', Date.now() - started); }   // SLOW-SHED (AUDIT LEAN-READS C1): and a batch one, whatever it carries",
+    "old": "          } finally {\n            tripDone(tally, Date.now() - started);\n          } // SLOW-SHED (AUDIT LEAN-READS C1): and a batch one, whatever it carries",
+    "new": "          } finally {\n            add(tally, 'ms', Date.now() - started);\n            add(tally, 'capped', Date.now() - started);\n          } // SLOW-SHED (AUDIT LEAN-READS C1): and a batch one, whatever it carries",
     "tests": [
       "test/net/slow_shed.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "SLOWSHED-statement-untripped",
     "file": "server-account/src/metrics.js",
-    "old": "          } finally { tripDone(tally, Date.now() - started); }   // SLOW-SHED (AUDIT LEAN-READS C1): a statement awaited is a trip",
-    "new": "          } finally { add(tally, 'ms', Date.now() - started); add(tally, 'capped', Date.now() - started); }   // SLOW-SHED (AUDIT LEAN-READS C1): a statement awaited is a trip",
+    "old": "          } finally {\n            tripDone(tally, Date.now() - started);\n          } // SLOW-SHED (AUDIT LEAN-READS C1): a statement awaited is a trip",
+    "new": "          } finally {\n            add(tally, 'ms', Date.now() - started);\n            add(tally, 'capped', Date.now() - started);\n          } // SLOW-SHED (AUDIT LEAN-READS C1): a statement awaited is a trip",
     "tests": [
       "test/net/slow_shed.test.js"
     ],

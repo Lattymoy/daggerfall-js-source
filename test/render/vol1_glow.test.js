@@ -57,23 +57,23 @@ test('VOL1: the march by source - the air pass builds the glow from the lane\'s 
   assert.match(EL_SCATTER_GLSL, /float chord = range \* range - h2;\n  if \(chord <= 0\.0\) return 0\.0;\n  chord = sqrt\(chord\);/, 'and the closed form over the same chord');
   assert.match(fs, /for \(int s = 0; s < \$\{AIR_VOL_STEPS\}; s\+\+\) \{\n      float t = ta \+ \(float\(s\) \+ jitter\) \* dt;\n      float ds = t - t0;\n      sum \+= casterShadowOne\(k, Lr, uCamPos \+ dir \* t\) \/ \(h2 \+ ds \* ds\);/, 'the march: the same integrand, through the cube (DISC15: of either tier), jittered');
   assert.match(fs, /float jitter = bayer4\(gl_FragCoord\.xy\);/, 'the ordered jitter the blur averages');
-  assert.match(fs, /\$\{linear\n\s*\? 'outColor = vec4\(acc, 1\.0\);[^\n]*\n\s*: 'outColor = vec4\(airEncode\(elTonemapRGB\(acc \* uScatter \* uExposure \* elAdapt\(\)\)\), 1\.0\);/, 'AUDIT VOL1: linear light into a float target, the tile\'s blur averaging LIGHT and the tone pass curving the average once (per-pixel tonemapping before the blur dimmed a halo\'s core by a quarter); the old path where there is no float target');
+  assert.match(fs, /\$\{\n\s*linear\n\s*\? 'outColor = vec4\(acc, 1\.0\);   \/\/ linear light, unclamped: the blur averages it and the tone pass curves the average'\n\s*: 'outColor = vec4\(airEncode\(elTonemapRGB\(acc \* uScatter \* uExposure \* elAdapt\(\)\)\), 1\.0\);/, 'AUDIT VOL1: linear light into a float target, the tile\'s blur averaging LIGHT and the tone pass curving the average once (per-pixel tonemapping before the blur dimmed a halo\'s core by a quarter); the old path where there is no float target');
   const tone = a.slice(a.indexOf('const volToneFs = '), a.indexOf('const VOLBLUR_FS = `'));
   assert.match(tone, /outColor = vec4\(airEncode\(elTonemapRGB\(texture\(uSrc, vUV\)\.rgb \* uScatter \* uExposure \* elAdapt\(\)\)\), 1\.0\);/, 'the tone pass: as elFinish tonemaps the glow it adds');
   // the shadow block's air tap
   assert.match(SHADOW_GLSL, /float pointShadowOne\(int k, vec3 wp\) \{\n  vec4 P = uPointShadowParams\[k\];\n  float far = P\.w;\n  if \(far <= 0\.0\) return 1\.0;\n  vec3 d = wp - P\.xyz;/, 'one tap, no normal');
   assert.match(SHADOW_GLSL, /return texture\(uPointShadow, vec4\(uv, float\(k \* 6 \+ face\), cubeDepthOfM\(m - 0\.04, far\)\)\);\n\}/, 'the world-unit bias (AUDIT-EL F15), the face\'s layer');
   // the pass
-  assert.match(a, /vol: color\(bw, bh, this\.volLinear\), volB: color\(bw, bh, this\.volLinear\),/, 'at the bloom\'s size, linear where the GL has a float target');
+  assert.match(a, /vol: color\(bw, bh, this\.volLinear\),\n\s*volB: color\(bw, bh, this\.volLinear\),/, 'at the bloom\'s size, linear where the GL has a float target');
   assert.match(a, /this\.targets\.volOut = this\.volLinear \? color\(bw, bh\) : this\.targets\.volB;/, 'the byte image the readers take');
-  assert.match(a, /export const airVolLinear = \(gl\) => !!\(gl\.getExtension\('EXT_color_buffer_float'\) \|\| gl\.getExtension\('EXT_color_buffer_half_float'\)\);/);   // BOOT-COMPILE: the question, a function the boot's program list asks too
+  assert.match(a, /export const airVolLinear = \(gl\) =>\n\s*!!\(gl\.getExtension\('EXT_color_buffer_float'\) \|\| gl\.getExtension\('EXT_color_buffer_half_float'\)\);/);   // BOOT-COMPILE: the question, a function the boot's program list asks too
   assert.match(a, /this\.volLinear = airVolLinear\(gl\);/);
-  assert.match(a, /if \(linear\) gl\.texImage2D\(gl\.TEXTURE_2D, 0, gl\.RGBA16F, cw, ch, 0, gl\.RGBA, gl\.HALF_FLOAT, null\);/);
-  assert.match(a, /try \{\n\s*const vol = P\(QUAD_VS, volFs\(opts\.glsl, opts\.maxLights \?\? 48, this\.volLinear\), \['uDepth', 'uProjInfo', 'uRect', 'uCanvas', 'uCamPos', 'uViewRot', 'uPointLights', 'uPointColors', 'uPointCount', 'uScatter', 'uExposure', 'uAdapt'\]\);\n\s*if \(this\.volLinear\) this\.programs\.volTone = P\(QUAD_VS, volToneFs\(opts\.glsl\), \['uSrc', 'uScatter', 'uExposure', 'uAdapt'\]\);/, 'built with the lane\'s blocks, the tone pass only with a float target');
-  assert.match(a, /\} catch \(e\) \{\n\s*this\.programs\.vol = null; this\.programs\.volTone = null;/, 'a shader the GL refuses costs the glow alone');
-  assert.match(a, /const prepared = !!this\.f && this\.fresh;\n\s*if \(prepared\) this\._images\(\);\n\s*else \{ this\._blank\(quad\); this\.measured = false; \}\n\s*this\.fresh = false;/, 'AUDIT VOL1: the images for a frame the pass was PREPARED for alone - a menu\'s frame gets black images (the last world frame\'s glow was painted over it)');
-  assert.match(a, /for \(const t of \[T\.bloom, T\.shaft, T\.volOut\]\) \{ quad\(this\.programs\.box, t\); gl\.clear\(gl\.COLOR_BUFFER_BIT\); \}/, 'the three the resolve adds, black');
-  assert.match(a, /this\.fresh = true;   \/\/ AUDIT VOL1/, 'set at prepare');
+  assert.match(a, /if \(linear\)\n\s*gl\.texImage2D\(gl\.TEXTURE_2D, 0, gl\.RGBA16F, cw, ch, 0, gl\.RGBA, gl\.HALF_FLOAT, null\);/);
+  assert.match(a, /try \{\n\s*const vol = P\(QUAD_VS, volFs\(opts\.glsl, opts\.maxLights \?\? 48, this\.volLinear\), \[\n\s*'uDepth',\n\s*'uProjInfo',\n\s*'uRect',\n\s*'uCanvas',\n\s*'uCamPos',\n\s*'uViewRot',\n\s*'uPointLights',\n\s*'uPointColors',\n\s*'uPointCount',\n\s*'uScatter',\n\s*'uExposure',\n\s*'uAdapt',\n\s*\]\);\n\s*if \(this\.volLinear\)\n\s*this\.programs\.volTone = P\(QUAD_VS, volToneFs\(opts\.glsl\), \['uSrc', 'uScatter', 'uExposure', 'uAdapt'\]\);/, 'built with the lane\'s blocks, the tone pass only with a float target');
+  assert.match(a, /\} catch \(e\) \{\n\s*this\.programs\.vol = null;\n\s*this\.programs\.volTone = null;/, 'a shader the GL refuses costs the glow alone');
+  assert.match(a, /const prepared = !!this\.f && this\.fresh;\n\s*if \(prepared\) this\._images\(\);\n\s*else \{\n\s*this\._blank\(quad\);\n\s*this\.measured = false;\n\s*\}\n\s*this\.fresh = false;/, 'AUDIT VOL1: the images for a frame the pass was PREPARED for alone - a menu\'s frame gets black images (the last world frame\'s glow was painted over it)');
+  assert.match(a, /for \(const t of \[T\.bloom, T\.shaft, T\.volOut\]\) \{\n\s*quad\(this\.programs\.box, t\);\n\s*gl\.clear\(gl\.COLOR_BUFFER_BIT\);\n\s*\}/, 'the three the resolve adds, black');
+  assert.match(a, /this\.fresh = true; \/\/ AUDIT VOL1/, 'set at prepare');
   assert.match(a, /vec3 c = airDecode\(texture\(uFrame, uv\)\.rgb\) \+ airDecode\(texture\(uVol, t\)\.rgb\);   \/\/ AUDIT VOL1/, 'the eye adapts to the glow it will see');
   assert.match(a, /vec3 glow = vec3\(0\.0\)\$\{glow \? ' \+ airDecode\(texture\(uVol, vUV\)\.rgb\)' : ''\};/, 'and the bright pass blooms a halo\'s core (PERF-EXT31: the bright pass built with the glow, for a frame that marched it; LA-POST1: added to each quarter it thresholds)');
   assert.match(a, /vec3 c = airDecode\(texture\(uFrame, uv\)\.rgb\) \+ glow;/, 'LA-POST1: the glow joins the frame before the threshold');
@@ -85,8 +85,8 @@ test('VOL1: the march by source - the air pass builds the glow from the lane\'s 
   assert.match(a, /float w = abs\(viewDist\(depthAt\(uv\)\) - here\) <= here \* \$\{AIR_VOL_BLUR_SHARE\} \? 1\.0 : 0\.0;/, 'a tap counts while its ray reaches within the share of the centre\'s distance');
   assert.match(a, /volBlur: P\(QUAD_VS, VOLBLUR_FS, \['uSrc', 'uTexel', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas'\]\),/);
   assert.match(a, /c \+= airDecode\(texture\(uVol, wuv\)\.rgb\);   \/\/ VOL1/, 'added at the resolve, display-linear');
-  assert.match(a, /gl\.activeTexture\(gl\.TEXTURE4\); gl\.bindTexture\(gl\.TEXTURE_2D, T\.volOut\.tex\); gl\.uniform1i\(PR\.uVol, 4\);/, 'the tonemapped image (PERF-EXT31: PR, the resolve built for what the frame drew)');
-  assert.match(a, /if \(!on\) \{ quad\(P\.box, T\.volOut\); gl\.clearColor\(0, 0, 0, 1\); gl\.clear\(gl\.COLOR_BUFFER_BIT\);/, 'shut: the image the readers take, cleared');
+  assert.match(a, /gl\.activeTexture\(gl\.TEXTURE4\);\n\s*gl\.bindTexture\(gl\.TEXTURE_2D, T\.volOut\.tex\);\n\s*gl\.uniform1i\(PR\.uVol, 4\);/, 'the tonemapped image (PERF-EXT31: PR, the resolve built for what the frame drew)');
+  assert.match(a, /if \(!on\) \{\n\s*quad\(P\.box, T\.volOut\);\n\s*gl\.clearColor\(0, 0, 0, 1\);\n\s*gl\.clear\(gl\.COLOR_BUFFER_BIT\);/, 'shut: the image the readers take, cleared');
   // the renderer hands the blocks over and the frame's gain and exposure
   const r = rd('src/render/renderer.js');
   assert.match(r, /glsl: \{ shadow: SHADOW_GLSL, tonemap: this\._lane\.tonemapGlsl, scatter: this\._lane\.scatterGlsl \}, maxLights: this\.maxPointLights \}\);/);

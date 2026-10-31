@@ -45,7 +45,11 @@ const COUNT_BD = T6([0, 0, 0, 1, 1, 2], [0, 0, 1, 1, 2, 2], [0, 1, 1, 2, 2, 3], 
 const COUNT_CE = T6([0, 0, 1, 2, 2, 3], [0, 1, 2, 2, 3, 3], [1, 2, 2, 3, 3, 4], [2, 2, 3, 3, 4, 4]);
 /** Each block's count lists (by INT's band) and its food list (2 fruit, 3 Mushroom, 4 Egg). */
 export const BASKET_BLOCKS = Object.freeze({
-  A: Object.freeze({ counts: T6([0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 1, 1], [0, 0, 0, 1, 1, 1], [0, 0, 1, 1, 1, 1]), foods: Object.freeze([2, 3, 4]), fruit: 'Orange' }),
+  A: Object.freeze({
+    counts: T6([0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 1, 1], [0, 0, 0, 1, 1, 1], [0, 0, 1, 1, 1, 1]),
+    foods: Object.freeze([2, 3, 4]),
+    fruit: 'Orange',
+  }),
   B: Object.freeze({ counts: COUNT_BD, foods: Object.freeze([2, 2, 3, 4]), fruit: 'Orange' }),
   C: Object.freeze({ counts: COUNT_CE, foods: Object.freeze([2, 2, 3, 4]), fruit: 'Orange' }),
   D: Object.freeze({ counts: COUNT_BD, foods: Object.freeze([2, 3, 3, 4, 4]), fruit: 'Apple' }),

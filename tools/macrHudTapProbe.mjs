@@ -74,24 +74,36 @@ const check = (name, ok, detail = '') => {
 // PROBE_PORT=<n> reuses a dev server already listening there (a container's
 // file-watcher budget can refuse a second vite); otherwise one is made here,
 // with its watcher off - the probe changes nothing it would need to see.
-const vite = process.env.PROBE_PORT ? null : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
+const vite = process.env.PROBE_PORT
+  ? null
+  : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
 if (vite) await vite.listen();
 const port = vite ? vite.httpServer.address().port : Number(process.env.PROBE_PORT);
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 try {
   // AUDIT 68 X2-probe-tmp-page-leak: written inside the try, so the finally that unlinks it always runs.
   await writeFile(join(ROOT, `tools/${PAGE_NAME}`), PAGE);
-  const ctx = await browser.newContext({ viewport: { width: 430, height: 860 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 });
+  const ctx = await browser.newContext({
+    viewport: { width: 430, height: 860 },
+    hasTouch: true,
+    isMobile: true,
+    deviceScaleFactor: 2,
+  });
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (er) => errors.push(er.message));
-  await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?nofonts`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?nofonts`, {
+    waitUntil: 'domcontentloaded',
+    timeout: 60000,
+  });
   await page.waitForFunction(() => !!globalThis.__probe, null, { timeout: 30000 });
   await page.waitForTimeout(300);
   const cdp = await ctx.newCDPSession(page);
-  const send = (type, x, y) => cdp.send('Input.dispatchTouchEvent', {
-    type, touchPoints: type === 'touchEnd' ? [] : [{ x, y, radiusX: 12, radiusY: 12, force: 1, id: 1 }],
-  });
+  const send = (type, x, y) =>
+    cdp.send('Input.dispatchTouchEvent', {
+      type,
+      touchPoints: type === 'touchEnd' ? [] : [{ x, y, radiusX: 12, radiusY: 12, force: 1, id: 1 }],
+    });
   const P = (fn, ...a) => page.evaluate(fn, ...a);
   const sleep = (ms) => page.waitForTimeout(ms);
   console.log('cells:', await P(() => globalThis.__probe.classes()));
@@ -99,32 +111,67 @@ try {
   const tap = async (pt, { hold = 60, wander = 0 } = {}) => {
     await P(() => globalThis.__probe.reset());
     await send('touchStart', pt.x, pt.y);
-    if (wander) { await sleep(hold / 2); await send('touchMove', pt.x + wander, pt.y + wander); await sleep(hold / 2); } else await sleep(hold);
+    if (wander) {
+      await sleep(hold / 2);
+      await send('touchMove', pt.x + wander, pt.y + wander);
+      await sleep(hold / 2);
+    } else await sleep(hold);
     await send('touchEnd', pt.x, pt.y);
     await sleep(120);
     return P(() => globalThis.__probe.calls());
   };
-  for (const [k, want] of [['c1', 'use1'], ['c2', 'use2'], ['off', 'off'], ['main', 'hand']]) {
+  for (const [k, want] of [
+    ['c1', 'use1'],
+    ['c2', 'use2'],
+    ['off', 'off'],
+    ['main', 'hand'],
+  ]) {
     const pt = await P((k) => globalThis.__probe.cell(k), k);
     check(`the ${k} cell exists`, !!pt, JSON.stringify(pt));
     if (!pt) continue;
-    check(`one tap on ${k} is ONE call`, (await tap(pt)) === want, `got "${await P(() => globalThis.__probe.calls())}"`);
-    check(`a wandering tap on ${k} is still ONE call`, (await tap(pt, { wander: 3 })) === want, `got "${await P(() => globalThis.__probe.calls())}"`);
+    check(
+      `one tap on ${k} is ONE call`,
+      (await tap(pt)) === want,
+      `got "${await P(() => globalThis.__probe.calls())}"`,
+    );
+    check(
+      `a wandering tap on ${k} is still ONE call`,
+      (await tap(pt, { wander: 3 })) === want,
+      `got "${await P(() => globalThis.__probe.calls())}"`,
+    );
     // two quick taps: two calls, never three or four
     await P(() => globalThis.__probe.reset());
-    for (let i = 0; i < 2; i++) { await send('touchStart', pt.x, pt.y); await sleep(50); await send('touchEnd', pt.x, pt.y); await sleep(80); }
+    for (let i = 0; i < 2; i++) {
+      await send('touchStart', pt.x, pt.y);
+      await sleep(50);
+      await send('touchEnd', pt.x, pt.y);
+      await sleep(80);
+    }
     await sleep(120);
-    check(`two quick taps on ${k} are TWO calls`, (await P(() => globalThis.__probe.calls())) === `${want},${want}`, `got "${await P(() => globalThis.__probe.calls())}"`);
+    check(
+      `two quick taps on ${k} are TWO calls`,
+      (await P(() => globalThis.__probe.calls())) === `${want},${want}`,
+      `got "${await P(() => globalThis.__probe.calls())}"`,
+    );
   }
   // a hold past the cycle threshold performs nothing (the choosing is the act)
   const c1 = await P(() => globalThis.__probe.cell('c1'));
-  if (c1) check('a HOLD on c1 is no call', (await tap(c1, { hold: 700 })) === '', `got "${await P(() => globalThis.__probe.calls())}"`);
+  if (c1)
+    check(
+      'a HOLD on c1 is no call',
+      (await tap(c1, { hold: 700 })) === '',
+      `got "${await P(() => globalThis.__probe.calls())}"`,
+    );
   // a mouse click is not a press (AUDIT QS F8)
   if (c1) {
     await P(() => globalThis.__probe.reset());
     await page.mouse.click(c1.x, c1.y);
     await sleep(120);
-    check('a MOUSE click on c1 is no call', (await P(() => globalThis.__probe.calls())) === '', `got "${await P(() => globalThis.__probe.calls())}"`);
+    check(
+      'a MOUSE click on c1 is no call',
+      (await P(() => globalThis.__probe.calls())) === '',
+      `got "${await P(() => globalThis.__probe.calls())}"`,
+    );
   }
   check('no page errors', errors.length === 0, errors.join(' | '));
   await ctx.close();

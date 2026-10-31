@@ -2589,7 +2589,7 @@ Measured through the real motor on TVRNBM04, MARKAA00 and GEMSAM00: 545 of 2,927
 rider at a board and 131 a walker (wedged under a low board's edge at a walk); a journey's feelers, at the knee, saw
 none of it, and its grinding stopped the journey.
 
-A sign's triangle every corner of which stands `signSolid.js:"export const SIGN_HANG_M = 1;"` over the sign's own foot
+A sign's triangle every corner of which stands `signSolid.js:"export const SIGN_HANG_M"` over the sign's own foot
 HANGS (the gap measured over the 56 records: standing corners at 0 and 0.5 m, hanging at 1.65 m and over; the range is
 HOUSE-SIGN's one export, `houseSigns.js` `isShopSignModel` - AUDIT FB1025i G3). A hung triangle stays in the collider
 as a RAY'S (`collider.js:"  addMesh(bucketKey, positions, indices, matrix, translation = null, rotation = null, posed = false, sight = null) {"`):

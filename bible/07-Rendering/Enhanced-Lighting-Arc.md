@@ -2310,7 +2310,7 @@ its beam - from the lamp through the glass to its reach - and in its glass's glo
 of every turn and size, that volume is an eighth of the sphere's box for a lit room's lamp (12.6 percent; 3.8 for the
 sun through a building's glass), and every fragment in the rest walked the light only to be turned away. `windowLightBox` (`src/render/windowLight.js:"export function windowLightBox"`)
 bounds the beam and the glow in the glass's own frame, and `buildLightClusterBoxes` lists a box by its three
-half-axes under the sphere's rules (`src/render/lightClusters.js:"export function cellsOfViewBox(x0, x1, y0, y1, d0, dFar, proj, box, at) {"`).
+half-axes under the sphere's rules (`src/render/lightClusters.js:"export function cellsOfViewBox"`).
 
 **Farther from the source.** A window's lamp reaches 12 m (`WL_LAMP_RANGE`, WL1's 8). On the lane a town lantern
 reaches 27 (`src/world/city/cityLights.js:"export const STREET_LIGHT_REACH = 1.5;"`, half again the prefab's 18), its
@@ -2322,7 +2322,7 @@ its size to its neighbours (S5, `src/world/city/cityLights.js:"export const stre
 
 **What the lanterns' reach costs, and what pays for it.** Half again the reach is more than twice the lit area, and
 the cells listing a lantern doubled with it. A sphere is listed in each depth slice only by the tiles of its widest
-circle there (`src/render/lightClusters.js:"export function sphereSlice(sph, o, cz, proj, out) {"`), not by its
+circle there (`src/render/lightClusters.js:"export function sphereSlice"`), not by its
 whole box: a third fewer entries at either reach, no pixel changed.
 
 **The back-face skip.** The lane's lantern loop leaves a surface turned from a light before its shadow taps. AUDIT

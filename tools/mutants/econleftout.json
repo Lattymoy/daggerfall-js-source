@@ -2,8 +2,8 @@
   {
     "name": "ECON-LEFT-OUT-the-ban-ignored",
     "file": "server-account/src/staffEconomy.js",
-    "old": "`(COALESCE(${p}.banned_until, 0) > ${Math.floor(nowS)} OR ",
-    "new": "`(0 OR ",
+    "old": "  `(COALESCE(${p}.banned_until, 0) > ${Math.floor(nowS)} OR COALESCE(${holdStandsSql(c, String(Math.floor(nowS)))}, 0))`;",
+    "new": "  `(0 OR COALESCE(${holdStandsSql(c, String(Math.floor(nowS)))}, 0))`;",
     "tests": [
       "test/server/staffpanel3econ.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "ECON-LEFT-OUT-the-hold-ignored",
     "file": "server-account/src/staffEconomy.js",
-    "old": " OR COALESCE(${holdStandsSql(c, String(Math.floor(nowS)))}, 0))`;",
-    "new": ")`;",
+    "old": "  `(COALESCE(${p}.banned_until, 0) > ${Math.floor(nowS)} OR COALESCE(${holdStandsSql(c, String(Math.floor(nowS)))}, 0))`;",
+    "new": "  `(COALESCE(${p}.banned_until, 0) > ${Math.floor(nowS)})`;",
     "tests": [
       "test/server/staffpanel3econ.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "ECON-LEFT-OUT-any-hold-stands",
     "file": "server-account/src/staffEconomy.js",
-    "old": "COALESCE(${holdStandsSql(c, String(Math.floor(nowS)))}, 0)",
-    "new": "COALESCE(c.held IS NOT NULL, 0)",
+    "old": "  `(COALESCE(${p}.banned_until, 0) > ${Math.floor(nowS)} OR COALESCE(${holdStandsSql(c, String(Math.floor(nowS)))}, 0))`;",
+    "new": "  `(COALESCE(${p}.banned_until, 0) > ${Math.floor(nowS)} OR COALESCE(c.held IS NOT NULL, 0))`;",
     "tests": [
       "test/server/staffpanel3econ.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "ECON-WORTH-the-split-dropped",
     "file": "server-account/src/staffEconomy.js",
-    "old": "WHEN json_type(i.tally, '$.b') IS NULL",
-    "new": "WHEN 0",
+    "old": "          COALESCE(SUM(CASE WHEN json_type(i.tally, '$.b') IS NULL THEN CAST(json_extract(i.tally, '$.g') AS INTEGER) ELSE 0 END), 0) AS unsplit",
+    "new": "          COALESCE(SUM(CASE WHEN 0 THEN CAST(json_extract(i.tally, '$.g') AS INTEGER) ELSE 0 END), 0) AS unsplit",
     "tests": [
       "test/server/staffpanel3econ.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "ECON-WORTH-the-unweighed-unworthed",
     "file": "server-account/src/staffEconomy.js",
-    "old": "COALESCE(c.wealth, CAST(json_extract(i.tally, '$.g') AS INTEGER), 0)",
-    "new": "COALESCE(c.wealth, 0)",
+    "old": "          COALESCE(SUM(COALESCE(c.wealth, CAST(json_extract(i.tally, '$.g') AS INTEGER), 0)), 0) AS wealth,",
+    "new": "          COALESCE(SUM(COALESCE(c.wealth, 0)), 0) AS wealth,",
     "tests": [
       "test/server/staffpanel3econ.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "ECON-WORTH-the-bank-share-dropped",
     "file": "server-account/src/staffCensus.js",
-    "old": "b: Math.min(Number.MAX_SAFE_INTEGER, banks) };",
-    "new": "};",
+    "old": "  const out = { g: Math.min(Number.MAX_SAFE_INTEGER, gold), b: Math.min(Number.MAX_SAFE_INTEGER, banks) };",
+    "new": "  const out = { g: Math.min(Number.MAX_SAFE_INTEGER, gold) };",
     "tests": [
       "test/server/staffpanel4census.test.js"
     ],

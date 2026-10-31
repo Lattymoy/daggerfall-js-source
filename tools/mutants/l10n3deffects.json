@@ -22,7 +22,7 @@
   {
     "name": "L10N3d2-player-activate-54-youSee",
     "file": "src/player/activate.js",
-    "old": "export const presentNpcInfoText = (displayName) => localizedText('youSee', YOU_SEE_TEXT).replaceAll('%s', displayName ?? '');",
+    "old": "export const presentNpcInfoText = (displayName) =>\n  localizedText('youSee', YOU_SEE_TEXT).replaceAll('%s', displayName ?? '');",
     "new": "export const presentNpcInfoText = (displayName) => YOU_SEE_TEXT.replaceAll('%s', displayName ?? '');",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
@@ -52,7 +52,7 @@
   {
     "name": "L10N3d2-player-interactionMode-23-interactionIsNowInMode",
     "file": "src/player/interactionMode.js",
-    "old": "  localizedText('interactionIsNowInMode', 'Interaction is now in %s mode.').replaceAll('%s', Object.hasOwn(MODE_WORDS, mode) ? MODE_WORDS[mode] : mode);",
+    "old": "  localizedText('interactionIsNowInMode', 'Interaction is now in %s mode.').replaceAll(\n    '%s',\n    Object.hasOwn(MODE_WORDS, mode) ? MODE_WORDS[mode] : mode,\n  );",
     "new": "  'Interaction is now in %s mode.'.replaceAll('%s', Object.hasOwn(MODE_WORDS, mode) ? MODE_WORDS[mode] : mode);",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
@@ -62,7 +62,7 @@
   {
     "name": "L10N3d2-player-mobileEnemyActivate-64-youSeeAn",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "  return (vowel ? localizedText('youSeeAn', YOU_SEE_AN_TEXT) : localizedText('youSeeA', YOU_SEE_A_TEXT)).replaceAll('%s', n);",
+    "old": "  return (vowel ? localizedText('youSeeAn', YOU_SEE_AN_TEXT) : localizedText('youSeeA', YOU_SEE_A_TEXT)).replaceAll(\n    '%s',\n    n,\n  );",
     "new": "  return (vowel ? YOU_SEE_AN_TEXT : localizedText('youSeeA', YOU_SEE_A_TEXT)).replaceAll('%s', n);",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
@@ -72,7 +72,7 @@
   {
     "name": "L10N3d2-player-mobileEnemyActivate-64-youSeeA",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "  return (vowel ? localizedText('youSeeAn', YOU_SEE_AN_TEXT) : localizedText('youSeeA', YOU_SEE_A_TEXT)).replaceAll('%s', n);",
+    "old": "  return (vowel ? localizedText('youSeeAn', YOU_SEE_AN_TEXT) : localizedText('youSeeA', YOU_SEE_A_TEXT)).replaceAll(\n    '%s',\n    n,\n  );",
     "new": "  return (vowel ? localizedText('youSeeAn', YOU_SEE_AN_TEXT) : YOU_SEE_A_TEXT).replaceAll('%s', n);",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
@@ -172,8 +172,8 @@
   {
     "name": "L10N3d2-systems-buildingLocks-138-guildClosed",
     "file": "src/systems/buildingLocks.js",
-    "old": "    : buildingType === BUILDING_TYPES.GuildHall ? localizedText('guildClosed', 'Guild is closed. Open from %d1:00 to %d2:00.')",
-    "new": "    : buildingType === BUILDING_TYPES.GuildHall ? 'Guild is closed. Open from %d1:00 to %d2:00.'",
+    "old": "        ? localizedText('guildClosed', 'Guild is closed. Open from %d1:00 to %d2:00.')",
+    "new": "        ? 'Guild is closed. Open from %d1:00 to %d2:00.'",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_effects.test.js"
@@ -262,8 +262,8 @@
   {
     "name": "L10N3d2-systems-lycanthropy-379-inventoryWhileShapechanged",
     "file": "src/systems/lycanthropy.js",
-    "old": "  return isTransformedNow(entity) ? { text: localizedText('inventoryWhileShapechanged', INVENTORY_WHILE_SHAPECHANGED_TEXT) } : null;   // :413",
-    "new": "  return isTransformedNow(entity) ? { text: INVENTORY_WHILE_SHAPECHANGED_TEXT } : null;   // :413",
+    "old": "  return isTransformedNow(entity)\n    ? { text: localizedText('inventoryWhileShapechanged', INVENTORY_WHILE_SHAPECHANGED_TEXT) }\n    : null; // :413",
+    "new": "  return isTransformedNow(entity) ? { text: INVENTORY_WHILE_SHAPECHANGED_TEXT } : null; // :413",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_effects.test.js"
@@ -272,8 +272,8 @@
   {
     "name": "L10N3d2-systems-lycanthropy-382-youGetNoResponse",
     "file": "src/systems/lycanthropy.js",
-    "old": "  return isTransformedNow(entity) ? { text: localizedText('youGetNoResponse', NO_RESPONSE_TEXT) } : null;   // :427",
-    "new": "  return isTransformedNow(entity) ? { text: NO_RESPONSE_TEXT } : null;   // :427",
+    "old": "  return isTransformedNow(entity) ? { text: localizedText('youGetNoResponse', NO_RESPONSE_TEXT) } : null; // :427",
+    "new": "  return isTransformedNow(entity) ? { text: NO_RESPONSE_TEXT } : null; // :427",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_effects.test.js"
@@ -362,8 +362,8 @@
   {
     "name": "L10N3d2-ui-levelNotice-290-skillImprove",
     "file": "src/ui/levelUp/levelNotice.js",
-    "old": "    say?.(localizedText('skillImprove', 'Your %s skill has improved.').replaceAll('%s', SKILL_NAMES[id]));   // PlayerEntity.cs:1389",
-    "new": "    say?.('Your %s skill has improved.'.replaceAll('%s', SKILL_NAMES[id]));   // PlayerEntity.cs:1389",
+    "old": "    say?.(localizedText('skillImprove', 'Your %s skill has improved.').replaceAll('%s', SKILL_NAMES[id])); // PlayerEntity.cs:1389",
+    "new": "    say?.('Your %s skill has improved.'.replaceAll('%s', SKILL_NAMES[id])); // PlayerEntity.cs:1389",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_effects.test.js"

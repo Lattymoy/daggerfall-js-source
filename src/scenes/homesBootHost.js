@@ -36,7 +36,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { holdRealmDeeds, homesGoneFrom, homesGoneLine } from '../systems/online/onlineHomes.js';
 import { createSceneCache } from '../systems/sceneCache.js';
-import { keepStrandedHomes } from '../systems/decor/homeStranded.js';   // HOME-STRANDED
+import { keepStrandedHomes } from '../systems/decor/homeStranded.js'; // HOME-STRANDED
 
 /** How long a step waits for the world to stand: a look every quarter second, five minutes of them. */
 const STAND_LOOKS = 1200;
@@ -50,8 +50,22 @@ const STAND_LOOK_MS = 250;
  *   `loaded` the boot's own character is the one played (never its stand-in - characterIdOf mints one); `stands` the
  *   world's modes stand (the host declares them far below its boot's first landing)
  */
-export function createHomesBoot({ homesApi, onlineHomes, realm, player, loaded, stands, giveOwn, say, wait = (ms) => new Promise((r) => { setTimeout(r, ms); }) }) {
-  let deedsAsked = false, goneAsked = false;
+export function createHomesBoot({
+  homesApi,
+  onlineHomes,
+  realm,
+  player,
+  loaded,
+  stands,
+  giveOwn,
+  say,
+  wait = (ms) =>
+    new Promise((r) => {
+      setTimeout(r, ms);
+    }),
+}) {
+  let deedsAsked = false,
+    goneAsked = false;
   /** Once the world stands with the character loaded - false where it never did (the step asked again). */
   async function standing() {
     for (let i = 0; !(loaded() && stands()) && i < STAND_LOOKS; i++) await wait(STAND_LOOK_MS);
@@ -60,10 +74,14 @@ export function createHomesBoot({ homesApi, onlineHomes, realm, player, loaded, 
   async function holdDeeds() {
     if (deedsAsked || !onlineHomes) return null;
     deedsAsked = true;
-    if (!await standing()) { deedsAsked = false; return null; }   // never the boot's stand-in character - asked again at the next landing
+    if (!(await standing())) {
+      deedsAsked = false;
+      return null;
+    } // never the boot's stand-in character - asked again at the next landing
     try {
       const held = await holdRealmDeeds(onlineHomes, { houses: player().houses });
-      for (const d of held) if (!d.r?.ok) console.warn(`[homes] the deed to house ${d.buildingKey} is not held: ${d.r?.error}`);
+      for (const d of held)
+        if (!d.r?.ok) console.warn(`[homes] the deed to house ${d.buildingKey} is not held: ${d.r?.error}`);
       return held;
     } catch (e) {
       console.warn('[homes] the deeds could not be held:', e?.message ?? e);
@@ -73,16 +91,28 @@ export function createHomesBoot({ homesApi, onlineHomes, realm, player, loaded, 
   async function sweepGone() {
     if (goneAsked || !homesApi || !realm) return null;
     goneAsked = true;
-    if (!await standing()) { goneAsked = false; return null; }   // never the boot's stand-in character - asked again at the next landing
+    if (!(await standing())) {
+      goneAsked = false;
+      return null;
+    } // never the boot's stand-in character - asked again at the next landing
     try {
       const r = await homesApi.mine();
-      if (!r?.ok || !Array.isArray(r.data?.homes)) { goneAsked = false; return null; }   // unanswered: nothing swept on a list not read
+      if (!r?.ok || !Array.isArray(r.data?.homes)) {
+        goneAsked = false;
+        return null;
+      } // unanswered: nothing swept on a list not read
       const p = player();
-      const swept = homesGoneFrom(p.sceneCache ??= createSceneCache(), r.data.homes, { ownNow: (m, k) => !!onlineHomes?.homeAt(m, k)?.own });   // never one bought while the list was read
-      if (swept.own.length) { giveOwn(swept.own); say(homesGoneLine(swept.own)); }   // the furniture among Your things, the rest to the pack
+      const swept = homesGoneFrom((p.sceneCache ??= createSceneCache()), r.data.homes, {
+        ownNow: (m, k) => !!onlineHomes?.homeAt(m, k)?.own,
+      }); // never one bought while the list was read
+      if (swept.own.length) {
+        giveOwn(swept.own);
+        say(homesGoneLine(swept.own));
+      } // the furniture among Your things, the rest to the pack
       for (const name of swept.gone) console.log(`[homes] ${name}: no longer the account's - let go`);
       // HOME-STRANDED: what the old pour left under a held home's building survives a world move until its owner walks in
-      for (const name of keepStrandedHomes(p.sceneCache, r.data.homes)) console.log(`[homes] ${name}: stranded chest goods kept for the owner's next visit`);
+      for (const name of keepStrandedHomes(p.sceneCache, r.data.homes))
+        console.log(`[homes] ${name}: stranded chest goods kept for the owner's next visit`);
       return swept;
     } catch (e) {
       console.warn('[homes] the homes the account holds no more could not be swept:', e?.message ?? e);

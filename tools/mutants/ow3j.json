@@ -152,8 +152,8 @@
   {
     "name": "OW3-J4-last-leg-drawn",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "...legs.slice(0, -1).map(",
-    "new": "...legs.map(",
+    "old": "    ...legs\n      .slice(0, -1)\n      .map((l) => (l.at ? [l.at.x, l.at.z] : onRoad(l, l.line ? [...l.line[l.line.length - 1]] : centre(l)))),",
+    "new": "    ...legs.map((l) => (l.at ? [l.at.x, l.at.z] : onRoad(l, l.line ? [...l.line[l.line.length - 1]] : centre(l)))),",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "OW3-J5-start-exempt-again",
     "file": "src/systems/travel/travelRoute.js",
-    "old": ": goalExempt ? 2 : 1, leaving, beyond);",
-    "new": ": goalExempt ? 2 : 1, leaving || c === start, beyond);",
+    "old": "          leaving,",
+    "new": "          leaving || c === start,",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "OW3-J5-plateau-climbed",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "n !== goal ? 0 : goalExempt ? 2 : 1, leaving, beyond);",
-    "new": "n !== goal ? 0 : 2, leaving, beyond);",
+    "old": "          n !== goal ? 0 : goalExempt ? 2 : 1,",
+    "new": "          n !== goal ? 0 : 2,",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -193,8 +193,8 @@
   {
     "name": "OW3-J6-mw-body-ungrown",
     "file": "src/player/mwView.js",
-    "old": "grow: face?.grow > 1 ? face.grow : 1, up: face?.up ?? null, horse });",
-    "new": "grow: 1, up: face?.up ?? null, horse });",
+    "old": "  return fpArm.drawThird(canvas, {\n    proj,\n    view,\n    eye,\n    feet,\n    yaw,\n    grow: face?.grow > 1 ? face.grow : 1,\n    up: face?.up ?? null,\n    horse,\n  });",
+    "new": "  return fpArm.drawThird(canvas, { proj, view, eye, feet, yaw, grow: 1, up: face?.up ?? null, horse });",
     "tests": [
       "test/player/eotb_view.test.js"
     ],

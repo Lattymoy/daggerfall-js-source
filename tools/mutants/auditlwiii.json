@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-LWIII-trailer-first",
     "file": "src/systems/livingWorld/wagons.js",
-    "old": "  let lo = 0, hi = step;",
-    "new": "  let lo = dist, hi = dist + step;",
+    "old": "  let lo = 0,\n    hi = step;",
+    "new": "  let lo = dist,\n    hi = dist + step;",
     "tests": [
       "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-LWIII-trailer-halve",
     "file": "src/systems/livingWorld/wagons.js",
-    "old": "  for (let i = 0; i < 20; i++) { const mid = (lo + hi) / 2; if (far(mid) < dist) lo = mid; else hi = mid; }",
-    "new": "  for (let i = 0; i < 4; i++) { const mid = (lo + hi) / 2; if (far(mid) < dist) lo = mid; else hi = mid; }",
+    "old": "  for (let i = 0; i < 20; i++) {",
+    "new": "  for (let i = 0; i < 4; i++) {",
     "tests": [
       "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "AUDIT-LWIII-camp-horse-face",
     "file": "src/systems/livingWorld/wagons.js",
-    "old": "      horses.push({ key: `${trip.id}:h${i}`, x: x + Math.cos(face) * CAMP_HORSE_SIDE_N, z: z - Math.sin(face) * CAMP_HORSE_SIDE_N, yaw: face, moving: false });",
-    "new": "      horses.push({ key: `${trip.id}:h${i}`, x: x + Math.cos(face) * CAMP_HORSE_SIDE_N, z: z - Math.sin(face) * CAMP_HORSE_SIDE_N, yaw: face + Math.PI / 2, moving: false });",
+    "old": "        z: z - Math.sin(face) * CAMP_HORSE_SIDE_N,\n        yaw: face,",
+    "new": "        z: z - Math.sin(face) * CAMP_HORSE_SIDE_N,\n        yaw: face + Math.PI / 2,",
     "tests": [
       "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "AUDIT-LWIII-clear-side",
     "file": "src/systems/livingWorld/wagons.js",
-    "old": "      if (out === 'f') nf = front; else if (out === 'b') nf = -back; else nr = (r < 0 ? -1 : 1) * half;",
-    "new": "      if (out === 'f') nf = front; else if (out === 'b') nf = -back; else nr = half;",
+    "old": "      else nr = (r < 0 ? -1 : 1) * half;",
+    "new": "      else nr = half;",
     "tests": [
       "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "AUDIT-LWIII-clear-horses",
     "file": "src/systems/livingWorld/wagons.js",
-    "old": "    ...team.horses.map((h) => ({ c: h, back: HORSE_FOOT_N.half, front: HORSE_FOOT_N.half, half: HORSE_FOOT_N.side })),",
-    "new": "",
+    "old": "  const boxes = [\n    ...team.wagons.map((w) => ({ c: w, back: foot.back, front: foot.front, half: foot.half })),\n    ...team.horses.map((h) => ({ c: h, back: HORSE_FOOT_N.half, front: HORSE_FOOT_N.half, half: HORSE_FOOT_N.side })),\n  ];",
+    "new": "  const boxes = [...team.wagons.map((w) => ({ c: w, back: foot.back, front: foot.front, half: foot.half }))];",
     "tests": [
       "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
@@ -283,7 +283,7 @@
   {
     "name": "AUDIT-LWIII-killed-stands",
     "file": "src/scenes/roadStands.js",
-    "old": "        if (s.rec?.dead && !killed(s.rec)) { stands.delete(id); continue; }",
+    "old": "        if (s.rec?.dead && !killed(s.rec)) {\n          stands.delete(id);\n          continue;\n        }",
     "new": "",
     "tests": [
       "test/scenes/lw7b_beyond.test.js"
@@ -321,8 +321,8 @@
   {
     "name": "AUDIT-LWIII-host-robbed-after-load",
     "file": "src/scenes/caravanHost.js",
-    "old": "if (yielded.has(trip.id) || !counterOf(trip) || robbedOf(trip.id) != null) continue;",
-    "new": "if (yielded.has(trip.id) || !counterOf(trip)) continue;",
+    "old": "        if (yielded.has(trip.id) || !counterOf(trip) || robbedOf(trip.id) != null) continue;",
+    "new": "        if (yielded.has(trip.id) || !counterOf(trip)) continue;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]

@@ -30,11 +30,13 @@ export class Message {
     this.parentQuest = parentQuest;
     this.id = 0;
     this.variants = [];
-    this.ownLines = null;   // L10N5: the quest's own lines while a translation's are read in their place (localize)
+    this.ownLines = null; // L10N5: the quest's own lines while a translation's are read in their place (localize)
     if (source) this.loadMessage(id, source);
   }
 
-  get variantCount() { return this.variants.length; }
+  get variantCount() {
+    return this.variants.length;
+  }
 
   loadMessage(id, source) {
     this.id = id;
@@ -83,7 +85,7 @@ export class Message {
    *  the journal for. */
   getTextTokens(variant = -1, roll = Math.random, expandMacros = true, revealDialogLinks = true) {
     const index = variant === -1 ? Math.floor(roll() * this.variantCount) : 0;
-    const tokens = this.variants[index].tokens.map((t) => ({ ...t }));   // C# Token is a STRUCT - callers get copies (AUDIT quest-P17)
+    const tokens = this.variants[index].tokens.map((t) => ({ ...t })); // C# Token is a STRUCT - callers get copies (AUDIT quest-P17)
     // Q4-i: DFU expands macros by default at token read (Message.cs:
     // 170-183).
     // AUDIT 24 systems, TWO halves of Message.cs:174-183 the port left
@@ -140,7 +142,7 @@ export class Message {
    *  Text token flushes the line and DROPS ITSELF (C#'s continue) -
    *  unreachable through loadMessage's strict alternation. */
   getSaveData() {
-    if (this.ownLines) return { id: this.id, lines: [...this.ownLines] };   // L10N5: the quest's own words, never a translation's
+    if (this.ownLines) return { id: this.id, lines: [...this.ownLines] }; // L10N5: the quest's own words, never a translation's
     const lines = [];
     for (let variant = 0; variant < this.variants.length; variant++) {
       if (variant > 0) lines.push(SPLIT_TOKEN);

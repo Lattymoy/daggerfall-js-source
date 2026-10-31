@@ -2,8 +2,8 @@
   {
     "name": "DW-FA-replacement-empty-cached",
     "file": "src/scenes/deepWater/deepWatersDecor.js",
-    "old": "    if (!t) return null;   // AUDIT DW-F: no answer before the file is in, and none cached - a cached \"none\" outlived the load for the session\n",
-    "new": "",
+    "old": "    if (!t) return null; // AUDIT DW-F: no answer before the file is in, and none cached - a cached \"none\" outlived the load for the session\n    let info = null;",
+    "new": "    let info = null;",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DW-FA-warm-before-the-file",
     "file": "src/scenes/deepWater/deepWatersDecor.js",
-    "old": "        if (!fileIn(rec.archive)) { busy = true; continue; }   // AUDIT DW-F: the kind is the file's answer, asked once it is in\n",
-    "new": "",
+    "old": "        if (!fileIn(rec.archive)) {\n          busy = true;\n          continue;\n        } // AUDIT DW-F: the kind is the file's answer, asked once it is in\n        const kind = kindOf(rec);",
+    "new": "        const kind = kindOf(rec);",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DW-FA-arrow-skips-the-material",
     "file": "src/systems/loot/loot.js",
-    "old": "  const material = randomMaterial(playerLevel, rolls);\n  if (groupIndex >= 19)",
-    "new": "  if (groupIndex === 18) return createWeapon(ARROW_TEMPLATE, 0, rolls);\n  const material = randomMaterial(playerLevel, rolls);\n  if (groupIndex >= 19)",
+    "old": "  const material = randomMaterial(playerLevel, rolls);",
+    "new": "  if (groupIndex === 18) return createWeapon(ARROW_TEMPLATE, 0, rolls);\n  const material = randomMaterial(playerLevel, rolls);",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DW-FA-seafloor-ordered",
     "file": "src/world/underwater/underwaterLoot.js",
-    "old": "column.depth < SEAFLOOR_Y_CLEARANCE) return null;",
-    "new": "!(column.depth >= SEAFLOOR_Y_CLEARANCE)) return null;",
+    "old": "  if (!column || !column.entry || column.depth < SEAFLOOR_Y_CLEARANCE) return null; // bge.un (IL_1aa49)",
+    "new": "  if (!column || !column.entry || !(column.depth >= SEAFLOOR_Y_CLEARANCE)) return null; // bge.un (IL_1aa49)",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DW-FA-seafloor-sea-ordered",
     "file": "src/world/underwater/underwaterLoot.js",
-    "old": "  if (column.oceanY - column.renderedSeafloorY < SEAFLOOR_Y_CLEARANCE) return null;",
-    "new": "  if (!(column.oceanY - column.renderedSeafloorY >= SEAFLOOR_Y_CLEARANCE)) return null;",
+    "old": "  if (column.oceanY - column.renderedSeafloorY < SEAFLOOR_Y_CLEARANCE) return null; // bge.un (IL_1aa68)",
+    "new": "  if (!(column.oceanY - column.renderedSeafloorY >= SEAFLOOR_Y_CLEARANCE)) return null; // bge.un (IL_1aa68)",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "DW-FA-wreck-ordered",
     "file": "src/world/underwater/underwaterLoot.js",
-    "old": "!!column && column.depth >= f32(Math.max(1, waterDepth) * WRECK_MINIMUM_DEPTH_FRACTION);",
-    "new": "!!column && !(column.depth < f32(Math.max(1, waterDepth) * WRECK_MINIMUM_DEPTH_FRACTION));",
+    "old": "  !!column && column.depth >= f32(Math.max(1, waterDepth) * WRECK_MINIMUM_DEPTH_FRACTION); // clt.un; ceq (IL_1a980): a NaN depth is none",
+    "new": "  !!column && !(column.depth < f32(Math.max(1, waterDepth) * WRECK_MINIMUM_DEPTH_FRACTION)); // clt.un; ceq (IL_1a980): a NaN depth is none",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DW-FA-fog-ahead-ordered",
     "file": "src/world/underwater/underwaterLoot.js",
-    "old": "  if (reveal >= maxDistance) return null;",
-    "new": "  if (!(reveal < maxDistance)) return null;",
+    "old": "  if (reveal >= maxDistance) return null; // blt.un (IL_5795)",
+    "new": "  if (!(reveal < maxDistance)) return null; // blt.un (IL_5795)",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "DW-FA-cluster-rate-ordered",
     "file": "src/world/underwater/underwaterLoot.js",
-    "old": "  if (rate <= 0) return false;",
-    "new": "  if (!(rate > 0)) return false;",
+    "old": "  if (rate <= 0) return false; // bgt.un (IL_19efb): the C#'s own form - a NaN rate goes on",
+    "new": "  if (!(rate > 0)) return false; // bgt.un (IL_19efb): the C#'s own form - a NaN rate goes on",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "DW-FA-pulse-gate-ordered",
     "file": "src/scenes/deepWater/deepWatersLoot.js",
-    "old": "    if (s.rate <= 0 && s.clusterRate <= 0) return null;",
-    "new": "    if (!(s.rate > 0) && !(s.clusterRate > 0)) return null;",
+    "old": "    if (s.rate <= 0 && s.clusterRate <= 0) return null; // bgt.un twice (IL_1a776, IL_1a787): the C#'s own form",
+    "new": "    if (!(s.rate > 0) && !(s.clusterRate > 0)) return null; // bgt.un twice (IL_1a776, IL_1a787): the C#'s own form",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "DW-FA-fog-while-paused",
     "file": "src/scenes/deepWater/deepWatersPlayer.js",
-    "old": "      if (f.playing === false) return { under: false, oceanY: 0 };",
-    "new": "",
+    "old": "      if (f.playing === false) return { under: false, oceanY: 0 }; // AUDIT DW-F: !IsPlayingGame - false, the out height 0 (IL_12020, IL_1203e)",
+    "new": "      // AUDIT DW-F: !IsPlayingGame - false, the out height 0 (IL_12020, IL_1203e)",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "DW-FA-saveload-no-stand",
     "file": "src/scenes/deepWater/deepWatersPlayer.js",
-    "old": "      releaseSpikeGuard(p);\n      requestStand(p);\n    },",
-    "new": "      releaseSpikeGuard(p);\n    },",
+    "old": "      requestStand(p);\n    },",
+    "new": "    },",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "DW-FA-saveload-restores",
     "file": "src/scenes/deepWater/deepWatersPlayer.js",
-    "old": "      swim.forged = false;\n      swim.resetHead(false);\n      releaseSpikeGuard(p);\n      requestStand(p);",
-    "new": "      if (swim.forged) restore(p, 0);\n      swim.resetHead(false);\n      releaseSpikeGuard(p);\n      requestStand(p);",
+    "old": "      swim.forged = false;",
+    "new": "      if (swim.forged) restore(p, 0);",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "DW-FA-load-off-the-clock",
     "file": "src/world/deepWater/deepWaterRuntime.js",
-    "old": "export function canRunLightRuntimeWork(playing) { return !!playing && !loadInProgress; }",
-    "new": "export function canRunLightRuntimeWork(playing) { return !!playing && resumeAt !== Infinity; }",
+    "old": "  return !!playing && !loadInProgress;",
+    "new": "  return !!playing && resumeAt !== Infinity;",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "DW-FA-guard-entry-dropped",
     "file": "src/scenes/deepWater/deepWatersEncounters.js",
-    "old": "entry: c.column.entry ?? null,",
-    "new": "entry: null,",
+    "old": "      entry: c.column.entry ?? null,",
+    "new": "      entry: null,",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]

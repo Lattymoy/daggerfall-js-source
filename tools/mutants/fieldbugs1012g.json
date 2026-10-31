@@ -120,8 +120,8 @@
   {
     "name": "SHOP-RATS-misses-never-counted",
     "file": "src/scenes/quest/questFoeHost.js",
-    "old": "  handle.ringMisses = (handle.ringMisses ?? 0) + 1;\n",
-    "new": "",
+    "old": "  handle.ringMisses = (handle.ringMisses ?? 0) + 1;\n  if (handle.ringMisses < ROOM_RING_MISSES) return null;",
+    "new": "  if (handle.ringMisses < ROOM_RING_MISSES) return null;",
     "tests": [
       "test/scenes/quest/fb1012g_shoprats.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "SHOP-RATS-the-fallback-at-once",
     "file": "src/scenes/quest/questFoeHost.js",
-    "old": "  if (handle.ringMisses < ROOM_RING_MISSES) return null;\n",
-    "new": "",
+    "old": "  if (handle.ringMisses < ROOM_RING_MISSES) return null;\n  return placeFoeFreely(env, ROOM_NEAR_RING) ?? roomMarkerSpot(env, spots);",
+    "new": "  return placeFoeFreely(env, ROOM_NEAR_RING) ?? roomMarkerSpot(env, spots);",
     "tests": [
       "test/scenes/quest/fb1012g_shoprats.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "SHOP-RATS-the-fallback-first",
     "file": "src/scenes/quest/questFoeHost.js",
-    "old": "  const ring = placeFoeFreely(env);\n  if (ring) return ring;",
-    "new": "  const ring = placeFoeFreely(env, ROOM_NEAR_RING) ?? roomMarkerSpot(env, spots);\n  if (ring) return ring;",
+    "old": "  const ring = placeFoeFreely(env);",
+    "new": "  const ring = placeFoeFreely(env, ROOM_NEAR_RING) ?? roomMarkerSpot(env, spots);",
     "tests": [
       "test/scenes/quest/fb1012g_shoprats.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "SHOP-RATS-the-nearest-first",
     "file": "src/scenes/quest/questFoeHost.js",
-    "old": ".sort((a, b) => d2(b) - d2(a));",
-    "new": ".sort((a, b) => d2(a) - d2(b));",
+    "old": "  const list = (spots ?? []).filter((p) => d2(p) <= C.maxDistance ** 2).sort((a, b) => d2(b) - d2(a));",
+    "new": "  const list = (spots ?? []).filter((p) => d2(p) <= C.maxDistance ** 2).sort((a, b) => d2(a) - d2(b));",
     "tests": [
       "test/scenes/quest/fb1012g_shoprats.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "SHOP-RATS-the-floor-unchecked",
     "file": "src/scenes/quest/questFoeHost.js",
-    "old": "    if (!floor) continue;\n    const t = { x: floor.point.x,",
-    "new": "    if (!floor) return { x: p[0], y: p[1] + C.separationDistance, z: p[2] };\n    const t = { x: floor.point.x,",
+    "old": "    if (!floor) continue;",
+    "new": "    if (!floor) return { x: p[0], y: p[1] + C.separationDistance, z: p[2] };",
     "tests": [
       "test/scenes/quest/fb1012g_shoprats.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "SHOP-RATS-the-reach-unchecked",
     "file": "src/scenes/quest/questFoeHost.js",
-    "old": "(spots ?? []).filter((p) => d2(p) <= C.maxDistance ** 2)",
-    "new": "(spots ?? []).filter(() => true)",
+    "old": "  const list = (spots ?? []).filter((p) => d2(p) <= C.maxDistance ** 2).sort((a, b) => d2(b) - d2(a));",
+    "new": "  const list = (spots ?? []).filter(() => true).sort((a, b) => d2(b) - d2(a));",
     "tests": [
       "test/scenes/quest/fb1012g_shoprats.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "HOLD-KEPT-the-model-not-compared",
     "file": "src/scenes/chestRecords.js",
-    "old": "if (taken.has(t) || t.modelIdNum !== c.model || !t.matrix) continue;",
-    "new": "if (taken.has(t) || !t.matrix) continue;",
+    "old": "      if (taken.has(t) || t.modelIdNum !== c.model || !t.matrix) continue;",
+    "new": "      if (taken.has(t) || !t.matrix) continue;",
     "tests": [
       "test/scenes/fb1012g_holdkept.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "HOLD-KEPT-the-reach-unchecked",
     "file": "src/scenes/chestRecords.js",
-    "old": "let best = null, bd = CHEST_MATCH_REACH ** 2;",
-    "new": "let best = null, bd = Infinity;",
+    "old": "      bd = CHEST_MATCH_REACH ** 2;",
+    "new": "      bd = Infinity;",
     "tests": [
       "test/scenes/fb1012g_holdkept.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "HOLD-KEPT-a-chest-taken-twice",
     "file": "src/scenes/chestRecords.js",
-    "old": "    if (best) { out.set(c, best); taken.add(best); }",
-    "new": "    if (best) { out.set(c, best); }",
+    "old": "      taken.add(best);\n    }",
+    "new": "    }",
     "tests": [
       "test/scenes/fb1012g_holdkept.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "HOLD-KEPT-the-legacy-pass-gone",
     "file": "src/scenes/chestRecords.js",
-    "old": "    if (t && !taken.has(t)) { out.set(c, t); taken.add(t); }",
-    "new": "",
+    "old": "    if (t && !taken.has(t)) {\n      out.set(c, t);\n      taken.add(t);\n    }\n  }",
+    "new": "  }",
     "tests": [
       "test/scenes/fb1012g_holdkept.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "HOLD-KEPT-a-named-chest-taken-again",
     "file": "src/scenes/chestRecords.js",
-    "old": "    if (t && !taken.has(t)) { out.set(c, t); taken.add(t); }",
-    "new": "    if (t) { out.set(c, t); taken.add(t); }",
+    "old": "    if (t && !taken.has(t)) {",
+    "new": "    if (t) {",
     "tests": [
       "test/scenes/fb1012g_holdkept.test.js"
     ]
@@ -292,7 +292,7 @@
   {
     "name": "LODE-MARK-the-warned-lode-unmarked",
     "file": "src/net/motherlodeBook.js",
-    "old": "        if (standing(l, t) || (said.has(`warn|${l.key}`) && t < l.opensAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS)) out.push(l);",
+    "old": "        if (standing(l, t) || (said.has(`warn|${l.key}`) && t < l.opensAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS))\n          out.push(l);",
     "new": "        if (standing(l, t)) out.push(l);",
     "tests": [
       "test/net/fb1012g_lodemark.test.js"
@@ -301,8 +301,8 @@
   {
     "name": "LODE-MARK-marked-before-its-warning",
     "file": "src/net/motherlodeBook.js",
-    "old": "(said.has(`warn|${l.key}`) && t < l.opensAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS)",
-    "new": "(t < l.opensAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS)",
+    "old": "        if (standing(l, t) || (said.has(`warn|${l.key}`) && t < l.opensAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS))\n          out.push(l);",
+    "new": "        if (standing(l, t) || (t < l.opensAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS)) out.push(l);",
     "tests": [
       "test/net/fb1012g_lodemark.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "LODE-MARK-marked-once-spent",
     "file": "src/net/motherlodeBook.js",
-    "old": "(said.has(`warn|${l.key}`) && t < l.opensAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS)",
-    "new": "(said.has(`warn|${l.key}`) && t < l.opensAt)",
+    "old": "        if (standing(l, t) || (said.has(`warn|${l.key}`) && t < l.opensAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS))\n          out.push(l);",
+    "new": "        if (standing(l, t) || (said.has(`warn|${l.key}`) && t < l.opensAt)) out.push(l);",
     "tests": [
       "test/net/fb1012g_lodemark.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "LODE-MARK-a-finder-told",
     "file": "src/net/motherlodeBook.js",
-    "old": "        if (state.found) break;\n",
-    "new": "",
+    "old": "        if (state.found) break;\n        if (t >= l.opensAt - ahead && t < l.opensAt && !said.has(`warn|${l.key}`)) {",
+    "new": "        if (t >= l.opensAt - ahead && t < l.opensAt && !said.has(`warn|${l.key}`)) {",
     "tests": [
       "test/net/fb1012g_lodemark.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "LODE-MARK-minings-copper",
     "file": "src/ui/nodeMarks.js",
-    "old": "profession === 'motherlode' ? MOTHERLODE_MARK_CSS : NODE_MARK_CSS[profession]",
-    "new": "profession === 'motherlode' ? NODE_MARK_CSS.mining : NODE_MARK_CSS[profession]",
+    "old": "      ? MOTHERLODE_MARK_CSS",
+    "new": "      ? NODE_MARK_CSS.mining",
     "tests": [
       "test/net/fb1012g_lodemark.test.js"
     ]
@@ -373,7 +373,7 @@
   {
     "name": "QUEST-TOWN-the-reveal-never-made",
     "file": "src/systems/quest/machine.js",
-    "old": "    revealNearSites(quest);   // FIELD BUGS 2026-10-12g QUEST-TOWN: its town on the map, once the quest is the machine's",
+    "old": "    revealNearSites(quest); // FIELD BUGS 2026-10-12g QUEST-TOWN: its town on the map, once the quest is the machine's",
     "new": "",
     "tests": [
       "test/systems/quest/qa2_nearsite.test.js"
@@ -391,8 +391,8 @@
   {
     "name": "QUEST-TOWN-the-town-not-named",
     "file": "src/ui/quest/questLens.js",
-    "old": "  const named = onMap === true || here || !!moved || said.has(",
-    "new": "  const named = onMap === true || here || said.has(",
+    "old": "  const named =\n    onMap === true || here || !!moved || said.has(MACRO_TYPES.NameMacro2) || said.has(MACRO_TYPES.NameMacro3);",
+    "new": "  const named = onMap === true || here || said.has(MACRO_TYPES.NameMacro2) || said.has(MACRO_TYPES.NameMacro3);",
     "tests": [
       "test/systems/quest/qa2_nearsite.test.js"
     ]
@@ -400,8 +400,8 @@
   {
     "name": "OPEN-HAND-the-follow-up-dropped",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  oweFoe(target, n);   // FIELD BUGS 2026-10-12g OPEN-HAND",
-    "new": "  // dropped",
+    "old": "  oweFoe(target, n); // FIELD BUGS 2026-10-12g OPEN-HAND: a body the relay runs (the gate's Warden) - its host's claim carries it",
+    "new": "  // dropped: a body the relay runs (the gate's Warden) - its host's claim carries it",
     "tests": [
       "test/systems/fb1012g_openhand.test.js"
     ]
@@ -418,8 +418,8 @@
   {
     "name": "OPEN-HAND-owed-twice-over",
     "file": "src/systems/playerDoor.js",
-    "old": "_owed.set(entity, (_owed.get(entity) ?? 0) + n);",
-    "new": "_owed.set(entity, (_owed.get(entity) ?? 0) + 2 * n);",
+    "old": "  if (entity && typeof entity === 'object' && n > 0) _owed.set(entity, (_owed.get(entity) ?? 0) + n);",
+    "new": "  if (entity && typeof entity === 'object' && n > 0) _owed.set(entity, (_owed.get(entity) ?? 0) + 2 * n);",
     "tests": [
       "test/systems/fb1012g_openhand.test.js"
     ]
@@ -437,8 +437,8 @@
   {
     "name": "OPEN-HAND-the-rival-carrying-it",
     "file": "src/scenes/dungeonContext.js",
-    "old": "const landOnRival = (rb, damage, kind) => (takeOwed(rb.entity), !!opts.onArenaHit?.({ i: rb.rival, d: damage, kind,",
-    "new": "const landOnRival = (rb, damage, kind) => (damage += takeOwed(rb.entity), !!opts.onArenaHit?.({ i: rb.rival, d: damage, kind,",
+    "old": "const landOnRival = (rb, damage, kind) => { takeOwed(rb.entity); return !!opts.onArenaHit?.({ i: rb.rival, d: damage, kind,",
+    "new": "const landOnRival = (rb, damage, kind) => { damage += takeOwed(rb.entity); return !!opts.onArenaHit?.({ i: rb.rival, d: damage, kind,",
     "tests": [
       "test/systems/fb1012g_openhand.test.js",
       "test/net/arena/arena4b_blows.test.js"

@@ -23,54 +23,429 @@
 // that is DFU's own answer rather than a stand-in: shared.js:"/* data absent: the"
 // records it, the category simply stays empty.
 
-import { randomMaterial, randomArmorMaterial, createWeapon, WEAPONS_ENUM, ARMOR_ENUM } from '../../combat/enemyEquipment.js';
-import { customItemsForGroup } from '../item/itemTemplates.js';   // FORAGE1: every mod's, from its one home; RRI1: CreateRandomWeapon/Armor roll over the classic slots PLUS the registered custom items (ItemBuilder.cs:382-390, :451-459)
-import { ARROW_TEMPLATE } from '../inventory.js';   // X11b: CreateWeapon's arrow arm keys on it
+import {
+  randomMaterial,
+  randomArmorMaterial,
+  createWeapon,
+  WEAPONS_ENUM,
+  ARMOR_ENUM,
+} from '../../combat/enemyEquipment.js';
+import { customItemsForGroup } from '../item/itemTemplates.js'; // FORAGE1: every mod's, from its one home; RRI1: CreateRandomWeapon/Armor roll over the classic slots PLUS the registered custom items (ItemBuilder.cs:382-390, :451-459)
+import { ARROW_TEMPLATE } from '../inventory.js'; // X11b: CreateWeapon's arrow arm keys on it
 import { dice100 } from '../../combat/formulas.js';
 import { goldStack } from '../inventory.js';
-import { ITEM_TEMPLATES, mintCondition, GROUP_TEMPLATE_INDICES, templateByIndex, itemBaseValue, setItemFields } from '../item/itemTemplates.js';   // F103: SetItem writes the value with the name; MAC-N1: through the one export
+import {
+  ITEM_TEMPLATES,
+  mintCondition,
+  GROUP_TEMPLATE_INDICES,
+  templateByIndex,
+  itemBaseValue,
+  setItemFields,
+} from '../item/itemTemplates.js'; // F103: SetItem writes the value with the name; MAC-N1: through the one export
 import { CLOTHING_DYES } from '../../characters/dyes.js';
-import { legacyEnchantmentValue, worksUnworn } from '../enchantments.js';   // G4: ItemBuilder's closing value sum; HELD-BASE: a power that works off the body
-import { wearableItem } from '../equip.js';   // HELD-BASE: whether any slot could ever take a piece (RARITY-WEAR's one law)
-import { validItemField, validItemFields, itemFieldsOfKind, ITEM_STR_MAX } from '../item/itemFields.js';   // RF5: the one declaration of every item field's kind (LR4's affix check rides it)
-import { validSetMarks } from '../aetheric.js';   // AUDIT SET D6: the wire's cross-checks of a sigil and an Aetheric piece
-import { validGildedMarks } from '../gilded.js';   // GILDED1: and a Gilded piece's - its record's exactly
-import { validImprint, validCurse, validSocket } from './lootRarity.js';   // LOOT10: and of a Rare's imprint; LOOT16: and of a curse; LOOT20: and of a socket
-import { createRandomBook, BOOK_TEMPLATE, bookValue } from '../books.js';   // IM1: CreateRandomBook whole (A2: + its book-file price); AUDIT LW-II-2 S9: the wire's floor of a book
-import { potionRecipeByKey, POTION_DEFAULT_TEXTURE_RECORD } from '../potions.js';   // F103: PotionRecipeKey's price side effect; AUDIT 63 F20: and its texture-record half
-import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS, DROP_ICON_ARCHIVES, DROP_ICON_IDXS } from './lootDataTables.js';   // G5: DaggerfallLootDataTables.cs, its own file again
-import { themedIngredientPool } from './lootThemes.js';   // MOD: a monster's CreatureIngredients roll draws from ITS OWN curated subset, not the full mismatched pool
-import { pathOfSignatureIndex } from '../arcanePaths.js';   // AUDIT SCHOOLS: a signature spell's name, by its index band
-import { getLocalizedSpellName } from '../textManager.js';   // L10N3e: a stock spell's name, by its SPELLS.STD index (shownSpellName)
-import { isOnlinePage } from '../online/onlineLane.js';   // REALM P0.4: online, a pile's gold is not the level's
-import { rriLootMatrix, rriEnemyLootTableKey, conditionBasedPricesOn, randomConditionLootItems } from '../roleplayRealismItems/rriRealism.js';   // RRI2: LootRealismTables over DefaultLootTables, MobLootKeys over the basics' key, the condition roll on tabled loot
-import { RRI_VENDOR } from '../roleplayRealismItems/rriItems.js';   // FORAGE3: the pile event's first subscriber, named by its mod
-import { RECEIVER_MARKS, VALUE_IS_IDENTITY_TEMPLATES, BOAT_TEMPLATES } from '../../net/realm/realmTradeLaw.js';   // MARK-WIRE: the receiver's marks, one list with the realm's trade law; HACKED-GOLD: the records whose `value` is no price
+import { legacyEnchantmentValue, worksUnworn } from '../enchantments.js'; // G4: ItemBuilder's closing value sum; HELD-BASE: a power that works off the body
+import { wearableItem } from '../equip.js'; // HELD-BASE: whether any slot could ever take a piece (RARITY-WEAR's one law)
+import { validItemField, validItemFields, itemFieldsOfKind, ITEM_STR_MAX } from '../item/itemFields.js'; // RF5: the one declaration of every item field's kind (LR4's affix check rides it)
+import { validSetMarks } from '../aetheric.js'; // AUDIT SET D6: the wire's cross-checks of a sigil and an Aetheric piece
+import { validGildedMarks } from '../gilded.js'; // GILDED1: and a Gilded piece's - its record's exactly
+import { validImprint, validCurse, validSocket } from './lootRarity.js'; // LOOT10: and of a Rare's imprint; LOOT16: and of a curse; LOOT20: and of a socket
+import { createRandomBook, BOOK_TEMPLATE, bookValue } from '../books.js'; // IM1: CreateRandomBook whole (A2: + its book-file price); AUDIT LW-II-2 S9: the wire's floor of a book
+import { potionRecipeByKey, POTION_DEFAULT_TEXTURE_RECORD } from '../potions.js'; // F103: PotionRecipeKey's price side effect; AUDIT 63 F20: and its texture-record half
+import {
+  RANDOM_TREASURE_ARCHIVE,
+  RANDOM_TREASURE_ICONS,
+  DROP_ICON_ARCHIVES,
+  DROP_ICON_IDXS,
+} from './lootDataTables.js'; // G5: DaggerfallLootDataTables.cs, its own file again
+import { themedIngredientPool } from './lootThemes.js'; // MOD: a monster's CreatureIngredients roll draws from ITS OWN curated subset, not the full mismatched pool
+import { pathOfSignatureIndex } from '../arcanePaths.js'; // AUDIT SCHOOLS: a signature spell's name, by its index band
+import { getLocalizedSpellName } from '../textManager.js'; // L10N3e: a stock spell's name, by its SPELLS.STD index (shownSpellName)
+import { isOnlinePage } from '../online/onlineLane.js'; // REALM P0.4: online, a pile's gold is not the level's
+import {
+  rriLootMatrix,
+  rriEnemyLootTableKey,
+  conditionBasedPricesOn,
+  randomConditionLootItems,
+} from '../roleplayRealismItems/rriRealism.js'; // RRI2: LootRealismTables over DefaultLootTables, MobLootKeys over the basics' key, the condition roll on tabled loot
+import { RRI_VENDOR } from '../roleplayRealismItems/rriItems.js'; // FORAGE3: the pile event's first subscriber, named by its mod
+import { RECEIVER_MARKS, VALUE_IS_IDENTITY_TEMPLATES, BOAT_TEMPLATES } from '../../net/realm/realmTradeLaw.js'; // MARK-WIRE: the receiver's marks, one list with the realm's trade law; HACKED-GOLD: the records whose `value` is no price
 
 // LootChanceMatrix rows, verbatim (22 keys, '-' included).
 export const LOOT_MATRICES = Object.freeze({
-  '-': { MinGold: 0, MaxGold: 0, P1: 0, P2: 0, C1: 0, C2: 0, C3: 0, M1: 0, AM: 0, WP: 0, MI: 0, CL: 0, BK: 0, M2: 0, RL: 0 },
-  A: { MinGold: 1, MaxGold: 10, P1: 0, P2: 0, C1: 0, C2: 0, C3: 0, M1: 0, AM: 5, WP: 5, MI: 2, CL: 4, BK: 0, M2: 2, RL: 0 },
-  B: { MinGold: 0, MaxGold: 0, P1: 10, P2: 10, C1: 0, C2: 0, C3: 0, M1: 0, AM: 0, WP: 0, MI: 0, CL: 0, BK: 0, M2: 0, RL: 0 },
-  C: { MinGold: 2, MaxGold: 20, P1: 10, P2: 10, C1: 5, C2: 5, C3: 5, M1: 5, AM: 5, WP: 25, MI: 3, CL: 0, BK: 2, M2: 2, RL: 2 },
-  D: { MinGold: 1, MaxGold: 4, P1: 6, P2: 6, C1: 6, C2: 6, C3: 6, M1: 6, AM: 0, WP: 0, MI: 0, CL: 0, BK: 0, M2: 0, RL: 4 },
-  E: { MinGold: 20, MaxGold: 80, P1: 0, P2: 0, C1: 0, C2: 0, C3: 0, M1: 0, AM: 10, WP: 10, MI: 3, CL: 4, BK: 2, M2: 1, RL: 15 },
-  F: { MinGold: 4, MaxGold: 30, P1: 2, P2: 2, C1: 5, C2: 5, C3: 5, M1: 2, AM: 50, WP: 50, MI: 1, CL: 0, BK: 0, M2: 3, RL: 0 },
-  G: { MinGold: 3, MaxGold: 15, P1: 0, P2: 0, C1: 0, C2: 0, C3: 0, M1: 0, AM: 50, WP: 50, MI: 1, CL: 5, BK: 0, M2: 3, RL: 0 },
-  H: { MinGold: 2, MaxGold: 10, P1: 0, P2: 0, C1: 0, C2: 0, C3: 0, M1: 0, AM: 0, WP: 100, MI: 1, CL: 2, BK: 0, M2: 0, RL: 0 },
-  I: { MinGold: 0, MaxGold: 0, P1: 0, P2: 0, C1: 0, C2: 0, C3: 0, M1: 0, AM: 0, WP: 0, MI: 2, CL: 0, BK: 0, M2: 0, RL: 5 },
-  J: { MinGold: 50, MaxGold: 150, P1: 0, P2: 0, C1: 0, C2: 0, C3: 0, M1: 0, AM: 5, WP: 5, MI: 3, CL: 0, BK: 0, M2: 0, RL: 0 },
-  K: { MinGold: 1, MaxGold: 10, P1: 3, P2: 3, C1: 3, C2: 3, C3: 3, M1: 3, AM: 5, WP: 5, MI: 3, CL: 0, BK: 5, M2: 2, RL: 100 },
-  L: { MinGold: 1, MaxGold: 20, P1: 0, P2: 0, C1: 3, C2: 3, C3: 3, M1: 3, AM: 50, WP: 50, MI: 1, CL: 75, BK: 0, M2: 5, RL: 3 },
-  M: { MinGold: 1, MaxGold: 15, P1: 1, P2: 1, C1: 1, C2: 1, C3: 1, M1: 2, AM: 10, WP: 10, MI: 1, CL: 15, BK: 2, M2: 3, RL: 1 },
-  N: { MinGold: 1, MaxGold: 80, P1: 5, P2: 5, C1: 5, C2: 5, C3: 5, M1: 5, AM: 5, WP: 5, MI: 1, CL: 20, BK: 5, M2: 2, RL: 5 },
-  O: { MinGold: 5, MaxGold: 20, P1: 1, P2: 1, C1: 1, C2: 1, C3: 1, M1: 1, AM: 10, WP: 15, MI: 2, CL: 0, BK: 0, M2: 0, RL: 0 },
-  P: { MinGold: 5, MaxGold: 20, P1: 5, P2: 5, C1: 5, C2: 5, C3: 5, M1: 5, AM: 5, WP: 10, MI: 2, CL: 0, BK: 10, M2: 5, RL: 0 },
-  Q: { MinGold: 20, MaxGold: 80, P1: 2, P2: 2, C1: 8, C2: 8, C3: 8, M1: 2, AM: 10, WP: 25, MI: 3, CL: 35, BK: 5, M2: 3, RL: 0 },
-  R: { MinGold: 5, MaxGold: 20, P1: 0, P2: 0, C1: 3, C2: 3, C3: 3, M1: 5, AM: 5, WP: 15, MI: 2, CL: 0, BK: 0, M2: 0, RL: 0 },
-  S: { MinGold: 50, MaxGold: 125, P1: 5, P2: 5, C1: 5, C2: 5, C3: 5, M1: 15, AM: 10, WP: 10, MI: 3, CL: 0, BK: 5, M2: 5, RL: 0 },
-  T: { MinGold: 20, MaxGold: 80, P1: 0, P2: 0, C1: 0, C2: 0, C3: 0, M1: 0, AM: 100, WP: 100, MI: 1, CL: 0, BK: 0, M2: 0, RL: 0 },
-  U: { MinGold: 7, MaxGold: 30, P1: 5, P2: 5, C1: 5, C2: 5, C3: 5, M1: 10, AM: 10, WP: 10, MI: 2, CL: 0, BK: 2, M2: 2, RL: 10 },
+  '-': {
+    MinGold: 0,
+    MaxGold: 0,
+    P1: 0,
+    P2: 0,
+    C1: 0,
+    C2: 0,
+    C3: 0,
+    M1: 0,
+    AM: 0,
+    WP: 0,
+    MI: 0,
+    CL: 0,
+    BK: 0,
+    M2: 0,
+    RL: 0,
+  },
+  A: {
+    MinGold: 1,
+    MaxGold: 10,
+    P1: 0,
+    P2: 0,
+    C1: 0,
+    C2: 0,
+    C3: 0,
+    M1: 0,
+    AM: 5,
+    WP: 5,
+    MI: 2,
+    CL: 4,
+    BK: 0,
+    M2: 2,
+    RL: 0,
+  },
+  B: {
+    MinGold: 0,
+    MaxGold: 0,
+    P1: 10,
+    P2: 10,
+    C1: 0,
+    C2: 0,
+    C3: 0,
+    M1: 0,
+    AM: 0,
+    WP: 0,
+    MI: 0,
+    CL: 0,
+    BK: 0,
+    M2: 0,
+    RL: 0,
+  },
+  C: {
+    MinGold: 2,
+    MaxGold: 20,
+    P1: 10,
+    P2: 10,
+    C1: 5,
+    C2: 5,
+    C3: 5,
+    M1: 5,
+    AM: 5,
+    WP: 25,
+    MI: 3,
+    CL: 0,
+    BK: 2,
+    M2: 2,
+    RL: 2,
+  },
+  D: {
+    MinGold: 1,
+    MaxGold: 4,
+    P1: 6,
+    P2: 6,
+    C1: 6,
+    C2: 6,
+    C3: 6,
+    M1: 6,
+    AM: 0,
+    WP: 0,
+    MI: 0,
+    CL: 0,
+    BK: 0,
+    M2: 0,
+    RL: 4,
+  },
+  E: {
+    MinGold: 20,
+    MaxGold: 80,
+    P1: 0,
+    P2: 0,
+    C1: 0,
+    C2: 0,
+    C3: 0,
+    M1: 0,
+    AM: 10,
+    WP: 10,
+    MI: 3,
+    CL: 4,
+    BK: 2,
+    M2: 1,
+    RL: 15,
+  },
+  F: {
+    MinGold: 4,
+    MaxGold: 30,
+    P1: 2,
+    P2: 2,
+    C1: 5,
+    C2: 5,
+    C3: 5,
+    M1: 2,
+    AM: 50,
+    WP: 50,
+    MI: 1,
+    CL: 0,
+    BK: 0,
+    M2: 3,
+    RL: 0,
+  },
+  G: {
+    MinGold: 3,
+    MaxGold: 15,
+    P1: 0,
+    P2: 0,
+    C1: 0,
+    C2: 0,
+    C3: 0,
+    M1: 0,
+    AM: 50,
+    WP: 50,
+    MI: 1,
+    CL: 5,
+    BK: 0,
+    M2: 3,
+    RL: 0,
+  },
+  H: {
+    MinGold: 2,
+    MaxGold: 10,
+    P1: 0,
+    P2: 0,
+    C1: 0,
+    C2: 0,
+    C3: 0,
+    M1: 0,
+    AM: 0,
+    WP: 100,
+    MI: 1,
+    CL: 2,
+    BK: 0,
+    M2: 0,
+    RL: 0,
+  },
+  I: {
+    MinGold: 0,
+    MaxGold: 0,
+    P1: 0,
+    P2: 0,
+    C1: 0,
+    C2: 0,
+    C3: 0,
+    M1: 0,
+    AM: 0,
+    WP: 0,
+    MI: 2,
+    CL: 0,
+    BK: 0,
+    M2: 0,
+    RL: 5,
+  },
+  J: {
+    MinGold: 50,
+    MaxGold: 150,
+    P1: 0,
+    P2: 0,
+    C1: 0,
+    C2: 0,
+    C3: 0,
+    M1: 0,
+    AM: 5,
+    WP: 5,
+    MI: 3,
+    CL: 0,
+    BK: 0,
+    M2: 0,
+    RL: 0,
+  },
+  K: {
+    MinGold: 1,
+    MaxGold: 10,
+    P1: 3,
+    P2: 3,
+    C1: 3,
+    C2: 3,
+    C3: 3,
+    M1: 3,
+    AM: 5,
+    WP: 5,
+    MI: 3,
+    CL: 0,
+    BK: 5,
+    M2: 2,
+    RL: 100,
+  },
+  L: {
+    MinGold: 1,
+    MaxGold: 20,
+    P1: 0,
+    P2: 0,
+    C1: 3,
+    C2: 3,
+    C3: 3,
+    M1: 3,
+    AM: 50,
+    WP: 50,
+    MI: 1,
+    CL: 75,
+    BK: 0,
+    M2: 5,
+    RL: 3,
+  },
+  M: {
+    MinGold: 1,
+    MaxGold: 15,
+    P1: 1,
+    P2: 1,
+    C1: 1,
+    C2: 1,
+    C3: 1,
+    M1: 2,
+    AM: 10,
+    WP: 10,
+    MI: 1,
+    CL: 15,
+    BK: 2,
+    M2: 3,
+    RL: 1,
+  },
+  N: {
+    MinGold: 1,
+    MaxGold: 80,
+    P1: 5,
+    P2: 5,
+    C1: 5,
+    C2: 5,
+    C3: 5,
+    M1: 5,
+    AM: 5,
+    WP: 5,
+    MI: 1,
+    CL: 20,
+    BK: 5,
+    M2: 2,
+    RL: 5,
+  },
+  O: {
+    MinGold: 5,
+    MaxGold: 20,
+    P1: 1,
+    P2: 1,
+    C1: 1,
+    C2: 1,
+    C3: 1,
+    M1: 1,
+    AM: 10,
+    WP: 15,
+    MI: 2,
+    CL: 0,
+    BK: 0,
+    M2: 0,
+    RL: 0,
+  },
+  P: {
+    MinGold: 5,
+    MaxGold: 20,
+    P1: 5,
+    P2: 5,
+    C1: 5,
+    C2: 5,
+    C3: 5,
+    M1: 5,
+    AM: 5,
+    WP: 10,
+    MI: 2,
+    CL: 0,
+    BK: 10,
+    M2: 5,
+    RL: 0,
+  },
+  Q: {
+    MinGold: 20,
+    MaxGold: 80,
+    P1: 2,
+    P2: 2,
+    C1: 8,
+    C2: 8,
+    C3: 8,
+    M1: 2,
+    AM: 10,
+    WP: 25,
+    MI: 3,
+    CL: 35,
+    BK: 5,
+    M2: 3,
+    RL: 0,
+  },
+  R: {
+    MinGold: 5,
+    MaxGold: 20,
+    P1: 0,
+    P2: 0,
+    C1: 3,
+    C2: 3,
+    C3: 3,
+    M1: 5,
+    AM: 5,
+    WP: 15,
+    MI: 2,
+    CL: 0,
+    BK: 0,
+    M2: 0,
+    RL: 0,
+  },
+  S: {
+    MinGold: 50,
+    MaxGold: 125,
+    P1: 5,
+    P2: 5,
+    C1: 5,
+    C2: 5,
+    C3: 5,
+    M1: 15,
+    AM: 10,
+    WP: 10,
+    MI: 3,
+    CL: 0,
+    BK: 5,
+    M2: 5,
+    RL: 0,
+  },
+  T: {
+    MinGold: 20,
+    MaxGold: 80,
+    P1: 0,
+    P2: 0,
+    C1: 0,
+    C2: 0,
+    C3: 0,
+    M1: 0,
+    AM: 100,
+    WP: 100,
+    MI: 1,
+    CL: 0,
+    BK: 0,
+    M2: 0,
+    RL: 0,
+  },
+  U: {
+    MinGold: 7,
+    MaxGold: 30,
+    P1: 5,
+    P2: 5,
+    C1: 5,
+    C2: 5,
+    C3: 5,
+    M1: 10,
+    AM: 10,
+    WP: 10,
+    MI: 2,
+    CL: 0,
+    BK: 2,
+    M2: 2,
+    RL: 10,
+  },
 });
 
 // ItemGroups template-index lists.
@@ -82,14 +457,23 @@ export const LOOT_MATRICES = Object.freeze({
 // are a view onto the one table now, so a regenerated enum cannot
 // move one and leave the other.
 const LOOT_GROUP_KEYS = Object.freeze([
-  'PlantIngredients1', 'PlantIngredients2',
-  'CreatureIngredients1', 'CreatureIngredients2', 'CreatureIngredients3',
-  'MiscellaneousIngredients1', 'MiscellaneousIngredients2',
-  'ReligiousItems', 'Gems', 'Jewellery', 'MensClothing', 'WomensClothing',
+  'PlantIngredients1',
+  'PlantIngredients2',
+  'CreatureIngredients1',
+  'CreatureIngredients2',
+  'CreatureIngredients3',
+  'MiscellaneousIngredients1',
+  'MiscellaneousIngredients2',
+  'ReligiousItems',
+  'Gems',
+  'Jewellery',
+  'MensClothing',
+  'WomensClothing',
 ]);
-export const ITEM_GROUPS = Object.freeze(Object.fromEntries(
-  LOOT_GROUP_KEYS.map((k) => [k, GROUP_TEMPLATE_INDICES[k]])));
-export { BOOK_TEMPLATE };   // ONE DFU MEMBER, ONE EXPORT: template 277's home is books.js now
+export const ITEM_GROUPS = Object.freeze(
+  Object.fromEntries(LOOT_GROUP_KEYS.map((k) => [k, GROUP_TEMPLATE_INDICES[k]])),
+);
+export { BOOK_TEMPLATE }; // ONE DFU MEMBER, ONE EXPORT: template 277's home is books.js now
 
 // LootTables.GenerateLoot verbatim data (moved here from the dungeon
 // scene in the 2026-07-06b audit - a scene file is no home for source
@@ -99,18 +483,38 @@ export { BOOK_TEMPLATE };   // ONE DFU MEMBER, ONE EXPORT: template 277's home i
 // they are RE-EXPORTED here, so every importer that reads them off
 // `loot.js` still does.
 export { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS, DROP_ICON_ARCHIVES, DROP_ICON_IDXS };
-export const RANDOM_TREASURE_MARKER_RECORD = 19;               // RDBLayout randomTreasureFlatIndex (editor 199.19)
+export const RANDOM_TREASURE_MARKER_RECORD = 19; // RDBLayout randomTreasureFlatIndex (editor 199.19)
 
 /** GenerateLoot's dungeon-type -> key rows (19 types, in order). */
-export const DUNGEON_LOOT_KEYS = Object.freeze(['K', 'N', 'N', 'N', 'K', 'M', 'M', 'Q', 'K', 'U', 'D', 'N', 'L', 'F', 'S', 'N', 'M', 'L', 'N']);   // Book0..3 all template 277; CreateRandomBook rolls Range(0, TotalVariants) = Range(0, 2) - the 4 is the Books ENUM NAME count, not a variant count
+export const DUNGEON_LOOT_KEYS = Object.freeze([
+  'K',
+  'N',
+  'N',
+  'N',
+  'K',
+  'M',
+  'M',
+  'Q',
+  'K',
+  'U',
+  'D',
+  'N',
+  'L',
+  'F',
+  'S',
+  'N',
+  'M',
+  'L',
+  'N',
+]); // Book0..3 all template 277; CreateRandomBook rolls Range(0, TotalVariants) = Range(0, 2) - the 4 is the Books ENUM NAME count, not a variant count
 
-const WEAPON_NAMES = Object.keys(WEAPONS_ENUM);   // 18 melee/bow names; index 18 = Arrow
-const ARMOR_PIECES = Object.values(ARMOR_ENUM);   // 11 pieces incl shields
+const WEAPON_NAMES = Object.keys(WEAPONS_ENUM); // 18 melee/bow names; index 18 = Arrow
+const ARMOR_PIECES = Object.values(ARMOR_ENUM); // 11 pieces incl shields
 
 /** ItemBuilder.CreateRandomWeapon: uniform over the 19 weapon slots;
  *  slot 18 is arrows - stack Range(1, 21), material 0. */
 export function createRandomWeapon(playerLevel, rolls = Math.random) {
-  const customs = customItemsForGroup('Weapons');   // RRI1: `Range(0, enumArray.Length + customItemTemplates.Length)`
+  const customs = customItemsForGroup('Weapons'); // RRI1: `Range(0, enumArray.Length + customItemTemplates.Length)`
   const groupIndex = Math.floor(rolls() * (19 + customs.length));
   // AUDIT DW-F: FormulaHelper.RandomMaterial is drawn for EVERY slot, before the arrow test (ItemBuilder.cs:392-394) -
   // an arrow spends it and throws it away, so the stack's Range(1, 21) is the THIRD draw, not the second
@@ -137,7 +541,7 @@ export function createRandomWeapon(playerLevel, rolls = Math.random) {
 /** ItemBuilder.CreateRandomArmor: uniform over the 11 armor pieces
  *  (shields included) + RandomArmorMaterial. */
 export function createRandomArmor(playerLevel, rolls = Math.random) {
-  const customs = customItemsForGroup('Armor');   // RRI1: the registered custom armor rides the same roll
+  const customs = customItemsForGroup('Armor'); // RRI1: the registered custom armor rides the same roll
   const i = Math.floor(rolls() * (ARMOR_PIECES.length + customs.length));
   const piece = i < ARMOR_PIECES.length ? ARMOR_PIECES[i] : customs[i - ARMOR_PIECES.length];
   // AUDIT-RR F6: the class ctor names the item from its template BEFORE SetVariant prefixes it (ItemJerkin.cs:29-46), and
@@ -156,7 +560,10 @@ const pick = (list, rolls) => list[Math.floor(rolls() * list.length)];
  *  RL row and the kits' `randomOf` call them, and Iliac Puddle No More's
  *  sunken loot calls them too - one home now. Bare, as the other
  *  CreateRandom* here are: the minter names and conditions it. */
-export const createRandomOfGroup = (group, rolls = Math.random) => ({ group, templateIndex: pick(ITEM_GROUPS[group], rolls) });
+export const createRandomOfGroup = (group, rolls = Math.random) => ({
+  group,
+  templateIndex: pick(ITEM_GROUPS[group], rolls),
+});
 export const createRandomReligiousItem = (rolls = Math.random) => createRandomOfGroup('ReligiousItems', rolls);
 export const createRandomGem = (rolls = Math.random) => createRandomOfGroup('Gems', rolls);
 export const createRandomJewellery = (rolls = Math.random) => createRandomOfGroup('Jewellery', rolls);
@@ -221,16 +628,19 @@ export function generateRandomLoot(matrix, who, rolls = Math.random, { itemChanc
   // gold stack (276) - looted gold was a second, unspendable row.
   if (gold > 0) items.push(goldStack(gold));
   const halving = (chance, make) => {
-    let c = chance * itemChanceScale;   // MOD: the one scale point every category shares
+    let c = chance * itemChanceScale; // MOD: the one scale point every category shares
     // MOD: `make` may answer null now (a themed creature-ingredient
     // roll with nothing to mint this tier) - the roll still happened
     // and the ladder still halves, only nothing lands in `items`.
-    while (dice100(Math.trunc(c), rolls())) { const it = make(); if (it) items.push(mintCondition(named(it))); c *= 0.5; }   // AUDIT 23 (items-5)
+    while (dice100(Math.trunc(c), rolls())) {
+      const it = make();
+      if (it) items.push(mintCondition(named(it)));
+      c *= 0.5;
+    } // AUDIT 23 (items-5)
   };
   halving(matrix.WP, () => createRandomWeapon(level, rolls));
   halving(matrix.AM, () => createRandomArmor(level, rolls));
-  const ingredient = (chance, groupName) =>
-    halving(chance, () => createRandomOfGroup(groupName, rolls));
+  const ingredient = (chance, groupName) => halving(chance, () => createRandomOfGroup(groupName, rolls));
   // MOD: the three CREATURE tiers read a themed subset when this
   // mobileType has one (lootThemes.js); an empty subset for a tier
   // means the roll happens and mints nothing, rather than falling
@@ -261,22 +671,25 @@ export function generateRandomLoot(matrix, who, rolls = Math.random, { itemChanc
   // last clause and took the whole member into books.js, so the three
   // sites that had it inline share one mint and one draw order.
   halving(matrix.BK, () => createRandomBook(rolls));
-  halving(matrix.RL, () => createRandomReligiousItem(rolls));   // LootTables.cs:253
+  halving(matrix.RL, () => createRandomReligiousItem(rolls)); // LootTables.cs:253
   return items;
 }
-
 
 // ---- Magic items (S4c): ItemBuilder.CreateRegularMagicItem verbatim ----
 // The MAGIC.DEF registry: set once per context after the file loads.
 let _magicItemTemplates = null;
-export function setMagicItemTemplates(templates) { _magicItemTemplates = templates; }
+export function setMagicItemTemplates(templates) {
+  _magicItemTemplates = templates;
+}
 // G4: the SPELLS.STD records, by index, for the CastWhen* arm of the
 // value sum below. The same module-level-registry idiom, set from the
 // same host block that builds the map (dungeonContext) - and absent
 // it, DFU's own answer applies: a spell the reader cannot find scores
 // zero, because GetSpellEnchantPtCost's loop simply never matches.
 let _spellsByIndex = null;
-export function setSpellRecordsByIndex(byIndex) { _spellsByIndex = byIndex; }
+export function setSpellRecordsByIndex(byIndex) {
+  _spellsByIndex = byIndex;
+}
 export const spellRecordOfIndex = (index) => _spellsByIndex?.get?.(index) ?? null;
 
 /** L10N3e: A SPELL'S NAME AS SHOWN - TextManager.GetLocalizedSpellName
@@ -301,7 +714,10 @@ export function shownSpellName(spell) {
   // language, as a stock spell does below; a name the player gave it in the book stays theirs
   const sig = Number.isInteger(spell?.index) ? pathOfSignatureIndex(spell.index) : null;
   if (sig) return name === sig.spell.nameEn ? sig.spell.name : name;
-  const stock = typeof name === 'string' && Number.isInteger(spell.index) && spell.index >= 0 ? spellRecordOfIndex(spell.index) : null;
+  const stock =
+    typeof name === 'string' && Number.isInteger(spell.index) && spell.index >= 0
+      ? spellRecordOfIndex(spell.index)
+      : null;
   if (!stock) return name;
   const own = String(stock.name ?? '');
   return name === own || name === own.replace(/^!/, '') ? getLocalizedSpellName(spell.index, name) : name;
@@ -321,11 +737,11 @@ function magicItemBase(magicItem, playerLevel, gender, rolls) {
   let groupId;
   if (magicItem.group === 0) groupId = MAGIC_GROUPS_0[Math.floor(rolls() * 7)];
   else if (magicItem.group === 1) groupId = MAGIC_GROUPS_1[Math.floor(rolls() * 5)];
-  else groupId = 3;   // group 2 -> Weapons
+  else groupId = 3; // group 2 -> Weapons
   let base;
   if (groupId === 3) {
     base = createRandomWeapon(playerLevel, rolls);
-    while (base.name === 'Arrow') base = createRandomWeapon(playerLevel, rolls);   // "No arrows as enchanted items"
+    while (base.name === 'Arrow') base = createRandomWeapon(playerLevel, rolls); // "No arrows as enchanted items"
   } else if (groupId === 2) base = createRandomArmor(playerLevel, rolls);
   else if (groupId === 6 || groupId === 12) base = createRandomClothing(gender, rolls);
   else if (groupId === 10) base = createRandomReligiousItem(rolls);
@@ -346,7 +762,7 @@ export const powersNeedWearing = (rows) => rows.some((r) => !worksUnworn(r));
 export const MAGIC_BASE_DRAWS = 64;
 
 export function createRegularMagicItem(templates, playerLevel, gender, rolls = Math.random, chosenItem = -1) {
-  const regular = templates.filter((t) => t.type === 0);   // RegularMagicItem
+  const regular = templates.filter((t) => t.type === 0); // RegularMagicItem
   // Q2b-ii: the quest mint's "item class 4 subclass N" passes a CHOSEN
   // index (-1 = random, as every earlier caller). C#'s guard is `>`
   // Length - chosenItem == Length walks off the array and crashes
@@ -364,8 +780,9 @@ export function createRegularMagicItem(templates, playerLevel, gender, rolls = M
   // was wearable is the draw it was; a power that works off the body (a Used cast: "Leaping Wand") keeps any base.
   let base = magicItemBase(magicItem, playerLevel, gender, rolls);
   if (powersNeedWearing(enchantments)) {
-    for (let i = 1; i < MAGIC_BASE_DRAWS && !wearableItem(base); i++) base = magicItemBase(magicItem, playerLevel, gender, rolls);
-    if (!wearableItem(base)) base = createRandomArmor(playerLevel, rolls);   // a dead stream: armour, every set's first group, every piece worn
+    for (let i = 1; i < MAGIC_BASE_DRAWS && !wearableItem(base); i++)
+      base = magicItemBase(magicItem, playerLevel, gender, rolls);
+    if (!wearableItem(base)) base = createRandomArmor(playerLevel, rolls); // a dead stream: armour, every set's first group, every piece worn
   }
   // The regular name is replaced by the magic name; enchantments ride
   // raw; condition = uses.
@@ -397,13 +814,35 @@ export function createRegularMagicItem(templates, playerLevel, gender, rolls = M
 // MagicItems/Artifacts/Books never reach the generic arm (their
 // CreateItem branches run first, as in Item.cs).
 export const ITEM_GROUP_NAME_BY_CLASS = Object.freeze([
-  'Drugs', 'UselessItems1', 'Armor', 'Weapons', 'MagicItems', 'Artifacts',
-  'MensClothing', 'Books', 'Furniture', 'UselessItems2', 'ReligiousItems',
-  'Maps', 'WomensClothing', 'Paintings', 'Gems', 'PlantIngredients1',
-  'PlantIngredients2', 'CreatureIngredients1', 'CreatureIngredients2',
-  'CreatureIngredients3', 'MiscellaneousIngredients1', 'MetalIngredients',
-  'MiscellaneousIngredients2', 'Transportation', 'Deeds', 'Jewellery',
-  'QuestItems', 'MiscItems', 'Currency',
+  'Drugs',
+  'UselessItems1',
+  'Armor',
+  'Weapons',
+  'MagicItems',
+  'Artifacts',
+  'MensClothing',
+  'Books',
+  'Furniture',
+  'UselessItems2',
+  'ReligiousItems',
+  'Maps',
+  'WomensClothing',
+  'Paintings',
+  'Gems',
+  'PlantIngredients1',
+  'PlantIngredients2',
+  'CreatureIngredients1',
+  'CreatureIngredients2',
+  'CreatureIngredients3',
+  'MiscellaneousIngredients1',
+  'MetalIngredients',
+  'MiscellaneousIngredients2',
+  'Transportation',
+  'Deeds',
+  'Jewellery',
+  'QuestItems',
+  'MiscItems',
+  'Currency',
 ]);
 
 // ── THE ITEM FLAG BITMASKS (DaggerfallUnityItem.cs:94-98) ─────────
@@ -424,14 +863,29 @@ export const ITEM_ARTIFACT_MASK = 0x800;
  *  against the item's own short name. */
 export const ARTIFACT_SUB_TYPE_NAMES = Object.freeze([
   ['None', -1],
-  ['Masque_of_Clavicus', 0], ['Mehrunes_Razor', 1], ['Mace_of_Molag_Bal', 2],
-  ['Hircine_Ring', 3], ['Sanguine_Rose', 4], ['Oghma_Infinium', 5],
-  ['Wabbajack', 6], ['Ring_of_Namira', 7], ['Skull_of_Corruption', 8],
-  ['Azuras_Star', 9], ['Volendrung', 10], ['Warlocks_Ring', 11],
-  ['Auriels_Bow', 12], ['Necromancers_Amulet', 13], ['Chrysamere', 14],
-  ['Lords_Mail', 15], ['Staff_of_Magnus', 16], ['Ring_of_Khajiit', 17],
-  ['Ebony_Mail', 18], ['Auriels_Shield', 19], ['Spell_Breaker', 20],
-  ['Skeletons_Key', 21], ['Ebony_Blade', 22],
+  ['Masque_of_Clavicus', 0],
+  ['Mehrunes_Razor', 1],
+  ['Mace_of_Molag_Bal', 2],
+  ['Hircine_Ring', 3],
+  ['Sanguine_Rose', 4],
+  ['Oghma_Infinium', 5],
+  ['Wabbajack', 6],
+  ['Ring_of_Namira', 7],
+  ['Skull_of_Corruption', 8],
+  ['Azuras_Star', 9],
+  ['Volendrung', 10],
+  ['Warlocks_Ring', 11],
+  ['Auriels_Bow', 12],
+  ['Necromancers_Amulet', 13],
+  ['Chrysamere', 14],
+  ['Lords_Mail', 15],
+  ['Staff_of_Magnus', 16],
+  ['Ring_of_Khajiit', 17],
+  ['Ebony_Mail', 18],
+  ['Auriels_Shield', 19],
+  ['Spell_Breaker', 20],
+  ['Skeletons_Key', 21],
+  ['Ebony_Blade', 22],
 ]);
 
 /**
@@ -443,7 +897,9 @@ export const ARTIFACT_SUB_TYPE_NAMES = Object.freeze([
  * ArtifactsSubTypes.None (-1) when nothing matches.
  */
 export function legacyGetArtifactSubType(itemShortName) {
-  const key = String(itemShortName ?? '').replaceAll('\'', '').replaceAll(' ', '_');
+  const key = String(itemShortName ?? '')
+    .replaceAll("'", '')
+    .replaceAll(' ', '_');
   for (const [name, value] of ARTIFACT_SUB_TYPE_NAMES) {
     if (key.includes(name)) return value;
   }
@@ -479,8 +935,8 @@ export function legacyArtifactIndexBitfieldCheck(item) {
  *  and the RECORD is this table indexed by the artifact subtype
  *  (ItemHelper.cs:43). Both are static - no ARENA2 read anywhere in
  *  the call. */
-export const ARTIFACT_MALE_TEXTURE_ARCHIVE = 432;     // ItemHelper.cs:50
-export const ARTIFACT_FEMALE_TEXTURE_ARCHIVE = 433;   // ItemHelper.cs:51
+export const ARTIFACT_MALE_TEXTURE_ARCHIVE = 432; // ItemHelper.cs:50
+export const ARTIFACT_FEMALE_TEXTURE_ARCHIVE = 433; // ItemHelper.cs:51
 export const ARTIFACT_TEXTURE_INDEX_MAPPINGS = Object.freeze([
   12, 13, 10, 8, 19, 16, 25, 18, 21, 2, 24, 26, 0, 15, 3, 9, 23, 17, 7, 1, 22, 20, 5,
 ]);
@@ -516,7 +972,7 @@ export function createArtifact(templates, artifactIndex, { gender = 'male' } = {
   const groupName = ITEM_GROUP_NAME_BY_CLASS[magicItem.group];
   const templateIndex = GROUP_TEMPLATE_INDICES[groupName]?.[magicItem.groupIndex];
   let material = magicItem.material;
-  if (magicItem.group === 2) material = 0x200 + material;   // Armor -> plate band
+  if (magicItem.group === 2) material = 0x200 + material; // Armor -> plate band
   // ROAD-U: the two identity BOOLEANS this used to stamp here
   // (`oghmaInfinium` on index 5, `azurasStar` on index 9) are gone.
   // Nothing in DFU carries them: ItemHelper.GetItemInfo (:782, :811)
@@ -563,7 +1019,9 @@ export function createArtifact(templates, artifactIndex, { gender = 'male' } = {
  *  mint builds real magic items and artifacts when a host has
  *  registered the file, and pends LOUDLY when not (the headless
  *  corpus gate runs with no ARENA2 - Ledger row). */
-export function getMagicItemTemplates() { return _magicItemTemplates; }
+export function getMagicItemTemplates() {
+  return _magicItemTemplates;
+}
 
 /** DaggerfallLoot.GenerateItems: key -> matrix -> loot. Unknown keys
  *  fall to '-' (empty), matching GetMatrix's null-safe use. */
@@ -586,7 +1044,7 @@ export const LOOT_LIST_MAX = 64;
 /** The most fields an item record may carry, the longest string it may
  *  hold, and how deep it may nest (an enchantment list is depth 2). */
 export const LOOT_ITEM_KEYS_MAX = 48;
-export const LOOT_STR_MAX = ITEM_STR_MAX;   // RF5: the schema's own string bound
+export const LOOT_STR_MAX = ITEM_STR_MAX; // RF5: the schema's own string bound
 export const LOOT_DEPTH_MAX = 4;
 /** AUDIT WORLD6b-iii(c) B2/C1: the widest stack the port mints (DFU's stackCount is a ushort) - a count is the one
  *  number on the record read as a QUANTITY, and it was open: a grant of one gold pile at 1e15, or at -5, minted or
@@ -603,7 +1061,11 @@ function clampLootValue(v, depth) {
   if (Array.isArray(v)) {
     if (v.length > LOOT_LIST_MAX) return undefined;
     const out = [];
-    for (const e of v) { const c = clampLootValue(e, depth + 1); if (c === undefined) return undefined; out.push(c); }
+    for (const e of v) {
+      const c = clampLootValue(e, depth + 1);
+      if (c === undefined) return undefined;
+      out.push(c);
+    }
     return out;
   }
   if (Object.getPrototypeOf(v) !== Object.prototype && Object.getPrototypeOf(v) !== null) return undefined;
@@ -635,7 +1097,10 @@ let _itemLaw = null;
 /** HACKED-GOLD: and the law's CEILING on an honest price (itemLaw.js worthCeiling), registered beside it - the wire's
  *  price has a floor (AUDIT WORLD6a B1, below) and, with the law, a ceiling. */
 let _priceCeiling = null;
-export function setItemLaw(fn, ceiling = null) { _itemLaw = typeof fn === 'function' ? fn : null; _priceCeiling = typeof ceiling === 'function' ? ceiling : null; }
+export function setItemLaw(fn, ceiling = null) {
+  _itemLaw = typeof fn === 'function' ? fn : null;
+  _priceCeiling = typeof ceiling === 'function' ? ceiling : null;
+}
 
 /** One item record off the wire, clamped to a copy - or null when it is not one this port could have minted: its shape
  *  (wireLootItem) and the item law. */
@@ -661,7 +1126,11 @@ export const itemLawFindings = (/** @type {any} */ it) => (_itemLaw ? _itemLaw(i
  *  (net/realm/realmTradeLaw.js) - is left as it came: a letter never rides a peer's word at all (systems/peerWord.js), and a
  *  boat's records never leave their holder in a trade. Never under the floor the projection set. */
 const lawPriced = (/** @type {any} */ it) => {
-  if (_priceCeiling && !VALUE_IS_IDENTITY_TEMPLATES.includes(it.templateIndex) && !BOAT_TEMPLATES.includes(it.templateIndex)) {
+  if (
+    _priceCeiling &&
+    !VALUE_IS_IDENTITY_TEMPLATES.includes(it.templateIndex) &&
+    !BOAT_TEMPLATES.includes(it.templateIndex)
+  ) {
     it.value = Math.min(it.value, Math.max(_priceCeiling(it), wireFloorOf(it)));
   }
   return it;
@@ -672,7 +1141,7 @@ const lawPriced = (/** @type {any} */ it) => {
 function wireLootItem(v) {
   if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
   if (v.templateIndex == null || validItemField('templateIndex', v.templateIndex) === undefined) return null;
-  if (!templateByIndex(v.templateIndex)) return null;   // AUDIT WORLD6a B1: an item the port has no template for is not an item
+  if (!templateByIndex(v.templateIndex)) return null; // AUDIT WORLD6a B1: an item the port has no template for is not an item
   const out = clampLootValue(v, 0);
   if (!out || typeof out !== 'object' || Array.isArray(out)) return null;
   // RF5: every DECLARED field is its declared kind - the three array fields (B1), the affix list's records (LR4:
@@ -681,11 +1150,11 @@ function wireLootItem(v) {
   // ran first, so a depth cut has dropped a field whole (safe) and a non-finite number is gone (the floor below
   // answers a missing value with the template's own).
   if (!validItemFields(out)) return null;
-  if (!validSetMarks(out)) return null;   // AUDIT SET D6: and the marks agree with the item - a set's sigil, a blow, the Aetheric
-  if (!validGildedMarks(out)) return null;   // GILDED1: a Gilded piece as its record mints it - a static roll, one number off is a forgery
-  if (!validImprint(out)) return null;   // LOOT10: an imprint only as the Reforge makes one
-  if (!validCurse(out)) return null;   // LOOT16: a curse only as a door's pass makes one
-  if (!validSocket(out)) return null;   // LOOT20: a socket only as the pass and the Reforge make one
+  if (!validSetMarks(out)) return null; // AUDIT SET D6: and the marks agree with the item - a set's sigil, a blow, the Aetheric
+  if (!validGildedMarks(out)) return null; // GILDED1: a Gilded piece as its record mints it - a static roll, one number off is a forgery
+  if (!validImprint(out)) return null; // LOOT10: an imprint only as the Reforge makes one
+  if (!validCurse(out)) return null; // LOOT16: a curse only as a door's pass makes one
+  if (!validSocket(out)) return null; // LOOT20: a socket only as the pass and the Reforge make one
   // AUDIT WORLD6a B1: THE PRICE IS NOT THE WIRE'S. A shelf's list lands on every client (WORLD6a) and calculateCost
   // reads `value`, so a peer minted a Daedric dai-katana at `value: 0` onto a shop's shelf and every player in the
   // Bay could buy it for 2 gold, and the room remembered it for thirty days. The value is floored at what the port
@@ -694,7 +1163,11 @@ function wireLootItem(v) {
   // a peer selling a conjured thing, which the WORLD4 law already accepts for a chest, and is recorded.
   out.value = Math.max(Number.isFinite(out.value) ? out.value : 0, wireFloorOf(out));
   // AUDIT WORLD6b-iii(c) B2/C1: a stack is a whole number in [1, LOOT_STACK_MAX] or absent - not an item otherwise
-  if (out.stackCount !== undefined && (!Number.isInteger(out.stackCount) || out.stackCount < 1 || out.stackCount > LOOT_STACK_MAX)) return null;
+  if (
+    out.stackCount !== undefined &&
+    (!Number.isInteger(out.stackCount) || out.stackCount < 1 || out.stackCount > LOOT_STACK_MAX)
+  )
+    return null;
   // AUDIT WORLD6b-iii(c) A6/B4: the marks that mean "worn by me" and "bound to my quest" are the RECEIVER's, never a
   // container's word - a wire-borne equipSlot re-linked into the pack's slots on the next load and pushed my own out
   // ACQUIRE1: and "it is mine already" (systems/acquireWatch.js) - a piece another player hands over is new to its taker
@@ -720,7 +1193,7 @@ export function validLootList(v) {
     if (!it) return null;
     // INT1 (AUDIT INT): a piece the item law refuses is no item - IT goes, never the list: a forged piece in a chest, a
     // body or a shelf cost every honest piece beside it ("from a newer version of the game", which no reload mends)
-    if (!lawRefuses(it)) out.push(lawPriced(it));   // HACKED-GOLD: at no price past the law's ceiling
+    if (!lawRefuses(it)) out.push(lawPriced(it)); // HACKED-GOLD: at no price past the law's ceiling
   }
   return out;
 }
@@ -770,8 +1243,8 @@ export const enemyLootTableKey = (mobileType, key) => rriEnemyLootTableKey(mobil
  *  own, CreateRandomPotion's source moves to that registry and this
  *  list stays where it is: DFU keeps them separate for that reason. */
 export const CLASSIC_RECIPE_KEYS = Object.freeze([
-  221871, 239524, 4975678, 5017404, 5188896, 111516185, 4826108, 216843, 224588, 220192,
-  240081, 4937012, 228890, 221117, 4870452, 5361377, 112080144, 4842851, 4815872, 2031019196,
+  221871, 239524, 4975678, 5017404, 5188896, 111516185, 4826108, 216843, 224588, 220192, 240081, 4937012, 228890,
+  221117, 4870452, 5361377, 112080144, 4842851, 4815872, 2031019196,
 ]);
 
 /** MiscItems.Map (template 287) - ItemBuilder has no maker for it;
@@ -797,7 +1270,8 @@ const potionValue = (recipeKey, item) => potionRecipeByKey(recipeKey)?.price ?? 
  *  patron (LW15) judged it by the same price. @param {any} item */
 const wireFloorOf = (item) => {
   if (item.group === 'Books' && item.templateIndex === BOOK_TEMPLATE) return bookValue(item.message);
-  if (item.group === 'MiscItems' && item.templateIndex === POTION_RECIPE_TEMPLATE_INDEX && item.potionRecipeKey != null) return potionValue(item.potionRecipeKey, item);
+  if (item.group === 'MiscItems' && item.templateIndex === POTION_RECIPE_TEMPLATE_INDEX && item.potionRecipeKey != null)
+    return potionValue(item.potionRecipeKey, item);
   return itemBaseValue(item);
 };
 
@@ -837,7 +1311,11 @@ export function createRandomPotion(rolls = Math.random) {
  *  chance of 0 never fires and no roll is wasted deciding that. */
 export function randomlyAddMap(chance, items, rolls = Math.random) {
   if (!dice100(chance, rolls())) return null;
-  const map = mintCondition({ group: 'MiscItems', templateIndex: MAP_TEMPLATE_INDEX, value: itemBaseValue({ group: 'MiscItems', templateIndex: MAP_TEMPLATE_INDEX }) });   // F103: SetItem's basePrice
+  const map = mintCondition({
+    group: 'MiscItems',
+    templateIndex: MAP_TEMPLATE_INDEX,
+    value: itemBaseValue({ group: 'MiscItems', templateIndex: MAP_TEMPLATE_INDEX }),
+  }); // F103: SetItem's basePrice
   items.push(map);
   return map;
 }
@@ -866,7 +1344,8 @@ export function randomlyAddPotionRecipe(chance, items, rolls = Math.random) {
  *  AFTER the equipment, as DFU does - AssignEnemyStartingEquipment
  *  has already pushed the gear into `items` by :388, so a map lands
  *  after a helmet in the list and not before it. */
-export function addEnemyLootExtras(items, basics, rolls = Math.random, { quarters = undefined } = {}) {   // PARTY-LOOT: `quarters` the roll's RENOWN-LOOT share, handed to the extras (undefined: the roller's own)
+export function addEnemyLootExtras(items, basics, rolls = Math.random, { quarters = undefined } = {}) {
+  // PARTY-LOOT: `quarters` the roll's RENOWN-LOOT share, handed to the extras (undefined: the roller's own)
   if (!items || !basics) return items;
   randomlyAddMap(basics.mapChance ?? 0, items, rolls);
   // "if (!string.IsNullOrEmpty(mobileEnemy.LootTableKey))" - the port
@@ -876,8 +1355,13 @@ export function addEnemyLootExtras(items, basics, rolls = Math.random, { quarter
   if (key && key !== '-') {
     randomlyAddPotion(3, items, rolls);
     randomlyAddPotionRecipe(2, items, rolls);
-    for (const fn of [..._enemyLootExtras.values()]) {   // REPAIR-EASE: the port's own extras on a looting foe (the field kit)
-      try { fn({ items, basics, rolls, quarters }); } catch (e) { console.warn('[enemyLoot] an extra threw', e); }
+    for (const fn of [..._enemyLootExtras.values()]) {
+      // REPAIR-EASE: the port's own extras on a looting foe (the field kit)
+      try {
+        fn({ items, basics, rolls, quarters });
+      } catch (e) {
+        console.warn('[enemyLoot] an extra threw', e);
+      }
     }
   }
   return items;
@@ -885,7 +1369,10 @@ export function addEnemyLootExtras(items, basics, rolls = Math.random, { quarter
 /** REPAIR-EASE: the port's own extras on a foe with a loot table, by name - the pile event's shape (raiseTabledLootSpawned),
  *  for the corpse that event never covers. */
 const _enemyLootExtras = new Map();
-export function registerEnemyLootExtra(name, fn) { if (typeof fn === 'function') _enemyLootExtras.set(name, fn); else _enemyLootExtras.delete(name); }
+export function registerEnemyLootExtra(name, fn) {
+  if (typeof fn === 'function') _enemyLootExtras.set(name, fn);
+  else _enemyLootExtras.delete(name);
+}
 
 /** REALM P0.4 (2026-09-28, bible/06-Systems/Realm-Arc.md "Pile gold divided by level"): ONLINE A PILE'S GOLD IS NOT
  *  THE LEVEL'S. GenerateRandomLoot rolls a pile's gold times the player's level, so a level-30 character found thirty
@@ -894,7 +1381,8 @@ export function registerEnemyLootExtra(name, fn) { if (typeof fn === 'function')
  *  every pile, the mod on or off, never under one piece. Answers the items. */
 export function unlevelPileGold(items, level) {
   const by = Math.max(1, Math.trunc(level) || 1);
-  for (const it of items) if (it?.group === 'Currency') it.stackCount = Math.max(1, Math.trunc((it.stackCount ?? 0) / by));
+  for (const it of items)
+    if (it?.group === 'Currency') it.stackCount = Math.max(1, Math.trunc((it.stackCount ?? 0) / by));
   return items;
 }
 
@@ -902,15 +1390,22 @@ export function unlevelPileGold(items, level) {
  *  is a different trio: the map chance comes from a six-entry table
  *  indexed by the loot key, and only keys J through O roll at all.
  *  The potion chance is FOUR here, not three. */
-export const PILE_MAP_CHANCES = Object.freeze([2, 1, 1, 2, 2, 15]);   // J, K, L, M, N, O
+export const PILE_MAP_CHANCES = Object.freeze([2, 1, 1, 2, 2, 15]); // J, K, L, M, N, O
 
-export function addPileLootExtras(items, lootTableKey, rolls = Math.random, { locationIndex = null, luck = 50, level = 1, online = isOnlinePage(), where = null, quarters = undefined } = {}) {   // PARTY-LOOT: `quarters` the roll's RENOWN-LOOT share for the subscribers (undefined: the roller's own)
+export function addPileLootExtras(
+  items,
+  lootTableKey,
+  rolls = Math.random,
+  { locationIndex = null, luck = 50, level = 1, online = isOnlinePage(), where = null, quarters = undefined } = {},
+) {
+  // PARTY-LOOT: `quarters` the roll's RENOWN-LOOT share for the subscribers (undefined: the roller's own)
   if (!items || !lootTableKey) return items;
-  if (online) unlevelPileGold(items, level);   // REALM P0.4: every pile, whatever its key
+  if (online) unlevelPileGold(items, level); // REALM P0.4: every pile, whatever its key
   // `int alphabetIndex = key - 64` on the FIRST character: 'A' is 1,
   // so J is 10 and O is 15.
   const alphabetIndex = lootTableKey.charCodeAt(0) - 64;
-  if (alphabetIndex >= 10 && alphabetIndex <= 15) {   // between keys J and O
+  if (alphabetIndex >= 10 && alphabetIndex <= 15) {
+    // between keys J and O
     randomlyAddMap(PILE_MAP_CHANCES[alphabetIndex - 10], items, rolls);
     randomlyAddPotion(4, items, rolls);
     randomlyAddPotionRecipe(2, items, rolls);
@@ -921,7 +1416,8 @@ export function addPileLootExtras(items, lootTableKey, rolls = Math.random, { lo
   // a laboratory's or a dragon's den's pile was never worn). RRI2's RandomConditionLootItems is its first subscriber;
   // every other hears it after (Foraging's, There's a Hole in the Bottom of the Ocean's AddBonusMagicLoot and UpgradeLoot).
   // AUDIT OH-F B3: `where` the host that rolled it ('dungeon', or null).
-  if (lootTableKey !== '-') raiseTabledLootSpawned({ locationIndex, key: lootTableKey, items, rolls, luck, where, quarters });
+  if (lootTableKey !== '-')
+    raiseTabledLootSpawned({ locationIndex, key: lootTableKey, items, rolls, luck, where, quarters });
   return items;
 }
 
@@ -932,13 +1428,25 @@ export function addPileLootExtras(items, lootTableKey, rolls = Math.random, { lo
  *  `{ locationIndex, key, items }` - with the pile's `rolls` and the player's `luck` beside them (DFU's subscribers
  *  read GameManager.PlayerEntity; the raiser hands them the player's live luck instead), and OH-F B3's `where`. */
 const _tabledLootHandlers = new Map([
-  [RRI_VENDOR, ({ items, rolls }) => { if (conditionBasedPricesOn()) randomConditionLootItems(items, rolls); }],
+  [
+    RRI_VENDOR,
+    ({ items, rolls }) => {
+      if (conditionBasedPricesOn()) randomConditionLootItems(items, rolls);
+    },
+  ],
 ]);
-export function registerTabledLootHandler(name, fn) { if (typeof fn === 'function') _tabledLootHandlers.set(name, fn); else _tabledLootHandlers.delete(name); }
+export function registerTabledLootHandler(name, fn) {
+  if (typeof fn === 'function') _tabledLootHandlers.set(name, fn);
+  else _tabledLootHandlers.delete(name);
+}
 /** Every subscriber over one pile; one that throws is logged and the rest still run (UL1's rule). Answers the items. */
 export function raiseTabledLootSpawned(args) {
   for (const fn of [..._tabledLootHandlers.values()]) {
-    try { fn(args); } catch (e) { console.warn('[lootSpawned] a pile handler threw', e); }
+    try {
+      fn(args);
+    } catch (e) {
+      console.warn('[lootSpawned] a pile handler threw', e);
+    }
   }
   return args.items;
 }
@@ -946,7 +1454,12 @@ export function raiseTabledLootSpawned(args) {
  *  built twice - they are one list now): `add` subscribes a host's listener after those before it, and answers its
  *  own removal; `raise` is raiseTabledLootSpawned. `{ key, items, where }` are the args OH-E reads. */
 export const tableLootSpawned = Object.freeze({
-  add(fn) { const id = Symbol('tableLootSpawned'); _tabledLootHandlers.set(id, fn); return () => { _tabledLootHandlers.delete(id); }; },
+  add(fn) {
+    const id = Symbol('tableLootSpawned');
+    _tabledLootHandlers.set(id, fn);
+    return () => {
+      _tabledLootHandlers.delete(id);
+    };
+  },
   raise: (args) => raiseTabledLootSpawned(args),
 });
-

@@ -47,8 +47,8 @@
   {
     "name": "PEACE-WAY-aim-ignored",
     "file": "src/systems/comeSailAway/peaceWay.js",
-    "old": "return enemies || boarding || aiming ? 1 : PEACE_WAY;",
-    "new": "return enemies || boarding ? 1 : PEACE_WAY;",
+    "old": "  return enemies || boarding || aiming ? 1 : PEACE_WAY;",
+    "new": "  return enemies || boarding ? 1 : PEACE_WAY;",
     "tests": [
       "test/systems/comeSailAway/peaceway.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PEACE-WAY-boarding-ignored",
     "file": "src/systems/comeSailAway/peaceWay.js",
-    "old": "return enemies || boarding || aiming ? 1 : PEACE_WAY;",
-    "new": "return enemies || aiming ? 1 : PEACE_WAY;",
+    "old": "  return enemies || boarding || aiming ? 1 : PEACE_WAY;",
+    "new": "  return enemies || aiming ? 1 : PEACE_WAY;",
     "tests": [
       "test/systems/comeSailAway/peaceway.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PEACE-WAY-enemies-ignored",
     "file": "src/systems/comeSailAway/peaceWay.js",
-    "old": "return enemies || boarding || aiming ? 1 : PEACE_WAY;",
-    "new": "return boarding || aiming ? 1 : PEACE_WAY;",
+    "old": "  return enemies || boarding || aiming ? 1 : PEACE_WAY;",
+    "new": "  return boarding || aiming ? 1 : PEACE_WAY;",
     "tests": [
       "test/systems/comeSailAway/peaceway.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "PEACE-WAY-floor-dropped",
     "file": "src/systems/comeSailAway/peaceWay.js",
-    "old": "Math.max(1, Math.min(PEACE_WAY, n))",
-    "new": "Math.min(PEACE_WAY, n)",
+    "old": "  return Number.isFinite(n) ? Math.max(1, Math.min(PEACE_WAY, n)) : 1;",
+    "new": "  return Number.isFinite(n) ? Math.min(PEACE_WAY, n) : 1;",
     "tests": [
       "test/systems/comeSailAway/peaceway.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PEACE-WAY-cap-dropped",
     "file": "src/systems/comeSailAway/peaceWay.js",
-    "old": "Math.max(1, Math.min(PEACE_WAY, n))",
-    "new": "Math.max(1, n)",
+    "old": "  return Number.isFinite(n) ? Math.max(1, Math.min(PEACE_WAY, n)) : 1;",
+    "new": "  return Number.isFinite(n) ? Math.max(1, n) : 1;",
     "tests": [
       "test/systems/comeSailAway/peaceway.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PEACE-WAY-unheld",
     "file": "src/systems/comeSailAway/peaceWay.js",
-    "old": "    if (!(t >= at && t - at < PEACE_HOLD_S)) { at = t; k = read(); }",
-    "new": "    { at = t; k = read(); }",
+    "old": "    if (!(t >= at && t - at < PEACE_HOLD_S)) {",
+    "new": "    {",
     "tests": [
       "test/systems/comeSailAway/peaceway.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "PEACE-WAY-held-backwards",
     "file": "src/systems/comeSailAway/peaceWay.js",
-    "old": "    if (!(t >= at && t - at < PEACE_HOLD_S)) { at = t; k = read(); }",
-    "new": "    if (!(t - at < PEACE_HOLD_S)) { at = t; k = read(); }",
+    "old": "    if (!(t >= at && t - at < PEACE_HOLD_S)) {",
+    "new": "    if (!(t - at < PEACE_HOLD_S)) {",
     "tests": [
       "test/systems/comeSailAway/peaceway.test.js"
     ]

@@ -30,20 +30,26 @@
 // localStorage THROWS under some privacy modes, and "no storage" must
 // read as null, never as a crash.
 
-let _wrapped = null;   // the shell bridge, wrapped once
+let _wrapped = null; // the shell bridge, wrapped once
 let _wrappedFrom = null;
 
 /** localStorage's shape over the shell's function bridge. */
 function wrapShellStorage(bridge) {
   return {
-    get length() { return bridge.length(); },
+    get length() {
+      return bridge.length();
+    },
     key: (i) => bridge.key(i),
     getItem: (k) => bridge.getItem(k),
     // setItem THROWS on failure exactly as localStorage does (quota,
     // disk) - contextBridge re-throws preload errors into the page,
     // and every caller already try/catches for the browser's sake.
-    setItem: (k, v) => { bridge.setItem(k, String(v)); },
-    removeItem: (k) => { bridge.removeItem(k); },
+    setItem: (k, v) => {
+      bridge.setItem(k, String(v));
+    },
+    removeItem: (k) => {
+      bridge.removeItem(k);
+    },
   };
 }
 
@@ -55,7 +61,11 @@ function wrapShellStorage(bridge) {
  *  whatever save each loaded. sessionStorage is per tab, survives a
  *  reload of that tab, and dies with it. Storage-shaped object or null. */
 export function tabStorage() {
-  try { return globalThis.sessionStorage ?? null; } catch { return null; }
+  try {
+    return globalThis.sessionStorage ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /** The one storage question. Storage-shaped object or null. */
@@ -63,9 +73,14 @@ export function appStorage() {
   try {
     const bridge = globalThis.daggerShell?.storage;
     if (bridge) {
-      if (_wrappedFrom !== bridge) { _wrapped = wrapShellStorage(bridge); _wrappedFrom = bridge; }
+      if (_wrappedFrom !== bridge) {
+        _wrapped = wrapShellStorage(bridge);
+        _wrappedFrom = bridge;
+      }
       return _wrapped;
     }
     return globalThis.localStorage ?? null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }

@@ -20,8 +20,8 @@
 //    and emptied, its treasure built empty (decision 3).
 import { lwSeed, lwRng, textSeed, rollInt } from './seed.js';
 import { DAY_MIN } from './dayPlan.js';
-import { RANDOM_RECORD } from '../../characters/dungeonEnemies.js';   // AUDIT LW-II-2 D11: the random foe marker's one home
-import { RANDOM_TREASURE_MARKER_RECORD } from '../loot/loot.js';   // ...and the random treasure marker's
+import { RANDOM_RECORD } from '../../characters/dungeonEnemies.js'; // AUDIT LW-II-2 D11: the random foe marker's one home
+import { RANDOM_TREASURE_MARKER_RECORD } from '../loot/loot.js'; // ...and the random treasure marker's
 
 /** The markers that are stops: the editor's random foe and random treasure (archive 199's records). AUDIT LW-II-2 D11:
  *  ONE DFU MEMBER, ONE EXPORT - their homes' (RDBLayout's records, read by the dungeon's foes and its loot), never two
@@ -39,7 +39,7 @@ export const DEEP_RISK = 0.5;
 export const DEEP_FIGHT_MIN = 20;
 /** What a dive passed stands cleared this long after (a day of the clock). */
 export const DIVE_CLEAR_MIN = DAY_MIN;
-const DEEP = 0x64656570;   // 'deep'
+const DEEP = 0x64656570; // 'deep'
 
 /**
  * @typedef {{ key: string, kind: 'foe'|'treasure', x: number, y: number, z: number, block: number, loadID: number }} Stop -
@@ -58,27 +58,50 @@ const DEEP = 0x64656570;   // 'deep'
  */
 export function stopsOf(blocks, side, entry = null) {
   const grid = blocks.map((b) => ({ gx: Math.round(b.originX / side), gz: Math.round(b.originZ / side) }));
-  const inBlock = blocks.map((b, bi) => (b.layout?.markers ?? [])
-    .filter((m) => !m.archive && (m.record === STOP_FOE || m.record === STOP_TREASURE))
-    .map((m) => /** @type {Stop} */ ({ key: `${bi}:${m.position}`, kind: m.record === STOP_FOE ? 'foe' : 'treasure', x: m.x + b.originX, y: m.y, z: m.z + b.originZ, block: bi, loadID: m.loadID ?? 0 })));
+  const inBlock = blocks.map((b, bi) =>
+    (b.layout?.markers ?? [])
+      .filter((m) => !m.archive && (m.record === STOP_FOE || m.record === STOP_TREASURE))
+      .map(
+        (m) =>
+          /** @type {Stop} */ ({
+            key: `${bi}:${m.position}`,
+            kind: m.record === STOP_FOE ? 'foe' : 'treasure',
+            x: m.x + b.originX,
+            y: m.y,
+            z: m.z + b.originZ,
+            block: bi,
+            loadID: m.loadID ?? 0,
+          }),
+      ),
+  );
   if (!blocks.length) return [];
   // AUDIT LW-II-2 D10: no start marker - from the STARTING block (the one the dungeon is entered by; its enter marker's,
   // dungeonLayout.js), never the list's first (a dungeon's blocks do not put the start first)
   const start = blocks.find((b) => b.isStartingBlock) ?? blocks[0];
   const from = entry ?? { x: start.originX + side / 2, z: start.originZ + side / 2 };
-  let first = blocks.findIndex((b) => from.x >= b.originX && from.x < b.originX + side && from.z >= b.originZ && from.z < b.originZ + side);
+  let first = blocks.findIndex(
+    (b) => from.x >= b.originX && from.x < b.originX + side && from.z >= b.originZ && from.z < b.originZ + side,
+  );
   if (first < 0) first = 0;
   // the blocks breadth first by the grid, a block's neighbours east, west, south, north
   const order = [first];
   const seen = new Set(order);
   for (let i = 0; i < order.length; i++) {
     const g = grid[order[i]];
-    for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    for (const [dx, dz] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ]) {
       const j = grid.findIndex((q, k) => !seen.has(k) && q.gx === g.gx + dx && q.gz === g.gz + dz);
-      if (j >= 0) { seen.add(j); order.push(j); }
+      if (j >= 0) {
+        seen.add(j);
+        order.push(j);
+      }
     }
   }
-  for (let k = 0; k < blocks.length; k++) if (!seen.has(k)) order.push(k);   // a block the grid does not join, last
+  for (let k = 0; k < blocks.length; k++) if (!seen.has(k)) order.push(k); // a block the grid does not join, last
   /** @type {Stop[]} */
   const out = [];
   let at = from;
@@ -101,13 +124,14 @@ export function stopsOf(blocks, side, entry = null) {
 /** The deep's fight of a dive with no fated death: the index among its foe stops' reach fraction, or null (none).
  *  @param {any} trip */
 export function deepFightOf(trip) {
-  if (trip.enc?.inside) return null;   // a fated trouble is the dive's own (trouble.js diveTrouble) - AUDIT LW-II-2 D8: one met INSIDE; a road's trouble on the way there or back takes nothing from the deep
+  if (trip.enc?.inside) return null; // a fated trouble is the dive's own (trouble.js diveTrouble) - AUDIT LW-II-2 D8: one met INSIDE; a road's trouble on the way there or back takes nothing from the deep
   const rng = lwRng(textSeed(trip.id), DEEP);
   return rng() < DEEP_RISK ? rng() : null;
 }
 
 /** A stop's minutes: a foe's by its seed, a treasure's. @param {Stop} s */
-export const stopDwellOf = (s) => (s.kind === 'foe' ? rollInt(lwRng(textSeed(s.key), DEEP), DEEP_FOE_MIN[0], DEEP_FOE_MIN[1]) : DEEP_TREASURE_MIN);
+export const stopDwellOf = (s) =>
+  s.kind === 'foe' ? rollInt(lwRng(textSeed(s.key), DEEP), DEEP_FOE_MIN[0], DEEP_FOE_MIN[1]) : DEEP_TREASURE_MIN;
 const walkMin = (a, b) => (Math.hypot(a.x - b.x, a.z - b.z) * DEEP_DETOUR) / DEEP_WALK_M;
 
 /**
@@ -122,14 +146,16 @@ export function routeOf(stops, entry, trip) {
   const fightAt = deepFightOf(trip);
   /** @type {Leg[]} */
   const legs = [];
-  let t = dive.t0, at = entry;
+  let t = dive.t0,
+    at = entry;
   for (const s of stops) {
     const tIn = t + walkMin(at, s);
     if (tIn > mid) break;
     const tOut = tIn + stopDwellOf(s);
     if (tOut > mid) break;
     legs.push({ stop: s, tIn, tOut, fight: s.kind === 'foe' });
-    t = tOut; at = s;
+    t = tOut;
+    at = s;
   }
   // the deep's fight: a foe stop of the reach, by the seed - its minutes that stop's own, the rest of the reach after it
   if (fightAt != null) {
@@ -137,13 +163,19 @@ export function routeOf(stops, entry, trip) {
     if (foes.length) {
       const i = foes[Math.min(foes.length - 1, Math.floor(fightAt * foes.length))];
       legs[i].tOut += DEEP_FIGHT_MIN;
-      for (let j = i + 1; j < legs.length; j++) { legs[j].tIn += DEEP_FIGHT_MIN; legs[j].tOut += DEEP_FIGHT_MIN; }
+      for (let j = i + 1; j < legs.length; j++) {
+        legs[j].tIn += DEEP_FIGHT_MIN;
+        legs[j].tOut += DEEP_FIGHT_MIN;
+      }
       // AUDIT LW-II-2 D13: no trim after it - the whole reach comes after the fight (section 7.1); the trim that stood
       // here (`tOut > mid + DEEP_FIGHT_MIN`) could never hold (each tOut was by the middle, then DEEP_FIGHT_MIN on)
     }
   }
-  const yOf = (/** @type {any} */ o) => (Number.isFinite(o?.y) ? { y: o.y } : {});   // AUDIT LW-II D7: each point its floor, where known
-  const path = [...legs.map((l) => ({ x: l.stop.x, z: l.stop.z, ...yOf(l.stop) })).reverse(), { x: entry.x, z: entry.z, ...yOf(entry) }];
+  const yOf = (/** @type {any} */ o) => (Number.isFinite(o?.y) ? { y: o.y } : {}); // AUDIT LW-II D7: each point its floor, where known
+  const path = [
+    ...legs.map((l) => ({ x: l.stop.x, z: l.stop.z, ...yOf(l.stop) })).reverse(),
+    { x: entry.x, z: entry.z, ...yOf(entry) },
+  ];
   let back = 0;
   for (let i = 1; i < path.length; i++) back += walkMin(path[i - 1], path[i]);
   const last = legs.length ? legs[legs.length - 1].tOut : dive.t0;
@@ -158,21 +190,38 @@ export function routeOf(stops, entry, trip) {
  */
 export function stopAt(route, t) {
   if (!route || t < route.t0 || t >= route.out.t1) return null;
-  let prev = /** @type {{ x: number, z: number }} */ (route.entry), prevT = route.t0;
+  let prev = /** @type {{ x: number, z: number }} */ (route.entry),
+    prevT = route.t0;
   for (const l of route.legs) {
     if (t < l.tIn) return { between: [prev, l.stop], f: (t - prevT) / Math.max(1e-9, l.tIn - prevT) };
     if (t < l.tOut) return { at: l.stop, fighting: l.fight };
-    prev = l.stop; prevT = l.tOut;
+    prev = l.stop;
+    prevT = l.tOut;
   }
-  if (t < route.out.t0) return { at: route.legs.length ? route.legs[route.legs.length - 1].stop : null, fighting: false, resting: true };
+  if (t < route.out.t0)
+    return { at: route.legs.length ? route.legs[route.legs.length - 1].stop : null, fighting: false, resting: true };
   // the way out: along the path at the share of its minutes walked
   const p = route.out.path;
   const seg = [];
   let total = 0;
-  for (let i = 1; i < p.length; i++) { const d = Math.hypot(p[i].x - p[i - 1].x, p[i].z - p[i - 1].z); seg.push(d); total += d; }
+  for (let i = 1; i < p.length; i++) {
+    const d = Math.hypot(p[i].x - p[i - 1].x, p[i].z - p[i - 1].z);
+    seg.push(d);
+    total += d;
+  }
   let goal = total * ((t - route.out.t0) / Math.max(1e-9, route.out.t1 - route.out.t0));
   for (let i = 0; i < seg.length; i++) {
-    if (goal <= seg[i]) { const f = seg[i] ? goal / seg[i] : 0, y = p[i + 1].y ?? p[i].y; return { out: { x: p[i].x + (p[i + 1].x - p[i].x) * f, z: p[i].z + (p[i + 1].z - p[i].z) * f, ...(y != null ? { y } : {}) } }; }
+    if (goal <= seg[i]) {
+      const f = seg[i] ? goal / seg[i] : 0,
+        y = p[i + 1].y ?? p[i].y;
+      return {
+        out: {
+          x: p[i].x + (p[i + 1].x - p[i].x) * f,
+          z: p[i].z + (p[i + 1].z - p[i].z) * f,
+          ...(y != null ? { y } : {}),
+        },
+      };
+    }
     goal -= seg[i];
   }
   const last = p[p.length - 1];
@@ -184,7 +233,10 @@ export function pointAt(route, t) {
   const s = stopAt(route, t);
   if (!s) return null;
   if (s.at) return { x: s.at.x, z: s.at.z, y: s.at.y };
-  if (s.between) { const [a, b] = s.between; return { x: a.x + (b.x - a.x) * s.f, z: a.z + (b.z - a.z) * s.f, y: /** @type {any} */ (b).y }; }
+  if (s.between) {
+    const [a, b] = s.between;
+    return { x: a.x + (b.x - a.x) * s.f, z: a.z + (b.z - a.z) * s.f, y: /** @type {any} */ (b).y };
+  }
   return s.out ? { x: s.out.x, z: s.out.z, y: s.out.y } : null;
 }
 
@@ -195,7 +247,8 @@ export function pointAt(route, t) {
  */
 export function clearedOf(routes, t) {
   const out = new Set();
-  for (const r of routes) for (const l of r?.legs ?? []) if (l.tOut <= t && t - l.tOut < DIVE_CLEAR_MIN) out.add(l.stop.key);
+  for (const r of routes)
+    for (const l of r?.legs ?? []) if (l.tOut <= t && t - l.tOut < DIVE_CLEAR_MIN) out.add(l.stop.key);
   return out;
 }
 
@@ -209,13 +262,18 @@ export function stopOfMinute(route, t) {
   const s = stopAt(route, t);
   if (!s) return route?.legs.length ? route.legs[route.legs.length - 1].stop : null;
   if (s.at) return s.at;
-  if (s.between) { const b = /** @type {any} */ (s.between[1]); const a = /** @type {any} */ (s.between[0]); return s.f >= 0.5 || !a.key ? b : a; }
+  if (s.between) {
+    const b = /** @type {any} */ (s.between[1]);
+    const a = /** @type {any} */ (s.between[0]);
+    return s.f >= 0.5 || !a.key ? b : a;
+  }
   // AUDIT LW-II-2 D9: on the way out they walk the reach's stops back - the nearest of them to where they are (the nearer
   // of the two walked between, section 7.1), never the deepest wherever the minute fell
   if (s.out && route?.legs.length) {
     const o = s.out;
     let best = route.legs[0].stop;
-    for (const l of route.legs) if (Math.hypot(l.stop.x - o.x, l.stop.z - o.z) < Math.hypot(best.x - o.x, best.z - o.z)) best = l.stop;
+    for (const l of route.legs)
+      if (Math.hypot(l.stop.x - o.x, l.stop.z - o.z) < Math.hypot(best.x - o.x, best.z - o.z)) best = l.stop;
     return best;
   }
   return route?.legs.length ? route.legs[route.legs.length - 1].stop : null;

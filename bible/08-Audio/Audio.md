@@ -906,7 +906,7 @@ The owner: "in oblivion gates ... while performance is overall good, the game hi
 distorts". Nothing stood between the mix and the speakers: the listener's bus (DW-D) went straight to `ctx.destination`,
 and a sum past full scale was cut square by the browser. The Burning Court reaches it easily - the boss's own clips peak
 at full scale in DAGGER.SND (measured: his bark and attack, records 208 and 209, a body's fall, 15, the fire's cast, 84,
-all at 0 dBFS; the burning loop, 420, at -8.9), his cues play them at 1.3 to 2.2 (`gateBoss.js:"export const BOSS_CUES = Object.freeze({"`),
+all at 0 dBFS; the burning loop, 420, at -8.9), his cues play them at 1.3 to 2.2 (`gateBoss.js:"export const BOSS_CUES"`),
 a landing sounds two of them in one frame (the slam's land and the quake), and the court's score is pressed to a decibel
 under the clip (WB10a). At the default SoundVolume of 0.5 a single cue at 2.2 already passed 1; at a higher one, most of
 his heavy blows did. The per-target copies that made it worse, and the other players' sounds now 4 dB down in the
@@ -1080,13 +1080,13 @@ outdoor songs beside them, whole, when the player's ARENA2 is at hand - M4: the 
 clip at the highest MusicVolume. On a MIDI device (MIDI-OUT1) each song's level rides the channels' CC7, which tops out
 at 127: past a MusicVolume of about 0.58 the still sea's loudest channels clamp and its mix flattens (the others from
 0.67 to 0.77), at the default 0.5 every level fits - FLAGGED (M6), as MIDI-OUT1 records for the made scores. THE LAW
-(`seaScore.js:"export function seaScoreFor(ctx) {"`): no helm, no score - but aboard in a sea fight, the fight's still
+(`seaScore.js:"export function seaScoreFor"`): no helm, no score - but aboard in a sea fight, the fight's still
 (M1: "Grapples away!" and "Repel boarders!" let the helm go, and the deck fight, a sea fight's climax, played the
 overland song); a sea fight as the watch knows it (the naval host's `battle`: her guns run out, the crew called to them
 by WK-W2's alarm - by night only a ship the night's law shows, or one that comes for me - or a boarding; M2: the
 first cut's hostileNear started the fight's song for a dark pirate the watch had not sighted at 500 m), then a
 thunderstorm, then a port's approach, then the night, then a drift under SEA_CALM_WAY (2.5 m/s) or a fog, else the open
-sea - rain and snow at sea are the open sea's. THE HOLD (`seaScore.js:"export function createSeaScore() {"`): a song
+sea - rain and snow at sea are the open sea's. THE HOLD (`seaScore.js:"export function createSeaScore"`): a song
 plays whole - its own length, never under SEA_SCORE_HOLD_MS (90 s) - and the law must have wanted another for
 SEA_SCORE_SETTLE_MS (20 s) on end before it changes (M3: a 90 s timer alone changed on the dot, at the calm line every
 90 s from the top, and the still sea's choir and the shanty's last tutti were never heard); a fight or a storm comes in

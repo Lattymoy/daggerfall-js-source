@@ -307,7 +307,7 @@ test('MENU-ORDER the rest: the Vendor page\'s pieces and the Market\'s crafted p
   // PIN MOVED (AUDIT PACK-PICK A10): the market and a stall hand a pack picker's box through (its card asks the pack grid's)
   assert.match(W, /hubs: marketHubs\(\), name: \(k\) => materialLabel\(k\), countName: materialCountLabel,\n\s*picture: \(k, wake\) => materialPicture\(k, \{ onReady: wake \}\), itemPicture: \(it, wake, box\) => itemPicture\(it, \{ onReady: wake, box \}\), piecePicture: marketPiecePicture,/, 'the market');   // PIN MOVED (BAY-LEFT-SEA): the hubs as they stand when the tab opens (systems/region/marketHubs.js)
   assert.equal((W.match(/picture: \(it, wake\) => itemPicture\(it, \{ onReady: wake \}\),/g) ?? []).length, 2, 'the board\'s traders and the Vendor page');
-  assert.match(W, /picture: \(it, wake, box\) => itemPicture\(it, \{ onReady: wake, box \}\),   \/\/ MENU-ORDER; PACK-PICK/, 'a stall');
+  assert.match(W, /picture: \(it, wake, box\) => itemPicture\(it, \{ onReady: wake, box \}\), \/\/ MENU-ORDER; PACK-PICK/, 'a stall');
   assert.match(W, /const marketPiecePicture = \(piece, wake\) => \{[^]*?return itemPicture\(_pieceItems\.get\(piece\.provenance\), \{ onReady: wake \}\);/, 'a crafted piece, minted once');
 });
 

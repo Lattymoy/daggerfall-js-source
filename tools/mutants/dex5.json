@@ -42,8 +42,8 @@
   {
     "name": "DEX5-the-loot-kept",
     "file": "src/systems/enemyExpansion/dexTroll.js",
-    "old": "  f.corpseDisabled = true;   // PostParentedSetup",
-    "new": "  // f.corpseDisabled = true;   // PostParentedSetup",
+    "old": "  f.corpseDisabled = true; // PostParentedSetup: no loot - every host's loot readers refuse a disabled body",
+    "new": "  // f.corpseDisabled = true;   // PostParentedSetup: no loot - every host's loot readers refuse a disabled body",
     "why": "the troll's body is searched, where PostParentedSetup destroyed its loot",
     "tests": [
       "test/systems/enemyExpansion/dex5_troll.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "DEX5-rises-in-silence",
     "file": "src/systems/enemyExpansion/dexTroll.js",
-    "old": "      host.say(t('dex.troll.recovered',",
-    "new": "      void (t('dex.troll.recovered',",
+    "old": "        host.say(\n          t('dex.troll.recovered', 'The {name} has recovered from its injuries.', {\n            name: getLocalizedEnemyName(f.mobileType, enemyDisplayName(f.mobileType)),\n          }),\n        );",
+    "new": "        void t('dex.troll.recovered', 'The {name} has recovered from its injuries.', {\n          name: getLocalizedEnemyName(f.mobileType, enemyDisplayName(f.mobileType)),\n        });",
     "why": "the HUD never says the troll recovered",
     "tests": [
       "test/systems/enemyExpansion/dex5_troll.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "DEX5-a-copy-burns",
     "file": "src/systems/enemyExpansion/dexTroll.js",
-    "old": "if (!host.runs(f)) { host.send(f, spell, casterLevel); return null; }",
-    "new": "if (!host.runs(f)) { host.send(f, spell, casterLevel); }",
+    "old": "        return null;\n      } // DEX5b: a copy's - the bundle goes to the body its runner holds",
+    "new": "      } // DEX5b: a copy's - the bundle goes to the body its runner holds",
     "why": "a body another machine runs burns here too - beside the bundle sent to its runner",
     "tests": [
       "test/systems/enemyExpansion/dex5_troll.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "DEX5-a-tougher-body",
     "file": "src/systems/enemyExpansion/dexTroll.js",
-    "old": "isPlayer: false, isClass: false, level: 0, maxHealth: 1, health: 1,",
-    "new": "isPlayer: false, isClass: false, level: 0, maxHealth: 100, health: 100,",
+    "old": "    maxHealth: 1,\n    health: 1,",
+    "new": "    maxHealth: 100,\n    health: 100,",
     "why": "the corpse's entity is not BestiaryTrollCorpseEntity's 1 of 1",
     "tests": [
       "test/systems/enemyExpansion/dex5_troll.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "DEX5-the-street-ash-unkept",
     "file": "src/scenes/corpsePrefabHost.js",
-    "old": "c.pixelKey = f.corpsePixelKey = pixelKey; f.corpseMarker = c; h.corpseBatches.push(c);",
-    "new": "c.pixelKey = f.corpsePixelKey = pixelKey; f.corpseMarker = c;",
+    "old": "        h.corpseBatches.push(c);\n      });",
+    "new": "      });",
     "why": "the ash is minted and never drawn",
     "tests": [
       "test/systems/enemyExpansion/dex5_troll.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "DEX5b-a-copy-sends-nothing",
     "file": "src/systems/enemyExpansion/dexTroll.js",
-    "old": "if (!host.runs(f)) { host.send(f, spell, casterLevel); return null; }",
-    "new": "if (!host.runs(f)) { return null; }",
+    "old": "        host.send(f, spell, casterLevel);\n        return null;",
+    "new": "        return null;",
     "why": "a peer's missile on the body reaches nobody",
     "tests": [
       "test/systems/enemyExpansion/dex5_troll.test.js"
@@ -384,8 +384,8 @@
   {
     "name": "AUDIT-DEX-LD-dungeon-no-key",
     "file": "src/scenes/corpsePrefabHost.js",
-    "old": "return i >= 0 && i < h.layoutFoes() ? `${h.locationKey()}|${i}` : null; },",
-    "new": "return null; },",
+    "old": "      return i >= 0 && i < h.layoutFoes() ? `${h.locationKey()}|${i}` : null;",
+    "new": "      return null;",
     "why": "no dungeon body is saved with its time",
     "tests": [
       "test/systems/enemyExpansion/dex5_audit.test.js",
@@ -395,8 +395,8 @@
   {
     "name": "AUDIT-DEX-LD-dungeon-no-ash",
     "file": "src/scenes/corpsePrefabHost.js",
-    "old": "      if (p) h.mintMarker({ corpseTexture: ash, feet: p, centre: ash.centre }).then((c) => {",
-    "new": "      if (false) h.mintMarker({ corpseTexture: ash, feet: p, centre: ash.centre }).then((c) => {",
+    "old": "      if (p)",
+    "new": "      if (false)",
     "why": "a burnt body stands no ash underground",
     "tests": [
       "test/systems/enemyExpansion/dex5_audit.test.js",
@@ -439,8 +439,8 @@
   {
     "name": "AUDIT-DEX-LD-dungeon-copy-keeps-body",
     "file": "src/scenes/corpsePrefabHost.js",
-    "old": "    vanish: (f) => { f.corpseDestroyed = 1; h.freeCorpse(f); },",
-    "new": "    vanish: (f) => { f.corpseDestroyed = 1; },",
+    "old": "      h.freeCorpse(f);\n    },",
+    "new": "    },",
     "why": "a body told gone (or settled) keeps lying underground",
     "tests": [
       "test/systems/enemyExpansion/dex5_audit.test.js",
@@ -450,8 +450,8 @@
   {
     "name": "AUDIT-DEX-D8-rise-frees-first",
     "file": "src/scenes/corpsePrefabHost.js",
-    "old": "      if (!(await h.spawnLooseFoe(f.mobileType, [p[0], p[1], p[2]]))) return false;\n      if (f.dead && f.corpse) { f.corpseDestroyed = 1; h.freeCorpse(f); }",
-    "new": "      f.corpseDestroyed = 1; h.freeCorpse(f);\n      if (!(await h.spawnLooseFoe(f.mobileType, [p[0], p[1], p[2]]))) return false;",
+    "old": "      if (!(await h.spawnLooseFoe(f.mobileType, [p[0], p[1], p[2]]))) return false;\n      if (f.dead && f.corpse) {\n        f.corpseDestroyed = 1;\n        h.freeCorpse(f);\n      }",
+    "new": "      f.corpseDestroyed = 1;\n      h.freeCorpse(f);\n      if (!(await h.spawnLooseFoe(f.mobileType, [p[0], p[1], p[2]]))) return false;",
     "why": "the body taken before the stand answers - a refused stand loses the troll",
     "tests": [
       "test/systems/enemyExpansion/dex5_audit.test.js",
@@ -461,8 +461,8 @@
   {
     "name": "AUDIT-DEX-D8-refused-ends",
     "file": "src/systems/enemyExpansion/dexTroll.js",
-    "old": "if (!stood) { c.respawnBuffer = TROLL_CORPSE.respawnTime; return; }",
-    "new": "if (!stood) { end(); return; }",
+    "old": "          c.respawnBuffer = TROLL_CORPSE.respawnTime;",
+    "new": "          end();",
     "why": "a refused stand ends the body's countdown for good",
     "tests": [
       "test/systems/enemyExpansion/dex5_audit.test.js",
@@ -505,8 +505,8 @@
   {
     "name": "AUDIT-DEX-D1-ash-kept",
     "file": "src/scenes/corpsePrefabHost.js",
-    "old": "      for (const b of ashes) { const i = h.billboardBatches.indexOf(b); if (i >= 0) h.billboardBatches.splice(i, 1); h.renderer.destroyBillboardBatch(b); }",
-    "new": "      for (const b of []) { const i = h.billboardBatches.indexOf(b); if (i >= 0) h.billboardBatches.splice(i, 1); h.renderer.destroyBillboardBatch(b); }",
+    "old": "      for (const b of ashes) {",
+    "new": "      for (const b of []) {",
     "why": "a load's rebuilt level keeps the ash",
     "tests": [
       "test/systems/enemyExpansion/dex5_audit.test.js",
@@ -549,8 +549,8 @@
   {
     "name": "AUDIT-DEX-D6-copy-keeps-marker",
     "file": "src/scenes/corpsePrefabHost.js",
-    "old": "if (!f.puppet) h.removeCorpse(f); else dropMarker(f); }",
-    "new": "if (!f.puppet) h.removeCorpse(f); }",
+    "old": "      else dropMarker(f);\n    }, // D6: a copy's flat goes at its owner's word",
+    "new": "    }, // D6: a copy's flat goes at its owner's word",
     "why": "a street copy told a body gone keeps its marker",
     "tests": [
       "test/systems/enemyExpansion/dex5_audit.test.js",

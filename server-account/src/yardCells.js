@@ -14,25 +14,45 @@ import { shapeOf, keptPast, KEPT_BOARD_MAX_BYTES } from './keptBoard.js';
 import { pieceOfRow } from './decor.js';
 
 /** The columns a built row keeps, in order - pieceOfRow's. */
-export const YARD_CELL_COLS = Object.freeze(['map_id', 'building_key', 'id', 'model', 'flat_archive', 'flat_record', 'place', 'placed_at', 'item', 'paid', 'yard']);
+export const YARD_CELL_COLS = Object.freeze([
+  'map_id',
+  'building_key',
+  'id',
+  'model',
+  'flat_archive',
+  'flat_record',
+  'place',
+  'placed_at',
+  'item',
+  'paid',
+  'yard',
+]);
 
 /** A cell's yard rows as they stand: one key range of idx_home_decor_yard_order (migration 0136), in its order, so
  *  there is no sort. `town` and `cell` are SQL - parameters, or the build's version row. */
-export const cellRowsSql = (/** @type {string} */ town, /** @type {string} */ cell) => `SELECT ${YARD_CELL_COLS.join(', ')} FROM home_decor
+export const cellRowsSql = (
+  /** @type {string} */ town,
+  /** @type {string} */ cell,
+) => `SELECT ${YARD_CELL_COLS.join(', ')} FROM home_decor
     WHERE map_id = ${town} AND yard = 1 AND building_key BETWEEN ${cell} * 256 AND ${cell} * 256 + 255
     ORDER BY building_key, placed_at, id LIMIT ${YARD_CELL_PIECES_MAX}`;
 
 /** The build's shape: its read whole and its bound. A deploy that changes it marks every cell stale in its own
  *  migration (`UPDATE home_yard_cell_ver SET built = 0`), so the clock finds them by the index. Migration 0190 builds
  *  every cell in this shape; its literal is pinned to this. */
-export const YARD_CELL_SHAPE = shapeOf('yard cell: [columns...] each, NULL past the bound', cellRowsSql('?', '?'), KEPT_BOARD_MAX_BYTES);
+export const YARD_CELL_SHAPE = shapeOf(
+  'yard cell: [columns...] each, NULL past the bound',
+  cellRowsSql('?', '?'),
+  KEPT_BOARD_MAX_BYTES,
+);
 
 /** How many stale cells the minute's clock builds a firing. Only a cascade leaves a cell stale (a decor route builds
  *  its own), so this paces the clock and is never seen by a player: a stale cell is read as its rows stand. */
 export const YARD_CELLS_SETTLE_A_MINUTE = 200;
 
 /** A built row that answers for its cell: built at the version row's version, in this shape. */
-const FRESH_SQL = (/** @type {string} */ v) => `EXISTS (SELECT 1 FROM home_yard_cells c WHERE c.map_id = ${v}.map_id AND c.cell = ${v}.cell AND c.built = ${v}.ver AND c.shape = '${YARD_CELL_SHAPE}')`;
+const FRESH_SQL = (/** @type {string} */ v) =>
+  `EXISTS (SELECT 1 FROM home_yard_cells c WHERE c.map_id = ${v}.map_id AND c.cell = ${v}.cell AND c.built = ${v}.ver AND c.shape = '${YARD_CELL_SHAPE}')`;
 
 /** The build of every stale cell `where` names (`v` its version row): its rows read and kept at the version read with
  *  them, in one statement, so no write lands between the read and the version. */
@@ -49,7 +69,11 @@ const cellMarkSql = (/** @type {string} */ where) => `UPDATE home_yard_cell_ver 
 /** A cell built again after a decor route's write - a no-op when the write moved no yard row. Answers the cell and the
  *  version this statement built it at (YC2: the YARD ORDER's `v`), or null when it built nothing - the write moved no
  *  yard row, or the minute's clock built the cell first. */
-export async function settleYardCell(/** @type {any} */ db, /** @type {unknown} */ mapId, /** @type {unknown} */ buildingKey) {
+export async function settleYardCell(
+  /** @type {any} */ db,
+  /** @type {unknown} */ mapId,
+  /** @type {unknown} */ buildingKey,
+) {
   if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey)) return null;
   const cell = yardCellOf(/** @type {number} */ (buildingKey));
   const [built] = await db.batch([
@@ -66,10 +90,7 @@ export async function settleStaleYardCells(/** @type {any} */ db) {
   const any = await db.prepare('SELECT 1 AS n FROM home_yard_cell_ver WHERE ver <> built LIMIT 1').first();
   if (!any) return 0;
   const stale = `(v.map_id, v.cell) IN (SELECT map_id, cell FROM home_yard_cell_ver WHERE ver <> built LIMIT ${YARD_CELLS_SETTLE_A_MINUTE})`;
-  const [built] = await db.batch([
-    db.prepare(cellBuildSql(stale)),
-    db.prepare(cellMarkSql('true')),
-  ]);
+  const [built] = await db.batch([db.prepare(cellBuildSql(stale)), db.prepare(cellMarkSql('true'))]);
   return Number(built?.meta?.changes ?? 0);
 }
 
@@ -97,7 +118,11 @@ const CELL_STANDING_SQL = cellRowsSql('?1', '?2');
 /** A built row's rows, as CELL_STANDING_SQL answers them - or null for a text that is not one. */
 export function yardCellRowsOf(/** @type {unknown} */ text) {
   let list;
-  try { list = JSON.parse(String(text)); } catch { return null; }
+  try {
+    list = JSON.parse(String(text));
+  } catch {
+    return null;
+  }
   if (!Array.isArray(list)) return null;
   const rows = [];
   for (const values of list) {
@@ -132,7 +157,12 @@ function yardsOfRows(/** @type {any[]} */ rows) {
  * a cell that never stood a yard piece).
  * @returns {Promise<{ cells: CellAnswer[], more: number[], vers: Map<number, number> }>}
  */
-export async function readYardCells(/** @type {any} */ db, /** @type {number} */ mapId, /** @type {Array<[number, number]>} */ cells, budget = YARD_CELLS_ANSWER_BYTES) {
+export async function readYardCells(
+  /** @type {any} */ db,
+  /** @type {number} */ mapId,
+  /** @type {Array<[number, number]>} */ cells,
+  budget = YARD_CELLS_ANSWER_BYTES,
+) {
   const { results: states = [] } = await db.prepare(CELLS_STATE_SQL).bind(mapId, JSON.stringify(cells)).all();
   /** @type {any[]} */
   const fresh = [];
@@ -161,10 +191,14 @@ export async function readYardCells(/** @type {any} */ db, /** @type {number} */
   /** @type {Map<number, CellAnswer>} */
   const answers = new Map();
   if (fresh.length) {
-    const { results = [] } = await db.prepare(CELLS_ROWS_SQL).bind(mapId, JSON.stringify(fresh.map((state) => Number(state.cell)))).all();
+    const { results = [] } = await db
+      .prepare(CELLS_ROWS_SQL)
+      .bind(mapId, JSON.stringify(fresh.map((state) => Number(state.cell))))
+      .all();
     for (const row of results) {
       const rows = yardCellRowsOf(row.rows);
-      if (rows) answers.set(Number(row.cell), { cell: Number(row.cell), ver: Number(row.built), yards: yardsOfRows(rows) });
+      if (rows)
+        answers.set(Number(row.cell), { cell: Number(row.cell), ver: Number(row.built), yards: yardsOfRows(rows) });
     }
   }
   // A cell whose built row is behind its version (a cascade the clock has not reached), of another deploy's shape, or
@@ -177,7 +211,11 @@ export async function readYardCells(/** @type {any} */ db, /** @type {number} */
     answers.set(cell, { cell, ver: Number(state.ver ?? 0), yards: yardsOfRows(rows) });
   }
   const order = states.map((state) => Number(state.cell));
-  return { cells: order.filter((cell) => answers.has(cell)).map((cell) => /** @type {CellAnswer} */ (answers.get(cell))), more, vers };
+  return {
+    cells: order.filter((cell) => answers.has(cell)).map((cell) => /** @type {CellAnswer} */ (answers.get(cell))),
+    more,
+    vers,
+  };
 }
 
 // ═══ THE ISOLATE'S KEPT CELLS ════════════════════════════════════════
@@ -272,7 +310,9 @@ export async function yardCellsKept(ctx, /** @type {unknown} */ body, /** @type 
   const { mapId } = ask;
   // YARD-SHED: the asks of one moment share one read - an asked cell another ask is reading now is waited for, then
   // answered from what that read kept like any kept cell
-  const flights = new Set(ask.cells.map(([cell]) => reading.get(keyOf(mapId, cell))).filter((flight) => flight != null));
+  const flights = new Set(
+    ask.cells.map(([cell]) => reading.get(keyOf(mapId, cell))).filter((flight) => flight != null),
+  );
   if (flights.size) await Promise.allSettled([...flights].map((flight) => flight.done));
   /** @type {Map<number, CellAnswer>} */
   const answered = new Map();
@@ -299,11 +339,20 @@ export async function yardCellsKept(ctx, /** @type {unknown} */ body, /** @type 
     const from = readFrom(keys);
     const root = ctx.db?.[DB_ROOT] ?? ctx.db;
     let db = ctx.db;
-    try { db = replicaDb(typeof ctx.db?.withSession === 'function' ? ctx.db : root, from); } catch { /* a bookmark D1 refuses: the request's database */ }
+    try {
+      db = replicaDb(typeof ctx.db?.withSession === 'function' ? ctx.db : root, from);
+    } catch {
+      /* a bookmark D1 refuses: the request's database */
+    }
     /** @type {() => void} */
     let land = () => {};
     /** @type {Flight} */
-    const flight = { stale: new Set(), done: new Promise((resolve) => { land = () => resolve(undefined); }) };
+    const flight = {
+      stale: new Set(),
+      done: new Promise((resolve) => {
+        land = () => resolve(undefined);
+      }),
+    };
     for (const key of keys) reading.set(key, flight);
     try {
       const budget = answered.size ? Math.max(0, YARD_CELLS_ANSWER_BYTES - bytes) : YARD_CELLS_ANSWER_BYTES;
@@ -318,12 +367,19 @@ export async function yardCellsKept(ctx, /** @type {unknown} */ body, /** @type 
         // a cell read unchanged for its asker is kept by its version alone, so the next asker who holds it is answered
         // from memory; one with no version row stood no yard piece, and is kept as such
         const yards = answer?.yards ?? (ver === 0 ? [] : null);
-        keep(key, { at: nowS, ver, yards, bytes: ENTRY_BYTES + (yards ? JSON.stringify(yards).length : 0), mark, written: false });
+        keep(key, {
+          at: nowS,
+          ver,
+          yards,
+          bytes: ENTRY_BYTES + (yards ? JSON.stringify(yards).length : 0),
+          mark,
+          written: false,
+        });
       }
       for (const answer of read.cells) answered.set(answer.cell, answer);
       more.push(...read.more);
     } catch (e) {
-      if (floor === from) floor = null;   // a read that failed from a bookmark: the next starts from none
+      if (floor === from) floor = null; // a read that failed from a bookmark: the next starts from none
       throw e;
     } finally {
       for (const key of keys) if (reading.get(key) === flight) reading.delete(key);
@@ -331,7 +387,11 @@ export async function yardCellsKept(ctx, /** @type {unknown} */ body, /** @type 
     }
   }
   const order = ask.cells.map(([cell]) => cell);
-  return { mapId, cells: order.filter((cell) => answered.has(cell)).map((cell) => /** @type {CellAnswer} */ (answered.get(cell))), more };
+  return {
+    mapId,
+    cells: order.filter((cell) => answered.has(cell)).map((cell) => /** @type {CellAnswer} */ (answered.get(cell))),
+    more,
+  };
 }
 
 /** A cell this isolate wrote: its kept answer let go, its next read the primary's, and a read in flight not kept. */

@@ -20,9 +20,12 @@ const MAP_ROWS = BAY_H;
  *  or a half (products and a square root, never `**`). */
 export const RED_MOUNTAIN_DIALS = Object.freeze({
   /** the crater: the rim's radius from the centre, the flat floor's, and how far the floor stands under the rim */
-  rim: 2600, floor: 1300, depth: 700,
+  rim: 2600,
+  floor: 1300,
+  depth: 700,
   /** the lift at the rim over the land, and its wander round the crater (a share of it; the noise's circle radius) */
-  lift: 4500, lobes: Object.freeze({ amp: 0.05, radius: 1.6 }),
+  lift: 4500,
+  lobes: Object.freeze({ amp: 0.05, radius: 1.6 }),
   /** THE FLANK, three tiers summed - each its share of the lift, its reach past the rim and its power: the summit cone
    *  (half the lift within 5 km of the rim, about 29 degrees under it), the body (a quarter left at 14 km) and the shield
    *  (a tenth at 35 km, nothing past 95) - a stratovolcano's concave flank */
@@ -62,10 +65,15 @@ function falloff(t, halves) {
  *  landforms' cosPi's, here so this module imports nothing of the kernel's). */
 export function dirOf(turn) {
   const cosPi = (v) => {
-    let x = v - 2 * Math.round(v / 2), sign = 1;   // into -1..1: cos(pi v) has period 2
+    let x = v - 2 * Math.round(v / 2),
+      sign = 1; // into -1..1: cos(pi v) has period 2
     if (x < 0) x = -x;
-    if (x > 0.5) { x = 1 - x; sign = -1; }
-    const y = Math.PI * x, y2 = y * y;
+    if (x > 0.5) {
+      x = 1 - x;
+      sign = -1;
+    }
+    const y = Math.PI * x,
+      y2 = y * y;
     let p = 1;
     for (let k = 20; k >= 2; k -= 2) p = 1 - (y2 * p) / (k * (k - 1));
     return sign * p;
@@ -100,40 +108,69 @@ export const RED_MOUNTAIN_REACH = D.rim + FLANK_REACH;
  */
 /** @type {RedMountainFrame|null} */
 let _frame = null;
-let _land = -1, _fit = /** @type {any} */ (null);
+let _land = -1,
+  _fit = /** @type {any} */ (null);
 
 /** THE FRAME the law stands in for the land and the fit in use - made once a land and a fit (the trace landing, the
  *  Bay's fit moving it), or null where Morrowind has no Red Mountain to stand it on. */
 export function redMountainFrame() {
-  const land = tamrielLandVersion(), fit = tamrielFit();
+  const land = tamrielLandVersion(),
+    fit = tamrielFit();
   if (land === _land && fit === _fit) return _frame;
-  _land = land; _fit = fit;
+  _land = land;
+  _fit = fit;
   const at = heartsAnchor('Morrowind', RED_MOUNTAIN);
   if (!at) return (_frame = null);
   const [bx, by] = pictureToBay(at[0], at[1]);
-  const cx = (bx * 128), cy = (MAP_ROWS + 1 - by) * 128, k = 1 / SAMPLE_M;
+  const cx = bx * 128,
+    cy = (MAP_ROWS + 1 - by) * 128,
+    k = 1 / SAMPLE_M;
   const foyada = D.foyada.map((f) => {
-    const [ux, uy] = dirOf(f.az), n = Math.floor(f.length / D.trough.step) + 1;
-    const pts = new Float64Array(2 * n), s = new Float64Array(n);
-    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    const [ux, uy] = dirOf(f.az),
+      n = Math.floor(f.length / D.trough.step) + 1;
+    const pts = new Float64Array(2 * n),
+      s = new Float64Array(n);
+    let x0 = Infinity,
+      x1 = -Infinity,
+      y0 = Infinity,
+      y1 = -Infinity;
     for (let i = 0; i < n; i++) {
-      const along = i * D.trough.step, r = D.rim + along;
+      const along = i * D.trough.step,
+        r = D.rim + along;
       // the wander across the fall line, eased in from the notch so the ravine leaves the rim straight
-      const side = f.wander * smooth01(along / 2000) * (2 * perlinNoise(along / 2600 + f.seed, f.seed * 0.37 + 0.5) - 1);
-      const x = cx + (ux * r - uy * side) * k, y = cy + (uy * r + ux * side) * k;
-      pts[2 * i] = x; pts[2 * i + 1] = y; s[i] = along;
-      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      const side =
+        f.wander * smooth01(along / 2000) * (2 * perlinNoise(along / 2600 + f.seed, f.seed * 0.37 + 0.5) - 1);
+      const x = cx + (ux * r - uy * side) * k,
+        y = cy + (uy * r + ux * side) * k;
+      pts[2 * i] = x;
+      pts[2 * i + 1] = y;
+      s[i] = along;
+      if (x < x0) x0 = x;
+      if (x > x1) x1 = x;
+      if (y < y0) y0 = y;
+      if (y > y1) y1 = y;
     }
-    const pad = 2 * D.trough.halfFoot * k + 1;   // nearFoyada's reach: twice the half-width
+    const pad = 2 * D.trough.halfFoot * k + 1; // nearFoyada's reach: twice the half-width
     // a box a run of CHUNK segments (x0, x1, y0, y1), so a sample asks the few runs it stands in, not every segment
-    const runs = Math.ceil((n - 1) / CHUNK), chunks = new Float64Array(4 * runs);
+    const runs = Math.ceil((n - 1) / CHUNK),
+      chunks = new Float64Array(4 * runs);
     for (let c = 0; c < runs; c++) {
-      let a0 = Infinity, a1 = -Infinity, b0 = Infinity, b1 = -Infinity;
+      let a0 = Infinity,
+        a1 = -Infinity,
+        b0 = Infinity,
+        b1 = -Infinity;
       for (let i = c * CHUNK; i <= Math.min(n - 1, (c + 1) * CHUNK); i++) {
-        const x = pts[2 * i], y = pts[2 * i + 1];
-        if (x < a0) a0 = x; if (x > a1) a1 = x; if (y < b0) b0 = y; if (y > b1) b1 = y;
+        const x = pts[2 * i],
+          y = pts[2 * i + 1];
+        if (x < a0) a0 = x;
+        if (x > a1) a1 = x;
+        if (y < b0) b0 = y;
+        if (y > b1) b1 = y;
       }
-      chunks[4 * c] = a0 - pad; chunks[4 * c + 1] = a1 + pad; chunks[4 * c + 2] = b0 - pad; chunks[4 * c + 3] = b1 + pad;
+      chunks[4 * c] = a0 - pad;
+      chunks[4 * c + 1] = a1 + pad;
+      chunks[4 * c + 2] = b0 - pad;
+      chunks[4 * c + 3] = b1 + pad;
     }
     return Object.freeze({ name: f.name, pts, s, x0: x0 - pad, x1: x1 + pad, y0: y0 - pad, y1: y1 + pad, chunks });
   });
@@ -148,7 +185,8 @@ export function redMountainReaches(x0, y0, x1, y1) {
 
 /** THE CROWN: the rim's height wanders round the crater, and the flank under it with it - a share of the lift by the
  *  direction (ux, uy) from the centre, read on a circle in the noise's plane (no angle asked). */
-const crownOf = (ux, uy) => 1 + D.lobes.amp * (2 * perlinNoise(ux * D.lobes.radius + 17.31, uy * D.lobes.radius + 5.77) - 1);
+const crownOf = (ux, uy) =>
+  1 + D.lobes.amp * (2 * perlinNoise(ux * D.lobes.radius + 17.31, uy * D.lobes.radius + 5.77) - 1);
 /** The crown on the direction (ux, uy) from the centre - the share of the lift the cone stands at there (the far draws'
  *  hiding: render/redMountainFire.js fireCrown). */
 export const redMountainCrown = crownOf;
@@ -156,7 +194,8 @@ export const redMountainCrown = crownOf;
 const coneAt = (r, ux, uy) => coneProfile(r > D.rim ? r - D.rim : 0) * crownOf(ux, uy);
 /** A foyada's own depth under the smooth cone, metres, `along` metres down its line of `len`: the crater's at the
  *  breach in the rim, the trough's after the first 1.5 km, none over its last 1 km. */
-const troughDeep = (along, len) => (D.depth + (D.trough.depth - D.depth) * smooth01(along / 1500)) * (1 - smooth01((along - (len - 1000)) / 1000));
+const troughDeep = (along, len) =>
+  (D.depth + (D.trough.depth - D.depth) * smooth01(along / 1500)) * (1 - smooth01((along - (len - 1000)) / 1000));
 
 /**
  * @typedef {{ floor: number, chan: ReadonlyArray<Float64Array> }} RedMountainGround the crater floor's level and each
@@ -178,9 +217,15 @@ export function redMountainGround(baseAt, key) {
   if (kept?.frame === f) return kept.ground;
   const floor = baseAt(f.cx, f.cy) + CRATER_FLOOR_LIFT;
   const chan = f.foyada.map((line) => {
-    const n = line.s.length, len = line.s[n - 1], lv = new Float64Array(n);
+    const n = line.s.length,
+      len = line.s[n - 1],
+      lv = new Float64Array(n);
     for (let i = 0; i < n; i++) {
-      const x = line.pts[2 * i], y = line.pts[2 * i + 1], dx = (x - f.cx) * SAMPLE_M, dy = (y - f.cy) * SAMPLE_M, r = Math.sqrt(dx * dx + dy * dy);
+      const x = line.pts[2 * i],
+        y = line.pts[2 * i + 1],
+        dx = (x - f.cx) * SAMPLE_M,
+        dy = (y - f.cy) * SAMPLE_M,
+        r = Math.sqrt(dx * dx + dy * dy);
       const own = baseAt(x, y) + (coneAt(r, dx / r, dy / r) - troughDeep(line.s[i], len)) / UNIT_M;
       const above = i ? lv[i - 1] : floor;
       lv[i] = own < above ? own : above;
@@ -196,23 +241,40 @@ export function redMountainGround(baseAt, key) {
  *  distance over the half-width), its floor's level there] into `out` - false when none is near. */
 function nearFoyada(f, ground, gx, gy, out) {
   let best = Infinity;
-  const T = D.trough, k = SAMPLE_M;
+  const T = D.trough,
+    k = SAMPLE_M;
   for (let fi = 0; fi < f.foyada.length; fi++) {
     const line = f.foyada[fi];
     if (gx < line.x0 || gx > line.x1 || gy < line.y0 || gy > line.y1) continue;
-    const p = line.pts, n = line.s.length, len = line.s[n - 1], lv = ground.chan[fi], ch = line.chunks;
+    const p = line.pts,
+      n = line.s.length,
+      len = line.s[n - 1],
+      lv = ground.chan[fi],
+      ch = line.chunks;
     for (let i = 0; i + 1 < n; i++) {
-      if (i % CHUNK === 0) {   // a run's box: past it, its segments are skipped whole
+      if (i % CHUNK === 0) {
+        // a run's box: past it, its segments are skipped whole
         const c = 4 * (i / CHUNK);
-        if (gx < ch[c] || gx > ch[c + 1] || gy < ch[c + 2] || gy > ch[c + 3]) { i += CHUNK - 1; continue; }
+        if (gx < ch[c] || gx > ch[c + 1] || gy < ch[c + 2] || gy > ch[c + 3]) {
+          i += CHUNK - 1;
+          continue;
+        }
       }
-      const ax = p[2 * i], ay = p[2 * i + 1], ex = p[2 * i + 2] - ax, ey = p[2 * i + 3] - ay, l2 = ex * ex + ey * ey;
+      const ax = p[2 * i],
+        ay = p[2 * i + 1],
+        ex = p[2 * i + 2] - ax,
+        ey = p[2 * i + 3] - ay,
+        l2 = ex * ex + ey * ey;
       let t = l2 > 0 ? ((gx - ax) * ex + (gy - ay) * ey) / l2 : 0;
       t = t < 0 ? 0 : t > 1 ? 1 : t;
-      const dx = gx - ax - ex * t, dy = gy - ay - ey * t, half = T.halfTop + (T.halfFoot - T.halfTop) * ((line.s[i] + (line.s[i + 1] - line.s[i]) * t) / len);
+      const dx = gx - ax - ex * t,
+        dy = gy - ay - ey * t,
+        half = T.halfTop + (T.halfFoot - T.halfTop) * ((line.s[i] + (line.s[i + 1] - line.s[i]) * t) / len);
       const q = (Math.sqrt(dx * dx + dy * dy) * k) / half;
       if (!(q < 2) || !(q < best)) continue;
-      best = q; out[0] = q; out[1] = lv[i] + (lv[i + 1] - lv[i]) * t;
+      best = q;
+      out[0] = q;
+      out[1] = lv[i] + (lv[i + 1] - lv[i]) * t;
     }
   }
   return best < 2;
@@ -230,23 +292,33 @@ const _near = new Float64Array(2);
 export function redMountainLand(gx, gy, base, hills, ground) {
   const f = redMountainFrame();
   if (!f) return base + hills;
-  const dx = gx - f.cx, dy = gy - f.cy;
+  const dx = gx - f.cx,
+    dy = gy - f.cy;
   if (!(dx < f.reach && dx > -f.reach && dy < f.reach && dy > -f.reach)) return base + hills;
   const r = Math.sqrt(dx * dx + dy * dy) * SAMPLE_M;
   if (!(r < RED_MOUNTAIN_REACH)) return base + hills;
-  const ux = r > 0 ? (dx * SAMPLE_M) / r : 1, uy = r > 0 ? (dy * SAMPLE_M) / r : 0;
+  const ux = r > 0 ? (dx * SAMPLE_M) / r : 1,
+    uy = r > 0 ? (dy * SAMPLE_M) / r : 0;
   const d = r - D.rim;
-  const near = nearFoyada(f, ground, gx, gy, _near), still = near ? 1 - smooth01(2 - _near[0]) : 1;   // the land's own shapes stilled about a foyada
+  const near = nearFoyada(f, ground, gx, gy, _near),
+    still = near ? 1 - smooth01(2 - _near[0]) : 1; // the land's own shapes stilled about a foyada
   let lift = coneAt(r, ux, uy);
-  if (d > 0 && d < D.gully.reach) {   // the gullies: polar noise stretched down the fall line, deepest where it is steep
+  if (d > 0 && d < D.gully.reach) {
+    // the gullies: polar noise stretched down the fall line, deepest where it is steep
     const q = D.gully.grain * Math.sqrt(Math.sqrt(r));
     const v = 2 * perlinNoise(ux * q + 41.13, uy * q + 29.71) - 1;
-    const grade = coneGrade(d);   // the flank's own fall, rise over run
+    const grade = coneGrade(d); // the flank's own fall, rise over run
     const reach = 1 - smooth01((d - 0.6 * D.gully.reach) / (0.4 * D.gully.reach));
-    lift += D.gully.depth * (2 * (v < 0 ? -v : v) - 0.8) * (grade < 0.5 ? grade / 0.5 : 1) * reach * smooth01(d / 400) * still;
+    lift +=
+      D.gully.depth *
+      (2 * (v < 0 ? -v : v) - 0.8) *
+      (grade < 0.5 ? grade / 0.5 : 1) *
+      reach *
+      smooth01(d / 400) *
+      still;
   }
   let land = base + hills * smooth01(d / D.keep) * still + lift / UNIT_M;
-  if (near && _near[1] < land) land += (_near[1] - land) * (1 - smooth01((_near[0] - 0.5) / 0.5));   // the foyada's floor
+  if (near && _near[1] < land) land += (_near[1] - land) * (1 - smooth01((_near[0] - 0.5) / 0.5)); // the foyada's floor
   if (d >= 0) return land;
   // the crater: the inner wall from the rim down to one flat floor
   const s = smooth01((D.rim - r) / (D.rim - D.floor));
@@ -265,7 +337,8 @@ export const RED_MOUNTAIN_TOP = (D.lift * (1 + D.lobes.amp) + 1.2 * D.gully.dept
 export function redMountainTopNear(px, py) {
   const f = redMountainFrame();
   if (!f) return 0;
-  const x0 = px * 128, y0 = (MAP_ROWS - py) * 128;
+  const x0 = px * 128,
+    y0 = (MAP_ROWS - py) * 128;
   const dx = f.cx < x0 ? x0 - f.cx : f.cx > x0 + 128 ? f.cx - x0 - 128 : 0;
   const dy = f.cy < y0 ? y0 - f.cy : f.cy > y0 + 128 ? f.cy - y0 - 128 : 0;
   const d = Math.sqrt(dx * dx + dy * dy) * SAMPLE_M - D.rim;
@@ -280,9 +353,11 @@ export function redMountainTopNear(px, py) {
 export function redMountainSmooth(gx, gy) {
   const f = redMountainFrame();
   if (!f) return 0;
-  const dx = gx - f.cx, dy = gy - f.cy;
+  const dx = gx - f.cx,
+    dy = gy - f.cy;
   if (!(dx < f.reach && dx > -f.reach && dy < f.reach && dy > -f.reach)) return 0;
-  const r = Math.sqrt(dx * dx + dy * dy) * SAMPLE_M, d = r - D.rim;
+  const r = Math.sqrt(dx * dx + dy * dy) * SAMPLE_M,
+    d = r - D.rim;
   if (!(d < FLANK_REACH)) return 0;
   const lift = coneProfile(d > 0 ? d : 0) * crownOf(r > 0 ? (dx * SAMPLE_M) / r : 1, r > 0 ? (dy * SAMPLE_M) / r : 0);
   if (d >= 0) return lift / UNIT_M;
@@ -308,18 +383,29 @@ export function redMountainNodeLift(x, y) {
 export function redMountainLavaBed(gx, gy) {
   const f = redMountainFrame();
   if (!f) return false;
-  const dx = (gx - f.cx) * SAMPLE_M, dy = (gy - f.cy) * SAMPLE_M, T = D.trough;
+  const dx = (gx - f.cx) * SAMPLE_M,
+    dy = (gy - f.cy) * SAMPLE_M,
+    T = D.trough;
   if (dx * dx + dy * dy < D.floor * D.floor) return true;
   for (const line of f.foyada) {
     if (gx < line.x0 || gx > line.x1 || gy < line.y0 || gy > line.y1) continue;
-    const p = line.pts, n = line.s.length, len = line.s[n - 1], run = len * T.lava;
+    const p = line.pts,
+      n = line.s.length,
+      len = line.s[n - 1],
+      run = len * T.lava;
     for (let i = 0; i + 1 < n && line.s[i] < run; i++) {
-      const ax = p[2 * i], ay = p[2 * i + 1], ex = p[2 * i + 2] - ax, ey = p[2 * i + 3] - ay, l2 = ex * ex + ey * ey;
+      const ax = p[2 * i],
+        ay = p[2 * i + 1],
+        ex = p[2 * i + 2] - ax,
+        ey = p[2 * i + 3] - ay,
+        l2 = ex * ex + ey * ey;
       let t = l2 > 0 ? ((gx - ax) * ex + (gy - ay) * ey) / l2 : 0;
       t = t < 0 ? 0 : t > 1 ? 1 : t;
       const along = line.s[i] + (line.s[i + 1] - line.s[i]) * t;
       if (along > run) continue;
-      const half = 0.5 * (T.halfTop + (T.halfFoot - T.halfTop) * (along / len)), qx = (gx - ax - ex * t) * SAMPLE_M, qy = (gy - ay - ey * t) * SAMPLE_M;
+      const half = 0.5 * (T.halfTop + (T.halfFoot - T.halfTop) * (along / len)),
+        qx = (gx - ax - ex * t) * SAMPLE_M,
+        qy = (gy - ay - ey * t) * SAMPLE_M;
       if (qx * qx + qy * qy < half * half) return true;
     }
   }
@@ -327,7 +413,8 @@ export function redMountainLavaBed(gx, gy) {
 }
 
 /** @type {Set<string>|null} */
-let _lavaPx = null, _lavaOf = /** @type {RedMountainFrame|null} */ (null);
+let _lavaPx = null,
+  _lavaOf = /** @type {RedMountainFrame|null} */ (null);
 /** LAVA-CLEAR: does a lava bed reach Bay pixel (px, py)? A place there would flatten the bed under it (a location levels
  *  its whole pixel), so no lair or spawn stands on one. Over the beds: a box about the crater's floor and about each
  *  piece of a foyada's run, so a pixel it names may hold none. Made once a frame. */
@@ -335,19 +422,29 @@ export function redMountainLavaIn(px, py) {
   const f = redMountainFrame();
   if (!f) return false;
   if (_lavaOf !== f || !_lavaPx) {
-    const out = new Set(), k = 1 / SAMPLE_M;
+    const out = new Set(),
+      k = 1 / SAMPLE_M;
     const mark = (x0, y0, x1, y1) => {
-      for (let y = Math.floor(MAP_ROWS + 1 - y1 / 128); y <= Math.floor(MAP_ROWS + 1 - y0 / 128); y++) for (let x = Math.floor(x0 / 128); x <= Math.floor(x1 / 128); x++) out.add(`${x},${y}`);
+      for (let y = Math.floor(MAP_ROWS + 1 - y1 / 128); y <= Math.floor(MAP_ROWS + 1 - y0 / 128); y++)
+        for (let x = Math.floor(x0 / 128); x <= Math.floor(x1 / 128); x++) out.add(`${x},${y}`);
     };
     mark(f.cx - D.floor * k, f.cy - D.floor * k, f.cx + D.floor * k, f.cy + D.floor * k);
     const pad = 0.5 * D.trough.halfFoot * k;
     for (const line of f.foyada) {
-      const p = line.pts, n = line.s.length, run = line.s[n - 1] * D.trough.lava;
+      const p = line.pts,
+        n = line.s.length,
+        run = line.s[n - 1] * D.trough.lava;
       for (let i = 0; i + 1 < n && line.s[i] < run; i++) {
-        mark(Math.min(p[2 * i], p[2 * i + 2]) - pad, Math.min(p[2 * i + 1], p[2 * i + 3]) - pad, Math.max(p[2 * i], p[2 * i + 2]) + pad, Math.max(p[2 * i + 1], p[2 * i + 3]) + pad);
+        mark(
+          Math.min(p[2 * i], p[2 * i + 2]) - pad,
+          Math.min(p[2 * i + 1], p[2 * i + 3]) - pad,
+          Math.max(p[2 * i], p[2 * i + 2]) + pad,
+          Math.max(p[2 * i + 1], p[2 * i + 3]) + pad,
+        );
       }
     }
-    _lavaOf = f; _lavaPx = out;
+    _lavaOf = f;
+    _lavaPx = out;
   }
   return _lavaPx.has(`${px},${py}`);
 }

@@ -102,8 +102,8 @@
   {
     "name": "PERF-SUN2-the-water-reads-its-shadow-all-night",
     "file": "src/render/waterSurface.js",
-    "old": "  float shadow = uSunScale > 0.0 ? cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''} : 0.0;",
-    "new": "  float shadow = cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''};",
+    "old": "  float shadow = uSunScale > 0.0 ? cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''} : 0.0;   // EL7: a quay's shadow lies on the water under the lane",
+    "new": "  float shadow = cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''};   // EL7: a quay's shadow lies on the water under the lane",
     "tests": [
       "test/render/perfsun_fragment.test.js"
     ]

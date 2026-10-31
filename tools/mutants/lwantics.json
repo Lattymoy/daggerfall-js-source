@@ -20,7 +20,7 @@
   {
     "name": "WATCH-LIFE-word-pools",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "    const pool = buys ? watchBuys() : y.kind === 'beg' ? beggarWords() : h >= MORNING_HOURS[0] && h < MORNING_HOURS[1] ? [...morningWatchWords(), ...watchWords()] : watchWords();",
+    "old": "    const pool = buys\n      ? watchBuys()\n      : y.kind === 'beg'\n        ? beggarWords()\n        : h >= MORNING_HOURS[0] && h < MORNING_HOURS[1]\n          ? [...morningWatchWords(), ...watchWords()]\n          : watchWords();",
     "new": "    const pool = watchWords();",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "WATCH-LIFE-word-stranger",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "    const them = metBy(g).filter((s) => !s.duty && s.kind !== 'gate' && s.who.town === mapId && !s.who.guard && !met.has(pairOf(g.who, s.who)))",
-    "new": "    const them = metBy(g).filter((s) => !s.duty && s.kind !== 'gate' && !s.who.guard && !met.has(pairOf(g.who, s.who)))",
+    "old": "      .filter(\n        (s) => !s.duty && s.kind !== 'gate' && s.who.town === mapId && !s.who.guard && !met.has(pairOf(g.who, s.who)),\n      )",
+    "new": "      .filter((s) => !s.duty && s.kind !== 'gate' && !s.who.guard && !met.has(pairOf(g.who, s.who)))",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LW-ANTICS-crowd",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "h >= 9 && h < 18 && y.t1 >= x.t1 && busy(at) >= CUTPURSE_CROWD && x.t1 - o0 > len) {",
-    "new": "h >= 9 && h < 18 && y.t1 >= x.t1 && x.t1 - o0 > len) {",
+    "old": "      if (y && !met.has(pair) && h >= 9 && h < 18 && y.t1 >= x.t1 && busy(at) >= CUTPURSE_CROWD && x.t1 - o0 > len) {",
+    "new": "      if (y && !met.has(pair) && h >= 9 && h < 18 && y.t1 >= x.t1 && x.t1 - o0 > len) {",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "LW-ANTICS-hours",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "if (y && !met.has(pair) && h >= 9 && h < 18 && y.t1 >= x.t1",
-    "new": "if (y && !met.has(pair) && y.t1 >= x.t1",
+    "old": "      if (y && !met.has(pair) && h >= 9 && h < 18 && y.t1 >= x.t1 && busy(at) >= CUTPURSE_CROWD && x.t1 - o0 > len) {",
+    "new": "      if (y && !met.has(pair) && y.t1 >= x.t1 && busy(at) >= CUTPURSE_CROWD && x.t1 - o0 > len) {",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "LW-ANTICS-end",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "ps, at, x.t1, null, watch, chaseLines(), gotAwayLines(), antics);",
-    "new": "ps, Math.max(o0, at - 600), x.t1, null, watch, chaseLines(), gotAwayLines(), antics);",
+    "old": "          at,",
+    "new": "          Math.max(o0, at - 600),",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "LW-ANTICS-no-chase",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "ps, at, x.t1, null, watch, chaseLines(), gotAwayLines(), antics);",
-    "new": "ps, at, x.t1, null, null, chaseLines(), gotAwayLines(), antics);",
+    "old": "          watch,",
+    "new": "          null,",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "LW-ANTICS-no-getaway",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "ps, at, x.t1, null, watch, chaseLines(), gotAwayLines(), antics);",
-    "new": "ps, at, x.t1, null, watch, chaseLines(), null, antics);",
+    "old": "          gotAwayLines(),",
+    "new": "          null,",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "LW-ANTICS-evening",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "x.kind === 'gate' || hourOf(x.t1) < 18) continue;",
-    "new": "x.kind === 'gate') continue;",
+    "old": "    if (x.who.town !== mapId || x.kind === 'stall' || x.kind === 'beg' || x.kind === 'gate' || hourOf(x.t1) < 18)\n      continue;",
+    "new": "    if (x.who.town !== mapId || x.kind === 'stall' || x.kind === 'beg' || x.kind === 'gate') continue;",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "LW-ANTICS-flirt-watch",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "    else if (r < DICE_SHARE + FLIRT_SHARE && !x.who.guard && !y.who.guard) {",
-    "new": "    else if (r < DICE_SHARE + FLIRT_SHARE) {",
+    "old": "    } else if (r < DICE_SHARE + FLIRT_SHARE && !x.who.guard && !y.who.guard) {",
+    "new": "    } else if (r < DICE_SHARE + FLIRT_SHARE) {",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "LW-ANTICS-sermon-door",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "    if (x.who.job === 'priest' && x.kind === 'social' && spot?.building != null && x.who.work === spot.building && draw(seed, 0x7365726d) < SERMON_SHARE) {   // 'serm'",
-    "new": "    if (x.who.job === 'priest' && x.kind === 'social' && draw(seed, 0x7365726d) < SERMON_SHARE) {   // 'serm'",
+    "old": "    if (\n      x.who.job === 'priest' &&\n      x.kind === 'social' &&\n      spot?.building != null &&\n      x.who.work === spot.building &&\n      draw(seed, 0x7365726d) < SERMON_SHARE\n    ) {",
+    "new": "    if (x.who.job === 'priest' && x.kind === 'social' && draw(seed, 0x7365726d) < SERMON_SHARE) {",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "WATCH-LIFE-extra-pairs",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "    return { shift, company, rank, kind: 'patrol', post: null, patrol: Math.ceil(Math.max(1, size - posts) / 2) + Math.floor(i / 2), pair: /** @type {0|1} */ (i % 2) };",
-    "new": "    return { shift, company, rank, kind: 'patrol', post: null, patrol: Math.ceil(Math.max(1, size - posts) / 2) + Math.floor(i / 2), pair: null };",
+    "old": "      pair: /** @type {0|1} */ (i % 2),",
+    "new": "      pair: null,",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
     ]
@@ -291,7 +291,7 @@
   {
     "name": "WATCH-LIFE-extra-beats",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "    return { shift, company, rank, kind: 'patrol', post: null, patrol: Math.ceil(Math.max(1, size - posts) / 2) + Math.floor(i / 2), pair: /** @type {0|1} */ (i % 2) };",
+    "old": "    return {\n      shift,\n      company,\n      rank,\n      kind: 'patrol',\n      post: null,\n      patrol: Math.ceil(Math.max(1, size - posts) / 2) + Math.floor(i / 2),\n      pair: /** @type {0|1} */ (i % 2),\n    };",
     "new": "    return { shift, company, rank, kind: 'patrol', post: null, patrol: 0, pair: /** @type {0|1} */ (i % 2) };",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
@@ -300,7 +300,7 @@
   {
     "name": "LW-ANTICS-crier",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "  if (e.kind === 'stall' && who.job === 'courier' && hour >= 8 && hour < 18) {   // LW-ANTICS: a courier cries the news",
+    "old": "  if (e.kind === 'stall' && who.job === 'courier' && hour >= 8 && hour < 18) {\n    // LW-ANTICS: a courier cries the news",
     "new": "  if (false) {",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"

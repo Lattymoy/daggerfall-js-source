@@ -15,5 +15,10 @@ export const LOCKPICK_TEMPLATE = 584;
  *  freely. Miscellany (UselessItems2), as Foraging's tools and the Skinning Knife are. Rarity 20: no DFU shelf draw and
  *  no loot table rolls it - its doors are the counter's endless stack, a rogue's pockets and a thief's starting kit. */
 export const LOCKPICK_LAW_ROW = Object.freeze({
-  index: LOCKPICK_TEMPLATE, baseWeight: 0.05, hitPoints: 100, basePrice: 12, rarity: 20, stackable: true,
+  index: LOCKPICK_TEMPLATE,
+  baseWeight: 0.05,
+  hitPoints: 100,
+  basePrice: 12,
+  rarity: 20,
+  stackable: true,
 });

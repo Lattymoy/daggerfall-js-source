@@ -2,8 +2,8 @@
   {
     "name": "STAR1-a-fall-moved",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "Object.freeze([-900_000, -450_000, 0]);",
-    "new": "Object.freeze([-900_000, -450_001, 0]);",
+    "old": "export const STAR_FALLS_MS = Object.freeze([-900_000, -450_000, 0]);",
+    "new": "export const STAR_FALLS_MS = Object.freeze([-900_000, -450_001, 0]);",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "STAR1-a-fall-at-noon",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "Object.freeze([-900_000, -450_000, 0]);",
-    "new": "Object.freeze([-900_000, -450_000, 1_800_000]);",
+    "old": "export const STAR_FALLS_MS = Object.freeze([-900_000, -450_000, 0]);",
+    "new": "export const STAR_FALLS_MS = Object.freeze([-900_000, -450_000, 1_800_000]);",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "STAR1-the-life-left-out-of-the-night",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "Math.ceil((nowMs - STAR_LIFE_MS - STAR_FALLS_MS[STAR_PER_NIGHT - 1]) / STAR_HOUR_MS)",
-    "new": "Math.ceil((nowMs - STAR_FALLS_MS[STAR_PER_NIGHT - 1]) / STAR_HOUR_MS)",
+    "old": "export const starNightAt = (nowMs) =>\n  Math.ceil((nowMs - STAR_LIFE_MS - STAR_FALLS_MS[STAR_PER_NIGHT - 1]) / STAR_HOUR_MS);",
+    "new": "export const starNightAt = (nowMs) => Math.ceil((nowMs - STAR_FALLS_MS[STAR_PER_NIGHT - 1]) / STAR_HOUR_MS);",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -56,7 +56,7 @@
   {
     "name": "STAR1-a-star-outside-the-festival",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "export const starInWindow = (n, k) => starOk(n, k) && starfallRuns(starTimes(n, k).fallAt) && frontStands(starFrontDay(n, k), starLaneOf(k));",
+    "old": "export const starInWindow = (n, k) =>\n  starOk(n, k) && starfallRuns(starTimes(n, k).fallAt) && frontStands(starFrontDay(n, k), starLaneOf(k));",
     "new": "export const starInWindow = (n, k) => starOk(n, k) && frontStands(starFrontDay(n, k), starLaneOf(k));",
     "tests": [
       "test/net/starfall/star1_law.test.js"
@@ -65,8 +65,8 @@
   {
     "name": "STAR1-the-heard-before-the-fall",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "return nowMs >= t.fallAt && nowMs < t.endAt + STAR_GRACE_MS;",
-    "new": "return nowMs >= t.omenAt && nowMs < t.endAt + STAR_GRACE_MS;",
+    "old": "  return nowMs >= t.fallAt && nowMs < t.endAt + STAR_GRACE_MS;",
+    "new": "  return nowMs >= t.omenAt && nowMs < t.endAt + STAR_GRACE_MS;",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "STAR1-the-spread-doubled",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "r = Math.sqrt(unit(n, k, 2)) * GATE_SPOT_SPREAD_M;",
-    "new": "r = Math.sqrt(unit(n, k, 2)) * GATE_SPOT_SPREAD_M * 2;",
+    "old": "    r = Math.sqrt(unit(n, k, 2)) * GATE_SPOT_SPREAD_M;",
+    "new": "    r = Math.sqrt(unit(n, k, 2)) * GATE_SPOT_SPREAD_M * 2;",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "STAR1-the-native-north-turned",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "(499 - py) * PIXEL_UNITS + no * STAR_UNITS_PER_M",
-    "new": "(499 - py) * PIXEL_UNITS - no * STAR_UNITS_PER_M",
+    "old": "  return [px * PIXEL_UNITS + e * STAR_UNITS_PER_M, (499 - py) * PIXEL_UNITS + no * STAR_UNITS_PER_M];",
+    "new": "  return [px * PIXEL_UNITS + e * STAR_UNITS_PER_M, (499 - py) * PIXEL_UNITS - no * STAR_UNITS_PER_M];",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "STAR1-the-reach-unchecked",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "<= STAR_REACH_M * STAR_UNITS_PER_M;",
-    "new": "<= Infinity;",
+    "old": "  return Math.hypot(x - cx, z - cz) <= STAR_REACH_M * STAR_UNITS_PER_M;",
+    "new": "  return Math.hypot(x - cx, z - cz) <= Infinity;",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "STAR1-the-circle-unbounded",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "Math.max(2, Math.min(5, 1 + Math.ceil(",
-    "new": "Math.max(2, Math.min(6, 1 + Math.ceil(",
+    "old": "  Math.max(2, Math.min(5, 1 + Math.ceil(Math.max(0, n | 0) / 2))) * (heart ? 2 : 1);",
+    "new": "  Math.max(2, Math.min(6, 1 + Math.ceil(Math.max(0, n | 0) / 2))) * (heart ? 2 : 1);",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "STAR1-the-heart-circle-single",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "* (heart ? 2 : 1);",
-    "new": "* (heart ? 1 : 1);",
+    "old": "  Math.max(2, Math.min(5, 1 + Math.ceil(Math.max(0, n | 0) / 2))) * (heart ? 2 : 1);",
+    "new": "  Math.max(2, Math.min(5, 1 + Math.ceil(Math.max(0, n | 0) / 2))) * (heart ? 1 : 1);",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "STAR1-the-mean-for-the-median",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "const m = ls[(ls.length - 1) >> 1];",
-    "new": "const m = ls.reduce((a, b) => a + b, 0) / ls.length;",
+    "old": "  const m = ls[(ls.length - 1) >> 1];",
+    "new": "  const m = ls.reduce((a, b) => a + b, 0) / ls.length;",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "STAR1-the-upper-middle",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "const m = ls[(ls.length - 1) >> 1];",
-    "new": "const m = ls[ls.length >> 1];",
+    "old": "  const m = ls[(ls.length - 1) >> 1];",
+    "new": "  const m = ls[ls.length >> 1];",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "STAR1-the-gather-skipped",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "led.p = P_GATHER; led.gatherAt = led.ec;",
-    "new": "led.p = P_GATHER; led.gatherAt = led.ec - STAR_GATHER_MS;",
+    "old": "    led.gatherAt = led.ec;",
+    "new": "    led.gatherAt = led.ec - STAR_GATHER_MS;",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "STAR1-the-kill-bound-dropped",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "led.ec - led.ws >= starClearFloorMs(led.wz, led.nd)",
-    "new": "led.ec - led.ws >= 0",
+    "old": "  if (led.p === P_WAVE && w.wc === led.w && led.ec - led.ws >= starClearFloorMs(led.wz, led.nd)) {",
+    "new": "  if (led.p === P_WAVE && w.wc === led.w && led.ec - led.ws >= 0) {",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "STAR1-the-breath-light-dropped",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "led.lt = Math.min(STAR_LIGHT, led.lt + STAR_BREATH_LIGHT);",
-    "new": "led.lt = Math.min(STAR_LIGHT, led.lt);",
+    "old": "  led.lt = Math.min(STAR_LIGHT, led.lt + STAR_BREATH_LIGHT);",
+    "new": "  led.lt = Math.min(STAR_LIGHT, led.lt);",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "STAR1-the-master-bound-dropped",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "led.ec - led.ma >= STAR_MASTER_MIN_MS",
-    "new": "led.ec - led.ma >= 0",
+    "old": "  if (led.p === P_MASTER && w.mf === 1 && led.ec - led.ma >= STAR_MASTER_MIN_MS) {",
+    "new": "  if (led.p === P_MASTER && w.mf === 1 && led.ec - led.ma >= 0) {",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "STAR1-a-fifth-wave",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "if (led.w >= STAR_WAVES) {",
-    "new": "if (led.w > STAR_WAVES) {",
+    "old": "      if (led.w >= STAR_WAVES) {",
+    "new": "      if (led.w > STAR_WAVES) {",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "STAR1-the-wave-never-times-out",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "else if (led.p === P_WAVE && led.ec >= led.ws + STAR_WAVE_MAX_MS)",
-    "new": "else if (led.p === P_WAVE && led.ec >= led.ws + 10 * STAR_WAVE_MAX_MS)",
+    "old": "    else if (led.p === P_WAVE && led.ec >= led.ws + STAR_WAVE_MAX_MS) breathStarts(led, led.ws + STAR_WAVE_MAX_MS);",
+    "new": "    else if (led.p === P_WAVE && led.ec >= led.ws + 10 * STAR_WAVE_MAX_MS) breathStarts(led, led.ws + STAR_WAVE_MAX_MS);",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "STAR1-a-non-owner-blows-credited",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "  if (led.own !== acct) return moved;\n",
-    "new": "  if (false) return moved;\n",
+    "old": "  if (led.own !== acct) return moved;",
+    "new": "  if (false) return moved;",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "STAR1-the-light-never-lost",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "  if (led.lt <= 0) { lose(led, nowMs, STAR_LOST_DARK); return true; }\n  if (led.p === P_MASTER",
-    "new": "  if (led.p === P_MASTER",
+    "old": "  if (led.lt <= 0) {\n    lose(led, nowMs, STAR_LOST_DARK);\n    return true;\n  }\n  if (led.p === P_MASTER && w.mf === 1 && led.ec - led.ma >= STAR_MASTER_MIN_MS) {",
+    "new": "  if (led.p === P_MASTER && w.mf === 1 && led.ec - led.ma >= STAR_MASTER_MIN_MS) {",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "STAR1-the-presence-bound-dropped",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "to = Math.min(nowMs, led.nearAt + STAR_PRESENT_MS);",
-    "new": "to = nowMs;",
+    "old": "    to = Math.min(nowMs, led.nearAt + STAR_PRESENT_MS);",
+    "new": "    to = nowMs;",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "STAR1-a-far-word-counted",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "  if (!near) return moved;   // heard, never counted",
-    "new": "  if (false) return moved;   // heard, never counted",
+    "old": "  if (!near) return moved; // heard, never counted: a word from off the star moves nothing (section 5)",
+    "new": "  if (false) return moved; // heard, never counted: a word from off the star moves nothing (section 5)",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "STAR1-the-deadline-ignored",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "if (nowMs >= starLostAt(led.n, led.k)) { lose(led, nowMs, STAR_LOST_DAWN); return true; }",
-    "new": "if (false) { lose(led, nowMs, STAR_LOST_DAWN); return true; }",
+    "old": "  if (nowMs >= starLostAt(led.n, led.k)) {",
+    "new": "  if (false) {",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "STAR1-the-orphan-bound-dropped",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "led.own && nowMs - led.ownAt <= STAR_ORPHAN_MS ? led.own : ''",
-    "new": "led.own ? led.own : ''",
+    "old": "export const starOwner = (led, nowMs) => (led.own && nowMs - led.ownAt <= STAR_ORPHAN_MS ? led.own : '');",
+    "new": "export const starOwner = (led, nowMs) => (led.own ? led.own : '');",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "STAR1-the-yield-ignored",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "  } else if (w.o !== 1 && led.own === acct) { led.own = ''; led.ownAt = 0; moved = true; }\n",
-    "new": "  }\n",
+    "old": "  } else if (w.o !== 1 && led.own === acct) {\n    led.own = '';\n    led.ownAt = 0;\n    moved = true;\n  }",
+    "new": "  }",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "STAR1-the-accounts-unbounded",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "if (Object.keys(led.a).length >= STAR_ACCOUNTS_MAX) return moved;",
-    "new": "if (false) return moved;",
+    "old": "    if (Object.keys(led.a).length >= STAR_ACCOUNTS_MAX) return moved;",
+    "new": "    if (false) return moved;",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "STAR1-the-earner-unstruck",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "r.s === 1 && r.near && led.hd - r.last <= STAR_PRESENT_MS",
-    "new": "r.near && led.hd - r.last <= STAR_PRESENT_MS",
+    "old": "  return Object.entries(led.a).filter(([, r]) => r.s === 1 && r.near && led.hd - r.last <= STAR_PRESENT_MS);",
+    "new": "  return Object.entries(led.a).filter(([, r]) => r.near && led.hd - r.last <= STAR_PRESENT_MS);",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "STAR1-another-shape-field-let-through",
     "file": "src/net/starfall/starReceipt.js",
-    "old": "Object.freeze(['sf', 's', 'c', 'l', 'i', 'e']);",
-    "new": "Object.freeze(['sf', 's', 'c', 'l', 'i', 'e', 'x']);",
+    "old": "export const STAR_RECEIPT_FIELDS = Object.freeze(['sf', 's', 'c', 'l', 'i', 'e']);",
+    "new": "export const STAR_RECEIPT_FIELDS = Object.freeze(['sf', 's', 'c', 'l', 'i', 'e', 'x']);",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "STAR1-the-version-not-checked",
     "file": "src/net/starfall/starReceipt.js",
-    "old": "if (v !== STAR_RECEIPT_V) return { ok: false, why: 'version' };",
-    "new": "if (false) return { ok: false, why: 'version' };",
+    "old": "  if (v !== STAR_RECEIPT_V) return { ok: false, why: 'version' };",
+    "new": "  if (false) return { ok: false, why: 'version' };",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "STAR1-a-fourth-star-receipted",
     "file": "src/net/starfall/starReceipt.js",
-    "old": "!starOk(c.sf[0], c.sf[1])",
-    "new": "!Number.isSafeInteger(c.sf[0])",
+    "old": "  if (!Array.isArray(c.sf) || c.sf.length !== 2 || !starOk(c.sf[0], c.sf[1])) return false;",
+    "new": "  if (!Array.isArray(c.sf) || c.sf.length !== 2 || !Number.isSafeInteger(c.sf[0])) return false;",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -355,8 +355,8 @@
   {
     "name": "STAR1-a-star-made-in-the-grace",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "starHeard(n, k, nowMs) && nowMs < starTimes(n, k).endAt;",
-    "new": "starHeard(n, k, nowMs);",
+    "old": "export const starMayMake = (n, k, nowMs) => starHeard(n, k, nowMs) && nowMs < starTimes(n, k).endAt;",
+    "new": "export const starMayMake = (n, k, nowMs) => starHeard(n, k, nowMs);",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -364,8 +364,8 @@
   {
     "name": "STAR1-the-deaths-on-any-wave",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "if (led.p === P_WAVE && w.kw === led.w && w.kn > led.kn)",
-    "new": "if (led.p === P_WAVE && w.kn > led.kn)",
+    "old": "  if (led.p === P_WAVE && w.kw === led.w && w.kn > led.kn) {",
+    "new": "  if (led.p === P_WAVE && w.kn > led.kn) {",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ]
@@ -373,8 +373,8 @@
   {
     "name": "STAR-TUNE-the-old-sizes",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "STAR_WAVE_MIN + 2 * (Math.max(1, n | 0) - 1) + Math.max(0, (k | 0) - 1)",
-    "new": "2 + Math.max(0, n | 0) + ((k | 0) >= 3 ? 1 : 0)",
+    "old": "export const starWaveSize = (k, n) =>\n  Math.min(STAR_WAVE_MAX, STAR_WAVE_MIN + 2 * (Math.max(1, n | 0) - 1) + Math.max(0, (k | 0) - 1));",
+    "new": "export const starWaveSize = (k, n) => Math.min(STAR_WAVE_MAX, 2 + Math.max(0, n | 0) + ((k | 0) >= 3 ? 1 : 0));",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ],
@@ -383,8 +383,8 @@
   {
     "name": "STAR-TUNE-a-defender-one-more",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "+ 2 * (Math.max(1, n | 0) - 1)",
-    "new": "+ (Math.max(1, n | 0) - 1)",
+    "old": "  Math.min(STAR_WAVE_MAX, STAR_WAVE_MIN + 2 * (Math.max(1, n | 0) - 1) + Math.max(0, (k | 0) - 1));",
+    "new": "  Math.min(STAR_WAVE_MAX, STAR_WAVE_MIN + (Math.max(1, n | 0) - 1) + Math.max(0, (k | 0) - 1));",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ],
@@ -393,8 +393,8 @@
   {
     "name": "STAR-TUNE-the-waves-alike",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": " + Math.max(0, (k | 0) - 1));",
-    "new": ");",
+    "old": "export const starWaveSize = (k, n) =>\n  Math.min(STAR_WAVE_MAX, STAR_WAVE_MIN + 2 * (Math.max(1, n | 0) - 1) + Math.max(0, (k | 0) - 1));",
+    "new": "export const starWaveSize = (k, n) => Math.min(STAR_WAVE_MAX, STAR_WAVE_MIN + 2 * (Math.max(1, n | 0) - 1));",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ],
@@ -423,8 +423,8 @@
   {
     "name": "AUDIT-STAR-TUNE-F2-the-floor-unshared",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "Math.ceil(Math.max(0, wz) / Math.max(1, nd | 0)) * STAR_KILL_MIN_MS",
-    "new": "Math.max(0, wz) * STAR_KILL_MIN_MS",
+    "old": "export const starClearFloorMs = (wz, nd) => Math.ceil(Math.max(0, wz) / Math.max(1, nd | 0)) * STAR_KILL_MIN_MS;",
+    "new": "export const starClearFloorMs = (wz, nd) => Math.max(0, wz) * STAR_KILL_MIN_MS;",
     "tests": [
       "test/net/starfall/star1_law.test.js"
     ],

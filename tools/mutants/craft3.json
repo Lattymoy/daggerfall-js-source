@@ -11,8 +11,8 @@
   {
     "name": "CRAFT3-law-one-parent-choices",
     "file": "src/net/professionLaw.js",
-    "old": "[r, Object.freeze(of.flatMap((d) => OWN_CHOICES[d][r]))]",
-    "new": "[r, Object.freeze(OWN_CHOICES[of[0]][r])]",
+    "old": "        Object.freeze(\n          Object.fromEntries(SPEC_RANKS.map((r) => [r, Object.freeze(of.flatMap((d) => OWN_CHOICES[d][r]))])),\n        ),",
+    "new": "        Object.freeze(Object.fromEntries(SPEC_RANKS.map((r) => [r, Object.freeze(OWN_CHOICES[of[0]][r])]))),",
     "tests": [
       "test/net/craft3_five.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CRAFT3-law-spec-discipline-unknown",
     "file": "src/net/professionLaw.js",
-    "old": "export const specDiscipline = (specId) => Object.keys(OWN_CHOICES).find(",
-    "new": "export const specDiscipline = (specId) => [].find(",
+    "old": "  Object.keys(OWN_CHOICES).find((d) => SPEC_RANKS.some((r) => OWN_CHOICES[d][r].some((s) => s.id === specId))) ?? null;",
+    "new": "  [].find((d) => SPEC_RANKS.some((r) => OWN_CHOICES[d][r].some((s) => s.id === specId))) ?? null;",
     "tests": [
       "test/net/craft3_five.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CRAFT3-law-specok-unmapped",
     "file": "src/net/professionLaw.js",
-    "old": "export const specOk = (profession, rank, specId) => !!SPECIALISATIONS[trackOf(profession)]?.",
-    "new": "export const specOk = (profession, rank, specId) => !!SPECIALISATIONS[profession]?.",
+    "old": "  !!SPECIALISATIONS[trackOf(profession)]?.[rank]?.some((s) => s.id === specId && !s.later);",
+    "new": "  !!SPECIALISATIONS[profession]?.[rank]?.some((s) => s.id === specId && !s.later);",
     "tests": [
       "test/net/craft3_five.test.js"
     ]

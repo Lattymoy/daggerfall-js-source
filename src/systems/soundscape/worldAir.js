@@ -25,7 +25,7 @@
 // them. Behind Enhanced Sounds (ES1) on the enhanced skin. Not a DFU member - Ledger A (SOUNDSCAPE).
 import { audio as defaultAudio } from '../audio.js';
 import { CLIMATES } from '../../formats/mapsTables.js';
-import { ensureBed, ensureMade } from './soundJobs.js';   // AUDIT SOUNDSCAPE W4: made off the main thread
+import { ensureBed, ensureMade } from './soundJobs.js'; // AUDIT SOUNDSCAPE W4: made off the main thread
 import { TOWN_BED_RATE } from './townBeds.js';
 import { SCAPE_SFX } from './soundscapeSfx.js';
 import { seaState } from './seaAir.js';
@@ -36,7 +36,14 @@ const clamp01 = (v) => Math.max(0, Math.min(1, Number.isFinite(v) ? v : 0));
 // ── the shore ───────────────────────────────────────────────────────────────────────────────────────────────────────
 
 /** THE SURF: heard from SURF_REACH m of the water's edge in, at its whole within SURF_FULL; `max` its loudest. */
-export const SURF = Object.freeze({ name: 'shore:surf', bed: 'shore:surf', max: 0.3, reach: 220, full: 8, floor: 0.22 });
+export const SURF = Object.freeze({
+  name: 'shore:surf',
+  bed: 'shore:surf',
+  max: 0.3,
+  reach: 220,
+  full: 8,
+  floor: 0.22,
+});
 /** THE LAP: close in (within LAP_REACH m) on a quiet sea (under LAP_STATE). */
 export const LAP = Object.freeze({ name: 'shore:lap', bed: 'shore:lap', max: 0.16, reach: 14, state: 0.45 });
 /** A wave's crash one-shot is played from the edge while it is nearer than this. */
@@ -59,7 +66,7 @@ export function surfReach(dist) {
   if (!Number.isFinite(d) || d >= SURF.reach) return 0;
   if (d <= SURF.full) return 1;
   const fall = 1 / (1 + Math.pow((d - SURF.full) / 25, 1.5));
-  return fall * Math.min(1, (SURF.reach - d) / 40);   // the last 40 m eased to nothing, never a step
+  return fall * Math.min(1, (SURF.reach - d) / 40); // the last 40 m eased to nothing, never a step
 }
 
 /** A breaker's envelope `u` seconds into a wave of `period`: rising as it curls, all at the crash, running back to the
@@ -79,9 +86,15 @@ export const surfGain = (dist, state, env) => SURF.max * surfReach(dist) * (0.4 
  *  bearing - so the gain carries the sea and the breaker, and the last 40 m of the reach eased to nothing (the inverse
  *  model stops falling at its max, it never falls silent). Pure. */
 export const SURF_REF = 12;
-export const surfEdgeGain = (dist, state, env) => (Number(dist) < SURF.reach ? SURF.max * Math.min(1, (SURF.reach - Number(dist)) / 40) * (0.4 + 0.6 * clamp01(state)) * clamp01(env) : 0);
+export const surfEdgeGain = (dist, state, env) =>
+  Number(dist) < SURF.reach
+    ? SURF.max * Math.min(1, (SURF.reach - Number(dist)) / 40) * (0.4 + 0.6 * clamp01(state)) * clamp01(env)
+    : 0;
 /** The lap's gain: close in on a quiet sea. Pure. */
-export const lapGain = (dist, state) => (Number(dist) < LAP.reach && clamp01(state) < LAP.state ? LAP.max * (1 - Number(dist) / LAP.reach) * (1 - clamp01(state) / LAP.state) : 0);
+export const lapGain = (dist, state) =>
+  Number(dist) < LAP.reach && clamp01(state) < LAP.state
+    ? LAP.max * (1 - Number(dist) / LAP.reach) * (1 - clamp01(state) / LAP.state)
+    : 0;
 
 // ── the wild ────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -89,10 +102,18 @@ export const lapGain = (dist, state) => (Number(dist) < LAP.reach && clamp01(sta
  * @typedef {{ kind: 'crow' | 'owl' | 'howl' | 'jackal' | 'frog', gap: readonly number[], dist: readonly number[], lift: readonly number[], volume: readonly number[], chorus?: number, id?: string }} WildVoice
  */
 /** @param {WildVoice['kind']} kind @param {number[]} gap @param {number[]} dist @param {number[]} lift @param {number[]} volume @param {number} [chorus] @returns {WildVoice} */
-const voice = (kind, gap, dist, lift, volume, chorus = 0) => Object.freeze({ kind, gap: Object.freeze(gap), dist: Object.freeze(dist), lift: Object.freeze(lift), volume: Object.freeze(volume), ...(chorus ? { chorus } : {}) });
+const voice = (kind, gap, dist, lift, volume, chorus = 0) =>
+  Object.freeze({
+    kind,
+    gap: Object.freeze(gap),
+    dist: Object.freeze(dist),
+    lift: Object.freeze(lift),
+    volume: Object.freeze(volume),
+    ...(chorus ? { chorus } : {}),
+  });
 const CROW = voice('crow', [25, 70], [20, 60], [8, 20], [0.3, 0.5]);
 const CROW_OFTEN = voice('crow', [14, 40], [18, 55], [8, 20], [0.3, 0.5]);
-const OWL = voice('owl', [25, 60], [18, 55], [6, 12], [0.2, 0.32]);   // AUDIT SOUNDSCAPE W12: a pure tone is louder than its peak says - 8 dB over the crow's caw at the same peak, taken back
+const OWL = voice('owl', [25, 60], [18, 55], [6, 12], [0.2, 0.32]); // AUDIT SOUNDSCAPE W12: a pure tone is louder than its peak says - 8 dB over the crow's caw at the same peak, taken back
 const OWL_SELDOM = voice('owl', [60, 150], [25, 60], [6, 12], [0.18, 0.28]);
 const WOLF = voice('howl', [90, 240], [160, 420], [10, 30], [0.4, 0.6]);
 const WOLF_OFTEN = voice('howl', [45, 120], [140, 380], [10, 30], [0.4, 0.65]);
@@ -142,7 +163,12 @@ export function wildVoicesFor(climate, { night, weather, winter, inTown }) {
     if (inTown && (frog || v.kind === 'howl' || v.kind === 'jackal')) continue;
     const k = (frog && (weather === 'rain' || weather === 'thunder') ? 0.5 : 1) * (inTown ? TOWN_WILD_GAP : 1);
     const far = inTown ? TOWN_WILD_FAR : 1;
-    out.push({ ...v, gap: [v.gap[0] * k, v.gap[1] * k], dist: [v.dist[0] * far, v.dist[1] * far], id: `${night ? 'night' : 'day'}:${i}` });
+    out.push({
+      ...v,
+      gap: [v.gap[0] * k, v.gap[1] * k],
+      dist: [v.dist[0] * far, v.dist[1] * far],
+      id: `${night ? 'night' : 'day'}:${i}`,
+    });
   }
   return out;
 }
@@ -157,7 +183,15 @@ export function marshGain(climate, { night, weather, winter, inTown }) {
 
 /** THE MURMUR: a town's people about by day, its loudest `max`, from `open` to `close` o'clock (the busiest from
  *  `busy[0]` to `busy[1]`), a town of `blocks` blocks or more at its whole. */
-export const MURMUR = Object.freeze({ name: 'town:murmur', key: 'town:murmur', max: 0.22, open: 6.5, close: 21.5, busy: Object.freeze([10, 17]), blocks: 16 });
+export const MURMUR = Object.freeze({
+  name: 'town:murmur',
+  key: 'town:murmur',
+  max: 0.22,
+  open: 6.5,
+  close: 21.5,
+  busy: Object.freeze([10, 17]),
+  blocks: 16,
+});
 /** AUDIT SOUNDSCAPE W13: the murmur is ONE bed played as TWO, the second a little lower and so a little longer (8 s
  *  against 8.7 s), each at the whole's power over the root of two - two loops whose seams never meet the same voice twice
  *  in a minute and a half, where one 8 s loop of the same fragments was a loop an ear finds. */
@@ -166,11 +200,29 @@ export const MURMUR_TWIN = Object.freeze({ name: 'town:murmur:2', pitch: 0.917 }
 export const MURMUR_WEATHER = Object.freeze({ rain: 0.45, thunder: 0.2, snow: 0.6 });
 /** THE SMITHIES: a smith at the anvil within `reach` m of the door, from `open` to `close` o'clock - bouts of `blows`
  *  `beat` s apart, `rest` s between. */
-export const SMITHY = Object.freeze({ reach: 45, open: 7, close: 19, blows: Object.freeze([3, 9]), beat: Object.freeze([0.55, 0.8]), rest: Object.freeze([5, 16]) });
+export const SMITHY = Object.freeze({
+  reach: 45,
+  open: 7,
+  close: 19,
+  blows: Object.freeze([3, 9]),
+  beat: Object.freeze([0.55, 0.8]),
+  rest: Object.freeze([5, 16]),
+});
 /** THE TAVERNS: their noise at the door within `reach` m - `night` from `evening` o'clock to `late`, `day` from `opens`
  *  to the evening, and between `late` and `opens` the hours a tavern sleeps (AUDIT SOUNDSCAPE W13: four in the morning was
  *  as loud as noon), `small`. */
-export const TAVERN = Object.freeze({ name: 'town:tavern', key: 'town:tavern', reach: 35, day: 0.18, night: 0.5, small: 0.03, evening: 17, late: 2, opens: 10, ref: 4 });
+export const TAVERN = Object.freeze({
+  name: 'town:tavern',
+  key: 'town:tavern',
+  reach: 35,
+  day: 0.18,
+  night: 0.5,
+  small: 0.03,
+  evening: 17,
+  late: 2,
+  opens: 10,
+  ref: 4,
+});
 
 const inHours = (h, from, to) => (from <= to ? h >= from && h < to : h >= from || h < to);
 /** The murmur's gain: the town's size, the hour (rising from `open` to the busy hours, falling to `close`), the
@@ -193,14 +245,20 @@ export function tavernGain(hour) {
 }
 
 /** The people's samples off the player's own archive (DAGGER.SND AmbientPeople1-10), or null without one. @param {any} engine */
-const peopleOf = (engine) => { const v = PEOPLE_RECORDS.map((i) => engine?.samplesOf?.(i)).filter(Boolean); return v.length ? v : null; };
+const peopleOf = (engine) => {
+  const v = PEOPLE_RECORDS.map((i) => engine?.samplesOf?.(i)).filter(Boolean);
+  return v.length ? v : null;
+};
 /**
  * The town's two beds (townBeds.js: the murmur, the tavern) made off the main thread and registered (soundJobs.js
  * ensureMade). True once both stand on the engine; false with no archive or no context yet (asked again next frame).
  * @param {any} engine @param {any} [opts]
  */
 export function ensureTownBeds(engine, opts) {
-  const job = (/** @type {string} */ kind) => () => { const voices = peopleOf(engine); return voices && { kind, voices }; };
+  const job = (/** @type {string} */ kind) => () => {
+    const voices = peopleOf(engine);
+    return voices && { kind, voices };
+  };
   const murmur = ensureMade(engine, MURMUR.key, job('murmur'), TOWN_BED_RATE, opts);
   const tavern = ensureMade(engine, TAVERN.key, job('tavern'), TOWN_BED_RATE, opts);
   return murmur && tavern;
@@ -215,16 +273,35 @@ export function ensureTownBeds(engine, opts) {
  */
 /** The name the wild's far shots are played under (audio.js fadeFar). */
 export const WORLD_AIR_FAR = 'worldAir';
-const WILD_CLIPS = Object.freeze({ crow: SCAPE_SFX.crow, owl: SCAPE_SFX.owl, howl: SCAPE_SFX.howl, jackal: SCAPE_SFX.howl, frog: SCAPE_SFX.frog });
-const WILD_PITCH = Object.freeze({ crow: [0.9, 1.1], owl: [0.94, 1.06], howl: [0.9, 1.05], jackal: [1.25, 1.45], frog: [0.85, 1.2] });
+const WILD_CLIPS = Object.freeze({
+  crow: SCAPE_SFX.crow,
+  owl: SCAPE_SFX.owl,
+  howl: SCAPE_SFX.howl,
+  jackal: SCAPE_SFX.howl,
+  frog: SCAPE_SFX.frog,
+});
+const WILD_PITCH = Object.freeze({
+  crow: [0.9, 1.1],
+  owl: [0.94, 1.06],
+  howl: [0.9, 1.05],
+  jackal: [1.25, 1.45],
+  frog: [0.85, 1.2],
+});
 
 /** @param {() => number} rand @param {readonly number[]} r */
 const between = (rand, r) => r[0] + (r[1] - r[0]) * rand();
 /** @template T @param {() => number} rand @param {ReadonlyArray<T>} list @returns {T} */
 const pick = (rand, list) => list[Math.min(list.length - 1, Math.floor(rand() * list.length))];
 const near = (ear, list, reach) => {
-  let best = null, bd = reach;
-  for (const p of list ?? []) { const d = Math.hypot(p[0] - ear[0], p[2] - ear[2]); if (d < bd) { bd = d; best = p; } }
+  let best = null,
+    bd = reach;
+  for (const p of list ?? []) {
+    const d = Math.hypot(p[0] - ear[0], p[2] - ear[2]);
+    if (d < bd) {
+      bd = d;
+      best = p;
+    }
+  }
   return best;
 };
 
@@ -235,7 +312,9 @@ const near = (ear, list, reach) => {
  * @param {{ engine?: any, rand?: () => number }} [opts]
  */
 export function createWorldAir({ engine = defaultAudio, rand = Math.random } = {}) {
-  let on = false, waveT = 0, period = BREAKER_PERIOD[0];
+  let on = false,
+    waveT = 0,
+    period = BREAKER_PERIOD[0];
   /** @type {Map<string, number>} each voice's time to its next call, by its id */
   let wildIn = new Map();
   let anvil = { blowsLeft: 0, next: 0 };
@@ -244,21 +323,35 @@ export function createWorldAir({ engine = defaultAudio, rand = Math.random } = {
   let due = [];
   let t = 0;
   const play3d = (clip, pos, volume, { pitch = 1, ref = 10, max = 500 } = {}) => {
-    try { engine.play3d(clip, pos, volume, { refDistance: ref, maxDistance: max, pitch, far: WORLD_AIR_FAR }); } catch { /* a sound is never the walk */ }
+    try {
+      engine.play3d(clip, pos, volume, { refDistance: ref, maxDistance: max, pitch, far: WORLD_AIR_FAR });
+    } catch {
+      /* a sound is never the walk */
+    }
   };
   const bed = (name, clip, volume, pitch = 1) => {
-    try { engine.setBed(name, volume > 0.002 ? clip : null, { volume, pitch }); } catch { /* not yet */ }
+    try {
+      engine.setBed(name, volume > 0.002 ? clip : null, { volume, pitch });
+    } catch {
+      /* not yet */
+    }
   };
   const bed3d = (name, clip, pos, volume, ref, max) => {
-    try { engine.setBed3d(name, volume > 0.002 && pos ? clip : null, pos, { volume, refDistance: ref, maxDistance: max }); } catch { /* not yet */ }
+    try {
+      engine.setBed3d(name, volume > 0.002 && pos ? clip : null, pos, { volume, refDistance: ref, maxDistance: max });
+    } catch {
+      /* not yet */
+    }
   };
   return {
-    get on() { return on; },
+    get on() {
+      return on;
+    },
     /** @param {number} dt @param {WorldFrame} w */
     frame(dt, w) {
       if (!w || !Array.isArray(w.ear) || w.ear.length !== 3) return;
       const step = Math.max(0, Math.min(0.25, Number(dt) || 0));
-      if (!w.paused) t += step;   // AUDIT SOUNDSCAPE W7: the clock the queued calls keep stands with the game
+      if (!w.paused) t += step; // AUDIT SOUNDSCAPE W7: the clock the queued calls keep stands with the game
       on = true;
       const state = seaState(w.wind, w.weather);
       // THE SHORE
@@ -267,7 +360,11 @@ export function createWorldAir({ engine = defaultAudio, rand = Math.random } = {
         if (!w.paused) waveT += step;
         // the edge: the host's own point at the sea's surface, standing while I move (AUDIT SOUNDSCAPE W9, W10); the
         // bearing's off my ear only where the host gave none
-        const edge = shore.at ?? (shore.dir ? [w.ear[0] + shore.dir[0] * shore.dist, w.ear[1] - 1, w.ear[2] + shore.dir[1] * shore.dist] : null);
+        const edge =
+          shore.at ??
+          (shore.dir
+            ? [w.ear[0] + shore.dir[0] * shore.dist, w.ear[1] - 1, w.ear[2] + shore.dir[1] * shore.dist]
+            : null);
         const dist = shore.at ? Math.hypot(shore.at[0] - w.ear[0], shore.at[2] - w.ear[2]) : shore.dist;
         if (waveT >= period) {
           waveT -= period;
@@ -275,8 +372,17 @@ export function createWorldAir({ engine = defaultAudio, rand = Math.random } = {
           // AUDIT SOUNDSCAPE W5: a crash's own curl - its loudest falls CRASH_PEAK_S into it - started so it peaks on the
           // bed's crash, not a second after it; W6: the panner takes the distance, never the gain twice
           if (dist < CRASH_REACH && edge) {
-            const k = Math.min(SCAPE_SFX.shoreCrash.length - 1, Math.floor(rand() * SCAPE_SFX.shoreCrash.length)), at = edge;
-            due.push({ at: t + Math.max(0, BREAKER_CURL_S - CRASH_PEAK_S[k]), play: () => play3d(SCAPE_SFX.shoreCrash[k], at, 0.35 + 0.5 * state, { pitch: between(rand, [0.94, 1.06]), ref: 12, max: 260 }) });
+            const k = Math.min(SCAPE_SFX.shoreCrash.length - 1, Math.floor(rand() * SCAPE_SFX.shoreCrash.length)),
+              at = edge;
+            due.push({
+              at: t + Math.max(0, BREAKER_CURL_S - CRASH_PEAK_S[k]),
+              play: () =>
+                play3d(SCAPE_SFX.shoreCrash[k], at, 0.35 + 0.5 * state, {
+                  pitch: between(rand, [0.94, 1.06]),
+                  ref: 12,
+                  max: 260,
+                }),
+            });
           }
         }
         if (ensureBed(engine, SURF.bed)) {
@@ -286,7 +392,11 @@ export function createWorldAir({ engine = defaultAudio, rand = Math.random } = {
           bed(SURF.name, SURF.bed, edge ? 0 : surfGain(dist, state, env));
         }
         if (ensureBed(engine, LAP.bed)) bed(LAP.name, LAP.bed, lapGain(dist, state));
-      } else { bed(SURF.name, SURF.bed, 0); bed3d(SURF.name, SURF.bed, null, 0, 1, 1); bed(LAP.name, LAP.bed, 0); }
+      } else {
+        bed(SURF.name, SURF.bed, 0);
+        bed3d(SURF.name, SURF.bed, null, 0, 1, 1);
+        bed(LAP.name, LAP.bed, 0);
+      }
       // THE WILD
       const now = { night: !!w.night, weather: w.weather, winter: !!w.winter, inTown: !!w.inTown };
       const voices = wildVoicesFor(w.climate, now);
@@ -296,14 +406,23 @@ export function createWorldAir({ engine = defaultAudio, rand = Math.random } = {
         let left = wildIn.get(id) ?? between(rand, [v.gap[0] * 0.3, v.gap[0]]);
         if (!w.paused) left -= step;
         if (left <= 0) {
-          const az = between(rand, [-Math.PI, Math.PI]), d = between(rand, v.dist), lift = between(rand, v.lift);
+          const az = between(rand, [-Math.PI, Math.PI]),
+            d = between(rand, v.dist),
+            lift = between(rand, v.lift);
           const pos = [w.ear[0] + Math.sin(az) * d, w.ear[1] + lift, w.ear[2] + Math.cos(az) * d];
           const calls = v.chorus ? 1 + Math.floor(rand() * v.chorus) : 1;
           for (let k = 0; k < calls; k++) {
-            const clip = pick(rand, WILD_CLIPS[v.kind]), pitch = between(rand, WILD_PITCH[v.kind]), vol = between(rand, v.volume);
+            const clip = pick(rand, WILD_CLIPS[v.kind]),
+              pitch = between(rand, WILD_PITCH[v.kind]),
+              vol = between(rand, v.volume);
             const p = k === 0 ? pos : [pos[0] + between(rand, [-6, 6]), pos[1], pos[2] + between(rand, [-6, 6])];
-            if (k === 0) play3d(clip, p, vol, { pitch, ref: v.kind === 'howl' || v.kind === 'jackal' ? 60 : 10, max: 900 });
-            else due.push({ at: t + between(rand, [0.15, 0.9]) * k, play: () => play3d(clip, p, vol * 0.85, { pitch, ref: 10, max: 900 }) });
+            if (k === 0)
+              play3d(clip, p, vol, { pitch, ref: v.kind === 'howl' || v.kind === 'jackal' ? 60 : 10, max: 900 });
+            else
+              due.push({
+                at: t + between(rand, [0.15, 0.9]) * k,
+                play: () => play3d(clip, p, vol * 0.85, { pitch, ref: 10, max: 900 }),
+              });
           }
           left = between(rand, v.gap);
         }
@@ -318,20 +437,46 @@ export function createWorldAir({ engine = defaultAudio, rand = Math.random } = {
       bed(MURMUR.name, MURMUR.key, murmur);
       bed(MURMUR_TWIN.name, MURMUR.key, murmur, MURMUR_TWIN.pitch);
       const tavern = towned ? near(w.ear, w.taverns, TAVERN.reach) : null;
-      bed3d(TAVERN.name, TAVERN.key, tavern ? [tavern[0], tavern[1] + 1, tavern[2]] : null, tavern ? tavernGain(w.hour) * (w.weather === 'thunder' ? 0.7 : 1) : 0, TAVERN.ref, TAVERN.reach + 15);
+      bed3d(
+        TAVERN.name,
+        TAVERN.key,
+        tavern ? [tavern[0], tavern[1] + 1, tavern[2]] : null,
+        tavern ? tavernGain(w.hour) * (w.weather === 'thunder' ? 0.7 : 1) : 0,
+        TAVERN.ref,
+        TAVERN.reach + 15,
+      );
       const smithy = w.inTown && smithAtWork(w.hour) ? near(w.ear, w.smithies, SMITHY.reach) : null;
       if (smithy && !w.paused) {
         if ((anvil.next -= step) <= 0) {
           if (anvil.blowsLeft <= 0) anvil.blowsLeft = Math.round(between(rand, SMITHY.blows));
-          play3d(SCAPE_SFX.anvil[0], [smithy[0], smithy[1] + 1, smithy[2]], between(rand, [0.45, 0.65]), { pitch: between(rand, [0.96, 1.04]), ref: 6, max: SMITHY.reach + 30 });
+          play3d(SCAPE_SFX.anvil[0], [smithy[0], smithy[1] + 1, smithy[2]], between(rand, [0.45, 0.65]), {
+            pitch: between(rand, [0.96, 1.04]),
+            ref: 6,
+            max: SMITHY.reach + 30,
+          });
           anvil.blowsLeft--;
           anvil.next = anvil.blowsLeft > 0 ? between(rand, SMITHY.beat) : between(rand, SMITHY.rest);
-          if (anvil.blowsLeft <= 0 && rand() < 0.25) due.push({ kind: 'anvil', at: t + between(rand, SMITHY.rest) * 0.5, play: () => play3d(SCAPE_SFX.anvil[1], [smithy[0], smithy[1] + 1, smithy[2]], 0.5, { ref: 6, max: SMITHY.reach + 30 }) });
+          if (anvil.blowsLeft <= 0 && rand() < 0.25)
+            due.push({
+              kind: 'anvil',
+              at: t + between(rand, SMITHY.rest) * 0.5,
+              play: () =>
+                play3d(SCAPE_SFX.anvil[1], [smithy[0], smithy[1] + 1, smithy[2]], 0.5, {
+                  ref: 6,
+                  max: SMITHY.reach + 30,
+                }),
+            });
         }
-      } else if (!smithy) { anvil = { blowsLeft: 0, next: between(rand, [0.5, 3]) }; if (due.length) due = due.filter((d) => d.kind !== 'anvil'); }
+      } else if (!smithy) {
+        anvil = { blowsLeft: 0, next: between(rand, [0.5, 3]) };
+        if (due.length) due = due.filter((d) => d.kind !== 'anvil');
+      }
       if (due.length) {
         const ready = due.filter((d) => d.at <= t);
-        if (ready.length) { due = due.filter((d) => d.at > t); for (const d of ready) d.play(); }
+        if (ready.length) {
+          due = due.filter((d) => d.at > t);
+          for (const d of ready) d.play();
+        }
       }
     },
     stop() {
@@ -344,7 +489,9 @@ export function createWorldAir({ engine = defaultAudio, rand = Math.random } = {
         for (const name of [SURF.name, LAP.name, MARSH.name, MURMUR.name, MURMUR_TWIN.name]) engine.setBed(name, null);
         for (const name of [SURF.name, TAVERN.name]) engine.setBed3d(name, null, null);
         engine.fadeFar?.(WORLD_AIR_FAR);
-      } catch { /* nothing left to stop */ }
+      } catch {
+        /* nothing left to stop */
+      }
     },
   };
 }

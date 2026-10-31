@@ -2,8 +2,8 @@
   {
     "name": "PERF-WAGON-a-the-radius-ungrown",
     "file": "src/render/frustum.js",
-    "old": "const r = s[3] * Math.sqrt(Math.max(m[0] * m[0]",
-    "new": "const r = s[3] * Math.sqrt(1, Math.max(m[0] * m[0]",
+    "old": "      Math.max(",
+    "new": "      1,\n      Math.max(",
     "tests": [
       "test/systems/livingWorld/perfwagon.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "PERF-WAGON-n-the-cart-box-unmade",
     "file": "src/player/eyeOfTheBeholder/eotbWagon.js",
-    "old": "cull && localBox ? transformedAabb(localBox, m) : null",
-    "new": "null",
+    "old": "      return drawSeen(renderer, cull, cull && localBox ? transformedAabb(localBox, m) : null, gpu, m, texRemap);",
+    "new": "      return drawSeen(renderer, cull, null, gpu, m, texRemap);",
     "tests": [
       "test/systems/livingWorld/perfwagon.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PERF-WAGON-o-the-cart-handed-no-test",
     "file": "src/player/mwView.js",
-    "old": "return eotbWagon.draw(renderer, texRemap, cull);",
-    "new": "return eotbWagon.draw(renderer, texRemap, null);",
+    "old": "  return eotbWagon.draw(renderer, texRemap, cull);",
+    "new": "  return eotbWagon.draw(renderer, texRemap, null);",
     "tests": [
       "test/systems/livingWorld/perfwagon.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "PERF-WAGON-q-the-hideout-tent-box-unmade",
     "file": "src/scenes/hideouts.js",
-    "old": "cull ? sphereAabb(tent.gpu.bounds, m) : null",
-    "new": "null",
+    "old": "        if (drawSeen(r, cull, cull ? sphereAabb(tent.gpu.bounds, m) : null, tent.gpu, m, texRemap)) n++;",
+    "new": "        if (drawSeen(r, cull, null, tent.gpu, m, texRemap)) n++;",
     "tests": [
       "test/systems/livingWorld/perfwagon.test.js"
     ]

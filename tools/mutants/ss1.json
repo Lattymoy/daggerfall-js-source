@@ -32,8 +32,8 @@
     "name": "SS1-the-table-takes-a-bound-piece",
     "file": "src/systems/tradePack.js",
     "note": "AUDIT AUTO-HOLD (PIN MOVED): re-aimed by content - the refusal's words are boundTradeText(item)",
-    "old": "  if (isBound(item)) return boundTradeText(item);   // SS1; AUDIT AUTO-HOLD: a piece the realm locked, in its own words\n",
-    "new": "",
+    "old": "  if (isBound(item)) return boundTradeText(item); // SS1; AUDIT AUTO-HOLD: a piece the realm locked, in its own words\n  if (BOAT_TEMPLATES.includes(item.templateIndex)) return 'Boat deeds and boat parts cannot be traded.'; // AUDIT REALM2 T1",
+    "new": "  if (BOAT_TEMPLATES.includes(item.templateIndex)) return 'Boat deeds and boat parts cannot be traded.'; // AUDIT REALM2 T1",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
     ]
@@ -41,8 +41,8 @@
   {
     "name": "SS1-a-peers-bound-lot-taken",
     "file": "src/systems/tradePack.js",
-    "old": "unwire(records) { const items = wholeLot(records); return items && !items.some(isBound) ? items : null; },",
-    "new": "unwire(records) { const items = wholeLot(records); return items; },",
+    "old": "      return items && !items.some(isBound) ? items : null;",
+    "new": "      return items;",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "SS3-a-buildings-container-lands-a-bound-piece",
     "file": "src/world/interior/interiorShared.js",
-    "old": "    const items = peerHanded(validLootList(rec.r));",
-    "new": "    const items = validLootList(rec.r);",
+    "old": "    const items = peerHanded(validLootList(rec.r)); // SS3: a shelf or a container is the room's - a bound piece in one never lands; HACKED-GOLD: nor a letter of credit, a peer's gold",
+    "new": "    const items = validLootList(rec.r); // SS3: a shelf or a container is the room's - a bound piece in one never lands; HACKED-GOLD: nor a letter of credit, a peer's gold",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
     ]
@@ -287,8 +287,8 @@
   {
     "name": "SS4-the-broker-card-silent",
     "file": "src/ui/brokerWindow.js",
-    "old": "      if (isBound(o.item)) card.append(el('p', 'boundline', BOUND_LINE));",
-    "new": "      if (isBound(o.item) && false) card.append(el('p', 'boundline', BOUND_LINE));",
+    "old": "      if (isBound(o.item)) card.append(el('p', 'boundline', BOUND_LINE)); // SS4: what the stones buy stays with its buyer - said before the sale",
+    "new": "      if (isBound(o.item) && false) card.append(el('p', 'boundline', BOUND_LINE)); // SS4: what the stones buy stays with its buyer - said before the sale",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
     ]

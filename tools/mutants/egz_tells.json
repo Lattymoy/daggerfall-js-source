@@ -2,8 +2,8 @@
   {
     "name": "EGZL-batch-turn-ignored",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "k.pos[o + q] = a0 * x + b0 * y + c0 * z + tx;",
-    "new": "k.pos[o + q] = x + tx;",
+    "old": "      k.pos[o + q] = a0 * x + b0 * y + c0 * z + tx;",
+    "new": "      k.pos[o + q] = x + tx;",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "EGZL-batch-normals-unturned",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "k.nrm[o + q] = a0 * nx + b0 * ny + c0 * nz;",
-    "new": "k.nrm[o + q] = nx;",
+    "old": "      k.nrm[o + q] = a0 * nx + b0 * ny + c0 * nz;",
+    "new": "      k.nrm[o + q] = nx;",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EGZL-batch-turn-alone-never-relaid",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "for (let j = 0; j < A; j++) if (k.at[o12 + j] !== M[TURN_AT[j]]) { same = false; break; }",
-    "new": "for (let j = 9; j < A; j++) if (k.at[o12 + j] !== M[TURN_AT[j]]) { same = false; break; }",
+    "old": "      for (let j = 0; j < A; j++)",
+    "new": "      for (let j = 9; j < A; j++)",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EGZL-batch-centre-unturned",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "M[0] * c[0] + M[4] * c[1] + M[8] * c[2] + M[12],",
-    "new": "c[0] + M[12],",
+    "old": "        M[0] * c[0] + M[4] * c[1] + M[8] * c[2] + M[12],",
+    "new": "        c[0] + M[12],",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EGZL-batch-turns-dropped",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "turns: !!turns, remap: null",
-    "new": "turns: false, remap: null",
+    "old": "            turns: !!turns,",
+    "new": "            turns: false,",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "EGZL-batch-map-lost-after-build",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "if (k.draw) k.draw.texRemap = k.remap;",
-    "new": "void 0;",
+    "old": "      if (k.draw) k.draw.texRemap = k.remap;",
+    "new": "      void 0;",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "EGZL-batch-map-lost-at-build",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "k.draw.texRemap = k.remap; draws?.push?.(k.draw);",
-    "new": "draws?.push?.(k.draw);",
+    "old": "          k.draw.texRemap = k.remap;\n          draws?.push?.(k.draw);",
+    "new": "          draws?.push?.(k.draw);",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "EGZL-batch-hidden-turning-copy-drawn",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "let show = !s.hidden && M != null && M[15] !== 0;",
-    "new": "let show = M != null;",
+    "old": "    let show = !s.hidden && M != null && M[15] !== 0; // a pose's zeros: no place",
+    "new": "    let show = M != null; // a pose's zeros: no place",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "EGZL-pass-no-slab-laid",
     "file": "src/render/superDungeon/sdStepsPass.js",
-    "old": "    if (!slab) return;\n",
-    "new": "    return;\n",
+    "old": "    if (!slab) return;",
+    "new": "    return;",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "EGZL-pass-slab-lit-at-nothing",
     "file": "src/render/superDungeon/sdStepsPass.js",
-    "old": "    if (st.w <= 0.0) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }\n",
-    "new": "",
+    "old": "    if (st.w <= 0.0) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }\n    vWorld = uStep[i].xyz + aA + vec3(0.0, LIFT, 0.0);",
+    "new": "    vWorld = uStep[i].xyz + aA + vec3(0.0, LIFT, 0.0);",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "EGZL-pass-floor-dropped",
     "file": "src/render/superDungeon/sdStepsPass.js",
-    "old": "* max(fogFactorAt(vWorld), kept), 1.0);",
-    "new": "* fogFactorAt(vWorld), 1.0);",
+    "old": "  o = vec4(sdPixel(uColor * vK, floor(gl_FragCoord.xy), uSteps) * max(fogFactorAt(vWorld), kept), 1.0);`",
+    "new": "  o = vec4(sdPixel(uColor * vK, floor(gl_FragCoord.xy), uSteps) * fogFactorAt(vWorld), 1.0);`",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "EGZL-pass-loop-on-the-hours",
     "file": "src/render/superDungeon/sdStepsPass.js",
-    "old": "for (let i = 0; i < this.n; i++) if (state[i * 4] > 0)",
-    "new": "for (let i = 0; i < SD_GHOSTS_MAX; i++) if (state[i * 4] > 0)",
+    "old": "    for (let i = 0; i < this.n; i++)",
+    "new": "    for (let i = 0; i < SD_GHOSTS_MAX; i++)",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "EGZL-pass-floor-never-sent",
     "file": "src/render/superDungeon/sdStepsPass.js",
-    "old": "if (this.fogFloor) gl.uniform3f(U.uFogFloor",
-    "new": "if (false) gl.uniform3f(U.uFogFloor",
+    "old": "    if (this.fogFloor) gl.uniform3f(U.uFogFloor, this.fogFloor.floor, this.fogFloor.within, this.fogFloor.ease); // EG-ZL",
+    "new": "    if (false) gl.uniform3f(U.uFogFloor, this.fogFloor.floor, this.fogFloor.within, this.fogFloor.ease); // EG-ZL",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "EGZL-art-dissolve-keeps-all",
     "file": "src/world/eliteGates/egBandArt.js",
-    "old": "(Math.floor(x / C) & 3)] < keep) continue;",
-    "new": "(Math.floor(x / C) & 3)] < 16) continue;",
+    "old": "      if (BAYER4[((Math.floor(y / C) & 3) << 2) | (Math.floor(x / C) & 3)] < keep) continue;",
+    "new": "      if (BAYER4[((Math.floor(y / C) & 3) << 2) | (Math.floor(x / C) & 3)] < 16) continue;",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "EGZL-art-falter-a-stage-late",
     "file": "src/world/eliteGates/egBandArt.js",
-    "old": "egDissolveArt(k < SD_BEAT_DISSOLVE.keep.length / 2 ? frame : falter, keep)",
-    "new": "egDissolveArt(k < 3 ? frame : falter, keep)",
+    "old": "        egDissolveArt(k < SD_BEAT_DISSOLVE.keep.length / 2 ? frame : falter, keep),",
+    "new": "        egDissolveArt(k < 3 ? frame : falter, keep),",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "EGZL-art-the-hours-ember",
     "file": "src/world/superDungeon/sdStepsArt.js",
-    "old": "col = ember ? warn : GOLD",
-    "new": "col = ember ? EMBER : GOLD",
+    "old": "    col = ember ? warn : GOLD,",
+    "new": "    col = ember ? EMBER : GOLD,",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "EGZL-art-dash-never-drawn",
     "file": "src/world/superDungeon/sdStepsArt.js",
-    "old": "if (dash && ember) fill(emission, A.line,",
-    "new": "if (false) fill(emission, A.line,",
+    "old": "  if (dash && ember) fill(emission, A.line, (s, t, x) => (((x >> 2) & 1) === 1 ? BLACK : null)); // EG-ZL: its warning's line dashed, four texels on and four off",
+    "new": "  if (false) fill(emission, A.line, (s, t, x) => (((x >> 2) & 1) === 1 ? BLACK : null)); // EG-ZL: its warning's line dashed, four texels on and four off",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -543,8 +543,8 @@
   {
     "name": "EGZL-track-no-ticks",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "seg(track, egToDungeon(spec, x - EG_TRACK.dash / 2, y, z), egToDungeon(spec, x + EG_TRACK.dash / 2, y, z));",
-    "new": "void x;",
+    "old": "          seg(track, egToDungeon(spec, x - EG_TRACK.dash / 2, y, z), egToDungeon(spec, x + EG_TRACK.dash / 2, y, z));",
+    "new": "          void x;",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -552,8 +552,8 @@
   {
     "name": "EGZL-track-ticked-at-one-end",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "for (const side of [-1, 1]) for (const z of [z0, z1]) {",
-    "new": "for (const side of [-1, 1]) for (const z of [z0]) {",
+    "old": "        for (const z of [z0, z1]) {",
+    "new": "        for (const z of [z0]) {",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -561,8 +561,8 @@
   {
     "name": "EGZL-track-tick-past-a-dash",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "egToDungeon(spec, x - EG_TRACK.dash / 2, y, z)",
-    "new": "egToDungeon(spec, x - EG_TRACK.dash, y, z)",
+    "old": "          seg(track, egToDungeon(spec, x - EG_TRACK.dash / 2, y, z), egToDungeon(spec, x + EG_TRACK.dash / 2, y, z));",
+    "new": "          seg(track, egToDungeon(spec, x - EG_TRACK.dash, y, z), egToDungeon(spec, x + EG_TRACK.dash / 2, y, z));",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -570,8 +570,8 @@
   {
     "name": "EGZL-drop-wall-dark",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "for (const s of spec.steps) if (s.kind === 'drop') lamp(",
-    "new": "for (const s of spec.steps) if (false) lamp(",
+    "old": "      if (s.kind === 'drop') lamp(egToDungeon(spec, s.x, s.y + EG_DROP_LAMP.h, s.z + s.d / 2 - EG_DROP_LAMP.off)); // EG-ZL: a Drop's wall lit",
+    "new": "      if (false) lamp(egToDungeon(spec, s.x, s.y + EG_DROP_LAMP.h, s.z + s.d / 2 - EG_DROP_LAMP.off)); // EG-ZL: a Drop's wall lit",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -579,8 +579,8 @@
   {
     "name": "EGZL-drop-lamp-behind-the-wall",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "s.z + s.d / 2 - EG_DROP_LAMP.off",
-    "new": "s.z + s.d / 2 + EG_DROP_LAMP.off",
+    "old": "      if (s.kind === 'drop') lamp(egToDungeon(spec, s.x, s.y + EG_DROP_LAMP.h, s.z + s.d / 2 - EG_DROP_LAMP.off)); // EG-ZL: a Drop's wall lit",
+    "new": "      if (s.kind === 'drop') lamp(egToDungeon(spec, s.x, s.y + EG_DROP_LAMP.h, s.z + s.d / 2 + EG_DROP_LAMP.off)); // EG-ZL: a Drop's wall lit",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]

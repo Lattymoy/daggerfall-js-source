@@ -2,8 +2,8 @@
   {
     "name": "PT-audit-near-lost-with-the-body",
     "file": "src/systems/party/partyTravel.js",
-    "old": "else if (near !== round.at || !nearFrom || Math.hypot(f.x - nearFrom.x, f.z - nearFrom.z) > host.radius) near = null;",
-    "new": "else near = null;",
+    "old": "      } else if (near !== round.at || !nearFrom || Math.hypot(f.x - nearFrom.x, f.z - nearFrom.z) > host.radius)\n        near = null;",
+    "new": "      } else near = null;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PT-audit-near-never-lost",
     "file": "src/systems/party/partyTravel.js",
-    "old": "Math.hypot(f.x - nearFrom.x, f.z - nearFrom.z) > host.radius) near = null;",
-    "new": "false) near = null;",
+    "old": "      } else if (near !== round.at || !nearFrom || Math.hypot(f.x - nearFrom.x, f.z - nearFrom.z) > host.radius)\n        near = null;",
+    "new": "      } else if (near !== round.at || !nearFrom || false) near = null;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PT-audit-offer-unsettled",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (!offerDue || now - settledAt < LEADER_SETTLE_MS || follow",
-    "new": "if (!offerDue || follow",
+    "old": "    if (!offerDue || now - settledAt < LEADER_SETTLE_MS || follow || host.moving()) return;",
+    "new": "    if (!offerDue || follow || host.moving()) return;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PT-audit-offer-lost-while-moving",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (!offerDue || now - settledAt < LEADER_SETTLE_MS || follow || host.moving()) return;\n    offerDue = false;",
-    "new": "if (!offerDue || now - settledAt < LEADER_SETTLE_MS) return;\n    offerDue = false;\n    if (follow || host.moving()) return;",
+    "old": "    if (!offerDue || now - settledAt < LEADER_SETTLE_MS || follow || host.moving()) return;\n    offerDue = false;",
+    "new": "    if (!offerDue || now - settledAt < LEADER_SETTLE_MS) return;\n    offerDue = false;\n    if (follow || host.moving()) return;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PT-audit-ride-step-keeps-still",
     "file": "src/systems/party/partyTravel.js",
-    "old": "leaderSeen.px = p.px; leaderSeen.py = p.py; settledAt = now;",
-    "new": "leaderSeen.px = p.px; leaderSeen.py = p.py;",
+    "old": "      leaderSeen.py = p.py;\n      settledAt = now; // any step restarts the stillness",
+    "new": "      leaderSeen.py = p.py; // any step restarts the stillness",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PT-audit-left-behind-offered-twice",
     "file": "src/systems/party/partyTravel.js",
-    "old": "    follow = null;\n    offerDue = false;\n    host.say(`The party went on",
-    "new": "    follow = null;\n    host.say(`The party went on",
+    "old": "    offerDue = false;\n    host.say(",
+    "new": "    host.say(",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PT-audit-start-unrefused",
     "file": "src/systems/party/partyTravel.js",
-    "old": "const why = !host.outdoors() || !host.alive() ? PARTY_TRAVEL_TEXT.off : host.refusal();",
-    "new": "const why = null;",
+    "old": "      const why = !host.outdoors() || !host.alive() ? PARTY_TRAVEL_TEXT.off : host.refusal();",
+    "new": "      const why = null;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PT-audit-start-indoors",
     "file": "src/systems/party/partyTravel.js",
-    "old": "const why = !host.outdoors() || !host.alive() ? PARTY_TRAVEL_TEXT.off : host.refusal();",
-    "new": "const why = host.refusal();",
+    "old": "      const why = !host.outdoors() || !host.alive() ? PARTY_TRAVEL_TEXT.off : host.refusal();",
+    "new": "      const why = host.refusal();",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "PT-audit-off-said-twice",
     "file": "src/systems/party/partyTravel.js",
-    "old": "(why === PARTY_TRAVEL_TEXT.off ? why :",
-    "new": "(false ? why :",
+    "old": "  const offWith = (why) => (why === PARTY_TRAVEL_TEXT.off ? why : `${why} ${PARTY_TRAVEL_TEXT.off}`);",
+    "new": "  const offWith = (why) => (false ? why : `${why} ${PARTY_TRAVEL_TEXT.off}`);",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "PT-audit-round-leaves-mid-journey",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (t.arrived && now - t.go > TRIP_FOLLOW_MS) trip = null;",
-    "new": "if (now - t.go > TRIP_FOLLOW_MS) trip = null;",
+    "old": "    if (t.arrived && now - t.go > TRIP_FOLLOW_MS) trip = null;",
+    "new": "    if (now - t.go > TRIP_FOLLOW_MS) trip = null;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PT-audit-round-never-leaves",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (t.arrived && now - t.go > TRIP_FOLLOW_MS) trip = null;",
-    "new": "if (t.arrived && now - t.go > TRIP_FOLLOW_MS * 1e9) trip = null;",
+    "old": "    if (t.arrived && now - t.go > TRIP_FOLLOW_MS) trip = null;",
+    "new": "    if (t.arrived && now - t.go > TRIP_FOLLOW_MS * 1e9) trip = null;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "PT-audit-arrival-unmarked",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (went) { t.arrived = true; return; }",
-    "new": "if (went) return;",
+    "old": "        if (went) {\n          t.arrived = true;\n          return;\n        }",
+    "new": "        if (went) return;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PT-audit-pick-seatless",
     "file": "src/systems/party/partyTravel.js",
-    "old": "besideSeat: followerSeatOf(social()?.party, social()?.acct),",
-    "new": "besideSeat: 0,",
+    "old": "      besideSeat: followerSeatOf(social()?.party, social()?.acct), // AUDIT PARTY-TRAVEL: a spot of my own beside them",
+    "new": "      besideSeat: 0, // AUDIT PARTY-TRAVEL: a spot of my own beside them",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "PT-audit-seat-counts-the-leader",
     "file": "src/systems/party/partyTravel.js",
-    "old": "    if (m.acct === party.leader) continue;\n",
-    "new": "",
+    "old": "    if (m.acct === party.leader) continue;\n    if (m.acct === me) return seat;",
+    "new": "    if (m.acct === me) return seat;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PT-audit-seat-ignored",
     "file": "src/systems/party/partyTravelLaw.js",
-    "old": "const start = Number.isInteger(first) && first > 0 ? first % n : 0;",
-    "new": "const start = 0;",
+    "old": "  const start = Number.isInteger(first) && first > 0 ? first % n : 0;",
+    "new": "  const start = 0;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "PT-audit-seat-no-wrap",
     "file": "src/systems/party/partyTravelLaw.js",
-    "old": "const start = Number.isInteger(first) && first > 0 ? first % n : 0;",
-    "new": "const start = Number.isInteger(first) && first > 0 ? Math.min(first, n - 1) : 0;",
+    "old": "  const start = Number.isInteger(first) && first > 0 ? first % n : 0;",
+    "new": "  const start = Number.isInteger(first) && first > 0 ? Math.min(first, n - 1) : 0;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "PT-audit-ring-restarts",
     "file": "src/systems/party/partyTravelLaw.js",
-    "old": "const [dx, dz] = offsets[(start + i) % n];",
-    "new": "const [dx, dz] = offsets[i === 0 ? start : i - 1];",
+    "old": "    const [dx, dz] = offsets[(start + i) % n];",
+    "new": "    const [dx, dz] = offsets[i === 0 ? start : i - 1];",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "PT-audit-four-spots",
     "file": "src/systems/party/partyTravelLaw.js",
-    "old": ",\n  [BESIDE_DIAG, BESIDE_DIAG], [-BESIDE_DIAG, -BESIDE_DIAG], [-BESIDE_DIAG, BESIDE_DIAG], [BESIDE_DIAG, -BESIDE_DIAG]]",
-    "new": "]",
+    "old": "    [BESIDE_DIAG, BESIDE_DIAG],\n    [-BESIDE_DIAG, -BESIDE_DIAG],\n    [-BESIDE_DIAG, BESIDE_DIAG],\n    [BESIDE_DIAG, -BESIDE_DIAG],\n  ].map((o) => Object.freeze(o)),",
+    "new": "  ].map((o) => Object.freeze(o)),",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "PT-audit-host-seat-dropped",
     "file": "src/systems/party/partyArrival.js",
-    "old": "return partyArrivalBeside([localX, feet.y + state.compensation[1], localZ], collider, seat, seaY - 0.1);",
-    "new": "return partyArrivalBeside([localX, feet.y + state.compensation[1], localZ], collider, 0, seaY - 0.1);",
+    "old": "  return partyArrivalBeside([localX, feet.y + state.compensation[1], localZ], collider, seat, seaY - 0.1);",
+    "new": "  return partyArrivalBeside([localX, feet.y + state.compensation[1], localZ], collider, 0, seaY - 0.1);",
     "tests": [
       "test/systems/partyArrivalTransaction.test.js"
     ]

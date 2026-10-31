@@ -11,8 +11,8 @@
   {
     "name": "MARKET-KEEP-the-settle-drops-it",
     "file": "src/net/marketBook.js",
-    "old": "            if (PIECE_GONE.includes(r?.error)) { try { drop?.(l.item, l.where); } catch (e) { console.warn('[market] drop', e); } }",
-    "new": "            if (PIECE_GONE.includes(r?.error) || r?.error === 'market-not-yours') { try { drop?.(l.item, l.where); } catch (e) { console.warn('[market] drop', e); } }",
+    "old": "              if (PIECE_GONE.includes(r?.error)) {",
+    "new": "              if (PIECE_GONE.includes(r?.error) || r?.error === 'market-not-yours') {",
     "tests": [
       "test/net/fb1001_market.test.js"
     ]
@@ -21,8 +21,8 @@
     "name": "MARKET-KEEP-the-writs-keep-their-own-list",
     "file": "src/net/writBook.js",
     "note": "INT19 (PIN MOVED): re-aimed by content - a new fill is the market's own realm act (realmPieceAct, PIECE_GONE); the writs' own list is their settle's, of a fill a tab from before kept",
-    "old": "            if (PIECE_GONE.includes(r?.error)) { try { drop?.(f.item, f.where); } catch (e) { console.warn('[writs] drop', e); } }   // AUDIT 31 H1",
-    "new": "            if (PIECE_GONE.includes(r?.error) || r?.error === 'market-not-yours') { try { drop?.(f.item, f.where); } catch (e) { console.warn('[writs] drop', e); } }   // AUDIT 31 H1",
+    "old": "              if (PIECE_GONE.includes(r?.error)) {",
+    "new": "              if (PIECE_GONE.includes(r?.error) || r?.error === 'market-not-yours') {",
     "tests": [
       "test/net/fb1001_market.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "MARKET-ANY-law-worn-dropped",
     "file": "src/net/marketLaw.js",
-    "old": "  if (rec.equipSlot != null) return 'worn';\n",
-    "new": "",
+    "old": "  if (rec.equipSlot != null) return 'worn';\n  if (rec.locked === true) return 'locked';",
+    "new": "  if (rec.locked === true) return 'locked';",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "MARKET-ANY-law-locked-dropped",
     "file": "src/net/marketLaw.js",
-    "old": "  if (rec.locked === true) return 'locked';\n",
-    "new": "",
+    "old": "  if (rec.locked === true) return 'locked';\n  if (rec.questItem) return 'quest';",
+    "new": "  if (rec.questItem) return 'quest';",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "MARKET-ANY-law-quest-dropped",
     "file": "src/net/marketLaw.js",
-    "old": "  if (rec.questItem) return 'quest';\n",
-    "new": "",
+    "old": "  if (rec.questItem) return 'quest';\n  if ((rec.timeForItemToDisappear ?? 0) !== 0) return 'summoned';",
+    "new": "  if ((rec.timeForItemToDisappear ?? 0) !== 0) return 'summoned';",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "MARKET-ANY-law-summoned-dropped",
     "file": "src/net/marketLaw.js",
-    "old": "  if ((rec.timeForItemToDisappear ?? 0) !== 0) return 'summoned';\n",
-    "new": "",
+    "old": "  if ((rec.timeForItemToDisappear ?? 0) !== 0) return 'summoned';\n  if (boundRecord(rec)) return 'bound';",
+    "new": "  if (boundRecord(rec)) return 'bound';",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "MARKET-ANY-law-bound-dropped",
     "file": "src/net/marketLaw.js",
-    "old": "  if (boundRecord(rec)) return 'bound';\n",
-    "new": "",
+    "old": "  if (boundRecord(rec)) return 'bound';\n  if (rec.templateIndex === GOLD_PIECES_TEMPLATE && rec.group === 'Currency') return 'gold';",
+    "new": "  if (rec.templateIndex === GOLD_PIECES_TEMPLATE && rec.group === 'Currency') return 'gold';",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "MARKET-ANY-law-letter-dropped",
     "file": "src/net/marketLaw.js",
-    "old": "  if (VALUE_IS_IDENTITY_TEMPLATES.includes(rec.templateIndex)) return 'letter';\n",
-    "new": "",
+    "old": "  if (VALUE_IS_IDENTITY_TEMPLATES.includes(rec.templateIndex)) return 'letter';\n  if (BOAT_TEMPLATES.includes(rec.templateIndex)) return 'boat';",
+    "new": "  if (BOAT_TEMPLATES.includes(rec.templateIndex)) return 'boat';",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "MARKET-ANY-law-boat-dropped",
     "file": "src/net/marketLaw.js",
-    "old": "  if (BOAT_TEMPLATES.includes(rec.templateIndex)) return 'boat';\n",
-    "new": "",
+    "old": "  if (BOAT_TEMPLATES.includes(rec.templateIndex)) return 'boat';\n  if (rec.templateIndex === GOOD_ARROW_TEMPLATE) return 'arrows';",
+    "new": "  if (rec.templateIndex === GOOD_ARROW_TEMPLATE) return 'arrows';",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "MARKET-ANY-law-arrows-dropped",
     "file": "src/net/marketLaw.js",
-    "old": "  if (rec.templateIndex === GOOD_ARROW_TEMPLATE) return 'arrows';\n",
-    "new": "",
+    "old": "  if (rec.templateIndex === GOOD_ARROW_TEMPLATE) return 'arrows';\n  if (storesForm(rec)) return 'stores';",
+    "new": "  if (storesForm(rec)) return 'stores';",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "MARKET-ANY-law-stores-dropped",
     "file": "src/net/marketLaw.js",
-    "old": "  if (storesForm(rec)) return 'stores';\n",
-    "new": "",
+    "old": "  if (storesForm(rec)) return 'stores';\n  if (!tradeableRecord(rec)) return 'shape'; // the trade's law, whole - nothing it refuses lists",
+    "new": "  if (!tradeableRecord(rec)) return 'shape'; // the trade's law, whole - nothing it refuses lists",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "MARKET-ANY-law-gold-dropped",
     "file": "src/net/marketLaw.js",
-    "old": "  if (rec.templateIndex === GOLD_PIECES_TEMPLATE && rec.group === 'Currency') return 'gold';\n",
-    "new": "",
+    "old": "  if (rec.templateIndex === GOLD_PIECES_TEMPLATE && rec.group === 'Currency') return 'gold';\n  if (VALUE_IS_IDENTITY_TEMPLATES.includes(rec.templateIndex)) return 'letter';",
+    "new": "  if (VALUE_IS_IDENTITY_TEMPLATES.includes(rec.templateIndex)) return 'letter';",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "MARKET-ANY-law-clothing-family",
     "file": "src/net/marketLaw.js",
-    "old": "  Object.freeze(['MensClothing', 'clothing']), Object.freeze(['WomensClothing', 'clothing']),",
-    "new": "  Object.freeze(['MensClothing', 'clothing']),",
+    "old": "  Object.freeze(['WomensClothing', 'clothing']),\n  Object.freeze(['Jewellery', 'jewellery']),",
+    "new": "  Object.freeze(['Jewellery', 'jewellery']),",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -156,7 +156,7 @@
   {
     "name": "MARKET-ANY-law-a-herb-unwalled",
     "file": "src/net/marketLaw.js",
-    "old": "    const keys = [...MINED_KEYS, ...Object.entries(PLANT_GROUP_TEMPLATES).flatMap(([g, ts]) => ts.map((t) => `${g}:${t}`))];",
+    "old": "    const keys = [\n      ...MINED_KEYS,\n      ...Object.entries(PLANT_GROUP_TEMPLATES).flatMap(([g, ts]) => ts.map((t) => `${g}:${t}`)),\n    ];",
     "new": "    const keys = [...MINED_KEYS];",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
@@ -165,8 +165,8 @@
   {
     "name": "MARKET-ANY-law-the-goods-view",
     "file": "src/net/marketLaw.js",
-    "old": "Object.freeze(['goods', 'Goods']),",
-    "new": "",
+    "old": "  Object.freeze(['goods', 'Goods']),\n  Object.freeze(['mine', 'My listings']),",
+    "new": "  Object.freeze(['mine', 'My listings']),",
     "tests": [
       "test/systems/fb1001_market_goods.test.js",
       "test/net/prof5_law.test.js"
@@ -395,8 +395,8 @@
   {
     "name": "MARKET-ANY-book-taken-before-the-hold",
     "file": "src/net/marketBook.js",
-    "old": "    let undo = null, asked = false;",
-    "new": "    let undo = good?.take?.() ?? null, asked = true;",
+    "old": "    let undo = null,\n      asked = false;",
+    "new": "    let undo = good?.take?.() ?? null,\n      asked = true;",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -404,8 +404,8 @@
   {
     "name": "MARKET-ANY-book-never-put-back",
     "file": "src/net/marketBook.js",
-    "old": "      reserve: () => () => { const u = undo; undo = null; u?.(); },",
-    "new": "      reserve: () => () => {},",
+    "old": "        reserve: () => () => {\n          const u = undo;\n          undo = null;\n          u?.();\n        },",
+    "new": "        reserve: () => () => {},",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -413,8 +413,8 @@
   {
     "name": "MARKET-ANY-book-asked-for-a-piece-the-pack-would-not-give",
     "file": "src/net/marketBook.js",
-    "old": "        if (!undo) return Promise.resolve({ ok: false, error: 'piece-held', status: 409 });\n",
-    "new": "",
+    "old": "          if (!undo) return Promise.resolve({ ok: false, error: 'piece-held', status: 409 });\n          return door.list({ ...body, realm: at });",
+    "new": "          return door.list({ ...body, realm: at });",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -422,8 +422,8 @@
   {
     "name": "MARKET-ANY-book-the-repeat-received",
     "file": "src/net/marketBook.js",
-    "old": "held = mine && goods.receive(a?.data?.item ?? null, why) === true;",
-    "new": "held = goods.receive(a?.data?.item ?? null, why) === true;",
+    "old": "            held = mine && goods.receive(a?.data?.item ?? null, why) === true;",
+    "new": "            held = goods.receive(a?.data?.item ?? null, why) === true;",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -431,8 +431,8 @@
   {
     "name": "MARKET-ANY-book-held-regardless",
     "file": "src/net/marketBook.js",
-    "old": "        if (!held) realm.abandon?.('unknown');\n",
-    "new": "",
+    "old": "          if (!held) realm.abandon?.('unknown');\n        },",
+    "new": "        },",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -440,8 +440,8 @@
   {
     "name": "MARKET-ANY-book-arrivals-uncollected",
     "file": "src/net/marketBook.js",
-    "old": "        for (const d of state.road.filter((x) => x.kind === 'item' && x.ready && x.character === me)) {",
-    "new": "        for (const d of state.road.filter((x) => x.kind === 'none' && x.ready && x.character === me)) {",
+    "old": "          for (const d of state.road.filter((x) => x.kind === 'item' && x.ready && x.character === me)) {",
+    "new": "          for (const d of state.road.filter((x) => x.kind === 'none' && x.ready && x.character === me)) {",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -449,8 +449,8 @@
   {
     "name": "MARKET-ANY-book-the-pieces-unkeyed",
     "file": "src/net/marketBook.js",
-    "old": ", (q.pieces ?? []).join(','), (q.board ?? []).join(','),\n",
-    "new": ", (q.board ?? []).join(','),\n",
+    "old": "      (q.pieces ?? []).join(','),\n      (q.board ?? []).join(','),",
+    "new": "      (q.board ?? []).join(','),",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -458,8 +458,8 @@
   {
     "name": "MARKET-ANY-pack-an-unwireable-piece-offered",
     "file": "src/systems/tradePack.js",
-    "old": "(pack.wire([{ item, count: Math.max(1, item.stackCount ?? 1) }])?.[0] ? null : 'shape')",
-    "new": "null",
+    "old": "          const why =\n            goodRefusal(item) ??\n            (pack.wire([{ item, count: Math.max(1, item.stackCount ?? 1) }])?.[0] ? null : 'shape');",
+    "new": "          const why = goodRefusal(item) ?? null;",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -476,8 +476,8 @@
   {
     "name": "MARKET-ANY-pack-the-keeper-unasked",
     "file": "src/systems/tradePack.js",
-    "old": "filter((it) => it && !(typeof it.provenance === 'string' && kept(it.provenance)))",
-    "new": "filter((it) => it)",
+    "old": "        .filter((it) => it && !(typeof it.provenance === 'string' && kept(it.provenance)))",
+    "new": "        .filter((it) => it)",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -485,8 +485,8 @@
   {
     "name": "MARKET-ANY-pack-nothing-said",
     "file": "src/systems/tradePack.js",
-    "old": "      say(why === 'bought' ? marketArrivedText(name) : why === 'returned' ? marketBackText(name) : `${name} is in your pack.`);\n",
-    "new": "",
+    "old": "      say(\n        why === 'bought'\n          ? marketArrivedText(name)\n          : why === 'returned'\n            ? marketBackText(name)\n            : `${name} is in your pack.`,\n      );\n      return true;",
+    "new": "      return true;",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -512,7 +512,7 @@
   {
     "name": "MARKET-ANY-tab-another-piece-offered-as-crafted",
     "file": "src/ui/marketTab.js",
-    "old": "  const pieceListedAsCrafted = (pv) => (st.data?.ways ? ['yours', 'unasked'].includes(/** @type {string} */ (heldState(pv))) : true);",
+    "old": "  const pieceListedAsCrafted = (pv) =>\n    st.data?.ways ? ['yours', 'unasked'].includes(/** @type {string} */ (heldState(pv))) : true;",
     "new": "  const pieceListedAsCrafted = () => true;",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
@@ -521,8 +521,8 @@
   {
     "name": "MARKET-ANY-tab-own-make-from-the-pack",
     "file": "src/ui/marketTab.js",
-    "old": "h === 'yours' ? 'made by you. List it as a crafted piece' :",
-    "new": "h === 'yours' ? null :",
+    "old": "        ? 'made by you. List it as a crafted piece'",
+    "new": "        ? null",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -530,8 +530,8 @@
   {
     "name": "MARKET-ANY-tab-the-pieces-unsent",
     "file": "src/ui/marketTab.js",
-    "old": "      ...(st.view === 'mine' ? { pieces: heldIds() } : {}),   // MARKET-ANY",
-    "new": "      ...({}),   // MARKET-ANY",
+    "old": "      ...(st.view === 'mine' ? { pieces: heldIds() } : {}), // MARKET-ANY",
+    "new": "      ...{}, // MARKET-ANY",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -548,8 +548,8 @@
   {
     "name": "MARKET-ANY-tab-arrivals-unasked",
     "file": "src/ui/marketTab.js",
-    "old": "(x.kind === 'piece' || x.kind === 'item') && x.ready && mine(x) && !tried.has(x.id));",
-    "new": "x.kind === 'piece' && x.ready && mine(x) && !tried.has(x.id));",
+    "old": "    (m.book.state.road ?? []).filter(\n      (x) => (x.kind === 'piece' || x.kind === 'item') && x.ready && mine(x) && !tried.has(x.id),\n    ); // MARKET-ANY: a pack's piece too",
+    "new": "    (m.book.state.road ?? []).filter((x) => x.kind === 'piece' && x.ready && mine(x) && !tried.has(x.id)); // MARKET-ANY: a pack's piece too",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]

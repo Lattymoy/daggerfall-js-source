@@ -3,7 +3,7 @@
     "name": "POI4B-the-entry-read-as-a-poi",
     "file": "src/poi/poiLaw.js",
     "old": "  if (typeof raw.id !== 'string' || !(shelf ? POI_SHELF_ID_RE : POI_ID_RE).test(raw.id)) say('id', 'id');",
-    "new": "  if (typeof raw.id !== 'string' || !(POI_ID_RE).test(raw.id)) say('id', 'id');",
+    "new": "  if (typeof raw.id !== 'string' || !POI_ID_RE.test(raw.id)) say('id', 'id');",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "POI4B-the-picture-unread",
     "file": "src/poi/poiLaw.js",
-    "old": "POI_SHA_RE.test(raw.thumb))) say('thumb', 'texture-ref'); }",
-    "new": "POI_SHA_RE.test(raw.thumb))) void 0; }",
+    "old": "    if (raw.thumb !== null && !(typeof raw.thumb === 'string' && POI_SHA_RE.test(raw.thumb)))\n      say('thumb', 'texture-ref');",
+    "new": "    if (raw.thumb !== null && !(typeof raw.thumb === 'string' && POI_SHA_RE.test(raw.thumb))) void 0;",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "POI4B-another-builder-changes-it",
     "file": "server-account/src/poi.js",
-    "old": "      if (had.by !== player.id && !roles.approver) return { error: 'poi-not-author' };\n",
-    "new": "\n",
+    "old": "      if (had.by !== player.id && !roles.approver) return { error: 'poi-not-author' };",
+    "new": "",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ],
@@ -39,8 +39,8 @@
   {
     "name": "POI4B-taken-off-by-anyone",
     "file": "server-account/src/poi.js",
-    "old": "  if (r.by !== player.id && !roles.approver) return { error: 'poi-not-author' };\n  const w = await ctx.db.prepare('UPDATE poi_shelf SET gone_at",
-    "new": "  const w = await ctx.db.prepare('UPDATE poi_shelf SET gone_at",
+    "old": "  if (r.by !== player.id && !roles.approver) return { error: 'poi-not-author' };\n  const w = await ctx.db",
+    "new": "  const w = await ctx.db",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ],
@@ -49,8 +49,8 @@
   {
     "name": "POI4B-a-taken-off-entry-listed",
     "file": "server-account/src/poi.js",
-    "old": "    WHERE gone_at IS NULL ORDER BY updated_at DESC, id",
-    "new": "    ORDER BY updated_at DESC, id",
+    "old": "    WHERE gone_at IS NULL ORDER BY updated_at DESC, id LIMIT ${POI_SHELF_LIST}`,",
+    "new": "    ORDER BY updated_at DESC, id LIMIT ${POI_SHELF_LIST}`,",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "POI4B-the-triangles-uncounted",
     "file": "server-account/src/poi.js",
-    "old": "(Number(facts.get(part.mesh)?.triangles) || 0)",
-    "new": "0",
+    "old": "  const triangles = item.parts.reduce((n, part) => n + (Number(facts.get(part.mesh)?.triangles) || 0), 0);",
+    "new": "  const triangles = item.parts.reduce((n, part) => n + 0, 0);",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "POI4B-the-count-unbounded",
     "file": "server-account/src/poi.js",
-    "old": "WHERE by = ?8 AND gone_at IS NULL) < ${POI_SHELF_MAX}",
-    "new": "WHERE by = ?8 AND gone_at IS NULL) < ${POI_SHELF_MAX * 2}",
+    "old": "      WHERE (SELECT COUNT(*) FROM poi_shelf WHERE by = ?8 AND gone_at IS NULL) < ${POI_SHELF_MAX} AND (SELECT COUNT(*) FROM poi_shelf WHERE by = ?8) < ${POI_SHELF_EVER}",
+    "new": "      WHERE (SELECT COUNT(*) FROM poi_shelf WHERE by = ?8 AND gone_at IS NULL) < ${POI_SHELF_MAX * 2} AND (SELECT COUNT(*) FROM poi_shelf WHERE by = ?8) < ${POI_SHELF_EVER}",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ],
@@ -86,8 +86,8 @@
   {
     "name": "POI4B-the-facing-reversed",
     "file": "src/poi/poiThumb.js",
-    "old": "  const front = (area > 0) !== q.mirrored;",
-    "new": "  const front = (area < 0) !== q.mirrored;",
+    "old": "  const front = area > 0 !== q.mirrored;",
+    "new": "  const front = area < 0 !== q.mirrored;",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "POI4B-the-cut-ignored",
     "file": "src/poi/poiThumb.js",
-    "old": "    if (mat.alpha === 'cutout' && a < (mat.cutoff ?? 0.5)) return;\n",
-    "new": "\n",
+    "old": "    if (mat.alpha === 'cutout' && a < (mat.cutoff ?? 0.5)) return;",
+    "new": "",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]
@@ -122,8 +122,8 @@
   {
     "name": "POI4B-uploaded-before-the-law",
     "file": "src/poi/poiShelf.js",
-    "old": "  if (own.length) return { ok: false, error: 'poi-doc', problems: own };\n",
-    "new": "\n",
+    "old": "  if (own.length) return { ok: false, error: 'poi-doc', problems: own };",
+    "new": "",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "POI4B-the-picture-not-worn",
     "file": "src/poi/poiShelf.js",
-    "old": "    item.thumb = r.data.sha;\n",
-    "new": "\n",
+    "old": "    item.thumb = r.data.sha;\n  }",
+    "new": "  }",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]
@@ -140,8 +140,8 @@
   {
     "name": "POI4B-the-problems-dropped",
     "file": "src/poi/poiService.js",
-    "old": "      ...(Array.isArray(data?.problems) ? { problems: data.problems } : {}), status: res.status };",
-    "new": "      status: res.status };",
+    "old": "      ...(Array.isArray(data?.problems) ? { problems: data.problems } : {}),\n      status: res.status,",
+    "new": "      status: res.status,",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "POI4B-mine-by-case",
     "file": "src/ui/poi/poiLibraryPanel.js",
-    "old": "String(item.by ?? '').toLowerCase() === me.handle.toLowerCase()",
-    "new": "String(item.by ?? '') === me.handle",
+    "old": "  const mine = (item) => !!me.handle && String(item.by ?? '').toLowerCase() === me.handle.toLowerCase();",
+    "new": "  const mine = (item) => !!me.handle && String(item.by ?? '') === me.handle;",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]
@@ -176,8 +176,8 @@
   {
     "name": "POI4B-taken-off-at-the-first-press",
     "file": "src/ui/poi/poiLibraryPanel.js",
-    "old": "    if (dropping !== it.id) { dropping = it.id; draw(); return; }\n",
-    "new": "\n",
+    "old": "    if (dropping !== it.id) {\n      dropping = it.id;\n      draw();\n      return;\n    }\n    dropping = null;",
+    "new": "    dropping = null;",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "POI4B-the-lights-left-behind",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "lights: structuredClone(d.lights ?? []) }); }));",
-    "new": "lights: [] }); }));",
+    "old": "          library.keep({ name: d.name, parts: structuredClone(d.parts), lights: structuredClone(d.lights ?? []) });",
+    "new": "          library.keep({ name: d.name, parts: structuredClone(d.parts), lights: [] });",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "POI4B-the-turn-dropped",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "            t: [local[0] + off[0], local[1] + off[1], local[2] + off[2]], r: piece.r, s: piece.s,",
-    "new": "            t: [local[0] + off[0], local[1] + off[1], local[2] + off[2]], s: piece.s,",
+    "old": "            r: piece.r,\n            s: piece.s,",
+    "new": "            s: piece.s,",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "POI4B-the-lights-dropped",
     "file": "src/scenes/poiEditorHost.js",
-    "old": "        for (const l of asset.lights ?? []) doc.lights.push(",
-    "new": "        for (const l of []) doc.lights.push(",
+    "old": "        for (const l of asset.lights ?? [])",
+    "new": "        for (const l of [])",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]

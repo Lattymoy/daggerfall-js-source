@@ -36,15 +36,31 @@
 // fits - the same range C# int holds.
 import { SKILLS } from '../skills.js';
 import { isMember } from './guilds.js';
-import { localizedText, localizedTable } from '../textManager.js';   // L10N3d: the deity lines and Stendarr's mercy
+import { localizedText, localizedTable } from '../textManager.js'; // L10N3d: the deity lines and Stendarr's mercy
 import { NPC_SERVICE } from './guildNpcServices.js';
 
 /** Services.GuildServices - the service kinds. */
 export const GUILD_SERVICES = Object.freeze([
-  'Training', 'Quests', 'Repair', 'Identify', 'Donate', 'CureDisease',
-  'BuyPotions', 'MakePotions', 'BuySpells', 'BuySpellsMages', 'MakeSpells',
-  'BuyMagicItems', 'MakeMagicItems', 'SellMagicItems', 'Teleport',
-  'DaedraSummoning', 'Spymaster', 'BuySoulgems', 'ReceiveArmor', 'ReceiveHouse',
+  'Training',
+  'Quests',
+  'Repair',
+  'Identify',
+  'Donate',
+  'CureDisease',
+  'BuyPotions',
+  'MakePotions',
+  'BuySpells',
+  'BuySpellsMages',
+  'MakeSpells',
+  'BuyMagicItems',
+  'MakeMagicItems',
+  'SellMagicItems',
+  'Teleport',
+  'DaedraSummoning',
+  'Spymaster',
+  'BuySoulgems',
+  'ReceiveArmor',
+  'ReceiveHouse',
 ]);
 
 /** Services.GuildNpcServices -> GuildServices: the table, a leaf of its own (systems/guild/guildNpcServices.js - AUDIT QA2). */
@@ -64,50 +80,175 @@ export const TRAINING_SKILLS = Object.freeze({
   // FGH2H: the hall trains HandToHand too - the rank law's new skill is one
   // a member can buy (a DEPARTURE, Port-Ledger row for guilds.js and this file;
   // R&R's fightersTeachHandToHand, which swapped Giantish out, is retired).
-  FightersGuild: [SKILLS.Archery, SKILLS.Axe, SKILLS.BluntWeapon, SKILLS.CriticalStrike,
-    SKILLS.Giantish, SKILLS.HandToHand, SKILLS.Jumping, SKILLS.LongBlade, SKILLS.Orcish,
-    SKILLS.Running, SKILLS.ShortBlade, SKILLS.Swimming],
-  MagesGuild: [SKILLS.Alteration, SKILLS.Daedric, SKILLS.Destruction, SKILLS.Dragonish,
-    SKILLS.Harpy, SKILLS.Illusion, SKILLS.Impish, SKILLS.Mysticism, SKILLS.Orcish,
-    SKILLS.Restoration, SKILLS.Spriggan, SKILLS.Thaumaturgy],
-  ThievesGuild: [SKILLS.Backstabbing, SKILLS.BluntWeapon, SKILLS.Climbing, SKILLS.Dodging,
-    SKILLS.Jumping, SKILLS.Lockpicking, SKILLS.Pickpocket, SKILLS.ShortBlade,
-    SKILLS.Stealth, SKILLS.Streetwise, SKILLS.Swimming],
-  DarkBrotherhood: [SKILLS.Archery, SKILLS.Backstabbing, SKILLS.Climbing, SKILLS.CriticalStrike,
-    SKILLS.Daedric, SKILLS.Destruction, SKILLS.Dodging, SKILLS.Running, SKILLS.ShortBlade,
-    SKILLS.Stealth, SKILLS.Streetwise, SKILLS.Swimming],
+  FightersGuild: [
+    SKILLS.Archery,
+    SKILLS.Axe,
+    SKILLS.BluntWeapon,
+    SKILLS.CriticalStrike,
+    SKILLS.Giantish,
+    SKILLS.HandToHand,
+    SKILLS.Jumping,
+    SKILLS.LongBlade,
+    SKILLS.Orcish,
+    SKILLS.Running,
+    SKILLS.ShortBlade,
+    SKILLS.Swimming,
+  ],
+  MagesGuild: [
+    SKILLS.Alteration,
+    SKILLS.Daedric,
+    SKILLS.Destruction,
+    SKILLS.Dragonish,
+    SKILLS.Harpy,
+    SKILLS.Illusion,
+    SKILLS.Impish,
+    SKILLS.Mysticism,
+    SKILLS.Orcish,
+    SKILLS.Restoration,
+    SKILLS.Spriggan,
+    SKILLS.Thaumaturgy,
+  ],
+  ThievesGuild: [
+    SKILLS.Backstabbing,
+    SKILLS.BluntWeapon,
+    SKILLS.Climbing,
+    SKILLS.Dodging,
+    SKILLS.Jumping,
+    SKILLS.Lockpicking,
+    SKILLS.Pickpocket,
+    SKILLS.ShortBlade,
+    SKILLS.Stealth,
+    SKILLS.Streetwise,
+    SKILLS.Swimming,
+  ],
+  DarkBrotherhood: [
+    SKILLS.Archery,
+    SKILLS.Backstabbing,
+    SKILLS.Climbing,
+    SKILLS.CriticalStrike,
+    SKILLS.Daedric,
+    SKILLS.Destruction,
+    SKILLS.Dodging,
+    SKILLS.Running,
+    SKILLS.ShortBlade,
+    SKILLS.Stealth,
+    SKILLS.Streetwise,
+    SKILLS.Swimming,
+  ],
 });
 
 /** Temple trainingSkills (:232-273), per divine - LONGER than the
  *  guild-skill lists the rank law reads, and a different set. */
 export const TEMPLE_TRAINING_SKILLS = Object.freeze({
-  Akatosh: [SKILLS.Alteration, SKILLS.Archery, SKILLS.Daedric, SKILLS.Destruction,
-    SKILLS.Dragonish, SKILLS.LongBlade, SKILLS.Running, SKILLS.Stealth, SKILLS.Swimming],
-  Arkay: [SKILLS.Axe, SKILLS.Backstabbing, SKILLS.Climbing, SKILLS.CriticalStrike,
-    SKILLS.Daedric, SKILLS.Destruction, SKILLS.Medical, SKILLS.Restoration, SKILLS.ShortBlade],
-  Dibella: [SKILLS.Daedric, SKILLS.Etiquette, SKILLS.Harpy, SKILLS.Illusion, SKILLS.Lockpicking,
-    SKILLS.LongBlade, SKILLS.Nymph, SKILLS.Orcish, SKILLS.Restoration, SKILLS.Streetwise],
-  Julianos: [SKILLS.Alteration, SKILLS.CriticalStrike, SKILLS.Daedric, SKILLS.Impish,
-    SKILLS.Lockpicking, SKILLS.Mercantile, SKILLS.Mysticism, SKILLS.ShortBlade, SKILLS.Thaumaturgy],
-  Kynareth: [SKILLS.Archery, SKILLS.Climbing, SKILLS.Daedric, SKILLS.Destruction, SKILLS.Dodging,
-    SKILLS.Dragonish, SKILLS.Harpy, SKILLS.Illusion, SKILLS.Jumping, SKILLS.Running, SKILLS.Stealth],
-  Mara: [SKILLS.Archery, SKILLS.CriticalStrike, SKILLS.Daedric, SKILLS.Etiquette, SKILLS.Harpy,
-    SKILLS.Illusion, SKILLS.Medical, SKILLS.Nymph, SKILLS.Restoration, SKILLS.Streetwise],
-  Stendarr: [SKILLS.Axe, SKILLS.BluntWeapon, SKILLS.CriticalStrike, SKILLS.Daedric,
-    SKILLS.Dodging, SKILLS.Medical, SKILLS.Orcish, SKILLS.Restoration, SKILLS.Spriggan],
-  Zenithar: [SKILLS.BluntWeapon, SKILLS.Centaurian, SKILLS.Daedric, SKILLS.Etiquette,
-    SKILLS.Giantish, SKILLS.Harpy, SKILLS.Mercantile, SKILLS.Orcish, SKILLS.Pickpocket,
-    SKILLS.Spriggan, SKILLS.Streetwise, SKILLS.Thaumaturgy],
+  Akatosh: [
+    SKILLS.Alteration,
+    SKILLS.Archery,
+    SKILLS.Daedric,
+    SKILLS.Destruction,
+    SKILLS.Dragonish,
+    SKILLS.LongBlade,
+    SKILLS.Running,
+    SKILLS.Stealth,
+    SKILLS.Swimming,
+  ],
+  Arkay: [
+    SKILLS.Axe,
+    SKILLS.Backstabbing,
+    SKILLS.Climbing,
+    SKILLS.CriticalStrike,
+    SKILLS.Daedric,
+    SKILLS.Destruction,
+    SKILLS.Medical,
+    SKILLS.Restoration,
+    SKILLS.ShortBlade,
+  ],
+  Dibella: [
+    SKILLS.Daedric,
+    SKILLS.Etiquette,
+    SKILLS.Harpy,
+    SKILLS.Illusion,
+    SKILLS.Lockpicking,
+    SKILLS.LongBlade,
+    SKILLS.Nymph,
+    SKILLS.Orcish,
+    SKILLS.Restoration,
+    SKILLS.Streetwise,
+  ],
+  Julianos: [
+    SKILLS.Alteration,
+    SKILLS.CriticalStrike,
+    SKILLS.Daedric,
+    SKILLS.Impish,
+    SKILLS.Lockpicking,
+    SKILLS.Mercantile,
+    SKILLS.Mysticism,
+    SKILLS.ShortBlade,
+    SKILLS.Thaumaturgy,
+  ],
+  Kynareth: [
+    SKILLS.Archery,
+    SKILLS.Climbing,
+    SKILLS.Daedric,
+    SKILLS.Destruction,
+    SKILLS.Dodging,
+    SKILLS.Dragonish,
+    SKILLS.Harpy,
+    SKILLS.Illusion,
+    SKILLS.Jumping,
+    SKILLS.Running,
+    SKILLS.Stealth,
+  ],
+  Mara: [
+    SKILLS.Archery,
+    SKILLS.CriticalStrike,
+    SKILLS.Daedric,
+    SKILLS.Etiquette,
+    SKILLS.Harpy,
+    SKILLS.Illusion,
+    SKILLS.Medical,
+    SKILLS.Nymph,
+    SKILLS.Restoration,
+    SKILLS.Streetwise,
+  ],
+  Stendarr: [
+    SKILLS.Axe,
+    SKILLS.BluntWeapon,
+    SKILLS.CriticalStrike,
+    SKILLS.Daedric,
+    SKILLS.Dodging,
+    SKILLS.Medical,
+    SKILLS.Orcish,
+    SKILLS.Restoration,
+    SKILLS.Spriggan,
+  ],
+  Zenithar: [
+    SKILLS.BluntWeapon,
+    SKILLS.Centaurian,
+    SKILLS.Daedric,
+    SKILLS.Etiquette,
+    SKILLS.Giantish,
+    SKILLS.Harpy,
+    SKILLS.Mercantile,
+    SKILLS.Orcish,
+    SKILLS.Pickpocket,
+    SKILLS.Spriggan,
+    SKILLS.Streetwise,
+    SKILLS.Thaumaturgy,
+  ],
 });
 
 /** MACRO-4: %gdd - Temple.templeData's deityDesc column
  *  (Temple.cs:134-141), DFU's Internal_Strings akatoshDesc..zenDesc,
  *  each read through its key when a record quotes it (L10N3d). */
 export const DEITY_DESCRIPTIONS = localizedTable({
-  Akatosh: ['akatoshDesc', 'God of Time'], Arkay: ['arkayDesc', 'God of Birth and Death'],
-  Dibella: ['dibellaDesc', 'Goddess of Beauty'], Julianos: ['julianosDesc', 'God of Logic'],
-  Kynareth: ['kynarethDesc', 'Goddess of Air'], Mara: ['maraDesc', 'Goddess of Love'],
-  Stendarr: ['stendarDesc', 'God of Mercy'], Zenithar: ['zenDesc', 'God of Work and Commerce'],
+  Akatosh: ['akatoshDesc', 'God of Time'],
+  Arkay: ['arkayDesc', 'God of Birth and Death'],
+  Dibella: ['dibellaDesc', 'Goddess of Beauty'],
+  Julianos: ['julianosDesc', 'God of Logic'],
+  Kynareth: ['kynarethDesc', 'Goddess of Air'],
+  Mara: ['maraDesc', 'Goddess of Love'],
+  Stendarr: ['stendarDesc', 'God of Mercy'],
+  Zenithar: ['zenDesc', 'God of Work and Commerce'],
 });
 
 /** Which skills a guild will train. NULL for a knightly order, which
@@ -116,7 +257,7 @@ export const DEITY_DESCRIPTIONS = localizedTable({
 export function trainingSkills(guild) {
   if (guild.divine) return TEMPLE_TRAINING_SKILLS[guild.divine];
   if (guild.order) return null;
-  return TRAINING_SKILLS[guild.name] ?? null;   // FGH2H-R: FightersGuildRR's override retired
+  return TRAINING_SKILLS[guild.name] ?? null; // FGH2H-R: FightersGuildRR's override retired
 }
 
 /** GetTrainingMax (:335-338): defaultTrainingMax, and no guild
@@ -136,15 +277,24 @@ export function trainingPrice(membership, level) {
  *  BuySpellsMages are open to NON-MEMBERS; Training and Repair are not. */
 function baseCanAccessService(membership, service) {
   switch (service) {
-    case 'Training': return isMember(membership);
-    case 'Quests': return true;
-    case 'Repair': return isMember(membership);
-    case 'Identify': return true;
-    case 'BuySpells': return false;
-    case 'BuySpellsMages': return true;
-    case 'Donate': return true;
-    case 'CureDisease': return true;
-    default: return false;
+    case 'Training':
+      return isMember(membership);
+    case 'Quests':
+      return true;
+    case 'Repair':
+      return isMember(membership);
+    case 'Identify':
+      return true;
+    case 'BuySpells':
+      return false;
+    case 'BuySpellsMages':
+      return true;
+    case 'Donate':
+      return true;
+    case 'CureDisease':
+      return true;
+    default:
+      return false;
   }
 }
 
@@ -152,21 +302,35 @@ function baseCanAccessService(membership, service) {
  *  divine's SERVICE-RANK columns. Training and Quests are open to
  *  anyone here - a temple trains non-members, where a guild does not. */
 function templeCanAccessService(guild, membership, service) {
-  const d = guild.services, rank = membership?.rank ?? -1;
+  const d = guild.services,
+    rank = membership?.rank ?? -1;
   switch (service) {
-    case 'Training': return true;
-    case 'Quests': return true;
-    case 'Donate': return true;
-    case 'CureDisease': return true;
-    case 'BuyPotions': return d.buyPotions <= rank;
-    case 'MakePotions': return d.makePotions <= rank;
-    case 'BuySpells': return d.buySpells <= rank;
-    case 'MakeSpells': return d.makeSpells <= rank;
-    case 'BuyMagicItems': return d.buyMagic <= rank;
-    case 'MakeMagicItems': return d.makeMagic <= rank;
-    case 'DaedraSummoning': return d.summoning <= rank;
-    case 'BuySoulgems': return d.soulGems <= rank;
-    default: return false;
+    case 'Training':
+      return true;
+    case 'Quests':
+      return true;
+    case 'Donate':
+      return true;
+    case 'CureDisease':
+      return true;
+    case 'BuyPotions':
+      return d.buyPotions <= rank;
+    case 'MakePotions':
+      return d.makePotions <= rank;
+    case 'BuySpells':
+      return d.buySpells <= rank;
+    case 'MakeSpells':
+      return d.makeSpells <= rank;
+    case 'BuyMagicItems':
+      return d.buyMagic <= rank;
+    case 'MakeMagicItems':
+      return d.makeMagic <= rank;
+    case 'DaedraSummoning':
+      return d.summoning <= rank;
+    case 'BuySoulgems':
+      return d.soulGems <= rank;
+    default:
+      return false;
   }
 }
 
@@ -177,48 +341,83 @@ function templeCanAccessService(guild, membership, service) {
  *  the Thieves/Brotherhood lose Identify, exactly as here. */
 function magesCanAccessService(membership, service) {
   const rank = membership?.rank ?? -1;
-  switch (service) {   // MagesGuild.cs:134-161
-    case 'Training': return isMember(membership);
-    case 'Quests': return true;
-    case 'Identify': return true;
-    case 'BuySpellsMages': return true;
-    case 'MakeSpells': return isMember(membership);
-    case 'BuyMagicItems': return rank >= 3;
-    case 'MakeMagicItems': return rank >= 5;
-    case 'Teleport': return rank >= 8;
-    case 'DaedraSummoning': return rank >= 6;
-    case 'BuySoulgems': return rank >= 4;
-    default: return false;
+  switch (
+    service // MagesGuild.cs:134-161
+  ) {
+    case 'Training':
+      return isMember(membership);
+    case 'Quests':
+      return true;
+    case 'Identify':
+      return true;
+    case 'BuySpellsMages':
+      return true;
+    case 'MakeSpells':
+      return isMember(membership);
+    case 'BuyMagicItems':
+      return rank >= 3;
+    case 'MakeMagicItems':
+      return rank >= 5;
+    case 'Teleport':
+      return rank >= 8;
+    case 'DaedraSummoning':
+      return rank >= 6;
+    case 'BuySoulgems':
+      return rank >= 4;
+    default:
+      return false;
   }
 }
 function thievesCanAccessService(membership, service) {
   const rank = membership?.rank ?? -1;
-  switch (service) {   // ThievesGuild.cs:146-162
-    case 'Training': return isMember(membership);
-    case 'Quests': return true;
-    case 'SellMagicItems': return rank >= 2;
-    case 'Spymaster': return rank >= 4;
-    default: return false;
+  switch (
+    service // ThievesGuild.cs:146-162
+  ) {
+    case 'Training':
+      return isMember(membership);
+    case 'Quests':
+      return true;
+    case 'SellMagicItems':
+      return rank >= 2;
+    case 'Spymaster':
+      return rank >= 4;
+    default:
+      return false;
   }
 }
 function brotherhoodCanAccessService(membership, service) {
   const rank = membership?.rank ?? -1;
-  switch (service) {   // DarkBrotherhood.cs:151-171
-    case 'Training': return isMember(membership);
-    case 'Quests': return true;
-    case 'BuyPotions': return rank >= 1;
-    case 'MakePotions': return rank >= 3;
-    case 'BuySoulgems': return rank >= 5;
-    case 'Spymaster': return rank >= 7;
-    default: return false;
+  switch (
+    service // DarkBrotherhood.cs:151-171
+  ) {
+    case 'Training':
+      return isMember(membership);
+    case 'Quests':
+      return true;
+    case 'BuyPotions':
+      return rank >= 1;
+    case 'MakePotions':
+      return rank >= 3;
+    case 'BuySoulgems':
+      return rank >= 5;
+    case 'Spymaster':
+      return rank >= 7;
+    default:
+      return false;
   }
 }
 function knightlyCanAccessService(membership, service) {
-  switch (service) {   // KnightlyOrder.cs:176-189
-    case 'Quests': return true;
-    case 'ReceiveArmor': return isMember(membership);
-    case 'ReceiveHouse': return true;
-    default: return false;
+  switch (
+    service // KnightlyOrder.cs:176-189
+  ) {
+    case 'Quests':
+      return true;
+    case 'ReceiveArmor':
+      return isMember(membership);
+    case 'ReceiveHouse':
+      return true;
+    default:
+      return false;
   }
 }
 
@@ -242,7 +441,10 @@ const _customGuilds = new Map();
 /** Register (fn) or retire (null) a guild's service override by guild
  *  name, e.g. 'MagesGuild'. The arm is (membership, service) and
  *  returns true, false, or undefined to decline. */
-export function registerCustomGuild(name, fn) { if (fn) _customGuilds.set(name, fn); else _customGuilds.delete(name); }
+export function registerCustomGuild(name, fn) {
+  if (fn) _customGuilds.set(name, fn);
+  else _customGuilds.delete(name);
+}
 
 export function canAccessService(guild, membership, service) {
   // AUDIT 26 F115: a NON-MEMBER never reaches the subclass switch.
@@ -267,12 +469,19 @@ export function canAccessService(guild, membership, service) {
   // back for the group, and a non-member is still handed
   // guildNotMember above before any subclass is asked.
   const custom = _customGuilds.get(guild.name);
-  if (custom) { const r = custom(membership, service); if (r !== undefined) return r; }
+  if (custom) {
+    const r = custom(membership, service);
+    if (r !== undefined) return r;
+  }
   switch (guild.name) {
-    case 'MagesGuild': return magesCanAccessService(membership, service);
-    case 'ThievesGuild': return thievesCanAccessService(membership, service);
-    case 'DarkBrotherhood': return brotherhoodCanAccessService(membership, service);
-    default: return baseCanAccessService(membership, service);
+    case 'MagesGuild':
+      return magesCanAccessService(membership, service);
+    case 'ThievesGuild':
+      return thievesCanAccessService(membership, service);
+    case 'DarkBrotherhood':
+      return brotherhoodCanAccessService(membership, service);
+    default:
+      return baseCanAccessService(membership, service);
   }
 }
 
@@ -301,16 +510,18 @@ export const canRest = (guild, m) => guild.name === 'FightersGuild' && isMember(
 export function hallAccessAnytime(guild, m) {
   switch (guild.name) {
     case 'FightersGuild':
-    case 'MagesGuild': return (m?.rank ?? -1) >= 6;
+    case 'MagesGuild':
+      return (m?.rank ?? -1) >= 6;
     case 'ThievesGuild':
-    case 'DarkBrotherhood': return isMember(m);
-    default: return false;
+    case 'DarkBrotherhood':
+      return isMember(m);
+    default:
+      return false;
   }
 }
 
 /** Temple.FreeHealing - at the divine's own healing rank. */
-export const freeHealing = (guild, m) =>
-  !!guild.divine && guild.services.healing <= (m?.rank ?? -1);
+export const freeHealing = (guild, m) => !!guild.divine && guild.services.healing <= (m?.rank ?? -1);
 
 /** MagesGuild.FreeMagickaRecharge - and note WHO it is for: a member
  *  whose career cannot regenerate spell points at all. The guild's
@@ -351,16 +562,16 @@ export const avoidDeathText = () => localizedText('avoidDeath', AVOID_DEATH_TEXT
 
 /** FightersGuild.AlterReward - a member's quest reward GROWS with rank. */
 export const alterReward = (guild, m, reward) =>
-  (guild.name === 'FightersGuild' ? scaleByRank(10 + (m?.rank ?? 0), reward) : reward);
+  guild.name === 'FightersGuild' ? scaleByRank(10 + (m?.rank ?? 0), reward) : reward;
 
 /** FightersGuild.ReducedRepairCost - and it shrinks the cost. */
 export const reducedRepairCost = (guild, m, price) =>
-  (guild.name === 'FightersGuild' ? scaleByRank(10 - (m?.rank ?? 0), price) : price);
+  guild.name === 'FightersGuild' ? scaleByRank(10 - (m?.rank ?? 0), price) : price;
 
 /** Temple.ReducedCureCost - ARKAY ONLY. The god of burial and the
  *  cycle of life is the one who discounts curing you. */
 export const reducedCureCost = (guild, m, price) =>
-  (guild.divine === 'Arkay' ? scaleByRank(10 - (m?.rank ?? 0), price) : price);
+  guild.divine === 'Arkay' ? scaleByRank(10 - (m?.rank ?? 0), price) : price;
 
 // ── Services.cs:146-175 - the custom merchant services ──────────────────
 // A mod's service on a merchant NPC, by the NPC's faction id: the popup
@@ -385,7 +596,12 @@ export function registerMerchantService(npcFactionId, service, serviceName, isOn
   return true;
 }
 /** GetCustomMerchantService (:168-171): the delegate, or null. */
-export const getCustomMerchantService = (npcFactionId) => (serviceOn(npcFactionId) ? _customMerchantServices.get(npcFactionId) : null);
+export const getCustomMerchantService = (npcFactionId) =>
+  serviceOn(npcFactionId) ? _customMerchantServices.get(npcFactionId) : null;
 /** GetCustomMerchantServiceLabel (:173-175). */
-export const getCustomMerchantServiceLabel = (npcFactionId) => _customMerchantServiceNames.get(npcFactionId) ?? '?';   // AUDIT-RR2 G17: GetCustomMerchantServiceLabel's `else return "?"` (Services.cs:173-179)
-export function _resetMerchantServices() { _customMerchantServices.clear(); _customMerchantServiceNames.clear(); _customMerchantServiceGates.clear(); }
+export const getCustomMerchantServiceLabel = (npcFactionId) => _customMerchantServiceNames.get(npcFactionId) ?? '?'; // AUDIT-RR2 G17: GetCustomMerchantServiceLabel's `else return "?"` (Services.cs:173-179)
+export function _resetMerchantServices() {
+  _customMerchantServices.clear();
+  _customMerchantServiceNames.clear();
+  _customMerchantServiceGates.clear();
+}

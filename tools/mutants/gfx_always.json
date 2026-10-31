@@ -2,8 +2,8 @@
   {
     "name": "GA-ready-fades",
     "file": "src/ui/gfxPrepBar.js",
-    "old": "  if (s.phase === 'gone' || s.phase === 'ready') return s;\n",
-    "new": "  if (s.phase === 'gone') return s;\n  if (s.phase === 'ready') return now - s.since >= 2000 ? { ...s, phase: 'gone', since: now } : s;\n",
+    "old": "  if (s.phase === 'gone' || s.phase === 'ready') return s;",
+    "new": "  if (s.phase === 'gone') return s;\n  if (s.phase === 'ready') return now - s.since >= 2000 ? { ...s, phase: 'gone', since: now } : s;",
     "tests": [
       "test/ui/gfxprepbar.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "GA-shown-before-a-count",
     "file": "src/ui/gfxPrepBar.js",
-    "old": "    if (!settled && total === 0) return s;   // nothing started yet\n",
-    "new": "",
+    "old": "    if (!settled && total === 0) return s; // nothing started yet\n    if (settled && (full || total === 0)) return { ...s, phase: 'ready', done, total, fullAt: now, since: now };",
+    "new": "    if (settled && (full || total === 0)) return { ...s, phase: 'ready', done, total, fullAt: now, since: now };",
     "tests": [
       "test/ui/gfxprepbar.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "GA-warm-ready-before-the-mount-set",
     "file": "src/ui/gfxPrepBar.js",
-    "old": "    if (settled && (full || total === 0))",
-    "new": "    if (full || total === 0)",
+    "old": "    if (settled && (full || total === 0)) return { ...s, phase: 'ready', done, total, fullAt: now, since: now };",
+    "new": "    if (full || total === 0) return { ...s, phase: 'ready', done, total, fullAt: now, since: now };",
     "tests": [
       "test/ui/gfxprepbar.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "GA-warm-ready-skips-paint",
     "file": "src/ui/gfxPrepBar.js",
-    "old": "fill.style.width = `${state.phase === 'filling' ? pct : 100}%`;",
-    "new": "fill.style.width = `${pct}%`;",
+    "old": "    fill.style.width = `${state.phase === 'filling' ? pct : 100}%`;",
+    "new": "    fill.style.width = `${pct}%`;",
     "tests": [
       "test/ui/gfxprepbar.test.js"
     ],

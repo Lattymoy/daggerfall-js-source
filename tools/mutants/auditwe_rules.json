@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-WE-L1-3-the-sap-unheld",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "    { const held = regenShare((entity.maxHealth * (share(entity) < 0.5 ? hist.low : hist.pct)) / 100, 'hist', entity); if (held > 0) healMine(entity, held); }",
-    "new": "    healMine(entity, (entity.maxHealth * (share(entity) < 0.5 ? hist.low : hist.pct)) / 100);",
+    "old": "    {\n      const held = regenShare((entity.maxHealth * (share(entity) < 0.5 ? hist.low : hist.pct)) / 100, 'hist', entity);\n      if (held > 0) healMine(entity, held);\n    } // AUDIT WORLD-EVENTS L1-3: a natural regeneration - held in a made level (systems/courtRules.js)",
+    "new": "    healMine(entity, (entity.maxHealth * (share(entity) < 0.5 ? hist.low : hist.pct)) / 100); // AUDIT WORLD-EVENTS L1-3: a natural regeneration - held in a made level (systems/courtRules.js)",
     "tests": [
       "test/systems/auditwe_rules.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-WE-L1-3-steadfast-unheld",
     "file": "src/systems/arcanePowers.js",
-    "old": "{ const held = regenShare((entity.maxHealth * mentorScaled(entity, N.steadfast.pct)) / 100, 'steadfast', entity); if (held > 0) healMine(entity, held); }",
-    "new": "healMine(entity, (entity.maxHealth * mentorScaled(entity, N.steadfast.pct)) / 100);",
+    "old": "  if (entity.health > 0 && entity.health < entity.maxHealth) {\n    const held = regenShare((entity.maxHealth * mentorScaled(entity, N.steadfast.pct)) / 100, 'steadfast', entity);\n    if (held > 0) healMine(entity, held);\n  } // AUDIT WORLD-EVENTS L1-3: held in a made level (systems/courtRules.js)",
+    "new": "  if (entity.health > 0 && entity.health < entity.maxHealth)\n    healMine(entity, (entity.maxHealth * mentorScaled(entity, N.steadfast.pct)) / 100); // AUDIT WORLD-EVENTS L1-3: held in a made level (systems/courtRules.js)",
     "tests": [
       "test/systems/auditwe_rules.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-WE-L1-3-the-sky-unheld",
     "file": "src/systems/firmamentPowers.js",
-    "old": "{ const held = regenShare((entity.maxHealth * c.hpRegen) / 1000, 'firmament', entity); if (held > 0) healMine(entity, held); }",
-    "new": "healMine(entity, (entity.maxHealth * c.hpRegen) / 1000);",
+    "old": "  if (c.hpRegen && entity.health > 0 && entity.health < entity.maxHealth) {\n    const held = regenShare((entity.maxHealth * c.hpRegen) / 1000, 'firmament', entity);\n    if (held > 0) healMine(entity, held);\n  } // AUDIT WORLD-EVENTS L1-3: held in a made level (systems/courtRules.js)",
+    "new": "  if (c.hpRegen && entity.health > 0 && entity.health < entity.maxHealth)\n    healMine(entity, (entity.maxHealth * c.hpRegen) / 1000); // AUDIT WORLD-EVENTS L1-3: held in a made level (systems/courtRules.js)",
     "tests": [
       "test/systems/auditwe_rules.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-WE-L1-9-one-carry-for-every-body",
     "file": "src/systems/courtRules.js",
-    "old": "  if (!onPlayer) { carry = _bodyCarry.get(body) ?? new Map(); _bodyCarry.set(body, carry); }\n",
-    "new": "",
+    "old": "  if (!onPlayer) {\n    carry = _bodyCarry.get(body) ?? new Map();\n    _bodyCarry.set(body, carry);\n  }\n  const c = (carry.get(source) ?? 0) + n * REGEN_HELD_SHARE;",
+    "new": "  const c = (carry.get(source) ?? 0) + n * REGEN_HELD_SHARE;",
     "tests": [
       "test/systems/auditwe_rules.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-WE-L1-10-the-pause-ended-off",
     "file": "src/systems/courtRules.js",
-    "old": "  if (!_on) { _carry.clear(); _bodyCarry = new WeakMap(); }",
-    "new": "  if (!_on) { _hurtAt = -Infinity; _carry.clear(); _bodyCarry = new WeakMap(); }",
+    "old": "    _carry.clear();",
+    "new": "    _hurtAt = -Infinity;\n    _carry.clear();",
     "tests": [
       "test/systems/auditwe_rules.test.js"
     ]

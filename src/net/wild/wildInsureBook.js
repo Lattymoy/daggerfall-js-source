@@ -18,7 +18,13 @@
 // answered `body` and the book was empty for good), and the card's read asks again when it is stale (`lineOf`).
 // ═══════════════════════════════════════════════════════════════════
 import { walletReserve } from '../realm/realmGoldLaw.js';
-import { wildInsurable, wildPremium, insureKeyOf, wildInsureKey, WILD_INSURE_SETTLE_S } from '../../systems/wild/wildInsureLaw.js';
+import {
+  wildInsurable,
+  wildPremium,
+  insureKeyOf,
+  wildInsureKey,
+  WILD_INSURE_SETTLE_S,
+} from '../../systems/wild/wildInsureLaw.js';
 import { WILD_TEXT } from '../../systems/wild/wildZone.js';
 import { REFUSALS } from '../accountClient.js';
 
@@ -33,16 +39,40 @@ export const WILD_POLICIES_STALE_MS = 10 * 60_000;
  *   character: () => string | null, region?: () => number, inZone?: () => boolean,
  *   now?: () => number }} o
  */
-export function createWildInsureBook({ door, realm, wallet, character, region = () => 0, inZone = () => false, now = () => Date.now() }) {
+export function createWildInsureBook({
+  door,
+  realm,
+  wallet,
+  character,
+  region = () => 0,
+  inZone = () => false,
+  now = () => Date.now(),
+}) {
   /** @type {Map<string, WildPolicy>} */
   const policies = new Map();
-  let readFor = /** @type {string | null} */ (null), readAt = -Infinity, reading = /** @type {Promise<void> | null} */ (null);
+  let readFor = /** @type {string | null} */ (null),
+    readAt = -Infinity,
+    reading = /** @type {Promise<void> | null} */ (null);
   let busy = false;
   const listeners = new Set();
-  const tell = () => { for (const fn of listeners) { try { fn(); } catch { /* a listener is not the book's problem */ } } };
+  const tell = () => {
+    for (const fn of listeners) {
+      try {
+        fn();
+      } catch {
+        /* a listener is not the book's problem */
+      }
+    }
+  };
   const take = (/** @type {any[]} */ list) => {
     for (const p of Array.isArray(list) ? list : []) {
-      if (p && typeof p.key === 'string' && Number.isSafeInteger(p.at)) policies.set(p.key, { key: p.key, premium: Number(p.premium) || 0, at: p.at, live: Number.isSafeInteger(p.live) ? p.live : p.at + WILD_INSURE_SETTLE_S });
+      if (p && typeof p.key === 'string' && Number.isSafeInteger(p.at))
+        policies.set(p.key, {
+          key: p.key,
+          premium: Number(p.premium) || 0,
+          at: p.at,
+          live: Number.isSafeInteger(p.live) ? p.live : p.at + WILD_INSURE_SETTLE_S,
+        });
     }
   };
   const book = {
@@ -51,20 +81,36 @@ export function createWildInsureBook({ door, realm, wallet, character, region = 
       const who = character();
       if (!who || typeof door?.policies !== 'function') return Promise.resolve();
       if (reading && readFor === who) return reading;
-      if (who !== readFor) { policies.clear(); readFor = who; }
-      readAt = now();
-      reading = door.policies({ character: who }).then((r) => {
-        if (readFor !== who || !r?.ok) return;
+      if (who !== readFor) {
         policies.clear();
-        take(r.data?.policies);
-        tell();
-      }).catch(() => { /* unread: the service's answer at the fall is the truth */ }).finally(() => { reading = null; });
+        readFor = who;
+      }
+      readAt = now();
+      reading = door
+        .policies({ character: who })
+        .then((r) => {
+          if (readFor !== who || !r?.ok) return;
+          policies.clear();
+          take(r.data?.policies);
+          tell();
+        })
+        .catch(() => {
+          /* unread: the service's answer at the fall is the truth */
+        })
+        .finally(() => {
+          reading = null;
+        });
       return reading;
     },
     /** Read again when the character changed or the last read is stale. */
-    fresh() { if (character() !== readFor || now() - readAt > WILD_POLICIES_STALE_MS) book.read(); },
+    fresh() {
+      if (character() !== readFor || now() - readAt > WILD_POLICIES_STALE_MS) book.read();
+    },
     /** The policy on `item`, or null. @param {any} item */
-    policyOf(item) { const k = insureKeyOf(item); return k != null ? policies.get(k) ?? null : null; },
+    policyOf(item) {
+      const k = insureKeyOf(item);
+      return k != null ? (policies.get(k) ?? null) : null;
+    },
     /** The card's line for `item`: insured and in force, insured and soon in force (its minutes), or null - the read asked
      *  again first when it is stale or another character's (AUDIT PVP-EASE L4-1). @param {any} item */
     lineOf(item) {
@@ -77,14 +123,16 @@ export function createWildInsureBook({ door, realm, wallet, character, region = 
     /** The premium a policy on `item` costs. @param {any} item */
     premiumOf: (item) => wildPremium(item),
     /** Whether the pack's card offers Insure for `item` at all: online with a realm record, insurable, not insured. */
-    offers(/** @type {any} */ item) { return !!realm && !!wallet && !!character() && wildInsurable(item) && !book.policyOf(item); },
+    offers(/** @type {any} */ item) {
+      return !!realm && !!wallet && !!character() && wildInsurable(item) && !book.policyOf(item);
+    },
     /** Why `item` cannot be insured now - the words said - or null. @param {any} item */
     refusal(item) {
       if (!realm || !wallet || !character()) return WILD_TEXT.insureOffline();
       if (!wildInsurable(item)) return REFUSALS['insure-piece'];
       if (book.policyOf(item)) return REFUSALS['insure-held'];
       if (inZone()) return WILD_TEXT.insureInZone();
-      if (busy) return REFUSALS.busy;   // AUDIT PVP-EASE L1-2: the cap is the service's - a policy whose piece is gone lapses there
+      if (busy) return REFUSALS.busy; // AUDIT PVP-EASE L1-2: the cap is the service's - a policy whose piece is gone lapses there
       const w = wallet(region());
       if (w.gold() < wildPremium(item)) return REFUSALS['realm-gold'];
       return null;
@@ -95,17 +143,30 @@ export function createWildInsureBook({ door, realm, wallet, character, region = 
     async insure(item) {
       const no = book.refusal(item);
       if (no) return { ok: false, text: no };
-      const key = wildInsureKey(item), gold = wildPremium(item), at = region();
+      const key = wildInsureKey(item),
+        gold = wildPremium(item),
+        at = region();
       if (key == null) return { ok: false, text: REFUSALS['insure-piece'] };
       const w = /** @type {any} */ (wallet)(at);
       busy = true;
       let r;
       try {
-        r = await /** @type {any} */ (realm).act({ reserve: walletReserve(w, gold).reserve, call: (/** @type {any} */ where) => /** @type {any} */ (door).insure({ realm: where, keys: [key], region: at }) });
-      } finally { busy = false; }
+        r = await /** @type {any} */ (realm).act({
+          reserve: walletReserve(w, gold).reserve,
+          call: (/** @type {any} */ where) =>
+            /** @type {any} */ (door).insure({ realm: where, keys: [key], region: at }),
+        });
+      } finally {
+        busy = false;
+      }
       if (!r?.ok) return { ok: false, text: REFUSALS[r?.error] ?? REFUSALS.server };
-      if (Array.isArray(r.data?.policies)) { take(r.data.policies); tell(); }
-      else { readAt = -Infinity; book.read(); }   // AUDIT PVP-EASE L4-4: landed, its answer lost - the policy is read back
+      if (Array.isArray(r.data?.policies)) {
+        take(r.data.policies);
+        tell();
+      } else {
+        readAt = -Infinity;
+        book.read();
+      } // AUDIT PVP-EASE L4-4: landed, its answer lost - the policy is read back
       return { ok: true, text: WILD_TEXT.insureDone(gold) };
     },
     /** THE FALL'S ANSWER: the keys its policies kept (server-account/src/wild.js `insured`) - spent there, forgotten here.
@@ -117,7 +178,10 @@ export function createWildInsureBook({ door, realm, wallet, character, region = 
       return list.length;
     },
     /** @param {() => void} fn */
-    onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); },
+    onChange(fn) {
+      listeners.add(fn);
+      return () => listeners.delete(fn);
+    },
   };
   return book;
 }

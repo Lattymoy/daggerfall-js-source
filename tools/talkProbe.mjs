@@ -6,7 +6,9 @@ import { createServer } from 'vite';
 import { chromium } from 'playwright';
 const server = await createServer({ root: '/home/user/project-dagger', server: { port: 5199, strictPort: true } });
 await server.listen();
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 // T2: `class=16` SKIPS THE CHARGEN WIZARD. Without it the wizard holds
@@ -22,7 +24,10 @@ for (let i = 0; i < 60 && !live; i++) {
   await new Promise((r) => setTimeout(r, 5000));
   live = (await readPeople()).find((p) => p.visible && p.moves > 0);
 }
-if (!live) { console.log('NO LIVE WALKER'); process.exit(1); }
+if (!live) {
+  console.log('NO LIVE WALKER');
+  process.exit(1);
+}
 // Face-to-face: pose near, let the politeness idle freeze them, then
 // re-aim at the LIVE position and hold E across real frames (a bare
 // press can fall between rAFs).
@@ -34,10 +39,13 @@ const aimAndUse = async () => {
   const p = (await readPeople()).find((q) => q.visible && q.moves > 0);
   if (!p) return false;
   await page.evaluate(([x, y, z]) => window.__pose(x, y, z, 0, 0), [p.pos[0], p.pos[1] + 0.1, p.pos[2] - 1.6]);
-  await waitFrames(12);   // the politeness idle freezes the subject
+  await waitFrames(12); // the politeness idle freezes the subject
   const q = (await readPeople()).find((r) => r.i === p.i);
   const yaw = Math.atan2(q.pos[0] - p.pos[0], q.pos[2] - (p.pos[2] - 1.6));
-  await page.evaluate(([x, y, z, yw]) => window.__pose(x, y, z, yw, 0), [p.pos[0], p.pos[1] + 0.1, p.pos[2] - 1.6, yaw]);
+  await page.evaluate(
+    ([x, y, z, yw]) => window.__pose(x, y, z, yw, 0),
+    [p.pos[0], p.pos[1] + 0.1, p.pos[2] - 1.6, yaw],
+  );
   await waitFrames(2);
   await page.keyboard.down('KeyE');
   await waitFrames(4);
@@ -56,8 +64,11 @@ const die = (why, detail) => {
 console.log('talk state before:', await page.evaluate(() => window.__talk()));
 await aimAndUse();
 let opened = true;
-await page.waitForFunction(() => JSON.parse(window.__talk()).overlay === true, null, { timeout: 30000 })
-  .catch(() => { opened = false; });
+await page
+  .waitForFunction(() => JSON.parse(window.__talk()).overlay === true, null, { timeout: 30000 })
+  .catch(() => {
+    opened = false;
+  });
 const after = JSON.parse(await page.evaluate(() => window.__talk()));
 console.log('talk state after E:', JSON.stringify(after));
 if (!opened) die('E on a townsperson opened no talk window', JSON.stringify(after));
@@ -92,4 +103,5 @@ if (await aimAndUse()) {
   die('no walker to pickpocket - the steal half never ran');
 }
 if (!process.exitCode) console.log('\nTALK OK: E converses, F1+E steals, and both were checked');
-await browser.close(); await server.close();
+await browser.close();
+await server.close();

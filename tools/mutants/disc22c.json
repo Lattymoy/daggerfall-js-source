@@ -48,7 +48,7 @@
     "name": "D22C-body-not-cut",
     "file": "src/ui/classicLootPanel.js",
     "old": "    drawImgCrop(renderer, sheet, m, [0, P.cutTop, P.w, P.cutBottom - P.cutTop], [L.x, L.y + P.cutTop, P.w, L.middle]);",
-    "new": "    drawImgCrop(renderer, sheet, m, [0, P.cutTop, P.w, P.cutBottom - P.cutTop], [L.x, L.y + P.cutTop, P.w, P.cutBottom - P.cutTop]);",
+    "new": "    drawImgCrop(\n      renderer,\n      sheet,\n      m,\n      [0, P.cutTop, P.w, P.cutBottom - P.cutTop],\n      [L.x, L.y + P.cutTop, P.w, P.cutBottom - P.cutTop],\n    );",
     "tests": [
       "test/systems/disc22c_classic_loot.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "D22C-body-not-grown",
     "file": "src/ui/classicLootPanel.js",
-    "old": "    const middle = Math.max(rowH, n * rowH) + 6;",
-    "new": "    const middle = PARCHMENT.cutBottom - PARCHMENT.cutTop;",
+    "old": "    const middle = Math.max(rowH, n * rowH) + 6; // the body, cut at the rules and stretched to the rows",
+    "new": "    const middle = PARCHMENT.cutBottom - PARCHMENT.cutTop; // the body, cut at the rules and stretched to the rows",
     "tests": [
       "test/systems/disc22c_classic_loot.test.js"
     ]

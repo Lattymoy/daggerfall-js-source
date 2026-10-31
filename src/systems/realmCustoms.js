@@ -32,27 +32,51 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { callInEmpireDebt, SHIP_TYPES, SHIP_INTERIOR_MAP_IDS, LOAN_AMNESTY, HOUSES_PER_REGION } from './banking.js';
-import { regionDeedsOf } from '../net/homeLaw.js';   // HOUSES-3: a region's three deeds
-import { interiorSceneName, LOOT_CONTAINER_TYPES } from './sceneCache.js';   // RESTORE: a deed's room, by its own name; AUDIT REST III B4: a shop's shelf told from a chest
-import { BUILDING_KEY_0 } from './talk/talkTopics.js';   // RESTORE: the no-key key a ship's room is filed under
-import { firstRestorable } from './save/saveSlots.js';   // RESTORE: the offline character a realm one came from, on this device
+import { regionDeedsOf } from '../net/homeLaw.js'; // HOUSES-3: a region's three deeds
+import { interiorSceneName, LOOT_CONTAINER_TYPES } from './sceneCache.js'; // RESTORE: a deed's room, by its own name; AUDIT REST III B4: a shop's shelf told from a chest
+import { BUILDING_KEY_0 } from './talk/talkTopics.js'; // RESTORE: the no-key key a ship's room is filed under
+import { firstRestorable } from './save/saveSlots.js'; // RESTORE: the offline character a realm one came from, on this device
 import { deductGold } from './court.js';
-import { LEVELING_CLASSIC, newCharacterLevelingSystem } from './oblivionLeveling.js';   // LEVEL-ONLINE-2: a character crossing levels the classic way
-import { levelUpSkillSumAnchor } from './advancement.js';   // LEVEL-ONLINE-2: ...from the start of the level it has
-import { onlineLevelConvert } from './levelClimb.js';   // LEVEL-45: the conversion rides the switch's two doors
-import { releaseCapLatch } from './levelCap.js';   // AUDIT FB1026d C2: a level owed past the cap crosses as none
+import { LEVELING_CLASSIC, newCharacterLevelingSystem } from './oblivionLeveling.js'; // LEVEL-ONLINE-2: a character crossing levels the classic way
+import { levelUpSkillSumAnchor } from './advancement.js'; // LEVEL-ONLINE-2: ...from the start of the level it has
+import { onlineLevelConvert } from './levelClimb.js'; // LEVEL-45: the conversion rides the switch's two doors
+import { releaseCapLatch } from './levelCap.js'; // AUDIT FB1026d C2: a level owed past the cap crosses as none
 import { isGoldPieces } from './inventory.js';
-import { crossFleetData } from './fleet.js';   // AUDIT SHIPYARDS L1-2: Come Sail Away's ships cross as a DFU deed does - kept, never sold
-import { COME_SAIL_AWAY_VENDOR } from './comeSailAway/comeSailAway.js';   // ...her placed boats' record, by its vendor
+import { crossFleetData } from './fleet.js'; // AUDIT SHIPYARDS L1-2: Come Sail Away's ships cross as a DFU deed does - kept, never sold
+import { COME_SAIL_AWAY_VENDOR } from './comeSailAway/comeSailAway.js'; // ...her placed boats' record, by its vendor
 // AUDIT REALM2 S1: the allowance and the measure live in the law the service reads too (net/realm/realmGoldLaw.js), which holds
 // a customs character's first save to them - re-exported here, their home before it; AUDIT REALM2 T2, T3 and T5's
 // counting with them (every container, a boat's hold, a deed at what the realm's bank pays)
-import { REST_ITEM, restItemsOnline } from './rest/restItems.js';   // AUDIT REST-PARTY B4: the supplies stay offline while their online sources are shut (REST-LOOT: open since 2026-10-05; the switch is the way back)
-import { liquidWorthOf, stashedItemLists, carriedItemLists, liquidWealthOf, deedsOf, customsAllowance, CUSTOMS_WEALTH_BASE, CUSTOMS_WEALTH_PER_LEVEL, CUSTOMS_HOUSE_PRICE } from '../net/realm/realmGoldLaw.js';
-import { cardWorthOf, cardRecordWorth, decorOwnOf, isCardRecord, customsCardAllowance } from '../net/card/cardWorthLaw.js';   // CARDS9: the cards' customs, one law with the service's first save; AUDIT CARDS-6 A1/A2: a pack's worth, and the decor
-import { binderOf, binderDecks, collectionOf, deckHeldRefusal } from './iliac/iliacItems.js';   // AUDIT CARDS-6 A9: the copies the binder's decks need, kept last
+import { REST_ITEM, restItemsOnline } from './rest/restItems.js'; // AUDIT REST-PARTY B4: the supplies stay offline while their online sources are shut (REST-LOOT: open since 2026-10-05; the switch is the way back)
+import {
+  liquidWorthOf,
+  stashedItemLists,
+  carriedItemLists,
+  liquidWealthOf,
+  deedsOf,
+  customsAllowance,
+  CUSTOMS_WEALTH_BASE,
+  CUSTOMS_WEALTH_PER_LEVEL,
+  CUSTOMS_HOUSE_PRICE,
+} from '../net/realm/realmGoldLaw.js';
+import {
+  cardWorthOf,
+  cardRecordWorth,
+  decorOwnOf,
+  isCardRecord,
+  customsCardAllowance,
+} from '../net/card/cardWorthLaw.js'; // CARDS9: the cards' customs, one law with the service's first save; AUDIT CARDS-6 A1/A2: a pack's worth, and the decor
+import { binderOf, binderDecks, collectionOf, deckHeldRefusal } from './iliac/iliacItems.js'; // AUDIT CARDS-6 A9: the copies the binder's decks need, kept last
 
-export { stashedItemLists, liquidWealthOf, deedsOf, customsAllowance, CUSTOMS_WEALTH_BASE, CUSTOMS_WEALTH_PER_LEVEL, CUSTOMS_HOUSE_PRICE };
+export {
+  stashedItemLists,
+  liquidWealthOf,
+  deedsOf,
+  customsAllowance,
+  CUSTOMS_WEALTH_BASE,
+  CUSTOMS_WEALTH_PER_LEVEL,
+  CUSTOMS_HOUSE_PRICE,
+};
 const lists = (/** @type {any[]} */ ...ls) => ls.filter(Array.isArray);
 /**
  * CUSTOMS ON A SAVE, in place (hand it a copy). First every loan is called in - the Empire keeps no loan for a
@@ -75,18 +99,32 @@ const lists = (/** @type {any[]} */ ...ls) => ls.filter(Array.isArray);
  * @param {any} snap
  */
 export function applyCustoms(snap) {
-  snap.loanAmnesty = LOAN_AMNESTY;   // LOAN-AMNESTY: a character crossing now is past every amnesty - its offline loans are called in below, never forgiven
+  snap.loanAmnesty = LOAN_AMNESTY; // LOAN-AMNESTY: a character crossing now is past every amnesty - its offline loans are called in below, never forgiven
   const accounts = Array.isArray(snap.bankAccounts) ? snap.bankAccounts : [];
-  const call = callInEmpireDebt(accounts, { deductGold: (/** @type {number} */ n) => deductGold(snap, n) }, { cap: 0, nowMinutes: Math.floor(snap.classicMinutes ?? 0) });
+  const call = callInEmpireDebt(
+    accounts,
+    { deductGold: (/** @type {number} */ n) => deductGold(snap, n) },
+    { cap: 0, nowMinutes: Math.floor(snap.classicMinutes ?? 0) },
+  );
   const crossed = crossDeeds(snap);
   // AUDIT SHIPYARDS L1-2: and every ship of Come Sail Away's, by number - the Fleet's records, the placed boats, every deed
   // and parts item wherever it lies - crossed: she sails in the realm, and no shipyard there buys her
-  const fleet = snap.modData && typeof snap.modData === 'object'
-    ? crossFleetData(snap.modData, [...carriedItemLists(snap), ...stashedItemLists(snap)], snap.modData[COME_SAIL_AWAY_VENDOR]?.placedBoats ?? null) : 0;
+  const fleet =
+    snap.modData && typeof snap.modData === 'object'
+      ? crossFleetData(
+          snap.modData,
+          [...carriedItemLists(snap), ...stashedItemLists(snap)],
+          snap.modData[COME_SAIL_AWAY_VENDOR]?.placedBoats ?? null,
+        )
+      : 0;
   const allowance = customsAllowance(snap.level);
   const wealth = liquidWealthOf(snap);
   let excess = Math.max(0, wealth - allowance);
-  const take = (/** @type {number} */ have) => { const t = Math.min(excess, Math.max(0, have)); excess -= t; return t; };
+  const take = (/** @type {number} */ have) => {
+    const t = Math.min(excess, Math.max(0, have));
+    excess -= t;
+    return t;
+  };
   /** @type {Set<any>} */
   const emptied = new Set();
   const takeFrom = (/** @type {any[]} */ list) => {
@@ -94,7 +132,8 @@ export function applyCustoms(snap) {
       if (!excess) return;
       const t = take(liquidWorthOf(it));
       if (!t) continue;
-      if (isGoldPieces(it)) it.stackCount -= t; else it.value -= t;
+      if (isGoldPieces(it)) it.stackCount -= t;
+      else it.value -= t;
       if (!liquidWorthOf(it)) emptied.add(it);
     }
   };
@@ -103,7 +142,7 @@ export function applyCustoms(snap) {
     if (!excess) break;
     a.accountGold -= take(a.accountGold ?? 0);
   }
-  for (const list of lists(snap.wagonItems, snap.bagItems, snap.items)) takeFrom(list);   // BAG1: the bag's materials too
+  for (const list of lists(snap.wagonItems, snap.bagItems, snap.items)) takeFrom(list); // BAG1: the bag's materials too
   if (excess) snap.goldPieces = Math.max(0, (snap.goldPieces ?? 0) - take(snap.goldPieces ?? 0));
   // the records customs emptied leave their lists, in place - a list is held by its container, its pile or its piece
   for (const list of carriedItemLists(snap)) {
@@ -118,7 +157,11 @@ export function applyCustoms(snap) {
   if (!restItemsOnline()) {
     const strip = (/** @type {any[]} */ list) => {
       let n = 0;
-      for (let i = list.length - 1; i >= 0; i--) if (REST_ITEM_IDS.has(list[i]?.templateIndex)) { list.splice(i, 1); n++; }
+      for (let i = list.length - 1; i >= 0; i--)
+        if (REST_ITEM_IDS.has(list[i]?.templateIndex)) {
+          list.splice(i, 1);
+          n++;
+        }
       return n;
     };
     const scenes = Array.isArray(snap.sceneCache?.scenes) ? snap.sceneCache.scenes : [];
@@ -128,11 +171,16 @@ export function applyCustoms(snap) {
     // (A chest, a dropped pile, the ship's hold: what is in them, the character put there - the port's supplies ride
     // no house loot.)
     const foreign = new Set();
-    for (const sc of scenes) for (const c of sc?.lootContainers ?? []) if (c?.containerType === LOOT_CONTAINER_TYPES.ShopShelves && Array.isArray(c.items)) foreign.add(c.items);
+    for (const sc of scenes)
+      for (const c of sc?.lootContainers ?? [])
+        if (c?.containerType === LOOT_CONTAINER_TYPES.ShopShelves && Array.isArray(c.items)) foreign.add(c.items);
     for (const pile of snap.world?.piles ?? []) if (Array.isArray(pile?.items)) foreign.add(pile.items);
     for (const foe of snap.world?.foes ?? []) if (foe?.dead && Array.isArray(foe.items)) foreign.add(foe.items);
     // AUDIT REST II H9: and the repairer's counter (save.js otherItems - restored to the pack's owner on the way in)
-    for (const list of new Set([...carriedItemLists(snap), ...(Array.isArray(snap.otherItems) ? [snap.otherItems] : [])])) {
+    for (const list of new Set([
+      ...carriedItemLists(snap),
+      ...(Array.isArray(snap.otherItems) ? [snap.otherItems] : []),
+    ])) {
       const n = strip(list);
       if (!foreign.has(list)) restKept += n;
     }
@@ -150,10 +198,24 @@ export function applyCustoms(snap) {
       }
     }
   }
-  const decks = heldDecksOf(snap);   // AUDIT CARDS-6 A9: the binder's decks the pack backs before the cards' customs...
-  const cards = cardCustoms(snap);   // CARDS9: and the cards, at their worth
-  const decksShort = decks.filter((d) => deckHeldRefusal(d.cards, snap.items)).length;   // ...and those it left naming a card that stayed
-  return { called: call.called, paid: call.paid, owed: call.owed, wealth, allowance, taken: wealth - liquidWealthOf(snap), crossed, fleet, restKept, cardsKept: cards.kept, cardWorth: cards.worth, cardAllowance: cards.allowance, decksShort };
+  const decks = heldDecksOf(snap); // AUDIT CARDS-6 A9: the binder's decks the pack backs before the cards' customs...
+  const cards = cardCustoms(snap); // CARDS9: and the cards, at their worth
+  const decksShort = decks.filter((d) => deckHeldRefusal(d.cards, snap.items)).length; // ...and those it left naming a card that stayed
+  return {
+    called: call.called,
+    paid: call.paid,
+    owed: call.owed,
+    wealth,
+    allowance,
+    taken: wealth - liquidWealthOf(snap),
+    crossed,
+    fleet,
+    restKept,
+    cardsKept: cards.kept,
+    cardWorth: cards.worth,
+    cardAllowance: cards.allowance,
+    decksShort,
+  };
 }
 
 /**
@@ -181,7 +243,8 @@ export function applyCustoms(snap) {
 export function cardCustoms(snap) {
   const allowance = customsCardAllowance(snap?.level);
   const worth = cardWorthOf(snap);
-  let over = worth - allowance, kept = 0;
+  let over = worth - allowance,
+    kept = 0;
   if (over <= 0) return { kept, worth, allowance };
   const pack = Array.isArray(snap.items) ? snap.items : null;
   /** @type {Map<string, number>} */
@@ -198,9 +261,14 @@ export function cardCustoms(snap) {
   for (const { scene, id, rec } of decorOwnOf(snap)) {
     if (!(unit(rec) > 0)) continue;
     held.push({
-      rec, inPack: false, left: () => scene.decorOwn?.[id] === rec,
+      rec,
+      inPack: false,
+      left: () => scene.decorOwn?.[id] === rec,
       takeOne: () => {
-        if ((rec.stackCount ?? 1) > 1) { rec.stackCount -= 1; return; }
+        if ((rec.stackCount ?? 1) > 1) {
+          rec.stackCount -= 1;
+          return;
+        }
         delete scene.decorOwn[id];
         if (Array.isArray(scene.decor)) scene.decor = scene.decor.filter((/** @type {any} */ p) => p?.id !== id);
       },
@@ -210,13 +278,19 @@ export function cardCustoms(snap) {
     for (const rec of list) {
       if (!(unit(rec) > 0)) continue;
       held.push({
-        rec, inPack: list === pack, left: () => list.includes(rec),
-        takeOne: () => { if ((rec.stackCount ?? 1) > 1) rec.stackCount -= 1; else list.splice(list.indexOf(rec), 1); },
+        rec,
+        inPack: list === pack,
+        left: () => list.includes(rec),
+        takeOne: () => {
+          if ((rec.stackCount ?? 1) > 1) rec.stackCount -= 1;
+          else list.splice(list.indexOf(rec), 1);
+        },
       });
     }
   }
-  held.sort((a, b) => unit(b.rec) - unit(a.rec));   // stable: the decor's, then the lists' own order, within a worth
-  const spare = (/** @type {any} */ h) => !h.inPack || !isCardRecord(h.rec) || (have.get(h.rec.card) ?? 0) > (need.get(h.rec.card) ?? 0);
+  held.sort((a, b) => unit(b.rec) - unit(a.rec)); // stable: the decor's, then the lists' own order, within a worth
+  const spare = (/** @type {any} */ h) =>
+    !h.inPack || !isCardRecord(h.rec) || (have.get(h.rec.card) ?? 0) > (need.get(h.rec.card) ?? 0);
   for (let i = 0; i < held.length && over > 0;) {
     const w = unit(held[i].rec);
     let j = i;
@@ -237,7 +311,8 @@ export function cardCustoms(snap) {
   return { kept, worth, allowance };
 }
 /** AUDIT CARDS-6 A9: the binder's decks the pack backs - every card each names, held (iliacItems.js deckHeldRefusal). */
-const heldDecksOf = (/** @type {any} */ snap) => binderDecks(binderOf(snap?.items)).filter((d) => !deckHeldRefusal(d.cards, snap?.items));
+const heldDecksOf = (/** @type {any} */ snap) =>
+  binderDecks(binderOf(snap?.items)).filter((d) => !deckHeldRefusal(d.cards, snap?.items));
 const REST_ITEM_IDS = new Set(Object.values(REST_ITEM));
 
 /**
@@ -259,7 +334,7 @@ const REST_ITEM_IDS = new Set(Object.values(REST_ITEM));
  */
 export function crossLeveling(snap) {
   const switched = switchLeveling(snap);
-  onlineLevelConvert(snap);   // LEVEL-45: and every realm character's level read again from its skills, capped at 45 (systems/levelClimb.js)
+  onlineLevelConvert(snap); // LEVEL-45: and every realm character's level read again from its skills, capped at 45 (systems/levelClimb.js)
   return switched;
 }
 
@@ -271,7 +346,7 @@ function switchLeveling(snap) {
   snap.levelProgress = 0;
   snap.levelRollUp = 0;
   const level = Number.isFinite(snap.level) ? snap.level : 1;
-  releaseCapLatch(snap);   // LEVEL-45: an Oblivion character's latch at 45 or past it owes no level online either
+  releaseCapLatch(snap); // LEVEL-45: an Oblivion character's latch at 45 or past it owes no level online either
   const target = snap.readyToLevelUp === true ? level + 1 : level;
   if (Number.isFinite(snap.currentLevelUpSkillSum)) {
     snap.startingLevelUpSkillSum = levelUpSkillSumAnchor(snap.currentLevelUpSkillSum, target);
@@ -321,9 +396,13 @@ export function reclaimCustomsDeeds(realm, offline) {
   const back = { houses: [], ship: false, pieces: 0 };
   if (!realm || typeof realm !== 'object' || !offline || typeof offline !== 'object') return back;
   const permanent = new Set(Array.isArray(realm.sceneCache?.permanentScenes) ? realm.sceneCache.permanentScenes : []);
-  const roomIn = (/** @type {any} */ snap, /** @type {string} */ name) => (Array.isArray(snap.sceneCache?.scenes) ? snap.sceneCache.scenes : []).find((/** @type {any} */ sc) => sc?.sceneName === name) ?? null;
+  const roomIn = (/** @type {any} */ snap, /** @type {string} */ name) =>
+    (Array.isArray(snap.sceneCache?.scenes) ? snap.sceneCache.scenes : []).find(
+      (/** @type {any} */ sc) => sc?.sceneName === name,
+    ) ?? null;
   const piecesBack = (/** @type {string} */ name) => {
-    const ours = roomIn(realm, name), theirs = roomIn(offline, name);
+    const ours = roomIn(realm, name),
+      theirs = roomIn(offline, name);
     if (!ours || !Array.isArray(theirs?.decor)) return;
     if (!Array.isArray(ours.decor)) ours.decor = [];
     const standing = new Set(ours.decor.map((/** @type {any} */ p) => p?.id));
@@ -340,8 +419,19 @@ export function reclaimCustomsDeeds(realm, offline) {
     for (const slot of regionDeedsOf(theirs, region)) {
       const name = interiorSceneName(slot.mapId, slot.buildingKey);
       if (!permanent.has(name) || regionDeedsOf(houses, region).length >= HOUSES_PER_REGION) continue;
-      if (regionDeedsOf(houses, region).some((d) => d.buildingKey === slot.buildingKey && (Number(d.mapId) >>> 0) === (Number(slot.mapId) >>> 0))) continue;
-      const deed = { regionIndex: region, location: slot.location ?? '', mapId: slot.mapId, buildingKey: slot.buildingKey, crossed: true };
+      if (
+        regionDeedsOf(houses, region).some(
+          (d) => d.buildingKey === slot.buildingKey && Number(d.mapId) >>> 0 === Number(slot.mapId) >>> 0,
+        )
+      )
+        continue;
+      const deed = {
+        regionIndex: region,
+        location: slot.location ?? '',
+        mapId: slot.mapId,
+        buildingKey: slot.buildingKey,
+        crossed: true,
+      };
       // WD3 (AUDIT WD3 S2): the deed's town layout crosses with it - its key names a building only in that layout
       if (typeof slot.layout === 'string' && slot.layout) deed.layout = slot.layout;
       const first = houses[region];
@@ -366,7 +456,11 @@ export function reclaimCustomsDeeds(realm, offline) {
 
 /** RESTORE: the offline character a realm character came from, on this device - its newest save this build can restore
  *  (systems/save/saveSlots.js firstRestorable) - given to reclaimCustomsDeeds. Null when there is nothing to give back from. */
-export function reclaimFromDevice(/** @type {any} */ realm, /** @type {unknown} */ origin, { find = firstRestorable } = {}) {
+export function reclaimFromDevice(
+  /** @type {any} */ realm,
+  /** @type {unknown} */ origin,
+  { find = firstRestorable } = {},
+) {
   if (typeof origin !== 'string' || !origin) return null;
   const offline = find((/** @type {any} */ e) => e?.snap?.characterId === origin)?.snap ?? null;
   return offline ? reclaimCustomsDeeds(realm, offline) : null;
@@ -377,14 +471,18 @@ export function reclaimLines(/** @type {{ houses: string[], ship: boolean, piece
   if (!back || (!back.houses.length && !back.ship)) return [];
   const where = back.houses.map((l) => (l ? `your house in ${l}` : 'your house'));
   const what = [...(back.ship ? ['your ship'] : []), ...where].join(' and ');
-  return [`Customs had kept back ${what}. ${back.houses.length + (back.ship ? 1 : 0) > 1 ? 'They are' : 'It is'} yours again, with every piece in ${back.houses.length + (back.ship ? 1 : 0) > 1 ? 'them' : 'it'}. The realm's bank does not buy back what came through customs.`];
+  return [
+    `Customs had kept back ${what}. ${back.houses.length + (back.ship ? 1 : 0) > 1 ? 'They are' : 'It is'} yours again, with every piece in ${back.houses.length + (back.ship ? 1 : 0) > 1 ? 'them' : 'it'}. The realm's bank does not buy back what came through customs.`,
+  ];
 }
 
 /** LEVEL-ONLINE-2: the door's words for an Oblivion-levelling character coming in. */
 export const LEVELING_CROSS_LINE = Object.freeze({
-  before: 'Online characters level the classic way: this character will level by its skills from here on, starting from its current level.',
+  before:
+    'Online characters level the classic way: this character will level by its skills from here on, starting from its current level.',
   after: 'Online, this character levels the classic way, by its skills.',
-  switched: 'Online characters now level the classic way: you will level by your skills from here on, starting from your current level.',
+  switched:
+    'Online characters now level the classic way: you will level by your skills from here on, starting from your current level.',
 });
 
 /** CUSTOMS-CARRY (2026-09-29): what the door promises before customs runs, whatever it finds - what crosses beside the
@@ -398,29 +496,73 @@ export const CUSTOMS_PROMISE = Object.freeze([
 /** What customs did, in the Online door's words - or, `before` it runs (FIELD 2026-09-29, Dracula/Valentin: "HOW TF WAS
  *  I SUPPOSED TO KNOW YALL WOULD FORCE THE LOANS TO BE PAID"), what it will do: the same report off a copy customs ran
  *  on, told ahead, and the door's promise under it. */
-export function customsLines({ called, owed, wealth, allowance, taken, crossed = [], fleet = 0, restKept = 0, cardsKept = 0, cardWorth: cardsWorth = 0, cardAllowance = 0, decksShort = 0 }, { before = false } = {}) {
+export function customsLines(
+  {
+    called,
+    owed,
+    wealth,
+    allowance,
+    taken,
+    crossed = [],
+    fleet = 0,
+    restKept = 0,
+    cardsKept = 0,
+    cardWorth: cardsWorth = 0,
+    cardAllowance = 0,
+    decksShort = 0,
+  },
+  { before = false } = {},
+) {
   const lines = [];
   if (called > 0) {
-    lines.push(before
-      ? (owed > 0 ? `Customs will call in ${called} gold of loans; ${owed} cannot be paid and falls due.` : `Customs will call in ${called} gold of loans and pay them from your bank and purse.`)
-      : (owed > 0 ? `Customs called in ${called} gold of loans; ${owed} could not be paid and falls due.` : `Customs called in ${called} gold of loans, and they are paid.`));
+    lines.push(
+      before
+        ? owed > 0
+          ? `Customs will call in ${called} gold of loans; ${owed} cannot be paid and falls due.`
+          : `Customs will call in ${called} gold of loans and pay them from your bank and purse.`
+        : owed > 0
+          ? `Customs called in ${called} gold of loans; ${owed} could not be paid and falls due.`
+          : `Customs called in ${called} gold of loans, and they are paid.`,
+    );
   }
   if (taken > 0) {
-    lines.push(before
-      ? `You carry ${wealth} gold; the realm lets a character of this level bring ${allowance}. ${taken} will stay behind.`
-      : `You carried ${wealth} gold; the realm lets a character of this level bring ${allowance}. ${taken} stays behind.`);
+    lines.push(
+      before
+        ? `You carry ${wealth} gold; the realm lets a character of this level bring ${allowance}. ${taken} will stay behind.`
+        : `You carried ${wealth} gold; the realm lets a character of this level bring ${allowance}. ${taken} stays behind.`,
+    );
   }
   // RESTORE: every deed comes along - and the door says so, since the realm's bank will not buy it back
   const houses = crossed.filter((d) => d === 'house').length;
-  const what = [crossed.includes('ship') ? 'your ship' : '', houses > 1 ? `${houses} houses` : houses ? 'your house' : ''].filter(Boolean).join(' and ');
-  if (what) lines.push(`${what[0].toUpperCase()}${what.slice(1)} ${before ? 'will come' : 'came'} with you, every piece in ${crossed.length > 1 ? 'them' : 'it'}; the realm's bank does not buy back what comes through customs.`);
+  const what = [
+    crossed.includes('ship') ? 'your ship' : '',
+    houses > 1 ? `${houses} houses` : houses ? 'your house' : '',
+  ]
+    .filter(Boolean)
+    .join(' and ');
+  if (what)
+    lines.push(
+      `${what[0].toUpperCase()}${what.slice(1)} ${before ? 'will come' : 'came'} with you, every piece in ${crossed.length > 1 ? 'them' : 'it'}; the realm's bank does not buy back what comes through customs.`,
+    );
   // AUDIT SHIPYARDS L1-2: Come Sail Away's ships come too, by number - sailed in the realm, never sold there
-  if (fleet > 0) lines.push(`${fleet === 1 ? 'Your boat' : `Your ${fleet} boats`} ${before ? 'will come' : 'came'} with you; no shipyard in the realm buys a boat that comes through customs.`);
-  if (restKept > 0) lines.push(`Your rest supplies ${before ? 'will stay' : 'stayed'} with your offline character. They are not yet sold in the realm.`);   // AUDIT REST-PARTY B4; AUDIT REST II H13: the Tonics, Salts, Draughts and Candles are rest supplies, not camping
+  if (fleet > 0)
+    lines.push(
+      `${fleet === 1 ? 'Your boat' : `Your ${fleet} boats`} ${before ? 'will come' : 'came'} with you; no shipyard in the realm buys a boat that comes through customs.`,
+    );
+  if (restKept > 0)
+    lines.push(
+      `Your rest supplies ${before ? 'will stay' : 'stayed'} with your offline character. They are not yet sold in the realm.`,
+    ); // AUDIT REST-PARTY B4; AUDIT REST II H13: the Tonics, Salts, Draughts and Candles are rest supplies, not camping
   // CARDS9: the cards past the allowance, the dearest first
-  if (cardsKept > 0) lines.push(`Your cards are worth ${cardsWorth} gold; the realm lets a character of this level bring ${cardAllowance}. ${cardsKept} ${cardsKept === 1 ? 'card' : 'cards'}, the dearest, ${before ? 'will stay' : 'stayed'} with your offline character.`);
+  if (cardsKept > 0)
+    lines.push(
+      `Your cards are worth ${cardsWorth} gold; the realm lets a character of this level bring ${cardAllowance}. ${cardsKept} ${cardsKept === 1 ? 'card' : 'cards'}, the dearest, ${before ? 'will stay' : 'stayed'} with your offline character.`,
+    );
   // AUDIT CARDS-6 A9: and a binder's deck left naming a card that stayed - the table deals it again once the binder holds it
-  if (decksShort > 0) lines.push(`${decksShort === 1 ? 'One deck' : `${decksShort} decks`} in your binder ${before ? 'will name' : decksShort === 1 ? 'names' : 'name'} cards that ${before ? 'stay' : 'stayed'} behind; the table deals a deck only when your binder holds every card it names.`);
+  if (decksShort > 0)
+    lines.push(
+      `${decksShort === 1 ? 'One deck' : `${decksShort} decks`} in your binder ${before ? 'will name' : decksShort === 1 ? 'names' : 'name'} cards that ${before ? 'stay' : 'stayed'} behind; the table deals a deck only when your binder holds every card it names.`,
+    );
   if (!lines.length) lines.push(before ? 'Customs finds nothing to settle.' : 'Customs found nothing to settle.');
   return before ? [...lines, ...CUSTOMS_PROMISE] : lines;
 }

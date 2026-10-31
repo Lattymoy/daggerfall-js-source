@@ -11,8 +11,8 @@
   {
     "name": "LOCKPICK-pins-no-ceiling",
     "file": "src/systems/lockpick/lockpickLaw.js",
-    "old": "LOCK_PINS_MIN, LOCK_PINS_MAX);\n",
-    "new": "LOCK_PINS_MIN, 9);\n",
+    "old": "  clamp(LOCK_PINS_MIN + Math.floor(Math.max(0, Number(lock) || 0) / LOCK_PINS_STEP), LOCK_PINS_MIN, LOCK_PINS_MAX);",
+    "new": "  clamp(LOCK_PINS_MIN + Math.floor(Math.max(0, Number(lock) || 0) / LOCK_PINS_STEP), LOCK_PINS_MIN, 9);",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "LOCKPICK-spools-one-short",
     "file": "src/systems/lockpick/lockpickLaw.js",
-    "old": "(Number(lock) || 0) >= SPOOL_TWO ? 2",
-    "new": "(Number(lock) || 0) > SPOOL_TWO ? 2",
+    "old": "export const spoolsFor = (lock) => ((Number(lock) || 0) >= SPOOL_TWO ? 2 : (Number(lock) || 0) >= SPOOL_ONE ? 1 : 0);",
+    "new": "export const spoolsFor = (lock) => ((Number(lock) || 0) > SPOOL_TWO ? 2 : (Number(lock) || 0) >= SPOOL_ONE ? 1 : 0);",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LOCKPICK-window-unbanded",
     "file": "src/systems/lockpick/lockpickLaw.js",
-    "old": "* (Number(band) > 0 ? Number(band) : 1);",
-    "new": "* 1;",
+    "old": "  return (\n    (A.windowMinS + ((A.windowMaxS - A.windowMinS) * (chanceOf(chance) - 5)) / 90) *\n    (Number(band) > 0 ? Number(band) : 1)\n  );",
+    "new": "  return (A.windowMinS + ((A.windowMaxS - A.windowMinS) * (chanceOf(chance) - 5)) / 90) * 1;",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "LOCKPICK-window-wrong-span",
     "file": "src/systems/lockpick/lockpickLaw.js",
-    "old": "(chanceOf(chance) - 5)) / 90)",
-    "new": "(chanceOf(chance) - 5)) / 100)",
+    "old": "    (A.windowMinS + ((A.windowMaxS - A.windowMinS) * (chanceOf(chance) - 5)) / 90) *",
+    "new": "    (A.windowMinS + ((A.windowMaxS - A.windowMinS) * (chanceOf(chance) - 5)) / 100) *",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "LOCKPICK-auto-exterior-convention-lost",
     "file": "src/systems/lockpick/lockpickLaw.js",
-    "old": "(exterior ? 1 : 0) + Math.floor",
-    "new": "Math.floor",
+    "old": "export const autoOpens = (chance, roll01, exterior = false) =>\n  (exterior ? 1 : 0) + Math.floor(Number(roll01) * 100) < chanceOf(chance);",
+    "new": "export const autoOpens = (chance, roll01, exterior = false) => Math.floor(Number(roll01) * 100) < chanceOf(chance);",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "LOCKPICK-auto-off-by-one",
     "file": "src/systems/lockpick/lockpickLaw.js",
-    "old": "Math.floor(Number(roll01) * 100) < chanceOf(chance)",
-    "new": "Math.floor(Number(roll01) * 100) <= chanceOf(chance)",
+    "old": "  (exterior ? 1 : 0) + Math.floor(Number(roll01) * 100) < chanceOf(chance);",
+    "new": "  (exterior ? 1 : 0) + Math.floor(Number(roll01) * 100) <= chanceOf(chance);",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LOCKPICK-order-unshuffled",
     "file": "src/systems/lockpick/lockpickLaw.js",
-    "old": "for (let i = order.length - 1; i > 0; i--) { const j",
-    "new": "for (let i = order.length - 1; i > 99; i--) { const j",
+    "old": "  for (let i = order.length - 1; i > 0; i--) {",
+    "new": "  for (let i = order.length - 1; i > 99; i--) {",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "LOCKPICK-spool-may-bind-first",
     "file": "src/systems/lockpick/lockpickLaw.js",
-    "old": "const pool = order.slice(1);",
-    "new": "const pool = order.slice(0);",
+    "old": "  const pool = order.slice(1);",
+    "new": "  const pool = order.slice(0);",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "LOCKPICK-seed-not-fnv",
     "file": "src/systems/lockpick/lockpickLaw.js",
-    "old": "let h = 0x811c9dc5;",
-    "new": "let h = 0x811c9dc4;",
+    "old": "  let h = 0x811c9dc5;",
+    "new": "  let h = 0x811c9dc4;",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "LOCKPICK-grace-ignored-at-rise",
     "file": "src/systems/lockpick/lockpickAct.js",
-    "old": "(p.phase === PIN.rise && p.t >= p.rise - A.graceS) || ",
-    "new": "",
+    "old": "  const inWindow = (p) =>\n    p.phase === PIN.hang ||\n    (p.phase === PIN.rise && p.t >= p.rise - A.graceS) ||\n    (p.phase === PIN.fall && p.t <= A.graceS);",
+    "new": "  const inWindow = (p) => p.phase === PIN.hang || (p.phase === PIN.fall && p.t <= A.graceS);",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "LOCKPICK-slip-never-snaps",
     "file": "src/systems/lockpick/lockpickAct.js",
-    "old": "if (rng() < breakChance) { st.broken++; dropAll(); return answer('break', i); }\n    st.slips++;",
-    "new": "st.slips++;",
+    "old": "    if (rng() < breakChance) {\n      st.broken++;\n      dropAll();\n      return answer('break', i);\n    }\n    st.slips++;",
+    "new": "    st.slips++;",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -155,7 +155,7 @@
   {
     "name": "LOCKPICK-slip-keeps-last-pin",
     "file": "src/systems/lockpick/lockpickAct.js",
-    "old": "      back.phase = PIN.rest; back.t = 0; back.y = 0;\n      st.next--;",
+    "old": "      back.phase = PIN.rest;\n      back.t = 0;\n      back.y = 0;\n      st.next--;",
     "new": "      st.next = st.next;",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
@@ -164,8 +164,8 @@
   {
     "name": "LOCKPICK-slip-keeps-false-set",
     "file": "src/systems/lockpick/lockpickAct.js",
-    "old": "    for (const q of pins) if (q.phase !== PIN.set) q.falseSet = false;\n",
-    "new": "",
+    "old": "    for (const q of pins) if (q.phase !== PIN.set) q.falseSet = false;\n    return answer('slip', i);",
+    "new": "    return answer('slip', i);",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "LOCKPICK-free-pin-never-risks",
     "file": "src/systems/lockpick/lockpickAct.js",
-    "old": "        if (rng() < breakChance * A.freeRisk) { st.broken++; dropAll(); return answer('break', i); }   // a free pin forced\n",
-    "new": "",
+    "old": "        if (rng() < breakChance * A.freeRisk) {\n          st.broken++;\n          dropAll();\n          return answer('break', i);\n        } // a free pin forced\n        p.phase = PIN.spring;",
+    "new": "        p.phase = PIN.spring;",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "LOCKPICK-free-pin-hangs",
     "file": "src/systems/lockpick/lockpickAct.js",
-    "old": "        p.phase = PIN.spring; p.t = 0;\n        return answer('springy', i);",
-    "new": "        p.phase = PIN.rise; p.t = 0;\n        return answer('springy', i);",
+    "old": "        p.phase = PIN.spring;",
+    "new": "        p.phase = PIN.rise;",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "LOCKPICK-spool-sets-once",
     "file": "src/systems/lockpick/lockpickAct.js",
-    "old": "if (p.spool && !p.falseSet) {",
-    "new": "if (false) {",
+    "old": "      if (p.spool && !p.falseSet) {",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "LOCKPICK-rise-unjittered",
     "file": "src/systems/lockpick/lockpickAct.js",
-    "old": "p.rise = A.riseS * (1 + A.riseJitter * (2 * rng() - 1));",
-    "new": "p.rise = A.riseS;",
+    "old": "          p.rise = A.riseS * (1 + A.riseJitter * (2 * rng() - 1));",
+    "new": "          p.rise = A.riseS;",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "LOCKPICK-snap-keeps-pins",
     "file": "src/systems/lockpick/lockpickAct.js",
-    "old": "  const dropAll = () => {\n    for (const p of pins) { p.phase = PIN.rest; p.t = 0; p.y = 0; p.falseSet = false; }\n    st.next = 0;",
-    "new": "  const dropAll = () => {\n    st.next = st.next;",
+    "old": "    for (const p of pins) {\n      p.phase = PIN.rest;\n      p.t = 0;\n      p.y = 0;\n      p.falseSet = false;\n    }\n    st.next = 0;",
+    "new": "    st.next = st.next;",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -218,7 +218,7 @@
   {
     "name": "LOCKPICK-auto-never-breaks",
     "file": "src/systems/lockpick/lockpickAct.js",
-    "old": "      st.broken++; dropAll();\n      return answer('break', -1);",
+    "old": "      st.broken++;\n      dropAll();\n      return answer('break', -1);",
     "new": "      return answer('break', -1);",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
@@ -227,8 +227,8 @@
   {
     "name": "LOCKPICK-dt-unclamped",
     "file": "src/systems/lockpick/lockpickAct.js",
-    "old": "const step = Math.max(0, Math.min(0.25, Number(dt) || 0));",
-    "new": "const step = Math.max(0, Number(dt) || 0);",
+    "old": "      const step = Math.max(0, Math.min(0.25, Number(dt) || 0));",
+    "new": "      const step = Math.max(0, Number(dt) || 0);",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "LOCKPICK-open-not-done",
     "file": "src/systems/lockpick/lockpickAct.js",
-    "old": "if (st.next >= n) { st.open = true; st.done = true;",
-    "new": "if (st.next >= n) { st.open = true;",
+    "old": "        st.done = true;\n        return answer('open', i);",
+    "new": "        return answer('open', i);",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "LOCKPICK-count-one-a-stack",
     "file": "src/systems/lockpick/lockpickItem.js",
-    "old": "n + (isLockpick(it) ? Math.max(1, Math.trunc(Number(it.stackCount) || 1)) : 0)",
-    "new": "n + (isLockpick(it) ? 1 : 0)",
+    "old": "  Array.isArray(items)\n    ? items.reduce((n, it) => n + (isLockpick(it) ? Math.max(1, Math.trunc(Number(it.stackCount) || 1)) : 0), 0)\n    : 0;",
+    "new": "  Array.isArray(items) ? items.reduce((n, it) => n + (isLockpick(it) ? 1 : 0), 0) : 0;",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "LOCKPICK-kit-for-anyone",
     "file": "src/systems/lockpick/lockpickItem.js",
-    "old": "  if (!careerPicksLocks(entity)) return null;\n",
-    "new": "",
+    "old": "  if (!careerPicksLocks(entity)) return null;\n  if (!Array.isArray(entity.items)) entity.items = [];",
+    "new": "  if (!Array.isArray(entity.items)) entity.items = [];",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "LOCKPICK-gift-every-load",
     "file": "src/systems/lockpick/lockpickItem.js",
-    "old": "  entity.lockpickGift = LOCKPICK_GIFT;\n",
-    "new": "",
+    "old": "  entity.lockpickGift = LOCKPICK_GIFT;\n  return giveStartingLockpicks(entity) ? LOCKPICK_KIT : 0;",
+    "new": "  return giveStartingLockpicks(entity) ? LOCKPICK_KIT : 0;",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "LOCKPICK-minor-forgotten",
     "file": "src/systems/lockpick/lockpickItem.js",
-    "old": "[c.primarySkills, c.majorSkills, c.minorSkills]",
-    "new": "[c.primarySkills, c.majorSkills]",
+    "old": "    !!c &&\n    [c.primarySkills, c.majorSkills, c.minorSkills].some(\n      (list) => Array.isArray(list) && list.includes(SKILLS.Lockpicking),\n    )",
+    "new": "    !!c && [c.primarySkills, c.majorSkills].some((list) => Array.isArray(list) && list.includes(SKILLS.Lockpicking))",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "LOCKPICK-rogue-off-by-one",
     "file": "src/systems/lockpick/lockpickItem.js",
-    "old": "const n = 1 + Math.min(r.most - 1, Math.floor(rolls() * r.most));",
-    "new": "const n = Math.min(r.most, Math.floor(rolls() * r.most));",
+    "old": "  const n = 1 + Math.min(r.most - 1, Math.floor(rolls() * r.most));",
+    "new": "  const n = Math.min(r.most, Math.floor(rolls() * r.most));",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "LOCKPICK-endless-never-refilled",
     "file": "src/systems/lockpick/lockpickItem.js",
-    "old": "  else if ((stack.stackCount ?? 1) < ENDLESS_LOCKPICK_STACK) stack.stackCount = ENDLESS_LOCKPICK_STACK;\n",
-    "new": "",
+    "old": "  else if ((stack.stackCount ?? 1) < ENDLESS_LOCKPICK_STACK) stack.stackCount = ENDLESS_LOCKPICK_STACK;\n  return items;",
+    "new": "  return items;",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "LOCKPICK-no-pick-still-opens",
     "file": "src/scenes/lockpickHost.js",
-    "old": "      if (lockpickCount(player?.items) < 1) { say(LOCKPICK_HOST_WORDS.need()); return true; }\n",
-    "new": "",
+    "old": "      if (lockpickCount(player?.items) < 1) {\n        say(LOCKPICK_HOST_WORDS.need());\n        return true;\n      }\n      const skill = skillValue(player, SKILLS.Lockpicking);",
+    "new": "      const skill = skillValue(player, SKILLS.Lockpicking);",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "LOCKPICK-snap-spends-nothing",
     "file": "src/scenes/lockpickHost.js",
-    "old": "            spendLockpick(player);\n",
-    "new": "",
+    "old": "            spendLockpick(player);\n            tallySkill(player, SKILLS.Lockpicking, 1); // TallySkill(Lockpicking, 1) - an attempt, ended by a snap",
+    "new": "            tallySkill(player, SKILLS.Lockpicking, 1); // TallySkill(Lockpicking, 1) - an attempt, ended by a snap",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "LOCKPICK-snap-tallies-nothing",
     "file": "src/scenes/lockpickHost.js",
-    "old": "            tallySkill(player, SKILLS.Lockpicking, 1);   // TallySkill(Lockpicking, 1) - an attempt, ended by a snap\n",
-    "new": "",
+    "old": "            tallySkill(player, SKILLS.Lockpicking, 1); // TallySkill(Lockpicking, 1) - an attempt, ended by a snap\n            changed();",
+    "new": "            changed();",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "LOCKPICK-last-pick-never-out",
     "file": "src/scenes/lockpickHost.js",
-    "old": "            if (lockpickCount(player?.items) < 1) ov?.out?.();\n",
-    "new": "",
+    "old": "            if (lockpickCount(player?.items) < 1) ov?.out?.();\n          } else if (a === 'open') {",
+    "new": "          } else if (a === 'open') {",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "LOCKPICK-tail-before-shut",
     "file": "src/scenes/lockpickHost.js",
-    "old": "        onClose: (/** @type {boolean} */ self) => { if (open === ov) open = null; if (opened && self && !dead && !(player?.health <= 0)) onOpen(); },",
-    "new": "        onClose: (/** @type {boolean} */ self) => { if (open === ov) open = null; },",
+    "old": "          if (opened && self && !dead && !(player?.health <= 0)) onOpen();\n        },",
+    "new": "        },",
     "tests": [
       "test/systems/lockpick/lockpick.test.js",
       "test/systems/lockpick/lockpick_door.test.js"
@@ -345,8 +345,8 @@
   {
     "name": "LOCKPICK-dead-host-tail",
     "file": "src/scenes/lockpickHost.js",
-    "old": "if (opened && self && !dead && !(player?.health <= 0)) onOpen();",
-    "new": "if (opened && self && !(player?.health <= 0)) onOpen();",
+    "old": "          if (opened && self && !dead && !(player?.health <= 0)) onOpen();",
+    "new": "          if (opened && self && !(player?.health <= 0)) onOpen();",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ],
@@ -356,8 +356,8 @@
   {
     "name": "LOCKPICK-two-at-once",
     "file": "src/scenes/lockpickHost.js",
-    "old": "if (dead || (open && !open.done)) return true;",
-    "new": "if (dead) return true;",
+    "old": "      if (dead || (open && !open.done)) return true; // one lock at a time",
+    "new": "      if (dead) return true; // one lock at a time",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -365,8 +365,8 @@
   {
     "name": "LOCKPICK-front-door-interior-chance",
     "file": "src/scenes/lockpickHost.js",
-    "old": "lock, chance: exteriorLockpickingChance(lock, skill), exterior: true, key,",
-    "new": "lock, chance: interiorLockpickingChance(player.level, lock, skill), exterior: true, key,",
+    "old": "        chance: exteriorLockpickingChance(lock, skill),",
+    "new": "        chance: interiorLockpickingChance(player.level, lock, skill),",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -374,8 +374,8 @@
   {
     "name": "LOCKPICK-inside-exterior-chance",
     "file": "src/scenes/lockpickHost.js",
-    "old": "chance: interiorLockpickingChance(player.level, lock, skillValue(player, SKILLS.Lockpicking)), key, what, onOpen",
-    "new": "chance: exteriorLockpickingChance(lock, skillValue(player, SKILLS.Lockpicking)), key, what, onOpen",
+    "old": "        chance: interiorLockpickingChance(player.level, lock, skillValue(player, SKILLS.Lockpicking)),",
+    "new": "        chance: exteriorLockpickingChance(lock, skillValue(player, SKILLS.Lockpicking)),",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -383,8 +383,8 @@
   {
     "name": "LOCKPICK-chambers-touch",
     "file": "src/ui/lockpickWindow.js",
-    "old": "const G = LOCK_GEOM, span = G.right - G.left - 90;",
-    "new": "const G = LOCK_GEOM, span = G.right - G.left + 400;",
+    "old": "    span = G.right - G.left - 90;",
+    "new": "    span = G.right - G.left + 400;",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -392,8 +392,8 @@
   {
     "name": "LOCKPICK-ear-repeats",
     "file": "src/systems/lockpick/lockpickSounds.js",
-    "old": "      if (keys.length > 1 && key === prev) key = keys[(keys.indexOf(key) + 1) % keys.length];\n",
-    "new": "",
+    "old": "      if (keys.length > 1 && key === prev) key = keys[(keys.indexOf(key) + 1) % keys.length];\n      prev = key;",
+    "new": "      prev = key;",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -438,8 +438,8 @@
   {
     "name": "LOCKPICK-shop-forgets-the-counter",
     "file": "src/systems/shopStock.js",
-    "old": "|| isRations(item) || isLockpick(item);",
-    "new": "|| isRations(item);",
+    "old": "  isBagItem(item) || (isSurvivalItem(item) && isCampfireKit(item)) || isRations(item) || isLockpick(item); // LOCKPICK: and the counter's picks",
+    "new": "  isBagItem(item) || (isSurvivalItem(item) && isCampfireKit(item)) || isRations(item); // LOCKPICK: and the counter's picks",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]

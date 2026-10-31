@@ -72,15 +72,23 @@ import { STAT_KEYS_ORDER } from '../../systems/chargen.js';
 import { statUp, statDown, MAX_STAT_VALUE } from '../chargen.js';
 import { mustDistributeBonusPointsText } from '../charsheet.js';
 import { REMAINING_POINTS_ERROR, remainingPointsLabel, TAKE_ONE_BACK_HINT } from '../virtueLevelUp.js';
-import { attributeOffset, canRaiseAttribute, canLowerAttribute, LEVELUP_TOTAL, levelBarProgress, levelingSettings, usesVirtueLeveling } from '../../systems/oblivionLeveling.js';   // ASCEND-ANYTIME: a mod-law view still needs the mod's own prices to draw a row
+import {
+  attributeOffset,
+  canRaiseAttribute,
+  canLowerAttribute,
+  LEVELUP_TOTAL,
+  levelBarProgress,
+  levelingSettings,
+  usesVirtueLeveling,
+} from '../../systems/oblivionLeveling.js'; // ASCEND-ANYTIME: a mod-law view still needs the mod's own prices to draw a row
 import { LEVELUP_SKILL_SUM_PER_LEVEL, skillRecentlyIncreased } from '../../systems/advancement.js';
-import { onlineLevelRawPoints } from '../../systems/levelClimb.js';   // LEVEL-45, LEVEL-BAR, LEVEL-RAW
-import { atLevelCap } from '../../systems/levelCap.js';   // LEVEL-45: the bar at the cap
+import { onlineLevelRawPoints } from '../../systems/levelClimb.js'; // LEVEL-45, LEVEL-BAR, LEVEL-RAW
+import { atLevelCap } from '../../systems/levelCap.js'; // LEVEL-45: the bar at the cap
 import { SKILL_NAMES, displaySkillValue } from '../../systems/skills.js';
-import { liveStat } from '../../systems/statMods.js';   // ASCEND-LIVE: what a star IS, beside what the rollout spends
+import { liveStat } from '../../systems/statMods.js'; // ASCEND-LIVE: what a star IS, beside what the rollout spends
 import { sheetModel } from '../enhanced/enhancedCharSheet.js';
-import { t } from '../../systems/textManager.js';   // AUDIT GROWTH LANE5-1: the window's own words, read in the player's language when drawn
-import { isOnlinePage } from '../../systems/online/onlineLane.js';   // LEVEL-EVEN: Endurance's words online
+import { t } from '../../systems/textManager.js'; // AUDIT GROWTH LANE5-1: the window's own words, read in the player's language when drawn
+import { isOnlinePage } from '../../systems/online/onlineLane.js'; // LEVEL-EVEN: Endurance's words online
 
 /** The three shapes a level-up can wear. They are not three laws -
  *  oghma is the classic screen with `oghma` latched (AUDIT 39: a FIXED
@@ -114,7 +122,8 @@ const ATTRIBUTE_NAME = Object.freeze({
   speed: () => t('levelup.attr.speed', 'Speed'),
   luck: () => t('levelup.attr.luck', 'Luck'),
 });
-export const attributeLabel = (k) => (Object.hasOwn(ATTRIBUTE_NAME, k) ? ATTRIBUTE_NAME[k]() : k ? k.charAt(0).toUpperCase() + k.slice(1) : '');
+export const attributeLabel = (k) =>
+  Object.hasOwn(ATTRIBUTE_NAME, k) ? ATTRIBUTE_NAME[k]() : k ? k.charAt(0).toUpperCase() + k.slice(1) : '';
 
 /**
  * WHAT EACH ATTRIBUTE DOES, in one line, and every line names a
@@ -146,15 +155,21 @@ export const ATTRIBUTE_BLURB = Object.freeze({
   // all; DFU draws the figure and never charges for it"). A window
   // that promises a penalty the game does not apply is teaching a
   // player to spend a point on nothing.
-  get strength() { return t('levelup.blurb.strength', 'Raises the damage of every hit you land and how much you can carry.'); },
-  // systems/chargen.js:"const maxMagicka = spellPoints" - spellPoints(intelligence, multiplier) is the whole magicka pool.
-  get intelligence() { return t('levelup.blurb.intelligence', 'Sets your maximum magicka: Intelligence times your class\'s multiplier.'); },
+  get strength() {
+    return t('levelup.blurb.strength', 'Raises the damage of every hit you land and how much you can carry.');
+  },
+  // systems/chargen.js:"const maxMagicka" - spellPoints(intelligence, multiplier) is the whole magicka pool.
+  get intelligence() {
+    return t('levelup.blurb.intelligence', "Sets your maximum magicka: Intelligence times your class's multiplier.");
+  },
   // systems/spellcast.js:"saving += magicResist(liveStat(target, 'willpower'))" - `saving += magicResist(liveStat(target,
   // 'willpower'))`, the CONSUMER of DFU's MagicResist. The first cut
   // cited systems/quest/questMacros.js:"return 'BLANK';", which only PRINTS the same
   // figure for %mr, and a display is not evidence that a number does
   // anything (LV1's audit).
-  get willpower() { return t('levelup.blurb.willpower', 'Resists spells: a tenth of your Willpower is added to every saving throw.'); },
+  get willpower() {
+    return t('levelup.blurb.willpower', 'Resists spells: a tenth of your Willpower is added to every saving throw.');
+  },
   // combat/formulas.js:"export const statsToHit" statsToHit = floor((your luck - theirs) / 10)
   // + floor((your agility - theirs) / 10), read INSIDE the hit roll - every attack's, so it is the
   // player's swing at a foe and a foe's at the player alike (calculateSuccessfulHit).
@@ -164,24 +179,39 @@ export const ATTRIBUTE_BLURB = Object.freeze({
   // display modifier - ui/chargen.js:"toHit: sign(toHitModifier(st.agility))" and the quest macros are its
   // only readers - so "a tenth of it, less five, rides on every swing"
   // named a number that rides nothing.
-  get agility() { return t('levelup.blurb.agility', 'Raises your chance to hit and lowers the enemy\'s chance to hit you.'); },
+  get agility() {
+    return t('levelup.blurb.agility', "Raises your chance to hit and lowers the enemy's chance to hit you.");
+  },
   // systems/chargen.js hitPointsPerLevelUp reads hitPointsModifier = floor(endurance / 10) - 5.
   // LEVEL-EVEN (systems/levelEven.js): online the health floor reads Endurance as it stands, so every level is lifted -
   // AUDIT SUGGESTIONS-1019 L6-5: for a body under the floor; a body that rolled above it keeps its rolls and gains nothing past
-  get endurance() { return isOnlinePage() ? t('levelup.blurb.enduranceOnline', 'Raises the health you gain each level. Online, your health is never below your class\'s average for your level at your current Endurance.') : t('levelup.blurb.endurance', 'Raises the health you gain each level from now on.'); },
+  get endurance() {
+    return isOnlinePage()
+      ? t(
+          'levelup.blurb.enduranceOnline',
+          "Raises the health you gain each level. Online, your health is never below your class's average for your level at your current Endurance.",
+        )
+      : t('levelup.blurb.endurance', 'Raises the health you gain each level from now on.');
+  },
   // systems/shopStock.js:"export function calculateTradePrice" haggles Mercantile and Personality against the
   // merchant's; scenes/townTalk.js:"personality: playerEntity.stats?.personality != null ? liveStat(playerEntity, 'personality') : 50,"
   // is the talk reaction's personality / 5; systems/court.js:"let chance = legalRep" is the Not Guilty plea's.
-  get personality() { return t('levelup.blurb.personality', 'Better prices, friendlier townspeople and better odds in court.'); },
+  get personality() {
+    return t('levelup.blurb.personality', 'Better prices, friendlier townspeople and better odds in court.');
+  },
   // player/motor.js:"this.speed = walkSpeed" walkSpeed(stats.speed) is how fast you move;
   // combat/weapon/weaponRig.js:"const playerWeapon = new PlayerWeapon" reads liveStat speed for the swing.
-  get speed() { return t('levelup.blurb.speed', 'Makes you move and swing your weapon faster.'); },
+  get speed() {
+    return t('levelup.blurb.speed', 'Makes you move and swing your weapon faster.');
+  },
   // combat/formulas.js:"export const statsToHit" again - the same term agility rides -
   // and systems/unleveledLoot.js:"const playerLuck", where the vendored ladder rolls
   // rarity against the player's luck, which is where a player actually
   // notices it. (AUDIT 28e: a line shorter - at 360 to 375 wide it was the one blurb that ran to a third line, and
   // the tallest sets the Ascension's band.)
-  get luck() { return t('levelup.blurb.luck', 'Helps you hit and avoid hits, as Agility does, and improves your loot.'); },
+  get luck() {
+    return t('levelup.blurb.luck', 'Helps you hit and avoid hits, as Agility does, and improves your loot.');
+  },
 });
 
 /**
@@ -252,8 +282,10 @@ export function crowdedStarPairs(fig = STAR_FIGURE) {
   const bad = [];
   for (let i = 0; i < keys.length; i++) {
     for (let j = i + 1; j < keys.length; j++) {
-      const a = fig.stars[keys[i]], b = fig.stars[keys[j]];
-      if (Math.abs(a.x - b.x) < STAR_MIN_APART_X && Math.abs(a.y - b.y) < STAR_MIN_APART_Y) bad.push([keys[i], keys[j]]);
+      const a = fig.stars[keys[i]],
+        b = fig.stars[keys[j]];
+      if (Math.abs(a.x - b.x) < STAR_MIN_APART_X && Math.abs(a.y - b.y) < STAR_MIN_APART_Y)
+        bad.push([keys[i], keys[j]]);
     }
   }
   return bad;
@@ -319,7 +351,9 @@ export function viewOnlyScreen(entity, virtue = false) {
     /** Never the all-max branch: that is a thing a LEVEL-UP says about
      *  points it cannot place, and this one has none to place. */
     allMax: () => false,
-    input(action) { if (action === 'confirm') this.done = true; },
+    input(action) {
+      if (action === 'confirm') this.done = true;
+    },
   };
 }
 
@@ -356,8 +390,12 @@ export function rolloutRows(screen) {
       const delta = screen.deltas?.[key] ?? 0;
       const canRaise = canRaiseAttribute(key, stats, screen.deltas ?? {}, screen.purse ?? 0, screen.s);
       return {
-        key, index, label: attributeLabel(key),
-        base, value: base + delta, delta,
+        key,
+        index,
+        label: attributeLabel(key),
+        base,
+        value: base + delta,
+        delta,
         ...liveOf(screen.entity, key, base + delta, canRaise),
         cost: attributeOffset(key, screen.s),
         canRaise,
@@ -369,8 +407,12 @@ export function rolloutRows(screen) {
     const pool = screen.pool ?? 0;
     const canRaise = statUp(value, pool).working !== value;
     return {
-      key, index, label: attributeLabel(key),
-      base, value, delta: value - base,
+      key,
+      index,
+      label: attributeLabel(key),
+      base,
+      value,
+      delta: value - base,
       ...liveOf(screen.entity, key, value, canRaise),
       cost: 1,
       canRaise,
@@ -385,8 +427,11 @@ export function rolloutRows(screen) {
  *  below the permanent one says it is lowered ("43 for now" named no cause). */
 export function liveNote(row) {
   if (!row || row.live === row.value) return '';
-  const said = row.live > row.value ? t('levelup.live.boosted', '{live} with its bonus', { live: row.live }) : t('levelup.live.lowered', 'Lowered to {live} for now', { live: row.live });
-  return row.capped ? t('levelup.live.capped', '{said} - a point here won\'t show', { said }) : said;
+  const said =
+    row.live > row.value
+      ? t('levelup.live.boosted', '{live} with its bonus', { live: row.live })
+      : t('levelup.live.lowered', 'Lowered to {live} for now', { live: row.live });
+  return row.capped ? t('levelup.live.capped', "{said} - a point here won't show", { said }) : said;
 }
 
 /** ASCEND-LIVE: the tint a star's figure and the pick line wear - the classic sheet's two, a live value above its
@@ -397,24 +442,31 @@ export const liveTint = (row) => (!row ? '' : row.live > row.value ? 'boosted' :
  *  points placed, and a point the law takes that would not show (AUDIT 28e: built in the window, unpinned). AUDIT
  *  GROWTH LANE5-1: the permanent value named as such ("of its own" said nothing a player knows). */
 export function starLabel(row) {
-  const said = [row.live !== row.value ? t('levelup.star.permanent', '{name} {live} ({value} permanent)', { name: row.label, live: row.live, value: row.value })
-    : t('levelup.star.value', '{name} {live}', { name: row.label, live: row.live })];
+  const said = [
+    row.live !== row.value
+      ? t('levelup.star.permanent', '{name} {live} ({value} permanent)', {
+          name: row.label,
+          live: row.live,
+          value: row.value,
+        })
+      : t('levelup.star.value', '{name} {live}', { name: row.label, live: row.live }),
+  ];
   if (row.delta > 0) said.push(t('levelup.star.raised', 'raised by {n}', { n: row.delta }));
-  if (!row.canRaise) said.push(t('levelup.star.cannotRaise', 'can\'t raise'));
-  if (row.capped) said.push(t('levelup.star.capped', 'a point here won\'t show for now'));
+  if (!row.canRaise) said.push(t('levelup.star.cannotRaise', "can't raise"));
+  if (row.capped) said.push(t('levelup.star.capped', "a point here won't show for now"));
   return said.join(', ');
 }
 
 /** What is left to spend, in whichever currency this lane counts in. */
 export const rolloutPool = (screen) =>
-  (levelUpLane(screen) === LANE_VIRTUE ? (screen?.purse ?? 0) : (screen?.pool ?? 0));
+  levelUpLane(screen) === LANE_VIRTUE ? (screen?.purse ?? 0) : (screen?.pool ?? 0);
 
 /** ...and what that currency is CALLED. The mod's own label for its
  *  side (l10n/en.yaml:36, through ui/virtueLevelUp.js), and the port's
  *  for Daggerfall's - "bonus points" is what CheckIfDoneLeveling's own
  *  refusal calls them (Internal_Strings.csv:110). AUDIT GROWTH LANE5-1: both read in the player's language. */
 export const poolLabel = (screen) =>
-  (levelUpLane(screen) === LANE_VIRTUE ? remainingPointsLabel() : t('levelup.pool.bonus', 'Bonus points left'));
+  levelUpLane(screen) === LANE_VIRTUE ? remainingPointsLabel() : t('levelup.pool.bonus', 'Bonus points left');
 
 /**
  * THE OK BUTTON'S GATE - and BOTH of CheckIfDoneLeveling's terms.
@@ -451,12 +503,13 @@ export const allMaxed = (screen) => typeof screen?.allMax === 'function' && scre
 /** ...and what the window SAYS on that branch, because a plate reading
  *  "5 bonus points left" over an enabled button is a screen that looks
  *  broken. The port's own words: DFU shows nothing here at all. AUDIT GROWTH LANE5-1: read when drawn, and plain. */
-export const allMaxLine = () => t('levelup.allMax', 'Every attribute is at its maximum. Leftover points can\'t be spent.');
+export const allMaxLine = () =>
+  t('levelup.allMax', "Every attribute is at its maximum. Leftover points can't be spent.");
 
 /** The refusal each lane already ships, so the window quotes rather
  *  than invents. */
 export const refusalText = (screen) =>
-  (levelUpLane(screen) === LANE_VIRTUE ? REMAINING_POINTS_ERROR : mustDistributeBonusPointsText());
+  levelUpLane(screen) === LANE_VIRTUE ? REMAINING_POINTS_ERROR : mustDistributeBonusPointsText();
 
 /** IN A CORNER: points left and no star will take another. Only the
  *  mod's priced purse can reach that state (ui/virtueLevelUp.js's
@@ -546,7 +599,7 @@ export function levelUpCrown(entity, screen) {
     lane,
     viewOnly,
     from,
-    to: (viewOnly || lane === LANE_OGHMA) ? from : (e.pendingLevel ?? from + 1),
+    to: viewOnly || lane === LANE_OGHMA ? from : (e.pendingLevel ?? from + 1),
   };
 }
 
@@ -572,7 +625,8 @@ export function levelUpCrown(entity, screen) {
 export function levelProgress(entity, screen) {
   const e = entity ?? {};
   // LEVEL-45 (systems/levelCap.js): at the cap no level is next - the bar is full and says so, on either lane
-  if (atLevelCap(e)) return { now: 1, max: 1, carried: 0, label: t('levelup.progress.cap', 'Highest level reached'), cap: true };   // AUDIT FB1026d II C3: `cap` - the bar says its label alone
+  if (atLevelCap(e))
+    return { now: 1, max: 1, carried: 0, label: t('levelup.progress.cap', 'Highest level reached'), cap: true }; // AUDIT FB1026d II C3: `cap` - the bar says its label alone
   if (levelUpLane(screen) === LANE_VIRTUE || usesVirtueLeveling(e)) {
     return {
       now: levelBarProgress(e),
@@ -581,7 +635,8 @@ export function levelProgress(entity, screen) {
       label: t('levelup.progress.virtue', 'Progress to next level'),
     };
   }
-  if (e._online === true) {   // LEVEL-45: online the climb is shared out to 45 (systems/levelClimb.js); LEVEL-RAW: in the sheet's points
+  if (e._online === true) {
+    // LEVEL-45: online the climb is shared out to 45 (systems/levelClimb.js); LEVEL-RAW: in the sheet's points
     const { now, max } = onlineLevelRawPoints(e);
     return {
       now,
@@ -620,18 +675,26 @@ export function levelProgress(entity, screen) {
  * from the sum, that pin fails rather than a player being taught the
  * wrong rule.
  */
-export const ROLE_COUNTS = 'counts';        // every point of it is in the sum
-export const ROLE_DROPPED = 'dropped';      // the lowest major, subtracted back out
-export const ROLE_BEST = 'best';            // the highest minor, the only one that counts
-export const ROLE_IDLE = 'idle';            // a minor that is not the best, or a misc skill
+export const ROLE_COUNTS = 'counts'; // every point of it is in the sum
+export const ROLE_DROPPED = 'dropped'; // the lowest major, subtracted back out
+export const ROLE_BEST = 'best'; // the highest minor, the only one that counts
+export const ROLE_IDLE = 'idle'; // a minor that is not the best, or a misc skill
 
 /** AUDIT GROWTH LANE5-1: each a getter, read in the player's language when the ribbon is drawn, and said in the
  *  player's terms - "the sum" was a word the window never defines. */
 export const ROLE_NOTE = Object.freeze({
-  get [ROLE_COUNTS]() { return t('levelup.role.counts', 'Every point counts toward your next level.'); },
-  get [ROLE_DROPPED]() { return t('levelup.role.dropped', 'Your lowest major skill. It doesn\'t count toward your next level.'); },
-  get [ROLE_BEST]() { return t('levelup.role.best', 'Your highest minor skill, the only minor skill that counts toward your next level.'); },
-  get [ROLE_IDLE]() { return t('levelup.role.idle', 'Doesn\'t count toward your next level.'); },
+  get [ROLE_COUNTS]() {
+    return t('levelup.role.counts', 'Every point counts toward your next level.');
+  },
+  get [ROLE_DROPPED]() {
+    return t('levelup.role.dropped', "Your lowest major skill. It doesn't count toward your next level.");
+  },
+  get [ROLE_BEST]() {
+    return t('levelup.role.best', 'Your highest minor skill, the only minor skill that counts toward your next level.');
+  },
+  get [ROLE_IDLE]() {
+    return t('levelup.role.idle', "Doesn't count toward your next level.");
+  },
 });
 
 export function levelSumRoles(entity) {
@@ -709,17 +772,18 @@ export function riseRibbon(entity) {
     name: SKILL_NAMES[id] ?? '',
     // AUDIT 65 CV-1's read, the one sheetModel makes: GetLiveSkillValue,
     // so a lycanthrope's +30 shows here exactly as it shows there.
-    value: displaySkillValue(e, id),   // SOFTCAP1: the printed 0..200 value, not the formula's
+    value: displaySkillValue(e, id), // SOFTCAP1: the printed 0..200 value, not the formula's
     group: groups.get(id) ?? t('levelup.group.misc', 'Miscellaneous'),
     role: roles.get(id) ?? ROLE_IDLE,
-    note: capped ? '' : ROLE_NOTE[roles.get(id) ?? ROLE_IDLE],   // AUDIT FB1026d II C3: at the cap no skill counts toward a next level
+    note: capped ? '' : ROLE_NOTE[roles.get(id) ?? ROLE_IDLE], // AUDIT FB1026d II C3: at the cap no skill counts toward a next level
     risen: !!skillRecentlyIncreased(e, id),
   }));
   // RISEN FIRST, then the career's own order. A sort that only ever
   // moved the risen ones keeps the rest where the sheet puts them, so
   // the ribbon is not a different list every visit.
-  return rows.map((r, i) => ({ r, i }))
-    .sort((a, b) => (Number(b.r.risen) - Number(a.r.risen)) || (a.i - b.i))
+  return rows
+    .map((r, i) => ({ r, i }))
+    .sort((a, b) => Number(b.r.risen) - Number(a.r.risen) || a.i - b.i)
     .map(({ r }) => r);
 }
 
@@ -733,7 +797,13 @@ export function levelUpVitals(entity) {
   return [
     { key: 'health', label: t('levelup.vital.health', 'Health'), now: m.health.now, max: m.health.max, fill: 'blood' },
     { key: 'fatigue', label: t('levelup.vital.fatigue', 'Fatigue'), now: m.fatigue.now, max: m.fatigue.max, fill: '' },
-    { key: 'magicka', label: t('levelup.vital.magicka', 'Magicka'), now: m.magicka.now, max: m.magicka.max, fill: 'verdigris' },
+    {
+      key: 'magicka',
+      label: t('levelup.vital.magicka', 'Magicka'),
+      now: m.magicka.now,
+      max: m.magicka.max,
+      fill: 'verdigris',
+    },
   ];
 }
 
@@ -772,7 +842,7 @@ export function levelUpFrame(entity, screen, refused = false) {
     // enhanced skin's OK button would refuse a classic level-up in
     // total silence, which is the defect ui/enhanced/enhancedChunk.js's whole
     // header is about.
-    refusal: (refused || screen?.refused) ? refusalText(screen) : null,
+    refusal: refused || screen?.refused ? refusalText(screen) : null,
     cornered: corneredHint(screen),
   };
 }

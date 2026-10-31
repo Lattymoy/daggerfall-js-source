@@ -17,12 +17,12 @@
 //     local climb's.
 
 import { CLIMB_SOUND, climbClip, installClimbSounds } from '../../player/climb/climbSounds.js';
-import { POSE, peerLipY, floorGapAt } from '../../player/climb/climbPose.js';   // CLIMB6: a peer's limbs on the climb, the own body's law
+import { POSE, peerLipY, floorGapAt } from '../../player/climb/climbPose.js'; // CLIMB6: a peer's limbs on the climb, the own body's law
 import { CLIMB_MOVE_KINDS } from '../wire.js';
 import { PARKOUR_UP_GAP } from '../../player/parkour.js';
 import { FEEL } from '../../player/climb/climbFeel.js';
 import { enhancedSoundsOn } from '../../systems/enhancedSounds.js';
-import { peerHeard } from './peerFx.js';   // EG-ZH: a peer's climb through the place's scope (Elite-Gates.md section 26)
+import { peerHeard } from './peerFx.js'; // EG-ZH: a peer's climb through the place's scope (Elite-Gates.md section 26)
 
 /** The wire's climb states (`cl`). */
 export const PEER_CLIMB = Object.freeze({ HANG: 1, FACE: 2, MOVE: 3 });
@@ -34,7 +34,7 @@ export function peerBodyYaw(shown) {
   return peerClimbing(shown) && Number.isFinite(shown.cw) ? shown.cw : shown?.yaw;
 }
 /** Is the peer walking - the move bit, never on the wall (a shimmy moves the feet along the lip, and is no stride). */
-export const peerMoving = (shown) => !!shown?.mv && !peerClimbing(shown) && !shown?.st;   // CARDS2b (AUDIT CARDS C5): nor is a sitter - one law for every body, sound and sprite stride
+export const peerMoving = (shown) => !!shown?.mv && !peerClimbing(shown) && !shown?.st; // CARDS2b (AUDIT CARDS C5): nor is a sitter - one law for every body, sound and sprite stride
 
 /**
  * What a change of a peer's climb sounds - `[sound, volume]` pairs, from the state they were in to the one they are in
@@ -45,13 +45,14 @@ export const peerMoving = (shown) => !!shown?.mv && !peerClimbing(shown) && !sho
  * @returns {Array<[string, number]>}
  */
 export function peerClimbCues(was, now) {
-  const C = CLIMB_SOUND, { HANG, FACE, MOVE } = PEER_CLIMB;
+  const C = CLIMB_SOUND,
+    { HANG, FACE, MOVE } = PEER_CLIMB;
   if (was === now) return [];
   if (!was) return now === HANG ? [['catch', C.CATCH_BASE + 0.1]] : [['grab', C.GRAB * (now === FACE ? 0.75 : 0.7)]];
   if (!now) return was === MOVE ? [] : [['step', C.LET_GO]];
   if (now === MOVE) return [['pull', C.PULL * (was === HANG ? 1 : 0.7)]];
   if (was === MOVE) return [['grab', C.GRAB * (now === HANG ? 1 : 0.8)]];
-  return [['grab', C.GRAB * 0.75]];   // a hang to a face, or back
+  return [['grab', C.GRAB * 0.75]]; // a hang to a face, or back
 }
 
 /** AUDIT CLIMB-ARC N6: the least time (ms) between one peer's climb cues, and between its hands' and boots' sounds. */
@@ -65,15 +66,22 @@ export class PeerClimbSounds {
    *   sounds' switch; `rand` the variety's dice (the pins' seam); `install` false keeps the clips unloaded; `now` the
    *   clock (ms) the sound floors read (AUDIT CLIMB-ARC N6 - the pins' seam).
    */
-  constructor({ audio = null, profile = null, on = enhancedSoundsOn, rand = Math.random, install = true, now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now()) } = {}) {
+  constructor({
+    audio = null,
+    profile = null,
+    on = enhancedSoundsOn,
+    rand = Math.random,
+    install = true,
+    now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now()),
+  } = {}) {
     this.audio = audio;
-    this.now = now;   // AUDIT CLIMB-ARC N6: the floors' clock (ms)
+    this.now = now; // AUDIT CLIMB-ARC N6: the floors' clock (ms)
     this.profile = profile;
     this.on = on;
     this.rand = rand;
     this.install = install;
-    this.peers = new Map();   // id -> { cl, at, climb, shimmy }
-    this.last = new Map();    // sound -> the key last played
+    this.peers = new Map(); // id -> { cl, at, climb, shimmy }
+    this.last = new Map(); // sound -> the key last played
   }
 
   /** One drawn frame of a peer: `shown` their pose, `at` their feet in the scene, `heard` whether they are in earshot
@@ -81,7 +89,10 @@ export class PeerClimbSounds {
   update(id, shown, at, heard = true) {
     const cl = shown?.cl | 0;
     const s = this.peers.get(id);
-    if (!s) { this.peers.set(id, { cl, at: at ? [at[0], at[1], at[2]] : null, climb: 0, shimmy: 0 }); return; }   // first seen: an old climb is not replayed
+    if (!s) {
+      this.peers.set(id, { cl, at: at ? [at[0], at[1], at[2]] : null, climb: 0, shimmy: 0 });
+      return;
+    } // first seen: an old climb is not replayed
     const on = this.on() && !!this.audio?.play3d;
     if (on && this.install) installClimbSounds(this.audio);
     // AUDIT CLIMB-ARC N6: A FLOOR UNDER EVERY PEER'S SOUNDS. The wire carries the climb's state, and a pose stream that
@@ -95,22 +106,35 @@ export class PeerClimbSounds {
       for (const [sound, vol] of cues) this._play(sound, vol, 1, at);
       if (cues.length) s.cueAt = t;
     }
-    const rhythmOk = () => { if (t - (s.rhythmAt ?? -Infinity) < PEER_RHYTHM_MS) return false; s.rhythmAt = t; return true; };
+    const rhythmOk = () => {
+      if (t - (s.rhythmAt ?? -Infinity) < PEER_RHYTHM_MS) return false;
+      s.rhythmAt = t;
+      return true;
+    };
     // the rhythm: a hand at every reach up a face (a boot half a reach on), a hand every span along a lip
-    if (cl !== s.cl) { s.climb = 0; s.shimmy = 0; }
+    if (cl !== s.cl) {
+      s.climb = 0;
+      s.shimmy = 0;
+    }
     if (at && s.at && cl === s.cl && (cl === PEER_CLIMB.FACE || cl === PEER_CLIMB.HANG)) {
-      const dx = at[0] - s.at[0], dy = at[1] - s.at[1], dz = at[2] - s.at[2];
+      const dx = at[0] - s.at[0],
+        dy = at[1] - s.at[1],
+        dz = at[2] - s.at[2];
       const d = cl === PEER_CLIMB.FACE ? Math.hypot(dx, dy, dz) : Math.hypot(dx, dz);
-      if (d > 1e-5 && d < 1) {   // past a metre a frame is a snap (a recentre, a placement), never a climb
+      if (d > 1e-5 && d < 1) {
+        // past a metre a frame is a snap (a recentre, a placement), never a climb
         if (cl === PEER_CLIMB.FACE) {
           const was = s.climb;
           s.climb += d / FEEL.REACH;
-          if (on && heard && Math.floor(s.climb) > Math.floor(was) && rhythmOk()) this._play('step', CLIMB_SOUND.STEP, 1, at);
-          if (on && heard && Math.floor(s.climb - 0.5) > Math.floor(was - 0.5) && rhythmOk()) this._play('step', CLIMB_SOUND.FOOT, CLIMB_SOUND.FOOT_PITCH, at);
+          if (on && heard && Math.floor(s.climb) > Math.floor(was) && rhythmOk())
+            this._play('step', CLIMB_SOUND.STEP, 1, at);
+          if (on && heard && Math.floor(s.climb - 0.5) > Math.floor(was - 0.5) && rhythmOk())
+            this._play('step', CLIMB_SOUND.FOOT, CLIMB_SOUND.FOOT_PITCH, at);
         } else {
           const was = s.shimmy;
           s.shimmy += d / FEEL.SHIMMY_SPAN;
-          if (on && heard && Math.floor(s.shimmy) > Math.floor(was) && rhythmOk()) this._play('step', CLIMB_SOUND.SHIMMY, CLIMB_SOUND.SHIMMY_PITCH, at);
+          if (on && heard && Math.floor(s.shimmy) > Math.floor(was) && rhythmOk())
+            this._play('step', CLIMB_SOUND.SHIMMY, CLIMB_SOUND.SHIMMY_PITCH, at);
         }
       }
     }
@@ -119,15 +143,19 @@ export class PeerClimbSounds {
   }
 
   /** A peer gone (left the room, out of the drawn set): the next sight of them is a first. */
-  forget(id) { this.peers.delete(id); }
+  forget(id) {
+    this.peers.delete(id);
+  }
   /** The floating origin moved: every peer's last place is in the old frame - the next frame's travel is no climb. */
-  rebase() { for (const s of this.peers.values()) s.at = null; }
+  rebase() {
+    for (const s of this.peers.values()) s.at = null;
+  }
 
   _play(sound, vol, pitch, at) {
     const c = climbClip(sound, this.last.get(sound), this.rand, pitch);
     if (!c) return;
     this.last.set(sound, c.key);
-    peerHeard(() => this.audio.play3d(c.key, at, Math.min(1, vol), { ...(this.profile ?? {}), pitch: c.pitch }));   // EG-ZH: as the place hears it
+    peerHeard(() => this.audio.play3d(c.key, at, Math.min(1, vol), { ...(this.profile ?? {}), pitch: c.pitch })); // EG-ZH: as the place hears it
   }
 }
 
@@ -148,27 +176,51 @@ const PEER_SPLIT = Object.freeze({ mantle: 0.6, vault: 0.4 });
  * start the feet then, its lip `cy` over them, its clock the local one from then over its `cd`. One per body.
  */
 export class PeerClimbTrack {
-  constructor() { this.move = null; this.moveKey = null; this.moveStart = 0; }
+  constructor() {
+    this.move = null;
+    this.moveKey = null;
+    this.moveStart = 0;
+  }
 
   /** The snapshot for this frame (null off the wall): `shown` the drawn pose, `feet` and `yaw` where the body is drawn
    *  (PeerBodies' b.feet, b.yaw), `now` ms, `collider` the host's (the floor under a hang's feet) or null. */
   input(shown, feet, yaw, now, collider = null) {
-    const cl = (shown?.cl | 0);
-    if (!cl || !feet) { this.move = null; this.moveKey = null; return null; }
+    const cl = shown?.cl | 0;
+    if (!cl || !feet) {
+      this.move = null;
+      this.moveKey = null;
+      return null;
+    }
     const cw = Number.isFinite(shown.cw) ? shown.cw : yaw;
-    const fwd = [Math.sin(cw), 0, Math.cos(cw)], normal = [-fwd[0], 0, -fwd[2]];
-    const base = { feet: [feet[0], feet[1], feet[2]], yaw, grip: 1, floorGap: floorGapAt(collider, feet), flight: null };
+    const fwd = [Math.sin(cw), 0, Math.cos(cw)],
+      normal = [-fwd[0], 0, -fwd[2]];
+    const base = {
+      feet: [feet[0], feet[1], feet[2]],
+      yaw,
+      grip: 1,
+      floorGap: floorGapAt(collider, feet),
+      flight: null,
+    };
     if (cl !== 3) {
-      this.move = null; this.moveKey = null;
-      return cl === 1 ? { ...base, mode: 'hang', normal, lipY: peerLipY(feet[1]), move: null } : { ...base, mode: 'climb', normal, lipY: null, move: null };
+      this.move = null;
+      this.moveKey = null;
+      return cl === 1
+        ? { ...base, mode: 'hang', normal, lipY: peerLipY(feet[1]), move: null }
+        : { ...base, mode: 'climb', normal, lipY: null, move: null };
     }
     const kind = CLIMB_MOVE_KINDS[(shown.ck | 0) - 1] ?? null;
-    if (!kind) return { ...base, mode: null, normal: null, lipY: null, move: null };   // a move the pose does not name: the in-air pose
+    if (!kind) return { ...base, mode: null, normal: null, lipY: null, move: null }; // a move the pose does not name: the in-air pose
     const key = `${kind}:${shown.cy ?? ''}:${shown.cd ?? ''}`;
     if (key !== this.moveKey || !this.move) {
       this.moveKey = key;
       this.moveStart = now;
-      this.move = peerMove(kind, base.feet, fwd, Number.isFinite(shown.cy) ? shown.cy / 100 : null, shown.cd ? shown.cd / 100 : PEER_MOVE_DUR);
+      this.move = peerMove(
+        kind,
+        base.feet,
+        fwd,
+        Number.isFinite(shown.cy) ? shown.cy / 100 : null,
+        shown.cd ? shown.cd / 100 : PEER_MOVE_DUR,
+      );
     }
     this.move.t = Math.min(1, Math.max(0, (now - this.moveStart) / 1000 / this.move.dur));
     return { ...base, mode: null, normal: null, lipY: null, move: this.move };
@@ -182,7 +234,19 @@ export class PeerClimbTrack {
 export function peerMove(kind, from, fwd, rise, dur) {
   const lip = from[1] + (Number.isFinite(rise) ? rise : 1.8);
   const back = POSE.FACE_BACK;
-  const m = { kind, from: [...from], up: null, to: null, split: 1, arc: 0, dur: Math.max(0.05, dur), exit: null, t: 0, hang: null, wall: null };
+  const m = {
+    kind,
+    from: [...from],
+    up: null,
+    to: null,
+    split: 1,
+    arc: 0,
+    dur: Math.max(0.05, dur),
+    exit: null,
+    t: 0,
+    hang: null,
+    wall: null,
+  };
   if (kind === 'mantle' || kind === 'vault') {
     m.up = [from[0], lip + PARKOUR_UP_GAP, from[2]];
     m.to = [from[0] + fwd[0] * (back + 0.4), lip, from[2] + fwd[2] * (back + 0.4)];

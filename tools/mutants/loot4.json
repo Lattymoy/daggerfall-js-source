@@ -119,8 +119,8 @@
   {
     "name": "LOOT4-a-class-foe-by-its-career",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  if (target.affinity === 'Human') return 'humanoid';\n",
-    "new": "\n",
+    "old": "  if (target.affinity === 'Human') return 'humanoid';",
+    "new": "",
     "tests": [
       "test/systems/loot4_procs.test.js"
     ]
@@ -212,8 +212,8 @@
   {
     "name": "LOOT4-the-thorns-unregistered",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "registerPlayerBlowLanded(LOOT_POWERS, lootLanded);\n",
-    "new": "\n",
+    "old": "registerPlayerBlowLanded(LOOT_POWERS, lootLanded);",
+    "new": "",
     "tests": [
       "test/systems/loot4_procs.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "LOOT4-the-landed-hook-unread",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (before - after > 0) for (const fn of _landed.values()) { try { fn(entity, blow.attacker, before - after); } catch { /* the loot is not the blow's problem */ } }   // LOOT4\n",
-    "new": "\n",
+    "old": "  if (before - after > 0)\n    for (const fn of _landed.values()) {\n      try {\n        fn(entity, blow.attacker, before - after);\n      } catch {\n        /* the loot is not the blow's problem */\n      }\n    } // LOOT4",
+    "new": "",
     "tests": [
       "test/systems/loot4_procs.test.js"
     ]
@@ -230,8 +230,8 @@
   {
     "name": "LOOT4-the-landed-hook-on-nothing",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (before - after > 0) for (const fn of _landed.values())",
-    "new": "  for (const fn of _landed.values())",
+    "old": "  if (before - after > 0)\n    for (const fn of _landed.values()) {\n      try {\n        fn(entity, blow.attacker, before - after);\n      } catch {\n        /* the loot is not the blow's problem */\n      }\n    } // LOOT4",
+    "new": "  for (const fn of _landed.values()) {\n    try {\n      fn(entity, blow.attacker, before - after);\n    } catch {\n      /* the loot is not the blow's problem */\n    }\n  } // LOOT4",
     "tests": [
       "test/systems/loot4_procs.test.js"
     ]

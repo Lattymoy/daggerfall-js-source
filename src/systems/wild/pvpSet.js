@@ -12,7 +12,10 @@ import { KIT_IDS, KIT_SPELLS, kitSlotOf, kitBarOf, kitSlotName } from './pvpKit.
 export const PVP_SET = Object.freeze({ slots: 16, made: 24, kitFrom: 2 });
 
 /** A made spell as the hotbar keeps it: a 'kit' entry. */
-export const kitEntry = (slot) => { const kit = kitSlotOf(slot); return { type: 'kit', kit, name: kitSlotName(kit) }; };
+export const kitEntry = (slot) => {
+  const kit = kitSlotOf(slot);
+  return { type: 'kit', kit, name: kitSlotName(kit) };
+};
 const sameKit = (a, b) => a.id === b.id && a.pick === b.pick && a.icon === b.icon;
 const isKit = (raw) => !!raw && KIT_IDS.includes(raw.id);
 
@@ -38,7 +41,8 @@ export const unmakeKit = (made, i) => made.filter((_, j) => j !== i);
 /** A set entry as saved, or null: a toolkit spell, or an item kind (never a book spell). */
 function entryOf(raw) {
   if (raw?.type === 'kit' && isKit(raw.kit)) return kitEntry(raw.kit);
-  if (raw?.type === 'item' && typeof raw.key === 'string' && typeof raw.kind === 'string') return { type: 'item', kind: raw.kind, key: raw.key, name: String(raw.name ?? '') };
+  if (raw?.type === 'item' && typeof raw.key === 'string' && typeof raw.kind === 'string')
+    return { type: 'item', kind: raw.kind, key: raw.key, name: String(raw.name ?? '') };
   return null;
 }
 /** The saved record (`{ v: 2, set, made }`), or null when there is none to read. */
@@ -67,14 +71,26 @@ export function kitTag(id) {
 /** A made spell's cost as the menu lists it. */
 export const kitCostLine = (id) => t('pvp.set.cost', '{n}% magicka', { n: KIT_SPELLS[id]?.cost ?? 0 });
 /** The refusal while the combat lock runs, `leftMs` of it left. */
-export const pvpSetLockLine = (leftMs) => t('pvp.set.locked', 'You are in combat. You can change your PvP spells in {s} s.', { s: Math.max(1, Math.ceil(leftMs / 1000)) });
+export const pvpSetLockLine = (leftMs) =>
+  t('pvp.set.locked', 'You are in combat. You can change your PvP spells in {s} s.', {
+    s: Math.max(1, Math.ceil(leftMs / 1000)),
+  });
 
 /**
  * A slot's marks on the bar: `cost` what a cast charges now (armour and all), `short` when my magicka is under it, `last`
  * the slot last cast, `cd` the share of the cast clock left (1 just cast, 0 ready), `lock` the combat lock. An item
  * slot carries the lock alone.
  */
-export function pvpSlotMarks({ kit = false, cost = 0, magicka = 0, last = false, castAt = -Infinity, recoverMs = 0, now = 0, locked = false }) {
+export function pvpSlotMarks({
+  kit = false,
+  cost = 0,
+  magicka = 0,
+  last = false,
+  castAt = -Infinity,
+  recoverMs = 0,
+  now = 0,
+  locked = false,
+}) {
   if (!kit) return { lock: !!locked };
   const cd = recoverMs > 0 ? Math.max(0, Math.min(1, (castAt + recoverMs - now) / recoverMs)) : 0;
   return { cost, short: magicka < cost, last: !!last, cd, lock: !!locked };

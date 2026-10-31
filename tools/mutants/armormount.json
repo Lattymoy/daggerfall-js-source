@@ -20,8 +20,8 @@
   {
     "name": "ARMORMOUNT-armour-stands-as-a-billboard",
     "file": "src/systems/decor/decorItems.js",
-    "old": "new Set(['Weapons', 'Armor', 'Transportation',",
-    "new": "new Set(['Weapons', 'Transportation',",
+    "old": "  new Set(['Weapons', 'Armor', 'Transportation', 'Currency', 'Deeds', 'QuestItems']),",
+    "new": "  new Set(['Weapons', 'Transportation', 'Currency', 'Deeds', 'QuestItems']),",
     "tests": [
       "test/systems/item/armormount.test.js"
     ]

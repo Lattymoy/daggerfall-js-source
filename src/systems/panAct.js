@@ -17,35 +17,58 @@ import { PRESS_LEAD_MAX_S } from './stitchAct.js';
  * @param {{ pans?: number, done?: readonly number[], gentle?: boolean, rng?: () => number }} [opts] `pans` the dish's
  *   (recipeLaw panCount), `done` the done band [lo, hi] (recipeLaw panWindow)
  */
-export function createPanAct({ pans = PAN_ACT.pans, done = [PAN_ACT.lo, PAN_ACT.lo + PAN_ACT.w], gentle = false, rng = Math.random } = {}) {
-  const lo = Number(done[0]), hi = Number(done[1]);
+export function createPanAct({
+  pans = PAN_ACT.pans,
+  done = [PAN_ACT.lo, PAN_ACT.lo + PAN_ACT.w],
+  gentle = false,
+  rng = Math.random,
+} = {}) {
+  const lo = Number(done[0]),
+    hi = Number(done[1]);
   /** One pan's pace, by one throw of the dice: PAN_ACT.paceLo to paceHi - the fire's own heat under it. */
   const pace = () => PAN_ACT.paceLo + (PAN_ACT.paceHi - PAN_ACT.paceLo) * Math.max(0, Math.min(1, Number(rng()) || 0));
   const st = {
-    kind: 'pan', t: 0, need: Math.max(1, pans | 0), lo, hi,
+    kind: 'pan',
+    t: 0,
+    need: Math.max(1, pans | 0),
+    lo,
+    hi,
     /** the pan on the fire: its heat (0 raw .. 1 burnt) and how fast it climbs, a second */
-    heat: 0, rate: pace() / PAN_ACT.burnS,
+    heat: 0,
+    rate: pace() / PAN_ACT.burnS,
     /** each pan as it came off: true done, false raw or burnt; `burnt` how many the fire took */
-    takes: /** @type {boolean[]} */ ([]), burnt: 0, lastAt: -Infinity, done: false,
+    takes: /** @type {boolean[]} */ ([]),
+    burnt: 0,
+    lastAt: -Infinity,
+    done: false,
   };
   const inWindow = (h) => !gentle && h >= st.lo && h <= st.hi;
   /** The pan off - `ok` whether done - and the next set on cold (the dish ends at its last). */
   const off = (ok, at) => {
     st.takes.push(ok);
     st.lastAt = at;
-    if (st.takes.length >= st.need) { st.done = true; return; }
+    if (st.takes.length >= st.need) {
+      st.done = true;
+      return;
+    }
     st.heat = 0;
     st.rate = pace() / PAN_ACT.burnS;
   };
   return {
     state: st,
     /** Whether the pan on the fire is done now (never under Gentle acts). */
-    get inWindow() { return !st.done && inWindow(st.heat); },
+    get inWindow() {
+      return !st.done && inWindow(st.heat);
+    },
     tick(dt) {
       if (st.done || !Number.isFinite(dt) || dt <= 0) return;
       st.t += dt;
       st.heat += st.rate * dt;
-      if (st.heat >= 1) { st.burnt++; st.heat = 1; off(false, st.t); }   // left on the fire: burnt, and the next goes on
+      if (st.heat >= 1) {
+        st.burnt++;
+        st.heat = 1;
+        off(false, st.t);
+      } // left on the fire: burnt, and the next goes on
     },
     /** The pan taken off the fire: true done, false raw (or burnt), null too soon after the last take or the act over.
      *  `lead` - the press's own moment past the act's last frame (AUDIT 32 P1's law, the stitch's): the heat it is judged
@@ -59,12 +82,19 @@ export function createPanAct({ pans = PAN_ACT.pans, done = [PAN_ACT.lo, PAN_ACT.
       return ok;
     },
     /** Let go (Esc, or the page shut): no more pans; an act short of its pans is never clean. */
-    cancel() { st.done = true; },
+    cancel() {
+      st.done = true;
+    },
     /** The act's report: its pans, the done ones, the burnt ones, and whether it was clean - every pan taken, every one
      *  done (a Gentle act's are none). */
     report() {
       const hits = st.takes.filter(Boolean).length;
-      return { pans: st.takes.length, hits, burnt: st.burnt, clean: st.takes.length >= st.need && hits === st.takes.length };
+      return {
+        pans: st.takes.length,
+        hits,
+        burnt: st.burnt,
+        clean: st.takes.length >= st.need && hits === st.takes.length,
+      };
     },
   };
 }

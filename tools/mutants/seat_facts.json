@@ -82,8 +82,8 @@
   {
     "name": "SEATFACTS-write-clock-unkept",
     "file": "server-account/src/townSeats.js",
-    "old": "  seatWroteAt.set(root, nowS);   // SEAT-FACTS",
-    "new": "  void nowS;   // SEAT-FACTS",
+    "old": "  seatWroteAt.set(root, nowS); // SEAT-FACTS: no kept row from before it answers here again (keptSeatFacts)",
+    "new": "  void nowS; // SEAT-FACTS: no kept row from before it answers here again (keptSeatFacts)",
     "tests": [
       "test/server/seat_facts.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "SEATFACTS-overload-swallowed",
     "file": "server-account/src/townSeats.js",
-    "old": "catch (e) { if (d1Overloaded(e)) throw e; return null; }",
-    "new": "catch { return null; }",
+    "old": "  } catch (e) {\n    if (d1Overloaded(e)) throw e;",
+    "new": "  } catch {",
     "tests": [
       "test/server/seat_facts.test.js"
     ],

@@ -789,11 +789,11 @@ test('AUDIT SCALE D12: the harness\'s counters - every frame and byte in and out
 
 test('AUDIT SCALE C11 C13: an interrupted run takes its state, and the private half leaves the disk once the service is up; the account entry answers as workerd\'s binding does - a column the row has not thrown, raw() counted once, each point stamped with its moment', async () => {
   const h = src('tools/loadHarness.mjs');
-  assert.match(h, /const onSignal = \(\) => \{\s*for \(const f of fleets\) f\.stop\?\.\(\);\s*stopAll\(\);\s*if \(!o\.keep\) \{ try \{ rmSync\(state, \{ recursive: true, force: true \}\); \} catch \{[^}]*\} \}\s*process\.exit\(130\);/);
-  assert.match(h, /if \(!\(await healthy\(accountPort, '\/v1\/health', 180\)\)\)[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*rmSync\(acctEnv, \{ force: true \}\);/);
+  assert.match(h, /const onSignal = \(\) => \{\n\s*for \(const f of fleets\) f\.stop\?\.\(\);\n\s*stopAll\(\);\n\s*if \(!o\.keep\) \{\n\s*try \{\n\s*rmSync\(state, \{ recursive: true, force: true \}\);\n\s*\} catch \{\n\s*\/\* gone \*\/\n\s*\}\n\s*\}\n\s*process\.exit\(130\);/);
+  assert.match(h, /if \(!\(await healthy\(accountPort, '\/v1\/health', 180\)\)\)\n\s*throw new Error\(`the account service never answered:\\n\$\{svc\.account\.log\.slice\(-2000\)\}`\);\n\s*\/\/ AUDIT SCALE C11: the private half read and the service up - it leaves the disk now, not at the run's end \(the storm\n\s*\/\/ restarts only the relay, whose file keeps the identity's public half and the gate's signing half for it, in the\n\s*\/\/ run's own state directory, which the run removes\)\n\s*rmSync\(acctEnv, \{ force: true \}\);/);
   const e = src('tools/loadAccountEntry.mjs');
   assert.match(e, /if \(!\(col in row\)\) throw new Error\(`D1_COLUMN_NOTFOUND/);
-  assert.match(e, /if \(key === 'raw'\) return async \([^)]*\) => \{ const r = await target\.raw\(opts\); note\(sql, null\); return r; \};/);
+  assert.match(e, /if \(key === 'raw'\)\n\s*return async \(\/\*\* @type \{any\} \*\/ opts\) => \{\n\s*const r = await target\.raw\(opts\);\n\s*note\(sql, null\);\n\s*return r;\n\s*\};/);
   assert.match(e, /points\.push\(\{ \.\.\.p, t: Date\.now\(\) \}\)/);
 });
 

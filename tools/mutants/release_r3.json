@@ -12,8 +12,8 @@
   {
     "name": "R3-1-castle-on-the-fold",
     "file": "src/net/instanceRoom.js",
-    "old": "export const GUILD_INSTANCE_RELAY_MIN = 276;",
-    "new": "export const GUILD_INSTANCE_RELAY_MIN = 260;",
+    "old": "export const GUILD_INSTANCE_RELAY_MIN = 276; // world276 (the eighth merge of main into #1184, 2026-10-28: past main's world275, SD-PARTY, already live); world275 (the seventh merge of main into #1184, 2026-10-28: past main's world274, LADDER-CUT); world274 (the fourth merge of main into #1184, 2026-10-27: past main's world272 and world273); world272 (the third merge of main into #1184, 2026-10-27: past MASTER-THREE's world271, main's); world271 (the second merge of main into #1184, 2026-10-27: past CHAT-POST's world270, main's); world270 (the merge of main into TESA, 2026-10-27: #1184's world269 folded into its world270 past BOW-TOPS's world269, main's): the merged release's (world256 on TESA's, renumbered past main's world256 to world259 at the merge, then world260 past main's world260 to world268 at the next)",
+    "new": "export const GUILD_INSTANCE_RELAY_MIN = 260; // world276 (the eighth merge of main into #1184, 2026-10-28: past main's world275, SD-PARTY, already live); world275 (the seventh merge of main into #1184, 2026-10-28: past main's world274, LADDER-CUT); world274 (the fourth merge of main into #1184, 2026-10-27: past main's world272 and world273); world272 (the third merge of main into #1184, 2026-10-27: past MASTER-THREE's world271, main's); world271 (the second merge of main into #1184, 2026-10-27: past CHAT-POST's world270, main's); world270 (the merge of main into TESA, 2026-10-27: #1184's world269 folded into its world270 past BOW-TOPS's world269, main's): the merged release's (world256 on TESA's, renumbered past main's world256 to world259 at the merge, then world260 past main's world260 to world268 at the next)",
     "tests": [
       "test/net/domain2_castles.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "R3-3-all-names-provinces",
     "file": "src/net/hubShards.js",
-    "old": "Array.from({ length: REGION_SPLIT }, (_, region) => region)",
-    "new": "Array.from({ length: REGION_CHANNELS }, (_, region) => region)",
+    "old": "        ? new Set(Array.from({ length: REGION_SPLIT }, (_, region) => region))",
+    "new": "        ? new Set(Array.from({ length: REGION_CHANNELS }, (_, region) => region))",
     "tests": [
       "test/net/cost1_regions.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "R3-3-var-names-a-province",
     "file": "src/net/hubShards.js",
-    "old": "/^\\d{1,2}$/.test(part) && canon(part, REGION_SPLIT))",
-    "new": "/^\\d{1,2}$/.test(part) && canon(part, REGION_CHANNELS))",
+    "old": "              .filter((part) => /^\\d{1,2}$/.test(part) && canon(part, REGION_SPLIT))",
+    "new": "              .filter((part) => /^\\d{1,2}$/.test(part) && canon(part, REGION_CHANNELS))",
     "tests": [
       "test/net/cost1_regions.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "R3-3-province-split-by-a-set",
     "file": "src/net/hubShards.js",
-    "old": "  if (!canon(String(bus).slice(String(bus).lastIndexOf('.') + 1), REGION_SPLIT)) return null;\n",
-    "new": "",
+    "old": "  if (!canon(String(bus).slice(String(bus).lastIndexOf('.') + 1), REGION_SPLIT)) return null;\n  return `${bus}.${shardHash(sub) % REGION_SHARDS}`;",
+    "new": "  return `${bus}.${shardHash(sub) % REGION_SHARDS}`;",
     "tests": [
       "test/net/sleepcost.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "R3-4-my-row-pushed-off-the-keys",
     "file": "src/systems/instancePlaces.js",
-    "old": "INSTANCE_ROWS_MAX - rows.length - (mine ? 1 : 0)",
-    "new": "INSTANCE_ROWS_MAX - rows.length",
+    "old": "  for (const p of (partners ?? []).slice(\n    0,\n    Math.max(0, INSTANCE_ROWS_MAX - rows.length - (mine ? 1 : 0) - (lastPublic ? 1 : 0)),\n  ))",
+    "new": "  for (const p of (partners ?? []).slice(0, Math.max(0, INSTANCE_ROWS_MAX - rows.length - (lastPublic ? 1 : 0))))",
     "tests": [
       "test/net/domain2_castles.test.js"
     ],

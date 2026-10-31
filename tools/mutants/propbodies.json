@@ -11,8 +11,8 @@
   {
     "name": "PROP-BODIES-the-clamp-s-reach-without-the-capsule",
     "file": "src/player/bodyClamp.js",
-    "old": "const R = it.r + radius, dx",
-    "new": "const R = it.r, dx",
+    "old": "    const R = it.r + radius,",
+    "new": "    const R = it.r,",
     "tests": [
       "test/player/propbodies.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PROP-BODIES-from-inside-out-to-the-edge-at-once",
     "file": "src/player/bodyClamp.js",
-    "old": "const to = pd >= R ? R : Math.max(d, pd);",
-    "new": "const to = R;",
+    "old": "    const to = pd >= R ? R : Math.max(d, pd); // from outside to its edge; from inside no deeper than it stood",
+    "new": "    const to = R; // from outside to its edge; from inside no deeper than it stood",
     "tests": [
       "test/player/propbodies.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PROP-BODIES-the-momentum-kept",
     "file": "src/player/bodyClamp.js",
-    "old": "    if (into < 0) { m._airVelX -= into * nx; m._airVelZ -= into * nz; }\n",
-    "new": "",
+    "old": "    if (into < 0) {\n      m._airVelX -= into * nx;\n      m._airVelZ -= into * nz;\n    }\n  });",
+    "new": "  });",
     "tests": [
       "test/player/propbodies.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PROP-BODIES-the-span-unread",
     "file": "src/player/bodyClamp.js",
-    "old": "    if (cy >= top || cy + it.h <= feet) return;",
-    "new": "    if (cy >= Infinity) return;",
+    "old": "    if (cy >= top || cy + it.h <= feet) return; // under the feet or over the head: a jump clears a rock",
+    "new": "    if (cy >= Infinity) return; // under the feet or over the head: a jump clears a rock",
     "tests": [
       "test/player/propbodies.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PROP-BODIES-the-journey-held",
     "file": "src/player/bodyClamp.js",
-    "old": "|| m._pkMove || m.travelling?.()) return;",
-    "new": "|| m._pkMove) return;",
+    "old": "  if (!cover?.near || m.freezeMotor > 0 || m.climb?.isClimbing || m._wall || m._pkMove || m.travelling?.()) return;",
+    "new": "  if (!cover?.near || m.freezeMotor > 0 || m.climb?.isClimbing || m._wall || m._pkMove) return;",
     "tests": [
       "test/player/propbodies.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PROP-BODIES-a-climb-held",
     "file": "src/player/bodyClamp.js",
-    "old": "m.freezeMotor > 0 || m.climb?.isClimbing || m._wall",
-    "new": "m.freezeMotor > 0 || m._wall",
+    "old": "  if (!cover?.near || m.freezeMotor > 0 || m.climb?.isClimbing || m._wall || m._pkMove || m.travelling?.()) return;",
+    "new": "  if (!cover?.near || m.freezeMotor > 0 || m._wall || m._pkMove || m.travelling?.()) return;",
     "tests": [
       "test/player/propbodies.test.js"
     ]

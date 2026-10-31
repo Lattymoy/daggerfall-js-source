@@ -43,10 +43,10 @@
 // half-delta - a crime penalty, an enemy's share of a reward - so
 // every halving here is Math.trunc.
 import { GUILD_GROUPS, FACTION_TYPES, FACTION_FLAGS } from '../../formats/factionFile.js';
-import { customFactions, relinkChildren } from '../../formats/factionFile.js';   // RR3: AddCustomFactions' registry and the relink
-import { restoreFactionRep } from '../save/save.js';   // AUDIT 23 C1: the stashed-load replay
-import { MIN_REPUTATION, MAX_REPUTATION } from '../guild/guildFactions.js';   // CHAP1: the bounds' one home, the leaf the Roll reads
-import { addProvinceFactions } from './provinceFactions.js';   // PROVINCE-COURTS: the provinces' own courts and people
+import { customFactions, relinkChildren } from '../../formats/factionFile.js'; // RR3: AddCustomFactions' registry and the relink
+import { restoreFactionRep } from '../save/save.js'; // AUDIT 23 C1: the stashed-load replay
+import { MIN_REPUTATION, MAX_REPUTATION } from '../guild/guildFactions.js'; // CHAP1: the bounds' one home, the leaf the Roll reads
+import { addProvinceFactions } from './provinceFactions.js'; // PROVINCE-COURTS: the provinces' own courts and people
 
 /** Mathf.Clamp bounds (:32-35) - the reputation's two live in the leaf guildFactions.js (CHAP1) and are handed on here. */
 export { MIN_REPUTATION, MAX_REPUTATION };
@@ -57,7 +57,7 @@ export const MAX_POWER = 100;
 export { FACTION_FLAGS };
 
 /** The faction ids the law names by hand (FactionFile.FactionIDs). */
-export const THE_THIEVES_GUILD = 42;   // FactionFile.cs:91
+export const THE_THIEVES_GUILD = 42; // FactionFile.cs:91
 export const THE_DARK_BROTHERHOOD = 108;
 export const GENERIC_TEMPLE = 450;
 export const GENERIC_KNIGHTLY_ORDER = 844;
@@ -65,14 +65,16 @@ export const GENERIC_KNIGHTLY_ORDER = 844;
 /** questorIds (:37-38) - the six guild QUESTOR npcs, from
  *  GuildNpcServices. A questor takes the FULL delta inside a
  *  propagating walk where its siblings take half. */
-export const QUESTOR_IDS = Object.freeze(new Set([
-  63,   // MG_Quests
-  851,  // FG_Quests
-  804,  // TG_Quests
-  807,  // DB_Quests
-  240,  // T_Quests
-  846,  // KO_Quests
-]));
+export const QUESTOR_IDS = Object.freeze(
+  new Set([
+    63, // MG_Quests
+    851, // FG_Quests
+    804, // TG_Quests
+    807, // DB_Quests
+    240, // T_Quests
+    846, // KO_Quests
+  ]),
+);
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 /** C# int division - toward zero, NOT Math.floor. See the header. */
@@ -115,7 +117,7 @@ export function createFactionRep(factionDict) {
   // through the store. AUDIT 20 found the header promising a clone
   // that was only one level deep.
   for (const [id, f] of factionDict) dict.set(id, { ...f, children: f.children ? [...f.children] : f.children });
-  addCustomFactions(dict);   // Reset (:331): the custom factions ride every fresh dictionary
+  addCustomFactions(dict); // Reset (:331): the custom factions ride every fresh dictionary
   return { dict };
 }
 

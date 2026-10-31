@@ -2,8 +2,8 @@
   {
     "name": "BAYLEFT-MERGE-the-seed-through-the-spawns",
     "file": "src/systems/livingWorld/seed.js",
-    "old": "import { hash32 } from '../../world/blockHash.js';",
-    "new": "import { hash32 } from '../../world/spawnedDungeons.js';",
+    "old": "import { hash32 } from '../../world/blockHash.js'; // AUDIT BAY-LEFT (its packages merged): the mix's own leaf - spawnedDungeons.js re-exports it, and SPAWN-WORLD's imports would ride into the account Worker's bundle through here",
+    "new": "import { hash32 } from '../../world/spawnedDungeons.js'; // AUDIT BAY-LEFT (its packages merged): the mix's own leaf - spawnedDungeons.js re-exports it, and SPAWN-WORLD's imports would ride into the account Worker's bundle through here",
     "tests": [
       "test/server/accountdeploy.test.js"
     ],

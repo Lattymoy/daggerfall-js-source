@@ -382,7 +382,7 @@ export function landFeetOff(props, tileM) {
       vines.add(at(props[i], tileM) + Math.floor(props[i + 2] / tileM) + 1024);
       continue;
     }
-    if (!/** @type {any} */ (LAND_KIND_LAW)[kind].body) continue;
+    if (!(/** @type {any} */ (LAND_KIND_LAW)[kind].body)) continue;
     const r = (landMeasures(kind, props[i + 6]).foot + FLAT_CLEAR) * props[i + 4];
     feet.push(props[i], props[i + 2], r);
     reach = Math.max(reach, r);

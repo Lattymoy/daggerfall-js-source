@@ -88,8 +88,8 @@
   {
     "name": "PROF4-chops-floor-two",
     "file": "src/net/professionLaw.js",
-    "old": "export const chopsFor = (tier, lumberjack = false) => Math.max(3,",
-    "new": "export const chopsFor = (tier, lumberjack = false) => Math.max(2,",
+    "old": "  Math.max(3, (tier <= 2 ? 5 : tier <= 4 ? 6 : 8) - (lumberjack ? 2 : 0));",
+    "new": "  Math.max(2, (tier <= 2 ? 5 : tier <= 4 ? 6 : 8) - (lumberjack ? 2 : 0));",
     "tests": [
       "test/net/prof4_law.test.js"
     ],
@@ -99,8 +99,8 @@
   {
     "name": "PROF4-ring-one-second",
     "file": "src/net/professionLaw.js",
-    "old": "export const CHOP_ACT = Object.freeze({ ringS: 0.9,",
-    "new": "export const CHOP_ACT = Object.freeze({ ringS: 1,",
+    "old": "  ringS: 0.9,",
+    "new": "  ringS: 1,",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/systems/prof4_client.test.js"
@@ -109,8 +109,8 @@
   {
     "name": "PROF4-ring-band-no-rank",
     "file": "src/net/professionLaw.js",
-    "old": "(CHOP_ACT.bandMaster - CHOP_ACT.bandNovice) * Math.max(0, Math.min(100, rank)) / 100) * band;",
-    "new": "(CHOP_ACT.bandMaster - CHOP_ACT.bandNovice) * 0) * band;",
+    "old": "  (CHOP_ACT.bandNovice + ((CHOP_ACT.bandMaster - CHOP_ACT.bandNovice) * Math.max(0, Math.min(100, rank))) / 100) * band;",
+    "new": "  (CHOP_ACT.bandNovice + (CHOP_ACT.bandMaster - CHOP_ACT.bandNovice) * 0) * band;",
     "tests": [
       "test/net/prof4_law.test.js"
     ]
@@ -127,8 +127,8 @@
   {
     "name": "PROF4-burner-three",
     "file": "src/net/professionLaw.js",
-    "old": "{ more: Object.freeze({ profession: 'logging', spec: 'charcoal-burner', per: 2 }), xp: null }",
-    "new": "{ more: Object.freeze({ profession: 'logging', spec: 'charcoal-burner', per: 3 }), xp: null }",
+    "old": "      more: Object.freeze({ profession: 'logging', spec: 'charcoal-burner', per: 2 }),",
+    "new": "      more: Object.freeze({ profession: 'logging', spec: 'charcoal-burner', per: 3 }),",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/net/prof4_service.test.js"
@@ -137,8 +137,8 @@
   {
     "name": "PROF4-saw-one-plank",
     "file": "src/net/professionLaw.js",
-    "old": "{ station: 'workbench', per: 2, more:",
-    "new": "{ station: 'workbench', per: 1, more:",
+    "old": "      per: 2,",
+    "new": "      per: 1,",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/net/prof4_service.test.js"
@@ -147,8 +147,8 @@
   {
     "name": "PROF4-saw-at-forge",
     "file": "src/net/professionLaw.js",
-    "old": "{ station: 'workbench', per: 2, more:",
-    "new": "{ station: 'forge', per: 2, more:",
+    "old": "      station: 'workbench',",
+    "new": "      station: 'forge',",
     "tests": [
       "test/net/prof4_law.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "PROF4-work-per-any-spec",
     "file": "src/net/professionLaw.js",
-    "old": "(r.more && specsAt?.[r.more.profession] === r.more.spec ? r.more.per : r.per)",
-    "new": "(r.more ? r.more.per : r.per)",
+    "old": "export const workPer = (r, specsAt = {}) =>\n  r.more && specsAt?.[r.more.profession] === r.more.spec ? r.more.per : r.per;",
+    "new": "export const workPer = (r, specsAt = {}) => (r.more ? r.more.per : r.per);",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/net/prof4_service.test.js"
@@ -185,8 +185,8 @@
   {
     "name": "PROF4-wood-no-profession",
     "file": "src/net/professionLaw.js",
-    "old": ": family === 'wood' ? 'logging' : null);",
-    "new": ": null);",
+    "old": "      : family === 'wood'\n        ? 'logging'\n        : null;",
+    "new": "      : null;",
     "tests": [
       "test/net/prof4_law.test.js"
     ]
@@ -549,8 +549,8 @@
   {
     "name": "PROF4-chop-ring-kept",
     "file": "src/systems/chopAct.js",
-    "old": "      st.ring = 0;   // the ring starts again after a chop\n",
-    "new": "",
+    "old": "      st.ring = 0; // the ring starts again after a chop\n      if (!st.creaked && st.points >= st.need * CHOP_ACT.creakAt) st.creaked = true;",
+    "new": "      if (!st.creaked && st.points >= st.need * CHOP_ACT.creakAt) st.creaked = true;",
     "tests": [
       "test/systems/prof4_client.test.js"
     ]

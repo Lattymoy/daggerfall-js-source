@@ -62,8 +62,8 @@ import { MEMBERSHIP_STATUS } from './questLists.js';
 import { QUEST_MESSAGES } from './quest.js';
 import { GUILD_GROUPS } from '../../formats/factionFile.js';
 import { GENDERS } from '../../characters/nameHelper.js';
-import { localizedText } from '../textManager.js';   // L10N3d: the wait box's two lines
-import { reputeGated } from './onlineRepute.js';   // REPUTE-GATE: online, two quests wait for their headers' standing
+import { localizedText } from '../textManager.js'; // L10N3d: the wait box's two lines
+import { reputeGated } from './onlineRepute.js'; // REPUTE-GATE: online, two quests wait for their headers' standing
 
 /** DaggerfallQuestPopupWindow.cs:92 - TEXT.RSC's "You're too late, I
  *  gave the job to some spellsword" flavour family. */
@@ -96,7 +96,7 @@ export class QuestOfferFlow {
     this.deps = deps;
     this.offeredQuest = null;
     this.questPool = null;
-    this.menu = false;      // the social window's ctor flag: popups
+    this.menu = false; // the social window's ctor flag: popups
     //                        opened from a talk MENU close back to it
     //                        (QuestPopupMessage_OnClose's override)
     this._guild = null;
@@ -139,7 +139,7 @@ export class QuestOfferFlow {
     this.offeredQuest = this.questLists.getSocialQuest(socialGroup, factionId, gender, reputation, level);
     if (this.offeredQuest) {
       const prompt = this.machine.createMessagePrompt(this.offeredQuest, QUEST_MESSAGES.QuestorOffer);
-      if (!prompt) return { kind: 'close' };   // no message 1000: nothing shows, the quest leaks
+      if (!prompt) return { kind: 'close' }; // no message 1000: nothing shows, the quest leaks
       return { kind: 'offer', prompt, respond: (yes) => this._offerResponse(yes) };
     }
     // Failed get quest messages do not appear inside castles in classic.
@@ -194,7 +194,12 @@ export class QuestOfferFlow {
     if (this.machine.isLastNPCClickedAnActiveQuestor()) return questorBusy(this.machine);
     const level = this.machine.deps.playerLevel?.() ?? 0;
     this.offeredQuest = this.questLists.getGuildQuest(
-      GUILD_GROUPS.Witches, MEMBERSHIP_STATUS.Nonmember, factionId, reputation, level);
+      GUILD_GROUPS.Witches,
+      MEMBERSHIP_STATUS.Nonmember,
+      factionId,
+      reputation,
+      level,
+    );
     return this._offerQuest();
   }
 
@@ -221,15 +226,21 @@ export class QuestOfferFlow {
     if (guild.isSatisfyQuestReqByLevel?.() && level > rank) rank = level;
     // REPUTE-GATE (onlineRepute.js): online, Guard the Guild and Protect an Honored Mage wait for the standing their
     // headers name - offline the pool is DFU's
-    this.questPool = reputeGated(this.questLists.getGuildQuestPool(guildGroup, status, factionId, guild.getReputation(), rank),
-      guild.getReputation(), !!this.deps.sharedClock?.());
+    this.questPool = reputeGated(
+      this.questLists.getGuildQuestPool(guildGroup, status, factionId, guild.getReputation(), rank),
+      guild.getReputation(),
+      !!this.deps.sharedClock?.(),
+    );
     // QUEST-AUDIT III NO-WORK: with Choose Guild Jobs on and no work to offer, the wait box opened a picker of nothing;
     // the classic draw's own "no work" line answers instead (selectQuest of an empty pool -> OfferQuest's failure)
     if (this.deps.guildQuestListBox && !this.questPool?.length) return this._failGetQuestMessage();
     if (this.deps.guildQuestListBox) {
       return {
         kind: 'gettingQuests',
-        textLines: [localizedText('gettingQuests1', GETTING_QUESTS_1), localizedText('gettingQuests2', GETTING_QUESTS_2)],   // :578-579
+        textLines: [
+          localizedText('gettingQuests1', GETTING_QUESTS_1),
+          localizedText('gettingQuests2', GETTING_QUESTS_2),
+        ], // :578-579
         clickAnywhereToClose: true,
         onClose: () => this._gettingQuestsBoxClose(),
       };
@@ -243,8 +254,9 @@ export class QuestOfferFlow {
    *  each C# call site does. */
   _getFactionIdForGuild() {
     const { guildGroup, buildingFactionId } = this._guildCtx;
-    return (guildGroup === GUILD_GROUPS.HolyOrder || guildGroup === GUILD_GROUPS.KnightlyOrder)
-      ? buildingFactionId : (this.deps.getGuildFactionId?.(guildGroup) ?? 0);
+    return guildGroup === GUILD_GROUPS.HolyOrder || guildGroup === GUILD_GROUPS.KnightlyOrder
+      ? buildingFactionId
+      : (this.deps.getGuildFactionId?.(guildGroup) ?? 0);
   }
 
   /** OfferQuest (:600-621): the member's guild becomes the quest's
@@ -309,10 +321,11 @@ export class QuestOfferFlow {
       }
     }
     for (const i of failures) {
-      if (i >= this.questPool.length) throw new Error('Index was out of range. Must be non-negative and less than the size of the collection.');
+      if (i >= this.questPool.length)
+        throw new Error('Index was out of range. Must be non-negative and less than the size of the collection.');
       this.questPool.splice(i, 1);
     }
-    if (!entries.length) return this._failGetQuestMessage();   // NO-WORK: every row failed its parse - nothing to pick
+    if (!entries.length) return this._failGetQuestMessage(); // NO-WORK: every row failed its parse - nothing to pick
     return { kind: 'pickQuest', entries, onPick: (index) => this._questPicked(index) };
   }
 
@@ -327,7 +340,7 @@ export class QuestOfferFlow {
    *  the pin here recorded that. An index past the pool answers
    *  nothing. */
   _questPicked(index) {
-    if (!this.questPool) return null;   // QUEST-UID1: a load took the pool away under its picker
+    if (!this.questPool) return null; // QUEST-UID1: a load took the pool away under its picker
     if (index < this.questPool.length) {
       this.offeredQuest = this.questLists.loadQuest(this.questPool[index], this._getFactionIdForGuild());
       return this._offerQuest();
@@ -344,7 +357,7 @@ export class QuestOfferFlow {
    *  TalkManager scrubs in C#'s order - info topics, quest rumors,
    *  progress rumors - then RefuseQuest with exitOnClose false. */
   _offerResponse(yes) {
-    if (!this.offeredQuest) return { kind: 'close' };   // QUEST-UID1: a load took the offer away under its popup
+    if (!this.offeredQuest) return { kind: 'close' }; // QUEST-UID1: a load took the offer away under its popup
     if (yes) {
       // C#'s accept call rides the exitOnClose DEFAULT (two args)
       const popup = this._showQuestPopupMessage(this.offeredQuest, QUEST_MESSAGES.AcceptQuest);
@@ -355,7 +368,10 @@ export class QuestOfferFlow {
     md.removeQuestInfoTopics?.(this.offeredQuest.uid);
     md.removeQuestRumors?.(this.offeredQuest.uid);
     md.removeProgressRumors?.(this.offeredQuest.uid);
-    return { kind: 'refused', popup: this._showQuestPopupMessage(this.offeredQuest, QUEST_MESSAGES.RefuseQuest, false) };
+    return {
+      kind: 'refused',
+      popup: this._showQuestPopupMessage(this.offeredQuest, QUEST_MESSAGES.RefuseQuest, false),
+    };
   }
 
   /** ShowQuestPopupMessage (:104-127): quest tokens at default

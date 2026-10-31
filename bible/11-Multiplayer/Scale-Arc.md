@@ -175,9 +175,9 @@ and for those seconds neither side of the door could see the other.
     a visit. An exit is a click with nothing to build behind it, so the walk is the mint's only time.
 - **It mints only when the held token could not open the next room by the time its socket asks**: none held, spent
   there, or its minute out within the door's own margin. A door's margin is
-  `doorTokenHost.js:"export const DOOR_SOON_MS = 2_000;"` (a frame, the join's 500 ms hold, a socket's open), asked again
+  `doorTokenHost.js:"export const DOOR_SOON_MS"` (a frame, the join's 500 ms hold, a socket's open), asked again
   every frame of the place change until its room is joined (at most `DOOR_PENDING_MS`, 30 s), so a long build or stream
-  needs no guessed bound; the walk's is `doorTokenHost.js:"export const EXIT_WALK_MS = 8_000;"` (16 m at the slowest
+  needs no guessed bound; the walk's is `doorTokenHost.js:"export const EXIT_WALK_MS"` (16 m at the slowest
   walk, the door's click, `DOOR_SOON_MS`). Never through a failure's hold (STORM-SHED), never while a mint is on the
   wire, never offline.
 - **AUDIT (2026-10-16, A2): the margin was one 20 s (`TOKEN_AHEAD_MS`) at every door**, and the record said "the next
@@ -2216,7 +2216,7 @@ properly", then "Do it". Read off D1's own query insights and the service's metr
 
 ### Built
 
-- **The kept read is a replica's.** `server-account/src/townSeats.js:"export const SEAT_ROWS_FROM = 'first-unconstrained';"`:
+- **The kept read is a replica's.** `server-account/src/townSeats.js:"export const SEAT_ROWS_FROM"`:
   seatRowsOf reads on a D1 session of its own (service.js `replicaDb`, counted on the request's point as the binding's
   statements are) - the first any instance's, each one after a kept read from the bookmark that one ended at, so a
   replica behind what this isolate already read never answers it; and the read after this isolate's own write (a
@@ -2310,7 +2310,7 @@ The owner's "1, 2 and 3", the first of them: one read of the seats' rows a minut
 
 ### Built
 
-- **The clock keeps the facts.** `server-account/src/townSeats.js:"export async function keepSeatFacts("` - a minute's
+- **The clock keeps the facts.** `server-account/src/townSeats.js:"export async function keepSeatFacts"` - a minute's
   job (`cron.js` `seat-facts`, while the seats are not `off`) reads every seat row on the binding and keeps what they
   say in `seat_facts_kept`'s one row (migration 0112): the seats that stand (a disputed one too) by key, state and
   report, and the accounts ignored - two statements a minute, where every isolate read the rows.
@@ -3817,7 +3817,7 @@ and a blow either one dropped went without a word. The arm is a method of its ow
 the lines), and its drops are counted.
 
 **The metrics point's blobs.** RoomMetrics writes all twenty doubles Analytics Engine takes, so the counts past them
-are blobs (`server/src/relayScale.js:"blobs: [kind, String(version), String(c.hitDrops), String(c.fullDrops), String(c.fulls),"`),
+are blobs (`server/src/relayScale.js:"indexes: [kind],"`),
 each its count in decimal:
 
 | Blob | Holds |
@@ -3919,7 +3919,7 @@ A frame that goes first (FOES-FIRST's: a full frame on its sender's turn, an unh
 cannot take is HELD, and every held frame goes in its turn:
 
 - **One line, one turn a sender.** The held frames are served first come, first served
-  (`server/src/foesHold.js:"export function heldHead(hold) {"`); a sender's turn sends its first held frame, and the
+  (`server/src/foesHold.js:"export function heldHead"`); a sender's turn sends its first held frame, and the
   frames it holds behind it while the turn's own lengths come to FOES_TURN_BYTES (16 KiB: a full frame and a handover's
   small batches beside it); past that the rest take places at the back (`served`). No sender's frames, however many or
   however large, keep another's from their turn.
@@ -3963,7 +3963,7 @@ cannot take is HELD, and every held frame goes in its turn:
 - **Bounds, and room made fairly.** FOES_HELD_PER_SENDER (4) frames a sender a lane; FOES_HELD_BYTES_MAX (64 of the
   largest frame) a lane, counted in the TEXT the hold keeps - a held frame is kept as it came and parsed again at its
   turn. Past the bytes, room is made from the sender holding the most, each time the one holding the most now, while it
-  holds more than the frame's own sender will (`server/src/foesHold.js:"function roomFor(hold, mine, over) {"`): its
+  holds more than the frame's own sender will (`server/src/foesHold.js:"function roomFor"`): its
   newest frame that is no handover first, a handover only when it holds nothing else; else the frame is refused and
   nothing taken. A full frame whose words are FOES_STALE_MS old leaves the hold unsent. Every frame out of the hold
   unsent is counted gone, and dropped as FOES-FIRST counted it.
@@ -4473,7 +4473,7 @@ none at all - not even the heartbeat. A MOVING one said POSE_HZ (10) down its ow
 (HALO-THIN), so a lone mover held its cell and its ~0.9 halo cells awake the whole time it moved (R4-3: ~1.9 objects,
 ~$7.8 a month a lone concurrent player) - HIBERNATE leaves a mover as it was.
 
-**Alone is one notion** (the second merge with main; `src/net/loneSleep.js:"export function aloneNow(s) {"`, asked by
+**Alone is one notion** (the second merge with main; `src/net/loneSleep.js:"export function aloneNow"`, asked by
 the session through `aloneOf`): no referee (the host's `haloWhole`, a cell's `rf` on any socket I hold), nobody else in
 my own room (`othersHere`) or any I hold (`peers`), in a world cell, a building or an ordinary dungeon. HIBERNATE's
 `aloneQuiet` and LONE-SLEEP's `loneNow` both read it: alone and standing, nothing (HIBERNATE); alone and moving in a
@@ -4488,7 +4488,7 @@ world cell, on LONE-SLEEP's further conditions below, a pose each LONE_POSE_MS; 
   the second merge, where world260 is main's THE FOLD), not standing in the open zone (`_wildZone`, my own zone word),
   and outside a fight's hold.
 - **Lone**, `src/net/online.js:"const lone = loneStep(this, pose, now);"`: a MOVED pose goes down my own cell's socket
-  once each `src/net/loneSleep.js:"export const LONE_POSE_MS = 60_000;"` (an unmoved one never - HIBERNATE's), and
+  once each `src/net/loneSleep.js:"export const LONE_POSE_MS"` (an unmoved one never - HIBERNATE's), and
   **down no halo** - an empty halo
   hears no pose at all (its liveness is its ping, answered asleep). A crossing's promotion clears `_lastSentAt`, so the
   cell crossed into hears me at once; a new halo's and a new room's hello carries my pose.
@@ -4496,9 +4496,9 @@ world cell, on LONE-SLEEP's further conditions below, a pose each LONE_POSE_MS; 
   that ends the quiet says my pose at once - the notice's own turn, before the next frame - down my cell's socket and
   each halo it is due to (one quiet a heartbeat or more always is), and POSE_HZ from the next frame. Never from a body
   lying dead (the pose would stand it up).
-- **A fight**: `src/net/loneSleep.js:"export const LONE_HOLD_MS = 5_000;"` of POSE_HZ after a pose whose fight counters
+- **A fight**: `src/net/loneSleep.js:"export const LONE_HOLD_MS"` of POSE_HZ after a pose whose fight counters
   moved (`wd`, `an`, `cn`, `ar`, `hk`, `hu` - that pose goes at once) and after a grant's mint is asked.
-- **A word carries my pose** (`src/net/loneSleep.js:"export function loneAhead(s, ws, room) {"`, beside LEASE1's
+- **A word carries my pose** (`src/net/loneSleep.js:"export function loneAhead"`, beside LEASE1's
   `_leased`, the same shape; a halo's socket keeps COST-2's `?of=` and is wrapped the same): any frame but a ping, a hello, a pose or a lease said down a cell's socket while lone goes
   behind my current pose when that socket last heard me elsewhere, and restarts the minute. Chat, a door, a zone's word,
   a grant, a raid's, a rite's - each is judged where I stand.
@@ -4513,7 +4513,7 @@ world cell, on LONE-SLEEP's further conditions below, a pose each LONE_POSE_MS; 
 | the grant's cell and pixel (`server/src/index.js:"_grantHere(ws, a, id) {"`, `_grantMint`) | my pose goes ahead of the ask (pinned) |
 | raid, rite, star, serpent site, the Hour's door, the Wild zone's word, a duel's open | my pose ahead of the word; a referee's cell is never quiet (`rf`) |
 | SEAT1b's Watch (`server/src/index.js:"async _watchTick(ws, sub, p, moved, now) {"`) | it ticks on a pose that finds its last tick WATCH_TICK_MS (120 s) old, at that pose's pixel - a minute's poses tick every two minutes as a pose a second does (pinned: 5 receipts in 10 minutes either way); WATCH_MOVED_MS (300 s) is five of them |
-| the reaction feed (`server/src/staffFeeds.js:"export function staffReactPose(room, ws, p, now) {"`, REACTION_FEED_URL set) | the mint holds POSE_HZ for LONE_HOLD_MS, past `server/src/staffFeedLaw.js:"export const REACT_FIRST_MS = 3_000;"`; each first it times (a draw, a swing, a cast, an arrow, a blow either way) is a fight counter, said at once; a death is `sendDeath`'s, at once |
+| the reaction feed (`server/src/staffFeeds.js:"export function staffReactPose"`, REACTION_FEED_URL set) | the mint holds POSE_HZ for LONE_HOLD_MS, past `server/src/staffFeedLaw.js:"export const REACT_FIRST_MS"`; each first it times (a draw, a swing, a cast, an arrow, a blow either way) is a fight counter, said at once; a death is `sendDeath`'s, at once |
 | duelPose, wildPose, the serpent's trail (`server/src/index.js:"_refereesPoses() {"`) | a referee in the cell says `rf`, and a session hearing it is never quiet; but the cell says it only at the pose or hello after the referee began, and the zone's `wildPose` steps every pose through `refereeStep` (a window's walk at most - a minute's would be a jump, and a jump refuses the fighter's blows for WILD_REF.jumpMs), so a session that has said it stands in the open zone is never quiet from that word on (pinned); a serpent's fight is the host's `haloWhole` the frame it begins |
 | siege and Royal `refereeStep`, a court, the Hour, a ship, the arena, an instance | not world cells - never quiet |
 | the warden's throw (first frame in the room) | at most a minute late, nobody there to see it but me |

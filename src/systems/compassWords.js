@@ -7,8 +7,18 @@
 // Not a DFU member. Pure.
 
 /** The eight ways, clockwise from north. */
-export const COMPASS_WORDS = Object.freeze(['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west']);
+export const COMPASS_WORDS = Object.freeze([
+  'north',
+  'north-east',
+  'east',
+  'south-east',
+  'south',
+  'south-west',
+  'west',
+  'north-west',
+]);
 
 /** The compass way across the level from one place to another, in scene XZ (+x east, +z north - ui/hud/hud.js
  *  compassMarkerLerp's frame). Pure. */
-export const sceneCompassWord = (dx, dz) => COMPASS_WORDS[((Math.round(Math.atan2(dx, dz) * 180 / Math.PI / 45) % 8) + 8) % 8];
+export const sceneCompassWord = (dx, dz) =>
+  COMPASS_WORDS[((Math.round((Math.atan2(dx, dz) * 180) / Math.PI / 45) % 8) + 8) % 8];

@@ -4,7 +4,10 @@
     "file": "tools/bakeCloak.mjs",
     "old": "export const CLOAK_SUBDIVISIONS = 2;",
     "new": "export const CLOAK_SUBDIVISIONS = 1;",
-    "tests": ["test/tooling/mwcloak2.test.js", "test/tooling/mwcloak1.test.js"],
+    "tests": [
+      "test/tooling/mwcloak2.test.js",
+      "test/tooling/mwcloak1.test.js"
+    ],
     "note": "One level, tried and lost: the top corner stays angular, and the shipped meshes are not the bake's."
   },
   {
@@ -12,39 +15,49 @@
     "file": "tools/bakeCloak.mjs",
     "old": "  const mesh = loopSubdivide(bakeObject(tree, CLOAK_OBJECT, CLOAK_BOX), CLOAK_SUBDIVISIONS);",
     "new": "  const mesh = bakeObject(tree, CLOAK_OBJECT, CLOAK_BOX);",
-    "tests": ["test/tooling/mwcloak1.test.js"],
+    "tests": [
+      "test/tooling/mwcloak1.test.js"
+    ],
     "note": "The export's coarse cloak shipped as it was."
   },
   {
     "name": "MWCLOAK2-the-rim-pulled-in",
     "file": "tools/meshSubdivide.mjs",
-    "old": "    if (r.length === 2) { w0 = 3 / 4; nb = r; wn = 1 / 8; }   // on the open edge",
-    "new": "    if (r.length === 2) { w0 = 1 / 2; nb = r; wn = 1 / 4; }   // on the open edge",
-    "tests": ["test/tooling/mwcloak2.test.js"],
+    "old": "      w0 = 3 / 4;\n      nb = r;\n      wn = 1 / 8;",
+    "new": "      w0 = 1 / 2;\n      nb = r;\n      wn = 1 / 4;",
+    "tests": [
+      "test/tooling/mwcloak2.test.js"
+    ],
     "note": "The open edge relaxed twice as hard: the corners pull far into the sheet."
   },
   {
     "name": "MWCLOAK2-the-rim-as-the-inside",
     "file": "tools/meshSubdivide.mjs",
-    "old": "    if (r.length === 2) { w0 = 3 / 4; nb = r; wn = 1 / 8; }   // on the open edge",
-    "new": "    if (false) { w0 = 3 / 4; nb = r; wn = 1 / 8; }   // on the open edge",
-    "tests": ["test/tooling/mwcloak2.test.js"],
+    "old": "    if (r.length === 2) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/tooling/mwcloak2.test.js"
+    ],
     "note": "A rim vertex smoothed by its whole ring, inside neighbours and all: the edge pulls into the sheet."
   },
   {
     "name": "MWCLOAK2-the-edge-its-middle",
     "file": "tools/meshSubdivide.mjs",
-    "old": "        ? 3 / 8 * (P[a * 3 + c] + P[b * 3 + c]) + 1 / 8 * (P[far[0] * 3 + c] + P[far[1] * 3 + c])",
-    "new": "        ? (P[a * 3 + c] + P[b * 3 + c]) / 2",
-    "tests": ["test/tooling/mwcloak2.test.js"],
+    "old": "      pos[next * 3 + c] =\n        far.length === 2\n          ? (3 / 8) * (P[a * 3 + c] + P[b * 3 + c]) + (1 / 8) * (P[far[0] * 3 + c] + P[far[1] * 3 + c])\n          : (P[a * 3 + c] + P[b * 3 + c]) / 2;",
+    "new": "      pos[next * 3 + c] = far.length === 2 ? (P[a * 3 + c] + P[b * 3 + c]) / 2 : (P[a * 3 + c] + P[b * 3 + c]) / 2;",
+    "tests": [
+      "test/tooling/mwcloak2.test.js"
+    ],
     "note": "An interior edge's new vertex at its middle: the surface is not Loop's."
   },
   {
     "name": "MWCLOAK2-no-beta",
     "file": "tools/meshSubdivide.mjs",
-    "old": "      const beta = k ? (5 / 8 - (3 / 8 + Math.cos(2 * Math.PI / k) / 4) ** 2) / k : 0;",
+    "old": "      const beta = k ? (5 / 8 - (3 / 8 + Math.cos((2 * Math.PI) / k) / 4) ** 2) / k : 0;",
     "new": "      const beta = 0;",
-    "tests": ["test/tooling/mwcloak2.test.js"],
+    "tests": [
+      "test/tooling/mwcloak2.test.js"
+    ],
     "note": "Old vertices where they were: the net interpolated, its bumps kept."
   },
   {
@@ -52,15 +65,19 @@
     "file": "tools/meshSubdivide.mjs",
     "old": "  return s < 0 ? -1 : 1;",
     "new": "  return s < 0 ? 1 : -1;",
-    "tests": ["test/tooling/mwcloak2.test.js"],
+    "tests": [
+      "test/tooling/mwcloak2.test.js"
+    ],
     "note": "The smoothed cloak lit from inside."
   },
   {
     "name": "MWCLOAK2-a-seam-torn",
     "file": "tools/meshSubdivide.mjs",
-    "old": "    if (seen.has(k)) throw new Error(`vertex ${v} shares its position with another - a seam this subdivision does not split`);",
+    "old": "    if (seen.has(k))\n      throw new Error(`vertex ${v} shares its position with another - a seam this subdivision does not split`);",
     "new": "",
-    "tests": ["test/tooling/mwcloak2.test.js"],
+    "tests": [
+      "test/tooling/mwcloak2.test.js"
+    ],
     "note": "A seam subdivided as two edges: the halves part."
   },
   {
@@ -68,15 +85,19 @@
     "file": "src/formats/morrowind/mwCloakFit.js",
     "old": "export const CLOAK_EASE_RADIUS = 8;",
     "new": "export const CLOAK_EASE_RADIUS = 0.001;",
-    "tests": ["test/tooling/mwcloak2.test.js"],
+    "tests": [
+      "test/tooling/mwcloak2.test.js"
+    ],
     "note": "A triangle's corners alone: the facet over the pauldron's edge."
   },
   {
     "name": "MWCLOAK2-normals-kept",
     "file": "src/formats/morrowind/mwCloakFit.js",
-    "old": "      const normals = cloak.batch.normals ? faceAs(vertexNormals(bind, cloak.indices, rep), cloak.batch.normals) : cloak.batch.normals;",
+    "old": "      const normals = cloak.batch.normals\n        ? faceAs(vertexNormals(bind, cloak.indices, rep), cloak.batch.normals)\n        : cloak.batch.normals;",
     "new": "      const normals = cloak.batch.normals;",
-    "tests": ["test/tooling/mwcloak2.test.js"],
+    "tests": [
+      "test/tooling/mwcloak2.test.js"
+    ],
     "note": "The eased cloak lit as if it had not moved."
   },
   {
@@ -84,7 +105,9 @@
     "file": "src/formats/morrowind/mwCloakFit.js",
     "old": "  if (s < 0) for (let k = 0; k < fresh.length; k++) fresh[k] = -fresh[k];",
     "new": "",
-    "tests": ["test/tooling/mwcloak2.test.js"],
+    "tests": [
+      "test/tooling/mwcloak2.test.js"
+    ],
     "note": "The fitted normals the winding's way, whichever way the cloak's faced."
   }
 ]

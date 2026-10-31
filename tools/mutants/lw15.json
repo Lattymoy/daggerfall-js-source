@@ -11,8 +11,8 @@
   {
     "name": "LW15-odds",
     "file": "src/net/patronLaw.js",
-    "old": "Object.freeze([0.5, 0.25])",
-    "new": "Object.freeze([0.5, 0.3])",
+    "old": "  Object.freeze([0.5, 0.25]),",
+    "new": "  Object.freeze([0.5, 0.3]),",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LW15-odds-negative",
     "file": "src/net/patronLaw.js",
-    "old": "  if (!(r >= 0)) return 0;\n",
-    "new": "\n",
+    "old": "  if (!(r >= 0)) return 0;\n  for (const [bound, odds] of PATRON_ODDS) if (r <= bound) return odds;",
+    "new": "  for (const [bound, odds] of PATRON_ODDS) if (r <= bound) return odds;",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "LW15-odds-over",
     "file": "src/net/patronLaw.js",
-    "old": "  for (const [bound, odds] of PATRON_ODDS) if (r <= bound) return odds;\n  return 0;",
-    "new": "  for (const [bound, odds] of PATRON_ODDS) if (r <= bound) return odds;\n  return 0.05;",
+    "old": "  return 0;",
+    "new": "  return 0.05;",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LW15-cap-floor",
     "file": "src/net/patronLaw.js",
-    "old": "Math.floor(Math.max(0, worth) * PATRON_PAY_SHARE)",
-    "new": "Math.floor(worth * PATRON_PAY_SHARE)",
+    "old": "export const patronCap = (worth) => Math.floor(Math.max(0, worth) * PATRON_PAY_SHARE);",
+    "new": "export const patronCap = (worth) => Math.floor(worth * PATRON_PAY_SHARE);",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "LW15-takes-quest",
     "file": "src/net/patronLaw.js",
-    "old": "&& !item.questItem &&",
-    "new": "&&",
+    "old": "  !item.questItem &&\n  !item.livingKeepsake &&",
+    "new": "  !item.livingKeepsake &&",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LW15-takes-keepsake",
     "file": "src/net/patronLaw.js",
-    "old": " && item.templateIndex !== PATRON_KEEPSAKE_TEMPLATE\n",
-    "new": "\n",
+    "old": "  item.templateIndex !== PATRON_KEEPSAKE_TEMPLATE &&\n  item[PATRON_COUNTER_MARK] !== true &&",
+    "new": "  item[PATRON_COUNTER_MARK] !== true &&",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "LW15-takes-living",
     "file": "src/net/patronLaw.js",
-    "old": "!item.livingKeepsake && ",
-    "new": "",
+    "old": "  !item.livingKeepsake &&\n  item.templateIndex !== PATRON_KEEPSAKE_TEMPLATE &&",
+    "new": "  item.templateIndex !== PATRON_KEEPSAKE_TEMPLATE &&",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "LW15-draw-hour",
     "file": "src/net/patronLaw.js",
-    "old": "fnv(`${salt}${listing}:${hour}:draw${salt}`)",
-    "new": "fnv(`${salt}${listing}:draw${salt}`)",
+    "old": "export const patronDraw = (listing, hour, salt = '') => fnv(`${salt}${listing}:${hour}:draw${salt}`) / 4294967296;",
+    "new": "export const patronDraw = (listing, hour, salt = '') => fnv(`${salt}${listing}:draw${salt}`) / 4294967296;",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "LW15-hour-odds",
     "file": "src/net/patronLaw.js",
-    "old": "    if (draw >= patronOdds(l.price / patronCap(l.worth))) continue;",
-    "new": "    if (draw >= 0.5) continue;",
+    "old": "    if (draw >= patronOdds(l.price / patronCap(l.worth))) continue; // over the cap (or no cap at all) the odds are none",
+    "new": "    if (draw >= 0.5) continue; // over the cap (or no cap at all) the odds are none",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "LW15-hour-order",
     "file": "src/net/patronLaw.js",
-    "old": "  cands.sort((a, b) => a.draw - b.draw ||",
-    "new": "  cands.sort((a, b) => b.draw - a.draw ||",
+    "old": "  cands.sort((a, b) => a.draw - b.draw || (a.l.id < b.l.id ? -1 : 1));",
+    "new": "  cands.sort((a, b) => b.draw - a.draw || (a.l.id < b.l.id ? -1 : 1));",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "LW15-hours-first",
     "file": "src/net/patronLaw.js",
-    "old": "Math.floor(fromS / PATRON_HOUR_S) + 1, cur",
-    "new": "Math.floor(fromS / PATRON_HOUR_S), cur",
+    "old": "  const first = Math.max(last != null ? last + 1 : Math.floor(fromS / PATRON_HOUR_S) + 1, cur - PATRON_RECKON_HOURS);",
+    "new": "  const first = Math.max(last != null ? last + 1 : Math.floor(fromS / PATRON_HOUR_S), cur - PATRON_RECKON_HOURS);",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "LW15-hours-last",
     "file": "src/net/patronLaw.js",
-    "old": "last != null ? last + 1 :",
-    "new": "last != null ? last :",
+    "old": "  const first = Math.max(last != null ? last + 1 : Math.floor(fromS / PATRON_HOUR_S) + 1, cur - PATRON_RECKON_HOURS);",
+    "new": "  const first = Math.max(last != null ? last : Math.floor(fromS / PATRON_HOUR_S) + 1, cur - PATRON_RECKON_HOURS);",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "LW15-faucet-n",
     "file": "server-account/src/budget.js",
-    "old": "n = realm_faucets.n + 1',",
-    "new": "n = realm_faucets.n',",
+    "old": "      'INSERT INTO realm_faucets (hour, kind, gold, n) VALUES (?1, ?2, ?3, 1) ON CONFLICT (hour, kind) DO UPDATE SET gold = realm_faucets.gold + excluded.gold, n = realm_faucets.n + 1',",
+    "new": "      'INSERT INTO realm_faucets (hour, kind, gold, n) VALUES (?1, ?2, ?3, 1) ON CONFLICT (hour, kind) DO UPDATE SET gold = realm_faucets.gold + excluded.gold, n = realm_faucets.n',",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "LW15-deal-guard",
     "file": "src/systems/livingWorld/patrons.js",
-    "old": "r.roll === 'h' && !r.guard",
-    "new": "r.roll === 'h'",
+    "old": "    .filter((r) => r && r.roll === 'h' && !r.guard)",
+    "new": "    .filter((r) => r && r.roll === 'h')",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "LW15-deal-roll",
     "file": "src/systems/livingWorld/patrons.js",
-    "old": "r.roll === 'h' && !r.guard",
-    "new": "!r.guard",
+    "old": "  const pool = (residents ?? [])\n    .filter((r) => r && r.roll === 'h' && !r.guard)\n    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));",
+    "new": "  const pool = (residents ?? []).filter((r) => r && !r.guard).sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "LW15-deal-order",
     "file": "src/systems/livingWorld/patrons.js",
-    "old": ".sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))",
-    "new": "",
+    "old": "  const pool = (residents ?? [])\n    .filter((r) => r && r.roll === 'h' && !r.guard)\n    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));",
+    "new": "  const pool = (residents ?? []).filter((r) => r && r.roll === 'h' && !r.guard);",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "LW15-visit-fold",
     "file": "src/systems/livingWorld/patrons.js",
-    "old": "from: day * DAY_MIN + open + ((((tod - open) % span) + span) % span),",
-    "new": "from: v.t,",
+    "old": "    if (res)\n      out.push({\n        resId: res.id,\n        door: v.door,\n        from: day * DAY_MIN + open + ((((tod - open) % span) + span) % span),\n        dur: PATRON_STAY_MIN,\n      });",
+    "new": "    if (res) out.push({ resId: res.id, door: v.door, from: v.t, dur: PATRON_STAY_MIN });",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "LW15-visit-stay",
     "file": "src/systems/livingWorld/patrons.js",
-    "old": "dur: PATRON_STAY_MIN });",
-    "new": "dur: 10 });",
+    "old": "        dur: PATRON_STAY_MIN,",
+    "new": "        dur: 10,",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "LW15-words",
     "file": "src/systems/livingWorld/patrons.js",
-    "old": "`${res.name}${town ? ` of ${town}` : ''}`",
-    "new": "`${res.name}`",
+    "old": "export const patronWords = (res, town) =>\n  res?.name ? `${res.name}${town ? ` of ${town}` : ''}` : `a townsperson${town ? ` of ${town}` : ''}`;",
+    "new": "export const patronWords = (res, town) => (res?.name ? `${res.name}` : `a townsperson${town ? ` of ${town}` : ''}`);",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "LW15-errand-cut",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "      prev.until = Math.min(prev.until ?? Infinity, leave);   // none of it left before",
-    "new": "      void leave;   // none of it left before",
+    "old": "      prev.until = Math.min(prev.until ?? Infinity, leave); // none of it left before: the day skips it (taken up after)",
+    "new": "      void leave; // none of it left before: the day skips it (taken up after)",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ],
@@ -435,8 +435,8 @@
   {
     "name": "LW15-errand-resume",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "      if (end - back >= MIN_STAY) add.push({ ...prev, from: back, dur: end - back });\n",
-    "new": "",
+    "old": "      if (end - back >= MIN_STAY) add.push({ ...prev, from: back, dur: end - back });\n      prev.until = Math.min(prev.until ?? Infinity, leave); // none of it left before: the day skips it (taken up after)",
+    "new": "      prev.until = Math.min(prev.until ?? Infinity, leave); // none of it left before: the day skips it (taken up after)",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -454,8 +454,8 @@
   {
     "name": "LW15-browse",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "if (brng && brng() < PATRON_BROWSE_SHARE) {",
-    "new": "if (brng && brng() < 0) {",
+    "old": "    if (brng && brng() < PATRON_BROWSE_SHARE) {",
+    "new": "    if (brng && brng() < 0) {",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -472,8 +472,8 @@
   {
     "name": "LW15-browse-none",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "  const brng = browse.length ? lwRng(",
-    "new": "  const brng = true ? lwRng(",
+    "old": "  const brng = browse.length ? lwRng(res.town, res.roll.charCodeAt(0), res.slot, day, 0x62726f77) : null; // 'brow'",
+    "new": "  const brng = true ? lwRng(res.town, res.roll.charCodeAt(0), res.slot, day, 0x62726f77) : null; // 'brow'",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -536,8 +536,8 @@
   {
     "name": "LW15-page-merge",
     "file": "src/ui/vendor/vendorPage.js",
-    "old": "    const sold = [...(mine.sold ?? []), ...(mine.patronSold ?? [])]",
-    "new": "    const sold = [...(mine.sold ?? [])]",
+    "old": "    const sold = [...(mine.sold ?? []), ...(mine.patronSold ?? [])].sort(\n      (a, b) => (Number(b.at) || 0) - (Number(a.at) || 0),\n    );",
+    "new": "    const sold = [...(mine.sold ?? [])].sort((a, b) => (Number(b.at) || 0) - (Number(a.at) || 0));",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -545,8 +545,8 @@
   {
     "name": "LW15-page-who",
     "file": "src/ui/vendor/vendorPage.js",
-    "old": "const who = s.patron ? safe(() => p.patronName?.(s.patron), null) : null;",
-    "new": "const who = null;",
+    "old": "      const who = s.patron ? safe(() => p.patronName?.(s.patron), null) : null; // LW15: \"Sold to Ada Lark of Wayrest\"",
+    "new": "      const who = null; // LW15: \"Sold to Ada Lark of Wayrest\"",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -554,8 +554,8 @@
   {
     "name": "LW15-hour-capped",
     "file": "src/net/patronLaw.js",
-    "old": "patronOdds(l.price / patronCap(l.worth))",
-    "new": "patronOdds(l.price / Math.max(1, patronCap(l.worth)))",
+    "old": "    if (draw >= patronOdds(l.price / patronCap(l.worth))) continue; // over the cap (or no cap at all) the odds are none",
+    "new": "    if (draw >= patronOdds(l.price / Math.max(1, patronCap(l.worth)))) continue; // over the cap (or no cap at all) the odds are none",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -782,8 +782,8 @@
   {
     "name": "LW15-AUDIT-P10-draw",
     "file": "src/net/patronLaw.js",
-    "old": "fnv(`${salt}${listing}:${hour}:draw${salt}`)",
-    "new": "fnv(`${listing}:${hour}:draw`)",
+    "old": "export const patronDraw = (listing, hour, salt = '') => fnv(`${salt}${listing}:${hour}:draw${salt}`) / 4294967296;",
+    "new": "export const patronDraw = (listing, hour, salt = '') => fnv(`${listing}:${hour}:draw`) / 4294967296;",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -791,8 +791,8 @@
   {
     "name": "LW15-AUDIT-P10-draw-after",
     "file": "src/net/patronLaw.js",
-    "old": "fnv(`${salt}${listing}:${hour}:draw${salt}`)",
-    "new": "fnv(`${salt}${listing}:${hour}:draw`)",
+    "old": "export const patronDraw = (listing, hour, salt = '') => fnv(`${salt}${listing}:${hour}:draw${salt}`) / 4294967296;",
+    "new": "export const patronDraw = (listing, hour, salt = '') => fnv(`${salt}${listing}:${hour}:draw`) / 4294967296;",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -855,8 +855,8 @@
   {
     "name": "LW15-AUDIT-B1-shift",
     "file": "src/systems/livingWorld/patrons.js",
-    "old": "const D0 = day * DAY_MIN + 4 * 60 - shift, D1 = D0 + DAY_MIN;",
-    "new": "const D0 = day * DAY_MIN + 4 * 60, D1 = D0 + DAY_MIN;",
+    "old": "  const D0 = day * DAY_MIN + 4 * 60 - shift,",
+    "new": "  const D0 = day * DAY_MIN + 4 * 60,",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js",
       "test/systems/livingWorld/lw16_word.test.js"
@@ -885,8 +885,8 @@
   {
     "name": "LW15-AUDIT-B2-late",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "until: e.from + e.dur + PATRON_LATE_MIN }];",
-    "new": "until: e.from + e.dur }];",
+    "old": "  const add = [{ kind: 'shop', at: e.at, from: e.from, dur: e.dur, until: e.from + e.dur + PATRON_LATE_MIN }];",
+    "new": "  const add = [{ kind: 'shop', at: e.at, from: e.from, dur: e.dur, until: e.from + e.dur }];",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js",
       "test/systems/livingWorld/lw16_word.test.js"

@@ -32,7 +32,12 @@ export const SAVE_SHOT_PREFIX = 'dagger.saveshot.';
 /** a fresh id - the platform's UUID where it has one, a stamp and a
  *  random tail where it does not (an old WebView); never empty */
 export function mintCharacterId() {
-  try { const u = globalThis.crypto?.randomUUID?.(); if (u) return u; } catch { /* no crypto */ }
+  try {
+    const u = globalThis.crypto?.randomUUID?.();
+    if (u) return u;
+  } catch {
+    /* no crypto */
+  }
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
 }
 
@@ -52,12 +57,25 @@ export function adoptLegacyCards(storage, characterName, characterId) {
   const stamped = [];
   if (!storage || !characterId) return stamped;
   const keys = [];
-  for (let i = 0; i < storage.length; i++) { const k = storage.key(i); if (k?.startsWith(SAVE_INFO_PREFIX)) keys.push(k); }
+  for (let i = 0; i < storage.length; i++) {
+    const k = storage.key(i);
+    if (k?.startsWith(SAVE_INFO_PREFIX)) keys.push(k);
+  }
   for (const k of keys) {
     let info;
-    try { info = JSON.parse(storage.getItem(k) ?? 'null'); } catch { continue; }
-    if (!info || typeof info !== 'object' || info.characterId || (info.characterName ?? '') !== (characterName ?? '')) continue;
-    try { storage.setItem(k, JSON.stringify({ ...info, characterId })); stamped.push(k); } catch { /* quota: the card stays a legacy card and is adopted next time */ }
+    try {
+      info = JSON.parse(storage.getItem(k) ?? 'null');
+    } catch {
+      continue;
+    }
+    if (!info || typeof info !== 'object' || info.characterId || (info.characterName ?? '') !== (characterName ?? ''))
+      continue;
+    try {
+      storage.setItem(k, JSON.stringify({ ...info, characterId }));
+      stamped.push(k);
+    } catch {
+      /* quota: the card stays a legacy card and is adopted next time */
+    }
   }
   return stamped;
 }

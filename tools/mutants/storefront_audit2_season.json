@@ -335,8 +335,8 @@
   {
     "name": "AUDIT2-D2-the-checkpoint-ask-unread",
     "file": "src/systems/online/onlineCheckpointClock.js",
-    "old": "export function askCheckpoint() { _asked = true; }",
-    "new": "export function askCheckpoint() { }",
+    "old": "export function askCheckpoint() {\n  _asked = true;\n}",
+    "new": "export function askCheckpoint() {}",
     "tests": [
       "test/systems/online/onlineCheckpointClock.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "AUDIT2-D2-the-checkpoint-ask-kept",
     "file": "src/systems/online/onlineCheckpointClock.js",
-    "old": "{ _asked = false; if (session && !session.lost) checkpoint(); }",
-    "new": "{ if (session && !session.lost) checkpoint(); }",
+    "old": "        _asked = false;\n        if (session && !session.lost) checkpoint();",
+    "new": "        if (session && !session.lost) checkpoint();",
     "tests": [
       "test/systems/online/onlineCheckpointClock.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "AUDIT2-D2-asked-before-the-world-stands",
     "file": "src/systems/online/onlineCheckpointClock.js",
-    "old": "if (stands() && _asked) {",
-    "new": "if (_asked) {",
+    "old": "      if (stands() && _asked) {",
+    "new": "      if (_asked) {",
     "tests": [
       "test/systems/online/onlineCheckpointClock.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "AUDIT2-D2-a-lost-session-asked",
     "file": "src/systems/online/onlineCheckpointClock.js",
-    "old": "if (session && !session.lost) checkpoint(); }",
-    "new": "if (session) checkpoint(); }",
+    "old": "        if (session && !session.lost) checkpoint();",
+    "new": "        if (session) checkpoint();",
     "tests": [
       "test/systems/online/onlineCheckpointClock.test.js"
     ]

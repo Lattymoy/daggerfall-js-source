@@ -35,18 +35,18 @@ import { CifRciFile } from '../../formats/cifRciFile.js';
 import { GENDERS } from '../../characters/nameHelper.js';
 import { RACES, raceArt } from '../../systems/races.js';
 import { bitmapToColor32, toScreenOrder } from '../../formats/color32Order.js';
-import { playerHeadImage, headDataStamp, HEAD_RECORD } from '../../characters/headPortraits.js';   // PORTRAIT3D
-import { hudScale } from './hud.js';   // AUDIT 64 F38: the ParentPanel scale every screen-anchored HUD member reads
+import { playerHeadImage, headDataStamp, HEAD_RECORD } from '../../characters/headPortraits.js'; // PORTRAIT3D
+import { hudScale } from './hud.js'; // AUDIT 64 F38: the ParentPanel scale every screen-anchored HUD member reads
 // FactionFile.FactionIDs.Children (514) - the one faction whose
 // Persons portrait as children; ONE home, characters/staticNpc.js.
 import { CHILDREN_FACTION_ID } from '../../characters/staticNpc.js';
 
 // EscortingNPCFacePanel's own constants (HUDEscortingNPCFaces.cs:31-35)
-export const ESCORT_FACE_COUNT = 10;              // faceCount - the foe portrait roll's range
-export const ESCORT_MAX_FACES = 3;                // maxFaces
-export const FACTION_FACE_FILE = 'FACES.CIF';     // factionFaceFile
-export const FACTION_CHILDREN_FACE_FILE = 'KIDS00I0.CIF';   // factionChildrenFaceFile
-export const FACTION_EXTRA_FACE_FILE = 'TFAC00I0.RCI';      // factionExtraFaceFile
+export const ESCORT_FACE_COUNT = 10; // faceCount - the foe portrait roll's range
+export const ESCORT_MAX_FACES = 3; // maxFaces
+export const FACTION_FACE_FILE = 'FACES.CIF'; // factionFaceFile
+export const FACTION_CHILDREN_FACE_FILE = 'KIDS00I0.CIF'; // factionChildrenFaceFile
+export const FACTION_EXTRA_FACE_FILE = 'TFAC00I0.RCI'; // factionExtraFaceFile
 // Update()'s layout constants (:60-63)
 export const ESCORT_START_X = 8;
 export const ESCORT_START_Y = 36;
@@ -139,7 +139,10 @@ export function layoutEscortFaces(sizes, startY = ESCORT_START_Y) {
   let count = 0;
   let y = startY;
   for (const size of sizes) {
-    if (count++ >= ESCORT_MAX_FACES) { placed.push({ x: 0, y: 0, enabled: false }); continue; }
+    if (count++ >= ESCORT_MAX_FACES) {
+      placed.push({ x: 0, y: 0, enabled: false });
+      continue;
+    }
     placed.push({ x: ESCORT_START_X, y, enabled: true });
     y += ESCORT_SPACE_Y < (size?.h ?? 0) ? ESCORT_SPACE_Y_SPECIAL : ESCORT_SPACE_Y;
   }
@@ -192,7 +195,7 @@ function touchRowClearPx(canvas, scale) {
 }
 
 // ---- the one panel's state ----
-let _deps = null;     // { fetchBytes, palette, renderer, getFactionData }
+let _deps = null; // { fetchBytes, palette, renderer, getFactionData }
 /** PORTRAIT3D (2026-10-15, the owner: "5. Do this" - the escorts' faces among those still Daggerfall's): with
  *  Morrowind's data attached an adult's face of the race's heads is the Morrowind head of their own race and sex at
  *  that face (characters/headPortraits.js playerHeadImage - the portrait's head, as a chargen face's, among the data's
@@ -203,27 +206,39 @@ export function escortHeadKey(face) {
   if (!face || face.isChild || face.factionFaceIndex >= 0) return null;
   const g = headDataStamp();
   const race = Object.keys(RACES).find((k) => RACES[k] === face.targetRace) ?? 'Breton';
-  return g ? `mwhead#escort#${race}|${face.gender === GENDERS.Female ? 'female' : 'male'}|${face.faceIndex | 0}|${g}` : null;
+  return g
+    ? `mwhead#escort#${race}|${face.gender === GENDERS.Female ? 'female' : 'male'}|${face.faceIndex | 0}|${g}`
+    : null;
 }
 const ESCORT_HEAD_PX = 4;
 function escortHead(face, key) {
   const race = Object.keys(RACES).find((k) => RACES[k] === face.targetRace) ?? 'Breton';
   const gender = face.gender === GENDERS.Female ? 'female' : 'male';
   // MW-HEADS2: an NPC - the data's heads
-  return playerHeadImage({ race, gender, faceIndex: face.faceIndex | 0, npc: true }, { px: HEAD_RECORD.w * ESCORT_HEAD_PX, ph: HEAD_RECORD.h * ESCORT_HEAD_PX, renderer: _deps.renderer })
-    .then((img) => {
+  return playerHeadImage(
+    { race, gender, faceIndex: face.faceIndex | 0, npc: true },
+    { px: HEAD_RECORD.w * ESCORT_HEAD_PX, ph: HEAD_RECORD.h * ESCORT_HEAD_PX, renderer: _deps.renderer },
+  ).then(
+    (img) => {
       if (!img || !_deps) return null;
-      if (!_textures.has(key)) _textures.set(key, { tex: _deps.renderer.uploadTexture('img', key, toScreenOrder(img)), w: HEAD_RECORD.w, h: HEAD_RECORD.h });
+      if (!_textures.has(key))
+        _textures.set(key, {
+          tex: _deps.renderer.uploadTexture('img', key, toScreenOrder(img)),
+          w: HEAD_RECORD.w,
+          h: HEAD_RECORD.h,
+        });
       return _textures.get(key);
-    }, () => null);
+    },
+    () => null,
+  );
 }
 
-let _faces = [];      // FaceDetails[] - the serializable truth
-let _panels = [];     // parallel to _faces: { special, img: {tex,w,h}|null }
-const _files = new Map();     // file -> Promise<CifRciFile>
-const _textures = new Map();  // `${file}#${record}` -> {tex,w,h}
+let _faces = []; // FaceDetails[] - the serializable truth
+let _panels = []; // parallel to _faces: { special, img: {tex,w,h}|null }
+const _files = new Map(); // file -> Promise<CifRciFile>
+const _textures = new Map(); // `${file}#${record}` -> {tex,w,h}
 let _warned = false;
-let _headStamp = 0;   // PORTRAIT3D: the data's stamp the panels were resolved under
+let _headStamp = 0; // PORTRAIT3D: the data's stamp the panels were resolved under
 // QUEST-SHELF-FACES: whether a quest is set aside (machine.js shelveQuest), by its uid - the quest bridge hands it.
 // Not reset by initEscortFaces: the bridge and the panel mount in either order.
 let _questAway = () => false;
@@ -250,27 +265,39 @@ function _loadFile(file) {
 /** RefreshFaces (:198-273) - rebuild the panel list from the faces
  *  list and make sure every face's texture is loading. */
 function refreshFaces() {
-  if (!_deps) { _panels = _faces.map(() => null); return; }
+  if (!_deps) {
+    _panels = _faces.map(() => null);
+    return;
+  }
   _headStamp = headDataStamp();
   _panels = _faces.map((face) => {
     const { file, record, special } = resolveFaceImage(face);
-    const head = escortHeadKey(face);   // PORTRAIT3D: the Morrowind head first, the record until it lands
+    const head = escortHeadKey(face); // PORTRAIT3D: the Morrowind head first, the record until it lands
     const panel = { special, img: (head && _textures.get(head)) || (_textures.get(`${file}#${record}`) ?? null) };
-    if (head && !_textures.has(head)) escortHead(face, head).then((img) => { if (img) panel.img = img; });
-    if (!panel.img) {
-      _loadFile(file).then((cif) => {
-        const key = `${file}#${record}`;
-        if (!_textures.has(key)) {
-          const bmp = cif.getDFBitmap(record, 0);
-          _textures.set(key, {
-            tex: _deps.renderer.uploadTexture('cif', key, bitmapToColor32(bmp, _deps.palette)),
-            w: bmp.width, h: bmp.height,
-          });
-        }
-        if (!(head && _textures.has(head))) panel.img = _textures.get(key);
-      }).catch((e) => {
-        if (!_warned) { _warned = true; console.warn('[escortFaces] face art unavailable:', e?.message ?? e); }
+    if (head && !_textures.has(head))
+      escortHead(face, head).then((img) => {
+        if (img) panel.img = img;
       });
+    if (!panel.img) {
+      _loadFile(file)
+        .then((cif) => {
+          const key = `${file}#${record}`;
+          if (!_textures.has(key)) {
+            const bmp = cif.getDFBitmap(record, 0);
+            _textures.set(key, {
+              tex: _deps.renderer.uploadTexture('cif', key, bitmapToColor32(bmp, _deps.palette)),
+              w: bmp.width,
+              h: bmp.height,
+            });
+          }
+          if (!(head && _textures.has(head))) panel.img = _textures.get(key);
+        })
+        .catch((e) => {
+          if (!_warned) {
+            _warned = true;
+            console.warn('[escortFaces] face art unavailable:', e?.message ?? e);
+          }
+        });
     }
     return panel;
   });
@@ -297,9 +324,11 @@ export function initEscortFaces(deps) {
  *  quest actions hand whichever resource the symbol named; the foe
  *  marker dispatches the overload. */
 export function addEscortFace(resource, roll = Math.random) {
-  _faces.push(resource.isFoe
-    ? createFaceDetailsFoe(resource, roll)
-    : createFaceDetailsPerson(resource, { getFactionData: _deps?.getFactionData, roll }));
+  _faces.push(
+    resource.isFoe
+      ? createFaceDetailsFoe(resource, roll)
+      : createFaceDetailsPerson(resource, { getFactionData: _deps?.getFactionData, roll }),
+  );
   refreshFaces();
 }
 
@@ -309,8 +338,9 @@ export function addEscortFace(resource, roll = Math.random) {
 export function dropEscortFace(resource) {
   const uid = resource.parentQuest.uid;
   const sym = resource.symbol?.original ?? null;
-  _faces = _faces.filter((face) => !(face.questUID === uid
-    && (resource.isFoe ? face.targetFoe === sym : face.targetPerson === sym)));
+  _faces = _faces.filter(
+    (face) => !(face.questUID === uid && (resource.isFoe ? face.targetFoe === sym : face.targetPerson === sym)),
+  );
   refreshFaces();
 }
 
@@ -354,14 +384,17 @@ export function escortQuestEnded(quest) {
 
 /** GetSaveData (:279-282) - the envelope's FaceDetails[]. */
 export function getEscortFacesSaveData() {
-  return _faces.filter((f) => !_questGone(f.questUID)).map((f) => ({ ...f }));   // RPT1026-MISC FACE-ORPHAN
+  return _faces.filter((f) => !_questGone(f.questUID)).map((f) => ({ ...f })); // RPT1026-MISC FACE-ORPHAN
 }
 
 /** RestoreSaveData (:284-289) with SaveLoadManager's own null arm
  *  (RestoreEscortingFacesData, SaveLoadManager.cs:1071-1079: a save
  *  without the block clears the panel). */
 export function restoreEscortFacesSaveData(faces) {
-  if (!faces) { clearEscortFaces(); return; }
+  if (!faces) {
+    clearEscortFaces();
+    return;
+  }
   _faces = faces.map((f) => ({ ...f }));
   refreshFaces();
 }
@@ -403,14 +436,16 @@ export function restoreEscortFacesSaveData(faces) {
  */
 export function drawEscortFaces(renderer, canvas) {
   if (!_panels.length) return;
-  if (headDataStamp() !== _headStamp) refreshFaces();   // PORTRAIT3D: the data came or went - the faces resolved again
+  if (headDataStamp() !== _headStamp) refreshFaces(); // PORTRAIT3D: the data came or went - the faces resolved again
   const m = { s: hudScale(canvas.width, canvas.height) };
   measureStart(canvas, m.s);
   for (const { panel, size, place } of shownColumn()) {
     if (!panel?.img || !place.enabled || !size) continue;
     renderer.drawScreenQuad(panel.img.tex, {
-      x: place.x * m.s, y: place.y * m.s,
-      w: size.w * m.s, h: size.h * m.s,
+      x: place.x * m.s,
+      y: place.y * m.s,
+      w: size.w * m.s,
+      h: size.h * m.s,
     });
   }
 }
@@ -419,10 +454,14 @@ export function drawEscortFaces(renderer, canvas) {
  *  A face whose quest is set aside (QUEST-SHELF-FACES) is left out before the layout, so the faces under it close up
  *  as they do when a face drops. Special panels take the fixed 48x48; a face whose art has not landed has no size. */
 function shownColumn() {
-  const panels = _panels.filter((_, i) => !_questAway(_faces[i]?.questUID) && !_questGone(_faces[i]?.questUID));   // RPT1026-MISC FACE-ORPHAN: nor one whose quest is gone
-  const sizes = panels.map((p) => (p?.special
-    ? { w: ESCORT_SPECIAL_FACE_SIZE, h: ESCORT_SPECIAL_FACE_SIZE }
-    : (p?.img ? { w: p.img.w, h: p.img.h } : null)));
+  const panels = _panels.filter((_, i) => !_questAway(_faces[i]?.questUID) && !_questGone(_faces[i]?.questUID)); // RPT1026-MISC FACE-ORPHAN: nor one whose quest is gone
+  const sizes = panels.map((p) =>
+    p?.special
+      ? { w: ESCORT_SPECIAL_FACE_SIZE, h: ESCORT_SPECIAL_FACE_SIZE }
+      : p?.img
+        ? { w: p.img.w, h: p.img.h }
+        : null,
+  );
   const placed = layoutEscortFaces(sizes, _startY);
   return panels.map((panel, i) => ({ panel, size: sizes[i], place: placed[i] }));
 }

@@ -61,8 +61,8 @@
   {
     "name": "PROF7-slaughterfish-meat",
     "file": "src/net/professionLaw.js",
-    "old": "[MOB.Slaughterfish], null, 'food:fish',",
-    "new": "[MOB.Slaughterfish], null, 'food:meat',",
+    "old": "    'food:fish',",
+    "new": "    'food:meat',",
     "tests": [
       "test/net/prof7_law.test.js",
       "test/net/prof7_service.test.js"
@@ -80,8 +80,8 @@
   {
     "name": "PROF7-spider-cured",
     "file": "src/net/professionLaw.js",
-    "old": "[MOB.Spider, DEX.BloodSpider], 'part:venom', 'food:meat', null),",
-    "new": "[MOB.Spider, DEX.BloodSpider], 'part:venom', 'food:meat', 'leather:cured'),",
+    "old": "    'food:meat',\n    null,",
+    "new": "    'food:meat',\n    'leather:cured',",
     "tests": [
       "test/net/prof7_law.test.js",
       "test/net/prof7_service.test.js"
@@ -90,8 +90,8 @@
   {
     "name": "PROF7-any-foe-a-rat",
     "file": "src/net/professionLaw.js",
-    "old": "(Number.isSafeInteger(mobileType) ? HIDES.find((h) => h.foes.includes(mobileType)) ?? null : null)",
-    "new": "(HIDES.find((h) => h.foes.includes(mobileType)) ?? HIDES[0])",
+    "old": "export const hideOfFoe = (mobileType) =>\n  Number.isSafeInteger(mobileType) ? (HIDES.find((h) => h.foes.includes(mobileType)) ?? null) : null;",
+    "new": "export const hideOfFoe = (mobileType) => HIDES.find((h) => h.foes.includes(mobileType)) ?? HIDES[0];",
     "tests": [
       "test/net/prof7_law.test.js",
       "test/net/prof7_service.test.js",
@@ -132,8 +132,8 @@
   {
     "name": "PROF7-cure-raises-outfitting",
     "file": "src/net/professionLaw.js",
-    "old": "spec: 'tanner', per: 2, rank: 50 }), xp: null })",
-    "new": "spec: 'tanner', per: 2, rank: 50 }), xp: 'outfitting' })",
+    "old": "        xp: null,",
+    "new": "        xp: 'outfitting',",
     "tests": [
       "test/net/prof7_law.test.js",
       "test/net/prof7_service.test.js"
@@ -161,8 +161,8 @@
   {
     "name": "PROF7-trace-master-narrower",
     "file": "src/net/professionLaw.js",
-    "old": "TRACE_ACT.tolDeg * band * (1 + TRACE_ACT.masterWiden",
-    "new": "TRACE_ACT.tolDeg * band * (1 - TRACE_ACT.masterWiden",
+    "old": "  TRACE_ACT.tolDeg * band * (1 + (TRACE_ACT.masterWiden * Math.max(0, Math.min(100, rank))) / 100);",
+    "new": "  TRACE_ACT.tolDeg * band * (1 - (TRACE_ACT.masterWiden * Math.max(0, Math.min(100, rank))) / 100);",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -197,8 +197,8 @@
   {
     "name": "HUNTERS-MARK-trophy-hunter-waits-again",
     "file": "src/net/professionLaw.js",
-    "old": "'A clean pelt of a grade 5 or 6 body gives a mounted trophy of the beast.'),",
-    "new": "'A clean pelt of a grade 5 or 6 body gives a mounted trophy of the beast.', 'trophy'),",
+    "old": "        'A clean pelt of a grade 5 or 6 body gives a mounted trophy of the beast.',\n      ),",
+    "new": "        'A clean pelt of a grade 5 or 6 body gives a mounted trophy of the beast.',\n        'trophy',\n      ),",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -206,8 +206,8 @@
   {
     "name": "PROF7-no-raw-fish",
     "file": "src/net/professionLaw.js",
-    "old": "'food:egg', 'food:meat', 'food:fish']);",
-    "new": "'food:egg', 'food:meat']);",
+    "old": "export const FOOD_KEYS = Object.freeze([\n  'food:apple',\n  'food:orange',\n  'food:mushroom',\n  'food:egg',\n  'food:meat',\n  'food:fish',\n]); // PROF7: a body's butchery - C&C's Raw Meat, and a Slaughterfish's Raw Fish (5.2's Fishing keeps the same)",
+    "new": "export const FOOD_KEYS = Object.freeze(['food:apple', 'food:orange', 'food:mushroom', 'food:egg', 'food:meat']); // PROF7: a body's butchery - C&C's Raw Meat, and a Slaughterfish's Raw Fish (5.2's Fishing keeps the same)",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -675,8 +675,8 @@
   {
     "name": "PROF7-trace-no-chord",
     "file": "src/systems/traceAct.js",
-    "old": "const lo = st.far, n = Math.ceil((hi - lo) / TRACE_ACT.stepDeg - 1e-9);",
-    "new": "const lo = st.far, n = 1;",
+    "old": "        n = Math.ceil((hi - lo) / TRACE_ACT.stepDeg - 1e-9);",
+    "new": "        n = 1;",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -684,8 +684,8 @@
   {
     "name": "PROF7-trace-let-go-kept",
     "file": "src/systems/traceAct.js",
-    "old": "      if (!held || !aim) { reset(); st.slips++; return; }",
-    "new": "      if (!aim) { reset(); st.slips++; return; }",
+    "old": "      if (!held || !aim) {",
+    "new": "      if (!aim) {",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -738,8 +738,8 @@
   {
     "name": "PROF7-slowrot-every-day",
     "file": "src/systems/survival/food.js",
-    "old": "if (kept % 2 === 1) continue; ",
-    "new": "",
+    "old": "        if (kept % 2 === 1) continue;\n        if (rotRoll(item, Math.floor(kept / 2), rolls)) n++;",
+    "new": "        if (rotRoll(item, Math.floor(kept / 2), rolls)) n++;",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -929,8 +929,8 @@
   {
     "name": "PROF7-hud-trace-unlit",
     "file": "src/ui/professions/profReticle.js",
-    "old": "setClass(n, st.tracing && i <= st.reached ? `prof-glint",
-    "new": "setClass(n, false ? `prof-glint",
+    "old": "        setClass(\n          n,\n          st.tracing && i <= st.reached\n            ? `prof-glint${ctx.reduced ? ' still' : ''}`\n            : i === 0\n              ? 'prof-point first'\n              : 'prof-point',\n        );",
+    "new": "        setClass(n, false ? `prof-glint${ctx.reduced ? ' still' : ''}` : i === 0 ? 'prof-point first' : 'prof-point');",
     "tests": [
       "test/systems/prof7_client.test.js"
     ]
@@ -965,8 +965,8 @@
   {
     "name": "PROF7-knife-offline",
     "file": "src/systems/professions/profTemplates.js",
-    "old": "(group === PROF_ITEM_GROUP && isOnlinePage() ? [SKINNING_KNIFE.templateIndex] : [])",
-    "new": "(group === PROF_ITEM_GROUP ? [SKINNING_KNIFE.templateIndex] : [])",
+    "old": "export const knifeCustomItemsForGroup = (group) =>\n  group === PROF_ITEM_GROUP && isOnlinePage() ? [SKINNING_KNIFE.templateIndex] : [];",
+    "new": "export const knifeCustomItemsForGroup = (group) => (group === PROF_ITEM_GROUP ? [SKINNING_KNIFE.templateIndex] : []);",
     "tests": [
       "test/systems/prof7_client.test.js"
     ]
@@ -983,8 +983,8 @@
   {
     "name": "PROF7-garment-as-armour",
     "file": "src/systems/smithItems.js",
-    "old": "      : r.kind === 'garment' ? garmentItem(r, seed, dye)   // PROF7: DFU's clothing, its variant and dye the record's\n",
-    "new": "",
+    "old": "        : r.kind === 'garment'\n          ? garmentItem(r, seed, dye) // PROF7: DFU's clothing, its variant and dye the record's\n          : r.kind === 'jewel'\n            ? jewelItem(r) // PROF10: DFU's jewellery\n            : armorOfMaterial(r.templateIndex, r.material); // PROF7: leather armour at Leather (0)",
+    "new": "        : r.kind === 'jewel'\n          ? jewelItem(r) // PROF10: DFU's jewellery\n          : armorOfMaterial(r.templateIndex, r.material); // PROF7: leather armour at Leather (0)",
     "tests": [
       "test/systems/prof7_client.test.js"
     ]
@@ -1108,9 +1108,9 @@
   },
   {
     "name": "PROF7-world-dungeon-bodies-street",
-    "file": "src/scenes/world.js",
-    "old": "{ street: exteriorFoes, dungeon: modes?.dungeonCtx, interior: modes?.interiorFoes }, bodyStamps);",
-    "new": "{ street: exteriorFoes, dungeon: exteriorFoes, interior: modes?.interiorFoes }, bodyStamps);",
+    "file": "src/scenes/professionsHost.js",
+    "old": "{ street: exteriorFoes, dungeon: host.modes?.dungeonCtx, interior: host.modes?.interiorFoes }, bodyStamps);",
+    "new": "{ street: exteriorFoes, dungeon: exteriorFoes, interior: host.modes?.interiorFoes }, bodyStamps);",
     "tests": [
       "test/systems/prof7_client.test.js"
     ]

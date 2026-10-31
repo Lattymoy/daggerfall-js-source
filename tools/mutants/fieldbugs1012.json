@@ -3,7 +3,7 @@
     "name": "RING-HOLD-the-end-unsaid",
     "file": "server-account/src/verdict.js",
     "note": "AUTO-HOLD (PIN MOVED): re-aimed by content and renamed (it was -the-review-unsaid) - the third hold says its end, `until`, where it said staff's review",
-    "old": "  const why = held !== 'law' ? null : count.until != null ? { code: 'until', t: found?.t ?? null, until: count.until } : found;",
+    "old": "  const why =\n    held !== 'law' ? null : count.until != null ? { code: 'until', t: found?.t ?? null, until: count.until } : found;",
     "new": "  const why = held !== 'law' ? null : found;",
     "tests": [
       "test/systems/item/ringhold.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "RING-HOLD-the-said-unread",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "    const notice = typeof said === 'string' && said ? said : typeof reason === 'string' ? /** @type {Record<string, string>} */ (TRADE_HELD_NOTICES)[reason] : undefined;",
-    "new": "    const notice = typeof reason === 'string' ? /** @type {Record<string, string>} */ (TRADE_HELD_NOTICES)[reason] : undefined;",
+    "old": "      typeof said === 'string' && said\n        ? said\n        : typeof reason === 'string'\n          ? /** @type {Record<string, string>} */ (TRADE_HELD_NOTICES)[reason]\n          : undefined;",
+    "new": "      typeof reason === 'string' ? /** @type {Record<string, string>} */ (TRADE_HELD_NOTICES)[reason] : undefined;",
     "tests": [
       "test/systems/item/ringhold.test.js"
     ]
@@ -22,7 +22,7 @@
     "name": "RING-HOLD-the-end-unnoticed",
     "file": "src/systems/item/itemIds.js",
     "note": "AUTO-HOLD (PIN MOVED): re-aimed by content and renamed (it was -the-review-unnoticed) - the timed hold's notice, its piece named (AUDIT AUTO-HOLD)",
-    "old": "  if (now === 'law' && why?.code === 'until' && Number.isSafeInteger(why.until)) return tradeHeldUntilNotice(/** @type {number} */ (why.until), typeof name === 'string' && name ? name : null);",
+    "old": "  if (now === 'law' && why?.code === 'until' && Number.isSafeInteger(why.until))\n    return tradeHeldUntilNotice(/** @type {number} */ (why.until), typeof name === 'string' && name ? name : null);",
     "new": "",
     "tests": [
       "test/systems/item/ringhold.test.js"
@@ -32,8 +32,8 @@
     "name": "RING-WARN-the-strikes-unsaid",
     "file": "src/net/realm/realmTradeLaw.js",
     "note": "AUTO-HOLD (PIN MOVED): re-aimed by content - the warning names a week where it named staff (AUDIT: \"then opens on its own\" was false with the piece carried)",
-    "old": "export const TRADE_HELD_STRIKES = ' Holds add up: from the third, the freeze stays for a week even after it is gone, and for a month each time after that.';",
-    "new": "export const TRADE_HELD_STRIKES = '';",
+    "old": "export const TRADE_HELD_STRIKES =\n  ' Holds add up: from the third, the freeze stays for a week even after it is gone, and for a month each time after that.'; // RPT1026-MARKET HOLD-SAID: the freeze, never \"trading\" alone",
+    "new": "export const TRADE_HELD_STRIKES = ''; // RPT1026-MARKET HOLD-SAID: the freeze, never \"trading\" alone",
     "tests": [
       "test/systems/item/ringhold.test.js"
     ]
@@ -41,7 +41,7 @@
   {
     "name": "VOID-ROOM-the-facing-unread",
     "file": "src/systems/decor/decorRooms.js",
-    "old": "      if (below.back && above.back) { y = fy - 0.05; continue; }",
+    "old": "      if (below.back && above.back) {\n        y = fy - 0.05;\n        continue;\n      }",
     "new": "",
     "tests": [
       "test/systems/decor/decorrooms.test.js"
@@ -59,7 +59,7 @@
   {
     "name": "QUAY-CROSSING-the-boxes-unweighed",
     "file": "src/systems/naval/shipLife.js",
-    "old": "      if (boxes.some((o) => boxesMeet(o, box))) continue;",
+    "old": "        if (boxes.some((o) => boxesMeet(o, box))) continue;",
     "new": "",
     "tests": [
       "test/systems/naval/quaycrossing.test.js"

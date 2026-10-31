@@ -302,8 +302,8 @@
   {
     "name": "HUD-tag-not-faded",
     "file": "src/ui/naval/navalHud.js",
-    "old": "tagAlpha(t.distance, reach) * Math.max(0, Math.min(1, t.fade ?? 1)) * 100",
-    "new": "tagAlpha(t.distance, reach) * 100",
+    "old": "    set(\n      'a',\n      String(Math.round(tagAlpha(t.distance, reach) * Math.max(0, Math.min(1, t.fade ?? 1)) * 100) / 100),\n      (v) => {\n        slot.n.style.opacity = v;\n      },\n    ); // SHIP-FADE: with her",
+    "new": "    set('a', String(Math.round(tagAlpha(t.distance, reach) * 100) / 100), (v) => {\n      slot.n.style.opacity = v;\n    }); // SHIP-FADE: with her",
     "tests": [
       "test/render/shipfade.test.js"
     ]

@@ -18,4 +18,5 @@
 // so a nought there is only ever the indoors' brought out; indoors, and under any wind, the load stands as the mod's does.
 
 /** Whether a wind a load restored is the indoors' none brought outdoors - the player outside, every axis nought. */
-export const windStaleOutdoors = (/** @type {boolean} */ inside, /** @type {ReadonlyArray<number>} */ wind) => !inside && Array.isArray(wind) && wind.length === 3 && wind.every((c) => c === 0);
+export const windStaleOutdoors = (/** @type {boolean} */ inside, /** @type {ReadonlyArray<number>} */ wind) =>
+  !inside && Array.isArray(wind) && wind.length === 3 && wind.every((c) => c === 0);

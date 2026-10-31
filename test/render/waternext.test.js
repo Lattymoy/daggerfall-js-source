@@ -89,7 +89,7 @@ test('WATER-NEXT 2 the copy: once a frame, before the first water draw, the lane
   assert.match(r, /this\._underWater = \(this\._air && this\._frameFbo && !this\.waterSimple\) \? this\._air\.snapshotUnderWater\(\) : null;/);
   const a = read('src/render/airPass.js');
   assert.match(a, /gl\.blitFramebuffer\(0, 0, F\.w, F\.h, 0, 0, F\.w, F\.h, gl\.COLOR_BUFFER_BIT \| gl\.DEPTH_BUFFER_BIT, gl\.NEAREST\);/);
-  assert.match(a, /if \(k\.uwFbo\) \{ gl\.deleteTexture\(k\.uwColor\); gl\.deleteTexture\(k\.uwDepth\); gl\.deleteFramebuffer\(k\.uwFbo\); \}/, 'freed with the frame');
+  assert.match(a, /if \(k\.uwFbo\) \{\n\s*gl\.deleteTexture\(k\.uwColor\);\n\s*gl\.deleteTexture\(k\.uwDepth\);\n\s*gl\.deleteFramebuffer\(k\.uwFbo\);\n\s*\}/, 'freed with the frame');
   const w = read('src/scenes/world.js');
   assert.match(w, /if \(waterOn && !f\.underwater && _waterU\) \{[\s\S]*?renderer\.drawSeaSurfaces\(_dwSurfaceList,[\s\S]*?return;\s*\n\s*\}/);
   assert.match(w, /dwRender\.drawSurfaces\(_dwSurfaceList,/, 'the underside stays the mod\'s');

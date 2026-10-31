@@ -41,19 +41,19 @@ export const DOUBLE_CLICK_TIME = 0.3;
  * 235..236 that are part of the art.
  */
 export const CHROME_RECTS = Object.freeze({
-  panel: Object.freeze({ x: 1, y: 1, w: 318, h: 169 }),        // dummyPanelAutomap (:358-360)
-  microMap: Object.freeze({ x: 0, y: 52, w: 28, h: 28 }),      // dummyPanelOverlay (:383-385)
-  compass: Object.freeze({ x: 3, y: 172, w: 76, h: 17 }),      // dummyPanelCompass (:473-475)
-  grid: Object.freeze({ x: 78, y: 171, w: 27, h: 19 }),        // :396
-  forward: Object.freeze({ x: 105, y: 171, w: 21, h: 19 }),    // :404
-  backward: Object.freeze({ x: 126, y: 171, w: 21, h: 19 }),   // :412
-  left: Object.freeze({ x: 149, y: 171, w: 21, h: 19 }),       // :421
-  right: Object.freeze({ x: 170, y: 171, w: 21, h: 19 }),      // :429
+  panel: Object.freeze({ x: 1, y: 1, w: 318, h: 169 }), // dummyPanelAutomap (:358-360)
+  microMap: Object.freeze({ x: 0, y: 52, w: 28, h: 28 }), // dummyPanelOverlay (:383-385)
+  compass: Object.freeze({ x: 3, y: 172, w: 76, h: 17 }), // dummyPanelCompass (:473-475)
+  grid: Object.freeze({ x: 78, y: 171, w: 27, h: 19 }), // :396
+  forward: Object.freeze({ x: 105, y: 171, w: 21, h: 19 }), // :404
+  backward: Object.freeze({ x: 126, y: 171, w: 21, h: 19 }), // :412
+  left: Object.freeze({ x: 149, y: 171, w: 21, h: 19 }), // :421
+  right: Object.freeze({ x: 170, y: 171, w: 21, h: 19 }), // :429
   rotateLeft: Object.freeze({ x: 193, y: 171, w: 21, h: 19 }), // :437
-  rotateRight: Object.freeze({ x: 214, y: 171, w: 21, h: 19 }),// :445
-  upstairs: Object.freeze({ x: 237, y: 171, w: 21, h: 19 }),   // :453
+  rotateRight: Object.freeze({ x: 214, y: 171, w: 21, h: 19 }), // :445
+  upstairs: Object.freeze({ x: 237, y: 171, w: 21, h: 19 }), // :453
   downstairs: Object.freeze({ x: 258, y: 171, w: 21, h: 19 }), // :461
-  exit: Object.freeze({ x: 281, y: 171, w: 28, h: 19 }),       // :469
+  exit: Object.freeze({ x: 281, y: 171, w: 28, h: 19 }), // :469
 });
 
 /** labelHoverText (:483-489): y=192, centred, MaxWidth 320,
@@ -71,7 +71,16 @@ export const CAPTION_SWATCHES = Object.freeze({
 });
 
 /** The eight held buttons, in DFU's own Update() poll order. */
-export const HOLD_BUTTONS = Object.freeze(['forward', 'backward', 'left', 'right', 'rotateLeft', 'rotateRight', 'upstairs', 'downstairs']);
+export const HOLD_BUTTONS = Object.freeze([
+  'forward',
+  'backward',
+  'left',
+  'right',
+  'rotateLeft',
+  'rotateRight',
+  'upstairs',
+  'downstairs',
+]);
 /** The three click buttons. */
 export const CLICK_BUTTONS = Object.freeze(['grid', 'exit', 'compass']);
 
@@ -84,10 +93,10 @@ export const CLICK_BUTTONS = Object.freeze(['grid', 'exit', 'compass']);
  */
 export const DUNGEON_ACTIONS = Object.freeze({
   grid: Object.freeze({
-    leftClick: 'ActionChangeAutomapGridMode',          // :1979
-    rightClick: 'ActionResetRotationPivotAxis',        // :1988
-    wheelUp: 'ActionIncreaseCameraFieldOfView',        // :1996
-    wheelDown: 'ActionDecreaseCameraFieldOfView',      // :2004
+    leftClick: 'ActionChangeAutomapGridMode', // :1979
+    rightClick: 'ActionResetRotationPivotAxis', // :1988
+    wheelUp: 'ActionIncreaseCameraFieldOfView', // :1996
+    wheelDown: 'ActionDecreaseCameraFieldOfView', // :2004
   }),
   forward: Object.freeze({ leftHold: 'ActionMoveForward', rightHold: 'ActionMoveRotationPivotAxisForward' }),
   backward: Object.freeze({ leftHold: 'ActionMoveBackward', rightHold: 'ActionMoveRotationPivotAxisBackward' }),
@@ -112,8 +121,8 @@ export const DUNGEON_ACTIONS = Object.freeze({
  */
 export const EXTERIOR_ACTIONS = Object.freeze({
   grid: Object.freeze({
-    leftClick: 'ActionSwitchToNextExteriorAutomapViewMode',   // :1372
-    rightClick: 'ActionClickSoundOnly',                       // :1380 - the sound IS the whole handler
+    leftClick: 'ActionSwitchToNextExteriorAutomapViewMode', // :1372
+    rightClick: 'ActionClickSoundOnly', // :1380 - the sound IS the whole handler
   }),
   forward: Object.freeze({ leftHold: 'ActionMoveForward', rightHold: 'ActionMoveToNorthLocationBorder' }),
   backward: Object.freeze({ leftHold: 'ActionMoveBackward', rightHold: 'ActionMoveToSouthLocationBorder' }),
@@ -139,9 +148,14 @@ export const EXTERIOR_ACTIONS = Object.freeze({
  * "fixes" this breaks parity.
  */
 export const RIGHT_DOWN_GUARD = Object.freeze({
-  forward: 'right', backward: 'right', left: 'right', right: 'right',
-  rotateLeft: 'left', rotateRight: 'left',
-  upstairs: 'right', downstairs: 'right',
+  forward: 'right',
+  backward: 'right',
+  left: 'right',
+  right: 'right',
+  rotateLeft: 'left',
+  rotateRight: 'left',
+  upstairs: 'right',
+  downstairs: 'right',
 });
 
 const inRect = (r, x, y) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h;
@@ -201,13 +215,15 @@ export class AutomapChrome {
     this.hover = null;
     this.hoverT = 0;
     this.time = 0;
-    this._pressed = null;      // { side, name } - the click candidate
-    this._lastDown = null;     // { t, nx, ny, side } - double-click detection
-    this._dragAt = null;       // last pointer position while a panel drag is live
+    this._pressed = null; // { side, name } - the click candidate
+    this._lastDown = null; // { t, nx, ny, side } - double-click detection
+    this._dragAt = null; // last pointer position while a panel drag is live
   }
 
   /** inDragMode() (:151): any button held down ON THE RENDER PANEL. */
-  inDragMode() { return this.panelDrag.left || this.panelDrag.right || this.panelDrag.middle; }
+  inDragMode() {
+    return this.panelDrag.left || this.panelDrag.right || this.panelDrag.middle;
+  }
 
   /** Every hold flag cleared and every guard released - what a window
    *  must call when it loses the pointer (the browser has no
@@ -254,15 +270,15 @@ export class AutomapChrome {
       if (this.inDragMode()) return out;
       if (CLICK_BUTTONS.includes(name)) {
         this._pressed = { side, name };
-        return out;   // the verb fires on RELEASE (OnMouseClick)
+        return out; // the verb fires on RELEASE (OnMouseClick)
       }
       // a hold button: the `alreadyIn` guard, on the flag DFU checks
       const guard = side === 'right' ? RIGHT_DOWN_GUARD[name] : 'left';
       if (this.alreadyIn[guard]) return out;
       this.alreadyIn[guard] = true;
       this.held[side].add(name);
-      this.suppressToolTip.add(name);   // SuppressToolTip = true while held
-      out.sound = true;                 // PlayOneShot(SoundClips.ButtonClick)
+      this.suppressToolTip.add(name); // SuppressToolTip = true while held
+      out.sound = true; // PlayOneShot(SoundClips.ButtonClick)
       return out;
     }
 
@@ -270,7 +286,8 @@ export class AutomapChrome {
       // AUDIT-AMAP W7: the tooltip clock runs only while the pointer is
       // STILL (BaseScreenComponent.cs:602-605) - any movement restarts
       // it, not just a change of rect
-      if (name !== this.hover || !this._lastMove || this._lastMove[0] !== nx || this._lastMove[1] !== ny) this.hoverT = 0;
+      if (name !== this.hover || !this._lastMove || this._lastMove[0] !== nx || this._lastMove[1] !== ny)
+        this.hoverT = 0;
       this._lastMove = [nx, ny];
       this.hover = name;
       if (this.inDragMode() && this._dragAt) {
@@ -293,7 +310,11 @@ export class AutomapChrome {
     // (see the four hosts' listeners), and honouring it here is the
     // point: an unreleasable drag is worse than a one-frame
     // difference in where the drag ends.
-    if (this.panelDrag[side]) { this.panelDrag[side] = false; this._dragAt = null; this.alreadyIn[side] = false; }   // AUDIT-AMAP W9: the panel's up clears its own flag (:1932-1936)
+    if (this.panelDrag[side]) {
+      this.panelDrag[side] = false;
+      this._dragAt = null;
+      this.alreadyIn[side] = false;
+    } // AUDIT-AMAP W9: the panel's up clears its own flag (:1932-1936)
     if (this._pressed && this._pressed.side === side) {
       const { name: pressedName } = this._pressed;
       this._pressed = null;
@@ -302,7 +323,10 @@ export class AutomapChrome {
       if (pressedName === name && !this.inDragMode()) {
         const entry = this.table[pressedName];
         const verb = side === 'right' ? entry?.rightClick : entry?.leftClick;
-        if (verb) { out.verbs.push(verb); out.sound = true; }
+        if (verb) {
+          out.verbs.push(verb);
+          out.sound = true;
+        }
       }
     }
     // ROAD-C c2/S8 FIX: `held` has a LEFT and a RIGHT set and no middle
@@ -332,7 +356,7 @@ export class AutomapChrome {
   }
 
   wheel(nx, ny, dir) {
-    this.hoverT = 0;   // AUDIT-AMAP W7: a wheel notch restarts the tooltip clock (:735)
+    this.hoverT = 0; // AUDIT-AMAP W7: a wheel notch restarts the tooltip clock (:735)
     if (this.inDragMode()) return null;
     const name = hitChrome(nx, ny);
     const entry = name ? this.table[name] : null;
@@ -363,8 +387,8 @@ export class AutomapChrome {
     }
     if (this.hover && !this.suppressToolTip.has(this.hover)) this.hoverT += dt;
     else this.hoverT = 0;
-    const tooltip = this.hover && this.hoverT >= TOOL_TIP_DELAY && !this.suppressToolTip.has(this.hover)
-      ? this.hover : null;
+    const tooltip =
+      this.hover && this.hoverT >= TOOL_TIP_DELAY && !this.suppressToolTip.has(this.hover) ? this.hover : null;
     return { verbs, tooltip };
   }
 }

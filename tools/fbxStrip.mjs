@@ -63,7 +63,10 @@ function rawRecords(buf) {
   const wide = version >= 7500;
   const HEAD = wide ? 25 : 13;
   const u = (o, i) => (wide ? Number(buf.readBigUInt64LE(o + i * 8)) : buf.readUInt32LE(o + i * 4));
-  const isNull = (o) => { for (let k = 0; k < HEAD; k++) if (buf[o + k] !== 0) return false; return true; };
+  const isNull = (o) => {
+    for (let k = 0; k < HEAD; k++) if (buf[o + k] !== 0) return false;
+    return true;
+  };
   function record(off) {
     const end = u(off, 0);
     const numProps = u(off, 1);
@@ -76,7 +79,11 @@ function rawRecords(buf) {
     let p = pStart + propLen;
     let sentinel = false;
     while (p < end) {
-      if (isNull(p)) { sentinel = true; p += HEAD; break; }
+      if (isNull(p)) {
+        sentinel = true;
+        p += HEAD;
+        break;
+      }
       const child = record(p);
       children.push(child);
       p = child.end;
@@ -87,7 +94,10 @@ function rawRecords(buf) {
   const top = [];
   let p = 27;
   for (;;) {
-    if (isNull(p)) { p += HEAD; break; }
+    if (isNull(p)) {
+      p += HEAD;
+      break;
+    }
     const r = record(p);
     top.push(r);
     p = r.end;
@@ -98,7 +108,8 @@ function rawRecords(buf) {
 /** Pair the byte-level tree with the reader's decoded one, record for record - the two walks must agree on every
  *  name, or the file is not one this tool understands. */
 function pair(raw, decoded, path = '') {
-  if (raw.length !== decoded.length) throw new Error(`${path || 'the file'}: ${raw.length} records read raw, ${decoded.length} decoded`);
+  if (raw.length !== decoded.length)
+    throw new Error(`${path || 'the file'}: ${raw.length} records read raw, ${decoded.length} decoded`);
   raw.forEach((r, i) => {
     const d = decoded[i];
     if (r.name !== d.name) throw new Error(`${path}/${i}: raw "${r.name}" against decoded "${d.name}"`);
@@ -136,7 +147,17 @@ function arrayProps(rec, values) {
 }
 
 /** What a cut knows a Geometry, and each of its layer elements, to hold - anything else is refused by name. */
-const CUT_GEOMETRY = new Set(['Properties70', 'GeometryVersion', 'Vertices', 'PolygonVertexIndex', 'Edges', 'LayerElementNormal', 'LayerElementUV', 'LayerElementMaterial', 'Layer']);
+const CUT_GEOMETRY = new Set([
+  'Properties70',
+  'GeometryVersion',
+  'Vertices',
+  'PolygonVertexIndex',
+  'Edges',
+  'LayerElementNormal',
+  'LayerElementUV',
+  'LayerElementMaterial',
+  'Layer',
+]);
 const CUT_LAYER = new Set(['Version', 'Name', 'MappingInformationType', 'ReferenceInformationType']);
 
 /**
@@ -145,7 +166,11 @@ const CUT_LAYER = new Set(['Version', 'Name', 'MappingInformationType', 'Referen
  * and its encoding. Answers how many polygons each slot gave up, and how many vertices went with them.
  */
 function cutGeometry(geo, materials, label) {
-  for (const c of geo.children) if (!CUT_GEOMETRY.has(c.name)) throw new Error(`${label}: its Geometry holds "${c.name}", which a cut does not know - refused rather than half cut`);
+  for (const c of geo.children)
+    if (!CUT_GEOMETRY.has(c.name))
+      throw new Error(
+        `${label}: its Geometry holds "${c.name}", which a cut does not know - refused rather than half cut`,
+      );
   const one = (parent, name) => {
     const r = parent.children.filter((c) => c.name === name);
     if (r.length !== 1) throw new Error(`${label}: ${r.length} "${name}" records where a cut reads one`);
@@ -160,48 +185,80 @@ function cutGeometry(geo, materials, label) {
   const polyOf = new Int32Array(pvi.length);
   for (let k = 0, s = 0; k < pvi.length; k++) {
     polyOf[k] = polys.length;
-    if (pvi[k] < 0) { polys.push([s, k]); s = k + 1; }
+    if (pvi[k] < 0) {
+      polys.push([s, k]);
+      s = k + 1;
+    }
   }
-  if (!polys.length || polys.at(-1)[1] !== pvi.length - 1) throw new Error(`${label}: its PolygonVertexIndex does not close its last polygon`);
+  if (!polys.length || polys.at(-1)[1] !== pvi.length - 1)
+    throw new Error(`${label}: its PolygonVertexIndex does not close its last polygon`);
 
   const matEl = one(geo, 'LayerElementMaterial');
-  for (const c of matEl.children) if (!CUT_LAYER.has(c.name) && c.name !== 'Materials') throw new Error(`${label}: its LayerElementMaterial holds "${c.name}"`);
+  for (const c of matEl.children)
+    if (!CUT_LAYER.has(c.name) && c.name !== 'Materials')
+      throw new Error(`${label}: its LayerElementMaterial holds "${c.name}"`);
   const matsRec = one(matEl, 'Materials');
   const mats = matsRec.decoded.props[0];
   // one material for the whole object (AllSame): every polygon wears it, or none does
   if (value(matEl, 'MappingInformationType') === 'AllSame') {
-    for (const m of materials) if (mats[0] === m) throw new Error(`${label}: every polygon wears material ${m} - drop the object instead`);
+    for (const m of materials)
+      if (mats[0] === m) throw new Error(`${label}: every polygon wears material ${m} - drop the object instead`);
     throw new Error(`${label}: no polygon wears material ${materials[0]} - nothing to cut`);
   }
-  if (value(matEl, 'MappingInformationType') !== 'ByPolygon' || value(matEl, 'ReferenceInformationType') !== 'IndexToDirect') {
+  if (
+    value(matEl, 'MappingInformationType') !== 'ByPolygon' ||
+    value(matEl, 'ReferenceInformationType') !== 'IndexToDirect'
+  ) {
     throw new Error(`${label}: its materials are not mapped ByPolygon, IndexToDirect - a cut reads no other`);
   }
-  if (mats.length !== polys.length) throw new Error(`${label}: ${mats.length} material indices for ${polys.length} polygons`);
+  if (mats.length !== polys.length)
+    throw new Error(`${label}: ${mats.length} material indices for ${polys.length} polygons`);
   const polygons = materials.map((m) => mats.filter((x) => x === m).length);
-  materials.forEach((m, i) => { if (!polygons[i]) throw new Error(`${label}: no polygon wears material ${m} - nothing to cut`); });
+  materials.forEach((m, i) => {
+    if (!polygons[i]) throw new Error(`${label}: no polygon wears material ${m} - nothing to cut`);
+  });
   const slots = new Set(materials);
   const keep = mats.map((m) => !slots.has(m));
-  if (keep.every((k) => !k)) throw new Error(`${label}: every polygon wears material ${materials.join(' or ')} - drop the object instead`);
+  if (keep.every((k) => !k))
+    throw new Error(`${label}: every polygon wears material ${materials.join(' or ')} - drop the object instead`);
   const keptPV = polys.flatMap(([s, e], p) => (keep[p] ? Array.from({ length: e - s + 1 }, (_, i) => s + i) : []));
   const newPV = new Map(keptPV.map((k, n) => [k, n]));
 
   // THE VERTICES: every one but those only the cut polygons used (a vertex no polygon uses was never theirs), in their
   // order; the polygons left re-pointed at them
   const vOf = (k) => (pvi[k] < 0 ? ~pvi[k] : pvi[k]);
-  const theirs = new Set(polys.flatMap(([s, e], p) => (keep[p] ? [] : Array.from({ length: e - s + 1 }, (_, i) => vOf(s + i)))));
+  const theirs = new Set(
+    polys.flatMap(([s, e], p) => (keep[p] ? [] : Array.from({ length: e - s + 1 }, (_, i) => vOf(s + i)))),
+  );
   for (const k of keptPV) theirs.delete(vOf(k));
   const keptV = Array.from({ length: verts.length / 3 }, (_, u) => u).filter((u) => !theirs.has(u));
   const vTo = new Map(keptV.map((u, n) => [u, n]));
-  vertsRec.props = arrayProps(vertsRec, keptV.flatMap((u) => verts.slice(u * 3, u * 3 + 3)));
-  pviRec.props = arrayProps(pviRec, keptPV.map((k) => (pvi[k] < 0 ? ~vTo.get(~pvi[k]) : vTo.get(pvi[k]))));
-  matsRec.props = arrayProps(matsRec, mats.filter((_, p) => keep[p]));
+  vertsRec.props = arrayProps(
+    vertsRec,
+    keptV.flatMap((u) => verts.slice(u * 3, u * 3 + 3)),
+  );
+  pviRec.props = arrayProps(
+    pviRec,
+    keptPV.map((k) => (pvi[k] < 0 ? ~vTo.get(~pvi[k]) : vTo.get(pvi[k]))),
+  );
+  matsRec.props = arrayProps(
+    matsRec,
+    mats.filter((_, p) => keep[p]),
+  );
 
   // THE EDGES, each written as the polygon corner it starts at: an edge a polygon left still has is kept, from that
   // polygon's corner where its own was cut; an edge only cut polygons had goes with them
   const edgesRec = geo.children.find((c) => c.name === 'Edges');
   if (edgesRec) {
-    const next = (k) => { const [s, e] = polys[polyOf[k]]; return k === e ? s : k + 1; };
-    const key = (k) => { const a = vOf(k), b = vOf(next(k)); return a < b ? `${a},${b}` : `${b},${a}`; };
+    const next = (k) => {
+      const [s, e] = polys[polyOf[k]];
+      return k === e ? s : k + 1;
+    };
+    const key = (k) => {
+      const a = vOf(k),
+        b = vOf(next(k));
+      return a < b ? `${a},${b}` : `${b},${a}`;
+    };
     const firstKept = new Map();
     for (const k of keptPV) if (!firstKept.has(key(k))) firstKept.set(key(k), k);
     const out = [];
@@ -209,15 +266,19 @@ function cutGeometry(geo, materials, label) {
       const k = newPV.has(e) ? e : firstKept.get(key(e));
       if (k !== undefined) out.push(newPV.get(k));
     }
-    if (new Set(out).size !== out.length) throw new Error(`${label}: an edge listed twice once cut - its Edges are not one a cut understands`);
+    if (new Set(out).size !== out.length)
+      throw new Error(`${label}: an edge listed twice once cut - its Edges are not one a cut understands`);
     edgesRec.props = arrayProps(edgesRec, out);
   }
 
   // EACH CORNER'S LAYER - its normals, its UVs: direct values per corner kept, or an index per corner into a table
   // kept to the entries still used, in their order
   const corners = (el, valueName, width, wName) => {
-    for (const c of el.children) if (!CUT_LAYER.has(c.name) && ![valueName, `${valueName}Index`, wName].includes(c.name)) throw new Error(`${label}: its ${el.name} holds "${c.name}"`);
-    if (value(el, 'MappingInformationType') !== 'ByPolygonVertex') throw new Error(`${label}: its ${el.name} is not mapped ByPolygonVertex - a cut reads no other`);
+    for (const c of el.children)
+      if (!CUT_LAYER.has(c.name) && ![valueName, `${valueName}Index`, wName].includes(c.name))
+        throw new Error(`${label}: its ${el.name} holds "${c.name}"`);
+    if (value(el, 'MappingInformationType') !== 'ByPolygonVertex')
+      throw new Error(`${label}: its ${el.name} is not mapped ByPolygonVertex - a cut reads no other`);
     const ref = value(el, 'ReferenceInformationType');
     const valuesRec = one(el, valueName);
     const values = valuesRec.decoded.props[0];
@@ -225,23 +286,37 @@ function cutGeometry(geo, materials, label) {
     let keepAt;
     if (ref === 'Direct') {
       // a value a corner, and no index table beside them (the audit's own fixture: one there was cut as if it were not)
-      if (el.children.some((c) => c.name === `${valueName}Index`)) throw new Error(`${label}: its ${el.name} is referenced Direct yet carries a ${valueName}Index`);
+      if (el.children.some((c) => c.name === `${valueName}Index`))
+        throw new Error(`${label}: its ${el.name} is referenced Direct yet carries a ${valueName}Index`);
       if (values.length !== pvi.length * width) throw new Error(`${label}: its ${valueName} is not one value a corner`);
       keepAt = keptPV;
     } else if (ref === 'IndexToDirect') {
       const idxRec = one(el, `${valueName}Index`);
       const idx = idxRec.decoded.props[0];
-      if (idx.length !== pvi.length || idx.some((i) => i < 0)) throw new Error(`${label}: its ${valueName}Index is not one entry a corner`);
+      if (idx.length !== pvi.length || idx.some((i) => i < 0))
+        throw new Error(`${label}: its ${valueName}Index is not one entry a corner`);
       // every entry but those only the cut corners used (an entry no corner uses was never theirs), in their order
-      const cutCorner = new Set(polys.flatMap(([s, e], p) => (keep[p] ? [] : Array.from({ length: e - s + 1 }, (_, i) => s + i))));
+      const cutCorner = new Set(
+        polys.flatMap(([s, e], p) => (keep[p] ? [] : Array.from({ length: e - s + 1 }, (_, i) => s + i))),
+      );
       const only = new Set([...cutCorner].map((k) => idx[k]));
       for (const k of keptPV) only.delete(idx[k]);
       keepAt = Array.from({ length: values.length / width }, (_, u) => u).filter((u) => !only.has(u));
       const to = new Map(keepAt.map((u, n) => [u, n]));
-      idxRec.props = arrayProps(idxRec, keptPV.map((k) => to.get(idx[k])));
+      idxRec.props = arrayProps(
+        idxRec,
+        keptPV.map((k) => to.get(idx[k])),
+      );
     } else throw new Error(`${label}: its ${el.name} is referenced ${ref} - a cut reads Direct or IndexToDirect`);
-    valuesRec.props = arrayProps(valuesRec, keepAt.flatMap((u) => values.slice(u * width, u * width + width)));
-    if (wRec) wRec.props = arrayProps(wRec, keepAt.map((u) => wRec.decoded.props[0][u]));
+    valuesRec.props = arrayProps(
+      valuesRec,
+      keepAt.flatMap((u) => values.slice(u * width, u * width + width)),
+    );
+    if (wRec)
+      wRec.props = arrayProps(
+        wRec,
+        keepAt.map((u) => wRec.decoded.props[0][u]),
+      );
   };
   for (const el of geo.children.filter((c) => c.name === 'LayerElementNormal')) corners(el, 'Normals', 3, 'NormalsW');
   for (const el of geo.children.filter((c) => c.name === 'LayerElementUV')) corners(el, 'UV', 2, null);
@@ -267,7 +342,9 @@ export function stripFbx(bytes, { drop = [], cut = [] } = {}) {
   const connRaw = raw.top.find((r) => r.name === 'Connections');
   if (!objectsRaw || !connRaw) throw new Error('this FBX has no Objects or no Connections section');
   const byId = new Map(objectsRaw.children.map((r) => [idKey(r.decoded.props[0]), r]));
-  const links = connRaw.children.filter((r) => r.name === 'C').map((r) => ({ r, child: idKey(r.decoded.props[1]), parent: idKey(r.decoded.props[2]) }));
+  const links = connRaw.children
+    .filter((r) => r.name === 'C')
+    .map((r) => ({ r, child: idKey(r.decoded.props[1]), parent: idKey(r.decoded.props[2]) }));
 
   const gone = new Set();
   for (const name of drop) {
@@ -279,7 +356,9 @@ export function stripFbx(bytes, { drop = [], cut = [] } = {}) {
   for (const l of links) {
     const child = byId.get(l.child);
     if (gone.has(l.parent) && child?.name === 'Model' && !gone.has(l.child)) {
-      throw new Error(`${objectName(child.decoded.props[1])} is parented under a removed object - remove it too, or keep its parent`);
+      throw new Error(
+        `${objectName(child.decoded.props[1])} is parented under a removed object - remove it too, or keep its parent`,
+      );
     }
   }
   // What hangs ONLY from removed objects goes with them, to a fixed point (model -> geometry/material -> texture ->
@@ -289,14 +368,20 @@ export function stripFbx(bytes, { drop = [], cut = [] } = {}) {
     for (const [id, r] of byId) {
       if (gone.has(id) || r.name === 'Model') continue;
       const parents = links.filter((l) => l.child === id).map((l) => l.parent);
-      if (parents.length && parents.every((p) => gone.has(p))) { gone.add(id); grew = true; }
+      if (parents.length && parents.every((p) => gone.has(p))) {
+        gone.add(id);
+        grew = true;
+      }
     }
   }
-  const dropped = objectsRaw.children.filter((r) => gone.has(idKey(r.decoded.props[0])))
+  const dropped = objectsRaw.children
+    .filter((r) => gone.has(idKey(r.decoded.props[0])))
     .map((r) => ({ kind: r.name, name: objectName(r.decoded.props[1]), id: idKey(r.decoded.props[0]) }));
 
   objectsRaw.children = objectsRaw.children.filter((r) => !gone.has(idKey(r.decoded.props[0])));
-  connRaw.children = connRaw.children.filter((r) => r.name !== 'C' || !(gone.has(idKey(r.decoded.props[1])) || gone.has(idKey(r.decoded.props[2]))));
+  connRaw.children = connRaw.children.filter(
+    (r) => r.name !== 'C' || !(gone.has(idKey(r.decoded.props[1])) || gone.has(idKey(r.decoded.props[2]))),
+  );
 
   // MW-FOLK1: THE CUTS - each object's one Geometry, re-written less its slots' polygons, every slot of it in one pass
   const slotsOf = new Map();
@@ -308,14 +393,21 @@ export function stripFbx(bytes, { drop = [], cut = [] } = {}) {
   const cuts = [...slotsOf].map(([object, materials]) => {
     const label = `"${object}"`;
     const model = objectsRaw.children.find((r) => r.name === 'Model' && objectName(r.decoded.props[1]) === object);
-    if (!model) throw new Error(`no Model named ${label} in this FBX${drop.includes(object) ? ' once its drop is made - a dropped object has nothing to cut' : ''}`);
+    if (!model)
+      throw new Error(
+        `no Model named ${label} in this FBX${drop.includes(object) ? ' once its drop is made - a dropped object has nothing to cut' : ''}`,
+      );
     const id = idKey(model.decoded.props[0]);
     const geos = links.filter((l) => l.parent === id && byId.get(l.child)?.name === 'Geometry').map((l) => l.child);
     if (geos.length !== 1) throw new Error(`${label} has ${geos.length} Geometry records - a cut reads one`);
-    if (links.some((l) => l.child === geos[0] && l.parent !== id && byId.get(l.parent)?.name === 'Model')) throw new Error(`${label}'s Geometry is another object's too - a cut would cut both`);
+    if (links.some((l) => l.child === geos[0] && l.parent !== id && byId.get(l.parent)?.name === 'Model'))
+      throw new Error(`${label}'s Geometry is another object's too - a cut would cut both`);
     // AUDIT MW-FOLK1 L1-F2: what hangs FROM the Geometry - a skin's deformer, a blend shape - names its vertices by index
     const hung = links.find((l) => l.parent === geos[0]);
-    if (hung) throw new Error(`${label}'s Geometry carries a ${byId.get(hung.child)?.name ?? 'record'} that names its vertices by their index - a cut would leave it on the old numbering: refused`);
+    if (hung)
+      throw new Error(
+        `${label}'s Geometry carries a ${byId.get(hung.child)?.name ?? 'record'} that names its vertices by their index - a cut would leave it on the old numbering: refused`,
+      );
     return { object, materials, ...cutGeometry(byId.get(geos[0]), materials, label) };
   });
 
@@ -325,8 +417,11 @@ export function stripFbx(bytes, { drop = [], cut = [] } = {}) {
     const lessBy = new Map();
     for (const d of dropped) lessBy.set(d.kind, (lessBy.get(d.kind) ?? 0) + 1);
     const setCount = (countRec, value) => {
-      if (countRec.props[0] !== 'I'.charCodeAt(0) || countRec.props.length !== 5) throw new Error('a Definitions Count that is not one int32');
-      const p = Buffer.alloc(5); p[0] = countRec.props[0]; p.writeInt32LE(value, 1);
+      if (countRec.props[0] !== 'I'.charCodeAt(0) || countRec.props.length !== 5)
+        throw new Error('a Definitions Count that is not one int32');
+      const p = Buffer.alloc(5);
+      p[0] = countRec.props[0];
+      p.writeInt32LE(value, 1);
       countRec.props = p;
     };
     for (const ot of definitions.children.filter((r) => r.name === 'ObjectType')) {
@@ -348,18 +443,28 @@ export function stripFbx(bytes, { drop = [], cut = [] } = {}) {
 
   const out = [];
   let at = 0;
-  const push = (b) => { out.push(b); at += b.length; };
+  const push = (b) => {
+    out.push(b);
+    at += b.length;
+  };
   const header = (end, numProps, propLen, name) => {
     const h = Buffer.alloc(raw.HEAD + name.length);
-    if (raw.wide) { h.writeBigUInt64LE(BigInt(end), 0); h.writeBigUInt64LE(BigInt(numProps), 8); h.writeBigUInt64LE(BigInt(propLen), 16); }
-    else { h.writeUInt32LE(end, 0); h.writeUInt32LE(numProps, 4); h.writeUInt32LE(propLen, 8); }
+    if (raw.wide) {
+      h.writeBigUInt64LE(BigInt(end), 0);
+      h.writeBigUInt64LE(BigInt(numProps), 8);
+      h.writeBigUInt64LE(BigInt(propLen), 16);
+    } else {
+      h.writeUInt32LE(end, 0);
+      h.writeUInt32LE(numProps, 4);
+      h.writeUInt32LE(propLen, 8);
+    }
     h.writeUInt8(name.length, raw.HEAD - 1);
     h.write(name, raw.HEAD, 'latin1');
     return h;
   };
   const emit = (r) => {
     const slot = out.length;
-    out.push(null);   // the header, written once the record's end is known
+    out.push(null); // the header, written once the record's end is known
     at += raw.HEAD + Buffer.byteLength(r.name, 'latin1');
     push(r.props);
     for (const c of r.children) emit(c);
@@ -368,13 +473,15 @@ export function stripFbx(bytes, { drop = [], cut = [] } = {}) {
   };
   push(buf.subarray(0, 27));
   for (const r of raw.top) emit(r);
-  push(Buffer.alloc(raw.HEAD));   // the top level's null record
+  push(Buffer.alloc(raw.HEAD)); // the top level's null record
   push(FOOT_ID);
   push(Buffer.alloc(4));
   let pad = ((at + 15) & ~15) - at;
   if (pad === 0) pad = 16;
   push(Buffer.alloc(pad));
-  const v = Buffer.alloc(4); v.writeUInt32LE(raw.version, 0); push(v);
+  const v = Buffer.alloc(4);
+  v.writeUInt32LE(raw.version, 0);
+  push(v);
   push(Buffer.alloc(120));
   push(FOOT_MAGIC);
   return { bytes: Buffer.concat(out), dropped, cut: cuts };
@@ -383,7 +490,9 @@ export function stripFbx(bytes, { drop = [], cut = [] } = {}) {
 /** The Mesh Models of an FBX by name - what a strip keeps, for the record. */
 export function meshModelNames(bytes) {
   const objects = nodeAt(readFbx(Buffer.from(bytes)).nodes, 'Objects');
-  return childrenNamed(objects, 'Model').filter((m) => m.props[2] === 'Mesh').map((m) => objectName(m.props[1]));
+  return childrenNamed(objects, 'Model')
+    .filter((m) => m.props[2] === 'Mesh')
+    .map((m) => objectName(m.props[1]));
 }
 
 if (isMain(import.meta.url)) {
@@ -391,19 +500,34 @@ if (isMain(import.meta.url)) {
   const files = args.filter((a) => !a.startsWith('--'));
   const dropArg = args.find((a) => a.startsWith('--drop='))?.slice('--drop='.length) ?? '';
   const cutArg = args.find((a) => a.startsWith('--cut='))?.slice('--cut='.length) ?? '';
-  const cut = cutArg.split(',').map((s) => s.trim()).filter(Boolean).map((s) => {
-    const at = s.lastIndexOf(':');
-    return { object: s.slice(0, at), material: Number(s.slice(at + 1)) };
-  });
+  const cut = cutArg
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s) => {
+      const at = s.lastIndexOf(':');
+      return { object: s.slice(0, at), material: Number(s.slice(at + 1)) };
+    });
   if (files.length !== 2 || (!dropArg && !cut.length) || cut.some((c) => !c.object || !Number.isInteger(c.material))) {
-    console.error('usage: node tools/fbxStrip.mjs <in.fbx> <out.fbx> [--drop=<Model>[,<Model>...]] [--cut=<Model>:<material>[,...]]');
+    console.error(
+      'usage: node tools/fbxStrip.mjs <in.fbx> <out.fbx> [--drop=<Model>[,<Model>...]] [--cut=<Model>:<material>[,...]]',
+    );
     process.exit(2);
   }
-  const r = stripFbx(readFileSync(files[0]), { drop: dropArg.split(',').map((s) => s.trim()).filter(Boolean), cut });
+  const r = stripFbx(readFileSync(files[0]), {
+    drop: dropArg
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
+    cut,
+  });
   mkdirSync(dirname(files[1]), { recursive: true });
   writeFileSync(files[1], r.bytes);
   console.log(`${files[0]} -> ${files[1]}  ${r.bytes.length} bytes`);
   for (const d of r.dropped) console.log(`  dropped ${d.kind} "${d.name}"`);
-  for (const c of r.cut) console.log(`  cut "${c.object}" ${c.materials.map((m, i) => `material ${m}: ${c.polygons[i]} polygons`).join(', ')}; ${c.vertices} vertices`);
+  for (const c of r.cut)
+    console.log(
+      `  cut "${c.object}" ${c.materials.map((m, i) => `material ${m}: ${c.polygons[i]} polygons`).join(', ')}; ${c.vertices} vertices`,
+    );
   console.log(`  kept: ${meshModelNames(r.bytes).join(', ')}`);
 }

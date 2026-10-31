@@ -19,8 +19,21 @@
 //
 // Not a DFU member. Ledger A (SERPENT1).
 import {
-  serpentAt, serpentPhase, serpentCountdown, serpentCountdownWords, serpentClock, serpentMarked, serpentSwims, serpentBossOf,
-  sightingLine, risingLine, sealLine, soundLine, SERPENT_RISE_MINUTE, SERPENT_SOUND_MINUTE, SERPENT_DAY_MINUTES,
+  serpentAt,
+  serpentPhase,
+  serpentCountdown,
+  serpentCountdownWords,
+  serpentClock,
+  serpentMarked,
+  serpentSwims,
+  serpentBossOf,
+  sightingLine,
+  risingLine,
+  sealLine,
+  soundLine,
+  SERPENT_RISE_MINUTE,
+  SERPENT_SOUND_MINUTE,
+  SERPENT_DAY_MINUTES,
 } from '../../net/serpent/serpentLaw.js';
 
 /** The phases that say a line on arrival, and the line each says. */
@@ -31,21 +44,36 @@ export const SERPENT_OMEN_SETTLE_MS = 1500;
 /** A day's site that came back none (the map's data not loaded yet, the lanes not built) is asked again this often. */
 export const SITE_RETRY_MS = 5000;
 /** Is map pixel (px, py) within the omen's ring, give or take `slack` pixels - the compass carries the serpent only here. */
-export const insideSerpentRing = (mark, px, py, slack = 1) => !!mark && Math.hypot(px + 0.5 - mark.cx, py + 0.5 - mark.cy) <= mark.r + slack;
+export const insideSerpentRing = (mark, px, py, slack = 1) =>
+  !!mark && Math.hypot(px + 0.5 - mark.cx, py + 0.5 - mark.cy) <= mark.r + slack;
 
 /**
  * @param {{now: () => number, site: (day: number) => any, say: (text: string) => void, localTime?: (classicMinutes: number) => (string|null),
  *   fellAt?: (day: number, site: {sx: number, sz: number}) => (number|null), ready?: () => boolean, settleMs?: number}} deps
  *   `fellAt` the kill of THIS site's serpent (AUDIT SERPENT S1 - the hub says each site's; a forged one's is not mine)
  */
-export function createSerpentOmen({ now, site, say, localTime = () => null, fellAt = () => null, ready = () => true, settleMs = 0 }) {
-  let saidDay = null, saidRank = -1;
-  let readyAt = null, settled = false;
+export function createSerpentOmen({
+  now,
+  site,
+  say,
+  localTime = () => null,
+  fellAt = () => null,
+  ready = () => true,
+  settleMs = 0,
+}) {
+  let saidDay = null,
+    saidRank = -1;
+  let readyAt = null,
+    settled = false;
   let cache = { day: null, site: null, at: -Infinity };
   const siteOf = (day) => {
     if (cache.day !== day || (!cache.site && now() - cache.at >= SITE_RETRY_MS)) {
       let s = null;
-      try { s = site(day) ?? null; } catch { s = null; }
+      try {
+        s = site(day) ?? null;
+      } catch {
+        s = null;
+      }
       cache = { day, site: s, at: now() };
     }
     return cache.site;
@@ -55,29 +83,45 @@ export function createSerpentOmen({ now, site, say, localTime = () => null, fell
   return {
     /** One frame: the serpent's state now, and its line if a new one is due. */
     frame() {
-      if (!ready()) { readyAt = null; settled = false; current = null; return null; }
+      if (!ready()) {
+        readyAt = null;
+        settled = false;
+        current = null;
+        return null;
+      }
       if (!settled) {
         if (readyAt == null || now() < readyAt) readyAt = now();
-        if (now() - readyAt < settleMs) { current = null; return null; }
+        if (now() - readyAt < settleMs) {
+          current = null;
+          return null;
+        }
         settled = true;
       }
       const t = serpentAt(now());
       // AUDIT SERPENT S1: the site first - its kill is the one that ends it early (a kill only ever brings `gone` sooner,
       // so the clock's own quiet and gone need no site)
       const bare = serpentPhase(t, now());
-      if (bare === 'quiet' || bare === 'gone') { current = { t, phase: bare, site: null }; return current; }
+      if (bare === 'quiet' || bare === 'gone') {
+        current = { t, phase: bare, site: null };
+        return current;
+      }
       const s = siteOf(t.day);
       const phase = serpentPhase(t, now(), s ? fellAt(t.day, s) : null);
-      if (phase === 'gone') { current = { t, phase, site: null }; return current; }
+      if (phase === 'gone') {
+        current = { t, phase, site: null };
+        return current;
+      }
       current = { t, phase, site: s };
       if (!s) return current;
       const line = SAYS[phase];
       const rank = LINE_ORDER.indexOf(line);
       if (line && (t.day !== saidDay || rank > saidRank)) {
-        saidDay = t.day; saidRank = rank;
+        saidDay = t.day;
+        saidRank = rank;
         const words = { near: s.near, boss: serpentBossOf(t.day).name };
         if (line === 'omen') say(sightingLine({ ...words, near: s.place, at: at(t.day, SERPENT_RISE_MINUTE) }));
-        else if (line === 'rise') say(risingLine({ ...words, left: serpentClock(t.soundAt - now()) }));   // SERPENT4: to its dive - its waters open till then
+        else if (line === 'rise')
+          say(risingLine({ ...words, left: serpentClock(t.soundAt - now()) })); // SERPENT4: to its dive - its waters open till then
         else if (line === 'seal') say(sealLine({ ...words, at: at(t.day, SERPENT_SOUND_MINUTE) }));
         else if (line === 'sound') say(soundLine(words));
       }
@@ -95,7 +139,11 @@ export function createSerpentOmen({ now, site, say, localTime = () => null, fell
     },
     /** AUDIT SERPENT L4: offline, nothing stands - no ring, no compass mark - until the omen is ready and settled again
      *  (its lines already said stay said). */
-    reset() { current = null; readyAt = null; settled = false; },
+    reset() {
+      current = null;
+      readyAt = null;
+      settled = false;
+    },
     /** The map's mark while the omen stands: the ring (map pixels), its name and its countdown's words, its card. */
     mapMark() {
       const c = current;
@@ -105,13 +153,22 @@ export function createSerpentOmen({ now, site, say, localTime = () => null, fell
       const words = c.phase === 'slain' ? 'slain' : serpentCountdownWords(cd);
       const label = words ? `${boss.name} - ${words}` : boss.name;
       const [a, b] = c.site.between ?? [];
-      const tip = { title: `${boss.name}, ${boss.title}`, lines: [`Off ${c.site.place}`, ...(a && b ? [`On the packet lane from ${a} to ${b}`] : []), ...(words ? [words[0].toUpperCase() + words.slice(1)] : [])] };
+      const tip = {
+        title: `${boss.name}, ${boss.title}`,
+        lines: [
+          `Off ${c.site.place}`,
+          ...(a && b ? [`On the packet lane from ${a} to ${b}`] : []),
+          ...(words ? [words[0].toUpperCase() + words.slice(1)] : []),
+        ],
+      };
       return { day: c.t.day, cx: c.site.ring.cx, cy: c.site.ring.cy, r: c.site.ring.r, label, phase: c.phase, tip };
     },
     /** Where it swims, for the compass and the host: its site, its phase and its times, while it swims. */
     swimming() {
       const c = current;
-      return c?.site && serpentSwims(c.phase) ? { day: c.t.day, site: c.site, phase: c.phase, t: c.t, fellAt: fellAt(c.t.day, c.site) } : null;
+      return c?.site && serpentSwims(c.phase)
+        ? { day: c.t.day, site: c.site, phase: c.phase, t: c.t, fellAt: fellAt(c.t.day, c.site) }
+        : null;
     },
   };
 }

@@ -12,8 +12,8 @@
   {
     "name": "STAFF-PANEL1-mod-flag-unread",
     "file": "server-account/src/titles.js",
-    "old": " || player.staff_mod === 1);",
-    "new": ");",
+    "old": "  (moderatorHandles(env).has(player.handle.toLowerCase()) || player.staff_mod === 1);",
+    "new": "  moderatorHandles(env).has(player.handle.toLowerCase());",
     "why": "an Admin's Moderator moderates nothing",
     "tests": [
       "test/server/staffpanel1.test.js"

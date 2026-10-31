@@ -71,7 +71,7 @@ test('REALM P0.1 by source: the world host drops them beside the Test Room refus
   assert.ok(drop > w.indexOf("if (testRoomOffline) { params.delete('online'); publishBootParams(params); }"), 'after the Test Room refusal (which may take `online` itself away)');
   // PIN MOVED (HOST-SPLIT, 2026-10-19: the town probes - __addGold among them - moved verbatim to scenes/townProbes.js;
   // the host installs them, and that call is its read)
-  for (const reader of ["const regionName = params.get('region')", "const shotMode = params.has('shot');", 'if (shotMode) { modes.installShotProbes(); installTownProbes(); }']) {
+  for (const reader of ["const regionName = params.get('region')", "const shotMode = params.has('shot');", 'if (shotMode) {\n    modes.installShotProbes();\n    installTownProbes();\n  }']) {
     const at = w.indexOf(reader);
     assert.ok(at > drop, `${reader} reads after the drop`);
   }
@@ -423,7 +423,7 @@ test('REALM P0.5: a trade\'s every change to the pack is checkpointed - the good
   // the session queues its commit only after the take returns (net/tradeSession.js _maybeCommit)
   const ts = src('src/net/tradeSession.js');
   assert.ok(ts.indexOf('const handle = this.pack.take(this.mine.entries, this.mine.gold);') > 0);
-  assert.ok(ts.indexOf('const handle = this.pack.take(this.mine.entries, this.mine.gold);') < ts.indexOf("this._enqueue({ k: 'commit'"), 'take, then the frame');
+  assert.ok(ts.indexOf('const handle = this.pack.take(this.mine.entries, this.mine.gold);') < ts.indexOf("this._enqueue(\n      { k: 'commit'"), 'take, then the frame');
 });
 
 test('REALM P0.5 by source: the host checkpoints every slot the exit save writes, quietly, each online frame it is due and through the trade pack', () => {

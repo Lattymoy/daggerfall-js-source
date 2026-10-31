@@ -26,9 +26,11 @@ import { CLIMATE_TABLE } from '../encounters.js';
  * for onPlayerGpsEvents. `random` is UnityEngine.Random.value's seam.
  */
 export function createDexEncounterSelector(read, { random = Math.random } = {}) {
-  const written = new Map();   // index -> enemy ids, as the C#'s `table.Enemies = ...` left it
+  const written = new Map(); // index -> enemy ids, as the C#'s `table.Enemies = ...` left it
   const tablesAt = (index) => read.byIndex.get(index) ?? [];
-  const write = (index, table) => { if (table.enemyIds) written.set(index, table.enemyIds); };
+  const write = (index, table) => {
+    if (table.enemyIds) written.set(index, table.enemyIds);
+  };
   /** SelectTable (:1755-1766): Random.Range(0, Count) over the index's tables. */
   const selectTable = (index) => {
     const tables = tablesAt(index);
@@ -39,7 +41,7 @@ export function createDexEncounterSelector(read, { random = Math.random } = {}) 
     const tables = tablesAt(index);
     if (!tables.length) return;
     const was = getSeed();
-    srand((unknown2 & 0xffff) ^ ((region & 0xff) << 8));   // (ushort)Unknown2 ^ ((byte)region << 8)
+    srand((unknown2 & 0xffff) ^ ((region & 0xff) << 8)); // (ushort)Unknown2 ^ ((byte)region << 8)
     const pick = rand() % tables.length;
     setSeed(was);
     write(index, tables[pick]);
@@ -47,7 +49,10 @@ export function createDexEncounterSelector(read, { random = Math.random } = {}) 
   /** SelectClimateTables (:1784-1824): the climate's day and night. */
   const selectClimateTables = (climateIndex) => {
     const band = CLIMATE_TABLE.get(climateIndex);
-    if (band) { selectTable(band[1]); selectTable(band[2]); }
+    if (band) {
+      selectTable(band[1]);
+      selectTable(band[2]);
+    }
   };
   return {
     table(index, place) {
@@ -58,14 +63,19 @@ export function createDexEncounterSelector(read, { random = Math.random } = {}) 
     },
     /** Every table the mod may pick for `index` - what a roll every machine must agree on reads one of. */
     choices(index) {
-      const ids = tablesAt(index).map((t) => t.enemyIds).filter(Boolean);
+      const ids = tablesAt(index)
+        .map((t) => t.enemyIds)
+        .filter(Boolean);
       return ids.length ? ids : null;
     },
     gps: {
-      climateIndexChanged: selectClimateTables,   // PlayerGPS_OnClimateIndexChanged (:1826-1829)
-      exitLocationRect: selectClimateTables,      // PlayerGPS_OnExitLocationRect (:1831-1834), at CurrentClimateIndex
+      climateIndexChanged: selectClimateTables, // PlayerGPS_OnClimateIndexChanged (:1826-1829)
+      exitLocationRect: selectClimateTables, // PlayerGPS_OnExitLocationRect (:1831-1834), at CurrentClimateIndex
       /** PlayerGPS_OnEnterLocationRect (:1836-1871): the climate's city night. */
-      enterLocationRect: (climateIndex) => { const band = CLIMATE_TABLE.get(climateIndex); if (band) selectTable(band[0]); },
+      enterLocationRect: (climateIndex) => {
+        const band = CLIMATE_TABLE.get(climateIndex);
+        if (band) selectTable(band[0]);
+      },
     },
   };
 }

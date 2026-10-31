@@ -125,8 +125,8 @@
   {
     "name": "AUDIT-SCALE-LANED-commission-decline-unprobed",
     "file": "server-account/src/writs.js",
-    "old": "\n      OR EXISTS (SELECT 1 FROM commissions WHERE poster = ?1 AND state = 'open' AND crafter IS NULL) AS due",
-    "new": " AS due",
+    "old": "      `SELECT EXISTS (SELECT 1 FROM commissions WHERE (poster = ?1 OR crafter = ?1) AND state = 'open' AND expires_at <= ?2)\n      OR EXISTS (SELECT 1 FROM commissions WHERE poster = ?1 AND state = 'open' AND crafter IS NULL) AS due`,",
+    "new": "      `SELECT EXISTS (SELECT 1 FROM commissions WHERE (poster = ?1 OR crafter = ?1) AND state = 'open' AND expires_at <= ?2) AS due`,",
     "tests": [
       "test/net/auditscale.test.js",
       "test/server/scale4b.test.js"
@@ -136,8 +136,8 @@
   {
     "name": "AUDIT-SCALE-LANED-commission-crafter-unprobed",
     "file": "server-account/src/writs.js",
-    "old": "SELECT EXISTS (SELECT 1 FROM commissions WHERE (poster = ?1 OR crafter = ?1) AND state = 'open' AND expires_at <= ?2)",
-    "new": "SELECT EXISTS (SELECT 1 FROM commissions WHERE poster = ?1 AND state = 'open' AND expires_at <= ?2)",
+    "old": "      `SELECT EXISTS (SELECT 1 FROM commissions WHERE (poster = ?1 OR crafter = ?1) AND state = 'open' AND expires_at <= ?2)",
+    "new": "      `SELECT EXISTS (SELECT 1 FROM commissions WHERE poster = ?1 AND state = 'open' AND expires_at <= ?2)",
     "tests": [
       "test/net/auditscale.test.js",
       "test/server/scale4b.test.js"
@@ -158,8 +158,8 @@
   {
     "name": "AUDIT-SCALE-LANED-guild-sweep-boundary",
     "file": "server-account/src/guildBoard.js",
-    "old": "'DELETE FROM guild_notes WHERE id IN (SELECT id FROM guild_notes WHERE expires_at <= ? LIMIT ?)'",
-    "new": "'DELETE FROM guild_notes WHERE id IN (SELECT id FROM guild_notes WHERE expires_at < ? LIMIT ?)'",
+    "old": "    .prepare('DELETE FROM guild_notes WHERE id IN (SELECT id FROM guild_notes WHERE expires_at <= ? LIMIT ?)')",
+    "new": "    .prepare('DELETE FROM guild_notes WHERE id IN (SELECT id FROM guild_notes WHERE expires_at < ? LIMIT ?)')",
     "tests": [
       "test/net/auditscale.test.js",
       "test/server/scale4b.test.js"
@@ -181,8 +181,8 @@
   {
     "name": "AUDIT-SCALE-LANED-hb-path",
     "file": "src/net/heartbeat.js",
-    "old": "'/v1/heartbeat', body);",
-    "new": "'/v1/heart-beat', body);",
+    "old": "            '/v1/heartbeat',",
+    "new": "            '/v1/heart-beat',",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "AUDIT-SCALE-LANED-hb-base-production",
     "file": "src/net/heartbeat.js",
-    "old": "base: serviceBase(storage), secret",
-    "new": "base: undefined, secret",
+    "old": "          r = await call(\n            { fetch: waited, base: serviceBase(storage), secret: session.secret, keepalive },\n            '/v1/heartbeat',\n            body,\n          );",
+    "new": "          r = await call({ fetch: waited, base: undefined, secret: session.secret, keepalive }, '/v1/heartbeat', body);",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"
@@ -203,8 +203,8 @@
   {
     "name": "AUDIT-SCALE-LANED-hb-retry-no-wait",
     "file": "src/net/heartbeat.js",
-    "old": "      if (i > 0) await sleep(NOTICE_RETRY_MS[Math.min(i - 1, NOTICE_RETRY_MS.length - 1)]);\n",
-    "new": "",
+    "old": "          if (i > 0) await sleep(NOTICE_RETRY_MS[Math.min(i - 1, NOTICE_RETRY_MS.length - 1)]);\n          const at = now();",
+    "new": "          const at = now();",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"
@@ -214,8 +214,8 @@
   {
     "name": "AUDIT-SCALE-LANED-hb-take-throw-escapes",
     "file": "src/net/heartbeat.js",
-    "old": "      catch (e) { console.warn(`[heartbeat] the ${name} part's answer threw`, e); }",
-    "new": "      finally { /* nothing caught */ }",
+    "old": "      } catch (e) {\n        console.warn(`[heartbeat] the ${name} part's answer threw`, e);",
+    "new": "      } finally {\n        /* nothing caught */",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"
@@ -225,8 +225,8 @@
   {
     "name": "AUDIT-SCALE-LANED-hb-equal-period-never-early",
     "file": "src/net/heartbeat.js",
-    "old": "((p.every ?? 0) >= pace && p.soon(t, pace - RIDE_EARLY_MS))",
-    "new": "((p.every ?? 0) > pace && p.soon(t, pace - RIDE_EARLY_MS))",
+    "old": "          ([name, p]) => going.some(([n]) => n === name) || ((p.every ?? 0) >= pace && p.soon(t, pace - RIDE_EARLY_MS)),",
+    "new": "          ([name, p]) => going.some(([n]) => n === name) || ((p.every ?? 0) > pace && p.soon(t, pace - RIDE_EARLY_MS)),",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"
@@ -247,8 +247,8 @@
   {
     "name": "AUDIT-SCALE-LANED-partAnswer-primitive",
     "file": "src/net/heartbeat.js",
-    "old": "export const partAnswer = (/** @type {any} */ v) => (v && typeof v === 'object'",
-    "new": "export const partAnswer = (/** @type {any} */ v) => (v != null",
+    "old": "  v && typeof v === 'object'",
+    "new": "  v != null",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"
@@ -259,7 +259,7 @@
     "name": "AUDIT-SCALE-LANED-board-part-over-window-read",
     "file": "src/net/noticeBook.js",
     "old": "      return !e?.pending && (!e || t - e.at >= BOARD_CACHE_MS - early);",
-    "new": "      return (!e || t - e.at >= BOARD_CACHE_MS - early);",
+    "new": "      return !e || t - e.at >= BOARD_CACHE_MS - early;",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js",
@@ -302,8 +302,8 @@
   {
     "name": "AUDIT-SCALE-LANED-harness-inbytes-uncounted",
     "file": "tools/loadHarness.mjs",
-    "old": "tally.inFrames += 1; tally.inBytes += text.length;",
-    "new": "tally.inFrames += 1; tally.inBytes += 0;",
+    "old": "        tally.inBytes += text.length;",
+    "new": "        tally.inBytes += 0;",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale3.test.js"
@@ -313,8 +313,8 @@
   {
     "name": "AUDIT-SCALE-LANED-harness-inframes-double",
     "file": "tools/loadHarness.mjs",
-    "old": "tally.inFrames += 1;",
-    "new": "tally.inFrames += 2;",
+    "old": "        tally.inFrames += 1;",
+    "new": "        tally.inFrames += 2;",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale3.test.js"
@@ -346,8 +346,8 @@
   {
     "name": "AUDIT-SCALE-LANED-harness-pose-off-cell",
     "file": "tools/loadHarness.mjs",
-    "old": "  const z = (499 - py + 0.5) * PIXEL_UNITS",
-    "new": "  const z = (459 - py + 0.5) * PIXEL_UNITS",
+    "old": "  const z = (499 - py + 0.5) * PIXEL_UNITS + Math.sin(a) * r * PIXEL_UNITS;",
+    "new": "  const z = (459 - py + 0.5) * PIXEL_UNITS + Math.sin(a) * r * PIXEL_UNITS;",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale3.test.js"
@@ -357,8 +357,8 @@
   {
     "name": "AUDIT-SCALE-LANED-harness-offline-unnoted",
     "file": "tools/loadHarness.mjs",
-    "old": "}).catch((e) => { note?.(routeLabel(path.split('?')[0]), 'offline', Date.now() - started); throw e; });",
-    "new": "}).catch((e) => { throw e; });",
+    "old": "      note?.(routeLabel(path.split('?')[0]), 'offline', Date.now() - started);\n      throw e;",
+    "new": "      throw e;",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale3.test.js"
@@ -368,8 +368,8 @@
   {
     "name": "AUDIT-SCALE-LANED-harness-synthetic-unmerged",
     "file": "tools/loadHarness.mjs",
-    "old": "for (const k of ['opened', 'synthetic', 'inFrames', 'inBytes', 'outFrames', 'outBytes']) relay[k] += f.relay[k];",
-    "new": "for (const k of ['opened', 'inFrames', 'inBytes', 'outFrames', 'outBytes']) relay[k] += f.relay[k];",
+    "old": "    for (const k of ['opened', 'synthetic', 'inFrames', 'inBytes', 'outFrames', 'outBytes']) relay[k] += f.relay[k];",
+    "new": "    for (const k of ['opened', 'inFrames', 'inBytes', 'outFrames', 'outBytes']) relay[k] += f.relay[k];",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale3.test.js"
@@ -379,8 +379,8 @@
   {
     "name": "AUDIT-SCALE-LANED-harness-refusal-word-dropped",
     "file": "tools/loadHarness.mjs",
-    "old": "note?.(routeLabel(path.split('?')[0]), word ? `${res.status} ${word}` : res.status, Date.now() - started);",
-    "new": "note?.(routeLabel(path.split('?')[0]), res.status, Date.now() - started);",
+    "old": "    note?.(routeLabel(path.split('?')[0]), word ? `${res.status} ${word}` : res.status, Date.now() - started);",
+    "new": "    note?.(routeLabel(path.split('?')[0]), res.status, Date.now() - started);",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale3.test.js"
@@ -412,8 +412,8 @@
   {
     "name": "AUDIT-SCALE-LANED-hb-board-falsy-unanswered",
     "file": "server-account/src/heartbeat.js",
-    "old": "  if (body?.board !== undefined) await part('board'",
-    "new": "  if (body?.board) await part('board'",
+    "old": "  if (body?.board !== undefined) await part('board', () => readBoard(ctx, player, env, body.board));",
+    "new": "  if (body?.board) await part('board', () => readBoard(ctx, player, env, body.board));",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"
@@ -447,8 +447,8 @@
   {
     "name": "AUDIT-SCALE-LANED-hb-secret-wrong",
     "file": "src/net/heartbeat.js",
-    "old": "secret: session.secret, keepalive }, '/v1/heartbeat'",
-    "new": "secret: session.id, keepalive }, '/v1/heartbeat'",
+    "old": "            { fetch: waited, base: serviceBase(storage), secret: session.secret, keepalive },",
+    "new": "            { fetch: waited, base: serviceBase(storage), secret: session.id, keepalive },",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"
@@ -469,8 +469,8 @@
   {
     "name": "AUDIT-SCALE-LANED-box-part-unstamped-signed-out",
     "file": "src/net/mail.js",
-    "old": "        this.at = this.now();   // MAIL1: stamped even when there is no session (`_refresh`'s own rule)\n        if (!this._io()) return undefined;   // signed out: the box says so, and nothing rides",
-    "new": "        if (!this._io()) return undefined;   // signed out: the box says so, and nothing rides\n        this.at = this.now();",
+    "old": "        this.at = this.now(); // MAIL1: stamped even when there is no session (`_refresh`'s own rule)\n        if (!this._io()) return undefined; // signed out: the box says so, and nothing rides",
+    "new": "        if (!this._io()) return undefined; // signed out: the box says so, and nothing rides\n        this.at = this.now();",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js",
@@ -481,8 +481,8 @@
   {
     "name": "AUDIT-SCALE-LANED-board-part-error-kept",
     "file": "src/net/noticeBook.js",
-    "old": "open = true; e.board = r.data; e.at = a.at; e.error = null;",
-    "new": "open = true; e.board = r.data; e.at = a.at;",
+    "old": "          e.error = null;\n          a.settle({ board: e.board, error: null, stale: false });",
+    "new": "          a.settle({ board: e.board, error: null, stale: false });",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js",
@@ -619,8 +619,8 @@
   {
     "name": "AUDIT-SCALE-B1-first-waits",
     "file": "src/net/heartbeat.js",
-    "old": "const waitLeft = (/** @type {number} */ t) => (creditedAt == null ? 0",
-    "new": "const waitLeft = (/** @type {number} */ t) => (creditedAt == null ? BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt))",
+    "old": "      ? 0",
+    "new": "      ? BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt))",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"
@@ -630,8 +630,8 @@
   {
     "name": "AUDIT-SCALE-B1-grace-uncapped",
     "file": "src/net/heartbeat.js",
-    "old": "    : Math.min(BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt)), creditedAt + PLAY_GRACE_S * 1000 - BEAT_GRACE_MARGIN_MS - t));",
-    "new": "    : BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt)));",
+    "old": "    creditedAt == null\n      ? 0\n      : Math.min(\n          BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt)),\n          creditedAt + PLAY_GRACE_S * 1000 - BEAT_GRACE_MARGIN_MS - t,\n        );",
+    "new": "    creditedAt == null ? 0 : BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt));",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"
@@ -652,7 +652,7 @@
   {
     "name": "AUDIT-SCALE-B1-hidden-held",
     "file": "src/net/heartbeat.js",
-    "old": "      if (beatAt == null) return null;\n      flying = send([], true, true).finally(() => { flying = null; });\n      return flying;",
+    "old": "      if (beatAt == null) return null;\n      flying = send([], true, true).finally(() => {\n        flying = null;\n      });\n      return flying;",
     "new": "      return null;",
     "tests": [
       "test/net/auditscale.test.js",
@@ -663,8 +663,8 @@
   {
     "name": "AUDIT-SCALE-B1-hidden-not-kept-alive",
     "file": "src/net/heartbeat.js",
-    "old": "      flying = send([], true, true).finally(() => { flying = null; });",
-    "new": "      flying = send([], true, false).finally(() => { flying = null; });",
+    "old": "      flying = send([], true, true).finally(() => {",
+    "new": "      flying = send([], true, false).finally(() => {",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"
@@ -684,8 +684,8 @@
   {
     "name": "AUDIT-SCALE-B2-no-giveup",
     "file": "src/net/heartbeat.js",
-    "old": "r = await call({ fetch: waited, base: serviceBase(storage)",
-    "new": "r = await call({ fetch, base: serviceBase(storage)",
+    "old": "            { fetch: waited, base: serviceBase(storage), secret: session.secret, keepalive },",
+    "new": "            { fetch, base: serviceBase(storage), secret: session.secret, keepalive },",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"
@@ -695,8 +695,8 @@
   {
     "name": "AUDIT-SCALE-B3-two-looks",
     "file": "src/net/mail.js",
-    "old": "        this._looking = new Promise((r) => { settle = r; });\n",
-    "new": "",
+    "old": "        this._looking = new Promise((r) => {\n          settle = r;\n        });\n        return true;",
+    "new": "        return true;",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js",
@@ -707,8 +707,8 @@
   {
     "name": "AUDIT-SCALE-B4-board-from-answer",
     "file": "src/net/noticeBook.js",
-    "old": "open = true; e.board = r.data; e.at = a.at; e.error = null;",
-    "new": "open = true; e.board = r.data; e.at = nowMs(); e.error = null;",
+    "old": "          e.at = a.at;",
+    "new": "          e.at = nowMs();",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"
@@ -731,7 +731,7 @@
   {
     "name": "AUDIT-SCALE-B6-body-throws-escapes",
     "file": "src/net/heartbeat.js",
-    "old": "      try { b = p.body(); } catch (e) { console.warn(`[heartbeat] the ${name} part's body threw`, e); continue; }",
+    "old": "      try {\n        b = p.body();\n      } catch (e) {\n        console.warn(`[heartbeat] the ${name} part's body threw`, e);\n        continue;\n      }",
     "new": "      b = p.body();",
     "tests": [
       "test/net/auditscale.test.js",
@@ -742,8 +742,8 @@
   {
     "name": "AUDIT-SCALE-B7-stamp-by-dt",
     "file": "src/scenes/townPanelHost.js",
-    "old": "const now = host.now ?? (() => performance.now());",
-    "new": "const now = host.now ?? (() => 0);",
+    "old": "  const now = host.now ?? (() => performance.now());",
+    "new": "  const now = host.now ?? (() => 0);",
     "tests": [
       "test/net/scale4c.test.js"
     ],
@@ -762,8 +762,8 @@
   {
     "name": "AUDIT-SCALE-C2-roles-nested",
     "file": "tools/loadHarness.mjs",
-    "old": "fighter: roll(o.fighters, 0.4142135623730951)",
-    "new": "fighter: roll(o.fighters, 0.6180339887498949)",
+    "old": "    fighter: roll(o.fighters, 0.4142135623730951),",
+    "new": "    fighter: roll(o.fighters, 0.6180339887498949),",
     "tests": [
       "test/net/auditscale.test.js"
     ],
@@ -772,8 +772,8 @@
   {
     "name": "AUDIT-SCALE-C2-play-with-mints",
     "file": "tools/loadHarness.mjs",
-    "old": "  const play = { requests: totals.requests - (mints?.requests ?? 0),",
-    "new": "  const play = { requests: totals.requests,",
+    "old": "    requests: totals.requests - (mints?.requests ?? 0),",
+    "new": "    requests: totals.requests,",
     "tests": [
       "test/net/auditscale.test.js"
     ],
@@ -812,8 +812,8 @@
   {
     "name": "AUDIT-SCALE-C11-signal-keeps-state",
     "file": "tools/loadHarness.mjs",
-    "old": "    if (!o.keep) { try { rmSync(state, { recursive: true, force: true }); } catch { /* gone */ } }\n",
-    "new": "",
+    "old": "    if (!o.keep) {\n      try {\n        rmSync(state, { recursive: true, force: true });\n      } catch {\n        /* gone */\n      }\n    }\n    process.exit(130);",
+    "new": "    process.exit(130);",
     "tests": [
       "test/net/auditscale.test.js"
     ],
@@ -822,8 +822,8 @@
   {
     "name": "AUDIT-SCALE-C11-key-kept",
     "file": "tools/loadHarness.mjs",
-    "old": "  rmSync(acctEnv, { force: true });\n",
-    "new": "",
+    "old": "  rmSync(acctEnv, { force: true });\n  if (!(await healthy(relayPort, '/health', 180)))",
+    "new": "  if (!(await healthy(relayPort, '/health', 180)))",
     "tests": [
       "test/net/auditscale.test.js"
     ],
@@ -832,8 +832,8 @@
   {
     "name": "AUDIT-SCALE-C12-fractions-taken",
     "file": "tools/loadHarness.mjs",
-    "old": "  for (const k of ['bots', 'cells', 'setup', 'threads', 'port']) if (!Number.isSafeInteger(out[k]) || out[k] < 1) throw new Error(`--${k} takes a whole number from 1, not ${out[k]}`);\n",
-    "new": "",
+    "old": "  for (const k of ['bots', 'cells', 'setup', 'threads', 'port'])\n    if (!Number.isSafeInteger(out[k]) || out[k] < 1)\n      throw new Error(`--${k} takes a whole number from 1, not ${out[k]}`);\n  for (const k of ['movers', 'fighters', 'registered'])",
+    "new": "  for (const k of ['movers', 'fighters', 'registered'])",
     "tests": [
       "test/net/auditscale.test.js"
     ],
@@ -842,8 +842,8 @@
   {
     "name": "AUDIT-SCALE-C13-column-quiet",
     "file": "tools/loadAccountEntry.mjs",
-    "old": "          if (!(col in row)) throw new Error(`D1_COLUMN_NOTFOUND: Column not found (${col})`);\n",
-    "new": "",
+    "old": "          if (!(col in row)) throw new Error(`D1_COLUMN_NOTFOUND: Column not found (${col})`);\n          return row[col];",
+    "new": "          return row[col];",
     "tests": [
       "test/net/auditscale.test.js"
     ],
@@ -852,8 +852,8 @@
   {
     "name": "AUDIT-SCALE-C13-abort-ignored",
     "file": "tools/loadHarness.mjs",
-    "old": "      if (init.signal?.aborted) { reject(new Error('aborted')); return; }\n",
-    "new": "",
+    "old": "      if (init.signal?.aborted) {\n        reject(new Error('aborted'));\n        return;\n      }\n      const req = request(",
+    "new": "      const req = request(",
     "tests": [
       "test/net/auditscale.test.js"
     ],

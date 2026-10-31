@@ -2,8 +2,8 @@
   {
     "name": "PEAKS1-a-climate-s-line",
     "file": "src/world/peaks/snowcap.js",
-    "old": "[C.Mountain]: 1350,",
-    "new": "[C.Mountain]: 1250,",
+    "old": "    [C.Mountain]: 1350,",
+    "new": "    [C.Mountain]: 1250,",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PEAKS1-the-southward-rise",
     "file": "src/world/peaks/snowcap.js",
-    "old": "return base + rise * smoothstep(north, south, py);",
-    "new": "return base;",
+    "old": "  return base + rise * smoothstep(north, south, py);",
+    "new": "  return base;",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PEAKS1-the-corner-s-mean",
     "file": "src/world/peaks/snowcap.js",
-    "old": "+ capLineOfPixel(cx - 1, cy, climateAt) + capLineOfPixel(cx, cy, climateAt)) / 4;",
-    "new": "+ capLineOfPixel(cx - 1, cy, climateAt) + capLineOfPixel(cx + 1, cy, climateAt)) / 4;",
+    "old": "      capLineOfPixel(cx, cy, climateAt)) /",
+    "new": "      capLineOfPixel(cx + 1, cy, climateAt)) /",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PEAKS1-the-band",
     "file": "src/world/peaks/snowcap.js",
-    "old": "band: Object.freeze({ below: 140, above: 180 }),",
-    "new": "band: Object.freeze({ below: 120, above: 180 }),",
+    "old": "  band: Object.freeze({ below: 140, above: 180 }),",
+    "new": "  band: Object.freeze({ below: 120, above: 180 }),",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "PEAKS1-the-face-s-height-gate",
     "file": "src/world/peaks/snowcap.js",
-    "old": "return (1 - smoothstep(f.bare, f.held, ny)) * smoothstep(line - f.from, line - f.full, h);",
-    "new": "return (1 - smoothstep(f.bare, f.held, ny));",
+    "old": "  return (1 - smoothstep(f.bare, f.held, ny)) * smoothstep(line - f.from, line - f.full, h);",
+    "new": "  return 1 - smoothstep(f.bare, f.held, ny);",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "PEAKS1-the-merge-s-min",
     "file": "src/world/peaks/snowcap.js",
-    "old": "for (let k = 0; k < 3; k++) if (c[k] < pack[k]) pack[k] = c[k];",
-    "new": "for (let k = 0; k < 3; k++) if (c[k] > pack[k]) pack[k] = c[k];",
+    "old": "  for (let k = 0; k < 3; k++) if (c[k] < pack[k]) pack[k] = c[k];",
+    "new": "  for (let k = 0; k < 3; k++) if (c[k] > pack[k]) pack[k] = c[k];",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PEAKS1-a-zone-s-line",
     "file": "src/world/peaks/snowcap.js",
-    "old": "skyrimPeaks: 1250,",
-    "new": "skyrimPeaks: 3000,",
+    "old": "    skyrimPeaks: 1250,",
+    "new": "    skyrimPeaks: 3000,",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "PEAKS1-the-zones-unread-past-the-bay",
     "file": "src/world/peaks/snowcap.js",
-    "old": "if (bayEdgeDistance(px, py) > SEAM_PX) {",
-    "new": "if (false) {",
+    "old": "  if (bayEdgeDistance(px, py) > SEAM_PX) {",
+    "new": "  if (false) {",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "PEAKS1-the-host-s-merge",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "    bareLine(mergeCapLine(snowlineOf(lattice.packNow(pt, t, _pack), _line, pt.n), l.cap), l.ash, BARE_LINE[0]);",
-    "new": "    bareLine(snowlineOf(lattice.packNow(pt, t, _pack), _line, pt.n), l.ash, BARE_LINE[0]);",
+    "old": "    bareLine(mergeCapLine(snowlineOf(lattice.packNow(pt, t, _pack), _line, pt.n), l.cap), l.ash, BARE_LINE[0]); // PEAKS1: the cap a floor under the pack; RED-MOUNTAIN: the ash bare",
+    "new": "    bareLine(snowlineOf(lattice.packNow(pt, t, _pack), _line, pt.n), l.ash, BARE_LINE[0]); // PEAKS1: the cap a floor under the pack; RED-MOUNTAIN: the ash bare",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "PEAKS1-the-host-s-corner",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "cap: capOf(pt.i * S, pt.j * S)",
-    "new": "cap: capOf(pt.i, pt.j)",
+    "old": "          cap: capOf(pt.i * S, pt.j * S),",
+    "new": "          cap: capOf(pt.i, pt.j),",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "PEAKS1-the-land-s-own-unhanded",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "airGround()?.landforms ? capLineAt(cx, cy, climateAt) : CAP_NONE",
-    "new": "CAP_NONE",
+    "old": "  const capOf = (cx, cy) =>\n    capLine !== undefined\n      ? capLine\n        ? capLine(cx, cy)\n        : CAP_NONE\n      : airGround()?.landforms\n        ? capLineAt(cx, cy, climateAt)\n        : CAP_NONE;",
+    "new": "  const capOf = (cx, cy) => (capLine !== undefined ? (capLine ? capLine(cx, cy) : CAP_NONE) : CAP_NONE);",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "PEAKS1-the-frame-s-alpha",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "tex[o + 3] = lines.get(latticeKey(i0 + i, j0 + j))?.cap ?? CAP_NONE;",
-    "new": "tex[o + 3] = CAP_NONE;",
+    "old": "            tex[o + 3] = lines.get(latticeKey(i0 + i, j0 + j))?.cap ?? CAP_NONE; // PEAKS1: the cap's line, the bare faces'",
+    "new": "            tex[o + 3] = CAP_NONE; // PEAKS1: the cap's line, the bare faces'",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "PEAKS1-the-middle-ring-s-whiten",
     "file": "src/render/midRing.js",
-    "old": "        whiten(colors, v * 3, share);   // PEAKS1",
-    "new": "        whiten(colors, v * 3, 0);   // PEAKS1",
+    "old": "        whiten(colors, v * 3, share); // PEAKS1",
+    "new": "        whiten(colors, v * 3, 0); // PEAKS1",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "PEAKS1-the-far-field-s-whiten",
     "file": "src/render/farField.js",
-    "old": "if (caps && !sea[j * side + i]) whiten(colors, o, capShare(positions[o + 1] - seaY, normals[o + 1], caps[j * side + i]));",
-    "new": "if (caps && !sea[j * side + i]) whiten(colors, o, 0);",
+    "old": "      if (caps && !sea[j * side + i])\n        whiten(colors, o, capShare(positions[o + 1] - seaY, normals[o + 1], caps[j * side + i])); // PEAKS1",
+    "new": "      if (caps && !sea[j * side + i]) whiten(colors, o, 0); // PEAKS1",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]

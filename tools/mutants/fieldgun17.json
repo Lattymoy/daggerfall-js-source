@@ -95,8 +95,8 @@
   {
     "name": "FIELD-GUN17-11-the-centroid-takes-the-texel-corner-not-its-centre",
     "file": "src/combat/gun/gunFlash.js",
-    "old": "if (body[i]) { sx += (i % img.width) + 0.5; sy += ((i / img.width) | 0) + 0.5; n++; }",
-    "new": "if (body[i]) { sx += (i % img.width); sy += ((i / img.width) | 0); n++; }",
+    "old": "      sx += (i % img.width) + 0.5;\n      sy += ((i / img.width) | 0) + 0.5;",
+    "new": "      sx += i % img.width;\n      sy += (i / img.width) | 0;",
     "tests": [
       "test/systems/thunderlock.test.js"
     ],
@@ -144,8 +144,8 @@
   {
     "name": "FIELD-GUN17-16-an-empty-sample-counts-as-the-sample",
     "file": "src/characters/thunderlockIds.js",
-    "old": "  const c = orbColourFrom(color32);\n  if (!c) return false;\n  _orb.colour = c; _orb.sampled = true;",
-    "new": "  const c = orbColourFrom(color32);\n  _orb.sampled = true;\n  if (!c) return false;\n  _orb.colour = c;",
+    "old": "  if (!c) return false;\n  _orb.colour = c;\n  _orb.sampled = true;",
+    "new": "  _orb.sampled = true;\n  if (!c) return false;\n  _orb.colour = c;",
     "tests": [
       "test/systems/thunderlock.test.js"
     ]
@@ -162,8 +162,8 @@
   {
     "name": "FIELD-GUN17-18-the-muzzle-light-is-white-again",
     "file": "src/systems/thunderlock.js",
-    "old": "color: orbColour()",
-    "new": "color: [1, 1, 1]",
+    "old": "    color: orbColour(), // FIELD-GUN17: `withPlayerLights` takes a light's own colour where it has one",
+    "new": "    color: [1, 1, 1], // FIELD-GUN17: `withPlayerLights` takes a light's own colour where it has one",
     "tests": [
       "test/systems/thunderlock.test.js"
     ]

@@ -56,8 +56,8 @@
   {
     "name": "DECORUSE-the-fire-unpressed",
     "file": "src/systems/decor/decorUse.js",
-    "old": "  if (decorHearth(piece)) { if (camps.usable?.() !== false) camps.activate('hearth:', mode()); }",
-    "new": "  if (decorHearth(piece)) { if (false) camps.activate('hearth:', mode()); }",
+    "old": "    if (camps.usable?.() !== false) camps.activate('hearth:', mode());",
+    "new": "    if (false) camps.activate('hearth:', mode());",
     "tests": [
       "test/systems/decor/decoruse.test.js"
     ]

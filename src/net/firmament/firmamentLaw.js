@@ -58,16 +58,59 @@ export function craftPointsFor(ranks) {
 // ─── THE CHANNELS ────────────────────────────────────────────────────
 
 /** The attributes (statMods.js STAT_KEYS_ORDER's names); Personality is a life channel, the rest are a fight's. */
-export const ATTRIBUTES = Object.freeze(['strength', 'intelligence', 'willpower', 'agility', 'endurance', 'personality', 'speed', 'luck']);
+export const ATTRIBUTES = Object.freeze([
+  'strength',
+  'intelligence',
+  'willpower',
+  'agility',
+  'endurance',
+  'personality',
+  'speed',
+  'luck',
+]);
 /** The skills a fight reads (systems/skills.js SKILLS' keys). */
-export const COMBAT_SKILLS = Object.freeze(['ShortBlade', 'LongBlade', 'Axe', 'BluntWeapon', 'HandToHand', 'Archery', 'CriticalStrike', 'Backstabbing',
-  'Dodging', 'Stealth', 'Running', 'Jumping', 'Destruction', 'Restoration', 'Illusion', 'Alteration', 'Thaumaturgy', 'Mysticism']);
+export const COMBAT_SKILLS = Object.freeze([
+  'ShortBlade',
+  'LongBlade',
+  'Axe',
+  'BluntWeapon',
+  'HandToHand',
+  'Archery',
+  'CriticalStrike',
+  'Backstabbing',
+  'Dodging',
+  'Stealth',
+  'Running',
+  'Jumping',
+  'Destruction',
+  'Restoration',
+  'Illusion',
+  'Alteration',
+  'Thaumaturgy',
+  'Mysticism',
+]);
 /** The skills a life reads - the counter, the street, the road and the sea. */
-export const LIFE_SKILLS = Object.freeze(['Mercantile', 'Etiquette', 'Streetwise', 'Swimming', 'Climbing', 'Medical', 'Lockpicking', 'Pickpocket']);
+export const LIFE_SKILLS = Object.freeze([
+  'Mercantile',
+  'Etiquette',
+  'Streetwise',
+  'Swimming',
+  'Climbing',
+  'Medical',
+  'Lockpicking',
+  'Pickpocket',
+]);
 /** The five elements a saving throw is read against (systems/entityMods.js resist channel). */
 export const FIRM_ELEMENTS = Object.freeze(['fire', 'frost', 'poison', 'shock', 'magic']);
 /** The six schools a spell's price is read in. */
-export const SCHOOLS = Object.freeze(['Destruction', 'Restoration', 'Illusion', 'Alteration', 'Thaumaturgy', 'Mysticism']);
+export const SCHOOLS = Object.freeze([
+  'Destruction',
+  'Restoration',
+  'Illusion',
+  'Alteration',
+  'Thaumaturgy',
+  'Mysticism',
+]);
 /** The ten professions (net/professionLaw.js PROFESSIONS' ids) - the gathering five and the crafting five. */
 export const GATHERING = Object.freeze(['mining', 'logging', 'herbalism', 'hunting', 'fishing']);
 export const CRAFTING = Object.freeze(['smithing', 'building', 'outfitting', 'provisioning', 'enchanting']);
@@ -87,7 +130,9 @@ const def = (kind, max, words, min = -max) => Object.freeze({ kind, max, min, wo
 
 /** THE FIXED CHANNELS, each with what the whole sky may add to it (`max`) and take from it (`min`). */
 export const STAT_DEFS = Object.freeze({
-  ...Object.fromEntries(ATTRIBUTES.map((a) => [a, def(a === 'personality' ? 'life' : 'combat', 15, (v) => `${signed(v)} ${cap1(a)}`)])),
+  ...Object.fromEntries(
+    ATTRIBUTES.map((a) => [a, def(a === 'personality' ? 'life' : 'combat', 15, (v) => `${signed(v)} ${cap1(a)}`)]),
+  ),
   // the weapon's blow - each channel capped, then the blow's whole group (BLOW_CAP, blowPct)
   weaponDmg: def('combat', 30, (v) => `${signed(v)}% damage with all weapons`, -20),
   meleeDmg: def('combat', 30, (v) => `${signed(v)}% melee weapon damage`, -20),
@@ -105,7 +150,12 @@ export const STAT_DEFS = Object.freeze({
   // the spell
   spellPower: def('combat', 30, (v) => `${signed(v)}% damage from your spells`, -20),
   spellPierce: def('combat', 10, (v) => `-${v} to saving throws against your spells`, 0),
-  castCost: def('combat', 25, (v) => (v >= 0 ? `Spells cost ${v}% fewer Spell Points` : `Spells cost ${-v}% more Spell Points`), -20),
+  castCost: def(
+    'combat',
+    25,
+    (v) => (v >= 0 ? `Spells cost ${v}% fewer Spell Points` : `Spells cost ${-v}% more Spell Points`),
+    -20,
+  ),
   castSpeed: def('combat', 15, (v) => `${signed(v)}% casting speed`),
   // what lands on you
   blowTaken: def('combat', 30, (v) => pctLess(v, 'damage from blows'), -15),
@@ -144,7 +194,8 @@ export function statDef(key) {
   if (Object.hasOwn(STAT_DEFS, key)) return /** @type {any} */ (STAT_DEFS)[key];
   const dot = key.indexOf('.');
   if (dot < 0) return null;
-  const fam = key.slice(0, dot), arg = key.slice(dot + 1);
+  const fam = key.slice(0, dot),
+    arg = key.slice(dot + 1);
   return FAMILIES[fam]?.(arg) ?? null;
 }
 /** @type {Record<string, (arg: string) => StatDef|null>} */
@@ -156,28 +207,61 @@ const FAMILIES = Object.freeze({
   xp: (p) => (GATHERING.includes(p) || CRAFTING.includes(p) ? XP_DEF[p] : null),
   act: (p) => (ACTS.includes(p) ? ACT_DEF[p] : null),
   pct: (a) => (ATTRIBUTES.includes(a) ? ATTR_PCT_DEF[a] : null),
-  skillPct: (n) => (COMBAT_SKILLS.includes(n) ? SKILL_PCT_DEF.combat[n] : LIFE_SKILLS.includes(n) ? SKILL_PCT_DEF.life[n] : null),
+  skillPct: (n) =>
+    COMBAT_SKILLS.includes(n) ? SKILL_PCT_DEF.combat[n] : LIFE_SKILLS.includes(n) ? SKILL_PCT_DEF.life[n] : null,
 });
 /** A share of an attribute or a skill AS THE CHARACTER HAS IT (its permanent value - Ascend's points in it), on the
  *  small stars: `pct.strength` 4 is 4% of the character's Strength, `skillPct.LongBlade` 6 is 6% of its Long Blade. */
-const ATTR_PCT_DEF = Object.freeze(Object.fromEntries(ATTRIBUTES.map((a) => [a, def(a === 'personality' ? 'life' : 'combat', 15, (v) => `${signed(v)}% ${cap1(a)}`, 0)])));
+const ATTR_PCT_DEF = Object.freeze(
+  Object.fromEntries(
+    ATTRIBUTES.map((a) => [a, def(a === 'personality' ? 'life' : 'combat', 15, (v) => `${signed(v)}% ${cap1(a)}`, 0)]),
+  ),
+);
 const SKILL_PCT_DEF = Object.freeze({
-  combat: Object.freeze(Object.fromEntries(COMBAT_SKILLS.map((n) => [n, def('combat', 20, (v) => `${signed(v)}% ${SKILL_WORDS(n)}`, 0)]))),
-  life: Object.freeze(Object.fromEntries(LIFE_SKILLS.map((n) => [n, def('life', 25, (v) => `${signed(v)}% ${SKILL_WORDS(n)}`, 0)]))),
+  combat: Object.freeze(
+    Object.fromEntries(COMBAT_SKILLS.map((n) => [n, def('combat', 20, (v) => `${signed(v)}% ${SKILL_WORDS(n)}`, 0)])),
+  ),
+  life: Object.freeze(
+    Object.fromEntries(LIFE_SKILLS.map((n) => [n, def('life', 25, (v) => `${signed(v)}% ${SKILL_WORDS(n)}`, 0)])),
+  ),
 });
 /** The raw points a share of `base` comes to: whole, toward nothing. */
 export const pctOf = (base, pct) => (Number.isFinite(base) && base > 0 && pct > 0 ? Math.floor((base * pct) / 100) : 0);
 const profName = (p) => cap1(p);
 const SKILL_DEF = Object.freeze({
-  combat: Object.freeze(Object.fromEntries(COMBAT_SKILLS.map((n) => [n, def('combat', 15, (v) => `${signed(v)} ${SKILL_WORDS(n)}`)]))),
-  life: Object.freeze(Object.fromEntries(LIFE_SKILLS.map((n) => [n, def('life', 20, (v) => `${signed(v)} ${SKILL_WORDS(n)}`)]))),
+  combat: Object.freeze(
+    Object.fromEntries(COMBAT_SKILLS.map((n) => [n, def('combat', 15, (v) => `${signed(v)} ${SKILL_WORDS(n)}`)])),
+  ),
+  life: Object.freeze(
+    Object.fromEntries(LIFE_SKILLS.map((n) => [n, def('life', 20, (v) => `${signed(v)} ${SKILL_WORDS(n)}`)])),
+  ),
 });
-const RESIST_DEF = Object.freeze(Object.fromEntries(FIRM_ELEMENTS.map((e) => [e, def('combat', 20, (v) => `${signed(v)}% chance to resist ${e === 'magic' ? 'magic' : e}`, 0)])));   // a point of resistance is a point on the saving throw's hundred
-const SCHOOL_COST_DEF = Object.freeze(Object.fromEntries(SCHOOLS.map((s) => [s, def('combat', 20, (v) => `${s} spells cost ${v}% less`, 0)])));
-const YIELD_DEF = Object.freeze(Object.fromEntries(GATHERING.map((p) => [p, def('life', 30, (v) => `${signed(v)}% ${profName(p)} yield`)])));
-const XP_DEF = Object.freeze(Object.fromEntries([...GATHERING, ...CRAFTING].map((p) => [p, def('life', 35, (v) => `${signed(v)}% ${profName(p)} experience`, -30)])));
+const RESIST_DEF = Object.freeze(
+  Object.fromEntries(
+    FIRM_ELEMENTS.map((e) => [
+      e,
+      def('combat', 20, (v) => `${signed(v)}% chance to resist ${e === 'magic' ? 'magic' : e}`, 0),
+    ]),
+  ),
+); // a point of resistance is a point on the saving throw's hundred
+const SCHOOL_COST_DEF = Object.freeze(
+  Object.fromEntries(SCHOOLS.map((s) => [s, def('combat', 20, (v) => `${s} spells cost ${v}% less`, 0)])),
+);
+const YIELD_DEF = Object.freeze(
+  Object.fromEntries(GATHERING.map((p) => [p, def('life', 30, (v) => `${signed(v)}% ${profName(p)} yield`)])),
+);
+const XP_DEF = Object.freeze(
+  Object.fromEntries(
+    [...GATHERING, ...CRAFTING].map((p) => [p, def('life', 35, (v) => `${signed(v)}% ${profName(p)} experience`, -30)]),
+  ),
+);
 const ACT_DEF = Object.freeze({
-  herbalism: def('life', 40, (v) => (v >= 0 ? `A steadier hand when picking herbs (+${v}%)` : `A clumsier hand when picking herbs (${v}%)`), -30),
+  herbalism: def(
+    'life',
+    40,
+    (v) => (v >= 0 ? `A steadier hand when picking herbs (+${v}%)` : `A clumsier hand when picking herbs (${v}%)`),
+    -30,
+  ),
   fishing: def('life', 40, (v) => `${signed(v)}% more time to set the hook`, -30),
 });
 
@@ -196,7 +280,14 @@ export const BLOW_TOTAL_CAP = 50;
 export const CAST_COST_CAP = 25;
 
 /** The weapon families a blow is read in (systems/skills.js's weapon skills by name). */
-const FAMILY_OF_SKILL = Object.freeze({ ShortBlade: 'shortDmg', LongBlade: 'longDmg', Axe: 'axeDmg', BluntWeapon: 'bluntDmg', Archery: 'bowDmg', HandToHand: 'fistDmg' });
+const FAMILY_OF_SKILL = Object.freeze({
+  ShortBlade: 'shortDmg',
+  LongBlade: 'longDmg',
+  Axe: 'axeDmg',
+  BluntWeapon: 'bluntDmg',
+  Archery: 'bowDmg',
+  HandToHand: 'fistDmg',
+});
 const GROUP_KEY = Object.freeze({ undead: 'undeadDmg', daedra: 'daedraDmg', animal: 'beastDmg' });
 /**
  * THE PERCENT THE SKY ADDS TO ONE WEAPON BLOW - `c` the capped totals; `skill` the weapon skill's name the blow is
@@ -215,11 +306,15 @@ export function blowPct(c, { skill = null, group = null, unaware = false, wounde
   // AUDIT UICALM-FIRM1 L1 M2: the group's gains capped, then its prices paid (Night Mother's Embrace's -5 in an open
   // fight was swallowed by a melee and a short-blade sum already past the group's 30)
   const paid = pricesOf(c);
-  let gain = 0, price = 0;
-  for (const k of chans) { gain += (c[k] ?? 0) - (paid[k] ?? 0); price += paid[k] ?? 0; }
+  let gain = 0,
+    price = 0;
+  for (const k of chans) {
+    gain += (c[k] ?? 0) - (paid[k] ?? 0);
+    price += paid[k] ?? 0;
+  }
   let pct = Math.max(BLOW_FLOOR, Math.min(BLOW_CAP, gain) + price);
-  if (unaware) pct += (c.unawareDmg ?? 0);
-  if (wounded) pct += (c.rageDmg ?? 0);
+  if (unaware) pct += c.unawareDmg ?? 0;
+  if (wounded) pct += c.rageDmg ?? 0;
   return Math.min(BLOW_TOTAL_CAP, pct);
 }
 /** THE PERCENT THE SKY TAKES OFF ONE SPELL'S PRICE - every school's own channel counts only where every effect of the
@@ -229,9 +324,13 @@ export function castCostPct(c, schools = []) {
   const set = new Set(schools);
   if (set.size === 1) chans.push(`castCost.${[...set][0]}`);
   const paid = pricesOf(c);
-  let gain = 0, price = 0;
-  for (const k of chans) { gain += (c[k] ?? 0) - (paid[k] ?? 0); price += paid[k] ?? 0; }
-  return Math.min(CAST_COST_CAP, gain) + price;   // the gains capped, then the price paid (AUDIT UICALM-FIRM1 L1 M2)
+  let gain = 0,
+    price = 0;
+  for (const k of chans) {
+    gain += (c[k] ?? 0) - (paid[k] ?? 0);
+    price += paid[k] ?? 0;
+  }
+  return Math.min(CAST_COST_CAP, gain) + price; // the gains capped, then the price paid (AUDIT UICALM-FIRM1 L1 M2)
 }
 
 // ─── AN ALLOCATION ──────────────────────────────────────────────────
@@ -245,13 +344,20 @@ export const isStart = (key) => START_KEYS.includes(key);
  *  out of the sky) is dropped, which is its refund. */
 export function cleanKeys(keys) {
   const out = new Set();
-  for (const k of Array.isArray(keys) ? keys : []) if (typeof k === 'string' && FIRM_NODES.has(k) && !isStart(k)) out.add(k);
+  for (const k of Array.isArray(keys) ? keys : [])
+    if (typeof k === 'string' && FIRM_NODES.has(k) && !isStart(k)) out.add(k);
   return [...out].sort();
 }
 /** What an allocation costs, by purse ring: `{ combat, life }` (a start is free). */
 export function firmCostOf(keys) {
-  let combat = 0, life = 0;
-  for (const k of keys) { const n = firmNode(k); if (!n || n.kind === 'start') continue; if (n.ring === 'life') life++; else combat++; }
+  let combat = 0,
+    life = 0;
+  for (const k of keys) {
+    const n = firmNode(k);
+    if (!n || n.kind === 'start') continue;
+    if (n.ring === 'life') life++;
+    else combat++;
+  }
   return { combat, life };
 }
 /** Whether an allocation's cost FITS the purses: its combat stars within the Stars, all of it within both together. */
@@ -267,15 +373,22 @@ export function pointsLeft(keys, stars, craft) {
 }
 
 /** A star a path may walk THROUGH: anything but a start other than its own, and a keystone (a keystone ends a path). */
-const passable = (key, start) => { const n = firmNode(key); return !!n && n.kind !== 'keystone' && (n.kind !== 'start' || key === start); };
+const passable = (key, start) => {
+  const n = firmNode(key);
+  return !!n && n.kind !== 'keystone' && (n.kind !== 'start' || key === start);
+};
 /** The stars of `set` reachable from `start` through `set` alone. */
 function reachFrom(start, set) {
   const seen = new Set([start]);
   const q = [start];
   while (q.length) {
     const k = /** @type {string} */ (q.pop());
-    if (k !== start && !passable(k, start)) continue;   // a keystone is reached, never walked through
-    for (const nb of FIRM_ADJ.get(k) ?? []) if (set.has(nb) && !seen.has(nb)) { seen.add(nb); q.push(nb); }
+    if (k !== start && !passable(k, start)) continue; // a keystone is reached, never walked through
+    for (const nb of FIRM_ADJ.get(k) ?? [])
+      if (set.has(nb) && !seen.has(nb)) {
+        seen.add(nb);
+        q.push(nb);
+      }
   }
   seen.delete(start);
   return seen;
@@ -319,7 +432,12 @@ export function pathTo(tree, target) {
   /** @type {Map<string, string|null>} */
   const from = new Map();
   const q = [];
-  for (const k of have) { if (passable(k, start)) { from.set(k, null); q.push(k); } }
+  for (const k of have) {
+    if (passable(k, start)) {
+      from.set(k, null);
+      q.push(k);
+    }
+  }
   for (let i = 0; i < q.length; i++) {
     const k = q[i];
     for (const nb of FIRM_ADJ.get(k) ?? []) {
@@ -340,7 +458,8 @@ export const allocatable = (tree, key) => pathTo(tree, key).length === 1;
 
 /** The keys `next` adds to `prev` and the keys it takes away. */
 export function treeDiff(prev, next) {
-  const p = new Set(prev?.keys ?? []), n = new Set(next?.keys ?? []);
+  const p = new Set(prev?.keys ?? []),
+    n = new Set(next?.keys ?? []);
   const startChanged = (prev?.start ?? null) !== (next?.start ?? null);
   return {
     added: [...n].filter((k) => startChanged || !p.has(k)).sort(),
@@ -361,7 +480,10 @@ export const REFUND_SILVER_PER_STAR = 10;
 export const FIRM_RESPEC_GOLD = 10_000;
 /** What taking `removed` stars back costs a character at `renown`, in silver. Choosing the first sign costs nothing;
  *  changing sign takes every star back. */
-export const refundSilver = (removed, renown) => (clampInt(renown ?? 1, 1, FIRM_RENOWN_MAX) < REFUND_FREE_BELOW_RENOWN ? 0 : Math.max(0, removed | 0) * REFUND_SILVER_PER_STAR);
+export const refundSilver = (removed, renown) =>
+  clampInt(renown ?? 1, 1, FIRM_RENOWN_MAX) < REFUND_FREE_BELOW_RENOWN
+    ? 0
+    : Math.max(0, removed | 0) * REFUND_SILVER_PER_STAR;
 
 // ─── WHAT THE SKY ADDS ───────────────────────────────────────────────
 
@@ -390,7 +512,10 @@ export function treeParts(tree) {
   for (const k of [tree.start, ...(tree.keys ?? [])]) {
     const n = firmNode(k);
     if (!n) continue;
-    for (const [s, v] of Object.entries(n.stats)) { const to = isPrice(s, v) ? prices : gains; to[s] = (to[s] ?? 0) + v; }
+    for (const [s, v] of Object.entries(n.stats)) {
+      const to = isPrice(s, v) ? prices : gains;
+      to[s] = (to[s] ?? 0) + v;
+    }
   }
   return { gains, prices };
 }
@@ -488,7 +613,10 @@ const SKY_INDEX = new Map(SKY_KEYS.map((k, i) => [k, i]));
 /** Four hex of the sky's key list (FNV-1a): a code names the sky it was made under. */
 export const SKY_TAG = (() => {
   let h = 0x811c9dc5;
-  for (const ch of SKY_KEYS.join(',')) { h ^= ch.charCodeAt(0); h = Math.imul(h, 0x01000193) >>> 0; }
+  for (const ch of SKY_KEYS.join(',')) {
+    h ^= ch.charCodeAt(0);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
   return (h >>> 16).toString(16).padStart(4, '0');
 })();
 /** Base64 with `+` for `_`: Discord reads a pair of underscores as italics and a copied code would lose them. */
@@ -498,7 +626,10 @@ export const BUILD_CODE_RE = /^FIRM-([0-9a-f]{4})-([A-Za-z0-9+.-]{0,120})$/;
 export function buildCode(tree) {
   if (!tree?.start || !isStart(tree.start)) return null;
   const bits = new Uint8Array(Math.ceil(SKY_KEYS.length / 6));
-  for (const k of [tree.start, ...cleanKeys(tree.keys)]) { const i = SKY_INDEX.get(k); bits[Math.floor(i / 6)] |= 1 << (i % 6); }
+  for (const k of [tree.start, ...cleanKeys(tree.keys)]) {
+    const i = SKY_INDEX.get(k);
+    bits[Math.floor(i / 6)] |= 1 << (i % 6);
+  }
   let end = bits.length;
   while (end > 0 && bits[end - 1] === 0) end--;
   const raw = [...bits.slice(0, end)].map((b) => B64[b]).join('');
@@ -515,7 +646,12 @@ export function treeOfCode(code) {
   const keys = [];
   for (let c = 0; c < raw.length; c++) {
     const v = B64.indexOf(raw[c]);
-    for (let b = 0; b < 6; b++) if (v & (1 << b)) { const k = SKY_KEYS[c * 6 + b]; if (!k) return { error: 'build-code' }; keys.push(k); }
+    for (let b = 0; b < 6; b++)
+      if (v & (1 << b)) {
+        const k = SKY_KEYS[c * 6 + b];
+        if (!k) return { error: 'build-code' };
+        keys.push(k);
+      }
   }
   const starts = keys.filter(isStart);
   if (starts.length !== 1) return { error: 'build-start' };

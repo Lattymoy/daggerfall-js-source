@@ -280,7 +280,7 @@
   {
     "name": "SURVTIERS3-the-warmed-cold-stays-red",
     "file": "src/systems/survival/status.js",
-    "old": "  if (key === 'temp') return tires && !warmed && (felt >= r.stamina.hotFrom || felt <= r.stamina.coldFrom) ? 'danger' : 'warn';",
+    "old": "  if (key === 'temp')\n    return tires && !warmed && (felt >= r.stamina.hotFrom || felt <= r.stamina.coldFrom) ? 'danger' : 'warn';",
     "new": "  if (key === 'temp') return tires && (felt >= r.stamina.hotFrom || felt <= r.stamina.coldFrom) ? 'danger' : 'warn';",
     "tests": [
       "test/systems/survival/survtiers3.test.js"
@@ -289,8 +289,8 @@
   {
     "name": "SURVTIERS3-the-page-says-deadly-cold-by-the-fire",
     "file": "src/systems/survival/status.js",
-    "old": "lines.push(warmedBy(s, word) ? STATUS_TEXT.warmedByFire : STATUS_TEXT.temp(word), ",
-    "new": "lines.push(STATUS_TEXT.temp(word), ",
+    "old": "    lines.push(warmedBy(s, word) ? STATUS_TEXT.warmedByFire : STATUS_TEXT.temp(word), STATUS_TEXT.felt(s.felt));",
+    "new": "    lines.push(STATUS_TEXT.temp(word), STATUS_TEXT.felt(s.felt));",
     "tests": [
       "test/systems/survival/survtiers3.test.js"
     ]
@@ -298,8 +298,8 @@
   {
     "name": "SURVTIERS3-no-warm-chip",
     "file": "src/systems/survival/status.js",
-    "old": "warm: 'Warm', ",
-    "new": "",
+    "old": "    warm: 'Warm',\n    hot: 'Hot',",
+    "new": "    hot: 'Hot',",
     "tests": [
       "test/systems/survival/survtiers3.test.js"
     ]
@@ -307,8 +307,8 @@
   {
     "name": "SURVTIERS3-a-vampire-thirsts-on-the-strip",
     "file": "src/systems/survival/status.js",
-    "old": "  if (!vampire) push('thirst', ",
-    "new": "  push('thirst', ",
+    "old": "  if (!vampire) push('thirst', HUD_NEED_WORDS.thirst, thirstStage(s.thirst)); // AUDIT SURV-TIERS (the third pass): nor drink - the law freezes it, and its red chip never cost",
+    "new": "  push('thirst', HUD_NEED_WORDS.thirst, thirstStage(s.thirst)); // AUDIT SURV-TIERS (the third pass): nor drink - the law freezes it, and its red chip never cost",
     "tests": [
       "test/systems/survival/survtiers3.test.js",
       "test/systems/survival/auditsurv.test.js"
@@ -317,8 +317,8 @@
   {
     "name": "SURVTIERS3-rations-refuse-the-first-peckish-minutes",
     "file": "src/systems/survival/food.js",
-    "old": "name: 'Rations', satiety: 240,",
-    "new": "name: 'Rations', satiety: 250,",
+    "old": "  [TEMPLATE.Rations]: Object.freeze({ name: 'Rations', satiety: 240, keeps: null, raw: false, thirst: 0, stack: true }), // AUDIT SURV-TIERS (the third pass): the Peckish line's own four hours - at 250 the page said \"You could eat.\" and the sack refused for ten minutes",
+    "new": "  [TEMPLATE.Rations]: Object.freeze({ name: 'Rations', satiety: 250, keeps: null, raw: false, thirst: 0, stack: true }), // AUDIT SURV-TIERS (the third pass): the Peckish line's own four hours - at 250 the page said \"You could eat.\" and the sack refused for ten minutes",
     "tests": [
       "test/systems/survival/survtiers3.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "SURVTIERS3-a-meal-in-the-future",
     "file": "src/systems/survival/food.js",
-    "old": "  const newLastAte = Math.min(now, base + satiety);",
-    "new": "  const newLastAte = base + satiety;",
+    "old": "  const newLastAte = Math.min(now, base + satiety); // AUDIT SURV-TIERS (the third pass): never a meal in the future - a marker ahead of the clock is a fresh start to the load (alignSurvival), and rations at 250 wrote one ten minutes ahead",
+    "new": "  const newLastAte = base + satiety; // AUDIT SURV-TIERS (the third pass): never a meal in the future - a marker ahead of the clock is a fresh start to the load (alignSurvival), and rations at 250 wrote one ten minutes ahead",
     "tests": [
       "test/systems/survival/survtiers3.test.js"
     ],
@@ -337,8 +337,8 @@
   {
     "name": "SURVTIERS3-the-stream-again",
     "file": "src/systems/survival/items.js",
-    "old": "Find a fountain, a well or a trough.",
-    "new": "Find a fountain, a well or a stream.",
+    "old": "  emptySkin: 'Your waterskin is empty. Find a fountain, a well or a trough.', // AUDIT SURV-TIERS (the third pass): the sources that fill one - no stream ever did",
+    "new": "  emptySkin: 'Your waterskin is empty. Find a fountain, a well or a stream.', // AUDIT SURV-TIERS (the third pass): the sources that fill one - no stream ever did",
     "tests": [
       "test/systems/survival/survtiers3.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "SURVTIERS3-two-spellings",
     "file": "src/systems/survival/items.js",
-    "old": "  drankLow: 'Your waterskin is nearly empty.',",
-    "new": "  drankLow: 'Your water skin is nearly empty.',",
+    "old": "  drankLow: 'Your waterskin is nearly empty.', // AUDIT SURV-TIERS (the third pass): one spelling - the automatic drink's (needs.js) had it",
+    "new": "  drankLow: 'Your water skin is nearly empty.', // AUDIT SURV-TIERS (the third pass): one spelling - the automatic drink's (needs.js) had it",
     "tests": [
       "test/systems/survival/survtiers3.test.js"
     ]
@@ -373,7 +373,7 @@
   {
     "name": "SURVTIERS3-the-blackout-has-no-morning",
     "file": "src/systems/survival/tavernMenu.js",
-    "old": "export const blackoutWaking = (sky) => (Math.trunc((((sky % 1440) + 1440) % 1440) / 60) === BLACKOUT_WAKE_HOUR ? TAVERN_MENU_TEXT.woke : TAVERN_MENU_TEXT.wokeNoDawn);",
+    "old": "export const blackoutWaking = (sky) =>\n  Math.trunc((((sky % 1440) + 1440) % 1440) / 60) === BLACKOUT_WAKE_HOUR\n    ? TAVERN_MENU_TEXT.woke\n    : TAVERN_MENU_TEXT.wokeNoDawn;",
     "new": "export const blackoutWaking = () => undefined;",
     "tests": [
       "test/systems/survival/survtiers3.test.js"
@@ -382,8 +382,8 @@
   {
     "name": "SURVTIERS3-the-classic-window-drops-the-waking",
     "file": "src/ui/tavernWindow.js",
-    "old": "        return [{ rows: b ? [...line(r.text), ...line(b.text)] : line(r.text) }];",
-    "new": "        return [{ rows: line(r.text) }];",
+    "old": "        return [{ rows: b ? [...line(r.text), ...line(b.text)] : line(r.text) }]; // AUDIT SURV-TIERS (the third pass): and the waking",
+    "new": "        return [{ rows: line(r.text) }]; // AUDIT SURV-TIERS (the third pass): and the waking",
     "tests": [
       "test/systems/survival/survtiers3.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "SURVTIERS3-hard-sets-out-with-nothing",
     "file": "src/systems/startingGear.js",
-    "old": "import { survivalOn } from './survival/switch.js';",
-    "new": "import { survivalTier } from './survival/switch.js'; const survivalOn = () => survivalTier() === 'casual';",
+    "old": "import { survivalOn } from './survival/switch.js'; // AUDIT SURV E: the survival kit reaches the character chargen makes",
+    "new": "import { survivalTier } from './survival/switch.js';\nconst survivalOn = () => survivalTier() === 'casual'; // AUDIT SURV E: the survival kit reaches the character chargen makes",
     "tests": [
       "test/systems/survival/survtiers3.test.js"
     ]
@@ -449,8 +449,8 @@
   {
     "name": "SURVTIERS3-the-gear-cite-equip-seed-rots",
     "file": "src/systems/startingGear.js",
-    "old": "// (equip.js:\"export function seedStartingEquipment\"), which survives",
-    "new": "// (equip.js:\"which the restore\"..\"return slots;\"), which survives",
+    "old": "// (equip.js:\"export function seedStartingEquipment\"), which survives only as the PRE-CHARGEN fallback its",
+    "new": "// (equip.js:\"which the restore\"..\"return slots;\"), which survives only as the PRE-CHARGEN fallback its",
     "tests": [
       "test/scenes/citedrift.test.js"
     ]
@@ -458,8 +458,8 @@
   {
     "name": "SURVTIERS3-the-gear-cite-world-seed-rots",
     "file": "src/systems/startingGear.js",
-    "old": "world.js:\"if (playerEntity.chargenDone)\" and exterior.js:\"if (playerEntity.chargenDone)\" seed it",
-    "new": "world.js:\"shape of the seam\" and exterior.js:\"if (playerEntity.chargenDone)\" seed it",
+    "old": "// two hosts gate it to - world.js:\"if (playerEntity.chargenDone)\" and exterior.js:\"if (playerEntity.chargenDone)\" seed it",
+    "new": "// two hosts gate it to - world.js:\"shape of the seam\" and exterior.js:\"if (playerEntity.chargenDone)\" seed it",
     "tests": [
       "test/scenes/citedrift.test.js"
     ],
@@ -496,8 +496,8 @@
   {
     "name": "SURVTIERS3-drenched-is-red",
     "file": "src/systems/survival/status.js",
-    "old": "  return 'warn';   // the wet",
-    "new": "  return stage === 'drenched' ? 'danger' : 'warn';   // the wet",
+    "old": "  return 'warn'; // the wet",
+    "new": "  return stage === 'drenched' ? 'danger' : 'warn'; // the wet",
     "tests": [
       "test/systems/survival/survtiers3.test.js"
     ],
@@ -542,8 +542,8 @@
   {
     "name": "SURVTIERS3-corpse-food-the-switch-is-never-installed",
     "file": "src/systems/survival/loot.js",
-    "old": "  _enabled = enabled;\n",
-    "new": "",
+    "old": "  _enabled = enabled;\n  registerEnemyDeathHandler(SURVIVAL_LOOT_HANDLER, (entity, opts = {}) => {",
+    "new": "  registerEnemyDeathHandler(SURVIVAL_LOOT_HANDLER, (entity, opts = {}) => {",
     "tests": [
       "test/systems/survival/survtiers3.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "SURVTIERS3-corpse-food-the-death-rolls-none",
     "file": "src/systems/survival/loot.js",
-    "old": "(entity, opts = {}) => { addCorpseFood(entity, opts); }",
-    "new": "(entity, opts = {}) => {}",
+    "old": "  registerEnemyDeathHandler(SURVIVAL_LOOT_HANDLER, (entity, opts = {}) => {\n    addCorpseFood(entity, opts);\n  });",
+    "new": "  registerEnemyDeathHandler(SURVIVAL_LOOT_HANDLER, (entity, opts = {}) => {});",
     "tests": [
       "test/systems/survival/survtiers3.test.js"
     ]

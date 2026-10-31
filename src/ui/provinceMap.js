@@ -47,7 +47,7 @@
 // an artefact - which is the right register for a map of Tamriel
 // anyway. Any smoothing here would be an invented geography.
 import { RACE_TEMPLATES } from '../systems/races.js';
-import { raceDisplayName } from '../systems/talk/talkSession.js';   // L10N3d: RaceTemplate.Name, read in the player's language
+import { raceDisplayName } from '../systems/talk/talkSession.js'; // L10N3d: RaceTemplate.Name, read in the player's language
 
 /** The picker's own dimensions. Named MAP_ and not PICKER_: the
  *  one-home sweep caught PICKER_W already declared in ui/listPicker.js
@@ -81,7 +81,10 @@ export const MAP_H = 200;
  *  Measured on the shipping files: 5,549 pixels, one component, and
  *  the next largest inner patch is 268. */
 export const INERT_REGION = Object.freeze({
-  id: 0, key: 'Imperial', name: 'Imperial Province', inert: true,
+  id: 0,
+  key: 'Imperial',
+  name: 'Imperial Province',
+  inert: true,
 });
 
 /** THE NAMES ARE THE MAP'S OWN. TMAP00I0 paints a label on every
@@ -90,9 +93,15 @@ export const INERT_REGION = Object.freeze({
  *  the picture rather than chosen. SUMURSET is the game's spelling and
  *  is kept: this is Daggerfall's map, not a corrected one. */
 export const PROVINCE_NAMES = Object.freeze({
-  Breton: 'High Rock', Redguard: 'Hammerfell', Nord: 'Skyrim',
-  DarkElf: 'Morrowind', HighElf: 'Sumurset Isle', WoodElf: 'Valenwood',
-  Khajiit: 'Elsweyr', Argonian: 'Black Marsh', Imperial: 'Imperial Province',
+  Breton: 'High Rock',
+  Redguard: 'Hammerfell',
+  Nord: 'Skyrim',
+  DarkElf: 'Morrowind',
+  HighElf: 'Sumurset Isle',
+  WoodElf: 'Valenwood',
+  Khajiit: 'Elsweyr',
+  Argonian: 'Black Marsh',
+  Imperial: 'Imperial Province',
 });
 
 const key = (x, y) => `${x},${y}`;
@@ -173,7 +182,8 @@ function traceMask(inside, w, h) {
  *  from any outside pixel, which is the one place a label sits clear
  *  of every coastline. A centroid would land in the Iliac Bay for
  *  High Rock, whose provinces wrap around it. */
-export function labelPoint(inside, w, h) {   // TAMRIEL3: the continent's province names hang on the same point
+export function labelPoint(inside, w, h) {
+  // TAMRIEL3: the continent's province names hang on the same point
   // one chebyshev pass out from the edge, then one back - cheap, and
   // exact enough for a label
   const dist = new Int32Array(w * h);
@@ -191,7 +201,9 @@ export function labelPoint(inside, w, h) {   // TAMRIEL3: the continent's provin
       dist[i] = best;
     }
   }
-  let bx = 0; let by = 0; let bd = -1;
+  let bx = 0;
+  let by = 0;
+  let bd = -1;
   for (let y = h - 1; y >= 0; y--) {
     for (let x = w - 1; x >= 0; x--) {
       const i = y * w + x;
@@ -202,7 +214,11 @@ export function labelPoint(inside, w, h) {   // TAMRIEL3: the continent's provin
       if (y < h - 1 && x < w - 1) best = Math.min(best, dist[i + w + 1] + 1);
       if (y < h - 1 && x > 0) best = Math.min(best, dist[i + w - 1] + 1);
       dist[i] = best;
-      if (best > bd) { bd = best; bx = x; by = y; }
+      if (best > bd) {
+        bd = best;
+        bx = x;
+        by = y;
+      }
     }
   }
   return [bx + 0.5, by + 0.5, bd];
@@ -211,7 +227,8 @@ export function labelPoint(inside, w, h) {   // TAMRIEL3: the continent's provin
 /** Which palette entries the painting uses for water. Blue-dominant
  *  by a clear margin, so a brown river bank does not qualify - the
  *  test is on the PALETTE, once, not on 64,000 pixels. */
-export function seaIndices(palette) {   // TAMRIEL3: the held map's trace of the picture reads the sea the same way
+export function seaIndices(palette) {
+  // TAMRIEL3: the held map's trace of the picture reads the sea the same way
   const sea = new Uint8Array(256);
   if (!palette) return sea;
   for (let i = 0; i < 256; i++) {
@@ -228,11 +245,12 @@ export function seaIndices(palette) {   // TAMRIEL3: the held map's trace of the
  * @param picture TMAP00I0's DFBitmap, or null.
  * @param palette (index) => [r,g,b] for that bitmap's palette.
  */
-export function inlandRemainder(data, w, h, picture, palette) {   // TAMRIEL3: and finds the Imperial Province the same way
+export function inlandRemainder(data, w, h, picture, palette) {
+  // TAMRIEL3: and finds the Imperial Province the same way
   if (!picture?.data?.length || picture.data.length !== data.length) return null;
   const sea = seaIndices(palette);
   const open = new Uint8Array(w * h);
-  for (let i = 0; i < w * h; i++) open[i] = (!data[i] && !sea[picture.data[i]]) ? 1 : 0;
+  for (let i = 0; i < w * h; i++) open[i] = !data[i] && !sea[picture.data[i]] ? 1 : 0;
 
   const seen = new Uint8Array(w * h);
   let best = null;
@@ -245,11 +263,14 @@ export function inlandRemainder(data, w, h, picture, palette) {   // TAMRIEL3: a
     while (stack.length) {
       const i = stack.pop();
       cells.push(i);
-      const x = i % w; const y = (i / w) | 0;
+      const x = i % w;
+      const y = (i / w) | 0;
       if (x === 0 || y === 0 || x === w - 1 || y === h - 1) touchesEdge = true;
-      for (const k of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1,
-        y > 0 ? i - w : -1, y < h - 1 ? i + w : -1]) {
-        if (k >= 0 && open[k] && !seen[k]) { seen[k] = 1; stack.push(k); }
+      for (const k of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, y > 0 ? i - w : -1, y < h - 1 ? i + w : -1]) {
+        if (k >= 0 && open[k] && !seen[k]) {
+          seen[k] = 1;
+          stack.push(k);
+        }
       }
     }
     // THE EDGE CLAUSE IS THE WHOLE TRICK: the parchment the map is
@@ -280,17 +301,23 @@ export function traceProvinces(bmp, { picture = null, palette = null } = {}) {
     const inside = new Uint8Array(w * h);
     let pixels = 0;
     for (let i = 0; i < data.length; i++) {
-      if (data[i] === race.id) { inside[i] = 1; pixels++; }
+      if (data[i] === race.id) {
+        inside[i] = 1;
+        pixels++;
+      }
     }
-    if (!pixels) continue;   // a file that does not carry this race says so
+    if (!pixels) continue; // a file that does not carry this race says so
     const [lx, ly, clearance] = labelPoint(inside, w, h);
     out.push({
-      id: race.id, key: race.key,
-      name: PROVINCE_NAMES[race.key] ?? race.name,   // the place
-      people: raceDisplayName(race.key),             // and who is from it (L10N3d: in the player's language)
+      id: race.id,
+      key: race.key,
+      name: PROVINCE_NAMES[race.key] ?? race.name, // the place
+      people: raceDisplayName(race.key), // and who is from it (L10N3d: in the player's language)
 
       d: traceMask(inside, w, h),
-      label: [lx, ly], clearance, pixels,
+      label: [lx, ly],
+      clearance,
+      pixels,
     });
   }
 
@@ -302,8 +329,11 @@ export function traceProvinces(bmp, { picture = null, palette = null } = {}) {
   if (inland) {
     const [lx, ly, clearance] = labelPoint(inland.mask, w, h);
     out.unshift({
-      ...INERT_REGION, d: traceMask(inland.mask, w, h),
-      label: [lx, ly], clearance, pixels: inland.pixels,
+      ...INERT_REGION,
+      d: traceMask(inland.mask, w, h),
+      label: [lx, ly],
+      clearance,
+      pixels: inland.pixels,
     });
   }
   return out;

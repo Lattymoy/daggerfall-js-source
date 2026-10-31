@@ -20,12 +20,20 @@ export const HORSE_TOOLTIP_Y = 112;
 export const ENHANCED_HORSE_TOOLTIP_ID = 'enhanced-horse-tooltip';
 
 export class HorseNameTooltip {
-  constructor() { this.text = ''; }
+  constructor() {
+    this.text = '';
+  }
   /** Update's two ends: the label's Text and Enabled (set_Text / set_Enabled [IL_2e9d-IL_2ea9]); '' is Hide. */
-  set(text) { this.text = typeof text === 'string' ? text : ''; }
+  set(text) {
+    this.text = typeof text === 'string' ? text : '';
+  }
   draw(renderer, canvas, font) {
     if (isEnhanced() && typeof document !== 'undefined') {
-      drawEnhancedHudLabel(ENHANCED_HORSE_TOOLTIP_ID, { text: this.text, visible: true, top: midTextTopPx(canvas, HORSE_TOOLTIP_Y) });
+      drawEnhancedHudLabel(ENHANCED_HORSE_TOOLTIP_ID, {
+        text: this.text,
+        visible: true,
+        top: midTextTopPx(canvas, HORSE_TOOLTIP_Y),
+      });
       return;
     }
     if (!font || !this.text) return;
@@ -35,7 +43,8 @@ export class HorseNameTooltip {
   }
   /** A frame that draws no HUD says so (a DOM line stays painted - AUDIT 64 F37's law). */
   hide() {
-    if (isEnhanced() && typeof document !== 'undefined') drawEnhancedHudLabel(ENHANCED_HORSE_TOOLTIP_ID, { text: '', visible: false });
+    if (isEnhanced() && typeof document !== 'undefined')
+      drawEnhancedHudLabel(ENHANCED_HORSE_TOOLTIP_ID, { text: '', visible: false });
   }
 }
 

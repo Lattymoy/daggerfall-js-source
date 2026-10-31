@@ -65,8 +65,10 @@ import { THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE } from '../thunderlockIds.js';
 const GRIP_RAKE = 18;
 const GRIP_CENTRE = Object.freeze([0, -2.5, -3.5]);
 export const GUN_GRIP_ATTITUDE = (() => {
-  const r = (GRIP_RAKE * Math.PI) / 180, c = Math.cos(r), s = Math.sin(r);
-  const a = [0, c, -s, 0, s, c, 1, 0, 0];   // columns: the mesh's right to +Z, its barrel to (c, s, 0), its top to (-s, c, 0)
+  const r = (GRIP_RAKE * Math.PI) / 180,
+    c = Math.cos(r),
+    s = Math.sin(r);
+  const a = [0, c, -s, 0, s, c, 1, 0, 0]; // columns: the mesh's right to +Z, its barrel to (c, s, 0), its top to (-s, c, 0)
   const [x, y, z] = GRIP_CENTRE;
   const t = [-(a[0] * x + a[1] * y + a[2] * z), -(a[3] * x + a[4] * y + a[5] * z), -(a[6] * x + a[7] * y + a[8] * z)];
   return Object.freeze({ a: Object.freeze(a), t: Object.freeze(t) });
@@ -84,8 +86,10 @@ export const GUN_GRIP_ATTITUDE = (() => {
 const PISTOL_GRIP_RAKE = 12;
 export const PISTOL_FIST_UP = 2.4;
 export const PISTOL_GRIP_ATTITUDE = (() => {
-  const r = (PISTOL_GRIP_RAKE * Math.PI) / 180, c = Math.cos(r), s = Math.sin(r);
-  const a = Object.freeze([0, c, -s, 0, s, c, 1, 0, 0]);   // GUN_GRIP_ATTITUDE's turn, at the pistol's own rake
+  const r = (PISTOL_GRIP_RAKE * Math.PI) / 180,
+    c = Math.cos(r),
+    s = Math.sin(r);
+  const a = Object.freeze([0, c, -s, 0, s, c, 1, 0, 0]); // GUN_GRIP_ATTITUDE's turn, at the pistol's own rake
   // the grip's way in the mesh (0, sin, cos), turned onto the bone: the mesh moved DOWN it so the fist stands up it
   const up = [a[1] * s + a[2] * c, a[4] * s + a[5] * c, a[7] * s + a[8] * c];
   return Object.freeze({ a, t: Object.freeze(up.map((v) => -PISTOL_FIST_UP * v)) });
@@ -192,7 +196,8 @@ export const OWN_MW_GILDED = Object.freeze({
 /** The model this item wears, or null for everything that resolves
  *  through Morrowind's own records. GILDED1: a Gilded piece wears its gold twin. */
 export const ownWeaponModelFor = (item) =>
-  (item && ((item.rarity === 'gilded' && OWN_MW_GILDED[item.templateIndex]) || OWN_MW_MODELS[item.templateIndex])) || null;
+  (item && ((item.rarity === 'gilded' && OWN_MW_GILDED[item.templateIndex]) || OWN_MW_MODELS[item.templateIndex])) ||
+  null;
 
 /** Every model path this table can ask for, so a preload and a coverage
  *  walk can both be DERIVED rather than typed out again. */

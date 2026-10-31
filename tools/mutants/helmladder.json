@@ -83,8 +83,8 @@
   {
     "name": "HELM-LADDER-the-button-a-rung",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "label: h.sailsUp ? 'Stow sails' : 'Raise sails', kind: 'tap', action: A.sail });",
-    "new": "label: h.sailsUp ? 'Stow sails' : 'Raise sails', kind: 'tap', action: !h.sailsUp ? A.more : A.less });",
+    "old": "    out.push({ act: 'sails', label: h.sailsUp ? 'Stow sails' : 'Raise sails', kind: 'tap', action: A.sail });",
+    "new": "    out.push({\n      act: 'sails',\n      label: h.sailsUp ? 'Stow sails' : 'Raise sails',\n      kind: 'tap',\n      action: !h.sailsUp ? A.more : A.less,\n    });",
     "tests": [
       "test/systems/comeSailAway/csa_sailing.test.js",
       "test/systems/csa_together.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "HELM-LADDER-hint-sails-alone",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "keys(h.hasSails ? 'Oars & sails' : 'Oars', 'MoveForwards', 'MoveBackwards', A.more, A.less)",
-    "new": "keys(h.hasSails ? 'Oars & sails' : 'Oars', A.more, A.less)",
+    "old": "    keys(h.hasSails ? 'Oars & sails' : 'Oars', 'MoveForwards', 'MoveBackwards', A.more, A.less),",
+    "new": "    keys(h.hasSails ? 'Oars & sails' : 'Oars', A.more, A.less),",
     "tests": [
       "test/systems/comeSailAway/csa_sailing.test.js",
       "test/systems/csa_together.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "HELM-LADDER-irons-strike-W",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "const strike = [key('MoveBackwards'), key(A.less)].filter(Boolean).join(' ');",
-    "new": "const strike = [key(A.less)].filter(Boolean).join(' ');",
+    "old": "    const strike = [key('MoveBackwards'), key(A.less)].filter(Boolean).join(' ');",
+    "new": "    const strike = [key(A.less)].filter(Boolean).join(' ');",
     "tests": [
       "test/systems/comeSailAway/auditnav2_helm.test.js"
     ]

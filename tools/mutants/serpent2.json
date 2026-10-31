@@ -2,8 +2,8 @@
   {
     "name": "SERPENT2-gate-role-over-own",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": "heraldRole(own) ?? heraldRole(gate)",
-    "new": "heraldRole(gate) ?? heraldRole(own)",
+    "old": "export const serpentHeraldRole = (own, gate) => heraldRole(own) ?? heraldRole(gate);",
+    "new": "export const serpentHeraldRole = (own, gate) => heraldRole(gate) ?? heraldRole(own);",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SERPENT2-bells-ping-nobody",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": "family: 'serpent', moment: 'Bells', role,",
-    "new": "family: 'serpent', moment: 'Bells',",
+    "old": "    role,\n    title: `A great serpent is sighted ${off ? `off ${off}` : 'on the packet lanes'}`,",
+    "new": "    title: `A great serpent is sighted ${off ? `off ${off}` : 'on the packet lanes'}`,",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SERPENT2-bells-every-mention",
     "file": "src/net/herald/heraldCard.js",
-    "old": "allowed_mentions: r ? { roles: [r] } : { parse: [] }",
-    "new": "allowed_mentions: { parse: ['everyone', 'roles', 'users'] }",
+    "old": "  const body = { embeds: [embed], allowed_mentions: r ? { roles: [r] } : { parse: [] } };",
+    "new": "  const body = { embeds: [embed], allowed_mentions: { parse: ['everyone', 'roles', 'users'] } };",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SERPENT2-dive-said-as-rising",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": "['Dives', heraldStamp(t.soundAt, 't')]",
-    "new": "['Dives', heraldStamp(t.riseAt, 't')]",
+    "old": "      ['Dives', heraldStamp(t.soundAt, 't')],",
+    "new": "      ['Dives', heraldStamp(t.riseAt, 't')],",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SERPENT2-kill-pings",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": "family: 'serpent', moment: 'Slain',",
-    "new": "family: 'serpent', moment: 'Slain', role: '1555589839825670258',",
+    "old": "    title: `${boss.name} is slain`,",
+    "new": "    role: '1555589839825670258',\n    title: `${boss.name} is slain`,",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SERPENT2-others-miscounted",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": "heraldWho((Array.isArray(top) ? top : []).slice(0, SERPENT_TOP_MAX), n)",
-    "new": "heraldWho((Array.isArray(top) ? top : []).slice(0, SERPENT_TOP_MAX), n + 1)",
+    "old": "      ['Slain by', heraldWho((Array.isArray(top) ? top : []).slice(0, SERPENT_TOP_MAX), n)],",
+    "new": "      ['Slain by', heraldWho((Array.isArray(top) ? top : []).slice(0, SERPENT_TOP_MAX), n + 1)],",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SERPENT2-name-taken-raw",
     "file": "src/net/herald/heraldCard.js",
-    "old": ".map(heraldName).filter(Boolean)",
-    "new": ".map(String).filter(Boolean)",
+    "old": "  const shown = (Array.isArray(names) ? names : []).map(heraldName).filter(Boolean);",
+    "new": "  const shown = (Array.isArray(names) ? names : []).map(String).filter(Boolean);",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SERPENT2-names-unbounded",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": ".slice(0, SERPENT_TOP_MAX)",
-    "new": ".slice(0, 8)",
+    "old": "      ['Slain by', heraldWho((Array.isArray(top) ? top : []).slice(0, SERPENT_TOP_MAX), n)],",
+    "new": "      ['Slain by', heraldWho((Array.isArray(top) ? top : []).slice(0, 8), n)],",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SERPENT2-bells-after-rising",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": "if (t.riseAt <= nowMs) continue;",
-    "new": "if (false) continue;",
+    "old": "    if (t.riseAt <= nowMs) continue;",
+    "new": "    if (false) continue;",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SERPENT2-bells-twice",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": "if (!isSerpentDay(d) || d <= posted) continue;",
-    "new": "if (!isSerpentDay(d)) continue;",
+    "old": "    if (!isSerpentDay(d) || d <= posted) continue;",
+    "new": "    if (!isSerpentDay(d)) continue;",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SERPENT2-bells-instant-ignored",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": "at: Math.max(nowMs, t.omenAt)",
-    "new": "at: nowMs",
+    "old": "    return { day: d, at: Math.max(nowMs, t.omenAt) };",
+    "new": "    return { day: d, at: nowMs };",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SERPENT2-quiet-day-owed",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": "if (!isSerpentDay(d) || d <= posted) continue;",
-    "new": "if (d <= posted) continue;",
+    "old": "    if (!isSerpentDay(d) || d <= posted) continue;",
+    "new": "    if (d <= posted) continue;",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SERPENT2-future-day-posted",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": "Number.isSafeInteger(postedDay) && postedDay <= today ? postedDay : -1",
-    "new": "Number.isSafeInteger(postedDay) ? postedDay : -1",
+    "old": "  const posted = Number.isSafeInteger(postedDay) && postedDay <= today ? postedDay : -1; // a day not yet come is no post made",
+    "new": "  const posted = Number.isSafeInteger(postedDay) ? postedDay : -1; // a day not yet come is no post made",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SERPENT2-kill-news-for-ever",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": "nowMs < serpentTimes(day).soundAt + SERPENT_DIVE_MS + HERALD_FELL_KEEP_MS",
-    "new": "nowMs < Infinity",
+    "old": "export const serpentHeraldFellLive = (day, nowMs) =>\n  isSerpentDay(day) && nowMs < serpentTimes(day).soundAt + SERPENT_DIVE_MS + HERALD_FELL_KEEP_MS;",
+    "new": "export const serpentHeraldFellLive = (day, nowMs) => isSerpentDay(day) && nowMs < Infinity;",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SERPENT2-no-skew",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": " || day === serpentAt(nowMs + GATE_SITE_SKEW_MS).day",
-    "new": "",
+    "old": "export const serpentSiteDayOk = (day, nowMs) =>\n  Number.isSafeInteger(day) && (day === serpentAt(nowMs).day || day === serpentAt(nowMs + GATE_SITE_SKEW_MS).day);",
+    "new": "export const serpentSiteDayOk = (day, nowMs) => Number.isSafeInteger(day) && day === serpentAt(nowMs).day;",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SERPENT2-any-site-kill",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": ".find((g) => sameSerpentSite(g, site))",
-    "new": ".find(() => true)",
+    "old": "  const f = site ? (Array.isArray(fells.list) ? fells.list : []).find((g) => sameSerpentSite(g, site)) : null;",
+    "new": "  const f = site ? (Array.isArray(fells.list) ? fells.list : []).find(() => true) : null;",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SERPENT2-kill-posted-twice",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": "fells.d <= postedDay || ",
-    "new": "",
+    "old": "  if (!fells || !Number.isSafeInteger(fells.d) || fells.d <= postedDay || !serpentHeraldFellLive(fells.d, nowMs))\n    return null;",
+    "new": "  if (!fells || !Number.isSafeInteger(fells.d) || !serpentHeraldFellLive(fells.d, nowMs)) return null;",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SERPENT2-stale-kill",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": " || !serpentHeraldFellLive(fells.d, nowMs)) return null;",
-    "new": ") return null;",
+    "old": "  if (!fells || !Number.isSafeInteger(fells.d) || fells.d <= postedDay || !serpentHeraldFellLive(fells.d, nowMs))\n    return null;",
+    "new": "  if (!fells || !Number.isSafeInteger(fells.d) || fells.d <= postedDay) return null;",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -273,8 +273,8 @@
   {
     "name": "SERPENT2-any-day-site-kept",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": "m?.sl === SERPENT_SITE_LAW && serpentSiteDayOk(m.d, nowMs);",
-    "new": "m?.sl === SERPENT_SITE_LAW;",
+    "old": "export const serpentSiteWordOk = (m, nowMs) => m?.sl === SERPENT_SITE_LAW && serpentSiteDayOk(m.d, nowMs);",
+    "new": "export const serpentSiteWordOk = (m, nowMs) => m?.sl === SERPENT_SITE_LAW;",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ],
@@ -356,8 +356,8 @@
   {
     "name": "SERPENT2-ahead-before-settled",
     "file": "src/systems/serpent/serpentOmen.js",
-    "old": "if (!settled) return null;",
-    "new": "if (false) return null;",
+    "old": "      if (!settled) return null;",
+    "new": "      if (false) return null;",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -383,8 +383,8 @@
   {
     "name": "SERPENT2-timers-place-before-bells",
     "file": "src/systems/eventTimers.js",
-    "old": "`${sName} rises`, s.riseAt, null, 'The harbor bells ring",
-    "new": "`${sName} rises`, s.riseAt, off, 'The harbor bells ring",
+    "old": "    coming(`serpent:${s.day}`, 'serpent', `${sName} rises`, s.riseAt, null, 'The harbor bells ring 15 minutes before');",
+    "new": "    coming(`serpent:${s.day}`, 'serpent', `${sName} rises`, s.riseAt, off, 'The harbor bells ring 15 minutes before');",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -392,8 +392,8 @@
   {
     "name": "SERPENT2-timers-hunt-to-storm",
     "file": "src/systems/eventTimers.js",
-    "old": "`${sName} hunts`, s.soundAt,",
-    "new": "`${sName} hunts`, s.sealAt,",
+    "old": "      s.soundAt,",
+    "new": "      s.sealAt,",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "SERPENT2-timers-late-row-dropped",
     "file": "src/systems/eventTimers.js",
-    "old": "sPhase === 'hunt' || sPhase === 'late') live(",
-    "new": "sPhase === 'hunt') live(",
+    "old": "  else if (sPhase === 'rising' || sPhase === 'hunt' || sPhase === 'late')",
+    "new": "  else if (sPhase === 'rising' || sPhase === 'hunt')",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "SERPENT2-timers-no-next",
     "file": "src/systems/eventTimers.js",
-    "old": "if (sPhase !== 'quiet') {",
-    "new": "if (false) {",
+    "old": "  if (sPhase !== 'quiet') {",
+    "new": "  if (false) {",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -419,8 +419,8 @@
   {
     "name": "SERPENT2-timers-kill-ignored",
     "file": "src/systems/eventTimers.js",
-    "old": "serpentPhase(s, now, src?.serpent?.fellAt?.(s.day) ?? null)",
-    "new": "serpentPhase(s, now, null)",
+    "old": "  const sPhase = serpentPhase(s, now, src?.serpent?.fellAt?.(s.day) ?? null);",
+    "new": "  const sPhase = serpentPhase(s, now, null);",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -428,8 +428,8 @@
   {
     "name": "SERPENT2-timers-kind-missing",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "['gate', 'serpent', 'super', 'star', 'ketch', 'elite', 'raid', 'battle', 'seat', 'reset', 'front']",
-    "new": "['gate', 'super', 'star', 'ketch', 'elite', 'raid', 'battle', 'seat', 'reset', 'front']",
+    "old": "  'serpent',\n  'super',",
+    "new": "  'super',",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ],

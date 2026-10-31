@@ -31,12 +31,44 @@
 
 import { t } from '../../systems/textManager.js';
 import {
-  IMPERIAL, IMPERIAL_SECTORS, IMPERIAL_CELLS, IMPERIAL_SPAN, PALACE, polar, imperialRoads, districtWallLines, districtWallGates,
-  causewayLines, bridgeLine, imperialArenaAt, prisonAt, divinesAt, palaceGates, imperialDistrictAt, imperialCellDistrict,
-  imperialCell, imperialCodeCell, gardenPaths, palaceFountains, tombAt,
+  IMPERIAL,
+  IMPERIAL_SECTORS,
+  IMPERIAL_CELLS,
+  IMPERIAL_SPAN,
+  PALACE,
+  polar,
+  imperialRoads,
+  districtWallLines,
+  districtWallGates,
+  causewayLines,
+  bridgeLine,
+  imperialArenaAt,
+  prisonAt,
+  divinesAt,
+  palaceGates,
+  imperialDistrictAt,
+  imperialCellDistrict,
+  imperialCell,
+  imperialCodeCell,
+  gardenPaths,
+  palaceFountains,
+  tombAt,
 } from '../../world/imperialCity.js';
 import { fabricCell, fabricStreetsIn } from '../../world/imperialFabric.js';
-import { PEN, INK_RGB, PARCHMENT_RGB, rgba, NAME_FACE, HALO_PEN, toPaper, toMap, fitView, viewCentredOn, SCALE_MAX, paintCaret } from '../ink/inkMap.js';
+import {
+  PEN,
+  INK_RGB,
+  PARCHMENT_RGB,
+  rgba,
+  NAME_FACE,
+  HALO_PEN,
+  toPaper,
+  toMap,
+  fitView,
+  viewCentredOn,
+  SCALE_MAX,
+  paintCaret,
+} from '../ink/inkMap.js';
 import { TOWN_PEN, BLOCK_PX, paintTownStatic } from '../ink/inkTown.js';
 import { WORLD_PER_PX } from '../nameplateLayout.js';
 
@@ -59,12 +91,12 @@ const IC_FIND_ME_BLOCKS = 2;
 const IC_INK = Object.freeze({
   water: 'rgba(86, 122, 146, 0.30)',
   palace: 'rgba(196, 160, 72, 0.16)',
-  district: Object.freeze([rgba(INK_RGB, 0.05), rgba(INK_RGB, 0.10)]),
+  district: Object.freeze([rgba(INK_RGB, 0.05), rgba(INK_RGB, 0.1)]),
   outer: rgba(INK_RGB, 0.07),
-  road: rgba(INK_RGB, 0.30),
+  road: rgba(INK_RGB, 0.3),
   street: rgba(INK_RGB, 0.12),
   stone: rgba(INK_RGB, 0.22),
-  building: rgba(INK_RGB, 0.40),
+  building: rgba(INK_RGB, 0.4),
   square: rgba(INK_RGB, 0.08),
   park: 'rgba(92, 128, 64, 0.20)',
   plinth: 'rgba(250, 244, 222, 0.55)',
@@ -102,7 +134,7 @@ const IC_LANDMARK_TEXT = Object.freeze({
   isle: () => t('icmap.isle', 'City Isle'),
 });
 /** A district's shown name, or '' for none (the lake). */
-export const imperialDistrictName = (d) => (d ? IC_DISTRICT_TEXT[d]?.() ?? d : '');
+export const imperialDistrictName = (d) => (d ? (IC_DISTRICT_TEXT[d]?.() ?? d) : '');
 
 // ── THE CITY'S PLAN, ONCE A SESSION ───────────────────────────────────────────────────────────────────────────────
 
@@ -110,7 +142,10 @@ let icPlanCache = null;
 let icPlanBuilds = 0;
 /** How many times the city's plan has been built this session - once (the pin's count). */
 export const imperialPlanBuilds = () => icPlanBuilds;
-export function _resetImperialPlanForTests() { icPlanCache = null; icPlanBuilds = 0; }
+export function _resetImperialPlanForTests() {
+  icPlanCache = null;
+  icPlanBuilds = 0;
+}
 
 /**
  * THE CITY'S PLAN: every line, ring and landmark the city layer inks, in the city's metres, and its labels (an id, where,
@@ -122,7 +157,12 @@ export function imperialCityPlan() {
   const I = IMPERIAL;
   // a district's name on its first radial between the middle and the outer ring roads - clear of its heart's landmark on
   // its avenue and of the grounds' names outside the wall
-  const sectorLabels = IMPERIAL_SECTORS.map(([name, b]) => ({ district: name, at: polar(b + I.roads.radials[0], (I.roads.rings[1] + I.roads.rings[2]) / 2), size: 15, zoom: 0 }));
+  const sectorLabels = IMPERIAL_SECTORS.map(([name, b]) => ({
+    district: name,
+    at: polar(b + I.roads.radials[0], (I.roads.rings[1] + I.roads.rings[2]) / 2),
+    size: 15,
+    zoom: 0,
+  }));
   icPlanCache = Object.freeze({
     roads: imperialRoads(),
     ways: causewayLines(),
@@ -143,22 +183,34 @@ export function imperialCityPlan() {
     gardenPaths: gardenPaths(),
     fountains: palaceFountains(),
     tombs: Array.from({ length: I.tombs.n }, (_, i) => tombAt(i)),
-    labels: Object.freeze([
-      ...sectorLabels,
-      { district: PALACE, at: polar(180, (I.palace.r1 + I.way.r0) / 2), size: 14, zoom: 0 },
-      { district: imperialDistrictAt(...prisonAt()), at: polar(I.prison.b, I.prison.r + I.prison.half + 260), size: 12, zoom: 0.1 },
-      { district: imperialDistrictAt(...polar(180, (I.cityWall.r + I.isle) / 2)), at: polar(180, (I.cityWall.r + I.isle) / 2), size: 13, zoom: 0 },
-      { landmark: 'tower', at: [0, -I.gardens.walks[0]], size: 14, zoom: 0 },
-      { landmark: 'way', at: polar(0, I.way.r1 + 110), size: 11, zoom: 0.12 },
-      { landmark: 'arena', at: [imperialArenaAt()[0], imperialArenaAt()[1] - 170], size: 12, zoom: 0 },
-      { landmark: 'temple', at: polar(I.temple.b, I.temple.r - 300), size: 12, zoom: 0 },
-      { landmark: 'prison', at: polar(I.prison.b, I.prison.r), size: 12, zoom: 0 },
-      { landmark: 'university', at: polar(I.university.b, I.university.r), size: 12, zoom: 0 },
-      { landmark: 'quay', at: polar(180, I.waterfront.r1 + 160), size: 11, zoom: 0.1 },
-      { landmark: 'bridge', at: polar(I.bridge.b - 2.2, (I.isle + I.lake) / 2), size: 12, zoom: 0 },
-      { landmark: 'lake', at: polar(0, (I.isle + I.lake) / 2), size: 17, zoom: 0 },
-      { landmark: 'isle', at: polar(315, (I.cityWall.r + I.isle) / 2), size: 13, zoom: 0 },
-    ].map((l) => Object.freeze(l))),
+    labels: Object.freeze(
+      [
+        ...sectorLabels,
+        { district: PALACE, at: polar(180, (I.palace.r1 + I.way.r0) / 2), size: 14, zoom: 0 },
+        {
+          district: imperialDistrictAt(...prisonAt()),
+          at: polar(I.prison.b, I.prison.r + I.prison.half + 260),
+          size: 12,
+          zoom: 0.1,
+        },
+        {
+          district: imperialDistrictAt(...polar(180, (I.cityWall.r + I.isle) / 2)),
+          at: polar(180, (I.cityWall.r + I.isle) / 2),
+          size: 13,
+          zoom: 0,
+        },
+        { landmark: 'tower', at: [0, -I.gardens.walks[0]], size: 14, zoom: 0 },
+        { landmark: 'way', at: polar(0, I.way.r1 + 110), size: 11, zoom: 0.12 },
+        { landmark: 'arena', at: [imperialArenaAt()[0], imperialArenaAt()[1] - 170], size: 12, zoom: 0 },
+        { landmark: 'temple', at: polar(I.temple.b, I.temple.r - 300), size: 12, zoom: 0 },
+        { landmark: 'prison', at: polar(I.prison.b, I.prison.r), size: 12, zoom: 0 },
+        { landmark: 'university', at: polar(I.university.b, I.university.r), size: 12, zoom: 0 },
+        { landmark: 'quay', at: polar(180, I.waterfront.r1 + 160), size: 11, zoom: 0.1 },
+        { landmark: 'bridge', at: polar(I.bridge.b - 2.2, (I.isle + I.lake) / 2), size: 12, zoom: 0 },
+        { landmark: 'lake', at: polar(0, (I.isle + I.lake) / 2), size: 17, zoom: 0 },
+        { landmark: 'isle', at: polar(315, (I.cityWall.r + I.isle) / 2), size: 13, zoom: 0 },
+      ].map((l) => Object.freeze(l)),
+    ),
   });
   return icPlanCache;
 }
@@ -171,12 +223,17 @@ const icSheetAt = (x, z) => [(x + IC_HALF_M) / WORLD_PER_PX, (z + IC_HALF_M) / W
  * @param {*} ctx @param {{ox:number, oy:number, scale:number}} view
  */
 export function paintImperialCity(ctx, view) {
-  const plan = imperialCityPlan(), I = IMPERIAL, TAU = Math.PI * 2;
-  const k = view.scale / WORLD_PER_PX;   // paper pixels a metre
+  const plan = imperialCityPlan(),
+    I = IMPERIAL,
+    TAU = Math.PI * 2;
+  const k = view.scale / WORLD_PER_PX; // paper pixels a metre
   const P = (x, z) => toPaper(view, ...icSheetAt(x, z));
   const [cx, cy] = P(0, 0);
-  const th = (b) => ((b - 90) * Math.PI) / 180;   // a bearing's canvas angle (y down is south)
-  const ring = (r) => { ctx.moveTo(cx + r * k, cy); ctx.arc(cx, cy, r * k, 0, TAU); };
+  const th = (b) => ((b - 90) * Math.PI) / 180; // a bearing's canvas angle (y down is south)
+  const ring = (r) => {
+    ctx.moveTo(cx + r * k, cy);
+    ctx.arc(cx, cy, r * k, 0, TAU);
+  };
   const wedge = (r0, r1, b0, b1) => {
     const [x0, y0] = P(...polar(b0, r1));
     ctx.moveTo(x0, y0);
@@ -184,70 +241,171 @@ export function paintImperialCity(ctx, view) {
     ctx.arc(cx, cy, r0 * k, th(b1), th(b0), true);
     ctx.closePath();
   };
-  const box = ([x, z], half) => { const [ax, ay] = P(x - half, z - half); ctx.rect(ax, ay, 2 * half * k, 2 * half * k); };
-  const line = ([a, b], w, min, pen) => {
-    ctx.strokeStyle = pen; ctx.lineWidth = Math.max(min, w * k);
-    ctx.beginPath(); ctx.moveTo(...P(...a)); ctx.lineTo(...P(...b)); ctx.stroke();
+  const box = ([x, z], half) => {
+    const [ax, ay] = P(x - half, z - half);
+    ctx.rect(ax, ay, 2 * half * k, 2 * half * k);
   };
-  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const line = ([a, b], w, min, pen) => {
+    ctx.strokeStyle = pen;
+    ctx.lineWidth = Math.max(min, w * k);
+    ctx.beginPath();
+    ctx.moveTo(...P(...a));
+    ctx.lineTo(...P(...b));
+    ctx.stroke();
+  };
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
   // Lake Rumare round City Isle, the Waterfront's quay out over it
-  ctx.beginPath(); ring(I.lake); ring(I.isle); wedge(I.isle, I.waterfront.r1, I.waterfront.b0, I.waterfront.b1);
-  ctx.fillStyle = IC_INK.water; ctx.fill('evenodd');
+  ctx.beginPath();
+  ring(I.lake);
+  ring(I.isle);
+  wedge(I.isle, I.waterfront.r1, I.waterfront.b0, I.waterfront.b1);
+  ctx.fillStyle = IC_INK.water;
+  ctx.fill('evenodd');
   // the districts' washes: the palace's, the six sectors' by turns, the grounds outside the wall
-  ctx.beginPath(); ring(I.palaceWall.r); ctx.fillStyle = IC_INK.palace; ctx.fill();
-  IMPERIAL_SECTORS.forEach(([, b], i) => { ctx.beginPath(); wedge(I.palaceWall.r, I.cityWall.r, b, b + 60); ctx.fillStyle = IC_INK.district[i % 2]; ctx.fill(); });
-  ctx.beginPath(); wedge(I.cityWall.r, I.waterfront.r1, I.waterfront.b0, I.waterfront.b1); box(plan.prison, I.prison.half); box(plan.university, I.university.half);
-  ctx.fillStyle = IC_INK.outer; ctx.fill();
+  ctx.beginPath();
+  ring(I.palaceWall.r);
+  ctx.fillStyle = IC_INK.palace;
+  ctx.fill();
+  IMPERIAL_SECTORS.forEach(([, b], i) => {
+    ctx.beginPath();
+    wedge(I.palaceWall.r, I.cityWall.r, b, b + 60);
+    ctx.fillStyle = IC_INK.district[i % 2];
+    ctx.fill();
+  });
+  ctx.beginPath();
+  wedge(I.cityWall.r, I.waterfront.r1, I.waterfront.b0, I.waterfront.b1);
+  box(plan.prison, I.prison.half);
+  box(plan.university, I.university.half);
+  ctx.fillStyle = IC_INK.outer;
+  ctx.fill();
   // the roads: Green Emperor Way and the rings, the avenues and radials, the causeways and the bridge, the piers
   for (const rd of plan.roads) {
-    ctx.strokeStyle = IC_INK.road; ctx.lineWidth = Math.max(rd.kind === 'way' ? 1.6 : 1, rd.w * k);
+    ctx.strokeStyle = IC_INK.road;
+    ctx.lineWidth = Math.max(rd.kind === 'way' ? 1.6 : 1, rd.w * k);
     ctx.beginPath();
     if (rd.kind === 'ring' || rd.kind === 'way') ring(rd.r);
-    else { ctx.moveTo(...P(...polar(rd.b, I.palaceWall.r))); ctx.lineTo(...P(...polar(rd.b, I.cityWall.r))); }
+    else {
+      ctx.moveTo(...P(...polar(rd.b, I.palaceWall.r)));
+      ctx.lineTo(...P(...polar(rd.b, I.cityWall.r)));
+    }
     ctx.stroke();
   }
   for (const w of plan.ways) line(w, I.causeway, 1, IC_INK.road);
   line(plan.bridge, I.bridge.w, 1.6, IC_INK.wall);
   for (const p of plan.piers) line(p, I.waterfront.pierW, 0.8, IC_INK.stone);
   // the landmarks
-  ctx.beginPath(); ring(I.palace.r1); ring(I.palace.r0); ctx.fillStyle = IC_INK.stone; ctx.fill('evenodd');
+  ctx.beginPath();
+  ring(I.palace.r1);
+  ring(I.palace.r0);
+  ctx.fillStyle = IC_INK.stone;
+  ctx.fill('evenodd');
   // the palace gardens round the tower: their ring walks, their paths out to the Way, their fountains, the emperors' tombs
   if (view.scale >= 0.12) {
     const G = I.gardens;
     ctx.strokeStyle = IC_INK.street;
-    for (const w of G.walks) { ctx.lineWidth = Math.max(0.8, G.walk * k); ctx.beginPath(); ring(w); ctx.stroke(); }
-    ctx.lineWidth = Math.max(0.8, G.path * k); ctx.beginPath();
-    for (const b of plan.gardenPaths) { ctx.moveTo(...P(...polar(b, I.palace.r1 + I.palace.terrace))); ctx.lineTo(...P(...polar(b, I.way.r0))); }
+    for (const w of G.walks) {
+      ctx.lineWidth = Math.max(0.8, G.walk * k);
+      ctx.beginPath();
+      ring(w);
+      ctx.stroke();
+    }
+    ctx.lineWidth = Math.max(0.8, G.path * k);
+    ctx.beginPath();
+    for (const b of plan.gardenPaths) {
+      ctx.moveTo(...P(...polar(b, I.palace.r1 + I.palace.terrace)));
+      ctx.lineTo(...P(...polar(b, I.way.r0)));
+    }
     ctx.stroke();
     ctx.fillStyle = IC_INK.water;
-    for (const f of plan.fountains) { ctx.beginPath(); ctx.arc(...P(...f), Math.max(1.5, (G.fountainR + G.round) * k), 0, TAU); ctx.fill(); }
+    for (const f of plan.fountains) {
+      ctx.beginPath();
+      ctx.arc(...P(...f), Math.max(1.5, (G.fountainR + G.round) * k), 0, TAU);
+      ctx.fill();
+    }
     ctx.fillStyle = IC_INK.stone;
-    for (const tb of plan.tombs) { const [x, y] = P(...tb), w = Math.max(2, I.tombs.w * k); ctx.fillRect(x - w / 2, y - w / 2, w, w); }
+    for (const tb of plan.tombs) {
+      const [x, y] = P(...tb),
+        w = Math.max(2, I.tombs.w * k);
+      ctx.fillRect(x - w / 2, y - w / 2, w, w);
+    }
   }
-  ctx.beginPath(); ring(I.tower.plinthR); ctx.fillStyle = IC_INK.plinth; ctx.fill(); ctx.strokeStyle = IC_INK.gilt; ctx.lineWidth = 1.4; ctx.stroke();
-  ctx.beginPath(); ring(I.tower.shaftR0); ctx.fillStyle = IC_INK.tower; ctx.fill(); ctx.stroke();
-  ctx.beginPath(); ctx.arc(...P(...plan.arena), Math.max(3, 48 * k), 0, TAU); ctx.fillStyle = IC_INK.stone; ctx.fill(); ctx.strokeStyle = IC_INK.wall; ctx.lineWidth = 1; ctx.stroke();
+  ctx.beginPath();
+  ring(I.tower.plinthR);
+  ctx.fillStyle = IC_INK.plinth;
+  ctx.fill();
+  ctx.strokeStyle = IC_INK.gilt;
+  ctx.lineWidth = 1.4;
+  ctx.stroke();
+  ctx.beginPath();
+  ring(I.tower.shaftR0);
+  ctx.fillStyle = IC_INK.tower;
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(...P(...plan.arena), Math.max(3, 48 * k), 0, TAU);
+  ctx.fillStyle = IC_INK.stone;
+  ctx.fill();
+  ctx.strokeStyle = IC_INK.wall;
+  ctx.lineWidth = 1;
+  ctx.stroke();
   {
-    const [tx, ty] = P(...plan.temple), a = th(I.temple.b) + Math.PI / 2;
-    ctx.save(); ctx.translate(tx, ty); ctx.rotate(a);
-    ctx.fillStyle = IC_INK.stone; ctx.strokeStyle = IC_INK.wall; ctx.lineWidth = 1;
-    const w = Math.max(3, I.temple.w * k), l = Math.max(5, I.temple.l * k);
-    ctx.fillRect(-w / 2, -l / 2, w, l); ctx.strokeRect(-w / 2, -l / 2, w, l);
+    const [tx, ty] = P(...plan.temple),
+      a = th(I.temple.b) + Math.PI / 2;
+    ctx.save();
+    ctx.translate(tx, ty);
+    ctx.rotate(a);
+    ctx.fillStyle = IC_INK.stone;
+    ctx.strokeStyle = IC_INK.wall;
+    ctx.lineWidth = 1;
+    const w = Math.max(3, I.temple.w * k),
+      l = Math.max(5, I.temple.l * k);
+    ctx.fillRect(-w / 2, -l / 2, w, l);
+    ctx.strokeRect(-w / 2, -l / 2, w, l);
     ctx.restore();
   }
-  ctx.beginPath(); box(plan.market, I.market.half); ctx.fillStyle = IC_INK.square; ctx.fill();
-  ctx.beginPath(); ctx.arc(...P(...plan.pool), Math.max(2, I.pool.r0 * k), 0, TAU); ctx.fillStyle = IC_INK.water; ctx.fill();
-  ctx.beginPath(); ctx.arc(...P(...plan.divines), Math.max(2, I.divines.court * k), 0, TAU); ctx.fillStyle = IC_INK.square; ctx.fill();
-  ctx.beginPath(); ctx.arc(...P(...plan.statue), Math.max(2, (I.statue.plaza / 2) * k), 0, TAU); ctx.fillStyle = IC_INK.square; ctx.fill();
+  ctx.beginPath();
+  box(plan.market, I.market.half);
+  ctx.fillStyle = IC_INK.square;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(...P(...plan.pool), Math.max(2, I.pool.r0 * k), 0, TAU);
+  ctx.fillStyle = IC_INK.water;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(...P(...plan.divines), Math.max(2, I.divines.court * k), 0, TAU);
+  ctx.fillStyle = IC_INK.square;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(...P(...plan.statue), Math.max(2, (I.statue.plaza / 2) * k), 0, TAU);
+  ctx.fillStyle = IC_INK.square;
+  ctx.fill();
   // the walls: the city's, the palace's, the districts', the Prison's and the University's curtains
   ctx.strokeStyle = IC_INK.wall;
-  ctx.lineWidth = Math.max(2, I.cityWall.thick * k); ctx.beginPath(); ring(I.cityWall.r); ctx.stroke();
-  ctx.lineWidth = Math.max(1.6, I.palaceWall.thick * k); ctx.beginPath(); ring(I.palaceWall.r); ctx.stroke();
+  ctx.lineWidth = Math.max(2, I.cityWall.thick * k);
+  ctx.beginPath();
+  ring(I.cityWall.r);
+  ctx.stroke();
+  ctx.lineWidth = Math.max(1.6, I.palaceWall.thick * k);
+  ctx.beginPath();
+  ring(I.palaceWall.r);
+  ctx.stroke();
   for (const w of plan.districtWalls) line(w, I.districtWall.thick, 1.2, IC_INK.wall);
-  ctx.lineWidth = Math.max(1.2, 6 * k); ctx.beginPath(); box(plan.prison, I.prison.half); box(plan.university, I.university.half); ctx.stroke();
+  ctx.lineWidth = Math.max(1.2, 6 * k);
+  ctx.beginPath();
+  box(plan.prison, I.prison.half);
+  box(plan.university, I.university.half);
+  ctx.stroke();
   // the gates, parchment in the wall's ink
-  const gate = (at, w) => { const [x, y] = P(...at), s = Math.max(3.5, w * k); ctx.fillRect(x - s / 2, y - s / 2, s, s); ctx.strokeRect(x - s / 2, y - s / 2, s, s); };
-  ctx.fillStyle = IC_INK.gate; ctx.strokeStyle = IC_INK.wall; ctx.lineWidth = 1;
+  const gate = (at, w) => {
+    const [x, y] = P(...at),
+      s = Math.max(3.5, w * k);
+    ctx.fillRect(x - s / 2, y - s / 2, s, s);
+    ctx.strokeRect(x - s / 2, y - s / 2, s, s);
+  };
+  ctx.fillStyle = IC_INK.gate;
+  ctx.strokeStyle = IC_INK.wall;
+  ctx.lineWidth = 1;
   for (const g of plan.cityGates) gate(g, I.cityWall.gate);
   for (const g of plan.palaceGates) gate(g, I.palaceWall.gate);
   if (view.scale >= 0.12) for (const g of plan.districtGates) gate(g, I.districtWall.gate);
@@ -255,14 +413,18 @@ export function paintImperialCity(ctx, view) {
 
 /** The plan's names, haloed then inked - the districts' and the landmarks', each from the zoom it is lettered at. */
 export function paintImperialLabels(ctx, view) {
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
   for (const l of imperialCityPlan().labels) {
     if (view.scale < l.zoom) continue;
     const text = l.district ? imperialDistrictName(l.district) : IC_LANDMARK_TEXT[l.landmark]();
     const [x, y] = toPaper(view, ...icSheetAt(l.at[0], l.at[1]));
     ctx.font = `${l.district ? '600 ' : l.landmark === 'lake' ? 'italic ' : ''}${l.size}px ${NAME_FACE}`;
-    ctx.lineWidth = 2 * HALO_PEN; ctx.strokeStyle = TOWN_PEN.halo; ctx.strokeText(text, x, y);
-    ctx.fillStyle = TOWN_PEN.name; ctx.fillText(text, x, y);
+    ctx.lineWidth = 2 * HALO_PEN;
+    ctx.strokeStyle = TOWN_PEN.halo;
+    ctx.strokeText(text, x, y);
+    ctx.fillStyle = TOWN_PEN.name;
+    ctx.fillText(text, x, y);
   }
 }
 
@@ -273,16 +435,41 @@ export function paintImperialLabels(ctx, view) {
 function paintFabricCell(ctx, view, f) {
   const k = view.scale / WORLD_PER_PX;
   const P = (x, z) => toPaper(view, ...icSheetAt(x, z));
-  const poly = (q) => { const [x0, y0] = P(q[0][0], q[0][1]); ctx.moveTo(x0, y0); for (let i = 1; i < q.length; i++) ctx.lineTo(...P(q[i][0], q[i][1])); ctx.closePath(); };
-  for (const s of f.streets) { ctx.strokeStyle = IC_INK.street; ctx.lineWidth = Math.max(0.6, s.w * k); ctx.beginPath(); ctx.moveTo(...P(...s.a)); ctx.lineTo(...P(...s.b)); ctx.stroke(); }
-  const fill = (list, ink) => { if (!list?.length) return; ctx.beginPath(); for (const q of list) poly(q); ctx.fillStyle = ink; ctx.fill(); };
+  const poly = (q) => {
+    const [x0, y0] = P(q[0][0], q[0][1]);
+    ctx.moveTo(x0, y0);
+    for (let i = 1; i < q.length; i++) ctx.lineTo(...P(q[i][0], q[i][1]));
+    ctx.closePath();
+  };
+  for (const s of f.streets) {
+    ctx.strokeStyle = IC_INK.street;
+    ctx.lineWidth = Math.max(0.6, s.w * k);
+    ctx.beginPath();
+    ctx.moveTo(...P(...s.a));
+    ctx.lineTo(...P(...s.b));
+    ctx.stroke();
+  }
+  const fill = (list, ink) => {
+    if (!list?.length) return;
+    ctx.beginPath();
+    for (const q of list) poly(q);
+    ctx.fillStyle = ink;
+    ctx.fill();
+  };
   fill(f.parks, IC_INK.park);
   fill(f.canals, IC_INK.water);
   fill(f.squares, IC_INK.square);
   fill(f.plots, IC_INK.building);
   if (f.yards.length) {
-    ctx.strokeStyle = IC_INK.stone; ctx.lineWidth = Math.max(0.5, 0.4 * k);
-    ctx.beginPath(); for (const y of f.yards) { if (!y?.a || !y?.b) continue; ctx.moveTo(...P(...y.a)); ctx.lineTo(...P(...y.b)); } ctx.stroke();
+    ctx.strokeStyle = IC_INK.stone;
+    ctx.lineWidth = Math.max(0.5, 0.4 * k);
+    ctx.beginPath();
+    for (const y of f.yards) {
+      if (!y?.a || !y?.b) continue;
+      ctx.moveTo(...P(...y.a));
+      ctx.lineTo(...P(...y.b));
+    }
+    ctx.stroke();
   }
 }
 
@@ -293,8 +480,11 @@ function paintFabricCell(ctx, view, f) {
  * @param {any} deps @param {(deps: any) => any} makeTown
  */
 export function createImperialSheet(deps, makeTown) {
-  const s = deps.imperial, sx = s % IMPERIAL_SPAN, sy = Math.floor(s / IMPERIAL_SPAN);
-  const offX = sx * IC_SLICE_PX, offY = sy * IC_SLICE_PX;
+  const s = deps.imperial,
+    sx = s % IMPERIAL_SPAN,
+    sy = Math.floor(s / IMPERIAL_SPAN);
+  const offX = sx * IC_SLICE_PX,
+    offY = sy * IC_SLICE_PX;
   const fieldH = Math.max(1, deps.gridH ?? 8) * BLOCK_PX;
   // the slice's own blocks, names and marks - its player the city's to draw, its title the city's to say
   const slice = makeTown({ ...deps, imperial: null, player: null, title: '' });
@@ -312,7 +502,10 @@ export function createImperialSheet(deps, makeTown) {
     return { ...p, x: offX + p.x, y: offY + (fieldH - 1) - p.y };
   }
   /** The player's place in the city's metres. */
-  const meMetres = () => { const m = me(); return m ? [m.x * WORLD_PER_PX - IC_HALF_M, m.y * WORLD_PER_PX - IC_HALF_M] : null; };
+  const meMetres = () => {
+    const m = me();
+    return m ? [m.x * WORLD_PER_PX - IC_HALF_M, m.y * WORLD_PER_PX - IC_HALF_M] : null;
+  };
 
   /** The fabric's cells to build: the player's district's own cells (the port's, not Daggerfall's blocks) within
    *  IC_FABRIC_REACH of the player's, nearest first. */
@@ -320,12 +513,15 @@ export function createImperialSheet(deps, makeTown) {
     if (queue) return queue;
     const at = meMetres();
     if (!at) return (queue = []);
-    const half = IMPERIAL_CELLS / 2, r0 = Math.floor(at[1] / IC_CELL_M + half), c0 = Math.floor(at[0] / IC_CELL_M + half);
+    const half = IMPERIAL_CELLS / 2,
+      r0 = Math.floor(at[1] / IC_CELL_M + half),
+      c0 = Math.floor(at[0] / IC_CELL_M + half);
     const district = imperialDistrictAt(at[0], at[1]);
     const out = [];
     for (let dr = -IC_FABRIC_REACH; dr <= IC_FABRIC_REACH; dr++) {
       for (let dc = -IC_FABRIC_REACH; dc <= IC_FABRIC_REACH; dc++) {
-        const r = r0 + dr, c = c0 + dc;
+        const r = r0 + dr,
+          c = c0 + dc;
         if (r < 0 || c < 0 || r >= IMPERIAL_CELLS || c >= IMPERIAL_CELLS) continue;
         if (!imperialCodeCell(imperialCell(r, c) ?? '') || imperialCellDistrict(r, c) !== district) continue;
         out.push({ r, c, d: dr * dr + dc * dc });
@@ -342,7 +538,16 @@ export function createImperialSheet(deps, makeTown) {
       const key = cell.r * IMPERIAL_CELLS + cell.c;
       if (fabric.has(key)) continue;
       const L = fabricCell(cell.r, cell.c);
-      fabric.set(key, { r: cell.r, c: cell.c, plots: L.plots.map((p) => p.q), squares: L.squares, parks: L.parks, canals: L.canals, yards: L.yards ?? [], streets: fabricStreetsIn(cell.r, cell.c) });
+      fabric.set(key, {
+        r: cell.r,
+        c: cell.c,
+        plots: L.plots.map((p) => p.q),
+        squares: L.squares,
+        parks: L.parks,
+        canals: L.canals,
+        yards: L.yards ?? [],
+        streets: fabricStreetsIn(cell.r, cell.c),
+      });
       made++;
     }
     return made;
@@ -352,7 +557,10 @@ export function createImperialSheet(deps, makeTown) {
   return {
     id: 'town',
     size: () => ({ width: IC_SHEET_PX, height: IC_SHEET_PX }),
-    ensure() { slice.ensure(); return imperialCityPlan(); },
+    ensure() {
+      slice.ensure();
+      return imperialCityPlan();
+    },
     staticKey: () => `ic|${s}|${fabric.size}|${slice.staticKey()}`,
 
     paintStatic(ctx, env) {
@@ -365,9 +573,14 @@ export function createImperialSheet(deps, makeTown) {
       if (env.view.scale >= IC_FABRIC_ZOOM) {
         wantFabric = true;
         // the cells on the paper alone
-        const [mx0, mz0] = toMap(env.view, 0, 0), [mx1, mz1] = toMap(env.view, paperW, paperH);
-        const c0 = Math.floor(mx0 / BLOCK_PX) - 1, c1 = Math.floor(mx1 / BLOCK_PX) + 1, r0 = Math.floor(mz0 / BLOCK_PX) - 1, r1 = Math.floor(mz1 / BLOCK_PX) + 1;
-        for (const f of fabric.values()) if (f.r >= r0 && f.r <= r1 && f.c >= c0 && f.c <= c1) paintFabricCell(ctx, env.view, f);
+        const [mx0, mz0] = toMap(env.view, 0, 0),
+          [mx1, mz1] = toMap(env.view, paperW, paperH);
+        const c0 = Math.floor(mx0 / BLOCK_PX) - 1,
+          c1 = Math.floor(mx1 / BLOCK_PX) + 1,
+          r0 = Math.floor(mz0 / BLOCK_PX) - 1,
+          r1 = Math.floor(mz1 / BLOCK_PX) + 1;
+        for (const f of fabric.values())
+          if (f.r >= r0 && f.r <= r1 && f.c >= c0 && f.c <= c1) paintFabricCell(ctx, env.view, f);
         const plan = slice.ensure();
         if (plan) paintTownStatic(ctx, plan, subView(env.view), { paperW, paperH, dpr, clear: false });
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -386,7 +599,9 @@ export function createImperialSheet(deps, makeTown) {
       }
     },
 
-    pickAt() { /* the city's plan picks nothing - its names are read */ },
+    pickAt() {
+      /* the city's plan picks nothing - its names are read */
+    },
 
     hoverLabel(px, py) {
       if (lastView && lastView.scale >= IC_FABRIC_ZOOM) {
@@ -395,7 +610,9 @@ export function createImperialSheet(deps, makeTown) {
       }
       if (lastView) {
         const [u, v] = toMap(lastView, px, py);
-        const name = imperialDistrictName(imperialDistrictAt(u * WORLD_PER_PX - IC_HALF_M, v * WORLD_PER_PX - IC_HALF_M));
+        const name = imperialDistrictName(
+          imperialDistrictAt(u * WORLD_PER_PX - IC_HALF_M, v * WORLD_PER_PX - IC_HALF_M),
+        );
         if (name) return { label: name, cursor: '' };
       }
       return { label: deps.title ?? '', cursor: '' };
@@ -403,12 +620,20 @@ export function createImperialSheet(deps, makeTown) {
 
     /** The fabric fills in on the window's beat, a cell a tick, while it is wanted and short. */
     breathes: () => fabricPending() || !!slice.breathes?.(),
-    mark() { /* the middle button marks the bay */ },
-    key() { return false; },
-    tick() { if (fabricPending()) buildFabric(IC_FABRIC_PER_TICK); },
-    mount() { },
-    unmount() { },
-    context() { return false; },
+    mark() {
+      /* the middle button marks the bay */
+    },
+    key() {
+      return false;
+    },
+    tick() {
+      if (fabricPending()) buildFabric(IC_FABRIC_PER_TICK);
+    },
+    mount() {},
+    unmount() {},
+    context() {
+      return false;
+    },
 
     /** At rest: the whole city, from the far shore round - Find me is the way to the player. */
     homeView: (limits) => fitView(limits),
@@ -423,13 +648,23 @@ export function createImperialSheet(deps, makeTown) {
     },
 
     // ── handles for the pins ────────────────────────────────────────
-    get plan() { return imperialCityPlan(); },
-    get slice() { return slice; },
-    get fabricCells() { return fabric.size; },
-    get fabricWanted() { return fabricQueue().length; },
+    get plan() {
+      return imperialCityPlan();
+    },
+    get slice() {
+      return slice;
+    },
+    get fabricCells() {
+      return fabric.size;
+    },
+    get fabricWanted() {
+      return fabricQueue().length;
+    },
     _fabricRows: () => [...fabric.values()].map((f) => ({ r: f.r, c: f.c })),
     ink: IC_INK,
     names: () => slice.names(),
-    get blockPx() { return BLOCK_PX; },
+    get blockPx() {
+      return BLOCK_PX;
+    },
   };
 }

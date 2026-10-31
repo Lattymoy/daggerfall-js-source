@@ -12,8 +12,8 @@
   {
     "name": "SCALE4b-guild-board-swept-on-read",
     "file": "server-account/src/guildBoard.js",
-    "old": "  const { me, powers } = a;\n  const g = await db.prepare('SELECT id, name, tag, heraldry FROM guilds WHERE id = ?').bind(me.guild_id).first();",
-    "new": "  const { me, powers } = a;\n  await sweepGuildNotes(db, nowS);\n  const g = await db.prepare('SELECT id, name, tag, heraldry FROM guilds WHERE id = ?').bind(me.guild_id).first();",
+    "old": "  const g = await db.prepare('SELECT id, name, tag, heraldry FROM guilds WHERE id = ?').bind(me.guild_id).first();",
+    "new": "  await sweepGuildNotes(db, nowS);\n  const g = await db.prepare('SELECT id, name, tag, heraldry FROM guilds WHERE id = ?').bind(me.guild_id).first();",
     "tests": [
       "test/server/scale4b.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "SCALE4b-commissions-unasked",
     "file": "server-account/src/writs.js",
-    "old": "  if (Number(due?.due)) {\n    await db.batch([\n      db.prepare(`UPDATE commissions SET state = 'expired'",
-    "new": "  if (true) {\n    await db.batch([\n      db.prepare(`UPDATE commissions SET state = 'expired'",
+    "old": "  if (Number(due?.due)) {",
+    "new": "  if (true) {",
     "tests": [
       "test/server/scale4b.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "SCALE4b-commissions-inverted",
     "file": "server-account/src/writs.js",
-    "old": "  if (Number(due?.due)) {\n    await db.batch([\n      db.prepare(`UPDATE commissions SET state = 'expired'",
-    "new": "  if (!Number(due?.due)) {\n    await db.batch([\n      db.prepare(`UPDATE commissions SET state = 'expired'",
+    "old": "  if (Number(due?.due)) {",
+    "new": "  if (!Number(due?.due)) {",
     "tests": [
       "test/server/scale4b.test.js"
     ],

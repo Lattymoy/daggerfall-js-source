@@ -40,9 +40,9 @@ import { MOBILE_TYPES as M } from '../../characters/mobile/mobileTypes.js';
 import { assignModBundle, isSilencedEffect, entityIsParalyzed } from '../effects.js';
 import { DISSOLVE_ARCANE } from '../dissolve.js';
 import { playerDoor } from '../playerDoor.js';
-import { t } from '../textManager.js';   // L10N4: UNQUIET's words through the text core
-import { lessonOf, ADAPT_MAX, ADAPT } from './revenantFeud.js';   // UNQUIET III: what a revenant of mastery trains against
-import { isClassEnemyId } from '../../characters/enemy/enemyBasics.js';   // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
+import { t } from '../textManager.js'; // L10N4: UNQUIET's words through the text core
+import { lessonOf, ADAPT_MAX, ADAPT } from './revenantFeud.js'; // UNQUIET III: what a revenant of mastery trains against
+import { isClassEnemyId } from '../../characters/enemy/enemyBasics.js'; // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
 
 // ── born of flight, ranked by surviving ─────────────────────────────
 /** A revenant's kill of the player (or a companion it fells) ranks it up only every this many times - an escape ranks
@@ -58,8 +58,10 @@ export const BLOOD_DEEDS = Object.freeze(['slew', 'felled']);
 export const TEAR_RANK = 2;
 /** Does `deed` rank an existing revenant up, with `blood` its blood-deeds since its last rank and `tears` its tear-aways
  *  (this one counted in either), `unbroken` the escape a tear-away? */
-export const deedRanks = (deed, blood, { unbroken = false, tears = 0 } = {}) => (deed === 'fled' && unbroken ? (tears | 0) >= TEAR_RANK
-  : SURVIVING_DEEDS.includes(deed) || (BLOOD_DEEDS.includes(deed) && (blood | 0) >= BLOOD_RANK));
+export const deedRanks = (deed, blood, { unbroken = false, tears = 0 } = {}) =>
+  deed === 'fled' && unbroken
+    ? (tears | 0) >= TEAR_RANK
+    : SURVIVING_DEEDS.includes(deed) || (BLOOD_DEEDS.includes(deed) && (blood | 0) >= BLOOD_RANK);
 /** A record's blood count read back: a whole number under BLOOD_RANK. */
 export const sanitizeBlood = (v) => (Number.isInteger(v) && v >= 0 ? Math.min(BLOOD_RANK - 1, v) : 0);
 /** A record's tear-away count read back: a whole number under TEAR_RANK. */
@@ -87,8 +89,27 @@ export const CRAFTS = Object.freeze(['smoke', 'blink', 'sink', 'bolt']);
 export const CRAFT_TINT = Object.freeze({ blink: DISSOLVE_ARCANE, sink: Object.freeze([0.5, 0.36, 0.2]) });
 /** Who blinks: a caster's class, a spirit, a lich, a nymph, a shaman, every daedra and atronach (never the imp - under
  *  revenant.js REVENANT_MIN_LEVEL, it never rises). */
-const BLINKERS = new Set([M.Mage, M.Sorcerer, M.Healer, M.Battlemage, M.Ghost, M.Wraith, M.Lich, M.AncientLich, M.Nymph, M.OrcShaman,
-  M.FireDaedra, M.FrostDaedra, M.Daedroth, M.DaedraSeducer, M.DaedraLord, M.FireAtronach, M.IceAtronach, M.IronAtronach, M.FleshAtronach]);
+const BLINKERS = new Set([
+  M.Mage,
+  M.Sorcerer,
+  M.Healer,
+  M.Battlemage,
+  M.Ghost,
+  M.Wraith,
+  M.Lich,
+  M.AncientLich,
+  M.Nymph,
+  M.OrcShaman,
+  M.FireDaedra,
+  M.FrostDaedra,
+  M.Daedroth,
+  M.DaedraSeducer,
+  M.DaedraLord,
+  M.FireAtronach,
+  M.IceAtronach,
+  M.IronAtronach,
+  M.FleshAtronach,
+]);
 /** Who sinks: the walking dead, and the spriggan into its roots. */
 const SINKERS = new Set([M.SkeletalWarrior, M.Zombie, M.Mummy, M.Vampire, M.VampireAncient, M.Spriggan]);
 /** ITS CRAFT, by its kind: a blinker blinks, a sinker sinks, any other person throws down smoke, anything else bolts. */
@@ -103,7 +124,8 @@ export function fleeCraftOf(mobileType) {
 export const revenantCraft = (mobileType, rank) => ((rank | 0) >= CRAFT.RANK ? fleeCraftOf(mobileType) : null);
 /** The pace its run is at: a bolt's, a blinker's while it opens its rift, a sink's shuffle (it stands and goes into the
  *  ground), else `pace`. */
-export const craftPace = (craft, pace) => (craft === 'bolt' ? CRAFT.BOLT_PACE : craft === 'blink' ? CRAFT.BLINK_PACE : craft === 'sink' ? CRAFT.SINK_PACE : pace);
+export const craftPace = (craft, pace) =>
+  craft === 'bolt' ? CRAFT.BOLT_PACE : craft === 'blink' ? CRAFT.BLINK_PACE : craft === 'sink' ? CRAFT.SINK_PACE : pace;
 
 /**
  * THE CRAFT BEGUN, as it breaks (revenant.js revenantFleeStep's 'start'): its body's `_craft` (what its flee card says),
@@ -120,7 +142,16 @@ export function beginCraft(f, craft, { now = Date.now() } = {}) {
   f._craft = { kind: craft, at: now, t: 0, hp: e.health, fired: 0, bundle: null };
   const at = f.ai?.feet ?? null;
   if (craft === 'smoke') {
-    try { f._craft.bundle = assignModBundle(e, { name: t('rvn.unq.craft.smoke', 'Smoke'), kind: 'chameleonNormal', rounds: CRAFT.SMOKE_ROUNDS })?.bundleId ?? null; } catch { /* no effects: it runs plain */ }
+    try {
+      f._craft.bundle =
+        assignModBundle(e, {
+          name: t('rvn.unq.craft.smoke', 'Smoke'),
+          kind: 'chameleonNormal',
+          rounds: CRAFT.SMOKE_ROUNDS,
+        })?.bundleId ?? null;
+    } catch {
+      /* no effects: it runs plain */
+    }
     puff(at);
   } else if (craft === 'sink') {
     f.portalFx = { dir: 'out', at: now, delay: CRAFT.SINK_DELAY, ms: CRAFT.SINK_MS, tint: CRAFT_TINT.sink };
@@ -130,7 +161,11 @@ export function beginCraft(f, craft, { now = Date.now() } = {}) {
 /** The door's leaving puff where it stands (the magic engine's 'vanish' technique), if the scene has one. */
 function puff(at) {
   if (!at) return;
-  try { playerDoor()?.fx?.('vanish', [at[0], at[1], at[2]]); } catch { /* a scene with no effects */ }
+  try {
+    playerDoor()?.fx?.('vanish', [at[0], at[1], at[2]]);
+  } catch {
+    /* a scene with no effects */
+  }
 }
 /**
  * ONE FRAME OF ITS CRAFT while it runs (revenant.js revenantFleeStep): 'gone' - through (a blink faded, a sink under):
@@ -141,26 +176,43 @@ function puff(at) {
  * `dt`, the wall's since it broke.
  */
 export function craftStep(f, now = Date.now(), dt = null) {
-  const c = f?._craft, e = f?.entity;
+  const c = f?._craft,
+    e = f?.entity;
   if (!c || !e) return null;
   c.t = Number.isFinite(dt) ? (c.t ?? 0) + Math.max(0, dt) * 1000 : now - c.at;
   if (c.kind === 'sink') {
-    if (e.health < c.hp) { f.portalFx = null; c.kind = 'broken'; return 'broken'; }
-    if (f.portalFx) f.portalFx.at = now - c.t;   // its look on the pool's clock
+    if (e.health < c.hp) {
+      f.portalFx = null;
+      c.kind = 'broken';
+      return 'broken';
+    }
+    if (f.portalFx) f.portalFx.at = now - c.t; // its look on the pool's clock
     return c.t >= CRAFT.SINK_DELAY + CRAFT.SINK_MS ? 'gone' : null;
   }
   if (c.kind !== 'blink') return null;
   if (!c.fired) {
     if (c.t < CRAFT.BLINK_DELAY * 1000) return null;
     let held = false;
-    try { held = isSilencedEffect(e) || entityIsParalyzed(e); } catch { held = false; }
-    if (held) { c.kind = 'run'; return null; }
-    c.fired = c.t; c.hp = e.health;
+    try {
+      held = isSilencedEffect(e) || entityIsParalyzed(e);
+    } catch {
+      held = false;
+    }
+    if (held) {
+      c.kind = 'run';
+      return null;
+    }
+    c.fired = c.t;
+    c.hp = e.health;
     f.portalFx = { dir: 'out', at: now, delay: 0, ms: CRAFT.BLINK_MS, tint: CRAFT_TINT.blink };
     puff(f.ai?.feet ?? null);
     return null;
   }
-  if (e.health < c.hp) { f.portalFx = null; c.kind = 'run'; return null; }
+  if (e.health < c.hp) {
+    f.portalFx = null;
+    c.kind = 'run';
+    return null;
+  }
   if (f.portalFx) f.portalFx.at = now - (c.t - c.fired);
   return c.t - c.fired >= CRAFT.BLINK_MS ? 'gone' : null;
 }
@@ -170,8 +222,10 @@ export function craftStep(f, now = Date.now(), dt = null) {
  *  dissolve gone (a sink rising to its last stand stood half under the ground, going on fading). */
 export function endCraft(f) {
   if (!f?._craft) return;
-  const id = f._craft.bundle, e = f.entity;
-  if (id != null && Array.isArray(e?.activeEffects)) e.activeEffects = e.activeEffects.filter((a) => a?.bundleId !== id);
+  const id = f._craft.bundle,
+    e = f.entity;
+  if (id != null && Array.isArray(e?.activeEffects))
+    e.activeEffects = e.activeEffects.filter((a) => a?.bundleId !== id);
   f._craft = null;
   if (f.portalFx?.dir === 'out') f.portalFx = null;
 }
@@ -183,9 +237,15 @@ export function endCraft(f) {
 export const WOUND = Object.freeze({ MAX: 3, RESIST: -15, HEAL_DAYS: 5 });
 /** UNQUIET III (section 48): does `day` heal its oldest wound - a whole multiple of WOUND.HEAL_DAYS after `woundDay`, the
  *  day it took its last? (a new wound starts the count again) */
-export const healsOn = (woundDay, day) => { const n = day - woundDay; return Number.isInteger(woundDay) && woundDay >= 0 && n > 0 && n % WOUND.HEAL_DAYS === 0; };
+export const healsOn = (woundDay, day) => {
+  const n = day - woundDay;
+  return Number.isInteger(woundDay) && woundDay >= 0 && n > 0 && n % WOUND.HEAL_DAYS === 0;
+};
 /** The whole days until its oldest wound heals on `day` (0: none to heal). */
-export const daysToHeal = (woundDay, day, wounds) => (Array.isArray(wounds) && wounds.length && Number.isInteger(woundDay) && woundDay >= 0 ? WOUND.HEAL_DAYS - (Math.max(0, day - woundDay) % WOUND.HEAL_DAYS) : 0);
+export const daysToHeal = (woundDay, day, wounds) =>
+  Array.isArray(wounds) && wounds.length && Number.isInteger(woundDay) && woundDay >= 0
+    ? WOUND.HEAL_DAYS - (Math.max(0, day - woundDay) % WOUND.HEAL_DAYS)
+    : 0;
 /** What each wound does (a share of its health or its blows, a share of its poise, its Speed, an element's saving
  *  throw) and the blow that leaves it (the ledger's class - systems/feudLedger.js FEUD_CLASSES). */
 export const WOUNDS = Object.freeze({
@@ -204,13 +264,19 @@ export const isWound = (v) => typeof v === 'string' && WOUND_KEYS.includes(v);
 /** The wound the blow that broke it leaves - by its class (`cls`, the ledger's `last`); none for another. */
 export const woundOf = (cls) => WOUND_KEYS.find((k) => WOUNDS[k].from.includes(cls)) ?? null;
 /** `wounds` with `w` taken now - a wound it already bears opens again (the newest), WOUND.MAX kept. */
-export const withWound = (wounds, w) => (isWound(w) ? [...(Array.isArray(wounds) ? wounds : []).filter((x) => x !== w), w].slice(-WOUND.MAX) : [...(Array.isArray(wounds) ? wounds : [])]);
+export const withWound = (wounds, w) =>
+  isWound(w)
+    ? [...(Array.isArray(wounds) ? wounds : []).filter((x) => x !== w), w].slice(-WOUND.MAX)
+    : [...(Array.isArray(wounds) ? wounds : [])];
 /** A record's wounds read back: known ones, once each, WOUND.MAX at most. */
 export const sanitizeWounds = (v) => (Array.isArray(v) ? [...new Set(v.filter(isWound))].slice(-WOUND.MAX) : []);
 /** WHAT ITS WOUNDS DO, at its stand: `health` and `blows` multiples, `poise` a multiple, `speed` points, `resist` by
  *  element (WOUND.RESIST each). Frozen. */
 export function woundEffects(wounds) {
-  let health = 1, blows = 1, poise = 1, speed = 0;
+  let health = 1,
+    blows = 1,
+    poise = 1,
+    speed = 0;
   /** @type {Record<string, number>} */
   const resist = {};
   for (const w of sanitizeWounds(wounds)) {
@@ -239,9 +305,16 @@ export const AMBITIONS = Object.freeze(['vengeance', 'mastery', 'plunder']);
 /** Who wants what (systems/revenant/revenantPersonality.js's ten): the savage, the zealous and the mad want you; the
  *  proud, the cold and the honourable want to be better than you; the rest want what is on the road. */
 const AMBITION_OF = Object.freeze({
-  brutal: 'vengeance', zealous: 'vengeance', unhinged: 'vengeance',
-  honourable: 'mastery', arrogant: 'mastery', cold: 'mastery',
-  witty: 'plunder', humorous: 'plunder', craven: 'plunder', weary: 'plunder',
+  brutal: 'vengeance',
+  zealous: 'vengeance',
+  unhinged: 'vengeance',
+  honourable: 'mastery',
+  arrogant: 'mastery',
+  cold: 'mastery',
+  witty: 'plunder',
+  humorous: 'plunder',
+  craven: 'plunder',
+  weary: 'plunder',
 });
 /** Its ambition, by its personality - derived, never stored. */
 export const ambitionOf = (personality) => AMBITION_OF[personality] ?? 'vengeance';
@@ -257,9 +330,13 @@ export const AMBITION = Object.freeze({
   PLUNDER_MOST: 3,
 });
 /** MASTERY's festering: does `day` give a record due on `dueDay` a wrath? */
-export const masteryFestersOn = (dueDay, day) => { const past = day - dueDay - AMBITION.FESTER_DAYS; return past >= 0 && past % AMBITION.FESTER_EVERY === 0; };
+export const masteryFestersOn = (dueDay, day) => {
+  const past = day - dueDay - AMBITION.FESTER_DAYS;
+  return past >= 0 && past % AMBITION.FESTER_EVERY === 0;
+};
 /** PLUNDER's hoard at a stand: its gold's multiple for `daysPast` whole days past its due day. */
-export const plunderGold = (daysPast) => Math.min(AMBITION.PLUNDER_MOST, 1 + AMBITION.PLUNDER_PER_DAY * Math.max(0, Math.floor(Number(daysPast) || 0)));
+export const plunderGold = (daysPast) =>
+  Math.min(AMBITION.PLUNDER_MOST, 1 + AMBITION.PLUNDER_PER_DAY * Math.max(0, Math.floor(Number(daysPast) || 0)));
 
 // ── the Dread ───────────────────────────────────────────────────────
 /** THE DREAD: its health over its rank's (HEALTH), its second last stand's share (SECOND_STAND - the first is its rank's),
@@ -268,9 +345,11 @@ export const plunderGold = (daysPast) => Math.min(AMBITION.PLUNDER_MOST, 1 + AMB
 export const DREAD = Object.freeze({ HEALTH: 1.5, STANDS: 2, SECOND_STAND: 0.25, GOLD: 3, MAX: 1 });
 /** May a record ASCEND - a living revenant of rank `max`, not the Dread already, with a lair to go to ground in, while
  *  fewer than DREAD.MAX (`dreads`, the living Dread) wait? */
-export const mayAscend = (r, max, dreads = 0) => !!r && !r.dread && (r.rank | 0) >= max && !!r.lair && (dreads | 0) < DREAD.MAX;
+export const mayAscend = (r, max, dreads = 0) =>
+  !!r && !r.dread && (r.rank | 0) >= max && !!r.lair && (dreads | 0) < DREAD.MAX;
 /** Its hoard's multiple at a stand: the Dread's GOLD or a plunderer's days (`plunder`, plunderGold's), the more of them. */
-export const hoardOf = (dread, plunder = 1) => Math.max(dread ? DREAD.GOLD : 1, Number.isFinite(plunder) && plunder > 0 ? plunder : 1);
+export const hoardOf = (dread, plunder = 1) =>
+  Math.max(dread ? DREAD.GOLD : 1, Number.isFinite(plunder) && plunder > 0 ? plunder : 1);
 /** Its last stand's share at its `n`th stand (1-based) - its rank's first (`first`), the Dread's second SECOND_STAND. */
 export const dreadStandHealth = (n, first) => (n >= 2 ? DREAD.SECOND_STAND : first);
 
@@ -285,32 +364,60 @@ export function trainLesson(r) {
   if (!r || ambitionOf(r.personality) !== 'mastery') return null;
   const learned = Array.isArray(r.learned) ? r.learned : [];
   if (learned.length >= Math.min(r.rank | 0, ADAPT_MAX)) return null;
-  const count = new Map(), last = new Map();
-  (Array.isArray(r.scars) ? r.scars : []).forEach((s, i) => { if (s?.k) { count.set(s.k, (count.get(s.k) ?? 0) + 1); last.set(s.k, i); } });
+  const count = new Map(),
+    last = new Map();
+  (Array.isArray(r.scars) ? r.scars : []).forEach((s, i) => {
+    if (s?.k) {
+      count.set(s.k, (count.get(s.k) ?? 0) + 1);
+      last.set(s.k, i);
+    }
+  });
   const kinds = [...count.keys()].sort((a, b) => count.get(b) - count.get(a) || last.get(b) - last.get(a));
-  return lessonOf(kinds.filter((k) => k !== 'routed' && k !== 'night'), [...learned, ...Object.keys(ADAPT.RESIST_OF)], r.mobileType, null);
+  return lessonOf(
+    kinds.filter((k) => k !== 'routed' && k !== 'night'),
+    [...learned, ...Object.keys(ADAPT.RESIST_OF)],
+    r.mobileType,
+    null,
+  );
 }
 /** The habit of the player's a lesson answers - RVN12a's words (revenantFeud.js `ADAPT_HOW` - "blade", "arrows"), through the text core
  *  (each its own key: a word put into a sentence of another language takes that language's own). Null for none. */
 export function trainedHow(a) {
   switch (a) {
-    case 'mailed': return t('rvn.unq.how.mailed', 'blade');
-    case 'braced': return t('rvn.unq.how.braced', 'hammer');
-    case 'hewnHard': return t('rvn.unq.how.hewnHard', 'axe');
-    case 'unflinching': return t('rvn.unq.how.unflinching', 'fists');
-    case 'arrowWise': return t('rvn.unq.how.arrowWise', 'arrows');
-    case 'fireproof': return t('rvn.unq.how.fireproof', 'fire');
-    case 'rimebound': return t('rvn.unq.how.rimebound', 'frost');
-    case 'grounded': return t('rvn.unq.how.grounded', 'lightning');
-    case 'venomBlooded': return t('rvn.unq.how.venomBlooded', 'poison');
-    case 'spellScarred': return t('rvn.unq.how.spellScarred', 'magic');
-    case 'silverScarred': return t('rvn.unq.how.silverScarred', 'silver');
-    case 'steadfast': return t('rvn.unq.how.steadfast', 'heavy blows');
-    case 'patient': return t('rvn.unq.how.patient', 'footwork');
-    case 'watchful': return t('rvn.unq.how.watchful', 'tricks from behind');
-    case 'relentless': return t('rvn.unq.how.relentless', 'running');
-    case 'nightStalker': return t('rvn.unq.how.nightStalker', 'night raids');
-    default: return null;
+    case 'mailed':
+      return t('rvn.unq.how.mailed', 'blade');
+    case 'braced':
+      return t('rvn.unq.how.braced', 'hammer');
+    case 'hewnHard':
+      return t('rvn.unq.how.hewnHard', 'axe');
+    case 'unflinching':
+      return t('rvn.unq.how.unflinching', 'fists');
+    case 'arrowWise':
+      return t('rvn.unq.how.arrowWise', 'arrows');
+    case 'fireproof':
+      return t('rvn.unq.how.fireproof', 'fire');
+    case 'rimebound':
+      return t('rvn.unq.how.rimebound', 'frost');
+    case 'grounded':
+      return t('rvn.unq.how.grounded', 'lightning');
+    case 'venomBlooded':
+      return t('rvn.unq.how.venomBlooded', 'poison');
+    case 'spellScarred':
+      return t('rvn.unq.how.spellScarred', 'magic');
+    case 'silverScarred':
+      return t('rvn.unq.how.silverScarred', 'silver');
+    case 'steadfast':
+      return t('rvn.unq.how.steadfast', 'heavy blows');
+    case 'patient':
+      return t('rvn.unq.how.patient', 'footwork');
+    case 'watchful':
+      return t('rvn.unq.how.watchful', 'tricks from behind');
+    case 'relentless':
+      return t('rvn.unq.how.relentless', 'running');
+    case 'nightStalker':
+      return t('rvn.unq.how.nightStalker', 'night raids');
+    default:
+      return null;
   }
 }
 
@@ -319,13 +426,24 @@ export function trainedHow(a) {
  *  longer side, as the boards measure; the earlier listed among equals). Null with none. */
 export function nearestLair(px, py, dungeons) {
   if (!Number.isInteger(px) || !Number.isInteger(py)) return null;
-  let best = null, bestD = Infinity;
+  let best = null,
+    bestD = Infinity;
   for (const d of Array.isArray(dungeons) ? dungeons : []) {
     if (!d || !Number.isInteger(d.px) || !Number.isInteger(d.py) || typeof d.name !== 'string' || !d.name) continue;
     const dist = Math.max(Math.abs(d.px - px), Math.abs(d.py - py));
-    if (dist < bestD) { best = d; bestD = dist; }
+    if (dist < bestD) {
+      best = d;
+      bestD = dist;
+    }
   }
-  return best ? { px: best.px, py: best.py, name: best.name.slice(0, 80), region: Number.isInteger(best.region) ? best.region : -1 } : null;   // revenantFeud.js sanitizeLair's shape
+  return best
+    ? {
+        px: best.px,
+        py: best.py,
+        name: best.name.slice(0, 80),
+        region: Number.isInteger(best.region) ? best.region : -1,
+      }
+    : null; // revenantFeud.js sanitizeLair's shape
 }
 
 // ── the trail (UNQUIET II, section 47) ──────────────────────────────
@@ -344,67 +462,166 @@ export const sanitizeTrail = (v) => (Number.isFinite(v) && v > 0 ? Math.floor(v)
 /** A craft's name and what it does, as the page says them. */
 export function craftWords(craft) {
   switch (craft) {
-    case 'smoke': return { name: t('rvn.unq.craft.smoke', 'Smoke'), effect: t('rvn.unq.craft.smokeDo', 'it throws down smoke and vanishes as it runs, but a blow can still find it') };
-    case 'blink': return { name: t('rvn.unq.craft.blink', 'Blink'), effect: t('rvn.unq.craft.blinkDo', 'it tears open a rift and is gone. Silence it, hold it, or strike it as it fades') };
-    case 'sink': return { name: t('rvn.unq.craft.sink', 'Sink'), effect: t('rvn.unq.craft.sinkDo', 'it sinks into the earth. Strike it before it is under, and it rises, cornered, and runs no more') };
-    case 'bolt': return { name: t('rvn.unq.craft.bolt', 'Bolt'), effect: t('rvn.unq.craft.boltDo', 'it runs faster than anything you have chased. Bring it down from range, and break its will before the killing blow') };
-    default: return null;
+    case 'smoke':
+      return {
+        name: t('rvn.unq.craft.smoke', 'Smoke'),
+        effect: t(
+          'rvn.unq.craft.smokeDo',
+          'it throws down smoke and vanishes as it runs, but a blow can still find it',
+        ),
+      };
+    case 'blink':
+      return {
+        name: t('rvn.unq.craft.blink', 'Blink'),
+        effect: t(
+          'rvn.unq.craft.blinkDo',
+          'it tears open a rift and is gone. Silence it, hold it, or strike it as it fades',
+        ),
+      };
+    case 'sink':
+      return {
+        name: t('rvn.unq.craft.sink', 'Sink'),
+        effect: t(
+          'rvn.unq.craft.sinkDo',
+          'it sinks into the earth. Strike it before it is under, and it rises, cornered, and runs no more',
+        ),
+      };
+    case 'bolt':
+      return {
+        name: t('rvn.unq.craft.bolt', 'Bolt'),
+        effect: t(
+          'rvn.unq.craft.boltDo',
+          'it runs faster than anything you have chased. Bring it down from range, and break its will before the killing blow',
+        ),
+      };
+    default:
+      return null;
   }
 }
 /** The narrator's line as it breaks away in its craft (its flee card). */
 export function craftFleeWords(craft, given) {
   switch (craft) {
-    case 'smoke': return t('rvn.unq.flee.smoke', '{given} throws down smoke and is lost to sight!', { given });
-    case 'blink': return t('rvn.unq.flee.blink', '{given} tears open a rift. Strike it before it is through!', { given });
-    case 'sink': return t('rvn.unq.flee.sink', '{given} sinks into the earth. Strike it before it is under!', { given });
-    case 'bolt': return t('rvn.unq.flee.bolt', '{given} bolts!', { given });
-    default: return null;
+    case 'smoke':
+      return t('rvn.unq.flee.smoke', '{given} throws down smoke and is lost to sight!', { given });
+    case 'blink':
+      return t('rvn.unq.flee.blink', '{given} tears open a rift. Strike it before it is through!', { given });
+    case 'sink':
+      return t('rvn.unq.flee.sink', '{given} sinks into the earth. Strike it before it is under!', { given });
+    case 'bolt':
+      return t('rvn.unq.flee.bolt', '{given} bolts!', { given });
+    default:
+      return null;
   }
 }
 /** A wound's name and what it does to it. */
 export function woundWords(w) {
   switch (w) {
-    case 'bled': return { name: t('rvn.unq.wound.bled', 'Bled'), effect: t('rvn.unq.wound.bledDo', 'a wound that will not close, so it has less health') };
-    case 'cracked': return { name: t('rvn.unq.wound.cracked', 'Cracked'), effect: t('rvn.unq.wound.crackedDo', 'cracked bones, so it staggers more easily') };
-    case 'maimed': return { name: t('rvn.unq.wound.maimed', 'Maimed'), effect: t('rvn.unq.wound.maimedDo', 'a maimed hand, so its blows are lighter') };
-    case 'lamed': return { name: t('rvn.unq.wound.lamed', 'Lamed'), effect: t('rvn.unq.wound.lamedDo', 'a lamed leg, so it runs slower') };
-    case 'burned': return { name: t('rvn.unq.wound.burned', 'Burned'), effect: t('rvn.unq.wound.burnedDo', 'fire bites it deeper') };
-    case 'frostbitten': return { name: t('rvn.unq.wound.frostbitten', 'Frostbitten'), effect: t('rvn.unq.wound.frostbittenDo', 'frost bites it deeper') };
-    case 'stormstruck': return { name: t('rvn.unq.wound.stormstruck', 'Stormstruck'), effect: t('rvn.unq.wound.stormstruckDo', 'shock bites it deeper') };
-    case 'blighted': return { name: t('rvn.unq.wound.blighted', 'Blighted'), effect: t('rvn.unq.wound.blightedDo', 'poison bites it deeper') };
-    case 'hexed': return { name: t('rvn.unq.wound.hexed', 'Hexed'), effect: t('rvn.unq.wound.hexedDo', 'magic bites it deeper') };
-    default: return null;
+    case 'bled':
+      return {
+        name: t('rvn.unq.wound.bled', 'Bled'),
+        effect: t('rvn.unq.wound.bledDo', 'a wound that will not close, so it has less health'),
+      };
+    case 'cracked':
+      return {
+        name: t('rvn.unq.wound.cracked', 'Cracked'),
+        effect: t('rvn.unq.wound.crackedDo', 'cracked bones, so it staggers more easily'),
+      };
+    case 'maimed':
+      return {
+        name: t('rvn.unq.wound.maimed', 'Maimed'),
+        effect: t('rvn.unq.wound.maimedDo', 'a maimed hand, so its blows are lighter'),
+      };
+    case 'lamed':
+      return {
+        name: t('rvn.unq.wound.lamed', 'Lamed'),
+        effect: t('rvn.unq.wound.lamedDo', 'a lamed leg, so it runs slower'),
+      };
+    case 'burned':
+      return { name: t('rvn.unq.wound.burned', 'Burned'), effect: t('rvn.unq.wound.burnedDo', 'fire bites it deeper') };
+    case 'frostbitten':
+      return {
+        name: t('rvn.unq.wound.frostbitten', 'Frostbitten'),
+        effect: t('rvn.unq.wound.frostbittenDo', 'frost bites it deeper'),
+      };
+    case 'stormstruck':
+      return {
+        name: t('rvn.unq.wound.stormstruck', 'Stormstruck'),
+        effect: t('rvn.unq.wound.stormstruckDo', 'shock bites it deeper'),
+      };
+    case 'blighted':
+      return {
+        name: t('rvn.unq.wound.blighted', 'Blighted'),
+        effect: t('rvn.unq.wound.blightedDo', 'poison bites it deeper'),
+      };
+    case 'hexed':
+      return { name: t('rvn.unq.wound.hexed', 'Hexed'), effect: t('rvn.unq.wound.hexedDo', 'magic bites it deeper') };
+    default:
+      return null;
   }
 }
 /** An ambition's name and what it does while it waits. */
 export function ambitionWords(a) {
   switch (a) {
-    case 'vengeance': return { name: t('rvn.unq.amb.vengeance', 'Vengeance'), effect: t('rvn.unq.amb.vengeanceDo', 'it comes for you sooner, and more often') };
-    case 'mastery': return { name: t('rvn.unq.amb.mastery', 'Mastery'), effect: t('rvn.unq.amb.masteryDo', 'it trains while it waits, and grows bolder every 2 days instead of 3') };
-    case 'plunder': return { name: t('rvn.unq.amb.plunder', 'Plunder'), effect: t('rvn.unq.amb.plunderDo', 'it raids the roads while it waits, and grows richer the longer you leave it') };
-    default: return null;
+    case 'vengeance':
+      return {
+        name: t('rvn.unq.amb.vengeance', 'Vengeance'),
+        effect: t('rvn.unq.amb.vengeanceDo', 'it comes for you sooner, and more often'),
+      };
+    case 'mastery':
+      return {
+        name: t('rvn.unq.amb.mastery', 'Mastery'),
+        effect: t('rvn.unq.amb.masteryDo', 'it trains while it waits, and grows bolder every 2 days instead of 3'),
+      };
+    case 'plunder':
+      return {
+        name: t('rvn.unq.amb.plunder', 'Plunder'),
+        effect: t(
+          'rvn.unq.amb.plunderDo',
+          'it raids the roads while it waits, and grows richer the longer you leave it',
+        ),
+      };
+    default:
+      return null;
   }
 }
 /** UNQUIET III (section 48): a revenant of mastery's training, told - its card's body. */
-export const trainedWords = (given, how) => t('rvn.unq.trained', '{given} has been training. It has learned to answer your {how}.', { given, how });
+export const trainedWords = (given, how) =>
+  t('rvn.unq.trained', '{given} has been training. It has learned to answer your {how}.', { given, how });
 /** UNQUIET III: when its oldest wound heals, as the page says it. */
-export const healWords = (days) => t('rvn.unq.page.heals', 'The oldest heals in {days, plural, one {# day} other {# days}} unless you find it first.', { days });
+export const healWords = (days) =>
+  t('rvn.unq.page.heals', 'The oldest heals in {days, plural, one {# day} other {# days}} unless you find it first.', {
+    days,
+  });
 /** THE TRAIL, as its escape's card ends: where it went to ground. */
-export const trailWords = (lair) => t('rvn.unq.trail', 'Its trail leads to {lair}, where it has gone to ground to recover. Catch it before it is whole again.', { lair });
+export const trailWords = (lair) =>
+  t(
+    'rvn.unq.trail',
+    'Its trail leads to {lair}, where it has gone to ground to recover. Catch it before it is whole again.',
+    { lair },
+  );
 /** AN OMEN - the day it is due, in its ambition's words (its card's body). */
 export function omenWords(a, given) {
   switch (a) {
-    case 'mastery': return t('rvn.unq.omen.mastery', 'Word reaches you that {given} is ready to face you again.', { given });
-    case 'plunder': return t('rvn.unq.omen.plunder', 'Travelers speak of {given} on the roads again. It is coming for you.', { given });
-    default: return t('rvn.unq.omen.vengeance', 'You feel eyes on your back. {given} is hunting you again.', { given });
+    case 'mastery':
+      return t('rvn.unq.omen.mastery', 'Word reaches you that {given} is ready to face you again.', { given });
+    case 'plunder':
+      return t('rvn.unq.omen.plunder', 'Travelers speak of {given} on the roads again. It is coming for you.', {
+        given,
+      });
+    default:
+      return t('rvn.unq.omen.vengeance', 'You feel eyes on your back. {given} is hunting you again.', { given });
   }
 }
 /** What the towns say of what it does while it waits - a rumour's last sentence. */
 export function ambitionRumor(a) {
   switch (a) {
-    case 'vengeance': return t('rvn.unq.rumor.vengeance', 'Word is it asks after you by name.');
-    case 'mastery': return t('rvn.unq.rumor.mastery', 'Word is it trains day and night for the day it meets you again.');
-    case 'plunder': return t('rvn.unq.rumor.plunder', 'Word is it has been raiding the roads.');
-    default: return '';
+    case 'vengeance':
+      return t('rvn.unq.rumor.vengeance', 'Word is it asks after you by name.');
+    case 'mastery':
+      return t('rvn.unq.rumor.mastery', 'Word is it trains day and night for the day it meets you again.');
+    case 'plunder':
+      return t('rvn.unq.rumor.plunder', 'Word is it has been raiding the roads.');
+    default:
+      return '';
   }
 }

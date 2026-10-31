@@ -2,8 +2,8 @@
   {
     "name": "SHPK-ship-unpackable",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "if (name === 'Crewed') boat.crewed = boat.packable = true;",
-    "new": "if (name === 'Crewed') boat.crewed = true;",
+    "old": "    if (name === 'Crewed') boat.crewed = boat.packable = true; // SHIP-PACK: a crewed ship is picked up as the small boats are (comeSailAway.js PackBoat - her deed goes with her)",
+    "new": "    if (name === 'Crewed') boat.crewed = true; // SHIP-PACK: a crewed ship is picked up as the small boats are (comeSailAway.js PackBoat - her deed goes with her)",
     "tests": [
       "test/systems/comeSailAway/shippack.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "SHPK-menu-deed-ignored",
     "file": "src/systems/comeSailAway/csaBoatMenu.js",
-    "old": "      : s.noDeed ? BOAT_MENU_WHY.noDeed",
-    "new": "      : false ? BOAT_MENU_WHY.noDeed",
+    "old": "          : s.noDeed",
+    "new": "          : false",
     "tests": [
       "test/systems/comeSailAway/boatmenu.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "SHPK-menu-refusal-words",
     "file": "src/systems/comeSailAway/csaBoatMenu.js",
-    "old": "        : why === BOAT_MENU_WHY.noDeed ? 'You need the ship\\'s deed in your pack to pick it up.'",
-    "new": "        : why === BOAT_MENU_WHY.noDeed ? null",
+    "old": "            ? \"You need the ship's deed in your pack to pick it up.\" // SHIP-PACK: comeSailAway.js DEED_NOT_HELD_TEXT (pinned equal)",
+    "new": "            ? null // SHIP-PACK: comeSailAway.js DEED_NOT_HELD_TEXT (pinned equal)",
     "tests": [
       "test/systems/comeSailAway/boatmenu.test.js"
     ]

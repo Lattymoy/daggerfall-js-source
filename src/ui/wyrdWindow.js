@@ -26,11 +26,28 @@ import { overlayAction } from './input.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhanced/enhancedStyle.js';
 import { isEnhancedPlus } from '../systems/uiSkin.js';
 import { brokerSkinCss, BROKER_SKIN_STYLE_ID, refusePress } from './brokerWindow.js';
-import { paintTitle, titleBadge, TITLE_TEXT, AURA_TEXT, WITCH_FIRE, WITCH_GLOW, WITCH_MOSS, WITCH_VIOLET } from './playerBadge.js';
+import {
+  paintTitle,
+  titleBadge,
+  TITLE_TEXT,
+  AURA_TEXT,
+  WITCH_FIRE,
+  WITCH_GLOW,
+  WITCH_MOSS,
+  WITCH_VIOLET,
+} from './playerBadge.js';
 import { profileIconNode, ICON_TEXT } from './profileIcons.js';
 import { iliacCardLines } from '../systems/iliac/iliacItems.js';
 import { SOUL_CAKE_TEXT } from '../systems/festival/soulCake.js';
-import { cakesText, festivalName, vendorOffice, festivalNightText, festivalRefusalText, findsTodayText, findsTodayFullText } from '../systems/festival/festivalWords.js';
+import {
+  cakesText,
+  festivalName,
+  vendorOffice,
+  festivalNightText,
+  festivalRefusalText,
+  findsTodayText,
+  findsTodayFullText,
+} from '../systems/festival/festivalWords.js';
 import { FESTIVAL_WARES, accountWare, HEARTHKEEPER_GIVEN, SOULCAKE_TAKEN } from '../net/festivalLaw.js';
 import { t } from '../systems/textManager.js';
 
@@ -45,18 +62,38 @@ const el = (tag, cls = null, text = null) => {
 /** The window's parts, in its order, and each part's heading and line. */
 const PARTS = Object.freeze(['insignia', 'raiment', 'cards', 'offering']);
 const PART_WORDS = Object.freeze({
-  insignia: () => [t('festival.window.insignia', 'Insignia'), t('festival.window.insigniaSub', 'Account-wide. Kept for good.')],
-  raiment: () => [t('festival.window.raiment', "The Wyrd's Raiment"), t('festival.window.raimentSub', 'An Aetheric set of nine. Bound to you.')],
-  cards: () => [t('festival.window.cards', 'The Iliac Hand'), t('festival.window.cardsSub', 'Festival cards. Never in a pack.')],
-  offering: () => [t('festival.window.offering', 'Hearth Offering'), t('festival.window.offeringSub', 'Set it out at your own door.')],
+  insignia: () => [
+    t('festival.window.insignia', 'Insignia'),
+    t('festival.window.insigniaSub', 'Account-wide. Kept for good.'),
+  ],
+  raiment: () => [
+    t('festival.window.raiment', "The Wyrd's Raiment"),
+    t('festival.window.raimentSub', 'An Aetheric set of nine. Bound to you.'),
+  ],
+  cards: () => [
+    t('festival.window.cards', 'The Iliac Hand'),
+    t('festival.window.cardsSub', 'Festival cards. Never in a pack.'),
+  ],
+  offering: () => [
+    t('festival.window.offering', 'Hearth Offering'),
+    t('festival.window.offeringSub', 'Set it out at your own door.'),
+  ],
 });
-const partOf = (/** @type {{ kind: string }} */ w) => (accountWare(w) ? 'insignia' : w.kind === 'piece' ? 'raiment' : w.kind === 'card' ? 'cards' : 'offering');
+const partOf = (/** @type {{ kind: string }} */ w) =>
+  accountWare(w) ? 'insignia' : w.kind === 'piece' ? 'raiment' : w.kind === 'card' ? 'cards' : 'offering';
 /** What kind an insignia is, in a word. */
 const KIND_WORD = Object.freeze({
-  title: () => t('festival.window.kindTitle', 'Title'), aura: () => t('festival.window.kindAura', 'Aura'), icon: () => t('festival.window.kindIcon', 'Profile icon'),
+  title: () => t('festival.window.kindTitle', 'Title'),
+  aura: () => t('festival.window.kindAura', 'Aura'),
+  icon: () => t('festival.window.kindIcon', 'Profile icon'),
 });
 /** An insignia's name, as the badge's own tables say it. */
-const insigniaName = (/** @type {string} */ kind, /** @type {string} */ key) => (kind === 'title' ? TITLE_TEXT[/** @type {keyof typeof TITLE_TEXT} */ (key)] : kind === 'aura' ? AURA_TEXT[/** @type {keyof typeof AURA_TEXT} */ (key)] : ICON_TEXT[/** @type {keyof typeof ICON_TEXT} */ (key)]) ?? key;
+const insigniaName = (/** @type {string} */ kind, /** @type {string} */ key) =>
+  (kind === 'title'
+    ? TITLE_TEXT[/** @type {keyof typeof TITLE_TEXT} */ (key)]
+    : kind === 'aura'
+      ? AURA_TEXT[/** @type {keyof typeof AURA_TEXT} */ (key)]
+      : ICON_TEXT[/** @type {keyof typeof ICON_TEXT} */ (key)]) ?? key;
 /** What an insignia does, in a line, for its card. */
 const INSIGNIA_WHAT = Object.freeze({
   title: () => t('festival.window.whatTitle', 'Worn over your name, for every player to see.'),
@@ -76,41 +113,91 @@ const INSIGNIA_WHAT = Object.freeze({
  */
 export function wyrdRows(state, worn, itemOf, nameOf) {
   const wares = state?.wares ?? [];
-  const wearing = (/** @type {string} */ kind, /** @type {string} */ key) => (kind === 'title' ? worn?.title : kind === 'aura' ? worn?.aura : worn?.icon) === key;
+  const wearing = (/** @type {string} */ kind, /** @type {string} */ key) =>
+    (kind === 'title' ? worn?.title : kind === 'aura' ? worn?.aura : worn?.icon) === key;
   /** @type {Array<{ id: string, part: string, kind: string, key: string, price: number|null, item: any, name: string, owned: boolean, worn: boolean, earned: string|null, progress: string|null }>} */
   const rows = FESTIVAL_WARES.map((w) => {
     const item = accountWare(w) ? null : itemOf(w);
     return {
-      id: w.id, part: partOf(w), kind: w.kind, key: w.key, price: w.price, item,
+      id: w.id,
+      part: partOf(w),
+      kind: w.kind,
+      key: w.key,
+      price: w.price,
+      item,
       name: accountWare(w) ? insigniaName(w.kind, w.key) : item ? nameOf(item) : w.key,
-      owned: accountWare(w) && wares.includes(w.id), worn: accountWare(w) && wearing(w.kind, w.key), earned: null, progress: null,
+      owned: accountWare(w) && wares.includes(w.id),
+      worn: accountWare(w) && wearing(w.kind, w.key),
+      earned: null,
+      progress: null,
     };
   });
-  const gift = (/** @type {string} */ kind, /** @type {string} */ key, /** @type {number|null|undefined} */ have, /** @type {number} */ need, /** @type {string} */ how, counted = true) => {
+  const gift = (
+    /** @type {string} */ kind,
+    /** @type {string} */ key,
+    /** @type {number|null|undefined} */ have,
+    /** @type {number} */ need,
+    /** @type {string} */ how,
+    counted = true,
+  ) => {
     const heard = Number.isSafeInteger(have);
     return {
-      id: `earned:${key}`, part: 'insignia', kind, key, price: null, item: null, name: insigniaName(kind, key),
-      owned: heard && Number(have) >= need, worn: wearing(kind, key), earned: how,
+      id: `earned:${key}`,
+      part: 'insignia',
+      kind,
+      key,
+      price: null,
+      item: null,
+      name: insigniaName(kind, key),
+      owned: heard && Number(have) >= need,
+      worn: wearing(kind, key),
+      earned: how,
       progress: counted ? `${heard ? Math.min(Number(have), need) : '?'}/${need}` : null,
     };
   };
   const at = rows.findIndex((r) => r.part !== 'insignia');
-  rows.splice(at, 0,
-    gift('title', 'hearthkeeper', state?.given, HEARTHKEEPER_GIVEN, t('festival.window.earnGiven', 'Earned when others take Soul Cakes from your offerings.')),
-    gift('title', 'starwarden', worn?.titles?.includes('starwarden') ? 1 : 0, 1, t('festival.window.earnStarwarden', 'Earned on The Thirteenth of Frostfall.'), false),   // AUDIT STAR8 T3
-    gift('icon', 'soulcake', state?.taken, SOULCAKE_TAKEN, t('festival.window.earnTaken', "Earned by taking Soul Cakes from others' offerings.")));
+  rows.splice(
+    at,
+    0,
+    gift(
+      'title',
+      'hearthkeeper',
+      state?.given,
+      HEARTHKEEPER_GIVEN,
+      t('festival.window.earnGiven', 'Earned when others take Soul Cakes from your offerings.'),
+    ),
+    gift(
+      'title',
+      'starwarden',
+      worn?.titles?.includes('starwarden') ? 1 : 0,
+      1,
+      t('festival.window.earnStarwarden', 'Earned on The Thirteenth of Frostfall.'),
+      false,
+    ), // AUDIT STAR8 T3
+    gift(
+      'icon',
+      'soulcake',
+      state?.taken,
+      SOULCAKE_TAKEN,
+      t('festival.window.earnTaken', "Earned by taking Soul Cakes from others' offerings."),
+    ),
+  );
   return rows;
 }
 
 /** The press a row shows, and why it cannot be pressed (null when it can): `shut` why the festival is not played here
  *  (festivalClient festivalShut - a guest, offline, closed), or null. Pure. */
-export function wyrdPress(/** @type {any} */ row, /** @type {{ cakes: number|null, shut: string|null, busy: boolean }} */ s) {
+export function wyrdPress(
+  /** @type {any} */ row,
+  /** @type {{ cakes: number|null, shut: string|null, busy: boolean }} */ s,
+) {
   if (row.worn) return { label: t('festival.window.takeOff', 'Take off'), why: null };
   if (row.owned) return { label: t('festival.window.wear', 'Wear'), why: null };
-  if (row.earned) return { label: row.progress ?? t('festival.window.notYet', 'Not yet'), why: row.earned };   // AUDIT STAR8 T3: a title with no count
+  if (row.earned) return { label: row.progress ?? t('festival.window.notYet', 'Not yet'), why: row.earned }; // AUDIT STAR8 T3: a title with no count
   const need = row.price - (s.cakes ?? 0);
   if (s.shut) return { label: t('festival.window.buy', 'Buy'), why: festivalRefusalText(s.shut) };
-  if (s.cakes != null && need > 0) return { label: t('festival.window.need', '{n} more', { n: need }), why: festivalRefusalText('cakes') };
+  if (s.cakes != null && need > 0)
+    return { label: t('festival.window.need', '{n} more', { n: need }), why: festivalRefusalText('cakes') };
   return { label: t('festival.window.buy', 'Buy'), why: null };
 }
 
@@ -120,7 +207,15 @@ export const WYRD_WATCH_MS = 2000;
  *  the Witchfire aura's ring (green fire and its candles' glow). */
 export const WYRD_STYLE_ID = 'wyrd-style';
 /** A badge colour (playerBadge.js's linear RGBA) as the sheet's hex. */
-const hex = (/** @type {ReadonlyArray<number>} */ c) => `#${c.slice(0, 3).map((v) => Math.round(v * 255).toString(16).padStart(2, '0')).join('')}`;
+const hex = (/** @type {ReadonlyArray<number>} */ c) =>
+  `#${c
+    .slice(0, 3)
+    .map((v) =>
+      Math.round(v * 255)
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('')}`;
 const [MOSS, FIRE, GLOW, VIOLET] = [WITCH_MOSS, WITCH_FIRE, WITCH_GLOW, WITCH_VIOLET].map(hex);
 export const WYRD_CSS = `
 .wyrd-shell .broker-title h2 { color: ${GLOW}; text-shadow: 2px 2px 0 #050608, 0 0 10px ${FIRE}55; }
@@ -159,11 +254,17 @@ function injectWyrdStyle(doc = document) {
 function insigniaSign(/** @type {any} */ row, hero = false) {
   const sign = el('span', ['insignia-sign', `insig-${row.kind}`, ...(hero ? ['hero'] : [])].join(' '));
   if (row.kind === 'title') {
-    const word = el('span', hero ? 'insignia-word' : 'insignia-word mono', hero ? row.name : [...row.name][0] ?? '');
+    const word = el('span', hero ? 'insignia-word' : 'insignia-word mono', hero ? row.name : ([...row.name][0] ?? ''));
     paintTitle(word, titleBadge({ title: row.key }));
     sign.append(word);
   } else if (row.kind === 'aura') sign.append(el('span', ['aura-ring', `aura-${row.key}`].join(' ')));
-  else { const svg = profileIconNode(document, row.key, 'wyrd-icon', hero ? 110 : 36); if (svg) { svg.setAttribute('aria-hidden', 'true'); sign.append(svg); } }   // its name stands beside it
+  else {
+    const svg = profileIconNode(document, row.key, 'wyrd-icon', hero ? 110 : 36);
+    if (svg) {
+      svg.setAttribute('aria-hidden', 'true');
+      sign.append(svg);
+    }
+  } // its name stands beside it
   return sign;
 }
 
@@ -187,10 +288,18 @@ export function mountWyrdWindow(host, deps) {
   const exit = () => deps.onExit?.();
   /** The minted pieces, once each - their pictures and cards. */
   const items = new Map();
-  const itemOf = (/** @type {any} */ w) => { if (!items.has(w.id)) items.set(w.id, deps.itemOf(w)); return items.get(w.id); };
-  let picked = null, pending = null, reveal = false;
+  const itemOf = (/** @type {any} */ w) => {
+    if (!items.has(w.id)) items.set(w.id, deps.itemOf(w));
+    return items.get(w.id);
+  };
+  let picked = null,
+    pending = null,
+    reveal = false;
   let note = /** @type {{ ok: boolean, text: string } | null} */ (null);
-  const say = (/** @type {string} */ text, ok = false) => { note = text ? { ok, text } : null; render(); };
+  const say = (/** @type {string} */ text, ok = false) => {
+    note = text ? { ok, text } : null;
+    render();
+  };
   const shell = el('div', 'broker-shell wyrd-shell');
   shell.id = 'wyrd-sister';
   shell.setAttribute('role', 'dialog');
@@ -201,14 +310,17 @@ export function mountWyrdWindow(host, deps) {
   const title = el('div', 'broker-title');
   const sub = el('p', 'broker-sub');
   const night = el('p', 'wyrd-night');
-  const todayLine = el('p', 'wyrd-today');   // CAKE-CAP-SAID: the day's finds, and when more are found once they are spent
+  const todayLine = el('p', 'wyrd-today'); // CAKE-CAP-SAID: the day's finds, and when more are found once they are spent
   const noteLine = el('p', 'broker-note');
   noteLine.setAttribute('aria-live', 'polite');
   title.append(el('h2', null, vendorOffice()), sub, night, todayLine, noteLine);
   const purse = el('span', 'broker-purse');
   const close = el('button', 'act broker-close', t('festival.window.close', 'Close'));
   close.setAttribute('type', 'button');
-  close.onclick = (e) => { e.stopPropagation(); exit(); };
+  close.onclick = (e) => {
+    e.stopPropagation();
+    exit();
+  };
   head.append(title, purse, close);
   const body = el('div', 'broker-body');
   const list = el('ul', 'broker-offers');
@@ -221,45 +333,87 @@ export function mountWyrdWindow(host, deps) {
     row.setAttribute('role', 'button');
     row.setAttribute('tabindex', '0');
     row.onclick = pick;
-    row.onkeydown = (e) => { if (e.target === row && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault?.(); pick(); } };
+    row.onkeydown = (e) => {
+      if (e.target === row && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault?.();
+        pick();
+      }
+    };
   };
   const tile = (/** @type {any} */ row) => {
     const frame = el('span', `broker-frame${row.part === 'insignia' ? ' insignia-frame' : ''}`);
-    if (row.part === 'insignia') { frame.append(insigniaSign(row)); return frame; }
+    if (row.part === 'insignia') {
+      frame.append(insigniaSign(row));
+      return frame;
+    }
     const r = rarityAttr(row.item);
     if (r) frame.dataset.rarity = r;
     const img = row.item ? inventoryItemImage(row.item, deps.wearer ?? undefined) : null;
-    const pic = img?.archive ? requestFittedIcon(img.archive, img.record, { box: SLOT_BOX.broker, dpr: screenDpr(), dye: img.dye, dyeTarget: img.dyeTarget, onReady: () => render() }) : null;
+    const pic = img?.archive
+      ? requestFittedIcon(img.archive, img.record, {
+          box: SLOT_BOX.broker,
+          dpr: screenDpr(),
+          dye: img.dye,
+          dyeTarget: img.dyeTarget,
+          onReady: () => render(),
+        })
+      : null;
     const box = el('span', 'tile');
-    if (pic && typeof pic === 'object') box.append(fittedImg(pic)); else box.textContent = String(row.name).split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+    if (pic && typeof pic === 'object') box.append(fittedImg(pic));
+    else
+      box.textContent = String(row.name)
+        .split(/\s+/)
+        .map((w) => w[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase();
     frame.append(box);
     return frame;
   };
   const press = async (/** @type {any} */ row) => {
     if (pending) return;
-    pending = row.id; picked = row.id;
+    pending = row.id;
+    picked = row.id;
     render();
-    const done = await Promise.resolve().then(() => (row.owned || row.worn ? deps.wear(row) : deps.buy(row.id))).catch(() => null);
+    const done = await Promise.resolve()
+      .then(() => (row.owned || row.worn ? deps.wear(row) : deps.buy(row.id)))
+      .catch(() => null);
     pending = null;
-    say(done?.ok ? (done.text || (row.owned || row.worn ? '' : t('festival.window.bought', 'Bought: {name}.', { name: row.name }))) : done?.text ?? t('festival.refusal.offline', 'The Wyrd cannot hear you right now.'), !!done?.ok);
+    say(
+      done?.ok
+        ? done.text || (row.owned || row.worn ? '' : t('festival.window.bought', 'Bought: {name}.', { name: row.name }))
+        : (done?.text ?? t('festival.refusal.offline', 'The Wyrd cannot hear you right now.')),
+      !!done?.ok,
+    );
   };
   const render = () => {
     if (!alive) return;
     const st = deps.state();
     const rows = wyrdRows(st, deps.worn(), itemOf, deps.nameOf);
     const s = { cakes: st.cakes, shut: deps.shut(), busy: pending != null };
-    sub.textContent = t('festival.window.until', '{festival} - until {last}.', { festival: festivalName(), last: deps.lastDay() });
+    sub.textContent = t('festival.window.until', '{festival} - until {last}.', {
+      festival: festivalName(),
+      last: deps.lastDay(),
+    });
     night.textContent = deps.night() ? festivalNightText() : '';
-    if (deps.night()) night.removeAttribute('hidden'); else night.setAttribute('hidden', '');
+    if (deps.night()) night.removeAttribute('hidden');
+    else night.setAttribute('hidden', '');
     // CAKE-CAP-SAID: the day's finds (systems/festival/festivalClient.js festivalFindsToday) - nothing while unheard
     const day = deps.today?.() ?? null;
-    todayLine.textContent = day?.found == null ? '' : day.full ? findsTodayFullText(day.max, day.resetMs) : findsTodayText(day.found, day.max);
-    if (todayLine.textContent) todayLine.removeAttribute('hidden'); else todayLine.setAttribute('hidden', '');
+    todayLine.textContent =
+      day?.found == null
+        ? ''
+        : day.full
+          ? findsTodayFullText(day.max, day.resetMs)
+          : findsTodayText(day.found, day.max);
+    if (todayLine.textContent) todayLine.removeAttribute('hidden');
+    else todayLine.setAttribute('hidden', '');
     // why nothing can be bought here, said before a press asks it - offline, a guest, the festival shut (AUDIT WITCH1 G2)
     const told = note ?? (s.shut ? { ok: false, text: festivalRefusalText(s.shut) } : null);
     noteLine.textContent = told ? told.text : '';
     noteLine.className = `broker-note${told?.ok ? ' ok' : ''}`;
-    if (!told) noteLine.setAttribute('hidden', ''); else noteLine.removeAttribute('hidden');
+    if (!told) noteLine.setAttribute('hidden', '');
+    else noteLine.removeAttribute('hidden');
     purse.textContent = st.cakes == null ? t('festival.window.cakesUnknown', 'Soul Cakes: ?') : cakesText(st.cakes);
     for (const c of [...list.children]) c.remove();
     for (const part of PARTS) {
@@ -269,26 +423,52 @@ export function mountWyrdWindow(host, deps) {
       hd.append(el('span', 'broker-insignia-title', h), el('span', 'broker-set', line));
       list.append(hd);
       for (const row of rows.filter((r) => r.part === part)) {
-        const li = el('li', `broker-offer${part === 'insignia' ? ' broker-insig' : ''}${picked === row.id ? ' on' : ''}${row.owned ? ' owned' : ''}${row.worn ? ' worn' : ''}${row.earned ? ' earned' : ''}`);
+        const li = el(
+          'li',
+          `broker-offer${part === 'insignia' ? ' broker-insig' : ''}${picked === row.id ? ' on' : ''}${row.owned ? ' owned' : ''}${row.worn ? ' worn' : ''}${row.earned ? ' earned' : ''}`,
+        );
         li.dataset.ware = row.id;
         const r = rarityAttr(row.item);
         if (r) li.dataset.rarity = r;
         li.setAttribute('aria-pressed', picked === row.id ? 'true' : 'false');
         const text = el('div', 'broker-offer-body');
         // its kind in a word (an insignia's, a part's heading) - the bowl's own line, never its name twice
-        const kind = part === 'insignia' ? KIND_WORD[/** @type {keyof typeof KIND_WORD} */ (row.kind)]() : part === 'offering' ? PART_WORDS.offering()[1] : PART_WORDS[part]()[0];
+        const kind =
+          part === 'insignia'
+            ? KIND_WORD[/** @type {keyof typeof KIND_WORD} */ (row.kind)]()
+            : part === 'offering'
+              ? PART_WORDS.offering()[1]
+              : PART_WORDS[part]()[0];
         text.append(el('span', 'broker-name', row.name), el('span', 'broker-set', kind));
         // an earned row's progress is its press's word, never said twice
-        const price = el('span', 'broker-price', row.worn ? t('festival.window.worn', 'Worn') : row.owned ? t('festival.window.owned', 'Owned') : row.price != null ? cakesText(row.price) : '');
+        const price = el(
+          'span',
+          'broker-price',
+          row.worn
+            ? t('festival.window.worn', 'Worn')
+            : row.owned
+              ? t('festival.window.owned', 'Owned')
+              : row.price != null
+                ? cakesText(row.price)
+                : '',
+        );
         const p = wyrdPress(row, s);
         const btn = el('button', 'act broker-buy', pending === row.id ? '...' : p.label);
         btn.setAttribute('type', 'button');
         btn.setAttribute('aria-label', `${p.label} - ${row.name}`);
         if (pending && pending !== row.id) btn.setAttribute('disabled', '');
         if (p.why) refusePress(btn, p.why, (reason) => say(reason));
-        else btn.onclick = (e) => { e.stopPropagation(); void press(row); };
+        else
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            void press(row);
+          };
         li.append(tile(row), text, price, btn);
-        pressable(li, () => { picked = row.id; reveal = true; render(); });
+        pressable(li, () => {
+          picked = row.id;
+          reveal = true;
+          render();
+        });
         list.append(li);
       }
     }
@@ -301,34 +481,62 @@ export function mountWyrdWindow(host, deps) {
     if (row.part === 'insignia') {
       const hero = el('div', 'insignia-hero');
       hero.append(insigniaSign(row, true));
-      card.append(hero, el('h3', null, row.name), el('p', 'insignia-what', INSIGNIA_WHAT[/** @type {keyof typeof INSIGNIA_WHAT} */ (row.kind)]()));
+      card.append(
+        hero,
+        el('h3', null, row.name),
+        el('p', 'insignia-what', INSIGNIA_WHAT[/** @type {keyof typeof INSIGNIA_WHAT} */ (row.kind)]()),
+      );
       card.append(el('p', 'insignia-kept', row.earned ?? t('festival.window.kept', 'One per account, kept for good.')));
     } else {
       const r = rarityAttr(row.item);
       if (r) card.dataset.rarity = r;
       card.append(el('h3', null, row.name));
-      const lines = row.part === 'raiment' ? rarityLines(row.item, { sigil: false, set: false }) : row.part === 'cards' ? iliacCardLines(row.item) : SOUL_CAKE_TEXT.offering();
-      if (lines.length) { const ul = el('ul', 'rarity'); for (const l of lines) ul.append(el('li', null, l)); card.append(ul); }
+      const lines =
+        row.part === 'raiment'
+          ? rarityLines(row.item, { sigil: false, set: false })
+          : row.part === 'cards'
+            ? iliacCardLines(row.item)
+            : SOUL_CAKE_TEXT.offering();
+      if (lines.length) {
+        const ul = el('ul', 'rarity');
+        for (const l of lines) ul.append(el('li', null, l));
+        card.append(ul);
+      }
       const set = row.part === 'raiment' ? setCard(row.item, deps.wearer ?? null, deps.nameOf) : null;
       if (set) card.append(set);
     }
     body.append(card);
     // the Broker's reveal (U4): on a phone the card stands under the whole list - brought into view as it is pressed
-    if (reveal && globalThis.matchMedia?.('(max-width: 720px)')?.matches) card.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+    if (reveal && globalThis.matchMedia?.('(max-width: 720px)')?.matches)
+      card.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
     reveal = false;
   };
   render();
   host.append(shell);
-  if (deps.load) Promise.resolve().then(() => deps.load?.()).catch(() => null).then(() => render());
+  if (deps.load)
+    Promise.resolve()
+      .then(() => deps.load?.())
+      .catch(() => null)
+      .then(() => render());
   const unhear = deps.hear?.(() => render()) ?? (() => {});
   // what the festival's state is without an answer to say it - the relay back, the night come, the clock past a day
   // CAKE-CAP-SAID: and a UTC day turned (its day's finds open again) - no answer says that either
   const sig = () => `${deps.shut()}|${deps.night()}|${deps.today?.()?.resetMs}`;
   let was = sig();
-  const watch = setInterval(() => { const now = sig(); if (now !== was) { was = now; render(); } }, WYRD_WATCH_MS);
+  const watch = setInterval(() => {
+    const now = sig();
+    if (now !== was) {
+      was = now;
+      render();
+    }
+  }, WYRD_WATCH_MS);
   const onKey = (/** @type {KeyboardEvent} */ e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
-    if (overlayAction(e) === 'back') { e.preventDefault(); e.stopPropagation(); exit(); }
+    if (overlayAction(e) === 'back') {
+      e.preventDefault();
+      e.stopPropagation();
+      exit();
+    }
   };
   globalThis.addEventListener('keydown', onKey, { capture: true });
   const offOutside = closeOnOutsideTap(shell, '.broker-win', exit);

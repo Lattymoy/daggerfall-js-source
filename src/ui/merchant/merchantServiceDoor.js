@@ -6,7 +6,10 @@ import { isEnhanced } from '../../systems/uiSkin.js';
 import { mountEnhancedChunk } from '../enhanced/enhancedChunk.js';
 import { registerOverlay } from '../enhanced/enhancedOverlays.js';
 import {
-  MerchantServiceWindow, preloadMerchantServiceArt, merchantServiceArtLoaded, merchantServiceLabel,
+  MerchantServiceWindow,
+  preloadMerchantServiceArt,
+  merchantServiceArtLoaded,
+  merchantServiceLabel,
 } from './merchantServiceWindow.js';
 
 export { preloadMerchantServiceArt };
@@ -43,14 +46,30 @@ function enhancedMerchantServiceOverlay(hooks) {
   const overlay = {
     isChoiceWindow: true,
     hooks,
-    get done() { return fired; },
-    input() { /* the panel's own capture keydown owns the keyboard */ },
-    click() { /* the panel is a fixed opaque div; pointers never get here */ },
-    wheel() { /* nothing here scrolls */ },
-    hover() { /* the panel has its own :hover, and no canvas to hit-test */ },
-    tick() { /* nothing on this screen moves on a clock */ },
-    draw() { /* DOM, not canvas */ },
-    dispose() { close(); },
+    get done() {
+      return fired;
+    },
+    input() {
+      /* the panel's own capture keydown owns the keyboard */
+    },
+    click() {
+      /* the panel is a fixed opaque div; pointers never get here */
+    },
+    wheel() {
+      /* nothing here scrolls */
+    },
+    hover() {
+      /* the panel has its own :hover, and no canvas to hit-test */
+    },
+    tick() {
+      /* nothing on this screen moves on a clock */
+    },
+    draw() {
+      /* DOM, not canvas */
+    },
+    dispose() {
+      close();
+    },
   };
 
   mountEnhancedChunk({
@@ -59,19 +78,58 @@ function enhancedMerchantServiceOverlay(hooks) {
       view = mountEnhancedMerchantPanel(host, {
         title: 'Merchant',
         buttons: [
-          { label: 'Talk', onClick: () => { close(); hooks.onTalk?.(); } },
+          {
+            label: 'Talk',
+            onClick: () => {
+              close();
+              hooks.onTalk?.();
+            },
+          },
           // AUDIT IT1 W1: a registered service's own name (GetServiceLabelText's custom arm), as the classic window
           // draws it - Immersive Travel's driver said "Sell" here, the default skin's only road to a carriage
-          { label: hooks.label ?? merchantServiceLabel(hooks.service), onClick: () => { close(); hooks.onService?.(); } },
-          ...(hooks.wardrobe ? [{ label: hooks.wardrobe.label, icon: 'clothing', onClick: () => { close(); hooks.wardrobe.onOpen?.(); } }] : []),   // APPEARANCES: the Wardrobe, at a tailor's and the smiths'
-          ...(hooks.portal ? [{ label: hooks.portal.label, onClick: () => { close(); hooks.portal.onBuy?.(); } }] : []),   // PORTAL1: the Portal Stone, for shards
+          {
+            label: hooks.label ?? merchantServiceLabel(hooks.service),
+            onClick: () => {
+              close();
+              hooks.onService?.();
+            },
+          },
+          ...(hooks.wardrobe
+            ? [
+                {
+                  label: hooks.wardrobe.label,
+                  icon: 'clothing',
+                  onClick: () => {
+                    close();
+                    hooks.wardrobe.onOpen?.();
+                  },
+                },
+              ]
+            : []), // APPEARANCES: the Wardrobe, at a tailor's and the smiths'
+          ...(hooks.portal
+            ? [
+                {
+                  label: hooks.portal.label,
+                  onClick: () => {
+                    close();
+                    hooks.portal.onBuy?.();
+                  },
+                },
+              ]
+            : []), // PORTAL1: the Portal Stone, for shards
           { label: 'Exit', onClick: close },
         ],
         onExit: close,
-        owner: overlay,   // COVERED-KEYS: the window the panel's keys are gated on (ui/windowStack.js listenWindowKeys)
+        owner: overlay, // COVERED-KEYS: the window the panel's keys are gated on (ui/windowStack.js listenWindowKeys)
       });
     },
-    alive: () => !fired, host, onDismiss: () => { host.remove(); fired = true; }, label: 'merchant-service',
+    alive: () => !fired,
+    host,
+    onDismiss: () => {
+      host.remove();
+      fired = true;
+    },
+    label: 'merchant-service',
   });
 
   return overlay;

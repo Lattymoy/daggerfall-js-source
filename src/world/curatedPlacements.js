@@ -34,15 +34,30 @@ export const DOOR_APPROACH_M = 4;
 /** One record moved: `from` where the pack stands it (xPos, zPos, yRotation - RMB block units and Daggerfall's angle),
  *  `to` the measured spot, `model` its first exterior model, `automap` the 64 x 64 automap cells its footprint covers
  *  at `to` ([col0, row0, col1, row1], inclusive - a cell is 64 block units, the row a zPos's). */
-const row = (block, record, model, from, to, automap) => Object.freeze({
-  vendor: HILL_HOUSE_VENDOR, block, record, model, from: Object.freeze(from), to: Object.freeze(to), automap: Object.freeze(automap),
-});
+const row = (block, record, model, from, to, automap) =>
+  Object.freeze({
+    vendor: HILL_HOUSE_VENDOR,
+    block,
+    record,
+    model,
+    from: Object.freeze(from),
+    to: Object.freeze(to),
+    automap: Object.freeze(automap),
+  });
 export const CURATED_PLACEMENTS = Object.freeze([
-  row('TEMPASD1.RMB', 6, 159, { xPos: 2816, zPos: 2176, yRotation: 0 }, { xPos: 3808, zPos: 2176, yRotation: 0 }, [57, 29, 61, 38]),
+  row(
+    'TEMPASD1.RMB',
+    6,
+    159,
+    { xPos: 2816, zPos: 2176, yRotation: 0 },
+    { xPos: 3808, zPos: 2176, yRotation: 0 },
+    [57, 29, 61, 38],
+  ),
 ]);
 
 /** The rows a block of `name` served by `vendor` takes, or none. */
-export const curatedPlacementsOf = (name, vendor) => CURATED_PLACEMENTS.filter((r) => r.vendor === vendor && r.block === name);
+export const curatedPlacementsOf = (name, vendor) =>
+  CURATED_PLACEMENTS.filter((r) => r.vendor === vendor && r.block === name);
 
 /**
  * Stand each listed record of a block the door has just made (an RMB DFBlock, `fromWorldData`), served by `vendor`, at
@@ -55,16 +70,29 @@ export function curateBlockPlacements(dfBlock, vendor) {
   for (const r of rows) {
     const sub = dfBlock.rmbBlock?.subRecords?.[r.record];
     const first = sub?.exterior?.block3dObjectRecords?.[0];
-    if (!sub || sub.xPos !== r.from.xPos || sub.zPos !== r.from.zPos || sub.yRotation !== r.from.yRotation || first?.modelIdNum !== r.model) continue;
-    sub.xPos = r.to.xPos; sub.zPos = r.to.zPos; sub.yRotation = r.to.yRotation;
+    if (
+      !sub ||
+      sub.xPos !== r.from.xPos ||
+      sub.zPos !== r.from.zPos ||
+      sub.yRotation !== r.from.yRotation ||
+      first?.modelIdNum !== r.model
+    )
+      continue;
+    sub.xPos = r.to.xPos;
+    sub.zPos = r.to.zPos;
+    sub.yRotation = r.to.yRotation;
     const fh = dfBlock.rmbBlock.fldHeader;
     const pos = fh?.blockPositions?.[r.record];
-    if (pos) { pos.xPos = r.to.xPos; pos.zPos = r.to.zPos; pos.yRotation = r.to.yRotation; }
+    if (pos) {
+      pos.xPos = r.to.xPos;
+      pos.zPos = r.to.zPos;
+      pos.yRotation = r.to.yRotation;
+    }
     const type = fh?.buildingDataList?.[r.record]?.buildingType;
     const map = fh?.autoMapData;
     if (map && Number.isInteger(type) && type >= 0) {
       const [c0, r0, c1, r1] = r.automap;
-      for (let y = r0; y <= r1; y++) for (let x = c0; x <= c1; x++) map[y * 64 + x] = type + 1;   // the automap's byte: the type plus one
+      for (let y = r0; y <= r1; y++) for (let x = c0; x <= c1; x++) map[y * 64 + x] = type + 1; // the automap's byte: the type plus one
     }
     moved++;
   }

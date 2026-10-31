@@ -20,8 +20,8 @@
   {
     "name": "ARENA2-STALL-ONCE",
     "file": "src/systems/arena/arenaBout.js",
-    "old": "  if (!b.stallSaid && now - b.lastBlowAt >= STALL_MS) { b.stallSaid = true;",
-    "new": "  if (now - b.lastBlowAt >= STALL_MS) { b.stallSaid = true;",
+    "old": "  if (!b.stallSaid && now - b.lastBlowAt >= STALL_MS) {",
+    "new": "  if (now - b.lastBlowAt >= STALL_MS) {",
     "tests": [
       "test/systems/arena/arena2_bout.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ARENA2-STALL-RESET",
     "file": "src/systems/arena/arenaBout.js",
-    "old": "  b.lastBlowAt = now; b.stallSaid = false;",
-    "new": "  b.lastBlowAt = now;",
+    "old": "  b.stallSaid = false;\n  emit(b, { k: 'hit', at: now, a: a.id, b: t.id, dmg: d });",
+    "new": "  emit(b, { k: 'hit', at: now, a: a.id, b: t.id, dmg: d });",
     "tests": [
       "test/systems/arena/arena2_bout.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ARENA2-RINGOUT-HOLD",
     "file": "src/systems/arena/arenaBout.js",
-    "old": "        if (now - f.outsideAt >= RING_OUT_MS) { out(b, f, 'ringout', now); continue; }",
-    "new": "        { out(b, f, 'ringout', now); continue; }",
+    "old": "        if (now - f.outsideAt >= RING_OUT_MS) {",
+    "new": "        {",
     "tests": [
       "test/systems/arena/arena2_bout.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "ARENA2-JUDGE-HITS",
     "file": "src/systems/arena/arenaBout.js",
-    "old": "(y.dealt - x.dealt) || (y.hits - x.hits) || (x.misses - y.misses)",
-    "new": "(y.dealt - x.dealt) || (x.misses - y.misses)",
+    "old": "  const ranked = [...sides].sort((x, y) => y.dealt - x.dealt || y.hits - x.hits || x.misses - y.misses);",
+    "new": "  const ranked = [...sides].sort((x, y) => y.dealt - x.dealt || x.misses - y.misses);",
     "tests": [
       "test/systems/arena/arena2_bout.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "ARENA2-JUDGE-MISSES",
     "file": "src/systems/arena/arenaBout.js",
-    "old": "(y.dealt - x.dealt) || (y.hits - x.hits) || (x.misses - y.misses)",
-    "new": "(y.dealt - x.dealt) || (y.hits - x.hits) || (y.misses - x.misses)",
+    "old": "  const ranked = [...sides].sort((x, y) => y.dealt - x.dealt || y.hits - x.hits || x.misses - y.misses);",
+    "new": "  const ranked = [...sides].sort((x, y) => y.dealt - x.dealt || y.hits - x.hits || y.misses - x.misses);",
     "tests": [
       "test/systems/arena/arena2_bout.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "ARENA2-COUNT-EARLY",
     "file": "src/systems/arena/arenaBout.js",
-    "old": "  const { from, to, dmg, health, crit = false, now } = blow;\n  if (!boutLive(b)) return false;",
-    "new": "  const { from, to, dmg, health, crit = false, now } = blow;",
+    "old": "  if (!boutLive(b)) return false;\n  const a = fighterOf(b, from),",
+    "new": "  const a = fighterOf(b, from),",
     "tests": [
       "test/systems/arena/arena2_bout.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "ARENA2-PURSE-T1",
     "file": "src/systems/arena/arenaLadder.js",
-    "old": "export const BOUT_PURSE = Object.freeze([50,",
-    "new": "export const BOUT_PURSE = Object.freeze([60,",
+    "old": "export const BOUT_PURSE = Object.freeze([50, 100, 175, 275, 400, 550, 750, 1000, 1350, 1800]);",
+    "new": "export const BOUT_PURSE = Object.freeze([60, 100, 175, 275, 400, 550, 750, 1000, 1350, 1800]);",
     "tests": [
       "test/systems/arena/arena2_ladder.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "ARENA2-GRAND-PURSE",
     "file": "src/systems/arena/arenaLadder.js",
-    "old": "1600, 2200, 3000, 4000, 5400, 10000]);",
-    "new": "1600, 2200, 3000, 4000, 5400, 9000]);",
+    "old": "export const CHAMPION_PURSE = Object.freeze([200, 400, 700, 1100, 1600, 2200, 3000, 4000, 5400, 10000]);",
+    "new": "export const CHAMPION_PURSE = Object.freeze([200, 400, 700, 1100, 1600, 2200, 3000, 4000, 5400, 9000]);",
     "tests": [
       "test/systems/arena/arena2_ladder.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "ARENA2-TIER5-TWO",
     "file": "src/systems/arena/arenaLadder.js",
-    "old": "champion: [champ(M.Warrior, 11), champ(M.Warrior, 11)] }",
-    "new": "champion: [champ(M.Warrior, 11)] }",
+    "old": "      champion: [champ(M.Warrior, 11), champ(M.Warrior, 11)],",
+    "new": "      champion: [champ(M.Warrior, 11)],",
     "tests": [
       "test/systems/arena/arena2_ladder.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "ARENA2-LOSS-MOVES",
     "file": "src/systems/arena/arenaLadder.js",
-    "old": "  } else {\n    r.losses++; r.streak = 0;\n",
-    "new": "  } else {\n    r.losses++; r.streak = 0; s.tier = Math.max(0, s.tier - 1);\n",
+    "old": "    out.runLost = s.won > 0;",
+    "new": "    s.tier = Math.max(0, s.tier - 1);\n    out.runLost = s.won > 0;",
     "tests": [
       "test/systems/arena/arena2_ladder.test.js",
       "test/systems/arenaladder_audit.test.js"
@@ -184,8 +184,8 @@
   {
     "name": "ARENA2-TIER-UP",
     "file": "src/systems/arena/arenaLadder.js",
-    "old": "      else { s.tier = Math.min(LADDER_TIERS.length - 1, s.tier + 1); s.won = 0; s.paid = 0; out.tierUp = true; }",
-    "new": "      else { s.won = 0; s.paid = 0; out.tierUp = true; }",
+    "old": "        s.tier = Math.min(LADDER_TIERS.length - 1, s.tier + 1);\n        s.won = 0;",
+    "new": "        s.won = 0;",
     "tests": [
       "test/systems/arena/arena2_driver.test.js",
       "test/systems/arena/arena2_ladder.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "ARENA2-EX-OPEN",
     "file": "src/net/arena/arenaExhibition.js",
-    "old": "open: minute < EXHIBITION_START_MINUTES,",
-    "new": "open: true,",
+    "old": "    open: minute < EXHIBITION_START_MINUTES,",
+    "new": "    open: true,",
     "tests": [
       "test/systems/arena/arena2_hud.test.js",
       "test/systems/arena/arena2_ladder.test.js"
@@ -222,8 +222,8 @@
   {
     "name": "ARENA2-NAME-STREAM",
     "file": "src/systems/arena/arenaFighters.js",
-    "old": "  } finally { setSeed(saved); }",
-    "new": "  } finally { /* the stream left moved */ }",
+    "old": "    setSeed(saved);",
+    "new": "    /* the stream left moved */",
     "tests": [
       "test/systems/arena/arena2_ladder.test.js"
     ]
@@ -250,8 +250,8 @@
   {
     "name": "ARENA2-HATED-BOO",
     "file": "src/systems/arena/arenaCrowd.js",
-    "old": "      if (hated) { push(c, MOOD_PUSH.hitHated); cues.push({ s: 'boo', v: 0.45 }); }",
-    "new": "      if (false) { push(c, MOOD_PUSH.hitHated); cues.push({ s: 'boo', v: 0.45 }); }",
+    "old": "      if (hated) {",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/arena/arena2_crowd.test.js"
     ]
@@ -286,8 +286,8 @@
   {
     "name": "ARENA2-GASP",
     "file": "src/systems/arena/arenaCrowd.js",
-    "old": "cues.push({ s: 'gasp', v: 0.9 }, { s: 'roar', v: 0.6 }); break;",
-    "new": "cues.push({ s: 'roar', v: 0.6 }); break;",
+    "old": "      cues.push({ s: 'gasp', v: 0.9 }, { s: 'roar', v: 0.6 });",
+    "new": "      cues.push({ s: 'roar', v: 0.6 });",
     "tests": [
       "test/systems/arena/arena2_crowd.test.js",
       "test/systems/arena/arena2_driver.test.js"
@@ -296,8 +296,8 @@
   {
     "name": "ARENA2-TITLE-FANFARE",
     "file": "src/systems/arena/arenaCrowd.js",
-    "old": "{ s: title ? 'title' : 'fanfare', v: 1 }",
-    "new": "{ s: 'fanfare', v: 1 }",
+    "old": "      cues.push({ s: 'roar', v: 0.9 }, { s: title ? 'title' : 'fanfare', v: 1 });",
+    "new": "      cues.push({ s: 'roar', v: 0.9 }, { s: 'fanfare', v: 1 });",
     "tests": [
       "test/systems/arena/arena2_crowd.test.js",
       "test/systems/arena/arena2_driver.test.js"
@@ -315,8 +315,8 @@
   {
     "name": "ARENA2-BED-WRAP",
     "file": "src/systems/arena/arenaSound.js",
-    "old": "gain: 0.55 + rng() * 0.3, wrap: true });",
-    "new": "gain: 0.55 + rng() * 0.3 });",
+    "old": "      wrap: true,\n    });",
+    "new": "    });",
     "tests": [
       "test/systems/arena/arena2_crowd.test.js"
     ]
@@ -333,8 +333,8 @@
   {
     "name": "ARENA2-GROAN",
     "file": "src/systems/arena/arenaSound.js",
-    "old": "          case 'groan': audio.playOneShot(ARENA_CLIPS.groan, vol); break;",
-    "new": "          case 'groan': break;",
+    "old": "            audio.playOneShot(ARENA_CLIPS.groan, vol);\n            break;",
+    "new": "            break;",
     "tests": [
       "test/systems/arena/arena2_crowd.test.js"
     ]
@@ -342,7 +342,7 @@
   {
     "name": "ARENA2-BED-OFF",
     "file": "src/systems/arena/arenaSound.js",
-    "old": "      if (!(near > 0)) { this.stop(); return; }",
+    "old": "      if (!(near > 0)) {\n        this.stop();\n        return;\n      }",
     "new": "      if (!(near > 0)) return;",
     "tests": [
       "test/systems/arena/arena2_crowd.test.js"
@@ -487,8 +487,8 @@
   {
     "name": "ARENA2-HERALD-WHY",
     "file": "src/systems/arena/arenaHerald.js",
-    "old": "  else if (!canWatch) { lines.push(H.noWatch); lines.push(H.nextAt(nextExhibitionHour(gameMinutes))); }",
-    "new": "",
+    "old": "  } else if (!canWatch) {\n    lines.push(H.noWatch);\n    lines.push(H.nextAt(nextExhibitionHour(gameMinutes)));\n  }",
+    "new": "  }\n",
     "tests": [
       "test/systems/arena/arena2_hud.test.js"
     ]
@@ -496,8 +496,8 @@
   {
     "name": "ARENA2-FLOOR-Y",
     "file": "src/world/arena/arenaFloor.js",
-    "old": "type: 0x01, position: pos++, index: objects.length, xPos: o.XPos, yPos: o.YPos - PROPS_Y,",
-    "new": "type: 0x01, position: pos++, index: objects.length, xPos: o.XPos, yPos: o.YPos,",
+    "old": "      yPos: o.YPos - PROPS_Y,",
+    "new": "      yPos: o.YPos,",
     "tests": [
       "test/world/arena/arena2_floor.test.js"
     ]
@@ -505,7 +505,7 @@
   {
     "name": "ARENA2-FLOOR-STAIR",
     "file": "src/world/arena/arenaFloor.js",
-    "old": "    if (id === 43600) continue;   // the undercroft's stair is the city's",
+    "old": "    if (id === 43600) continue; // the undercroft's stair is the city's",
     "new": "",
     "tests": [
       "test/world/arena/arena2_floor.test.js"
@@ -541,8 +541,8 @@
   {
     "name": "ARENA2-REFUND-HALF",
     "file": "src/systems/arena/arenaMove.js",
-    "old": "out.refund += Number.isSafeInteger(p?.paid) && p.paid > 0 ? p.paid : 0;",
-    "new": "out.refund += Number.isSafeInteger(p?.paid) && p.paid > 0 ? Math.floor(p.paid / 2) : 0;",
+    "old": "      out.refund += Number.isSafeInteger(p?.paid) && p.paid > 0 ? p.paid : 0;",
+    "new": "      out.refund += Number.isSafeInteger(p?.paid) && p.paid > 0 ? Math.floor(p.paid / 2) : 0;",
     "tests": [
       "test/systems/arena/arena2_move.test.js"
     ]
@@ -550,7 +550,7 @@
   {
     "name": "ARENA2-CRATE-FLOOR",
     "file": "src/systems/arena/arenaMove.js",
-    "old": "    for (const pile of d?.droppedPiles ?? []) if (Array.isArray(pile?.items)) out.crate.push(...pile.items.map(copyItem));",
+    "old": "    for (const pile of d?.droppedPiles ?? [])\n      if (Array.isArray(pile?.items)) out.crate.push(...pile.items.map(copyItem));",
     "new": "",
     "tests": [
       "test/systems/arena/arena2_move.test.js"
@@ -559,8 +559,8 @@
   {
     "name": "ARENA2-MARKS-KEPT",
     "file": "src/systems/arena/arenaMove.js",
-    "old": "    cacheScene(cache, to, stampLayout({ lootContainers: out.crate.length ? [{ key: ARENA_CRATE_KEY, items: out.crate.map(copyItem), crate: true, stockedDate: 0 }] : [], frame: 'building' }, layout));",
-    "new": "    cacheScene(cache, to, stampLayout({ lootContainers: out.crate.length ? [{ key: ARENA_CRATE_KEY, items: out.crate.map(copyItem), crate: true, stockedDate: 0 }] : [], frame: 'building', hiddenBase: ['bed:2'] }, layout));",
+    "old": "        },",
+    "new": "          hiddenBase: ['bed:2'],\n        },",
     "tests": [
       "test/systems/arena/arena2_move.test.js"
     ]
@@ -596,8 +596,8 @@
   {
     "name": "ARENA2-PREFIGHT-BLOW",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "      if (foe?.entity) foe.entity.health = Math.min(foe.entity.maxHealth ?? foe.entity.health, foe.entity.health + dmg);",
-    "new": "",
+    "old": "      // a blow before the word or after the verdict: the body is made whole again (the healers' law), nothing counts\n      if (foe?.entity) foe.entity.health = Math.min(foe.entity.maxHealth ?? foe.entity.health, foe.entity.health + dmg);",
+    "new": "      // a blow before the word or after the verdict: the body is made whole again (the healers' law), nothing counts\n",
     "tests": [
       "test/systems/arena/arena2_driver.test.js"
     ]
@@ -614,8 +614,8 @@
   {
     "name": "ARENA2-NO-LOOT",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "          if (foe.entity) { foe.entity.bout = tags.get(f.id); foe.entity.items = []; foe.entity.pacifyImmune = true; }",
-    "new": "          if (foe.entity) { foe.entity.bout = tags.get(f.id); foe.entity.pacifyImmune = true; }",
+    "old": "            foe.entity.items = [];\n            foe.entity.pacifyImmune = true;",
+    "new": "            foe.entity.pacifyImmune = true;",
     "tests": [
       "test/systems/arena/arena2_driver.test.js"
     ]
@@ -623,8 +623,8 @@
   {
     "name": "ARENA2-EX-HOSTILE",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "          if (foe.ai) { foe.ai.isHostile = !!C.ladder; foe.ai.target = null; foe.ai.yaw = yawTo(f.mark, [0, 0]); }",
-    "new": "          if (foe.ai) { foe.ai.isHostile = true; foe.ai.target = null; foe.ai.yaw = yawTo(f.mark, [0, 0]); }",
+    "old": "            foe.ai.isHostile = !!C.ladder;",
+    "new": "            foe.ai.isHostile = true;",
     "tests": [
       "test/systems/arena/arena2_driver.test.js"
     ]
@@ -695,8 +695,8 @@
   {
     "name": "ARENA2-CLOCK-STANDS",
     "file": "src/systems/arena/arenaBout.js",
-    "old": "Math.max(0, b.fightAt + b.limitMs - b.endAt) : 0;",
-    "new": "0 : 0;",
+    "old": "  return Number.isFinite(b.fightAt) && Number.isFinite(b.endAt) ? Math.max(0, b.fightAt + b.limitMs - b.endAt) : 0;",
+    "new": "  return Number.isFinite(b.fightAt) && Number.isFinite(b.endAt) ? 0 : 0;",
     "tests": [
       "test/systems/arena/arena2_bout.test.js"
     ]

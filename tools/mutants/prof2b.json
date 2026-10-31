@@ -177,8 +177,8 @@
   {
     "name": "PROF2b-cli-warn-early",
     "file": "src/net/motherlodeBook.js",
-    "old": "if (t >= l.opensAt - ahead && t < l.opensAt",
-    "new": "if (t >= l.opensAt - ahead - 60 && t < l.opensAt",
+    "old": "        if (t >= l.opensAt - ahead && t < l.opensAt && !said.has(`warn|${l.key}`)) {",
+    "new": "        if (t >= l.opensAt - ahead - 60 && t < l.opensAt && !said.has(`warn|${l.key}`)) {",
     "tests": [
       "test/net/prof2b_client.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "PROF2b-cli-sense-unread",
     "file": "src/net/motherlodeBook.js",
-    "old": "const ahead = motherlodeWarnS(sense);",
-    "new": "const ahead = motherlodeWarnS(false);",
+    "old": "      const ahead = motherlodeWarnS(sense);",
+    "new": "      const ahead = motherlodeWarnS(false);",
     "tests": [
       "test/net/prof2b_client.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "PROF2b-cli-watch-anyones",
     "file": "src/net/motherlodeBook.js",
-    "old": "if (!c || !c.signed || c.s !== meNow(true)) return false;",
-    "new": "if (!c || !c.signed) return false;",
+    "old": "      if (!c || !c.signed || c.s !== meNow(true)) return false;",
+    "new": "      if (!c || !c.signed) return false;",
     "tests": [
       "test/net/prof2b_client.test.js"
     ],
@@ -205,8 +205,8 @@
   {
     "name": "PROF2b-cli-watch-older-over-newer",
     "file": "src/net/motherlodeBook.js",
-    "old": "      if ((watches.get(k)?.i ?? -Infinity) >= c.i) return false;\n",
-    "new": "",
+    "old": "      if ((watches.get(k)?.i ?? -Infinity) >= c.i) return false;\n      watches.delete(k);",
+    "new": "      watches.delete(k);",
     "tests": [
       "test/net/prof2b_client.test.js"
     ]
@@ -214,8 +214,8 @@
   {
     "name": "PROF2b-cli-watch-stale-carried",
     "file": "src/net/motherlodeBook.js",
-    "old": "return w && w.s === m && motherlodeWatchOk(w.i, nowS() + Math.max(0, aheadS)) ? w.r : null;",
-    "new": "return w && w.s === m ? w.r : null;",
+    "old": "      return w && w.s === m && motherlodeWatchOk(w.i, nowS() + Math.max(0, aheadS)) ? w.r : null;",
+    "new": "      return w && w.s === m ? w.r : null;",
     "tests": [
       "test/net/prof2b_client.test.js"
     ],
@@ -224,8 +224,8 @@
   {
     "name": "PROF2b-cli-find-unheard",
     "file": "src/net/motherlodeBook.js",
-    "old": "      state.found = typeof data.node === 'string' ? data.node : state.found;\n",
-    "new": "",
+    "old": "      state.found = typeof data.node === 'string' ? data.node : state.found;\n      const l = state.lodes.find((x) => x.key === data.node);",
+    "new": "      const l = state.lodes.find((x) => x.key === data.node);",
     "tests": [
       "test/net/prof2b_client.test.js"
     ]

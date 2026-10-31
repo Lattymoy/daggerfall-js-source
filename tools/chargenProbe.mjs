@@ -6,7 +6,9 @@ import { createServer } from 'vite';
 import { chromium } from 'playwright';
 const server = await createServer({ root: '/home/user/project-dagger', server: { port: 5199, strictPort: true } });
 await server.listen();
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 await page.goto('http://localhost:5199/play/?shot&play&exterior&time=12:00');
@@ -15,7 +17,10 @@ const waitFrames = async (n) => {
   const f = await page.evaluate(() => window.__frame);
   await page.waitForFunction(([f0, k]) => window.__frame > f0 + k, [f, n], { timeout: 60000 });
 };
-const key = async (k) => { await page.keyboard.press(k); await waitFrames(2); };
+const key = async (k) => {
+  await page.keyboard.press(k);
+  await waitFrames(2);
+};
 // the chargen overlay must be up on a fresh boot
 await page.waitForFunction(() => JSON.parse(window.__talk()).overlay === true, null, { timeout: 60000 });
 console.log('chargen overlay on boot:', JSON.parse(await page.evaluate(() => window.__talk())).overlay);
@@ -27,138 +32,234 @@ await waitFrames(2);
 // U10: the PROVINCE CLICK is verbatim - TAMRIEL2.IMG's palette index
 // at the click point IS the race id. Click Hammerfell and the flow
 // must land on Redguard (id 2) with no key pressed.
-const M = { s: 4, ox: 60, oy: 50 };   // 1400x900 -> the native mapping
-const clickNative = async (vx, vy) => { await page.mouse.click(M.ox + vx * M.s, M.oy + vy * M.s); await waitFrames(3); };
-await clickNative(110, 95);           // Hammerfell
+const M = { s: 4, ox: 60, oy: 50 }; // 1400x900 -> the native mapping
+const clickNative = async (vx, vy) => {
+  await page.mouse.click(M.ox + vx * M.s, M.oy + vy * M.s);
+  await waitFrames(3);
+};
+await clickNative(110, 95); // Hammerfell
 const clicked = await page.evaluate(() => window.__chargenRace?.() ?? null);
 console.log('province click ->', clicked);
-if (clicked !== 'Redguard') { console.log('PROVINCE CLICK DID NOT PICK A RACE', clicked); process.exit(1); }
+if (clicked !== 'Redguard') {
+  console.log('PROVINCE CLICK DID NOT PICK A RACE', clicked);
+  process.exit(1);
+}
 // U11: the click opens the race's TEXT.RSC description in a Yes/No
 // parchment box (CreateCharRaceSelect.cs:100-112).
 await waitFrames(3);
 const confirm = await page.evaluate(() => window.__chargenConfirm?.() ?? null);
 console.log('race confirm box:', JSON.stringify(confirm?.slice(0, 2) ?? null));
-if (!confirm?.length) { console.log('RACE DESCRIPTION BOX DID NOT OPEN'); process.exit(1); }
+if (!confirm?.length) {
+  console.log('RACE DESCRIPTION BOX DID NOT OPEN');
+  process.exit(1);
+}
 await page.screenshot({ path: '/home/claude/chargen-raceconfirm.png' });
-await key('Escape');                  // NO - back to the map, race kept
-if (await page.evaluate(() => window.__chargenConfirm?.() ?? null)) { console.log('NO DID NOT DISMISS'); process.exit(1); }
+await key('Escape'); // NO - back to the map, race kept
+if (await page.evaluate(() => window.__chargenConfirm?.() ?? null)) {
+  console.log('NO DID NOT DISMISS');
+  process.exit(1);
+}
 // the click left the cursor on Redguard (index 1); step to Khajiit (6)
 for (let i = 0; i < 5; i++) await key('ArrowDown');
 await waitFrames(2);
-await page.screenshot({ path: '/home/claude/chargen-race.png' });   // U10: TMAP00I0
+await page.screenshot({ path: '/home/claude/chargen-race.png' }); // U10: TMAP00I0
 // AUDIT 17g F5: a KEYBOARD confirm opens the same description box a
 // click does - it used to walk straight past it.
 await key('Enter');
 const kbConfirm = await page.evaluate(() => window.__chargenConfirm?.() ?? null);
-if (!kbConfirm?.length) { console.log('KEYBOARD CONFIRM SKIPPED THE RACE BOX'); process.exit(1); }
+if (!kbConfirm?.length) {
+  console.log('KEYBOARD CONFIRM SKIPPED THE RACE BOX');
+  process.exit(1);
+}
 console.log('keyboard confirm opened the box:', kbConfirm.length, 'rows');
-await key('Enter');            // YES -> gender
+await key('Enter'); // YES -> gender
 await waitFrames(2);
 await page.screenshot({ path: '/home/claude/chargen-gender.png' });
-await key('ArrowDown');        // female
-await key('Enter');            // U18: -> the class-METHOD screen
+await key('ArrowDown'); // female
+await key('Enter'); // U18: -> the class-METHOD screen
 await waitFrames(2);
-await page.screenshot({ path: '/home/claude/chargen-method.png' });   // U18: BUTN01I0
-await key('Enter');            // choose from a list (cursor 0) -> the class list
-for (let i = 0; i < 3; i++) await key('ArrowDown');   // -> Sorcerer's row
+await page.screenshot({ path: '/home/claude/chargen-method.png' }); // U18: BUTN01I0
+await key('Enter'); // choose from a list (cursor 0) -> the class list
+for (let i = 0; i < 3; i++) await key('ArrowDown'); // -> Sorcerer's row
 await waitFrames(2);
-await page.screenshot({ path: '/home/claude/chargen-class.png' });   // U10: PICK00I0
-await key('Enter');            // U17: Return USES the row - the description box opens
-await key('Enter');            // Yes -> U19's BIO-METHOD screen
+await page.screenshot({ path: '/home/claude/chargen-class.png' }); // U10: PICK00I0
+await key('Enter'); // U17: Return USES the row - the description box opens
+await key('Enter'); // Yes -> U19's BIO-METHOD screen
 await waitFrames(2);
 // U19: the GENERATE path is this probe's leg (the click probe walks
 // the manual questions): the BUTN02I0 method screen, then the
 // auto-answered biography with its reputation box.
-const biog = async () => JSON.parse(await page.evaluate(() => {
-  const f = window.__chargenFlow?.();
-  return JSON.stringify(f ? { state: f.state, q: f.biogQuestionIndex, effects: f.biographyEffects.length } : null);
-}));
+const biog = async () =>
+  JSON.parse(
+    await page.evaluate(() => {
+      const f = window.__chargenFlow?.();
+      return JSON.stringify(f ? { state: f.state, q: f.biogQuestionIndex, effects: f.biographyEffects.length } : null);
+    }),
+  );
 let b = await biog();
 console.log('bio-method opened:', JSON.stringify(b));
-if (b?.state !== 'bioMethod') { console.log('BIO-METHOD SCREEN DID NOT OPEN', JSON.stringify(b)); process.exit(1); }
-await page.screenshot({ path: '/home/claude/chargen-biomethod.png' });   // U19: BUTN02I0
-await key('Enter');            // cursor 0 = have your history GENERATED
+if (b?.state !== 'bioMethod') {
+  console.log('BIO-METHOD SCREEN DID NOT OPEN', JSON.stringify(b));
+  process.exit(1);
+}
+await page.screenshot({ path: '/home/claude/chargen-biomethod.png' }); // U19: BUTN02I0
+await key('Enter'); // cursor 0 = have your history GENERATED
 await waitFrames(2);
 // the auto path answers all twelve and pops the REPUTATION box
 // (TEXT.RSC 35) over the method screen; any key closes it.
-const rep = JSON.parse(await page.evaluate(() => {
-  const f = window.__chargenFlow?.();
-  return JSON.stringify({ state: f?.state, box: f?.biogRepBox?.map((r) => r.text) ?? null, story: f?.backStory?.length ?? 0, changes: f?.repChanges ?? null });
-}));
-console.log('reputation box:', JSON.stringify(rep.box?.slice(0, 3)), 'changes', JSON.stringify(rep.changes), 'backstory rows', rep.story);
-if (rep.state !== 'bioMethod') { console.log('THE REP BOX SHOULD SHOW OVER THE METHOD SCREEN', rep.state); process.exit(1); }
-if (!rep.box?.length) { console.log('REPUTATION BOX DID NOT OPEN'); process.exit(1); }
-if (!rep.story) { console.log('BACKSTORY NOT COMPOSED'); process.exit(1); }
+const rep = JSON.parse(
+  await page.evaluate(() => {
+    const f = window.__chargenFlow?.();
+    return JSON.stringify({
+      state: f?.state,
+      box: f?.biogRepBox?.map((r) => r.text) ?? null,
+      story: f?.backStory?.length ?? 0,
+      changes: f?.repChanges ?? null,
+    });
+  }),
+);
+console.log(
+  'reputation box:',
+  JSON.stringify(rep.box?.slice(0, 3)),
+  'changes',
+  JSON.stringify(rep.changes),
+  'backstory rows',
+  rep.story,
+);
+if (rep.state !== 'bioMethod') {
+  console.log('THE REP BOX SHOULD SHOW OVER THE METHOD SCREEN', rep.state);
+  process.exit(1);
+}
+if (!rep.box?.length) {
+  console.log('REPUTATION BOX DID NOT OPEN');
+  process.exit(1);
+}
+if (!rep.story) {
+  console.log('BACKSTORY NOT COMPOSED');
+  process.exit(1);
+}
 await page.screenshot({ path: '/home/claude/chargen-repbox.png' });
-await key('Enter');            // close the box -> the NAME screen (U15 order)
+await key('Enter'); // close the box -> the NAME screen (U15 order)
 const after = await biog();
 console.log('after the generated biography:', JSON.stringify({ state: after.state, effects: after.effects }));
-if (after.state !== 'name') { console.log('GENERATED BIOGRAPHY DID NOT COMPLETE', JSON.stringify(after)); process.exit(1); }
-if (after.effects < 12) { console.log('GENERATED BIOGRAPHY COLLECTED NO EFFECTS', after.effects); process.exit(1); }
+if (after.state !== 'name') {
+  console.log('GENERATED BIOGRAPHY DID NOT COMPLETE', JSON.stringify(after));
+  process.exit(1);
+}
+if (after.effects < 12) {
+  console.log('GENERATED BIOGRAPHY COLLECTED NO EFFECTS', after.effects);
+  process.exit(1);
+}
 await waitFrames(2);
 // the name, typed as classic types it
 await page.screenshot({ path: '/home/claude/chargen-name.png' });
 for (const c of 'MAC') await key(c);
-await key('Enter');            // -> face
+await key('Enter'); // -> face
 for (let i = 0; i < 3; i++) await key('ArrowDown');
-await waitFrames(10);          // U10: the FACE CIF streams in
+await waitFrames(10); // U10: the FACE CIF streams in
 await page.screenshot({ path: '/home/claude/chargen-face.png' });
-await key('Enter');            // -> stats
+await key('Enter'); // -> stats
 await waitFrames(2);
-await page.screenshot({ path: '/home/claude/chargen-stats.png' });   // U10: CHAR02I0
+await page.screenshot({ path: '/home/claude/chargen-stats.png' }); // U10: CHAR02I0
 // spend the stat pool, then each skill pool
-const spend = async () => { for (let i = 0; i < 30; i++) await page.keyboard.press('='); await waitFrames(2); };
+const spend = async () => {
+  for (let i = 0; i < 30; i++) await page.keyboard.press('=');
+  await waitFrames(2);
+};
 await spend();
-await key('Enter');            // -> skills (gated until pool 0)
+await key('Enter'); // -> skills (gated until pool 0)
 await waitFrames(2);
-await page.screenshot({ path: '/home/claude/chargen-skills.png' });   // U10: CHAR03I0
-for (let row = 0; row < 9; row++) { await spend(); await page.keyboard.press('ArrowDown'); }
+await page.screenshot({ path: '/home/claude/chargen-skills.png' }); // U10: CHAR03I0
+for (let row = 0; row < 9; row++) {
+  await spend();
+  await page.keyboard.press('ArrowDown');
+}
 await waitFrames(2);
-await key('Enter');            // skills -> REFLEXES (U13)
+await key('Enter'); // skills -> REFLEXES (U13)
 await waitFrames(2);
 await page.screenshot({ path: '/home/claude/chargen-reflexes.png' });
 const reflexBefore = await page.evaluate(() => window.__chargenFlow?.()?.reflexes ?? null);
-await key('ArrowUp'); await key('ArrowUp');   // Average -> VeryHigh
+await key('ArrowUp');
+await key('ArrowUp'); // Average -> VeryHigh
 const reflexAfter = await page.evaluate(() => window.__chargenFlow?.()?.reflexes ?? null);
 console.log('reflexes:', reflexBefore, '->', reflexAfter);
-if (reflexBefore !== 2 || reflexAfter !== 0) { console.log('REFLEX PICKER DID NOT MOVE'); process.exit(1); }
-await key('Enter');            // -> U16's SUMMARY
+if (reflexBefore !== 2 || reflexAfter !== 0) {
+  console.log('REFLEX PICKER DID NOT MOVE');
+  process.exit(1);
+}
+await key('Enter'); // -> U16's SUMMARY
 await waitFrames(2);
 await page.screenshot({ path: '/home/claude/chargen-summary.png' });
-await key('Enter');            // the summary's OK -> ORL1's leveling question
+await key('Enter'); // the summary's OK -> ORL1's leveling question
 await waitFrames(2);
 await page.screenshot({ path: '/home/claude/chargen-leveling.png' });
 // ORL1: the door asks which leveling system this character wants before
 // it hands the host a character. Enter takes the cursor's answer, which
 // starts on Daggerfall's own - the system every pin below expects.
-await key('Enter');            // the question's answer -> done
+await key('Enter'); // the question's answer -> done
 await waitFrames(4);
 const e = await page.evaluate(() => {
   const p = window.__playerEntity;
-  return { name: p.name, race: p.race, raceId: p.raceId, gender: p.gender, face: p.faceIndex,
-    chargenDone: !!p.chargenDone, maxHealth: p.maxHealth, career: p.career?.name,
-    skillsIsArray: Array.isArray(p.skills), overlay: JSON.parse(window.__talk()).overlay,
+  return {
+    name: p.name,
+    race: p.race,
+    raceId: p.raceId,
+    gender: p.gender,
+    face: p.faceIndex,
+    chargenDone: !!p.chargenDone,
+    maxHealth: p.maxHealth,
+    career: p.career?.name,
+    skillsIsArray: Array.isArray(p.skills),
+    overlay: JSON.parse(window.__talk()).overlay,
     // S3d: the real starting kit replaces the interim dagger
     items: (p.items ?? []).map((i) => `${i.name}${i.stackCount > 1 ? 'x' + i.stackCount : ''}`),
     worn: (p.equip?.slots ?? []).filter(Boolean).map((i) => i.name),
-    gold: (p.items ?? []).find((i) => i.group === 'Currency')?.stackCount ?? 0 };
+    gold: (p.items ?? []).find((i) => i.group === 'Currency')?.stackCount ?? 0,
+  };
 });
 console.log('entity after chargen:', JSON.stringify(e));
-if (!e.chargenDone) { console.log('CHARGEN DID NOT COMPLETE'); process.exit(1); }
-if (e.race !== 'Khajiit' || e.gender !== 'female') { console.log('IDENTITY NOT APPLIED'); process.exit(1); }
-if (!e.skillsIsArray) { console.log('SKILLS STILL THE INTERIM FLAT NUMBER'); process.exit(1); }
+if (!e.chargenDone) {
+  console.log('CHARGEN DID NOT COMPLETE');
+  process.exit(1);
+}
+if (e.race !== 'Khajiit' || e.gender !== 'female') {
+  console.log('IDENTITY NOT APPLIED');
+  process.exit(1);
+}
+if (!e.skillsIsArray) {
+  console.log('SKILLS STILL THE INTERIM FLAT NUMBER');
+  process.exit(1);
+}
 // S3d: AssignStartingGear - dressed, armed, funded, and NO interim dagger
 // S3e: the kit's 100 gold is the FLOOR now - a biography answer can
 // add to it (GP +N) or take from it, so the assertion is that the kit
 // landed and the biography moved it, not a fixed number.
-if (e.gold < 100) { console.log('STARTING GOLD BELOW THE KIT', e.gold); process.exit(1); }
-if (e.worn.length !== 2) { console.log('CLOTHES NOT WORN', JSON.stringify(e.worn)); process.exit(1); }
-if (!e.items.includes('Spellbook')) { console.log('NO SPELLBOOK'); process.exit(1); }
-if (e.items.includes('Dagger')) { console.log('THE INTERIM DAGGER SURVIVED CHARGEN'); process.exit(1); }
+if (e.gold < 100) {
+  console.log('STARTING GOLD BELOW THE KIT', e.gold);
+  process.exit(1);
+}
+if (e.worn.length !== 2) {
+  console.log('CLOTHES NOT WORN', JSON.stringify(e.worn));
+  process.exit(1);
+}
+if (!e.items.includes('Spellbook')) {
+  console.log('NO SPELLBOOK');
+  process.exit(1);
+}
+if (e.items.includes('Dagger')) {
+  console.log('THE INTERIM DAGGER SURVIVED CHARGEN');
+  process.exit(1);
+}
 // AUDIT 17f: the bag order is AssignStartingGear's - Spellbook FIRST
 // (AddPosition.Back), then the clothes, then the class weapon.
-if (e.items[0] !== 'Spellbook') { console.log('SPELLBOOK NOT FIRST', JSON.stringify(e.items)); process.exit(1); }
-if (e.items[1] !== 'Short Shirt' || e.items[2] !== 'Casual Pants') { console.log('TEMPLATE NAMES WRONG', JSON.stringify(e.items)); process.exit(1); }
+if (e.items[0] !== 'Spellbook') {
+  console.log('SPELLBOOK NOT FIRST', JSON.stringify(e.items));
+  process.exit(1);
+}
+if (e.items[1] !== 'Short Shirt' || e.items[2] !== 'Casual Pants') {
+  console.log('TEMPLATE NAMES WRONG', JSON.stringify(e.items));
+  process.exit(1);
+}
 // AUDIT 17f F2: a Mage/Spellsword created in a TOWN gets their
 // starting spellbook - the exterior hosts used to call finishChargen
 // with no spell table at all.
@@ -172,10 +273,16 @@ const icons = await page.evaluate(async () => {
   const m = await import('/src/systems/item/itemTemplates.js');
   const p = window.__playerEntity;
   const shirt = (p.items ?? []).find((i) => i.name === 'Short Shirt');
-  return { worn: m.inventoryItemImage(shirt, p), base: m.inventoryItemImage(shirt, { gender: 'female', race: 'Argonian' }) };
+  return {
+    worn: m.inventoryItemImage(shirt, p),
+    base: m.inventoryItemImage(shirt, { gender: 'female', race: 'Argonian' }),
+  };
 });
 console.log('shirt icon archive:', JSON.stringify(icons));
-if (icons.worn.archive !== icons.base.archive + 3) { console.log('ICON NOT ADDRESSED FOR THE WEARER', JSON.stringify(icons)); process.exit(1); }
+if (icons.worn.archive !== icons.base.archive + 3) {
+  console.log('ICON NOT ADDRESSED FOR THE WEARER', JSON.stringify(icons));
+  process.exit(1);
+}
 // the paperdoll must reload on the chosen identity
 await waitFrames(10);
 await page.keyboard.press('F6');
@@ -183,7 +290,9 @@ await waitFrames(10);
 await page.screenshot({ path: '/home/claude/chargen-paperdoll.png' });
 // AUDIT 17f: eyeball the CLOTHING & MISC tab - the shirt/pants icons
 // are the ones that were coming off the wrong morphology row.
-const S = 4, OX = 60, OY = 50;
+const S = 4,
+  OX = 60,
+  OY = 50;
 await page.mouse.click(OX + 205 * S, OY + 4 * S);
 await waitFrames(12);
 await page.screenshot({ path: '/home/claude/chargen-clothing-icons.png' });
@@ -191,20 +300,34 @@ await page.screenshot({ path: '/home/claude/chargen-clothing-icons.png' });
 // skills screen only displays the bonus, finishChargen applies it.
 const bio = await page.evaluate(() => {
   const p = window.__playerEntity;
-  return { rep: [...(p.sGroupReputations ?? [])], reaction: p.biographyReactionMod ?? 0,
-    poison: p.biographyResistPoisonMod ?? 0, skillSum: (p.skills ?? []).reduce((a, b) => a + b, 0) };
+  return {
+    rep: [...(p.sGroupReputations ?? [])],
+    reaction: p.biographyReactionMod ?? 0,
+    poison: p.biographyResistPoisonMod ?? 0,
+    skillSum: (p.skills ?? []).reduce((a, b) => a + b, 0),
+  };
 });
 console.log('biography on the entity:', JSON.stringify(bio));
 // U19: the answers are RANDOM now (the generate path), so the pin is
 // the run's OWN digested totals landing on the entity, not a fixed
 // first-answer vector.
 if (JSON.stringify(bio.rep.slice(0, 5)) !== JSON.stringify(rep.changes)) {
-  console.log('BIOGRAPHY REPUTATION DID NOT LAND', JSON.stringify(bio.rep.slice(0, 5)), 'vs', JSON.stringify(rep.changes)); process.exit(1);
+  console.log(
+    'BIOGRAPHY REPUTATION DID NOT LAND',
+    JSON.stringify(bio.rep.slice(0, 5)),
+    'vs',
+    JSON.stringify(rep.changes),
+  );
+  process.exit(1);
 }
 // U13: the reflex pick must reach the entity - both consumers (the
 // EnemyAttack melee timer and the monster multi-attack gate) read it.
 const reflexOnEntity = await page.evaluate(() => window.__playerEntity.reflexes);
 console.log('reflexes on the entity:', reflexOnEntity);
-if (reflexOnEntity !== 0) { console.log('REFLEX PICK NEVER LANDED', reflexOnEntity); process.exit(1); }
+if (reflexOnEntity !== 0) {
+  console.log('REFLEX PICK NEVER LANDED', reflexOnEntity);
+  process.exit(1);
+}
 console.log('CHARGEN OK');
-await browser.close(); await server.close();
+await browser.close();
+await server.close();

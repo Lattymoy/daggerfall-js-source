@@ -4501,7 +4501,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     return _arenaSpellQ;
   };
   /** A blow's number on my opponent, out to the referee (ARENA4b: with its sequence); answers whether it went. */
-  const landOnRival = (rb, damage, kind) => (takeOwed(rb.entity), !!opts.onArenaHit?.({ i: rb.rival, d: damage, kind, w: playerWeapon.strikingWeapon?.templateIndex ?? -1, m: playerWeapon.strikingWeapon?.material ?? 0, q: _arenaQ }));   // OPEN-HAND: what a follow-up owed a player is dropped - BAL8, the referee's blow alone
+  const landOnRival = (rb, damage, kind) => { takeOwed(rb.entity); return !!opts.onArenaHit?.({ i: rb.rival, d: damage, kind, w: playerWeapon.strikingWeapon?.templateIndex ?? -1, m: playerWeapon.strikingWeapon?.material ?? 0, q: _arenaQ }); };   // OPEN-HAND: what a follow-up owed a player is dropped - BAL8, the referee's blow alone
   /** A swing of mine that met my opponent: the parry's ring for none, else the hit's sound and blood at them and the
    *  number out (their own screen bleeds as the relay's health falls). */
   function swingOnRival(rb, damage, lookDir) {

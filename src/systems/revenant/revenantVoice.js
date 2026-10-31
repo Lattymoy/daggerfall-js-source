@@ -8,12 +8,18 @@
 /** @type {null | ((ev: any) => boolean)} */
 let _presenter = null;
 /** The face that draws a revenant's events (`fn(ev)` answers whether it drew it); null takes it down. */
-export function setRevenantPresenter(fn) { _presenter = typeof fn === 'function' ? fn : null; }
+export function setRevenantPresenter(fn) {
+  _presenter = typeof fn === 'function' ? fn : null;
+}
 /** Say an event: the face draws it, or `say` speaks its line. Answers whether the face drew it. */
 export function revenantSay(ev, say = null) {
   if (!ev) return false;
   let shown = false;
-  try { shown = !!_presenter?.(ev); } catch { shown = false; }
+  try {
+    shown = !!_presenter?.(ev);
+  } catch {
+    shown = false;
+  }
   if (!shown && ev.line) say?.(ev.line);
   return shown;
 }

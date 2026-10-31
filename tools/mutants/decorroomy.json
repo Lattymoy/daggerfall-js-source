@@ -29,8 +29,8 @@
   {
     "name": "DECORROOMY-price-unheld",
     "file": "src/net/homeLaw.js",
-    "old": "&& homeOnlinePrice(ground, townBlocks) === price;",
-    "new": "&& price > 0;",
+    "old": "  homeOnlinePrice(ground, townBlocks) === price;",
+    "new": "  price > 0;",
     "tests": [
       "test/server/decorroomy_service.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DECORROOMY-ground-unbounded",
     "file": "src/net/homeLaw.js",
-    "old": "ground > 0 && ground <= HOME_GROUND_MAX",
-    "new": "ground > 0",
+    "old": "  ground <= HOME_GROUND_MAX &&\n  Number.isSafeInteger(townBlocks) &&",
+    "new": "  Number.isSafeInteger(townBlocks) &&",
     "tests": [
       "test/server/decorroomy_service.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "DECORROOMY-ground-op-unwired",
     "file": "server-account/src/decorAccess.js",
-    "old": "  if (body.op === 'ground') return setHomeGround(ctx, player, body);   // DECOR-ROOMY\n",
-    "new": "",
+    "old": "  if (body.op === 'ground') return setHomeGround(ctx, player, body); // DECOR-ROOMY\n  if (body.op === 'grants') return decorGrants(ctx, player, body);",
+    "new": "  if (body.op === 'grants') return decorGrants(ctx, player, body);",
     "tests": [
       "test/server/decorroomy_service.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "DECORROOMY-ground-anyone",
     "file": "server-account/src/decorAccess.js",
-    "old": "  if (!(await owns(db, mapId, buildingKey, player, character))?.owns) return { error: 'no-home' };\n  const home = await db.prepare('SELECT price, ground, guild_id",
-    "new": "  const home = await db.prepare('SELECT price, ground, guild_id",
+    "old": "  if (!(await owns(db, mapId, buildingKey, player, character))?.owns) return { error: 'no-home' };\n  const home = await db",
+    "new": "  const home = await db",
     "tests": [
       "test/server/decorroomy_service.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "DECORROOMY-ground-rewritten",
     "file": "server-account/src/decorAccess.js",
-    "old": "  if (home.ground != null) return { ok: true, ground: home.ground };\n",
-    "new": "",
+    "old": "  if (home.ground != null) return { ok: true, ground: home.ground };\n  if (",
+    "new": "  if (",
     "tests": [
       "test/server/decorroomy_service.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "DECORROOMY-ground-unheld",
     "file": "server-account/src/decorAccess.js",
-    "old": "  if (!homeGroundOk(ground, townBlocks, homeGroundPrice(mapId, buildingKey, Number(home.price), ground, townBlocks, home.layout ?? null))) return { error: 'bad-home' };   // AUDIT FOUNDATION P2: a row's price, the law's ground\n",
-    "new": "",
+    "old": "  if (\n    !homeGroundOk(\n      ground,\n      townBlocks,\n      homeGroundPrice(mapId, buildingKey, Number(home.price), ground, townBlocks, home.layout ?? null),\n    )\n  )\n    return { error: 'bad-home' }; // AUDIT FOUNDATION P2: a row's price, the law's ground\n  const kept = homeGroundKept(ground);",
+    "new": "  const kept = homeGroundKept(ground);",
     "tests": [
       "test/server/decorroomy_service.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "DECORROOMY-any-room",
     "file": "src/systems/decor/homeDecorCap.js",
-    "old": "(room && room.key === keyOf(mapId, buildingKey) ? room.cap : null)",
-    "new": "(room ? room.cap : null)",
+    "old": "export const homeDecorCap = (mapId, buildingKey) => (room && room.key === keyOf(mapId, buildingKey) ? room.cap : null);",
+    "new": "export const homeDecorCap = (mapId, buildingKey) => (room ? room.cap : null);",
     "tests": [
       "test/systems/decor/decorroomy.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "DECORROOMY-answer-unread",
     "file": "src/systems/decor/homeDecorCap.js",
-    "old": "room = { key, cap: decorCapOf(res.data.ground) };",
-    "new": "room = room;",
+    "old": "      if (res?.ok && room?.key === key && typeof res.data?.ground === 'number')\n        room = { key, cap: decorCapOf(res.data.ground) };",
+    "new": "      if (res?.ok && room?.key === key && typeof res.data?.ground === 'number') room = room;",
     "tests": [
       "test/systems/decor/decorroomy.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "DECORROOMY-registry-drops",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "...(ground ? { ground: ground[0], townBlocks: ground[1] } : {})",
-    "new": "...{}",
+    "old": "      ...(ground ? { ground: ground[0], townBlocks: ground[1] } : {}),",
+    "new": "      ...{},",
     "tests": [
       "test/systems/decor/decorroomy.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "DECORROOMY-ground-race-guard",
     "file": "server-account/src/decorAccess.js",
-    "old": "WHERE map_id = ? AND building_key = ? AND ground IS NULL').bind(kept, mapId, buildingKey).run();",
-    "new": "WHERE map_id = ? AND building_key = ?').bind(kept, mapId, buildingKey).run();",
+    "old": "    .prepare('UPDATE homes SET ground = ? WHERE map_id = ? AND building_key = ? AND ground IS NULL')",
+    "new": "    .prepare('UPDATE homes SET ground = ? WHERE map_id = ? AND building_key = ?')",
     "tests": [
       "test/server/decorroomy_service.test.js"
     ],

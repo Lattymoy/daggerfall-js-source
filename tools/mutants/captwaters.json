@@ -11,8 +11,8 @@
   {
     "name": "CW-deep-strict",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "portPx >= DEEP_PX ? 'deep' : 'open'",
-    "new": "portPx > DEEP_PX ? 'deep' : 'open'",
+    "old": "  nearPort ? 'coastal' : Number.isFinite(portPx) && portPx >= DEEP_PX ? 'deep' : 'open';",
+    "new": "  nearPort ? 'coastal' : Number.isFinite(portPx) && portPx > DEEP_PX ? 'deep' : 'open';",
     "tests": [
       "test/systems/naval/captwaters.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CW-coast-first",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "(nearPort ? 'coastal' : Number.isFinite(portPx)",
-    "new": "(false ? 'coastal' : Number.isFinite(portPx)",
+    "old": "  nearPort ? 'coastal' : Number.isFinite(portPx) && portPx >= DEEP_PX ? 'deep' : 'open';",
+    "new": "  false ? 'coastal' : Number.isFinite(portPx) && portPx >= DEEP_PX ? 'deep' : 'open';",
     "tests": [
       "test/systems/naval/captwaters.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CW-unknown-deep",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "Number.isFinite(portPx) && portPx >= DEEP_PX",
-    "new": "!(portPx < DEEP_PX)",
+    "old": "  nearPort ? 'coastal' : Number.isFinite(portPx) && portPx >= DEEP_PX ? 'deep' : 'open';",
+    "new": "  nearPort ? 'coastal' : !(portPx < DEEP_PX) ? 'deep' : 'open';",
     "tests": [
       "test/systems/naval/captwaters.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CW-navy-unscaled",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "w.merchant *= DEEP_TRADE_K; w.navy *= DEEP_TRADE_K; }",
-    "new": "w.merchant *= DEEP_TRADE_K; }",
+    "old": "    w.navy *= DEEP_TRADE_K;\n  } // CAPT-WATERS: the deep waters",
+    "new": "  } // CAPT-WATERS: the deep waters",
     "tests": [
       "test/systems/naval/captwaters.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CW-port-precedence",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "  else if (deep) { w.pirate *= DEEP_PIRATE_K;",
-    "new": "  if (deep) { w.pirate *= DEEP_PIRATE_K;",
+    "old": "  else if (deep) {",
+    "new": "  if (deep) {",
     "tests": [
       "test/systems/naval/captwaters.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "CW-level-unread",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "classFor(faction, (ctx.level ?? 1) + (deep ? DEEP_LEVEL : 0) + (ether?.band?.level ?? 0), rng());",
-    "new": "classFor(faction, (ctx.level ?? 1) + (ether?.band?.level ?? 0), rng());",
+    "old": "      let cls = classFor(faction, (ctx.level ?? 1) + (deep ? DEEP_LEVEL : 0) + (ether?.band?.level ?? 0), rng());",
+    "new": "      let cls = classFor(faction, (ctx.level ?? 1) + (ether?.band?.level ?? 0), rng());",
     "tests": [
       "test/systems/naval/captwaters.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CW-flag-unsaid",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "hunter, ...(deep ? { deep: true } : {}), ...(ether",
-    "new": "hunter, ...(ether",
+    "old": "        out.spawn = {\n          seed,\n          classId: cls.id,\n          variant,\n          pos,\n          yaw,\n          hunter,\n          ...(deep ? { deep: true } : {}),\n          ...(ether ? { ether: ether.band.id } : {}),\n        }; // CAPT-WATERS: launched of the deep; ETHER-SEA: of the Eltheric Ocean",
+    "new": "        out.spawn = { seed, classId: cls.id, variant, pos, yaw, hunter, ...(ether ? { ether: ether.band.id } : {}) }; // CAPT-WATERS: launched of the deep; ETHER-SEA: of the Eltheric Ocean",
     "tests": [
       "test/systems/naval/captwaters.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "CW-temper-share",
     "file": "src/systems/naval/navalAI.js",
-    "old": "return mulberry32(((seed >>> 0) ^ TEMPER_SALT) >>> 0)() < bold ? TEMPERS.bold : TEMPERS.wary;",
-    "new": "return mulberry32(((seed >>> 0) ^ TEMPER_SALT) >>> 0)() < BOLD_SHARE ? TEMPERS.bold : TEMPERS.wary;",
+    "old": "  return mulberry32(((seed >>> 0) ^ TEMPER_SALT) >>> 0)() < bold ? TEMPERS.bold : TEMPERS.wary;",
+    "new": "  return mulberry32(((seed >>> 0) ^ TEMPER_SALT) >>> 0)() < BOLD_SHARE ? TEMPERS.bold : TEMPERS.wary;",
     "tests": [
       "test/systems/naval/captwaters.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "CW-plate",
     "file": "src/ui/naval/navalHud.js",
-    "old": "${model.waters === 'deep' ? ', deep' : ''}",
-    "new": "${''}",
+    "old": "          model.ether\n            ? etherWatersWords(model.ether)\n            : `${model.notoriety.crown} waters${model.waters === 'deep' ? ', deep' : ''}`,",
+    "new": "          model.ether ? etherWatersWords(model.ether) : `${model.notoriety.crown} waters${''}`,",
     "tests": [
       "test/systems/naval/captwaters.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "CW-shots-drop",
     "file": "src/systems/naval/navalShots.js",
-    "old": "owner, deep: !!deep, pos: [...pos],",
-    "new": "owner, pos: [...pos],",
+    "old": "      deep: !!deep,\n      pos: [...pos],",
+    "new": "      pos: [...pos],",
     "tests": [
       "test/systems/naval/captwaters.test.js"
     ]

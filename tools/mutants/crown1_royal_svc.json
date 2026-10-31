@@ -2,8 +2,8 @@
   {
     "name": "CROWN1S-edict-cost",
     "file": "src/net/townSeatLaw.js",
-    "old": "'royal-tourney': Object.freeze({ name: 'Royal Tourney', standing: 0, cost: Object.freeze({ crown: 5000 }), repeat: false, crown: true }),",
-    "new": "'royal-tourney': Object.freeze({ name: 'Royal Tourney', standing: 0, cost: Object.freeze({ crown: 4000 }), repeat: false, crown: true }),",
+    "old": "    cost: Object.freeze({ crown: 5000 }),",
+    "new": "    cost: Object.freeze({ crown: 4000 }),",
     "tests": [
       "test/net/crown1_royal_law.test.js",
       "test/net/crown1_royal_service.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "CROWN1S-edict-crown",
     "file": "src/net/townSeatLaw.js",
-    "old": "cost: Object.freeze({ crown: 5000 }), repeat: false, crown: true }),",
-    "new": "cost: Object.freeze({ crown: 5000 }), repeat: false }),",
+    "old": "    crown: true,\n  }),",
+    "new": "  }),",
     "tests": [
       "test/net/crown1_royal_law.test.js",
       "test/net/crown1_royal_service.test.js",
@@ -23,8 +23,8 @@
   {
     "name": "CROWN1S-words",
     "file": "src/net/townSeatLaw.js",
-    "old": "  'royal-tourney': 'A duel ladder all week",
-    "new": "  'royal-tourneyX': 'A duel ladder all week",
+    "old": "    \"The kingdom's palace seats held by other guilds pay the crown 2% of their week's Tithe, a March's 1%. Standing -5 at every seat that pays.\",\n  'royal-tourney':",
+    "new": "    \"The kingdom's palace seats held by other guilds pay the crown 2% of their week's Tithe, a March's 1%. Standing -5 at every seat that pays.\",\n  'royal-tourneyX':",
     "tests": [
       "test/net/crown1_royal_law.test.js"
     ]
@@ -32,8 +32,8 @@
   {
     "name": "CROWN1S-champion-season",
     "file": "src/net/townSeatLaw.js",
-    "old": "    case 'champion': return kingdom ? `Champion of ${kingdom}${seasonTail(ts[1])}` : null;",
-    "new": "    case 'champion': return kingdom ? `Champion of ${kingdom}` : null;",
+    "old": "      return kingdom ? `Champion of ${kingdom}${seasonTail(ts[1])}` : null; // CROWN1 part two: 7.6's words",
+    "new": "      return kingdom ? `Champion of ${kingdom}` : null; // CROWN1 part two: 7.6's words",
     "tests": [
       "test/net/crown1_royal_law.test.js",
       "test/net/crown1_royal_service.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "CROWN1S-chron-champion",
     "file": "src/net/townSeatLaw.js",
-    "old": "    case 'royal-champion': return",
-    "new": "    case 'royal-championX': return",
+    "old": "    case 'royal-champion':",
+    "new": "    case 'royal-championX':",
     "tests": [
       "test/net/crown1_royal_law.test.js"
     ]
@@ -51,8 +51,8 @@
   {
     "name": "CROWN1S-chron-none",
     "file": "src/net/townSeatLaw.js",
-    "old": "    case 'royal-none': return",
-    "new": "    case 'royal-noneX': return",
+    "old": "    case 'royal-none':",
+    "new": "    case 'royal-noneX':",
     "tests": [
       "test/net/crown1_royal_law.test.js"
     ]
@@ -98,8 +98,8 @@
   {
     "name": "CROWN1S-stand-max",
     "file": "src/net/townSeatLaw.js",
-    "old": "w.wins++; w.last = Math.max(w.last, Number(b.at) || 0);",
-    "new": "w.wins++; w.last = Number(b.at) || 0;",
+    "old": "    w.last = Math.max(w.last, Number(b.at) || 0);",
+    "new": "    w.last = Number(b.at) || 0;",
     "tests": [
       "test/net/crown1_royal_law.test.js"
     ]
@@ -162,7 +162,7 @@
   {
     "name": "CROWN1S-pass-once",
     "file": "server-account/src/seatRoyal.js",
-    "old": "    await db.prepare('INSERT OR IGNORE INTO town_seat_royal (week, key, field, at) VALUES (?, ?, ?, ?)').bind(week, key, f, nowS).run();\n    ring = (await db.prepare('SELECT field FROM town_seat_royal WHERE week = ? AND key = ?').bind(week, key).first())?.field ?? f;",
+    "old": "    await db\n      .prepare('INSERT OR IGNORE INTO town_seat_royal (week, key, field, at) VALUES (?, ?, ?, ?)')\n      .bind(week, key, f, nowS)\n      .run();\n    ring =\n      (await db.prepare('SELECT field FROM town_seat_royal WHERE week = ? AND key = ?').bind(week, key).first())\n        ?.field ?? f;",
     "new": "    ring = f;",
     "tests": [
       "test/net/crown1_royal_service.test.js"
@@ -180,8 +180,8 @@
   {
     "name": "CROWN1S-pass-window",
     "file": "server-account/src/seatRoyal.js",
-    "old": "const windowOf = (week) => { const sb = Math.floor(seatWeekStartMs(week) / 1000); return { sb, se: sb + SEAT_WEEK_MS / 1000 }; };",
-    "new": "const windowOf = (week) => { const sb = Math.floor(seatWeekStartMs(week) / 1000); return { sb, se: sb + SEAT_WEEK_MS / 2000 }; };",
+    "old": "  return { sb, se: sb + SEAT_WEEK_MS / 1000 };",
+    "new": "  return { sb, se: sb + SEAT_WEEK_MS / 2000 };",
     "tests": [
       "test/net/crown1_royal_service.test.js"
     ]
@@ -207,7 +207,7 @@
   {
     "name": "CROWN1S-claim-over",
     "file": "server-account/src/seatRoyal.js",
-    "old": "  if (await db.prepare('SELECT 1 FROM town_seat_weeks WHERE week = ?').bind(c.sw).first()) return { error: 'royal-over' };",
+    "old": "  if (await db.prepare('SELECT 1 FROM town_seat_weeks WHERE week = ?').bind(c.sw).first())\n    return { error: 'royal-over' };",
     "new": "",
     "tests": [
       "test/net/crown1_royal_service.test.js"
@@ -216,8 +216,8 @@
   {
     "name": "CROWN1S-claim-once",
     "file": "server-account/src/seatRoyal.js",
-    "old": "    WHERE NOT EXISTS (SELECT 1 FROM town_seat_bouts WHERE week = ?1 AND key = ?2 AND n = ?3)`)",
-    "new": "    WHERE 1`)",
+    "old": "    WHERE NOT EXISTS (SELECT 1 FROM town_seat_bouts WHERE week = ?1 AND key = ?2 AND n = ?3)`,",
+    "new": "    WHERE 1`,",
     "tests": [
       "test/net/crown1_royal_service.test.js"
     ]
@@ -243,8 +243,8 @@
   {
     "name": "CROWN1S-claim-wins",
     "file": "server-account/src/seatRoyal.js",
-    "old": "AND winner = ? AND counted = 1').bind(c.sw, c.sk, player.id)",
-    "new": "AND winner = ?').bind(c.sw, c.sk, player.id)",
+    "old": "        .prepare('SELECT COUNT(*) AS n FROM town_seat_bouts WHERE week = ? AND key = ? AND winner = ? AND counted = 1')",
+    "new": "        .prepare('SELECT COUNT(*) AS n FROM town_seat_bouts WHERE week = ? AND key = ? AND winner = ?')",
     "tests": [
       "test/net/crown1_royal_service.test.js"
     ]
@@ -270,8 +270,8 @@
   {
     "name": "CROWN1S-view-counted",
     "file": "server-account/src/seatRoyal.js",
-    "old": "  const { results = [] } = await db.prepare('SELECT winner, loser, at FROM town_seat_bouts WHERE week = ? AND key = ? AND counted = 1')",
-    "new": "  const { results = [] } = await db.prepare('SELECT winner, loser, at FROM town_seat_bouts WHERE week = ? AND key = ? AND 1')",
+    "old": "    .prepare('SELECT winner, loser, at FROM town_seat_bouts WHERE week = ? AND key = ? AND counted = 1')",
+    "new": "    .prepare('SELECT winner, loser, at FROM town_seat_bouts WHERE week = ? AND key = ? AND 1')",
     "tests": [
       "test/net/crown1_royal_service.test.js"
     ]
@@ -279,8 +279,8 @@
   {
     "name": "CROWN1S-view-prize",
     "file": "server-account/src/seatRoyal.js",
-    "old": "  return { prize: rule.prize, startsAt: sb,",
-    "new": "  return { prize: 0, startsAt: sb,",
+    "old": "    prize: rule.prize,",
+    "new": "    prize: 0,",
     "tests": [
       "test/net/crown1_royal_service.test.js"
     ]
@@ -288,8 +288,8 @@
   {
     "name": "CROWN1S-turn-prize",
     "file": "server-account/src/seatRoyal.js",
-    "old": "'royal-prize', ?2, ?4, ?5, 'seats', 'The Royal Tourney', ?1 || ':prize'`)\n          .bind(escrow, prize, top.account, day, nowS));",
-    "new": "'royal-prize', ?2, ?4, ?5, 'seats', 'The Royal Tourney', ?1 || ':prize'`)\n          .bind(escrow, prize, top.account, day, nowS) && db.prepare('SELECT 1'));",
+    "old": "            .bind(escrow, prize, top.account, day, nowS),",
+    "new": "            .bind(escrow, prize, top.account, day, nowS) && db.prepare('SELECT 1'),",
     "tests": [
       "test/net/crown1_royal_service.test.js"
     ]
@@ -297,8 +297,8 @@
   {
     "name": "CROWN1S-turn-title",
     "file": "server-account/src/seatRoyal.js",
-    "old": "        db.prepare('INSERT OR IGNORE INTO town_seat_titles (account, title, key, week, at) VALUES (?, \\'champion\\', ?, ?, ?)').bind(top.account, key, week, nowS),\n",
-    "new": "",
+    "old": "            \"INSERT OR IGNORE INTO town_seat_titles (account, title, key, week, at) VALUES (?, 'champion', ?, ?, ?)\",\n          )\n          .bind(top.account, key, week, nowS),\n        db\n          .prepare(\n            'INSERT INTO town_seat_royal (week, key, field, champion, at) VALUES (?, ?, NULL, ?, ?) ON CONFLICT (week, key) DO UPDATE SET champion = excluded.champion',",
+    "new": "            'INSERT INTO town_seat_royal (week, key, field, champion, at) VALUES (?, ?, NULL, ?, ?) ON CONFLICT (week, key) DO UPDATE SET champion = excluded.champion',",
     "tests": [
       "test/net/crown1_royal_service.test.js"
     ]
@@ -333,8 +333,8 @@
   {
     "name": "CROWN1S-turn-state",
     "file": "server-account/src/seatRoyal.js",
-    "old": "    out.push(db.prepare(\"UPDATE town_seat_edicts SET state = 'returned' WHERE key = ? AND week = ? AND state = 'law'\").bind(key, week));",
-    "new": "",
+    "old": "    out.push(\n      db\n        .prepare(\"UPDATE town_seat_edicts SET state = 'returned' WHERE key = ? AND week = ? AND state = 'law'\")\n        .bind(key, week),\n    );\n  }",
+    "new": "  }",
     "tests": [
       "test/net/crown1_royal_service.test.js"
     ]

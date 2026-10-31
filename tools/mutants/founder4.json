@@ -2,8 +2,8 @@
   {
     "name": "FOUNDER4-firstPlayed-blind-to-the-column",
     "file": "server-account/src/titles.js",
-    "old": "  Number.isFinite(player.first_played_at) ? player.first_played_at : Infinity,   // FOUNDER4",
-    "new": "  Infinity,   // FOUNDER4",
+    "old": "    Number.isFinite(player.first_played_at) ? player.first_played_at : Infinity, // FOUNDER4",
+    "new": "    Infinity, // FOUNDER4",
     "tests": [
       "test/server/founder4.test.js"
     ],

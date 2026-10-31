@@ -72,8 +72,8 @@
   {
     "name": "TURNED-BLOW-screen-turn-dropped",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      turnStandIn(d.target, b);   // FIELD BUGS 2026-10-18f TURNED-BLOW: a blow from where I stand, on it as it stands, that the relay will refuse is turned here too\n",
-    "new": "",
+    "old": "      turnStandIn(d.target, b); // FIELD BUGS 2026-10-18f TURNED-BLOW: a blow from where I stand, on it as it stands, that the relay will refuse is turned here too\n      _targets.push(d.target);",
+    "new": "      _targets.push(d.target);",
     "tests": [
       "test/net/eliteGates/fb1018f_turnedblow.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "TURNED-BLOW-object-turn-dropped",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      turnStandIn(c.target, b);   // FIELD BUGS 2026-10-18f TURNED-BLOW: an errand's object struck from traversal ground (but one standing off the floor, struck from beside it)\n",
-    "new": "",
+    "old": "      turnStandIn(c.target, b); // FIELD BUGS 2026-10-18f TURNED-BLOW: an errand's object struck from traversal ground (but one standing off the floor, struck from beside it)\n      _targets.push(c.target);",
+    "new": "      _targets.push(c.target);",
     "tests": [
       "test/net/eliteGates/fb1018f_turnedblow.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "TURNED-BLOW-turn-kept-off",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "    e.warded = off || egStrikeTurned(view, b, at[0], at[1], at[2], now(), spec);",
-    "new": "    e.warded = false;",
+    "old": "    e.warded = off || egStrikeTurned(view, b, at[0], at[1], at[2], now(), spec); // AUDIT FB1018f L3-6: the body where it stands now (its storey); and the reach off the hall's own floor",
+    "new": "    e.warded = false; // AUDIT FB1018f L3-6: the body where it stands now (its storey); and the reach off the hall's own floor",
     "tests": [
       "test/net/eliteGates/fb1018f_turnedblow.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "TURNED-BLOW-flags-unasked",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "    e.warded = off || egStrikeTurned(view, b, at[0], at[1], at[2], now(), spec);",
-    "new": "    e.warded = off;",
+    "old": "    e.warded = off || egStrikeTurned(view, b, at[0], at[1], at[2], now(), spec); // AUDIT FB1018f L3-6: the body where it stands now (its storey); and the reach off the hall's own floor",
+    "new": "    e.warded = off; // AUDIT FB1018f L3-6: the body where it stands now (its storey); and the reach off the hall's own floor",
     "tests": [
       "test/net/eliteGates/fb1018f_turnedblow.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "TURNED-BLOW-strike-feet-lost",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      strikeAt = standing ? _strikeAt : null;",
-    "new": "      strikeAt = null;",
+    "old": "      strikeAt = standing ? _strikeAt : null; // FIELD BUGS 2026-10-18f TURNED-BLOW: where this frame's blows are struck from, as the relay reads my pose",
+    "new": "      strikeAt = null; // FIELD BUGS 2026-10-18f TURNED-BLOW: where this frame's blows are struck from, as the relay reads my pose",
     "tests": [
       "test/net/eliteGates/fb1018f_turnedblow.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "TURNED-BLOW-sent-anyway",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      if (!b || (drawn.get(i)?.target ?? crystalSlots.get(i)?.target)?.entity?.warded) return false;",
-    "new": "      if (!b) return false;",
+    "old": "      if (!b || (drawn.get(i)?.target ?? crystalSlots.get(i)?.target)?.entity?.warded) return false; // FIELD BUGS 2026-10-18f TURNED-BLOW: a blow the relay will refuse is never sent, nor flashes it",
+    "new": "      if (!b) return false; // FIELD BUGS 2026-10-18f TURNED-BLOW: a blow the relay will refuse is never sent, nor flashes it",
     "tests": [
       "test/net/eliteGates/fb1018f_turnedblow.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "TURNED-BLOW-no-word",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "    e.wardText = off && at ? egNoFooting() : null;",
-    "new": "    e.wardText = null;",
+    "old": "    e.wardText = off && at ? egNoFooting() : null; // ui/hitNumbers.js: the ground's word, else the ward's",
+    "new": "    e.wardText = null; // ui/hitNumbers.js: the ground's word, else the ward's",
     "tests": [
       "test/net/eliteGates/fb1018f_turnedblow.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "TURNED-BLOW-ground-word-on-a-ward",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "    e.wardText = off && at ? egNoFooting() : null;",
-    "new": "    e.wardText = egNoFooting();",
+    "old": "    e.wardText = off && at ? egNoFooting() : null; // ui/hitNumbers.js: the ground's word, else the ward's",
+    "new": "    e.wardText = egNoFooting(); // ui/hitNumbers.js: the ground's word, else the ward's",
     "tests": [
       "test/net/eliteGates/fb1018f_turnedblow.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "TURNED-BLOW-hud-word-dropped",
     "file": "src/ui/hitNumbers.js",
-    "old": "text: r.target.wardText || 'Warded', tag: null };",
-    "new": "text: 'Warded', tag: null };",
+    "old": "  if (r.target?.warded) return { kind: 'warded', text: r.target.wardText || 'Warded', tag: null };",
+    "new": "  if (r.target?.warded) return { kind: 'warded', text: 'Warded', tag: null };",
     "tests": [
       "test/net/eliteGates/fb1018f_turnedblow.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "TURNED-BLOW-wake-a-phase-turn",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "phases: w.ph > 1 ? keepLast(f.phases, { i: w.i, ph: w.ph, at: now }, 6) : f.phases",
-    "new": "phases: keepLast(f.phases, { i: w.i, ph: w.ph, at: now }, 6)",
+    "old": "        phases: w.ph > 1 ? keepLast(f.phases, { i: w.i, ph: w.ph, at: now }, 6) : f.phases,",
+    "new": "        phases: keepLast(f.phases, { i: w.i, ph: w.ph, at: now }, 6),",
     "tests": [
       "test/net/eliteGates/fb1018f_turnedblow.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "TURNED-BLOW-storey-instant-unhanded",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "egStrikeTurned(view, b, at[0], at[1], at[2], now(), spec);",
-    "new": "egStrikeTurned(view, b, at[0], at[1], at[2], undefined, spec);",
+    "old": "    e.warded = off || egStrikeTurned(view, b, at[0], at[1], at[2], now(), spec); // AUDIT FB1018f L3-6: the body where it stands now (its storey); and the reach off the hall's own floor",
+    "new": "    e.warded = off || egStrikeTurned(view, b, at[0], at[1], at[2], undefined, spec); // AUDIT FB1018f L3-6: the body where it stands now (its storey); and the reach off the hall's own floor",
     "tests": [
       "test/net/eliteGates/law9_height.test.js"
     ],
@@ -322,8 +322,8 @@
   {
     "name": "TURNED-BLOW-radius-unfolded-risen",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "[egBodyOf(t, now, null, now, w.r?.[j])]",
-    "new": "[egBodyOf(t, now, null, now)]",
+    "old": "        bodies: [...f.bodies, ...w.a.flatMap((t, j) => (had.has(t[0]) ? [] : [egBodyOf(t, now, null, now, w.r?.[j])]))],",
+    "new": "        bodies: [...f.bodies, ...w.a.flatMap((t, j) => (had.has(t[0]) ? [] : [egBodyOf(t, now, null, now)]))],",
     "tests": [
       "test/net/eliteGates/fb1018f_turnedblow.test.js"
     ],
@@ -332,8 +332,8 @@
   {
     "name": "TURNED-BLOW-radius-unfolded-whole",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "egBodyOf(t, now, had?.get(t[0]) ?? null, 0, w.r?.[j])",
-    "new": "egBodyOf(t, now, had?.get(t[0]) ?? null, 0)",
+    "old": "        bodies: w.b.map((t, j) => egBodyOf(t, now, had?.get(t[0]) ?? null, 0, w.r?.[j])),",
+    "new": "        bodies: w.b.map((t, j) => egBodyOf(t, now, had?.get(t[0]) ?? null, 0)),",
     "tests": [
       "test/net/eliteGates/fb1018f_turnedblow.test.js"
     ],
@@ -342,8 +342,8 @@
   {
     "name": "TURNED-BLOW-L3-object-radius-half",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "if (Number.isFinite(r)) b.r = r;",
-    "new": "if (Number.isFinite(r)) b.r = r / 2;",
+    "old": "  if (Number.isFinite(r)) b.r = r; // AUDIT FB1018f L3-4: the relay's own radius",
+    "new": "  if (Number.isFinite(r)) b.r = r / 2; // AUDIT FB1018f L3-4: the relay's own radius",
     "tests": [
       "test/net/eliteGates/fb1018f_turnedblow.test.js"
     ],
@@ -352,8 +352,8 @@
   {
     "name": "TURNED-BLOW-objects-sent-anyway",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "(drawn.get(i)?.target ?? crystalSlots.get(i)?.target)?.entity?.warded",
-    "new": "drawn.get(i)?.target?.entity?.warded",
+    "old": "      if (!b || (drawn.get(i)?.target ?? crystalSlots.get(i)?.target)?.entity?.warded) return false; // FIELD BUGS 2026-10-18f TURNED-BLOW: a blow the relay will refuse is never sent, nor flashes it",
+    "new": "      if (!b || drawn.get(i)?.target?.entity?.warded) return false; // FIELD BUGS 2026-10-18f TURNED-BLOW: a blow the relay will refuse is never sent, nor flashes it",
     "tests": [
       "test/net/eliteGates/fb1018f_turnedblow.test.js"
     ],
@@ -362,8 +362,8 @@
   {
     "name": "TURNED-BLOW-turn-plan-only-on-screen",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "const off = !at || egStruckOff(view, b, at[0], at[1], at[2]);",
-    "new": "const off = !at || egStruckOff(view, b, at[0], NaN, at[2]);",
+    "old": "    const off = !at || egStruckOff(view, b, at[0], at[1], at[2]);",
+    "new": "    const off = !at || egStruckOff(view, b, at[0], NaN, at[2]);",
     "tests": [
       "test/net/eliteGates/law9_height.test.js"
     ],
@@ -372,8 +372,8 @@
   {
     "name": "TURNED-BLOW-no-feet-says-footing",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "e.wardText = off && at ? egNoFooting() : null;",
-    "new": "e.wardText = off ? egNoFooting() : null;",
+    "old": "    e.wardText = off && at ? egNoFooting() : null; // ui/hitNumbers.js: the ground's word, else the ward's",
+    "new": "    e.wardText = off ? egNoFooting() : null; // ui/hitNumbers.js: the ground's word, else the ward's",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
     ],
@@ -382,8 +382,8 @@
   {
     "name": "TURNED-BLOW-standing-nowhere-turns-nothing",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "    const off = !at || egStruckOff(view, b, at[0], at[1], at[2]);\n    e.warded = off || egStrikeTurned(view, b, at[0], at[1], at[2], now(), spec);",
-    "new": "    const off = !!at && egStruckOff(view, b, at[0], at[1], at[2]);\n    e.warded = off || (!!at && egStrikeTurned(view, b, at[0], at[1], at[2], now()));",
+    "old": "    const off = !at || egStruckOff(view, b, at[0], at[1], at[2]);\n    e.warded = off || egStrikeTurned(view, b, at[0], at[1], at[2], now(), spec); // AUDIT FB1018f L3-6: the body where it stands now (its storey); and the reach off the hall's own floor",
+    "new": "    const off = !!at && egStruckOff(view, b, at[0], at[1], at[2]);\n    e.warded = off || (!!at && egStrikeTurned(view, b, at[0], at[1], at[2], now())); // AUDIT FB1018f L3-6: the body where it stands now (its storey); and the reach off the hall's own floor",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
     ],
@@ -413,8 +413,8 @@
   {
     "name": "TURNED-BLOW-host-spell-number-blind",
     "file": "src/scenes/gate/standInSpell.js",
-    "old": "reportPlayerAttack({ hit: true, damage: Math.round(shown), target: body.entity });",
-    "new": "reportPlayerAttack({ hit: true, damage: Math.round(shown) });",
+    "old": "    reportPlayerAttack({ hit: true, damage: Math.round(shown), target: body.entity });",
+    "new": "    reportPlayerAttack({ hit: true, damage: Math.round(shown) });",
     "tests": [
       "test/net/eliteGates/fb1018f_turnedblow.test.js"
     ],
@@ -434,8 +434,8 @@
   {
     "name": "TURNED-BLOW-reach-spec-unhanded",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "egStrikeTurned(view, b, at[0], at[1], at[2], now(), spec);",
-    "new": "egStrikeTurned(view, b, at[0], at[1], at[2], now());",
+    "old": "    e.warded = off || egStrikeTurned(view, b, at[0], at[1], at[2], now(), spec); // AUDIT FB1018f L3-6: the body where it stands now (its storey); and the reach off the hall's own floor",
+    "new": "    e.warded = off || egStrikeTurned(view, b, at[0], at[1], at[2], now()); // AUDIT FB1018f L3-6: the body where it stands now (its storey); and the reach off the hall's own floor",
     "tests": [
       "test/net/eliteGates/fb1018f_turnedblow.test.js"
     ],

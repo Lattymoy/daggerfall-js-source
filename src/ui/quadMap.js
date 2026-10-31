@@ -22,18 +22,30 @@
  *  (Heckbert): the projective basis that sends the three unit vectors
  *  and (1,1,1) to the corners. */
 export function unitSquareTo([p0, p1, p2, p3]) {
-  const [x0, y0] = p0, [x1, y1] = p1, [x2, y2] = p2, [x3, y3] = p3;
-  const dx1 = x1 - x2, dx2 = x3 - x2, dx3 = x0 - x1 + x2 - x3;
-  const dy1 = y1 - y2, dy2 = y3 - y2, dy3 = y0 - y1 + y2 - y3;
-  let g = 0, h = 0;
+  const [x0, y0] = p0,
+    [x1, y1] = p1,
+    [x2, y2] = p2,
+    [x3, y3] = p3;
+  const dx1 = x1 - x2,
+    dx2 = x3 - x2,
+    dx3 = x0 - x1 + x2 - x3;
+  const dy1 = y1 - y2,
+    dy2 = y3 - y2,
+    dy3 = y0 - y1 + y2 - y3;
+  let g = 0,
+    h = 0;
   if (Math.abs(dx3) > 1e-12 || Math.abs(dy3) > 1e-12) {
     const det = dx1 * dy2 - dx2 * dy1;
     if (Math.abs(det) < 1e-12) return null;
     g = (dx3 * dy2 - dx2 * dy3) / det;
     h = (dx1 * dy3 - dx3 * dy1) / det;
   }
-  const a = x1 - x0 + g * x1, b = x3 - x0 + h * x3, c = x0;
-  const d = y1 - y0 + g * y1, e = y3 - y0 + h * y3, f = y0;
+  const a = x1 - x0 + g * x1,
+    b = x3 - x0 + h * x3,
+    c = x0;
+  const d = y1 - y0 + g * y1,
+    e = y3 - y0 + h * y3,
+    f = y0;
   return [a, b, c, d, e, f, g, h, 1];
 }
 
@@ -56,11 +68,17 @@ export function applyH(H, x, y) {
 /** The inverse of a 3x3 (row-major), or null when singular. */
 export function invertH(H) {
   const [a, b, c, d, e, f, g, h, i] = H;
-  const A = e * i - f * h, B = -(d * i - f * g), C = d * h - e * g;
+  const A = e * i - f * h,
+    B = -(d * i - f * g),
+    C = d * h - e * g;
   const det = a * A + b * B + c * C;
   if (Math.abs(det) < 1e-12) return null;
-  const D = -(b * i - c * h), E = a * i - c * g, F = -(a * h - b * g);
-  const G = b * f - c * e, I2 = -(a * f - c * d), J = a * e - b * d;
+  const D = -(b * i - c * h),
+    E = a * i - c * g,
+    F = -(a * h - b * g);
+  const G = b * f - c * e,
+    I2 = -(a * f - c * d),
+    J = a * e - b * d;
   return [A / det, D / det, G / det, B / det, E / det, I2 / det, C / det, F / det, J / det];
 }
 
@@ -72,12 +90,7 @@ export function invertH(H) {
  */
 export function matrix3dOf(H) {
   const [a, b, c, d, e, f, g, h, i] = H;
-  const m = [
-    a, d, 0, g,
-    b, e, 0, h,
-    0, 0, 1, 0,
-    c, f, 0, i,
-  ];
+  const m = [a, d, 0, g, b, e, 0, h, 0, 0, 1, 0, c, f, 0, i];
   return `matrix3d(${m.map((v) => (Math.abs(v) < 1e-9 ? '0' : String(Math.round(v * 1e6) / 1e6))).join(', ')})`;
 }
 
@@ -90,22 +103,35 @@ export function matrix3dOf(H) {
  * @param {number[][]} corners [[x,y] x4] in CSS px of the composite canvas, TL TR BR BL
  */
 export function quadPlacement(w, h, corners) {
-  if (!Array.isArray(corners) || corners.length !== 4 || corners.some((p) => !p || !Number.isFinite(p[0]) || !Number.isFinite(p[1]))) return null;
+  if (
+    !Array.isArray(corners) ||
+    corners.length !== 4 ||
+    corners.some((p) => !p || !Number.isFinite(p[0]) || !Number.isFinite(p[1]))
+  )
+    return null;
   const H = sheetToCorners(w, h, corners);
   if (!H) return null;
   const inv = invertH(H);
   if (!inv) return null;
-  const xs = corners.map((p) => p[0]), ys = corners.map((p) => p[1]);
-  const box = { x: Math.min(...xs), y: Math.min(...ys), w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) };
+  const xs = corners.map((p) => p[0]),
+    ys = corners.map((p) => p[1]);
+  const box = {
+    x: Math.min(...xs),
+    y: Math.min(...ys),
+    w: Math.max(...xs) - Math.min(...xs),
+    h: Math.max(...ys) - Math.min(...ys),
+  };
   // AUDIT-MAP2: a sheet turned nearly edge-on is not a place to put the
   // ink - the guards above are absolute and pass a quad whose corners are
   // all but collinear, and the browser would smear the canvas across the
   // screen. Shoelace area against the longest edge squared: under a
   // fiftieth (a sheet fifty times wider than it is tall on screen),
   // nothing - it could not be read or picked at that angle anyway.
-  let area = 0, edge2 = 0;
+  let area = 0,
+    edge2 = 0;
   for (let i = 0; i < 4; i++) {
-    const a = corners[i], b = corners[(i + 1) % 4];
+    const a = corners[i],
+      b = corners[(i + 1) % 4];
     area += a[0] * b[1] - b[0] * a[1];
     edge2 = Math.max(edge2, (b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2);
   }
@@ -117,7 +143,8 @@ export function quadPlacement(w, h, corners) {
   // divisor - a screen point behind the paper's horizon is not a
   // mirrored sheet point, it is nowhere.
   return {
-    H, inv,
+    H,
+    inv,
     css: matrix3dOf(H),
     box,
     /** a screen point to sheet coordinates (CSS px on the untransformed

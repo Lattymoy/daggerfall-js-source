@@ -358,8 +358,8 @@ the widest token under its bound, the migrations in order on a live database, ev
 ## Known, and not changed
 
 - IV E1: a script that says a hello into a dungeon's room is welcomed and proved, so the proof raises the bar and does
-  not end it. The day's bound, ten coffers and 100 Aurum, still holds. Finds and the Wardens' challenges are scriptable
-  in the same way, under their own day's bounds.
+  not end it. The day's bound, ten coffers and 100 Aurum, still holds (CACHE-SPREAD, 2026-10-31, took it away at Mac's
+  word: `Aurum.md` 3a). Finds and the Wardens' challenges are scriptable in the same way, under their own day's bounds.
 - IV F3: a pack charged back after its Aurum is spent leaves the balance below zero and the wares kept. The owner
   decides: take the newest buys back, or answer each dispute by hand.
 - IV: the developers are named by handle (DEVELOPER_HANDLES), not by account id; a handle changed or taken over is a

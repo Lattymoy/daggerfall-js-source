@@ -110,8 +110,8 @@
   {
     "name": "WB3b-every-joint-burning",
     "file": "src/world/gate/gateArt.js",
-    "old": "      const hot = tone(x, y) > 0.7;",
-    "new": "      const hot = tone(x, y) > 0;",
+    "old": "        const hot = tone(x, y) > 0.7; // the fire shows through a few joints, not all of them",
+    "new": "        const hot = tone(x, y) > 0; // the fire shows through a few joints, not all of them",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "WB3b-a-word-before-the-state-starts-a-fight",
     "file": "src/net/gate/gateLink.js",
-    "old": "  if (s.day === null) return s;   // nothing but a whole state starts a fight",
-    "new": "  if (s.day === undefined) return s;   // nothing but a whole state starts a fight",
+    "old": "  if (s.day === null) return s; // nothing but a whole state starts a fight",
+    "new": "  if (s.day === undefined) return s; // nothing but a whole state starts a fight",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "WB3b-the-attack-does-not-supersede",
     "file": "src/net/gate/gateLink.js",
-    "old": "    case 'atk': return { ...s, atk: { i: g.i,",
-    "new": "    case 'atk': return s.atk ? s : { ...s, atk: { i: g.i,",
+    "old": "      return {\n        ...s,\n        atk: { i: g.i, a: g.a, at: g.at, x: g.x, z: g.z, yw: g.yw, tg: g.tg, ...(g.pk ? { pk: g.pk } : {}) },\n        move: null,\n        x: g.x,\n        z: g.z,\n        yaw: g.yw,\n        heardAt: now,\n        cx: s.cx && s.cx.i === g.i ? s.cx : null,\n        ...(g.a === ATTACKS.wrath.id ? { stunUntil: 0, ...flameStill(s) } : {}),\n        ...crossLaid(s, g),\n      }; // WB14a: its marked, by peer id",
+    "new": "      return s.atk\n        ? s\n        : {\n            ...s,\n            atk: { i: g.i, a: g.a, at: g.at, x: g.x, z: g.z, yw: g.yw, tg: g.tg, ...(g.pk ? { pk: g.pk } : {}) },\n            move: null,\n            x: g.x,\n            z: g.z,\n            yaw: g.yw,\n            heardAt: now,\n            cx: s.cx && s.cx.i === g.i ? s.cx : null,\n            ...(g.a === ATTACKS.wrath.id ? { stunUntil: 0, ...flameStill(s) } : {}),\n            ...crossLaid(s, g),\n          }; // WB14a: its marked, by peer id",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "WB3b-the-walk-past-its-goal",
     "file": "src/net/gate/gateLink.js",
-    "old": "  const along = Math.min(len, (Math.max(0, now - m.at) / 1000) * m.v);\n  return [",
-    "new": "  const along = (Math.max(0, now - m.at) / 1000) * m.v;\n  return [",
+    "old": "  const along = Math.min(len, (Math.max(0, now - m.at) / 1000) * m.v);",
+    "new": "  const along = (Math.max(0, now - m.at) / 1000) * m.v;",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "WB3b-the-map-in-the-court",
     "file": "src/systems/madeLevel.js",
-    "old": "court: row({ save: 'refused', rest: 'refused', automap: 'off', mark",
-    "new": "court: row({ save: 'refused', rest: 'refused', automap: null, mark",
+    "old": "    save: 'refused',\n    rest: 'refused',\n    automap: 'off',\n    mark: 'refused',\n    portalStone: 'refused',",
+    "new": "    save: 'refused',\n    rest: 'refused',\n    automap: null,\n    mark: 'refused',\n    portalStone: 'refused',",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "WB3b-rest-in-the-court",
     "file": "src/systems/madeLevel.js",
-    "old": "court: row({ save: 'refused', rest: 'refused',",
-    "new": "court: row({ save: 'refused', rest: null,",
+    "old": "  court: row({\n    save: 'refused',\n    rest: 'refused',\n    automap: 'off',",
+    "new": "  court: row({\n    save: 'refused',\n    rest: null,\n    automap: 'off',",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "WB3b-a-save-in-the-court",
     "file": "src/systems/madeLevel.js",
-    "old": "court: row({ save: 'refused',",
-    "new": "court: row({ save: null,",
+    "old": "  court: row({\n    save: 'refused',",
+    "new": "  court: row({\n    save: null,",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "WB3b-a-mark-in-the-court",
     "file": "src/systems/madeLevel.js",
-    "old": "automap: 'off', mark: 'refused', portalStone",
-    "new": "automap: 'off', mark: null, portalStone",
+    "old": "    automap: 'off',\n    mark: 'refused',\n    portalStone: 'refused',",
+    "new": "    automap: 'off',\n    mark: null,\n    portalStone: 'refused',",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "WB3b-the-fall-line-drops-the-last",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "`${top.slice(0, -1).join(', ')} and ${top[top.length - 1]}`",
-    "new": "`${top.slice(0, -1).join(', ')}`",
+    "old": "  `${boss} has fallen at Dagon's Breach ${near ? `near ${near}` : 'in the wilds'}${top?.length ? `, struck down by ${top.length > 1 ? `${top.slice(0, -1).join(', ')} and ${top[top.length - 1]}` : top[0]}` : ''}. The breach collapses.`; // WB13b: \"in the wilds\" where this screen never found the site, as Discord says it",
+    "new": "  `${boss} has fallen at Dagon's Breach ${near ? `near ${near}` : 'in the wilds'}${top?.length ? `, struck down by ${top.length > 1 ? `${top.slice(0, -1).join(', ')}` : top[0]}` : ''}. The breach collapses.`; // WB13b: \"in the wilds\" where this screen never found the site, as Discord says it",
     "tests": [
       "test/net/gate/wb3b_gate_arena.test.js"
     ]

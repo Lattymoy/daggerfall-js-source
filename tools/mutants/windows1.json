@@ -367,7 +367,7 @@
   {
     "name": "RW1-pieces-off",
     "file": "src/render/staticBatch.js",
-    "old": "      if (this.pieces) {   // RW1: one sphere a model that went into this sub-mesh",
+    "old": "      if (this.pieces) {\n        // RW1: one sphere a model that went into this sub-mesh",
     "new": "      if (false) {",
     "tests": [
       "test/render/windows1_view.test.js"
@@ -421,8 +421,8 @@
   {
     "name": "RW1-medium-off-preset",
     "file": "src/systems/graphicsPresets.js",
-    "old": "'water-quality': 'simple', 'real-windows': 'rooms' }",
-    "new": "'water-quality': 'simple', 'real-windows': 'off' }",
+    "old": "      'real-windows': 'rooms',",
+    "new": "      'real-windows': 'off',",
     "tests": [
       "test/render/windows1_rooms.test.js"
     ]
@@ -430,8 +430,8 @@
   {
     "name": "RW1-glass-blooms",
     "file": "src/render/airPass.js",
-    "old": "          if (sm._evWin === GLASS_INTERIOR) continue;",
-    "new": "",
+    "old": "          if (sm._evWin === GLASS_INTERIOR) continue; // RW1: an interior's declared glass rides the emission unit and is never an emission - it glows nowhere (render/realWindows.js)",
+    "new": "          // RW1: an interior's declared glass rides the emission unit and is never an emission - it glows nowhere (render/realWindows.js)",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -538,8 +538,8 @@
   {
     "name": "RW1-AUDIT-the-replays-stale-vao",
     "file": "src/render/airPass.js",
-    "old": "    f.bindVao?.(null);   // RW1 (AUDIT)",
-    "new": "    void f;   // RW1 (AUDIT)",
+    "old": "    f.bindVao?.(null); // RW1 (AUDIT): the images' quads bind their own VAO behind the renderer's back - its shadow still named a mesh's, so the first replay's bind of that mesh was skipped and drew from the quad (GL 1282, \"no element array buffer bound\")",
+    "new": "    void f; // RW1 (AUDIT): the images' quads bind their own VAO behind the renderer's back - its shadow still named a mesh's, so the first replay's bind of that mesh was skipped and drew from the quad (GL 1282, \"no element array buffer bound\")",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -556,8 +556,8 @@
   {
     "name": "GLASS-ALL-dungeon-set-taken",
     "file": "src/world/interior/interiorGlass.js",
-    "old": "  return Number.isInteger(archive) && archive >= 0 && archive < 500 && INTERIOR_BASES.has(Math.trunc(archive / 100)) && BUILDING_INTERIOR_SETS.has(archive % 100);",
-    "new": "  return Number.isInteger(archive) && archive >= 0 && archive < 500 && INTERIOR_BASES.has(Math.trunc(archive / 100)) && (BUILDING_INTERIOR_SETS.has(archive % 100) || archive % 100 === 22);",
+    "old": "    BUILDING_INTERIOR_SETS.has(archive % 100)",
+    "new": "    (BUILDING_INTERIOR_SETS.has(archive % 100) || archive % 100 === 22)",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -574,7 +574,7 @@
   {
     "name": "GLASS-ALL-the-castle-exception-lost",
     "file": "src/world/interior/interiorGlass.js",
-    "old": "const WINDOW_EXCEPTIONS = new Map([[11, null], [111, Object.freeze({ record: 1, twin: 0 })]]);",
+    "old": "const WINDOW_EXCEPTIONS = new Map([\n  [11, null],\n  [111, Object.freeze({ record: 1, twin: 0 })],\n]);",
     "new": "const WINDOW_EXCEPTIONS = new Map([[11, null]]);",
     "tests": [
       "test/render/windows1_view.test.js"
@@ -601,8 +601,8 @@
   {
     "name": "GLASS-ALL-the-ramp-unread",
     "file": "src/world/interior/interiorGlass.js",
-    "old": "    cand[i] = d[i] === GLASS_INDEX || (fresh[i] && RAMP.has(d[i]) && dense(x, y)) ? 1 : 0;",
-    "new": "    cand[i] = d[i] === GLASS_INDEX || (fresh[i] && dense(x, y)) ? 1 : 0;",
+    "old": "      cand[i] = d[i] === GLASS_INDEX || (fresh[i] && RAMP.has(d[i]) && dense(x, y)) ? 1 : 0;",
+    "new": "      cand[i] = d[i] === GLASS_INDEX || (fresh[i] && dense(x, y)) ? 1 : 0;",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -619,8 +619,8 @@
   {
     "name": "GLASS-ALL-the-index-lost",
     "file": "src/world/interior/interiorGlass.js",
-    "old": "    cand[i] = d[i] === GLASS_INDEX || (fresh[i] && RAMP.has(d[i]) && dense(x, y)) ? 1 : 0;",
-    "new": "    cand[i] = fresh[i] && RAMP.has(d[i]) && dense(x, y) ? 1 : 0;",
+    "old": "      cand[i] = d[i] === GLASS_INDEX || (fresh[i] && RAMP.has(d[i]) && dense(x, y)) ? 1 : 0;",
+    "new": "      cand[i] = fresh[i] && RAMP.has(d[i]) && dense(x, y) ? 1 : 0;",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -646,8 +646,8 @@
   {
     "name": "GLASS-ALL-the-edges-lost",
     "file": "src/world/interior/interiorGlass.js",
-    "old": "    core[y * W + x] = k >= GLASS_CORE_NEIGHBOURS ? 1 : 0;",
-    "new": "    core[y * W + x] = k >= 8 ? 1 : 0;",
+    "old": "      core[y * W + x] = k >= GLASS_CORE_NEIGHBOURS ? 1 : 0;",
+    "new": "      core[y * W + x] = k >= 8 ? 1 : 0;",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -655,8 +655,8 @@
   {
     "name": "GLASS-ALL-rows-unflipped",
     "file": "src/world/interior/interiorGlass.js",
-    "old": "    const o = ((height - 1 - y) * width + x) * 4;",
-    "new": "    const o = (y * width + x) * 4;",
+    "old": "      const o = ((height - 1 - y) * width + x) * 4;",
+    "new": "      const o = (y * width + x) * 4;",
     "tests": [
       "test/render/windows1_view.test.js"
     ]

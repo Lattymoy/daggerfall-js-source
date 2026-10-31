@@ -2652,8 +2652,8 @@ test('IG6: the arms are FIXED TO THE SCREEN by default - the owner\'s final call
   // clamp-hard ones included, and under the bob).
   const probe = readFileSync('tools/mwArmProbe.mjs', 'utf8');
   assert.match(probe, /window\.__arm\.setFollowCamera\(false\);/, 'L5c/L5d measure the LAW with the flag off');
-  assert.match(probe, /window\.__arm\.setFollowCamera\(true\); \}\);/, 'L5e measures the shipped fix');
-  assert.match(probe, /Math\.abs\(fixHardUp\.cy - fixLevel\.cy\) < 0\.02 && Math\.abs\(fixHardDown\.cy - fixLevel\.cy\) < 0\.02/,
+  assert.match(probe, /window\.__arm\.setFollowCamera\(true\);\n\s*\}\);/, 'L5e measures the shipped fix');
+  assert.match(probe, /Math\.abs\(fixHardUp\.cy - fixLevel\.cy\) < 0\.02 &&\n\s*Math\.abs\(fixHardDown\.cy - fixLevel\.cy\) < 0\.02/,
     'and its assertion is INVARIANCE, clamp-hard looks included');
 });
 
@@ -2925,7 +2925,7 @@ test('MAC-S1: ONE flush, called from every exit out of `busy`', () => {
   // The file's own prose is not its wiring, so it is stripped first.
   const code = src.replace(/^\s*\/\/.*$/gm, '');
   const swap = code.slice(code.indexOf('    setWeapon(item, { hasAmmo = false, ammoCount = null } = {}) {'));
-  const tail = swap.slice(swap.indexOf('        } finally {'), swap.indexOf('        } finally {') + 600);
+  const tail = swap.slice(swap.indexOf('} finally {'), swap.indexOf('} finally {') + 600);
   assert.match(tail, /busy = false;/, 'the swap still frees the rig');
   assert.match(tail, /for \(const fn of listeners\)/, 'and still repaints (PX33)');
   assert.match(tail, /flushPending\(\);/, 'and now hands over what queued behind it');

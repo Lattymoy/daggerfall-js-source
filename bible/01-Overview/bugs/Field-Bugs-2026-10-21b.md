@@ -25,7 +25,7 @@ FOUND. Both screenshots read the helm's panel with the sails up - its first butt
 helm (the default) a ship under sail makes nothing at exactly one wind: none. Driven over every hull, all seven Large Boat
 rigs and 24 headings at the base wind, the slowest was 1.47 m/s and no heading is in irons; a wind of a millionth still
 drives a Small Ship at 4.31 m/s; a wind of nought drives nothing, because the sails' way and their pull both read it
-(`helmWay.js:"export const seaWind = (windLen) => (windLen > 0 ? WIND_RATED * windShare(windLen) : 0);"`) - so whatever
+(`helmWay.js:"export const seaWind"`) - so whatever
 way she had when the sail went up is all she keeps. The oars read no wind, which is "Oars work fine".
 
 Where the nought comes from: Come Sail Away lays no wind indoors (`comeSailAway.js:"if (deps.isPlayerInside()) {"`, both
@@ -103,7 +103,7 @@ THE LAW NOW.
 
 - She sailed from where she last LAY STILL: a berth now says whether she lies still - her own way under BERTH_STILL
   (0.5 m/s, the current none of it), or the helm let go - and only a still berth moves the departure
-  (`harbourOffice.js:"if (!from || ev.still !== false) log.departed = { port: ev.port, sailed };"`). A slow berth under way
+  (`harbourOffice.js:"if (!from || ev.still !== false)"`). A slow berth under way
   is checked against the departure and moves nothing, so a Rowboat rowing out of one port and into the next is counted
   from the quay she lay at. A berth at another port a quarter league on is the port reached, and she lies there from then.
   A boat drifting where two ports' waters meet lies still in each in turn and never makes the quarter league between them;
@@ -111,12 +111,12 @@ THE LAW NOW.
 - Her arrival is said however she comes in: a boat aground lies still
   (`navalHost.js:"const local = boat === r?.state?.CurrentBoat && sailing() && !r.IsBeached?.(boat) ? (r.state.velocityCurrent ?? [0, 0, 0]) : [0, 0, 0];"`
   - and logs no leagues while she lies), and the helm let go in a port's waters with no hostile near is a berth, still
-  (`navalBerth.js:"else if (!boat && helm && port && deps.clear()) deps.event({ type: 'berth', port: port.key, boat: helm.uid ?? null, still: true });"`).
+  (`navalBerth.js:"else if (!boat && helm && port && deps.clear())"`).
   A cargo delivered there is delivered as well (QLIS02's `cargo-delivered`, the same berth).
 - The departure is the log's own (`captainLedger.js` newLog `departed`, restored only where it lies within its log's way):
   a load keeps the voyage its save was on.
 - The port a pixel lies in is the nearest within SEA_RING by the crow's flight, exact on every engine
-  (`portSites.js:"export function boardPortAt(ports, x, y) {"`, the world's navalPortHere through it - code out of bootWorld). Inside a
+  (`portSites.js:"export function boardPortAt"`, the world's navalPortHere through it - code out of bootWorld). Inside a
   ring of two it differs from the squares on a tie alone: Pencart now names 5,923 squares of ship water, nine neighbours
   trade tied pixels, and no board port names none.
 - The quest says what counts: QLIS01's letter, log and the harbourmaster's word now ask for "the harbor of another, a
@@ -162,14 +162,14 @@ and the socket draws it (`enhancedInventory.js:"const item = waistLanternOf(deps
 the same way, found on the way:
 
 - O lit the pack's first lantern even with another hung on the belt - the hung one stood dark while a second hung lit
-  beside it. A press now lights the slot's lantern first (`handheldTorches.js:"const lanternFirst = () => beltLanternOf(ctx?.entity) ?? firstOf('UselessItems2', T.Lantern);"`),
+  beside it. A press now lights the slot's lantern first (`handheldTorches.js:"const lanternFirst"`),
   on the mod's ladder and its remembered-light branch alike.
 - With the switch off, a hung lantern behind a shield and a drawn sword was refused ("You can't hold a light source right
   now"): the waist branch read the switch alone. BELT-LANTERN's own word is that a hung lantern takes no hand; the branch
-  now runs with a lantern hung (`handheldTorches.js:"if ((w.s.lanternsAtWaist || beltLanternOf(ctx?.entity)) && !hasFreeHand() && waistPress()) return true;"`).
+  now runs with a lantern hung (`handheldTorches.js:"|| beltLanternOf"`).
   An unhung lantern with the switch off still asks a hand.
 - The hotbar's lantern slot took the shield off (SHIELD1's torch law) and an off-hand weapon refused it. A lantern at the
-  waist takes no hand, so its slot does neither (`quickslots.js:"const atWaist = lanternAtWaist(hotbarView(entity)[i]?.item);"`);
+  waist takes no hand, so its slot does neither (`quickslots.js:"const atWaist = lanternAtWaist"`);
   a torch's slot still takes the shield off first.
 
 A torch and a candle are held, as Handheld Torches holds them, and stay the hand's row.
@@ -215,12 +215,12 @@ build they play or what their machines log - but each is real, measured, and on 
 THE LAW NOW.
 
 - SNOW-YEAR: the sky's midsummer is a whole minute, so it is rounded to one before the floor
-  (`snowpack.js:"const midsummer = eventMinuteOfSky(Math.round(sky - since));"`) - one snow year, one origin, at any
+  (`snowpack.js:"const midsummer ="`) - one snow year, one origin, at any
   fractional minute of it; and a build's wait asks the clock's minute on every pass, as the tick does
-  (`snowCoverHost.js:"while (!at(px, py, now(), arriving?.() ? Math.max(SNOW_COVER.arriveMs, breather.left()) : breather.left(), true)) await breather.breathe();"`),
+  (`snowCoverHost.js:"py, now(), arriving?.()"`),
   so a wait across the year's real turn finishes too.
 - SNOW-HOLD: the blanket's five-second prune lets a queued tile go with the overlays once it leaves the rings it draws
-  (`snowfallRuntime.js:"if (B.queue.some((t) => !live.has(t))) { B.queue = B.queue.filter((t) => live.has(t)); B.queued = new Set(B.queue); }"`
+  (`snowfallRuntime.js:"if (B.queue.some((t) => !live.has(t)))"`
   - `_blanketProcess` skips such a tile, so letting it go is the same), and a blanket going inactive lets its queue go
   (standing again queues every visible tile anew). The same walk now holds no destroyed tile and a queue of the 49 its
   rings draw. A host tile says THAT it replaced one; the old goes to the runtime through `promotions` alone. Departures

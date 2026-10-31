@@ -182,8 +182,8 @@
   {
     "name": "HORIZON-TREES-heights-unkept",
     "file": "src/render/midRing.js",
-    "old": "    this.heights = groundHeights(v.positions);",
-    "new": "    this.heights = null;",
+    "old": "    this.heights = groundHeights(v.positions); // HORIZON-TREES: the drawn ground, for the band's skyline (render/farTrees.js)",
+    "new": "    this.heights = null; // HORIZON-TREES: the drawn ground, for the band's skyline (render/farTrees.js)",
     "tests": [
       "test/render/fartrees.test.js"
     ]

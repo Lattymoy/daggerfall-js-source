@@ -270,7 +270,7 @@ test('DOMAIN2 THE DOOR: the castle\'s dungeon door offers "Your guild\'s castle"
   const w = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
   // PIN MOVED (AUDIT DOMAINS R3): the world link's word too, as the instances' own
   assert.match(w, /castle: \(site\) => \(online\?\.guildInstanceOk \|\| chatLinks\?\.get\('world'\)\?\.guildInstanceOk \? seatHalls\.castleAt\(site\.mapId\) : null\),/, 'the door is handed the castle only where the relay admits a guild');
-  assert.match(readFileSync(new URL('../../src/scenes/instanceDoor.js', import.meta.url), 'utf8'), /const c = site\?\.siteType === SITE_TYPES\.Dungeon \? deps\.castle\?\.\(site\) \?\? null : null;/);
+  assert.match(readFileSync(new URL('../../src/scenes/instanceDoor.js', import.meta.url), 'utf8'), /const c = site\?\.siteType === SITE_TYPES\.Dungeon \? \(deps\.castle\?\.\(site\) \?\? null\) : null;/);
 });
 
 test('DOMAIN2 THE THRONE ROOM: its holder\'s banners, board and chest stand in the public castle and in the holder\'s own instance at the epoch its view names - never in another instance, as a quest\'s private castle (mutants: the instance gate; the epoch; the guild)', () => {

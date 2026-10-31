@@ -12,7 +12,7 @@
   {
     "name": "DEX2-a-gap-not-the-end",
     "file": "src/systems/textureReplacement.js",
-    "old": "    for (const [r, set] of frames) { let n = 0; while (set.has(n)) n++; counts.set(r, n); }",
+    "old": "    for (const [r, set] of frames) {\n      let n = 0;\n      while (set.has(n)) n++;\n      counts.set(r, n);\n    }",
     "new": "    for (const [r, set] of frames) counts.set(r, Math.max(...set) + 1);",
     "why": "a frame past a gap counted - DFU imports a record's frames to the first missing",
     "tests": [
@@ -32,8 +32,8 @@
   {
     "name": "DEX2-the-albedo-never-the-emission",
     "file": "src/systems/enemyExpansion/dexSprites.js",
-    "old": "        else if (art.emission) out.push(",
-    "new": "        else if (false) out.push(",
+    "old": "        else if (art.emission)",
+    "new": "        else if (false)",
     "why": "an emissive archive's frame with no map of its own goes unlit",
     "tests": [
       "test/systems/enemyExpansion/dex2_sprites.test.js"
@@ -102,7 +102,7 @@
   {
     "name": "DEX2-the-band-undressed",
     "file": "src/world/bandSprites.js",
-    "old": "        r.batch = setupFoeLook(renderer?.createBillboardBatch?.(archive, rkey, size, [[0, 0, 0]]) ?? null, b.mobileType);",
+    "old": "        r.batch = setupFoeLook(\n          renderer?.createBillboardBatch?.(archive, rkey, size, [[0, 0, 0]]) ?? null,\n          b.mobileType,\n        );",
     "new": "        r.batch = renderer?.createBillboardBatch?.(archive, rkey, size, [[0, 0, 0]]) ?? null;",
     "why": "AUDIT DEX B6: an Overworld band of a Spectral or NoShadow row drawn opaque and casting",
     "tests": [
@@ -152,7 +152,7 @@
   {
     "name": "DEX2-a-readonly-picture-kept",
     "file": "src/systems/textureReplacement.js",
-    "old": "  if (pic) { const e = liveEntry(key); if (e?.readOnly) release(key, e, pic); }",
+    "old": "  if (pic) {\n    const e = liveEntry(key);\n    if (e?.readOnly) release(key, e, pic);\n  }",
     "new": "",
     "why": "AUDIT DEX B5: every picture an archive decoded stays on the CPU for the session (DFU imports a mobile's readOnly)",
     "tests": [
@@ -192,8 +192,8 @@
   {
     "name": "DEX2-a-released-size-forgotten",
     "file": "src/systems/textureReplacement.js",
-    "old": "  const size = (record) => { const d = measuredOf(archive, record);",
-    "new": "  const size = (record) => { const d = decodedOf(archive, record);",
+    "old": "    const d = measuredOf(archive, record);",
+    "new": "    const d = decodedOf(archive, record);",
     "why": "AUDIT DEX B5: a stand-in whose pictures went to the GPU measures 1x1",
     "tests": [
       "test/systems/enemyExpansion/dex2_sprites.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "DEX2-the-map-after-its-albedo",
     "file": "src/systems/textureReplacement.js",
-    "old": "      lit.then(() => preloadTextureRecord(archive, record, frame)).then(",
-    "new": "      preloadTextureRecord(archive, record, frame); lit.then(() => null).then(",
+    "old": "        lit\n          .then(() => preloadTextureRecord(archive, record, frame))",
+    "new": "        preloadTextureRecord(archive, record, frame);\n        lit\n          .then(() => null)",
     "why": "AUDIT DEX B5: an evicted frame's albedo lands before its emission map and is uploaded unlit for good",
     "tests": [
       "test/systems/enemyExpansion/dex2_sprites.test.js"

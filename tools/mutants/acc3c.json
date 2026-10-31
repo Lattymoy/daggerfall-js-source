@@ -2,7 +2,7 @@
   {
     "name": "ACC3c-1-the-client-decides-what-is-held",
     "file": "src/ui/accountFlow.js",
-    "old": "      self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, ...glyphHalf(r.data), ...auraHalf(r.data) };   // WB9g: the auras ride the same answer",
+    "old": "      self.wardrobe = {\n        ...(self.wardrobe ?? {}),\n        titles: r.data.titles,\n        title: r.data.title,\n        glyphs: r.data.glyphs,\n        ...glyphHalf(r.data),\n        ...auraHalf(r.data),\n      }; // WB9g: the auras ride the same answer",
     "new": "      self.wardrobe = { ...self.wardrobe, title: want };",
     "tests": [
       "test/ui/enhanced/acc3wear.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "ACC3c-2-the-refusal-writes-anyway",
     "file": "src/ui/accountFlow.js",
-    "old": "      const r = await ask(() => equipTitle(door(), want));\n      if (!r) return false;                 // `auth` already landed on `out`\n      if (!r.ok) return refuse(accountRefusalText(r.error));",
-    "new": "      const r = await ask(() => equipTitle(door(), want));\n      if (!r) return false;                 // `auth` already landed on `out`\n      if (!r.ok) { self.wardrobe = { ...self.wardrobe, title: want }; return refuse(accountRefusalText(r.error)); }",
+    "old": "      if (!r) return false; // `auth` already landed on `out`\n      if (!r.ok) return refuse(accountRefusalText(r.error));\n      // THE SERVICE'S OWN ANSWER, whole: it describes the row AFTER",
+    "new": "      if (!r) return false; // `auth` already landed on `out`\n      if (!r.ok) {\n        self.wardrobe = { ...self.wardrobe, title: want };\n        return refuse(accountRefusalText(r.error));\n      }\n      // THE SERVICE'S OWN ANSWER, whole: it describes the row AFTER",
     "tests": [
       "test/ui/enhanced/acc3wear.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "ACC3c-6-the-wardrobe-outlives-the-account",
     "file": "src/ui/accountFlow.js",
-    "old": "    self.account = null;\n    self.wardrobe = null;   // ACC3c: a wardrobe outliving its account is a title drawn for nobody",
-    "new": "    self.account = null;",
+    "old": "    self.wardrobe = null; // ACC3c: a wardrobe outliving its account is a title drawn for nobody\n    self.patreon = null;",
+    "new": "    self.patreon = null;",
     "tests": [
       "test/ui/enhanced/acc3wear.test.js"
     ],
@@ -83,8 +83,8 @@
   {
     "name": "ACC3c-10-my-own-roster-row-goes-unbadged",
     "file": "src/net/roster.js",
-    "old": "push(session?.id ?? null, session?.name ?? '', true, session);",
-    "new": "push(session?.id ?? null, session?.name ?? '', true);",
+    "old": "  if (session?.hidden !== true) push(session?.id ?? null, session?.name ?? '', true, session);",
+    "new": "  if (session?.hidden !== true) push(session?.id ?? null, session?.name ?? '', true);",
     "tests": [
       "test/ui/enhanced/acc3wear.test.js"
     ],
@@ -93,8 +93,8 @@
   {
     "name": "ACC3c-11-the-roster-trusts-the-relay",
     "file": "src/net/roster.js",
-    "old": "      const row = { id, name: sanitizeName(name), tag: tagOf(id), me, ...readBadge(from), gt: readGuildTag(from) };",
-    "new": "      const row = { id, name: sanitizeName(name), tag: tagOf(id), me, title: from?.title ?? null, glyphs: from?.glyphs ?? [], gt: readGuildTag(from) };",
+    "old": "      const row = { id, name: sanitizeName(name), tag: tagOf(id), me, ...readBadge(from), gt: readGuildTag(from) }; // GUILD1c: and the guild's tag, through the wire's own reader",
+    "new": "      const row = {\n        id,\n        name: sanitizeName(name),\n        tag: tagOf(id),\n        me,\n        title: from?.title ?? null,\n        glyphs: from?.glyphs ?? [],\n        gt: readGuildTag(from),\n      }; // GUILD1c: and the guild's tag, through the wire's own reader",
     "tests": [
       "test/ui/enhanced/acc3wear.test.js"
     ],

@@ -96,7 +96,7 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from `TerrainHelper.SetLo
   diagonals and the rect - proven against the rect's law alone - and the ring lies past the rect, so 82% of it was never
   paved (259,606 of 1,451,249 ring tiles over the Bay's 3,444 towns; a road's stubs where its arms cross it); and the ring
   paved the sea where TS2 keeps it (2,670 ring tiles over water). Now the guard passes no ring tile, the ring paves no
-  water and `smoothRoadHeights` keeps off it (`roadPainter.js:"&& !locationRect?.ring?.[i]) continue;"`): the
+  water and `smoothRoadHeights` keeps off it (`roadPainter.js:"!locationRect?.ring?.[i]"`): the
   whole dry ring paved (the audit page's record).
 - Measured on the freeware: Daggerfall stands within its walls as before (its rect 11..116, its tiles' histogram
   unchanged, its ground 0.166139 for DFU's 0.166147 - its own land's mean); Antelibuton keeps its sea (thousands of water
@@ -644,16 +644,16 @@ through their ring.
   (`townWalls.js:"export function townWallPathsReader({ bay, landedIn = null, byte = arenaRoadByte, join = arenaJoinByte }) {"`,
   wired in `scenes/tamrielPlacesHost.js`): null while the pixel's roads are not known. While they are not, the wall is
   not made - its carrier block provisional (open ground, no model, no marker - the world-data door builds it again at
-  its next read: `worldDataReplacement.js:"if (!json?.Provisional) b.block = block;"`), the town's fabric plans no streets
-  (`townFabricStand.js:"if (dfLocation.outline?.walled && townWallWaits(dfLocation)) return null;"`), and once they land
+  its next read: `worldDataReplacement.js:"if (!json?.Provisional)"`), the town's fabric plans no streets
+  (`townFabricStand.js:"if (dfLocation.outline?.walled && townWallWaits(dfLocation))"`), and once they land
   its pixel is built again (`tamrielSweepsHost.js:"|| townWallReadyAt(p.px, p.py);"`, TESA4's stale law).
 - **A capital's approaches** (`world/capitalApproaches.js`): each plan names its road gates (`gateAt`, the middle of each
-  opening, off the measures its wall is cut at - `capitalPlans.js:"const landwardGates = (W) =>"`, Mournhold's,
+  opening, off the measures its wall is cut at - `capitalPlans.js:"const landwardGates"`, Mournhold's,
   Helstrom's, Solitude's main gate, the Imperial City's Talos Bridge landing); the road's gate pixel stands off the slice
-  the gate stands in (`capitalApproaches.js:"export function capitalGateSlice(cap, D, side) {"`); and the capital lays
+  the gate stands in (`capitalApproaches.js:"export function capitalGateSlice"`); and the capital lays
   two tiles of the road's own surface (the painter's record 46) from the arm's end - the middle of the gate pixel's side -
   straight in to a gate on its line, else in to APPROACH_SKIRT (19.2 m) outside the wall's line, along it, and in to the
-  gate (`capitalApproaches.js:"export function capitalApproaches(cap, D) {"`). Its gardens lay it over their rim too (the
+  gate (`capitalApproaches.js:"export function capitalApproaches"`). Its gardens lay it over their rim too (the
   rim's no ground elsewhere), no tree on it (`tamrielCapitals.js:"tile: (x, z) => (way(x, z) ? APPROACH_TILE : rim(x, z) ? CAPITAL_NO_GROUND : tile(x, z)),"`);
   the Imperial City's crosses four cells of the open ground past its lake, each now a block of its own
   (`capitalApproachName`), the shared open cell everywhere else. Every approach lies on gardens and open ground, under no
@@ -732,7 +732,7 @@ main's walls):
   GATE_WAY.half to either side, clear of every house - `townHouses`, the town map's bytes, its ground flats aside - until
   two tiles of the town's paving, ROAD_RECORDS, under its middle). A road with no street near keeps its crossing; two that
   come to one street are one gate.
-- **Every gate on its road** (`gateRoads.js:"export function layGateRoads(tilemap, paths, tileData, town, ground = null) {"`):
+- **Every gate on its road** (`gateRoads.js:"export function layGateRoads"`):
   the terrain kernel lays each gate's road after the painter and its smoothing. Its passage runs across the opening's width (its
   middle's line and half its half width to either side - an opening on a tile's edge opens onto both tiles) from the
   middle out to the first open tile past the wall's half thickness, through the wall and its towers, never over water.
@@ -742,7 +742,7 @@ main's walls):
 - **What it lays.** A tile already a road - the painter's, the town's paving - is kept as it lies; every tile laid is the
   road's record and the paths hold it (GRASS-PATH1: the grass, the woods and a town's yards keep off it; its walkers take it
   as a road, TS10).
-- **The gates handed on** (`townGates.js:"export function townGateRoads(dfLocation, mapsFile, blocksFile) {"`): the
+- **The gates handed on** (`townGates.js:"export function townGateRoads"`): the
   pixel's build gives the kernel each gate's opening in the pixel's tiles with its outward normal and its half width, and
   the tiles a road may not cross - a wall on its outline its own gates and cells, a kept ring its blocks' gate models
   (WALL_MODELS.gate, turned by their subrecord and their own turn). A capital lays its own approaches (ROAD-FOLLOW); a wall
@@ -806,7 +806,7 @@ cobbles at the same height (FABRIC_ROAD_Y). GATE-ROADS stands gates on the towns
 under a gate; and where a length lies on the fabric's grid, a yard's fence can run in its face. Measured over the 407
 city templates past the Bay and Riften (each fabric planned on its whole grid, a road every way; its faces against its
 wall's, within 4 cm): 88 towns, 1,853 m2. The fabric now lays nothing on a cell that a piece of the wall touches
-(`townFabricStand.js:"const under = wall ? townWallCells(wall"`, townWallCells grown a cell's half diagonal): none now.
+(`townFabricStand.js:"const under = wall"`, townWallCells grown a cell's half diagonal): none now.
 
 **Measured after**: no two faces within 1 mm on any wall of either set, nor within 4 cm (822,943 and 495,846 m2 before),
 two that only meet along an edge aside; the same open ends seen at the towers as before, by level rays from both sides
@@ -877,7 +877,7 @@ Daggerfall is one: it stands as every Bay city does with the packs off. Every co
   is cut at each tower it ends in, on the tower's middle line across the wall, its own side kept - the two meet on one
   plane inside the tower. The tower is grown across to 4.8 m / cos(half the turn) and TOWER_PROUD (0.1 m) more (wallPieces'
   `thick`; its cells with it): it holds the cut and stands out of the faces, low enough that a sliding body rides past.
-- **The arms taken up** (`gateRoads.js:"export function takeUpArms(tilemap, paths, inside, ground) {"`, joinArms): on a Bay
+- **The arms taken up** (`gateRoads.js:"export function takeUpArms"`, joinArms): on a Bay
   wall's ground the painter's road and track tiles outside the wall's inner face are taken up, and the stub inside joined
   to them (`townGates.js` insideWall hands the inside). Each gate's road is laid on to the ring round the ground; an arm
   cut where no ring runs (a pixel of tracks alone) is joined to the nearest gate's road. A river's tiles, the town's paving
@@ -891,7 +891,7 @@ two lengths of a gate onto the same street - two gates stand two lengths apart a
 a wall (55 walls) each run on to a gate: 95 a gate's road along the inner face, 17 the painter's. Gates 1,513 to 1,568 (55
 walls one more; Daggerfall 5, as it was; the nearest two 57.7 m apart).
 
-**Every yard where #1184 stood it** (the owner's decision; `gateRoads.js:"export function yardRoads(tilemap, paths, tileData, town) {"`,
+**Every yard where #1184 stood it** (the owner's decision; `gateRoads.js:"export function yardRoads"`,
 `townWalls.js:"export function townWallYardCellsOf(dfLocation) {"`). A yard's place reads the roads and the wall, and
 the new ones moved 310 of the 1,258 (220 cities; over 44 of them, 42 of 49 moves with the take-up). So the yards read
 what they read at #1184: the paths with no arm taken up and the roads of the gates that wall stood (`townGates.js` hands
@@ -902,11 +902,11 @@ yards' ground so (`scenes/pixelBuild.js` yardShut); its walkers keep the new.
 as #1184 laid it: its boards, carriages and markers by that wall's gates, stood clear of its cells
 (`townWalls.js:"export function townWallYardLayout(yl, dfLocation) {"`). The game stands today's. The yards' ground is
 TS2's mask over the outline before its crops, with no edge band
-(`townBlendBefore.js:"export function townGroundMaskBefore(shape, ground, hDim) {"`, the kernel's `yardGround`), and
+(`townBlendBefore.js:"export function townGroundMaskBefore"`, the kernel's `yardGround`), and
 today's ring is no road on it (`terrainGen.js:"export function ringAsWas(paths, ring, yardGround) {"`). The host hands
 both (`scenes/pixelBuild.js` shapeWas, yardShut), so the Bay's yards keep #1184's mask whatever today's becomes.
 
-**A broken yard placed again** (`merchantYardSites.js:"export function* keptSitesSteps(g, sites, ports = [], gained = null) {"`). A
+**A broken yard placed again** (`merchantYardSites.js:"export function* keptSitesSteps"`). A
 yard keeps its #1184 place unless the place no longer fits the town as it stands (siteFits: its cells on no road and
 nothing shut, its pad clear of the wall and every closed cell). One that does not is placed again by its kind's law on
 the new ground, every kept yard's and port's ground closed first (`scenes/world.js` townPlacesFor, `world/townWalls.js`

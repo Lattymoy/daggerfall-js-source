@@ -122,8 +122,8 @@
   {
     "name": "QUICK-LOOT-the-nudge-is-never-spent",
     "file": "src/systems/quickLoot.js",
-    "old": "  _lastKey = _sel ? frame.key : null;\n  _nudge = 0;",
-    "new": "  _lastKey = _sel ? frame.key : null;",
+    "old": "  _nudge = 0;\n  return _sel;",
+    "new": "  return _sel;",
     "tests": [
       "test/systems/quickloot.test.js"
     ]
@@ -131,7 +131,7 @@
   {
     "name": "QUICK-LOOT-the-switch-off-leaves-a-highlight-standing",
     "file": "src/systems/quickLoot.js",
-    "old": "  _sel = (verbs || (take && quickLootOn())) ? nextSelection(_sel, frame, _nudge) : null;",
+    "old": "  _sel = verbs || (take && quickLootOn()) ? nextSelection(_sel, frame, _nudge) : null;",
     "new": "  _sel = nextSelection(_sel, frame, _nudge);",
     "tests": [
       "test/systems/quickloot.test.js"
@@ -140,8 +140,8 @@
   {
     "name": "QUICK-LOOT-the-armed-key-outlives-the-press-it-rode",
     "file": "src/systems/quickLoot.js",
-    "old": "  const how = _pending;\n  _pending = null;",
-    "new": "  const how = _pending;",
+    "old": "  const how = _pending;\n  _pending = null; // spent on the press it was armed for, whatever that press finds",
+    "new": "  const how = _pending; // spent on the press it was armed for, whatever that press finds",
     "tests": [
       "test/systems/quickloot.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "QUICK-LOOT-the-open-key-takes-the-row-instead",
     "file": "src/systems/quickLoot.js",
-    "old": "  if (how === 'open' && !beast) return null;",
-    "new": "  if (false) return null;",
+    "old": "  if (how === 'open' && !beast) return null; // J: the player asked for the window",
+    "new": "  if (false) return null; // J: the player asked for the window",
     "tests": [
       "test/systems/quickloot.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "QUICK-LOOT-the-bulk-take-walks-the-list-it-is-splicing",
     "file": "src/systems/quickLoot.js",
-    "old": "    for (const it of [...items]) {\n      if (takeAllLeaves(it)) { left++; continue; }",
-    "new": "    for (const it of items) {\n      if (takeAllLeaves(it)) { left++; continue; }",
+    "old": "    for (const it of [...items]) {",
+    "new": "    for (const it of items) {",
     "tests": [
       "test/systems/quickloot.test.js"
     ],
@@ -177,8 +177,8 @@
   {
     "name": "QUICK-LOOT-a-key-arms-with-nothing-highlighted",
     "file": "src/systems/quickLoot.js",
-    "old": "  if (!quickLootOn() || !_sel || _actionIds) return false;",
-    "new": "  if (!quickLootOn() || _actionIds) return false;",
+    "old": "  if (!quickLootOn() || !_sel || _actionIds) return false; // ACT-MENU: P and J take from a pile, never from a list of verbs",
+    "new": "  if (!quickLootOn() || _actionIds) return false; // ACT-MENU: P and J take from a pile, never from a list of verbs",
     "tests": [
       "test/systems/quickloot.test.js"
     ]

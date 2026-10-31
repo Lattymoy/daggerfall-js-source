@@ -72,8 +72,7 @@ export const FADE_CLEAR = Object.freeze([0, 0, 0, 0]);
 /** Color.Lerp: t is CLAMPED to [0,1] and every channel moves. */
 function lerpColor(a, b, t) {
   const k = t < 0 ? 0 : t > 1 ? 1 : t;
-  return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k,
-    a[2] + (b[2] - a[2]) * k, a[3] + (b[3] - a[3]) * k];
+  return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k, a[3] + (b[3] - a[3]) * k];
 }
 
 /**
@@ -84,9 +83,9 @@ function lerpColor(a, b, t) {
  */
 export class FadeBehaviour {
   constructor() {
-    this.allowFade = true;          // :22, DFU's own default
+    this.allowFade = true; // :22, DFU's own default
     this.fadeInProgress = false;
-    this.hasTarget = true;          // fadeTargetPanel, assigned once at DaggerfallUI.cs:409
+    this.hasTarget = true; // fadeTargetPanel, assigned once at DaggerfallUI.cs:409
     /** fadeTargetPanel.BackgroundColor - the HUD parent panel's own. */
     this.backgroundColor = [...FADE_CLEAR];
     this.fadeTimer = 0;
@@ -97,7 +96,9 @@ export class FadeBehaviour {
   }
 
   /** The guard the four public entry points share (:56, :64, :76, :88). */
-  _blocked() { return !this.hasTarget || !this.allowFade; }
+  _blocked() {
+    return !this.hasTarget || !this.allowFade;
+  }
 
   /** SmashHUDToBlack (:54-60). */
   smashHUDToBlack() {
@@ -158,8 +159,12 @@ export class FadeBehaviour {
   draw(renderer, canvas) {
     const c = this.backgroundColor;
     if (!(c[3] > 0)) return false;
-    renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height },
-      undefined, [c[0], c[1], c[2], c[3]]);
+    renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, [
+      c[0],
+      c[1],
+      c[2],
+      c[3],
+    ]);
     return true;
   }
 }

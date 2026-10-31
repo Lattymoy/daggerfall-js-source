@@ -65,8 +65,8 @@
   {
     "name": "ONEBAG-the-bag-a-piece",
     "file": "src/systems/decor/decorItems.js",
-    "old": "  if (isBagItem(item) || isPackOnly(item)) return null;\n  if (item.templateIndex === TROPHY_TEMPLATE) return null;",
-    "new": "  if (isPackOnly(item)) return null;\n  if (item.templateIndex === TROPHY_TEMPLATE) return null;",
+    "old": "  if (isBagItem(item) || isPackOnly(item)) return null;",
+    "new": "  if (isPackOnly(item)) return null;",
     "tests": [
       "test/systems/professions/fb1004_onebag.test.js"
     ]

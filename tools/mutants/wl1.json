@@ -2,8 +2,8 @@
   {
     "name": "WL1-aperture-tiled-past-reason-kept",
     "file": "src/render/windowApertures.js",
-    "old": "    if ((iu1 - iu0) * (iv1 - iv0) > 4096) continue;",
-    "new": "    if ((iu1 - iu0) * (iv1 - iv0) > 4096 * 4096) continue;",
+    "old": "      if ((iu1 - iu0) * (iv1 - iv0) > 4096) continue; // a picture tiled past reason is no window",
+    "new": "      if ((iu1 - iu0) * (iv1 - iv0) > 4096 * 4096) continue; // a picture tiled past reason is no window",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WL1-aperture-cover-whole",
     "file": "src/render/windowApertures.js",
-    "old": "      a0 = Math.max(0, a0); b0 = Math.max(0, b0); a1 = Math.min(1, a1); b1 = Math.min(1, b1);",
-    "new": "      a0 = 0; b0 = 0; a1 = 1; b1 = 1;",
+    "old": "          a0 = Math.max(0, a0);\n          b0 = Math.max(0, b0);\n          a1 = Math.min(1, a1);\n          b1 = Math.min(1, b1);",
+    "new": "          a0 = 0;\n          b0 = 0;\n          a1 = 1;\n          b1 = 1;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -436,8 +436,8 @@
   {
     "name": "WL1-batch-measures-none",
     "file": "src/render/staticBatch.js",
-    "old": "      if (this.windows?.(archive, record)) sub.apertures = yield* apertureSteps(",
-    "new": "      if (false) sub.apertures = yield* apertureSteps(",
+    "old": "      if (this.windows?.(archive, record))\n        sub.apertures = yield* apertureSteps(positions, normals, uvs, indices, start, at - start); // WL1: renderer.createMesh takes them as they are",
+    "new": "      if (false) sub.apertures = yield* apertureSteps(positions, normals, uvs, indices, start, at - start); // WL1: renderer.createMesh takes them as they are",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -490,8 +490,8 @@
   {
     "name": "WL1-exterior-glass-colour-short",
     "file": "src/world/exteriorGlass.js",
-    "old": "  '171_2': Object.freeze([104, 105, 106]),",
-    "new": "  '171_2': Object.freeze([104]),",
+    "old": "  '171_2': Object.freeze([104, 105, 106]), // a timber wall's four blue panes",
+    "new": "  '171_2': Object.freeze([104]), // a timber wall's four blue panes",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -583,8 +583,8 @@
   {
     "name": "WL1-sliver-kept",
     "file": "src/render/windowApertures.js",
-    "old": "      if (!(a1 - a0 >= APERTURE_MIN_COVER && b1 - b0 >= APERTURE_MIN_COVER)) continue;",
-    "new": "      if (!(a1 - a0 > 1e-4 && b1 - b0 > 1e-4)) continue;",
+    "old": "          if (!(a1 - a0 >= APERTURE_MIN_COVER && b1 - b0 >= APERTURE_MIN_COVER)) continue;",
+    "new": "          if (!(a1 - a0 > 1e-4 && b1 - b0 > 1e-4)) continue;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -592,8 +592,8 @@
   {
     "name": "WL1-quad-twice",
     "file": "src/render/windowApertures.js",
-    "old": "    if (into < 0) {\n      const key = bucketKey(",
-    "new": "    if (true) {\n      const key = bucketKey(",
+    "old": "    if (into < 0) {",
+    "new": "    if (true) {",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -601,8 +601,8 @@
   {
     "name": "WL1-no-area-kept",
     "file": "src/render/windowApertures.js",
-    "old": "    if (!(Math.hypot(ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx) > 1e-8)) continue;",
-    "new": "    if (false) continue;",
+    "old": "    if (!(Math.hypot(ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx) > 1e-8)) continue; // no area: no plane to light through",
+    "new": "    if (false) continue; // no area: no plane to light through",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -665,8 +665,8 @@
   {
     "name": "WL1-speck-4-connected",
     "file": "src/world/exteriorGlass.js",
-    "old": "        if ((!dx && !dy) || nx < 0 || ny < 0 || nx >= W || ny >= H) continue;",
-    "new": "        if ((!dx && !dy) || (dx && dy) || nx < 0 || ny < 0 || nx >= W || ny >= H) continue;",
+    "old": "          if ((!dx && !dy) || nx < 0 || ny < 0 || nx >= W || ny >= H) continue;",
+    "new": "          if ((!dx && !dy) || (dx && dy) || nx < 0 || ny < 0 || nx >= W || ny >= H) continue;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]

@@ -244,5 +244,5 @@ test('WEAR-VANILLA: through the core, an armed Knight\'s blow on an iron-clad pl
   // the module on: the overhaul's own wear, handed the weapon the core assigned - a monster's stand-in among them
   // PIN MOVED (TWO-HANDS AUDIT 2, bible/05-Combat/Two-Hands.md): the module's own wear reads the blow through `shared` -
   // the off hand's share of a pair's blow (formulas.js `blowShare`), the roll itself for every other blow
-  assert.match(readFileSync(new URL('../../src/combat/pcaao.js', import.meta.url), 'utf8'), /if \(modules\.equipmentDamageEnhanced\) pcaaoDamageEquipment\(attacker, target, shared\(damage\), weapon, struckBodyPart, \{ rolls, say, modules \}\);/);
+  assert.match(readFileSync(new URL('../../src/combat/pcaao.js', import.meta.url), 'utf8'), /if \(modules\.equipmentDamageEnhanced\)\n\s*pcaaoDamageEquipment\(attacker, target, shared\(damage\), weapon, struckBodyPart, \{ rolls, say, modules \}\);/);
 });

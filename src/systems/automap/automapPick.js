@@ -44,21 +44,21 @@
 // seen just by hovering over where they are.
 
 import { rayAabb } from '../../player/activate.js';
-import { invert4 } from '../../player/tapRay.js';   // AUDIT 68 S15-invert4-duplicate: the port's one 4x4 inverse
+import { invert4 } from '../../player/tapRay.js'; // AUDIT 68 S15-invert4-duplicate: the port's one 4x4 inverse
 
 /** The gameobject NAMES DFU dispatches its hover text on (:149-166).
  *  They are the picker's taxonomy on purpose: `GetMouseHoverOverText`
  *  is a chain of `transform.name ==` comparisons, so porting the names
  *  ports the dispatch. */
 export const MARKER_NAMES = Object.freeze({
-  PLAYER_ARROW: 'PlayerMarkerArrow',              // :149
-  PLAYER_BEACON: 'BeaconPlayerPosition',          // :150
-  PIVOT_BEACON: 'BeaconRotationPivotAxis',        // :151
-  ROTATE_ARROW: 'CurvedArrow',                    // :152
-  ENTRANCE_RAY: 'BeaconEntrancePositionMarker',   // :154
-  ENTRANCE_CUBE: 'CubeEntrancePositionMarker',    // :155
-  PORTAL: 'PortalMarker',                         // :157 - c2/S8's teleporters
-  NOTE_PREFIX: 'UserNoteMarker_',                 // :164 - c2/S8's notes
+  PLAYER_ARROW: 'PlayerMarkerArrow', // :149
+  PLAYER_BEACON: 'BeaconPlayerPosition', // :150
+  PIVOT_BEACON: 'BeaconRotationPivotAxis', // :151
+  ROTATE_ARROW: 'CurvedArrow', // :152
+  ENTRANCE_RAY: 'BeaconEntrancePositionMarker', // :154
+  ENTRANCE_CUBE: 'CubeEntrancePositionMarker', // :155
+  PORTAL: 'PortalMarker', // :157 - c2/S8's teleporters
+  NOTE_PREFIX: 'UserNoteMarker_', // :164 - c2/S8's notes
 });
 
 /**
@@ -75,19 +75,27 @@ export const MARKER_NAMES = Object.freeze({
 export function hoverKeyForHit(hit) {
   if (!hit) return null;
   switch (hit.name) {
-    case MARKER_NAMES.PLAYER_BEACON: return 'automapPlayerPositionBeacon';
+    case MARKER_NAMES.PLAYER_BEACON:
+      return 'automapPlayerPositionBeacon';
     case MARKER_NAMES.PIVOT_BEACON:
-    case MARKER_NAMES.ROTATE_ARROW: return 'automapRotationPivotAxis';
-    case MARKER_NAMES.ENTRANCE_RAY: return 'automapEntranceExitPositionBeacon';
-    case MARKER_NAMES.ENTRANCE_CUBE: return 'automapEntranceExit';
-    case MARKER_NAMES.PLAYER_ARROW: return 'automapPlayerMarker';
+    case MARKER_NAMES.ROTATE_ARROW:
+      return 'automapRotationPivotAxis';
+    case MARKER_NAMES.ENTRANCE_RAY:
+      return 'automapEntranceExitPositionBeacon';
+    case MARKER_NAMES.ENTRANCE_CUBE:
+      return 'automapEntranceExit';
+    case MARKER_NAMES.PLAYER_ARROW:
+      return 'automapPlayerMarker';
     case MARKER_NAMES.PORTAL:
       // the parent's name suffix is what tells the two ends apart
       // (":557-566" - `EndsWith("] - Portal Entrance")` / `"] - Portal Exit"`)
-      return hit.portal === 'exit' ? 'automapTeleporterExit'
-        : hit.portal === 'entrance' ? 'automapTeleporterEntrance'
+      return hit.portal === 'exit'
+        ? 'automapTeleporterExit'
+        : hit.portal === 'entrance'
+          ? 'automapTeleporterEntrance'
           : null;
-    default: return null;
+    default:
+      return null;
   }
 }
 
@@ -117,16 +125,20 @@ export function transformPoint4(m, x, y, z) {
 export function transformBounds(bounds, m) {
   if (!bounds) return null;
   const { min, max } = bounds;
-  let x0 = Infinity, y0 = Infinity, z0 = Infinity;
-  let x1 = -Infinity, y1 = -Infinity, z1 = -Infinity;
+  let x0 = Infinity,
+    y0 = Infinity,
+    z0 = Infinity;
+  let x1 = -Infinity,
+    y1 = -Infinity,
+    z1 = -Infinity;
   for (let i = 0; i < 8; i++) {
-    const p = transformPoint4(m,
-      (i & 1) ? max[0] : min[0],
-      (i & 2) ? max[1] : min[1],
-      (i & 4) ? max[2] : min[2]);
-    if (p[0] < x0) x0 = p[0]; if (p[0] > x1) x1 = p[0];
-    if (p[1] < y0) y0 = p[1]; if (p[1] > y1) y1 = p[1];
-    if (p[2] < z0) z0 = p[2]; if (p[2] > z1) z1 = p[2];
+    const p = transformPoint4(m, i & 1 ? max[0] : min[0], i & 2 ? max[1] : min[1], i & 4 ? max[2] : min[2]);
+    if (p[0] < x0) x0 = p[0];
+    if (p[0] > x1) x1 = p[0];
+    if (p[1] < y0) y0 = p[1];
+    if (p[1] > y1) y1 = p[1];
+    if (p[2] < z0) z0 = p[2];
+    if (p[2] > z1) z1 = p[2];
   }
   return { min: [x0, y0, z0], max: [x1, y1, z1] };
 }
@@ -135,15 +147,21 @@ export function transformBounds(bounds, m) {
  *  dungeon's inward-facing walls would be unpickable from the map
  *  camera otherwise. Answers the ray parameter or null. */
 export function rayTriangle(o, d, ax, ay, az, bx, by, bz, cx, cy, cz) {
-  const e1x = bx - ax, e1y = by - ay, e1z = bz - az;
-  const e2x = cx - ax, e2y = cy - ay, e2z = cz - az;
+  const e1x = bx - ax,
+    e1y = by - ay,
+    e1z = bz - az;
+  const e2x = cx - ax,
+    e2y = cy - ay,
+    e2z = cz - az;
   const px = d[1] * e2z - d[2] * e2y;
   const py = d[2] * e2x - d[0] * e2z;
   const pz = d[0] * e2y - d[1] * e2x;
   const det = e1x * px + e1y * py + e1z * pz;
   if (det > -1e-12 && det < 1e-12) return null;
   const inv = 1 / det;
-  const tx = o[0] - ax, ty = o[1] - ay, tz = o[2] - az;
+  const tx = o[0] - ax,
+    ty = o[1] - ay,
+    tz = o[2] - az;
   const u = (tx * px + ty * py + tz * pz) * inv;
   if (u < 0 || u > 1) return null;
   const qx = ty * e1z - tz * e1y;
@@ -180,7 +198,9 @@ export function panelRay(proj, view, panel, px, py) {
   const ndcY = 1 - (py / panel.h) * 2;
   const near = transformPoint4(inv, ndcX, ndcY, -1);
   const far = transformPoint4(inv, ndcX, ndcY, 1);
-  const dx = far[0] - near[0], dy = far[1] - near[1], dz = far[2] - near[2];
+  const dx = far[0] - near[0],
+    dy = far[1] - near[1],
+    dz = far[2] - near[2];
   const len = Math.hypot(dx, dy, dz);
   if (!(len > 0)) return null;
   return { origin: near, dir: [dx / len, dy / len, dz / len] };
@@ -238,13 +258,18 @@ export function pickAutomap({ ray, model, rec, markers = null, stats = null }) {
     if (t === null) continue;
     if (best && t >= best.distance) continue;
     best = {
-      kind: 'marker', name: mk.name, portal: mk.portal ?? null, id: mk.id ?? null,
+      kind: 'marker',
+      name: mk.name,
+      portal: mk.portal ?? null,
+      id: mk.id ?? null,
       // c2/S8: a user note answers the NOTE ITSELF, and a portal is
       // resolved back to its dictionary key - DFU reads both off the
       // GameObject's NAME (:565-567, :646-661); the port carries them as
       // fields on the proxy, so nothing parses a string back apart.
-      note: mk.note ?? null, teleporterKey: mk.teleporterKey ?? null,
-      key: null, distance: t,
+      note: mk.note ?? null,
+      teleporterKey: mk.teleporterKey ?? null,
+      key: null,
+      distance: t,
       point: [o[0] + d[0] * t, o[1] + d[1] * t, o[2] + d[2] * t],
       normal: aabbNormalAt(box, [o[0] + d[0] * t, o[1] + d[1] * t, o[2] + d[2] * t]),
     };
@@ -259,14 +284,25 @@ export function pickAutomap({ ray, model, rec, markers = null, stats = null }) {
     if (box === null) continue;
     if (geo && box >= geo.distance) continue;
     const tri = triangleHit(o, d, row, geo ? geo.distance : Infinity, stats);
-    if (tri) { geo = { ...tri, kind: 'geometry', name: null, key: row.key, row }; continue; }
-    if (row.positions && row.indices) continue;   // real triangles said no
+    if (tri) {
+      geo = { ...tri, kind: 'geometry', name: null, key: row.key, row };
+      continue;
+    }
+    if (row.positions && row.indices) continue; // real triangles said no
     // A row with no CPU triangles (a hand-built fixture, or an entry
     // whose model never reached cpuModels) answers its BOX - the same
     // conservative stand-in the reveal probe records, and never a
     // silent miss.
     const p = [o[0] + d[0] * box, o[1] + d[1] * box, o[2] + d[2] * box];
-    geo = { kind: 'geometry', name: null, key: row.key, row, distance: box, point: p, normal: aabbNormalAt(row.aabb, p) };
+    geo = {
+      kind: 'geometry',
+      name: null,
+      key: row.key,
+      row,
+      distance: box,
+      point: p,
+      normal: aabbNormalAt(row.aabb, p),
+    };
   }
 
   if (geo && geo.distance + TIE < markerDistance) return geo;
@@ -279,7 +315,9 @@ export function pickAutomap({ ray, model, rec, markers = null, stats = null }) {
  *  applied to BOTH origin and direction, which is why the distance
  *  needs no correction on the way back out. */
 function triangleHit(o, d, row, limit, stats) {
-  const pos = row.positions, idx = row.indices, m = row.matrix;
+  const pos = row.positions,
+    idx = row.indices,
+    m = row.matrix;
   if (!pos || !idx || !m) return null;
   const inv = invertMat4(m);
   if (!inv) return null;
@@ -292,29 +330,57 @@ function triangleHit(o, d, row, limit, stats) {
   let bestT = limit;
   let bi = -1;
   for (let i = 0; i + 2 < idx.length; i += 3) {
-    const a = idx[i] * 3, b = idx[i + 1] * 3, c = idx[i + 2] * 3;
-    const t = rayTriangle(lo, ld,
-      pos[a], pos[a + 1], pos[a + 2],
-      pos[b], pos[b + 1], pos[b + 2],
-      pos[c], pos[c + 1], pos[c + 2]);
-    if (t !== null && t < bestT) { bestT = t; bi = i; }
+    const a = idx[i] * 3,
+      b = idx[i + 1] * 3,
+      c = idx[i + 2] * 3;
+    const t = rayTriangle(
+      lo,
+      ld,
+      pos[a],
+      pos[a + 1],
+      pos[a + 2],
+      pos[b],
+      pos[b + 1],
+      pos[b + 2],
+      pos[c],
+      pos[c + 1],
+      pos[c + 2],
+    );
+    if (t !== null && t < bestT) {
+      bestT = t;
+      bi = i;
+    }
   }
   if (stats) stats.triangleTests += idx.length / 3;
   if (bi < 0) return null;
-  const a = idx[bi] * 3, b = idx[bi + 1] * 3, c = idx[bi + 2] * 3;
+  const a = idx[bi] * 3,
+    b = idx[bi + 1] * 3,
+    c = idx[bi + 2] * 3;
   // the face normal, in model space, rotated into the world by the
   // matrix's upper 3x3 (dungeon placements are rigid - the ROAD-C
   // reveal model's rows all come from `trs` with unit scale)
-  const ux = pos[b] - pos[a], uy = pos[b + 1] - pos[a + 1], uz = pos[b + 2] - pos[a + 2];
-  const vx = pos[c] - pos[a], vy = pos[c + 1] - pos[a + 1], vz = pos[c + 2] - pos[a + 2];
-  let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+  const ux = pos[b] - pos[a],
+    uy = pos[b + 1] - pos[a + 1],
+    uz = pos[b + 2] - pos[a + 2];
+  const vx = pos[c] - pos[a],
+    vy = pos[c + 1] - pos[a + 1],
+    vz = pos[c + 2] - pos[a + 2];
+  let nx = uy * vz - uz * vy,
+    ny = uz * vx - ux * vz,
+    nz = ux * vy - uy * vx;
   const wx = m[0] * nx + m[4] * ny + m[8] * nz;
   const wy = m[1] * nx + m[5] * ny + m[9] * nz;
   const wz = m[2] * nx + m[6] * ny + m[10] * nz;
   const len = Math.hypot(wx, wy, wz) || 1;
-  nx = wx / len; ny = wy / len; nz = wz / len;
+  nx = wx / len;
+  ny = wy / len;
+  nz = wz / len;
   // face the ray, as a collision normal always does
-  if (nx * d[0] + ny * d[1] + nz * d[2] > 0) { nx = -nx; ny = -ny; nz = -nz; }
+  if (nx * d[0] + ny * d[1] + nz * d[2] > 0) {
+    nx = -nx;
+    ny = -ny;
+    nz = -nz;
+  }
   return {
     distance: bestT,
     point: [o[0] + d[0] * bestT, o[1] + d[1] * bestT, o[2] + d[2] * bestT],
@@ -329,11 +395,18 @@ function aabbNormalAt(box, p) {
   let bestD = Infinity;
   let n = [0, 1, 0];
   const faces = [
-    [Math.abs(p[0] - min[0]), [-1, 0, 0]], [Math.abs(p[0] - max[0]), [1, 0, 0]],
-    [Math.abs(p[1] - min[1]), [0, -1, 0]], [Math.abs(p[1] - max[1]), [0, 1, 0]],
-    [Math.abs(p[2] - min[2]), [0, 0, -1]], [Math.abs(p[2] - max[2]), [0, 0, 1]],
+    [Math.abs(p[0] - min[0]), [-1, 0, 0]],
+    [Math.abs(p[0] - max[0]), [1, 0, 0]],
+    [Math.abs(p[1] - min[1]), [0, -1, 0]],
+    [Math.abs(p[1] - max[1]), [0, 1, 0]],
+    [Math.abs(p[2] - min[2]), [0, 0, -1]],
+    [Math.abs(p[2] - max[2]), [0, 0, 1]],
   ];
-  for (const [dist, v] of faces) if (dist < bestD) { bestD = dist; n = v; }
+  for (const [dist, v] of faces)
+    if (dist < bestD) {
+      bestD = dist;
+      n = v;
+    }
   return n;
 }
 
@@ -353,11 +426,13 @@ function aabbNormalAt(box, p) {
  * answers would pass a timing assertion and fail this one.
  */
 export function createAutomapPicker() {
-  let cached = null;   // { px, py, stamp, hit }
+  let cached = null; // { px, py, stamp, hit }
   const stats = { picks: 0, triangleTests: 0 };
   return {
     stats,
-    invalidate() { cached = null; },
+    invalidate() {
+      cached = null;
+    },
     pick({ proj, view, panel, px, py, model, rec, markers, stamp = '' }) {
       if (cached && cached.px === px && cached.py === py && cached.stamp === stamp) return cached.hit;
       stats.picks++;

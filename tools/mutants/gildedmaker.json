@@ -47,8 +47,8 @@
   {
     "name": "GMAKER-the-name-written",
     "file": "src/ui/item/itemMakerWindow.js",
-    "old": "this.itemName !== shownItemName(this.selected) && !makerKeepsName(this.selected)) this.selected.name = this.itemName;",
-    "new": "this.itemName !== shownItemName(this.selected)) this.selected.name = this.itemName;",
+    "old": "    if (this.itemName && this.itemName !== shownItemName(this.selected) && !makerKeepsName(this.selected))\n      this.selected.name = this.itemName;",
+    "new": "    if (this.itemName && this.itemName !== shownItemName(this.selected)) this.selected.name = this.itemName;",
     "tests": [
       "test/systems/gildedmaker.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "GMAKER-the-box-opened",
     "file": "src/ui/item/itemMakerWindow.js",
-    "old": "    if (makerKeepsName(this.selected)) { this._say(gildedKeepsNameText()); return; }\n",
-    "new": "",
+    "old": "    if (makerKeepsName(this.selected)) {\n      this._say(gildedKeepsNameText());\n      return;\n    }\n    this.renameBox = new InputMessageBoxWindow({",
+    "new": "    this.renameBox = new InputMessageBoxWindow({",
     "tests": [
       "test/systems/gildedmaker.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "GMAKER-a-custom-row-let-in",
     "file": "src/systems/gilded.js",
-    "old": "if (item.customEnchantments?.length || (Array.isArray(item.enchantments) && item.enchantments.some((e) => !makerLaid(e)))) return null;",
-    "new": "if (Array.isArray(item.enchantments) && item.enchantments.some((e) => !makerLaid(e))) return null;",
+    "old": "  if (\n    item.customEnchantments?.length ||\n    (Array.isArray(item.enchantments) && item.enchantments.some((e) => !makerLaid(e)))\n  )\n    return null;",
+    "new": "  if (Array.isArray(item.enchantments) && item.enchantments.some((e) => !makerLaid(e))) return null;",
     "tests": [
       "test/systems/gildedmaker.test.js"
     ]

@@ -18,7 +18,10 @@ const browser = await chromium.launch({
   args: ['--use-gl=angle', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'],
 });
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
-page.on('console', (m) => { const t = m.text(); if (/music|MIDI|song|error/i.test(t)) console.log('[page]', t); });
+page.on('console', (m) => {
+  const t = m.text();
+  if (/music|MIDI|song|error/i.test(t)) console.log('[page]', t);
+});
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 
 // A MINIMAL PAGE, not the game. Booting a whole dungeon host to ask
@@ -26,13 +29,15 @@ page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 // system; intercepting the root and serving one script isolates the
 // audio question, and the modules under test are the real ones vite
 // serves from src/.
-await page.route('**/', (route) => route.fulfill({
-  status: 200,
-  contentType: 'text/html',
-  body: '<!doctype html><meta charset="utf-8"><title>music probe</title><body><canvas id="c"></canvas>',
-}));
+await page.route('**/', (route) =>
+  route.fulfill({
+    status: 200,
+    contentType: 'text/html',
+    body: '<!doctype html><meta charset="utf-8"><title>music probe</title><body><canvas id="c"></canvas>',
+  }),
+);
 await page.goto('http://localhost:5206/play/');
-await page.mouse.click(200, 200);          // the gesture that allows audio
+await page.mouse.click(200, 200); // the gesture that allows audio
 
 const result = await page.evaluate(async () => {
   const mod = await import('/src/systems/music.js');

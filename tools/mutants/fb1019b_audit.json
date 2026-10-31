@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-1019-L1-3-bounty-unmarked",
     "file": "src/systems/bounty/bountyReward.js",
-    "old": "  if (max > 0) item.foundCondition = item.currentCondition;",
-    "new": "",
+    "old": "  if (max > 0) item.foundCondition = item.currentCondition; // AUDIT SUGGESTIONS-1019 L1-3: SELL-AS-FOUND's mark (tradeModes.js) - online a mended reward sells as it was handed over and a third of the mend (MEND-THIRD)",
+    "new": "  // AUDIT SUGGESTIONS-1019 L1-3: SELL-AS-FOUND's mark (tradeModes.js) - online a mended reward sells as it was handed over and a third of the mend (MEND-THIRD)",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "AUDIT-1019-L2-1-health-by-fraction",
     "file": "src/systems/renownLayer.js",
-    "old": "  if (keepHealth && Number.isFinite(health)) entity.health = Math.min(health, entity.maxHealth);\n",
-    "new": "",
+    "old": "  if (keepHealth && Number.isFinite(health)) entity.health = Math.min(health, entity.maxHealth);\n}",
+    "new": "}",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "AUDIT-1019-L2-2-refresh-before-points",
     "file": "src/systems/advancement.js",
-    "old": "  distribute(entity.stats, pool);\n  // LEVEL-EVEN (systems/levelEven.js): the floor over the new maximum and the Endurance just spent (AUDIT LEVEL-EVEN L2-2:\n  // after the points, not before them), current health left as it stands (L2-1)\n  refreshOnlineLayer(entity, { keepHealth: true });\n",
-    "new": "  distribute(entity.stats, pool);\n",
+    "old": "  // LEVEL-EVEN (systems/levelEven.js): the floor over the new maximum and the Endurance just spent (AUDIT LEVEL-EVEN L2-2:\n  // after the points, not before them), current health left as it stands (L2-1)\n  refreshOnlineLayer(entity, { keepHealth: true });\n  entity.readyToLevelUp = false;",
+    "new": "  entity.readyToLevelUp = false;",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "AUDIT-1019-L2-2-oghma-unrefreshed",
     "file": "src/systems/advancement.js",
-    "old": "    refreshOnlineLayer(entity, { keepHealth: true });   // AUDIT LEVEL-EVEN L2-2: the book's Endurance reaches the floor now\n",
-    "new": "",
+    "old": "    refreshOnlineLayer(entity, { keepHealth: true }); // AUDIT LEVEL-EVEN L2-2: the book's Endurance reaches the floor now\n    entity.readyToLevelUp = false;",
+    "new": "    entity.readyToLevelUp = false;",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
     ],
@@ -92,7 +92,7 @@
   {
     "name": "AUDIT-1019-L2-3-mentor-floor-unread",
     "file": "src/systems/mentorMode.js",
-    "old": "  const rawMax = (entity.rawMaxHealth ?? entity.maxHealth ?? 0) + (Number.isFinite(entity.evenHp) && entity.evenHp > 0 ? entity.evenHp : 0);",
+    "old": "  const rawMax =\n    (entity.rawMaxHealth ?? entity.maxHealth ?? 0) +\n    (Number.isFinite(entity.evenHp) && entity.evenHp > 0 ? entity.evenHp : 0);",
     "new": "  const rawMax = entity.rawMaxHealth ?? entity.maxHealth ?? 0;",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "AUDIT-1019-L3-2-lock-before-pass",
     "file": "src/systems/advancement.js",
-    "old": "    : value >= 95 && !masterSkillsActive(entity) && lockedBy(entity, i) ? 'lock' : null;",
-    "new": "    : value >= 95 && !masterSkillsActive(entity) && alreadyMasteredASkill(entity) ? 'lock' : null;",
+    "old": "      : value >= 95 && !masterSkillsActive(entity) && lockedBy(entity, i)",
+    "new": "      : value >= 95 && !masterSkillsActive(entity) && alreadyMasteredASkill(entity)",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "AUDIT-1019-L3-3-open-mastery-as-cap",
     "file": "src/systems/advancement.js",
-    "old": "  const held = value >= 100 ? (masteryRefusal(entity, i) == null ? 'master' : 'cap')",
-    "new": "  const held = value >= 100 ? 'cap'",
+    "old": "  const held =\n    value >= 100\n      ? masteryRefusal(entity, i) == null\n        ? 'master'\n        : 'cap'\n      : value >= 95 && !masterSkillsActive(entity) && lockedBy(entity, i)\n        ? 'lock'\n        : null;",
+    "new": "  const held = value >= 100 ? 'cap' : value >= 95 && !masterSkillsActive(entity) && lockedBy(entity, i) ? 'lock' : null;",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
     ],
@@ -282,8 +282,8 @@
   {
     "name": "AUDIT-1019-L5-4-unmarked",
     "file": "src/systems/skillSwap.js",
-    "old": "entity.career[key].map((id) => (id === out ? inn : id)), ...traded, swapped: true };",
-    "new": "entity.career[key].map((id) => (id === out ? inn : id)), ...traded };",
+    "old": "  return { ...entity.career, [key]: entity.career[key].map((id) => (id === out ? inn : id)), ...traded, swapped: true };",
+    "new": "  return { ...entity.career, [key]: entity.career[key].map((id) => (id === out ? inn : id)), ...traded };",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
     ],
@@ -292,7 +292,7 @@
   {
     "name": "AUDIT-1019-L5-4-family-name-only",
     "file": "src/systems/legacy/family.js",
-    "old": "    career: career && (career.swapped === true || String(career.name ?? '') !== CLASS_CAREERS[idx]) ? JSON.parse(JSON.stringify(career)) : null,",
+    "old": "    career:\n      career && (career.swapped === true || String(career.name ?? '') !== CLASS_CAREERS[idx])\n        ? JSON.parse(JSON.stringify(career))\n        : null,",
     "new": "    career: career && String(career.name ?? '') !== CLASS_CAREERS[idx] ? JSON.parse(JSON.stringify(career)) : null,",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
@@ -312,8 +312,8 @@
   {
     "name": "AUDIT-1019-L6-2-offline-words",
     "file": "src/systems/skillSwap.js",
-    "old": "  return entity._online === true\n    ? t('skillswap.refuse.gold',",
-    "new": "  return true\n    ? t('skillswap.refuse.gold',",
+    "old": "  return entity._online === true",
+    "new": "  return true",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
     ],
@@ -322,8 +322,8 @@
   {
     "name": "AUDIT-1019-L6-2-group-word-fixed",
     "file": "src/systems/skillSwap.js",
-    "old": "group: groupWord(group), other: groupWord(other) };",
-    "new": "group: 'minor', other: groupWord(other) };",
+    "old": "  const words = { inn: SKILL_NAMES[inn], out: SKILL_NAMES[out], group: groupWord(group), other: groupWord(other) };",
+    "new": "  const words = { inn: SKILL_NAMES[inn], out: SKILL_NAMES[out], group: 'minor', other: groupWord(other) };",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
     ],
@@ -382,8 +382,8 @@
   {
     "name": "AUDIT-1019-L6-13-online-pool-words",
     "file": "src/ui/levelingChoice.js",
-    "old": "        online ? t('leveling.classic.poolOnline',",
-    "new": "        false ? t('leveling.classic.poolOnline',",
+    "old": "        online",
+    "new": "        false",
     "tests": [
       "test/systems/fb1019b_leveleven.test.js"
     ],
@@ -402,7 +402,7 @@
   {
     "name": "AUDIT-1019-L2-4-share-of-stored",
     "file": "src/systems/firmamentPowers.js",
-    "old": "  const floored = baseHp + (Number.isFinite(entity.rawMaxHealth) ? evenHpOf(entity, (entity.stats?.endurance ?? NaN) + end) : 0);",
+    "old": "  const floored =\n    baseHp + (Number.isFinite(entity.rawMaxHealth) ? evenHpOf(entity, (entity.stats?.endurance ?? NaN) + end) : 0);",
     "new": "  const floored = baseHp;",
     "tests": [
       "test/systems/fb1019b_audit.test.js"

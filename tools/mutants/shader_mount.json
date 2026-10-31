@@ -193,8 +193,8 @@
   {
     "name": "QO-long-ones-first-again",
     "file": "src/render/playPrograms.js",
-    "old": "...NODE_GLINT_PROGRAMS, ...FIRE_PROGRAMS, ...GLOW_PROGRAMS, ...NODE_GLOW_PROGRAMS, ...NAVAL_PROGRAMS, ...AURA_PROGRAMS, ...ARMORY_PROGRAMS, ...AURORA_PROGRAMS];",
-    "new": "...NODE_GLINT_PROGRAMS, ...AURA_PROGRAMS, ...ARMORY_PROGRAMS, ...FIRE_PROGRAMS, ...GLOW_PROGRAMS, ...NODE_GLOW_PROGRAMS, ...NAVAL_PROGRAMS, ...AURORA_PROGRAMS];",
+    "old": "  ...FIRE_PROGRAMS,\n  ...GLOW_PROGRAMS,\n  ...NODE_GLOW_PROGRAMS,\n  ...NAVAL_PROGRAMS,\n  ...AURA_PROGRAMS,\n  ...ARMORY_PROGRAMS,",
+    "new": "  ...AURA_PROGRAMS,\n  ...ARMORY_PROGRAMS,\n  ...FIRE_PROGRAMS,\n  ...GLOW_PROGRAMS,\n  ...NODE_GLOW_PROGRAMS,\n  ...NAVAL_PROGRAMS,",
     "tests": [
       "test/render/auditshaderstall.test.js",
       "test/render/shadermount.test.js"
@@ -204,8 +204,8 @@
   {
     "name": "QO-node-glow-left-out",
     "file": "src/render/playPrograms.js",
-    "old": ", ...NODE_GLOW_PROGRAMS, ...NAVAL_PROGRAMS",
-    "new": ", ...NAVAL_PROGRAMS",
+    "old": "  ...NODE_GLOW_PROGRAMS,\n  ...NAVAL_PROGRAMS,",
+    "new": "  ...NAVAL_PROGRAMS,",
     "tests": [
       "test/render/auditshaderstall.test.js",
       "test/render/shadermount.test.js"
@@ -226,7 +226,7 @@
     "name": "SM-mount-no-wait",
     "file": "src/render/bootPrograms.js",
     "old": "      for (let turn = 0; turn < MOUNT_WAIT_TURNS && !startedDone(renderer.gl, blocking); turn++) await wait();",
-    "new": "      void startedDone; void blocking;",
+    "new": "      void startedDone;\n      void blocking;",
     "tests": [
       "test/render/shadermount.test.js"
     ],
@@ -235,8 +235,8 @@
   {
     "name": "SM-mount-wait-no-cap",
     "file": "src/render/bootPrograms.js",
-    "old": "turn < MOUNT_WAIT_TURNS && !startedDone",
-    "new": "turn < MOUNT_WAIT_TURNS * 1000 && !startedDone",
+    "old": "      for (let turn = 0; turn < MOUNT_WAIT_TURNS && !startedDone(renderer.gl, blocking); turn++) await wait();",
+    "new": "      for (let turn = 0; turn < MOUNT_WAIT_TURNS * 1000 && !startedDone(renderer.gl, blocking); turn++) await wait();",
     "tests": [
       "test/render/shadermount.test.js"
     ],

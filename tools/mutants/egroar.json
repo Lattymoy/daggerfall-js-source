@@ -2,8 +2,8 @@
   {
     "name": "EGROAR-voice-unheld",
     "file": "src/systems/song/songPlayer.js",
-    "old": "for (const [k, [lo, hi]] of Object.entries(range)) if (Number.isFinite(o[k])) out[k] = Math.min(hi, Math.max(lo, o[k]));",
-    "new": "for (const [k] of Object.entries(range)) if (Number.isFinite(o[k])) out[k] = o[k];",
+    "old": "  for (const [k, [lo, hi]] of Object.entries(range))\n    if (Number.isFinite(o[k])) out[k] = Math.min(hi, Math.max(lo, o[k]));",
+    "new": "  for (const [k] of Object.entries(range)) if (Number.isFinite(o[k])) out[k] = o[k];",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "EGROAR-unison-all-sharp",
     "file": "src/systems/song/songPlayer.js",
-    "old": "return Array.from({ length: n }, (_, i) => -cents + (2 * cents * i) / (n - 1));",
-    "new": "return Array.from({ length: n }, (_, i) => (cents * i) / (n - 1));",
+    "old": "  return Array.from({ length: n }, (_, i) => -cents + (2 * cents * i) / (n - 1));",
+    "new": "  return Array.from({ length: n }, (_, i) => (cents * i) / (n - 1));",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EGROAR-unison-as-loud-as-its-copies",
     "file": "src/systems/song/songPlayer.js",
-    "old": "const peak = (amp * spec.gain) / Math.sqrt(offs.length);",
-    "new": "const peak = amp * spec.gain;",
+    "old": "    const peak = (amp * spec.gain) / Math.sqrt(offs.length); // a unison as loud as the one pair it stands for",
+    "new": "    const peak = amp * spec.gain; // a unison as loud as the one pair it stands for",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EGROAR-spread-one-side",
     "file": "src/systems/song/songPlayer.js",
-    "old": "const sides = own?.spread > 0 && offs.length > 1 ? [gain, ctx.createGain()] : [gain];",
-    "new": "const sides = [gain];",
+    "old": "    const sides = own?.spread > 0 && offs.length > 1 ? [gain, ctx.createGain()] : [gain];",
+    "new": "    const sides = [gain];",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EGROAR-sub-on-the-note",
     "file": "src/systems/song/songPlayer.js",
-    "old": "subN.frequency.value = (hz * spec.car) / 2;",
-    "new": "subN.frequency.value = hz * spec.car;",
+    "old": "      subN.frequency.value = (hz * spec.car) / 2;",
+    "new": "      subN.frequency.value = hz * spec.car;",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "EGROAR-bend-flattens-the-spread",
     "file": "src/systems/song/songPlayer.js",
-    "old": "d.setValueAtTime(cents + (v.offs?.[i] ?? 0), when);",
-    "new": "d.setValueAtTime(cents, when);",
+    "old": "            d.setValueAtTime(cents + (v.offs?.[i] ?? 0), when);",
+    "new": "            d.setValueAtTime(cents, when);",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "EGROAR-drum-unvoiced",
     "file": "src/systems/song/songPlayer.js",
-    "old": "const own = this._songKit?.get(e.note) ?? null;",
-    "new": "const own = null;",
+    "old": "      const own = this._songKit?.get(e.note) ?? null; // EG-ROAR: the song's own drum, over the kit's",
+    "new": "      const own = null; // EG-ROAR: the song's own drum, over the kit's",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "EGROAR-no-floor",
     "file": "src/systems/song/songPlayer.js",
-    "old": "const hp = this._songVoices && typeof this.ctx.createBiquadFilter === 'function'",
-    "new": "const hp = false && typeof this.ctx.createBiquadFilter === 'function'",
+    "old": "    const hp =\n      this._songVoices && typeof this.ctx.createBiquadFilter === 'function'\n        ? (this._floor ??= this._makeFloor())\n        : null;",
+    "new": "    const hp = false && typeof this.ctx.createBiquadFilter === 'function' ? (this._floor ??= this._makeFloor()) : null;",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "EGROAR-songs-unvoiced",
     "file": "src/systems/eliteGates/egScore.js",
-    "old": "seamless: true, level, voices: VOICES_BY_CHANNEL, kit: SPIRE_KIT };",
-    "new": "seamless: true, level };",
+    "old": "    voices: VOICES_BY_CHANNEL,\n    kit: SPIRE_KIT,\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "EGROAR-swell-before-tick-0",
     "file": "src/systems/eliteGates/egScore.js",
-    "old": "if (at >= end || at < 0) return;",
-    "new": "if (at >= end) return;",
+    "old": "      if (at >= end || at < 0) return;",
+    "new": "      if (at >= end) return;",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js"
     ],
@@ -94,8 +94,8 @@
   {
     "name": "EGROAR-press-clamps-the-drums",
     "file": "src/systems/eliteGates/egScore.js",
-    "old": "ratio: 3, attack: 0.012, release: 0.25, ceiling: -1 });",
-    "new": "ratio: 3, attack: 0.003, release: 0.25, ceiling: -1 });",
+    "old": "const PRESS = Object.freeze({ threshold: -18, knee: 12, ratio: 3, attack: 0.012, release: 0.25, ceiling: -1 });",
+    "new": "const PRESS = Object.freeze({ threshold: -18, knee: 12, ratio: 3, attack: 0.003, release: 0.25, ceiling: -1 });",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "EGROAR-halls-flat",
     "file": "src/systems/eliteGates/egScore.js",
-    "old": "spicc(w, bar, chord, sec >= 2 ? 16 : 8, 62 + sec * 8, band === 2 ? 1 : 0);",
-    "new": "spicc(w, bar, chord, 8, 62 + sec * 8, band === 2 ? 1 : 0);",
+    "old": "          spicc(w, bar, chord, sec >= 2 ? 16 : 8, 62 + sec * 8, band === 2 ? 1 : 0);",
+    "new": "          spicc(w, bar, chord, 8, 62 + sec * 8, band === 2 ? 1 : 0);",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "EGROAR-break-kept",
     "file": "src/systems/eliteGates/egScore.js",
-    "old": "drums(w, bar, brk ? 0 : height ? (bar >= 28 ? 3 : 2) : bar >= 4 && !build ? 2 : 1);",
-    "new": "drums(w, bar, brk ? 2 : height ? (bar >= 28 ? 3 : 2) : bar >= 4 && !build ? 2 : 1);",
+    "old": "        drums(w, bar, brk ? 0 : height ? (bar >= 28 ? 3 : 2) : bar >= 4 && !build ? 2 : 1);",
+    "new": "        drums(w, bar, brk ? 2 : height ? (bar >= 28 ? 3 : 2) : bar >= 4 && !build ? 2 : 1);",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "EGROAR-braam-on-the-brass",
     "file": "src/systems/eliteGates/egScore.js",
-    "old": "for (const n of chord === 'Em' ? [o - 12, o, o + 7, o + 13] : [o - 12, o, o + 7, o + 12]) w.note('ostinato', bar, 0, 2.5, n, vel);",
-    "new": "for (const n of chord === 'Em' ? [o - 12, o, o + 7, o + 13] : [o - 12, o, o + 7, o + 12]) w.note('brass', bar, 0, 2.5, n, vel);",
+    "old": "    w.note('ostinato', bar, 0, 2.5, n, vel);",
+    "new": "    w.note('brass', bar, 0, 2.5, n, vel);",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js",
       "test/systems/eliteGates/eglook_score.test.js"
@@ -131,8 +131,8 @@
   {
     "name": "EGROAR-swell-past-the-downbeat",
     "file": "src/systems/eliteGates/egScore.js",
-    "old": "for (const n of ['E6', 'F6']) w.note('swell', bar, -len, len, n, vel);",
-    "new": "for (const n of ['E6', 'F6']) w.note('swell', bar, 0, len, n, vel);",
+    "old": "  for (const n of ['E6', 'F6']) w.note('swell', bar, -len, len, n, vel);",
+    "new": "  for (const n of ['E6', 'F6']) w.note('swell', bar, 0, len, n, vel);",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js"
     ]
@@ -140,8 +140,8 @@
   {
     "name": "EGROAR-shrieks-not-the-half-step",
     "file": "src/systems/eliteGates/egScore.js",
-    "old": "if (build) trem(w, bar, ['B5', 'C6'], 60 + (bar - 20) * 10);",
-    "new": "if (build) trem(w, bar, ['B5', 'D6'], 60 + (bar - 20) * 10);",
+    "old": "        if (build) trem(w, bar, ['B5', 'C6'], 60 + (bar - 20) * 10);",
+    "new": "        if (build) trem(w, bar, ['B5', 'D6'], 60 + (bar - 20) * 10);",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "EGROAR-count-unclocked",
     "file": "src/systems/eliteGates/egScore.js",
-    "old": "for (let i = 0; i < 8; i++) w.hit(i % 2 ? 'woodLo' : 'woodHi', bar, i * 0.5, i % 2 ? 84 : 100);",
-    "new": "for (let i = 0; i < 8; i += 2) w.hit(i % 2 ? 'woodLo' : 'woodHi', bar, i * 0.5, i % 2 ? 84 : 100);",
+    "old": "        for (let i = 0; i < 8; i++) w.hit(i % 2 ? 'woodLo' : 'woodHi', bar, i * 0.5, i % 2 ? 84 : 100);",
+    "new": "        for (let i = 0; i < 8; i += 2) w.hit(i % 2 ? 'woodLo' : 'woodHi', bar, i * 0.5, i % 2 ? 84 : 100);",
     "tests": [
       "test/systems/eliteGates/egroar_score.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "EGROAR-air-partial-between-turns",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "const n = out.length, turns = Math.max(1, Math.round((hz * n) / rate)),",
-    "new": "const n = out.length, turns = Math.max(1, (hz * n) / rate),",
+    "old": "    turns = Math.max(1, Math.round((hz * n) / rate)),",
+    "new": "    turns = Math.max(1, (hz * n) / rate),",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
     ]
@@ -167,7 +167,7 @@
   {
     "name": "EGROAR-air-void-seam-raw",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "for (let i = 0; i < x; i++) { const t = (i / x) * (Math.PI / 2); out[i] = raw[i] * Math.sin(t) + raw[n + i] * Math.cos(t); }",
+    "old": "  for (let i = 0; i < x; i++) {\n    const t = (i / x) * (Math.PI / 2);\n    out[i] = raw[i] * Math.sin(t) + raw[n + i] * Math.cos(t);\n  }",
     "new": "",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
@@ -176,8 +176,8 @@
   {
     "name": "EGROAR-air-every-band-the-galleries",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "kinds = { ...EG_AIR_EVENTS.legion, ...EG_AIR_EVENTS.bands[b] };",
-    "new": "kinds = { ...EG_AIR_EVENTS.legion, ...EG_AIR_EVENTS.bands[0] };",
+    "old": "    kinds = { ...EG_AIR_EVENTS.legion, ...EG_AIR_EVENTS.bands[b] };",
+    "new": "    kinds = { ...EG_AIR_EVENTS.legion, ...EG_AIR_EVENTS.bands[0] };",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "EGROAR-air-one-sky",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "let salt = (seed >>> 0) % 100003;",
-    "new": "let salt = 0;",
+    "old": "  let salt = (seed >>> 0) % 100003;",
+    "new": "  let salt = 0;",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "EGROAR-air-sleep-a-fight",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "return place.kind === 'court' && place.asleep ? 'sleep' : 'trial';",
-    "new": "return 'trial';",
+    "old": "  if (place.sg === 'trial') return place.kind === 'court' && place.asleep ? 'sleep' : 'trial';",
+    "new": "  if (place.sg === 'trial') return 'trial';",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "EGROAR-air-rest-a-fight",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "  if (place.sg === 'rest') return 'rest';\n",
-    "new": "",
+    "old": "  if (place.sg === 'rest') return 'rest';\n  if (place.sg === 'trial') return place.kind === 'court' && place.asleep ? 'sleep' : 'trial';",
+    "new": "  if (place.sg === 'trial') return place.kind === 'court' && place.asleep ? 'sleep' : 'trial';",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
     ]
@@ -212,8 +212,8 @@
   {
     "name": "EGROAR-air-fall-unheard",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "if (place.end || (Number.isFinite(place.sinceFall) && place.sinceFall >= 0 && place.sinceFall < SPIRE_END_MS)) return 'end';",
-    "new": "if (place.end) return 'end';",
+    "old": "  if (place.end || (Number.isFinite(place.sinceFall) && place.sinceFall >= 0 && place.sinceFall < SPIRE_END_MS))\n    return 'end';",
+    "new": "  if (place.end) return 'end';",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "EGROAR-air-all-built-at-once",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "if (buildsLeft <= 0) return false; buildsLeft--;",
-    "new": "buildsLeft--;",
+    "old": "        if (buildsLeft <= 0) return false;\n        buildsLeft--;",
+    "new": "        buildsLeft--;",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
     ]
@@ -230,8 +230,8 @@
   {
     "name": "EGROAR-air-mix-stepped",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "else for (const k of Object.keys(target)) gains[k] += (target[k] - gains[k]) * Math.min(1, dt / EG_AIR_EASE_S);",
-    "new": "else for (const k of Object.keys(target)) gains[k] = target[k];",
+    "old": "      else for (const k of Object.keys(target)) gains[k] += (target[k] - gains[k]) * Math.min(1, dt / EG_AIR_EASE_S);",
+    "new": "      else for (const k of Object.keys(target)) gains[k] = target[k];",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "EGROAR-air-breath-kept",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "if (!breathing) engine.setBed(EG_AIR_BEDS.breath, null);",
-    "new": "if (!breathing) { /* kept */ }",
+    "old": "        if (!breathing) engine.setBed(EG_AIR_BEDS.breath, null);\n        else if (",
+    "new": "        if (!breathing) {\n          /* kept */\n        } else if (",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
     ]
@@ -248,7 +248,7 @@
   {
     "name": "EGROAR-air-horn-before-it-stands",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "if (typeof e.clip === 'string' && !made.has(e.clip)) continue;",
+    "old": "            if (typeof e.clip === 'string' && !made.has(e.clip)) continue;",
     "new": "",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
@@ -257,8 +257,8 @@
   {
     "name": "EGROAR-air-beds-left-looping",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "for (const name of Object.values(EG_AIR_BEDS)) engine.setBed(name, null);",
-    "new": "",
+    "old": "        for (const name of Object.values(EG_AIR_BEDS)) engine.setBed(name, null);\n        engine.fadeFar?.(EG_AIR_FAR); // and its events still sounding, with them",
+    "new": "        engine.fadeFar?.(EG_AIR_FAR); // and its events still sounding, with them",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
     ]
@@ -266,8 +266,8 @@
   {
     "name": "EGROAR-air-far-left-ringing",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "engine.fadeFar?.(EG_AIR_FAR);   // and its events still sounding, with them",
-    "new": "",
+    "old": "        engine.fadeFar?.(EG_AIR_FAR); // and its events still sounding, with them\n      } catch {",
+    "new": "      } catch {",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
     ]

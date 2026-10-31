@@ -9,10 +9,15 @@ import { chromium } from 'playwright';
 
 const server = await createServer({ root: '/home/user/project-dagger', server: { port: 5213, strictPort: true } });
 await server.listen();
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 const errors = [];
-page.on('pageerror', (e) => { errors.push(e.message); console.log('[pageerror]', e.message); });
+page.on('pageerror', (e) => {
+  errors.push(e.message);
+  console.log('[pageerror]', e.message);
+});
 // T2: `class=16` SKIPS THE CHARGEN WIZARD. Without it the wizard holds
 // townTalk's overlay slot and townTalk.keydown - FIRST in this host's
 // keydown ladder (exterior.js:"if (e.code === 'Escape') backButtonHeld = true") - swallows every
@@ -25,10 +30,13 @@ const waitFrames = async (n) => {
   const f = await page.evaluate(() => window.__frame);
   await page.waitForFunction(([f0, k]) => window.__frame > f0 + k, [f, n], { timeout: 60000 });
 };
-const bank = async () => JSON.parse(await page.evaluate(() => window.__bankOverlay()) ?? 'null');
-const gold = () => page.evaluate(() => (window.__playerEntity.items ?? [])
-  .find((i) => i.group === 'Currency')?.stackCount ?? 0);
-const fail = (m) => { console.log('FAIL:', m); process.exit(1); };
+const bank = async () => JSON.parse((await page.evaluate(() => window.__bankOverlay())) ?? 'null');
+const gold = () =>
+  page.evaluate(() => (window.__playerEntity.items ?? []).find((i) => i.group === 'Currency')?.stackCount ?? 0);
+const fail = (m) => {
+  console.log('FAIL:', m);
+  process.exit(1);
+};
 
 // Any interior will do - the bank window needs the host's accounts and
 // purse, not a bank. Use the same enterable types the other probes
@@ -42,11 +50,13 @@ for (let i = 0; i < doors.length && !inside; i++) {
   const b = JSON.parse(await page.evaluate((j) => window.__buildingAt(j), i));
   if (!b || !ENTERABLE.has(b.buildingType)) continue;
   const { pos, normal } = doors[i];
-  await page.evaluate(([x, y, z, yaw]) => window.__pose(x, y, z, yaw, -0.05),
-    [pos[0] + normal[0] * 1.5, pos[1] - 1.2, pos[2] + normal[2] * 1.5, Math.atan2(-normal[0], -normal[2])]);
-  if (!await page.evaluate(() => window.__enter())) continue;
+  await page.evaluate(
+    ([x, y, z, yaw]) => window.__pose(x, y, z, yaw, -0.05),
+    [pos[0] + normal[0] * 1.5, pos[1] - 1.2, pos[2] + normal[2] * 1.5, Math.atan2(-normal[0], -normal[2])],
+  );
+  if (!(await page.evaluate(() => window.__enter()))) continue;
   await waitFrames(10);
-  if (JSON.parse(await page.evaluate(() => window.__building()) ?? 'null')) inside = true;
+  if (JSON.parse((await page.evaluate(() => window.__building())) ?? 'null')) inside = true;
 }
 if (!inside) fail('could not get inside any building');
 const building = JSON.parse(await page.evaluate(() => window.__building()));
@@ -56,7 +66,8 @@ await page.evaluate(() => {
   const e = window.__playerEntity;
   e.items = e.items ?? [];
   const g = e.items.find((i) => i.group === 'Currency');
-  if (g) g.stackCount = 50000; else e.items.push({ group: 'Currency', name: 'Gold pieces', stackCount: 50000 });
+  if (g) g.stackCount = 50000;
+  else e.items.push({ group: 'Currency', name: 'Gold pieces', stackCount: 50000 });
   e.level = 5;
 });
 
@@ -65,9 +76,12 @@ await page.evaluate(() => window.__openBank());
 await waitFrames(6);
 let s = await bank();
 if (!s?.bank) {
-  const why = await page.evaluate(() => JSON.stringify({
-    art: typeof window.__openBank, mode: window.__mode?.(),
-  }));
+  const why = await page.evaluate(() =>
+    JSON.stringify({
+      art: typeof window.__openBank,
+      mode: window.__mode?.(),
+    }),
+  );
   fail(`the bank window did not open (${why}) - the G8 route is still dead`);
 }
 console.log('opened:', JSON.stringify({ region: s.region, labels: s.labels, enabled: s.enabled }));
@@ -109,7 +123,7 @@ console.log('withdrawal:', JSON.stringify(s.box), 'account now', s.labels.accoun
 if (s.box == null && s.labels.account !== '0') fail('the withdrawal neither landed nor was refused');
 if (s.box) {
   console.log('  (refused - the encumbrance gate fired, which is the law)');
-  await page.keyboard.press('Enter');   // a click-anywhere box
+  await page.keyboard.press('Enter'); // a click-anywhere box
   await waitFrames(2);
 }
 

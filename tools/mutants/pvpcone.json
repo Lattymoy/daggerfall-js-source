@@ -1,14 +1,110 @@
 [
-  { "name": "PVP-CONE-band-unread", "file": "src/ui/nameCone.js", "old": "1 - (p.off - lo) / NAME_CONE.band", "new": "1 - (p.off - lo)", "tests": ["test/ui/pvpcone.test.js"] },
-  { "name": "PVP-CONE-near-unread", "file": "src/ui/nameCone.js", "old": "if (!p || p.near || !Number.isFinite(p.off)) return 1;", "new": "if (!p || !Number.isFinite(p.off)) return 1;", "tests": ["test/ui/pvpcone.test.js"] },
-  { "name": "PVP-CONE-step-unclamped", "file": "src/ui/nameCone.js", "old": "return was + Math.max(-most, Math.min(most, want - was));", "new": "return want;", "tests": ["test/ui/pvpcone.test.js"] },
-  { "name": "PVP-CONE-depth-sign", "file": "src/ui/nameCone.js", "old": "Math.atan2(Math.hypot(x, y), -z)", "new": "Math.atan2(Math.hypot(x, y), z)", "tests": ["test/ui/pvpcone.test.js"] },
-  { "name": "PVP-CONE-angle-dropped", "file": "src/net/remotePlayers.js", "old": "depth: s.depth, lens, off: nameOffDeg(view, head) });", "new": "depth: s.depth, lens });", "tests": ["test/ui/pvpcone.test.js"] },
-  { "name": "PVP-CONE-cone-unworn", "file": "src/ui/nameLayer.js", "old": "(v) => { tag.node.style.opacity = v === '1.00' ? '' : v; tag.node.style.visibility = v === '0.00' ? 'hidden' : ''; }", "new": "() => {}", "tests": ["test/ui/pvpcone.test.js"] },
-  { "name": "PVP-CONE-ease-skipped", "file": "src/ui/nameLayer.js", "old": "tag.cone = nameConeStep(tag.cone, nameConeTarget(p), t - tag.coneAt);", "new": "tag.cone = nameConeTarget(p);", "tests": ["test/ui/pvpcone.test.js"] },
-  { "name": "PVP-CONE-foe-unnoted", "file": "src/scenes/pvpFlagHost.js", "old": "foes.set(g.by === me() ? g.to : g.by, fightAt);", "new": "", "tests": ["test/ui/pvpcone.test.js"] },
-  { "name": "PVP-CONE-foe-one-side", "file": "src/scenes/pvpFlagHost.js", "old": "foes.set(g.by === me() ? g.to : g.by, fightAt);", "new": "foes.set(g.to, fightAt);", "tests": ["test/ui/pvpcone.test.js"] },
-  { "name": "PVP-CONE-lock-unread", "file": "src/scenes/pvpFlagHost.js", "old": "now() - foes.get(id) < PVP_FLAG.lockMs", "new": "now() - foes.get(id) <= PVP_FLAG.lockMs", "tests": ["test/ui/pvpcone.test.js"] },
-  { "name": "PVP-CONE-party-unasked", "file": "src/scenes/pvpFlagHost.js", "old": "near = foeOf(p.id) || party;", "new": "near = foeOf(p.id);", "tests": ["test/ui/pvpcone.test.js"] },
-  { "name": "PVP-CONE-near-unworn", "file": "src/scenes/pvpFlagHost.js", "old": "return q && near ? { ...q, near } : q;", "new": "return q;", "tests": ["test/ui/pvpcone.test.js"] }
+  {
+    "name": "PVP-CONE-band-unread",
+    "file": "src/ui/nameCone.js",
+    "old": "  return Math.max(0, Math.min(1, 1 - (p.off - lo) / NAME_CONE.band));",
+    "new": "  return Math.max(0, Math.min(1, 1 - (p.off - lo)));",
+    "tests": [
+      "test/ui/pvpcone.test.js"
+    ]
+  },
+  {
+    "name": "PVP-CONE-near-unread",
+    "file": "src/ui/nameCone.js",
+    "old": "  if (!p || p.near || !Number.isFinite(p.off)) return 1;",
+    "new": "  if (!p || !Number.isFinite(p.off)) return 1;",
+    "tests": [
+      "test/ui/pvpcone.test.js"
+    ]
+  },
+  {
+    "name": "PVP-CONE-step-unclamped",
+    "file": "src/ui/nameCone.js",
+    "old": "  return was + Math.max(-most, Math.min(most, want - was));",
+    "new": "  return want;",
+    "tests": [
+      "test/ui/pvpcone.test.js"
+    ]
+  },
+  {
+    "name": "PVP-CONE-depth-sign",
+    "file": "src/ui/nameCone.js",
+    "old": "  return (Math.atan2(Math.hypot(x, y), -z) * 180) / Math.PI;",
+    "new": "  return (Math.atan2(Math.hypot(x, y), z) * 180) / Math.PI;",
+    "tests": [
+      "test/ui/pvpcone.test.js"
+    ]
+  },
+  {
+    "name": "PVP-CONE-angle-dropped",
+    "file": "src/net/remotePlayers.js",
+    "old": "depth: s.depth, lens, off: nameOffDeg(view, head) });",
+    "new": "depth: s.depth, lens });",
+    "tests": [
+      "test/ui/pvpcone.test.js"
+    ]
+  },
+  {
+    "name": "PVP-CONE-cone-unworn",
+    "file": "src/ui/nameLayer.js",
+    "old": "        put(tag, 'coneAlpha', tag.cone.toFixed(2), (v) => {\n          tag.node.style.opacity = v === '1.00' ? '' : v;\n          tag.node.style.visibility = v === '0.00' ? 'hidden' : '';\n        });",
+    "new": "        put(tag, 'coneAlpha', tag.cone.toFixed(2), () => {});",
+    "tests": [
+      "test/ui/pvpcone.test.js"
+    ]
+  },
+  {
+    "name": "PVP-CONE-ease-skipped",
+    "file": "src/ui/nameLayer.js",
+    "old": "        tag.cone = nameConeStep(tag.cone, nameConeTarget(p), t - tag.coneAt);",
+    "new": "        tag.cone = nameConeTarget(p);",
+    "tests": [
+      "test/ui/pvpcone.test.js"
+    ]
+  },
+  {
+    "name": "PVP-CONE-foe-unnoted",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "      foes.set(g.by === me() ? g.to : g.by, fightAt);",
+    "new": "",
+    "tests": [
+      "test/ui/pvpcone.test.js"
+    ]
+  },
+  {
+    "name": "PVP-CONE-foe-one-side",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "      foes.set(g.by === me() ? g.to : g.by, fightAt);",
+    "new": "      foes.set(g.to, fightAt);",
+    "tests": [
+      "test/ui/pvpcone.test.js"
+    ]
+  },
+  {
+    "name": "PVP-CONE-lock-unread",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "  const foeOf = (id) => foes.has(id) && now() - foes.get(id) < PVP_FLAG.lockMs;",
+    "new": "  const foeOf = (id) => foes.has(id) && now() - foes.get(id) <= PVP_FLAG.lockMs;",
+    "tests": [
+      "test/ui/pvpcone.test.js"
+    ]
+  },
+  {
+    "name": "PVP-CONE-party-unasked",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "          near = foeOf(p.id) || party;",
+    "new": "          near = foeOf(p.id);",
+    "tests": [
+      "test/ui/pvpcone.test.js"
+    ]
+  },
+  {
+    "name": "PVP-CONE-near-unworn",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "        if (!k) return q && near ? { ...q, near } : q;",
+    "new": "        if (!k) return q;",
+    "tests": [
+      "test/ui/pvpcone.test.js"
+    ]
+  }
 ]

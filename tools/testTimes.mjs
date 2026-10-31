@@ -43,15 +43,30 @@ export function mergeTimes(base, records, files) {
 /** `--merge`: every `*.json` record under `dir` (a folder an artifact, as the download lays them) onto `root`'s
  *  tools/testTimes.json, written back; what it did, counted. */
 export function mergeDir(dir, root = ROOT) {
-  const base = readTimes(root), files = testFiles(root);
-  const records = readdirSync(dir, { recursive: true }).map((f) => String(f)).filter((f) => f.endsWith('.json')).sort().map((f) => {
-    try { const t = JSON.parse(readFileSync(join(dir, f), 'utf8')); return t && typeof t === 'object' ? t : {}; } catch { return {}; }
-  });
+  const base = readTimes(root),
+    files = testFiles(root);
+  const records = readdirSync(dir, { recursive: true })
+    .map((f) => String(f))
+    .filter((f) => f.endsWith('.json'))
+    .sort()
+    .map((f) => {
+      try {
+        const t = JSON.parse(readFileSync(join(dir, f), 'utf8'));
+        return t && typeof t === 'object' ? t : {};
+      } catch {
+        return {};
+      }
+    });
   const merged = mergeTimes(base, records, files);
   writeFileSync(join(root, TIMES_FILE), JSON.stringify(merged, null, 1) + '\n');
   const seen = new Set(records.flatMap((r) => Object.keys(r)));
   const recorded = Object.keys(merged).filter((f) => seen.has(f)).length;
-  return { files: files.length, recorded, kept: Object.keys(merged).length - recorded, untimed: files.length - Object.keys(merged).length };
+  return {
+    files: files.length,
+    recorded,
+    kept: Object.keys(merged).length - recorded,
+    untimed: files.length - Object.keys(merged).length,
+  };
 }
 
 function timeOne(file) {
@@ -65,16 +80,24 @@ function timeOne(file) {
 async function main(argv) {
   const m = argv.indexOf('--merge');
   if (m >= 0) {
-    if (!argv[m + 1]) { console.error('usage: node tools/testTimes.mjs --merge <dir of records>'); process.exitCode = 2; return; }
+    if (!argv[m + 1]) {
+      console.error('usage: node tools/testTimes.mjs --merge <dir of records>');
+      process.exitCode = 2;
+      return;
+    }
     const r = mergeDir(argv[m + 1]);
-    console.log(`${r.files} files: ${r.recorded} timed by the records, ${r.kept} kept from before, ${r.untimed} untimed - written to ${TIMES_FILE}`);
+    console.log(
+      `${r.files} files: ${r.recorded} timed by the records, ${r.kept} kept from before, ${r.untimed} untimed - written to ${TIMES_FILE}`,
+    );
     return;
   }
   const at = argv.indexOf('--jobs');
   const jobs = Math.max(1, at >= 0 ? Number(argv[at + 1]) || 1 : availableParallelism());
   const files = testFiles();
-  const times = {}, failed = [];
-  let next = 0, done = 0;
+  const times = {},
+    failed = [];
+  let next = 0,
+    done = 0;
   const worker = async () => {
     while (next < files.length) {
       const f = files[next++];
@@ -85,7 +108,11 @@ async function main(argv) {
     }
   };
   await Promise.all(Array.from({ length: jobs }, worker));
-  const sorted = Object.fromEntries(Object.keys(times).sort().map((k) => [k, times[k]]));
+  const sorted = Object.fromEntries(
+    Object.keys(times)
+      .sort()
+      .map((k) => [k, times[k]]),
+  );
   writeFileSync(join(ROOT, TIMES_FILE), JSON.stringify(sorted, null, 1) + '\n');
   const total = Object.values(times).reduce((a, b) => a + b, 0);
   console.log(`${files.length} files, ${(total / 1000).toFixed(0)} s of wall time in all, written to ${TIMES_FILE}`);

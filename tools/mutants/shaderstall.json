@@ -2,8 +2,8 @@
   {
     "name": "SS-the-started-program-never-taken",
     "file": "src/render/glProgram.js",
-    "old": "  if (took) started.delete(key);\n  takenOf(gl).add(key);\n  const { prog, vs, fs } = took?.prog ? took : link(gl, vsSrc, fsSrc);",
-    "new": "  takenOf(gl).add(key);\n  const { prog, vs, fs } = link(gl, vsSrc, fsSrc);",
+    "old": "  if (took) started.delete(key);\n  takenOf(gl).add(key);\n  const { prog, vs, fs } = took?.prog ? took : link(gl, vsSrc, fsSrc); // COMPILE-QUEUE: a queued pair is compiled here, out of its turn",
+    "new": "  takenOf(gl).add(key);\n  const { prog, vs, fs } = link(gl, vsSrc, fsSrc); // COMPILE-QUEUE: a queued pair is compiled here, out of its turn",
     "tests": [
       "test/render/shaderstall.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SS-a-read-at-the-start",
     "file": "src/render/glProgram.js",
-    "old": "    else if (!s.prog) s.wanted = true;",
-    "new": "    else if (!s.prog) s.wanted = true;\n    if (s.prog) gl.getProgramParameter(s.prog, gl.LINK_STATUS);",
+    "old": "      else if (!s.prog) s.wanted = true; // COMPILE-QUEUE: a queued pair waits its turn, at the front",
+    "new": "      else if (!s.prog) s.wanted = true;\n      if (s.prog) gl.getProgramParameter(s.prog, gl.LINK_STATUS); // COMPILE-QUEUE: a queued pair waits its turn, at the front",
     "tests": [
       "test/render/shaderstall.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "SS-done-before-the-driver-says",
     "file": "src/render/glProgram.js",
-    "old": "    return (done = startAll().every((p) => p !== null && gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR) === true));",
+    "old": "    return (done = startAll().every(\n      (p) => p !== null && gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR) === true,\n    ));",
     "new": "    return (done = startAll().length > 0);",
     "tests": [
       "test/render/shaderstall.test.js"
@@ -38,8 +38,8 @@
   {
     "name": "SS-taken-handed-to-the-waiting",
     "file": "src/render/glProgram.js",
-    "old": "    let s = started.get(k);\n    if (!s) started.set(k, (s = link(gl, vs, fs)));\n",
-    "new": "    let s = started.get(k);\n    if (!s) return { taken: true };\n",
+    "old": "      if (!s) started.set(k, (s = link(gl, vs, fs)));",
+    "new": "      if (!s) return { taken: true };",
     "tests": [
       "test/render/shaderstall.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SS-a-list-misses-a-program",
     "file": "src/render/gate/gateFx.js",
-    "old": "export const GATE_FX_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[FX_SPARK_VS, FX_SPARK_FS], [FX_METEOR_VS, FX_METEOR_FS]]));",
-    "new": "export const GATE_FX_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[FX_SPARK_VS, FX_SPARK_FS]]));",
+    "old": "  Object.freeze([\n    [FX_SPARK_VS, FX_SPARK_FS],\n    [FX_METEOR_VS, FX_METEOR_FS],\n  ])",
+    "new": "  Object.freeze([[FX_SPARK_VS, FX_SPARK_FS]])",
     "tests": [
       "test/render/shaderstall.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SS-the-outline-idle-while-compiling",
     "file": "src/render/nodeGlint.js",
-    "old": "      if (!asked && pictured.length && (ready ??= start(renderer.gl))()) { asked = true; idle(make); }",
-    "new": "      if (!asked && pictured.length) { ready ??= start(renderer.gl); asked = true; idle(make); }",
+    "old": "      if (!asked && pictured.length && (ready ??= start(renderer.gl))()) {",
+    "new": "      if (!asked && pictured.length) {\n        ready ??= start(renderer.gl);",
     "tests": [
       "test/render/shaderstall.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SS-the-veil-warm-builds-it-whole",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "      if (!begin()) return false;\n      void warmPrograms(",
-    "new": "      if (!build()) return false;\n      void warmPrograms(",
+    "old": "      if (!begin()) return false;",
+    "new": "      if (!build()) return false;",
     "tests": [
       "test/render/shaderstall.test.js"
     ]
@@ -137,7 +137,7 @@
   {
     "name": "SS-the-snow-surface-never-made-after",
     "file": "src/scenes/snowfallHost.js",
-    "old": "      if (snowReady?.()) makeSurface();   // SHADER-STALL: the surface the frame its program is compiled",
+    "old": "      if (snowReady?.()) makeSurface(); // SHADER-STALL: the surface the frame its program is compiled",
     "new": "",
     "tests": [
       "test/systems/audit_environs.test.js"

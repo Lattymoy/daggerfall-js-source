@@ -75,9 +75,11 @@ export function readFbx(buf) {
     // one this is rather than "bad magic", because the fix differs: an
     // ASCII export is re-exported, a truncated file is re-copied.
     const ascii = buf.toString('latin1', 0, 64);
-    throw new Error(/^;\s*FBX/.test(ascii)
-      ? 'this is an ASCII FBX; re-export from Blender with "Binary" format (this reader is the binary container only)'
-      : `not an FBX: expected ${JSON.stringify(FBX_MAGIC)}, got ${JSON.stringify(magic)}`);
+    throw new Error(
+      /^;\s*FBX/.test(ascii)
+        ? 'this is an ASCII FBX; re-export from Blender with "Binary" format (this reader is the binary container only)'
+        : `not an FBX: expected ${JSON.stringify(FBX_MAGIC)}, got ${JSON.stringify(magic)}`,
+    );
   }
   const version = buf.readUInt32LE(23);
   // >=7500 widened the three record-header integers from uint32 to
@@ -123,7 +125,8 @@ export function readFbx(buf) {
         if (encoding === 1) raw = inflateSync(raw);
         else if (encoding !== 0) throw new Error(`FBX array encoding ${encoding} is not 0 (raw) or 1 (deflate)`);
         const [w, rd] = ARRAY[t];
-        if (raw.length < count * w) throw new Error(`FBX array ${t} claims ${count} elements but carries ${raw.length} bytes`);
+        if (raw.length < count * w)
+          throw new Error(`FBX array ${t} claims ${count} elements but carries ${raw.length} bytes`);
         const out = new Array(count);
         for (let k = 0; k < count; k++) out[k] = rd(raw, k * w);
         props.push(out);
@@ -137,7 +140,10 @@ export function readFbx(buf) {
     const children = [];
     while (p < end) {
       const child = readNode(p);
-      if (!child) { p += HEAD; break; }   // the null record closes the list
+      if (!child) {
+        p += HEAD;
+        break;
+      } // the null record closes the list
       children.push(child);
       p = child.__end;
     }
@@ -157,7 +163,7 @@ export function readFbx(buf) {
 
 /** Every child of `node` (or of a root list) with this name. */
 export const childrenNamed = (node, name) =>
-  (Array.isArray(node) ? node : node?.children ?? []).filter((c) => c.name === name);
+  (Array.isArray(node) ? node : (node?.children ?? [])).filter((c) => c.name === name);
 
 /** The FIRST child with this name, or null. */
 export const childNamed = (node, name) => childrenNamed(node, name)[0] ?? null;

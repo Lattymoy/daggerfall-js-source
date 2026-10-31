@@ -52,8 +52,8 @@
   {
     "name": "BOSS-DOT-never-ticked",
     "file": "src/scenes/gate/standInSpell.js",
-    "old": "k++) tickActiveEffects(e, counting(got, e), rolls);",
-    "new": "k++) void tickActiveEffects;",
+    "old": "          for (let k = 0; k < due && e.activeEffects.some(carriedOnStandIn); k++)\n            tickActiveEffects(e, counting(got, e), rolls);",
+    "new": "          for (let k = 0; k < due && e.activeEffects.some(carriedOnStandIn); k++) void tickActiveEffects;",
     "tests": [
       "test/net/gate/fb1019f_bossdot.test.js"
     ],
@@ -72,7 +72,7 @@
   {
     "name": "BOSS-DOT-a-gone-body-kept",
     "file": "src/scenes/gate/standInSpell.js",
-    "old": "        if (!body?.entity) { kept.delete(key); continue; }",
+    "old": "        if (!body?.entity) {\n          kept.delete(key);\n          continue;\n        }",
     "new": "        if (!body?.entity) continue;",
     "tests": [
       "test/net/gate/fb1019f_bossdot.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "BOSS-DOT-the-serpent-past-its-fight",
     "file": "src/scenes/gate/standInSpell.js",
-    "old": "!!alive && player.health > 0); },",
-    "new": "player.health > 0); },",
+    "old": "      rounds.frame(() => (met ? { entity: standIn(), land: (d) => land(met, d) } : null), !!alive && player.health > 0);",
+    "new": "      rounds.frame(() => (met ? { entity: standIn(), land: (d) => land(met, d) } : null), player.health > 0);",
     "tests": [
       "test/net/gate/fb1019f_bossdot.test.js"
     ],

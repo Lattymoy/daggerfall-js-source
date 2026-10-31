@@ -54,7 +54,7 @@ import { drawText, measureText } from './text.js';
 import { nativeMetrics, NATIVE_W, DEFAULT_TEXT_COLOR } from './native/nativePanel.js';
 import { isEnhanced } from '../systems/uiSkin.js';
 import { drawEnhancedMidText, midTextTopPx } from './enhanced/enhancedHudText.js';
-import { timeScale } from '../systems/timeScale.js';   // CSA-G: the timer adds Time.deltaTime, which the time scale scales
+import { timeScale } from '../systems/timeScale.js'; // CSA-G: the timer adds Time.deltaTime, which the time scale scales
 
 /** DaggerfallHUD.cs:25 `const int midScreenTextDefaultY = 146`, the
  *  label's Position.y on the 320x200 NativePanel (:176). */
@@ -117,7 +117,7 @@ export class MidScreenText {
   set(message, delayInSeconds = MID_SCREEN_TEXT_DEFAULT_DELAY) {
     if (this._largeHudHeight !== null) {
       const offset = this._screenHeight - this._largeHudHeight;
-      const localY = (offset / this._scale) - MID_SCREEN_TEXT_LARGE_HUD_MARGIN;
+      const localY = offset / this._scale - MID_SCREEN_TEXT_LARGE_HUD_MARGIN;
       this.y = localY < MID_SCREEN_TEXT_DEFAULT_Y ? Math.trunc(localY) : MID_SCREEN_TEXT_DEFAULT_Y;
     }
     this.text = message;

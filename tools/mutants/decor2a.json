@@ -85,8 +85,8 @@
   {
     "name": "DECOR2a-a-worn-item-listed",
     "file": "src/systems/decor/decorItems.js",
-    "old": "if (!item || item.questItem || item.equipSlot != null || isSummoned(item) || isMap(item)) return null;",
-    "new": "if (!item || item.questItem || isSummoned(item) || isMap(item)) return null;",
+    "old": "  if (!item || item.questItem || item.equipSlot != null || isSummoned(item) || isMap(item)) return null;",
+    "new": "  if (!item || item.questItem || isSummoned(item) || isMap(item)) return null;",
     "tests": [
       "test/systems/decor2a.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "DECOR2a-a-quest-item-listed",
     "file": "src/systems/decor/decorItems.js",
-    "old": "if (!item || item.questItem || item.equipSlot != null || isSummoned(item) || isMap(item)) return null;",
-    "new": "if (!item || item.equipSlot != null || isSummoned(item) || isMap(item)) return null;",
+    "old": "  if (!item || item.questItem || item.equipSlot != null || isSummoned(item) || isMap(item)) return null;",
+    "new": "  if (!item || item.equipSlot != null || isSummoned(item) || isMap(item)) return null;",
     "tests": [
       "test/systems/decor2a.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "DECOR2a-a-weapon-stood",
     "file": "src/systems/decor/decorItems.js",
-    "old": "new Set(['Weapons', 'Armor', 'Transportation'",
-    "new": "new Set(['Armor', 'Transportation'",
+    "old": "  new Set(['Weapons', 'Armor', 'Transportation', 'Currency', 'Deeds', 'QuestItems']),",
+    "new": "  new Set(['Armor', 'Transportation', 'Currency', 'Deeds', 'QuestItems']),",
     "tests": [
       "test/systems/decor2a.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "DECOR2a-the-group-dropped",
     "file": "src/systems/decor/decorItems.js",
-    "old": "t: item.templateIndex, g: g >= 0 ? g : null,",
-    "new": "t: item.templateIndex, g: null,",
+    "old": "    g: g >= 0 ? g : null,",
+    "new": "    g: null,",
     "tests": [
       "test/systems/decor2a.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "DECOR2a-the-artifact-index-misread",
     "file": "src/systems/decor/decorItems.js",
-    "old": "const a = item.artifact ? ((bits & 1) ? bits >> 1 : DECOR_ARTIFACT_UNKNOWN) : null;",
-    "new": "const a = item.artifact ? bits >> 1 : null;",
+    "old": "  const a = item.artifact ? (bits & 1 ? bits >> 1 : DECOR_ARTIFACT_UNKNOWN) : null;",
+    "new": "  const a = item.artifact ? bits >> 1 : null;",
     "tests": [
       "test/systems/decor2a.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "DECOR2a-a-message-kept-on-a-statue",
     "file": "src/systems/decor/decorItems.js",
-    "old": "const p = (item.group === 'Paintings' || item.group === 'Books' || item.templateIndex === TROPHY_TEMPLATE) && Number.isSafeInteger(item.message) ? item.message : null;",
-    "new": "const p = Number.isSafeInteger(item.message) ? item.message : null;",
+    "old": "  const p =\n    (item.group === 'Paintings' || item.group === 'Books' || item.templateIndex === TROPHY_TEMPLATE) &&\n    Number.isSafeInteger(item.message)\n      ? item.message\n      : null;",
+    "new": "  const p = Number.isSafeInteger(item.message) ? item.message : null;",
     "tests": [
       "test/systems/decor2a.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "DECOR2a-counted-among-all-magic-items",
     "file": "src/systems/decor/decorItems.js",
-    "old": ".filter((m) => m.type === 1 || m.type === 2);",
-    "new": ".filter(() => true);",
+    "old": "    const artifacts = (getMagicItemTemplates() ?? []).filter((m) => m.type === 1 || m.type === 2);",
+    "new": "    const artifacts = (getMagicItemTemplates() ?? []).filter(() => true);",
     "tests": [
       "test/systems/decor2a.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "DECOR2a-the-plant-unplaced",
     "file": "src/systems/decor/decorItems.js",
-    "old": "  const group = own.g != null ? ITEM_GROUP_NAME_BY_CLASS[own.g] ?? null : null;\n  // the list's own naming",
-    "new": "  const group = null;\n  // the list's own naming",
+    "old": "  if (own.t === TROPHY_TEMPLATE && own.p != null) return trophyItemName(own.p, own.v != null ? own.v - 1 : null); // HUNTERS-MARK: its beast, and a mark's name\n  const group = own.g != null ? (ITEM_GROUP_NAME_BY_CLASS[own.g] ?? null) : null;",
+    "new": "  if (own.t === TROPHY_TEMPLATE && own.p != null) return trophyItemName(own.p, own.v != null ? own.v - 1 : null); // HUNTERS-MARK: its beast, and a mark's name\n  const group = null;",
     "tests": [
       "test/systems/decor2a.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "DECOR2a-the-pack-picture-lost",
     "file": "src/systems/decor/decorItems.js",
-    "old": "icon: pic && (pic.archive > 0 || pic.record > 0) ? pic : {",
-    "new": "icon: false ? pic : {",
+    "old": "    icon: pic && (pic.archive > 0 || pic.record > 0) ? pic : { archive: as.flat[0], record: as.flat[1], dye: null },",
+    "new": "    icon: false ? pic : { archive: as.flat[0], record: as.flat[1], dye: null },",
     "tests": [
       "test/systems/decor2a.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "DECOR2a-own-light-dark",
     "file": "src/systems/decor/decorItems.js",
-    "old": "return { flat, light: decorFlatLight(flat), item: descriptor };",
-    "new": "return { flat, light: null, item: descriptor };",
+    "old": "  return { flat, light: decorFlatLight(flat), item: descriptor };",
+    "new": "  return { flat, light: null, item: descriptor };",
     "tests": [
       "test/systems/decor2a.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "DECOR2a-the-scene-shares-them",
     "file": "src/systems/sceneCache.js",
-    "old": "decorOwn: Object.fromEntries(Object.entries(d.decorOwn ?? {}).map(([id, item]) => [id, { ...item }])),",
-    "new": "decorOwn: d.decorOwn ?? {},",
+    "old": "  decorOwn: Object.fromEntries(Object.entries(d.decorOwn ?? {}).map(([id, item]) => [id, { ...item }])),",
+    "new": "  decorOwn: d.decorOwn ?? {},",
     "tests": [
       "test/systems/decor2a.test.js"
     ]

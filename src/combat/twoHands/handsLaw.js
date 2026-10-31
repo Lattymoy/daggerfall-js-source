@@ -16,8 +16,8 @@
 // arms' (combat/fpArm.js) - and the swing's (combat/playerWeapon.js), so one law says which hand strikes and what it
 // costs, whichever picture is on the screen.
 
-import { isHandWraps } from '../../characters/handWrapsIds.js';   // HAND-WRAPS: the fists' weapon (a leaf)
-import { swingHeft, SWING_FRAME_MAX } from '../../characters/weaponStates.js';   // SWING-LAW's heft, the one home for a weapon's weight against a Strength, and its slowest frame
+import { isHandWraps } from '../../characters/handWrapsIds.js'; // HAND-WRAPS: the fists' weapon (a leaf)
+import { swingHeft, SWING_FRAME_MAX } from '../../characters/weaponStates.js'; // SWING-LAW's heft, the one home for a weapon's weight against a Strength, and its slowest frame
 
 /** How the two hands are held. `single` is DFU's: one hand fights (the used hand, H switches it) and the other holds a
  *  shield, a bow's other end, nothing, or a weapon waiting for H. `fists` is both hands empty - both fists up. `dual` is
@@ -95,7 +95,8 @@ export const MIXED = Object.freeze({
  */
 export function gunHandOf(right, left) {
   if (!dualEligible(right) || !dualEligible(left)) return null;
-  const r = dualGun(right), l = dualGun(left);
+  const r = dualGun(right),
+    l = dualGun(left);
   return r === l ? null : r ? 'R' : 'L';
 }
 
@@ -155,7 +156,10 @@ export function strikeHandOf({ mode = HANDS_MODE.Single, lead = 'R', last = null
  *  hand's sweep to the RIGHT is the right hand's sweep to the left, mirrored (its forehand), and its sweep to the left the
  *  right hand's backhand mirrored. The straight strikes (down, up) are their own mirror. */
 const MIRROR_STRIKE = Object.freeze({
-  StrikeLeft: 'StrikeRight', StrikeRight: 'StrikeLeft', StrikeDownLeft: 'StrikeDownRight', StrikeDownRight: 'StrikeDownLeft',
+  StrikeLeft: 'StrikeRight',
+  StrikeRight: 'StrikeLeft',
+  StrikeDownLeft: 'StrikeDownRight',
+  StrikeDownRight: 'StrikeDownLeft',
 });
 export const mirrorStrike = (state) => MIRROR_STRIKE[state] ?? state;
 
@@ -362,13 +366,26 @@ export const PAIR_SPREAD = Object.freeze({
  *  edges are measured at each angle tried, never assumed; `fov` is the lens's vertical field of view. */
 export function pairSpreadAngle(innerAt, fov) {
   const tan = Math.tan(fov / 2);
-  const share = (k) => Math.atan(k * 2 * tan);   // a share of the picture's height, as the angle it spans at its middle
+  const share = (k) => Math.atan(k * 2 * tan); // a share of the picture's height, as the angle it spans at its middle
   const gap = 2 * Math.atan(PAIR_SPREAD.GAP * tan);
-  const clear = (a) => { const e = innerAt(a); return !e || !Number.isFinite(e.L) || !Number.isFinite(e.R) || /** @type {number} */ (e.L) + /** @type {number} */ (e.R) >= gap; };
-  let lo = share(PAIR_SPREAD.MIN), hi = share(PAIR_SPREAD.MAX);
+  const clear = (a) => {
+    const e = innerAt(a);
+    return (
+      !e ||
+      !Number.isFinite(e.L) ||
+      !Number.isFinite(e.R) ||
+      /** @type {number} */ (e.L) + /** @type {number} */ (e.R) >= gap
+    );
+  };
+  let lo = share(PAIR_SPREAD.MIN),
+    hi = share(PAIR_SPREAD.MAX);
   if (clear(lo)) return lo;
   if (!clear(hi)) return hi;
-  for (let i = 0; i < 24; i++) { const m = (lo + hi) / 2; if (clear(m)) hi = m; else lo = m; }
+  for (let i = 0; i < 24; i++) {
+    const m = (lo + hi) / 2;
+    if (clear(m)) hi = m;
+    else lo = m;
+  }
   return hi;
 }
 
@@ -431,7 +448,7 @@ export const RUN_PUMP = Object.freeze({
 export const runPhaseOfBob = (timer) => timer - Math.PI / 2;
 
 /** The stride's own step: the phase `speed` m/s walks in `dt` - PI a RUN_STEP_M, never backward. */
-const strideStep = (speed, dt) => Math.max(0, speed || 0) * Math.max(0, dt) * Math.PI / RUN_STEP_M;
+const strideStep = (speed, dt) => (Math.max(0, speed || 0) * Math.max(0, dt) * Math.PI) / RUN_STEP_M;
 
 /** The stride's phase after running `speed` m/s for `dt`: PI a step, as HeadBobber's timer - the fallback with head
  *  bobbing off, when there is no bob to keep step with. */
@@ -457,9 +474,10 @@ export function runPhaseFollow(phase, bob, speed, dt, fresh = false) {
   if (!Number.isFinite(bob)) return runPhaseStep(phase, speed, dt);
   if (fresh || !Number.isFinite(phase)) return bob;
   const walk = strideStep(speed, dt);
-  const lo = walk * (1 - RUN_PUMP.CATCH), hi = walk * (1 + RUN_PUMP.CATCH);
+  const lo = walk * (1 - RUN_PUMP.CATCH),
+    hi = walk * (1 + RUN_PUMP.CATCH);
   const turn = 2 * Math.PI;
-  const off = bob - phase - turn * Math.round((bob - phase) / turn);   // the bob's lead, the shorter way round
+  const off = bob - phase - turn * Math.round((bob - phase) / turn); // the bob's lead, the shorter way round
   if (off >= lo && off <= hi) return bob;
   return (phase + Math.min(hi, Math.max(lo, off))) % turn;
 }
@@ -474,10 +492,30 @@ export function runHandsKept({ wanted = false, aloft = false, wasWanted = false,
 /** The hands want to run: the body runs on its feet (DFU's run - PlayerMotor's isRunning; not standing, not crouched,
  *  not mounted, not swimming or in the air or on a wall) fast enough over the ground, and the hands hold nothing at all
  *  (`emptyHands`: no weapon and no shield in either hand, no light, no spell, no sheet, no tool) and throw nothing. */
-export function runHandsWanted({ running = false, standing = false, grounded = true, crouching = false, riding = false,
-  swimming = false, climbing = false, speed = 0, emptyHands = false, attacking = false } = {}) {
-  return !!running && !standing && !!grounded && !crouching && !riding && !swimming && !climbing && !attacking
-    && !!emptyHands && speed >= RUN_PUMP.MIN_SPEED;
+export function runHandsWanted({
+  running = false,
+  standing = false,
+  grounded = true,
+  crouching = false,
+  riding = false,
+  swimming = false,
+  climbing = false,
+  speed = 0,
+  emptyHands = false,
+  attacking = false,
+} = {}) {
+  return (
+    !!running &&
+    !standing &&
+    !!grounded &&
+    !crouching &&
+    !riding &&
+    !swimming &&
+    !climbing &&
+    !attacking &&
+    !!emptyHands &&
+    speed >= RUN_PUMP.MIN_SPEED
+  );
 }
 
 /**
@@ -490,8 +528,14 @@ export function runHandsWanted({ running = false, standing = false, grounded = t
  */
 export function pumpOf(phase, hand) {
   const s = Math.sin(phase + (hand === 'L' ? Math.PI : 0));
-  const fwd = Math.max(0, s), back = Math.max(0, -s);
-  return { dx: RUN_PUMP.IN * fwd - RUN_PUMP.OUT * back, dy: RUN_PUMP.DROP * (1 - s) / 2, frame: RUN_PUMP.ARM_FRAME, s };
+  const fwd = Math.max(0, s),
+    back = Math.max(0, -s);
+  return {
+    dx: RUN_PUMP.IN * fwd - RUN_PUMP.OUT * back,
+    dy: (RUN_PUMP.DROP * (1 - s)) / 2,
+    frame: RUN_PUMP.ARM_FRAME,
+    s,
+  };
 }
 
 /**
@@ -514,8 +558,13 @@ export const RUN_3D = Object.freeze({
 export function pumpTarget3D(phase, hand) {
   const { s } = pumpOf(phase, hand);
   const f = (s + 1) / 2;
-  const lerp = (a, b) => a * (1 - f) + b * f;   // exact at both ends of the stroke
-  return { x: lerp(RUN_3D.BOTTOM.x, RUN_3D.TOP.x), y: lerp(RUN_3D.BOTTOM.y, RUN_3D.TOP.y), d: lerp(RUN_3D.BOTTOM.d, RUN_3D.TOP.d), s };
+  const lerp = (a, b) => a * (1 - f) + b * f; // exact at both ends of the stroke
+  return {
+    x: lerp(RUN_3D.BOTTOM.x, RUN_3D.TOP.x),
+    y: lerp(RUN_3D.BOTTOM.y, RUN_3D.TOP.y),
+    d: lerp(RUN_3D.BOTTOM.d, RUN_3D.TOP.d),
+    s,
+  };
 }
 
 /** The running weight this frame, from the last: up as a run starts, away as it ends, at once for a punch. */

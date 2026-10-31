@@ -42,8 +42,8 @@
   {
     "name": "SCALE2c-browser-unread",
     "file": "src/net/reconnectWave.js",
-    "old": "      if (!online()) return t;   // the browser lost its network - a blip, not the relay's wave\n",
-    "new": "",
+    "old": "      if (!online()) return t; // the browser lost its network - a blip, not the relay's wave\n      while (drops.length && t - drops[0] > WAVE_WINDOW_MS) drops.shift();",
+    "new": "      while (drops.length && t - drops[0] > WAVE_WINDOW_MS) drops.shift();",
     "tests": [
       "test/net/scale2c.test.js"
     ],
@@ -52,7 +52,7 @@
   {
     "name": "SCALE2c-offset-a-drop",
     "file": "src/net/reconnectWave.js",
-    "old": "      if (drops.length >= WAVE_DROPS && !(wave && t - wave.at <= WAVE_WINDOW_MS)) wave = { at: drops[0], offset: rand() * waveSpreadMs(count) };",
+    "old": "      if (drops.length >= WAVE_DROPS && !(wave && t - wave.at <= WAVE_WINDOW_MS))\n        wave = { at: drops[0], offset: rand() * waveSpreadMs(count) };",
     "new": "      if (drops.length >= WAVE_DROPS) wave = { at: drops[0], offset: rand() * waveSpreadMs(count) };",
     "tests": [
       "test/net/scale2c.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "SCALE2c-own-counted",
     "file": "src/net/foesQuiet.js",
-    "old": "    if (FOES_FRAME_OWN.includes(key)) continue;",
-    "new": "",
+    "old": "    if (FOES_FRAME_OWN.includes(key)) continue;\n    const v = frame[key];",
+    "new": "    const v = frame[key];",
     "tests": [
       "test/net/scale2c.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "SCALE2c-never-said-once",
     "file": "src/net/foesQuiet.js",
-    "old": "    skip(frame, { full, cell, room }) { return !!(cell && full && room != null && saidIn === room && quietFoesFrame(frame)); },",
-    "new": "    skip(frame, { full, cell, room }) { return !!(cell && full && room != null && quietFoesFrame(frame)); },",
+    "old": "      return !!(cell && full && room != null && saidIn === room && quietFoesFrame(frame));",
+    "new": "      return !!(cell && full && room != null && quietFoesFrame(frame));",
     "tests": [
       "test/net/scale2c.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "SCALE2c-refusal-said",
     "file": "src/net/foesQuiet.js",
-    "old": "    sent(frame, { full, room }, ok = true) { saidIn = ok && full && room != null && quietFoesFrame(frame) ? room : null; },   // a world room's quiet frame is remembered too - `skip` alone asks for a cell",
-    "new": "    sent(frame, { full, room }) { saidIn = full && room != null && quietFoesFrame(frame) ? room : null; },",
+    "old": "    sent(frame, { full, room }, ok = true) {\n      saidIn = ok && full && room != null && quietFoesFrame(frame) ? room : null;\n    }, // a world room's quiet frame is remembered too - `skip` alone asks for a cell",
+    "new": "    sent(frame, { full, room }) {\n      saidIn = full && room != null && quietFoesFrame(frame) ? room : null;\n    },",
     "tests": [
       "test/net/scale2c.test.js"
     ],

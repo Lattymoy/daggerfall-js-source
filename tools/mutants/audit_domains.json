@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-DOMAINS-S3-the-bare-three",
     "file": "server-account/src/domains.js",
-    "old": "agreeing >= DOMAIN_AGREEING_KEPT) return 'agreed';",
-    "new": "agreeing >= 3) return 'agreed';",
+    "old": "  if (domainFacts(rows, ignored).get(d.region) === d.key && agreeing >= DOMAIN_AGREEING_KEPT) return 'agreed';",
+    "new": "  if (domainFacts(rows, ignored).get(d.region) === d.key && agreeing >= 3) return 'agreed';",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-DOMAINS-R1-any-door",
     "file": "src/scenes/instanceDoor.js",
-    "old": "const c = site?.siteType === SITE_TYPES.Dungeon ? deps.castle?.(site) ?? null : null;",
-    "new": "const c = deps.castle?.(site) ?? null;",
+    "old": "    const c = site?.siteType === SITE_TYPES.Dungeon ? (deps.castle?.(site) ?? null) : null;",
+    "new": "    const c = deps.castle?.(site) ?? null;",
     "tests": [
       "test/net/domain2_castles.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-DOMAINS-R2-any-room",
     "file": "src/net/instanceRoom.js",
-    "old": "guild != null && GUILD_ROOMS.has(r.base) && r.owner",
-    "new": "guild != null && r.owner",
+    "old": "  if (guild != null && GUILD_ROOMS.has(r.base) && r.owner === (await instanceGuildOwnerOf(guild))) return 'guild'; // a castle's, whole (AUDIT DOMAINS R2)",
+    "new": "  if (guild != null && r.owner === (await instanceGuildOwnerOf(guild))) return 'guild'; // a castle's, whole (AUDIT DOMAINS R2)",
     "tests": [
       "test/net/domain2_castles.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-DOMAINS-C2-the-line-english",
     "file": "src/net/townSeatLaw.js",
-    "old": "return holder ? t('seat.info.held', '{charter}: held by {guild}', { charter, guild: guildWords(holder) }) : t('seat.info.unheld', '{charter}: unheld', { charter });",
-    "new": "return `${charter}: ${holder ? `held by ${guildWords(holder)}` : 'unheld'}`;",
+    "old": "  return holder\n    ? t('seat.info.held', '{charter}: held by {guild}', { charter, guild: guildWords(holder) })\n    : t('seat.info.unheld', '{charter}: unheld', { charter });",
+    "new": "  return `${charter}: ${holder ? `held by ${guildWords(holder)}` : 'unheld'}`;",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-DOMAINS-C4-a-tenth-row",
     "file": "src/systems/instancePlaces.js",
-    "old": "(partners ?? []).slice(0, Math.max(0, INSTANCE_ROWS_MAX - rows.length - (mine ? 1 : 0) - (lastPublic ? 1 : 0)))",
-    "new": "(partners ?? [])",
+    "old": "  for (const p of (partners ?? []).slice(\n    0,\n    Math.max(0, INSTANCE_ROWS_MAX - rows.length - (mine ? 1 : 0) - (lastPublic ? 1 : 0)),\n  ))",
+    "new": "  for (const p of partners ?? [])",
     "tests": [
       "test/net/domain2_castles.test.js"
     ]

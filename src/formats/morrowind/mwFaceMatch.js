@@ -32,8 +32,16 @@ const lum = (c) => 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
 
 /** Mean RGB (0..1) over a pixel iterator; null when nothing qualified. */
 function meanOf(iter) {
-  let r = 0; let g = 0; let b = 0; let n = 0;
-  for (const c of iter) { r += c[0]; g += c[1]; b += c[2]; n++; }
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  let n = 0;
+  for (const c of iter) {
+    r += c[0];
+    g += c[1];
+    b += c[2];
+    n++;
+  }
   return n ? [r / n, g / n, b / n] : null;
 }
 
@@ -46,19 +54,29 @@ function meanOf(iter) {
 export function portraitFeatures(bitmap, palette) {
   const { width: w, height: h, data } = bitmap;
   if (!w || !h) return null;
-  const rgb = (x, y) => { const c = palette.get(data[y * w + x]); return [c.r / 255, c.g / 255, c.b / 255]; };
+  const rgb = (x, y) => {
+    const c = palette.get(data[y * w + x]);
+    return [c.r / 255, c.g / 255, c.b / 255];
+  };
   const fg = (x, y) => data[y * w + x] !== 0;
   // the foreground's own box, so a portrait drawn small in its frame
   // is measured on the face and not the frame.
-  let top = h; let bot = -1; let left = w; let right = -1;
+  let top = h;
+  let bot = -1;
+  let left = w;
+  let right = -1;
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       if (!fg(x, y)) continue;
-      if (y < top) top = y; if (y > bot) bot = y; if (x < left) left = x; if (x > right) right = x;
+      if (y < top) top = y;
+      if (y > bot) bot = y;
+      if (x < left) left = x;
+      if (x > right) right = x;
     }
   }
   if (bot < 0) return null;
-  const H = bot - top + 1; const W = right - left + 1;
+  const H = bot - top + 1;
+  const W = right - left + 1;
   const band = (y0, y1, x0, x1) => {
     const out = [];
     for (let y = Math.max(top, Math.floor(top + y0 * H)); y < Math.min(bot + 1, Math.ceil(top + y1 * H)); y++) {
@@ -68,8 +86,8 @@ export function portraitFeatures(bitmap, palette) {
     }
     return out;
   };
-  const skin = meanOf(band(0.40, 0.68, 0.32, 0.68));
-  const hairBand = band(0.00, 0.22, 0.00, 1.00);
+  const skin = meanOf(band(0.4, 0.68, 0.32, 0.68));
+  const hairBand = band(0.0, 0.22, 0.0, 1.0);
   const hair = meanOf(hairBand);
   if (!skin || !hair) return null;
   const bald = dist3(hair, skin) < 0.12;
@@ -77,11 +95,11 @@ export function portraitFeatures(bitmap, palette) {
   // skin mean - the same rule finds long hair on the shoulders and a
   // beard on the chin.
   const hairish = (c) => !bald && dist3(c, hair) < dist3(c, skin);
-  const lower = band(0.55, 1.00, 0.00, 1.00);
+  const lower = band(0.55, 1.0, 0.0, 1.0);
   const length = lower.length ? lower.filter(hairish).length / lower.length : 0;
   // the chin's CENTRE only - long hair falls beside the jaw, and a
   // wide band read every long-haired portrait as bearded.
-  const chin = band(0.76, 0.96, 0.40, 0.60);
+  const chin = band(0.76, 0.96, 0.4, 0.6);
   const beard = chin.length ? chin.filter(hairish).length / chin.length : 0;
   return { skin, hair, bald, length, beard };
 }
@@ -114,25 +132,36 @@ export function headFeatures(rgba, w, h, geometry = null) {
     const o = (y * w + x) * 4;
     return [rgba[o] / 255, rgba[o + 1] / 255, rgba[o + 2] / 255];
   };
-  const shapes = (geometry ?? []).filter((g) => g && g.positions && g.uvs && g.uvs.length === (g.positions.length / 3) * 2);
+  const shapes = (geometry ?? []).filter(
+    (g) => g && g.positions && g.uvs && g.uvs.length === (g.positions.length / 3) * 2,
+  );
   if (shapes.length) {
-    let minY = Infinity; let maxY = -Infinity; let minZ = Infinity; let maxZ = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    let minZ = Infinity;
+    let maxZ = -Infinity;
     for (const g of shapes) {
       for (let i = 0; i < g.positions.length; i += 3) {
-        const y = g.positions[i + 1]; const z = g.positions[i + 2];
-        if (y < minY) minY = y; if (y > maxY) maxY = y; if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+        const y = g.positions[i + 1];
+        const z = g.positions[i + 2];
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+        if (z < minZ) minZ = z;
+        if (z > maxZ) maxZ = z;
       }
     }
-    const spanY = maxY - minY || 1; const spanZ = maxZ - minZ || 1;
-    const cheeks = []; const chin = [];
+    const spanY = maxY - minY || 1;
+    const spanZ = maxZ - minZ || 1;
+    const cheeks = [];
+    const chin = [];
     for (const g of shapes) {
       for (let i = 0, k = 0; i < g.positions.length; i += 3, k += 2) {
-        const fy = (maxY - g.positions[i + 1]) / spanY;   // 1 = the front of the face (MW-HEADS2: on -Y)
-        const fz = (g.positions[i + 2] - minZ) / spanZ;   // 1 = the crown
-        if (fy < 0.62) continue;                          // the back and the sides are not the face
+        const fy = (maxY - g.positions[i + 1]) / spanY; // 1 = the front of the face (MW-HEADS2: on -Y)
+        const fz = (g.positions[i + 2] - minZ) / spanZ; // 1 = the crown
+        if (fy < 0.62) continue; // the back and the sides are not the face
         const c = texel(g.uvs[k], g.uvs[k + 1]);
         if (fz > 0.42 && fz < 0.72) cheeks.push(c);
-        else if (fz < 0.30) chin.push(c);
+        else if (fz < 0.3) chin.push(c);
       }
     }
     const skin = meanOf(cheeks);
@@ -143,7 +172,10 @@ export function headFeatures(rgba, w, h, geometry = null) {
     }
   }
   // no usable UVs: the band read, which assumes a centred face
-  const px = (x, y) => { const o = (y * w + x) * 4; return [rgba[o] / 255, rgba[o + 1] / 255, rgba[o + 2] / 255]; };
+  const px = (x, y) => {
+    const o = (y * w + x) * 4;
+    return [rgba[o] / 255, rgba[o + 1] / 255, rgba[o + 2] / 255];
+  };
   const band = (y0, y1, x0, x1) => {
     const out = [];
     for (let y = Math.floor(y0 * h); y < Math.ceil(y1 * h); y++) {
@@ -151,8 +183,8 @@ export function headFeatures(rgba, w, h, geometry = null) {
     }
     return out;
   };
-  const cheeks = meanOf(band(0.30, 0.55, 0.20, 0.80));
-  const chinB = meanOf(band(0.66, 0.90, 0.30, 0.70));
+  const cheeks = meanOf(band(0.3, 0.55, 0.2, 0.8));
+  const chinB = meanOf(band(0.66, 0.9, 0.3, 0.7));
   if (!cheeks || !chinB) return null;
   const beard = Math.max(0, Math.min(1, (lum(cheeks) - lum(chinB)) / 0.25));
   return { skin: cheeks, beard, via: 'band' };
@@ -183,22 +215,29 @@ export function hairFeatures(rgba, w, h, extentZ) {
  *  verdict in the derived store against the stored set and the
  *  identity; a change to how heads and hairs are measured or scored
  *  is a bump here, so an older verdict is re-measured, never read. */
-export const FACE_MATCH_VERSION = 2;   // MW-HEADS2: the face read on -Y - every verdict kept was measured off the back of the skull
+export const FACE_MATCH_VERSION = 2; // MW-HEADS2: the face read on -Y - every verdict kept was measured off the back of the skull
 
 export function matchFace(portrait, heads, hairs, { female = false } = {}) {
   const reasons = [];
   if (!portrait) return { head: null, hair: null, reasons: ['portrait unreadable - the walk stands'] };
-  let head = null; let best = Infinity;
+  let head = null;
+  let best = Infinity;
   for (const h of heads ?? []) {
-    if (!h.f) { reasons.push(`${h.id}: no texture to measure`); continue; }
+    if (!h.f) {
+      reasons.push(`${h.id}: no texture to measure`);
+      continue;
+    }
     // a beard is a male cue; the female pools have none and the
     // portrait's chin band is hair beside the jaw, not on it.
     const d = dist3(portrait.skin, h.f.skin) + (female ? 0 : 0.35 * Math.abs(portrait.beard - h.f.beard));
-    if (d < best) { best = d; head = h.id; }
+    if (d < best) {
+      best = d;
+      head = h.id;
+    }
   }
   if (head) reasons.push(`head ${head}: skin dist ${best.toFixed(2)}`);
   const measured = (hairs ?? []).filter((x) => x.f);
-  for (const x of (hairs ?? [])) if (!x.f) reasons.push(`${x.id}: no texture to measure`);
+  for (const x of hairs ?? []) if (!x.f) reasons.push(`${x.id}: no texture to measure`);
   let hair = null;
   if (measured.length) {
     // rank-normalise mesh height so 'long' means long FOR THIS RACE
@@ -208,9 +247,14 @@ export function matchFace(portrait, heads, hairs, { female = false } = {}) {
     for (const x of measured) {
       const want = portrait.bald ? 0 : portrait.length;
       const d = (portrait.bald ? 0 : 1.2 * dist3(portrait.hair, x.f.colour)) + 0.6 * Math.abs(want - rank(x.f.extentZ));
-      if (d < bestH) { bestH = d; hair = x.id; }
+      if (d < bestH) {
+        bestH = d;
+        hair = x.id;
+      }
     }
-    reasons.push(`hair ${hair}: ${portrait.bald ? 'portrait is bald, shortest hair' : `colour+length dist ${bestH.toFixed(2)}`}`);
+    reasons.push(
+      `hair ${hair}: ${portrait.bald ? 'portrait is bald, shortest hair' : `colour+length dist ${bestH.toFixed(2)}`}`,
+    );
   }
   return { head, hair, reasons };
 }

@@ -24,10 +24,18 @@ import { PNG } from 'pngjs';
 import { isMain } from './lib/isMain.mjs';
 import { readUnityBundle } from '../src/formats/unity/unityBundle.js';
 import { DFPalette } from '../src/formats/dfPalette.js';
-import { classicRecords, findClassicSource } from './lib/classicSource.mjs';   // a record within a pixel of the picture's size, at every offset
+import { classicRecords, findClassicSource } from './lib/classicSource.mjs'; // a record within a pixel of the picture's size, at every offset
 
 /** The seven pictures PassiveFishSpeciesCatalog loads, by their bundle names. */
-export const FISH_TEXTURES = Object.freeze(['longnose_butterflyfish', 'largemouth_bass', 'canary_rockfish', 'crucian_carp', 'mackerel', 'white_zebra_angelfish', 'finulon']);
+export const FISH_TEXTURES = Object.freeze([
+  'longnose_butterflyfish',
+  'largemouth_bass',
+  'canary_rockfish',
+  'crucian_carp',
+  'mackerel',
+  'white_zebra_angelfish',
+  'finulon',
+]);
 
 /** The bundle's fish and templates. @param {Uint8Array} bundleBytes */
 export function fishAssets(bundleBytes) {
@@ -54,7 +62,8 @@ if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
   const arenaAt = args.indexOf('--arena2');
   const arena2 = arenaAt >= 0 ? args.splice(arenaAt, 2)[1] : process.env.ARENA2_PATH;
-  const [bundlePath, outDir = join(fileURLToPath(new URL('..', import.meta.url)), 'vendor/iliac-puddle-no-more')] = args;
+  const [bundlePath, outDir = join(fileURLToPath(new URL('..', import.meta.url)), 'vendor/iliac-puddle-no-more')] =
+    args;
   if (!bundlePath || !arena2) {
     console.error('usage: node tools/iliacPuddleAssets.mjs "<iliac puddle no more.dfmod>" [outDir] --arena2 <ARENA2>');
     process.exit(2);
@@ -66,7 +75,10 @@ if (isMain(import.meta.url)) {
   mkdirSync(join(outDir, 'Flats'), { recursive: true });
   for (const pic of pictures) {
     const src = findClassicSource(pic, records);
-    if (src) throw new Error(`${pic.name}: TEXTURE.${src.archive} record ${src.record} covers it - not the author's own picture`);
+    if (src)
+      throw new Error(
+        `${pic.name}: TEXTURE.${src.archive} record ${src.record} covers it - not the author's own picture`,
+      );
     writeFileSync(join(outDir, 'Flats', `${pic.name}.png`), toPng(pic));
     console.log(`Flats/${pic.name}.png ${pic.width}x${pic.height} - no classic record covers it`);
   }

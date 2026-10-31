@@ -37,16 +37,19 @@ export const ARENA_CLAIM_MENDABLE = Object.freeze(['signature', 'verify-threw', 
 
 /** What the service's answer does to a kept receipt: 'done' (let it go) or 'keep'. */
 export function arenaClaimVerdict(answer) {
-  if (answer?.ok) return answer.data?.why === 'guest' ? 'keep' : 'done';   // counted, counted before, out of order
+  if (answer?.ok) return answer.data?.why === 'guest' ? 'keep' : 'done'; // counted, counted before, out of order
   return answer?.error === 'receipt' && !ARENA_CLAIM_MENDABLE.includes(answer.why) ? 'done' : 'keep';
 }
 /** Whose receipt it is: does it name `me`. */
-export const arenaReceiptIsMine = (c, me) => !!c && !!me && (c.a === 'l' ? c.s === me : Array.isArray(c.f) && c.f.includes(me));
+export const arenaReceiptIsMine = (c, me) =>
+  !!c && !!me && (c.a === 'l' ? c.s === me : Array.isArray(c.f) && c.f.includes(me));
 /** ARENA4b: a kept entry's receipt - a bare string (a build before ARENA4b), or `{ r, c, n }` with its fighter. */
 export const arenaKeptReceipt = (e) => (typeof e === 'string' ? e : typeof e?.r === 'string' ? e.r : null);
 /** ARENA4b: the entry a receipt is kept as - with the character that fought it (and its name), or bare without one. */
-export const arenaKeptEntry = (r, character = null, name = null) => (typeof character === 'string' && character
-  ? { r, c: character, ...(typeof name === 'string' && name ? { n: name } : {}) } : r);
+export const arenaKeptEntry = (r, character = null, name = null) =>
+  typeof character === 'string' && character
+    ? { r, c: character, ...(typeof name === 'string' && name ? { n: name } : {}) }
+    : r;
 
 /**
  * @param {{
@@ -60,23 +63,62 @@ export const arenaKeptEntry = (r, character = null, name = null) => (typeof char
  *   ARENA4b: `character`/`name` the fighter standing here as a receipt comes in, and `onRenown` each answer carrying a
  *   bout's Renown (`data.renown`, `data.order`)
  */
-export function createArenaClaims({ claim, store = null, nowS = () => Math.floor(Date.now() / 1000), nowMs = () => Date.now(), me = () => null, character = () => null, name = () => null, onCounted = () => {}, onGuest = () => {}, onRenown = () => {} }) {
-  let running = null, again = false, lastAt = -Infinity, lastMe;
-  const settled = new Set(), guestSaid = new Set();
-  const live = (r) => { const c = typeof r === 'string' ? readArenaReceipt(r) : null; const t = nowS(); return c && c.signed && (t == null || c.e > t) ? c : null; };
+export function createArenaClaims({
+  claim,
+  store = null,
+  nowS = () => Math.floor(Date.now() / 1000),
+  nowMs = () => Date.now(),
+  me = () => null,
+  character = () => null,
+  name = () => null,
+  onCounted = () => {},
+  onGuest = () => {},
+  onRenown = () => {},
+}) {
+  let running = null,
+    again = false,
+    lastAt = -Infinity,
+    lastMe;
+  const settled = new Set(),
+    guestSaid = new Set();
+  const live = (r) => {
+    const c = typeof r === 'string' ? readArenaReceipt(r) : null;
+    const t = nowS();
+    return c && c.signed && (t == null || c.e > t) ? c : null;
+  };
   let memory = [];
   function kept() {
     let v;
-    try { v = store ? store.get(ARENA_CLAIMS_KEY) : undefined; } catch { v = undefined; }
+    try {
+      v = store ? store.get(ARENA_CLAIMS_KEY) : undefined;
+    } catch {
+      v = undefined;
+    }
     return (Array.isArray(v) ? v : v === undefined ? memory : []).filter((e) => live(arenaKeptReceipt(e)));
   }
-  const keep = (list) => { memory = list; try { store?.set(ARENA_CLAIMS_KEY, list); } catch { /* memory holds it */ } };
+  const keep = (list) => {
+    memory = list;
+    try {
+      store?.set(ARENA_CLAIMS_KEY, list);
+    } catch {
+      /* memory holds it */
+    }
+  };
 
   /** AUDIT ARENA-LADDER 2: a flush asked while one runs is the running one's answer, and runs again after it - never a
    *  quiet 0 while a receipt is still on its way (a ladder ticket asked on that 0 forfeit a win not yet carried). */
   function flush() {
-    if (running) { again = true; return running; }
-    running = run().finally(() => { running = null; if (again) { again = false; void flush(); } });
+    if (running) {
+      again = true;
+      return running;
+    }
+    running = run().finally(() => {
+      running = null;
+      if (again) {
+        again = false;
+        void flush();
+      }
+    });
     return running;
   }
   async function run() {
@@ -90,20 +132,44 @@ export function createArenaClaims({ claim, store = null, nowS = () => Math.floor
         const r = arenaKeptReceipt(e);
         if (!arenaReceiptIsMine(live(r), mine)) continue;
         let answer;
-        try { answer = await claim(r, typeof e === 'string' ? null : e.c ?? null, typeof e === 'string' ? null : e.n ?? null); } catch { answer = { ok: false, error: 'offline' }; }
-        if (answer?.ok && answer.data?.recorded === true) { recorded++; onCounted(answer.data); }
-        else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(r)) { guestSaid.add(r); onGuest(); }
-        if (answer?.ok && answer.data?.renown) onRenown(answer.data);   // ARENA4b: the bout's Renown, counted now or before
-        if (arenaClaimVerdict(answer) === 'done') { settled.add(r); keep(kept().filter((k) => arenaKeptReceipt(k) !== r)); }
+        try {
+          answer = await claim(
+            r,
+            typeof e === 'string' ? null : (e.c ?? null),
+            typeof e === 'string' ? null : (e.n ?? null),
+          );
+        } catch {
+          answer = { ok: false, error: 'offline' };
+        }
+        if (answer?.ok && answer.data?.recorded === true) {
+          recorded++;
+          onCounted(answer.data);
+        } else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(r)) {
+          guestSaid.add(r);
+          onGuest();
+        }
+        if (answer?.ok && answer.data?.renown) onRenown(answer.data); // ARENA4b: the bout's Renown, counted now or before
+        if (arenaClaimVerdict(answer) === 'done') {
+          settled.add(r);
+          keep(kept().filter((k) => arenaKeptReceipt(k) !== r));
+        }
       }
     }
     return recorded;
   }
   /** AUDIT ARENA-LADDER 2: every flush asked so far run out (the one running, and the one asked behind it). */
-  async function idle() { while (running) await running.catch(() => 0); }
+  async function idle() {
+    while (running) await running.catch(() => 0);
+  }
   /** AUDIT ARENA-LADDER 2: does this device still keep a ladder receipt of mine that carries an attempt's ticket - a bout
    *  the service has not counted yet, which the next attempt would forfeit (a win among them lost). */
-  const ladderKept = () => { const mine = me(); return kept().some((e) => { const c = live(arenaKeptReceipt(e)); return !!c && arenaReceiptIsMine(c, mine) && c.a === 'l' && typeof c.z === 'string'; }); };
+  const ladderKept = () => {
+    const mine = me();
+    return kept().some((e) => {
+      const c = live(arenaKeptReceipt(e));
+      return !!c && arenaReceiptIsMine(c, mine) && c.a === 'l' && typeof c.z === 'string';
+    });
+  };
 
   return {
     /** A receipt the relay handed this socket: kept (one a bout - the relay may hand the same one again on a
@@ -113,7 +179,8 @@ export function createArenaClaims({ claim, store = null, nowS = () => Math.floor
       if (!c || settled.has(r)) return false;
       const list = kept();
       // ARENA4b: kept with the fighter standing here now - the one the bout's Renown is for
-      if (!list.some((k) => arenaKeptReceipt(k) === r || readArenaReceipt(arenaKeptReceipt(k))?.j === c.j)) keep([...list, arenaKeptEntry(r, character(), name())].slice(-ARENA_CLAIMS_MAX));
+      if (!list.some((k) => arenaKeptReceipt(k) === r || readArenaReceipt(arenaKeptReceipt(k))?.j === c.j))
+        keep([...list, arenaKeptEntry(r, character(), name())].slice(-ARENA_CLAIMS_MAX));
       void flush();
       return true;
     },
@@ -121,17 +188,22 @@ export function createArenaClaims({ claim, store = null, nowS = () => Math.floor
      *  signs in. */
     tick() {
       if (running) return false;
-      const t = nowMs(), due = t - lastAt >= ARENA_CLAIM_RETRY_MS;
-      const mine = me(), signedIn = mine !== lastMe;
+      const t = nowMs(),
+        due = t - lastAt >= ARENA_CLAIM_RETRY_MS;
+      const mine = me(),
+        signedIn = mine !== lastMe;
       lastMe = mine;
       if (!signedIn && !due) return false;
-      if (!kept().some((e) => arenaReceiptIsMine(live(arenaKeptReceipt(e)), mine))) { lastAt = t; return false; }
+      if (!kept().some((e) => arenaReceiptIsMine(live(arenaKeptReceipt(e)), mine))) {
+        lastAt = t;
+        return false;
+      }
       void flush();
       return true;
     },
     flush,
-    idle,   // AUDIT ARENA-LADDER 2
-    ladderKept,   // AUDIT ARENA-LADDER 2
+    idle, // AUDIT ARENA-LADDER 2
+    ladderKept, // AUDIT ARENA-LADDER 2
     kept,
   };
 }

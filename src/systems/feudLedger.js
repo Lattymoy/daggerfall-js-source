@@ -14,7 +14,19 @@
 // at a deed, or gone with the body.
 
 /** The ways the player harms a foe, as the ledger counts them. */
-export const FEUD_CLASSES = Object.freeze(['blade', 'blunt', 'axe', 'h2h', 'arrow', 'fire', 'frost', 'shock', 'poison', 'magic', 'other']);
+export const FEUD_CLASSES = Object.freeze([
+  'blade',
+  'blunt',
+  'axe',
+  'h2h',
+  'arrow',
+  'fire',
+  'frost',
+  'shock',
+  'poison',
+  'magic',
+  'other',
+]);
 /** A spell's element (DFU's ElementTypes: Fire, Cold, Poison, Shock, Magic) as the ledger's class. */
 const ELEMENT_CLASS = Object.freeze(['fire', 'frost', 'poison', 'shock', 'magic']);
 export const elementFeudClass = (element) => ELEMENT_CLASS[element] ?? 'magic';
@@ -30,22 +42,37 @@ let _onWeak = null;
 /** @type {null | (() => { now?: number, night?: boolean })} */
 let _clock = null;
 /** systems/revenant/revenant.js: which bodies keep a ledger (a revenant candidate, the switch on). */
-export function setFeudGate(fn) { _gate = typeof fn === 'function' ? fn : null; }
+export function setFeudGate(fn) {
+  _gate = typeof fn === 'function' ? fn : null;
+}
 /** systems/revenant/revenant.js: the character's minute and whether the sky reads night, when a ledger opens. */
-export function setFeudClock(fn) { _clock = typeof fn === 'function' ? fn : null; }
+export function setFeudClock(fn) {
+  _clock = typeof fn === 'function' ? fn : null;
+}
 /** RVN3: systems/revenant/revenant.js's word on whether a blow is of a body's weakness - `info` `{ cls, metal }` as the ledger's
  *  writers know it, or `{ kind, weapon, element, attacker }` as a door does - and what follows a blow of it (`onWeak`). */
-export function setFeudWeakTest(fn, onWeak = null) { _weak = typeof fn === 'function' ? fn : null; _onWeak = typeof onWeak === 'function' ? onWeak : null; }
+export function setFeudWeakTest(fn, onWeak = null) {
+  _weak = typeof fn === 'function' ? fn : null;
+  _onWeak = typeof onWeak === 'function' ? onWeak : null;
+}
 /** RVN13 (bible/12-Enhanced-AI/Feud-Arc.md 25): a PEER's blow of its weakness (the relayed hit's `wc`) - revealed to me as
  *  my own would be (the reveal's own once-a-stand and first-found law). */
 export function feudRevealWeak(entity) {
   if (!entity?.revenant || !_onWeak) return;
-  try { _onWeak(entity, { peer: true }); } catch { /* the reveal is no blow's business */ }   // AUDIT FEUD 2: no word of mine for it
+  try {
+    _onWeak(entity, { peer: true });
+  } catch {
+    /* the reveal is no blow's business */
+  } // AUDIT FEUD 2: no word of mine for it
 }
 /** RVN3: is this blow of `entity`'s weakness (false with no test, or for a body with none)? */
 export function feudWeakBlow(entity, info = {}) {
   if (!_weak || !entity?.revenant) return false;
-  try { return !!_weak(entity, info ?? {}); } catch { return false; }
+  try {
+    return !!_weak(entity, info ?? {});
+  } catch {
+    return false;
+  }
 }
 
 /** `entity`'s open ledger - opened now for a body the gate passes (`open`), else null. */
@@ -54,15 +81,36 @@ export function feudOf(entity, open = true) {
   if (entity._feud) return entity._feud;
   if (!open || !_gate) return null;
   let ok = false;
-  try { ok = !!_gate(entity); } catch { ok = false; }
+  try {
+    ok = !!_gate(entity);
+  } catch {
+    ok = false;
+  }
   if (!ok) return null;
   let c = null;
-  try { c = _clock?.() ?? null; } catch { c = null; }
+  try {
+    c = _clock?.() ?? null;
+  } catch {
+    c = null;
+  }
   /** @type {Record<string, number>} */
   const dmg = {};
   for (const k of FEUD_CLASSES) dmg[k] = 0;
   const place = entity._feudPlace === 'building' || entity._feudPlace === 'dungeon' ? entity._feudPlace : 'street';
-  entity._feud = { dmg, silver: 0, staggers: 0, dodged: 0, perfect: 0, backHits: 0, backstab: false, weak: 0, night: !!c?.night, place, start: Number.isFinite(c?.now) ? c.now : 0, last: null };   // UNQUIET: `last` - the class of the last harm that reached it (the blow that broke it leaves its wound)
+  entity._feud = {
+    dmg,
+    silver: 0,
+    staggers: 0,
+    dodged: 0,
+    perfect: 0,
+    backHits: 0,
+    backstab: false,
+    weak: 0,
+    night: !!c?.night,
+    place,
+    start: Number.isFinite(c?.now) ? c.now : 0,
+    last: null,
+  }; // UNQUIET: `last` - the class of the last harm that reached it (the blow that broke it leaves its wound)
   return entity._feud;
 }
 
@@ -73,11 +121,15 @@ export function noteFeudHarm(entity, cls, n, { silver = false, metal = null } = 
   const l = feudOf(entity);
   if (!l) return;
   l.dmg[FEUD_CLASSES.includes(cls) ? cls : 'other'] += n;
-  l.last = FEUD_CLASSES.includes(cls) ? cls : 'other';   // UNQUIET (bible/06-Systems/Revenants.md section 46): the blow that broke it
+  l.last = FEUD_CLASSES.includes(cls) ? cls : 'other'; // UNQUIET (bible/06-Systems/Revenants.md section 46): the blow that broke it
   if (silver) l.silver += n;
   if (feudWeakBlow(entity, { cls, metal })) {
     l.weak++;
-    try { _onWeak?.(entity); } catch { /* the reveal is not the blow's problem */ }
+    try {
+      _onWeak?.(entity);
+    } catch {
+      /* the reveal is not the blow's problem */
+    }
   }
 }
 /** One more of a count (`staggers`, `dodged`, `perfect`, `backHits`, `weak`) in `entity`'s fight. */

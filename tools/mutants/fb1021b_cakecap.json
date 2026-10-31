@@ -82,8 +82,8 @@
   {
     "name": "CAKE-CAP-SAID-window-never-full",
     "file": "src/ui/wyrdWindow.js",
-    "old": "day.full ? findsTodayFullText(day.max, day.resetMs) : findsTodayText(day.found, day.max)",
-    "new": "findsTodayText(day.found, day.max)",
+    "old": "    todayLine.textContent =\n      day?.found == null\n        ? ''\n        : day.full\n          ? findsTodayFullText(day.max, day.resetMs)\n          : findsTodayText(day.found, day.max);",
+    "new": "    todayLine.textContent = day?.found == null ? '' : findsTodayText(day.found, day.max);",
     "tests": [
       "test/systems/festival/fb1021b_cakecap.test.js"
     ],

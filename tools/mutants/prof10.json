@@ -610,8 +610,8 @@
   {
     "name": "PROF10-light-fixed",
     "file": "src/systems/facetAct.js",
-    "old": "const light = () => FACET_ACT.lightLo + (FACET_ACT.lightHi - FACET_ACT.lightLo) * Math.max(0, Math.min(1, Number(rng()) || 0));",
-    "new": "const light = () => FACET_ACT.lightLo;",
+    "old": "  const light = () =>\n    FACET_ACT.lightLo + (FACET_ACT.lightHi - FACET_ACT.lightLo) * Math.max(0, Math.min(1, Number(rng()) || 0));",
+    "new": "  const light = () => FACET_ACT.lightLo;",
     "tests": [
       "test/net/prof10_law.test.js"
     ]
@@ -648,8 +648,8 @@
   {
     "name": "PROF10-never-lost-round",
     "file": "src/systems/facetAct.js",
-    "old": "if (st.turned >= 360 * FACET_ACT.turns) { st.passed++; end(false, st.t); }",
-    "new": "if (st.turned >= 360 * (FACET_ACT.turns + 1)) { st.passed++; end(false, st.t); }",
+    "old": "      if (st.turned >= 360 * FACET_ACT.turns) {",
+    "new": "      if (st.turned >= 360 * (FACET_ACT.turns + 1)) {",
     "tests": [
       "test/net/prof10_law.test.js",
       "test/systems/prof10_client.test.js"
@@ -658,8 +658,8 @@
   {
     "name": "PROF10-passed-uncounted",
     "file": "src/systems/facetAct.js",
-    "old": "{ st.passed++; end(false, st.t); }",
-    "new": "{ end(false, st.t); }",
+    "old": "        st.passed++;\n        end(false, st.t);",
+    "new": "        end(false, st.t);",
     "tests": [
       "test/net/prof10_law.test.js",
       "test/systems/prof10_client.test.js"
@@ -722,7 +722,7 @@
   {
     "name": "PROF10-cancel-goes-on",
     "file": "src/systems/facetAct.js",
-    "old": "    cancel() { st.done = true; },",
+    "old": "    cancel() {\n      st.done = true;\n    },",
     "new": "    cancel() {},",
     "tests": [
       "test/net/prof10_law.test.js",
@@ -750,8 +750,8 @@
   {
     "name": "PROF10-jewel-a-useless-item",
     "file": "src/systems/smithItems.js",
-    "old": "return mintCondition(setItemFields({ group: 'Jewellery', templateIndex: r.templateIndex,",
-    "new": "return mintCondition(setItemFields({ group: 'UselessItems2', templateIndex: r.templateIndex,",
+    "old": "      group: 'Jewellery',",
+    "new": "      group: 'UselessItems2',",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -759,8 +759,8 @@
   {
     "name": "PROF10-jewel-minted-as-armour",
     "file": "src/systems/smithItems.js",
-    "old": ": r.kind === 'jewel' ? jewelItem(r)   // PROF10: DFU's jewellery",
-    "new": ": r.kind === 'never' ? jewelItem(r)   // PROF10: DFU's jewellery",
+    "old": "          : r.kind === 'jewel'",
+    "new": "          : r.kind === 'never'",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -768,8 +768,8 @@
   {
     "name": "PROF10-jewel-unset",
     "file": "src/systems/smithItems.js",
-    "old": "    if (r.kind === 'jewel') setJewel(item, r, hand);   // PROF10: its metal's and its gem's name, points and worth\n",
-    "new": "",
+    "old": "    if (r.kind === 'jewel') setJewel(item, r, hand); // PROF10: its metal's and its gem's name, points and worth\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -795,8 +795,8 @@
   {
     "name": "PROF10-worth-no-gem",
     "file": "src/systems/smithItems.js",
-    "old": "* jewelPointsPct(r, hand)) / 100) + gem);",
-    "new": "* jewelPointsPct(r, hand)) / 100));",
+    "old": "    ) + gem,",
+    "new": "    ),",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -804,8 +804,8 @@
   {
     "name": "PROF10-worth-no-share",
     "file": "src/systems/smithItems.js",
-    "old": "* jewelPointsPct(r, hand)) / 100) + gem);",
-    "new": "* 0) / 100) + gem);",
+    "old": "      (Number.isFinite(item.value) ? item.value : (base?.basePrice ?? 0)) +\n        ((base?.basePrice ?? 0) * jewelPointsPct(r, hand)) / 100,",
+    "new": "      (Number.isFinite(item.value) ? item.value : (base?.basePrice ?? 0)) + ((base?.basePrice ?? 0) * 0) / 100,",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1282,7 +1282,7 @@
   },
   {
     "name": "PROF10-world-band-no-luck",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "luck: liveStat(playerEntity, 'luck') }),",
     "new": "luck: liveStat(playerEntity, 'willpower') }),",
     "tests": [
@@ -1291,7 +1291,7 @@
   },
   {
     "name": "PROF10-world-cracked-dropped",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "{ clean, heartwood, dye, cracked, fee:",
     "new": "{ clean, heartwood, dye, fee:",
     "tests": [
@@ -1401,8 +1401,8 @@
   {
     "name": "AUDIT-PROF10-J2-label-kept-free",
     "file": "src/ui/item/itemMakerWindow.js",
-    "old": "totalEnchantmentCost(this.powers, this.sideEffects) + enchantmentListCost(keptEnchantments(this.selected) ?? []), itemEnchantmentPower",
-    "new": "totalEnchantmentCost(this.powers, this.sideEffects), itemEnchantmentPower",
+    "old": "        totalEnchantmentCost(this.powers, this.sideEffects) +\n          enchantmentListCost(keptEnchantments(this.selected) ?? []),",
+    "new": "        totalEnchantmentCost(this.powers, this.sideEffects),",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1428,8 +1428,8 @@
   {
     "name": "AUDIT-PROF10-J2-guard-own-rows",
     "file": "src/ui/item/itemMakerWindow.js",
-    "old": "      item: this.selected, powers: all.powers, sideEffects: all.sideEffects,\n    });\n    if (d.kind === 'refuse')",
-    "new": "      item: this.selected, powers: this.powers, sideEffects: this.sideEffects,\n    });\n    if (d.kind === 'refuse')",
+    "old": "      item: this.selected,\n      powers: all.powers,\n      sideEffects: all.sideEffects,\n    });",
+    "new": "      item: this.selected,\n      powers: this.powers,\n      sideEffects: this.sideEffects,\n    });",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1491,8 +1491,8 @@
   {
     "name": "AUDIT-PROF-541-J4-no-fit",
     "file": "src/systems/smithItems.js",
-    "old": "applyRarity(item, eff.rarity, rolls, null, { fits, byLines",
-    "new": "applyRarity(item, eff.rarity, rolls, null, { byLines",
+    "old": "        fits,\n        byLines: at(MINT_V_LINES),",
+    "new": "        byLines: at(MINT_V_LINES),",
     "tests": [
       "test/systems/prof10_client.test.js"
     ],
@@ -1627,7 +1627,7 @@
   },
   {
     "name": "PROF-541-R2-C6-world-station",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "jewelSteps: () => myHall('jewelcrafting').steps,",
     "new": "jewelSteps: () => myHall('alchemy').steps,",
     "tests": [

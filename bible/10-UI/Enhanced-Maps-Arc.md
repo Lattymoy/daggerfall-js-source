@@ -346,7 +346,7 @@ that inks nothing.
   a building an NPC marked on a crowded plan had no mark at all: with
   both town packs, Daggerfall with 152 others found lettered 85 of its
   153 names at rest and not the marked one. Now the surrendered plate is
-  lettered `nameplateLayout.js:"export const STAR_PLATE = '*';"` - one
+  lettered `nameplateLayout.js:"export const STAR_PLATE"` - one
   word both maps read - where the solver left it
   (`townSheet.js:"          text: s.replaced ? STAR_PLATE : n.text, name: n.text,"`),
   ticked and inked as any name, and the pointer over it reads its
@@ -807,7 +807,7 @@ town map painting none", its own comment says.
 - **The classic window painted it magenta.** Its ladder gives a byte in no group DFU's debug red, (255, 0, byte)
   (ExteriorAutomap.cs:1535-1540) - (255, 0, 254) here: 118,671 of the 262,144 pixels of a Market District slice, and the
   White-Gold Tower and the palace solid magenta. The closed byte paints nothing now, for every capital, as the held
-  map's sheet paints it (`exteriorAutomapWindow.js:"if (byte === 0 || byte === CAPITAL_CLOSED_BYTE) continue;"`). No
+  map's sheet paints it (`exteriorAutomapWindow.js:"if (byte === 0 || byte === CAPITAL_CLOSED_BYTE)"`). No
   Daggerfall block writes the byte - every RMB in BLOCKS.BSA reads 0 to 24, 117, 250 and 251 - so DFU's ladder is
   unchanged on DFU's own data, and a Bay town's map is the same byte for byte: no departure from DFU, only our blocks'
   byte taken out of its debug arm.
@@ -830,7 +830,7 @@ across, whose walls, avenues and landmarks are the port's own (`03-World/Arena-P
 streets and buildings are the fabric's (`world/imperialFabric.js`) - none of it in an automap byte.
 
 - **The sheet is the city.** The host hands the slice (`exteriorAutomapToggle.js:"imperialSlice: capitalViewOf(dfLoc) ? dfLoc.capital.s : null,"`),
-  the town sheet's bag carries it (`townMapDoor.js:"imperial: deps.imperialSlice ?? null,"`), and the town sheet answers
+  the town sheet's bag carries it (`townMapDoor.js:"imperial: deps.imperialSlice"`), and the town sheet answers
   with the city's (`townSheet.js:"if (deps.imperial != null) return createImperialSheet(deps, createTownSheet);"`,
   `ui/town/imperialSheet.js`). Its space is the town sheet's own unit, a layout pixel, over the whole plan, north up; the
   slice's own sheet stands at its slice's corner, so the player's caret, the plates and the marks cross by that offset
@@ -839,11 +839,11 @@ streets and buildings are the fabric's (`world/imperialFabric.js`) - none of it 
   it; the city wall and its gates, the palace wall and its gates, the district walls and theirs; Green Emperor Way, the
   three ring roads, the six avenues and twelve radials, the causeways and Talos Bridge; each district washed and named;
   the White-Gold Tower in its palace, the Arena, the Temple of the One, the Prison, the University. The plan is read off
-  `world/imperialCity.js`'s own laws once a session (`imperialSheet.js:"export function imperialCityPlan() {"`) and inked
+  `world/imperialCity.js`'s own laws once a session (`imperialSheet.js:"export function imperialCityPlan"`) and inked
   from it; every name goes through the text core (`t('icmap.*', en)`, L10N4).
 - **Zoomed in, near the player** (from `IC_FABRIC_ZOOM`): the district's own streets, buildings, squares, parks, canals
   and yards' walls - the cells of the player's district within `IC_FABRIC_REACH` of theirs, the port's own cells only,
-  built on demand a cell a tick, nearest first (`imperialSheet.js:"tick() { if (fabricPending()) buildFabric(IC_FABRIC_PER_TICK); },"`),
+  built on demand a cell a tick, nearest first (`imperialSheet.js:"tick() {"`),
   so no frame carries the district (a cell is some ten milliseconds, the first of a neighbourhood up to a hundred); and the
   slice's own Daggerfall blocks through the town sheet - their quarters' washes, their names, the quest rings, the party,
   the homes and the boards - where the slice stands.

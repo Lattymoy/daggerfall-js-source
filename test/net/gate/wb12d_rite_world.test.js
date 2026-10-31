@@ -612,7 +612,7 @@ test('AUDIT WB12d (G14): the smoke\'s pass is built by the frame - before the re
   assert.equal(h.smoking(), true);
   assert.equal(h.drawSmoke(I, I, [0, 0, 0], 5), 1, 'asked, it draws');
   assert.equal(createRiteHost({ now: () => r.now(), omen: () => ({ site: SITE }), pixelTranslation: () => [0, 0, 0] }).drawSmoke(I, I, [0, 0, 0], 5), 0);
-  assert.match(read('src/render/riteSmoke.js'), /s\.fade > SMOKE_FADE_MIN\)\.slice\(0, SMOKE_MAX\)/);
+  assert.match(read('src/render/riteSmoke.js'), /s\.fade > SMOKE_FADE_MIN,\n\s*\)\n\s*\.slice\(0, SMOKE_MAX\)/);
 });
 
 test('AUDIT WB12d (G2): the burned earth - the circle says where no grass grows (its heart, past its braziers) and asks the grass placed there to be placed again when it stands and when it goes (mutants: no clearing; never placed again; placed again where it is no longer)', () => {

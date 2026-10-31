@@ -2,8 +2,8 @@
   {
     "name": "HUNTERS-MARK-II-law-kind-unchecked",
     "file": "src/systems/hunt/namedMark.js",
-    "old": "if (foe !== mobileType || bossTraitMask",
-    "new": "if (bossTraitMask",
+    "old": "      if (foe !== mobileType || bossTraitMask(huntMarkTraits(w, tier)) !== mask) continue;",
+    "new": "      if (bossTraitMask(huntMarkTraits(w, tier)) !== mask) continue;",
     "tests": [
       "test/scenes/huntersmark2_wire.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "HUNTERS-MARK-II-law-mask-unchecked",
     "file": "src/systems/hunt/namedMark.js",
-    "old": "bossTraitMask(huntMarkTraits(w, tier)) !== mask) continue;",
-    "new": "bossTraitMask(huntMarkTraits(w, tier)) === -1) continue;",
+    "old": "      if (foe !== mobileType || bossTraitMask(huntMarkTraits(w, tier)) !== mask) continue;",
+    "new": "      if (foe !== mobileType || bossTraitMask(huntMarkTraits(w, tier)) === -1) continue;",
     "tests": [
       "test/scenes/huntersmark2_wire.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "HUNTERS-MARK-II-law-last-week-dropped",
     "file": "src/systems/hunt/namedMark.js",
-    "old": "for (const w of [week, week - 1])",
-    "new": "for (const w of [week])",
+    "old": "  for (const w of [week, week - 1]) {",
+    "new": "  for (const w of [week]) {",
     "tests": [
       "test/scenes/huntersmark2_wire.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "HUNTERS-MARK-II-law-two-weeks-back",
     "file": "src/systems/hunt/namedMark.js",
-    "old": "for (const w of [week, week - 1])",
-    "new": "for (const w of [week, week - 1, week - 2])",
+    "old": "  for (const w of [week, week - 1]) {",
+    "new": "  for (const w of [week, week - 1, week - 2]) {",
     "tests": [
       "test/scenes/huntersmark2_wire.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "HUNTERS-MARK-II-law-last-week-first",
     "file": "src/systems/hunt/namedMark.js",
-    "old": "for (const w of [week, week - 1])",
-    "new": "for (const w of [week - 1, week])",
+    "old": "  for (const w of [week, week - 1]) {",
+    "new": "  for (const w of [week - 1, week]) {",
     "tests": [
       "test/scenes/huntersmark2_wire.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "HUNTERS-MARK-II-crown-stand-trait-kept",
     "file": "src/scenes/huntersMark.js",
-    "old": "    e.bossTraits = undefined; e.bossWard = undefined;",
-    "new": "    void e;",
+    "old": "    e.bossTraits = undefined;\n    e.bossWard = undefined; // HUNTERS-MARK-II: the week's two in place of any its stand drew as an elite (RAID5's leader's law) - a mate's screen reads the mark off them",
+    "new": "    void e; // HUNTERS-MARK-II: the week's two in place of any its stand drew as an elite (RAID5's leader's law) - a mate's screen reads the mark off them",
     "tests": [
       "test/scenes/huntersmark2_wire.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "HUNTERS-MARK-II-the-mark-keeps-the-elite-kit",
     "file": "src/scenes/huntersMark.js",
-    "old": "    withdrawEliteLoot(e);   // HUNTERS-MARK-II: an elite its stand rolled keeps no elite's pieces - a mark is never kit",
-    "new": "    ;",
+    "old": "    withdrawEliteLoot(e); // HUNTERS-MARK-II: an elite its stand rolled keeps no elite's pieces - a mark is never kit\n    e.bossTraits = undefined;",
+    "new": "    e.bossTraits = undefined;",
     "tests": [
       "test/scenes/huntersmark2_wire.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "HUNTERS-MARK-II-the-record-never-kept",
     "file": "src/systems/eliteFoes.js",
-    "old": "  _eliteLaid.set(entity, laid);",
-    "new": "  ;",
+    "old": "  _eliteLaid.set(entity, laid);\n  entity.items.push(...laid);",
+    "new": "  entity.items.push(...laid);",
     "tests": [
       "test/scenes/huntersmark2_wire.test.js"
     ]

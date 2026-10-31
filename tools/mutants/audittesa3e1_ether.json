@@ -1,65 +1,65 @@
 [
- {
-  "name": "E1-4-ether-the-isle-shape-dropped",
-  "file": "src/world/etherWatersBake.js",
-  "old": "    return basis ? isleRect(basis, isle) : { xMin: r[0], xMax: r[1], yMin: r[2], yMax: r[3] };",
-  "new": "    return { xMin: r[0], xMax: r[1], yMin: r[2], yMax: r[3] };",
-  "tests": [
-   "test/world/audittesa3e1_ether.test.js"
-  ]
- },
- {
-  "name": "E1-4-ether-another-id-seeding-it",
-  "file": "src/world/etherWatersBake.js",
-  "old": "  r = rectOfBasis(b, outlineOfBasis(b, etherPlaceId(isle)));",
-  "new": "  r = rectOfBasis(b, outlineOfBasis(b, etherPlaceId(isle) + 1));",
-  "tests": [
-   "test/world/audittesa3e1_ether.test.js"
-  ]
- },
- {
-  "name": "E1-4-ether-every-basis-none",
-  "file": "src/world/etherWatersBake.js",
-  "old": "return [r.xMin, r.xMax, r.yMin, r.yMax, basisIndex(r.shape?.basis ?? null)];",
-  "new": "return [r.xMin, r.xMax, r.yMin, r.yMax, basisIndex(null)];",
-  "tests": [
-   "test/world/audittesa3e1_ether.test.js"
-  ]
- },
- {
-  "name": "E1-4-ether-a-bit-packed-wrong",
-  "file": "src/world/etherWatersBake.js",
-  "old": "for (let i = 0; i < a.length; i++) if (a[i]) bits[i >> 3] |= 1 << (i & 7);",
-  "new": "for (let i = 0; i < a.length; i++) if (a[i]) bits[i >> 3] |= 1 << ((i + 1) & 7);",
-  "tests": [
-   "test/world/audittesa3e1_ether.test.js"
-  ]
- },
- {
-  "name": "E1-4-ether-the-basis-under-a-fixed-seed",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "  const out = outlineOfBasis(basis, (dfLocation.mapTableData?.mapId ?? 0) >>> 0);",
-  "new": "  const out = outlineOfBasis(basis, 0);",
-  "tests": [
-   "test/world/audittesa3e1_ether.test.js"
-  ]
- },
- {
-  "name": "E1-4-ether-the-rect-uncut-by-the-outline",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "    if (px < 0 || py < 0 || px >= D || py >= D || !shape[px + py * D]) continue;",
-  "new": "    if (px < 0 || py < 0 || px >= D || py >= D) continue;",
-  "tests": [
-   "test/world/audittesa3e1_ether.test.js"
-  ]
- },
- {
-  "name": "E1-4-ether-the-stamp-unread",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "      if (ground[tx][(T - 1) - ty].textureRecord < GROUND_RECORD_LIMIT) stamp[(by * T + ty + SHAPE_PAD) * PW + bx * T + tx + SHAPE_PAD] = 1;",
-  "new": "      if (ground[tx][(T - 1) - ty].textureRecord < GROUND_RECORD_LIMIT) stamp[(by * T + ty + SHAPE_PAD) * PW + bx * T + tx + SHAPE_PAD + 1] = 1;",
-  "tests": [
-   "test/world/audittesa3e1_ether.test.js"
-  ]
- }
+  {
+    "name": "E1-4-ether-the-isle-shape-dropped",
+    "file": "src/world/etherWatersBake.js",
+    "old": "    return basis ? isleRect(basis, isle) : { xMin: r[0], xMax: r[1], yMin: r[2], yMax: r[3] };",
+    "new": "    return { xMin: r[0], xMax: r[1], yMin: r[2], yMax: r[3] };",
+    "tests": [
+      "test/world/audittesa3e1_ether.test.js"
+    ]
+  },
+  {
+    "name": "E1-4-ether-another-id-seeding-it",
+    "file": "src/world/etherWatersBake.js",
+    "old": "  r = rectOfBasis(b, outlineOfBasis(b, etherPlaceId(isle)));",
+    "new": "  r = rectOfBasis(b, outlineOfBasis(b, etherPlaceId(isle) + 1));",
+    "tests": [
+      "test/world/audittesa3e1_ether.test.js"
+    ]
+  },
+  {
+    "name": "E1-4-ether-every-basis-none",
+    "file": "src/world/etherWatersBake.js",
+    "old": "      return [r.xMin, r.xMax, r.yMin, r.yMax, basisIndex(r.shape?.basis ?? null)];",
+    "new": "      return [r.xMin, r.xMax, r.yMin, r.yMax, basisIndex(null)];",
+    "tests": [
+      "test/world/audittesa3e1_ether.test.js"
+    ]
+  },
+  {
+    "name": "E1-4-ether-a-bit-packed-wrong",
+    "file": "src/world/etherWatersBake.js",
+    "old": "    for (let i = 0; i < a.length; i++) if (a[i]) bits[i >> 3] |= 1 << (i & 7);",
+    "new": "    for (let i = 0; i < a.length; i++) if (a[i]) bits[i >> 3] |= 1 << ((i + 1) & 7);",
+    "tests": [
+      "test/world/audittesa3e1_ether.test.js"
+    ]
+  },
+  {
+    "name": "E1-4-ether-the-basis-under-a-fixed-seed",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "  const out = outlineOfBasis(basis, (dfLocation.mapTableData?.mapId ?? 0) >>> 0);",
+    "new": "  const out = outlineOfBasis(basis, 0);",
+    "tests": [
+      "test/world/audittesa3e1_ether.test.js"
+    ]
+  },
+  {
+    "name": "E1-4-ether-the-rect-uncut-by-the-outline",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "    if (px < 0 || py < 0 || px >= D || py >= D || !shape[px + py * D]) continue;",
+    "new": "    if (px < 0 || py < 0 || px >= D || py >= D) continue;",
+    "tests": [
+      "test/world/audittesa3e1_ether.test.js"
+    ]
+  },
+  {
+    "name": "E1-4-ether-the-stamp-unread",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "      if (ground[tx][(T - 1) - ty].textureRecord < GROUND_RECORD_LIMIT) stamp[(by * T + ty + SHAPE_PAD) * PW + bx * T + tx + SHAPE_PAD] = 1;",
+    "new": "      if (ground[tx][(T - 1) - ty].textureRecord < GROUND_RECORD_LIMIT) stamp[(by * T + ty + SHAPE_PAD) * PW + bx * T + tx + SHAPE_PAD + 1] = 1;",
+    "tests": [
+      "test/world/audittesa3e1_ether.test.js"
+    ]
+  }
 ]

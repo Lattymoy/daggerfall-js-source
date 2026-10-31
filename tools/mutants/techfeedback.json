@@ -2,8 +2,8 @@
   {
     "name": "TECH-BACKSTAB-unread",
     "file": "src/combat/playerWeapon.js",
-    "old": "      const back = backstabOf(foe) || (techOn(foe) ? techniqueBackstab(tb, playerCombat, foe) : 0);",
-    "new": "      const back = backstabOf(foe);",
+    "old": "      const back = backstabOf(foe) || (techOn(foe) ? techniqueBackstab(tb, playerCombat, foe) : 0); // TECH-BACKSTAB: its back was to me at the press",
+    "new": "      const back = backstabOf(foe); // TECH-BACKSTAB: its back was to me at the press",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "TECH-BACKSTAB-leaf-blind",
     "file": "src/combat/technique/techniqueBlow.js",
-    "old": "(_backstab && blow?.backs?.has?.(foe) ? _backstab(player, foe) : 0)",
-    "new": "(_backstab && false ? _backstab(player, foe) : 0)",
+    "old": "export const techniqueBackstab = (blow, player, foe) =>\n  _backstab && blow?.backs?.has?.(foe) ? _backstab(player, foe) : 0;",
+    "new": "export const techniqueBackstab = (blow, player, foe) => (_backstab && false ? _backstab(player, foe) : 0);",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "TECH-BACKSTAB-swing-unread",
     "file": "src/combat/techniques.js",
-    "old": "{ use, backs: backsAt(ctx.cam?.feet) }",
-    "new": "{ use }",
+    "old": "    const blow = swingBlow(hand.id, hand.value, ctx.cam, { use, backs: backsAt(ctx.cam?.feet) }); // TECH-BACKSTAB: read at the press",
+    "new": "    const blow = swingBlow(hand.id, hand.value, ctx.cam, { use }); // TECH-BACKSTAB: read at the press",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "TECH-BACKSTAB-landing-drops",
     "file": "src/combat/techniques.js",
-    "old": "{ target: a.foe, use: a.use, backs: a.backs }",
-    "new": "{ target: a.foe, use: a.use }",
+    "old": "            ? { target: a.foe, use: a.use, backs: a.backs }",
+    "new": "            ? { target: a.foe, use: a.use }",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "TECH-BACKSTAB-player-body",
     "file": "src/combat/techniques.js",
-    "old": "f.ai?.feet && !playerBody(f) && isBackFacing(",
-    "new": "f.ai?.feet && isBackFacing(",
+    "old": "    if (f && !f.dead && f.ai?.feet && !playerBody(f) && isBackFacing(f.ai.yaw ?? 0, f.ai.feet, at))\n      (out ??= new Set()).add(f);",
+    "new": "    if (f && !f.dead && f.ai?.feet && isBackFacing(f.ai.yaw ?? 0, f.ai.feet, at)) (out ??= new Set()).add(f);",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "TECH-CANCEL-gate-kept",
     "file": "src/combat/techniques.js",
-    "old": "  if (!ctx.ready || machineGunBusy(pw.machine)) return true;",
-    "new": "  if (!ctx.ready || machineGunBusy(pw.machine) || pw.machine?.state !== 'Idle') return true;",
+    "old": "  if (!ctx.ready || machineGunBusy(pw.machine)) return true; // AUDIT TECH-FEEDBACK II F2: a gun's shot and reload still hold it",
+    "new": "  if (!ctx.ready || machineGunBusy(pw.machine) || pw.machine?.state !== 'Idle') return true; // AUDIT TECH-FEEDBACK II F2: a gun's shot and reload still hold it",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "TECH-KEY2-reads-line",
     "file": "src/combat/techniques.js",
-    "old": "export const handOfKey = (key, entity, pw) => (key === 2 ?",
-    "new": "export const handOfKey = (key, entity, pw) => (key === 3 ?",
+    "old": "  key === 2 ? signatureInHand(entity, pw, techniqueItem(entity, pw)) : techniqueInHand(entity, pw);",
+    "new": "  key === 3 ? signatureInHand(entity, pw, techniqueItem(entity, pw)) : techniqueInHand(entity, pw);",
     "tests": [
       "test/systems/martial_paths.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "TECH-KEY2-refusal-unsaid",
     "file": "src/combat/techniques.js",
-    "old": "  if (!hand && key === 2) return noSignatureText();",
-    "new": "  if (!hand && key === 2) return true;",
+    "old": "  if (!hand && key === 2) return noSignatureText(); // TECH-KEY2: no path held, or the weapon is not one of its pair",
+    "new": "  if (!hand && key === 2) return true; // TECH-KEY2: no path held, or the weapon is not one of its pair",
     "tests": [
       "test/systems/martial_paths.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "AUDIT-TECH-FEEDBACK-F1-bow-cut-undrawn",
     "file": "src/characters/weaponStates.js",
-    "old": "m.frame = m.isBow && m.bowIdleDrawn ? BOW_DRAWN_HOLD_FRAME : 0; m.ticks = 0;",
-    "new": "m.frame = 0; m.ticks = 0;",
+    "old": "  m.frame = m.isBow && m.bowIdleDrawn ? BOW_DRAWN_HOLD_FRAME : 0;",
+    "new": "  m.frame = 0;",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "AUDIT-TECH-FEEDBACK-F2-refused-strike-keeps-cut",
     "file": "src/combat/playerWeapon.js",
-    "old": "{ if (was) Object.assign(this.machine, was); return false; }",
-    "new": "{ return false; }",
+    "old": "      if (was) Object.assign(this.machine, was);\n      return false;",
+    "new": "      return false;",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "AUDIT-TECH-FEEDBACK-F2-cut-skipped",
     "file": "src/combat/playerWeapon.js",
-    "old": "    const was = machineCut(this.machine);\n",
-    "new": "    const was = null;\n",
+    "old": "    const was = machineCut(this.machine);",
+    "new": "    const was = null;",
     "tests": [
       "test/systems/tech1_runner.test.js",
       "test/scenes/tech1_hosts.test.js"
@@ -183,8 +183,8 @@
   {
     "name": "TECH-CANCEL-gun-reload-waived",
     "file": "src/characters/weaponStates.js",
-    "old": "  if (m.ranged && !m.isBow) return null;",
-    "new": "  if (false) return null;",
+    "old": "  if (m.ranged && !m.isBow) return null; // a gun's shot and its reload stand (AUDIT PISTOL-PORT C1: a technique waits for them)",
+    "new": "  if (false) return null; // a gun's shot and its reload stand (AUDIT PISTOL-PORT C1: a technique waits for them)",
     "tests": [
       "test/systems/tech1_runner.test.js",
       "test/combat/gun/pistolport_audit.test.js"
@@ -194,8 +194,8 @@
   {
     "name": "AUDIT-TECH-FEEDBACK-II-F1-flight-from-landing",
     "file": "src/combat/techniques.js",
-    "old": "  const backs = backsAt(from), foe = target.foe;",
-    "new": "  const backs = backsAt(target.point), foe = target.foe;",
+    "old": "  const backs = backsAt(from),",
+    "new": "  const backs = backsAt(target.point),",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ],
@@ -204,8 +204,8 @@
   {
     "name": "AUDIT-TECH-FEEDBACK-II-F1-behind-dropped",
     "file": "src/combat/techniques.js",
-    "old": "backs: behind ? (backs ?? new Set()).add(foe) : backs };",
-    "new": "backs };",
+    "old": "    backs: behind ? (backs ?? new Set()).add(foe) : backs,",
+    "new": "    backs,",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ],
@@ -214,8 +214,8 @@
   {
     "name": "AUDIT-TECH-FEEDBACK-II-F2-gun-gate-dropped",
     "file": "src/combat/techniques.js",
-    "old": "  if (!ctx.ready || machineGunBusy(pw.machine)) return true;",
-    "new": "  if (!ctx.ready) return true;",
+    "old": "  if (!ctx.ready || machineGunBusy(pw.machine)) return true; // AUDIT TECH-FEEDBACK II F2: a gun's shot and reload still hold it",
+    "new": "  if (!ctx.ready) return true; // AUDIT TECH-FEEDBACK II F2: a gun's shot and reload still hold it",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ],
@@ -224,8 +224,8 @@
   {
     "name": "AUDIT-TECH-FEEDBACK-II-F3-launch-uncut",
     "file": "src/combat/techniques.js",
-    "old": "  ctx.cutSwing?.();   // AUDIT TECH-FEEDBACK II F3",
-    "new": "  // AUDIT TECH-FEEDBACK II F3",
+    "old": "  ctx.cutSwing?.(); // AUDIT TECH-FEEDBACK II F3: the swing in flight is cut at the launch - its hit never lands mid-air",
+    "new": "  // AUDIT TECH-FEEDBACK II F3: the swing in flight is cut at the launch - its hit never lands mid-air",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ],

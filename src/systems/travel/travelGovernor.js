@@ -59,9 +59,11 @@ export function createLoadGovernor({ max = 100 } = {}) {
   let ceiling = max;
   let dirty = 0;
   let clear = 0;
-  let settling = false;   // AUDIT DEEP2 B-2: a cut made, no climb since - the next cut waits TV_GOV_SETTLE_S
+  let settling = false; // AUDIT DEEP2 B-2: a cut made, no climb since - the next cut waits TV_GOV_SETTLE_S
   return {
-    get ceiling() { return ceiling; },
+    get ceiling() {
+      return ceiling;
+    },
     /**
      * One frame: `dt` REAL seconds (the clock the player waits on, not the accelerated one), `unbuilt` the pixels in
      * the view's reach not yet built, `requested` the spinner's rate. Returns the rate the clock may run at.
@@ -70,25 +72,46 @@ export function createLoadGovernor({ max = 100 } = {}) {
       const want = Math.max(TV_GOV_FLOOR, requested);
       // OW-LEAD: handed the pixels owed and where the traveller stands, the cap is how NEAR the nearest of them is - the
       // halving below is what it replaces on the host (and still answers a bare count)
-      if (owed) { ceiling = max; dirty = 0; clear = 0; settling = false; return Math.min(want, leadCap(owedMetres(feet, owed), speedMps)); }
+      if (owed) {
+        ceiling = max;
+        dirty = 0;
+        clear = 0;
+        settling = false;
+        return Math.min(want, leadCap(owedMetres(feet, owed), speedMps));
+      }
       if (unbuilt > 0) {
         clear = 0;
         dirty += dt;
         // AUDIT DEEP T2-2: nothing is learned at walking pace - streaming's ordinary lag at x1 taught a ceiling of 1, and
         // the next journey's x40 then climbed from it for half a minute of clean view
-        if (dirty >= (settling ? TV_GOV_SETTLE_S : TV_GOV_HOLD_S)) { if (want > TV_GOV_FLOOR) { ceiling = stepDown(Math.min(ceiling, want) / 2); settling = true; } dirty = 0; }
+        if (dirty >= (settling ? TV_GOV_SETTLE_S : TV_GOV_HOLD_S)) {
+          if (want > TV_GOV_FLOOR) {
+            ceiling = stepDown(Math.min(ceiling, want) / 2);
+            settling = true;
+          }
+          dirty = 0;
+        }
       } else {
         dirty = 0;
         if (ceiling < max) {
           clear += dt;
           // AUDIT DEEP T2-8: up the spinner's own steps - 1, 5, 10, 15 (it went 1, 6, 11)
-          if (clear >= TV_GOV_CLEAR_S) { ceiling = Math.min(max, Math.floor(ceiling / TV_GOV_STEP) * TV_GOV_STEP + TV_GOV_STEP); clear = 0; settling = false; }
+          if (clear >= TV_GOV_CLEAR_S) {
+            ceiling = Math.min(max, Math.floor(ceiling / TV_GOV_STEP) * TV_GOV_STEP + TV_GOV_STEP);
+            clear = 0;
+            settling = false;
+          }
         }
       }
       return Math.min(want, ceiling);
     },
     /** A new journey, or the view gone: the ceiling forgets. */
-    reset() { ceiling = max; dirty = 0; clear = 0; settling = false; },
+    reset() {
+      ceiling = max;
+      dirty = 0;
+      clear = 0;
+      settling = false;
+    },
   };
 }
 
@@ -116,7 +139,11 @@ export function unbuiltAround(center, radius, isBuilt, out = null) {
   if (out) out.length = 0;
   let n = 0;
   for (let y = center.y - radius; y <= center.y + radius; y++) {
-    for (let x = center.x - radius; x <= center.x + radius; x++) if (!isBuilt(x, y)) { n++; out?.push([x, y]); }
+    for (let x = center.x - radius; x <= center.x + radius; x++)
+      if (!isBuilt(x, y)) {
+        n++;
+        out?.push([x, y]);
+      }
   }
   return n;
 }
@@ -139,8 +166,8 @@ export function unbuiltAround(center, radius, isBuilt, out = null) {
  *  the builds are quick and, where they are slow (a slow machine), held a deep queue off the traveller - no hole met, a
  *  few seconds at walking pace where 2 had most of a minute. */
 export const TV_GOV_LEAD_S = 4;
-const PIXEL_N = 32768;   // native units a map pixel (streamingWorld.js NATIVE_PIXEL)
-const N_PER_M = PIXEL_N / 819.2;   // native units a metre
+const PIXEL_N = 32768; // native units a map pixel (streamingWorld.js NATIVE_PIXEL)
+const N_PER_M = PIXEL_N / 819.2; // native units a metre
 /** Metres from `feet` (native world {x, z}, StreamingWorldState.worldCoords) to the nearest square of `owed` ([x, y] map
  *  pixels; y counts north from 499, streamingWorld.js worldCoordToMapPixel): 0 inside one, Infinity with none. */
 export function owedMetres(feet, owed) {
@@ -148,8 +175,10 @@ export function owedMetres(feet, owed) {
   if (!feet) return 0;
   let best = Infinity;
   for (const [x, y] of owed) {
-    const x0 = x * PIXEL_N, z0 = (499 - y) * PIXEL_N;
-    const dx = Math.max(x0 - feet.x, 0, feet.x - (x0 + PIXEL_N)), dz = Math.max(z0 - feet.z, 0, feet.z - (z0 + PIXEL_N));
+    const x0 = x * PIXEL_N,
+      z0 = (499 - y) * PIXEL_N;
+    const dx = Math.max(x0 - feet.x, 0, feet.x - (x0 + PIXEL_N)),
+      dz = Math.max(z0 - feet.z, 0, feet.z - (z0 + PIXEL_N));
     best = Math.min(best, Math.hypot(dx, dz));
   }
   return best / N_PER_M;

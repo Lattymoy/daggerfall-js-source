@@ -30,8 +30,8 @@ import { tierColour } from '../render/spoilsGlow.js';
 import { modSetting } from './modSettings.js';
 import { TEMPLATES, isPotion } from './useItem.js';
 import { CANNOT_REMOVE_ITEM_TEXT } from './createItem.js';
-import { insideUnitCircle } from '../world/passiveFish.js';   // Random.insideUnitCircle's one home
-import { rangeFloat } from './unleveledLoot.js';   // Random.Range(float, float)'s
+import { insideUnitCircle } from '../world/passiveFish.js'; // Random.insideUnitCircle's one home
+import { rangeFloat } from './unleveledLoot.js'; // Random.Range(float, float)'s
 import { planStore, applyTransfer, isKeptSpellbook, SPELLBOOK_KEPT_TEXT } from './item/itemTransfer.js';
 import { lockRefuses, lockedText } from './item/itemLock.js';
 import { boundRefusesPut, boundText, isPackOnly, packOnlyText } from './item/itemBound.js';
@@ -41,18 +41,50 @@ import { itemLongName } from './item/itemInfo.js';
 export const PHYSICAL_ITEMS_VENDOR = 'physical-items';
 
 /** PhysicalItemManager.ItemCategories (.cctor [IL_7dac]) - the sixteen, in the mod's order (the settings' order). */
-export const PI_CATEGORIES = Object.freeze(['Weapons', 'Arrows', 'Armor', 'Clothing', 'Ingredients', 'Gold', 'Potions', 'Books',
-  'Gems', 'Jewellery', 'Maps', 'Magic Items', 'Religious Items', 'Quest Items', 'Transportation', 'Other Items']);
+export const PI_CATEGORIES = Object.freeze([
+  'Weapons',
+  'Arrows',
+  'Armor',
+  'Clothing',
+  'Ingredients',
+  'Gold',
+  'Potions',
+  'Books',
+  'Gems',
+  'Jewellery',
+  'Maps',
+  'Magic Items',
+  'Religious Items',
+  'Quest Items',
+  'Transportation',
+  'Other Items',
+]);
 
 /** GetItemCategory's switch [IL_2905] over DFU's ItemGroups, by the port's group names (systems/loot/loot.js). A group the
  *  switch does not name - Drugs, UselessItems1, Furniture, UselessItems2, Paintings, Deeds - is Other Items. */
 export const PI_GROUP_CATEGORY = Object.freeze({
-  Armor: 'Armor', Weapons: 'Weapons', MagicItems: 'Magic Items', Artifacts: 'Magic Items',
-  MensClothing: 'Clothing', WomensClothing: 'Clothing', Books: 'Books', ReligiousItems: 'Religious Items', Maps: 'Maps',
-  Gems: 'Gems', PlantIngredients1: 'Ingredients', PlantIngredients2: 'Ingredients', CreatureIngredients1: 'Ingredients',
-  CreatureIngredients2: 'Ingredients', CreatureIngredients3: 'Ingredients', MiscellaneousIngredients1: 'Ingredients',
-  MetalIngredients: 'Ingredients', MiscellaneousIngredients2: 'Ingredients', Transportation: 'Transportation',
-  Jewellery: 'Jewellery', QuestItems: 'Quest Items', Currency: 'Gold',
+  Armor: 'Armor',
+  Weapons: 'Weapons',
+  MagicItems: 'Magic Items',
+  Artifacts: 'Magic Items',
+  MensClothing: 'Clothing',
+  WomensClothing: 'Clothing',
+  Books: 'Books',
+  ReligiousItems: 'Religious Items',
+  Maps: 'Maps',
+  Gems: 'Gems',
+  PlantIngredients1: 'Ingredients',
+  PlantIngredients2: 'Ingredients',
+  CreatureIngredients1: 'Ingredients',
+  CreatureIngredients2: 'Ingredients',
+  CreatureIngredients3: 'Ingredients',
+  MiscellaneousIngredients1: 'Ingredients',
+  MetalIngredients: 'Ingredients',
+  MiscellaneousIngredients2: 'Ingredients',
+  Transportation: 'Transportation',
+  Jewellery: 'Jewellery',
+  QuestItems: 'Quest Items',
+  Currency: 'Gold',
 });
 
 /** GetItemCategory [IL_28e4]: null is Other Items; a potion is Potions before its group is read; a Weapons arrow (template
@@ -70,25 +102,62 @@ export function itemCategory(item) {
 export const PI_DEFAULT_HEIGHT = Object.freeze({ weapon: 0.8, arrow: 0.32, armor: 0.65, clothing: 0.52, other: 0.4 });
 export function defaultWorldHeight(item) {
   switch (itemCategory(item)) {
-    case 'Weapons': return PI_DEFAULT_HEIGHT.weapon;
-    case 'Arrows': return PI_DEFAULT_HEIGHT.arrow;
-    case 'Armor': return PI_DEFAULT_HEIGHT.armor;
-    case 'Clothing': return PI_DEFAULT_HEIGHT.clothing;
-    default: return PI_DEFAULT_HEIGHT.other;
+    case 'Weapons':
+      return PI_DEFAULT_HEIGHT.weapon;
+    case 'Arrows':
+      return PI_DEFAULT_HEIGHT.arrow;
+    case 'Armor':
+      return PI_DEFAULT_HEIGHT.armor;
+    case 'Clothing':
+      return PI_DEFAULT_HEIGHT.clothing;
+    default:
+      return PI_DEFAULT_HEIGHT.other;
   }
 }
 
 /** ApplySettings [IL_2f73]: the Weapon Sizes and Armor Sizes keys are DFU's Weapons and Armor enum names with `_` read as
  *  a space, and both pauldrons answer to the one "Pauldrons" key. By template index (systems/loot/loot.js's numbering). */
-export const PI_WEAPON_SIZE_KEYS = Object.freeze({ 113: 'Dagger', 114: 'Tanto', 115: 'Staff', 116: 'Shortsword', 117: 'Wakazashi',
-  118: 'Broadsword', 119: 'Saber', 120: 'Longsword', 121: 'Katana', 122: 'Claymore', 123: 'Dai Katana', 124: 'Mace',
-  125: 'Flail', 126: 'Warhammer', 127: 'Battle Axe', 128: 'War Axe', 129: 'Short Bow', 130: 'Long Bow', 131: 'Arrow' });
-export const PI_ARMOR_SIZE_KEYS = Object.freeze({ 102: 'Cuirass', 103: 'Gauntlets', 104: 'Greaves', 105: 'Pauldrons',
-  106: 'Pauldrons', 107: 'Helm', 108: 'Boots', 109: 'Buckler', 110: 'Round Shield', 111: 'Kite Shield', 112: 'Tower Shield' });
+export const PI_WEAPON_SIZE_KEYS = Object.freeze({
+  113: 'Dagger',
+  114: 'Tanto',
+  115: 'Staff',
+  116: 'Shortsword',
+  117: 'Wakazashi',
+  118: 'Broadsword',
+  119: 'Saber',
+  120: 'Longsword',
+  121: 'Katana',
+  122: 'Claymore',
+  123: 'Dai Katana',
+  124: 'Mace',
+  125: 'Flail',
+  126: 'Warhammer',
+  127: 'Battle Axe',
+  128: 'War Axe',
+  129: 'Short Bow',
+  130: 'Long Bow',
+  131: 'Arrow',
+});
+export const PI_ARMOR_SIZE_KEYS = Object.freeze({
+  102: 'Cuirass',
+  103: 'Gauntlets',
+  104: 'Greaves',
+  105: 'Pauldrons',
+  106: 'Pauldrons',
+  107: 'Helm',
+  108: 'Boots',
+  109: 'Buckler',
+  110: 'Round Shield',
+  111: 'Kite Shield',
+  112: 'Tower Shield',
+});
 
 /** ApplySettings' clamps: a category's size 0.1..1.5 m [IL_2f0e], an override the same when above 0 [IL_302a] (0
  *  inherits), Impulse Strength 0..400 percent [IL_2e73], a NaN or infinite read the shipped value. */
-export const PI_SIZE_MIN = 0.1, PI_SIZE_MAX = 1.5, PI_IMPULSE_MAX_PCT = 400, PI_IMPULSE_DEFAULT = 2;
+export const PI_SIZE_MIN = 0.1,
+  PI_SIZE_MAX = 1.5,
+  PI_IMPULSE_MAX_PCT = 400,
+  PI_IMPULSE_DEFAULT = 2;
 const finite = (v) => typeof v === 'number' && Number.isFinite(v);
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
@@ -101,7 +170,8 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 export function readPhysicalItemsSettings(read = (key) => modSetting(PHYSICAL_ITEMS_VENDOR, key)) {
   const pct = read('Enemy Loot.Impulse Strength');
   // [IL_2e73]: clamped first (an infinity clamps to an end), and only a NaN reads the shipped 2 (AUDIT PI1 I10)
-  const impulse = typeof pct === 'number' && !Number.isNaN(pct) ? clamp(pct, 0, PI_IMPULSE_MAX_PCT) / 100 : PI_IMPULSE_DEFAULT;
+  const impulse =
+    typeof pct === 'number' && !Number.isNaN(pct) ? clamp(pct, 0, PI_IMPULSE_MAX_PCT) / 100 : PI_IMPULSE_DEFAULT;
   const disabled = new Set();
   const heights = new Map();
   for (const c of PI_CATEGORIES) {
@@ -110,7 +180,10 @@ export function readPhysicalItemsSettings(read = (key) => modSetting(PHYSICAL_IT
     if (finite(h)) heights.set(c, clamp(h, PI_SIZE_MIN, PI_SIZE_MAX));
   }
   const overrides = new Map();
-  for (const [section, group, table] of [['Weapon Sizes', 'Weapons', PI_WEAPON_SIZE_KEYS], ['Armor Sizes', 'Armor', PI_ARMOR_SIZE_KEYS]]) {
+  for (const [section, group, table] of [
+    ['Weapon Sizes', 'Weapons', PI_WEAPON_SIZE_KEYS],
+    ['Armor Sizes', 'Armor', PI_ARMOR_SIZE_KEYS],
+  ]) {
     for (const name of new Set(Object.values(table))) {
       const v = read(`${section}.${name}`);
       if (finite(v) && v > 0) overrides.set(`${group}:${name}`, clamp(v, PI_SIZE_MIN, PI_SIZE_MAX));
@@ -131,7 +204,8 @@ export function worldHeight(item, settings = null) {
 }
 
 /** Whether a body's item stands out of it - the switch, and its category left on (ReconcileCorpseGroup [IL_4bcd]). */
-export const showsOnCorpse = (item, settings) => !!item && settings?.enemyDrops !== false && !settings?.disabled?.has(itemCategory(item));
+export const showsOnCorpse = (item, settings) =>
+  !!item && settings?.enemyDrops !== false && !settings?.disabled?.has(itemCategory(item));
 
 /** GetVisibleArtworkUV [IL_0d39]: a texel is the item's at alpha 128 and over. */
 export const PI_ALPHA_VISIBLE = 128;
@@ -141,11 +215,17 @@ export const PI_ALPHA_VISIBLE = 128;
  * @param {ArrayLike<number>} colors @param {number} width @param {number} height
  */
 export function visibleBox(colors, width, height) {
-  let x0 = width, y0 = height, x1 = -1, y1 = -1;
+  let x0 = width,
+    y0 = height,
+    x1 = -1,
+    y1 = -1;
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       if (colors[(y * width + x) * 4 + 3] < PI_ALPHA_VISIBLE) continue;
-      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      if (x < x0) x0 = x;
+      if (x > x1) x1 = x;
+      if (y < y0) y0 = y;
+      if (y > y1) y1 = y;
     }
   }
   if (x1 < x0 || y1 < y0) return { x: 0, y: 0, w: width, h: height };
@@ -160,10 +240,15 @@ export function hasVisible(colors) {
 /** The picture cut to that box (RGBA, the same row order). Pure. AUDIT PI1 L12: a typed array's rows by view. */
 export function cropTo(colors, width, box) {
   const out = new Uint8ClampedArray(box.w * box.h * 4);
-  const view = typeof (/** @type {any} */ (colors)).subarray === 'function';
+  const view = typeof (/** @type {any} */ (colors).subarray) === 'function';
   for (let y = 0; y < box.h; y++) {
     const s = ((box.y + y) * width + box.x) * 4;
-    out.set(view ? /** @type {any} */ (colors).subarray(s, s + box.w * 4) : Array.prototype.slice.call(colors, s, s + box.w * 4), y * box.w * 4);
+    out.set(
+      view
+        ? /** @type {any} */ (colors).subarray(s, s + box.w * 4)
+        : Array.prototype.slice.call(colors, s, s + box.w * 4),
+      y * box.w * 4,
+    );
   }
   return out;
 }
@@ -183,18 +268,34 @@ export function bleedEdges(c, w, h, passes = 2) {
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
         if (owned[y * w + x]) continue;
-        let r = 0, g = 0, b = 0, n = 0;
+        let r = 0,
+          g = 0,
+          b = 0,
+          n = 0;
         for (let dy = -1; dy <= 1; dy++) {
           for (let dx = -1; dx <= 1; dx++) {
-            const X = x + dx, Y = y + dy;
-            if ((dx || dy) && X >= 0 && Y >= 0 && X < w && Y < h && owned[Y * w + X]) { const j = (Y * w + X) * 4; r += c[j]; g += c[j + 1]; b += c[j + 2]; n++; }
+            const X = x + dx,
+              Y = y + dy;
+            if ((dx || dy) && X >= 0 && Y >= 0 && X < w && Y < h && owned[Y * w + X]) {
+              const j = (Y * w + X) * 4;
+              r += c[j];
+              g += c[j + 1];
+              b += c[j + 2];
+              n++;
+            }
           }
         }
         if (n) fill.push(y * w + x, r / n, g / n, b / n);
       }
     }
     if (!fill.length) break;
-    for (let k = 0; k < fill.length; k += 4) { const i = fill[k]; c[i * 4] = fill[k + 1]; c[i * 4 + 1] = fill[k + 2]; c[i * 4 + 2] = fill[k + 3]; owned[i] = 1; }
+    for (let k = 0; k < fill.length; k += 4) {
+      const i = fill[k];
+      c[i * 4] = fill[k + 1];
+      c[i * 4 + 1] = fill[k + 2];
+      c[i * 4 + 2] = fill[k + 3];
+      owned[i] = 1;
+    }
   }
   return c;
 }
@@ -214,8 +315,12 @@ export const colliderDepth = (w, h) => Math.max(w, h * 0.4);
 export const PI_SCATTER = Object.freeze({ min: 0.45, max: 0.85, up: 0.65 });
 export function scatterOffset(rolls = Math.random) {
   let [x, y] = insideUnitCircle(rolls);
-  if (x * x + y * y < 1e-4) { x = 1; y = 0; }
-  const l = Math.hypot(x, y), r = rangeFloat(PI_SCATTER.min, PI_SCATTER.max, rolls);
+  if (x * x + y * y < 1e-4) {
+    x = 1;
+    y = 0;
+  }
+  const l = Math.hypot(x, y),
+    r = rangeFloat(PI_SCATTER.min, PI_SCATTER.max, rolls);
   return [(x / l) * r, PI_SCATTER.up, (y / l) * r];
 }
 /**
@@ -224,18 +329,28 @@ export function scatterOffset(rolls = Math.random) {
  * nudge (0.08 out and 0.08 up, unscaled). `rel` the item's place from the body. Answers the velocity [x, y, z]. Pure.
  * @param {number[]} rel @param {boolean} fresh @param {number} impulse @param {() => number} [rolls]
  */
-export const PI_LAUNCH = Object.freeze({ reach: 0.85, nudge: 0.08, nearShare: 0.75, wobble: 0.1, up: Object.freeze({ min: 0.7, max: 1.1 }) });
+export const PI_LAUNCH = Object.freeze({
+  reach: 0.85,
+  nudge: 0.08,
+  nearShare: 0.75,
+  wobble: 0.1,
+  up: Object.freeze({ min: 0.7, max: 1.1 }),
+});
 export function proxyLaunch(rel, fresh, impulse, rolls = Math.random) {
   const r = fresh ? PI_LAUNCH.reach : PI_LAUNCH.nudge;
-  let dx = rel[0], dz = rel[2];
+  let dx = rel[0],
+    dz = rel[2];
   if (dx * dx + dz * dz < 1e-4) [dx, dz] = insideUnitCircle(rolls);
   const l = Math.hypot(dx, dz) || 1;
-  dx /= l; dz /= l;
-  let hx = dx * r, hz = dz * r;
+  dx /= l;
+  dz /= l;
+  let hx = dx * r,
+    hz = dz * r;
   if (fresh) {
     const s = rangeFloat(r * PI_LAUNCH.nearShare, r, rolls);
     const [wx, wz] = insideUnitCircle(rolls);
-    hx = dx * s + wx * PI_LAUNCH.wobble; hz = dz * s + wz * PI_LAUNCH.wobble;
+    hx = dx * s + wx * PI_LAUNCH.wobble;
+    hz = dz * s + wz * PI_LAUNCH.wobble;
   }
   const up = fresh ? rangeFloat(PI_LAUNCH.up.min, PI_LAUNCH.up.max, rolls) : PI_LAUNCH.nudge;
   const k = fresh ? impulse : 1;
@@ -243,7 +358,14 @@ export function proxyLaunch(rel, fresh, impulse, rolls = Math.random) {
 }
 /** GetBatchSpreadCentre [IL_3fa4]: the spiral's centre stands this far ahead of the player (flat). GetBatchDropPosition
  *  [IL_4028]: ring i is 0.78 * sqrt(i) out at i * the golden angle, tried 256 times. */
-export const PI_SPIRAL = Object.freeze({ ahead: 1.1, ring: 0.78, golden: 2.399963140487671, tries: 256, lift: 0.025, overlap: 0.1 });
+export const PI_SPIRAL = Object.freeze({
+  ahead: 1.1,
+  ring: 0.78,
+  golden: 2.399963140487671,
+  tries: 256,
+  lift: 0.025,
+  overlap: 0.1,
+});
 /** AUDIT PI1 I3: a drop's footprint (FlushPendingDrops [IL_3b68]): `Mathf.Max(0.2, GetWorldHeight * 0.6)` - the radius
  *  each drop asks room for and leaves as its DropFootprint. */
 export const PI_FOOTPRINT = Object.freeze({ min: 0.2, share: 0.6 });
@@ -264,7 +386,8 @@ export function nearestFloor(hits, refY) {
   return best;
 }
 export const spiralPoint = (centre, i) => {
-  const r = i ? PI_SPIRAL.ring * Math.sqrt(i) : 0, a = i * PI_SPIRAL.golden;
+  const r = i ? PI_SPIRAL.ring * Math.sqrt(i) : 0,
+    a = i * PI_SPIRAL.golden;
   return [centre[0] + Math.cos(a) * r, centre[1], centre[2] + Math.sin(a) * r];
 };
 /**
@@ -276,7 +399,8 @@ export const spiralPoint = (centre, i) => {
  * @param {{ i: number }} next @param {Array<{ pos: number[], r: number }>} placed
  * @param {(p: number[]) => (number|null)} floorAt @param {(a: number[], b: number[]) => boolean} [clear]
  */
-export function spiralDrop(anchor, centre, radius, next, placed, floorAt, clear = () => true) {   // `radius` and each footprint's: dropRadius
+export function spiralDrop(anchor, centre, radius, next, placed, floorAt, clear = () => true) {
+  // `radius` and each footprint's: dropRadius
   for (let t = 0; t < PI_SPIRAL.tries; t++) {
     const p = spiralPoint(centre, next.i++);
     const y = floorAt(p);
@@ -299,25 +423,58 @@ export function spiralDrop(anchor, centre, radius, next, placed, floorAt, clear 
  * under 0.05 m/s (0.0025 squared) for half a second (Update [IL_1e0f], [IL_1e55]).
  */
 export const PI_BODY = Object.freeze({
-  gravity: 9.81, dt: 0.02, drag: 0.9, bounce: 0.35, bounceThreshold: 2,
-  dynamicGrip: (0.45 + 0.6) / 2, staticGrip: (0.55 + 0.6) / 2,
-  settleSq: 0.0025, settleS: 0.5, reach: 0.1, flightMaxS: 8,
+  gravity: 9.81,
+  dt: 0.02,
+  drag: 0.9,
+  bounce: 0.35,
+  bounceThreshold: 2,
+  dynamicGrip: (0.45 + 0.6) / 2,
+  staticGrip: (0.55 + 0.6) / 2,
+  settleSq: 0.0025,
+  settleS: 0.5,
+  reach: 0.1,
+  flightMaxS: 8,
 });
 /** FixedUpdate's shoulder [IL_1e94]: a body with the ground within its support and 0.15 m (TryFindGround [IL_1ed8]),
  *  slower than 0.65 m/s across and 0.5 m/s up or down, eases toward 0.45 m/s away from every item whose box its own
  *  (grown 0.08 m - OverlapBoxNonAlloc [IL_1f4a]) meets and lies within the two half-widths and 0.04 m across (x and z,
  *  [IL_2024]), at 1.5 m/s a second. */
-export const PI_SEPARATION = Object.freeze({ maxAcross: 0.65, maxUpDown: 0.5, pad: 0.04, query: 0.08, ground: 0.15, speed: 0.45, ease: 1.5 });
+export const PI_SEPARATION = Object.freeze({
+  maxAcross: 0.65,
+  maxUpDown: 0.5,
+  pad: 0.04,
+  query: 0.08,
+  ground: 0.15,
+  speed: 0.45,
+  ease: 1.5,
+});
 /** AUDIT PI1 L6: the ground probe starts this far above the foot - a surface above the item is never its floor (a table
  *  the item lies under, a bench beside it). */
 export const PI_PROBE_LIFT = 0.05;
 
 /** A body: its foot, its velocity, its box's half-extents across (x, z) and its height, whether it has settled. */
 export function makeBody(pos, vel = [0, 0, 0], half = [0.2, 0.2], h = 0.4) {
-  return { pos: [...pos], vel: [...vel], half: [...half], h, settled: false, quietFor: 0, t: 0, acc: 0, grounded: false, nearGround: false };
+  return {
+    pos: [...pos],
+    vel: [...vel],
+    half: [...half],
+    h,
+    settled: false,
+    quietFor: 0,
+    t: 0,
+    acc: 0,
+    grounded: false,
+    nearGround: false,
+  };
 }
 /** Settle a body where it stands (StartSettled [IL_1cf8]). */
-export function settleBody(b) { b.vel[0] = 0; b.vel[1] = 0; b.vel[2] = 0; b.settled = true; b.quietFor = 0; }
+export function settleBody(b) {
+  b.vel[0] = 0;
+  b.vel[1] = 0;
+  b.vel[2] = 0;
+  b.settled = true;
+  b.quietFor = 0;
+}
 
 /**
  * One fixed step. `ground(x, y, z)` answers the floor's height under a point (or null) - asked from just above the foot,
@@ -330,28 +487,41 @@ export function settleBody(b) { b.vel[0] = 0; b.vel[1] = 0; b.vel[2] = 0; b.sett
  */
 export function stepBody(b, ground, wall = null) {
   if (b.settled) return 'rest';
-  const B = PI_BODY, dt = B.dt;
+  const B = PI_BODY,
+    dt = B.dt;
   b.t += dt;
   b.vel[1] -= B.gravity * dt;
   const damp = 1 / (1 + B.drag * dt);
-  b.vel[0] *= damp; b.vel[1] *= damp; b.vel[2] *= damp;
+  b.vel[0] *= damp;
+  b.vel[1] *= damp;
+  b.vel[2] *= damp;
   let what = 'fly';
   // across: a wall stops the move and takes the speed into it back at the bounce
-  const sx = b.vel[0] * dt, sz = b.vel[2] * dt, run = Math.hypot(sx, sz);
+  const sx = b.vel[0] * dt,
+    sz = b.vel[2] * dt,
+    run = Math.hypot(sx, sz);
   if (run > 1e-9) {
     const dir = [sx / run, 0, sz / run];
     const hit = wall ? wall([b.pos[0], b.pos[1] + 0.1, b.pos[2]], dir, run + Math.max(b.half[0], b.half[1])) : null;
     if (finite(hit)) {
       const vn = b.vel[0] * dir[0] + b.vel[2] * dir[2];
       const back = vn >= B.bounceThreshold ? B.bounce * vn : 0;
-      b.vel[0] -= dir[0] * (vn + back); b.vel[2] -= dir[2] * (vn + back);
+      b.vel[0] -= dir[0] * (vn + back);
+      b.vel[2] -= dir[2] * (vn + back);
       what = 'bounce';
-    } else { b.pos[0] += sx; b.pos[2] += sz; }
+    } else {
+      b.pos[0] += sx;
+      b.pos[2] += sz;
+    }
   }
   // a ceiling over a rising item turns it back (AUDIT PI1 L6)
   if (b.vel[1] > 0 && wall) {
     const up = wall([b.pos[0], b.pos[1] + b.h, b.pos[2]], [0, 1, 0], b.vel[1] * dt);
-    if (finite(up)) { const vn = b.vel[1]; b.vel[1] = vn >= B.bounceThreshold ? -B.bounce * vn : 0; what = 'bounce'; }
+    if (finite(up)) {
+      const vn = b.vel[1];
+      b.vel[1] = vn >= B.bounceThreshold ? -B.bounce * vn : 0;
+      what = 'bounce';
+    }
   }
   // up and down: the floor under the foot, asked from just above it
   const floor = ground(b.pos[0], b.pos[1] + PI_PROBE_LIFT, b.pos[2]);
@@ -366,22 +536,32 @@ export function stepBody(b, ground, wall = null) {
     const across = Math.hypot(b.vel[0], b.vel[2]);
     if (across > 0) {
       const cut = Math.min(across, B.dynamicGrip * (vn + back));
-      b.vel[0] *= (across - cut) / across; b.vel[2] *= (across - cut) / across;
+      b.vel[0] *= (across - cut) / across;
+      b.vel[2] *= (across - cut) / across;
     }
     if (back > 0) what = 'bounce';
     b.grounded = back === 0;
   } else b.pos[1] = ny;
   // resting contact: the impulse above is the sliding grip under its own weight; a slide the static grip holds stands
-  if (b.grounded && Math.hypot(b.vel[0], b.vel[2]) <= B.staticGrip * B.gravity * dt) { b.vel[0] = 0; b.vel[2] = 0; }
+  if (b.grounded && Math.hypot(b.vel[0], b.vel[2]) <= B.staticGrip * B.gravity * dt) {
+    b.vel[0] = 0;
+    b.vel[2] = 0;
+  }
   // Update's settle: the ground in reach and the speed quiet for half a second
   const near = finite(floor) && b.pos[1] - /** @type {number} */ (floor) <= B.reach;
   b.nearGround = finite(floor) && b.pos[1] - /** @type {number} */ (floor) <= PI_SEPARATION.ground;
   const sq = b.vel[0] * b.vel[0] + b.vel[1] * b.vel[1] + b.vel[2] * b.vel[2];
   if (near && sq <= B.settleSq) {
     b.quietFor += dt;
-    if (b.quietFor >= B.settleS) { settleBody(b); return 'rest'; }
+    if (b.quietFor >= B.settleS) {
+      settleBody(b);
+      return 'rest';
+    }
   } else b.quietFor = 0;
-  if (b.t >= B.flightMaxS) { settleBody(b); return 'rest'; }   // the port's floor: a body still moving after 8 s stands (as the gate spew's SPEW_FLIGHT_MAX_S)
+  if (b.t >= B.flightMaxS) {
+    settleBody(b);
+    return 'rest';
+  } // the port's floor: a body still moving after 8 s stands (as the gate spew's SPEW_FLIGHT_MAX_S)
   return what;
 }
 /** Step a body through `dt` seconds of the fixed clock; answers 'rest' if it came to rest, 'bounce' if it bounced. */
@@ -418,26 +598,44 @@ export function shoulder(bodies, dt) {
   bodies.forEach((b, bi) => {
     if (b.settled || !b.nearGround) return;
     if (Math.hypot(b.vel[0], b.vel[2]) > S.maxAcross || Math.abs(b.vel[1]) > S.maxUpDown) return;
-    let px = 0, pz = 0;
-    const cx = cell(b.pos[0]), cz = cell(b.pos[2]);
+    let px = 0,
+      pz = 0;
+    const cx = cell(b.pos[0]),
+      cz = cell(b.pos[2]);
     for (let gx = cx - 1; gx <= cx + 1; gx++) {
       for (let gz = cz - 1; gz <= cz + 1; gz++) {
         for (const oi of grid.get(`${gx},${gz}`) ?? []) {
           if (oi === bi) continue;
           const o = bodies[oi];
-          if (Math.abs((b.pos[1] + b.h / 2) - (o.pos[1] + o.h / 2)) >= (b.h + o.h) / 2 + S.query) continue;
-          let dx = b.pos[0] - o.pos[0], dz = b.pos[2] - o.pos[2];
+          if (Math.abs(b.pos[1] + b.h / 2 - (o.pos[1] + o.h / 2)) >= (b.h + o.h) / 2 + S.query) continue;
+          let dx = b.pos[0] - o.pos[0],
+            dz = b.pos[2] - o.pos[2];
           if (Math.abs(dx) >= b.half[0] + o.half[0] + S.pad || Math.abs(dz) >= b.half[1] + o.half[1] + S.pad) continue;
-          if (dx * dx + dz * dz < 1e-4) { dx = bi < oi ? -1 : 1; dz = 0; }
+          if (dx * dx + dz * dz < 1e-4) {
+            dx = bi < oi ? -1 : 1;
+            dz = 0;
+          }
           const l = Math.hypot(dx, dz);
-          px += dx / l; pz += dz / l;
+          px += dx / l;
+          pz += dz / l;
         }
       }
     }
     if (px * px + pz * pz < 1e-4) return;
-    const l = Math.hypot(px, pz), tx = (px / l) * S.speed, tz = (pz / l) * S.speed;
-    const ex = tx - b.vel[0], ez = tz - b.vel[2], el = Math.hypot(ex, ez), step = S.ease * dt;
-    if (el <= step) { b.vel[0] = tx; b.vel[2] = tz; } else { b.vel[0] += (ex / el) * step; b.vel[2] += (ez / el) * step; }
+    const l = Math.hypot(px, pz),
+      tx = (px / l) * S.speed,
+      tz = (pz / l) * S.speed;
+    const ex = tx - b.vel[0],
+      ez = tz - b.vel[2],
+      el = Math.hypot(ex, ez),
+      step = S.ease * dt;
+    if (el <= step) {
+      b.vel[0] = tx;
+      b.vel[2] = tz;
+    } else {
+      b.vel[0] += (ex / el) * step;
+      b.vel[2] += (ez / el) * step;
+    }
   });
 }
 
@@ -462,9 +660,16 @@ export function constrainMove(from, to, halfW, h, rayHit) {
     const hit = rayHit([at[0], at[1] + h / 2, at[2]], dir, len + skin);
     const n = hit?.normal ?? null;
     const facing = hit && Number.isFinite(hit.dist) && (!n || n[0] * dir[0] + n[1] * dir[1] + n[2] * dir[2] < -0.001);
-    if (!facing) { at[0] += rem[0]; at[1] += rem[1]; at[2] += rem[2]; break; }
+    if (!facing) {
+      at[0] += rem[0];
+      at[1] += rem[1];
+      at[2] += rem[2];
+      break;
+    }
     const go = Math.max(0, hit.dist - skin - PI_CONSTRAIN.skin);
-    at[0] += dir[0] * go; at[1] += dir[1] * go; at[2] += dir[2] * go;
+    at[0] += dir[0] * go;
+    at[1] += dir[1] * go;
+    at[2] += dir[2] * go;
     if (!n) break;
     const left = [to[0] - at[0], to[1] - at[1], to[2] - at[2]];
     const d = left[0] * n[0] + left[1] * n[1] + left[2] * n[2];
@@ -479,7 +684,14 @@ export function constrainMove(from, to, halfW, h, rayHit) {
  *  Rare-or-better item's own picture (scenes/lootLines.js, WBX3's form), and a Magic-or-better picture wears its tier's
  *  rim - the port's own, the foes' tell outline (systems/hitFlash.js setBatchGlint) in the tier's colour - stronger up
  *  the ladder. The body's own playRareDrop chimed at the kill; its items do not chime again. The mod draws no rarity. */
-export const PI_RIM = Object.freeze({ magic: 0.3, rare: 0.45, legendary: 0.6, aetheric: 0.7, artifact: 0.7, gilded: 0.8 });
+export const PI_RIM = Object.freeze({
+  magic: 0.3,
+  rare: 0.45,
+  legendary: 0.6,
+  aetheric: 0.7,
+  artifact: 0.7,
+  gilded: 0.8,
+});
 /** The rim an item wears - `[r, g, b, strength]` - or null (Common, or the rarity row off). */
 export function rarityRim(item) {
   if (!lootRarityOn()) return null;
@@ -491,9 +703,19 @@ export function rarityRim(item) {
 }
 /** AUDIT PI1 L4: WHAT AN ITEM LOOKS LIKE - a body's list replaced with equal items (the dungeon room's word, a save's
  *  restore) hands each standing picture to its look-alike rather than throwing the lot again. */
-export const itemLook = (item) => (item && typeof item === 'object'
-  ? [item.group, item.templateIndex, item.stackCount ?? 1, item.nativeMaterialValue ?? '', item.dyeColor ?? '', item.rarity ?? '', item.artifact ? 1 : 0, item.name ?? ''].join('|')
-  : '');
+export const itemLook = (item) =>
+  item && typeof item === 'object'
+    ? [
+        item.group,
+        item.templateIndex,
+        item.stackCount ?? 1,
+        item.nativeMaterialValue ?? '',
+        item.dyeColor ?? '',
+        item.rarity ?? '',
+        item.artifact ? 1 : 0,
+        item.name ?? '',
+      ].join('|')
+    : '';
 /** RaycastPhysicalItem's reach [IL_5b54]: an item is pressed from 3 m. */
 export const PI_REACH = 3;
 export const isRareOrBetter = (item) => lootRarityOn() && (RARITIES[rarityOf(item)]?.rank ?? 0) >= RARITIES.rare.rank;
@@ -503,22 +725,36 @@ export const isRareOrBetter = (item) => lootRarityOn() && (RARITIES[rarityOf(ite
 /** The items a layer is presenting as themselves right now: a body's or a pile's line of light (scenes/lootLines.js)
  *  leaves them to their own. A WeakSet, so nothing here keeps an item alive. */
 const _presented = new WeakSet();
-export const presentItem = (item, on) => { if (item && typeof item === 'object') { if (on) _presented.add(item); else _presented.delete(item); } };
+export const presentItem = (item, on) => {
+  if (item && typeof item === 'object') {
+    if (on) _presented.add(item);
+    else _presented.delete(item);
+  }
+};
 export const isPresented = (item) => !!item && typeof item === 'object' && _presented.has(item);
 
 /** The deaths the layers are told of (OnEnemyDeath - HandleEnemyDeath [IL_4790]): an entity and when, so a body's items
  *  are thrown out of it only at its fall, and a body met later (a load, a return) has them lie where they landed. */
 const _deaths = new WeakMap();
 export const PI_FRESH_MS = 4000;
-export const markDeath = (entity, at = Date.now()) => { if (entity && typeof entity === 'object') _deaths.set(entity, at); };
-export const diedRecently = (entity, at = Date.now()) => { const t = entity && typeof entity === 'object' ? _deaths.get(entity) : undefined; return t !== undefined && at - t <= PI_FRESH_MS; };
+export const markDeath = (entity, at = Date.now()) => {
+  if (entity && typeof entity === 'object') _deaths.set(entity, at);
+};
+export const diedRecently = (entity, at = Date.now()) => {
+  const t = entity && typeof entity === 'object' ? _deaths.get(entity) : undefined;
+  return t !== undefined && at - t <= PI_FRESH_MS;
+};
 
 // ---- the shift-drop's refusals ---------------------------------------------------------------------------------------
 
 /** LocalItemLeftClickPrefix [IL_0565]: ItemGroups.Transportation (23) - DFU's "cannotRemoveItem" (its one home,
  *  systems/createItem.js). KEEP-SPELLBOOK (the port's own, systems/item/itemTransfer.js): and the character's spellbook. */
-export const shiftDropRefusal = (item) => (item?.group === 'Transportation' ? { text: CANNOT_REMOVE_ITEM_TEXT }
-  : isKeptSpellbook(item) ? { text: SPELLBOOK_KEPT_TEXT } : null);
+export const shiftDropRefusal = (item) =>
+  item?.group === 'Transportation'
+    ? { text: CANNOT_REMOVE_ITEM_TEXT }
+    : isKeptSpellbook(item)
+      ? { text: SPELLBOOK_KEPT_TEXT }
+      : null;
 
 /**
  * THE SHIFT-DROP, ONE LAW FOR BOTH PACKS (ui/native/nativeInventory.js, ui/enhanced/enhancedInventory.js): QueueInventoryPhysicalDrop
@@ -538,12 +774,14 @@ export function shiftDrop(item, { items, entity, getQuest = null, dropRefusal = 
   if (no) return { refusal: no };
   if (lockRefuses(item, 'drop')) return { refusal: { text: lockedText(name()) } };
   if (isPackOnly(item)) return { refusal: { text: packOnlyText(name()) } };
-  if (boundRefusesPut(item, 'elsewhere')) return { refusal: { text: boundText(name(), item) } };   // AUDIT AUTO-HOLD: a piece the realm locked says so
+  if (boundRefusesPut(item, 'elsewhere')) return { refusal: { text: boundText(name(), item) } }; // AUDIT AUTO-HOLD: a piece the realm locked says so
   const dest = [];
-  const plan = /** @type {any} */ (planStore(item, { remote: dest, getQuest, groundRefusal: dropRefusal?.() ?? null, bagLoaded: !bagMayLeave(entity) }));   // its map arm is not in its declared shape
+  const plan = /** @type {any} */ (
+    planStore(item, { remote: dest, getQuest, groundRefusal: dropRefusal?.() ?? null, bagLoaded: !bagMayLeave(entity) })
+  ); // its map arm is not in its declared shape
   if (!plan.ok) return { refusal: plan.refusal };
   if (plan.map) return { map: true };
-  applyTransfer(item, plan, items, dest, { entity, fromLocal: true });   // F157: a lit torch leaving the pack goes out
+  applyTransfer(item, plan, items, dest, { entity, fromLocal: true }); // F157: a lit torch leaving the pack goes out
   if (dest.length) drop(dest);
   return { moved: dest, sound: plan.sound };
 }

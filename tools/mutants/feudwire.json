@@ -74,8 +74,8 @@
   {
     "name": "FW-sig-unwritten",
     "file": "src/ai/puppetBlows.js",
-    "old": " | (landed ? WIRE_LANDED : 0) | (b.sig ? WIRE_SIG : 0);",
-    "new": " | (landed ? WIRE_LANDED : 0);",
+    "old": "      out.wk =\n        k |\n        (b.guard === 'iron' ? WIRE_IRON : 0) |\n        (b.feint ? WIRE_FEINT : 0) |\n        (landed ? WIRE_LANDED : 0) |\n        (b.sig ? WIRE_SIG : 0);",
+    "new": "      out.wk = k | (b.guard === 'iron' ? WIRE_IRON : 0) | (b.feint ? WIRE_FEINT : 0) | (landed ? WIRE_LANDED : 0);",
     "tests": [
       "test/systems/revenant/feudwire.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "FW-sig-unread",
     "file": "src/ai/puppetBlows.js",
-    "old": "signature = (r.wk & WIRE_SIG) !== 0 && !!sig;",
-    "new": "signature = false && !!sig;",
+    "old": "          signature = (r.wk & WIRE_SIG) !== 0 && !!sig;",
+    "new": "          signature = false && !!sig;",
     "tests": [
       "test/systems/revenant/feudwire.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "FW-sig-no-host-numbers",
     "file": "src/ai/puppetBlows.js",
-    "old": "signature = (r.wk & WIRE_SIG) !== 0 && !!sig;",
-    "new": "signature = (r.wk & WIRE_SIG) !== 0;",
+    "old": "          signature = (r.wk & WIRE_SIG) !== 0 && !!sig;",
+    "new": "          signature = (r.wk & WIRE_SIG) !== 0;",
     "tests": [
       "test/systems/revenant/feudwire.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "FW-sig-mult-dropped",
     "file": "src/ai/puppetBlows.js",
-    "old": "if (signature) { b.sig = true; b.mult = sig.MULT; b.windPitch = sig.WIND_PITCH; }",
-    "new": "if (signature) { b.sig = true; b.windPitch = sig.WIND_PITCH; }",
+    "old": "          b.mult = sig.MULT;\n          b.windPitch = sig.WIND_PITCH;",
+    "new": "          b.windPitch = sig.WIND_PITCH;",
     "tests": [
       "test/systems/revenant/feudwire.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "FW-sig-pitch-dropped",
     "file": "src/ai/puppetBlows.js",
-    "old": "if (signature) { b.sig = true; b.mult = sig.MULT; b.windPitch = sig.WIND_PITCH; }",
-    "new": "if (signature) { b.sig = true; b.mult = sig.MULT; }",
+    "old": "          b.windPitch = sig.WIND_PITCH;\n        } // FEUD WIRE: its owner's signature - x2.0 on my feet as on its owner's",
+    "new": "        } // FEUD WIRE: its owner's signature - x2.0 on my feet as on its owner's",
     "tests": [
       "test/systems/revenant/feudwire.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "FW-sig-ember-dropped",
     "file": "src/ai/puppetBlows.js",
-    "old": "now + left - total, signature ? sig.COLOR : iron ? IRON_COLOR",
-    "new": "now + left - total, iron ? IRON_COLOR",
+    "old": "          signature ? sig.COLOR : iron ? IRON_COLOR : BLOW_COLOR,",
+    "new": "          iron ? IRON_COLOR : BLOW_COLOR,",
     "tests": [
       "test/systems/revenant/feudwire.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "FW-per-moved",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "BLOWS_WIRE = Object.freeze({ PER: 1000,",
-    "new": "BLOWS_WIRE = Object.freeze({ PER: 100,",
+    "old": "export const BLOWS_WIRE = Object.freeze({ PER: 1000, MIN: 1000, MAX: 4000 });",
+    "new": "export const BLOWS_WIRE = Object.freeze({ PER: 100, MIN: 1000, MAX: 4000 });",
     "tests": [
       "test/systems/revenant/feudwire.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "FW-write-unwritten",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "...(rev.p2 ? { p2: 1 } : {}), ...(rb ? { rb } : {}) };",
-    "new": "...(rev.p2 ? { p2: 1 } : {}) };",
+    "old": "  return { ...(ad ? { ad } : {}), ...(wq >= 0 ? { wq } : {}), ...(rev.p2 ? { p2: 1 } : {}), ...(rb ? { rb } : {}) };",
+    "new": "  return { ...(ad ? { ad } : {}), ...(wq >= 0 ? { wq } : {}), ...(rev.p2 ? { p2: 1 } : {}) };",
     "tests": [
       "test/systems/revenant/feudwire.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "FW-write-at-one",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "Number.isFinite(rev.blows) && rev.blows > 1 ?",
-    "new": "Number.isFinite(rev.blows) && rev.blows >= 1 ?",
+    "old": "    Number.isFinite(rev.blows) && rev.blows > 1",
+    "new": "    Number.isFinite(rev.blows) && rev.blows >= 1",
     "tests": [
       "test/systems/revenant/feudwire.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "FW-write-unclamped",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "Math.max(BLOWS_WIRE.MIN, Math.min(BLOWS_WIRE.MAX, Math.round(rev.blows * BLOWS_WIRE.PER)))",
-    "new": "Math.round(rev.blows * BLOWS_WIRE.PER)",
+    "old": "  const rb =\n    Number.isFinite(rev.blows) && rev.blows > 1\n      ? Math.max(BLOWS_WIRE.MIN, Math.min(BLOWS_WIRE.MAX, Math.round(rev.blows * BLOWS_WIRE.PER)))\n      : 0;",
+    "new": "  const rb = Number.isFinite(rev.blows) && rev.blows > 1 ? Math.round(rev.blows * BLOWS_WIRE.PER) : 0;",
     "tests": [
       "test/systems/revenant/feudwire.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "FW-heir-dropped",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "p2: r?.p2 === 1 ? (rev?.p2 ?? phaseTwo()) : null, blows };",
-    "new": "p2: r?.p2 === 1 ? (rev?.p2 ?? phaseTwo()) : null };",
+    "old": "    blows,\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/revenant/feudwire.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "FW-fold-rb-unread",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "const factor = (Number.isInteger(r?.rb) ? r.rb / BLOWS_WIRE.PER : 1) *",
-    "new": "const factor = 1 *",
+    "old": "  const factor = (Number.isInteger(r?.rb) ? r.rb / BLOWS_WIRE.PER : 1) * (r?.p2 === 1 ? PHASE_TWO.BLOWS : 1);",
+    "new": "  const factor = 1 * (r?.p2 === 1 ? PHASE_TWO.BLOWS : 1);",
     "tests": [
       "test/systems/revenant/feudwire.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "FW-fold-p2-unread",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "* (r?.p2 === 1 ? PHASE_TWO.BLOWS : 1);\n  const was",
-    "new": "* 1;\n  const was",
+    "old": "  const factor = (Number.isInteger(r?.rb) ? r.rb / BLOWS_WIRE.PER : 1) * (r?.p2 === 1 ? PHASE_TWO.BLOWS : 1);",
+    "new": "  const factor = (Number.isInteger(r?.rb) ? r.rb / BLOWS_WIRE.PER : 1) * 1;",
     "tests": [
       "test/systems/revenant/feudwire.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "FW-fold-doubled",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "const own = (Number.isFinite(entity.damageScale) && entity.damageScale > 0 ? entity.damageScale : 1) / was;",
-    "new": "const own = (Number.isFinite(entity.damageScale) && entity.damageScale > 0 ? entity.damageScale : 1);",
+    "old": "  const own = (Number.isFinite(entity.damageScale) && entity.damageScale > 0 ? entity.damageScale : 1) / was;",
+    "new": "  const own = Number.isFinite(entity.damageScale) && entity.damageScale > 0 ? entity.damageScale : 1;",
     "tests": [
       "test/systems/revenant/feudwire.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "FW-fold-unremembered",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  entity.damageScale = own * factor;\n  entity._revBlows = factor;",
-    "new": "  entity.damageScale = own * factor;",
+    "old": "  entity._revBlows = factor;\n  return factor;",
+    "new": "  return factor;",
     "tests": [
       "test/systems/revenant/feudwire.test.js"
     ]

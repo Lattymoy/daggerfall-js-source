@@ -32,11 +32,20 @@ import { carriedItemLists } from '../realm/realmGoldLaw.js';
 /** The card's template (systems/iliac/iliacItems.js ILIAC_CARD_TEMPLATE, pinned equal: the Worker bundles no systems/). */
 export const ILIAC_CARD_TEMPLATE = 581;
 /** MEASURE (CARDS9): a card's worth in gold by its tier. */
-export const CARD_WORTH = Object.freeze({ common: 5, magic: 20, rare: 75, legendary: 300, aetheric: 1200, artifact: 2500, gilded: 5000 });
+export const CARD_WORTH = Object.freeze({
+  common: 5,
+  magic: 20,
+  rare: 75,
+  legendary: 300,
+  aetheric: 1200,
+  artifact: 2500,
+  gilded: 5000,
+});
 /** A card's worth by its catalog id - nothing for one the catalog does not know. */
 export const cardWorth = (/** @type {any} */ id) => CARD_WORTH[cardById(id)?.tier] ?? 0;
 /** Whether a save's record is a card (the template and a card it names - the group is the client's to check). */
-export const isCardRecord = (/** @type {any} */ rec) => rec?.templateIndex === ILIAC_CARD_TEMPLATE && typeof rec?.card === 'string';
+export const isCardRecord = (/** @type {any} */ rec) =>
+  rec?.templateIndex === ILIAC_CARD_TEMPLATE && typeof rec?.card === 'string';
 /** AUDIT CARDS-6 A1: the sealed pack's template (systems/iliac/iliacItems.js CARD_PACK_TEMPLATE, the law's own handed on, as
  *  the card's is - the account service reads it here). */
 export const CARD_PACK_TEMPLATE = 583;
@@ -51,7 +60,8 @@ export const CARD_PACK_WORTH = 171;
 const stackOf = (/** @type {any} */ rec) => Math.max(1, Math.trunc(rec.stackCount ?? 1) || 1);
 /** A record's worth to the cards' customs, times its stack: a card's its card's, a sealed pack's CARD_PACK_WORTH (AUDIT
  *  CARDS-6 A1) - anything else none. */
-export const cardRecordWorth = (/** @type {any} */ rec) => (isCardRecord(rec) ? cardWorth(rec.card) * stackOf(rec) : isPackRecord(rec) ? CARD_PACK_WORTH * stackOf(rec) : 0);
+export const cardRecordWorth = (/** @type {any} */ rec) =>
+  isCardRecord(rec) ? cardWorth(rec.card) * stackOf(rec) : isPackRecord(rec) ? CARD_PACK_WORTH * stackOf(rec) : 0;
 /**
  * AUDIT CARDS-6 A2: THE OWNER'S OWN THINGS STANDING IN A ROOM - each cached scene's DECOR2a `decorOwn` (one item a piece,
  * by the piece's id), as `{ scene, id, rec }`: what the cards' customs reads beside every list (carriedItemLists). Gold's
@@ -63,7 +73,8 @@ export function decorOwnOf(snap) {
   const out = [];
   for (const scene of Array.isArray(snap?.sceneCache?.scenes) ? snap.sceneCache.scenes : []) {
     const own = scene?.decorOwn && typeof scene.decorOwn === 'object' ? scene.decorOwn : null;
-    for (const id of own ? Object.keys(own) : []) if (own[id] && typeof own[id] === 'object') out.push({ scene, id, rec: own[id] });
+    for (const id of own ? Object.keys(own) : [])
+      if (own[id] && typeof own[id] === 'object') out.push({ scene, id, rec: own[id] });
   }
   return out;
 }
@@ -88,18 +99,23 @@ export const STARTER_DECK_WORTH = STARTER_DECK.reduce((s, id) => s + cardWorth(i
 /** OPEN (CARDS9): the card worth customs admits a level, above the starter deck's. */
 export const CUSTOMS_CARD_WORTH_PER_LEVEL = 150;
 /** The card worth an offline character may bring into the realm at a level (the gold allowance's level law). */
-export const customsCardAllowance = (/** @type {number} */ level) => STARTER_DECK_WORTH + CUSTOMS_CARD_WORTH_PER_LEVEL * Math.max(1, Math.trunc(level) || 1);
+export const customsCardAllowance = (/** @type {number} */ level) =>
+  STARTER_DECK_WORTH + CUSTOMS_CARD_WORTH_PER_LEVEL * Math.max(1, Math.trunc(level) || 1);
 
 /** CARDS10: the cards a save holds, by id - every list it carries (carriedItemLists), each record's stack counted. */
 export function cardCountsOf(/** @type {any} */ snap) {
   const n = new Map();
-  for (const list of carriedItemLists(snap)) for (const rec of list) if (isCardRecord(rec)) n.set(rec.card, (n.get(rec.card) ?? 0) + Math.max(1, Math.trunc(rec.stackCount ?? 1) || 1));
+  for (const list of carriedItemLists(snap))
+    for (const rec of list)
+      if (isCardRecord(rec))
+        n.set(rec.card, (n.get(rec.card) ?? 0) + Math.max(1, Math.trunc(rec.stackCount ?? 1) || 1));
   return n;
 }
 /** CARDS10: the first card of `deck` the save holds too few of for it (a ranked seat's deck order - the service's
  *  word that the character holds every card it plays), or null. */
 export function deckShortOf(/** @type {any} */ snap, /** @type {string[]} */ deck) {
-  const have = cardCountsOf(snap), want = new Map();
+  const have = cardCountsOf(snap),
+    want = new Map();
   for (const id of deck) want.set(id, (want.get(id) ?? 0) + 1);
   for (const [id, k] of want) if ((have.get(id) ?? 0) < k) return id;
   return null;

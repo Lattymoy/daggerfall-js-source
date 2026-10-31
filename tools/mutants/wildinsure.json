@@ -4,28 +4,36 @@
     "file": "src/systems/wild/wildInsureLaw.js",
     "old": "export const WILD_INSURE_DIVISOR = 5;",
     "new": "export const WILD_INSURE_DIVISOR = 10;",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "WILD-INSURE-the-premium-rounded-down",
     "file": "src/systems/wild/wildInsureLaw.js",
-    "old": "Math.max(1, Math.ceil((itemWorth(item) + wildMakerGold(item)) / WILD_INSURE_DIVISOR))",
-    "new": "Math.max(1, Math.floor((itemWorth(item) + wildMakerGold(item)) / WILD_INSURE_DIVISOR))",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "old": "  Math.max(1, Math.ceil((itemWorth(item) + wildMakerGold(item)) / WILD_INSURE_DIVISOR));",
+    "new": "  Math.max(1, Math.floor((itemWorth(item) + wildMakerGold(item)) / WILD_INSURE_DIVISOR));",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "WILD-INSURE-in-force-at-once",
     "file": "src/systems/wild/wildInsureLaw.js",
-    "old": "at + WILD_INSURE_SETTLE_S <= fallAt",
-    "new": "at <= fallAt",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "old": "  Number.isSafeInteger(at) && Number.isSafeInteger(fallAt) && at + WILD_INSURE_SETTLE_S <= fallAt;",
+    "new": "  Number.isSafeInteger(at) && Number.isSafeInteger(fallAt) && at <= fallAt;",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "WILD-INSURE-a-letter-insurable",
     "file": "src/systems/wild/wildInsureLaw.js",
     "old": "  if (!item || typeof item !== 'object' || item.templateIndex === TEMPLATES.Letter_of_credit) return false;",
     "new": "  if (!item || typeof item !== 'object') return false;",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "WILD-INSURE-a-piece-of-no-gear-insurable",
@@ -33,132 +41,171 @@
     "old": "  return (valuablePiece(item) || WILD_GEAR_GROUPS.includes(item.group)) && wildCanLose(item);",
     "new": "  return wildCanLose(item);",
     "note": "Re-aimed by content (INSURE-ALL): a plain piece of gear is insurable now; the mutant insures a piece of no gear",
-    "tests": ["test/systems/wild/wildinsure.test.js", "test/systems/wild/insureall.test.js"]
+    "tests": [
+      "test/systems/wild/wildinsure.test.js",
+      "test/systems/wild/insureall.test.js"
+    ]
   },
   {
     "name": "WILD-INSURE-the-pick-blind",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  if (k && !held(k) && recordFits(wildRecord(k))) { bag.splice(bag.indexOf(k), 1); took.push([k, 'bag']); }",
-    "new": "  if (k && !keep(k) && recordFits(wildRecord(k))) { bag.splice(bag.indexOf(k), 1); took.push([k, 'bag']); }",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "old": "  if (k && !held(k) && recordFits(wildRecord(k))) {",
+    "new": "  if (k && !keep(k) && recordFits(wildRecord(k))) {",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "WILD-INSURE-the-drop-blind",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "const held = (/** @type {any} */ it) => keep(it) || insured(it);",
-    "new": "const held = (/** @type {any} */ it) => keep(it);",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "old": "  const held = (/** @type {any} */ it) => keep(it) || insured(it); // WILD-INSURE: a policy keeps as the ledger does",
+    "new": "  const held = (/** @type {any} */ it) => keep(it); // WILD-INSURE: a policy keeps as the ledger does",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "WILD-INSURE-the-candidates-blind",
     "file": "src/systems/wild/wildDropLaw.js",
     "old": "  const drop = bag.filter((it) => !isEquipped(it) && wildCanLose(it) && !insured(it));",
     "new": "  const drop = bag.filter((it) => !isEquipped(it) && wildCanLose(it));",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "WILD-INSURE-the-policies-unread",
     "file": "server-account/src/wild.js",
-    "old": "const insured = pvpInsuredFor(live.map((p) => String(p.key)),",
-    "new": "const insured = pvpInsuredFor([],",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "old": "  const insured = pvpInsuredFor(\n    live.map((p) => String(p.key)),\n    { villain: isVillain(Number(row.villainy)), among: stored.items },\n  ); // the owner: \"villian lose insurance\"; INSURE-ALL: a key two pieces carry keeps neither",
+    "new": "  const insured = pvpInsuredFor([], { villain: isVillain(Number(row.villainy)), among: stored.items }); // the owner: \"villian lose insurance\"; INSURE-ALL: a key two pieces carry keeps neither",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "WILD-INSURE-the-settle-unread-at-the-fall",
     "file": "server-account/src/wild.js",
-    "old": "policies.filter((p) => wildPolicyInForce(Number(p.at), fallAt))",
-    "new": "policies.filter((p) => Number(p.at) > 0)",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "old": "  const live = policies.filter((p) => wildPolicyInForce(Number(p.at), fallAt));",
+    "new": "  const live = policies.filter((p) => Number(p.at) > 0);",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "WILD-INSURE-spent-unread",
     "file": "server-account/src/wild.js",
-    "old": "    ...spent.map((k) => ctx.db.prepare(",
-    "new": "    ...spent.slice(0, 0).map((k) => ctx.db.prepare(",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "old": "    ...spent.map((k) =>\n      ctx.db\n        .prepare(\n          \"UPDATE wild_insurance SET state = 'spent', spent_r = ?3, spent_at = ?4 WHERE char_id = ?1 AND key = ?2 AND state = 'active'\",\n        )\n        .bind(charId, k, r, ctx.nowS),\n    ),",
+    "new": "    ...spent\n      .slice(0, 0)\n      .map((k) =>\n        ctx.db\n          .prepare(\n            \"UPDATE wild_insurance SET state = 'spent', spent_r = ?3, spent_at = ?4 WHERE char_id = ?1 AND key = ?2 AND state = 'active'\",\n          )\n          .bind(charId, k, r, ctx.nowS),\n      ),",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "WILD-INSURE-the-premium-unpaid",
     "file": "server-account/src/wildInsure.js",
     "old": "    return payFromSave(save, gold, region) ? null : 'realm-gold';",
     "new": "    return null;",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "WILD-INSURE-a-second-policy-on-one-piece",
     "file": "server-account/src/wildInsure.js",
     "old": "  if (keys.some((k) => held.has(k))) return { error: 'insure-held' };\n",
     "new": "",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "WILD-INSURE-the-book-zone-unread",
     "file": "src/net/wild/wildInsureBook.js",
-    "old": "      if (inZone()) return WILD_TEXT.insureInZone();\n",
-    "new": "",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "old": "      if (inZone()) return WILD_TEXT.insureInZone();\n      if (busy) return REFUSALS.busy; // AUDIT PVP-EASE L1-2: the cap is the service's - a policy whose piece is gone lapses there",
+    "new": "      if (busy) return REFUSALS.busy; // AUDIT PVP-EASE L1-2: the cap is the service's - a policy whose piece is gone lapses there",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "WILD-INSURE-the-book-reserve-skipped",
     "file": "src/net/wild/wildInsureBook.js",
-    "old": "reserve: walletReserve(w, gold).reserve,",
-    "new": "reserve: () => null,",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "old": "          reserve: walletReserve(w, gold).reserve,",
+    "new": "          reserve: () => null,",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "WILD-INSURE-the-book-settle-unread",
     "file": "src/net/wild/wildInsureBook.js",
     "old": "      return left > 0 ? WILD_TEXT.insuredSoon(Math.ceil(left / 60)) : WILD_TEXT.insuredLine();",
     "new": "      return WILD_TEXT.insuredLine();",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "WILD-INSURE-the-book-spent-unread",
     "file": "src/net/wild/wildInsureBook.js",
-    "old": "      for (const k of list) policies.delete(k);\n",
-    "new": "",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "old": "      for (const k of list) policies.delete(k);\n      if (list.length) tell();",
+    "new": "      if (list.length) tell();",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "AUDIT-PVP-EASE-L4-1-the-book-a-stand-in",
     "file": "src/scenes/world.js",
     "old": "character: () => realmSession?.id ?? null, region: () => _questRegionIndex() ?? 0, inZone: () => wildHere(), now:",
     "new": "character: () => characterIdOf(playerEntity), region: () => _questRegionIndex() ?? 0, inZone: () => wildHere(), now:",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "WILD-INSURE-the-kept-line-unsaid",
     "file": "src/systems/wild/wildZone.js",
-    "old": "  return [head, WILD_TEXT.deathDrop(d.dropped), WILD_TEXT.deathInsured(d.insured ?? 0),",
-    "new": "  return [head, WILD_TEXT.deathDrop(d.dropped),",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "old": "    WILD_TEXT.deathInsured(d.insured ?? 0),\n    WILD_TEXT.deathBurnt(d.burnt ?? 0),",
+    "new": "    WILD_TEXT.deathBurnt(d.burnt ?? 0),",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "REPEAT-SHIELD-the-shield-unread",
     "file": "server-account/src/wild.js",
-    "old": "  if (repeat) return wildShielded(",
-    "new": "  if (repeat && false) return wildShielded(",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "old": "  if (repeat)",
+    "new": "  if (repeat && false)",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "REPEAT-SHIELD-the-window-unread",
     "file": "server-account/src/wild.js",
-    "old": ".bind(charId, killer, fallAt - WILD_REPEAT_S, fallAt + WILD_REPEAT_S).first();",
-    "new": ".bind(charId, killer, 0, Number.MAX_SAFE_INTEGER).first();",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "old": "    .bind(charId, killer, fallAt - WILD_REPEAT_S, fallAt + WILD_REPEAT_S)",
+    "new": "    .bind(charId, killer, 0, Number.MAX_SAFE_INTEGER)",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "REPEAT-SHIELD-the-killer-unread",
     "file": "server-account/src/wild.js",
-    "old": "WHERE char_id = ?1 AND killer = ?2 AND ki > ?3 AND ki < ?4 LIMIT 1",
-    "new": "WHERE char_id = ?1 AND (killer = ?2 OR killer IS NOT NULL) AND ki > ?3 AND ki < ?4 LIMIT 1",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "old": "    .prepare('SELECT 1 AS x FROM wild_falls WHERE char_id = ?1 AND killer = ?2 AND ki > ?3 AND ki < ?4 LIMIT 1')",
+    "new": "    .prepare(\n      'SELECT 1 AS x FROM wild_falls WHERE char_id = ?1 AND (killer = ?2 OR killer IS NOT NULL) AND ki > ?3 AND ki < ?4 LIMIT 1',\n    )",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   },
   {
     "name": "REPEAT-SHIELD-the-line-unsaid",
     "file": "src/systems/wild/wildZone.js",
-    "old": "  const head = d.shield ? WILD_TEXT.deathShield()",
-    "new": "  const head = false ? WILD_TEXT.deathShield()",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "old": "  const head = d.shield",
+    "new": "  const head = false",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
   }
 ]

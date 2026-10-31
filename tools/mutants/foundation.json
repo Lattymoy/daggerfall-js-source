@@ -242,8 +242,8 @@
   {
     "name": "F1-door-port-blocks-unserved",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "export const worldDataServesBlock = (blockName) => _portBlocks.has(blockName) || familyIndex(blockName) >= 0 ||",
-    "new": "export const worldDataServesBlock = (blockName) => familyIndex(blockName) >= 0 ||",
+    "old": "  _portBlocks.has(blockName) ||\n  familyIndex(blockName) >= 0 ||",
+    "new": "  familyIndex(blockName) >= 0 ||",
     "tests": [
       "test/world/atlas/f1_atlas.test.js",
       "test/world/atlas/f1_atlas_served.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "F1-door-mod-files-unserved",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "(worldDataOn() && (_assets.get(blockReplacementFilename(blockName)) ?? []).some((a) => a.isOn?.() ?? true));",
-    "new": "false;",
+    "old": "export const worldDataServesBlock = (blockName) =>\n  _portBlocks.has(blockName) ||\n  familyIndex(blockName) >= 0 ||\n  (worldDataOn() && (_assets.get(blockReplacementFilename(blockName)) ?? []).some((a) => a.isOn?.() ?? true));",
+    "new": "export const worldDataServesBlock = (blockName) => _portBlocks.has(blockName) || familyIndex(blockName) >= 0 || false;",
     "tests": [
       "test/world/atlas/f1_atlas_layer.test.js",
       "test/world/atlas/f1_atlas_packs.test.js"
@@ -307,8 +307,8 @@
   {
     "name": "F2-term-unadded",
     "file": "src/net/townEconLaw.js",
-    "old": " + townSeaTerm(lanes) + regionTermOf(regional));",
-    "new": " + townSeaTerm(lanes));",
+    "old": "      townSeaTerm(lanes) +\n      regionTermOf(regional),",
+    "new": "      townSeaTerm(lanes),",
     "tests": [
       "test/net/f2_regionclock.test.js"
     ]
@@ -325,8 +325,8 @@
   {
     "name": "F2-kept-regions",
     "file": "server-account/src/townEcon.js",
-    "old": "  const regions = await regionsProsperity(db, nowS);   // FOUNDATION F2",
-    "new": "  const regions = [];   // FOUNDATION F2",
+    "old": "  const regions = await regionsProsperity(db, nowS); // FOUNDATION F2: the regions' prosperity, kept beside them",
+    "new": "  const regions = []; // FOUNDATION F2: the regions' prosperity, kept beside them",
     "tests": [
       "test/net/f2_regionclock.test.js"
     ]
@@ -379,8 +379,8 @@
   {
     "name": "F3-door-row-unasked",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "=> !homeListedOff(mapId, bd?.buildingKey, undefined, homeClaimLayout(mapId)) &&   // FOUNDATION F3",
-    "new": "=> true &&   // FOUNDATION F3",
+    "old": "  !homeListedOff(mapId, bd?.buildingKey, undefined, homeClaimLayout(mapId)) && // FOUNDATION F3: nor one its row takes off the market, in the town's layout",
+    "new": "  true && // FOUNDATION F3: nor one its row takes off the market, in the town's layout",
     "tests": [
       "test/net/f3_homelistings.test.js"
     ]
@@ -451,8 +451,8 @@
   {
     "name": "F4-run-lengths",
     "file": "src/formats/pakFile.js",
-    "old": "for (const [n, value] of r) { v.setUint16(pos, n, true); out[pos + 2] = value; pos += 3; }",
-    "new": "for (const [n, value] of r) { v.setUint16(pos, Math.min(n, 1), true); out[pos + 2] = value; pos += 3; }",
+    "old": "        v.setUint16(pos, n, true);",
+    "new": "        v.setUint16(pos, Math.min(n, 1), true);",
     "tests": [
       "test/world/land/f4_landlayer.test.js"
     ]
@@ -478,8 +478,8 @@
   {
     "name": "F4-land-out-of-key",
     "file": "src/world/roadsCache.js",
-    "old": "${JSON.stringify(d)}${land ? `:land${land}` : ''}`;",
-    "new": "${JSON.stringify(d)}`;",
+    "old": "  return `roads:v${GENERATOR_VERSION}:${settlements.length}:${sum}:${woodsLength}:${JSON.stringify(d)}${land ? `:land${land}` : ''}`; // FOUNDATION F4: the land's rows move the ground the roads were laid on",
+    "new": "  return `roads:v${GENERATOR_VERSION}:${settlements.length}:${sum}:${woodsLength}:${JSON.stringify(d)}`; // FOUNDATION F4: the land's rows move the ground the roads were laid on",
     "tests": [
       "test/world/land/f4_landlayer.test.js"
     ]
@@ -550,8 +550,8 @@
   {
     "name": "F1-harbour-province",
     "file": "src/world/pastBayRows.js",
-    "old": ", ...(t > 0 ? { area: areaOfDistrict(t, cx, cy) } : {}),",
-    "new": ",",
+    "old": "          ...(t > 0 ? { area: areaOfDistrict(t, cx, cy) } : {}),\n          type: LOCATION_TYPES.TownCity,",
+    "new": "          type: LOCATION_TYPES.TownCity,",
     "tests": [
       "test/world/atlas/f1_atlas_served.test.js"
     ]
@@ -613,8 +613,8 @@
   {
     "name": "AF-P3-pick-unasked",
     "file": "src/systems/arena/arenaMove.js",
-    "old": " && !homeListedOff(o?.mapId, s.buildingKey, undefined, homeClaimLayout(o?.mapId))), opts);",
-    "new": "), opts);",
+    "old": "    (summaries ?? []).filter(\n      (s) =>\n        homeCandidate(s) &&\n        s.hasInterior !== false &&\n        !homeListedOff(o?.mapId, s.buildingKey, undefined, homeClaimLayout(o?.mapId)),\n    ),",
+    "new": "    (summaries ?? []).filter((s) => homeCandidate(s) && s.hasInterior !== false),",
     "tests": [
       "test/net/f3_homelistings.test.js"
     ]
@@ -776,8 +776,8 @@
   {
     "name": "AF2-L4-line-unread",
     "file": "src/world/peaks/snowcap.js",
-    "old": "z = row === undefined ? tamrielBiomeAt(px, py) : null;",
-    "new": "z = tamrielBiomeAt(px, py);",
+    "old": "      z = row === undefined ? tamrielBiomeAt(px, py) : null; // AUDIT FOUNDATION II L4: a row's climate its line",
+    "new": "      z = tamrielBiomeAt(px, py); // AUDIT FOUNDATION II L4: a row's climate its line",
     "tests": [
       "test/world/land/f4_landlayer.test.js"
     ]
@@ -812,8 +812,8 @@
   {
     "name": "AF2-C3-regions-unkept",
     "file": "src/net/townEconBook.js",
-    "old": "        regions = byRegion;\n",
-    "new": "",
+    "old": "            regions = byRegion;\n            heard = true;",
+    "new": "            heard = true;",
     "tests": [
       "test/net/f2_regionclock.test.js"
     ]
@@ -821,8 +821,8 @@
   {
     "name": "AF2-C3-term-unpassed",
     "file": "src/systems/town/townEcon.js",
-    "old": "const regional = host.regional?.(town.region) ?? 0;",
-    "new": "const regional = 0;",
+    "old": "    const regional = host.regional?.(town.region) ?? 0; // FOUNDATION F2: its region's prosperity",
+    "new": "    const regional = 0; // FOUNDATION F2: its region's prosperity",
     "tests": [
       "test/net/f2_regionclock.test.js"
     ]
@@ -830,8 +830,8 @@
   {
     "name": "AF2-C3-host-unwired",
     "file": "src/scenes/townEconHost.js",
-    "old": ", regional: (region) => book?.regionalOf(region) ?? 0 });",
-    "new": " });",
+    "old": "    regional: (region) => book?.regionalOf(region) ?? 0,\n  }); // FOUNDATION F2",
+    "new": "  }); // FOUNDATION F2",
     "tests": [
       "test/net/f2_regionclock.test.js"
     ]
@@ -875,8 +875,8 @@
   {
     "name": "AF2-A3-pin-read",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "(_assets.get(blockReplacementFilename(blockName)) ?? []).some((a) => a.isOn?.() ?? true)",
-    "new": "!!liveAsset(blockReplacementFilename(blockName))",
+    "old": "  (worldDataOn() && (_assets.get(blockReplacementFilename(blockName)) ?? []).some((a) => a.isOn?.() ?? true));",
+    "new": "  (worldDataOn() && !!liveAsset(blockReplacementFilename(blockName)));",
     "tests": [
       "test/world/atlas/f1_atlas.test.js"
     ]
@@ -920,8 +920,8 @@
   {
     "name": "AF2-P6-door-layout-unpassed",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "!homeListedOff(mapId, bd?.buildingKey, undefined, homeClaimLayout(mapId)) &&",
-    "new": "!homeListedOff(mapId, bd?.buildingKey) &&",
+    "old": "  !homeListedOff(mapId, bd?.buildingKey, undefined, homeClaimLayout(mapId)) && // FOUNDATION F3: nor one its row takes off the market, in the town's layout",
+    "new": "  !homeListedOff(mapId, bd?.buildingKey) && // FOUNDATION F3: nor one its row takes off the market, in the town's layout",
     "tests": [
       "test/net/f3_homelistings.test.js"
     ]

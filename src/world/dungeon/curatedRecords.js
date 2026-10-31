@@ -10,13 +10,19 @@ import { curatedRecordError } from './curatedBlocks.js';
 
 /** Each record checked, frozen. @param {readonly any[]} list */
 export function checkedRecords(list) {
-  const ids = new Set(), ns = new Set();
-  return Object.freeze(list.map((rec) => {
-    const why = curatedRecordError(rec) ?? (rec.n === 0 ? 'n: 0 is the lab\'s draft' : ids.has(rec.id) ? 'id: twice' : ns.has(rec.n) ? 'n: twice' : null);
-    if (why) throw new Error(`curated block ${rec?.id ?? '?'}: ${why}`);
-    ids.add(rec.id); ns.add(rec.n);
-    return Object.freeze(structuredClone(rec));
-  }));
+  const ids = new Set(),
+    ns = new Set();
+  return Object.freeze(
+    list.map((rec) => {
+      const why =
+        curatedRecordError(rec) ??
+        (rec.n === 0 ? "n: 0 is the lab's draft" : ids.has(rec.id) ? 'id: twice' : ns.has(rec.n) ? 'n: twice' : null);
+      if (why) throw new Error(`curated block ${rec?.id ?? '?'}: ${why}`);
+      ids.add(rec.id);
+      ns.add(rec.n);
+      return Object.freeze(structuredClone(rec));
+    }),
+  );
 }
 /** The blocks that ship, in number order (DLV6: the first four - Delve-II.md section 15). */
 export const CURATED_RECORDS = checkedRecords([CRYPT_HALL, MINE_GALLERY, DESECRATED_CHAPEL, THRONE_HALL]);
@@ -26,7 +32,10 @@ export const CURATED_RECORDS = checkedRecords([CRYPT_HALL, MINE_GALLERY, DESECRA
  *  refuses is refused here, by name. */
 let _draft = null;
 export function setCuratedDraft(rec) {
-  if (rec == null) { _draft = null; return null; }
+  if (rec == null) {
+    _draft = null;
+    return null;
+  }
   const why = curatedRecordError(rec) ?? (rec.n !== 0 ? 'n: a draft is number 0' : null);
   if (why) return why;
   _draft = Object.freeze(structuredClone(rec));

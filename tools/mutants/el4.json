@@ -111,8 +111,8 @@
   {
     "name": "frame-target-not-set",
     "file": "src/render/airPass.js",
-    "old": "    gl.bindFramebuffer(gl.FRAMEBUFFER, f.fbo);\n    setFrameTarget(f.fbo);",
-    "new": "    gl.bindFramebuffer(gl.FRAMEBUFFER, f.fbo);",
+    "old": "    setFrameTarget(f.fbo);\n    this.canvas[0] = W;",
+    "new": "    this.canvas[0] = W;",
     "tests": [
       "test/render/el4_frame.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "adapt-images-start-dark",
     "file": "src/render/airPass.js",
-    "old": "    const [hi, lo] = packAdapt(1);",
-    "new": "    const [hi, lo] = [0, 0];",
+    "old": "    const [hi, lo] = packAdapt(1); // LA-POST4: the multiplier 1 at sixteen bits - [128, 0]",
+    "new": "    const [hi, lo] = [0, 0]; // LA-POST4: the multiplier 1 at sixteen bits - [128, 0]",
     "tests": [
       "test/render/el4_frame.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "resolve-no-swap",
     "file": "src/render/airPass.js",
-    "old": "    this.adaptIndex = 1 - this.adaptIndex;\n",
-    "new": "",
+    "old": "      this.adaptIndex = 1 - this.adaptIndex;\n    }",
+    "new": "    }",
     "tests": [
       "test/render/el4_frame.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "resolve-no-mipmap",
     "file": "src/render/airPass.js",
-    "old": "    gl.bindTexture(gl.TEXTURE_2D, this.lum.tex);\n    gl.generateMipmap(gl.TEXTURE_2D);\n",
-    "new": "",
+    "old": "      gl.bindTexture(gl.TEXTURE_2D, this.lum.tex);\n      gl.generateMipmap(gl.TEXTURE_2D);\n      // 2. the adaptation step, into the other 1x1 image",
+    "new": "      // 2. the adaptation step, into the other 1x1 image",
     "tests": [
       "test/render/el4_frame.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "resolve-frame-kept",
     "file": "src/render/airPass.js",
-    "old": "    gl.bindFramebuffer(gl.FRAMEBUFFER, this.resolveTo?.fbo ?? null);\n    setFrameTarget(null);\n    gl.viewport(0, 0, F.w, F.h);",
-    "new": "    gl.bindFramebuffer(gl.FRAMEBUFFER, this.resolveTo?.fbo ?? null);\n    gl.viewport(0, 0, F.w, F.h);",
+    "old": "    setFrameTarget(null);\n    gl.viewport(0, 0, F.w, F.h);",
+    "new": "    gl.viewport(0, 0, F.w, F.h);",
     "tests": [
       "test/render/el4_frame.test.js"
     ],
@@ -166,8 +166,8 @@
   {
     "name": "resolve-no-threshold",
     "file": "src/render/airPass.js",
-    "old": "    gl.uniform1f(PB.uThreshold, AIR_BRIGHT_THRESHOLD);",
-    "new": "    gl.uniform1f(PB.uThreshold, 0.0);",
+    "old": "      gl.uniform1f(PB.uThreshold, AIR_BRIGHT_THRESHOLD);",
+    "new": "      gl.uniform1f(PB.uThreshold, 0.0);",
     "tests": [
       "test/render/el4_frame.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "release-keeps-target",
     "file": "src/render/airPass.js",
-    "old": "  release() {\n    if (this.frame) setFrameTarget(null);\n    this.pending = false;\n",
-    "new": "  release() {\n    this.pending = false;\n",
+    "old": "    if (this.frame) setFrameTarget(null);\n    this.pending = false;",
+    "new": "    this.pending = false;",
     "tests": [
       "test/render/el4_frame.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "rt-withtarget-canvas",
     "file": "src/render/renderTarget.js",
-    "old": "  gl.bindFramebuffer(gl.FRAMEBUFFER, _frameTarget);   // EL4: the frame, or the canvas\n  gl.viewport(restoreViewport[0]",
-    "new": "  gl.bindFramebuffer(gl.FRAMEBUFFER, null);\n  gl.viewport(restoreViewport[0]",
+    "old": "  gl.bindFramebuffer(gl.FRAMEBUFFER, _frameTarget); // EL4: the frame, or the canvas",
+    "new": "  gl.bindFramebuffer(gl.FRAMEBUFFER, null);",
     "tests": [
       "test/render/el4_frame.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "rt-finishvolume-canvas",
     "file": "src/render/renderTarget.js",
-    "old": "  gl.bindFramebuffer(gl.FRAMEBUFFER, _frameTarget);   // EL4\n  gl.viewport",
-    "new": "  gl.bindFramebuffer(gl.FRAMEBUFFER, null);\n  gl.viewport",
+    "old": "export function finishVolume(gl, volume, restoreViewport) {\n  gl.bindFramebuffer(gl.FRAMEBUFFER, _frameTarget); // EL4",
+    "new": "export function finishVolume(gl, volume, restoreViewport) {\n  gl.bindFramebuffer(gl.FRAMEBUFFER, null);",
     "tests": [
       "test/render/el4_frame.test.js"
     ]

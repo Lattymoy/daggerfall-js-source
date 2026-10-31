@@ -2,8 +2,8 @@
   {
     "name": "TECH1-the-gun-a-bow",
     "file": "src/combat/technique/techniqueRoster.js",
-    "old": "  if (isGunTemplate(item.templateIndex)) return 'thunderlock';   // PISTOLET: the guns' family - the Pistolet takes the Thunderlock's Piercing Shot, never a volley\n",
-    "new": "",
+    "old": "  if (isGunTemplate(item.templateIndex)) return 'thunderlock'; // PISTOLET: the guns' family - the Pistolet takes the Thunderlock's Piercing Shot, never a volley\n  // AUDIT TECH1: a Roleplay & Realism class is its class with its switch off too - the piece in the pack is still that",
+    "new": "  // AUDIT TECH1: a Roleplay & Realism class is its class with its switch off too - the piece in the pack is still that",
     "tests": [
       "test/systems/tech1_roster.test.js"
     ]
@@ -316,8 +316,8 @@
   {
     "name": "TECH1-single-strikes-all",
     "file": "src/combat/playerWeapon.js",
-    "old": "      if (tb?.single && techOn(foe)) { singles.push({ foe, dist }); continue; }",
-    "new": "",
+    "old": "      if (tb?.single && techOn(foe)) {\n        singles.push({ foe, dist });\n        continue;\n      } // TECH1: the one blow waits for the nearest",
+    "new": "      // TECH1: the one blow waits for the nearest",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -397,7 +397,7 @@
   {
     "name": "TECH1-the-rig-identity",
     "file": "src/combat/techniques.js",
-    "old": "  if (_s.owner !== ctx.rig) { _s.owner = ctx.rig; _s.aim = null; endAct(ctx.pw); }",
+    "old": "  if (_s.owner !== ctx.rig) {\n    _s.owner = ctx.rig;\n    _s.aim = null;\n    endAct(ctx.pw);\n  }",
     "new": "  _s.owner = ctx.rig;",
     "tests": [
       "test/systems/tech1_runner.test.js"
@@ -433,8 +433,8 @@
   {
     "name": "TECH1-a-shaft-untallied",
     "file": "src/combat/techniques.js",
-    "old": "conjured.push(shot.summoned); tallySwingSkills(ctx.entity, weapon); }",
-    "new": "conjured.push(shot.summoned); }",
+    "old": "    tallySwingSkills(ctx.entity, weapon);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -451,8 +451,8 @@
   {
     "name": "TECH1-the-release-unasked",
     "file": "src/combat/techniques.js",
-    "old": "    const why = refusal(hand, ctx, a.key);   // asked again at the release",
-    "new": "    const why = null;   // asked again at the release",
+    "old": "    const why = refusal(hand, ctx, a.key); // asked again at the release: a run may have spent the fatigue, a duel begun",
+    "new": "    const why = null; // asked again at the release: a run may have spent the fatigue, a duel begun",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -460,8 +460,8 @@
   {
     "name": "TECH1-the-cancel-unread",
     "file": "src/combat/techniques.js",
-    "old": "!ctx.ready || ctx.cancel) { _s.aim = null; return; }",
-    "new": "!ctx.ready) { _s.aim = null; return; }",
+    "old": "    if (!hand || hand.id !== a.hand.id || hand.item !== a.hand.item || !ctx.ready || ctx.cancel) {",
+    "new": "    if (!hand || hand.id !== a.hand.id || hand.item !== a.hand.item || !ctx.ready) {",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -487,8 +487,8 @@
   {
     "name": "TECH1-the-shot-at-plain-speed",
     "file": "src/combat/techniques.js",
-    "old": "pierce: t.through, use: a.use }, speedScale: t.speed, summoned: shot.summoned });",
-    "new": "pierce: t.through, use: a.use }, summoned: shot.summoned });",
+    "old": "      speedScale: t.speed,\n      summoned: shot.summoned,",
+    "new": "      summoned: shot.summoned,",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -541,8 +541,8 @@
   {
     "name": "TECH1-the-mark-at-the-kind-size",
     "file": "src/render/foeTelegraph.js",
-    "old": "      if (b.technique) {   // TECH1: the player's own mark",
-    "new": "      if (false) {   // TECH1: the player's own mark",
+    "old": "      if (b.technique) {",
+    "new": "      if (false) {",
     "tests": [
       "test/scenes/tech1_hosts.test.js"
     ]
@@ -633,8 +633,8 @@
   {
     "name": "TECH1-AUDIT-the-march-dropped",
     "file": "src/player/groundRay.js",
-    "old": "  if (!Number.isFinite(groundAt(collider, origin[0], origin[2]))) return Infinity;   // no terrain here (indoors, underground)",
-    "new": "  return Infinity;   // no terrain here (indoors, underground)",
+    "old": "  if (!Number.isFinite(groundAt(collider, origin[0], origin[2]))) return Infinity; // no terrain here (indoors, underground)",
+    "new": "  return Infinity; // no terrain here (indoors, underground)",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -651,8 +651,8 @@
   {
     "name": "TECH1-AUDIT-the-ground-aim-mesh-only",
     "file": "src/combat/techniques.js",
-    "old": "  const hit = rayHit(eye, look, range + 2, collider);   // a wall, a floor - or the open ground outdoors",
-    "new": "  const hit = collider.raycast(eye, look, range + 2);   // a wall, a floor - or the open ground outdoors",
+    "old": "  const hit = rayHit(eye, look, range + 2, collider); // a wall, a floor - or the open ground outdoors",
+    "new": "  const hit = collider.raycast(eye, look, range + 2); // a wall, a floor - or the open ground outdoors",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -660,8 +660,8 @@
   {
     "name": "TECH1-AUDIT-the-lane-through-the-ground",
     "file": "src/combat/techniques.js",
-    "old": "      const hit = rayHit(eye, look, tech.length, collider);   // the shot's length",
-    "new": "      const hit = collider.raycast(eye, look, tech.length);   // the shot's length",
+    "old": "      const hit = rayHit(eye, look, tech.length, collider); // the shot's length: to a wall, or into the ground",
+    "new": "      const hit = collider.raycast(eye, look, tech.length); // the shot's length: to a wall, or into the ground",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -669,7 +669,7 @@
   {
     "name": "TECH1-AUDIT-the-mesh-ignored",
     "file": "src/player/groundRay.js",
-    "old": "  try { const m = collider?.raycast?.(origin, dir, max); if (Number.isFinite(m) && m >= 0) best = m; } catch { /* no meshes */ }",
+    "old": "  try {\n    const m = collider?.raycast?.(origin, dir, max);\n    if (Number.isFinite(m) && m >= 0) best = m;\n  } catch {\n    /* no meshes */\n  }",
     "new": "",
     "tests": [
       "test/systems/tech1_runner.test.js"
@@ -760,8 +760,8 @@
   {
     "name": "TECH1-AUDIT-the-strike-ungated",
     "file": "src/combat/techniques.js",
-    "old": "      if (!ctx.ready || techniqueInHand(ctx.entity, pw)?.item !== a.hand.item) { endAct(pw); return; }\n",
-    "new": "",
+    "old": "      if (!ctx.ready || techniqueInHand(ctx.entity, pw)?.item !== a.hand.item) {\n        endAct(pw);\n        return;\n      }\n      // Shadowstep: turn on the foe - FROM WHERE YOU LAND (AUDIT TECH1: turned from mid-dash, the view looked on along the",
+    "new": "      // Shadowstep: turn on the foe - FROM WHERE YOU LAND (AUDIT TECH1: turned from mid-dash, the view looked on along the",
     "tests": [
       "test/systems/tech1_audit.test.js"
     ]
@@ -787,8 +787,8 @@
   {
     "name": "TECH1-AUDIT-the-window-unread",
     "file": "src/combat/techniques.js",
-    "old": "  if (ctx.blocked) { _s.aim = null; _s.prev = true; _s.prev2 = true; return; }\n",
-    "new": "",
+    "old": "  if (ctx.blocked) {\n    _s.aim = null;\n    _s.prev = true;\n    _s.prev2 = true;\n    return;\n  }\n  const step = Number.isFinite(dt) && dt > 0 ? Math.min(dt, 0.25) : 0;",
+    "new": "  const step = Number.isFinite(dt) && dt > 0 ? Math.min(dt, 0.25) : 0;",
     "tests": [
       "test/systems/tech1_audit.test.js"
     ]
@@ -823,8 +823,8 @@
   {
     "name": "TECH1-AUDIT-the-volley-live-weapon",
     "file": "src/combat/techniques.js",
-    "old": "{ sky: true, weapon: a.weapon, technique:",
-    "new": "{ sky: true, technique:",
+    "old": "        weapon: a.weapon,\n        technique: { id: a.hand.id, mult: a.mult, pierce: 1, use: a.use },",
+    "new": "        technique: { id: a.hand.id, mult: a.mult, pierce: 1, use: a.use },",
     "tests": [
       "test/systems/tech1_audit.test.js"
     ]
@@ -841,8 +841,8 @@
   {
     "name": "TECH1-AUDIT-the-shaft-in-the-wall",
     "file": "src/combat/techniques.js",
-    "old": "    if (Number.isFinite(blocked)) from = at(base, ",
-    "new": "    if (false) from = at(base, ",
+    "old": "    if (Number.isFinite(blocked))\n      from = at(base, [back[0] / bl, back[1] / bl, back[2] / bl], Math.max(0.6, blocked - 0.4));",
+    "new": "    if (false) from = at(base, [back[0] / bl, back[1] / bl, back[2] / bl], Math.max(0.6, blocked - 0.4));",
     "tests": [
       "test/systems/tech1_audit.test.js"
     ]
@@ -850,8 +850,8 @@
   {
     "name": "TECH1-AUDIT-the-leap-from-the-water",
     "file": "src/combat/techniques.js",
-    "old": "m.swimming || m.onExteriorWater || m.isPlayerSwimming ||",
-    "new": "m.swimming ||",
+    "old": "      m.onExteriorWater ||\n      m.isPlayerSwimming ||\n      m.levitating ||",
+    "new": "      m.levitating ||",
     "tests": [
       "test/systems/tech1_audit.test.js"
     ]
@@ -868,8 +868,8 @@
   {
     "name": "TECH1-AUDIT-the-gauntlets-unsaid",
     "file": "src/combat/techniques.js",
-    "old": "? GAUNTLETS_TEXT : NO_TECHNIQUE_TEXT;",
-    "new": "? NO_TECHNIQUE_TEXT : NO_TECHNIQUE_TEXT;",
+    "old": "      ? GAUNTLETS_TEXT",
+    "new": "      ? NO_TECHNIQUE_TEXT",
     "tests": [
       "test/systems/tech1_audit.test.js"
     ]
@@ -877,8 +877,8 @@
   {
     "name": "TECH1-AUDIT-the-load-unread",
     "file": "src/combat/techniques.js",
-    "old": "    if (_s.restores != null) { _s.aim = null; endAct(ctx.pw); _s.wait.fill(0); }\n",
-    "new": "",
+    "old": "    if (_s.restores != null) {\n      _s.aim = null;\n      endAct(ctx.pw);\n      _s.wait.fill(0);\n    }\n    if (_s.restores != null) resetTechniqueFx(); // TECH-FX: and no spring of the moment before it still moving the view",
+    "new": "    if (_s.restores != null) resetTechniqueFx(); // TECH-FX: and no spring of the moment before it still moving the view",
     "tests": [
       "test/systems/tech1_audit.test.js"
     ]
@@ -886,7 +886,7 @@
   {
     "name": "TECH1-AUDIT-the-unknown-named",
     "file": "src/combat/techniques.js",
-    "old": "export const techniqueName = (hand) => (hand?.known === false ? UNKNOWN_TECHNIQUE : hand?.tech?.name ?? UNKNOWN_TECHNIQUE);",
+    "old": "export const techniqueName = (hand) =>\n  hand?.known === false ? UNKNOWN_TECHNIQUE : (hand?.tech?.name ?? UNKNOWN_TECHNIQUE);",
     "new": "export const techniqueName = (hand) => hand?.tech?.name ?? UNKNOWN_TECHNIQUE;",
     "tests": [
       "test/systems/tech1_audit.test.js"
@@ -895,8 +895,8 @@
   {
     "name": "TECH1-AUDIT-the-fallback-widened",
     "file": "src/combat/playerWeapon.js",
-    "old": "if (!techOn(foe) || playerMeleeCanHit(dist, inView, losClear)) protectedInReach.push({ foe, dist }); continue; }",
-    "new": "protectedInReach.push({ foe, dist }); continue; }",
+    "old": "        if (!techOn(foe) || playerMeleeCanHit(dist, inView, losClear)) protectedInReach.push({ foe, dist });",
+    "new": "        protectedInReach.push({ foe, dist });",
     "tests": [
       "test/systems/tech1_audit.test.js"
     ]
@@ -940,8 +940,8 @@
   {
     "name": "TECH1-AUDIT-the-volley-too-quick",
     "file": "src/combat/technique/techniqueRoster.js",
-    "old": "delay: 0.55, spread: 1.35 }),",
-    "new": "delay: 0.55, spread: 0.85 }),",
+    "old": "    spread: 1.35,",
+    "new": "    spread: 0.85,",
     "tests": [
       "test/systems/tech1_roster.test.js"
     ]
@@ -949,7 +949,7 @@
   {
     "name": "TECH1-AUDIT-the-rri-family-switched",
     "file": "src/combat/technique/techniqueRoster.js",
-    "old": "  const skill = weaponSkillUsed(item.templateIndex) ?? (rri?.group === 'Weapons' && rri.weaponSkillUsed ? SKILLS[rri.weaponSkillUsed] : null);",
+    "old": "  const skill =\n    weaponSkillUsed(item.templateIndex) ??\n    (rri?.group === 'Weapons' && rri.weaponSkillUsed ? SKILLS[rri.weaponSkillUsed] : null);",
     "new": "  const skill = weaponSkillUsed(item.templateIndex);",
     "tests": [
       "test/systems/tech1_roster.test.js"
@@ -958,8 +958,8 @@
   {
     "name": "TECH1-AUDIT-the-big-body-thin",
     "file": "src/combat/technique/techniqueBlow.js",
-    "old": "Number.isFinite(foe?.ai?.radius) ? foe.ai.radius : TECH_BODY_RADIUS);",
-    "new": "TECH_BODY_RADIUS);",
+    "old": "export const bodyRadius = (foe) =>\n  Number.isFinite(foe?.radius) ? foe.radius : Number.isFinite(foe?.ai?.radius) ? foe.ai.radius : TECH_BODY_RADIUS;",
+    "new": "export const bodyRadius = (foe) => (Number.isFinite(foe?.radius) ? foe.radius : TECH_BODY_RADIUS);",
     "tests": [
       "test/systems/tech1_audit.test.js"
     ]
@@ -967,8 +967,8 @@
   {
     "name": "TECH1-AUDIT-a-sure-blow",
     "file": "src/combat/technique/techniqueRoster.js",
-    "old": "      case 'crush': return `One heavy blow, ${pct(m)}, +${t.toHit} to hit`;",
-    "new": "      case 'crush': return `One sure blow, ${pct(m)}`;",
+    "old": "        return `One heavy blow, ${pct(m)}, +${t.toHit} to hit`; // AUDIT TECH1: never 'sure' - a miss is still a miss (law 1)",
+    "new": "        return `One sure blow, ${pct(m)}`; // AUDIT TECH1: never 'sure' - a miss is still a miss (law 1)",
     "tests": [
       "test/systems/tech1_roster.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "TELL6e-push",
     "file": "src/systems/blowEffects.js",
-    "old": "  PUSH: Object.freeze({ lunge: 3, charge: 5 }),",
-    "new": "  PUSH: Object.freeze({ lunge: 3, charge: 3 }),",
+    "old": "  PUSH: Object.freeze({ lunge: 3, charge: 5 }), // m/s (the decay and the edge: player/motor.js BLOW_PUSH_*)",
+    "new": "  PUSH: Object.freeze({ lunge: 3, charge: 3 }), // m/s (the decay and the edge: player/motor.js BLOW_PUSH_*)",
     "tests": [
       "test/scenes/tell6e_landing.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TELL6e-knock-shapes",
     "file": "src/systems/blowEffects.js",
-    "old": "  KNOCKDOWN: Object.freeze(['slam', 'ring', 'charge']),   // iron's alone",
-    "new": "  KNOCKDOWN: Object.freeze(['slam', 'ring', 'charge', 'leap']),   // iron's alone",
+    "old": "  KNOCKDOWN: Object.freeze(['slam', 'ring', 'charge']), // iron's alone",
+    "new": "  KNOCKDOWN: Object.freeze(['slam', 'ring', 'charge', 'leap']), // iron's alone",
     "tests": [
       "test/scenes/tell6e_landing.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "TELL6e-guard-ignored",
     "file": "src/systems/blowEffects.js",
-    "old": "    if (fx.knockdown && now >= _guardUntil && motor?.blowKnockDown?.(",
-    "new": "    if (fx.knockdown && motor?.blowKnockDown?.(",
+    "old": "    if (\n      fx.knockdown &&\n      now >= _guardUntil &&\n      motor?.blowKnockDown?.(BLOW_EFFECT.KNOCKDOWN_S, BLOW_EFFECT.KNOCKDOWN_DROP) !== false\n    ) {",
+    "new": "    if (fx.knockdown && motor?.blowKnockDown?.(BLOW_EFFECT.KNOCKDOWN_S, BLOW_EFFECT.KNOCKDOWN_DROP) !== false) {",
     "tests": [
       "test/scenes/tell6e_landing.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "TELL6e-no-dip",
     "file": "src/systems/blowEffects.js",
-    "old": "    if (fx.rattle) { motor?.blowRattle?.(BLOW_EFFECT.RATTLE_S, BLOW_EFFECT.RATTLE_WALK); shake?.(BLOW_EFFECT.RATTLE_SHAKE); }",
-    "new": "    if (fx.rattle) { motor?.blowRattle?.(BLOW_EFFECT.RATTLE_S, BLOW_EFFECT.RATTLE_WALK); }",
+    "old": "      shake?.(BLOW_EFFECT.RATTLE_SHAKE);\n    }",
+    "new": "    }",
     "tests": [
       "test/scenes/tell6e_landing.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "TELL6e-no-bleed",
     "file": "src/systems/blowEffects.js",
-    "old": "    if (fx.bleed && entity && dmg > 0) startBleed(entity, dmg * BLOW_EFFECT.BLEED_SHARE, foe, now);",
-    "new": "",
+    "old": "    if (fx.bleed && entity && dmg > 0) startBleed(entity, dmg * BLOW_EFFECT.BLEED_SHARE, foe, now);\n  }",
+    "new": "  }",
     "tests": [
       "test/scenes/tell6e_landing.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "TELL6e-heal-ignored",
     "file": "src/systems/blowEffects.js",
-    "old": "  if (entity.health > b.health || !(entity.health > 0)) { entity.bleed = null; return 0; }",
-    "new": "  if (!(entity.health > 0)) { entity.bleed = null; return 0; }",
+    "old": "  if (entity.health > b.health || !(entity.health > 0)) {",
+    "new": "  if (!(entity.health > 0)) {",
     "tests": [
       "test/scenes/tell6e_landing.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "TELL6e-bleed-unmarked",
     "file": "src/systems/blowEffects.js",
-    "old": "    if (b.foe) markPlayerHarm(b.foe, { ms: HARM_MARK_STRUCK_MS });",
-    "new": "",
+    "old": "      if (b.foe) markPlayerHarm(b.foe, { ms: HARM_MARK_STRUCK_MS }); // REVENANT-HARM: its blow's, still",
+    "new": "      // REVENANT-HARM: its blow's, still",
     "tests": [
       "test/scenes/tell6e_landing.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "TELL6e-miss-stamped",
     "file": "src/ai/tactics.js",
-    "old": "  ai._blowFx = atMe && verdict ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null;",
-    "new": "  ai._blowFx = atMe ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null;",
+    "old": "  ai._blowFx = atMe && verdict ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null; // TELL6e: what it does where its damage lands (scenes/hostCombat.js landBlowEffect)",
+    "new": "  ai._blowFx = atMe ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null; // TELL6e: what it does where its damage lands (scenes/hostCombat.js landBlowEffect)",
     "tests": [
       "test/scenes/tell6e_landing.test.js"
     ],
@@ -246,8 +246,8 @@
   {
     "name": "TELL6e-hud-no-bleed",
     "file": "src/ui/hud/hudActiveSpells.js",
-    "old": "  if (bleed && bleed.left > 0) other.push(",
-    "new": "  if (false) other.push(",
+    "old": "  if (bleed && bleed.left > 0)",
+    "new": "  if (false)",
     "tests": [
       "test/scenes/tell6e_landing.test.js"
     ]

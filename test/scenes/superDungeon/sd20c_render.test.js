@@ -185,7 +185,7 @@ test('SD20c THE GEARS FLY ON EDGE ALONG THEIR FLIGHT (V12): each gear stood in i
     const a = top(0), b = top(0.01);
     assert.ok(near(a[1], 1, 1e-9) && (b[0] - a[0]) * fwd[0] + (b[2] - a[2]) * fwd[1] > 0.009, 'unspun, it stands upright, and its top rolls forward as it spins');
   }
-  assert.match(read('src/scenes/superDungeon/sdRemnant.js'), /gearMatrix\(q\.x, q\.y, q\.z, q\.spin, d\.object\.matrix, q\.yaw\); d\.hidden = false;/);
+  assert.match(read('src/scenes/superDungeon/sdRemnant.js'), /gearMatrix\(q\.x, q\.y, q\.z, q\.spin, d\.object\.matrix, q\.yaw\);\n\s*d\.hidden = false;/);
 });
 
 test('SD20c THE BRASS AIR\'S GRADE ON THE SKY IS ITS HAZE\'S (V8): world/superDungeon/sdBrassSky.js\'s GLSL is its JS - generated from the same stops and weights, run here on the code the GPU runs and equal to sdBrassGrade over the colours a sky shows and every weight; each of the four passes that draw the sky (the classic, the enhanced, the dynamic, the clouds\' composite) includes it, grades its final colour by its own uBrass after the dread\'s, and uploads the weight the controller sets - the fogged land met the sky a step apart at the skyline (15/-4/-34 a clear noon); the water\'s sky graded as the sky over it (mutants: the sky ungraded; the ramp drifted)', () => {

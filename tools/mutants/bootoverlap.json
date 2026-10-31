@@ -47,8 +47,8 @@
   {
     "name": "BO-named-character-ignored",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "api.town(id, as === undefined ? character() : as)",
-    "new": "api.town(id, character())",
+    "old": "      .then(() => api.town(id, as === undefined ? character() : as)) // HOME-RENT: the playing character's own tenancies ride the answer",
+    "new": "      .then(() => api.town(id, character())) // HOME-RENT: the playing character's own tenancies ride the answer",
     "tests": [
       "test/systems/online/bootoverlap.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "BO-playing-never-asked",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "api.town(id, as === undefined ? character() : as)",
-    "new": "api.town(id, as)",
+    "old": "      .then(() => api.town(id, as === undefined ? character() : as)) // HOME-RENT: the playing character's own tenancies ride the answer",
+    "new": "      .then(() => api.town(id, as)) // HOME-RENT: the playing character's own tenancies ride the answer",
     "tests": [
       "test/systems/online/bootoverlap.test.js"
     ]

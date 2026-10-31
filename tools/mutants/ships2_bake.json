@@ -2,8 +2,8 @@
   {
     "name": "SHIPS2-B-a-role-dropped",
     "file": "tools/bakeCarrack.mjs",
-    "old": "  'Cylinder.017': role('aftStep', [[-13.403, 10.189, 4.271], [-9.991, 13.774, 6.416]]),\n",
-    "new": "",
+    "old": "  'Cylinder.017': role('aftStep', [\n    [-13.403, 10.189, 4.271],\n    [-9.991, 13.774, 6.416],\n  ]),\n});",
+    "new": "});",
     "tests": [
       "test/tooling/ships2_bake.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "SHIPS2-B-the-frame-unread",
     "file": "tools/shipBake.mjs",
-    "old": "(z - frame.waterline) * frame.scale",
-    "new": "z * frame.scale",
+    "old": "  return [(frame.centreline - y) * frame.scale, (z - frame.waterline) * frame.scale, (x - frame.midship) * frame.scale];",
+    "new": "  return [(frame.centreline - y) * frame.scale, z * frame.scale, (x - frame.midship) * frame.scale];",
     "tests": [
       "test/tooling/ships2_bake.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "SHIPS2-B-the-centreline-unread",
     "file": "tools/shipBake.mjs",
-    "old": "(frame.centreline - y) * frame.scale",
-    "new": "(-y) * frame.scale",
+    "old": "  return [(frame.centreline - y) * frame.scale, (z - frame.waterline) * frame.scale, (x - frame.midship) * frame.scale];",
+    "new": "  return [-y * frame.scale, (z - frame.waterline) * frame.scale, (x - frame.midship) * frame.scale];",
     "tests": [
       "test/tooling/ships2_bake.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "SHIPS2-B-a-skip-unchecked",
     "file": "tools/shipBake.mjs",
-    "old": "      if (fault) throw new Error(fault);\n",
-    "new": "",
+    "old": "      if (fault) throw new Error(fault);\n      continue;",
+    "new": "      continue;",
     "tests": [
       "test/tooling/ships2_bake.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "SHIPS2-B-the-box-unchecked",
     "file": "tools/shipBake.mjs",
-    "old": "    if (!(off <= BOX_SLACK)) throw",
-    "new": "    if (false) throw",
+    "old": "    if (!(off <= BOX_SLACK))",
+    "new": "    if (false)",
     "tests": [
       "test/tooling/ships2_bake.test.js"
     ],

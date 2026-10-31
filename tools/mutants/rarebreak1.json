@@ -2,8 +2,8 @@
   {
     "name": "RARE-BREAK1-rolled-tiers-fade-again",
     "file": "src/combat/pcaao.js",
-    "old": "export const pcaaoFades = (item) => isEnchantedItem(item) && !stampedTier(item);",
-    "new": "export const pcaaoFades = (item) => isEnchantedItem(item);",
+    "old": "export const pcaaoFades = (item) => isEnchantedItem(item) && !stampedTier(item); // AUDIT SET D3: and the Aetheric",
+    "new": "export const pcaaoFades = (item) => isEnchantedItem(item); // AUDIT SET D3: and the Aetheric",
     "tests": [
       "test/systems/pcaao.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RARE-BREAK1-nothing-fades",
     "file": "src/combat/pcaao.js",
-    "old": "export const pcaaoFades = (item) => isEnchantedItem(item) && !stampedTier(item);",
-    "new": "export const pcaaoFades = (item) => false && isEnchantedItem(item);",
+    "old": "export const pcaaoFades = (item) => isEnchantedItem(item) && !stampedTier(item); // AUDIT SET D3: and the Aetheric",
+    "new": "export const pcaaoFades = (item) => false && isEnchantedItem(item); // AUDIT SET D3: and the Aetheric",
     "tests": [
       "test/systems/pcaao.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RARE-BREAK1-wear-ignores-the-exemption",
     "file": "src/combat/pcaao.js",
-    "old": "isPlayer(owner) && pcaaoFades(item) ? (owner.items ?? null) : null;",
-    "new": "isPlayer(owner) && isEnchantedItem(item) ? (owner.items ?? null) : null;",
+    "old": "  const removeFrom = modules.fadingEnchantedItems && isPlayer(owner) && pcaaoFades(item) ? (owner.items ?? null) : null; // RARE-BREAK1",
+    "new": "  const removeFrom =\n    modules.fadingEnchantedItems && isPlayer(owner) && isEnchantedItem(item) ? (owner.items ?? null) : null; // RARE-BREAK1",
     "tests": [
       "test/systems/pcaao.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-SET-an-enchanted-aetheric-fades",
     "file": "src/systems/rarityTier.js",
-    "old": "export const stampedTier = (item) => rolledTier(item) || item?.rarity === 'aetheric' || item?.rarity === 'gilded';",
-    "new": "export const stampedTier = (item) => rolledTier(item) || item?.rarity === 'gilded';",
+    "old": "export const stampedTier = (item) => rolledTier(item) || item?.rarity === 'aetheric' || item?.rarity === 'gilded'; // GILDED1: and the Gilded rung's, minted whole",
+    "new": "export const stampedTier = (item) => rolledTier(item) || item?.rarity === 'gilded'; // GILDED1: and the Gilded rung's, minted whole",
     "tests": [
       "test/systems/pcaao.test.js"
     ]

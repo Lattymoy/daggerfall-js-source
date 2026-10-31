@@ -119,8 +119,8 @@
   {
     "name": "NAMEAS-the-characters-name-never-read",
     "file": "server-account/src/realm.js",
-    "old": "    name: typeof row.name === 'string' && row.name ? row.name : null,",
-    "new": "    name: null,",
+    "old": "    name: typeof row.name === 'string' && row.name ? row.name : null, // NAME-AS: its own name, for the mint to wear where chosen",
+    "new": "    name: null, // NAME-AS: its own name, for the mint to wear where chosen",
     "tests": [
       "test/net/nameas_service.test.js",
       "test/server/scale4f.test.js"

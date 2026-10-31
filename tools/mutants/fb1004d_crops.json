@@ -2,8 +2,8 @@
   {
     "name": "CROPS-1-half-x-unhalved",
     "file": "src/world/flatFields.js",
-    "old": "const hx = Math.trunc(spec.rangeX / 2), hz = Math.trunc(spec.rangeZ / 2);",
-    "new": "const hx = spec.rangeX / 2, hz = Math.trunc(spec.rangeZ / 2);",
+    "old": "  const hx = Math.trunc(spec.rangeX / 2),",
+    "new": "  const hx = spec.rangeX / 2,",
     "tests": [
       "test/world/fb1004d_crops.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "CROPS-2-half-z-unhalved",
     "file": "src/world/flatFields.js",
-    "old": "const hx = Math.trunc(spec.rangeX / 2), hz = Math.trunc(spec.rangeZ / 2);",
-    "new": "const hx = Math.trunc(spec.rangeX / 2), hz = spec.rangeZ / 2;",
+    "old": "    hz = Math.trunc(spec.rangeZ / 2); // `-rangeX / 2` over C#'s int: -42 for 85",
+    "new": "    hz = spec.rangeZ / 2; // `-rangeX / 2` over C#'s int: -42 for 85",
     "tests": [
       "test/world/fb1004d_crops.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "CROPS-8-reach-never",
     "file": "src/world/flatFields.js",
-    "old": "tris[t + 6], tris[t + 7], tris[t + 8]) <= r2) return true;",
-    "new": "tris[t + 6], tris[t + 7], tris[t + 8]) < 0) return true;",
+    "old": "          ) <= r2",
+    "new": "          ) < 0",
     "tests": [
       "test/world/fb1004d_crops.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "CROPS-11-edge-region",
     "file": "src/world/flatFields.js",
-    "old": "if (vc <= 0 && d1 >= 0 && d3 <= 0) { const v = d1 / (d1 - d3); return at(ax + v * abx, ay + v * aby, az + v * abz); }",
-    "new": "if (vc <= 0 && d1 >= 0 && d3 <= 0) { const v = d1 / (d1 - d3); return at(ax, ay, az); }",
+    "old": "    return at(ax + v * abx, ay + v * aby, az + v * abz);",
+    "new": "    return at(ax, ay, az);",
     "tests": [
       "test/world/fb1004d_crops.test.js"
     ],

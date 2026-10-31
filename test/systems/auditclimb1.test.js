@@ -20,6 +20,7 @@ import { parkourSwitchOn } from '../../src/scenes/shared.js';
 import { setPref, PREF_DEFAULTS } from '../../src/systems/uiPrefs.js';
 import { setUiSkin, uiSkin } from '../../src/systems/uiSkin.js';
 import { rrParkourRefusal, NO_CLIMB_HOLDING_WEAPON } from '../../src/systems/roleplayRealism/rrRealism.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT SHOT-HOOKS): the probe surface left world.js
 
 const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 const BOX_IDX = [0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 3, 7, 6, 3, 6, 2, 0, 4, 7, 0, 7, 3, 1, 2, 6, 1, 6, 5];
@@ -292,7 +293,7 @@ test('AUDIT CLIMB1 F9: a move in flight reads as a climb to what watches the bod
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
     assert.match(read(f), /camera: \(\) => \(\{ pos: player\.eyeAt\(\),[^\n]*climbing: !!\(player\.climb\?\.isClimbing \|\| player\.mantling( \|\| player\.onWall)?\)/, `${f}: the torch and the shield read the move as a climb`);   // CLIMB4: and the hold (climb4.test.js F16)
   }
-  assert.match(read('src/scenes/world.js'), /window\.__climb = \(\) => JSON\.stringify\(\{[^}]*mantling: !!player\.mantling/, 'the __climb probe sees a mantle');
+  assert.match(hostText('src/scenes/world.js'), /window\.__climb = \(\) =>\n\s*JSON\.stringify\(\{\n\s*climbing: !!player\.climb\?\.isClimbing,\n\s*slipping: !!player\.climb\?\.isSlipping,\n\s*mantling: !!player\.mantling/, 'the __climb probe sees a mantle');
 });
 
 test('AUDIT CLIMB1 F10: Roleplay & Realism\'s "no climbing with a weapon out" holds for the enhanced climb - a mantle and a clamber refused, said once a press; a vault is a leap and goes', () => {

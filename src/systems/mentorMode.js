@@ -18,7 +18,7 @@ export const MENTOR_LEVEL_SHARE = 0.25;
 export const MENTOR_SKILL_BASELINE = 30;
 export const MENTOR_SKILL_CEILING_SLACK = 10;
 export const MENTOR_STAT_BASELINE = 40;
-export const AVERAGE_LEVEL_UP_POOL = 5;   // FormulaHelper.BonusPool: Range(4, 6+1)
+export const AVERAGE_LEVEL_UP_POOL = 5; // FormulaHelper.BonusPool: Range(4, 6+1)
 export const MENTOR_HP_BASE = 25;
 /** A blow on a mentor lands at most this many times harder (SOFTCAP1 had 5: a mentor fell in a few blows). */
 export const MENTOR_MAX_DAMAGE_MULT = 2;
@@ -83,14 +83,24 @@ export function mentorProfile(entity, partnerLevels) {
     statCut[k] = excess > 0 ? Math.min(ex, Math.round((pool * ex) / excess)) : 0;
   }
   // AUDIT LEVEL-EVEN L2-3: the body the blows land on is the stored maximum with the online floor's share on it
-  const rawMax = (entity.rawMaxHealth ?? entity.maxHealth ?? 0) + (Number.isFinite(entity.evenHp) && entity.evenHp > 0 ? entity.evenHp : 0);
+  const rawMax =
+    (entity.rawMaxHealth ?? entity.maxHealth ?? 0) +
+    (Number.isFinite(entity.evenHp) && entity.evenHp > 0 ? entity.evenHp : 0);
   const perLevel = r > 1 ? Math.max(1, (rawMax - MENTOR_HP_BASE) / (r - 1)) : 0;
   const mentoredMax = Math.max(1, rawMax - perLevel * (r - t));
   const damageTakenMult = rawMax > 0 ? Math.min(MENTOR_MAX_DAMAGE_MULT, Math.max(1, rawMax / mentoredMax)) : 1;
   const gearScale = Math.min(1, Math.max(0.5, Math.sqrt(expectedSkillAt(t) / expectedSkillAt(r))));
   return {
-    level: t, worldLevel: mentorWorldLevel(r, partnerLevels), realLevel: r, skillFactor, skillCeiling, statCut,
-    mentoredMaxHealth: Math.round(mentoredMax), damageTakenMult, gearScale, powerScale: gearScale,
+    level: t,
+    worldLevel: mentorWorldLevel(r, partnerLevels),
+    realLevel: r,
+    skillFactor,
+    skillCeiling,
+    statCut,
+    mentoredMaxHealth: Math.round(mentoredMax),
+    damageTakenMult,
+    gearScale,
+    powerScale: gearScale,
     reference: groupReferenceLevel(partnerLevels),
   };
 }
@@ -189,14 +199,23 @@ export function createMentorPresence() {
       for (const n of near ?? []) {
         if (!n || n.acct == null || !Number.isInteger(n.level) || n.level < 1) continue;
         const s = seen.get(n.acct);
-        if (s) { s.last = now; s.level = n.level; } else seen.set(n.acct, { since: now, last: now, level: n.level });
+        if (s) {
+          s.last = now;
+          s.level = n.level;
+        } else seen.set(n.acct, { since: now, last: now, level: n.level });
       }
       const live = [];
       for (const [acct, s] of seen) {
-        if (now - s.last > MENTOR_LEAVE_MS) { seen.delete(acct); continue; }
+        if (now - s.last > MENTOR_LEAVE_MS) {
+          seen.delete(acct);
+          continue;
+        }
         if (now - s.since >= MENTOR_JOIN_MS) live.push(s.level);
       }
-      if (live.length === held.length && live.every((l, i) => l === held[i])) { holdFrom = null; return held; }
+      if (live.length === held.length && live.every((l, i) => l === held[i])) {
+        holdFrom = null;
+        return held;
+      }
       if (typeof fighting === 'function' ? fighting() : fighting) {
         holdFrom ??= now;
         if (now - holdFrom < MENTOR_FIGHT_HOLD_MS) return held;
@@ -205,6 +224,10 @@ export function createMentorPresence() {
       held = live;
       return live;
     },
-    reset() { seen.clear(); held = []; holdFrom = null; },
+    reset() {
+      seen.clear();
+      held = [];
+      holdFrom = null;
+    },
   };
 }

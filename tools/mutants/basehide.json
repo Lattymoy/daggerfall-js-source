@@ -38,8 +38,8 @@
   {
     "name": "BASEHIDE-out-but-solid",
     "file": "src/scenes/decor/decorBase.js",
-    "old": "    if (p.draw) { drop(drawList, p.draw); lateSolidsOf(collider)?.remove(baseBucketOf(key)); }",
-    "new": "    if (p.draw) { drop(drawList, p.draw); }",
+    "old": "      lateSolidsOf(collider)?.remove(baseBucketOf(key));\n    } // DECOR-CLEAR: or its triangles withheld",
+    "new": "    } // DECOR-CLEAR: or its triangles withheld",
     "tests": [
       "test/server/basehide.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "BASEHIDE-back-but-a-ghost",
     "file": "src/scenes/decor/decorBase.js",
-    "old": "      if (p.cpu?.positions && p.cpu?.indices) lateSolidsOf(collider)?.add(baseBucketOf(key), p.cpu.positions, p.cpu.indices, p.matrix);\n",
-    "new": "",
+    "old": "      if (p.cpu?.positions && p.cpu?.indices)\n        lateSolidsOf(collider)?.add(baseBucketOf(key), p.cpu.positions, p.cpu.indices, p.matrix);\n    }",
+    "new": "    }",
     "tests": [
       "test/server/basehide.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "BASEHIDE-the-save-forgets",
     "file": "src/systems/sceneCache.js",
-    "old": "  hiddenBase: (Array.isArray(d.hiddenBase) ? d.hiddenBase : []).filter((k) => typeof k === 'string'),\n",
-    "new": "",
+    "old": "  hiddenBase: (Array.isArray(d.hiddenBase) ? d.hiddenBase : []).filter((k) => typeof k === 'string'),\n  // GUILD-SHELF: a guild's day's Buy shelves, by service, as bought down (scenes/worldModes.js guildShelf) - so",
+    "new": "  // GUILD-SHELF: a guild's day's Buy shelves, by service, as bought down (scenes/worldModes.js guildShelf) - so",
     "tests": [
       "test/server/basehide.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "BASEHIDE-a-sale-clears-nothing",
     "file": "src/systems/sceneCache.js",
-    "old": "  if (d) d.hiddenBase = [];\n",
-    "new": "",
+    "old": "  if (d) d.hiddenBase = [];\n  return n;",
+    "new": "  return n;",
     "tests": [
       "test/server/basehide.test.js"
     ]

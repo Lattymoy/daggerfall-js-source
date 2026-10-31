@@ -222,8 +222,8 @@
   {
     "name": "AUDIT-SCALE2-C4-hour-end-unread",
     "file": "src/net/renownTracker.js",
-    "old": "  if (Number.isFinite(hourLeftMs) && /** @type {number} */ (hourLeftMs) <= RENOWN_REPORT_MS) return true;   // AUDIT SCALE II C-4\n",
-    "new": "",
+    "old": "  if (Number.isFinite(hourLeftMs) && /** @type {number} */ (hourLeftMs) <= RENOWN_REPORT_MS) return true; // AUDIT SCALE II C-4\n  if (!Number.isSafeInteger(xp) || !Number.isSafeInteger(room)) return true;",
+    "new": "  if (!Number.isSafeInteger(xp) || !Number.isSafeInteger(room)) return true;",
     "tests": [
       "test/net/auditscale2_client.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "AUDIT-SCALE2-C4-hour-end-strict",
     "file": "src/net/renownTracker.js",
-    "old": "(hourLeftMs) <= RENOWN_REPORT_MS) return true;",
-    "new": "(hourLeftMs) < RENOWN_REPORT_MS) return true;",
+    "old": "  if (Number.isFinite(hourLeftMs) && /** @type {number} */ (hourLeftMs) <= RENOWN_REPORT_MS) return true; // AUDIT SCALE II C-4",
+    "new": "  if (Number.isFinite(hourLeftMs) && /** @type {number} */ (hourLeftMs) < RENOWN_REPORT_MS) return true; // AUDIT SCALE II C-4",
     "tests": [
       "test/net/auditscale2_client.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "AUDIT-SCALE2-C4-hour-end-five-minutes",
     "file": "src/net/renownTracker.js",
-    "old": "(hourLeftMs) <= RENOWN_REPORT_MS) return true;",
-    "new": "(hourLeftMs) <= RENOWN_COALESCE_MS) return true;",
+    "old": "  if (Number.isFinite(hourLeftMs) && /** @type {number} */ (hourLeftMs) <= RENOWN_REPORT_MS) return true; // AUDIT SCALE II C-4",
+    "new": "  if (Number.isFinite(hourLeftMs) && /** @type {number} */ (hourLeftMs) <= RENOWN_COALESCE_MS) return true; // AUDIT SCALE II C-4",
     "tests": [
       "test/net/auditscale2_client.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "AUDIT-SCALE2-C5-one-region",
     "file": "src/net/renownTracker.js",
-    "old": "      for (const k of [...pend.keys()]) {\n        const r = mint(k);\n        if (!r) continue;\n",
-    "new": "      for (const k of []) {\n        const r = mint(k);\n        if (!r) continue;\n",
+    "old": "      for (const k of [...pend.keys()]) {",
+    "new": "      for (const k of []) {",
     "tests": [
       "test/net/auditscale2_client.test.js"
     ],
@@ -272,8 +272,8 @@
   {
     "name": "AUDIT-SCALE2-C5-held-first",
     "file": "src/net/renownTracker.js",
-    "old": "      for (const k of [...pend.keys()]) {\n        const r = mint(k);\n        if (!r) continue;\n        try { leave(r.character, r.xp, name?.() ?? null, r.rid, r.region, r.vd); } catch { pend.set(k, (pend.get(k) ?? 0) + r.xp); vdPend += r.vd; }   // not sent: still pending\n      }\n      try { leave(h.character, h.xp, name?.() ?? null, h.rid, h.region, h.vd); return true; } catch { return false; }",
-    "new": "      try { leave(h.character, h.xp, name?.() ?? null, h.rid, h.region, h.vd); } catch { return false; }\n      for (const k of [...pend.keys()]) {\n        const r = mint(k);\n        if (!r) continue;\n        try { leave(r.character, r.xp, name?.() ?? null, r.rid, r.region, r.vd); } catch { pend.set(k, (pend.get(k) ?? 0) + r.xp); vdPend += r.vd; }   // not sent: still pending\n      }\n      return true;",
+    "old": "      for (const k of [...pend.keys()]) {\n        const r = mint(k);\n        if (!r) continue;\n        try {\n          leave(r.character, r.xp, name?.() ?? null, r.rid, r.region, r.vd);\n        } catch {\n          pend.set(k, (pend.get(k) ?? 0) + r.xp);\n          vdPend += r.vd;\n        } // not sent: still pending\n      }\n      try {\n        leave(h.character, h.xp, name?.() ?? null, h.rid, h.region, h.vd);\n        return true;\n      } catch {\n        return false;\n      }",
+    "new": "      try {\n        leave(h.character, h.xp, name?.() ?? null, h.rid, h.region, h.vd);\n      } catch {\n        return false;\n      }\n      for (const k of [...pend.keys()]) {\n        const r = mint(k);\n        if (!r) continue;\n        try {\n          leave(r.character, r.xp, name?.() ?? null, r.rid, r.region, r.vd);\n        } catch {\n          pend.set(k, (pend.get(k) ?? 0) + r.xp);\n          vdPend += r.vd;\n        } // not sent: still pending\n      }\n      return true;",
     "tests": [
       "test/net/auditscale2_client.test.js"
     ],
@@ -282,8 +282,8 @@
   {
     "name": "AUDIT-SCALE2-C5-id-shared",
     "file": "src/net/renownTracker.js",
-    "old": "        try { leave(r.character, r.xp, name?.() ?? null, r.rid, r.region, r.vd); }",
-    "new": "        try { leave(r.character, r.xp, name?.() ?? null, h.rid, r.region, r.vd); }",
+    "old": "          leave(r.character, r.xp, name?.() ?? null, r.rid, r.region, r.vd);",
+    "new": "          leave(r.character, r.xp, name?.() ?? null, h.rid, r.region, r.vd);",
     "tests": [
       "test/net/auditscale2_client.test.js"
     ],
@@ -292,8 +292,8 @@
   {
     "name": "AUDIT-SCALE2-C5-unsent-dropped",
     "file": "src/net/renownTracker.js",
-    "old": "catch { pend.set(k, (pend.get(k) ?? 0) + r.xp); vdPend += r.vd; }   // not sent: still pending",
-    "new": "catch { /* lost */ }   // not sent: still pending",
+    "old": "          pend.set(k, (pend.get(k) ?? 0) + r.xp);\n          vdPend += r.vd;",
+    "new": "          /* lost */",
     "tests": [
       "test/net/auditscale2_client.test.js"
     ],

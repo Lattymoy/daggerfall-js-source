@@ -2,8 +2,8 @@
   {
     "name": "ANY-HOUR-the-act-asks-the-daylight",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "skip ? [...skip, ...ACT_KEEPS_NO_HOURS] : ACT_KEEPS_NO_HOURS);",
-    "new": "skip);",
+    "old": "export const foragingActRefusal = (templateIndex, skip = null) =>\n  foragingRefusal(templateIndex, worldNow(), skip ? [...skip, ...ACT_KEEPS_NO_HOURS] : ACT_KEEPS_NO_HOURS); // PROF2: a dungeon vein skips the surface's checks",
+    "new": "export const foragingActRefusal = (templateIndex, skip = null) => foragingRefusal(templateIndex, worldNow(), skip); // PROF2: a dungeon vein skips the surface's checks",
     "tests": [
       "test/scenes/fb1001_anyhour.test.js"
     ]
@@ -12,7 +12,7 @@
     "name": "ANY-HOUR-the-net-words-the-hour",
     "file": "src/scenes/fishHost.js",
     "old": "export const NET_WHERE = Object.freeze(['inside', 'town']);\nexport const NET_WHERE_WORDS = Object.freeze({ inside: 'not in here', town: 'not in a settlement' });",
-    "new": "export const NET_WHERE = Object.freeze(['inside', 'town', 'daylight']);\nexport const NET_WHERE_WORDS = Object.freeze({ inside: 'not in here', town: 'not in a settlement', daylight: 'the fish bite by daylight (07:00-17:59)' });",
+    "new": "export const NET_WHERE = Object.freeze(['inside', 'town', 'daylight']);\nexport const NET_WHERE_WORDS = Object.freeze({\n  inside: 'not in here',\n  town: 'not in a settlement',\n  daylight: 'the fish bite by daylight (07:00-17:59)',\n});",
     "tests": [
       "test/scenes/fb1001_anyhour.test.js",
       "test/world/terrain/prof8_client.test.js"
@@ -34,8 +34,8 @@
   {
     "name": "ANY-HOUR-the-net-line-by-daylight",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "`Fishing is done in water: stand or swim in it,",
-    "new": "`Fishing is done in water by daylight: stand or swim in it,",
+    "old": "    `Fishing is done in water: stand or swim in it, or be at sea, until its acts show, then press ${k} (or use the Fishing-Net).`, // ANY-HOUR: at any hour",
+    "new": "    `Fishing is done in water by daylight: stand or swim in it, or be at sea, until its acts show, then press ${k} (or use the Fishing-Net).`, // ANY-HOUR: at any hour",
     "tests": [
       "test/scenes/fb1001_anyhour.test.js",
       "test/systems/fb0930b_toolsaid.test.js"

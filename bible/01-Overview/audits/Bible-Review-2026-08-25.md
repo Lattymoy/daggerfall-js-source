@@ -100,7 +100,7 @@ contradict the same file.** All 20 ledgerSweep suspects verified as
 VALID rows (the matcher is over-cautious - the right failure
 direction). The real staleness is where the sweep cannot see:
 - `:341` "**TWO LEFT**... only DaedraSummoning and ReceiveHouse are
-  still null" - `guildServiceFlow.js:"BuyMagicItems: 'guildServiceBuyMagicItems',"/guildServiceFlow.js:"BuySoulgems: 'guildServiceBuySoulgems',"` maps both (G7, H1);
+  still null" - `guildServiceFlow.js:"BuyMagicItems: 'guildServiceBuyMagicItems',"guildServiceFlow.js:"BuySoulgems: 'guildServiceBuySoulgems',"` maps both (G7, H1);
   the row contradicts the GATED derived figure fifteen lines above it
   ("still unbuilt: 0") and is on its FOURTH stale generation - the
   row's own title records the previous three.

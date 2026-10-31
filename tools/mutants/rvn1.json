@@ -2,8 +2,8 @@
   {
     "name": "RVN1-gate-ignored",
     "file": "src/systems/feudLedger.js",
-    "old": "  if (!ok) return null;\n",
-    "new": "",
+    "old": "  if (!ok) return null;\n  let c = null;",
+    "new": "  let c = null;",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RVN1-silver-unkept",
     "file": "src/systems/feudLedger.js",
-    "old": "  if (silver) l.silver += n;\n",
-    "new": "",
+    "old": "  if (silver) l.silver += n;\n  if (feudWeakBlow(entity, { cls, metal })) {",
+    "new": "  if (feudWeakBlow(entity, { cls, metal })) {",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RVN1-a-count-by-any-name",
     "file": "src/systems/feudLedger.js",
-    "old": "  if (!COUNTS.includes(what)) return;\n",
-    "new": "",
+    "old": "  if (!COUNTS.includes(what)) return;\n  const l = feudOf(entity);",
+    "new": "  const l = feudOf(entity);",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "RVN1-taken-twice",
     "file": "src/systems/feudLedger.js",
-    "old": "  if (entity && typeof entity === 'object') entity._feud = null;\n",
-    "new": "",
+    "old": "  if (entity && typeof entity === 'object') entity._feud = null;\n  return l;",
+    "new": "  return l;",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RVN1-night-never-read",
     "file": "src/systems/feudLedger.js",
-    "old": "night: !!c?.night,",
-    "new": "night: false,",
+    "old": "    night: !!c?.night,",
+    "new": "    night: false,",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "RVN1-class-by-the-wrong-skill",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": ": skill === SKILLS.BluntWeapon ? 'blunt' : skill === SKILLS.Axe ? 'axe'",
-    "new": ": skill === SKILLS.BluntWeapon ? 'axe' : skill === SKILLS.Axe ? 'blunt'",
+    "old": "        ? 'blunt'\n        : skill === SKILLS.Axe\n          ? 'axe'",
+    "new": "        ? 'axe'\n        : skill === SKILLS.Axe\n          ? 'blunt'",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "RVN1-a-bow-not-an-arrow",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": ": skill === SKILLS.Archery ? 'arrow' :",
-    "new": ": skill === SKILLS.Archery ? 'blade' :",
+    "old": "            ? 'arrow'",
+    "new": "            ? 'blade'",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "RVN1-the-dodge-unnoted",
     "file": "src/ai/tactics.js",
-    "old": "  if (atMe && ent) { noteFeud(ent, 'dodged'); if (perfect) noteFeud(ent, 'perfect'); }",
-    "new": "  if (atMe && ent) { if (perfect) noteFeud(ent, 'perfect'); }",
+    "old": "    noteFeud(ent, 'dodged');\n    if (perfect) noteFeud(ent, 'perfect');",
+    "new": "    if (perfect) noteFeud(ent, 'perfect');",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "RVN1-every-dodge-perfect",
     "file": "src/ai/tactics.js",
-    "old": "if (perfect) noteFeud(ent, 'perfect');",
-    "new": "noteFeud(ent, 'perfect');",
+    "old": "    if (perfect) noteFeud(ent, 'perfect');",
+    "new": "    noteFeud(ent, 'perfect');",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "RVN1-a-perfect-dodge-uncounted",
     "file": "src/ai/tactics.js",
-    "old": "noteFeud(ent, 'dodged'); if (perfect) noteFeud(ent, 'perfect'); }",
-    "new": "noteFeud(ent, 'dodged'); }",
+    "old": "    if (perfect) noteFeud(ent, 'perfect');\n  } // RVN1 (Feud-Arc.md 12): my dodge - a peer's is its own fight",
+    "new": "  } // RVN1 (Feud-Arc.md 12): my dodge - a peer's is its own fight",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "RVN1-the-share-exclusive",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  if (total > 0) out.push(leadN / total >= SCAR_SHARE ? lead : 'mixed');",
-    "new": "  if (total > 0) out.push(leadN / total > SCAR_SHARE ? lead : 'mixed');",
+    "old": "    if (total > 0) out.push(leadN / total >= SCAR_SHARE ? lead : 'mixed');",
+    "new": "    if (total > 0) out.push(leadN / total > SCAR_SHARE ? lead : 'mixed');",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "RVN1-mixed-never",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  if (total > 0) out.push(leadN / total >= SCAR_SHARE ? lead : 'mixed');",
-    "new": "  if (total > 0 && leadN / total >= SCAR_SHARE) out.push(lead);",
+    "old": "    if (total > 0) out.push(leadN / total >= SCAR_SHARE ? lead : 'mixed');",
+    "new": "    if (total > 0 && leadN / total >= SCAR_SHARE) out.push(lead);",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "RVN1-silver-by-any",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  if (total > 0 && (Number(ledger.silver) || 0) / total >= SCAR_SHARE) out.push('silver');",
-    "new": "  if ((Number(ledger.silver) || 0) > 0) out.push('silver');",
+    "old": "    if (total > 0 && (Number(ledger.silver) || 0) / total >= SCAR_SHARE) out.push('silver');",
+    "new": "    if ((Number(ledger.silver) || 0) > 0) out.push('silver');",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "RVN1-staggered-line",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  if ((ledger.staggers | 0) >= SCAR_STAGGERS) out.push('staggered');",
-    "new": "  if ((ledger.staggers | 0) > SCAR_STAGGERS) out.push('staggered');",
+    "old": "    if ((ledger.staggers | 0) >= SCAR_STAGGERS) out.push('staggered');",
+    "new": "    if ((ledger.staggers | 0) > SCAR_STAGGERS) out.push('staggered');",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "RVN1-dodged-line",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  if ((ledger.dodged | 0) >= SCAR_DODGED) out.push('dodged');",
-    "new": "  if ((ledger.dodged | 0) > SCAR_DODGED) out.push('dodged');",
+    "old": "    if ((ledger.dodged | 0) >= SCAR_DODGED) out.push('dodged');",
+    "new": "    if ((ledger.dodged | 0) > SCAR_DODGED) out.push('dodged');",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "RVN1-back-line",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  if ((ledger.backHits | 0) >= SCAR_BACK || ledger.backstab === true) out.push('back');",
-    "new": "  if ((ledger.backHits | 0) > SCAR_BACK || ledger.backstab === true) out.push('back');",
+    "old": "    if ((ledger.backHits | 0) >= SCAR_BACK || ledger.backstab === true) out.push('back');",
+    "new": "    if ((ledger.backHits | 0) > SCAR_BACK || ledger.backstab === true) out.push('back');",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "RVN1-the-backstab-no-back",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": " || ledger.backstab === true) out.push('back');",
-    "new": ") out.push('back');",
+    "old": "    if ((ledger.backHits | 0) >= SCAR_BACK || ledger.backstab === true) out.push('back');",
+    "new": "    if ((ledger.backHits | 0) >= SCAR_BACK) out.push('back');",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "RVN1-night-dropped",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  if (ledger.night === true) out.push('night');\n",
-    "new": "",
+    "old": "    if (ledger.night === true) out.push('night');\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "RVN1-the-deed-dropped",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  if (deedName && SCAR_SET.has(deedName)) out.push(deedName);\n",
-    "new": "",
+    "old": "  if (deedName && SCAR_SET.has(deedName)) out.push(deedName);\n  return out;",
+    "new": "  return out;",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "RVN1-more-than-six",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  return out.slice(-SCAR_MAX);\n}",
-    "new": "  return out;\n}",
+    "old": "  return out.slice(-SCAR_MAX);",
+    "new": "  return out;",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "RVN1-loyalty-unclamped",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "(Number.isFinite(v) ? Math.max(0, Math.min(100, Math.round(v))) : loyaltyStart(personality))",
-    "new": "(Number.isFinite(v) ? v : loyaltyStart(personality))",
+    "old": "export const sanitizeLoyalty = (v, personality) =>\n  Number.isFinite(v) ? Math.max(0, Math.min(100, Math.round(v))) : loyaltyStart(personality);",
+    "new": "export const sanitizeLoyalty = (v, personality) => (Number.isFinite(v) ? v : loyaltyStart(personality));",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "RVN1-learned-unvalidated",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "[...new Set(r.learned.filter(isAdaptation))].slice(-Math.min(rank, ADAPT_MAX))",
-    "new": "r.learned.filter(isAdaptation)",
+    "old": "    learned: Array.isArray(r.learned)\n      ? [...new Set(r.learned.filter(isAdaptation))].slice(-Math.min(rank, ADAPT_MAX))\n      : [], // RVN2: at most its rank's",
+    "new": "    learned: Array.isArray(r.learned) ? r.learned.filter(isAdaptation) : [], // RVN2: at most its rank's",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "RVN1-weak-known-unvalidated",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "(r.weakKnown === 1 || r.weakKnown === 2 ? r.weakKnown : 0),",
-    "new": "(Number.isInteger(r.weakKnown) ? r.weakKnown : 0),",
+    "old": "    weakKnown: /** @type {0|1|2} */ (r.weakKnown === 1 || r.weakKnown === 2 ? r.weakKnown : 0),",
+    "new": "    weakKnown: /** @type {0|1|2} */ (Number.isInteger(r.weakKnown) ? r.weakKnown : 0),",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "RVN1-a-bad-signature-kept",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "(isSignature(r.sig) ? r.sig : drawSignature(id, mobileType))",
-    "new": "(r.sig ?? drawSignature(id, mobileType))",
+    "old": "    sig: rank >= SIG_RANK ? (isSignature(r.sig) ? r.sig : drawSignature(id, mobileType)) : null,",
+    "new": "    sig: rank >= SIG_RANK ? (r.sig ?? drawSignature(id, mobileType)) : null,",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "RVN1-took-uncapped",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": ".slice(0, TOOK_MAX).map((it) => setItemFields(it))",
-    "new": ".map((it) => setItemFields(it))",
+    "old": "          .slice(0, TOOK_MAX)\n          .map((it) => setItemFields(it))",
+    "new": "          .map((it) => setItemFields(it))",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "RVN1-wrath-unclamped",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "Math.max(0, Math.min(WRATH_MAX, r.wrath))",
-    "new": "r.wrath",
+    "old": "    wrath: Number.isInteger(r.wrath) ? Math.max(0, Math.min(WRATH_MAX, r.wrath)) : 0,",
+    "new": "    wrath: Number.isInteger(r.wrath) ? r.wrath : 0,",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "RVN1-fights-negative-kept",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "Number.isInteger(r.fights) && r.fights >= 0 ? r.fights",
-    "new": "Number.isInteger(r.fights) ? r.fights",
+    "old": "  const fights =\n    Number.isInteger(r.fights) && r.fights >= 0 ? r.fights : (r.kills | 0) + (r.escapes | 0) + (r.returns | 0);",
+    "new": "  const fights = Number.isInteger(r.fights) ? r.fights : (r.kills | 0) + (r.escapes | 0) + (r.returns | 0);",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "RVN1-fights-derived-wrong",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": ": (r.kills | 0) + (r.escapes | 0) + (r.returns | 0);",
-    "new": ": (r.kills | 0) + (r.escapes | 0);",
+    "old": "  const fights =\n    Number.isInteger(r.fights) && r.fights >= 0 ? r.fights : (r.kills | 0) + (r.escapes | 0) + (r.returns | 0);",
+    "new": "  const fights = Number.isInteger(r.fights) && r.fights >= 0 ? r.fights : (r.kills | 0) + (r.escapes | 0);",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "RVN1-weakness-on-math-random",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "idStream(id, 'weak')) ?? 'blunt';",
-    "new": "Math.random) ?? 'blunt';",
+    "old": "  return weighted(pool.length ? pool : [['blunt', 1]], idStream(id, 'weak')) ?? 'blunt';",
+    "new": "  return weighted(pool.length ? pool : [['blunt', 1]], Math.random) ?? 'blunt';",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -578,7 +578,7 @@
   {
     "name": "RVN1-the-career-unread",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  const shut = ((career?.resistanceFlags | 0) | (career?.immunityFlags | 0)) >>> 0;",
+    "old": "  const shut = (career?.resistanceFlags | 0 | (career?.immunityFlags | 0)) >>> 0;",
     "new": "  const shut = 0;",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
@@ -587,7 +587,7 @@
   {
     "name": "RVN1-immunity-unread",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  const shut = ((career?.resistanceFlags | 0) | (career?.immunityFlags | 0)) >>> 0;",
+    "old": "  const shut = (career?.resistanceFlags | 0 | (career?.immunityFlags | 0)) >>> 0;",
     "new": "  const shut = (career?.resistanceFlags | 0) >>> 0;",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
@@ -597,7 +597,7 @@
     "name": "RVN1-the-opposite-dropped",
     "file": "src/systems/revenant/revenantFeud.js",
     "old": "  if (DAEDRA.has(t)) return [...(opp ? [[opp, 3]] : []), ['shock', 1], ['magic', 1]];",
-    "new": "  if (DAEDRA.has(t)) return [['shock', 1], ['magic', 1]];",
+    "new": "  if (DAEDRA.has(t))\n    return [\n      ['shock', 1],\n      ['magic', 1],\n    ];",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "RVN1-the-undead-in-daylight",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "['silver', 2], ['blunt', 2], ['daylight', 2]];",
-    "new": "['silver', 2], ['blunt', 2]];",
+    "old": "      ['blunt', 2],\n      ['daylight', 2],\n    ];",
+    "new": "      ['blunt', 2],\n    ];",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -614,8 +614,8 @@
   {
     "name": "RVN1-the-sig-pool-moved",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "blade: ['slam', 'charge'],",
-    "new": "blade: ['slam', 'ring'],",
+    "old": "const SIG_POOL = Object.freeze({ blade: ['slam', 'charge'], beast: ['charge', 'leap'], brute: ['ring', 'charge'] });",
+    "new": "const SIG_POOL = Object.freeze({ blade: ['slam', 'ring'], beast: ['charge', 'leap'], brute: ['ring', 'charge'] });",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -623,8 +623,8 @@
   {
     "name": "RVN1-a-caster-no-pyre",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "return CASTER_CLASSES.has(mobileType) ? null : 'blade';",
-    "new": "return 'blade';",
+    "old": "  if (isClassEnemyId(mobileType) && mobileType !== M.None) return CASTER_CLASSES.has(mobileType) ? null : 'blade';",
+    "new": "  if (isClassEnemyId(mobileType) && mobileType !== M.None) return 'blade';",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -632,8 +632,8 @@
   {
     "name": "RVN1-the-solitary-kin",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  if (!fac) return [];\n",
-    "new": "  if (!fac) return [mobileType];\n",
+    "old": "  if (!fac) return [];",
+    "new": "  if (!fac) return [mobileType];",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -704,8 +704,8 @@
   {
     "name": "RVN1-scars-unshown",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "  if (scars) text.append(el('span', 'rvn-scars', scars));\n",
-    "new": "",
+    "old": "  if (scars) text.append(el('span', 'rvn-scars', scars));\n  const chips = fallen ? [] : learnedChips(r); // RVN2: and what it learned of them - RVN12b (24.1): as chips, each with its effect",
+    "new": "  const chips = fallen ? [] : learnedChips(r); // RVN2: and what it learned of them - RVN12b (24.1): as chips, each with its effect",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]
@@ -758,7 +758,7 @@
   {
     "name": "RVN1-a-beast-kin-moved",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  return members ?? [mobileType];   // a beast, a vermin, a fish (BEASTPACK, VERMIN, AQUATIC): its own kind",
+    "old": "  return members ?? [mobileType]; // a beast, a vermin, a fish (BEASTPACK, VERMIN, AQUATIC): its own kind",
     "new": "  return members ?? [];",
     "tests": [
       "test/systems/rvn1_ledger.test.js"

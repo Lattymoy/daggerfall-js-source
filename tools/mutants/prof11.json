@@ -31,8 +31,8 @@
   {
     "name": "PROF11-mortar-unregistered",
     "file": "src/net/professionLaw.js",
-    "old": "...PARTS, ...MASONRY_TEMPLATES, RAM_KIT, ...REAGENTS",
-    "new": "...PARTS, RAM_KIT, ...REAGENTS",
+    "old": "    ...MASONRY_TEMPLATES,\n    RAM_KIT,",
+    "new": "    RAM_KIT,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "PROF11-mortar-row-heavier",
     "file": "src/systems/professions/profTemplates.js",
-    "old": "baseWeight: 1, hitPoints: 50, capacityOrTarget: 0, basePrice: 2,",
-    "new": "baseWeight: 2, hitPoints: 50, capacityOrTarget: 0, basePrice: 2,",
+    "old": "      baseWeight: 1,",
+    "new": "      baseWeight: 2,",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -51,8 +51,8 @@
   {
     "name": "PROF11-mortar-row-dearer",
     "file": "src/systems/professions/profTemplates.js",
-    "old": "baseWeight: 1, hitPoints: 50, capacityOrTarget: 0, basePrice: 2,",
-    "new": "baseWeight: 1, hitPoints: 50, capacityOrTarget: 0, basePrice: 3,",
+    "old": "      basePrice: 2,",
+    "new": "      basePrice: 3,",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -69,8 +69,8 @@
   {
     "name": "PROF11-mortars",
     "file": "src/systems/professions/profItems.js",
-    "old": "  'Mortar',   // PROF11 (FOUND by its pin)",
-    "new": "  // PROF11 (FOUND by its pin)",
+    "old": "  'Mortar', // PROF11 (FOUND by its pin): the bench's mix is mass, as its stone - '10 Mortar', never 'Mortars'",
+    "new": "  // PROF11 (FOUND by its pin): the bench's mix is mass, as its stone - '10 Mortar', never 'Mortars'",
     "tests": [
       "test/systems/prof11_client.test.js"
     ],
@@ -141,8 +141,8 @@
   {
     "name": "PROF11-work-asks-no-rank",
     "file": "src/net/professionLaw.js",
-    "old": "tier, rank: TIER_RANKS[tier - 1], act: 'chisel',",
-    "new": "tier, rank: 0, act: 'chisel',",
+    "old": "    rank: TIER_RANKS[tier - 1],",
+    "new": "    rank: 0,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js"
@@ -151,8 +151,8 @@
   {
     "name": "PROF11-work-no-chisel",
     "file": "src/net/professionLaw.js",
-    "old": "tier, rank: TIER_RANKS[tier - 1], act: 'chisel',",
-    "new": "tier, rank: TIER_RANKS[tier - 1], act: null,",
+    "old": "    act: 'chisel',",
+    "new": "    act: null,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js"
@@ -183,8 +183,8 @@
   {
     "name": "PROF11-mix-without-lead",
     "file": "src/net/professionLaw.js",
-    "old": "[['metal:sulphur', 1], ['metal:lead', 1], [ROUGH_STONE.key, 5]]",
-    "new": "[['metal:sulphur', 1], [ROUGH_STONE.key, 5]]",
+    "old": "      ['metal:lead', 1],\n      [ROUGH_STONE.key, 5],",
+    "new": "      [ROUGH_STONE.key, 5],",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js"
@@ -193,8 +193,8 @@
   {
     "name": "PROF11-mix-four-stone",
     "file": "src/net/professionLaw.js",
-    "old": "['metal:lead', 1], [ROUGH_STONE.key, 5]]",
-    "new": "['metal:lead', 1], [ROUGH_STONE.key, 4]]",
+    "old": "      [ROUGH_STONE.key, 5],",
+    "new": "      [ROUGH_STONE.key, 4],",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js"
@@ -203,8 +203,8 @@
   {
     "name": "PROF11-mix-at-rank-0",
     "file": "src/net/professionLaw.js",
-    "old": "[ROUGH_STONE.key, 5]], MORTAR.tier,",
-    "new": "[ROUGH_STONE.key, 5]], 1,",
+    "old": "    MORTAR.tier,",
+    "new": "    1,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js",
@@ -214,8 +214,8 @@
   {
     "name": "PROF11-works-unlisted",
     "file": "src/net/professionLaw.js",
-    "old": "...WEAVE_RECIPES, ...SPIN_RECIPES, ...MASON_RECIPES, ...TRANSMUTE_RECIPES]",
-    "new": "...WEAVE_RECIPES, ...SPIN_RECIPES, ...TRANSMUTE_RECIPES]",
+    "old": "  ...MASON_RECIPES,\n  ...TRANSMUTE_RECIPES,",
+    "new": "  ...TRANSMUTE_RECIPES,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js"
@@ -517,8 +517,8 @@
   {
     "name": "PROF11-decor-rows-stack",
     "file": "src/systems/professions/profTemplates.js",
-    "old": "playerTextureArchive: 0, playerTextureRecord: 0, stackable: false,\n})));\nregisterCustomTemplates(STONE_DECOR_ROWS);",
-    "new": "playerTextureArchive: 0, playerTextureRecord: 0, stackable: true,\n})));\nregisterCustomTemplates(STONE_DECOR_ROWS);",
+    "old": "      playerTextureRecord: 0,\n      stackable: false,\n    }),",
+    "new": "      playerTextureRecord: 0,\n      stackable: true,\n    }),",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -526,8 +526,8 @@
   {
     "name": "PROF11-decor-rows-wood-hard",
     "file": "src/systems/professions/profTemplates.js",
-    "old": "baseWeight: d.weight, hitPoints: 200,",
-    "new": "baseWeight: d.weight, hitPoints: 100,",
+    "old": "      hitPoints: 200,",
+    "new": "      hitPoints: 100,",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -780,8 +780,8 @@
   {
     "name": "PROF11-act-time-over-lost",
     "file": "src/systems/chiselAct.js",
-    "old": "st.markLeft = left + st.markS; }",
-    "new": "st.markLeft = st.markS; }",
+    "old": "        st.markLeft = left + st.markS;",
+    "new": "        st.markLeft = st.markS;",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -843,8 +843,8 @@
   {
     "name": "PROF11-act-set-down-moves",
     "file": "src/systems/chiselAct.js",
-    "old": "function aim(i) { if (!st.done && Number.isInteger(i))",
-    "new": "function aim(i) { if (Number.isInteger(i))",
+    "old": "    if (!st.done && Number.isInteger(i)) st.at = Math.max(0, Math.min(lines - 1, i));",
+    "new": "    if (Number.isInteger(i)) st.at = Math.max(0, Math.min(lines - 1, i));",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -852,8 +852,8 @@
   {
     "name": "PROF11-act-off-the-stone",
     "file": "src/systems/chiselAct.js",
-    "old": "st.at = Math.max(0, Math.min(lines - 1, i)); }",
-    "new": "st.at = Math.min(lines - 1, i); }",
+    "old": "    if (!st.done && Number.isInteger(i)) st.at = Math.max(0, Math.min(lines - 1, i));",
+    "new": "    if (!st.done && Number.isInteger(i)) st.at = Math.min(lines - 1, i);",
     "tests": [
       "test/net/prof11_law.test.js"
     ]

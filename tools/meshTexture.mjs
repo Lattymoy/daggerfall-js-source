@@ -68,19 +68,19 @@ import { isMain } from './lib/isMain.mjs';
 // screen values comes out of the encode pale and chalky - which is
 // exactly what the first bake of this file did.
 export const BANDS = [
-  { at: 0.00, name: 'muzzle',   colour: [0.070, 0.045, 0.026], rough: 0.90 },   // scorched, sooted
-  { at: 0.07, name: 'barrel',   colour: [0.305, 0.148, 0.036], rough: 0.55 },   // turned bronze
-  { at: 0.50, name: 'receiver', colour: [0.205, 0.112, 0.034], rough: 0.50 },   // the same alloy, cast
-  { at: 0.76, name: 'grip',     colour: [0.055, 0.034, 0.022], rough: 0.95 },   // dark, matte
+  { at: 0.0, name: 'muzzle', colour: [0.07, 0.045, 0.026], rough: 0.9 }, // scorched, sooted
+  { at: 0.07, name: 'barrel', colour: [0.305, 0.148, 0.036], rough: 0.55 }, // turned bronze
+  { at: 0.5, name: 'receiver', colour: [0.205, 0.112, 0.034], rough: 0.5 }, // the same alloy, cast
+  { at: 0.76, name: 'grip', colour: [0.055, 0.034, 0.022], rough: 0.95 }, // dark, matte
 ];
 /** GILDED1 (2026-10-07): THE HOURLOCK'S GOLD LEAF, the same four bands. The barrel and the receiver gilt and polished
  *  (a third of the bronze's roughness), the muzzle a scorched gilt, the grip a dark enamel - a gilded gun is gilt where
  *  the eye goes and dark where the hand does. Linear, as the bronze's are (0.80 encodes to sRGB 0.91). */
 export const GILDED_BANDS = [
-  { at: 0.00, name: 'muzzle',   colour: [0.150, 0.096, 0.030], rough: 0.80 },   // scorched gilt
-  { at: 0.07, name: 'barrel',   colour: [0.800, 0.530, 0.120], rough: 0.20 },   // gold leaf, polished
-  { at: 0.50, name: 'receiver', colour: [0.680, 0.430, 0.095], rough: 0.25 },   // the same, cast
-  { at: 0.76, name: 'grip',     colour: [0.090, 0.040, 0.020], rough: 0.85 },   // dark enamel
+  { at: 0.0, name: 'muzzle', colour: [0.15, 0.096, 0.03], rough: 0.8 }, // scorched gilt
+  { at: 0.07, name: 'barrel', colour: [0.8, 0.53, 0.12], rough: 0.2 }, // gold leaf, polished
+  { at: 0.5, name: 'receiver', colour: [0.68, 0.43, 0.095], rough: 0.25 }, // the same, cast
+  { at: 0.76, name: 'grip', colour: [0.09, 0.04, 0.02], rough: 0.85 }, // dark enamel
 ];
 
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -116,12 +116,20 @@ function hash3(x, y, z) {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
 export function valueNoise(x, y, z) {
-  const xi = Math.floor(x); const yi = Math.floor(y); const zi = Math.floor(z);
-  const xf = x - xi; const yf = y - yi; const zf = z - zi;
-  const sx = xf * xf * (3 - 2 * xf); const sy = yf * yf * (3 - 2 * yf); const sz = zf * zf * (3 - 2 * zf);
+  const xi = Math.floor(x);
+  const yi = Math.floor(y);
+  const zi = Math.floor(z);
+  const xf = x - xi;
+  const yf = y - yi;
+  const zf = z - zi;
+  const sx = xf * xf * (3 - 2 * xf);
+  const sy = yf * yf * (3 - 2 * yf);
+  const sz = zf * zf * (3 - 2 * zf);
   let out = 0;
   for (let k = 0; k < 8; k++) {
-    const dx = k & 1; const dy = (k >> 1) & 1; const dz = (k >> 2) & 1;
+    const dx = k & 1;
+    const dy = (k >> 1) & 1;
+    const dz = (k >> 2) & 1;
     const w = (dx ? sx : 1 - sx) * (dy ? sy : 1 - sy) * (dz ? sz : 1 - sz);
     out += w * hash3(xi + dx, yi + dy, zi + dz);
   }
@@ -163,7 +171,9 @@ function rayTri(o, d, a, b, c) {
  * is a few hundredths.
  */
 export function vertexAO(mesh, { rays = 64, range = null } = {}) {
-  const P = mesh.positions; const N = mesh.normals; const I = mesh.indices;
+  const P = mesh.positions;
+  const N = mesh.normals;
+  const I = mesh.indices;
   const n = P.length / 3;
   // THE RANGE IS RELATIVE TO THE MODEL, or it is a constant that only
   // works at one scale - and the scale changed the moment the bake
@@ -226,7 +236,10 @@ export function vertexAO(mesh, { rays = 64, range = null } = {}) {
  * painter works over and the sheet this writes are the same sheet.
  */
 export function bakeAttributes(mesh, size, ao) {
-  const P = mesh.positions; const N = mesh.normals; const U = mesh.uvs; const I = mesh.indices;
+  const P = mesh.positions;
+  const N = mesh.normals;
+  const U = mesh.uvs;
+  const I = mesh.indices;
   if (!U) throw new Error('this mesh has no UVs - there is nothing to bake into');
   const pos = new Float32Array(size * size * 3);
   const nrm = new Float32Array(size * size * 3);
@@ -249,7 +262,8 @@ export function bakeAttributes(mesh, size, ao) {
     const maxY = Math.min(size - 1, Math.ceil(Math.max(s[0][1], s[1][1], s[2][1])) + 1);
     for (let y = minY; y <= maxY; y++) {
       for (let x = minX; x <= maxX; x++) {
-        const px = x + 0.5; const py = y + 0.5;
+        const px = x + 0.5;
+        const py = y + 0.5;
         let w0 = ((s[1][0] - s[0][0]) * (py - s[0][1]) - (px - s[0][0]) * (s[1][1] - s[0][1])) / area;
         let w1 = ((s[2][0] - s[1][0]) * (py - s[1][1]) - (px - s[1][0]) * (s[2][1] - s[1][1])) / area;
         let w2 = ((s[0][0] - s[2][0]) * (py - s[2][1]) - (px - s[2][0]) * (s[0][1] - s[2][1])) / area;
@@ -260,11 +274,19 @@ export function bakeAttributes(mesh, size, ao) {
         if (outside && covered[y * size + x]) continue;
         const sum = Math.abs(w0) + Math.abs(w1) + Math.abs(w2);
         if (outside) {
-          w0 = clamp01(w0); w1 = clamp01(w1); w2 = clamp01(w2);
+          w0 = clamp01(w0);
+          w1 = clamp01(w1);
+          w2 = clamp01(w2);
           const k = w0 + w1 + w2;
           if (k <= 0) continue;
-          w0 /= k; w1 /= k; w2 /= k;
-        } else if (sum > 0) { w0 /= sum; w1 /= sum; w2 /= sum; }
+          w0 /= k;
+          w1 /= k;
+          w2 /= k;
+        } else if (sum > 0) {
+          w0 /= sum;
+          w1 /= sum;
+          w2 /= sum;
+        }
         // The weights are opposite-edge areas, so each belongs to the
         // vertex ACROSS from it: w0 -> idx[2], w1 -> idx[0], w2 -> idx[1].
         const [c, a, b] = [idx[2], idx[0], idx[1]];
@@ -274,7 +296,7 @@ export function bakeAttributes(mesh, size, ao) {
           nrm[at * 3 + k] = N[c * 3 + k] * w0 + N[a * 3 + k] * w1 + N[b * 3 + k] * w2;
         }
         occ[at] = ao[c] * w0 + ao[a] * w1 + ao[b] * w2;
-        covered[at] = outside ? (covered[at] || 2) : 1;   // 1 = real, 2 = margin
+        covered[at] = outside ? covered[at] || 2 : 1; // 1 = real, 2 = margin
       }
     }
   }
@@ -283,8 +305,7 @@ export function bakeAttributes(mesh, size, ao) {
 
 /** The model's longest extent. One home, because the occlusion reach
  *  and the noise frequencies below are both PROPORTIONS of it. */
-export const longestAxis = (bounds) =>
-  Math.max(...[0, 1, 2].map((k) => bounds.max[k] - bounds.min[k])) || 1;
+export const longestAxis = (bounds) => Math.max(...[0, 1, 2].map((k) => bounds.max[k] - bounds.min[k])) || 1;
 
 /** How far back from the MUZZLE a point is, 0 at the muzzle and 1 at
  *  the butt. One home, because the bands and the pins both ask it. */
@@ -328,7 +349,9 @@ export function shadeTexel(p, n, ao, bounds, bands = BANDS) {
   const occ = 0.22 + 0.78 * clamp01(ao);
 
   const k = tone * wear * occ;
-  r *= k; g *= k; b *= k;
+  r *= k;
+  g *= k;
+  b *= k;
   // NO VERDIGRIS. Two versions of it were tried and both are gone: a
   // green tint keyed on occlusion fired over most of the gun (this
   // mesh's mean AO is 0.60, so "the deepest crevices" was nearly all
@@ -345,7 +368,7 @@ export function shadeTexel(p, n, ao, bounds, bands = BANDS) {
 
 /** sRGB encode - the texture is colour, and a linear buffer written
  *  straight out is the classic too-dark asset. */
-const toSrgb = (v) => Math.round(255 * (v <= 0.0031308 ? v * 12.92 : 1.055 * (v ** (1 / 2.4)) - 0.055));
+const toSrgb = (v) => Math.round(255 * (v <= 0.0031308 ? v * 12.92 : 1.055 * v ** (1 / 2.4) - 0.055));
 
 /**
  * DILATE the covered texels outward. Bilinear filtering and every mip
@@ -362,18 +385,28 @@ export function dilate(rgba, covered, size, passes) {
       for (let x = 0; x < size; x++) {
         const at = y * size + x;
         if (have[at]) continue;
-        let r = 0; let g = 0; let b = 0; let n = 0;
+        let r = 0;
+        let g = 0;
+        let b = 0;
+        let n = 0;
         for (let dy = -1; dy <= 1; dy++) {
           for (let dx = -1; dx <= 1; dx++) {
-            const nx = x + dx; const ny = y + dy;
+            const nx = x + dx;
+            const ny = y + dy;
             if (nx < 0 || ny < 0 || nx >= size || ny >= size) continue;
             const s = ny * size + nx;
             if (!have[s]) continue;
-            r += rgba[s * 4]; g += rgba[s * 4 + 1]; b += rgba[s * 4 + 2]; n++;
+            r += rgba[s * 4];
+            g += rgba[s * 4 + 1];
+            b += rgba[s * 4 + 2];
+            n++;
           }
         }
         if (!n) continue;
-        rgba[at * 4] = r / n; rgba[at * 4 + 1] = g / n; rgba[at * 4 + 2] = b / n; rgba[at * 4 + 3] = 255;
+        rgba[at * 4] = r / n;
+        rgba[at * 4 + 1] = g / n;
+        rgba[at * 4 + 2] = b / n;
+        rgba[at * 4 + 3] = 255;
         next[at] = 1;
       }
     }
@@ -391,9 +424,14 @@ export function bakeTexture(mesh, { size = 512, rays = 64, dilatePasses = 8, ban
     const c = shadeTexel(
       [pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]],
       [nrm[i * 3], nrm[i * 3 + 1], nrm[i * 3 + 2]],
-      occ[i], mesh.bounds, bands,
+      occ[i],
+      mesh.bounds,
+      bands,
     );
-    rgba[i * 4] = toSrgb(c[0]); rgba[i * 4 + 1] = toSrgb(c[1]); rgba[i * 4 + 2] = toSrgb(c[2]); rgba[i * 4 + 3] = 255;
+    rgba[i * 4] = toSrgb(c[0]);
+    rgba[i * 4 + 1] = toSrgb(c[1]);
+    rgba[i * 4 + 2] = toSrgb(c[2]);
+    rgba[i * 4 + 3] = 255;
   }
   dilate(rgba, covered, size, dilatePasses);
   return { width: size, height: size, data: rgba, covered };
@@ -405,16 +443,20 @@ export function bakeTexture(mesh, { size = 512, rays = 64, dilatePasses = 8, ban
  *  textures: a first-person weapon spends its life at a few hundred
  *  pixels and its atlas is a thousand. */
 export function halve({ width, height, data }) {
-  const w = Math.max(1, width >> 1); const h = Math.max(1, height >> 1);
+  const w = Math.max(1, width >> 1);
+  const h = Math.max(1, height >> 1);
   const out = new Uint8ClampedArray(w * h * 4);
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       for (let c = 0; c < 4; c++) {
-        let sum = 0; let n = 0;
+        let sum = 0;
+        let n = 0;
         for (let dy = 0; dy < 2; dy++) {
           for (let dx = 0; dx < 2; dx++) {
-            const sx = Math.min(width - 1, x * 2 + dx); const sy = Math.min(height - 1, y * 2 + dy);
-            sum += data[(sy * width + sx) * 4 + c]; n++;
+            const sx = Math.min(width - 1, x * 2 + dx);
+            const sy = Math.min(height - 1, y * 2 + dy);
+            sum += data[(sy * width + sx) * 4 + c];
+            n++;
           }
         }
         out[(y * w + x) * 4 + c] = sum / n;
@@ -436,31 +478,31 @@ export function writeDds(levels) {
   let bytes = 0;
   for (const m of levels) bytes += m.width * m.height * 4;
   const buf = Buffer.alloc(HEADER + bytes);
-  buf.writeUInt32LE(0x20534444, 0);            // 'DDS '
-  buf.writeUInt32LE(124, 4);                   // header size
+  buf.writeUInt32LE(0x20534444, 0); // 'DDS '
+  buf.writeUInt32LE(124, 4); // header size
   // CAPS | HEIGHT | WIDTH | PITCH | PIXELFORMAT | MIPMAPCOUNT
   buf.writeUInt32LE(0x1 | 0x2 | 0x4 | 0x8 | 0x1000 | 0x20000, 8);
   buf.writeUInt32LE(levels[0].height, 12);
   buf.writeUInt32LE(levels[0].width, 16);
-  buf.writeUInt32LE(levels[0].width * 4, 20);  // pitch
-  buf.writeUInt32LE(0, 24);                    // depth
+  buf.writeUInt32LE(levels[0].width * 4, 20); // pitch
+  buf.writeUInt32LE(0, 24); // depth
   buf.writeUInt32LE(levels.length, 28);
-  buf.writeUInt32LE(32, 76);                   // pixel format size
-  buf.writeUInt32LE(0x1 | 0x40, 80);           // ALPHAPIXELS | RGB
-  buf.writeUInt32LE(0, 84);                    // no fourCC
-  buf.writeUInt32LE(32, 88);                   // bits per pixel
-  buf.writeUInt32LE(0x00ff0000, 92);           // R
-  buf.writeUInt32LE(0x0000ff00, 96);           // G
-  buf.writeUInt32LE(0x000000ff, 100);          // B
-  buf.writeUInt32LE(0xff000000, 104);          // A
-  buf.writeUInt32LE(0x1000 | 0x8 | 0x400000, 108);   // TEXTURE | COMPLEX | MIPMAP
+  buf.writeUInt32LE(32, 76); // pixel format size
+  buf.writeUInt32LE(0x1 | 0x40, 80); // ALPHAPIXELS | RGB
+  buf.writeUInt32LE(0, 84); // no fourCC
+  buf.writeUInt32LE(32, 88); // bits per pixel
+  buf.writeUInt32LE(0x00ff0000, 92); // R
+  buf.writeUInt32LE(0x0000ff00, 96); // G
+  buf.writeUInt32LE(0x000000ff, 100); // B
+  buf.writeUInt32LE(0xff000000, 104); // A
+  buf.writeUInt32LE(0x1000 | 0x8 | 0x400000, 108); // TEXTURE | COMPLEX | MIPMAP
   let off = HEADER;
   for (const m of levels) {
     for (let i = 0; i < m.width * m.height; i++) {
-      buf[off++] = m.data[i * 4 + 2];          // B
-      buf[off++] = m.data[i * 4 + 1];          // G
-      buf[off++] = m.data[i * 4];              // R
-      buf[off++] = m.data[i * 4 + 3];          // A
+      buf[off++] = m.data[i * 4 + 2]; // B
+      buf[off++] = m.data[i * 4 + 1]; // G
+      buf[off++] = m.data[i * 4]; // R
+      buf[off++] = m.data[i * 4 + 3]; // A
     }
   }
   return buf;
@@ -470,16 +512,26 @@ export function writeDds(levels) {
 export function mipChain(top) {
   const levels = [top];
   let cur = top;
-  while (cur.width > 1 || cur.height > 1) { cur = halve(cur); levels.push(cur); }
+  while (cur.width > 1 || cur.height > 1) {
+    cur = halve(cur);
+    levels.push(cur);
+  }
   return levels;
 }
 
 if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
-  const opt = (k, d = null) => args.find((a) => a.startsWith(`--${k}=`))?.split('=').slice(1).join('=') ?? d;
+  const opt = (k, d = null) =>
+    args
+      .find((a) => a.startsWith(`--${k}=`))
+      ?.split('=')
+      .slice(1)
+      .join('=') ?? d;
   const files = args.filter((a) => !a.startsWith('--'));
   if (files.length !== 2) {
-    console.error('usage: node tools/meshTexture.mjs <mesh.json> <out.dds> [--size=512] [--rays=64] [--preview=out.png]');
+    console.error(
+      'usage: node tools/meshTexture.mjs <mesh.json> <out.dds> [--size=512] [--rays=64] [--preview=out.png]',
+    );
     process.exit(2);
   }
   const mesh = JSON.parse(readFileSync(files[0], 'utf8'));
@@ -491,7 +543,7 @@ if (isMain(import.meta.url)) {
   writeFileSync(files[1], dds);
   const coveredCount = top.covered.reduce((a, v) => a + (v ? 1 : 0), 0);
   console.log(`${files[0]} -> ${files[1]}  ${dds.length} bytes, ${levels.length} mip levels`);
-  console.log(`  ${size}x${size}, ${(100 * coveredCount / (size * size)).toFixed(1)}% of the atlas is the model`);
+  console.log(`  ${size}x${size}, ${((100 * coveredCount) / (size * size)).toFixed(1)}% of the atlas is the model`);
   if (opt('preview')) {
     mkdirSync(dirname(opt('preview')), { recursive: true });
     writeFileSync(opt('preview'), writePng({ width: top.width, height: top.height, data: top.data }));

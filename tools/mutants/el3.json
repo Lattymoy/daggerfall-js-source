@@ -2,8 +2,8 @@
   {
     "name": "door-ignored",
     "file": "src/render/airPass.js",
-    "old": "  return pageParam('air', search) !== 'off';",
-    "new": "  return true;",
+    "old": "  return pageParam('air', search) !== 'off'; // PERF-URL",
+    "new": "  return true; // PERF-URL",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "projinfo-swapped",
     "file": "src/render/airPass.js",
-    "old": "  out[0] = proj[0]; out[1] = proj[5]; out[2] = proj[10]; out[3] = proj[14];",
-    "new": "  out[0] = proj[5]; out[1] = proj[0]; out[2] = proj[10]; out[3] = proj[14];",
+    "old": "  out[0] = proj[0];\n  out[1] = proj[5];",
+    "new": "  out[0] = proj[5];\n  out[1] = proj[0];",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "ao-horizon-unclamped",
     "file": "src/render/airPass.js",
-    "old": "    h1 = gamma + max(-h1 - gamma, -1.5707963);\n    h2 = gamma + min(h2 - gamma, 1.5707963);\n",
-    "new": "    h1 = gamma - h1;\n    h2 = gamma + h2;\n",
+    "old": "    h1 = gamma + max(-h1 - gamma, -1.5707963);\n    h2 = gamma + min(h2 - gamma, 1.5707963);",
+    "new": "    h1 = gamma - h1;\n    h2 = gamma + h2;",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "ao-no-distance-weight",
     "file": "src/render/airPass.js",
-    "old": "    float w = clamp((uAOParams.x - d) / (uAOParams.x * ${AIR_AO_FALLOFF}), 0.0, 1.0);",
-    "new": "    float w = 1.0;",
+    "old": "    float w = clamp((uAOParams.x - d) / (uAOParams.x * ${AIR_AO_FALLOFF}), 0.0, 1.0);   // a step's claim is whole to 1 - AIR_AO_FALLOFF of the radius, then eases to nothing at it (the reference's own shape)",
+    "new": "    float w = 1.0;   // a step's claim is whole to 1 - AIR_AO_FALLOFF of the radius, then eases to nothing at it (the reference's own shape)",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "ao-one-slice",
     "file": "src/render/airPass.js",
-    "old": "  for (int k = 0; k < ${AIR_AO_DIRECTIONS}; k++) {\n    float a = ang + float(k) * ${(Math.PI / 2).toFixed(7)};",
-    "new": "  for (int k = 0; k < 1; k++) {\n    float a = ang + float(k) * ${(Math.PI / 2).toFixed(7)};",
+    "old": "  for (int k = 0; k < ${AIR_AO_DIRECTIONS}; k++) {",
+    "new": "  for (int k = 0; k < 1; k++) {",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "glsl-normal-unflipped",
     "file": "src/render/airPass.js",
-    "old": "  if (dot(n, -p) < 0.0) n = -n;   // a normal faces the eye whatever the projection's handedness did to the derivatives\n",
-    "new": "",
+    "old": "  if (dot(n, -p) < 0.0) n = -n;   // a normal faces the eye whatever the projection's handedness did to the derivatives\n  vec3 v = normalize(-p);",
+    "new": "  vec3 v = normalize(-p);",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "render-no-pending",
     "file": "src/render/airPass.js",
-    "old": "    this.pending = true;   // AUDIT-EL F5: a bound frame is a resolve owed, whether or not the passes ran for it\n",
-    "new": "",
+    "old": "    this.pending = true; // AUDIT-EL F5: a bound frame is a resolve owed, whether or not the passes ran for it\n    return f.fbo;",
+    "new": "    return f.fbo;",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "render-clear-not-restored",
     "file": "src/render/airPass.js",
-    "old": "    gl.clearColor(f.clearColor[0], f.clearColor[1], f.clearColor[2], f.clearColor[3]);\n  }\n\n  /** AUDIT VOL1: the images a frame",
-    "new": "  }\n\n  /** AUDIT VOL1: the images a frame",
+    "old": "    gl.clearColor(f.clearColor[0], f.clearColor[1], f.clearColor[2], f.clearColor[3]);\n  }",
+    "new": "  }",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "render-one-gauss",
     "file": "src/render/airPass.js",
-    "old": "      for (let pass = 0; pass < 2; pass++) {\n        quad(P.gauss, T.bloomB);",
-    "new": "      for (let pass = 0; pass < 1; pass++) {\n        quad(P.gauss, T.bloomB);",
+    "old": "      for (let pass = 0; pass < 2; pass++) {",
+    "new": "      for (let pass = 0; pass < 1; pass++) {",
     "tests": [
       "test/render/el4_frame.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "render-no-depth-clear",
     "file": "src/render/airPass.js",
-    "old": "    gl.clearColor(0, 0, 0, 1);\n    gl.clear(gl.COLOR_BUFFER_BIT);\n    gl.enable(gl.BLEND);   // the emitters and the glares add",
-    "new": "    gl.enable(gl.BLEND);   // the emitters and the glares add",
+    "old": "    gl.clearColor(0, 0, 0, 1);\n    gl.clear(gl.COLOR_BUFFER_BIT);\n    gl.enable(gl.BLEND); // the emitters and the glares add; the target has no depth - both hide by the frame's depth themselves",
+    "new": "    gl.enable(gl.BLEND); // the emitters and the glares add; the target has no depth - both hide by the frame's depth themselves",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "resize-always",
     "file": "src/render/airPass.js",
-    "old": "    if (this.targets && this.width === w && this.height === h) return;\n",
-    "new": "",
+    "old": "    if (this.targets && this.width === w && this.height === h) return;\n    const gl = this.gl;",
+    "new": "    const gl = this.gl;",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "emit-flat-without-map",
     "file": "src/render/airPass.js",
-    "old": "          if (!emis) continue;\n          if (!batchVisible(planes, b)) continue;   // EL5\n",
-    "new": "          if (!batchVisible(planes, b)) continue;   // EL5\n",
+    "old": "          if (!emis) continue;\n          if (!batchVisible(planes, b)) continue; // EL5",
+    "new": "          if (!batchVisible(planes, b)) continue; // EL5",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "glare-rangeless",
     "file": "src/render/airPass.js",
-    "old": "      if (!(range > 0) || range > AIR_GLARE_MAX_RANGE) continue;   // AUDIT-EL F11: the lightning flash (range 500..1000 over the player) is no lantern\n",
-    "new": "      if (range > AIR_GLARE_MAX_RANGE) continue;\n",
+    "old": "      if (!(range > 0) || range > AIR_GLARE_MAX_RANGE) continue; // AUDIT-EL F11: the lightning flash (range 500..1000 over the player) is no lantern",
+    "new": "      if (range > AIR_GLARE_MAX_RANGE) continue;",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "composite-twice",
     "file": "src/render/airPass.js",
-    "old": "    if (!this.pending || !this.targets || !this.frame) return;\n    this.pending = false;",
-    "new": "    if (!this.pending || !this.targets || !this.frame) return;",
+    "old": "    this.pending = false;\n    const gl = this.gl,",
+    "new": "    const gl = this.gl,",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "composite-alpha-blend",
     "file": "src/render/airPass.js",
-    "old": "      quad(PB, T.bloom);\n      gl.enable(gl.BLEND);\n      gl.blendFunc(gl.ONE, gl.ONE);",
-    "new": "      quad(PB, T.bloom);\n      gl.enable(gl.BLEND);\n      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);",
+    "old": "      gl.blendFunc(gl.ONE, gl.ONE);",
+    "new": "      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);",
     "tests": [
       "test/render/el3_air.test.js"
     ]

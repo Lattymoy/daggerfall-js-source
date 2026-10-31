@@ -2,8 +2,8 @@
   {
     "name": "AUDITLWII2-C1-hand-dead",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "f.t <= t && !f.hand));",
-    "new": "f.t <= t));",
+    "old": "  const left = trip.party.filter((m) => !trip.fallen?.some((f) => f.res.id === m.id && f.t <= t && !f.hand));",
+    "new": "  const left = trip.party.filter((m) => !trip.fallen?.some((f) => f.res.id === m.id && f.t <= t));",
     "tests": [
       "test/systems/livingWorld/auditlwii2_door.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDITLWII2-C2-robbed",
     "file": "src/scenes/caravanHost.js",
-    "old": "if ((robbedAt != null && robbedAt >= c.t) || trip.party.some(",
-    "new": "if (trip.party.some(",
+    "old": "      if (\n        (robbedAt != null && robbedAt >= c.t) ||\n        trip.party.some((/** @type {any} */ m) => deps.slainAt(m, t) && !deps.slainAt(m, c.t))\n      ) {",
+    "new": "      if (trip.party.some((/** @type {any} */ m) => deps.slainAt(m, t) && !deps.slainAt(m, c.t))) {",
     "tests": [
       "test/systems/livingWorld/auditlwii2_door.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDITLWII2-C2-slain",
     "file": "src/scenes/caravanHost.js",
-    "old": " || trip.party.some((/** @type {any} */ m) => deps.slainAt(m, t) && !deps.slainAt(m, c.t))) {",
-    "new": ") {",
+    "old": "      if (\n        (robbedAt != null && robbedAt >= c.t) ||\n        trip.party.some((/** @type {any} */ m) => deps.slainAt(m, t) && !deps.slainAt(m, c.t))\n      ) {",
+    "new": "      if (robbedAt != null && robbedAt >= c.t) {",
     "tests": [
       "test/systems/livingWorld/auditlwii2_door.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDITLWII2-C2-hire-minute",
     "file": "src/scenes/caravanHost.js",
-    "old": "deps.slainAt(m, t) && !deps.slainAt(m, c.t)",
-    "new": "deps.slainAt(m, t)",
+    "old": "      if (\n        (robbedAt != null && robbedAt >= c.t) ||\n        trip.party.some((/** @type {any} */ m) => deps.slainAt(m, t) && !deps.slainAt(m, c.t))\n      ) {",
+    "new": "      if ((robbedAt != null && robbedAt >= c.t) || trip.party.some((/** @type {any} */ m) => deps.slainAt(m, t))) {",
     "tests": [
       "test/systems/livingWorld/auditlwii2_door.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDITLWII2-C2-line",
     "file": "src/scenes/caravanHost.js",
-    "old": "betrayed: (name) => `${name} hired you to keep the caravan, not to turn on it. There is no pay.`,",
-    "new": "betrayed: (name) => `${name} hired you to keep up. The contract is broken.`,",
+    "old": "  betrayed: (name) => `${name} hired you to keep the caravan, not to turn on it. There is no pay.`, // AUDIT LW-II-2 C2",
+    "new": "  betrayed: (name) => `${name} hired you to keep up. The contract is broken.`, // AUDIT LW-II-2 C2",
     "tests": [
       "test/systems/livingWorld/auditlwii2_door.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDITLWII2-C3-part",
     "file": "src/scenes/caravanHost.js",
-    "old": "const wareOf = (s) => [...goneOf(s), ...partOf(s)];",
-    "new": "const wareOf = (s) => [...goneOf(s)];",
+    "old": "  const wareOf = (s) => [...goneOf(s), ...partOf(s)];",
+    "new": "  const wareOf = (s) => [...goneOf(s)];",
     "tests": [
       "test/systems/livingWorld/auditlwii2_door.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDITLWII2-C3-part-count",
     "file": "src/scenes/caravanHost.js",
-    "old": "(it.stackCount ?? 1) < s.rolled[it[WARE_KEY]]).map(",
-    "new": "(it.stackCount ?? 1) < 0).map(",
+    "old": "      .filter((/** @type {any} */ it) => s.items.includes(it) && (it.stackCount ?? 1) < s.rolled[it[WARE_KEY]])",
+    "new": "      .filter((/** @type {any} */ it) => s.items.includes(it) && (it.stackCount ?? 1) < 0)",
     "tests": [
       "test/systems/livingWorld/auditlwii2_door.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDITLWII2-C3-read",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "gone: new Set(gone.filter(placeOk)), left: leftOf(gone),",
-    "new": "gone: new Set(gone.filter(placeOk)), left: new Map(),",
+    "old": "            left: leftOf(gone),",
+    "new": "            left: new Map(),",
     "tests": [
       "test/systems/livingWorld/auditlwii2_door.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDITLWII2-C3-set",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "left: leftOf(list), coin:",
-    "new": "left: new Map(), coin:",
+    "old": "        left: leftOf(list),",
+    "new": "        left: new Map(),",
     "tests": [
       "test/systems/livingWorld/auditlwii2_door.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AUDITLWII2-C3-left-count",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "&& e[1] >= 1 && e[1] < 1e6)",
-    "new": "&& e[1] >= 0 && e[1] < 1e6)",
+    "old": "      .filter((e) => Array.isArray(e) && placeOk(e[0]) && Number.isSafeInteger(e[1]) && e[1] >= 1 && e[1] < 1e6)",
+    "new": "      .filter((e) => Array.isArray(e) && placeOk(e[0]) && Number.isSafeInteger(e[1]) && e[1] >= 0 && e[1] < 1e6)",
     "tests": [
       "test/systems/livingWorld/auditlwii2_door.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AUDITLWII2-C3-shelf",
     "file": "src/scenes/caravanHost.js",
-    "old": "      for (const [place, n] of w?.left ?? []) if (all[place] && n < rolled[place]) all[place].stackCount = n;\n",
-    "new": "",
+    "old": "      for (const [place, n] of w?.left ?? []) if (all[place] && n < rolled[place]) all[place].stackCount = n;\n      // LW12: a band's hold-up took half the goods (every other place) - the band's, never the character's",
+    "new": "      // LW12: a band's hold-up took half the goods (every other place) - the band's, never the character's",
     "tests": [
       "test/systems/livingWorld/auditlwii2_door.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDITLWII2-C3-keep",
     "file": "src/scenes/caravanHost.js",
-    "old": "const gone = s ? wareOf(s) : [...(w?.gone ?? []), ...(w?.left ?? [])];",
-    "new": "const gone = s ? goneOf(s) : [...(w?.gone ?? []), ...(w?.left ?? [])];",
+    "old": "    const gone = s ? wareOf(s) : [...(w?.gone ?? []), ...(w?.left ?? [])]; // AUDIT LW-II-2 C3: and the stacks partly taken",
+    "new": "    const gone = s ? goneOf(s) : [...(w?.gone ?? []), ...(w?.left ?? [])]; // AUDIT LW-II-2 C3: and the stacks partly taken",
     "tests": [
       "test/systems/livingWorld/auditlwii2_door.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "AUDITLWII2-C6-door",
     "file": "src/scenes/caravanHost.js",
-    "old": "deps.travelWith && deps.travelFree?.() && t < trip.outT1",
-    "new": "deps.travelWith && t < trip.outT1",
+    "old": "      if (contract?.trip === trip.id && !deps.online() && deps.travelWith && deps.travelFree?.() && t < trip.outT1)",
+    "new": "      if (contract?.trip === trip.id && !deps.online() && deps.travelWith && t < trip.outT1)",
     "tests": [
       "test/systems/livingWorld/auditlwii2_door.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "AUDITLWII2-C8-evict",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "const i = isVoid ? reports.findIndex(isVoid) : -1;",
-    "new": "const i = -1;",
+    "old": "        const i = isVoid ? reports.findIndex(isVoid) : -1;",
+    "new": "        const i = -1;",
     "tests": [
       "test/systems/livingWorld/auditlwii2_door.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "AUDITLWII2-C8-host-word",
     "file": "src/scenes/caravanHost.js",
-    "old": "trip: trip.id }, (/** @type {any} */ rep) => voidNow(rep, t)) ?? false;",
-    "new": "trip: trip.id }) ?? false;",
+    "old": "      rel()?.report?.(\n        {\n          crime,\n          region: deps.regionAt(/** @type {number} */ (at.x), /** @type {number} */ (at.z)),\n          at: reportAt(trip, t),\n          who,\n          witnesses,\n          trip: trip.id,\n        },\n        (/** @type {any} */ rep) => voidNow(rep, t),\n      ) ?? false",
+    "new": "      rel()?.report?.({\n        crime,\n        region: deps.regionAt(/** @type {number} */ (at.x), /** @type {number} */ (at.z)),\n        at: reportAt(trip, t),\n        who,\n        witnesses,\n        trip: trip.id,\n      }) ?? false",
     "tests": [
       "test/systems/livingWorld/auditlwii2_door.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "AUDITLWII2-C8-void-word",
     "file": "src/scenes/caravanHost.js",
-    "old": "return w && !deps.deadAt(w, t); });",
-    "new": "return w && !deps.deadAt(w, t) && false; });",
+    "old": "      return w && !deps.deadAt(w, t);",
+    "new": "      return w && !deps.deadAt(w, t) && false;",
     "tests": [
       "test/systems/livingWorld/auditlwii2_door.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "AUDITLWII2-C8-drop",
     "file": "src/scenes/caravanHost.js",
-    "old": "        if (t < rep.at && voidNow(rep, t)) { r.dropReport(rep); continue; }\n",
-    "new": "",
+    "old": "        if (t < rep.at && voidNow(rep, t)) {\n          r.dropReport(rep);\n          continue;\n        }\n        if (t < rep.at) continue;",
+    "new": "        if (t < rep.at) continue;",
     "tests": [
       "test/systems/livingWorld/auditlwii2_door.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "AUDITLWII2-C8-victim",
     "file": "src/scenes/caravanHost.js",
-    "old": "!deps.deadAt(m, t) && m.id !== victim)",
-    "new": "!deps.deadAt(m, t))",
+    "old": "      .filter((m) => !deps.deadAt(m, t) && m.id !== victim)",
+    "new": "      .filter((m) => !deps.deadAt(m, t))",
     "tests": [
       "test/systems/livingWorld/auditlwii2_door.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "AUDITLWII2-C8-victim-named",
     "file": "src/scenes/caravanHost.js",
-    "old": "report(trip, t, CRIMES.Murder, res.name, res.id)",
-    "new": "report(trip, t, CRIMES.Murder, res.name)",
+    "old": "      return trip ? report(trip, t, CRIMES.Murder, res.name, res.id) : false;",
+    "new": "      return trip ? report(trip, t, CRIMES.Murder, res.name) : false;",
     "tests": [
       "test/systems/livingWorld/auditlwii2_door.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "AUDITLWII2-C9-robbed-word",
     "file": "src/scenes/caravanHost.js",
-    "old": "deps.say(bandTook(trip, end) ? CARAVAN_LINES.paidRobbed(name, gold) : CARAVAN_LINES.paid(name, gold));",
-    "new": "deps.say(CARAVAN_LINES.paid(name, gold));",
+    "old": "        deps.say(bandTook(trip, end) ? CARAVAN_LINES.paidRobbed(name, gold) : CARAVAN_LINES.paid(name, gold));",
+    "new": "        deps.say(CARAVAN_LINES.paid(name, gold));",
     "tests": [
       "test/systems/livingWorld/auditlwii2_door.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "AUDITLWII2-R9-wild",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "&& !trip.turned && !trip.wild ?",
-    "new": "&& !trip.turned ?",
+    "old": "export const reportAt = (trip, t) => (t < trip.outT1 && !trip.turned && !trip.wild ? trip.outT1 : trip.backT1);",
+    "new": "export const reportAt = (trip, t) => (t < trip.outT1 && !trip.turned ? trip.outT1 : trip.backT1);",
     "tests": [
       "test/systems/livingWorld/auditlwii2_door.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "AUDITLWII2-P7-LW11P-travel-stop-trouble",
     "file": "src/scenes/caravanHost.js",
-    "old": "    if (trip.enc && trip.enc.t0 > t && trip.enc.t0 < trip.outT1) stops.push(trip.enc.t0 - 1);\n",
-    "new": "",
+    "old": "    if (trip.enc && trip.enc.t0 > t && trip.enc.t0 < trip.outT1) stops.push(trip.enc.t0 - 1);\n    const dusk = Math.floor(t / 1440) * 1440 + WALK_TO_H * 60;",
+    "new": "    const dusk = Math.floor(t / 1440) * 1440 + WALK_TO_H * 60;",
     "tests": [
       "test/systems/livingWorld/auditlwii2_door.test.js"
     ],
@@ -399,8 +399,8 @@
   {
     "name": "AUDITLWII2-P4-LW11P-counter-region",
     "file": "src/scenes/caravanHost.js",
-    "old": "      regionIndex: deps.regionAt(/** @type {number} */ (at.x ?? 0), /** @type {number} */ (at.z ?? 0)), roadDiscount: friend ? FRIEND_DISCOUNT : 0 };",
-    "new": "      regionIndex: 0, roadDiscount: friend ? FRIEND_DISCOUNT : 0 };",
+    "old": "      regionIndex: deps.regionAt(/** @type {number} */ (at.x ?? 0), /** @type {number} */ (at.z ?? 0)),",
+    "new": "      regionIndex: 0,",
     "tests": [
       "test/systems/livingWorld/auditlwii2_door.test.js"
     ],

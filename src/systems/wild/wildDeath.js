@@ -30,35 +30,66 @@
 // ═══════════════════════════════════════════════════════════════════
 import { WILD_ITEMS_MAX } from '../../net/wire.js';
 import { WILD_FALL_PACKS, WILD_FALL_LETTERS } from './wildDropLaw.js';
-import { wildInside, wildNear, wildRingAt } from './wildZone.js';   // AUDIT FOE-KEEPS E1: the rise's towns
+import { wildInside, wildNear, wildRingAt } from './wildZone.js'; // AUDIT FOE-KEEPS E1: the rise's towns
 
 // THE LAW - INT9: its home is systems/wild/wildDropLaw.js (a leaf the account Worker bundles: the service takes a death's drop
 // off the record), re-exported here
-export { WILD_NEVER_GROUPS, keptOnWildDeath, wildCanLose, takeWildDrop, WILD_GOLD_LOSS, takeWildGold, wornOffer, wildRecord, takeWildDeath, wildPickOf, wildDropCandidates, wildTookOf, wildTakeTook, WILD_REVENANTS_MAX, wildSwornAtSide, WILD_PACK, wildPacks, wildPacksOf, WILD_FALL_PACKS } from './wildDropLaw.js';
+export {
+  WILD_NEVER_GROUPS,
+  keptOnWildDeath,
+  wildCanLose,
+  takeWildDrop,
+  WILD_GOLD_LOSS,
+  takeWildGold,
+  wornOffer,
+  wildRecord,
+  takeWildDeath,
+  wildPickOf,
+  wildDropCandidates,
+  wildTookOf,
+  wildTakeTook,
+  WILD_REVENANTS_MAX,
+  wildSwornAtSide,
+  WILD_PACK,
+  wildPacks,
+  wildPacksOf,
+  WILD_FALL_PACKS,
+} from './wildDropLaw.js';
 
 /** THE FALLEN'S OWN WORDS on /v1/wild/fall (world.js wildTakeDrop), beside its receipt (FOE-KEEPS: a foe's death asks none), its record's `at`, its
  *  room and its relay's `collect`: COMPANION-DROP's `packs` 1 - this game takes a companion's piece out of his own pack
  *  (wildTakeTook's `packs`), as an answer from before STORE-KEEPS may still name - and LETTERS-TENTH's `letters` 1. STORE-KEEPS
  *  retired CART-AWAY's `cart` word: no death takes the cart, wherever the wagon stands. */
-export const wildFallWords = () => ({ packs: WILD_FALL_PACKS, letters: WILD_FALL_LETTERS });   // AUDIT FOE-KEEPS LETTERS-TENTH: this game lowers a letter by its share
+export const wildFallWords = () => ({ packs: WILD_FALL_PACKS, letters: WILD_FALL_LETTERS }); // AUDIT FOE-KEEPS LETTERS-TENTH: this game lowers a letter by its share
 
 /** AUDIT INT9: DID MY DROP TAKE ANYTHING OF MINE - a piece out of a list (`out`, wildTakeTook's answer) or a share of coin:
  *  the purse's, the cart's, or (COMPANION-DROP, AUDIT FB1019f B5) a pack's at my side (`gold.packs`). A receipt that finds
  *  me risen says so when it did (world.js wildDropTaken, `WILD_TEXT.dropLate`): a companion's coin alone is my loss too -
  *  AUDIT FOE-KEEPS LETTERS-TENTH: and a letter's share (`gold.letters`).
  *  @param {any[]} out @param {{ purse?: number, cart?: number, packs?: Record<string, number>, letters?: Record<string, number> } | null | undefined} gold */
-export const wildTookAny = (out, gold) => out.length > 0 || (gold?.purse ?? 0) > 0 || (gold?.cart ?? 0) > 0 || Object.values(gold?.packs ?? {}).some((n) => n > 0) || Object.values(gold?.letters ?? {}).some((n) => n > 0);   // LETTERS-TENTH: a letter's share alone is said too
+export const wildTookAny = (out, gold) =>
+  out.length > 0 ||
+  (gold?.purse ?? 0) > 0 ||
+  (gold?.cart ?? 0) > 0 ||
+  Object.values(gold?.packs ?? {}).some((n) => n > 0) ||
+  Object.values(gold?.letters ?? {}).some((n) => n > 0); // LETTERS-TENTH: a letter's share alone is said too
 
 /** A list cut into the wire's chunks. */
 export function wildChunks(list, size = WILD_ITEMS_MAX, bytes = Infinity) {
   // INT9 (AUDIT): and `bytes` of their JSON a chunk - a frame of sixteen heavy records was past the wire's own bound
   // (net/wire.js WILD_DATA_MAX), refused at the sender, and the deposit never left
   const out = [];
-  let cur = [], n = 2;
+  let cur = [],
+    n = 2;
   for (const it of list) {
     const w = JSON.stringify(it).length + 1;
-    if (cur.length && (cur.length >= size || n + w > bytes)) { out.push(cur); cur = []; n = 2; }
-    cur.push(it); n += w;
+    if (cur.length && (cur.length >= size || n + w > bytes)) {
+      out.push(cur);
+      cur = [];
+      n = 2;
+    }
+    cur.push(it);
+    n += w;
   }
   if (cur.length) out.push(cur);
   return out;
@@ -74,7 +105,10 @@ export function wildChunks(list, size = WILD_ITEMS_MAX, bytes = Infinity) {
  * @param {{ bodies?: number[][], clear?: (from: number[], yaw: number) => boolean, yaw?: number, room?: number, step?: number, reach?: number }} [opts]
  * @returns {{ pos: number[], yaw: number }}
  */
-export function wildSpawnSpot(centre, { bodies = [], clear = () => true, yaw = 0, room = 2.5, step = 2, reach = 8 } = {}) {
+export function wildSpawnSpot(
+  centre,
+  { bodies = [], clear = () => true, yaw = 0, room = 2.5, step = 2, reach = 8 } = {},
+) {
   const free = (p) => bodies.every((b) => !b || Math.hypot(b[0] - p[0], b[2] - p[2]) >= room);
   for (let r = 0; r <= reach; r += step) {
     const n = r === 0 ? 1 : 8;

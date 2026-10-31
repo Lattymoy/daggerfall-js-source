@@ -17,7 +17,7 @@ export class DecisionBoxWindow {
     this.onYes = onYes;
     this.onNo = onNo;
     this.done = false;
-    this.isChoiceWindow = true;   // raw codes through the overlay seam
+    this.isChoiceWindow = true; // raw codes through the overlay seam
     this._box = null;
   }
   answer(yes) {
@@ -26,13 +26,19 @@ export class DecisionBoxWindow {
     (yes ? this.onYes : this.onNo)?.();
   }
   input(code) {
-    if (this.ok) { if (['Enter', 'NumpadEnter', 'Space', 'Escape', 'KeyY'].includes(code)) this.answer(true); return; }
+    if (this.ok) {
+      if (['Enter', 'NumpadEnter', 'Space', 'Escape', 'KeyY'].includes(code)) this.answer(true);
+      return;
+    }
     if (code === 'KeyY') this.answer(true);
     else if (code === 'KeyN' || code === 'Enter' || code === 'NumpadEnter') this.answer(false);
   }
   click(vx, vy) {
     const hit = this._box ? messageBoxHit(this._box, vx, vy) : null;
-    if (this.ok) { if (hit === MB_BUTTONS.OK) this.answer(true); return true; }
+    if (this.ok) {
+      if (hit === MB_BUTTONS.OK) this.answer(true);
+      return true;
+    }
     if (hit === MB_BUTTONS.Yes) this.answer(true);
     else if (hit === MB_BUTTONS.No) this.answer(false);
     return true;
@@ -45,7 +51,14 @@ export class DecisionBoxWindow {
     if (!drawMessageBox(renderer, m, font, this._box)) {
       // no art and no enhanced dialog: the words and the keys, plainly
       this.rows.forEach((r, i) => shadowText(renderer, font, r.text, m, 20, 20 + i * (this._box.rowH ?? 8)));
-      shadowText(renderer, font, this.ok ? 'Return - OK' : 'Y - yes   N - no', m, 20, 24 + this.rows.length * (this._box.rowH ?? 8));
+      shadowText(
+        renderer,
+        font,
+        this.ok ? 'Return - OK' : 'Y - yes   N - no',
+        m,
+        20,
+        24 + this.rows.length * (this._box.rowH ?? 8),
+      );
     }
   }
 }

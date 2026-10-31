@@ -30,19 +30,31 @@
 // registerCustomTemplates takes them and the frozen DFU table stays
 // what it is. Nothing here writes to itemTemplates.json.
 
-import { registerCustomTemplates, templateByIndex, mintCondition, setItemFields, registerAmmunition, registerOwnItemImage, registerTemplateLore } from './item/itemTemplates.js';
+import {
+  registerCustomTemplates,
+  templateByIndex,
+  mintCondition,
+  setItemFields,
+  registerAmmunition,
+  registerOwnItemImage,
+  registerTemplateLore,
+} from './item/itemTemplates.js';
 import { addVendorTextures, vendorTextureCount } from './textureReplacement.js';
 import { registerUniqueFind, registerLegendary, FOE_FAMILIES } from './loot/lootRarity.js';
 import { SKILLS } from './skills.js';
-import { APP_ROOT } from './appRoot.js';   // AUDIT-THUNDERLOCK F7
-import { GUN_FEEL } from '../combat/gun/gunFeel.js';   // FIELD-GUN13: the flash's reach, from the one home the feel lives in (a leaf - no imports of its own)
+import { APP_ROOT } from './appRoot.js'; // AUDIT-THUNDERLOCK F7
+import { GUN_FEEL } from '../combat/gun/gunFeel.js'; // FIELD-GUN13: the flash's reach, from the one home the feel lives in (a leaf - no imports of its own)
 // The indices live in a LEAF (characters/thunderlockIds.js) because
 // characters/weapons.js needs them too and importing this file from
 // there would close a cycle through systems/item/itemTemplates.js. Said out
 // loud on the leaf itself.
 import {
-  THUNDERLOCK_TEMPLATE, PELLET_TEMPLATE, THUNDERLOCK_ARCHIVE, PELLET_ARCHIVE, PISTOLET_TEMPLATE,
-  orbColour,   // FIELD-GUN17: the muzzle light wears the orb's own colour, sampled rather than named
+  THUNDERLOCK_TEMPLATE,
+  PELLET_TEMPLATE,
+  THUNDERLOCK_ARCHIVE,
+  PELLET_ARCHIVE,
+  PISTOLET_TEMPLATE,
+  orbColour, // FIELD-GUN17: the muzzle light wears the orb's own colour, sampled rather than named
 } from '../characters/thunderlockIds.js';
 
 /** The two indices, from the leaf that holds them - re-exported so
@@ -86,7 +98,7 @@ export const THUNDERLOCK_TEMPLATES = Object.freeze([
     basePrice: 480,
     enchantmentPoints: 400,
     rarity: 20,
-    drawOrderOrEffect: 100,     // BlitItems' layer - weapons draw last, over the hand
+    drawOrderOrEffect: 100, // BlitItems' layer - weapons draw last, over the hand
     isBluntWeapon: false,
     isOneHanded: false,
     worldTextureArchive: ART.weaponArchive,
@@ -105,10 +117,10 @@ export const THUNDERLOCK_TEMPLATES = Object.freeze([
     drawOrderOrEffect: 0,
     stackable: true,
     isNotRepairable: true,
-    hasNoEncumbrance: false,    // an arrow weighs nothing in classic; a lead ball does not
+    hasNoEncumbrance: false, // an arrow weighs nothing in classic; a lead ball does not
     worldTextureArchive: ART.ammoArchive,
     worldTextureRecord: 0,
-    playerTextureArchive: 0,    // ammunition is never worn - the arrow's own 0
+    playerTextureArchive: 0, // ammunition is never worn - the arrow's own 0
     playerTextureRecord: 0,
   },
 ]);
@@ -134,9 +146,12 @@ export const isPellet = (item) => item?.templateIndex === PELLET_TEMPLATE;
 // light (FIELD-GUN17's one colour for both is the lore's). A coil sung must be wound again before it sings - the reload's
 // two clacks are its key turned and set.
 export const GUN_LORE = Object.freeze({
-  thunderlock: 'A Rourken long gun. Its lock holds no flint but a tonal coil: the trigger frees the striker, the coil sings one deep note, and the note wakes the aetherium in a Dwemer Pellet and throws it out as a ball of bound lightning. The thunder you hear is the note.',
-  pistolet: 'A Rourken boarding piece, made for the decks of their sky-ketches. Its short coil sings one sharp note and must be wound again by its key before it sings another, so the Ketch\'s marines carried them in braces of two: one sings while the other is wound.',
-  pellet: 'A bead of Dwemer brass sealed around a mote of aetherium. A tonal coil\'s note wakes the mote, and the bead leaves the barrel as lightning. No forge in the Bay has made one since the Dwemer vanished: they are found, never bought.',
+  thunderlock:
+    'A Rourken long gun. Its lock holds no flint but a tonal coil: the trigger frees the striker, the coil sings one deep note, and the note wakes the aetherium in a Dwemer Pellet and throws it out as a ball of bound lightning. The thunder you hear is the note.',
+  pistolet:
+    "A Rourken boarding piece, made for the decks of their sky-ketches. Its short coil sings one sharp note and must be wound again by its key before it sings another, so the Ketch's marines carried them in braces of two: one sings while the other is wound.",
+  pellet:
+    "A bead of Dwemer brass sealed around a mote of aetherium. A tonal coil's note wakes the mote, and the bead leaves the barrel as lightning. No forge in the Bay has made one since the Dwemer vanished: they are found, never bought.",
 });
 registerTemplateLore(THUNDERLOCK_TEMPLATE, GUN_LORE.thunderlock);
 registerTemplateLore(PELLET_TEMPLATE, GUN_LORE.pellet);
@@ -167,10 +182,17 @@ export const THUNDERLOCK_DAMAGE = Object.freeze({ min: 7, max: 26 });
  *  the damage modifier both read it), defaulting to Dwarven because
  *  that is what it is. */
 export function createThunderlock({ material = 4, condition = null } = {}) {
-  const item = mintCondition(setItemFields({
-    group: WEAPON_GROUP, templateIndex: THUNDERLOCK_TEMPLATE,
-    material, flags: 0, variant: 0, message: 0, stackCount: 1,
-  }));
+  const item = mintCondition(
+    setItemFields({
+      group: WEAPON_GROUP,
+      templateIndex: THUNDERLOCK_TEMPLATE,
+      material,
+      flags: 0,
+      variant: 0,
+      message: 0,
+      stackCount: 1,
+    }),
+  );
   if (condition != null) item.currentCondition = Math.max(0, Math.min(item.maxCondition ?? condition, condition));
   return item;
 }
@@ -178,11 +200,17 @@ export function createThunderlock({ material = 4, condition = null } = {}) {
 /** Mint a stack of pellets. Material None (0), as CreateWeapon's arrow
  *  arm does - ammunition takes no metal ladder. */
 export function createPellets(stackCount = 20) {
-  return mintCondition(setItemFields({
-    group: WEAPON_GROUP, templateIndex: PELLET_TEMPLATE,
-    material: 0, flags: 0, variant: 0, message: 0,
-    stackCount: Math.max(1, stackCount | 0),
-  }));
+  return mintCondition(
+    setItemFields({
+      group: WEAPON_GROUP,
+      templateIndex: PELLET_TEMPLATE,
+      material: 0,
+      flags: 0,
+      variant: 0,
+      message: 0,
+      stackCount: Math.max(1, stackCount | 0),
+    }),
+  );
 }
 
 /** How many pellets a pack is carrying. */
@@ -253,34 +281,57 @@ export const PAPERDOLL_OFFSET = Object.freeze({ x: 200 + 8, y: 8 + 93 });
  */
 export const ART_RECORDS = Object.freeze({ doll: 0, icon: 1, gildedDoll: 2, gildedIcon: 3 });
 export const ICON_FILES = Object.freeze([
-  { archive: ART.weaponArchive, record: ART_RECORDS.doll, frame: 0, file: 'gun-paperdoll.png', offset: PAPERDOLL_OFFSET },
+  {
+    archive: ART.weaponArchive,
+    record: ART_RECORDS.doll,
+    frame: 0,
+    file: 'gun-paperdoll.png',
+    offset: PAPERDOLL_OFFSET,
+  },
   { archive: ART.weaponArchive, record: ART_RECORDS.icon, frame: 0, file: 'gun-icon.png' },
-  { archive: ART.weaponArchive, record: ART_RECORDS.gildedDoll, frame: 0, file: 'gun-paperdoll-gilded.png', offset: PAPERDOLL_OFFSET },
+  {
+    archive: ART.weaponArchive,
+    record: ART_RECORDS.gildedDoll,
+    frame: 0,
+    file: 'gun-paperdoll-gilded.png',
+    offset: PAPERDOLL_OFFSET,
+  },
   { archive: ART.weaponArchive, record: ART_RECORDS.gildedIcon, frame: 0, file: 'gun-icon-gilded.png' },
   { archive: ART.ammoArchive, record: 0, frame: 0, file: 'gun-ammo.png' },
 ]);
 /** Which of them an item wears, for a job: the doll layer on the doll, the whole gun in a list - gold for a Gilded
  *  piece ('gilded' is lootRarity.js's tier id; systems/gilded.js imports this file, so this one names it). */
-export const thunderlockImageRecord = (item, forPaperDoll) => (item?.rarity === 'gilded'
-  ? (forPaperDoll ? ART_RECORDS.gildedDoll : ART_RECORDS.gildedIcon)
-  : (forPaperDoll ? ART_RECORDS.doll : ART_RECORDS.icon));
-registerOwnItemImage(THUNDERLOCK_TEMPLATE, (item, { forPaperDoll = false } = {}) => ({ archive: ART.weaponArchive, record: thunderlockImageRecord(item, forPaperDoll) }));
+export const thunderlockImageRecord = (item, forPaperDoll) =>
+  item?.rarity === 'gilded'
+    ? forPaperDoll
+      ? ART_RECORDS.gildedDoll
+      : ART_RECORDS.gildedIcon
+    : forPaperDoll
+      ? ART_RECORDS.doll
+      : ART_RECORDS.icon;
+registerOwnItemImage(THUNDERLOCK_TEMPLATE, (item, { forPaperDoll = false } = {}) => ({
+  archive: ART.weaponArchive,
+  record: thunderlockImageRecord(item, forPaperDoll),
+}));
 
 /** AUDIT-THUNDERLOCK F7: the SITE root, not the document's - the
  *  game's document is `/play/index.html` and these live at
  *  `<root>/art/`. See systems/appRoot.js, and the held map before it. */
-export const iconUrl = (file) => new URL(`art/${file}`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
+export const iconUrl = (file) =>
+  new URL(`art/${file}`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
 
 let _installed = false;
 /** Register the icons once. `fetchBytes` is the test's door. */
 export function installThunderlockIcons({ fetchBytes = null } = {}) {
   if (_installed && vendorTextureCount() > 0) return 0;
   _installed = true;
-  const load = fetchBytes ?? (async (name) => {
-    const r = await fetch(iconUrl(name));
-    if (!r.ok) throw new Error(`${name}: ${r.status}`);
-    return new Uint8Array(await r.arrayBuffer());
-  });
+  const load =
+    fetchBytes ??
+    (async (name) => {
+      const r = await fetch(iconUrl(name));
+      if (!r.ok) throw new Error(`${name}: ${r.status}`);
+      return new Uint8Array(await r.arrayBuffer());
+    });
   // FIELD-GUN1 (Mac, from play: "the inventory sprites dont have
   // their sprites"). `standIn: true` IS THE REGISTRATION, not a hint.
   // Archives 560 and 561 exist ONLY as this art - there is no
@@ -298,9 +349,17 @@ export function installThunderlockIcons({ fetchBytes = null } = {}) {
   // showing at all" - and textureReplacement.js:"sprites aren't showing" says so in the
   // comment right above the function. The audit read that file for F7
   // and took the URL law out of it while walking past the flag.
-  return addVendorTextures(ICON_FILES.map(({ archive, record, frame, file, offset }) => ({
-    archive, record, frame, fileName: file, standIn: true, offset, load: () => load(file),
-  })));
+  return addVendorTextures(
+    ICON_FILES.map(({ archive, record, frame, file, offset }) => ({
+      archive,
+      record,
+      frame,
+      fileName: file,
+      standIn: true,
+      offset,
+      load: () => load(file),
+    })),
+  );
 }
 
 // ── HOW YOU GET ONE ─────────────────────────────────────────────────
@@ -368,7 +427,7 @@ export const PELLET_FIND_STACK = Object.freeze({ min: 4, max: 12 });
 registerAmmunition(PELLET_TEMPLATE);
 
 registerUniqueFind({
-  id: 'dwarven-thunderlock',   // its id kept: the find's place, not its prize (GUNS-UNFOUND)
+  id: 'dwarven-thunderlock', // its id kept: the find's place, not its prize (GUNS-UNFOUND)
   minTier: FIND_MIN_TIER,
   mint: (rolls = Math.random) => {
     // ONE draw, as it always drew (law 9); GUNS-UNFOUND: no gun - PELLETS-SCARCE: and no Pellets, which are their own find
@@ -377,10 +436,17 @@ registerUniqueFind({
   },
 });
 /** PELLETS-SCARCE: one Dwemer find's stack, counted on one draw. */
-export const pelletFindStack = (rolls = Math.random) => PELLET_FIND_STACK.min
-  + Math.min(PELLET_FIND_STACK.max - PELLET_FIND_STACK.min, Math.floor(rolls() * (PELLET_FIND_STACK.max - PELLET_FIND_STACK.min + 1)));
+export const pelletFindStack = (rolls = Math.random) =>
+  PELLET_FIND_STACK.min +
+  Math.min(
+    PELLET_FIND_STACK.max - PELLET_FIND_STACK.min,
+    Math.floor(rolls() * (PELLET_FIND_STACK.max - PELLET_FIND_STACK.min + 1)),
+  );
 registerUniqueFind({
-  id: 'dwemer-pellets', final: true, minTier: PELLET_FIND_MIN_TIER, weights: PELLET_FIND_WEIGHTS,
+  id: 'dwemer-pellets',
+  final: true,
+  minTier: PELLET_FIND_MIN_TIER,
+  weights: PELLET_FIND_WEIGHTS,
   mint: (rolls = Math.random) => [createPellets(pelletFindStack(rolls))],
 });
 
@@ -391,21 +457,30 @@ registerUniqueFind({
 registerLegendary({
   // AUDIT PISTOLET C5: both guns - a Pistolet claimed by no exclusive record rolled up every time as Wyrmbane, "Forged
   // for a dragon hunt" with Fire Storm (824 of 824), exactly what `exclusive` is for
-  id: 'the-last-lock', name: 'The Last Lock', group: WEAPON_GROUP, templates: [THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE],
-  exclusive: true,   // a gun does not roll up as a blade forged for a dragon hunt
+  id: 'the-last-lock',
+  name: 'The Last Lock',
+  group: WEAPON_GROUP,
+  templates: [THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE],
+  exclusive: true, // a gun does not roll up as a blade forged for a dragon hunt
   affixes: [
     { id: 'damage', value: 20 },
     { id: 'stat', param: 'agility', value: 10 },
-    { id: 'skill', param: 33, value: 30 },   // Archery
+    { id: 'skill', param: 33, value: 30 }, // Archery
   ],
-  enchantment: { type: 3, param: 20 },   // CastWhenStrikes - the shot carries a spell
+  enchantment: { type: 3, param: 20 }, // CastWhenStrikes - the shot carries a spell
   lore: 'The Dwemer left no instructions and no second one.',
   // AUDIT LOOT F8 (the Loot arc, bible/06-Systems/Loot-Arc.md section 7 - "every Legendary a power"): its POWER, the
   // Dwemer's own quarrel - they knelt to no god and no daedra (systems/loot/lootPowers.js's bane, on its own shots) - and,
   // a unique find of no family, where its codex row says it is found
-  power: Object.freeze({ name: 'Dwemer Defiance', kind: 'bane', foes: FOE_FAMILIES.daedra, pct: 50,
-    brief: '+50% vs daedra and atronachs', text: 'Its shots deal 50% more damage to daedra, atronachs, imps and gargoyles. The Dwemer knelt to none of them' }),
-  hint: 'No longer found',   // GUNS-UNFOUND: no gun drops, so none rolls up as it - a held one keeps it
+  power: Object.freeze({
+    name: 'Dwemer Defiance',
+    kind: 'bane',
+    foes: FOE_FAMILIES.daedra,
+    pct: 50,
+    brief: '+50% vs daedra and atronachs',
+    text: 'Its shots deal 50% more damage to daedra, atronachs, imps and gargoyles. The Dwemer knelt to none of them',
+  }),
+  hint: 'No longer found', // GUNS-UNFOUND: no gun drops, so none rolls up as it - a held one keeps it
 });
 
 // ── THE SOUND ───────────────────────────────────────────────────────
@@ -442,21 +517,28 @@ export const SFX_FILES = Object.freeze({
   [SFX.open]: 'open-gunrack.wav',
   [SFX.close]: 'close-shell.wav',
 });
-export const sfxUrl = (file) => new URL(`sfx/${file}`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
+export const sfxUrl = (file) =>
+  new URL(`sfx/${file}`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
 
 let _sounds = null;
 /** Register the three clips, once. Answers how many took. */
 export function installThunderlockSounds(audio, { fetchBytes = null } = {}) {
   if (!audio?.registerSound) return Promise.resolve(0);
   return (_sounds ??= (async () => {
-    const load = fetchBytes ?? (async (file) => {
-      const r = await fetch(sfxUrl(file));
-      if (!r.ok) throw new Error(`${file}: ${r.status}`);
-      return new Uint8Array(await r.arrayBuffer());
-    });
+    const load =
+      fetchBytes ??
+      (async (file) => {
+        const r = await fetch(sfxUrl(file));
+        if (!r.ok) throw new Error(`${file}: ${r.status}`);
+        return new Uint8Array(await r.arrayBuffer());
+      });
     let n = 0;
     for (const [key, file] of Object.entries(SFX_FILES)) {
-      try { if (await audio.registerSound(key, await load(file))) n++; } catch { /* the weapon still fires, silently */ }
+      try {
+        if (await audio.registerSound(key, await load(file))) n++;
+      } catch {
+        /* the weapon still fires, silently */
+      }
     }
     return n;
   })());
@@ -522,9 +604,10 @@ export const MUZZLE_OFFSET = Object.freeze({ right: 0.3, up: 1.2, forward: 0.9 }
 export function thunderlockMuzzleLight(entity, feet, yaw = 0) {
   const glow = entity?._thunderlockFlash;
   if (!(glow > 0) || !feet) return null;
-  const sy = Math.sin(yaw), cy = Math.cos(yaw);
-  const f = [sy, 0, cy];              // forward
-  const r = [cy, 0, -sy];             // right
+  const sy = Math.sin(yaw),
+    cy = Math.cos(yaw);
+  const f = [sy, 0, cy]; // forward
+  const r = [cy, 0, -sy]; // right
   const o = MUZZLE_OFFSET;
   // PISTOLET: the side the flash is on - a pair's left pistol fires from the left hand - and the gun's own reach (the
   // Pistolet's PISTOLET_FEEL.flashRange), both parked by the rig beside the glow
@@ -535,7 +618,7 @@ export function thunderlockMuzzleLight(entity, feet, yaw = 0) {
     y: feet[1] + o.up,
     z: feet[2] + r[2] * o.right * side + f[2] * o.forward,
     range: reach * glow,
-    color: orbColour(),   // FIELD-GUN17: `withPlayerLights` takes a light's own colour where it has one
+    color: orbColour(), // FIELD-GUN17: `withPlayerLights` takes a light's own colour where it has one
     // MAC-T1: a flash in your own hand gets no bloom glare either -
     // the same exemption the carried torch takes, for the same reason
     // (a torso-sized additive ball painted over the third-person body).

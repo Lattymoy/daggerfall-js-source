@@ -98,7 +98,7 @@ or that has no piece left, loses. Played against the innkeeper (four tiers) for 
   70 hp, attack 16, free.
 - THE TABLE, computed off the port's own `characters/enemy/enemyBasics.js` (ENEMY_BASICS, DFU's rows) at float32 and at
   float64, with half to even and with half up: every unit the same - the vanilla rows meet no half. The last column is
-  FACT: the card each creature already is (`cardSources.js:"export const FOE_CARDS = Object.freeze({"`).
+  FACT: the card each creature already is (`cardSources.js:"export const FOE_CARDS"`).
 
   | id | unit | level | hp | attack | cost | reach | its Iliac card |
   |---|---|---|---|---|---|---|---|
@@ -280,7 +280,7 @@ or that has no piece left, loses. Played against the innkeeper (four tiers) for 
 - `Tavern-Cards.md` section 7's refusal - "No card game from a menu. The table is the game" (Mac: "needing to be in a
   tavern"): The King's Gambit is played seated at a tavern's card table - either of its two (section 30 there) - as
   Hold'em and Iliac Hand are, one game a cloth. The Hold'em panel offers **Play The King's Gambit** beside Play Iliac Hand
-  (`cardTableHud.js:"if (iliac) actions.push("`'s way), Iliac Hand's panel offers it too, and its own panel offers the
+  (`cardTableHud.js:"if (iliac) actions.push"`'s way), Iliac Hand's panel offers it too, and its own panel offers the
   other two back.
 - The mod's two doors are not carried: the HUD's K key (a game anywhere, from a menu) and the tavern window's "Challenge
   the innkeeper" offer (its G key) - the table is the door.
@@ -291,7 +291,7 @@ or that has no piece left, loses. Played against the innkeeper (four tiers) for 
 - FACT: the interior host keeps one slot a game (`worldModes.js:"let iliacGame = null;"`, beside Hold'em's `cardGame`),
   each game opening by closing the other, and every road off the seat closing both
   (`worldModes.js:"function standFromCardTable({ cashOut = true } = {}) {"`). The King's Gambit takes a third slot, its
-  half in its own module with Iliac Hand's handle (`iliacTableGame.js:"export function openIliacTableGame(d) {"`: press,
+  half in its own module with Iliac Hand's handle (`iliacTableGame.js:"export function openIliacTableGame"`: press,
   frame, relay, draw, playing, staked, close).
 
 ## 4. What ports 1:1 - the law
@@ -303,7 +303,7 @@ structure ours.
   the board and its build, the hazards, the units and the roster, the deployment, the legal commands and their effect, a
   turn's end, the game's end, and each seat's view (KG1 found none to make - section 11). A refused command answers a
   refusal word and changes nothing (a relay keeps the last good state - `net/card/cardLaw.js`'s way).
-- THE ROSTER IS DFU's TABLE: the units read `enemyBasics.js:"export const VANILLA_ENEMY_BASICS = deepFreeze("` (DEX1, 2026-10-19: the table's vanilla rows by name, copied before any mod writes one - Daggerfall Enemy Expansion writes its classic lines into the live table, as DFU's EnemyBasics.Enemies is written, and a client reading this module after that would have built another roster; ONE DFU
+- THE ROSTER IS DFU's TABLE: the units read `enemyBasics.js:"export const VANILLA_ENEMY_BASICS"` (DEX1, 2026-10-19: the table's vanilla rows by name, copied before any mod writes one - Daggerfall Enemy Expansion writes its classic lines into the live table, as DFU's EnemyBasics.Enemies is written, and a client reading this module after that would have built another roster; ONE DFU
   MEMBER, ONE EXPORT - never a second literal of the levels and the health), at float32 with RoundToInt's half to even,
   pinned deepEqual against section 2.2's table. DECIDED: the vanilla rows, never a mod's overlay. Meaner Monsters is
   applied at a foe's mint (`applyMeanerMonsters`, `characters/enemy/enemyEntity.js`), not to the table, and one roster for every
@@ -340,13 +340,13 @@ structure ours.
 - THE ARMY (Q2). DECIDED (section 10.2): the mod's roster whole - any unit, as often as 300 points buy - so every player
   sits down at once and the cards are the units' faces. NOT CHOSEN: an army only of the creature cards the binder holds,
   a card a unit (the collection the barracks). It would bend the mod's balance: the starter deck
-  (`iliacCards.js:"export const STARTER_DECK = Object.freeze(["`) fields ten units worth 167 points - two Rats, two Giant
+  (`iliacCards.js:"export const STARTER_DECK"`) fields ten units worth 167 points - two Rats, two Giant
   Bats, two Mages Guild Apprentices, the Spriggan, the Centaur, the Dreugh and the Lamia.
 
 ### 5.2 The kings are the Bay's
 
 - THE MOD'S kings are two sprites over one set of numbers (2.2). DECIDED: each side's king is one of the four crowns'
-  kings in the deck of the Iliac Bay (`cardFaces.js:"export const SUIT_CROWNS = Object.freeze(["` - Gothryd of
+  kings in the deck of the Iliac Bay (`cardFaces.js:"export const SUIT_CROWNS"` - Gothryd of
   Daggerfall, Eadwyre of Wayrest, Camaron of Sentinel, Gortwog of Orsinium; the painted royal, the K of the crown's suit),
   with the mod's king's numbers. The player's crown is the player's choice at the setup; a regular's is the regular's
   seed's, never the player's. Q4.
@@ -354,7 +354,7 @@ structure ours.
 ### 5.3 The board is the cloth
 
 - DECIDED: the board is laid on the table's felt. FACT: the felt is 1.42 by 0.92 m inside its rail
-  (`cardTableProp.js:"export const CARD_TABLE_RAIL = 0.04;"`, with CARD_TABLE_W 1.5 and CARD_TABLE_D 1), and the prop's
+  (`cardTableProp.js:"export const CARD_TABLE_RAIL"`, with CARD_TABLE_W 1.5 and CARD_TABLE_D 1), and the prop's
   chairs stand two to a long side, 0.375 m either side of its middle, and one at each end (`world/card/cardTables.js`
   seatSpots).
 - DECIDED (AUDIT KG C1): laid ALONG THE TABLE'S OWN AXES, square to the felt's edges, as Hold'em's board lies
@@ -363,7 +363,7 @@ structure ours.
   fifteen columns across and thirteen rows along, 6.13 cm cells. The guest's side is the head, whatever chair the guest
   takes (Iliac Hand's rule for the opponent's side, which "still lays its side opposite"); each viewer reads the board
   from its own chair (the lean, 10.7). NOT CHOSEN: Iliac Hand's lay, square to the line from the cloth's middle to seat
-  0's chair (`iliacCloth.js:"export function iliacPlaces(frame, seat0, seat1, viewer = 0) {"`, AUDIT CARDS-6 B3), which
+  0's chair (`iliacCloth.js:"export function iliacPlaces"`, AUDIT CARDS-6 B3), which
   this record had cited as the line between the two chairs: a long-side chair's line is 23.8 degrees off the table's
   short axis, and a board square to it lies askew on the felt in 5.13 cm cells. MEASURE (KG4): the cell from the chair.
   KG5 says where a guest's chair stands (the head faces the guest only across from the host).
@@ -1208,7 +1208,7 @@ The owner: **"Dont come back until this is completed in full"** - the slice afte
 - FOUND AT THE DRAFTS - A NO-BREAK SPACE WAS A PLACE TO BREAK. French sets a no-break space before a colon ("Continu :"),
   and the face's wrapper split the words on every white space (`/\s+/` matches U+00A0): the colon wrapped onto the next
   line's head and the space came back a plain one. The wrapper breaks on white space but never a no-break space now
-  (`iliacCardFaces.js:"export const CARD_BREAK = "`) - U+00A0, U+2007 and U+202F - and keeps it; no French rules line
+  (`iliacCardFaces.js:"export const CARD_BREAK"`) - U+00A0, U+2007 and U+202F - and keeps it; no French rules line
   opens on its colon at any width.
 - FOUND AT THE GATES - THE ACCOUNT WORKER CARRIES THE WORDS. The account service bundles `systems/iliac/iliacItems.js` (the
   item law reads a card item), so the words module a card item's lines read rides its bundle beside the text core it
@@ -1388,7 +1388,7 @@ panel; the card panels' sheets and the chrome joined FONT3's floor (`test/ui/fon
   law's own word now (`armyRefusal`, `armyCost`).
 - THE WARNINGS' CLOCK (found by the mutation run): the panel said when the warnings turn - the information box's round
   and the next step's "at the end of this round" - with a formula true only while `KG_HAZARD_SPAWN_EVERY` is 2. The law
-  says it now (`kingsGambit.js:"export const warningsArmAt = (round) =>"`), pinned against a game played on.
+  says it now (`kingsGambit.js:"export const warningsArmAt"`), pinned against a game played on.
 - A STALE COUNT: `Tavern-Cards.md` section 40 said KG-SET's pins 4 and its mutants 12 - 5 and 13 since the no-break
   space was found.
 - THREE NAMES ALREADY TAKEN (found by the whole suite at the merge of main): `cursorStep` (the gamepad cursor's,
@@ -1401,7 +1401,7 @@ panel; the card panels' sheets and the chrome joined FONT3's floor (`test/ui/fon
   (`test/scenes/inputmap.test.js`) refuse in a host; and that listener's `window.addEventListener('keydown'` stood above the
   host's own, so V4 (`test/systems/modalkeys.test.js`) and U43, which read the host's handler from its registration, read the
   cloth's instead. The keys are a window's own (ui/input.js's overlayAction is the precedent): the table and its reader
-  live in the panel (`gambitTableHud.js:"export const gambitBoardKey = (code) =>"`), both hosts ask it, and the cloth's
+  live in the panel (`gambitTableHud.js:"export const gambitBoardKey"`), both hosts ask it, and the cloth's
   three listeners are taken and let go as one list. The chat's claim is asked of every press key, not Enter's alone -
   the claim answers per press by ActivateCursor's binding, so a rebound open key is yielded wherever it lands.
 
@@ -1446,7 +1446,7 @@ cards, as sections 5.3, 5.4, 10.1, 10.7, 14.3, 14.7 and 14.8 decided.
   vitals, its length the value (14.8).
 - THE MOTION (`world/gambitMotion.js`), every timing the mod's, read off its IL (2.10, `EffectOffset`, the attack's
   visuals): the walk along the path the move took at 3.5 cells a second - the law's own walk kept as a path
-  (`kingsGambit.js:"export function reachPath(board, p, col, row) {"`, on the board before the move: AUDIT KG C22); a
+  (`kingsGambit.js:"export function reachPath"`, on the board before the move: AUDIT KG C22); a
   blow's impact AttackTiming's default 0.2 s after the order, its lunge from 0.1 s before it for 0.28 s, 0.15 of a cell
   for a melee blow and 0.06 for a shot, a shot's bolt 0.3 s; the hit 0.45 s - EffectOffset's knock of 0.22 of a cell
   along the blow, dying away, and its jitter of 4 px on the mod's cell at a 1080-line screen ((1080 - 190) / 13 px: 0.058
@@ -1463,15 +1463,15 @@ cards, as sections 5.3, 5.4, 10.1, 10.7, 14.3, 14.7 and 14.8 decided.
   warning's pulsing ring and its bobbing "!" - each over KG3's painted mark.
 - THE SHOT (10.7): four bright squares on the line from the shooter to its target over the bolt's 0.3 s, at a card's
   mid-height.
-- THE PRESS ON THE BUILT BOARD (14.3): `gambitCloth.js:"export function gambitPressCell(places, board, eye, dir, selected = null) {"` -
+- THE PRESS ON THE BUILT BOARD (14.3): `gambitCloth.js:"export function gambitPressCell"` -
   the nearest of a standing card's face (its cell), a wall's top (the wall's cell, which presses nothing), a pillar's top
   and the mat; never the cell a ray reaches on the mat behind a card. Under a finger a piece snaps by its card's middle,
   where the finger sees it.
-- THE LEAN (10.7, 14.7): `gambitCloth.js:"export function gambitLean(places, { aspect, fovY, clear: given = { x0: 0, x1: 1, y0: 0, y1: 1 }, pitch = GAMBIT_LEAN_PITCH }) {"`
+- THE LEAN (10.7, 14.7): `gambitCloth.js:"export function gambitLean"`
   - SOLVED, not guessed: pitched `GAMBIT_LEAN_PITCH` (55 degrees) down over the board, the eye moved back along its line
   of sight and slid square to it until the board's corners and its head row's cards standing fill `GAMBIT_LEAN_FILL` of
   the CLEAR screen and stand centred in it. The clear screen
-  (`gambitTableGame.js:"export function gambitClear(box, { w, h, rect = null }, touch = false) {"`) is the largest of what
+  (`gambitTableGame.js:"export function gambitClear"`) is the largest of what
   lies left of the panel, right of it and above it - the desktop's column, the phone's strip, the landscape phone's
   column - under the touch layer's presses (`GAMBIT_TOUCH_TOP_PX`) on a touch device, read in the world's strip. The
   battle leans in over `GAMBIT_LEAN_S` (at once under reduced motion) from the seat's own eye and look and back out with

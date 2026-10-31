@@ -2,7 +2,7 @@
   {
     "name": "DISC19-A-werewolf-curse-rounds-out",
     "file": "src/systems/lycanthropy.js",
-    "old": "    permanent: true,   // CURSE-PERSIST1: lifelong - ended by its cure, never by the magic-round clock (diseases' and poisons' own flag)\n    racial: 'lycanthropy',",
+    "old": "    permanent: true, // CURSE-PERSIST1: lifelong - ended by its cure, never by the magic-round clock (diseases' and poisons' own flag)\n    racial: 'lycanthropy',",
     "new": "    racial: 'lycanthropy',",
     "tests": [
       "test/systems/disc19.test.js"
@@ -20,8 +20,8 @@
   {
     "name": "DISC19-A-infection-rounds-out",
     "file": "src/systems/infection.js",
-    "old": "    permanent: true,   // CURSE-PERSIST1: lifelong until it turns or is cured - never the magic-round clock's (a plain disease's own flag, diseases.js)\n",
-    "new": "",
+    "old": "    permanent: true, // CURSE-PERSIST1: lifelong until it turns or is cured - never the magic-round clock's (a plain disease's own flag, diseases.js)\n    infection: key,",
+    "new": "    infection: key,",
     "tests": [
       "test/systems/disc19.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "DISC19-F-watch-comes-for-the-wanted",
     "file": "src/systems/town/townWatch.js",
-    "old": "      if (crime) { countdown = 0; calm = 0; return null; }",
-    "new": "      if (false) { countdown = 0; calm = 0; return null; }",
+    "old": "      if (crime) {",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/disc19.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "DISC19-F-watch-follows-a-player-who-left",
     "file": "src/systems/town/townWatch.js",
-    "old": "          if (locationKey !== countdownKey) return null;\n",
-    "new": "",
+    "old": "          if (locationKey !== countdownKey) return null;\n          waves++;",
+    "new": "          waves++;",
     "tests": [
       "test/systems/disc19.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "DISC19-F-threat-need-not-hunt",
     "file": "src/systems/town/townWatch.js",
-    "old": "  if (!isPlayerTarget(t) && !(t?.defender === true && !t.dead) && !(t?.companion != null && !t.dead)   // AUDIT CC-B6: a monster fighting a companion is still the fight\n    && !(t?.civilian === true && (t.entity?.health ?? 0) > 0)) return false;   // WATCH-PROTECTS: and one hunting a townsperson of the living world\n",
-    "new": "",
+    "old": "  if (\n    !isPlayerTarget(t) &&\n    !(t?.defender === true && !t.dead) &&\n    !(t?.companion != null && !t.dead) && // AUDIT CC-B6: a monster fighting a companion is still the fight\n    !(t?.civilian === true && (t.entity?.health ?? 0) > 0)\n  )\n    return false; // WATCH-PROTECTS: and one hunting a townsperson of the living world\n  return !!inTownRect?.(f);",
+    "new": "  return !!inTownRect?.(f);",
     "tests": [
       "test/systems/disc19.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "DISC19-F-threat-allies-count",
     "file": "src/systems/town/townWatch.js",
-    "old": "  if (f.entity.team === 'PlayerAlly') return false;\n",
-    "new": "",
+    "old": "  if (f.entity.team === 'PlayerAlly') return false;\n  const t = f.ai.target;",
+    "new": "  const t = f.ai.target;",
     "tests": [
       "test/systems/disc19.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "DISC19-E-no-mesh-colliders",
     "file": "src/player/activate.js",
-    "old": "export const hasMeshCollider = (o) => !!o && (o.kind === 'action'",
-    "new": "export const hasMeshCollider = (o) => false && (o.kind === 'action'",
+    "old": "  !!o &&",
+    "new": "  false &&",
     "tests": [
       "test/systems/disc19.test.js"
     ]
@@ -318,8 +318,8 @@
   {
     "name": "DISC19-E-every-entered-model-skipped",
     "file": "src/player/activate.js",
-    "old": "      firstHit ??= collider.raycastHit(eye, dir, RAY_DISTANCE);\n",
-    "new": "      firstHit ??= collider.raycastHit(eye, dir, RAY_DISTANCE); continue;\n",
+    "old": "      if (firstHit.key != null && firstHit.key !== target.key) {",
+    "new": "      continue;\n      if (firstHit.key != null && firstHit.key !== target.key) {",
     "tests": [
       "test/systems/disc19.test.js"
     ]

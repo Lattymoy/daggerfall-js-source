@@ -11,7 +11,7 @@
   {
     "name": "AUDIT-PERFURL-A3-searchParams-read",
     "file": "src/render/airPass.js",
-    "old": "  return pageParam('air', search) !== 'off';   // PERF-URL",
+    "old": "  return pageParam('air', search) !== 'off'; // PERF-URL",
     "new": "  return new URL(`http://x/${search}`).searchParams.get('air') !== 'off';",
     "tests": [
       "test/systems/perfurl_doors.test.js"
@@ -48,8 +48,8 @@
   {
     "name": "AUDIT-PERFURL-A5-latched-key-published",
     "file": "src/systems/online/onlineLane.js",
-    "old": "export const BOOT_DOOR_KEYS = Object.freeze(['load', 'online',",
-    "new": "export const BOOT_DOOR_KEYS = Object.freeze(['renderscale', 'load', 'online',",
+    "old": "  'load',",
+    "new": "  'renderscale',\n  'load',",
     "tests": [
       "test/systems/perfurl_doors.test.js"
     ]

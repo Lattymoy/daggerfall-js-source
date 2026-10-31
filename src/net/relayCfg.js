@@ -22,18 +22,18 @@ export const RELAY_CFG_VARS = Object.freeze({
   serpentThread: 'SERPENT_DISCORD_THREAD',
   sdThread: 'SD_DISCORD_THREAD',
   egThread: 'EG_DISCORD_THREAD',
-  ktRole: 'KT_DISCORD_ROLE',   // KETCH (net/ketch/ketchHerald.js): the role the Sky-Ketch's sighting pings - its own, else the gate's
-  ktThread: 'KT_DISCORD_THREAD',   // KETCH: and the thread her cards post to
-  egDrain: 'EG_DRAIN',   // EG-H2 (bible/11-Multiplayer/Elite-Gates.md section 22): THE DRAIN - 'on' shuts the Spire's road (no new breach) while a deploy drains it
-  groundGate: 'GROUND_GATE',   // GROUND-GATE (bible/01-Overview/bugs/Field-Bugs-2026-10-17f.md): 'on' refuses a ground room's hello from a build on an older ground (net/wire.js GROUND_LAW) - off until the site serves the build that says it, since the relay deploys first
-  grantMode: 'GRANT_MODE',   // GRANT2 (bible/11-Multiplayer/Spawn-Grants.md section 12): the spawn grants' law - 'measure' (and unset: net/grantLaw.js grantModeOf), 'enforce' (GRANT6), 'off'
-  grantRoll: 'GRANT_ROLL',   // GRANT8 (Spawn-Grants.md section 16): 'on' - an encounter's grant rolls its species from its seed (`encr`); off unset
-  grantStrip: 'GRANT_STRIP',   // GRANT9 (Spawn-Grants.md section 16): 'on' - the relay drops a record its grant does not stand (FOE-BOUNDS, section 19: and one no builder could give); off unset
-  grantDoor: 'GRANT_DOOR',   // GRANT-DOOR (Spawn-Grants.md section 20): 'on' - a foes room refuses a build whose hello says no spawn grants (net/wire.js GRANT_HELLO_LAW); off unset, and off until the site serves the build that says it, since the relay deploys first
-  cellSeed: 'CELL_SEED',   // COST-2 part two (net/cellTree.js cellSeedOf): the level the cell directory seeds its tree at, 1 to 4 - off unset (the tree fixed at L0), and off until the site serves the build that says `cv`, since the relay deploys first; off again is the way back
-  leaseDoor: 'LEASE_DOOR',   // LEASE1 (net/roomLease.js): 'on' - a lease room refuses a hello that does not hand on its hub's lease, and hears a bound socket in nothing but its ping while it holds no live lease; off unset, and off until the site serves the build that says it, since the relay deploys first
-  lootDoor: 'LOOT_DOOR',   // LOOT-DOOR (AUDIT HORIZONTAL B7, bible/06-Systems/Professions-Arc.md 57.8): 'on' - a loot room refuses a build whose hello reads less loot than the relay's law (net/wire.js LOOT_HELLO_LAW); off unset, and off until the site serves the build that says it, since the relay deploys first
-  sdCollapse: 'SD_COLLAPSE',   // SD-PARTY (bible/11-Multiplayer/Super-Dungeons.md SD-PARTY): 'on' - the first party to break an Abyss Dungeon's Hour collapses it for everyone (the law before SD-PARTY); off unset - each party's win closes its own Hour, and the Hollow stands until it fades
+  ktRole: 'KT_DISCORD_ROLE', // KETCH (net/ketch/ketchHerald.js): the role the Sky-Ketch's sighting pings - its own, else the gate's
+  ktThread: 'KT_DISCORD_THREAD', // KETCH: and the thread her cards post to
+  egDrain: 'EG_DRAIN', // EG-H2 (bible/11-Multiplayer/Elite-Gates.md section 22): THE DRAIN - 'on' shuts the Spire's road (no new breach) while a deploy drains it
+  groundGate: 'GROUND_GATE', // GROUND-GATE (bible/01-Overview/bugs/Field-Bugs-2026-10-17f.md): 'on' refuses a ground room's hello from a build on an older ground (net/wire.js GROUND_LAW) - off until the site serves the build that says it, since the relay deploys first
+  grantMode: 'GRANT_MODE', // GRANT2 (bible/11-Multiplayer/Spawn-Grants.md section 12): the spawn grants' law - 'measure' (and unset: net/grantLaw.js grantModeOf), 'enforce' (GRANT6), 'off'
+  grantRoll: 'GRANT_ROLL', // GRANT8 (Spawn-Grants.md section 16): 'on' - an encounter's grant rolls its species from its seed (`encr`); off unset
+  grantStrip: 'GRANT_STRIP', // GRANT9 (Spawn-Grants.md section 16): 'on' - the relay drops a record its grant does not stand (FOE-BOUNDS, section 19: and one no builder could give); off unset
+  grantDoor: 'GRANT_DOOR', // GRANT-DOOR (Spawn-Grants.md section 20): 'on' - a foes room refuses a build whose hello says no spawn grants (net/wire.js GRANT_HELLO_LAW); off unset, and off until the site serves the build that says it, since the relay deploys first
+  cellSeed: 'CELL_SEED', // COST-2 part two (net/cellTree.js cellSeedOf): the level the cell directory seeds its tree at, 1 to 4 - off unset (the tree fixed at L0), and off until the site serves the build that says `cv`, since the relay deploys first; off again is the way back
+  leaseDoor: 'LEASE_DOOR', // LEASE1 (net/roomLease.js): 'on' - a lease room refuses a hello that does not hand on its hub's lease, and hears a bound socket in nothing but its ping while it holds no live lease; off unset, and off until the site serves the build that says it, since the relay deploys first
+  lootDoor: 'LOOT_DOOR', // LOOT-DOOR (AUDIT HORIZONTAL B7, bible/06-Systems/Professions-Arc.md 57.8): 'on' - a loot room refuses a build whose hello reads less loot than the relay's law (net/wire.js LOOT_HELLO_LAW); off unset, and off until the site serves the build that says it, since the relay deploys first
+  sdCollapse: 'SD_COLLAPSE', // SD-PARTY (bible/11-Multiplayer/Super-Dungeons.md SD-PARTY): 'on' - the first party to break an Abyss Dungeon's Hour collapses it for everyone (the law before SD-PARTY); off unset - each party's win closes its own Hour, and the Hollow stands until it fades
 });
 /** The settings a developer may set. */
 export const RELAY_CFG_KEYS = Object.freeze(Object.keys(RELAY_CFG_VARS));
@@ -49,9 +49,20 @@ export const RELAY_CFG_RELAY_MIN = 192;
 /** HERALD-CARDS: a setting newer than the frame, and the first relay that knows it - an older one finds no such name in
  *  its RELAY_CFG_KEYS and closes the hub link on the frame, so the client says it only to a relay at this or later
  *  (world250: world243 on its branch, renumbered at the merge - AUDIT HERALD-CARDS S1). */
-export const RELAY_CFG_KEY_MIN = Object.freeze({ gateThread: 250, serpentThread: 250, sdThread: 250, egThread: 250, ktRole: 255, ktThread: 255, cellSeed: 260, lootDoor: 273, sdCollapse: 275 });   // KETCH: world255's (world253 on its branch); COST-2 part two: world260's, the fold's one release (world260, world261, then world262, on its branch); LOOT-DOOR: world272's (AUDIT HORIZONTAL B7, re-hashed in place; main's MASTER-THREE world271 knows no such setting)
+export const RELAY_CFG_KEY_MIN = Object.freeze({
+  gateThread: 250,
+  serpentThread: 250,
+  sdThread: 250,
+  egThread: 250,
+  ktRole: 255,
+  ktThread: 255,
+  cellSeed: 260,
+  lootDoor: 273,
+  sdCollapse: 275,
+}); // KETCH: world255's (world253 on its branch); COST-2 part two: world260's, the fold's one release (world260, world261, then world262, on its branch); LOOT-DOOR: world272's (AUDIT HORIZONTAL B7, re-hashed in place; main's MASTER-THREE world271 knows no such setting)
 /** Does the relay at version `v` take a setting - any (`k` unsaid), or that one? */
-export const relayCfgSupported = (v, k = null) => Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= Math.max(RELAY_CFG_RELAY_MIN, RELAY_CFG_KEY_MIN[k] ?? 0);
+export const relayCfgSupported = (v, k = null) =>
+  Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= Math.max(RELAY_CFG_RELAY_MIN, RELAY_CFG_KEY_MIN[k] ?? 0);
 /** May a player whose verified glyphs are `glyphs` set the relay's settings? The Developer's alone - a Dungeon Master's
  *  and Shadow Fang's staff commands move only themselves (net/staffCommands.js). */
 export const mayRelayCfg = (glyphs) => Array.isArray(glyphs) && glyphs.includes('dev');
@@ -108,7 +119,8 @@ export function parseRelayCfgCommand(rest) {
   if (!text) return { cmd: 'relay' };
   const m = /^(\S+)\s*([\s\S]*)$/.exec(text);
   const k = RELAY_CFG_KEYS.find((x) => x.toLowerCase() === String(m?.[1] ?? '').toLowerCase());
-  if (!k) return { error: `No relay setting called "${String(m?.[1] ?? '').slice(0, 24)}" - ${RELAY_CFG_KEYS.join(', ')}.` };
+  if (!k)
+    return { error: `No relay setting called "${String(m?.[1] ?? '').slice(0, 24)}" - ${RELAY_CFG_KEYS.join(', ')}.` };
   const v = (m?.[2] ?? '').trim();
   if (!v) return { error: `Usage: /relay ${k} <value>, or /relay ${k} - to hand it back to the Worker's var.` };
   if (v.length > RELAY_CFG_VALUE_MAX) return { error: `A setting is ${RELAY_CFG_VALUE_MAX} characters at most.` };

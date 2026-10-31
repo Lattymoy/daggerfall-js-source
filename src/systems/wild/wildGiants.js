@@ -53,7 +53,12 @@ export function giantGroundBlocked(collider, x, h, z) {
 }
 const DAY_MS = 24 * 3_600_000;
 
-const mix = (a, b) => { let h = (a ^ Math.imul(b + 0x7f4a7c15, 0x9e3779b1)) >>> 0; h = Math.imul(h ^ (h >>> 16), 0x85ebca6b) >>> 0; h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35) >>> 0; return (h ^ (h >>> 16)) >>> 0; };
+const mix = (a, b) => {
+  let h = (a ^ Math.imul(b + 0x7f4a7c15, 0x9e3779b1)) >>> 0;
+  h = Math.imul(h ^ (h >>> 16), 0x85ebca6b) >>> 0;
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35) >>> 0;
+  return (h ^ (h >>> 16)) >>> 0;
+};
 
 /** A giant's tier (1..4) by its index (0..7): two a tier, the outer tier's first. */
 export const wildGiantRing = (g) => Math.floor((g | 0) / WILD_GIANTS_PER_RING) + 1;
@@ -70,12 +75,28 @@ function cellsOf(mask, free, heightAt = null) {
   if (c && c.free === free && c.heightAt === heightAt) return c;
   const box = mask.box ?? { x0: 0, y0: 0, x1: mask.width - 1, y1: mask.height - 1 };
   const all = Array.from({ length: WILD_RINGS + 1 }, () => []);
-  for (let y = box.y0; y <= box.y1; y++) for (let x = box.x0; x <= box.x1; x++) { const r = ringOfCell(mask, x, y); if (r) all[r].push({ x, y }); }
+  for (let y = box.y0; y <= box.y1; y++)
+    for (let x = box.x0; x <= box.x1; x++) {
+      const r = ringOfCell(mask, x, y);
+      if (r) all[r].push({ x, y });
+    }
   /** @type {Map<number, boolean>} */
   const asked = new Map();
   const mid = (p) => maskWorld(mask, p.x + 0.5, p.y + 0.5).map(Math.floor);
-  const isFree = (p) => { const k = p.y * mask.width + p.x; let f = asked.get(k); if (f === undefined) { const [x, y] = mid(p); asked.set(k, f = !!free(x, y)); } return f; };
-  const low = (p) => { if (!heightAt) return 0; const [x, y] = mid(p); return heightAt(x, y); };
+  const isFree = (p) => {
+    const k = p.y * mask.width + p.x;
+    let f = asked.get(k);
+    if (f === undefined) {
+      const [x, y] = mid(p);
+      asked.set(k, (f = !!free(x, y)));
+    }
+    return f;
+  };
+  const low = (p) => {
+    if (!heightAt) return 0;
+    const [x, y] = mid(p);
+    return heightAt(x, y);
+  };
   c = { free, heightAt, all, isFree, low, mid, legs: new Map(), homes: new Map(), mask };
   _cells.set(mask, c);
   return c;
@@ -88,11 +109,18 @@ function homeOf(c, g, day) {
   let h = c.homes.get(key);
   if (h !== undefined) return h;
   const list = c.all[wildGiantRing(g)];
-  const draws = list.length ? Array.from({ length: WILD_GIANT_HOME_DRAWS }, (_, k) => list[mix(day * 31 + 7 + k * 101, g) % list.length]).filter(c.isFree) : [];
+  const draws = list.length
+    ? Array.from(
+        { length: WILD_GIANT_HOME_DRAWS },
+        (_, k) => list[mix(day * 31 + 7 + k * 101, g) % list.length],
+      ).filter(c.isFree)
+    : [];
   if (!draws.length) h = null;
   else if (g % WILD_GIANTS_PER_RING === 1 && homeOf(c, g - 1, day)) {
-    const first = /** @type {{x:number,y:number}} */ (homeOf(c, g - 1, day));   // apart from its twin: the farthest
-    h = draws.reduce((a, b) => (Math.hypot(b.x - first.x, b.y - first.y) > Math.hypot(a.x - first.x, a.y - first.y) ? b : a));
+    const first = /** @type {{x:number,y:number}} */ (homeOf(c, g - 1, day)); // apart from its twin: the farthest
+    h = draws.reduce((a, b) =>
+      Math.hypot(b.x - first.x, b.y - first.y) > Math.hypot(a.x - first.x, a.y - first.y) ? b : a,
+    );
   } else h = draws.reduce((a, b) => (c.low(b) < c.low(a) ? b : a));
   c.homes.set(key, h);
   if (c.homes.size > 256) c.homes.delete(c.homes.keys().next().value);
@@ -106,7 +134,10 @@ function waypointOf(c, g, leg) {
   if (w !== undefined) return w;
   const day = Math.floor((leg * WILD_GIANT_LEG_MS) / DAY_MS);
   const home = homeOf(c, g, day);
-  if (!home) { c.legs.set(key, null); return null; }
+  if (!home) {
+    c.legs.set(key, null);
+    return null;
+  }
   // GIANT-LEASH2: the day's first leg starts at its home; every next waypoint is one the giant can WALK to from the last
   // in a straight line without leaving the zone (a bay in the border is walked round, never across) - none such, it
   // stands where it is for the leg
@@ -114,17 +145,28 @@ function waypointOf(c, g, leg) {
   const prev = first ? null : waypointOf(c, g, leg - 1);
   if (first) w = home;
   else {
-    const reach = Math.max(1, Math.ceil(WILD_GIANT_ROAM_PX / (c.mask.cell ?? 1))), ring = wildGiantRing(g);
+    const reach = Math.max(1, Math.ceil(WILD_GIANT_ROAM_PX / (c.mask.cell ?? 1))),
+      ring = wildGiantRing(g);
     let near = [];
-    for (let y = home.y - reach; y <= home.y + reach; y++) for (let x = home.x - reach; x <= home.x + reach; x++) if (ringOfCell(c.mask, x, y) === ring && (!prev || lineInside(c.mask, prev, { x, y }))) near.push({ x, y });
-    if (c.heightAt && near.length >= 8) {   // GIANT-FIELDS: the low half of the ground about the home
-      const hs = near.map(c.low).sort((a, b) => a - b), cut = hs[Math.floor((hs.length - 1) * WILD_GIANT_LOW_SHARE)];
+    for (let y = home.y - reach; y <= home.y + reach; y++)
+      for (let x = home.x - reach; x <= home.x + reach; x++)
+        if (ringOfCell(c.mask, x, y) === ring && (!prev || lineInside(c.mask, prev, { x, y }))) near.push({ x, y });
+    if (c.heightAt && near.length >= 8) {
+      // GIANT-FIELDS: the low half of the ground about the home
+      const hs = near.map(c.low).sort((a, b) => a - b),
+        cut = hs[Math.floor((hs.length - 1) * WILD_GIANT_LOW_SHARE)];
       near = near.filter((p) => c.low(p) <= cut);
     }
     // the leg's draw, and the next ones round the window until a free cell answers
     const at = near.length ? mix(leg, g * 977 + 13) % near.length : 0;
     w = prev ?? home;
-    for (let k = 0; k < near.length; k++) { const q = near[(at + k) % near.length]; if (c.isFree(q)) { w = q; break; } }
+    for (let k = 0; k < near.length; k++) {
+      const q = near[(at + k) % near.length];
+      if (c.isFree(q)) {
+        w = q;
+        break;
+      }
+    }
   }
   c.legs.set(key, w);
   if (c.legs.size > 4096) c.legs.delete(c.legs.keys().next().value);
@@ -132,10 +174,12 @@ function waypointOf(c, g, leg) {
 }
 /** WW-C2: a giant's place on the world at a point of the cells' grid - a cell's middle its middle pixel's (a hall's own
  *  pixel, wildDungeons.js), the walk between at the grid's scale. */
-const giantWorld = (mask, cx, cy) => maskWorld(mask, cx - 0.5, cy - 0.5).map((v) => v + Math.floor((mask.cell ?? 1) / 2) + 0.5);
+const giantWorld = (mask, cx, cy) =>
+  maskWorld(mask, cx - 0.5, cy - 0.5).map((v) => v + Math.floor((mask.cell ?? 1) / 2) + 0.5);
 /** Does a giant at grid point (cx, cy) stand in the zone - its cell the zone's, and (ZONE-LINE) the world pixel under it the
  *  zone's own: a cell whose middle is the province's may hold a pixel or two past the province's line. */
-const giantIn = (mask, cx, cy) => !!ringOfCell(mask, Math.floor(cx), Math.floor(cy)) && wildInside(mask, ...giantWorld(mask, cx, cy));
+const giantIn = (mask, cx, cy) =>
+  !!ringOfCell(mask, Math.floor(cx), Math.floor(cy)) && wildInside(mask, ...giantWorld(mask, cx, cy));
 /** Does the straight walk from cell `a` to cell `b` (their middles) stay inside the zone all the way? */
 function lineInside(mask, a, b) {
   const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) * 4));
@@ -160,16 +204,22 @@ export function wildGiantsAt(mask, free, now, dead = () => false, heightAt = nul
   const out = [];
   for (let g = 0; g < WILD_GIANT_COUNT; g++) {
     if (dead(g)) continue;
-    const t = now + g * 157_000;   // each giant's legs out of step with the others'
+    const t = now + g * 157_000; // each giant's legs out of step with the others'
     const leg = Math.floor(t / WILD_GIANT_LEG_MS);
     const f = (t - leg * WILD_GIANT_LEG_MS) / WILD_GIANT_LEG_MS;
-    const a = waypointOf(c, g, leg), b = waypointOf(c, g, leg + 1);
+    const a = waypointOf(c, g, leg),
+      b = waypointOf(c, g, leg + 1);
     if (!a || !b) continue;
-    let cx = a.x + 0.5 + (b.x - a.x) * f, cy = a.y + 0.5 + (b.y - a.y) * f;
+    let cx = a.x + 0.5 + (b.x - a.x) * f,
+      cy = a.y + 0.5 + (b.y - a.y) * f;
     // GIANT-LEASH (the owner: "giant should not be able to walk out of the zone"): a straight line between two waypoints
     // of its tier that cuts over the zone's edge (a bay in the border) is not walked out there - the giant waits at the
     // nearer waypoint until the line comes back in
-    if (!giantIn(mask, cx, cy)) { const p = f < 0.5 ? a : b; cx = p.x + 0.5; cy = p.y + 0.5; }   // ZONE-LINE: the zone's own pixel too
+    if (!giantIn(mask, cx, cy)) {
+      const p = f < 0.5 ? a : b;
+      cx = p.x + 0.5;
+      cy = p.y + 0.5;
+    } // ZONE-LINE: the zone's own pixel too
     const [x, y] = giantWorld(mask, cx, cy);
     out.push({ g, ring: wildGiantRing(g), x, y, heading: Math.atan2(b.y - a.y, b.x - a.x) });
   }

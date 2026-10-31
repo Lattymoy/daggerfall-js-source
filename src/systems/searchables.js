@@ -32,18 +32,26 @@
 // block). The ids are DFU's own model numbers; no art ships.
 // ═══════════════════════════════════════════════════════════════════
 
-import { DOOR_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../player/activate.js';   // GRAVE-PARTY: and the ray's own, a searchable's reach once the body is near it
+import { DOOR_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../player/activate.js'; // GRAVE-PARTY: and the ray's own, a searchable's reach once the body is near it
 import { isShopShelfModel } from './shopStock.js';
 import { registerModSaveData } from './modSaveData.js';
-import { eliteHash, eliteRng, elitesAllowed, eliteRenownOpen } from './eliteFoes.js';   // AUDIT BAL: and where elites stand at all; RENOWN-GATE: and the searcher's Renown
+import { eliteHash, eliteRng, elitesAllowed, eliteRenownOpen } from './eliteFoes.js'; // AUDIT BAL: and where elites stand at all; RENOWN-GATE: and the searcher's Renown
 import { goldStack } from './inventory.js';
-import { createRandomWeapon, createRandomArmor, createRandomJewellery, createRandomReligiousItem, createRandomGem, createRandomClothing, createRandomPotion } from './loot/loot.js';
+import {
+  createRandomWeapon,
+  createRandomArmor,
+  createRandomJewellery,
+  createRandomReligiousItem,
+  createRandomGem,
+  createRandomClothing,
+  createRandomPotion,
+} from './loot/loot.js';
 import { createRandomBook } from './books.js';
 import { setItemFields, mintCondition, isAmmunition } from './item/itemTemplates.js';
 import { rollLootRarity, pileSource } from './loot/lootRarity.js';
-import { noteFirstUse } from './tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
-import { WATER_SPECIES } from '../characters/dungeonEnemies.js';   // SLAUGHTER-BOX: a search's foe stands on the floor, never a swimmer
-import { t } from './textManager.js';   // GRAVE-PARTY: who searched it, in the player's language
+import { noteFirstUse } from './tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
+import { WATER_SPECIES } from '../characters/dungeonEnemies.js'; // SLAUGHTER-BOX: a search's foe stands on the floor, never a swimmer
+import { t } from './textManager.js'; // GRAVE-PARTY: who searched it, in the player's language
 
 // ── reach and time ──────────────────────────────────────────────────
 /** Half a door's reach (DoorActivationDistance, 128 classic units): 64 units, 1.6 m. GRAVE-PARTY (FIELD BUGS 2026-10-16b):
@@ -59,8 +67,10 @@ export const SEARCH_REACH = DOOR_ACTIVATION_DISTANCE / 2;
  */
 export function searchBodyDistance(aabb, feet, top) {
   const gap = (v, lo, hi) => (v < lo ? lo - v : v > hi ? v - hi : 0);
-  const dx = gap(feet[0], aabb.min[0], aabb.max[0]), dz = gap(feet[2], aabb.min[2], aabb.max[2]);
-  const lo = Math.min(feet[1], top), hi = Math.max(feet[1], top);
+  const dx = gap(feet[0], aabb.min[0], aabb.max[0]),
+    dz = gap(feet[2], aabb.min[2], aabb.max[2]);
+  const lo = Math.min(feet[1], top),
+    hi = Math.max(feet[1], top);
   const dy = hi < aabb.min[1] ? aabb.min[1] - hi : lo > aabb.max[1] ? lo - aabb.max[1] : 0;
   return Math.hypot(dx, dy, dz);
 }
@@ -74,7 +84,9 @@ export function searchBodyDistance(aabb, feet, top) {
  */
 export function searchReachFor(aabb, feet, top) {
   if (!aabb || !Array.isArray(feet) || !feet.every(Number.isFinite)) return SEARCH_REACH;
-  return searchBodyDistance(aabb, feet, Number.isFinite(top) ? top : feet[1]) <= SEARCH_REACH ? RAY_DISTANCE : SEARCH_REACH;
+  return searchBodyDistance(aabb, feet, Number.isFinite(top) ? top : feet[1]) <= SEARCH_REACH
+    ? RAY_DISTANCE
+    : SEARCH_REACH;
 }
 /** Five game hours between two searches of one object, in game minutes. */
 export const SEARCH_COOLDOWN_MINUTES = 5 * 60;
@@ -83,12 +95,12 @@ export const SEARCH_COOLDOWN_MINUTES = 5 * 60;
 /** @typedef {'coffin'|'sarcophagus'|'shelf'|'tombstone'|'chest'|'crate'} SearchKind */
 /** Each kind: its plaque name, and whether its foe is the grave's (undead) or the place's (the dungeon's own roster). */
 export const SEARCH_KINDS = Object.freeze({
-  coffin:      Object.freeze({ name: 'Coffin',      grave: true,  lockable: false }),
-  sarcophagus: Object.freeze({ name: 'Sarcophagus', grave: true,  lockable: false }),
-  shelf:       Object.freeze({ name: 'Shelf',       grave: true,  lockable: false }),
-  tombstone:   Object.freeze({ name: 'Grave',       grave: true,  lockable: false }),
-  chest:       Object.freeze({ name: 'Chest',       grave: false, lockable: true }),
-  crate:       Object.freeze({ name: 'Crate',       grave: false, lockable: true }),
+  coffin: Object.freeze({ name: 'Coffin', grave: true, lockable: false }),
+  sarcophagus: Object.freeze({ name: 'Sarcophagus', grave: true, lockable: false }),
+  shelf: Object.freeze({ name: 'Shelf', grave: true, lockable: false }),
+  tombstone: Object.freeze({ name: 'Grave', grave: true, lockable: false }),
+  chest: Object.freeze({ name: 'Chest', grave: false, lockable: true }),
+  crate: Object.freeze({ name: 'Crate', grave: false, lockable: true }),
 });
 
 /** TEXTURE.092's low wooden coffins (41315-41318) and its lidded sarcophagi (41319-41327). 41120 wears the same
@@ -104,7 +116,12 @@ const CHESTS = new Set([41811, 41812, 41816, 41817, 41826, 41829]);
 const CRATES = new Set([41815, 41818, 41822, 41824, 41825, 41827, 41828, 41830, 41831, 41832, 41833, 41834]);
 /** The headstones: every GRVE model wearing TEXTURE.073 whose footprint is a grave's, not a mausoleum's (43083-43086,
  *  43105-43116 and 43137+ are the pedestals, obelisks, tombs and vaults). */
-const TOMBSTONE_RANGES = Object.freeze([[43011, 43082], [43101, 43104], [43117, 43136], [43142, 43145]]);
+const TOMBSTONE_RANGES = Object.freeze([
+  [43011, 43082],
+  [43101, 43104],
+  [43117, 43136],
+  [43142, 43145],
+]);
 export const isTombstoneModel = (id) => TOMBSTONE_RANGES.some(([a, b]) => id >= a && id <= b);
 
 /** What a model is to a searcher, or null. @returns {SearchKind|null} */
@@ -125,18 +142,24 @@ export const searchName = (kind, locked = false) => `${locked ? 'Locked ' : ''}$
 /** @typedef {'foe'|'loot'|'nothing'} SearchOutcome */
 /** A dungeon's object: a third each. A graveyard's headstone: two in three nothing, the last third split evenly. */
 export function rollSearchOutcome({ graveyard = false, rolls = Math.random } = {}) {
-  noteFirstUse('searchables');   // TUT1
+  noteFirstUse('searchables'); // TUT1
   const r = rolls();
-  if (graveyard) return r < 2 / 3 ? 'nothing' : (r < 5 / 6 ? 'loot' : 'foe');
-  return r < 1 / 3 ? 'foe' : (r < 2 / 3 ? 'loot' : 'nothing');
+  if (graveyard) return r < 2 / 3 ? 'nothing' : r < 5 / 6 ? 'loot' : 'foe';
+  return r < 1 / 3 ? 'foe' : r < 2 / 3 ? 'loot' : 'nothing';
 }
 
 /** The undead a grave gives up, DFU's mobile types with their own levels (ENEMY_BASICS): skeletal warrior 9, zombie
  *  10, ghost 11, mummy 11, wraith 15, vampire 19, ancient vampire 20, lich 20, ancient lich 21. */
 export const SEARCH_UNDEAD = Object.freeze([
-  Object.freeze({ type: 15, level: 9 }), Object.freeze({ type: 17, level: 10 }), Object.freeze({ type: 18, level: 11 }),
-  Object.freeze({ type: 19, level: 11 }), Object.freeze({ type: 23, level: 15 }), Object.freeze({ type: 28, level: 19 }),
-  Object.freeze({ type: 30, level: 20 }), Object.freeze({ type: 32, level: 20 }), Object.freeze({ type: 33, level: 21 }),
+  Object.freeze({ type: 15, level: 9 }),
+  Object.freeze({ type: 17, level: 10 }),
+  Object.freeze({ type: 18, level: 11 }),
+  Object.freeze({ type: 19, level: 11 }),
+  Object.freeze({ type: 23, level: 15 }),
+  Object.freeze({ type: 28, level: 19 }),
+  Object.freeze({ type: 30, level: 20 }),
+  Object.freeze({ type: 32, level: 20 }),
+  Object.freeze({ type: 33, level: 21 }),
 ]);
 /** A kind stands if its level is at most the player's plus this, and the first four always may. */
 export const SEARCH_UNDEAD_LEVEL_SLACK = 3;
@@ -170,7 +193,8 @@ export const SEARCH_DOOR_REACH_M = 30;
  *  the same either way. With the ladder off a search woke an elite and its ladder-tier drop, the one door that did.
  *  RENOWN-GATE (bible/06-Systems/Revenants.md section 39): and online only from the searcher's Renown 5
  *  (eliteFoes.js eliteRenownOpen) - the foes a search wakes are the searcher's own stands. */
-export const rollSearchElite = (rolls = Math.random) => rolls() < SEARCH_ELITE_CHANCE && elitesAllowed() && eliteRenownOpen();
+export const rollSearchElite = (rolls = Math.random) =>
+  rolls() < SEARCH_ELITE_CHANCE && elitesAllowed() && eliteRenownOpen();
 
 // ── the loot ────────────────────────────────────────────────────────
 export const SEARCH_LOOT_MIN = 1;
@@ -179,12 +203,12 @@ export const SEARCH_LOOT_MAX = 4;
 export const SEARCH_GOLD_PER_LEVEL = Object.freeze([6, 18]);
 /** The goods each kind is drawn from - the minter's names (searchMinters in the host). */
 export const SEARCH_GOODS = Object.freeze({
-  coffin:      Object.freeze(['jewellery', 'religious', 'gem', 'weapon']),
+  coffin: Object.freeze(['jewellery', 'religious', 'gem', 'weapon']),
   sarcophagus: Object.freeze(['jewellery', 'religious', 'gem', 'armor', 'weapon']),
-  tombstone:   Object.freeze(['jewellery', 'religious', 'gem']),
-  shelf:       Object.freeze(['book', 'potion', 'potion', 'gem']),
-  chest:       Object.freeze(['weapon', 'armor', 'clothing', 'gem', 'potion', 'jewellery']),
-  crate:       Object.freeze(['clothing', 'potion', 'weapon', 'armor']),
+  tombstone: Object.freeze(['jewellery', 'religious', 'gem']),
+  shelf: Object.freeze(['book', 'potion', 'potion', 'gem']),
+  chest: Object.freeze(['weapon', 'armor', 'clothing', 'gem', 'potion', 'jewellery']),
+  crate: Object.freeze(['clothing', 'potion', 'weapon', 'armor']),
 });
 /**
  * THE FIND: one to four items, one of them gold. `mint` is `{ [good]: (level, rolls) => item|null }`; a good that
@@ -200,7 +224,10 @@ export function rollSearchLoot(kind, level = 1, mint = {}, rolls = Math.random) 
     for (let tries = 0; tries < 4; tries++) {
       const fn = mint[goods[Math.floor(rolls() * goods.length)]];
       const it = typeof fn === 'function' ? fn(lv, rolls) : null;
-      if (it) { items.push(it); break; }
+      if (it) {
+        items.push(it);
+        break;
+      }
     }
   }
   return items;
@@ -218,7 +245,7 @@ export function searchLockValue(kind, locationKey, objectKey) {
 }
 
 // ── the ledger: the cooldown and the picked locks ───────────────────
-const _ledger = new Map();   // `${location}|${object}` -> { t: game minute searched (or -Infinity), u: picked, w: who searched it - a partymate's name, null for me }
+const _ledger = new Map(); // `${location}|${object}` -> { t: game minute searched (or -Infinity), u: picked, w: who searched it - a partymate's name, null for me }
 export const searchKey = (locationKey, objectKey) => `${locationKey}|${objectKey}`;
 /** Minutes until it may be searched again (0: now). */
 export function searchCooldownLeft(key, nowMinutes) {
@@ -234,17 +261,26 @@ export const SEARCH_WHO_MAX = 32;
 export function markSearched(key, nowMinutes, who = null) {
   const e = _ledger.get(key);
   if (e && Number.isFinite(e.t) && e.t > nowMinutes) return;
-  _ledger.set(key, { ...(e ?? { u: false }), t: nowMinutes, w: typeof who === 'string' && who ? who.slice(0, SEARCH_WHO_MAX) : null });
+  _ledger.set(key, {
+    ...(e ?? { u: false }),
+    t: nowMinutes,
+    w: typeof who === 'string' && who ? who.slice(0, SEARCH_WHO_MAX) : null,
+  });
 }
 export const isPicked = (key) => !!_ledger.get(key)?.u;
-export const markPicked = (key) => { _ledger.set(key, { t: -Infinity, w: null, ...(_ledger.get(key) ?? {}), u: true }); };
+export const markPicked = (key) => {
+  _ledger.set(key, { t: -Infinity, w: null, ...(_ledger.get(key) ?? {}), u: true });
+};
 /** The text a searched object answers inside its five hours. */
 export const SEARCHED_TEXT = 'You have already searched here.';
 /** GRAVE-PARTY (FIELD BUGS 2026-10-16b): who searched it, when another of the party did - their name, else null (mine). */
 export const searchedBy = (key) => _ledger.get(key)?.w ?? null;
 /** GRAVE-PARTY: what a searched object answers inside its hours - SEARCHED_TEXT for my own search, and the searcher by
  *  name for a partymate's ("Already searched by Ann."), so a stone a partymate searched is not a mystery. */
-export const searchedText = (key) => { const w = searchedBy(key); return w ? t('search.searchedBy', 'Already searched by {name}.', { name: w }) : SEARCHED_TEXT; };
+export const searchedText = (key) => {
+  const w = searchedBy(key);
+  return w ? t('search.searchedBy', 'Already searched by {name}.', { name: w }) : SEARCHED_TEXT;
+};
 
 /** THE SAVE: every picked lock and every cooldown still running; at most SEARCH_LEDGER_MAX rows, newest kept. */
 export const SEARCH_LEDGER_MAX = 4000;
@@ -253,7 +289,12 @@ export function searchLedgerRecord(nowMinutes = Infinity) {
   const rows = [];
   for (const [k, e] of _ledger) {
     const live = Number.isFinite(e.t) && (!Number.isFinite(nowMinutes) || nowMinutes - e.t < SEARCH_COOLDOWN_MINUTES);
-    if (live || e.u) rows.push(e.w ? [k, Number.isFinite(e.t) ? e.t : null, e.u ? 1 : 0, e.w] : [k, Number.isFinite(e.t) ? e.t : null, e.u ? 1 : 0]);   // GRAVE-PARTY: a partymate's search keeps their name
+    if (live || e.u)
+      rows.push(
+        e.w
+          ? [k, Number.isFinite(e.t) ? e.t : null, e.u ? 1 : 0, e.w]
+          : [k, Number.isFinite(e.t) ? e.t : null, e.u ? 1 : 0],
+      ); // GRAVE-PARTY: a partymate's search keeps their name
   }
   rows.sort((a, b) => (b[1] ?? -Infinity) - (a[1] ?? -Infinity));
   return { rows: rows.slice(0, SEARCH_LEDGER_MAX) };
@@ -268,7 +309,9 @@ export function restoreSearchLedger(record) {
 }
 let _clock = () => Infinity;
 /** The host's game clock, so a save drops cooldowns already run out. */
-export const setSearchClock = (fn) => { _clock = typeof fn === 'function' ? fn : () => Infinity; };
+export const setSearchClock = (fn) => {
+  _clock = typeof fn === 'function' ? fn : () => Infinity;
+};
 registerModSaveData(SEARCH_SAVE_VENDOR, {
   newSaveData: () => ({ rows: [] }),
   getSaveData: () => searchLedgerRecord(_clock()),
@@ -290,11 +333,16 @@ const acctOk = (a) => typeof a === 'string' && a.length > 0 && a.length <= SEARC
  *  name, acctOfPeer(peerId) }` (the hub's picture and the session's issued name - scenes/searchPartyHost.js registers the
  *  streaming host's). None (the bench, offline): every other searcher is nobody of mine. */
 let _party = null;
-export const setSearchParty = (lens) => { _party = lens && typeof lens === 'object' ? lens : null; };
+export const setSearchParty = (lens) => {
+  _party = lens && typeof lens === 'object' ? lens : null;
+};
 /** The lens registered now (a harness standing several players in one process swaps them by it). */
 export const searchPartyLens = () => _party;
 /** My own account, or null. */
-export const searchSelfAcct = () => { const a = _party?.self?.(); return acctOk(a) ? a : null; };
+export const searchSelfAcct = () => {
+  const a = _party?.self?.();
+  return acctOk(a) ? a : null;
+};
 /** Who a searcher's account is to me: 'me', 'party', or null (a stranger, or nobody the lens knows). */
 export function searchKinOf(acct) {
   if (!acctOk(acct) || !_party) return null;
@@ -302,17 +350,28 @@ export function searchKinOf(acct) {
   return _party.inParty?.(acct) ? 'party' : null;
 }
 /** The account behind a peer id (my own tab, a partymate's), or null - a live word's speaker. */
-export const searchAcctOfPeer = (id) => { const a = typeof id === 'string' && id ? _party?.acctOfPeer?.(id) : null; return acctOk(a) ? a : null; };
+export const searchAcctOfPeer = (id) => {
+  const a = typeof id === 'string' && id ? _party?.acctOfPeer?.(id) : null;
+  return acctOk(a) ? a : null;
+};
 /** The name a search by `acct` is told by: null for mine; a partymate's seat name (the hub's) - or `fallback` (the
  *  relay's stamp), else "your party". */
 export function searchWhoOf(acct, fallback = null) {
   if (searchKinOf(acct) !== 'party') return null;
   const n = _party?.nameOf?.(acct);
-  const name = typeof n === 'string' && n ? n : (typeof fallback === 'string' && fallback ? fallback : t('search.yourParty', 'your party'));
+  const name =
+    typeof n === 'string' && n
+      ? n
+      : typeof fallback === 'string' && fallback
+        ? fallback
+        : t('search.yourParty', 'your party');
   return name.slice(0, SEARCH_WHO_MAX);
 }
 /** My own character's name (the lens's - the session's issued name, the one the relay stamps), or null. */
-export const searchSelfName = () => { const n = _party?.selfName?.(); return typeof n === 'string' && n ? n.slice(0, SEARCH_WHO_MAX) : null; };
+export const searchSelfName = () => {
+  const n = _party?.selfName?.();
+  return typeof n === 'string' && n ? n.slice(0, SEARCH_WHO_MAX) : null;
+};
 /**
  * AUDIT GRAVE-PARTY G5: THE NAME A SEARCH IS TOLD BY, its searcher's account `acct` and the searching character's `name`
  * (the relay's stamp above ground, the word's `bn` below). A partymate's: their seat name (searchWhoOf, `name` the
@@ -325,7 +384,8 @@ export function searchToldBy(acct, name = null) {
   const kin = searchKinOf(acct);
   if (kin === 'party') return searchWhoOf(acct, name);
   if (kin !== 'me' || typeof name !== 'string' || !name) return null;
-  const n = name.slice(0, SEARCH_WHO_MAX), mine = searchSelfName();
+  const n = name.slice(0, SEARCH_WHO_MAX),
+    mine = searchSelfName();
   return mine && n !== mine ? n : null;
 }
 
@@ -333,30 +393,103 @@ export function searchToldBy(acct, name = null) {
 // Daggerfall's own register: second person, past the event, the parchment's short rows. `%s` is the foe's name.
 const FOE_GRAVE = Object.freeze({
   coffin: [
-    ['You pry the warped lid aside.', 'The stench of the grave rolls out,', 'and something within draws breath', 'it has no right to.', '', 'A %s rises to meet you!'],
-    ['The coffin is not empty.', 'Bony fingers close about your wrist', 'before you can pull it back.', '', 'A %s stirs from its rest!'],
+    [
+      'You pry the warped lid aside.',
+      'The stench of the grave rolls out,',
+      'and something within draws breath',
+      'it has no right to.',
+      '',
+      'A %s rises to meet you!',
+    ],
+    [
+      'The coffin is not empty.',
+      'Bony fingers close about your wrist',
+      'before you can pull it back.',
+      '',
+      'A %s stirs from its rest!',
+    ],
   ],
   sarcophagus: [
-    ['Stone grinds on stone as the lid gives.', 'Within, the wrappings shift and tear,', 'and dead eyes open in the dark.', '', 'A %s wakes, and it is not pleased.'],
-    ['Old wards crumble beneath your hands.', 'Whatever they kept in has been', 'waiting a long time for this.', '', 'A %s claws its way out!'],
+    [
+      'Stone grinds on stone as the lid gives.',
+      'Within, the wrappings shift and tear,',
+      'and dead eyes open in the dark.',
+      '',
+      'A %s wakes, and it is not pleased.',
+    ],
+    [
+      'Old wards crumble beneath your hands.',
+      'Whatever they kept in has been',
+      'waiting a long time for this.',
+      '',
+      'A %s claws its way out!',
+    ],
   ],
   shelf: [
-    ['Behind the moldering tomes your hand', 'finds a skull - and the skull turns', 'to look at you.', '', 'A %s answers the disturbance!'],
-    ['A brittle scroll crumbles at your touch.', 'The words upon it were a binding,', 'and you have just broken it.', '', 'A %s is loosed upon you!'],
+    [
+      'Behind the moldering tomes your hand',
+      'finds a skull - and the skull turns',
+      'to look at you.',
+      '',
+      'A %s answers the disturbance!',
+    ],
+    [
+      'A brittle scroll crumbles at your touch.',
+      'The words upon it were a binding,',
+      'and you have just broken it.',
+      '',
+      'A %s is loosed upon you!',
+    ],
   ],
   tombstone: [
-    ['The earth before the stone is soft.', 'Too soft. It heaves, and a hand', 'breaks through the sod.', '', 'A %s rises from the grave!'],
-    ['As you brush the moss from the name,', 'the ground beneath you groans.', 'The dead do not care to be read.', '', 'A %s claws free of its grave!'],
+    [
+      'The earth before the stone is soft.',
+      'Too soft. It heaves, and a hand',
+      'breaks through the sod.',
+      '',
+      'A %s rises from the grave!',
+    ],
+    [
+      'As you brush the moss from the name,',
+      'the ground beneath you groans.',
+      'The dead do not care to be read.',
+      '',
+      'A %s claws free of its grave!',
+    ],
   ],
 });
 const FOE_PLACE = Object.freeze({
   chest: [
-    ['The hinges shriek like a dying man.', 'Somewhere in the dark, footsteps', 'quicken toward the sound.', '', 'A %s has heard you!'],
-    ['You have barely raised the lid when', 'you hear it - the scrape of claws', 'and the breathing behind you.', '', 'A %s comes to guard its hoard!'],
+    [
+      'The hinges shriek like a dying man.',
+      'Somewhere in the dark, footsteps',
+      'quicken toward the sound.',
+      '',
+      'A %s has heard you!',
+    ],
+    [
+      'You have barely raised the lid when',
+      'you hear it - the scrape of claws',
+      'and the breathing behind you.',
+      '',
+      'A %s comes to guard its hoard!',
+    ],
   ],
   crate: [
-    ['The boards split with a crack that', 'echoes down every passage.', 'You are no longer alone.', '', 'A %s comes looking!'],
-    ['Splinters fly as the crate gives way.', 'The din carries far, and something', 'that lairs here answers it.', '', 'A %s is upon you!'],
+    [
+      'The boards split with a crack that',
+      'echoes down every passage.',
+      'You are no longer alone.',
+      '',
+      'A %s comes looking!',
+    ],
+    [
+      'Splinters fly as the crate gives way.',
+      'The din carries far, and something',
+      'that lairs here answers it.',
+      '',
+      'A %s is upon you!',
+    ],
   ],
 });
 const ELITE_ROW = 'It burns with a cold, unholy light...';
@@ -364,31 +497,75 @@ const MANY_ROW_GRAVE = 'And it does not rise alone.';
 const MANY_ROW_PLACE = 'And it has brought company.';
 const ELITE_ROW_PLACE = 'It moves with a terrible purpose...';
 const LOOT = Object.freeze({
-  coffin: [['Beneath the rotted shroud, the dead', 'still clutch what they could not', 'take with them.'], ['The departed were buried with', 'more than their names. You do not', 'think they will miss it.']],
-  sarcophagus: [['Grave goods glint amid the wrappings -', 'offerings for a journey', 'their owner never took.'], ['The noble dead keep their wealth', 'close. Not close enough.']],
-  shelf: [['Among the dust and the cobwebs,', 'a few things of worth have', 'escaped the years.'], ['Someone hid their valuables', 'behind these old books, and', 'never came back for them.']],
-  tombstone: [['Something is buried at the foot of', 'the stone - a mourner\'s offering,', 'or a thief\'s cache.'], ['The earth here was disturbed once', 'before. Whoever dug it left', 'something behind.']],
-  chest: [['The chest yields its contents.', 'Whoever stocked it will not', 'be pleased.'], ['Inside, wrapped in oilcloth,', 'lies a small fortune.']],
-  crate: [['Amid straw and splinters you', 'find more than provisions.'], ['The crate holds a few things', 'worth the carrying.']],
+  coffin: [
+    ['Beneath the rotted shroud, the dead', 'still clutch what they could not', 'take with them.'],
+    ['The departed were buried with', 'more than their names. You do not', 'think they will miss it.'],
+  ],
+  sarcophagus: [
+    ['Grave goods glint amid the wrappings -', 'offerings for a journey', 'their owner never took.'],
+    ['The noble dead keep their wealth', 'close. Not close enough.'],
+  ],
+  shelf: [
+    ['Among the dust and the cobwebs,', 'a few things of worth have', 'escaped the years.'],
+    ['Someone hid their valuables', 'behind these old books, and', 'never came back for them.'],
+  ],
+  tombstone: [
+    ['Something is buried at the foot of', "the stone - a mourner's offering,", "or a thief's cache."],
+    ['The earth here was disturbed once', 'before. Whoever dug it left', 'something behind.'],
+  ],
+  chest: [
+    ['The chest yields its contents.', 'Whoever stocked it will not', 'be pleased.'],
+    ['Inside, wrapped in oilcloth,', 'lies a small fortune.'],
+  ],
+  crate: [
+    ['Amid straw and splinters you', 'find more than provisions.'],
+    ['The crate holds a few things', 'worth the carrying.'],
+  ],
 });
 const NOTHING = Object.freeze({
-  coffin: [['Nothing but bones and dust.', 'The grave-robbers came before you.'], ['The coffin holds only the dead,', 'and the dead hold nothing of value.']],
-  sarcophagus: [['The sarcophagus was plundered long ago.', 'Only scraps of linen remain.'], ['Dust, bone and silence.', 'Nothing worth the taking.']],
-  shelf: [['Rotten parchment and empty jars.', 'Nothing of value.'], ['The books crumble at your touch.', 'Whatever was here is long gone.']],
-  tombstone: [['The grave keeps its own counsel.', 'You find nothing of value.'], ['Only moss, earth and a name', 'time has nearly taken.'], ['The stone is cold, the ground undisturbed.', 'There is nothing here for you.'], ['Here lies one who took', 'everything with them.']],
-  chest: [['The chest is empty.', 'Someone was here before you.'], ['Nothing but cobwebs', 'and the smell of old rope.']],
-  crate: [['Rotten straw and broken pottery.', 'Nothing of value.'], ['The crate holds nothing', 'worth carrying.']],
+  coffin: [
+    ['Nothing but bones and dust.', 'The grave-robbers came before you.'],
+    ['The coffin holds only the dead,', 'and the dead hold nothing of value.'],
+  ],
+  sarcophagus: [
+    ['The sarcophagus was plundered long ago.', 'Only scraps of linen remain.'],
+    ['Dust, bone and silence.', 'Nothing worth the taking.'],
+  ],
+  shelf: [
+    ['Rotten parchment and empty jars.', 'Nothing of value.'],
+    ['The books crumble at your touch.', 'Whatever was here is long gone.'],
+  ],
+  tombstone: [
+    ['The grave keeps its own counsel.', 'You find nothing of value.'],
+    ['Only moss, earth and a name', 'time has nearly taken.'],
+    ['The stone is cold, the ground undisturbed.', 'There is nothing here for you.'],
+    ['Here lies one who took', 'everything with them.'],
+  ],
+  chest: [
+    ['The chest is empty.', 'Someone was here before you.'],
+    ['Nothing but cobwebs', 'and the smell of old rope.'],
+  ],
+  crate: [
+    ['Rotten straw and broken pottery.', 'Nothing of value.'],
+    ['The crate holds nothing', 'worth carrying.'],
+  ],
 });
 const pickRows = (pool, rolls) => [...pool[Math.min(pool.length - 1, Math.floor(rolls() * pool.length))]];
 /**
  * THE MESSAGE the player clicks away before anything happens: its rows. `foeName` fills `%s`; `elite` adds the
  * elite's row.
  */
-export function searchMessage(kind, outcome, { foeName = 'creature', elite = false, count = 1, rolls = Math.random } = {}) {
+export function searchMessage(
+  kind,
+  outcome,
+  { foeName = 'creature', elite = false, count = 1, rolls = Math.random } = {},
+) {
   const k = SEARCH_KINDS[kind] ? kind : 'chest';
   if (outcome === 'foe') {
     const grave = SEARCH_KINDS[k].grave;
-    const rows = pickRows((grave ? FOE_GRAVE : FOE_PLACE)[k] ?? FOE_PLACE.chest, rolls).map((r) => r.replace('%s', foeName));
+    const rows = pickRows((grave ? FOE_GRAVE : FOE_PLACE)[k] ?? FOE_PLACE.chest, rolls).map((r) =>
+      r.replace('%s', foeName),
+    );
     if (elite) rows.push(grave ? ELITE_ROW : ELITE_ROW_PLACE);
     if (count > 1) rows.push(grave ? MANY_ROW_GRAVE : MANY_ROW_PLACE);
     return rows;
@@ -402,19 +579,31 @@ const finish = (raw) => (raw ? mintCondition(setItemFields(raw)) : null);
 /** The goods' minters, DFU's ItemBuilder doors (systems/loot/loot.js, systems/books.js). Never ammunition. */
 export function searchMinters(gender = 'male') {
   return {
-    weapon: (lv, r) => { const w = createRandomWeapon(lv, r); return w && !isAmmunition(w) ? finish(w) : null; },
+    weapon: (lv, r) => {
+      const w = createRandomWeapon(lv, r);
+      return w && !isAmmunition(w) ? finish(w) : null;
+    },
     armor: (lv, r) => finish(createRandomArmor(lv, r)),
     jewellery: (lv, r) => finish(createRandomJewellery(r)),
     religious: (lv, r) => finish(createRandomReligiousItem(r)),
     gem: (lv, r) => finish(createRandomGem(r)),
     clothing: (lv, r) => finish(createRandomClothing(gender, r)),
     potion: (lv, r) => createRandomPotion(r),
-    book: (lv, r) => { try { return createRandomBook(r); } catch { return null; } },
+    book: (lv, r) => {
+      try {
+        return createRandomBook(r);
+      } catch {
+        return null;
+      }
+    },
   };
 }
 /** THE FIND, minted and laddered: rollSearchLoot over searchMinters, then the rarity ladder at the place's pile tier
  *  (lootRarity.js - a no-op with the switch off). */
-export function mintSearchFind(kind, { level = 1, gender = 'male', tier = 0, family = null, luck = 50, rolls = Math.random, mint = null } = {}) {
+export function mintSearchFind(
+  kind,
+  { level = 1, gender = 'male', tier = 0, family = null, luck = 50, rolls = Math.random, mint = null } = {},
+) {
   const items = rollSearchLoot(kind, level, mint ?? searchMinters(gender), rolls);
   rollLootRarity(items, { ...pileSource(tier), family }, { rolls, luck });
   return items;

@@ -21,16 +21,31 @@ export const SEA_HOLD_SHUT_KEY = 'dfo.sea.holdShut';
 /** @type {Map<number, number>} uid -> shut until (ms) */
 const shut = new Map();
 let read = false;
-const storage = () => { try { return appStorage(); } catch { return null; } };
+const storage = () => {
+  try {
+    return appStorage();
+  } catch {
+    return null;
+  }
+};
 function load() {
   if (read) return;
   read = true;
   try {
     const o = JSON.parse(storage()?.getItem(SEA_HOLD_SHUT_KEY) ?? '{}');
-    for (const [k, v] of Object.entries(o && typeof o === 'object' ? o : {})) if (Number.isSafeInteger(Number(k)) && Number.isFinite(v)) shut.set(Number(k), v);
-  } catch { /* nothing kept */ }
+    for (const [k, v] of Object.entries(o && typeof o === 'object' ? o : {}))
+      if (Number.isSafeInteger(Number(k)) && Number.isFinite(v)) shut.set(Number(k), v);
+  } catch {
+    /* nothing kept */
+  }
 }
-const save = () => { try { storage()?.setItem(SEA_HOLD_SHUT_KEY, JSON.stringify(Object.fromEntries(shut))); } catch { /* kept by this page alone */ } };
+const save = () => {
+  try {
+    storage()?.setItem(SEA_HOLD_SHUT_KEY, JSON.stringify(Object.fromEntries(shut)));
+  } catch {
+    /* kept by this page alone */
+  }
+};
 
 /** Her hold shut: her wreck may be boarded. */
 export function shutSeaHold(/** @type {unknown} */ uid, now = Date.now()) {

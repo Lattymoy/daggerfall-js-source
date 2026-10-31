@@ -2,8 +2,8 @@
   {
     "name": "WB9c-a-count-unbounded",
     "file": "src/net/gate/gateBrain.js",
-    "old": "Math.max(RECKON_CRYSTALS[0], Math.min(RECKON_CRYSTALS[1], 2 + Math.ceil(Math.max(0, n) / 2)))",
-    "new": "Math.max(RECKON_CRYSTALS[0], 2 + Math.ceil(Math.max(0, n) / 2))",
+    "old": "export const crystalCountFor = (n) =>\n  Math.max(RECKON_CRYSTALS[0], Math.min(RECKON_CRYSTALS[1], 2 + Math.ceil(Math.max(0, n) / 2)));",
+    "new": "export const crystalCountFor = (n) => Math.max(RECKON_CRYSTALS[0], 2 + Math.ceil(Math.max(0, n) / 2));",
     "tests": [
       "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WB9c-a-health-off-the-court",
     "file": "src/net/gate/gateBrain.js",
-    "old": "Math.round((RECKON_TEAM_S * lvs.reduce((s, lv) => s + dpsRef(lv), 0)) / Math.max(1, n))",
-    "new": "Math.round((RECKON_TEAM_S * lvs.length * dpsRef(60)) / Math.max(1, n))",
+    "old": "  Math.max(RECKON_CRYSTAL_MIN, Math.round((RECKON_TEAM_S * lvs.reduce((s, lv) => s + dpsRef(lv), 0)) / Math.max(1, n)));",
+    "new": "  Math.max(RECKON_CRYSTAL_MIN, Math.round((RECKON_TEAM_S * lvs.length * dpsRef(60)) / Math.max(1, n)));",
     "tests": [
       "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WB9c-the-reckoning-never-armed",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    if (!f.rk && f.court === finalCourt(f)) f.rk = now + RECKON_FIRST_MS;",
-    "new": "    if (!f.rk && f.court === finalCourt(f) && f.phase > 3) f.rk = now + RECKON_FIRST_MS;",
+    "old": "    if (!f.rk && f.court === finalCourt(f)) f.rk = now + RECKON_FIRST_MS; // WB14d: the last court his last phase is fought in",
+    "new": "    if (!f.rk && f.court === finalCourt(f) && f.phase > 3) f.rk = now + RECKON_FIRST_MS; // WB14d: the last court his last phase is fought in",
     "tests": [
       "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB9c-a-crystal-off-the-floor",
     "file": "src/net/gate/gateBrain.js",
-    "old": "r = Math.sqrt(RECKON_RING[0] ** 2 + rng() * (RECKON_RING[1] ** 2 - RECKON_RING[0] ** 2));",
-    "new": "r = RECKON_RING[1] + 8 * rng();",
+    "old": "      r = Math.sqrt(RECKON_RING[0] ** 2 + rng() * (RECKON_RING[1] ** 2 - RECKON_RING[0] ** 2)); // even over the ring's area",
+    "new": "      r = RECKON_RING[1] + 8 * rng(); // even over the ring's area",
     "tests": [
       "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WB9c-the-dead-counted",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  const live = bodies.filter((b) => !b.dead && f.players[b.sub]);\n  const n = crystalCountFor(live.length)",
-    "new": "  const live = bodies.filter((b) => f.players[b.sub]);\n  const n = crystalCountFor(live.length)",
+    "old": "function growCrystals(f, now, bodies, rng, out) {\n  const live = bodies.filter((b) => !b.dead && f.players[b.sub]);",
+    "new": "function growCrystals(f, now, bodies, rng, out) {\n  const live = bodies.filter((b) => f.players[b.sub]);",
     "tests": [
       "test/net/gate/wb9c_gate_reckoning.test.js"
     ],
@@ -49,8 +49,8 @@
   {
     "name": "WB9c-the-rate-unshared",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (!spendBlow(p, now, seq, `x${c}`)) return out;",
-    "new": "",
+    "old": "  if (!spendBlow(p, now, seq, `x${c}`)) return out; // his hand (AUDIT WB11 W3: once a blow)",
+    "new": "  // his hand (AUDIT WB11 W3: once a blow)",
     "tests": [
       "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "WB9c-the-blow-unscaled",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  const want = d * P.hitX * (!H && now < (f.stunUntil ?? 0) ? STUN_HIT_X : 1);",
-    "new": "  const want = d * P.hitX;",
+    "old": "  const want = d * P.hitX * (!H && now < (f.stunUntil ?? 0) ? STUN_HIT_X : 1); // WB9c: a stunned Warden takes it heavier - AUDIT WB14 (LAW-1): whole (a kneeling Blade's stun is his alone: the Flame takes no more for it)",
+    "new": "  const want = d * P.hitX; // WB9c: a stunned Warden takes it heavier - AUDIT WB14 (LAW-1): whole (a kneeling Blade's stun is his alone: the Flame takes no more for it)",
     "tests": [
       "test/net/gate/wb9c_gate_reckoning.test.js"
     ],
@@ -95,8 +95,8 @@
   {
     "name": "WB9c-a-saving-throw-answering-it",
     "file": "src/net/gate/gateStrike.js",
-    "old": "saved: L.el != null && !isDagons(A) };",
-    "new": "saved: L.el != null && A !== ATTACKS.wrath };",
+    "old": "  return { pct: L.pct, base: L.base, el: L.el, name: L.name, saved: L.el != null && !isDagons(A) }; // WB9c: Dagon's Reckoning, as his Wrath, is answered by nothing",
+    "new": "  return { pct: L.pct, base: L.base, el: L.el, name: L.name, saved: L.el != null && A !== ATTACKS.wrath }; // WB9c: Dagon's Reckoning, as his Wrath, is answered by nothing",
     "tests": [
       "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "WB9c-a-reckoning-landing-on-one-court",
     "file": "src/net/gate/gateStrike.js",
-    "old": "    case 'all': return true;",
-    "new": "    case 'all': return Math.hypot(px - atk.x, pz - atk.z) <= 24;",
+    "old": "      return true;",
+    "new": "      return Math.hypot(px - atk.x, pz - atk.z) <= 24;",
     "tests": [
       "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "WB9c-another-reckonings-health-taken",
     "file": "src/net/gate/gateLink.js",
-    "old": "    case 'cxh': return s.cx && s.cx.i === g.i ?",
-    "new": "    case 'cxh': return s.cx ?",
+    "old": "    case 'cxh':\n      return s.cx && s.cx.i === g.i",
+    "new": "    case 'cxh':\n      return s.cx",
     "tests": [
       "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "WB9c-the-breaker-forgotten-by-the-state",
     "file": "src/net/gate/gateLink.js",
-    "old": "broke: same && s.cx?.i === g.cx.i ? s.cx.broke : []",
-    "new": "broke: []",
+    "old": "    const cx = g.cx\n      ? {\n          i: g.cx.i,\n          m: g.cx.m,\n          c: g.cx.c.map((q) => [q[0], q[1], q[2]]),\n          broke: same && s.cx?.i === g.cx.i ? s.cx.broke : [],\n        }\n      : null;",
+    "new": "    const cx = g.cx ? { i: g.cx.i, m: g.cx.m, c: g.cx.c.map((q) => [q[0], q[1], q[2]]), broke: [] } : null;",
     "tests": [
       "test/net/gate/wb9c_gate_reckoning.test.js"
     ]

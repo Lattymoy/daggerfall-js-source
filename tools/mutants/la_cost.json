@@ -209,8 +209,8 @@
   {
     "name": "LA-COST2-one-key-s-batches-reversed",
     "file": "src/render/billboardKey.js",
-    "old": "    for (let i = 0; i < n; i++) { const b = list[i]; _placed[_count[_slot[b._bbKeyId] - 1]++] = b; }",
-    "new": "    for (let i = n - 1; i >= 0; i--) { const b = list[i]; _placed[_count[_slot[b._bbKeyId] - 1]++] = b; }",
+    "old": "    } // each bucket's count becomes its first position\n    for (let i = 0; i < n; i++) {",
+    "new": "    } // each bucket's count becomes its first position\n    for (let i = n - 1; i >= 0; i--) {",
     "tests": [
       "test/render/la_cost.test.js"
     ]

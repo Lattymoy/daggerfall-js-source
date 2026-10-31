@@ -118,7 +118,7 @@ test('OW-DOTS-GROUND (Mac: "the dotted lines dont look still"): the route\'s dot
   assert.match(hud, /const pairs = Array\.isArray\(f\.routeDots\) \? dotPairsFor\(f\.routeDotSizes\) : null;\n\s*const shown = pairs \? '' : Array\.isArray\(f\.routeDots\) \? routeDotsPath\(f\.routeDots, vw, vh\) : d;/, 'the readout draws the dots, a pair a size; the line where none are handed');
   assert.equal(hudMod.routeDotsPath([{ x: 1.26, y: 2 }, { x: 5000, y: 5 }, null], 100, 100), 'M1.3 2.0h0', 'a zero-length stroke each, off the screen none');
   assert.equal(hudMod.routeDotsPath([{ x: 1, y: 2, c: 0 }, { x: 3, y: 4, c: 2 }], 100, 100, 2), 'M3.0 4.0h0', 'one size\'s dots');
-  assert.match(rd('src/scenes/travelView.js'), /routeDots: routeGroundDots\(routeWorld, proj, [^\n]*keep: dotSpacing \}\),[^\n]*\n\s*routeDotSizes: ROUTE_DOT_SIZES,/);
+  assert.match(rd('src/scenes/travelView.js'), /routeDots: routeGroundDots\(routeWorld, proj, \{\n\s*w: deps\.canvas\?\.clientWidth \|\| Infinity,\n\s*h: deps\.canvas\?\.clientHeight \|\| Infinity,\n\s*keep: dotSpacing,\n\s*\}\), \/\/ OW-DOTS-GROUND; OW-DOTS-EVEN: the line's spacing kept frame to frame\n\s*routeDotSizes: ROUTE_DOT_SIZES,/);
 });
 
 test('OW-DOTS-EVEN (Mac: "the dot spacing is still a bit weird make it more consistent"): ONE spacing on the ground for the whole line, picked at the feet and kept; the dots shrink with the land toward the horizon, thinned only where they would crowd (mutants: the spacing picked piece by piece; the sizes unread; the keep unread)', () => {

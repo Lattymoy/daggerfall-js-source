@@ -2,8 +2,8 @@
   {
     "name": "glare-slack-half",
     "file": "src/render/airPass.js",
-    "old": "export const AIR_GLARE_SLACK = 0.25;",
-    "new": "export const AIR_GLARE_SLACK = 0.5;",
+    "old": "export const AIR_GLARE_SLACK = 0.25; // F4 (2026-09-17, Mac: \"bloom circle disconnected from light sources and still reports of light bloom balls appearing behind floors/ceilings\"): a QUARTER unit, either side. At a unit the band took a ceiling 0.4 in front of a hanging lantern and a wall 0.5 behind a bare light for \"a flame\" - the ball through the floor above, the ball beside a light with no flat. A flame flat is a camera-facing quad THROUGH the light, so its opaque texels sit at the light's own planar depth: a quarter unit holds the flat and nothing else",
+    "new": "export const AIR_GLARE_SLACK = 0.5; // F4 (2026-09-17, Mac: \"bloom circle disconnected from light sources and still reports of light bloom balls appearing behind floors/ceilings\"): a QUARTER unit, either side. At a unit the band took a ceiling 0.4 in front of a hanging lantern and a wall 0.5 behind a bare light for \"a flame\" - the ball through the floor above, the ball beside a light with no flat. A flame flat is a camera-facing quad THROUGH the light, so its opaque texels sit at the light's own planar depth: a quarter unit holds the flat and nothing else",
     "tests": [
       "test/render/el7_polish.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "glare-size-ball",
     "file": "src/render/airPass.js",
-    "old": "export const AIR_GLARE_SIZE = 0.25;",
-    "new": "export const AIR_GLARE_SIZE = 0.35;",
+    "old": "export const AIR_GLARE_SIZE = 0.25; // EL7: a glare the size of a flame, not a ball (0.35 was a unit and a half across at a lantern's range)",
+    "new": "export const AIR_GLARE_SIZE = 0.35; // EL7: a glare the size of a flame, not a ball (0.35 was a unit and a half across at a lantern's range)",
     "tests": [
       "test/render/el7_polish.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "glare-taps-one",
     "file": "src/render/airPass.js",
-    "old": "for (int k = 0; k < ${AIR_GLARE_TAPS.length}; k++) sum += flame(",
-    "new": "for (int k = 0; k < 1; k++) sum += flame(",
+    "old": "      for (int k = 0; k < ${AIR_GLARE_TAPS.length}; k++) sum += flame(vc + vec4(GLARE_TAP[k] * s, 0.0, 0.0), lantern);",
+    "new": "      for (int k = 0; k < 1; k++) sum += flame(vc + vec4(GLARE_TAP[k] * s, 0.0, 0.0), lantern);",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "blur-no-normalise",
     "file": "src/render/airPass.js",
-    "old": "  float ao = clamp(wsum > 0.0 ? acc / wsum / ${AIR_AO_STORE} : 1.0, 0.0, 1.0);",
-    "new": "  float ao = clamp(acc / 16.0 / ${AIR_AO_STORE}, 0.0, 1.0);",
+    "old": "  float ao = clamp(wsum > 0.0 ? acc / wsum / ${AIR_AO_STORE} : 1.0, 0.0, 1.0);   // AUDIT HQ1: the tile's average, unscaled, is where the clamp belongs",
+    "new": "  float ao = clamp(acc / 16.0 / ${AIR_AO_STORE}, 0.0, 1.0);   // AUDIT HQ1: the tile's average, unscaled, is where the clamp belongs",
     "tests": [
       "test/render/el7_polish.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "bounds-stride-ignored",
     "file": "src/render/bounds.js",
-    "old": "  const at = (k) => (indices ? indices[start + k] : k) * stride;",
-    "new": "  const at = (k) => (indices ? indices[start + k] : k) * 3;",
+    "old": "  const at = (k) => (indices ? indices[start + k] : k) * stride; // EL7: `stride` floats per vertex (a character rig's interleaved 9 or 11)",
+    "new": "  const at = (k) => (indices ? indices[start + k] : k) * 3; // EL7: `stride` floats per vertex (a character rig's interleaved 9 or 11)",
     "tests": [
       "test/render/el7_polish.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "water-fs-no-shadow",
     "file": "src/render/waterSurface.js",
-    "old": "  float shadow = uSunScale > 0.0 ? cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''} : 0.0;",
-    "new": "  float shadow = uSunScale > 0.0 ? cloudShadowAt(vWorldPos) : 0.0;",
+    "old": "  float shadow = uSunScale > 0.0 ? cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''} : 0.0;   // EL7: a quay's shadow lies on the water under the lane",
+    "new": "  float shadow = uSunScale > 0.0 ? cloudShadowAt(vWorldPos) : 0.0;   // EL7: a quay's shadow lies on the water under the lane",
     "tests": [
       "test/render/el7_polish.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "water-block-before-campos",
     "file": "src/render/waterSurface.js",
-    "old": "uniform vec3 uCamPos;\n${shadowGlsl}\n",
-    "new": "${shadowGlsl}\nuniform vec3 uCamPos;\n",
+    "old": "uniform vec3 uCamPos;\n${shadowGlsl}",
+    "new": "${shadowGlsl}\nuniform vec3 uCamPos;",
     "tests": [
       "test/render/el7_polish.test.js"
     ]

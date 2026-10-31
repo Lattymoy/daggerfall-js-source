@@ -2,8 +2,8 @@
   {
     "name": "BOW-BLOOM-a-step-moved",
     "file": "src/combat/bowBloom.js",
-    "old": "Object.freeze({ step: 2, most: 8, settle: 3 });",
-    "new": "Object.freeze({ step: 3, most: 8, settle: 3 });",
+    "old": "export const BOW_BLOOM = Object.freeze({ step: 2, most: 8, settle: 3 });",
+    "new": "export const BOW_BLOOM = Object.freeze({ step: 3, most: 8, settle: 3 });",
     "tests": [
       "test/combat/bowbloom.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "BOW-BLOOM-the-first-shot-bloomed",
     "file": "src/combat/bowBloom.js",
-    "old": "  const r = bowBloomNow(now);\n  _deg = Math.min(",
-    "new": "  const r = bowBloomNow(now) + BOW_BLOOM.step;\n  _deg = Math.min(",
+    "old": "  const r = bowBloomNow(now);",
+    "new": "  const r = bowBloomNow(now) + BOW_BLOOM.step;",
     "tests": [
       "test/combat/bowbloom.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "BOW-BLOOM-the-settle-unread",
     "file": "src/combat/bowBloom.js",
-    "old": "Math.max(0, _deg - _settle * Math.max(0, now - _at));",
-    "new": "Math.max(0, _deg);",
+    "old": "export const bowBloomNow = (now = bloomClock()) => Math.max(0, _deg - _settle * Math.max(0, now - _at));",
+    "new": "export const bowBloomNow = (now = bloomClock()) => Math.max(0, _deg);",
     "tests": [
       "test/combat/bowbloom.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "BOW-BLOOM-the-field-of-view-unread",
     "file": "src/ui/bowBloomRing.js",
-    "old": ") / Math.tan(fov / 2));",
-    "new": ") / Math.tan(Math.PI / 6));",
+    "old": "  Math.round((2 * (height / 2) * Math.tan((deg * Math.PI) / 180)) / Math.tan(fov / 2));",
+    "new": "  Math.round((2 * (height / 2) * Math.tan((deg * Math.PI) / 180)) / Math.tan(Math.PI / 6));",
     "tests": [
       "test/combat/bowbloom.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "BOW-FAST-the-cut-moved",
     "file": "src/combat/bowBloom.js",
-    "old": "Object.freeze({ cut: 20, most: 4, within: 1 });",
-    "new": "Object.freeze({ cut: 15, most: 4, within: 1 });",
+    "old": "export const BOW_FAST = Object.freeze({ cut: 20, most: 4, within: 1 });",
+    "new": "export const BOW_FAST = Object.freeze({ cut: 15, most: 4, within: 1 });",
     "tests": [
       "test/combat/bowbloom.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "BOW-FAST-the-cap-off",
     "file": "src/combat/bowBloom.js",
-    "old": "Math.min(BOW_FAST.most, _stacks + 1) : 0;",
-    "new": "_stacks + 1 : 0;",
+    "old": "  _stacks = now - _last < (kind?.within ?? BOW_FAST.within) ? Math.min(BOW_FAST.most, _stacks + 1) : 0;",
+    "new": "  _stacks = now - _last < (kind?.within ?? BOW_FAST.within) ? _stacks + 1 : 0;",
     "tests": [
       "test/combat/bowbloom.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "BOW-FAST-the-window-unread",
     "file": "src/combat/bowBloom.js",
-    "old": "  _stacks = now - _last < (kind?.within ?? BOW_FAST.within) ?",
-    "new": "  _stacks = true ?",
+    "old": "  _stacks = now - _last < (kind?.within ?? BOW_FAST.within) ? Math.min(BOW_FAST.most, _stacks + 1) : 0;",
+    "new": "  _stacks = true ? Math.min(BOW_FAST.most, _stacks + 1) : 0;",
     "tests": [
       "test/combat/bowbloom.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "BOW-FAST-the-floor-off",
     "file": "src/combat/bowBloom.js",
-    "old": "? Math.max(1, Math.round((dmg * pull * (100 - BOW_FAST.cut * k)) / 100)) : dmg;",
-    "new": "? Math.round((dmg * pull * (100 - BOW_FAST.cut * k)) / 100) : dmg;",
+    "old": "  return (k > 0 || pull !== 1) && dmg > 0\n    ? Math.max(1, Math.round((dmg * pull * (100 - BOW_FAST.cut * k)) / 100))\n    : dmg;",
+    "new": "  return (k > 0 || pull !== 1) && dmg > 0 ? Math.round((dmg * pull * (100 - BOW_FAST.cut * k)) / 100) : dmg;",
     "tests": [
       "test/combat/bowbloom.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "BOW-FAST-the-landing-unset",
     "file": "src/combat/bowBloom.js",
-    "old": "  _landing = m;\n  try { return fn(); }",
-    "new": "  try { return fn(); }",
+    "old": "  _landing = m;\n  try {",
+    "new": "  try {",
     "tests": [
       "test/combat/bowbloom.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "BOW-FAST-the-duel-door-unread",
     "file": "src/combat/duelCombat.js",
-    "old": "? bowFastDamage(d.relayCut ? { ...landingShaft(), fast: 0 } : landingShaft(), Math.floor(scaled * pvpArrowScale(d.a?.pl))) : scaled;",
-    "new": "? Math.floor(scaled * pvpArrowScale(d.a?.pl)) : scaled;",
+    "old": "  const n =\n    d.by === 'arrow'\n      ? bowFastDamage(\n          d.relayCut ? { ...landingShaft(), fast: 0 } : landingShaft(),\n          Math.floor(scaled * pvpArrowScale(d.a?.pl)),\n        )\n      : scaled; // PVP-TRIANGLE: an arrow's; BOW-FAST: its stacks (the relay's to cut, `relayCut`: its pull alone)",
+    "new": "  const n = d.by === 'arrow' ? Math.floor(scaled * pvpArrowScale(d.a?.pl)) : scaled; // PVP-TRIANGLE: an arrow's; BOW-FAST: its stacks (the relay's to cut, `relayCut`: its pull alone)",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "BOW-KINDS-a-window-moved",
     "file": "src/combat/bowBloom.js",
-    "old": "129: Object.freeze({ within: 0.75, settle: 4, pull: 1 }),",
-    "new": "129: Object.freeze({ within: 1, settle: 4, pull: 1 }),",
+    "old": "  129: Object.freeze({ within: 0.75, settle: 4, pull: 1 }),",
+    "new": "  129: Object.freeze({ within: 1, settle: 4, pull: 1 }),",
     "tests": [
       "test/combat/bowbloom.test.js"
     ]

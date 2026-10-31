@@ -11,7 +11,9 @@ import { chromium } from 'playwright';
 
 const server = await createServer({ root: '/home/user/project-dagger', server: { port: 5202, strictPort: true } });
 await server.listen();
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 await page.goto('http://localhost:5202/play/?shot&class=0');
@@ -33,31 +35,38 @@ await page.evaluate(() => {
 // code, not an action.
 await page.keyboard.press('F6');
 await waitFrames(8);
-let ov = JSON.parse(await page.evaluate(() => window.__overlay()) ?? 'null');
+let ov = JSON.parse((await page.evaluate(() => window.__overlay())) ?? 'null');
 console.log('overlay:', JSON.stringify(ov));
-if (ov?.kind !== 'NativeInventoryWindow') { console.log('THE DUNGEON DID NOT OPEN THE NATIVE WINDOW'); process.exit(1); }
+if (ov?.kind !== 'NativeInventoryWindow') {
+  console.log('THE DUNGEON DID NOT OPEN THE NATIVE WINDOW');
+  process.exit(1);
+}
 await page.screenshot({ path: '/home/claude/dungeon-inventory.png' });
 
 // the info panel, on the real TEXT.RSC record for a weapon
-await page.evaluate(() => window.__overlayClick(230, 43));      // info mode
+await page.evaluate(() => window.__overlayClick(230, 43)); // info mode
 await page.evaluate(() => window.__overlayClick(163 + 9 + 25, 48 + 5));
 await waitFrames(4);
 console.log('info:', JSON.parse(await page.evaluate(() => window.__overlay())).box);
 await page.screenshot({ path: '/home/claude/dungeon-inventory-info.png' });
-await page.evaluate(() => window.__overlayClick(10, 190));      // dismiss
+await page.evaluate(() => window.__overlayClick(10, 190)); // dismiss
 
 // USE: light the torch (clothing & misc tab, equip-mode click)
-await page.evaluate(() => window.__overlayClick(163 + 5, 5));   // clothing tab
-await page.evaluate(() => window.__overlayClick(230, 65));      // equip mode
+await page.evaluate(() => window.__overlayClick(163 + 5, 5)); // clothing tab
+await page.evaluate(() => window.__overlayClick(230, 65)); // equip mode
 await page.evaluate(() => window.__overlayClick(163 + 9 + 25, 48 + 5));
 await waitFrames(4);
-console.log('after equip-click on the torch:', JSON.parse(await page.evaluate(() => window.__overlay())).box,
-  'lightSource=', await page.evaluate(() => window.__playerEntity.lightSource?.name ?? null));
+console.log(
+  'after equip-click on the torch:',
+  JSON.parse(await page.evaluate(() => window.__overlay())).box,
+  'lightSource=',
+  await page.evaluate(() => window.__playerEntity.lightSource?.name ?? null),
+);
 await page.evaluate(() => window.__overlayClick(10, 190));
 
 // REMOVE the sword to the ground: the pile is what the dungeon never had
-await page.evaluate(() => window.__overlayClick(0 + 5, 5));     // weapons tab
-await page.evaluate(() => window.__overlayClick(230, 87));      // remove mode
+await page.evaluate(() => window.__overlayClick(0 + 5, 5)); // weapons tab
+await page.evaluate(() => window.__overlayClick(230, 87)); // remove mode
 await page.evaluate(() => window.__overlayClick(163 + 9 + 25, 48 + 5));
 await waitFrames(4);
 ov = JSON.parse(await page.evaluate(() => window.__overlay()));
@@ -67,7 +76,10 @@ await waitFrames(8);
 console.log('closed:', await page.evaluate(() => window.__overlay()));
 console.log('ground piles:', await page.evaluate(() => window.__piles()));
 const piles = JSON.parse(await page.evaluate(() => window.__piles()));
-if (!piles.length || !piles[0].n) { console.log('THE DROPPED ITEM VANISHED - no ground pile'); process.exit(1); }
+if (!piles.length || !piles[0].n) {
+  console.log('THE DROPPED ITEM VANISHED - no ground pile');
+  process.exit(1);
+}
 await waitFrames(10);
 await page.screenshot({ path: '/home/claude/dungeon-pile.png' });
 

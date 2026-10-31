@@ -33,9 +33,9 @@
 import { diseaseCount, contractedMessageRecord, diseaseIncubating } from './diseases.js';
 import { poisonCount } from './poisons.js';
 import { expandQuestMessage } from './quest/questMacros.js';
-import { t } from './textManager.js';   // DISEASE-UNWELL: the unwell line in the player's language, read when the box is made
+import { t } from './textManager.js'; // DISEASE-UNWELL: the unwell line in the player's language, read when the box is made
 
-export const STATUS_INFO_ID = 22;   // SetTextTokens(22) (DaggerfallUI.cs:1620)
+export const STATUS_INFO_ID = 22; // SetTextTokens(22) (DaggerfallUI.cs:1620)
 
 /** DisplayStatusInfo's first box (:1617-1620): record 22 expanded.
  *  `questLike` is machine.macroContext() - null (a headless host)
@@ -57,8 +57,8 @@ export function statusInfoRows(rows, questLike = null) {
   return src.map((r, i) => (typeof r === 'string' ? tokens[i].text : { ...r, text: tokens[i].text }));
 }
 
-export const YOU_ARE_HEALTHY_ID = 18;        // youAreHealthyID (:1632)
-export const YOU_HAVE_BEEN_POISONED_ID = 117;   // youHaveBeenPoisoned (:1633)
+export const YOU_ARE_HEALTHY_ID = 18; // youAreHealthyID (:1632)
+export const YOU_HAVE_BEEN_POISONED_ID = 117; // youHaveBeenPoisoned (:1633)
 /** DISEASE-UNWELL (FIELD BUGS 2026-10-19f; the owner, 2026-10-19: "Unnamed 'Unwell' tile"): the box's line for a disease
  *  still incubating - the house's own, naming none. */
 export const UNWELL_LINE_TEXT = 'You feel unwell.';
@@ -75,8 +75,9 @@ export const UNWELL_LINE_TEXT = 'You feel unwell.';
  *  underground). The named message once incubation is over, as DFU. */
 export function healthStatusRows(entity, rows) {
   if (diseaseCount(entity) === 0 && poisonCount(entity) === 0) return rows(YOU_ARE_HEALTHY_ID) ?? [];
-  let tokens = null, unwell = false;
-  for (const a of (entity?.activeEffects ?? [])) {
+  let tokens = null,
+    unwell = false;
+  for (const a of entity?.activeEffects ?? []) {
     if (!unwell && diseaseIncubating(a)) {
       unwell = true;
       const like = rows(YOU_ARE_HEALTHY_ID)?.[0];
@@ -95,12 +96,13 @@ export function healthStatusRows(entity, rows) {
       tokens = [...(tokens ?? []), ...(rows(contractedMessageRecord(a.disease)) ?? [])];
     }
   }
-  const poisonActive = (entity?.activeEffects ?? [])
-    .some((a) => a.kind === 'poison' && !a.ended && a.state !== 'waiting');
+  const poisonActive = (entity?.activeEffects ?? []).some(
+    (a) => a.kind === 'poison' && !a.ended && a.state !== 'waiting',
+  );
   if (poisonCount(entity) > 0 && poisonActive) {
     tokens = [...(tokens ?? []), ...(rows(YOU_HAVE_BEEN_POISONED_ID) ?? [])];
   }
   // `if (tokens == null)` (:1694-1697), read as DFU means it: nothing
   // qualified is the healthy line, and an empty append is nothing
-  return (tokens && tokens.length) ? tokens : (rows(YOU_ARE_HEALTHY_ID) ?? []);
+  return tokens && tokens.length ? tokens : (rows(YOU_ARE_HEALTHY_ID) ?? []);
 }

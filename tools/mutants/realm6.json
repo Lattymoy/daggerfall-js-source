@@ -111,8 +111,8 @@
   {
     "name": "REALM6-buy-never-reserves",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "        reserve: paid.reserve,\n",
-    "new": "",
+    "old": "        reserve: paid.reserve,\n        // AUDIT REALM: a claim answered as the house already this character's (`repeat`) moved no gold on the record - the",
+    "new": "        // AUDIT REALM: a claim answered as the house already this character's (`repeat`) moved no gold on the record - the",
     "tests": [
       "test/server/realm6.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "REALM6-sale-guesses",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    const r = await realm.act({\n      needsAnswer: true,\n",
-    "new": "    const r = await realm.act({\n",
+    "old": "      needsAnswer: true,\n      apply: (/** @type {any} */ res) => {",
+    "new": "      apply: (/** @type {any} */ res) => {",
     "tests": [
       "test/server/realm6.test.js"
     ],

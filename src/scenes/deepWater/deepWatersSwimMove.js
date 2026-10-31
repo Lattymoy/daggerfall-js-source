@@ -17,9 +17,15 @@
 //     pixel when the correction is 2.5 m or less (ClampAboveRenderedSeafloor).
 // ═══════════════════════════════════════════════════════════════════
 
-import { STROKE, strokeTempoScale, strokeFatigueCost, strokeDirection, strokeVelocity } from '../../world/deepWater/deepWaterSwim.js';
+import {
+  STROKE,
+  strokeTempoScale,
+  strokeFatigueCost,
+  strokeDirection,
+  strokeVelocity,
+} from '../../world/deepWater/deepWaterSwim.js';
 import { maxFatigue } from '../../systems/statMods.js';
-import { EXACT_SWEEP_MAX } from '../../player/collider.js';   // AUDIT DISC28 MO-3: the longest motion one move() sweeps exactly
+import { EXACT_SWEEP_MAX } from '../../player/collider.js'; // AUDIT DISC28 MO-3: the longest motion one move() sweeps exactly
 
 const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
 
@@ -38,7 +44,7 @@ const STROKE_PIECES_MAX = 8;
 function strokeMove(col, p, dx, dy, dz) {
   const m = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz));
   const n = Number.isFinite(m) ? Math.min(STROKE_PIECES_MAX, Math.max(1, Math.ceil(m / EXACT_SWEEP_MAX))) : 1;
-  for (let i = 0; i < n; i++) col.move(p.pos, dx / n, dy / n, dz / n, p.height, false);   // MoveWithMovingPlatform: a bare Move, no ground snap
+  for (let i = 0; i < n; i++) col.move(p.pos, dx / n, dy / n, dz / n, p.height, false); // MoveWithMovingPlatform: a bare Move, no ground snap
 }
 /** SeafloorSwimFloorClearance, MaxShoreClampCorrection. */
 export const SEAFLOOR_CLEARANCE = STROKE.seafloorClearance;
@@ -51,13 +57,25 @@ export const MAX_TERRAIN_CLAMP_CORRECTION = STROKE.maxShoreClampCorrection;
  */
 export function createSwimMovement({ settings, collider }) {
   const stroke = { remaining: 0, duration: STROKE.duration, next: 0, dir: null, wasHeld: false };
-  const reset = () => { stroke.remaining = 0; stroke.duration = STROKE.duration; stroke.wasHeld = false; };
+  const reset = () => {
+    stroke.remaining = 0;
+    stroke.duration = STROKE.duration;
+    stroke.wasHeld = false;
+  };
   /** ConsumeStrokeInputEdge: Run's press or release since the last read. */
-  const consumeEdge = (run) => { const held = !!run; const edge = held !== stroke.wasHeld; stroke.wasHeld = held; return edge; };
+  const consumeEdge = (run) => {
+    const held = !!run;
+    const edge = held !== stroke.wasHeld;
+    stroke.wasHeld = held;
+    return edge;
+  };
 
   return {
     /** ResetStroke - and the speed modifier off (RemoveSpeedModifier). */
-    reset(player) { reset(); if (player) player.swimSpeedScale = 1; },
+    reset(player) {
+      reset();
+      if (player) player.swimSpeedScale = 1;
+    },
 
     /**
      * OutdoorSwimMovementController.Update.
@@ -67,18 +85,32 @@ export function createSwimMovement({ settings, collider }) {
      */
     update(f) {
       const p = f.player;
-      if (!f.anySwimming || f.loadGrace) { p.swimSpeedScale = 1; reset(); return; }
+      if (!f.anySwimming || f.loadGrace) {
+        p.swimSpeedScale = 1;
+        reset();
+        return;
+      }
       const s = settings();
       const mult = clamp(s.swimSpeedMultiplier, 0.25, 30);
-      p.swimSpeedScale = mult;   // ApplySpeedMultiplier (a no-op modifier at 1)
+      p.swimSpeedScale = mult; // ApplySpeedMultiplier (a no-op modifier at 1)
       // HandleStrokeInput, in its short-circuit order: the switch, then the edge (ConsumeStrokeInputEdge - read and
       // spent even on a cooldown frame, never with the stroke switched off), then the cooldown, then the direction
       const tempo = strokeTempoScale(mult);
       if (s.enableSwimStroke && consumeEdge(f.input.run) && f.now >= stroke.next) {
-        const dir = strokeDirection({ forward: f.input.forward, strafe: f.input.strafe, yaw: f.yaw, pitch: f.pitch, lookDir: f.lookDir, up: f.input.up, down: f.input.down, cameraY: f.cameraY, oceanY: f.oceanY });
-        const cost = f.entity ? strokeFatigueCost(maxFatigue(f.entity)) : 0;   // raw units: MaxFatigue is (STR + END) x 64
+        const dir = strokeDirection({
+          forward: f.input.forward,
+          strafe: f.input.strafe,
+          yaw: f.yaw,
+          pitch: f.pitch,
+          lookDir: f.lookDir,
+          up: f.input.up,
+          down: f.input.down,
+          cameraY: f.cameraY,
+          oceanY: f.oceanY,
+        });
+        const cost = f.entity ? strokeFatigueCost(maxFatigue(f.entity)) : 0; // raw units: MaxFatigue is (STR + END) x 64
         if (dir && f.entity && (f.entity.fatigue ?? 0) >= cost) {
-          f.entity.fatigue = Math.min(maxFatigue(f.entity), Math.max(0, (f.entity.fatigue ?? 0) - cost));   // DecreaseFatigue(cost, false): SetFatigue's clamps, no x64
+          f.entity.fatigue = Math.min(maxFatigue(f.entity), Math.max(0, (f.entity.fatigue ?? 0) - cost)); // DecreaseFatigue(cost, false): SetFatigue's clamps, no x64
           stroke.dir = dir;
           stroke.duration = STROKE.duration / tempo;
           stroke.remaining = stroke.duration;
@@ -87,10 +119,16 @@ export function createSwimMovement({ settings, collider }) {
       }
       // ApplyStrokeMotion: speed x 2.65 x tempo x the eased share, a tenth of a second at most per frame
       if (stroke.remaining > 0 && stroke.dir) {
-        const v = strokeVelocity({ direction: stroke.dir, swimSpeed: p.swimSpeedNow(), tempo, remaining: stroke.remaining, duration: stroke.duration });
+        const v = strokeVelocity({
+          direction: stroke.dir,
+          swimSpeed: p.swimSpeedNow(),
+          tempo,
+          remaining: stroke.remaining,
+          duration: stroke.duration,
+        });
         const dt = Math.min(f.dt, STROKE.maxMoveDelta);
         const col = typeof collider === 'function' ? collider() : collider;
-        if (col) strokeMove(col, p, v[0] * dt, v[1] * dt, v[2] * dt);   // AUDIT DISC28 MO-3: swept whole, as one Move is
+        if (col) strokeMove(col, p, v[0] * dt, v[1] * dt, v[2] * dt); // AUDIT DISC28 MO-3: swept whole, as one Move is
         stroke.remaining = Math.max(0, stroke.remaining - f.dt);
       }
       if (f.outdoorSwimming) clampAboveSeafloor(p, f);

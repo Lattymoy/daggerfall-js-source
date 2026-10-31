@@ -19,9 +19,9 @@
 /** The three speeds, verbatim (DaggerfallBillboard.cs:38-39, :46).
  *  Everything runs at the general 5 FPS except the two archives DFU
  *  names: ANIMALS also 5, LIGHTS 12 - the flames are the fast ones. */
-export const GENERAL_FPS = 5;      // framesPerSecond (:46)
-export const ANIMAL_FPS = 5;       // animalFps (:38)
-export const LIGHT_FPS = 12;       // lightFps (:39)
+export const GENERAL_FPS = 5; // framesPerSecond (:46)
+export const ANIMAL_FPS = 5; // animalFps (:38)
+export const LIGHT_FPS = 12; // lightFps (:39)
 
 /** TextureReader.cs:35-36. */
 export const ANIMALS_TEXTURE_ARCHIVE = 201;
@@ -79,17 +79,20 @@ export class FlatAnim {
     this.oneShot = oneShot;
     this.fps = flatFps(archive, framesPerSecond);
     this.currentFrame = 0;
-    this.frame = 0;        // what the renderer should draw RIGHT NOW
+    this.frame = 0; // what the renderer should draw RIGHT NOW
     this.done = false;
     this._acc = 0;
-    this._step();          // the coroutine's first pass runs before its first wait
+    this._step(); // the coroutine's first pass runs before its first wait
   }
 
   /** One pass of the loop body: wrap, publish, advance. */
   _step() {
     if (this.currentFrame >= this.frameCount) {
       this.currentFrame = 0;
-      if (this.oneShot) { this.done = true; return; }
+      if (this.oneShot) {
+        this.done = true;
+        return;
+      }
     }
     this.frame = this.currentFrame;
     this.currentFrame++;
@@ -122,7 +125,9 @@ export class FlatAnim {
  * still flats costs nothing per frame.
  */
 export class FlatAnimator {
-  constructor() { this.entries = []; }
+  constructor() {
+    this.entries = [];
+  }
 
   /** @param {import('./contract.js').BillboardBatch} batch a renderer billboard batch (its `frame` is written each tick) */
   add(batch, archive, frameCount, oneShot = false, framesPerSecond = GENERAL_FPS) {
@@ -144,10 +149,16 @@ export class FlatAnimator {
   /** FIELD BUGS 2026-10-18 LOOT-FLATS: a batch rebuilt in place (its centres baked into a buffer a recentre or a moved
    *  ground has to remint) keeps its entry and its clock - the old batch's entry points at the new one. */
   rebind(from, to) {
-    for (const e of this.entries) if (e.batch === from) { e.batch = to; to.frame = e.anim.frame; }
+    for (const e of this.entries)
+      if (e.batch === from) {
+        e.batch = to;
+        to.frame = e.anim.frame;
+      }
   }
 
-  clear() { this.entries.length = 0; }
+  clear() {
+    this.entries.length = 0;
+  }
 
   tick(dt) {
     for (const e of this.entries) e.batch.frame = e.anim.tick(dt);

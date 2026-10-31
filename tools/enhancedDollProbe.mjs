@@ -32,15 +32,18 @@ const browser = await chromium.launch();
 /** main.js's failed boot assigns document.body.textContent, which
  *  removes every child of body. See enhancedPackProbe for the story. */
 async function bootSettled(page) {
-  await page.waitForFunction(
-    () => document.body.textContent.includes('boot failed'), null, { timeout: 15000 },
-  ).catch(() => { /* a successful boot never says it */ });
+  await page
+    .waitForFunction(() => document.body.textContent.includes('boot failed'), null, { timeout: 15000 })
+    .catch(() => {
+      /* a successful boot never says it */
+    });
 }
 
 async function toGamePage(page) {
   await page.goto(`${BASE}/play/?skin=enhanced`, { waitUntil: 'networkidle' });
   await page.waitForSelector('#enhanced-menu .doorbtn', { timeout: 20000 });
-  if (await page.locator('#enhanced-menu .doorbtn.door-offline').count()) await page.locator('#enhanced-menu .doorbtn.door-offline').click();   // UI-CALM: the games stand behind Offline
+  if (await page.locator('#enhanced-menu .doorbtn.door-offline').count())
+    await page.locator('#enhanced-menu .doorbtn.door-offline').click(); // UI-CALM: the games stand behind Offline
   await page.locator('#enhanced-menu .doorbtn.door-new').first().click();
   await page.getByRole('button', { name: 'Begin', exact: true }).click();
   await page.waitForSelector('#enhanced-menu', { state: 'detached', timeout: 20000 });
@@ -59,7 +62,8 @@ async function openPack(page, { doll = true } = {}) {
     const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll/paperdoll.js');
     const pd = await import('/src/ui/paperDoll.js');
     if (withDoll) {
-      const W = 110, H = 184;
+      const W = 110,
+        H = 184;
       const px = new Uint8Array(W * H * 4);
       for (let y = 0; y < H; y++) {
         for (let x = 0; x < W; x++) {
@@ -78,17 +82,26 @@ async function openPack(page, { doll = true } = {}) {
     const t = (n) => ITEM_TEMPLATES.find((x) => x.name === n);
     const mk = (n, group = 'Weapons') => {
       const tp = t(n);
-      return tp && {
-        name: tp.name, templateIndex: tp.index, group, stackCount: 1,
-        currentCondition: tp.hitPoints ?? 50, maxCondition: tp.hitPoints ?? 50,
-      };
+      return (
+        tp && {
+          name: tp.name,
+          templateIndex: tp.index,
+          group,
+          stackCount: 1,
+          currentCondition: tp.hitPoints ?? 50,
+          maxCondition: tp.hitPoints ?? 50,
+        }
+      );
     };
     const e = {
-      name: 'Aelwyn', career: { name: 'Spellsword' },
-      stats: { strength: 50, endurance: 48 }, items: [],
+      name: 'Aelwyn',
+      career: { name: 'Spellsword' },
+      stats: { strength: 50, endurance: 48 },
+      items: [],
     };
-    e.items = [mk('Longsword'), mk('Dagger'), mk('Cuirass', 'Armor'), mk('Helm', 'Armor'),
-      mk('Boots', 'Armor')].filter(Boolean);
+    e.items = [mk('Longsword'), mk('Dagger'), mk('Cuirass', 'Armor'), mk('Helm', 'Armor'), mk('Boots', 'Armor')].filter(
+      Boolean,
+    );
     globalThis.__ent = e;
     globalThis.__slot = createInventoryWindow({ entity: e, items: () => e.items, wagonItems: () => [] });
   }, doll);
@@ -98,8 +111,7 @@ async function openPack(page, { doll = true } = {}) {
 const pack = (page) => page.evaluate(() => JSON.parse(globalThis.__pack()));
 const localRow = (page, name) =>
   page.locator('#enhanced-inventory .packcol:not(.packremote) .itemrow', { hasText: name }).first();
-const act = (page, label) =>
-  page.locator('#enhanced-inventory .acts button', { hasText: label }).first();
+const act = (page, label) => page.locator('#enhanced-inventory .acts button', { hasText: label }).first();
 async function closeSheet(page) {
   const lid = page.locator('#enhanced-inventory .packdetail .sheet-close');
   if (await lid.isVisible()) await lid.click();
@@ -129,51 +141,67 @@ async function run(label, opts) {
     im.src = `data:image/png;base64,${b64}`;
     await im.decode();
     const c = document.createElement('canvas');
-    c.width = im.width; c.height = im.height;
+    c.width = im.width;
+    c.height = im.height;
     const g = c.getContext('2d');
     g.drawImage(im, 0, 0);
     const at = (fx, fy) => [...g.getImageData(Math.floor(im.width * fx), Math.floor(im.height * fy), 1, 1).data];
     return { w: im.width, h: im.height, left: at(0.25, 0.5), right: at(0.75, 0.5) };
   }, shot.toString('base64'));
   // RED left, GREEN right - a channel swap or a stride slip fails here
-  check(`${label}: the left half is the RED the buffer put there`,
-    px.left[0] > 180 && px.left[1] < 60, JSON.stringify(px.left));
-  check(`${label}: the right half is the GREEN`,
-    px.right[1] > 160 && px.right[0] < 60, JSON.stringify(px.right));
+  check(
+    `${label}: the left half is the RED the buffer put there`,
+    px.left[0] > 180 && px.left[1] < 60,
+    JSON.stringify(px.left),
+  );
+  check(`${label}: the right half is the GREEN`, px.right[1] > 160 && px.right[0] < 60, JSON.stringify(px.right));
   // ...and it is drawn at the panel's 110:184 aspect, not squashed
   const box = await img.boundingBox();
   const aspect = box.width / box.height;
-  check(`${label}: the avatar keeps its 110x184 aspect`,
-    Math.abs(aspect - 110 / 184) < 0.02, `${box.width.toFixed(0)}x${box.height.toFixed(0)} = ${aspect.toFixed(3)}`);
-  check(`${label}: and it is ON the screen`,
-    box.y >= 0 && box.y < (opts.viewport?.height ?? 900), `y=${box.y.toFixed(0)}`);
+  check(
+    `${label}: the avatar keeps its 110x184 aspect`,
+    Math.abs(aspect - 110 / 184) < 0.02,
+    `${box.width.toFixed(0)}x${box.height.toFixed(0)} = ${aspect.toFixed(3)}`,
+  );
+  check(
+    `${label}: and it is ON the screen`,
+    box.y >= 0 && box.y < (opts.viewport?.height ?? 900),
+    `y=${box.y.toFixed(0)}`,
+  );
 
   // ── 2. THE WORN LIST IS A LIST, NOT DOTS ───────────────────────
-  check(`${label}: every slot has a row`, p.wornRows === 25,
-    `${p.wornRows} rows (25 = 27 slots less DFU's two unnamed)`);
+  check(
+    `${label}: every slot has a row`,
+    p.wornRows === 25,
+    `${p.wornRows} rows (25 = 27 slots less DFU's two unnamed)`,
+  );
   check(`${label}: and nothing is worn yet`, p.wornFilled === 0, `${p.wornFilled} filled`);
   await wear(page, 'Helm');
   await wear(page, 'Cuirass');
   await wear(page, 'Boots');
   p = await pack(page);
-  check(`${label}: wearing three things NAMES them in the list`,
+  check(
+    `${label}: wearing three things NAMES them in the list`,
     p.wornFilled === 3 && p.wornNames.includes('Helm') && p.wornNames.includes('Cuirass'),
-    p.wornNames.join(', '));
+    p.wornNames.join(', '),
+  );
   // the ORDER is the body's - the helm reads above the boots
-  check(`${label}: the list runs head to feet`,
-    p.wornNames.indexOf('Helm') < p.wornNames.indexOf('Boots'), p.wornNames.join(' -> '));
+  check(
+    `${label}: the list runs head to feet`,
+    p.wornNames.indexOf('Helm') < p.wornNames.indexOf('Boots'),
+    p.wornNames.join(' -> '),
+  );
   // and worn items are GONE from the pack list (FilterLocalItems)
-  const inPack = await page.$$eval('#enhanced-inventory .packcol:not(.packremote) .itemrow .itemname span',
-    (ns) => ns.map((n) => n.textContent));
-  check(`${label}: ...and out of the pack list, where DFU puts them`,
-    !inPack.includes('Helm'), inPack.join(', '));
+  const inPack = await page.$$eval('#enhanced-inventory .packcol:not(.packremote) .itemrow .itemname span', (ns) =>
+    ns.map((n) => n.textContent),
+  );
+  check(`${label}: ...and out of the pack list, where DFU puts them`, !inPack.includes('Helm'), inPack.join(', '));
 
   // ── 3. A ROW SELECTS; THE DETAIL TAKES IT OFF ──────────────────
   // The slot map's node unequipped on the spot. A named row has a
   // panel behind it, so a mis-click costs nothing.
   await page.locator('#enhanced-inventory .wornrow', { hasText: 'Cuirass' }).first().click();
-  check(`${label}: a worn row opens the item, it does not undress you`,
-    (await pack(page)).wornFilled === 3);
+  check(`${label}: a worn row opens the item, it does not undress you`, (await pack(page)).wornFilled === 3);
   check(`${label}: the detail offers Take off`, (await act(page, 'Take off').count()) === 1);
   // ...and NOT a way to drop it: filterByTab means DFU's Remove click
   // can never reach an equipped item
@@ -184,18 +212,22 @@ async function run(label, opts) {
   await closeSheet(page);
   p = await pack(page);
   check(`${label}: Take off empties the slot`, p.wornFilled === 2, `${p.wornFilled} filled`);
-  check(`${label}: ...and the item is back in the pack`,
-    (await localRow(page, 'Cuirass').count()) === 1);
+  check(`${label}: ...and the item is back in the pack`, (await localRow(page, 'Cuirass').count()) === 1);
 
   // ── 4. EVERY TOUCH TARGET IS A TARGET ──────────────────────────
   // An empty slot is NOT a control, so it must not be a button: the
   // first draft disabled twenty-two 24px buttons and the pack probe
   // failed on exactly this.
   const tags = await page.$$eval('#enhanced-inventory .wornrow.wornempty', (ns) => ns.map((n) => n.tagName));
-  check(`${label}: empty slots are not buttons`,
-    tags.length > 0 && tags.every((t) => t !== 'BUTTON'), `${tags.length} rows, ${[...new Set(tags)].join('/')}`);
-  const small = await page.$$eval('#enhanced-inventory .wornrow button, #enhanced-inventory button.wornrow',
-    (ns) => ns.filter((n) => n.getBoundingClientRect().height < 44).length);
+  check(
+    `${label}: empty slots are not buttons`,
+    tags.length > 0 && tags.every((t) => t !== 'BUTTON'),
+    `${tags.length} rows, ${[...new Set(tags)].join('/')}`,
+  );
+  const small = await page.$$eval(
+    '#enhanced-inventory .wornrow button, #enhanced-inventory button.wornrow',
+    (ns) => ns.filter((n) => n.getBoundingClientRect().height < 44).length,
+  );
   check(`${label}: and every real one is 44px`, small === 0, `${small} under`);
 
   check(`${label}: no page errors`, errors.length === 0, errors.join(' | '));
@@ -214,8 +246,10 @@ async function runFallback() {
   await openPack(page, { doll: false });
   const p = await pack(page);
   check('fallback: no composite means the SCHEMATIC', p.figure === 'schematic', p.figure);
-  check('fallback: and no broken image in its place',
-    (await page.locator('#enhanced-inventory .figure-doll').count()) === 0);
+  check(
+    'fallback: and no broken image in its place',
+    (await page.locator('#enhanced-inventory .figure-doll').count()) === 0,
+  );
   check('fallback: the worn list is there either way', p.wornRows === 25, `${p.wornRows} rows`);
   check('fallback: the schematic still draws its nodes', p.nodes === 25, `${p.nodes} nodes`);
   check('fallback: no page errors', errors.length === 0, errors.join(' | '));

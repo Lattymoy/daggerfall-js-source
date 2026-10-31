@@ -19,25 +19,48 @@ const SID_RE = /^[A-Za-z0-9]{6,16}$/;
  *   face:number, born:number, died:{ at:number, cause:string }|null, revived:number[], minor:boolean }} KinCard
  */
 
-const nameOf = (/** @type {unknown} */ s) => { const v = String(s ?? '').trim(); return v.length <= KIN_NAME_MAX ? v : ''; };
+const nameOf = (/** @type {unknown} */ s) => {
+  const v = String(s ?? '').trim();
+  return v.length <= KIN_NAME_MAX ? v : '';
+};
 
 /** A card held to its shape, or null. @param {any} c @returns {KinCard|null} */
 export function kinCard(c) {
   if (!c || typeof c !== 'object' || !Number.isSafeInteger(c.key) || c.key < 0) return null;
-  const died = c.died && typeof c.died === 'object' && Number.isFinite(c.died.at)
-    ? { at: Number(c.died.at), cause: KIN_CAUSES.includes(c.died.cause) ? String(c.died.cause) : 'unknown' } : null;
+  const died =
+    c.died && typeof c.died === 'object' && Number.isFinite(c.died.at)
+      ? { at: Number(c.died.at), cause: KIN_CAUSES.includes(c.died.cause) ? String(c.died.cause) : 'unknown' }
+      : null;
   return {
-    key: c.key, given: nameOf(c.given), surname: nameOf(c.surname), house: houseNameOk(c.house) ? c.house : null,
+    key: c.key,
+    given: nameOf(c.given),
+    surname: nameOf(c.surname),
+    house: houseNameOk(c.house) ? c.house : null,
     gender: c.gender === 'female' ? 'female' : 'male',
     race: typeof c.race === 'string' && /^[A-Za-z][A-Za-z ]{0,23}$/.test(c.race) ? c.race : null,
     face: Number.isSafeInteger(c.face) && c.face >= 0 && c.face <= KIN_FACE_MAX ? c.face : 0,
-    born: Number.isFinite(c.born) && c.born >= 0 ? Math.floor(c.born) : 0, died, minor: c.minor === true,
-    revived: Array.isArray(c.revived) ? c.revived.filter((/** @type {unknown} */ n) => Number.isFinite(n)).map(Number).slice(-KIN_REVIVED_MAX) : [],   // AUDIT FB1029 E-S1
+    born: Number.isFinite(c.born) && c.born >= 0 ? Math.floor(c.born) : 0,
+    died,
+    minor: c.minor === true,
+    revived: Array.isArray(c.revived)
+      ? c.revived
+          .filter((/** @type {unknown} */ n) => Number.isFinite(n))
+          .map(Number)
+          .slice(-KIN_REVIVED_MAX)
+      : [], // AUDIT FB1029 E-S1
   };
 }
 
 /** A union child's link on the record - the union's sid, their id on the other's line, that house's name - or null. */
 export function readUnionKin(/** @type {any} */ u) {
-  if (!u || typeof u !== 'object' || typeof u.sid !== 'string' || !SID_RE.test(u.sid) || !Number.isSafeInteger(u.key) || u.key < 0) return null;
+  if (
+    !u ||
+    typeof u !== 'object' ||
+    typeof u.sid !== 'string' ||
+    !SID_RE.test(u.sid) ||
+    !Number.isSafeInteger(u.key) ||
+    u.key < 0
+  )
+    return null;
   return { sid: u.sid, key: u.key, house: houseNameOk(u.house) ? u.house : null };
 }

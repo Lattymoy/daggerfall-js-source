@@ -2797,27 +2797,27 @@ reads it: a Disintegrate deals its target what health it has left
 (`effects.js:"if (left > 0 && sinks.hurt) { out.damage += left; sinks.hurt(left, { whole: true }); }"` - DFU's
 `Disintegrate.MagicRound`, `SetHealth(0)`). So the cast claimed 1e9, and no wire carries that: the gate's `hit`, `ahit` and
 `xhit` and the Abyss's stop at GATE_DMG_WIRE_MAX (`wire.js:"if (!finite(m.d) || m.d <= 0 || m.d > GATE_DMG_WIRE_MAX) return null;"`,
-100,000), an Elite Breach's at 1e6, a bout's at 10,000 (`arenaLaw.js:"const d = num(m.d, 10000), r = int(m.r, 0, 2);"`).
+100,000), an Elite Breach's at 1e6, a bout's at 10,000 (`arenaLaw.js:"const d = num(m.d, 10000)"`).
 Every relay refused the cast whole, and the spell door popped the claim. The relay caps a blow anyway (HIT_CAP_X times
 the reference at the striker's level - section 5's bucket; an Elite Breach's grown by the Vestiges' declared factor), so
 the fix is the stand-in's, as a duel's was (`combat/duelCombat.js` DUEL_STAND_IN, whole at the wire's vital ceiling):
 
-- **THE WHOLE** (`gateBoss.js:"export const STAND_IN_WHOLE = HIT_CAP_X * dpsRef(LV_MAX) * EG_BUCKET_X_MAX;"`, 975) - the
+- **THE WHOLE** (`gateBoss.js:"export const STAND_IN_WHOLE"`, 975) - the
   most one blow lands at any relay: the gate's cap at LV_MAX (780) grown by the most a breach's bucket grows, over the
   serpent's (SERPENT_HIT_CAP_X of a galley's reference, 182) and a bout's (`arenaBlowCap`, 122 at most); and under the least
   ceiling nobody clamps (the bout's 10,000), with the rest of a spell's room beside it. Every stand-in stands at it
-  (`gateBoss.js:"e.maxHealth = e.health = STAND_IN_WHOLE;"`). A Disintegrate counts it whole, every wire carries it and
+  (`gateBoss.js:"e.maxHealth = e.health = STAND_IN_WHOLE"`). A Disintegrate counts it whole, every wire carries it and
   the relay's own law weighs and clips it - his stun heavier, an Unyielding ward 15% lighter (975 of it still past the cap
   at the level cap), the bucket. The serpent's door already held its claim to 5,000; it carries the whole as it is.
-- **THE NUMBER** says what can land (`standInSpell.js:"const shown = standInShown(dealt, standInBlowCap(body.entity, player.level));"`):
-  the claim, never past the most one blow of mine lands there (`gateBoss.js:"export function standInBlowCap(e, lv) {"` -
+- **THE NUMBER** says what can land (`standInSpell.js:"const shown = standInShown"`):
+  the claim, never past the most one blow of mine lands there (`gateBoss.js:"export function standInBlowCap"` -
   the relay's cap at my level, grown by the factor the stand-in's owner says my bucket grows by: an Elite Breach hands its
-  stand-ins my Vestiges' declared factor, `egFight.js:"const myBlowX = () =>"`, at most EG_BUCKET_X_MAX; on my opponent the
+  stand-ins my Vestiges' declared factor, `egFight.js:"const myBlowX = ()"`, at most EG_BUCKET_X_MAX; on my opponent the
   referee's spell cap, ARENA_SPELL_MAX). The paths' riders are told the same (`took`: what the foe could lose). The claim
   goes out whole beside it - clipping it here would lose what the relay weighs before its cap.
 - **THE DOOR** is one: the court's four spell doors (him, his crystals, his host, my opponent - each its own copy in
   `buildDungeonContext`) left the host for `scenes/gate/standInSpell.js`
-  (`standInSpell.js:"export function createStandInSpell(host) {"`), which the context wires where they stood
+  (`standInSpell.js:"export function createStandInSpell"`), which the context wires where they stood
   (`dungeonContext.js:"} = createStandInSpell({"`;
   `01-Overview/Host-Split.md` STAND-IN-WHOLE).
 - **NOTHING LOCAL READS IT AS A BODY.** With the whole finite, every reader of a stand-in's health was read again: the
@@ -2825,9 +2825,9 @@ the fix is the stand-in's, as a duel's was (`combat/duelCombat.js` DUEL_STAND_IN
   every lasting family is forgotten at once - nothing here empties a stand-in, pinned on every factory. An "under its
   health" power reads the relay's word (RELAY-SHARE, `relayHealth`); the weapon masteries the same. The blood ladder read
   the placeholder and bled the bottom rung on every blow; a whole of 975 would have bled a body of 975's rungs, so it
-  measures no whole on a stand-in (`bloodDecals.js:"maxHealth: Number.isFinite(entity?.maxHealth) && !entity?.relayHealth ? entity.maxHealth : 0,"`):
+  measures no whole on a stand-in (`bloodDecals.js:"maxHealth: Number.isFinite"`):
   the same rung, by law now; a host body's real whole still comes as its `bloodOf`.
-- **MEHRUNES' RAZOR STAYS PASSED BY** (`artifactEffects.js:"if (!target || !item || target.spareGear) return null;"`, AUDIT
+- **MEHRUNES' RAZOR STAYS PASSED BY** (`artifactEffects.js:"if (!target || !item || target.spareGear)"`, AUDIT
   WBX F1). Its two reasons were the 1e9 billed to its condition and a blow the wire refused; the wire carries the whole
   now and no Strikes payload bills wear on a stand-in (F2) - and that is why it stays: the Razor's kill is paid in its own
   condition, the health it removes (`MehrunesRazorEffect`), and on a body the relay runs nothing would pay it - a whole blow
@@ -2857,11 +2857,11 @@ alone). So a Continuous Damage spell on any body a relay runs landed its cast's 
 through at even dice) dealt its first round alone, 8 of its 200, and the other 24 rounds went nowhere. Now its rounds are
 carried:
 
-- **What is carried** (`standInSpell.js:"export const carriedOnStandIn = (a) =>"`): Continuous Damage on health (1,0 - DFU's
+- **What is carried** (`standInSpell.js:"export const carriedOnStandIn"`): Continuous Damage on health (1,0 - DFU's
   ContinuousDamageHealth), a round still to run. Its siblings on fatigue and magicka (1,1 and 1,2) have nothing to fall on -
   a relay body is health alone - and the duel's other lasting families (Paralyze, Silence, Drain) are the relay brain's to
   know, never a claim: none of those is.
-- **Kept a body** (`standInSpell.js:"export function createStandInRounds({ now = Date.now, rolls = Math.random } = {}) {"`):
+- **Kept a body** (`standInSpell.js:"export function createStandInRounds"`):
   him, one of his host, a crystal (the Remnant, its Echoes and Hearts in the Hour; an Elite Breach's lords, legion and struck
   objects through the host seam). A cast on the body lays its running rounds on the stand-in first, as copies - the
   incumbent a recast RENEWS (STACK-CAP's renewRounds; a renewal fires no first round, as DFU's AddState does) - and keeps
@@ -2904,7 +2904,7 @@ EGZR-stacks-any-body.
 The owner: "in oblivion gates ... while performance is overall good, the game hitches, audio becomes super loud and even
 distorts". The causes, landing in the same frames - his big landings, a wave rising, the Sundering:
 
-- **A cue at its targets, thinned** (`gateBoss.js:"export function cueTargetPlaces(points, ear) {"`). A cue `at: 'targets'`
+- **A cue at its targets, thinned** (`gateBoss.js:"export function cueTargetPlaces"`). A cue `at: 'targets'`
   (the Hellfire's release and landing, the Meteor's, the Brand's, the Torment's) played one copy at every target: a
   Hellfire on five players was five of the fire's full-scale cast in one frame, ten in his third phase (its second volley
   within 3 m of the first), and over a reach of 40 to 80 m with a linear fall every copy near a group came in at nearly
@@ -2923,7 +2923,7 @@ distorts". The causes, landing in the same frames - his big landings, a wave ris
   three passes' compiles start together as I come in and each is built once its own is done; where it cannot, one a
   frame as here.
 
-- **The night's bodies made ready** (`gateSpriteWarm.js:"export function createSpriteWarm({ getTexture = null, uploadRecordFrame = null, has = () => false } = {}) {"`).
+- **The night's bodies made ready** (`gateSpriteWarm.js:"export function createSpriteWarm"`).
   His host's, his Flame's and his own sprites were fetched when their first body was drawn (a wave's first rising, the
   Sundering), and each frame decoded and uploaded the first time it showed (a new angle, a first swing, a first hurt).
   Now, as I stand in the court, it asks for the archive of every body the night can show (`nightMobiles`: him and the

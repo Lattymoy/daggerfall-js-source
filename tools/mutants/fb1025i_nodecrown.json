@@ -2,8 +2,8 @@
   {
     "name": "NODE-CROWN-the-scale-counted-twice",
     "file": "src/render/nodeGlint.js",
-    "old": "h = t.run.size[1] * row[4];",
-    "new": "h = t.run.size[1] * row[4] * t.run.scale[1];",
+    "old": "            h = t.run.size[1] * row[4];",
+    "new": "            h = t.run.size[1] * row[4] * t.run.scale[1];",
     "tests": [
       "test/scenes/fb1025i_nodecrown.test.js",
       "test/scenes/nodeglint.test.js"
@@ -13,8 +13,8 @@
   {
     "name": "NODE-CROWN-the-row-s-scale-unread",
     "file": "src/render/nodeGlint.js",
-    "old": "h = t.run.size[1] * row[4];",
-    "new": "h = t.run.size[1];",
+    "old": "            h = t.run.size[1] * row[4];",
+    "new": "            h = t.run.size[1];",
     "tests": [
       "test/scenes/fb1025i_nodecrown.test.js",
       "test/scenes/nodeglint.test.js"
@@ -24,8 +24,8 @@
   {
     "name": "NODE-CROWN-the-width-for-the-height",
     "file": "src/render/nodeGlint.js",
-    "old": "h = t.run.size[1] * row[4];",
-    "new": "h = t.run.size[0] * row[4];",
+    "old": "            h = t.run.size[1] * row[4];",
+    "new": "            h = t.run.size[0] * row[4];",
     "tests": [
       "test/scenes/fb1025i_nodecrown.test.js",
       "test/scenes/nodeglint.test.js"
@@ -35,8 +35,8 @@
   {
     "name": "NODE-CROWN-the-anchors-on-the-old-height",
     "file": "src/render/nodeGlint.js",
-    "old": "_span(s.spans, k, row[0], row[1], row[2], 2 * reach, h, 0)",
-    "new": "_span(s.spans, k, row[0], row[1], row[2], 2 * reach, h * t.run.scale[1], 0)",
+    "old": "          NodeGlintRenderer._span(s.spans, k, row[0], row[1], row[2], 2 * reach, h, 0); // AUDIT NODE-GLINT: its crown, about its root",
+    "new": "          NodeGlintRenderer._span(s.spans, k, row[0], row[1], row[2], 2 * reach, h * t.run.scale[1], 0); // AUDIT NODE-GLINT: its crown, about its root",
     "tests": [
       "test/scenes/fb1025i_nodecrown.test.js"
     ],
@@ -45,8 +45,8 @@
   {
     "name": "NODE-CROWN-the-box-on-the-old-height",
     "file": "src/render/nodeGlint.js",
-    "old": "row[0] + reach, row[1] + h, row[2] + reach);",
-    "new": "row[0] + reach, row[1] + h * t.run.scale[1], row[2] + reach);",
+    "old": "            row[1] + h,",
+    "new": "            row[1] + h * t.run.scale[1],",
     "tests": [
       "test/scenes/fb1025i_nodecrown.test.js"
     ],
@@ -55,8 +55,8 @@
   {
     "name": "NODE-CROWN-the-row-s-scale-held-at-1-and-over",
     "file": "src/render/nodeGlint.js",
-    "old": "h = t.run.size[1] * row[4];",
-    "new": "h = t.run.size[1] * Math.max(1, row[4]);",
+    "old": "            h = t.run.size[1] * row[4];",
+    "new": "            h = t.run.size[1] * Math.max(1, row[4]);",
     "tests": [
       "test/scenes/fb1025i_nodecrown.test.js"
     ],
@@ -65,8 +65,8 @@
   {
     "name": "NODE-CROWN-C1-the-growth-unbounded",
     "file": "src/render/nodeGlint.js",
-    "old": "Math.min(GLINT_CROWN_GROWTH, Math.max(1, (crownPx",
-    "new": "Math.min(Infinity, Math.max(1, (crownPx",
+    "old": "  Math.min(\n    GLINT_CROWN_GROWTH,\n    Math.max(1, (crownPx / ((GLINT_PX / GLINT_SHARE) * (rows / GLINT_REF_ROWS))) ** (2 / 3)),\n  );",
+    "new": "  Math.min(Infinity, Math.max(1, (crownPx / ((GLINT_PX / GLINT_SHARE) * (rows / GLINT_REF_ROWS))) ** (2 / 3)));",
     "tests": [
       "test/scenes/fb1025i_nodecrown.test.js"
     ],
@@ -75,8 +75,8 @@
   {
     "name": "NODE-CROWN-C1-the-growth-under-1",
     "file": "src/render/nodeGlint.js",
-    "old": "Math.max(1, (crownPx",
-    "new": "Math.max(0, (crownPx",
+    "old": "    Math.max(1, (crownPx / ((GLINT_PX / GLINT_SHARE) * (rows / GLINT_REF_ROWS))) ** (2 / 3)),",
+    "new": "    Math.max(0, (crownPx / ((GLINT_PX / GLINT_SHARE) * (rows / GLINT_REF_ROWS))) ** (2 / 3)),",
     "tests": [
       "test/scenes/fb1025i_nodecrown.test.js"
     ],
@@ -85,8 +85,8 @@
   {
     "name": "NODE-CROWN-C1-the-power-the-side-s-own",
     "file": "src/render/nodeGlint.js",
-    "old": "** (2 / 3)));",
-    "new": "** 1));",
+    "old": "  Math.min(\n    GLINT_CROWN_GROWTH,\n    Math.max(1, (crownPx / ((GLINT_PX / GLINT_SHARE) * (rows / GLINT_REF_ROWS))) ** (2 / 3)),\n  );",
+    "new": "  Math.min(GLINT_CROWN_GROWTH, Math.max(1, (crownPx / ((GLINT_PX / GLINT_SHARE) * (rows / GLINT_REF_ROWS))) ** 1));",
     "tests": [
       "test/scenes/fb1025i_nodecrown.test.js"
     ],
@@ -95,8 +95,8 @@
   {
     "name": "NODE-CROWN-C1-the-image-unscaled",
     "file": "src/render/nodeGlint.js",
-    "old": "* (rows / GLINT_REF_ROWS))) ** (2 / 3)",
-    "new": "* 1)) ** (2 / 3)",
+    "old": "  Math.min(\n    GLINT_CROWN_GROWTH,\n    Math.max(1, (crownPx / ((GLINT_PX / GLINT_SHARE) * (rows / GLINT_REF_ROWS))) ** (2 / 3)),\n  );",
+    "new": "  Math.min(GLINT_CROWN_GROWTH, Math.max(1, (crownPx / ((GLINT_PX / GLINT_SHARE) * 1)) ** (2 / 3)));",
     "tests": [
       "test/scenes/fb1025i_nodecrown.test.js"
     ],
@@ -105,8 +105,8 @@
   {
     "name": "NODE-CROWN-C1-the-count-unrounded",
     "file": "src/render/nodeGlint.js",
-    "old": "Math.round(GLINT_COUNT * glintCrownGrowth(rows, crownPx))",
-    "new": "GLINT_COUNT * glintCrownGrowth(rows, crownPx)",
+    "old": "export const glintCrownCount = (rows, crownPx) => Math.round(GLINT_COUNT * glintCrownGrowth(rows, crownPx));",
+    "new": "export const glintCrownCount = (rows, crownPx) => GLINT_COUNT * glintCrownGrowth(rows, crownPx);",
     "tests": [
       "test/scenes/fb1025i_nodecrown.test.js"
     ],
@@ -115,8 +115,8 @@
   {
     "name": "NODE-CROWN-C1-the-reach-ungrown",
     "file": "src/render/nodeGlint.js",
-    "old": "glintPx(rows, crownPx) * glintCrownGrowth(rows, crownPx);",
-    "new": "glintPx(rows, crownPx);",
+    "old": "export const glintCrownPx = (rows, crownPx) => glintPx(rows, crownPx) * glintCrownGrowth(rows, crownPx);",
+    "new": "export const glintCrownPx = (rows, crownPx) => glintPx(rows, crownPx);",
     "tests": [
       "test/scenes/fb1025i_nodecrown.test.js",
       "test/scenes/nodeglint.test.js"
@@ -126,8 +126,8 @@
   {
     "name": "NODE-CROWN-C1-the-area-its-width-alone",
     "file": "src/render/nodeGlint.js",
-    "old": "* ((h * Math.abs(proj[5]) * vh) / (2 * cw))",
-    "new": "* ((w * Math.abs(proj[0]) * vw) / (2 * cw))",
+    "old": "    ? Math.sqrt(((w * Math.abs(proj[0]) * vw) / (2 * cw)) * ((h * Math.abs(proj[5]) * vh) / (2 * cw)))",
+    "new": "    ? Math.sqrt(((w * Math.abs(proj[0]) * vw) / (2 * cw)) * ((w * Math.abs(proj[0]) * vw) / (2 * cw)))",
     "tests": [
       "test/scenes/fb1025i_nodecrown.test.js"
     ],
@@ -136,8 +136,8 @@
   {
     "name": "NODE-CROWN-C1-a-root-behind-the-eye-none",
     "file": "src/render/nodeGlint.js",
-    "old": ": Infinity);",
-    "new": ": 0);",
+    "old": "    : Infinity;",
+    "new": "    : 0;",
     "tests": [
       "test/scenes/fb1025i_nodecrown.test.js"
     ],
@@ -156,8 +156,8 @@
   {
     "name": "NODE-CROWN-C1-the-crown-never-grown",
     "file": "src/render/nodeGlint.js",
-    "old": "if (crown > 0) { s.count",
-    "new": "if (false) { s.count",
+    "old": "      if (crown > 0) {",
+    "new": "      if (false) {",
     "tests": [
       "test/scenes/fb1025i_nodecrown.test.js",
       "test/scenes/nodeglint.test.js"
@@ -167,8 +167,8 @@
   {
     "name": "NODE-CROWN-C1-every-node-grown",
     "file": "src/render/nodeGlint.js",
-    "old": "if (crown > 0) { s.count",
-    "new": "if (crown >= 0) { s.count",
+    "old": "      if (crown > 0) {",
+    "new": "      if (crown >= 0) {",
     "tests": [
       "test/scenes/fb1025i_nodecrown.test.js",
       "test/scenes/nodeglint.test.js"
@@ -178,8 +178,8 @@
   {
     "name": "NODE-CROWN-C1-the-crown-s-size-its-height-alone",
     "file": "src/render/nodeGlint.js",
-    "old": "t.run.size[0] * row[4], h, vw, vh));",
-    "new": "h, h, vw, vh));",
+    "old": "            crownSidePx(\n              r._proj,\n              vpm[3] * row[0] + vpm[7] * row[1] + vpm[11] * row[2] + vpm[15],\n              t.run.size[0] * row[4],\n              h,\n              vw,\n              vh,\n            ),",
+    "new": "            crownSidePx(r._proj, vpm[3] * row[0] + vpm[7] * row[1] + vpm[11] * row[2] + vpm[15], h, h, vw, vh),",
     "tests": [
       "test/scenes/fb1025i_nodecrown.test.js",
       "test/scenes/nodeglint.test.js"
@@ -189,8 +189,8 @@
   {
     "name": "NODE-CROWN-C1-the-crown-at-the-eye-s-depth",
     "file": "src/render/nodeGlint.js",
-    "old": "vpm[3] * row[0] + vpm[7] * row[1] + vpm[11] * row[2] + vpm[15]",
-    "new": "1",
+    "old": "          crown = Math.max(\n            crown,\n            crownSidePx(\n              r._proj,\n              vpm[3] * row[0] + vpm[7] * row[1] + vpm[11] * row[2] + vpm[15],\n              t.run.size[0] * row[4],\n              h,\n              vw,\n              vh,\n            ),\n          );",
+    "new": "          crown = Math.max(crown, crownSidePx(r._proj, 1, t.run.size[0] * row[4], h, vw, vh));",
     "tests": [
       "test/scenes/fb1025i_nodecrown.test.js",
       "test/scenes/nodeglint.test.js"
@@ -200,8 +200,8 @@
   {
     "name": "NODE-CROWN-C1-the-room-a-flat-s",
     "file": "src/render/nodeGlint.js",
-    "old": "const room = look.glint ? Math.max(roomPx, s.glint + 2) : Math.ceil(ringPx) + 2;",
-    "new": "const room = look.glint ? roomPx : Math.ceil(ringPx) + 2;",
+    "old": "      const room = look.glint ? Math.max(roomPx, s.glint + 2) : Math.ceil(ringPx) + 2; // RESOURCE-HIGHLIGHTS: the ring alone takes its own width's room (section 46's), so more nodes hold a texel a pixel",
+    "new": "      const room = look.glint ? roomPx : Math.ceil(ringPx) + 2; // RESOURCE-HIGHLIGHTS: the ring alone takes its own width's room (section 46's), so more nodes hold a texel a pixel",
     "tests": [
       "test/scenes/fb1025i_nodecrown.test.js",
       "test/scenes/nodeglint.test.js"
@@ -211,8 +211,8 @@
   {
     "name": "NODE-CROWN-C1-the-count-unsent",
     "file": "src/render/nodeGlint.js",
-    "old": "      gl.uniform1i(L.uCount, s.count);   // NODE-CROWN: its glints\n",
-    "new": "",
+    "old": "      gl.uniform1i(L.uCount, s.count); // NODE-CROWN: its glints\n      const tint = glintTint(g.rgb, this._tint);",
+    "new": "      const tint = glintTint(g.rgb, this._tint);",
     "tests": [
       "test/scenes/nodeglint.test.js"
     ],
@@ -221,8 +221,8 @@
   {
     "name": "NODE-CROWN-C1-the-count-unread",
     "file": "src/render/nodeGlint.js",
-    "old": "  if (i >= uCount) return vec4(0.0, 0.0, 1.0, 0.0);   // NODE-CROWN: past the node's own count, none\n",
-    "new": "",
+    "old": "  if (i >= uCount) return vec4(0.0, 0.0, 1.0, 0.0);   // NODE-CROWN: past the node's own count, none\n  uint life;",
+    "new": "  uint life;",
     "tests": [
       "test/scenes/nodeglint.test.js"
     ],
@@ -231,8 +231,8 @@
   {
     "name": "NODE-CROWN-C1-the-turn-another-life-s",
     "file": "src/render/nodeGlint.js",
-    "old": "  glintLife(i, seed, tm, life);",
-    "new": "  glintLife(0, seed, tm, life);",
+    "old": "  glintLife(i, seed, tm, life);   // NODE-CROWN: the life the vertex stage stood it at, its turn its own",
+    "new": "  glintLife(0, seed, tm, life);   // NODE-CROWN: the life the vertex stage stood it at, its turn its own",
     "tests": [
       "test/scenes/nodeglint.test.js"
     ],

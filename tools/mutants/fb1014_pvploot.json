@@ -40,8 +40,8 @@
   {
     "name": "PVP-LOOT-the-named-piece-anyones",
     "file": "src/net/wild/wildLaw.js",
-    "old": "  if (named && sub !== named) return null;",
-    "new": "  if (named && false) return null;",
+    "old": "  if (named && sub !== named) return null; // INT9: the killer's worn piece is the killer's alone",
+    "new": "  if (named && false) return null; // INT9: the killer's worn piece is the killer's alone",
     "tests": [
       "test/systems/fb1014_pvploot.test.js"
     ]

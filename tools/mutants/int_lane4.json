@@ -92,8 +92,8 @@
   {
     "name": "INT17-asked-not-credited",
     "file": "server-account/src/progress.js",
-    "old": "    case '/v1/renown/xp': add('renown', n(a.credited)); break;",
-    "new": "    case '/v1/renown/xp': add('renown', n(a.xp)); break;",
+    "old": "      add('renown', n(a.credited));",
+    "new": "      add('renown', n(a.xp));",
     "why": "the measure counts the track's total, never what this report credited",
     "tests": [
       "test/server/int16_progress.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "INT17-first-claim-empty",
     "file": "server-account/src/progress.js",
-    "old": "CASE WHEN b.played_at IS NULL THEN 0 ELSE MAX(0, COALESCE(p.played_s, 0) - b.played_at) END AS played",
-    "new": "CASE WHEN b.played_at IS NULL THEN COALESCE(p.played_s, 0) ELSE MAX(0, COALESCE(p.played_s, 0) - b.played_at) END AS played",
+    "old": "  FROM (SELECT COALESCE(p.played_s, 0) AS now, CASE WHEN b.played_at IS NULL THEN 0 ELSE MAX(0, COALESCE(p.played_s, 0) - b.played_at) END AS played, COALESCE(b.allowance, ?4) AS start",
+    "new": "  FROM (SELECT COALESCE(p.played_s, 0) AS now, CASE WHEN b.played_at IS NULL THEN COALESCE(p.played_s, 0) ELSE MAX(0, COALESCE(p.played_s, 0) - b.played_at) END AS played, COALESCE(b.allowance, ?4) AS start",
     "why": "a first claim credits the account's whole life of play to the hour it lands in",
     "tests": [
       "test/server/int16_progress.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "INT17-measure-keeps-debt",
     "file": "server-account/src/progress.js",
-    "old": "SELECT ?1, ?2, CASE WHEN ?7 THEN s.left ELSE MAX(0, s.left) END, s.now, ?3",
-    "new": "SELECT ?1, ?2, s.left, s.now, ?3",
+    "old": "      SELECT ?1, ?2, CASE WHEN ?7 THEN s.left ELSE MAX(0, s.left) END, s.now, ?3 FROM (${BUCKET_STEP_SQL}) s WHERE true",
+    "new": "      SELECT ?1, ?2, s.left, s.now, ?3 FROM (${BUCKET_STEP_SQL}) s WHERE true",
     "why": "a measured week's debt holds every claimant the day staff turn the line on (AUDIT INT's lesson, the budget's)",
     "tests": [
       "test/server/int16_progress.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "INT17-the-line-kept-past-a-write",
     "file": "server-account/src/review.js",
-    "old": "      forgetProgressConfig(db);",
-    "new": "",
+    "old": "      forgetProgressConfig(db);\n    }",
+    "new": "    }",
     "why": "the line staff wrote waits a minute where they wrote it - the old one kept",
     "tests": [
       "test/server/int16_progress.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "INT16-renown-retried-forever",
     "file": "src/net/renownTracker.js",
-    "old": "'renown-full', 'progress-seat', 'trade-held']);",
-    "new": "'renown-full']);",
+    "old": "const PERMANENT = new Set(['renown-character', 'renown-xp', 'renown-full', 'progress-seat', 'trade-held']); // INT16: not the account's seat here, or a character whose trade is held",
+    "new": "const PERMANENT = new Set(['renown-character', 'renown-xp', 'renown-full']); // INT16: not the account's seat here, or a character whose trade is held",
     "why": "a tab that lost its seat reports every minute, doubling, for the rest of the page",
     "tests": [
       "test/server/int16_progress.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "INT18-blood-past-its-most",
     "file": "src/systems/legacy/legacyLaw.js",
-    "old": "!Object.values(p.blood).every((v) => whole(v, BLOOD_MAX))",
-    "new": "!Object.values(p.blood).every((v) => whole(v, BLOOD_MAX + 1))",
+    "old": "        !Object.values(p.blood).every((v) => whole(v, BLOOD_MAX))",
+    "new": "        !Object.values(p.blood).every((v) => whole(v, BLOOD_MAX + 1))",
     "why": "a gift of four",
     "tests": [
       "test/server/int18_lineage_law.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "INT18-hearth-a-skill-past",
     "file": "src/systems/legacy/legacyLaw.js",
-    "old": "Number(k) < SKILL_COUNT",
-    "new": "Number(k) <= SKILL_COUNT",
+    "old": "          ([k, v]) => /^(0|[1-9]\\d?)$/.test(k) && Number(k) < SKILL_COUNT && whole(v, HEARTH_MAX),",
+    "new": "          ([k, v]) => /^(0|[1-9]\\d?)$/.test(k) && Number(k) <= SKILL_COUNT && whole(v, HEARTH_MAX),",
     "why": "a hearth on a skill the game has none of",
     "tests": [
       "test/server/int18_lineage_law.test.js"
@@ -222,8 +222,8 @@
   {
     "name": "INT18-hearth-past-its-most",
     "file": "src/systems/legacy/legacyLaw.js",
-    "old": "&& whole(v, HEARTH_MAX))) out.add('hearth');",
-    "new": "&& whole(v, HEARTH_MAX + 1))) out.add('hearth');",
+    "old": "          ([k, v]) => /^(0|[1-9]\\d?)$/.test(k) && Number(k) < SKILL_COUNT && whole(v, HEARTH_MAX),",
+    "new": "          ([k, v]) => /^(0|[1-9]\\d?)$/.test(k) && Number(k) < SKILL_COUNT && whole(v, HEARTH_MAX + 1),",
     "why": "a hearth gift of four",
     "tests": [
       "test/server/int18_lineage_law.test.js"
@@ -232,8 +232,8 @@
   {
     "name": "INT18-estate-past-its-ceiling",
     "file": "src/systems/legacy/legacyLaw.js",
-    "old": "!whole(record.pending.estate ?? 0, ESTATE_MAX)",
-    "new": "!whole(record.pending.estate ?? 0, ESTATE_MAX + 1)",
+    "old": "  if (record?.pending != null && !whole(record.pending.estate ?? 0, ESTATE_MAX)) out.add('estate');",
+    "new": "  if (record?.pending != null && !whole(record.pending.estate ?? 0, ESTATE_MAX + 1)) out.add('estate');",
     "why": "a waiting estate one past the birth's ceiling",
     "tests": [
       "test/server/int18_lineage_law.test.js"
@@ -242,7 +242,7 @@
   {
     "name": "INT18-a-death-unwritten",
     "file": "src/systems/legacy/legacyLaw.js",
-    "old": "      if (was.died && !now.died && !((was.kind ?? 'member') === 'union' && revivedOf(now).includes(Number(was.died.at)))) out.add('death');",
+    "old": "      if (\n        was.died &&\n        !now.died &&\n        !((was.kind ?? 'member') === 'union' && revivedOf(now).includes(Number(was.died.at)))\n      )\n        out.add('death');",
     "new": "",
     "why": "a copy that takes back a death the line recorded lands",
     "tests": [
@@ -252,8 +252,8 @@
   {
     "name": "INT18-a-retirement-unwritten",
     "file": "src/systems/legacy/legacyLaw.js",
-    "old": "      if (was.retired != null && now.retired == null) out.add('retired');",
-    "new": "",
+    "old": "      if (was.retired != null && now.retired == null) out.add('retired');\n    }",
+    "new": "    }",
     "why": "an Enduring elder retired, played again",
     "tests": [
       "test/server/int18_lineage_law.test.js"
@@ -262,7 +262,7 @@
   {
     "name": "INT18-a-member-dropped",
     "file": "src/systems/legacy/legacyLaw.js",
-    "old": "      if (!now) { out.add('member'); continue; }",
+    "old": "      if (!now) {\n        out.add('member');\n        continue;\n      }",
     "new": "      if (!now) continue;",
     "why": "a copy that loses a member lands",
     "tests": [
@@ -272,8 +272,8 @@
   {
     "name": "INT18-remains-dropped",
     "file": "src/systems/legacy/legacyLaw.js",
-    "old": "for (const r of Array.isArray(stored.remains) ? stored.remains : []) if (!rows.has(r?.id)) out.add('remains');",
-    "new": "for (const r of Array.isArray(stored.remains) ? stored.remains : []) if (false) out.add('remains');",
+    "old": "    for (const r of Array.isArray(stored.remains) ? stored.remains : []) if (!rows.has(r?.id)) out.add('remains');",
+    "new": "    for (const r of Array.isArray(stored.remains) ? stored.remains : []) if (false) out.add('remains');",
     "why": "a fallen's remains vanish from the record",
     "tests": [
       "test/server/int18_lineage_law.test.js"

@@ -57,8 +57,8 @@
   {
     "name": "REVENANT-FATE-the-record-open",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "  revenantExecuted(player, f.entity);\n",
-    "new": "",
+    "old": "  revenantExecuted(player, f.entity);\n  swornWitness(f.mobileType ?? f.entity?.mobileType); // RVN11 (Feud-Arc.md 22.1): one of its own kind executed in a sworn one's sight, -15",
+    "new": "  swornWitness(f.mobileType ?? f.entity?.mobileType); // RVN11 (Feud-Arc.md 22.1): one of its own kind executed in a sworn one's sight, -15",
     "tests": [
       "test/systems/revenant/revenant_fate.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "REVENANT-FATE-spare-past-the-retinue",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "  if (!retinueHasRoom()) return null;\n  setRetinuePlayer(player);\n  const state = swornPlace();",
-    "new": "  setRetinuePlayer(player);\n  const state = swornPlace();",
+    "old": "  if (!retinueHasRoom()) return null;\n  setRetinuePlayer(player);",
+    "new": "  setRetinuePlayer(player);",
     "tests": [
       "test/systems/revenant/revenant_fate.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "REVENANT-FATE-one-click-decides",
     "file": "src/ui/revenant/revenantFateView.js",
-    "old": "    row.onclick = () => { if (o.disabled) return; if (picked === o.id) onChoose(o.id); else onPick(o.id); };",
-    "new": "    row.onclick = () => { if (o.disabled) return; onChoose(o.id); };",
+    "old": "      if (picked === o.id) onChoose(o.id);\n      else onPick(o.id);",
+    "new": "      onChoose(o.id);",
     "tests": [
       "test/systems/revenant/revenant_fate.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "REVENANT-FATE-back-closes-over-a-pick",
     "file": "src/ui/revenant/revenantFateView.js",
-    "old": "  if (k === 'escape' && picked) { onPick(null); return true; }\n",
-    "new": "",
+    "old": "  if (k === 'escape' && picked) {\n    onPick(null);\n    return true;\n  }\n  return false;",
+    "new": "  return false;",
     "tests": [
       "test/systems/revenant/revenant_fate.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "REVENANT-TROPHY-the-carried-blade-ignored",
     "file": "src/systems/revenant/revenantTrophy.js",
-    "old": "  if (carried != null) return carried;\n",
-    "new": "",
+    "old": "  if (carried != null) return carried;\n  const pool = TROPHY_KIND_WEAPONS[r?.mobileType] ?? [W.Longsword];",
+    "new": "  const pool = TROPHY_KIND_WEAPONS[r?.mobileType] ?? [W.Longsword];",
     "tests": [
       "test/systems/revenant/revenant_fate.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "COMPANION-SLOTS-the-crew-blind-to-the-sworn",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "      if (!find(boat, hand.name) && companionsWithYou() >= COMPANION_SLOTS) return COMPANION_WHY.slots;\n",
-    "new": "",
+    "old": "      if (!find(boat, hand.name) && companionsWithYou() >= COMPANION_SLOTS) return COMPANION_WHY.slots;\n      return null;",
+    "new": "      return null;",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "REVENANT-COMPANION-a-call-past-the-slots",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  if (companionsWithYou() >= COMPANION_SLOTS) return `Your companions are full (${COMPANION_SLOTS}).`;\n",
-    "new": "",
+    "old": "  if (companionsWithYou() >= COMPANION_SLOTS) return `Your companions are full (${COMPANION_SLOTS}).`;\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "REVENANT-COMPANION-health-boosted-at-every-door",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  if (fresh) {\n    entity.maxHealth",
-    "new": "  if (true) {\n    entity.maxHealth",
+    "old": "  if (fresh) {",
+    "new": "  if (true) {",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "COMPANION-PORTAL-the-arrival-unasked",
     "file": "src/scenes/crewAshore.js",
-    "old": "        try { place.fx?.arrive?.(rec); } catch { /* COMPANION-PORTAL: no portal, the stand all the same */ }\n",
-    "new": "",
+    "old": "          try {\n            place.fx?.arrive?.(rec);\n          } catch {\n            /* COMPANION-PORTAL: no portal, the stand all the same */\n          }\n          deps.onStood?.(c, rec);",
+    "new": "          deps.onStood?.(c, rec);",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "COMPANION-PORTAL-the-body-out-at-once",
     "file": "src/scenes/crewAshore.js",
-    "old": "    if (typeof s.fx?.leave !== 'function') { lift(s); return; }",
-    "new": "    { lift(s); return; }",
+    "old": "    if (typeof s.fx?.leave !== 'function') {",
+    "new": "    {",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "COMPANION-PORTAL-the-jump-without-its-pair",
     "file": "src/scenes/crewAshore.js",
-    "old": "          try { s.fx?.jump?.(rec, from); } catch { /* COMPANION-PORTAL: no portal, the step all the same */ }\n",
-    "new": "",
+    "old": "          try {\n            s.fx?.jump?.(rec, from);\n          } catch {\n            /* COMPANION-PORTAL: no portal, the step all the same */\n          }\n          // AUDIT CC-A3: stood afresh - the motor resumes as a puppet handed back does (enemyMotor.js resumeLive: its",
+    "new": "          // AUDIT CC-A3: stood afresh - the motor resumes as a puppet handed back does (enemyMotor.js resumeLive: its",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "COMPANION-PORTAL-never-freed",
     "file": "src/scenes/portalFx.js",
-    "old": "      if (done) { dropDress(p); try { renderer.destroyBillboardBatch(p.batch); } catch { /* gone */ } list.splice(i, 1); continue; }",
-    "new": "      if (false) { continue; }",
+    "old": "      if (done) {\n        dropDress(p);\n        try {\n          renderer.destroyBillboardBatch(p.batch);\n        } catch {\n          /* gone */\n        }\n        list.splice(i, 1);",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "COMPANION-PORTAL-art-outside-the-oval",
     "file": "src/scenes/portalFx.js",
-    "old": "      if (r > 1) continue;   // outside: clear",
-    "new": "      if (r > 1.5) continue;   // outside: clear",
+    "old": "      if (r > 1) continue; // outside: clear",
+    "new": "      if (r > 1.5) continue; // outside: clear",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "COMPANION-PORTAL-standing-in-front",
     "file": "src/scenes/portalFx.js",
-    "old": "        p.origin[0] = p.feet[0] + (dx / L) * PORTAL_BACK; p.origin[2] = p.feet[2] + (dz / L) * PORTAL_BACK;",
-    "new": "        p.origin[0] = p.feet[0] - (dx / L) * PORTAL_BACK; p.origin[2] = p.feet[2] - (dz / L) * PORTAL_BACK;",
+    "old": "        p.origin[0] = p.feet[0] + (dx / L) * PORTAL_BACK;\n        p.origin[2] = p.feet[2] + (dz / L) * PORTAL_BACK;",
+    "new": "        p.origin[0] = p.feet[0] - (dx / L) * PORTAL_BACK;\n        p.origin[2] = p.feet[2] - (dz / L) * PORTAL_BACK;",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "REVENANT-FATE-the-state-left-changed",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "    } finally { this.state = was; }",
-    "new": "    } finally { /* kept */ }",
+    "old": "      this.state = was;",
+    "new": "      /* kept */",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "COMPANION-ROSTER-release-at-one-press",
     "file": "src/ui/companionRoster.js",
-    "old": "    rel.onclick = () => { _confirm = r.id; _notice = null; rerender(); };",
-    "new": "    rel.onclick = () => { releaseRevenant(r.id); rerender(); };",
+    "old": "      _confirm = r.id;\n      _notice = null;",
+    "new": "      releaseRevenant(r.id);",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "COMPANION-ROSTER-the-refusal-unsaid",
     "file": "src/ui/companionRoster.js",
-    "old": "      call.onclick = () => { const no = callRevenant(r.id, now); _notice = no ? { id: r.id, text: no } : null; rerender(); };",
-    "new": "      call.onclick = () => { callRevenant(r.id, now); rerender(); };",
+    "old": "        const no = callRevenant(r.id, now);\n        _notice = no ? { id: r.id, text: no } : null;",
+    "new": "        callRevenant(r.id, now);",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]

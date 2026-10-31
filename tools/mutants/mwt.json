@@ -29,8 +29,8 @@
   {
     "name": "MWT2-emissiveAt-reads-the-material-for-an-Emission-mesh-so-the-flame-takes-the-blacked-out-diffuse",
     "file": "src/formats/morrowind/mwNifMesh.js",
-    "old": "  if (colors && m === VERTEX_COLOR_MODE.Emission) {\n    return [colors[i * 4], colors[i * 4 + 1], colors[i * 4 + 2]];\n  }",
-    "new": "  if (false) {\n    return [colors[i * 4], colors[i * 4 + 1], colors[i * 4 + 2]];\n  }",
+    "old": "  if (colors && m === VERTEX_COLOR_MODE.Emission) {",
+    "new": "  if (false) {",
     "tests": [
       "test/formats/morrowind/mwnifmesh.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "HT7-the-sheathed-stance-frees-a-worn-left-hand-again",
     "file": "src/systems/handheldTorches.js",
-    "old": "    if (left) {\n      w.handLeft = false;\n      if (getItemHands(left) === ITEM_HANDS.Both || isBow(left)) w.handRight = false;\n    }",
-    "new": "    if (left && !sheathedNow) {\n      w.handLeft = false;\n      if (getItemHands(left) === ITEM_HANDS.Both || isBow(left)) w.handRight = false;\n    }",
+    "old": "    if (left) {",
+    "new": "    if (left && !sheathedNow) {",
     "tests": [
       "test/systems/ht6_offhand.test.js",
       "test/systems/ht1_handheldtorches.test.js"
@@ -122,7 +122,7 @@
   {
     "name": "HT7-a-bare-right-hand-is-in-use-while-the-weapon-is-away",
     "file": "src/systems/handheldTorches.js",
-    "old": "    } else if (!sheathedNow && usingRightNow) w.handRight = false;   // bare right hand, in use (0x2d53) - and only with the weapon up",
+    "old": "    } else if (!sheathedNow && usingRightNow) w.handRight = false; // bare right hand, in use (0x2d53) - and only with the weapon up",
     "new": "    } else if (usingRightNow) w.handRight = false;",
     "tests": [
       "test/systems/ht1_handheldtorches.test.js"
@@ -131,8 +131,8 @@
   {
     "name": "HT7-the-port-ships-the-mods-own-Drop-default-again",
     "file": "src/systems/modSettings.js",
-    "old": "      'Handling.OnStow': Object.freeze({ default: 0, options: lazyWords(() => t('mods.handheldTorches.option.unequip', 'Unequip'), () => t('mods.handheldTorches.option.drop', 'Drop')), get description() { return t('mods.handheldTorches.Handling.OnStow.description', 'Behavior when forced to stow a light source'); } }),",
-    "new": "      'Handling.OnStow': Object.freeze({ default: 1, options: lazyWords(() => t('mods.handheldTorches.option.unequip', 'Unequip'), () => t('mods.handheldTorches.option.drop', 'Drop')), get description() { return t('mods.handheldTorches.Handling.OnStow.description', 'Behavior when forced to stow a light source'); } }),",
+    "old": "      'Handling.OnStow': Object.freeze({\n        default: 0,",
+    "new": "      'Handling.OnStow': Object.freeze({\n        default: 1,",
     "tests": [
       "test/systems/ht6_offhand.test.js",
       "test/systems/ht1_handheldtorches.test.js"

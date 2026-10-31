@@ -20,8 +20,8 @@
   {
     "name": "ARENA6-NOT-A-FLOOR",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "isArenaBoutRoom(key) || isArenaExhibitionRoom(key) || isArenaPrivateRoom(key);",
-    "new": "isArenaBoutRoom(key) || isArenaExhibitionRoom(key);",
+    "old": "export const isArenaFloorRoom = (key) => isArenaBoutRoom(key) || isArenaExhibitionRoom(key) || isArenaPrivateRoom(key);",
+    "new": "export const isArenaFloorRoom = (key) => isArenaBoutRoom(key) || isArenaExhibitionRoom(key);",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ARENA6-CODE-BIASED",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "if (b < A.length * 8 && out.length < ARENA_PRIVATE_CODE_LEN)",
-    "new": "if (b < 256 && out.length < ARENA_PRIVATE_CODE_LEN)",
+    "old": "      if (b < A.length * 8 && out.length < ARENA_PRIVATE_CODE_LEN) out += A[b % A.length];",
+    "new": "      if (b < 256 && out.length < ARENA_PRIVATE_CODE_LEN) out += A[b % A.length];",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ARENA6-LIFE-FOREVER",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "  if (now - S.at >= ARENA_PRIVATE_LIFE_MS) return 'life';\n",
-    "new": "",
+    "old": "  if (now - S.at >= ARENA_PRIVATE_LIFE_MS) return 'life';\n  if (S.hostGoneAt != null && now - S.hostGoneAt >= ARENA_PRIVATE_HOST_GONE_MS) return 'host';",
+    "new": "  if (S.hostGoneAt != null && now - S.hostGoneAt >= ARENA_PRIVATE_HOST_GONE_MS) return 'host';",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ARENA6-HOST-GONE-FOREVER",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "  if (S.hostGoneAt != null && now - S.hostGoneAt >= ARENA_PRIVATE_HOST_GONE_MS) return 'host';\n",
-    "new": "",
+    "old": "  if (S.hostGoneAt != null && now - S.hostGoneAt >= ARENA_PRIVATE_HOST_GONE_MS) return 'host';\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "ARENA6-HEALTH-BY-LEVEL",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "(st.equal ? ARENA_PRIVATE_VITALITY : pvpVitality(x.lv))",
-    "new": "pvpVitality(x.lv)",
+    "old": "    maxHealth:\n      st.kind === 'pvp' ? (st.equal ? ARENA_PRIVATE_VITALITY : pvpVitality(x.lv)) : ladderVitality(x.cl, x.lv, st.tier),",
+    "new": "    maxHealth: st.kind === 'pvp' ? pvpVitality(x.lv) : ladderVitality(x.cl, x.lv, st.tier),",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "ARENA6-GUEST-FIGHTS",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "  if (x.guest) return 'guest fighter';\n",
-    "new": "",
+    "old": "  if (x.guest) return 'guest fighter';\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "ARENA6-KICKED-REJOINS",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "  if (S.kicked.includes(who.sub)) return { no: 'removed' };\n",
-    "new": "",
+    "old": "  if (S.kicked.includes(who.sub)) return { no: 'removed' };\n  let me = S.members[who.sub];",
+    "new": "  let me = S.members[who.sub];",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "ARENA6-SAME-FIGHTER",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "  if (red && blue && red === blue) return { no: 'same fighter' };\n",
-    "new": "",
+    "old": "  if (red && blue && red === blue) return { no: 'same fighter' };\n  if (red !== undefined) {",
+    "new": "  if (red !== undefined) {",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "ARENA6-CLIENT-WORD-UNSAID",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "    else if (!sess.sent) {\n      const bn = bannerClaim",
-    "new": "    else if (false) {\n      const bn = bannerClaim",
+    "old": "    else if (!sess.sent) {",
+    "new": "    else if (false) {",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "ARENA6-CLIENT-STATE-UNKEPT",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "    sess.state = w;\n",
-    "new": "    void w;\n",
+    "old": "    sess.state = w;",
+    "new": "    void w;",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "ARENA6-CLIENT-FIGHTER-IN-STANDS",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "deps.closeWindow?.(); deps.standOnMark?.(side === 1 ? 'rival' : 'ladder'); say(O.privToSand); }",
-    "new": "deps.closeWindow?.(); }",
+    "old": "      deps.standOnMark?.(side === 1 ? 'rival' : 'ladder');\n      say(O.privToSand);\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "ARENA6-CLIENT-LEFT-ON-SAND",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "    if (stay) { deps.standOnMark?.('watch'); say(O.privToStands); }\n",
-    "new": "",
+    "old": "    if (stay) {\n      deps.standOnMark?.('watch');\n      say(O.privToStands);\n    }\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "ARENA6-CLIENT-END-STAYS",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "if (SESSION_ENDS.has(w.m)) { say(text); leaveSession(true, text); return true; }",
-    "new": "if (SESSION_ENDS.has(w.m)) { say(text); leaveSession(false, text); return true; }",
+    "old": "      leaveSession(true, text);",
+    "new": "      leaveSession(false, text);",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "ARENA6-CLIENT-GUEST-HOSTS",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "        if (deps.guest?.()) return { ok: false, text: ARENA_NO_TEXT['host guest'] };\n",
-    "new": "",
+    "old": "        if (deps.guest?.()) return { ok: false, text: ARENA_NO_TEXT['host guest'] };\n        const code = arenaPrivateCode((n) =>",
+    "new": "        const code = arenaPrivateCode((n) =>",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "ARENA6-CLIENT-QUEUE-IN-SESSION",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "      if (sess) return { ok: false, text: O.privIn };   // ARENA6: one place at a time",
-    "new": "      if (false) return { ok: false, text: O.privIn };   // ARENA6: one place at a time",
+    "old": "      if (sess) return { ok: false, text: O.privIn }; // ARENA6: one place at a time - the session's room is this screen's",
+    "new": "      if (false) return { ok: false, text: O.privIn }; // ARENA6: one place at a time - the session's room is this screen's",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "ARENA6-CLIENT-BAD-CODE-SENT",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "      if (!ARENA_PRIVATE_CODE_RE.test(code)) return { ok: false, text: O.privBadCode };\n",
-    "new": "",
+    "old": "      if (!ARENA_PRIVATE_CODE_RE.test(code)) return { ok: false, text: O.privBadCode };\n      void enterSession(code, false);",
+    "new": "      void enterSession(code, false);",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "ARENA6-CARD-EVERYONE-HOSTS",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "  const host = w.h === 1;\n  const name = (id) =>",
-    "new": "  const host = true;\n  const name = (id) =>",
+    "old": "  const host = w.h === 1;",
+    "new": "  const host = true;",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "ARENA6-CARD-NO-JOIN",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "      join: { label: T.privJoin,",
-    "new": "      xjoin: { label: T.privJoin,",
+    "old": "      join: { label: T.privJoin, field: T.privCodeLabel, hint: T.privCodeHint, why: wait },",
+    "new": "      xjoin: { label: T.privJoin, field: T.privCodeLabel, hint: T.privCodeHint, why: wait },",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "ARENA6-CARD-MISSING-ONLINE",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "    if (o.online?.session) placeSession(",
-    "new": "    if (false) placeSession(",
+    "old": "    if (o.online?.session)",
+    "new": "    if (false)",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "ARENA6-GATE-NO-PRIV",
     "file": "src/scenes/arena/arenaGate.js",
-    "old": "    if (typeof kind === 'string' && kind.startsWith('priv')) return online()?.act(kind, data)",
-    "new": "    if (false) return online()?.act(kind, data)",
+    "old": "    if (typeof kind === 'string' && kind.startsWith('priv'))\n      return online()?.act(kind, data) ?? { ok: false, text: ARENA_TEXT.online.whyOffline };",
+    "new": "    if (false) return online()?.act(kind, data) ?? { ok: false, text: ARENA_TEXT.online.whyOffline };",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "ARENA6-CLIENT-OUTDOORS-UNSAID",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "{ sess = null; say(O.privOutdoors); sessLast",
-    "new": "{ sess = null; sessLast",
+    "old": "      say(O.privOutdoors);\n      sessLast = { text: O.privOutdoors, code, back: false };",
+    "new": "      sessLast = { text: O.privOutdoors, code, back: false };",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "ARENA6-CLIENT-OUTDOORS-HELD",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "{ sess = null; say(O.privOutdoors); sessLast",
-    "new": "{ say(O.privOutdoors); sessLast",
+    "old": "      sess = null;\n      say(O.privOutdoors);",
+    "new": "      say(O.privOutdoors);",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "ARENA6-FLOOR-ROOM-FOR-A-CODE-MISSING",
     "file": "src/net/arena/arenaLaw.js",
-    "old": " || isArenaPrivateRoom(`arena:${o}`) ? `arena:${o}`",
-    "new": " ? `arena:${o}`",
+    "old": "  ARENA_BOUT_ID_RE.test(String(o ?? ''))\n    ? arenaBoutRoom(o)\n    : isArenaExhibitionRoom(`arena:${o}`) || isArenaPrivateRoom(`arena:${o}`)\n      ? `arena:${o}`\n      : null;",
+    "new": "  ARENA_BOUT_ID_RE.test(String(o ?? '')) ? arenaBoutRoom(o) : isArenaExhibitionRoom(`arena:${o}`) ? `arena:${o}` : null;",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "ARENA6-ACCOUNT-ID-ON-THE-WIRE",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "m: list.map(([s, x]) => [x.id, x.name,",
-    "new": "m: list.map(([s, x]) => [s, x.name,",
+    "old": "    m: list.map(([s, x]) => [x.id, x.name, x.guest ? 1 : 0, here(s) ? 1 : 0, x.title ?? '', x.banner ?? '']),",
+    "new": "    m: list.map(([s, x]) => [s, x.name, x.guest ? 1 : 0, here(s) ? 1 : 0, x.title ?? '', x.banner ?? '']),",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "ARENA6-GONE-MEMBER-PICKED",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "if (!x || !here(sub)) return 'not here';",
-    "new": "if (!x) return 'not here';",
+    "old": "  if (!x || !here(sub)) return 'not here';",
+    "new": "  if (!x) return 'not here';",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -344,7 +344,7 @@
   {
     "name": "ARENA6-GO-WITHOUT-PICKS",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "if (!S.red || !S.blue) return { no: 'no picks' };",
+    "old": "  if (!S.red || !S.blue) return { no: 'no picks' };",
     "new": "",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
@@ -398,8 +398,8 @@
   {
     "name": "ARENA6-ENDED-WHEN-HOST-BLINKED",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "now - S.hostGoneAt >= ARENA_PRIVATE_HOST_GONE_MS",
-    "new": "now - S.hostGoneAt >= 0",
+    "old": "  if (S.hostGoneAt != null && now - S.hostGoneAt >= ARENA_PRIVATE_HOST_GONE_MS) return 'host';",
+    "new": "  if (S.hostGoneAt != null && now - S.hostGoneAt >= 0) return 'host';",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "ARENA6-CAP-UNBOUNDED-BRAIN",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "if (Object.keys(S.members).length >= ARENA_PRIVATE_MEMBERS_MAX) {",
-    "new": "if (false) {",
+    "old": "    if (Object.keys(S.members).length >= ARENA_PRIVATE_MEMBERS_MAX) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "ARENA6-ONE-HERE-EVICTED",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "sub !== S.host && !here(sub) && !keep.includes(sub)",
-    "new": "sub !== S.host && !keep.includes(sub)",
+    "old": "        .filter(([sub]) => sub !== S.host && !here(sub) && !keep.includes(sub))",
+    "new": "        .filter(([sub]) => sub !== S.host && !keep.includes(sub))",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -488,7 +488,7 @@
   {
     "name": "ARENA6-UNKNOWN-ACT-TAKEN",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "if (!ARENA_PS_ACTS.includes(m.a)) return null;",
+    "old": "      if (!ARENA_PS_ACTS.includes(m.a)) return null;",
     "new": "",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
@@ -497,8 +497,8 @@
   {
     "name": "ARENA6-ACCOUNT-ID-FOR-A-MEMBER-IN",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "const mid = (v) => typeof v === 'string' && (v === '' || ARENA_MEMBER_ID_RE.test(v));\n      if (m.a === 'pick')",
-    "new": "const mid = (v) => typeof v === 'string';\n      if (m.a === 'pick')",
+    "old": "      }\n      const mid = (v) => typeof v === 'string' && (v === '' || ARENA_MEMBER_ID_RE.test(v));",
+    "new": "      }\n      const mid = (v) => typeof v === 'string';",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "ARENA6-PSS-BAD-CODE",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "if (typeof m.c !== 'string' || !ARENA_PRIVATE_CODE_RE.test(m.c) ||",
-    "new": "if (typeof m.c !== 'string' ||",
+    "old": "      if (typeof m.c !== 'string' || !ARENA_PRIVATE_CODE_RE.test(m.c) || !nameOk(m.hn) || (m.h !== 0 && m.h !== 1))\n        return null;",
+    "new": "      if (typeof m.c !== 'string' || !nameOk(m.hn) || (m.h !== 0 && m.h !== 1)) return null;",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "ARENA6-PSS-BAD-MEMBER",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "if (typeof id !== 'string' || !ARENA_MEMBER_ID_RE.test(id) ||",
-    "new": "if (typeof id !== 'string' ||",
+    "old": "        if (\n          typeof id !== 'string' ||\n          !ARENA_MEMBER_ID_RE.test(id) ||\n          !nameOk(n) ||\n          (g !== 0 && g !== 1) ||\n          (here !== 0 && here !== 1)\n        )\n          return null;",
+    "new": "        if (typeof id !== 'string' || !nameOk(n) || (g !== 0 && g !== 1) || (here !== 0 && here !== 1)) return null;",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "ARENA6-PSS-TOO-MANY",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "if (!Array.isArray(m.m) || m.m.length > ARENA_PRIVATE_MEMBERS_MAX) return null;",
-    "new": "if (!Array.isArray(m.m)) return null;",
+    "old": "      if (!Array.isArray(m.m) || m.m.length > ARENA_PRIVATE_MEMBERS_MAX) return null;",
+    "new": "      if (!Array.isArray(m.m)) return null;",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "ARENA6-PSS-BAD-PHASE",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "(m.ph !== '' && !ARENA_ST_PHASES.includes(m.ph))",
-    "new": "false",
+    "old": "      if (typeof m.ph !== 'string' || (m.ph !== '' && !ARENA_ST_PHASES.includes(m.ph))) return null;",
+    "new": "      if (typeof m.ph !== 'string' || false) return null;",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "ARENA6-PSS-ONE-FIGHTER",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "(m.f.length === 2 && m.f.every(",
-    "new": "(m.f.length >= 1 && m.f.every(",
+    "old": "          (m.f.length === 2 && m.f.every((v) => typeof v === 'string' && ARENA_MEMBER_ID_RE.test(v)))",
+    "new": "          (m.f.length >= 1 && m.f.every((v) => typeof v === 'string' && ARENA_MEMBER_ID_RE.test(v)))",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "ARENA6-REFUSAL-UNSAID",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "  'bout on': 'A bout is under way. End it first.',\n",
-    "new": "",
+    "old": "  'bout on': 'A bout is under way. End it first.',\n  'no picks': 'Pick a Red and a Blue first.',",
+    "new": "  'no picks': 'Pick a Red and a Blue first.',",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]

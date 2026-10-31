@@ -11,7 +11,7 @@
   {
     "name": "DECOR1d-a-dungeon-block-read",
     "file": "src/systems/decor/decorScan.js",
-    "old": "        if (!isTownBlock(type) && !isDungeonBlock(type)) continue;   // DECOR-DUNGEON: and a dungeon's furnishings",
+    "old": "        if (!isTownBlock(type) && !isDungeonBlock(type)) continue; // DECOR-DUNGEON: and a dungeon's furnishings",
     "new": "        if (false) continue;",
     "tests": [
       "test/scenes/decor/decor1d.test.js"
@@ -21,7 +21,7 @@
     "name": "DECOR1d-the-count-per-step",
     "file": "src/systems/decor/decorScan.js",
     "old": "        if (b) collectDecor([b], collected);",
-    "new": "        if (b) { collected.clear(); collectDecor([b], collected); }",
+    "new": "        if (b) {\n          collected.clear();\n          collectDecor([b], collected);\n        }",
     "tests": [
       "test/scenes/decor/decor1d.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DECOR1d-a-zero-radius-kept",
     "file": "src/systems/decor/decorScan.js",
-    "old": "if (Number.isFinite(r) && r > 0) { radii.set(key, r);",
-    "new": "if (Number.isFinite(r)) { radii.set(key, r);",
+    "old": "    if (Number.isFinite(r) && r > 0) {",
+    "new": "    if (Number.isFinite(r)) {",
     "tests": [
       "test/scenes/decor/decor1d.test.js"
     ],

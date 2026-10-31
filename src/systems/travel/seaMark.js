@@ -37,7 +37,13 @@ export function seaLegWindow(x, y) {
  *  @param {(x: number, z: number) => boolean | null} waterAt */
 export function seaLegBuiltAt(origin, waterAt) {
   const c = MP_WORLD_UNITS / 2;
-  for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) if (waterAt(origin.x + c + (a * TILE) / 2, origin.z + c + (b * TILE) / 2) === null) return false;
+  for (const [a, b] of [
+    [-1, -1],
+    [1, -1],
+    [-1, 1],
+    [1, 1],
+  ])
+    if (waterAt(origin.x + c + (a * TILE) / 2, origin.z + c + (b * TILE) / 2) === null) return false;
   return true;
 }
 /** A leg's pixel whose ground is not built yet - aimed at its middle, and again once it is. */
@@ -56,17 +62,23 @@ export const SEA_LEG_DRY = Object.freeze({ dry: true });
 export function seaLegMark(origin, waterAt) {
   if (typeof waterAt !== 'function') return null;
   const floats = (/** @type {number} */ x, /** @type {number} */ z) => {
-    for (let a = -MARK_BLOCK_HALF; a <= MARK_BLOCK_HALF; a++) for (let b = -MARK_BLOCK_HALF; b <= MARK_BLOCK_HALF; b++) if (!waterAt(x + a * TILE, z + b * TILE)) return false;
+    for (let a = -MARK_BLOCK_HALF; a <= MARK_BLOCK_HALF; a++)
+      for (let b = -MARK_BLOCK_HALF; b <= MARK_BLOCK_HALF; b++) if (!waterAt(x + a * TILE, z + b * TILE)) return false;
     return true;
   };
   const mid = PIXEL_TILES / 2;
-  const at = (/** @type {number} */ i, /** @type {number} */ j) => ({ x: origin.x + (i + 0.5) * TILE, z: origin.z + (j + 0.5) * TILE });
+  const at = (/** @type {number} */ i, /** @type {number} */ j) => ({
+    x: origin.x + (i + 0.5) * TILE,
+    z: origin.z + (j + 0.5) * TILE,
+  });
   const centre = { x: origin.x + MP_WORLD_UNITS / 2, z: origin.z + MP_WORLD_UNITS / 2 };
   if (!seaLegBuiltAt(origin, waterAt)) return SEA_LEG_UNBUILT;
   if (floats(centre.x, centre.z)) return null;
-  const lo = MARK_BLOCK_HALF, hi = PIXEL_TILES - 1 - MARK_BLOCK_HALF;
+  const lo = MARK_BLOCK_HALF,
+    hi = PIXEL_TILES - 1 - MARK_BLOCK_HALF;
   /** @type {{ x: number, z: number } | null} */
-  let best = null, bestD = Infinity;
+  let best = null,
+    bestD = Infinity;
   // ring by ring out from the middle; a ring wholly farther than the nearest found ends the walk
   for (let r = 0; r <= mid; r++) {
     if ((r - 1) * TILE > bestD) break;
@@ -74,8 +86,12 @@ export function seaLegMark(origin, waterAt) {
       for (let j = mid - 1 - r; j <= mid + r; j++) {
         const onRing = i === mid - 1 - r || i === mid + r || j === mid - 1 - r || j === mid + r;
         if (!onRing || i < lo || i > hi || j < lo || j > hi) continue;
-        const p = at(i, j), d = Math.hypot(p.x - centre.x, p.z - centre.z);
-        if (d < bestD && floats(p.x, p.z)) { best = p; bestD = d; }
+        const p = at(i, j),
+          d = Math.hypot(p.x - centre.x, p.z - centre.z);
+        if (d < bestD && floats(p.x, p.z)) {
+          best = p;
+          bestD = d;
+        }
       }
     }
   }

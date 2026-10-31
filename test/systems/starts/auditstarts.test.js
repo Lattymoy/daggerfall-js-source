@@ -491,7 +491,7 @@ test('AUDIT STARTS U6/U7 the drafted words: French says a ship\'s own name bare,
 });
 
 test('AUDIT STARTS W8 the boot\'s ?start= is a dev door of its boot alone: an online page, a birth\'s and a load\'s address drop it, and so does every front door\'s choice (mutants: a door keeping it)', () => {
-  assert.match(rd('src/systems/online/onlineLane.js'), /export const BOOT_DOOR_KEYS = Object\.freeze\(\[[^\]]*'start'\]\);/);
+  assert.match(rd('src/systems/online/onlineLane.js'), /export const BOOT_DOOR_KEYS = Object\.freeze\(\[\n\s*'load',\n\s*'online',\n\s*'loadkey',\n\s*'test',\n\s*'classic',\n\s*'classicload',\n\s*'realm',\n\s*'realmnew',\n\s*'legacyborn',\n\s*'region',\n\s*'loc',\n\s*'seat',\n\s*'start',\n\s*\]\);/);
   const P = rd('src/systems/legacy/places.js');
   assert.equal([...P.matchAll(/for \(const k of \[[^\]]*'start'\]\) p\.delete\(k\);/g)].length, 2, 'a birth\'s address and a load\'s');
   assert.equal([...rd('src/main.js').matchAll(/params\.delete\('start'\);/g)].length, 2, 'and both front doors\' choices (MAC-N3: BOOT_DOOR_KEYS is what main.js decides)');

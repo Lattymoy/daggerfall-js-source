@@ -47,8 +47,8 @@
   {
     "name": "LW10-sold-seed",
     "file": "src/systems/livingWorld/wagons.js",
-    "old": "  return lwSeed(textSeed(trip.id), 0x63617267) % 2 ? CARGO_SOLD : CARGO_BOUGHT;   // 'carg'",
-    "new": "  return CARGO_SOLD;   // 'carg'",
+    "old": "  return lwSeed(textSeed(trip.id), 0x63617267) % 2 ? CARGO_SOLD : CARGO_BOUGHT; // 'carg'",
+    "new": "  return CARGO_SOLD; // 'carg'",
     "tests": [
       "test/systems/livingWorld/lw10_wagons.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "LW10-dir",
     "file": "src/systems/livingWorld/wagons.js",
-    "old": "  const dir = back ? -1 : 1;   // the way it walks, along the way's own s",
-    "new": "  const dir = 1;   // the way it walks, along the way's own s",
+    "old": "  const dir = back ? -1 : 1; // the way it walks, along the way's own s",
+    "new": "  const dir = 1; // the way it walks, along the way's own s",
     "tests": [
       "test/systems/livingWorld/lw10_wagons.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "LW10-park",
     "file": "src/systems/livingWorld/wagons.js",
-    "old": "  const d = Math.max(r + CAMP_PARK_N, slots ?",
-    "new": "  const d = Math.max(r, slots ?",
+    "old": "  const d = Math.max(r + CAMP_PARK_N, slots ? (all * CAMP_TEAM_ARC_N) / (Math.PI * 2) : 0);",
+    "new": "  const d = Math.max(r, slots ? (all * CAMP_TEAM_ARC_N) / (Math.PI * 2) : 0);",
     "tests": [
       "test/systems/livingWorld/lw10_wagons.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LW10-face",
     "file": "src/systems/livingWorld/wagons.js",
-    "old": "    const face = Math.atan2(cx - x, cz - z);   // to the fire",
-    "new": "    const face = Math.atan2(x - cx, z - cz);   // to the fire",
+    "old": "    const face = Math.atan2(cx - x, cz - z); // to the fire",
+    "new": "    const face = Math.atan2(x - cx, z - cz); // to the fire",
     "tests": [
       "test/systems/livingWorld/lw10_wagons.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "LW10-AUDIT-E8-wheels-home",
     "file": "src/systems/livingWorld/wagons.js",
-    "old": "s: back ? trip.way.len - axle : axle, hitched: true });",
-    "new": "s: axle, hitched: true });",
+    "old": "        s: back ? trip.way.len - axle : axle,",
+    "new": "        s: axle,",
     "tests": [
       "test/systems/livingWorld/lw10_wagons.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "LW10-WAGONS1-camp-hitched",
     "file": "src/systems/livingWorld/wagons.js",
-    "old": "tier: cargoOf(trip, t), s: 0, hitched: false });",
-    "new": "tier: cargoOf(trip, t), s: 0, hitched: true });",
+    "old": "        hitched: false,",
+    "new": "        hitched: true,",
     "tests": [
       "test/systems/livingWorld/lw10_wagons.test.js"
     ]

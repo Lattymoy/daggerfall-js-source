@@ -56,8 +56,8 @@
   {
     "name": "START3-lens-site-unpassed",
     "file": "src/ui/quest/questLens.js",
-    "old": "!!where.canFindPlace(site.regionName, site.locationName, site)",
-    "new": "!!where.canFindPlace(site.regionName, site.locationName)",
+    "old": "  const onMap = where.canFindPlace ? !!where.canFindPlace(site.regionName, site.locationName, site) : null; // START3: the site, for its pixel past the Bay",
+    "new": "  const onMap = where.canFindPlace ? !!where.canFindPlace(site.regionName, site.locationName) : null; // START3: the site, for its pixel past the Bay",
     "tests": [
       "test/systems/starts/start3_pastbay_marks.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "START3-find-unpixeled",
     "file": "src/ui/quest/questLens.js",
-    "old": ", ...(site.worldPixel ? { worldPixel: site.worldPixel } : {}) } : null,",
-    "new": " } : null,",
+    "old": "        ? {\n            regionIndex: site.regionIndex ?? 0,\n            regionName: site.regionName ?? '',\n            locationName: site.locationName,\n            ...(site.worldPixel ? { worldPixel: site.worldPixel } : {}),\n          }",
+    "new": "        ? { regionIndex: site.regionIndex ?? 0, regionName: site.regionName ?? '', locationName: site.locationName }",
     "tests": [
       "test/systems/starts/start3_pastbay_marks.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "START3-frame-far-edge",
     "file": "src/ui/quest/questMarks.js",
-    "old": "px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h",
-    "new": "px < box.x0 || py < box.y0 || py >= box.y0 + box.h",
+    "old": "    if (\n      !Number.isInteger(px) ||\n      !Number.isInteger(py) ||\n      px < box.x0 ||\n      py < box.y0 ||\n      px >= box.x0 + box.w ||\n      py >= box.y0 + box.h\n    )\n      continue;",
+    "new": "    if (!Number.isInteger(px) || !Number.isInteger(py) || px < box.x0 || py < box.y0 || py >= box.y0 + box.h) continue;",
     "tests": [
       "test/systems/starts/start3_pastbay_marks.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "START3-mark-unnamed",
     "file": "src/ui/quest/questMarks.js",
-    "old": "placeName: find.locationName, quests: [], tracked: false };",
-    "new": "quests: [], tracked: false };",
+    "old": "      placeName: find.locationName,\n      quests: [],",
+    "new": "      quests: [],",
     "tests": [
       "test/systems/starts/start3_pastbay_marks.test.js"
     ]

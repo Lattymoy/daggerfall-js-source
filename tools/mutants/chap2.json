@@ -2,8 +2,8 @@
   {
     "name": "CHAP2-WRIT-SCALE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "export const hallWritCount = (/** @type {unknown} */ active) => 2 * Math.max(1, Math.ceil(Math.max(0, Number(active) || 0) / 100));",
-    "new": "export const hallWritCount = (/** @type {unknown} */ active) => 2 * Math.max(1, Math.ceil(Math.max(0, Number(active) || 0) / 200));",
+    "old": "  2 * Math.max(1, Math.ceil(Math.max(0, Number(active) || 0) / 100));",
+    "new": "  2 * Math.max(1, Math.ceil(Math.max(0, Number(active) || 0) / 200));",
     "tests": [
       "test/net/chap2_halls.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CHAP2-WRIT-FLOOR",
     "file": "src/net/npcChapterLaw.js",
-    "old": "=> 2 * Math.max(1, Math.ceil(",
-    "new": "=> 2 * Math.max(0, Math.ceil(",
+    "old": "  2 * Math.max(1, Math.ceil(Math.max(0, Number(active) || 0) / 100));",
+    "new": "  2 * Math.max(0, Math.ceil(Math.max(0, Number(active) || 0) / 100));",
     "tests": [
       "test/net/chap2_halls.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CHAP2-KINDS",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const from = own.length ? own : table;",
-    "new": "const from = table;",
+    "old": "  const from = own.length ? own : table;",
+    "new": "  const from = table;",
     "tests": [
       "test/net/chap2_halls.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "CHAP2-OWN-DICE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const dice = (/** @type {number} */ slot, /** @type {number} */ k) => gateHash(HALL_WRIT_SALT, day, region, faction, slot, k) / 4294967296;",
-    "new": "const dice = undefined;",
+    "old": "  const dice = (/** @type {number} */ slot, /** @type {number} */ k) =>\n    gateHash(HALL_WRIT_SALT, day, region, faction, slot, k) / 4294967296;",
+    "new": "  const dice = undefined;",
     "tests": [
       "test/net/chap2_halls.test.js",
       "test/net/audit_chap2.test.js"
@@ -49,8 +49,8 @@
   {
     "name": "CHAP2-REPORT-DUP",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  if (sorted.length !== factions.length) return null;\n",
-    "new": "",
+    "old": "  if (sorted.length !== factions.length) return null;\n  return { key, region, factions: sorted };",
+    "new": "  return { key, region, factions: sorted };",
     "tests": [
       "test/net/chap2_halls.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "CHAP2-JOIN-FLOOR",
     "file": "src/net/npcChapterLaw.js",
-    "old": "rollRep(rep) >= RANK_REQ_REPUTATION[0];",
-    "new": "rollRep(rep) > RANK_REQ_REPUTATION[0];",
+    "old": "  hallHidden(faction) || rollRep(rep) >= RANK_REQ_REPUTATION[0];",
+    "new": "  hallHidden(faction) || rollRep(rep) > RANK_REQ_REPUTATION[0];",
     "tests": [
       "test/net/chap2_halls.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "CHAP2-HALL-KIND",
     "file": "src/net/npcHallBook.js",
-    "old": "if (!id || (b?.buildingType !== BUILDING_TYPES.GuildHall && b?.buildingType !== BUILDING_TYPES.Temple)) continue;",
-    "new": "if (!id) continue;",
+    "old": "    if (!id || (b?.buildingType !== BUILDING_TYPES.GuildHall && b?.buildingType !== BUILDING_TYPES.Temple)) continue;",
+    "new": "    if (!id) continue;",
     "tests": [
       "test/net/chap2_halls.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "CHAP2-HIDDEN",
     "file": "src/net/npcHallBook.js",
-    "old": "return isRollFaction(f) && !HIDDEN.has(/** @type {number} */ (f)) ? /** @type {number} */ (f) : null;",
-    "new": "return isRollFaction(f) ? /** @type {number} */ (f) : null;",
+    "old": "  return isRollFaction(f) && !HIDDEN.has(/** @type {number} */ (f)) ? /** @type {number} */ (f) : null;",
+    "new": "  return isRollFaction(f) ? /** @type {number} */ (f) : null;",
     "tests": [
       "test/net/chap2_halls.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "CHAP2-NO-DICT",
     "file": "src/net/npcHallBook.js",
-    "old": "  if (!factionDict) return [];\n",
-    "new": "",
+    "old": "  if (!factionDict) return [];\n  /** @type {Set<number>} */",
+    "new": "  /** @type {Set<number>} */",
     "tests": [
       "test/net/chap2_halls.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "CHAP2-JOIN",
     "file": "server-account/src/npcRoll.js",
-    "old": "const member = ranks.has(f) && (row.member || joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f));",
-    "new": "const member = ranks.has(f);",
+    "old": "      const member =\n        ranks.has(f) && (row.member || joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f));",
+    "new": "      const member = ranks.has(f);",
     "tests": [
       "test/net/chap2_halls.test.js",
       "test/net/audit_chap2.test.js"
@@ -266,8 +266,8 @@
   {
     "name": "CHAP2-MEMBER-STAYS",
     "file": "server-account/src/npcRoll.js",
-    "old": "const member = ranks.has(f) && (row.member || joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f));",
-    "new": "const member = ranks.has(f) && joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f);",
+    "old": "      const member =\n        ranks.has(f) && (row.member || joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f));",
+    "new": "      const member = ranks.has(f) && joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f);",
     "tests": [
       "test/net/chap2_halls.test.js",
       "test/net/audit_chap2.test.js"
@@ -277,8 +277,8 @@
   {
     "name": "CHAP2-REFRESH",
     "file": "src/net/npcRollTracker.js",
-    "old": "      askGen++;   // a failure's wait",
-    "new": "      void askGen;   // a failure's wait",
+    "old": "      askGen++; // a failure's wait still holds: the claim goes when the service is asked again",
+    "new": "      void askGen; // a failure's wait still holds: the claim goes when the service is asked again",
     "tests": [
       "test/net/chap2_halls.test.js",
       "test/net/audit_chap2.test.js"
@@ -288,8 +288,8 @@
   {
     "name": "CHAP2-REFRESH-MINUTE",
     "file": "src/net/npcRollTracker.js",
-    "old": "if (!asked && now() - lastSentAt < ROLL_CLAIM_MS) return null;",
-    "new": "if (now() - lastSentAt < ROLL_CLAIM_MS) return null;",
+    "old": "    if (!asked && now() - lastSentAt < ROLL_CLAIM_MS) return null; // CHAP2a: a refresh is asked at once (a writ's, three a day)",
+    "new": "    if (now() - lastSentAt < ROLL_CLAIM_MS) return null; // CHAP2a: a refresh is asked at once (a writ's, three a day)",
     "tests": [
       "test/net/chap2_halls.test.js"
     ]
@@ -297,8 +297,8 @@
   {
     "name": "CHAP2-REFRESH-ONCE",
     "file": "src/net/npcRollTracker.js",
-    "old": "    doneGen = Math.max(doneGen, g);\n",
-    "new": "\n",
+    "old": "    doneGen = Math.max(doneGen, g);",
+    "new": "",
     "tests": [
       "test/net/chap2_halls.test.js",
       "test/net/audit_chap2.test.js"

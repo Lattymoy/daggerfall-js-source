@@ -76,7 +76,7 @@ test('AUDIT DRAGON the recall: with the mount on, the service\'s tames for the s
       dragonAccount: { me: () => 'acct-1', claim: async () => ({ ok: false }), tames: async () => { asked++; return { ok: true, data: { tames: served } }; } } });
     await off.recall('char-0001');
     assert.equal(asked, 1, 'the mount waiting: the service not asked');
-    assert.match(src('src/scenes/dragonRewards.js'), /recall\(characterId\)\.then\(\(\) => bind\(characterId\)\)/, 'a stand-up recalls, then binds');
+    assert.match(src('src/scenes/dragonRewards.js'), /recall\(characterId\)\n\s*\.then\(\(\) => bind\(characterId\)\)/, 'a stand-up recalls, then binds');
   } finally { playerEntity.items = was.items; playerEntity.characterId = was.id; }
 });
 

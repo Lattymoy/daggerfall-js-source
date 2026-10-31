@@ -42,8 +42,8 @@
   {
     "name": "LOOT-FLATS-rebind-restarts",
     "file": "src/render/flatAnimation.js",
-    "old": "if (e.batch === from) { e.batch = to; to.frame = e.anim.frame; }",
-    "new": "if (e.batch === from) { e.batch = to; }",
+    "old": "        to.frame = e.anim.frame;\n      }",
+    "new": "      }",
     "tests": [
       "test/scenes/fb1018_lootflats.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "LOOT-FLATS-rebind-first-only",
     "file": "src/render/flatAnimation.js",
-    "old": "for (const e of this.entries) if (e.batch === from) { e.batch = to; to.frame = e.anim.frame; }",
-    "new": "for (const e of this.entries.slice(0, 1)) if (e.batch === from) { e.batch = to; to.frame = e.anim.frame; }",
+    "old": "  rebind(from, to) {\n    for (const e of this.entries)",
+    "new": "  rebind(from, to) {\n    for (const e of this.entries.slice(0, 1))",
     "tests": [
       "test/scenes/fb1018_lootflats.test.js"
     ],

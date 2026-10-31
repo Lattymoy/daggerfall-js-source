@@ -2,8 +2,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-law-order",
     "file": "src/net/professionLaw.js",
-    "old": "  const by = cap < PROF_XP_MAX ? PROFESSIONS.filter(",
-    "new": "  const by = cap < PROF_XP_MAX ? [...PROFESSIONS].reverse().filter(",
+    "old": "      ? PROFESSIONS.filter((p) => p.kind === 'crafting' && p.id !== own && (ranks?.[p.id] ?? 0) > JOURNEYMAN_RANK).map(\n          (p) => p.id,\n        )",
+    "new": "      ? [...PROFESSIONS]\n          .reverse()\n          .filter((p) => p.kind === 'crafting' && p.id !== own && (ranks?.[p.id] ?? 0) > JOURNEYMAN_RANK)\n          .map((p) => p.id)",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-law-by-unheld",
     "file": "src/net/professionLaw.js",
-    "old": "  const by = cap < PROF_XP_MAX ? ",
-    "new": "  const by = true ? ",
+    "old": "  const by =\n    cap < PROF_XP_MAX\n      ? PROFESSIONS.filter((p) => p.kind === 'crafting' && p.id !== own && (ranks?.[p.id] ?? 0) > JOURNEYMAN_RANK).map(\n          (p) => p.id,\n        )\n      : [];",
+    "new": "  const by = true\n    ? PROFESSIONS.filter((p) => p.kind === 'crafting' && p.id !== own && (ranks?.[p.id] ?? 0) > JOURNEYMAN_RANK).map(\n        (p) => p.id,\n      )\n    : [];",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-law-own-counted",
     "file": "src/net/professionLaw.js",
-    "old": "p.kind === 'crafting' && p.id !== own && (ranks?.[p.id] ?? 0) > JOURNEYMAN_RANK).map((p) => p.id) : [];",
-    "new": "p.kind === 'crafting' && (ranks?.[p.id] ?? 0) > JOURNEYMAN_RANK).map((p) => p.id) : [];",
+    "old": "      ? PROFESSIONS.filter((p) => p.kind === 'crafting' && p.id !== own && (ranks?.[p.id] ?? 0) > JOURNEYMAN_RANK).map(\n          (p) => p.id,\n        )",
+    "new": "      ? PROFESSIONS.filter((p) => p.kind === 'crafting' && (ranks?.[p.id] ?? 0) > JOURNEYMAN_RANK).map((p) => p.id)",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-law-room-floor",
     "file": "src/net/professionLaw.js",
-    "old": "room: Math.max(0, cap - (Number(xp) || 0))",
-    "new": "room: cap - (Number(xp) || 0)",
+    "old": "  return { cap, room: Math.max(0, cap - (Number(xp) || 0)), by, rank: rankOfXp(Math.max(cap, Number(xp) || 0)) };",
+    "new": "  return { cap, room: cap - (Number(xp) || 0), by, rank: rankOfXp(Math.max(cap, Number(xp) || 0)) };",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-law-gathering-held",
     "file": "src/net/professionLaw.js",
-    "old": "cap = BY_ID.get(own)?.kind === 'crafting' ? craftXpCap(profession, ranks) : PROF_XP_MAX;",
-    "new": "cap = craftXpCap(profession, ranks);",
+    "old": "    cap = BY_ID.get(own)?.kind === 'crafting' ? craftXpCap(profession, ranks) : PROF_XP_MAX;",
+    "new": "    cap = craftXpCap(profession, ranks);",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-law-views-rank",
     "file": "src/net/professionLaw.js",
-    "old": "rankOfXp(Number(v.xp))",
-    "new": "v.rank",
+    "old": "  return craftLimit(\n    profession,\n    Object.fromEntries(list.map((v) => [v.profession, rankOfXp(Number(v.xp))])),\n    own?.xp ?? 0,\n  );",
+    "new": "  return craftLimit(profession, Object.fromEntries(list.map((v) => [v.profession, v.rank])), own?.xp ?? 0);",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-law-credit-unfloored",
     "file": "src/net/professionLaw.js",
-    "old": "Math.max(0, Math.min(Number(earned) || 0, room))",
-    "new": "Math.min(Number(earned) || 0, room)",
+    "old": "export const creditedXp = (earned, room) => Math.max(0, Math.min(Number(earned) || 0, room));",
+    "new": "export const creditedXp = (earned, room) => Math.min(Number(earned) || 0, room);",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-law-credit-unbounded",
     "file": "src/net/professionLaw.js",
-    "old": "Math.max(0, Math.min(Number(earned) || 0, room))",
-    "new": "Math.max(0, Number(earned) || 0)",
+    "old": "export const creditedXp = (earned, room) => Math.max(0, Math.min(Number(earned) || 0, room));",
+    "new": "export const creditedXp = (earned, room) => Math.max(0, Number(earned) || 0);",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -450,7 +450,7 @@
   },
   {
     "name": "CRAFT-LIMIT-SAID-host-word-unlimited",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "${craftXpText(rec, r.data, st.xp, profBook.limit(rec?.profession))}",
     "new": "${craftXpText(rec, r.data, st.xp)}",
     "tests": [
@@ -573,8 +573,8 @@
   {
     "name": "L5-law-held-rank-cap",
     "file": "src/net/professionLaw.js",
-    "old": "rank: rankOfXp(Math.max(cap, Number(xp) || 0)) };",
-    "new": "rank: rankOfXp(cap) };",
+    "old": "  return { cap, room: Math.max(0, cap - (Number(xp) || 0)), by, rank: rankOfXp(Math.max(cap, Number(xp) || 0)) };",
+    "new": "  return { cap, room: Math.max(0, cap - (Number(xp) || 0)), by, rank: rankOfXp(cap) };",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],

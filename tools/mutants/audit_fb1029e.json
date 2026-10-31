@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-FB1029e-T-FR-spare-reads-id",
     "file": "src/systems/legacy/waitingHouses.js",
-    "old": "(rows ?? []).map((r) => r?.lineage)",
-    "new": "(rows ?? []).map((r) => r?.id)",
+    "old": "  const played = new Set((rows ?? []).map((r) => r?.lineage).filter(Boolean));",
+    "new": "  const played = new Set((rows ?? []).map((r) => r?.id).filter(Boolean));",
     "tests": [
       "test/systems/legacy/family_remove_menu.test.js"
     ]

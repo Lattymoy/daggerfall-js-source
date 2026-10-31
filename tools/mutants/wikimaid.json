@@ -2,8 +2,8 @@
   {
     "name": "WIKIMAID-amethyst-drifted",
     "file": "src/ui/playerBadge.js",
-    "old": "export const WARREN_AMETHYST = Object.freeze([0.616, 0.361, 1, 1]);",
-    "new": "export const WARREN_AMETHYST = Object.freeze([0.439, 0.188, 0.878, 1]);",
+    "old": "export const WARREN_AMETHYST = Object.freeze([0.616, 0.361, 1, 1]); // #9d5cff",
+    "new": "export const WARREN_AMETHYST = Object.freeze([0.439, 0.188, 0.878, 1]); // #9d5cff",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "WIKIMAID-gradient-turned",
     "file": "src/ui/playerBadge.js",
-    "old": "  wikimaid: Object.freeze([WARREN_AMETHYST, WARREN_LILAC, WARREN_BLUSH]),",
-    "new": "  wikimaid: Object.freeze([WARREN_BLUSH, WARREN_LILAC, WARREN_AMETHYST]),",
+    "old": "  wikimaid: Object.freeze([WARREN_AMETHYST, WARREN_LILAC, WARREN_BLUSH]), // WIKIMAID: \"Wiki\" in the warren's amethyst, \"Maid\" into a rabbit's blush",
+    "new": "  wikimaid: Object.freeze([WARREN_BLUSH, WARREN_LILAC, WARREN_AMETHYST]), // WIKIMAID: \"Wiki\" in the warren's amethyst, \"Maid\" into a rabbit's blush",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "WIKIMAID-edge-dropped",
     "file": "src/ui/playerBadge.js",
-    "old": "  wikimaid: Object.freeze([0, 0, 0, 1]),   // WIKIMAID",
-    "new": "  zz_wikimaid: Object.freeze([0, 0, 0, 1]),   // WIKIMAID",
+    "old": "  wikimaid: Object.freeze([0, 0, 0, 1]), // WIKIMAID: its blush end is pale - edged in black, as Penitent's and the Aegis's",
+    "new": "  zz_wikimaid: Object.freeze([0, 0, 0, 1]), // WIKIMAID: its blush end is pale - edged in black, as Penitent's and the Aegis's",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "WIKIMAID-one-colour-amethyst",
     "file": "src/ui/playerBadge.js",
-    "old": "  wikimaid: WARREN_LILAC,   // WIKIMAID",
-    "new": "  wikimaid: WARREN_AMETHYST,   // WIKIMAID",
+    "old": "  wikimaid: WARREN_LILAC, // WIKIMAID: the rabbits' lilac - the colour a face that cannot draw a gradient uses, and the glyph's",
+    "new": "  wikimaid: WARREN_AMETHYST, // WIKIMAID: the rabbits' lilac - the colour a face that cannot draw a gradient uses, and the glyph's",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "WIKIMAID-glyph-in-aegis-violet",
     "file": "src/ui/playerBadge.js",
-    "old": "  wikimaid: TITLE_RGBA.wikimaid,       // WIKIMAID",
-    "new": "  wikimaid: TITLE_RGBA.aegis,       // WIKIMAID",
+    "old": "  wikimaid: TITLE_RGBA.wikimaid, // WIKIMAID: the rabbit in the title's lilac - the maid's frill is its detail, below",
+    "new": "  wikimaid: TITLE_RGBA.aegis, // WIKIMAID: the rabbit in the title's lilac - the maid's frill is its detail, below",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "WIKIMAID-mark-taken",
     "file": "src/ui/playerBadge.js",
-    "old": "  wikimaid: 'V',      // WIKIMAID",
-    "new": "  wikimaid: '^',      // WIKIMAID",
+    "old": "  wikimaid: 'V', // WIKIMAID: the rabbit's two ears, up",
+    "new": "  wikimaid: '^', // WIKIMAID: the rabbit's two ears, up",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "WIKIMAID-stroked",
     "file": "src/ui/playerBadge.js",
-    "old": "crystalfist: false, wikimaid: false, nirnrootsage: false,",
-    "new": "crystalfist: false, wikimaid: true,",
+    "old": "  wikimaid: false,\n  nirnrootsage: false,",
+    "new": "  wikimaid: true,",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "WIKIMAID-button-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker', vampirichaze: 'coldharbour' });",
-    "new": "lilacwarren: 'aegis', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker', vampirichaze: 'coldharbour' });",
+    "old": "  lilacwarren: 'wikimaid',",
+    "new": "  lilacwarren: 'aegis',",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "WIKIMAID-title-word",
     "file": "src/ui/playerBadge.js",
-    "old": "  wikimaid: 'WikiMaid',           // WIKIMAID",
-    "new": "  wikimaid: 'Wiki Maid',           // WIKIMAID",
+    "old": "  wikimaid: 'WikiMaid', // WIKIMAID (2026-10-17, for SylviaBun: \"the WikiMaid title\"): SylviaBun's own, spelled as she spelled it",
+    "new": "  wikimaid: 'Wiki Maid', // WIKIMAID (2026-10-17, for SylviaBun: \"the WikiMaid title\"): SylviaBun's own, spelled as she spelled it",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "WIKIMAID-aura-word",
     "file": "src/ui/playerBadge.js",
-    "old": "  lilacwarren: 'Lilac Warren',",
-    "new": "  lilacwarren: 'Bunny Warren',",
+    "old": "  lilacwarren: 'Lilac Warren', // WIKIMAID: the WikiMaid's rabbits hopping round the feet on a ring of lilac light, granted with the title",
+    "new": "  lilacwarren: 'Bunny Warren', // WIKIMAID: the WikiMaid's rabbits hopping round the feet on a ring of lilac light, granted with the title",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "WIKIMAID-ear-lowered",
     "file": "src/ui/playerBadge.js",
-    "old": "Q3.6 3 4.6 0.7Q5.3 0.1 6 0.8Q7.3 3.4 7.1 6.2",
-    "new": "Q3.6 3 4.6 3.7Q5.3 3.1 6 3.8Q7.3 3.4 7.1 6.2",
+    "old": "    'M3.6 8.6Q4.3 7 5 6.5Q3.6 3 4.6 0.7Q5.3 0.1 6 0.8Q7.3 3.4 7.1 6.2Q8 6 8.9 6.2Q8.7 3.4 10 0.8Q10.7 0.1 11.4 0.7Q12.4 3 11 6.5Q11.7 7 12.4 8.6Q13.4 10.6 12.6 12.8Q11 15.2 8 15.2Q5 15.2 3.4 12.8Q2.6 10.6 3.6 8.6Z',",
+    "new": "    'M3.6 8.6Q4.3 7 5 6.5Q3.6 3 4.6 3.7Q5.3 3.1 6 3.8Q7.3 3.4 7.1 6.2Q8 6 8.9 6.2Q8.7 3.4 10 0.8Q10.7 0.1 11.4 0.7Q12.4 3 11 6.5Q11.7 7 12.4 8.6Q13.4 10.6 12.6 12.8Q11 15.2 8 15.2Q5 15.2 3.4 12.8Q2.6 10.6 3.6 8.6Z',",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "WIKIMAID-lopsided-cheek",
     "file": "src/ui/playerBadge.js",
-    "old": "Q13.4 10.6 12.6 12.8",
-    "new": "Q14.4 10.6 12.6 12.8",
+    "old": "    'M3.6 8.6Q4.3 7 5 6.5Q3.6 3 4.6 0.7Q5.3 0.1 6 0.8Q7.3 3.4 7.1 6.2Q8 6 8.9 6.2Q8.7 3.4 10 0.8Q10.7 0.1 11.4 0.7Q12.4 3 11 6.5Q11.7 7 12.4 8.6Q13.4 10.6 12.6 12.8Q11 15.2 8 15.2Q5 15.2 3.4 12.8Q2.6 10.6 3.6 8.6Z',",
+    "new": "    'M3.6 8.6Q4.3 7 5 6.5Q3.6 3 4.6 0.7Q5.3 0.1 6 0.8Q7.3 3.4 7.1 6.2Q8 6 8.9 6.2Q8.7 3.4 10 0.8Q10.7 0.1 11.4 0.7Q12.4 3 11 6.5Q11.7 7 12.4 8.6Q14.4 10.6 12.6 12.8Q11 15.2 8 15.2Q5 15.2 3.4 12.8Q2.6 10.6 3.6 8.6Z',",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "WIKIMAID-lace-dropped",
     "file": "src/ui/playerBadge.js",
-    "old": "    Object.freeze({ path: 'M4.3 8.6L4.6 7.4Q5 6.4 5.9 6.9Q6.5 6 7.3 6.5Q8 5.7 8.7 6.5Q9.5 6 10.1 6.9Q11 6.4 11.4 7.4L11.7 8.6Q8 7.4 4.3 8.6Z', rgba: WARREN_FRILL }),\n",
-    "new": "",
+    "old": "      path: 'M4.3 8.6L4.6 7.4Q5 6.4 5.9 6.9Q6.5 6 7.3 6.5Q8 5.7 8.7 6.5Q9.5 6 10.1 6.9Q11 6.4 11.4 7.4L11.7 8.6Q8 7.4 4.3 8.6Z',\n      rgba: WARREN_FRILL,\n    }),\n    Object.freeze({\n      path: 'M4.3 8.6Q8 7.4 11.7 8.6L11.8 9.4Q8 8.2 4.2 9.4ZM6.1 10.1Q6.75 10.1 6.75 10.8Q6.75 11.5 6.1 11.5Q5.45 11.5 5.45 10.8Q5.45 10.1 6.1 10.1ZM9.9 10.1Q10.55 10.1 10.55 10.8Q10.55 11.5 9.9 11.5Q9.25 11.5 9.25 10.8Q9.25 10.1 9.9 10.1ZM7.4 12.4L8.6 12.4L8 13.1Z',",
+    "new": "      path: 'M4.3 8.6Q8 7.4 11.7 8.6L11.8 9.4Q8 8.2 4.2 9.4ZM6.1 10.1Q6.75 10.1 6.75 10.8Q6.75 11.5 6.1 11.5Q5.45 11.5 5.45 10.8Q5.45 10.1 6.1 10.1ZM9.9 10.1Q10.55 10.1 10.55 10.8Q10.55 11.5 9.9 11.5Q9.25 11.5 9.25 10.8Q9.25 10.1 9.9 10.1ZM7.4 12.4L8.6 12.4L8 13.1Z',",
     "tests": [
       "test/net/wikimaid.test.js",
       "test/ui/travel/tv5_far_places.test.js"
@@ -133,8 +133,8 @@
   {
     "name": "WIKIMAID-lace-in-lilac",
     "file": "src/ui/playerBadge.js",
-    "old": "11.4 7.4L11.7 8.6Q8 7.4 4.3 8.6Z', rgba: WARREN_FRILL }),",
-    "new": "11.4 7.4L11.7 8.6Q8 7.4 4.3 8.6Z', rgba: WARREN_LILAC }),",
+    "old": "      rgba: WARREN_FRILL,",
+    "new": "      rgba: WARREN_LILAC,",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
@@ -143,8 +143,8 @@
   {
     "name": "WIKIMAID-ears-over-lace",
     "file": "src/ui/playerBadge.js",
-    "old": "Q9.4 4 10 1.9Q10.3 1.5 10.6 1.9Z', rgba: WARREN_BLUSH }),",
-    "new": "Q9.4 4 10 1.9Q10.3 1.5 10.6 1.9Z', rgba: WARREN_PLUM }),",
+    "old": "      rgba: WARREN_BLUSH,",
+    "new": "      rgba: WARREN_PLUM,",
     "tests": [
       "test/net/wikimaid.test.js",
       "test/ui/travel/tv5_far_places.test.js"
@@ -175,8 +175,8 @@
   {
     "name": "WIKIMAID-svg-first-detail",
     "file": "src/ui/playerBadge.js",
-    "old": "  glyphDetails(g.detail).forEach((det, i) => {   // WIKIMAID",
-    "new": "  glyphDetails(g.detail).slice(0, 1).forEach((det, i) => {   // WIKIMAID",
+    "old": "  glyphDetails(g.detail).forEach((det, i) => {\n    // WIKIMAID: each of a glyph's details, in order\n    const d = doc.createElementNS(NS, 'path');\n    d.setAttribute('d', det.path);\n    d.setAttribute('fill', cssRgba(det.rgba) ?? 'currentColor');\n    const m = /** @type {{ opacity?: string, d?: string, dur: number } | null | undefined} */ (motion?.details?.[i]); // SHOP: a detail that breathes or swells\n    if (m?.opacity) d.append(smil(doc, 'animate', { attributeName: 'opacity', values: m.opacity, dur: `${m.dur}s` }));\n    if (m?.d)\n      d.append(\n        smil(doc, 'animate', {\n          attributeName: 'd',\n          values: `${det.path};${m.d};${det.path}`,\n          dur: `${m.dur}s`,\n          calcMode: 'spline',\n          keyTimes: '0;0.5;1',\n          keySplines: '.45 0 .55 1;.45 0 .55 1',\n        }),\n      );\n    svg.append(d);\n  });",
+    "new": "  glyphDetails(g.detail)\n    .slice(0, 1)\n    .forEach((det, i) => {\n      // WIKIMAID: each of a glyph's details, in order\n      const d = doc.createElementNS(NS, 'path');\n      d.setAttribute('d', det.path);\n      d.setAttribute('fill', cssRgba(det.rgba) ?? 'currentColor');\n      const m = /** @type {{ opacity?: string, d?: string, dur: number } | null | undefined} */ (motion?.details?.[i]); // SHOP: a detail that breathes or swells\n      if (m?.opacity) d.append(smil(doc, 'animate', { attributeName: 'opacity', values: m.opacity, dur: `${m.dur}s` }));\n      if (m?.d)\n        d.append(\n          smil(doc, 'animate', {\n            attributeName: 'd',\n            values: `${det.path};${m.d};${det.path}`,\n            dur: `${m.dur}s`,\n            calcMode: 'spline',\n            keyTimes: '0;0.5;1',\n            keySplines: '.45 0 .55 1;.45 0 .55 1',\n          }),\n        );\n      svg.append(d);\n    });",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
@@ -215,8 +215,8 @@
   {
     "name": "WIKIMAID-glyph-word",
     "file": "server-account/src/titles.js",
-    "old": "crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage', coldharbour: 'coldharbour' });",
-    "new": "crystalfist: 'crystalfist', wikimaid: 'crystalfist' });",
+    "old": "  wikimaid: 'wikimaid',\n  nirnrootsage: 'nirnrootsage',\n  coldharbour: 'coldharbour',",
+    "new": "  wikimaid: 'crystalfist',",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
@@ -225,8 +225,8 @@
   {
     "name": "WIKIMAID-aura-not-granted",
     "file": "server-account/src/titles.js",
-    "old": "crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
-    "new": "crystalfist: 'resonance' });",
+    "old": "  wikimaid: 'lilacwarren',\n  nirnrootsage: 'sagesmoke',\n  coldharbour: 'vampirichaze',\n}); // BLOOD-OF-COLDHARBOUR: the Vampiric Haze;   // NIRNROOT-SAGE: Sage's Smoke; WIKIMAID: the Lilac Warren; CRYSTAL-FIST: the Crystal Resonance; PRIMARCH: the Golden Radiance; SHADOW-CLOAK (2026-10-04, the owner, for SirMcMobdon: \"I want to build a new unique AURA specifically for his account. A holo shadow cloak with red accents. Extremely detailed\"): the Holo Shadow Cloak",
+    "new": "}); // BLOOD-OF-COLDHARBOUR: the Vampiric Haze;   // NIRNROOT-SAGE: Sage's Smoke; WIKIMAID: the Lilac Warren; CRYSTAL-FIST: the Crystal Resonance; PRIMARCH: the Golden Radiance; SHADOW-CLOAK (2026-10-04, the owner, for SirMcMobdon: \"I want to build a new unique AURA specifically for his account. A holo shadow cloak with red accents. Extremely detailed\"): the Holo Shadow Cloak",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
@@ -235,8 +235,8 @@
   {
     "name": "WIKIMAID-title-not-in-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'spirechampion', 'spirefirst', 'wikimaid', 'doorwarden',",
-    "new": "'spirechampion', 'spirefirst', 'doorwarden',",
+    "old": "  'wikimaid',\n  'doorwarden',",
+    "new": "  'doorwarden',",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
@@ -245,8 +245,8 @@
   {
     "name": "WIKIMAID-aura-not-in-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings', 'vampirichaze']);",
-    "new": "'burningstair', 'firstlight', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings', 'vampirichaze']);",
+    "old": "  'lilacwarren',\n  'witchfire',",
+    "new": "  'witchfire',",
     "tests": [
       "test/net/wikimaid.test.js"
     ],

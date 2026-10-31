@@ -157,8 +157,8 @@
   {
     "name": "SEAT-HALL-law-holder",
     "file": "src/net/townSeatLaw.js",
-    "old": "&& seat.holder?.guild?.id === guildId;",
-    "new": "&& !!seat.holder?.guild?.id;",
+    "old": "export const seatHallOf = (seat, guildId) => !!seat && !!guildId && seat.holder?.guild?.id === guildId;",
+    "new": "export const seatHallOf = (seat, guildId) => !!seat && !!guildId && !!seat.holder?.guild?.id;",
     "tests": [
       "test/net/seathall_client.test.js"
     ]
@@ -351,8 +351,8 @@
   {
     "name": "SEAT-HALL-keeper-rank",
     "file": "src/scenes/seatHallHost.js",
-    "old": "keeper: member && guildMay(Number(mine?.rank), 'decorate', mine?.powers ?? null)",
-    "new": "keeper: member",
+    "old": "      return {\n        key: seat.key,\n        name: g.name ?? '',\n        member,\n        keeper: member && guildMay(Number(mine?.rank), 'decorate', mine?.powers ?? null),\n      };",
+    "new": "      return { key: seat.key, name: g.name ?? '', member, keeper: member };",
     "tests": [
       "test/net/seathall_client.test.js"
     ],
@@ -361,8 +361,8 @@
   {
     "name": "SEAT-HALL-crown",
     "file": "src/scenes/seatHallHost.js",
-    "old": "const g = seat?.tier === 'palace' ? seat.holder?.guild ?? null : null;",
-    "new": "const g = seat.holder?.guild ?? null;",
+    "old": "      const g = seat?.tier === 'palace' ? (seat.holder?.guild ?? null) : null;",
+    "new": "      const g = seat.holder?.guild ?? null;",
     "tests": [
       "test/net/seathall_client.test.js"
     ],

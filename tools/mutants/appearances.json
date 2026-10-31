@@ -2,8 +2,8 @@
   {
     "name": "APPEARANCES-short-blade-in-with-the-long",
     "file": "src/net/appearanceLaw.js",
-    "old": "113: 'dagger', 114: 'shortBlade',",
-    "new": "113: 'dagger', 114: 'longBlade',",
+    "old": "  114: 'shortBlade',",
+    "new": "  114: 'longBlade',",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "APPEARANCES-war-axe-with-the-battle-axe",
     "file": "src/net/appearanceLaw.js",
-    "old": "127: 'axe', 128: 'greatAxe',",
-    "new": "127: 'axe', 128: 'axe',",
+    "old": "  128: 'greatAxe',",
+    "new": "  128: 'axe',",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "APPEARANCES-flail-a-mace",
     "file": "src/net/appearanceLaw.js",
-    "old": "115: 'staff', 124: 'mace', 125: 'flail',",
-    "new": "115: 'staff', 124: 'mace', 125: 'mace',",
+    "old": "  125: 'flail',",
+    "new": "  125: 'mace',",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "APPEARANCES-pauldron-side-crossed",
     "file": "src/net/appearanceLaw.js",
-    "old": "105: 'leftArm', 106: 'rightArm', 107: 'head'",
-    "new": "105: 'rightArm', 106: 'rightArm', 107: 'head'",
+    "old": "  105: 'leftArm',",
+    "new": "  105: 'rightArm',",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "APPEARANCES-the-dagger-a-short-blade",
     "file": "src/net/appearanceLaw.js",
-    "old": "113: 'dagger', 114: 'shortBlade',",
-    "new": "113: 'shortBlade', 114: 'shortBlade',",
+    "old": "  113: 'dagger',",
+    "new": "  113: 'shortBlade',",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "APPEARANCES-a-shield-its-own-kind",
     "file": "src/net/appearanceLaw.js",
-    "old": "109: 'shield', 110: 'shield',",
-    "new": "109: 'buckler', 110: 'shield',",
+    "old": "  109: 'shield',",
+    "new": "  109: 'buckler',",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "APPEARANCES-chain2-its-own",
     "file": "src/net/appearanceLaw.js",
-    "old": "m === ARMOR_MATERIAL.Chain2 ? ARMOR_MATERIAL.Chain : m",
-    "new": "m === ARMOR_MATERIAL.Chain ? ARMOR_MATERIAL.Chain : m",
+    "old": "  groupOfTemplate(t) === 'Armor' && m === ARMOR_MATERIAL.Chain2 ? ARMOR_MATERIAL.Chain : m;",
+    "new": "  groupOfTemplate(t) === 'Armor' && m === ARMOR_MATERIAL.Chain ? ARMOR_MATERIAL.Chain : m;",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "APPEARANCES-the-clamp-unread",
     "file": "src/net/appearanceLaw.js",
-    "old": "Math.min(n - 1, clampArmorVariant(t, m, Number.isInteger(v) ? v : 0))",
-    "new": "Math.min(n - 1, Number.isInteger(v) ? v : 0)",
+    "old": "  return Math.max(0, Math.min(n - 1, clampArmorVariant(t, m, Number.isInteger(v) ? v : 0)));",
+    "new": "  return Math.max(0, Math.min(n - 1, Number.isInteger(v) ? v : 0));",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "APPEARANCES-a-style-past-the-count",
     "file": "src/net/appearanceLaw.js",
-    "old": "Math.max(0, Math.min(n - 1, clampArmorVariant",
-    "new": "Math.max(0, Math.min(n, clampArmorVariant",
+    "old": "  return Math.max(0, Math.min(n - 1, clampArmorVariant(t, m, Number.isInteger(v) ? v : 0)));",
+    "new": "  return Math.max(0, Math.min(n, clampArmorVariant(t, m, Number.isInteger(v) ? v : 0)));",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "APPEARANCES-a-mods-piece-a-look",
     "file": "src/net/appearanceLaw.js",
-    "old": ".filter((t) => t >= 102 && t <= 130));",
-    "new": ".filter((t) => t >= 102 && t <= 600));",
+    "old": "    .filter((t) => t >= 102 && t <= 130),",
+    "new": "    .filter((t) => t >= 102 && t <= 600),",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "APPEARANCES-a-weapon-in-one-metal-less",
     "file": "src/net/appearanceLaw.js",
-    "old": "export const WEAPON_LOOK_MATERIALS = Object.freeze(Array.from({ length: 10 }",
-    "new": "export const WEAPON_LOOK_MATERIALS = Object.freeze(Array.from({ length: 9 }",
+    "old": "export const WEAPON_LOOK_MATERIALS = Object.freeze(Array.from({ length: 10 }, (_, i) => i));",
+    "new": "export const WEAPON_LOOK_MATERIALS = Object.freeze(Array.from({ length: 9 }, (_, i) => i));",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "APPEARANCES-an-artifact-collected",
     "file": "src/net/appearanceLaw.js",
-    "old": "if (item.artifact === true || item.rarity === 'gilded') return null;",
-    "new": "if (item.rarity === 'gilded') return null;",
+    "old": "  if (item.artifact === true || item.rarity === 'gilded') return null;",
+    "new": "  if (item.rarity === 'gilded') return null;",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "APPEARANCES-a-gilded-piece-collected",
     "file": "src/net/appearanceLaw.js",
-    "old": "if (item.artifact === true || item.rarity === 'gilded') return null;",
-    "new": "if (item.artifact === true) return null;",
+    "old": "  if (item.artifact === true || item.rarity === 'gilded') return null;",
+    "new": "  if (item.artifact === true) return null;",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "APPEARANCES-the-group-unchecked",
     "file": "src/net/appearanceLaw.js",
-    "old": "if (!item || typeof item !== 'object' || !LOOK_TEMPLATES.includes(item.templateIndex) || groupOfTemplate(item.templateIndex) !== item.group) return null;",
-    "new": "if (!item || typeof item !== 'object' || !LOOK_TEMPLATES.includes(item.templateIndex)) return null;",
+    "old": "  if (\n    !item ||\n    typeof item !== 'object' ||\n    !LOOK_TEMPLATES.includes(item.templateIndex) ||\n    groupOfTemplate(item.templateIndex) !== item.group\n  )\n    return null;",
+    "new": "  if (!item || typeof item !== 'object' || !LOOK_TEMPLATES.includes(item.templateIndex)) return null;",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "APPEARANCES-the-kind-unchecked",
     "file": "src/net/appearanceLaw.js",
-    "old": "return kind && kind === look.kind ? look : null;",
-    "new": "return kind ? look : null;",
+    "old": "  return kind && kind === look.kind ? look : null;",
+    "new": "  return kind ? look : null;",
     "tests": [
       "test/systems/appearances.test.js",
       "test/net/appearances_wire.test.js"
@@ -138,8 +138,8 @@
   {
     "name": "APPEARANCES-the-memo-never-renewed",
     "file": "src/net/appearanceLaw.js",
-    "old": "if (memo && memo.look === look && sameWatch(memo.src, item)) return memo.drawn;",
-    "new": "if (memo && memo.look === look) return memo.drawn;",
+    "old": "  if (memo && memo.look === look && sameWatch(memo.src, item)) return memo.drawn;",
+    "new": "  if (memo && memo.look === look) return memo.drawn;",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "APPEARANCES-the-memo-never-kept",
     "file": "src/net/appearanceLaw.js",
-    "old": "_drawn.set(item, { look, src: DRAWN_WATCH.map((k) => item[k]), drawn });",
-    "new": "_drawn.set({}, { look, src: DRAWN_WATCH.map((k) => item[k]), drawn });",
+    "old": "  _drawn.set(item, { look, src: DRAWN_WATCH.map((k) => item[k]), drawn });",
+    "new": "  _drawn.set({}, { look, src: DRAWN_WATCH.map((k) => item[k]), drawn });",
     "tests": [
       "test/systems/appearances.test.js",
       "test/ui/appearances_render.test.js"
@@ -157,8 +157,8 @@
   {
     "name": "APPEARANCES-the-dye-kept",
     "file": "src/net/appearanceLaw.js",
-    "old": "['appearance', 'ap', 'dyeColor', 'artifact',",
-    "new": "['appearance', 'ap', 'artifact',",
+    "old": "  'dyeColor',\n  'artifact',",
+    "new": "  'artifact',",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "APPEARANCES-the-artifact-kept",
     "file": "src/net/appearanceLaw.js",
-    "old": "'dyeColor', 'artifact', 'playerTextureArchive',",
-    "new": "'dyeColor', 'playerTextureArchive',",
+    "old": "  'artifact',\n  'playerTextureArchive',",
+    "new": "  'playerTextureArchive',",
     "tests": [
       "test/systems/appearances.test.js",
       "test/ui/appearances_render.test.js"
@@ -185,8 +185,8 @@
   {
     "name": "APPEARANCES-the-field-a-stray-key",
     "file": "src/net/appearanceLaw.js",
-    "old": "Object.keys(a).every((k) => k === 't' || k === 'm' || k === 'v')",
-    "new": "Object.keys(a).every((k) => k === 't' || k === 'm' || k === 'v' || k === 'x')",
+    "old": "  !!a && Object.keys(a).every((k) => k === 't' || k === 'm' || k === 'v') && isLook(a);",
+    "new": "  !!a && Object.keys(a).every((k) => k === 't' || k === 'm' || k === 'v' || k === 'x') && isLook(a);",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "APPEARANCES-the-wire-any-length",
     "file": "src/net/appearanceLaw.js",
-    "old": "if (!Array.isArray(ap) || ap.length !== 3) return null;",
-    "new": "if (!Array.isArray(ap) || ap.length < 3) return null;",
+    "old": "  if (!Array.isArray(ap) || ap.length !== 3) return null;",
+    "new": "  if (!Array.isArray(ap) || ap.length < 3) return null;",
     "tests": [
       "test/net/appearances_wire.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "APPEARANCES-the-wagon-unread",
     "file": "src/systems/appearances.js",
-    "old": "for (const list of [entity.items, entity.wagonItems, entity.bagItems]) {",
-    "new": "for (const list of [entity.items, entity.bagItems]) {",
+    "old": "  for (const list of [entity.items, entity.wagonItems, entity.bagItems]) {",
+    "new": "  for (const list of [entity.items, entity.bagItems]) {",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -212,8 +212,8 @@
   {
     "name": "APPEARANCES-the-bag-unread",
     "file": "src/systems/appearances.js",
-    "old": "for (const list of [entity.items, entity.wagonItems, entity.bagItems]) {",
-    "new": "for (const list of [entity.items, entity.wagonItems]) {",
+    "old": "  for (const list of [entity.items, entity.wagonItems, entity.bagItems]) {",
+    "new": "  for (const list of [entity.items, entity.wagonItems]) {",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "APPEARANCES-a-record-never-read-again",
     "file": "src/systems/appearances.js",
-    "old": "if (_read.get(it) === sig) continue;",
-    "new": "if (_read.has(it)) continue;",
+    "old": "      if (_read.get(it) === sig) continue;",
+    "new": "      if (_read.has(it)) continue;",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -231,7 +231,7 @@
     "name": "APPEARANCES-the-list-pushed",
     "file": "src/systems/appearances.js",
     "old": "  entity.appearances = ALL_LOOKS.map(lookCode).filter((k) => all.has(k));",
-    "new": "  if (Array.isArray(entity.appearances)) entity.appearances.push(...add); else entity.appearances = ALL_LOOKS.map(lookCode).filter((k) => all.has(k));",
+    "new": "  if (Array.isArray(entity.appearances)) entity.appearances.push(...add);\n  else entity.appearances = ALL_LOOKS.map(lookCode).filter((k) => all.has(k));",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "APPEARANCES-the-saved-list-unread",
     "file": "src/systems/appearances.js",
-    "old": "const set = new Set(Array.isArray(arr) ? arr.filter((k) => lookOfKey(k)) : []);",
-    "new": "const set = new Set(Array.isArray(arr) ? arr : []);",
+    "old": "  const set = new Set(Array.isArray(arr) ? arr.filter((k) => lookOfKey(k)) : []);",
+    "new": "  const set = new Set(Array.isArray(arr) ? arr : []);",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -248,8 +248,8 @@
   {
     "name": "APPEARANCES-a-general-store-wardrobe",
     "file": "src/systems/appearances.js",
-    "old": "BUILDING_TYPES.Armorer, BUILDING_TYPES.WeaponSmith]));",
-    "new": "BUILDING_TYPES.Armorer, BUILDING_TYPES.GeneralStore]));",
+    "old": "  /** @type {number[]} */ ([BUILDING_TYPES.ClothingStore, BUILDING_TYPES.Armorer, BUILDING_TYPES.WeaponSmith]),",
+    "new": "  /** @type {number[]} */ ([BUILDING_TYPES.ClothingStore, BUILDING_TYPES.Armorer, BUILDING_TYPES.GeneralStore]),",
     "tests": [
       "test/systems/appearances.test.js",
       "test/ui/wardrobe_window.test.js"
@@ -276,8 +276,8 @@
   {
     "name": "APPEARANCES-an-unworn-piece-dressed",
     "file": "src/systems/appearances.js",
-    "old": "  if (!isWorn(entity, item)) return 'worn';\n  if (pieceKind(item)",
-    "new": "  if (pieceKind(item)",
+    "old": "  if (!isWorn(entity, item)) return 'worn';\n  if (pieceKind(item) !== a.kind) return 'kind';",
+    "new": "  if (pieceKind(item) !== a.kind) return 'kind';",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -304,8 +304,8 @@
   {
     "name": "APPEARANCES-the-clear-charged",
     "file": "src/systems/appearances.js",
-    "old": "  delete item.appearance;",
-    "new": "  delete item.appearance; deductGold(entity, WARDROBE_FEE_MIN);",
+    "old": "  return { ok: true, reason: null };",
+    "new": "  deductGold(entity, WARDROBE_FEE_MIN);\n  return { ok: true, reason: null };",
     "tests": [
       "test/systems/appearances.test.js",
       "test/ui/wardrobe_window.test.js"
@@ -314,8 +314,8 @@
   {
     "name": "APPEARANCES-the-style-0-based",
     "file": "src/systems/appearances.js",
-    "old": "return vs.length > 1 ? vs.indexOf(look.v) + 1 : 0;",
-    "new": "return vs.length > 1 ? vs.indexOf(look.v) : 0;",
+    "old": "  return vs.length > 1 ? vs.indexOf(look.v) + 1 : 0;",
+    "new": "  return vs.length > 1 ? vs.indexOf(look.v) : 0;",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -323,8 +323,8 @@
   {
     "name": "APPEARANCES-a-style-said-of-one",
     "file": "src/systems/appearances.js",
-    "old": "return vs.length > 1 ? vs.indexOf(look.v) + 1 : 0;",
-    "new": "return vs.length > 0 ? vs.indexOf(look.v) + 1 : 0;",
+    "old": "  return vs.length > 1 ? vs.indexOf(look.v) + 1 : 0;",
+    "new": "  return vs.length > 0 ? vs.indexOf(look.v) + 1 : 0;",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -332,8 +332,8 @@
   {
     "name": "APPEARANCES-a-ring-in-the-wardrobe",
     "file": "src/systems/appearances.js",
-    "old": "    if (kind && LOOK_KIND_ORDER.includes(kind)) out.push({ slot, item, kind });",
-    "new": "    if (item) out.push({ slot, item, kind });",
+    "old": "    if (kind && LOOK_KIND_ORDER.includes(kind)) out.push({ slot, item, kind }); // AUDIT HORIZONTAL E5: a kind no look is of (a Light Flail's) offers none",
+    "new": "    if (item) out.push({ slot, item, kind }); // AUDIT HORIZONTAL E5: a kind no look is of (a Light Flail's) offers none",
     "tests": [
       "test/ui/wardrobe_window.test.js"
     ]
@@ -341,8 +341,8 @@
   {
     "name": "APPEARANCES-the-field-undeclared",
     "file": "src/systems/item/itemFields.js",
-    "old": "  appearance: rec(validAppearanceField),\n",
-    "new": "",
+    "old": "  appearance: rec(validAppearanceField),\n  // GLOW-SET (bible/05-Combat/Weapon-Glow.md law 9): a staff's pick of glow, one of the wire's words (net/wire.js",
+    "new": "  // GLOW-SET (bible/05-Combat/Weapon-Glow.md law 9): a staff's pick of glow, one of the wire's words (net/wire.js",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -350,8 +350,8 @@
   {
     "name": "APPEARANCES-the-mark-not-stripped",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "'horseBond', 'horseFed', 'appearance']);",
-    "new": "'horseBond', 'horseFed']);",
+    "old": "  'appearance',\n]); // APPEARANCES (bible/04-Characters/Wardrobe.md): the look a piece wears is its wearer's, who collected it - a piece handed over arrives in its own; WAGONS2-VISIT (AUDIT): who may enter a caravan is its owner's word - a buyer's caravan opens to its owner alone; STEED1: a horse's bond is with its owner - it comes to the next a stranger; AUDIT STEED1: and its food's clock is its owner's character's - it comes fed as a horse first seen (steedCare.js NEW_HORSE_FED), and an offer's record never mismatches its checkpoint for a minute's grazing",
+    "new": "]); // APPEARANCES (bible/04-Characters/Wardrobe.md): the look a piece wears is its wearer's, who collected it - a piece handed over arrives in its own; WAGONS2-VISIT (AUDIT): who may enter a caravan is its owner's word - a buyer's caravan opens to its owner alone; STEED1: a horse's bond is with its owner - it comes to the next a stranger; AUDIT STEED1: and its food's clock is its owner's character's - it comes fed as a horse first seen (steedCare.js NEW_HORSE_FED), and an offer's record never mismatches its checkpoint for a minute's grazing",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -431,8 +431,8 @@
   {
     "name": "APPEARANCES-the-mw-map-reads-the-piece",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "    const item = drawnPiece(piece);",
-    "new": "    const item = piece;",
+    "old": "    const item = drawnPiece(piece); // APPEARANCES (bible/04-Characters/Wardrobe.md): a piece wearing a look dresses the body as the look - the player's and every peer's",
+    "new": "    const item = piece; // APPEARANCES (bible/04-Characters/Wardrobe.md): a piece wearing a look dresses the body as the look - the player's and every peer's",
     "tests": [
       "test/ui/appearances_render.test.js",
       "test/net/appearances_wire.test.js"
@@ -441,8 +441,8 @@
   {
     "name": "APPEARANCES-the-strip-reads-the-piece",
     "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-    "old": "  const m = drawnPiece(piece)?.material;",
-    "new": "  const m = piece?.material;",
+    "old": "  const m = drawnPiece(piece)?.material; // APPEARANCES (bible/04-Characters/Wardrobe.md): a piece wearing a look is drawn as the look - my body's and every peer walker's",
+    "new": "  const m = piece?.material; // APPEARANCES (bible/04-Characters/Wardrobe.md): a piece wearing a look is drawn as the look - my body's and every peer walker's",
     "tests": [
       "test/ui/appearances_render.test.js",
       "test/net/appearances_wire.test.js"
@@ -496,8 +496,8 @@
   {
     "name": "APPEARANCES-the-helm-of-the-piece",
     "file": "src/characters/headPortraits.js",
-    "old": "  const helm = drawnPiece(entity?.equip ? equipTableOf(entity)?.[EQUIP_SLOTS.Head] ?? null : null);",
-    "new": "  const helm = (entity?.equip ? equipTableOf(entity)?.[EQUIP_SLOTS.Head] ?? null : null);",
+    "old": "  const helm = drawnPiece(entity?.equip ? (equipTableOf(entity)?.[EQUIP_SLOTS.Head] ?? null) : null); // APPEARANCES: the helm as it is drawn - a look worn over it is a new face",
+    "new": "  const helm = entity?.equip ? (equipTableOf(entity)?.[EQUIP_SLOTS.Head] ?? null) : null; // APPEARANCES: the helm as it is drawn - a look worn over it is a new face",
     "tests": [
       "test/ui/appearances_render.test.js"
     ]
@@ -505,8 +505,8 @@
   {
     "name": "APPEARANCES-the-rows-on-one-place",
     "file": "src/ui/merchant/merchantServiceWindow.js",
-    "old": "Object.freeze([5, panelH + 2 + 12 * i, 120, 10]);",
-    "new": "Object.freeze([5, panelH + 2 + 0 * i, 120, 10]);",
+    "old": "export const shopRowRect = (panelH, i) => Object.freeze([5, panelH + 2 + 12 * i, 120, 10]);",
+    "new": "export const shopRowRect = (panelH, i) => Object.freeze([5, panelH + 2 + 0 * i, 120, 10]);",
     "tests": [
       "test/ui/wardrobe_window.test.js"
     ]
@@ -523,8 +523,8 @@
   {
     "name": "APPEARANCES-a-key-with-no-hook",
     "file": "src/ui/merchant/merchantServiceWindow.js",
-    "old": "    if (code === WARDROBE_ROW_KEY && this.hooks.wardrobe) this._wardrobe();",
-    "new": "    if (code === WARDROBE_ROW_KEY) this._wardrobe();",
+    "old": "    if (code === WARDROBE_ROW_KEY && this.hooks.wardrobe) this._wardrobe(); // APPEARANCES",
+    "new": "    if (code === WARDROBE_ROW_KEY) this._wardrobe(); // APPEARANCES",
     "tests": [
       "test/ui/wardrobe_window.test.js"
     ]
@@ -532,8 +532,8 @@
   {
     "name": "APPEARANCES-the-repair-row-unread",
     "file": "src/ui/merchant/merchantRepairWindow.js",
-    "old": "    if (this.hooks.wardrobe && inRect(shopRowRect(REPAIR_PANEL_H, wardrobeRowIndex(this.hooks)), vx, vy)) { this._act(this.hooks.wardrobe.onOpen); return true; }   // APPEARANCES\n",
-    "new": "",
+    "old": "    if (this.hooks.wardrobe && inRect(shopRowRect(REPAIR_PANEL_H, wardrobeRowIndex(this.hooks)), vx, vy)) {\n      this._act(this.hooks.wardrobe.onOpen);\n      return true;\n    } // APPEARANCES\n    return true; // the panel eats its own clicks",
+    "new": "    return true; // the panel eats its own clicks",
     "tests": [
       "test/ui/wardrobe_window.test.js"
     ]
@@ -541,8 +541,8 @@
   {
     "name": "APPEARANCES-the-row-at-every-shop",
     "file": "src/scenes/wardrobeCounter.js",
-    "old": "(isWardrobeShop(buildingType) ? { label",
-    "new": "(buildingType != null ? { label",
+    "old": "    isWardrobeShop(buildingType) ? { label: WARDROBE_ROW(), onOpen: () => open() } : undefined;",
+    "new": "    buildingType != null ? { label: WARDROBE_ROW(), onOpen: () => open() } : undefined;",
     "tests": [
       "test/ui/wardrobe_window.test.js"
     ]
@@ -550,8 +550,8 @@
   {
     "name": "APPEARANCES-the-doll-never-told",
     "file": "src/scenes/wardrobeCounter.js",
-    "old": "const dressed = () => { surfacePlayer(); onDressed(entity); };",
-    "new": "const dressed = () => { surfacePlayer(); };",
+    "old": "    onDressed(entity);\n  };",
+    "new": "  };",
     "tests": [
       "test/ui/wardrobe_window.test.js"
     ]
@@ -559,8 +559,8 @@
   {
     "name": "APPEARANCES-the-doll-told-of-a-refusal",
     "file": "src/scenes/wardrobeCounter.js",
-    "old": "    if (done.ok) { audio.playOneShot(SOUND.GoldPieces, 1); dressed(); }",
-    "new": "    { audio.playOneShot(SOUND.GoldPieces, 1); dressed(); }",
+    "old": "    if (done.ok) {",
+    "new": "    {",
     "tests": [
       "test/ui/wardrobe_window.test.js"
     ]
@@ -568,8 +568,8 @@
   {
     "name": "APPEARANCES-the-counter-reads-no-pack",
     "file": "src/scenes/wardrobeCounter.js",
-    "old": "    noteHeldLooks(entity);\n",
-    "new": "",
+    "old": "    noteHeldLooks(entity);\n    const o = createWardrobeOverlay({ entity, wear, clear, nameOf: (/** @type {any} */ it) => itemLongName(it) });",
+    "new": "    const o = createWardrobeOverlay({ entity, wear, clear, nameOf: (/** @type {any} */ it) => itemLongName(it) });",
     "tests": [
       "test/ui/wardrobe_window.test.js"
     ]
@@ -578,7 +578,7 @@
     "name": "APPEARANCES-the-shops-rows-no-wardrobe",
     "file": "src/scenes/shopRows.js",
     "old": "      ...(wardrobe ? { wardrobe } : {}),",
-    "new": "      ...({}),",
+    "new": "      ...{},",
     "tests": [
       "test/ui/wardrobe_window.test.js"
     ]
@@ -604,8 +604,8 @@
   {
     "name": "APPEARANCES-the-fee-unsaid",
     "file": "src/ui/wardrobe/wardrobeWindow.js",
-    "old": "el('span', 'broker-price', WARDROBE_WORDS.fee(fee)), press);",
-    "new": "el('span', 'broker-price', ''), press);",
+    "old": "      row.append(\n        tryPress(item, look, frameOf(lookStub(look), name), name),\n        el('span', 'broker-price', WARDROBE_WORDS.fee(fee)),\n        press,\n      );",
+    "new": "      row.append(tryPress(item, look, frameOf(lookStub(look), name), name), el('span', 'broker-price', ''), press);",
     "tests": [
       "test/ui/wardrobe_window.test.js"
     ]
@@ -613,8 +613,8 @@
   {
     "name": "APPEARANCES-a-refused-press-wears",
     "file": "src/ui/wardrobe/wardrobeWindow.js",
-    "old": "        if (why) refusePress(press, wardrobeRefusal(why), refused);",
-    "new": "",
+    "old": "        if (why) refusePress(press, wardrobeRefusal(why), refused); // MENU-ORDER: a refused press says why, pressed",
+    "new": "        // MENU-ORDER: a refused press says why, pressed",
     "tests": [
       "test/ui/wardrobe_window.test.js"
     ]
@@ -622,8 +622,8 @@
   {
     "name": "APPEARANCES-the-own-look-not-offered",
     "file": "src/ui/wardrobe/wardrobeWindow.js",
-    "old": "worn ? WARDROBE_WORDS.wear() : WARDROBE_WORDS.worn());",
-    "new": "WARDROBE_WORDS.worn());",
+    "old": "    const ownPress = el(\n      'button',\n      'act broker-buy wardrobe-press',\n      worn ? WARDROBE_WORDS.wear() : WARDROBE_WORDS.worn(),\n    );",
+    "new": "    const ownPress = el('button', 'act broker-buy wardrobe-press', WARDROBE_WORDS.worn());",
     "tests": [
       "test/ui/wardrobe_window.test.js"
     ]
@@ -640,8 +640,8 @@
   {
     "name": "APPEARANCES-the-line-of-every-piece",
     "file": "src/systems/appearances.js",
-    "old": "  return a ? t('wardrobe.wearing',",
-    "new": "  return item ? t('wardrobe.wearing',",
+    "old": "  return a ? t('wardrobe.wearing', 'Looks like {name}', { name: lookName(a) }) : '';",
+    "new": "  return item ? t('wardrobe.wearing', 'Looks like {name}', { name: lookName(a) }) : '';",
     "tests": [
       "test/ui/appearances_render.test.js"
     ]
@@ -649,8 +649,8 @@
   {
     "name": "APPEARANCES-the-tile-missing",
     "file": "src/ui/collectionsPage.js",
-    "old": "  wordPair('appearances', () => t('coll.part.appearances', 'Appearances')),",
-    "new": "",
+    "old": "  wordPair('appearances', () => t('coll.part.appearances', 'Appearances')), // APPEARANCES: the character's looks, first of its own parts",
+    "new": "  // APPEARANCES: the character's looks, first of its own parts",
     "tests": [
       "test/ui/appearances_part.test.js"
     ]
@@ -658,8 +658,8 @@
   {
     "name": "APPEARANCES-the-count-not-the-characters",
     "file": "src/ui/collectionsPage.js",
-    "old": "  if (id === 'appearances') return appearancesCount(player);",
-    "new": "",
+    "old": "  if (id === 'appearances') return appearancesCount(player); // APPEARANCES: every look there is, and those the character holds",
+    "new": "  // APPEARANCES: every look there is, and those the character holds",
     "tests": [
       "test/ui/appearances_part.test.js"
     ]
@@ -667,8 +667,8 @@
   {
     "name": "APPEARANCES-a-groups-count-the-filters",
     "file": "src/ui/collections/appearancesPart.js",
-    "old": "LOOK_WORDS.group(kindName(g.kind), g.held, g.total)",
-    "new": "LOOK_WORDS.group(kindName(g.kind), rows.length, g.total)",
+    "old": "    detail.append(divider(LOOK_WORDS.group(kindName(g.kind), g.held, g.total)));",
+    "new": "    detail.append(divider(LOOK_WORDS.group(kindName(g.kind), rows.length, g.total)));",
     "tests": [
       "test/ui/appearances_part.test.js"
     ]
@@ -676,8 +676,8 @@
   {
     "name": "APPEARANCES-the-parts-fee-unsaid",
     "file": "src/ui/collections/appearancesPart.js",
-    "old": "LOOK_WORDS.wearAt(kindName(kind), wardrobeFee(look))",
-    "new": "LOOK_WORDS.wearAt(kindName(kind), 0)",
+    "old": "  text.append(\n    el('h5', null, LOOK_WORDS.wearHead()),\n    el('p', null, LOOK_WORDS.wearAt(kindName(kind), wardrobeFee(look))),\n  );",
+    "new": "  text.append(el('h5', null, LOOK_WORDS.wearHead()), el('p', null, LOOK_WORDS.wearAt(kindName(kind), 0)));",
     "tests": [
       "test/ui/appearances_part.test.js"
     ]
@@ -685,8 +685,8 @@
   {
     "name": "APPEARANCES-the-dimming-lost",
     "file": "src/ui/collections/appearancesPart.js",
-    "old": "`coll-row${held ? ' held' : ''}${open ? ' on' : ''}`",
-    "new": "`coll-row held${open ? ' on' : ''}`",
+    "old": "  const row = el('button', `coll-row${held ? ' held' : ''}${open ? ' on' : ''}`);",
+    "new": "  const row = el('button', `coll-row held${open ? ' on' : ''}`);",
     "tests": [
       "test/ui/appearances_part.test.js"
     ]
@@ -694,8 +694,8 @@
   {
     "name": "AUDIT-E1-the-hand-reads-template-and-slot-alone",
     "file": "src/net/peer/peerBodies.js",
-    "old": "      if (want !== b.weapon && heldWeaponKey(want) !== heldWeaponKey(b.weapon)   // AUDIT HORIZONTAL E1: and its metal and its look",
-    "new": "      if (want !== b.weapon && (want?.templateIndex !== b.weapon?.templateIndex || want?.equipSlot !== b.weapon?.equipSlot)",
+    "old": "        heldWeaponKey(want) !== heldWeaponKey(b.weapon) && // AUDIT HORIZONTAL E1: and its metal and its look",
+    "new": "        (want?.templateIndex !== b.weapon?.templateIndex || want?.equipSlot !== b.weapon?.equipSlot) &&",
     "tests": [
       "test/systems/appearances_audit.test.js"
     ]
@@ -703,8 +703,8 @@
   {
     "name": "AUDIT-E1-the-hand-blind-to-the-look",
     "file": "src/net/peer/peerBodies.js",
-    "old": "|${it.equipSlot}|${appearanceSig(it)}` : '');",
-    "new": "|${it.equipSlot}|` : '');",
+    "old": "  it ? `${it.templateIndex}|${it.material ?? ''}|${it.equipSlot}|${appearanceSig(it)}` : '';",
+    "new": "  it ? `${it.templateIndex}|${it.material ?? ''}|${it.equipSlot}|` : '';",
     "tests": [
       "test/systems/appearances_audit.test.js"
     ]
@@ -712,8 +712,8 @@
   {
     "name": "AUDIT-E1-the-hand-blind-to-the-metal",
     "file": "src/net/peer/peerBodies.js",
-    "old": "`${it.templateIndex}|${it.material ?? ''}|${it.equipSlot}",
-    "new": "`${it.templateIndex}||${it.equipSlot}",
+    "old": "  it ? `${it.templateIndex}|${it.material ?? ''}|${it.equipSlot}|${appearanceSig(it)}` : '';",
+    "new": "  it ? `${it.templateIndex}||${it.equipSlot}|${appearanceSig(it)}` : '';",
     "tests": [
       "test/systems/appearances_audit.test.js"
     ]
@@ -730,8 +730,8 @@
   {
     "name": "AUDIT-E2-the-shield-covers-the-look-s-parts",
     "file": "src/combat/shieldWidget.js",
-    "old": "shieldProtectedBodyParts(item?.coverTemplate ?? item?.templateIndex ?? -1)",
-    "new": "shieldProtectedBodyParts(item?.templateIndex ?? -1)",
+    "old": "  const parts = shieldProtectedBodyParts(item?.coverTemplate ?? item?.templateIndex ?? -1); // AUDIT HORIZONTAL E2: the piece's own, under any look (weaponRig.js shieldItem)",
+    "new": "  const parts = shieldProtectedBodyParts(item?.templateIndex ?? -1); // AUDIT HORIZONTAL E2: the piece's own, under any look (weaponRig.js shieldItem)",
     "tests": [
       "test/systems/appearances_audit.test.js"
     ]
@@ -739,8 +739,8 @@
   {
     "name": "AUDIT-E3-the-unmade-style-kept",
     "file": "src/net/appearanceLaw.js",
-    "old": "lookMaterial(t, m) === ARMOR_MATERIAL.Chain && v !== 1;",
-    "new": "lookMaterial(t, m) === ARMOR_MATERIAL.Chain && v > 9;",
+    "old": "  t === 108 && lookMaterial(t, m) === ARMOR_MATERIAL.Chain && v !== 1;",
+    "new": "  t === 108 && lookMaterial(t, m) === ARMOR_MATERIAL.Chain && v > 9;",
     "tests": [
       "test/systems/appearances_audit.test.js",
       "test/systems/appearances.test.js"
@@ -749,8 +749,8 @@
   {
     "name": "AUDIT-E4-a-shop-s-style-said-as-anyone-s",
     "file": "src/ui/collections/appearancesPart.js",
-    "old": "look.v === lookVariant(look.t, look.m, 0);",
-    "new": "look.v === look.v;",
+    "old": "export const everyMintMakes = (/** @type {{ t: number, m: number, v: number }} */ look) =>\n  look.v === lookVariant(look.t, look.m, 0);",
+    "new": "export const everyMintMakes = (/** @type {{ t: number, m: number, v: number }} */ look) => look.v === look.v;",
     "tests": [
       "test/systems/appearances_audit.test.js"
     ]
@@ -758,8 +758,8 @@
   {
     "name": "AUDIT-E4-the-first-style-said-as-a-shop-s",
     "file": "src/ui/collections/appearancesPart.js",
-    "old": "look.v === lookVariant(look.t, look.m, 0);",
-    "new": "look.v === lookVariant(look.t, look.m, 1);",
+    "old": "  look.v === lookVariant(look.t, look.m, 0);",
+    "new": "  look.v === lookVariant(look.t, look.m, 1);",
     "tests": [
       "test/systems/appearances_audit.test.js"
     ]
@@ -767,8 +767,8 @@
   {
     "name": "AUDIT-E5-any-kind-at-the-wardrobe",
     "file": "src/systems/appearances.js",
-    "old": "if (kind && LOOK_KIND_ORDER.includes(kind)) out.push({ slot, item, kind });",
-    "new": "if (kind) out.push({ slot, item, kind });",
+    "old": "    if (kind && LOOK_KIND_ORDER.includes(kind)) out.push({ slot, item, kind }); // AUDIT HORIZONTAL E5: a kind no look is of (a Light Flail's) offers none",
+    "new": "    if (kind) out.push({ slot, item, kind }); // AUDIT HORIZONTAL E5: a kind no look is of (a Light Flail's) offers none",
     "tests": [
       "test/systems/appearances_audit.test.js"
     ]
@@ -785,8 +785,8 @@
   {
     "name": "AUDIT-E7-a-repeat-a-press-on-the-merchant-s-popup",
     "file": "src/ui/merchant/merchantServiceWindow.js",
-    "old": "    if (e?.repeat) return;\n    // ROAD-G G7:",
-    "new": "    // ROAD-G G7:",
+    "old": "    if (e?.repeat) return;\n    // ROAD-G G7: these three letters ARE the port's own, and the",
+    "new": "    // ROAD-G G7: these three letters ARE the port's own, and the",
     "tests": [
       "test/systems/appearances_audit.test.js"
     ]
@@ -794,8 +794,8 @@
   {
     "name": "AUDIT-E7-a-repeat-a-press-on-the-repair-popup",
     "file": "src/ui/merchant/merchantRepairWindow.js",
-    "old": "    if (e?.repeat) return;   // AUDIT HORIZONTAL E7",
-    "new": "    // AUDIT HORIZONTAL E7",
+    "old": "    if (e?.repeat) return; // AUDIT HORIZONTAL E7: a key held as the popup opened is no press (merchantServiceWindow.js input)",
+    "new": "    // AUDIT HORIZONTAL E7: a key held as the popup opened is no press (merchantServiceWindow.js input)",
     "tests": [
       "test/systems/appearances_audit.test.js"
     ]

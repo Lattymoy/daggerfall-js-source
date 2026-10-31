@@ -40,7 +40,7 @@ letters of credit (650,000, 700,000 and 600,000) drew a letter on 583 of 1,000 i
 record and into the standing body.
 
 A letter taken that way was hard to get back. A slain body hands over what it carried, but only to its owner
-(`bodyLoot.js:"if (!piece || neverPeerHanded(piece)) return null;"` - a letter never rides a peer's word). A fallen
+(`bodyLoot.js:"if (!piece || neverPeerHanded(piece))"` - a letter never rides a peer's word). A fallen
 record whose body never carried it kept it for good, and one that escaped kept it.
 
 CHANGED:
@@ -87,7 +87,7 @@ CHANGED:
   held case its own way (`burntLate`). The three lines go through the text core (L10N4: `wild.death.burnt`,
   `wild.death.letters`, `wild.death.burntLate`), in the English catalog (`tools/l10nExtract.mjs`) and drafted in-session for
   the thirteen languages that cover it whole (`tools/l10nInSession.mjs`, recorded as the machine's).
-- Every death in the zone names the letters of credit it took, by their worth (`wildZone.js:"deathLetters: (n, gold) =>"`):
+- Every death in the zone names the letters of credit it took, by their worth (`wildZone.js:"deathLetters: (n, gold)"`):
   "2 letters of credit worth 1,350,000 gold left your wallet." A letter's loss was "a thing you carried", whatever it
   stood for.
 - The host hands both on in its one line, in place (`wildDropHost.js:"claimed, held, burnt: d.burnt ? n : 0, letters: out,"`) - no line added: the host does not grow.
@@ -106,7 +106,7 @@ the fallen's own take-out, and the words, the host's line and the risen line. `t
 
 ## TRADE-WRAP: a lot's price never wraps
 
-FOUND (the client sweep). CalculateTradePrice (`shopStock.js:"export function calculateTradePrice("`) haggles a lot ONCE,
+FOUND (the client sweep). CalculateTradePrice (`shopStock.js:"export function calculateTradePrice"`) haggles a lot ONCE,
 as DFU does: the whole basket's cost (`tradeModes.js tradeCost`, CalculateCost summed) times the haggle's factor, then
 `>> 8` - C#'s `int` in DFU, JS's int32 here. Past 2^31 the product wraps. Measured on the real counter: the first wrong
 price comes at a cost of 9.65 million (a quality-1 shop, Mercantile and Personality 100) to 18 million (quality 10,
@@ -128,7 +128,7 @@ tab since PURSE-BACK, below.
 
 ## NO-NAN-PAY: a price that is no number takes nothing
 
-FOUND (the client sweep). deductGold (`court.js:"export function deductGold(player, amount) {"`, PlayerEntity.DeductGoldAmount)
+FOUND (the client sweep). deductGold (`court.js:"export function deductGold(player, amount)"`, PlayerEntity.DeductGoldAmount)
 given NaN or undefined: `amount <= purse` is false, so the letters pay - and NaN is never under a letter's value, so
 EVERY letter is spliced, `owed > 0` is false, and it answers 0, paid. All the letters gone, the coins untouched: the
 report's own shape. A negative amount added coin. The sweep traced every price producer it could find (trade, repair,

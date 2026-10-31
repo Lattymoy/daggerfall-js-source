@@ -26,5 +26,5 @@ test('AUDIT HELM-SIGHT A1: a party\'s wait holds the mod\'s frame - the runtime 
 test('AUDIT HELM-SIGHT A4: a boat whose helm is held from another pixel is in sight but not heard - the loops\' frame stops her channels', () => {
   const w = read('src/scenes/csaAudio.js');   // HOST-SPLIT moved the loops' frame out of world.js
   const frame = body(w, '  function csaAudioFrame() {');
-  assert.match(frame, /if \(!src\.isPlaying \|\| !node\?\.activeInHierarchy \|\| boat\.helmAfar\) \{ if \(ch\) \{ ch\.handle\?\.stop\(\); _csaLoops\.delete\(src\); \} continue; \}/);
+  assert.match(frame, /if \(!src\.isPlaying \|\| !node\?\.activeInHierarchy \|\| boat\.helmAfar\) \{\n\s*if \(ch\) \{\n\s*ch\.handle\?\.stop\(\);\n\s*_csaLoops\.delete\(src\);\n\s*\}\n\s*continue;\n\s*\}/);
 });

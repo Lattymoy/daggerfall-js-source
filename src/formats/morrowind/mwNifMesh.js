@@ -22,7 +22,8 @@ import { deref, TEX_SLOT } from './mwNifFile.js';
 // `ninode->mChildren` for anything that casts to Nif::NiNode, and the switch
 // and LOD classes get their own osg wrapper first (:907-924) rather than a
 // pruned subtree. Four of these were parsed and then dropped on the floor.
-export const NODE_TYPES = new Set([   // MW-SPELLFX1: exported - an effect mesh's node graph is the drawing walk's own membership (formats/morrowind/mwVfx.js)
+export const NODE_TYPES = new Set([
+  // MW-SPELLFX1: exported - an effect mesh's node graph is the drawing walk's own membership (formats/morrowind/mwVfx.js)
   'NiNode',
   'NiBSAnimationNode',
   'NiBSParticleNode',
@@ -46,7 +47,8 @@ export const NODE_TYPES = new Set([   // MW-SPELLFX1: exported - an effect mesh'
  * NiSortAdjustNode and NiCollisionSwitch are plain NiNodes in the
  * reference (no Switch/LOD wrapper), so they keep every child.
  */
-export function selectedChild(rec) {   // MW-SPELLFX1: exported - an effect's switch shows the one branch the flattener shows
+export function selectedChild(rec) {
+  // MW-SPELLFX1: exported - an effect's switch shows the one branch the flattener shows
   if (rec.type === 'NiLODNode') {
     const levels = rec.lodLevels;
     if (Array.isArray(levels)) {
@@ -70,7 +72,7 @@ export function selectedChild(rec) {   // MW-SPELLFX1: exported - an effect's sw
  *  1631) and a batch here is a triangle list by contract, so a line shape
  *  has no honest home downstream - it is dropped rather than drawn as
  *  triangles. */
-export const GEOMETRY_TYPES = new Set(['NiTriShape', 'NiTriStrips']);   // MW-SPELLFX1: exported (formats/morrowind/mwVfx.js)
+export const GEOMETRY_TYPES = new Set(['NiTriShape', 'NiTriStrips']); // MW-SPELLFX1: exported (formats/morrowind/mwVfx.js)
 
 /** MAC-Q (2026-09-17, Mac: "the torch doesn't emit fire"): the PARTICLE
  *  geometries. A batch here is a triangle list by contract, and a particle
@@ -83,20 +85,23 @@ export const GEOMETRY_TYPES = new Set(['NiTriShape', 'NiTriStrips']);   // MW-SP
  *  enclosing NiBSAnimationNode or NiBSParticleNode). formats/morrowind/mwParticles.js
  *  turns a bundle into a system. A caller with no sink gets exactly what
  *  it always got: nothing. */
-export const PARTICLE_TYPES = new Set(['NiParticles', 'NiAutoNormalParticles', 'NiRotatingParticles']);   // MW-SPELLFX1: exported - an effect's particle geometry is a node of its graph
-export const ANIM_FLAG_NODES = new Set(['NiBSAnimationNode', 'NiBSParticleNode']);   // MW-SPELLFX1: exported - formats/morrowind/mwVfx.js reads the same AutoPlay/LocalSpace flags
+export const PARTICLE_TYPES = new Set(['NiParticles', 'NiAutoNormalParticles', 'NiRotatingParticles']); // MW-SPELLFX1: exported - an effect's particle geometry is a node of its graph
+export const ANIM_FLAG_NODES = new Set(['NiBSAnimationNode', 'NiBSParticleNode']); // MW-SPELLFX1: exported - formats/morrowind/mwVfx.js reads the same AutoPlay/LocalSpace flags
 
 /** nifloader.cpp:1609-1621: one TRIANGLE_STRIP primitive per strip, strips
  *  shorter than 3 skipped, and a shape whose strips are ALL short draws
  *  nothing. Unrolled to the triangle list this module emits, with GL's own
  *  winding flip on odd triangles and the degenerate joins (a repeated index,
  *  which GL drops) left out. */
-export function stripsToTriangles(data) {   // MW-SPELLFX1: exported - an effect mesh's strips, the one expansion
+export function stripsToTriangles(data) {
+  // MW-SPELLFX1: exported - an effect mesh's strips, the one expansion
   const out = [];
   for (const strip of data.strips ?? []) {
     if (!strip || strip.length < 3) continue;
     for (let i = 0; i + 2 < strip.length; i++) {
-      const a = strip[i], b = strip[i + 1], c = strip[i + 2];
+      const a = strip[i],
+        b = strip[i + 1],
+        c = strip[i + 2];
       if (a === b || b === c || a === c) continue;
       if (i & 1) out.push(b, a, c);
       else out.push(a, b, c);
@@ -118,11 +123,7 @@ export function mat33Mul(a, b) {
 
 /** Row-major 3x3 applied to [x,y,z]. */
 export function mat33Apply(m, x, y, z) {
-  return [
-    m[0] * x + m[1] * y + m[2] * z,
-    m[3] * x + m[4] * y + m[5] * z,
-    m[6] * x + m[7] * y + m[8] * z,
-  ];
+  return [m[0] * x + m[1] * y + m[2] * z, m[3] * x + m[4] * y + m[5] * z, m[6] * x + m[7] * y + m[8] * z];
 }
 
 /** Copy a translation triple into a plain array. */
@@ -159,7 +160,12 @@ export function composeTransform(p, node) {
  * so they are the numbers.
  */
 export const VERTEX_COLOR_MODE = Object.freeze({
-  None: 0, Emission: 1, AmbientAndDiffuse: 2, Ambient: 3, Diffuse: 4, Specular: 5,
+  None: 0,
+  Emission: 1,
+  AmbientAndDiffuse: 2,
+  Ambient: 3,
+  Diffuse: 4,
+  Specular: 5,
 });
 
 /** NiVertexColorProperty's two enums (nif/property.hpp:558-576). */
@@ -214,14 +220,15 @@ export function resolveMaterial(nif, props, hasVertexColors = false) {
     // reference's default on the ONE/ZERO pair is a NIF with no alpha
     // property at all, which draws opaque. Kept as the file's index -
     // the renderer owns the GL names.
-    srcBlend: 6, dstBlend: 7,
+    srcBlend: 6,
+    dstBlend: 7,
     // NiZBufferProperty (:2542-2548, handleDepthFlags :2143-2154): bit 0
     // tests, bit 1 writes; a file without the property does both.
-    depthTest: true, depthWrite: true,
+    depthTest: true,
+    depthWrite: true,
     // Rule 64: the mode is the ONE thing set before the loop that is not
     // a default.
-    vertexColorMode: hasVertexColors
-      ? VERTEX_COLOR_MODE.AmbientAndDiffuse : VERTEX_COLOR_MODE.None,
+    vertexColorMode: hasVertexColors ? VERTEX_COLOR_MODE.AmbientAndDiffuse : VERTEX_COLOR_MODE.None,
     // Rule 65: DrawMode 3 (Both) is the ONLY two-sided value. Default is
     // a synonym for counter-clockwise WITH backface culling, not for
     // two-sided.
@@ -260,10 +267,10 @@ export function resolveMaterial(nif, props, hasVertexColors = false) {
         out.alphaBlend = (prop.flags & 0x0001) !== 0;
         out.alphaTest = (prop.flags & 0x0200) !== 0;
         out.alphaThreshold = prop.threshold;
-        out.srcBlend = (prop.flags >> 1) & 0xF;   // MAC-Q: sourceBlendMode()
-        out.dstBlend = (prop.flags >> 5) & 0xF;   // MAC-Q: destinationBlendMode()
+        out.srcBlend = (prop.flags >> 1) & 0xf; // MAC-Q: sourceBlendMode()
+        out.dstBlend = (prop.flags >> 5) & 0xf; // MAC-Q: destinationBlendMode()
         break;
-      case 'NiZBufferProperty':   // MAC-Q
+      case 'NiZBufferProperty': // MAC-Q
         out.depthTest = (prop.flags & 0x1) !== 0;
         out.depthWrite = (prop.flags & 0x2) !== 0;
         break;
@@ -274,8 +281,8 @@ export function resolveMaterial(nif, props, hasVertexColors = false) {
           out.vertexColorMode = VERTEX_COLOR_MODE.Emission;
         } else if (prop.vertexMode === VERT_MODE.SrcAmbDif) {
           lightmode = prop.lightingMode;
-          out.vertexColorMode = lightmode === LIGHT_MODE.Emissive
-            ? VERTEX_COLOR_MODE.None : VERTEX_COLOR_MODE.AmbientAndDiffuse;
+          out.vertexColorMode =
+            lightmode === LIGHT_MODE.Emissive ? VERTEX_COLOR_MODE.None : VERTEX_COLOR_MODE.AmbientAndDiffuse;
         }
         break;
       case 'NiStencilProperty':
@@ -404,7 +411,10 @@ export function hasMarkerFlag(nif, rec) {
   return false;
 }
 
-const ciStartsWith = (name, prefix) => String(name || '').toLowerCase().startsWith(prefix);
+const ciStartsWith = (name, prefix) =>
+  String(name || '')
+    .toLowerCase()
+    .startsWith(prefix);
 
 /**
  * RULE 59's GEOMETRY NAME SKIP LIST (nifloader.cpp:855-861), for
@@ -442,7 +452,7 @@ export function flattenNif(nif, opts = {}) {
     let indices;
     if (shape.type === 'NiTriStrips') {
       indices = stripsToTriangles(data);
-      if (!indices.length) return;   // no strip of 3: the reference draws none
+      if (!indices.length) return; // no strip of 3: the reference draws none
     } else {
       indices = Uint16Array.from(data.triangles);
     }
@@ -540,7 +550,7 @@ export function flattenNif(nif, opts = {}) {
       colors: data.colors ? Float32Array.from(data.colors) : null,
       indices,
       material: resolveMaterial(nif, props, !!data.colors),
-      parentRef,   // MWNPC9: the node the shape hangs under - a creature's rigid piece rides it (mwCharacter.js bindCreatureModel)
+      parentRef, // MWNPC9: the node the shape hangs under - a creature's rigid piece rides it (mwCharacter.js bindCreatureModel)
     });
   }
 
@@ -548,14 +558,15 @@ export function flattenNif(nif, opts = {}) {
   // nowhere else, then carried down the whole traversal.
   let hasMarkers = false;
 
-  function walk(ref, world, props, isRoot = false, inside = !underNode, animFlags = 0, chain = [], parentRef = -1) {   // MWNPC9: and the node above
+  function walk(ref, world, props, isRoot = false, inside = !underNode, animFlags = 0, chain = [], parentRef = -1) {
+    // MWNPC9: and the node above
     const rec = deref(nif, ref);
     if (!rec) return;
-    const nextChain = [...chain, rec];   // MW-BOW1: the records from the root down
-    if (ANIM_FLAG_NODES.has(rec.type)) animFlags = rec.flags | 0;   // MAC-Q: nifloader.cpp:786-787
+    const nextChain = [...chain, rec]; // MW-BOW1: the records from the root down
+    if (ANIM_FLAG_NODES.has(rec.type)) animFlags = rec.flags | 0; // MAC-Q: nifloader.cpp:786-787
     const lname = String(rec.name || '').toLowerCase();
-    if (excludeNode && lname === excludeNode) return;   // WS1: the masked subtree
-    if (underNode && lname === underNode) inside = true;   // WS1: from here down
+    if (excludeNode && lname === excludeNode) return; // WS1: the masked subtree
+    if (underNode && lname === underNode) inside = true; // WS1: from here down
     // RULE 58 (1): "Bounding Box", case-insensitive EXACT, and the node
     // AND ITS WHOLE SUBTREE never enter the scene at all. The guard is
     // `args.mRootNode && ...` and mRootNode is null on the first call, so
@@ -589,7 +600,8 @@ export function flattenNif(nif, opts = {}) {
       // been composed. The node is still walked - it simply emits
       // nothing - which is the difference between skipping a drawable
       // and pruning a subtree.
-      if (inside && !skipGeometryName(rec.name, hasMarkers)) emit(rec, nextWorld, nextProps, nextChain, animFlags, parentRef);
+      if (inside && !skipGeometryName(rec.name, hasMarkers))
+        emit(rec, nextWorld, nextProps, nextChain, animFlags, parentRef);
       return;
     }
     if (PARTICLE_TYPES.has(rec.type)) {
@@ -611,7 +623,8 @@ export function flattenNif(nif, opts = {}) {
       const only = selectedChild(rec);
       if (only !== null) {
         const child = rec.children[only];
-        if (child !== undefined && child >= 0) walk(child, nextWorld, nextProps, false, inside, animFlags, nextChain, ref);
+        if (child !== undefined && child >= 0)
+          walk(child, nextWorld, nextProps, false, inside, animFlags, nextChain, ref);
         return;
       }
       for (const child of rec.children) {

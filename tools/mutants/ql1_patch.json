@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-QL-PATCH-draft-global-header-unread",
     "file": "tools/qlSheetDraft.mjs",
-    "old": "if (!head && linked && globalVarsTable().hasValue(linked[1]))",
-    "new": "if (false)",
+    "old": "    if (!head && linked && globalVarsTable().hasValue(linked[1])) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/questlines/ql1_sheets.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-QL-PATCH-draft-task-header-unread",
     "file": "tools/qlSheetDraft.mjs",
-    "old": "    if (head) { cur = head[1] ?? `until ${head[2]}`; out.set(cur, []); continue; }",
-    "new": "",
+    "old": "    if (head) {\n      cur = head[1] ?? `until ${head[2]}`;\n      out.set(cur, []);\n      continue;\n    } // AUDIT QUESTLINES DOC-35: a `variable` is above - no third arm",
+    "new": "    // AUDIT QUESTLINES DOC-35: a `variable` is above - no third arm",
     "tests": [
       "test/systems/questlines/ql1_sheets.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "AUDIT-QL-PATCH-flagship-by-pay-name",
     "file": "tools/qlSheetLaw.mjs",
-    "old": "  return JSON.stringify([!!outcome?.failure, given, !outcome?.failure && p.gear, p.step, Object.entries(outcome?.standing ?? {}).sort(), legal, repute]);",
+    "old": "  return JSON.stringify([\n    !!outcome?.failure,\n    given,\n    !outcome?.failure && p.gear,\n    p.step,\n    Object.entries(outcome?.standing ?? {}).sort(),\n    legal,\n    repute,\n  ]);",
     "new": "  return JSON.stringify([outcome?.pay, outcome?.standing ?? {}, outcome?.legal ?? 0]);",
     "tests": [
       "test/systems/questlines/ql1_sheets.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-QL-PATCH-gold-a-path-gives-not-read",
     "file": "tools/qlSheetLaw.mjs",
-    "old": ".filter(([, r]) => r && r.itemName !== 'letter')",
-    "new": ".filter(() => false)",
+    "old": "    .filter(([, r]) => r && r.itemName !== 'letter')",
+    "new": "    .filter(() => false)",
     "tests": [
       "test/systems/questlines/ql1_sheets.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-QL-PATCH-script-repute-not-read",
     "file": "tools/qlSheetLaw.mjs",
-    "old": "const repute = acts.filter((a) => a.typeName === 'ChangeReputeWith')",
-    "new": "const repute = acts.filter(() => false)",
+    "old": "    .filter((a) => a.typeName === 'ChangeReputeWith')",
+    "new": "    .filter(() => false)",
     "tests": [
       "test/systems/questlines/ql1_sheets.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-QL-PATCH-ask-answer-unread",
     "file": "tools/qlCheck.mjs",
-    "old": "for (const x of ask[2].matchAll(/(\\d+)\\s+_/g)) named.add(Number(x[1]));",
-    "new": "",
+    "old": "      for (const x of ask[2].matchAll(/(\\d+)\\s+_/g)) named.add(Number(x[1]));\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/questlines/ql1_sheets.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-QL-PATCH-patch-word-on-DFU-id-let-by",
     "file": "tools/qlCheck.mjs",
-    "old": "if (!p.old.includes(m[0]) && shipped?.quest?.getMessage?.(Number(m[1])))",
-    "new": "if (false)",
+    "old": "      if (!p.old.includes(m[0]) && shipped?.quest?.getMessage?.(Number(m[1])))\n        out.push(`${name}: its words take message ${m[1]}, which the script already has`);",
+    "new": "      if (false) out.push(`${name}: its words take message ${m[1]}, which the script already has`);",
     "tests": [
       "test/systems/questlines/ql1_sheets.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-QL-PATCH-rows-unmeasured",
     "file": "tools/qlCheck.mjs",
-    "old": "if (t.length > ROW_CHARS)",
-    "new": "if (false)",
+    "old": "        if (t.length > ROW_CHARS) out.push(`${name}: message ${id}'s row \"${t}\" is over ${ROW_CHARS} characters`);",
+    "new": "        if (false) out.push(`${name}: message ${id}'s row \"${t}\" is over ${ROW_CHARS} characters`);",
     "tests": [
       "test/systems/questlines/ql1_sheets.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-QL-PATCH-answers-unmeasured",
     "file": "tools/qlCheck.mjs",
-    "old": "if (rows.length !== 1 || label.length > CHOICE_CHARS)",
-    "new": "if (false)",
+    "old": "      if (rows.length !== 1 || label.length > CHOICE_CHARS)\n        out.push(`${name}: answer ${id} \"${label}\" - one line of at most ${CHOICE_CHARS} characters`);",
+    "new": "      if (false) out.push(`${name}: answer ${id} \"${label}\" - one line of at most ${CHOICE_CHARS} characters`);",
     "tests": [
       "test/systems/questlines/ql1_sheets.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-QL-PATCH-outcome-lines-unread",
     "file": "tools/qlSheetLaw.mjs",
-    "old": "if (a.typeName === 'QlOutcome' && !outcomeIds.has(a.outcomeSymbol?.name))",
-    "new": "if (false)",
+    "old": "    if (a.typeName === 'QlOutcome' && !outcomeIds.has(a.outcomeSymbol?.name))\n      out.push(`the script says \"outcome _${a.outcomeSymbol?.name}_\" - the sheet has no such outcome`);",
+    "new": "    if (false) out.push(`the script says \"outcome _${a.outcomeSymbol?.name}_\" - the sheet has no such outcome`);",
     "tests": [
       "test/systems/questlines/ql1_sheets.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-QL-PATCH-standing-check-dropped",
     "file": "tools/qlSheetLaw.mjs",
-    "old": "for (const f of Object.keys(o?.standing ?? {})) if (!individualFaction(f))",
-    "new": "for (const f of Object.keys(o?.standing ?? {})) if (false)",
+    "old": "      if (!individualFaction(f))\n        out.push(`outcomes[${i}].standing.${f}: no individual faction of Quests-Factions.txt (a p2 -1 row)`);",
+    "new": "      if (false) out.push(`outcomes[${i}].standing.${f}: no individual faction of Quests-Factions.txt (a p2 -1 row)`);",
     "tests": [
       "test/systems/questlines/ql1_sheets.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-QL-PATCH-named-base-unchecked",
     "file": "tools/qlSheetLaw.mjs",
-    "old": "else if (!NAMED_BASES[n.kind].includes(n?.base))",
-    "new": "else if (false)",
+    "old": "      else if (!NAMED_BASES[n.kind].includes(n?.base))",
+    "new": "      else if (false)",
     "tests": [
       "test/systems/questlines/ql1_sheets.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-QL-PATCH-whole-script-payer-dropped",
     "file": "tools/qlSheetLaw.mjs",
-    "old": "if (!pays.length) { out.push(",
-    "new": "if (false) { out.push(",
+    "old": "    if (!pays.length) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/questlines/ql1_sheets.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-QL-PATCH-path-payer-dropped",
     "file": "tools/qlSheetLaw.mjs",
-    "old": "if (t && t.actions.some((a) => a.typeName === 'EndQuest') && !pays.includes(t))",
-    "new": "if (false)",
+    "old": "      if (t && t.actions.some((a) => a.typeName === 'EndQuest') && !pays.includes(t))",
+    "new": "      if (false)",
     "tests": [
       "test/systems/questlines/ql1_sheets.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-QL-PATCH-success-requirement-dropped",
     "file": "tools/qlSheetLaw.mjs",
-    "old": "if (!fb && lines && canSucceedUnnamed(sheet, quest, lines))",
-    "new": "if (false)",
+    "old": "  if (!fb && lines && canSucceedUnnamed(sheet, quest, lines))",
+    "new": "  if (false)",
     "tests": [
       "test/systems/questlines/ql1_sheets.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-QL-PATCH-betrayal-fallback-let-by",
     "file": "tools/qlSheetLaw.mjs",
-    "old": "if (fb.pay === 'betrayal')",
-    "new": "if (false)",
+    "old": "    if (fb.pay === 'betrayal')\n      out.push(at(`success: \"${fb.id}\" pays a betrayal - a success no row named never betrayed anyone`));",
+    "new": "    if (false) out.push(at(`success: \"${fb.id}\" pays a betrayal - a success no row named never betrayed anyone`));",
     "tests": [
       "test/systems/questlines/ql1_sheets.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "AUDIT-QL-PATCH-choice-task-fallback-let-by",
     "file": "tools/qlSheetLaw.mjs",
-    "old": "if (fb && positiveSymbols(fb.on).some((x) => x.kind === 'task' && chosen.has(x.name)))",
-    "new": "if (false)",
+    "old": "  if (fb && positiveSymbols(fb.on).some((x) => x.kind === 'task' && chosen.has(x.name)))\n    out.push(`success: \"${fb.id}\" waits on a task a choice sets - a success no row named made no choice`);",
+    "new": "  if (false) out.push(`success: \"${fb.id}\" waits on a task a choice sets - a success no row named made no choice`);",
     "tests": [
       "test/systems/questlines/ql1_sheets.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-QL-PATCH-kit-guard-on-the-text",
     "file": "tools/qlPatchKit.mjs",
-    "old": "if (hasQuestlinePatch(quest) && !replace)",
-    "new": "if (/_ql[a-z]/i.test(text) && !replace)",
+    "old": "  if (hasQuestlinePatch(quest) && !replace)",
+    "new": "  if (/_ql[a-z]/i.test(text) && !replace)",
     "tests": [
       "test/systems/questlines/ql4_branches.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-QL-PATCH-kit-readers-unread",
     "file": "tools/qlPatchKit.mjs",
-    "old": "if (found.length && readers !== 'copy') throw",
-    "new": "if (false) throw",
+    "old": "  if (found.length && readers !== 'copy')",
+    "new": "  if (false)",
     "tests": [
       "test/systems/questlines/ql4_branches.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "AUDIT-QL-PATCH-kit-question-one-row",
     "file": "tools/qlPatchKit.mjs",
-    "old": "...(centred ? wrapRows(text).map((l) => `<ce> ${l}`)",
-    "new": "...(centred ? [`<ce> ${String(text).trim()}`]",
+    "old": "  [`Message:  ${id}`, ...(centred ? wrapRows(text).map((l) => `<ce> ${l}`) : [String(text).trim()]), ''].join('\\n');",
+    "new": "  [`Message:  ${id}`, ...(centred ? [`<ce> ${String(text).trim()}`] : [String(text).trim()]), ''].join('\\n');",
     "tests": [
       "test/systems/questlines/ql4_branches.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "AUDIT-QL-PATCH-kit-refusal-always-ql-paid",
     "file": "tools/qlPatchKit.mjs",
-    "old": "const paid = gives.every((l) => /^give pc nothing\\b/i.test(l)) ? 'give pc nothing' : 'ql paid';",
-    "new": "const paid = 'ql paid';",
+    "old": "  const paid = gives.every((l) => /^give pc nothing\\b/i.test(l)) ? 'give pc nothing' : 'ql paid';",
+    "new": "  const paid = 'ql paid';",
     "tests": [
       "test/systems/questlines/ql4_branches.test.js"
     ]

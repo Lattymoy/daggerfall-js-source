@@ -57,25 +57,48 @@ import { randomRangeInclusive } from '../formats/dfRandom.js';
 import { isAlly, isEnemy, flatArchive, flatRecord } from '../formats/factionFile.js';
 import { tokensToString } from './rumorMill.js';
 import { GENDERS } from '../characters/nameHelper.js';
-import { BUILDING_TYPES } from '../world/buildingNames.js';   // PROVINCE-COURTS: the questor pool's palace is DFLocation.BuildingTypes.Palace
-import { getLocalizedFactionName } from './textManager.js';   // L10N3e: the greeting's faction names in the player's language
+import { BUILDING_TYPES } from '../world/buildingNames.js'; // PROVINCE-COURTS: the questor pool's palace is DFLocation.BuildingTypes.Palace
+import { getLocalizedFactionName } from './textManager.js'; // L10N3e: the greeting's faction names in the player's language
 import {
-  NO_RESPONSE_TEXT_ID, MIN_NEUTRAL_REACTION, MIN_LIKE_REACTION,
-  MIN_VERY_LIKE_REACTION, REFUSE_TALK_REACTION,
+  NO_RESPONSE_TEXT_ID,
+  MIN_NEUTRAL_REACTION,
+  MIN_LIKE_REACTION,
+  MIN_VERY_LIKE_REACTION,
+  REFUSE_TALK_REACTION,
 } from './talk/talkSession.js';
 
 /** FactionFile.FactionTypes, the four the parent walks stop on. */
 export const FACTION_TYPE = Object.freeze({
-  None: -1, Daedra: 0, God: 1, Group: 2, Subgroup: 3, Individual: 4,
-  Official: 5, VampireClan: 6, Province: 7, WitchesCoven: 8, Temple: 9,
-  KnightlyGuard: 10, MagicUser: 11, Generic: 12, Thieves: 13,
-  Courts: 14, People: 15,
+  None: -1,
+  Daedra: 0,
+  God: 1,
+  Group: 2,
+  Subgroup: 3,
+  Individual: 4,
+  Official: 5,
+  VampireClan: 6,
+  Province: 7,
+  WitchesCoven: 8,
+  Temple: 9,
+  KnightlyGuard: 10,
+  MagicUser: 11,
+  Generic: 12,
+  Thieves: 13,
+  Courts: 14,
+  People: 15,
 });
 
 /** FactionFile.SocialGroups. */
 export const SOCIAL_GROUP = Object.freeze({
-  None: -1, Commoners: 0, Merchants: 1, Scholars: 2, Nobility: 3,
-  Underworld: 4, SGroup5: 5, SupernaturalBeings: 6, GuildMembers: 7,
+  None: -1,
+  Commoners: 0,
+  Merchants: 1,
+  Scholars: 2,
+  Nobility: 3,
+  Underworld: 4,
+  SGroup5: 5,
+  SupernaturalBeings: 6,
+  GuildMembers: 7,
 });
 
 /** FactionFile.FactionIDs, the three generic ones GetStaticNPCFactionData
@@ -91,8 +114,8 @@ export const RANDOM_KNIGHT = 853;
  *  appear TWICE - the table is not a clean 3-per-index run, and that
  *  is the table, not a typo. */
 export const GREETINGS = Object.freeze([
-  8550, 8551, 8552, 8553, 8554, 8555, 8556, 8557, 8558, 8559, 8560, 8561, 8562, 8562,
-  8563, 8564, 8564, 8565, 8566, 8566, 8567, 8568, 8568, 8569, 8570, 8570, 8571,
+  8550, 8551, 8552, 8553, 8554, 8555, 8556, 8557, 8558, 8559, 8560, 8561, 8562, 8562, 8563, 8564, 8564, 8565, 8566,
+  8566, 8567, 8568, 8568, 8569, 8570, 8570, 8571,
 ]);
 
 /** The four mobile-greeting records the ladder falls back to
@@ -134,8 +157,19 @@ export function newNPCData(over = {}) {
 }
 
 const EMPTY_FACTION = Object.freeze({
-  id: 0, parent: 0, type: 0, rep: 0, sgroup: 0, ggroup: 0, name: '',
-  ally1: 0, ally2: 0, ally3: 0, enemy1: 0, enemy2: 0, enemy3: 0,
+  id: 0,
+  parent: 0,
+  type: 0,
+  rep: 0,
+  sgroup: 0,
+  ggroup: 0,
+  name: '',
+  ally1: 0,
+  ally2: 0,
+  ally3: 0,
+  enemy1: 0,
+  enemy2: 0,
+  enemy3: 0,
 });
 
 /** L10N3e: a faction's name as GetFactionData hands it back - through
@@ -175,14 +209,22 @@ export class NPCSession {
     this.exteriorUsedForQuestors = 0;
   }
 
-  _rolls() { return this.deps.rolls ?? Math.random; }
+  _rolls() {
+    return this.deps.rolls ?? Math.random;
+  }
   /** UnityEngine.Random.Range(0, n) - int, exclusive top. */
-  _range(n) { return Math.floor(this._rolls()() * n); }
-  _faction(id) { return this.deps.factionData?.(id) ?? null; }
+  _range(n) {
+    return Math.floor(this._rolls()() * n);
+  }
+  _faction(id) {
+    return this.deps.factionData?.(id) ?? null;
+  }
   /** PersistentFactionData.GetFactionName (:309-314): the host's
    *  FACTION.TXT name for the id ('' when it has none), handed back
    *  through GetLocalizedFactionName (:313) - L10N3e. */
-  _factionName(id) { return getLocalizedFactionName(id, this.deps.factionName?.(id) ?? ''); }
+  _factionName(id) {
+    return getLocalizedFactionName(id, this.deps.factionName?.(id) ?? '');
+  }
 
   // ---- the faction resolution (:884-907) ----
 
@@ -198,9 +240,10 @@ export class NPCSession {
   getStaticNPCFactionData(factionId, buildingType) {
     let id = factionId;
     if (id === 0) {
-      id = buildingType === 'Palace' || buildingType === BUILDING_TYPES.Palace
-        ? (this.deps.courtOfCurrentRegion?.() ?? 0)
-        : (this.deps.peopleOfCurrentRegion?.() ?? 0);
+      id =
+        buildingType === 'Palace' || buildingType === BUILDING_TYPES.Palace
+          ? (this.deps.courtOfCurrentRegion?.() ?? 0)
+          : (this.deps.peopleOfCurrentRegion?.() ?? 0);
     } else if (id === RANDOM_RULER || id === RANDOM_NOBLE || id === RANDOM_KNIGHT) {
       id = this.deps.courtOfCurrentRegion?.() ?? 0;
     }
@@ -212,12 +255,14 @@ export class NPCSession {
    *  or the faction is a Group, a Province or a Temple. */
   getParentGroupFaction(faction) {
     let parent = faction ?? EMPTY_FACTION;
-    while (parent.parent !== 0
-      && parent.type !== FACTION_TYPE.Group
-      && parent.type !== FACTION_TYPE.Province
-      && parent.type !== FACTION_TYPE.Temple) {
+    while (
+      parent.parent !== 0 &&
+      parent.type !== FACTION_TYPE.Group &&
+      parent.type !== FACTION_TYPE.Province &&
+      parent.type !== FACTION_TYPE.Temple
+    ) {
       const next = this._faction(parent.parent);
-      if (!next) break;   // headless: no faction table, no walk
+      if (!next) break; // headless: no faction table, no walk
       parent = next;
     }
     return parent;
@@ -249,7 +294,7 @@ export class NPCSession {
     const names = this.npcData;
     // L10N3e: the names the greeting macros show, in the player's language
     const npcName = shownName(npcF);
-    for (const guild of (this.deps.guildMemberships?.() ?? [])) {
+    for (const guild of this.deps.guildMemberships?.() ?? []) {
       const g = this._faction(guild.factionId) ?? EMPTY_FACTION;
       const gName = shownName(g);
       // the same guild: nothing beats it, and it returns at once
@@ -259,10 +304,12 @@ export class NPCSession {
         return { greetingIndex: 0, reputation: rep };
       }
       // a shared parent, or one being the other's parent
-      if ((g.parent !== 0 && npcF.parent !== 0 && g.parent === npcF.parent
-        || g.parent === npcF.id
-        || npcF.parent === g.id)
-        && greetingIndex > 1) {
+      if (
+        ((g.parent !== 0 && npcF.parent !== 0 && g.parent === npcF.parent) ||
+          g.parent === npcF.id ||
+          npcF.parent === g.id) &&
+        greetingIndex > 1
+      ) {
         names.npcFactionName = npcName;
         names.pcFactionName = gName;
         greetingIndex = 1;
@@ -399,7 +446,8 @@ export class NPCSession {
       isSpyMaster: false,
     });
     this.deps.onTargetChanged?.({
-      kind: NPC_TYPE.Mobile, nameNPC: this.nameNPC,
+      kind: NPC_TYPE.Mobile,
+      nameNPC: this.nameNPC,
       portrait: { archive: 'CommonFaces', record: targetMobileNPC?.personFaceRecordId ?? 0 },
     });
     // "Update Where Is -> Person since this list may hide the questor
@@ -493,7 +541,9 @@ export class NPCSession {
    *  additions "since they have their own reputation". */
   talkToStaticNPC(targetNPC, { menu = true, isSpyMaster = false } = {}) {
     let npcFactionData = this.getStaticNPCFactionData(
-      targetNPC?.data?.factionID ?? 0, this.deps.buildingType?.() ?? null);
+      targetNPC?.data?.factionID ?? 0,
+      this.deps.buildingType?.() ?? null,
+    );
     const isChildNPC = targetNPC?.isChildNPC ?? false;
     const nameSeed = targetNPC?.data?.nameSeed ?? 0;
     if (!isChildNPC && this.isNpcOfferingQuest(nameSeed)) {
@@ -502,20 +552,25 @@ export class NPCSession {
     }
     if (!isChildNPC && this.isCastleNpcOfferingQuest(nameSeed)) {
       return {
-        kind: 'questOffer', npc: targetNPC?.data ?? null,
-        socialGroup: (npcFactionData ?? EMPTY_FACTION).sgroup, menu,
+        kind: 'questOffer',
+        npc: targetNPC?.data ?? null,
+        socialGroup: (npcFactionData ?? EMPTY_FACTION).sgroup,
+        menu,
       };
     }
     this.currentNPCType = NPC_TYPE.Static;
-    while (npcFactionData && npcFactionData.parent !== 0
-      && npcFactionData.type !== FACTION_TYPE.Group
-      && npcFactionData.type !== FACTION_TYPE.Province
-      && npcFactionData.type !== FACTION_TYPE.Temple
-      && npcFactionData.type !== FACTION_TYPE.People
-      && npcFactionData.type !== FACTION_TYPE.Courts
-      && npcFactionData.type !== FACTION_TYPE.Individual) {
+    while (
+      npcFactionData &&
+      npcFactionData.parent !== 0 &&
+      npcFactionData.type !== FACTION_TYPE.Group &&
+      npcFactionData.type !== FACTION_TYPE.Province &&
+      npcFactionData.type !== FACTION_TYPE.Temple &&
+      npcFactionData.type !== FACTION_TYPE.People &&
+      npcFactionData.type !== FACTION_TYPE.Courts &&
+      npcFactionData.type !== FACTION_TYPE.Individual
+    ) {
       const next = this._faction(npcFactionData.parent);
-      if (!next) break;   // headless: no table, no walk
+      if (!next) break; // headless: no table, no walk
       npcFactionData = next;
     }
     this.reactionToPlayer = this.deps.reactionToPlayer?.(npcFactionData) ?? 0;
@@ -576,13 +631,14 @@ export class NPCSession {
   /** WorkAvailable (:2606-2609). Note C# has TWO of these: the public
    *  property here tests `Count != 0`, and the one at :494 tests
    *  `npcsWithWork != null && Count > 0`. Same answer, kept as one. */
-  get workAvailable() { return this.npcsWithWork.size !== 0; }
+  get workAvailable() {
+    return this.npcsWithWork.size !== 0;
+  }
 
   /** IsNpcOfferingQuest (:2551-2554): in the pool, and not already
    *  the questor of a running quest. */
   isNpcOfferingQuest(nameSeed) {
-    return this.npcsWithWork.has(nameSeed)
-      && !(this.deps.isLastNPCClickedAnActiveQuestor?.() ?? false);
+    return this.npcsWithWork.has(nameSeed) && !(this.deps.isLastNPCClickedAnActiveQuestor?.() ?? false);
   }
 
   /** IsCastleNpcOfferingQuest (:2556-2572): a castle NPC gets ONE
@@ -593,9 +649,11 @@ export class NPCSession {
    *  NPC clicked outside a castle, or while a questor is active, is
    *  never marked as spoken to and can still be rolled later. */
   isCastleNpcOfferingQuest(nameSeed) {
-    if (!(this.deps.isPlayerInsideCastle?.() ?? false)
-      || this.castleNPCsSpokenTo.has(nameSeed)
-      || (this.deps.isLastNPCClickedAnActiveQuestor?.() ?? false)) {
+    if (
+      !(this.deps.isPlayerInsideCastle?.() ?? false) ||
+      this.castleNPCsSpokenTo.has(nameSeed) ||
+      (this.deps.isLastNPCClickedAnActiveQuestor?.() ?? false)
+    ) {
       return false;
     }
     const rand = this._range(4);
@@ -624,11 +682,18 @@ export class NPCSession {
     return this.deps.fullName?.(entry.npc.nameBank, entry.npc.gender) ?? '';
   }
 
-  getQuestorGender() { return this.npcsWithWork.get(this.selectedNpcWorkKey)?.npc?.gender ?? null; }
-  getQuestorLocation() { return this.npcsWithWork.get(this.selectedNpcWorkKey)?.buildingName ?? ''; }
+  getQuestorGender() {
+    return this.npcsWithWork.get(this.selectedNpcWorkKey)?.npc?.gender ?? null;
+  }
+  getQuestorLocation() {
+    return this.npcsWithWork.get(this.selectedNpcWorkKey)?.buildingName ?? '';
+  }
 
   /** RemoveNpcQuestor (:2600-2604) - the offer flow's seam. */
-  removeNpcQuestor(nameSeed) { this.npcsWithWork.delete(nameSeed); this._holdSelection(); }
+  removeNpcQuestor(nameSeed) {
+    this.npcsWithWork.delete(nameSeed);
+    this._holdSelection();
+  }
 
   /** QUESTOR-HELD (FIELD BUGS 2026-10-20h, Ledger A): while the pool
    *  holds questors, the selection names one of them - the invariant the
@@ -688,12 +753,15 @@ export class NPCSession {
     this.npcsWithWork.clear();
     const nameBank = this.deps.nameBankOfCurrentRegion?.() ?? 0;
     for (const building of buildings) {
-      for (const npc of (building.npcs ?? [])) {
+      for (const npc of building.npcs ?? []) {
         const factionData = this.getStaticNPCFactionData(npc.factionID ?? 0, building.buildingType);
         const socialGroup = (factionData ?? EMPTY_FACTION).sgroup;
-        if (socialGroup !== SOCIAL_GROUP.Merchants
-          && socialGroup !== SOCIAL_GROUP.Commoners
-          && socialGroup !== SOCIAL_GROUP.Nobility) continue;
+        if (
+          socialGroup !== SOCIAL_GROUP.Merchants &&
+          socialGroup !== SOCIAL_GROUP.Commoners &&
+          socialGroup !== SOCIAL_GROUP.Nobility
+        )
+          continue;
         const randomChance = this._range(4);
         if (randomChance < 3) continue;
         if (npc.isChild) continue;
@@ -733,10 +801,11 @@ export class NPCSession {
     for (const [questID, tokens] of posts) {
       const quest = this.deps.getQuest?.(questID) ?? null;
       if (!quest) continue;
-      for (const person of (quest.resources?.values?.() ?? [])) {
+      for (const person of quest.resources?.values?.() ?? []) {
         if (!person.isPerson) continue;
-        const matches = (this.deps.isNPCDataEqual?.(person.questorData, this.lastTargetStaticNPC?.data) ?? false)
-          || (person.isIndividualNPC && person.factionData?.id === (this.lastTargetStaticNPC?.data?.factionID ?? null));
+        const matches =
+          (this.deps.isNPCDataEqual?.(person.questorData, this.lastTargetStaticNPC?.data) ?? false) ||
+          (person.isIndividualNPC && person.factionData?.id === (this.lastTargetStaticNPC?.data?.factionID ?? null));
         if (!person.isQuestor || !matches) continue;
         if (guild?.isMember?.()) quest.externalMCP = guild;
         // KEPT: **THE UNCLONED QUESTOR POST.** ExpandQuestMessage

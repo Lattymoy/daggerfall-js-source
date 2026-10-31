@@ -2,8 +2,8 @@
   {
     "name": "E-chen-gap2",
     "file": "src/systems/card/cardPatrons.js",
-    "old": "gap === 2 ? 2 :",
-    "new": "gap === 2 ? 1 :",
+    "old": "  s -= gap === 0 ? 0 : gap === 1 ? 1 : gap === 2 ? 2 : gap === 3 ? 4 : 5;",
+    "new": "  s -= gap === 0 ? 0 : gap === 1 ? 1 : gap === 2 ? 1 : gap === 3 ? 4 : 5;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -21,8 +21,8 @@
   {
     "name": "E-chen-gap3",
     "file": "src/systems/card/cardPatrons.js",
-    "old": "gap === 3 ? 4 : 5",
-    "new": "gap === 3 ? 3 : 5",
+    "old": "  s -= gap === 0 ? 0 : gap === 1 ? 1 : gap === 2 ? 2 : gap === 3 ? 4 : 5;",
+    "new": "  s -= gap === 0 ? 0 : gap === 1 ? 1 : gap === 2 ? 2 : gap === 3 ? 3 : 5;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -40,8 +40,8 @@
   {
     "name": "E-chen-connector-queen",
     "file": "src/systems/card/cardPatrons.js",
-    "old": "if (gap <= 1 && hi < 10) s += 1;",
-    "new": "if (gap <= 1 && hi <= 10) s += 1;",
+    "old": "  if (gap <= 1 && hi < 10) s += 1;",
+    "new": "  if (gap <= 1 && hi <= 10) s += 1;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -59,8 +59,8 @@
   {
     "name": "E-odds-no-call",
     "file": "src/systems/card/cardPatrons.js",
-    "old": "const odds = call > 0 ? call / (pot + call) : 0;",
-    "new": "const odds = call > 0 ? call / pot : 0;",
+    "old": "  const odds = call > 0 ? call / (pot + call) : 0; // the share of the pot after the call this call buys",
+    "new": "  const odds = call > 0 ? call / pot : 0; // the share of the pot after the call this call buys",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -78,8 +78,8 @@
   {
     "name": "E-opp-count-folded",
     "file": "src/systems/card/cardPatrons.js",
-    "old": "view.seats.filter((s, i) => i !== seat && !s.folded).length",
-    "new": "view.seats.filter((s, i) => i !== seat).length",
+    "old": "  const opponents = view.seats.filter((s, i) => i !== seat && !s.folded).length;",
+    "new": "  const opponents = view.seats.filter((s, i) => i !== seat).length;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -97,8 +97,8 @@
   {
     "name": "E-raise-size-flat",
     "file": "src/systems/card/cardPatrons.js",
-    "old": "Math.round(pot * (0.5 + Math.min(1, Math.max(0, strength - temper.raise) * 2)))",
-    "new": "Math.round(pot * 0.5)",
+    "old": "    const want = view.currentBet + Math.round(pot * (0.5 + Math.min(1, Math.max(0, strength - temper.raise) * 2)));",
+    "new": "    const want = view.currentBet + Math.round(pot * 0.5);",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -116,8 +116,8 @@
   {
     "name": "E-purse-offbyone",
     "file": "src/systems/card/cardTableSession.js",
-    "old": "(PURSE_MAX_BB - PURSE_MIN_BB + 1)",
-    "new": "(PURSE_MAX_BB - PURSE_MIN_BB)",
+    "old": "    stack: (PURSE_MIN_BB + Math.floor(unit(rand32) * (PURSE_MAX_BB - PURSE_MIN_BB + 1))) * bb,",
+    "new": "    stack: (PURSE_MIN_BB + Math.floor(unit(rand32) * (PURSE_MAX_BB - PURSE_MIN_BB))) * bb,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -135,8 +135,8 @@
   {
     "name": "E-leave-chips-seat",
     "file": "src/systems/card/cardTableSession.js",
-    "old": "const chips = this.hand && k >= 0 ? this.hand.seats[k].stack : this.seats[p].stack;",
-    "new": "const chips = this.seats[p].stack;",
+    "old": "    const chips = this.hand && k >= 0 ? this.hand.seats[k].stack : this.seats[p].stack;",
+    "new": "    const chips = this.seats[p].stack;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -154,8 +154,8 @@
   {
     "name": "E-leave-hand-stack-kept",
     "file": "src/systems/card/cardTableSession.js",
-    "old": "if (this.hand && k >= 0) this.hand.seats[k].stack = 0;",
-    "new": ";",
+    "old": "    this.seats[p].stack = 0;\n    if (this.hand && k >= 0) this.hand.seats[k].stack = 0; // folded: the law never asks it for a chip again",
+    "new": "    this.seats[p].stack = 0; // folded: the law never asks it for a chip again",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -173,8 +173,8 @@
   {
     "name": "E-leave-no-afterAction",
     "file": "src/systems/card/cardTableSession.js",
-    "old": "this._say({ t: 'act', seat: p, type: 'fold', to: null, paid: 0 }, now); this._afterAction(prev, now); }",
-    "new": "this._say({ t: 'act', seat: p, type: 'fold', to: null, paid: 0 }, now); }",
+    "old": "        this._afterAction(prev, now);\n      }",
+    "new": "      }",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -192,7 +192,7 @@
   {
     "name": "E-foldseat-no-reeval",
     "file": "src/net/card/cardLaw.js",
-    "old": "next.toAct = next.toAct >= 0 ? firstToAct(next, next.toAct) : -1;",
+    "old": "  next.toAct = next.toAct >= 0 ? firstToAct(next, next.toAct) : -1;",
     "new": "",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
@@ -211,8 +211,8 @@
   {
     "name": "E-hud-allin-state",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "h.allIn ? 'all in' : ",
-    "new": "",
+    "old": "              : h.allIn\n                ? 'all in'\n                : hand.toAct === k\n                  ? 'to act'\n                  : '',",
+    "new": "              : hand.toAct === k\n                ? 'to act'\n                : '',",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -230,8 +230,8 @@
   {
     "name": "E-hud-out-state",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "!h ? (hand ? 'out' : '') :",
-    "new": "!h ? '' :",
+    "old": "            ? hand\n              ? 'out'\n              : ''",
+    "new": "            ? ''",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -249,8 +249,8 @@
   {
     "name": "E-hud-folded-backs",
     "file": "src/ui/card/cardTableHud.js",
-    "old": ": h && !h.folded ? [cardFace(-1), cardFace(-1)] : []",
-    "new": ": h ? [cardFace(-1), cardFace(-1)] : []",
+    "old": "          : h && !h.folded",
+    "new": "          : h",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -268,8 +268,8 @@
   {
     "name": "E-hud-empty-msg",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "why === 'empty' ? 'The table has emptied. Every patron is broke.' :",
-    "new": "why === 'empty' ? 'You leave the table.' :",
+    "old": "          ? 'The table has emptied. Every patron is broke.'",
+    "new": "          ? 'You leave the table.'",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -287,8 +287,8 @@
   {
     "name": "E-hud-allin-press",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "else if (a.id === 'allin') onPress('raise', a.to);",
-    "new": "else if (a.id === 'allin') onPress('allin');",
+    "old": "          else if (a.id === 'allin') onPress('raise', a.to);",
+    "new": "          else if (a.id === 'allin') onPress('allin');",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -306,8 +306,8 @@
   {
     "name": "E-hud-raise-press-min",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "b.addEventListener('click', () => onPress('raise', Number(range.value)));",
-    "new": "b.addEventListener('click', () => onPress('raise', a.min));",
+    "old": "          b.addEventListener('click', () => onPress('raise', Number(range.value)));",
+    "new": "          b.addEventListener('click', () => onPress('raise', a.min));",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -325,8 +325,8 @@
   {
     "name": "E-hud-bet-label",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "label: bet ? 'Bet' : 'Raise to'",
-    "new": "label: 'Raise to'",
+    "old": "        label: bet ? 'Bet' : 'Raise to',",
+    "new": "        label: 'Raise to',",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -344,8 +344,8 @@
   {
     "name": "E-scene-street-no-push",
     "file": "src/world/card/cardScene.js",
-    "old": "    if (e.t === 'street') {\n      this._pushBets(t);",
-    "new": "    if (e.t === 'street') {",
+    "old": "      this._pushBets(t);\n      // AUDIT CARDS-2 L1: an all-in's run-out says its streets in one drain - each waits for the last one's cards",
+    "new": "      // AUDIT CARDS-2 L1: an all-in's run-out says its streets in one drain - each waits for the last one's cards",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -363,8 +363,8 @@
   {
     "name": "E-scene-coming-ignored",
     "file": "src/world/card/cardScene.js",
-    "old": "const stack = (h ? h.stack : s.stack) - coming - (carried",
-    "new": "const stack = (h ? h.stack : s.stack) - (carried",
+    "old": "        const stack = (h ? h.stack : s.stack) - coming - (carried?.seat === i ? carried.amount : 0),",
+    "new": "        const stack = (h ? h.stack : s.stack) - (carried?.seat === i ? carried.amount : 0),",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -382,8 +382,8 @@
   {
     "name": "E-scene-boardyaw",
     "file": "src/world/card/cardScene.js",
-    "old": "boardYaw: frame.axisYaw + Math.PI / 2,",
-    "new": "boardYaw: frame.axisYaw,",
+    "old": "    boardYaw: frame.axisYaw + Math.PI / 2,",
+    "new": "    boardYaw: frame.axisYaw,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -401,8 +401,8 @@
   {
     "name": "E-scene-stack-side",
     "file": "src/world/card/cardScene.js",
-    "old": "stack: inward(STACK_IN, STACK_SIDE),",
-    "new": "stack: inward(STACK_IN, 0),",
+    "old": "      stack: inward(STACK_IN, STACK_SIDE),",
+    "new": "      stack: inward(STACK_IN, 0),",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -420,8 +420,8 @@
   {
     "name": "E-scene-dealer-from-player",
     "file": "src/world/card/cardScene.js",
-    "old": "const from = this.places.seats[e.button].deal;",
-    "new": "const from = this.places.seats[this.playerSeat].deal;",
+    "old": "      const from = this.places.seats[e.button].deal;",
+    "new": "      const from = this.places.seats[this.playerSeat].deal;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -458,8 +458,8 @@
   {
     "name": "E-scene-muck-not-flagged",
     "file": "src/world/card/cardScene.js",
-    "old": "        c.seat = -3;",
-    "new": "",
+    "old": "        c.seat = -3;\n      }",
+    "new": "      }",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -477,8 +477,8 @@
   {
     "name": "E-scene-burn-layer",
     "file": "src/world/card/cardScene.js",
-    "old": "to: this._rest(this.places.burn, this.cards.filter((c) => c.seat === -2).length)",
-    "new": "to: this._rest(this.places.burn)",
+    "old": "        to: this._rest(this.places.burn, this.cards.filter((c) => c.seat === -2).length),",
+    "new": "        to: this._rest(this.places.burn),",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -496,8 +496,8 @@
   {
     "name": "E-motion-slide-half",
     "file": "src/world/card/cardMotion.js",
-    "old": "const slide = Math.min(dist * 0.5, SLIDE_MIN + js * SLIDE_SPREAD);",
-    "new": "const slide = SLIDE_MIN + js * SLIDE_SPREAD;",
+    "old": "  const slide = Math.min(dist * 0.5, SLIDE_MIN + js * SLIDE_SPREAD);",
+    "new": "  const slide = SLIDE_MIN + js * SLIDE_SPREAD;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -515,8 +515,8 @@
   {
     "name": "E-motion-yaw-jitter-off",
     "file": "src/world/card/cardMotion.js",
-    "old": "const yawRest = yaw + (jx - jz) * YAW_JITTER;",
-    "new": "const yawRest = yaw;",
+    "old": "  const yawRest = yaw + (jx - jz) * YAW_JITTER;",
+    "new": "  const yawRest = yaw;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -534,8 +534,8 @@
   {
     "name": "E-draw-edge-uv-face",
     "file": "src/render/cardTableDraw.js",
-    "old": "const s = [[su0, sv0], [su1, sv0], [su1, sv1], [su0, sv1]];",
-    "new": "const s = [[fu0, fv0], [fu1, fv0], [fu1, fv1], [fu0, fv1]];",
+    "old": "    [su0, sv0],\n    [su1, sv0],\n    [su1, sv1],\n    [su0, sv1],",
+    "new": "    [fu0, fv0],\n    [fu1, fv0],\n    [fu1, fv1],\n    [fu0, fv1],",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -553,8 +553,8 @@
   {
     "name": "E-draw-chip-cap-uv",
     "file": "src/render/cardTableDraw.js",
-    "old": "positions.push(0, y, 0); normals.push(0, ny, 0); uvs.push(um, vBody);",
-    "new": "positions.push(0, y, 0); normals.push(0, ny, 0); uvs.push(um, vBand);",
+    "old": "    uvs.push(um, vBody);",
+    "new": "    uvs.push(um, vBand);",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -572,8 +572,8 @@
   {
     "name": "E-draw-texture-not-released",
     "file": "src/render/cardTableDraw.js",
-    "old": "      renderer.releaseTexture?.(CARD_ARCHIVE, CARD_RECORD);\n",
-    "new": "\n",
+    "old": "      renderer.releaseTexture?.(CARD_ARCHIVE, CARD_RECORD);",
+    "new": "",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -762,8 +762,8 @@
   {
     "name": "E-play-strict",
     "file": "src/systems/card/cardPatrons.js",
-    "old": "    ? strength >= temper.play + PRICE_PER_DOUBLING",
-    "new": "    ? strength > temper.play + PRICE_PER_DOUBLING",
+    "old": "    ? strength >=",
+    "new": "    ? strength >",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -781,8 +781,8 @@
   {
     "name": "E-think-no-spread",
     "file": "src/systems/card/cardTableSession.js",
-    "old": "Math.max(settle, THINK_MS + Math.floor(unit(this.rand32) * THINK_SPREAD_MS))",
-    "new": "Math.max(settle, THINK_MS + 0 * unit(this.rand32))",
+    "old": "    this.thinkUntil = now + Math.max(settle, THINK_MS + Math.floor(unit(this.rand32) * THINK_SPREAD_MS));",
+    "new": "    this.thinkUntil = now + Math.max(settle, THINK_MS + 0 * unit(this.rand32));",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -800,8 +800,8 @@
   {
     "name": "E-scene-pot-push-now",
     "file": "src/world/card/cardScene.js",
-    "old": "      const at = Math.max(t0, this.busyUntil, t + PUSH_S) + POT_BEAT;",
-    "new": "      const at = t;",
+    "old": "      const at = Math.max(t0, this.busyUntil, t + PUSH_S) + POT_BEAT; // and once the street's last bets are in it",
+    "new": "      const at = t; // and once the street's last bets are in it",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -819,8 +819,8 @@
   {
     "name": "E-scene-pot-while-sliding",
     "file": "src/world/card/cardScene.js",
-    "old": "shares.filter((p) => t < p.t0).reduce((a, p) => a + p.amount, 0) - sliding : pot - sliding;",
-    "new": "shares.reduce((a, p) => a + p.amount, 0) - sliding : pot - sliding;",
+    "old": "      const waiting = shares.length\n        ? shares.filter((p) => t < p.t0).reduce((a, p) => a + p.amount, 0) - sliding\n        : pot - sliding;",
+    "new": "      const waiting = shares.length ? shares.reduce((a, p) => a + p.amount, 0) - sliding : pot - sliding;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -876,8 +876,8 @@
   {
     "name": "A2-one-street-event",
     "file": "src/systems/card/cardTableSession.js",
-    "old": "    for (const len of [3, 4, 5]) if (from < len && h.board.length >= len) this._say(",
-    "new": "    for (const len of [5]) if (from < len && h.board.length >= len) this._say(",
+    "old": "    for (const len of [3, 4, 5])",
+    "new": "    for (const len of [5])",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -895,8 +895,8 @@
   {
     "name": "A2-deal-no-streets",
     "file": "src/systems/card/cardTableSession.js",
-    "old": "    this._afterAction(null, now);   // a hand the blinds settled",
-    "new": "    if (this.hand.result) this.hand.board.length = this.hand.board.length;   // a hand the blinds settled",
+    "old": "    this._afterAction(null, now); // a hand the blinds settled at the deal still turns its streets (AUDIT CARDS-2 L2)",
+    "new": "    if (this.hand.result) this.hand.board.length = this.hand.board.length; // a hand the blinds settled at the deal still turns its streets (AUDIT CARDS-2 L2)",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -914,8 +914,8 @@
   {
     "name": "A2-showdown-not-kept",
     "file": "src/systems/card/cardTableSession.js",
-    "old": "      this.lastShowdown = structuredClone(end);\n",
-    "new": "\n",
+    "old": "      this.lastShowdown = structuredClone(end);",
+    "new": "",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -933,8 +933,8 @@
   {
     "name": "A2-showdown-never-cleared",
     "file": "src/systems/card/cardTableSession.js",
-    "old": "    this.handNo++;\n    this.lastShowdown = null;\n",
-    "new": "    this.handNo++;\n",
+    "old": "    this.lastShowdown = null;\n    this.hand = newHand({",
+    "new": "    this.hand = newHand({",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -952,8 +952,8 @@
   {
     "name": "A2-deal-no-settle",
     "file": "src/systems/card/cardTableSession.js",
-    "old": "    this._think(now, settleMs(live.length * 2) + Math.round((GATHER_S + RIFFLE_S) * 1000));",
-    "new": "    this._think(now);",
+    "old": "    this._think(now, settleMs(live.length * 2) + Math.round((GATHER_S + RIFFLE_S) * 1000)); // the first to act waits for the last hand's gathering, the riffle and the deal to land (CARDS-TIDY)",
+    "new": "    this._think(now); // the first to act waits for the last hand's gathering, the riffle and the deal to land (CARDS-TIDY)",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -971,8 +971,8 @@
   {
     "name": "A2-street-no-settle",
     "file": "src/systems/card/cardTableSession.js",
-    "old": "    if (h.board.length > from && !h.result) this.thinkUntil = Math.max(this.thinkUntil, now + settleMs(h.board.length - from, true));\n",
-    "new": "\n",
+    "old": "    if (h.board.length > from && !h.result)\n      this.thinkUntil = Math.max(this.thinkUntil, now + settleMs(h.board.length - from, true));",
+    "new": "",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -990,8 +990,8 @@
   {
     "name": "A2-bet-flag",
     "file": "src/systems/card/cardTableSession.js",
-    "old": "bet: action.type === 'raise' && prev.currentBet === 0,",
-    "new": "bet: action.type === 'raise',",
+    "old": "        bet: action.type === 'raise' && prev.currentBet === 0,",
+    "new": "        bet: action.type === 'raise',",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1009,8 +1009,8 @@
   {
     "name": "A2-allin-flag",
     "file": "src/systems/card/cardTableSession.js",
-    "old": "allIn: next.seats[k].allIn && !prev.seats[k].allIn }",
-    "new": "allIn: false }",
+    "old": "        allIn: next.seats[k].allIn && !prev.seats[k].allIn,",
+    "new": "        allIn: false,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1066,8 +1066,8 @@
   {
     "name": "A2-book-unbounded",
     "file": "src/systems/card/cardTableSession.js",
-    "old": "keys.slice(0, REGULARS_BOOK_MAX).map(",
-    "new": "keys.map(",
+    "old": "  return Object.fromEntries(keys.slice(0, REGULARS_BOOK_MAX).map((k) => [k, next[k]]));",
+    "new": "  return Object.fromEntries(keys.map((k) => [k, next[k]]));",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1085,8 +1085,8 @@
   {
     "name": "A2-book-restore-trusts",
     "file": "src/systems/card/cardTableSession.js",
-    "old": "purses: v.purses.map((x) => Math.max(0, Math.floor(Number(x)) || 0)),",
-    "new": "purses: v.purses,",
+    "old": "      purses: v.purses.map((x) => Math.max(0, Math.floor(Number(x)) || 0)),",
+    "new": "      purses: v.purses,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1142,8 +1142,8 @@
   {
     "name": "A2-no-price",
     "file": "src/systems/card/cardPatrons.js",
-    "old": "+ PRICE_PER_DOUBLING * Math.log2(Math.max(1, call / (PRICE_FREE_BB * bb)))",
-    "new": "+ 0",
+    "old": "    ? strength >=\n      temper.play +\n        PRICE_PER_DOUBLING * Math.log2(Math.max(1, call / (PRICE_FREE_BB * bb))) -\n        DEFEND * Math.max(0, DEFEND_ODDS - odds)",
+    "new": "    ? strength >= temper.play + 0 - DEFEND * Math.max(0, DEFEND_ODDS - odds)",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1161,8 +1161,8 @@
   {
     "name": "A2-price-from-bb",
     "file": "src/systems/card/cardPatrons.js",
-    "old": "Math.max(1, call / (PRICE_FREE_BB * bb))",
-    "new": "Math.max(1, call / bb)",
+    "old": "      temper.play +\n        PRICE_PER_DOUBLING * Math.log2(Math.max(1, call / (PRICE_FREE_BB * bb))) -\n        DEFEND * Math.max(0, DEFEND_ODDS - odds)",
+    "new": "      temper.play + PRICE_PER_DOUBLING * Math.log2(Math.max(1, call / bb)) - DEFEND * Math.max(0, DEFEND_ODDS - odds)",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1180,8 +1180,8 @@
   {
     "name": "A2-no-defend",
     "file": "src/systems/card/cardPatrons.js",
-    "old": " - DEFEND * Math.max(0, DEFEND_ODDS - odds)",
-    "new": "",
+    "old": "    ? strength >=\n      temper.play +\n        PRICE_PER_DOUBLING * Math.log2(Math.max(1, call / (PRICE_FREE_BB * bb))) -\n        DEFEND * Math.max(0, DEFEND_ODDS - odds)",
+    "new": "    ? strength >= temper.play + PRICE_PER_DOUBLING * Math.log2(Math.max(1, call / (PRICE_FREE_BB * bb)))",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1199,8 +1199,8 @@
   {
     "name": "A2-no-bend",
     "file": "src/systems/card/cardPatrons.js",
-    "old": "  const facing = !preflop && call > 0 ? strength ** (1 + BETTOR_BEND",
-    "new": "  const facing = false ? strength ** (1 + BETTOR_BEND",
+    "old": "  const facing =\n    !preflop && call > 0 ? strength ** (1 + BETTOR_BEND * Math.min(BETTOR_BET_MAX, call / pot0)) : strength;",
+    "new": "  const facing = false ? strength ** (1 + BETTOR_BEND * Math.min(BETTOR_BET_MAX, call / pot0)) : strength;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1522,7 +1522,7 @@
   {
     "name": "A2-hud-no-showdown",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "  const sd = !hand ? view?.showdown ?? null : null;",
+    "old": "  const sd = !hand ? (view?.showdown ?? null) : null;",
     "new": "  const sd = null;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
@@ -1541,8 +1541,8 @@
   {
     "name": "A2-hud-keys-all",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "{ if (e.target?.type === 'range' && SLIDER_KEYS.has(e.key)) e.stopPropagation(); }",
-    "new": "{ e.stopPropagation(); }",
+    "old": "    if (e.target?.type === 'range' && SLIDER_KEYS.has(e.key)) e.stopPropagation();",
+    "new": "    e.stopPropagation();",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1560,8 +1560,8 @@
   {
     "name": "A2-hud-wide",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "min-width:min(520px,calc(100vw - 32px));",
-    "new": "min-width:520px;",
+    "old": ".dfcards{left:50%;bottom:18px;transform:translateX(-50%);box-sizing:border-box;min-width:min(520px,calc(100vw - 32px));max-width:min(760px,calc(100vw - 32px))}",
+    "new": ".dfcards{left:50%;bottom:18px;transform:translateX(-50%);box-sizing:border-box;min-width:520px;max-width:min(760px,calc(100vw - 32px))}",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1598,8 +1598,8 @@
   {
     "name": "A2-fold-from-rest",
     "file": "src/world/card/cardScene.js",
-    "old": "        const at = this._poseOf(c, t);\n        c.motions.push(dealMotion({ from: at.pos,",
-    "new": "        const at = this._restOf(c);\n        c.motions.push(dealMotion({ from: at.pos,",
+    "old": "        const at = this._poseOf(c, t);",
+    "new": "        const at = this._restOf(c);",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1655,8 +1655,8 @@
   {
     "name": "A2-streets-together",
     "file": "src/world/card/cardScene.js",
-    "old": "      const t0 = Math.max(t, this.busyUntil);\n      const from = this.places.seats[this.dealer].deal;",
-    "new": "      const t0 = t;\n      const from = this.places.seats[this.dealer].deal;",
+    "old": "      // AUDIT CARDS-2 L1: an all-in's run-out says its streets in one drain - each waits for the last one's cards\n      const t0 = Math.max(t, this.busyUntil);",
+    "new": "      // AUDIT CARDS-2 L1: an all-in's run-out says its streets in one drain - each waits for the last one's cards\n      const t0 = t;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1674,8 +1674,8 @@
   {
     "name": "A2-board-one-plane",
     "file": "src/world/card/cardScene.js",
-    "old": "this._rest(this.places.board[i], i & 1)",
-    "new": "this._rest(this.places.board[i])",
+    "old": "          to: flipShift(this._rest(this.places.board[i], i & 1), this.places.boardYaw),",
+    "new": "          to: flipShift(this._rest(this.places.board[i]), this.places.boardYaw),",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1693,8 +1693,8 @@
   {
     "name": "A2-burn-close",
     "file": "src/world/card/cardScene.js",
-    "old": "    burn: at(-(BOARD_SLOTS / 2 + 1) * BOARD_GAP, 0),",
-    "new": "    burn: at(-((BOARD_SLOTS + 1) / 2) * BOARD_GAP, 0),",
+    "old": "    burn: at(-(BOARD_SLOTS / 2 + 1) * BOARD_GAP, 0), // a gap and a half off the first slot: never on its plane, jittered (AUDIT CARDS-2 L4)",
+    "new": "    burn: at(-((BOARD_SLOTS + 1) / 2) * BOARD_GAP, 0), // a gap and a half off the first slot: never on its plane, jittered (AUDIT CARDS-2 L4)",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1750,8 +1750,8 @@
   {
     "name": "A2-flip-wrong-edge",
     "file": "src/world/card/cardMotion.js",
-    "old": "roll: edge ? fromRoll - a : fromRoll + a,",
-    "new": "roll: fromRoll + a,",
+    "old": "        roll: edge ? fromRoll - a : fromRoll + a,",
+    "new": "        roll: fromRoll + a,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1769,8 +1769,8 @@
   {
     "name": "A2-flip-own-yaw",
     "file": "src/world/card/cardScene.js",
-    "old": "t0: m.t1 + TURN_DELAY, acrossYaw: this.places.boardYaw });",
-    "new": "t0: m.t1 + TURN_DELAY });",
+    "old": "        const flip = flipMotion({\n          pos: m.rest,\n          yaw: m.at(Infinity).yaw,\n          fromRoll: Math.PI,\n          t0: m.t1 + TURN_DELAY,\n          acrossYaw: this.places.boardYaw,\n        });",
+    "new": "        const flip = flipMotion({ pos: m.rest, yaw: m.at(Infinity).yaw, fromRoll: Math.PI, t0: m.t1 + TURN_DELAY });",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1788,8 +1788,8 @@
   {
     "name": "A2-scoop-flat",
     "file": "src/world/card/cardScene.js",
-    "old": "p.potShare ? SCOOP_LIFT : 0",
-    "new": "0",
+    "old": "        chips.push(\n          ...chipDiscs(\n            p.amount,\n            pushAt(p.from, p.to, p.t0, Math.max(t, p.t0), p.potShare ? SCOOP_LIFT : 0),\n            p.yaw,\n            p.toSeat != null,\n          ),\n        ); // AUDIT CARDS-3 D10: a share comes home in the stack's own columns - away from his cards",
+    "new": "        chips.push(...chipDiscs(p.amount, pushAt(p.from, p.to, p.t0, Math.max(t, p.t0), 0), p.yaw, p.toSeat != null)); // AUDIT CARDS-3 D10: a share comes home in the stack's own columns - away from his cards",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",

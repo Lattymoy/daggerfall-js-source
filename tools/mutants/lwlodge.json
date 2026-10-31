@@ -2,8 +2,8 @@
   {
     "name": "LW-LODGE-breakfast",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "  if (lodger) { const at = intents.length; I('tavern', home,",
-    "new": "  if (false) { const at = intents.length; I('tavern', home,",
+    "old": "  if (lodger) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/livingWorld/lwlodge_tavern.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "LW-LODGE-staff",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": " && res.work !== home.building;",
-    "new": "",
+    "old": "  !!home &&\n  home.building != null &&\n  places.types.get(home.building) === BUILDING_TYPES.Tavern &&\n  res.work !== home.building;",
+    "new": "  !!home && home.building != null && places.types.get(home.building) === BUILDING_TYPES.Tavern;",
     "tests": [
       "test/systems/livingWorld/lwlodge_tavern.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LW-LODGE-visitor-supper-inn",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "      I('tavern', lodger ? home : fav.tavern, h(18), rollInt(rng, 180, 300),",
-    "new": "      I('tavern', fav.tavern, h(18), rollInt(rng, 180, 300),",
+    "old": "        'tavern',\n        lodger ? home : fav.tavern,\n        h(18),",
+    "new": "        'tavern',\n        fav.tavern,\n        h(18),",
     "tests": [
       "test/systems/livingWorld/lwlodge_tavern.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "LW-LODGE-visitor-going-up",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "I('tavern', lodger ? home : fav.tavern, h(18), rollInt(rng, 180, 300), lodger ? bed - rollInt(rng, LODGE_UP_MIN[0], LODGE_UP_MIN[1]) : undefined);",
-    "new": "I('tavern', lodger ? home : fav.tavern, h(18), rollInt(rng, 180, 300), undefined);",
+    "old": "      I(\n        'tavern',\n        lodger ? home : fav.tavern,\n        h(18),\n        rollInt(rng, 180, 300),\n        lodger ? bed - rollInt(rng, LODGE_UP_MIN[0], LODGE_UP_MIN[1]) : undefined,\n      ); // LW-LODGE: a lodger sups at their own, and goes up before bed",
+    "new": "      I('tavern', lodger ? home : fav.tavern, h(18), rollInt(rng, 180, 300), undefined); // LW-LODGE: a lodger sups at their own, and goes up before bed",
     "tests": [
       "test/systems/livingWorld/lwlodge_tavern.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LW-LODGE-adventurer-supper-inn",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "      I('tavern', lodger ? home : fav.tavern, h(18.5), rollInt(rng, 180, 300),",
-    "new": "      I('tavern', fav.tavern, h(18.5), rollInt(rng, 180, 300),",
+    "old": "        'tavern',\n        lodger ? home : fav.tavern,\n        h(18.5),",
+    "new": "        'tavern',\n        fav.tavern,\n        h(18.5),",
     "tests": [
       "test/systems/livingWorld/lwlodge_tavern.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "LW-LODGE-adventurer-going-up",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "I('tavern', lodger ? home : fav.tavern, h(18.5), rollInt(rng, 180, 300), lodger ? bed - rollInt(rng, LODGE_UP_MIN[0], LODGE_UP_MIN[1]) : undefined);",
-    "new": "I('tavern', lodger ? home : fav.tavern, h(18.5), rollInt(rng, 180, 300), undefined);",
+    "old": "      I(\n        'tavern',\n        lodger ? home : fav.tavern,\n        h(18.5),\n        rollInt(rng, 180, 300),\n        lodger ? bed - rollInt(rng, LODGE_UP_MIN[0], LODGE_UP_MIN[1]) : undefined,\n      ); // LW-LODGE: a lodger sups at their own, and goes up before bed",
+    "new": "      I('tavern', lodger ? home : fav.tavern, h(18.5), rollInt(rng, 180, 300), undefined); // LW-LODGE: a lodger sups at their own, and goes up before bed",
     "tests": [
       "test/systems/livingWorld/lwlodge_tavern.test.js"
     ]

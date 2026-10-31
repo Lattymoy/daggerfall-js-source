@@ -2,8 +2,8 @@
   {
     "name": "WITCH1-the-days-a-day-short",
     "file": "src/net/festivalLaw.js",
-    "old": "toMs: Date.UTC(2026, 10, 8), eveFromMs",
-    "new": "toMs: Date.UTC(2026, 10, 7), eveFromMs",
+    "old": "    toMs: Date.UTC(2026, 10, 8),",
+    "new": "    toMs: Date.UTC(2026, 10, 7),",
     "tests": [
       "test/systems/festival/witch1_law.test.js"
     ],
@@ -23,8 +23,8 @@
   {
     "name": "WITCH1-a-card-held-as-an-account-ware",
     "file": "src/net/festivalLaw.js",
-    "old": ".split(' ').filter((id) => accountWare(wareById(id))) : []);",
-    "new": ".split(' ').filter((id) => wareById(id)) : []);",
+    "old": "  typeof col === 'string' ? col.split(' ').filter((id) => accountWare(wareById(id))) : [];",
+    "new": "  typeof col === 'string' ? col.split(' ').filter((id) => wareById(id)) : [];",
     "tests": [
       "test/systems/festival/witch1_law.test.js"
     ],
@@ -103,8 +103,8 @@
   {
     "name": "WITCH1-hearthkeeper-one-late",
     "file": "server-account/src/titles.js",
-    "old": "if (Number(player?.fest_given) >= HEARTHKEEPER_GIVEN) held.push(HEARTHKEEPER_TITLE);",
-    "new": "if (Number(player?.fest_given) > HEARTHKEEPER_GIVEN) held.push(HEARTHKEEPER_TITLE);",
+    "old": "    if (Number(player?.fest_given) >= HEARTHKEEPER_GIVEN) held.push(HEARTHKEEPER_TITLE);",
+    "new": "    if (Number(player?.fest_given) > HEARTHKEEPER_GIVEN) held.push(HEARTHKEEPER_TITLE);",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],
@@ -113,8 +113,8 @@
   {
     "name": "WITCH1-soulcake-one-late",
     "file": "server-account/src/titles.js",
-    "old": "if (Number(player?.fest_taken) >= SOULCAKE_TAKEN) own.add(SOULCAKE_ICON);",
-    "new": "if (Number(player?.fest_taken) > SOULCAKE_TAKEN) own.add(SOULCAKE_ICON);",
+    "old": "  if (Number(player?.fest_taken) >= SOULCAKE_TAKEN) own.add(SOULCAKE_ICON);",
+    "new": "  if (Number(player?.fest_taken) > SOULCAKE_TAKEN) own.add(SOULCAKE_ICON);",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],
@@ -123,8 +123,8 @@
   {
     "name": "WITCH1-the-token-believes-any-icon",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.pi !== undefined && !ICONS.includes(c.pi)) return false;",
-    "new": "  if (c.pi !== undefined && typeof c.pi !== 'string') return false;",
+    "old": "  if (c.pi !== undefined && !ICONS.includes(c.pi)) return false; // WITCH1: the profile icon worn, the aura's law - absent for none (the face), one of the known or refused",
+    "new": "  if (c.pi !== undefined && typeof c.pi !== 'string') return false; // WITCH1: the profile icon worn, the aura's law - absent for none (the face), one of the known or refused",
     "tests": [
       "test/systems/festival/witch1_law.test.js"
     ],
@@ -183,8 +183,8 @@
   {
     "name": "WITCH1-no-door-pair",
     "file": "src/world/witchesDecor.js",
-    "old": "    pair(front, kit.door);\n",
-    "new": "",
+    "old": "    pair(front, kit.door);\n    // the Wyrd Sister on her side (the house's own roll), the show on the other - each tried on the far side if refused",
+    "new": "    // the Wyrd Sister on her side (the house's own roll), the show on the other - each tried on the far side if refused",
     "tests": [
       "test/world/witch1_decor.test.js"
     ],
@@ -193,8 +193,8 @@
   {
     "name": "WITCH1-through-the-wall",
     "file": "src/world/witchesDecor.js",
-    "old": "    for (const h of S.rayHeights) if (blocked(",
-    "new": "    for (const h of S.rayHeights) if (false && blocked(",
+    "old": "      if (blocked([from[0], fromY + h, from[1]], [xz[0] + (dx / l) * r, fy + h, xz[1] + (dz / l) * r])) return false;",
+    "new": "      if (false && blocked([from[0], fromY + h, from[1]], [xz[0] + (dx / l) * r, fy + h, xz[1] + (dz / l) * r]))\n        return false;",
     "tests": [
       "test/world/witch1_decor.test.js"
     ],
@@ -203,8 +203,8 @@
   {
     "name": "WITCH1-the-offering-on-the-steps-side",
     "file": "src/world/witchesDecor.js",
-    "old": "const side = witchStepSide(mapId, key) * (far ? 1 : -1);",
-    "new": "const side = witchStepSide(mapId, key);",
+    "old": "  const side = witchStepSide(mapId, key) * (far ? 1 : -1);",
+    "new": "  const side = witchStepSide(mapId, key);",
     "tests": [
       "test/world/witch1_decor.test.js"
     ],
@@ -253,8 +253,8 @@
   {
     "name": "WITCH1-worn-reads-wear",
     "file": "src/ui/wyrdWindow.js",
-    "old": "  if (row.worn) return { label: t('festival.window.takeOff', 'Take off'), why: null };\n",
-    "new": "",
+    "old": "  if (row.worn) return { label: t('festival.window.takeOff', 'Take off'), why: null };\n  if (row.owned) return { label: t('festival.window.wear', 'Wear'), why: null };",
+    "new": "  if (row.owned) return { label: t('festival.window.wear', 'Wear'), why: null };",
     "tests": [
       "test/systems/festival/witch1_wares.test.js"
     ],
@@ -273,7 +273,7 @@
   {
     "name": "WITCH1-tallow-ward-blind",
     "file": "src/systems/festival/festivalFoes.js",
-    "old": "export const hallowedFoe = (/** @type {any} */ e) => FESTIVAL_UNDEAD.includes(e?.mobileType) || FESTIVAL_SUMMONED.includes(e?.mobileType);",
+    "old": "export const hallowedFoe = (/** @type {any} */ e) =>\n  FESTIVAL_UNDEAD.includes(e?.mobileType) || FESTIVAL_SUMMONED.includes(e?.mobileType);",
     "new": "export const hallowedFoe = (/** @type {any} */ e) => FESTIVAL_UNDEAD.includes(e?.mobileType);",
     "tests": [
       "test/systems/festival/witch1_wares.test.js"
@@ -283,8 +283,8 @@
   {
     "name": "WITCH1-a-card-in-the-packs",
     "file": "src/systems/card/cardSources.js",
-    "old": "&& !BOSS_CARD_IDS.includes(c.id) && !FESTIVAL_CARD_IDS.includes(c.id)).map",
-    "new": "&& !BOSS_CARD_IDS.includes(c.id)).map",
+    "old": "      Object.freeze(\n        ILIAC_CARDS.filter(\n          (c) => c.tier === t && !BOSS_CARD_IDS.includes(c.id) && !FESTIVAL_CARD_IDS.includes(c.id),\n        ).map((c) => c.id),\n      ),",
+    "new": "      Object.freeze(ILIAC_CARDS.filter((c) => c.tier === t && !BOSS_CARD_IDS.includes(c.id)).map((c) => c.id)),",
     "tests": [
       "test/systems/festival/witch1_wares.test.js"
     ],
@@ -444,8 +444,8 @@
   {
     "name": "WITCH1-AUDIT-pi-unsigned",
     "file": "src/net/identityToken.js",
-    "old": "  if (who?.pi !== undefined) claims.pi = who.pi;",
-    "new": "",
+    "old": "  if (who?.pi !== undefined) claims.pi = who.pi; // WITCH1: only while a profile icon is worn - a player wearing none mints the bytes they always did",
+    "new": "  // WITCH1: only while a profile icon is worn - a player wearing none mints the bytes they always did",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],
@@ -464,8 +464,8 @@
   {
     "name": "WITCH1-AUDIT-eve-not-doubled",
     "file": "src/net/festivalLaw.js",
-    "old": "=> festivalNight(dayOfYear) || festivalEve(nowMs);",
-    "new": "=> festivalNight(dayOfYear);",
+    "old": "export const deadWalk = (/** @type {number} */ dayOfYear, /** @type {number} */ nowMs) =>\n  festivalNight(dayOfYear) || festivalEve(nowMs);",
+    "new": "export const deadWalk = (/** @type {number} */ dayOfYear, /** @type {number} */ nowMs) => festivalNight(dayOfYear);",
     "tests": [
       "test/systems/festival/witch1_law.test.js"
     ],
@@ -494,8 +494,8 @@
   {
     "name": "WITCH1-AUDIT-water-stood",
     "file": "src/world/witchesDecor.js",
-    "old": "    if (!ground(xz[0], xz[1])) return false;\n",
-    "new": "",
+    "old": "    if (!ground(xz[0], xz[1])) return false;\n    const gx = Math.floor(xz[0] / GRID_M),",
+    "new": "    const gx = Math.floor(xz[0] / GRID_M),",
     "tests": [
       "test/world/witch1_decor.test.js"
     ],
@@ -504,8 +504,8 @@
   {
     "name": "WITCH1-AUDIT-dressing-holds-the-frame",
     "file": "src/world/witchesDecor.js",
-    "old": "  while (!r.done) { await breathe(); r = steps.next(); }",
-    "new": "  while (!r.done) { r = steps.next(); }",
+    "old": "    await breathe();\n    r = steps.next();",
+    "new": "    r = steps.next();",
     "tests": [
       "test/world/witch1_decor.test.js"
     ],
@@ -514,8 +514,8 @@
   {
     "name": "WITCH1-AUDIT-hammerfell-fen",
     "file": "src/world/witchesDecor.js",
-    "old": "  if (climateIndex === CLIMATES.Swamp) return 'fen';\n",
-    "new": "  if (climateIndex === CLIMATES.Swamp || climateIndex === CLIMATES.Subtropical) return 'fen';\n",
+    "old": "  if (climateIndex === CLIMATES.Swamp) return 'fen';",
+    "new": "  if (climateIndex === CLIMATES.Swamp || climateIndex === CLIMATES.Subtropical) return 'fen';",
     "tests": [
       "test/world/witch1_decor.test.js"
     ],
@@ -564,8 +564,8 @@
   {
     "name": "WITCH1-AUDIT-window-never-looks-again",
     "file": "src/ui/wyrdWindow.js",
-    "old": "if (now !== was) { was = now; render(); }",
-    "new": "if (now !== was) { was = now; }",
+    "old": "      render();\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/festival/witch1_wares.test.js"
     ],
@@ -584,8 +584,8 @@
   {
     "name": "WITCH1-AUDIT-the-world-boss-finds-twice",
     "file": "src/systems/festival/festivalFoes.js",
-    "old": "  if (e?.worldBoss === true) return null;\n",
-    "new": "",
+    "old": "  if (e?.worldBoss === true) return null;\n  if (e?.eliteFoe === true || (typeof e?.champion === 'string' && e.champion !== '')) return 'elite';",
+    "new": "  if (e?.eliteFoe === true || (typeof e?.champion === 'string' && e.champion !== '')) return 'elite';",
     "tests": [
       "test/systems/festival/witch1_wares.test.js",
       "test/systems/festival/witch1_client.test.js"
@@ -605,7 +605,7 @@
   {
     "name": "WITCH1-AUDIT-G1-no-look-down",
     "file": "src/world/witchesDecor.js",
-    "old": "    for (const [x, z] of [xz, [xz[0] + (tx / tl) * r, xz[1] + (tz / tl) * r]]) if (blocked([x, floor(x, z) + S.downFrom, z], [x, floor(x, z) + S.lip, z])) return false;",
+    "old": "    for (const [x, z] of [xz, [xz[0] + (tx / tl) * r, xz[1] + (tz / tl) * r]])\n      if (blocked([x, floor(x, z) + S.downFrom, z], [x, floor(x, z) + S.lip, z])) return false;",
     "new": "    for (const [x, z] of []) if (blocked([x, floor(x, z) + S.downFrom, z], [x, floor(x, z) + S.lip, z])) return false;",
     "tests": [
       "test/world/witch1_decor.test.js"
@@ -615,8 +615,8 @@
   {
     "name": "WITCH1-AUDIT-G1-middle-only",
     "file": "src/world/witchesDecor.js",
-    "old": "    for (const [x, z] of [xz, [xz[0] + (tx / tl) * r, xz[1] + (tz / tl) * r]]) if (",
-    "new": "    for (const [x, z] of [xz]) if (",
+    "old": "    for (const [x, z] of [xz, [xz[0] + (tx / tl) * r, xz[1] + (tz / tl) * r]])\n      if (blocked([x, floor(x, z) + S.downFrom, z], [x, floor(x, z) + S.lip, z])) return false;",
+    "new": "    for (const [x, z] of [xz]) if (blocked([x, floor(x, z) + S.downFrom, z], [x, floor(x, z) + S.lip, z])) return false;",
     "tests": [
       "test/world/witch1_decor.test.js"
     ],
@@ -625,8 +625,8 @@
   {
     "name": "WITCH1-AUDIT-G1-lip-at-the-street",
     "file": "src/world/witchesDecor.js",
-    "old": "downFrom: 1.2, lip: 0.08,",
-    "new": "downFrom: 1.2, lip: -0.01,",
+    "old": "  lip: 0.08,",
+    "new": "  lip: -0.01,",
     "tests": [
       "test/world/witch1_decor.test.js"
     ],
@@ -636,7 +636,7 @@
     "name": "WITCH1-AUDIT-G2-a-nought-known",
     "file": "src/ui/wyrdWindow.js",
     "old": "    const heard = Number.isSafeInteger(have);",
-    "new": "    const heard = true; have = have ?? 0;",
+    "new": "    const heard = true;\n    have = have ?? 0;",
     "tests": [
       "test/systems/festival/witch1_wares.test.js"
     ],

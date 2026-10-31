@@ -12,8 +12,8 @@
   {
     "name": "SEASON1-zero-parse",
     "file": "src/net/townSeatLaw.js",
-    "old": "(/^\\d{1,7}$/.test(String(v ?? '').trim())",
-    "new": "(/^\\d+$/.test(String(v ?? '').trim())",
+    "old": "export const seasonZeroOf = (v) => (/^\\d{1,7}$/.test(String(v ?? '').trim()) ? Number(String(v).trim()) : null);",
+    "new": "export const seasonZeroOf = (v) => (/^\\d+$/.test(String(v ?? '').trim()) ? Number(String(v).trim()) : null);",
     "tests": [
       "test/net/season1_law.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "SEASON1-of-beta",
     "file": "src/net/townSeatLaw.js",
-    "old": "  if (week < zero + SEASON_ZERO_WEEKS) return { n: 0, start: zero, end: zero + SEASON_ZERO_WEEKS };\n",
-    "new": "",
+    "old": "  if (week < zero + SEASON_ZERO_WEEKS) return { n: 0, start: zero, end: zero + SEASON_ZERO_WEEKS };\n  const n = 1 + Math.floor((week - zero - SEASON_ZERO_WEEKS) / SEASON_WEEKS);",
+    "new": "  const n = 1 + Math.floor((week - zero - SEASON_ZERO_WEEKS) / SEASON_WEEKS);",
     "tests": [
       "test/net/season1_law.test.js",
       "test/net/season1_service.test.js"
@@ -79,8 +79,8 @@
   {
     "name": "SEASON1-name-zero",
     "file": "src/net/townSeatLaw.js",
-    "old": "  if (n === 0) return 'Season 0';\n",
-    "new": "",
+    "old": "  if (n === 0) return 'Season 0';\n  const round = Math.floor((n - 1) / SEASON_MONTHS.length) + 1;",
+    "new": "  const round = Math.floor((n - 1) / SEASON_MONTHS.length) + 1;",
     "tests": [
       "test/net/season1_law.test.js",
       "test/net/season1_client.test.js"
@@ -89,8 +89,8 @@
   {
     "name": "SEASON1-name-neg",
     "file": "src/net/townSeatLaw.js",
-    "old": "  if (!Number.isSafeInteger(n) || n < 0) return null;\n  if (n === 0)",
-    "new": "  if (!Number.isSafeInteger(n)) return null;\n  if (n === 0)",
+    "old": "  if (!Number.isSafeInteger(n) || n < 0) return null;",
+    "new": "  if (!Number.isSafeInteger(n)) return null;",
     "tests": [
       "test/net/season1_law.test.js"
     ]
@@ -107,8 +107,8 @@
   {
     "name": "SEASON1-name-numeral",
     "file": "src/net/townSeatLaw.js",
-    "old": "${round > 1 ? ` ${roman(round)}` : ''}",
-    "new": "${round > 1 ? ` ${round}` : ''}",
+    "old": "  return `the Season of ${SEASON_MONTHS[(n - 1) % SEASON_MONTHS.length]}${round > 1 ? ` ${roman(round)}` : ''}`;",
+    "new": "  return `the Season of ${SEASON_MONTHS[(n - 1) % SEASON_MONTHS.length]}${round > 1 ? ` ${round}` : ''}`;",
     "tests": [
       "test/net/season1_law.test.js"
     ]
@@ -116,8 +116,8 @@
   {
     "name": "SEASON1-name-month",
     "file": "src/net/townSeatLaw.js",
-    "old": "SEASON_MONTHS[(n - 1) % SEASON_MONTHS.length]",
-    "new": "SEASON_MONTHS[n % SEASON_MONTHS.length]",
+    "old": "  return `the Season of ${SEASON_MONTHS[(n - 1) % SEASON_MONTHS.length]}${round > 1 ? ` ${roman(round)}` : ''}`;",
+    "new": "  return `the Season of ${SEASON_MONTHS[n % SEASON_MONTHS.length]}${round > 1 ? ` ${roman(round)}` : ''}`;",
     "tests": [
       "test/net/season1_law.test.js",
       "test/net/season1_client.test.js"
@@ -126,8 +126,8 @@
   {
     "name": "SEASON1-roman-nine",
     "file": "src/net/townSeatLaw.js",
-    "old": "[10, 'X'], [9, 'IX'],",
-    "new": "[10, 'X'],",
+    "old": "  [9, 'IX'],\n  [5, 'V'],",
+    "new": "  [5, 'V'],",
     "tests": [
       "test/net/season1_law.test.js"
     ]
@@ -135,8 +135,8 @@
   {
     "name": "SEASON1-roman-thousand",
     "file": "src/net/townSeatLaw.js",
-    "old": "const ROMAN = [[1000, 'M'],",
-    "new": "const ROMAN = [",
+    "old": "  [1000, 'M'],\n  [900, 'CM'],",
+    "new": "  [900, 'CM'],",
     "tests": [
       "test/net/season1_law.test.js"
     ]
@@ -144,8 +144,8 @@
   {
     "name": "SEASON1-months-order",
     "file": "src/net/townSeatLaw.js",
-    "old": "'Hearthfire', 'Frostfall'",
-    "new": "'Frostfall', 'Hearthfire'",
+    "old": "  'Hearthfire',\n  'Frostfall',",
+    "new": "  'Frostfall',\n  'Hearthfire',",
     "tests": [
       "test/net/season1_law.test.js"
     ]
@@ -153,8 +153,8 @@
   {
     "name": "SEASON1-ending",
     "file": "src/net/townSeatLaw.js",
-    "old": "return s && s.end === week + 1 ? s : null; };",
-    "new": "return s && s.end === week ? s : null; };",
+    "old": "  return s && s.end === week + 1 ? s : null;",
+    "new": "  return s && s.end === week ? s : null;",
     "tests": [
       "test/net/season1_law.test.js",
       "test/net/season1_service.test.js"
@@ -163,8 +163,8 @@
   {
     "name": "SEASON1-floor-none",
     "file": "src/net/townSeatLaw.js",
-    "old": "seasonOf(week, zero)?.start ?? week - SIEGE_PAIR_WEEKS + 1;",
-    "new": "seasonOf(week, zero)?.start ?? week - SIEGE_PAIR_WEEKS;",
+    "old": "export const seasonFloor = (week, zero) => seasonOf(week, zero)?.start ?? week - SIEGE_PAIR_WEEKS + 1;",
+    "new": "export const seasonFloor = (week, zero) => seasonOf(week, zero)?.start ?? week - SIEGE_PAIR_WEEKS;",
     "tests": [
       "test/net/season1_law.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "SEASON1-standing-trunc",
     "file": "src/net/townSeatLaw.js",
-    "old": "STANDING_START + Math.trunc((Number(standing) - STANDING_START) / 2);",
-    "new": "STANDING_START + Math.round((Number(standing) - STANDING_START) / 2);",
+    "old": "export const seasonStanding = (standing) => STANDING_START + Math.trunc((Number(standing) - STANDING_START) / 2);",
+    "new": "export const seasonStanding = (standing) => STANDING_START + Math.round((Number(standing) - STANDING_START) / 2);",
     "tests": [
       "test/net/season1_law.test.js",
       "test/net/season1_service.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "SEASON1-standing-half",
     "file": "src/net/townSeatLaw.js",
-    "old": "STANDING_START + Math.trunc((Number(standing) - STANDING_START) / 2);",
-    "new": "STANDING_START + Math.trunc((Number(standing) - STANDING_START) / 3);",
+    "old": "export const seasonStanding = (standing) => STANDING_START + Math.trunc((Number(standing) - STANDING_START) / 2);",
+    "new": "export const seasonStanding = (standing) => STANDING_START + Math.trunc((Number(standing) - STANDING_START) / 3);",
     "tests": [
       "test/net/season1_law.test.js",
       "test/net/season1_service.test.js"
@@ -211,8 +211,8 @@
   {
     "name": "SEASON1-titles-crown",
     "file": "src/net/townSeatLaw.js",
-    "old": "    if (h.tier === 'crown') out.push({ guild: h.guild, title: 'crowned', key: h.key });\n",
-    "new": "",
+    "old": "    if (h.tier === 'crown') out.push({ guild: h.guild, title: 'crowned', key: h.key });\n    if (keptWholeSeason(season, h.since)) out.push({ guild: h.guild, title: 'keeper', key: h.key });",
+    "new": "    if (keptWholeSeason(season, h.since)) out.push({ guild: h.guild, title: 'keeper', key: h.key });",
     "tests": [
       "test/net/season1_law.test.js",
       "test/net/season1_service.test.js"
@@ -221,8 +221,8 @@
   {
     "name": "SEASON1-titles-keeper",
     "file": "src/net/townSeatLaw.js",
-    "old": "Number(since) <= season.start + (season.n === 1 ? 1 : 0);",
-    "new": "Number(since) < season.start + (season.n === 1 ? 1 : 0);",
+    "old": "export const keptWholeSeason = (season, since) => !!season && Number(since) <= season.start + (season.n === 1 ? 1 : 0);",
+    "new": "export const keptWholeSeason = (season, since) => !!season && Number(since) < season.start + (season.n === 1 ? 1 : 0);",
     "tests": [
       "test/net/season1_law.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "SEASON1-line-week",
     "file": "src/net/townSeatLaw.js",
-    "old": "(s ? `Week ${week - s.start + 1} of ${s.end - s.start} of",
-    "new": "(s ? `Week ${week - s.start} of ${s.end - s.start} of",
+    "old": "  s ? `Week ${week - s.start + 1} of ${s.end - s.start} of ${seatSeasonName(s.n)}.` : null;",
+    "new": "  s ? `Week ${week - s.start} of ${s.end - s.start} of ${seatSeasonName(s.n)}.` : null;",
     "tests": [
       "test/net/season1_law.test.js",
       "test/net/season1_client.test.js"
@@ -249,8 +249,8 @@
   {
     "name": "SEASON1-line-len",
     "file": "src/net/townSeatLaw.js",
-    "old": "of ${s.end - s.start} of ${seatSeasonName(s.n)}.` : null);",
-    "new": "of ${SEASON_WEEKS} of ${seatSeasonName(s.n)}.` : null);",
+    "old": "  s ? `Week ${week - s.start + 1} of ${s.end - s.start} of ${seatSeasonName(s.n)}.` : null;",
+    "new": "  s ? `Week ${week - s.start + 1} of ${SEASON_WEEKS} of ${seatSeasonName(s.n)}.` : null;",
     "tests": [
       "test/net/season1_law.test.js"
     ]
@@ -258,8 +258,8 @@
   {
     "name": "SEASON1-chron-kept",
     "file": "src/net/townSeatLaw.js",
-    "old": "${d.kept ? ', as it had the whole Season through' : ''}",
-    "new": "",
+    "old": "      return `At the end of ${seatSeasonName(Number(d.season)) ?? 'the Season'}, ${guildWords(d.guild)} held ${seat.name}${d.kept ? ', as it had the whole Season through' : ''}.`;",
+    "new": "      return `At the end of ${seatSeasonName(Number(d.season)) ?? 'the Season'}, ${guildWords(d.guild)} held ${seat.name}.`;",
     "tests": [
       "test/net/season1_law.test.js"
     ]
@@ -267,8 +267,8 @@
   {
     "name": "SEASON1-chron-name",
     "file": "src/net/townSeatLaw.js",
-    "old": "At the end of ${seatSeasonName(Number(d.season)) ?? 'the Season'}",
-    "new": "At the end of the Season",
+    "old": "      return `At the end of ${seatSeasonName(Number(d.season)) ?? 'the Season'}, ${guildWords(d.guild)} held ${seat.name}${d.kept ? ', as it had the whole Season through' : ''}.`;",
+    "new": "      return `At the end of the Season, ${guildWords(d.guild)} held ${seat.name}${d.kept ? ', as it had the whole Season through' : ''}.`;",
     "tests": [
       "test/net/season1_law.test.js"
     ]
@@ -285,8 +285,8 @@
   {
     "name": "SEASON1-pact-season",
     "file": "src/net/townSeatLaw.js",
-    "old": "export const pactUntil = (week, zero = null) => seasonOf(week, zero)?.end ?? (Math",
-    "new": "export const pactUntil = (week, zero = null) => (Math",
+    "old": "export const pactUntil = (week, zero = null) =>\n  seasonOf(week, zero)?.end ?? (Math.floor(Math.max(0, week) / SEASON_WEEKS) + 1) * SEASON_WEEKS; // SEASON1: the Season's own end, once one is counted",
+    "new": "export const pactUntil = (week, zero = null) => (Math.floor(Math.max(0, week) / SEASON_WEEKS) + 1) * SEASON_WEEKS; // SEASON1: the Season's own end, once one is counted",
     "tests": [
       "test/net/season1_law.test.js",
       "test/net/season1_service.test.js"
@@ -470,8 +470,8 @@
   {
     "name": "SEASON1-roy-kept-season",
     "file": "server-account/src/seatRoyal.js",
-    "old": "seasonOf(Number(r.week), zero)?.n ?? 0] } : null;",
-    "new": "0] } : null;",
+    "old": "  return r ? { ts: [Number(r.key), seasonOf(Number(r.week), zero)?.n ?? 0] } : null;",
+    "new": "  return r ? { ts: [Number(r.key), 0] } : null;",
     "tests": [
       "test/net/season1_service.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "SEASON1-roy-kept-title",
     "file": "server-account/src/seatRoyal.js",
-    "old": "WHERE account = ? AND title = ? ORDER BY week DESC, key LIMIT 1').bind(playerId, title)",
-    "new": "WHERE account = ? ORDER BY week DESC, key LIMIT 1').bind(playerId)",
+    "old": "    .prepare('SELECT key, week FROM town_seat_titles WHERE account = ? AND title = ? ORDER BY week DESC, key LIMIT 1')\n    .bind(playerId, title)",
+    "new": "    .prepare('SELECT key, week FROM town_seat_titles WHERE account = ? ORDER BY week DESC, key LIMIT 1')\n    .bind(playerId)",
     "tests": [
       "test/net/season1_service.test.js",
       "test/net/crown1_royal_service.test.js"
@@ -553,8 +553,8 @@
   {
     "name": "SEASON1-tab-line",
     "file": "src/ui/seatTab.js",
-    "old": "      if (season) week.append(el('p', 'notice-seat-week notice-seat-season', season));\n",
-    "new": "",
+    "old": "      if (season) week.append(el('p', 'notice-seat-week notice-seat-season', season));\n      const tide = data.tides ? tideLine(seat.region, data.tides.now, data.tides.next) : null; // SEASON1 part two (9.3)",
+    "new": "      const tide = data.tides ? tideLine(seat.region, data.tides.now, data.tides.next) : null; // SEASON1 part two (9.3)",
     "tests": [
       "test/net/season1_client.test.js"
     ]
@@ -562,8 +562,8 @@
   {
     "name": "SEASON1-tab-data",
     "file": "src/ui/seatTab.js",
-    "old": "      const season = seasonLine(data.week, data.season ?? null);",
-    "new": "      const season = seasonLine(data.week, null);",
+    "old": "      const season = seasonLine(data.week, data.season ?? null); // SEASON1",
+    "new": "      const season = seasonLine(data.week, null); // SEASON1",
     "tests": [
       "test/net/season1_client.test.js"
     ]

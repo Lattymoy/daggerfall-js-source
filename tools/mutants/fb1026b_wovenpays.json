@@ -211,8 +211,8 @@
   {
     "name": "WOVEN-PAYS-realm-delete-leaves-the-count",
     "file": "server-account/src/realm.js",
-    "old": "    db.prepare('DELETE FROM prof_silver_cloth WHERE player = ? AND char_id = ?').bind(playerId, id),   // WOVEN-PAYS: and its cloth's silver counts\n",
-    "new": "",
+    "old": "    db.prepare('DELETE FROM prof_silver_cloth WHERE player = ? AND char_id = ?').bind(playerId, id), // WOVEN-PAYS: and its cloth's silver counts\n    db.prepare('DELETE FROM npc_roll WHERE player = ? AND char_id = ?').bind(playerId, id), // CHAP1: its standing with the guilds (npcRoll.js)",
+    "new": "    db.prepare('DELETE FROM npc_roll WHERE player = ? AND char_id = ?').bind(playerId, id), // CHAP1: its standing with the guilds (npcRoll.js)",
     "tests": [
       "test/server/profdelete.test.js"
     ]

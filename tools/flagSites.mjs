@@ -52,8 +52,7 @@ const MARKER = /(?<![A-Za-z0-9_])(FLAGGED|INTERIM)(?![A-Za-z0-9_])/;
  * which nobody sees at all. Three lines catches every wrapped
  * quotation in the tree and cannot reach across a paragraph.
  */
-export const blankQuoted = (src) => src.replace(/"[^"\n]*(?:\n[^"\n]*){0,2}?"/g,
-  (m) => m.replace(/[^\n]/g, ' '));
+export const blankQuoted = (src) => src.replace(/"[^"\n]*(?:\n[^"\n]*){0,2}?"/g, (m) => m.replace(/[^\n]/g, ' '));
 
 /** The 1-based line numbers in `src` that are open-flag sites. */
 export function flagLines(src) {

@@ -33,10 +33,20 @@
 export const WINDFALL_ANCHOR_PERIOD = 49152;
 /** The flat's own two hashes' wavenumbers, in whole turns over the period (x, z): about 1-3 radians a metre, so flats a
  *  metre apart differ, each a whole number of turns so the period repeats them. */
-export const WINDFALL_TURNS = Object.freeze({ own: Object.freeze([[10248, 16976], [-21357, 7588]]), shiver: Object.freeze([[18853, -8840], [6493, 24016]]) });
+export const WINDFALL_TURNS = Object.freeze({
+  own: Object.freeze([
+    [10248, 16976],
+    [-21357, 7588],
+  ]),
+  shiver: Object.freeze([
+    [18853, -8840],
+    [6493, 24016],
+  ]),
+});
 /** A turn pair as the shader's wave vector: whole turns over the anchor's period, so the field repeats with the anchor.
  *  @param {readonly number[]} t */
-const k = (t) => `vec2(${(t[0] * 2 * Math.PI / WINDFALL_ANCHOR_PERIOD).toPrecision(9)}, ${(t[1] * 2 * Math.PI / WINDFALL_ANCHOR_PERIOD).toPrecision(9)})`;
+const k = (t) =>
+  `vec2(${((t[0] * 2 * Math.PI) / WINDFALL_ANCHOR_PERIOD).toPrecision(9)}, ${((t[1] * 2 * Math.PI) / WINDFALL_ANCHOR_PERIOD).toPrecision(9)})`;
 /** The most of the mod's per-flat multiplier (0.8 + 0.4 x h2). */
 export const WINDFALL_SCALE_MAX = 1.2;
 
@@ -62,14 +72,23 @@ bool windfallLaw() { return dot(uWindfallAxis.xy, uWindfallAxis.xy) > 0.5; }
  *  shiver phase, heading x, heading z, anchor x, anchor z] - from systems/windfall.js's frame (`wf`) and the anchor;
  *  written into `out`. A frame with no law (the mod off, no wind) is all zero. */
 export function windfallUniforms(wf, anchor, out = new Float32Array(8)) {
-  if (!wf || !wf.on || !wf.outside) { out.fill(0); return out; }
-  const s = Math.max(0, wf.strength), cap = Math.min(s, 2), sat = Math.min(1, s);
+  if (!wf || !wf.on || !wf.outside) {
+    out.fill(0);
+    return out;
+  }
+  const s = Math.max(0, wf.strength),
+    cap = Math.min(s, 2),
+    sat = Math.min(1, s);
   out[0] = wf.profile.swayAmplitude * cap;
   out[1] = wf.profile.shiverAmplitude * sat * cap;
-  out[2] = wf.swayPhase; out[3] = wf.shiverPhase;
-  const [dx, dz] = wf.direction, l = Math.hypot(dx, dz) || 1;
-  out[4] = dx / l; out[5] = dz / l;
-  out[6] = anchor?.[0] ?? 0; out[7] = anchor?.[1] ?? 0;
+  out[2] = wf.swayPhase;
+  out[3] = wf.shiverPhase;
+  const [dx, dz] = wf.direction,
+    l = Math.hypot(dx, dz) || 1;
+  out[4] = dx / l;
+  out[5] = dz / l;
+  out[6] = anchor?.[0] ?? 0;
+  out[7] = anchor?.[1] ?? 0;
   return out;
 }
 /** Is the mod's law on in these eight numbers (the heading's set)? */
@@ -83,6 +102,9 @@ export const windfallLeanMax = (wf, share, h) => (Math.abs(wf[0]) + Math.abs(wf[
  *  0..WINDFALL_ANCHOR_PERIOD (double precision; the shader's sum is small). */
 export function windfallAnchorAfterShift(anchor, offset) {
   const P = WINDFALL_ANCHOR_PERIOD;
-  const wrap = (v) => { const r = v % P; return r < 0 ? r + P : r; };
+  const wrap = (v) => {
+    const r = v % P;
+    return r < 0 ? r + P : r;
+  };
   return [wrap(anchor[0] - offset[0]), wrap(anchor[1] - offset[2])];
 }

@@ -8,7 +8,7 @@
 import { crewSpare, crewRoom, signOffOrder } from '../../systems/naval/crewTrade.js';
 import { playerCrewCount } from '../../systems/naval/crewLife.js';
 import { fleetCrossed } from '../../systems/fleet.js';
-import { charterRecord } from '../../systems/naval/passage.js';   // AUDIT CREW-TRADE E1: a booked passage's boat
+import { charterRecord } from '../../systems/naval/passage.js'; // AUDIT CREW-TRADE E1: a booked passage's boat
 
 /**
  * A boat of mine's crew as the exchange deals in it: `st` her sea-fight state (navalHost.js myBoatState), `sync(boat)`
@@ -30,8 +30,23 @@ export function crewDealOf(boat, st, sync, companions) {
   function stands() {
     const crewed = !!boat?.crewed && d.maxCrew > 0;
     const hands = crewed ? sync(boat) : [];
-    const spare = crewSpare({ hull: boat.hull, crew: d.crew, hands, away: away(), crossed: !!boat.uid && fleetCrossed(boat.uid) });
-    return { crewed, charter: !!charterRecord(boat?.charter), crew: d.crew, maxCrew: d.maxCrew, fighting: !!st.inFight, room: crewRoom(d), spare: spare.n, why: spare.why };
+    const spare = crewSpare({
+      hull: boat.hull,
+      crew: d.crew,
+      hands,
+      away: away(),
+      crossed: !!boat.uid && fleetCrossed(boat.uid),
+    });
+    return {
+      crewed,
+      charter: !!charterRecord(boat?.charter),
+      crew: d.crew,
+      maxCrew: d.maxCrew,
+      fighting: !!st.inFight,
+      room: crewRoom(d),
+      spare: spare.n,
+      why: spare.why,
+    };
   }
   return {
     stands,
@@ -40,7 +55,8 @@ export function crewDealOf(boat, st, sync, companions) {
      *  the men she took and the named hands who joined her (AUDIT CREW-TRADE H3: said, as the shipwright's hire says
      *  them). @param {number} k */
     signOn(k) {
-      const was = d.crew, before = new Set(st.crew.hands.map((h) => h.name));
+      const was = d.crew,
+        before = new Set(st.crew.hands.map((h) => h.name));
       d.muster(was + Math.max(0, Math.floor(Number(k) || 0)));
       st.lastCrew = d.crew;
       sync(boat);
@@ -55,7 +71,10 @@ export function crewDealOf(boat, st, sync, companions) {
       const n = Math.min(Math.max(0, Math.floor(Number(k) || 0)), stands().spare);
       if (n <= 0) return { n: 0, left: [] };
       const was = d.crew;
-      const going = signOffOrder(st.crew.hands, away()).slice(0, Math.max(0, st.crew.hands.length - playerCrewCount(boat.hull, was - n)));
+      const going = signOffOrder(st.crew.hands, away()).slice(
+        0,
+        Math.max(0, st.crew.hands.length - playerCrewCount(boat.hull, was - n)),
+      );
       for (const h of going) st.crew.release(h.name);
       d.discharge(was - n);
       st.lastCrew = d.crew;

@@ -72,8 +72,8 @@
   {
     "name": "PASSAUDIT-3-the-find-no-claim",
     "file": "server-account/src/progress.js",
-    "old": "  '/v1/pass/find': Object.freeze(['pass', false]),\n",
-    "new": "",
+    "old": "  '/v1/pass/find': Object.freeze(['pass', false]),\n  '/v1/festival/find': Object.freeze(['festival', false]),",
+    "new": "  '/v1/festival/find': Object.freeze(['festival', false]),",
     "tests": [
       "test/server/storefront_passaudit.test.js"
     ]
@@ -81,8 +81,8 @@
   {
     "name": "PASSAUDIT-3-the-silver-finds-stream",
     "file": "server-account/src/progress.js",
-    "old": "  '/v1/pass/find': Object.freeze(['pass', false]),\n",
-    "new": "  '/v1/pass/find': Object.freeze(['find', false]),\n",
+    "old": "  '/v1/pass/find': Object.freeze(['pass', false]),",
+    "new": "  '/v1/pass/find': Object.freeze(['find', false]),",
     "tests": [
       "test/server/storefront_passaudit.test.js"
     ]
@@ -90,8 +90,8 @@
   {
     "name": "PASSAUDIT-3-spent-as-profession-xp",
     "file": "server-account/src/progress.js",
-    "old": "    case '/v1/pass/find': case '/v1/festival/find': add(PROGRESS_ROUTES[path][0], 1); break;",
-    "new": "    case '/v1/festival/find': add(PROGRESS_ROUTES[path][0], 1); break;",
+    "old": "    case '/v1/pass/find':\n    case '/v1/festival/find':",
+    "new": "    case '/v1/festival/find':",
     "tests": [
       "test/server/storefront_passaudit.test.js"
     ]
@@ -108,8 +108,8 @@
   {
     "name": "PASSAUDIT-3-a-stored-line-dropped-for-a-new-stream",
     "file": "server-account/src/progress.js",
-    "old": "  try { c = progressConfigOf(withStreamsAdded(JSON.parse(row?.value ?? 'null'))); } catch { c = null; }",
-    "new": "  try { c = progressConfigOf(JSON.parse(row?.value ?? 'null')); } catch { c = null; }",
+    "old": "    c = progressConfigOf(withStreamsAdded(JSON.parse(row?.value ?? 'null')));",
+    "new": "    c = progressConfigOf(JSON.parse(row?.value ?? 'null'));",
     "tests": [
       "test/server/storefront_passaudit.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "PASSAUDIT-3f-the-festival-find-no-claim",
     "file": "server-account/src/progress.js",
-    "old": "  '/v1/festival/find': Object.freeze(['festival', false]),\n",
-    "new": "",
+    "old": "  '/v1/festival/find': Object.freeze(['festival', false]),\n  // AUDIT-STOREFRONT (lane 5 W2): the Resonant Maul's day (seasonClaim.js) - asked of the account's seated character as the",
+    "new": "  // AUDIT-STOREFRONT (lane 5 W2): the Resonant Maul's day (seasonClaim.js) - asked of the account's seated character as the",
     "tests": [
       "test/server/storefront_passaudit.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "PASSAUDIT-3f-the-pass-stream",
     "file": "server-account/src/progress.js",
-    "old": "  '/v1/festival/find': Object.freeze(['festival', false]),\n",
-    "new": "  '/v1/festival/find': Object.freeze(['pass', false]),\n",
+    "old": "  '/v1/festival/find': Object.freeze(['festival', false]),",
+    "new": "  '/v1/festival/find': Object.freeze(['pass', false]),",
     "tests": [
       "test/server/storefront_passaudit.test.js"
     ]

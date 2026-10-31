@@ -12,14 +12,22 @@ import { chromium } from 'playwright';
 
 const server = await createServer({ root: '/home/user/project-dagger', server: { port: 5219, strictPort: true } });
 await server.listen();
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 const errors = [];
-page.on('pageerror', (e) => { errors.push(e.message); console.log('[pageerror]', e.message); });
+page.on('pageerror', (e) => {
+  errors.push(e.message);
+  console.log('[pageerror]', e.message);
+});
 await page.goto('http://localhost:5219/play/?shot&play&exterior&time=22:00');
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 180000 });
 
-const fail = (m) => { console.log('FAIL:', m); process.exit(1); };
+const fail = (m) => {
+  console.log('FAIL:', m);
+  process.exit(1);
+};
 const state = async () => JSON.parse(await page.evaluate(() => window.__infection()));
 const videos = async () => (await state()).videos;
 
@@ -28,12 +36,14 @@ console.log('== THE BITE ==');
 // with: a level-1 player cannot be turned any more than they can
 // catch plague.
 console.log('level:', await page.evaluate(() => window.__playerEntity.level));
-if (await page.evaluate(() => window.__playerEntity.level) < 2) {
+if ((await page.evaluate(() => window.__playerEntity.level)) < 2) {
   const cub = JSON.parse(await page.evaluate(() => window.__infect('Vampirism-Infection')));
-  if (cub) fail('a level-1 player took an infection - base.Start\'s gate is not being reached');
+  if (cub) fail("a level-1 player took an infection - base.Start's gate is not being reached");
   console.log('level-1 bite:', cub, '(refused, DiseaseEffect.Start:89)');
 }
-await page.evaluate(() => { window.__playerEntity.level = 5; });
+await page.evaluate(() => {
+  window.__playerEntity.level = 5;
+});
 const bitten = JSON.parse(await page.evaluate(() => window.__infect('Vampirism-Infection')));
 if (!bitten) fail('__infect minted nothing - startInfection refused a live player');
 console.log('entry:', JSON.stringify(bitten));
@@ -47,8 +57,11 @@ console.log('\n== ONE DAY: THE WARNING DREAM ==');
 await page.evaluate(() => window.__advanceDays(1));
 await page.waitForFunction(() => (window.__infectionVideos ?? []).length >= 1, null, { timeout: 240000 });
 console.log('pushed:', JSON.stringify(await videos()));
-await page.waitForFunction(() => (window.__infectionVideos ?? []).length >= 1
-  && window.__infectionVideos[0].played !== undefined, null, { timeout: 240000 });
+await page.waitForFunction(
+  () => (window.__infectionVideos ?? []).length >= 1 && window.__infectionVideos[0].played !== undefined,
+  null,
+  { timeout: 240000 },
+);
 let v = await videos();
 if (v[0].name !== 'ANIM0004.VID') fail(`the vampire dream is ANIM0004.VID, got ${v[0].name}`);
 if (v[0].played !== true) fail('ANIM0004.VID did not decode - the diet did not feed it');

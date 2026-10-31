@@ -35,7 +35,13 @@ import { buildProgram } from '../glProgram.js';
 import { DEAD_NOISE_GLSL } from '../deadlands.js';
 import { BAYER_GLSL, SD_PIXEL_GLSL } from '../orderedDither.js';
 import { createRenderTarget, withTarget } from '../renderTarget.js';
-import { sdSkySigns, SD_SKY_SIGN_GRID, SD_GLYPHS, SD_HOUR_NUMERALS, numeralWidth } from '../../world/superDungeon/sdSkyArt.js';
+import {
+  sdSkySigns,
+  SD_SKY_SIGN_GRID,
+  SD_GLYPHS,
+  SD_HOUR_NUMERALS,
+  numeralWidth,
+} from '../../world/superDungeon/sdSkyArt.js';
 import { SD_TICK_EASE_S } from '../../world/superDungeon/sdLook.js';
 
 /** Every rate is whole cycles over this many seconds; the clock is handed wrapped to it. */
@@ -82,7 +88,9 @@ const HEAD = `#version 300 es
 precision highp float;
 `;
 
-export const SD_SKY_VS = HEAD + `layout(location = 0) in vec2 aPos;
+export const SD_SKY_VS =
+  HEAD +
+  `layout(location = 0) in vec2 aPos;
 uniform vec3 uRight, uUp, uFwd;
 uniform vec4 uProj;
 out vec3 vRay;
@@ -94,26 +102,38 @@ const f4 = (v) => v.toFixed(4);
 const f6 = (v) => v.toFixed(6);
 /** AUDIT SD II (L2 F15): the clock-face's frame on the sky - its centre's direction (the realm's azimuth from +z toward
  *  +x, its elevation), the way its third hour lies (azimuth growing) and its twelfth (elevation growing). */
-export const CLOCK_BASIS = Object.freeze((() => {
-  const { az, elev } = SD_CLOCK_FACE;
-  return {
-    centre: Object.freeze([Math.cos(elev) * Math.sin(az), Math.sin(elev), Math.cos(elev) * Math.cos(az)]),
-    right: Object.freeze([Math.cos(az), 0, -Math.sin(az)]),
-    up: Object.freeze([-Math.sin(elev) * Math.sin(az), Math.cos(elev), -Math.sin(elev) * Math.cos(az)]),
-  };
-})());
+export const CLOCK_BASIS = Object.freeze(
+  (() => {
+    const { az, elev } = SD_CLOCK_FACE;
+    return {
+      centre: Object.freeze([Math.cos(elev) * Math.sin(az), Math.sin(elev), Math.cos(elev) * Math.cos(az)]),
+      right: Object.freeze([Math.cos(az), 0, -Math.sin(az)]),
+      up: Object.freeze([-Math.sin(elev) * Math.sin(az), Math.cos(elev), -Math.sin(elev) * Math.cos(az)]),
+    };
+  })(),
+);
 
 /** SD-LOOK: THE OCTAHEDRAL MAP - a direction to its place on the map (0..1 each way) and back, +y the inner diamond. Pure
  *  (the shaders' own, pinned equal). */
 export function octEncode(d) {
   const s = Math.abs(d[0]) + Math.abs(d[1]) + Math.abs(d[2]);
-  let x = d[0] / s, z = d[2] / s;
-  if (d[1] < 0) { const ox = x; x = (1 - Math.abs(z)) * (ox >= 0 ? 1 : -1); z = (1 - Math.abs(ox)) * (z >= 0 ? 1 : -1); }
+  let x = d[0] / s,
+    z = d[2] / s;
+  if (d[1] < 0) {
+    const ox = x;
+    x = (1 - Math.abs(z)) * (ox >= 0 ? 1 : -1);
+    z = (1 - Math.abs(ox)) * (z >= 0 ? 1 : -1);
+  }
   return [x * 0.5 + 0.5, z * 0.5 + 0.5];
 }
 export function octDecode(uv) {
-  const fx = uv[0] * 2 - 1, fz = uv[1] * 2 - 1, y = 1 - Math.abs(fx) - Math.abs(fz), t = Math.max(-y, 0);
-  const x = fx + (fx >= 0 ? -t : t), z = fz + (fz >= 0 ? -t : t), l = Math.hypot(x, y, z);
+  const fx = uv[0] * 2 - 1,
+    fz = uv[1] * 2 - 1,
+    y = 1 - Math.abs(fx) - Math.abs(fz),
+    t = Math.max(-y, 0);
+  const x = fx + (fx >= 0 ? -t : t),
+    z = fz + (fz >= 0 ? -t : t),
+    l = Math.hypot(x, y, z);
   return [x / l, y / l, z / l];
 }
 export const SD_OCT_GLSL = `vec2 octEncode(vec3 d) {
@@ -234,24 +254,39 @@ float numeralLit(int h, int cx, int cy) {
   if (cy < 0 || cy > 6 || cx < 0) return 0.0;
 ${SD_HOUR_NUMERALS.map((s, h) => {
   let x = 0;
-  const parts = [...s].map((ch) => { const g = SD_GLYPHS[ch], code = ch === 'I' ? 0 : ch === 'V' ? 1 : 2, at = x; x += g.w + 1; return `if (cx >= ${at} && cx < ${at + g.w}) return glyphBit(${code}, cx - ${at}, cy);`; });
+  const parts = [...s].map((ch) => {
+    const g = SD_GLYPHS[ch],
+      code = ch === 'I' ? 0 : ch === 'V' ? 1 : 2,
+      at = x;
+    x += g.w + 1;
+    return `if (cx >= ${at} && cx < ${at + g.w}) return glyphBit(${code}, cx - ${at}, cy);`;
+  });
   return `  if (h == ${h}) { ${parts.join(' ')} return 0.0; }`;
 }).join('\n')}
   return 0.0;
 }
 `;
 
-const skylineDraw = SD_SKY_SHARDS.map((s, i) => `  { float c = ${f4(s.az)} + ${f4(s.turns)} * TAU * uTime / PERIOD; float du = wrapPi(az - c) / ${f4(s.halfW)}; float dv = (${f4(SD_SHARD_TOP)} - e) / ${f4(s.depth)};
+const skylineDraw = SD_SKY_SHARDS.map(
+  (
+    s,
+    i,
+  ) => `  { float c = ${f4(s.az)} + ${f4(s.turns)} * TAU * uTime / PERIOD; float du = wrapPi(az - c) / ${f4(s.halfW)}; float dv = (${f4(SD_SHARD_TOP)} - e) / ${f4(s.depth)};
     if (abs(du) < 1.0 && dv > -0.05 && dv < 1.0) { float m = skyline${i}(du, dv); float rim = max(skyline${i}(du * 1.04, dv - 0.06), skyline${i}(du * 0.96, dv - 0.06)) * (1.0 - m);
       col = mix(col, SHARD_DARK, m * 0.95); col = max(col, BRASS * 0.75 * rim);
-      if (m > 0.5 && dv > 0.14 && fract(dv * 11.0) < 0.45 && fract(du * 9.0) < 0.5 && dhash(floor(vec2(du * 9.0, dv * 11.0)) + ${f4(i * 17.3 + 4.1)}) > 0.55) col = WINDOW * (0.42 + 0.3 * dhash(cellF + 1.7)); } }`).join('\n');
+      if (m > 0.5 && dv > 0.14 && fract(dv * 11.0) < 0.45 && fract(du * 9.0) < 0.5 && dhash(floor(vec2(du * 9.0, dv * 11.0)) + ${f4(i * 17.3 + 4.1)}) > 0.55) col = WINDOW * (0.42 + 0.3 * dhash(cellF + 1.7)); } }`,
+).join('\n');
 
 /** THE PAINT: one texel of the map a fragment - its direction the octahedral decode of its centre. */
-export const SD_SKY_PAINT_VS = HEAD + `layout(location = 0) in vec2 aPos;
+export const SD_SKY_PAINT_VS =
+  HEAD +
+  `layout(location = 0) in vec2 aPos;
 uniform vec4 uQuad;   // the quadrant painted: its corner and its size on the map (0..1)
 out vec2 vUv;
 void main() { vUv = uQuad.xy + (aPos * 0.5 + 0.5) * uQuad.zw; gl_Position = vec4(aPos, 0.0, 1.0); }`;
-export const SD_SKY_PAINT_FS = HEAD + `in vec2 vUv;
+export const SD_SKY_PAINT_FS =
+  HEAD +
+  `in vec2 vUv;
 uniform float uTime;      // the realm's seconds, wrapped to the period
 uniform vec3 uHaze;       // the frame's fog colour - the horizon meets it
 uniform float uSteps;     // the pixel law's steps (SD_SKY_STEPS)
@@ -441,7 +476,9 @@ vec3 sdSkyAt(vec3 d) {
 }
 `;
 
-export const SD_SKY_FS = HEAD + `in vec3 vRay;
+export const SD_SKY_FS =
+  HEAD +
+  `in vec3 vRay;
 uniform vec3 uHaze;      // the frame's fog colour (painted into the map; kept for the pass's word)
 out vec4 o;
 ${SD_SKY_FETCH_GLSL}
@@ -453,10 +490,19 @@ void main() {
 /** AUDIT SD II (L2 F9): the sky's ray basis into `out`'s own arrays - render/deadlands.js skyBasis's reading, which makes
  *  four arrays a call (pinned equal to it). The pass's frame makes nothing. */
 export function sdSkyBasisInto(view, proj, out) {
-  out.right[0] = view[0]; out.right[1] = view[4]; out.right[2] = view[8];
-  out.up[0] = view[1]; out.up[1] = view[5]; out.up[2] = view[9];
-  out.fwd[0] = -view[2]; out.fwd[1] = -view[6]; out.fwd[2] = -view[10];
-  out.lens[0] = proj[0]; out.lens[1] = proj[5]; out.lens[2] = proj[8]; out.lens[3] = proj[9];
+  out.right[0] = view[0];
+  out.right[1] = view[4];
+  out.right[2] = view[8];
+  out.up[0] = view[1];
+  out.up[1] = view[5];
+  out.up[2] = view[9];
+  out.fwd[0] = -view[2];
+  out.fwd[1] = -view[6];
+  out.fwd[2] = -view[10];
+  out.lens[0] = proj[0];
+  out.lens[1] = proj[5];
+  out.lens[2] = proj[8];
+  out.lens[3] = proj[9];
   return out;
 }
 
@@ -469,7 +515,8 @@ export class SdSkyMap {
     this.target = createRenderTarget(gl, SD_SKY_MAP, SD_SKY_MAP, { filter: 'NEAREST' });
     this.program = buildProgram(gl, SD_SKY_PAINT_VS, SD_SKY_PAINT_FS, 'sd sky paint');
     this.u = {};
-    for (const n of ['uQuad', 'uTime', 'uHaze', 'uSteps', 'uSigns', 'uEnding', 'uEndingIdx']) this.u[n] = gl.getUniformLocation(this.program, n);
+    for (const n of ['uQuad', 'uTime', 'uHaze', 'uSteps', 'uSigns', 'uEnding', 'uEndingIdx'])
+      this.u[n] = gl.getUniformLocation(this.program, n);
     const signs = sdSkySigns();
     this.signs = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, this.signs);
@@ -483,7 +530,8 @@ export class SdSkyMap {
     gl.bindVertexArray(this.vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     gl.bindVertexArray(null);
     /** the next quadrant painted, and the look the map was last painted in (a change paints it whole) */
     this.next = 0;
@@ -496,9 +544,14 @@ export class SdSkyMap {
     this._quads = () => {
       for (let k = 0; k < 4; k++) {
         if (!this._all && k !== this.next) continue;
-        const qx = k & 1, qy = k >> 1, h = SD_SKY_MAP / 2;
+        const qx = k & 1,
+          qy = k >> 1,
+          h = SD_SKY_MAP / 2;
         this.gl.viewport(qx * h, qy * h, h, h);
-        this._quad[0] = qx * 0.5; this._quad[1] = qy * 0.5; this._quad[2] = 0.5; this._quad[3] = 0.5;
+        this._quad[0] = qx * 0.5;
+        this._quad[1] = qy * 0.5;
+        this._quad[2] = 0.5;
+        this._quad[3] = 0.5;
         this.gl.uniform4fv(this.u.uQuad, this._quad);
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
       }
@@ -508,36 +561,73 @@ export class SdSkyMap {
    *  realm's clock, `haze` the fog's colour, `look` `{ steps, ending: [r, g, b] | null, endingIdx }`, `viewport` the
    *  world viewport handed back. A DRAW PATH: binds its target, and hands back the frame's (render/renderTarget.js). */
   paint(seconds, haze, look, viewport) {
-    const gl = this.gl, U = this.u, steps = look?.steps ?? SD_SKY_STEPS.lane, idx = look?.endingIdx ?? -1, light = look?.ending ?? null;
-    const W = this._was, n0 = light ? light[0] : -1, n1 = light ? light[1] : -1, n2 = light ? light[2] : -1, h0 = haze ? haze[0] : -1, h1 = haze ? haze[1] : -1, h2 = haze ? haze[2] : -1;
-    const all = this.painted === 0 || W[0] !== steps || W[1] !== idx || W[2] !== n0 || W[3] !== n1 || W[4] !== n2 || W[5] !== h0 || W[6] !== h1 || W[7] !== h2;
-    W[0] = steps; W[1] = idx; W[2] = n0; W[3] = n1; W[4] = n2; W[5] = h0; W[6] = h1; W[7] = h2;
+    const gl = this.gl,
+      U = this.u,
+      steps = look?.steps ?? SD_SKY_STEPS.lane,
+      idx = look?.endingIdx ?? -1,
+      light = look?.ending ?? null;
+    const W = this._was,
+      n0 = light ? light[0] : -1,
+      n1 = light ? light[1] : -1,
+      n2 = light ? light[2] : -1,
+      h0 = haze ? haze[0] : -1,
+      h1 = haze ? haze[1] : -1,
+      h2 = haze ? haze[2] : -1;
+    const all =
+      this.painted === 0 ||
+      W[0] !== steps ||
+      W[1] !== idx ||
+      W[2] !== n0 ||
+      W[3] !== n1 ||
+      W[4] !== n2 ||
+      W[5] !== h0 ||
+      W[6] !== h1 ||
+      W[7] !== h2;
+    W[0] = steps;
+    W[1] = idx;
+    W[2] = n0;
+    W[3] = n1;
+    W[4] = n2;
+    W[5] = h0;
+    W[6] = h1;
+    W[7] = h2;
     this._all = all;
-    gl.disable(gl.BLEND); gl.disable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE);
+    gl.disable(gl.BLEND);
+    gl.disable(gl.DEPTH_TEST);
+    gl.disable(gl.CULL_FACE);
     gl.useProgram(this.program);
     gl.uniform1f(U.uTime, sdSkyClock(seconds));
     gl.uniform3fv(U.uHaze, haze ?? NO_HAZE);
     gl.uniform1f(U.uSteps, steps);
     gl.uniform3fv(U.uEnding, light ?? NO_LIGHT);
     gl.uniform1f(U.uEndingIdx, idx);
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.signs); gl.uniform1i(U.uSigns, 0);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.signs);
+    gl.uniform1i(U.uSigns, 0);
     gl.bindVertexArray(this.vao);
     withTarget(gl, this.target, viewport, this._quads);
     gl.bindVertexArray(null);
-    gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE);
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
     this.next = (this.next + 1) & 3;
     this.painted++;
   }
-  get texture() { return this.target.tex; }
+  get texture() {
+    return this.target.tex;
+  }
   release() {
     const gl = this.gl;
-    gl.deleteTexture(this.target.tex); gl.deleteFramebuffer(this.target.fbo); gl.deleteTexture(this.signs);
-    gl.deleteProgram(this.program); gl.deleteVertexArray(this.vao);
+    gl.deleteTexture(this.target.tex);
+    gl.deleteFramebuffer(this.target.fbo);
+    gl.deleteTexture(this.signs);
+    gl.deleteProgram(this.program);
+    gl.deleteVertexArray(this.vao);
   }
 }
 
 /** A haze and an Ending's light for a look that names none, made once (AUDIT SD V P4). */
-const NO_HAZE = Object.freeze([0.2, 0.15, 0.07]), NO_LIGHT = Object.freeze([0, 0, 0]);
+const NO_HAZE = Object.freeze([0.2, 0.15, 0.07]),
+  NO_LIGHT = Object.freeze([0, 0, 0]);
 
 /** The Hour's sky, one foreign pass - the fetch over the map it owns. */
 export class SdSkyRenderer {
@@ -546,42 +636,59 @@ export class SdSkyRenderer {
     this.gl = gl;
     this.program = buildProgram(gl, SD_SKY_VS, SD_SKY_FS, 'sd sky');
     this.u = {};
-    for (const n of ['uRight', 'uUp', 'uFwd', 'uProj', 'uTime', 'uHaze', 'uGain', 'uSkyMap', 'uClock']) this.u[n] = gl.getUniformLocation(this.program, n);
+    for (const n of ['uRight', 'uUp', 'uFwd', 'uProj', 'uTime', 'uHaze', 'uGain', 'uSkyMap', 'uClock'])
+      this.u[n] = gl.getUniformLocation(this.program, n);
     this.vao = gl.createVertexArray();
     gl.bindVertexArray(this.vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     gl.bindVertexArray(null);
     /** whether the last draw put the sky up (the stats and the tests) */
     this.drawn = false;
     /** the frame's basis, filled in place (sdSkyBasisInto) */
-    this._b = { right: new Float32Array(3), up: new Float32Array(3), fwd: new Float32Array(3), lens: new Float32Array(4) };
+    this._b = {
+      right: new Float32Array(3),
+      up: new Float32Array(3),
+      fwd: new Float32Array(3),
+      lens: new Float32Array(4),
+    };
     /** SD-LOOK: the painted map (made with the pass; the Rift's window reads it too) and the fight's word to the face */
     this.map = new SdSkyMap(gl);
     this.clock = new Float32Array(4);
   }
 
   /** SD-LOOK: the map's next quadrant (SdSkyMap.paint) - before the draw, in the frame's own air. */
-  paint(seconds, fog, look, viewport) { this.map.paint(seconds, fog?.color ?? null, look, viewport); }
+  paint(seconds, fog, look, viewport) {
+    this.map.paint(seconds, fog?.color ?? null, look, viewport);
+  }
 
   /** Paint the sky where nothing nearer has drawn: `seconds` the realm's clock (wrapped here), `fog` the frame's (its
    *  colour the haze the horizon meets), `gain` the realm's light against its own; `clock` the fight's word to the face
    *  ([SD_SKY_MODE, a0, a1, lit] - none by default). Answers true. */
   draw(proj, view, seconds, fog = null, gain = 1, clock = null) {
-    const gl = this.gl, U = this.u, b = sdSkyBasisInto(view, proj, this._b);
+    const gl = this.gl,
+      U = this.u,
+      b = sdSkyBasisInto(view, proj, this._b);
     gl.disable(gl.BLEND);
     gl.disable(gl.CULL_FACE);
     gl.useProgram(this.program);
-    gl.uniform3fv(U.uRight, b.right); gl.uniform3fv(U.uUp, b.up); gl.uniform3fv(U.uFwd, b.fwd); gl.uniform4fv(U.uProj, b.lens);
+    gl.uniform3fv(U.uRight, b.right);
+    gl.uniform3fv(U.uUp, b.up);
+    gl.uniform3fv(U.uFwd, b.fwd);
+    gl.uniform4fv(U.uProj, b.lens);
     gl.uniform1f(U.uTime, sdSkyClock(seconds));
     gl.uniform3fv(U.uHaze, fog?.color ?? NO_HAZE);
     gl.uniform1f(U.uGain, gain);
     for (let k = 0; k < 4; k++) this.clock[k] = clock?.[k] ?? 0;
     gl.uniform4fv(U.uClock, this.clock);
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.map.texture); gl.uniform1i(U.uSkyMap, 0);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.map.texture);
+    gl.uniform1i(U.uSkyMap, 0);
     gl.depthMask(false);
-    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);   // PERF2: only where nothing nearer has drawn - z is the far plane
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL); // PERF2: only where nothing nearer has drawn - z is the far plane
     gl.bindVertexArray(this.vao);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.depthFunc(gl.LESS);

@@ -146,9 +146,9 @@ test('GUILD-HALL-SALE the hosts, by source: the plaque\'s "Sell it" pressed open
   // HOST-SPLIT: the menu and the sale are scenes/hallSaleDoor.js's - the interior host builds it with its own door's helpers
   assert.match(m, /const \{ openHallMenu, openHallSale \} = createHallSaleDoor\(\{ host, townTalk, homeOnward: \(hit, entries\) => homeOnward\(hit, entries\), turnHallEntry, homeIdOf, homeTownOf \}\);/);
   const d = src('src/scenes/hallSaleDoor.js');
-  assert.match(d, /\.\.\.\(hallSellable\(home\) \? \[\{ code: 'KeyS', label: t\('home\.hallMenu\.sell', 'S - sell it'\), action: \(\) => openHallSale\(bd, home\) \}\] : \[\]\),/, 'the menu sells as the row does');
+  assert.match(d, /\.\.\.\(hallSellable\(home\)\n\s*\? \[\{ code: 'KeyS', label: t\('home\.hallMenu\.sell', 'S - sell it'\), action: \(\) => openHallSale\(bd, home\) \}\]\n\s*: \[\]\),/, 'the menu sells as the row does');
   assert.match(d, /lines: hallSaleLines\(home\),\s*options: \[\s*\{ code: 'KeyY', label: 'Y - yes', action: \(\) => sellHallAt\(bd, home\) \},/, 'asked first');
   assert.match(d, /Promise\.resolve\(host\.guildHall\?\.sell\?\.\(\{ mapId, buildingKey: bd\.buildingKey \}\) \?\? \{ ok: false, error: 'no-guild' \}\)/, 'the door\'s building');
-  assert.match(d, /if \(r\?\.ok \|\| r\?\.error === 'guild-hall-moved' \|\| r\?\.error === 'guild-hall-none'\) host\.onlineHomes\?\.ensure\?\.\(mapId, \{ force: true \}\);/);
+  assert.match(d, /if \(r\?\.ok \|\| r\?\.error === 'guild-hall-moved' \|\| r\?\.error === 'guild-hall-none'\)\n\s*host\.onlineHomes\?\.ensure\?\.\(mapId, \{ force: true \}\);/);
   assert.match(src('src/scenes/world.js'), /sell: \(at\) => \(guildBook \? guildBook\.sellHall\(at\) : Promise\.resolve\(\{ ok: false, error: 'no-guild' \}\)\),/);
 });

@@ -39,11 +39,11 @@ export function layeredWeaponOf(item) {
 }
 /** LAYERED-DUAL: what a layered body's hands hold, for its look - a pair's right weapon (`weapon`), its left (`offhand`)
  *  and the hand whose blow is in flight (`strike`); else the hand in use's weapon. SPELL-BURST: a cast's element (`cast`)
- *  and a weapon kept beside the spell (`spellHand`). `s` the rig's state: heldWeapon, and pairRight, pairLeft,
- *  pairStrike where the hands hold a pair; castElement, spellHand. */
+ *  and a weapon kept beside the spell (`spellHand`); BACK-SHIELD: sheathed. `s` the rig's state: heldWeapon, and
+ *  pairRight, pairLeft, pairStrike where the hands hold a pair; castElement, spellHand, sheathed. */
 export function layeredHands(s) {
   const held = s?.pairRight && s?.pairLeft ? { weapon: layeredWeaponOf(s.pairRight), offhand: layeredWeaponOf(s.pairLeft), strike: s.pairStrike ?? null } : { weapon: layeredWeaponOf(s?.heldWeapon) };
-  return { ...held, ...(Number.isInteger(s?.castElement) ? { cast: s.castElement } : {}), ...(s?.spellHand ? { spellHand: true } : {}) };
+  return { ...held, ...(Number.isInteger(s?.castElement) ? { cast: s.castElement } : {}), ...(s?.spellHand ? { spellHand: true } : {}), ...(s?.sheathed ? { sheathed: true } : {}) };
 }
 export const isBowCode = (code) => typeof code === 'string' && BOWS.has(code.slice(0, 2));
 
@@ -66,22 +66,33 @@ export function weaponShownFor(table, held, spellHand = false) {
  *  again (5). Each weapon plays its own cut of them: a thrust, a slash, the full chop. */
 export const SWING_CUTS = Object.freeze({ thrust: [4, 4, 2, 2, 2, 4], slash: [4, 2, 3, 3, 4, 4], chop: [0, 1, 2, 3, 4, 5] });
 const THRUSTS = new Set(['dg', 'tn', 'ss', 'wk']), SLASHES = new Set(['ls', 'bs', 'sa', 'kt']);
-const _thrust = new WeakMap();
+const _thrust = new WeakMap(), _strike = new WeakMap();
+/** STRIKE-AHEAD: a strike line shorter than this share of the hammer points at the camera. */
+export const STRIKE_SHORT = 0.45;
 /** SWING-CUTS: a thrust's strike (the swing's frame 2, arms out) points its blade the way the body faces, along the
  *  arms - the art's hammer line there is the chop's, at the camera: from aside the whole blade forward, from three
  *  quarters shortened, from the front a stub at the camera, from behind hidden past the fists. A frame's rig as
  *  drawWeapon reads one (`len` the body's hammer, px); null for any other frame or weapon. */
 export function thrustRigOf(fr, code, view, frame, len = rig.male.len) {
-  if (frame !== 2 || !fr || !THRUSTS.has(String(code ?? '').slice(0, 2))) return null;
-  let o = _thrust.get(fr);
+  if (frame !== 2 || !fr) return null;
+  // STRIKE-AHEAD (the owner, 2026-10-31, of a side strike's sword drawn a stub up from the fists: "These look really
+  // wrong"): where the art's hammer points at the camera at the strike, every weapon strikes along the arms
+  const [qx, qy, tx, ty] = fr.w ?? [...fr.q, ...fr.t];
+  const thrust = THRUSTS.has(String(code ?? '').slice(0, 2)), D0 = Math.hypot(tx - qx, ty - qy) || 1;
+  if (!thrust && D0 >= STRIKE_SHORT * len) return null;
+  // from behind three quarters the arms' way is behind the body: the art's own way, at least STRIKE_SHORT long
+  if (!thrust && (view | 0) === 3) return { w: [qx, qy, qx + ((tx - qx) / D0) * STRIKE_SHORT * len, qy + ((ty - qy) / D0) * STRIKE_SHORT * len], d: fr.d, side: fr.side };
+  const kept = thrust ? _thrust : _strike;
+  let o = kept.get(fr);
   if (!o) {
     const [gx, gy, ax, ay] = fr.w ?? [...fr.q, ...fr.t], D = Math.hypot(ax - gx, ay - gy) || 1, v = Math.max(0, Math.min(4, view | 0));
     const fx = FACING_X[v], [ux, uy] = fx ? [Math.sign(fx), 0.12] : [(ax - gx) / D, (ay - gy) / D];
     const k = fx ? Math.abs(fx) : 0.35, n = Math.hypot(ux, uy), L = len * k, [lo, hi] = rig.span;
-    const blade = v === 4 ? 'x' : v === 3 ? 'b' : 'f', c = blade === 'x' ? 'b' : blade;
+    // STRIKE-AHEAD: a strike's handle is in the fist, none of it drawn - its grip is on the arm's edge, not its middle
+    const blade = v === 4 ? 'x' : v === 3 ? 'b' : 'f', c = !thrust ? 'x' : blade === 'x' ? 'b' : blade;
     const ex = gx + (ux / n) * L, ey = gy + (uy / n) * L;
     o = { w: [gx, gy, ex, ey], d: c.repeat(-lo - 3) + 'bbb' + blade.repeat(hi + 1), side: fr.side };   // no second line: the swing's
-    _thrust.set(fr, o);
+    kept.set(fr, o);
   }
   return o;
 }
@@ -89,9 +100,13 @@ export function thrustRigOf(fr, code, view, frame, len = rig.male.len) {
 /** The cut a weapon code swings - a short blade's and a bare fist's thrust, a long blade's slash, else the chop; `back`
  *  (a pair's left hand) plays it the other way round, a rising backhand. */
 export function swingCutOf(code, back = false) {
-  const head = String(code ?? '0').slice(0, 2);
-  const cut = THRUSTS.has(head) || head === '0' ? SWING_CUTS.thrust : SLASHES.has(head) ? SWING_CUTS.slash : SWING_CUTS.chop;
+  const cut = SWING_CUTS[swingKindOf(code)];
   return back ? [...cut].reverse() : cut;
+}
+/** SWING-CUTS: the cut a weapon code's swing is - 'thrust', 'slash' or 'chop'. */
+export function swingKindOf(code) {
+  const head = String(code ?? '0').slice(0, 2);
+  return THRUSTS.has(head) || head === '0' ? 'thrust' : SLASHES.has(head) ? 'slash' : 'chop';
 }
 
 /** A frame whose arm the hammer hid is drawn as another of its walk: empty-handed, its mirror twin (the front walk's
@@ -359,13 +374,19 @@ export function heldChain(P) {
   if (n < 8 || !(top > 0)) return P;
   const x = P.gx + P.ux * top, y = P.gy + P.uy * top, D = Math.hypot(cx / n - x, cy / n - y) || 1;
   const dx = (cx / n - x) / D, dy = (cy / n - y) / D;
-  let len = 0, half = 0;
+  let len = 0, half = 0, near = Infinity;
   for (let py = 0; py < img.height; py++) for (let px = 0; px < img.width; px++) {
-    if (chain[(py * img.width + px) * 4 + 3] <= 127) continue;
-    len = Math.max(len, (px - x) * dx + (py - y) * dy); half = Math.max(half, Math.abs((px - x) * dy - (py - y) * dx));
+    const j = (py * img.width + px) * 4;
+    if (chain[j + 3] <= 127) continue;
+    const a = (px - x) * dx + (py - y) * dy;
+    if (a < 0) { chain[j + 3] = 0; handle[j + 3] = img.colors[j + 3]; continue; }   // FLAIL-LINK: above the anchor, the cap's
+    len = Math.max(len, a); near = Math.min(near, a); half = Math.max(half, Math.abs((px - x) * dy - (py - y) * dx));
   }
+  // FLAIL-LINK (the placement audit, 2026-10-31): the doll's first link sits past the cap; the chain is drawn from it,
+  // so it hangs from the cap, not a pixel or two below it (half a px short, so the two touch)
+  const lead = Number.isFinite(near) ? Math.max(0, near - 0.5) : 0;
   const pic = (colors) => ({ width: img.width, height: img.height, colors });
-  return { ...P, handle: pic(handle), chain: { img: pic(chain), x, y, dx, dy, len: len + 1, half: half + 1 } };
+  return { ...P, handle: pic(handle), chain: { img: pic(chain), x, y, dx, dy, lead, len: len + 1 - lead, half: half + 1 } };
 }
 
 /** Does the axis's line run through a band wider than a string: as many px 1.5 to 4 px off it as on it? */
@@ -579,11 +600,11 @@ export function drawWeapon(out, fr, code, len, view = 2, art = {}) {
   const depthAt = (proj) => depth[Math.max(0, Math.min(depth.length - 1, Math.round(proj) - lo))];
   const shown = (alpha, proj) => { const k = depthAt(proj); return k !== 'x' && (!alpha || k === 'f'); };
   const px = { ux, uy, nx, ny, minS: 1.1 / (k * f) };
-  const side = fr.side || 1;
+  const side = fr.side || 1, wx = fr.wx ?? 1;   // BACK-CARRY: its width's share where the frame turns it edge on
   // a flail's chain hangs: its heavier side down the picture, whatever the hammer's face
   const face = shape === 'fl' || shape === 'lf' ? (ny >= 0 ? 1 : -1) : side;
   if (pic) {
-    const L = { qx, qy, ux, uy, nx, ny, along: /** @type {number} */ (art.cm) * f, across: /** @type {number} */ (art.cm), side: face };
+    const L = { qx, qy, ux, uy, nx, ny, along: /** @type {number} */ (art.cm) * f, across: /** @type {number} */ (art.cm) * wx, side: face };
     const was = d.slice();
     // the doll's hand gap: its handle, where no fist of the art's covers it
     if (pic.bridge) drawPicture(out, pic, L, (a, proj) => !a && shown(a, proj), pic.bridge);
@@ -598,7 +619,7 @@ export function drawWeapon(out, fr, code, len, view = 2, art = {}) {
   const box = [Math.min(ends[0][0], ends[1][0]) - wide, Math.min(ends[0][1], ends[1][1]) - wide, Math.max(ends[0][0], ends[1][0]) + wide, Math.max(ends[0][1], ends[1][1]) + wide];
   return paint(out, (x, y) => {
     const ex = x - qx, ey = y - qy;
-    const proj = ex * ux + ey * uy, s = proj / (k * f), v = (ex * nx + ey * ny) / k;
+    const proj = ex * ux + ey * uy, s = proj / (k * f), v = (ex * nx + ey * ny) / (k * wx);
     if (s < sMin - 1 || s > sMax + 1 || Math.abs(v) > 20) return null;
     return sample(parts, s, v, side, px);
   }, (a, x, y) => shown(a, (x - qx) * ux + (y - qy) * uy), box, metal);
@@ -787,7 +808,7 @@ function drawChain(out, P, L, shown, g = [0, 1]) {
   const y0 = Math.max(0, Math.floor(Math.min(hy, ey) - wide)), y1 = Math.min(h - 1, Math.ceil(Math.max(hy, ey) + wide));
   const n = Math.max(3, Math.min(12, Math.ceil(2 / Math.min(k, ka))));
   const at = (x, y) => {
-    const c = ((x - hx) * gx + (y - hy) * gy) / ka, v = ((x - hx) * gy - (y - hy) * gx) / k;
+    const c = ((x - hx) * gx + (y - hy) * gy) / ka + (C.lead ?? 0), v = ((x - hx) * gy - (y - hy) * gx) / k;
     return [C.x + C.dx * c - C.dy * v, C.y + C.dy * c + C.dx * v];
   };
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {

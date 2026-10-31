@@ -101,8 +101,8 @@
   {
     "name": "PRECIP3-the-cover-a-ramp",
     "file": "src/systems/weather/snowpack.js",
-    "old": "  const t = Math.max(0, Math.min(1, swe / SNOWPACK.fullMm));\n  return t * t * (3 - 2 * t);",
-    "new": "  const t = Math.max(0, Math.min(1, swe / SNOWPACK.fullMm));\n  return t;",
+    "old": "  return t * t * (3 - 2 * t);",
+    "new": "  return t;",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "PRECIP3-the-read-back-steeper",
     "file": "src/systems/weather/snowpack.js",
-    "old": "  if (h <= h50) return 0.1 + 0.4 * (h - h10) / lo;",
-    "new": "  if (h <= h50) return 0.1 + 0.5 * (h - h10) / lo;",
+    "old": "  if (h <= h50) return 0.1 + (0.4 * (h - h10)) / lo;",
+    "new": "  if (h <= h50) return 0.1 + (0.5 * (h - h10)) / lo;",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js",
       "test/render/precip4_snowground.test.js"
@@ -185,8 +185,8 @@
   {
     "name": "PRECIP4-the-first-frame-turns",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "  const lane = () => (on ?? !!owns());",
-    "new": "  const lane = () => (on ?? false);",
+    "old": "  const lane = () => on ?? !!owns();",
+    "new": "  const lane = () => on ?? false;",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "PRECIP2-the-shares-swapped",
     "file": "src/render/precipitation.js",
-    "old": "if (share < 1) { this.intensity = all * (1 - share);",
-    "new": "if (share < 1) { this.intensity = all * share;",
+    "old": "        this.intensity = all * (1 - share);",
+    "new": "        this.intensity = all * share;",
     "tests": [
       "test/systems/weather/precip1_air.test.js"
     ]
@@ -284,8 +284,8 @@
   {
     "name": "PRECIP2-the-shift-dropped",
     "file": "src/render/precipitation.js",
-    "old": "        this._shift = MIX_SHIFT;\n",
-    "new": "",
+    "old": "        this._shift = MIX_SHIFT;\n        this.draw('snow', proj, view, camPos, camRight, timeSeconds);",
+    "new": "        this.draw('snow', proj, view, camPos, camRight, timeSeconds);",
     "tests": [
       "test/systems/weather/precip1_air.test.js"
     ]
@@ -293,8 +293,8 @@
   {
     "name": "PRECIP2-the-intensity-kept",
     "file": "src/render/precipitation.js",
-    "old": "} finally { this.intensity = all; this.countCap = cap; this._shift = null; }",
-    "new": "} finally { this.countCap = cap; this._shift = null; }",
+    "old": "      this.intensity = all;\n      this.countCap = cap;",
+    "new": "      this.countCap = cap;",
     "tests": [
       "test/systems/weather/precip1_air.test.js"
     ]
@@ -312,8 +312,8 @@
   {
     "name": "PRECIP3-the-melt-upside-down",
     "file": "src/systems/weather/snowpack.js",
-    "old": "const next = swe[k] + fallMm * white - (SNOWPACK.melt * degreeHours",
-    "new": "const next = swe[k] + fallMm * white + (SNOWPACK.melt * degreeHours",
+    "old": "    const next = swe[k] + fallMm * white - (SNOWPACK.melt * degreeHours + SNOWPACK.rainMelt * fallMm * heat);",
+    "new": "    const next = swe[k] + fallMm * white + (SNOWPACK.melt * degreeHours + SNOWPACK.rainMelt * fallMm * heat);",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -321,8 +321,8 @@
   {
     "name": "PRECIP3-the-rain-cold",
     "file": "src/systems/weather/snowpack.js",
-    "old": "if (T > 0) heat += _w[i] * (1 - s) * T;",
-    "new": "if (T > 0) heat += 0;",
+    "old": "      if (T > 0) heat += _w[i] * (1 - s) * T;",
+    "new": "      if (T > 0) heat += 0;",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -330,8 +330,8 @@
   {
     "name": "PRECIP3-the-share-unread",
     "file": "src/systems/weather/snowpack.js",
-    "old": "white += _w[i] * s;",
-    "new": "white += _w[i];",
+    "old": "      white += _w[i] * s;",
+    "new": "      white += _w[i];",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -339,8 +339,8 @@
   {
     "name": "PRECIP3-the-step-air-chill-dropped",
     "file": "src/systems/weather/snowpack.js",
-    "old": "out.base = seasonAir(p, day) + p.spell * spellAt(x, z, tm) - f.chill;",
-    "new": "out.base = seasonAir(p, day) + p.spell * spellAt(x, z, tm);",
+    "old": "  out.base = seasonAir(p, day) + p.spell * spellAt(x, z, tm) - f.chill;",
+    "new": "  out.base = seasonAir(p, day) + p.spell * spellAt(x, z, tm);",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -348,8 +348,8 @@
   {
     "name": "PRECIP3-the-origin-off-the-grid",
     "file": "src/systems/weather/snowpack.js",
-    "old": "return Math.floor(midsummer / SNOWPACK.stepMinutes) * SNOWPACK.stepMinutes;",
-    "new": "return midsummer;",
+    "old": "  return Math.floor(midsummer / SNOWPACK.stepMinutes) * SNOWPACK.stepMinutes;",
+    "new": "  return midsummer;",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -357,8 +357,8 @@
   {
     "name": "PRECIP3-the-skip-loosened",
     "file": "src/systems/weather/snowpack.js",
-    "old": "- LAPSE_C_PER_M * levelAltitude(pt.top) >= RAIN_ALL_C)) { quiet = false; break; }",
-    "new": "- LAPSE_C_PER_M * levelAltitude(pt.top) >= RAIN_ALL_C - 4)) { quiet = false; break; }",
+    "old": "        if (!(stepAirFloor(pt.p, pt.x, pt.z, t0, t1) - LAPSE_C_PER_M * levelAltitude(pt.top) >= RAIN_ALL_C)) {",
+    "new": "        if (!(stepAirFloor(pt.p, pt.x, pt.z, t0, t1) - LAPSE_C_PER_M * levelAltitude(pt.top) >= RAIN_ALL_C - 4)) {",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -366,8 +366,8 @@
   {
     "name": "PRECIP3-the-blend-ends-swapped",
     "file": "src/systems/weather/snowpack.js",
-    "old": "const u = Math.max(0, Math.min(1, 1 - (pt.step - t) / SNOWPACK.stepMinutes));",
-    "new": "const u = Math.max(0, Math.min(1, (pt.step - t) / SNOWPACK.stepMinutes));",
+    "old": "    const u = Math.max(0, Math.min(1, 1 - (pt.step - t) / SNOWPACK.stepMinutes));",
+    "new": "    const u = Math.max(0, Math.min(1, (pt.step - t) / SNOWPACK.stepMinutes));",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -375,8 +375,8 @@
   {
     "name": "PRECIP3-every-type-asked",
     "file": "src/systems/weather/snowpack.js",
-    "old": "walk: systemsSpanWalk(x, z, t, t1, this._births, range, WET_TYPES) };",
-    "new": "walk: systemsSpanWalk(x, z, t, t1, this._births, range) };",
+    "old": "      job = this._job = { t0: t, t1, x, z, range, walk: systemsSpanWalk(x, z, t, t1, this._births, range, WET_TYPES) };",
+    "new": "      job = this._job = { t0: t, t1, x, z, range, walk: systemsSpanWalk(x, z, t, t1, this._births, range) };",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -384,8 +384,8 @@
   {
     "name": "PRECIP4-the-corners-swapped",
     "file": "src/render/snowCoverGlsl.js",
-    "old": "vec3 a = snowLineAt(i), b = snowLineAt(i + ivec2(1, 0)),",
-    "new": "vec3 b = snowLineAt(i), a = snowLineAt(i + ivec2(1, 0)),",
+    "old": "  vec3 a = snowLineAt(i), b = snowLineAt(i + ivec2(1, 0)), c = snowLineAt(i + ivec2(0, 1)), d = snowLineAt(i + ivec2(1, 1));",
+    "new": "  vec3 b = snowLineAt(i), a = snowLineAt(i + ivec2(1, 0)), c = snowLineAt(i + ivec2(0, 1)), d = snowLineAt(i + ivec2(1, 1));",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -402,8 +402,8 @@
   {
     "name": "PRECIP4-the-twin-offset-dropped",
     "file": "src/render/snowCoverGlsl.js",
-    "old": "vec3(tl.xy, tl.z + float(uSnowArr.x)), gx, gy).rgb);",
-    "new": "vec3(tl.xy, tl.z), gx, gy).rgb);",
+    "old": "  vec3 white = ${decode}(textureGrad(uTileArr, vec3(tl.xy, tl.z + float(uSnowArr.x)), gx, gy).rgb);",
+    "new": "  vec3 white = ${decode}(textureGrad(uTileArr, vec3(tl.xy, tl.z), gx, gy).rgb);",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -411,8 +411,8 @@
   {
     "name": "PRECIP4-the-neighbours-unshifted",
     "file": "src/render/snowCoverGlsl.js",
-    "old": "vec3(tl.xy, tl.z + float(uSnowArr.y))",
-    "new": "vec3(tl.xy, tl.z)",
+    "old": "    if (ew.y > 0.0) cw += ew.y * ${decode}(textureGrad(uEcoArr1, vec3(tl.xy, tl.z + float(uSnowArr.y)), gx, gy).rgb);",
+    "new": "    if (ew.y > 0.0) cw += ew.y * ${decode}(textureGrad(uEcoArr1, vec3(tl.xy, tl.z), gx, gy).rgb);",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -420,8 +420,8 @@
   {
     "name": "PRECIP4-the-switch-unread",
     "file": "src/render/snowCoverGlsl.js",
-    "old": "  if (uSnowSet.y < 0.5) return 0.0;   // off the lane: one uniform test\n",
-    "new": "",
+    "old": "  if (uSnowSet.y < 0.5) return 0.0;   // off the lane: one uniform test\n  float c = snowAtHeight(snowLine(local), y + uSnowSet.x);   // SNOW-FACE: a steep face keeps it (SNOW_GROUND)",
+    "new": "  float c = snowAtHeight(snowLine(local), y + uSnowSet.x);   // SNOW-FACE: a steep face keeps it (SNOW_GROUND)",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -456,8 +456,8 @@
   {
     "name": "PRECIP4-the-turn-unmarked",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "!turned.has(p)) { turned.add(p); markRebuild(key); }",
-    "new": "!turned.has(p)) { turned.add(p); }",
+    "old": "            markRebuild(key);\n          }",
+    "new": "          }",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -465,8 +465,8 @@
   {
     "name": "PRECIP4-the-lattice-by-the-middle",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "const fi = x / PIXEL_M / S, fj = (mapHeight - z / PIXEL_M) / S;",
-    "new": "const fi = (x / PIXEL_M - 0.5) / S, fj = (mapHeight - z / PIXEL_M - 0.5) / S;",
+    "old": "    const fi = x / PIXEL_M / S,\n      fj = (mapHeight - z / PIXEL_M) / S;",
+    "new": "    const fi = (x / PIXEL_M - 0.5) / S,\n      fj = (mapHeight - z / PIXEL_M - 0.5) / S;",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -474,8 +474,8 @@
   {
     "name": "PRECIP4-the-offset-sign",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "out.altitude = -(state.compensation[1] + SEA_LEVEL_M);",
-    "new": "out.altitude = state.compensation[1] + SEA_LEVEL_M;",
+    "old": "      out.altitude = -(state.compensation[1] + SEA_LEVEL_M);",
+    "new": "      out.altitude = state.compensation[1] + SEA_LEVEL_M;",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -483,8 +483,8 @@
   {
     "name": "PRECIP4-the-twin-off-the-lane",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "return (lane() ? renderer.tileArrays.get(twinKey(a)) : null) ?? renderer.tileArrays.get(a) ?? null;",
-    "new": "return renderer.tileArrays.get(twinKey(a)) ?? renderer.tileArrays.get(a) ?? null;",
+    "old": "      return (lane() ? renderer.tileArrays.get(twinKey(a)) : null) ?? renderer.tileArrays.get(a) ?? null;",
+    "new": "      return renderer.tileArrays.get(twinKey(a)) ?? renderer.tileArrays.get(a) ?? null;",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -492,8 +492,8 @@
   {
     "name": "PRECIP4-a-desert-twinned",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "return lane() && groundIsSnowy(climate, SEASON.Winter) ? getTerrainGroundArchive",
-    "new": "return lane() ? getTerrainGroundArchive",
+    "old": "      return lane() && groundIsSnowy(climate, SEASON.Winter) ? getTerrainGroundArchive(climate, SEASON.Winter) : null;",
+    "new": "      return lane() ? getTerrainGroundArchive(climate, SEASON.Winter) : null;",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -501,8 +501,8 @@
   {
     "name": "PRECIP4-the-half-the-wrong-side",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "return coverAt(x, z, altitude, 'build') >= SNOW_COVER.winter ? SEASON.Winter : SEASON.Summer;",
-    "new": "return coverAt(x, z, altitude, 'build') < SNOW_COVER.winter ? SEASON.Winter : SEASON.Summer;",
+    "old": "    return coverAt(x, z, altitude, 'build') >= SNOW_COVER.winter ? SEASON.Winter : SEASON.Summer;",
+    "new": "    return coverAt(x, z, altitude, 'build') < SNOW_COVER.winter ? SEASON.Winter : SEASON.Summer;",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -510,8 +510,8 @@
   {
     "name": "PRECIP4-the-flat-draw-unread",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "return coverAt(x, z, altitude, 'build') >= draw ? SEASON.Winter : SEASON.Summer;",
-    "new": "return coverAt(x, z, altitude, 'build') >= 0.5 ? SEASON.Winter : SEASON.Summer;",
+    "old": "    return coverAt(x, z, altitude, 'build') >= draw ? SEASON.Winter : SEASON.Summer;",
+    "new": "    return coverAt(x, z, altitude, 'build') >= 0.5 ? SEASON.Winter : SEASON.Summer;",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -519,8 +519,8 @@
   {
     "name": "PRECIP4-a-blade-through-the-snow",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "return c > 0 && c >= flatDraw(p.px, p.py, lx, lz);",
-    "new": "return false;",
+    "old": "      return c > 0 && c >= flatDraw(p.px, p.py, lx, lz);",
+    "new": "      return false;",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -528,8 +528,8 @@
   {
     "name": "PRECIP4-the-step-unread",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "if (ready && buildGen !== sweptGen) { sweptGen = buildGen; beginSweep(); }",
-    "new": "if (false) { sweptGen = buildGen; beginSweep(); }",
+    "old": "      if (ready && buildGen !== sweptGen) {",
+    "new": "      if (false) {",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -537,8 +537,8 @@
   {
     "name": "PRECIP4-the-feet-the-calendars",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "      if (!lane() || !pos) return fallback;\n      const state = stateOf(), c = state.compensation;",
-    "new": "      return fallback;\n      const state = stateOf(), c = state.compensation;",
+    "old": "      if (!lane() || !pos) return fallback;",
+    "new": "      return fallback;",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -609,8 +609,8 @@
   {
     "name": "PRECIP4-the-blades-shift-the-wrong-sign",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "y - stateOf().compensation[1] - SEA_LEVEL_M",
-    "new": "y + stateOf().compensation[1] - SEA_LEVEL_M",
+    "old": "      const c = drawnCover(p.px, p.py, lx, lz, y - stateOf().compensation[1] - SEA_LEVEL_M);",
+    "new": "      const c = drawnCover(p.px, p.py, lx, lz, y + stateOf().compensation[1] - SEA_LEVEL_M);",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -618,8 +618,8 @@
   {
     "name": "PRECIP4-the-feets-height-unshifted",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "pos[1] - c[1] - SEA_LEVEL_M) >= 0.5",
-    "new": "pos[1] - SEA_LEVEL_M) >= 0.5",
+    "old": "      return drawnCover(px, py, pos[0] - tr[0], pos[2] - tr[2], pos[1] - c[1] - SEA_LEVEL_M) >= 0.5;",
+    "new": "      return drawnCover(px, py, pos[0] - tr[0], pos[2] - tr[2], pos[1] - SEA_LEVEL_M) >= 0.5;",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -627,8 +627,8 @@
   {
     "name": "PRECIP4-the-laid-snows-footprint-one-axis",
     "file": "src/render/snowCoverGlsl.js",
-    "old": "return uSnowSet.y < 0.5 ? 1.0 : snowCover(local, y, gx, gy);",
-    "new": "return uSnowSet.y < 0.5 ? 1.0 : snowCover(local, y, gx, gx);",
+    "old": "  return uSnowSet.y < 0.5 ? 1.0 : snowCover(local, y, gx, gy);",
+    "new": "  return uSnowSet.y < 0.5 ? 1.0 : snowCover(local, y, gx, gx);",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]

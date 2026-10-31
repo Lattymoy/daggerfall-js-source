@@ -92,8 +92,8 @@
   {
     "name": "SESSIONSIGN-paths-plus-account",
     "file": "server-account/src/sessionPass.js",
-    "old": "'/v1/seats/list', '/v1/festival/town']);",
-    "new": "'/v1/seats/list', '/v1/festival/town', '/v1/account']);",
+    "old": "]); // WITCH1: and a town's Hearth Offerings, asked as its homes are",
+    "new": "  '/v1/account',\n]); // WITCH1: and a town's Hearth Offerings, asked as its homes are",
     "tests": [
       "test/server/sessionsign.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "SESSIONSIGN-save-ban-unread",
     "file": "server-account/src/realm.js",
-    "old": "  if (Number.isSafeInteger(row.ban_until_now) && row.ban_until_now > nowS) return { error: 'banned', player: { banned_until: row.ban_until_now, ban_reason: row.ban_reason_now } };\n",
-    "new": "",
+    "old": "  if (Number.isSafeInteger(row.ban_until_now) && row.ban_until_now > nowS)\n    return { error: 'banned', player: { banned_until: row.ban_until_now, ban_reason: row.ban_reason_now } };\n  // STAFF-PANEL5-FREEZE (staffFreeze.js; design doc Weak spots: \"checkpoints still save\"): and the freeze - a frozen player",
+    "new": "  // STAFF-PANEL5-FREEZE (staffFreeze.js; design doc Weak spots: \"checkpoints still save\"): and the freeze - a frozen player",
     "tests": [
       "test/server/sessionsign.test.js"
     ],

@@ -23,7 +23,13 @@ export const GPU_TRAIL_FIRST_MS = 5_000;
 export const GPU_TRAIL_KEEP = 20;
 
 /** The kinds counted: WebGL's own name for each, and the sample's. */
-export const GL_KINDS = Object.freeze([['Texture', 'textures'], ['Buffer', 'buffers'], ['VertexArray', 'vaos'], ['Framebuffer', 'framebuffers'], ['Program', 'programs']]);
+export const GL_KINDS = Object.freeze([
+  ['Texture', 'textures'],
+  ['Buffer', 'buffers'],
+  ['VertexArray', 'vaos'],
+  ['Framebuffer', 'framebuffers'],
+  ['Program', 'programs'],
+]);
 
 /** @typedef {{ textures: number, buffers: number, vaos: number, framebuffers: number, programs: number }} GlLive */
 
@@ -39,12 +45,24 @@ const noneLive = () => ({ textures: 0, buffers: 0, vaos: 0, framebuffers: 0, pro
  * @returns {GlLive}
  */
 export function countGlObjects(gl, live = noneLive()) {
-  const g = /** @type {any} */ (gl), n = /** @type {Record<string, number>} */ (live);
+  const g = /** @type {any} */ (gl),
+    n = /** @type {Record<string, number>} */ (live);
   for (const [kind, key] of GL_KINDS) {
-    const create = g[`create${kind}`], remove = g[`delete${kind}`];
+    const create = g[`create${kind}`],
+      remove = g[`delete${kind}`];
     const held = new WeakSet();
-    g[`create${kind}`] = function () { const o = create.call(gl); if (o) { held.add(o); n[key]++; } return o; };
-    g[`delete${kind}`] = function (o) { if (o && held.delete(o)) n[key]--; return remove.call(gl, o); };
+    g[`create${kind}`] = function () {
+      const o = create.call(gl);
+      if (o) {
+        held.add(o);
+        n[key]++;
+      }
+      return o;
+    };
+    g[`delete${kind}`] = function (o) {
+      if (o && held.delete(o)) n[key]--;
+      return remove.call(gl, o);
+    };
   }
   return live;
 }
@@ -62,7 +80,10 @@ export function countCanvasGl(canvas) {
   const own = c.getContext;
   c.getContext = function (type, attrs) {
     const ctx = own.call(canvas, type, attrs);
-    if (ctx && type === 'webgl2') { delete c.getContext; countGlObjects(ctx, live); }
+    if (ctx && type === 'webgl2') {
+      delete c.getContext;
+      countGlObjects(ctx, live);
+    }
     return ctx;
   };
   return live;
@@ -74,7 +95,11 @@ export function createTrail(keep = GPU_TRAIL_KEEP) {
   const ring = [];
   return {
     /** @param {object} s */
-    push(s) { ring.push(s); if (ring.length > keep) ring.splice(0, ring.length - keep); return ring.slice(); },
+    push(s) {
+      ring.push(s);
+      if (ring.length > keep) ring.splice(0, ring.length - keep);
+      return ring.slice();
+    },
   };
 }
 
@@ -96,11 +121,25 @@ const hitchOf = (frame) => (frame ? (frame.hitch ? whole(frame.hitch.ms) : 0) : 
  */
 export function gpuSample({ at, upMs, live, frame, heap, hidden, lost, restored = false }) {
   return {
-    at, upS: whole(upMs / 1000),
-    textures: live.textures, buffers: live.buffers, vaos: live.vaos, framebuffers: live.framebuffers, programs: live.programs,
-    fps: whole(frame?.fps), frameMs: Number.isFinite(frame?.meanMs) ? Math.round(frame.meanMs * 10) / 10 : null, worstMs: whole(frame?.worstMs),
-    hitchMs: hitchOf(frame), draws: whole(frame?.draws), binds: whole(frame?.binds), viewDraws: whole(frame?.viewDraws), shadowDraws: whole(frame?.shadowDraws),
-    heapMB: heap == null ? null : whole(heap / 1048576), hidden: !!hidden, lost: !!lost, restored: !!restored,
+    at,
+    upS: whole(upMs / 1000),
+    textures: live.textures,
+    buffers: live.buffers,
+    vaos: live.vaos,
+    framebuffers: live.framebuffers,
+    programs: live.programs,
+    fps: whole(frame?.fps),
+    frameMs: Number.isFinite(frame?.meanMs) ? Math.round(frame.meanMs * 10) / 10 : null,
+    worstMs: whole(frame?.worstMs),
+    hitchMs: hitchOf(frame),
+    draws: whole(frame?.draws),
+    binds: whole(frame?.binds),
+    viewDraws: whole(frame?.viewDraws),
+    shadowDraws: whole(frame?.shadowDraws),
+    heapMB: heap == null ? null : whole(heap / 1048576),
+    hidden: !!hidden,
+    lost: !!lost,
+    restored: !!restored,
   };
 }
 
@@ -118,12 +157,21 @@ export function startGpuTrail({ canvas, gl, live, frames, gpu = null, send, time
   const sample = (restored = false) => {
     const frame = frames?.() ?? null;
     const s = gpuSample({
-      at: Date.now(), upMs: globalThis.performance?.now?.() ?? 0, live, frame: frame === lastFrame ? null : frame,
-      heap: /** @type {any} */ (globalThis.performance)?.memory?.usedJSHeapSize ?? null, hidden: !!globalThis.document?.hidden, lost: gl.isContextLost(),
+      at: Date.now(),
+      upMs: globalThis.performance?.now?.() ?? 0,
+      live,
+      frame: frame === lastFrame ? null : frame,
+      heap: /** @type {any} */ (globalThis.performance)?.memory?.usedJSHeapSize ?? null,
+      hidden: !!globalThis.document?.hidden,
+      lost: gl.isContextLost(),
       restored,
     });
     lastFrame = frame;
-    try { send({ gpu, samples: trail.push(s) }); } catch { /* the shell gone first: the next sample tries again */ }
+    try {
+      send({ gpu, samples: trail.push(s) });
+    } catch {
+      /* the shell gone first: the next sample tries again */
+    }
   };
   // A timer and the lost event would hand their own argument to `sample`; each says what it is instead.
   const sampleNow = () => sample(false);
@@ -135,8 +183,10 @@ export function startGpuTrail({ canvas, gl, live, frames, gpu = null, send, time
   return {
     sample: sampleNow,
     stop() {
-      timers.clearTimeout(first); timers.clearInterval(every);
-      canvas.removeEventListener('webglcontextlost', sampleNow); canvas.removeEventListener('webglcontextrestored', sampleRestored);
+      timers.clearTimeout(first);
+      timers.clearInterval(every);
+      canvas.removeEventListener('webglcontextlost', sampleNow);
+      canvas.removeEventListener('webglcontextrestored', sampleRestored);
     },
   };
 }
@@ -151,6 +201,7 @@ export function gpuTrailOn(canvas, send) {
   const live = countCanvasGl(canvas);
   return {
     /** @param {{ gl: WebGL2RenderingContext, gpuName?: string|null }} renderer @param {() => any} frames */
-    start: (renderer, frames) => startGpuTrail({ canvas, gl: renderer.gl, live, frames, gpu: renderer.gpuName ?? null, send }),
+    start: (renderer, frames) =>
+      startGpuTrail({ canvas, gl: renderer.gl, live, frames, gpu: renderer.gpuName ?? null, send }),
   };
 }

@@ -7,7 +7,14 @@
 // made. A face a DFU pack registered for the same font and locale (L10N3b) is never replaced - the pack's own letters
 // win. English registers nothing and keeps Daggerfall's pixel fonts, byte for byte.
 
-import { registerLocalizedFont, hasLocalizedFont, setSdfForcer, localeInfo, BASE_LOCALE, PSEUDO_LOCALE } from '../systems/textManager.js';
+import {
+  registerLocalizedFont,
+  hasLocalizedFont,
+  setSdfForcer,
+  localeInfo,
+  BASE_LOCALE,
+  PSEUDO_LOCALE,
+} from '../systems/textManager.js';
 import { setValue } from '../systems/settings/settings.js';
 import { catalogLocale } from '../systems/localeCatalog.js';
 import { createGlyphFace, canRasterise } from './glyphFace.js';
@@ -23,10 +30,42 @@ export const FACE_FAMILIES = Object.freeze({
   latin: LATIN,
   cyrillic: LATIN,
   greek: LATIN,
-  ja: ['"Hiragino Sans"', '"Hiragino Kaku Gothic ProN"', '"Yu Gothic UI"', '"Yu Gothic"', 'Meiryo', '"Noto Sans CJK JP"', '"Noto Sans JP"', 'sans-serif'],
-  'zh-Hans': ['"PingFang SC"', '"Microsoft YaHei UI"', '"Microsoft YaHei"', '"Noto Sans CJK SC"', '"Noto Sans SC"', '"Source Han Sans SC"', 'sans-serif'],
-  'zh-Hant': ['"PingFang TC"', '"Microsoft JhengHei UI"', '"Microsoft JhengHei"', '"Noto Sans CJK TC"', '"Noto Sans TC"', '"Source Han Sans TC"', 'sans-serif'],
-  hangul: ['"Apple SD Gothic Neo"', '"Malgun Gothic"', '"Noto Sans CJK KR"', '"Noto Sans KR"', '"Source Han Sans K"', 'sans-serif'],
+  ja: [
+    '"Hiragino Sans"',
+    '"Hiragino Kaku Gothic ProN"',
+    '"Yu Gothic UI"',
+    '"Yu Gothic"',
+    'Meiryo',
+    '"Noto Sans CJK JP"',
+    '"Noto Sans JP"',
+    'sans-serif',
+  ],
+  'zh-Hans': [
+    '"PingFang SC"',
+    '"Microsoft YaHei UI"',
+    '"Microsoft YaHei"',
+    '"Noto Sans CJK SC"',
+    '"Noto Sans SC"',
+    '"Source Han Sans SC"',
+    'sans-serif',
+  ],
+  'zh-Hant': [
+    '"PingFang TC"',
+    '"Microsoft JhengHei UI"',
+    '"Microsoft JhengHei"',
+    '"Noto Sans CJK TC"',
+    '"Noto Sans TC"',
+    '"Source Han Sans TC"',
+    'sans-serif',
+  ],
+  hangul: [
+    '"Apple SD Gothic Neo"',
+    '"Malgun Gothic"',
+    '"Noto Sans CJK KR"',
+    '"Noto Sans KR"',
+    '"Source Han Sans K"',
+    'sans-serif',
+  ],
 });
 
 /** The CSS family list a locale's face draws with: its own (Han's three) or its script's - as the text core was told
@@ -40,7 +79,7 @@ export function faceFamilyFor(code) {
  *  setting in memory, as DFU's is - the file keeps the player's own until a settings save writes it. */
 const forceSdf = () => setValue('GUI', 'SDFFontRendering', true);
 
-const _faces = new Map();   // locale -> its face
+const _faces = new Map(); // locale -> its face
 /** The port's faces for `code`'s five fonts, registered once. English registers none; a font a pack already
  *  registered for `code` is left to the pack. Answers whether the locale has a port face (false where nothing can
  *  rasterise - bare node - or for English). */
@@ -49,7 +88,11 @@ export function installLocaleFaces(code, { createFace = createGlyphFace, canDraw
   setSdfForcer(forceSdf);
   let face = _faces.get(code);
   if (!face) {
-    face = createFace(faceFamilyFor(code), { name: `locale-${code}`, lang: code === PSEUDO_LOCALE ? BASE_LOCALE : code, weight: 500 });
+    face = createFace(faceFamilyFor(code), {
+      name: `locale-${code}`,
+      lang: code === PSEUDO_LOCALE ? BASE_LOCALE : code,
+      weight: 500,
+    });
     _faces.set(code, face);
   }
   for (const n of CLASSIC_FONT_NAMES) if (!hasLocalizedFont(n, code)) registerLocalizedFont(code, n, face);
@@ -57,4 +100,6 @@ export function installLocaleFaces(code, { createFace = createGlyphFace, canDraw
 }
 
 /** Tests: forget the faces made. */
-export function _resetLocaleFacesForTests() { _faces.clear(); }
+export function _resetLocaleFacesForTests() {
+  _faces.clear();
+}

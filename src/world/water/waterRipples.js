@@ -30,26 +30,44 @@ export const RIPPLE_SCALE = 0.012;
  *   disturb: (x: number, z: number, strength: number, radius?: number) => void, step: (dt: number) => number,
  *   heightAt: (x: number, z: number) => number, version: () => number, asleep: () => boolean }}
  */
-export function createRipples({ cells = RIPPLE_CELLS, span = RIPPLE_SPAN, hz = RIPPLE_HZ, damping = RIPPLE_DAMPING } = {}) {
-  const n = cells * cells, cell = span / cells;
-  let cur = new Float32Array(n), prev = new Float32Array(n), next = new Float32Array(n);
-  const origin = [0, 0];   // the world x, z of cell (0, 0)'s corner - a whole number of cells
+export function createRipples({
+  cells = RIPPLE_CELLS,
+  span = RIPPLE_SPAN,
+  hz = RIPPLE_HZ,
+  damping = RIPPLE_DAMPING,
+} = {}) {
+  const n = cells * cells,
+    cell = span / cells;
+  let cur = new Float32Array(n),
+    prev = new Float32Array(n),
+    next = new Float32Array(n);
+  const origin = [0, 0]; // the world x, z of cell (0, 0)'s corner - a whole number of cells
   const bytes = new Uint8Array(n).fill(128);
-  const packed = [0, 0];   // AUDIT WATER-NEXT G13: the corner the bytes were packed at - the field slides between steps
-  let acc = 0, version = 0, live = false;
+  const packed = [0, 0]; // AUDIT WATER-NEXT G13: the corner the bytes were packed at - the field slides between steps
+  let acc = 0,
+    version = 0,
+    live = false;
   const idx = (cx, cz) => cz * cells + cx;
 
   /** Slide the field to centre on (x, z), a whole cell at a time; true when it moved. */
   function recenter(x, z) {
-    const ox = Math.floor(x / cell - cells / 2) * cell, oz = Math.floor(z / cell - cells / 2) * cell;
-    const dx = Math.round((ox - origin[0]) / cell), dz = Math.round((oz - origin[1]) / cell);
+    const ox = Math.floor(x / cell - cells / 2) * cell,
+      oz = Math.floor(z / cell - cells / 2) * cell;
+    const dx = Math.round((ox - origin[0]) / cell),
+      dz = Math.round((oz - origin[1]) / cell);
     if (!dx && !dz) return false;
-    origin[0] = ox; origin[1] = oz;
+    origin[0] = ox;
+    origin[1] = oz;
     // AUDIT WATER-NEXT P2: asleep, the field is still water everywhere - there is nothing to slide. Every outdoor frame
     // the eye crossed a cell in had slid two arrays of zeros (0.13 ms a frame walking anywhere, water or none)
     if (!live) return true;
-    if (Math.abs(dx) >= cells || Math.abs(dz) >= cells) { cur.fill(0); prev.fill(0); return true; }
-    slide(cur, dx, dz); slide(prev, dx, dz);
+    if (Math.abs(dx) >= cells || Math.abs(dz) >= cells) {
+      cur.fill(0);
+      prev.fill(0);
+      return true;
+    }
+    slide(cur, dx, dz);
+    slide(prev, dx, dz);
     return true;
   }
   /** One of the field's arrays moved by whole cells, through the scratch array. AUDIT WATER-NEXT M1: into the INSIDE
@@ -72,11 +90,14 @@ export function createRipples({ cells = RIPPLE_CELLS, span = RIPPLE_SPAN, hz = R
 
   /** Push the water down at (x, z) - a cosine dimple `radius` units wide, `strength` units deep. */
   function disturb(x, z, strength, radius = 0.8) {
-    const r = Math.max(cell, radius), rc = Math.ceil(r / cell);
-    const cx = Math.floor((x - origin[0]) / cell), cz = Math.floor((z - origin[1]) / cell);
+    const r = Math.max(cell, radius),
+      rc = Math.ceil(r / cell);
+    const cx = Math.floor((x - origin[0]) / cell),
+      cz = Math.floor((z - origin[1]) / cell);
     for (let j = -rc; j <= rc; j++) {
       for (let i = -rc; i <= rc; i++) {
-        const gx = cx + i, gz = cz + j;
+        const gx = cx + i,
+          gz = cz + j;
         if (gx < 1 || gz < 1 || gx >= cells - 1 || gz >= cells - 1) continue;
         const d = Math.hypot(i * cell, j * cell) / r;
         if (d >= 1) continue;
@@ -88,7 +109,7 @@ export function createRipples({ cells = RIPPLE_CELLS, span = RIPPLE_SPAN, hz = R
 
   /** Advance by `dt` seconds at the fixed rate; the steps taken. The edge stays still. */
   function step(dt) {
-    acc = Math.min(acc + Math.max(0, dt), 4 / hz);   // a stalled frame runs four steps at most
+    acc = Math.min(acc + Math.max(0, dt), 4 / hz); // a stalled frame runs four steps at most
     let k = 0;
     while (acc >= 1 / hz) {
       acc -= 1 / hz;
@@ -102,13 +123,21 @@ export function createRipples({ cells = RIPPLE_CELLS, span = RIPPLE_SPAN, hz = R
           energy += v * v;
         }
       }
-      const t = prev; prev = cur; cur = next; next = t;
+      const t = prev;
+      prev = cur;
+      cur = next;
+      next = t;
       k++;
-      if (energy < 1e-10) { live = false; cur.fill(0); prev.fill(0); }
+      if (energy < 1e-10) {
+        live = false;
+        cur.fill(0);
+        prev.fill(0);
+      }
     }
     if (k) {
       for (let i = 0; i < n; i++) bytes[i] = Math.max(1, Math.min(255, Math.round(128 + cur[i] / RIPPLE_SCALE)));
-      packed[0] = origin[0]; packed[1] = origin[1];
+      packed[0] = origin[0];
+      packed[1] = origin[1];
       version++;
     }
     return k;
@@ -116,7 +145,8 @@ export function createRipples({ cells = RIPPLE_CELLS, span = RIPPLE_SPAN, hz = R
 
   /** The field's height (units) at a world point, 0 outside it. */
   function heightAt(x, z) {
-    const cx = Math.floor((x - origin[0]) / cell), cz = Math.floor((z - origin[1]) / cell);
+    const cx = Math.floor((x - origin[0]) / cell),
+      cz = Math.floor((z - origin[1]) / cell);
     return cx < 0 || cz < 0 || cx >= cells || cz >= cells ? 0 : cur[idx(cx, cz)];
   }
 
@@ -142,21 +172,32 @@ export const BOAT_STIR = 2.5;
  */
 export function createRippleStir(field) {
   const last = new WeakMap();
-  let acc = 0, emit = false;
+  let acc = 0,
+    emit = false;
   return {
     field,
     /** @param {number} dt @param {number} x @param {number} z the eye */
-    begin(dt, x, z) { field.recenter(x, z); acc += dt; emit = acc >= STIR_PERIOD; if (emit) acc = 0; },
+    begin(dt, x, z) {
+      field.recenter(x, z);
+      acc += dt;
+      emit = acc >= STIR_PERIOD;
+      if (emit) acc = 0;
+    },
     /** @param {object} key @param {ArrayLike<number>} pos @param {boolean} swimming @param {number} nowMs */
     stir(key, pos, swimming, nowMs, force = 1, minSpeed = 0) {
       let l = last.get(key);
-      if (!l) last.set(key, l = { x: pos[0], z: pos[2], t: nowMs });
+      if (!l) last.set(key, (l = { x: pos[0], z: pos[2], t: nowMs }));
       const speed = Math.hypot(pos[0] - l.x, pos[2] - l.z) / Math.max(1e-3, (nowMs - l.t) / 1000);
-      l.x = pos[0]; l.z = pos[2]; l.t = nowMs;
-      if (emit && speed >= minSpeed) field.disturb(pos[0], pos[2], stirOf(speed, swimming) * force, swimming ? 1.0 : 0.7);
+      l.x = pos[0];
+      l.z = pos[2];
+      l.t = nowMs;
+      if (emit && speed >= minSpeed)
+        field.disturb(pos[0], pos[2], stirOf(speed, swimming) * force, swimming ? 1.0 : 0.7);
     },
     /** @param {number} dt */
-    end(dt) { return field.step(dt); },
+    end(dt) {
+      return field.step(dt);
+    },
   };
 }
 

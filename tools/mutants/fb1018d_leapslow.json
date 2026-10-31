@@ -2,8 +2,8 @@
   {
     "name": "LEAP-SLOW-the-gate-reads-the-spell-on-the-ground",
     "file": "src/combat/techniques.js",
-    "old": "(m.slowFalling && !m.grounded)",
-    "new": "(m.slowFalling && m.grounded)",
+    "old": "      (m.slowFalling && !m.grounded) ||",
+    "new": "      (m.slowFalling && m.grounded) ||",
     "tests": [
       "test/combat/fb1018d_leapslow.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "LEAP-SLOW-the-gate-blind-to-the-spell-in-the-air",
     "file": "src/combat/techniques.js",
-    "old": "(m.slowFalling && !m.grounded)",
-    "new": "(m.slowFallin && !m.grounded)",
+    "old": "      (m.slowFalling && !m.grounded) ||",
+    "new": "      (m.slowFallin && !m.grounded) ||",
     "tests": [
       "test/combat/fb1018d_leapslow.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "LEAP-SLOW-the-air-read-off-jumping",
     "file": "src/combat/techniques.js",
-    "old": "(m.slowFalling && !m.grounded)",
-    "new": "(m.slowFalling && m.jumping)",
+    "old": "      (m.slowFalling && !m.grounded) ||",
+    "new": "      (m.slowFalling && m.jumping) ||",
     "tests": [
       "test/combat/fb1018d_leapslow.test.js"
     ],

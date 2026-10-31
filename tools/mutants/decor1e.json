@@ -384,8 +384,8 @@
   {
     "name": "DECOR1e-the-pieces-half-dropped",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "decorBack: n(r.data?.decorBack), ...(r.data?.refund != null",
-    "new": "decorBack: 0, ...(r.data?.refund != null",
+    "old": "        decorBack: n(r.data?.decorBack),",
+    "new": "        decorBack: 0,",
     "tests": [
       "test/systems/online/decor1e.test.js"
     ]
@@ -393,8 +393,8 @@
   {
     "name": "DECOR1e-the-sale-line-the-home-alone",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "`You sold your home. ${gold(refund + piecesBack + rent)} gold",
-    "new": "`You sold your home. ${gold(refund + rent)} gold",
+    "old": "  `You sold your home. ${gold(refund + piecesBack + rent)} gold went to ${EMPIRE_ACCOUNT_WORDS}` +",
+    "new": "  `You sold your home. ${gold(refund + rent)} gold went to ${EMPIRE_ACCOUNT_WORDS}` +",
     "tests": [
       "test/systems/online/decor1e.test.js"
     ],

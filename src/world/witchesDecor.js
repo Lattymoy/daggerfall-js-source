@@ -41,7 +41,8 @@ import { tileWeight } from './city/cityNavigation.js';
 export const WYRD_SISTER_FLAT = Object.freeze({ archive: 179, record: 2 });
 
 /** A piece: its picture and the foot it keeps clear (metres). */
-const piece = (/** @type {number} */ archive, /** @type {number} */ record, r = 0.35) => Object.freeze({ archive, record, r });
+const piece = (/** @type {number} */ archive, /** @type {number} */ record, r = 0.35) =>
+  Object.freeze({ archive, record, r });
 const TURNIP = piece(FESTIVAL_ARCHIVE, FESTIVAL_ART.turnip, 0.3);
 const EFFIGY = piece(FESTIVAL_ARCHIVE, FESTIVAL_ART.effigy, 0.45);
 const WARD_STAFF = piece(FESTIVAL_ARCHIVE, FESTIVAL_ART.wardStaff, 0.3);
@@ -56,35 +57,54 @@ const RIBCAGE = piece(100, 18, 0.7);
 const WHITE_SKULL = piece(100, 23, 0.2);
 const SKULL_STAKE = piece(100, 24, 0.3);
 /** A show piece's part: a piece at [along, out] from the show's own spot (metres, along the wall and out from it). */
-const at = (/** @type {any} */ p, /** @type {number} */ along, /** @type {number} */ out) => Object.freeze({ ...p, along, out });
+const at = (/** @type {any} */ p, /** @type {number} */ along, /** @type {number} */ out) =>
+  Object.freeze({ ...p, along, out });
 
 /** EACH PEOPLE'S KIT: the pair at a tavern's door, the pair at a temple's, the show piece beside the tavern, and a
  *  house's step - each `[piece, share]`, the share of the town's houses that stand it. */
 export const WITCH_KITS = Object.freeze({
   breton: Object.freeze({
-    door: TURNIP, temple: STANDING_CANDLE,
+    door: TURNIP,
+    temple: STANDING_CANDLE,
     show: Object.freeze([at(EFFIGY, 0, 0), at(TURNIP, 0.8, 0.5), at(TURNIP, -0.8, 0.5)]),
-    step: Object.freeze([[TURNIP, 0.32], [SKULL_CANDLE, 0.08]]),
+    step: Object.freeze([
+      [TURNIP, 0.32],
+      [SKULL_CANDLE, 0.08],
+    ]),
   }),
   redguard: Object.freeze({
-    door: STANDING_CANDLE, temple: POLE_TORCH,
+    door: STANDING_CANDLE,
+    temple: POLE_TORCH,
     show: Object.freeze([at(BOWL_OF_FIRE, 0, 0), at(SKULL_CANDLE, 0.9, 0.4), at(SKULL_CANDLE, -0.9, 0.4)]),
     step: Object.freeze([[STANDING_CANDLE, 0.3]]),
   }),
   highland: Object.freeze({
-    door: POLE_TORCH, temple: POLE_TORCH,
+    door: POLE_TORCH,
+    temple: POLE_TORCH,
     show: Object.freeze([at(BONFIRE, 0, 0.3), at(EFFIGY, 1.2, -0.1), at(HORNED_SKULL, -1.3, 0.1)]),
-    step: Object.freeze([[SKULL_STAKE, 0.28], [TURNIP, 0.1]]),
+    step: Object.freeze([
+      [SKULL_STAKE, 0.28],
+      [TURNIP, 0.1],
+    ]),
   }),
   fen: Object.freeze({
-    door: WARD_STAFF, temple: STANDING_CANDLE,
+    door: WARD_STAFF,
+    temple: STANDING_CANDLE,
     show: Object.freeze([at(BOWL_OF_FIRE, 0, 0), at(WARD_STAFF, 1.0, 0), at(WARD_STAFF, -1.0, 0)]),
-    step: Object.freeze([[WARD_STAFF, 0.3], [SKULL_CANDLE, 0.08]]),
+    step: Object.freeze([
+      [WARD_STAFF, 0.3],
+      [SKULL_CANDLE, 0.08],
+    ]),
   }),
   haunted: Object.freeze({
-    door: SKULL_CANDLE, temple: STANDING_CANDLE,
+    door: SKULL_CANDLE,
+    temple: STANDING_CANDLE,
     show: Object.freeze([at(EFFIGY, 0, 0), at(SKULL_PILE, 1.3, 0.4), at(SKULL_STAKE, -1.0, 0)]),
-    step: Object.freeze([[TURNIP, 0.3], [WHITE_SKULL, 0.15], [RIBCAGE, 0.08]]),
+    step: Object.freeze([
+      [TURNIP, 0.3],
+      [WHITE_SKULL, 0.15],
+      [RIBCAGE, 0.08],
+    ]),
   }),
 });
 
@@ -92,11 +112,15 @@ export const WITCH_KITS = Object.freeze({
  *  haunted woods, the mountains and the swamps their own; then a Redguard region's, and every desert, Hammerfell's (its
  *  jungle coast too - Sentinel's own: AUDIT WITCH1 F-M3, three Hammerfell towns in four are subtropical); a Breton
  *  region's rainforest the fens'; the rest High Rock's. Pure. */
-export function witchCulture(/** @type {number|null|undefined} */ climateIndex, /** @type {number|null|undefined} */ region) {
+export function witchCulture(
+  /** @type {number|null|undefined} */ climateIndex,
+  /** @type {number|null|undefined} */ region,
+) {
   if (climateIndex === CLIMATES.HauntedWoodlands) return 'haunted';
   if (climateIndex === CLIMATES.Mountain || climateIndex === CLIMATES.MountainWoods) return 'highland';
   if (climateIndex === CLIMATES.Swamp) return 'fen';
-  if (REGION_RACES[region ?? -1] === 1 || climateIndex === CLIMATES.Desert || climateIndex === CLIMATES.Desert2) return 'redguard';
+  if (REGION_RACES[region ?? -1] === 1 || climateIndex === CLIMATES.Desert || climateIndex === CLIMATES.Desert2)
+    return 'redguard';
   if (climateIndex === CLIMATES.Rainforest || climateIndex === CLIMATES.Subtropical) return 'fen';
   return 'breton';
 }
@@ -106,9 +130,24 @@ export function witchCulture(/** @type {number|null|undefined} */ climateIndex, 
  *  height a spot is looked down from to the lip over the street (`downFrom`, `lip`: a plinth or a step lower than the
  *  rays); and the room kept round what the town stands (`clear`, a pace) and between the dressing's own pieces (`near`). */
 export const WITCH_SPOTS = Object.freeze({
-  pairAlong: 0.45, pairOut: 0.5, sisterAlong: 1.3, sisterOut: 1.6, showAlong: 2.6, showOut: 1.7, stepAlong: 0.45, stepOut: 0.45,
-  offeringAlong: 0.55, offeringOut: 0.55, offeringFarOut: 1.4, offeringR: 0.5,
-  rayFrom: 0.35, rayHeights: Object.freeze([0.5, 1.2]), downFrom: 1.2, lip: 0.08, clear: 0.35, near: 0.1,
+  pairAlong: 0.45,
+  pairOut: 0.5,
+  sisterAlong: 1.3,
+  sisterOut: 1.6,
+  showAlong: 2.6,
+  showOut: 1.7,
+  stepAlong: 0.45,
+  stepOut: 0.45,
+  offeringAlong: 0.55,
+  offeringOut: 0.55,
+  offeringFarOut: 1.4,
+  offeringR: 0.5,
+  rayFrom: 0.35,
+  rayHeights: Object.freeze([0.5, 1.2]),
+  downFrom: 1.2,
+  lip: 0.08,
+  clear: 0.35,
+  near: 0.1,
 });
 
 /** The foot a flat or a person the town already stands keeps, and the Wyrd Sister's own - metres; and the cells what
@@ -120,21 +159,36 @@ const GRID_M = 4;
 /** A small integer mix to [0, 1) - the same on every machine. */
 function seeded(/** @type {number[]} */ ...ns) {
   let h = 0x811c9dc5;
-  for (const n of ns) { h ^= n >>> 0; h = Math.imul(h, 0x01000193); h ^= h >>> 15; h = Math.imul(h, 0x2c1b3c6d); h ^= h >>> 12; }
+  for (const n of ns) {
+    h ^= n >>> 0;
+    h = Math.imul(h, 0x01000193);
+    h ^= h >>> 15;
+    h = Math.imul(h, 0x2c1b3c6d);
+    h ^= h >>> 12;
+  }
   return (h >>> 0) / 4294967296;
 }
 
 /** The side of its door a house's step piece stands (1 or -1) - its town's and its key's; a Hearth Offering stands on
  *  the other (scenes/witchesHost.js). Pure. */
-export const witchStepSide = (/** @type {number} */ mapId, /** @type {number} */ key) => (seeded(mapId, key, 3) < 0.5 ? -1 : 1);
+export const witchStepSide = (/** @type {number} */ mapId, /** @type {number} */ key) =>
+  seeded(mapId, key, 3) < 0.5 ? -1 : 1;
 
 /** A HOME'S OFFERING SPOT, pixel-local [x, z]: beside its door, on the side its step piece does not take - or, `far`,
  *  out before it. Null for a frame with no door. Pure. */
-export function offeringSpot(/** @type {any} */ frame, /** @type {number} */ mapId, /** @type {number} */ key, far = false) {
+export function offeringSpot(
+  /** @type {any} */ frame,
+  /** @type {number} */ mapId,
+  /** @type {number} */ key,
+  far = false,
+) {
   const front = doorFront(frame);
   if (!front) return null;
   const side = witchStepSide(mapId, key) * (far ? 1 : -1);
-  return front.spot(side * (front.half + WITCH_SPOTS.offeringAlong), far ? WITCH_SPOTS.offeringFarOut : WITCH_SPOTS.offeringOut);
+  return front.spot(
+    side * (front.half + WITCH_SPOTS.offeringAlong),
+    far ? WITCH_SPOTS.offeringFarOut : WITCH_SPOTS.offeringOut,
+  );
 }
 
 /**
@@ -147,8 +201,19 @@ export function doorFront(frame) {
   if (!f) return null;
   const d = frame.door;
   const half = Math.hypot(d.b[0] - d.a[0], d.b[2] - d.a[2]) / 2;
-  const out = [f.out[0] + 0, f.out[1] + 0], along = [0 - out[1], out[0] + 0];   // (+0: never a signed zero)
-  return { c: f.at, foot: Math.min(d.a[1], d.b[1]), out, along, half, spot: (/** @type {number} */ s, /** @type {number} */ o) => [f.at[0] + along[0] * s + out[0] * o, f.at[1] + along[1] * s + out[1] * o] };
+  const out = [f.out[0] + 0, f.out[1] + 0],
+    along = [0 - out[1], out[0] + 0]; // (+0: never a signed zero)
+  return {
+    c: f.at,
+    foot: Math.min(d.a[1], d.b[1]),
+    out,
+    along,
+    half,
+    spot: (/** @type {number} */ s, /** @type {number} */ o) => [
+      f.at[0] + along[0] * s + out[0] * o,
+      f.at[1] + along[1] * s + out[1] * o,
+    ],
+  };
 }
 
 /**
@@ -161,7 +226,8 @@ export function colliderBlocked(collider, state, px, py) {
   const t = [0, 0, 0];
   return (/** @type {number[]} */ a, /** @type {number[]} */ b) => {
     state.pixelTranslation(px, py, t);
-    const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], l = Math.hypot(d[0], d[1], d[2]);
+    const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]],
+      l = Math.hypot(d[0], d[1], d[2]);
     return l > 1e-6 && collider.raycast([a[0] + t[0], a[1] + t[1], a[2] + t[2]], [d[0] / l, d[1] / l, d[2] / l], l) < l;
   };
 }
@@ -180,11 +246,14 @@ const TILE_M = RMB_SIDE / 16;
 export function dryGround(blocks, origin) {
   const at = new Map((blocks ?? []).map((b) => [`${b.x},${b.y}`, b]));
   return (/** @type {number} */ x, /** @type {number} */ z) => {
-    const lx = x - origin[0], lz = z - origin[2];
-    const bx = Math.floor(lx / RMB_SIDE), by = Math.floor(lz / RMB_SIDE);
+    const lx = x - origin[0],
+      lz = z - origin[2];
+    const bx = Math.floor(lx / RMB_SIDE),
+      by = Math.floor(lz / RMB_SIDE);
     const tiles = at.get(`${bx},${by}`)?.dfBlock?.rmbBlock?.fldHeader?.groundData?.groundTiles;
     if (!tiles) return false;
-    const tx = Math.floor((lx - bx * RMB_SIDE) / TILE_M), ty = 15 - Math.floor((lz - by * RMB_SIDE) / TILE_M);
+    const tx = Math.floor((lx - bx * RMB_SIDE) / TILE_M),
+      ty = 15 - Math.floor((lz - by * RMB_SIDE) / TILE_M);
     return tileWeight((tiles[tx]?.[ty]?.textureRecord ?? 0) & 0x3f) !== 0;
   };
 }
@@ -206,10 +275,16 @@ export function witchesDressing(town) {
   return r.value;
 }
 /** THE SAME, BREATHING (PERF7): `breathe()` awaited between buildings - a city's thousand rays never one frame's. */
-export async function witchesDressingBreathing(/** @type {DressedTown} */ town, /** @type {() => Promise<unknown>} */ breathe) {
+export async function witchesDressingBreathing(
+  /** @type {DressedTown} */ town,
+  /** @type {() => Promise<unknown>} */ breathe,
+) {
   const steps = dressTown(town);
   let r = steps.next();
-  while (!r.done) { await breathe(); r = steps.next(); }
+  while (!r.done) {
+    await breathe();
+    r = steps.next();
+  }
   return r.value;
 }
 /**
@@ -220,7 +295,22 @@ export async function witchesDressingBreathing(/** @type {DressedTown} */ town, 
  *   own (world/tamrielCapitals.js capitalBlockLift), else `floorY` everywhere.
  */
 /** The dressing, a building a step (witchesDressing runs it whole, witchesDressingBreathing breathes between). */
-function* dressTown(/** @type {DressedTown} */ { frames, taverns = [], temples = [], mapId = 0, climateIndex = null, region = null, floorY = 0, floorAt = null, nowMs = Date.now(), blocked = () => false, ground = () => true, taken = [] }) {
+function* dressTown(
+  /** @type {DressedTown} */ {
+    frames,
+    taverns = [],
+    temples = [],
+    mapId = 0,
+    climateIndex = null,
+    region = null,
+    floorY = 0,
+    floorAt = null,
+    nowMs = Date.now(),
+    blocked = () => false,
+    ground = () => true,
+    taken = [],
+  },
+) {
   if (!frames?.size || !festivalOpen(nowMs)) return null;
   const floor = floorAt ?? (() => floorY);
   const kit = WITCH_KITS[witchCulture(climateIndex, region)];
@@ -228,34 +318,51 @@ function* dressTown(/** @type {DressedTown} */ { frames, taverns = [], temples =
   // what stands, filed in GRID_M cells - a city's thousands of flats, each spot asking only the nine cells about it
   /** @type {Map<string, number[][]>} [x, z, r, the room kept round it] */
   const grid = new Map();
-  const cell = (/** @type {number} */ x, /** @type {number} */ z) => `${Math.floor(x / GRID_M)},${Math.floor(z / GRID_M)}`;
-  const file = (/** @type {number} */ x, /** @type {number} */ z, /** @type {number} */ r, /** @type {number} */ room = S.near) => {
+  const cell = (/** @type {number} */ x, /** @type {number} */ z) =>
+    `${Math.floor(x / GRID_M)},${Math.floor(z / GRID_M)}`;
+  const file = (
+    /** @type {number} */ x,
+    /** @type {number} */ z,
+    /** @type {number} */ r,
+    /** @type {number} */ room = S.near,
+  ) => {
     const k = cell(x, z);
     let list = grid.get(k);
     if (!list) grid.set(k, (list = []));
     list.push([x, z, r, room]);
   };
   for (const p of taken) if (p && Number.isFinite(p[0]) && Number.isFinite(p[2])) file(p[0], p[2], TAKEN_R, S.clear);
-  const flats = [], sisters = [];
+  const flats = [],
+    sisters = [];
   /** Whether a spot is clear for a foot `r`: on the ground, no wall from the door's front to it, nothing under it above
    *  the street, a pace from what stands. */
   const clear = (/** @type {any} */ front, /** @type {number[]} */ xz, /** @type {number} */ r) => {
     if (!ground(xz[0], xz[1])) return false;
-    const gx = Math.floor(xz[0] / GRID_M), gz = Math.floor(xz[1] / GRID_M);
+    const gx = Math.floor(xz[0] / GRID_M),
+      gz = Math.floor(xz[1] / GRID_M);
     for (let i = -1; i <= 1; i++) {
       for (let j = -1; j <= 1; j++) {
-        for (const [x, z, q, room] of grid.get(`${gx + i},${gz + j}`) ?? []) if (Math.hypot(xz[0] - x, xz[1] - z) < r + q + room) return false;
+        for (const [x, z, q, room] of grid.get(`${gx + i},${gz + j}`) ?? [])
+          if (Math.hypot(xz[0] - x, xz[1] - z) < r + q + room) return false;
       }
     }
     // from before the door at its own foot (a door up steps looks over them) to the spot's far edge, so a piece is
     // never half in a wall
-    const from = front.spot(0, S.rayFrom), fy = floor(xz[0], xz[1]), fromY = Math.max(floor(from[0], from[1]), Number.isFinite(front.foot) ? front.foot : floor(from[0], from[1]));
-    const dx = xz[0] - from[0], dz = xz[1] - from[1], l = Math.hypot(dx, dz) || 1;
-    for (const h of S.rayHeights) if (blocked([from[0], fromY + h, from[1]], [xz[0] + (dx / l) * r, fy + h, xz[1] + (dz / l) * r])) return false;
+    const from = front.spot(0, S.rayFrom),
+      fy = floor(xz[0], xz[1]),
+      fromY = Math.max(floor(from[0], from[1]), Number.isFinite(front.foot) ? front.foot : floor(from[0], from[1]));
+    const dx = xz[0] - from[0],
+      dz = xz[1] - from[1],
+      l = Math.hypot(dx, dz) || 1;
+    for (const h of S.rayHeights)
+      if (blocked([from[0], fromY + h, from[1]], [xz[0] + (dx / l) * r, fy + h, xz[1] + (dz / l) * r])) return false;
     // and looked down on at its middle and at its edge nearest the door, so a piece never stands sunk in a house's plinth
     // or its steps, which the rays pass over (AUDIT WITCH1 G1: a turnip lantern half in a Daggerfall house's base)
-    const tx = front.c[0] - xz[0], tz = front.c[1] - xz[1], tl = Math.hypot(tx, tz) || 1;
-    for (const [x, z] of [xz, [xz[0] + (tx / tl) * r, xz[1] + (tz / tl) * r]]) if (blocked([x, floor(x, z) + S.downFrom, z], [x, floor(x, z) + S.lip, z])) return false;
+    const tx = front.c[0] - xz[0],
+      tz = front.c[1] - xz[1],
+      tl = Math.hypot(tx, tz) || 1;
+    for (const [x, z] of [xz, [xz[0] + (tx / tl) * r, xz[1] + (tz / tl) * r]])
+      if (blocked([x, floor(x, z) + S.downFrom, z], [x, floor(x, z) + S.lip, z])) return false;
     return true;
   };
   const stand = (/** @type {any} */ front, /** @type {any} */ p, /** @type {number} */ s, /** @type {number} */ o) => {
@@ -265,7 +372,9 @@ function* dressTown(/** @type {DressedTown} */ { frames, taverns = [], temples =
     flats.push({ archive: p.archive, record: p.record, c: [xz[0], floor(xz[0], xz[1]), xz[1]] });
     return true;
   };
-  const pair = (/** @type {any} */ front, /** @type {any} */ p) => { for (const s of [-1, 1]) stand(front, p, s * (front.half + S.pairAlong), S.pairOut); };
+  const pair = (/** @type {any} */ front, /** @type {any} */ p) => {
+    for (const s of [-1, 1]) stand(front, p, s * (front.half + S.pairAlong), S.pairOut);
+  };
   for (const key of taverns) {
     const front = doorFront(frames.get(key));
     if (!front) continue;
@@ -278,8 +387,18 @@ function* dressTown(/** @type {DressedTown} */ { frames, taverns = [], temples =
       if (!clear(front, xz, SISTER_R)) continue;
       file(xz[0], xz[1], SISTER_R);
       sisters.push({
-        archive: WYRD_SISTER_FLAT.archive, record: WYRD_SISTER_FLAT.record, x: xz[0], y: floor(xz[0], xz[1]), z: xz[1],
-        factionID: 0, flags: 0, rawX: 0, rawY: 0, rawZ: 0, recordPosition: key, witch: Object.freeze({ key }),
+        archive: WYRD_SISTER_FLAT.archive,
+        record: WYRD_SISTER_FLAT.record,
+        x: xz[0],
+        y: floor(xz[0], xz[1]),
+        z: xz[1],
+        factionID: 0,
+        flags: 0,
+        rawX: 0,
+        rawY: 0,
+        rawZ: 0,
+        recordPosition: key,
+        witch: Object.freeze({ key }),
       });
       side = s;
       break;
@@ -318,7 +437,10 @@ function* dressTown(/** @type {DressedTown} */ { frames, taverns = [], temples =
     let edge = 0;
     const p = kit.step.find((pick) => roll < (edge += /** @type {number} */ (pick[1])))?.[0];
     const front = p ? doorFront(f) : null;
-    if (front) { stand(front, p, witchStepSide(mapId, key) * (front.half + S.stepAlong), S.stepOut); yield; }
+    if (front) {
+      stand(front, p, witchStepSide(mapId, key) * (front.half + S.stepAlong), S.stepOut);
+      yield;
+    }
   }
   return { flats, sisters, homes };
 }

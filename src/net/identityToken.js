@@ -120,15 +120,15 @@
 // and node 22 - and in none of the shared globals lists, because this
 // is the first module in src/net/ to need it.
 
-import { validStaffEvent, STAFF_EVENT_ID_RE } from './staffEvent/staffEventLaw.js';   // STAFF-EVENT: a staff event order's event
+import { validStaffEvent, STAFF_EVENT_ID_RE } from './staffEvent/staffEventLaw.js'; // STAFF-EVENT: a staff event order's event
 import { sanitizeName, NAME_MAX, streamsFoes } from './wire.js';
-import { GUILD_ID_RE, GUILD_TAG_RE, GUILD_MEMBER_RE } from './guild/guildLaw.js';   // GUILD1c: a guild rides the token - the law's own three shapes
-import { ribbonClaimOk } from './heraldryLaw.js';   // SEASON1 part two: a Season's banner ribbon - heraldryLaw.js imports nothing, so the worker's graph stays flat
-import { worksOf } from './siege/siegeRef.js';   // SEAT2b part two (b): a siege's works on its pass - siegeRef.js imports nothing
-import { armoryKitOk } from './armoryLaw.js';   // ARMORY: the kit worn rides the token - armoryLaw.js imports nothing, so the worker's graph stays flat
-import { effectKitOk } from './effectLaw.js';   // STOREFRONT: the effects kit worn rides the token - effectLaw.js imports nothing
-import { houseClaimOk } from './houseLaw.js';   // LEGACY7: a house rides the token - houseLaw.js imports nothing, so the worker's graph stays flat
-import { homeMapIdOk, homeBuildingKeyOk, HOME_ORDER_KEYS_MAX, HOME_KEY_MAX } from './homeLaw.js';   // QUEST-HOME: a home order names a town and its buildings in the homes' own shapes - homeLaw.js imports nothing
+import { GUILD_ID_RE, GUILD_TAG_RE, GUILD_MEMBER_RE } from './guild/guildLaw.js'; // GUILD1c: a guild rides the token - the law's own three shapes
+import { ribbonClaimOk } from './heraldryLaw.js'; // SEASON1 part two: a Season's banner ribbon - heraldryLaw.js imports nothing, so the worker's graph stays flat
+import { worksOf } from './siege/siegeRef.js'; // SEAT2b part two (b): a siege's works on its pass - siegeRef.js imports nothing
+import { armoryKitOk } from './armoryLaw.js'; // ARMORY: the kit worn rides the token - armoryLaw.js imports nothing, so the worker's graph stays flat
+import { effectKitOk } from './effectLaw.js'; // STOREFRONT: the effects kit worn rides the token - effectLaw.js imports nothing
+import { houseClaimOk } from './houseLaw.js'; // LEGACY7: a house rides the token - houseLaw.js imports nothing, so the worker's graph stays flat
+import { homeMapIdOk, homeBuildingKeyOk, HOME_ORDER_KEYS_MAX, HOME_KEY_MAX } from './homeLaw.js'; // QUEST-HOME: a home order names a town and its buildings in the homes' own shapes - homeLaw.js imports nothing
 
 /** The only version this file will read or write. It names the
  *  algorithm, so the payload cannot. */
@@ -196,7 +196,91 @@ export const ACCOUNT_KINDS = Object.freeze(['guest', 'linked']);
 /** The titles that exist. A title is WORN one at a time, so a token
  *  carries at most one. Grants are the service's business (who HOLDS
  *  one); this list is the vocabulary both ends share. */
-export const TITLES = Object.freeze(['founder', 'developer', 'dungeonmaster', 'disciple', 'apostle', 'hierophant', 'shadowfang', 'penitent', 'gatebreaker', 'herald', 'warden', 'protector', 'crowned', 'keeper', 'champion', 'grandchampion', 'arenachampion', 'aegis', 'primarch', 'crystalfist', 'hourbreaker', 'hoursfirst', 'iliacchampion', 'chaptermaster', 'chapterofficer', 'formermaster', 'highmaster', 'seasonmaster', 'ilovelamp', 'grandmaster', 'coilbreaker', 'spirewalker', 'beaconlighter', 'kynbane', 'unfallen', 'lonebeacon', 'battlemage', 'wellheadwalker', 'mastergallery', 'mastercairn', 'mastershade', 'masterwellhead', 'spirechampion', 'spirefirst', 'wikimaid', 'doorwarden', 'covenbane', 'weirwalker', 'hourwitness', 'satakalwitness', 'starwarden', 'witchwarden', 'hearthkeeper', 'skyfarer', 'nirnrootsage', 'bloodhound', 'beastbane', 'grandhuntsman', 'huntlegend', 'mastermining', 'masterlogging', 'masterherbalism', 'masterhunting', 'masterfishing', 'mastersmithing', 'masterbuilding', 'masteroutfitting', 'masterprovisioning', 'masterenchanting', 'serpenthunter', 'deepbane', 'genesis', 'wyrmrider', 'firstwyrmrider', 'aetherrider', 'firstaetherrider', 'dawnbringer', 'voidwalker', 'eternalchampion', 'tremorborn', 'heartwaker', 'numidiumecho', 'coldharbour']);   // BLOOD-OF-COLDHARBOUR (2026-10-30, for Trakel, a $200 patron): Blood of Coldharbour last;   // STOREFRONT (2026-10-29, bible/06-Systems/Storefront.md, Battle-Pass.md): the shop's three name visuals (Dawnbringer, Voidwalker, Eternal Champion) and the Battle Pass's three of Season One, last (AURUM: three fewer - "No overbundence of titles"), after WYRM-RIDER's four, which main ships first;   // SHOP (2026-10-28, bible/06-Systems/Shop.md): GENESIS last - the shop's pre-alpha title, bought once (net/shopLaw.js SHOP_WARES; server-account/src/shop.js), held for good;   // HUNTERS-MARK, MARKS-OF-MASTERY (2026-10-27, a player: "Add more horizontal progression please!"; bible/06-Systems/Bounty-Boards.md section 12): THE MARKS OF MASTERY, last - the hunt's four (an account's board clears), a profession's Master each (a living character's track at 100) and the sea's two (the serpents an account helped slay), derived by the service (net/huntLaw.js MASTERY_MARKS; server-account/src/hunts.js);   // NIRNROOT-SAGE (2026-10-26, for Blob-Marley, an Immortal backer: "billowing smoke, circling nirn roots around midsection, small glowing green runes encircling feet"; bible/06-Systems/Accounts-And-Cloud-Saves-Arc.md NIRNROOT-SAGE): NIRNROOT SAGE last - Blob-Marley's own, granted by name with its glyph and Sage's Smoke (server-account/src/titles.js NIRNROOT_SAGE_HANDLES);   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): THE WITCHES' FESTIVAL'S TWO, last (after the Starwarden, when the Starfall's branch took the festival in) - Witchwarden, bought from a Wyrd Sister for Soul Cakes, and Hearthkeeper, an account's Hearth Offerings having given 25 cakes (server-account/src/titles.js, `fest_wares`, `fest_given`), held for good;   // STAR8 (2026-10-20, the owner: "A new seasonal quest line that ties into the event, its functions and the new world event"; bible/11-Multiplayer/Starfall.md section 7): the STARWARDEN last - the Thirteenth of Frostfall's, QL_TITLES' sixth, laid on the row as the questlines' five are;   // QL12 (2026-10-19, the owner: "New questlines tying into and introduced the oblivion gates, abyss dungeons, elite dungeons and elite breaches"; bible/06-Systems/Questlines-Arc.md section 5.3, decision 10.3: a title a questline): THE QUESTLINES' FIVE, last - in QL_TITLES' order (net/questlineClaims.js, the lines' order): the Doorwarden (the Burning Doors), Covenbane (the Covens' Hoard), the Weirwalker (the Weir Road), Witness of the Hour (the Hour That Was Not) and Satakal's Witness (the Old Coil) - each laid on the row by the claim that witnessed its line's last paid step (server-account/src/questlines.js, `ql_titles`), held for good;   // WIKIMAID (2026-10-17, for SylviaBun: "the WikiMaid title and a purple aura with bunnies"; bible/06-Systems/Accounts-And-Cloud-Saves-Arc.md WIKIMAID): WIKIMAID last - SylviaBun's own, granted by name with its glyph and the Lilac Warren (server-account/src/titles.js WIKIMAID_HANDLES);   // EG-E2 (2026-10-12; at the merges of main, after LAMP-KEEPER II's I Love Lamp, KG6's Grandmaster and SERPENT5's Coilbreaker, which main ships first): EG-E2 (2026-10-12, Mac: "I said I want everything"; bible/11-Multiplayer/Elite-Gates.md section 19, THE HONOURS): THE SPIRE'S THIRTEEN, last - after the Coilbreaker - Spirewalker (Redoubt 2), Beacon-Lighter (5), Kynbane (10), the Unfallen (10 with no fall from Hall 1), the Lone Beacon (a Court felled alone in a company of four or more), Battlemage of the Spire (15), Wellhead-Walker (20), the four bands' Masters (every feat of a band's lords), Spire Champion (a Descent bracket's top ten, held through the next season) and First of the Spire (by name, as Hour's First) - the service's (server-account/src/egHonours.js, titles.js);   // SERPENT5 (2026-10-15, Mac: "A gilded weapon to the serpent + a rare chance of a title/aura drop"; bible/11-Multiplayer/Sea-Serpent.md section 17): COILBREAKER last - one dealing ship's serpent kill in twenty grants it on its first write (server-account/src/serpents.js), held for good   // LAMP-KEEPER II (2026-10-14, Mac: "Anybody that interacts with the lamp model should earn the 'I Love Lamp' title"): I LOVE LAMP, last - laid on the account's row by its first word with a lamp keeper (server-account/src/lamp.js); CHAP4c (2026-10-08, the Chapters arc, Chapters-Arc.md section 6) and CHAP6e (2026-10-09, section 7): a chapter's Master, its officer, its former Master, its High Master and a Season's Master, last (CHAPTER_TITLES, below) - after CARDS10's, at the merge of main (its relay deployed first); CARDS10 (2026-10-08, Tavern-Cards section 6.4, DECIDED: "a ladder ... with a title for the top of it"): ILIAC CHAMPION, last (after HOURS-FIRST's at the merge) - the season's #1 of Iliac Hand's refereed board, while they hold the top, derived at the mint (server-account/src/iliac.js, the row's `iliac`); HOURS-FIRST (2026-10-08, Mac: "for all the accounts here I want to grant them a unique different version of the aura, a title named Hour's First, and each the gilded gun"): HOUR'S FIRST, last - the first group to break an Abyss Dungeon, granted by name (server-account/src/titles.js HOURS_FIRST_HANDLES);   // SD9b (2026-10-07, the Super Dungeons arc): HOURBREAKER, last - one Brass Remnant's kill in four grants it on its first write (server-account/src/sds.js), held for good; CRYSTAL-FIST (2026-10-05, the owner, for Flylighter: "Title: Crystal Fist"): Flylighter's own; PRIMARCH (2026-10-04, GA00250: "the title will be Primarch"): GA00250's own; AEGIS (2026-10-03, the owner: "For the account named Sureme ... a title, glyph and new custom aura for this user. Title: Aegis of Oblivion. Theme: Purple"): Sureme's own, last;   // ARENA4 (2026-10-02, Mac: "Being a top rank PvE fighter comes with it's own title. Being the #1 pvp arena player comes with it's own temporary title/glyph"): the Grand Champion (the ladder's tenth tier's champion beaten, relay-refereed - for good) and the Arena Champion (the season's #1 of the refereed board - while they are #1), both derived at the mint (server-account/src/titles.js, the row's `arena`), last;   // HERALD (2026-10-01, Mac: "Herald doesnt exist ingame yet" - "you'll need to develop the herald title/glyph"): the Patreon tier between Disciple and Hierophant, after the Gatebreaker (the seats' five after it, SEAT1c); TITLE-N (2026-09-24, Mac): the Dungeon Master, and the three Patreon tiers in their order; SHADOW-FANG (2026-09-26, Mac): SirMcMobdon's own; PENITENT (2026-09-29, Mac): Diggleborf's own; WB9g (2026-09-30, Mac: "a brand new title to the broker"): the Gatebreaker, bought with Sigil Stones (net/insignia.js)   // KG6 (2026-10-15, Kings-Gambit.md 10.7): GRANDMASTER last - The King's Gambit's season #1 (server-account/src/gambit.js)
+export const TITLES = Object.freeze([
+  'founder',
+  'developer',
+  'dungeonmaster',
+  'disciple',
+  'apostle',
+  'hierophant',
+  'shadowfang',
+  'penitent',
+  'gatebreaker',
+  'herald',
+  'warden',
+  'protector',
+  'crowned',
+  'keeper',
+  'champion',
+  'grandchampion',
+  'arenachampion',
+  'aegis',
+  'primarch',
+  'crystalfist',
+  'hourbreaker',
+  'hoursfirst',
+  'iliacchampion',
+  'chaptermaster',
+  'chapterofficer',
+  'formermaster',
+  'highmaster',
+  'seasonmaster',
+  'ilovelamp',
+  'grandmaster',
+  'coilbreaker',
+  'spirewalker',
+  'beaconlighter',
+  'kynbane',
+  'unfallen',
+  'lonebeacon',
+  'battlemage',
+  'wellheadwalker',
+  'mastergallery',
+  'mastercairn',
+  'mastershade',
+  'masterwellhead',
+  'spirechampion',
+  'spirefirst',
+  'wikimaid',
+  'doorwarden',
+  'covenbane',
+  'weirwalker',
+  'hourwitness',
+  'satakalwitness',
+  'starwarden',
+  'witchwarden',
+  'hearthkeeper',
+  'skyfarer',
+  'nirnrootsage',
+  'bloodhound',
+  'beastbane',
+  'grandhuntsman',
+  'huntlegend',
+  'mastermining',
+  'masterlogging',
+  'masterherbalism',
+  'masterhunting',
+  'masterfishing',
+  'mastersmithing',
+  'masterbuilding',
+  'masteroutfitting',
+  'masterprovisioning',
+  'masterenchanting',
+  'serpenthunter',
+  'deepbane',
+  'genesis',
+  'wyrmrider',
+  'firstwyrmrider',
+  'aetherrider',
+  'firstaetherrider',
+  'dawnbringer',
+  'voidwalker',
+  'eternalchampion',
+  'tremorborn',
+  'heartwaker',
+  'numidiumecho',
+  'coldharbour',
+]); // BLOOD-OF-COLDHARBOUR (2026-10-30, for Trakel, a $200 patron): Blood of Coldharbour last;   // STOREFRONT (2026-10-29, bible/06-Systems/Storefront.md, Battle-Pass.md): the shop's three name visuals (Dawnbringer, Voidwalker, Eternal Champion) and the Battle Pass's three of Season One, last (AURUM: three fewer - "No overbundence of titles"), after WYRM-RIDER's four, which main ships first;   // SHOP (2026-10-28, bible/06-Systems/Shop.md): GENESIS last - the shop's pre-alpha title, bought once (net/shopLaw.js SHOP_WARES; server-account/src/shop.js), held for good;   // HUNTERS-MARK, MARKS-OF-MASTERY (2026-10-27, a player: "Add more horizontal progression please!"; bible/06-Systems/Bounty-Boards.md section 12): THE MARKS OF MASTERY, last - the hunt's four (an account's board clears), a profession's Master each (a living character's track at 100) and the sea's two (the serpents an account helped slay), derived by the service (net/huntLaw.js MASTERY_MARKS; server-account/src/hunts.js);   // NIRNROOT-SAGE (2026-10-26, for Blob-Marley, an Immortal backer: "billowing smoke, circling nirn roots around midsection, small glowing green runes encircling feet"; bible/06-Systems/Accounts-And-Cloud-Saves-Arc.md NIRNROOT-SAGE): NIRNROOT SAGE last - Blob-Marley's own, granted by name with its glyph and Sage's Smoke (server-account/src/titles.js NIRNROOT_SAGE_HANDLES);   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): THE WITCHES' FESTIVAL'S TWO, last (after the Starwarden, when the Starfall's branch took the festival in) - Witchwarden, bought from a Wyrd Sister for Soul Cakes, and Hearthkeeper, an account's Hearth Offerings having given 25 cakes (server-account/src/titles.js, `fest_wares`, `fest_given`), held for good;   // STAR8 (2026-10-20, the owner: "A new seasonal quest line that ties into the event, its functions and the new world event"; bible/11-Multiplayer/Starfall.md section 7): the STARWARDEN last - the Thirteenth of Frostfall's, QL_TITLES' sixth, laid on the row as the questlines' five are;   // QL12 (2026-10-19, the owner: "New questlines tying into and introduced the oblivion gates, abyss dungeons, elite dungeons and elite breaches"; bible/06-Systems/Questlines-Arc.md section 5.3, decision 10.3: a title a questline): THE QUESTLINES' FIVE, last - in QL_TITLES' order (net/questlineClaims.js, the lines' order): the Doorwarden (the Burning Doors), Covenbane (the Covens' Hoard), the Weirwalker (the Weir Road), Witness of the Hour (the Hour That Was Not) and Satakal's Witness (the Old Coil) - each laid on the row by the claim that witnessed its line's last paid step (server-account/src/questlines.js, `ql_titles`), held for good;   // WIKIMAID (2026-10-17, for SylviaBun: "the WikiMaid title and a purple aura with bunnies"; bible/06-Systems/Accounts-And-Cloud-Saves-Arc.md WIKIMAID): WIKIMAID last - SylviaBun's own, granted by name with its glyph and the Lilac Warren (server-account/src/titles.js WIKIMAID_HANDLES);   // EG-E2 (2026-10-12; at the merges of main, after LAMP-KEEPER II's I Love Lamp, KG6's Grandmaster and SERPENT5's Coilbreaker, which main ships first): EG-E2 (2026-10-12, Mac: "I said I want everything"; bible/11-Multiplayer/Elite-Gates.md section 19, THE HONOURS): THE SPIRE'S THIRTEEN, last - after the Coilbreaker - Spirewalker (Redoubt 2), Beacon-Lighter (5), Kynbane (10), the Unfallen (10 with no fall from Hall 1), the Lone Beacon (a Court felled alone in a company of four or more), Battlemage of the Spire (15), Wellhead-Walker (20), the four bands' Masters (every feat of a band's lords), Spire Champion (a Descent bracket's top ten, held through the next season) and First of the Spire (by name, as Hour's First) - the service's (server-account/src/egHonours.js, titles.js);   // SERPENT5 (2026-10-15, Mac: "A gilded weapon to the serpent + a rare chance of a title/aura drop"; bible/11-Multiplayer/Sea-Serpent.md section 17): COILBREAKER last - one dealing ship's serpent kill in twenty grants it on its first write (server-account/src/serpents.js), held for good   // LAMP-KEEPER II (2026-10-14, Mac: "Anybody that interacts with the lamp model should earn the 'I Love Lamp' title"): I LOVE LAMP, last - laid on the account's row by its first word with a lamp keeper (server-account/src/lamp.js); CHAP4c (2026-10-08, the Chapters arc, Chapters-Arc.md section 6) and CHAP6e (2026-10-09, section 7): a chapter's Master, its officer, its former Master, its High Master and a Season's Master, last (CHAPTER_TITLES, below) - after CARDS10's, at the merge of main (its relay deployed first); CARDS10 (2026-10-08, Tavern-Cards section 6.4, DECIDED: "a ladder ... with a title for the top of it"): ILIAC CHAMPION, last (after HOURS-FIRST's at the merge) - the season's #1 of Iliac Hand's refereed board, while they hold the top, derived at the mint (server-account/src/iliac.js, the row's `iliac`); HOURS-FIRST (2026-10-08, Mac: "for all the accounts here I want to grant them a unique different version of the aura, a title named Hour's First, and each the gilded gun"): HOUR'S FIRST, last - the first group to break an Abyss Dungeon, granted by name (server-account/src/titles.js HOURS_FIRST_HANDLES);   // SD9b (2026-10-07, the Super Dungeons arc): HOURBREAKER, last - one Brass Remnant's kill in four grants it on its first write (server-account/src/sds.js), held for good; CRYSTAL-FIST (2026-10-05, the owner, for Flylighter: "Title: Crystal Fist"): Flylighter's own; PRIMARCH (2026-10-04, GA00250: "the title will be Primarch"): GA00250's own; AEGIS (2026-10-03, the owner: "For the account named Sureme ... a title, glyph and new custom aura for this user. Title: Aegis of Oblivion. Theme: Purple"): Sureme's own, last;   // ARENA4 (2026-10-02, Mac: "Being a top rank PvE fighter comes with it's own title. Being the #1 pvp arena player comes with it's own temporary title/glyph"): the Grand Champion (the ladder's tenth tier's champion beaten, relay-refereed - for good) and the Arena Champion (the season's #1 of the refereed board - while they are #1), both derived at the mint (server-account/src/titles.js, the row's `arena`), last;   // HERALD (2026-10-01, Mac: "Herald doesnt exist ingame yet" - "you'll need to develop the herald title/glyph"): the Patreon tier between Disciple and Hierophant, after the Gatebreaker (the seats' five after it, SEAT1c); TITLE-N (2026-09-24, Mac): the Dungeon Master, and the three Patreon tiers in their order; SHADOW-FANG (2026-09-26, Mac): SirMcMobdon's own; PENITENT (2026-09-29, Mac): Diggleborf's own; WB9g (2026-09-30, Mac: "a brand new title to the broker"): the Gatebreaker, bought with Sigil Stones (net/insignia.js)   // KG6 (2026-10-15, Kings-Gambit.md 10.7): GRANDMASTER last - The King's Gambit's season #1 (server-account/src/gambit.js)
 
 /** SEAT1c (2026-09-30, Mac: "Finish the seats"; Seats-Arc 7.4): THE SEATS' TITLES - five GENERIC ids, because a town's
  *  or a Season's name cannot be a closed list's word: "Warden of <Town>" (a palace seat's guildmaster), "Protector of
@@ -205,8 +289,15 @@ export const TITLES = Object.freeze(['founder', 'developer', 'dungeonmaster', 'd
  *  which the client words it. Reaching the relay once, here, before the service mints any (the SHADOW-FANG order). */
 export const SEAT_TITLES = Object.freeze(['warden', 'protector', 'crowned', 'keeper', 'champion']);
 /** SEAT1c: whether `ts` is a seat title's claim - [seat key (a map id, unsigned 32), Season (0-9999)]. */
-export const seatTitleClaimOk = (ts) => Array.isArray(ts) && ts.length === 2 && Number.isSafeInteger(ts[0]) && ts[0] >= 0 && ts[0] <= 0xffffffff
-  && Number.isSafeInteger(ts[1]) && ts[1] >= 0 && ts[1] <= 9999;
+export const seatTitleClaimOk = (ts) =>
+  Array.isArray(ts) &&
+  ts.length === 2 &&
+  Number.isSafeInteger(ts[0]) &&
+  ts[0] >= 0 &&
+  ts[0] <= 0xffffffff &&
+  Number.isSafeInteger(ts[1]) &&
+  ts[1] >= 0 &&
+  ts[1] <= 9999;
 /** CHAP4c (2026-10-08, Chapters-Arc 6): A CHAPTER'S SEATS' TITLES - three GENERIC ids, as the seats' are, because a guild's
  *  and a region's name cannot be a closed list's word: its Master (rank 9), an officer (rank 8), and a Master who lost
  *  the seat (for the rest of the Season). Each rides with the seats' bounded claim, `ts`: [the chapter's key - its
@@ -215,7 +306,13 @@ export const seatTitleClaimOk = (ts) => Array.isArray(ts) && ts.length === 2 && 
  *  CHAP6e (2026-10-09, Chapters-Arc 7): and two more - a Master's in its chapter's Ascendancy ("High Master", signed in
  *  the Master's place for the Season, never worn on its own) and the Master who held the seat a whole Season's, kept
  *  for good, its claim's Season the one it held. */
-export const CHAPTER_TITLES = Object.freeze(['chaptermaster', 'chapterofficer', 'formermaster', 'highmaster', 'seasonmaster']);
+export const CHAPTER_TITLES = Object.freeze([
+  'chaptermaster',
+  'chapterofficer',
+  'formermaster',
+  'highmaster',
+  'seasonmaster',
+]);
 /** Whether a title rides with a claim (`ts`): the seats' and the chapters' - every other title rides alone. */
 export const titleClaimed = (t) => SEAT_TITLES.includes(t) || CHAPTER_TITLES.includes(t);
 
@@ -227,13 +324,70 @@ export const titleClaimed = (t) => SEAT_TITLES.includes(t) || CHAPTER_TITLES.inc
  *  server-account/src/titles.js TIER_AURA: the Oblivion Ward, since PRIMARCH the Golden Radiance and since SHADOW-CLOAK
  *  the Holo Shadow Cloak and since CRYSTAL-FIST the Crystal Resonance; since SERAPH-WINGS, the developers' Seraph Wings -
  *  titles.js DEVELOPER_AURA); this list is the vocabulary both ends share. */
-export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings', 'vampirichaze']);   // BLOOD-OF-COLDHARBOUR: the Vampiric Haze last - a dark violet haze, blood rising into Daedric runes;   // STOREFRONT (2026-10-29): the Daedric Dominion (the bundles' own) and the Battle Pass's Aetherium; the Aetherium Wings, the Gilded Folio's capstone (2026-10-30) Coil and Gilded Coil, last;   // SHOP (2026-10-28): ETERNAL last - a cape of blue-violet fire hung from the shoulders and flowing down the back, the shop's pre-alpha aura, bought once;   // NIRNROOT-SAGE (2026-10-26, for Blob-Marley: "billowing smoke, circling nirn roots around midsection, small glowing green runes encircling feet"): SAGE'S SMOKE last - smoke billowing up about the body, nirnroots circling the waist, green runes glowing round the feet; the Nirnroot Sage's own, granted with its title by name, never sold;   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;   // WIKIMAID (2026-10-17, for SylviaBun: "a purple aura with bunnies"): THE LILAC WARREN last - rabbits hopping round the feet on a ring of lilac light, their prints fading behind them; the WikiMaid's own, granted with its title by name, never sold;   // EG-E2 (2026-10-12, Elite-Gates.md section 19): THE SPIRE'S THREE, last (after SERPENT5's Maelstrom, which main ships first) - Beaconlight (Kynbane's: gold-white motes), The Burning Stair (Wellhead-Walker's: falling embers) and Firstlight (First of the Spire's: a dawn-white ring), each granted with its title, never sold;   // SERPENT5 (2026-10-15, Sea-Serpent.md section 17): THE MAELSTROM last - the Old Coil's whirlpool of tide and foam about the feet, one dealing ship's serpent kill in fifty on its first write (server-account/src/serpents.js), held for good   // HOURS-FIRST (2026-10-08, Mac: "a unique different version of the aura"): THE FIRST HOUR, last - The Turning Hour's wheel in the light of the first dawn, its dial turning forward, the Hour's own mark ablaze; Hour's First's own, granted with the title by name, never rolled or sold;   // SD9c (2026-10-07, the Super Dungeons arc): THE TURNING HOUR, last - the Brass Remnant's wheel of brass gears and gold light, one kill in eight on its first write (server-account/src/sds.js), held for good; CRYSTAL-FIST (2026-10-05, the owner, for Flylighter: "a circle of tiny purple squares going up and down out of the ground"): the Crystal Resonance - the Crystal Fist's own ring of rising and falling purple squares, granted with its title by name, never sold.    // SERAPH-WINGS (2026-10-05, Mac: "I want to build an aura for the developers ... Golden Angel wings that flow"): the Seraph Wings.    // SHADOW-CLOAK (2026-10-04, the owner, for SirMcMobdon: "A holo shadow cloak with red accents"): the Holo Shadow Cloak - the Shadow Fang's own hooded cloak of shadow and crimson light, granted with its title by name, never sold; PRIMARCH (2026-10-04, GA00250: "can the aura be a golden light around the character?"): the Golden Radiance - the Primarch's own column of golden light about the body, granted with its title by name, never sold; AEGIS (2026-10-03): the Oblivion Ward - the Aegis of Oblivion's own ring of runes, granted with its title by name (server-account/src/titles.js TIER_AURA), never sold
+export const AURAS = Object.freeze([
+  'dagonfire',
+  'oblivionward',
+  'radiance',
+  'shadowcloak',
+  'seraphwings',
+  'resonance',
+  'turninghour',
+  'firsthour',
+  'maelstrom',
+  'beaconlight',
+  'burningstair',
+  'firstlight',
+  'lilacwarren',
+  'witchfire',
+  'sagesmoke',
+  'eternal',
+  'dominion',
+  'aetherium',
+  'gildedcoil',
+  'aetherwings',
+  'vampirichaze',
+]); // BLOOD-OF-COLDHARBOUR: the Vampiric Haze last - a dark violet haze, blood rising into Daedric runes;   // STOREFRONT (2026-10-29): the Daedric Dominion (the bundles' own) and the Battle Pass's Aetherium; the Aetherium Wings, the Gilded Folio's capstone (2026-10-30) Coil and Gilded Coil, last;   // SHOP (2026-10-28): ETERNAL last - a cape of blue-violet fire hung from the shoulders and flowing down the back, the shop's pre-alpha aura, bought once;   // NIRNROOT-SAGE (2026-10-26, for Blob-Marley: "billowing smoke, circling nirn roots around midsection, small glowing green runes encircling feet"): SAGE'S SMOKE last - smoke billowing up about the body, nirnroots circling the waist, green runes glowing round the feet; the Nirnroot Sage's own, granted with its title by name, never sold;   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;   // WIKIMAID (2026-10-17, for SylviaBun: "a purple aura with bunnies"): THE LILAC WARREN last - rabbits hopping round the feet on a ring of lilac light, their prints fading behind them; the WikiMaid's own, granted with its title by name, never sold;   // EG-E2 (2026-10-12, Elite-Gates.md section 19): THE SPIRE'S THREE, last (after SERPENT5's Maelstrom, which main ships first) - Beaconlight (Kynbane's: gold-white motes), The Burning Stair (Wellhead-Walker's: falling embers) and Firstlight (First of the Spire's: a dawn-white ring), each granted with its title, never sold;   // SERPENT5 (2026-10-15, Sea-Serpent.md section 17): THE MAELSTROM last - the Old Coil's whirlpool of tide and foam about the feet, one dealing ship's serpent kill in fifty on its first write (server-account/src/serpents.js), held for good   // HOURS-FIRST (2026-10-08, Mac: "a unique different version of the aura"): THE FIRST HOUR, last - The Turning Hour's wheel in the light of the first dawn, its dial turning forward, the Hour's own mark ablaze; Hour's First's own, granted with the title by name, never rolled or sold;   // SD9c (2026-10-07, the Super Dungeons arc): THE TURNING HOUR, last - the Brass Remnant's wheel of brass gears and gold light, one kill in eight on its first write (server-account/src/sds.js), held for good; CRYSTAL-FIST (2026-10-05, the owner, for Flylighter: "a circle of tiny purple squares going up and down out of the ground"): the Crystal Resonance - the Crystal Fist's own ring of rising and falling purple squares, granted with its title by name, never sold.    // SERAPH-WINGS (2026-10-05, Mac: "I want to build an aura for the developers ... Golden Angel wings that flow"): the Seraph Wings.    // SHADOW-CLOAK (2026-10-04, the owner, for SirMcMobdon: "A holo shadow cloak with red accents"): the Holo Shadow Cloak - the Shadow Fang's own hooded cloak of shadow and crimson light, granted with its title by name, never sold; PRIMARCH (2026-10-04, GA00250: "can the aura be a golden light around the character?"): the Golden Radiance - the Primarch's own column of golden light about the body, granted with its title by name, never sold; AEGIS (2026-10-03): the Oblivion Ward - the Aegis of Oblivion's own ring of runes, granted with its title by name (server-account/src/titles.js TIER_AURA), never sold
 
 /** The glyphs that exist. A glyph is not worn, it is TRUE of a player -
  *  sprout is "this account is new", dev is "this is a developer", mod is
  *  "this is a moderator" (MOD1, Mac: "a moderator glyph") - so a token
  *  may carry several and a player chooses none of them. */
-export const GLYPHS = Object.freeze(['sprout', 'dev', 'mod', 'dm', 'disciple', 'apostle', 'hierophant', 'shadowfang', 'penitent', 'herald', 'tower', 'crownDF', 'crownWR', 'crownSN', 'laurel', 'aegis', 'primarch', 'crystalfist', 'wikimaid', 'nirnrootsage', 'crownSK', 'crownMW', 'crownSU', 'crownVW', 'crownEW', 'crownBM', 'crownCY', 'origin', 'oblivion', 'gatesigil', 'gearcrown', 'tonalfork', 'cog', 'coldharbour']);   // BLOOD-OF-COLDHARBOUR: the rose in its ring of thorns, Trakel's, last;   // STOREFRONT (2026-10-29): the bundles' three (the Oblivion Sigil, the Gate Sigil, the Brass Crown) and the Battle Pass's two, last;   // NIRNROOT-SAGE: the nirnrootsage - a nirnroot sprig, its leaves and its glowing bud, Blob-Marley's, last;   // WIKIMAID: the wikimaid - a rabbit's head in a maid's frilled headband, SylviaBun's, last;   // CRYSTAL-FIST: the crystal fist - Flylighter's three slashes, last;   // PRIMARCH: the primarch - GA00250's three-barred cross;   // AEGIS: the aegis - three pillars through a ring over the void's tendrils, Sureme's reference, last;   // ARENA4: the laurel - the Arena Champion's wreath, true of the season's #1 while they hold the top, last;   // HERALD: the herald's trumpet and its banner, after the penitent's; SEAT1c (Seats-Arc 7.4): a seat's - `tower` every member of a guild holding a palace seat, a crown in its kingdom's metal every member of a crown's   // TITLE-N: each new title has its own glyph (Mac), true of whoever holds the title; SHADOW-FANG: the wolf's head, and the werewolf's skin rides it; PENITENT: the sword in its lozenge; WW7-3: the provinces' crowns, after every glyph a token already carries (net/townSeatLaw.js SEAT_CROWN_GLYPHS)   // WIKIMAID: the wikimaid - a rabbit's head in a maid's frilled headband, SylviaBun's, last;   // CRYSTAL-FIST: the crystal fist - Flylighter's three slashes, last;   // PRIMARCH: the primarch - GA00250's three-barred cross;   // AEGIS: the aegis - three pillars through a ring over the void's tendrils, Sureme's reference, last;   // ARENA4: the laurel - the Arena Champion's wreath, true of the season's #1 while they hold the top, last;   // HERALD: the herald's trumpet and its banner, after the penitent's; SEAT1c (Seats-Arc 7.4): a seat's - `tower` every member of a guild holding a palace seat, a crown in its kingdom's metal every member of a crown's   // TITLE-N: each new title has its own glyph (Mac), true of whoever holds the title; SHADOW-FANG: the wolf's head, and the werewolf's skin rides it; PENITENT: the sword in its lozenge   // SHOP (2026-10-28): the origin, last - a dragon coiled round on itself, the shop's pre-alpha glyph
+export const GLYPHS = Object.freeze([
+  'sprout',
+  'dev',
+  'mod',
+  'dm',
+  'disciple',
+  'apostle',
+  'hierophant',
+  'shadowfang',
+  'penitent',
+  'herald',
+  'tower',
+  'crownDF',
+  'crownWR',
+  'crownSN',
+  'laurel',
+  'aegis',
+  'primarch',
+  'crystalfist',
+  'wikimaid',
+  'nirnrootsage',
+  'crownSK',
+  'crownMW',
+  'crownSU',
+  'crownVW',
+  'crownEW',
+  'crownBM',
+  'crownCY',
+  'origin',
+  'oblivion',
+  'gatesigil',
+  'gearcrown',
+  'tonalfork',
+  'cog',
+  'coldharbour',
+]); // BLOOD-OF-COLDHARBOUR: the rose in its ring of thorns, Trakel's, last;   // STOREFRONT (2026-10-29): the bundles' three (the Oblivion Sigil, the Gate Sigil, the Brass Crown) and the Battle Pass's two, last;   // NIRNROOT-SAGE: the nirnrootsage - a nirnroot sprig, its leaves and its glowing bud, Blob-Marley's, last;   // WIKIMAID: the wikimaid - a rabbit's head in a maid's frilled headband, SylviaBun's, last;   // CRYSTAL-FIST: the crystal fist - Flylighter's three slashes, last;   // PRIMARCH: the primarch - GA00250's three-barred cross;   // AEGIS: the aegis - three pillars through a ring over the void's tendrils, Sureme's reference, last;   // ARENA4: the laurel - the Arena Champion's wreath, true of the season's #1 while they hold the top, last;   // HERALD: the herald's trumpet and its banner, after the penitent's; SEAT1c (Seats-Arc 7.4): a seat's - `tower` every member of a guild holding a palace seat, a crown in its kingdom's metal every member of a crown's   // TITLE-N: each new title has its own glyph (Mac), true of whoever holds the title; SHADOW-FANG: the wolf's head, and the werewolf's skin rides it; PENITENT: the sword in its lozenge; WW7-3: the provinces' crowns, after every glyph a token already carries (net/townSeatLaw.js SEAT_CROWN_GLYPHS)   // WIKIMAID: the wikimaid - a rabbit's head in a maid's frilled headband, SylviaBun's, last;   // CRYSTAL-FIST: the crystal fist - Flylighter's three slashes, last;   // PRIMARCH: the primarch - GA00250's three-barred cross;   // AEGIS: the aegis - three pillars through a ring over the void's tendrils, Sureme's reference, last;   // ARENA4: the laurel - the Arena Champion's wreath, true of the season's #1 while they hold the top, last;   // HERALD: the herald's trumpet and its banner, after the penitent's; SEAT1c (Seats-Arc 7.4): a seat's - `tower` every member of a guild holding a palace seat, a crown in its kingdom's metal every member of a crown's   // TITLE-N: each new title has its own glyph (Mac), true of whoever holds the title; SHADOW-FANG: the wolf's head, and the werewolf's skin rides it; PENITENT: the sword in its lozenge   // SHOP (2026-10-28): the origin, last - a dragon coiled round on itself, the shop's pre-alpha glyph
 
 /** The bound on `g`, and it is the vocabulary's own size rather than a
  *  number somebody picked: a token carrying more glyph slots than there
@@ -249,8 +403,14 @@ export const GLYPH_BITS_RE = new RegExp(`^[0-9a-f]{1,${Math.ceil(GLYPHS.length /
 /** A glyph list as its mask (`gb`), or '' for none. Pure. @param {ReadonlyArray<string>} list */
 export function glyphBitsOf(list) {
   const n = new Array(Math.ceil(GLYPHS.length / 4)).fill(0);
-  for (const g of list) { const i = GLYPHS.indexOf(g); if (i >= 0) n[i >> 2] |= 1 << (i & 3); }
-  return n.map((v) => v.toString(16)).join('').replace(/0+$/, '');
+  for (const g of list) {
+    const i = GLYPHS.indexOf(g);
+    if (i >= 0) n[i >> 2] |= 1 << (i & 3);
+  }
+  return n
+    .map((v) => v.toString(16))
+    .join('')
+    .replace(/0+$/, '');
 }
 /** A mask's glyphs in GLYPHS' order, or null for a mask no minter writes (a bit past the list, a trailing zero). Pure. */
 export function glyphsOfBits(/** @type {unknown} */ bits) {
@@ -258,7 +418,12 @@ export function glyphsOfBits(/** @type {unknown} */ bits) {
   const out = [];
   for (let c = 0; c < bits.length; c++) {
     const v = parseInt(bits[c], 16);
-    for (let k = 0; k < 4; k++) if (v & (1 << k)) { const g = GLYPHS[c * 4 + k]; if (g === undefined) return null; out.push(g); }
+    for (let k = 0; k < 4; k++)
+      if (v & (1 << k)) {
+        const g = GLYPHS[c * 4 + k];
+        if (g === undefined) return null;
+        out.push(g);
+      }
   }
   return out;
 }
@@ -272,7 +437,24 @@ export const glyphsInOrder = (/** @type {ReadonlyArray<string>} */ list) => GLYP
  *  title's reason: a picture another player's Inspect card shows is one the service vouches for. Holding one is the
  *  service's business (server-account/src/titles.js iconsHeld: the Witches' Festival's, bought or earned); this list is
  *  the vocabulary both ends share. Appended, never reordered. */
-export const ICONS = Object.freeze(['tallowskull', 'twinmoons', 'wyrdcauldron', 'soulcake', 'aetherium', 'lexicon', 'gearheart', 'gatefire', 'aurbis', 'elderscroll', 'azurastar', 'redmountain', 'hourglass', 'sanguinerose', 'whitegold', 'guildcrest']);   // STOREFRONT (2026-10-29, bible/06-Systems/Battle-Pass.md): Season One's three portraits, then the daily wares' eight (AURUM, bible/06-Systems/Aurum.md - the owner: "For profile icons no figures should be used"), last   // GUILD-SHOP: the Guild Crest - the wearer's guild's arms (guildShopLaw.js)
+export const ICONS = Object.freeze([
+  'tallowskull',
+  'twinmoons',
+  'wyrdcauldron',
+  'soulcake',
+  'aetherium',
+  'lexicon',
+  'gearheart',
+  'gatefire',
+  'aurbis',
+  'elderscroll',
+  'azurastar',
+  'redmountain',
+  'hourglass',
+  'sanguinerose',
+  'whitegold',
+  'guildcrest',
+]); // STOREFRONT (2026-10-29, bible/06-Systems/Battle-Pass.md): Season One's three portraits, then the daily wares' eight (AURUM, bible/06-Systems/Aurum.md - the owner: "For profile icons no figures should be used"), last   // GUILD-SHOP: the Guild Crest - the wearer's guild's arms (guildShopLaw.js)
 
 /** RENOWN1 (2026-09-24, Mac: "What if the leveling system was something
  *  seperate unique to online but compatible" ... "Plus having their level
@@ -303,7 +485,9 @@ const bytesFromB64url = (s) => {
     const out = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
     return out;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 };
 
 /**
@@ -316,14 +500,13 @@ const bytesFromB64url = (s) => {
  * @param {unknown} name
  */
 export function nameIsIssuable(name) {
-  return typeof name === 'string' && name.length > 0 && name.length <= NAME_MAX
-    && sanitizeName(name) === name;
+  return typeof name === 'string' && name.length > 0 && name.length <= NAME_MAX && sanitizeName(name) === name;
 }
 
 /**
  * The claims, as they ride. Short keys because this travels in a hello
  * on every connection and the payload is base64 on top.
- * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number, t?: string, g?: string[], mu?: number, fz?: number, lv?: number, gi?: string, gt?: string, gm?: string, rc?: 0|1, ci?: string, au?: string, ak?: string, fx?: string, sc?: 1, ar?: number, cl?: number, wa?: [number, 0|1], vl?: number, hn?: string, hc?: string, hb?: 1, hg?: number, hd?: 1, fo?: string}} Claims
+ * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number, t?: string, g?: string[], mu?: number, fz?: number, lv?: number, gi?: string, gt?: string, gm?: string, rc?: 0|1, ci?: string, au?: string, ak?: string, fx?: string, sc?: 1, ar?: number, cl?: number, wa?: [number, 0|1], mg?: number, vl?: number, hn?: string, hc?: string, hb?: 1, hg?: number, hd?: 1, fo?: string}} Claims
  *   s  the account id          n  the display name
  *   k  guest or linked         i  issued at, epoch seconds
  *   e  expires at, epoch seconds
@@ -362,7 +545,7 @@ export function nameIsIssuable(name) {
  *      and 1 where a lawful bow is among them; beside a 1 `rc` alone,
  *      absent before its first judged checkpoint and from a service
  *      before INT7. Every referee's clip of a blow between players
- *      (net/siege/siegeRef.js siegeBlowMax, net/arena/arenaLaw.js arenaBlowCap)
+ *      (net/siege/siegeRef.js siegeBlowMax, net/arena/arenaLaw.js arenaBlowCap); `mg` that character's MIGHT (EG-MIGHT, net/mightLaw.js), beside a 1 `rc` alone - an Elite Breach's purse grows by it
  *   hd 1 on a HIDDEN STAFF SPECTATOR's token (STAFF-PANEL5-HIDDEN, mob: "true
  *      invis not lattys invis"), absent on every other: an Admin's or a
  *      Moderator's while they hold a live staff session with Hide me on.
@@ -387,12 +570,25 @@ export const ARENA_RATING_MAX = 4000;
 export const CHARACTER_LEVEL_MIN = 1;
 export const CHARACTER_LEVEL_MAX = 1000;
 /** ARENA4b: a character level a token may carry - a whole number in bounds, never a stand-in. */
-export const characterLevelIssuable = (cl) => Number.isSafeInteger(cl) && cl >= CHARACTER_LEVEL_MIN && cl <= CHARACTER_LEVEL_MAX;
+export const characterLevelIssuable = (cl) =>
+  Number.isSafeInteger(cl) && cl >= CHARACTER_LEVEL_MIN && cl <= CHARACTER_LEVEL_MAX;
 /** INT7: the most reach a weapon has (net/siege/siegeRef.js ARMS_TOP_MAX - a Daedric Thunderlock's 26 + 6, pinned equal; its own
  *  name, ONE MEMBER ONE EXPORT - this leaf imports only the token's). */
 export const TOKEN_ARMS_TOP_MAX = 32;
 /** INT7: an arms claim a token may carry - `[reach, bow]`, the reach a whole number 0..TOKEN_ARMS_TOP_MAX, the bow 0 or 1. */
-export const armsIssuable = (wa) => Array.isArray(wa) && wa.length === 2 && Number.isSafeInteger(wa[0]) && wa[0] >= 0 && wa[0] <= TOKEN_ARMS_TOP_MAX && (wa[1] === 0 || wa[1] === 1);
+export const armsIssuable = (wa) =>
+  Array.isArray(wa) &&
+  wa.length === 2 &&
+  Number.isSafeInteger(wa[0]) &&
+  wa[0] >= 0 &&
+  wa[0] <= TOKEN_ARMS_TOP_MAX &&
+  (wa[1] === 0 || wa[1] === 1);
+/** EG-MIGHT: a might's bounds on a token (net/mightLaw.js MIGHT_NONE and MIGHT_MOST, pinned equal - this leaf imports only
+ *  the token's). */
+export const TOKEN_MIGHT_MIN = 100;
+export const TOKEN_MIGHT_MAX = 1000;
+/** EG-MIGHT: a might a token may carry - a whole per cent in bounds. */
+export const mightIssuable = (mg) => Number.isSafeInteger(mg) && mg >= TOKEN_MIGHT_MIN && mg <= TOKEN_MIGHT_MAX;
 
 /** PVP-VILLAIN-KEEP: the villain meter's top on a token (systems/wild/villainLaw.js VILLAIN.max, pinned - this leaf imports
  *  only the token's). */
@@ -415,9 +611,14 @@ export const REALM_CHARACTER_RE = /^r[0-9a-f]{20}$/;
  *  only one of the three anybody else is shown. */
 export function guildClaimsValid(c) {
   if (c?.gi === undefined && c?.gt === undefined && c?.gm === undefined) return true;
-  return typeof c.gi === 'string' && GUILD_ID_RE.test(c.gi)
-    && typeof c.gt === 'string' && GUILD_TAG_RE.test(c.gt)
-    && typeof c.gm === 'string' && GUILD_MEMBER_RE.test(c.gm);
+  return (
+    typeof c.gi === 'string' &&
+    GUILD_ID_RE.test(c.gi) &&
+    typeof c.gt === 'string' &&
+    GUILD_TAG_RE.test(c.gt) &&
+    typeof c.gm === 'string' &&
+    GUILD_MEMBER_RE.test(c.gm)
+  );
 }
 
 /** Everything a well-formed claim set must be, before any signature is
@@ -437,19 +638,19 @@ export function claimsValid(c, { maxTtlS = MAX_TTL_S } = {}) {
   // SEAT1c: a seat's title rides with its claim, and the claim with nothing else - absent for every other title; CHAP4c:
   // and a chapter's seat's
   if (titleClaimed(c.t) ? !seatTitleClaimOk(c.ts) : c.ts !== undefined) return false;
-  if (c.pi !== undefined && !ICONS.includes(c.pi)) return false;   // WITCH1: the profile icon worn, the aura's law - absent for none (the face), one of the known or refused
-  if (c.au !== undefined && !AURAS.includes(c.au)) return false;   // WB9g: the aura worn, the title's law - absent for none, one of the known or refused
+  if (c.pi !== undefined && !ICONS.includes(c.pi)) return false; // WITCH1: the profile icon worn, the aura's law - absent for none (the face), one of the known or refused
+  if (c.au !== undefined && !AURAS.includes(c.au)) return false; // WB9g: the aura worn, the title's law - absent for none, one of the known or refused
   if (c.ak !== undefined && !armoryKitOk(c.ak)) return false;
-  if (c.sc !== undefined && c.sc !== 1) return false;   // AUDIT GUILD-SHOP S2: the Guild Sailcloth held - absent for none, 1 or refused   // ARMORY: the kit worn, the aura's law - absent for none, a kit of known pieces or refused
-  if (c.fx !== undefined && !effectKitOk(c.fx)) return false;   // STOREFRONT: the effects kit worn (a kill effect, a portal skin, a mount look), the armory's law
-  if (c.rb !== undefined && !ribbonClaimOk(c.rb)) return false;   // SEASON1 part two: a Season's banner ribbon - absent for none, two of the sixteen colours or refused
+  if (c.sc !== undefined && c.sc !== 1) return false; // AUDIT GUILD-SHOP S2: the Guild Sailcloth held - absent for none, 1 or refused   // ARMORY: the kit worn, the aura's law - absent for none, a kit of known pieces or refused
+  if (c.fx !== undefined && !effectKitOk(c.fx)) return false; // STOREFRONT: the effects kit worn (a kill effect, a portal skin, a mount look), the armory's law
+  if (c.rb !== undefined && !ribbonClaimOk(c.rb)) return false; // SEASON1 part two: a Season's banner ribbon - absent for none, two of the sixteen colours or refused
   if (c.g !== undefined) {
-    if (c.gb !== undefined) return false;   // STOREFRONT: one way of saying them
+    if (c.gb !== undefined) return false; // STOREFRONT: one way of saying them
     if (!Array.isArray(c.g) || c.g.length > GLYPHS_MAX) return false;
     if (!c.g.every((g) => GLYPHS.includes(g))) return false;
-    if (new Set(c.g).size !== c.g.length) return false;   // a repeat is a longer claim set saying one thing
+    if (new Set(c.g).size !== c.g.length) return false; // a repeat is a longer claim set saying one thing
   }
-  const glyphs = c.gb !== undefined ? glyphsOfBits(c.gb) : c.g;   // STOREFRONT: the mask, a mask a minter writes or refused
+  const glyphs = c.gb !== undefined ? glyphsOfBits(c.gb) : c.g; // STOREFRONT: the mask, a mask a minter writes or refused
   if (c.gb !== undefined && !glyphs?.length) return false;
   // GLYPH-WEAR: the glyphs taken off - a list of `g`'s own, each once; absent for none, so a service before it signs
   // nothing new. One `g` does not carry is refused: a token cannot hide what it never said was true.
@@ -470,7 +671,7 @@ export function claimsValid(c, { maxTtlS = MAX_TTL_S } = {}) {
   // RENOWN1: the level, optional the same way - absent from a token minted
   // without a character (an older build) - and within the cap when there.
   if (c.lv !== undefined && !renownIssuable(c.lv)) return false;
-  if (!guildClaimsValid(c)) return false;   // GUILD1c
+  if (!guildClaimsValid(c)) return false; // GUILD1c
   // REALM-DOOR: the realm's word on the named character - exactly 0 or 1, never a truthy stand-in; absent from a service
   // before it, which the relay admits as it always did (the two Workers deploy on their own)
   if (c.rc !== undefined && c.rc !== 0 && c.rc !== 1) return false;
@@ -478,22 +679,24 @@ export function claimsValid(c, { maxTtlS = MAX_TTL_S } = {}) {
   if (c.ci !== undefined && !(c.rc === 1 && typeof c.ci === 'string' && REALM_CHARACTER_RE.test(c.ci))) return false;
   // ARENA4: the account's arena rating this season (net/arena/arenaLaw.js - the hall queues by it): absent from a service before
   // it and from a guest's token; present, a whole number on the rating's scale
-  if (c.ar !== undefined && !(Number.isSafeInteger(c.ar) && c.ar >= ARENA_RATING_MIN && c.ar <= ARENA_RATING_MAX)) return false;
+  if (c.ar !== undefined && !(Number.isSafeInteger(c.ar) && c.ar >= ARENA_RATING_MIN && c.ar <= ARENA_RATING_MAX))
+    return false;
   // ARENA4b: the named character's level (the relay's ladder vitality reads it): absent from a service before it and from a
   // mint that named no character; present, a whole number from 1 to the realm's 1000
   if (c.cl !== undefined && !characterLevelIssuable(c.cl)) return false;
   // INT7: the realm character's arms (every referee's clip): beside the realm's yes alone, of its shape or refused
   if (c.wa !== undefined && !(c.rc === 1 && armsIssuable(c.wa))) return false;
-  if (c.vl !== undefined && !(c.rc === 1 && villainyIssuable(c.vl))) return false;   // PVP-VILLAIN-KEEP: the meter, beside the realm's yes alone
-  if (!houseClaimOk(c)) return false;   // LEGACY7: the house - absent for none, each field of its shape or refused
+  if (c.mg !== undefined && !(c.rc === 1 && mightIssuable(c.mg))) return false; // EG-MIGHT: the kit's might, beside the realm's yes alone
+  if (c.vl !== undefined && !(c.rc === 1 && villainyIssuable(c.vl))) return false; // PVP-VILLAIN-KEEP: the meter, beside the realm's yes alone
+  if (!houseClaimOk(c)) return false; // LEGACY7: the house - absent for none, each field of its shape or refused
   // STAFF-PANEL5 (design doc "DFO Staff Panel: design", Invisible follow; the hidden builder's claim and the follow
   // builder's): `hd` 1 a hidden staff spectator's socket, minted only by the account service's staff doors - absent for
   // every player; `fo` the account a hidden spectator follows, beside `hd` alone and never its own subject
   if (c.hd !== undefined && c.hd !== 1) return false;
   if (c.fo !== undefined && !(c.hd === 1 && typeof c.fo === 'string' && ID_RE.test(c.fo) && c.fo !== c.s)) return false;
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
-  if (c.e <= c.i) return false;                 // a token that is born dead
-  if (c.e - c.i > maxTtlS) return false;        // a minter that got greedy
+  if (c.e <= c.i) return false; // a token that is born dead
+  if (c.e - c.i > maxTtlS) return false; // a minter that got greedy
   return true;
 }
 
@@ -515,7 +718,7 @@ export const tokenBodyOf = (/** @type {string} */ token) => String(token ?? '').
  * MINT. The account service's half - it holds the private key and
  * nothing else does.
  *
- * @param {{s:string, n:string, k:'guest'|'linked', t?:string, ts?:number[], g?:string[], mu?:number, fz?:number, lv?:number, gi?:string, gt?:string, gm?:string, rc?:0|1, ci?:string, au?:string, ak?:string, fx?:string, sc?:1, pi?:string, rb?:number[], gx?:string[], ar?:number, cl?:number, wa?:[number, 0|1], vl?:number, hn?:string, hc?:string, hb?:1, hg?:number, hd?:1, fo?:string}} who
+ * @param {{s:string, n:string, k:'guest'|'linked', t?:string, ts?:number[], g?:string[], mu?:number, fz?:number, lv?:number, gi?:string, gt?:string, gm?:string, rc?:0|1, ci?:string, au?:string, ak?:string, fx?:string, sc?:1, pi?:string, rb?:number[], gx?:string[], ar?:number, cl?:number, wa?:[number, 0|1], mg?:number, vl?:number, hn?:string, hc?:string, hb?:1, hg?:number, hd?:1, fo?:string}} who
  * @param {CryptoKey} privateKey  an Ed25519 private key
  * @param {{subtle: SubtleCrypto, nowS: number, ttlS?: number}} env
  * @returns {Promise<string>}
@@ -527,30 +730,35 @@ export async function mintToken(who, privateKey, { subtle, nowS, ttlS = MAX_TTL_
   // minter has always minted.
   const claims = { s: who?.s, n: who?.n, k: who?.k, i: nowS, e: nowS + ttlS };
   if (who?.t !== undefined) claims.t = who.t;
-  if (who?.ts !== undefined) claims.ts = who.ts;   // SEAT1c: a seat title's claim - beside its title alone (claimsValid)
-  if (who?.g !== undefined && who.g.length) claims.gb = glyphBitsOf(who.g);   // STOREFRONT: the glyphs as their mask
-  if (who?.mu !== undefined) claims.mu = who.mu;   // MOD1: only while muted - an unmuted player mints the bytes they always did
-  if (who?.fz !== undefined) claims.fz = who.fz;   // STAFF-PANEL5-FREEZE: only while frozen - an unfrozen player mints the bytes they always did
-  if (who?.lv !== undefined) claims.lv = who.lv;   // RENOWN1: only when the client named its character
+  if (who?.ts !== undefined) claims.ts = who.ts; // SEAT1c: a seat title's claim - beside its title alone (claimsValid)
+  if (who?.g !== undefined && who.g.length) claims.gb = glyphBitsOf(who.g); // STOREFRONT: the glyphs as their mask
+  if (who?.mu !== undefined) claims.mu = who.mu; // MOD1: only while muted - an unmuted player mints the bytes they always did
+  if (who?.fz !== undefined) claims.fz = who.fz; // STAFF-PANEL5-FREEZE: only while frozen - an unfrozen player mints the bytes they always did
+  if (who?.lv !== undefined) claims.lv = who.lv; // RENOWN1: only when the client named its character
   // GUILD1c: only while that character is in a guild - all three, and a partial set is refused below, not trimmed
-  if (who?.gi !== undefined || who?.gt !== undefined || who?.gm !== undefined) Object.assign(claims, { gi: who.gi, gt: who.gt, gm: who.gm });
-  if (who?.rc !== undefined) claims.rc = who.rc;   // REALM-DOOR: a 0 is said, never dropped as falsy - it is the relay's refusal
-  if (who?.ci !== undefined) claims.ci = who.ci;   // AUDIT LEGACY III O1: only with the realm's yes - a 0, or none named, the bytes as before
-  if (who?.au !== undefined) claims.au = who.au;   // WB9g: only while an aura is worn - a player wearing none mints the bytes they always did
+  if (who?.gi !== undefined || who?.gt !== undefined || who?.gm !== undefined)
+    Object.assign(claims, { gi: who.gi, gt: who.gt, gm: who.gm });
+  if (who?.rc !== undefined) claims.rc = who.rc; // REALM-DOOR: a 0 is said, never dropped as falsy - it is the relay's refusal
+  if (who?.ci !== undefined) claims.ci = who.ci; // AUDIT LEGACY III O1: only with the realm's yes - a 0, or none named, the bytes as before
+  if (who?.au !== undefined) claims.au = who.au; // WB9g: only while an aura is worn - a player wearing none mints the bytes they always did
   if (who?.ak !== undefined) claims.ak = who.ak;
-  if (who?.sc !== undefined) claims.sc = who.sc;   // AUDIT GUILD-SHOP S2: only while the Guild Sailcloth is held - none, the bytes as before   // ARMORY: only while a piece is worn - a player wearing none mints the bytes they always did
-  if (who?.fx !== undefined) claims.fx = who.fx;   // STOREFRONT: only while an effect is worn - a player wearing none mints the bytes they always did
-  if (who?.pi !== undefined) claims.pi = who.pi;   // WITCH1: only while a profile icon is worn - a player wearing none mints the bytes they always did
-  if (who?.rb !== undefined) claims.rb = who.rb;   // SEASON1 part two: only while a Season's ribbon is worn - none, the bytes as before
-  if (who?.gx !== undefined && who.gx.length) claims.gx = who.gx;   // GLYPH-WEAR: only while a glyph is taken off - a player hiding none mints the bytes they always did
-  if (who?.ar !== undefined) claims.ar = who.ar;   // ARENA4: only for a registered account - a guest mints the bytes it always did
-  if (who?.cl !== undefined) claims.cl = who.cl;   // ARENA4b: only when a character was named - a mint naming none, the bytes as before
-  if (who?.wa !== undefined) claims.wa = who.wa;   // INT7: only for a realm character judged since - before one, the bytes as before
-  if (who?.vl !== undefined) claims.vl = who.vl;   // PVP-VILLAIN-KEEP: only while the meter is above 0 - a meter at 0, the bytes as before
+  if (who?.sc !== undefined) claims.sc = who.sc; // AUDIT GUILD-SHOP S2: only while the Guild Sailcloth is held - none, the bytes as before   // ARMORY: only while a piece is worn - a player wearing none mints the bytes they always did
+  if (who?.fx !== undefined) claims.fx = who.fx; // STOREFRONT: only while an effect is worn - a player wearing none mints the bytes they always did
+  if (who?.pi !== undefined) claims.pi = who.pi; // WITCH1: only while a profile icon is worn - a player wearing none mints the bytes they always did
+  if (who?.rb !== undefined) claims.rb = who.rb; // SEASON1 part two: only while a Season's ribbon is worn - none, the bytes as before
+  if (who?.gx !== undefined && who.gx.length) claims.gx = who.gx; // GLYPH-WEAR: only while a glyph is taken off - a player hiding none mints the bytes they always did
+  if (who?.ar !== undefined) claims.ar = who.ar; // ARENA4: only for a registered account - a guest mints the bytes it always did
+  if (who?.cl !== undefined) claims.cl = who.cl; // ARENA4b: only when a character was named - a mint naming none, the bytes as before
+  if (who?.wa !== undefined) claims.wa = who.wa; // INT7: only for a realm character judged since - before one, the bytes as before
+  if (who?.mg !== undefined) claims.mg = who.mg; // EG-MIGHT: only for a realm character judged since - before one, the bytes as before
+  if (who?.vl !== undefined) claims.vl = who.vl; // PVP-VILLAIN-KEEP: only while the meter is above 0 - a meter at 0, the bytes as before
   // LEGACY7: only for a realm character of a Project Legacy line - a character of none, the bytes as before
-  if (who?.hn !== undefined) { claims.hn = who.hn; for (const k of /** @type {const} */ (['hc', 'hb', 'hg'])) if (who[k] !== undefined) claims[k] = who[k]; }
-  if (who?.hd !== undefined) claims.hd = who.hd;   // STAFF-PANEL5: a hidden staff spectator alone - a player mints the bytes they always did
-  if (who?.fo !== undefined) claims.fo = who.fo;   // STAFF-PANEL5-FOLLOW: the account it follows, beside `hd` alone
+  if (who?.hn !== undefined) {
+    claims.hn = who.hn;
+    for (const k of /** @type {const} */ (['hc', 'hb', 'hg'])) if (who[k] !== undefined) claims[k] = who[k];
+  }
+  if (who?.hd !== undefined) claims.hd = who.hd; // STAFF-PANEL5: a hidden staff spectator alone - a player mints the bytes they always did
+  if (who?.fo !== undefined) claims.fo = who.fo; // STAFF-PANEL5-FOLLOW: the account it follows, beside `hd` alone
   // A BAD CLAIM SET IS REFUSED AT THE MINTER. The verifier would refuse
   // it too, but at the player's machine, where the only thing anyone
   // learns is that online is broken.
@@ -583,7 +791,10 @@ async function sealClaims(claims, privateKey, subtle) {
  */
 export async function verifyToken(token, publicKey, { subtle, nowS, maxTtlS = MAX_TTL_S, skewS = SKEW_S }) {
   const r = await openSealed(token, publicKey, { subtle, nowS, skewS, valid: (c) => claimsValid(c, { maxTtlS }) });
-  if (r.ok && r.claims.gb !== undefined) { r.claims.g = /** @type {string[]} */ (glyphsOfBits(r.claims.gb)); delete r.claims.gb; }   // STOREFRONT: read back as the list
+  if (r.ok && r.claims.gb !== undefined) {
+    r.claims.g = /** @type {string[]} */ (glyphsOfBits(r.claims.gb));
+    delete r.claims.gb;
+  } // STOREFRONT: read back as the list
   return r;
 }
 
@@ -614,11 +825,17 @@ async function openSealed(token, publicKey, { subtle, nowS, skewS, valid }) {
   let good = false;
   try {
     good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`));
-  } catch { return { ok: false, why: 'verify-threw' }; }
+  } catch {
+    return { ok: false, why: 'verify-threw' };
+  }
   if (!good) return { ok: false, why: 'signature' };
 
   let claims;
-  try { claims = JSON.parse(dec.decode(raw)); } catch { return { ok: false, why: 'json' }; }
+  try {
+    claims = JSON.parse(dec.decode(raw));
+  } catch {
+    return { ok: false, why: 'json' };
+  }
   // Signed, and still checked: a key of ours signing a claim set we
   // would not have minted means the minter has a bug, and a bug is not
   // an authorisation.
@@ -655,7 +872,27 @@ async function openSealed(token, publicKey, { subtle, nowS, skewS, valid }) {
  *  second: 'renown', a character's Renown that ROSE while its player was
  *  already in a room, carried in by that player's own client (the token
  *  that let them in said the Renown they had then). */
-export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline', 'sevent', 'yard']);   // YARD-CELL YC2: a yard's cell moved to a version, the service's word for every page online (bible/11-Multiplayer/Yard-Cells.md section 3.6)   // STAFF-PANEL5-MESSAGE: a staff message stored for account `s` (`mi` its id) - the hub nudges that account's own sockets   // SAFE4: a ban - its end, the service's word that the account may no longer play   // EG-PLAY: an Elite Breach's open and a member's admission   // QUEST-HOME: a town's homes moved, the service's word for every page online   // INT9: a fall's drop, the service's word on what it took   // CARDS10: a ranked seat's deck, vouched for   // GUILD1c: a character's guild now, and a member or a guild gone   // SEAT2a: a battle's pass   // STAFF-PANEL2-FIX: a staff member cut off, the service's word that the account's sockets close   // STAFF-PANEL5-HIDDEN: a hidden staff subject's mark ended (Show myself, the staff session's end) - its sockets closed, never shown   // STAFF-PANEL5-FREEZE: a staff freeze - its end, the service's word that the account may only look around - and a staff line's nudge, the service's word that a staff chat thread has a new line
+export const ORDER_KINDS = Object.freeze([
+  'mute',
+  'renown',
+  'guild',
+  'guildout',
+  'siege',
+  'stake',
+  'deck',
+  'remains',
+  'home',
+  'egopen',
+  'egadmit',
+  'ban',
+  'smsg',
+  'staffcut',
+  'hide',
+  'freeze',
+  'staffline',
+  'sevent',
+  'yard',
+]); // YARD-CELL YC2: a yard's cell moved to a version, the service's word for every page online (bible/11-Multiplayer/Yard-Cells.md section 3.6)   // STAFF-PANEL5-MESSAGE: a staff message stored for account `s` (`mi` its id) - the hub nudges that account's own sockets   // SAFE4: a ban - its end, the service's word that the account may no longer play   // EG-PLAY: an Elite Breach's open and a member's admission   // QUEST-HOME: a town's homes moved, the service's word for every page online   // INT9: a fall's drop, the service's word on what it took   // CARDS10: a ranked seat's deck, vouched for   // GUILD1c: a character's guild now, and a member or a guild gone   // SEAT2a: a battle's pass   // STAFF-PANEL2-FIX: a staff member cut off, the service's word that the account's sockets close   // STAFF-PANEL5-HIDDEN: a hidden staff subject's mark ended (Show myself, the staff session's end) - its sockets closed, never shown   // STAFF-PANEL5-FREEZE: a staff freeze - its end, the service's word that the account may only look around - and a staff line's nudge, the service's word that a staff chat thread has a new line
 /** An order lives a minute - long enough to be carried to every room
  *  the moderator holds, short enough that a leaked one is stale before
  *  anyone could use it for anything but what it already said. */
@@ -671,16 +908,24 @@ const HIDE_ORDER_KEYS = Object.freeze(['o', 's', 'hd', 'i', 'e']);
 export function orderValid(c) {
   if (!c || typeof c !== 'object' || Array.isArray(c)) return false;
   if (!ORDER_KINDS.includes(c.o)) return false;
-  if (c.n !== undefined || c.k !== undefined) return false;   // an identity's fields: never on an order
+  if (c.n !== undefined || c.k !== undefined) return false; // an identity's fields: never on an order
   if (typeof c.s !== 'string' || !ID_RE.test(c.s)) return false;
-  const noGuild = c.gi === undefined && c.gt === undefined && c.gm === undefined;   // GUILD1c: a guild's fields are the guild kinds' alone
+  const noGuild = c.gi === undefined && c.gt === undefined && c.gm === undefined; // GUILD1c: a guild's fields are the guild kinds' alone
   if (c.o === 'mute' && (!Number.isSafeInteger(c.mu) || c.mu < 0 || c.lv !== undefined || !noGuild)) return false;
   if (c.o === 'renown' && (!renownIssuable(c.lv) || c.mu !== undefined || !noGuild)) return false;
   // GUILD1c: `guild` - the guild the carrier's character is in NOW, all three or none; `guildout` - guild `gi` lost its
   // member `gm` (removed), or everyone (no `gm`: disbanded), and never a tag, which names nobody
   if (c.o === 'guild' && (!guildClaimsValid(c) || c.mu !== undefined || c.lv !== undefined)) return false;
-  if (c.o === 'guildout' && (typeof c.gi !== 'string' || !GUILD_ID_RE.test(c.gi) || c.gt !== undefined
-    || (c.gm !== undefined && (typeof c.gm !== 'string' || !GUILD_MEMBER_RE.test(c.gm))) || c.mu !== undefined || c.lv !== undefined)) return false;
+  if (
+    c.o === 'guildout' &&
+    (typeof c.gi !== 'string' ||
+      !GUILD_ID_RE.test(c.gi) ||
+      c.gt !== undefined ||
+      (c.gm !== undefined && (typeof c.gm !== 'string' || !GUILD_MEMBER_RE.test(c.gm))) ||
+      c.mu !== undefined ||
+      c.lv !== undefined)
+  )
+    return false;
   // SEAT2a: a battle's pass carries its own fields and no other kind's; no other kind carries a pass's
   const noSiege = SIEGE_PASS_FIELDS.every((f) => c[f] === undefined);
   if (c.o !== 'siege' && !noSiege) return false;
@@ -688,31 +933,115 @@ export function orderValid(c) {
   // CARDS6: a card table's stake carries its own fields and no other kind's; no other kind carries a stake's
   const noStake = STAKE_FIELDS.every((f) => c[f] === undefined);
   if (c.o !== 'stake' && !noStake) return false;
-  if (c.o === 'stake' && (!stakeOrderValid(c) || c.mu !== undefined || c.lv !== undefined || !noGuild || !noSiege)) return false;
+  if (c.o === 'stake' && (!stakeOrderValid(c) || c.mu !== undefined || c.lv !== undefined || !noGuild || !noSiege))
+    return false;
   // CARDS10: a deck order carries its digest and no other kind's fields; no other kind carries a digest
   if (c.o !== 'deck' && c.dh !== undefined) return false;
-  if (c.o === 'deck' && (typeof c.dh !== 'string' || !DECK_DIGEST_RE.test(c.dh) || c.mu !== undefined || c.lv !== undefined || !noGuild || !noSiege || !noStake)) return false;
+  if (
+    c.o === 'deck' &&
+    (typeof c.dh !== 'string' ||
+      !DECK_DIGEST_RE.test(c.dh) ||
+      c.mu !== undefined ||
+      c.lv !== undefined ||
+      !noGuild ||
+      !noSiege ||
+      !noStake)
+  )
+    return false;
   // INT9: a remains order carries its own fields and no other kind's; no other kind carries a remains'
   const noRemains = REMAINS_FIELDS.every((f) => c[f] === undefined);
   if (c.o !== 'remains' && !noRemains) return false;
-  if (c.o === 'remains' && (!remainsOrderValid(c) || c.mu !== undefined || c.lv !== undefined || c.dh !== undefined || !noGuild || !noSiege || !noStake)) return false;
+  if (
+    c.o === 'remains' &&
+    (!remainsOrderValid(c) ||
+      c.mu !== undefined ||
+      c.lv !== undefined ||
+      c.dh !== undefined ||
+      !noGuild ||
+      !noSiege ||
+      !noStake)
+  )
+    return false;
   // QUEST-HOME: a home order carries its own fields and no other kind's; no other kind carries a home's
   const noHome = HOME_ORDER_FIELDS.every((f) => c[f] === undefined);
   if (c.o !== 'home' && !noHome) return false;
-  if (c.o === 'home' && (!homeOrderValid(c) || c.mu !== undefined || c.lv !== undefined || c.dh !== undefined || !noGuild || !noSiege || !noStake || !noRemains)) return false;
+  if (
+    c.o === 'home' &&
+    (!homeOrderValid(c) ||
+      c.mu !== undefined ||
+      c.lv !== undefined ||
+      c.dh !== undefined ||
+      !noGuild ||
+      !noSiege ||
+      !noStake ||
+      !noRemains)
+  )
+    return false;
   // EG-PLAY: an Elite Breach's orders carry their own fields and no other kind's; no other kind carries a breach's
   const noEg = EG_ORDER_FIELDS.every((f) => c[f] === undefined);
   const isEg = c.o === 'egopen' || c.o === 'egadmit';
   if (!isEg && !noEg) return false;
-  if (isEg && (!egOrderValid(c) || c.mu !== undefined || c.lv !== undefined || c.dh !== undefined || !noGuild || !noSiege || !noStake || !noRemains)) return false;
+  if (
+    isEg &&
+    (!egOrderValid(c) ||
+      c.mu !== undefined ||
+      c.lv !== undefined ||
+      c.dh !== undefined ||
+      !noGuild ||
+      !noSiege ||
+      !noStake ||
+      !noRemains)
+  )
+    return false;
   // SAFE4: a ban carries its end (`bn`, epoch seconds - 0 lifted) and no other kind's fields; no other kind carries a ban's
   if (c.o !== 'ban' && c.bn !== undefined) return false;
-  if (c.o === 'ban' && (!Number.isSafeInteger(c.bn) || c.bn < 0 || c.mu !== undefined || c.lv !== undefined || c.dh !== undefined || !noGuild || !noSiege || !noStake || !noRemains || !noHome || !noEg)) return false;
+  if (
+    c.o === 'ban' &&
+    (!Number.isSafeInteger(c.bn) ||
+      c.bn < 0 ||
+      c.mu !== undefined ||
+      c.lv !== undefined ||
+      c.dh !== undefined ||
+      !noGuild ||
+      !noSiege ||
+      !noStake ||
+      !noRemains ||
+      !noHome ||
+      !noEg)
+  )
+    return false;
   // STAFF-PANEL5-MESSAGE: a staff message's order carries its id (`mi`) and no other kind's fields; no other kind carries a `mi`
   if (c.o !== 'smsg' && c.mi !== undefined) return false;
-  if (c.o === 'smsg' && (typeof c.mi !== 'string' || !ID_RE.test(c.mi) || c.mu !== undefined || c.lv !== undefined || c.dh !== undefined || c.bn !== undefined || !noGuild || !noSiege || !noStake || !noRemains || !noHome || !noEg)) return false;
+  if (
+    c.o === 'smsg' &&
+    (typeof c.mi !== 'string' ||
+      !ID_RE.test(c.mi) ||
+      c.mu !== undefined ||
+      c.lv !== undefined ||
+      c.dh !== undefined ||
+      c.bn !== undefined ||
+      !noGuild ||
+      !noSiege ||
+      !noStake ||
+      !noRemains ||
+      !noHome ||
+      !noEg)
+  )
+    return false;
   // STAFF-PANEL2-FIX: a staff cut names its account and carries nothing else
-  if (c.o === 'staffcut' && (c.mu !== undefined || c.lv !== undefined || c.dh !== undefined || !noGuild || !noSiege || !noStake || !noRemains || !noHome || !noEg)) return false;
+  if (
+    c.o === 'staffcut' &&
+    (c.mu !== undefined ||
+      c.lv !== undefined ||
+      c.dh !== undefined ||
+      !noGuild ||
+      !noSiege ||
+      !noStake ||
+      !noRemains ||
+      !noHome ||
+      !noEg)
+  )
+    return false;
   // STAFF-PANEL5-HIDDEN: a hide order is `{o:'hide', s, hd: 0, i, e}` - the hidden subject `s` hidden no longer - and carries
   // nothing else; no other kind carries an `hd`
   if (c.o !== 'hide' && c.hd !== undefined) return false;
@@ -721,7 +1050,8 @@ export function orderValid(c) {
   // the account service's row id), each that and nothing else; no other kind carries either
   const staffField = STAFF_ORDER_FIELDS[/** @type {'freeze'|'staffline'} */ (c.o)];
   if (staffField) {
-    if (!Object.keys(c).every((k) => k === 'o' || k === 's' || k === 'i' || k === 'e' || k === staffField)) return false;
+    if (!Object.keys(c).every((k) => k === 'o' || k === 's' || k === 'i' || k === 'e' || k === staffField))
+      return false;
     if (!Number.isSafeInteger(c[staffField]) || c[staffField] < (c.o === 'freeze' ? 0 : 1)) return false;
   } else if (c.fz !== undefined || c.sl !== undefined) return false;
   // STAFF-EVENT: a staff event's order is `{o:'sevent', s, op, ev?, ei?, i, e}` - staff member `s` staging an event (`op`
@@ -741,7 +1071,8 @@ const SEVENT_ORDER_KEYS = Object.freeze(['o', 's', 'op', 'ev', 'ei', 'i', 'e']);
 function staffEventOrderValid(c) {
   if (Object.keys(c).some((k) => !SEVENT_ORDER_KEYS.includes(k))) return false;
   if (c.op === 'start') return c.ei === undefined && validStaffEvent(c.ev) !== null;
-  if (c.op === 'end' || c.op === 'boss') return c.ev === undefined && typeof c.ei === 'string' && STAFF_EVENT_ID_RE.test(c.ei);
+  if (c.op === 'end' || c.op === 'boss')
+    return c.ev === undefined && typeof c.ei === 'string' && STAFF_EVENT_ID_RE.test(c.ei);
   return c.op === 'look' && c.ev === undefined && c.ei === undefined;
 }
 
@@ -760,16 +1091,36 @@ export const HOME_ORDER_FIELDS = Object.freeze(['bm', 'bu', 'bd']);
 /** Whether a claim set's home fields are a home order's. */
 export function homeOrderValid(c) {
   if (!homeMapIdOk(c.bm)) return false;
-  const on = c.bu ?? [], off = c.bd ?? [];
-  if (!Array.isArray(on) || !Array.isArray(off) || (c.bu !== undefined && !on.length) || (c.bd !== undefined && !off.length)) return false;
+  const on = c.bu ?? [],
+    off = c.bd ?? [];
+  if (
+    !Array.isArray(on) ||
+    !Array.isArray(off) ||
+    (c.bu !== undefined && !on.length) ||
+    (c.bd !== undefined && !off.length)
+  )
+    return false;
   const all = [...on, ...off];
-  return all.length > 0 && all.length <= HOME_ORDER_KEYS_MAX && all.every(homeBuildingKeyOk) && new Set(all).size === all.length;
+  return (
+    all.length > 0 &&
+    all.length <= HOME_ORDER_KEYS_MAX &&
+    all.every(homeBuildingKeyOk) &&
+    new Set(all).size === all.length
+  );
 }
 /** QUEST-HOME: MINT A HOME ORDER - the service's word that account `s`'s act left town `bm`'s buildings `bu` homes and
  *  `bd` homes no more (either may be empty, never both). */
 export async function mintHomeOrder({ s, bm, bu = [], bd = [] }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
   if (!Number.isSafeInteger(nowS)) throw new TypeError('mintHomeOrder needs an integer epoch-seconds clock');
-  const claims = { o: 'home', s, bm, ...(bu.length ? { bu: [...bu] } : {}), ...(bd.length ? { bd: [...bd] } : {}), i: nowS, e: nowS + ttlS };
+  const claims = {
+    o: 'home',
+    s,
+    bm,
+    ...(bu.length ? { bu: [...bu] } : {}),
+    ...(bd.length ? { bd: [...bd] } : {}),
+    i: nowS,
+    e: nowS + ttlS,
+  };
   if (!orderValid(claims)) throw new TypeError('mintHomeOrder refused an order it could not verify');
   return sealClaims(claims, privateKey, subtle);
 }
@@ -817,9 +1168,11 @@ export const STAKE_ROOM_RE = /^interior:[A-Za-z0-9._:-]{1,80}$/;
 export const STAKE_GOLD_MAX = 1_000_000;
 /** Whether a claim set's stake fields are a stake's. */
 export function stakeOrderValid(c) {
-  if (typeof c.cj !== 'string' || !STAKE_ID_RE.test(c.cj) || typeof c.cr !== 'string' || !STAKE_ROOM_RE.test(c.cr)) return false;
+  if (typeof c.cj !== 'string' || !STAKE_ID_RE.test(c.cj) || typeof c.cr !== 'string' || !STAKE_ROOM_RE.test(c.cr))
+    return false;
   if (!Number.isInteger(c.ct) || c.ct < 0 || c.ct > 15) return false;
-  if (!Number.isSafeInteger(c.ca) || c.ca < 1 || c.ca > STAKE_GOLD_MAX || !Number.isSafeInteger(c.cb) || c.cb < 1) return false;
+  if (!Number.isSafeInteger(c.ca) || c.ca < 1 || c.ca > STAKE_GOLD_MAX || !Number.isSafeInteger(c.cb) || c.cb < 1)
+    return false;
   return true;
 }
 
@@ -839,7 +1192,11 @@ export async function verifyStakeOrderAnyAge(token, publicKey, { subtle }) {
   if (!(typeof token === 'string' && token.length <= TOKEN_MAX_CHARS)) return { ok: false, why: 'shape' };
   const raw = bytesFromB64url(token.split('.')[1] ?? '');
   let i = null;
-  try { i = raw ? JSON.parse(dec.decode(raw))?.i : null; } catch { i = null; }
+  try {
+    i = raw ? JSON.parse(dec.decode(raw))?.i : null;
+  } catch {
+    i = null;
+  }
   if (!Number.isSafeInteger(i)) return { ok: false, why: 'shape' };
   return openSealed(token, publicKey, { subtle, nowS: i, skewS: 0, valid: (c) => orderValid(c) && c.o === 'stake' });
 }
@@ -866,21 +1223,46 @@ export const REMAINS_ID_RE = /^[0-9a-f]{12}$/;
 export const REMAINS_RECORDS_MAX = 96;
 /** Whether a claim set's remains fields are a remains'. */
 export function remainsOrderValid(c) {
-  if (typeof c.wr !== 'string' || !REMAINS_ID_RE.test(c.wr) || typeof c.wh !== 'string' || !DECK_DIGEST_RE.test(c.wh)) return false;
+  if (typeof c.wr !== 'string' || !REMAINS_ID_RE.test(c.wr) || typeof c.wh !== 'string' || !DECK_DIGEST_RE.test(c.wh))
+    return false;
   if (!Number.isSafeInteger(c.wn) || c.wn < 0 || c.wn > REMAINS_RECORDS_MAX) return false;
   if (typeof c.wm !== 'string' || c.wm.length > 64 || !streamsFoes(c.wm)) return false;
   if (c.wg !== undefined && !(typeof c.wg === 'string' && GUILD_ID_RE.test(c.wg))) return false;
-  if (c.wnm !== undefined && !(typeof c.wnm === 'string' && c.wnm === sanitizeName(c.wnm))) return false;   // WILD-REMAINS-LOSS: a name as the wire keeps one
-  if (c.wk === undefined && c.wi === undefined) return c.we === undefined;   // MAC (2026-10-14): an escrow is the killer's piece's
+  if (c.wnm !== undefined && !(typeof c.wnm === 'string' && c.wnm === sanitizeName(c.wnm))) return false; // WILD-REMAINS-LOSS: a name as the wire keeps one
+  if (c.wk === undefined && c.wi === undefined) return c.we === undefined; // MAC (2026-10-14): an escrow is the killer's piece's
   if (c.we !== undefined && c.we !== 1) return false;
-  return typeof c.wk === 'string' && ID_RE.test(c.wk) && c.wk !== c.s && Number.isSafeInteger(c.wi) && c.wi >= 0 && c.wi < c.wn;
+  return (
+    typeof c.wk === 'string' &&
+    ID_RE.test(c.wk) &&
+    c.wk !== c.s &&
+    Number.isSafeInteger(c.wi) &&
+    c.wi >= 0 &&
+    c.wi < c.wn
+  );
 }
 /** INT9: MINT A REMAINS ORDER - the service's word that account `s`'s fall left remains `wr` of `wn` records digesting to
  *  `wh`, for room `wm` (`wk`, `wi`: the killer's worn piece, theirs alone; `wg`: the fallen's guild; `wnm`: the fallen
  *  character's name). */
-export async function mintRemainsOrder({ s, wr, wh, wn, wm, wk = undefined, wi = undefined, wg = undefined, we = undefined, wnm = undefined }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
+export async function mintRemainsOrder(
+  { s, wr, wh, wn, wm, wk = undefined, wi = undefined, wg = undefined, we = undefined, wnm = undefined },
+  privateKey,
+  { subtle, nowS, ttlS = ORDER_TTL_S },
+) {
   if (!Number.isSafeInteger(nowS)) throw new TypeError('mintRemainsOrder needs an integer epoch-seconds clock');
-  const claims = { o: 'remains', s, wr, wh, wn, wm, ...(wk !== undefined ? { wk, wi } : {}), ...(wg !== undefined ? { wg } : {}), ...(we !== undefined ? { we } : {}), ...(wnm !== undefined ? { wnm } : {}), i: nowS, e: nowS + ttlS };
+  const claims = {
+    o: 'remains',
+    s,
+    wr,
+    wh,
+    wn,
+    wm,
+    ...(wk !== undefined ? { wk, wi } : {}),
+    ...(wg !== undefined ? { wg } : {}),
+    ...(we !== undefined ? { we } : {}),
+    ...(wnm !== undefined ? { wnm } : {}),
+    i: nowS,
+    e: nowS + ttlS,
+  };
   if (!orderValid(claims)) throw new TypeError('mintRemainsOrder refused an order it could not verify');
   return sealClaims(claims, privateKey, subtle);
 }
@@ -899,7 +1281,7 @@ export async function remainsDigest(/** @type {any[]} */ records, { subtle }) {
  * spends each `ez` once.
  */
 /** An Elite Breach order's fields - no other order kind carries one. */
-export const EG_ORDER_FIELDS = Object.freeze(['eb', 'ez', 'ew', 'rh', 'ewg']);   // EG-F: `ewg` the open's Wager (the page's `wg` is INT9's remains guild - REMAINS_FIELDS - so the order's rides `ewg`)
+export const EG_ORDER_FIELDS = Object.freeze(['eb', 'ez', 'ew', 'rh', 'ewg']); // EG-F: `ewg` the open's Wager (the page's `wg` is INT9's remains guild - REMAINS_FIELDS - so the order's rides `ewg`)
 /** A breach id, an order id, the deepest start Redoubt an order may name. */
 export const EG_ORDER_BREACH_RE = /^[0-9a-f]{16}$/;
 export const EG_ORDER_ZID_RE = /^[a-z0-9]{16,32}$/;
@@ -908,13 +1290,30 @@ export const EG_ORDER_START_MAX = 999;
 export const EG_ORDER_WAGER_MAX = 3;
 /** Whether a claim set's breach fields are an Elite Breach order's (`rh` an open's alone). */
 export function egOrderValid(c) {
-  if (typeof c.eb !== 'string' || !EG_ORDER_BREACH_RE.test(c.eb) || typeof c.ez !== 'string' || !EG_ORDER_ZID_RE.test(c.ez)) return false;
+  if (
+    typeof c.eb !== 'string' ||
+    !EG_ORDER_BREACH_RE.test(c.eb) ||
+    typeof c.ez !== 'string' ||
+    !EG_ORDER_ZID_RE.test(c.ez)
+  )
+    return false;
   if (!Number.isSafeInteger(c.ew) || c.ew < 0 || c.ew > EG_ORDER_START_MAX) return false;
   if (c.rh !== undefined && !(c.o === 'egopen' && c.rh === 1)) return false;
   // EG-F (section 18): THE WAGER on an open alone - one to EG_ORDER_WAGER_MAX decree numbers, distinct (the service
   // holds their families apart - net/eliteGates/egStartLaw.js egWagerOf); never on a Rehearsal
-  if (c.ewg !== undefined && !(c.o === 'egopen' && c.rh === undefined && Array.isArray(c.ewg) && c.ewg.length >= 1 && c.ewg.length <= EG_ORDER_WAGER_MAX
-    && c.ewg.every((d) => Number.isSafeInteger(d) && d >= 0 && d <= 31) && new Set(c.ewg).size === c.ewg.length)) return false;
+  if (
+    c.ewg !== undefined &&
+    !(
+      c.o === 'egopen' &&
+      c.rh === undefined &&
+      Array.isArray(c.ewg) &&
+      c.ewg.length >= 1 &&
+      c.ewg.length <= EG_ORDER_WAGER_MAX &&
+      c.ewg.every((d) => Number.isSafeInteger(d) && d >= 0 && d <= 31) &&
+      new Set(c.ewg).size === c.ewg.length
+    )
+  )
+    return false;
   return true;
 }
 /** EG-ZA (2026-10-12; bible/11-Multiplayer/Elite-Gates.md sections 22 and 23, "A key's loss"): VERIFY AN OPEN ORDER
@@ -925,15 +1324,33 @@ export async function verifyEgOpenAnyAge(token, publicKey, { subtle }) {
   if (!(typeof token === 'string' && token.length <= TOKEN_MAX_CHARS)) return { ok: false, why: 'shape' };
   const raw = bytesFromB64url(token.split('.')[1] ?? '');
   let i = null;
-  try { i = raw ? JSON.parse(dec.decode(raw))?.i : null; } catch { i = null; }
+  try {
+    i = raw ? JSON.parse(dec.decode(raw))?.i : null;
+  } catch {
+    i = null;
+  }
   if (!Number.isSafeInteger(i)) return { ok: false, why: 'shape' };
   return openSealed(token, publicKey, { subtle, nowS: i, skewS: 0, valid: (c) => orderValid(c) && c.o === 'egopen' });
 }
 /** EG-PLAY: MINT AN ELITE BREACH ORDER - `o` 'egopen' (the open: `rh` 1 for a Rehearsal) or 'egadmit' (a member's
  *  admission). */
-export async function mintEgOrder({ o, s, eb, ez, ew = 0, rh = undefined, ewg = undefined }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
+export async function mintEgOrder(
+  { o, s, eb, ez, ew = 0, rh = undefined, ewg = undefined },
+  privateKey,
+  { subtle, nowS, ttlS = ORDER_TTL_S },
+) {
   if (!Number.isSafeInteger(nowS)) throw new TypeError('mintEgOrder needs an integer epoch-seconds clock');
-  const claims = { o, s, eb, ez, ew, ...(rh === 1 ? { rh } : {}), ...(Array.isArray(ewg) && ewg.length ? { ewg: [...ewg] } : {}), i: nowS, e: nowS + ttlS };   // EG-F: and the open's Wager
+  const claims = {
+    o,
+    s,
+    eb,
+    ez,
+    ew,
+    ...(rh === 1 ? { rh } : {}),
+    ...(Array.isArray(ewg) && ewg.length ? { ewg: [...ewg] } : {}),
+    i: nowS,
+    e: nowS + ttlS,
+  }; // EG-F: and the open's Wager
   if (!orderValid(claims)) throw new TypeError('mintEgOrder refused an order it could not verify');
   return sealClaims(claims, privateKey, subtle);
 }
@@ -998,13 +1415,26 @@ export const ROYAL_PASS_SPAN_S = 7 * 24 * 3600;
 const coordOk = (v) => Number.isSafeInteger(v) && Math.abs(v) <= SIEGE_PASS_COORD_MAX;
 /** Whether a claim set's pass fields are a pass's. */
 export function siegePassValid(c) {
-  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || c.sk > 0xffffffff || !Number.isSafeInteger(c.sw) || c.sw < 0) return false;
+  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || c.sk > 0xffffffff || !Number.isSafeInteger(c.sw) || c.sw < 0)
+    return false;
   const royal = c.sn === 'royal';
-  if (!SIEGE_PASS_SIDES.includes(c.sd) || (c.st !== 'palace' && c.st !== 'crown') || (c.sn !== 'siege' && c.sn !== 'tourney' && c.sn !== 'revolt' && !royal)) return false;
-  if (royal ? c.st !== 'crown' || (c.sd !== 'duel' && c.sd !== 'watch') : c.sd === 'duel') return false;   // a contender is a Royal Tourney's alone
-  if (c.sn === 'revolt' && c.sd === 'attack') return false;   // SEAT2b part two (c): a revolt's rising is the relay's own
-  if (!Number.isSafeInteger(c.sb) || c.sb <= 0 || !Number.isSafeInteger(c.se) || c.se <= c.sb || c.se - c.sb > (royal ? ROYAL_PASS_SPAN_S : SIEGE_PASS_SPAN_S)) return false;
-  if (c.sx !== undefined && (c.sn !== 'siege' || !worksOf(c.sx, c.st, c.sn))) return false;   // SEAT2b part two (b): a siege's works, well made
+  if (
+    !SIEGE_PASS_SIDES.includes(c.sd) ||
+    (c.st !== 'palace' && c.st !== 'crown') ||
+    (c.sn !== 'siege' && c.sn !== 'tourney' && c.sn !== 'revolt' && !royal)
+  )
+    return false;
+  if (royal ? c.st !== 'crown' || (c.sd !== 'duel' && c.sd !== 'watch') : c.sd === 'duel') return false; // a contender is a Royal Tourney's alone
+  if (c.sn === 'revolt' && c.sd === 'attack') return false; // SEAT2b part two (c): a revolt's rising is the relay's own
+  if (
+    !Number.isSafeInteger(c.sb) ||
+    c.sb <= 0 ||
+    !Number.isSafeInteger(c.se) ||
+    c.se <= c.sb ||
+    c.se - c.sb > (royal ? ROYAL_PASS_SPAN_S : SIEGE_PASS_SPAN_S)
+  )
+    return false;
+  if (c.sx !== undefined && (c.sn !== 'siege' || !worksOf(c.sx, c.st, c.sn))) return false; // SEAT2b part two (b): a siege's works, well made
   return siegeFieldValid(c.sf, c.st, c.sn);
 }
 /** A battle's field as a pass carries it (`sf`): a palace's six points or a crown's seven, each `[x, z]` whole room units
@@ -1016,9 +1446,27 @@ export function siegeFieldValid(sf, tier, kind = 'siege') {
 
 /** SEAT2a: MINT A SIEGE PASS - the service's word that account `s` may enter seat `sk`'s battle of week `sw` on side `sd`.
  *  SEAT2b part two (b): `sx` the siege's frozen works, where it has them. */
-export async function mintSiegeOrder({ s, sk, sw, sd, st, sn, sb, se, sf, sx }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
+export async function mintSiegeOrder(
+  { s, sk, sw, sd, st, sn, sb, se, sf, sx },
+  privateKey,
+  { subtle, nowS, ttlS = ORDER_TTL_S },
+) {
   if (!Number.isSafeInteger(nowS)) throw new TypeError('mintSiegeOrder needs an integer epoch-seconds clock');
-  const claims = { o: 'siege', s, sk, sw, sd, st, sn, sb, se, sf, ...(sx === undefined || sx === null ? {} : { sx }), i: nowS, e: nowS + ttlS };
+  const claims = {
+    o: 'siege',
+    s,
+    sk,
+    sw,
+    sd,
+    st,
+    sn,
+    sb,
+    se,
+    sf,
+    ...(sx === undefined || sx === null ? {} : { sx }),
+    i: nowS,
+    e: nowS + ttlS,
+  };
   if (!orderValid(claims)) throw new TypeError('mintSiegeOrder refused an order it could not verify');
   return sealClaims(claims, privateKey, subtle);
 }
@@ -1059,7 +1507,15 @@ export async function mintStaffMessageOrder({ s, mi }, privateKey, { subtle, now
  *  (server/src/staffEvents.js), which keeps the book. Never carried by a client. */
 export async function mintStaffEventOrder({ s, op, ev, ei }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
   if (!Number.isSafeInteger(nowS)) throw new TypeError('mintStaffEventOrder needs an integer epoch-seconds clock');
-  const claims = { o: 'sevent', s, op, ...(ev !== undefined ? { ev } : {}), ...(ei !== undefined ? { ei } : {}), i: nowS, e: nowS + ttlS };
+  const claims = {
+    o: 'sevent',
+    s,
+    op,
+    ...(ev !== undefined ? { ev } : {}),
+    ...(ei !== undefined ? { ei } : {}),
+    i: nowS,
+    e: nowS + ttlS,
+  };
   if (!orderValid(claims)) throw new TypeError('mintStaffEventOrder refused an order it could not verify');
   return sealClaims(claims, privateKey, subtle);
 }
@@ -1163,7 +1619,9 @@ export async function importPublicKey(raw, { subtle }) {
   if (bytes.length !== PUBKEY_BYTES) return null;
   try {
     return await subtle.importKey('raw', bytes, { name: 'Ed25519' }, false, ['verify']);
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 /** The same, from the base64url a config file would hold. */

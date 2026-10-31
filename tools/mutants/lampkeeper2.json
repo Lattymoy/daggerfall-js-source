@@ -11,8 +11,8 @@
   {
     "name": "LAMP-KEEPER-II-every-182-person",
     "file": "src/systems/lampKeeper.js",
-    "old": "(pn.textureArchive === LAMP_KEEPER_ARCHIVE && LAMP_KEEPER_RECORDS.includes(pn.textureRecord))",
-    "new": "(pn.textureArchive === LAMP_KEEPER_ARCHIVE)",
+    "old": "  ((pn.textureArchive === LAMP_KEEPER_ARCHIVE && LAMP_KEEPER_RECORDS.includes(pn.textureRecord)) ||\n    (!!buildingFactionId && pn.factionID === buildingFactionId));",
+    "new": "  (pn.textureArchive === LAMP_KEEPER_ARCHIVE || (!!buildingFactionId && pn.factionID === buildingFactionId));",
     "tests": [
       "test/server/lampkeeper2.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LAMP-KEEPER-II-in-any-building",
     "file": "src/systems/lampKeeper.js",
-    "old": "!!pn && isShop(buildingType)\n",
-    "new": "!!pn\n",
+    "old": "  isShop(buildingType) &&\n  ((pn.textureArchive === LAMP_KEEPER_ARCHIVE && LAMP_KEEPER_RECORDS.includes(pn.textureRecord)) ||",
+    "new": "  ((pn.textureArchive === LAMP_KEEPER_ARCHIVE && LAMP_KEEPER_RECORDS.includes(pn.textureRecord)) ||",
     "tests": [
       "test/server/lampkeeper2.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "LAMP-KEEPER-II-the-day-ignored",
     "file": "src/systems/lampKeeper.js",
-    "old": " ^ Math.imul(day | 0, 0x85ebca6b)",
-    "new": "",
+    "old": "      Math.imul(day | 0, 0x85ebca6b) ^\n      Math.imul((pn.position ?? 0) | 0, 0xc2b2ae35) ^",
+    "new": "      Math.imul((pn.position ?? 0) | 0, 0xc2b2ae35) ^",
     "tests": [
       "test/server/lampkeeper2.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LAMP-KEEPER-II-the-building-ignored",
     "file": "src/systems/lampKeeper.js",
-    "old": " ^ Math.imul(buildingKey | 0, 0x9e3779b1)",
-    "new": "",
+    "old": "    ((mapId >>> 0) ^\n      Math.imul(buildingKey | 0, 0x9e3779b1) ^\n      Math.imul(day | 0, 0x85ebca6b) ^\n      Math.imul((pn.position ?? 0) | 0, 0xc2b2ae35) ^\n      LAMP_SALT) >>>\n    0;",
+    "new": "    ((mapId >>> 0) ^ Math.imul(day | 0, 0x85ebca6b) ^ Math.imul((pn.position ?? 0) | 0, 0xc2b2ae35) ^ LAMP_SALT) >>> 0;",
     "tests": [
       "test/server/lampkeeper2.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "LAMP-KEEPER-II-granted-no-banner",
     "file": "src/systems/lampKeeper.js",
-    "old": "say(LAMP_TEXT.granted()); announce('title', LAMP_TITLE); return 'granted';",
-    "new": "say(LAMP_TEXT.granted()); return 'granted';",
+    "old": "        announce('title', LAMP_TITLE);\n        return 'granted';",
+    "new": "        return 'granted';",
     "tests": [
       "test/server/lampkeeper2.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LAMP-KEEPER-II-granted-again",
     "file": "src/systems/lampKeeper.js",
-    "old": "if (a?.ok && a.data?.granted === true) { done = true;",
-    "new": "if (a?.ok && a.data?.granted === true) {",
+    "old": "        done = true;\n        say(LAMP_TEXT.granted());",
+    "new": "        say(LAMP_TEXT.granted());",
     "tests": [
       "test/server/lampkeeper2.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "LAMP-KEEPER-II-a-guest-told-each-time",
     "file": "src/systems/lampKeeper.js",
-    "old": "  const tell = (k, text) => { if (!told.has(k)) { told.add(k); say(text); } };",
-    "new": "  const tell = (k, text) => { say(text); };",
+    "old": "    if (!told.has(k)) {\n      told.add(k);\n      say(text);\n    }",
+    "new": "    say(text);",
     "tests": [
       "test/server/lampkeeper2.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "LAMP-KEEPER-II-two-calls-at-once",
     "file": "src/systems/lampKeeper.js",
-    "old": "      if (busy) return 'busy';\n",
-    "new": "",
+    "old": "      if (busy) return 'busy';\n      busy = true;",
+    "new": "      busy = true;",
     "tests": [
       "test/server/lampkeeper2.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "LAMP-KEEPER-II-a-guest-written",
     "file": "server-account/src/lamp.js",
-    "old": "  if (!player?.handle) return { granted: false, why: 'guest' };\n",
-    "new": "",
+    "old": "  if (!player?.handle) return { granted: false, why: 'guest' };\n  const r = await db",
+    "new": "  const r = await db",
     "tests": [
       "test/server/lampkeeper2.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "LAMP-KEEPER-II-granted-every-time",
     "file": "server-account/src/lamp.js",
-    "old": "WHERE id = ?1 AND lamp_title = 0",
-    "new": "WHERE id = ?1",
+    "old": "  const r = await db\n    .prepare('UPDATE players SET lamp_title = 1 WHERE id = ?1 AND lamp_title = 0')\n    .bind(player.id)\n    .run();",
+    "new": "  const r = await db.prepare('UPDATE players SET lamp_title = 1 WHERE id = ?1').bind(player.id).run();",
     "tests": [
       "test/server/lampkeeper2.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "LAMP-KEEPER-II-the-merchant-never",
     "file": "src/systems/lampKeeper.js",
-    "old": "|| (!!buildingFactionId && pn.factionID === buildingFactionId)",
-    "new": "|| false",
+    "old": "  ((pn.textureArchive === LAMP_KEEPER_ARCHIVE && LAMP_KEEPER_RECORDS.includes(pn.textureRecord)) ||\n    (!!buildingFactionId && pn.factionID === buildingFactionId));",
+    "new": "  ((pn.textureArchive === LAMP_KEEPER_ARCHIVE && LAMP_KEEPER_RECORDS.includes(pn.textureRecord)) || false);",
     "tests": [
       "test/server/lampkeeper2.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "LAMP-KEEPER-II-the-page-not-the-account",
     "file": "src/systems/lampKeeper.js",
-    "old": "if (id !== whose) { whose = id; done = false; told.clear(); }",
-    "new": "",
+    "old": "      if (id !== whose) {\n        whose = id;\n        done = false;\n        told.clear();\n      } // another account: nothing it was told is its",
+    "new": "      // another account: nothing it was told is its",
     "tests": [
       "test/server/lampkeeper2.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "LAMP-KEEPER-II-a-late-answer-kept",
     "file": "src/systems/lampKeeper.js",
-    "old": "      if (who() !== id) return 'failed';",
-    "new": "",
+    "old": "      if (who() !== id) return 'failed'; // signed out, or in as another, while it was asked",
+    "new": "      // signed out, or in as another, while it was asked",
     "tests": [
       "test/server/lampkeeper2.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "LAMP-KEEPER-II-signed-out-told-to-go-online",
     "file": "src/systems/lampKeeper.js",
-    "old": "tell('signin', LAMP_TEXT.signin()); return 'signin';",
-    "new": "tell('offline', LAMP_TEXT.offline()); return 'offline';",
+    "old": "        tell('signin', LAMP_TEXT.signin());\n        return 'signin';",
+    "new": "        tell('offline', LAMP_TEXT.offline());\n        return 'offline';",
     "tests": [
       "test/server/lampkeeper2.test.js"
     ]

@@ -11,8 +11,8 @@
   {
     "name": "LW-STAND-beside-unread",
     "file": "src/systems/livingWorld/places.js",
-    "old": "    const x0 = Math.floor((Math.min(ax, bx) - reach) / C), x1 = Math.floor((Math.max(ax, bx) + reach) / C);",
-    "new": "    const x0 = Math.floor(Math.min(ax, bx) / C), x1 = Math.floor(Math.max(ax, bx) / C);",
+    "old": "    const x0 = Math.floor((Math.min(ax, bx) - reach) / C),\n      x1 = Math.floor((Math.max(ax, bx) + reach) / C);",
+    "new": "    const x0 = Math.floor(Math.min(ax, bx) / C),\n      x1 = Math.floor(Math.max(ax, bx) / C);",
     "tests": [
       "test/systems/livingWorld/lwstand_street.test.js"
     ]

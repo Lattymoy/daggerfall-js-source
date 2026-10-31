@@ -57,12 +57,21 @@ export const PLAY_GRACE_S = 2 * PLAY_BEAT_S;
  *   setInterval?: (fn: () => void, ms: number) => unknown,
  *   clearInterval?: (id: unknown) => void }} io
  */
-export function startPlayClock({ beat, visible = () => true, setInterval = globalThis.setInterval, clearInterval = globalThis.clearInterval }) {
+export function startPlayClock({
+  beat,
+  visible = () => true,
+  setInterval = globalThis.setInterval,
+  clearInterval = globalThis.clearInterval,
+}) {
   // A BEAT THAT THROWS OR REJECTS IS DROPPED. It is a counter, and a
   // counter must never be the thing that breaks the world it counts.
   const knock = () => {
     if (!visible()) return;
-    try { Promise.resolve(beat()).catch(() => {}); } catch { /* next beat */ }
+    try {
+      Promise.resolve(beat()).catch(() => {});
+    } catch {
+      /* next beat */
+    }
   };
   knock();
   const id = setInterval(knock, PLAY_BEAT_S * 1000);

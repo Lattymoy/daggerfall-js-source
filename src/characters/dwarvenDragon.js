@@ -12,7 +12,7 @@ import { addVendorTextures } from '../systems/textureReplacement.js';
 import { APP_ROOT } from '../systems/appRoot.js';
 import { t, registerCustomEnemyNameText } from '../systems/textManager.js';
 import { DWARVEN_DRAGON_ID, DWARVEN_DRAGON_ARCHIVE, AETHERBRIGHT_ARCHIVE } from './dwarvenDragonId.js';
-import { aetherbrightPng } from './dwarvenDragonShiny.js';   // DRAGON7: the Aetherbright, 1800's pictures under its palette
+import { aetherbrightPng } from './dwarvenDragonShiny.js'; // DRAGON7: the Aetherbright, 1800's pictures under its palette
 
 export { DWARVEN_DRAGON_ID, DWARVEN_DRAGON_ARCHIVE, AETHERBRIGHT_ARCHIVE };
 
@@ -20,7 +20,9 @@ export { DWARVEN_DRAGON_ID, DWARVEN_DRAGON_ARCHIVE, AETHERBRIGHT_ARCHIVE };
 export const dwarvenDragonName = () => t('enemy.dwarvenDragon', 'Dwarven Dragon');
 export const DWARVEN_DRAGON_ART = 'art/dwarven-dragon/';
 /** Frames by record: 0-4 move, 5-9 claw attack, 10-14 hurt, 15-19 idle, 20-24 hovering (DRAGON-HOVER). */
-export const DWARVEN_DRAGON_FRAMES = Object.freeze([8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 8, 8, 8, 8, 8]);
+export const DWARVEN_DRAGON_FRAMES = Object.freeze([
+  8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 8, 8, 8, 8, 8,
+]);
 
 /** The Iron Atronach's row (36) made a boss: a metal golem's career, sounds and remains. */
 export const DWARVEN_DRAGON_ROW = Object.freeze({
@@ -52,7 +54,8 @@ const IRON_ATRONACH = 36;
 /** Its English, the game's own (the save, the log, the staff's list). */
 export const DWARVEN_DRAGON_NAME = 'Dwarven Dragon';
 
-export const dwarvenDragonArtUrl = (name) => new URL(`${DWARVEN_DRAGON_ART}${name}.png`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
+export const dwarvenDragonArtUrl = (name) =>
+  new URL(`${DWARVEN_DRAGON_ART}${name}.png`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
 async function fetchPng(url) {
   const r = await fetch(url);
   if (!r.ok) throw new Error(`[DWARVEN-DRAGON] ${url}: ${r.status}`);
@@ -65,9 +68,28 @@ export function dwarvenDragonSpriteEntries({ fetchBytes = fetchPng } = {}) {
   const out = [];
   DWARVEN_DRAGON_FRAMES.forEach((n, record) => {
     for (let frame = 0; frame < n; frame++) {
-      const name = `${DWARVEN_DRAGON_ARCHIVE}_${record}-${frame}`, url = dwarvenDragonArtUrl(name);
-      out.push({ archive: DWARVEN_DRAGON_ARCHIVE, record, frame, map: 'Albedo', standIn: true, readOnly: true, fileName: name, load: () => fetchBytes(url) });
-      out.push({ archive: AETHERBRIGHT_ARCHIVE, record, frame, map: 'Albedo', standIn: true, readOnly: true, fileName: `${AETHERBRIGHT_ARCHIVE}_${record}-${frame}`, load: async () => aetherbrightPng(await fetchBytes(url)) });
+      const name = `${DWARVEN_DRAGON_ARCHIVE}_${record}-${frame}`,
+        url = dwarvenDragonArtUrl(name);
+      out.push({
+        archive: DWARVEN_DRAGON_ARCHIVE,
+        record,
+        frame,
+        map: 'Albedo',
+        standIn: true,
+        readOnly: true,
+        fileName: name,
+        load: () => fetchBytes(url),
+      });
+      out.push({
+        archive: AETHERBRIGHT_ARCHIVE,
+        record,
+        frame,
+        map: 'Albedo',
+        standIn: true,
+        readOnly: true,
+        fileName: `${AETHERBRIGHT_ARCHIVE}_${record}-${frame}`,
+        load: async () => aetherbrightPng(await fetchBytes(url)),
+      });
     }
   });
   return out;
@@ -79,11 +101,18 @@ export function installDwarvenDragon(opts = {}) {
   if (_installed) return 0;
   _installed = true;
   registerEnemyRows([[DWARVEN_DRAGON_ID, structuredClone(DWARVEN_DRAGON_ROW)]]);
-  registerCustomCareerTemplate(DWARVEN_DRAGON_ID, { name: DWARVEN_DRAGON_NAME, load: (fetchBytes) => loadMonsterCareer(IRON_ATRONACH, fetchBytes) });
+  registerCustomCareerTemplate(DWARVEN_DRAGON_ID, {
+    name: DWARVEN_DRAGON_NAME,
+    load: (fetchBytes) => loadMonsterCareer(IRON_ATRONACH, fetchBytes),
+  });
   registerCustomEnemyName((id) => (id === DWARVEN_DRAGON_ID ? DWARVEN_DRAGON_NAME : null));
   registerCustomEnemyNameText((id) => (id === DWARVEN_DRAGON_ID ? dwarvenDragonName() : null));
-  registerCreatureMatches([[DWARVEN_DRAGON_ID, { miss: 'our own clockwork dragon: no Morrowind creature is it, so its sprite stands' }]]);
+  registerCreatureMatches([
+    [DWARVEN_DRAGON_ID, { miss: 'our own clockwork dragon: no Morrowind creature is it, so its sprite stands' }],
+  ]);
   return addVendorTextures(dwarvenDragonSpriteEntries(opts));
 }
 /** The test seam: the next install registers again. */
-export function _resetDwarvenDragon() { _installed = false; }
+export function _resetDwarvenDragon() {
+  _installed = false;
+}

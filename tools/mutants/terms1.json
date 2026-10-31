@@ -4,7 +4,9 @@
     "file": "server-account/src/index.js",
     "old": "          if (refused) return no(refused.error, 400, origin);\n          const made = await createGuest(",
     "new": "          const made = await createGuest(",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "A guest row IS an account; the route that opens one must ask."
   },
   {
@@ -12,7 +14,9 @@
     "file": "server-account/src/index.js",
     "old": "        if (refused) return no(refused.error, 400, origin);\n        const r = await register(",
     "new": "        const r = await register(",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "A guest from before the boxes names itself here, and has agreed to nothing."
   },
   {
@@ -20,7 +24,9 @@
     "file": "server-account/src/index.js",
     "old": "        if (path === '/v1/auth/login') {\n",
     "new": "        if (path === '/v1/auth/login') {\n          if (legalRefusal(body)) return no('terms-unaccepted', 400, origin);\n",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "New accounts only: an account that exists signs in unasked."
   },
   {
@@ -28,7 +34,9 @@
     "file": "server-account/src/accounts.js",
     "old": ".bind(id, name, nowS, nowS, ...legalColumns(legal, nowS)).run();",
     "new": ".bind(id, name, nowS, nowS, null, null, null).run();",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "A refusal without a record is an agreement nobody can show."
   },
   {
@@ -36,7 +44,9 @@
     "file": "server-account/src/accounts.js",
     "old": ".bind(handle, handle.toLowerCase(), pw, rc, nowS, ...legalColumns(legal, nowS), playerId).run();",
     "new": ".bind(handle, handle.toLowerCase(), pw, rc, nowS, null, null, null, playerId).run();",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "The name recorded without the agreement ticked on the same form."
   },
   {
@@ -44,7 +54,9 @@
     "file": "server-account/src/accounts.js",
     "old": "(legal && !legalRefusal(legal) ? [legal.terms, legal.privacy, nowS]",
     "new": "(legal ? [legal.terms, legal.privacy, nowS]",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "A row saying its player agreed to text the service does not hold records something that did not happen."
   },
   {
@@ -52,7 +64,9 @@
     "file": "server-account/src/accounts.js",
     "old": "'terms_version = COALESCE(?, terms_version), privacy_version = COALESCE(?, privacy_version), legal_accepted_at = COALESCE(?, legal_accepted_at) '",
     "new": "'terms_version = ?, privacy_version = ?, legal_accepted_at = ? '",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "Naming an account never erases the agreement its row already holds."
   },
   {
@@ -60,7 +74,9 @@
     "file": "server-account/src/accounts.js",
     "old": "  if (terms === TERMS_VERSION && privacy === PRIVACY_VERSION) return null;",
     "new": "  if (terms === TERMS_VERSION) return null;",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "Both documents, not the first."
   },
   {
@@ -68,7 +84,9 @@
     "file": "server-account/src/accounts.js",
     "old": "  if (terms === TERMS_VERSION && privacy === PRIVACY_VERSION) return null;",
     "new": "  if (terms && privacy) return null;",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "A tick is WHICH text, not that something was ticked."
   },
   {
@@ -76,7 +94,9 @@
     "file": "server-account/src/accounts.js",
     "old": "  if (dated(terms) && dated(privacy)) return { error: 'terms-stale' };\n",
     "new": "",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "A player holding old text is told to reload, not to tick a box they ticked."
   },
   {
@@ -84,7 +104,9 @@
     "file": "src/ui/accountFlow.js",
     "old": "    const bad = localRefusal(FIELDS.register, AGREEMENTS.register);",
     "new": "    const bad = localRefusal(FIELDS.register);",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "Nothing leaves the device until both are ticked."
   },
   {
@@ -92,39 +114,49 @@
     "file": "src/ui/accountFlow.js",
     "old": "  register: ['terms', 'privacy'],",
     "new": "  register: ['terms'],",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "Two documents, two boxes."
   },
   {
     "name": "TERMS1-login-asks-on-the-form",
     "file": "src/ui/accountFlow.js",
-    "old": "  register: ['terms', 'privacy'],\n",
-    "new": "  register: ['terms', 'privacy'],\n  login: ['terms', 'privacy'],\n",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "old": "  register: ['terms', 'privacy'],\n});",
+    "new": "  register: ['terms', 'privacy'],\n  login: ['terms', 'privacy'],\n});",
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "New accounts only, on the form too."
   },
   {
     "name": "TERMS1-guest-row-opened-bare",
     "file": "src/ui/accountFlow.js",
-    "old": "openGuest(io, null, ACCEPTED)",
-    "new": "openGuest(io, null)",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "old": "      const made = await ask(() => openGuest(io, null, ACCEPTED));",
+    "new": "      const made = await ask(() => openGuest(io, null));",
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "The service opens no row without the versions ticked."
   },
   {
     "name": "TERMS1-name-sent-bare",
     "file": "src/ui/accountFlow.js",
-    "old": "register(door(), v('handle'), pw('password'), ACCEPTED)",
-    "new": "register(door(), v('handle'), pw('password'))",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "old": "    const r = await ask(() => register(door(), v('handle'), pw('password'), ACCEPTED));",
+    "new": "    const r = await ask(() => register(door(), v('handle'), pw('password')));",
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "The service names nobody without the versions ticked."
   },
   {
     "name": "TERMS1-ticks-carried-across-a-move",
     "file": "src/ui/accountFlow.js",
-    "old": "    self.agreed = {};\n    if (stage !== 'code') { self.recoveryCodes = null; self.codesFor = ''; }",
-    "new": "    if (stage !== 'code') { self.recoveryCodes = null; self.codesFor = ''; }",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "old": "    self.agreed = {};\n    if (stage !== 'code') {",
+    "new": "    if (stage !== 'code') {",
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "A box is ticked by the player, on the stage in front of them."
   },
   {
@@ -132,7 +164,9 @@
     "file": "src/ui/accountFlow.js",
     "old": "    self.agreed[key] = on === true;",
     "new": "    self.agreed[key] = !!on;",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "An agreement is true, not truthy."
   },
   {
@@ -140,7 +174,9 @@
     "file": "src/ui/enhanced/enhancedAccount.js",
     "old": "    box.checked = flow.agreed?.[key] === true;",
     "new": "    box.checked = true;",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "Unticked until the player ticks it."
   },
   {
@@ -148,23 +184,29 @@
     "file": "src/ui/enhanced/enhancedAccount.js",
     "old": "    link.target = '_blank';\n",
     "new": "",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "Reading a document must not lose what was typed."
   },
   {
     "name": "TERMS1-a-document-path-dropped",
     "file": "scripts/landingHtml.mjs",
-    "old": "Object.freeze(['/terms/index.html', '/privacy/index.html'])",
-    "new": "Object.freeze(['/terms/index.html'])",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "old": "export const DOCUMENT_PATHS = Object.freeze(['/terms/index.html', '/privacy/index.html']);",
+    "new": "export const DOCUMENT_PATHS = Object.freeze(['/terms/index.html']);",
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "Both documents wear the skin."
   },
   {
     "name": "TERMS1-documents-left-undressed",
     "file": "scripts/landingHtml.mjs",
-    "old": "        if (DOCUMENT_PATHS.includes(ctx.path)) return transformDocument(html);",
-    "new": "        if (DOCUMENT_PATHS.includes(ctx.path)) return html;",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "old": "        if (DOCUMENT_PATHS.includes(ctx.path)) return transformDocument(html); // TERMS1: the Terms and the Privacy Policy",
+    "new": "        if (DOCUMENT_PATHS.includes(ctx.path)) return html; // TERMS1: the Terms and the Privacy Policy",
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "A document with no tokens reads var() as nothing."
   },
   {
@@ -172,7 +214,9 @@
     "file": "vite.config.js",
     "old": "        privacy: 'privacy/index.html',\n",
     "new": "",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "A page missing here works under npm run dev and never ships."
   },
   {
@@ -180,7 +224,9 @@
     "file": "index.html",
     "old": "      <a href=\"./terms/\">Terms</a>\n",
     "new": "",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "The documents are the site's, not only the form's."
   },
   {
@@ -188,7 +234,9 @@
     "file": "terms/index.html",
     "old": "DFO Online is an experimental community multiplayer project.",
     "new": "DFO Online is a community multiplayer project.",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "Words that change under a version they keep are words nobody agreed to. BR5 (re-aimed by content): the name and its file form moved; the date moved and was put back (AUDIT BR5: a rename is not a new version)."
   },
   {
@@ -196,7 +244,9 @@
     "file": "privacy/index.html",
     "old": "<time datetime=\"2026-10-17\">",
     "new": "<time datetime=\"2026-10-18\">",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "The date a reader sees is the version an account records. BR5 (re-aimed by content): the name and its file form moved; the date moved and was put back (AUDIT BR5: a rename is not a new version). SAFE (re-aimed by content): a new version, 2026-10-17 - the chat safety arc's words."
   },
   {
@@ -204,7 +254,9 @@
     "file": "src/net/legalLaw.js",
     "old": "export const TERMS_VERSION = '2026-10-17';",
     "new": "export const TERMS_VERSION = '2026-10-18';",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "A version with no page dated by it is an agreement to nothing on the site. BR5 (re-aimed by content): the name and its file form moved; the date moved and was put back (AUDIT BR5: a rename is not a new version). SAFE (re-aimed by content): a new version, 2026-10-17."
   },
   {
@@ -212,7 +264,9 @@
     "file": "privacy/index.html",
     "old": "</body>",
     "new": "<script>void 0</script></body>",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "A document runs nothing."
   },
   {
@@ -220,7 +274,9 @@
     "file": "server-account/migrations/0023_terms.sql",
     "old": "ALTER TABLE players ADD COLUMN terms_version TEXT;",
     "new": "ALTER TABLE players ADD COLUMN terms_version TEXT DEFAULT '2026-09-28';",
-    "tests": ["test/ui/enhanced/terms1.test.js"],
+    "tests": [
+      "test/ui/enhanced/terms1.test.js"
+    ],
     "note": "Accounts made before the boxes were never asked; NULL says so."
   }
 ]

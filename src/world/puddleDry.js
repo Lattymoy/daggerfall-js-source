@@ -27,16 +27,30 @@
 // BLOCKS.BSA's bytes.
 // ═══════════════════════════════════════════════════════════════════
 import { waterCorners, WATER_DRAW_MASK_TABLE } from './water/waterCorners.js';
-import { PUDDLE_RECORDS } from './puddleMask.js';   // the shallow-water art's records, one list (WATER-PUDDLE's)
+import { PUDDLE_RECORDS } from './puddleMask.js'; // the shallow-water art's records, one list (WATER-PUDDLE's)
 import { convertTile } from './terrain/terrainSurface.js';
-import { GROUND_RECORD_LIMIT as RECORD_LIMIT } from './terrain/terrainTiles.js';   // AUDIT WATER-NEXT m8: MeshReader.cs:487's marker, one home
+import { GROUND_RECORD_LIMIT as RECORD_LIMIT } from './terrain/terrainTiles.js'; // AUDIT WATER-NEXT m8: MeshReader.cs:487's marker, one home
 
 /** The shallow-water art: a patch made of these alone is a puddle, whatever its size. */
 const PUDDLE = new Set(PUDDLE_RECORDS);
 /** An RMB block's ground is 16 tiles a side. */
 const DIM = 16;
-const NEIGHBOURS = Object.freeze([[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]]);
-const STEPS = Object.freeze([[1, 0], [-1, 0], [0, 1], [0, -1]]);
+const NEIGHBOURS = Object.freeze([
+  [-1, -1],
+  [0, -1],
+  [1, -1],
+  [-1, 0],
+  [1, 0],
+  [-1, 1],
+  [0, 1],
+  [1, 1],
+]);
+const STEPS = Object.freeze([
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+]);
 
 /** Whether one RMB ground tile carries water as the draw sees it (the zero byte is record 0 whether or not it rides
  *  the stamps' 0xFF sentinel: convertTile answers 0 for both). */
@@ -47,7 +61,10 @@ export function groundTileWet(tile) {
 
 /** The reader's tile shape for a byte (formats/blocksFile.js _readRmbGroundTilesData). */
 const tileOf = (bitfield) => ({
-  tileBitfield: bitfield, textureRecord: bitfield & 0x3f, isRotated: (bitfield & 0x40) === 0x40, isFlipped: (bitfield & 0x80) === 0x80,
+  tileBitfield: bitfield,
+  textureRecord: bitfield & 0x3f,
+  isRotated: (bitfield & 0x40) === 0x40,
+  isFlipped: (bitfield & 0x80) === 0x80,
 });
 
 const _dried = new WeakSet();
@@ -74,8 +91,12 @@ export function dryPuddles(groundTiles) {
         const [cx, cy] = /** @type {number[]} */ (stack.pop());
         patch.push([cx, cy]);
         for (const [dx, dy] of STEPS) {
-          const nx = cx + dx, ny = cy + dy;
-          if (wet(nx, ny) && !seen[nx * DIM + ny]) { seen[nx * DIM + ny] = 1; stack.push([nx, ny]); }
+          const nx = cx + dx,
+            ny = cy + dy;
+          if (wet(nx, ny) && !seen[nx * DIM + ny]) {
+            seen[nx * DIM + ny] = 1;
+            stack.push([nx, ny]);
+          }
         }
       }
       if (patch.length > 1 && !patch.every(([px, py]) => PUDDLE.has(at(px, py).textureRecord))) continue;
@@ -86,12 +107,17 @@ export function dryPuddles(groundTiles) {
           if (!n || n.textureRecord >= RECORD_LIMIT || groundTileWet(n)) continue;
           count.set(n.tileBitfield, (count.get(n.tileBitfield) ?? 0) + 1);
         }
-        let best = -1, most = 0;
-        for (const [bits, n] of count) if (n > most) { most = n; best = bits; }
+        let best = -1,
+          most = 0;
+        for (const [bits, n] of count)
+          if (n > most) {
+            most = n;
+            best = bits;
+          }
         if (best >= 0) plan.push([px, py, best]);
       }
     }
   }
-  for (const [x, y, bits] of plan) groundTiles[x][y] = tileOf(bits);   // written after the walk: every choice is the art's own ground
+  for (const [x, y, bits] of plan) groundTiles[x][y] = tileOf(bits); // written after the walk: every choice is the art's own ground
   return plan.length;
 }

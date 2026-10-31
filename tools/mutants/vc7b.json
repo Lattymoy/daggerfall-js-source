@@ -146,8 +146,8 @@
   {
     "name": "VC7b-blur-reads-the-wrong-image",
     "file": "src/render/airPass.js",
-    "old": "gl.bindTexture(gl.TEXTURE_2D, T.shaftRaw.tex); gl.uniform1i(B.uSrc, 1);",
-    "new": "gl.bindTexture(gl.TEXTURE_2D, T.shaft.tex); gl.uniform1i(B.uSrc, 1);",
+    "old": "        gl.bindTexture(gl.TEXTURE_2D, T.shaftRaw.tex);",
+    "new": "        gl.bindTexture(gl.TEXTURE_2D, T.shaft.tex);",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]

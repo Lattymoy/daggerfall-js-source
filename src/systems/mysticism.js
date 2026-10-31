@@ -64,12 +64,12 @@
 // search (activateSearchable) fires an armed Open on a crate's own lock;
 // a crate is no ActionSystem door. Lock stays a door's alone.
 import { EFFECT_FLAGS } from './spellcast.js';
-import { isSilencedEffect, BUFF_START_TEXT, WATER_WALKING_SILENT_KIND, BUFF_KINDS } from './effects.js';   // BUFF-END: the duration buffs are the kinds a player may end
-import { hasArtifactSubtype, ARTIFACTS } from './artifactEffects.js';   // ROAD-U: ContainsEnchantment, the way SoulTrap.cs asks
-import { setEnchantmentEffectDoors } from './enchantments.js';   // AUDIT 63 F14: SoulBound's Enchanted arm reaches RemoveFilledTrap through the doors bag (this leaf cannot be imported BY enchantments.js - effects.js sits between them)
-import { localizedStrings, localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
-import { DISH_STAMINA_KIND } from './cookItems.js';   // AUDIT PROF-541 K6: the Orchard Tart's stamina, a dish the player may end as the others
-import { DWARVEN_DRAGON_ID } from '../characters/dwarvenDragonId.js';   // DWARVEN-DRAGON: a clockwork has no soul to trap
+import { isSilencedEffect, BUFF_START_TEXT, WATER_WALKING_SILENT_KIND, BUFF_KINDS } from './effects.js'; // BUFF-END: the duration buffs are the kinds a player may end
+import { hasArtifactSubtype, ARTIFACTS } from './artifactEffects.js'; // ROAD-U: ContainsEnchantment, the way SoulTrap.cs asks
+import { setEnchantmentEffectDoors } from './enchantments.js'; // AUDIT 63 F14: SoulBound's Enchanted arm reaches RemoveFilledTrap through the doors bag (this leaf cannot be imported BY enchantments.js - effects.js sits between them)
+import { localizedStrings, localizedText } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
+import { DISH_STAMINA_KIND } from './cookItems.js'; // AUDIT PROF-541 K6: the Orchard Tart's stamina, a dish the player may end as the others
+import { DWARVEN_DRAGON_ID } from '../characters/dwarvenDragonId.js'; // DWARVEN-DRAGON: a clockwork has no soul to trap
 
 /** The ten, with the classic key DFU registers and which of the three
  *  cost axes each supports. `chance` and `duration` cost pairs are
@@ -96,8 +96,8 @@ export const SUPPORTS_MAGNITUDE = false;
  *  Spell Maker. */
 export const MYSTICISM_ELEMENT_FLAG = EFFECT_FLAGS.Magic;
 
-export const isMysticism = (e) => Object.values(MYSTICISM_EFFECTS)
-  .some((m) => m.type === e?.type && m.subType === (e?.subType & 0xff));
+export const isMysticism = (e) =>
+  Object.values(MYSTICISM_EFFECTS).some((m) => m.type === e?.type && m.subType === (e?.subType & 0xff));
 
 // ── Open (Open.cs :90-140) ────────────────────────────────────────
 // Open is an ARMED effect, not an instant one: the chance is rolled at
@@ -134,8 +134,7 @@ export const isMysticism = (e) => Object.values(MYSTICISM_EFFECTS)
  *  CastByItem (CastWhenUsed.cs:136), so only a USED item can ever
  *  arm a key-cast Open. */
 export function castBySkeletonKey(item) {
-  return !!item && item.artifact === true
-    && item.worldTextureArchive === 432 && item.worldTextureRecord === 20;
+  return !!item && item.artifact === true && item.worldTextureArchive === 432 && item.worldTextureRecord === 20;
 }
 
 /** TriggerOpenEffect (:97-131), against the port's ActionSystem door
@@ -236,8 +235,7 @@ export function dispelNearby(nearby, rollChance) {
  *  The picker WINDOW is the UI arc's; this is the rule it fills from. */
 export const DISPELLABLE_BUNDLE_TYPES = Object.freeze(['Spell', 'HeldMagicItem']);
 export function dispellableBundles(bundles) {
-  return (bundles ?? []).filter((b) =>
-    DISPELLABLE_BUNDLE_TYPES.includes(b?.bundleType) && b?.showIcon !== false);
+  return (bundles ?? []).filter((b) => DISPELLABLE_BUNDLE_TYPES.includes(b?.bundleType) && b?.showIcon !== false);
 }
 
 /** X10: the entity's live entries GROUPED into bundles, which is the
@@ -260,17 +258,24 @@ export function dispellableBundles(bundles) {
  *  lumped together: an untagged entry belongs to no cast, and
  *  inventing a bundle for it would let the picker offer something it
  *  cannot coherently remove. */
-const NO_ICON_KINDS = new Set(['openArmed', 'lockArmed', WATER_WALKING_SILENT_KIND]);   // CSA-I: WaterWalkingSilent's ShowSpellIcon false
+const NO_ICON_KINDS = new Set(['openArmed', 'lockArmed', WATER_WALKING_SILENT_KIND]); // CSA-I: WaterWalkingSilent's ShowSpellIcon false
 export function liveBundles(entity) {
   const byId = new Map();
   for (const a of entity?.activeEffects ?? []) {
     if (a.ended || a.bundleId == null) continue;
     let b = byId.get(a.bundleId);
     if (!b) {
-      b = { bundleId: a.bundleId, name: a.bundleName ?? '', spellIndex: a.bundleSpellIndex ?? null, bundleType: a.bundleType ?? 'Spell',   // L10N3e: the index a window shows the name by
-        icon: a.bundleIcon ?? 0, selfCast: !!a.bundleSelfCast,   // U46: the HUD's icon and its buff/debuff row
-        ally: !!a.bundleAlly,   // AUDIT ALLY-CAST C4: a party mate's gift - the target dispels it as their own, no roll
-        entries: [], showIcon: false };
+      b = {
+        bundleId: a.bundleId,
+        name: a.bundleName ?? '',
+        spellIndex: a.bundleSpellIndex ?? null,
+        bundleType: a.bundleType ?? 'Spell', // L10N3e: the index a window shows the name by
+        icon: a.bundleIcon ?? 0,
+        selfCast: !!a.bundleSelfCast, // U46: the HUD's icon and its buff/debuff row
+        ally: !!a.bundleAlly, // AUDIT ALLY-CAST C4: a party mate's gift - the target dispels it as their own, no roll
+        entries: [],
+        showIcon: false,
+      };
       byId.set(a.bundleId, b);
     }
     b.entries.push(a);
@@ -316,13 +321,24 @@ export function dispelBundle(entity, bundleId, { selfCast = false, roll01 = 0, c
  * a harmful kind in it - a foe's Drain merges into the incumbent it finds (effects.js findInc), so who cast the bundle
  * is not enough and every entry's KIND is asked.
  */
-export const ENDABLE_KINDS = Object.freeze(new Set([
-  'shield', 'fortifyAttribute', 'regenerate', 'elementalResistance',
-  'spellAbsorption', 'spellReflection', 'spellResistance', 'comprehendLanguages',
-  'healHealth', 'healFatigue', 'healSpellPoints', 'healAttribute',
-  DISH_STAMINA_KIND,   // AUDIT PROF-541 K6: the Tart's (cookItems.js feedEffect) - the other dishes are Fortify Attribute's
-  ...Object.values(BUFF_KINDS).filter((k) => k !== 'silenced'),
-]));
+export const ENDABLE_KINDS = Object.freeze(
+  new Set([
+    'shield',
+    'fortifyAttribute',
+    'regenerate',
+    'elementalResistance',
+    'spellAbsorption',
+    'spellReflection',
+    'spellResistance',
+    'comprehendLanguages',
+    'healHealth',
+    'healFatigue',
+    'healSpellPoints',
+    'healAttribute',
+    DISH_STAMINA_KIND, // AUDIT PROF-541 K6: the Tart's (cookItems.js feedEffect) - the other dishes are Fortify Attribute's
+    ...Object.values(BUFF_KINDS).filter((k) => k !== 'silenced'),
+  ]),
+);
 /** Whether a live bundle (liveBundles') is the player's to end. */
 export function canEndBundle(bundle) {
   if (!bundle || bundle.bundleType === 'HeldMagicItem') return false;
@@ -343,8 +359,8 @@ export const endedSpellText = (name) => `${name} ends.`;
 
 /** Internal_Strings.csv - the two outcome lines. */
 export const DISPEL_MAGIC_TEXT = localizedStrings({
-  dispelMagicSuccess: 'Dispel magic was a success...',   // :1054
-  dispelMagicFailed: 'Dispel magic failed...',           // :1055
+  dispelMagicSuccess: 'Dispel magic was a success...', // :1054
+  dispelMagicFailed: 'Dispel magic failed...', // :1055
 });
 
 // ── Soul Trap (SoulTrap.cs :117-163, EnemyEntity.cs :157-238) ─────
@@ -376,17 +392,21 @@ export const SOUL_TRAP_TEMPLATE = 274;
  *  (int)MiscItems.Soul_trap)), which is what the port does now and
  *  what every other item predicate here already did (useItem.js's
  *  isPotionRecipe/isMap). */
-export function fillEmptyTrap(items, soulType, {
-  azurasStarOnly = false,
-  // ROAD-U, the X5 fix one item further on: this default was
-  // `it?.azurasStar === true`, a boolean only createArtifact minted -
-  // so a Star imported from a classic save captured nothing at either
-  // death site while isAzurasStarEquipped, read on the very same line
-  // there, said it was worn. SoulTrap.cs:129 asks the ITEM:
-  // ContainsEnchantment(SpecialArtifactEffect, Azuras_Star).
-  isAzurasStar = (it) => hasArtifactSubtype(it, ARTIFACTS.AzurasStar),
-  isSoulTrap = (it) => it?.group === 'MiscItems' && it?.templateIndex === SOUL_TRAP_TEMPLATE,
-} = {}) {
+export function fillEmptyTrap(
+  items,
+  soulType,
+  {
+    azurasStarOnly = false,
+    // ROAD-U, the X5 fix one item further on: this default was
+    // `it?.azurasStar === true`, a boolean only createArtifact minted -
+    // so a Star imported from a classic save captured nothing at either
+    // death site while isAzurasStarEquipped, read on the very same line
+    // there, said it was worn. SoulTrap.cs:129 asks the ITEM:
+    // ContainsEnchantment(SpecialArtifactEffect, Azuras_Star).
+    isAzurasStar = (it) => hasArtifactSubtype(it, ARTIFACTS.AzurasStar),
+    isSoulTrap = (it) => it?.group === 'MiscItems' && it?.templateIndex === SOUL_TRAP_TEMPLATE,
+  } = {},
+) {
   // DWARVEN-DRAGON: a clockwork has no soul, and the item law knows none past Enemy Expansion's (itemLaw.js soulLawful)
   if (soulType === DWARVEN_DRAGON_ID) return null;
   const empty = (it) => (it?.trappedSoulType ?? null) === null;
@@ -417,16 +437,19 @@ export const SOUL_BOUND_MONSTER_ID_COUNT = 43;
  *  carrying no trap at all - and SoulBound's costs are NEGATIVE, so an
  *  empty-handed player could mint 8000 free enchantment points off a
  *  Daedra Lord he had never trapped. */
-export function enumerateFilledTraps(items, {
-  isAzurasStar = (it) => hasArtifactSubtype(it, ARTIFACTS.AzurasStar),
-  isSoulTrap = (it) => it?.group === 'MiscItems' && it?.templateIndex === SOUL_TRAP_TEMPLATE,
-} = {}) {
+export function enumerateFilledTraps(
+  items,
+  {
+    isAzurasStar = (it) => hasArtifactSubtype(it, ARTIFACTS.AzurasStar),
+    isSoulTrap = (it) => it?.group === 'MiscItems' && it?.templateIndex === SOUL_TRAP_TEMPLATE,
+  } = {},
+) {
   const found = new Set();
   for (const it of items ?? []) {
     const soul = it?.trappedSoulType ?? null;
     if (soul === null) continue;
     if (isSoulTrap(it) && soul < SOUL_BOUND_MONSTER_ID_COUNT) found.add(soul);
-    else if (isAzurasStar(it)) found.add(soul);   // :121-125, unbounded
+    else if (isAzurasStar(it)) found.add(soul); // :121-125, unbounded
   }
   return found;
 }
@@ -449,10 +472,14 @@ export function enumerateFilledTraps(items, {
  *
  *  @returns {object|null} the trap consumed or emptied, for the caller
  *           that wants to say so; null when nothing matched. */
-export function removeFilledTrap(items, monsterID, {
-  isAzurasStar = (it) => hasArtifactSubtype(it, ARTIFACTS.AzurasStar),
-  isSoulTrap = (it) => it?.group === 'MiscItems' && it?.templateIndex === SOUL_TRAP_TEMPLATE,
-} = {}) {
+export function removeFilledTrap(
+  items,
+  monsterID,
+  {
+    isAzurasStar = (it) => hasArtifactSubtype(it, ARTIFACTS.AzurasStar),
+    isSoulTrap = (it) => it?.group === 'MiscItems' && it?.templateIndex === SOUL_TRAP_TEMPLATE,
+  } = {},
+) {
   if (!Array.isArray(items)) return null;
   if (!(monsterID >= 0) || monsterID >= SOUL_BOUND_MONSTER_ID_COUNT) return null;
   for (const it of items) {
@@ -463,18 +490,21 @@ export function removeFilledTrap(items, monsterID, {
   }
   let emptied = null;
   for (const it of items) {
-    if (isAzurasStar(it) && it?.trappedSoulType === monsterID) { it.trappedSoulType = null; emptied ??= it; }
+    if (isAzurasStar(it) && it?.trappedSoulType === monsterID) {
+      it.trappedSoulType = null;
+      emptied ??= it;
+    }
   }
   return emptied;
 }
 
 /** The five Soul Trap HUD lines (Internal_Strings.csv :658-662). */
 export const SOUL_TRAP_TEXT = localizedStrings({
-  trapActive: 'Trap active.',                        // :658
-  trapHumanoid: 'Trap will not work on humanoids.',  // :659
-  trapSuccess: 'Trapped soul.',                      // :660
-  trapFail: 'Trap failed.',                          // :661
-  trapNoneEmpty: 'You have no empty soul traps!',    // :662
+  trapActive: 'Trap active.', // :658
+  trapHumanoid: 'Trap will not work on humanoids.', // :659
+  trapSuccess: 'Trapped soul.', // :660
+  trapFail: 'Trap failed.', // :661
+  trapNoneEmpty: 'You have no empty soul traps!', // :662
 });
 
 /** EnemyEntity.AttemptSoulTrap (:194-238) + the SetHealth override
@@ -510,7 +540,7 @@ export const SOUL_TRAP_TEXT = localizedStrings({
  *  the soul goes to the player who cast it, never to the corpse. */
 export function attemptSoulTrap(target, soulType, items, roll01, { azurasStarOnly = false } = {}) {
   const trap = (target?.activeEffects ?? []).find((a) => a.kind === 'soulTrap' && !a.ended);
-  if (!trap || soulType === DWARVEN_DRAGON_ID) return { allowDeath: true, alert: null, filled: null };   // DWARVEN-DRAGON: no soul to hold it
+  if (!trap || soulType === DWARVEN_DRAGON_ID) return { allowDeath: true, alert: null, filled: null }; // DWARVEN-DRAGON: no soul to hold it
   // Dice100.SuccessRoll, the port's convention throughout.
   if (Math.floor(roll01 * 100) >= (trap.chance ?? 0)) {
     return { allowDeath: true, alert: 'trapFail', filled: null };
@@ -588,12 +618,12 @@ export function silenceBlocksCast(entity, { costsSpellPoints = true } = {}) {
  *                                as the record of DFU's own
  *                                Open.cs:87 AddHUDText call. */
 export const DOOR_SPELL_TEXT = localizedStrings({
-  readyToOpen: 'Ready to open.',            // :652
-  openFailed: 'Lock is too powerful.',      // :655
-  readyToLock: 'Ready to lock.',            // :651
-  doorLocked: 'Door is now locked.',        // :653
-  doorAlreadyLocked: 'Door already locked.',// :654
-  spellEffectFailed: 'Spell effect failed.',// :647
+  readyToOpen: 'Ready to open.', // :652
+  openFailed: 'Lock is too powerful.', // :655
+  readyToLock: 'Ready to lock.', // :651
+  doorLocked: 'Door is now locked.', // :653
+  doorAlreadyLocked: 'Door already locked.', // :654
+  spellEffectFailed: 'Spell effect failed.', // :647
 });
 
 /** AUDIT 63 F16: DFU prints this line from TWO places - SilenceCheck at

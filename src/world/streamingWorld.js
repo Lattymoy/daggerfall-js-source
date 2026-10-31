@@ -26,7 +26,7 @@ import { TERRAIN_SIZE } from './terrain/terrainSampler.js';
 import { GLOBAL_SCALE } from './meshReader.js';
 import { WORLD_MAP_TILE_DIM, getLocationTerrainTileOrigin } from './terrain/terrainTiles.js';
 
-export const TERRAIN_DISTANCE = 3;   // DFU's default (StreamingWorld.cs:56); D1: the world host passes the LIVE Experimental/TerrainDistance (1..4) into the constructor
+export const TERRAIN_DISTANCE = 3; // DFU's default (StreamingWorld.cs:56); D1: the world host passes the LIVE Experimental/TerrainDistance (1..4) into the constructor
 /** BUILD-RETRY (bible/06-Systems/Travel-View.md LOAD-OWED, the port's own - DFU's builds do not fail): the stream's own
  *  re-asks of a pixel whose build THREW, real milliseconds after each failure - five, doubling from two seconds, a
  *  minute in all. Past the last the pixel waits for the next crossing that lists it, as every failed pixel waited
@@ -40,7 +40,7 @@ const MIN_MAP_PIXEL_X = 0;
 const MIN_MAP_PIXEL_Y = 0;
 const MAX_MAP_PIXEL_X = 1000;
 const MAX_MAP_PIXEL_Y = 500;
-export const SCENE_MAP_RATIO = 1 / GLOBAL_SCALE;   // HCC: StreamingWorld.SceneMapRatio, the mod's scene<->world conversions read it by name
+export const SCENE_MAP_RATIO = 1 / GLOBAL_SCALE; // HCC: StreamingWorld.SceneMapRatio, the mod's scene<->world conversions read it by name
 const NATIVE_PIXEL = 32768; // MapsFile world units per map pixel
 
 /** Verbatim MapsFile.WorldCoordToMapPixel (truncating division). DFU
@@ -93,9 +93,13 @@ export function locationWorldRect(dfLocation, mapPixelX, mapPixelY) {
  *  widened answer. */
 export function isInLocationRect(worldX, worldZ, rect) {
   if (!rect) return false;
-  const extraRect = WORLD_MAP_RMB_DIM;   // size of a full city block
-  return worldX >= rect.minX - extraRect && worldX <= rect.maxX + extraRect
-    && worldZ >= rect.minZ - extraRect && worldZ <= rect.maxZ + extraRect;
+  const extraRect = WORLD_MAP_RMB_DIM; // size of a full city block
+  return (
+    worldX >= rect.minX - extraRect &&
+    worldX <= rect.maxX + extraRect &&
+    worldZ >= rect.minZ - extraRect &&
+    worldZ <= rect.maxZ + extraRect
+  );
 }
 
 /** The load list's order, nearest-first around `current` (a map pixel):
@@ -108,7 +112,7 @@ export const nearestFirstFrom = (current) => (a, b) => {
   const ca = Math.max(Math.abs(a.px - current.x), Math.abs(a.py - current.y));
   const cb = Math.max(Math.abs(b.px - current.x), Math.abs(b.py - current.y));
   if (ca !== cb) return ca - cb;
-  return ((a.px - current.x) ** 2 + (a.py - current.y) ** 2) - ((b.px - current.x) ** 2 + (b.py - current.y) ** 2);
+  return (a.px - current.x) ** 2 + (a.py - current.y) ** 2 - ((b.px - current.x) ** 2 + (b.py - current.y) ** 2);
 };
 
 export class StreamingWorldState {
@@ -118,8 +122,8 @@ export class StreamingWorldState {
     this.compensation = [0, 0, 0];
     this.current = { x: 0, y: 0 };
     this.loaded = new Map(); // key -> {px, py}, built or building
-    this.failed = new Map();   // BUILD-RETRY: key -> {px, py, tries, at} - a pixel whose build threw, and when the stream asks again
-    this.initOffset = [0, 0, 0];   // FIELD-CSA1: the last init's move of the scene (init)
+    this.failed = new Map(); // BUILD-RETRY: key -> {px, py, tries, at} - a pixel whose build threw, and when the stream asks again
+    this.initOffset = [0, 0, 0]; // FIELD-CSA1: the last init's move of the scene (init)
   }
 
   static key(px, py) {
@@ -140,7 +144,7 @@ export class StreamingWorldState {
     this.compensation = [0, this.compensation[1], 0];
     this.current = { x: mapPixelX, y: mapPixelY };
     this.loaded.clear();
-    this.failed.clear();   // BUILD-RETRY: the new grid asks for every pixel afresh
+    this.failed.clear(); // BUILD-RETRY: the new grid asks for every pixel afresh
     const [ox, oz] = this.localFromWorld(was.x, was.z);
     this.initOffset = [ox, 0, oz];
     return this._loadList();
@@ -185,8 +189,7 @@ export class StreamingWorldState {
    *  its ground archive and its nature scatter where DFU leaves the
    *  edge of the world empty. */
   static onMap(px, py) {
-    return px >= MIN_MAP_PIXEL_X && px < MAX_MAP_PIXEL_X
-      && py >= MIN_MAP_PIXEL_Y && py < MAX_MAP_PIXEL_Y;
+    return px >= MIN_MAP_PIXEL_X && px < MAX_MAP_PIXEL_X && py >= MIN_MAP_PIXEL_Y && py < MAX_MAP_PIXEL_Y;
   }
 
   /** TAMRIEL2 (2026-10-08, Mac: "only implement the land mass"): THE FRAME THE WORLD STREAMS OVER, past the map - the
@@ -206,9 +209,11 @@ export class StreamingWorldState {
   }
 
   inRange(px, py) {
-    return StreamingWorldState.streams(px, py) &&
+    return (
+      StreamingWorldState.streams(px, py) &&
       Math.abs(px - this.current.x) <= this.terrainDistance &&
-      Math.abs(py - this.current.y) <= this.terrainDistance;
+      Math.abs(py - this.current.y) <= this.terrainDistance
+    );
   }
 
   _loadList() {
@@ -217,7 +222,7 @@ export class StreamingWorldState {
     const d = this.terrainDistance;
     for (let py = this.current.y - d; py <= this.current.y + d; py++) {
       for (let px = this.current.x - d; px <= this.current.x + d; px++) {
-        if (!StreamingWorldState.streams(px, py)) continue;   // TAMRIEL2: the frame, where the host set one
+        if (!StreamingWorldState.streams(px, py)) continue; // TAMRIEL2: the frame, where the host set one
         if (this.loaded.has(StreamingWorldState.key(px, py))) continue;
         list.push({ px, py });
       }
@@ -240,7 +245,12 @@ export class StreamingWorldState {
     const key = StreamingWorldState.key(px, py);
     this.loaded.delete(key);
     const tries = (this.failed.get(key)?.tries ?? 0) + 1;
-    this.failed.set(key, { px, py, tries, at: tries <= BUILD_RETRY_MS.length ? now + BUILD_RETRY_MS[tries - 1] : Infinity });
+    this.failed.set(key, {
+      px,
+      py,
+      tries,
+      at: tries <= BUILD_RETRY_MS.length ? now + BUILD_RETRY_MS[tries - 1] : Infinity,
+    });
   }
 
   /** BUILD-RETRY: a pixel that stood - its failures forgotten. */
@@ -254,9 +264,12 @@ export class StreamingWorldState {
   retryDue(now) {
     const out = [];
     for (const [key, f] of this.failed) {
-      if (!this.inRange(f.px, f.py)) { this.failed.delete(key); continue; }
+      if (!this.inRange(f.px, f.py)) {
+        this.failed.delete(key);
+        continue;
+      }
       if (f.at > now || this.loaded.has(key)) continue;
-      f.at = Infinity;   // asked: its next failure sets the next wait, its standing forgets it
+      f.at = Infinity; // asked: its next failure sets the next wait, its standing forgets it
       const p = { px: f.px, py: f.py };
       this.loaded.set(key, p);
       out.push(p);
@@ -346,11 +359,17 @@ export class TerrainSlots {
   }
 
   /** The pixel holds a slot, active or pooled. */
-  has(key) { return this.keys.has(key); }
+  has(key) {
+    return this.keys.has(key);
+  }
 
   /** ClearStreamingWorld: CollectTerrains(true) and terrainIndexDict.Clear(). */
   clear() {
-    for (const s of this.slots) { s.active = false; s.px = -2147483648; s.py = -2147483648; }
+    for (const s of this.slots) {
+      s.active = false;
+      s.px = -2147483648;
+      s.py = -2147483648;
+    }
     this.keys.clear();
   }
 
@@ -372,26 +391,38 @@ export class TerrainSlots {
         const at = this.keys.get(key);
         if (at !== undefined) {
           const s = this.slots[at];
-          if (!s.active) { s.active = true; out.reactivated.push(key); }
+          if (!s.active) {
+            s.active = true;
+            out.reactivated.push(key);
+          }
           continue;
         }
         let found = -1;
         for (let i = 0; i < this.size; i++) {
           const s = this.slots[i];
-          if (!s || (!s.active && !inRange(s.px, s.py))) { found = i; break; }
+          if (!s || (!s.active && !inRange(s.px, s.py))) {
+            found = i;
+            break;
+          }
         }
-        if (found === -1) continue;   // "Unable to find free terrain" - DFU quits the game; 256 slots never run out at distance <= 4
+        if (found === -1) continue; // "Unable to find free terrain" - DFU quits the game; 256 slots never run out at distance <= 4
         const old = this.slots[found];
         if (old) {
           const k = `${old.px},${old.py}`;
-          if (this.keys.get(k) === found) { this.keys.delete(k); out.recycled.push(k); }
+          if (this.keys.get(k) === found) {
+            this.keys.delete(k);
+            out.recycled.push(k);
+          }
         }
         this.slots[found] = { px: x, py: y, active: true };
         this.keys.set(key, found);
       }
     }
     for (const s of this.slots) {
-      if (s.active && !inRange(s.px, s.py)) { s.active = false; out.pooled.push(`${s.px},${s.py}`); }
+      if (s.active && !inRange(s.px, s.py)) {
+        s.active = false;
+        out.pooled.push(`${s.px},${s.py}`);
+      }
     }
     return out;
   }

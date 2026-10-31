@@ -4,7 +4,9 @@
     "file": "src/net/online.js",
     "old": "    if (this._stalled(ws, this._now())) return false;\n    const gate = hitGate(this._hbucket, this._now());",
     "new": "    const gate = hitGate(this._hbucket, this._now());",
-    "tests": ["test/net/audit_rpt1026_secnet.test.js"],
+    "tests": [
+      "test/net/audit_rpt1026_secnet.test.js"
+    ],
     "note": "a stalled line is handed every blow beside the poses it holds - a blow spends the relay's pose meter, and a held fight strikes the socket out"
   },
   {
@@ -12,7 +14,9 @@
     "file": "src/net/online.js",
     "old": "export const LINE_STALL_MS = PING_MS;",
     "new": "export const LINE_STALL_MS = 2 * PING_MS;",
-    "tests": ["test/net/audit_rpt1026_secnet.test.js"],
+    "tests": [
+      "test/net/audit_rpt1026_secnet.test.js"
+    ],
     "note": "a stall known 5 s later - a walk's arithmetic still holds, a fight's (its blows on the same meter) does not"
   },
   {
@@ -20,7 +24,9 @@
     "file": "src/net/online.js",
     "old": "    if (!cell && !this._welcomed.has(this._ws)) return false;\n",
     "new": "",
-    "tests": ["test/net/audit_rpt1026_secnet.test.js"],
+    "tests": [
+      "test/net/audit_rpt1026_secnet.test.js"
+    ],
     "note": "a world room's blow at the host goes down a rehello's replacement before its welcome - at an instance whose hub is slow, \"hit before hello\" and the socket closed for good"
   },
   {
@@ -28,7 +34,9 @@
     "file": "src/net/online.js",
     "old": "    if (!this._welcomed.has(this._ws)) return false;   // AUDIT RPT1026 A5:",
     "new": "    // AUDIT RPT1026 A5:",
-    "tests": ["test/net/audit_rpt1026_secnet.test.js"],
+    "tests": [
+      "test/net/audit_rpt1026_secnet.test.js"
+    ],
     "note": "the host's memory goes down a rehello's replacement before its welcome - \"world before hello\", closed for good"
   },
   {
@@ -36,7 +44,9 @@
     "file": "server-account/src/accounts.js",
     "old": "'DELETE FROM sessions WHERE player_id = ? AND EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?)').bind(player.id, player.id, pw)",
     "new": "'DELETE FROM sessions WHERE player_id = ? AND (EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?) OR 1)').bind(player.id, player.id, pw)",
-    "tests": ["test/server/audit_rpt1026_secnet_acct.test.js"],
+    "tests": [
+      "test/server/audit_rpt1026_secnet_acct.test.js"
+    ],
     "note": "a recovery's sign-out by the account's id alone - a second recovery that wrote after it is answered 200 with a session this sign-out then deletes"
   }
 ]

@@ -20,8 +20,8 @@
   {
     "name": "tile-size",
     "file": "src/world/road/pathData.js",
-    "old": "export const T_SIZE = MP_WORLD_UNITS / 128;",
-    "new": "export const T_SIZE = MP_WORLD_UNITS / 64;",
+    "old": "export const T_SIZE = MP_WORLD_UNITS / 128; // 256 - one terrain tile",
+    "new": "export const T_SIZE = MP_WORLD_UNITS / 64; // 256 - one terrain tile",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "path-width",
     "file": "src/world/road/pathData.js",
-    "old": "export const P_SIZE = T_SIZE * 2;",
-    "new": "export const P_SIZE = T_SIZE;",
+    "old": "export const P_SIZE = T_SIZE * 2; // 512 - a path's width",
+    "new": "export const P_SIZE = T_SIZE; // 512 - a path's width",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "target-pixel-north-inverted",
     "file": "src/systems/travel/travelPaths.js",
-    "old": "    case N: return { x: mapPixelX, y: mapPixelY - 1 };",
-    "new": "    case N: return { x: mapPixelX, y: mapPixelY + 1 };",
+    "old": "      return { x: mapPixelX, y: mapPixelY - 1 };",
+    "new": "      return { x: mapPixelX, y: mapPixelY + 1 };",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "target-pixel-default-moves",
     "file": "src/systems/travel/travelPaths.js",
-    "old": "    default: return { x: mapPixelX, y: mapPixelY };",
-    "new": "    default: return { x: mapPixelX + 1, y: mapPixelY };",
+    "old": "      return { x: mapPixelX, y: mapPixelY };",
+    "new": "      return { x: mapPixelX + 1, y: mapPixelY };",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -112,7 +112,7 @@
   {
     "name": "data-point-unchecked",
     "file": "src/world/road/pathData.js",
-    "old": "  if (!onTable(mapPixelX, mapPixelY)) return pathType === PATH_ROADS || pathType === PATH_TRACKS ? roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;",
+    "old": "  if (!onTable(mapPixelX, mapPixelY))\n    return pathType === PATH_ROADS || pathType === PATH_TRACKS\n      ? roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff\n      : 0;",
     "new": "  if (false) return 0;",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
@@ -193,8 +193,8 @@
   {
     "name": "autopilot-forward-fixed",
     "file": "src/systems/travel/travelAutopilot.js",
-    "old": "    // forward at the journey's speed multiplier.\n    return { yaw: this.yaw, pitch: this.pitch, forward: this.speedMultiplier, arrived: false };",
-    "new": "    // forward at the journey's speed multiplier.\n    return { yaw: this.yaw, pitch: this.pitch, forward: 1, arrived: false };",
+    "old": "    return { yaw: this.yaw, pitch: this.pitch, forward: this.speedMultiplier, arrived: false };",
+    "new": "    return { yaw: this.yaw, pitch: this.pitch, forward: 1, arrived: false };",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -382,7 +382,7 @@
   {
     "name": "ports-mask",
     "file": "src/systems/travel/travelPorts.js",
-    "old": "  return (mapId | 0) & 0x000FFFFF;",
+    "old": "  return (mapId | 0) & 0x000fffff;",
     "new": "  return mapId | 0;",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
@@ -391,8 +391,8 @@
   {
     "name": "ports-null-is-a-port",
     "file": "src/systems/travel/travelPorts.js",
-    "old": "  if (mapId == null || !Number.isFinite(mapId)) return false;\n  return PORT_SET.has(maskMapId(mapId));",
-    "new": "  if (mapId == null || !Number.isFinite(mapId)) return true;\n  return PORT_SET.has(maskMapId(mapId));",
+    "old": "export function hasPort(mapId) {\n  if (mapId == null || !Number.isFinite(mapId)) return false;",
+    "new": "export function hasPort(mapId) {\n  if (mapId == null || !Number.isFinite(mapId)) return true;",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -400,8 +400,8 @@
   {
     "name": "draw-path-centre-only",
     "file": "src/ui/travel/travelPathsOverlay.js",
-    "old": "  if ((data & 32) !== 0) { buf[offset + (width * 2) + 3] = px; buf[offset + (width * 2) + 4] = px; }  // E",
-    "new": "  if ((data & 32) !== 0) { buf[offset + (width * 2) + 3] = px; }  // E",
+    "old": "    buf[offset + width * 2 + 4] = px;\n  } // E",
+    "new": "  } // E",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -409,8 +409,8 @@
   {
     "name": "draw-path-diagonal-straight",
     "file": "src/ui/travel/travelPathsOverlay.js",
-    "old": "  if ((data & 64) !== 0) { buf[offset + (width * 3) + 3] = px; buf[offset + (width * 4) + 4] = px; }  // NE",
-    "new": "  if ((data & 64) !== 0) { buf[offset + (width * 3) + 3] = px; buf[offset + (width * 4) + 3] = px; }  // NE",
+    "old": "    buf[offset + width * 4 + 4] = px;",
+    "new": "    buf[offset + width * 4 + 3] = px;",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -436,8 +436,8 @@
   {
     "name": "here-pt",
     "file": "src/ui/travel/travelPathsOverlay.js",
-    "old": "export const JUNCTION_HERE_PT = (JUNCTION_MAP_H2 * JUNCTION_MAP_WIDTH * 25) - (3 * JUNCTION_MAP_WIDTH * 5) + (JUNCTION_MAP_W2 * 5) + 2;",
-    "new": "export const JUNCTION_HERE_PT = (JUNCTION_MAP_H2 * JUNCTION_MAP_WIDTH * 25) - (2 * JUNCTION_MAP_WIDTH * 5) + (JUNCTION_MAP_W2 * 5) + 2;",
+    "old": "  JUNCTION_MAP_H2 * JUNCTION_MAP_WIDTH * 25 - 3 * JUNCTION_MAP_WIDTH * 5 + JUNCTION_MAP_W2 * 5 + 2;",
+    "new": "  JUNCTION_MAP_H2 * JUNCTION_MAP_WIDTH * 25 - 2 * JUNCTION_MAP_WIDTH * 5 + JUNCTION_MAP_W2 * 5 + 2;",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -445,8 +445,8 @@
   {
     "name": "direction-index-north-down",
     "file": "src/ui/travel/travelPathsOverlay.js",
-    "old": "    case 128: return here + w5;         // N",
-    "new": "    case 128: return here - w5;         // N",
+    "old": "      return here + w5; // N",
+    "new": "      return here - w5; // N",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -454,8 +454,8 @@
   {
     "name": "map-section-no-circle",
     "file": "src/ui/travel/travelPathsOverlay.js",
-    "old": "      if (circular && height === width",
-    "new": "      if (false && height === width",
+    "old": "        circular &&",
+    "new": "        false &&",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -501,7 +501,7 @@
   {
     "name": "guild-halls-counted",
     "file": "src/ui/travel/travelMapOptions.js",
-    "old": "      continue;   // :404-406 - a guild hall is named, never counted",
+    "old": "      continue; // :404-406 - a guild hall is named, never counted",
     "new": "      // counted too",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
@@ -555,8 +555,8 @@
   {
     "name": "cancel-does-not-close",
     "file": "src/ui/travel/travelControlUI.js",
-    "old": "    this.deps.onCancel?.();\n    this.deps.onClose?.();",
-    "new": "    this.deps.onCancel?.();",
+    "old": "    this.deps.onCancel?.();\n    this.deps.onClose?.();\n  }",
+    "new": "    this.deps.onCancel?.();\n  }",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -582,7 +582,7 @@
   {
     "name": "junction-redraw-every-frame",
     "file": "src/ui/travel/travelJunctionMap.js",
-    "old": "    if (this.lastDrawn && this.lastDrawn.x === mapPixel.x && this.lastDrawn.y === mapPixel.y\n      && this.lastDrawn.direction === direction) return false;",
+    "old": "    if (\n      this.lastDrawn &&\n      this.lastDrawn.x === mapPixel.x &&\n      this.lastDrawn.y === mapPixel.y &&\n      this.lastDrawn.direction === direction\n    )\n      return false;",
     "new": "    if (false) return false;",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
@@ -627,8 +627,8 @@
   {
     "name": "travel-options-off-by-default",
     "file": "src/systems/modSettings.js",
-    "old": "  'travel-options': Object.freeze({\n    title: 'Travel Options',\n    author: 'Hazelnut',\n    keys: Object.freeze({\n      Enabled: Object.freeze({\n        default: true,",
-    "new": "  'travel-options': Object.freeze({\n    title: 'Travel Options',\n    author: 'Hazelnut',\n    keys: Object.freeze({\n      Enabled: Object.freeze({\n        default: false,",
+    "old": "    author: 'Hazelnut',\n    keys: Object.freeze({\n      Enabled: Object.freeze({\n        default: true,\n        get description() {\n          return t(\n            'mods.travelOptions.Enabled.description',",
+    "new": "    author: 'Hazelnut',\n    keys: Object.freeze({\n      Enabled: Object.freeze({\n        default: false,\n        get description() {\n          return t(\n            'mods.travelOptions.Enabled.description',",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -708,7 +708,7 @@
   {
     "name": "k1-yaw-zeroed-on-reinit",
     "file": "src/systems/travel/travelAutopilot.js",
-    "old": "    this.pitch = 0;        // :48 - mouseLook.Pitch = 0, and :143 holds it there every frame\n    // ...and NOT the yaw: see the constructor (AUDIT-TO1 K1).",
+    "old": "    this.pitch = 0; // :48 - mouseLook.Pitch = 0, and :143 holds it there every frame\n    // ...and NOT the yaw: see the constructor (AUDIT-TO1 K1).",
     "new": "    this.pitch = 0;\n    this.yaw = 0;",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
@@ -801,7 +801,7 @@
     "name": "e3-filter-back-in-src-slot",
     "file": "src/ui/travel/travelJunctionMap.js",
     "old": "      renderer.drawScreenQuad?.(this._tex, { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s });",
-    "new": "      renderer.drawScreenQuad?.(this._tex, { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s }, { filter: 'nearest' });",
+    "new": "      renderer.drawScreenQuad?.(\n        this._tex,\n        { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s },\n        { filter: 'nearest' },\n      );",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -818,8 +818,8 @@
   {
     "name": "f1-enhanced-mount-torn-down-with-bar",
     "file": "src/ui/enhanced/enhancedTravelControl.js",
-    "old": "  if (!state.showing && !junctionOnly) { hideEnhancedTravelControl(); return null; }",
-    "new": "  if (!state.showing) { hideEnhancedTravelControl(); return null; }",
+    "old": "  if (!state.showing && !junctionOnly) {",
+    "new": "  if (!state.showing) {",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -945,8 +945,8 @@
   {
     "name": "i1-follow-key-back-on-f",
     "file": "src/systems/modSettings.js",
-    "old": "'RoadsIntegration.FollowPathsKey': Object.freeze({ default: 3, keyChoice: true,",
-    "new": "'RoadsIntegration.FollowPathsKey': Object.freeze({ default: 1, keyChoice: true,",
+    "old": "      'RoadsIntegration.FollowPathsKey': Object.freeze({\n        default: 3,",
+    "new": "      'RoadsIntegration.FollowPathsKey': Object.freeze({\n        default: 1,",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js",
       "test/systems/ht1_handheldtorches.test.js"
@@ -955,8 +955,8 @@
   {
     "name": "i1-follow-key-on-x-handheld-torches-throw",
     "file": "src/systems/modSettings.js",
-    "old": "'RoadsIntegration.FollowPathsKey': Object.freeze({ default: 3, keyChoice: true,",
-    "new": "'RoadsIntegration.FollowPathsKey': Object.freeze({ default: 5, keyChoice: true,",
+    "old": "      'RoadsIntegration.FollowPathsKey': Object.freeze({\n        default: 3,",
+    "new": "      'RoadsIntegration.FollowPathsKey': Object.freeze({\n        default: 5,",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js",
       "test/systems/ht1_handheldtorches.test.js"
@@ -965,8 +965,8 @@
   {
     "name": "l6-containment-back-on-the-mods-page",
     "file": "src/ui/travel/travelMapOptions.js",
-    "old": "      // a neighbouring province's included. Kept as the mod draws it.",
-    "new": "      // a neighbouring province's included. Kept as the mod draws it.\n      if (deps.politicAt(mpX, mpY) - 128 !== selectedRegion) continue;",
+    "old": "      const summary = summaryAt(mpX, mpY);",
+    "new": "      if (deps.politicAt(mpX, mpY) - 128 !== selectedRegion) continue;\n      const summary = summaryAt(mpX, mpY);",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -1028,7 +1028,7 @@
   {
     "name": "travel-drive-ungated",
     "file": "src/systems/travel/travelAutopilot.js",
-    "old": "  return (!standing && streaming) ? 0 : forward;",
+    "old": "  return !standing && streaming ? 0 : forward;",
     "new": "  return forward;",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
@@ -1055,7 +1055,7 @@
   {
     "name": "travel-drive-holds-for-ever",
     "file": "src/systems/travel/travelAutopilot.js",
-    "old": "  return (!standing && streaming) ? 0 : forward;",
+    "old": "  return !standing && streaming ? 0 : forward;",
     "new": "  return !standing ? 0 : forward;",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"

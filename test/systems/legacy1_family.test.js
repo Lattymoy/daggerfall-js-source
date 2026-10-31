@@ -28,6 +28,7 @@ import { MOD_SETTINGS } from '../../src/systems/modSettings.js';
 import { DEFAULT_BINDINGS, MOD_ACTIONS } from '../../src/systems/inputActions.js';
 import { LOCATION_TYPES } from '../../src/formats/mapsFile.js';
 import { _resetModSaveData, modSaveRecords, restoreModSaveRecords } from '../../src/systems/modSaveData.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT TEST-PRESET): the world host whole
 
 const rd = (f) => readFileSync(new URL(`../../${f}`, import.meta.url), 'utf8');
 
@@ -477,7 +478,7 @@ test('LEGACY1: the save carries the family and a newer store copy wins at the lo
 });
 
 test('LEGACY1: THE FOUR HOSTS - the street and the modal hosts all reset a death through Project Legacy first', () => {
-  const src = rd('src/scenes/world.js');
+  const src = hostText('src/scenes/world.js');
   assert.match(src, /onReset: \(\) => \(legacyDeathReset\(\) \|\| \(_deathWasOnline \? respawnOnlinePlayer\(\) : endRunToTitleMenu\(renderer\)\)\)/);
   assert.match(src, /onlineRespawn: \(\) => \{ if \(legacyDeathReset\(\)\) return true;/);
   // the interior and the dungeon hosts reset through that one door

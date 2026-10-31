@@ -11,8 +11,8 @@
   {
     "name": "LR-box-depth-as-width",
     "file": "src/render/lightClusters.js",
-    "old": "  vb[0] = vx - ex; vb[1] = vx + ex; vb[2] = vy - ey; vb[3] = vy + ey; vb[4] = -vz - ez; vb[5] = -vz + ez;",
-    "new": "  vb[0] = vx - ex; vb[1] = vx + ex; vb[2] = vy - ey; vb[3] = vy + ey; vb[4] = -vz - ex; vb[5] = -vz + ex;",
+    "old": "  vb[4] = -vz - ez;\n  vb[5] = -vz + ez;",
+    "new": "  vb[4] = -vz - ex;\n  vb[5] = -vz + ex;",
     "tests": [
       "test/render/lightreach.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LR-box-sphere-depth",
     "file": "src/render/lightClusters.js",
-    "old": "  vb[0] = vx - r; vb[1] = vx + r; vb[2] = vy - r; vb[3] = vy + r; vb[4] = -vz - r; vb[5] = -vz + r;",
-    "new": "  vb[0] = vx - r; vb[1] = vx + r; vb[2] = vy - r; vb[3] = vy + r; vb[4] = -vz - r; vb[5] = -vz + 0.5 * r;",
+    "old": "  vb[5] = -vz + r;",
+    "new": "  vb[5] = -vz + 0.5 * r;",
     "tests": [
       "test/render/lightreach.test.js",
       "test/render/lc1_clusters.test.js"
@@ -30,8 +30,8 @@
   {
     "name": "LR-slice-not-narrowed",
     "file": "src/render/lightClusters.js",
-    "old": "  out[0] = Math.max(out[0], tile(minX, CLUSTER_X)); out[1] = Math.min(out[1], tile(maxX, CLUSTER_X));",
-    "new": "  out[0] = Math.max(out[0], 0); out[1] = Math.min(out[1], CLUSTER_X - 1);",
+    "old": "  out[0] = Math.max(out[0], tile(minX, CLUSTER_X));\n  out[1] = Math.min(out[1], tile(maxX, CLUSTER_X));",
+    "new": "  out[0] = Math.max(out[0], 0);\n  out[1] = Math.min(out[1], CLUSTER_X - 1);",
     "tests": [
       "test/render/lightreach.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "LR-slice-circle-as-sphere",
     "file": "src/render/lightClusters.js",
-    "old": "  const rs = Math.sqrt(r * r - dz * dz), dA =",
-    "new": "  const rs = r, dA =",
+    "old": "  const rs = Math.sqrt(r * r - dz * dz),",
+    "new": "  const rs = r,",
     "tests": [
       "test/render/lightreach.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "LR-slice-cross-section-too-thin",
     "file": "src/render/lightClusters.js",
-    "old": "  const rs = Math.sqrt(r * r - dz * dz), dA =",
-    "new": "  const rs = Math.sqrt(r * r - dz * dz) * 0.8, dA =",
+    "old": "  const rs = Math.sqrt(r * r - dz * dz),",
+    "new": "  const rs = Math.sqrt(r * r - dz * dz) * 0.8,",
     "tests": [
       "test/render/lightreach.test.js",
       "test/render/lc1_clusters.test.js"
@@ -581,8 +581,8 @@
   {
     "name": "LR-audit-last-slice-bounded",
     "file": "src/render/lightClusters.js",
-    "old": "(k >= CLUSTER_Z - 1 ? Infinity : CLUSTER_NEAR * Math.exp((k + 1) / CLUSTER_Z_SCALE) * 1.001)",
-    "new": "(CLUSTER_NEAR * Math.exp((k + 1) / CLUSTER_Z_SCALE) * 1.001)",
+    "old": "const SLICE_HI = Float64Array.from({ length: CLUSTER_Z }, (_, k) =>\n  k >= CLUSTER_Z - 1 ? Infinity : CLUSTER_NEAR * Math.exp((k + 1) / CLUSTER_Z_SCALE) * 1.001,",
+    "new": "const SLICE_HI = Float64Array.from(\n  { length: CLUSTER_Z },\n  (_, k) => CLUSTER_NEAR * Math.exp((k + 1) / CLUSTER_Z_SCALE) * 1.001,",
     "tests": [
       "test/render/audit_lightreach.test.js"
     ]

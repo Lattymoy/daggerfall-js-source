@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-CC-A1-clear-orphans",
     "file": "src/scenes/crewAshore.js",
-    "old": "(rec.dead || !rec.ai || (s.has && !s.has(rec)))",
-    "new": "(rec.dead || !rec.ai)",
+    "old": "      if (rec.dead || !rec.ai || (s.has && !s.has(rec))) {",
+    "new": "      if (rec.dead || !rec.ai) {",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "AUDIT-CC-A2-health-absolute",
     "file": "src/scenes/crewAshore.js",
-    "old": "rec.entity.maxHealth = c.maxHealth; rec.entity.health = Math.max(1, Math.min(c.maxHealth, c.health ?? c.maxHealth));",
-    "new": "rec.entity.health = Math.max(1, Math.min(rec.entity.maxHealth, c.health ?? c.maxHealth));",
+    "old": "              rec.entity.maxHealth = c.maxHealth;\n              rec.entity.health = Math.max(1, Math.min(c.maxHealth, c.health ?? c.maxHealth));",
+    "new": "              rec.entity.health = Math.max(1, Math.min(rec.entity.maxHealth, c.health ?? c.maxHealth));",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-CC-A3-height-chase-airborne",
     "file": "src/scenes/crewAshore.js",
-    "old": "(L.grounded !== false && Math.abs(f[1] - L.feet[1]) > CATCH_UP_DY)",
-    "new": "(Math.abs(f[1] - L.feet[1]) > CATCH_UP_DY)",
+    "old": "          Math.hypot(f[0] - L.feet[0], f[2] - L.feet[2]) > CATCH_UP_M ||\n          (L.grounded !== false && Math.abs(f[1] - L.feet[1]) > CATCH_UP_DY);",
+    "new": "          Math.hypot(f[0] - L.feet[0], f[2] - L.feet[2]) > CATCH_UP_M || Math.abs(f[1] - L.feet[1]) > CATCH_UP_DY;",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "AUDIT-CC-A4-side-not-reasserted",
     "file": "src/scenes/crewAshore.js",
-    "old": "        rec.entity.team = 'PlayerAlly'; rec.entity.mobileTeam = 'PlayerAlly';\n",
-    "new": "",
+    "old": "        rec.entity.team = 'PlayerAlly';\n        rec.entity.mobileTeam = 'PlayerAlly';\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "AUDIT-CC-A5-home-unseen",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "      if (w.away) for (const m of ship.life.members) { if (!m.gone && !ship.sprites.get(m)) ship.sprites.set(m, sprite(m)); }\n",
-    "new": "",
+    "old": "      if (w.away)\n        for (const m of ship.life.members) {\n          if (!m.gone && !ship.sprites.get(m)) ship.sprites.set(m, sprite(m));\n        }\n      if (w.hold && !ship.held) {",
+    "new": "      if (w.hold && !ship.held) {",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "AUDIT-CC-A9-no-uid-row",
     "file": "src/systems/comeSailAway/csaBoatMenu.js",
-    "old": "if (s.crewed && s.companions !== false) rows.push",
-    "new": "if (s.crewed) rows.push",
+    "old": "    if (s.crewed && s.companions !== false) rows.push({ id: BOAT_VERB.companions, label: BOAT_MENU_TEXT.companions }); // CREW-COMPANIONS - AUDIT CC-A9: not on a boat with no deed number (`companions` false)",
+    "new": "    if (s.crewed) rows.push({ id: BOAT_VERB.companions, label: BOAT_MENU_TEXT.companions }); // CREW-COMPANIONS - AUDIT CC-A9: not on a boat with no deed number (`companions` false)",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "AUDIT-CC-B5-route-kept",
     "file": "src/ai/enhancedMotor.js",
-    "old": "this._wasFollowing = this._following; this.path = null; this.repathT = 0; }",
-    "new": "this._wasFollowing = this._following; }",
+    "old": "        this.path = null;\n        this.repathT = 0;\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -232,8 +232,8 @@
   {
     "name": "AUDIT-CC-B6-watch-leaves",
     "file": "src/systems/town/townWatch.js",
-    "old": " && !(t?.companion != null && !t.dead)   // AUDIT CC-B6",
-    "new": "   // AUDIT CC-B6",
+    "old": "    !(t?.defender === true && !t.dead) &&\n    !(t?.companion != null && !t.dead) && // AUDIT CC-B6: a monster fighting a companion is still the fight",
+    "new": "    !(t?.defender === true && !t.dead) && // AUDIT CC-B6: a monster fighting a companion is still the fight",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -306,8 +306,8 @@
   {
     "name": "AUDIT-CC-D2-no-hands-no-work",
     "file": "src/systems/naval/navalYard.js",
-    "old": "const share = crewed && crewShare > 0 ? Math.min(1, crewShare) : SEA_REPAIR_ALONE;",
-    "new": "const share = crewed ? Math.min(1, crewShare) : SEA_REPAIR_ALONE;",
+    "old": "  const share = crewed && crewShare > 0 ? Math.min(1, crewShare) : SEA_REPAIR_ALONE; // AUDIT CC-D2",
+    "new": "  const share = crewed ? Math.min(1, crewShare) : SEA_REPAIR_ALONE; // AUDIT CC-D2",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js",
@@ -317,8 +317,8 @@
   {
     "name": "AUDIT-CC-D3-order-unsaved",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "includes(record.order)) order = record.order;",
-    "new": "includes(record.order)) order = CREW_ORDERS.stand;",
+    "old": "      order = record.order;",
+    "new": "      order = CREW_ORDERS.stand;",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js",
@@ -328,8 +328,8 @@
   {
     "name": "AUDIT-CC-D4-losses-forever",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "        if (lossT > LOSSES_WINDOW_S) losses = 0;\n",
-    "new": "",
+    "old": "        if (lossT > LOSSES_WINDOW_S) losses = 0;\n        lossT = 0;",
+    "new": "        lossT = 0;",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js",
@@ -339,8 +339,8 @@
   {
     "name": "AUDIT-CC-D4-nan-lands",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "        if (!Number.isFinite(n)) return;",
-    "new": "        if (false) return;",
+    "old": "        if (!Number.isFinite(n)) return; // AUDIT CC-D4: a NaN loss saved as null and loaded as no spirits at all",
+    "new": "        if (false) return; // AUDIT CC-D4: a NaN loss saved as null and loaded as no spirits at all",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js",
@@ -350,8 +350,8 @@
   {
     "name": "AUDIT-CC-D4-backlog",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "if (k > 0) { seaT -= k * SEA_DECAY_S; bump(-k); }",
-    "new": "if (k > 0) { seaT -= SEA_DECAY_S; bump(-1); }",
+    "old": "          seaT -= k * SEA_DECAY_S;\n          bump(-k);",
+    "new": "          seaT -= SEA_DECAY_S;\n          bump(-1);",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js",
@@ -361,8 +361,8 @@
   {
     "name": "AUDIT-CC-D5-grog-daily",
     "file": "src/systems/naval/navalYard.js",
-    "old": "want = morale < 100 && !grogToday ? 1 : 0;",
-    "new": "want = morale < 100 ? 1 : 0;",
+    "old": "      want = morale < 100 && !grogToday ? 1 : 0;",
+    "new": "      want = morale < 100 ? 1 : 0;",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js",
@@ -405,8 +405,8 @@
   {
     "name": "AUDIT-CC-D8-card-ashore-unsaid",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "${ashore?.has(h.name) ? ' - ashore with you' : ''}",
-    "new": "",
+    "old": "    lines.push(\n      `${h.name}, ${h.role}${deeds ? ` - ${deeds}` : ''}${v.tier > 0 ? ` - ${v.label}` : ''}${ashore?.has(h.name) ? ' - ashore with you' : ''}`,\n    ); // AUDIT CC-D8: a hand ashore said so",
+    "new": "    lines.push(`${h.name}, ${h.role}${deeds ? ` - ${deeds}` : ''}${v.tier > 0 ? ` - ${v.label}` : ''}`); // AUDIT CC-D8: a hand ashore said so",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js",
@@ -416,8 +416,8 @@
   {
     "name": "AUDIT-CC-D8-hint-unsaid",
     "file": "src/ui/naval/navalHud.js",
-    "old": "ship.repairOrdered ? 'Crippled, repairs ordered' : ",
-    "new": "",
+    "old": "                  : ship.repairOrdered\n                    ? 'Crippled, repairs ordered'\n                    : ship.stores > 0\n                      ? 'Crippled. Order repairs, or make for port'\n                      : 'Crippled. Make for port and a shipwright' // AUDIT NAV1: the way out of a wreck, said - SEA-REPAIR: her stores the other",
+    "new": "                  : ship.stores > 0\n                    ? 'Crippled. Order repairs, or make for port'\n                    : 'Crippled. Make for port and a shipwright' // AUDIT NAV1: the way out of a wreck, said - SEA-REPAIR: her stores the other",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js",
@@ -507,8 +507,8 @@
   {
     "name": "AUDIT-CC-F-hours-floor",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "Math.max(1, Math.ceil(((r?.until ?? now) - now) / 60))",
-    "new": "Math.max(1, Math.floor(((r?.until ?? now) - now) / 60))",
+    "old": "      const hours = Math.max(1, Math.ceil(((r?.until ?? now) - now) / 60));",
+    "new": "      const hours = Math.max(1, Math.floor(((r?.until ?? now) - now) / 60));",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -517,8 +517,8 @@
   {
     "name": "AUDIT-CC-F-hours-plural",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "${hours === 1 ? 'hour' : 'hours'}",
-    "new": "hours",
+    "old": "      return {\n        id: h.name,\n        label: `${called}`,\n        disabled: true,\n        why: `${COMPANION_TEXT.resting}, ${hours} ${hours === 1 ? 'hour' : 'hours'}`,\n      };",
+    "new": "      return { id: h.name, label: `${called}`, disabled: true, why: `${COMPANION_TEXT.resting}, ${hours} hours` };",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -537,8 +537,8 @@
   {
     "name": "AUDIT-CC-F-restore-role-raw",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "role: isName(c.role) ? c.role : 'Deckhand'",
-    "new": "role: c.role",
+    "old": "        role: isName(c.role) ? c.role : 'Deckhand',",
+    "new": "        role: c.role,",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -657,8 +657,8 @@
   {
     "name": "AUDIT-CC-F-layer-spot-ignored",
     "file": "src/scenes/crewAshore.js",
-    "old": "return place.spot ? place.spot(L.feet, dx, dz) :",
-    "new": "return false ? place.spot(L.feet, dx, dz) :",
+    "old": "    return place.spot ? place.spot(L.feet, dx, dz) : [L.feet[0] + dx, L.feet[1], L.feet[2] + dz];",
+    "new": "    return false ? place.spot(L.feet, dx, dz) : [L.feet[0] + dx, L.feet[1], L.feet[2] + dz];",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -667,8 +667,8 @@
   {
     "name": "AUDIT-CC-F-layer-over-max",
     "file": "src/scenes/crewAshore.js",
-    "old": "Math.max(1, Math.min(c.maxHealth, c.health ?? c.maxHealth))",
-    "new": "Math.max(1, c.health ?? c.maxHealth)",
+    "old": "              rec.entity.health = Math.max(1, Math.min(c.maxHealth, c.health ?? c.maxHealth));",
+    "new": "              rec.entity.health = Math.max(1, c.health ?? c.maxHealth);",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -677,8 +677,8 @@
   {
     "name": "AUDIT-CC-F-layer-late-kept",
     "file": "src/scenes/crewAshore.js",
-    "old": "if (was !== epoch || !party.isAshore(c.boat, c.name) || deps.party() !== party)",
-    "new": "if (was !== epoch || deps.party() !== party)",
+    "old": "          if (was !== epoch || !party.isAshore(c.boat, c.name) || deps.party() !== party) {",
+    "new": "          if (was !== epoch || deps.party() !== party) {",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -687,8 +687,8 @@
   {
     "name": "AUDIT-CC-F-layer-clear-keeps",
     "file": "src/scenes/crewAshore.js",
-    "old": "clear() { liftAll(); placeKey = undefined; epoch++; trail.length = 0; leaderWas = null; },",
-    "new": "clear() { placeKey = undefined; epoch++; trail.length = 0; leaderWas = null; },",
+    "old": "      liftAll();\n      placeKey = undefined;",
+    "new": "      placeKey = undefined;",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -697,8 +697,8 @@
   {
     "name": "AUDIT-CC-F-crew-always-speaks",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "if (!s || rng() >= 1 / 3) return null;",
-    "new": "if (!s) return null;",
+    "old": "      if (!s || rng() >= 1 / 3) return null;",
+    "new": "      if (!s) return null;",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -707,8 +707,8 @@
   {
     "name": "AUDIT-CC-F-crew-card-plural",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "${h.fights === 1 ? 'fight' : 'fights'}",
-    "new": "fights",
+    "old": "      h.fights ? `${h.fights} ${h.fights === 1 ? 'fight' : 'fights'}` : '',",
+    "new": "      h.fights ? `${h.fights} fights` : '',",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -717,8 +717,8 @@
   {
     "name": "AUDIT-CC-F-crew-no-hands-unsaid",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "  if (!crew.hands.length) lines.push('No hands aboard.');\n",
-    "new": "",
+    "old": "  if (!crew.hands.length) lines.push('No hands aboard.');\n  for (const h of crew.hands) {",
+    "new": "  for (const h of crew.hands) {",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -727,8 +727,8 @@
   {
     "name": "AUDIT-CC-F-crew-unclamped",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "morale = Number.isFinite(m) ? clamp(m, 0, MORALE_MAX) : MORALE_START;",
-    "new": "morale = Number.isFinite(m) ? m : MORALE_START;",
+    "old": "    morale = Number.isFinite(m) ? clamp(m, 0, MORALE_MAX) : MORALE_START;",
+    "new": "    morale = Number.isFinite(m) ? m : MORALE_START;",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -737,8 +737,8 @@
   {
     "name": "AUDIT-CC-F-crew-hires-low",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "    hires = Math.max(hires, hands.length);\n",
-    "new": "",
+    "old": "    hires = Math.max(hires, hands.length);\n    if (typeof record.order === 'string' && /** @type {string[]} */ (Object.values(CREW_ORDERS)).includes(record.order))",
+    "new": "    if (typeof record.order === 'string' && /** @type {string[]} */ (Object.values(CREW_ORDERS)).includes(record.order))",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -747,8 +747,8 @@
   {
     "name": "AUDIT-CC-F-crew-sea-clock-kept",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "        seaT = 0;\n",
-    "new": "",
+    "old": "        seaT = 0;\n        // AUDIT CC-D4: a long step spent at once (a backlog drained a point a frame after it)",
+    "new": "        // AUDIT CC-D4: a long step spent at once (a backlog drained a point a frame after it)",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -757,8 +757,8 @@
   {
     "name": "AUDIT-CC-F-crew-any-order",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "if (!/** @type {string[]} */ (Object.values(CREW_ORDERS)).includes(o)) return false;",
-    "new": "",
+    "old": "      if (!(/** @type {string[]} */ (Object.values(CREW_ORDERS)).includes(o))) return false;\n      order = o;",
+    "new": "      order = o;",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -777,8 +777,8 @@
   {
     "name": "AUDIT-CC-F-yard-grog-free",
     "file": "src/systems/naval/navalYard.js",
-    "old": "export const grogPrice = (crew) => Math.max(GROG_MIN, Math.round(",
-    "new": "export const grogPrice = (crew) => Math.max(0, Math.round(",
+    "old": "export const grogPrice = (crew) => Math.max(GROG_MIN, Math.round(Math.max(0, crew) * GROG_PER_HAND));",
+    "new": "export const grogPrice = (crew) => Math.max(0, Math.round(Math.max(0, crew) * GROG_PER_HAND));",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -797,8 +797,8 @@
   {
     "name": "AUDIT-CC-F-yard-sail-unwanted",
     "file": "src/systems/naval/navalYard.js",
-    "old": "damage.hull < damage.maxHull - 1e-6 || (damage.maxSail > 0 && damage.sail < damage.maxSail - 1e-6);",
-    "new": "damage.hull < damage.maxHull - 1e-6;",
+    "old": "export const wantsRepair = (damage) =>\n  damage.hull < damage.maxHull - 1e-6 || (damage.maxSail > 0 && damage.sail < damage.maxSail - 1e-6);",
+    "new": "export const wantsRepair = (damage) => damage.hull < damage.maxHull - 1e-6;",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"

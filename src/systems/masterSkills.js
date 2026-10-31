@@ -169,7 +169,8 @@ export function masteryRefusal(entity, id) {
  *  switched on) turned 20,000 plain uses into a point every rest. The counter of a skill that may now pass 100 held
  *  only plain uses, so it goes (the weighted fraction, skillUseFrac, is the tough-foe rule's own and stays). */
 function dropPlainPractice(entity, id) {
-  if ((entity?.skills?.[id] ?? 0) >= 100 && Array.isArray(entity.skillUses) && id < entity.skillUses.length) entity.skillUses[id] = 0;
+  if ((entity?.skills?.[id] ?? 0) >= 100 && Array.isArray(entity.skillUses) && id < entity.skillUses.length)
+    entity.skillUses[id] = 0;
 }
 
 /** AUDIT RPT1026 F1 (the drop above took practice the tough-foe rule had counted): THE SWITCH OFF HOLDS IT ASIDE. A
@@ -202,7 +203,7 @@ export function masterSkill(entity, id, names = null) {
   const why = masteryRefusal(entity, id);
   if (why) return { ok: false, text: why };
   entity.masteredSkills = [...masteredSkills(entity), id];
-  dropPlainPractice(entity, id);   // RPT1026-PROGRESS: what it practised unmastered was counted whole
+  dropPlainPractice(entity, id); // RPT1026-PROGRESS: what it practised unmastered was counted whole
   const n = names?.[id] ?? 'The skill';
   return { ok: true, text: `${n} mastered: it can now pass 100.` };
 }
@@ -210,8 +211,9 @@ export function masterSkill(entity, id, names = null) {
 /** Every skill that could be mastered right now, primary first. */
 export function masteryCandidates(entity) {
   const c = entity?.career;
-  return [...(c?.primarySkills ?? []), ...(c?.majorSkills ?? []), ...(c?.minorSkills ?? [])]
-    .filter((id) => masteryRefusal(entity, id) == null);
+  return [...(c?.primarySkills ?? []), ...(c?.majorSkills ?? []), ...(c?.minorSkills ?? [])].filter(
+    (id) => masteryRefusal(entity, id) == null,
+  );
 }
 
 /** The next skill whose choice the game still owes an ASK (asked once per skill; the skill screen keeps the rest). */
@@ -234,7 +236,9 @@ export function masteryChoiceRows(entity, id, names = {}) {
     '',
     'This decision cannot be undone.',
     `${MASTERY_GROUP_NAMES[g]} skills: you can master ${max}.`,
-    after > 0 ? `After this: ${after} ${g} ${after === 1 ? 'mastery' : 'masteries'} left.` : `This would be your last ${g} mastery.`,
+    after > 0
+      ? `After this: ${after} ${g} ${after === 1 ? 'mastery' : 'masteries'} left.`
+      : `This would be your last ${g} mastery.`,
   ];
 }
 
@@ -248,7 +252,9 @@ export function masterCappedSkill(entity, raw, id = null) {
 
 let _gate = null;
 /** The host's extra refusal (a dungeon): fn(entity) -> reason string or null. */
-export function setMasterSkillsGate(fn) { _gate = typeof fn === 'function' ? fn : null; }
+export function setMasterSkillsGate(fn) {
+  _gate = typeof fn === 'function' ? fn : null;
+}
 
 /** Whether this character has a switch at all (offline only). */
 export const masterSkillsSwitchable = (entity) => entity?._online !== true;
@@ -256,7 +262,11 @@ export const masterSkillsSwitchable = (entity) => entity?._online !== true;
 /** Why the switch cannot move right now, or null. */
 export function masterSkillsBlockReason(entity) {
   if (!masterSkillsSwitchable(entity)) return MASTER_SKILLS_ONLINE_TEXT;
-  try { return _gate?.(entity) ?? null; } catch { return null; }
+  try {
+    return _gate?.(entity) ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /** Move the switch (offline). Returns { ok, text } - the text is what the UI says either way. */
@@ -265,15 +275,18 @@ export function setMasterSkills(entity, on) {
   if (reason) return { ok: false, text: reason };
   const was = masterSkillsActive(entity);
   entity.masterSkills = !!on;
-  if (was && !masterSkillsActive(entity)) holdMasterPractice(entity);   // AUDIT RPT1026 F1: switched off - the tough-foe practice set aside
+  if (was && !masterSkillsActive(entity)) holdMasterPractice(entity); // AUDIT RPT1026 F1: switched off - the tough-foe practice set aside
   // RPT1026-PROGRESS: switched on - while it was off, every skill mastered and at the cap or beyond counted each use whole
-  if (!was && masterSkillsActive(entity)) { for (const id of masteredSkills(entity)) dropPlainPractice(entity, id); returnMasterPractice(entity); }   // AUDIT RPT1026 F1: and what it held comes back
+  if (!was && masterSkillsActive(entity)) {
+    for (const id of masteredSkills(entity)) dropPlainPractice(entity, id);
+    returnMasterPractice(entity);
+  } // AUDIT RPT1026 F1: and what it held comes back
   entity.masterSkillsAsked = true;
   return { ok: true, text: on ? MASTER_SKILLS_ON_TEXT : MASTER_SKILLS_OFF_TEXT };
 }
 
-const masteredPrimary = (entity) => Array.isArray(entity?.skills)
-  && (entity.career?.primarySkills ?? []).some((id) => (entity.skills[id] ?? 0) >= 100);
+const masteredPrimary = (entity) =>
+  Array.isArray(entity?.skills) && (entity.career?.primarySkills ?? []).some((id) => (entity.skills[id] ?? 0) >= 100);
 
 /** Which one-time box is owed now: 'info' (online, never shown), 'offer' (offline, never asked, off, free to
  *  switch), or null. Both wait for a mastered primary skill - the moment Daggerfall would stop you. */

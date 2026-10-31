@@ -27,12 +27,17 @@ export const staffMessageOk = () => t('net.staffMsg.ok', 'OK');
  * @param {{ from: string, text: string, onOk: () => void }} m
  * @param {Document|null} [doc]
  */
-export function showStaffMessageBox({ from, text, onOk }, doc = (typeof document === 'undefined' ? null : document)) {
+export function showStaffMessageBox({ from, text, onOk }, doc = typeof document === 'undefined' ? null : document) {
   if (!doc?.body) return null;
   current?.remove();
   injectEnhancedStyle(doc);
   injectEnhancedFonts(doc);
-  const el = (/** @type {string} */ tag, /** @type {string} */ cls, /** @type {string} */ words) => { const n = doc.createElement(tag); n.className = cls; n.textContent = words; return n; };
+  const el = (/** @type {string} */ tag, /** @type {string} */ cls, /** @type {string} */ words) => {
+    const n = doc.createElement(tag);
+    n.className = cls;
+    n.textContent = words;
+    return n;
+  };
   const root = doc.createElement('div');
   root.id = STAFF_MESSAGE_BOX_ID;
   root.className = 'inputbox yesnobox';
@@ -41,12 +46,21 @@ export function showStaffMessageBox({ from, text, onOk }, doc = (typeof document
   const rows = el('div', 'inputbox-rows', '');
   const head = el('div', 'notice-row center highlight', staffMessageTitle());
   head.id = `${STAFF_MESSAGE_BOX_ID}-head`;
-  rows.append(head, el('div', 'notice-row center inputbox-label', staffMessageFrom(from)), el('div', 'notice-row', text));
+  rows.append(
+    head,
+    el('div', 'notice-row center inputbox-label', staffMessageFrom(from)),
+    el('div', 'notice-row', text),
+  );
   const acts = el('div', 'yesnobox-acts', '');
   const ok = el('button', 'act primary', staffMessageOk());
   /** @type {any} */ (ok).type = 'button';
   let done = false;
-  ok.onclick = () => { if (done) return; done = true; root.remove(); onOk(); };
+  ok.onclick = () => {
+    if (done) return;
+    done = true;
+    root.remove();
+    onOk();
+  };
   acts.append(ok);
   root.append(rows, acts);
   doc.body.append(root);
