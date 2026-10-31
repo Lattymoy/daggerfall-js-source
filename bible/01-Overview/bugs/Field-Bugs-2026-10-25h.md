@@ -93,7 +93,7 @@ THE CHANGE:
   reference: DFU has no online zone and no drop at death.
 - THE HARNESS MINTS THE GATE PAIR. `standServices` minted the identity pair alone, so the local account service answered
   every seizure `no-gate-key`; it mints the gate's receipt pair beside it now
-  (`loadHarness.mjs:"const [gatePriv, gatePub] = gate.stdout.split"`, `tools/mintGateKeys.mjs`).
+  (`loadHarness.mjs:"const [gatePriv, gatePub]"`, `tools/mintGateKeys.mjs`).
 
 Pinned by `test/net/wildremainsloss.test.js` (a deposit by the fallen and by its killer into a room woken since its
 last hello, through the real account service and the relay's Room); `tools/mutants/wildremainsloss.json` (9, all dead); `test/net/wildself.test.js`, `tools/mutants/wildself.json` (2, all

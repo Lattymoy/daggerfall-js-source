@@ -302,8 +302,8 @@
   {
     "name": "AUDIT-SCALE-LANED-harness-inbytes-uncounted",
     "file": "tools/loadHarness.mjs",
-    "old": "tally.inFrames += 1; tally.inBytes += text.length;",
-    "new": "tally.inFrames += 1; tally.inBytes += 0;",
+    "old": "        tally.inBytes += text.length;",
+    "new": "        tally.inBytes += 0;",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale3.test.js"
@@ -313,8 +313,8 @@
   {
     "name": "AUDIT-SCALE-LANED-harness-inframes-double",
     "file": "tools/loadHarness.mjs",
-    "old": "tally.inFrames += 1;",
-    "new": "tally.inFrames += 2;",
+    "old": "        tally.inFrames += 1;",
+    "new": "        tally.inFrames += 2;",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale3.test.js"
@@ -346,8 +346,8 @@
   {
     "name": "AUDIT-SCALE-LANED-harness-pose-off-cell",
     "file": "tools/loadHarness.mjs",
-    "old": "  const z = (499 - py + 0.5) * PIXEL_UNITS",
-    "new": "  const z = (459 - py + 0.5) * PIXEL_UNITS",
+    "old": "  const z = (499 - py + 0.5) * PIXEL_UNITS + Math.sin(a) * r * PIXEL_UNITS;",
+    "new": "  const z = (459 - py + 0.5) * PIXEL_UNITS + Math.sin(a) * r * PIXEL_UNITS;",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale3.test.js"
@@ -357,8 +357,8 @@
   {
     "name": "AUDIT-SCALE-LANED-harness-offline-unnoted",
     "file": "tools/loadHarness.mjs",
-    "old": "}).catch((e) => { note?.(routeLabel(path.split('?')[0]), 'offline', Date.now() - started); throw e; });",
-    "new": "}).catch((e) => { throw e; });",
+    "old": "      note?.(routeLabel(path.split('?')[0]), 'offline', Date.now() - started);\n      throw e;",
+    "new": "      throw e;",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale3.test.js"
@@ -368,8 +368,8 @@
   {
     "name": "AUDIT-SCALE-LANED-harness-synthetic-unmerged",
     "file": "tools/loadHarness.mjs",
-    "old": "for (const k of ['opened', 'synthetic', 'inFrames', 'inBytes', 'outFrames', 'outBytes']) relay[k] += f.relay[k];",
-    "new": "for (const k of ['opened', 'inFrames', 'inBytes', 'outFrames', 'outBytes']) relay[k] += f.relay[k];",
+    "old": "    for (const k of ['opened', 'synthetic', 'inFrames', 'inBytes', 'outFrames', 'outBytes']) relay[k] += f.relay[k];",
+    "new": "    for (const k of ['opened', 'inFrames', 'inBytes', 'outFrames', 'outBytes']) relay[k] += f.relay[k];",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale3.test.js"
@@ -379,8 +379,8 @@
   {
     "name": "AUDIT-SCALE-LANED-harness-refusal-word-dropped",
     "file": "tools/loadHarness.mjs",
-    "old": "note?.(routeLabel(path.split('?')[0]), word ? `${res.status} ${word}` : res.status, Date.now() - started);",
-    "new": "note?.(routeLabel(path.split('?')[0]), res.status, Date.now() - started);",
+    "old": "    note?.(routeLabel(path.split('?')[0]), word ? `${res.status} ${word}` : res.status, Date.now() - started);",
+    "new": "    note?.(routeLabel(path.split('?')[0]), res.status, Date.now() - started);",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale3.test.js"
@@ -762,8 +762,8 @@
   {
     "name": "AUDIT-SCALE-C2-roles-nested",
     "file": "tools/loadHarness.mjs",
-    "old": "fighter: roll(o.fighters, 0.4142135623730951)",
-    "new": "fighter: roll(o.fighters, 0.6180339887498949)",
+    "old": "    fighter: roll(o.fighters, 0.4142135623730951),",
+    "new": "    fighter: roll(o.fighters, 0.6180339887498949),",
     "tests": [
       "test/net/auditscale.test.js"
     ],
@@ -772,8 +772,8 @@
   {
     "name": "AUDIT-SCALE-C2-play-with-mints",
     "file": "tools/loadHarness.mjs",
-    "old": "  const play = { requests: totals.requests - (mints?.requests ?? 0),",
-    "new": "  const play = { requests: totals.requests,",
+    "old": "    requests: totals.requests - (mints?.requests ?? 0),",
+    "new": "    requests: totals.requests,",
     "tests": [
       "test/net/auditscale.test.js"
     ],
@@ -812,8 +812,8 @@
   {
     "name": "AUDIT-SCALE-C11-signal-keeps-state",
     "file": "tools/loadHarness.mjs",
-    "old": "    if (!o.keep) { try { rmSync(state, { recursive: true, force: true }); } catch { /* gone */ } }\n",
-    "new": "",
+    "old": "    if (!o.keep) {\n      try {\n        rmSync(state, { recursive: true, force: true });\n      } catch {\n        /* gone */\n      }\n    }\n    process.exit(130);",
+    "new": "    process.exit(130);",
     "tests": [
       "test/net/auditscale.test.js"
     ],
@@ -822,8 +822,8 @@
   {
     "name": "AUDIT-SCALE-C11-key-kept",
     "file": "tools/loadHarness.mjs",
-    "old": "  rmSync(acctEnv, { force: true });\n",
-    "new": "",
+    "old": "  rmSync(acctEnv, { force: true });\n  if (!(await healthy(relayPort, '/health', 180)))",
+    "new": "  if (!(await healthy(relayPort, '/health', 180)))",
     "tests": [
       "test/net/auditscale.test.js"
     ],
@@ -832,8 +832,8 @@
   {
     "name": "AUDIT-SCALE-C12-fractions-taken",
     "file": "tools/loadHarness.mjs",
-    "old": "  for (const k of ['bots', 'cells', 'setup', 'threads', 'port']) if (!Number.isSafeInteger(out[k]) || out[k] < 1) throw new Error(`--${k} takes a whole number from 1, not ${out[k]}`);\n",
-    "new": "",
+    "old": "  for (const k of ['bots', 'cells', 'setup', 'threads', 'port'])\n    if (!Number.isSafeInteger(out[k]) || out[k] < 1)\n      throw new Error(`--${k} takes a whole number from 1, not ${out[k]}`);\n  for (const k of ['movers', 'fighters', 'registered'])",
+    "new": "  for (const k of ['movers', 'fighters', 'registered'])",
     "tests": [
       "test/net/auditscale.test.js"
     ],
@@ -842,8 +842,8 @@
   {
     "name": "AUDIT-SCALE-C13-column-quiet",
     "file": "tools/loadAccountEntry.mjs",
-    "old": "          if (!(col in row)) throw new Error(`D1_COLUMN_NOTFOUND: Column not found (${col})`);\n",
-    "new": "",
+    "old": "          if (!(col in row)) throw new Error(`D1_COLUMN_NOTFOUND: Column not found (${col})`);\n          return row[col];",
+    "new": "          return row[col];",
     "tests": [
       "test/net/auditscale.test.js"
     ],
@@ -852,8 +852,8 @@
   {
     "name": "AUDIT-SCALE-C13-abort-ignored",
     "file": "tools/loadHarness.mjs",
-    "old": "      if (init.signal?.aborted) { reject(new Error('aborted')); return; }\n",
-    "new": "",
+    "old": "      if (init.signal?.aborted) {\n        reject(new Error('aborted'));\n        return;\n      }\n      const req = request(",
+    "new": "      const req = request(",
     "tests": [
       "test/net/auditscale.test.js"
     ],

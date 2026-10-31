@@ -23,8 +23,8 @@
   {
     "name": "MWCLOAK2-the-rim-pulled-in",
     "file": "tools/meshSubdivide.mjs",
-    "old": "    if (r.length === 2) { w0 = 3 / 4; nb = r; wn = 1 / 8; }   // on the open edge",
-    "new": "    if (r.length === 2) { w0 = 1 / 2; nb = r; wn = 1 / 4; }   // on the open edge",
+    "old": "      w0 = 3 / 4;\n      nb = r;\n      wn = 1 / 8;",
+    "new": "      w0 = 1 / 2;\n      nb = r;\n      wn = 1 / 4;",
     "tests": [
       "test/tooling/mwcloak2.test.js"
     ],
@@ -33,8 +33,8 @@
   {
     "name": "MWCLOAK2-the-rim-as-the-inside",
     "file": "tools/meshSubdivide.mjs",
-    "old": "    if (r.length === 2) { w0 = 3 / 4; nb = r; wn = 1 / 8; }   // on the open edge",
-    "new": "    if (false) { w0 = 3 / 4; nb = r; wn = 1 / 8; }   // on the open edge",
+    "old": "    if (r.length === 2) {",
+    "new": "    if (false) {",
     "tests": [
       "test/tooling/mwcloak2.test.js"
     ],
@@ -43,8 +43,8 @@
   {
     "name": "MWCLOAK2-the-edge-its-middle",
     "file": "tools/meshSubdivide.mjs",
-    "old": "        ? 3 / 8 * (P[a * 3 + c] + P[b * 3 + c]) + 1 / 8 * (P[far[0] * 3 + c] + P[far[1] * 3 + c])",
-    "new": "        ? (P[a * 3 + c] + P[b * 3 + c]) / 2",
+    "old": "      pos[next * 3 + c] =\n        far.length === 2\n          ? (3 / 8) * (P[a * 3 + c] + P[b * 3 + c]) + (1 / 8) * (P[far[0] * 3 + c] + P[far[1] * 3 + c])\n          : (P[a * 3 + c] + P[b * 3 + c]) / 2;",
+    "new": "      pos[next * 3 + c] = far.length === 2 ? (P[a * 3 + c] + P[b * 3 + c]) / 2 : (P[a * 3 + c] + P[b * 3 + c]) / 2;",
     "tests": [
       "test/tooling/mwcloak2.test.js"
     ],
@@ -53,7 +53,7 @@
   {
     "name": "MWCLOAK2-no-beta",
     "file": "tools/meshSubdivide.mjs",
-    "old": "      const beta = k ? (5 / 8 - (3 / 8 + Math.cos(2 * Math.PI / k) / 4) ** 2) / k : 0;",
+    "old": "      const beta = k ? (5 / 8 - (3 / 8 + Math.cos((2 * Math.PI) / k) / 4) ** 2) / k : 0;",
     "new": "      const beta = 0;",
     "tests": [
       "test/tooling/mwcloak2.test.js"
@@ -73,7 +73,7 @@
   {
     "name": "MWCLOAK2-a-seam-torn",
     "file": "tools/meshSubdivide.mjs",
-    "old": "    if (seen.has(k)) throw new Error(`vertex ${v} shares its position with another - a seam this subdivision does not split`);",
+    "old": "    if (seen.has(k))\n      throw new Error(`vertex ${v} shares its position with another - a seam this subdivision does not split`);",
     "new": "",
     "tests": [
       "test/tooling/mwcloak2.test.js"

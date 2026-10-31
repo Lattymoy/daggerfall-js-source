@@ -303,8 +303,8 @@
   {
     "name": "AUDITMWCLOAK-the-bow-tie-untied",
     "file": "tools/meshSubdivide.mjs",
-    "old": "for (let v = 0; v < n; v++) if (rim[v].length > 2) throw",
-    "new": "for (let v = 0; v < n; v++) if (false) throw",
+    "old": "    if (rim[v].length > 2)",
+    "new": "    if (false)",
     "tests": [
       "test/tooling/mwcloak2.test.js"
     ],

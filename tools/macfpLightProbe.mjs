@@ -29,7 +29,8 @@ await page.waitForSelector('.px-menu button', { timeout: 15000 });
 const out = await page.evaluate(async () => {
   const { Renderer, FLAT_LIGHT_FLOOR } = await import('/src/render/renderer.js');
   const canvas = document.createElement('canvas');
-  canvas.width = 64; canvas.height = 64;
+  canvas.width = 64;
+  canvas.height = 64;
   document.body.append(canvas);
   const r = new Renderer(canvas);
   const white = { width: 1, height: 1, colors: new Uint8Array([255, 255, 255, 255]) };
@@ -43,7 +44,8 @@ const out = await page.evaluate(async () => {
   };
   const drawWith = (tint) => {
     const gl = r.gl;
-    gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     r.drawScreenQuad(tex, { x: 0, y: 0, w: 64, h: 64 }, undefined, tint);
     return read();
   };
@@ -65,7 +67,7 @@ const out = await page.evaluate(async () => {
   // 5. and the channel really multiplies the sprite
   res.pixelWhite = drawWith([1, 1, 1, 1]);
   res.pixelQuarter = drawWith([0.25, 0.25, 0.25, 1]);
-  res.pixelTorch = drawWith(r.flatLightAt([0, 0, 0]));   // BLACK-ARMS: the TRIPLE the rig hands over - no alpha appended here that the runtime never passes
+  res.pixelTorch = drawWith(r.flatLightAt([0, 0, 0])); // BLACK-ARMS: the TRIPLE the rig hands over - no alpha appended here that the runtime never passes
 
   // ---- MAC-P: the Morrowind arm's own pass -------------------------
   //
@@ -76,9 +78,14 @@ const out = await page.evaluate(async () => {
   // viewmodel light does nothing, the two come back identical, which is
   // precisely the "consistently dark" that was reported.
   const V = [];
-  const vert = (x, y) => V.push(x, y, 0, /* diffuse */1, 1, 1, /* normal */0, 0, 1, /* uv */0, 0, /* emission */0, 0, 0);
-  vert(-1, -1); vert(1, -1); vert(1, 1);
-  vert(-1, -1); vert(1, 1); vert(-1, 1);
+  const vert = (x, y) =>
+    V.push(x, y, 0, /* diffuse */ 1, 1, 1, /* normal */ 0, 0, 1, /* uv */ 0, 0, /* emission */ 0, 0, 0);
+  vert(-1, -1);
+  vert(1, -1);
+  vert(1, 1);
+  vert(-1, -1);
+  vert(1, 1);
+  vert(-1, 1);
   const mesh = r.createCharacterMesh(new Float32Array(V), { uv: true });
   mesh.ranges = [{ first: 0, count: 6, tex: null, hidden: false }];
   const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
@@ -93,15 +100,16 @@ const out = await page.evaluate(async () => {
     const gl = r.gl;
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, 64, 64);
-    gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     r.drawScreenQuad(tex, { x: 0, y: 0, w: 64, h: 64 }, { u0: 0, v0: 32 / 1024, u1: 32 / 1024, v1: 0 });
     return read();
   };
-  r.setLighting([0.02, 0.02, 0.02], 0, [0, 0, 0]);   // a black room
+  r.setLighting([0.02, 0.02, 0.02], 0, [0, 0, 0]); // a black room
   r.setPointLights(new Float32Array(0), [1, 1, 1], null);
-  res.armNoLight = armPixel(null);              // the switch off: the studio, as it was
+  res.armNoLight = armPixel(null); // the switch off: the studio, as it was
   res.armDark = armPixel(r.flatLightAt([0, 0, 0]));
-  r.setLighting([0.9, 0.9, 0.9], 1, [1, 1, 1]);   // noon
+  r.setLighting([0.9, 0.9, 0.9], 1, [1, 1, 1]); // noon
   res.armBright = armPixel(r.flatLightAt([0, 0, 0]));
   // and the borrow is RETURNED - the frame's own light survives the pass
   res.lightAfter = [...r._ambient];
@@ -109,23 +117,71 @@ const out = await page.evaluate(async () => {
 });
 
 const near = (a, b, eps = 0.001) => Math.abs(a - b) <= eps;
-check('MAC-I: a clockless scene is white, as its flats are', out.clockless.every((v) => v === 1), JSON.stringify(out.clockless));
-check('MAC-I: daylight is the ambient plus the sun’s half', out.day.every((v) => near(v, 0.7)), JSON.stringify(out.day));
-check('MAC-I: a black room lands on the floor, not on nothing', out.dark.every((v) => near(v, out.floor)), `${JSON.stringify(out.dark)} floor ${out.floor}`);
-check('MAC-I: a torch two units off is warm and bright', out.nearTorch[0] > out.nearTorch[2] && out.nearTorch[0] > 0.5, JSON.stringify(out.nearTorch));
-check('MAC-I: the same torch forty units off reaches nothing', out.farFromTorch.every((v) => near(v, out.floor)), JSON.stringify(out.farFromTorch));
-check('MAC-I: white tint leaves the sprite alone', out.pixelWhite[0] === 255 && out.pixelWhite[1] === 255, JSON.stringify(out.pixelWhite));
-check('MAC-I: a quarter tint really is a quarter on screen', Math.abs(out.pixelQuarter[0] - 64) <= 2, JSON.stringify(out.pixelQuarter));
-check('MAC-I: the torch’s own light reaches the sprite as colour', out.pixelTorch[0] > out.pixelTorch[2], JSON.stringify(out.pixelTorch));
-check('BLACK-ARMS: an RGB tint leaves the sprite OPAQUE - the alpha the triple lacks is 1, not NaN', out.pixelTorch[3] === 255, JSON.stringify(out.pixelTorch));
+check(
+  'MAC-I: a clockless scene is white, as its flats are',
+  out.clockless.every((v) => v === 1),
+  JSON.stringify(out.clockless),
+);
+check(
+  'MAC-I: daylight is the ambient plus the sun’s half',
+  out.day.every((v) => near(v, 0.7)),
+  JSON.stringify(out.day),
+);
+check(
+  'MAC-I: a black room lands on the floor, not on nothing',
+  out.dark.every((v) => near(v, out.floor)),
+  `${JSON.stringify(out.dark)} floor ${out.floor}`,
+);
+check(
+  'MAC-I: a torch two units off is warm and bright',
+  out.nearTorch[0] > out.nearTorch[2] && out.nearTorch[0] > 0.5,
+  JSON.stringify(out.nearTorch),
+);
+check(
+  'MAC-I: the same torch forty units off reaches nothing',
+  out.farFromTorch.every((v) => near(v, out.floor)),
+  JSON.stringify(out.farFromTorch),
+);
+check(
+  'MAC-I: white tint leaves the sprite alone',
+  out.pixelWhite[0] === 255 && out.pixelWhite[1] === 255,
+  JSON.stringify(out.pixelWhite),
+);
+check(
+  'MAC-I: a quarter tint really is a quarter on screen',
+  Math.abs(out.pixelQuarter[0] - 64) <= 2,
+  JSON.stringify(out.pixelQuarter),
+);
+check(
+  'MAC-I: the torch’s own light reaches the sprite as colour',
+  out.pixelTorch[0] > out.pixelTorch[2],
+  JSON.stringify(out.pixelTorch),
+);
+check(
+  'BLACK-ARMS: an RGB tint leaves the sprite OPAQUE - the alpha the triple lacks is 1, not NaN',
+  out.pixelTorch[3] === 255,
+  JSON.stringify(out.pixelTorch),
+);
 // THE DEFECT, MEASURED. With no viewmodel light the pass takes the FRAME's
 // light on geometry that sits at the origin of a camera-local space: a black
 // room's ambient and nothing else, because every point light in it is a room
 // away in world space. Five of 255 is Mac's "consistently dark".
 check('MAC-P: the old path is nearly black in a dark room', out.armNoLight[0] < 16, `${out.armNoLight[0]}/255`);
-check('MAC-P: the room\u2019s light makes the arm readable without making it bright', out.armDark[0] > 40 && out.armDark[0] < 160, `${out.armDark[0]}/255 on the floor`);
-check('MAC-P: and noon is a lit arm', out.armBright[0] > out.armDark[0] * 2, `${out.armBright[0]} vs ${out.armDark[0]}`);
-check('MAC-P: the frame\u2019s own light survives the borrow', Math.abs(out.lightAfter[0] - 0.9) < 1e-6, JSON.stringify(out.lightAfter));
+check(
+  'MAC-P: the room\u2019s light makes the arm readable without making it bright',
+  out.armDark[0] > 40 && out.armDark[0] < 160,
+  `${out.armDark[0]}/255 on the floor`,
+);
+check(
+  'MAC-P: and noon is a lit arm',
+  out.armBright[0] > out.armDark[0] * 2,
+  `${out.armBright[0]} vs ${out.armDark[0]}`,
+);
+check(
+  'MAC-P: the frame\u2019s own light survives the borrow',
+  Math.abs(out.lightAfter[0] - 0.9) < 1e-6,
+  JSON.stringify(out.lightAfter),
+);
 check('no page errors', errors.length === 0, errors.join(' | '));
 
 await browser.close();

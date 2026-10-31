@@ -33,8 +33,8 @@
   {
     "name": "AFB-MERGE-the-base-unread",
     "file": "tools/mergeMain.mjs",
-    "old": "v[k].ours > v[k].base && v[k].ours <= v[k].theirs",
-    "new": "v[k].ours <= v[k].theirs",
+    "old": "export const renumbered = (v) => Object.keys(v).filter((k) => v[k].ours > v[k].base && v[k].ours <= v[k].theirs);",
+    "new": "export const renumbered = (v) => Object.keys(v).filter((k) => v[k].ours <= v[k].theirs);",
     "tests": [
       "test/tooling/mergemain.test.js"
     ],
@@ -43,8 +43,8 @@
   {
     "name": "AFB-MERGE-ahead-renumbered",
     "file": "tools/mergeMain.mjs",
-    "old": "v[k].ours > v[k].base && v[k].ours <= v[k].theirs",
-    "new": "v[k].ours > v[k].base",
+    "old": "export const renumbered = (v) => Object.keys(v).filter((k) => v[k].ours > v[k].base && v[k].ours <= v[k].theirs);",
+    "new": "export const renumbered = (v) => Object.keys(v).filter((k) => v[k].ours > v[k].base);",
     "tests": [
       "test/tooling/mergemain.test.js"
     ],

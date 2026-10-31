@@ -83,8 +83,8 @@
   {
     "name": "THUNDERLOCK-ART-a-loop-left-open",
     "file": "tools/meshCap.mjs",
-    "old": "  for (const loop of loops) {\n    const pts",
-    "new": "  for (const loop of loops.slice(1)) {\n    const pts",
+    "old": "  for (const loop of loops) {",
+    "new": "  for (const loop of loops.slice(1)) {",
     "tests": [
       "test/systems/thunderlockart.test.js"
     ]
