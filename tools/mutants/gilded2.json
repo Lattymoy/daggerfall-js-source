@@ -65,8 +65,8 @@
   {
     "name": "GILDED2-the-sovereign-to-a-ship-that-stood",
     "file": "src/systems/serpent/serpentSpoils.js",
-    "old": "const sovereign = dealt ? rollSunkenSovereign(rolls) : null;",
-    "new": "const sovereign = rollSunkenSovereign(rolls);",
+    "old": "  const sovereign = dealt ? rollSunkenSovereign(rolls) : null;",
+    "new": "  const sovereign = rollSunkenSovereign(rolls);",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]

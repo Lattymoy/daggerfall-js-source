@@ -965,7 +965,7 @@ too. The `site` word named no law, so during a deploy old and new tabs rose the 
 a kill at the one most accounts named alone.
 
 Now each lane is scored by its ends' world keys and the best is tried first
-(`serpentSite.js:"export function serpentLaneTries(day, lanes)"`), its place along its own. A lane added moves only the
+(`serpentSite.js:"export function serpentLaneTries"`), its place along its own. A lane added moves only the
 days it wins: ten taken out of the freeware's 450 moved 4, 1 and 1 of 60 days, each a day a lane taken out had won,
 where the index moved 60 of 60. This change moved every day's site once more. The word says its law
 (`serpentLaw.js:"export const SERPENT_SITE_LAW"`), and the hub folds its own law's words alone

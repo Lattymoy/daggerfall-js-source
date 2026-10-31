@@ -1279,6 +1279,13 @@
 !/src/systems/seasonsIliacBay.js
 !/src/systems/seasonsIliacBayAssets.js
 !/src/systems/seatEdicts.js
+!/src/systems/serpent/
+/src/systems/serpent/*
+!/src/systems/serpent/serpentOmen.js
+!/src/systems/serpent/serpentSite.js
+!/src/systems/serpent/serpentSounds.js
+!/src/systems/serpent/serpentSpoils.js
+!/src/systems/serpent/serpentStrike.js
 !/src/systems/shellUpdates.js
 !/src/systems/shipyards.js
 !/src/systems/shopStock.js

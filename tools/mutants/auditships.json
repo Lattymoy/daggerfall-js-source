@@ -591,8 +591,8 @@
   {
     "name": "AUDIT-SHIPS-C3-rounded-a-blow",
     "file": "src/systems/serpent/serpentStrike.js",
-    "old": "if (k === 1 || !carry) return Math.round(x * k);",
-    "new": "return Math.round(x * k);",
+    "old": "  if (k === 1 || !carry) return Math.round(x * k);",
+    "new": "  return Math.round(x * k);",
     "tests": [
       "test/net/serpent/auditships.test.js"
     ]
@@ -600,8 +600,8 @@
   {
     "name": "AUDIT-SHIPS-C3-carry-dropped",
     "file": "src/systems/serpent/serpentStrike.js",
-    "old": "  carry[key] = v - n;\n",
-    "new": "",
+    "old": "  carry[key] = v - n;\n  return n;",
+    "new": "  return n;",
     "tests": [
       "test/net/serpent/auditships.test.js"
     ]

@@ -234,8 +234,8 @@
   {
     "name": "WWC2-the-serpent-truncated",
     "file": "src/systems/serpent/serpentSite.js",
-    "old": "export const sitePixelOfNative = (x, z) => [Math.floor(x / PIXEL_UNITS), 499 - Math.floor(z / PIXEL_UNITS)];",
-    "new": "export const sitePixelOfNative = (x, z) => [Math.trunc(x / PIXEL_UNITS), 499 - Math.trunc(z / PIXEL_UNITS)];",
+    "old": "export const sitePixelOfNative = (x, z) => [Math.floor(x / PIXEL_UNITS), 499 - Math.floor(z / PIXEL_UNITS)]; // WW-C2: floored, as mapPixelOfWire",
+    "new": "export const sitePixelOfNative = (x, z) => [Math.trunc(x / PIXEL_UNITS), 499 - Math.trunc(z / PIXEL_UNITS)]; // WW-C2: floored, as mapPixelOfWire",
     "tests": [
       "test/world/worldWide/wwc2_zone.test.js"
     ]

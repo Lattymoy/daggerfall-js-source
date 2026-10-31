@@ -694,8 +694,8 @@
   {
     "name": "AUDIT625-D2-the-embers-another-tier",
     "file": "src/systems/serpent/serpentSpoils.js",
-    "old": "{ kind: 'item', item: s.embers, tier: 'artifact' }",
-    "new": "{ kind: 'item', item: s.embers, tier: 'legendary' }",
+    "old": "    ...(s.embers ? [{ kind: 'item', item: s.embers, tier: 'artifact' }] : []),",
+    "new": "    ...(s.embers ? [{ kind: 'item', item: s.embers, tier: 'legendary' }] : []),",
     "why": "the serpent's embers another glow than the gate's",
     "tests": [
       "test/systems/audit625_serpent.test.js"

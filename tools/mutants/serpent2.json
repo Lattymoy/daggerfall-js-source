@@ -356,8 +356,8 @@
   {
     "name": "SERPENT2-ahead-before-settled",
     "file": "src/systems/serpent/serpentOmen.js",
-    "old": "if (!settled) return null;",
-    "new": "if (false) return null;",
+    "old": "      if (!settled) return null;",
+    "new": "      if (false) return null;",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]

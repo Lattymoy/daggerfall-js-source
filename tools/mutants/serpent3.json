@@ -351,8 +351,8 @@
   {
     "name": "SERPENT3-pair-grip-law",
     "file": "src/systems/serpent/serpentStrike.js",
-    "old": "const hull = carry.hull + (GRIP.hull * whole.maxHull + GRIP.base) * dtS * k, crew",
-    "new": "const hull = carry.hull + (GRIP.hull * whole.maxHull + GRIP.base) * dtS, crew",
+    "old": "  const hull = carry.hull + (GRIP.hull * whole.maxHull + GRIP.base) * dtS * k,",
+    "new": "  const hull = carry.hull + (GRIP.hull * whole.maxHull + GRIP.base) * dtS,",
     "tests": [
       "test/net/serpent/serpent3.test.js"
     ]
@@ -360,8 +360,8 @@
   {
     "name": "SERPENT3-pair-grind-law",
     "file": "src/systems/serpent/serpentStrike.js",
-    "old": "const hull = carry + (MAEL_GRIND.hull * whole.maxHull + MAEL_GRIND.base) * dtS * k;",
-    "new": "const hull = carry + (MAEL_GRIND.hull * whole.maxHull + MAEL_GRIND.base) * dtS;",
+    "old": "  const hull = carry + (MAEL_GRIND.hull * whole.maxHull + MAEL_GRIND.base) * dtS * k;",
+    "new": "  const hull = carry + (MAEL_GRIND.hull * whole.maxHull + MAEL_GRIND.base) * dtS;",
     "tests": [
       "test/net/serpent/serpent3.test.js"
     ]

@@ -40,8 +40,8 @@
   {
     "name": "SERPENT4-the-throw-unscaled",
     "file": "src/systems/serpent/serpentStrike.js",
-    "old": "const d = Math.hypot(dx, dz) || 1, v = A.shove * SERPENT_THROW_X;",
-    "new": "const d = Math.hypot(dx, dz) || 1, v = A.shove;",
+    "old": "    v = A.shove * SERPENT_THROW_X; // SERPENT4: half the throw",
+    "new": "    v = A.shove; // SERPENT4: half the throw",
     "tests": [
       "test/net/serpent/serpent4.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "SERPENT4-the-whole-canvas",
     "file": "src/systems/serpent/serpentStrike.js",
-    "old": "sail: shared(A.sail * SERPENT_CANVAS_X * whole.maxSail, k, carry, 'sail')",
-    "new": "sail: shared(A.sail * whole.maxSail, k, carry, 'sail')",
+    "old": "  sail: shared(A.sail * SERPENT_CANVAS_X * whole.maxSail, k, carry, 'sail'),",
+    "new": "  sail: shared(A.sail * whole.maxSail, k, carry, 'sail'),",
     "tests": [
       "test/net/serpent/serpent4.test.js"
     ]

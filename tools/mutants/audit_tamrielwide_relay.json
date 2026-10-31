@@ -112,8 +112,8 @@
   {
     "name": "AUDIT-TW-E3-the-lists-order",
     "file": "src/systems/serpent/serpentSite.js",
-    "old": "scored.sort((p, q) => q.score - p.score || p.i - q.i)",
-    "new": "scored.sort((p, q) => p.i - q.i)",
+    "old": "  return scored.sort((p, q) => q.score - p.score || p.i - q.i).slice(0, SERPENT_LANE_TRIES);",
+    "new": "  return scored.sort((p, q) => p.i - q.i).slice(0, SERPENT_LANE_TRIES);",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_relay.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "AUDIT-TW-E3-along-not-the-lanes",
     "file": "src/systems/serpent/serpentSite.js",
-    "old": "const f = serpentAlongAt(day, ends[0], ends[1]);",
-    "new": "const f = serpentAlongAt(day, 0, 0);",
+    "old": "    const f = serpentAlongAt(day, ends[0], ends[1]);",
+    "new": "    const f = serpentAlongAt(day, 0, 0);",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_relay.test.js"
     ],
@@ -214,8 +214,8 @@
   {
     "name": "AUDIT-TW-II-R5-one-end-keyed-twice",
     "file": "src/systems/serpent/serpentSite.js",
-    "old": "? [worldPixelKey(lane.a.px, lane.a.py), worldPixelKey(lane.b.px, lane.b.py)] : null);",
-    "new": "? [worldPixelKey(lane.a.px, lane.a.py), worldPixelKey(lane.a.px, lane.a.py)] : null);",
+    "old": "    ? [worldPixelKey(lane.a.px, lane.a.py), worldPixelKey(lane.b.px, lane.b.py)]",
+    "new": "    ? [worldPixelKey(lane.a.px, lane.a.py), worldPixelKey(lane.a.px, lane.a.py)]",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_relay.test.js"
     ],
@@ -224,8 +224,8 @@
   {
     "name": "AUDIT-TW-II-R5-the-tries-unbounded",
     "file": "src/systems/serpent/serpentSite.js",
-    "old": ".slice(0, SERPENT_LANE_TRIES);",
-    "new": ";",
+    "old": "  return scored.sort((p, q) => q.score - p.score || p.i - q.i).slice(0, SERPENT_LANE_TRIES);",
+    "new": "  return scored.sort((p, q) => q.score - p.score || p.i - q.i);",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_relay.test.js"
     ],

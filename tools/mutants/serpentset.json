@@ -144,8 +144,8 @@
   {
     "name": "SERPENT-SET-no-ember",
     "file": "src/systems/serpent/serpentSpoils.js",
-    "old": "    ...(s.embers ? [{ kind: 'item', item: s.embers, tier: 'artifact' }] : []),\n",
-    "new": "",
+    "old": "    ...(s.embers ? [{ kind: 'item', item: s.embers, tier: 'artifact' }] : []),\n    { kind: 'gold', gold: s.gold, tier: 'common' },",
+    "new": "    { kind: 'gold', gold: s.gold, tier: 'common' },",
     "why": "the gate's currency never paid",
     "tests": [
       "test/systems/serpentset.test.js"
@@ -165,8 +165,8 @@
   {
     "name": "SERPENT-SET-the-set-before-the-last-pass",
     "file": "src/systems/serpent/serpentSpoils.js",
-    "old": "  lastPass(pieces.map((p) => p.item), rolls);\n  // SERPENT-SET: the Old Coil's own set, a dealer's alone - rolled LAST, so every hoard before it is what it was\n  const coil = dealt ? rollSerpentSetPiece(rolls) : null;",
-    "new": "  const coil = dealt ? rollSerpentSetPiece(rolls) : null;\n  lastPass(pieces.map((p) => p.item), rolls);",
+    "old": "  lastPass(\n    pieces.map((p) => p.item),\n    rolls,\n  );\n  // SERPENT-SET: the Old Coil's own set, a dealer's alone - rolled LAST, so every hoard before it is what it was\n  const coil = dealt ? rollSerpentSetPiece(rolls) : null;",
+    "new": "  const coil = dealt ? rollSerpentSetPiece(rolls) : null;\n  lastPass(\n    pieces.map((p) => p.item),\n    rolls,\n  );",
     "why": "the set rolled before the last pass - every earlier hoard's Exalted roll moved",
     "tests": [
       "test/systems/serpentset.test.js"
@@ -175,8 +175,8 @@
   {
     "name": "SERPENT-SET-a-standers-set",
     "file": "src/systems/serpent/serpentSpoils.js",
-    "old": "const coil = dealt ? rollSerpentSetPiece(rolls) : null;",
-    "new": "const coil = rollSerpentSetPiece(rolls);",
+    "old": "  const coil = dealt ? rollSerpentSetPiece(rolls) : null;",
+    "new": "  const coil = rollSerpentSetPiece(rolls);",
     "why": "a ship that stood finds a piece too",
     "tests": [
       "test/systems/serpentset.test.js"

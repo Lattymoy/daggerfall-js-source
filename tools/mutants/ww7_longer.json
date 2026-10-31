@@ -603,8 +603,8 @@
   {
     "name": "WW7-12-site-told-over-own",
     "file": "src/systems/serpent/serpentSite.js",
-    "old": "  if (lanes.whole()) return findSerpentSite(",
-    "new": "  if (lanes.whole() && !told(day)) return findSerpentSite(",
+    "old": "  if (lanes.whole()) return findSerpentSite(day, { lanes: lanes.all(), wayOf: lanes.way, open: lanes.open });",
+    "new": "  if (lanes.whole() && !told(day))\n    return findSerpentSite(day, { lanes: lanes.all(), wayOf: lanes.way, open: lanes.open });",
     "tests": [
       "test/world/worldWide/ww7_longer.test.js"
     ],
@@ -613,8 +613,8 @@
   {
     "name": "WW7-12-site-told-unmarked",
     "file": "src/systems/serpent/serpentSite.js",
-    "old": "between: [null, null], ring: serpentRing(day, sx, sz), told: true });",
-    "new": "between: [null, null], ring: serpentRing(day, sx, sz) });",
+    "old": "    told: true,\n  });",
+    "new": "  });",
     "tests": [
       "test/world/worldWide/ww7_longer.test.js"
     ],
@@ -623,8 +623,8 @@
   {
     "name": "WW7-12-site-told-pixel",
     "file": "src/systems/serpent/serpentSite.js",
-    "old": "  const [px, py] = sitePixelOfNative(sx, sz);\n  return Object.freeze({ day, lane: null",
-    "new": "  const [px, py] = [Math.round(sx / 32768), Math.round(sz / 32768)];\n  return Object.freeze({ day, lane: null",
+    "old": "  const [px, py] = sitePixelOfNative(sx, sz);",
+    "new": "  const [px, py] = [Math.round(sx / 32768), Math.round(sz / 32768)];",
     "tests": [
       "test/world/worldWide/ww7_longer.test.js"
     ],

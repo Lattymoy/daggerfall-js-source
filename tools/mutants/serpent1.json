@@ -276,8 +276,8 @@
   {
     "name": "SERPENT1-omen-line-twice",
     "file": "src/systems/serpent/serpentOmen.js",
-    "old": "if (line && (t.day !== saidDay || rank > saidRank)) {",
-    "new": "if (line && (t.day !== saidDay || rank >= saidRank)) {",
+    "old": "      if (line && (t.day !== saidDay || rank > saidRank)) {",
+    "new": "      if (line && (t.day !== saidDay || rank >= saidRank)) {",
     "tests": [
       "test/systems/serpent1_client.test.js"
     ]
@@ -285,8 +285,8 @@
   {
     "name": "SERPENT1-omen-site-cached",
     "file": "src/systems/serpent/serpentOmen.js",
-    "old": "(!cache.site && now() - cache.at >= SITE_RETRY_MS)",
-    "new": "false",
+    "old": "    if (cache.day !== day || (!cache.site && now() - cache.at >= SITE_RETRY_MS)) {",
+    "new": "    if (cache.day !== day || false) {",
     "tests": [
       "test/systems/serpent1_client.test.js"
     ]
@@ -294,8 +294,8 @@
   {
     "name": "SERPENT1-strike-middle-alone",
     "file": "src/systems/serpent/serpentStrike.js",
-    "old": "return [[boat.x + fx, boat.z + fz], [boat.x, boat.z], [boat.x - fx, boat.z - fz]];",
-    "new": "return [[boat.x, boat.z]];",
+    "old": "  return [\n    [boat.x + fx, boat.z + fz],\n    [boat.x, boat.z],\n    [boat.x - fx, boat.z - fz],\n  ];",
+    "new": "  return [[boat.x, boat.z]];",
     "tests": [
       "test/systems/serpent1_client.test.js"
     ]
@@ -303,8 +303,8 @@
   {
     "name": "SERPENT1-strike-ram-whole-lane",
     "file": "src/systems/serpent/serpentStrike.js",
-    "old": "const run = Math.max(0, Math.min(len, ((t - atk.at) / 1000) * RAM_V));",
-    "new": "const run = len;",
+    "old": "      const run = Math.max(0, Math.min(len, ((t - atk.at) / 1000) * RAM_V));",
+    "new": "      const run = len;",
     "tests": [
       "test/systems/serpent1_client.test.js"
     ]
@@ -312,8 +312,8 @@
   {
     "name": "SERPENT1-strike-grip-carry-dropped",
     "file": "src/systems/serpent/serpentStrike.js",
-    "old": "const hull = carry.hull + (GRIP.hull * whole.maxHull + GRIP.base) * dtS * k, crew = carry.crew + GRIP.crew * dtS * k;",
-    "new": "const hull = (GRIP.hull * whole.maxHull + GRIP.base) * dtS * k, crew = GRIP.crew * dtS * k;",
+    "old": "  const hull = carry.hull + (GRIP.hull * whole.maxHull + GRIP.base) * dtS * k,\n    crew = carry.crew + GRIP.crew * dtS * k;",
+    "new": "  const hull = (GRIP.hull * whole.maxHull + GRIP.base) * dtS * k,\n    crew = GRIP.crew * dtS * k;",
     "tests": [
       "test/systems/serpent1_client.test.js"
     ]
@@ -339,8 +339,8 @@
   {
     "name": "SERPENT1-spoils-stood-full-gold",
     "file": "src/systems/serpent/serpentSpoils.js",
-    "old": "* (dealt ? 1 : STOOD_GOLD));",
-    "new": ");",
+    "old": "  const gold = Math.round(SERPENT_SPOILS_GOLD_PER_LEVEL * lv * (0.8 + 0.4 * rolls()) * (dealt ? 1 : STOOD_GOLD));",
+    "new": "  const gold = Math.round(SERPENT_SPOILS_GOLD_PER_LEVEL * lv * (0.8 + 0.4 * rolls()));",
     "tests": [
       "test/systems/serpent1_client.test.js"
     ]
@@ -348,8 +348,8 @@
   {
     "name": "SERPENT1-sounds-roar-unpitched",
     "file": "src/systems/serpent/serpentSounds.js",
-    "old": "roar: cue(DREUGH.barkSound, 0.42, 2.2, 60, 3200),",
-    "new": "roar: cue(DREUGH.barkSound, 1, 2.2, 60, 3200),",
+    "old": "  roar: cue(DREUGH.barkSound, 0.42, 2.2, 60, 3200),",
+    "new": "  roar: cue(DREUGH.barkSound, 1, 2.2, 60, 3200),",
     "tests": [
       "test/systems/serpent1_client.test.js"
     ]

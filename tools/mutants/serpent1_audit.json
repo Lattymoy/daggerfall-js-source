@@ -388,8 +388,8 @@
   {
     "name": "AUDIT-SERPENT-S1-omen-site-fell",
     "file": "src/systems/serpent/serpentOmen.js",
-    "old": "const phase = serpentPhase(t, now(), s ? fellAt(t.day, s) : null);",
-    "new": "const phase = serpentPhase(t, now(), fellAt(t.day));",
+    "old": "      const phase = serpentPhase(t, now(), s ? fellAt(t.day, s) : null);",
+    "new": "      const phase = serpentPhase(t, now(), fellAt(t.day));",
     "tests": [
       "test/systems/serpent1_client.test.js"
     ]
@@ -397,8 +397,8 @@
   {
     "name": "AUDIT-SERPENT-L4-omen-reset",
     "file": "src/systems/serpent/serpentOmen.js",
-    "old": "reset() { current = null; readyAt = null; settled = false; },",
-    "new": "reset() {},",
+    "old": "    reset() {\n      current = null;\n      readyAt = null;\n      settled = false;\n    },",
+    "new": "    reset() {},",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "AUDIT-SERPENT-B5-ring-any",
     "file": "src/systems/serpent/serpentStrike.js",
-    "old": "case 'ring': return pts.some(([x, z]) => Math.hypot(x - cx, z - cz) <= A.r);",
-    "new": "case 'ring': return Math.hypot(boat.x - cx, boat.z - cz) <= A.r;",
+    "old": "      return pts.some(([x, z]) => Math.hypot(x - cx, z - cz) <= A.r); // AUDIT SERPENT B5: laid where the relay saw her helm - any of her inside it",
+    "new": "      return Math.hypot(boat.x - cx, boat.z - cz) <= A.r; // AUDIT SERPENT B5: laid where the relay saw her helm - any of her inside it",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]
@@ -597,8 +597,8 @@
   {
     "name": "AUDIT-SERPENT-B10-hoard-pack",
     "file": "src/systems/serpent/serpentSpoils.js",
-    "old": "granted: (boss) => `${boss.name}'s hoard is yours. It is in your pack.`,",
-    "new": "granted: (boss) => `${boss.name}'s hoard is in your hold. And your pack.`,",
+    "old": "  granted: (boss) => `${boss.name}'s hoard is yours. It is in your pack.`,",
+    "new": "  granted: (boss) => `${boss.name}'s hoard is in your hold. And your pack.`,",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]
