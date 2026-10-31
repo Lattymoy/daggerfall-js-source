@@ -282,8 +282,8 @@
  {
   "name": "U3M-cobbles-in-a-hamlet",
   "file": "src/world/urban/townFabricModel.js",
-  "old": "  if (cobbles && st.side) flat(",
-  "new": "  if (st.side) flat(",
+  "old": "(k === K.side && cobbles && st.side)",
+  "new": "(k === K.side && st.side)",
   "tests": [
    "test/world/urban/urban3_model.test.js"
   ]
