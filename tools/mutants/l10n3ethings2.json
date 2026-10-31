@@ -120,7 +120,7 @@
     "name": "L10N3e-shown-ui-itemMakerWindow-296-Item",
     "file": "src/ui/item/itemMakerWindow.js",
     "old": "    this.itemName = shownItemName(item) ?? '';",
-    "new": "    this.itemName = (item).name ?? '';",
+    "new": "    this.itemName = item.name ?? '';",
     "tests": [
       "test/systems/l10n3e_things.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "L10N3e-shown-ui-itemMakerWindow-414-Item",
     "file": "src/ui/item/itemMakerWindow.js",
-    "old": "    if (this.itemName && this.itemName !== shownItemName(this.selected) && !makerKeepsName(this.selected)) this.selected.name = this.itemName;",
-    "new": "    if (this.itemName && this.itemName !== (this.selected).name && !makerKeepsName(this.selected)) this.selected.name = this.itemName;",
+    "old": "    if (this.itemName && this.itemName !== shownItemName(this.selected) && !makerKeepsName(this.selected))",
+    "new": "    if (this.itemName && this.itemName !== this.selected.name && !makerKeepsName(this.selected))",
     "note": "Re-aimed by content (GILDED-MAKER): the line asks makerKeepsName too; the mutant still compares the canonical name.",
     "tests": [
       "test/systems/l10n3e_things.test.js"

@@ -166,7 +166,7 @@ test('E1 SOURCE SWEEP: a window that NESTS a list picker forwards the release, e
   const ASSIGN = /this\._?picker = new ListPickerWindow\(/;
   // `?.release?.()` is the same forwarder: the spell maker also parks a
   // SpellIconPickerWindow in the slot, which has no drag latch to drop.
-  const FORWARD = /(?:release\(\) \{ this\._?picker\?\.release(?:\?\.)?\(\); \}|release\(\) \{\n\s*this\.picker\?\.release\?\.\(\);\n\s*\})/;
+  const FORWARD = /(?:(?:release\(\) \{ this\._?picker\?\.release(?:\?\.)?\(\); \}|release\(\) \{\n\s*this\.picker\?\.release\?\.\(\);\n\s*\})|release\(\) \{\n\s*this\.picker\?\.release\(\);\n\s*\})/;
   const nesting = [];
   for (const path of readdirSync(new URL('../../src/ui/', import.meta.url), { recursive: true })) {
     if (!path.endsWith('.js')) continue;

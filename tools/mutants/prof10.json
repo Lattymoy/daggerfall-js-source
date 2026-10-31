@@ -1355,8 +1355,8 @@
   {
     "name": "AUDIT-PROF10-J2-filter-refuses-crafted",
     "file": "src/ui/item/itemMakerWindow.js",
-    "old": "if (!keptEnchantments(item) || item.group === 'UselessItems2') return false;",
-    "new": "if (item.enchantments?.length || item.group === 'UselessItems2') return false;",
+    "old": "  if (!keptEnchantments(item) || item.group === 'UselessItems2') return false;",
+    "new": "  if (item.enchantments?.length || item.group === 'UselessItems2') return false;",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1401,8 +1401,8 @@
   {
     "name": "AUDIT-PROF10-J2-label-kept-free",
     "file": "src/ui/item/itemMakerWindow.js",
-    "old": "totalEnchantmentCost(this.powers, this.sideEffects) + enchantmentListCost(keptEnchantments(this.selected) ?? []), itemEnchantmentPower",
-    "new": "totalEnchantmentCost(this.powers, this.sideEffects), itemEnchantmentPower",
+    "old": "        totalEnchantmentCost(this.powers, this.sideEffects) +\n          enchantmentListCost(keptEnchantments(this.selected) ?? []),",
+    "new": "        totalEnchantmentCost(this.powers, this.sideEffects),",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1419,8 +1419,8 @@
   {
     "name": "AUDIT-PROF10-J2-kept-row-removable",
     "file": "src/ui/item/itemMakerWindow.js",
-    "old": "if (hit && !hit.entry.kept && (hit.entry.parentEnchantment ?? 0) === 0) this._removeRow(hit.entry);",
-    "new": "if (hit && (hit.entry.parentEnchantment ?? 0) === 0) this._removeRow(hit.entry);",
+    "old": "      if (hit && !hit.entry.kept && (hit.entry.parentEnchantment ?? 0) === 0) this._removeRow(hit.entry);",
+    "new": "      if (hit && (hit.entry.parentEnchantment ?? 0) === 0) this._removeRow(hit.entry);",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1428,8 +1428,8 @@
   {
     "name": "AUDIT-PROF10-J2-guard-own-rows",
     "file": "src/ui/item/itemMakerWindow.js",
-    "old": "      item: this.selected, powers: all.powers, sideEffects: all.sideEffects,\n    });\n    if (d.kind === 'refuse')",
-    "new": "      item: this.selected, powers: this.powers, sideEffects: this.sideEffects,\n    });\n    if (d.kind === 'refuse')",
+    "old": "      item: this.selected,\n      powers: all.powers,\n      sideEffects: all.sideEffects,\n    });",
+    "new": "      item: this.selected,\n      powers: this.powers,\n      sideEffects: this.sideEffects,\n    });",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1437,8 +1437,8 @@
   {
     "name": "AUDIT-PROF10-J2-lists-no-kept",
     "file": "src/ui/item/itemMakerWindow.js",
-    "old": "return { powers: [...k.powers, ...this.powers], sideEffects: [...k.sideEffects, ...this.sideEffects] };",
-    "new": "return { powers: this.powers, sideEffects: this.sideEffects };",
+    "old": "    return { powers: [...k.powers, ...this.powers], sideEffects: [...k.sideEffects, ...this.sideEffects] };",
+    "new": "    return { powers: this.powers, sideEffects: this.sideEffects };",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]

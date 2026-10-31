@@ -398,7 +398,7 @@ test('PROF12 wiring: the alchemy station an Alchemist\'s (open for trade) or a h
   assert.match(m, /guildGroupOfFaction\(townTalk\?\.factionDict \?\? null, interiorBuilding\.factionId\) === GUILD_GROUPS\.MagesGuild\) return \{ kind: 'shop', fee: ENCHANT_FEE \};/);
   assert.match(m, /if \(stationOwnerHere\(\) && interiorDecor\.list\(\)\.some\(\(p\) => p\?\.station === 'enchant'\)\) return \{ kind: 'home', fee: 0 \};/);   // PIN MOVED (FB1018D HOME-BENCH, test/scenes/fb1018d_homebench.test.js): a home's stations serve its owner's account
   assert.match(m, /goldDiscountPct: \(\) => enchantGoldPct\(\),/);
-  assert.match(src('src/ui/item/itemMakerWindow.js'), /enchantDecision\(this\.selected, this\.powers, this\.sideEffects, \{ gold: this\.gold\(\), discountPct: this\.goldDiscountPct\(\), souls: this\._souls \}\)/);   // PIN MOVED (RPT1026-PROGRESS SOUL-HELD, test/ui/rpt1026_progress_ui.test.js): and the souls the pack holds now
+  assert.match(src('src/ui/item/itemMakerWindow.js'), /enchantDecision\(this\.selected, this\.powers, this\.sideEffects, \{\n\s*gold: this\.gold\(\),\n\s*discountPct: this\.goldDiscountPct\(\),\n\s*souls: this\._souls,\n\s*\}\)/);   // PIN MOVED (RPT1026-PROGRESS SOUL-HELD, test/ui/rpt1026_progress_ui.test.js): and the souls the pack holds now
   const w = hostText('src/scenes/world.js');
   assert.match(w, /alchemy: \(\) => host\.modes\?\.alchemyHere\?\.\(\) \?\? null,/);
   assert.match(w, /const myHall = \(profession\) => hallStepsFor\(seatHere\(host\._musicLoc\?\.mapTableData\?\.mapId\), host\.guildBook\?\.guild\?\.id \?\? null, profession\);\n\s*const alchemyHall = \(\) => myHall\('alchemy'\);/);   // PIN MOVED (AUDIT PROF-541 R2-H1): the guard fortLaw.js hallStepsFor's (prof9_client.test.js drives it)

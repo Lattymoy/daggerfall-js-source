@@ -95,8 +95,8 @@
   {
     "name": "RPT1026-PROGRESS-maker-souls-frozen",
     "file": "src/ui/item/itemMakerWindow.js",
-    "old": "  get _souls() { return this._filledSouls(); }",
-    "new": "  get _souls() { return (this.__souls ??= this._filledSouls()); }",
+    "old": "    return this._filledSouls();",
+    "new": "    return (this.__souls ??= this._filledSouls());",
     "tests": [
       "test/ui/rpt1026_progress_ui.test.js",
       "test/systems/audit63_effects.test.js"
@@ -106,8 +106,8 @@
   {
     "name": "RPT1026-PROGRESS-maker-souls-unasked",
     "file": "src/ui/item/itemMakerWindow.js",
-    "old": ", souls: this._souls });   // PROF12",
-    "new": " });   // PROF12",
+    "old": "      souls: this._souls,\n    }); // PROF12: Enchanting's layer; RPT1026-PROGRESS: the souls the pack holds now",
+    "new": "    }); // PROF12: Enchanting's layer; RPT1026-PROGRESS: the souls the pack holds now",
     "tests": [
       "test/ui/rpt1026_progress_ui.test.js"
     ],

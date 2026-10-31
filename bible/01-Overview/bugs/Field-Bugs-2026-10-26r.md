@@ -1353,7 +1353,7 @@ nothing to take and the bind goes ahead.
 WHAT THE PORT DID. Exactly that, on purpose (AUDIT 63 F14's review round). A bound soul's costs are negative, so the second
 item got the soul's whole budget free: a single gem paid for item after item while that window stayed open.
 
-FIXED. The window reads the pack's souls every time it asks (`itemMakerWindow.js:"  get _souls() { return this._filledSouls(); }"`),
+FIXED. The window reads the pack's souls every time it asks (`itemMakerWindow.js:"get _souls() {"`),
 and the law refuses a Soul Bound row whose soul the pack no longer holds, whatever list the row came from
 (enchantDecision's `souls`: "That soul is no longer in your pack.", nothing paid). Port-Ledger A; Systems-Arc's AUDIT 63
 F14 record says the freeze is gone. The account service's item law cannot tell such a piece: it reads one item, and holds a

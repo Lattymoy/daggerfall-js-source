@@ -1597,6 +1597,11 @@
 !/src/ui/intro/set/
 /src/ui/intro/set/*/
 !/src/ui/intro/titleHeld.js
+!/src/ui/item/
+/src/ui/item/*
+!/src/ui/item/itemIconColor32.js
+!/src/ui/item/itemIconUrl.js
+!/src/ui/item/itemMakerWindow.js
 !/src/ui/ketch/
 /src/ui/ketch/*/
 !/src/ui/levelUp/

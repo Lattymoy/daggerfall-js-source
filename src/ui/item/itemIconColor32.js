@@ -23,7 +23,8 @@ export const ICON_ASK_MS = 200;
 /** The picture's key: archive, record and dye - and (AUDIT FINAL F3, main's DYE-ICON) the swatch the classic arm dyes by
  *  it - what makes two pictures the same: the pack's own iconName law (ui/textureCanvas.js). Pure. */
 export function itemIconKey(img) {
-  const dye = img?.dye ?? null, dyeTarget = img?.dyeTarget ?? null;
+  const dye = img?.dye ?? null,
+    dyeTarget = img?.dyeTarget ?? null;
   const token = dyeToken(dye);
   const dyed = dyeTarget != null && dye != null && dye !== '';
   return `${img?.archive}_${img?.record}${token ? `_${token}` : ''}${dyed ? `_t${dyeTarget}d${dye}` : ''}`;
@@ -37,9 +38,18 @@ export function itemIconKey(img) {
  * @param {{ wait?: (ms: number) => Promise<void>, identity?: any }} [opts]
  * @returns {Promise<{key: string, width: number, height: number, colors: Uint8ClampedArray}|null>}
  */
-export async function itemIconColor32(item, { wait = (ms) => new Promise((r) => setTimeout(r, ms)), identity = undefined } = {}) {
+export async function itemIconColor32(
+  item,
+  { wait = (ms) => new Promise((r) => setTimeout(r, ms)), identity = undefined } = {},
+) {
   const img = item ? inventoryItemImage(item, identity) : null;
-  if (img?.archive == null || !Number.isInteger(img.record) || typeof document === 'undefined' || typeof Image === 'undefined') return null;
+  if (
+    img?.archive == null ||
+    !Number.isInteger(img.record) ||
+    typeof document === 'undefined' ||
+    typeof Image === 'undefined'
+  )
+    return null;
   let url = null;
   for (let t = 0; !url && t <= ICON_WAIT_MS; t += ICON_ASK_MS) {
     // the first ask starts the load; the cache answers after. AUDIT FINAL F3: by the swatch too (main's DYE-ICON) - a
@@ -53,12 +63,19 @@ export async function itemIconColor32(item, { wait = (ms) => new Promise((r) => 
     el.src = url;
     await el.decode();
     const cv = document.createElement('canvas');
-    cv.width = el.naturalWidth; cv.height = el.naturalHeight;
+    cv.width = el.naturalWidth;
+    cv.height = el.naturalHeight;
     const cx = cv.getContext('2d');
     if (!cx || !(cv.width > 0) || !(cv.height > 0)) return null;
     cx.drawImage(el, 0, 0);
     const raster = cx.getImageData(0, 0, cv.width, cv.height).data;
-    const c = toColor32({ width: cv.width, height: cv.height, data: new Uint8Array(raster.buffer, raster.byteOffset, raster.byteLength) });
+    const c = toColor32({
+      width: cv.width,
+      height: cv.height,
+      data: new Uint8Array(raster.buffer, raster.byteOffset, raster.byteLength),
+    });
     return { key: itemIconKey(img), ...c };
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }

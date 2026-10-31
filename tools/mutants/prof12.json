@@ -488,8 +488,8 @@
   {
     "name": "PROF12-discount-window-unread",
     "file": "src/ui/item/itemMakerWindow.js",
-    "old": "goldDiscountPct() { const v = this.hooks.goldDiscountPct?.(); return Number.isSafeInteger(v) && v > 0 && v < 100 ? v : 0; }",
-    "new": "goldDiscountPct() { return 0; }",
+    "old": "    const v = this.hooks.goldDiscountPct?.();\n    return Number.isSafeInteger(v) && v > 0 && v < 100 ? v : 0;",
+    "new": "    return 0;",
     "tests": [
       "test/systems/prof12_client.test.js"
     ]

@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-FINAL-F3-the-floor-asked-undyed",
     "file": "src/ui/item/itemIconColor32.js",
-    "old": "dye: img.dye, dyeTarget: img.dyeTarget ?? null });",
-    "new": "dye: img.dye });",
+    "old": "    url = requestIcon(img.archive, img.record, { scale: 1, dye: img.dye, dyeTarget: img.dyeTarget ?? null });",
+    "new": "    url = requestIcon(img.archive, img.record, { scale: 1, dye: img.dye });",
     "tests": [
       "test/world/gate/wbx_gate_fixes.test.js"
     ]
