@@ -135,6 +135,13 @@ worn on it, as wide: the Insignia Armlet's patch, and the Ashbound Bracers' and 
 through it. A side view's stand half an arm in from the body's back edge, where the pictures paint its near arm. An arm
 the picture hides behind the body (`armSide`) wears none.
 
+**The body's edge** (ARM-BEHIND, the owner, 2026-10-31: *"the arm auras dont really hide behind the torso"*). A piece
+lies on the card's near side, so the card hides none of it. Where an arm passes behind the painted torso (a
+three-quarter picture's far arm, its shoulder inside the body), the bracers ran from that shoulder over the chest. Each
+arm piece with its band read is cut at the screen's upright line through the band's inner edge (`armClip`, the shader's
+`uClip`), so nothing of it, its embers included, lands on the body's side of that line. A Morrowind body needs no cut:
+its own depth hides its far arm.
+
 **The pieces.** Tubes round a limb or the brow, a decal on the chest, cards for embers and motes. Light is added, the
 depth tested and never written, and the fog applied. One program a piece (the auras' AURA-SPLIT law), each started at
 the boot's idle (`src/render/playPrograms.js`). Every rate is whole over the auras' clock, so nothing jumps at its wrap.
@@ -262,6 +269,9 @@ peer's name lifts only over a head piece drawn in that frame, and a sprite's Cin
 - `tools/profileSlotsProbe.mjs` - the section on a real GPU, desktop and phone, round three bodies: the plate clear of
   the drawn head, a try-on and a press, and close-ups of each line's set. `tools/spriteArmsSheet.mjs` - every sprite's
   pose on its picture.
+- `test/render/armbehind.test.js` - section 6's cut at the body's edge: its law, the draws it rides on, the shader's
+  discard, the pass's upload; `tools/mutants/armbehind.json` mutates them. `tools/armorySpriteProbe.mjs` (SETS=1) reads
+  nothing between the two arms' inner edges on every Layered Gearing body.
 - `test/render/aurapixel.test.js` - section 13's texel and levels run in the shader's own code, both passes' `main()`
   with the law on, the switch, and the rider's cards; `tools/mutants/aurapixel.json` mutates them. `tools/auraProbe.mjs`
   and `tools/armoryProbe.mjs` read every look and kit with the law on, beside the designs read per pixel.

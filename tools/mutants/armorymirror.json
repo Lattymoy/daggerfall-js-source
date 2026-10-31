@@ -119,8 +119,8 @@
   {
     "name": "ARMORY-MIRROR-the-bands-width-unread",
     "file": "src/render/armoryPass.js",
-    "old": "k: band ? band.w / (2 * r0 * s) : 1 };",
-    "new": "k: 1 };",
+    "old": "k: band ? band.w / (2 * r0 * s) : 1, clip:",
+    "new": "k: 1, clip:",
     "tests": [
       "test/render/armorymirror.test.js"
     ]

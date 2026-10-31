@@ -147,6 +147,16 @@ const out = await page.evaluate(async ({ W, H, CLOSE, SETS, ONLY }) => {
             for (let rr = r0 - Math.round(u); rr <= r0 + Math.round(u); rr++) for (let cc = Math.round(c0 - b.wd * u); cc <= Math.round(c0 + b.wd * u); cc++) if (rr >= 0 && rr < cv.height && cc >= 0 && cc < cv.width && strong(rr * cv.width + cc)) { l2 = Math.min(l2, cc); h2 = Math.max(h2, cc); }   // a chain's dark links leave a row bare
             armChecks.push({ what: `the ${arm} arm's band: on it, no wider`, ok: l2 <= h2 && l2 >= sp[0] - u && h2 <= sp[1] + u, detail: `${l2}..${h2} px, the arm ${sp[0].toFixed(1)}..${sp[1].toFixed(1)}` });
           }
+          // ARM-BEHIND: both arms' bands read and shown - nothing of the pieces between their inner edges, over the body
+          const shown = ['left', 'right'].map((arm) => apass.armSide(pose, fwd, [0, 1.2, 0], eye, arm)).filter(Boolean);
+          if (shown.length === 2 && mk.arms.L.band && mk.arms.R.band && mk.chest != null) {
+            const inner = (sd) => { const b = mk.arms[sd].band, way = Math.sign(b.c - mk.chest) || 1, yy = pose.bands[sd].y; return colOf(along(b.c - way * b.wd / 2, yy)); };
+            const [c0, c1] = [inner('L'), inner('R')].sort((p, q) => p - q), u = pxAt(pose.bands.L.y);
+            const r0 = Math.round(rowOf(along(0, yOf('elL')))), r1 = Math.round(rowOf(along(0, yOf('shL'))));
+            let hits = 0;
+            for (let rr = Math.min(r0, r1); rr <= Math.max(r0, r1); rr++) for (let cc = Math.ceil(c0 + 1.5 * u); cc <= Math.floor(c1 - 1.5 * u); cc++) if (rr >= 0 && rr < cv.height && cc >= 0 && cc < cv.width && strong(rr * cv.width + cc)) hits++;
+            armChecks.push({ what: 'nothing over the body between the arms', ok: hits === 0, detail: `${hits} px between ${c0.toFixed(1)} and ${c1.toFixed(1)}` });
+          }
         }
         const col = name === 'halo' ? (hi >= lo ? (lo + hi) / 2 : null) : n ? sum / n : null;
         row.pieces[name] = { n, col, onBody: n ? onBody / n : 0, want, tol: tol * unit, unit, span, lo, hi, armChecks, worn: toB64(worn) };
