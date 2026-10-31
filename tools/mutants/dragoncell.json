@@ -75,12 +75,12 @@
   {
     "name": "DRAGON-CELL-the-cover-unread",
     "file": "server/src/dragonFights.js",
-    "old": "(!isCellRoom(a.key) || inCover(a, cellRoomOfWire(a.pose.x, a.pose.z)))",
-    "new": "true",
+    "old": "(isCellRoom(a.key) && inCover(a, cellRoomOfWire(a.pose.x, a.pose.z)))",
+    "new": "isCellRoom(a.key)",
     "tests": [
       "test/net/dragon/dragoncell.test.js"
     ],
-    "note": "Re-aimed by content (AUDIT DRAGON-CELL)."
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL). Re-aimed by content (AUDIT DRAGON-CELL II)."
   },
   {
     "name": "DRAGON-CELL-the-far-told-at-once",

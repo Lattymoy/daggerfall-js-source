@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DRAGON_FIGHT_KEY, SOCIAL_ROOM, cellRoomOfWire, PIXEL_UNITS } from '../../../src/net/wire.js';
 import { dragonTimes, dragonFightId, DRAGON_BRAIN_V, DRAGON_NATIVE_PER_M, DRAGON_CLIMB_MS } from '../../../src/net/dragon/dragonLaw.js';
-import { RELAY_KEY, dragonOmenFrom, siteOf } from '../../dragonOmen.mjs';
+import { RELAY_KEY, dragonOmenFrom, siteOf, aged } from '../../dragonOmen.mjs';
 import { DRAGON_TICK_MS, DRAGON_OPENING_MS, DRAGON_FAN_R, DRAGON_ADMIT_R, DRAGON_TTK_S } from '../../../src/net/dragon/dragonBrain.js';
 import { dpsRef } from '../../../src/net/gate/gateBrain.js';
 import { verifyDragonReceipt } from '../../../src/net/dragon/dragonReceipt.js';
@@ -30,7 +30,7 @@ async function withSky(fn, { start = TT.landAt + 60_000 } = {}) {
   try {
     Date.now = () => clock;
     const world = fakeRooms({ now: () => clock });
-    const r = world.room(CELL);
+    const r = aged(world.room(CELL));
     r.env.GATE_SIGNING_KEY = RELAY_KEY.pkcs8;   // DRAGON-HIDDEN: no secret, no dragon
     const tick = async (n = 1) => { for (let i = 0; i < n; i++) { clock += DRAGON_TICK_MS; if (r.alarm.at != null && clock >= r.alarm.at) await r.fire(); } };
     const say = (ws, o) => r.raw(ws, JSON.stringify({ t: 'dragon', ...o }));

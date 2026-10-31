@@ -160,12 +160,13 @@ export function createTheatreGateScans({ places, wet, spawnSalt, land = () => 0,
     /** DRAGON-CELL (bible/11-Multiplayer/Dwarven-Dragon.md section 2): the gate's ground in one square past the Bay, `side`
      *  pixels from (x0, y0) - each pixel on a lane that stands, its towns every place of a town's kind about it, the
      *  countryside's among them (a theatre's scan lists its listed towns alone). Kept for the generation, the last few.
-     *  AUDIT DRAGON-CELL: null until the countryside stands (D8 - read before it, a square named another site) and, where
-     *  the page has idle moments, until its slices are read (D9 - 13 to 95 ms a square, 514 the first, on the freeware).
+     *  AUDIT DRAGON-CELL: null until the countryside stands (D8 - read before it, a square named another site) and the land
+     *  past the Bay has been laid (II E4: `land()`, the trace's install), and where the page has idle moments, until its
+     *  slices are read (D9 - 13 to 95 ms a square, 514 the first, on the freeware).
      *  @param {number} x0 @param {number} y0 @param {number} side */
     groundIn(x0, y0, side) {
       fresh();
-      if (!places.sources().includes(COUNTRY_SOURCE)) return null;
+      if (!places.sources().includes(COUNTRY_SOURCE) || !(land() > 0)) return null;
       const key = `${x0},${y0},${side}`, g = grounds8.get(key);
       if (g) return g;
       if (dig?.key !== key) dig = { key, x0, y0, side, i: 0, towns: [], scan: null };

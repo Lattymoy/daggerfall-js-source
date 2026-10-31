@@ -377,7 +377,7 @@ import { createTownWatch, runTownWatchFrame } from '../systems/town/townWatch.js
 import { rollCampEncountersOnChunkLoad, amGroupRollOwner, campAnchorSpot, CAMP_SIGHT_RADIUS } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
 import { WORLD_SALT, spawnsDungeon, pathFreePixel, createSpawnGround, createSpawnLedger, spawnedLocationCentreLocal, dungeonSightLine } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
 import { insideGateRing, gateSceneXZ, fellLine, courtFellLine, OMEN_SETTLE_MS, GATE_STORM_RING } from '../systems/gate/gateOmen.js';   // WB1 (Mac: "on the timer, a large area would be shown on the map, also in chat"): the Oblivion Gate's omen - its lines, its ring, its compass mark
-import { createGateLanes, createTheatreGateScans } from './gate/gateLanes.js';   // WW2: a gate a game day in every theatre - the omen a lane at a time
+import { createGateLanes, createTheatreGateScans, pageIdle } from './gate/gateLanes.js';   // WW2: a gate a game day in every theatre - the omen a lane at a time
 import { gateSeatRegion, gateClaimWaits } from './gate/gateSeat.js';   // WW-GATES-EVERYWHERE (A2b): where a gate's kill counts - a lane past the Bay's its own province's
 import { gateScanner, findGateSite, gateSeaPixel } from '../systems/gate/gateSite.js';   // WB1: where the day's gate stands, over the map files every client holds alike
 import { createGatePool, GATE_TEXT } from './gate/gatePool.js';   // WB2: the gate the world stands - its stone, its fire and beacon, its collider and its door
@@ -22560,12 +22560,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   };
   let _gateWarming = false;
   const warmGateScan = () => {
-    if (_gateScan || _gateWarming || !maps || typeof globalThis.requestIdleCallback !== 'function') return;
+    const idle = pageIdle();   // AUDIT DRAGON-CELL II E7: a page with no idle callback (Safari) warms on a timer's slices, as the theatres' scans do
+    if (_gateScan || _gateWarming || !maps || !idle) return;
     _gateWarming = true;
-    globalThis.requestIdleCallback(function slice(deadline) {
+    idle(function slice(deadline) {
       // a page that is never idle still gets there: a slice the timeout forced takes 4 ms of rows and asks again soon
       const until = performance.now() + (deadline.didTimeout ? 4 : 0);
-      try { if (!gateScanOf(() => deadline.timeRemaining() > 2 || performance.now() < until)) { globalThis.requestIdleCallback(slice, { timeout: 250 }); return; } } catch (e) { console.warn('[gate] no site', e?.message ?? e); }
+      try { if (!gateScanOf(() => deadline.timeRemaining() > 2 || performance.now() < until)) { idle(slice, { timeout: 250 }); return; } } catch (e) { console.warn('[gate] no site', e?.message ?? e); }
       _gateWarming = false;
     }, { timeout: 4000 });
   };

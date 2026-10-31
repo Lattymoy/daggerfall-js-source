@@ -145,8 +145,8 @@ import { dungeonMap3dOn, tamrielMapOn } from './map/mapSkin.js';   // EM3-3D: th
 // continent inked round the Bay on the world sheet - the sheet's pan box grows to the whole frame, the home view stays
 // the Bay's own fit, and past that fit the sheet is on the continent (ui/tamrielInk.js; bible/03-World/Tamriel.md)
 import { tamrielInkFor, paintTamrielInk, paintPastBay, pastBayStamp, tamrielHoverAt, tamrielCityAt, tamrielCityBucket, onContinent, ARENA_KIND_GLYPHS, releasePastBayInk, viewLeavesBay, tamrielFindRows, tamrielFoundRows } from './tamrielInk.js';   // TESA2: the press's city beside the hover's; BAY-LEFT-MAPS C9: the find box's places past the Bay (FIND-FOUND: and the found)
-import { foundMadePlaces, discoveryGeneration } from '../systems/discovery.js';
-import { eventWay } from '../systems/eventBoard.js';   // AUDIT FIND-FOUND F1: a homonym's way from the player, the board's own words   // FIND-FOUND: the places past the Bay found, and when that moves
+import { foundMadePlaces, discoveryGeneration } from '../systems/discovery.js';   // FIND-FOUND: the places past the Bay found, and when that moves
+import { eventWay } from '../systems/eventBoard.js';   // AUDIT FIND-FOUND F1: a homonym's way from the player, the board's own words
 import { tamrielFrameInBay, inBay } from '../world/tamriel/tamrielFrame.js';
 import { tamrielLandVersion } from '../world/tamriel/tamrielLand.js';   // TAMRIEL3: the trace's version, in the static key
 import { arenaPlacesVersion } from '../world/arenaPlaces.js';   // TESA1: the places' version past the Bay, beside it
@@ -3605,7 +3605,7 @@ export class HeldMapWindow {
     const me = this.deps.getPlayerPixel?.() ?? null, away = (/** @type {any} */ e) => (me && e.pos ? Math.hypot(e.pos.x - me.x, e.pos.y - me.y) : 0);
     for (const match of matches) {
       const all = byName.get(match.text) ?? [];
-      const entries = all.length > 1 && all.some((e) => e.pastBay) ? [...all].sort((a, b) => away(a) - away(b)).map((e) => (e.pastBay ? { ...e, way: eventWay(me, { px: e.pos.x, py: e.pos.y })?.text ?? '' } : e)) : all;
+      const entries = all.length > 1 && all.some((e) => e.pastBay) ? [...all].sort((a, b) => away(a) - away(b)).map((e) => ({ ...e, way: e.pos ? eventWay(me, { px: e.pos.x, py: e.pos.y })?.text ?? '' : '' })) : all;   // AUDIT DRAGON-CELL II E8: a Bay homonym its way too
       for (const entry of entries) {
         // BAY-LEFT-MAPS (C9): a place past the Bay is on the sheet found or not (TESA1's law, tamrielMarksIn) - under the
         // Ports filter a port alone, as the sheet inks it (C11)
@@ -4282,7 +4282,7 @@ export class HeldMapWindow {
     for (const entry of entries) {
       const li = el('li');
       const b = el('button', 'hmresult');
-      b.append(el('span', 'hmresult-name', entry.name), el('span', 'hmresult-region', entry.way ? `${entry.regionName}, ${entry.way}` : entry.regionName));   // AUDIT FIND-FOUND F1
+      b.append(el('span', 'hmresult-name', entry.name), el('span', 'hmresult-region', [entry.regionName, entry.way].filter(Boolean).join(', ')));   // AUDIT FIND-FOUND F1 (II E8: no lone comma)
       b.onclick = () => this._searchPick(entry);
       li.append(b);
       ul.append(li);

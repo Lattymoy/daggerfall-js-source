@@ -62,14 +62,15 @@ told the seed to every screen at the landing, and the seed named the pixel; now 
   its authored fit (`DRAGON_CELLS`), a box the relay knows with no map; it holds the land at the shipped fits. The client
   finds the site in it over the world's own data (`systems/dragon/dragonSite.js`): the Bay's gate scan's ground where the
   cell has any, which every screen holds; else the gate's law over the towns about the cell past the Bay, the
-  countryside's among them (`scenes/gate/gateLanes.js` groundIn, read in idle slices once the countryside stands). Its
-  own roll picks one pixel. A cell with no ground brings no dragon. An omen within two cells of an earlier one is dropped.
+  countryside's among them (`scenes/gate/gateLanes.js` groundIn, read in idle slices once the countryside stands and the
+  land is laid). Its own roll picks one pixel. A cell with no ground brings no dragon, and a screen with the land past the
+  Bay off sees none whose site is past it. An omen within two cells of an earlier one is dropped.
 - **Told near its cell.** A client asks (`ask`) for this watch and the last, down whatever room it stands in. The relay
-  judges a pose in a cell room (in a cell the socket covers) and in a battle (on its map frame); another room answers
-  nothing. It tells a dragon's omen only to a socket posed within `DRAGON_TELL_PX` (6 pixels, the dragon's sight) of its
-  cell, once it has landed and the socket has stood `DRAGON_TELL_DWELL_MS` (20 s) in its room. Any other is told null,
-  no sooner than a quiet watch (`dragonQuietAt`). The client asks again outside a told omen's reach, and after a null
-  from another pixel, or the same one a minute on. No secret, no dragon.
+  judges a pose in a cell room (in a cell the socket covers) and in a battle; a private room and any other answers
+  nothing. A socket not yet stood `DRAGON_TELL_DWELL_MS` (20 s) in the cell of its pose hears nothing. One that has is
+  told a landed dragon's omen within `DRAGON_TELL_PX` (6 pixels, the dragon's sight) of its cell, and null otherwise, no
+  sooner than a quiet watch (`dragonQuietAt`). An `in` waits the same. The client asks again outside a told omen's reach,
+  and after a null from another pixel, or the same one a minute on. No secret, no dragon.
 - **Its life.** It stays until slain or `DRAGON_STAY_MS` (40 minutes) after its landing, then climbs away. Up to four may
   stand at once, three cells apart at least. An account is rewarded for one a watch: the account service keys a kill by
   watch and account (AUDIT DRAGON-CELL D4, put to the owner).
@@ -462,7 +463,8 @@ omens, because a cell holds ground about 28% of the time: on the freeware 1,220 
 Bay at most 23,281 of 86,344 (`tools/dragonCellProbe.mjs`). No host line changed. Relay world298, `DRAGON_RELAY_MIN`
 298, `DRAGON_BRAIN_MIN` 3. Deploy the relay first.
 
-Pinned by `test/net/dragon/dragoncell.test.js` (4); `tools/mutants/dragoncell.json`, 22 dead. PINS MOVED: the relay
+Pinned by `test/net/dragon/dragoncell.test.js` (4); `tools/mutants/dragoncell.json`, 22 dead (20 since AUDIT DRAGON-CELL
+retired two with their code). PINS MOVED: the relay
 version's 46 files and its law's row; `dragon2_law`'s site and relay floor; `dragon3_client`'s site; `dragonhidden`'s
 tell and quiet watch; `dragonhiddenaudit`'s A1, B1, A3 and A6. Re-aimed by content and run, dead: DRAGON2-the-site-day-a-gates,
 DRAGON3-the-gates-day and -a-site-asked-every-frame, AUDIT-DRAGON-the-gate-its-own-number, two of `dragonhidden`'s, the
@@ -478,6 +480,13 @@ reach and after a null. A cell across the Bay's edge takes the Bay's ground wher
 the countryside stands, in idle slices. Open, and put to the owner: many forged sockets at once (D3), and one reward a
 watch (D4). Relay world298, re-hashed in place. Pinned by `test/net/dragon/dragoncellaudit.test.js` (9);
 `tools/mutants/dragoncellaudit.json`, 18 dead.
+
+**AUDIT DRAGON-CELL II (2026-10-31, the owner: "Audit"; `01-Overview/audits/Audit-Dragon-Cell-II.md`).** The first
+audit's 20 s wait was a socket's, and a private room holds any pose, so one socket swept every cell in minutes. The wait
+is the cell's now, a private room judges no pose, and an `in` waits too. A socket not yet stood hears nothing, so a
+player arriving late is told in 20 to 35 s. A square waits for the land to be laid, and the Bay's scan warms on Safari.
+The watch's own seed is retired. Relay world298, re-hashed in place again. Pinned by `dragoncellaudit.test.js` (12);
+`tools/mutants/dragoncellaudit2.json`, 12 dead.
 
 **DRAGON7 - the Aetherbright (2026-10-29).** `characters/dwarvenDragonShiny.js` turns each PLTE colour at load - the brass
 and copper to aetherium's blue, the wings' olive membrane to its violet, the greys cooled - and writes the chunk's CRC

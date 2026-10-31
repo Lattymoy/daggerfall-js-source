@@ -6,13 +6,14 @@
 // few hooks that call in here; the state rides the room under `_dg`.
 import { DRAGON_SEAM } from '../../src/net/bossSeam.js';
 import * as dragonBrain from '../../src/net/dragon/dragonBrain.js';
-import { dragonHolds, dragonAdmits, dragonFightId, dragonLookOf, dragonTimes, dragonSeedTold, dragonWatchesAbout, dragonCandidateAt, dragonCandidateOf, dragonQuietAt, isDragonOmen, DRAGON_CELLS_A_WATCH, DRAGON_SITES_MAX, DRAGON_NATIVE_PER_M, DRAGON_BRAIN_MIN, DRAGON_REMAINS_MS } from '../../src/net/dragon/dragonLaw.js';
+import { dragonHolds, dragonAdmits, dragonFightId, dragonLookOf, dragonTimes, dragonSeedTold, dragonWatchesAbout, dragonCandidateAt, dragonCandidateOf, dragonQuietAt, isDragonOmen, DRAGON_CELLS_A_WATCH, DRAGON_CELL_PX, DRAGON_SITES_MAX, DRAGON_NATIVE_PER_M, DRAGON_BRAIN_MIN, DRAGON_REMAINS_MS } from '../../src/net/dragon/dragonLaw.js';
 import { dragonWatchKeyOf, dragonOmenSeeds } from '../../src/net/dragon/dragonSeed.js';
 import { roostLeg } from '../../src/net/dragon/dragonBody.js';
 import { mintDragonReceipt, readDragonReceipt } from '../../src/net/dragon/dragonReceipt.js';
 import { bodyCensus } from '../../src/net/bossBody.js';
-import { validDragonOut, cellRoomOfWire, mapPixelOfWire, isCellRoom, nativePoseRoom, SOCIAL_ROOM, DRAGON_INTERNAL_FELL, DRAGON_TELL_RETRY_MS, DRAGON_FIGHT_KEY, DRAGON_FIGHTS_KEY, DRAGON_RC_PREFIX } from '../../src/net/wire.js';
+import { validDragonOut, cellRoomOfWire, mapPixelOfWire, isCellRoom, SOCIAL_ROOM, DRAGON_INTERNAL_FELL, DRAGON_TELL_RETRY_MS, DRAGON_FIGHT_KEY, DRAGON_FIGHTS_KEY, DRAGON_RC_PREFIX } from '../../src/net/wire.js';
 import { junkOutsideCover, inCover } from './cellNodes.js';
+import { isBattleRoom } from '../../src/net/siege/siegeRef.js';   // AUDIT DRAGON-CELL II E1: a battle's pose is judged, a private room's not
 import { ROOM_CALL_MS, Bounded, HUB_KEEP_MAX } from './relayScale.js';
 
 /** A fight is forgotten this long after it ends; the cell's other duties run this often while one beats (ms). */
@@ -25,7 +26,7 @@ const storeKey = (id) => `${DRAGON_FIGHT_KEY}:${id}`;
 const say = (room, ws, w) => room._send(ws, JSON.stringify({ t: 'dragon', ...w }));
 
 /** The room's dragon state, made on first use. @param {any} room */
-const dg = (room) => (room._dg ??= { fights: undefined, savedAt: new Map(), falling: new Map(), armedTo: 0, restAt: 0, key: undefined, seeds: new Map(), noRcpt: new Bounded(HUB_KEEP_MAX) });   // AUDIT DRAGON: the serpent's bound (SCALE5a), never a set emptied whole
+const dg = (room) => (room._dg ??= { fights: undefined, savedAt: new Map(), falling: new Map(), armedTo: 0, restAt: 0, key: undefined, seeds: new Map(), noRcpt: new Bounded(HUB_KEEP_MAX), stood: new WeakMap() });   // AUDIT DRAGON: the serpent's bound (SCALE5a), never a set emptied whole
 
 /** DRAGON-HIDDEN: watch `w`'s omens' seeds `{w, seeds}` - each the relay's secret (net/dragon/dragonSeed.js
  *  dragonOmenSeeds), kept for the watches about - or null: no GATE_SIGNING_KEY, no dragon. DRAGON-CELL: one is told only
@@ -152,25 +153,35 @@ export async function dragonWord(room, ws, a, m, now) {
   if (!f.fell && !f.gone) await arm(room, now);
 }
 
-/** AUDIT DRAGON-CELL D3: how long a socket stands in its room before it is told an omen (ms) - a sweep of far rooms by
- *  forged poses waits this in each; a player walking in waits it once. */
+/** AUDIT DRAGON-CELL D3: how long a socket stands in one cell before it is told of a dragon there (ms). AUDIT DRAGON-CELL II
+ *  E1: in that cell, not its room - a pose re-posed in another cell waits again, so a sweep waits it at every cell. */
 export const DRAGON_TELL_DWELL_MS = 20_000;
 /** The map pixel a socket stands on as this room can judge it, or null: a cell room's pose in a cell the socket covers, a
- *  battle's on its own map frame (wire.js nativePoseRoom - AUDIT DRAGON-CELL D6). @param {any} a */
-const judgedPixel = (a) => (a?.pose && !a.pose.dd && nativePoseRoom(a.key) && (!isCellRoom(a.key) || inCover(a, cellRoomOfWire(a.pose.x, a.pose.z))) ? mapPixelOfWire(a.pose.x, a.pose.z) : null);
+ *  battle's on its own map frame (D6). AUDIT DRAGON-CELL II E1: a private room's (an owned interior, a boat, a caravan)
+ *  holds any pose its socket posts, so it judges none. @param {any} a */
+const judgedPixel = (a) => (a?.pose && !a.pose.dd && (isBattleRoom(a.key) || (isCellRoom(a.key) && inCover(a, cellRoomOfWire(a.pose.x, a.pose.z)))) ? mapPixelOfWire(a.pose.x, a.pose.z) : null);
+/** AUDIT DRAGON-CELL II E1, E2: has socket `ws` stood DRAGON_TELL_DWELL_MS in the cell of pixel `p`? Its clock starts again
+ *  when it is judged in another cell; a cell room's first clock is the socket's own age (its pose held to its cover).
+ *  Kept with the instance: a wake starts every clock again, which only waits longer. */
+function stood(room, ws, a, p, now) {
+  const c = `${Math.floor(p[0] / DRAGON_CELL_PX)},${Math.floor(p[1] / DRAGON_CELL_PX)}`, m = dg(room).stood;
+  let r = m.get(ws);
+  if (r?.c !== c) m.set(ws, r = { c, at: !r && isCellRoom(a.key) ? (a.at ?? now) : now });
+  return now - r.at >= DRAGON_TELL_DWELL_MS;
+}
 
 /** DRAGON-HIDDEN: an `ask` - watch `w`'s omen, only for a watch about whose landing is past (never one to come). AUDIT
- *  DRAGON-HIDDEN B1, B2: in any room that can judge a pose, each time asked; the dragon bucket bounds the asking.
+ *  DRAGON-HIDDEN B1, B2: in a room that can judge a pose, each time asked; the dragon bucket bounds the asking.
  *  DRAGON-CELL (the owner chose "Cell-scoped"): an omen's seed names its dragon's pixel, so it is told only to a socket
- *  posed within DRAGON_TELL_PX of its cell (judgedPixel), once it has landed and the socket has stood DRAGON_TELL_DWELL_MS.
- *  Any other - far, new, near a quiet omen, no secret here - is told null no sooner than a quiet watch (dragonQuietAt), so
- *  no answer tells a landing elsewhere; a room that cannot judge a pose answers nothing (AUDIT DRAGON-CELL D1, D3, D6). */
+ *  posed within DRAGON_TELL_PX of its cell (judgedPixel) that has stood there (stood), once it has landed. A socket not
+ *  yet stood hears nothing, near or far (AUDIT DRAGON-CELL II E3: asked again in 15 s, never a null kept a minute); any
+ *  other - far, near a quiet omen, no secret here - is told null no sooner than a quiet watch (dragonQuietAt). */
 async function dragonAsk(room, ws, a, m, now) {
   if (!dragonWatchesAbout(now).includes(m.w)) return;
   const p = judgedPixel(a);
-  if (!p) return;
+  if (!p || !stood(room, ws, a, p, now)) return;
   const o = await dragonOmenOf(room, m.w), c = o ? dragonCandidateAt(o, p[0], p[1]) : null;
-  if (c && isDragonOmen(c) && dragonSeedTold(c, m.w, now) && now - (a.at ?? now) >= DRAGON_TELL_DWELL_MS) { say(room, ws, { k: 'omen', w: m.w, s: c.s }); return; }   // DRAGON-HIDDEN-TIME: silent until it lands
+  if (c && isDragonOmen(c) && dragonSeedTold(c, m.w, now)) { say(room, ws, { k: 'omen', w: m.w, s: c.s }); return; }   // DRAGON-HIDDEN-TIME: silent until it lands
   if (now >= dragonQuietAt(m.w)) say(room, ws, { k: 'omen', w: m.w, s: null });
 }
 
@@ -191,6 +202,9 @@ async function dragonIn(room, ws, a, m, now, fights) {
   if (!a.pose || a.pose.dd) return;
   const at = frameOf(f ?? { sx: m.sx, sz: m.sz }, a.pose);
   if (Math.hypot(at.x, at.z) > dragonBrain.DRAGON_ADMIT_R) { no('far'); return; }
+  // AUDIT DRAGON-CELL II E2: and none for a socket not yet stood in its cell - `st` against `gone` told a new one which cell
+  // held a dragon; a fighter already in this fight learns nothing new
+  if (!f?.players?.[a.sub] && !stood(room, ws, a, mapPixelOfWire(a.pose.x, a.pose.z), now)) return;
   const watch = dragonWatchesAbout(now).includes(m.w) ? await dragonOmenOf(room, m.w) : null;
   const o = watch ? dragonCandidateOf(watch, m.sx, m.sz) : null, t = o ? dragonTimes(o) : null;
   if (!dragonHolds(o, now)) { if (f) say(room, ws, { ...DRAGON_SEAM.stateOf(f) }); if (!f?.rc?.[a.sub]) no('gone'); return; }   // a fallen one's remains still lie: its state tells them

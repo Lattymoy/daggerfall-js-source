@@ -19,16 +19,16 @@ not so; **test-gap** a law no pin reads; **nit** a cost or a word. A finding two
 |---|---|---|---|---|
 | D1 | A1, C1 | bug | **A told omen's seed ran back to its watch's.** Each omen's seed was `gateHash(watchSeed, w, 100 + i)`, and every step of gateHash undoes (an xor, an odd multiply, an xorshift): four guesses gave the watch's seed, then every omen's cell, landing and look. A quiet omen's seed was told too, so standing near any omen was enough. | Each omen's seed is its own HMAC of the relay's secret (`dragonSeed.js` dragonOmenSeeds, `dragon-omen:<watch>:<omen>`). A quiet omen is told null, as a far one is. |
 | D2 | A2, C2 | bug | **An `in` told a socket anywhere which cell held a dragon.** It read the omen before the cover check: `gone` for an empty cell, silence and a junk strike for the dragon's, at eight frames a second. | The cover first, then the pose within `DRAGON_ADMIT_R`, then the omen: one answer whether a dragon stands there or none. |
-| D3 | A3 | risk | **The cover check binds a socket, not a player.** A client may open far cell rooms with forged poses; some 9,800 rooms sweep the frame. | A socket is told only after `DRAGON_TELL_DWELL_MS` (20 s) in its room, so a sweep waits that in each. Still open: many sockets at once sweep in minutes. Put to the owner: an account's budget of cells told on the hub, or a pose judge in the cell rooms. |
+| D3 | A3 | risk | **The cover check binds a socket, not a player.** A client may open far cell rooms with forged poses; some 9,800 rooms sweep the frame. | A socket is told only after `DRAGON_TELL_DWELL_MS` (20 s) - in its room here, in its cell since AUDIT DRAGON-CELL II E1 - so a sweep waits that at each cell. Still open: many sockets at once sweep in minutes. Put to the owner: an account's budget of cells told on the hub, or a pose judge in the cell rooms. |
 | D4 | A4 | risk | **Up to four dragons a watch, one reward.** The account service keys a kill by watch and account (`dragon_kills`, migration 0194), the hub keeps one receipt a watch, so a second kill in one watch is "claimed": no hoard, no tame roll. | Not changed: re-keying by omen is a migration and a receipt's new shape. Recorded in section 2, and put to the owner. |
 | D5 | A5, B1, C5 | bug | **A client told one omen never asked again that watch**, so a player who travelled to another omen's cell was never told it. | Asked again once the player stands outside the told omen's reach. |
 | D6 | A6, A7, B2, B7, C3 | bug | **A battle was told null** (AUDIT DRAGON-HIDDEN B1 undone: a battle's pose is on its map frame), and the client kept a null against its pixel for good - the one it arrived on, not the one it asked from. | A battle's pose is judged; a room that judges no pose answers nothing. A null is kept against the pixel it was asked from and asked again after `DRAGON_NONE_AGAIN_MS` (60 s). |
-| D7 | B3 | bug | **Two players together saw different sites** in a cell across the Bay's edge when one had the land past the Bay off: 88 of 150 such cells on the freeware, 21 of them two fights. | The Bay's ground alone where the cell has any: every screen holds the Bay's scan. |
+| D7 | B3 | bug | **Two players together saw different sites** in a cell across the Bay's edge when one had the land past the Bay off (AUDIT DRAGON-CELL II E5: of the freeware's 94 such cells, 20 hold Bay ground). | The Bay's ground alone where the cell has any: every screen holds the Bay's scan. Where it has none, a land-off screen sees no dragon (II E5). |
 | D8 | B4 | risk | **A site, or none, was kept for good** though the countryside registers later: read before it, a square named another site. | `groundIn` answers nothing until the countryside's source stands; a cell with no ground is asked again. |
 | D9 | B5 | risk | **A square was read on the frame**: 514 ms the first time, 13 to 95 after, on the freeware. | Read in the page's idle moments, a slice at a time, as the theatre scans are. |
 | D10 | B8 | nit | A wild-zone filter on the Bay's scan never fired: the Bay's scan holds no open zone. | Gone, with its mutant. |
 | D11 | A8, C4 | doc | "Holds the land at any fit", "two may stand", "about eight a day". | The shipped fits; up to four a watch; at most 8.9 a day. |
-| D12 | A9, B6, C9 | test-gap | No pin read a told seed's siblings, the `in` probe or the re-asks. The re-run found DRAGON-HIDDEN-a-dragon-drawn-untold and DRAGON3-the-remains-forgotten-at-the-watchs-turn alive on main too. | Each pinned. `AUDIT-DRAGON-HIDDEN-A1-the-theatre-unchecked` now drops the cell's column check; its name is the record's. |
+| D12 | A9, B6, C9 | test-gap | No pin read a told seed's siblings, the `in` probe or the re-asks. The re-run found DRAGON-HIDDEN-a-dragon-drawn-untold and DRAGON3-the-remains-forgotten-at-the-watchs-turn alive on main too. | Each pinned. (DRAGON-CELL, not this audit, aimed AUDIT-DRAGON-HIDDEN-A1-the-theatre-unchecked at the cell's column check; the name is kept as the record's.) |
 
 ## F - the Find box
 
@@ -41,8 +41,9 @@ not so; **test-gap** a law no pin reads; **nit** a cost or a word. A finding two
 Still open, older than either slice: a quest's reveal finds its place by name (`scenes/world.js` placeByName), so a
 homonym the world already stood can take it.
 
-Re-aimed by content and run, dead: fifteen records the fixes moved (nine of `dragoncell.json`, BLM-C9-the-rows-unread,
-FIND-FOUND-the-box-unread, two of `dragonhidden.json`, WWGE-the-forced-slice-none, and the two D12 survivors' tests).
+Re-aimed by content and run: fifteen records the fixes moved (eight of `dragoncell.json`, BLM-C9-the-rows-unread,
+FIND-FOUND-the-box-unread, two of `dragonhidden.json`, WWGE-the-forced-slice-none, and the two D12 survivors' tests) -
+fourteen dead, one recorded equivalent.
 Retired with their code: DRAGON-CELL-the-site-the-wild-zone and -the-none-forgotten (AUDIT-DRAGON-CELL-D8-none-kept-for-good
 holds the law reversed). PINS MOVED: `dragoncell`'s law, relay and client; `dragonhidden`'s tell; `dragon3_client`'s site;
 `test/fakeRoom.mjs` writes a socket's `at` as `Room.fetch` does, so `test/placeWidest.mjs` measures the widest attachment with it

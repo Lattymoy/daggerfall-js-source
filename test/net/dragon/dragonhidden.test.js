@@ -8,13 +8,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import * as Law from '../../../src/net/dragon/dragonLaw.js';
-import { dragonWatchKeyOf, dragonWatchSeed, DRAGON_SEED_INFO } from '../../../src/net/dragon/dragonSeed.js';
+import { dragonWatchKeyOf, dragonOmenSeeds, DRAGON_SEED_INFO } from '../../../src/net/dragon/dragonSeed.js';
 import { leaseKeyOf } from '../../../src/net/roomLease.js';
 import { cellRoomOfWire, PIXEL_UNITS } from '../../../src/net/wire.js';
 import { createDragonHost, DRAGON_ASK_RETRY_MS } from '../../../src/scenes/dragonHost.js';
 import { createDragonLink } from '../../../src/net/dragon/dragonLink.js';
 import { fakeRooms } from '../../fakeRoom.mjs';
-import { RELAY_KEY, omenOf, watchOf, dragonOmenFrom, siteOf } from '../../dragonOmen.mjs';
+import { RELAY_KEY, watchOf, dragonOmenFrom, siteOf, aged } from '../../dragonOmen.mjs';
 import { DRAGON_TELL_DWELL_MS } from '../../../server/src/dragonFights.js';
 
 const subtle = globalThis.crypto.subtle;
@@ -23,19 +23,19 @@ const OMEN = await dragonOmenFrom(500_000), W = OMEN.w, TT = Law.dragonTimes(OME
 const { px: PX, py: PY } = siteOf(OMEN), SX = (PX + 0.5) * PIXEL_UNITS, SZ = (499 - PY + 0.5) * PIXEL_UNITS, CELL = cellRoomOfWire(SX, SZ);
 const at = (mx, mz) => ({ x: SX + mx * Law.DRAGON_NATIVE_PER_M, y: 0, z: SZ + mz * Law.DRAGON_NATIVE_PER_M, yaw: 0, pitch: 0 });
 
-test('DRAGON-HIDDEN the seed: HMAC of the relay\'s secret under its own label - the same for a watch every time, another for the next watch and for another secret, a whole 32-bit number, never the lease key\'s; no secret, no key (never a public roll in its place) (mutants: the label the lease\'s; the watch unread; the bytes shortened)', async () => {
+test('DRAGON-HIDDEN the seed (AUDIT DRAGON-CELL II E11 - PIN MOVED: the watch\'s seed to its omens\'): HMAC of the relay\'s secret under its own label - the same for an omen every time, another for the next watch and for another secret, a whole 32-bit number, never the lease key\'s; no secret, no key (never a public roll in its place) (mutants: the label the lease\'s; the watch unread; the bytes shortened)', async () => {
   assert.equal(DRAGON_SEED_INFO, 'dfo-dragon-seed:v1');
   const lease = await leaseKeyOf(RELAY_KEY.pkcs8, { subtle });   // AUDIT DRAGON-HIDDEN C6: the keys apart, not their labels alone
-  assert.notEqual(await dragonWatchSeed(lease, W, { subtle }), (await omenOf(W)).s, 'the seed is never what the lease key signs');
+  assert.notEqual((await dragonOmenSeeds(lease, W, 1, { subtle }))[0], (await watchOf(W)).seeds[0], 'the seed is never what the lease key signs');
   const k = await dragonWatchKeyOf(RELAY_KEY.pkcs8, { subtle }), k2 = await dragonWatchKeyOf('another secret', { subtle });
-  const a = await dragonWatchSeed(k, W, { subtle });
-  assert.equal(await dragonWatchSeed(k, W, { subtle }), a, 'fixed for a watch');
-  assert.equal((await omenOf(W)).s, a, 'the tests\' relay rolls the same');
-  assert.notEqual(await dragonWatchSeed(k, W + 1, { subtle }), a, 'another watch, another seed');
-  assert.notEqual(await dragonWatchSeed(k2, W, { subtle }), a, 'another secret, another seed');
+  const [a] = await dragonOmenSeeds(k, W, 1, { subtle });
+  assert.equal((await dragonOmenSeeds(k, W, 1, { subtle }))[0], a, 'fixed for an omen');
+  assert.equal((await watchOf(W)).seeds[0], a, 'the tests\' relay rolls the same');
+  assert.notEqual((await dragonOmenSeeds(k, W + 1, 1, { subtle }))[0], a, 'another watch, another seed');
+  assert.notEqual((await dragonOmenSeeds(k2, W, 1, { subtle }))[0], a, 'another secret, another seed');
   assert.ok(Number.isSafeInteger(a) && a >= 0 && a <= 0xffffffff);
   const seeds = new Set();
-  for (let w = W; w < W + 64; w++) seeds.add(await dragonWatchSeed(k, w, { subtle }));
+  for (let w = W; w < W + 64; w++) seeds.add((await dragonOmenSeeds(k, w, 1, { subtle }))[0]);
   assert.ok([...seeds].some((s) => s >= 2 ** 31), 'all four bytes, the high one too');
   assert.equal(await dragonWatchKeyOf(undefined, { subtle }), null);
   assert.equal(await dragonWatchKeyOf('', { subtle }), null);
@@ -47,7 +47,7 @@ test('DRAGON-HIDDEN the law keeps no salt: nothing a client holds rolls a watch 
   assert.doesNotMatch(src('src/net/dragon/dragonLaw.js'), /0xd7a6/i, 'the old public salt');
   assert.equal(Law.dragonSeedTold(OMEN, W, TT.landAt - 1), false);
   assert.equal(Law.dragonSeedTold(OMEN, W, TT.landAt), true);
-  assert.equal(Law.dragonSeedTold(await omenOf(W + 1), W + 1, (W + 1) * Law.DRAGON_WATCH_MS - 1), false);
+  assert.equal(Law.dragonSeedTold({ w: W + 1, s: (await watchOf(W + 1)).seeds[0] }, W + 1, (W + 1) * Law.DRAGON_WATCH_MS - 1), false);
 });
 
 async function withRelay(fn, { start = TT.landAt + 60_000, key = RELAY_KEY.pkcs8, cell = CELL } = {}) {
@@ -55,7 +55,7 @@ async function withRelay(fn, { start = TT.landAt + 60_000, key = RELAY_KEY.pkcs8
   try {
     Date.now = () => clock;
     const world = fakeRooms({ now: () => clock });
-    const r = world.room(cell);
+    const r = aged(world.room(cell));
     if (key) r.env.GATE_SIGNING_KEY = key;
     const say = (ws, o) => r.raw(ws, JSON.stringify({ t: 'dragon', ...o }));
     await fn({ r, say, set: (t) => { clock = t; } });
@@ -75,7 +75,6 @@ test('DRAGON-HIDDEN the cell tells a watch\'s omen once its landing is past - fo
     assert.equal(omens(a).length, 0, 'never a watch to come, nor one long past');
     await say(a, { k: 'ask', w: W });
     assert.deepEqual(omens(a).map(({ w, s }) => [w, s]), [[W, OMEN.s]], 'its omen\'s seed, near its cell - never the watch\'s own');
-    assert.notEqual(OMEN.s, (await omenOf(W)).s);
     await say(a, { k: 'ask', w: W });
     assert.deepEqual(omens(a).map(({ w, s }) => [w, s]), [[W, OMEN.s], [W, OMEN.s]], 'told again: an answer lost is never the watch lost');
     const last = Law.dragonCandidateAt(await watchOf(W - 1), PX, PY);

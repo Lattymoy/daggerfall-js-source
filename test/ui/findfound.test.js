@@ -121,4 +121,6 @@ test('AUDIT FIND-FOUND F1, F2 one name, many places: found homonyms past the Bay
   win._renderSearch(hits);
   const shown = win._chrome.results.children.map((li) => li.children[0].children[1].textContent ?? li.children[0].children[1].children?.[0]?.textContent);
   assert.deepEqual(shown, ['Morrowind, 8.2 km E', 'Morrowind, 232 km SE']);
+  win._renderSearch([{ name: 'Helbenar', regionName: '', way: '8.2 km E', pastBay: true, pos: near }]);
+  assert.equal(win._chrome.results.children[0].children[0].children[1].textContent, '8.2 km E', 'AUDIT DRAGON-CELL II E8: no lone comma');
 });

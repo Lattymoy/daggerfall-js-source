@@ -1441,7 +1441,8 @@ Pins `test/ui/findfound.test.js` (4); mutants `tools/mutants/findfound.json`, 8 
 AUDIT FIND-FOUND (2026-10-31, `01-Overview/audits/Audit-Dragon-Cell.md` F1-F3). One name stands for many places past the
 Bay: 103 Helbenars on the freeware, and 38,661 of 83,179 rolled names are shared. Found homonyms come nearest first, each
 with its way from the player in the event board's own words ("8.2 km E", `systems/eventBoard.js` eventWay). MAPS.BSA's
-rows and the listed ones are kept by the ink, so a find reads the found rows alone. Pinned by `findfound.test.js` (one
+rows and the listed ones are kept by the ink, so a find reads the found rows alone. AUDIT DRAGON-CELL II E8: a Bay
+homonym its way too, and no lone comma where a row has no region. Pinned by `findfound.test.js` (one
 more, 5); `tools/mutants/dragoncellaudit.json` AUDIT-FIND-FOUND-*, 3 dead.
 
 ## PAD-CAPTURE - a pad's press on the map never throws (RPT1026-CLIENT, 2026-10-26)

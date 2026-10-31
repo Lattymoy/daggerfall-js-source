@@ -123,7 +123,7 @@ test('DRAGON-CELL a square\'s ground past the Bay (groundIn): its towns every pl
     generation: () => 1, theatres: () => [], inTheatre: () => [], sources: () => [COUNTRY_SOURCE],
     at: (x, y) => { asks++; return [town, imperial].find((p) => p.px === x && p.py === y) ?? null; },
   };
-  const scans = createTheatreGateScans({ places: /** @type {any} */ (places), wet: () => false, spawnSalt: 1, idle: null });
+  const scans = createTheatreGateScans({ places: /** @type {any} */ (places), wet: () => false, spawnSalt: 1, idle: null, land: () => 1 });
   assert.equal(theatreAt(town.px, town.py), 3);
   assert.equal(theatreAt(imperial.px, imperial.py), 9);
   const g = scans.groundIn(2000, -100, 16);

@@ -1,7 +1,7 @@
 // AUDIT DRAGON-HIDDEN (2026-10-30, the owner: "Audit this"; bible/01-Overview/audits/Audit-Dragon-Hidden.md): THE AUDIT'S
 // PINS. A forged site held to its theatre's side of the Bay's edge and a pixel's centre (A1); a fight an older law made
-// let go when its cell wakes, a slain one kept (A4); an `ask` answered in any room and heard from there, a fight's word
-// still its cell's (B1); the Aetherbright's look on its fight, its receipt and a party's share (A3, C2); the omen word
+// let go when its cell wakes, a slain one kept (A4); an `ask` answered in a battle and heard from there (PIN MOVED, AUDIT
+// DRAGON-CELL II E12: in a room that judges a pose), a fight's word still its cell's (B1); the Aetherbright's look on its fight, its receipt and a party's share (A3, C2); the omen word
 // the host's (B4); the ask's bounds and the sighting's look (B5); the fight's gate named in its own note (A6).
 // tools/mutants/dragonhiddenaudit.json.
 import { test } from 'node:test';
@@ -17,10 +17,10 @@ import { siegeRoomKey } from '../../../src/net/siege/siegeRef.js';
 import { OnlineSession } from '../../../src/net/online.js';
 import { createDragonHost, createDragonSky, DRAGON_ASK_RETRY_MS, DRAGON_NOTICE_WAIT_MS } from '../../../src/scenes/dragonHost.js';
 import { createDragonLink } from '../../../src/net/dragon/dragonLink.js';
-import { dragonFights, dragonFellInternal } from '../../../server/src/dragonFights.js';
+import { dragonFights, dragonFellInternal, DRAGON_TELL_DWELL_MS } from '../../../server/src/dragonFights.js';
 import { fakeRooms } from '../../fakeRoom.mjs';
 import { fakeSocketClass } from '../../fakeSocket.mjs';
-import { RELAY_KEY, dragonOmenFrom, siteOf } from '../../dragonOmen.mjs';
+import { RELAY_KEY, dragonOmenFrom, siteOf, aged } from '../../dragonOmen.mjs';
 
 const subtle = globalThis.crypto.subtle;
 const OMEN = await dragonOmenFrom(500_000), W = OMEN.w, TT = Law.dragonTimes(OMEN);
@@ -36,7 +36,7 @@ async function withRelay(fn, { start = TT.landAt + 60_000, key = CELL } = {}) {
   try {
     Date.now = () => clock;
     const world = fakeRooms({ now: () => clock });
-    const r = world.room(key);
+    const r = aged(world.room(key));
     r.env.GATE_SIGNING_KEY = RELAY_KEY.pkcs8;
     const say = (ws, o) => r.raw(ws, JSON.stringify({ t: 'dragon', ...o }));
     const tick = async (n = 1) => { for (let i = 0; i < n; i++) { clock += DRAGON_TICK_MS; if (r.alarm.at != null && clock >= r.alarm.at) await r.fire(); } };
@@ -83,10 +83,12 @@ test('AUDIT DRAGON-HIDDEN A4 the deploy: a cell waking lets go of an unslain fig
   });
 });
 
-test('AUDIT DRAGON-HIDDEN B1 the relay: an `ask` is answered in any room - a siege\'s battle too - while an `in` and a blow there are junk, a fight being its cell\'s. DRAGON-CELL: a battle holds no pose of the world, so it is told null, as a quiet watch is (mutants: an ask in a battle junked; a battle\'s blow let through)', async () => {
-  await withRelay(async ({ r, say }) => {
+test('AUDIT DRAGON-HIDDEN B1 the relay: an `ask` is answered in a siege\'s battle - PIN MOVED (AUDIT DRAGON-CELL II E12): its pose judged on its map frame, a far one told null once it has stood (D6, II E1) - while an `in` and a blow there are junk, a fight being its cell\'s (mutants: an ask in a battle junked; a battle\'s blow let through)', async () => {
+  await withRelay(async ({ r, say, tick }) => {
     const a = r.connect();
     await r.hello(a, 'peer-0001', { x: 0, y: 0, z: 0, yaw: 0, pitch: 0 }, { glyphs: ['dev'] });
+    await say(a, { k: 'ask', w: W });
+    await tick(Math.ceil(DRAGON_TELL_DWELL_MS / DRAGON_TICK_MS));
     await say(a, { k: 'ask', w: W });
     assert.deepEqual(words(a, 'omen').map(({ w, s }) => [w, s]), [[W, null]]);
     assert.equal(a.meters.junk ?? 0, 0);

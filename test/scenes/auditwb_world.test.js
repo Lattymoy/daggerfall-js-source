@@ -231,9 +231,10 @@ test('AUDIT WB C7 the site\'s scan in slices IS the scan made at once, a row at 
 test('AUDIT WB C7 the seams: the scan warmed in idle slices once the relay\'s clock is read; a site asked early finishes it; a scan that throws begins again', () => {
   const world = hostText('src/scenes/world.js');
   assert.match(world, /if \(_omenClockAt == null\) \{ _omenClockAt = performance\.now\(\); warmGateScan\(\); \}/);
-  assert.match(world, /globalThis\.requestIdleCallback\(function slice\(deadline\) \{/);
+  assert.match(world, /const idle = pageIdle\(\);/, 'PIN MOVED (AUDIT DRAGON-CELL II E7): the page\'s idle moments, a timer\'s slices where it has none');
+  assert.match(world, /idle\(function slice\(deadline\) \{/);
   assert.match(world, /const until = performance\.now\(\) \+ \(deadline\.didTimeout \? 4 : 0\);/, 'a page never idle still gets there');
-  assert.match(world, /if \(!gateScanOf\(\(\) => deadline\.timeRemaining\(\) > 2 \|\| performance\.now\(\) < until\)\) \{ globalThis\.requestIdleCallback\(slice, \{ timeout: 250 \}\); return; \}/);
+  assert.match(world, /if \(!gateScanOf\(\(\) => deadline\.timeRemaining\(\) > 2 \|\| performance\.now\(\) < until\)\) \{ idle\(slice, \{ timeout: 250 \}\); return; \}/);
   assert.match(world, /\}, \{ timeout: 4000 \}\);/);
   assert.match(world, /try \{ const scan = gateScanOf\(\); return scan \? findGateSite\(day, scan\) : null; \}/, 'the site finishes it there and then');
   assert.match(world, /\} catch \(e\) \{ _gateScanner = null; throw e; \}/);

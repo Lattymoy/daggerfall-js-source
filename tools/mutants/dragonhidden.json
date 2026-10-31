@@ -11,20 +11,22 @@
   {
     "name": "DRAGON-HIDDEN-the-watch-unread",
     "file": "src/net/dragon/dragonSeed.js",
-    "old": "enc.encode(`dragon-watch:${w}`)",
-    "new": "enc.encode('dragon-watch')",
+    "old": "enc.encode(`dragon-omen:${w}:${i}`)",
+    "new": "enc.encode(`dragon-omen:0:${i}`)",
     "tests": [
       "test/net/dragon/dragonhidden.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL II E11: the watch's own seed retired; its omens' read the watch)."
   },
   {
     "name": "DRAGON-HIDDEN-the-bytes-shortened",
     "file": "src/net/dragon/dragonSeed.js",
-    "old": "return ((mac[0] << 24) | (mac[1] << 16) | (mac[2] << 8) | mac[3]) >>> 0;",
-    "new": "return ((mac[1] << 16) | (mac[2] << 8) | mac[3]) >>> 0;",
+    "old": "out.push(((mac[0] << 24) | (mac[1] << 16) | (mac[2] << 8) | mac[3]) >>> 0);",
+    "new": "out.push(((mac[1] << 16) | (mac[2] << 8) | mac[3]) >>> 0);",
     "tests": [
       "test/net/dragon/dragonhidden.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL II E11)."
   },
   {
     "name": "DRAGON-HIDDEN-told-before-its-landing",
