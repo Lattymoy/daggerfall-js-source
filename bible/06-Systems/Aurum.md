@@ -73,6 +73,8 @@ The owner, asked whether "world finds" meant deeds alone or "also Aurum caches p
 points of interest) that a player picks up, each one server-checked and under a daily cap": *"Also Aurum caches"*.
 CACHES-ONCE, the owner, 2026-10-30: *"Is there a way we can make it non time gated"*. Asked, the owner chose one coffer
 in every dungeon, opened once ever by an account, its Aurum tuned so the total does not flood the economy.
+CACHE-SPREAD, Mac, 2026-10-31: *"I want to make this have no daily cap. But also have value finds from 5 to 10"*. So a
+coffer pays 5 to 10 Aurum, and no day's bound holds the claims.
 
 **Where they stand.** Every dungeon holds one Aurum coffer, the same for every player (`src/net/aurumCacheLaw.js`). Its
 id is the dungeon's key, the professions' (`src/scenes/dungeonIdentity.js`): a Bay dungeon's pixel id, and the whole map
@@ -90,16 +92,17 @@ fifty that has a pile (AUDIT-STOREFRONT III lane D, on the freeware over the Bay
 **Found and opened.** Where the account has not emptied the coffer, the HUD says "An Aurum coffer is hidden in this
 dungeon." The coffer is the owner's chest in dark oak with a gold hinge and latch (CHEST3D, `bible/03-World/Chests.md`),
 its front away from its pile; where a host hands no mesh door, its picture (`src/world/aurumCofferArt.js`, an oak chest
-bound in gold, the Aurum coin's sun on its lock plate). The activate key opens it at a treasure pile's reach: the page asks the
-service, and on a yes the coffer stands open and empty and the HUD says "+10 Aurum". A refusal says why. A coffer the
-account emptied stands open for it on every visit, for good. The device keeps a note of each, and the service's answer
-is what counts. A coffer the service does not know (a page and a service of two laws) is taken away.
+bound in gold, the Aurum coin's sun on its lock plate). The activate key opens it at a treasure pile's reach: the page
+asks the service, and on a yes the coffer stands open and empty and the HUD says what it paid ("+7 Aurum"). A refusal
+says why. A coffer the account emptied stands open for it on every visit, for good. The device notes each, and the
+service's answer is what counts. A coffer the service does not know (a page and a service of two laws) is taken
+away.
 
 **The claim.** `/v1/aurum/cache` `{ id, proof }` (`server-account/src/aurumCache.js` claimCache) takes a cache's id,
-`d<dungeon>`, in its one spelling, and the relay's proof that the account stood in that dungeon. One statement writes a ledger line of 10
-Aurum, kind `cache` and ref the id, only while the account has claimed fewer than ten today; the line's key makes a
-second claim of one id write nothing, ever. The balance needs nothing new: it sums the ledger. It refuses a guest, a
-closed Aurum (`AURUM_OPEN`), a bad id, a cache already taken and a day's bound met, and it is a progression claim
+`d<dungeon>`, in its one spelling, and the relay's proof that the account stood in that dungeon. One statement writes a
+ledger line of the cache's own Aurum (`aurumCacheAurumOf`), kind `cache` and ref the id; the line's key makes a second
+claim of one id write nothing, ever. The balance needs nothing new: it sums the ledger. It refuses a guest, a closed
+Aurum (`AURUM_OPEN`), a bad id and a cache already taken, and it is a progression claim
 (`progress.js`): asked of the seated realm character, as the Maul's day is.
 
 **The proof** (AUDIT AURUM-CACHES E1, 2026-10-31, the owner: *"Ensure security on aurem caches so nobody can dupe or
@@ -112,15 +115,18 @@ held. A guest is proved nothing. The claim goes under the account the coffer was
 since is `no-session` (lane 3 F2).
 
 **What still holds it.** A script that says a hello into a dungeon's room is welcomed, so the proof raises the bar and
-does not end it. The day's bound is the floor: ten claims a UTC day, so no account earns more than 100 Aurum a day
-from caches, which is a day's finds. Play meets it only with ten new dungeons in a day. A coffer past it is not lost:
-it stays shut, the refusal says to come back after midnight, UTC, and it opens then.
+does not end it. Until CACHE-SPREAD a day's bound was the floor: ten claims a UTC day, no more than 100 Aurum a day from
+caches. Mac took it away. Now one claim a cache an account and the proof are all that hold it: a script that walks the
+dungeons' rooms can take each coffer it is proved in, once. The Bay alone holds 4,232 coffers, some 31,700 Aurum.
+Each line still keeps its UTC day (`day`).
 
-**Balance** (CACHES-ONCE BALANCE). AURUM-CACHES BALANCE had set 25 Aurum in one dungeon in four, three a day (15 in one
-in five before it). Now every dungeon pays once, so a coffer is 10 Aurum, one quest's finds. Modelled for a casual, a
-regular and a dedicated player (one, four and ten dungeons a day, three in five of them new), caches pay 6, 24 and 60
-Aurum a day, against 6, 25 and 62 before. So the flow stays where it was and only the clock is gone. The Bay alone holds
-4,232 dungeons. `test/net/aurum_cache_law.test.js` holds the ratios, not only the numbers.
+**Balance** (CACHE-SPREAD). A coffer pays 5 to 10 Aurum, its own by a hash of its id (`aurumCacheAurumOf`), so every
+player finds one coffer worth the same. The six amounts fall about evenly: 7.5 on the mean, half a quest's finds to one.
+Modelled for a casual, a regular and a dedicated player (one, four and ten dungeons a day, three in five of them new),
+caches pay about 4.5, 18 and 45 Aurum a day, against 6, 24 and 60 at 10 a coffer. A dedicated player reaches the Gilded
+capstone in the season with seven new dungeons a day, not six (`Battle-Pass.md` section 3). Before it: CACHES-ONCE
+BALANCE set 10 a coffer, AURUM-CACHES BALANCE 25 in one dungeon in four, three a day (15 in one in five before it).
+`test/net/aurum_cache_law.test.js` holds the spread and the ratios, not only the numbers.
 
 **The four hosts.** `dungeonContext.js` stands the coffer at the end of its build, and its takeLoot presses it; the loot
 arms of `worldModes.js`'s dungeon ladder and the standalone `dungeon.js` carry the `aurum:` key there, as DELVE II's
@@ -244,7 +250,7 @@ Aurum spent beside each ware's orders, and lists each day's wares beside its fea
 `test/server/storefront_service.test.js` (the demand). The mutants are `tools/mutants/aurum.json`.
 
 The caches (section 3a): `test/net/aurum_cache_law.test.js` (the numbers, the balance, the id, the spot),
-`test/server/aurum_cache_service.test.js` (the claim, the day's bound, a repeat, a forged id, the guards, the proof),
+`test/server/aurum_cache_service.test.js` (the claim, no day's bound, a repeat, a forged id, the guards, the proof),
 `test/net/cache_proof.test.js` (the proof's room, its cache, its signature, the relay's welcome, the page's keep),
 `test/scenes/aurum_cache_world.test.js` (which dungeons, the spot, the press; a Bay dungeon and a lair of Cyrodiil on
 the freeware) and `test/world/aurum_coffer_art.test.js` (the pictures). The mutants are `tools/mutants/aurum_caches.json`
