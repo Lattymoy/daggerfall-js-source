@@ -74,8 +74,8 @@
   {
     "name": "FB1020c-ONE-SAVE-a-provider-call-a-material",
     "file": "src/ui/professions/profPages.js",
-    "old": "      const answers = plan.length ? await p.deposit(plan) : [];",
-    "new": "      const answers = []; for (const one of plan) answers.push(...(await p.deposit([one])));",
+    "old": "    const answers = plan.length ? await p.deposit(plan) : [];",
+    "new": "    const answers = []; for (const one of plan) answers.push(...(await p.deposit([one])));",
     "tests": [
       "test/systems/professions/fb1020c_onesave.test.js"
     ]

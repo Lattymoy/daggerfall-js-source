@@ -6557,6 +6557,16 @@ drawn; and 56.5's five. `tools/mutants/crafthall.json` (53, all dead).
   (`crafthall.test.js`); the chooser's names (`fb1011f_stationdoor.test.js`); the key's row
   (`fb1018d_crafthowto.test.js`).
 
+### 56.6 STORES-AT-BENCH (2026-10-29)
+
+its_WiKeD on Discord: "when you open up a bench you need to scroll all the way down, click stores, then scroll all the way
+up top just to store stuff." Before CRAFT-HALL a station opened the Stores page, with Put everything in at its top. Now
+the Crafting page at a station draws a bar over the station worked here: Put everything in and Your Stores. A station's
+press lands on the bar, with the station's head under it. Put everything in is one function for both pages
+(`profPages.js` `putAllButton`); the bar keeps its own answer line (`benchWord`). The buttons are the page's `.act`
+buttons in a `.prof-doors` row, so Enhanced Plus and DFO Grimoire dress them as the page's other doors. Pinned by
+`test/ui/professions/fb1029_benchstores.test.js`.
+
 ## 57. MASTER-ART - a Master's work: a Legendary of the crafter's chosen lines (BUILT 2026-10-27)
 
 A player's feedback: "The horizontal MMO approach was working really well imo ... I would hate hate hate to see go down
