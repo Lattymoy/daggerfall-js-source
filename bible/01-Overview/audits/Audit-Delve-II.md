@@ -167,8 +167,8 @@ began and pinned (`test/world/dlv56_audit.test.js`, `tools/mutants/dlv56.json`, 
 ## I - LITANY-STAND and DELVE-VAULT (2026-10-31)
 
 The owner: *"Audit"*, of `cb7def4b6` and `b2b3faf53` (`03-World/Delve-II.md` section 16). One cold lane read the diff
-with the code alone; the session ran the new pins six times, the whole suite once and the census for a Litany to probe.
-Each finding below is fixed and pinned, and each pin failed on the code it was found in.
+with the code alone; the session ran the new pins six times, the whole suite and the census for a Litany to probe.
+Each finding below is fixed; I1 to I5 are pinned, and each pin failed on the code it was found in.
 
 | ID | Sev | Finding | Fix |
 |---|---|---|---|
@@ -187,8 +187,9 @@ Each finding below is fixed and pinned, and each pin failed on the code it was f
 - **NOT A FINDING.** `sendPose` keeps the pose every frame even when it sends none, and `sendDelve` says it before the
   word, so the room hears last frame's feet. The wire takes `st` from -1 to 5. A ledger kept by `world297` holds `pl`
   -1, and no plate lights twice. The piece takes no curse, socket, finder or the opener's luck, as the raids' spoils.
-  Two files failed in a 50-minute run of the whole suite (`hiddenuncounted`, `staffpanel5message_client`); both pass
-  alone and read nothing changed here.
+  The whole suite at the audit's head, in eight shards: 39,197 tests, three failing and none of them this change's.
+  `fb1002_audit`'s step-back fails the same on main at `1ecc2e5c7`; `staffpanel5message_client` and `staffpanel5bench`
+  pass alone.
 
 ## Pins and mutants
 
