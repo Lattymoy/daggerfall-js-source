@@ -78,3 +78,13 @@ test('LOCK-RULES wiring: the card offers Always lock beside Lock and, for a name
   assert.doesNotMatch(main, /^import .*lockRules/m, 'a dynamic import: the entry\'s reach is counted (BOOT2)');
   assert.match(main, /import\('\.\/systems\/item\/lockRules\.js'\);/);
 });
+
+test('LOCK-RULES rename: a piece renamed in place is judged by its new name - the kept answer follows the name as well as the list (mutants: the answer kept past a rename)', () => {
+  const piece = beads();
+  setAlwaysLock(beads(), true);
+  assert.equal(isAlwaysLocked(piece), true, 'by its name');
+  piece.name = 'Broken Cup';
+  assert.equal(isAlwaysLocked(piece), false, 'renamed: no longer on the list');
+  piece.name = 'PRAYER beads';
+  assert.equal(isAlwaysLocked(piece), true, 'renamed back: locked again, any case');
+});

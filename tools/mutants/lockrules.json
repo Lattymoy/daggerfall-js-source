@@ -38,7 +38,7 @@
   {
     "name": "LOCK-RULES-answer-kept-past-a-change",
     "file": "src/systems/item/lockRules.js",
-    "old": "if (hit && hit.list === list) return hit.locked;",
+    "old": "if (hit && hit.list === list && hit.name === name) return hit.locked;",
     "new": "if (hit) return hit.locked;",
     "tests": [
       "test/ui/lockrules.test.js"
@@ -67,6 +67,15 @@
     "file": "src/systems/features.js",
     "old": "key: 'lockAlways', initial: Object.freeze([])",
     "new": "key: 'lockAlways', initial: Object.freeze(['x'])",
+    "tests": [
+      "test/ui/lockrules.test.js"
+    ]
+  },
+  {
+    "name": "LOCK-RULES-answer-kept-past-a-rename",
+    "file": "src/systems/item/lockRules.js",
+    "old": "if (hit && hit.list === list && hit.name === name) return hit.locked;",
+    "new": "if (hit && hit.list === list) return hit.locked;",
     "tests": [
       "test/ui/lockrules.test.js"
     ]
