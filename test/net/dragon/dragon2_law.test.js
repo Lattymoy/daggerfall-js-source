@@ -294,7 +294,7 @@ test('DRAGON2 wire: the client says two things, `in` and `hit`, projected field 
   assert.ok('error' in parseClient(JSON.stringify({ t: 'dragon', k: 'hit', d: 9, r: 1 }), { hasHello: false }));
   assert.equal(relaySupportsDragon(RELAY_VERSION), true);
   assert.equal(relaySupportsDragon(`world${DRAGON_RELAY_MIN - 1}`), false);
-  assert.deepEqual([DRAGON_RELAY_MIN, DRAGON_RIDE_RELAY_MIN], [298, 288], 'PIN MOVED (DRAGON-CELL, world298: the relay that tells an omen near its cell alone; DRAGON-HIDDEN, world294 past WYRM-RIDER and PVP-VITALS): the fight past the ride - the first relay that answers `ask` (290, 291 then 292 on its branch, renumbered past PVP-LINGER, GILDED-GLOW and DELVE II)');
+  assert.deepEqual([DRAGON_RELAY_MIN, DRAGON_RIDE_RELAY_MIN], [299, 288], 'PIN MOVED (DRAGON-CELL, world299, world298 on its branch until LITANY-STAND took it: the relay that tells an omen near its cell alone; DRAGON-HIDDEN, world294 past WYRM-RIDER and PVP-VITALS): the fight past the ride - the first relay that answers `ask` (290, 291 then 292 on its branch, renumbered past PVP-LINGER, GILDED-GLOW and DELVE II)');
   assert.equal(relaySupportsDragon('world289'), false, 'HAND-WRAPS\' relay closes the socket on `ask`');
   assert.equal(relaySupportsDragon('world290'), false, 'and PVP-LINGER\'s');
   assert.equal(relaySupportsDragon('world291'), false, 'and GILDED-GLOW\'s');

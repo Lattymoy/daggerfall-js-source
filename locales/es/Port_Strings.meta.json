@@ -14119,6 +14119,16 @@
   "tr": "62b5e8890e3d",
   "by": "claude-in-session"
  },
+ "features.wildlife.note": {
+  "en": "31f535af642e",
+  "tr": "e7cc8c69b2c5",
+  "by": "claude-in-session"
+ },
+ "features.wildlife.title": {
+  "en": "f00edc13965e",
+  "tr": "05949d53f231",
+  "by": "claude-in-session"
+ },
  "features.wind.note": {
   "en": "3ead7f301ee7",
   "tr": "8bdec28c5487",
@@ -42262,6 +42272,11 @@
  "shop.who.reading": {
   "en": "9964cedb67bf",
   "tr": "6c21c53065fd",
+  "by": "claude-in-session"
+ },
+ "shop.who.unread": {
+  "en": "dcec3bbdb56e",
+  "tr": "dfb4bff4d3f5",
   "by": "claude-in-session"
  },
  "shop.yourName": {

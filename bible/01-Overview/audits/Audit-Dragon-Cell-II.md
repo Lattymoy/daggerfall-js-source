@@ -8,7 +8,7 @@ re-read against the tree before it was fixed, and no fix began until all three l
 
 Pinned in `test/net/dragon/dragoncellaudit.test.js` (12, three more) and `test/ui/findfound.test.js` (one assertion more).
 Mutation-proven: `tools/mutants/dragoncellaudit2.json`, 12, all dead; every dragon and find list run again, 140 dead and
-one recorded equivalent. Relay world298, never deployed, re-hashed in place again.
+one recorded equivalent. Relay world299, never deployed, re-hashed in place again.
 
 Severity as in the first audit: **bug**, **risk**, **doc**, **test-gap**, **nit**.
 

@@ -8,7 +8,7 @@ again by the new one. Every finding was re-read against the tree before it was f
 lanes had reported.
 
 Pinned in `test/net/dragon/dragoncellaudit3.test.js` (8), with `dragonbudget.test.js` moved to the new law.
-Mutation-proven: `tools/mutants/dragoncellaudit3.json`, 29, all dead; every dragon list run again. Relay world298,
+Mutation-proven: `tools/mutants/dragoncellaudit3.json`, 29, all dead; every dragon list run again. Relay world299 (world298 on its branch, renumbered past LITANY-STAND at the merge),
 never deployed, re-hashed in place; acct233 (acct231 on its branch, renumbered past main's at the merge) and migration 0203 unshipped, changed in place.
 
 Severity as in the first audit: **bug**, **risk**, **doc**, **test-gap**, **nit**.

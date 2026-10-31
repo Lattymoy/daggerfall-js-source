@@ -1,0 +1,16 @@
+[
+  {
+    "name": "SHOP-UNTOLD-every-ware-with-no-card",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "export const shopListed = (/** @type {any} */ flow, /** @type {any} */ w) => !!w?.alone && !!rowOf(flow, w.id);",
+    "new": "export const shopListed = (/** @type {any} */ flow, /** @type {any} */ w) => !!w?.alone && (!flow?.shop || !!rowOf(flow, w.id));",
+    "tests": ["test/ui/shop_untold.test.js"]
+  },
+  {
+    "name": "SHOP-UNTOLD-the-unread-line-unsaid",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "  if (!flow.shop) return t('shop.who.unread', 'The shop could not be read. Open it again when you are online.');   // SHOP-UNTOLD: offline, no card\n",
+    "new": "",
+    "tests": ["test/ui/shop_untold.test.js"]
+  }
+]

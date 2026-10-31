@@ -95,8 +95,8 @@
   {
     "name": "AUDIT-DRAGON-the-gate-its-own-number",
     "file": "src/net/wire.js",
-    "old": "export const DRAGON_RELAY_MIN = 298;",
-    "new": "export const DRAGON_RELAY_MIN = 297;",
+    "old": "export const DRAGON_RELAY_MIN = 299;",
+    "new": "export const DRAGON_RELAY_MIN = 298;",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ],

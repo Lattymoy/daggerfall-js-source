@@ -464,8 +464,8 @@ watcher on the desktop app's debugging port read each dragon's site. The relay h
 tell who stands near a pixel. The seed picks a cell now, which the relay can judge: it tells an omen only to a socket
 posed within six pixels of its cell, and null to any other at a quiet watch's time (section 2). A watch holds four
 omens, because a cell holds ground about 28% of the time: on the freeware 1,220 of the Bay's 2,016 cells, and past the
-Bay at most 23,281 of 86,344 (`tools/dragonCellProbe.mjs`). No host line changed. Relay world298, `DRAGON_RELAY_MIN`
-298, `DRAGON_BRAIN_MIN` 3. Deploy the relay first.
+Bay at most 23,281 of 86,344 (`tools/dragonCellProbe.mjs`). No host line changed. Relay world299, `DRAGON_RELAY_MIN`
+299, `DRAGON_BRAIN_MIN` 3. Deploy the relay first.
 
 Pinned by `test/net/dragon/dragoncell.test.js` (4); `tools/mutants/dragoncell.json`, 22 dead (20 since AUDIT DRAGON-CELL
 retired two with their code). PINS MOVED: the relay
@@ -482,14 +482,14 @@ its own HMAC now, and a quiet omen is told null. An `in` reads no omen outside i
 A socket is told after 20 s in its room, a battle's pose is judged, and the client asks again outside a told omen's
 reach and after a null. A cell across the Bay's edge takes the Bay's ground where it has any, and a square is read once
 the countryside stands, in idle slices. Open, and put to the owner: many forged sockets at once (D3), and one reward a
-watch (D4). Relay world298, re-hashed in place. Pinned by `test/net/dragon/dragoncellaudit.test.js` (9);
+watch (D4). Relay world299, re-hashed in place. Pinned by `test/net/dragon/dragoncellaudit.test.js` (9);
 `tools/mutants/dragoncellaudit.json`, 18 dead.
 
 **AUDIT DRAGON-CELL II (2026-10-31, the owner: "Audit"; `01-Overview/audits/Audit-Dragon-Cell-II.md`).** The first
 audit's 20 s wait was a socket's, and a private room holds any pose, so one socket swept every cell in minutes. The wait
 is the cell's now, a private room judges no pose, and an `in` waits too. A socket not yet stood hears nothing, so a
 player arriving late is told in 20 to 35 s. A square waits for the land to be laid, and the Bay's scan warms on Safari.
-The watch's own seed is retired. Relay world298, re-hashed in place again. Pinned by `dragoncellaudit.test.js` (12);
+The watch's own seed is retired. Relay world299, re-hashed in place again. Pinned by `dragoncellaudit.test.js` (12);
 `tools/mutants/dragoncellaudit2.json`, 12 dead.
 
 **DRAGON-BUDGET (2026-10-31, the owner: "Do it", of AUDIT DRAGON-CELL II's open D3).** The wait made a sweep cost 20 s a
@@ -497,7 +497,7 @@ cell a socket, and a client could open hundreds of sockets. A room that judges a
 the hub before it judges an account in a cell it has not (`server/src/dragonFights.js` judged, the hub's
 dragonJudgeInternal at `DRAGON_INTERNAL_JUDGE`), and the hub grants an account `DRAGON_JUDGED_CELLS_MAX` cells a
 watch. A room keeps a cell granted; a hub that fails refuses. The count lives with the hub's instance,
-which a sleep forgets. Relay world298, re-hashed in place. Pinned by `test/net/dragon/dragonbudget.test.js` (3);
+which a sleep forgets. Relay world299, re-hashed in place. Pinned by `test/net/dragon/dragonbudget.test.js` (3);
 `tools/mutants/dragonbudget.json`, 9 dead. PINS MOVED: `dragonaudit_relay`'s state line; `dragoncell`'s and
 `dragoncellaudit`'s rooms aged; seven records re-aimed (AUDIT-DRAGON-the-cache-unbounded, D2's two, D6, E2's two, E3).
 AUDIT DRAGON-CELL III changed it: 24 cells became 48, each a pose could be told of (G4).
@@ -507,7 +507,7 @@ kill was keyed by watch and account, so a second dragon in one watch paid nothin
 place (`p`, its cell's number, `dragonLaw.js` dragonPlaceOf). The hub keeps an account's receipts of its newest watch,
 one a place (`dragonFights.js` keptOf), and the service keys the kill, the hoard and the tame by (watch, place,
 account). The client settles and spends one a dragon. A forged site has its cell's place, so it pays once. A receipt
-from before counts one a watch. Relay world298, re-hashed in place. Pinned by `test/net/dragon/dragoneach.test.js` (6);
+from before counts one a watch. Relay world299, re-hashed in place. Pinned by `test/net/dragon/dragoneach.test.js` (6);
 `tools/mutants/dragoneach.json`, 25 dead. PINS MOVED: acct233 in twenty test files and eleven mutant lists; the hub's
 keep (`dragonhiddenaudit`); four records re-aimed (DRAGON2's hub and hello, AUDIT DRAGON's sweep). Deploy order and
 rollback floors: AUDIT DRAGON-CELL III G2.

@@ -38,7 +38,7 @@
   {
     "name": "AUDIT-STOREFRONT-a-drop-to-come-told",
     "file": "src/net/shopLaw.js",
-    "old": "  return !mine.some((e) => e.bad) && (!mine.length || nowMs >= Math.min(...mine.map((e) => e.fromMs)));",
+    "old": "  return !mine.some((e) => e.bad) && (!limits.length || nowMs >= Math.min(...limits.map((e) => e.fromMs)));",
     "new": "  return true;",
     "tests": [
       "test/server/storefront_service.test.js"
