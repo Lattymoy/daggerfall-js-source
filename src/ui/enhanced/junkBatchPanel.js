@@ -54,7 +54,11 @@ export function batchJunkPlan(items, sel, rarityOn = true) {
   for (const it of items ?? []) {
     if (!it || !sel.pages.has(pageOf(it))) continue;
     if (rarityOn && !sel.rarities.has(rarityOf(it))) continue;
-    if (isJunk(it)) { marked.push(it); continue; }
+    if (isJunk(it)) {
+      if (isLocked(it)) skipped.locked = (skipped.locked ?? 0) + 1;   // a locked piece is never touched by a sweep: not marked, and its mark not lifted
+      else marked.push(it);
+      continue;
+    }
     if (canJunkInBatch(it)) mark.push(it);
     else { const why = passedOverWhy(it); skipped[why] = (skipped[why] ?? 0) + 1; }
   }
@@ -70,7 +74,7 @@ export function applyBatchJunk(/** @type {{ mark: any[] }} */ plan) {
 /** Lift the mark from every piece of a plan that holds it. Answers how many. */
 export function clearBatchJunk(/** @type {{ marked: any[] }} */ plan) {
   let n = 0;
-  for (const it of plan.marked) if (isJunk(it)) { setJunk(it, false); n++; }
+  for (const it of plan.marked) if (isJunk(it) && !isLocked(it)) { setJunk(it, false); n++; }
   return n;
 }
 
