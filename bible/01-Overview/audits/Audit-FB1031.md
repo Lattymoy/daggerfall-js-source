@@ -48,8 +48,9 @@ stored a crafted hung tree; neither end takes one (acct234). **Y7, Y8.** The rec
 
 **F1.** A ray opened a cover proxy whole when a struck body stood in it, and the clamps leave bodies inside wide
 flats' cover (35 nature records) and young trees' crowns: a foe pressed behind a rock was shot through it, and the
-player was hit behind one. A ray with an end in a proxy now meets it at its middle (`cover.js`): in front is struck,
-behind is hidden both ways. **F2, F3.** Each flight lists only what it may strike, duels and companions included.
+player was hit behind one. A ray with an end in a proxy now hides only where it crosses the proxy's middle inside it, either end alike
+(`cover.js`; AUDIT FB1031 II K1 made it so for a crown lifted off the ground): in front is struck, behind is hidden both
+ways. **F2, F3.** Each flight lists only what it may strike, duels and companions included.
 **F4.** A foe on a trunk's middle line stood there for good; it steps round. **F5.** A record named a navmesh the
 street has not. **F6.** Three unpinned laws. **B1.** A band met head-on stood mid-screen; it stands outside the view.
 

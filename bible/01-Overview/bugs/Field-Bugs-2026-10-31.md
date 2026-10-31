@@ -54,7 +54,7 @@ minimum, since every smaller level roof inside the walls is a stair tread.
 
 FOUND. Only the player's clamp read a tree's body, so a foe walked into a trunk, saw and shot out, and the player's
 arrows stopped at the bark. FIXED. Every pool's spacing pass puts a foe in a nature body at its edge, a lone foe too
-(`03-World/Player-Arc.md` TRUNK-FOES). AUDIT FB1031 F1-F6: cover is met at its middle, so a body in front is struck
+(`03-World/Player-Arc.md` TRUNK-FOES). AUDIT FB1031 F1-F6 and II K1: a ray hides only where it crosses the cover's middle inside it, so a body in front is struck
 and one behind is hidden both ways; each flight lists only what it may strike; a foe steps round a trunk.
 NOT CHANGED: barrels, statues and carts hold no foe, since no foe's steering reads a body.
 
