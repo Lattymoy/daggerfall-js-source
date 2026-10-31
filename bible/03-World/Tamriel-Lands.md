@@ -110,10 +110,11 @@ own dice), with the zone's numbers in FOREST1's stead:
   95th to the field's highest, the tail had stood the Ashlands' and the Alik'r's 2% at 0.05%, the High Peaks' 3% at 0.4%
   and Craglorn's 4% at 1.7%, and the far views (the zone's number) stood half again the trees the ground did.
 - **Its flats, any climate's**: a wood's tile stands one of its `trees`, a plain's one of its `cover`, each an [archive,
-  record, weight] of Daggerfall's own nature flats - the Mountains' pines in the Pinewoods, the swamp's black basalt
+  record, weight] - usually Daggerfall's own nature flats (the Mountains' pines in the Pinewoods, the swamp's black basalt
   stacks and the desert's dry trama in the Ashlands, the rainforest's twisted and vine-hung trees and its palms in the
-  Tenmar - and every flat carries its archive (ECOTONE1's own seam: the build reads each flat's own, its season and its
-  Low Poly tree its own).
+  Tenmar), and for Skyrim's four Lands zones also the port's own plant archive (`SKYRIM_FLORA_ARCHIVE` 38362,
+  `world/tamriel/skyrimFlora.js` / `skyrimFloraArt.js`, pictures under `src/assets/skyrim/flora/`) - and every flat carries
+  its archive (ECOTONE1's own seam: the build reads each flat's own, its season and its Low Poly tree its own).
 - **Its dead trees** are `DEAD_TREES` - the desert's snags (503:11, 503:12), its gnarled thorn
   (503:28), the woodlands' great dead oak (504:30) - bare in the classic picture and in Low Poly Trees' mesh alike; never
   the classic sets' grey dead tree (504:24, 510:24), which the mod stands as 504:25's PINE (AUDIT: seen in the game - the

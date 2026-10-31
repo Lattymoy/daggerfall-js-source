@@ -35,7 +35,9 @@ import { flatBatchAabb, localAabb, transformedAabb } from '../render/frustum.js'
 import { floraSwayOf } from '../systems/wind/windDrive.js';
 import { footGroundAt, footRectsAt, modelFootParts } from './homeYards.js';
 import { FOREST_HIDDEN_LOCATION_TYPES, populatesWanderingNpcs, tamrielLandsOn } from './shared.js';
-import { landGroundSet } from '../world/tamriel/tamrielLands.js';   // TESA-LANDS: a zone's dress of its ground
+import { landGroundSet, landsNine } from '../world/tamriel/tamrielLands.js';   // TESA-LANDS: a zone's dress of its ground
+import { SKYRIM_FLORA_ARCHIVE } from '../world/tamriel/skyrimFlora.js';   // SKYRIM-FLORA: crossed plants + hanging moss
+import { isSkyrimMossRock, standSkyrimFlora } from '../world/tamriel/skyrimFloraMesh.js';
 import { standLandProps, landFeetOff } from '../world/lands/landProps.js';   // TESA-LANDS: and its landmarks stood, its flats off their feet
 import { climateNeighbourIn } from '../world/tamriel/tamrielGround.js';
 import { getLocationTerrainTileOrigin, setLocationTiles, WORLD_MAP_TILE_DIM } from '../world/terrain/terrainTiles.js';
@@ -169,7 +171,7 @@ export function createPixelBuild(host) {
    *   uploadRecordFrame: Function, flatAnims: any, unionBox: (b: number[]) => void }} g
    * @param {{ batches: any[], forestGroups: Map<string, any>, coverItems: any[], lptHandles: any[], lptGroups: any[] }} out
    */
-  async function standFlatGroups(g, { batches, forestGroups, coverItems, lptHandles, lptGroups }) {
+  async function standFlatGroups(g, { batches, forestGroups, coverItems, lptHandles, lptGroups, skyrimPlants, hangHosts }) {
     let lptPathMask = null;   // LPT-FIT: the pixel's path tiles, made at its first fitted tree
     // FB1020c TRUNK-FIT: THE PIXEL'S SOLID THINGS, measured before any tree is stood - a fountain, a well, a crate, a statue:
     // PROP-BODIES' own bodies (world/propBodies.js flatBody, each foot off its own picture) of every flat of no nature
@@ -198,7 +200,18 @@ export function createPixelBuild(host) {
       // `lowPolyTrees` set). Its cover, its sway, its forest and the far rings' rule are the flat's own (the season's,
       // while one stands). AUDIT 05b A12: the choice is every host's one (world/naturePicture.js - a location's, a yard's)
       const { sib, proto: lpt, far, plain, key: rkey } = await naturePicture({ door: lowPolyTrees, seasons: host.seasonsActive ? seasons : null, renderer, uploadRecord: g.uploadRecord }, t, archive, record);
-      coverItems.push(...flatBodies(t, archive, record, plain, centers, { tree: g.natureSet.has(archive) && isTreeRecord(g.natureBase(archive), record) }));   // PROP-BODIES: the record's own, whichever picture stands
+      const base = g.natureBase(archive) ?? archive;
+      const asTree = g.natureSet.has(archive) && isTreeRecord(base, record);
+      coverItems.push(...flatBodies(t, archive, record, plain, centers, { tree: asTree }));   // PROP-BODIES: the record's own, whichever picture stands
+      // SKYRIM-FLORA: ground plants are three crossed cards (not a camera billboard); trees/rocks host hanging moss
+      if (archive === SKYRIM_FLORA_ARCHIVE) {
+        skyrimPlants.push({ record, centers, size: plain });
+        if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, plain, { tree: false }));
+        continue;
+      }
+      if (g.natureSet.has(archive) && (asTree || isSkyrimMossRock(base, record))) {
+        for (const c of centers) hangHosts.push({ c, h: plain.h, tree: asTree });
+      }
       if (far) {
         lowPolyTrees.acquire(far); lptHandles.push(far);   // AUDIT LPT B5: held until the pixel goes
         const scales = new Float32Array(centers.length), wild = new Uint8Array(centers.length);
@@ -230,7 +243,7 @@ export function createPixelBuild(host) {
         g.unionBox(batch._box);
         batches.push(batch);
         if (g.natureSet.has(archive)) forestGroups.set(k, { batch, centers, size: far.size, scales });   // PROF4: a felled tree's batch - it falls as its far picture
-        if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, plain, { tree: g.natureSet.has(archive) && isTreeRecord(g.natureBase(archive), record) }));
+        if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, plain, { tree: asTree }));
         continue;
       }
       if (sib) {   // uploaded under the install's key, with no mip chain (AUDIT 61) - world/naturePicture.js
@@ -241,7 +254,7 @@ export function createPixelBuild(host) {
         g.unionBox(batch._box);
         batches.push(batch);
         if (g.natureSet.has(archive)) forestGroups.set(k, { batch, centers, size: sib.size });   // PROF4: a felled tree's batch
-        if (isCoverFlat(archive, record, sib.size)) for (const c of centers) coverItems.push(...coverProxies(c, sib.size, { tree: g.natureSet.has(archive) && isTreeRecord(g.natureBase(archive), record) }));   // AUDIT TACT B2: a tree's trunk and crown
+        if (isCoverFlat(archive, record, sib.size)) for (const c of centers) coverItems.push(...coverProxies(c, sib.size, { tree: asTree }));   // AUDIT TACT B2: a tree's trunk and crown
         continue;
       }
       const size = plain;   // the record, uploaded (world/naturePicture.js)
@@ -253,7 +266,7 @@ export function createPixelBuild(host) {
       armFlatAnim(batch, t, archive, record, g.flatAnims, g.uploadRecordFrame);
       batches.push(batch);
       if (g.natureSet.has(archive)) forestGroups.set(k, { batch, centers, size });   // PROF4: a felled tree's batch
-      if (isCoverFlat(archive, record, size)) for (const c of centers) coverItems.push(...coverProxies(c, size, { tree: g.natureSet.has(archive) && isTreeRecord(g.natureBase(archive), record) }));   // AUDIT TACT B2: a tree's trunk and crown
+      if (isCoverFlat(archive, record, size)) for (const c of centers) coverItems.push(...coverProxies(c, size, { tree: asTree }));   // AUDIT TACT B2: a tree's trunk and crown
     }
   }
   async function buildPixelNow(px, py, { roadsRetry = false } = {}) {
@@ -1233,8 +1246,17 @@ export function createPixelBuild(host) {
     // AUDIT PRECIP HOST-7: the groups stood by the one function a re-skin stands them by (standFlatGroups, above)
     const { groups, wild: wildFlats, places } = groupFlats(flatLog, flatLog.map((f) => [f.archive, f.record]));
     placeTrees(flatLog, flatLog.map((f) => f.archive), places);
+    const skyrimPlants = [], hangHosts = [];
     await standFlatGroups({ px, py, groups, wild: wildFlats, natureSet, natureBase, tilemap, paths, vergeNet, uploadRecord, uploadRecordFrame, flatAnims, unionBox },
-      { batches, forestGroups, coverItems, lptHandles, lptGroups });
+      { batches, forestGroups, coverItems, lptHandles, lptGroups, skyrimPlants, hangHosts });
+    // SKYRIM-FLORA: crossed ground plants; HangingMoss only in the Reach (from trees, rock flats, spires)
+    const skyrimReach = landsNine(px, py)[4]?.key === 'skyrimReach';
+    if (skyrimPlants.length || (skyrimReach && (hangHosts.length || landStood?.set.props?.length))) {
+      standSkyrimFlora(skyrimPlants, skyrimReach ? hangHosts : [], skyrimReach ? landStood?.set.props : null, px, py, {
+        addStatic: (m, at, own) => addStatic(m, at, own),
+        unionBox,
+      });
+    }
     const groupBatches = batches.slice(), groupForest = new Set(forestGroups.keys()), groupCover = coverItems.length;
     // BANTHA1: THE JUNGLE'S TREES STAND - a species a batch of its far picture (the owner's tree drawn once from the
     // side, systems/jungleTreesAssets.js), each tree's own scale on its corner, and its 3D tree near the eye (the pixel's

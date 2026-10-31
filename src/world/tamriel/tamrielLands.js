@@ -6,6 +6,7 @@
 // its climate's land. Pure and worker-safe (world/ and formats/ alone): the terrain worker reads the flora and the props.
 import { tamrielBiomeAt, BIOME_BY_KEY } from './tamrielBiomes.js';
 import { climateNeighbourIn } from './tamrielGround.js';
+import { skyrimCoverPicks } from './skyrimFlora.js';   // SKYRIM-FLORA: Skyrim's plant picks (art door: skyrimFloraArt.js)
 
 /**
  * THE FOREST FIELD'S QUANTILES (terrainNature.js forestCover), every 1%, measured over 400,000 world tiles of the
@@ -142,6 +143,11 @@ const fleck = (colors, share) => Object.freeze({ colors: Object.freeze(colors), 
 // ── Daggerfall's nature flats the recipes draw on (TEXTURE.500-510's summer records; world/terrain/terrainNature.js
 //    TREE_RECORDS the Trees among them) ─────────────────────────────────────────────────────────────────────────────────
 /** @typedef {readonly [number, number, number]} Pick - a flat: [summer nature archive, record 1-31, weight] */
+/** SKYRIM-FLORA: each zone's own undergrowth (skyrimFloraArt.js) - mixed with a few classic rocks where the ground asks. */
+const SKYRIM_PINEWOOD_COVER = skyrimCoverPicks('pinewood');
+const SKYRIM_REACH_COVER = skyrimCoverPicks('reach');
+const SKYRIM_FROZEN_COVER = skyrimCoverPicks('frozenCoast');
+const SKYRIM_TUNDRA_COVER = skyrimCoverPicks('tundra');
 const PINES = /** @type {Pick[]} */ ([
   [510, 11, 3],
   [510, 12, 3],
@@ -231,7 +237,7 @@ export const LANDS = deepFreeze({
       treeRate: 0.6,
       coverRate: 0.7,
       trees: [...SMALL_PINE, [510, 11, 2], [510, 12, 2], [510, 25, 1], [503, 12, 1]],
-      cover: [...MOUNTAIN_ROCKS, [510, 2, 3], [510, 29, 2], [510, 9, 1]],
+      cover: [...SKYRIM_FROZEN_COVER, ...MOUNTAIN_ROCKS],
     },
     props: [{ kind: 'spire', looks: ['frost'], rate: 0.05, where: 'plains' }],
     lore: "the Pale's pale white tundra and Winterhold's ice fields - frost-grey shingle, spiky grass and snowberry, a few snow-laden pines",
@@ -253,7 +259,7 @@ export const LANDS = deepFreeze({
         [510, 13, 1],
         [503, 11, 1],
       ],
-      cover: [...MOUNTAIN_ROCKS, [510, 2, 3], [510, 29, 3], [510, 22, 2], [506, 21, 2], [506, 9, 1], [510, 28, 1]],
+      cover: [...SKYRIM_TUNDRA_COVER, [510, 17, 1], [510, 18, 1]],
     },
     props: [
       { kind: 'spire', looks: ['lichen'], rate: 0.04, where: 'plains' },
@@ -273,16 +279,7 @@ export const LANDS = deepFreeze({
       treeRate: 1.1,
       coverRate: 1,
       trees: [...PINES, ...SMALL_PINE],
-      cover: [
-        [510, 8, 3],
-        [510, 7, 2],
-        [510, 2, 2],
-        [510, 19, 2],
-        [504, 31, 1],
-        [510, 17, 2],
-        [504, 23, 1],
-        [510, 26, 1],
-      ],
+      cover: [...SKYRIM_PINEWOOD_COVER, [510, 17, 1], [510, 8, 1]],
     },
     props: [{ kind: 'grove', looks: ['aspen'], rate: 0.09, where: 'woods', patch: 0.35 }],
     lore: "Haafingar's and Falkreath's dark misty pine and spruce over needle litter, the Rift's white-barked golden aspens",
@@ -301,7 +298,7 @@ export const LANDS = deepFreeze({
         [510, 20, 2],
         [510, 11, 1],
       ],
-      cover: [...MOUNTAIN_ROCKS, [510, 9, 3], [506, 27, 2], [510, 2, 2], [510, 28, 1], [510, 3, 1]],
+      cover: [...SKYRIM_REACH_COVER, ...MOUNTAIN_ROCKS],
     },
     props: [{ kind: 'spire', looks: ['reachstone'], rate: 0.12, where: 'any' }],
     lore: "Markarth's maze of warm grey-brown crags and gorges, juniper and hanging moss, skeletal grey trees",
