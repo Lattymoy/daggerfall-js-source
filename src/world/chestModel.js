@@ -82,7 +82,8 @@ export function chestModel(box, look, open = false) {
     if (!groups.has(key)) groups.set(key, { pic, p: [], n: [], uv: [] });
     const g = /** @type {{ p: number[], n: number[], uv: number[] }} */ (groups.get(key));
     for (let t = 0; t < src.normals.length / 3; t++) {
-      const n = [src.normals[t * 3], src.normals[t * 3 + 1], src.normals[t * 3 + 2]];
+      const n0 = [src.normals[t * 3], src.normals[t * 3 + 1], src.normals[t * 3 + 2]], l = Math.hypot(n0[0], n0[1], n0[2]) || 1;
+      const n = [n0[0] / l, n0[1] / l, n0[2] / l];   // unit again - the bake keeps four places
       for (let c = 0; c < 3; c++) {
         const o = t * 9 + c * 3, p = [src.positions[o] * s + at[0], src.positions[o + 1] * s + at[1], src.positions[o + 2] * s + at[2]];
         g.p.push(...p); g.n.push(...n); g.uv.push(...chestUv(p, n));
