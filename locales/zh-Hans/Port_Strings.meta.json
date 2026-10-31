@@ -1464,6 +1464,21 @@
   "tr": "36f5d5a177e5",
   "by": "claude-in-session"
  },
+ "features.realWindows.light": {
+  "en": "33064adf0f79",
+  "tr": "3431c228817a",
+  "by": "claude-in-session"
+ },
+ "features.realWindows.light.day": {
+  "en": "2afe02177426",
+  "tr": "2f97da5924a4",
+  "by": "claude-in-session"
+ },
+ "features.realWindows.light.on": {
+  "en": "e0049a66519c",
+  "tr": "b4217093bce3",
+  "by": "claude-in-session"
+ },
  "features.tamrielLand.note": {
   "en": "c4201ee9109a",
   "tr": "b276265b2363",
