@@ -135,6 +135,7 @@ import { shiftDrop } from '../../systems/physicalItems.js';   // PI1: Physical I
 import { BAG_KG_LIMIT } from '../../net/bagLaw.js';
 import { STORE_FILTER_KINDS, filterStore, storeFilterOptions, storeRarityOptions, storeMaterialOptions, freshStoreFilter } from '../storeFilter.js';   // WAGON-FILTER: the wagon, the storage and the bag, filtered; LOOT-BULK: a container too, and its rarity and metal
 import { bulkVerdict, runBulk, listAtCap, CONTAINER_LIST_CAP, containerFull } from '../storeBulk.js';   // LOOT-BULK: Take all / Stash all
+import { sortInPlace, SORT_STORE_KINDS } from '../packSort.js';   // PACK-SORT: the pack's Sort, and the side window's
 import { entityMaxEncumbrance } from '../../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all
 import { liveStat } from '../../systems/statMods.js';
 import { conditionWord, conditionPercentage, itemNameParts, itemLongName, itemDamageLine, itemArmourLine, itemArmorTypeLine, itemHandsLine } from '../../systems/item/itemInfo.js';   // RF6: the long name's two parts, ResolveItemLongName's arms once
@@ -1467,6 +1468,38 @@ function reorderPack(item, before) {
   // of the two directions. Take the shift off when moving down.
   list.splice(from, 1);
   list.splice(from < to ? to - 1 : to, 0, item);
+  refresh();
+  render();
+}
+
+/** PACK-SORT: the header's Sort - the player's own list put in packSort.js's order, in place, as reorderPack moves one
+ *  row. Never over a chest's copy of the pack, and not while the pack chooses what to break (its ticks are by row). */
+function sortPack() {
+  if (salvageSel) return;
+  notice = null;
+  { const no = chestActRefusal(deps); if (no) return refuse(no); }
+  if (!sortInPlace(deps.entity?.items, { nameOf: storeNameOf })) return render();
+  picked = null;   // PX24: an act closes the card - its row has moved
+  refresh();
+  render();
+}
+/** PACK-SORT: the Sort press - the pack header's and the side window's are one button. */
+function sortButton(onclick) {
+  const b = el('button', 'act sortbtn', t('inventory.sort.label', 'Sort'));
+  b.type = 'button';
+  b.title = t('inventory.sort.how', 'Sort by page, then rarity, name and value. Quest items stay first.');
+  b.onclick = onclick;
+  return b;
+}
+/** PACK-SORT: whether the side window shows a list of the player's own to sort - never a chest that settles its own
+ *  pieces, whose order is the service's (inventorySession.js settlesOwnPieces). */
+const storeSorts = () => SORT_STORE_KINDS.has(remote?.kind) && !settlesOwnPieces(deps);
+/** PACK-SORT: the side window's Sort - the array remoteTarget answers, in place, saved wherever that list is saved. */
+function sortStore() {
+  if (!storeSorts()) return;
+  notice = null;
+  if (!sortInPlace(remoteTarget(deps, sessionState()), { nameOf: storeNameOf })) return render();
+  picked = null;
   refresh();
   render();
 }
@@ -3071,6 +3104,8 @@ function remoteCol() {
     takeAll.onclick = () => bulkMove('take');
     acts.append(takeAll);
   }
+  // PACK-SORT: the player's own wagon, bag or storage sorts as the pack does; a container and a shared chest do not
+  if (storeSorts() && remote.items.length > 1) acts.append(sortButton(sortStore));
   if (typeof deps.loot?.vaultPour === 'function') {
     const fromVault = el('button', 'act', t('inventory.store.fromVault', 'From the vault'));
     fromVault.onclick = () => {
@@ -3288,6 +3323,9 @@ function catsCol() {
     tabs.append(b);
   }
   col.append(tabs);
+  // PACK-SORT: a phone's header has no room past Body and Close, so its Sort stands at this strip's end (the sheet's
+  // touch-phone rule shows it there and hides the header's)
+  if (!salvageSel) col.append(sortButton(sortPack));
   return col;
 }
 
@@ -4319,6 +4357,8 @@ function render() {
     if (name) title.append(el('span', 'pack-who', name));
     who.append(title);
     head.append(who);
+    // PACK-SORT: the pack's one-shot Sort, first of the header's presses - gone while the pack chooses what to break
+    if (!salvageSel) head.append(sortButton(sortPack));
     // PACK-PHONE (FIELD BUGS 2026-09-30, "we dont really need paperdoll on phone or at least if it could be hidden"):
     // THE BODY IS A CHOICE ON A PHONE. The sheet hides the figure on a touch phone unless the shell carries `showdoll`,
     // and draws this button there alone; the choice is the player's own shelf, so the pack opens as it was left.

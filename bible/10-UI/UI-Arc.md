@@ -20804,3 +20804,41 @@ popup is DFU's records and does not change (THE NATIVE-WINDOW RULE). Pins: `test
 every material, the shield and the rest, the gate agreeing, the stat rows' order, the card model and the reward card);
 `tools/mutants/armorlean.json` ARMOR-TYPE-no-row. The same update's loot and sale halves are `06-Systems/Loot-Rarity.md`
 ARMOR-LEAN.
+
+## PACK-SORT - one press puts the pack or a store of the player's own in order (2026-10-31, Discord #feature-feedback, Sammy: "Add a sort button to the inventory!" and "Would like to be able to reorganise and sort things in my carriage inventory or any side inventory really.")
+
+The enhanced pack kept its items in the order they came: a pickup appends or joins a stack, a quest item goes to the
+front (`itemTransfer.js`, DFU's AddPosition.Front). Only INV1's drag moved them, a row at a time and in the pack alone
+(`06-Systems/Handheld-Torches.md` HT5 + INV1). A **Sort** press now puts a whole list in one order: the pack's pages in
+the spine's order (`ui/packPages.js`), then rarity high to low (`RARITY_ORDER`), then the row's own name (what the row
+prints: an unidentified piece by the name it shows, an heirloom with its house), then value high to low. Quest items
+stay at the front in their own order. A tie keeps the list's order. The order is `ui/packSort.js` (`sortedItems`,
+`sortInPlace`), pure. It departs from DaggerfallInventoryWindow, whose FilterLocalItems and FilterRemoteItems list a
+collection in the order ItemCollection holds it and offer no sort (Port-Ledger A).
+
+- **The pack.** The header's first press, before the Codex. It sorts `entity.items` in place - the array every page,
+  the save and a later drag read - so the classic skin shows the same order, with no new control there (THE
+  NATIVE-WINDOW RULE). One shot: nothing keeps the list sorted, so a drag after it stands. Over a shared chest it is
+  refused in the chest's own words (`chestActRefusal`); while Batch salvage chooses it is gone. On a touch phone the
+  sheet moves it to the end of the tab strip: measured in Chromium at 360 x 740, a header holding Sort, Codex, Batch
+  salvage, Body and Close was 424 px wide and pushed Close off the screen.
+- **The side window.** The player's own wagon, Materials Bag and storage (`SORT_STORE_KINDS`: a ship's hold, a house's
+  cupboard or placed chest, a companion's pack) carry the same press beside Take all once they hold two pieces. It
+  sorts the array `remoteTarget` answers, in place, so each list is saved where it was already saved. Never a container
+  or a body, the ground, a reward tray, or a shared chest that settles its own pieces (`settlesOwnPieces` - its order is
+  the service's). It is its word's width, so a wagon's Leave wagon, Take all and Sort keep one row in a 340 px window.
+  Side rows still never drag (INV1).
+- **Quickslots.** A slot names a kind and uses the first record of it in pack order (`quickslots.js`
+  `resolveConsumable`, `resolveSwap`). Two stacks of one potion or two daggers of one kind tie on every key, so a sort
+  leaves the slot on the record it used. Where one kind's records can differ in a key (an heirloom's house in its
+  name), the slot takes another record its own key counts as the same item.
+- **Known.** Beside a store on a 1280 px screen a 25-letter name wraps the pack's title to a third line: the header
+  grows from 74 px to 90. A short name keeps one line.
+
+Pins: `test/ui/packsort.test.js` (7: the order over the producers' own items - a quest machine's linked piece, the
+ladder's tiers, a potion, a letter of credit, a material, an heirloom; in place and saved; the quickslot's record; the
+header's press, a drag after it, Batch salvage; a shared chest; the wagon, the bag, a storage, a body and the ground;
+the phone's sheet). PIN MOVED: `test/systems/fb0930_packphone.test.js` (the header's presses read Sort first) and
+`test/systems/questlines/fb1025i_daedraheart.test.js` (its walk to a page with rows pressed Sort, which put the quest's
+heart first). The two strings are drafted in the thirteen complete languages (`tools/l10nInSession.mjs`).
+`tools/mutants/packsort.json`: 27, all dead.

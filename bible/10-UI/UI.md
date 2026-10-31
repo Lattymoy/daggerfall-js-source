@@ -91,7 +91,8 @@ ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABL
 - and GUILD-SHOP's NINE (`sailClothPanel.js`: the Fleet's sailcloth; `guild/guildShopText.js`, `guildShopPage.js`, `guildWareArt.js`: the guild window's Shop page, its words and its pictures; `guild/guildCrestArt.js`, `guildLogoImages.js`, `guildLogoPick.js`, `guildLogoPage.js`: a guild's crest, its logo loaded, picked and sent; `guild/guildWindowLook.js`: the window's look - `11-Multiplayer/Guild-Shop.md`);
 - and GUILD-RANKS' and GUILD-REQUESTS' TWO (`guild/guildRanksPage.js`: the guild window's Ranks page, the names and the grid of powers; `guild/guildRequestNodes.js`: a request to join sent and answered - `11-Multiplayer/Guild-Shop.md` sections 13 and 14);
 - and FIGUREHEAD's ONE (`figureheadPanel.js`: a ship's carving on her Fleet card - `03-World/Naval-Refit.md` FIGUREHEAD);
-482 modules
+- and PACK-SORT's ORDER (`packSort.js`: the order one press of Sort puts the pack or a store of the player's own in - `10-UI/UI-Arc.md` PACK-SORT);
+483 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.
