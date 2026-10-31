@@ -254,7 +254,7 @@ import { loadFace } from '../facePortrait.js';
 import { timersMark, timersWindow, anchorBeside } from './enhancedTimers.js';   // TIMERS1: the hourglass beside the profile mark, and its window
 import { postMark, postWindow, watchPostMark, anchorPost } from './enhancedPost.js';   // SERVER-POST: the mailbox beside the hourglass, and its window
 import { seasonMark, seasonWindow, seasonSource, anchorSeason } from './enhancedSeason.js';   // SEASON-BOOK: the laurel beside the envelope, and its window
-import { shopMark, shopWindow, shopNow } from './enhancedShop.js';   // SHOP: the gem at the end of the row of marks, and its window - AUDIT-STOREFRONT III B8: its clock the shared one
+import { shopMark, shopWindow, shopNow, shopReread } from './enhancedShop.js';   // SHOP: the gem at the end of the row of marks, and its window - AUDIT-STOREFRONT III B8: its clock the shared one
 import { profileBadge, portraitSave, liveCharacter, characterLine } from '../profileBadge.js';   // PROFILE1: the mark is the last character's portrait   // TILE1: the character's face, the one home chargen also reads
 import { profileIconNode } from '../profileIcons.js';   // WITCH1: a profile icon worn, in the mark's portrait
 import { ownIcon } from '../../systems/ownGlyphs.js';   // WITCH1: the icon the stored session says this device's player wears
@@ -472,7 +472,7 @@ const shopFlowOf = () => {
  *  GEM on the pause face, at the end of the row of marks `chain` - online or not, for the account is the shop's. */
 function shopGem(home, chain) {
   if (getPref('shopHidden')) { shopOpen = false; shopAnchor?.(); shopAnchor = null; return null; }   // SHOP-HIDE: the player's own Hide the shop
-  const gem = shopMark(document, { open: shopOpen, onOpen: () => { shopOpen = true; shopFocusIn = true; render(); } });
+  const gem = shopMark(document, { open: shopOpen, onOpen: () => { shopOpen = true; shopFocusIn = true; shopReread(shopFlow); render(); } });   // SHOP-REREAD: this visit's read again
   home.append(gem);
   shopAnchor = anchorSeason(gem, chain, home.querySelector?.('.px-profile'), home);
   if (shopFocusBack && !shopOpen) { shopFocusBack = false; globalThis.requestAnimationFrame?.(() => gem.focus?.()); }
