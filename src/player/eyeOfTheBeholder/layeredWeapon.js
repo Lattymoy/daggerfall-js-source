@@ -66,22 +66,33 @@ export function weaponShownFor(table, held, spellHand = false) {
  *  again (5). Each weapon plays its own cut of them: a thrust, a slash, the full chop. */
 export const SWING_CUTS = Object.freeze({ thrust: [4, 4, 2, 2, 2, 4], slash: [4, 2, 3, 3, 4, 4], chop: [0, 1, 2, 3, 4, 5] });
 const THRUSTS = new Set(['dg', 'tn', 'ss', 'wk']), SLASHES = new Set(['ls', 'bs', 'sa', 'kt']);
-const _thrust = new WeakMap();
+const _thrust = new WeakMap(), _strike = new WeakMap();
+/** STRIKE-AHEAD: a strike line shorter than this share of the hammer points at the camera. */
+export const STRIKE_SHORT = 0.45;
 /** SWING-CUTS: a thrust's strike (the swing's frame 2, arms out) points its blade the way the body faces, along the
  *  arms - the art's hammer line there is the chop's, at the camera: from aside the whole blade forward, from three
  *  quarters shortened, from the front a stub at the camera, from behind hidden past the fists. A frame's rig as
  *  drawWeapon reads one (`len` the body's hammer, px); null for any other frame or weapon. */
 export function thrustRigOf(fr, code, view, frame, len = rig.male.len) {
-  if (frame !== 2 || !fr || !THRUSTS.has(String(code ?? '').slice(0, 2))) return null;
-  let o = _thrust.get(fr);
+  if (frame !== 2 || !fr) return null;
+  // STRIKE-AHEAD (the owner, 2026-10-31, of a side strike's sword drawn a stub up from the fists: "These look really
+  // wrong"): where the art's hammer points at the camera at the strike, every weapon strikes along the arms
+  const [qx, qy, tx, ty] = fr.w ?? [...fr.q, ...fr.t];
+  const thrust = THRUSTS.has(String(code ?? '').slice(0, 2)), D0 = Math.hypot(tx - qx, ty - qy) || 1;
+  if (!thrust && D0 >= STRIKE_SHORT * len) return null;
+  // from behind three quarters the arms' way is behind the body: the art's own way, at least STRIKE_SHORT long
+  if (!thrust && (view | 0) === 3) return { w: [qx, qy, qx + ((tx - qx) / D0) * STRIKE_SHORT * len, qy + ((ty - qy) / D0) * STRIKE_SHORT * len], d: fr.d, side: fr.side };
+  const kept = thrust ? _thrust : _strike;
+  let o = kept.get(fr);
   if (!o) {
     const [gx, gy, ax, ay] = fr.w ?? [...fr.q, ...fr.t], D = Math.hypot(ax - gx, ay - gy) || 1, v = Math.max(0, Math.min(4, view | 0));
     const fx = FACING_X[v], [ux, uy] = fx ? [Math.sign(fx), 0.12] : [(ax - gx) / D, (ay - gy) / D];
     const k = fx ? Math.abs(fx) : 0.35, n = Math.hypot(ux, uy), L = len * k, [lo, hi] = rig.span;
-    const blade = v === 4 ? 'x' : v === 3 ? 'b' : 'f', c = blade === 'x' ? 'b' : blade;
+    // STRIKE-AHEAD: a strike's handle is in the fist, none of it drawn - its grip is on the arm's edge, not its middle
+    const blade = v === 4 ? 'x' : v === 3 ? 'b' : 'f', c = !thrust ? 'x' : blade === 'x' ? 'b' : blade;
     const ex = gx + (ux / n) * L, ey = gy + (uy / n) * L;
     o = { w: [gx, gy, ex, ey], d: c.repeat(-lo - 3) + 'bbb' + blade.repeat(hi + 1), side: fr.side };   // no second line: the swing's
-    _thrust.set(fr, o);
+    kept.set(fr, o);
   }
   return o;
 }

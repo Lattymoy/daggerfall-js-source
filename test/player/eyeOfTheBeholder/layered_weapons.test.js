@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import {
   layeredWeaponOf, weaponShownFor, weaponRigOf, WEAPON_SHAPES, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode, removeWeapon,
-  maskTile, fillFrom, weaponLen, WEAPON_SPAN, heldPicture, heldBow, heldImage, drawWeapon, chainWay, heldChain, layeredHands, offRigOf,
+  maskTile, fillFrom, weaponLen, WEAPON_SPAN, STRIKE_SHORT, heldPicture, heldBow, heldImage, drawWeapon, chainWay, heldChain, layeredHands, offRigOf,
   SWING_CUTS, swingCutOf, thrustRigOf, artBowPx, dropSpecks, heldPictureExpected, LOOSE_BOW_FROM,
 } from '../../../src/player/eyeOfTheBeholder/layeredWeapon.js';
 import { worldOrderLayered } from '../../../src/player/eyeOfTheBeholder/eotbSprite.js';
@@ -513,7 +513,8 @@ test('the doll\'s hand gap carries the handle where no fist of the art covers it
     if (bare.data[(y * bare.width + x) * 4 + 3]) { if (isBlue(x, y)) over++; continue; }
     air++; if ([-1, 0, 1].some((dy) => [-1, 0, 1].some((dx) => isBlue(x + dx, y + dy)))) blue++;   // a line a px wide, unbroken
   }
-  assert.ok(air > 4 && blue === air, `the handle joins guard and pommel in open air (${blue} of ${air})`);
+  // PIN MOVED (the placement audit): 12-0's grip is at the fist's middle now, four px of the gap in the air, not five
+  assert.ok(air >= 4 && blue === air, `the handle joins guard and pommel in open air (${blue} of ${air})`);
   assert.equal(over, 0, 'the bridge is never over the body');
   // the side walk's fist is the art's: the gap under it stays the fist, never the handle over it
   const walk = 'LA:male:leather_leather_leather:2-1:lll', fw = weaponRigOf('male', '2-1'), [wx, wy] = fw.q;
@@ -789,13 +790,20 @@ test('SWING-CUTS a thrust\'s strike points the blade the way the body faces, alo
     assert.ok(side.length > 10 && side.every(([x]) => x < gx) && Math.max(...ys) - Math.min(...ys) <= 6 && Math.abs(side.reduce((t, p) => t + p[1], 0) / side.length - gy) <= 5,
       `${body}: from aside the blade runs forward, level with the fists (${side.length} px)`);
     assert.equal(reds(await decodeLayered(`LA:${body}:leather_leather_leather:9-2:lll@dg1`, decodePng, withPic)).length, 0, `${body}: from behind the blade is hidden`);
+    // PIN MOVED (STRIKE-AHEAD): 7-2's hammer points at the camera - a mace there strikes ahead too, level with the fists
     const chop = reds(await decodeLayered(`LA:${body}:leather_leather_leather:7-2:lll@mc1`, decodePng, withPic));
-    assert.notDeepEqual(chop, side, `${body}: a mace keeps the chop's line`);
+    assert.ok(chop.length > 10 && chop.every(([x]) => x < gx + 1) && Math.abs(chop.reduce((t, p) => t + p[1], 0) / chop.length - gy) <= 5, `${body}: a mace strikes ahead (${chop.length} px)`);
   }
   const t = thrustRigOf(weaponRigOf('male', '7-2'), 'dg1', 2, 2, rig.male.len);
   assert.equal(t.off, undefined, 'PIN MOVED (2026-10-31): no second blade - both fists hold the first');
   assert.equal(thrustRigOf(weaponRigOf('male', '7-3'), 'dg1', 2, 3, rig.male.len), null, 'only the strike');
-  assert.equal(thrustRigOf(weaponRigOf('male', '7-2'), 'ls1', 2, 2, rig.male.len), null, 'only a thrust');
+  // PIN MOVED (STRIKE-AHEAD): a strike whose hammer is not at the camera keeps the chop; one at the camera strikes
+  // ahead, its handle in the fist, none drawn - and from behind three quarters the art's own way, never a stub
+  assert.equal(thrustRigOf(weaponRigOf('male', '6-2'), 'ls1', 1, 2, rig.male.len), null, 'the chop where the hammer is not at the camera');
+  const ahead = thrustRigOf(weaponRigOf('male', '7-2'), 'ls1', 2, 2, rig.male.len);
+  assert.ok(ahead && ahead.w[2] < ahead.w[0] && /^x+bbbf+$/.test(ahead.d), `aside: forward, the handle unseen (${ahead?.d.slice(0, 20)})`);
+  const back = thrustRigOf(weaponRigOf('male', '8-2'), 'mc1', 3, 2, rig.male.len), fr8 = weaponRigOf('male', '8-2');
+  assert.ok(back && Math.hypot(back.w[2] - back.w[0], back.w[3] - back.w[1]) >= STRIKE_SHORT * rig.male.len - 0.01 && (back.w[2] - back.w[0]) * (fr8.t[0] - fr8.q[0]) > 0, 'from behind three quarters: the art\'s way, at its length');
 });
 
 // ── SPELL-BURST ────────────────────────────────────────────────────────────────────────────────────────────────────

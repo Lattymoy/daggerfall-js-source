@@ -227,6 +227,13 @@ blade slashes (4 2 3 3 4 4), the rest chop (0-5). A thrust's strike points its b
 arms (`thrustRigOf`): from aside the whole blade, from the front a stub, from behind hidden. A pair's left-hand blow is
 the right's flipped from the front or behind, and its own cut run backwards from aside, a rising backhand.
 
+**STRIKE-AHEAD** (2026-10-31, the owner, of the placement sheets: "These look really wrong"). Where the art's hammer
+points at the camera at the strike (male 7-2 and 8-2, female 7-2: the line under `STRIKE_SHORT` of the hammer), every
+weapon was drawn a stub up from the fists, or a cross on the shoulder. It strikes along the arms there, as a thrust
+does, its handle in the fist and none of it drawn (`thrustRigOf`); from behind three quarters, where the arms' way is
+behind the body, it keeps the art's own way at that length at least. Male 12-0's grip is the fist's middle, on the
+haft's line, and female 18-0's weapon lies at the art's own hammer's lean.
+
 **The spell in the hands** (SPELL-BURST, the owner, 2026-10-30, of a concept sheet's "Wrath of Sithis": "Do both. I
 wanna see what you can cook"). The art has no cast; the cast plays the swing's first four frames, and the outfit code
 carries its element (`!0` fire to `!4` magic, `layeredSpell.js` `drawSpellBurst`). An orb gathers at the fists (0),

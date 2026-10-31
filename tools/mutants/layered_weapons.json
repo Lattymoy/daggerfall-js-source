@@ -902,7 +902,7 @@
   {
     "name": "SWING-CUTS-thrust-not-hidden",
     "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
-    "old": "    const blade = v === 4 ? 'x' : v === 3 ? 'b' : 'f', c = blade === 'x' ? 'b' : blade;",
+    "old": "    const blade = v === 4 ? 'x' : v === 3 ? 'b' : 'f', c = !thrust ? 'x' : blade === 'x' ? 'b' : blade;",
     "new": "    const blade = v === 3 ? 'b' : 'f', c = blade;",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
