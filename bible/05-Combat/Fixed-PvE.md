@@ -240,11 +240,11 @@ record. Gold stays the classic price, the same at every skill. The simulator pay
 ## 14. A template foe's drop leans to its killer (SKILL-LEAN, 2026-10-30)
 
 The owner: "as they are higher tier area they have better leaning skill gear", "1 line leans in 1-20 then 2 line leans in
-the 10-25 area and the 20-35 area has 3", "to their highest skills", "for all weapons armor jewelry". A template foe's
+the 10-25 area and the 20-35 area has 3", "to their highest skills", "for all weapons armor jewelry"; 2026-10-31: "clothing need to lean as well". A template foe's
 body and kit roll inside `withSkillLean` (`loot/lootSkillLean.js`) at the foe's own level: the first skill lines of each
-weapon, armour piece and ring take the roller's three best trained skills in order (`lootPowers.js` `bestSkills`). One
+weapon, armour piece, piece of jewellery and garment take the roller's three best trained skills in order (`lootPowers.js` `bestSkills`). One
 line leans to level 20, two to 35, three in the top band (the owner: "23 to early"). The other
-lines, the values and garments roll as ever. With the switch off no foe carries a template, so nothing leans. Daggerfall
+lines and the values roll as ever. With the switch off no foe carries a template, so nothing leans. Daggerfall
 Unity's items have no lines. The tests: `test/systems/loot/skilllean.test.js`.
 
 ## 15. A template foe's metal follows its level (FOE-METAL, 2026-10-30)

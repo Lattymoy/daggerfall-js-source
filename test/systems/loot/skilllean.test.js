@@ -1,4 +1,4 @@
-// SKILL-LEAN (bible/05-Combat/Fixed-PvE.md section 14): a template foe's weapons, armour and jewellery take their first
+// SKILL-LEAN (bible/05-Combat/Fixed-PvE.md section 14): a template foe's weapons, armour, jewellery and clothing take their first
 // skill lines on the killer's best skills - one line to level 20, two to 35, three in the top band.
 import '../../modsOff.js';
 import { test } from 'node:test';
@@ -15,13 +15,15 @@ const pieces = {
   Weapons: { name: 'Longsword', group: 'Weapons', templateIndex: 115, material: 0, maxCondition: 100, currentCondition: 100 },
   Armor: { name: 'Cuirass', group: 'Armor', templateIndex: 102, material: 0, maxCondition: 100, currentCondition: 100 },
   Jewellery: { name: 'Ring', group: 'Jewellery', templateIndex: 133, maxCondition: 100, currentCondition: 100 },
+  MensClothing: { name: 'Cloak', group: 'MensClothing', templateIndex: 183, maxCondition: 100, currentCondition: 100 },
+  WomensClothing: { name: 'Cloak', group: 'WomensClothing', templateIndex: 183, maxCondition: 100, currentCondition: 100 },
 };
 const skillsOf = (out) => out.filter((a) => a.id === 'skill').map((a) => a.param);
 
-test('SKILL-LEAN: one line to level 20, two to 35, three in the top band', () => {
+test('SKILL-LEAN: weapons, armour, jewellery and clothing; one line to level 20, two to 35, three in the top band', () => {
   assert.deepEqual([1, 20, 21, 35, 36, 45].map(leanLinesAt), [1, 1, 2, 2, 3, 3]);
   assert.equal(leanLinesAt(undefined), 1);
-  assert.deepEqual(SKILL_LEAN_GROUPS, ['Weapons', 'Armor', 'Jewellery']);
+  assert.deepEqual(SKILL_LEAN_GROUPS, ['Weapons', 'Armor', 'Jewellery', 'MensClothing', 'WomensClothing']);
 });
 
 test('SKILL-LEAN: inside the lean a piece\'s first lines are the roller\'s best skills, in order; outside, nothing leans', () => {
@@ -40,8 +42,8 @@ test('SKILL-LEAN: inside the lean a piece\'s first lines are the roller\'s best 
   assert.ok(hits < 20, `no lean outside the scope (${hits})`);
   assert.equal(skillLean(), null);
   assert.equal(withSkillLean(45, () => skillLean(), BEST)?.lines, 3);
-  const cloak = { name: 'Cloak', group: 'MensClothing', templateIndex: 183, maxCondition: 100, currentCondition: 100 };
-  for (let s = 0; s < 10; s++) assert.deepEqual(withSkillLean(45, () => rollAffixes(cloak, 'rare', seededRng(s)), BEST), rollAffixes(cloak, 'rare', seededRng(s)), 'a garment never leans');
+  const shield = { name: 'Kite Shield', group: 'Books', templateIndex: 0, maxCondition: 100, currentCondition: 100 };
+  for (let s = 0; s < 10; s++) assert.deepEqual(withSkillLean(45, () => rollAffixes(shield, 'rare', seededRng(s)), BEST), rollAffixes(shield, 'rare', seededRng(s)), 'a group outside the five never leans');
 });
 
 test('SKILL-LEAN: the registered roller answers when no skills are handed in; a rollerless scope leans nothing', () => {
