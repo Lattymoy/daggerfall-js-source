@@ -5,7 +5,7 @@ slice in a frozen worktree, given its commits and the players' words, never its 
 reproduced with a probe on the real code and the freeware's data before it was reported, and its fix was pinned by a
 test that fails on the code as it stood. Each fix in code carries an `AUDIT FB1031 <id>` comment. Mutants:
 `tools/mutants/fb1031_benchstores.json`, `fb1031_craftbound.json`, `fb1031_light.json`, `fb1031_yard.json`,
-`fb1031_foes.json`, all dead.
+`fb1031_foes.json`, `fb1031_witness.json`, all dead.
 
 | Lane | Read | Found |
 |---|---|---|
@@ -15,6 +15,7 @@ test that fails on the code as it stood. Each fix in code carries an `AUDIT FB10
 | FOES | TRUNK-FOES and BAND-NEAR: every nature record, every flight, the band's stand | 7 |
 | CRAFT | SMITH-RRI, BUTCHER-STORES, DAEDRIC-RARE: the made pieces, mixed builds, every Daedric source | 4 |
 | BOUND | BOUND-DESTROY: every Aetheric set by its producer, the service route, both skins | 5 |
+| WITNESS | WITNESS-MAP: every view of the Bay, the service's reads, a province and the sea past the Bay | 7 |
 
 ## PACK
 
@@ -67,3 +68,16 @@ nothing. A count heard since makes a new ask. **D2.** The catalog (with P5). **D
 pinned. **D4.** The record: the classic wagon takes gear. **D5.** A priced ware the realm locked still dismantled for
 Embers, which AUTO-HOLD had shut for salvage; it is refused, and destroyed for nothing. The account deploy's path filter
 names `itemBound.js` since.
+
+## WITNESS
+
+**W1.** The reader asked six of up to 35 regions in view: 55% of the land in a 1080p view was never asked. **W3.** The
+map's ask was said to cost no scan; past the board's 10-minute keep, and on any empty region, it scanned the witness
+rows on the primary. **W4.** A province is one region past the Bay, and the sea there is region 0, so the 8,192-pixel
+cap cut them north first, unsaid. All three by one change: the day's confirmed ground is laid once as 64-pixel tiles,
+keyed by the world pixel (`witnessTiles.js`, migration 0205, acct236), and the map reads every tile in view by its key
+from a replica.
+
+**W2.** The wash was painted on every pulse and pan frame (49,152 pixels, 84 ms); it is a kept bitmap,
+a pan frame's blit 1-2 ms. **W5, W7.** The pins: a real sea pixel past the Bay, the switch's save and redraw. **W6.** A
+pixel a harvest confirmed stayed unwashed till the next day; it shows at once.

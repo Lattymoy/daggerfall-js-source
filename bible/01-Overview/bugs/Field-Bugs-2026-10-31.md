@@ -83,10 +83,12 @@ draws no control.
 
 ## 9. Witnessed ground on the map (WITNESS-MAP)
 
-FOUND. Witnessed ground stands every vein, gem and pearl, and the map showed it nowhere. FIXED. The service answers a
-region's confirmed pixels (`/v1/prof/ground`, acct235, a busy read); the held map tints them in copper from the middle
-zoom in, in every province, with a legend row and a Ground switch (`06-Systems/Professions-Arc.md` 61). NOT CHANGED:
-the classic region map, the farthest zoom; ground confirmed today shows the next UTC day.
+FOUND. Witnessed ground stands every vein, gem and pearl, and the map showed it nowhere. FIXED. The held map tints it
+in copper from the middle zoom in, in every province and on the sea past the Bay, with a legend row and a Ground switch
+(`06-Systems/Professions-Arc.md` 61). AUDIT FB1031 W1-W7 rebuilt its read: the day's ground is laid once as 64-pixel
+tiles (migration 0205, acct236), the map reads every tile in view by its key from a replica, the wash is kept on the
+sheet's layer, and a pixel heard confirmed shows at once. NOT CHANGED: the classic region map and the farthest zoom;
+ground other players confirm today shows the next UTC day.
 
 ## 10. The mod's two weapons at the anvil (SMITH-RRI)
 
@@ -109,5 +111,5 @@ its kills, is now the largest Daedric source; it is the owner's call.
 
 ## Deploy
 
-The account service before the site: acct231 to acct235 (YARD-WALLS, BUTCHER-STORES, BOUND-DESTROY, the AUDIT's
-hung tree, WITNESS-MAP), migrations 0203 and 0204. No relay change.
+The account service before the site: acct231 to acct236 (YARD-WALLS, BUTCHER-STORES, BOUND-DESTROY, the AUDIT's
+hung tree, WITNESS-MAP, its AUDIT's tiles), migrations 0203, 0204 and 0205. No relay change.
