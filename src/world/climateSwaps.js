@@ -334,9 +334,15 @@ export function isExteriorWindow(archive, record) {
   return false;
 }
 
-/** Verbatim GetNatureArchive: winter bumps the four woodland sets by 1. */
+/** Verbatim GetNatureArchive: winter bumps the four woodland sets by 1.
+ *  A Lands flat past TEXTURE.511 (PSEUDO_ARCHIVE_FLOOR) already named its stand-in - keep it.
+ *  DFU's unknown→TemperateWoodland would rewrite every plant to 504. */
 export function getNatureArchive(baseNatureArchive, season) {
-  let archive = NATURE_SETS.has(baseNatureArchive) ? baseNatureArchive : SET.Nature_TemperateWoodland;
+  if (!NATURE_SETS.has(baseNatureArchive)) {
+    if (baseNatureArchive > 511) return baseNatureArchive;
+    return SET.Nature_TemperateWoodland;
+  }
+  let archive = baseNatureArchive;
   if (season === SEASON.Winter && NATURE_WINTER_SETS.has(archive)) archive += 1;
   return archive;
 }
