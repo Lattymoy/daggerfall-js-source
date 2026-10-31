@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { canonReady } from '../../../src/world/gen2/canon.js';
-import { continent, regionInflow, downstreamOf, continentCell } from '../../../src/world/gen2/continent.js';
+import { continent, regionInflow, downstreamOf, continentCell, cellWorld } from '../../../src/world/gen2/continent.js';
 import { basinNet } from '../../../src/world/gen2/hydrology.js';
 import { route, hollowsOf } from '../../../src/world/gen2/drainage.js';
 import { Field } from '../../../src/world/gen2/field.js';
@@ -40,6 +40,8 @@ test('WG2 BASIN SCOPE: a change reaches downstream to the sea and not upstream -
   let k = continentCell(c, r.x + 2, r.y + 2), steps = 0;
   while (c.rcv[k] >= 0 && steps < 1e5) { k = c.rcv[k]; steps++; }
   assert.equal(c.theatre[k], 0, 'the walk ends at the sea');
+  const [sx, sy] = cellWorld(c, k);
+  assert.ok(sx >= d.x - 8 && sx <= d.x + d.w + 8 && sy >= d.y - 8 && sy <= d.y + d.h + 8, 'the reach runs to the river\'s mouth');
   assert.ok(d.w * d.h < 6000 * 3750 / 20, 'a river, not the continent');
   const bounds = { x: H.rect.x, y: H.rect.y, w: H.rect.w, h: H.rect.h };
   const stale = staleAfter('erosion', r, bounds, { basinOf: (q) => downstreamOf(fit, q) });
@@ -54,6 +56,7 @@ test('WG2 BASINS: inside a closed basin each cell drains down the real ground to
   assert.equal(hollows.length, 1);
   const floor = 10 * 21 + 10;
   assert.equal(net.rcv[floor], f.data.length, 'the floor drains to the lake node');
+  assert.equal(net.rcv[10 * 21 + 14], 10 * 21 + 13, 'a flank drains to its lower neighbour, toward the floor, not straight to the lake');
   for (const c of hollows[0].cells) {
     let k = c, n = 0;
     while (k < f.data.length && n < 100) { const r = net.rcv[k]; if (r < f.data.length) assert.ok(f.data[r] < f.data[k], 'downhill on the real ground'); k = r; n++; }

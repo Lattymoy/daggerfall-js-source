@@ -19,6 +19,7 @@ import { buildingSummaries } from '../../../src/world/buildingSummaries.js';
 import { isMadePlaceId } from '../../../src/world/placeIds.js';
 import { homeBuildingKeyOk, homeMapIdOk } from '../../../src/net/homeLaw.js';
 import { CAPITAL_LANE } from '../../../src/world/capitalLane.js';
+import { makeBuildingKey } from '../../../src/systems/talk/talkTopics.js';
 
 const S = {}, BAKED = {};
 for (const id of ['hammerfell-test', 'blackmarsh-test']) {
@@ -43,12 +44,13 @@ for (const spec of TEST_SETTLEMENTS) {
     assert.deepEqual(settlementProblems(s, { ...t, buildings }, { minted: true }), []);
     assert.deepEqual(settlementProblems(s, shipped, { minted: true }), [], 'the bake ships it sound');
     const plain = (v) => JSON.parse(JSON.stringify(v));   // the file's JSON (a -0 is a 0 there)
-    assert.deepEqual(shipped.buildings.map((b) => [b.id, b.at, b.prefab]), plain(buildings.map((b) => [b.id, b.at, b.prefab])), 'the bake ships what the law makes');
+    assert.deepEqual(shipped.buildings.map((b) => [b.id, b.at, b.prefab, b.slot, b.home ?? null]), plain(buildings.map((b) => [b.id, b.at, b.prefab, b.slot, b.home ?? null])), 'the bake ships what the law makes');
     assert.equal(shipped.mapId, settlementMapId(spec.ordinal));
     for (const b of shipped.buildings.filter((x) => x.ground.kind === 'terrace')) assert.ok(Math.abs(BAKED[spec.region].heightAt(b.at.x, b.at.y) - b.at.z) < 1e-6, 'the streamed ground stands on its pad');
     assert.ok(buildings.length >= 10, `${buildings.length} buildings`);
     assert.ok(buildings.every((b) => b.prefab !== 'rmb' && !b.legacy && b.interior.kind !== 'rmb'));
     for (const b of buildings) if (b.home) assert.ok(homeBuildingKeyOk(b.home.key) && homeMapIdOk(b.home.mapId));
+    for (const b of buildings) if (b.role === 'house') assert.equal(b.home.key, makeBuildingKey(b.slot[0], b.slot[1], b.slot[2]), 'a house\'s home key is its slot\'s building key');
   });
 }
 
@@ -64,6 +66,9 @@ test('WG2 SETTLEMENT: one spec makes one town, and the culture shapes it - stilt
   }
   assert.ok(hold.features.some((f) => f.kind === 'wall') && hold.features.filter((f) => f.kind === 'gate').length >= 2, 'a fortified town walls itself');
   assert.ok(tava.features.some((f) => f.kind === 'field'), 'an oasis farms');
+  // a town on a pixel's edge spills into the next pixel, and the streamed world stands one pixel a location
+  const spill = generateSettlement(S['hammerfell-test'], { ...TEST_SETTLEMENTS[3], x: 1101.02, y: 408.5 });
+  assert.ok(settlementProblems(S['hammerfell-test'], spill).some((p) => /the town's pixel/.test(p)));
 });
 
 test('WG2 SITES: each type finds its own ground - the mine by the ore, the fortress on its height, the stilt village at the water\'s edge (mutants: a type\'s weights, the water town\'s reach)', () => {
@@ -84,7 +89,7 @@ test('WG2 REGENERATE: one district made again leaves every other district\'s bui
   const again = generateSettlement(S[spec.region], { ...spec, x: t.centre.x, y: t.centre.y, regenerate: [d], keep: kept, seed: spec.seed + 1 });
   const second = mintIds(t.id, mapId, again.buildings, first.book);
   const before = first.buildings.filter((b) => b.district !== d), after = second.buildings.filter((b) => b.district !== d);
-  assert.deepEqual(after.map((b) => [b.id, b.at]), before.map((b) => [b.id, b.at]));
+  assert.deepEqual(after.map((b) => [b.id, b.at, b.slot, b.home?.key]), before.map((b) => [b.id, b.at, b.slot, b.home?.key]), 'their ids, slots and home keys kept');
   const fresh = second.buildings.filter((b) => b.district === d).map((b) => b.id);
   for (const id of fresh) assert.ok(!second.book.retired.includes(id), id);
   assert.ok(new Set(second.buildings.map((b) => b.id)).size === second.buildings.length, 'every id once');

@@ -93,8 +93,8 @@
   {
     "name": "WG2-edge-unblended",
     "file": "src/world/gen2/regionSampler.js",
-    "old": "      return smoothstep(0, BLEND_PX, e);",
-    "new": "      return e > 0 ? 1 : 0;",
+    "old": "      return smoothstep(0, band, Math.min(x - rect.x, rect.x + rect.w - x)) * smoothstep(0, band, Math.min(y - rect.y, rect.y + rect.h - y));",
+    "new": "      return 1;",
     "tests": [
       "test/world/gen2/wg2_seam.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "WG2-climate-never",
     "file": "src/world/gen2/gen2Ground.js",
-    "old": "r.weight(px + 0.5, py + 0.5) >= 0.5 ? r.climateAt(px, py) : undefined;",
-    "new": "r.weight(px + 0.5, py + 0.5) > 1 ? r.climateAt(px, py) : undefined;",
+    "old": "  return r && shareAt(px + 0.5, py + 0.5) >= 0.5 ? r.climateAt(px, py) : undefined;",
+    "new": "  return r && shareAt(px + 0.5, py + 0.5) > 1 ? r.climateAt(px, py) : undefined;",
     "tests": [
       "test/world/gen2/wg2_seam.test.js"
     ]
@@ -232,6 +232,170 @@
     "new": ".slice(-LIMIT), now: doc, future: h.future });",
     "tests": [
       "test/world/gen2/wg2_editor.test.js"
+    ]
+  },
+  {
+    "name": "WG2-inflow-at-the-receiver",
+    "file": "src/world/gen2/continent.js",
+    "old": "Math.max(R.x + 1.5 / spec.res, x)), cyw",
+    "new": "Math.max(R.x + 1.5 / spec.res, rx)), cyw",
+    "tests": [
+      "test/world/gen2/wg2_continent.test.js"
+    ]
+  },
+  {
+    "name": "WG2-runoff-unrun",
+    "file": "src/world/gen2/continent.js",
+    "old": "    own[k] = (runoff(precip, evaporation(temp)) * cellM * cellM) / YEAR_S;",
+    "new": "    own[k] = 0;",
+    "tests": [
+      "test/world/gen2/wg2_continent.test.js"
+    ]
+  },
+  {
+    "name": "WG2-downstream-unwalked",
+    "file": "src/world/gen2/continent.js",
+    "old": "    for (let k = continentCell(c, x, y); k >= 0 && !seen.has(k); k = c.rcv[k]) {",
+    "new": "    for (let k = continentCell(c, x, y); k >= 0 && !seen.has(k); k = -1) {",
+    "tests": [
+      "test/world/gen2/wg2_continent.test.js"
+    ]
+  },
+  {
+    "name": "WG2-basin-flat-kept",
+    "file": "src/world/gen2/hydrology.js",
+    "old": "        if (home[nk] === i && s > best) { best = s; r = nk; rd = l; }",
+    "new": "        if (home[nk] === -2 && s > best) { best = s; r = nk; rd = l; }",
+    "tests": [
+      "test/world/gen2/wg2_continent.test.js"
+    ]
+  },
+  {
+    "name": "WG2-fill-flat",
+    "file": "src/world/gen2/geology.js",
+    "old": "export const FLAT_GRAIN = 1.2;",
+    "new": "export const FLAT_GRAIN = 0;",
+    "tests": [
+      "test/world/gen2/wg2_continent.test.js",
+      "test/world/gen2/wg2_bakes.test.js"
+    ]
+  },
+  {
+    "name": "WG2-tiles-not-partitioned",
+    "file": "src/world/gen2/regionSampler.js",
+    "old": "      const band = 2 * (header.blend ?? BLEND_PX / 2);",
+    "new": "      const band = 3 * (header.blend ?? BLEND_PX / 2);",
+    "tests": [
+      "test/world/gen2/wg2_tiles.test.js",
+      "test/world/gen2/wg2_seam.test.js"
+    ]
+  },
+  {
+    "name": "WG2-tiles-refused",
+    "file": "src/world/gen2/gen2Ground.js",
+    "old": "&& !(r.tiling && r.tiling === d.header.tiling && overlaps(r.header.core, d.header.core) === false)",
+    "new": "&& !(r.tiling && r.tiling === d.header.tiling && false)",
+    "tests": [
+      "test/world/gen2/wg2_tiles.test.js"
+    ]
+  },
+  {
+    "name": "WG2-tile-left-out",
+    "file": "src/world/gen2/tiling.js",
+    "old": "    for (let b = 0; b < 8 && !land; b++) for (let a = 0; a < 8 && !land; a++) land =",
+    "new": "    for (let b = 0; b < 2 && !land; b++) for (let a = 0; a < 2 && !land; a++) land =",
+    "tests": [
+      "test/world/gen2/wg2_tiles.test.js"
+    ]
+  },
+  {
+    "name": "WG2-lean-drops-lakes",
+    "file": "src/world/gen2/bakeCodec.js",
+    "old": "export const RUNTIME = new Set(['elev', 'biome', 'lake']);",
+    "new": "export const RUNTIME = new Set(['elev', 'biome']);",
+    "tests": [
+      "test/world/gen2/wg2_tiles.test.js"
+    ]
+  },
+  {
+    "name": "WG2-drawn-river-unforced",
+    "file": "src/world/gen2/regionBake.js",
+    "old": "    forced[k] = 1;\n",
+    "new": "",
+    "tests": [
+      "test/world/gen2/wg2_editor.test.js"
+    ]
+  },
+  {
+    "name": "WG2-paint-unlaid",
+    "file": "src/world/gen2/regionBake.js",
+    "old": "  if (o.doc) applyBiomePaint(o.doc, bio.biome);\n",
+    "new": "",
+    "tests": [
+      "test/world/gen2/wg2_editor.test.js"
+    ]
+  },
+  {
+    "name": "WG2-road-uneased",
+    "file": "src/world/gen2/edit/editLayers.js",
+    "old": "    return n.z + (h - n.z) * smoothstep(half, half + ROAD_SHOULDER_M, n.d);",
+    "new": "    return h;",
+    "tests": [
+      "test/world/gen2/wg2_editor.test.js"
+    ]
+  },
+  {
+    "name": "WG2-drawn-river-rises",
+    "file": "src/world/gen2/edit/editLayers.js",
+    "old": "s = Math.min(s, zs[i] - 0.5); return [x, y, s];",
+    "new": "s = zs[i] - 0.5; return [x, y, s];",
+    "tests": [
+      "test/world/gen2/wg2_editor.test.js"
+    ]
+  },
+  {
+    "name": "WG2-pad-ignored",
+    "file": "src/world/gen2/padLaw.js",
+    "old": "  if (u <= 0 && v <= 0) return p.level;",
+    "new": "  if (u <= 0 && v <= 0) return h;",
+    "tests": [
+      "test/world/gen2/wg2_settlements.test.js"
+    ]
+  },
+  {
+    "name": "WG2-slot-not-kept",
+    "file": "src/world/gen2/settle/buildingRecord.js",
+    "old": "    let slot = same ? was.slot : null;",
+    "new": "    let slot = null;",
+    "tests": [
+      "test/world/gen2/wg2_settlements.test.js"
+    ]
+  },
+  {
+    "name": "WG2-home-key-by-sequence",
+    "file": "src/world/gen2/settle/buildingRecord.js",
+    "old": "{ home: { mapId, key: makeBuildingKey(slot[0], slot[1], slot[2]) } }",
+    "new": "{ home: { mapId, key: Number(id.slice(id.lastIndexOf('/b') + 2)) } }",
+    "tests": [
+      "test/world/gen2/wg2_settlements.test.js"
+    ]
+  },
+  {
+    "name": "WG2-town-leaves-its-pixel",
+    "file": "src/world/gen2/settle/settlementValidate.js",
+    "old": "inPixel = (x, y) => x >= px && y >= py && x < px + 1 && y < py + 1;",
+    "new": "inPixel = () => true;",
+    "tests": [
+      "test/world/gen2/wg2_settlements.test.js"
+    ]
+  },
+  {
+    "name": "WG2-bake-under-play",
+    "file": "src/scenes/gen2Host.js",
+    "old": "new URL(`worldgen2/${file}.gz`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;",
+    "new": "new URL(`worldgen2/${file}.gz`, new URL('play/', APP_ROOT ?? 'http://localhost/')).href;",
+    "tests": [
+      "test/world/gen2/wg2_seam.test.js"
     ]
   }
 ]

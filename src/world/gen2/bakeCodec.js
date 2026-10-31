@@ -35,9 +35,10 @@ const ARRAY = { i16: Int16Array, u8: Uint8Array, u16: Uint16Array };
 const LIMIT = { i16: [-32768, 32767], u8: [0, 255], u16: [0, 65535] };
 const q = (v, d) => Math.round(v * d) / d;
 
-/** The planes a client reads to stand the ground (the sampler: height, biome, water, lakes); the rest are the authoring
- *  tools' (the editor, the towns' sites, the plants). A lean bake carries these alone - a published tile's cut. */
-export const RUNTIME = new Set(['elev', 'biome', 'water', 'lake']);
+/** The planes a client reads to stand the ground (the sampler: height, the biome's grain, the lakes; its rivers are the
+ *  header's courses); the rest are the authoring tools' (the editor, the towns' sites, the plants). A lean bake carries
+ *  these alone - a published tile's cut. */
+export const RUNTIME = new Set(['elev', 'biome', 'lake']);
 /** The bake as bytes; `lean`: the runtime planes alone. @param {ReturnType<import('./regionBake.js').bakeRegion>} bake
  *  @param {{ lean?: boolean }} [o] @returns {Uint8Array} */
 export function encodeBake(bake, o = {}) {
