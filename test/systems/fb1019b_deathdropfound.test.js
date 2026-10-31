@@ -32,11 +32,11 @@ const drop = (id, rolls, level = 20) => {
 };
 
 test('ASF-DEATH: a Daedroth\'s weapon, a Daedra Lord\'s armour and an Orc Warlord\'s weapon each fall marked with the condition they rolled (mutants: either drop\'s mark dropped)', () => {
-  const [blade] = drop(27, seq(0.999, 0.999, 0.5, 0.2));
+  const [blade] = drop(27, seq(0.999, 0, 0.999, 0.5, 0.2));   // PIN MOVED (DAEDRIC-RARE): its keep draw, 0 - Daedric kept
   assert.equal(blade.group, 'Weapons'); assert.equal(blade.material, 9);
   assert.ok(blade.currentCondition < blade.maxCondition);
   assert.equal(blade.foundCondition, blade.currentCondition);
-  const [plate] = drop(31, seq(0.999, 0, 0, 0.5, 0.2, 0.999, 0.999));
+  const [plate] = drop(31, seq(0.999, 0, 0, 0, 0.5, 0.2, 0.999, 0.999));   // PIN MOVED (DAEDRIC-RARE): the keep draw
   assert.equal(plate.group, 'Armor'); assert.equal(plate.material, 521);
   assert.equal(plate.foundCondition, plate.currentCondition);
   const [orcish] = drop(24, seq(0.999, 0.999, 0.5, 0.5));
@@ -44,7 +44,7 @@ test('ASF-DEATH: a Daedroth\'s weapon, a Daedra Lord\'s armour and an Orc Warlor
 });
 
 test('ASF-DEATH: online a mended Daedric drop sells as it fell - the smith\'s repair adds nothing to the sale; offline the mod\'s condition price stands (mutant: the mark dropped)', () => {
-  const [plate] = drop(31, seq(0.999, 0, 0, 0.5, 0.2, 0.999, 0.999));
+  const [plate] = drop(31, seq(0.999, 0, 0, 0, 0.5, 0.2, 0.999, 0.999));   // PIN MOVED (DAEDRIC-RARE): the keep draw
   const mended = { ...plate, currentCondition: plate.maxCondition };
   online(() => assert.equal(sell(mended), sell(plate), 'online: whole sells as found'));
   assert.ok(sell(mended) > sell(plate), 'offline: a mended piece sells higher, the mod\'s own law');

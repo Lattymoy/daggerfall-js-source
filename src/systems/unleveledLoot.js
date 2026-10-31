@@ -283,13 +283,21 @@ function rampedMetal(top, level, rolls) {
   if (level >= METAL_RAMP_FULL || rangeInt(0, METAL_RAMP_FULL, rolls) < level) return top;
   return materialSwitch(rampMetal(level), matSwitchList());   // AUDIT SUGGESTIONS-1019 L1-4: through the Mods pane's switches, as the mod's own metals go
 }
+// DAEDRIC-RARE (FIELD FEEDBACK 2026-10-31; Sammy, Discord #feature-feedback: "Daedric is way too common, I think it
+// should drop but very rarely"): A DEPARTURE from AddDaedric past METAL-RAMP, which made every granted drop Daedric from
+// level 20 up. A granted drop that would be Daedric is Daedric on DAEDRIC_KEEP of its draws, at any level, and Ebony on
+// the rest - one draw more on the drop's own stream, after the ramp's. Whether a Daedra drops at all stays the mod's.
+export const DAEDRIC_KEEP = 0.1;
+/** The metal a granted Daedra drop keeps: Daedric on a draw under DAEDRIC_KEEP, else Ebony through the Mods pane's
+ *  switch, as the ramp's metals go; any other metal as it came, no draw. */
+const daedricKept = (metal, rolls) => (metal !== 9 || rolls() < DAEDRIC_KEEP ? metal : materialSwitch(7, matSwitchList()));
 /** AddDaedric: the Lord over 70, the Seducer over 75 (always a weapon),
  *  the Fire and Frost Daedra and the Daedroth over 80. */
 export function addDaedric(loot, enemyId, rolls, level = playerLevel()) {
   const num = rangeInt(0, 101, rolls) + (luckMod - 5);
   const flag = (enemyId === 31 && num > 70) || (enemyId === 29 && num > 75) || ((enemyId === 26 || enemyId === 25) && num > 80) || (enemyId === 27 && num > 80);
   if (!flag) return null;
-  const metal = rampedMetal(9, level, rolls);   // METAL-RAMP
+  const metal = daedricKept(rampedMetal(9, level, rolls), rolls);   // METAL-RAMP, then DAEDRIC-RARE
   if (rangeInt(0, 100, rolls) > 50 || enemyId === 29) return dropWeapon(loot, metal, rolls);
   return dropArmor(loot, 0x0200 + metal, rolls);   // plate of the metal: 521 Daedric
 }

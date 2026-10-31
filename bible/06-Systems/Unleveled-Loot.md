@@ -120,18 +120,25 @@ hand-off. Not run here: a game.
 ## Departures (2026-10-19, `01-Overview/bugs/Field-Bugs-2026-10-19b.md`)
 
 The mod stood 1:1 until the Discord's "Weapon/Armor Materials" thread ("any new character can wander outside, kill some
-easy orcs on the overworld, and get orcish gear right from the get-go"); SCOPE1 makes it ours to move, and two moves are
+easy orcs on the overworld, and get orcish gear right from the get-go"); SCOPE1 makes it ours to move, and the moves are
 named here and in Port-Ledger A.
 
 - **METAL-RAMP** (Mac: "Level ramp"). AddOrcish and AddDaedric read the killer's level: a drop the mod's roll grants is
   its race's metal on a draw of `Range(0, 20)` under the level, else the level's middle metal (`rampMetal`: Elven 1-4,
-  Dwarven 5-8, Mithril 9-12, Adamantium 13-16, Ebony 17-19; plate of it for the armour arm). At 20 and up nothing
-  changes - no draw more. `unlevelDroppedLoot` reads the level once, the raiser's (a room's base the room's) or the
+  Dwarven 5-8, Mithril 9-12, Adamantium 13-16, Ebony 17-19; plate of it for the armour arm). At 20 and up the ramp
+  draws nothing. `unlevelDroppedLoot` reads the level once, the raiser's (a room's base the room's) or the
   player's, for the drop and the gold alike - a kill's the player's, not a mentor's lowered one, as the mod's gold does
   (AUDIT SUGGESTIONS-1019 L1-5, recorded). For the whole raise the mod's own Luck and level are the raiser's, so an
   armour drop's CreateRandomArmor, which reaches the RandomArmorMaterial override, rolls the same on every client of a
   room (AUDIT L1-1, a fault older than the departures). The middle metal goes through the Mods pane's material switches
   as the race's does (AUDIT L1-4).
+- **DAEDRIC-RARE** (2026-10-31, Sammy on Discord: "Daedric is way too common, I think it should drop but very rarely").
+  Online the mod is on, and its AddDaedric was the game's main Daedric: random pieces almost never roll it and shops
+  never stock it, but a Daedra's granted drop was Daedric always from level 20. Now a granted drop that would be Daedric
+  keeps it on a draw under `DAEDRIC_KEEP` (a tenth), at any level and after the ramp's draw, and is Ebony otherwise,
+  through the Mods pane's Ebony switch. Whether a Daedra drops (its threshold and Luck) and the Orcs are unchanged. The
+  ocean abyss's UpgradeLoot still steps Orcish to Daedric: only an Orcish piece reaches it, and those are rare. The
+  Sigil Broker sells, so it is not a drop. Pinned by `test/systems/daedricrare.test.js`, `tools/mutants/daedricrare.json`.
 - **ASF-DEATH**. Both death drops leave the condition they roll as `foundCondition`, SELL-AS-FOUND's mark, so online a
   drop mended at a smith sells as it fell, and its owner's own mends a third more (MEND-THIRD, `Economy-Arc.md`). The
   rolls and the draws are the mod's.
