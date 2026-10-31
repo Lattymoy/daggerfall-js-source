@@ -143,8 +143,8 @@
   {
     "name": "SERVERPOST-a-name-unchecked",
     "file": "tools/sendServerPost.mjs",
-    "old": "  for (const h of names) if (!HANDLE_RE.test(h)) throw new Error(`not a handle: ${JSON.stringify(h)}`);\n",
-    "new": "",
+    "old": "  for (const h of names) if (!HANDLE_RE.test(h)) throw new Error(`not a handle: ${JSON.stringify(h)}`);\n  return [...new Set(names.map((h) => h.toLowerCase()))];",
+    "new": "  return [...new Set(names.map((h) => h.toLowerCase()))];",
     "tests": [
       "test/tooling/serverpost_send.test.js"
     ],
@@ -153,8 +153,8 @@
   {
     "name": "SERVERPOST-the-bounds-dropped",
     "file": "tools/sendServerPost.mjs",
-    "old": "  if (!b || b.length > POST_BODY_MAX)",
-    "new": "  if (!b)",
+    "old": "  if (!b || b.length > POST_BODY_MAX) throw new Error(`not a message: 1 to ${POST_BODY_MAX} characters`);",
+    "new": "  if (!b) throw new Error(`not a message: 1 to ${POST_BODY_MAX} characters`);",
     "tests": [
       "test/tooling/serverpost_send.test.js"
     ],
@@ -163,8 +163,8 @@
   {
     "name": "SERVERPOST-the-gun-swapped",
     "file": "tools/sendServerPost.mjs",
-    "old": "  hourlock: () => mintHourlock(),",
-    "new": "  hourlock: () => ({ ...mintHourlock(), value: 1 }),",
+    "old": "  hourlock: () => mintHourlock(), // the Hourlock, as the Brass Remnant's spoils mint it (GUNS-UNFOUND: a gilded bow since 2026-10-23)",
+    "new": "  hourlock: () => ({ ...mintHourlock(), value: 1 }), // the Hourlock, as the Brass Remnant's spoils mint it (GUNS-UNFOUND: a gilded bow since 2026-10-23)",
     "tests": [
       "test/tooling/serverpost_send.test.js"
     ],
@@ -333,8 +333,8 @@
   {
     "name": "TAMRIEL-POST-a-guest-sent-it",
     "file": "tools/sendServerPost.mjs",
-    "old": "${record ? sqlText(record) : 'NULL'}, CAST(strftime('%s', 'now') AS INTEGER)\nFROM players p WHERE p.handle IS NOT NULL;`;",
-    "new": "${record ? sqlText(record) : 'NULL'}, CAST(strftime('%s', 'now') AS INTEGER)\nFROM players p;`;",
+    "old": "FROM players p WHERE p.handle IS NOT NULL;`;",
+    "new": "FROM players p;`;",
     "tests": [
       "test/tooling/serverpost_send.test.js"
     ],
@@ -343,8 +343,8 @@
   {
     "name": "TAMRIEL-POST-the-stones-not-ten",
     "file": "tools/sendServerPost.mjs",
-    "old": "\"currentCondition\":1000,\"stackCount\":10}';",
-    "new": "\"currentCondition\":1000,\"stackCount\":1}';",
+    "old": "  '{\"group\":\"UselessItems2\",\"templateIndex\":572,\"name\":\"Portal Stone\",\"value\":1250,\"maxCondition\":1000,\"currentCondition\":1000,\"stackCount\":10}';",
+    "new": "  '{\"group\":\"UselessItems2\",\"templateIndex\":572,\"name\":\"Portal Stone\",\"value\":1250,\"maxCondition\":1000,\"currentCondition\":1000,\"stackCount\":1}';",
     "tests": [
       "test/tooling/serverpost_send.test.js"
     ],
@@ -353,8 +353,8 @@
   {
     "name": "TAMRIEL-POST-the-send-not-once",
     "file": "tools/sendServerPost.mjs",
-    "old": "  return `INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)\nSELECT lower(hex(randomblob(12))), p.id, ${sqlText(b)}, ${sqlText(sender)}, ${sqlText(words.subject)}, ${sqlText(words.body)}, ${record ? sqlText(record) : 'NULL'}",
-    "new": "  return `INSERT INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)\nSELECT lower(hex(randomblob(12))), p.id, ${sqlText(b)}, ${sqlText(sender)}, ${sqlText(words.subject)}, ${sqlText(words.body)}, ${record ? sqlText(record) : 'NULL'}",
+    "old": "    words = postWords({ subject, body });\n  return `INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)",
+    "new": "    words = postWords({ subject, body });\n  return `INSERT INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)",
     "tests": [
       "test/tooling/serverpost_send.test.js"
     ],

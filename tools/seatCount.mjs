@@ -40,8 +40,12 @@ export function countSeats(rows, { regionNameOf, layout = null } = {}) {
   const seats = deriveTownSeats(rows, { regionNameOf, isHub: (k) => hubs.byMapId.has(k) });
   const byKey = new Map(rows.map((loc) => [loc.mapTableData?.mapId >>> 0, loc]));
   const out = seats.list.map((s) => {
-    let tally = { boards: -1, bounty: 0, rumour: 0 };   // -1: not laid out, never "none"
-    try { if (layout) tally = boardTally(layout(byKey.get(s.key)).blocks); } catch { /* not measured */ }
+    let tally = { boards: -1, bounty: 0, rumour: 0 }; // -1: not laid out, never "none"
+    try {
+      if (layout) tally = boardTally(layout(byKey.get(s.key)).blocks);
+    } catch {
+      /* not measured */
+    }
     return { ...s, regionName: regionNameOf ? regionNameOf(s.region) : String(s.region), ...tally };
   });
   return { seats: out, totals: seatTotals(seats.list) };
@@ -49,19 +53,37 @@ export function countSeats(rows, { regionNameOf, layout = null } = {}) {
 
 if (isMain(import.meta.url)) {
   const A2 = process.env.ARENA2_PATH;
-  if (!A2) { console.error('ARENA2_PATH is not set - point it at your own arena2 folder.'); process.exit(2); }
+  if (!A2) {
+    console.error('ARENA2_PATH is not set - point it at your own arena2 folder.');
+    process.exit(2);
+  }
   const bytes = (n) => new Uint8Array(readFileSync(`${A2}/${n}`));
-  const blocks = new BlocksFile(); blocks.load(bytes('BLOCKS.BSA'));
-  const maps = new MapsFile(); maps.load(bytes('MAPS.BSA'), bytes('CLIMATE.PAK'), bytes('POLITIC.PAK'));
+  const blocks = new BlocksFile();
+  blocks.load(bytes('BLOCKS.BSA'));
+  const maps = new MapsFile();
+  maps.load(bytes('MAPS.BSA'), bytes('CLIMATE.PAK'), bytes('POLITIC.PAK'));
   const { seats, totals } = countSeats(baseRows(maps), {
     regionNameOf: (r) => maps.getRegionName(r),
     layout: (loc) => layoutLocation(loc, maps, blocks, { enhanced: false, windmills: false }),
   });
-  if (process.argv.includes('--json')) { console.log(JSON.stringify({ seats, totals }, null, 2)); process.exit(0); }
+  if (process.argv.includes('--json')) {
+    console.log(JSON.stringify({ seats, totals }, null, 2));
+    process.exit(0);
+  }
   for (const s of seats) {
-    console.log(`${s.regionName.padEnd(20)} ${String(s.kingdom ?? '-').padEnd(10)} ${s.name.padEnd(24)} ${s.tier.padEnd(6)} ${s.isHub ? 'hub' : '   '}  (${s.pixel[0]},${s.pixel[1]})  boards ${String(s.boards).padStart(2)} rumour ${s.rumour}${s.boards < 0 ? '   (layout failed - not measured)' : s.rumour ? '' : '   <- NO NOTICE BOARD'}`);
+    console.log(
+      `${s.regionName.padEnd(20)} ${String(s.kingdom ?? '-').padEnd(10)} ${s.name.padEnd(24)} ${s.tier.padEnd(6)} ${s.isHub ? 'hub' : '   '}  (${s.pixel[0]},${s.pixel[1]})  boards ${String(s.boards).padStart(2)} rumour ${s.rumour}${s.boards < 0 ? '   (layout failed - not measured)' : s.rumour ? '' : '   <- NO NOTICE BOARD'}`,
+    );
   }
   const none = seats.filter((s) => s.boards === 0);
-  console.log(`\n${totals.seats} seats: ${totals.crown} crown, ${totals.palace} palace; ${totals.hubs} of them hubs. By kingdom: ${Object.entries(totals.kingdoms).map(([k, n]) => `${k} ${n}`).join(', ')}.`);
-  console.log(`${none.length} whose blocks place no board (DFU's own - the town panel's Notice Board stands in every one)${none.length ? `: ${none.map((s) => s.name).join(', ')}` : ''}.`);
+  console.log(
+    `\n${totals.seats} seats: ${totals.crown} crown, ${totals.palace} palace; ${totals.hubs} of them hubs. By kingdom: ${Object.entries(
+      totals.kingdoms,
+    )
+      .map(([k, n]) => `${k} ${n}`)
+      .join(', ')}.`,
+  );
+  console.log(
+    `${none.length} whose blocks place no board (DFU's own - the town panel's Notice Board stands in every one)${none.length ? `: ${none.map((s) => s.name).join(', ')}` : ''}.`,
+  );
 }

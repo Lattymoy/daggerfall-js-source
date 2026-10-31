@@ -94,8 +94,8 @@
   {
     "name": "DUNGEON-SEAMS-the-census-counts-open-space",
     "file": "tools/seamCensus.mjs",
-    "old": "if (worst > SEAM_HAIR && worst <= SEAM_REACH) {",
-    "new": "if (worst > SEAM_HAIR) {",
+    "old": "      if (worst > SEAM_HAIR && worst <= SEAM_REACH) {",
+    "new": "      if (worst > SEAM_HAIR) {",
     "tests": [
       "test/world/dungeonseams.test.js"
     ]
@@ -160,8 +160,8 @@
   {
     "name": "DUNGEON-SEAMS-the-exit-door-laid-everywhere",
     "file": "tools/seamCensus.mjs",
-    "old": "const lay = layoutRdbBlock(block, 0, false, getModelPre);",
-    "new": "const lay = layoutRdbBlock(block, 0, true, getModelPre);",
+    "old": "    const lay = layoutRdbBlock(block, 0, false, getModelPre);",
+    "new": "    const lay = layoutRdbBlock(block, 0, true, getModelPre);",
     "tests": [
       "test/world/dungeonseams.test.js"
     ],
@@ -170,8 +170,8 @@
   {
     "name": "DUNGEON-SEAMS-a-landing-measured-against-its-own-face",
     "file": "tools/seamCensus.mjs",
-    "old": "if (g.placement === pi && g.rawDf.some((q) => q[0] === r.x && q[1] === r.y && q[2] === r.z)) continue;",
-    "new": "if (g.placement === pi && g.df.some((q) => q[0] === p.x && q[1] === p.y && q[2] === p.z)) continue;",
+    "old": "            if (g.placement === pi && g.rawDf.some((q) => q[0] === r.x && q[1] === r.y && q[2] === r.z)) continue; // it moved with it",
+    "new": "            if (g.placement === pi && g.df.some((q) => q[0] === p.x && q[1] === p.y && q[2] === p.z)) continue; // it moved with it",
     "tests": [
       "test/world/dungeonseams.test.js"
     ],

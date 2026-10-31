@@ -198,51 +198,95 @@ const VIEWS = [
 const rgb = (hex) => `rgb(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(', ')})`;
 
 mkdirSync(OUT, { recursive: true });
-const vite = process.env.PROBE_PORT ? null : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
+const vite = process.env.PROBE_PORT
+  ? null
+  : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
 if (vite) await vite.listen();
 const port = vite ? vite.httpServer.address().port : Number(process.env.PROBE_PORT);
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 const fails = [];
 let checks = 0;
-const check = (ok, what) => { checks++; if (!ok) fails.push(what); };
-const settle = (page) => page.evaluate(() => new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(res))));
+const check = (ok, what) => {
+  checks++;
+  if (!ok) fails.push(what);
+};
+const settle = (page) =>
+  page.evaluate(() => new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(res))));
 try {
   await writeFile(join(ROOT, `tools/${PAGE_NAME}`), PAGE);
   for (const v of VIEWS) {
-    const ctx = await browser.newContext({ viewport: v.viewport, isMobile: !!v.isMobile, hasTouch: !!v.hasTouch, deviceScaleFactor: 2 });
+    const ctx = await browser.newContext({
+      viewport: v.viewport,
+      isMobile: !!v.isMobile,
+      hasTouch: !!v.hasTouch,
+      deviceScaleFactor: 2,
+    });
     const page = await ctx.newPage();
     page.on('pageerror', (err) => fails.push(`${v.name}: page error ${err.message}`));
-    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 90000,
+    });
     await page.waitForFunction(() => globalThis.__ready === true, null, { timeout: 90000 });
     const colours = await page.evaluate(() => globalThis.__colours);
     // ── THE PACK ──
     check(await page.evaluate(() => globalThis.__openPack()), `${v.name}: the pack did not open`);
     await page.waitForSelector('#enhanced-inventory .packtab', { timeout: 30000 });
-    check(await page.evaluate(() => globalThis.__tab('Armor')), `${v.name}: no Armor page`);   // the carried pieces are armour
+    check(await page.evaluate(() => globalThis.__tab('Armor')), `${v.name}: no Armor page`); // the carried pieces are armour
     await page.waitForSelector('#enhanced-inventory .itemrow', { timeout: 30000 });
     await page.evaluate(() => document.fonts.ready);
     await settle(page);
     const s = await page.evaluate(() => globalThis.__strip());
-    console.log(`${v.name}: strip ${s.shown ? `${s.strip.w.toFixed(0)}x${s.strip.h.toFixed(0)}` : 'NOT SHOWN'} - ${s.lines.map((l) => `${l.name} ${l.count} [${l.lit}] ${l.stage}`).join(' | ')}`);
+    console.log(
+      `${v.name}: strip ${s.shown ? `${s.strip.w.toFixed(0)}x${s.strip.h.toFixed(0)}` : 'NOT SHOWN'} - ${s.lines.map((l) => `${l.name} ${l.count} [${l.lit}] ${l.stage}`).join(' | ')}`,
+    );
     check(s.shown, `${v.name}: the doll's strip is not shown`);
     check(s.lines.length === 2, `${v.name}: ${s.lines.length} strip lines, not 2`);
-    const dag = s.lines.find((l) => l.set === 'dagon'), ruhn = s.lines.find((l) => l.set === 'ruhn');
-    check(dag && dag.name === "Dagon's Brand" && dag.count === '7/9' && dag.lit === 3 && dag.stage === 'Kindled', `${v.name}: the Dagon line reads ${JSON.stringify(dag)}`);
-    check(ruhn && ruhn.name === "Ruhn's Regalia" && ruhn.count === '2/9' && ruhn.lit === 1 && ruhn.stage === 'Faint', `${v.name}: the Ruhn line reads ${JSON.stringify(ruhn)}`);
-    check(dag && dag.nameColour === rgb(colours.dagon), `${v.name}: the Dagon line's name is ${dag?.nameColour}, not its set's ${rgb(colours.dagon)}`);
+    const dag = s.lines.find((l) => l.set === 'dagon'),
+      ruhn = s.lines.find((l) => l.set === 'ruhn');
+    check(
+      dag && dag.name === "Dagon's Brand" && dag.count === '7/9' && dag.lit === 3 && dag.stage === 'Kindled',
+      `${v.name}: the Dagon line reads ${JSON.stringify(dag)}`,
+    );
+    check(
+      ruhn && ruhn.name === "Ruhn's Regalia" && ruhn.count === '2/9' && ruhn.lit === 1 && ruhn.stage === 'Faint',
+      `${v.name}: the Ruhn line reads ${JSON.stringify(ruhn)}`,
+    );
+    check(
+      dag && dag.nameColour === rgb(colours.dagon),
+      `${v.name}: the Dagon line's name is ${dag?.nameColour}, not its set's ${rgb(colours.dagon)}`,
+    );
     if (s.shown && s.col) {
-      check(s.strip.x >= s.col.x - 0.5 && s.strip.r <= s.col.r + 0.5, `${v.name}: the strip runs out of its column sideways`);
-      check(s.strip.b <= s.col.b + 0.5, `${v.name}: the strip runs off the column's foot (${s.strip.b.toFixed(0)} > ${s.col.b.toFixed(0)})`);
+      check(
+        s.strip.x >= s.col.x - 0.5 && s.strip.r <= s.col.r + 0.5,
+        `${v.name}: the strip runs out of its column sideways`,
+      );
+      check(
+        s.strip.b <= s.col.b + 0.5,
+        `${v.name}: the strip runs off the column's foot (${s.strip.b.toFixed(0)} > ${s.col.b.toFixed(0)})`,
+      );
       check(!s.shelf || s.strip.y >= s.shelf.b - 0.5, `${v.name}: the strip overlaps the shelf`);
-      for (const l of s.lines) check(l.box.h >= 22, `${v.name}: the ${l.set} line is ${l.box.h}px tall - too small to press`);
+      for (const l of s.lines)
+        check(l.box.h >= 22, `${v.name}: the ${l.set} line is ${l.box.h}px tall - too small to press`);
       const pad = 10;
-      await page.screenshot({ path: join(OUT, `setui-${v.name}-strip.png`), clip: { x: Math.max(0, s.col.x - pad), y: Math.max(0, (s.shelf?.y ?? s.strip.y) - pad), width: s.col.w + pad * 2, height: s.strip.b - (s.shelf?.y ?? s.strip.y) + pad * 2 } });
+      await page.screenshot({
+        path: join(OUT, `setui-${v.name}-strip.png`),
+        clip: {
+          x: Math.max(0, s.col.x - pad),
+          y: Math.max(0, (s.shelf?.y ?? s.strip.y) - pad),
+          width: s.col.w + pad * 2,
+          height: s.strip.b - (s.shelf?.y ?? s.strip.y) + pad * 2,
+        },
+      });
     }
     const runes = await page.evaluate(() => globalThis.__runes());
     for (const set of ['dagon', 'ruhn', 'mora', 'nocturnal']) {
       const r = runes.find((x) => x.set === set);
       check(!!r, `${v.name}: no frame wears data-set="${set}"`);
-      check(r && r.rune.includes(encodeURIComponent(colours[set]).toLowerCase().replace('%23', '%23')), `${v.name}: the ${set} rune is not in its colour (${r?.rune.slice(0, 60)}...)`);
+      check(
+        r && r.rune.includes(encodeURIComponent(colours[set]).toLowerCase().replace('%23', '%23')),
+        `${v.name}: the ${set} rune is not in its colour (${r?.rune.slice(0, 60)}...)`,
+      );
     }
     await page.screenshot({ path: join(OUT, `setui-${v.name}-pack.png`) });
     // AUDIT SET U13: the hover card of a worn set piece stands inside the screen, whole
@@ -250,73 +294,184 @@ try {
       const tip = await page.evaluate((x) => globalThis.__hover(x), set);
       await settle(page);
       const t = await page.evaluate((x) => globalThis.__hover(x), set);
-      console.log(`${v.name}: hover card (${set}) ${t ? `${t.w.toFixed(0)}x${t.h.toFixed(0)} at ${t.y.toFixed(0)}..${t.b.toFixed(0)} (scroll ${t.scrollH}/${t.clientH}) ${t.parts}` : 'NONE'}`);
+      console.log(
+        `${v.name}: hover card (${set}) ${t ? `${t.w.toFixed(0)}x${t.h.toFixed(0)} at ${t.y.toFixed(0)}..${t.b.toFixed(0)} (scroll ${t.scrollH}/${t.clientH}) ${t.parts}` : 'NONE'}`,
+      );
       check(tip && t && t.set && t.sigil, `${v.name}: the ${set} hover card has no set or sigil block`);
-      check(t && t.y >= 0 && t.b <= v.viewport.height + 0.5 && t.x >= 0 && t.r <= v.viewport.width + 0.5, `${v.name}: the ${set} hover card runs off the screen (${t && `${t.y.toFixed(0)}..${t.b.toFixed(0)} of ${v.viewport.height}`})`);
-      check(t && t.scrollH <= t.clientH + 1, `${v.name}: the ${set} hover card is cut (${t?.scrollH} of ${t?.clientH})`);
-      if (t) await page.screenshot({ path: join(OUT, `setui-${v.name}-hover-${set}.png`), clip: { x: Math.max(0, t.x - 8), y: Math.max(0, t.y - 8), width: Math.min(v.viewport.width - Math.max(0, t.x - 8), t.w + 16), height: Math.min(v.viewport.height - Math.max(0, t.y - 8), t.h + 16) } });
+      check(
+        t && t.y >= 0 && t.b <= v.viewport.height + 0.5 && t.x >= 0 && t.r <= v.viewport.width + 0.5,
+        `${v.name}: the ${set} hover card runs off the screen (${t && `${t.y.toFixed(0)}..${t.b.toFixed(0)} of ${v.viewport.height}`})`,
+      );
+      check(
+        t && t.scrollH <= t.clientH + 1,
+        `${v.name}: the ${set} hover card is cut (${t?.scrollH} of ${t?.clientH})`,
+      );
+      if (t)
+        await page.screenshot({
+          path: join(OUT, `setui-${v.name}-hover-${set}.png`),
+          clip: {
+            x: Math.max(0, t.x - 8),
+            y: Math.max(0, t.y - 8),
+            width: Math.min(v.viewport.width - Math.max(0, t.x - 8), t.w + 16),
+            height: Math.min(v.viewport.height - Math.max(0, t.y - 8), t.h + 16),
+          },
+        });
       await page.evaluate(() => document.querySelectorAll('.inv-tip').forEach((n) => n.remove()));
     }
     // the card of a worn Dagon piece
     check(await page.evaluate(() => globalThis.__pickWorn('dagon')), `${v.name}: no worn Dagon piece to press`);
     await settle(page);
     let c = await page.evaluate(() => globalThis.__card());
-    console.log(`${v.name}: worn Dagon card ${c ? `${c.name} ${c.count} lit ${c.lit}/${c.places} awake ${c.awake}/${c.tiers} "${c.stageText}" sigil "${c.sigil}"` : 'NONE'}`);
-    check(c && c.set === 'dagon' && c.count === '7/9' && c.lit === 7 && c.places === 9 && c.awake === 3 && c.tiers === 3, `${v.name}: the worn Dagon card reads ${JSON.stringify(c && { ...c, text: undefined })}`);
-    check(c && c.stageText === 'Kindled · Bright: grow your Helm, reach Renown 20', `${v.name}: the stage line says "${c?.stageText}"`);
+    console.log(
+      `${v.name}: worn Dagon card ${c ? `${c.name} ${c.count} lit ${c.lit}/${c.places} awake ${c.awake}/${c.tiers} "${c.stageText}" sigil "${c.sigil}"` : 'NONE'}`,
+    );
+    check(
+      c && c.set === 'dagon' && c.count === '7/9' && c.lit === 7 && c.places === 9 && c.awake === 3 && c.tiers === 3,
+      `${v.name}: the worn Dagon card reads ${JSON.stringify(c && { ...c, text: undefined })}`,
+    );
+    check(
+      c && c.stageText === 'Kindled · Bright: grow your Helm, reach Renown 20',
+      `${v.name}: the stage line says "${c?.stageText}"`,
+    );
     check(c && c.nameColour === rgb(colours.dagon), `${v.name}: the set's name is ${c?.nameColour}`);
-    check(c && c.stageAlign === 'left' && c.stageSize === '12px', `${v.name}: the stage line is ${c?.stageAlign} at ${c?.stageSize} - the card's own paragraph rule won`);
+    check(
+      c && c.stageAlign === 'left' && c.stageSize === '12px',
+      `${v.name}: the stage line is ${c?.stageAlign} at ${c?.stageSize} - the card's own paragraph rule won`,
+    );
     check(c && !/null|undefined|NaN/.test(c.text), `${v.name}: the card says null/undefined: ${c?.text}`);
-    check(c && (c.sigil == null || /^A set's sigil|^\+|^Wakes/.test(c.sigil)) && !/null/.test(String(c.sigil)), `${v.name}: the sigil block says "${c?.sigil}"`);
+    check(
+      c && (c.sigil == null || /^A set's sigil|^\+|^Wakes/.test(c.sigil)) && !/null/.test(String(c.sigil)),
+      `${v.name}: the sigil block says "${c?.sigil}"`,
+    );
     if (c) {
       check(c.box.x >= 0 && c.box.r <= v.viewport.width + 0.5, `${v.name}: the set block runs off the screen sideways`);
-      await page.screenshot({ path: join(OUT, `setui-${v.name}-card-dagon.png`), clip: { x: Math.max(0, c.box.x - 12), y: Math.max(0, c.box.y - 12), width: Math.min(v.viewport.width, c.box.w + 24), height: Math.min(v.viewport.height - Math.max(0, c.box.y - 12), c.box.h + 24) } });
+      await page.screenshot({
+        path: join(OUT, `setui-${v.name}-card-dagon.png`),
+        clip: {
+          x: Math.max(0, c.box.x - 12),
+          y: Math.max(0, c.box.y - 12),
+          width: Math.min(v.viewport.width, c.box.w + 24),
+          height: Math.min(v.viewport.height - Math.max(0, c.box.y - 12), c.box.h + 24),
+        },
+      });
     }
     // a Mora helm in the pack: nothing of its set worn
     check(await page.evaluate(() => globalThis.__pickPack('mora')), `${v.name}: no Mora helm in the pack to press`);
     await settle(page);
     c = await page.evaluate(() => globalThis.__card());
-    check(c && c.set === 'mora' && c.count === '0/9' && c.lit === 0 && c.awake === 0 && c.stageText === 'Wear two pieces to wake it', `${v.name}: the Mora card reads ${JSON.stringify(c && { ...c, text: undefined })}`);
+    check(
+      c &&
+        c.set === 'mora' &&
+        c.count === '0/9' &&
+        c.lit === 0 &&
+        c.awake === 0 &&
+        c.stageText === 'Wear two pieces to wake it',
+      `${v.name}: the Mora card reads ${JSON.stringify(c && { ...c, text: undefined })}`,
+    );
     check(c && /^A set's sigil/.test(String(c.sigil)), `${v.name}: a set armour's sigil block says "${c?.sigil}"`);
-    if (c) await page.screenshot({ path: join(OUT, `setui-${v.name}-card-mora.png`), clip: { x: Math.max(0, c.box.x - 12), y: Math.max(0, c.box.y - 12), width: Math.min(v.viewport.width, c.box.w + 24), height: Math.min(v.viewport.height - Math.max(0, c.box.y - 12), c.box.h + 24) } });
+    if (c)
+      await page.screenshot({
+        path: join(OUT, `setui-${v.name}-card-mora.png`),
+        clip: {
+          x: Math.max(0, c.box.x - 12),
+          y: Math.max(0, c.box.y - 12),
+          width: Math.min(v.viewport.width, c.box.w + 24),
+          height: Math.min(v.viewport.height - Math.max(0, c.box.y - 12), c.box.h + 24),
+        },
+      });
     // the strip's Ruhn line shows a Ruhn piece
     check(await page.evaluate(() => globalThis.__pickStrip('ruhn')), `${v.name}: no Ruhn line to press`);
     await settle(page);
     c = await page.evaluate(() => globalThis.__card());
-    check(c && c.set === 'ruhn' && c.count === '2/9' && c.awake === 1, `${v.name}: the strip's press shows ${JSON.stringify(c && { set: c.set, count: c.count, awake: c.awake })}`);
+    check(
+      c && c.set === 'ruhn' && c.count === '2/9' && c.awake === 1,
+      `${v.name}: the strip's press shows ${JSON.stringify(c && { set: c.set, count: c.count, awake: c.awake })}`,
+    );
     // offline: the sets sleep
-    await page.evaluate(() => { globalThis.__closePack(); globalThis.__online(false); globalThis.__openPack(); });
+    await page.evaluate(() => {
+      globalThis.__closePack();
+      globalThis.__online(false);
+      globalThis.__openPack();
+    });
     await page.waitForSelector('#enhanced-inventory .packtab', { timeout: 30000 });
     await page.evaluate(() => globalThis.__tab('Armor'));
     await settle(page);
-    check(await page.evaluate(() => globalThis.__pickWorn('dagon')), `${v.name}: offline, no worn Dagon piece to press`);
+    check(
+      await page.evaluate(() => globalThis.__pickWorn('dagon')),
+      `${v.name}: offline, no worn Dagon piece to press`,
+    );
     await settle(page);
     c = await page.evaluate(() => globalThis.__card());
-    check(c && c.stage === 'asleep' && c.awake === 0 && c.stageText === 'Asleep · sets wake online', `${v.name}: offline the card reads ${JSON.stringify(c && { stage: c.stage, awake: c.awake, stageText: c.stageText })}`);
+    check(
+      c && c.stage === 'asleep' && c.awake === 0 && c.stageText === 'Asleep · sets wake online',
+      `${v.name}: offline the card reads ${JSON.stringify(c && { stage: c.stage, awake: c.awake, stageText: c.stageText })}`,
+    );
     check(c && /saturate/.test(c.filter), `${v.name}: offline the block is not dimmed (${c?.filter})`);
-    if (c) await page.screenshot({ path: join(OUT, `setui-${v.name}-card-offline.png`), clip: { x: Math.max(0, c.box.x - 12), y: Math.max(0, c.box.y - 12), width: Math.min(v.viewport.width, c.box.w + 24), height: Math.min(v.viewport.height - Math.max(0, c.box.y - 12), c.box.h + 24) } });
-    await page.evaluate(() => { globalThis.__closePack(); globalThis.__online(true); });
+    if (c)
+      await page.screenshot({
+        path: join(OUT, `setui-${v.name}-card-offline.png`),
+        clip: {
+          x: Math.max(0, c.box.x - 12),
+          y: Math.max(0, c.box.y - 12),
+          width: Math.min(v.viewport.width, c.box.w + 24),
+          height: Math.min(v.viewport.height - Math.max(0, c.box.y - 12), c.box.h + 24),
+        },
+      });
+    await page.evaluate(() => {
+      globalThis.__closePack();
+      globalThis.__online(true);
+    });
     // ── THE HUD ──
-    for (const [set, want] of [['dagon', { name: 'Rampage II', state: 'active' }], ['malacath', { name: 'Unbroken', state: 'active' }],
-      ['ruhn', { name: 'Wrath', state: 'active' }], ['nocturnal', { name: 'Eventide', state: 'recovering' }]]) {
+    for (const [set, want] of [
+      ['dagon', { name: 'Rampage II', state: 'active' }],
+      ['malacath', { name: 'Unbroken', state: 'active' }],
+      ['ruhn', { name: 'Wrath', state: 'active' }],
+      ['nocturnal', { name: 'Eventide', state: 'recovering' }],
+    ]) {
       const law = await page.evaluate((x) => globalThis.__power(x), set);
       await page.waitForTimeout(200);
       await settle(page);
       const chips = await page.evaluate(() => globalThis.__chips());
       const chip = chips.find((x) => x.set === set);
-      console.log(`${v.name}: HUD ${set} - law ${JSON.stringify(law.map((x) => `${x.name} ${x.text} ${x.state}`))} drawn ${JSON.stringify(chips.map((x) => `${x.name} ${x.text} ${x.state}`))}`);
-      check(chip && chip.name === want.name && chip.state === want.state, `${v.name}: the ${set} chip reads ${JSON.stringify(chip)}`);
-      check(chip && chip.colour === colours[set] && chip.border === rgb(chip.hi), `${v.name}: the ${set} tile's frame is ${chip?.border} (${chip?.colour}), not its set's ${colours[set]} lit`);
-      check(chip && chip.rune.includes(encodeURIComponent(colours[set])), `${v.name}: the ${set} tile's rune is not in its set's colour`);
-      check(chip && (want.state === 'recovering') === (chip.style === 'dashed'), `${v.name}: the ${set} chip's border is ${chip?.style}`);
-      check(chip && chip.box.x >= 0 && chip.box.r <= v.viewport.width + 0.5, `${v.name}: the ${set} chip runs off the screen`);
+      console.log(
+        `${v.name}: HUD ${set} - law ${JSON.stringify(law.map((x) => `${x.name} ${x.text} ${x.state}`))} drawn ${JSON.stringify(chips.map((x) => `${x.name} ${x.text} ${x.state}`))}`,
+      );
+      check(
+        chip && chip.name === want.name && chip.state === want.state,
+        `${v.name}: the ${set} chip reads ${JSON.stringify(chip)}`,
+      );
+      check(
+        chip && chip.colour === colours[set] && chip.border === rgb(chip.hi),
+        `${v.name}: the ${set} tile's frame is ${chip?.border} (${chip?.colour}), not its set's ${colours[set]} lit`,
+      );
+      check(
+        chip && chip.rune.includes(encodeURIComponent(colours[set])),
+        `${v.name}: the ${set} tile's rune is not in its set's colour`,
+      );
+      check(
+        chip && (want.state === 'recovering') === (chip.style === 'dashed'),
+        `${v.name}: the ${set} chip's border is ${chip?.style}`,
+      );
+      check(
+        chip && chip.box.x >= 0 && chip.box.r <= v.viewport.width + 0.5,
+        `${v.name}: the ${set} chip runs off the screen`,
+      );
       if (chips.length) {
         // the widget's tiles, as a player sees them at the left edge (UI3)
         const pad = 16;
         const xs = chips.flatMap((x) => [x.box.x, x.box.r]);
         const ys = chips.flatMap((x) => [x.box.y, x.box.b]);
-        const x0 = Math.max(0, Math.min(...xs) - pad), y0 = Math.max(0, Math.min(...ys) - pad);
-        await page.screenshot({ path: join(OUT, `setui-${v.name}-hud-${set}.png`), clip: { x: x0, y: y0, width: Math.min(v.viewport.width, Math.max(...xs) + pad) - x0, height: Math.min(v.viewport.height, Math.max(...ys) + pad) - y0 } });
+        const x0 = Math.max(0, Math.min(...xs) - pad),
+          y0 = Math.max(0, Math.min(...ys) - pad);
+        await page.screenshot({
+          path: join(OUT, `setui-${v.name}-hud-${set}.png`),
+          clip: {
+            x: x0,
+            y: y0,
+            width: Math.min(v.viewport.width, Math.max(...xs) + pad) - x0,
+            height: Math.min(v.viewport.height, Math.max(...ys) + pad) - y0,
+          },
+        });
       }
     }
     await ctx.close();
