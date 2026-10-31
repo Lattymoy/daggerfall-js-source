@@ -1,12 +1,13 @@
 // @ts-check
 // WG2 SETTLEMENT 2.0 (bible/03-World/World-2-Canon.md, "Settlements"): WHAT A TOWN MUST BE before it is saved or
 // published - every building whole (buildingRecord.js), every door within a step of a street, none floating over its
-// ground or buried in it (its pad, plinth, terrace or stilts accounted for), every street joined to the plaza, and no
-// building standing on another or in the water. Answers the problems as words a designer can act on; none for a sound
-// town.
+// ground or buried in it (its pads laid, its plinth, terrace or stilts accounted for), every street joined to the plaza,
+// no building standing on another or in the water, and all of it within the one map pixel the streamed world stands.
+// Answers the problems as words a designer can act on; none for a sound town.
 import { buildingProblems } from './buildingRecord.js';
 import { rectOf, overlaps, polyDist, spanPoints, PLINTH_M, TERRACE_M } from './settlementGen.js';
 import { PIXEL_M } from '../regionSampler.js';
+import { padAt } from '../padLaw.js';
 
 /** How far a door may stand from a street's edge (m), and how far a plinth may stand over its lowest corner. */
 export const DOOR_REACH = 6;
@@ -15,7 +16,8 @@ export const FLOAT_M = PLINTH_M + 0.4;
 /** @param {import('../regionSampler.js').RegionSampler} S @param {ReturnType<typeof import('./settlementGen.js').generateSettlement>} t
  *  @param {{ minted?: boolean }} [o] minted: the ids given (mintIds), so each building is checked whole */
 export function settlementProblems(S, t, o = {}) {
-  const out = [], cx = t.centre.x, cy = t.centre.y;
+  const out = [], cx = t.centre.x, cy = t.centre.y, pads = t.terrainOps.filter((op) => op.kind === 'pad');
+  const heightAt = (x, y) => { let h = S.heightAt(x, y); for (const p of pads) h = padAt(p, x, y, h); return h; };
   const L = (x, y) => [(x - cx) * PIXEL_M, (y - cy) * PIXEL_M];
   const roads = t.roads.map((r) => ({ ...r, pts: r.pts.map(([x, y]) => L(x, y)) }));
   // the streets join: each road meets the plaza or another road (one network)
@@ -39,7 +41,7 @@ export function settlementProblems(S, t, o = {}) {
     if (rects.some((r) => overlaps(r, rect))) out.push(`${name}: stands on another building`);
     rects.push(rect);
     // its ground: nowhere under the floor by more than its plinth may hide, nowhere over it (buried) past a step
-    const hs = spanPoints(ground).map(([x, y]) => S.heightAt(cx + x / PIXEL_M, cy + y / PIXEL_M));
+    const hs = spanPoints(ground).map(([x, y]) => heightAt(cx + x / PIXEL_M, cy + y / PIXEL_M));
     const level = b.at.z, lo = Math.min(...hs), hi = Math.max(...hs), stilts = b.ground?.kind === 'stilts', terrace = b.ground?.kind === 'terrace';
     if (!stilts && !terrace && level - lo > FLOAT_M) out.push(`${name}: floats ${(level - lo).toFixed(1)} m over its ground`);
     if (!stilts && !terrace && hi - level > 0.3) out.push(`${name}: buried ${(hi - level).toFixed(1)} m`);
@@ -51,6 +53,10 @@ export function settlementProblems(S, t, o = {}) {
       if (!(reach <= DOOR_REACH)) out.push(`${name}: its door is ${reach.toFixed(1)} m from a street`);
     }
   }
+  // the streamed world stands a town as one map pixel's location: every building and road inside the centre's pixel
+  const px = Math.floor(cx), py = Math.floor(cy), inPixel = (x, y) => x >= px && y >= py && x < px + 1 && y < py + 1;
+  for (const b of t.buildings) if (!rectOf(L(b.at.x, b.at.y), b.at.dir, b.footprint, 0).corners.every(([x, y]) => inPixel(cx + x / PIXEL_M, cy + y / PIXEL_M))) out.push(`${b.id ?? b.genKey}: outside the town's pixel`);
+  for (const r of t.roads) if (!r.pts.every(([x, y]) => inPixel(x, y))) { out.push(`a ${r.kind} leaves the town's pixel`); break; }
   const roles = new Set(t.buildings.map((b) => b.role));
   for (const f of t.features) if (f.kind === 'well') roles.add('well');
   for (const need of t.services ?? []) if (!roles.has(need === 'store' ? 'shop' : need)) out.push(`no ${need}`);

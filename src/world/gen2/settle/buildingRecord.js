@@ -3,10 +3,11 @@
 // from it (an inn, a shop, a temple...), who may enter, and an interior to reach. A legacy building is the same record
 // with its old key kept beside its id (rmbAdapter.js): `rmb:<mapId>:<key>@<layout>` - the layout stamp, because a
 // pack's layout gives a key to another building (systems/layoutPins.js). A new building's id is its settlement's and
-// a sequence the settlement never reuses; its home key is that sequence under the settlement's own map id, so it can
-// never be read as a building of Daggerfall's.
+// a sequence the settlement never reuses; its home key is its block slot's key under the settlement's own map id, so it
+// can never be read as a building of Daggerfall's.
 import { BUILDING_TYPES } from '../../buildingNames.js';
 import { HOME_KEY_MAX } from '../../../net/homeLaw.js';
+import { makeBuildingKey } from '../../../systems/talk/talkTopics.js';
 
 /** The lane of World 2.0's settlements' map ids (world/capitalLane.js holds 0x341, the capitals'). */
 export const WG2_SETTLEMENT_LANE = 0x342;
@@ -95,24 +96,41 @@ function placeOk(p) {
   return l2 > 0.999 && l2 < 1.001;
 }
 
+/** A block's side in metres, and the blocks a pixel holds each way (locationLayout.js: 4096 x 0.025, eight a pixel). */
+export const BLOCK_M = 102.4;
+/** The block a building stands in within its pixel's location: x east, y counted from the south (the layout's rows).
+ *  @param {{ x: number, y: number }} at */
+export function blockOf(at) {
+  const px = Math.floor(at.x), py = Math.floor(at.y), bx = Math.floor(((at.x - px) * 819.2) / BLOCK_M), by = Math.floor(((py + 1 - at.y) * 819.2) / BLOCK_M);
+  return [bx < 0 ? 0 : bx > 7 ? 7 : bx, by < 0 ? 0 : by > 7 ? 7 : by];
+}
+
 /**
  * THE ID BOOK: a settlement's buildings keep their ids across a regeneration. A generated building carries its `genKey`
- * (its district and plot); a regeneration that makes the same key on the same ground keeps the id, every other building
- * takes the next sequence, and a retired id is never given again. Answers the buildings with ids and the book's new
- * state (what retired). A house's home key is its sequence under the settlement's map id.
+ * (its district and plot); a regeneration that makes the same key on the same ground keeps the id and its slot, every
+ * other building takes the next sequence and the next record of its block, and a retired id or record is never given
+ * again. The slot [bx, by, record] is where the streamed world's location stands it, so a house's home key is the game's
+ * own building key for it (talkTopics.js makeBuildingKey) - the key its door, its deed and the account service read.
  * @param {string} settlement @param {number} mapId @param {Building[]} made
- * @param {{ next: number, byKey: Record<string, { id: string, x: number, y: number }>, retired: string[] }} [book]
+ * @param {{ next: number, byKey: Record<string, { id: string, x: number, y: number, slot: number[] }>, retired: string[], recs?: Record<string, number> }} [book]
  */
-export function mintIds(settlement, mapId, made, book = { next: 1, byKey: {}, retired: [] }) {
-  const next = { next: book.next, byKey: {}, retired: [...book.retired] }, used = new Set();
+export function mintIds(settlement, mapId, made, book = { next: 1, byKey: {}, retired: [], recs: {} }) {
+  const next = { next: book.next, byKey: {}, retired: [...book.retired], recs: { ...(book.recs ?? {}) } }, used = new Set();
   const out = made.map((b) => {
     const was = b.genKey ? book.byKey[b.genKey] : undefined;
     const same = was && !used.has(was.id) && Math.abs(was.x - b.at.x) * 819.2 < 2 && Math.abs(was.y - b.at.y) * 819.2 < 2;
     const id = same ? was.id : buildingId(settlement, next.next++);
+    let slot = same ? was.slot : null;
+    if (!slot) {
+      const [bx, by] = blockOf(b.at), cell = `${bx},${by}`, rec = next.recs[cell] ?? 0;
+      if (rec > 255) throw new Error(`${settlement}: block ${cell} holds more than 256 buildings`);
+      next.recs[cell] = rec + 1;
+      slot = [bx, by, rec];
+    }
     used.add(id);
-    if (b.genKey) next.byKey[b.genKey] = { id, x: b.at.x, y: b.at.y };
-    const seq = Number(id.slice(id.lastIndexOf('/b') + 2));
-    return b.role === 'house' ? { ...b, id, home: { mapId, key: seq } } : { ...b, id };
+    if (b.genKey) next.byKey[b.genKey] = { id, x: b.at.x, y: b.at.y, slot };
+    const homed = b.role === 'house' ? { home: { mapId, key: makeBuildingKey(slot[0], slot[1], slot[2]) } } : {};
+    return { ...b, id, slot, ...homed };
   });
   for (const k of Object.keys(book.byKey)) if (!used.has(book.byKey[k].id) && !next.retired.includes(book.byKey[k].id)) next.retired.push(book.byKey[k].id);
   return { buildings: out, book: next };

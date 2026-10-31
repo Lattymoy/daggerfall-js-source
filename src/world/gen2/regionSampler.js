@@ -7,6 +7,7 @@ import { fbm, ridged, seedOf, smoothstep } from './exact.js';
 import { Field } from './field.js';
 import { worldPixelKey } from '../worldWide/worldGrid.js';
 import { nearCourse, ROAD_SHOULDER_M } from './riverLaw.js';
+import { padAt, padReach } from './padLaw.js';
 import { SCALED_OCEAN_ELEVATION, STREAMING_TERRAIN_SCALE } from '../terrain/terrainSampler.js';
 
 /** Metres a world pixel. */
@@ -26,10 +27,11 @@ export const WATER_REACH_M = 160;
 export const kernelUnits = (m) => SCALED_OCEAN_ELEVATION + m / STREAMING_TERRAIN_SCALE;
 
 /**
- * A sampler over a decoded bake (bakeCodec.js decodeBake).
- * @param {import('./bakeCodec.js').DecodedBake} bake
+ * A sampler over a decoded bake (bakeCodec.js decodeBake). `bare`: its ground without its towns' pads (the validator
+ * lays a town's own).
+ * @param {import('./bakeCodec.js').DecodedBake} bake @param {{ bare?: boolean }} [o]
  */
-export function regionSampler(bake) {
+export function regionSampler(bake, o = {}) {
   const { header, fields } = bake, rect = header.rect, seed = seedOf(header.seed, 'grain');
   const elev = fields.elev, biome = fields.biome, lake = fields.lake;
   // the grain's height a cell, from its biome and its slope
@@ -88,6 +90,18 @@ export function regionSampler(bake) {
     if (biome.get(...elev.cellOf(x, y)) === DUNES) h += 5 * ridged(seed + 1, x * 6, y * 1.5, 2);
     return h;
   };
+  // the towns' pads (padLaw.js), filed by every world pixel they reach
+  /** @type {Map<number, any[]>} */
+  const padIndex = new Map();
+  for (const t of o.bare ? [] : header.towns ?? []) for (const p of t.terrainOps ?? []) {
+    if (p.kind !== 'pad') continue;
+    const r = padReach(p);
+    for (let y = Math.floor(p.at[1] - r); y <= Math.floor(p.at[1] + r); y++) for (let x = Math.floor(p.at[0] - r); x <= Math.floor(p.at[0] + r); x++) {
+      const k = worldPixelKey(x, y), list = padIndex.get(k);
+      if (list) list.push(p); else padIndex.set(k, [p]);
+    }
+  }
+  const padded = (x, y, h) => { const list = padIndex.get(worldPixelKey(Math.floor(x), Math.floor(y))); if (list) for (const p of list) h = padAt(p, x, y, h); return h; };
   // the authored roads (an editor document baked in): the ground eased to their level across width and shoulder
   const roads = header.roads ?? [];
   const eased = (x, y, h) => {
@@ -98,7 +112,7 @@ export function regionSampler(bake) {
     return h;
   };
   const api = {
-    id: header.id, rect, print: bake.print, header, fields,
+    id: header.id, rect, print: bake.print, header, fields, towns: header.towns ?? [],
     /** Is a world point in the region? */
     owns: inside,
     /** The share of the region's ground at a point: 0 at its edge and outside, 1 past BLEND_PX inside. */
@@ -111,7 +125,7 @@ export function regionSampler(bake) {
     heightAt(x, y) {
       const pool = poolAt(x, y);
       if (pool) return Math.min(land(x, y), pool.p.level - 1.8 * (1 - pool.u * pool.u) + 0.5 * pool.u * pool.u);
-      const h = roads.length ? eased(x, y, land(x, y)) : land(x, y), c = channel(x, y);
+      const h = padded(x, y, roads.length ? eased(x, y, land(x, y)) : land(x, y)), c = channel(x, y);
       if (!c) return h;
       if (c.d < c.half) { const u = c.d / c.half; return Math.min(h, c.surface - c.depth * (1 - u * u)); }
       const bankTop = Math.max(h, c.surface + 0.4);

@@ -7,8 +7,13 @@ import { join } from 'node:path';
 import { gzipSync, gunzipSync } from 'node:zlib';
 import { isMain } from './lib/isMain.mjs';
 import { TEST_REGIONS, testRegion } from '../src/world/gen2/testRegions.js';
-import { bakeRegion } from '../src/world/gen2/regionBake.js';
-import { encodeBake, bakePrint } from '../src/world/gen2/bakeCodec.js';
+import { bakeRegion, bakeTowns } from '../src/world/gen2/regionBake.js';
+import { encodeBake, decodeBake, bakePrint } from '../src/world/gen2/bakeCodec.js';
+import { regionSampler } from '../src/world/gen2/regionSampler.js';
+import { generateSettlement } from '../src/world/gen2/settle/settlementGen.js';
+import { settlementProblems } from '../src/world/gen2/settle/settlementValidate.js';
+import { mintIds, settlementMapId } from '../src/world/gen2/settle/buildingRecord.js';
+import { TEST_SETTLEMENTS } from '../src/world/gen2/settle/testSettlements.js';
 import { importPackage } from '../src/world/gen2/edit/contentPackage.js';
 import { canonReady } from '../src/world/gen2/canon.js';
 
@@ -18,7 +23,12 @@ export const BAKE_DIR = 'public/worldgen2';
 
 /** Bake one region spec to its bytes and print. */
 export function bakeBytes(spec, doc = null) {
-  const bytes = encodeBake(bakeRegion(spec, { doc }));
+  const bake = bakeRegion(spec, { doc });
+  // the region's towns: the prototypes and any the document placed, made on the bake's own ground (regionBake.js bakeTowns)
+  const docTowns = (doc?.layers ?? []).filter((L) => L.visible).flatMap((L) => L.ops.filter((o) => o.kind === 'settlement').map((o) => o.spec));
+  const towns = [...TEST_SETTLEMENTS.filter((t) => t.region === spec.id), ...docTowns];
+  bake.towns = bakeTowns(encodeBake(bake), towns, regionSampler, { generate: generateSettlement, problems: settlementProblems, mint: mintIds, mapId: settlementMapId }, decodeBake);
+  const bytes = encodeBake(bake);
   return { bytes, print: bakePrint(bytes) };
 }
 /** A served bake's raw bytes (its gzip opened). @param {string} file */

@@ -14,6 +14,7 @@ import { WATER } from '../hydrology.js';
 import { ROLES } from './buildingRecord.js';
 import { PIXEL_M } from '../regionSampler.js';
 import { worldPixelKey } from '../../worldWide/worldGrid.js';
+import { padAt, PAD_MARGIN_M } from '../padLaw.js';
 
 export const STYLES = Object.freeze(STYLES_JSON.styles);
 export const SETTLEMENT_TYPES = Object.freeze(TYPES_JSON.types);
@@ -56,7 +57,9 @@ export function generateSettlement(S, spec) {
   if (!type || !style) throw new Error(`settlement ${spec.id}: type ${spec.type} or style ${spec.style} unknown`);
   const seed = seedOf(spec.seed, spec.id), cx = spec.x, cy = spec.y;
   const W = (lx, ly) => [cx + lx / PIXEL_M, cy + ly / PIXEL_M];
-  const ground = (lx, ly) => S.heightAt(...W(lx, ly));
+  // the ground with every pad laid so far: a later building stands on what the earlier ones left (padLaw.js)
+  const pads = [];
+  const ground = (lx, ly) => { const [x, y] = W(lx, ly); let h = S.heightAt(x, y); for (const p of pads) h = padAt(p, x, y, h); return h; };
   const wetAt = (lx, ly) => { const e = /** @type {any} */ (S.env(...W(lx, ly))); return !!(e.water & WATER.wetland); };
   const waterAt = (lx, ly) => !!S.waterAt(...W(lx, ly));
   /** Water, or a channel's bank (a ray's step must not jump a narrow river). */
@@ -210,6 +213,7 @@ export function generateSettlement(S, spec) {
   const placed = keep ? keep.buildings.filter((b) => !regen.has(b.district)).map((b) => ({ ...b, rect: rectOf(toLocal(b.at.x, b.at.y), b.at.dir, b.footprint, 0) })) : [];
   const features = keep ? keep.features.filter((f) => !regen.has(f.district)) : [];
   const ops = keep ? keep.terrainOps.filter((o) => !regen.has(o.district)) : [];
+  pads.push(...ops.filter((o) => o.kind === 'pad'));
   const made = [];
   const plotOk = (r) => !placed.some((b) => overlaps(b.rect, r)) && !made.some((b) => overlaps(b.rect, r));
   const [pw0, pw1] = style.plot[0], [pd0, pd1] = style.plot[1];
@@ -292,7 +296,9 @@ export function generateSettlement(S, spec) {
       ground: { kind: m.stand.kind, level },
     });
     if (m.stand.kind === 'terrace') {
-      ops.push({ kind: 'pad', district: m.district.key, at: [x, y], dir: m.dir, size: [fp[0] + 2, fp[1] + 2], level, falloff: 4 });
+      const pad = { kind: 'pad', district: m.district.key, at: [x, y], dir: m.dir, size: [fp[0] + 2 * PAD_MARGIN_M, fp[1] + 2 * PAD_MARGIN_M], level };
+      ops.push(pad);
+      pads.push(pad);
       if (level - m.stand.lo > PLINTH_M) features.push({ kind: 'retaining', district: m.district.key, at: [x, y], dir: m.dir, height: level - m.stand.lo });
     }
     if (m.stand.kind === 'stilts') features.push({ kind: 'platform', district: m.district.key, at: [x, y], size: fp, level, stilts: level - m.stand.lo });

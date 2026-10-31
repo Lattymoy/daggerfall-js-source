@@ -114,3 +114,24 @@ export function applyBiomePaint(doc, biome) {
     }
   }
 }
+
+/**
+ * THE REGION'S TOWNS, BAKED (Settlement System 2.0's layer of the file): each of `towns` made on the region's own ground
+ * (the bake decoded and sampled as a client samples it), its ids minted under its ordinal's map id, and refused whole if
+ * the validator finds a problem - a bake never ships a town that floats, buries or strands a door. Every client then
+ * stands the same records (GROUND-AGREE); nothing is generated at run time.
+ * @param {Uint8Array} bytes the encoded bake @param {readonly any[]} towns settlement specs with `ordinal`
+ * @param {(d: any) => any} sampler regionSampler @param {{ generate: Function, problems: Function, mint: Function, mapId: Function }} law
+ */
+export function bakeTowns(bytes, towns, sampler, law, decode) {
+  if (!towns.length) return [];
+  const S = sampler(decode(bytes));
+  return towns.map((spec) => {
+    const t = law.generate(S, spec), mapId = law.mapId(spec.ordinal), { buildings } = law.mint(t.id, mapId, t.buildings);
+    const town = { ...t, mapId, ordinal: spec.ordinal, buildings };
+    const bad = law.problems(S, town, { minted: true });
+    if (bad.length) throw new Error(`wg2: ${spec.id} cannot be baked: ${bad.slice(0, 4).join('; ')}`);
+    const { keep, ...plain } = town;
+    return plain;
+  });
+}

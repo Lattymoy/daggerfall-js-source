@@ -11,7 +11,7 @@ import { decodeBake } from '../../../src/world/gen2/bakeCodec.js';
 import { regionSampler } from '../../../src/world/gen2/regionSampler.js';
 import { generateSettlement } from '../../../src/world/gen2/settle/settlementGen.js';
 import { settlementProblems } from '../../../src/world/gen2/settle/settlementValidate.js';
-import { siteCandidates, siteNeeds } from '../../../src/world/gen2/settle/siteSelect.js';
+import { siteNeeds } from '../../../src/world/gen2/settle/siteSelect.js';
 import { TEST_SETTLEMENTS } from '../../../src/world/gen2/settle/testSettlements.js';
 import { mintIds, buildingProblems, settlementMapId, parseBuildingId, legacyBuildingId, WG2_SETTLEMENT_LANE } from '../../../src/world/gen2/settle/buildingRecord.js';
 import { legacyBuildings } from '../../../src/world/gen2/settle/rmbAdapter.js';
@@ -20,23 +20,32 @@ import { isMadePlaceId } from '../../../src/world/placeIds.js';
 import { homeBuildingKeyOk, homeMapIdOk } from '../../../src/net/homeLaw.js';
 import { CAPITAL_LANE } from '../../../src/world/capitalLane.js';
 
-const S = {};
-for (const id of ['hammerfell-test', 'blackmarsh-test']) S[id] = regionSampler(decodeBake(readBake(`${BAKE_DIR}/${id}.wg2.gz`)));
+const S = {}, BAKED = {};
+for (const id of ['hammerfell-test', 'blackmarsh-test']) {
+  const d = decodeBake(readBake(`${BAKE_DIR}/${id}.wg2.gz`));
+  S[id] = regionSampler(d, { bare: true });   // the ground the towns were made on; each town's validator lays its pads
+  BAKED[id] = regionSampler(d);
+}
 const towns = new Map();
+/** A prototype town made again on its region's ground (as the bake made it, before its ids). */
 const town = (spec) => {
-  if (!towns.has(spec.id)) {
-    const s = S[spec.region], c = spec.x ? spec : siteCandidates(s, spec.type, { step: 3, count: 1 })[0];
-    towns.set(spec.id, generateSettlement(s, { ...spec, x: c.x, y: c.y }));
-  }
+  if (!towns.has(spec.id)) towns.set(spec.id, generateSettlement(S[spec.region], spec));
   return towns.get(spec.id);
 };
+/** The town the bake ships. */
+const baked = (spec) => BAKED[spec.region].towns.find((t) => t.id === spec.id);
 
-for (const [i, spec] of TEST_SETTLEMENTS.entries()) {
+for (const spec of TEST_SETTLEMENTS) {
   test(`WG2 SETTLEMENT ${spec.name} (${spec.type}, ${spec.style}): sound - its buildings whole once minted, its doors on its streets, nothing floating, buried or in the water, its streets one network, its services and its dock standing; no RMB block read (mutants: the plinth, the door's street, the services, the dock)`, () => {
-    const t = town(spec), s = S[spec.region];
+    const t = town(spec), s = S[spec.region], shipped = baked(spec);
     assert.deepEqual(settlementProblems(s, t), []);
-    const { buildings } = mintIds(t.id, settlementMapId(i + 1), t.buildings);
+    const { buildings } = mintIds(t.id, settlementMapId(spec.ordinal), t.buildings);
     assert.deepEqual(settlementProblems(s, { ...t, buildings }, { minted: true }), []);
+    assert.deepEqual(settlementProblems(s, shipped, { minted: true }), [], 'the bake ships it sound');
+    const plain = (v) => JSON.parse(JSON.stringify(v));   // the file's JSON (a -0 is a 0 there)
+    assert.deepEqual(shipped.buildings.map((b) => [b.id, b.at, b.prefab]), plain(buildings.map((b) => [b.id, b.at, b.prefab])), 'the bake ships what the law makes');
+    assert.equal(shipped.mapId, settlementMapId(spec.ordinal));
+    for (const b of shipped.buildings.filter((x) => x.ground.kind === 'terrace')) assert.ok(Math.abs(BAKED[spec.region].heightAt(b.at.x, b.at.y) - b.at.z) < 1e-6, 'the streamed ground stands on its pad');
     assert.ok(buildings.length >= 10, `${buildings.length} buildings`);
     assert.ok(buildings.every((b) => b.prefab !== 'rmb' && !b.legacy && b.interior.kind !== 'rmb'));
     for (const b of buildings) if (b.home) assert.ok(homeBuildingKeyOk(b.home.key) && homeMapIdOk(b.home.mapId));
@@ -45,7 +54,7 @@ for (const [i, spec] of TEST_SETTLEMENTS.entries()) {
 
 test('WG2 SETTLEMENT: one spec makes one town, and the culture shapes it - stilts and boardwalk water in Black Marsh, terraces with their pads and walls in the Dragontails, never stilts under a Redguard roof (mutants: the stilts, the pad, the walls)', () => {
   const [tava, mine, hold, , hist] = TEST_SETTLEMENTS.map(town);
-  assert.deepEqual(generateSettlement(S['hammerfell-test'], { ...TEST_SETTLEMENTS[0] }), tava);
+  assert.deepEqual(generateSettlement(S['hammerfell-test'], { ...TEST_SETTLEMENTS[0] }), tava, 'one spec, one town');
   assert.ok(hist.buildings.filter((b) => b.ground.kind === 'stilts').length > hist.buildings.length / 2);
   assert.ok(hist.features.some((f) => f.kind === 'platform' && f.stilts > 0));
   for (const t of [tava, mine, hold]) assert.ok(t.buildings.every((b) => b.ground.kind !== 'stilts'));
@@ -65,7 +74,7 @@ test('WG2 SITES: each type finds its own ground - the mine by the ore, the fortr
 });
 
 test('WG2 REGENERATE: one district made again leaves every other district\'s buildings where they stood with their ids; a retired id is never given again (mutants: the kept districts, the id book)', () => {
-  const spec = TEST_SETTLEMENTS[2], t = town(spec), mapId = settlementMapId(3);
+  const spec = TEST_SETTLEMENTS[2], t = town(spec), mapId = settlementMapId(spec.ordinal);
   const first = mintIds(t.id, mapId, t.buildings);
   const tally = new Map();
   for (const b of t.buildings) tally.set(b.district, (tally.get(b.district) ?? 0) + 1);
