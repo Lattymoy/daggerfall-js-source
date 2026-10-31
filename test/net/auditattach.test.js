@@ -56,7 +56,6 @@ test('AUDIT ATTACH A1: the WIDEST attachment a place socket carries - the widest
   // ribbon, arms, villain meter or hidden glyph, and its pose no blow, kill or ten other fields (placeWidest.mjs WIDE_WORN,
   // WIDE_REST), though this note said the kits were on it. The widest is 344 under the runtime's 2048, not half of it;
   // the hidden glyphs as a mask, as `gb` is, would take back some 200.
-  // PIN MOVED (AUDIT DRAGON-CELL): the socket's `at`, which Room.fetch writes and the fake now does - 1723 measured, 325 under 2048
   assert.ok(bytes <= 1750, `the widest place attachment is ${bytes} bytes - under the runtime's 2048 with room for the next field`);
   assert.ok(bytes > 1500, `and it is the wide one: ${bytes} bytes`);
 }));
@@ -81,7 +80,6 @@ test('AUDIT ATTACH A1 (AUDIT FB1018D L4-4): THE WIDEST DUNGEON INSTANCE SOCKET -
   // PIN MOVED (STOREFRONT): the glyphs as their mask on the dungeon's wider key - 1013
   // PIN MOVED (STOREFRONT, the wire audit): 1760 measured, from 1013 - the worn claims, the hidden glyphs and the pose's
   // fields the fixture left out (the building's note above); 288 under the runtime's 2048
-  // PIN MOVED (AUDIT DRAGON-CELL): and its `at` - 1778 measured, 270 under 2048
   assert.ok(bytes <= 1800, `the widest dungeon instance attachment is ${bytes} bytes`);
 }));
 

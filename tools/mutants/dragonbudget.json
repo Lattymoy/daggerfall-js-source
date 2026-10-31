@@ -1,0 +1,11 @@
+[
+  { "name": "DRAGON-BUDGET-no-count", "file": "server/src/dragonFights.js", "old": "  if (!cells.has(b.c) && cells.size >= DRAGON_JUDGED_CELLS_MAX) return json({ ok: false });\n", "new": "", "tests": ["test/net/dragon/dragonbudget.test.js"] },
+  { "name": "DRAGON-BUDGET-a-cell-counted-twice", "file": "server/src/dragonFights.js", "old": "  if (!cells.has(b.c) && cells.size >= DRAGON_JUDGED_CELLS_MAX)", "new": "  if (cells.size >= DRAGON_JUDGED_CELLS_MAX)", "tests": ["test/net/dragon/dragonbudget.test.js"] },
+  { "name": "DRAGON-BUDGET-one-count-for-every-account", "file": "server/src/dragonFights.js", "old": "const key = `${b.w}|${b.sub}`, cells", "new": "const key = `${b.w}`, cells", "tests": ["test/net/dragon/dragonbudget.test.js"] },
+  { "name": "DRAGON-BUDGET-the-hub-unasked", "file": "server/src/dragonFights.js", "old": " || !(await judged(room, a, p, m.w))) return;", "new": ") return;", "tests": ["test/net/dragon/dragonbudget.test.js"] },
+  { "name": "DRAGON-BUDGET-asked-of-every-ask", "file": "server/src/dragonFights.js", "old": "  if (mine?.has(c)) return true;\n", "new": "", "tests": ["test/net/dragon/dragonbudget.test.js"] },
+  { "name": "DRAGON-BUDGET-the-in-unbudgeted", "file": "server/src/dragonFights.js", "old": "(dragonWatchesAbout(now).includes(m.w) && !(await judged(room, a, mapPixelOfWire(a.pose.x, a.pose.z), m.w)))", "new": "false", "tests": ["test/net/dragon/dragonbudget.test.js"] },
+  { "name": "DRAGON-BUDGET-a-failed-answer-granted", "file": "server/src/dragonFights.js", "old": "  if (!ok) return false;\n  for (const k of s.judged.keys())", "new": "  for (const k of s.judged.keys())", "tests": ["test/net/dragon/dragonbudget.test.js"] },
+  { "name": "DRAGON-BUDGET-a-word-unread", "file": "server/src/dragonFights.js", "old": "|| typeof b.c !== 'string' || !/^-?\\d{1,4},-?\\d{1,4}$/.test(b.c)) return json({ ok: false }, 400);", "new": ") return json({ ok: false }, 400);", "tests": ["test/net/dragon/dragonbudget.test.js"] },
+  { "name": "DRAGON-BUDGET-the-max", "file": "src/net/dragon/dragonLaw.js", "old": "export const DRAGON_JUDGED_CELLS_MAX = 24;", "new": "export const DRAGON_JUDGED_CELLS_MAX = 25;", "tests": ["test/net/dragon/dragonbudget.test.js"] }
+]

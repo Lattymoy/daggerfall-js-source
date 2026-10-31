@@ -67,9 +67,9 @@ test('AUDIT DRAGON-CELL D1 a quiet omen is told as a far one is: null at a quiet
   while (!(qc = Law.dragonCandidates(await watchOf(quiet)).find((c) => !Law.isDragonOmen(c)))) quiet++;
   const Q = siteOf(qc);
   await withRelay(async ({ room, say, set, now }) => {
-    const r = room(cellRoomOfWire(Q.sx, Q.sz)), a = r.connect();
+    const r = aged(room(cellRoomOfWire(Q.sx, Q.sz))), a = r.connect();
     await r.hello(a, 'peer-0001', posed(Q.px, Q.py));
-    set(now() + DRAGON_TELL_DWELL_MS + 1000);   // stood: only the omen's quiet keeps its seed
+    set(now() + 1000);   // stood: only the omen's quiet keeps its seed
     await say(r, a, { k: 'ask', w: quiet });
     assert.deepEqual(omens(a), [[quiet, null]]);
   }, { start: Law.dragonQuietAt(quiet) + 1000 });
@@ -150,7 +150,7 @@ test('AUDIT DRAGON-CELL II E2 an `in` from a socket not yet stood in its cell he
 
 test('AUDIT DRAGON-CELL D6 the relay: a battle\'s pose is judged on its own map frame, as a cell\'s - its players see the sky once they have stood (AUDIT DRAGON-HIDDEN B1); a room that judges no pose answers nothing (mutants: a battle never judged; the hub answered)', async () => {
   await withRelay(async ({ room, say, set }) => {
-    const b = room(siegeRoomKey(3021, 20)), a = b.connect();
+    const b = aged(room(siegeRoomKey(3021, 20))), a = b.connect();   // an old socket: a battle's first clock is still its first judging
     await b.hello(a, 'peer-0001', posed(SITE.px, SITE.py), { glyphs: ['dev'] });
     const h = room(SOCIAL_ROOM), c = h.connect();
     await h.hello(c, 'peer-0002');

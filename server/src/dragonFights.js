@@ -6,12 +6,12 @@
 // few hooks that call in here; the state rides the room under `_dg`.
 import { DRAGON_SEAM } from '../../src/net/bossSeam.js';
 import * as dragonBrain from '../../src/net/dragon/dragonBrain.js';
-import { dragonHolds, dragonAdmits, dragonFightId, dragonLookOf, dragonTimes, dragonSeedTold, dragonWatchesAbout, dragonCandidateAt, dragonCandidateOf, dragonQuietAt, isDragonOmen, DRAGON_CELLS_A_WATCH, DRAGON_CELL_PX, DRAGON_SITES_MAX, DRAGON_NATIVE_PER_M, DRAGON_BRAIN_MIN, DRAGON_REMAINS_MS } from '../../src/net/dragon/dragonLaw.js';
+import { dragonHolds, dragonAdmits, dragonFightId, dragonLookOf, dragonTimes, dragonSeedTold, dragonWatchesAbout, dragonCandidateAt, dragonCandidateOf, dragonQuietAt, isDragonOmen, dragonJudgedCell, DRAGON_JUDGED_CELLS_MAX, DRAGON_CELLS_A_WATCH, DRAGON_CELL_PX, DRAGON_SITES_MAX, DRAGON_NATIVE_PER_M, DRAGON_BRAIN_MIN, DRAGON_REMAINS_MS } from '../../src/net/dragon/dragonLaw.js';
 import { dragonWatchKeyOf, dragonOmenSeeds } from '../../src/net/dragon/dragonSeed.js';
 import { roostLeg } from '../../src/net/dragon/dragonBody.js';
 import { mintDragonReceipt, readDragonReceipt } from '../../src/net/dragon/dragonReceipt.js';
 import { bodyCensus } from '../../src/net/bossBody.js';
-import { validDragonOut, cellRoomOfWire, mapPixelOfWire, isCellRoom, SOCIAL_ROOM, DRAGON_INTERNAL_FELL, DRAGON_TELL_RETRY_MS, DRAGON_FIGHT_KEY, DRAGON_FIGHTS_KEY, DRAGON_RC_PREFIX } from '../../src/net/wire.js';
+import { validDragonOut, cellRoomOfWire, mapPixelOfWire, isCellRoom, SOCIAL_ROOM, DRAGON_INTERNAL_FELL, DRAGON_INTERNAL_JUDGE, DRAGON_TELL_RETRY_MS, DRAGON_FIGHT_KEY, DRAGON_FIGHTS_KEY, DRAGON_RC_PREFIX } from '../../src/net/wire.js';
 import { junkOutsideCover, inCover } from './cellNodes.js';
 import { isBattleRoom } from '../../src/net/siege/siegeRef.js';   // AUDIT DRAGON-CELL II E1: a battle's pose is judged, a private room's not
 import { ROOM_CALL_MS, Bounded, HUB_KEEP_MAX } from './relayScale.js';
@@ -26,7 +26,7 @@ const storeKey = (id) => `${DRAGON_FIGHT_KEY}:${id}`;
 const say = (room, ws, w) => room._send(ws, JSON.stringify({ t: 'dragon', ...w }));
 
 /** The room's dragon state, made on first use. @param {any} room */
-const dg = (room) => (room._dg ??= { fights: undefined, savedAt: new Map(), falling: new Map(), armedTo: 0, restAt: 0, key: undefined, seeds: new Map(), noRcpt: new Bounded(HUB_KEEP_MAX), stood: new WeakMap() });   // AUDIT DRAGON: the serpent's bound (SCALE5a), never a set emptied whole
+const dg = (room) => (room._dg ??= { fights: undefined, savedAt: new Map(), falling: new Map(), armedTo: 0, restAt: 0, key: undefined, seeds: new Map(), noRcpt: new Bounded(HUB_KEEP_MAX), stood: new WeakMap(), judged: new Map(), budget: new Map() });   // AUDIT DRAGON: the serpent's bound (SCALE5a), never a set emptied whole
 
 /** DRAGON-HIDDEN: watch `w`'s omens' seeds `{w, seeds}` - each the relay's secret (net/dragon/dragonSeed.js
  *  dragonOmenSeeds), kept for the watches about - or null: no GATE_SIGNING_KEY, no dragon. DRAGON-CELL: one is told only
@@ -170,6 +170,43 @@ function stood(room, ws, a, p, now) {
   return now - r.at >= DRAGON_TELL_DWELL_MS;
 }
 
+/** DRAGON-BUDGET: may this socket's account be judged in the cell of pixel `p` this watch - a cell this room asked of the
+ *  hub before, or one the hub grants under DRAGON_JUDGED_CELLS_MAX. Many sockets, rooms and pages of one account share it.
+ *  No hub to ask (a lone room) grants; a hub that fails to answer refuses, and the cell is asked again at the next ask. */
+async function judged(room, a, p, w) {
+  const c = dragonJudgedCell(p[0], p[1]), key = `${w}|${a.sub}`, s = dg(room), mine = s.judged.get(key);
+  if (mine?.has(c)) return true;
+  const rooms = room.env?.ROOMS;
+  if (!rooms?.idFromName || !rooms?.get) return true;
+  let ok = false;
+  try {
+    const res = await rooms.get(rooms.idFromName(SOCIAL_ROOM)).fetch(new Request(`https://relay.internal${DRAGON_INTERNAL_JUDGE}`, { method: 'POST', body: JSON.stringify({ w, sub: a.sub, c }), signal: AbortSignal.timeout(ROOM_CALL_MS) }));
+    ok = !!res?.ok && (await res.json())?.ok === true;
+  } catch (e) { console.warn('[dragon] hub budget', e?.message ?? e); }
+  if (!ok) return false;
+  for (const k of s.judged.keys()) if (!dragonWatchesAbout(Date.now()).includes(Number(k.split('|')[0]))) s.judged.delete(k);
+  s.judged.set(key, (mine ?? new Set()).add(c));
+  return true;
+}
+
+/**
+ * DRAGON-BUDGET, THE HUB'S HALF: an account judged in one more cell this watch - granted while its cells this watch number
+ * under DRAGON_JUDGED_CELLS_MAX (a cell granted before is granted again); a watch no longer about is forgotten. Kept with
+ * the instance: a hub that sleeps starts every account's count again. @param {any} room @param {Request} request
+ */
+export async function dragonJudgeInternal(room, request) {
+  let b = null;
+  try { b = await request.json(); } catch { /* refused below */ }
+  const now = Date.now();
+  if (!Number.isSafeInteger(b?.w) || !dragonWatchesAbout(now).includes(b.w) || typeof b.sub !== 'string' || !b.sub || b.sub.length > 64 || typeof b.c !== 'string' || !/^-?\d{1,4},-?\d{1,4}$/.test(b.c)) return json({ ok: false }, 400);
+  const budget = dg(room).budget;
+  for (const k of budget.keys()) if (!dragonWatchesAbout(now).includes(Number(k.split('|')[0]))) budget.delete(k);
+  const key = `${b.w}|${b.sub}`, cells = budget.get(key) ?? new Set();
+  if (!cells.has(b.c) && cells.size >= DRAGON_JUDGED_CELLS_MAX) return json({ ok: false });
+  budget.set(key, cells.add(b.c));
+  return json({ ok: true });
+}
+
 /** DRAGON-HIDDEN: an `ask` - watch `w`'s omen, only for a watch about whose landing is past (never one to come). AUDIT
  *  DRAGON-HIDDEN B1, B2: in a room that can judge a pose, each time asked; the dragon bucket bounds the asking.
  *  DRAGON-CELL (the owner chose "Cell-scoped"): an omen's seed names its dragon's pixel, so it is told only to a socket
@@ -179,7 +216,7 @@ function stood(room, ws, a, p, now) {
 async function dragonAsk(room, ws, a, m, now) {
   if (!dragonWatchesAbout(now).includes(m.w)) return;
   const p = judgedPixel(a);
-  if (!p || !stood(room, ws, a, p, now)) return;
+  if (!p || !stood(room, ws, a, p, now) || !(await judged(room, a, p, m.w))) return;   // DRAGON-BUDGET: and within its account's cells
   const o = await dragonOmenOf(room, m.w), c = o ? dragonCandidateAt(o, p[0], p[1]) : null;
   if (c && isDragonOmen(c) && dragonSeedTold(c, m.w, now)) { say(room, ws, { k: 'omen', w: m.w, s: c.s }); return; }   // DRAGON-HIDDEN-TIME: silent until it lands
   if (now >= dragonQuietAt(m.w)) say(room, ws, { k: 'omen', w: m.w, s: null });
@@ -204,7 +241,7 @@ async function dragonIn(room, ws, a, m, now, fights) {
   if (Math.hypot(at.x, at.z) > dragonBrain.DRAGON_ADMIT_R) { no('far'); return; }
   // AUDIT DRAGON-CELL II E2: and none for a socket not yet stood in its cell - `st` against `gone` told a new one which cell
   // held a dragon; a fighter already in this fight learns nothing new
-  if (!f?.players?.[a.sub] && !stood(room, ws, a, mapPixelOfWire(a.pose.x, a.pose.z), now)) return;
+  if (!f?.players?.[a.sub] && (!stood(room, ws, a, mapPixelOfWire(a.pose.x, a.pose.z), now) || (dragonWatchesAbout(now).includes(m.w) && !(await judged(room, a, mapPixelOfWire(a.pose.x, a.pose.z), m.w))))) return;   // DRAGON-BUDGET: a watch about (any other is `gone` below, as the clock says)
   const watch = dragonWatchesAbout(now).includes(m.w) ? await dragonOmenOf(room, m.w) : null;
   const o = watch ? dragonCandidateOf(watch, m.sx, m.sz) : null, t = o ? dragonTimes(o) : null;
   if (!dragonHolds(o, now)) { if (f) say(room, ws, { ...DRAGON_SEAM.stateOf(f) }); if (!f?.rc?.[a.sub]) no('gone'); return; }   // a fallen one's remains still lie: its state tells them
@@ -389,4 +426,4 @@ export async function sweepDragonReceipts(room, now, cur, dead, page) {
   for (const [k, v] of kept) { last = k; if (!v || typeof v !== 'object' || !(Number.isFinite(v.e) && now < v.e * 1000)) dead.push(k); }
   return { last, full: kept.size >= page };
 }
-export { DRAGON_INTERNAL_FELL };
+export { DRAGON_INTERNAL_FELL, DRAGON_INTERNAL_JUDGE };

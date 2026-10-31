@@ -46,5 +46,5 @@ FIND-FOUND-the-box-unread, two of `dragonhidden.json`, WWGE-the-forced-slice-non
 fourteen dead, one recorded equivalent.
 Retired with their code: DRAGON-CELL-the-site-the-wild-zone and -the-none-forgotten (AUDIT-DRAGON-CELL-D8-none-kept-for-good
 holds the law reversed). PINS MOVED: `dragoncell`'s law, relay and client; `dragonhidden`'s tell; `dragon3_client`'s site;
-`test/fakeRoom.mjs` writes a socket's `at` as `Room.fetch` does, so `test/placeWidest.mjs` measures the widest attachment with it
-(`auditattach`'s two bounds hold).
+`test/fakeRoom.mjs` wrote a socket's `at` as `Room.fetch` does - withdrawn by AUDIT DRAGON-CELL II E14: a test's slow hello
+was then closed as "no hello" under load.

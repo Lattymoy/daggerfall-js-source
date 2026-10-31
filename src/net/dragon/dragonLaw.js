@@ -83,6 +83,12 @@ export function dragonToldAt(o, px, py) {
   const { cx, cy } = dragonCellOf(o), x0 = cx * DRAGON_CELL_PX - DRAGON_TELL_PX, y0 = cy * DRAGON_CELL_PX - DRAGON_TELL_PX, span = DRAGON_CELL_PX + 2 * DRAGON_TELL_PX;
   return Number.isInteger(px) && Number.isInteger(py) && px >= x0 && py >= y0 && px < x0 + span && py < y0 + span;
 }
+/** DRAGON-BUDGET (2026-10-31, the owner: "Do it", of AUDIT DRAGON-CELL II's open D3): how many cells one account is judged
+ *  in a watch - its every socket and room together, on the hub. A rider crosses a few cells an hour and a fast traveller a
+ *  few more; a sweep of the world's 24,500 ground cells is held to this many an account. */
+export const DRAGON_JUDGED_CELLS_MAX = 24;
+/** A judged cell's word on the hub. @param {number} px @param {number} py */
+export const dragonJudgedCell = (px, py) => `${Math.floor(px / DRAGON_CELL_PX)},${Math.floor(py / DRAGON_CELL_PX)}`;
 /** How many omens a watch holds. On the freeware (tools/dragonCellProbe.mjs) at most 27.7% of DRAGON_CELLS hold ground,
  *  so four, one in three a dragon, bring at most 8.9 a day down, and up to four a watch - one in three watches had one. */
 export const DRAGON_CELLS_A_WATCH = 4;

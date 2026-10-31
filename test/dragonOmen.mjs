@@ -29,11 +29,12 @@ export async function dragonOmenFrom(from, { look = 0, bay = true } = {}) {
     for (const c of dragonCandidates(await watchOf(w))) if (isDragonOmen(c) && (look === null || dragonLookOf(c) === look) && (bay === null || cellInBay(c) === bay)) return c;
   }
 }
-/** AUDIT DRAGON-CELL II E2: a fake room whose sockets have stood DRAGON_TELL_DWELL_MS in its cell when they connect - a
- *  player at the site a while, as a fight's tests mean one (the room keeps the attachment it is handed). */
+/** AUDIT DRAGON-CELL II E2: a fake room whose sockets opened DRAGON_TELL_DWELL_MS ago, so a cell room's first clock finds
+ *  them stood - a player at the site a while, as a fight's tests mean one (the room keeps the attachment it is handed; the
+ *  fake writes no `at` of its own, so a test's slow hello is never "no hello"). */
 export function aged(r, ms = DRAGON_TELL_DWELL_MS) {
   const connect = r.connect;
-  r.connect = () => { const ws = connect(); ws.att.at -= ms; return ws; };
+  r.connect = () => { const ws = connect(); ws.att.at = Date.now() - ms; return ws; };
   return r;
 }
 /** A site in an omen's cell: the pixel `dx`, `dy` from the cell's corner, and its native centre. */

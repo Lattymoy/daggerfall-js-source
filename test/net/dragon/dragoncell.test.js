@@ -14,7 +14,7 @@ import { createTheatreGateScans } from '../../../src/scenes/gate/gateLanes.js';
 import { LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
 import { theatreAt } from '../../../src/world/worldWide/worldGrid.js';
 import { fakeRooms } from '../../fakeRoom.mjs';
-import { RELAY_KEY, watchOf, dragonOmenFrom, siteOf } from '../../dragonOmen.mjs';
+import { RELAY_KEY, watchOf, dragonOmenFrom, siteOf, aged } from '../../dragonOmen.mjs';
 import { DRAGON_TELL_DWELL_MS } from '../../../server/src/dragonFights.js';
 import { COUNTRY_SOURCE } from '../../../src/world/tamrielCountry.js';
 
@@ -71,7 +71,7 @@ test('DRAGON-CELL the relay: a socket posed near the omen\'s cell is told its se
   assert.notEqual(FAR_CELL, CELL);
   const others = (await watchOf(W)).seeds.filter((s) => s !== OMEN.s);
   await withRelay(async ({ room, say, set }) => {
-    const r = room(CELL), f = room(FAR_CELL), aw = room(AWAY_CELL);
+    const r = aged(room(CELL)), f = aged(room(FAR_CELL)), aw = aged(room(AWAY_CELL));
     const near = r.connect(), out = r.connect(), far = f.connect(), liar = aw.connect();
     await r.hello(near, 'peer-0001', posed(SITE.px, SITE.py));
     await r.hello(out, 'peer-0002', posed(farPx, farPy));   // in this cell's room, its pose in a cell it does not cover

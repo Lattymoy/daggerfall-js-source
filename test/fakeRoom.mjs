@@ -172,7 +172,7 @@ export function fakeRoom(key, { now = () => Date.now(), ROOMS = null, poll = 'dr
   const wake = () => { room = new Room(state, env); };
   const { token, signer } = roomSigner(env, now);
   const connect = () => {
-    const ws = { sent: [], closed: null, att: { key, id: null, name: null, pose: null, at: now() },   // `at`: when it opened, as Room.fetch writes it (AUDIT DRAGON-CELL D3 reads it)
+    const ws = { sent: [], closed: null, att: { key, id: null, name: null, pose: null },
       // AUDIT ATTACH: the socket's meters are the Room INSTANCE's, not its attachment's - read off the object awake now,
       // so a wake() forgets them as a hibernation does
       get meters() { return room._meters.get(ws) ?? {}; },

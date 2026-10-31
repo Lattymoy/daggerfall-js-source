@@ -69,8 +69,9 @@ told the seed to every screen at the landing, and the seed named the pixel; now 
   judges a pose in a cell room (in a cell the socket covers) and in a battle; a private room and any other answers
   nothing. A socket not yet stood `DRAGON_TELL_DWELL_MS` (20 s) in the cell of its pose hears nothing. One that has is
   told a landed dragon's omen within `DRAGON_TELL_PX` (6 pixels, the dragon's sight) of its cell, and null otherwise, no
-  sooner than a quiet watch (`dragonQuietAt`). An `in` waits the same. The client asks again outside a told omen's reach,
-  and after a null from another pixel, or the same one a minute on. No secret, no dragon.
+  sooner than a quiet watch (`dragonQuietAt`). An `in` waits the same. An account is judged in at most
+  `DRAGON_JUDGED_CELLS_MAX` (24) cells a watch, all its sockets together, on the hub (DRAGON-BUDGET). The client asks again outside a told omen's reach, and after a null from another pixel, or the
+  same one a minute on. No secret, no dragon.
 - **Its life.** It stays until slain or `DRAGON_STAY_MS` (40 minutes) after its landing, then climbs away. Up to four may
   stand at once, three cells apart at least. An account is rewarded for one a watch: the account service keys a kill by
   watch and account (AUDIT DRAGON-CELL D4, put to the owner).
@@ -487,6 +488,14 @@ is the cell's now, a private room judges no pose, and an `in` waits too. A socke
 player arriving late is told in 20 to 35 s. A square waits for the land to be laid, and the Bay's scan warms on Safari.
 The watch's own seed is retired. Relay world298, re-hashed in place again. Pinned by `dragoncellaudit.test.js` (12);
 `tools/mutants/dragoncellaudit2.json`, 12 dead.
+
+**DRAGON-BUDGET (2026-10-31, the owner: "Do it", of AUDIT DRAGON-CELL II's open D3).** The wait made a sweep cost 20 s a
+cell a socket, and a client could open hundreds of sockets. A cell room now asks the hub before it judges an account in a
+cell it has not (`server/src/dragonFights.js` judged, the hub's dragonJudgeInternal at `DRAGON_INTERNAL_JUDGE`), and the
+hub grants an account `DRAGON_JUDGED_CELLS_MAX` (24) cells a watch - a rider crosses a few an hour - so a sweep of the
+world's 24,500 ground cells is held to 24 an account, whatever its sockets. A room keeps a cell granted; a hub that fails
+refuses. The count lives with the hub's instance, which a sleep forgets. Relay world298, re-hashed in
+place. Pinned by `test/net/dragon/dragonbudget.test.js` (3); `tools/mutants/dragonbudget.json`, 9 dead.
 
 **DRAGON7 - the Aetherbright (2026-10-29).** `characters/dwarvenDragonShiny.js` turns each PLTE colour at load - the brass
 and copper to aetherium's blue, the wings' olive membrane to its violet, the greys cooled - and writes the chunk's CRC

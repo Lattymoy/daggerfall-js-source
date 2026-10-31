@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-DRAGON-the-cache-unbounded",
     "file": "server/src/dragonFights.js",
-    "old": "noRcpt: new Bounded(HUB_KEEP_MAX), stood: new WeakMap() });",
-    "new": "noRcpt: new Map(), stood: new WeakMap() });",
+    "old": "noRcpt: new Bounded(HUB_KEEP_MAX), stood: new WeakMap(), judged: new Map(), budget: new Map() });",
+    "new": "noRcpt: new Map(), stood: new WeakMap(), judged: new Map(), budget: new Map() });",
     "tests": [
       "test/net/dragon/dragonaudit_relay.test.js"
     ],
