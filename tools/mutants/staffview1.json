@@ -462,8 +462,8 @@
   {
     "name": "STAFF-VIEW1-layer-rewrites",
     "file": "src/ui/staffTags.js",
-    "old": "const put = (/** @type {any} */ o, /** @type {string} */ k, /** @type {any} */ v, /** @type {(v: any) => void} */ write) => { if (o[k] !== v) { o[k] = v; write(v); } };",
-    "new": "const put = (/** @type {any} */ o, /** @type {string} */ k, /** @type {any} */ v, /** @type {(v: any) => void} */ write) => { o[k] = v; write(v); };",
+    "old": "    if (o[k] !== v) {\n      o[k] = v;\n      write(v);\n    }",
+    "new": "    o[k] = v;\n    write(v);",
     "why": "a still frame writes every word",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -472,8 +472,8 @@
   {
     "name": "STAFF-VIEW1-layer-crowd-rebuilt",
     "file": "src/ui/staffTags.js",
-    "old": "    if (b.v.rows === key) return;\n",
-    "new": "",
+    "old": "    if (b.v.rows === key) return;\n    b.v.rows = key;",
+    "new": "    b.v.rows = key;",
     "why": "a crowd's rows rebuilt every frame",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -482,7 +482,7 @@
   {
     "name": "STAFF-VIEW1-layer-lines-redrawn",
     "file": "src/ui/staffTags.js",
-    "old": "if (sig === lineSig) return;",
+    "old": "      if (sig === lineSig) return;",
     "new": "",
     "why": "the lines drawn again every frame",
     "tests": [
@@ -492,8 +492,8 @@
   {
     "name": "STAFF-VIEW1-layer-press-leaks",
     "file": "src/ui/staffTags.js",
-    "old": "n.addEventListener?.('click', (/** @type {any} */ e) => { e.stopPropagation?.();",
-    "new": "n.addEventListener?.('click', (/** @type {any} */ e) => {",
+    "old": "    n.addEventListener?.('click', (/** @type {any} */ e) => {\n      e.stopPropagation?.();\n      e.preventDefault?.();",
+    "new": "    n.addEventListener?.('click', (/** @type {any} */ e) => {\n      e.preventDefault?.();",
     "why": "a tag's press reaches the world under it",
     "tests": [
       "test/scenes/staffview1.test.js"

@@ -611,8 +611,8 @@
   {
     "name": "SPY-V-rows-unwritten",
     "file": "src/ui/spyglassView.js",
-    "old": "      parts.rows.append(b, s);\n",
-    "new": "",
+    "old": "      parts.rows.append(b, s);\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/naval/spyglass.test.js"
     ]
@@ -620,8 +620,8 @@
   {
     "name": "SPY-V-tone-unread",
     "file": "src/ui/spyglassView.js",
-    "old": "  set('tone', GLASS_TONES[c.tone] ?? GLASS_TONES.neutral,",
-    "new": "  set('tone', GLASS_TONES.neutral,",
+    "old": "  set('tone', GLASS_TONES[c.tone] ?? GLASS_TONES.neutral, (v) => {",
+    "new": "  set('tone', GLASS_TONES.neutral, (v) => {",
     "tests": [
       "test/systems/naval/spyglass.test.js"
     ]
@@ -629,8 +629,8 @@
   {
     "name": "SPY-V-bar-always",
     "file": "src/ui/spyglassView.js",
-    "old": "  set('studying', study < 1, (v) =>",
-    "new": "  set('studying', true, (v) =>",
+    "old": "  set('studying', study < 1, (v) => {",
+    "new": "  set('studying', true, (v) => {",
     "tests": [
       "test/systems/naval/spyglass.test.js"
     ]
@@ -647,8 +647,8 @@
   {
     "name": "SPY-V-foot-wheel-always",
     "file": "src/ui/spyglassView.js",
-    "old": "  const magnify = pad ? (keys.zoom ? `${keys.zoom}: magnify` : null) : 'Wheel: magnify';",
-    "new": "  const magnify = 'Wheel: magnify';",
+    "old": "  const magnify = pad ? (keys.zoom ? `${keys.zoom}: magnify` : null) : 'Wheel: magnify'; // S3: the pad's, the look stick's click",
+    "new": "  const magnify = 'Wheel: magnify'; // S3: the pad's, the look stick's click",
     "tests": [
       "test/systems/naval/spyglass.test.js"
     ]

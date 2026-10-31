@@ -52,8 +52,8 @@
   {
     "name": "STAFF-FOLLOW-UNLOCK-press-leaks",
     "file": "src/ui/staffFollowBar.js",
-    "old": "b.addEventListener?.('click', (/** @type {any} */ e) => { e.stopPropagation?.(); e.preventDefault?.(); b.blur?.(); run(); });",
-    "new": "b.addEventListener?.('click', () => { b.blur?.(); run(); });",
+    "old": "    b.addEventListener?.('click', (/** @type {any} */ e) => {\n      e.stopPropagation?.();\n      e.preventDefault?.();",
+    "new": "    b.addEventListener?.('click', () => {",
     "why": "the Unlock's press reaches the world under it - a swing or a look",
     "tests": [
       "test/ui/staffFollowBar.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "STAFF-HIDE-IN-GAME-wrong-way",
     "file": "src/ui/staffFollowBar.js",
-    "old": "hideBtn = button(BUTTON_CSS, 'data-staff-hide', () => onHide(!hiddenNow));",
-    "new": "hideBtn = button(BUTTON_CSS, 'data-staff-hide', () => onHide(hiddenNow));",
+    "old": "    hideBtn = button(BUTTON_CSS, 'data-staff-hide', () => onHide(!hiddenNow));",
+    "new": "    hideBtn = button(BUTTON_CSS, 'data-staff-hide', () => onHide(hiddenNow));",
     "why": "the bar's Hide me asks the state the staff member is already in - the button does nothing",
     "tests": [
       "test/ui/staffFollowBar.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "FOLLOW-GROUND-HINT-bar-silent",
     "file": "src/ui/staffFollowBar.js",
-    "old": "const line = following && !seeing ?",
-    "new": "const line = false ?",
+    "old": "      const line =\n        following && !seeing\n          ? t('net.staffFollow.finding', 'Following - finding them…')\n          : following\n            ? name\n              ? t('net.staffFollow.following', 'Following {name}', { name })\n              : t('net.staffFollow.followingAnon', 'Following')\n            : hidden\n              ? t('net.staffFollow.hidden', 'Hidden')\n              : t('net.staffFollow.shown', 'Shown to players');",
+    "new": "      const line = false\n        ? t('net.staffFollow.finding', 'Following - finding them…')\n        : following\n          ? name\n            ? t('net.staffFollow.following', 'Following {name}', { name })\n            : t('net.staffFollow.followingAnon', 'Following')\n          : hidden\n            ? t('net.staffFollow.hidden', 'Hidden')\n            : t('net.staffFollow.shown', 'Shown to players');",
     "why": "a follow locked but not yet finding its target says Following with a still camera",
     "tests": [
       "test/ui/staffFollowBar.test.js"

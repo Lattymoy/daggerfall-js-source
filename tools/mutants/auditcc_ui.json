@@ -624,8 +624,8 @@
   {
     "name": "AUDITCC-UI-R6-the-section-unhung",
     "file": "src/ui/statsCard.js",
-    "old": "    page.append(bn);\n",
-    "new": "",
+    "old": "    page.append(bn);\n  }",
+    "new": "  }",
     "why": "the Stats side's Boons section built and never shown",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -644,8 +644,8 @@
   {
     "name": "AUDITCC-UI-R6-one-boon",
     "file": "src/ui/statsCard.js",
-    "old": "for (const [k, v] of boonRows) bn.append",
-    "new": "for (const [k, v] of boonRows.slice(0, 1)) bn.append",
+    "old": "    for (const [k, v] of boonRows) bn.append(row(k, v));",
+    "new": "    for (const [k, v] of boonRows.slice(0, 1)) bn.append(row(k, v));",
     "why": "one boon of four",
     "tests": [
       "test/systems/auditcc_ui.test.js"

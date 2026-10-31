@@ -249,8 +249,8 @@
   {
     "name": "START2-page-shut-picked",
     "file": "src/ui/startChoice.js",
-    "old": "    if (!opt || opt.locked) return false;\n    this.cursor = i;\n    if (sound) audio.playOneShot(SOUND.ButtonClick, 1);\n    return this.answer(opt.id);",
-    "new": "    if (!opt) return false;\n    this.cursor = i;\n    if (sound) audio.playOneShot(SOUND.ButtonClick, 1);\n    return this.answer(opt.id);",
+    "old": "    if (!opt || opt.locked) return false;",
+    "new": "    if (!opt) return false;",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]

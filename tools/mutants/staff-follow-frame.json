@@ -102,8 +102,8 @@
   {
     "name": "CROWD-CHIPS-names-open-unasked",
     "file": "src/ui/staffTags.js",
-    "old": "list.style.display = b.hover || b.pinned ? 'block' : 'none';",
-    "new": "list.style.display = 'block';",
+    "old": "      list.style.display = b.hover || b.pinned ? 'block' : 'none';",
+    "new": "      list.style.display = 'block';",
     "why": "every crowd draws its whole name list, and a 95-player box covers the boxes around it",
     "tests": [
       "test/scenes/staffview1.test.js"

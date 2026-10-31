@@ -194,8 +194,8 @@
   {
     "name": "AUDITBR5-the-stats-card-named",
     "file": "src/ui/statsCard.js",
-    "old": "'Rules: the original game\\u2019s combat formulas.",
-    "new": "'Rules: Daggerfall\\u2019s combat formulas.",
+    "old": "      : t(\n          'stats.rules.classic',\n          'Rules: the original game\\u2019s combat formulas. Damage is before any armor effects.',\n        ),",
+    "new": "      : t('stats.rules.classic', 'Rules: Daggerfall\\u2019s combat formulas. Damage is before any armor effects.'),",
     "tests": [
       "test/ui/brand.test.js"
     ],

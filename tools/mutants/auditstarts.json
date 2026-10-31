@@ -105,8 +105,8 @@
   {
     "name": "AUDIT-STARTS-U3-a-press-answers-unseen",
     "file": "src/ui/startChoice.js",
-    "old": "    if (i === this._shown) return this.pickIndex(i);\n",
-    "new": "    return this.pickIndex(i);\n",
+    "old": "    if (i === this._shown) return this.pickIndex(i);",
+    "new": "    return this.pickIndex(i);",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -123,8 +123,8 @@
   {
     "name": "AUDIT-STARTS-U3-classic-story-unmarked",
     "file": "src/ui/startChoice.js",
-    "old": "    centre(START_CHOICE_TEXT.hint(this.options.length), 190, dim);\n    this._shown = this.cursor;\n",
-    "new": "    centre(START_CHOICE_TEXT.hint(this.options.length), 190, dim);\n",
+    "old": "    this._shown = this.cursor;\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/starts/auditstarts.test.js",
       "test/systems/starts/start2_provinces.test.js"
@@ -133,8 +133,8 @@
   {
     "name": "AUDIT-STARTS-U3-plus-story-unmarked",
     "file": "src/ui/startChoice.js",
-    "old": "this._faced = true; this._shown = this.cursor; return;",
-    "new": "this._faced = true; return;",
+    "old": "      this._shown = this.cursor;\n      return;",
+    "new": "      return;",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -142,8 +142,8 @@
   {
     "name": "AUDIT-STARTS-P8-up-is-down",
     "file": "src/ui/startChoice.js",
-    "old": "const n = this.options.length, step = move === 'up' ? n - 1 : 1;",
-    "new": "const n = this.options.length, step = 1;",
+    "old": "      step = move === 'up' ? n - 1 : 1;",
+    "new": "      step = 1;",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]

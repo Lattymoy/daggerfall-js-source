@@ -432,8 +432,8 @@
   {
     "name": "STAFF-PANEL5-MESSAGE-box-ok-twice",
     "file": "src/ui/staffMessageBox.js",
-    "old": "ok.onclick = () => { if (done) return; done = true;",
-    "new": "ok.onclick = () => { done = true;",
+    "old": "    if (done) return;\n    done = true;",
+    "new": "    done = true;",
     "why": "OK pressed twice is two OKs",
     "tests": [
       "test/net/staffpanel5message_client.test.js"
@@ -442,8 +442,8 @@
   {
     "name": "STAFF-PANEL5-MESSAGE-box-name-dropped",
     "file": "src/ui/staffMessageBox.js",
-    "old": "el('div', 'notice-row center inputbox-label', staffMessageFrom(from))",
-    "new": "el('div', 'notice-row center inputbox-label', '')",
+    "old": "  rows.append(\n    head,\n    el('div', 'notice-row center inputbox-label', staffMessageFrom(from)),\n    el('div', 'notice-row', text),\n  );",
+    "new": "  rows.append(head, el('div', 'notice-row center inputbox-label', ''), el('div', 'notice-row', text));",
     "why": "the staff member's name not shown",
     "tests": [
       "test/net/staffpanel5message_client.test.js"

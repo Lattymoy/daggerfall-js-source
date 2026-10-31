@@ -2088,8 +2088,8 @@
   {
     "name": "ACS-S16-foot-touch",
     "file": "src/ui/spyglassView.js",
-    "old": "  if (touch) return `x${Math.round(zoom)}`;",
-    "new": "  if (false) return `x${Math.round(zoom)}`;",
+    "old": "  if (touch) return `x${Math.round(zoom)}`; // AUDIT CAPTAIN'S SEA S3/S16: a finger's two presses are the foot's own buttons",
+    "new": "  if (false) return `x${Math.round(zoom)}`; // AUDIT CAPTAIN'S SEA S3/S16: a finger's two presses are the foot's own buttons",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2115,8 +2115,8 @@
   {
     "name": "ACS-S16-buttons-unshown",
     "file": "src/ui/spyglassView.js",
-    "old": "root.className = `dfglass${c ? ' held' : ''}${touch ? ' touch' : ''}`;",
-    "new": "root.className = `dfglass${c ? ' held' : ''}`;",
+    "old": "    root.className = `dfglass${c ? ' held' : ''}${touch ? ' touch' : ''}`;",
+    "new": "    root.className = `dfglass${c ? ' held' : ''}`;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2124,8 +2124,8 @@
   {
     "name": "ACS-S16-taps-kept",
     "file": "src/ui/spyglassView.js",
-    "old": "const t = { zoom: taps.zoom > 0, lower: taps.lower > 0 }; taps.zoom = 0; taps.lower = 0; return t; }",
-    "new": "const t = { zoom: taps.zoom > 0, lower: taps.lower > 0 }; return t; }",
+    "old": "  taps.zoom = 0;\n  taps.lower = 0;\n  return t;",
+    "new": "  return t;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2133,8 +2133,8 @@
   {
     "name": "ACS-S16-taps-forgotten",
     "file": "src/ui/spyglassView.js",
-    "old": "  if (!on) { taps.zoom = 0; taps.lower = 0; return; }",
-    "new": "  if (!on) { return; }",
+    "old": "    taps.zoom = 0;\n    taps.lower = 0;\n    return;",
+    "new": "    return;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2142,8 +2142,8 @@
   {
     "name": "ACS-S16-tap-unheard",
     "file": "src/ui/spyglassView.js",
-    "old": "e?.stopPropagation?.(); taps[k]++; };",
-    "new": "e?.stopPropagation?.(); void k; };",
+    "old": "    taps[k]++;",
+    "new": "    void k;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2322,8 +2322,8 @@
   {
     "name": "ACS-S10-strip-unread",
     "file": "src/ui/spyglassView.js",
-    "old": "const box = rect && rect.w > 0 && rect.h > 0 ? ",
-    "new": "const box = false ? ",
+    "old": "  const box =\n    rect && rect.w > 0 && rect.h > 0\n      ? `${Math.round(rect.x)},${Math.round(rect.y)},${Math.round(rect.w)},${Math.round(rect.h)}`\n      : '';",
+    "new": "  const box = false ? `${Math.round(rect.x)},${Math.round(rect.y)},${Math.round(rect.w)},${Math.round(rect.h)}` : '';",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2331,8 +2331,8 @@
   {
     "name": "ACS-S10-measure",
     "file": "src/ui/spyglassView.js",
-    "old": "root.style.setProperty?.('--g-m', v ? `${Math.min(w, h) / 100}px` : '');",
-    "new": "root.style.setProperty?.('--g-m', v ? `${Math.max(w, h) / 100}px` : '');",
+    "old": "    root.style.setProperty?.('--g-m', v ? `${Math.min(w, h) / 100}px` : '');",
+    "new": "    root.style.setProperty?.('--g-m', v ? `${Math.max(w, h) / 100}px` : '');",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2340,8 +2340,8 @@
   {
     "name": "ACS-S17-order-glass",
     "file": "src/ui/spyglassView.js",
-    "old": "pointer-events: none; z-index: 4;",
-    "new": "pointer-events: none; z-index: 2;",
+    "old": "  pointer-events: none; z-index: 4; ${PIXEL_FONT_CSS} color: #e6dcb8; --g-scale: 1; }",
+    "new": "  pointer-events: none; z-index: 2; ${PIXEL_FONT_CSS} color: #e6dcb8; --g-scale: 1; }",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

@@ -1992,8 +1992,17 @@
 !/src/ui/spell/
 /src/ui/spell/*/
 !/src/ui/spellbookDoor.js
+!/src/ui/spyglassView.js
+!/src/ui/staffFlatMap.js
+!/src/ui/staffFollowBar.js
+!/src/ui/staffMessageBox.js
+!/src/ui/staffPilotBar.js
+!/src/ui/staffTags.js
 !/src/ui/starfall/
 /src/ui/starfall/*/
+!/src/ui/startChoice.js
+!/src/ui/startWindow.js
+!/src/ui/statsCard.js
 !/src/ui/superDungeon/
 /src/ui/superDungeon/*/
 !/src/ui/teleportPopUp.js

@@ -56,7 +56,7 @@ export async function loadStartArt({ renderer, fetchBytes }) {
 export class StartWindow {
   constructor(art = null) {
     this.art = art;
-    this.action = null;          // 'newGame' | 'load' | 'exit'
+    this.action = null; // 'newGame' | 'load' | 'exit'
   }
 
   /** Screen pixel -> the button under it, or null. */
