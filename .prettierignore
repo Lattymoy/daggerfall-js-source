@@ -1356,11 +1356,7 @@
 !/src/systems/survival/tavernMenu.js
 !/src/systems/survival/temperature.js
 !/src/systems/talk/
-/src/systems/talk/*
-!/src/systems/talk/talk.js
-!/src/systems/talk/talkMacros.js
-!/src/systems/talk/talkSession.js
-!/src/systems/talk/talkTopics.js
+/src/systems/talk/*/
 !/src/systems/tamrielFauna.js
 !/src/systems/tavern.js
 !/src/systems/teleportAnchor.js
