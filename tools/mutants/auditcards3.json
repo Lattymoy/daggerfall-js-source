@@ -2,8 +2,8 @@
   {
     "name": "D-sb-floor2",
     "file": "src/net/holdemTable.js",
-    "old": "sb: Math.max(1, Math.floor(bb / 2)),",
-    "new": "sb: Math.max(2, Math.floor(bb / 2)),",
+    "old": "    sb: Math.max(1, Math.floor(bb / 2)),",
+    "new": "    sb: Math.max(2, Math.floor(bb / 2)),",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -24,8 +24,8 @@
   {
     "name": "D-public-clock-always",
     "file": "src/net/holdemTable.js",
-    "old": "clockAt: t.hand && t.hand.toAct >= 0 ? t.clockAt : 0, last: t.last,",
-    "new": "clockAt: t.clockAt, last: t.last,",
+    "old": "    clockAt: t.hand && t.hand.toAct >= 0 ? t.clockAt : 0,",
+    "new": "    clockAt: t.clockAt,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -48,8 +48,8 @@
   {
     "name": "D-button-stuck",
     "file": "src/net/holdemTable.js",
-    "old": "const at = live.findIndex((i) => i > t.button);",
-    "new": "const at = live.findIndex((i) => i >= t.button);",
+    "old": "  const at = live.findIndex((i) => i > t.button);",
+    "new": "  const at = live.findIndex((i) => i >= t.button);",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -70,8 +70,8 @@
   {
     "name": "D-only-flop-said",
     "file": "src/net/holdemTable.js",
-    "old": "for (const len of [3, 4, 5]) if (from < len && h.board.length >= len) events.push",
-    "new": "for (const len of [3]) if (from < len && h.board.length >= len) events.push",
+    "old": "  for (const len of [3, 4, 5])",
+    "new": "  for (const len of [3])",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -92,8 +92,8 @@
   {
     "name": "D-last-forgotten",
     "file": "src/net/holdemTable.js",
-    "old": "  t.last = end;\n",
-    "new": "  t.last = null;\n",
+    "old": "  t.last = end;",
+    "new": "  t.last = null;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -114,8 +114,8 @@
   {
     "name": "D-deal-alone",
     "file": "src/net/holdemTable.js",
-    "old": "  if (live.length < HOLDEM_SEATS_MIN) return [];\n  const at =",
-    "new": "  if (live.length < 1) return [];\n  const at =",
+    "old": "  if (live.length < HOLDEM_SEATS_MIN) return [];",
+    "new": "  if (live.length < 1) return [];",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -136,8 +136,8 @@
   {
     "name": "D-stand-refold",
     "file": "src/net/holdemTable.js",
-    "old": "  if (t.hand.seats[k].folded) { cashOutFolded(t, chair, k); return [room(t, [])]; }\n",
-    "new": "\n",
+    "old": "  if (t.hand.seats[k].folded) {\n    cashOutFolded(t, chair, k);\n    return [room(t, [])];\n  }",
+    "new": "",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -158,8 +158,8 @@
   {
     "name": "D-allin-unsaid",
     "file": "src/net/holdemTable.js",
-    "old": "allIn: next.seats[k].allIn && !prev.seats[k].allIn, at: now",
-    "new": "allIn: false, at: now",
+    "old": "      allIn: next.seats[k].allIn && !prev.seats[k].allIn,",
+    "new": "      allIn: false,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -180,8 +180,8 @@
   {
     "name": "D-bet-unsaid",
     "file": "src/net/holdemTable.js",
-    "old": "bet: action.type === 'raise' && prev.currentBet === 0,",
-    "new": "bet: false,",
+    "old": "      bet: action.type === 'raise' && prev.currentBet === 0,",
+    "new": "      bet: false,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -202,8 +202,8 @@
   {
     "name": "D-look-no-turn",
     "file": "src/net/holdemTable.js",
-    "old": "    if (t.hand.toAct === k) out.push(...turnOf(t));\n",
-    "new": "\n",
+    "old": "    if (t.hand.toAct === k) out.push(...turnOf(t));\n  }",
+    "new": "  }",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -224,8 +224,8 @@
   {
     "name": "D-name-unbounded",
     "file": "src/net/holdemTable.js",
-    "old": "name: String(name ?? '').slice(0, HOLDEM_NAME_MAX)",
-    "new": "name: String(name ?? '')",
+    "old": "    name: String(name ?? '').slice(0, HOLDEM_NAME_MAX),",
+    "new": "    name: String(name ?? ''),",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -246,8 +246,8 @@
   {
     "name": "D-out-error-any",
     "file": "src/net/holdemTable.js",
-    "old": "if (typeof m.error === 'string') return m.error.length <= 40;",
-    "new": "if (typeof m.error === 'string') return true;",
+    "old": "  if (typeof m.error === 'string') return m.error.length <= 40; // the relay's refusal of a word (a chair taken, not your turn)",
+    "new": "  if (typeof m.error === 'string') return true; // the relay's refusal of a word (a chair taken, not your turn)",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -268,8 +268,8 @@
   {
     "name": "D-out-turn-clock",
     "file": "src/net/holdemTable.js",
-    "old": "&& typeof m.turn.legal === 'object' && Number.isFinite(m.turn.clockAt);",
-    "new": "&& typeof m.turn.legal === 'object';",
+    "old": "  if (m.turn)\n    return (\n      Number.isInteger(m.turn.handNo) &&\n      !!m.turn.legal &&\n      typeof m.turn.legal === 'object' &&\n      Number.isFinite(m.turn.clockAt)\n    );",
+    "new": "  if (m.turn) return Number.isInteger(m.turn.handNo) && !!m.turn.legal && typeof m.turn.legal === 'object';",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -290,8 +290,8 @@
   {
     "name": "D-out-events-cap",
     "file": "src/net/holdemTable.js",
-    "old": "m.events.length > 32 ||",
-    "new": "m.events.length > 32000 ||",
+    "old": "  if (!Array.isArray(m.events) || m.events.length > 32 || !m.events.every((e) => e && typeof e.t === 'string'))",
+    "new": "  if (!Array.isArray(m.events) || m.events.length > 32000 || !m.events.every((e) => e && typeof e.t === 'string'))",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -334,8 +334,8 @@
   {
     "name": "D-out-bb-any",
     "file": "src/net/holdemTable.js",
-    "old": "    && t.seats.every(seatOk) && HOLDEM_BBS.includes(t.bb) && handShapeOk(t);",
-    "new": "    && t.seats.every(seatOk) && handShapeOk(t);",
+    "old": "    HOLDEM_BBS.includes(t.bb) &&\n    handShapeOk(t)",
+    "new": "    handShapeOk(t)",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -360,8 +360,8 @@
   {
     "name": "D-in-chairs-min",
     "file": "src/net/holdemTable.js",
-    "old": "if (!Number.isInteger(m.chairs) || m.chairs < HOLDEM_SEATS_MIN || m.chairs > HOLDEM_SEATS_MAX",
-    "new": "if (!Number.isInteger(m.chairs) || m.chairs > HOLDEM_SEATS_MAX",
+    "old": "    if (\n      !Number.isInteger(m.chairs) ||\n      m.chairs < HOLDEM_SEATS_MIN ||\n      m.chairs > HOLDEM_SEATS_MAX ||\n      m.chair >= m.chairs\n    )\n      return null;",
+    "new": "    if (!Number.isInteger(m.chairs) || m.chairs > HOLDEM_SEATS_MAX || m.chair >= m.chairs) return null;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -520,8 +520,8 @@
   {
     "name": "D-remote-catchup-no-folds",
     "file": "src/systems/card/cardRemoteTable.js",
-    "old": "      st.hand.seats.forEach((s, k) => { if (s.folded) caught.push(",
-    "new": "      st.hand.seats.forEach((s, k) => { if (false) caught.push(",
+    "old": "        if (s.folded) caught.push({ t: 'act', seat: st.handSeats[k], type: 'fold', to: null, paid: 0, at: then });",
+    "new": "        if (false) caught.push({ t: 'act', seat: st.handSeats[k], type: 'fold', to: null, paid: 0, at: then });",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -542,8 +542,8 @@
   {
     "name": "D-remote-catchup-no-streets",
     "file": "src/systems/card/cardRemoteTable.js",
-    "old": "      for (const len of [3, 4, 5]) if (st.hand.board.length >= len) caught.push(",
-    "new": "      for (const len of []) if (st.hand.board.length >= len) caught.push(",
+    "old": "      for (const len of [3, 4, 5])",
+    "new": "      for (const len of [])",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -564,8 +564,8 @@
   {
     "name": "D-remote-catchup-again",
     "file": "src/systems/card/cardRemoteTable.js",
-    "old": "      events.unshift(...caught);\n      this.seenHand = st.handNo;\n",
-    "new": "      events.unshift(...caught);\n",
+    "old": "      this.seenHand = st.handNo;\n    }",
+    "new": "    }",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -586,8 +586,8 @@
   {
     "name": "D-remote-clock-negative",
     "file": "src/systems/card/cardRemoteTable.js",
-    "old": "return this.legal() && this.turn ? Math.max(0, this.turn.clockAt - local) : 0;",
-    "new": "return this.legal() && this.turn ? this.turn.clockAt - local : 0;",
+    "old": "    return this.legal() && this.turn ? Math.max(0, this.turn.clockAt - local) : 0;",
+    "new": "    return this.legal() && this.turn ? this.turn.clockAt - local : 0;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -608,8 +608,8 @@
   {
     "name": "D-remote-no-showdown",
     "file": "src/systems/card/cardRemoteTable.js",
-    "old": "showdown: st.hand ? null : st.last };",
-    "new": "showdown: null };",
+    "old": "      showdown: st.hand ? null : st.last,",
+    "new": "      showdown: null,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -630,8 +630,8 @@
   {
     "name": "D-look-one-face",
     "file": "src/world/card/cardRegulars.js",
-    "old": "faceIndex: Math.floor(r() * REGULAR_FACES), items",
-    "new": "faceIndex: 0, items",
+    "old": "  return { race, gender: female ? 'female' : 'male', faceIndex: Math.floor(r() * REGULAR_FACES), items };",
+    "new": "  return { race, gender: female ? 'female' : 'male', faceIndex: 0, items };",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -652,8 +652,8 @@
   {
     "name": "D-look-one-variant",
     "file": "src/world/card/cardRegulars.js",
-    "old": "variant: Math.floor(r() * 2) });",
-    "new": "variant: 0 });",
+    "old": "  const put = (templateIndex, equipSlot) =>\n    items.push({ templateIndex, group, equipSlot, variant: Math.floor(r() * 2) });",
+    "new": "  const put = (templateIndex, equipSlot) => items.push({ templateIndex, group, equipSlot, variant: 0 });",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -674,8 +674,8 @@
   {
     "name": "D-stack-grab-strict",
     "file": "src/world/card/cardHand.js",
-    "old": "<= STACK_GRAB_M;",
-    "new": "< STACK_GRAB_M * 0.95;",
+    "old": "export const onStack = (p, place) => !!p && Math.hypot(p[0] - place.stack[0], p[2] - place.stack[2]) <= STACK_GRAB_M;",
+    "new": "export const onStack = (p, place) =>\n  !!p && Math.hypot(p[0] - place.stack[0], p[2] - place.stack[2]) < STACK_GRAB_M * 0.95;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -696,8 +696,8 @@
   {
     "name": "D-betzone-margin",
     "file": "src/world/card/cardHand.js",
-    "old": "return depth(p) > depth(place.holes[0]) + 0.02;",
-    "new": "return depth(p) > depth(place.holes[0]) - 0.02;",
+    "old": "  return depth(p) > depth(place.holes[0]) + 0.02;",
+    "new": "  return depth(p) > depth(place.holes[0]) - 0.02;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -718,8 +718,8 @@
   {
     "name": "D-peek-no-rise",
     "file": "src/world/card/cardHand.js",
-    "old": "HELD_AT[1] + PEEK_RISE * p + Math.max",
-    "new": "HELD_AT[1] + Math.max",
+    "old": "    const up = HELD_AT[1] + PEEK_RISE * p + Math.max(0, Math.min(HELD_LIFT_MAX * f, lift));",
+    "new": "    const up = HELD_AT[1] + Math.max(0, Math.min(HELD_LIFT_MAX * f, lift));",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -740,8 +740,8 @@
   {
     "name": "D-riffle-yaw-sign",
     "file": "src/world/card/cardMotion.js",
-    "old": "  const r = [Math.cos(yaw), 0 - Math.sin(yaw)];\n  const n = RIFFLE_HALF * 2;",
-    "new": "  const r = [Math.cos(yaw), Math.sin(yaw)];\n  const n = RIFFLE_HALF * 2;",
+    "old": "  if (!(u >= 0 && u < 1)) return [];\n  const r = [Math.cos(yaw), 0 - Math.sin(yaw)];",
+    "new": "  if (!(u >= 0 && u < 1)) return [];\n  const r = [Math.cos(yaw), Math.sin(yaw)];",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -762,8 +762,8 @@
   {
     "name": "D-riffle-no-bend",
     "file": "src/world/card/cardMotion.js",
-    "old": "roll: Math.PI + side * 0.35 * part * (1 - fallen) });",
-    "new": "roll: Math.PI });",
+    "old": "      roll: Math.PI + side * 0.35 * part * (1 - fallen),",
+    "new": "      roll: Math.PI,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -784,8 +784,8 @@
   {
     "name": "D-riffle-no-lift",
     "file": "src/world/card/cardMotion.js",
-    "old": "+ 0.012 * (1 - fallen) * part,",
-    "new": ",",
+    "old": "      pos: [at[0] + r[0] * off, at[1] + CARD_T * (0.5 + layer) + 0.012 * (1 - fallen) * part, at[2] + r[1] * off],",
+    "new": "      pos: [at[0] + r[0] * off, at[1] + CARD_T * (0.5 + layer), at[2] + r[1] * off],",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1094,8 +1094,8 @@
   {
     "name": "D-hud-timeout-line",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "      if (e.timeout) return `${who} ${me ? 'are' : 'is'} out of time and",
-    "new": "      if (false) return `${who} ${me ? 'are' : 'is'} out of time and",
+    "old": "      if (e.timeout)",
+    "new": "      if (false)",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1116,8 +1116,8 @@
   {
     "name": "D-hud-sit-line",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "    case 'sit': return me ? 'You sit down.' : `${e.name} sits down.`;",
-    "new": "    case 'sit': return '';",
+    "old": "      return me ? 'You sit down.' : `${e.name} sits down.`;",
+    "new": "      return '';",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1226,8 +1226,8 @@
   {
     "name": "D2-street-twice",
     "file": "src/net/holdemTable.js",
-    "old": "if (from < len && h.board.length >= len) events.push",
-    "new": "if (from <= len && h.board.length >= len) events.push",
+    "old": "    if (from < len && h.board.length >= len)",
+    "new": "    if (from <= len && h.board.length >= len)",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1248,8 +1248,8 @@
   {
     "name": "D2-third-sitter-delays",
     "file": "src/net/holdemTable.js",
-    "old": "if (!t.hand && liveChairs(t).length === HOLDEM_SEATS_MIN) t.nextDealAt = Math.max(t.nextDealAt, now + HOLDEM_FIRST_MS);\n  return [room(t, [{ t: 'sit', seat: chair,",
-    "new": "if (!t.hand && liveChairs(t).length >= HOLDEM_SEATS_MIN) t.nextDealAt = Math.max(t.nextDealAt, now + HOLDEM_FIRST_MS);\n  return [room(t, [{ t: 'sit', seat: chair,",
+    "old": "  if (!t.hand && liveChairs(t).length === HOLDEM_SEATS_MIN)\n    t.nextDealAt = Math.max(t.nextDealAt, now + HOLDEM_FIRST_MS);",
+    "new": "  if (!t.hand && liveChairs(t).length >= HOLDEM_SEATS_MIN) t.nextDealAt = Math.max(t.nextDealAt, now + HOLDEM_FIRST_MS);",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1270,8 +1270,8 @@
   {
     "name": "D2-hud-no-clock",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "(online?.clock ? `Your turn - ${online.clock} s.` : 'Your turn.')",
-    "new": "'Your turn.'",
+    "old": "              ? online?.clock\n                ? `Your turn - ${online.clock} s.`\n                : 'Your turn.'",
+    "new": "              ? 'Your turn.'",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1292,8 +1292,8 @@
   {
     "name": "D2-hud-refusal-raw",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "`${message} (${HOLDEM_REFUSALS[online.error] ?? 'The table refused that.'})`",
-    "new": "`${message} (${online.error})`",
+    "old": "    message:\n      online?.error && !legal ? `${message} (${HOLDEM_REFUSALS[online.error] ?? 'The table refused that.'})` : message,",
+    "new": "    message: online?.error && !legal ? `${message} (${online.error})` : message,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1578,8 +1578,8 @@
   {
     "name": "C4-runout-unpaused",
     "file": "src/net/holdemTable.js",
-    "old": " + HOLDEM_RUNOUT_MS * events.filter((e) => e.t === 'street').length;",
-    "new": "",
+    "old": "  t.nextDealAt = now + HOLDEM_GAP_MS + HOLDEM_RUNOUT_MS * events.filter((e) => e.t === 'street').length; // AUDIT CARDS-3 C4: a run-out's streets are on the cloth first",
+    "new": "  t.nextDealAt = now + HOLDEM_GAP_MS; // AUDIT CARDS-3 C4: a run-out's streets are on the cloth first",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1622,8 +1622,8 @@
   {
     "name": "B2-refusal-kept-chair",
     "file": "src/systems/card/cardRemoteTable.js",
-    "old": "      if (!this.confirmed && this.chair >= 0 && SIT_REFUSALS.includes(f.error)) this._lose('refused');\n",
-    "new": "",
+    "old": "      if (!this.confirmed && this.chair >= 0 && SIT_REFUSALS.includes(f.error)) this._lose('refused');\n      if (!this.confirmed && this.chair >= 0 && f.error === SIT_OTHER_GAME) this._lose(SIT_OTHER_GAME); // AUDIT CARDS-6 E8",
+    "new": "      if (!this.confirmed && this.chair >= 0 && f.error === SIT_OTHER_GAME) this._lose(SIT_OTHER_GAME); // AUDIT CARDS-6 E8",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1644,8 +1644,8 @@
   {
     "name": "B2-pending-dropped",
     "file": "src/systems/card/cardRemoteTable.js",
-    "old": "(this.confirmed || st.seats[this.chair])",
-    "new": "(true)",
+    "old": "    } else if (this.chair >= 0 && (this.confirmed || st.seats[this.chair])) {",
+    "new": "    } else if (this.chair >= 0 && true) {",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1666,8 +1666,8 @@
   {
     "name": "B3-error-forever",
     "file": "src/systems/card/cardRemoteTable.js",
-    "old": "    if (events.length) this.error = null;",
-    "new": "    void events;",
+    "old": "    if (events.length) this.error = null; // AUDIT CARDS-3 B3/D8: the table moved on - an old refusal is not the news",
+    "new": "    void events; // AUDIT CARDS-3 B3/D8: the table moved on - an old refusal is not the news",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1688,8 +1688,8 @@
   {
     "name": "B3-refusal-unsaid",
     "file": "src/systems/card/cardRemoteTable.js",
-    "old": "      this.said++;\n",
-    "new": "",
+    "old": "      this.said++;\n      if (!this.confirmed && this.chair >= 0 && SIT_REFUSALS.includes(f.error)) this._lose('refused');",
+    "new": "      if (!this.confirmed && this.chair >= 0 && SIT_REFUSALS.includes(f.error)) this._lose('refused');",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2111,8 +2111,8 @@
   {
     "name": "B5-rebuilt-every-second",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "      if (key === shownKey && msgEl) { msgEl.textContent = m.message; return; }\n",
-    "new": "",
+    "old": "      if (key === shownKey && msgEl) {\n        msgEl.textContent = m.message;\n        return;\n      }\n      shownKey = key;",
+    "new": "      shownKey = key;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2133,8 +2133,8 @@
   {
     "name": "B5-reset-keeps-slider",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "    resetSlider() { sliderValue = null; shownKey = null; },",
-    "new": "    resetSlider() { sliderValue = null; },",
+    "old": "      shownKey = null;\n    }, // the next render rebuilds the slider at the law's own value",
+    "new": "    }, // the next render rebuilds the slider at the law's own value",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2155,8 +2155,8 @@
   {
     "name": "B7-leave-third-person",
     "file": "src/ui/card/cardTableHud.js",
-    "old": ": me ? (e.broke ? 'You are out of chips and stand up.' : 'You stand up.') : e.broke",
-    "new": ": e.broke",
+    "old": "        : me\n          ? e.broke\n            ? 'You are out of chips and stand up.'\n            : 'You stand up.'\n          : e.broke\n            ? `${e.name} is out of chips and stands up.`\n            : `${e.name} stands up.`; // CARDS5: a player at the relay's table, not a regular; AUDIT CARDS-3 B7: said to me when it is me",
+    "new": "        : e.broke\n          ? `${e.name} is out of chips and stands up.`\n          : `${e.name} stands up.`; // CARDS5: a player at the relay's table, not a regular; AUDIT CARDS-3 B7: said to me when it is me",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2265,8 +2265,8 @@
   {
     "name": "C8-carried-on-stack",
     "file": "src/world/card/cardScene.js",
-    "old": " - (carried?.seat === i ? carried.amount : 0), bet",
-    "new": " , bet",
+    "old": "        const stack = (h ? h.stack : s.stack) - coming - (carried?.seat === i ? carried.amount : 0),",
+    "new": "        const stack = (h ? h.stack : s.stack) - coming,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2287,8 +2287,8 @@
   {
     "name": "C6-no-frame",
     "file": "src/world/card/cardScene.js",
-    "old": "    table: frame,   // AUDIT CARDS-3 C6",
-    "new": "    table: null,   // AUDIT CARDS-3 C6",
+    "old": "    table: frame, // AUDIT CARDS-3 C6: the top's own frame - a carried bet is let go on it or not at all",
+    "new": "    table: null, // AUDIT CARDS-3 C6: the top's own frame - a carried bet is let go on it or not at all",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2309,8 +2309,8 @@
   {
     "name": "D10-push-centred",
     "file": "src/world/card/cardScene.js",
-    "old": "p.yaw, p.toSeat != null));",
-    "new": "p.yaw));",
+    "old": "          ...chipDiscs(\n            p.amount,\n            pushAt(p.from, p.to, p.t0, Math.max(t, p.t0), p.potShare ? SCOOP_LIFT : 0),\n            p.yaw,\n            p.toSeat != null,\n          ),",
+    "new": "          ...chipDiscs(p.amount, pushAt(p.from, p.to, p.t0, Math.max(t, p.t0), p.potShare ? SCOOP_LIFT : 0), p.yaw),",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2353,8 +2353,8 @@
   {
     "name": "BAY-wrong-king",
     "file": "src/render/cardFaces.js",
-    "old": "court('Gothryd', 'King of Daggerfall', 'crown')",
-    "new": "court('Lysandus', 'King of Daggerfall', 'crown')",
+    "old": "      court('Gothryd', 'King of Daggerfall', 'crown'),",
+    "new": "      court('Lysandus', 'King of Daggerfall', 'crown'),",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2375,8 +2375,8 @@
   {
     "name": "BAY-two-reds",
     "file": "src/render/cardFaces.js",
-    "old": "colour: '#9a5c08'",
-    "new": "colour: '#a3141e'",
+    "old": "    colour: '#9a5c08',",
+    "new": "    colour: '#a3141e',",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2397,8 +2397,8 @@
   {
     "name": "BAY-pips-upright",
     "file": "src/render/cardFaces.js",
-    "old": "if (y > 0.01) ctx.rotate(Math.PI);",
-    "new": "void y;",
+    "old": "      if (y > 0.01) ctx.rotate(Math.PI);",
+    "new": "      void y;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2419,8 +2419,8 @@
   {
     "name": "BAY-made-up-name",
     "file": "src/render/cardFaces.js",
-    "old": "court(null, 'Queen of Orsinium', 'circlet')",
-    "new": "court('Ulda', 'Queen of Orsinium', 'circlet')",
+    "old": "      court(null, 'Queen of Orsinium', 'circlet'),",
+    "new": "      court('Ulda', 'Queen of Orsinium', 'circlet'),",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2441,8 +2441,8 @@
   {
     "name": "BAY-seal-unnamed",
     "file": "src/render/cardFaces.js",
-    "old": "  if (rankOf(c) === RANK_ACE) return `The Seal of ${crown}`;\n",
-    "new": "",
+    "old": "  if (rankOf(c) === RANK_ACE) return `The Seal of ${crown}`;\n  return `${rankLabel(rankOf(c))} of ${crown}`;",
+    "new": "  return `${rankLabel(rankOf(c))} of ${crown}`;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2463,7 +2463,7 @@
   {
     "name": "BAY-panel-unpainted",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "    if (c.back) paintBack(ctx, cv.width, cv.height); else paintFace(ctx, c.card, cv.width, cv.height);",
+    "old": "    if (c.back) paintBack(ctx, cv.width, cv.height);\n    else paintFace(ctx, c.card, cv.width, cv.height);",
     "new": "    void c;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
@@ -2507,8 +2507,8 @@
   {
     "name": "TIDY-wiped",
     "file": "src/world/card/cardScene.js",
-    "old": "        ...left.map((c, i) =>",
-    "new": "        ...[].map((c, i) =>",
+    "old": "        ...left.map((c, i) => ({",
+    "new": "        ...[].map((c, i) => ({",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2533,8 +2533,8 @@
   {
     "name": "TIDY-regathered",
     "file": "src/world/card/cardScene.js",
-    "old": "      const left = this.cards.filter((c) => c.seat !== -4);",
-    "new": "      const left = this.cards;",
+    "old": "      const left = this.cards.filter((c) => c.seat !== -4); // cards still on their way from the hand before join the deck now",
+    "new": "      const left = this.cards; // cards still on their way from the hand before join the deck now",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2577,8 +2577,8 @@
   {
     "name": "TIDY-no-pile",
     "file": "src/world/card/cardScene.js",
-    "old": "    if (this._pileShown(t)) cards.push(...this._deckPile(t));",
-    "new": "    void this.deck;",
+    "old": "    if (this._pileShown(t)) cards.push(...this._deckPile(t)); // CARDS-TIDY: the squared deck, thinning as it is dealt",
+    "new": "    void this.deck; // CARDS-TIDY: the squared deck, thinning as it is dealt",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2603,8 +2603,8 @@
   {
     "name": "TIDY-pile-never-thins",
     "file": "src/world/card/cardScene.js",
-    "old": "Math.ceil((DECK_PLATES * (DECK_CARDS - thrown)) / DECK_CARDS)",
-    "new": "DECK_PLATES",
+    "old": "    const n = Math.max(1, Math.ceil((DECK_PLATES * (DECK_CARDS - thrown)) / DECK_CARDS));",
+    "new": "    const n = Math.max(1, DECK_PLATES);",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2625,8 +2625,8 @@
   {
     "name": "TIDY-gathered-forever",
     "file": "src/world/card/cardScene.js",
-    "old": "      if (c.seat === -4 && t >= c.motions[c.motions.length - 1].t1) continue;",
-    "new": "      void c;",
+    "old": "      if (c.seat === -4 && t >= c.motions[c.motions.length - 1].t1) continue; // CARDS-TIDY: gathered into the deck",
+    "new": "      void c; // CARDS-TIDY: gathered into the deck",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2673,8 +2673,8 @@
   {
     "name": "TIDY-delta-of-nothing",
     "file": "src/net/holdemTable.js",
-    "old": "  if (!prev) return null;\n  const d = {};",
-    "new": "  if (!prev) return {};\n  const d = {};",
+    "old": "  if (!prev) return null;",
+    "new": "  if (!prev) return {};",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2695,8 +2695,8 @@
   {
     "name": "TIDY-delta-unchecked",
     "file": "src/systems/card/cardRemoteTable.js",
-    "old": "      if (!validHoldemOut({ table: 0, events: [], state: merged })) { this.needLook = true; return; }",
-    "new": "      if (false) { this.needLook = true; return; }",
+    "old": "      if (!validHoldemOut({ table: 0, events: [], state: merged })) {",
+    "new": "      if (false) {",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2721,8 +2721,8 @@
   {
     "name": "TIDY-delta-any-key",
     "file": "src/net/holdemTable.js",
-    "old": "|| Object.keys(d).some((k) => !STATE_KEYS.includes(k))) return false;",
-    "new": ") return false;",
+    "old": "    if (\n      m.state !== undefined ||\n      !d ||\n      typeof d !== 'object' ||\n      Array.isArray(d) ||\n      Object.keys(d).some((k) => !STATE_KEYS.includes(k))\n    )\n      return false;",
+    "new": "    if (m.state !== undefined || !d || typeof d !== 'object' || Array.isArray(d)) return false;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",

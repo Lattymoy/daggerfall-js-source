@@ -323,7 +323,7 @@ test('JUNGLE-ROADSIDE where it asks: both trunks\' tiles of the jungle\'s tree l
   g2[9 * T + 7] = Math.tan(33.5 * Math.PI / 180) ** 2;
   assert.ok(ok(7, 9), '33.5 degrees stands');
   // PIN MOVED (GRAHT1): the tile law off a graht-oak's foot where they stand (world/jungle/grahtOaks.js grahtFootMask)
-  assert.match(text('src/world/terrain/jungleNature.js'), /tileOk: onFoot \? \(\(ok\) => \(tx, ty\) => ok\(tx, ty\) && !onFoot\[ty \* tDim \+ tx\]\)\(pairTile\(share, groundOf, g2Of, openOf\)\) : pairTile\(share, groundOf, g2Of, openOf\),[^\n]*\n\s+trailOk: \(x, z, r\) => !trails \|\| trailClear\(px, py, x, z, r\),/, 'the layout\'s own law and trails');
+  assert.match(text('src/world/terrain/jungleNature.js'), /tileOk: onFoot\n\s*\? \(\n\s*\(ok\) => \(tx, ty\) =>\n\s*ok\(tx, ty\) && !onFoot\[ty \* tDim \+ tx\]\n\s*\)\(pairTile\(share, groundOf, g2Of, openOf\)\)\n\s*: pairTile\(share, groundOf, g2Of, openOf\), \/\/ GRAHT1: never on a graht-oak's foot\n\s*trailOk: \(x, z, r\) => !trails \|\| trailClear\(px, py, x, z, r\),/, 'the layout\'s own law and trails');
   // EVERY STATION of every arm, slid either way, every pair, turn and the two extreme scales: a trunk EDGE_MIN inside
   let nearest = Infinity;
   for (const [, sx, sz] of ARMS) {
@@ -476,7 +476,7 @@ test('JUNGLE-ROADSIDE the worker reads the roads by Basic Roads\' one port: worl
   // PIN MOVED (TESA4/TESA5, at the merge of main into TESA): the map's pixels ask the network (and a crossing's join past it), every other pixel Arena's roads;
   // PIN MOVED (VOYAGER2): every other pixel the curves of Arena's roads and tracks (world/road/roadCurves.js curveDistance)
   assert.match(band, /const onMap = mx >= 0 && my >= 0 && mx < MAP_W && my < MAP_H;/);
-  assert.match(band, /Math\.min\(r \? curveDistance\(r, tx, tz\) : Infinity, t \? curveDistance\(t, tx, tz\) : Infinity\) \* TILE_M - PATH_HALF_M;/);
+  assert.match(band, /Math\.min\(r \? curveDistance\(r, tx, tz\) : Infinity, t \? curveDistance\(t, tx, tz\) : Infinity\) \* TILE_M -\n\s*PATH_HALF_M;/);
   assert.match(band, /const bits = pathsDataPoint\(net, mx, my\) \| arenaJoinByte\(mx, my\);/);
   assert.match(band, /import \{ pathsDataPoint, MP_WORLD_UNITS, N, NE, E, SE, S, SW, W, NW \} from '\.\/pathData\.js';/);
   const bytes = (f) => new Uint8Array(readFileSync(join(ROOT, 'vendor/roads-hazelnut', f)));
@@ -575,7 +575,7 @@ test('JUNGLE-ROADSIDE the build stands each pair whole, a tree\'s half at its ow
   const slots = [{ cut: new Set([c]) }, { cut: new Set([b]) }];
   const r = Object.assign(Object.create(Renderer.prototype), { _lptSlots: slots });
   assert.deepEqual([r._lptFrameOf([a, b]), r._lptFrameOf([a]), r._lptFrameOf(c)], [slots[1], null, slots[0]], 'the renderer finds the frame drawing any of them');
-  assert.match(text('src/render/nodeGlint.js'), /sendCut\(b\.lptProto \? frames\.find\(\(f\) => f\?\.cut && lptCuts\(f\.cut, b\.lptProto\)\) \?\? null : null\);/, 'and the glint');
+  assert.match(text('src/render/nodeGlint.js'), /sendCut\(b\.lptProto \? \(frames\.find\(\(f\) => f\?\.cut && lptCuts\(f\.cut, b\.lptProto\)\) \?\? null\) : null\);/, 'and the glint');
 
   const pb = text('src/scenes/pixelBuild.js');
   assert.match(pb, /const pairs = keptPairs\(roadside, \(x, z\) => !pointNearGate\(gateClear, px, py, x, z, WOD_FLAT_GATE_CLEAR_M\) && !insideRocks\(pixelRocks, x, z\)\);/, 'kept by the gate\'s clearing and the rocks, as every flat');

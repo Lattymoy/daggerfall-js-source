@@ -2,8 +2,8 @@
   {
     "name": "GUIDE2-note-on-an-unasked-map",
     "file": "src/ui/quest/questLens.js",
-    "old": "    note: target.locationName && target.onMap === false && !target.here ? (target.pastBay ? WHERE_TEXT.offMapPastBay : WHERE_TEXT.offMap) : null,",
-    "new": "    note: target.locationName && !target.onMap && !target.here ? (target.pastBay ? WHERE_TEXT.offMapPastBay : WHERE_TEXT.offMap) : null,",
+    "old": "      target.locationName && target.onMap === false && !target.here",
+    "new": "      target.locationName && !target.onMap && !target.here",
     "tests": [
       "test/ui/enhanced/guide2_wayThere.test.js"
     ],
@@ -30,8 +30,8 @@
   {
     "name": "GUIDE2-phrase-drifted",
     "file": "src/ui/quest/questLens.js",
-    "old": "  formatText(localizedText('locationInRegionProvince', '{0} in {1} province'), locationName, regionName);",
-    "new": "  formatText(localizedText('locationInRegionProvince', '{0}, {1}'), locationName, regionName);",
+    "old": "  formatText(localizedText('locationInRegionProvince', '{0} in {1} province'), locationName, regionName); // L10N3d: in the player's language",
+    "new": "  formatText(localizedText('locationInRegionProvince', '{0}, {1}'), locationName, regionName); // L10N3d: in the player's language",
     "tests": [
       "test/ui/enhanced/guide2_wayThere.test.js",
       "test/systems/audit26_systems2.test.js"
@@ -40,8 +40,8 @@
   {
     "name": "GUIDE2-unasked-map-is-a-no",
     "file": "src/ui/quest/questLens.js",
-    "old": "  const onMap = where.canFindPlace ? !!where.canFindPlace(site.regionName, site.locationName, site) : null;",
-    "new": "  const onMap = where.canFindPlace ? !!where.canFindPlace(site.regionName, site.locationName, site) : false;",
+    "old": "  const onMap = where.canFindPlace ? !!where.canFindPlace(site.regionName, site.locationName, site) : null; // START3: the site, for its pixel past the Bay",
+    "new": "  const onMap = where.canFindPlace ? !!where.canFindPlace(site.regionName, site.locationName, site) : false; // START3: the site, for its pixel past the Bay",
     "tests": [
       "test/ui/enhanced/guide2_wayThere.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "GUIDE2-a-token-array-is-read-as-a-message",
     "file": "src/ui/quest/questLens.js",
-    "old": "  if (typeof message?.getTextTokens !== 'function') return null;\n",
-    "new": "",
+    "old": "  if (typeof message?.getTextTokens !== 'function') return null;\n  let place = lastPlaceMentionedInMessage(message, QUIET_ROLL);",
+    "new": "  let place = lastPlaceMentionedInMessage(message, QUIET_ROLL);",
     "tests": [
       "test/ui/enhanced/enhancedChronicle.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "GUIDE2-chronicle-door-read-after-the-close",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "      go.onclick = () => { onExit(); door(find); };",
-    "new": "      go.onclick = () => { onExit(); deps.showQuestPlace?.(find); };",
+    "old": "        door(find);",
+    "new": "        deps.showQuestPlace?.(find);",
     "tests": [
       "test/ui/enhanced/guide2_wayThere.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "GUIDE2-chronicle-map-before-the-close",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "      go.onclick = () => { onExit(); door(find); };",
-    "new": "      go.onclick = () => { door(find); onExit(); };",
+    "old": "        onExit();\n        door(find);",
+    "new": "        door(find);\n        onExit();",
     "tests": [
       "test/ui/enhanced/guide2_wayThere.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "GUIDE2-chronicle-line-hidden-when-shut",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "        if (section === 'quests' && e.uid != null) {\n          const state = questState(e);",
-    "new": "        if (section === 'quests' && e.uid != null && !isFolded(folded, section, i)) {\n          const state = questState(e);",
+    "old": "        if (section === 'quests' && e.uid != null) {",
+    "new": "        if (section === 'quests' && e.uid != null && !isFolded(folded, section, i)) {",
     "tests": [
       "test/ui/enhanced/guide2_wayThere.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "GUIDE2-chronicle-timer-never-armed",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "  armClocks();   // GUIDE2: after the spans exist\n",
-    "new": "",
+    "old": "  armClocks(); // GUIDE2: after the spans exist\n}",
+    "new": "}",
     "tests": [
       "test/ui/enhanced/guide2_wayThere.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "GUIDE2-chronicle-interval-outlives-the-window",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "    destroy() {\n      disarmClocks();\n",
-    "new": "    destroy() {\n",
+    "old": "      disarmClocks();\n      unlistenKeys();",
+    "new": "      unlistenKeys();",
     "tests": [
       "test/ui/enhanced/guide2_wayThere.test.js"
     ]
@@ -166,7 +166,7 @@
   {
     "name": "GUIDE2-chronicle-stopped-clock-left-standing",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "      if (!Number.isFinite(left)) { render(); return; }",
+    "old": "      if (!Number.isFinite(left)) {\n        render();\n        return;\n      }",
     "new": "      if (!Number.isFinite(left)) continue;",
     "tests": [
       "test/ui/enhanced/guide2_wayThere.test.js"

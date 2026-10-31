@@ -56,8 +56,8 @@
   {
     "name": "DRAKES-a-market-label-old",
     "file": "src/ui/marketTab.js",
-    "old": "const unitWord = gold ? 'gold' : 'silver';",
-    "new": "const unitWord = gold ? 'gold' : 'Marks';",
+    "old": "    const unitWord = gold ? 'gold' : 'silver';",
+    "new": "    const unitWord = gold ? 'gold' : 'Marks';",
     "tests": [
       "test/ui/drakes.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "DRAKES-the-gate-line-old",
     "file": "src/net/marksBook.js",
-    "old": "capped: `No silver for this breach. You can earn at most ${marksText(MARKS_COMBAT.perDay)} a day",
-    "new": "capped: `No silver for this breach. You can earn at most Marks a day",
+    "old": "  capped: `No silver for this breach. You can earn at most ${marksText(MARKS_COMBAT.perDay)} a day from breaches, town defenses, serpents, Redoubts and fallen stars.`,",
+    "new": "  capped: `No silver for this breach. You can earn at most Marks a day from breaches, town defenses, serpents, Redoubts and fallen stars.`,",
     "tests": [
       "test/ui/drakes.test.js"
     ]

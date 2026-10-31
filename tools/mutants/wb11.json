@@ -11,8 +11,8 @@
   {
     "name": "WB11-legion-on-every-profile",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    legion: !!T('legion')?.legion,",
-    "new": "    legion: true,",
+    "old": "    legion: !!T('legion')?.legion, // WB11b: his host fights beside him (HOST_KINDS) - nothing of it runs without the trial",
+    "new": "    legion: true, // WB11b: his host fights beside him (HOST_KINDS) - nothing of it runs without the trial",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WB11-harriers-at-the-nearest",
     "file": "src/net/gate/gateBrain.js",
-    "old": "if (!mark || dist(b.x, b.z, f.pos[0], f.pos[1]) > dist(mark.x, mark.z, f.pos[0], f.pos[1])) mark = b;",
-    "new": "if (!mark || dist(b.x, b.z, f.pos[0], f.pos[1]) < dist(mark.x, mark.z, f.pos[0], f.pos[1])) mark = b;",
+    "old": "      if (!mark || dist(b.x, b.z, f.pos[0], f.pos[1]) > dist(mark.x, mark.z, f.pos[0], f.pos[1])) mark = b;",
+    "new": "      if (!mark || dist(b.x, b.z, f.pos[0], f.pos[1]) < dist(mark.x, mark.z, f.pos[0], f.pos[1])) mark = b;",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB11-the-rise-skipped",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    if (now < (a.up ?? 0)) continue;   // still rising out of the fire",
-    "new": "    if (false) continue;   // still rising out of the fire",
+    "old": "    if (now < (a.up ?? 0)) continue; // still rising out of the fire",
+    "new": "    if (false) continue; // still rising out of the fire",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WB11-a-wave-on-a-challenger",
     "file": "src/net/gate/gateBrain.js",
-    "old": "if (live.some((b) => dist(b.x, b.z, x, z) < HOST_SPAWN_CLEAR) || ",
-    "new": "if (",
+    "old": "    if (\n      live.some((b) => dist(b.x, b.z, x, z) < HOST_SPAWN_CLEAR) ||\n      spots.some((q) => dist(q[0], q[1], x, z) < HOST_GAP_M) ||\n      (ok && !ok(x, z))\n    )\n      return;",
+    "new": "    if (spots.some((q) => dist(q[0], q[1], x, z) < HOST_GAP_M) || (ok && !ok(x, z))) return;",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WB11-sappers-anywhere",
     "file": "src/net/gate/gateBrain.js",
-    "old": "rimSpots(C, n, here, rng, away, SAP_SPREAD, clear)",
-    "new": "rimSpots(C, n, here, rng)",
+    "old": "      const spots = n > 0 ? rimSpots(C, n, here, rng, away, SAP_SPREAD, clear) : [];",
+    "new": "      const spots = n > 0 ? rimSpots(C, n, here, rng) : [];",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "WB11-bearers-twice-a-court",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (H.wardCt === f.court) return;\n",
-    "new": "",
+    "old": "  if (H.wardCt === f.court) return;\n  H.wardCt = f.court;",
+    "new": "  H.wardCt = f.court;",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "WB11-host-outlives-its-phase",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    hostGone(f, now, out, HOST_GONE.crumbled, notGaoler);   // WB11b: his host crumbles at every turn - each kind is its phase's or its court's (WB14f: the Captive's gaolers are the Pen's)\n",
-    "new": "",
+    "old": "    hostGone(f, now, out, HOST_GONE.crumbled, notGaoler); // WB11b: his host crumbles at every turn - each kind is its phase's or its court's (WB14f: the Captive's gaolers are the Pen's)\n    f.pending = null;",
+    "new": "    f.pending = null;",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "WB11-host-through-the-wrath",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    // crumbling first read it as the Ward-Bearers' cap and said his ward broke - it stands through the wind-up)\n    hostGone(f, now, out, HOST_GONE.crumbled);\n",
-    "new": "    // crumbling first read it as the Ward-Bearers' cap and said his ward broke - it stands through the wind-up)\n",
+    "old": "    hostGone(f, now, out, HOST_GONE.crumbled);\n    hpFrame(f, now, out); // AUDIT WBX R5",
+    "new": "    hpFrame(f, now, out); // AUDIT WBX R5",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "WB11-host-outlives-the-kill",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    if (f.lg) f.lg.ads = [];   // WB11b: and his host goes with him (the fall's word says so - no word of its own)\n",
-    "new": "",
+    "old": "    if (f.lg) f.lg.ads = []; // WB11b: and his host goes with him (the fall's word says so - no word of its own)\n  }",
+    "new": "  }",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "WB11-a-blow-from-another-court",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  const [ax, az] = hostAt(a, now);\n  if (!inCourt(pose.x, pose.z, nearestCourt(ax, az), POSE_SLACK)) return out;",
-    "new": "  const [ax, az] = hostAt(a, now);",
+    "old": "  const [ax, az] = hostAt(a, now);\n  if (!inCourt(pose.x, pose.z, nearestCourt(ax, az), POSE_SLACK)) return out; // WB14c: from the floor it stands on (his court, under the Legion-Lord; the Vanguard's platform)",
+    "new": "  const [ax, az] = hostAt(a, now); // WB14c: from the floor it stands on (his court, under the Legion-Lord; the Vanguard's platform)",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "WB11-a-swing-from-across-the-court",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, ax, az) - HOST_KINDS[a.k].r > MELEE_REACH + POSE_SLACK) return out;\n",
-    "new": "",
+    "old": "  if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, ax, az) - HOST_KINDS[a.k].r > MELEE_REACH + POSE_SLACK) return out;\n  const got = spendPurse(p, d, a.h, now);",
+    "new": "  const got = spendPurse(p, d, a.h, now);",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "WB11-the-share-uncounted",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  p.hd = (p.hd ?? 0) + got;\n",
-    "new": "",
+    "old": "  p.hd = (p.hd ?? 0) + got;\n  a.h -= got;",
+    "new": "  a.h -= got;",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "WB11-his-threat",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  p.hd = (p.hd ?? 0) + got;\n",
-    "new": "  p.hd = (p.hd ?? 0) + got;\n  f.threat[sub] = (f.threat[sub] ?? 0) + got;\n",
+    "old": "  a.h -= got;",
+    "new": "  f.threat[sub] = (f.threat[sub] ?? 0) + got;\n  a.h -= got;",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "WB11-the-state-drops-the-host",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    ...(f.lg ? { lg: hostStateOf(f.lg) } : {}),",
-    "new": "    ...{},",
+    "old": "    ...(f.lg ? { lg: hostStateOf(f.lg) } : {}), // WB11b: his host standing - the Legion-Lord's (WB14: and the Vanguard's, the gaolers, a Tithe-Imp)",
+    "new": "    ...{}, // WB11b: his host standing - the Legion-Lord's (WB14: and the Vanguard's, the gaolers, a Tithe-Imp)",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "WB11-a-walk-dropped",
     "file": "src/net/gate/gateLink.js",
-    "old": "    case 'ad': case 'amv': case 'aatk': case 'ah': case 'adie': return foldHost(s, g, now);",
-    "new": "    case 'ad': case 'aatk': case 'ah': case 'adie': return foldHost(s, g, now);",
+    "old": "    case 'amv':\n    case 'aatk':",
+    "new": "    case 'aatk':",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]
@@ -227,7 +227,7 @@
   {
     "name": "WB11-judged-before-its-landing",
     "file": "src/net/gate/gateStrike.js",
-    "old": "  if (!(now >= atk.at)) return 'wait';   // (spelled apart from strikeVerdict's - a mutant record aims at that one alone)\n  if (now > atk.at + Math.max(B.active, 1) + STRIKE_LATE_MS) return 'miss';",
+    "old": "  if (!(now >= atk.at)) return 'wait'; // (spelled apart from strikeVerdict's - a mutant record aims at that one alone)\n  if (now > atk.at + Math.max(B.active, 1) + STRIKE_LATE_MS) return 'miss';",
     "new": "  if (now > atk.at + Math.max(B.active, 1) + STRIKE_LATE_MS) return 'miss';",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
@@ -282,8 +282,8 @@
   {
     "name": "WB11-the-rise-drawn-standing",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  if (since < riseMs) return { act: 'rise',",
-    "new": "  if (false) return { act: 'rise',",
+    "old": "  if (since < riseMs)",
+    "new": "  if (false)",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "WB11-the-bearers-uncounted",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "&& bearers > 0 && now < s.shieldUntil && !callout) callout =",
-    "new": "&& bearers > 99 && now < s.shieldUntil && !callout) callout =",
+    "old": "  if (!s.fell && s.wrath == null && bearers > 0 && now < s.shieldUntil && !callout)",
+    "new": "  if (!s.fell && s.wrath == null && bearers > 99 && now < s.shieldUntil && !callout)",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "WB11-the-column-for-every-court",
     "file": "src/ui/gate/gateDamageChart.js",
-    "old": "  const hosted = dm.some((r) => r.a !== undefined);",
-    "new": "  const hosted = true;",
+    "old": "  const hosted = dm.some((r) => r.a !== undefined); // WB11c: his host stood in this court",
+    "new": "  const hosted = true; // WB11c: his host stood in this court",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]

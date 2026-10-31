@@ -24,7 +24,11 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const arg = (k) => (process.argv.includes(k) ? process.argv[process.argv.indexOf(k) + 1] : null);
 const wavAt = arg('--wav');
 const SECONDS = Number(arg('--seconds') ?? 24);
-const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
+const out = [];
+const check = (n, ok, d = '') => {
+  out.push(ok);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`);
+};
 
 const PAGE = `<!doctype html><html><body><script type=module>
 import { SongPlayer } from '/src/systems/song/songPlayer.js';
@@ -86,18 +90,43 @@ window.ready = true;
 function wav(pcmB64, rate) {
   const data = Buffer.from(pcmB64, 'base64');
   const h = Buffer.alloc(44);
-  h.write('RIFF', 0); h.writeUInt32LE(36 + data.length, 4); h.write('WAVE', 8); h.write('fmt ', 12);
-  h.writeUInt32LE(16, 16); h.writeUInt16LE(1, 20); h.writeUInt16LE(2, 22); h.writeUInt32LE(rate, 24); h.writeUInt32LE(rate * 4, 28); h.writeUInt16LE(4, 32); h.writeUInt16LE(16, 34);
-  h.write('data', 36); h.writeUInt32LE(data.length, 40);
+  h.write('RIFF', 0);
+  h.writeUInt32LE(36 + data.length, 4);
+  h.write('WAVE', 8);
+  h.write('fmt ', 12);
+  h.writeUInt32LE(16, 16);
+  h.writeUInt16LE(1, 20);
+  h.writeUInt16LE(2, 22);
+  h.writeUInt32LE(rate, 24);
+  h.writeUInt32LE(rate * 4, 28);
+  h.writeUInt16LE(4, 32);
+  h.writeUInt16LE(16, 34);
+  h.write('data', 36);
+  h.writeUInt32LE(data.length, 40);
   return Buffer.concat([h, data]);
 }
 
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
-  if (url === '/probe/') { res.writeHead(200, { 'content-type': 'text/html' }); res.end(PAGE); return; }
+  if (url === '/probe/') {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(PAGE);
+    return;
+  }
   const f = join(ROOT, url);
-  if (!f.startsWith(ROOT) || !existsSync(f)) { res.writeHead(404); res.end(); return; }
-  res.writeHead(200, { 'content-type': extname(f) === '.js' ? 'text/javascript' : extname(f) === '.json' ? 'application/json' : 'application/octet-stream' });
+  if (!f.startsWith(ROOT) || !existsSync(f)) {
+    res.writeHead(404);
+    res.end();
+    return;
+  }
+  res.writeHead(200, {
+    'content-type':
+      extname(f) === '.js'
+        ? 'text/javascript'
+        : extname(f) === '.json'
+          ? 'application/json'
+          : 'application/octet-stream',
+  });
   res.end(readFileSync(f));
 });
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -105,7 +134,8 @@ const port = server.address().port;
 const browser = await chromium.launch();
 try {
   const page = await browser.newPage();
-  const errs = []; page.on('pageerror', (e) => errs.push(e.message));
+  const errs = [];
+  page.on('pageerror', (e) => errs.push(e.message));
   await page.goto(`http://127.0.0.1:${port}/probe/`);
   await page.waitForFunction(() => window.ready === true, null, { timeout: 60000 });
   const db = (x) => (x > 0 ? 20 * Math.log10(x) : -Infinity);
@@ -115,26 +145,62 @@ try {
     const loud = r[key].rms.slice(1, 12);
     const mean = loud.reduce((a, b) => a + b, 0) / loud.length;
     r[key].meanDb = db(mean);
-    console.log(`     ${key}: ${r[key].secs.toFixed(1)} s, peak ${db(r[key].peak).toFixed(1)} dBFS, loudness ${r[key].meanDb.toFixed(1)} dBFS, ${r[key].voices} voices`);
+    console.log(
+      `     ${key}: ${r[key].secs.toFixed(1)} s, peak ${db(r[key].peak).toFixed(1)} dBFS, loudness ${r[key].meanDb.toFixed(1)} dBFS, ${r[key].voices} voices`,
+    );
     if (wavAt) writeFileSync(join(wavAt, `${key}.wav`), wav(r[key].pcm, r[key].rate));
   }
-  for (const key of ['war1', 'war2', 'war3', 'fell']) check(`${key}: it plays - every second of it sounding, no NaN`, r[key].nan === 0 && r[key].rms.slice(0, 10).every((x) => x > 1e-4), JSON.stringify(r[key].rms.slice(0, 10).map((x) => db(x).toFixed(0))));
+  for (const key of ['war1', 'war2', 'war3', 'fell'])
+    check(
+      `${key}: it plays - every second of it sounding, no NaN`,
+      r[key].nan === 0 && r[key].rms.slice(0, 10).every((x) => x > 1e-4),
+      JSON.stringify(r[key].rms.slice(0, 10).map((x) => db(x).toFixed(0))),
+    );
   // WBX9: louder - and still under the clip at the highest MusicVolume (1.0 is twice the 0.5 this renders at: +6 dB)
-  for (const key of ['war1', 'war2', 'war3', 'fell']) check(`${key}: never clipping, even at the highest MusicVolume`, db(r[key].peak) <= -6.03, `peak ${db(r[key].peak).toFixed(1)} dBFS here, ${(db(r[key].peak) + 6.02).toFixed(1)} at full volume`);
+  for (const key of ['war1', 'war2', 'war3', 'fell'])
+    check(
+      `${key}: never clipping, even at the highest MusicVolume`,
+      db(r[key].peak) <= -6.03,
+      `peak ${db(r[key].peak).toFixed(1)} dBFS here, ${(db(r[key].peak) + 6.02).toFixed(1)} at full volume`,
+    );
   // WB10a: and under its own ceiling (SCORE_PRESS: the dBFS it may reach at the highest MusicVolume)
-  for (const key of ['war1', 'war2', 'war3', 'fell']) check(`${key}: under its ceiling of ${r[key].ceiling} dBFS at the highest MusicVolume`, db(r[key].peak) + 6.02 <= r[key].ceiling + 0.05, `${(db(r[key].peak) + 6.02).toFixed(2)} dBFS at full volume`);
+  for (const key of ['war1', 'war2', 'war3', 'fell'])
+    check(
+      `${key}: under its ceiling of ${r[key].ceiling} dBFS at the highest MusicVolume`,
+      db(r[key].peak) + 6.02 <= r[key].ceiling + 0.05,
+      `${(db(r[key].peak) + 6.02).toFixed(2)} dBFS at full volume`,
+    );
   // WBX9 (Mac: "The music needs to be louder and more intense"): over the game's own songs, which the same player renders
   // at -28.7 (GDAY___D) to -41 dBFS (the dungeon's) - measured beside them when this was written; the score read
   // -34.5 / -29.7 / -28.4 / -30.9 then, -25.6 / -22.1 / -21.5 / -22.9 after WBX9. WB10a (Mac: "make it more loud, just
   // feel like its too quite"): pressed, -15.8 / -15.4 / -14.2 / -15.6 now (the drums' noise moves a peak ~0.4 dB a run)
-  for (const [key, floor] of [['war1', -17], ['war2', -16.5], ['war3', -15.5], ['fell', -17]]) check(`${key}: loud - at least ${floor} dBFS`, r[key].meanDb >= floor, `${r[key].meanDb.toFixed(1)} dBFS`);
-  check('the war grows with his phases', r.war2.meanDb > r.war1.meanDb && r.war3.meanDb > r.war2.meanDb - 0.5, `${r.war1.meanDb.toFixed(1)} / ${r.war2.meanDb.toFixed(1)} / ${r.war3.meanDb.toFixed(1)} dBFS`);
+  for (const [key, floor] of [
+    ['war1', -17],
+    ['war2', -16.5],
+    ['war3', -15.5],
+    ['fell', -17],
+  ])
+    check(`${key}: loud - at least ${floor} dBFS`, r[key].meanDb >= floor, `${r[key].meanDb.toFixed(1)} dBFS`);
+  check(
+    'the war grows with his phases',
+    r.war2.meanDb > r.war1.meanDb && r.war3.meanDb > r.war2.meanDb - 0.5,
+    `${r.war1.meanDb.toFixed(1)} / ${r.war2.meanDb.toFixed(1)} / ${r.war3.meanDb.toFixed(1)} dBFS`,
+  );
   // the law gives the fall SCORE_STING_MS (12.5 s): by then it has rung out
-  const tail = r.fell.rms.slice(12, 20), top = Math.max(...r.fell.rms.slice(0, 8));
-  check('the fall rings out inside the time the law gives it, and leaves the court quiet', tail.length === 8 && tail.every((x) => x < top * 0.05), `top ${db(top).toFixed(1)}, from 12 s ${tail.map((x) => db(x).toFixed(0)).join(' ')} dBFS`);
+  const tail = r.fell.rms.slice(12, 20),
+    top = Math.max(...r.fell.rms.slice(0, 8));
+  check(
+    'the fall rings out inside the time the law gives it, and leaves the court quiet',
+    tail.length === 8 && tail.every((x) => x < top * 0.05),
+    `top ${db(top).toFixed(1)}, from 12 s ${tail.map((x) => db(x).toFixed(0)).join(' ')} dBFS`,
+  );
   // WB10a: one player through the whole fight and the song after it
   const f = await page.evaluate(() => window.fight());
-  check('one player through the whole fight: every song started, the press on for the court\'s four and off for the song after, nothing thrown, no NaN', f.error === null && f.bad === 0 && f.routes.join() === 'pressed,pressed,pressed,pressed,plain', `${f.error ?? ''} ${f.routes.join(' ')}${f.bad ? `, ${f.bad} bad samples` : ''}`);
+  check(
+    "one player through the whole fight: every song started, the press on for the court's four and off for the song after, nothing thrown, no NaN",
+    f.error === null && f.bad === 0 && f.routes.join() === 'pressed,pressed,pressed,pressed,plain',
+    `${f.error ?? ''} ${f.routes.join(' ')}${f.bad ? `, ${f.bad} bad samples` : ''}`,
+  );
   check('no page error', errs.length === 0, errs.join('; '));
 } finally {
   await browser.close();

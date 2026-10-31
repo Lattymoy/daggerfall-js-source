@@ -21,7 +21,7 @@
     "name": "TELL1-kind-health-undivided",
     "file": "src/ai/tells.js",
     "old": "  return Math.max(1, (entity?.maxHealth || 1) / m);",
-    "new": "  return Math.max(1, (entity?.maxHealth || 1));",
+    "new": "  return Math.max(1, entity?.maxHealth || 1);",
     "tests": [
       "test/systems/tell1_poise.test.js"
     ]
@@ -74,7 +74,7 @@
   {
     "name": "TELL1-back-half-turn",
     "file": "src/ai/tells.js",
-    "old": "  return dot < Math.cos(TELL.BACK_DEG * Math.PI / 180);",
+    "old": "  return dot < Math.cos((TELL.BACK_DEG * Math.PI) / 180);",
     "new": "  return dot < 0;",
     "tests": [
       "test/systems/tell1_poise.test.js"
@@ -101,8 +101,8 @@
   {
     "name": "TELL1-no-stagger",
     "file": "src/ai/tactics.js",
-    "old": "  s.state = 'staggered'; s.until = now + staggerSeconds(weight); s.staggerReady = s.until + TELL.STAGGER_IMMUNE;",
-    "new": "  s.state = 'wait'; s.until = now + staggerSeconds(weight); s.staggerReady = s.until + TELL.STAGGER_IMMUNE;",
+    "old": "  s.state = 'staggered';",
+    "new": "  s.state = 'wait';",
     "tests": [
       "test/systems/tell1_poise.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "TELL1-stagger-length",
     "file": "src/ai/tactics.js",
-    "old": "  s.state = 'staggered'; s.until = now + staggerSeconds(weight); s.staggerReady = s.until + TELL.STAGGER_IMMUNE;",
-    "new": "  s.state = 'staggered'; s.until = now + 1.2; s.staggerReady = s.until + TELL.STAGGER_IMMUNE;",
+    "old": "  s.until = now + staggerSeconds(weight);",
+    "new": "  s.until = now + 1.2;",
     "tests": [
       "test/systems/tell1_poise.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "TELL1-token-kept",
     "file": "src/ai/tactics.js",
-    "old": "  if (bd) { bd.melee.delete(ai); bd.waiting.set(ai, now); }",
-    "new": "  if (false) { bd.melee.delete(ai); bd.waiting.set(ai, now); }",
+    "old": "  if (bd) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/tell1_poise.test.js"
     ]
@@ -128,7 +128,7 @@
   {
     "name": "TELL1-no-cooldown",
     "file": "src/ai/tactics.js",
-    "old": "  s.blowReady = now + blowCooldown(ent);   // By its tier",
+    "old": "  s.blowReady = now + blowCooldown(ent); // By its tier",
     "new": "  s.blowReady = now;",
     "tests": [
       "test/systems/tell1_poise.test.js"
@@ -137,8 +137,8 @@
   {
     "name": "TELL1-stunlock",
     "file": "src/ai/tactics.js",
-    "old": "  if (now < (s.staggerReady ?? -Infinity)) { s.state = 'wait'; return 'break'; }   // no stunlock: a stagger, then 3 s of none",
-    "new": "  if (false) { s.state = 'wait'; return 'break'; }   // no stunlock: a stagger, then 3 s of none",
+    "old": "  if (now < (s.staggerReady ?? -Infinity)) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/tell1_poise.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "TELL1-guard-short",
     "file": "src/ai/tactics.js",
-    "old": "  s.state = 'staggered'; s.until = now + staggerSeconds(weight); s.staggerReady = s.until + TELL.STAGGER_IMMUNE;",
-    "new": "  s.state = 'staggered'; s.until = now + staggerSeconds(weight); s.staggerReady = s.until;",
+    "old": "  s.staggerReady = s.until + TELL.STAGGER_IMMUNE;",
+    "new": "  s.staggerReady = s.until;",
     "tests": [
       "test/systems/tell1_poise.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "TELL1-motor-unheld",
     "file": "src/ai/tactics.js",
-    "old": "  ai.staggerUntil = s.until;   // the motor's hold (characters/enemy/enemyMotor.js _step)",
-    "new": "  ai.staggerUntil = 0;   // the motor's hold (characters/enemy/enemyMotor.js _step)",
+    "old": "  ai.staggerUntil = s.until; // the motor's hold (characters/enemy/enemyMotor.js _step)",
+    "new": "  ai.staggerUntil = 0; // the motor's hold (characters/enemy/enemyMotor.js _step)",
     "tests": [
       "test/systems/tell1_poise.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "TELL1-entity-unmarked",
     "file": "src/ai/tactics.js",
-    "old": "  if (ent) ent.staggerUntil = s.until;   // ...and what every blow at it reads (the fold below)",
-    "new": "  if (false) ent.staggerUntil = s.until;   // ...and what every blow at it reads (the fold below)",
+    "old": "  if (ent) ent.staggerUntil = s.until; // ...and what every blow at it reads (the fold below)",
+    "new": "  if (false) ent.staggerUntil = s.until; // ...and what every blow at it reads (the fold below)",
     "tests": [
       "test/systems/tell1_poise.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "TELL1-elite-unmarked",
     "file": "src/systems/eliteFoes.js",
-    "old": "    entity.healthMult = (entity.healthMult ?? 1) * hm;",
-    "new": "    entity.healthMult = 1;",
+    "old": "    entity.healthMult = (entity.healthMult ?? 1) * hm; // TELL1: what was stood on the kind's own health (ai/tells.js kindHealth - its poise)",
+    "new": "    entity.healthMult = 1; // TELL1: what was stood on the kind's own health (ai/tells.js kindHealth - its poise)",
     "tests": [
       "test/systems/tell1_poise.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "TELL1-champion-unmarked",
     "file": "src/systems/champions.js",
-    "old": "  entity.healthMult = (entity.healthMult ?? 1) * hp;",
-    "new": "  entity.healthMult = 1;",
+    "old": "  entity.healthMult = (entity.healthMult ?? 1) * hp; // TELL1: what was stood on the kind's own health (ai/tells.js kindHealth - its poise)",
+    "new": "  entity.healthMult = 1; // TELL1: what was stood on the kind's own health (ai/tells.js kindHealth - its poise)",
     "tests": [
       "test/systems/tell1_poise.test.js"
     ]

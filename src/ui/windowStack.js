@@ -157,8 +157,12 @@ export function makeWindowStack({ hud = null, onTop = null, onWindowChange = nul
   const isHud = (w) => !!hud && w === hud;
   const top = () => (windows.length > 0 ? windows[windows.length - 1] : null);
   /** PLEA-LOOP: every door in and out of `windows` says so here, so windowCovered answers for this stack. */
-  const hold = (w) => { if (w && typeof w === 'object') HELD_BY.set(w, api); };
-  const unhold = (w) => { if (w && typeof w === 'object' && HELD_BY.get(w) === api) HELD_BY.delete(w); };
+  const hold = (w) => {
+    if (w && typeof w === 'object') HELD_BY.set(w, api);
+  };
+  const unhold = (w) => {
+    if (w && typeof w === 'object' && HELD_BY.get(w) === api) HELD_BY.delete(w);
+  };
 
   let lastTop = top();
   const publishTop = () => {
@@ -249,7 +253,9 @@ export function makeWindowStack({ hud = null, onTop = null, onWindowChange = nul
     },
 
     /** ContainsWindow (:114-117). */
-    containsWindow(win) { return windows.indexOf(win) >= 0; },
+    containsWindow(win) {
+      return windows.indexOf(win) >= 0;
+    },
 
     /** THE DRAW CHAIN. DaggerfallUI paints ONE window a frame -
      *  `uiManager.TopWindow.Draw()` (DaggerfallUI.cs:491) - and depth
@@ -349,7 +355,7 @@ export function makeWindowStack({ hud = null, onTop = null, onWindowChange = nul
         onDrop?.(w);
         w.onPop?.();
       }
-      if (windows.length <= (hud ? 1 : 0)) gamePaused = false;   // RemoveWindow's latch: down once the HUD alone, or nothing, is left
+      if (windows.length <= (hud ? 1 : 0)) gamePaused = false; // RemoveWindow's latch: down once the HUD alone, or nothing, is left
       publishTop();
       onWindowChange?.();
     },
@@ -399,9 +405,13 @@ export function makeWindowStack({ hud = null, onTop = null, onWindowChange = nul
       messages.push(message);
     },
     /** GetMessage (:157-163) - empty string, never null. */
-    getMessage() { return messages.length > 0 ? messages.shift() : ''; },
+    getMessage() {
+      return messages.length > 0 ? messages.shift() : '';
+    },
     /** PeekMessage (:168-174). */
-    peekMessage() { return messages.length > 0 ? messages[0] : ''; },
+    peekMessage() {
+      return messages.length > 0 ? messages[0] : '';
+    },
 
     /**
      * THE PORT SEAM. Not a DFU member: DFU windows close themselves

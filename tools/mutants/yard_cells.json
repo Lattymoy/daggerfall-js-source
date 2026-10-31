@@ -4,7 +4,9 @@
     "file": "src/net/yardCellLaw.js",
     "old": "export const yardCellOf = (buildingKey) => Math.floor(buildingKey / 256);",
     "new": "export const yardCellOf = (buildingKey) => Math.floor(buildingKey / 65536);",
-    "tests": ["test/server/yard_cells.test.js"],
+    "tests": [
+      "test/server/yard_cells.test.js"
+    ],
     "note": "a cell a block column, not a block: two blocks of a column one cell"
   },
   {
@@ -12,7 +14,9 @@
     "file": "src/net/yardCellLaw.js",
     "old": "export const YARD_CELLS_ASK_MAX = HOME_TOWN_BLOCKS_MAX + 1;",
     "new": "export const YARD_CELLS_ASK_MAX = HOME_TOWN_BLOCKS_MAX;",
-    "tests": ["test/server/yard_cells.test.js"],
+    "tests": [
+      "test/server/yard_cells.test.js"
+    ],
     "note": "a request of a whole town refused - BUILDING_KEY_0's cell unaskable with the rest"
   },
   {
@@ -20,7 +24,9 @@
     "file": "server-account/migrations/0190_yard_cell.sql",
     "old": "VALUES (NEW.map_id, NEW.building_key >> 8, COALESCE",
     "new": "VALUES (NEW.map_id, NEW.building_key >> 16, COALESCE",
-    "tests": ["test/server/yard_cells.test.js"],
+    "tests": [
+      "test/server/yard_cells.test.js"
+    ],
     "note": "a placed piece moves another cell's version"
   },
   {
@@ -28,7 +34,9 @@
     "file": "server-account/migrations/0190_yard_cell.sql",
     "old": "    WHERE OLD.yard = 1\n",
     "new": "    WHERE 0\n",
-    "tests": ["test/server/yard_cells.test.js"],
+    "tests": [
+      "test/server/yard_cells.test.js"
+    ],
     "note": "a piece moved out of a cell leaves its cell's version where it stood"
   },
   {
@@ -36,7 +44,9 @@
     "file": "server-account/migrations/0190_yard_cell.sql",
     "old": "        ORDER BY building_key, placed_at, id LIMIT 15360)))",
     "new": "        ORDER BY building_key, placed_at DESC, id LIMIT 15360)))",
-    "tests": ["test/server/yard_cells.test.js"],
+    "tests": [
+      "test/server/yard_cells.test.js"
+    ],
     "note": "the migration's backfill another order than the code's build"
   },
   {
@@ -44,7 +54,9 @@
     "file": "server-account/src/yardCells.js",
     "old": "    db.prepare(`${cellBuildSql('v.map_id = ?1 AND v.cell = ?2')} RETURNING built`).bind(mapId, cell),",
     "new": "    db.prepare(`${cellBuildSql('v.map_id = ?1 AND v.cell = ?2')} RETURNING built`).bind(mapId, cell + 1),",
-    "tests": ["test/server/yard_cells.test.js"],
+    "tests": [
+      "test/server/yard_cells.test.js"
+    ],
     "note": "Re-aimed by content (YARD-CELL YC2): the line YC2 changed. a write builds the next cell, never its own"
   },
   {
@@ -52,15 +64,19 @@
     "file": "server-account/src/yardCells.js",
     "old": "const cellMarkSql = (/** @type {string} */ where) => `UPDATE home_yard_cell_ver SET built = ver",
     "new": "const cellMarkSql = (/** @type {string} */ where) => `UPDATE home_yard_cell_ver SET built = built",
-    "tests": ["test/server/yard_cells.test.js"],
+    "tests": [
+      "test/server/yard_cells.test.js"
+    ],
     "note": "a built cell left on the stale index - the clock builds it again for ever"
   },
   {
     "name": "YARD-CELL-the-version-compare",
     "file": "server-account/src/yardCells.js",
-    "old": "Number(state.ver) > Number(state.have)",
-    "new": "Number(state.ver) >= Number(state.have)",
-    "tests": ["test/server/yard_cells.test.js"],
+    "old": "    const moved = state.ver != null ? Number(state.ver) > Number(state.have) : !!state.orphan;",
+    "new": "    const moved = state.ver != null ? Number(state.ver) >= Number(state.have) : !!state.orphan;",
+    "tests": [
+      "test/server/yard_cells.test.js"
+    ],
     "note": "a cell the asker holds at its version sent again at every poll"
   },
   {
@@ -68,7 +84,9 @@
     "file": "server-account/src/yardCells.js",
     "old": "    if (taken > 0 && bytes >= budget) {",
     "new": "    if (false) {",
-    "tests": ["test/server/yard_cells.test.js"],
+    "tests": [
+      "test/server/yard_cells.test.js"
+    ],
     "note": "an answer of every changed cell however large"
   },
   {
@@ -76,15 +94,19 @@
     "file": "server-account/src/yardCells.js",
     "old": "    if (entry && entry.ver <= have) continue;",
     "new": "    if (entry && entry.ver < have) continue;",
-    "tests": ["test/server/yard_cells.test.js"],
+    "tests": [
+      "test/server/yard_cells.test.js"
+    ],
     "note": "a cell the asker holds sent again from memory"
   },
   {
     "name": "YARD-CELL-the-shared-read",
     "file": "server-account/src/yardCells.js",
-    "old": "  if (flights.size) await Promise.allSettled([...flights].map((flight) => flight.done));\n",
-    "new": "",
-    "tests": ["test/server/yard_cells.test.js"],
+    "old": "  if (flights.size) await Promise.allSettled([...flights].map((flight) => flight.done));\n  /** @type {Map<number, CellAnswer>} */",
+    "new": "  /** @type {Map<number, CellAnswer>} */",
+    "tests": [
+      "test/server/yard_cells.test.js"
+    ],
     "note": "two asks of one moment two reads (YARD-SHED)"
   },
   {
@@ -92,7 +114,9 @@
     "file": "server-account/src/index.js",
     "old": "            forgetYardCell(body?.mapId, body?.buildingKey);   // YARD-CELL: the cell's kept answer let go, whatever the write did\n",
     "new": "",
-    "tests": ["test/server/yard_cells.test.js"],
+    "tests": [
+      "test/server/yard_cells.test.js"
+    ],
     "note": "a decor write's cell answered from the kept answer before it"
   },
   {
@@ -100,7 +124,9 @@
     "file": "server-account/src/index.js",
     "old": "      if (path === '/v1/homes/yards' && request.method === 'POST') return no('client-update', 410, origin);\n",
     "new": "",
-    "tests": ["test/server/yard_cells.test.js"],
+    "tests": [
+      "test/server/yard_cells.test.js"
+    ],
     "note": "a build from before the cells never refused"
   },
   {
@@ -108,7 +134,9 @@
     "file": "src/net/homeLaw.js",
     "old": "export const HOME_TOWN_MAX = 2048;",
     "new": "export const HOME_TOWN_MAX = 512;",
-    "tests": ["test/server/yard_cells.test.js"],
+    "tests": [
+      "test/server/yard_cells.test.js"
+    ],
     "note": "a town's homes answer cut short of the buildings a town can hold - Wayrest's 506 houses and its halls"
   }
 ]

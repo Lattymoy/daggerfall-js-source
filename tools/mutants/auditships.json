@@ -255,8 +255,8 @@
   {
     "name": "AUDIT-SHIPS-C1-client-change-unread",
     "file": "src/scenes/serpentHost.js",
-    "old": "lastIn.day !== sw.day || (lastIn.hl !== hl && t - lastIn.at >= IN_CHANGE_MS) || ",
-    "new": "lastIn.day !== sw.day || ",
+    "old": "    const due =\n      lastIn.day !== sw.day ||\n      (lastIn.hl !== hl && t - lastIn.at >= IN_CHANGE_MS) ||\n      t - lastIn.at >= (answered ? IN_RESEND_MS : IN_RETRY_MS);",
+    "new": "    const due = lastIn.day !== sw.day || t - lastIn.at >= (answered ? IN_RESEND_MS : IN_RETRY_MS);",
     "tests": [
       "test/net/serpent/auditships.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "AUDIT-SHIPS-D2-wound-from-landing",
     "file": "src/net/serpent/serpentBody.js",
-    "old": "const on = smooth((t - (c.w > c.at ? c.w : c.at)) / COIL_BLEND_MS);",
-    "new": "const on = smooth((t - c.at) / COIL_BLEND_MS);",
+    "old": "  const on = smooth((t - (c.w > c.at ? c.w : c.at)) / COIL_BLEND_MS);",
+    "new": "  const on = smooth((t - c.at) / COIL_BLEND_MS);",
     "tests": [
       "test/net/serpent/auditships.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "AUDIT-SHIPS-D2-fold-drops-w",
     "file": "src/net/serpent/serpentLink.js",
-    "old": "...(w.w !== undefined ? { w: w.w } : {}), until: w.until,",
-    "new": "until: w.until,",
+    "old": "          ...(w.w !== undefined ? { w: w.w } : {}),\n          until: w.until,",
+    "new": "          until: w.until,",
     "tests": [
       "test/net/serpent/auditships.test.js"
     ]
@@ -544,8 +544,8 @@
   {
     "name": "AUDIT-SHIPS-B6-drawn-still",
     "file": "src/net/serpent/serpentBody.js",
-    "old": "const th = w > 0 ? coilAngleAt(b.coil, t) : 0;",
-    "new": "const th = w > 0 ? b.coil.th : 0;",
+    "old": "  const th = w > 0 ? coilAngleAt(b.coil, t) : 0; // AUDIT SHIPS B6: the coil as its head has gone round it",
+    "new": "  const th = w > 0 ? b.coil.th : 0; // AUDIT SHIPS B6: the coil as its head has gone round it",
     "tests": [
       "test/net/serpent/auditships.test.js",
       "test/net/serpent/serpent1_law.test.js"
@@ -554,8 +554,8 @@
   {
     "name": "AUDIT-SHIPS-B6-turned-past-off",
     "file": "src/net/serpent/serpentBody.js",
-    "old": "const end = c.off > 0 ? Math.min(t, c.off) : t;",
-    "new": "const end = t;",
+    "old": "  const end = c.off > 0 ? Math.min(t, c.off) : t;",
+    "new": "  const end = t;",
     "tests": [
       "test/net/serpent/auditships.test.js",
       "test/net/serpent/serpent1_law.test.js"
@@ -591,8 +591,8 @@
   {
     "name": "AUDIT-SHIPS-C3-rounded-a-blow",
     "file": "src/systems/serpent/serpentStrike.js",
-    "old": "if (k === 1 || !carry) return Math.round(x * k);",
-    "new": "return Math.round(x * k);",
+    "old": "  if (k === 1 || !carry) return Math.round(x * k);",
+    "new": "  return Math.round(x * k);",
     "tests": [
       "test/net/serpent/auditships.test.js"
     ]
@@ -600,8 +600,8 @@
   {
     "name": "AUDIT-SHIPS-C3-carry-dropped",
     "file": "src/systems/serpent/serpentStrike.js",
-    "old": "  carry[key] = v - n;\n",
-    "new": "",
+    "old": "  carry[key] = v - n;\n  return n;",
+    "new": "  return n;",
     "tests": [
       "test/net/serpent/auditships.test.js"
     ]
@@ -609,8 +609,8 @@
   {
     "name": "AUDIT-SHIPS-C3-host-uncarried",
     "file": "src/scenes/serpentHost.js",
-    "old": "shipHurt(A, ship, share(), blows)",
-    "new": "shipHurt(A, ship, share())",
+    "old": "    deps.strike?.(ship.boat, shipHurt(A, ship, share(), blows), {\n      shake: A.hull >= 0.18 ? 2.6 : 1.8,\n      line: `${A.name}!`,\n    }); // AUDIT SHIPS C3: carried",
+    "new": "    deps.strike?.(ship.boat, shipHurt(A, ship, share()), { shake: A.hull >= 0.18 ? 2.6 : 1.8, line: `${A.name}!` }); // AUDIT SHIPS C3: carried",
     "tests": [
       "test/net/serpent/auditships.test.js"
     ]
@@ -618,8 +618,8 @@
   {
     "name": "AUDIT-SHIPS-C4-a-frame",
     "file": "src/scenes/serpentHost.js",
-    "old": "if (t >= lastWake && t - lastWake < WAKE_MS) return;",
-    "new": "",
+    "old": "    if (t >= lastWake && t - lastWake < WAKE_MS) return;\n    lastWake = t;",
+    "new": "    lastWake = t;",
     "tests": [
       "test/net/serpent/auditships.test.js"
     ]

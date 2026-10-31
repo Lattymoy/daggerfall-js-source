@@ -27,12 +27,20 @@ export const PERF_EVERY = 120;
 
 /** The door: `?perf` anywhere in the query. */
 export function perfOn(search = globalThis.location?.search ?? '') {
-  try { return /[?&]perf\b/.test(search); } catch { return false; }
+  try {
+    return /[?&]perf\b/.test(search);
+  } catch {
+    return false;
+  }
 }
 
 /** VC6d: `?perf=zones` - the same door, per pass instead of per frame. */
 export function perfZones(search = globalThis.location?.search ?? '') {
-  try { return /[?&]perf=zones\b/.test(search); } catch { return false; }
+  try {
+    return /[?&]perf=zones\b/.test(search);
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -55,7 +63,11 @@ export function perfZones(search = globalThis.location?.search ?? '') {
  * on every browser, including the ones the GPU timer refuses.
  */
 export function perfCpu(search = globalThis.location?.search ?? '') {
-  try { return /[?&]perf=cpu\b/.test(search); } catch { return false; }
+  try {
+    return /[?&]perf=cpu\b/.test(search);
+  } catch {
+    return false;
+  }
 }
 
 /** One line from the accumulated GPU samples and this frame's counts. */
@@ -63,8 +75,15 @@ export function perfLine(gpuMs, counts) {
   const gpu = gpuMs == null ? 'gpu n/a' : `gpu ${gpuMs.toFixed(2)}ms`;
   const c = counts || {};
   const parts = [gpu, `draws ${c.draws ?? 0}`];
-  if (c.shadows) parts.push(`sun ${c.shadows.cascadesDrawn ?? 0}c/${c.shadows.sunDraws ?? 0}d`, `lanterns ${c.shadows.casters ?? 0}k/${c.shadows.facesDrawn ?? 0}f/${c.shadows.pointDraws ?? 0}d`, `culled ${c.shadows.culled ?? 0}`, `records ${c.shadows.records ?? 0}`);
-  if (c.air) parts.push(`emit ${c.air.emitDraws ?? 0}`, `glares ${c.air.glares ?? 0}`, `shafts ${c.air.shafts ? 1 : 0}`);
+  if (c.shadows)
+    parts.push(
+      `sun ${c.shadows.cascadesDrawn ?? 0}c/${c.shadows.sunDraws ?? 0}d`,
+      `lanterns ${c.shadows.casters ?? 0}k/${c.shadows.facesDrawn ?? 0}f/${c.shadows.pointDraws ?? 0}d`,
+      `culled ${c.shadows.culled ?? 0}`,
+      `records ${c.shadows.records ?? 0}`,
+    );
+  if (c.air)
+    parts.push(`emit ${c.air.emitDraws ?? 0}`, `glares ${c.air.glares ?? 0}`, `shafts ${c.air.shafts ? 1 : 0}`);
   return `[perf] ${parts.join(' | ')}`;
 }
 
@@ -76,7 +95,11 @@ export function perfZoneLine(zones, counts, clock = 'gpu') {
   const rows = [...zones.entries()].filter(([, ms]) => ms != null).sort((a, b) => b[1] - a[1]);
   if (!rows.length) return perfLine(null, counts);
   const total = rows.reduce((a, [, ms]) => a + ms, 0);
-  const parts = [`${clock} ${total.toFixed(2)}ms`, ...rows.map(([n, ms]) => `${n} ${ms.toFixed(2)}`), `draws ${counts?.draws ?? 0}`];
+  const parts = [
+    `${clock} ${total.toFixed(2)}ms`,
+    ...rows.map(([n, ms]) => `${n} ${ms.toFixed(2)}`),
+    `draws ${counts?.draws ?? 0}`,
+  ];
   return `[perf] ${parts.join(' | ')}`;
 }
 
@@ -93,10 +116,10 @@ export class PerfMeter {
     // PERF-CPU: the CPU arm needs no extension and does not share the
     // GPU arm's one-query-at-a-time rule, so it stands on its own.
     this.cpu = !!cpu;
-    this.cpuZones = new Map();     // name -> ms accumulated this window
-    this.cpuOpen = null;           // [name, startedAt]
+    this.cpuZones = new Map(); // name -> ms accumulated this window
+    this.cpuOpen = null; // [name, startedAt]
     this.cpuFrames = 0;
-    this._now = () => (globalThis.performance?.now?.() ?? Date.now());
+    this._now = () => globalThis.performance?.now?.() ?? Date.now();
     this.queries = [];
     this.active = null;
     this.samples = [];
@@ -105,7 +128,7 @@ export class PerfMeter {
     // the extension will not have two elapsed-time queries open at once
     // and the zones are what tile the frame in its place.
     this.zones = !!zones;
-    this.zoneQueries = [];      // [name, query], in the order they were opened
+    this.zoneQueries = []; // [name, query], in the order they were opened
     this.zoneSamples = new Map();
     this.openZone = null;
   }
@@ -140,7 +163,10 @@ export class PerfMeter {
     this.openZone = [name, q];
   }
   /** VC6d, DRAW PATH: close the last span of the frame. */
-  stop() { if (this.cpu) this._cpuClose(); this._closeZone(); }
+  stop() {
+    if (this.cpu) this._cpuClose();
+    this._closeZone();
+  }
   /** PERF-READ1 (2026-09-21, Mac's readout: `hud 7.09 | ... | world 0.06`):
    *  close the CPU span at the END OF THE SCRIPT FRAME, and open nothing.
    *
@@ -155,7 +181,9 @@ export class PerfMeter {
    *  script frame ends, so the idle belongs to no span and the total is
    *  the script's; the FPS counter carries frame time beside it, and
    *  the difference between the two is the headroom. */
-  stopCpu() { if (this.cpu) this._cpuClose(); }
+  stopCpu() {
+    if (this.cpu) this._cpuClose();
+  }
   /** PERF-CPU: a mark on the CPU clock ALONE.
    *
    *  The GPU arm can only tile the DRAW path - a span there is a pair of
@@ -166,12 +194,16 @@ export class PerfMeter {
    *  and the query stack untouched, so `?perf` and `?perf=zones` read
    *  exactly what they read before this existed.
    */
-  markCpu(name) { if (this.cpu) this._cpuMark(name); }
+  markCpu(name) {
+    if (this.cpu) this._cpuMark(name);
+  }
   /** PERF-EXT24: milliseconds spent OUTSIDE the frame's spans, on its
    *  thread - the stream build's slices, which run in their own animation
    *  frame callback after the script frame closed and so fell in no span
    *  at all. Added to `name`'s bucket; the open span is left alone. */
-  addCpu(name, ms) { if (this.cpu && ms > 0) this.cpuZones.set(name, (this.cpuZones.get(name) ?? 0) + ms); }
+  addCpu(name, ms) {
+    if (this.cpu && ms > 0) this.cpuZones.set(name, (this.cpuZones.get(name) ?? 0) + ms);
+  }
   /** PERF-CPU: close the open span, add its milliseconds to the name's
    *  bucket, and open `name`'s. The spans TILE exactly as the GPU's do,
    *  so their sum is the marked part of the frame and nothing is
@@ -228,12 +260,13 @@ export class PerfMeter {
       if (this.frames % PERF_EVERY === 0) {
         const means = new Map();
         for (const [name, ms] of this.cpuZones) means.set(name, ms / Math.max(1, this.cpuFrames));
-        this.cpuZones.clear(); this.cpuFrames = 0;
+        this.cpuZones.clear();
+        this.cpuFrames = 0;
         return perfZoneLine(means, counts, 'cpu');
       }
       return null;
     }
-    if (this.zones) this.poll();   // VC6d: no end() to poll from - the zones are closed by mark/stop
+    if (this.zones) this.poll(); // VC6d: no end() to poll from - the zones are closed by mark/stop
     if (this.frames % PERF_EVERY !== 0) return null;
     if (this.zones) {
       // VC6d: the mean PER FRAME, not per sample - a zone marked twice
@@ -258,6 +291,11 @@ export class PerfMeter {
 // own span. A WeakMap, so a dropped context takes its meter with it.
 const METERS = new WeakMap();
 /** Register `meter` as the one for `gl` (the renderer, at boot). */
-export function setMeter(gl, meter) { if (meter) METERS.set(gl, meter); return meter; }
+export function setMeter(gl, meter) {
+  if (meter) METERS.set(gl, meter);
+  return meter;
+}
 /** The meter for `gl`, or null where `?perf` is not on. */
-export function meterFor(gl) { return METERS.get(gl) ?? null; }
+export function meterFor(gl) {
+  return METERS.get(gl) ?? null;
+}

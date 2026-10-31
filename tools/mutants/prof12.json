@@ -11,8 +11,8 @@
   {
     "name": "PROF12-potions-reexport-copy",
     "file": "src/systems/potions.js",
-    "old": "import {\n  POTION_RECIPES, POTION_DEFAULT_TEXTURE_RECORD, potionRecipeKey, potionKeyFromCauldron, setPotionDisplayNames,\n} from './potionRecipes.js';",
-    "new": "import {\n  POTION_RECIPES as LEAF_RECIPES, POTION_DEFAULT_TEXTURE_RECORD, potionRecipeKey, potionKeyFromCauldron, setPotionDisplayNames,\n} from './potionRecipes.js';\nconst POTION_RECIPES = Object.freeze([...LEAF_RECIPES]);",
+    "old": "  POTION_RECIPES,\n  POTION_DEFAULT_TEXTURE_RECORD,\n  potionRecipeKey,\n  potionKeyFromCauldron,\n  setPotionDisplayNames,\n} from './potionRecipes.js';",
+    "new": "  POTION_RECIPES as LEAF_RECIPES,\n  POTION_DEFAULT_TEXTURE_RECORD,\n  potionRecipeKey,\n  potionKeyFromCauldron,\n  setPotionDisplayNames,\n} from './potionRecipes.js';\nconst POTION_RECIPES = Object.freeze([...LEAF_RECIPES]);",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PROF12-ladder-top",
     "file": "src/net/alchemyLaw.js",
-    "old": "return i < 0 ? POTION_PRICE_TIERS.length + 1 : i + 1; };",
-    "new": "return i < 0 ? POTION_PRICE_TIERS.length : i + 1; };",
+    "old": "  return i < 0 ? POTION_PRICE_TIERS.length + 1 : i + 1;",
+    "new": "  return i < 0 ? POTION_PRICE_TIERS.length : i + 1;",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PROF12-ladder-inclusive",
     "file": "src/net/alchemyLaw.js",
-    "old": "findIndex((p) => price <= p);",
-    "new": "findIndex((p) => price < p);",
+    "old": "  const i = POTION_PRICE_TIERS.findIndex((p) => price <= p);",
+    "new": "  const i = POTION_PRICE_TIERS.findIndex((p) => price < p);",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PROF12-potion-rank-tier",
     "file": "src/net/alchemyLaw.js",
-    "old": "rank: TIER_RANKS[tier - 1], key: potionRecipeKey(r.ingredients)",
-    "new": "rank: TIER_RANKS[tier], key: potionRecipeKey(r.ingredients)",
+    "old": "      rank: TIER_RANKS[tier - 1],",
+    "new": "      rank: TIER_RANKS[tier],",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -57,8 +57,8 @@
   {
     "name": "PROF12-potion-key-unsorted",
     "file": "src/net/alchemyLaw.js",
-    "old": "key: potionRecipeKey(r.ingredients), price: r.price",
-    "new": "key: potionRecipeKey([...r.ingredients].reverse()), price: r.price",
+    "old": "      key: potionRecipeKey(r.ingredients),",
+    "new": "      key: potionRecipeKey([...r.ingredients].reverse()),",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -67,8 +67,8 @@
   {
     "name": "PROF12-ingredient-one-group",
     "file": "src/net/professionLaw.js",
-    "old": "const herbs = ['p1', 'p2'].filter((g) =>",
-    "new": "const herbs = ['p1'].filter((g) =>",
+    "old": "  const herbs = ['p1', 'p2']",
+    "new": "  const herbs = ['p1']",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -96,8 +96,8 @@
   {
     "name": "PROF12-keytemplate-any-group",
     "file": "src/net/professionLaw.js",
-    "old": "if (m) return PLANT_GROUP_TEMPLATES[m[1]].includes(Number(m[2])) ? Number(m[2]) : null;",
-    "new": "if (m) return Number(m[2]);",
+    "old": "  if (m) return PLANT_GROUP_TEMPLATES[m[1]].includes(Number(m[2])) ? Number(m[2]) : null;",
+    "new": "  if (m) return Number(m[2]);",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -105,8 +105,8 @@
   {
     "name": "PROF12-spends-unsorted",
     "file": "src/net/alchemyLaw.js",
-    "old": "if (potionKeyFromCauldron(/** @type {number[]} */ (templates)) !== potion.key) return null;",
-    "new": "if (potionRecipeKey(/** @type {number[]} */ (templates)) !== potion.key) return null;",
+    "old": "  if (potionKeyFromCauldron(/** @type {number[]} */ (templates)) !== potion.key) return null;",
+    "new": "  if (potionRecipeKey(/** @type {number[]} */ (templates)) !== potion.key) return null;",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -115,8 +115,8 @@
   {
     "name": "PROF12-spends-no-hash",
     "file": "src/net/alchemyLaw.js",
-    "old": "if (potionKeyFromCauldron(/** @type {number[]} */ (templates)) !== potion.key) return null;",
-    "new": "if (!potion.key) return null;",
+    "old": "  if (potionKeyFromCauldron(/** @type {number[]} */ (templates)) !== potion.key) return null;",
+    "new": "  if (!potion.key) return null;",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -127,8 +127,8 @@
   {
     "name": "PROF12-brewkeys-fewer",
     "file": "src/net/alchemyLaw.js",
-    "old": "return keys.reduce((best, k) => (held(k) > held(best) ? k : best), keys[0]);",
-    "new": "return keys[0];",
+    "old": "    return keys.reduce((best, k) => (held(k) > held(best) ? k : best), keys[0]);",
+    "new": "    return keys[0];",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/systems/prof12_client.test.js"
@@ -137,8 +137,8 @@
   {
     "name": "PROF12-brewkeys-tie-south",
     "file": "src/net/alchemyLaw.js",
-    "old": "return keys.reduce((best, k) => (held(k) > held(best) ? k : best), keys[0]);",
-    "new": "return keys.reduce((best, k) => (held(k) >= held(best) ? k : best), keys[0]);",
+    "old": "    return keys.reduce((best, k) => (held(k) > held(best) ? k : best), keys[0]);",
+    "new": "    return keys.reduce((best, k) => (held(k) >= held(best) ? k : best), keys[0]);",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "PROF12-first-pays-any",
     "file": "src/net/recipeLaw.js",
-    "old": "export const brewFirstPays = (potion) => !!potion && !potion.ingredients.every(",
-    "new": "export const brewFirstPays = (potion) => !!potion && !potion.ingredients.some(",
+    "old": "  !!potion && !potion.ingredients.every((t) => ingredientKeys(t).every((k) => COUNTER_ONLY.includes(k)));",
+    "new": "  !!potion && !potion.ingredients.some((t) => ingredientKeys(t).every((k) => COUNTER_ONLY.includes(k)));",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -156,8 +156,8 @@
   {
     "name": "PROF12-count-master-two",
     "file": "src/net/alchemyLaw.js",
-    "old": "  if (rank >= PROF_RANK_MAX) return 3;\n",
-    "new": "  if (rank >= PROF_RANK_MAX) return 2;\n",
+    "old": "  if (rank >= PROF_RANK_MAX) return 3;",
+    "new": "  if (rank >= PROF_RANK_MAX) return 2;",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",
@@ -167,8 +167,8 @@
   {
     "name": "PROF12-count-brewer-two",
     "file": "src/net/alchemyLaw.js",
-    "old": "return spec50 === BREWER ? 3 : 2;",
-    "new": "return spec50 === BREWER ? 2 : 2;",
+    "old": "  if (rank >= JOURNEYMAN_RANK) return spec50 === BREWER ? 3 : 2;",
+    "new": "  if (rank >= JOURNEYMAN_RANK) return spec50 === BREWER ? 2 : 2;",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -177,8 +177,8 @@
   {
     "name": "PROF12-count-novice-one",
     "file": "src/net/alchemyLaw.js",
-    "old": "return spec50 === BREWER ? 3 : 2;\n  return 2;",
-    "new": "return spec50 === BREWER ? 3 : 2;\n  return 1;",
+    "old": "  return 2;",
+    "new": "  return 1;",
     "note": "CRAFT-PAYS (2026-10-21, PIN MOVED): re-aimed by content - a Novice brews two now, and this mutant is the one it was.",
     "tests": [
       "test/systems/prof12_law.test.js",
@@ -189,8 +189,8 @@
   {
     "name": "CRAFT-PAYS-a-fourth-past-the-table",
     "file": "src/net/alchemyLaw.js",
-    "old": "  if (rank >= PROF_RANK_MAX) return 3;\n",
-    "new": "  if (rank >= PROF_RANK_MAX) return 4;\n",
+    "old": "  if (rank >= PROF_RANK_MAX) return 3;",
+    "new": "  if (rank >= PROF_RANK_MAX) return 4;",
     "tests": [
       "test/systems/prof12_law.test.js"
     ],
@@ -199,8 +199,8 @@
   {
     "name": "PROF12-potent-expert-15",
     "file": "src/net/alchemyLaw.js",
-    "old": "export const POTENT = Object.freeze({ expert: 10, master: 20,",
-    "new": "export const POTENT = Object.freeze({ expert: 15, master: 20,",
+    "old": "  expert: 10,",
+    "new": "  expert: 15,",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -209,8 +209,8 @@
   {
     "name": "PROF12-potent-master-25",
     "file": "src/net/alchemyLaw.js",
-    "old": "{ expert: 10, master: 20, expertRank: 75,",
-    "new": "{ expert: 10, master: 25, expertRank: 75,",
+    "old": "  master: 20,",
+    "new": "  master: 25,",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -219,8 +219,8 @@
   {
     "name": "PROF12-potent-expert-rank",
     "file": "src/net/alchemyLaw.js",
-    "old": "expertRank: 75, unbruised: 5,",
-    "new": "expertRank: 70, unbruised: 5,",
+    "old": "  expertRank: 75,",
+    "new": "  expertRank: 70,",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -229,8 +229,8 @@
   {
     "name": "PROF12-potent-unbruised-ten",
     "file": "src/net/alchemyLaw.js",
-    "old": "unbruised: 5, distiller: 10,",
-    "new": "unbruised: 10, distiller: 10,",
+    "old": "  unbruised: 5,",
+    "new": "  unbruised: 10,",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -239,8 +239,8 @@
   {
     "name": "PROF12-potent-distiller-five",
     "file": "src/net/alchemyLaw.js",
-    "old": "distiller: 10, apothecary: 10,",
-    "new": "distiller: 5, apothecary: 10,",
+    "old": "  distiller: 10,",
+    "new": "  distiller: 5,",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -249,8 +249,8 @@
   {
     "name": "PROF12-potent-apothecary-five",
     "file": "src/net/alchemyLaw.js",
-    "old": "apothecary: 10, pct: 25,",
-    "new": "apothecary: 5, pct: 25,",
+    "old": "  apothecary: 10,",
+    "new": "  apothecary: 5,",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_apothecary.test.js"
@@ -259,8 +259,8 @@
   {
     "name": "PROF12-potent-pct-twenty",
     "file": "src/net/alchemyLaw.js",
-    "old": "pct: 25, masterPct: 40 });",
-    "new": "pct: 20, masterPct: 40 });",
+    "old": "  pct: 25,",
+    "new": "  pct: 20,",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",
@@ -270,8 +270,8 @@
   {
     "name": "PROF12-potent-master-pct",
     "file": "src/net/alchemyLaw.js",
-    "old": "pct: 25, masterPct: 40 });",
-    "new": "pct: 25, masterPct: 50 });",
+    "old": "  masterPct: 40,",
+    "new": "  masterPct: 50,",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",
@@ -281,8 +281,8 @@
   {
     "name": "PROF12-potent-no-cap",
     "file": "src/net/alchemyLaw.js",
-    "old": "return Math.min(100, base + POTENT.unbruised * u",
-    "new": "return (base + POTENT.unbruised * u",
+    "old": "  return Math.min(100, base + POTENT.unbruised * u + (distiller ? POTENT.distiller : 0) + POTENT.apothecary * st);",
+    "new": "  return base + POTENT.unbruised * u + (distiller ? POTENT.distiller : 0) + POTENT.apothecary * st;",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "PROF12-potent-steps-none",
     "file": "src/net/alchemyLaw.js",
-    "old": "+ POTENT.apothecary * st);",
-    "new": "+ 0 * st);",
+    "old": "  return Math.min(100, base + POTENT.unbruised * u + (distiller ? POTENT.distiller : 0) + POTENT.apothecary * st);",
+    "new": "  return Math.min(100, base + POTENT.unbruised * u + (distiller ? POTENT.distiller : 0) + 0 * st);",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_apothecary.test.js"
@@ -300,8 +300,8 @@
   {
     "name": "PROF12-potent-distiller-unread",
     "file": "src/net/alchemyLaw.js",
-    "old": "(distiller ? POTENT.distiller : 0)",
-    "new": "(0)",
+    "old": "  return Math.min(100, base + POTENT.unbruised * u + (distiller ? POTENT.distiller : 0) + POTENT.apothecary * st);",
+    "new": "  return Math.min(100, base + POTENT.unbruised * u + 0 + POTENT.apothecary * st);",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",
@@ -321,8 +321,8 @@
   {
     "name": "PROF12-potent-effect-floor",
     "file": "src/net/alchemyLaw.js",
-    "old": "if (Number.isFinite(out[f])) out[f] = Math.round((out[f] * (100 + pct)) / 100);",
-    "new": "if (Number.isFinite(out[f])) out[f] = Math.floor((out[f] * (100 + pct)) / 100);",
+    "old": "    for (const f of POTENT_FIELDS) if (Number.isFinite(out[f])) out[f] = Math.round((out[f] * (100 + pct)) / 100);",
+    "new": "    for (const f of POTENT_FIELDS) if (Number.isFinite(out[f])) out[f] = Math.floor((out[f] * (100 + pct)) / 100);",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -330,7 +330,7 @@
   {
     "name": "PROF12-potent-effect-base-only",
     "file": "src/net/alchemyLaw.js",
-    "old": "export const POTENT_FIELDS = Object.freeze(['magnitudeBaseLow', 'magnitudeBaseHigh', 'magnitudeLevelBase', 'magnitudeLevelHigh']);",
+    "old": "export const POTENT_FIELDS = Object.freeze([\n  'magnitudeBaseLow',\n  'magnitudeBaseHigh',\n  'magnitudeLevelBase',\n  'magnitudeLevelHigh',\n]);",
     "new": "export const POTENT_FIELDS = Object.freeze(['magnitudeBaseLow', 'magnitudeBaseHigh']);",
     "tests": [
       "test/systems/prof12_law.test.js"
@@ -339,8 +339,8 @@
   {
     "name": "PROF12-master-alchemist-name",
     "file": "src/net/alchemyLaw.js",
-    "old": "export const BREWER = 'brewer', DISTILLER = 'distiller', MASTER_ALCHEMIST = 'master-alchemist';",
-    "new": "export const BREWER = 'brewer', DISTILLER = 'distiller', MASTER_ALCHEMIST = 'master-alchemists';",
+    "old": "  MASTER_ALCHEMIST = 'master-alchemist';",
+    "new": "  MASTER_ALCHEMIST = 'master-alchemists';",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",
@@ -359,8 +359,8 @@
   {
     "name": "PROF12-points-jewel-template",
     "file": "src/net/alchemyLaw.js",
-    "old": "return r.kind === 'jewel' ? jewelPoints(r, base, hand) : base;",
-    "new": "return base;",
+    "old": "  return r.kind === 'jewel' ? jewelPoints(r, base, hand) : base;",
+    "new": "  return base;",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -369,8 +369,8 @@
   {
     "name": "PROF12-points-jewel-no-hand",
     "file": "src/net/alchemyLaw.js",
-    "old": "return r.kind === 'jewel' ? jewelPoints(r, base, hand) : base;",
-    "new": "return r.kind === 'jewel' ? jewelPoints(r, base, null) : base;",
+    "old": "  return r.kind === 'jewel' ? jewelPoints(r, base, hand) : base;",
+    "new": "  return r.kind === 'jewel' ? jewelPoints(r, base, null) : base;",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "PROF12-essence-disenchanter-one",
     "file": "src/net/alchemyLaw.js",
-    "old": "* (disenchanter ? 2 : 1);",
-    "new": "* (disenchanter ? 1 : 1);",
+    "old": "  Math.floor(Math.max(0, Number(points) || 0) / ESSENCE_POINTS) * (disenchanter ? 2 : 1);",
+    "new": "  Math.floor(Math.max(0, Number(points) || 0) / ESSENCE_POINTS) * (disenchanter ? 1 : 1);",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -399,8 +399,8 @@
   {
     "name": "PROF12-essence-ceil",
     "file": "src/net/alchemyLaw.js",
-    "old": "export const essenceOf = (points, disenchanter = false) => Math.floor(",
-    "new": "export const essenceOf = (points, disenchanter = false) => Math.ceil(",
+    "old": "  Math.floor(Math.max(0, Number(points) || 0) / ESSENCE_POINTS) * (disenchanter ? 2 : 1);",
+    "new": "  Math.ceil(Math.max(0, Number(points) || 0) / ESSENCE_POINTS) * (disenchanter ? 2 : 1);",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -420,8 +420,8 @@
   {
     "name": "PROF12-disenchant-xp-flat",
     "file": "src/net/alchemyLaw.js",
-    "old": "  const xp = DISENCHANT_XP * tier * (",
-    "new": "  const xp = DISENCHANT_XP * 1 * (",
+    "old": "  const xp = DISENCHANT_XP * tier * (Number.isSafeInteger(essence) && essence > 0 ? essence : 0);",
+    "new": "  const xp = DISENCHANT_XP * 1 * (Number.isSafeInteger(essence) && essence > 0 ? essence : 0);",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -450,8 +450,8 @@
   {
     "name": "PROF12-discount-efficient-ten",
     "file": "src/net/alchemyLaw.js",
-    "old": "journeyman: 10, master: 20, efficient: 5 });",
-    "new": "journeyman: 10, master: 20, efficient: 10 });",
+    "old": "export const ENCHANT_DISCOUNT = Object.freeze({ journeyman: 10, master: 20, efficient: 5 });",
+    "new": "export const ENCHANT_DISCOUNT = Object.freeze({ journeyman: 10, master: 20, efficient: 10 });",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/systems/prof12_client.test.js"
@@ -460,8 +460,8 @@
   {
     "name": "PROF12-discount-efficient-novice",
     "file": "src/net/alchemyLaw.js",
-    "old": "return base + (r >= JOURNEYMAN_RANK && spec50 === EFFICIENT ? ENCHANT_DISCOUNT.efficient : 0);",
-    "new": "return base + (spec50 === EFFICIENT ? ENCHANT_DISCOUNT.efficient : 0);",
+    "old": "  return base + (r >= JOURNEYMAN_RANK && spec50 === EFFICIENT ? ENCHANT_DISCOUNT.efficient : 0);",
+    "new": "  return base + (spec50 === EFFICIENT ? ENCHANT_DISCOUNT.efficient : 0);",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -469,8 +469,8 @@
   {
     "name": "PROF12-discount-round-down",
     "file": "src/net/alchemyLaw.js",
-    "old": "(pct > 0 ? Math.ceil((Math.max(0, gold) * (100 - pct)) / 100) : gold)",
-    "new": "(pct > 0 ? Math.floor((Math.max(0, gold) * (100 - pct)) / 100) : gold)",
+    "old": "export const enchantGold = (gold, pct = 0) => (pct > 0 ? Math.ceil((Math.max(0, gold) * (100 - pct)) / 100) : gold);",
+    "new": "export const enchantGold = (gold, pct = 0) => (pct > 0 ? Math.floor((Math.max(0, gold) * (100 - pct)) / 100) : gold);",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/systems/prof12_client.test.js"
@@ -479,8 +479,8 @@
   {
     "name": "PROF12-discount-unread",
     "file": "src/systems/enchanting.js",
-    "old": "const goldCost = enchantGold(totalGoldCost(powers), discountPct);",
-    "new": "const goldCost = totalGoldCost(powers);",
+    "old": "  const goldCost = enchantGold(totalGoldCost(powers), discountPct);",
+    "new": "  const goldCost = totalGoldCost(powers);",
     "tests": [
       "test/systems/prof12_client.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "PROF12-discount-window-unread",
     "file": "src/ui/item/itemMakerWindow.js",
-    "old": "goldDiscountPct() { const v = this.hooks.goldDiscountPct?.(); return Number.isSafeInteger(v) && v > 0 && v < 100 ? v : 0; }",
-    "new": "goldDiscountPct() { return 0; }",
+    "old": "    const v = this.hooks.goldDiscountPct?.();\n    return Number.isSafeInteger(v) && v > 0 && v < 100 ? v : 0;",
+    "new": "    return 0;",
     "tests": [
       "test/systems/prof12_client.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "PROF12-reagent-price-ichor",
     "file": "src/net/professionLaw.js",
-    "old": "reagent('reagent:ichor', 'MiscellaneousIngredients1', 64, 20, 4),",
-    "new": "reagent('reagent:ichor', 'MiscellaneousIngredients1', 64, 20, 5),",
+    "old": "  reagent('reagent:ichor', 'MiscellaneousIngredients1', 64, 20, 4),",
+    "new": "  reagent('reagent:ichor', 'MiscellaneousIngredients1', 64, 20, 5),",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",
@@ -517,8 +517,8 @@
   {
     "name": "PROF12-reagent-horn-group",
     "file": "src/net/professionLaw.js",
-    "old": "reagent('reagent:unicorn-horn', 'CreatureIngredients3', 37, 200, 40),",
-    "new": "reagent('reagent:unicorn-horn', 'CreatureIngredients1', 37, 200, 40),",
+    "old": "  reagent('reagent:unicorn-horn', 'CreatureIngredients3', 37, 200, 40),",
+    "new": "  reagent('reagent:unicorn-horn', 'CreatureIngredients1', 37, 200, 40),",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -526,8 +526,8 @@
   {
     "name": "PROF12-reagent-tooth-key",
     "file": "src/net/professionLaw.js",
-    "old": "reagent('reagent:small-tooth', 'MiscellaneousIngredients1', 58, 2, 1),",
-    "new": "reagent('reagent:small-teeth', 'MiscellaneousIngredients1', 58, 2, 1),",
+    "old": "  reagent('reagent:small-tooth', 'MiscellaneousIngredients1', 58, 2, 1),",
+    "new": "  reagent('reagent:small-teeth', 'MiscellaneousIngredients1', 58, 2, 1),",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/systems/prof12_client.test.js"
@@ -536,8 +536,8 @@
   {
     "name": "PROF12-reagent-no-ivory",
     "file": "src/net/professionLaw.js",
-    "old": "  reagent('reagent:ivory', 'MiscellaneousIngredients2', 76, 13, 3),\n",
-    "new": "",
+    "old": "  reagent('reagent:ivory', 'MiscellaneousIngredients2', 76, 13, 3),\n]);",
+    "new": "]);",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -545,8 +545,8 @@
   {
     "name": "PROF12-reagent-family",
     "file": "src/net/professionLaw.js",
-    "old": "Object.freeze({ ...dfu(key, 'essences', gemTierOfPrice(price), group, templateIndex), value });",
-    "new": "Object.freeze({ ...dfu(key, 'herbs', gemTierOfPrice(price), group, templateIndex), value });",
+    "old": "  Object.freeze({ ...dfu(key, 'essences', gemTierOfPrice(price), group, templateIndex), value });",
+    "new": "  Object.freeze({ ...dfu(key, 'herbs', gemTierOfPrice(price), group, templateIndex), value });",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -554,8 +554,8 @@
   {
     "name": "PROF12-reagent-tier",
     "file": "src/net/professionLaw.js",
-    "old": "Object.freeze({ ...dfu(key, 'essences', gemTierOfPrice(price), group, templateIndex), value });",
-    "new": "Object.freeze({ ...dfu(key, 'essences', 1, group, templateIndex), value });",
+    "old": "  Object.freeze({ ...dfu(key, 'essences', gemTierOfPrice(price), group, templateIndex), value });",
+    "new": "  Object.freeze({ ...dfu(key, 'essences', 1, group, templateIndex), value });",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -563,8 +563,8 @@
   {
     "name": "PROF12-reagents-unstocked",
     "file": "src/net/professionLaw.js",
-    "old": "export const STOCKS = Object.freeze([...SMITH_STOCK, ...FURNISHER_STOCK, ...WEAVERS_STOCK, ...APOTHECARY_STOCK]);",
-    "new": "export const STOCKS = Object.freeze([...SMITH_STOCK, ...FURNISHER_STOCK, ...WEAVERS_STOCK]);",
+    "old": "export const STOCKS = Object.freeze([...SMITH_STOCK, ...FURNISHER_STOCK, ...WEAVERS_STOCK, ...APOTHECARY_STOCK]); // PROF12: the Apothecaries'",
+    "new": "export const STOCKS = Object.freeze([...SMITH_STOCK, ...FURNISHER_STOCK, ...WEAVERS_STOCK]); // PROF12: the Apothecaries'",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",
@@ -574,8 +574,8 @@
   {
     "name": "PROF12-reagents-gathered",
     "file": "src/net/professionLaw.js",
-    "old": "export const COUNTER_ONLY = Object.freeze([LINEN.key, WOOL.key, ...REAGENTS.map((r) => r.key)]);",
-    "new": "export const COUNTER_ONLY = Object.freeze([LINEN.key, WOOL.key]);",
+    "old": "export const COUNTER_ONLY = Object.freeze([LINEN.key, WOOL.key, ...REAGENTS.map((r) => r.key)]); // PROF12: the Apothecaries' sixteen, never gathered",
+    "new": "export const COUNTER_ONLY = Object.freeze([LINEN.key, WOOL.key]); // PROF12: the Apothecaries' sixteen, never gathered",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -584,8 +584,8 @@
   {
     "name": "PROF12-reagents-unregistered",
     "file": "src/net/professionLaw.js",
-    "old": "RAM_KIT, ...REAGENTS, ARCANE_ESSENCE].map((m) => [m.key, m]));",
-    "new": "RAM_KIT, ARCANE_ESSENCE].map((m) => [m.key, m]));",
+    "old": "    ...REAGENTS,\n    ARCANE_ESSENCE,",
+    "new": "    ARCANE_ESSENCE,",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",
@@ -595,8 +595,8 @@
   {
     "name": "PROF12-essence-unregistered",
     "file": "src/net/professionLaw.js",
-    "old": "RAM_KIT, ...REAGENTS, ARCANE_ESSENCE].map((m) => [m.key, m]));",
-    "new": "RAM_KIT, ...REAGENTS].map((m) => [m.key, m]));",
+    "old": "    ARCANE_ESSENCE,\n  ].map((m) => [m.key, m]),",
+    "new": "  ].map((m) => [m.key, m]),",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",
@@ -606,8 +606,8 @@
   {
     "name": "PROF12-essence-tier",
     "file": "src/net/professionLaw.js",
-    "old": "export const ARCANE_ESSENCE = made('essence:arcane', 'essences', 3, 680,",
-    "new": "export const ARCANE_ESSENCE = made('essence:arcane', 'essences', 2, 680,",
+    "old": "export const ARCANE_ESSENCE = made('essence:arcane', 'essences', 3, 680, 'Arcane Essence', ICON_ECTOPLASM, null);",
+    "new": "export const ARCANE_ESSENCE = made('essence:arcane', 'essences', 2, 680, 'Arcane Essence', ICON_ECTOPLASM, null);",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -625,8 +625,8 @@
   {
     "name": "PROF12-alchemy-fee",
     "file": "src/net/professionLaw.js",
-    "old": "export const ALCHEMY_FEE = 25;",
-    "new": "export const ALCHEMY_FEE = 50;",
+    "old": "export const ALCHEMY_FEE = 25; // CRAFT-PAYS (Professions-Arc.md section 48): 50 until 2026-10-21 - a brew is a bottle, not a blade; a forge's 50 on a 50-gold potion was the margin's whole",
+    "new": "export const ALCHEMY_FEE = 50; // CRAFT-PAYS (Professions-Arc.md section 48): 50 until 2026-10-21 - a brew is a bottle, not a blade; a forge's 50 on a 50-gold potion was the margin's whole",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/systems/prof12_client.test.js"
@@ -665,7 +665,7 @@
   {
     "name": "PROF12-transmute-ladder-skip",
     "file": "src/net/professionLaw.js",
-    "old": "export const TRANSMUTE_LADDER = Object.freeze(['metal:tin', 'metal:copper', 'metal:silver', 'metal:gold', 'metal:platinum']);",
+    "old": "export const TRANSMUTE_LADDER = Object.freeze([\n  'metal:tin',\n  'metal:copper',\n  'metal:silver',\n  'metal:gold',\n  'metal:platinum',\n]);",
     "new": "export const TRANSMUTE_LADDER = Object.freeze(['metal:tin', 'metal:copper', 'metal:gold', 'metal:platinum']);",
     "tests": [
       "test/systems/prof12_law.test.js"
@@ -674,8 +674,8 @@
   {
     "name": "PROF12-transmute-xp",
     "file": "src/net/professionLaw.js",
-    "old": "{ station: 'alchemy', xp: null }),\n  spec: TRANSMUTER,",
-    "new": "{ station: 'alchemy', xp: 'alchemy' }),\n  spec: TRANSMUTER,",
+    "old": "        { station: 'alchemy', xp: null },",
+    "new": "        { station: 'alchemy', xp: 'alchemy' },",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -684,8 +684,8 @@
   {
     "name": "PROF12-transmute-forge",
     "file": "src/net/professionLaw.js",
-    "old": "{ station: 'alchemy', xp: null }),\n  spec: TRANSMUTER,",
-    "new": "{ station: 'forge', xp: null }),\n  spec: TRANSMUTER,",
+    "old": "        { station: 'alchemy', xp: null },",
+    "new": "        { station: 'forge', xp: null },",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/systems/prof12_client.test.js"
@@ -714,8 +714,8 @@
   {
     "name": "PROF12-transmute-unlisted",
     "file": "src/net/professionLaw.js",
-    "old": "...WEAVE_RECIPES, ...SPIN_RECIPES, ...MASON_RECIPES, ...TRANSMUTE_RECIPES]",
-    "new": "...WEAVE_RECIPES, ...SPIN_RECIPES, ...MASON_RECIPES]",
+    "old": "  ...TRANSMUTE_RECIPES,\n]); // CLOTH-GEMS: the loom's Linen and Wool",
+    "new": "]); // CLOTH-GEMS: the loom's Linen and Wool",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",
@@ -727,7 +727,7 @@
     "name": "PROF12-cook-steps-unread",
     "file": "src/net/recipeLaw.js",
     "old": "  const n = (clean ? 1 : 0) + (Number.isSafeInteger(steps) && steps > 0 ? steps : 0);",
-    "new": "  const n = (clean ? 1 : 0);",
+    "new": "  const n = clean ? 1 : 0;",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_apothecary.test.js"
@@ -1056,8 +1056,8 @@
   {
     "name": "PROF12-apothecary-no-jeweller",
     "file": "src/net/fortLaw.js",
-    "old": "apothecary: Object.freeze(['alchemy', 'cooking', 'jewelcrafting']),",
-    "new": "apothecary: Object.freeze(['alchemy', 'cooking']),",
+    "old": "  apothecary: Object.freeze(['alchemy', 'cooking', 'jewelcrafting']),",
+    "new": "  apothecary: Object.freeze(['alchemy', 'cooking']),",
     "tests": [
       "test/net/prof12_apothecary.test.js"
     ]
@@ -1065,8 +1065,8 @@
   {
     "name": "PROF12-apothecary-no-cook",
     "file": "src/net/fortLaw.js",
-    "old": "apothecary: Object.freeze(['alchemy', 'cooking', 'jewelcrafting']),",
-    "new": "apothecary: Object.freeze(['alchemy', 'jewelcrafting']),",
+    "old": "  apothecary: Object.freeze(['alchemy', 'cooking', 'jewelcrafting']),",
+    "new": "  apothecary: Object.freeze(['alchemy', 'jewelcrafting']),",
     "tests": [
       "test/net/prof12_apothecary.test.js"
     ]
@@ -1074,8 +1074,8 @@
   {
     "name": "PROF12-apothecary-no-alchemy",
     "file": "src/net/fortLaw.js",
-    "old": "apothecary: Object.freeze(['alchemy', 'cooking', 'jewelcrafting']),",
-    "new": "apothecary: Object.freeze(['cooking', 'jewelcrafting']),",
+    "old": "  apothecary: Object.freeze(['alchemy', 'cooking', 'jewelcrafting']),",
+    "new": "  apothecary: Object.freeze(['cooking', 'jewelcrafting']),",
     "tests": [
       "test/net/prof12_apothecary.test.js"
     ]
@@ -1083,8 +1083,8 @@
   {
     "name": "PROF12-route-brew-unlisted",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/prof/brew', '/v1/prof/disenchant',\n",
-    "new": "  '/v1/prof/disenchant',\n",
+    "old": "  '/v1/prof/brew',\n  '/v1/prof/disenchant',",
+    "new": "  '/v1/prof/disenchant',",
     "tests": [
       "test/net/prof12_service.test.js",
       "test/systems/prof12_client.test.js"
@@ -1093,8 +1093,8 @@
   {
     "name": "PROF12-route-dis-unlisted",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/prof/brew', '/v1/prof/disenchant',\n",
-    "new": "  '/v1/prof/brew',\n",
+    "old": "  '/v1/prof/disenchant',\n  // CRAFT4: a temper (professions.js) and an Enchanter's Reforge with Essence (alchemy.js) - the same doors",
+    "new": "  // CRAFT4: a temper (professions.js) and an Enchanter's Reforge with Essence (alchemy.js) - the same doors",
     "tests": [
       "test/net/prof12_service.test.js",
       "test/systems/prof12_client.test.js"
@@ -1121,8 +1121,8 @@
   {
     "name": "PROF12-item-potent-dropped",
     "file": "src/systems/alchemyItems.js",
-    "old": "    if (potent) {\n      it.potent = potent;",
-    "new": "    if (potent) {\n      it.potent = undefined;",
+    "old": "      it.potent = potent;",
+    "new": "      it.potent = undefined;",
     "tests": [
       "test/systems/prof12_client.test.js"
     ]
@@ -1175,8 +1175,8 @@
   {
     "name": "PROF12-item-field",
     "file": "src/systems/item/itemFields.js",
-    "old": "  potent: int({ min: 25, max: 40 }),\n",
-    "new": "",
+    "old": "  potent: int({ min: 25, max: 40 }),\n  // AUDIT LW-II-2 S1: a piece an NPC counter sold online (systems/tradeModes.js markCounterBought) - true, or absent: no",
+    "new": "  // AUDIT LW-II-2 S1: a piece an NPC counter sold online (systems/tradeModes.js markCounterBought) - true, or absent: no",
     "tests": [
       "test/systems/rf5_itemfields.test.js",
       "test/systems/prof12_client.test.js"
@@ -1212,8 +1212,8 @@
   {
     "name": "PROF12-essence-row-picture",
     "file": "src/systems/professions/profTemplates.js",
-    "old": "  isOneHanded: false, isIngredient: false, worldTextureArchive: m.icon[0], worldTextureRecord: m.icon[1],\n  playerTextureArchive: 0, playerTextureRecord: 0, stackable: true,\n})));\nregisterCustomTemplates(ESSENCE_TEMPLATE_ROWS);",
-    "new": "  isOneHanded: false, isIngredient: false, worldTextureArchive: m.icon[0], worldTextureRecord: 0,\n  playerTextureArchive: 0, playerTextureRecord: 0, stackable: true,\n})));\nregisterCustomTemplates(ESSENCE_TEMPLATE_ROWS);",
+    "old": "      variants: 0,\n      drawOrderOrEffect: 0,\n      isBluntWeapon: false,\n      isLiquid: false,\n      isOneHanded: false,\n      isIngredient: false,\n      worldTextureArchive: m.icon[0],\n      worldTextureRecord: m.icon[1],\n      playerTextureArchive: 0,\n      playerTextureRecord: 0,\n      stackable: true,\n    }),\n  ),\n);\nregisterCustomTemplates(ESSENCE_TEMPLATE_ROWS);",
+    "new": "      variants: 0,\n      drawOrderOrEffect: 0,\n      isBluntWeapon: false,\n      isLiquid: false,\n      isOneHanded: false,\n      isIngredient: false,\n      worldTextureArchive: m.icon[0],\n      worldTextureRecord: 0,\n      playerTextureArchive: 0,\n      playerTextureRecord: 0,\n      stackable: true,\n    }),\n  ),\n);\nregisterCustomTemplates(ESSENCE_TEMPLATE_ROWS);",
     "tests": [
       "test/systems/prof12_client.test.js"
     ]
@@ -1221,8 +1221,8 @@
   {
     "name": "PROF12-plural-small-teeth",
     "file": "src/systems/professions/profItems.js",
-    "old": ", 'Small Tooth': 'Small Teeth' });",
-    "new": " });",
+    "old": "  'Small Tooth': 'Small Teeth',\n}); // PROF12: the Apothecaries' Small Tooth",
+    "new": "}); // PROF12: the Apothecaries' Small Tooth",
     "tests": [
       "test/systems/prof12_client.test.js"
     ]
@@ -1330,16 +1330,16 @@
   },
   {
     "name": "PROF12-world-alchemy-forge",
-    "file": "src/scenes/world.js",
-    "old": "          const f = (alch ? modes?.alchemyHere?.() : mason ?",
-    "new": "          const f = (alch ? modes?.forgeHere?.() : mason ?",
+    "file": "src/scenes/professionsHost.js",
+    "old": "          const f = (alch ? host.modes?.alchemyHere?.() : mason ?",
+    "new": "          const f = (alch ? host.modes?.forgeHere?.() : mason ?",
     "tests": [
       "test/systems/prof12_client.test.js"
     ]
   },
   {
     "name": "PROF12-world-brew-no-seat",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "const { seat } = alchemyHall();",
     "new": "const seat = null;",
     "tests": [
@@ -1358,7 +1358,7 @@
   },
   {
     "name": "PROF12-world-dis-kept-piece",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "if (at >= 0) out = { piece: playerEntity.items.splice(at, 1)[0], at };",
     "new": "if (at < 0) out = { piece: playerEntity.items.splice(at, 1)[0], at };",
     "tests": [
@@ -1396,8 +1396,8 @@
   {
     "name": "PROF12-market-no-counter",
     "file": "src/ui/marketTab.js",
-    "old": "    if ((m.apothecaries ?? []).length) box.append(apothecariesNode());   // PROF12\n",
-    "new": "",
+    "old": "    if ((m.apothecaries ?? []).length) box.append(apothecariesNode()); // PROF12\n    return box;",
+    "new": "    return box;",
     "tests": [
       "test/systems/prof12_client.test.js"
     ]
@@ -1423,8 +1423,8 @@
   {
     "name": "PROF12-E1-essence-to-pack",
     "file": "src/net/professionLaw.js",
-    "old": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane']);",
-    "new": "export const NO_PACK_FORM = Object.freeze(['work:ram']);",
+    "old": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane']); // SEAT2b part two: a siege work's road is the writ's (RAM_KIT); AUDIT PROF12 E1: Arcane Essence's the Stores'",
+    "new": "export const NO_PACK_FORM = Object.freeze(['work:ram']); // SEAT2b part two: a siege work's road is the writ's (RAM_KIT); AUDIT PROF12 E1: Arcane Essence's the Stores'",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -1567,8 +1567,8 @@
   {
     "name": "PROF12-A2-key-no-potent",
     "file": "src/systems/quickslots.js",
-    "old": "    + (item.potent ? `|p${item.potent}` : '')",
-    "new": "    + ''",
+    "old": "    (item.potent ? `|p${item.potent}` : '') + // AUDIT PROF12 A2: a Potent potion's share (set at the mint - the cache holds), so a slot and its count keep Potent and plain apart; AUDIT PROF-541 Q1: only when set, so a save's plain keys still resolve",
+    "new": "    '' + // AUDIT PROF12 A2: a Potent potion's share (set at the mint - the cache holds), so a slot and its count keep Potent and plain apart; AUDIT PROF-541 Q1: only when set, so a save's plain keys still resolve",
     "tests": [
       "test/systems/prof12_client.test.js",
       "test/systems/quickslots.test.js"
@@ -1577,8 +1577,8 @@
   {
     "name": "PROF12-A3-magnitude-always",
     "file": "src/net/alchemyLaw.js",
-    "old": "  if (!magnitudeDefault(out)) {\n",
-    "new": "  if (true) {\n",
+    "old": "  if (!magnitudeDefault(out)) {",
+    "new": "  if (true) {",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -1586,8 +1586,8 @@
   {
     "name": "PROF12-A3-lasts-always",
     "file": "src/net/alchemyLaw.js",
-    "old": "  if (!magnitudeDefault(out)) {\n",
-    "new": "  if (false) {\n",
+    "old": "  if (!magnitudeDefault(out)) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -1595,8 +1595,8 @@
   {
     "name": "PROF12-A3-no-chance",
     "file": "src/net/alchemyLaw.js",
-    "old": "  if (chanceOwn(out)) out.chanceBase = raise(out.chanceBase, out.chanceMod, out.chancePerLevel, false);\n",
-    "new": "",
+    "old": "  if (chanceOwn(out)) out.chanceBase = raise(out.chanceBase, out.chanceMod, out.chancePerLevel, false);\n  return out;",
+    "new": "  return out;",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -1604,8 +1604,8 @@
   {
     "name": "PROF12-A3-chance-everywhere",
     "file": "src/net/alchemyLaw.js",
-    "old": "  if (chanceOwn(out)) out.chanceBase = raise(",
-    "new": "  out.chanceBase = raise(",
+    "old": "  if (chanceOwn(out)) out.chanceBase = raise(out.chanceBase, out.chanceMod, out.chancePerLevel, false);",
+    "new": "  out.chanceBase = raise(out.chanceBase, out.chanceMod, out.chancePerLevel, false);",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -1613,8 +1613,8 @@
   {
     "name": "PROF12-A3-no-duration-clamp",
     "file": "src/net/alchemyLaw.js",
-    "old": "    if (min1 && mult < 1) mult = 1;",
-    "new": "",
+    "old": "    if (min1 && mult < 1) mult = 1; // rollDuration's clamp (DFU SetDuration); chanceValue has none",
+    "new": "    // rollDuration's clamp (DFU SetDuration); chanceValue has none",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -1659,8 +1659,8 @@
   {
     "name": "PROF12-A3-brewed-words",
     "file": "src/systems/alchemyItems.js",
-    "old": "(potentLasts(p) ? ` (lasts ${data.potent}% longer)` :",
-    "new": "(false ? ` (lasts ${data.potent}% longer)` :",
+    "old": "  return `You brewed ${n === 1 ? 'a' : n} ${potent ? 'Potent ' : ''}${n === 1 ? 'Potion' : 'Potions'} of ${p.name}${potent ? (potentLasts(p) ? ` (lasts ${data.potent}% longer)` : ` (+${data.potent}% magnitude)`) : ''}`;",
+    "new": "  return `You brewed ${n === 1 ? 'a' : n} ${potent ? 'Potent ' : ''}${n === 1 ? 'Potion' : 'Potions'} of ${p.name}${potent ? (false ? ` (lasts ${data.potent}% longer)` : ` (+${data.potent}% magnitude)`) : ''}`;",
     "tests": [
       "test/systems/prof12_client.test.js"
     ]
@@ -1686,8 +1686,8 @@
   {
     "name": "PROF12-E3-card-three",
     "file": "src/net/professionLaw.js",
-    "old": "spec('transmuter', 'Transmuter', 'Two of a metal and a Mercury make one of the next metal up.')",
-    "new": "spec('transmuter', 'Transmuter', 'Three of a metal make one of the next metal up.')",
+    "old": "      spec('transmuter', 'Transmuter', 'Two of a metal and a Mercury make one of the next metal up.'),",
+    "new": "      spec('transmuter', 'Transmuter', 'Three of a metal make one of the next metal up.'),",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -1704,8 +1704,8 @@
   {
     "name": "PROF-541-B1-collision",
     "file": "src/net/alchemyLaw.js",
-    "old": "  if (sorted(/** @type {number[]} */ (templates)) !== sorted(potion.ingredients)) return null;",
-    "new": "  if (sorted(/** @type {number[]} */ (templates)) === 'never') return null;",
+    "old": "  if (sorted(/** @type {number[]} */ (templates)) !== sorted(potion.ingredients)) return null; // AUDIT PROF-541 B1: the recipe's own, never a collision",
+    "new": "  if (sorted(/** @type {number[]} */ (templates)) === 'never') return null; // AUDIT PROF-541 B1: the recipe's own, never a collision",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -1714,7 +1714,7 @@
   {
     "name": "PROF-541-B3-able",
     "file": "src/net/alchemyLaw.js",
-    "old": "  return !(/^3,/.test(String(r.effect)) && !(r.secondary?.length) && magnitudeDefault(r.settings ?? {}));",
+    "old": "  return !(/^3,/.test(String(r.effect)) && !r.secondary?.length && magnitudeDefault(r.settings ?? {}));",
     "new": "  return true;",
     "tests": [
       "test/systems/prof12_law.test.js",
@@ -1734,8 +1734,8 @@
   {
     "name": "PROF-541-B3-mint",
     "file": "src/systems/alchemyItems.js",
-    "old": "potentOk(data?.potent) && potentAble(p) ? data.potent : 0",
-    "new": "potentOk(data?.potent) ? data.potent : 0",
+    "old": "  const potent = potentOk(data?.potent) && potentAble(p) ? data.potent : 0; // AUDIT PROF-541 B3: never a Potent Cure - its name and worth +25% for nothing",
+    "new": "  const potent = potentOk(data?.potent) ? data.potent : 0; // AUDIT PROF-541 B3: never a Potent Cure - its name and worth +25% for nothing",
     "tests": [
       "test/systems/prof12_client.test.js"
     ]
@@ -1743,8 +1743,8 @@
   {
     "name": "PROF-541-B3-word",
     "file": "src/systems/alchemyItems.js",
-    "old": "const potent = potentOk(data?.potent) && potentAble(p);",
-    "new": "const potent = potentOk(data?.potent);",
+    "old": "  const potent = potentOk(data?.potent) && potentAble(p); // AUDIT PROF-541 B3",
+    "new": "  const potent = potentOk(data?.potent); // AUDIT PROF-541 B3",
     "tests": [
       "test/systems/prof12_client.test.js"
     ]
@@ -1769,7 +1769,7 @@
   },
   {
     "name": "PROF-541-B4-provider",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "alchemySteps: () => alchemyHall().steps,",
     "new": "alchemySteps: () => 0,",
     "tests": [
@@ -1788,8 +1788,8 @@
   {
     "name": "PROF-541-B5-delete",
     "file": "server-account/src/realm.js",
-    "old": "'DELETE FROM prof_unbruised WHERE player = ? AND char_id = ?'",
-    "new": "'DELETE FROM prof_unbruised WHERE player = ? AND char_id = ? AND 0'",
+    "old": "    db.prepare('DELETE FROM prof_unbruised WHERE player = ? AND char_id = ?').bind(playerId, id), // AUDIT PROF-541 B5: the unbruised count goes with the Stores it counts",
+    "new": "    db.prepare('DELETE FROM prof_unbruised WHERE player = ? AND char_id = ? AND 0').bind(playerId, id), // AUDIT PROF-541 B5: the unbruised count goes with the Stores it counts",
     "tests": [
       "test/net/prof12_service.test.js"
     ]
@@ -1887,7 +1887,7 @@
   },
   {
     "name": "PROF-541-B2-world-gone",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "r?.error === 'prof-no-piece' && r?.why === 'disenchanted' && takeOut()",
     "new": "r?.error === 'prof-no-piece' && r?.why === 'never' && takeOut()",
     "tests": [
@@ -1915,7 +1915,7 @@
   },
   {
     "name": "PROF-541-R2-C1-landed-unread",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "          if (!r.data) profBook.refresh({ force: true }).catch(() => {});\n",
     "new": "",
     "tests": [
@@ -1924,7 +1924,7 @@
   },
   {
     "name": "PROF-541-R2-C1-gone-unread",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "              profBook.refresh({ force: true }).catch(() => {});\n              saveSoon.changed();",
     "new": "              saveSoon.changed();",
     "tests": [
@@ -1933,7 +1933,7 @@
   },
   {
     "name": "PROF-541-R2-N1-gone-unpaid",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "if (owed > 0) deductGold(playerEntity, owed);",
     "new": "if (owed < 0) deductGold(playerEntity, owed);",
     "tests": [
@@ -1961,8 +1961,8 @@
   {
     "name": "PROF541-R2-S1-law-one",
     "file": "src/net/alchemyLaw.js",
-    "old": "  if (potion && !brewFirstPays(potion)) return 1;\n",
-    "new": "",
+    "old": "  if (potion && !brewFirstPays(potion)) return 1;\n  if (rank >= PROF_RANK_MAX) return 3;",
+    "new": "  if (rank >= PROF_RANK_MAX) return 3;",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",

@@ -1,326 +1,326 @@
 [
- {
-  "name": "MWNPC17-cut-ignored",
-  "file": "src/characters/wardrobe.js",
-  "old": "  const prefer = cut === 'robe' ? ['robe', 'skirt', 'pants'] : cut === 'skirt' ? ['skirt', 'pants', 'robe'] : cut === 'pants' ? ['pants', 'skirt', 'robe'] : null;",
-  "new": "  const prefer = null;",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-one-metal-for-a-fighter",
-  "file": "src/characters/wardrobe.js",
-  "old": "    one: false,",
-  "new": "    one: true,",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-chain-helm",
-  "file": "src/characters/wardrobe.js",
-  "old": "    if (material === MAT.Chain && !CHAIN_PIECES.has(templateIndex)) material = MAT.Iron;",
-  "new": "",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-pauldron-alone",
-  "file": "src/characters/wardrobe.js",
-  "old": "  if (l && !r) out.push(",
-  "new": "  if (false) out.push(",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-noble-in-common",
-  "file": "src/characters/wardrobe.js",
-  "old": "tiers: [0, 35, 45, 20]",
-  "new": "tiers: [10, 35, 45, 20]",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-rung-ignored",
-  "file": "src/formats/morrowind/mwItemMap.js",
-  "old": "  if (Number.isInteger(tier) && tier >= 0 && tier <= 3) {",
-  "new": "  if (false) {",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-pick-over-every-colour",
-  "file": "src/formats/morrowind/mwItemMap.js",
-  "old": "      let k = Math.min(CLOTH_PICK_NEAREST, near.length);",
-  "new": "      let k = near.length;",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-higher-rung-first",
-  "file": "src/formats/morrowind/mwItemMap.js",
-  "old": "    for (const d of [0, -1, 1, -2, 2, -3, 3]) {",
-  "new": "    for (const d of [0, 1, -1, 2, -2, 3, -3]) {",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-blind-pick-ignored",
-  "file": "src/formats/morrowind/mwItemMap.js",
-  "old": "  if (picking) return { record: pool[pick % pool.length], row,",
-  "new": "  if (false) return { record: pool[pick % pool.length], row,",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-composer-drops-the-pick",
-  "file": "src/formats/morrowind/mwItemMap.js",
-  "old": "colourOf, tier: piece.tier ?? null, pick: piece.pick ?? null });   // MWNPC17",
-  "new": "colourOf });   // MWNPC17",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-picks-dropped",
-  "file": "src/net/peer/peerBodies.js",
-  "old": "    armor: [...(npc ? withNpcPicks(worn, npc) : worn), ...outfitPiece(look, wolf)],",
-  "new": "    armor: [...worn, ...outfitPiece(look, wolf)],",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-face-one-hash",
-  "file": "src/characters/wardrobe.js",
-  "old": "hair: wmix(n.seed ^ 0x4a12b0b5) });",
-  "new": "hair: wmix(n.seed ^ 0x4ead5eed) });",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-key-without-hint",
-  "file": "src/net/peer/peerBodies.js",
-  "old": ": lookKey(look)) + npcKeyOf(look) + outfitKeyOf(look);",
-  "new": ": lookKey(look)) + outfitKeyOf(look);",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-walk-ignored",
-  "file": "src/formats/morrowind/mwFirstPerson.js",
-  "old": "    if (sorted.length && Number.isInteger(step) && step >= 0) {",
-  "new": "    if (false) {",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-player-hint-read",
-  "file": "src/characters/wardrobe.js",
-  "old": "  if (!n || typeof n !== 'object' || !Number.isInteger(n.seed) || n.seed < 0 || n.seed > 0xffffffff",
-  "new": "  if (!n || typeof n !== 'object' || !Number.isInteger(n.seed)",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-stray-unbounded",
-  "file": "src/characters/wardrobe.js",
-  "old": "  const tier = Math.max(n.lo ?? 0, Math.min(n.hi ?? 3, n.tier + (step < 2 ? -1 : step === 2 ? 1 : 0)));",
-  "new": "  const tier = Math.max(0, Math.min(3, n.tier + (step < 2 ? -1 : step === 2 ? 1 : 0)));",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-role-rungs-unread",
-  "file": "src/characters/wardrobe.js",
-  "old": "  return { items, npc: npcHint(s, tier, lo, hi), role: name, cut: k, tier };",
-  "new": "  return { items, npc: npcHint(s, tier), role: name, cut: k, tier };",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-hint-range-unchecked",
-  "file": "src/characters/wardrobe.js",
-  "old": "  if (!ok(n.tier) || !ok(n.lo) || !ok(n.hi) || n.lo > n.tier || n.tier > n.hi) return null;",
-  "new": "  if (!ok(n.tier)) return null;",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-band-ignored",
-  "file": "src/formats/morrowind/mwItemMap.js",
-  "old": "      while (k > 1 && near[k - 1].d > band) k--;",
-  "new": "",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-foe-unhinted",
-  "file": "src/characters/foeBodies.js",
-  "old": "items: clothesUnder([...worn], FOE_WARDROBE[gender], h), npc: npcHint(h, 0),",
-  "new": "items: clothesUnder([...worn], FOE_WARDROBE[gender], h),",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-roster-unhinted",
-  "file": "src/characters/foeBodies.js",
-  "old": "items: clothesUnder(items, FOE_WARDROBE[g], h), npc: npcHint(h, 0),",
-  "new": "items: clothesUnder(items, FOE_WARDROBE[g], h),",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-watch-unhinted",
-  "file": "src/characters/folkBodies.js",
-  "old": "    return { race, gender: 'male', faceIndex: mix(seed ^ 0xfa) % 10, items, npc: npcHint(seed, 0) };",
-  "new": "    return { race, gender: 'male', faceIndex: mix(seed ^ 0xfa) % 10, items };",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-still-unhinted",
-  "file": "src/characters/rosterBodies.js",
-  "old": "    return { race: res.race ?? 'Breton', gender, faceIndex: (seed >>> 0) % 10, items: d.items, npc: d.npc };",
-  "new": "    return { race: res.race ?? 'Breton', gender, faceIndex: (seed >>> 0) % 10, items: d.items };",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "AUDIT-MWNPC16-18-R2-door-priest-unrobed",
-  "file": "src/characters/rosterBodies.js",
-  "old": "cut: kind === 'priest' ? 'robe' : null",
-  "new": "cut: null",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "AUDIT-MWNPC16-18-R2-rogue-unarmoured",
-  "file": "src/characters/wardrobe.js",
-  "old": "armor: 'rogue'",
-  "new": "armor: null",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "AUDIT-MWNPC16-18-R2-underworld-commoner",
-  "file": "src/characters/peopleBodies.js",
-  "old": "underworld: 'rogue',",
-  "new": "underworld: 'commoner',",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "AUDIT-MWNPC16-18-R2-scholar-commoner",
-  "file": "src/characters/peopleBodies.js",
-  "old": "scholar: 'scholar', common:",
-  "new": "scholar: 'commoner', common:",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "AUDIT-MWNPC16-18-R2-dark-bright",
-  "file": "src/characters/wardrobe.js",
-  "old": "  dark: Object.freeze([3, 1, 4, 9]),",
-  "new": "  dark: Object.freeze([6, 8, 7, 2]),",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "AUDIT-MWNPC16-18-R2-lower-never-matches",
-  "file": "src/characters/wardrobe.js",
-  "old": "  const lowDye = chance(R.match, wmix(s ^ 0x3a7c)) ? topDye : dye(0xd2);",
-  "new": "  const lowDye = dye(0xd2);",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "AUDIT-MWNPC16-18-R2-formal-swapped",
-  "file": "src/characters/wardrobe.js",
-  "old": "    const cloak = female ? (formal ? W.formalCloak : W.casualCloak) : (formal ? M.formalCloak : M.casualCloak);",
-  "new": "    const cloak = female ? (formal ? W.casualCloak : W.formalCloak) : (formal ? M.casualCloak : M.formalCloak);",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "AUDIT-MWNPC16-18-R2-rung-step-off",
-  "file": "src/characters/wardrobe.js",
-  "old": "n.tier + (step < 2 ? -1 : step === 2 ? 1 : 0)",
-  "new": "n.tier + 0",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "AUDIT-MWNPC16-18-R2-helm-always",
-  "file": "src/characters/wardrobe.js",
-  "old": "['Head', A.Helm, 0.3]]",
-  "new": "['Head', A.Helm, 1]]",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "AUDIT-MWNPC16-18-R2-merchant-poor",
-  "file": "src/characters/wardrobe.js",
-  "old": "tiers: [45, 45, 9, 1]",
-  "new": "tiers: [100, 0, 0, 0]",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "AUDIT-MWNPC16-18-R2-knight-exq-iron",
-  "file": "src/characters/wardrobe.js",
-  "old": "[[MAT.Dwarven, 30], [MAT.Ebony, 30], [MAT.Orcish, 20], [MAT.Silver, 20]],",
-  "new": "[[MAT.Iron, 30], [MAT.Iron, 30], [MAT.Iron, 20], [MAT.Iron, 20]],",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "AUDIT-MWNPC16-18-R2-folk-tradesman-commoner",
-  "file": "src/characters/folkBodies.js",
-  "old": "    Object.freeze({ role: 'tradesman', cut: 'pants' }),   // a tunic and breeches - the tradesman",
-  "new": "    Object.freeze({ role: 'commoner', cut: 'pants' }),   // a tunic and breeches - the tradesman",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "AUDIT-MWNPC16-18-R2-pick-zero",
-  "file": "src/characters/wardrobe.js",
-  "old": "  return { pick: h >>> 8, tier };",
-  "new": "  return { pick: 0, tier };",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- }
+  {
+    "name": "MWNPC17-cut-ignored",
+    "file": "src/characters/wardrobe.js",
+    "old": "  const prefer =\n    cut === 'robe'\n      ? ['robe', 'skirt', 'pants']\n      : cut === 'skirt'\n        ? ['skirt', 'pants', 'robe']\n        : cut === 'pants'\n          ? ['pants', 'skirt', 'robe']\n          : null;",
+    "new": "  const prefer = null;",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC17-one-metal-for-a-fighter",
+    "file": "src/characters/wardrobe.js",
+    "old": "    one: false,",
+    "new": "    one: true,",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC17-chain-helm",
+    "file": "src/characters/wardrobe.js",
+    "old": "    if (material === MAT.Chain && !CHAIN_PIECES.has(templateIndex)) material = MAT.Iron; // no chain helm in Morrowind: iron, its own neighbour",
+    "new": "    // no chain helm in Morrowind: iron, its own neighbour",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC17-pauldron-alone",
+    "file": "src/characters/wardrobe.js",
+    "old": "  if (l && !r)",
+    "new": "  if (false)",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC17-noble-in-common",
+    "file": "src/characters/wardrobe.js",
+    "old": "    tiers: [0, 35, 45, 20],",
+    "new": "    tiers: [10, 35, 45, 20],",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC17-rung-ignored",
+    "file": "src/formats/morrowind/mwItemMap.js",
+    "old": "  if (Number.isInteger(tier) && tier >= 0 && tier <= 3) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC17-pick-over-every-colour",
+    "file": "src/formats/morrowind/mwItemMap.js",
+    "old": "      let k = Math.min(CLOTH_PICK_NEAREST, near.length);",
+    "new": "      let k = near.length;",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC17-higher-rung-first",
+    "file": "src/formats/morrowind/mwItemMap.js",
+    "old": "    for (const d of [0, -1, 1, -2, 2, -3, 3]) {",
+    "new": "    for (const d of [0, 1, -1, 2, -2, 3, -3]) {",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC17-blind-pick-ignored",
+    "file": "src/formats/morrowind/mwItemMap.js",
+    "old": "  }\n  if (picking)",
+    "new": "  }\n  if (false)",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC17-composer-drops-the-pick",
+    "file": "src/formats/morrowind/mwItemMap.js",
+    "old": "      const res = mwClothingRecord(clothes, name, {\n        dye: piece.dye ?? null,\n        colourOf,\n        tier: piece.tier ?? null,\n        pick: piece.pick ?? null,\n      }); // MWNPC17: a person's rung and pick (characters/wardrobe.js)",
+    "new": "      const res = mwClothingRecord(clothes, name, { dye: piece.dye ?? null, colourOf }); // MWNPC17: a person's rung and pick (characters/wardrobe.js)",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC17-picks-dropped",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "    armor: [...(npc ? withNpcPicks(worn, npc) : worn), ...outfitPiece(look, wolf)], // MWNPC17: each garment its rung and its pick; BEAST-BOOTS: a beast NPC's helm and boots go to the composer as a player's do; MW-FOLK1: and a townsperson's outfit",
+    "new": "    armor: [...worn, ...outfitPiece(look, wolf)], // MWNPC17: each garment its rung and its pick; BEAST-BOOTS: a beast NPC's helm and boots go to the composer as a player's do; MW-FOLK1: and a townsperson's outfit",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC17-face-one-hash",
+    "file": "src/characters/wardrobe.js",
+    "old": "export const npcFaceOf = (n) => ({ head: wmix(n.seed ^ 0x4ead5eed), hair: wmix(n.seed ^ 0x4a12b0b5) });",
+    "new": "export const npcFaceOf = (n) => ({ head: wmix(n.seed ^ 0x4ead5eed), hair: wmix(n.seed ^ 0x4ead5eed) });",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC17-key-without-hint",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "        : lookKey(look)) +\n      npcKeyOf(look) +\n      outfitKeyOf(look);",
+    "new": "        : lookKey(look)) + outfitKeyOf(look);",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC17-walk-ignored",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "    if (sorted.length && Number.isInteger(step) && step >= 0) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC17-player-hint-read",
+    "file": "src/characters/wardrobe.js",
+    "old": "  if (!n || typeof n !== 'object' || !Number.isInteger(n.seed) || n.seed < 0 || n.seed > 0xffffffff) return null;",
+    "new": "  if (!n || typeof n !== 'object' || !Number.isInteger(n.seed)) return null;",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC17-stray-unbounded",
+    "file": "src/characters/wardrobe.js",
+    "old": "  const tier = Math.max(n.lo ?? 0, Math.min(n.hi ?? 3, n.tier + (step < 2 ? -1 : step === 2 ? 1 : 0)));",
+    "new": "  const tier = Math.max(0, Math.min(3, n.tier + (step < 2 ? -1 : step === 2 ? 1 : 0)));",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC17-role-rungs-unread",
+    "file": "src/characters/wardrobe.js",
+    "old": "  return { items, npc: npcHint(s, tier, lo, hi), role: name, cut: k, tier };",
+    "new": "  return { items, npc: npcHint(s, tier), role: name, cut: k, tier };",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC17-hint-range-unchecked",
+    "file": "src/characters/wardrobe.js",
+    "old": "  if (!ok(n.tier) || !ok(n.lo) || !ok(n.hi) || n.lo > n.tier || n.tier > n.hi) return null;",
+    "new": "  if (!ok(n.tier)) return null;",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC17-band-ignored",
+    "file": "src/formats/morrowind/mwItemMap.js",
+    "old": "      while (k > 1 && near[k - 1].d > band) k--; // AUDIT MWNPC16-18 C F2: the dye's colour, not merely the nearest few",
+    "new": "      // AUDIT MWNPC16-18 C F2: the dye's colour, not merely the nearest few",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC17-foe-unhinted",
+    "file": "src/characters/foeBodies.js",
+    "old": "    npc: npcHint(h, 0),\n    ...(VAMPIRE_MOBILES.has(f.mobileType) ? { vampire: true } : {}),",
+    "new": "    ...(VAMPIRE_MOBILES.has(f.mobileType) ? { vampire: true } : {}),",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC17-roster-unhinted",
+    "file": "src/characters/foeBodies.js",
+    "old": "    npc: npcHint(h, 0),\n    ...(vampire ? { vampire: true } : {}),",
+    "new": "    ...(vampire ? { vampire: true } : {}),",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC17-watch-unhinted",
+    "file": "src/characters/folkBodies.js",
+    "old": "    return { race, gender: 'male', faceIndex: mix(seed ^ 0xfa) % 10, items, npc: npcHint(seed, 0) };",
+    "new": "    return { race, gender: 'male', faceIndex: mix(seed ^ 0xfa) % 10, items };",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC17-still-unhinted",
+    "file": "src/characters/rosterBodies.js",
+    "old": "    return { race: res.race ?? 'Breton', gender, faceIndex: (seed >>> 0) % 10, items: d.items, npc: d.npc };",
+    "new": "    return { race: res.race ?? 'Breton', gender, faceIndex: (seed >>> 0) % 10, items: d.items };",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWNPC16-18-R2-door-priest-unrobed",
+    "file": "src/characters/rosterBodies.js",
+    "old": "    const d = dressPerson({ role: kind, gender, seed, cut: kind === 'priest' ? 'robe' : null }); // MWNPC17: their kind's role, off their own id's seed - a priest at the door in the robes his picture wears",
+    "new": "    const d = dressPerson({ role: kind, gender, seed, cut: null }); // MWNPC17: their kind's role, off their own id's seed - a priest at the door in the robes his picture wears",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWNPC16-18-R2-rogue-unarmoured",
+    "file": "src/characters/wardrobe.js",
+    "old": "    armor: 'rogue',",
+    "new": "    armor: null,",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWNPC16-18-R2-underworld-commoner",
+    "file": "src/characters/peopleBodies.js",
+    "old": "  underworld: 'rogue',",
+    "new": "  underworld: 'commoner',",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWNPC16-18-R2-scholar-commoner",
+    "file": "src/characters/peopleBodies.js",
+    "old": "  scholar: 'scholar',",
+    "new": "  scholar: 'commoner',",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWNPC16-18-R2-dark-bright",
+    "file": "src/characters/wardrobe.js",
+    "old": "  dark: Object.freeze([3, 1, 4, 9]),",
+    "new": "  dark: Object.freeze([6, 8, 7, 2]),",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWNPC16-18-R2-lower-never-matches",
+    "file": "src/characters/wardrobe.js",
+    "old": "  const lowDye = chance(R.match, wmix(s ^ 0x3a7c)) ? topDye : dye(0xd2);",
+    "new": "  const lowDye = dye(0xd2);",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWNPC16-18-R2-formal-swapped",
+    "file": "src/characters/wardrobe.js",
+    "old": "    const cloak = female ? (formal ? W.formalCloak : W.casualCloak) : formal ? M.formalCloak : M.casualCloak;",
+    "new": "    const cloak = female ? (formal ? W.casualCloak : W.formalCloak) : formal ? M.casualCloak : M.formalCloak;",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWNPC16-18-R2-rung-step-off",
+    "file": "src/characters/wardrobe.js",
+    "old": "  const tier = Math.max(n.lo ?? 0, Math.min(n.hi ?? 3, n.tier + (step < 2 ? -1 : step === 2 ? 1 : 0)));",
+    "new": "  const tier = Math.max(n.lo ?? 0, Math.min(n.hi ?? 3, n.tier + 0));",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWNPC16-18-R2-helm-always",
+    "file": "src/characters/wardrobe.js",
+    "old": "      ['Head', A.Helm, 0.3],",
+    "new": "      ['Head', A.Helm, 1],",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWNPC16-18-R2-merchant-poor",
+    "file": "src/characters/wardrobe.js",
+    "old": "    tiers: [45, 45, 9, 1],",
+    "new": "    tiers: [100, 0, 0, 0],",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWNPC16-18-R2-knight-exq-iron",
+    "file": "src/characters/wardrobe.js",
+    "old": "        [MAT.Dwarven, 30],\n        [MAT.Ebony, 30],\n        [MAT.Orcish, 20],\n        [MAT.Silver, 20],",
+    "new": "        [MAT.Iron, 30],\n        [MAT.Iron, 30],\n        [MAT.Iron, 20],\n        [MAT.Iron, 20],",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWNPC16-18-R2-folk-tradesman-commoner",
+    "file": "src/characters/folkBodies.js",
+    "old": "    Object.freeze({ role: 'tradesman', cut: 'pants' }), // a tunic and breeches - the tradesman",
+    "new": "    Object.freeze({ role: 'commoner', cut: 'pants' }), // a tunic and breeches - the tradesman",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWNPC16-18-R2-pick-zero",
+    "file": "src/characters/wardrobe.js",
+    "old": "  return { pick: h >>> 8, tier };",
+    "new": "  return { pick: 0, tier };",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  }
 ]

@@ -146,8 +146,8 @@
   {
     "name": "WAGONS2-FINAL-the-floor-are",
     "file": "src/systems/wagon/wagonLooks.js",
-    "old": "`The ${part} ${part === 'walls' ? 'are' : 'is'} now ${name.toLowerCase()}.`",
-    "new": "`The ${part} are now ${name.toLowerCase()}.`",
+    "old": "  paintedInside: (part, name) => `The ${part} ${part === 'walls' ? 'are' : 'is'} now ${name.toLowerCase()}.`, // FINAL AUDIT: \"The floor are now\" - the walls alone are many",
+    "new": "  paintedInside: (part, name) => `The ${part} are now ${name.toLowerCase()}.`, // FINAL AUDIT: \"The floor are now\" - the walls alone are many",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "WAGONS2-FINAL-out-of-reach-no-room",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "    if (!(distance <= RIDE_ASK_REACH)) { deps.say(RIDE_TEXT.tooFar); return true; }",
-    "new": "    if (!(distance <= RIDE_ASK_REACH)) { deps.say(RIDE_TEXT.noSeats); return true; }",
+    "old": "      deps.say(RIDE_TEXT.tooFar);",
+    "new": "      deps.say(RIDE_TEXT.noSeats);",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "WAGONS2-FINAL-a-lapsed-ask-no-seat",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "    if (!book.asks().some((a) => a.rider === rider)) { deps.say(RIDE_TEXT.lapsed(name(rider))); return; }",
-    "new": "",
+    "old": "    if (!book.asks().some((a) => a.rider === rider)) {\n      deps.say(RIDE_TEXT.lapsed(name(rider)));\n      return;\n    } // WAGONS2 (FINAL AUDIT): the ask went before the press",
+    "new": "    // WAGONS2 (FINAL AUDIT): the ask went before the press",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "WAGONS2-FINAL-the-second-strip-unmarked",
     "file": "src/ui/duelPrompt.js",
-    "old": "${second ? ' second' : ''}",
-    "new": "",
+    "old": "  const root = el('div', `dfduel-toast${touch ? ' touch' : ''}${second ? ' second' : ''}`);",
+    "new": "  const root = el('div', `dfduel-toast${touch ? ' touch' : ''}`);",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "WAGONS2-FINAL-the-first-wagon-in-the-pack",
     "file": "src/systems/tradeModes.js",
-    "old": "  usedWagon: activeWagonItem(entity?.items ?? []),\n",
-    "new": "  usedWagon: (entity?.items ?? []).find((it) => it?.group === 'Transportation' && it.templateIndex === 93) ?? null,\n",
+    "old": "  usedWagon: activeWagonItem(entity?.items ?? []),",
+    "new": "  usedWagon: (entity?.items ?? []).find((it) => it?.group === 'Transportation' && it.templateIndex === 93) ?? null,",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "WAGONS2-FINAL-the-services-loaded-wagon-sold",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "  if (loaded) left[items.indexOf(loaded)] = 0;\n",
-    "new": "\n",
+    "old": "  if (loaded) left[items.indexOf(loaded)] = 0;",
+    "new": "",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "WAGONS2-FINAL-the-untouched-wagon-dropped",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "    if (left[i] === had[i]) return [rec];   // untouched",
-    "new": "    if (left[i] === (tradeableRecord(rec) ? recordCount(rec) : 0)) return [rec];   // untouched",
+    "old": "    if (left[i] === had[i]) return [rec]; // untouched",
+    "new": "    if (left[i] === (tradeableRecord(rec) ? recordCount(rec) : 0)) return [rec]; // untouched",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "WAGONS2-FINAL-the-seat-words-kept-for-the-gone",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "    for (const peer of [...seatWords.keys()]) if (!alive?.has?.(peer)) seatWords.delete(peer);\n",
-    "new": "",
+    "old": "    for (const peer of [...seatWords.keys()]) if (!alive?.has?.(peer)) seatWords.delete(peer);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
     ]
@@ -272,7 +272,7 @@
   {
     "name": "WAGONS2-FINAL-the-pin-unwatched",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "    if (here && ride.pinned && Math.hypot(here[0] - ride.pinned[0], here[2] - ride.pinned[2]) > GET_DOWN_REACH) { leave(); return; }",
+    "old": "    if (here && ride.pinned && Math.hypot(here[0] - ride.pinned[0], here[2] - ride.pinned[2]) > GET_DOWN_REACH) {\n      leave();\n      return;\n    }",
     "new": "",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
@@ -281,8 +281,8 @@
   {
     "name": "WAGONS2-FINAL-the-wait-on-any-journey",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "    if (ride.following) { if (deps.traveling?.()) {",
-    "new": "    if (ride.go != null) { if (deps.traveling?.()) {",
+    "old": "    if (ride.following) {",
+    "new": "    if (ride.go != null) {",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "WAGONS2-FINAL-the-cloud-unread",
     "file": "src/world/worldClock.js",
-    "old": "sun: sunScale(minute) * w * c };",
-    "new": "sun: sunScale(minute) * w };",
+    "old": "  return { ambient: exteriorAmbient(minute, nightScale, w), sun: sunScale(minute) * w * c };",
+    "new": "  return { ambient: exteriorAmbient(minute, nightScale, w), sun: sunScale(minute) * w };",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]
@@ -408,8 +408,8 @@
   {
     "name": "WAGONS2-FINAL-a-dark-room-blooms",
     "file": "src/render/airPass.js",
-    "old": "  if (uRoomsLit > 0.5 && !rwRoomLit(rwSeedBits(normalize(vNormal), vWorldPos, uModel[3].xyz, vUV))) discard;",
-    "new": "",
+    "old": "  if (uRoomsLit > 0.5 && !rwRoomLit(rwSeedBits(normalize(vNormal), vWorldPos, uModel[3].xyz, vUV))) discard;   // the room drawn dark (render/realWindows.js): no amber halo round it",
+    "new": "   // the room drawn dark (render/realWindows.js): no amber halo round it",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]
@@ -417,8 +417,8 @@
   {
     "name": "WAGONS2-FINAL-the-replays-uniform-unset",
     "file": "src/render/airPass.js",
-    "old": "          gl.uniform1f(P.emitMesh.uRoomsLit, f.windowRooms && sm._evWin === GLASS_EXTERIOR ? 1 : 0);",
-    "new": "",
+    "old": "          gl.uniform1f(P.emitMesh.uRoomsLit, f.windowRooms && sm._evWin === GLASS_EXTERIOR ? 1 : 0); // WAGONS2 (FINAL AUDIT): a room behind it - its own lit test",
+    "new": "          // WAGONS2 (FINAL AUDIT): a room behind it - its own lit test",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]
@@ -444,7 +444,7 @@
   {
     "name": "WAGONS2-FINAL-the-target-held-with-the-street-off",
     "file": "src/render/realWindows.js",
-    "old": "  if (!street) { if (state.drawn) { renderer.releaseOutsideView?.(); state.drawn = false; } return { rect, view: false }; }",
+    "old": "  if (!street) {\n    if (state.drawn) {\n      renderer.releaseOutsideView?.();\n      state.drawn = false;\n    }\n    return { rect, view: false };\n  }",
     "new": "  if (!street) return { rect, view: false };",
     "tests": [
       "test/render/windows1_view.test.js"

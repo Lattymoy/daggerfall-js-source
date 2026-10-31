@@ -28,13 +28,13 @@
 import { TENT_MODEL, FIRE_FLAT } from '../systems/survival/camp.js';
 import { trs } from '../world/mat4.js';
 import { sphereAabb } from '../render/frustum.js';
-import { drawSeen } from './decor/decorRoom.js';   // PERF-WAGON: a tent by the street's view test
+import { drawSeen } from './decor/decorRoom.js'; // PERF-WAGON: a tent by the street's view test
 import { NATIVE_PER_M, NATIVE_PIXEL } from '../systems/livingWorld/trips.js';
 import { GLOBAL_SCALE } from '../player/activate.js';
 import { lwSeed, lwRng, textSeed } from '../systems/livingWorld/seed.js';
 import { DAY_MIN } from '../systems/livingWorld/dayPlan.js';
-import { takeOf, TAKE_DAYS } from '../systems/livingWorld/outlaws.js';   // AUDIT LW-II-2 P5: the chest's law, here to be run
-import { isBagItem } from '../net/bagLaw.js';   // AUDIT LW-II-2 C4: a general store's fixed pieces, none of a chest's
+import { takeOf, TAKE_DAYS } from '../systems/livingWorld/outlaws.js'; // AUDIT LW-II-2 P5: the chest's law, here to be run
+import { isBagItem } from '../net/bagLaw.js'; // AUDIT LW-II-2 C4: a general store's fixed pieces, none of a chest's
 import { isSurvivalItem } from '../systems/survival/items.js';
 
 /** A hideout this near the player on foot (m) is stood; let go past BAND_KEEP_M. */
@@ -67,7 +67,10 @@ export const HIDEOUTS_ASK_MS = 100;
 export const killed = (rec) => !!rec?.dead && (!!rec.corpse || !!rec.executed);
 
 /** AUDIT LW-II C2: a chest as it was minted - each piece there at its count, and nothing put in. @param {any} pile @param {[any, any][]} minted */
-const asMinted = (pile, minted) => { const items = pile?.items ?? []; return items.length === minted.length && minted.every(([it, n]) => items.includes(it) && it?.stackCount === n); };
+const asMinted = (pile, minted) => {
+  const items = pile?.items ?? [];
+  return items.length === minted.length && minted.every(([it, n]) => items.includes(it) && it?.stackCount === n);
+};
 
 /**
  * AUDIT LW-II C8: THE HIDEOUTS KEPT - each region's (outlaws.js hideoutsOf, the host's `of`), kept for the network's
@@ -87,13 +90,21 @@ export function createHideoutBook(deps) {
   const now = deps.now ?? (() => performance.now());
   return (region) => {
     if (region == null || !Number.isFinite(region)) return [];
-    if (deps.generation() !== gen) { kept.clear(); waiting.clear(); gen = deps.generation(); }
+    if (deps.generation() !== gen) {
+      kept.clear();
+      waiting.clear();
+      gen = deps.generation();
+    }
     const got = kept.get(region);
     if (got) return got;
-    const at = waiting.get(region), ms = now();
+    const at = waiting.get(region),
+      ms = now();
     if (at != null && ms - at < HIDEOUTS_ASK_MS) return [];
     const h = deps.of(region);
-    if (h === undefined) { waiting.set(region, ms); return []; }
+    if (h === undefined) {
+      waiting.set(region, ms);
+      return [];
+    }
     kept.set(region, h);
     if (waiting.delete(region) && h.length) deps.resolved?.(region);
     return h;
@@ -102,8 +113,9 @@ export function createHideoutBook(deps) {
 
 /** The rumoured ring's point: the hideout's, moved by the band's seed up to RUMOUR_OFF_N. @param {any} h @param {string} bandKey */
 export function rumourAt(h, bandKey) {
-  const s = lwSeed(textSeed(bandKey), 0x72756d);   // 'rum'
-  const a = ((s % 3600) / 3600) * Math.PI * 2, d = RUMOUR_OFF_N * (((s >>> 12) % 1000) / 1000);
+  const s = lwSeed(textSeed(bandKey), 0x72756d); // 'rum'
+  const a = ((s % 3600) / 3600) * Math.PI * 2,
+    d = RUMOUR_OFF_N * (((s >>> 12) % 1000) / 1000);
   return { x: h.x + Math.sin(a) * d, z: h.z + Math.cos(a) * d };
 }
 
@@ -133,11 +145,17 @@ export const chestPiece = (it) => !!it && it.group !== 'Transportation' && !isBa
 export function* bandChest(band, t, deps) {
   const towns = [band.hideout.a, band.hideout.b].map((id) => deps.townOf(id)).filter(Boolean);
   const trips = [];
-  for (let d = 0; d <= TAKE_DAYS; d++) for (const town of towns) { trips.push(...(deps.tripsOf(town, t - d * DAY_MIN) ?? [])); yield; }
+  for (let d = 0; d <= TAKE_DAYS; d++)
+    for (const town of towns) {
+      trips.push(...(deps.tripsOf(town, t - d * DAY_MIN) ?? []));
+      yield;
+    }
   const take = takeOf(band, trips, t);
-  yield;   // the shelf's roll a step of its own
-  const pool = take.goods ? deps.shelf({ rolls: lwRng(textSeed(band.key), 0x63687374), shelfIndex: 1 }).filter(chestPiece) : [];   // 'chst'
-  const draw = lwRng(textSeed(band.key), 0x676f6f64);   // 'good'
+  yield; // the shelf's roll a step of its own
+  const pool = take.goods
+    ? deps.shelf({ rolls: lwRng(textSeed(band.key), 0x63687374), shelfIndex: 1 }).filter(chestPiece)
+    : []; // 'chst'
+  const draw = lwRng(textSeed(band.key), 0x676f6f64); // 'good'
   const items = [];
   while (items.length < take.goods && pool.length) items.push(pool.splice(Math.floor(draw() * pool.length), 1)[0]);
   if (take.gold > 0) items.push(deps.gold(take.gold));
@@ -162,8 +180,10 @@ export function createHideouts(deps) {
   /** The hideout stood, or null. */
   let stood = /** @type {any} */ (null);
   let timer = 0;
-  let tent = /** @type {any} */ (null), tentLoading = false;
-  let fire = /** @type {any} */ (null), fireLoading = false;
+  let tent = /** @type {any} */ (null),
+    tentLoading = false;
+  let fire = /** @type {any} */ (null),
+    fireLoading = false;
   const rel = () => deps.relations();
   const now = deps.now ?? (() => performance.now());
   /** AUDIT LW-II-2 C14: THE SESSION'S STRUCK-DOWN - each band's people killed, by its key (their ids), kept past the
@@ -174,24 +194,36 @@ export function createHideouts(deps) {
   function ensureArt() {
     if (!tent && !tentLoading && deps.meshes?.getGpuMesh) {
       tentLoading = true;
-      Promise.resolve(deps.meshes.getGpuMesh(TENT_MODEL)).then((gpu) => { tent = gpu ? { gpu } : null; }).catch(() => {});
+      Promise.resolve(deps.meshes.getGpuMesh(TENT_MODEL))
+        .then((gpu) => {
+          tent = gpu ? { gpu } : null;
+        })
+        .catch(() => {});
     }
     if (!fire && !fireLoading && deps.getTexture) {
       fireLoading = true;
-      Promise.resolve(deps.getTexture(FIRE_FLAT.archive)).then((t) => {
-        if (!t) return;
-        const count = t.getFrameCount?.(FIRE_FLAT.record) ?? 1;
-        for (let i = 0; i < count; i++) deps.uploadRecordFrame?.(FIRE_FLAT.archive, FIRE_FLAT.record, i);
-        const size = t.getSize(FIRE_FLAT.record);
-        fire = { size: { w: size.width * GLOBAL_SCALE, h: size.height * GLOBAL_SCALE } };
-      }).catch(() => {});
+      Promise.resolve(deps.getTexture(FIRE_FLAT.archive))
+        .then((t) => {
+          if (!t) return;
+          const count = t.getFrameCount?.(FIRE_FLAT.record) ?? 1;
+          for (let i = 0; i < count; i++) deps.uploadRecordFrame?.(FIRE_FLAT.archive, FIRE_FLAT.record, i);
+          const size = t.getSize(FIRE_FLAT.record);
+          fire = { size: { w: size.width * GLOBAL_SCALE, h: size.height * GLOBAL_SCALE } };
+        })
+        .catch(() => {});
     }
   }
 
-  const takeOut = (rec) => { try { if (deps.inPool(rec)) deps.remove(rec); } catch (e) { console.warn('[hideouts] a body would not leave', /** @type {any} */ (e)?.message ?? e); } };
+  const takeOut = (rec) => {
+    try {
+      if (deps.inPool(rec)) deps.remove(rec);
+    } catch (e) {
+      console.warn('[hideouts] a body would not leave', /** @type {any} */ (e)?.message ?? e);
+    }
+  };
 
   /** The camp's turn about its fire (its seed's). @param {any} h */
-  const turnOf = (h) => (lwSeed(textSeed(h.key), 0x74656e74) % 628) / 100;   // 'tent'
+  const turnOf = (h) => (lwSeed(textSeed(h.key), 0x74656e74) % 628) / 100; // 'tent'
 
   /** Stand a hideout: its tents, its fire, its chest (every reader's own), and its people where this player stands them
    *  (`owned`: the election's - AUDIT LW-II C11b). */
@@ -202,15 +234,34 @@ export function createHideouts(deps) {
     const tents = [];
     for (let i = 0; i < tentsFor(n); i++) {
       const a = turn + (i / tentsFor(n)) * Math.PI * 2;
-      const nx = h.x + Math.sin(a) * TENT_RING_M * NATIVE_PER_M, nz = h.z + Math.cos(a) * TENT_RING_M * NATIVE_PER_M;
+      const nx = h.x + Math.sin(a) * TENT_RING_M * NATIVE_PER_M,
+        nz = h.z + Math.cos(a) * TENT_RING_M * NATIVE_PER_M;
       const feet = deps.sceneOf(nx, nz);
-      tents.push({ feet, yaw: a + Math.PI });   // facing the fire
+      tents.push({ feet, yaw: a + Math.PI }); // facing the fire
     }
     const centre = deps.sceneOf(h.x, h.z);
     // `rel` the character it stood for (AUDIT LW-II C11c); `minted` its chest's pieces and counts (C2); `killed` its
     // people struck down (C3); `chest` its chest still worked (AUDIT LW-II-2 C5); `wave` its people's standing (C13)
-    stood = { h, band, tents, centre, foes: [], spawning: 0, pile: null, minted: /** @type {[any, any][]} */ ([]), robbed: [], routed: false, batch: null,
-      rel: rel(), owned: false, looted: false, killed: new Set(), chest: /** @type {any} */ (null), wave: 0, allDown: false };
+    stood = {
+      h,
+      band,
+      tents,
+      centre,
+      foes: [],
+      spawning: 0,
+      pile: null,
+      minted: /** @type {[any, any][]} */ ([]),
+      robbed: [],
+      routed: false,
+      batch: null,
+      rel: rel(),
+      owned: false,
+      looted: false,
+      killed: new Set(),
+      chest: /** @type {any} */ (null),
+      wave: 0,
+      allDown: false,
+    };
     if (band) {
       if (owned) standPeople(stood, t);
       // AUDIT LW-II-2 C5: its chest worked from the next frame (`workChest`) and its pile laid when done - read here, the
@@ -222,10 +273,10 @@ export function createHideouts(deps) {
   /** Its chest laid: the take's pile - unless the character took from it before (`looted`) - and its robbed parties.
    *  @param {any} s @param {{ items: any[], robbed: any[] }} c */
   function layChest(s, c) {
-    s.robbed = c.robbed;   // its robbed parties, looted or not: the rout's thanks
+    s.robbed = c.robbed; // its robbed parties, looted or not: the rout's thanks
     if (!rel()?.turns?.()?.looted?.has(s.band.key) && c.items.length) {
       s.pile = deps.dropPile(c.items, s.centre);
-      s.minted = c.items.map((it) => [it, it?.stackCount]);   // AUDIT LW-II C2: the take's minting, the latch's measure
+      s.minted = c.items.map((it) => [it, it?.stackCount]); // AUDIT LW-II C2: the take's minting, the latch's measure
     }
   }
 
@@ -236,8 +287,16 @@ export function createHideouts(deps) {
     while (s.chest) {
       if (now() - t0 >= budgetMs) return;
       let r;
-      try { r = s.chest.next(); } catch (e) { console.warn('[hideouts] the chest', /** @type {any} */ (e)?.message ?? e); r = { done: true, value: null }; }
-      if (r.done) { s.chest = null; layChest(s, r.value ?? { items: [], robbed: [] }); }
+      try {
+        r = s.chest.next();
+      } catch (e) {
+        console.warn('[hideouts] the chest', /** @type {any} */ (e)?.message ?? e);
+        r = { done: true, value: null };
+      }
+      if (r.done) {
+        s.chest = null;
+        layChest(s, r.value ?? { items: [], robbed: [] });
+      }
     }
   }
 
@@ -246,7 +305,10 @@ export function createHideouts(deps) {
     const id = rec?.living?.outlaw;
     if (id == null) return;
     let set = downs.get(s.band.key);
-    if (!set) { if (downs.size > 64) downs.clear(); downs.set(s.band.key, (set = new Set())); }
+    if (!set) {
+      if (downs.size > 64) downs.clear();
+      downs.set(s.band.key, (set = new Set()));
+    }
     set.add(id);
   }
 
@@ -254,22 +316,32 @@ export function createHideouts(deps) {
    *  the session struck down. @param {any} s @param {number} t */
   function standPeople(s, t) {
     s.owned = true;
-    const wave = ++s.wave, down = downs.get(s.band.key);
-    const people = standingAt(s.band, t).filter((p) => !down?.has(p.id)), turn = turnOf(s.h);
-    s.allDown = !people.length;   // every one of them struck down before (the last blow in the second it was left)
+    const wave = ++s.wave,
+      down = downs.get(s.band.key);
+    const people = standingAt(s.band, t).filter((p) => !down?.has(p.id)),
+      turn = turnOf(s.h);
+    s.allDown = !people.length; // every one of them struck down before (the last blow in the second it was left)
     people.forEach((p, i) => {
       const a = turn + 0.5 + (i / Math.max(1, people.length)) * Math.PI * 2;
       const r = BAND_RING_M[0] + (BAND_RING_M[1] - BAND_RING_M[0]) * ((lwSeed(textSeed(p.id)) % 100) / 100);
       const feet = deps.sceneOf(s.h.x + Math.sin(a) * r * NATIVE_PER_M, s.h.z + Math.cos(a) * r * NATIVE_PER_M);
       s.spawning++;
-      deps.spawn(p.cls, feet, { yaw: a, level: p.level, gender: p.sex, allied: false }).then((rec) => {
-        s.spawning--;
-        if (!rec) return;
-        if (stood !== s || s.wave !== wave) { takeOut(rec); return; }   // let go while it came (AUDIT LW-II-2 C13: or given up)
-        if (rec.entity) rec.entity.name = p.name;
-        rec.living = { outlaw: p.id };
-        s.foes.push(rec);
-      }).catch(() => { s.spawning--; });
+      deps
+        .spawn(p.cls, feet, { yaw: a, level: p.level, gender: p.sex, allied: false })
+        .then((rec) => {
+          s.spawning--;
+          if (!rec) return;
+          if (stood !== s || s.wave !== wave) {
+            takeOut(rec);
+            return;
+          } // let go while it came (AUDIT LW-II-2 C13: or given up)
+          if (rec.entity) rec.entity.name = p.name;
+          rec.living = { outlaw: p.id };
+          s.foes.push(rec);
+        })
+        .catch(() => {
+          s.spawning--;
+        });
     });
   }
 
@@ -283,7 +355,11 @@ export function createHideouts(deps) {
    *  out, `owned` dropped (two readers both stood them, one of them for good). @param {any} s */
   function dropPeople(s) {
     takeOutPeople(s);
-    s.foes = []; s.killed = new Set(); s.owned = false; s.allDown = false; s.wave++;
+    s.foes = [];
+    s.killed = new Set();
+    s.owned = false;
+    s.allDown = false;
+    s.wave++;
   }
 
   /** A hand in the chest: `looted` for the character it stood for. @param {any} s */
@@ -300,7 +376,7 @@ export function createHideouts(deps) {
     stood = null;
     takeOutPeople(s);
     if (s.pile) {
-      lootedYet(s);   // a hand in it this very frame - the character's who stood it, never a loaded one's (C11c)
+      lootedYet(s); // a hand in it this very frame - the character's who stood it, never a loaded one's (C11c)
       deps.removePile(s.pile);
     }
     if (s.batch) deps.renderer?.destroyBillboardBatch?.(s.batch);
@@ -309,13 +385,18 @@ export function createHideouts(deps) {
   /** Routed: the tale, the robbed parties' thanks, the word. */
   function rout(s, t) {
     s.routed = true;
-    if (s.chest) workChest(s, Infinity);   // AUDIT LW-II-2 C5: a rout before its chest was worked - its robbed known now
+    if (s.chest) workChest(s, Infinity); // AUDIT LW-II-2 C5: a rout before its chest was worked - its robbed known now
     const r = rel();
     const day = Math.floor((t - 240) / DAY_MIN);
     r?.turn?.('routed', `${s.h.key}@${s.band.gen}.${s.band.heir}`, { t, who: s.band.name });
-    deps.routed?.(s.h);   // BAY-LEFT-SEA: a den cleared - a Bounty past the Bay pays for it (systems/seatEdicts.js hideoutRouted)
+    deps.routed?.(s.h); // BAY-LEFT-SEA: a den cleared - a Bounty past the Bay pays for it (systems/seatEdicts.js hideoutRouted)
     const thanked = new Set();
-    for (const tr of s.robbed) for (const m of tr.party ?? []) if (!thanked.has(m.id)) { thanked.add(m.id); r?.note?.(m.id, 'helped', day); }
+    for (const tr of s.robbed)
+      for (const m of tr.party ?? [])
+        if (!thanked.has(m.id)) {
+          thanked.add(m.id);
+          r?.note?.(m.id, 'helped', day);
+        }
     deps.say(`You have routed ${s.band.name}.`);
   }
 
@@ -330,21 +411,30 @@ export function createHideouts(deps) {
       // AUDIT LW-II C11c: another character's records (a load, a new game) - the hideout stood for the last let go, and
       // nothing of it theirs (a let-go after the load wrote the last session's chest into the loaded character)
       if (stood && rel() !== stood.rel) letGo();
-      if (rel() !== downsRel) { downs.clear(); downsRel = rel(); }   // AUDIT LW-II-2 C14: the struck-down the character's
+      if (rel() !== downsRel) {
+        downs.clear();
+        downsRel = rel();
+      } // AUDIT LW-II-2 C14: the struck-down the character's
       // AUDIT LW-II C2: a hand in the chest is `looted` the frame it shows - a piece taken, one put in, a stack split. Kept
       // at the let-go alone, and by its count, a piece swapped in (or a save made while it stood) refilled it without end
       if (stood) lootedYet(stood);
-      if (stood?.chest) workChest(stood, CHEST_SLICE_MS);   // AUDIT LW-II-2 C5: the chest's take, a slice a frame
+      if (stood?.chest) workChest(stood, CHEST_SLICE_MS); // AUDIT LW-II-2 C5: the chest's take, a slice a frame
       if ((timer -= dt) > 0) return;
       timer = 1;
       const here = deps.here();
       const t = deps.clock();
-      if (!here || !deps.ready()) { letGo(); return; }
+      if (!here || !deps.ready()) {
+        letGo();
+        return;
+      }
       if (stood) {
         const d = Math.hypot(here.x - stood.h.x, here.z - stood.h.z) / NATIVE_PER_M;
         // AUDIT LW-II-2 C14: never let go under one of its people drawing on the player (the pool's cull spares such a foe,
         // and AUDIT LW-II D8 keeps a company's) - one at the player's heels vanished at 281 m from the fire
-        if (d > BAND_KEEP_M && !stood.foes.some((/** @type {any} */ rec) => !rec.dead && deps.engaged?.(rec))) { letGo(); return; }
+        if (d > BAND_KEEP_M && !stood.foes.some((/** @type {any} */ rec) => !rec.dead && deps.engaged?.(rec))) {
+          letGo();
+          return;
+        }
         // AUDIT LW-II C11b: the camp stood by every reader; its people by the one it falls to (taken up when it does) -
         // AUDIT LW-II-2 C13: and given up when it falls to another (a reader of a lower id come within BAND_KEEP_M)
         if (stood.band && !stood.routed) {
@@ -361,9 +451,11 @@ export function createHideouts(deps) {
         }
         return;
       }
-      const near = deps.hideoutsNear(here.x, here.z)
+      const near = deps
+        .hideoutsNear(here.x, here.z)
         .map((h) => ({ h, d: Math.hypot(here.x - h.x, here.z - h.z) / NATIVE_PER_M }))
-        .filter((q) => q.d <= BAND_LIVE_M).sort((a, b) => a.d - b.d)[0];
+        .filter((q) => q.d <= BAND_LIVE_M)
+        .sort((a, b) => a.d - b.d)[0];
       if (!near) return;
       ensureArt();
       stand(near.h, t, deps.owner(deps.sceneOf(near.h.x, near.h.z)));
@@ -372,7 +464,10 @@ export function createHideouts(deps) {
     batches() {
       const s = stood;
       if (!s?.band || s.routed || !fire || !deps.renderer?.createBillboardBatch) return [];
-      if (!s.batch) { s.batch = deps.renderer.createBillboardBatch(FIRE_FLAT.archive, FIRE_FLAT.record, fire.size, [s.centre]); if (s.batch) s.batch.frame = 0; }
+      if (!s.batch) {
+        s.batch = deps.renderer.createBillboardBatch(FIRE_FLAT.archive, FIRE_FLAT.record, fire.size, [s.centre]);
+        if (s.batch) s.batch.frame = 0;
+      }
       return s.batch ? [s.batch] : [];
     },
     /** The tents, in the host's world mesh pass. PERF-WAGON: `cull` the host's view test over each tent's sphere
@@ -402,7 +497,9 @@ export function createHideouts(deps) {
       return null;
     },
     /** The character heard of a band. @param {any} band */
-    heard(band) { return rel()?.turn?.('heard', band.key) ?? false; },
+    heard(band) {
+      return rel()?.turn?.('heard', band.key) ?? false;
+    },
     /**
      * The Overworld's rumoured hideouts about native (`x`, `z`): each band standing whose name the character has heard -
      * a ring (`wayfarer hideout`) about a point near it.
@@ -416,7 +513,12 @@ export function createHideouts(deps) {
         const band = deps.bandAt(h, t);
         if (!band || !heard.has(band.key)) continue;
         const p = rumourAt(h, band.key);
-        out.push({ key: `hideout:${h.key}`, at: deps.sceneOf(p.x, p.z), label: `Hideout of ${band.name} (rumoured)`, kind: 'wayfarer hideout' });
+        out.push({
+          key: `hideout:${h.key}`,
+          at: deps.sceneOf(p.x, p.z),
+          label: `Hideout of ${band.name} (rumoured)`,
+          kind: 'wayfarer hideout',
+        });
       }
       return out;
     },
@@ -429,19 +531,37 @@ export function createHideouts(deps) {
     offsetAll(offset) {
       const s = stood;
       if (!s) return;
-      const move = (/** @type {number[]} */ p) => { p[0] += offset[0]; p[1] += offset[1]; p[2] += offset[2]; };
+      const move = (/** @type {number[]} */ p) => {
+        p[0] += offset[0];
+        p[1] += offset[1];
+        p[2] += offset[2];
+      };
       for (const tt of s.tents) move(tt.feet);
       move(s.centre);
       if (s.batch) {
         const frame = s.batch.frame;
         deps.renderer?.destroyBillboardBatch?.(s.batch);
-        s.batch = deps.renderer?.createBillboardBatch?.(FIRE_FLAT.archive, FIRE_FLAT.record, fire.size, [s.centre]) ?? null;
+        s.batch =
+          deps.renderer?.createBillboardBatch?.(FIRE_FLAT.archive, FIRE_FLAT.record, fire.size, [s.centre]) ?? null;
         if (s.batch) s.batch.frame = frame;
       }
     },
     /** What stands (the probes; the pins). */
-    shown: () => (stood ? { key: stood.h.key, band: stood.band?.key ?? null, foes: stood.foes.length, tents: stood.tents.length, pile: !!stood.pile, routed: stood.routed } : null),
+    shown: () =>
+      stood
+        ? {
+            key: stood.h.key,
+            band: stood.band?.key ?? null,
+            foes: stood.foes.length,
+            tents: stood.tents.length,
+            pile: !!stood.pile,
+            routed: stood.routed,
+          }
+        : null,
     /** Every body taken out, the pile and the fire let go. */
-    clear() { letGo(); timer = 0; },
+    clear() {
+      letGo();
+      timer = 0;
+    },
   };
 }

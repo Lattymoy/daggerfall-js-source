@@ -30,14 +30,34 @@ import { multiply } from '../world/mat4.js';
  *  S15-invert4-duplicate). It lives here, not in mat4.js, because mat4.js
  *  is in the relay's bundle (test/net/relayversion.test.js). */
 export function invert4(m, out = new Float32Array(16)) {
-  const a00 = m[0], a01 = m[1], a02 = m[2], a03 = m[3];
-  const a10 = m[4], a11 = m[5], a12 = m[6], a13 = m[7];
-  const a20 = m[8], a21 = m[9], a22 = m[10], a23 = m[11];
-  const a30 = m[12], a31 = m[13], a32 = m[14], a33 = m[15];
-  const b00 = a00 * a11 - a01 * a10, b01 = a00 * a12 - a02 * a10, b02 = a00 * a13 - a03 * a10;
-  const b03 = a01 * a12 - a02 * a11, b04 = a01 * a13 - a03 * a11, b05 = a02 * a13 - a03 * a12;
-  const b06 = a20 * a31 - a21 * a30, b07 = a20 * a32 - a22 * a30, b08 = a20 * a33 - a23 * a30;
-  const b09 = a21 * a32 - a22 * a31, b10 = a21 * a33 - a23 * a31, b11 = a22 * a33 - a23 * a32;
+  const a00 = m[0],
+    a01 = m[1],
+    a02 = m[2],
+    a03 = m[3];
+  const a10 = m[4],
+    a11 = m[5],
+    a12 = m[6],
+    a13 = m[7];
+  const a20 = m[8],
+    a21 = m[9],
+    a22 = m[10],
+    a23 = m[11];
+  const a30 = m[12],
+    a31 = m[13],
+    a32 = m[14],
+    a33 = m[15];
+  const b00 = a00 * a11 - a01 * a10,
+    b01 = a00 * a12 - a02 * a10,
+    b02 = a00 * a13 - a03 * a10;
+  const b03 = a01 * a12 - a02 * a11,
+    b04 = a01 * a13 - a03 * a11,
+    b05 = a02 * a13 - a03 * a12;
+  const b06 = a20 * a31 - a21 * a30,
+    b07 = a20 * a32 - a22 * a30,
+    b08 = a20 * a33 - a23 * a30;
+  const b09 = a21 * a32 - a22 * a31,
+    b10 = a21 * a33 - a23 * a31,
+    b11 = a22 * a33 - a23 * a32;
   let det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
   if (!det) return null;
   det = 1 / det;
@@ -93,7 +113,9 @@ export function rayDirFromScreen(sx, sy, w, h, proj, view, eye, rect = null) {
   const fz = inv[2] * nx + inv[6] * ny + inv[10] + inv[14];
   const fw = inv[3] * nx + inv[7] * ny + inv[11] + inv[15];
   if (!fw) return null;
-  const dx = fx / fw - eye[0], dy = fy / fw - eye[1], dz = fz / fw - eye[2];
+  const dx = fx / fw - eye[0],
+    dy = fy / fw - eye[1],
+    dz = fz / fw - eye[2];
   const len = Math.hypot(dx, dy, dz);
   return len > 0 ? [dx / len, dy / len, dz / len] : null;
 }
@@ -107,12 +129,12 @@ export function rayDirFromScreen(sx, sy, w, h, proj, view, eye, rect = null) {
  * eye at the screen's edge, pointing its way, and needs to know which way.
  */
 export function projectToScreen(p, w, h, proj, view, rect = null, behind = false, pvIn = null) {
-  const pv = pvIn ?? multiply(proj, view);   // PERF-PEERS2: a caller projecting many points hands the product it made once (the same float32 product)
+  const pv = pvIn ?? multiply(proj, view); // PERF-PEERS2: a caller projecting many points hands the product it made once (the same float32 product)
   const [x, y, z] = p;
   let cw = pv[3] * x + pv[7] * y + pv[11] * z + pv[15];
   const front = cw > 0;
   if (!front && !(behind && Number.isFinite(cw))) return { x: 0, y: 0, depth: 0, front: false };
-  if (!front) cw = Math.min(cw, -1e-6);   // on the eye's own plane: a hair behind it
+  if (!front) cw = Math.min(cw, -1e-6); // on the eye's own plane: a hair behind it
   const nx = (pv[0] * x + pv[4] * y + pv[8] * z + pv[12]) / cw;
   const ny = (pv[1] * x + pv[5] * y + pv[9] * z + pv[13]) / cw;
   const r = worldRectPx(rect, w, h);
@@ -145,12 +167,19 @@ export function projectToScreen(p, w, h, proj, view, rect = null, behind = false
  */
 export function createFrameProjector(canvas, rectOf, frame) {
   const pv = new Float32Array(16);
-  let proj = null, view = null, w = 0, h = 0, rect = null;
+  let proj = null,
+    view = null,
+    w = 0,
+    h = 0,
+    rect = null;
   const take = (p, v) => {
     if (!p || !v) return false;
     if (p !== proj || v !== view) {
-      proj = p; view = v;
-      w = canvas.clientWidth; h = canvas.clientHeight; rect = rectOf(w, h);
+      proj = p;
+      view = v;
+      w = canvas.clientWidth;
+      h = canvas.clientHeight;
+      rect = rectOf(w, h);
       multiply(p, v, pv);
     }
     return true;

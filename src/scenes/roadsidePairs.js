@@ -16,7 +16,7 @@
 // A pair whose halves or trees' far pictures cannot all stand stands its two trees as the canopy stands its own (but
 // never Logging's).
 // ═══════════════════════════════════════════════════════════════════
-import { pairPicture } from '../world/naturePicture.js';   // THE ONE CONSTRUCTION SEAM: the one file that asks a door for a picture
+import { pairPicture } from '../world/naturePicture.js'; // THE ONE CONSTRUCTION SEAM: the one file that asks a door for a picture
 
 /**
  * The pairs that stand: a pair whose trees both `keep(x, z)` - the build would stand a flat at each - or none of it (a
@@ -38,7 +38,7 @@ export const keptPairs = (pairs, keep) => pairs.filter((p) => p.trees.every((t) 
  * Answers how many pairs stood as the owner drew them.
  */
 export async function standRoadside({ door, pairs, speciesPic, groups, handles, set, sway }) {
-  const halves = new Map();   // `${kind}.${side}` -> its picture (with its handle's index and near set entry once held), or null
+  const halves = new Map(); // `${kind}.${side}` -> its picture (with its handle's index and near set entry once held), or null
   const half = async (kind, side) => {
     const key = `${kind}.${side}`;
     if (!halves.has(key)) halves.set(key, await pairPicture(door, kind, side));
@@ -47,17 +47,21 @@ export async function standRoadside({ door, pairs, speciesPic, groups, handles, 
   let drawn = 0;
   for (const p of pairs) {
     const pics = [];
-    for (const [side, t] of p.trees.entries()) pics.push((await speciesPic(t.species)) ? await half(p.kind, side) : null);
-    const whole = pics.every(Boolean);   // both halves, and both trees' far pictures to hand over to
+    for (const [side, t] of p.trees.entries())
+      pics.push((await speciesPic(t.species)) ? await half(p.kind, side) : null);
+    const whole = pics.every(Boolean); // both halves, and both trees' far pictures to hand over to
     if (whole) drawn++;
     p.trees.forEach((t, side) => {
-      const gk = `J${t.species}`, c = [t.x, t.y, t.z];
+      const gk = `J${t.species}`,
+        c = [t.x, t.y, t.z];
       let g = groups.get(gk);
       if (!g) groups.set(gk, (g = { species: t.species, young: false, centers: [], own: [] }));
-      g.centers.push(c); g.own.push(p.js);
+      g.centers.push(c);
+      g.own.push(p.js);
       if (!whole) return;
       const pic = pics[side];
-      if (pic.h == null) {   // held until the pixel goes - once a half
+      if (pic.h == null) {
+        // held until the pixel goes - once a half
         door.acquire(pic.far);
         handles.push(pic.far);
         pic.h = handles.length - 1;
@@ -65,11 +69,17 @@ export async function standRoadside({ door, pairs, speciesPic, groups, handles, 
         set.push(pic.entry);
         sway(pic.proto, t.record);
       }
-      pic.entry.centers.push([t.x, p.y, t.z]); pic.entry.own.push(p.js); pic.entry.turn.push(p.turn);
+      pic.entry.centers.push([t.x, p.y, t.z]);
+      pic.entry.own.push(p.js);
+      pic.entry.turn.push(p.turn);
       (g.spanned ??= new Set()).add(c);
       (g.spans ??= new Set()).add(pic.far);
     });
   }
-  for (const pic of halves.values()) if (pic?.entry) { pic.entry.own = Float32Array.from(pic.entry.own); pic.entry.turn = Float32Array.from(pic.entry.turn); }
+  for (const pic of halves.values())
+    if (pic?.entry) {
+      pic.entry.own = Float32Array.from(pic.entry.own);
+      pic.entry.turn = Float32Array.from(pic.entry.turn);
+    }
   return drawn;
 }

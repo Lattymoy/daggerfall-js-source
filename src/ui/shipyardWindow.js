@@ -39,7 +39,13 @@ export const SHIPYARD_TABS = Object.freeze([
   Object.freeze({ id: 'crew', label: 'Crew Hall' }),
 ]);
 /** MENU-ORDER (2026-10-12): each page's picture (ui/menu/menuGlyphs.js). */
-export const SHIPYARD_TAB_ICONS = Object.freeze({ ships: 'ship', fleet: 'anchor', yard: 'saw', refits: 'anvil', crew: 'people' });
+export const SHIPYARD_TAB_ICONS = Object.freeze({
+  ships: 'ship',
+  fleet: 'anchor',
+  yard: 'saw',
+  refits: 'anvil',
+  crew: 'people',
+});
 export const SHIPYARD_CSS = `
 .dfyard-pic { display: block; color: #c9bba1; } .dfyard-card .dfyard-pic::before { width: 40px; height: 40px; margin: 0 0 4px; }
 .dfyard-card[data-hull="0"] .dfyard-pic::before { width: 24px; height: 24px; }   /* MENU-ORDER: her picture her size - a rowboat small, a galley great */
@@ -104,13 +110,16 @@ export function shipCardText(s) {
   else figs.push('no crew (you sail it alone)');
   if (s.guns > 0) figs.push(`${s.guns} ${s.guns === 1 ? 'gun' : 'guns'}${s.barrels ? ' and fire barrels' : ''}`);
   else if (s.barrels) figs.push('fire barrels');
-  if (s.ram) figs.push('a ram');   // RAM-RETURN
+  if (s.ram) figs.push('a ram'); // RAM-RETURN
   figs.push(`hull ${s.hullHp}${s.sailHp > 0 ? `, canvas ${s.sailHp}` : ''}`);
   return {
-    name: s.name, line: s.line, figs: figs.join(' - '),
+    name: s.name,
+    line: s.line,
+    figs: figs.join(' - '),
     note: s.docks ? null : 'Too big for the quay. It anchors off the harbor.',
     press: `Buy - ${gold(s.asked)}`,
-    why: s.why, can: !s.why,
+    why: s.why,
+    can: !s.why,
   };
 }
 /** A fleet row's words. Pure. */
@@ -118,18 +127,30 @@ export function fleetRowText(r) {
   const w = whereWords(r);
   const fits = refitLine(r.upgrades);
   return {
-    name: r.label, sub: `${r.hullName} - ${w.state}`, where: w.line,
+    name: r.label,
+    sub: `${r.hullName} - ${w.state}`,
+    where: w.line,
     worth: `Worth ${gold(r.worth)}. The shipmaster offers ${gold(r.offer)}.${fits ? ` Refits: ${fits}.` : ''}`,
-    sell: r.sell, canSell: !r.sell, summon: r.can?.summon ?? null, away: r.can?.away ?? null,
+    sell: r.sell,
+    canSell: !r.sell,
+    summon: r.can?.summon ?? null,
+    away: r.can?.away ?? null,
   };
 }
 /** A recruit's words. Pure. */
 export function recruitText(r) {
-  const record = r.fights || r.boardings ? `${r.fights} ${r.fights === 1 ? 'fight' : 'fights'}, ${r.boardings} ${r.boardings === 1 ? 'boarding' : 'boardings'}` : 'never been in a fight';
+  const record =
+    r.fights || r.boardings
+      ? `${r.fights} ${r.fights === 1 ? 'fight' : 'fights'}, ${r.boardings} ${r.boardings === 1 ? 'boarding' : 'boardings'}`
+      : 'never been in a fight';
   return {
-    name: r.name, who: `${r.gradeLabel} ${r.trade} - ${r.className}, ${r.sex === 'female' ? 'she' : 'he'} has ${record}.`,
+    name: r.name,
+    who: `${r.gradeLabel} ${r.trade} - ${r.className}, ${r.sex === 'female' ? 'she' : 'he'} has ${record}.`,
     // AUDIT SHIPYARDS L2-2: the price this ship's hire comes to; L7-2: a full deck signs on in a hand's place
-    quote: `"${r.line}"`, press: `${r.swap ? 'Sign on in place' : 'Sign on'} - ${gold(r.price ?? r.fee)}`, why: r.why, can: !r.why,
+    quote: `"${r.line}"`,
+    press: `${r.swap ? 'Sign on in place' : 'Sign on'} - ${gold(r.price ?? r.fee)}`,
+    why: r.why,
+    can: !r.why,
   };
 }
 
@@ -146,7 +167,10 @@ const button = (text, cls, onPress, can = true, why = null) => {
   b.setAttribute('type', 'button');
   if (!can) b.setAttribute('disabled', '');
   if (why) b.title = why;
-  b.onclick = (e) => { e.stopPropagation(); if (!b.disabled) onPress(); };
+  b.onclick = (e) => {
+    e.stopPropagation();
+    if (!b.disabled) onPress();
+  };
   return b;
 };
 function injectStyle(doc = document) {
@@ -178,7 +202,7 @@ export function mountShipyardWindow(host, deps) {
   let confirmAt = 0;
   /** @type {Record<string, string>} the hand each recruit would sign on in place of, as the player picked it */
   const swapPick = {};
-  let draft = null;   // the name field's text, while it is being typed
+  let draft = null; // the name field's text, while it is being typed
   const now = () => (deps.now ? deps.now() : performance.now());
   const exit = (reason = 'close') => deps.onExit?.(reason);
   const shell = el('div', 'dfnaval-shell');
@@ -213,21 +237,32 @@ export function mountShipyardWindow(host, deps) {
     img.setAttribute('alt', '');
     pic.append(img);
     const url = shipPics.get(hull);
-    if (url) { img.setAttribute('src', url); return; }
-    if (!deps.picture) return;   // AUDIT MENU-ORDER C4: no host to ask, nothing to wait on - her glyph
+    if (url) {
+      img.setAttribute('src', url);
+      return;
+    }
+    if (!deps.picture) return; // AUDIT MENU-ORDER C4: no host to ask, nothing to wait on - her glyph
     shipWaiting.set(hull, [...(shipWaiting.get(hull) ?? []), img]);
-    if (shipPics.has(hull)) return;   // in flight
+    if (shipPics.has(hull)) return; // in flight
     shipPics.set(hull, null);
     const settle = (u) => {
       const imgs = shipWaiting.get(hull) ?? [];
       shipWaiting.delete(hull);
-      if (!u || !alive) { shipPics.delete(hull); return; }
+      if (!u || !alive) {
+        shipPics.delete(hull);
+        return;
+      }
       shipPics.set(hull, u);
       for (const i of imgs) i.setAttribute('src', u);
     };
-    Promise.resolve(deps.picture(hull, () => (alive ? win.getBoundingClientRect?.() ?? null : null))).then(settle, () => settle(null));
+    Promise.resolve(deps.picture(hull, () => (alive ? (win.getBoundingClientRect?.() ?? null) : null))).then(
+      settle,
+      () => settle(null),
+    );
   };
-  const said = (r) => { if (r && typeof r.text === 'string' && r.text) note = { text: r.text, warn: !r.ok }; };
+  const said = (r) => {
+    if (r && typeof r.text === 'string' && r.text) note = { text: r.text, warn: !r.ok };
+  };
   /** CREW-SIGNED: an act the account service answers first (a hire online) - no press is taken while it is out. */
   let asking = false;
   const press = (verb, a, b) => {
@@ -238,15 +273,28 @@ export function mountShipyardWindow(host, deps) {
       asking = true;
       note = { text: CREW_SIGN_TEXT.asking, warn: false };
       render();
-      r.then((x) => x, () => ({ ok: false, text: CREW_SIGN_TEXT.unread })).then((x) => { asking = false; if (alive) answered(x); });
+      r.then(
+        (x) => x,
+        () => ({ ok: false, text: CREW_SIGN_TEXT.unread }),
+      ).then((x) => {
+        asking = false;
+        if (alive) answered(x);
+      });
       return;
     }
     answered(r);
   };
   const answered = (r) => {
-    if (r?.door) { deps.onDoor?.(r.door); exit('door'); return; }   // a summons that wants the water clicked: the window makes way for it
+    if (r?.door) {
+      deps.onDoor?.(r.door);
+      exit('door');
+      return;
+    } // a summons that wants the water clicked: the window makes way for it
     said(r);
-    if (r?.ok && typeof r.page === 'string') { view.page = r.page; if (r.uid != null) view.uid = r.uid; }   // AUDIT SHIPYARDS L7-4: a bought ship's page
+    if (r?.ok && typeof r.page === 'string') {
+      view.page = r.page;
+      if (r.uid != null) view.uid = r.uid;
+    } // AUDIT SHIPYARDS L7-4: a bought ship's page
     render();
   };
   /** THE SECOND PRESS: an act that cannot be taken back (a ship bought, a ship sold, a hand paid off) asks once and is
@@ -254,14 +302,23 @@ export function mountShipyardWindow(host, deps) {
    *  bought two ships, and confirmed a sale in one gesture). */
   const CONFIRM_MS = 350;
   const twoPress = (key, ask, go) => {
-    if (confirm === key) { if (now() - confirmAt >= CONFIRM_MS) go(); return; }
-    confirm = key; confirmAt = now(); note = { text: ask, warn: true }; render();
+    if (confirm === key) {
+      if (now() - confirmAt >= CONFIRM_MS) go();
+      return;
+    }
+    confirm = key;
+    confirmAt = now();
+    note = { text: ask, warn: true };
+    render();
   };
   const chooser = (m) => {
     if (!(m.choices?.length > 1)) return null;
     const row = el('div', 'dfyard-choose');
     for (const c of m.choices) {
-      const b = button(c.label, 'dfnaval-btn', () => { view.uid = c.uid; render(); });
+      const b = button(c.label, 'dfnaval-btn', () => {
+        view.uid = c.uid;
+        render();
+      });
       b.setAttribute('aria-pressed', String(c.uid === m.uid));
       row.append(b);
     }
@@ -282,26 +339,40 @@ export function mountShipyardWindow(host, deps) {
       const t = shipCardText(s);
       const card = el('div', 'dfyard-card');
       card.setAttribute('data-hull', String(s.hull));
-      const pic = el('span', 'dfyard-pic');   // MENU-ORDER: a ship's card leads with a ship
+      const pic = el('span', 'dfyard-pic'); // MENU-ORDER: a ship's card leads with a ship
       pic.setAttribute('data-dficon', 'ship');
       shipPicture(pic, s.hull);
       card.append(pic, el('b', null, t.name), el('span', 'dfyard-line', t.line), el('span', 'dfyard-figs', t.figs));
       if (t.note) card.append(el('span', 'dfyard-figs', t.note));
       if (t.why) card.append(el('span', 'dfyard-why', t.why));
       const key = `buy:${s.hull}`;
-      card.append(button(confirm === key ? `Yes - buy for ${gold(s.asked)}` : t.press, 'dfnaval-btn dfnaval-take',
-        () => twoPress(key, `Buy the ${t.name} for ${gold(s.asked)}? Press again to confirm.`, () => press('buy', s.hull)), t.can, t.why));
+      card.append(
+        button(
+          confirm === key ? `Yes - buy for ${gold(s.asked)}` : t.press,
+          'dfnaval-btn dfnaval-take',
+          () =>
+            twoPress(key, `Buy the ${t.name} for ${gold(s.asked)}? Press again to confirm.`, () =>
+              press('buy', s.hull),
+            ),
+          t.can,
+          t.why,
+        ),
+      );
       cards.append(card);
     }
     sec.append(cards);
     body.append(sec);
   }
   function fleetPage(m) {
-    const sec = section('Your fleet', m.fleet.length ? `${m.fleet.length} ${m.fleet.length === 1 ? 'ship' : 'ships'}` : 'none');
-    if (!m.fleet.length) sec.append(el('p', 'dfnaval-lede', 'You don\'t own a ship. The shipmaster has a few for sale.'));
+    const sec = section(
+      'Your fleet',
+      m.fleet.length ? `${m.fleet.length} ${m.fleet.length === 1 ? 'ship' : 'ships'}` : 'none',
+    );
+    if (!m.fleet.length)
+      sec.append(el('p', 'dfnaval-lede', "You don't own a ship. The shipmaster has a few for sale."));
     for (const r of m.fleet) {
       const t = fleetRowText(r);
-      const row = el('div', 'dfyard-row dfyard-fleetrow');   // YARD-ROWS: her acts under her words
+      const row = el('div', 'dfyard-row dfyard-fleetrow'); // YARD-ROWS: her acts under her words
       row.setAttribute('data-uid', String(r.uid));
       const left = el('div');
       left.append(el('b', null, t.name), el('br'), el('span', null, t.sub));
@@ -310,8 +381,18 @@ export function mountShipyardWindow(host, deps) {
       if (t.sell) mid.append(el('br'), el('span', null, t.sell));
       const acts = el('div', 'dfyard-acts');
       const key = `sell:${r.uid}`;
-      acts.append(button(confirm === key ? `Yes - sell for ${gold(r.offer)}` : 'Sell', 'dfnaval-btn',
-        () => twoPress(key, `Sell ${t.name} for ${gold(r.offer)}? This can't be undone. Press again to confirm.`, () => press('sell', r.uid)), t.canSell, t.sell));
+      acts.append(
+        button(
+          confirm === key ? `Yes - sell for ${gold(r.offer)}` : 'Sell',
+          'dfnaval-btn',
+          () =>
+            twoPress(key, `Sell ${t.name} for ${gold(r.offer)}? This can't be undone. Press again to confirm.`, () =>
+              press('sell', r.uid),
+            ),
+          t.canSell,
+          t.sell,
+        ),
+      );
       acts.append(button('Bring here', 'dfnaval-btn', () => press('summon', r.uid), !t.summon, t.summon));
       acts.append(button('Lay up', 'dfnaval-btn', () => press('away', r.uid), !t.away, t.away));
       const named = el('div', 'dfyard-name');
@@ -319,9 +400,23 @@ export function mountShipyardWindow(host, deps) {
       input.maxLength = SHIP_NAME_MAX;
       input.placeholder = 'Ship name';
       input.value = draft?.uid === r.uid ? draft.text : (r.name ?? '');
-      input.oninput = () => { draft = { uid: r.uid, text: input.value }; };
-      input.onkeydown = (e) => { e.stopPropagation(); if (e.key === 'Enter') { press('rename', r.uid, input.value); draft = null; } };
-      named.append(input, button('Rename', 'dfnaval-btn', () => { press('rename', r.uid, input.value); draft = null; }));
+      input.oninput = () => {
+        draft = { uid: r.uid, text: input.value };
+      };
+      input.onkeydown = (e) => {
+        e.stopPropagation();
+        if (e.key === 'Enter') {
+          press('rename', r.uid, input.value);
+          draft = null;
+        }
+      };
+      named.append(
+        input,
+        button('Rename', 'dfnaval-btn', () => {
+          press('rename', r.uid, input.value);
+          draft = null;
+        }),
+      );
       acts.append(named);
       row.append(left, mid, acts);
       sec.append(row);
@@ -332,7 +427,11 @@ export function mountShipyardWindow(host, deps) {
     const sec = section('The shipwright', m.ship ? m.ship.label : '');
     const ch = chooser(m);
     if (ch) sec.append(ch);
-    if (!m.yard) { sec.append(el('p', 'dfnaval-lede', m.why ?? 'The shipwright has nothing to work on.')); body.append(sec); return; }
+    if (!m.yard) {
+      sec.append(el('p', 'dfnaval-lede', m.why ?? 'The shipwright has nothing to work on.'));
+      body.append(sec);
+      return;
+    }
     const t = yardText(m.yard);
     sec.append(el('p', 'dfnaval-lede', t.lede));
     for (const r of [...t.rows, ...t.provisions]) {
@@ -340,13 +439,34 @@ export function mountShipyardWindow(host, deps) {
       row.setAttribute('data-row', r.id);
       const acts = el('div', 'dfyard-acts');
       const prov = t.provisions.includes(r);
-      acts.append(button(r.press, 'dfnaval-btn', () => { const res = prov ? m.yard.buyProvision?.(r.id) : m.yard.buy?.(r.id); note = yardNote(res); render(); }, r.can));
+      acts.append(
+        button(
+          r.press,
+          'dfnaval-btn',
+          () => {
+            const res = prov ? m.yard.buyProvision?.(r.id) : m.yard.buy?.(r.id);
+            note = yardNote(res);
+            render();
+          },
+          r.can,
+        ),
+      );
       row.append(el('b', null, r.label), el('span', null, r.state), acts);
       sec.append(row);
     }
     if (t.whole) {
       const acts = el('div', 'dfnaval-acts');
-      acts.append(button(t.whole, 'dfnaval-btn dfnaval-take dfnaval-whole', () => { note = yardNote(m.yard.buyAll?.()); render(); }, t.canWhole));
+      acts.append(
+        button(
+          t.whole,
+          'dfnaval-btn dfnaval-take dfnaval-whole',
+          () => {
+            note = yardNote(m.yard.buyAll?.());
+            render();
+          },
+          t.canWhole,
+        ),
+      );
       sec.append(acts);
     }
     body.append(sec);
@@ -356,17 +476,33 @@ export function mountShipyardWindow(host, deps) {
     const ch = chooser(m);
     if (ch) sec.append(ch);
     const o = m.refit;
-    if (!o) { sec.append(el('p', 'dfnaval-lede', m.why ?? 'No ship to refit.')); body.append(sec); return; }
+    if (!o) {
+      sec.append(el('p', 'dfnaval-lede', m.why ?? 'No ship to refit.'));
+      body.append(sec);
+      return;
+    }
     if (o.why) sec.append(el('p', 'dfnaval-lede', o.why));
     for (const r of o.rows) {
       const row = el('div', 'dfyard-row');
       row.setAttribute('data-line', r.id);
-      const w = refitRowWords(r);   // REFIT-ORES: the Fleet page's words - a metal's melt and its captain's level said
+      const w = refitRowWords(r); // REFIT-ORES: the Fleet page's words - a metal's melt and its captain's level said
       const left = el('div');
       left.append(el('b', null, w.name), el('br'), el('span', null, w.gain));
-      const mid = el('span', null, r.next ? [w.asks, w.melt, w.lock].filter(Boolean).join(' ') : 'This upgrade line is complete.');
+      const mid = el(
+        'span',
+        null,
+        r.next ? [w.asks, w.melt, w.lock].filter(Boolean).join(' ') : 'This upgrade line is complete.',
+      );
       const acts = el('div', 'dfyard-acts');
-      acts.append(button(r.next ? `Refit - ${REFIT_NUMERALS[r.tier + 1]}` : 'Done', 'dfnaval-btn', () => press('refit', m.uid, r.id), !!r.next && r.afford && !o.why, o.why ?? w.lock));
+      acts.append(
+        button(
+          r.next ? `Refit - ${REFIT_NUMERALS[r.tier + 1]}` : 'Done',
+          'dfnaval-btn',
+          () => press('refit', m.uid, r.id),
+          !!r.next && r.afford && !o.why,
+          o.why ?? w.lock,
+        ),
+      );
       row.append(left, mid, acts);
       sec.append(row);
     }
@@ -377,13 +513,24 @@ export function mountShipyardWindow(host, deps) {
     const ch = chooser(m);
     if (ch) sec.append(ch);
     if (m.why) sec.append(el('p', 'dfnaval-lede', m.why));
-    body.append(sec);   // AUDIT SHIPYARDS L2-7: the hall's header and the ship chooser first, her hands under them
+    body.append(sec); // AUDIT SHIPYARDS L2-7: the hall's header and the ship chooser first, her hands under them
     if (m.ship) {
-      const crew = section(`${m.ship.label}'s hands`, m.room?.ok ? 'a place for another' : m.room?.full ? 'the deck is full' : 'no place');
+      const crew = section(
+        `${m.ship.label}'s hands`,
+        m.room?.ok ? 'a place for another' : m.room?.full ? 'the deck is full' : 'no place',
+      );
       for (const h of m.hands) {
         const row = el('div', 'dfyard-row');
         const left = el('div');
-        left.append(el('b', null, h.name), el('br'), el('span', null, `${h.fights} ${h.fights === 1 ? 'fight' : 'fights'}, ${h.boardings} ${h.boardings === 1 ? 'boarding' : 'boardings'}${h.ashore ? ' - ashore with you' : ''}`));
+        left.append(
+          el('b', null, h.name),
+          el('br'),
+          el(
+            'span',
+            null,
+            `${h.fights} ${h.fights === 1 ? 'fight' : 'fights'}, ${h.boardings} ${h.boardings === 1 ? 'boarding' : 'boardings'}${h.ashore ? ' - ashore with you' : ''}`,
+          ),
+        );
         const post = /** @type {HTMLSelectElement} */ (el('select', 'dfyard-post'));
         // AUDIT SHIPYARDS L2-7: the Fleet page's posts (AUDIT HOLDINGS C3) - a Bard by his class keeps his calling to
         // offer and stands no lookout
@@ -396,17 +543,36 @@ export function mountShipyardWindow(host, deps) {
         post.onchange = () => press('role', m.uid, { name: h.name, role: post.value });
         const acts = el('div', 'dfyard-acts');
         const key = `payoff:${m.uid}:${h.name}`;
-        const she = h.gender === 'female';   // AUDIT SHIPYARDS L7-9: a woman is paid off as one
-        acts.append(button(confirm === key ? `Yes - pay ${she ? 'her' : 'him'} off` : 'Pay off', 'dfnaval-btn',
-          () => twoPress(key, `Pay off ${h.name}? ${she ? 'She' : 'He'} leaves ${m.ship.label} for good. Press again.`, () => press('payoff', m.uid, h.name)),
-          !h.ashore, h.ashore ? 'Ashore with you' : null));
+        const she = h.gender === 'female'; // AUDIT SHIPYARDS L7-9: a woman is paid off as one
+        acts.append(
+          button(
+            confirm === key ? `Yes - pay ${she ? 'her' : 'him'} off` : 'Pay off',
+            'dfnaval-btn',
+            () =>
+              twoPress(
+                key,
+                `Pay off ${h.name}? ${she ? 'She' : 'He'} leaves ${m.ship.label} for good. Press again.`,
+                () => press('payoff', m.uid, h.name),
+              ),
+            !h.ashore,
+            h.ashore ? 'Ashore with you' : null,
+          ),
+        );
         row.append(left, post, acts);
         crew.append(row);
       }
       body.append(crew);
     }
     const hall = section('Looking for a berth', m.recruits.length ? `${m.recruits.length} at the table` : 'none');
-    hall.append(el('p', 'dfnaval-lede', m.recruits.length ? 'Sailors at the crewmaster\'s table, looking for a berth today:' : 'No one is looking for a berth today. Come back tomorrow.'));
+    hall.append(
+      el(
+        'p',
+        'dfnaval-lede',
+        m.recruits.length
+          ? "Sailors at the crewmaster's table, looking for a berth today:"
+          : 'No one is looking for a berth today. Come back tomorrow.',
+      ),
+    );
     const free = m.hands.filter((h) => !h.ashore);
     for (const r of m.recruits) {
       const t = recruitText(r);
@@ -427,8 +593,19 @@ export function mountShipyardWindow(host, deps) {
           if (h.name === chosen) o.selected = true;
           pick.append(o);
         }
-        pick.onchange = () => { swapPick[r.id] = pick.value; };
-        acts.append(pick, button(t.press, 'dfnaval-btn dfnaval-take', () => press('hire', m.uid, { id: r.id, replace: pick.value }), t.can, t.why));
+        pick.onchange = () => {
+          swapPick[r.id] = pick.value;
+        };
+        acts.append(
+          pick,
+          button(
+            t.press,
+            'dfnaval-btn dfnaval-take',
+            () => press('hire', m.uid, { id: r.id, replace: pick.value }),
+            t.can,
+            t.why,
+          ),
+        );
       } else {
         acts.append(button(t.press, 'dfnaval-btn dfnaval-take', () => press('hire', m.uid, r.id), t.can, t.why));
       }
@@ -443,21 +620,33 @@ export function mountShipyardWindow(host, deps) {
     if (!alive) return;
     const m = deps.model({ ...view });
     // CREW-SIGNED: the hall's read in flight - painted again once it lands
-    if (m.wait && m.wait !== waited) { waited = m.wait; Promise.resolve(m.wait).then(() => render(), () => render()); }
+    if (m.wait && m.wait !== waited) {
+      waited = m.wait;
+      Promise.resolve(m.wait).then(
+        () => render(),
+        () => render(),
+      );
+    }
     view.page = m.page;
     if (m.uid != null) view.uid = m.uid;
     h2.textContent = m.title;
     sub.textContent = `${m.keeper ? `${m.keeper}, the shipmaster` : 'The shipmaster'} - your purse: ${gold(m.gold)}`;
     noteLine.textContent = note ? note.text : '';
     noteLine.className = `dfnaval-note${note?.warn ? ' warn' : ''}`;
-    if (note) noteLine.removeAttribute('hidden'); else noteLine.setAttribute('hidden', '');
+    if (note) noteLine.removeAttribute('hidden');
+    else noteLine.setAttribute('hidden', '');
     for (const c of [...tabs.children]) c.remove();
     for (const t of SHIPYARD_TABS) {
-      const b = button(t.id === 'crew' ? m.crewName ?? t.label : t.label, 'dfyard-tab', () => { view.page = t.id; confirm = null; note = null; render(); });
+      const b = button(t.id === 'crew' ? (m.crewName ?? t.label) : t.label, 'dfyard-tab', () => {
+        view.page = t.id;
+        confirm = null;
+        note = null;
+        render();
+      });
       b.setAttribute('role', 'tab');
       b.setAttribute('aria-selected', String(t.id === m.page));
       b.setAttribute('data-tab', t.id);
-      b.setAttribute('data-dficon', SHIPYARD_TAB_ICONS[t.id] ?? 'ship');   // MENU-ORDER: each page its picture
+      b.setAttribute('data-dficon', SHIPYARD_TAB_ICONS[t.id] ?? 'ship'); // MENU-ORDER: each page its picture
       tabs.append(b);
     }
     for (const c of [...body.children]) c.remove();
@@ -472,7 +661,11 @@ export function mountShipyardWindow(host, deps) {
   close.focus?.({ preventScroll: true });
   const onKey = (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
-    if (overlayAction(e) === 'back') { e.preventDefault(); e.stopPropagation(); exit('close'); }
+    if (overlayAction(e) === 'back') {
+      e.preventDefault();
+      e.stopPropagation();
+      exit('close');
+    }
   };
   globalThis.addEventListener('keydown', onKey, { capture: true });
   const offOutside = closeOnOutsideTap(shell, '.dfnaval-win', () => exit('close'));

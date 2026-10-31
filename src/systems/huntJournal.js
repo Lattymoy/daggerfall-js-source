@@ -12,7 +12,9 @@
 /** @type {{ abandon: (id: string) => boolean } | null} */
 let _journal = null;
 /** The revenant store's word: its door (null clears). */
-export function setHuntJournal(j) { _journal = j && typeof j === 'object' ? j : null; }
+export function setHuntJournal(j) {
+  _journal = j && typeof j === 'object' ? j : null;
+}
 /** The quest-log id prefix a hunt wears. */
 export const HUNT_QUEST_PREFIX = 'hunt:';
 /** Is this quest-log id a hunt's? */
@@ -20,5 +22,9 @@ export const isHuntQuestId = (id) => typeof id === 'string' && id.startsWith(HUN
 /** Give the hunt up, from the journal - its lair forgotten. */
 export function abandonHuntQuest(id) {
   if (!isHuntQuestId(id) || !_journal) return false;
-  try { return !!_journal.abandon(id.slice(HUNT_QUEST_PREFIX.length)); } catch { return false; }
+  try {
+    return !!_journal.abandon(id.slice(HUNT_QUEST_PREFIX.length));
+  } catch {
+    return false;
+  }
 }

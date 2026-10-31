@@ -21,16 +21,18 @@ const flight = createDragonFlight();
 let _falling = 0;
 let _settling = false;
 let _mounted = false;
-let _mode = /** @type {string | null} */ (null);   // DRAGON5b: the last step's transport mode
+let _mode = /** @type {string | null} */ (null); // DRAGON5b: the last step's transport mode
 /** DRAGON6: 'cruise' while a journey flies it, 'down' from its end until the ground meets it, else null. */
 /** @type {'cruise' | 'down' | null} */
 let _cruise = null;
-let _over = Infinity;   // m over the ground or the sea under the rider, the last step's
+let _over = Infinity; // m over the ground or the sea under the rider, the last step's
 /** @type {((what: 'took-off' | 'landed') => void) | null} */
 let _heard = null;
 /** DRAGON5c: horse care's word on its breath (systems/upkeep/upkeepRuntime.js) - winded, it will not take off, and aloft it glides. */
 let _windedSrc = /** @type {(() => boolean) | null} */ (null);
-export function setDragonWindedSource(fn) { _windedSrc = typeof fn === 'function' ? fn : null; }
+export function setDragonWindedSource(fn) {
+  _windedSrc = typeof fn === 'function' ? fn : null;
+}
 
 /** One motor step. @param {number} dt @param {any} motor @param {any} input */
 export function dragonRideStep(dt, motor, input) {
@@ -39,21 +41,32 @@ export function dragonRideStep(dt, motor, input) {
   const grounded = !!motor?.grounded;
   _mounted = mounted;
   _over = heightOver(motor);
-  const winded = !!_windedSrc?.();   // DRAGON5c
-  if (_cruise === 'cruise' && mounted && !winded && !flight.aloft() && flight.lift()) _heard?.('took-off');   // DRAGON6: a flown journey takes it up (DRAGON5c: never winded)
+  const winded = !!_windedSrc?.(); // DRAGON5c
+  if (_cruise === 'cruise' && mounted && !winded && !flight.aloft() && flight.lift()) _heard?.('took-off'); // DRAGON6: a flown journey takes it up (DRAGON5c: never winded)
   const wasAloft = flight.aloft();
   const what = flight.step(dt, { mounted, jump: !!input?.jump, grounded, winded });
   if (_cruise === 'down' && !flight.aloft()) _cruise = null;
-  if (what === 'landed' && wasAloft && !mounted && !grounded) _settling = true;   // off it in the air: set down
+  if (what === 'landed' && wasAloft && !mounted && !grounded) _settling = true; // off it in the air: set down
   if (_settling && (grounded || mounted)) _settling = false;
   _falling = mounted && !grounded && !flight.aloft() ? _falling + dt : 0;
-  if (_falling >= DRAGON_CATCH_S && flight.lift()) { _falling = 0; _heard?.('took-off'); }
+  if (_falling >= DRAGON_CATCH_S && flight.lift()) {
+    _falling = 0;
+    _heard?.('took-off');
+  }
   if (what) _heard?.(what);
 }
 registerRideStep(dragonRideStep);
 registerFlySpeedMod('dragonMount', flight.flyMult);
 registerFlySink('dragonMount', () => (_settling ? DRAGON_SET_DOWN_SINK : flight.sink()));
-registerFlyHold(() => (!flight.aloft() || !_mounted || _windedSrc?.() ? null : _cruise === 'cruise' ? cruiseHold(_over) : _cruise === 'down' ? -1 : null));   // DRAGON5c: winded, the glide's sink rules
+registerFlyHold(() =>
+  !flight.aloft() || !_mounted || _windedSrc?.()
+    ? null
+    : _cruise === 'cruise'
+      ? cruiseHold(_over)
+      : _cruise === 'down'
+        ? -1
+        : null,
+); // DRAGON5c: winded, the glide's sink rules
 
 /** m over the ground or the sea under the motor's feet (Infinity where neither is known). @param {any} motor */
 function heightOver(motor) {
@@ -67,8 +80,9 @@ function heightOver(motor) {
 /** DRAGON6: the Overworld's word each frame - a flown leg walked now (on) or not; off after on brings it down.
  *  @param {boolean} on */
 export function setDragonCruise(on) {
-  if (on) { if (_mounted) _cruise = 'cruise'; }
-  else if (_cruise === 'cruise') _cruise = 'down';
+  if (on) {
+    if (_mounted) _cruise = 'cruise';
+  } else if (_cruise === 'cruise') _cruise = 'down';
 }
 /** Whether the rider sits the dragon (the last motor step's word) - the Overworld plans a flown journey for them. */
 export const dragonMounted = () => _mounted;
@@ -76,7 +90,9 @@ export const dragonMounted = () => _mounted;
 export const rideModeNow = () => _mode;
 /** DRAGON5b: the mount rig's way onto the dragon (player/mountRig.js - the one place the mode changes), for the keep. */
 let _mountDragon = /** @type {(() => void) | null} */ (null);
-export function setDragonMounter(fn) { _mountDragon = typeof fn === 'function' ? fn : null; }
+export function setDragonMounter(fn) {
+  _mountDragon = typeof fn === 'function' ? fn : null;
+}
 export const rideDragon = () => _mountDragon?.();
 /** DRAGON6: whether a journey cruises it now. */
 export const dragonCruising = () => _cruise === 'cruise';
@@ -84,6 +100,17 @@ export const dragonCruising = () => _cruise === 'cruise';
 /** Whether the rider is in the air on the dragon, or being set down off it (the hosts' levitation term). */
 export const dragonAloft = () => flight.aloft() || _settling;
 /** Told 'took-off' and 'landed' (the host's sound). @param {((what: 'took-off' | 'landed') => void) | null} fn */
-export function onDragonFlight(fn) { _heard = typeof fn === 'function' ? fn : null; }
+export function onDragonFlight(fn) {
+  _heard = typeof fn === 'function' ? fn : null;
+}
 /** For tests: on the ground, and nothing heard. */
-export function _resetDragonFlight() { flight.land(); _falling = 0; _settling = false; _heard = null; _mounted = false; _mode = null; _cruise = null; _over = Infinity; }
+export function _resetDragonFlight() {
+  flight.land();
+  _falling = 0;
+  _settling = false;
+  _heard = null;
+  _mounted = false;
+  _mode = null;
+  _cruise = null;
+  _over = Infinity;
+}

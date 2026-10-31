@@ -63,7 +63,8 @@ export const KT_PELLETS_OWN = Object.freeze(['warden', 'captain', 'tonal']);
 export const KT_PELLETS_KEY = 'ketch.pellets';
 /** What construct `kind`'s `rolled` Pellets pay with `given` of the cap already paid this voyage: `{ n, given }` after. Pure. */
 export function ketchPelletsDue(kind, rolled, given) {
-  const r = Math.max(0, rolled | 0), g = Math.max(0, given | 0);
+  const r = Math.max(0, rolled | 0),
+    g = Math.max(0, given | 0);
   if (KT_PELLETS_OWN.includes(kind)) return { n: r, given: g };
   const n = Math.min(r, Math.max(0, KT_CONSTRUCT_PELLETS_MAX - g));
   return { n, given: g + n };
@@ -84,9 +85,15 @@ export const KT_SPOILS_RECORDS_MAX = 8;
  *  they are gathered) and the share put straight into the pack (off the ship, or no floor to throw onto) - each read
  *  through the text core when it is said (L10N4). */
 export const KT_SPOILS_TEXT = Object.freeze({
-  get spilled() { return t('ketch.spoils.spilled', 'The chest opens. Your share spills onto the floor.'); },
-  get granted() { return t('ketch.spoils.granted', 'Your share of the Ketchmaster\'s hold is in your pack.'); },
-  get gathered() { return t('ketch.spoils.gathered', 'The rest of your share is in your pack.'); },
+  get spilled() {
+    return t('ketch.spoils.spilled', 'The chest opens. Your share spills onto the floor.');
+  },
+  get granted() {
+    return t('ketch.spoils.granted', "Your share of the Ketchmaster's hold is in your pack.");
+  },
+  get gathered() {
+    return t('ketch.spoils.gathered', 'The rest of your share is in your pack.');
+  },
 });
 /** The word the pool says when leaving gathers the cabin's floor - its own words' sentinel, said by the Ketch's say in
  *  the player's language when it is said (KT_SPOILS_TEXT.gathered; the pool keeps one string from its making). */
@@ -117,16 +124,28 @@ export function rollKetchSpoils(seed, level) {
   const pieces = [];
   pieces.push(graded(spoilsBase(lv, rolls), rolls() < KT_SPOILS_LEGENDARY ? 'legendary' : 'rare', rolls));
   pieces.push(graded(spoilsBase(lv, rolls), rareOrBetter(rolls, KT_SPOILS_SOURCE), rolls));
-  lastPass(pieces.map((p) => p.item), rolls);
+  lastPass(
+    pieces.map((p) => p.item),
+    rolls,
+  );
   const P = KT_SPOILS_PELLETS;
   const pellets = P.min + Math.min(P.max - P.min, Math.floor(rolls() * (P.max - P.min + 1)));
   const guns = [];
   if (rolls() < KT_THUNDERLOCK_CHANCE) guns.push(createThunderlock());
   if (rolls() < KT_PISTOLET_CHANCE) guns.push(createPistolet());
-  socketPass(pieces.map((p) => p.item), rolls);
-  weaponSocketPass(pieces.map((p) => p.item), rolls);
-  techniquePass(pieces.map((p) => p.item), rolls);
-  const gilded = rollKetchGilded(rolls);   // LAST OF ALL
+  socketPass(
+    pieces.map((p) => p.item),
+    rolls,
+  );
+  weaponSocketPass(
+    pieces.map((p) => p.item),
+    rolls,
+  );
+  techniquePass(
+    pieces.map((p) => p.item),
+    rolls,
+  );
+  const gilded = rollKetchGilded(rolls); // LAST OF ALL
   return { gold, pieces, pellets, guns, gilded };
 }
 

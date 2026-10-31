@@ -44,9 +44,9 @@
 import { isEnhanced } from '../../systems/uiSkin.js';
 import { getPref } from '../../systems/uiPrefs.js';
 import { drawEnhancedToasts, releaseEnhancedToasts } from '../enhanced/enhancedNotice.js';
-import { entryOpening, timeLeftWords, QUEST_URGENT_SECONDS } from './questRail.js';   // the rail, never the lens: the HUD imports this face (entryOpening's own comment says why)
-import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
-import { t } from '../../systems/textManager.js';   // QL2: the objective's word, in the player's language
+import { entryOpening, timeLeftWords, QUEST_URGENT_SECONDS } from './questRail.js'; // the rail, never the lens: the HUD imports this face (entryOpening's own comment says why)
+import { noteFirstUse } from '../../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
+import { t } from '../../systems/textManager.js'; // QL2: the objective's word, in the player's language
 
 /** The switch's prefs key (systems/features.js row `quest-herald`). */
 export const HERALD_PREF = 'questHerald';
@@ -64,7 +64,9 @@ export const HERALD_MAX = 3;
 export const HERALD_WORDS = Object.freeze({
   started: 'New quest',
   updated: 'Journal updated',
-  get objective() { return t('quest.herald.objective', 'Objective done'); },   // QL2: a stamped quest's objective, done
+  get objective() {
+    return t('quest.herald.objective', 'Objective done');
+  }, // QL2: a stamped quest's objective, done
   urgent: 'Under a day left',
   completed: 'Quest completed',
   ended: 'Quest ended',
@@ -81,7 +83,7 @@ export const HERALD_LIVE_ID = 'quest-herald-live';
  *  player most needs: an ending is the last word, a new quest stays new
  *  while its first entries land, and a deadline outranks a routine
  *  entry. */
-const RANK = Object.freeze({ updated: 0, objective: 0.5, urgent: 1, started: 2, completed: 3, ended: 3 });   // QL2: an objective done outranks a routine entry
+const RANK = Object.freeze({ updated: 0, objective: 0.5, urgent: 1, started: 2, completed: 3, ended: 3 }); // QL2: an objective done outranks a routine entry
 
 /** Is the herald listening? The enhanced skin, the player's switch - and
  *  a page to say it on: node drives the hosts headless (the suite, the
@@ -93,13 +95,14 @@ export const heraldOn = () => isEnhanced() && !!getPref(HERALD_PREF) && typeof d
 const kindOf = (r) => (r.main ? `${HERALD_WORDS[r.type]} - ${MAIN_QUEST_WORD}` : HERALD_WORDS[r.type]);
 
 /** AUDIT GUIDE H7: is the quest under a day now? The view's own word, or its count (a pure view without the flag). */
-const underADay = (view) => view?.urgent ?? (Number.isFinite(view?.clockSeconds) && view.clockSeconds < QUEST_URGENT_SECONDS);
+const underADay = (view) =>
+  view?.urgent ?? (Number.isFinite(view?.clockSeconds) && view.clockSeconds < QUEST_URGENT_SECONDS);
 
 /** A notice's third line, for the news that stands: the newest entry's
  *  opening, the time left, or nothing for an ending. */
 function lineOf(type, event, view) {
   if (type === 'started' || type === 'updated') return entryOpening(view?.latest?.lines);
-  if (type === 'objective') return event.type === 'objective' ? event.text ?? '' : '';   // QL2: what was done
+  if (type === 'objective') return event.type === 'objective' ? (event.text ?? '') : ''; // QL2: what was done
   if (type === 'urgent') {
     const s = event.type === 'urgent' ? event.clockSeconds : view?.clockSeconds;
     return Number.isFinite(s) ? heraldTimeLeft(s) : '';
@@ -124,7 +127,7 @@ export class QuestHerald {
   /** A lens look (`{ quests, events }`, ui/quest/questLens.js): each event is
    *  news for its quest's one notice. */
   hear(seen) {
-    if ((seen?.events ?? []).some((e) => Object.hasOwn(HERALD_WORDS, e?.type))) noteFirstUse('quests');   // TUT1: the first quest news
+    if ((seen?.events ?? []).some((e) => Object.hasOwn(HERALD_WORDS, e?.type))) noteFirstUse('quests'); // TUT1: the first quest news
     const views = new Map((seen?.quests ?? []).map((q) => [q.id, q]));
     this._views = views;
     for (const event of seen?.events ?? []) {
@@ -144,7 +147,7 @@ export class QuestHerald {
         // AUDIT QUESTLINES UI-2: a kept "Objective done" keeps its words - the entry the script writes a tick later is not one
         line: keeps && type === 'objective' ? was.line : lineOf(type, event, view),
         left: HERALD_SECONDS,
-        said: false,   // AUDIT GUIDE H3: spoken once, whole, on the first frame it shows - a merge is new words
+        said: false, // AUDIT GUIDE H3: spoken once, whole, on the first frame it shows - a merge is new words
       };
       // AUDIT GUIDE H5: merged news is the newest news - it moves to the back, where the next eviction reaches last
       if (was) this.rows.splice(at, 1);
@@ -201,7 +204,10 @@ export class QuestHerald {
     return out.join(' ');
   }
 
-  clear() { this.rows = []; this._views = new Map(); }
+  clear() {
+    this.rows = [];
+    this._views = new Map();
+  }
 }
 
 /** THE ONE QUEUE: one player, one HUD, one journal (ui/levelUp/levelNotice.js's reason). */
@@ -218,7 +224,11 @@ let wasHidden = false;
  * until told otherwise): the queue empties and the toasts slide out.
  * Returns the live toasts, for a test.
  */
-export function drawQuestHerald({ hidden = false, dt = 0, doc = (typeof document === 'undefined' ? null : document) } = {}) {
+export function drawQuestHerald({
+  hidden = false,
+  dt = 0,
+  doc = typeof document === 'undefined' ? null : document,
+} = {}) {
   if (!heraldOn()) {
     if (questHerald.rows.length) questHerald.clear();
     releaseEnhancedToasts(HERALD_OWNER);
@@ -227,9 +237,9 @@ export function drawQuestHerald({ hidden = false, dt = 0, doc = (typeof document
   }
   const voice = liveRegion(doc);
   if (!hidden) {
-    if (wasHidden) questHerald.refresh();   // AUDIT GUIDE H6: back from under a window - the count as it stands now
+    if (wasHidden) questHerald.refresh(); // AUDIT GUIDE H6: back from under a window - the count as it stands now
     questHerald.tick(dt);
-    const words = questHerald.speak();   // AUDIT GUIDE H3: news said when it first shows, as the notice first shows
+    const words = questHerald.speak(); // AUDIT GUIDE H3: news said when it first shows, as the notice first shows
     if (words && voice) voice.textContent = words;
   }
   wasHidden = !!hidden;
@@ -259,6 +269,10 @@ function liveRegion(doc) {
 }
 function dropLive() {
   if (!live) return;
-  try { live.node.remove(); } catch { /* gone */ }
+  try {
+    live.node.remove();
+  } catch {
+    /* gone */
+  }
   live = null;
 }

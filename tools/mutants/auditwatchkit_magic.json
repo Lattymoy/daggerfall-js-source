@@ -20,8 +20,8 @@
   {
     "name": "WK-M3-door-bare",
     "file": "src/scenes/crewAshore.js",
-    "old": "function liftAll() { for (const s of stood.values()) { carry(s); lift(s); } stood.clear(); }",
-    "new": "function liftAll() { for (const s of stood.values()) lift(s); stood.clear(); }",
+    "old": "    for (const s of stood.values()) {\n      carry(s);\n      lift(s);\n    }",
+    "new": "    for (const s of stood.values()) lift(s);",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WK-M3-sweep-bare",
     "file": "src/scenes/crewAshore.js",
-    "old": "{ carry(s); stood.delete(k); continue; }",
-    "new": "{ stood.delete(k); continue; }",
+    "old": "        carry(s);\n        stood.delete(k);",
+    "new": "        stood.delete(k);",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WK-M3-stand-bare",
     "file": "src/scenes/crewAshore.js",
-    "old": "if (fx?.length) rec.entity.activeEffects =",
-    "new": "if (false) rec.entity.activeEffects =",
+    "old": "            if (fx?.length) rec.entity.activeEffects = [...(rec.entity.activeEffects ?? []), ...fx];",
+    "new": "            if (false) rec.entity.activeEffects = [...(rec.entity.activeEffects ?? []), ...fx];",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WK-M3-ended-carried",
     "file": "src/scenes/crewAshore.js",
-    "old": "fx.filter((a) => a && !a.ended)",
-    "new": "fx.filter((a) => a)",
+    "old": "    carried.set(s.c, Array.isArray(fx) ? fx.filter((a) => a && !a.ended) : []);",
+    "new": "    carried.set(s.c, Array.isArray(fx) ? fx.filter((a) => a) : []);",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WK-U2-share-again",
     "file": "src/scenes/crewAshore.js",
-    "old": "          if (c.maxHealth > 0) { rec.entity.maxHealth = c.maxHealth; rec.entity.health = Math.max(1, Math.min(c.maxHealth, c.health ?? c.maxHealth)); }",
-    "new": "          { const max = rec.entity.maxHealth; if (c.health != null && c.maxHealth > 0 && max > 0) rec.entity.health = Math.max(1, Math.min(max, Math.round(c.health / c.maxHealth * max))); }",
+    "old": "            if (c.maxHealth > 0) {\n              rec.entity.maxHealth = c.maxHealth;\n              rec.entity.health = Math.max(1, Math.min(c.maxHealth, c.health ?? c.maxHealth));",
+    "new": "            {\n              const max = rec.entity.maxHealth;\n              if (c.health != null && c.maxHealth > 0 && max > 0)\n                rec.entity.health = Math.max(1, Math.min(max, Math.round((c.health / c.maxHealth) * max)));",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WK-U2-hurt-healed",
     "file": "src/scenes/crewAshore.js",
-    "old": "Math.min(c.maxHealth, c.health ?? c.maxHealth)",
-    "new": "Math.min(c.maxHealth, c.maxHealth)",
+    "old": "              rec.entity.health = Math.max(1, Math.min(c.maxHealth, c.health ?? c.maxHealth));",
+    "new": "              rec.entity.health = Math.max(1, Math.min(c.maxHealth, c.maxHealth));",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WK-U2-at-nothing",
     "file": "src/scenes/crewAshore.js",
-    "old": "rec.entity.health = Math.max(1, Math.min(c.maxHealth, c.health ?? c.maxHealth));",
-    "new": "rec.entity.health = Math.min(c.maxHealth, c.health ?? c.maxHealth);",
+    "old": "              rec.entity.health = Math.max(1, Math.min(c.maxHealth, c.health ?? c.maxHealth));",
+    "new": "              rec.entity.health = Math.min(c.maxHealth, c.health ?? c.maxHealth);",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "WK-M4-nothing-he-can-use",
     "file": "src/systems/allyCast.js",
-    "old": "return allyCastable(spell) && spell.effects.some(companionEffect);",
-    "new": "return allyCastable(spell);",
+    "old": "  return allyCastable(spell) && spell.effects.some(companionEffect);",
+    "new": "  return allyCastable(spell);",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "WK-M4-only-what-he-can-use",
     "file": "src/systems/allyCast.js",
-    "old": "spell.effects.some(companionEffect)",
-    "new": "spell.effects.every(companionEffect)",
+    "old": "  return allyCastable(spell) && spell.effects.some(companionEffect);",
+    "new": "  return allyCastable(spell) && spell.effects.every(companionEffect);",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "WK-M4-strip-ignored",
     "file": "src/systems/allyCast.js",
-    "old": "stranger ? strangerEffect : companion ? companionEffect : allyEffect",
-    "new": "stranger ? strangerEffect : allyEffect",
+    "old": "  const effects = d.effects\n    .filter(stranger ? strangerEffect : companion ? companionEffect : allyEffect)\n    .slice(0, MAX_EFFECTS_PER_SPELL); // SPELL-GIFT: a stranger's cast keeps the stranger's list alone; AUDIT WK-M4: my companion's gift, what he can use",
+    "new": "  const effects = d.effects.filter(stranger ? strangerEffect : allyEffect).slice(0, MAX_EFFECTS_PER_SPELL); // SPELL-GIFT: a stranger's cast keeps the stranger's list alone; AUDIT WK-M4: my companion's gift, what he can use",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "WK-M4-light-unlisted",
     "file": "src/systems/allyCast.js",
-    "old": "new Set([15, 39, 44])",
-    "new": "new Set([39, 44])",
+    "old": "export const COMPANION_UNREAD_TYPES = Object.freeze(new Set([15, 39, 44]));",
+    "new": "export const COMPANION_UNREAD_TYPES = Object.freeze(new Set([39, 44]));",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "WK-M4-detect-unlisted",
     "file": "src/systems/allyCast.js",
-    "old": "new Set([15, 39, 44])",
-    "new": "new Set([15, 44])",
+    "old": "export const COMPANION_UNREAD_TYPES = Object.freeze(new Set([15, 39, 44]));",
+    "new": "export const COMPANION_UNREAD_TYPES = Object.freeze(new Set([15, 44]));",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "WK-M4-comprehend-unlisted",
     "file": "src/systems/allyCast.js",
-    "old": "new Set([15, 39, 44])",
-    "new": "new Set([15, 39])",
+    "old": "export const COMPANION_UNREAD_TYPES = Object.freeze(new Set([15, 39, 44]));",
+    "new": "export const COMPANION_UNREAD_TYPES = Object.freeze(new Set([15, 39]));",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "LD-CC-load-codec-throws",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "try { const out = codec ? codec.deserialize(data) : data.slice(); return Array.isArray(out) ? out : []; } catch { return []; }",
-    "new": "const out = codec ? codec.deserialize(data) : data.slice(); return Array.isArray(out) ? out : [];",
+    "old": "    try {\n      const out = codec ? codec.deserialize(data) : data.slice();\n      return Array.isArray(out) ? out : [];\n    } catch {\n      return [];\n    }",
+    "new": "    const out = codec ? codec.deserialize(data) : data.slice();\n    return Array.isArray(out) ? out : [];",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "LD-CC-save-codec-throws",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "try { return codec ? codec.serialize(items) : items.slice(); } catch { return []; }",
-    "new": "return codec ? codec.serialize(items) : items.slice();",
+    "old": "    try {\n      return codec ? codec.serialize(items) : items.slice();\n    } catch {\n      return [];\n    }",
+    "new": "    return codec ? codec.serialize(items) : items.slice();",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "LD-CC-load-codec-shape",
     "file": "src/systems/naval/crewCompanions.js",
-    "old": "return Array.isArray(out) ? out : [];",
-    "new": "return out;",
+    "old": "      return Array.isArray(out) ? out : [];",
+    "new": "      return out;",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"
     ]

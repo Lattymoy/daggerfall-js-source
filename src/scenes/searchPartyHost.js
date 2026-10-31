@@ -25,7 +25,23 @@ import { dungeonFamily, dungeonRarityTier } from '../systems/loot/lootRarity.js'
 import { effectiveLevel } from '../systems/mentorMode.js';
 import { enemyDisplayName } from '../characters/enemy/enemyBasics.js';
 import { liveStat } from '../systems/statMods.js';
-import { markSearched, mintSearchFind, pickSearchUndead, rollSearchElite, rollSearchOutcome, SEARCH_FOE_SPACING, SEARCH_FOES_PER_PLAYER, searchCooldownLeft, searchKey, searchMessage, searchedText, setSearchParty, searchKinOf, searchToldBy, SEARCH_COOLDOWN_MINUTES } from '../systems/searchables.js';
+import {
+  markSearched,
+  mintSearchFind,
+  pickSearchUndead,
+  rollSearchElite,
+  rollSearchOutcome,
+  SEARCH_FOE_SPACING,
+  SEARCH_FOES_PER_PLAYER,
+  searchCooldownLeft,
+  searchKey,
+  searchMessage,
+  searchedText,
+  setSearchParty,
+  searchKinOf,
+  searchToldBy,
+  SEARCH_COOLDOWN_MINUTES,
+} from '../systems/searchables.js';
 import { playerEntity } from '../characters/playerEntity.js';
 import { randomEpitaph } from '../systems/gravestoneLore.js';
 import { setMidScreenText } from '../ui/midScreenText.js';
@@ -49,19 +65,17 @@ export const GRAVE_LOC_RE = /^g(-?\d{1,4}),(-?\d{1,4})$/;
 
 /** @param {any} host */
 export function createSearchParty(host) {
-  const {
-    dropFeet, droppedLoot, exteriorFoes, makeInventoryWindow, player, playerTravelPixel, townTalk
-  } = host;
+  const { dropFeet, droppedLoot, exteriorFoes, makeInventoryWindow, player, playerTravelPixel, townTalk } = host;
   // THE PARTY LENS - the hub's picture, read at each question (it changes under the session)
   setSearchParty({
     self: () => host.social?.acct ?? null,
-    selfName: () => host.online?.name || host.social?.name || null,   // AUDIT GRAVE-PARTY G5: my character's name, the issued one the relay stamps
+    selfName: () => host.online?.name || host.social?.name || null, // AUDIT GRAVE-PARTY G5: my character's name, the issued one the relay stamps
     inParty: (acct) => !!host.social?.inMyParty?.(acct),
     nameOf: (acct) => host.social?.party?.members?.find((m) => m.acct === acct)?.name ?? null,
     acctOfPeer: (id) => host.social?.accountOfPeer?.(id) ?? null,
   });
-  const owed = new Map();   // `${px},${py}|${n}` -> { row: [px, py, n], since } - my searches the cell has not taken
-  const book = new Map();   // `${px},${py}|${n}|${acct}` -> [px, py, n, minute, acct] - the cell's rows, as heard
+  const owed = new Map(); // `${px},${py}|${n}` -> { row: [px, py, n], since } - my searches the cell has not taken
+  const book = new Map(); // `${px},${py}|${n}|${acct}` -> [px, py, n, minute, acct] - the cell's rows, as heard
   let saidAt = -Infinity;
   /** A stone's wire row `[px, py, n]`, or null (a stone no graveyard pixel built). */
   function rowOf(g) {
@@ -75,7 +89,11 @@ export function createSearchParty(host) {
   function land(g) {
     if (!searchKinOf(g[4])) return false;
     const now = worldMinutes();
-    markSearched(searchKey(`g${g[0]},${g[1]}`, String(g[2])), sharedClockOn() ? Math.min(g[3], now) : now, searchToldBy(g[4], g[5]));
+    markSearched(
+      searchKey(`g${g[0]},${g[1]}`, String(g[2])),
+      sharedClockOn() ? Math.min(g[3], now) : now,
+      searchToldBy(g[4], g[5]),
+    );
     return true;
   }
   /** THE CELL'S WORD (`ow` `gr`, net/online.js onOverworld) - its welcome's rows or a change: each kept, and landed. */
@@ -85,7 +103,8 @@ export function createSearchParty(host) {
     for (const [k, g] of [...book]) if (sharedClockOn() && now - g[3] >= SEARCH_COOLDOWN_MINUTES) book.delete(k);
     for (const g of msg.rows) {
       const k = `${g[0]},${g[1]}|${g[2]}|${g[4]}`;
-      book.delete(k); book.set(k, g);
+      book.delete(k);
+      book.set(k, g);
       land(g);
     }
     while (book.size > GRAVE_BOOK_MAX) book.delete(book.keys().next().value);
@@ -101,7 +120,8 @@ export function createSearchParty(host) {
   function owe(row) {
     if (!row) return;
     const k = `${row[0]},${row[1]}|${row[2]}`;
-    owed.delete(k); owed.set(k, { row, since: performance.now() });
+    owed.delete(k);
+    owed.set(k, { row, since: performance.now() });
     while (owed.size > GRAVE_OWED_MAX) owed.delete(owed.keys().next().value);
   }
   /** THE FRAME: what is owed, said a second apart at most - down my primary cell's socket, at a relay that keeps the
@@ -112,25 +132,36 @@ export function createSearchParty(host) {
     saidAt = now;
     for (const [k, o] of [...owed]) if (now - o.since > GRAVE_OWED_KEEP_MS) owed.delete(k);
     if (!owed.size || !isCellRoom(online.room)) return;
-    for (const r of online.sendOverworld('gr', [...owed.values()].map((o) => o.row))) owed.delete(`${r[0]},${r[1]}|${r[2]}`);
+    for (const r of online.sendOverworld(
+      'gr',
+      [...owed.values()].map((o) => o.row),
+    ))
+      owed.delete(`${r[0]},${r[1]}|${r[2]}`);
   }
   function activateGrave(g, mode = 'grab') {
     if (!g) return false;
-    if (mode === 'info') { townTalk.say(randomEpitaph()); return true; }
+    if (mode === 'info') {
+      townTalk.say(randomEpitaph());
+      return true;
+    }
     const key = searchKey(g.loc, g.key);
     const now = worldMinutes();
     const row = rowOf(g);
-    adopt(row);   // GRAVE-PARTY: the cell's word about this stone, read against my party now
-    if (searchCooldownLeft(key, now) > 0) { setMidScreenText(searchedText(key)); return true; }   // GRAVE-PARTY: and by whom, a partymate's
+    adopt(row); // GRAVE-PARTY: the cell's word about this stone, read against my party now
+    if (searchCooldownLeft(key, now) > 0) {
+      setMidScreenText(searchedText(key));
+      return true;
+    } // GRAVE-PARTY: and by whom, a partymate's
     markSearched(key, now);
-    owe(row);   // GRAVE-PARTY: the cell hears it - my party's games lock the stone
+    owe(row); // GRAVE-PARTY: the cell hears it - my party's games lock the stone
     const outcome = rollSearchOutcome({ graveyard: true });
     const level = effectiveLevel(playerEntity);
-    let rows, onClose = null;
+    let rows,
+      onClose = null;
     if (outcome === 'foe') {
       const type = pickSearchUndead(level);
       const elite = rollSearchElite();
-      const count = SEARCH_FOES_PER_PLAYER * (1 + host.partyNear().length);   // SEARCH1-PARTY: two for every player of the party here
+      const count = SEARCH_FOES_PER_PLAYER * (1 + host.partyNear().length); // SEARCH1-PARTY: two for every player of the party here
       rows = searchMessage('tombstone', 'foe', { foeName: enemyDisplayName(type) ?? 'creature', elite, count });
       onClose = () => {
         // a ring about the stone, opening toward the player (a graveyard is open ground - no room to run out of)
@@ -142,19 +173,31 @@ export function createSearchParty(host) {
           const a = toward + (n % 2 ? 1 : -1) * Math.ceil(n / 2) * (Math.PI / 5);
           const r = half + 0.7 + Math.floor(n / 10) * SEARCH_FOE_SPACING;
           const at = [c[0] + Math.sin(a) * r, c[1] + 0.05, c[2] + Math.cos(a) * r];
-          exteriorFoes.spawnFoe(type, at, { yaw: Math.atan2(-(feet[0] - at[0]), -(feet[2] - at[2])), feetGiven: true, loose: true, eliteFoe: elite && n === 0 })
-            .catch((e) => console.warn('[search] a grave\'s foe would not stand', e));
+          exteriorFoes
+            .spawnFoe(type, at, {
+              yaw: Math.atan2(-(feet[0] - at[0]), -(feet[2] - at[2])),
+              feetGiven: true,
+              loose: true,
+              eliteFoe: elite && n === 0,
+            })
+            .catch((e) => console.warn("[search] a grave's foe would not stand", e));
         }
       };
     } else if (outcome === 'loot') {
-      const items = mintSearchFind('tombstone', { level, gender: playerEntity.gender, tier: dungeonRarityTier(18), family: dungeonFamily(18), luck: liveStat(playerEntity, 'luck') });   // a Cemetery's tier and family (DFRegion.DungeonTypes 18)
+      const items = mintSearchFind('tombstone', {
+        level,
+        gender: playerEntity.gender,
+        tier: dungeonRarityTier(18),
+        family: dungeonFamily(18),
+        luck: liveStat(playerEntity, 'luck'),
+      }); // a Cemetery's tier and family (DFRegion.DungeonTypes 18)
       rows = searchMessage('tombstone', 'loot');
       onClose = () => {
         const pile = droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`);
         if (!pile) return;
-        silverFindAt('search', items);   // SILVER-FINDS: this search's find rolls its silver once (the stone searched again after its hours, again)
+        silverFindAt('search', items); // SILVER-FINDS: this search's find rolls its silver once (the stone searched again after its hours, again)
         const w = makeInventoryWindow({ onClose: () => droppedLoot.releaseEmptied(), loot: droppedLootHooks(pile) });
-        if (w) townTalk.showOverlay(w);   // a refused pack is null - the find stays on the ground
+        if (w) townTalk.showOverlay(w); // a refused pack is null - the find stays on the ground
       };
     } else rows = searchMessage('tombstone', 'nothing');
     townTalk.showOverlay(new ActionTextBox(rows, { onClose }));

@@ -20,8 +20,8 @@
   {
     "name": "RVN3-the-will-staggers-moved",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "((ledger.weak | 0) > 0 || (ledger.staggers | 0) + (ledger.perfect | 0) >= WILL_STAGGERS)",
-    "new": "((ledger.weak | 0) > 0 || (ledger.staggers | 0) + (ledger.perfect | 0) > WILL_STAGGERS)",
+    "old": "  !!ledger && ((ledger.weak | 0) > 0 || (ledger.staggers | 0) + (ledger.perfect | 0) >= WILL_STAGGERS);",
+    "new": "  !!ledger && ((ledger.weak | 0) > 0 || (ledger.staggers | 0) + (ledger.perfect | 0) > WILL_STAGGERS);",
     "tests": [
       "test/systems/rvn3_weak.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RVN3-the-weakness-breaks-nothing",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "((ledger.weak | 0) > 0 || (ledger.staggers | 0) + (ledger.perfect | 0) >= WILL_STAGGERS)",
-    "new": "((ledger.staggers | 0) + (ledger.perfect | 0) >= WILL_STAGGERS)",
+    "old": "export const willBroken = (ledger) =>\n  !!ledger && ((ledger.weak | 0) > 0 || (ledger.staggers | 0) + (ledger.perfect | 0) >= WILL_STAGGERS);",
+    "new": "export const willBroken = (ledger) => !!ledger && (ledger.staggers | 0) + (ledger.perfect | 0) >= WILL_STAGGERS;",
     "tests": [
       "test/systems/rvn3_weak.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "RVN3-struck-moved",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "export const WEAK = Object.freeze({ STRUCK: 1.5,",
-    "new": "export const WEAK = Object.freeze({ STRUCK: 1.25,",
+    "old": "export const WEAK = Object.freeze({ STRUCK: 1.5, DAYLIGHT: 1.25, RESIST: -50 });",
+    "new": "export const WEAK = Object.freeze({ STRUCK: 1.25, DAYLIGHT: 1.25, RESIST: -50 });",
     "tests": [
       "test/systems/rvn3_weak.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RVN3-the-flinch-line-lost",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  daylight: 'It squints and shrinks from the daylight.',\n",
-    "new": "",
+    "old": "  daylight: 'It squints and shrinks from the daylight.',\n});",
+    "new": "});",
     "tests": [
       "test/systems/rvn3_weak.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RVN3-a-hint-named",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "export const WEAK_HINTS = Object.freeze({ element: 'An element',",
-    "new": "export const WEAK_HINTS = Object.freeze({ element: 'Fire',",
+    "old": "export const WEAK_HINTS = Object.freeze({\n  element: 'An element',\n  metal: 'A metal',\n  weapon: 'A weapon',\n  sun: 'The sun',\n});",
+    "new": "export const WEAK_HINTS = Object.freeze({ element: 'Fire', metal: 'A metal', weapon: 'A weapon', sun: 'The sun' });",
     "tests": [
       "test/systems/rvn3_weak.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RVN3-never-counted",
     "file": "src/systems/feudLedger.js",
-    "old": "  if (feudWeakBlow(entity, { cls, metal })) {\n    l.weak++;",
-    "new": "  if (feudWeakBlow(entity, { cls, metal })) {",
+    "old": "    l.weak++;\n    try {",
+    "new": "    try {",
     "tests": [
       "test/systems/rvn3_weak.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RVN3-never-told",
     "file": "src/systems/feudLedger.js",
-    "old": "    try { _onWeak?.(entity); } catch { /* the reveal is not the blow's problem */ }\n",
-    "new": "",
+    "old": "    try {\n      _onWeak?.(entity);\n    } catch {\n      /* the reveal is not the blow's problem */\n    }\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/rvn3_weak.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "RVN3-the-will-unread",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "  return !!r && !r.dread && willMatters(r.rank) && !willBroken(f.entity._feud);",
-    "new": "  return false;",
+    "old": "  return !!r && !r.dread && willMatters(r.rank) && !willBroken(f.entity._feud); // UNQUIET: the Dread, at home, has nowhere to tear away to - it kneels",
+    "new": "  return false; // UNQUIET: the Dread, at home, has nowhere to tear away to - it kneels",
     "tests": [
       "test/systems/rvn3_weak.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "RVN3-the-will-ignores-the-fight",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "  return !!r && !r.dread && willMatters(r.rank) && !willBroken(f.entity._feud);",
-    "new": "  return !!r && !r.dread && willMatters(r.rank);",
+    "old": "  return !!r && !r.dread && willMatters(r.rank) && !willBroken(f.entity._feud); // UNQUIET: the Dread, at home, has nowhere to tear away to - it kneels",
+    "new": "  return !!r && !r.dread && willMatters(r.rank); // UNQUIET: the Dread, at home, has nowhere to tear away to - it kneels",
     "tests": [
       "test/systems/rvn3_weak.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "RVN3-the-tint-unread",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "    const tint = p.tint ?? DISSOLVE_ARCANE;",
-    "new": "    const tint = DISSOLVE_ARCANE;",
+    "old": "    const tint = p.tint ?? DISSOLVE_ARCANE; // RVN3: a tear-away's ember; a portal's arcane",
+    "new": "    const tint = DISSOLVE_ARCANE; // RVN3: a tear-away's ember; a portal's arcane",
     "tests": [
       "test/systems/rvn3_weak.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "RVN3-not-held",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "  if (f.entity) f.entity.health = 1;\n  if (f.ai) { f.ai.target = null; f.ai.fleeLeft = 0; f.ai.velX = 0; f.ai.velZ = 0; }",
-    "new": "  if (f.ai) { f.ai.target = null; f.ai.fleeLeft = 0; f.ai.velX = 0; f.ai.velZ = 0; }",
+    "old": "  endCraft(f); // UNQUIET: its own ash-out, not a craft's\n  f.fleeing = false;\n  f._fleeRolled = true;\n  if (f.entity) f.entity.health = 1;\n  if (f.ai) {\n    f.ai.target = null;\n    f.ai.fleeLeft = 0;",
+    "new": "  endCraft(f); // UNQUIET: its own ash-out, not a craft's\n  f.fleeing = false;\n  f._fleeRolled = true;\n  if (f.ai) {\n    f.ai.target = null;\n    f.ai.fleeLeft = 0;",
     "tests": [
       "test/systems/rvn3_weak.test.js"
     ]
@@ -483,8 +483,8 @@
   {
     "name": "RVN3-the-page-rule-at-rank-2",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "export const willWords = (r) => (willMatters(r?.rank) ?",
-    "new": "export const willWords = (r) => (true ?",
+    "old": "  willMatters(r?.rank)\n    ? 'Its will must be broken. Strike its weakness, stagger it, or evade its blow at the last moment.'\n    : ''; // FEUD BALANCE (Feud-Arc.md OPEN 22)",
+    "new": "  true ? 'Its will must be broken. Strike its weakness, stagger it, or evade its blow at the last moment.' : ''; // FEUD BALANCE (Feud-Arc.md OPEN 22)",
     "tests": [
       "test/systems/rvn3_weak.test.js"
     ]

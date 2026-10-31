@@ -114,8 +114,8 @@
   {
     "name": "LW6-deep-on-the-road",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "  if (trip.dive && (fated.length || dead.length)) return diveTrouble(trip, dead, world, fated);",
-    "new": "  void diveTrouble;",
+    "old": "  if (trip.dive && (fated.length || dead.length)) return diveTrouble(trip, dead, world, fated); // LW6: a dive's fated meet their end inside",
+    "new": "  void diveTrouble; // LW6: a dive's fated meet their end inside",
     "tests": [
       "test/systems/livingWorld/lw6_deep.test.js"
     ]
@@ -123,8 +123,8 @@
   {
     "name": "LW6-deep-table-unread",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "dungeonType: /** @type {any} */ (trip.to).dungeonType ?? 0,",
-    "new": "dungeonType: 0,",
+    "old": "      dungeonType: /** @type {any} */ (trip.to).dungeonType ?? 0,",
+    "new": "      dungeonType: 0,",
     "tests": [
       "test/systems/livingWorld/lw6_deep.test.js"
     ]
@@ -132,8 +132,8 @@
   {
     "name": "LW6-deep-leader-unread",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "  const kind = dead.includes(trip.leader.id) ? 'fell' : 'won';",
-    "new": "  const kind = 'won';",
+    "old": "  const kind = dead.includes(trip.leader.id) ? 'fell' : 'won'; // the character's turns are read in the lives (a member spared is no death)",
+    "new": "  const kind = 'won'; // the character's turns are read in the lives (a member spared is no death)",
     "tests": [
       "test/systems/livingWorld/lw6_deep.test.js"
     ]
@@ -159,7 +159,7 @@
   {
     "name": "LW6-deep-fallen-outside",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "    const fallen = enc.dead.map((id) => ({ res: byId.get(id), t: fallAt, s: enc.s, inside: true })).filter((f) => f.res);",
+    "old": "    const fallen = enc.dead\n      .map((id) => ({ res: byId.get(id), t: fallAt, s: enc.s, inside: true }))\n      .filter((f) => f.res);",
     "new": "    const fallen = enc.dead.map((id) => ({ res: byId.get(id), t: fallAt, s: enc.s })).filter((f) => f.res);",
     "tests": [
       "test/systems/livingWorld/lw6_deep.test.js"
@@ -168,8 +168,8 @@
   {
     "name": "LW6-news-the-road",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "      : (item.dive ? DIVE_NEWS : ROAD_NEWS)[",
-    "new": "      : (ROAD_NEWS)[",
+    "old": "                        : (item.dive ? DIVE_NEWS : ROAD_NEWS)[/** @type {keyof typeof ROAD_NEWS} */ (item.kind)];",
+    "new": "                        : ROAD_NEWS[/** @type {keyof typeof ROAD_NEWS} */ (item.kind)];",
     "tests": [
       "test/systems/livingWorld/lw6_deep.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "LW6-met-ahead",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "      const dx = -Math.sin(L.yaw) * back + Math.cos(L.yaw) * side, dz = -Math.cos(L.yaw) * back - Math.sin(L.yaw) * side;",
-    "new": "      const dx = Math.sin(L.yaw) * back + Math.cos(L.yaw) * side, dz = Math.cos(L.yaw) * back - Math.sin(L.yaw) * side;",
+    "old": "      const dx = -Math.sin(L.yaw) * back + Math.cos(L.yaw) * side,\n        dz = -Math.cos(L.yaw) * back - Math.sin(L.yaw) * side;",
+    "new": "      const dx = Math.sin(L.yaw) * back + Math.cos(L.yaw) * side,\n        dz = Math.cos(L.yaw) * back - Math.sin(L.yaw) * side;",
     "tests": [
       "test/systems/livingWorld/lw6_deep.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "LW6-unfollowing",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "        if (rec.ai && !at) rec.ai.follow = heelOf(i);",
-    "new": "        void heelOf;",
+    "old": "          if (rec.ai && !at) rec.ai.follow = heelOf(i); // LW14: along the trail; met at their place, they hold it",
+    "new": "          void heelOf; // LW14: along the trail; met at their place, they hold it",
     "tests": [
       "test/systems/livingWorld/lw6_deep.test.js"
     ]
@@ -204,8 +204,8 @@
   {
     "name": "LW6-divers-struck",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "        rec.shipmate = true;",
-    "new": "        void rec.shipmate;",
+    "old": "          rec.shipmate = true;",
+    "new": "          void rec.shipmate;",
     "tests": [
       "test/systems/livingWorld/lw6_deep.test.js"
     ]
@@ -213,7 +213,7 @@
   {
     "name": "LW6-fallen-unturned",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "          if (deps.died) deps.died(rec.living.res, t); else turn('fallen', deps.turnKeyOf(rec.living.res, c.trip));",
+    "old": "          if (deps.died) deps.died(rec.living.res, t);\n          else turn('fallen', deps.turnKeyOf(rec.living.res, c.trip));",
     "new": "          void turn;",
     "tests": [
       "test/systems/livingWorld/lw6_deep.test.js"
@@ -240,8 +240,8 @@
   {
     "name": "LW6-fallen-thanked",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "      if (c.fell.has(mid) || rec.dead) continue;\n      const m = rec.living.res;",
-    "new": "      if (false) continue;\n      const m = rec.living.res;",
+    "old": "      if (c.fell.has(mid) || rec.dead) continue;",
+    "new": "      if (false) continue;",
     "tests": [
       "test/systems/livingWorld/lw6_deep.test.js"
     ]

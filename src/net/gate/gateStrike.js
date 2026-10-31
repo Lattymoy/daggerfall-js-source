@@ -15,18 +15,34 @@
 // size, each attack's reach, element, name, ground and weight), the Warden unmarked when none is given.
 //
 // Not a DFU member. Ledger A (WB).
-import { ATTACK_BY_ID, ATTACKS, BASE_PROFILE, windupOf, isDagons, HOST_BLOWS, CHAIN_HOLD_M, CHAIN_PULL_TO_M, CHAIN_PULL_MAX_M, GAZE_HALF_DEG, GAZE_RANGE_M } from './gateBrain.js';
-import { segmentDistance } from '../../world/segment.js';   // TAMRIEL2-WORKER: the one segment distance, from a module that imports nothing
+import {
+  ATTACK_BY_ID,
+  ATTACKS,
+  BASE_PROFILE,
+  windupOf,
+  isDagons,
+  HOST_BLOWS,
+  CHAIN_HOLD_M,
+  CHAIN_PULL_TO_M,
+  CHAIN_PULL_MAX_M,
+  GAZE_HALF_DEG,
+  GAZE_RANGE_M,
+} from './gateBrain.js';
+import { segmentDistance } from '../../world/segment.js'; // TAMRIEL2-WORKER: the one segment distance, from a module that imports nothing
 
 /** A landing is decided at the first frame at or past it - and a frame that comes later than this past its span (a
  *  stalled or hidden screen) lets it pass: nobody is struck by what their screen never showed land. */
 export const STRIKE_LATE_MS = 400;
 
 const DEG = Math.PI / 180;
-const wrap = (a) => { let x = (a + Math.PI) % (2 * Math.PI); if (x < 0) x += 2 * Math.PI; return x - Math.PI; };
+const wrap = (a) => {
+  let x = (a + Math.PI) % (2 * Math.PI);
+  if (x < 0) x += 2 * Math.PI;
+  return x - Math.PI;
+};
 
 /** The distance from (px, pz) to the segment (ax, az)-(bx, bz). */
-export { segmentDistance };   // TAMRIEL2-WORKER: declared in world/segment.js, a module that imports nothing (the terrain worker's law)
+export { segmentDistance }; // TAMRIEL2-WORKER: declared in world/segment.js, a module that imports nothing (the terrain worker's law)
 
 /** WBX5: the Spokes of Dagon's lanes - `n` segments from where he stood, the first along his facing, each `len` long:
  *  [[ax, az, bx, bz], ...]. Pure. */
@@ -43,7 +59,7 @@ export function spokeLanes(atk) {
 
 /** WB14a: THE SCYTHING WHEEL'S TURN - +1 or -1 by the attack's own number (`i`: every screen and the relay read the same
  *  way round, and nothing is sent for it). */
-export const wheelSpin = (atk) => ((Math.abs(atk?.i | 0) % 2) === 1 ? 1 : -1);
+export const wheelSpin = (atk) => (Math.abs(atk?.i | 0) % 2 === 1 ? 1 : -1);
 /** WB14a: the Wheel's first blade's bearing at `now` - its facing at the word, turning `spin` radians a second over its
  *  span from the landing (still before it, still after it). Pure. */
 export function wheelAngle(atk, now) {
@@ -54,8 +70,13 @@ export function wheelAngle(atk, now) {
 /** WB14a: the Wheel's blades at `now` - `n` segments from where he stood, the first at wheelAngle, `len` long:
  *  [[ax, az, bx, bz], ...]. Pure. */
 export function wheelBlades(atk, now) {
-  const A = ATTACKS.wheel, a0 = wheelAngle(atk, now), out = [];
-  for (let k = 0; k < A.n; k++) { const a = a0 + (k * 2 * Math.PI) / A.n; out.push([atk.x, atk.z, atk.x + Math.sin(a) * A.len, atk.z + Math.cos(a) * A.len]); }
+  const A = ATTACKS.wheel,
+    a0 = wheelAngle(atk, now),
+    out = [];
+  for (let k = 0; k < A.n; k++) {
+    const a = a0 + (k * 2 * Math.PI) / A.n;
+    out.push([atk.x, atk.z, atk.x + Math.sin(a) * A.len, atk.z + Math.cos(a) * A.len]);
+  }
   return out;
 }
 const TAU = 2 * Math.PI;
@@ -66,14 +87,28 @@ const wrap0 = (a) => ((a % TAU) + TAU) % TAU;
  *  it gets there. Pure. */
 export function wheelStrikes(atk, px, pz, now, prev = -Infinity, P = BASE_PROFILE) {
   const A = ATTACKS.wheel;
-  if (ATTACK_BY_ID[atk?.a] !== A || now < atk.at || prev > atk.at + A.active || !Number.isFinite(px) || !Number.isFinite(pz)) return false;
-  const dx = px - atk.x, dz = pz - atk.z, d = Math.hypot(dx, dz), half = A.width / 2;
+  if (
+    ATTACK_BY_ID[atk?.a] !== A ||
+    now < atk.at ||
+    prev > atk.at + A.active ||
+    !Number.isFinite(px) ||
+    !Number.isFinite(pz)
+  )
+    return false;
+  const dx = px - atk.x,
+    dz = pz - atk.z,
+    d = Math.hypot(dx, dz),
+    half = A.width / 2;
   if (d > A.len + half) return false;
-  if (d <= half) return true;   // AUDIT WB14 (SCREEN-6): the blades' roots - his body no wider than they are drawn
-  const a0 = wheelAngle(atk, Math.max(prev, atk.at)), a1 = wheelAngle(atk, Math.min(now, atk.at + A.active));
-  const slack = wheelSlack(d, A.len, half), phi = Math.atan2(dx, dz);
+  if (d <= half) return true; // AUDIT WB14 (SCREEN-6): the blades' roots - his body no wider than they are drawn
+  const a0 = wheelAngle(atk, Math.max(prev, atk.at)),
+    a1 = wheelAngle(atk, Math.min(now, atk.at + A.active));
+  const slack = wheelSlack(d, A.len, half),
+    phi = Math.atan2(dx, dz);
   for (let k = 0; k < A.n; k++) {
-    const off = (k * TAU) / A.n, lo = Math.min(a0, a1) + off - slack, span = Math.abs(a1 - a0) + 2 * slack;
+    const off = (k * TAU) / A.n,
+      lo = Math.min(a0, a1) + off - slack,
+      span = Math.abs(a1 - a0) + 2 * slack;
     if (wrap0(phi - lo) <= span) return true;
   }
   return false;
@@ -82,18 +117,21 @@ export function wheelStrikes(atk, px, pz, now, prev = -Infinity, P = BASE_PROFIL
  *  capsule `len` long and `half` wide each side: its side out to its length, its round tip past it (where the side's own
  *  slack overstated it - up to 0.68 m struck past the drawn edge). Radians. Pure. */
 export function wheelSlack(d, len, half) {
-  const side = d <= Math.hypot(len, half) ? Math.asin(Math.min(1, half / d)) : 0;   // its side (the point's foot on the blade)
-  const tip = d > len ? Math.acos(Math.max(-1, Math.min(1, (d * d + len * len - half * half) / (2 * d * len)))) : 0;   // its tip's round end
+  const side = d <= Math.hypot(len, half) ? Math.asin(Math.min(1, half / d)) : 0; // its side (the point's foot on the blade)
+  const tip = d > len ? Math.acos(Math.max(-1, Math.min(1, (d * d + len * len - half * half) / (2 * d * len)))) : 0; // its tip's round end
   return Math.max(side, tip);
 }
 /** WB14a: is (px, pz) in a lit wedge of the Unmaking - every other one of `n` about its heart (tg[0]), the first centred on
  *  its facing, out to `r`? Pure. */
 export function inWedges(atk, px, pz, r = ATTACKS.unmake.r) {
-  const A = ATTACKS.unmake, c = atk?.tg?.[0];
+  const A = ATTACKS.unmake,
+    c = atk?.tg?.[0];
   if (!c || !Number.isFinite(px) || !Number.isFinite(pz)) return false;
-  const dx = px - c[0], dz = pz - c[1];
+  const dx = px - c[0],
+    dz = pz - c[1];
   if (Math.hypot(dx, dz) > r) return false;
-  const per = (2 * TAU) / A.n, a = Math.atan2(dx, dz) - atk.yw;
+  const per = (2 * TAU) / A.n,
+    a = Math.atan2(dx, dz) - atk.yw;
   return Math.abs(a - per * Math.round(a / per)) <= TAU / (2 * A.n);
 }
 
@@ -118,17 +156,37 @@ export function inAttack(atk, px, pz, P = BASE_PROFILE) {
   const A = ATTACK_BY_ID[atk?.a];
   if (!A || !Number.isFinite(px) || !Number.isFinite(pz)) return false;
   const r = P.atk[A.key].r;
-  const dx = px - atk.x, dz = pz - atk.z, d = Math.hypot(dx, dz);
+  const dx = px - atk.x,
+    dz = pz - atk.z,
+    d = Math.hypot(dx, dz);
   switch (A.shape) {
-    case 'cone': return d <= r && (d <= P.bossR || Math.abs(wrap(Math.atan2(dx, dz) - atk.yw)) <= (A.arc / 2) * DEG);
-    case 'disc': return A.aim === 'self' ? d <= r : (A.aim === 'point' ? (atk.tg ?? []).slice(0, 1) : (atk.tg ?? [])).some((p) => Math.hypot(px - p[0], pz - p[1]) <= r);
-    case 'lane': { const e = atk.tg?.[0]; return !!e && segmentDistance(px, pz, atk.x, atk.z, e[0], e[1]) <= Math.max(A.width / 2, P.bossR); }   // AUDIT WBX F7: as wide as his body - the charge's own sweep (chargeStrikes), and the telegraph's
-    case 'ring': return d >= A.r0 && d <= A.r1;
-    case 'spokes': return spokeLanes(atk).some((l) => segmentDistance(px, pz, l[0], l[1], l[2], l[3]) <= A.width / 2);
-    case 'wheel': return d <= A.width / 2 || wheelBlades(atk, atk.at).some((l) => segmentDistance(px, pz, l[0], l[1], l[2], l[3]) <= A.width / 2);   // AUDIT WB14 (SCREEN-6): as drawn - no body disc
-    case 'wedges': return inWedges(atk, px, pz, r);
-    case 'all': return true;
-    default: return false;
+    case 'cone':
+      return d <= r && (d <= P.bossR || Math.abs(wrap(Math.atan2(dx, dz) - atk.yw)) <= (A.arc / 2) * DEG);
+    case 'disc':
+      return A.aim === 'self'
+        ? d <= r
+        : (A.aim === 'point' ? (atk.tg ?? []).slice(0, 1) : (atk.tg ?? [])).some(
+            (p) => Math.hypot(px - p[0], pz - p[1]) <= r,
+          );
+    case 'lane': {
+      const e = atk.tg?.[0];
+      return !!e && segmentDistance(px, pz, atk.x, atk.z, e[0], e[1]) <= Math.max(A.width / 2, P.bossR);
+    } // AUDIT WBX F7: as wide as his body - the charge's own sweep (chargeStrikes), and the telegraph's
+    case 'ring':
+      return d >= A.r0 && d <= A.r1;
+    case 'spokes':
+      return spokeLanes(atk).some((l) => segmentDistance(px, pz, l[0], l[1], l[2], l[3]) <= A.width / 2);
+    case 'wheel':
+      return (
+        d <= A.width / 2 ||
+        wheelBlades(atk, atk.at).some((l) => segmentDistance(px, pz, l[0], l[1], l[2], l[3]) <= A.width / 2)
+      ); // AUDIT WB14 (SCREEN-6): as drawn - no body disc
+    case 'wedges':
+      return inWedges(atk, px, pz, r);
+    case 'all':
+      return true;
+    default:
+      return false;
   }
 }
 
@@ -141,10 +199,20 @@ export function inAttack(atk, px, pz, P = BASE_PROFILE) {
  * @param {any} atk @param {ReturnType<typeof import('./gateBrain.js').fightProfile>} [P]
  */
 export function landingPools(atk, P = BASE_PROFILE) {
-  const A = ATTACK_BY_ID[atk?.a], G = A ? P.atk[A.key].pool : null;
+  const A = ATTACK_BY_ID[atk?.a],
+    G = A ? P.atk[A.key].pool : null;
   if (!G || !Number.isFinite(atk.at)) return [];
   const spots = A.aim === 'point' ? (atk.tg ?? []).slice(0, 1) : A.aim === 'self' ? [[atk.x, atk.z]] : (atk.tg ?? []);
-  return spots.map((p) => ({ x: p[0], z: p[1], r: G.r, from: atk.at, until: atk.at + G.ms, pct: G.pct, base: G.base, el: P.el }));
+  return spots.map((p) => ({
+    x: p[0],
+    z: p[1],
+    r: G.r,
+    from: atk.at,
+    until: atk.at + G.ms,
+    pct: G.pct,
+    base: G.base,
+    el: P.el,
+  }));
 }
 
 /** WBX5: the burning ground under (px, pz) at `now` - the first live pool that holds the point, or null. Pure. */
@@ -156,7 +224,8 @@ export function poolUnder(pools, px, pz, now) {
 /** Where the charge's head stands at `now` - the brain's own run (net/gate/gateBrain.js stepBrain: from where he stood to
  *  the lane's end over the attack's `active` span) - or null outside the run. */
 export function chargeHead(atk, now) {
-  const A = ATTACK_BY_ID[atk?.a], e = atk?.tg?.[0];
+  const A = ATTACK_BY_ID[atk?.a],
+    e = atk?.tg?.[0];
   if (A !== ATTACKS.charge || !e || now < atk.at || now > atk.at + A.active) return null;
   const k = Math.min(1, (now - atk.at) / A.active);
   return [atk.x + (e[0] - atk.x) * k, atk.z + (e[1] - atk.z) * k];
@@ -168,7 +237,8 @@ export function chargeHead(atk, now) {
 export function chargeStrikes(atk, px, pz, now, prev = -Infinity, P = BASE_PROFILE) {
   const A = ATTACKS.charge;
   if (ATTACK_BY_ID[atk?.a] !== A || now < atk.at || prev > atk.at + A.active) return false;
-  const a = chargeHead(atk, Math.max(prev, atk.at)), b = chargeHead(atk, Math.min(now, atk.at + A.active));
+  const a = chargeHead(atk, Math.max(prev, atk.at)),
+    b = chargeHead(atk, Math.min(now, atk.at + A.active));
   if (!a || !b) return false;
   return segmentDistance(px, pz, a[0], a[1], b[0], b[1]) <= Math.max(A.width / 2, P.bossR);
 }
@@ -184,11 +254,13 @@ export function chargeStrikes(atk, px, pz, now, prev = -Infinity, P = BASE_PROFI
  */
 export function strikeVerdict(atk, px, pz, now, prev = -Infinity, P = BASE_PROFILE) {
   const A = ATTACK_BY_ID[atk?.a];
-  if (!A || !Number.isFinite(atk.at) || isMarkedBlow(A)) return 'miss';   // WB14a: a marked blow's is markedVerdict's
+  if (!A || !Number.isFinite(atk.at) || isMarkedBlow(A)) return 'miss'; // WB14a: a marked blow's is markedVerdict's
   if (now < atk.at) return 'wait';
   if (now > atk.at + Math.max(A.active, 1) + STRIKE_LATE_MS) return 'miss';
-  if (A === ATTACKS.charge) return chargeStrikes(atk, px, pz, now, prev, P) ? 'hit' : now >= atk.at + A.active ? 'miss' : 'wait';
-  if (A === ATTACKS.wheel) return wheelStrikes(atk, px, pz, now, prev, P) ? 'hit' : now >= atk.at + A.active ? 'miss' : 'wait';   // WB14a: the charge's law, turning
+  if (A === ATTACKS.charge)
+    return chargeStrikes(atk, px, pz, now, prev, P) ? 'hit' : now >= atk.at + A.active ? 'miss' : 'wait';
+  if (A === ATTACKS.wheel)
+    return wheelStrikes(atk, px, pz, now, prev, P) ? 'hit' : now >= atk.at + A.active ? 'miss' : 'wait'; // WB14a: the charge's law, turning
   return inAttack(atk, px, pz, P) ? 'hit' : 'miss';
 }
 
@@ -213,12 +285,15 @@ export function markedAt(atk, k, me, mine, placeOf) {
 /** WB14a: am I one the attack marks? */
 export const markedMe = (atk, me) => !!me && markedOf(atk).includes(me);
 /** WB14a: does the chain hold me as it lands - within CHAIN_HOLD_M of where he stood? */
-export const chainHolds = (atk, px, pz) => Number.isFinite(px) && Number.isFinite(pz) && Math.hypot(px - atk.x, pz - atk.z) <= CHAIN_HOLD_M;
+export const chainHolds = (atk, px, pz) =>
+  Number.isFinite(px) && Number.isFinite(pz) && Math.hypot(px - atk.x, pz - atk.z) <= CHAIN_HOLD_M;
 /** WB14a: THE CHAIN'S PULL on me - the push (metres a second, the court's frame) that carries me to CHAIN_PULL_TO_M of
  *  him (CHAIN_PULL_MAX_M at most) against the motor's own decay (`decay` - player/motor.js BLOW_PUSH_DECAY: a push of v
  *  runs v*v/(2*decay) metres); none when I stand that near already. Pure. */
 export function chainPull(atk, px, pz, decay) {
-  const dx = atk.x - px, dz = atk.z - pz, d = Math.hypot(dx, dz);
+  const dx = atk.x - px,
+    dz = atk.z - pz,
+    d = Math.hypot(dx, dz);
   const run = Math.min(CHAIN_PULL_MAX_M, d - CHAIN_PULL_TO_M);
   if (!(run > 0) || !(decay > 0)) return null;
   const v = Math.sqrt(2 * decay * run);
@@ -228,12 +303,14 @@ export function chainPull(atk, px, pz, decay) {
  *  reach of a branded fighter who is not me (its burst) - each other branded one where this screen sees them (markedAt).
  *  Pure. */
 export function brandOn(atk, me, px, pz, placeOf, P = BASE_PROFILE) {
-  const r = P.atk.brand.r, pk = markedOf(atk), self = markedMe(atk, me);
+  const r = P.atk.brand.r,
+    pk = markedOf(atk),
+    self = markedMe(atk, me);
   let burst = false;
   const n = Math.max(pk.length, atk?.tg?.length ?? 0);
   for (let k = 0; k < n && !burst; k++) {
     if (pk[k] && pk[k] === me) continue;
-    if (!pk[k] && self) continue;   // a relay that named nobody: the ring I stand on is mine
+    if (!pk[k] && self) continue; // a relay that named nobody: the ring I stand on is mine
     const p = markedAt(atk, k, me, null, placeOf);
     if (p && Math.hypot(px - p[0], pz - p[1]) <= r) burst = true;
   }
@@ -254,7 +331,9 @@ export function tormentShare(atk, me, px, pz, placeOf, others, P = BASE_PROFILE)
  *  heading - `yaw` the camera's (scenes/world.js cam.yaw: ahead [sin, cos]). No camera, no gaze. Pure. */
 export function gazeHolds(bx, bz, px, pz, yaw) {
   if (!Number.isFinite(yaw) || !Number.isFinite(px) || !Number.isFinite(pz)) return false;
-  const dx = bx - px, dz = bz - pz, d = Math.hypot(dx, dz);
+  const dx = bx - px,
+    dz = bz - pz,
+    d = Math.hypot(dx, dz);
   if (d > GAZE_RANGE_M) return false;
   if (d < 1e-6) return true;
   const off = Math.atan2(dx, dz) - yaw;
@@ -266,7 +345,7 @@ export function gazeHolds(bx, bz, px, pz, yaw) {
 export function markedVerdict(atk, now) {
   const A = ATTACK_BY_ID[atk?.a];
   if (!A || !Number.isFinite(atk.at)) return 'miss';
-  if (atk.at > now) return 'wait';   // (spelled apart from strikeVerdict's and hostVerdict's - a mutant record aims at each alone)
+  if (atk.at > now) return 'wait'; // (spelled apart from strikeVerdict's and hostVerdict's - a mutant record aims at each alone)
   return now > atk.at + Math.max(A.active, 1) + STRIKE_LATE_MS ? 'miss' : 'judge';
 }
 /** WB14a: the attacks whose verdict is markedVerdict's (and never strikeVerdict's ground). */
@@ -281,12 +360,13 @@ export const blowOf = (atk, P = BASE_PROFILE) => {
   const A = ATTACK_BY_ID[atk?.a];
   if (!A) return null;
   const L = P.atk[A.key];
-  return { pct: L.pct, base: L.base, el: L.el, name: L.name, saved: L.el != null && !isDagons(A) };   // WB9c: Dagon's Reckoning, as his Wrath, is answered by nothing
+  return { pct: L.pct, base: L.base, el: L.el, name: L.name, saved: L.el != null && !isDagons(A) }; // WB9c: Dagon's Reckoning, as his Wrath, is answered by nothing
 };
 
 /** The damage a struck player takes: `pct` of their maximum health and WBX4's `base` points beside it, whole points, at
  *  least one (Dagon's Wrath is more than any health - 999%). */
-export const strikeDamage = (pct, maxHealth, base = 0) => Math.max(1, Math.round(pct * Math.max(1, maxHealth) + Math.max(0, base)));
+export const strikeDamage = (pct, maxHealth, base = 0) =>
+  Math.max(1, Math.round(pct * Math.max(1, maxHealth) + Math.max(0, base)));
 
 /** An elemental strike's share after the game's own saving throw against its element (combat/spellcast.js savingThrow
  *  answers the percent of an effect that lands, 0..100). WB8b: fire's alone before his aspects - `fireShare` then. */
@@ -301,9 +381,16 @@ export const savedShare = (dmg, savePct) => Math.trunc((dmg * Math.max(0, Math.m
 export function telegraphAt(atk, phase, now) {
   const A = ATTACK_BY_ID[atk?.a];
   if (!A || !Number.isFinite(atk.at)) return null;
-  const w = windupOf(A, phase), span = Math.max(A.active, 1);
+  const w = windupOf(A, phase),
+    span = Math.max(A.active, 1);
   const t = w > 0 ? Math.max(0, Math.min(1, (now - (atk.at - w)) / w)) : 1;
-  return { t, landing: now >= atk.at && now < atk.at + span, over: now >= atk.at + span, key: A.key, since: now - atk.at };
+  return {
+    t,
+    landing: now >= atk.at && now < atk.at + span,
+    over: now >= atk.at + span,
+    key: A.key,
+    since: now - atk.at,
+  };
 }
 
 /**
@@ -317,7 +404,7 @@ export function telegraphAt(atk, phase, now) {
 export function hostVerdict(atk, k, px, pz, now) {
   const B = HOST_BLOWS[k];
   if (!B || !atk || !Number.isFinite(atk.at)) return 'miss';
-  if (!(now >= atk.at)) return 'wait';   // (spelled apart from strikeVerdict's - a mutant record aims at that one alone)
+  if (!(now >= atk.at)) return 'wait'; // (spelled apart from strikeVerdict's - a mutant record aims at that one alone)
   if (now > atk.at + Math.max(B.active, 1) + STRIKE_LATE_MS) return 'miss';
   return Number.isFinite(px) && Number.isFinite(pz) && Math.hypot(px - atk.x, pz - atk.z) <= B.r ? 'hit' : 'miss';
 }
@@ -327,5 +414,11 @@ export function hostTelegraphAt(atk, k, now) {
   const B = HOST_BLOWS[k];
   if (!B || !atk || !Number.isFinite(atk.at)) return null;
   const span = Math.max(B.active, 1);
-  return { t: Math.max(0, Math.min(1, (now - (atk.at - B.windup)) / B.windup)), landing: now >= atk.at && now < atk.at + span, over: now >= atk.at + span, since: now - atk.at, key: B.key };
+  return {
+    t: Math.max(0, Math.min(1, (now - (atk.at - B.windup)) / B.windup)),
+    landing: now >= atk.at && now < atk.at + span,
+    over: now >= atk.at + span,
+    since: now - atk.at,
+    key: B.key,
+  };
 }

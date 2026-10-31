@@ -56,12 +56,24 @@ export const FACTIONS = Object.freeze({
   // The "bandit camp" feel: every human class id except the city
   // watch (that one's reserved for guard spawning, never wilderness).
   BANDIT: [
-    MOBILE_TYPES.Mage, MOBILE_TYPES.Spellsword, MOBILE_TYPES.Battlemage,
-    MOBILE_TYPES.Sorcerer, MOBILE_TYPES.Healer, MOBILE_TYPES.Nightblade,
-    MOBILE_TYPES.Bard, MOBILE_TYPES.Burglar, MOBILE_TYPES.Rogue,
-    MOBILE_TYPES.Acrobat, MOBILE_TYPES.Thief, MOBILE_TYPES.Assassin,
-    MOBILE_TYPES.Monk, MOBILE_TYPES.Archer, MOBILE_TYPES.Ranger,
-    MOBILE_TYPES.Barbarian, MOBILE_TYPES.Warrior, MOBILE_TYPES.Knight,
+    MOBILE_TYPES.Mage,
+    MOBILE_TYPES.Spellsword,
+    MOBILE_TYPES.Battlemage,
+    MOBILE_TYPES.Sorcerer,
+    MOBILE_TYPES.Healer,
+    MOBILE_TYPES.Nightblade,
+    MOBILE_TYPES.Bard,
+    MOBILE_TYPES.Burglar,
+    MOBILE_TYPES.Rogue,
+    MOBILE_TYPES.Acrobat,
+    MOBILE_TYPES.Thief,
+    MOBILE_TYPES.Assassin,
+    MOBILE_TYPES.Monk,
+    MOBILE_TYPES.Archer,
+    MOBILE_TYPES.Ranger,
+    MOBILE_TYPES.Barbarian,
+    MOBILE_TYPES.Warrior,
+    MOBILE_TYPES.Knight,
   ],
   ORC: [MOBILE_TYPES.Orc, MOBILE_TYPES.OrcSergeant, MOBILE_TYPES.OrcShaman, MOBILE_TYPES.OrcWarlord],
   VERMIN: [MOBILE_TYPES.Spider, MOBILE_TYPES.GiantScorpion, MOBILE_TYPES.GiantBat],
@@ -74,7 +86,13 @@ export const FACTIONS = Object.freeze({
   // quirks, not lore. NIGHT_ONLY_FACTIONS below overrides those few
   // exceptions so a werewolf/wereboar pack only ever forms after dark.
   WEREBEAST: [MOBILE_TYPES.Werewolf, MOBILE_TYPES.Wereboar],
-  UNDEAD: [MOBILE_TYPES.SkeletalWarrior, MOBILE_TYPES.Zombie, MOBILE_TYPES.Ghost, MOBILE_TYPES.Wraith, MOBILE_TYPES.Vampire],
+  UNDEAD: [
+    MOBILE_TYPES.SkeletalWarrior,
+    MOBILE_TYPES.Zombie,
+    MOBILE_TYPES.Ghost,
+    MOBILE_TYPES.Wraith,
+    MOBILE_TYPES.Vampire,
+  ],
   FAE: [MOBILE_TYPES.Centaur, MOBILE_TYPES.Harpy, MOBILE_TYPES.Gargoyle],
   AQUATIC: [MOBILE_TYPES.Slaughterfish],
 });

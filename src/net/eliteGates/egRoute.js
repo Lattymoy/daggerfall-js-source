@@ -66,7 +66,14 @@ const fin = (v) => typeof v === 'number' && Number.isFinite(v);
 /** THE COURSE'S LINE of a law 4-8 hall: its origin along +z (its length the hall's, 1 m where none is said). */
 function lineOf(spec) {
   const L = fin(spec?.len) && spec.len > 0 ? spec.len : 1;
-  return { nodes: [[0, 0, 0], [0, 0, L]], links: [{ a: 0, b: 1, kind: 'walk', road: 0, len: L }], main: [0, 1] };
+  return {
+    nodes: [
+      [0, 0, 0],
+      [0, 0, L],
+    ],
+    links: [{ a: 0, b: 1, kind: 'walk', road: 0, len: L }],
+    main: [0, 1],
+  };
 }
 const pt = (R, i) => R.nodes[i];
 const geoLen = (A, B) => Math.hypot(B[0] - A[0], B[1] - A[1], B[2] - A[2]);
@@ -74,16 +81,30 @@ const geoLen = (A, B) => Math.hypot(B[0] - A[0], B[1] - A[1], B[2] - A[2]);
 const walked = (R, l) => (fin(l.len) && l.len >= 0 ? l.len : geoLen(pt(R, l.a), pt(R, l.b)));
 /** Is `R` a route this module can read (its nodes points, its links joining two of them, its main path two at least)? */
 function readable(R) {
-  if (!R || typeof R !== 'object' || !Array.isArray(R.nodes) || !Array.isArray(R.links) || !Array.isArray(R.main) || R.nodes.length < 2 || !R.links.length || R.main.length < 2) return false;
+  if (
+    !R ||
+    typeof R !== 'object' ||
+    !Array.isArray(R.nodes) ||
+    !Array.isArray(R.links) ||
+    !Array.isArray(R.main) ||
+    R.nodes.length < 2 ||
+    !R.links.length ||
+    R.main.length < 2
+  )
+    return false;
   if (!R.nodes.every((p) => Array.isArray(p) && p.length >= 3 && fin(p[0]) && fin(p[1]) && fin(p[2]))) return false;
-  const N = R.nodes.length, ix = (i) => Number.isInteger(i) && i >= 0 && i < N;
+  const N = R.nodes.length,
+    ix = (i) => Number.isInteger(i) && i >= 0 && i < N;
   return R.links.every((l) => l && ix(l.a) && ix(l.b)) && R.main.every(ix);
 }
 
 /** The cheapest way from `src` to `dst` over the links `use` allows (`cost` each; a Drop a to b only) - the nodes and the
  *  links taken, or null. A route is tens of nodes: the plain O(N^2) search. */
 function cheapest(R, src, dst, use, cost) {
-  const N = R.nodes.length, d = new Float64Array(N).fill(Infinity), via = new Int32Array(N).fill(-1), done = new Uint8Array(N);
+  const N = R.nodes.length,
+    d = new Float64Array(N).fill(Infinity),
+    via = new Int32Array(N).fill(-1),
+    done = new Uint8Array(N);
   d[src] = 0;
   for (;;) {
     let u = -1;
@@ -95,34 +116,63 @@ function cheapest(R, src, dst, use, cost) {
       const v = l.a === u ? l.b : l.b === u && l.kind !== 'drop' ? l.a : -1;
       if (v < 0 || done[v]) return;
       const nd = d[u] + cost(l);
-      if (nd < d[v]) { d[v] = nd; via[v] = j; }
+      if (nd < d[v]) {
+        d[v] = nd;
+        via[v] = j;
+      }
     });
   }
   if (!(d[dst] < Infinity)) return null;
-  const nodes = [dst], links = [];
-  for (let v = dst; v !== src;) { const j = via[v], l = R.links[j]; links.unshift(j); v = l.a === v ? l.b : l.a; nodes.unshift(v); }
+  const nodes = [dst],
+    links = [];
+  for (let v = dst; v !== src;) {
+    const j = via[v],
+      l = R.links[j];
+    links.unshift(j);
+    v = l.a === v ? l.b : l.a;
+    nodes.unshift(v);
+  }
   return { nodes, links };
 }
 /** Road `r`'s path from the arrival plate to the door: road 0 the spec's `main` (each step the cheapest main-way link
  *  between its two nodes), road 1 the main with THE FORK's other way taken wherever one is laid - or null. */
 function pathOf(R, r) {
-  const src = R.main[0], dst = R.main[R.main.length - 1];
+  const src = R.main[0],
+    dst = R.main[R.main.length - 1];
   if (r === 0) {
     const links = [];
     for (let i = 1; i < R.main.length; i++) {
-      const u = R.main[i - 1], v = R.main[i];
-      let best = -1, bk = Infinity;
+      const u = R.main[i - 1],
+        v = R.main[i];
+      let best = -1,
+        bk = Infinity;
       R.links.forEach((l, j) => {
         if (!((l.a === u && l.b === v) || (l.b === u && l.a === v && l.kind !== 'drop'))) return;
-        const k = ((l.road ?? 0) === 0 ? 0 : 1e9) + walked(R, l);   // the main way's own link first, then the shortest
-        if (k < bk) { best = j; bk = k; }
+        const k = ((l.road ?? 0) === 0 ? 0 : 1e9) + walked(R, l); // the main way's own link first, then the shortest
+        if (k < bk) {
+          best = j;
+          bk = k;
+        }
       });
-      if (best < 0) return cheapest(R, src, dst, (l) => (l.road ?? 0) !== 2, (l) => walked(R, l) * ((l.road ?? 0) === 0 ? 1 : OFF_ROAD_X));
+      if (best < 0)
+        return cheapest(
+          R,
+          src,
+          dst,
+          (l) => (l.road ?? 0) !== 2,
+          (l) => walked(R, l) * ((l.road ?? 0) === 0 ? 1 : OFF_ROAD_X),
+        );
       links.push(best);
     }
     return { nodes: [...R.main], links };
   }
-  return cheapest(R, src, dst, (l) => (l.road ?? 0) === 0 || (l.road ?? 0) === r, (l) => walked(R, l) * ((l.road ?? 0) === r ? 1 : OFF_ROAD_X));
+  return cheapest(
+    R,
+    src,
+    dst,
+    (l) => (l.road ?? 0) === 0 || (l.road ?? 0) === r,
+    (l) => walked(R, l) * ((l.road ?? 0) === r ? 1 : OFF_ROAD_X),
+  );
 }
 /**
  * Each node's progress on a road whose path is `P` (`cum` its walked length at each of its nodes): its own on the path; off
@@ -130,15 +180,25 @@ function pathOf(R, r) {
  * side way that comes back), or the one it leaves from (a side way that ends); NaN for a node no way joins to the path.
  */
 function progressOf(R, P, cum) {
-  const N = R.nodes.length, out = new Float64Array(N).fill(NaN), onPath = new Uint8Array(R.links.length), place = new Uint8Array(N);
+  const N = R.nodes.length,
+    out = new Float64Array(N).fill(NaN),
+    onPath = new Uint8Array(R.links.length),
+    place = new Uint8Array(N);
   for (const j of P.links) onPath[j] = 1;
-  P.nodes.forEach((n, i) => { if (!place[n]) { place[n] = 1; out[n] = cum[i]; } });
+  P.nodes.forEach((n, i) => {
+    if (!place[n]) {
+      place[n] = 1;
+      out[n] = cum[i];
+    }
+  });
   for (let n = 0; n < N; n++) {
     if (!Number.isNaN(out[n])) continue;
     // the walk from `n` over the off-path links (either way), stopping at the path's places
-    const d = new Float64Array(N).fill(Infinity), done = new Uint8Array(N);
+    const d = new Float64Array(N).fill(Infinity),
+      done = new Uint8Array(N);
     d[n] = 0;
-    let lo = -1, hi = -1;
+    let lo = -1,
+      hi = -1;
     for (;;) {
       let u = -1;
       for (let i = 0; i < N; i++) if (!done[i] && d[i] < Infinity && (u < 0 || d[i] < d[u])) u = i;
@@ -158,58 +218,128 @@ function progressOf(R, P, cum) {
       });
     }
     if (lo < 0) continue;
-    const wl = d[lo], wh = d[hi];
-    out[n] = lo === hi || out[lo] === out[hi] || !(wl + wh > 0) ? out[lo] : out[lo] + ((out[hi] - out[lo]) * wl) / (wl + wh);
+    const wl = d[lo],
+      wh = d[hi];
+    out[n] =
+      lo === hi || out[lo] === out[hi] || !(wl + wh > 0) ? out[lo] : out[lo] + ((out[hi] - out[lo]) * wl) / (wl + wh);
   }
   return out;
 }
 /** THE ROUTE COMPILED for the measure: each link's foot and unit way in the measure's space (height times
  *  EG_ROUTE_Y_WEIGHT) and in plan, its progress at either end on roads 0 and 1, its way of travel in plan. */
 function compile(R, line) {
-  const n = R.links.length, f = () => new Float64Array(n);
-  const C = /** @type {Compiled} */ ({ route: null, n, ok: new Uint8Array(n), road: new Uint8Array(n), open: new Uint8Array(n),
-    ax: f(), ay: f(), az: f(), ux: f(), uy: f(), uz: f(), g: f(), pux: f(), puz: f(), gp: f(), dirX: f(), dirZ: f(),
-    m: [], k: [], kp: [], cum: [], paths: [], ways: [] });
-  const W = EG_ROUTE_Y_WEIGHT, src = R.main[0], dst = R.main[R.main.length - 1];
+  const n = R.links.length,
+    f = () => new Float64Array(n);
+  const C = /** @type {Compiled} */ ({
+    route: null,
+    n,
+    ok: new Uint8Array(n),
+    road: new Uint8Array(n),
+    open: new Uint8Array(n),
+    ax: f(),
+    ay: f(),
+    az: f(),
+    ux: f(),
+    uy: f(),
+    uz: f(),
+    g: f(),
+    pux: f(),
+    puz: f(),
+    gp: f(),
+    dirX: f(),
+    dirZ: f(),
+    m: [],
+    k: [],
+    kp: [],
+    cum: [],
+    paths: [],
+    ways: [],
+  });
+  const W = EG_ROUTE_Y_WEIGHT,
+    src = R.main[0],
+    dst = R.main[R.main.length - 1];
   R.links.forEach((l, i) => {
-    const A = pt(R, l.a), B = pt(R, l.b), dx = B[0] - A[0], dy = (B[1] - A[1]) * W, dz = B[2] - A[2];
-    const g = Math.sqrt(dx * dx + dy * dy + dz * dz), gp = Math.sqrt(dx * dx + dz * dz);
-    C.ax[i] = A[0]; C.ay[i] = A[1] * W; C.az[i] = A[2];
-    if (g > 0) { C.ux[i] = dx / g; C.uy[i] = dy / g; C.uz[i] = dz / g; }
-    if (gp > 0) { C.pux[i] = dx / gp; C.puz[i] = dz / gp; }
-    C.g[i] = g; C.gp[i] = gp;
+    const A = pt(R, l.a),
+      B = pt(R, l.b),
+      dx = B[0] - A[0],
+      dy = (B[1] - A[1]) * W,
+      dz = B[2] - A[2];
+    const g = Math.sqrt(dx * dx + dy * dy + dz * dz),
+      gp = Math.sqrt(dx * dx + dz * dz);
+    C.ax[i] = A[0];
+    C.ay[i] = A[1] * W;
+    C.az[i] = A[2];
+    if (g > 0) {
+      C.ux[i] = dx / g;
+      C.uy[i] = dy / g;
+      C.uz[i] = dz / g;
+    }
+    if (gp > 0) {
+      C.pux[i] = dx / gp;
+      C.puz[i] = dz / gp;
+    }
+    C.g[i] = g;
+    C.gp[i] = gp;
     C.road[i] = Math.max(0, Math.min(2, (l.road ?? 0) | 0));
     C.open[i] = (l.a === src || l.a === dst ? 1 : 0) | (l.b === src || l.b === dst ? 2 : 0);
   });
   for (const r of [0, 1]) {
     const P = pathOf(R, r) ?? pathOf(R, 0) ?? { nodes: [src, dst], links: [] };
     const cum = new Float64Array(P.nodes.length);
-    P.links.forEach((j, i) => { cum[i + 1] = cum[i] + walked(R, R.links[j]); });
-    const at = progressOf(R, P, cum), m = new Float64Array(2 * n), k = f(), kp = f();
-    R.links.forEach((l, i) => {
-      m[2 * i] = at[l.a]; m[2 * i + 1] = at[l.b];
-      const dm = at[l.b] - at[l.a];
-      k[i] = C.g[i] > 0 ? dm / C.g[i] : 0; kp[i] = C.gp[i] > 0 ? dm / C.gp[i] : 0;
+    P.links.forEach((j, i) => {
+      cum[i + 1] = cum[i] + walked(R, R.links[j]);
     });
-    C.m.push(m); C.k.push(k); C.kp.push(kp); C.cum.push(cum); C.paths.push(P.nodes); C.ways.push(P.links);
+    const at = progressOf(R, P, cum),
+      m = new Float64Array(2 * n),
+      k = f(),
+      kp = f();
+    R.links.forEach((l, i) => {
+      m[2 * i] = at[l.a];
+      m[2 * i + 1] = at[l.b];
+      const dm = at[l.b] - at[l.a];
+      k[i] = C.g[i] > 0 ? dm / C.g[i] : 0;
+      kp[i] = C.gp[i] > 0 ? dm / C.gp[i] : 0;
+    });
+    C.m.push(m);
+    C.k.push(k);
+    C.kp.push(kp);
+    C.cum.push(cum);
+    C.paths.push(P.nodes);
+    C.ways.push(P.links);
   }
   // a link is the route's while both its ends are joined to the main way; its way of travel is toward the door on road 0
   const m0 = C.m[0];
   for (let i = 0; i < n; i++) {
     C.ok[i] = Number.isNaN(m0[2 * i]) || Number.isNaN(m0[2 * i + 1]) ? 0 : 1;
-    if (C.gp[i] > 1e-6) { const s = m0[2 * i + 1] < m0[2 * i] ? -1 : 1; C.dirX[i] = s * C.pux[i]; C.dirZ[i] = s * C.puz[i]; }
+    if (C.gp[i] > 1e-6) {
+      const s = m0[2 * i + 1] < m0[2 * i] ? -1 : 1;
+      C.dirX[i] = s * C.pux[i];
+      C.dirZ[i] = s * C.puz[i];
+    }
   }
   // a link with no way in plan (a climb's face) travels as the next link on from its far end does (else the one before it)
   for (let i = 0; i < n; i++) {
     if (C.gp[i] > 1e-6) continue;
-    const l = R.links[i], up = m0[2 * i + 1] >= m0[2 * i] ? l.b : l.a, down = up === l.b ? l.a : l.b;
+    const l = R.links[i],
+      up = m0[2 * i + 1] >= m0[2 * i] ? l.b : l.a,
+      down = up === l.b ? l.a : l.b;
     const from = (node) => R.links.findIndex((q, j) => j !== i && C.gp[j] > 1e-6 && (q.a === node || q.b === node));
     const j = from(up) >= 0 ? from(up) : from(down);
-    if (j >= 0) { C.dirX[i] = C.dirX[j]; C.dirZ[i] = C.dirZ[j]; } else C.dirZ[i] = 1;
+    if (j >= 0) {
+      C.dirX[i] = C.dirX[j];
+      C.dirZ[i] = C.dirZ[j];
+    } else C.dirZ[i] = 1;
   }
   const fz = (a) => Object.freeze([...a]);
-  C.route = Object.freeze({ nodes: R.nodes, links: R.links, main: R.main, paths: Object.freeze(C.paths.map(fz)), ways: Object.freeze(C.ways.map(fz)),
-    len: Object.freeze([C.cum[0][C.cum[0].length - 1], C.cum[1][C.cum[1].length - 1]]), line: line ? 1 : 0 });
+  C.route = Object.freeze({
+    nodes: R.nodes,
+    links: R.links,
+    main: R.main,
+    paths: Object.freeze(C.paths.map(fz)),
+    ways: Object.freeze(C.ways.map(fz)),
+    len: Object.freeze([C.cum[0][C.cum[0].length - 1], C.cum[1][C.cum[1].length - 1]]),
+    line: line ? 1 : 0,
+  });
   return C;
 }
 /** THE COURSE'S LINE shared by every spec this module is handed without one (a null, a fixture with no fields). */
@@ -220,53 +350,87 @@ function compiled(spec) {
   const R = spec && typeof spec === 'object' ? spec.route : null;
   if (R && typeof R === 'object') {
     let C = _byRoute.get(R);
-    if (!C && readable(R)) { C = compile(R, false); _byRoute.set(R, C); }
+    if (!C && readable(R)) {
+      C = compile(R, false);
+      _byRoute.set(R, C);
+    }
     if (C) return C;
   }
   if (!spec || typeof spec !== 'object') return (_bare ??= compile(lineOf(null), true));
   let C = _byLine.get(spec);
-  if (!C) { C = compile(lineOf(spec), true); _byLine.set(spec, C); }
+  if (!C) {
+    C = compile(lineOf(spec), true);
+    _byLine.set(spec, C);
+  }
   return C;
 }
 
 // ── THE NEAREST POINT ────────────────────────────────────────────────────────────────────────────────────────
 // the answer of the last search, read before the next (no reader holds it across a call)
-let _i = -1, _s = 0, _d2 = Infinity, _plan = false;
+let _i = -1,
+  _s = 0,
+  _d2 = Infinity,
+  _plan = false;
 /** The route's nearest link to (x, y, z) - `y` not finite: plan alone - and the point's reach along it (unclamped, metres of
  *  the measure's space); a tie goes to the lower road. */
 function nearest(C, x, y, z) {
-  const plan = !fin(y), Y = plan ? 0 : y * EG_ROUTE_Y_WEIGHT;
-  let best = -1, bd = Infinity, bs = 0;
+  const plan = !fin(y),
+    Y = plan ? 0 : y * EG_ROUTE_Y_WEIGHT;
+  let best = -1,
+    bd = Infinity,
+    bs = 0;
   for (let i = 0; i < C.n; i++) {
     if (!C.ok[i]) continue;
-    const ax = C.ax[i], az = C.az[i];
+    const ax = C.ax[i],
+      az = C.az[i];
     let s, d2;
     if (plan) {
-      const G = C.gp[i], ux = C.pux[i], uz = C.puz[i];
+      const G = C.gp[i],
+        ux = C.pux[i],
+        uz = C.puz[i];
       s = (x - ax) * ux + (z - az) * uz;
-      const sc = s < 0 ? 0 : s > G ? G : s, ex = x - (ax + ux * sc), ez = z - (az + uz * sc);
+      const sc = s < 0 ? 0 : s > G ? G : s,
+        ex = x - (ax + ux * sc),
+        ez = z - (az + uz * sc);
       d2 = ex * ex + ez * ez;
     } else {
-      const G = C.g[i], ay = C.ay[i], ux = C.ux[i], uy = C.uy[i], uz = C.uz[i];
+      const G = C.g[i],
+        ay = C.ay[i],
+        ux = C.ux[i],
+        uy = C.uy[i],
+        uz = C.uz[i];
       s = (x - ax) * ux + (Y - ay) * uy + (z - az) * uz;
-      const sc = s < 0 ? 0 : s > G ? G : s, ex = x - (ax + ux * sc), ez = z - (az + uz * sc);
+      const sc = s < 0 ? 0 : s > G ? G : s,
+        ex = x - (ax + ux * sc),
+        ez = z - (az + uz * sc);
       let ey = Y - (ay + uy * sc);
       if (ey < 0) ey *= EG_ROUTE_UNDER_X;
       d2 = ex * ex + ey * ey + ez * ez;
     }
-    if (best < 0 || d2 < bd || (d2 === bd && C.road[i] < C.road[best])) { best = i; bd = d2; bs = s; }
+    if (best < 0 || d2 < bd || (d2 === bd && C.road[i] < C.road[best])) {
+      best = i;
+      bd = d2;
+      bs = s;
+    }
   }
-  _i = best; _s = bs; _d2 = bd; _plan = plan;
+  _i = best;
+  _s = bs;
+  _d2 = bd;
+  _plan = plan;
 }
 /** The progress on road `r` of the last search's point (its road's first and last links run on past their ends). */
 function alongLast(C, r) {
-  const i = _i, R = r === 1 ? 1 : 0;
+  const i = _i,
+    R = r === 1 ? 1 : 0;
   if (i < 0) return NaN;
-  const G = _plan ? C.gp[i] : C.g[i], o = C.open[i];
+  const G = _plan ? C.gp[i] : C.g[i],
+    o = C.open[i];
   const s = _s < 0 && !(o & 1) ? 0 : _s > G && !(o & 2) ? G : _s;
   return C.m[R][2 * i] + s * (_plan ? C.kp[R][i] : C.k[R][i]);
 }
-const xOf = (p) => (Array.isArray(p) ? p[0] : p?.x), yOf = (p) => (Array.isArray(p) ? p[1] : p?.y), zOf = (p) => (Array.isArray(p) ? p[2] : p?.z);
+const xOf = (p) => (Array.isArray(p) ? p[0] : p?.x),
+  yOf = (p) => (Array.isArray(p) ? p[1] : p?.y),
+  zOf = (p) => (Array.isArray(p) ? p[2] : p?.z);
 
 // ── THE READERS ──────────────────────────────────────────────────────────────────────────────────────────────
 /**
@@ -303,13 +467,23 @@ export const egRouteAlong = (spec, p, road = 0) => egRouteAlongAt(spec, xOf(p), 
 export function egRouteNear(spec, p, out = {}) {
   const C = compiled(spec);
   nearest(C, xOf(p), yOf(p), zOf(p));
-  const i = _i, along = alongLast(C, 0);
+  const i = _i,
+    along = alongLast(C, 0);
   if (i < 0) return Object.assign(out, { i: -1, road: 0, kind: '', x: NaN, y: NaN, z: NaN, d: NaN, along: NaN });
-  const l = C.route.links[i], G = _plan ? C.gp[i] : C.g[i], sc = _s < 0 ? 0 : _s > G ? G : _s, t = G > 0 ? sc / G : 0;
-  const A = C.route.nodes[l.a], B = C.route.nodes[l.b];
-  out.i = i; out.road = C.road[i]; out.kind = l.kind ?? 'walk';
-  out.x = A[0] + (B[0] - A[0]) * t; out.y = A[1] + (B[1] - A[1]) * t; out.z = A[2] + (B[2] - A[2]) * t;
-  out.d = Math.sqrt(_d2); out.along = along;
+  const l = C.route.links[i],
+    G = _plan ? C.gp[i] : C.g[i],
+    sc = _s < 0 ? 0 : _s > G ? G : _s,
+    t = G > 0 ? sc / G : 0;
+  const A = C.route.nodes[l.a],
+    B = C.route.nodes[l.b];
+  out.i = i;
+  out.road = C.road[i];
+  out.kind = l.kind ?? 'walk';
+  out.x = A[0] + (B[0] - A[0]) * t;
+  out.y = A[1] + (B[1] - A[1]) * t;
+  out.z = A[2] + (B[2] - A[2]) * t;
+  out.d = Math.sqrt(_d2);
+  out.along = along;
   return out;
 }
 /**
@@ -322,7 +496,10 @@ export const egRouteRoad = (spec, p) => egRouteRoadAt(spec, xOf(p), yOf(p), zOf(
 /** egRouteRoad's no-array form. @param {any} spec @param {number} x @param {number|undefined} y @param {number} z */
 export function egRouteRoadAt(spec, x, y, z) {
   const C = compiled(spec);
-  if (C.route.line) { const F = spec?.fork; return F && z >= F.z && x >= (F.lowX + F.x) / 2 ? 1 : 0; }
+  if (C.route.line) {
+    const F = spec?.fork;
+    return F && z >= F.z && x >= (F.lowX + F.x) / 2 ? 1 : 0;
+  }
   nearest(C, x, y, z);
   return _i < 0 ? 0 : C.road[_i];
 }
@@ -332,11 +509,20 @@ export function egRouteRoadAt(spec, x, y, z) {
  * @param {any} spec @param {number} s @param {number} [road] @param {number[]} [out]
  */
 export function egRouteAt(spec, s, road = 0, out = [0, 0, 0]) {
-  const C = compiled(spec), r = road === 1 ? 1 : 0, P = C.paths[r], cum = C.cum[r], N = C.route.nodes;
+  const C = compiled(spec),
+    r = road === 1 ? 1 : 0,
+    P = C.paths[r],
+    cum = C.cum[r],
+    N = C.route.nodes;
   let i = 0;
   while (i < P.length - 2 && s > cum[i + 1]) i++;
-  const A = N[P[i]], B = N[P[i + 1]], L = cum[i + 1] - cum[i], t = L > 0 ? (s - cum[i]) / L : 0;
-  out[0] = A[0] + (B[0] - A[0]) * t; out[1] = A[1] + (B[1] - A[1]) * t; out[2] = A[2] + (B[2] - A[2]) * t;
+  const A = N[P[i]],
+    B = N[P[i + 1]],
+    L = cum[i + 1] - cum[i],
+    t = L > 0 ? (s - cum[i]) / L : 0;
+  out[0] = A[0] + (B[0] - A[0]) * t;
+  out[1] = A[1] + (B[1] - A[1]) * t;
+  out[2] = A[2] + (B[2] - A[2]) * t;
   return out;
 }
 /** A road's walked length from the arrival plate to the door (m - laws 4-8: the hall's length). */
@@ -349,9 +535,12 @@ export const egRouteLen = (spec, road = 0) => compiled(spec).route.len[road === 
  * @param {any} spec @param {any} p @param {number} ahead @param {number} side @param {number[]} [out]
  */
 export function egRouteAhead(spec, p, ahead, side, out = [0, 0]) {
-  const C = compiled(spec), x = xOf(p), z = zOf(p);
+  const C = compiled(spec),
+    x = xOf(p),
+    z = zOf(p);
   nearest(C, x, yOf(p), z);
-  const dx = _i < 0 ? 0 : C.dirX[_i], dz = _i < 0 ? 1 : C.dirZ[_i];
+  const dx = _i < 0 ? 0 : C.dirX[_i],
+    dz = _i < 0 ? 1 : C.dirZ[_i];
   out[0] = x + side * dz + ahead * dx;
   out[1] = z + side * -dx + ahead * dz;
   return out;
@@ -363,6 +552,9 @@ export function egRouteAhead(spec, p, ahead, side, out = [0, 0]) {
  * @param {any} spec @param {number} sx @param {number} z @param {number} [pad]
  */
 export function egRouteInHall(spec, sx, z, pad = 40) {
-  if (!compiled(spec).route.line) return Math.abs(sx - spec.x0) <= EG_ROUTE_BOUND.x + pad && z >= EG_ROUTE_BOUND.z0 - pad && z <= EG_ROUTE_BOUND.z1 + pad;
+  if (!compiled(spec).route.line)
+    return (
+      Math.abs(sx - spec.x0) <= EG_ROUTE_BOUND.x + pad && z >= EG_ROUTE_BOUND.z0 - pad && z <= EG_ROUTE_BOUND.z1 + pad
+    );
   return Math.abs(sx - spec.x0) <= EG_LINE_HALF_X + pad && z >= -pad && z <= spec.len + pad;
 }

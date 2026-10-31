@@ -2,8 +2,8 @@
   {
     "name": "LA-AUDIT-A1-1-the-cells-never-built",
     "file": "src/render/staticBatch.js",
-    "old": "    if (this.shadowCell > 0) {   // LA-AUDIT A1",
-    "new": "    if (false) {   // LA-AUDIT A1",
+    "old": "    if (this.shadowCell > 0) {",
+    "new": "    if (false) {",
     "tests": [
       "test/render/la_audit.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "LA-AUDIT-A1-2-the-sort-unstable",
     "file": "src/render/staticBatch.js",
-    "old": "  for (let t = 0; t < tris; t++) {\n    const s = /** @type {number} */ (next.get(key[t]));",
-    "new": "  for (let t = tris - 1; t >= 0; t--) {\n    const s = /** @type {number} */ (next.get(key[t]));",
+    "old": "  const out = new Uint32Array(indices.length);\n  for (let t = 0; t < tris; t++) {",
+    "new": "  const out = new Uint32Array(indices.length);\n  for (let t = tris - 1; t >= 0; t--) {",
     "tests": [
       "test/render/la_audit.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "LA-AUDIT-B5-1-the-low-byte-unrounded",
     "file": "src/render/airPass.js",
-    "old": "floor(t.r * 255.0 + 0.5) * 256.0 + floor(t.g * 255.0 + 0.5)",
-    "new": "floor(t.r * 255.0 + 0.5) * 256.0 + t.g * 255.0",
+    "old": "  return (floor(t.r * 255.0 + 0.5) * 256.0 + floor(t.g * 255.0 + 0.5)) / ${glslFloat(AIR_ADAPT_STEPS)} * ${glslFloat(AIR_ADAPT_LOG_RANGE[1] - AIR_ADAPT_LOG_RANGE[0])} + (${glslFloat(AIR_ADAPT_LOG_RANGE[0])});",
+    "new": "  return (floor(t.r * 255.0 + 0.5) * 256.0 + t.g * 255.0) / ${glslFloat(AIR_ADAPT_STEPS)} * ${glslFloat(AIR_ADAPT_LOG_RANGE[1] - AIR_ADAPT_LOG_RANGE[0])} + (${glslFloat(AIR_ADAPT_LOG_RANGE[0])});",
     "tests": [
       "test/render/la_audit.test.js",
       "test/render/la_post.test.js"
@@ -211,8 +211,8 @@
   {
     "name": "LA-AUDIT-B5-2-the-eye-sampler-lowp-again",
     "file": "src/render/airPass.js",
-    "old": "uniform highp sampler2D uAdapt;   // LA-AUDIT B5",
-    "new": "uniform sampler2D uAdapt;   // LA-AUDIT B5",
+    "old": "uniform highp sampler2D uAdapt;   // LA-AUDIT B5: sixteen bits, at a precision that holds them",
+    "new": "uniform sampler2D uAdapt;   // LA-AUDIT B5: sixteen bits, at a precision that holds them",
     "tests": [
       "test/render/la_audit.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "LA-AUDIT-B6-1-the-one-surface-test-loosened",
     "file": "src/render/airPass.js",
-    "old": "abs(a - b) <= max(abs(a), abs(b)) * 0.5 + uBlurRange * 0.25)",
-    "new": "abs(a - b) <= max(abs(a), abs(b)) * 0.5 + uBlurRange)",
+    "old": "  if (a * b >= 0.0 && abs(a - b) <= max(abs(a), abs(b)) * 0.5 + uBlurRange * 0.25) return vec2((a + b) * 0.5, (b - a) * 0.5);",
+    "new": "  if (a * b >= 0.0 && abs(a - b) <= max(abs(a), abs(b)) * 0.5 + uBlurRange) return vec2((a + b) * 0.5, (b - a) * 0.5);",
     "tests": [
       "test/render/la_audit.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "LA-AUDIT-B6-3-the-parabola-dropped",
     "file": "src/render/airPass.js",
-    "old": "return vec2((a + b) * 0.5, (b - a) * 0.5);",
-    "new": "return vec2(0.0);",
+    "old": "  if (a * b >= 0.0 && abs(a - b) <= max(abs(a), abs(b)) * 0.5 + uBlurRange * 0.25) return vec2((a + b) * 0.5, (b - a) * 0.5);",
+    "new": "  if (a * b >= 0.0 && abs(a - b) <= max(abs(a), abs(b)) * 0.5 + uBlurRange * 0.25) return vec2(0.0);",
     "tests": [
       "test/render/la_audit.test.js",
       "test/render/la_post.test.js"
@@ -257,8 +257,8 @@
   {
     "name": "LA-AUDIT-F1-1-black-is-still",
     "file": "tools/lightFlickerVerdict.mjs",
-    "old": "    if (x.frames && x.lumMax < LUM_BLACK) bad.push(",
-    "new": "    if (false) bad.push(",
+    "old": "    if (x.frames && x.lumMax < LUM_BLACK) bad.push(`${x.scene}: black (brightest frame's mean luma ${x.lumMax})`);",
+    "new": "    if (false) bad.push(`${x.scene}: black (brightest frame's mean luma ${x.lumMax})`);",
     "tests": [
       "test/render/la_audit.test.js"
     ]
@@ -266,8 +266,8 @@
   {
     "name": "LA-AUDIT-F1-2-walks-unjudged",
     "file": "tools/lightFlickerVerdict.mjs",
-    "old": "    if (kind === 'walk' && !(x.moved >= WALK_MIN && x.c4Max > 0)) bad.push(",
-    "new": "    if (false) bad.push(",
+    "old": "    if (kind === 'walk' && !(x.moved >= WALK_MIN && x.c4Max > 0))\n      bad.push(`${x.scene}: the eye did not walk (moved ${x.moved}, the picture ${x.c4Max}%)`);",
+    "new": "    if (false) bad.push(`${x.scene}: the eye did not walk (moved ${x.moved}, the picture ${x.c4Max}%)`);",
     "tests": [
       "test/render/la_audit.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "LA-AUDIT-F1-3-turns-unjudged",
     "file": "tools/lightFlickerVerdict.mjs",
-    "old": "    if (kind === 'turn' && !(x.turned >= TURN_MIN && x.c4Max > 0)) bad.push(",
-    "new": "    if (false) bad.push(",
+    "old": "    if (kind === 'turn' && !(x.turned >= TURN_MIN && x.c4Max > 0))\n      bad.push(`${x.scene}: the eye did not turn (turned ${x.turned}, the picture ${x.c4Max}%)`);",
+    "new": "    if (false) bad.push(`${x.scene}: the eye did not turn (turned ${x.turned}, the picture ${x.c4Max}%)`);",
     "tests": [
       "test/render/la_audit.test.js"
     ]
@@ -284,8 +284,8 @@
   {
     "name": "LA-AUDIT-F1-4-the-mode-unchecked",
     "file": "tools/lightFlickerVerdict.mjs",
-    "old": "    if (mode && x.modes.some((m) => m !== mode)) bad.push(",
-    "new": "    if (false) bad.push(",
+    "old": "    if (mode && x.modes.some((m) => m !== mode)) bad.push(`${x.scene}: in ${x.modes.join('/')}, not ${mode}`);",
+    "new": "    if (false) bad.push(`${x.scene}: in ${x.modes.join('/')}, not ${mode}`);",
     "tests": [
       "test/render/la_audit.test.js"
     ]
@@ -293,8 +293,8 @@
   {
     "name": "LA-AUDIT-F1-5-the-plans-exception-unread",
     "file": "tools/lightFlickerVerdict.mjs",
-    "old": "    if (x.err) bad.push(",
-    "new": "    if (false) bad.push(",
+    "old": "    if (x.err) bad.push(`${x.scene}: the plan threw - ${x.err}`);",
+    "new": "    if (false) bad.push(`${x.scene}: the plan threw - ${x.err}`);",
     "tests": [
       "test/render/la_audit.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "LA-AUDIT-F1-7-the-churn-unweighed",
     "file": "tools/lightFlickerVerdict.mjs",
-    "old": "rows.reduce((a, r) => a + (r.lInW ?? 0) + (r.lOutW ?? 0), 0)",
-    "new": "rows.reduce((a, r) => a + (r.lIn ?? 0) + (r.lOut ?? 0), 0)",
+    "old": "    churnW: +rows.reduce((a, r) => a + (r.lInW ?? 0) + (r.lOutW ?? 0), 0).toFixed(2), // weighted by each light's share: a faded join is no switch",
+    "new": "    churnW: +rows.reduce((a, r) => a + (r.lIn ?? 0) + (r.lOut ?? 0), 0).toFixed(2), // weighted by each light's share: a faded join is no switch",
     "tests": [
       "test/render/la_audit.test.js"
     ]
@@ -356,8 +356,8 @@
   {
     "name": "LA-AUDIT-D-1-the-flash-unjudged",
     "file": "tools/lightFlickerVerdict.mjs",
-    "old": "    if (x.flashMax > 0) bad.push(",
-    "new": "    if (false) bad.push(",
+    "old": "    if (x.flashMax > 0)\n      bad.push(`${x.scene}: the HUD flashed red (${x.flashMax}) - a blow or a bleed, not the lighting`);",
+    "new": "    if (false) bad.push(`${x.scene}: the HUD flashed red (${x.flashMax}) - a blow or a bleed, not the lighting`);",
     "tests": [
       "test/render/la_audit.test.js"
     ]
@@ -365,8 +365,8 @@
   {
     "name": "LA-AUDIT-D-2-the-health-unjudged",
     "file": "tools/lightFlickerVerdict.mjs",
-    "old": "    if (x.hpLost > 0) bad.push(",
-    "new": "    if (false) bad.push(",
+    "old": "    if (x.hpLost > 0) bad.push(`${x.scene}: the player lost ${x.hpLost} health during the pass`);",
+    "new": "    if (false) bad.push(`${x.scene}: the player lost ${x.hpLost} health during the pass`);",
     "tests": [
       "test/render/la_audit.test.js"
     ]
@@ -374,8 +374,8 @@
   {
     "name": "LA-AUDIT-D-3-the-pass-starts-hurt",
     "file": "tools/lightFlickerProbe.mjs",
-    "old": "  await ev(() => { const e = window.__playerEntity; if (e && e.maxHealth > 0) e.health = e.maxHealth; });\n",
-    "new": "",
+    "old": "  await ev(() => {\n    const e = window.__playerEntity;\n    if (e && e.maxHealth > 0) e.health = e.maxHealth;\n  });\n  await ev(",
+    "new": "  await ev(",
     "tests": [
       "test/render/la_audit.test.js"
     ]

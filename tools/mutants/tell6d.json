@@ -2,8 +2,8 @@
   {
     "name": "TELL6d-halfW",
     "file": "src/ai/blowShapes.js",
-    "old": "aimed: Object.freeze({ windup: 0.6, halfW: 0.25, mult: 1.4, speed: 1.3 }),",
-    "new": "aimed: Object.freeze({ windup: 0.6, halfW: 0.5, mult: 1.4, speed: 1.3 }),",
+    "old": "  aimed: Object.freeze({ windup: 0.6, halfW: 0.25, mult: 1.4, speed: 1.3 }),",
+    "new": "  aimed: Object.freeze({ windup: 0.6, halfW: 0.5, mult: 1.4, speed: 1.3 }),",
     "tests": [
       "test/characters/enemy/tell6d_aimed.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "TELL6d-mult",
     "file": "src/ai/blowShapes.js",
-    "old": "aimed: Object.freeze({ windup: 0.6, halfW: 0.25, mult: 1.4, speed: 1.3 }),",
-    "new": "aimed: Object.freeze({ windup: 0.6, halfW: 0.25, mult: 1.25, speed: 1.3 }),",
+    "old": "  aimed: Object.freeze({ windup: 0.6, halfW: 0.25, mult: 1.4, speed: 1.3 }),",
+    "new": "  aimed: Object.freeze({ windup: 0.6, halfW: 0.25, mult: 1.25, speed: 1.3 }),",
     "tests": [
       "test/characters/enemy/tell6d_aimed.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "TELL6d-speed",
     "file": "src/ai/blowShapes.js",
-    "old": "aimed: Object.freeze({ windup: 0.6, halfW: 0.25, mult: 1.4, speed: 1.3 }),",
-    "new": "aimed: Object.freeze({ windup: 0.6, halfW: 0.25, mult: 1.4, speed: 1 }),",
+    "old": "  aimed: Object.freeze({ windup: 0.6, halfW: 0.25, mult: 1.4, speed: 1.3 }),",
+    "new": "  aimed: Object.freeze({ windup: 0.6, halfW: 0.25, mult: 1.4, speed: 1 }),",
     "tests": [
       "test/characters/enemy/tell6d_aimed.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TELL6d-windup",
     "file": "src/ai/blowShapes.js",
-    "old": "aimed: Object.freeze({ windup: 0.6, halfW: 0.25, mult: 1.4, speed: 1.3 }),",
-    "new": "aimed: Object.freeze({ windup: 0.8, halfW: 0.25, mult: 1.4, speed: 1.3 }),",
+    "old": "  aimed: Object.freeze({ windup: 0.6, halfW: 0.25, mult: 1.4, speed: 1.3 }),",
+    "new": "  aimed: Object.freeze({ windup: 0.8, halfW: 0.25, mult: 1.4, speed: 1.3 }),",
     "tests": [
       "test/characters/enemy/tell6d_aimed.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TELL6d-share",
     "file": "src/ai/tells.js",
-    "old": "  AIMED_SHARE: 1 / 3,           // an archer of the whole set's shots aimed, one in this",
-    "new": "  AIMED_SHARE: 1,           // an archer of the whole set's shots aimed, one in this",
+    "old": "  AIMED_SHARE: 1 / 3, // an archer of the whole set's shots aimed, one in this",
+    "new": "  AIMED_SHARE: 1, // an archer of the whole set's shots aimed, one in this",
     "tests": [
       "test/characters/enemy/tell6d_aimed.test.js",
       "test/systems/tell1_poise.test.js"
@@ -48,8 +48,8 @@
   {
     "name": "TELL6d-line-endless",
     "file": "src/ai/blowShapes.js",
-    "old": "along <= (b.ahead ?? 0) && Math.abs(across) <= BLOW.aimed.halfW;",
-    "new": "along <= 99 && Math.abs(across) <= BLOW.aimed.halfW;",
+    "old": "  if (b.kind === 'aimed') return along >= -0.3 && along <= (b.ahead ?? 0) && Math.abs(across) <= BLOW.aimed.halfW; // TELL6: its line to its target",
+    "new": "  if (b.kind === 'aimed') return along >= -0.3 && along <= 99 && Math.abs(across) <= BLOW.aimed.halfW; // TELL6: its line to its target",
     "tests": [
       "test/characters/enemy/tell6d_aimed.test.js"
     ],
@@ -58,8 +58,8 @@
   {
     "name": "TELL6d-mirror-endless",
     "file": "src/render/foeTelegraph.js",
-    "old": "const W = BLOW.aimed.halfW, inside = along >= -0.3 && along <= ahead && Math.abs(across) <= W;",
-    "new": "const W = BLOW.aimed.halfW, inside = along >= -0.3 && along <= 99 && Math.abs(across) <= W;",
+    "old": "      inside = along >= -0.3 && along <= ahead && Math.abs(across) <= W;",
+    "new": "      inside = along >= -0.3 && along <= 99 && Math.abs(across) <= W;",
     "tests": [
       "test/characters/enemy/tell6d_aimed.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "TELL6d-up-unset",
     "file": "src/render/foeTelegraph.js",
-    "old": "      else if (b.kind === 'aimed') gl.uniform4f(U.uP, b.ahead ?? 0, P.halfW, 0, 0);\n",
-    "new": "",
+    "old": "      else if (b.kind === 'aimed') gl.uniform4f(U.uP, b.ahead ?? 0, P.halfW, 0, 0);\n      else gl.uniform4f(U.uP, P.r, P.ahead, 0, 0);",
+    "new": "      else gl.uniform4f(U.uP, P.r, P.ahead, 0, 0);",
     "tests": [
       "test/characters/enemy/tell6d_aimed.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "TELL6d-quad-fixed",
     "file": "src/render/foeTelegraph.js",
-    "old": "(Number.isFinite(ahead) && (kind === 'leap' || kind === 'aimed' || kind === 'pyre') ?",
-    "new": "(Number.isFinite(ahead) && (kind === 'leap' || kind === 'pyre') ?",
+    "old": "  (Number.isFinite(ahead) && (kind === 'leap' || kind === 'aimed' || kind === 'pyre')",
+    "new": "  (Number.isFinite(ahead) && (kind === 'leap' || kind === 'pyre')",
     "tests": [
       "test/characters/enemy/tell6d_aimed.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "TELL6d-never-ready",
     "file": "src/ai/tactics.js",
-    "old": "    ai._aimReady = has && key === LOCAL && !!_me && ai.canAct !== false && now >= (s.blowReady ?? 0) && aimsShots(ai, ent) && !windupNear(_me.feet, now, ai);",
-    "new": "    ai._aimReady = false && key === LOCAL && !!_me && ai.canAct !== false && now >= (s.blowReady ?? 0) && aimsShots(ai, ent) && !windupNear(_me.feet, now, ai);",
+    "old": "    ai._aimReady =\n      has &&",
+    "new": "    ai._aimReady =\n      false &&",
     "tests": [
       "test/characters/enemy/tell6d_aimed.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "TELL6d-want-ignored",
     "file": "src/ai/tactics.js",
-    "old": "      if (ai._aimReady) { beginWindup(ai, s, ent, 'aimed', dx, dz, now); return windupTurn(ai, s, now, skipped); }",
-    "new": "",
+    "old": "      if (ai._aimReady) {\n        beginWindup(ai, s, ent, 'aimed', dx, dz, now);\n        return windupTurn(ai, s, now, skipped);\n      }\n    }",
+    "new": "    }",
     "tests": [
       "test/characters/enemy/tell6d_aimed.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "TELL6d-line-unlocked",
     "file": "src/ai/tactics.js",
-    "old": "  if (shape === 'aimed') b.ahead = Math.hypot(dx, dz);   // Its line to me, locked",
-    "new": "  if (shape === 'aimed') b.ahead = 3;   // Its line to me, locked",
+    "old": "  if (shape === 'aimed') b.ahead = Math.hypot(dx, dz); // Its line to me, locked",
+    "new": "  if (shape === 'aimed') b.ahead = 3; // Its line to me, locked",
     "tests": [
       "test/characters/enemy/tell6d_aimed.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "TELL6d-swing-held",
     "file": "src/ai/tactics.js",
-    "old": "  const swings = shape !== 'aimed' && shape !== 'pyre';   // A shot draws no held swing - its landing looses it (ai._blowShot); RVN5: nor a pyre - its landing is a spell",
-    "new": "  const swings = shape !== 'pyre';   // A shot draws no held swing - its landing looses it (ai._blowShot); RVN5: nor a pyre - its landing is a spell",
+    "old": "  const swings = shape !== 'aimed' && shape !== 'pyre'; // A shot draws no held swing - its landing looses it (ai._blowShot); RVN5: nor a pyre - its landing is a spell",
+    "new": "  const swings = shape !== 'pyre'; // A shot draws no held swing - its landing looses it (ai._blowShot); RVN5: nor a pyre - its landing is a spell",
     "tests": [
       "test/characters/enemy/tell6d_aimed.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "TELL6d-feints",
     "file": "src/ai/tactics.js",
-    "old": "  if (chain === 0 && !sig && shape !== 'aimed' && shape !== 'pyre' && !GAP_CLOSERS.includes(shape) && feints(blowFamily(ent.mobileType), ent, n - (s.lastFeint ?? -Infinity)) && Math.random() < feintChance(ent)) {   // A Patient one's one in three",
-    "new": "  if (chain === 0 && !sig && shape !== 'pyre' && !GAP_CLOSERS.includes(shape) && feints(blowFamily(ent.mobileType), ent, n - (s.lastFeint ?? -Infinity)) && Math.random() < feintChance(ent)) {   // A Patient one's one in three",
+    "old": "    shape !== 'aimed' &&\n    shape !== 'pyre' &&",
+    "new": "    shape !== 'pyre' &&",
     "tests": [
       "test/characters/enemy/tell6d_aimed.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "TELL6d-no-loose",
     "file": "src/ai/tactics.js",
-    "old": "    if (atMe) ai._blowShot = { yaw: b0.yaw, at: now, fired: false };   // the attack component draws, the sprite looses",
-    "new": "   // the attack component draws, the sprite looses",
+    "old": "    if (atMe) ai._blowShot = { yaw: b0.yaw, at: now, fired: false }; // the attack component draws, the sprite looses",
+    "new": "    // the attack component draws, the sprite looses",
     "tests": [
       "test/characters/enemy/tell6d_aimed.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "TELL6d-window",
     "file": "src/ai/tactics.js",
-    "old": "    s.blowReady = cooled; s.state = 'wait'; s.blow = null;",
-    "new": "    s.blowReady = cooled; s.state = 'overreach'; s.until = now + 1; s.blow = null;",
+    "old": "    s.blowReady = cooled;\n    s.state = 'wait';",
+    "new": "    s.blowReady = cooled;\n    s.state = 'overreach';\n    s.until = now + 1;",
     "tests": [
       "test/characters/enemy/tell6d_aimed.test.js"
     ]

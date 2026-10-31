@@ -44,7 +44,7 @@ export const townTierOn = () => guidanceTier() !== 'journal';
  *  quest's item, people and foes, and the compass pointed at them. The behaviour's quest, else its resource's. */
 export const questEnded = (b) => {
   const q = b?.targetQuest ?? b?.targetResource?.parentQuest ?? null;
-  return !!q && (q.questComplete === true || q.questTombstoned === true || q.shelvedAt != null);   // QUEST-SHELF: and one set aside marks nothing while away
+  return !!q && (q.questComplete === true || q.questTombstoned === true || q.shelvedAt != null); // QUEST-SHELF: and one set aside marks nothing while away
 };
 
 /**
@@ -61,7 +61,16 @@ export const questEnded = (b) => {
  *   behaviourOf?: (f: any) => any }} o
  * @returns {QuestMark[]}
  */
-export function dungeonQuestMarks({ stands = [], foes = [], people = [], boxOf, followedId = null, itemName = () => null, foeName = () => null, behaviourOf = (f) => f?.questBehaviour ?? null }) {
+export function dungeonQuestMarks({
+  stands = [],
+  foes = [],
+  people = [],
+  boxOf,
+  followedId = null,
+  itemName = () => null,
+  foeName = () => null,
+  behaviourOf = (f) => f?.questBehaviour ?? null,
+}) {
   /** @type {QuestMark[]} */
   const out = [];
   const followed = (uid) => followedId != null && uid != null && String(uid) === String(followedId);
@@ -71,14 +80,18 @@ export function dungeonQuestMarks({ stands = [], foes = [], people = [], boxOf, 
     const box = boxOf(s);
     if (!box?.min || !box?.max) continue;
     const at = [(box.min[0] + box.max[0]) / 2, box.min[1], (box.min[2] + box.max[2]) / 2];
-    const name = res.isPerson === true ? (res.displayName || 'Someone') : (itemName(s, res) || 'Quest item');
+    const name = res.isPerson === true ? res.displayName || 'Someone' : itemName(s, res) || 'Quest item';
     out.push({ at, name, followed: followed(s.behaviour.questUID) });
   }
   for (const f of foes ?? []) {
     const b = f ? behaviourOf(f) : null;
     const feet = f?.ai?.feet;
     if (!b || f.dead || !feet || b.targetResource?.isHidden === true || questEnded(b)) continue;
-    out.push({ at: [feet[0], feet[1], feet[2]], name: b.targetResource?.displayName || foeName(f) || 'Quest foe', followed: followed(b.questUID) });
+    out.push({
+      at: [feet[0], feet[1], feet[2]],
+      name: b.targetResource?.displayName || foeName(f) || 'Quest foe',
+      followed: followed(b.questUID),
+    });
   }
   for (const p of people ?? []) {
     const b = p?.questBehaviour;
@@ -98,12 +111,16 @@ export function dungeonQuestMarks({ stands = [], foes = [], people = [], boxOf, 
  */
 export function questCompassPick(marks, feet) {
   if (!feet || !marks?.length) return null;
-  let best = null, bestD = Infinity;
+  let best = null,
+    bestD = Infinity;
   for (const pass of [true, false]) {
     for (const q of marks) {
       if (pass && !q.followed) continue;
       const d = Math.hypot(q.at[0] - feet[0], q.at[1] - feet[1], q.at[2] - feet[2]);
-      if (d < bestD) { bestD = d; best = q; }
+      if (d < bestD) {
+        bestD = d;
+        best = q;
+      }
     }
     if (best) break;
   }
@@ -124,7 +141,7 @@ export function townQuestBuildings(views, mapId, followedId = null) {
   const here = Number(mapId) >>> 0;
   for (const v of views ?? []) {
     const b = v?.target?.building;
-    if (!b || !(b.buildingKey > 0) || (Number(b.mapId) >>> 0) !== here) continue;
+    if (!b || !(b.buildingKey > 0) || Number(b.mapId) >>> 0 !== here) continue;
     const followed = followedId != null && v.id != null && String(v.id) === String(followedId);
     const had = out.get(b.buildingKey);
     out.set(b.buildingKey, { buildingKey: b.buildingKey, followed: followed || !!had?.followed });

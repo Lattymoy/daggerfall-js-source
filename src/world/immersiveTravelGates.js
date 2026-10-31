@@ -18,7 +18,7 @@
 // town out in. The bible's page names it for the owner's eyes.
 
 import { registerWorldDataLayer } from '../formats/worldData/worldDataReplacement.js';
-import { isWallCarrier } from './townShape.js';   // TS7: a city walled on its outline carries its carriages
+import { isWallCarrier } from './townShape.js'; // TS7: a city walled on its outline carries its carriages
 
 /** The four gate blocks the mod edits, and Beautiful Cities' composites on them: `WALLAA08.RMB.json`,
  *  `WALLAA08.FARMAA00.RMB.json` - the gate is the name's first part. */
@@ -26,7 +26,10 @@ export const IT_GATE_FILE = /^(WALLAA(?:08|09|10|11))(?:\.[A-Z0-9]+)?\.RMB\.json
 /** OW-HUBS (FIELD BUGS 2026-10-04e): whether a town stands a carriage at its gate - one of its exterior blocks is a
  *  gate the mod edits (`IT_GATE_FILE`, read off the block's own name: 'WALLAA08.RMB', or a composite on it). Pure; the
  *  mod's switch is the caller's (systems/immersiveTravel.js immersiveTravelLoaded). */
-export const hasCarriageGate = (loc) => (loc?.exterior?.exteriorData?.blockNames ?? []).some((n) => IT_GATE_FILE.test(`${String(n ?? '').toUpperCase()}.json`) || isWallCarrier(n));   // TS7: or the carrier of a wall on its outline (world/townWalls.js gateFurniture); a capital's: world/capitalCarriages.js isCarriageTown
+export const hasCarriageGate = (loc) =>
+  (loc?.exterior?.exteriorData?.blockNames ?? []).some(
+    (n) => IT_GATE_FILE.test(`${String(n ?? '').toUpperCase()}.json`) || isWallCarrier(n),
+  ); // TS7: or the carrier of a wall on its outline (world/townWalls.js gateFurniture); a capital's: world/capitalCarriages.js isCarriageTown
 /** CAPITAL-CARRIAGES: each gate block's frame - its gate model's (446) origin in the block's own metres (x east, z north) and
  *  its outward normal, measured on the freeware (TS7's frames: the subrecord's place, the model 1.6 m in from it). The
  *  mod's records are carried from here to a capital's gate (world/capitalCarriages.js). */
@@ -72,7 +75,13 @@ export function layGateRecords(json, appends) {
 let _carriages = null;
 export function carriageRecordsOf(gateName) {
   if (!_carriages?.isOn()) return null;
-  return _carriages.byGate.get(String(gateName ?? '').toUpperCase().replace(/\.RMB$/, '')) ?? null;
+  return (
+    _carriages.byGate.get(
+      String(gateName ?? '')
+        .toUpperCase()
+        .replace(/\.RMB$/, ''),
+    ) ?? null
+  );
 }
 
 /**
@@ -82,10 +91,12 @@ export function carriageRecordsOf(gateName) {
  */
 export function installImmersiveTravelGates(patches, own, isOn) {
   const byGate = new Map();
-  _carriages = { byGate, isOn: typeof isOn === 'function' ? isOn : () => true };   // TS7: the carriers' too
+  _carriages = { byGate, isOn: typeof isOn === 'function' ? isOn : () => true }; // TS7: the carriers' too
   (patches ?? []).forEach((p, i) => {
-    const h = own?.[i]?.RmbBlock?.FldHeader;   // the rebuilt file's header: the classic counts the editor left there
-    const counts = h ? { Misc3dObjectRecords: h.NumMisc3dObjectRecords, MiscFlatObjectRecords: h.NumMiscFlatObjectRecords } : null;
+    const h = own?.[i]?.RmbBlock?.FldHeader; // the rebuilt file's header: the classic counts the editor left there
+    const counts = h
+      ? { Misc3dObjectRecords: h.NumMisc3dObjectRecords, MiscFlatObjectRecords: h.NumMiscFlatObjectRecords }
+      : null;
     byGate.set(String(p.rebuilds ?? '').replace(/\.RMB\.json$/, ''), gateAppends(p, counts));
   });
   if (!byGate.size) return false;

@@ -48,7 +48,7 @@ export function packTemperature(entity) {
   if (!survivalOn() || !entity) return null;
   const t = feltNow(entity);
   if (t) {
-    const r = temperatureReadout(entity, t.felt, { rules: survivalRules(), env: t.env });   // AUDIT C&C S5/S9: the live tier's level, the live air's fire
+    const r = temperatureReadout(entity, t.felt, { rules: survivalRules(), env: t.env }); // AUDIT C&C S5/S9: the live tier's level, the live air's fire
     return r ? { ...r, rows: temperatureBreakdown(t.env, t), live: true } : null;
   }
   const r = temperatureReadout(entity, undefined, { rules: survivalRules() });
@@ -56,7 +56,8 @@ export function packTemperature(entity) {
 }
 
 /** A breakdown as lines of text - the plaque's title: "Mountains -40", "Clothing +12 (+16 dry)", ... */
-export const breakdownLines = (rows) => rows.map((r) => `${r.label} ${signedDegrees(r.value)}${r.note ? ` (${r.note})` : ''}`);
+export const breakdownLines = (rows) =>
+  rows.map((r) => `${r.label} ${signedDegrees(r.value)}${r.note ? ` (${r.note})` : ''}`);
 
 /** THE PLAQUE: "Felt" over the reading, coloured by the way it runs and framed by its level; its title the whole sum.
  *  Null where packTemperature is. */
@@ -102,7 +103,8 @@ export function temperatureWear(entity, item, wear = null) {
 export function temperatureCompareBlock(entity, item, wear = null) {
   const w = temperatureWear(entity, item, wear);
   if (!w) return null;
-  const a = temperatureReadout(entity, w.before.felt), b = temperatureReadout(entity, w.after.felt);   // the number and its word (no level is drawn here)
+  const a = temperatureReadout(entity, w.before.felt),
+    b = temperatureReadout(entity, w.after.felt); // the number and its word (no level is drawn here)
   const box = el('div', 'cmp tcmp');
   box.append(el('p', 'cmp-head', 'Temperature'));
   const dl = el('dl', 'stats cmp-rows');
@@ -110,7 +112,8 @@ export function temperatureCompareBlock(entity, item, wear = null) {
   const dd = el('dd');
   dd.append(el('span', 'cmp-v', `${a.text} ${a.label} → ${b.text} ${b.label}`));
   const change = Math.round(w.after.felt) - Math.round(w.before.felt);
-  const better = discomfort(w.after.felt) < discomfort(w.before.felt), worse = discomfort(w.after.felt) > discomfort(w.before.felt);
+  const better = discomfort(w.after.felt) < discomfort(w.before.felt),
+    worse = discomfort(w.after.felt) > discomfort(w.before.felt);
   dd.append(el('span', `cmp-d ${better ? 'up' : worse ? 'down' : 'same'}`, signedDegrees(change)));
   g.append(el('dt', null, w.label), dd);
   dl.append(g);
@@ -136,6 +139,10 @@ export function boonStatRows(entity) {
   if (!survivalOn() || !survivalRules()?.boons) return [];
   const s = entity?.survival;
   const ids = Array.isArray(s?.boons) ? s.boons : [];
-  return ids.filter((id) => HUD_BOON_WORDS[id]).map((id) => [HUD_BOON_WORDS[id][0], `${boonEffect(id)}${id === 'rested' && restedLeft(s) ? ` (${restedLeft(s)} left)` : ''}`]);
+  return ids
+    .filter((id) => HUD_BOON_WORDS[id])
+    .map((id) => [
+      HUD_BOON_WORDS[id][0],
+      `${boonEffect(id)}${id === 'rested' && restedLeft(s) ? ` (${restedLeft(s)} left)` : ''}`,
+    ]);
 }
-

@@ -75,8 +75,8 @@
   {
     "name": "AUDIT-WOD-M2-chain-uncaught",
     "file": "src/world/worldOfDaggerfall/worldOfDaggerfall.js",
-    "old": "      try { this.session.appendRegion(region, decodeRegionPack(b)); this._bytes.set(region, b); } catch (e) {\n        this.warn(`[wod] region ${region} did not read: ${e?.message ?? e}`);\n        this._retryLater(region, 0);   // WOD6: a body that would not read may be a proxy's page, not the pack\n      }",
-    "new": "      this.session.appendRegion(region, decodeRegionPack(b)); this._bytes.set(region, b);",
+    "old": "      try {\n        this.session.appendRegion(region, decodeRegionPack(b));\n        this._bytes.set(region, b);\n      } catch (e) {\n        this.warn(`[wod] region ${region} did not read: ${e?.message ?? e}`);\n        this._retryLater(region, 0); // WOD6: a body that would not read may be a proxy's page, not the pack\n      }",
+    "new": "      this.session.appendRegion(region, decodeRegionPack(b));\n      this._bytes.set(region, b);",
     "tests": [
       "test/world/worldOfDaggerfall/audit_wod_branch.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "AUDIT-WOD-M2-early-region-first",
     "file": "src/world/worldOfDaggerfall/worldOfDaggerfall.js",
-    "old": "    if (!this._awake) { this._early.push(region); return; }",
-    "new": "",
+    "old": "    if (!this._awake) {\n      this._early.push(region);\n      return;\n    } // AUDIT BRANCH (WoD) M2: after Awake's folder",
+    "new": "    // AUDIT BRANCH (WoD) M2: after Awake's folder",
     "tests": [
       "test/world/worldOfDaggerfall/audit_wod_branch.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "AUDIT-WOD-M2-stall-is-total-time",
     "file": "src/world/worldOfDaggerfall/worldOfDaggerfall.js",
-    "old": "      for (;;) {\n        poke();",
-    "new": "      for (;;) {",
+    "old": "        poke();\n        const { done, value } = await reader.read();",
+    "new": "        const { done, value } = await reader.read();",
     "tests": [
       "test/world/worldOfDaggerfall/audit_wod_branch.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "AUDIT-WOD-L1-3-collect-before-place",
     "file": "src/world/streamingWorld.js",
-    "old": "    const out = { reactivated: [], recycled: [], pooled: [] };\n    for (let y = cy - distance; y <= cy + distance; y++) {",
-    "new": "    const out = { reactivated: [], recycled: [], pooled: [] };\n    for (const s of this.slots) { if (s.active && !inRange(s.px, s.py)) { s.active = false; out.pooled.push(`${s.px},${s.py}`); } }\n    for (let y = cy - distance; y <= cy + distance; y++) {",
+    "old": "    for (let y = cy - distance; y <= cy + distance; y++) {",
+    "new": "    for (const s of this.slots) {\n      if (s.active && !inRange(s.px, s.py)) {\n        s.active = false;\n        out.pooled.push(`${s.px},${s.py}`);\n      }\n    }\n    for (let y = cy - distance; y <= cy + distance; y++) {",
     "tests": [
       "test/world/worldOfDaggerfall/audit_wod_branch.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "WOD6-failed-fetch-lost",
     "file": "src/world/worldOfDaggerfall/worldOfDaggerfall.js",
-    "old": "      if (b === FAILED) { this._retryLater(region, 0); return; }",
-    "new": "      if (b === FAILED) return;",
+    "old": "      if (b === FAILED) {\n        this._retryLater(region, 0);\n        return;\n      } // WOD6: tried again, off the chain",
+    "new": "      if (b === FAILED) return; // WOD6: tried again, off the chain",
     "tests": [
       "test/world/worldOfDaggerfall/audit_wod_branch.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "WOD6-unreadable-pack-lost",
     "file": "src/world/worldOfDaggerfall/worldOfDaggerfall.js",
-    "old": "        this._retryLater(region, 0);   // WOD6: a body that would not read may be a proxy's page, not the pack\n",
-    "new": "",
+    "old": "        this._retryLater(region, 0); // WOD6: a body that would not read may be a proxy's page, not the pack\n      }",
+    "new": "      }",
     "tests": [
       "test/world/worldOfDaggerfall/audit_wod_branch.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "WOD6-flat-backoff",
     "file": "src/world/worldOfDaggerfall/worldOfDaggerfall.js",
-    "old": "Math.min(60000, 5000 * 2 ** tries)",
-    "new": "5000",
+    "old": "    this._schedule(\n      () => {\n        this.sources.pack(region).then(\n          (b) => {\n            if (b) this._chain = this._chain.then(() => this._landLate(region, b, tries + 1));\n          },\n          () => this._retryLater(region, tries + 1),\n        );\n      },\n      Math.min(60000, 5000 * 2 ** tries),\n    );",
+    "new": "    this._schedule(() => {\n      this.sources.pack(region).then(\n        (b) => {\n          if (b) this._chain = this._chain.then(() => this._landLate(region, b, tries + 1));\n        },\n        () => this._retryLater(region, tries + 1),\n      );\n    }, 5000);",
     "tests": [
       "test/world/worldOfDaggerfall/audit_wod_branch.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "WOD6-retry-failure-dropped",
     "file": "src/world/worldOfDaggerfall/worldOfDaggerfall.js",
-    "old": "        () => this._retryLater(region, tries + 1));",
-    "new": "        () => {});",
+    "old": "          () => this._retryLater(region, tries + 1),",
+    "new": "          () => {},",
     "tests": [
       "test/world/worldOfDaggerfall/audit_wod_branch.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "WOD6-late-appended",
     "file": "src/world/worldOfDaggerfall/worldOfDaggerfall.js",
-    "old": "    const session = new LocationSession();\n    for (const r of this._order) {\n      const rb = this._bytes.get(r);\n      if (!rb) continue;\n      await new Promise((res) => setTimeout(res, 0));   // one decode a task, as the first landing\n      session.appendRegion(r, r === region ? pack : decodeRegionPack(rb));\n    }\n    this.session = session;",
-    "new": "    this.session.appendRegion(region, pack);",
+    "old": "    const session = new LocationSession();\n    for (const r of this._order) {\n      const rb = this._bytes.get(r);\n      if (!rb) continue;\n      await new Promise((res) => setTimeout(res, 0)); // one decode a task, as the first landing\n      session.appendRegion(r, r === region ? pack : decodeRegionPack(rb));\n    }\n    this.session = session; // swapped whole: a pick reads one list or the other, never half of one",
+    "new": "    this.session.appendRegion(region, pack); // swapped whole: a pick reads one list or the other, never half of one",
     "tests": [
       "test/world/worldOfDaggerfall/audit_wod_branch.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "WOD6-host-not-told",
     "file": "src/world/worldOfDaggerfall/worldOfDaggerfall.js",
-    "old": "    this.onLate?.(region, keys);\n",
-    "new": "",
+    "old": "    this.onLate?.(region, keys);\n  }",
+    "new": "  }",
     "tests": [
       "test/world/worldOfDaggerfall/audit_wod_branch.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "WOD6-bytes-not-kept",
     "file": "src/world/worldOfDaggerfall/worldOfDaggerfall.js",
-    "old": "this.session.appendRegion(region, decodeRegionPack(b)); this._bytes.set(region, b);",
-    "new": "this.session.appendRegion(region, decodeRegionPack(b));",
+    "old": "        this._bytes.set(region, b);\n      } catch (e) {",
+    "new": "      } catch (e) {",
     "tests": [
       "test/world/worldOfDaggerfall/audit_wod_branch.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "WOD6-order-not-kept",
     "file": "src/world/worldOfDaggerfall/worldOfDaggerfall.js",
-    "old": "    this._order.push(region);   // WOD6\n",
-    "new": "",
+    "old": "    this._order.push(region); // WOD6\n    // Fetch now, append in order: a later region's bytes may land first.",
+    "new": "    // Fetch now, append in order: a later region's bytes may land first.",
     "tests": [
       "test/world/worldOfDaggerfall/audit_wod_branch.test.js"
     ]
@@ -273,8 +273,8 @@
   {
     "name": "WOD6-identity-through-new-list",
     "file": "src/world/worldOfDaggerfall/worldOfDaggerfall.js",
-    "old": "            locationID: pick.locationID, objectID: obj.objectID,",
-    "new": "            locationID: this.session.locationID[pick.index], objectID: obj.objectID,",
+    "old": "            locationID: pick.locationID,",
+    "new": "            locationID: this.session.locationID[pick.index],",
     "tests": [
       "test/world/worldOfDaggerfall/audit_wod_branch.test.js"
     ]
@@ -399,8 +399,8 @@
   {
     "name": "WOD6-onload-radius",
     "file": "src/world/worldOfDaggerfall/wodSpawner.js",
-    "old": "    if (dist <= WOD_STAND_DOWN_RADIUS) this.active = false;\n  }",
-    "new": "    if (dist < 0) this.active = false;\n  }",
+    "old": "    if (dist <= WOD_STAND_DOWN_RADIUS) this.active = false;",
+    "new": "    if (dist < 0) this.active = false;",
     "tests": [
       "test/world/worldOfDaggerfall/audit_wod_branch.test.js"
     ]
@@ -408,8 +408,8 @@
   {
     "name": "WOD6-onload-boundary",
     "file": "src/world/worldOfDaggerfall/wodSpawner.js",
-    "old": "    if (dist <= WOD_STAND_DOWN_RADIUS) this.active = false;\n  }",
-    "new": "    if (dist < WOD_STAND_DOWN_RADIUS) this.active = false;\n  }",
+    "old": "    if (dist <= WOD_STAND_DOWN_RADIUS) this.active = false;",
+    "new": "    if (dist < WOD_STAND_DOWN_RADIUS) this.active = false;",
     "tests": [
       "test/world/worldOfDaggerfall/audit_wod_branch.test.js"
     ]

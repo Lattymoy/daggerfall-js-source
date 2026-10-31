@@ -411,5 +411,5 @@ test('POI-6 OUT AND BACK IN FROM THE PANEL: a POI\'s model saved as a .glb the i
 test('POI-6 RECORDS: the world takes the eye to a place for the approver by the map\'s own door', () => {
   const world = hostText('src/scenes/world.js');
   assert.match(world, /function goTo\(place\) \{\n\s+if \(!place\) return;\n\s+_teleportToPixel\(place\.px, place\.py, \[place\.x, player\.pos\[1\] \+ 1, place\.z\], \{ grounded: true \}\)/);
-  assert.match(world, /createPoiEditorPanel\(\{[^}]*decodeImage: decodePoiImage, goTo \}\)/);
+  assert.match(world, /createPoiEditorPanel\(\{\n\s*edit,\n\s*editor,\n\s*feed: host\.poiFeed,\n\s*io,\n\s*me,\n\s*onExit: exit,\n\s*onEnter: enter,\n\s*onJump: jump,\n\s*decodeImage: decodePoiImage,\n\s*goTo,\n\s*\}\)/);
 });

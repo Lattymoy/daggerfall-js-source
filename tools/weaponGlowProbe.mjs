@@ -16,7 +16,9 @@ mkdirSync(outDir, { recursive: true });
 const PORT = 5207;
 const server = await createServer({ server: { port: PORT, strictPort: true, cors: true }, logLevel: 'warn' });
 await server.listen();
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
 const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
 page.on('console', (m) => console.log('[page]', m.text()));
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));

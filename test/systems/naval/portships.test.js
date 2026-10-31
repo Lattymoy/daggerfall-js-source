@@ -226,5 +226,5 @@ test('PORT-SHIPS THE HOST: the world hands the harbour book the port\'s town\'s 
   assert.match(W, /return \{ \.\.\.h, keep: harbourKeep\(t\.loc, h\.rect\) \};/);   // PIN MOVED (the fourth merge of main - RPT1026-WORLD FAR-QUAY): each port town near, its harbour harbourBook.js harbourOf's
   assert.match(W, /const harbourBook = createHarbourBook\(\{\n\s+harbourNear: navalHarbourNear,\n\s+isWater: navalIsWater,\n\s+ground: \(x, z\) => surfaceAt\(x, z\) - tvSeaY\(\),/);
   const book = readFileSync(new URL('../../../src/systems/naval/harbourBook.js', import.meta.url), 'utf8');
-  assert.match(book, /findHarbour\(\{ rect: near\.rect, isWater: \(x, z, h\) => deps\.isWater\(x, z, h\), reach, square, keep: near\.keep \?\? null, ground: deps\.ground \?\? null \}\)/);   // PIN MOVED (ALDBRUGH-QUAY): and the square reach
+  assert.match(book, /findHarbour\(\{\n\s*rect: near\.rect,\n\s*isWater: \(x, z, h\) => deps\.isWater\(x, z, h\),\n\s*reach,\n\s*square,\n\s*keep: near\.keep \?\? null,\n\s*ground: deps\.ground \?\? null,\n\s*\}\)/);   // PIN MOVED (ALDBRUGH-QUAY): and the square reach
 });

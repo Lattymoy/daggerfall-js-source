@@ -14,7 +14,15 @@
 //
 // Pure - the door, the storage and the clock are handed in - so the pins drive it without a network.
 // ═══════════════════════════════════════════════════════════════════
-import { BOARD_CACHE_MS, boardKeyOk, unseenCount, NOTE_ID_RE, NOTE_DAYS, noteReplySubject, GUILD_NOTES_LIVE_MAX } from './boardLaw.js';
+import {
+  BOARD_CACHE_MS,
+  boardKeyOk,
+  unseenCount,
+  NOTE_ID_RE,
+  NOTE_DAYS,
+  noteReplySubject,
+  GUILD_NOTES_LIVE_MAX,
+} from './boardLaw.js';
 import { accountRefusalText } from './accountClient.js';
 
 /** A moderator's chat word (PROF0 20: "`/note remove <id>`"): `{ op: 'remove', id }`, `{ error }` in words, or null
@@ -24,7 +32,8 @@ export function parseNoteCommand(text) {
   const m = /^\/note(?:\s+([\s\S]*))?$/i.exec(String(text ?? '').trim());
   if (!m) return null;
   const [op, id, ...more] = (m[1] ?? '').trim().split(/\s+/).filter(Boolean);
-  if (String(op ?? '').toLowerCase() !== 'remove' || !id || more.length || !NOTE_ID_RE.test(id)) return { error: NOTE_USAGE };
+  if (String(op ?? '').toLowerCase() !== 'remove' || !id || more.length || !NOTE_ID_RE.test(id))
+    return { error: NOTE_USAGE };
   return { op: 'remove', id };
 }
 
@@ -60,15 +69,19 @@ export const NOTE_LETTER_LOST = 'Your letters could not be opened. The note is s
 export function planNoteAnswer(note, { duelHere = false, mail = null, letters = false, signedOutText = '' } = {}) {
   if (!note || typeof note.from !== 'string') return { kind: 'refuse', text: 'That note is too faded to answer.' };
   if (note.button === 'duel' && duelHere) return { kind: 'duel' };
-  if (!letters || mail == null || mail === 'guest') return { kind: 'refuse', text: accountRefusalText('mail-needs-account') };
+  if (!letters || mail == null || mail === 'guest')
+    return { kind: 'refuse', text: accountRefusalText('mail-needs-account') };
   if (mail === 'signed-out') return { kind: 'refuse', text: signedOutText || accountRefusalText('no-session') };
-  return { kind: 'letter', draft: { to: note.from, subject: noteReplySubject(note.subject), body: NOTE_LETTER_START[note.button] ?? '' } };
+  return {
+    kind: 'letter',
+    draft: { to: note.from, subject: noteReplySubject(note.subject), body: NOTE_LETTER_START[note.button] ?? '' },
+  };
 }
 
 /** GUILD1e: a guild board's own words for a refusal the town board's words would misname. */
 export const GUILD_BOARD_WORDS = Object.freeze({
   'notes-full': `You have ${GUILD_NOTES_LIVE_MAX} notes up on your guild's board already. Take one down first.`,
-  'no-note': 'That note is no longer on your guild\'s board.',
+  'no-note': "That note is no longer on your guild's board.",
 });
 const guildRefusal = (e) => GUILD_BOARD_WORDS[e] ?? accountRefusalText(e);
 
@@ -88,7 +101,13 @@ export function mintNoticeRid(rand = (b) => globalThis.crypto.getRandomValues(b)
  *   sleep?: (ms: number) => Promise<void>,
  * }} deps `sleep` the wait between tries (a test hands in none)
  */
-export function createNoticeBook({ door, storage = null, nowMs = () => Date.now(), rid = () => mintNoticeRid(), sleep = (ms) => new Promise((r) => setTimeout(r, ms)) }) {
+export function createNoticeBook({
+  door,
+  storage = null,
+  nowMs = () => Date.now(),
+  rid = () => mintNoticeRid(),
+  sleep = (ms) => new Promise((r) => setTimeout(r, ms)),
+}) {
   /** mapId -> { board, at, error, pending } */
   const boards = new Map();
   /** whether the board is open to this account, as the last read said: true, false, or null not yet asked */
@@ -104,22 +123,35 @@ export function createNoticeBook({ door, storage = null, nowMs = () => Date.now(
     try {
       const v = JSON.parse(storage?.getItem?.(NOTICE_SEEN_KEY) ?? 'null');
       if (v && typeof v === 'object' && !Array.isArray(v)) _seen = v;
-    } catch { /* a bad key reads as none */ }
+    } catch {
+      /* a bad key reads as none */
+    }
     return _seen;
   };
   const writeSeen = (t) => {
-    const keep = Object.entries(t).sort((a, b) => b[1] - a[1]).slice(0, NOTICE_SEEN_MAX);
+    const keep = Object.entries(t)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, NOTICE_SEEN_MAX);
     _seen = Object.fromEntries(keep);
-    try { storage?.setItem?.(NOTICE_SEEN_KEY, JSON.stringify(_seen)); } catch { /* this page keeps it */ }
+    try {
+      storage?.setItem?.(NOTICE_SEEN_KEY, JSON.stringify(_seen));
+    } catch {
+      /* this page keeps it */
+    }
   };
 
   /** One act, asked up to NOTICE_TRIES times with a wait between. `gone`: the refusals that, after a try whose answer
    *  was lost, mean that try did it (a note already taken down) - answered as done. */
   async function ask(fn, { gone = [] } = {}) {
-    let r = null, lost = false;
+    let r = null,
+      lost = false;
     for (let i = 0; i < NOTICE_TRIES; i++) {
       if (i > 0) await sleep(NOTICE_RETRY_MS[Math.min(i - 1, NOTICE_RETRY_MS.length - 1)]);
-      try { r = await fn(); } catch { r = { ok: false, error: 'offline' }; }
+      try {
+        r = await fn();
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
       if (r?.ok) return r;
       if (lost && gone.includes(r?.error)) return { ok: true, data: null, gone: true };
       if (!RETRY.includes(r?.error)) return r;
@@ -134,19 +166,26 @@ export function createNoticeBook({ door, storage = null, nowMs = () => Date.now(
     if (!boardKeyOk(map)) return Promise.resolve({ board: null, error: 'bad-board', stale: false });
     const e = boards.get(map) ?? { board: null, at: -Infinity, error: null, pending: null };
     boards.set(map, e);
-    if (!force && nowMs() - e.at < BOARD_CACHE_MS) return Promise.resolve({ board: e.board, error: e.error, stale: !!(e.error && e.board) });
+    if (!force && nowMs() - e.at < BOARD_CACHE_MS)
+      return Promise.resolve({ board: e.board, error: e.error, stale: !!(e.error && e.board) });
     // AUDIT 28 N10: a FORCED read (after a write) never takes one that set out before the write - it waits it out and asks
     if (e.pending) return force ? e.pending.then(() => read(map, { force: true })) : e.pending;
     e.pending = (async () => {
       const r = await ask(() => door.read(map));
       e.pending = null;
       if (r?.ok) {
-        open = true; e.board = r.data; e.at = nowMs(); e.error = null;
+        open = true;
+        e.board = r.data;
+        e.at = nowMs();
+        e.error = null;
         return { board: e.board, error: null, stale: false };
       }
-      if (SHUT.includes(r?.error)) { open = false; e.board = null; }   // AUDIT 28 N11: not this account's now - DFU's box
+      if (SHUT.includes(r?.error)) {
+        open = false;
+        e.board = null;
+      } // AUDIT 28 N11: not this account's now - DFU's box
       e.error = r?.error ?? 'server';
-      e.at = nowMs();   // a refusal is an answer too: asked again after the minute, not on the next frame
+      e.at = nowMs(); // a refusal is an answer too: asked again after the minute, not on the next frame
       return { board: e.board, error: e.error, stale: !!e.board };
     })();
     return e.pending;
@@ -185,7 +224,9 @@ export function createNoticeBook({ door, storage = null, nowMs = () => Date.now(
         boards.set(map, e);
         /** @type {(v: any) => void} */
         let settle = () => {};
-        e.pending = new Promise((r) => { settle = r; });
+        e.pending = new Promise((r) => {
+          settle = r;
+        });
         asking = { map, e, settle, at: nowMs() };
         return map;
       },
@@ -196,11 +237,17 @@ export function createNoticeBook({ door, storage = null, nowMs = () => Date.now(
         const { e } = a;
         e.pending = null;
         if (r?.ok) {
-          open = true; e.board = r.data; e.at = a.at; e.error = null;
+          open = true;
+          e.board = r.data;
+          e.at = a.at;
+          e.error = null;
           a.settle({ board: e.board, error: null, stale: false });
           return;
         }
-        if (SHUT.includes(r?.error)) { open = false; e.board = null; }   // AUDIT 28 N11's law, as `read` keeps it
+        if (SHUT.includes(r?.error)) {
+          open = false;
+          e.board = null;
+        } // AUDIT 28 N11's law, as `read` keeps it
         e.error = r?.error ?? 'server';
         e.at = a.at;
         a.settle({ board: e.board, error: e.error, stale: !!e.board });
@@ -210,15 +257,24 @@ export function createNoticeBook({ door, storage = null, nowMs = () => Date.now(
 
   /** What a read would show without asking: the cached board, or null. */
   const cached = (map) => boards.get(map)?.board ?? null;
-  const forget = (map) => { const e = boards.get(map); if (e) e.at = -Infinity; };
+  const forget = (map) => {
+    const e = boards.get(map);
+    if (e) e.at = -Infinity;
+  };
 
   /** When this device last read town `map`'s board (unix seconds of its newest note then), or null. */
-  const seenAt = (map) => { const v = seenTable()[String(map)]; return Number.isFinite(v) ? v : null; };
+  const seenAt = (map) => {
+    const v = seenTable()[String(map)];
+    return Number.isFinite(v) ? v : null;
+  };
   /** The board read to its newest note: the count over it goes to nought. */
   function markSeen(map) {
     const b = cached(map);
     if (!b) return;
-    const newest = Math.max(0, ...[...(b.notices ?? []), ...(b.notes ?? [])].map((x) => (Number.isFinite(x.at) ? x.at : 0)));
+    const newest = Math.max(
+      0,
+      ...[...(b.notices ?? []), ...(b.notes ?? [])].map((x) => (Number.isFinite(x.at) ? x.at : 0)),
+    );
     const t = seenTable();
     if ((t[String(map)] ?? -1) >= newest) return;
     t[String(map)] = newest;
@@ -240,54 +296,75 @@ export function createNoticeBook({ door, storage = null, nowMs = () => Date.now(
   /** A write, then the board read again (the answer the window repaints from). */
   async function write(map, fn, okText, opts) {
     const r = await ask(fn, opts);
-    if (r?.ok) { forget(map); await read(map, { force: true }); return { ok: true, data: r.data, text: okText }; }
+    if (r?.ok) {
+      forget(map);
+      await read(map, { force: true });
+      return { ok: true, data: r.data, text: okText };
+    }
     return { ok: false, error: r?.error ?? 'server', text: accountRefusalText(r?.error) };
   }
 
   /** AUDIT 28 N5/N7: a write that carries its own request id - the id kept with its words until the service ANSWERS
    *  (anything but a lost answer), so a press after three lost tries is the same note. Keyed by `key` + the words. */
-  const kept = new Map();   // key -> { words, id, promise }
+  const kept = new Map(); // key -> { words, id, promise }
   function once(key, words, send, okText, map, after = null) {
     const w = JSON.stringify(words);
     let k = kept.get(key);
     if (k?.promise) return k.promise;
-    if (!k || k.words !== w) kept.set(key, k = { words: w, id: rid(), promise: null });
+    if (!k || k.words !== w) kept.set(key, (k = { words: w, id: rid(), promise: null }));
     const id = k.id;
     const entry = k;
     entry.promise = (async () => {
       const r = await ask(() => send(id));
       entry.promise = null;
-      if (!RETRY.includes(r?.error) && kept.get(key) === entry) kept.delete(key);   // answered: the id is spent
+      if (!RETRY.includes(r?.error) && kept.get(key) === entry) kept.delete(key); // answered: the id is spent
       if (r?.ok) {
-        if (after) await after(); else { forget(map); await read(map, { force: true }); }
+        if (after) await after();
+        else {
+          forget(map);
+          await read(map, { force: true });
+        }
         return { ok: true, data: r.data, text: okText };
       }
-      return { ok: false, error: r?.error ?? 'server', text: after ? guildRefusal(r?.error) : accountRefusalText(r?.error) };
+      return {
+        ok: false,
+        error: r?.error ?? 'server',
+        text: after ? guildRefusal(r?.error) : accountRefusalText(r?.error),
+      };
     })();
     return entry.promise;
   }
 
   /** GUILD1e: EACH CHARACTER'S GUILD BOARD (the service's /v1/guilds/board) - the last answer inside a minute, as a
    *  town's; a refusal kept the minute too (a character in no guild asks once a minute, not every frame). */
-  const guildBoards = new Map();   // character -> { data, at, error, pending }
+  const guildBoards = new Map(); // character -> { data, at, error, pending }
   function readGuild(character, { force = false } = {}) {
-    if (typeof character !== 'string' || !character) return Promise.resolve({ data: null, error: 'no-guild', stale: false });
+    if (typeof character !== 'string' || !character)
+      return Promise.resolve({ data: null, error: 'no-guild', stale: false });
     const e = guildBoards.get(character) ?? { data: null, at: -Infinity, error: null, pending: null };
     guildBoards.set(character, e);
-    if (!force && nowMs() - e.at < BOARD_CACHE_MS) return Promise.resolve({ data: e.data, error: e.error, stale: !!(e.error && e.data) });
+    if (!force && nowMs() - e.at < BOARD_CACHE_MS)
+      return Promise.resolve({ data: e.data, error: e.error, stale: !!(e.error && e.data) });
     if (e.pending) return force ? e.pending.then(() => readGuild(character, { force: true })) : e.pending;
     e.pending = (async () => {
       const r = await ask(() => door.guildRead(character));
       e.pending = null;
       e.at = nowMs();
-      if (r?.ok) { e.data = r.data; e.error = null; return { data: e.data, error: null, stale: false }; }
-      if (SHUT.includes(r?.error) || r?.error === 'no-guild') e.data = null;   // not this character's any more
+      if (r?.ok) {
+        e.data = r.data;
+        e.error = null;
+        return { data: e.data, error: null, stale: false };
+      }
+      if (SHUT.includes(r?.error) || r?.error === 'no-guild') e.data = null; // not this character's any more
       e.error = r?.error ?? 'server';
       return { data: e.data, error: e.error, stale: !!e.data };
     })();
     return e.pending;
   }
-  const forgetGuild = (character) => { const e = guildBoards.get(character); if (e) e.at = -Infinity; };
+  const forgetGuild = (character) => {
+    const e = guildBoards.get(character);
+    if (e) e.at = -Infinity;
+  };
   const guildDrafts = new Map();
 
   /** AUDIT 28 N13: the note being written for each town, and the developer's notice - kept for the session, so a stray
@@ -296,13 +373,20 @@ export function createNoticeBook({ door, storage = null, nowMs = () => Date.now(
   const noticeDraft = { subject: '', body: '', days: 3 };
 
   return {
-    read, cached, markSeen, seenAt, unseen, heartbeatPart,
+    read,
+    cached,
+    markSeen,
+    seenAt,
+    unseen,
+    heartbeatPart,
     /** Whether the board is open to this account, as the last read said (null before any). */
-    get open() { return open; },
+    get open() {
+      return open;
+    },
     /** The note being written for town `map` - the window's form writes into it. */
     draft(map) {
       let d = drafts.get(map);
-      if (!d) drafts.set(map, d = { subject: '', body: '', days: NOTE_DAYS[NOTE_DAYS.length - 1], button: '' });
+      if (!d) drafts.set(map, (d = { subject: '', body: '', days: NOTE_DAYS[NOTE_DAYS.length - 1], button: '' }));
       return d;
     },
     /** The developer's notice being written. */
@@ -312,19 +396,23 @@ export function createNoticeBook({ door, storage = null, nowMs = () => Date.now(
      * @param {number} map
      * @param {{ subject: string, body: string, days: number, button?: string|null, character?: string|null }} note
      */
-    pin: (map, note) => once(`pin:${map}`, note, (id) => door.pin({ map, ...note }, id), 'Your note is pinned up.', map),
+    pin: (map, note) =>
+      once(`pin:${map}`, note, (id) => door.pin({ map, ...note }, id), 'Your note is pinned up.', map),
     takeDown: (map, id) => write(map, () => door.takeDown(id), 'Your note is taken down.', { gone: ['no-note'] }),
     /** The chat's `/note remove <id>`: a moderator's remove from anywhere - every cached board is read afresh after. */
     async modRemoveAnywhere(id) {
       const r = await ask(() => door.modRemove(id), { gone: ['no-note'] });
       for (const e of boards.values()) e.at = -Infinity;
-      return r?.ok ? { ok: true, text: 'The note is removed.' } : { ok: false, error: r?.error ?? 'server', text: accountRefusalText(r?.error) };
+      return r?.ok
+        ? { ok: true, text: 'The note is removed.' }
+        : { ok: false, error: r?.error ?? 'server', text: accountRefusalText(r?.error) };
     },
     report: (map, id) => write(map, () => door.report(id), 'Reported. You will not see that note again.'),
     modRemove: (map, id) => write(map, () => door.modRemove(id), 'The note is removed.', { gone: ['no-note'] }),
     modRestore: (map, id) => write(map, () => door.modRestore(id), 'The note is restored.'),
     notice: (map, n) => once('notice', n, (id) => door.notice(n, id), 'The notice is up on every board.', map),
-    noticeRemove: (map, id) => write(map, () => door.noticeRemove(id), 'The notice is taken down.', { gone: ['no-notice'] }),
+    noticeRemove: (map, id) =>
+      write(map, () => door.noticeRemove(id), 'The notice is taken down.', { gone: ['no-notice'] }),
     /** GUILD1e: the guild's own board, as `character` is its member (read, cached, a refusal kept). */
     readGuild,
     /** GUILD1e: what a guild board read would show without asking. */
@@ -332,16 +420,30 @@ export function createNoticeBook({ door, storage = null, nowMs = () => Date.now(
     /** GUILD1e: the note being written for the guild's board - kept for the session, as a town's. */
     guildDraft(character) {
       let d = guildDrafts.get(character);
-      if (!d) guildDrafts.set(character, d = { subject: '', body: '', days: NOTE_DAYS[NOTE_DAYS.length - 1] });
+      if (!d) guildDrafts.set(character, (d = { subject: '', body: '', days: NOTE_DAYS[NOTE_DAYS.length - 1] }));
       return d;
     },
     /** GUILD1e: PIN A NOTE on the guild's board - its request id kept until the service answers, as a town's pin. */
-    pinGuild: (character, note) => once(`gpin:${character}`, note, (id) => door.guildPin({ character, ...note }, id), 'Your note is up on the guild\'s board.', null,
-      async () => { forgetGuild(character); await readGuild(character, { force: true }); }),
+    pinGuild: (character, note) =>
+      once(
+        `gpin:${character}`,
+        note,
+        (id) => door.guildPin({ character, ...note }, id),
+        "Your note is up on the guild's board.",
+        null,
+        async () => {
+          forgetGuild(character);
+          await readGuild(character, { force: true });
+        },
+      ),
     /** GUILD1e: take a note down from the guild's board - one's own, or (an Officer's) anyone's. */
     async takeDownGuild(character, id) {
       const r = await ask(() => door.guildTakeDown(character, id), { gone: ['no-note'] });
-      if (r?.ok) { forgetGuild(character); await readGuild(character, { force: true }); return { ok: true, text: 'The note is taken down.' }; }
+      if (r?.ok) {
+        forgetGuild(character);
+        await readGuild(character, { force: true });
+        return { ok: true, text: 'The note is taken down.' };
+      }
       return { ok: false, error: r?.error ?? 'server', text: guildRefusal(r?.error) };
     },
     /** Test seam. */

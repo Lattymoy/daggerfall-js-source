@@ -20,8 +20,8 @@
   {
     "name": "TACT4-casters-blade",
     "file": "src/ai/blowShapes.js",
-    "old": "  if ((mobileType & 128) !== 0 && mobileType !== NONE) return BLOW_CASTERS.has(mobileType) ? [] : BLADE;",
-    "new": "  if ((mobileType & 128) !== 0 && mobileType !== NONE) return BLADE;",
+    "old": "  if ((mobileType & 128) !== 0 && mobileType !== NONE) return BLOW_CASTERS.has(mobileType) ? [] : BLADE; // the classes and the watch - DaggerfallEntity.IsClassEnemyId's 128 bit, written here because a leaf imports nothing (enemy/enemyBasics.js isClassEnemyId is the export); DEX1: so a mod's monster past 255 is no class (it throws no telegraphed blow, as an unnamed kind throws none)",
+    "new": "  if ((mobileType & 128) !== 0 && mobileType !== NONE) return BLADE; // the classes and the watch - DaggerfallEntity.IsClassEnemyId's 128 bit, written here because a leaf imports nothing (enemy/enemyBasics.js isClassEnemyId is the export); DEX1: so a mod's monster past 255 is no class (it throws no telegraphed blow, as an unnamed kind throws none)",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TACT4-lunge-endless",
     "file": "src/ai/blowShapes.js",
-    "old": "return along >= -0.3 && along <= P.len && Math.abs(across) <= P.halfW; }",
-    "new": "return along >= -0.3 && Math.abs(across) <= P.halfW; }",
+    "old": "    return along >= -0.3 && along <= P.len && Math.abs(across) <= P.halfW;",
+    "new": "    return along >= -0.3 && Math.abs(across) <= P.halfW;",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TACT4-lunge-wide",
     "file": "src/ai/blowShapes.js",
-    "old": "return along >= -0.3 && along <= P.len && Math.abs(across) <= P.halfW; }",
-    "new": "return along >= -0.3 && along <= P.len; }",
+    "old": "    return along >= -0.3 && along <= P.len && Math.abs(across) <= P.halfW;",
+    "new": "    return along >= -0.3 && along <= P.len;",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TACT4-slam-at-feet",
     "file": "src/ai/blowShapes.js",
-    "old": "  if (b.kind === 'slam') { const P = BLOW.slam; return Math.hypot(along - P.ahead, across) <= P.r; }",
-    "new": "  if (b.kind === 'slam') { const P = BLOW.slam; return Math.hypot(along, across) <= P.r; }",
+    "old": "    return Math.hypot(along - P.ahead, across) <= P.r;",
+    "new": "    return Math.hypot(along, across) <= P.r;",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "TACT4-across-flipped",
     "file": "src/ai/blowShapes.js",
-    "old": "  const along = rx * fx + rz * fz, across = -rx * fz + rz * fx;",
-    "new": "  const along = rx * fx + rz * fz, across = rx * fz + rz * fx;",
+    "old": "    across = -rx * fz + rz * fx;",
+    "new": "    across = rx * fz + rz * fx;",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "TACT4-spent-kept",
     "file": "src/ai/foeBlows.js",
-    "old": "    if (!phase || (now < b.land && gone(ai, now))) { _live.delete(ai); continue; }   // AUDIT TACT D4: a dead foe's wind-up goes with it",
-    "new": "    if (!phase || (now < b.land && gone(ai, now))) continue;   // AUDIT TACT D4: a dead foe's wind-up goes with it",
+    "old": "    if (!phase || (now < b.land && gone(ai, now))) {\n      _live.delete(ai);\n      continue;\n    } // AUDIT TACT D4: a dead foe's wind-up goes with it",
+    "new": "    if (!phase || (now < b.land && gone(ai, now))) continue; // AUDIT TACT D4: a dead foe's wind-up goes with it",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "TACT4-verdict-kept",
     "file": "src/ai/foeBlows.js",
-    "old": "  ai._blowVerdict = null;\n  if (!fresh || turned) { ai._blowMult = undefined; return classic; }",
-    "new": "  if (!fresh || turned) { ai._blowMult = undefined; return classic; }",
+    "old": "  ai._blowVerdict = null;\n  if (!fresh || turned) {",
+    "new": "  if (!fresh || turned) {",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "TACT4-dodge-keeps-weight",
     "file": "src/ai/foeBlows.js",
-    "old": "  if (!v) { ai._blowMult = undefined; tellDodged(ai); }   // dodged: the weight is spent with it, and the dodge is told",
-    "new": "  if (!v) { tellDodged(ai); }   // dodged: the weight is spent with it, and the dodge is told",
+    "old": "    ai._blowMult = undefined;\n    tellDodged(ai);",
+    "new": "    tellDodged(ai);",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "TACT4-many-windups",
     "file": "src/ai/foeBlows.js",
-    "old": "    if (ai === except || b.cut != null || gone(ai, now)) continue;   // A cut feint is no wind-up",
-    "new": "    continue;   // A cut feint is no wind-up",
+    "old": "    if (ai === except || b.cut != null || gone(ai, now)) continue; // A cut feint is no wind-up",
+    "new": "    continue; // A cut feint is no wind-up",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "TACT4-no-cooldown",
     "file": "src/ai/tactics.js",
-    "old": "  if (s.state === 'engage' && b.melee.has(ai) && tf && ai.canAct !== false && now >= (s.blowReady ?? 0)) {   // AUDIT TACT: a token holder's, never an opportunist's",
-    "new": "  if (s.state === 'engage' && b.melee.has(ai) && tf && ai.canAct !== false) {   // AUDIT TACT: a token holder's, never an opportunist's",
+    "old": "  if (s.state === 'engage' && b.melee.has(ai) && tf && ai.canAct !== false && now >= (s.blowReady ?? 0)) {",
+    "new": "  if (s.state === 'engage' && b.melee.has(ai) && tf && ai.canAct !== false) {",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "TACT4-aim-follows",
     "file": "src/ai/tactics.js",
-    "old": "  ai._tacStrike = false; ai._tacShoot = false; ai.moving = false;   // AUDIT TACT A4: no shot, no spell, mid-wind-up",
-    "new": "  ai._tacStrike = false; ai._tacShoot = false; ai.moving = false; ai.yaw += 0.05;   // AUDIT TACT A4: no shot, no spell, mid-wind-up",
+    "old": "  ai.moving = false; // AUDIT TACT A4: no shot, no spell, mid-wind-up",
+    "new": "  ai.moving = false;\n  ai.yaw += 0.05; // AUDIT TACT A4: no shot, no spell, mid-wind-up",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "TACT4-walks-in-windup",
     "file": "src/ai/tactics.js",
-    "old": "  ai._tacStrike = false; ai._tacShoot = false; ai.moving = false;   // AUDIT TACT A4: no shot, no spell, mid-wind-up\n  return true;",
-    "new": "  ai._tacStrike = false; ai._tacShoot = false;   // AUDIT TACT A4: no shot, no spell, mid-wind-up\n  return false;",
+    "old": "  ai._tacShoot = false;\n  ai.moving = false; // AUDIT TACT A4: no shot, no spell, mid-wind-up\n  return true;",
+    "new": "  ai._tacShoot = false; // AUDIT TACT A4: no shot, no spell, mid-wind-up\n  return false;",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ]
@@ -201,7 +201,7 @@
   {
     "name": "TACT4-verdict-always",
     "file": "src/ai/tactics.js",
-    "old": "    if (tf) return resolveLanding(ai, s, s.blow, arrived && inBlow(s.blow, tf[0], tf[2]), now, cooled, atMe, judgedHere(ai, key));",
+    "old": "    if (tf)\n      return resolveLanding(\n        ai,\n        s,\n        s.blow,\n        arrived && inBlow(s.blow, tf[0], tf[2]),\n        now,\n        cooled,\n        atMe,\n        judgedHere(ai, key),\n      );",
     "new": "    if (tf) return resolveLanding(ai, s, s.blow, true, now, cooled, atMe, judgedHere(ai, key));",
     "tests": [
       "test/characters/enemy/tact4.test.js"
@@ -211,8 +211,8 @@
   {
     "name": "TACT4-no-forced-swing",
     "file": "src/ai/tactics.js",
-    "old": "  ai._blowMult = judged ? b.mult : undefined; ai._blowAt = now; ai._blowSwing = true;",
-    "new": "  ai._blowMult = judged ? b.mult : undefined; ai._blowAt = now;",
+    "old": "  ai._blowSwing = true;\n  ai._blowFor = judged ? (b.key ?? targetKey(ai)) : undefined; // Whose verdict it is",
+    "new": "  ai._blowFor = judged ? (b.key ?? targetKey(ai)) : undefined; // Whose verdict it is",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ],
@@ -221,8 +221,8 @@
   {
     "name": "TACT4-sight-breaks",
     "file": "src/ai/tactics.js",
-    "old": "  if (s.state === 'windup' && s.blow) return windupTurn(ai, s, now, skipped);\n  if (s.key !== key) { releaseTactics(ai); s.key = key; s.state = 'wait'; }",
-    "new": "  if (s.key !== key) { releaseTactics(ai); s.key = key; s.state = 'wait'; }",
+    "old": "  if (s.state === 'windup' && s.blow) return windupTurn(ai, s, now, skipped);\n  if (s.key !== key) {",
+    "new": "  if (s.key !== key) {",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ]

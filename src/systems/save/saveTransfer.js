@@ -62,9 +62,14 @@ export function slotsOf(storage) {
     const tail = k.slice(SAVE_INFO_PREFIX.length);
     const key = Number(tail);
     if (!Number.isInteger(key) || key < 0 || String(key) !== tail) continue;
-    const info = storage.getItem(k), data = storage.getItem(SAVE_DATA_PREFIX + key);
+    const info = storage.getItem(k),
+      data = storage.getItem(SAVE_DATA_PREFIX + key);
     if (!info || !data) continue;
-    try { JSON.parse(info); } catch { continue; }
+    try {
+      JSON.parse(info);
+    } catch {
+      continue;
+    }
     out.push({ key, data, info, shot: storage.getItem(SAVE_SHOT_PREFIX + key) ?? null });
   }
   out.sort((a, b) => a.key - b.key);
@@ -73,7 +78,8 @@ export function slotsOf(storage) {
 
 // ── bytes ────────────────────────────────────────────────────────
 
-const enc = new TextEncoder(), dec = new TextDecoder();
+const enc = new TextEncoder(),
+  dec = new TextDecoder();
 // SNOW-THREAD (2026-10-26): the base64 pair's home is base64Bytes.js - a leaf, so snowfall.js (and the snow's build
 // worker) read it without the save system's graph; re-exported here for the callers that ask the transfer for it
 export { base64ToBytes, bytesToBase64 };
@@ -104,34 +110,86 @@ export function fileToShot(name, data) {
 
 const CRC_TABLE = (() => {
   const t = new Uint32Array(256);
-  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; }
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    t[n] = c >>> 0;
+  }
   return t;
 })();
 export function crc32(bytes) {
-  let c = 0xFFFFFFFF;
+  let c = 0xffffffff;
   for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 255] ^ (c >>> 8);
-  return (c ^ 0xFFFFFFFF) >>> 0;
+  return (c ^ 0xffffffff) >>> 0;
 }
 
 /** entries [{ name, data: Uint8Array }] -> one zip, method 0, no zip64 */
 export function zipStore(entries) {
-  const locals = [], centrals = [];
+  const locals = [],
+    centrals = [];
   let offset = 0;
   const u16 = (v) => [v & 255, (v >> 8) & 255];
   const u32 = (v) => [v & 255, (v >> 8) & 255, (v >> 16) & 255, (v >>> 24) & 255];
   for (const { name, data } of entries) {
-    const nameB = enc.encode(name), crc = crc32(data);
-    const local = new Uint8Array([...u32(0x04034b50), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0), ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(nameB.length), ...u16(0), ...nameB]);
+    const nameB = enc.encode(name),
+      crc = crc32(data);
+    const local = new Uint8Array([
+      ...u32(0x04034b50),
+      ...u16(20),
+      ...u16(0x0800),
+      ...u16(0),
+      ...u16(0),
+      ...u16(0),
+      ...u32(crc),
+      ...u32(data.length),
+      ...u32(data.length),
+      ...u16(nameB.length),
+      ...u16(0),
+      ...nameB,
+    ]);
     locals.push(local, data);
-    centrals.push(new Uint8Array([...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0), ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(nameB.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(offset), ...nameB]));
+    centrals.push(
+      new Uint8Array([
+        ...u32(0x02014b50),
+        ...u16(20),
+        ...u16(20),
+        ...u16(0x0800),
+        ...u16(0),
+        ...u16(0),
+        ...u16(0),
+        ...u32(crc),
+        ...u32(data.length),
+        ...u32(data.length),
+        ...u16(nameB.length),
+        ...u16(0),
+        ...u16(0),
+        ...u16(0),
+        ...u16(0),
+        ...u32(0),
+        ...u32(offset),
+        ...nameB,
+      ]),
+    );
     offset += local.length + data.length;
   }
   const centralSize = centrals.reduce((a, c) => a + c.length, 0);
-  const eocd = new Uint8Array([...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(entries.length), ...u16(entries.length), ...u32(centralSize), ...u32(offset), ...u16(0)]);
+  const eocd = new Uint8Array([
+    ...u32(0x06054b50),
+    ...u16(0),
+    ...u16(0),
+    ...u16(entries.length),
+    ...u16(entries.length),
+    ...u32(centralSize),
+    ...u32(offset),
+    ...u16(0),
+  ]);
   const total = offset + centralSize + eocd.length;
   const out = new Uint8Array(total);
   let p = 0;
-  for (const part of [...locals, ...centrals, eocd]) { out.set(part, p); p += part.length; }
+  for (const part of [...locals, ...centrals, eocd]) {
+    out.set(part, p);
+    p += part.length;
+  }
   return out;
 }
 
@@ -177,22 +235,32 @@ export function collectSlots(entries) {
     else {
       const idx = TRANSFER_SHOT_FILES.findIndex(([n]) => n === at.file);
       // the first spelling wins when a crash left two (the app reads the newest; a zip has no mtimes to read)
-      if (idx >= 0 && (slot.shotSpelling < 0 || idx < slot.shotSpelling)) { slot.shot = fileToShot(at.file, bytes); slot.shotSpelling = idx; }
+      if (idx >= 0 && (slot.shotSpelling < 0 || idx < slot.shotSpelling)) {
+        slot.shot = fileToShot(at.file, bytes);
+        slot.shotSpelling = idx;
+      }
     }
     byN.set(at.n, slot);
   }
   const out = [];
   for (const s of [...byN.values()].sort((a, b) => a.n - b.n)) {
     if (!s.data || !s.info) continue;
-    try { JSON.parse(s.info); JSON.parse(s.data); } catch { continue; }
+    try {
+      JSON.parse(s.info);
+      JSON.parse(s.data);
+    } catch {
+      continue;
+    }
     out.push({ n: s.n, data: s.data, info: s.info, shot: s.shot });
   }
   return out;
 }
 
 /** the identity a store already holds: same character, same slot name, same game minute */
-const sameSave = (a, b) => (a?.characterName ?? '') === (b?.characterName ?? '') && (a?.saveName ?? '') === (b?.saveName ?? '')
-  && (a?.dateAndTime?.gameTime ?? -1) === (b?.dateAndTime?.gameTime ?? -1);
+const sameSave = (a, b) =>
+  (a?.characterName ?? '') === (b?.characterName ?? '') &&
+  (a?.saveName ?? '') === (b?.saveName ?? '') &&
+  (a?.dateAndTime?.gameTime ?? -1) === (b?.dateAndTime?.gameTime ?? -1);
 
 /**
  * Write the collected slots into a store. A slot keeps its own number
@@ -207,11 +275,25 @@ const sameSave = (a, b) => (a?.characterName ?? '') === (b?.characterName ?? '')
 export function importSlots(slots, storage) {
   const result = { imported: [], skipped: 0, failed: 0 };
   if (!storage) return result;
-  const held = slotsOf(storage).map((s) => { try { return JSON.parse(s.info); } catch { return null; } });
+  const held = slotsOf(storage).map((s) => {
+    try {
+      return JSON.parse(s.info);
+    } catch {
+      return null;
+    }
+  });
   for (const s of slots) {
     let info;
-    try { info = JSON.parse(s.info); } catch { result.failed++; continue; }
-    if (held.some((h) => sameSave(h, info))) { result.skipped++; continue; }
+    try {
+      info = JSON.parse(s.info);
+    } catch {
+      result.failed++;
+      continue;
+    }
+    if (held.some((h) => sameSave(h, info))) {
+      result.skipped++;
+      continue;
+    }
     const taken = storage.getItem(SAVE_DATA_PREFIX + s.n) != null || storage.getItem(SAVE_INFO_PREFIX + s.n) != null;
     const key = taken ? firstFreeKey(storage) : s.n;
     try {
@@ -221,7 +303,12 @@ export function importSlots(slots, storage) {
       held.push(info);
       result.imported.push(key);
     } catch {
-      try { storage.removeItem(SAVE_DATA_PREFIX + key); storage.removeItem(SAVE_SHOT_PREFIX + key); } catch { /* storage gone */ }
+      try {
+        storage.removeItem(SAVE_DATA_PREFIX + key);
+        storage.removeItem(SAVE_SHOT_PREFIX + key);
+      } catch {
+        /* storage gone */
+      }
       result.failed++;
     }
   }

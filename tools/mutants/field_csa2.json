@@ -56,8 +56,8 @@
   {
     "name": "FIELD-CSA2-the-other-triangle",
     "file": "src/world/terrain/terrainSurface.js",
-    "old": "  if (u > v) {\n    const z10 = at(x1, z0);",
-    "new": "  if (u < v) {\n    const z10 = at(x1, z0);",
+    "old": "  if (u > v) {",
+    "new": "  if (u < v) {",
     "tests": [
       "test/systems/comeSailAway/field_csa2.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "FIELD-CSA2-corners-one-apart",
     "file": "src/world/terrain/terrainSurface.js",
-    "old": "  const x0 = qx * stride, z0 = qz * stride, x1 = x0 + stride, z1 = z0 + stride;\n  const z00 = at(x0, z0), z11 = at(x1, z1);",
-    "new": "  const x0 = qx * stride, z0 = qz * stride, x1 = x0 + 1, z1 = z0 + 1;\n  const z00 = at(x0, z0), z11 = at(x1, z1);",
+    "old": "    z0 = qz * stride,\n    x1 = x0 + stride,\n    z1 = z0 + stride;\n  const z00 = at(x0, z0),",
+    "new": "    z0 = qz * stride,\n    x1 = x0 + 1,\n    z1 = z0 + 1;\n  const z00 = at(x0, z0),",
     "tests": [
       "test/systems/comeSailAway/field_csa2.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "FIELD-CSA2-stride-dropped",
     "file": "src/world/terrain/terrainSurface.js",
-    "old": "  const quad = (TERRAIN_SIZE / (hDim - 1)) * stride;\n  const last = (hDim - 1) / stride - 1;        // the last quad's index\n  const at = (x, z) => unityHeightmapStep(",
-    "new": "  const quad = TERRAIN_SIZE / (hDim - 1);\n  const last = (hDim - 1) / stride - 1;        // the last quad's index\n  const at = (x, z) => unityHeightmapStep(",
+    "old": "  const hDim = HEIGHTMAP_DIMENSION;\n  const quad = (TERRAIN_SIZE / (hDim - 1)) * stride;",
+    "new": "  const hDim = HEIGHTMAP_DIMENSION;\n  const quad = TERRAIN_SIZE / (hDim - 1);",
     "tests": [
       "test/systems/comeSailAway/field_csa2.test.js"
     ]

@@ -11,7 +11,7 @@
   {
     "name": "CEIL-GHOST-the-bar-over-the-ceiling",
     "file": "src/ui/naval/navalHud.js",
-    "old": "  return [feet[0], Number.isFinite(up) ? Math.max(from, Math.min(want, from + up - CREW_BAR_UNDER_CEILING)) : want, feet[2]];",
+    "old": "  return [\n    feet[0],\n    Number.isFinite(up) ? Math.max(from, Math.min(want, from + up - CREW_BAR_UNDER_CEILING)) : want,\n    feet[2],\n  ];",
     "new": "  return [feet[0], want, feet[2]];",
     "tests": [
       "test/characters/enemy/fb1009c_ceilghost.test.js"
@@ -20,8 +20,8 @@
   {
     "name": "CEIL-GHOST-the-bar-into-the-floor",
     "file": "src/ui/naval/navalHud.js",
-    "old": "Number.isFinite(up) ? Math.max(from, Math.min(want, from + up - CREW_BAR_UNDER_CEILING)) : want",
-    "new": "Number.isFinite(up) ? Math.min(want, from + up - CREW_BAR_UNDER_CEILING) : want",
+    "old": "  return [\n    feet[0],\n    Number.isFinite(up) ? Math.max(from, Math.min(want, from + up - CREW_BAR_UNDER_CEILING)) : want,\n    feet[2],\n  ];",
+    "new": "  return [feet[0], Number.isFinite(up) ? Math.min(want, from + up - CREW_BAR_UNDER_CEILING) : want, feet[2]];",
     "tests": [
       "test/characters/enemy/fb1009c_ceilghost.test.js"
     ]

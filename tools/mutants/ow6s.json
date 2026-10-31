@@ -12,8 +12,8 @@
   {
     "name": "OW6-S-inside-always-held",
     "file": "src/systems/travel/travelThreat.js",
-    "old": "  if (d <= reach) return along >= 0 ? 0 : Infinity;",
-    "new": "  if (d <= reach) return 0;",
+    "old": "  if (d <= reach) return along >= 0 ? 0 : Infinity; // inside: held while the way goes deeper, free as it leads out",
+    "new": "  if (d <= reach) return 0; // inside: held while the way goes deeper, free as it leads out",
     "tests": [
       "test/systems/travel/ow6_slowdown.test.js"
     ],
@@ -22,7 +22,7 @@
   {
     "name": "OW6-S-passing-counted",
     "file": "src/systems/travel/travelThreat.js",
-    "old": "  if (disc < 0) return Infinity;   // the way passes it by",
+    "old": "  if (disc < 0) return Infinity; // the way passes it by",
     "new": "  if (disc < 0) return Math.max(0, d - reach);",
     "tests": [
       "test/systems/travel/ow6_slowdown.test.js"
@@ -42,7 +42,7 @@
   {
     "name": "OW6-S-behind-counted",
     "file": "src/systems/travel/travelThreat.js",
-    "old": "  return enter >= 0 ? enter : Infinity;   // both crossings behind: it is behind the traveller",
+    "old": "  return enter >= 0 ? enter : Infinity; // both crossings behind: it is behind the traveller",
     "new": "  return Math.abs(enter);",
     "tests": [
       "test/systems/travel/ow6_slowdown.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "OW6-S-first-not-worst",
     "file": "src/systems/travel/travelThreat.js",
-    "old": "    if (near === null || r < rate) { rate = r; best = m; near = t; }",
-    "new": "    if (near === null) { rate = r; best = m; near = t; }",
+    "old": "    if (near === null || r < rate) {",
+    "new": "    if (near === null) {",
     "tests": [
       "test/systems/travel/ow6_slowdown.test.js"
     ],

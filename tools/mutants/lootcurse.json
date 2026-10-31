@@ -5,8 +5,8 @@
     "tests": [
       "test/systems/curse_persist.test.js"
     ],
-    "old": "    kind: 'racialOverride',\n    permanent: true,",
-    "new": "    kind: 'racialOverride',"
+    "old": "    kind: 'racialOverride',\n    permanent: true, // CURSE-PERSIST1: lifelong - ended by its cure, never by the magic-round clock (diseases' and poisons' own flag)",
+    "new": "    kind: 'racialOverride', // CURSE-PERSIST1: lifelong - ended by its cure, never by the magic-round clock (diseases' and poisons' own flag)"
   },
   {
     "name": "CP-vampire-not-lifelong",
@@ -23,8 +23,8 @@
     "tests": [
       "test/systems/curse_persist.test.js"
     ],
-    "old": "    kind: 'disease',\n    permanent: true,",
-    "new": "    kind: 'disease',"
+    "old": "    kind: 'disease',\n    permanent: true, // CURSE-PERSIST1: lifelong until it turns or is cured - never the magic-round clock's (a plain disease's own flag, diseases.js)",
+    "new": "    kind: 'disease', // CURSE-PERSIST1: lifelong until it turns or is cured - never the magic-round clock's (a plain disease's own flag, diseases.js)"
   },
   {
     "name": "CP-old-saves-not-migrated",
@@ -68,8 +68,8 @@
     "tests": [
       "test/systems/curse_persist.test.js"
     ],
-    "old": "  return VAMPIRE_CLANS.Anthotis;\n}",
-    "new": "  return VAMPIRE_CLANS.Lyrezi;\n}"
+    "old": "  return VAMPIRE_CLANS.Anthotis;",
+    "new": "  return VAMPIRE_CLANS.Lyrezi;"
   },
   {
     "name": "CR-pending-ignored",

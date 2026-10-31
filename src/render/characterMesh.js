@@ -22,11 +22,17 @@ export function packCharacterFaces(faces) {
     out[o++] = f.p[vi * 3];
     out[o++] = f.p[vi * 3 + 1];
     out[o++] = f.p[vi * 3 + 2];
-    out[o++] = r; out[o++] = g; out[o++] = b;
-    out[o++] = f.n[0]; out[o++] = f.n[1]; out[o++] = f.n[2];
+    out[o++] = r;
+    out[o++] = g;
+    out[o++] = b;
+    out[o++] = f.n[0];
+    out[o++] = f.n[1];
+    out[o++] = f.n[2];
   };
   for (const f of faces) {
-    const r = f.c[0] / 255, g = f.c[1] / 255, b = f.c[2] / 255;
+    const r = f.c[0] / 255,
+      g = f.c[1] / 255,
+      b = f.c[2] / 255;
     const np = f.p.length / 3;
     for (let i = 1; i < np - 1; i++) {
       put(f, 0, r, g, b);

@@ -20,8 +20,8 @@
   {
     "name": "WB13e-the-flare-never",
     "file": "src/world/gate/gateBoss.js",
-    "old": "if (wake >= 0 && wake < WAKE_FLARE_MS) return lit(",
-    "new": "if (false) return lit(",
+    "old": "  if (wake >= 0 && wake < WAKE_FLARE_MS)\n    return lit(ember, 0.45 + 2.2 * Math.sin((Math.PI * wake) / WAKE_FLARE_MS), GLOW_RANGE.landing);",
+    "new": "  if (false) return lit(ember, 0.45 + 2.2 * Math.sin((Math.PI * wake) / WAKE_FLARE_MS), GLOW_RANGE.landing);",
     "tests": [
       "test/net/gate/wb13e_beats.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB13e-the-opening-unsaid",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    ...(Number.isSafeInteger(openedAt(f)) ? { op: openedAt(f) + OPENING_MS } : {}),   // WB13e: the opening's end - his wake, on every screen (WB14c: none while his Vanguard holds)\n",
-    "new": "",
+    "old": "    ...(Number.isSafeInteger(openedAt(f)) ? { op: openedAt(f) + OPENING_MS } : {}), // WB13e: the opening's end - his wake, on every screen (WB14c: none while his Vanguard holds)\n    ...(f.vg ? { vg: [f.vg.s, f.vg.w] } : {}), // WB14c: the Vanguard's stage and its waves risen",
+    "new": "    ...(f.vg ? { vg: [f.vg.s, f.vg.w] } : {}), // WB14c: the Vanguard's stage and its waves risen",
     "tests": [
       "test/net/gate/wb13e_beats.test.js",
       "test/net/gate/wb3_gate_room.test.js"
@@ -39,8 +39,8 @@
   {
     "name": "WB13e-the-opening-unfolded",
     "file": "src/net/gate/gateLink.js",
-    "old": "openUntil: g.op ?? 0,",
-    "new": "openUntil: 0,",
+    "old": "      openUntil: g.op ?? 0, // WB13e: the opening's end - his wake (0: an older relay's word, and no wake)",
+    "new": "      openUntil: 0, // WB13e: the opening's end - his wake (0: an older relay's word, and no wake)",
     "tests": [
       "test/net/gate/wb13e_beats.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "WB13e-no-sink",
     "file": "src/world/gate/gateBoss.js",
-    "old": "const sink = since > THUD_AT_MS ? FALL_SINK_M * Math.min(1, (since - THUD_AT_MS) / (FALL_MS - THUD_AT_MS)) : 0;",
-    "new": "const sink = 0;",
+    "old": "    const sink = since > THUD_AT_MS ? FALL_SINK_M * Math.min(1, (since - THUD_AT_MS) / (FALL_MS - THUD_AT_MS)) : 0;",
+    "new": "    const sink = 0;",
     "tests": [
       "test/net/gate/wb13e_beats.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "WB13e-a-steady-ember",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  if (s.max > 0 && s.hp / s.max < LOW_HEALTH) return lit(ember, 0.45 * sputter(now), GLOW_RANGE.ember);\n",
-    "new": "",
+    "old": "  if (s.max > 0 && s.hp / s.max < LOW_HEALTH) return lit(ember, 0.45 * sputter(now), GLOW_RANGE.ember);\n  return lit(ember, 0.45, GLOW_RANGE.ember);",
+    "new": "  return lit(ember, 0.45, GLOW_RANGE.ember);",
     "tests": [
       "test/net/gate/wb13e_beats.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "WB13e-the-bar-never-pulsing",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "low: !s.fell && frac > 0 && frac < LOW_HEALTH,",
-    "new": "low: false,",
+    "old": "    low: !s.fell && frac > 0 && frac < LOW_HEALTH, // WB13e: the bar pulses",
+    "new": "    low: false, // WB13e: the bar pulses",
     "tests": [
       "test/net/gate/wb13e_beats.test.js"
     ]

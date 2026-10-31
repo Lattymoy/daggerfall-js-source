@@ -128,8 +128,8 @@
   {
     "name": "DECK-CAMP-wire-silent",
     "file": "src/systems/survival/camp.js",
-    "old": "  if (d) out.d = [d.mine ? '' : d.peer,",
-    "new": "  if (false) out.d = [d.mine ? '' : d.peer,",
+    "old": "  if (d) out.d = [d.mine ? '' : d.peer, d.uid, q3(d.local[0]), q3(d.local[1]), q3(d.local[2]), q3(d.yaw)];",
+    "new": "  if (false) out.d = [d.mine ? '' : d.peer, d.uid, q3(d.local[0]), q3(d.local[1]), q3(d.local[2]), q3(d.yaw)];",
     "tests": [
       "test/systems/survival/deckcamp.test.js"
     ]
@@ -137,7 +137,7 @@
   {
     "name": "DECK-CAMP-wire-bad-kept",
     "file": "src/systems/survival/camp.js",
-    "old": "    if (!validDeck({ ...(a[0] === '' ? { mine: true } : { peer: a[0] }), uid: a[1], local: [a[2], a[3], a[4]], yaw: a[5] })) return null;",
+    "old": "    if (\n      !validDeck({\n        ...(a[0] === '' ? { mine: true } : { peer: a[0] }),\n        uid: a[1],\n        local: [a[2], a[3], a[4]],\n        yaw: a[5],\n      })\n    )\n      return null;",
     "new": "    if (false) return null;",
     "tests": [
       "test/systems/survival/deckcamp.test.js"
@@ -146,8 +146,8 @@
   {
     "name": "DECK-CAMP-sender-boat-mine",
     "file": "src/systems/survival/camp.js",
-    "old": "    const ref = who === '' ? { peer: owner } :",
-    "new": "    const ref = who === '' ? { mine: true } :",
+    "old": "    const ref = who === '' ? { peer: owner } : selfId != null && who === selfId ? { mine: true } : { peer: who };",
+    "new": "    const ref = who === '' ? { mine: true } : selfId != null && who === selfId ? { mine: true } : { peer: who };",
     "tests": [
       "test/systems/survival/deckcamp.test.js"
     ]

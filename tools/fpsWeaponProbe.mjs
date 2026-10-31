@@ -11,7 +11,9 @@ import { writeFileSync } from 'node:fs';
 const server = await createServer({ server: { port: 5199, strictPort: true, cors: true } });
 await server.listen();
 
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 page.on('console', (m) => console.log('[page]', m.text()));
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
@@ -72,9 +74,23 @@ await page.waitForFunction('window.__probeReady === true', { timeout: 60000 });
 
 let fails = 0;
 const check = (name, r, wants) => {
-  console.log(name, JSON.stringify({ cov: +r.coveredFrac.toFixed(4), bbox: r.bbox && Object.fromEntries(Object.entries(r.bbox).map(([k, v]) => [k, +v.toFixed(2)])) }));
-  if (r.coveredFrac === 0) { console.log(`FAIL: ${name} rendered zero pixels`); fails++; return; }
-  for (const [msg, ok] of wants) if (!ok(r)) { console.log(`FAIL: ${name} - ${msg}`); fails++; }
+  console.log(
+    name,
+    JSON.stringify({
+      cov: +r.coveredFrac.toFixed(4),
+      bbox: r.bbox && Object.fromEntries(Object.entries(r.bbox).map(([k, v]) => [k, +v.toFixed(2)])),
+    }),
+  );
+  if (r.coveredFrac === 0) {
+    console.log(`FAIL: ${name} rendered zero pixels`);
+    fails++;
+    return;
+  }
+  for (const [msg, ok] of wants)
+    if (!ok(r)) {
+      console.log(`FAIL: ${name} - ${msg}`);
+      fails++;
+    }
 };
 
 // Idle sweeps: every set draws its ready frame; dagger sits right,
@@ -88,8 +104,8 @@ for (const [which, state, frame, name] of [
   ['dagger', 'StrikeRight', 2, 'dagger-strikeright-mid'],
   ['longblade', 'StrikeLeft', 2, 'longblade-strikeleft-mid'],
   ['bow', 'StrikeDown', 4, 'bow-draw'],
-  ['silverdagger', 'Idle', 0, 'silver-dagger-idle'],   // dye-parity evidence: 18 dyes SILVER (audit 2026-08-17)
-  ['steelblade', 'Idle', 0, 'steel-blade-idle'],       // dye-parity evidence: Steel keeps the files' native colors
+  ['silverdagger', 'Idle', 0, 'silver-dagger-idle'], // dye-parity evidence: 18 dyes SILVER (audit 2026-08-17)
+  ['steelblade', 'Idle', 0, 'steel-blade-idle'], // dye-parity evidence: Steel keeps the files' native colors
 ]) {
   const r = await page.evaluate(([w, s, f]) => window.__probe(w, s, f), [which, state, frame]);
   const wants = [['bottom-anchored', (x) => x.bbox.y1 > 0.98]];

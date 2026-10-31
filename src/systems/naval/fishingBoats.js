@@ -9,7 +9,7 @@ import { hash32 } from '../../world/spawnedDungeons.js';
 import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { keyHash } from './quays.js';
 import { footprintClear, berthSize, REACH_M } from './shipLife.js';
-import { SWEEP_WAY } from './navalAI.js';   // her sweeps out on the way, as a merchantman's into a harbour
+import { SWEEP_WAY } from './navalAI.js'; // her sweeps out on the way, as a merchantman's into a harbour
 
 /** A harbour's boats a day (a draw in the range, never more than its anchorages hold). */
 export const FISH_ROLL = Object.freeze([2, 4]);
@@ -40,7 +40,9 @@ const TAU = Math.PI * 2;
 const dist2 = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
 /** A point's distance (m) from the segment `a`-`b`. */
 function offSegment(p, a, b) {
-  const dx = b[0] - a[0], dz = b[1] - a[1], l2 = dx * dx + dz * dz;
+  const dx = b[0] - a[0],
+    dz = b[1] - a[1],
+    l2 = dx * dx + dz * dz;
   const t = l2 > 0 ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dz) / l2)) : 0;
   return Math.hypot(p[0] - a[0] - dx * t, p[1] - a[1] - dz * t);
 }
@@ -48,9 +50,12 @@ function offSegment(p, a, b) {
  *  her way in from its approach. */
 export function clearOfBerths(p, harbour, length) {
   return harbour.berths.every((b) => {
-    const fx = Math.sin(b.yaw) * length / 2, fz = Math.cos(b.yaw) * length / 2;
-    return offSegment(p, [b.pos[0] - fx, b.pos[1] - fz], [b.pos[0] + fx, b.pos[1] + fz]) >= FISH_BERTH_CLEAR
-      && offSegment(p, b.approach, b.pos) >= FISH_BERTH_CLEAR;
+    const fx = (Math.sin(b.yaw) * length) / 2,
+      fz = (Math.cos(b.yaw) * length) / 2;
+    return (
+      offSegment(p, [b.pos[0] - fx, b.pos[1] - fz], [b.pos[0] + fx, b.pos[1] + fz]) >= FISH_BERTH_CLEAR &&
+      offSegment(p, b.approach, b.pos) >= FISH_BERTH_CLEAR
+    );
   });
 }
 
@@ -76,10 +81,17 @@ export function fishersOf(key, day) {
 /** The harbour's outward bearing at its mouth: from its berths' middle to the mouth ([x, z], unit), else its first
  *  berth's own normal. */
 export function harbourOutwardOf(harbour) {
-  let x = 0, z = 0;
-  for (const b of harbour.berths) { x += b.pos[0]; z += b.pos[1]; }
-  x /= harbour.berths.length; z /= harbour.berths.length;
-  const dx = harbour.mouth[0] - x, dz = harbour.mouth[1] - z, d = Math.hypot(dx, dz);
+  let x = 0,
+    z = 0;
+  for (const b of harbour.berths) {
+    x += b.pos[0];
+    z += b.pos[1];
+  }
+  x /= harbour.berths.length;
+  z /= harbour.berths.length;
+  const dx = harbour.mouth[0] - x,
+    dz = harbour.mouth[1] - z,
+    d = Math.hypot(dx, dz);
   return d > 1 ? [dx / d, dz / d] : [...harbour.berths[0].normal];
 }
 
@@ -88,10 +100,17 @@ export function harbourOutwardOf(harbour) {
 export function berthSpan(harbour, n, u, length) {
   const m = harbour.mouth;
   const on = (p, w) => (p[0] - m[0]) * w[0] + (p[1] - m[1]) * w[1];
-  let lo = Infinity, hi = -Infinity, depth = 0;
+  let lo = Infinity,
+    hi = -Infinity,
+    depth = 0;
   for (const b of harbour.berths) {
-    const fx = Math.sin(b.yaw) * length / 2, fz = Math.cos(b.yaw) * length / 2;
-    for (const p of [[b.pos[0] - fx, b.pos[1] - fz], [b.pos[0] + fx, b.pos[1] + fz], b.approach]) { const a = on(p, u); lo = Math.min(lo, a); hi = Math.max(hi, a); }
+    const fx = (Math.sin(b.yaw) * length) / 2,
+      fz = (Math.cos(b.yaw) * length) / 2;
+    for (const p of [[b.pos[0] - fx, b.pos[1] - fz], [b.pos[0] + fx, b.pos[1] + fz], b.approach]) {
+      const a = on(p, u);
+      lo = Math.min(lo, a);
+      hi = Math.max(hi, a);
+    }
     depth -= on(b.pos, n);
   }
   return { lo, hi, depth: depth / harbour.berths.length };
@@ -107,24 +126,35 @@ export function berthSpan(harbour, n, u, length) {
  */
 export function fishingWaters({ harbour, i, seed, hull, isWater, grid }) {
   if (!harbour?.mouth || !harbour.berths?.length) return null;
-  const m = harbour.mouth, n = harbourOutwardOf(harbour), u = [n[1], -n[0]], side = i % 2 ? -1 : 1, k = Math.floor(i / 2);
-  const along = Math.atan2(u[0], u[1]);   // she lies along the shore, as the berths' ships do
+  const m = harbour.mouth,
+    n = harbourOutwardOf(harbour),
+    u = [n[1], -n[0]],
+    side = i % 2 ? -1 : 1,
+    k = Math.floor(i / 2);
+  const along = Math.atan2(u[0], u[1]); // she lies along the shore, as the berths' ships do
   const water = (x, z) => !!isWater(x, z, hull);
-  const length = (() => { const b = berthSize(harbour.hull ?? 4); return b.bowZ - b.aftZ; })();
+  const length = (() => {
+    const b = berthSize(harbour.hull ?? 4);
+    return b.bowZ - b.aftZ;
+  })();
   const span = berthSpan(harbour, n, u, length);
   const a = side > 0 ? span.hi + FISH_BERTH_CLEAR + k * FISH_SPACING : span.lo - FISH_BERTH_CLEAR - k * FISH_SPACING;
   let anchor = null;
   for (const share of FISH_ROADS_IN) {
     const d = span.depth * share;
     const p = [m[0] - n[0] * d + u[0] * a, m[1] - n[1] * d + u[1] * a];
-    if (footprintClear(p, along, hull, isWater) && clearOfBerths(p, harbour, length) && grid.path(m, p)) { anchor = p; break; }
+    if (footprintClear(p, along, hull, isWater) && clearOfBerths(p, harbour, length) && grid.path(m, p)) {
+      anchor = p;
+      break;
+    }
   }
   if (!anchor) return null;
   const r = fishRng(seed);
-  r();   // the class's draw (fishersOf)
+  r(); // the class's draw (fishersOf)
   let ground = null;
   for (let t = 0; t < FISH_TRIES && !ground; t++) {
-    const a = Math.atan2(n[0], n[1]) + (r() * 2 - 1) * FISH_GROUND_SPREAD, d = FISH_GROUND_M[0] + r() * (FISH_GROUND_M[1] - FISH_GROUND_M[0]);
+    const a = Math.atan2(n[0], n[1]) + (r() * 2 - 1) * FISH_GROUND_SPREAD,
+      d = FISH_GROUND_M[0] + r() * (FISH_GROUND_M[1] - FISH_GROUND_M[0]);
     const q = [m[0] + Math.sin(a) * d, m[1] + Math.cos(a) * d];
     if (water(q[0], q[1]) && grid.clear(m, q)) ground = q;
   }
@@ -137,8 +167,19 @@ export function fishingWaters({ harbour, i, seed, hull, isWater, grid }) {
  * @param {{ key: string, waters: { anchor: number[], yaw: number, ground: number[] }, lights: boolean }} q
  */
 export function fishingErrand({ key, waters, lights }) {
-  const errand = { kind: lights ? 'anchor' : 'fish', harbour: key, to: [...waters.anchor], at: [...waters.ground], yaw: waters.yaw, path: null, i: 0, ringing: false };
-  return lights ? { errand, pos: [...waters.anchor], yaw: waters.yaw } : { errand, pos: [...waters.ground], yaw: waters.yaw + Math.PI };
+  const errand = {
+    kind: lights ? 'anchor' : 'fish',
+    harbour: key,
+    to: [...waters.anchor],
+    at: [...waters.ground],
+    yaw: waters.yaw,
+    path: null,
+    i: 0,
+    ringing: false,
+  };
+  return lights
+    ? { errand, pos: [...waters.anchor], yaw: waters.yaw }
+    : { errand, pos: [...waters.ground], yaw: waters.yaw + Math.PI };
 }
 
 /** Whether her errand holds her where she is - at anchor, or working her ground's ring: no stall is a stall then
@@ -156,18 +197,37 @@ export const fishingHeld = (e) => e?.kind === 'anchor' || (e?.kind === 'fish' &&
 export function stepFishing(ship, dt, ctx, { here, plan, way }) {
   const e = ship.errand;
   const lit = !!ctx.lights;
-  const turn = (kind) => { e.kind = kind; e.path = null; e.i = 0; e.ringing = false; e.stall = 0; e.detour = null; };
+  const turn = (kind) => {
+    e.kind = kind;
+    e.path = null;
+    e.i = 0;
+    e.ringing = false;
+    e.stall = 0;
+    e.detour = null;
+  };
   if (e.kind === 'anchor') {
-    if (!lit) { turn('fish'); return stepFishing(ship, dt, ctx, { here, plan, way }); }
-    if (dist2(here, e.to) > FISH_ANCHOR_M * 2) { turn('home'); return stepFishing(ship, dt, ctx, { here, plan, way }); }   // moved off her mooring (a fight)
+    if (!lit) {
+      turn('fish');
+      return stepFishing(ship, dt, ctx, { here, plan, way });
+    }
+    if (dist2(here, e.to) > FISH_ANCHOR_M * 2) {
+      turn('home');
+      return stepFishing(ship, dt, ctx, { here, plan, way });
+    } // moved off her mooring (a fight)
     return { hold: { pos: [e.to[0], e.to[1]], yaw: e.yaw } };
   }
   if (e.kind === 'fish') {
-    if (lit) { turn('home'); return stepFishing(ship, dt, ctx, { here, plan, way }); }
-    if (e.ringing && !e.path) e.ringing = false;   // a fight took her off it (navalAI.js lets a way go): back by the water's way
+    if (lit) {
+      turn('home');
+      return stepFishing(ship, dt, ctx, { here, plan, way });
+    }
+    if (e.ringing && !e.path) e.ringing = false; // a fight took her off it (navalAI.js lets a way go): back by the water's way
     if (!e.ringing && dist2(here, e.at) <= FISH_RING + REACH_M) {
       e.ringing = true;
-      e.path = [0, 1, 2, 3].map((k) => { const a = (k / 4) * TAU + (ship.seed % 360) * (Math.PI / 180); return [e.at[0] + Math.sin(a) * FISH_RING, e.at[1] + Math.cos(a) * FISH_RING]; });
+      e.path = [0, 1, 2, 3].map((k) => {
+        const a = (k / 4) * TAU + (ship.seed % 360) * (Math.PI / 180);
+        return [e.at[0] + Math.sin(a) * FISH_RING, e.at[1] + Math.cos(a) * FISH_RING];
+      });
       e.i = 0;
     }
     if (e.ringing) {
@@ -178,13 +238,24 @@ export function stepFishing(ship, dt, ctx, { here, plan, way }) {
     return p ? { ...plan(p, 0.8), sweeps: SWEEP_WAY, sailable: true } : (ship.errand = null);
   }
   if (e.kind === 'home') {
-    if (!lit) { turn('fish'); return stepFishing(ship, dt, ctx, { here, plan, way }); }
-    if (dist2(here, e.to) <= FISH_ANCHOR_M) { turn('anchor'); return { hold: { pos: [e.to[0], e.to[1]], yaw: e.yaw } }; }
+    if (!lit) {
+      turn('fish');
+      return stepFishing(ship, dt, ctx, { here, plan, way });
+    }
+    if (dist2(here, e.to) <= FISH_ANCHOR_M) {
+      turn('anchor');
+      return { hold: { pos: [e.to[0], e.to[1]], yaw: e.yaw } };
+    }
     const p = way(e.to);
     if (!p) return (ship.errand = null);
     const left = dist2(here, e.to);
     // the last leg, into her anchorage by the shore: no swing off the land she lies by (shipLife.js arrive's `berthing`)
-    return { ...plan(p, left > 120 ? 0.8 : Math.max(0.3, left / 150)), sweeps: SWEEP_WAY, sailable: true, berthing: !!e.path && e.i === e.path.length - 1 };
+    return {
+      ...plan(p, left > 120 ? 0.8 : Math.max(0.3, left / 150)),
+      sweeps: SWEEP_WAY,
+      sailable: true,
+      berthing: !!e.path && e.i === e.path.length - 1,
+    };
   }
   return (ship.errand = null);
 }
@@ -199,10 +270,10 @@ export function fisherCatch(classId, seed) {
 /** The seed's place in its harbour's fleet: `{ key, i, classId, day }` - found among `harbours`' fleets of `days`, or
  *  null. A boat taken over is known by it (her errand never rides the word). */
 export function fisherPlace(seed, harbours, days) {
-  for (const day of days) for (const h of harbours) {
-    const f = fishersOf(h.key, day).find((x) => x.seed === (seed >>> 0));
-    if (f) return { key: h.key, i: f.i, classId: f.classId, day };
-  }
+  for (const day of days)
+    for (const h of harbours) {
+      const f = fishersOf(h.key, day).find((x) => x.seed === seed >>> 0);
+      if (f) return { key: h.key, i: f.i, classId: f.classId, day };
+    }
   return null;
 }
-

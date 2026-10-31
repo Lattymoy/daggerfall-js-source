@@ -2,8 +2,8 @@
   {
     "name": "DOACTIVE-window-guard",
     "file": "tools/doActive.mjs",
-    "old": "days < 1 || days > DAYS_MAX) throw",
-    "new": "days < 1 || days > DAYS_MAX + 1) throw",
+    "old": "  if (!Number.isSafeInteger(days) || days < 1 || days > DAYS_MAX)",
+    "new": "  if (!Number.isSafeInteger(days) || days < 1 || days > DAYS_MAX + 1)",
     "tests": [
       "test/server/doactive.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DOACTIVE-window-end",
     "file": "tools/doActive.mjs",
-    "old": "(today - (days - index) * DAY_S)",
-    "new": "(today - (days - index - 1) * DAY_S)",
+    "old": "    new Date((today - (days - index) * DAY_S) * 1000).toISOString().slice(0, 10),",
+    "new": "    new Date((today - (days - index - 1) * DAY_S) * 1000).toISOString().slice(0, 10),",
     "tests": [
       "test/server/doactive.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DOACTIVE-price",
     "file": "tools/doActive.mjs",
-    "old": "(0.125 * DAY_S * 12.5) / 1e6",
-    "new": "(0.128 * DAY_S * 12.5) / 1e6",
+    "old": "export const OBJECT_DAY_USD = (0.125 * DAY_S * 12.5) / 1e6;",
+    "new": "export const OBJECT_DAY_USD = (0.128 * DAY_S * 12.5) / 1e6;",
     "tests": [
       "test/server/doactive.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DOACTIVE-unit-rule",
     "file": "tools/doActive.mjs",
-    "old": ".filter((candidate) => candidate.hours <= 24.5)",
-    "new": ".filter((candidate) => candidate.hours <= 1e9)",
+    "old": "  const fit = readings\n    .filter((candidate) => candidate.hours <= 24.5)\n    .sort((left, right) => right.hours - left.hours)[0];",
+    "new": "  const fit = readings.filter((candidate) => candidate.hours <= 1e9).sort((left, right) => right.hours - left.hours)[0];",
     "tests": [
       "test/server/doactive.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DOACTIVE-edge",
     "file": "tools/doActive.mjs",
-    "old": "[1, 2, 4, 8, 12, 16, 20, 22, 24]",
-    "new": "[1, 2, 4, 8, 12, 16, 20, 23, 24]",
+    "old": "export const HOUR_EDGES = Object.freeze([1, 2, 4, 8, 12, 16, 20, 22, 24]);",
+    "new": "export const HOUR_EDGES = Object.freeze([1, 2, 4, 8, 12, 16, 20, 23, 24]);",
     "tests": [
       "test/server/doactive.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "DOACTIVE-unwrap",
     "file": "tools/doActive.mjs",
-    "old": "while (inner && !inner.name) inner = inner.ofType;",
-    "new": "while (inner && inner.kind === 'NON_NULL') inner = inner.ofType;",
+    "old": "  while (inner && !inner.name) inner = inner.ofType;",
+    "new": "  while (inner && inner.kind === 'NON_NULL') inner = inner.ofType;",
     "tests": [
       "test/server/doactive.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DOACTIVE-object-kind",
     "file": "tools/doActive.mjs",
-    "old": "parts[field.name] = typeRef?.kind === 'OBJECT' ?",
-    "new": "parts[field.name] = typeRef?.name ?",
+    "old": "    parts[field.name] = typeRef?.kind === 'OBJECT' ? names((await type(typeRef.name)).fields) : null; // null: a value of the group's own (a count)",
+    "new": "    parts[field.name] = typeRef?.name ? names((await type(typeRef.name)).fields) : null; // null: a value of the group's own (a count)",
     "tests": [
       "test/server/doactive.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "DOACTIVE-settings-unread",
     "file": "tools/doActive.mjs",
-    "old": "if (asked.length) settings =",
-    "new": "if (false) settings =",
+    "old": "    if (asked.length)",
+    "new": "    if (false)",
     "tests": [
       "test/server/doactive.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "DOACTIVE-page-size",
     "file": "tools/doActive.mjs",
-    "old": "Math.min(PAGE_MAX, Number(schema.settings?.maxPageSize)",
-    "new": "Math.max(PAGE_MAX, Number(schema.settings?.maxPageSize)",
+    "old": "  const pageSize = Math.min(",
+    "new": "  const pageSize = Math.max(",
     "tests": [
       "test/server/doactive.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "DOACTIVE-order",
     "file": "tools/doActive.mjs",
-    "old": "? 'sum_activeTime_DESC' : null",
-    "new": "? 'sum_activeTime_ASC' : null",
+    "old": "    order: schema.orders.includes('sum_activeTime_DESC') ? 'sum_activeTime_DESC' : null,",
+    "new": "    order: schema.orders.includes('sum_activeTime_DESC') ? 'sum_activeTime_ASC' : null,",
     "tests": [
       "test/server/doactive.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "DOACTIVE-object-dimension",
     "file": "tools/doActive.mjs",
-    "old": "dimensions { objectId${plan.namespace ? ' namespaceId' : ''} }",
-    "new": "dimensions { objectId }",
+    "old": "    `dimensions { objectId${plan.namespace ? ' namespaceId' : ''} } sum { activeTime }`,",
+    "new": "    `dimensions { objectId } sum { activeTime }`,",
     "tests": [
       "test/server/doactive.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "DOACTIVE-total-through-page",
     "file": "tools/doActive.mjs",
-    "old": "`${plan.namespace ? 'dimensions { namespaceId } ' : ''}sum { activeTime }`",
-    "new": "`dimensions { objectId${plan.namespace ? ' namespaceId' : ''} } sum { activeTime }`",
+    "old": "    `${plan.namespace ? 'dimensions { namespaceId } ' : ''}sum { activeTime }`,",
+    "new": "    `dimensions { objectId${plan.namespace ? ' namespaceId' : ''} } sum { activeTime }`,",
     "tests": [
       "test/server/doactive.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "DOACTIVE-missing-active",
     "file": "tools/doActive.mjs",
-    "old": "if (!sums.includes('activeTime')) missing.push",
-    "new": "if (false) missing.push",
+    "old": "  if (!sums.includes('activeTime')) missing.push('sum.activeTime');",
+    "new": "  if (false) missing.push('sum.activeTime');",
     "tests": [
       "test/server/doactive.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "DOACTIVE-short-slice",
     "file": "tools/doActive.mjs",
-    "old": "maxDuration > 0 && maxDuration < DAY_S) missing.push",
-    "new": "maxDuration > 0 && maxDuration < 0) missing.push",
+    "old": "  if (byDay !== 'datetime' && Number.isFinite(maxDuration) && maxDuration > 0 && maxDuration < DAY_S)",
+    "new": "  if (byDay !== 'datetime' && Number.isFinite(maxDuration) && maxDuration > 0 && maxDuration < 0)",
     "tests": [
       "test/server/doactive.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "DOACTIVE-kept-days",
     "file": "tools/doActive.mjs",
-    "old": "Math.floor(notOlderThan / DAY_S) - 1",
-    "new": "Math.floor(notOlderThan / DAY_S)",
+    "old": "  const keptDays = Number.isFinite(notOlderThan) && notOlderThan > 0 ? Math.floor(notOlderThan / DAY_S) - 1 : days;",
+    "new": "  const keptDays = Number.isFinite(notOlderThan) && notOlderThan > 0 ? Math.floor(notOlderThan / DAY_S) : days;",
     "tests": [
       "test/server/doactive.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "DOACTIVE-always-on",
     "file": "tools/doActive.mjs",
-    "old": "entry.n++;\n      if (hoursOf(object.raw) > ALWAYS_ON_H) entry.on++;",
-    "new": "entry.n++;\n      if (hoursOf(object.raw) >= 0) entry.on++;",
+    "old": "      entry.n++;\n      if (hoursOf(object.raw) > ALWAYS_ON_H) entry.on++;",
+    "new": "      entry.n++;\n      if (hoursOf(object.raw) >= 0) entry.on++;",
     "tests": [
       "test/server/doactive.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "DOACTIVE-cut-unsaid",
     "file": "tools/doActive.mjs",
-    "old": "if (rows.length >= plan.pageSize) cut = true;",
-    "new": "if (rows.length > plan.pageSize) cut = true;",
+    "old": "      if (rows.length >= plan.pageSize) cut = true;",
+    "new": "      if (rows.length > plan.pageSize) cut = true;",
     "tests": [
       "test/server/doactive.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "DOACTIVE-namespace-name",
     "file": "tools/doActive.mjs",
-    "old": "(id == null ? '(all)' : namespaces.get(id) ?? id)",
-    "new": "(id == null ? '(all)' : id)",
+    "old": "  const namespaceName = (id) => (id == null ? '(all)' : (namespaces.get(id) ?? id));",
+    "new": "  const namespaceName = (id) => (id == null ? '(all)' : id);",
     "tests": [
       "test/server/doactive.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "DOACTIVE-histogram",
     "file": "tools/doActive.mjs",
-    "old": "histogram[bucketOf(hoursOf(object.raw))]++;",
-    "new": "histogram[bucketOf(hoursOf(object.raw) / 2)]++;",
+    "old": "      histogram[bucketOf(hoursOf(object.raw))]++;",
+    "new": "      histogram[bucketOf(hoursOf(object.raw) / 2)]++;",
     "tests": [
       "test/server/doactive.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "DOACTIVE-top-order",
     "file": "tools/doActive.mjs",
-    "old": "sort((left, right) => right[1].hours - left[1].hours",
-    "new": "sort((left, right) => left[1].hours - right[1].hours",
+    "old": "    .sort((left, right) => right[1].hours - left[1].hours || (left[0] < right[0] ? -1 : 1))",
+    "new": "    .sort((left, right) => left[1].hours - right[1].hours || (left[0] < right[0] ? -1 : 1))",
     "tests": [
       "test/server/doactive.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "DOACTIVE-refusal",
     "file": "tools/doActive.mjs",
-    "old": "if (response.status === 401 || response.status === 403) throw",
-    "new": "if (response.status === 401) throw",
+    "old": "    if (response.status === 401 || response.status === 403)",
+    "new": "    if (response.status === 401)",
     "tests": [
       "test/server/doactive.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "DOACTIVE-account-guard",
     "file": "tools/doActive.mjs",
-    "old": "if (!/^[0-9a-f]{32}$/.test(text)) throw",
-    "new": "if (!/./.test(text)) throw",
+    "old": "  if (!/^[0-9a-f]{32}$/.test(text)) throw new Error(`not an account id: ${JSON.stringify(raw)}`);",
+    "new": "  if (!/./.test(text)) throw new Error(`not an account id: ${JSON.stringify(raw)}`);",
     "tests": [
       "test/server/doactive.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "DOACTIVE-stop-green",
     "file": "tools/doActive.mjs",
-    "old": "    process.exit(1);\n  }\n}",
-    "new": "    process.exit(0);\n  }\n}",
+    "old": "    process.exit(1);",
+    "new": "    process.exit(0);",
     "tests": [
       "test/server/doactive.test.js"
     ]

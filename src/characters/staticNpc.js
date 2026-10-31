@@ -13,21 +13,26 @@
 
 import { srand } from '../formats/dfRandom.js';
 import { getNameBankOfRegion, BANK_TYPES, GENDERS } from './nameHelper.js';
-import { personName } from './personNames.js';   // REGION-NAMES: a key - by its bank's culture alone
+import { personName } from './personNames.js'; // REGION-NAMES: a key - by its bank's culture alone
 import { RACES } from '../systems/races.js';
 // ONE HOME for FactionFile.FactionTypes (FactionFile.cs:530-546) - the
 // enum the parser already mints. Individual is 4; 3 is Subgroup.
 import { FACTION_TYPES } from '../formats/factionFile.js';
-import { getLocalizedFactionName } from '../systems/textManager.js';   // L10N3e: a named NPC's faction name, shown in the player's language
+import { getLocalizedFactionName } from '../systems/textManager.js'; // L10N3e: a named NPC's faction name, shown in the player's language
 
 // RR2: `flatsDict[flatId] = new FlatsFile.FlatData { faceIndex }`
 // (RoleplayRealism.cs:1017-1023) - a mod rewrites FLATS.CFG's face for a
 // flat it re-drew, keyed by the flat the person was born as, the last
 // writer winning. The pipeline's flatFaceIndex asks here first.
 const _faceOverrides = new Map();
-export function setFlatFaceOverride(archive, record, faceIndex) { if (faceIndex == null) _faceOverrides.delete(`${archive}:${record}`); else _faceOverrides.set(`${archive}:${record}`, faceIndex | 0); }
+export function setFlatFaceOverride(archive, record, faceIndex) {
+  if (faceIndex == null) _faceOverrides.delete(`${archive}:${record}`);
+  else _faceOverrides.set(`${archive}:${record}`, faceIndex | 0);
+}
 export const flatFaceOverride = (archive, record) => _faceOverrides.get(`${archive}:${record}`) ?? null;
-export function _resetFlatFaceOverrides() { _faceOverrides.clear(); }
+export function _resetFlatFaceOverrides() {
+  _faceOverrides.clear();
+}
 
 /** StaticNPC.Context (:113-118). */
 export const NPC_CONTEXT = Object.freeze({ Custom: 0, Dungeon: 1, Building: 2 });
@@ -51,31 +56,37 @@ export const ZERO_NPC_DATA = Object.freeze({
   flags: 0,
   factionID: 0,
   nameSeed: 0,
-  gender: 0,            // Genders.Male
-  race: 0,              // (Races)0 - C#'s struct default, no member
+  gender: 0, // Genders.Male
+  race: 0, // (Races)0 - C#'s struct default, no member
   context: NPC_CONTEXT.Custom,
   mapID: 0,
   locationID: 0,
   buildingKey: 0,
-  nameBank: 0,          // BankTypes.Breton
+  nameBank: 0, // BankTypes.Breton
   billboardArchiveIndex: 0,
   billboardRecordIndex: 0,
 });
 
 /** GetPositionHash (StaticNPC.cs:333-336): int32 semantics via |0. */
-export const positionHash = (x, y, z) => ((x ^ (y << 2) ^ (z >> 2)) | 0);
+export const positionHash = (x, y, z) => (x ^ (y << 2) ^ (z >> 2)) | 0;
 
 /** SetLayoutData (StaticNPC.cs:210-224): the NPCData record from a
  *  block person record + the scene context. */
-export function staticNpcData(pn, {
-  mapId = 0, locationIndex = 0, buildingKey = 0,
-  getFaction = null, raceOfCurrentRegion = null,
-  // StaticNPC.cs:165-179 - the RMB (building) overload stamps
-  // Context.Building; the RDB one two above it stamps Dungeon. This
-  // helper serves the building path, so that is the default, and a
-  // dungeon caller says so.
-  context = NPC_CONTEXT.Building,
-} = {}) {
+export function staticNpcData(
+  pn,
+  {
+    mapId = 0,
+    locationIndex = 0,
+    buildingKey = 0,
+    getFaction = null,
+    raceOfCurrentRegion = null,
+    // StaticNPC.cs:165-179 - the RMB (building) overload stamps
+    // Context.Building; the RDB one two above it stamps Dungeon. This
+    // helper serves the building path, so that is the default, and a
+    // dungeon caller says so.
+    context = NPC_CONTEXT.Building,
+  } = {},
+) {
   const factionID = pn.factionID ?? 0;
   return {
     // AUDIT 24 (the seven-slice sweep): over the ZERO STRUCT, because
@@ -88,7 +99,7 @@ export function staticNpcData(pn, {
     billboardArchiveIndex: pn.textureArchive ?? 0,
     billboardRecordIndex: pn.textureRecord ?? 0,
     // C# precedence kept: position ^ (buildingKey + locationIndex)
-    nameSeed: (((pn.position ?? 0) ^ (buildingKey + locationIndex)) | 0),
+    nameSeed: ((pn.position ?? 0) ^ (buildingKey + locationIndex)) | 0,
     gender: ((pn.flags ?? 0) & 32) === 32 ? GENDERS.Female : GENDERS.Male,
     // SetLayoutData's own line (:220). AUDIT 24: the port left `race`
     // off entirely, so QuestMCP.Oath's clicked-NPC arm - the one the
@@ -127,7 +138,7 @@ export function staticNpcData(pn, {
  */
 export function exteriorNpcFlags(flags, flatData) {
   if (!flatData) return flags;
-  return String(flatData.gender ?? '').includes('2') ? (flags | 32) : (flags & 223);
+  return String(flatData.gender ?? '').includes('2') ? flags | 32 : flags & 223;
 }
 
 /** SetLayoutData(hash, gender, factionID, nameSeed) (StaticNPC.cs:245-255)
@@ -136,8 +147,13 @@ export function exteriorNpcFlags(flags, flatData) {
  *  runtime pass at :299-306 fills the key), and it is the only
  *  overload that stamps Context.Custom. */
 export function layoutNpcData({
-  hash, gender, factionID = 0, nameSeed = -1,
-  getFaction = null, raceOfCurrentRegion = null, ...rest
+  hash,
+  gender,
+  factionID = 0,
+  nameSeed = -1,
+  getFaction = null,
+  raceOfCurrentRegion = null,
+  ...rest
 }) {
   return {
     ...ZERO_NPC_DATA,
@@ -207,29 +223,47 @@ export function raceFromFaction(factionId, getFaction, raceOfCurrentRegion) {
  *  Wereboar 11) have no case in C#'s switch either and fall out None. */
 export function factionRaceFromRace(race) {
   switch (race) {
-    case RACES.Nord: return 0;
-    case RACES.Khajiit: return 1;
-    case RACES.Redguard: return 2;
-    case RACES.Breton: return 3;
-    case RACES.Argonian: return 4;
-    case RACES.WoodElf: return 5;
-    case RACES.HighElf: return 6;
-    case RACES.DarkElf: return 7;
-    default: return -1;   // FactionRaces.None
+    case RACES.Nord:
+      return 0;
+    case RACES.Khajiit:
+      return 1;
+    case RACES.Redguard:
+      return 2;
+    case RACES.Breton:
+      return 3;
+    case RACES.Argonian:
+      return 4;
+    case RACES.WoodElf:
+      return 5;
+    case RACES.HighElf:
+      return 6;
+    case RACES.DarkElf:
+      return 7;
+    default:
+      return -1; // FactionRaces.None
   }
 }
 
 export function raceFromFactionRace(factionRace) {
   switch (factionRace) {
-    case 0: return RACES.Nord;
-    case 1: return RACES.Khajiit;
-    case 2: return RACES.Redguard;
-    case 3: return RACES.Breton;
-    case 4: return RACES.Argonian;
-    case 5: return RACES.WoodElf;
-    case 6: return RACES.HighElf;
-    case 7: return RACES.DarkElf;
-    default: return null;   // None (-1), Skakmat, Orc, Vampire, Fey
+    case 0:
+      return RACES.Nord;
+    case 1:
+      return RACES.Khajiit;
+    case 2:
+      return RACES.Redguard;
+    case 3:
+      return RACES.Breton;
+    case 4:
+      return RACES.Argonian;
+    case 5:
+      return RACES.WoodElf;
+    case 6:
+      return RACES.HighElf;
+    case 7:
+      return RACES.DarkElf;
+    default:
+      return null; // None (-1), Skakmat, Orc, Vampire, Fey
   }
 }
 
@@ -254,13 +288,13 @@ export function staticNpcName(data, { getFaction = null, nameBank = null } = {})
   // GetDisplayName (:319) tests `factionData.type == (int)FactionTypes.Individual`.
   if (fd && fd.type === FACTION_TYPES.Individual) return fd.name;
   srand(data.nameSeed);
-  const bank = nameBank ?? BANK_TYPES.Breton;   // F016: GetNameBankOfCurrentRegion's own fallback
+  const bank = nameBank ?? BANK_TYPES.Breton; // F016: GetNameBankOfCurrentRegion's own fallback
   // AUDIT 24 (wave 24): `data.gender` is the Genders enum, which is
   // what FullName takes - C# passes `npcData.gender` straight through
   // (:328). The string compare here was propping up the stale
   // staticNpcData above, which wrote 'female'/'male'; that one is gone
   // and this is the C# line.
-  const drawn = personName(bank, data.gender);   // REGION-NAMES: DFU's draw, then its culture's name off it (a key: no region)
+  const drawn = personName(bank, data.gender); // REGION-NAMES: DFU's draw, then its culture's name off it (a key: no region)
   // QUEST-NAME-ONE (a departure): a quest Person's stand answers to the
   // Person's own name (systems/quest/person.js personOwnName, carried as
   // `personName` by the stand's one builder) - the name its quest's
@@ -294,14 +328,14 @@ export function staticNpcShownName(data, deps = {}) {
  *  in the port, so `isChildNPC` was read in four places and written
  *  nowhere. */
 const CHILD_NPC_TEXTURES = Object.freeze({
-  181: Object.freeze(new Set([3])),                                                       // templePeople
-  182: Object.freeze(new Set([4, 5, 6, 18, 36, 37, 38, 42, 43, 52, 53])),                  // mediumCommonPeople
-  184: Object.freeze(new Set([15])),                                                      // flatPeople2
-  186: Object.freeze(new Set([4, 5, 6, 7, 19, 37, 38, 39, 43, 44, 53, 54])),               // testBigFlats
-  197: Object.freeze(new Set([3])),                                                       // kludgeTown
-  334: Object.freeze(new Set([2, 3, 6, 9, 12])),                                           // daggerfallPeople
-  346: Object.freeze(new Set([2, 3, 12, 15, 16, 18])),                                     // wayrestPeople
-  357: Object.freeze(new Set([5, 6, 7, 8])),                                               // sentinelPeople
+  181: Object.freeze(new Set([3])), // templePeople
+  182: Object.freeze(new Set([4, 5, 6, 18, 36, 37, 38, 42, 43, 52, 53])), // mediumCommonPeople
+  184: Object.freeze(new Set([15])), // flatPeople2
+  186: Object.freeze(new Set([4, 5, 6, 7, 19, 37, 38, 39, 43, 44, 53, 54])), // testBigFlats
+  197: Object.freeze(new Set([3])), // kludgeTown
+  334: Object.freeze(new Set([2, 3, 6, 9, 12])), // daggerfallPeople
+  346: Object.freeze(new Set([2, 3, 12, 15, 16, 18])), // wayrestPeople
+  357: Object.freeze(new Set([5, 6, 7, 8])), // sentinelPeople
 });
 export const isChildNPCTexture = (archive, record) => !!CHILD_NPC_TEXTURES[archive]?.has(record);
 
@@ -311,8 +345,9 @@ export const isChildNPCTexture = (archive, record) => !!CHILD_NPC_TEXTURES[archi
 export const CHILDREN_FACTION_ID = 514;
 export function isChildNPCData(data) {
   if (!data) return false;
-  return isChildNPCTexture(data.billboardArchiveIndex, data.billboardRecordIndex)
-    || data.factionID === CHILDREN_FACTION_ID;
+  return (
+    isChildNPCTexture(data.billboardArchiveIndex, data.billboardRecordIndex) || data.factionID === CHILDREN_FACTION_ID
+  );
 }
 
 // AUDIT 26 F016: `bankForRace` and its raceKeyOf helper lived here to

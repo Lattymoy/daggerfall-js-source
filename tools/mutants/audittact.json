@@ -12,8 +12,8 @@
   {
     "name": "ATACT-A1-cornered-stands",
     "file": "src/ai/tactics.js",
-    "old": "      if (ai._tacBlocked || now >= s.kiteUntil) {   // a wall behind it: cornered, it fights hand to hand",
-    "new": "      if (now >= s.kiteUntil) {   // a wall behind it: cornered, it fights hand to hand",
+    "old": "      if (ai._tacBlocked || now >= s.kiteUntil) {",
+    "new": "      if (now >= s.kiteUntil) {",
     "tests": [
       "test/scenes/audittact.test.js",
       "test/characters/enemy/tact5_feedback.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "ATACT-A2-shot-keeps-token",
     "file": "src/ai/tactics.js",
-    "old": "    if (shot !== s.shot) { s.shot = shot; if (b.ranged.delete(ai)) b.waiting.set(ai, now); }",
-    "new": "    if (shot !== s.shot) { s.shot = shot; }",
+    "old": "      if (b.ranged.delete(ai)) b.waiting.set(ai, now);\n    }",
+    "new": "    }",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -68,8 +68,8 @@
   {
     "name": "ATACT-A3-held-ticks",
     "file": "src/ai/tacticsClock.js",
-    "old": "export function tickTactics(dt) { if (dt > 0 && Number.isFinite(dt)) _t += dt; }",
-    "new": "export function tickTactics(dt) { _t += Math.abs(dt) || 0.016; }",
+    "old": "  if (dt > 0 && Number.isFinite(dt)) _t += dt;",
+    "new": "  _t += Math.abs(dt) || 0.016;",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -77,8 +77,8 @@
   {
     "name": "ATACT-A4-shoots-mid-windup",
     "file": "src/ai/tactics.js",
-    "old": "  ai._tacStrike = false; ai._tacShoot = false; ai.moving = false;   // AUDIT TACT A4: no shot, no spell, mid-wind-up",
-    "new": "  ai._tacStrike = false; ai.moving = false;   // AUDIT TACT A4: no shot, no spell, mid-wind-up",
+    "old": "  ai._tacShoot = false;\n  ai.moving = false; // AUDIT TACT A4: no shot, no spell, mid-wind-up",
+    "new": "  ai.moving = false; // AUDIT TACT A4: no shot, no spell, mid-wind-up",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -133,8 +133,8 @@
   {
     "name": "ATACT-A7-boards-kept",
     "file": "src/ai/tactics.js",
-    "old": "    if (k !== LOCAL && !b.melee.size && !b.ranged.size && !b.waiting.size) _boards.delete(k);   // AUDIT TACT A7: no dead target held",
-    "new": "    void k;   // AUDIT TACT A7: no dead target held",
+    "old": "    if (k !== LOCAL && !b.melee.size && !b.ranged.size && !b.waiting.size) _boards.delete(k); // AUDIT TACT A7: no dead target held",
+    "new": "    void k; // AUDIT TACT A7: no dead target held",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -151,8 +151,8 @@
   {
     "name": "ATACT-D3-blows-unshifted",
     "file": "src/ai/foeBlows.js",
-    "old": "  for (const b of [..._live.values(), ..._shards.map((x) => x.blow)]) { b.origin[0] += offset[0]; b.origin[1] += offset[1]; b.origin[2] += offset[2]; }   // AUDIT TELL: a shattering one too",
-    "new": "  void offset;   // AUDIT TELL: a shattering one too",
+    "old": "  for (const b of [..._live.values(), ..._shards.map((x) => x.blow)]) {\n    b.origin[0] += offset[0];\n    b.origin[1] += offset[1];\n    b.origin[2] += offset[2];\n  } // AUDIT TELL: a shattering one too",
+    "new": "  void offset; // AUDIT TELL: a shattering one too",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -169,8 +169,8 @@
   {
     "name": "ATACT-D4-dead-blocks",
     "file": "src/ai/foeBlows.js",
-    "old": "    if (ai === except || b.cut != null || gone(ai, now)) continue;   // A cut feint is no wind-up",
-    "new": "    if (ai === except || b.cut != null) continue;   // A cut feint is no wind-up",
+    "old": "    if (ai === except || b.cut != null || gone(ai, now)) continue; // A cut feint is no wind-up",
+    "new": "    if (ai === except || b.cut != null) continue; // A cut feint is no wind-up",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -178,8 +178,8 @@
   {
     "name": "ATACT-D4-dead-drawn",
     "file": "src/ai/foeBlows.js",
-    "old": "    if (!phase || (now < b.land && gone(ai, now))) { _live.delete(ai); continue; }   // AUDIT TACT D4: a dead foe's wind-up goes with it",
-    "new": "    if (!phase) { _live.delete(ai); continue; }   // AUDIT TACT D4: a dead foe's wind-up goes with it",
+    "old": "    if (!phase || (now < b.land && gone(ai, now))) {",
+    "new": "    if (!phase) {",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -232,8 +232,8 @@
   {
     "name": "ATACT-B2-one-way",
     "file": "src/ai/cover.js",
-    "old": "  if (endAt != null) {   // the sight ray's own end (its target's eye), however short the search has been cut",
-    "new": "  if (false) {   // the sight ray's own end (its target's eye), however short the search has been cut",
+    "old": "  if (endAt != null) {",
+    "new": "  if (false) {",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -268,8 +268,8 @@
   {
     "name": "ATACT-B3-people-cover",
     "file": "src/ai/cover.js",
-    "old": "      if (!(it?.r > 0) || !(it.h > 0) || !it.c || it.c.noCover) continue;   // AUDIT TACT B3: a person is no cover",
-    "new": "      if (!(it?.r > 0) || !(it.h > 0) || !it.c) continue;   // AUDIT TACT B3: a person is no cover",
+    "old": "      if (!(it?.r > 0) || !(it.h > 0) || !it.c || it.c.noCover) continue; // AUDIT TACT B3: a person is no cover",
+    "new": "      if (!(it?.r > 0) || !(it.h > 0) || !it.c) continue; // AUDIT TACT B3: a person is no cover",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -304,8 +304,8 @@
   {
     "name": "ATACT-C1-plaque-puppet",
     "file": "src/player/activate.js",
-    "old": "      ...(f.ai && !(f.puppet ? f._pupMine : f.ai.isHostile) && f.companion == null ? { peaceful: true } : {}),",
-    "new": "      ...(f.ai && !f.ai.isHostile && f.companion == null ? { peaceful: true } : {}),",
+    "old": "      ...(f.ai && !(f.puppet ? f._pupMine : f.ai.isHostile) && f.companion == null ? { peaceful: true } : {}), // TACT3d: passes a door click (peacefulFoePass); AUDIT TACT C1/C5: hostile to ME (a puppet on me), never my companion",
+    "new": "      ...(f.ai && !f.ai.isHostile && f.companion == null ? { peaceful: true } : {}), // TACT3d: passes a door click (peacefulFoePass); AUDIT TACT C1/C5: hostile to ME (a puppet on me), never my companion",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -331,8 +331,8 @@
   {
     "name": "ATACT-C5-companion-passed",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "  if (!foe || foe.companion != null || mode === 'steal') return false;",
-    "new": "  if (!foe || mode === 'steal') return false;",
+    "old": "  if (!foe || foe.companion != null || mode === 'steal') return false; // AUDIT TACT C5: my companion's pack, a pickpocket - asked of HIM",
+    "new": "  if (!foe || mode === 'steal') return false; // AUDIT TACT C5: my companion's pack, a pickpocket - asked of HIM",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -340,8 +340,8 @@
   {
     "name": "ATACT-C5-steal-passed",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "  if (!foe || foe.companion != null || mode === 'steal') return false;",
-    "new": "  if (!foe || foe.companion != null) return false;",
+    "old": "  if (!foe || foe.companion != null || mode === 'steal') return false; // AUDIT TACT C5: my companion's pack, a pickpocket - asked of HIM",
+    "new": "  if (!foe || foe.companion != null) return false; // AUDIT TACT C5: my companion's pack, a pickpocket - asked of HIM",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -358,8 +358,8 @@
   {
     "name": "ATACT-C5-plaque-steal",
     "file": "src/player/activate.js",
-    "old": "  if (!foeHit || mode === 'steal' || !(Number.isFinite(doorBehind)",
-    "new": "  if (!foeHit || !(Number.isFinite(doorBehind)",
+    "old": "  if (!foeHit || mode === 'steal' || !(Number.isFinite(doorBehind) && doorBehind <= DOOR_ACTIVATION_DISTANCE))\n    return foeHit; // AUDIT TACT C5: a pickpocket is asked of him",
+    "new": "  if (!foeHit || !(Number.isFinite(doorBehind) && doorBehind <= DOOR_ACTIVATION_DISTANCE)) return foeHit; // AUDIT TACT C5: a pickpocket is asked of him",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -376,8 +376,8 @@
   {
     "name": "ATACT-C6-wrong-axis",
     "file": "src/characters/foeSpacing.js",
-    "old": "    out.push({ pos: [cx, cy, cz], normal: ex < ez ? [1, 0, 0] : [0, 0, 1] });",
-    "new": "    out.push({ pos: [cx, cy, cz], normal: ex < ez ? [0, 0, 1] : [1, 0, 0] });",
+    "old": "    out.push({ pos: [cx, cy, cz], normal: ex < ez ? [1, 0, 0] : [0, 0, 1] }); // a door is thin across its doorway",
+    "new": "    out.push({ pos: [cx, cy, cz], normal: ex < ez ? [0, 0, 1] : [1, 0, 0] }); // a door is thin across its doorway",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -385,8 +385,8 @@
   {
     "name": "ATACT-D-depth-left-off",
     "file": "src/render/foeTelegraph.js",
-    "old": "    gl.enable(gl.CULL_FACE);\n    gl.depthMask(true);",
-    "new": "    gl.enable(gl.CULL_FACE);",
+    "old": "    gl.depthMask(true);\n    gl.disable(gl.BLEND);",
+    "new": "    gl.disable(gl.BLEND);",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -403,8 +403,8 @@
   {
     "name": "ATACT-D-blend-left-on",
     "file": "src/render/foeTelegraph.js",
-    "old": "    gl.depthMask(true);\n    gl.disable(gl.BLEND);",
-    "new": "    gl.depthMask(true);",
+    "old": "    gl.disable(gl.BLEND);\n    return this.drawn;",
+    "new": "    return this.drawn;",
     "tests": [
       "test/scenes/audittact.test.js"
     ]

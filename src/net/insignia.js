@@ -23,7 +23,7 @@
 //
 // Pure: the offers, their prices, and the column's words. Not a DFU member. Ledger A (WB).
 import { TITLES, AURAS } from './identityToken.js';
-import { ARMORY_PIECES } from './armoryLaw.js';   // ARMORY: the Dagonfire line the Broker sells - armoryLaw.js imports nothing
+import { ARMORY_PIECES } from './armoryLaw.js'; // ARMORY: the Dagonfire line the Broker sells - armoryLaw.js imports nothing
 
 /** ARMORY: a Dagonfire piece's price at the Broker, in Sigil Stones (the owner's: 75 each). */
 export const ARMORY_BROKER_PRICE = 75;
@@ -38,12 +38,21 @@ export const INSIGNIA = Object.freeze([
   Object.freeze({ id: 'aura:dagonfire', kind: 'aura', key: 'dagonfire', price: 50 }),
   // ARMORY (the owner: "The dagon breach set should be very expensive from the dagon breach shop dealer"; bible/04-Characters/
   // Aura-Armory.md section 4): THE DAGONFIRE LINE, a piece a slot at half again the aura's price - 375 for the five
-  ...ARMORY_PIECES.filter((p) => p.source === 'broker').map((p) => Object.freeze({ id: `armory:${p.key}`, kind: 'armory', key: p.key, price: ARMORY_BROKER_PRICE })),
+  ...ARMORY_PIECES.filter((p) => p.source === 'broker').map((p) =>
+    Object.freeze({ id: `armory:${p.key}`, kind: 'armory', key: p.key, price: ARMORY_BROKER_PRICE }),
+  ),
 ]);
 /** An offer by its id, or null. */
 export const insigniaById = (id) => INSIGNIA.find((r) => r.id === id) ?? null;
 /** Every offer's key is in the token's vocabulary (a title a token could not carry would be a sale nobody sees). */
-export const insigniaVocabularyOk = () => INSIGNIA.every((r) => (r.kind === 'title' ? TITLES.includes(r.key) : r.kind === 'armory' ? ARMORY_PIECES.some((p) => p.key === r.key && p.source === 'broker') : AURAS.includes(r.key)));
+export const insigniaVocabularyOk = () =>
+  INSIGNIA.every((r) =>
+    r.kind === 'title'
+      ? TITLES.includes(r.key)
+      : r.kind === 'armory'
+        ? ARMORY_PIECES.some((p) => p.key === r.key && p.source === 'broker')
+        : AURAS.includes(r.key),
+  );
 
 /** The most the column may hold - every offer once (a longer column is not one this law wrote). */
 export const INSIGNIA_COLUMN_MAX = INSIGNIA.map((r) => r.id).join(' ').length;
@@ -63,7 +72,10 @@ export function insigniaHeld(column) {
 /** The column once `id` is bought (held pieces kept, in their order). Pure. */
 export const insigniaWith = (column, id) => [...insigniaHeld(column).filter((w) => w !== id), id].join(' ');
 /** The keys of one kind an account holds - its titles, its auras, or its armory pieces - in the offers' order. Pure. */
-export const insigniaKeys = (column, kind) => { const held = insigniaHeld(column); return INSIGNIA.filter((r) => r.kind === kind && held.includes(r.id)).map((r) => r.key); };
+export const insigniaKeys = (column, kind) => {
+  const held = insigniaHeld(column);
+  return INSIGNIA.filter((r) => r.kind === kind && held.includes(r.id)).map((r) => r.key);
+};
 
 /**
  * WHY AN OFFER MAY NOT BE BOUGHT, on this side's own knowing - 'owned' (the account holds it), 'stones' (the pack's

@@ -65,7 +65,7 @@ export { clampScrollIndex } from './verticalScrollBar.js';
 export function sliderThumb([tx, ty, tw, th], scrollIndex, totalUnits, displayUnits) {
   if (totalUnits <= displayUnits) return null;
   const thumbW = Math.max(THUMB_MIN_W, tw * (displayUnits / totalUnits));
-  const thumbX = scrollIndex * (tw - thumbW) / (totalUnits - displayUnits);
+  const thumbX = (scrollIndex * (tw - thumbW)) / (totalUnits - displayUnits);
   return [tx + thumbX, ty, thumbW, th];
 }
 
@@ -85,7 +85,11 @@ export { roundToInt };
  */
 export function makeSlider(spec) {
   const displayUnits = spec.displayUnits ?? SLIDER_DISPLAY_UNITS;
-  let mode, min, max, start, items = null;
+  let mode,
+    min,
+    max,
+    start,
+    items = null;
   if (spec.mode === 'float') {
     mode = 'float';
     min = roundToInt(spec.min * 10);
@@ -99,13 +103,20 @@ export function makeSlider(spec) {
     start = spec.selected;
   } else {
     mode = 'int';
-    min = spec.min; max = spec.max; start = spec.start;
+    min = spec.min;
+    max = spec.max;
+    start = spec.start;
   }
   // SetupIndicator (:329-343): SetDisplayUnits derives totalUnits from
   // the range, then the start value is stored as an INDEX off min.
-  const totalUnits = (max - min) + displayUnits;
+  const totalUnits = max - min + displayUnits;
   const s = {
-    mode, min, max, items, displayUnits, totalUnits,
+    mode,
+    min,
+    max,
+    items,
+    displayUnits,
+    totalUnits,
     scrollIndex: clampScrollIndex(start - min, totalUnits, displayUnits),
   };
   return s;

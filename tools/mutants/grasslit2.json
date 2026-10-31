@@ -213,7 +213,7 @@
   {
     "name": "GRASSLIT2-normal-unnormalised",
     "file": "src/world/terrain/terrainSurface.js",
-    "old": "  out[0] /= l; out[1] /= l; out[2] /= l;\n  return out;",
+    "old": "  out[0] /= l;\n  out[1] /= l;\n  out[2] /= l;\n  return out;",
     "new": "  return out;",
     "tests": [
       "test/render/grasslit2.test.js",
@@ -429,27 +429,27 @@
   },
   {
     "name": "AUDIT-GRASSLIT2-B5-zero-step",
-    "file": "src/scenes/world.js",
-    "old": "window.__grassSpot = (r = 6, skip = 0, steep = 0) => {\n      r = Math.max(1, r | 0);",
-    "new": "window.__grassSpot = (r = 6, skip = 0, steep = 0) => {\n      r = r | 0;",
+    "file": "src/scenes/worldShotHooks.js",
+    "old": "      r = Math.max(1, r | 0); // AUDIT GRASS-LIT2 B5: a zero step never left the loop",
+    "new": "      r = r | 0; // AUDIT GRASS-LIT2 B5: a zero step never left the loop",
     "tests": [
       "test/render/grasslit2.test.js"
     ]
   },
   {
     "name": "AUDIT-GRASSLIT2-B5-yaw-flat",
-    "file": "src/scenes/world.js",
-    "old": "yaw: n ? Math.atan2(n[0], n[2]) : 0,",
-    "new": "yaw: 0,",
+    "file": "src/scenes/worldShotHooks.js",
+    "old": "            return {\n              feet: [x, heightAt(x, z), z],\n              yaw: n ? Math.atan2(n[0], n[2]) : 0,\n              pixel: [p.px, p.py],\n              archive: p.groundArchive,\n              normal: n,\n            }; // AUDIT B5: a hillside's yaw looks down it",
+    "new": "            return { feet: [x, heightAt(x, z), z], yaw: 0, pixel: [p.px, p.py], archive: p.groundArchive, normal: n }; // AUDIT B5: a hillside's yaw looks down it",
     "tests": [
       "test/render/grasslit2.test.js"
     ]
   },
   {
     "name": "AUDIT-GRASSLIT2-B5-near-half",
-    "file": "src/scenes/world.js",
-    "old": "(tz + r * 2 + 0.5) * 6.4, [0, 1, 0])",
-    "new": "(tz + 0.5) * 6.4, [0, 1, 0])",
+    "file": "src/scenes/worldShotHooks.js",
+    "old": "                ? surfaceNormalAt(p.groundNormals, (tx + 0.5) * 6.4, (tz + r * 2 + 0.5) * 6.4, [0, 1, 0])",
+    "new": "                ? surfaceNormalAt(p.groundNormals, (tx + 0.5) * 6.4, (tz + 0.5) * 6.4, [0, 1, 0])",
     "tests": [
       "test/render/grasslit2.test.js"
     ]
@@ -656,26 +656,26 @@
   },
   {
     "name": "AUDIT-GRASSLIT2-C-forest-grass-check-dropped",
-    "file": "src/scenes/world.js",
-    "old": "if (!grass.has(p.tilemapBytes[tz * TERRAIN_TILE_DIM + tx] >> 2)) continue;\n          let w = 0",
-    "new": "let w = 0",
+    "file": "src/scenes/worldShotHooks.js",
+    "old": "            if (!grass.has(p.tilemapBytes[tz * TERRAIN_TILE_DIM + tx] >> 2)) continue;\n            let w = 0,",
+    "new": "            let w = 0,",
     "tests": [
       "test/render/grasslit2.test.js"
     ]
   },
   {
     "name": "AUDIT-GRASSLIT2-C-forest-min-not-max",
-    "file": "src/scenes/world.js",
-    "old": "if (!best || w / k > best.wood)",
-    "new": "if (!best || w / k < best.wood)",
+    "file": "src/scenes/worldShotHooks.js",
+    "old": "            if (!best || w / k > best.wood) best = { p, tx, tz, wood: w / k };",
+    "new": "            if (!best || w / k < best.wood) best = { p, tx, tz, wood: w / k };",
     "tests": [
       "test/render/grasslit2.test.js"
     ]
   },
   {
     "name": "AUDIT-GRASSLIT2-C-steep-ignored",
-    "file": "src/scenes/world.js",
-    "old": "if (steep > 0 && !(n && Math.hypot(n[0], n[2]) >= steep)) continue;",
+    "file": "src/scenes/worldShotHooks.js",
+    "old": "            if (steep > 0 && !(n && Math.hypot(n[0], n[2]) >= steep)) continue;",
     "new": "",
     "tests": [
       "test/render/grasslit2.test.js"
@@ -703,8 +703,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-lane-terrain-falloff-linear",
     "file": "src/render/enhancedLighting.js",
-    "old": "    float att = sh * elAttenuation(d, uPointLights[i].w);\n    acc += att *",
-    "new": "    float att = sh * clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);\n    acc += att *",
+    "old": "    float att = sh * elAttenuation(d, uPointLights[i].w);",
+    "new": "    float att = sh * clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);",
     "tests": [
       "test/render/grasslit2.test.js"
     ]
@@ -722,8 +722,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-light-probe-was-in-todays-tones",
     "file": "tools/grassLightProbe.mjs",
-    "old": "was = grassLit(mean, 0.5, night, lane, 1, GRASS_TONES)",
-    "new": "was = grassLit(mean, 0.5, night, lane)",
+    "old": "      was = grassLit(mean, 0.5, night, lane, 1, GRASS_TONES),",
+    "new": "      was = grassLit(mean, 0.5, night, lane),",
     "tests": [
       "test/render/grasslit2.test.js"
     ]
@@ -731,8 +731,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-look-probe-default-lane-only",
     "file": "tools/grassLookProbe.mjs",
-    "old": "window.__grassTones?.(x.tones, x.classic)",
-    "new": "window.__grassTones?.(x.tones)",
+    "old": "        if (x.tones !== undefined) window.__grassTones?.(x.tones, x.classic);",
+    "new": "        if (x.tones !== undefined) window.__grassTones?.(x.tones);",
     "tests": [
       "test/render/grasslit2.test.js"
     ]

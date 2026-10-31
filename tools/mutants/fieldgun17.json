@@ -30,8 +30,8 @@
   {
     "name": "FIELD-GUN17-4-the-up-term-is-dropped-from-the-basis",
     "file": "src/systems/spellcast.js",
-    "old": "    eye[0] + rx * r + ux * u + f[0] * d,\n    eye[1] + uy * u + f[1] * d,\n    eye[2] + rz * r + uz * u + f[2] * d,",
-    "new": "    eye[0] + rx * r + f[0] * d,\n    eye[1] + f[1] * d,\n    eye[2] + rz * r + f[2] * d,",
+    "old": "  return [eye[0] + rx * r + ux * u + f[0] * d, eye[1] + uy * u + f[1] * d, eye[2] + rz * r + uz * u + f[2] * d];",
+    "new": "  return [eye[0] + rx * r + f[0] * d, eye[1] + f[1] * d, eye[2] + rz * r + f[2] * d];",
     "tests": [
       "test/systems/thunderlock.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "FIELD-GUN17-5-right-and-up-are-swapped",
     "file": "src/systems/spellcast.js",
-    "old": "  const r = muzzle?.right ?? 0, u = muzzle?.up ?? 0, d = muzzle?.forward ?? 0;",
-    "new": "  const r = muzzle?.up ?? 0, u = muzzle?.right ?? 0, d = muzzle?.forward ?? 0;",
+    "old": "  const r = muzzle?.right ?? 0,\n    u = muzzle?.up ?? 0,",
+    "new": "  const r = muzzle?.up ?? 0,\n    u = muzzle?.right ?? 0,",
     "tests": [
       "test/systems/thunderlock.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "FIELD-GUN17-11-the-centroid-takes-the-texel-corner-not-its-centre",
     "file": "src/combat/gun/gunFlash.js",
-    "old": "if (body[i]) { sx += (i % img.width) + 0.5; sy += ((i / img.width) | 0) + 0.5; n++; }",
-    "new": "if (body[i]) { sx += (i % img.width); sy += ((i / img.width) | 0); n++; }",
+    "old": "      sx += (i % img.width) + 0.5;\n      sy += ((i / img.width) | 0) + 0.5;",
+    "new": "      sx += i % img.width;\n      sy += (i / img.width) | 0;",
     "tests": [
       "test/systems/thunderlock.test.js"
     ],
@@ -144,8 +144,8 @@
   {
     "name": "FIELD-GUN17-16-an-empty-sample-counts-as-the-sample",
     "file": "src/characters/thunderlockIds.js",
-    "old": "  const c = orbColourFrom(color32);\n  if (!c) return false;\n  _orb.colour = c; _orb.sampled = true;",
-    "new": "  const c = orbColourFrom(color32);\n  _orb.sampled = true;\n  if (!c) return false;\n  _orb.colour = c;",
+    "old": "  if (!c) return false;\n  _orb.colour = c;\n  _orb.sampled = true;",
+    "new": "  _orb.sampled = true;\n  if (!c) return false;\n  _orb.colour = c;",
     "tests": [
       "test/systems/thunderlock.test.js"
     ]
@@ -162,8 +162,8 @@
   {
     "name": "FIELD-GUN17-18-the-muzzle-light-is-white-again",
     "file": "src/systems/thunderlock.js",
-    "old": "color: orbColour()",
-    "new": "color: [1, 1, 1]",
+    "old": "    color: orbColour(), // FIELD-GUN17: `withPlayerLights` takes a light's own colour where it has one",
+    "new": "    color: [1, 1, 1], // FIELD-GUN17: `withPlayerLights` takes a light's own colour where it has one",
     "tests": [
       "test/systems/thunderlock.test.js"
     ]

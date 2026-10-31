@@ -58,7 +58,8 @@ export const vergeClear = (net, px, py, x, z, radius) => roadRoom(net, px, py, x
  */
 export function lptCrownOf(baseArchive, record) {
   let crown = 0;
-  for (const season of [SEASON.Summer, SEASON.Winter]) crown = Math.max(crown, LPT_CROWNS[`${getNatureArchive(baseArchive, season)}_${record}`] ?? 0);
+  for (const season of [SEASON.Summer, SEASON.Winter])
+    crown = Math.max(crown, LPT_CROWNS[`${getNatureArchive(baseArchive, season)}_${record}`] ?? 0);
   return crown;
 }
 
@@ -117,7 +118,8 @@ export function pathTileMask(tilemap, paths = null) {
 export function tileRoom(mask, x, z, reach) {
   if (!(reach > 0)) return Math.max(0, reach);
   const n = Math.ceil(reach / TILE_M);
-  const cx = Math.floor(x / TILE_M), cz = Math.floor(z / TILE_M);
+  const cx = Math.floor(x / TILE_M),
+    cz = Math.floor(z / TILE_M);
   let room = reach;
   for (let tz = Math.max(0, cz - n); tz <= Math.min(127, cz + n); tz++) {
     for (let tx = Math.max(0, cx - n); tx <= Math.min(127, cx + n); tx++) {

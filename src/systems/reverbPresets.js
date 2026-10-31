@@ -15,9 +15,45 @@
 // hears is a cave, a stone room and a quarry in that order of size and
 // brightness; the exact tail is not FMOD's and is said so in the record.
 export const REVERB_PRESET = Object.freeze({
-  Cave: Object.freeze({ room: -1000, roomHF: 0, decayTime: 2.91, decayHFRatio: 1.30, reflections: -602, reflectionsDelay: 0.015, reverb: -302, reverbDelay: 0.022, HFReference: 5000, diffusion: 100, density: 100 }),
-  Stoneroom: Object.freeze({ room: -1000, roomHF: -300, decayTime: 2.31, decayHFRatio: 0.64, reflections: -711, reflectionsDelay: 0.012, reverb: 83, reverbDelay: 0.017, HFReference: 5000, diffusion: 100, density: 100 }),
-  Quarry: Object.freeze({ room: -1000, roomHF: -1000, decayTime: 1.49, decayHFRatio: 0.83, reflections: -10000, reflectionsDelay: 0.061, reverb: 500, reverbDelay: 0.025, HFReference: 5000, diffusion: 100, density: 100 }),
+  Cave: Object.freeze({
+    room: -1000,
+    roomHF: 0,
+    decayTime: 2.91,
+    decayHFRatio: 1.3,
+    reflections: -602,
+    reflectionsDelay: 0.015,
+    reverb: -302,
+    reverbDelay: 0.022,
+    HFReference: 5000,
+    diffusion: 100,
+    density: 100,
+  }),
+  Stoneroom: Object.freeze({
+    room: -1000,
+    roomHF: -300,
+    decayTime: 2.31,
+    decayHFRatio: 0.64,
+    reflections: -711,
+    reflectionsDelay: 0.012,
+    reverb: 83,
+    reverbDelay: 0.017,
+    HFReference: 5000,
+    diffusion: 100,
+    density: 100,
+  }),
+  Quarry: Object.freeze({
+    room: -1000,
+    roomHF: -1000,
+    decayTime: 1.49,
+    decayHFRatio: 0.83,
+    reflections: -10000,
+    reflectionsDelay: 0.061,
+    reverb: 500,
+    reverbDelay: 0.025,
+    HFReference: 5000,
+    diffusion: 100,
+    density: 100,
+  }),
 });
 /** millibels to a linear gain (Unity's reverb levels are in mB: -1000 mB = -10 dB). */
 export const mbToGain = (mb) => Math.pow(10, mb / 2000);
@@ -25,15 +61,22 @@ export const mbToGain = (mb) => Math.pow(10, mb / 2000);
 /** A deterministic noise source for the tail, so the same preset is the same impulse every time. */
 function noise(seed) {
   let x = seed | 0;
-  return () => { x ^= x << 13; x ^= x >>> 17; x ^= x << 5; return ((x >>> 0) / 4294967296) * 2 - 1; };
+  return () => {
+    x ^= x << 13;
+    x ^= x >>> 17;
+    x ^= x << 5;
+    return ((x >>> 0) / 4294967296) * 2 - 1;
+  };
 }
 
 /** The impulse response for a preset, as stereo samples at the context's rate. */
 export function reverbImpulseSamples(p, sampleRate) {
   const length = Math.max(1, Math.ceil((p.reverbDelay + p.decayTime) * sampleRate));
   const out = [new Float32Array(length), new Float32Array(length)];
-  const room = mbToGain(p.room), roomHF = mbToGain(p.roomHF);
-  const refl = mbToGain(p.reflections) * room, tail = mbToGain(p.reverb) * room;
+  const room = mbToGain(p.room),
+    roomHF = mbToGain(p.roomHF);
+  const refl = mbToGain(p.reflections) * room,
+    tail = mbToGain(p.reverb) * room;
   // early reflections: a few taps spread over 40 ms after reflectionsDelay, each a little later and quieter
   for (let ch = 0; ch < 2; ch++) {
     const taps = [0, 0.011, 0.019, 0.027, 0.034][Symbol.iterator]();
@@ -54,8 +97,8 @@ export function reverbImpulseSamples(p, sampleRate) {
   // whole tail carries energy tail^2 and no more; the early taps are impulses and carry their gain squared each.
   const start = Math.floor(p.reverbDelay * sampleRate);
   const lowDecay = Math.log(1000) / (p.decayTime * sampleRate);
-  const highDecay = Math.log(1000) / ((p.decayTime * Math.max(0.05, p.decayHFRatio)) * sampleRate);   // AUDIT 68 S31-reverb-hf-decay-ratio-inverted: was decayTime / ratio
-  const alpha = Math.exp(-p.HFReference * Math.PI / (sampleRate / 2));   // e^(-2 pi f / fs), the one-pole coefficient at HFReference
+  const highDecay = Math.log(1000) / (p.decayTime * Math.max(0.05, p.decayHFRatio) * sampleRate); // AUDIT 68 S31-reverb-hf-decay-ratio-inverted: was decayTime / ratio
+  const alpha = Math.exp((-p.HFReference * Math.PI) / (sampleRate / 2)); // e^(-2 pi f / fs), the one-pole coefficient at HFReference
   for (let ch = 0; ch < 2; ch++) {
     const rnd = noise(0x9e3779b9 + ch * 7919);
     let low = 0;
@@ -63,7 +106,7 @@ export function reverbImpulseSamples(p, sampleRate) {
     let energy = 0;
     for (let i = start; i < length; i++) {
       const n = rnd();
-      low = low * alpha + n * (1 - alpha);   // the low band, one pole
+      low = low * alpha + n * (1 - alpha); // the low band, one pole
       const high = n - low;
       const t = i - start;
       const v = low * Math.exp(-lowDecay * t) + high * roomHF * Math.exp(-highDecay * t);

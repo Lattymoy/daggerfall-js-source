@@ -2,7 +2,7 @@
   {
     "name": "TELL2-held-minus-one-consumed",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "      if (this.state === 'attack' && this._underHold && this._hold === true && this._attackFrames[this._iter] === -1) return;",
+    "old": "      if (this.state === 'attack' && this._underHold && this._hold === true && this._attackFrames[this._iter] === -1)\n        return;",
     "new": "",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "TELL2-second-strike-held",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "        else { this.doMeleeDamage = true; this.meleeSeq++; this._underHold = false; this._struck = this._heldSwing; }",
-    "new": "        else { this.doMeleeDamage = true; this.meleeSeq++; this._struck = this._heldSwing; }",
+    "old": "          this._underHold = false;\n          this._struck = this._heldSwing;",
+    "new": "          this._struck = this._heldSwing;",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "TELL2-cancel-ignored",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "    if (this._underHold && this.state === 'attack' && hold === 'cancel') { this._underHold = false; this._change('idle'); }",
+    "old": "    if (this._underHold && this.state === 'attack' && hold === 'cancel') {\n      this._underHold = false;\n      this._change('idle');\n    }",
     "new": "",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
@@ -38,8 +38,8 @@
   {
     "name": "TELL2-any-swing-held",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "      this._underHold = this._hold === true;\n      this._heldSwing",
-    "new": "      this._underHold = true;\n      this._heldSwing",
+    "old": "      this._underHold = this._hold === true;",
+    "new": "      this._underHold = true;",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "TELL2-head-strike-under-hold",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "        if (this._hold === true) { this.frame = 0; this._iter = 0; }",
-    "new": "        if (false) { this.frame = 0; this._iter = 0; }",
+    "old": "        if (this._hold === true) {",
+    "new": "        if (false) {",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TELL2-old-swing-kept",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "    } else if (striking && (this.state !== 'attack' || (hold === true && !this._underHold))) this._change('attack');",
-    "new": "    } else if (striking && this.state !== 'attack') this._change('attack');",
+    "old": "    } else if (striking && (this.state !== 'attack' || (hold === true && !this._underHold)))",
+    "new": "    } else if (striking && this.state !== 'attack')",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "TELL2-no-meleeseq",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "        else { this.doMeleeDamage = true; this.meleeSeq++; this._underHold = false; this._struck = this._heldSwing; }",
-    "new": "        else { this.doMeleeDamage = true; this._underHold = false; this._struck = this._heldSwing; }",
+    "old": "          this.meleeSeq++;\n          this._underHold = false;",
+    "new": "          this._underHold = false;",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
     ]
@@ -115,8 +115,8 @@
   {
     "name": "TELL2-dropswing-gone",
     "file": "src/ai/tactics.js",
-    "old": "function dropSwing(ai) { ai._blowHold = 'cancel'; ai._blowWind = false; }",
-    "new": "function dropSwing(ai) { }",
+    "old": "function dropSwing(ai) {\n  ai._blowHold = 'cancel';\n  ai._blowWind = false;\n}",
+    "new": "function dropSwing(ai) {}",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
     ]
@@ -124,8 +124,8 @@
   {
     "name": "TELL2-release-keeps-hold",
     "file": "src/ai/tactics.js",
-    "old": "  if (ai._tac) { ai._tac.key = null; if (ai._tac.state === 'windup') { ai._tac.state = 'wait'; dropSwing(ai); } ai._tac.blow = null; }",
-    "new": "  if (ai._tac) { ai._tac.key = null; if (ai._tac.state === 'windup') { ai._tac.state = 'wait'; } ai._tac.blow = null; }",
+    "old": "      dropSwing(ai);\n    }",
+    "new": "    }",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
     ]
@@ -133,8 +133,8 @@
   {
     "name": "TELL2-landing-never-releases",
     "file": "src/ai/tactics.js",
-    "old": "  ai._blowHold = false;   // The held swing strikes on its next frame\n  s.blowReady = cooled; s.blow = null;",
-    "new": "  s.blowReady = cooled; s.blow = null;",
+    "old": "  ai._blowHold = false; // The held swing strikes on its next frame\n  s.blowReady = cooled;",
+    "new": "  s.blowReady = cooled;",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js",
       "test/characters/enemy/tact4.test.js"
@@ -143,8 +143,8 @@
   {
     "name": "TELL2-wind-never-raised",
     "file": "src/ai/tactics.js",
-    "old": "  ai._blowHold = swings; ai._blowWind = swings;   // The swing begins now and stands at its raised arm until the landing",
-    "new": "  ai._blowHold = swings; ai._blowWind = false;   // The swing begins now and stands at its raised arm until the landing",
+    "old": "  ai._blowWind = swings; // The swing begins now and stands at its raised arm until the landing",
+    "new": "  ai._blowWind = false; // The swing begins now and stands at its raised arm until the landing",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js",
       "test/characters/enemy/tact4.test.js"
@@ -153,8 +153,8 @@
   {
     "name": "TELL2-feint-glints",
     "file": "src/ai/tactics.js",
-    "old": "  if (!b || b.feint || unseen(s, now)) return null;   // AUDIT TELL B1: a wind-up nobody is stepping tells nothing",
-    "new": "  if (!b || unseen(s, now)) return null;   // AUDIT TELL B1: a wind-up nobody is stepping tells nothing",
+    "old": "  if (!b || b.feint || unseen(s, now)) return null; // AUDIT TELL B1: a wind-up nobody is stepping tells nothing",
+    "new": "  if (!b || unseen(s, now)) return null; // AUDIT TELL B1: a wind-up nobody is stepping tells nothing",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
     ]
@@ -171,7 +171,7 @@
   {
     "name": "TELL2-landing-unstamped",
     "file": "src/ai/tactics.js",
-    "old": "    ai._blowLandedAt = now;   // The landing, for the LAND cue (scenes/hostCombat.js tellCues)",
+    "old": "    ai._blowLandedAt = now; // The landing, for the LAND cue (scenes/hostCombat.js tellCues)",
     "new": "    // The landing, for the LAND cue (scenes/hostCombat.js tellCues)",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
@@ -180,8 +180,8 @@
   {
     "name": "TELL2-glint-pulse",
     "file": "src/ai/tells.js",
-    "old": "  GLINT_PULSE: 0.9,             // the glint's flare as the wind-up begins...",
-    "new": "  GLINT_PULSE: 0.8,             // the glint's flare as the wind-up begins...",
+    "old": "  GLINT_PULSE: 0.9, // the glint's flare as the wind-up begins...",
+    "new": "  GLINT_PULSE: 0.8, // the glint's flare as the wind-up begins...",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js",
       "test/systems/tell1_poise.test.js"
@@ -190,8 +190,8 @@
   {
     "name": "TELL2-glint-steady",
     "file": "src/ai/tells.js",
-    "old": "  GLINT_STEADY: 0.2,            // the rim through the wind-up",
-    "new": "  GLINT_STEADY: 0.25,            // the rim through the wind-up",
+    "old": "  GLINT_STEADY: 0.2, // the rim through the wind-up",
+    "new": "  GLINT_STEADY: 0.25, // the rim through the wind-up",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js",
       "test/systems/tell1_poise.test.js"
@@ -200,8 +200,8 @@
   {
     "name": "TELL2-glint-reduced",
     "file": "src/ai/tells.js",
-    "old": "  GLINT_REDUCED: 0.45,          // reduced motion: one steady rim, no pulses",
-    "new": "  GLINT_REDUCED: 0.4,          // reduced motion: one steady rim, no pulses",
+    "old": "  GLINT_REDUCED: 0.45, // reduced motion: one steady rim, no pulses",
+    "new": "  GLINT_REDUCED: 0.4, // reduced motion: one steady rim, no pulses",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js",
       "test/systems/tell1_poise.test.js"
@@ -210,8 +210,8 @@
   {
     "name": "TELL2-release-lead",
     "file": "src/ai/tells.js",
-    "old": "  RELEASE_LEAD: 0.25,           // the release's whoosh this long before the landing",
-    "new": "  RELEASE_LEAD: 0.3,           // the release's whoosh this long before the landing",
+    "old": "  RELEASE_LEAD: 0.25, // the release's whoosh this long before the landing",
+    "new": "  RELEASE_LEAD: 0.3, // the release's whoosh this long before the landing",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js",
       "test/systems/tell1_poise.test.js"
@@ -220,8 +220,8 @@
   {
     "name": "TELL2-wind-pitch",
     "file": "src/ai/tells.js",
-    "old": "  WIND_PITCH: 0.85,             // the kind's bark as it winds up",
-    "new": "  WIND_PITCH: 1,             // the kind's bark as it winds up",
+    "old": "  WIND_PITCH: 0.85, // the kind's bark as it winds up",
+    "new": "  WIND_PITCH: 1, // the kind's bark as it winds up",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js",
       "test/systems/tell1_poise.test.js"
@@ -239,7 +239,7 @@
   {
     "name": "TELL2-no-now-rise",
     "file": "src/ai/tells.js",
-    "old": "  if (toLand < TELL.TELL_NOW) k = Math.max(k, TELL.GLINT_STEADY + (1 - TELL.GLINT_STEADY) * (1 - toLand / TELL.TELL_NOW));",
+    "old": "  if (toLand < TELL.TELL_NOW)\n    k = Math.max(k, TELL.GLINT_STEADY + (1 - TELL.GLINT_STEADY) * (1 - toLand / TELL.TELL_NOW));",
     "new": "  if (false) k = Math.max(k, TELL.GLINT_STEADY + (1 - TELL.GLINT_STEADY) * (1 - toLand / TELL.TELL_NOW));",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
@@ -248,8 +248,8 @@
   {
     "name": "TELL2-no-flare",
     "file": "src/ai/tells.js",
-    "old": "  if (sinceStart < TELL.GLINT_PULSE_S) k = Math.max(k, TELL.GLINT_PULSE - (TELL.GLINT_PULSE - TELL.GLINT_STEADY) * (sinceStart / TELL.GLINT_PULSE_S));",
-    "new": "  if (false) k = Math.max(k, TELL.GLINT_PULSE - (TELL.GLINT_PULSE - TELL.GLINT_STEADY) * (sinceStart / TELL.GLINT_PULSE_S));",
+    "old": "  if (sinceStart < TELL.GLINT_PULSE_S)",
+    "new": "  if (false)",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
     ]
@@ -356,8 +356,8 @@
   {
     "name": "TELL2-glint-rewritten",
     "file": "src/systems/hitFlash.js",
-    "old": "  if (cur && cur[0] === g[0] && cur[1] === g[1] && cur[2] === g[2] && cur[3] === g[3]) return;\n",
-    "new": "",
+    "old": "  if (cur && cur[0] === g[0] && cur[1] === g[1] && cur[2] === g[2] && cur[3] === g[3]) return;\n  if (cur) {",
+    "new": "  if (cur) {",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
     ]
@@ -365,7 +365,7 @@
   {
     "name": "TELL2-glint-never-cleared",
     "file": "src/systems/hitFlash.js",
-    "old": "  if (!g || !(g[3] > 0)) { if (cur) batch.glint = undefined; return; }",
+    "old": "  if (!g || !(g[3] > 0)) {\n    if (cur) batch.glint = undefined;\n    return;\n  }",
     "new": "  if (!g || !(g[3] > 0)) return;",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
@@ -374,8 +374,8 @@
   {
     "name": "TELL2-reduced-uncached",
     "file": "src/systems/hitFlash.js",
-    "old": "  if (nowMs - _reducedAt < 1000) return _reduced;\n",
-    "new": "",
+    "old": "  if (nowMs - _reducedAt < 1000) return _reduced;\n  _reducedAt = nowMs;",
+    "new": "  _reducedAt = nowMs;",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "TELL2-el-undecoded",
     "file": "src/render/enhancedLighting.js",
-    "old": "vec4(elDecode(uGlint.rgb), uGlint.a)",
-    "new": "uGlint",
+    "old": "  lit = glintLit(lit, albedo + emission, vec4(elDecode(uGlint.rgb), uGlint.a));   // TELL2: the body lifted toward its blow's colour, in the lane's linear light",
+    "new": "  lit = glintLit(lit, albedo + emission, uGlint);   // TELL2: the body lifted toward its blow's colour, in the lane's linear light",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "TELL2-blend-additive",
     "file": "src/render/foeTelegraph.js",
-    "old": "gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);",
-    "new": "gl.blendFunc(gl.ONE, gl.ONE);",
+    "old": "    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); // TELL2: premultiplied - the keyline darkens the floor, the line and the fill light it",
+    "new": "    gl.blendFunc(gl.ONE, gl.ONE); // TELL2: premultiplied - the keyline darkens the floor, the line and the fill light it",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
     ]

@@ -11,8 +11,8 @@
   {
     "name": "WB13d-the-court-s-whole",
     "file": "src/world/gate/gateBoss.js",
-    "old": "GATE_FLASH_COURT * hitFlashStrength((now - courtAt) / 1000)",
-    "new": "hitFlashStrength((now - courtAt) / 1000)",
+    "old": "  Math.max(hitFlashStrength((now - mineAt) / 1000), GATE_FLASH_COURT * hitFlashStrength((now - courtAt) / 1000));",
+    "new": "  Math.max(hitFlashStrength((now - mineAt) / 1000), hitFlashStrength((now - courtAt) / 1000));",
     "tests": [
       "test/ui/gate/wb13d_blows.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WB13d-the-number-shown",
     "file": "src/ui/hitNumbers.js",
-    "old": "  if (r.target?.warded) return { kind: 'warded', text: r.target.wardText || 'Warded', tag: null };\n",
-    "new": "",
+    "old": "  if (r.target?.warded) return { kind: 'warded', text: r.target.wardText || 'Warded', tag: null };\n  // FIELD BUGS 2026-10-20f LANDED-WORD: a body whose room says what a blow LANDED (an Elite Breach's - scenes/eliteGates/egFight.js",
+    "new": "  // FIELD BUGS 2026-10-20f LANDED-WORD: a body whose room says what a blow LANDED (an Elite Breach's - scenes/eliteGates/egFight.js",
     "tests": [
       "test/ui/gate/wb13d_blows.test.js"
     ],
@@ -66,8 +66,8 @@
   {
     "name": "WB13d-the-word-on-any-blow",
     "file": "src/ui/hitNumbers.js",
-    "old": "if (r.target?.warded) return",
-    "new": "if (r.target) return",
+    "old": "  if (r.target?.warded) return { kind: 'warded', text: r.target.wardText || 'Warded', tag: null };",
+    "new": "  if (r.target) return { kind: 'warded', text: r.target.wardText || 'Warded', tag: null };",
     "tests": [
       "test/ui/gate/wb13d_blows.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "WB13d-the-shake-flashes",
     "file": "src/ui/damageFlash.js",
-    "old": "export function shakePlayerDamage(amount = 0) { _removeHealthListener?.(amount); }",
-    "new": "export function shakePlayerDamage(amount = 0) { playerDamageFlash.flash(); _removeHealthListener?.(amount); }",
+    "old": "export function shakePlayerDamage(amount = 0) {\n  _removeHealthListener?.(amount);",
+    "new": "export function shakePlayerDamage(amount = 0) {\n  playerDamageFlash.flash();\n  _removeHealthListener?.(amount);",
     "tests": [
       "test/ui/gate/wb13d_blows.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "WB13d-the-shake-for-every-landing",
     "file": "src/world/gate/gateBoss.js",
-    "old": "const w = LAND_SHAKE[SHAKE_AS[A?.key] ?? A?.key]; return !w ? 0 :",
-    "new": "const w = LAND_SHAKE[SHAKE_AS[A?.key] ?? A?.key]; return !w ? 1 :",
+    "old": "  return !w ? 0 : !(w[1] > 0) ? w[0] : w[0] * Math.max(0, 1 - d / w[1]);",
+    "new": "  return !w ? 1 : !(w[1] > 0) ? w[0] : w[0] * Math.max(0, 1 - d / w[1]);",
     "tests": [
       "test/ui/gate/wb13d_blows.test.js"
     ]
@@ -113,8 +113,8 @@
   {
     "name": "WB13d-the-distance-ignored",
     "file": "src/world/gate/gateBoss.js",
-    "old": "w[0] * Math.max(0, 1 - d / w[1])",
-    "new": "w[0]",
+    "old": "  return !w ? 0 : !(w[1] > 0) ? w[0] : w[0] * Math.max(0, 1 - d / w[1]);",
+    "new": "  return !w ? 0 : !(w[1] > 0) ? w[0] : w[0];",
     "tests": [
       "test/ui/gate/wb13d_blows.test.js"
     ]
@@ -140,8 +140,8 @@
   {
     "name": "WB13d-the-flare-back-on-his-chest",
     "file": "src/world/gate/gateBoss.js",
-    "old": ": lit(color, 2.4, GLOW_RANGE.landing, floor);",
-    "new": ": lit(color, 2.4, GLOW_RANGE.landing);",
+    "old": "      if (tel.landing) return away ? lit(ember, 0.45, GLOW_RANGE.ember) : lit(color, 2.4, GLOW_RANGE.landing, floor);",
+    "new": "      if (tel.landing) return away ? lit(ember, 0.45, GLOW_RANGE.ember) : lit(color, 2.4, GLOW_RANGE.landing);",
     "tests": [
       "test/ui/gate/wb13d_blows.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "WB13d-the-meteor-s-light-at-him",
     "file": "src/world/gate/gateBoss.js",
-    "old": "away = !!fxBurstOf(A)?.light;",
-    "new": "away = false;",
+    "old": "      away = !!fxBurstOf(A)?.light;",
+    "new": "      away = false;",
     "tests": [
       "test/ui/gate/wb13d_blows.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "WB13d-his-aspect-not-loosed",
     "file": "src/world/gate/gateBoss.js",
-    "old": "if (kind === 'windup' || kind === 'release') return",
-    "new": "if (kind === 'windup') return",
+    "old": "  if (kind === 'windup' || kind === 'release')",
+    "new": "  if (kind === 'windup')",
     "tests": [
       "test/ui/gate/wb13d_blows.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "WB13d-the-cast-swung",
     "file": "src/world/gate/gateBoss.js",
-    "old": "frame: cast ? CAST_RAISE_FRAME : tel.t < 0.5 ? 0 : 1,",
-    "new": "frame: tel.t < 0.5 ? 0 : 1,",
+    "old": "        frame: cast ? CAST_RAISE_FRAME : tel.t < 0.5 ? 0 : 1,",
+    "new": "        frame: tel.t < 0.5 ? 0 : 1,",
     "tests": [
       "test/ui/gate/wb13d_blows.test.js"
     ]
@@ -212,8 +212,8 @@
   {
     "name": "WB13d-the-cast-loosed-as-a-swing",
     "file": "src/world/gate/gateBoss.js",
-    "old": "frame: cast ? CAST_LOOSE_FRAME : 2 + played,",
-    "new": "frame: 2 + played,",
+    "old": "      return {\n        act: 'strike',\n        anims: PRIMARY_ATTACK_ANIMS,\n        frame: cast ? CAST_LOOSE_FRAME : 2 + played,\n        loop: false,\n        atk: A.key,\n        t: 1,\n      };",
+    "new": "      return { act: 'strike', anims: PRIMARY_ATTACK_ANIMS, frame: 2 + played, loop: false, atk: A.key, t: 1 };",
     "tests": [
       "test/ui/gate/wb13d_blows.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "WB13d-the-swing-cast",
     "file": "src/world/gate/gateBoss.js",
-    "old": "const cast = !!A.el;",
-    "new": "const cast = true;",
+    "old": "    const cast = !!A.el; // WB13d: his fire (his aspect's element is his fire) is cast",
+    "new": "    const cast = true; // WB13d: his fire (his aspect's element is his fire) is cast",
     "tests": [
       "test/ui/gate/wb13d_blows.test.js"
     ]

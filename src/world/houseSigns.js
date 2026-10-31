@@ -29,7 +29,8 @@ export const SHOP_SIGN_LAST_MODEL = 43799;
 export const SIGN_REACH_M = 8;
 
 /** @param {number} modelIdNum */
-export const isShopSignModel = (modelIdNum) => modelIdNum >= SHOP_SIGN_FIRST_MODEL && modelIdNum <= SHOP_SIGN_LAST_MODEL;
+export const isShopSignModel = (modelIdNum) =>
+  modelIdNum >= SHOP_SIGN_FIRST_MODEL && modelIdNum <= SHOP_SIGN_LAST_MODEL;
 
 /** A house, not a shop: DFU's residences (RMBLayout.IsResidence, House1-House4) and the house for sale, which is a
  *  residence offered to the player. @param {number} buildingType */

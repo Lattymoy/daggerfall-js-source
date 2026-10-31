@@ -315,6 +315,7 @@ const HARDCODED = {
   'src/scenes/oceanHolesAbyss.js': 3,
   'src/scenes/oceanHolesHost.js': 7,
   'src/scenes/portHost.js': 21,
+  'src/scenes/professionsHost.js': 35,   // HOST-SPLIT PROFESSIONS: moved verbatim out of world.js
   'src/scenes/quest/questProvinceSites.js': 3,   // AUDIT RELEASE R2-5b: the Imperial City plan's three fills (PLAN_FILL_NAMES - City Isle, Lake Rumare, Rumare Shore) - proper names its law compares a slice's name against, never shown, as imperialCity.js's own
   'src/scenes/riteHost.js': 5,
   'src/scenes/roadStands.js': 2,
@@ -334,13 +335,14 @@ const HARDCODED = {
   'src/scenes/snowfallHost.js': 3,
   'src/scenes/spoilsPool.js': 7,
   'src/scenes/standingHost.js': 14,
+  'src/scenes/testPresetHost.js': 3,   // HOST-SPLIT TEST-PRESET: moved verbatim out of world.js
   'src/scenes/townEconHost.js': 1,   // AUDIT TOWN-ECON 2 SVC-1: the `/town strike` answer, a developer's
   'src/scenes/townTalk.js': 9,
   'src/scenes/travelView.js': 39,
   'src/scenes/treeHost.js': 3,
   'src/scenes/windfallHost.js': 5,
   'src/scenes/vendorHost.js': 7,   // VENDOR-LOST: the home traders' words, moved verbatim out of world.js
-  'src/scenes/world.js': 314,   // ZONE-BANK (FIELD BUGS 2026-10-30b): -1, the zone bank's refusal through zoneSafe.js's t(). ZONE-HOMES: -1, the zone's house refusal through zoneSafe.js's t(). SHARED-HEALTH: -2, the battles' readouts print no 'Your vitality' line (my own health is my bar). THE SIXTH MERGE OF MAIN INTO #1184: MENTOR2 (main's): -1, mentoring's end through mentorText.js's t(). THE FOURTH MERGE OF MAIN INTO #1184: 319 measured on the merged host (RPT1026-MARKET's Collect through t() on main). BAY-LEFT-SEA: -4, the market's pieces' words moved verbatim to scenes/marketPiecesHost.js (HOST-SPLIT). TESA x MAIN (the merge of main into TESA, AUDIT RELEASE R3): 325 measured - TESA's -6 (the quick save's words moved whole to scenes/worldQuickSave.js) on main's 331. VENDOR-LOST: -7, the home traders' words moved verbatim to vendorHost.js; QUEST-AUDIT III SHARE-WORDS: -4, the share's lines through questShare.js's t(); AUDIT QA3: -2, the sender's (shareSentLine); STAFF-PANEL5-FOLLOW-FIX: -1 already at the relay base (ec3d522d61), written down; FB1020c ONE-SAVE: the kept words moved to the Stores page (BAG_PAGE_WORDS.kept); CABIN-FOES: Transport > Ship's helm refusal read off CABIN_REFUSAL; AUDIT SEA VENTURES C6: -1, /unstuck's outdoor refusal read off the zone's words; SEASON-BOOK: -1, /mail's refusal read off chatCommands.js pauseCommandRefusal (344 at the merge of main #1161: both -1s stand)
+  'src/scenes/world.js': 276,   // HOST-SPLIT TEST-PRESET: -3, the test room's words moved verbatim to scenes/testPresetHost.js. HOST-SPLIT PROFESSIONS: -35, the professions' words moved verbatim to scenes/professionsHost.js. ZONE-BANK (FIELD BUGS 2026-10-30b): -1, the zone bank's refusal through zoneSafe.js's t(). ZONE-HOMES: -1, the zone's house refusal through zoneSafe.js's t(). SHARED-HEALTH: -2, the battles' readouts print no 'Your vitality' line (my own health is my bar). THE SIXTH MERGE OF MAIN INTO #1184: MENTOR2 (main's): -1, mentoring's end through mentorText.js's t(). THE FOURTH MERGE OF MAIN INTO #1184: 319 measured on the merged host (RPT1026-MARKET's Collect through t() on main). BAY-LEFT-SEA: -4, the market's pieces' words moved verbatim to scenes/marketPiecesHost.js (HOST-SPLIT). TESA x MAIN (the merge of main into TESA, AUDIT RELEASE R3): 325 measured - TESA's -6 (the quick save's words moved whole to scenes/worldQuickSave.js) on main's 331. VENDOR-LOST: -7, the home traders' words moved verbatim to vendorHost.js; QUEST-AUDIT III SHARE-WORDS: -4, the share's lines through questShare.js's t(); AUDIT QA3: -2, the sender's (shareSentLine); STAFF-PANEL5-FOLLOW-FIX: -1 already at the relay base (ec3d522d61), written down; FB1020c ONE-SAVE: the kept words moved to the Stores page (BAG_PAGE_WORDS.kept); CABIN-FOES: Transport > Ship's helm refusal read off CABIN_REFUSAL; AUDIT SEA VENTURES C6: -1, /unstuck's outdoor refusal read off the zone's words; SEASON-BOOK: -1, /mail's refusal read off chatCommands.js pauseCommandRefusal (344 at the merge of main #1161: both -1s stand)
   'src/scenes/worldModes.js': 79,   // NOTICE-PANEL: 82 -> 80, the board's two plaque words out with its press; the merge of main: 79, main's set-down line gone to scenes/arrivalSetDown.js, through t()
   'src/systems/aetheric.js': 168,   // SEA-SET: +17, the Eltheric Tidemail's nine names and lore, as the Weave's - the records' own data, minted onto the item; WITCH1: the Wyrd's Raiment's nine pieces, each its name and its affixes' names (+18) - an item's canonical name, as every Aetheric set's; STAR7: +18, the Starspun Weave's nine names and lore - the records' own data, minted onto the item, never read at load
   'src/systems/alchemyItems.js': 3,
@@ -546,7 +548,6 @@ const HARDCODED = {
   'src/systems/snowfall.js': 12,
   'src/systems/snowfallRuntime.js': 10,
   'src/systems/spell/spellEffects.js': 29,
-  'src/systems/eliteGates/spireKit.js': 1,
   'src/systems/staleChunk.js': 6,
   'src/systems/starfall/starglass.js': 1,   // AUDIT STAR I1: Starfall Glass's name - an item's canonical name is its row's, as the Soul Cake's and the Weir Key's
   'src/systems/startDungeon.js': 1,

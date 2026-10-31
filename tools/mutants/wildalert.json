@@ -29,8 +29,8 @@
   {
     "name": "WILD-first-check-delayed",
     "file": "src/systems/wild/wildAlert.js",
-    "old": "      if (!s) { s = { alerted: false, clock: WILD_ROLL_S, at: 0 }; st.set(k, s); }",
-    "new": "      if (!s) { s = { alerted: false, clock: 0, at: 0 }; st.set(k, s); }",
+    "old": "        s = { alerted: false, clock: WILD_ROLL_S, at: 0 };",
+    "new": "        s = { alerted: false, clock: 0, at: 0 };",
     "tests": [
       "test/scenes/wildalert.test.js"
     ]
@@ -38,7 +38,7 @@
   {
     "name": "WILD-clock-not-reset-out-of-reach",
     "file": "src/systems/wild/wildAlert.js",
-    "old": "      if (!(distM <= reachM)) { if (s) s.clock = WILD_ROLL_S; return { alerted: false, noticed: false }; }",
+    "old": "      if (!(distM <= reachM)) {\n        if (s) s.clock = WILD_ROLL_S;\n        return { alerted: false, noticed: false };\n      }",
     "new": "      if (!(distM <= reachM)) return { alerted: false, noticed: false };",
     "tests": [
       "test/scenes/wildalert.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "WILD-alert-forgotten-far",
     "file": "src/systems/wild/wildAlert.js",
-    "old": "      if (s?.alerted) return { alerted: true, noticed: false };\n",
-    "new": "",
+    "old": "      if (s?.alerted) return { alerted: true, noticed: false };\n      if (!(distM <= reachM)) {",
+    "new": "      if (!(distM <= reachM)) {",
     "tests": [
       "test/scenes/wildalert.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WILD-alert-other-way-ignored",
     "file": "src/systems/wild/wildAlert.js",
-    "old": "    alert(k, now = 0) { const s = get(k); if (s) { if (!s.alerted) { s.alerted = true; s.at = now; } } else st.set(k, { alerted: true, clock: 0, at: now }); },",
-    "new": "    alert(k, now = 0) { void k; void now; },",
+    "old": "      const s = get(k);\n      if (s) {\n        if (!s.alerted) {\n          s.alerted = true;\n          s.at = now;\n        }\n      } else st.set(k, { alerted: true, clock: 0, at: now });",
+    "new": "      void k;\n      void now;",
     "tests": [
       "test/scenes/wildalert.test.js",
       "test/systems/wild/encounterplace.test.js"
@@ -66,8 +66,8 @@
   {
     "name": "WILD-checked-rolls-at-once",
     "file": "src/systems/wild/wildAlert.js",
-    "old": "    checked(k) { if (!get(k)) st.set(k, { alerted: false, clock: 0, at: 0 }); },",
-    "new": "    checked(k) { if (!get(k)) st.set(k, { alerted: false, clock: WILD_ROLL_S, at: 0 }); },",
+    "old": "      if (!get(k)) st.set(k, { alerted: false, clock: 0, at: 0 });",
+    "new": "      if (!get(k)) st.set(k, { alerted: false, clock: WILD_ROLL_S, at: 0 });",
     "tests": [
       "test/scenes/wildalert.test.js"
     ]
@@ -258,8 +258,8 @@
   {
     "name": "WILD-marks-uncapped",
     "file": "src/ui/wild/wildMarks.js",
-    "old": "    .sort((a, b) => a.distance - b.distance).slice(0, WILD_MARKS_MAX);",
-    "new": "    .sort((a, b) => a.distance - b.distance);",
+    "old": "        .sort((a, b) => a.distance - b.distance)\n        .slice(0, WILD_MARKS_MAX);",
+    "new": "        .sort((a, b) => a.distance - b.distance);",
     "tests": [
       "test/scenes/wildalert.test.js"
     ]
@@ -285,8 +285,8 @@
   {
     "name": "WILD-marks-watchdog-unarmed",
     "file": "src/ui/wild/wildMarks.js",
-    "old": "  watch(want.length > 0, timers);\n",
-    "new": "",
+    "old": "  watch(want.length > 0, timers);\n  if (!root) {",
+    "new": "  if (!root) {",
     "tests": [
       "test/scenes/wildalert.test.js"
     ]

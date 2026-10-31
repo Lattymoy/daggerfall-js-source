@@ -586,7 +586,7 @@ test('AUDIT CAPTAIN\'S SEA H1/P2: every port isle has a harbour - its town whole
   // isle's own reach asks no farther (the port law's ring is a Bay port's - test/systems/naval/fb1020c_harbourreach.test.js).
   // PIN MOVED (ALDBRUGH-QUAY): the sounding names its shape too - round by default, the ring's square only past it
   const book = rd('src/systems/naval/harbourBook.js');
-  assert.match(book, /const own = near\.reach \?\? HARBOUR_REACH;\n\s+const sound = \(reach = own, square = false\) => findHarbour\(\{ rect: near\.rect, isWater: \(x, z, h\) => deps\.isWater\(x, z, h\), reach, square, keep: near\.keep \?\? null, ground: deps\.ground \?\? null \}\);/);   // PIN MOVED (PORT-SHIPS): the town's keep and the ground beside the reach
+  assert.match(book, /const own = near\.reach \?\? HARBOUR_REACH;\n\s*const sound = \(reach = own, square = false\) =>\n\s*findHarbour\(\{\n\s*rect: near\.rect,\n\s*isWater: \(x, z, h\) => deps\.isWater\(x, z, h\),\n\s*reach,\n\s*square,\n\s*keep: near\.keep \?\? null,\n\s*ground: deps\.ground \?\? null,\n\s*\}\);/);   // PIN MOVED (PORT-SHIPS): the town's keep and the ground beside the reach
   assert.match(book, /far = own === HARBOUR_REACH \? portRingReach\(near\.rect\) : 0;/);
   assert.match(book, /const reach = t\.reach \?\? HARBOUR_REACH;/, 'the lanes\' harbour feed sounds it as far');   // PIN MOVED (RPT1026-WORLD FAR-QUAY): harbourBook.js harbourOf
 });
@@ -627,7 +627,7 @@ test('AUDIT CAPTAIN\'S SEA P4/P6/P8/P9/P10: a death past the Veil rises at the n
   const w = hostText('src/scenes/world.js');
   assert.match(w, /else if \(etherSea && inEther\(px\.x, px\.y\)\) \{\n(?:\s*\/\/[^\n]*\n)*\s+const port = etherRisePort\(px\.x, px\.y\);\n\s+land = \{ x: port\.px, y: port\.py \}; kind = 'city';/);
   // PIN MOVED (AUDIT SEA VENTURES C5/F2): the nearest port by distance, sought from ETHER_RISE_PX out until one stands within reach (Veilhaven the farthest)
-  assert.match(rd('src/systems/wild/etherWild.js'), /export function etherRisePort\(x, y\) \{\n  const h = veilhaven\(\), far = Math\.hypot\(h\.px - x, h\.py - y\);/);   // HOST-SPLIT (SEA VENTURES): out of bootWorld
+  assert.match(rd('src/systems/wild/etherWild.js'), /export function etherRisePort\(x, y\) \{\n\s*const h = veilhaven\(\),\n\s*far = Math\.hypot\(h\.px - x, h\.py - y\);/);   // HOST-SPLIT (SEA VENTURES): out of bootWorld
   const { islesNear, veilhaven, inEther } = await import('../../../src/world/ethericSea.js');
   const rise = islesNear(7900, -5300, 60).find((i) => i.kind === 'port') ?? veilhaven();
   assert.ok(rise.kind === 'port' && inEther(rise.px, rise.py), 'a port isle of the sea');

@@ -11,8 +11,8 @@
   {
     "name": "LEGIBLE1-a-destructuring-entry-counted",
     "file": "tools/hostScope.mjs",
-    "old": "  if (type === 'Property') return parent.type === 'ObjectExpression';",
-    "new": "  if (type === 'Property') return true;",
+    "old": "  if (type === 'Property') return parent.type === 'ObjectExpression'; // an object literal's entry, not a destructuring pattern's",
+    "new": "  if (type === 'Property') return true; // an object literal's entry, not a destructuring pattern's",
     "tests": [
       "test/scenes/hostceiling.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LEGIBLE1-object-entries-not-counted",
     "file": "tools/hostScope.mjs",
-    "old": "  if (type === 'Property') return parent.type === 'ObjectExpression';",
-    "new": "  if (type === 'Property') return false;",
+    "old": "  if (type === 'Property') return parent.type === 'ObjectExpression'; // an object literal's entry, not a destructuring pattern's",
+    "new": "  if (type === 'Property') return false; // an object literal's entry, not a destructuring pattern's",
     "tests": [
       "test/scenes/hostceiling.test.js"
     ]
@@ -29,7 +29,7 @@
   {
     "name": "LEGIBLE1-class-members-not-counted",
     "file": "tools/hostScope.mjs",
-    "old": "  if (type === 'MethodDefinition' || type === 'PropertyDefinition' || type === 'StaticBlock' || type === 'SwitchCase') return true;",
+    "old": "  if (type === 'MethodDefinition' || type === 'PropertyDefinition' || type === 'StaticBlock' || type === 'SwitchCase')\n    return true;",
     "new": "  if (type === 'SwitchCase') return true;",
     "tests": [
       "test/scenes/hostceiling.test.js"
@@ -38,7 +38,7 @@
   {
     "name": "LEGIBLE1-switch-cases-not-counted",
     "file": "tools/hostScope.mjs",
-    "old": "  if (type === 'MethodDefinition' || type === 'PropertyDefinition' || type === 'StaticBlock' || type === 'SwitchCase') return true;",
+    "old": "  if (type === 'MethodDefinition' || type === 'PropertyDefinition' || type === 'StaticBlock' || type === 'SwitchCase')\n    return true;",
     "new": "  if (type === 'MethodDefinition' || type === 'PropertyDefinition' || type === 'StaticBlock') return true;",
     "tests": [
       "test/scenes/hostceiling.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "LEGIBLE1-expression-arrows-not-counted",
     "file": "tools/hostScope.mjs",
-    "old": "  return type === 'ArrowFunctionExpression' && node.expression;",
-    "new": "  return false;",
+    "old": "  return type === 'ArrowFunctionExpression' && node.expression; // `() => value` holds an implicit return statement",
+    "new": "  return false; // `() => value` holds an implicit return statement",
     "tests": [
       "test/scenes/hostceiling.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LEGIBLE1-braces-counted",
     "file": "tools/hostScope.mjs",
-    "old": "  if (type === 'BlockStatement' || type === 'EmptyStatement') return false;",
-    "new": "  if (type === 'EmptyStatement') return false;",
+    "old": "  if (type === 'BlockStatement' || type === 'EmptyStatement') return false; // braces and stray semicolons are layout",
+    "new": "  if (type === 'EmptyStatement') return false; // braces and stray semicolons are layout",
     "tests": [
       "test/scenes/hostceiling.test.js"
     ]

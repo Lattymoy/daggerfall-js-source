@@ -20,7 +20,8 @@ function walk(dir, out = []) {
   for (const e of readdirSync(join(ROOT, dir), { withFileTypes: true })) {
     if (SKIP.has(e.name)) continue;
     const p = `${dir}/${e.name}`;
-    if (e.isDirectory()) walk(p, out); else if (/\.(?:m?js|cjs)$/.test(e.name)) out.push(p);
+    if (e.isDirectory()) walk(p, out);
+    else if (/\.(?:m?js|cjs)$/.test(e.name)) out.push(p);
   }
   return out;
 }
@@ -37,7 +38,8 @@ export function measure() {
 
 /** `{ over, lower }`: files above their baseline (a new file's is 0), and files below it. */
 export function verdict(now, base) {
-  const over = [], lower = [];
+  const over = [],
+    lower = [];
   for (const [f, n] of Object.entries(now)) if (n > (base[f] ?? 0)) over.push(`${f}: ${n} (baseline ${base[f] ?? 0})`);
   for (const [f, n] of Object.entries(base)) if ((now[f] ?? 0) < n) lower.push(`${f}: ${now[f] ?? 0} (baseline ${n})`);
   return { over, lower };
@@ -48,9 +50,17 @@ if (isMain(import.meta.url)) {
   const total = Object.values(now).reduce((a, b) => a + b, 0);
   if (process.argv.includes('--lower')) {
     const base = existsSync(join(ROOT, BASELINE)) ? JSON.parse(readFileSync(join(ROOT, BASELINE), 'utf8')) : null;
-    const next = base ? Object.fromEntries(Object.entries(now).map(([f, n]) => [f, Math.min(n, base[f] ?? n)]).filter(([f]) => f in base)) : now;
+    const next = base
+      ? Object.fromEntries(
+          Object.entries(now)
+            .map(([f, n]) => [f, Math.min(n, base[f] ?? n)])
+            .filter(([f]) => f in base),
+        )
+      : now;
     writeFileSync(join(ROOT, BASELINE), `${JSON.stringify(next, null, 1)}\n`);
-    console.log(`baseline written: ${Object.keys(next).length} files, ${Object.values(next).reduce((a, b) => a + b, 0)} history lines`);
+    console.log(
+      `baseline written: ${Object.keys(next).length} files, ${Object.values(next).reduce((a, b) => a + b, 0)} history lines`,
+    );
   } else {
     const base = JSON.parse(readFileSync(join(ROOT, BASELINE), 'utf8'));
     const { over } = verdict(now, base);

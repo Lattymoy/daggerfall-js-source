@@ -2,7 +2,7 @@
   {
     "name": "NO-ASKS-the-reader-check-removed",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "  return timesNamed(quest, no.symbol.name) === 1 ? no : null;   // the prompt's own `no`, and nothing else",
+    "old": "  return timesNamed(quest, no.symbol.name) === 1 ? no : null; // the prompt's own `no`, and nothing else",
     "new": "  return no;",
     "tests": [
       "test/systems/quest/fb1013e_noasks.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "NO-ASKS-the-action-check-removed",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "  if (no.actions.length > 0) return null;   // a `_x_ task:` merged into the variable does something\n",
-    "new": "",
+    "old": "  if (no.actions.length > 0) return null; // a `_x_ task:` merged into the variable does something\n  return timesNamed(quest, no.symbol.name) === 1 ? no : null; // the prompt's own `no`, and nothing else",
+    "new": "  return timesNamed(quest, no.symbol.name) === 1 ? no : null; // the prompt's own `no`, and nothing else",
     "tests": [
       "test/systems/quest/fb1013e_noasks.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "NO-ASKS-the-asking-read-as-anything-but-a-click",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "  if (!triggers.length || !triggers.every((/** @type {any} */ a) => CLICK_TRIGGERS.includes(a.typeName))) return false;\n",
-    "new": "",
+    "old": "  if (!triggers.length || !triggers.every((/** @type {any} */ a) => CLICK_TRIGGERS.includes(a.typeName))) return false;\n  return timesNamed(quest, task.symbol.name) === named;",
+    "new": "  return timesNamed(quest, task.symbol.name) === named;",
     "tests": [
       "test/systems/quest/fb1013e_noasks.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "NO-ASKS-a-global-task-cleared",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "  if (task.type !== TaskType.Standard) return false;   // a `_x_ task:` - a global's is every quest's (SAVEVARS)\n",
-    "new": "",
+    "old": "  if (task.type !== TaskType.Standard) return false; // a `_x_ task:` - a global's is every quest's (SAVEVARS)\n  const triggers = task.actions.filter((/** @type {any} */ a) => a.isTriggerCondition);",
+    "new": "  const triggers = task.actions.filter((/** @type {any} */ a) => a.isTriggerCondition);",
     "tests": [
       "test/systems/quest/fb1013e_noasks.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "NO-ASKS-re-armed-before-the-answer",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "      if (!no.getTriggerValue()) continue;   // not answered No (yet)\n",
-    "new": "",
+    "old": "      if (!no.getTriggerValue()) continue; // not answered No (yet)\n      if (law.gives && !no.actions.every((/** @type {any} */ a) => a.isComplete)) continue; // NO-GIVES-BACK: its item back in the pack first",
+    "new": "      if (law.gives && !no.actions.every((/** @type {any} */ a) => a.isComplete)) continue; // NO-GIVES-BACK: its item back in the pack first",
     "tests": [
       "test/systems/quest/fb1013e_noasks.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "NO-ASKS-every-task-read-a-global-written-at-load",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "  for (const task of quest.tasks.values()) {\n    for (const prompt of task.actions) {\n      if (prompt.typeName !== 'Prompt' || !prompt.isComplete) continue;\n",
-    "new": "  for (const task of quest.tasks.values()) {\n    if (!task.getTriggerValue()) continue;\n    for (const prompt of task.actions) {\n      if (prompt.typeName !== 'Prompt' || !prompt.isComplete) continue;\n",
+    "old": "  for (const task of quest.tasks.values()) {\n    for (const prompt of task.actions) {\n      if (prompt.typeName !== 'Prompt' || !prompt.isComplete) continue;",
+    "new": "  for (const task of quest.tasks.values()) {\n    if (!task.getTriggerValue()) continue;\n    for (const prompt of task.actions) {\n      if (prompt.typeName !== 'Prompt' || !prompt.isComplete) continue;",
     "tests": [
       "test/systems/quest/questsave.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "NO-ASKS-the-asking-task-left-set",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "      task.clear();                 // its click listens again",
-    "new": "      //",
+    "old": "      task.clear(); // its click listens again (Task.Clear - its other actions rearm as a `clear` rearms them)",
+    "new": "      // (Task.Clear - its other actions rearm as a `clear` rearms them)",
     "tests": [
       "test/systems/quest/fb1013e_noasks.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "NO-ASKS-the-prompt-left-complete",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "      prompt.isComplete = false;    // the one action",
-    "new": "      //",
+    "old": "      prompt.isComplete = false; // the one action the departure re-arms (Prompt.cs: allowRearm = false)",
+    "new": "      // the departure re-arms (Prompt.cs: allowRearm = false)",
     "tests": [
       "test/systems/quest/fb1013e_noasks.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "NO-ASKS-the-no-left-set",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "      no.clear();                   // the No forgotten",
-    "new": "      //",
+    "old": "      no.clear(); // the No forgotten - nothing reads it (NO-GIVES-BACK: its `get item` rearms, for a second No)",
+    "new": "      // - nothing reads it (NO-GIVES-BACK: its `get item` rearms, for a second No)",
     "tests": [
       "test/systems/quest/fb1013e_noasks.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "NO-ASKS-no-tick-door",
     "file": "src/systems/quest/quest.js",
-    "old": "    // nowhere, is asked again on the next click\n    askAgain(this);",
-    "new": "    // nowhere, is asked again on the next click",
+    "old": "    // nowhere, is asked again on the next click\n    askAgain(this);\n",
+    "new": "    // nowhere, is asked again on the next click\n",
     "tests": [
       "test/systems/quest/fb1013e_noasks.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "NO-ASKS-no-repair-at-restore",
     "file": "src/systems/quest/quest.js",
-    "old": "under DFU's law, loads asking again\n    askAgain(this);",
-    "new": "under DFU's law, loads asking again",
+    "old": "    askAgain(this);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/quest/fb1013e_noasks.test.js"
     ]

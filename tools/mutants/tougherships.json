@@ -2,8 +2,8 @@
   {
     "name": "TOUGHER-SHIPS-the-men-untoughened",
     "file": "src/systems/naval/navalDamage.js",
-    "old": "export const ballMen = (men, roll, tough = SHIP_TOUGHNESS) => (men > 0 ? Math.floor(men / tough + clamp(roll, 0, 0.999999)) : 0);",
-    "new": "export const ballMen = (men, roll, tough = SHIP_TOUGHNESS) => (men > 0 ? Math.floor(men + clamp(roll, 0, 0.999999) * 0) : 0);",
+    "old": "  men > 0 ? Math.floor(men / tough + clamp(roll, 0, 0.999999)) : 0;",
+    "new": "  men > 0 ? Math.floor(men + clamp(roll, 0, 0.999999) * 0) : 0;",
     "tests": [
       "test/systems/naval/tougherships.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "TOUGHER-SHIPS-a-fire-untoughened",
     "file": "src/systems/naval/navalDamage.js",
-    "old": "s.wound += 1 / (player ? PLAYER_CREW_TOUGHNESS : SHIP_TOUGHNESS); }",
-    "new": "s.wound += 1; }",
+    "old": "          s.wound += 1 / (player ? PLAYER_CREW_TOUGHNESS : SHIP_TOUGHNESS);",
+    "new": "          s.wound += 1;",
     "tests": [
       "test/systems/naval/tougherships.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "TOUGHER-SHIPS-a-fire-let-go-when-out",
     "file": "src/systems/naval/navalDamage.js",
-    "old": "        if (!s.fires.length) s.crewBurn = 0;\n",
-    "new": "        if (!s.fires.length) { s.crewBurn = 0; s.wound = 0; }\n",
+    "old": "        if (!s.fires.length) s.crewBurn = 0;",
+    "new": "        if (!s.fires.length) {\n          s.crewBurn = 0;\n          s.wound = 0;\n        }",
     "tests": [
       "test/systems/naval/tougherships.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "QUICK-REPAIRS-damage-control-as-strong-as-before",
     "file": "src/systems/naval/navalYard.js",
-    "old": "export const SEA_REPAIR_UNDER_FIRE = 0.125;",
-    "new": "export const SEA_REPAIR_UNDER_FIRE = 0.3;",
+    "old": "export const SEA_REPAIR_UNDER_FIRE = 0.125; // about a third of what a ship her size deals her (a fight's damage is a toughened hull's)",
+    "new": "export const SEA_REPAIR_UNDER_FIRE = 0.3; // about a third of what a ship her size deals her (a fight's damage is a toughened hull's)",
     "tests": [
       "test/systems/naval/tougherships.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "SALVAGE-the-wire-key-unread",
     "file": "src/systems/naval/navalWire.js",
-    "old": "const lots = raw.f ?? [], wrecks = raw.w ?? [],",
-    "new": "const lots = raw.f ?? [], wrecks = [],",
+    "old": "    wrecks = raw.w ?? [],",
+    "new": "    wrecks = [],",
     "tests": [
       "test/systems/naval/tougherships.test.js"
     ]

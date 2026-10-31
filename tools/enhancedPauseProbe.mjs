@@ -57,11 +57,12 @@ const browser = await chromium.launch();
  *  A boot that SUCCEEDS never writes that text, so the wait times out
  *  and that is the correct outcome - hence the swallowed rejection. */
 async function bootSettled(page) {
-  await page.waitForFunction(
-    () => document.body.textContent.includes('boot failed'), null, { timeout: 15000 },
-  ).catch(() => { /* a successful boot never says it - nothing to wait for */ });
+  await page
+    .waitForFunction(() => document.body.textContent.includes('boot failed'), null, { timeout: 15000 })
+    .catch(() => {
+      /* a successful boot never says it - nothing to wait for */
+    });
 }
-
 
 // A SAVE IN THE SLOT, because the empty state is not the interesting
 // one. Four of this screen's panes are built FROM the quicksave, and
@@ -70,9 +71,13 @@ async function bootSettled(page) {
 // is vacuously true. save.js validates the envelope version, so this
 // is what restorableSlot will actually accept (v === 1).
 const SAVE = {
-  v: 1, name: 'Aelwyn', chargenDone: true,
-  career: { name: 'Spellsword' }, level: 4,
-  health: 41, maxHealth: 58,
+  v: 1,
+  name: 'Aelwyn',
+  chargenDone: true,
+  career: { name: 'Spellsword' },
+  level: 4,
+  health: 41,
+  maxHealth: 58,
   classicMinutes: 396_000_000 + 60 * 17 + 34,
   items: [{ name: 'Gold Pieces', stackCount: 1287 }],
 };
@@ -81,7 +86,11 @@ const SAVE = {
  *  unmounts through runEnhancedMenu's own resolve. */
 async function toGamePage(page, skin) {
   await page.addInitScript((snap) => {
-    try { localStorage.setItem('dagger.quicksave', JSON.stringify(snap)); } catch { /* storage off */ }
+    try {
+      localStorage.setItem('dagger.quicksave', JSON.stringify(snap));
+    } catch {
+      /* storage off */
+    }
   }, SAVE);
   await page.goto(`${BASE}/play/?skin=${skin}`, { waitUntil: 'networkidle' });
   if (skin === 'enhanced') {
@@ -97,20 +106,25 @@ async function toGamePage(page, skin) {
  *  whether the DOOR WAS STILL UP when they ran, which is the ordering
  *  law stated as a question only the browser can answer. */
 async function openDoor(page, { canSave = true, canLoad = true } = {}) {
-  await page.evaluate(async ({ canSave: cs, canLoad: cl }) => {
-    globalThis.__log = [];
-    const up = () => (document.getElementById('enhanced-pause') ? 'door-up' : 'door-down');
-    const { openPauseFlow } = await import('/src/ui/pauseDoor.js');
-    const hooks = {
-      exitToMenu: () => globalThis.__log.push(`exit:${up()}`),
-      textLines: () => null,
-    };
-    if (cs) hooks.quickSave = () => globalThis.__log.push(`save:${up()}`);
-    else hooks.savingPrevented = () => true;
-    if (cl) hooks.quickLoad = () => globalThis.__log.push(`load:${up()}`);
-    globalThis.__slot = null;
-    openPauseFlow((w) => { globalThis.__slot = w; }, hooks);
-  }, { canSave, canLoad });
+  await page.evaluate(
+    async ({ canSave: cs, canLoad: cl }) => {
+      globalThis.__log = [];
+      const up = () => (document.getElementById('enhanced-pause') ? 'door-up' : 'door-down');
+      const { openPauseFlow } = await import('/src/ui/pauseDoor.js');
+      const hooks = {
+        exitToMenu: () => globalThis.__log.push(`exit:${up()}`),
+        textLines: () => null,
+      };
+      if (cs) hooks.quickSave = () => globalThis.__log.push(`save:${up()}`);
+      else hooks.savingPrevented = () => true;
+      if (cl) hooks.quickLoad = () => globalThis.__log.push(`load:${up()}`);
+      globalThis.__slot = null;
+      openPauseFlow((w) => {
+        globalThis.__slot = w;
+      }, hooks);
+    },
+    { canSave, canLoad },
+  );
 }
 
 const railText = (page) => page.$$eval('#enhanced-pause .railbtn .rk', (ns) => ns.map((n) => n.textContent));
@@ -127,46 +141,53 @@ async function run(label, opts) {
   // ── 1. THE FORK, AND THE SCREEN IT PUTS UP ─────────────────────
   await openDoor(page);
   await page.waitForSelector('#enhanced-pause .railbtn', { timeout: 15000 });
-  check(`${label}: Escape's screen is the enhanced one`,
-    (await page.locator('#enhanced-pause').count()) === 1);
+  check(`${label}: Escape's screen is the enhanced one`, (await page.locator('#enhanced-pause').count()) === 1);
   const box = await page.$eval('#enhanced-pause', (n) => {
     const s = getComputedStyle(n);
     return { pos: s.position, z: s.zIndex, bg: s.backgroundColor };
   });
-  check(`${label}: it is fixed, opaque and above the boot overlays`,
+  check(
+    `${label}: it is fixed, opaque and above the boot overlays`,
     box.pos === 'fixed' && box.z === '13' && !/rgba\(0, 0, 0, 0\)/.test(box.bg),
-    `${box.pos} z${box.z} ${box.bg}`);
-  check(`${label}: the host is holding it - which is what stops the motor and the clock`,
-    (await done(page)) === false);
+    `${box.pos} z${box.z} ${box.bg}`,
+  );
+  check(`${label}: the host is holding it - which is what stops the motor and the clock`, (await done(page)) === false);
 
   // ── 2. THE PAUSE RAIL, AND THE PANE IT OPENS ON ────────────────
   const rail = await railText(page);
-  check(`${label}: the rail asks the in-game questions`,
-    JSON.stringify(rail) === JSON.stringify(
-      ['Resume', 'Save Game', 'Load Game', 'Settings', 'Mods', 'About', 'Exit']),
-    rail.join('/'));
-  check(`${label}: it opens on Save Game`,
-    (await page.locator('#enhanced-pause .head h2').textContent()) === 'Save Game');
+  check(
+    `${label}: the rail asks the in-game questions`,
+    JSON.stringify(rail) === JSON.stringify(['Resume', 'Save Game', 'Load Game', 'Settings', 'Mods', 'About', 'Exit']),
+    rail.join('/'),
+  );
+  check(
+    `${label}: it opens on Save Game`,
+    (await page.locator('#enhanced-pause .head h2').textContent()) === 'Save Game',
+  );
 
   // EVERY DESTINATION IS ON THE SCREEN, not merely in the DOM. The
   // phone rail scrolls horizontally with its scrollbar hidden, so a
   // seventh entry went off the end with no affordance at all - and the
   // one pushed off was EXIT. The 44px check below passes either way,
   // which is the point: reachable and VISIBLE are different claims.
-  const offscreen = await page.$$eval('#enhanced-pause .railbtn', (ns) => ns
-    .map((n) => ({ t: (n.textContent ?? '').trim(), r: n.getBoundingClientRect() }))
-    .filter(({ r }) => r.right > innerWidth + 1 || r.bottom > innerHeight + 1
-      || r.left < -1 || r.top < -1)
-    .map(({ t }) => t));
-  check(`${label}: every rail destination is ON the screen`,
-    offscreen.length === 0, offscreen.join(', '));
+  const offscreen = await page.$$eval('#enhanced-pause .railbtn', (ns) =>
+    ns
+      .map((n) => ({ t: (n.textContent ?? '').trim(), r: n.getBoundingClientRect() }))
+      .filter(({ r }) => r.right > innerWidth + 1 || r.bottom > innerHeight + 1 || r.left < -1 || r.top < -1)
+      .map(({ t }) => t),
+  );
+  check(`${label}: every rail destination is ON the screen`, offscreen.length === 0, offscreen.join(', '));
 
   // THE CARD IS THE GAME BEING OVERWRITTEN, not a label for the button
   const saveCard = await page.locator('#enhanced-pause .card').first().textContent();
-  check(`${label}: the Save card names what the press replaces`,
-    saveCard.includes('Overwrites') && saveCard.includes('Aelwyn')
-    && /Health/i.test(saveCard) && /Gold/i.test(saveCard),
-    saveCard.replace(/\s+/g, ' ').slice(0, 90));
+  check(
+    `${label}: the Save card names what the press replaces`,
+    saveCard.includes('Overwrites') &&
+      saveCard.includes('Aelwyn') &&
+      /Health/i.test(saveCard) &&
+      /Gold/i.test(saveCard),
+    saveCard.replace(/\s+/g, ' ').slice(0, 90),
+  );
 
   // ── 3. THE REASON THIS DOOR EXISTS ─────────────────────────────
   // U49's own record: settings were "reachable only at boot: once you
@@ -178,8 +199,10 @@ async function run(label, opts) {
 
   // ── 4. THE HOST IS BELIEVED ────────────────────────────────────
   await page.locator('#enhanced-pause .railbtn', { hasText: 'Save Game' }).click();
-  check(`${label}: a save-capable host gets a Save button`,
-    (await page.locator('#enhanced-pause .acts button', { hasText: 'Save' }).count()) === 1);
+  check(
+    `${label}: a save-capable host gets a Save button`,
+    (await page.locator('#enhanced-pause .acts button', { hasText: 'Save' }).count()) === 1,
+  );
 
   // ── 5. EVERY EXIT CLOSES THE DOOR BEFORE IT ACTS ───────────────
   // The port answers a save with a HUD line and this screen is opaque
@@ -187,40 +210,52 @@ async function run(label, opts) {
   // own answer. The hook is asked, not the source.
   await page.locator('#enhanced-pause .acts button', { hasText: 'Save' }).click();
   await page.waitForSelector('#enhanced-pause', { state: 'detached', timeout: 10000 });
-  check(`${label}: Save closed the door first, then wrote`,
+  check(
+    `${label}: Save closed the door first, then wrote`,
     JSON.stringify(await log(page)) === JSON.stringify(['save:door-down']),
-    (await log(page)).join(','));
-  check(`${label}: ...and the overlay reports done, so the host frees its slot`,
-    (await done(page)) === true);
+    (await log(page)).join(','),
+  );
+  check(`${label}: ...and the overlay reports done, so the host frees its slot`, (await done(page)) === true);
 
   // ── 6. A HOST THAT REFUSES IS BELIEVED, NOT OVERRIDDEN ─────────
   // Two of the four hand savingPrevented: () => true and no hook at
   // all. A Save button there is the lie the anti-lie law forbids.
   await openDoor(page, { canSave: false, canLoad: false });
   await page.waitForSelector('#enhanced-pause .railbtn', { timeout: 15000 });
-  check(`${label}: a host that cannot save draws no Save button`,
-    (await page.locator('#enhanced-pause .acts button', { hasText: 'Save' }).count()) === 0);
-  check(`${label}: ...and says so in the game's own words`,
-    (await page.locator('#enhanced-pause').textContent()).includes('You cannot save now.'));
-  check(`${label}: the refused rows stay ON the rail`,
-    (await railText(page)).includes('Save Game'));
+  check(
+    `${label}: a host that cannot save draws no Save button`,
+    (await page.locator('#enhanced-pause .acts button', { hasText: 'Save' }).count()) === 0,
+  );
+  check(
+    `${label}: ...and says so in the game's own words`,
+    (await page.locator('#enhanced-pause').textContent()).includes('You cannot save now.'),
+  );
+  check(`${label}: the refused rows stay ON the rail`, (await railText(page)).includes('Save Game'));
 
   // ── 7. EXIT ASKS FIRST ─────────────────────────────────────────
   await page.locator('#enhanced-pause .railbtn', { hasText: 'Exit' }).click();
   await page.locator('#enhanced-pause .acts button', { hasText: 'Leave this game' }).click();
-  check(`${label}: leaving a game asks before it throws it away`,
-    (await page.locator('#enhanced-pause .card p.meta').first().textContent()).length > 0
-    && (await page.locator('#enhanced-pause').textContent()).includes('Cancel'));
+  check(
+    `${label}: leaving a game asks before it throws it away`,
+    (await page.locator('#enhanced-pause .card p.meta').first().textContent()).length > 0 &&
+      (await page.locator('#enhanced-pause').textContent()).includes('Cancel'),
+  );
   // A CONFIRM THAT REPEATS THE CARD IT REPLACED reads as a screen that
   // did not respond: both were titled "Leave this game" at first.
-  check(`${label}: ...and the confirm does not repeat the heading it replaced`,
+  check(
+    `${label}: ...and the confirm does not repeat the heading it replaced`,
     (await page.locator('#enhanced-pause .card h3').first().textContent()) === 'Leave this game',
-    'the confirm echoes the BUTTON, and the card heading says where you go');
-  check(`${label}: ...and Cancel means cancel`,
-    await page.locator('#enhanced-pause .acts button', { hasText: 'Cancel' }).count() === 1);
+    'the confirm echoes the BUTTON, and the card heading says where you go',
+  );
+  check(
+    `${label}: ...and Cancel means cancel`,
+    (await page.locator('#enhanced-pause .acts button', { hasText: 'Cancel' }).count()) === 1,
+  );
   await page.locator('#enhanced-pause .acts button', { hasText: 'Cancel' }).click();
-  check(`${label}: the door is still up after Cancel`,
-    (await page.locator('#enhanced-pause').count()) === 1 && (await log(page)).length === 0);
+  check(
+    `${label}: the door is still up after Cancel`,
+    (await page.locator('#enhanced-pause').count()) === 1 && (await log(page)).length === 0,
+  );
 
   // ── 8. ESCAPE - the key that opened it closes it ───────────────
   // The back stack first: a confirm card is closed by the same key
@@ -228,9 +263,11 @@ async function run(label, opts) {
   await page.locator('#enhanced-pause .railbtn', { hasText: 'Exit' }).click();
   await page.locator('#enhanced-pause .acts button', { hasText: 'Leave this game' }).click();
   await page.keyboard.press('Escape');
-  check(`${label}: Escape cancels the confirm before it closes the screen`,
-    (await page.locator('#enhanced-pause').count()) === 1
-    && !(await page.locator('#enhanced-pause').textContent()).includes('Cancel'));
+  check(
+    `${label}: Escape cancels the confirm before it closes the screen`,
+    (await page.locator('#enhanced-pause').count()) === 1 &&
+      !(await page.locator('#enhanced-pause').textContent()).includes('Cancel'),
+  );
   await page.keyboard.press('Escape');
   await page.waitForSelector('#enhanced-pause', { state: 'detached', timeout: 10000 });
   check(`${label}: Escape then closes the pause door`, (await done(page)) === true);
@@ -245,17 +282,21 @@ async function run(label, opts) {
   await page.waitForSelector('#enhanced-pause .railbtn', { timeout: 15000 });
   await page.keyboard.press('Escape');
   await page.waitForSelector('#enhanced-pause', { state: 'detached', timeout: 10000 });
-  check(`${label}: the door reopens and closes again - no orphaned listener`,
-    (await done(page)) === true);
+  check(`${label}: the door reopens and closes again - no orphaned listener`, (await done(page)) === true);
 
   // ── 10. THE PHONE ──────────────────────────────────────────────
   await openDoor(page);
   await page.waitForSelector('#enhanced-pause .railbtn', { timeout: 15000 });
-  const small = await page.$$eval('#enhanced-pause button', (ns) => ns
-    .map((n) => ({ t: (n.textContent ?? '').trim().slice(0, 24), h: n.getBoundingClientRect().height }))
-    .filter((b) => b.h > 0 && b.h < 44));
-  check(`${label}: every target a finger has to hit is 44px`,
-    small.length === 0, small.map((b) => `${b.t}@${Math.round(b.h)}`).join(', '));
+  const small = await page.$$eval('#enhanced-pause button', (ns) =>
+    ns
+      .map((n) => ({ t: (n.textContent ?? '').trim().slice(0, 24), h: n.getBoundingClientRect().height }))
+      .filter((b) => b.h > 0 && b.h < 44),
+  );
+  check(
+    `${label}: every target a finger has to hit is 44px`,
+    small.length === 0,
+    small.map((b) => `${b.t}@${Math.round(b.h)}`).join(', '),
+  );
 
   check(`${label}: no page errors`, errors.length === 0, errors.join(' | '));
   await ctx.close();
@@ -275,10 +316,8 @@ await run('phone', devices['Pixel 5']);
     return { name: w?.constructor?.name, ready: pauseDoorReady() };
   });
   check('classic: Escape still opens the canvas window', kind.name === 'PauseOptionsWindow', kind.name);
-  check('classic: and no enhanced screen is mounted',
-    (await page.locator('#enhanced-pause').count()) === 0);
-  check('classic: the door stays gated on OPTN00I0, which never loaded here',
-    kind.ready === false);
+  check('classic: and no enhanced screen is mounted', (await page.locator('#enhanced-pause').count()) === 0);
+  check('classic: the door stays gated on OPTN00I0, which never loaded here', kind.ready === false);
   await ctx.close();
 }
 

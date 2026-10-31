@@ -24,20 +24,47 @@ export const DRAGON_LEAVE_NEAR_MS = 60 * 1000;
 export function dragonBarModel(b, now = b?.now ?? 0) {
   if (!b) return null;
   const frac = b.fell ? 0 : b.max > 0 ? Math.max(0, Math.min(1, b.hp / b.max)) : 1;
-  const callout = !b.fell && !b.gone && b.atk ? { text: b.atk.name, color: DRAGON_BAR_CSS[b.atk.el ?? 'weight'] ?? DRAGON_BAR_CSS.weight, t: b.atk.t, dagon: false, move: !!b.atk.aimed } : null;
+  const callout =
+    !b.fell && !b.gone && b.atk
+      ? {
+          text: b.atk.name,
+          color: DRAGON_BAR_CSS[b.atk.el ?? 'weight'] ?? DRAGON_BAR_CSS.weight,
+          t: b.atk.t,
+          dagon: false,
+          move: !!b.atk.aimed,
+        }
+      : null;
   const since = b.fell ? Math.max(0, now - b.fell.at) : 0;
   const alpha = b.gone ? 0 : b.fell ? Math.max(0, Math.min(1, 1 - (since - FELL_HOLD_MS) / FELL_FADE_MS)) : 1;
   const leaveIn = Number.isFinite(b.leaveIn) ? b.leaveIn : Infinity;
   return {
-    theme: 'brass', ringCss: DRAGON_BAR_CSS.ring,
-    name: b.name, title: b.title, epithet: '', epithetColor: null, marksView: null, trials: '',
-    frac, marks: [...DRAGON_PHASE_AT], phase: b.phase, spent: DRAGON_PHASE_AT.map((_, i) => b.phase > i + 1),
-    warded: !b.fell && !!b.warded, fallen: !!b.fell, callout,
+    theme: 'brass',
+    ringCss: DRAGON_BAR_CSS.ring,
+    name: b.name,
+    title: b.title,
+    epithet: '',
+    epithetColor: null,
+    marksView: null,
+    trials: '',
+    frac,
+    marks: [...DRAGON_PHASE_AT],
+    phase: b.phase,
+    spent: DRAGON_PHASE_AT.map((_, i) => b.phase > i + 1),
+    warded: !b.fell && !!b.warded,
+    fallen: !!b.fell,
+    callout,
     wrath: !b.fell && leaveIn <= DRAGON_LEAVE_WARN_MS ? DRAGON_BAR_WORDS.climbs(countdownText(leaveIn)) : null,
     wrathNear: !b.fell && leaveIn <= DRAGON_LEAVE_NEAR_MS,
-    fighters: b.fighters | 0, fightersLine: DRAGON_BAR_WORDS.fighters(b.fighters | 0),
-    host: b.fell ? null : b.grounded ? DRAGON_BAR_WORDS.grounded(Math.max(0, Math.ceil(b.groundLeft / 1000))) : DRAGON_BAR_WORDS.aloft,
+    fighters: b.fighters | 0,
+    fightersLine: DRAGON_BAR_WORDS.fighters(b.fighters | 0),
+    host: b.fell
+      ? null
+      : b.grounded
+        ? DRAGON_BAR_WORDS.grounded(Math.max(0, Math.ceil(b.groundLeft / 1000)))
+        : DRAGON_BAR_WORDS.aloft,
     reckonIn: null,
-    alpha: Math.round(alpha * 20) / 20, now, low: !b.fell && frac > 0 && frac < LOW_HEALTH,
+    alpha: Math.round(alpha * 20) / 20,
+    now,
+    low: !b.fell && frac > 0 && frac < LOW_HEALTH,
   };
 }

@@ -2,8 +2,8 @@
   {
     "name": "UI1-no-dress-laid",
     "file": "src/ui/cursor.js",
-    "old": "  lay(SCROLLBAR_STYLE_ID, CURSOR_SCROLLBAR_CSS);\n",
-    "new": "",
+    "old": "  lay(SCROLLBAR_STYLE_ID, CURSOR_SCROLLBAR_CSS);\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/ui/fb1001_uiaudit.test.js"
     ]

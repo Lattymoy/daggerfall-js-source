@@ -67,6 +67,7 @@ import { TEST_LOOT, testEntryById, seedTestLoot, TEST_LOOT_BASES } from '../../s
 import { itemNameParts } from '../../src/systems/item/itemInfo.js';   // LR6: what the pack ROW actually prints
 import { templateByIndex } from '../../src/systems/item/itemTemplates.js';   // LR6: the bare-template reading an unidentified item falls back to
 import { snapshotPlayer, restorePlayer } from '../../src/systems/save/save.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT TEST-PRESET): the world host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -535,7 +536,7 @@ test('LR3: the Test Room\'s loot ladder - one door, thirty items (a Magic and a 
   for (const it of legs) { const rec = LR.legendaryById(it.legendary); assert.ok(!rec.templates || rec.templates.includes(it.templateIndex), `${rec.id} on a fitting base`); }
   assert.equal(e.items.length, added.length);
   assert.match(read('src/ui/enhanced/enhancedMenu.js'), /TEST_LOOT\.label[\s\S]*?onAction\(`test:\$\{TEST_LOOT\.id\}`\)/, 'the pane\'s card');
-  assert.match(read('src/scenes/world.js'), /if \(testEntry\.loot\) console\.log\(`\[testroom\] loot ladder: \$\{seedTestLoot\(playerEntity\)\.length\} rolled items in the pack`\);/, 'the boot seeds it');
+  assert.match(hostText('src/scenes/world.js'), /if \(testEntry\.loot\) console\.log\(`\[testroom\] loot ladder: \$\{seedTestLoot\(playerEntity\)\.length\} rolled items in the pack`\);/, 'the boot seeds it');
   _resetForTests();
 });
 

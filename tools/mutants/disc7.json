@@ -11,8 +11,8 @@
   {
     "name": "ACT-MENU-loot-switch-gates-the-verbs",
     "file": "src/systems/quickLoot.js",
-    "old": "  _sel = (verbs || (take && quickLootOn())) ? nextSelection(_sel, frame, _nudge) : null;",
-    "new": "  _sel = (take && quickLootOn()) ? nextSelection(_sel, frame, _nudge) : null;",
+    "old": "  _sel = verbs || (take && quickLootOn()) ? nextSelection(_sel, frame, _nudge) : null;",
+    "new": "  _sel = take && quickLootOn() ? nextSelection(_sel, frame, _nudge) : null;",
     "tests": [
       "test/systems/disc7.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ACT-MENU-P-arms-on-verbs",
     "file": "src/systems/quickLoot.js",
-    "old": "  if (!quickLootOn() || !_sel || _actionIds) return false;",
-    "new": "  if (!quickLootOn() || !_sel) return false;",
+    "old": "  if (!quickLootOn() || !_sel || _actionIds) return false; // ACT-MENU: P and J take from a pile, never from a list of verbs",
+    "new": "  if (!quickLootOn() || !_sel) return false; // ACT-MENU: P and J take from a pile, never from a list of verbs",
     "tests": [
       "test/systems/disc7.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "ACT-MENU-drive-called-a-ride",
     "file": "src/systems/horse/horseCartLaw.js",
-    "old": "label: ride === HORSE_ACTIVATION.MountHitchedTeam ? HCC_ACTION_TEXT.drive : HCC_ACTION_TEXT.ride });",
-    "new": "label: HCC_ACTION_TEXT.ride });",
+    "old": "  rows.push({\n    id: ACTIVATE_MODE.Grab,\n    label: ride === HORSE_ACTIVATION.MountHitchedTeam ? HCC_ACTION_TEXT.drive : HCC_ACTION_TEXT.ride,\n  });",
+    "new": "  rows.push({ id: ACTIVATE_MODE.Grab, label: HCC_ACTION_TEXT.ride });",
     "tests": [
       "test/systems/disc7.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "ACT-MENU-wait-called-follow",
     "file": "src/systems/horse/horseCartLaw.js",
-    "old": "      : cmd === HORSE_ACTIVATION.Wait ? HCC_ACTION_TEXT.wait : null;",
-    "new": "      : cmd === HORSE_ACTIVATION.Wait ? HCC_ACTION_TEXT.follow : null;",
+    "old": "          ? HCC_ACTION_TEXT.wait",
+    "new": "          ? HCC_ACTION_TEXT.follow",
     "tests": [
       "test/systems/disc7.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "ACT-MENU-wagon-pack-not-listed",
     "file": "src/systems/horse/horseCartLaw.js",
-    "old": ", { id: ACTIVATE_MODE.Steal, label: HCC_ACTION_TEXT.openWagon }];\n  if (target === 'followingWagon')",
-    "new": "];\n  if (target === 'followingWagon')",
+    "old": "      },\n      { id: ACTIVATE_MODE.Steal, label: HCC_ACTION_TEXT.openWagon },\n    ];",
+    "new": "      },\n    ];",
     "tests": [
       "test/systems/disc7.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "ACT-MENU-wagon-verb-ignored",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    if ((mode ?? deps.activateMode()) === ACTIVATE_MODE.Steal) { openWagonInventoryFromPhysicalActivation(); return true; }\n    if (!tm().hasHorse())",
-    "new": "    if (deps.activateMode() === ACTIVATE_MODE.Steal) { openWagonInventoryFromPhysicalActivation(); return true; }\n    if (!tm().hasHorse())",
+    "old": "    if (pee().isPlayerInside()) return true;\n    if ((mode ?? deps.activateMode()) === ACTIVATE_MODE.Steal) {",
+    "new": "    if (pee().isPlayerInside()) return true;\n    if (deps.activateMode() === ACTIVATE_MODE.Steal) {",
     "tests": [
       "test/systems/disc7.test.js"
     ]
@@ -137,7 +137,7 @@
   {
     "name": "ACT-MENU-refused-verb-listed-as-offered",
     "file": "src/ui/socialMenu.js",
-    "old": "    .map((r) => (r.enabled ? { id: r.key, label: r.label } : { id: r.key, label: r.label, disabled: true, why: r.why ?? null }));",
+    "old": "    .map((r) =>\n      r.enabled ? { id: r.key, label: r.label } : { id: r.key, label: r.label, disabled: true, why: r.why ?? null },\n    );",
     "new": "    .map((r) => ({ id: r.key, label: r.label }));",
     "tests": [
       "test/systems/disc7.test.js"
@@ -146,8 +146,8 @@
   {
     "name": "ACT-MENU-refused-verb-sent",
     "file": "src/ui/socialMenu.js",
-    "old": "  return r.enabled ? { act: r.act, refusal: null } : { act: null, refusal:",
-    "new": "  return true ? { act: r.act, refusal: null } : { act: null, refusal:",
+    "old": "  return r.enabled ? { act: r.act, refusal: null } : { act: null, refusal: `${r.label}: ${r.why || 'not now'}.` };",
+    "new": "  return true ? { act: r.act, refusal: null } : { act: null, refusal: `${r.label}: ${r.why || 'not now'}.` };",
     "tests": [
       "test/systems/disc7.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "DISC7-torch-listener-never-stops",
     "file": "src/systems/handheldTorches.js",
-    "old": "    w.loop.stop?.(); w.loop = null;\n  };\n  let offLight = null;",
-    "new": "  };\n  let offLight = null;",
+    "old": "    w.loop.stop?.();\n    w.loop = null;\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/disc7.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "DISC7-torch-listener-leaks",
     "file": "src/systems/handheldTorches.js",
-    "old": "  function dispose() { offLight?.(); offLight = null; w.loop",
-    "new": "  function dispose() { offLight = null; w.loop",
+    "old": "    offLight?.();\n    offLight = null;",
+    "new": "    offLight = null;",
     "tests": [
       "test/systems/disc7.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "DISC7-door-says-nothing",
     "file": "src/systems/lightSource.js",
-    "old": "  if (was === now) return;\n  for",
-    "new": "  return;\n  for",
+    "old": "  if (was === now) return;",
+    "new": "  return;",
     "tests": [
       "test/systems/disc7.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "DISC7-door-says-every-write",
     "file": "src/systems/lightSource.js",
-    "old": "  if (was === now) return;\n",
-    "new": "",
+    "old": "  if (was === now) return;\n  for (const f of [...listeners]) {",
+    "new": "  for (const f of [...listeners]) {",
     "tests": [
       "test/systems/disc7.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "DISC7-door-stops-at-a-throw",
     "file": "src/systems/lightSource.js",
-    "old": "    try { f(entity, now, was); } catch (e) {",
-    "new": "    { f(entity, now, was); } if (0) { const e = null;",
+    "old": "    try {\n      f(entity, now, was);\n    } catch (e) {",
+    "new": "    {\n      f(entity, now, was);\n    }\n    if (0) {\n      const e = null;",
     "tests": [
       "test/systems/disc7.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "DISC7-contact-rect-y-from-x",
     "file": "src/render/airPass.js",
-    "old": "out[1] = rect[1] / H;",
-    "new": "out[1] = rect[1] / W;",
+    "old": "  out[1] = rect[1] / H;",
+    "new": "  out[1] = rect[1] / W;",
     "tests": [
       "test/systems/disc7.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "DISC7-contact-rect-never-held",
     "file": "src/render/airPass.js",
-    "old": "this.prevValid = !!this.frame && !this._cut && !jumped; holdPrevRect(this.prevRect, this.rect, this.canvas); }",
-    "new": "this.prevValid = !!this.frame && !this._cut && !jumped; }",
+    "old": "      holdPrevRect(this.prevRect, this.rect, this.canvas);\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/disc7.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "DISC7-contact-rect-never-uploaded",
     "file": "src/render/airPass.js",
-    "old": "    gl.uniform4fv(loc.prevRect, this.prevRect);   // DISC7\n",
-    "new": "",
+    "old": "    gl.uniform4fv(loc.prevRect, this.prevRect); // DISC7\n    this.contactParams[3] = live ? 1 : 0;",
+    "new": "    this.contactParams[3] = live ? 1 : 0;",
     "tests": [
       "test/systems/disc7.test.js"
     ]

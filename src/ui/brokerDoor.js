@@ -11,7 +11,7 @@
 // gate fell, the court was entered) through `closeBrokerDoor`.
 import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';
 import { registerOverlay } from './enhanced/enhancedOverlays.js';
-import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { noteFirstUse } from '../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 /** The overlay standing now, or null. */
 let _open = null;
@@ -24,7 +24,9 @@ export function closeBrokerDoor() {
   return was;
 }
 /** Draw it again, if it is up (a stone won or dropped under it). */
-export const repaintBrokerDoor = () => { _open?.repaint(); };
+export const repaintBrokerDoor = () => {
+  _open?.repaint();
+};
 
 /**
  * Open the window, as an overlay for the host's slot (townTalk.showOverlay). `deps` is brokerWindow.js's own, less
@@ -33,7 +35,7 @@ export const repaintBrokerDoor = () => { _open?.repaint(); };
  * @returns {any} the overlay, or null with no document
  */
 export function createBrokerOverlay(deps) {
-  noteFirstUse('sigil-sets');   // TUT1: the Sigil Broker is where the sets are traded
+  noteFirstUse('sigil-sets'); // TUT1: the Sigil Broker is where the sets are traded
   if (typeof document === 'undefined') return null;
   _open?.dispose();
   let fired = false;
@@ -49,28 +51,53 @@ export function createBrokerOverlay(deps) {
     view?.unmount();
     view = null;
     host.remove();
-    fired = true;   // last: `done` must not read true while the DOM is up
+    fired = true; // last: `done` must not read true while the DOM is up
     if (_open === overlay) _open = null;
     deps.onClose?.();
   };
   unregister = registerOverlay(close);
   const overlay = {
     isChoiceWindow: true,
-    get done() { return fired; },
-    input() { /* the window's own capture keydown owns the keyboard */ },
-    click() { /* the window is a fixed div over the canvas; pointers never get here */ },
-    wheel() { /* its list scrolls itself */ },
-    hover() { /* its own :hover */ },
-    tick() { /* its own clock repaints it */ },
-    draw() { /* DOM, not canvas */ },
-    dispose() { close(); },
-    repaint() { view?.repaint(); },
+    get done() {
+      return fired;
+    },
+    input() {
+      /* the window's own capture keydown owns the keyboard */
+    },
+    click() {
+      /* the window is a fixed div over the canvas; pointers never get here */
+    },
+    wheel() {
+      /* its list scrolls itself */
+    },
+    hover() {
+      /* its own :hover */
+    },
+    tick() {
+      /* its own clock repaints it */
+    },
+    draw() {
+      /* DOM, not canvas */
+    },
+    dispose() {
+      close();
+    },
+    repaint() {
+      view?.repaint();
+    },
   };
   _open = overlay;
   mountEnhancedChunk({
     load: () => import('./brokerWindow.js'),
-    mount: ({ mountBrokerWindow }) => { view = mountBrokerWindow(host, { ...deps, onExit: close }); },
-    alive: () => !fired, host, onDismiss: () => { close(); }, label: 'broker',
+    mount: ({ mountBrokerWindow }) => {
+      view = mountBrokerWindow(host, { ...deps, onExit: close });
+    },
+    alive: () => !fired,
+    host,
+    onDismiss: () => {
+      close();
+    },
+    label: 'broker',
   });
   return overlay;
 }

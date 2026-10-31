@@ -39,7 +39,8 @@ export function navCacheKey({ key, tris, minY, maxY, agent = SOUP_AGENT, anchor 
   const cell = (p) => `${Math.floor(p[0] / agent.cs)},${Math.floor(p[2] / agent.cs)},${Math.round(p[1] ?? 0)}`;
   const a = anchor ? `:a${cell(anchor)}` : '';
   // the union's cells, hashed: the same layout is the same key, a moved foe a new one
-  let h = 0; for (const p of anchors ?? []) for (const c of cell(p)) h = (Math.imul(h, 31) + c.charCodeAt(0)) | 0;
+  let h = 0;
+  for (const p of anchors ?? []) for (const c of cell(p)) h = (Math.imul(h, 31) + c.charCodeAt(0)) | 0;
   const u = anchors?.length ? `:u${anchors.length}.${(h >>> 0).toString(36)}` : '';
   return `nav:v${NAV_BAKE_VERSION}:${key}:${tris}:${minY.toFixed(2)}:${maxY.toFixed(2)}:${agent.cs}:${agent.radius}:${agent.height}:${agent.maxStep}:${agent.maxSlope}${a}${u}`;
 }
@@ -95,13 +96,27 @@ export class NavClient {
         // the switch on (measured: 3.0s for a 10k-triangle level, 6.9s
         // for 31k). A test double still comes in through WorkerCtor;
         // the real one is spelled the way the bundler reads.
-        const w = WorkerCtor === globalThis.Worker
-          ? new Worker(new URL('./navWorker.js', import.meta.url), { type: 'module' })
-          : new WorkerCtor('./navWorker.js', { type: 'module' });
-        w.onmessage = (ev) => { const m = ev.data ?? {}; const p = this._pending.get(m.id); if (!p) return; this._pending.delete(m.id); if (m.t === 'error') p.reject(new Error(m.message)); else p.resolve(m); };
-        w.onerror = (e) => { for (const p of this._pending.values()) p.reject(new Error(e?.message ?? 'nav worker failed')); this._pending.clear(); this._worker = null; };
+        const w =
+          WorkerCtor === globalThis.Worker
+            ? new Worker(new URL('./navWorker.js', import.meta.url), { type: 'module' })
+            : new WorkerCtor('./navWorker.js', { type: 'module' });
+        w.onmessage = (ev) => {
+          const m = ev.data ?? {};
+          const p = this._pending.get(m.id);
+          if (!p) return;
+          this._pending.delete(m.id);
+          if (m.t === 'error') p.reject(new Error(m.message));
+          else p.resolve(m);
+        };
+        w.onerror = (e) => {
+          for (const p of this._pending.values()) p.reject(new Error(e?.message ?? 'nav worker failed'));
+          this._pending.clear();
+          this._worker = null;
+        };
         this._worker = w;
-      } catch { this._worker = null; }
+      } catch {
+        this._worker = null;
+      }
     }
     this._hadWorker = !!this._worker;
   }
@@ -112,7 +127,8 @@ export class NavClient {
     const id = this._nextId++;
     return new Promise((resolve, reject) => {
       this._pending.set(id, { resolve, reject });
-      const positions = input.positions.slice(), indices = input.indices.slice();
+      const positions = input.positions.slice(),
+        indices = input.indices.slice();
       this._worker.postMessage({ ...msg, id, positions, indices }, [positions.buffer, indices.buffer]);
     });
   }
@@ -122,10 +138,18 @@ export class NavClient {
    *  worker failed on a large one. */
   async _cols(input, cs, agent) {
     let failed = null;
-    const m = this._worker ? await this._ask({ t: 'cols', cs, maxSlope: agent.maxSlope }, input).catch((e) => { failed = e; return null; }) : null;
-    if (m) return m.cols;   // Packed, as they landed - the height layer indexes them so (navmesh.js buildPackedIndex)
-    if (this._hadWorker && input.tris >= DEGENERATE_MIN_TRIS) {   // The bake path's rule on a cache hit too - a dead worker's large soup is not re-cut here (2.8 s on 25k triangles at the soup's cell)
-      console.warn(`[enhanced-ai] the nav worker failed on ${input.tris} triangles - not re-cutting a cached bake on the main thread; the classic motor stands (the worker: ${workerWord(failed)})`);
+    const m = this._worker
+      ? await this._ask({ t: 'cols', cs, maxSlope: agent.maxSlope }, input).catch((e) => {
+          failed = e;
+          return null;
+        })
+      : null;
+    if (m) return m.cols; // Packed, as they landed - the height layer indexes them so (navmesh.js buildPackedIndex)
+    if (this._hadWorker && input.tris >= DEGENERATE_MIN_TRIS) {
+      // The bake path's rule on a cache hit too - a dead worker's large soup is not re-cut here (2.8 s on 25k triangles at the soup's cell)
+      console.warn(
+        `[enhanced-ai] the nav worker failed on ${input.tris} triangles - not re-cutting a cached bake on the main thread; the classic motor stands (the worker: ${workerWord(failed)})`,
+      );
       return null;
     }
     return trianglesToColliders(input.positions, input.indices, { cs, maxSlope: agent.maxSlope });
@@ -140,22 +164,36 @@ export class NavClient {
     const ck = navCacheKey({ key, tris: input.tris, minY: input.minY, maxY: input.maxY, agent, anchor, anchors });
     if (this._store) {
       const hit = await this._store.get(ck).catch(() => null);
-      if (hit && hit.baked) { const cols = await this._cols(input, hit.cs, agent); return cols ? { chf: hydrateHere(hit.baked, cols, input), stats: { ...(hit.stats ?? {}), cached: true }, cached: true } : null; }
+      if (hit && hit.baked) {
+        const cols = await this._cols(input, hit.cs, agent);
+        return cols
+          ? { chf: hydrateHere(hit.baked, cols, input), stats: { ...(hit.stats ?? {}), cached: true }, cached: true }
+          : null;
+      }
     }
-    let result = null, failed = null;
+    let result = null,
+      failed = null;
     if (this._worker) {
-      const m = await this._ask({ t: 'bake', floor: input.minY - 10, anchor, anchors, agent }, input).catch((e) => { failed = e; return null; });   // The worker's own word is kept for the console
-      if (m) result = m;   // its boxes packed, as they landed (INDOOR-WATCH AUDIT W2: unpacking them was the landing's hitch)
+      const m = await this._ask({ t: 'bake', floor: input.minY - 10, anchor, anchors, agent }, input).catch((e) => {
+        failed = e;
+        return null;
+      }); // The worker's own word is kept for the console
+      if (m) result = m; // its boxes packed, as they landed (INDOOR-WATCH AUDIT W2: unpacking them was the landing's hitch)
     }
     // A WORKER THAT DIED IS NOT A REASON TO FREEZE THE PAGE. The soup bake keeps its own cell now, so a
     // large dungeon is 5-11 s and up to ~1.3 GB (the corpus's largest) - AUDIT 59 F1's main-thread freeze, several
     // times over. Here the bake runs only where there never was a worker (node, a test) or the soup is small; a worker
     // that failed on a large one leaves the classic motor standing, which is where a degenerate bake left it too.
     if (!result && this._hadWorker && input.tris >= DEGENERATE_MIN_TRIS) {
-      console.warn(`[enhanced-ai] the nav worker failed on ${input.tris} triangles - not baking on the main thread; the classic motor stands (the worker: ${workerWord(failed)})`);
+      console.warn(
+        `[enhanced-ai] the nav worker failed on ${input.tris} triangles - not baking on the main thread; the classic motor stands (the worker: ${workerWord(failed)})`,
+      );
       return null;
     }
-    if (!result && this._hadWorker) console.warn(`[enhanced-ai] the nav worker failed - baking ${input.tris} triangles on the main thread (the worker: ${workerWord(failed)})`);   // A small soup's fallback says so
+    if (!result && this._hadWorker)
+      console.warn(
+        `[enhanced-ai] the nav worker failed - baking ${input.tris} triangles on the main thread (the worker: ${workerWord(failed)})`,
+      ); // A small soup's fallback says so
     if (!result) result = bakeHere(input, anchor, agent, anchors);
     // DEGENERATE-BAKE GUARD (2026-09-20, Mac's patch - a report of foes
     // standing idle across most of a dungeon, with the console showing a
@@ -187,13 +225,29 @@ export class NavClient {
     // was the bake's own cell, erosion, flat floors and single anchor, not
     // luck; navBake.js bakeSoup has the four. The guard stays as the net.)
     const polys = result.stats?.polys ?? 0;
-    if (input.tris >= DEGENERATE_MIN_TRIS && (polys < DEGENERATE_MIN_POLYS || polys < input.tris * DEGENERATE_POLY_SHARE)) {
-      console.warn(`[enhanced-ai] navmesh bake looks degenerate (${polys} polys from ${input.tris} triangles) - not caching, so the next entry gets a fresh retry instead of being stuck with this one`);
+    if (
+      input.tris >= DEGENERATE_MIN_TRIS &&
+      (polys < DEGENERATE_MIN_POLYS || polys < input.tris * DEGENERATE_POLY_SHARE)
+    ) {
+      console.warn(
+        `[enhanced-ai] navmesh bake looks degenerate (${polys} polys from ${input.tris} triangles) - not caching, so the next entry gets a fresh retry instead of being stuck with this one`,
+      );
     } else if (this._store) {
       await this._store.set(ck, { baked: result.baked, cs: result.cs, stats: result.stats }).catch(() => null);
     }
-    return { chf: hydrateHere(result.baked, result.cols, input), stats: { ...result.stats, cached: false }, cached: false };
+    return {
+      chf: hydrateHere(result.baked, result.cols, input),
+      stats: { ...result.stats, cached: false },
+      cached: false,
+    };
   }
 
-  dispose() { try { this._worker?.terminate?.(); } catch { /* gone */ } this._worker = null; }
+  dispose() {
+    try {
+      this._worker?.terminate?.();
+    } catch {
+      /* gone */
+    }
+    this._worker = null;
+  }
 }

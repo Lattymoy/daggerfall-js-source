@@ -7,7 +7,7 @@ import { isGuildBanker } from '../world/guildFurniture.js';
 import { t } from '../systems/textManager.js';
 
 /** What a visitor is told at another guild's banker. */
-export const GUILD_BANKER_SHUT = () => t('guild.banker.shut', 'The banker serves this guild\'s members alone.');
+export const GUILD_BANKER_SHUT = () => t('guild.banker.shut', "The banker serves this guild's members alone.");
 
 /**
  * A HALL PIECE PRESSED: the board's notes (`board` - the host's own isHallBoard), or the banker's vault for a member
@@ -16,8 +16,12 @@ export const GUILD_BANKER_SHUT = () => t('guild.banker.shut', 'The banker serves
  * @param {boolean} member @param {(text: string) => void} say
  */
 export function hallPiecePress(piece, board, openBoard, openVault, member, say) {
-  if (board) { openBoard(); return true; }
+  if (board) {
+    openBoard();
+    return true;
+  }
   if (!isGuildBanker(piece)) return false;
-  if (member) openVault(); else say(GUILD_BANKER_SHUT());
+  if (member) openVault();
+  else say(GUILD_BANKER_SHUT());
   return true;
 }

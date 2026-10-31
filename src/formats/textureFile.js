@@ -22,11 +22,7 @@ export const SOLID_TYPES = Object.freeze({
 const ROW_ENCODING_RLE = 0x8000;
 
 // These three texture filenames have no image data or are otherwise invalid.
-export const UNSUPPORTED_FILENAMES = Object.freeze([
-  'TEXTURE.215',
-  'TEXTURE.217',
-  'TEXTURE.436',
-]);
+export const UNSUPPORTED_FILENAMES = Object.freeze(['TEXTURE.215', 'TEXTURE.217', 'TEXTURE.436']);
 
 /** TEXTURE.### - the archive's filename from its number.
  *
@@ -109,7 +105,7 @@ export class TextureFile extends BaseImageFile {
     else this._solidType = SOLID_TYPES.None;
 
     if (palette) this.palette = palette;
-    this.archive = Number.parseInt(fileName.slice('TEXTURE.'.length), 10);   // MM1: the archive number, for the xml billboard scale (world/billboardXml.js)
+    this.archive = Number.parseInt(fileName.slice('TEXTURE.'.length), 10); // MM1: the archive number, for the xml billboard scale (world/billboardXml.js)
     this._setBytes(bytes, fileName);
 
     try {
@@ -251,8 +247,7 @@ export class TextureFile extends BaseImageFile {
 
   /** Creates a solid 32x32 image. TEXTURE.000 uses index=record, TEXTURE.001 index=128+record. */
   _readSolid(record) {
-    const colourIndex =
-      this._solidType === SOLID_TYPES.SolidColoursA ? record & 0xff : (128 + record) & 0xff;
+    const colourIndex = this._solidType === SOLID_TYPES.SolidColoursA ? record & 0xff : (128 + record) & 0xff;
     const data = new Uint8Array(SOLID_SIZE * SOLID_SIZE).fill(colourIndex);
     this._records[record].frames[0] = {
       width: SOLID_SIZE,

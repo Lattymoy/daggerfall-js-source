@@ -29,8 +29,8 @@
   {
     "name": "LW-WALLS-tie-smaller",
     "file": "src/systems/livingWorld/places.js",
-    "old": "(keys.size === bestKeys && n > bestSize)",
-    "new": "(keys.size === bestKeys && n < bestSize)",
+    "old": "    if (keys.size > bestKeys || (keys.size === bestKeys && n > bestSize)) {",
+    "new": "    if (keys.size > bestKeys || (keys.size === bestKeys && n < bestSize)) {",
     "tests": [
       "test/systems/livingWorld/lwwalls_city.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LW-WALLS-tie-last",
     "file": "src/systems/livingWorld/places.js",
-    "old": "if (keys.size > bestKeys ||",
-    "new": "if (keys.size >= bestKeys ||",
+    "old": "    if (keys.size > bestKeys || (keys.size === bestKeys && n > bestSize)) {",
+    "new": "    if (keys.size >= bestKeys || (keys.size === bestKeys && n > bestSize)) {",
     "tests": [
       "test/systems/livingWorld/lwwalls_city.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LW-WALLS-street-unread",
     "file": "src/systems/livingWorld/places.js",
-    "old": "const at = doorCell(nav, d, (i) => net[i] === netId);",
-    "new": "const at = doorCell(nav, d, (i) => net[i] > 0);",
+    "old": "    const at = doorCell(nav, d, (i) => net[i] === netId);",
+    "new": "    const at = doorCell(nav, d, (i) => net[i] > 0);",
     "tests": [
       "test/systems/livingWorld/lwwalls_city.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "LW-WALLS-normal-unflipped",
     "file": "src/systems/livingWorld/places.js",
-    "old": "return { cell: [cx, cy], nx: nx * sign, nz: nz * sign };",
-    "new": "return { cell: [cx, cy], nx, nz };",
+    "old": "      if (cx >= 0 && cy >= 0 && cx < W && cy < H && ok(cy * W + cx))\n        return { cell: [cx, cy], nx: nx * sign, nz: nz * sign };",
+    "new": "      if (cx >= 0 && cy >= 0 && cx < W && cy < H && ok(cy * W + cx)) return { cell: [cx, cy], nx, nz };",
     "tests": [
       "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "LW-WALLS-opens-unread",
     "file": "src/systems/livingWorld/census.js",
-    "old": "const open = (/** @type {LwBuilding} */ b) => !opens || opens.has(b.key);",
-    "new": "const open = (/** @type {LwBuilding} */ b) => !!b;",
+    "old": "  const open = (/** @type {LwBuilding} */ b) => !opens || opens.has(b.key);",
+    "new": "  const open = (/** @type {LwBuilding} */ b) => !!b;",
     "tests": [
       "test/systems/livingWorld/lwwalls_city.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "LW-WALLS-palace-unread",
     "file": "src/systems/livingWorld/census.js",
-    "old": "find((b) => b?.type === BUILDING_TYPES.Palace && open(b))",
-    "new": "find((b) => b?.type === BUILDING_TYPES.Palace)",
+    "old": "  const palace = (buildings ?? []).find((b) => b?.type === BUILDING_TYPES.Palace && open(b))?.key ?? null;",
+    "new": "  const palace = (buildings ?? []).find((b) => b?.type === BUILDING_TYPES.Palace)?.key ?? null;",
     "tests": [
       "test/systems/livingWorld/lwwalls_city.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "LW-WALLS-houses-unread",
     "file": "src/systems/livingWorld/census.js",
-    "old": "isHome(b.type) && open(b))",
-    "new": "isHome(b.type))",
+    "old": "    .filter((b) => b && isHome(b.type) && open(b))",
+    "new": "    .filter((b) => b && isHome(b.type))",
     "tests": [
       "test/systems/livingWorld/lwwalls_city.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "LW-WALLS-taverns-unread",
     "file": "src/systems/livingWorld/census.js",
-    "old": "b?.type === BUILDING_TYPES.Tavern && open(b))",
-    "new": "b?.type === BUILDING_TYPES.Tavern)",
+    "old": "    .filter((b) => b?.type === BUILDING_TYPES.Tavern && open(b))",
+    "new": "    .filter((b) => b?.type === BUILDING_TYPES.Tavern)",
     "tests": [
       "test/systems/livingWorld/lwwalls_city.test.js"
     ]

@@ -23,7 +23,13 @@
 //     animal, a light, the editor's markers or treasure (cover's own NOT_COVER_ARCHIVES), nor the flora Windfall sways
 //     Low or Medium (grass, flowers, ferns, bushes - a jungle of solid ferns could not be walked).
 // bible/03-World/Player-Arc.md (PROP-BODIES), bible/12-Enhanced-AI/Tactics-Arc.md (the index it rides).
-import { NOT_COVER_ARCHIVES, COVER_RADIUS_FRAC, COVER_HEIGHT_FRAC, COVER_TRUNK_R, COVER_CROWN_FROM } from '../ai/cover.js';
+import {
+  NOT_COVER_ARCHIVES,
+  COVER_RADIUS_FRAC,
+  COVER_HEIGHT_FRAC,
+  COVER_TRUNK_R,
+  COVER_CROWN_FROM,
+} from '../ai/cover.js';
 import { responseByte, RESPONSE } from '../systems/windfall.js';
 import { JUNGLE_MEASURES } from './jungle/jungleModels.js';
 import { isNatureArchive } from './rmbFlats.js';
@@ -35,18 +41,23 @@ import { STEP_OFFSET, CAPSULE_HEIGHT } from '../player/motor.js';
  *  reference (`c`), as its cover's. */
 export function flatBody(c, t, archive, record, size, { tree = false } = {}) {
   if (NOT_COVER_ARCHIVES.has(archive) || c?.noCover) return null;
-  const w = size?.w ?? 0, h = size?.h ?? 0;
+  const w = size?.w ?? 0,
+    h = size?.h ?? 0;
   const sway = isNatureArchive(archive) ? responseByte(archive, record) : 0;
-  if (tree || sway === RESPONSE.full) return body(c, Math.min(w * COVER_RADIUS_FRAC, COVER_TRUNK_R), h * COVER_CROWN_FROM);
-  if (sway !== 0) return null;   // the flora, Low and Medium
+  if (tree || sway === RESPONSE.full)
+    return body(c, Math.min(w * COVER_RADIUS_FRAC, COVER_TRUNK_R), h * COVER_CROWN_FROM);
+  if (sway !== 0) return null; // the flora, Low and Medium
   return body(c, (footShare(t, record, size) * w) / 2, h * COVER_HEIGHT_FRAC);
 }
-const body = (c, r, h) => (r > 0 && h >= STEP_OFFSET ? { c, r, h, lift: 0, body: true, _mark: 0 } : null);   // MEM-AUDIT: born with the index's mark (cover.js fileIn)
+const body = (c, r, h) => (r > 0 && h >= STEP_OFFSET ? { c, r, h, lift: 0, body: true, _mark: 0 } : null); // MEM-AUDIT: born with the index's mark (cover.js fileIn)
 
 /** A group's bodies (flatBody for each foot), for a host's cover list. */
 export function flatBodies(t, archive, record, size, centers, opts = {}) {
   const out = [];
-  for (const c of centers) { const b = flatBody(c, t, archive, record, size, opts); if (b) out.push(b); }
+  for (const c of centers) {
+    const b = flatBody(c, t, archive, record, size, opts);
+    if (b) out.push(b);
+  }
   return out;
 }
 
@@ -70,16 +81,25 @@ export function footShare(t, record, size) {
   // a classic record's own cutout (index 0), or - a painted stand-in's, which has no index (systems/textureReplacement.js
   // vendorTextureFile: `data` null beside its `rgba`, top-down as `data` is) - its own alpha (AUDIT WITCH1 D7: a festival
   // ward-staff, a 2 px post, stood a body as wide as its whole picture's cover)
-  const solid = bmp?.data ? (/** @type {number} */ i) => bmp.data[i] !== 0 : bmp?.rgba?.length >= bmp?.width * bmp?.height * 4 ? (/** @type {number} */ i) => bmp.rgba[i * 4 + 3] !== 0 : null;
+  const solid = bmp?.data
+    ? (/** @type {number} */ i) => bmp.data[i] !== 0
+    : bmp?.rgba?.length >= bmp?.width * bmp?.height * 4
+      ? (/** @type {number} */ i) => bmp.rgba[i * 4 + 3] !== 0
+      : null;
   if (solid && bmp.width > 0 && bmp.height > 0) {
-    const perRow = size.h / bmp.height, spans = [];
-    const lo = Math.max(0, bmp.height - Math.round(Math.min(size.h, CAPSULE_HEIGHT) / perRow)), hi = bmp.height - 1 - Math.round(STEP_OFFSET / perRow);
+    const perRow = size.h / bmp.height,
+      spans = [];
+    const lo = Math.max(0, bmp.height - Math.round(Math.min(size.h, CAPSULE_HEIGHT) / perRow)),
+      hi = bmp.height - 1 - Math.round(STEP_OFFSET / perRow);
     for (let y = lo; y <= hi; y++) {
       let n = 0;
       for (let x = 0; x < bmp.width; x++) if (solid(y * bmp.width + x)) n++;
       spans.push(n / bmp.width);
     }
-    if (spans.length) { spans.sort((p, q) => p - q); share = spans[spans.length >> 1]; }
+    if (spans.length) {
+      spans.sort((p, q) => p - q);
+      share = spans[spans.length >> 1];
+    }
   }
   known.set(key, share);
   return share;
@@ -89,5 +109,5 @@ export function footShare(t, record, size) {
  *  jungleCover's trunk - the measures a table, so a client whose files did not load stands the same bodies). */
 export function jungleBody(c, species, scale) {
   const m = JUNGLE_MEASURES[species];
-  return { c, r: m.trunk * scale, h: m.crownFrom * scale, lift: 0, body: true, _mark: 0 };   // MEM-AUDIT: born with the index's mark
+  return { c, r: m.trunk * scale, h: m.crownFrom * scale, lift: 0, body: true, _mark: 0 }; // MEM-AUDIT: born with the index's mark
 }

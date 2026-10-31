@@ -34,15 +34,13 @@ export function computeFaceUVCoordinates(faceVertsIn, faceVertsOut) {
   let V1 = [P2[0] - P0[0], P2[1] - P0[1], P2[2] - P0[2]];
 
   // Orthogonalize V1.
-  const k =
-    dot(V1[0], V1[1], V1[2], V0[0], V0[1], V0[2]) /
-    dot(V0[0], V0[1], V0[2], V0[0], V0[1], V0[2]);
+  const k = dot(V1[0], V1[1], V1[2], V0[0], V0[1], V0[2]) / dot(V0[0], V0[1], V0[2], V0[0], V0[1], V0[2]);
   V1 = [V1[0] - V0[0] * k, V1[1] - V0[1] * k, V1[2] - V0[2] * k];
 
   // Normalize both vectors (throws on zero magnitude, as DFU's Vector3 does).
   const m0 = Math.sqrt(dot(V0[0], V0[1], V0[2], V0[0], V0[1], V0[2]));
   const m1 = Math.sqrt(dot(V1[0], V1[1], V1[2], V1[0], V1[1], V1[2]));
-  if (m0 === 0 || m1 === 0) throw new Error('Can not normalize a vector when it\'s magnitude is zero');
+  if (m0 === 0 || m1 === 0) throw new Error("Can not normalize a vector when it's magnitude is zero");
   // AUDIT 18 F4: DFU's Vector3.Normalize (API/Vector3.cs:583-597) computes
   // `double inverse = 1 / Magnitude` and MULTIPLIES each component by it.
   // x*(1/m) and x/m are not the same double, and the difference survives
@@ -50,7 +48,8 @@ export function computeFaceUVCoordinates(faceVertsIn, faceVertsOut) {
   // of 1,917,087 corpus UVs one raw unit (1/16 texel) off DFU. Ledger row
   // 18 authorises the float->double widening here, not a different
   // normalize formulation.
-  const i0 = 1 / m0, i1 = 1 / m1;
+  const i0 = 1 / m0,
+    i1 = 1 / m1;
   const n0 = [V0[0] * i0, V0[1] * i0, V0[2] * i0];
   const n1 = [V1[0] * i1, V1[1] * i1, V1[2] * i1];
 
@@ -127,28 +126,15 @@ export function computeFaceUVCoordinates(faceVertsIn, faceVertsOut) {
  */
 function computeDFUVMatrixXY(X, Y, U, V) {
   // Compute the determinant of the coefficient matrix.
-  const determinant =
-    X[0] * Y[1] + Y[0] * X[2] + X[1] * Y[2] - Y[1] * X[2] - Y[0] * X[1] - X[0] * Y[2];
+  const determinant = X[0] * Y[1] + Y[0] * X[2] + X[1] * Y[2] - Y[1] * X[2] - Y[0] * X[1] - X[0] * Y[2];
 
   // Check for a singular matrix indicating no valid solution.
   if (determinant === 0) return null;
 
   // Compute parameters of the inverted XYZ matrix.
-  const Xi = [
-    (Y[1] - Y[2]) / determinant,
-    (-X[1] + X[2]) / determinant,
-    (X[1] * Y[2] - X[2] * Y[1]) / determinant,
-  ];
-  const Yi = [
-    (-Y[0] + Y[2]) / determinant,
-    (X[0] - X[2]) / determinant,
-    (-X[0] * Y[2] + X[2] * Y[0]) / determinant,
-  ];
-  const Zi = [
-    (Y[0] - Y[1]) / determinant,
-    (-X[0] + X[1]) / determinant,
-    (X[0] * Y[1] - X[1] * Y[0]) / determinant,
-  ];
+  const Xi = [(Y[1] - Y[2]) / determinant, (-X[1] + X[2]) / determinant, (X[1] * Y[2] - X[2] * Y[1]) / determinant];
+  const Yi = [(-Y[0] + Y[2]) / determinant, (X[0] - X[2]) / determinant, (-X[0] * Y[2] + X[2] * Y[0]) / determinant];
+  const Zi = [(Y[0] - Y[1]) / determinant, (-X[0] + X[1]) / determinant, (X[0] * Y[1] - X[1] * Y[0]) / determinant];
 
   // Compute the UV conversion parameters.
   return {

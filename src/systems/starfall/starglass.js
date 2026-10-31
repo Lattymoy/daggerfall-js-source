@@ -22,18 +22,27 @@ export { STARGLASS_TEMPLATE };
 
 /** Its row: the leaf's with its name and its picture. */
 export const STARGLASS_ROW = Object.freeze({
-  ...STARGLASS_LAW_ROW, name: 'Starfall Glass', worldTextureArchive: STARGLASS_ART.archive, worldTextureRecord: STARGLASS_ART.record,
+  ...STARGLASS_LAW_ROW,
+  name: 'Starfall Glass',
+  worldTextureArchive: STARGLASS_ART.archive,
+  worldTextureRecord: STARGLASS_ART.record,
 });
 registerCustomTemplates([STARGLASS_ROW]);
-registerStarglassArt(addVendorTextures);   // the import IS the registration
+registerStarglassArt(addVendorTextures); // the import IS the registration
 /** Its card's lines: what it is and what it is for - read when the card is shown (the Soul Cake's shape, systems/festival/
  *  soulCake.js SOUL_CAKE_TEXT). AUDIT STAR I2: its card said its name and its weight, and nothing more. */
 export const STARGLASS_TEXT = Object.freeze({
-  glass: () => [t('starfall.item.glass.what', 'Pale glass from a fallen star, still holding some of its light.'), t('starfall.item.glass.use', 'Any merchant pays well for it.')],
+  glass: () => [
+    t('starfall.item.glass.what', 'Pale glass from a fallen star, still holding some of its light.'),
+    t('starfall.item.glass.use', 'Any merchant pays well for it.'),
+  ],
 });
 /** Whether a record is Starfall Glass - its template and its group, the one spelling every rule reads. */
-export const isStarglass = (/** @type {any} */ item) => item?.templateIndex === STARGLASS_TEMPLATE && item?.group === 'UselessItems2';
+export const isStarglass = (/** @type {any} */ item) =>
+  item?.templateIndex === STARGLASS_TEMPLATE && item?.group === 'UselessItems2';
 /** `n` pieces of Starfall Glass (at least one), one stack, minted on their own row. */
 export function starglass(n = 1) {
-  return Object.assign(mintCondition(setItemFields({ group: 'UselessItems2', templateIndex: STARGLASS_TEMPLATE })), { stackCount: Math.max(1, Math.trunc(Number(n) || 1)) });
+  return Object.assign(mintCondition(setItemFields({ group: 'UselessItems2', templateIndex: STARGLASS_TEMPLATE })), {
+    stackCount: Math.max(1, Math.trunc(Number(n) || 1)),
+  });
 }

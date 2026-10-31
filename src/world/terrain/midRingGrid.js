@@ -16,8 +16,14 @@
 // WORKER-SAFE: pure, node-tested modules only (the terrain worker runs it - world/terrain/terrainGenWorker.js 'midring').
 // ═══════════════════════════════════════════════════════════════════
 
-import { sampleKernel, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } from './terrainSampler.js';
-import { nodeGroundAt } from '../landforms.js';   // RELIEF-PEAKS: the far field's vertex on the kernel's own ground at its node
+import {
+  sampleKernel,
+  HEIGHTMAP_DIMENSION,
+  MAX_TERRAIN_HEIGHT,
+  STREAMING_TERRAIN_SCALE,
+  TERRAIN_SIZE,
+} from './terrainSampler.js';
+import { nodeGroundAt } from '../landforms.js'; // RELIEF-PEAKS: the far field's vertex on the kernel's own ground at its node
 
 /** The middle ring's radius in map pixels round its base - 14: 11.5 km of the kernel's own ground every way. */
 export const MID_RADIUS = 14;
@@ -33,7 +39,9 @@ export const midRingSide = (radius = MID_RADIUS, sub = MID_SUB) => (2 * radius +
  *  samples (i, j) x the step, in world units. What a pixel's ring answers is this pixel's alone, so a worker keeps it by
  *  the pixel across the ring's rebuilds (terrainGenWorker.js). */
 export function midRingPixel(woods, px, py, sub = MID_SUB, landforms = null) {
-  const step = (HEIGHTMAP_DIMENSION - 1) / sub, world = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE, w = sub + 1;
+  const step = (HEIGHTMAP_DIMENSION - 1) / sub,
+    world = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE,
+    w = sub + 1;
   const kernel = sampleKernel(woods, px, py, HEIGHTMAP_DIMENSION, true, landforms);
   const out = new Float32Array(w * w);
   for (let j = 0; j <= sub; j++) for (let i = 0; i <= sub; i++) out[j * w + i] = kernel(i * step, j * step) * world;
@@ -42,7 +50,8 @@ export function midRingPixel(woods, px, py, sub = MID_SUB, landforms = null) {
 
 /** The vertex rows a band of the ring's pixel rows [pj0, pj1) holds - a row of pixels its sub rows, the last row of the
  *  ring its closing one too. */
-export const midRingBandRows = (pj0, pj1, radius = MID_RADIUS, sub = MID_SUB) => (pj1 - pj0) * sub + (pj1 === 2 * radius + 1 ? 1 : 0);
+export const midRingBandRows = (pj0, pj1, radius = MID_RADIUS, sub = MID_SUB) =>
+  (pj1 - pj0) * sub + (pj1 === 2 * radius + 1 ? 1 : 0);
 
 /**
  * The ring's heights, world units, row by row from its south-west corner: vertex (gx, gz) is the pixel
@@ -56,15 +65,29 @@ export const midRingBandRows = (pj0, pj1, radius = MID_RADIUS, sub = MID_SUB) =>
  * @param {{ woods: any, baseX: number, baseY: number, radius?: number, sub?: number, landforms?: any, rows?: ?[number, number], pixel?: (px: number, py: number) => ArrayLike<number>, Kind?: Float32ArrayConstructor | Uint8ArrayConstructor }} o
  * @returns {Float32Array | Uint8Array}
  */
-export function buildMidRingHeights({ woods, baseX, baseY, radius = MID_RADIUS, sub = MID_SUB, landforms = null, rows = null, pixel = (px, py) => midRingPixel(woods, px, py, sub, landforms), Kind = Float32Array }) {
-  const n = 2 * radius + 1, side = n * sub + 1, w = sub + 1;
+export function buildMidRingHeights({
+  woods,
+  baseX,
+  baseY,
+  radius = MID_RADIUS,
+  sub = MID_SUB,
+  landforms = null,
+  rows = null,
+  pixel = (px, py) => midRingPixel(woods, px, py, sub, landforms),
+  Kind = Float32Array,
+}) {
+  const n = 2 * radius + 1,
+    side = n * sub + 1,
+    w = sub + 1;
   const [pj0, pj1] = rows ?? [0, n];
   const out = new Kind(midRingBandRows(pj0, pj1, radius, sub) * side);
   for (let pj = pj0; pj < pj1; pj++) {
     const py = baseY + radius - pj;
     for (let pi = 0; pi < n; pi++) {
-      const px = baseX - radius + pi, own = pixel(px, py);
-      const lastI = pi === n - 1 ? sub : sub - 1, lastJ = pj === n - 1 ? sub : sub - 1;
+      const px = baseX - radius + pi,
+        own = pixel(px, py);
+      const lastI = pi === n - 1 ? sub : sub - 1,
+        lastJ = pj === n - 1 ? sub : sub - 1;
       for (let j = 0; j <= lastJ; j++) {
         const row = ((pj - pj0) * sub + j) * side + pi * sub;
         for (let i = 0; i <= lastI; i++) out[row + i] = own[j * w + i];
@@ -103,8 +126,11 @@ export const FAR_CLIMATE_ASK = 255;
  *  the cell across the rebuilds. */
 export function farFieldCell(woods, cx, cy, cell = FAR_CELL, seaByte = 0, climateAt = null, relief = false) {
   let n = 0;
-  for (const v of FAR_SAMPLES) for (const u of FAR_SAMPLES) if (woods.getHeightMapValue(cx * cell + u, cy * cell + v) <= seaByte) n++;
-  const nx = cx * cell + cell / 2 - 1, ny = cy * cell + cell / 2 - 1, byteAt = (x, y) => woods.getHeightMapValue(x, y);
+  for (const v of FAR_SAMPLES)
+    for (const u of FAR_SAMPLES) if (woods.getHeightMapValue(cx * cell + u, cy * cell + v) <= seaByte) n++;
+  const nx = cx * cell + cell / 2 - 1,
+    ny = cy * cell + cell / 2 - 1,
+    byteAt = (x, y) => woods.getHeightMapValue(x, y);
   const c = climateAt ? climateAt(Math.floor(cx * cell + cell / 2), Math.floor(cy * cell + cell / 2)) : FAR_CLIMATE_ASK;
   return [byteAt(nx, ny), n, c, nodeGroundAt(byteAt, nx, ny, relief) * STREAMING_TERRAIN_SCALE];
 }
@@ -119,13 +145,32 @@ export function farFieldCell(woods, cx, cy, cell = FAR_CELL, seaByte = 0, climat
  * @param {{ woods: any, baseCX: number, baseCY: number, radius?: number, cell?: number, seaByte?: number, rows?: ?[number, number], climateAt?: ?((x: number, y: number) => number), relief?: boolean, cellAt?: (cx: number, cy: number) => number[] }} o
  * @returns {{ high: Uint8Array, low: Uint8Array, clim: Uint8Array, ground: Float32Array }}
  */
-export function buildFarFieldBytes({ woods, baseCX, baseCY, radius = FAR_RADIUS, cell = FAR_CELL, seaByte = 0, rows = null, climateAt = null, relief = false, cellAt = (cx, cy) => farFieldCell(woods, cx, cy, cell, seaByte, climateAt, relief) }) {
-  const side = farFieldSide(radius), [j0, j1] = rows ?? [0, side];
-  const high = new Uint8Array((j1 - j0) * side), low = new Uint8Array((j1 - j0) * side), clim = new Uint8Array((j1 - j0) * side), ground = new Float32Array((j1 - j0) * side);
+export function buildFarFieldBytes({
+  woods,
+  baseCX,
+  baseCY,
+  radius = FAR_RADIUS,
+  cell = FAR_CELL,
+  seaByte = 0,
+  rows = null,
+  climateAt = null,
+  relief = false,
+  cellAt = (cx, cy) => farFieldCell(woods, cx, cy, cell, seaByte, climateAt, relief),
+}) {
+  const side = farFieldSide(radius),
+    [j0, j1] = rows ?? [0, side];
+  const high = new Uint8Array((j1 - j0) * side),
+    low = new Uint8Array((j1 - j0) * side),
+    clim = new Uint8Array((j1 - j0) * side),
+    ground = new Float32Array((j1 - j0) * side);
   for (let j = j0; j < j1; j++) {
     for (let i = 0; i < side; i++) {
-      const [m, n, c, g] = cellAt(baseCX - radius + i, baseCY - radius + j), o = (j - j0) * side + i;
-      high[o] = m; low[o] = n; clim[o] = c; ground[o] = g;
+      const [m, n, c, g] = cellAt(baseCX - radius + i, baseCY - radius + j),
+        o = (j - j0) * side + i;
+      high[o] = m;
+      low[o] = n;
+      clim[o] = c;
+      ground[o] = g;
     }
   }
   return { high, low, clim, ground };
@@ -134,14 +179,26 @@ export function buildFarFieldBytes({ woods, baseCX, baseCY, radius = FAR_RADIUS,
 /** The ring's normals off its heights by central differences at its own cell (one-sided at its rim) - the streamed
  *  grid's own law (buildTerrainGrid: nx = left - right, nz = down - up, ny = 2 x the span); into `out`, rows [z0, z1)
  *  (a stepped build's share), all of them by default. */
-export function midRingNormals(heights, side, sub = MID_SUB, out = new Float32Array(side * side * 3), z0 = 0, z1 = side) {
+export function midRingNormals(
+  heights,
+  side,
+  sub = MID_SUB,
+  out = new Float32Array(side * side * 3),
+  z0 = 0,
+  z1 = side,
+) {
   const cell = TERRAIN_SIZE / sub;
   const h = (x, z) => heights[Math.max(0, Math.min(side - 1, z)) * side + Math.max(0, Math.min(side - 1, x))];
   for (let z = z0; z < z1; z++) {
     for (let x = 0; x < side; x++) {
-      const nx = h(x - 1, z) - h(x + 1, z), nz = h(x, z - 1) - h(x, z + 1), ny = 2 * cell;
-      const l = Math.hypot(nx, ny, nz), o = (z * side + x) * 3;
-      out[o] = nx / l; out[o + 1] = ny / l; out[o + 2] = nz / l;
+      const nx = h(x - 1, z) - h(x + 1, z),
+        nz = h(x, z - 1) - h(x, z + 1),
+        ny = 2 * cell;
+      const l = Math.hypot(nx, ny, nz),
+        o = (z * side + x) * 3;
+      out[o] = nx / l;
+      out[o + 1] = ny / l;
+      out[o + 2] = nz / l;
     }
   }
   return out;

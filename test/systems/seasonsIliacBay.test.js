@@ -655,7 +655,7 @@ test('SIB2: the bundle is the mod by its MANIFEST, not by one guessed file name;
   const assets = read('src/systems/seasonsIliacBayAssets.js');
   assert.match(assets, /const isSeasonsDfmod = \(name\) => \/\\\.dfmod\$\/i\.test\(name\) && \/season\/i\.test\(name\);/);
   assert.match(assets, /if \(manifest\.GUID === SEASONS_MOD\.guid \|\| manifest\.ModTitle === SEASONS_MOD\.title\) \{/, 'the identity is the manifest\'s');
-  assert.match(assets, /if \(manifest\.ModVersion && String\(manifest\.ModVersion\) !== SEASONS_MOD\.version\) console\.warn/, 'a later build is said, not assumed');
+  assert.match(assets, /if \(manifest\.ModVersion && String\(manifest\.ModVersion\) !== SEASONS_MOD\.version\)\n\s*console\.warn/, 'a later build is said, not assumed');
   assert.equal(SEASONS_MOD.version, JSON.parse(read('vendor/seasons-iliac-bay/seasons-of-the-iliac-bay.dfmod.json')).ModVersion, 'the port\'s script is the vendored manifest\'s version');
   // the events per caller: the travel popup's arm raises OnPostFastTravel (+ OnUpdateTerrainsEnd), a quickload and the
   // classic import raise OnLoad, every other teleport raises neither (their terrains' OnInstantiateTerrain is the mod\'s word)

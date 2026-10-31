@@ -22,6 +22,7 @@ import { FT } from '../../src/systems/foraging/foragingLaw.js';
 import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } from '../../src/world/terrain/terrainSampler.js';
 import { REFUSALS } from '../../src/net/accountClient.js';
 import { createMarksBook } from '../../src/net/marksBook.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const { subtle } = globalThis.crypto;
@@ -210,7 +211,7 @@ test('PROF2b the kind: a pixel\'s nodes take the Motherlodes standing on it; its
 
 test('PROF2b the seams by source: the professions\' book sends a harvest\'s Watch; the world host builds the book with the shared clock, hands it the relay\'s Watch beside the seats\', ticks it on the frame with the Sense read, gives it to Mining\'s kind with the silver\'s book, restands its pixel, marks every Motherlode standing on the compass; the Sense\'s card is chosen as any; every strike refusal has its sentence (mutants: each seam)', () => {
   assert.match(src('src/net/profBook.js'), /\.\.\.\(typeof h\.watch === 'string' \? \{ watch: h\.watch \} : \{\}\),/);
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const motherlodeBook = motherlodeDoor \? createMotherlodeBook\(\{/);
   assert.match(w, /nowS: \(\) => Math\.floor\(\(Date\.now\(\) \+ _sharedOffsetMs\) \/ 1000\),/);
   assert.match(w, /onChange: \(l\) => gatherHost\?\.restandAt\(l\.x, l\.y\),/);

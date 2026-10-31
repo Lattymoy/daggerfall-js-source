@@ -281,8 +281,8 @@
   {
     "name": "EGA3-count-blow-of-none",
     "file": "src/net/eliteGates/egBrain.js",
-    "old": "return (m.dh > 0 && m.dh >= even * dealt)",
-    "new": "return (m.dh >= even * dealt)",
+    "old": "return (m.dh > 0 && egRefDealt(m.dh, m.mg) >= even * dealt)",
+    "new": "return (egRefDealt(m.dh, m.mg) >= even * dealt)",
     "tests": [
       "test/net/eliteGates/egaudit3_count.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "EGA3-count-lifeline-iii-past-cap",
     "file": "src/net/eliteGates/egVestige.js",
-    "old": "v: [0.20, 0.25, 0.30], by: 'word'",
-    "new": "v: [0.20, 0.25, 0.40], by: 'word'",
+    "old": "    v: [0.2, 0.25, 0.3],",
+    "new": "    v: [0.2, 0.25, 0.4],",
     "tests": [
       "test/net/eliteGates/egaudit3_count.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "EGA3-count-lifeline-ii-at-cap",
     "file": "src/net/eliteGates/egVestige.js",
-    "old": "v: [0.20, 0.25, 0.30], by: 'word'",
-    "new": "v: [0.20, 0.30, 0.30], by: 'word'",
+    "old": "    v: [0.2, 0.25, 0.3],",
+    "new": "    v: [0.2, 0.3, 0.3],",
     "tests": [
       "test/net/eliteGates/egaudit3_count.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "EGA3-count-mark-distance-unread",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "if (r !== HIT_KINDS.Shaft || !(d > EG_FAR_M)) return false;",
-    "new": "if (r !== HIT_KINDS.Shaft) return false;",
+    "old": "  if (r !== HIT_KINDS.Shaft || !(d > EG_FAR_M)) return false;",
+    "new": "  if (r !== HIT_KINDS.Shaft) return false;",
     "tests": [
       "test/net/eliteGates/egaudit3_count.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "EGA3-count-mark-kind-unread",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "if (r !== HIT_KINDS.Shaft || !(d > EG_FAR_M)) return false;",
-    "new": "if (!(d > EG_FAR_M)) return false;",
+    "old": "  if (r !== HIT_KINDS.Shaft || !(d > EG_FAR_M)) return false;",
+    "new": "  if (!(d > EG_FAR_M)) return false;",
     "tests": [
       "test/net/eliteGates/egaudit3_count.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "EGA3-count-mark-twelve-beyond",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "if (r !== HIT_KINDS.Shaft || !(d > EG_FAR_M)) return false;",
-    "new": "if (r !== HIT_KINDS.Shaft || !(d >= EG_FAR_M)) return false;",
+    "old": "  if (r !== HIT_KINDS.Shaft || !(d > EG_FAR_M)) return false;",
+    "new": "  if (r !== HIT_KINDS.Shaft || !(d >= EG_FAR_M)) return false;",
     "tests": [
       "test/net/eliteGates/egaudit3_count.test.js"
     ]
@@ -534,8 +534,8 @@
   {
     "name": "EGA3-count-run-circles-unsaid",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "m.mast ?? -1, (m.rel ?? []).slice(-EG_RUN_REL_MAX)];",
-    "new": "m.mast ?? -1];",
+    "old": "  (m.rel ?? []).slice(-EG_RUN_REL_MAX),\n];",
+    "new": "];",
     "tests": [
       "test/net/eliteGates/egaudit3_count.test.js",
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
@@ -544,8 +544,8 @@
   {
     "name": "EGA3-count-run-circles-oldest",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "(m.rel ?? []).slice(-EG_RUN_REL_MAX)];",
-    "new": "(m.rel ?? []).slice(0, EG_RUN_REL_MAX)];",
+    "old": "  (m.rel ?? []).slice(-EG_RUN_REL_MAX),",
+    "new": "  (m.rel ?? []).slice(0, EG_RUN_REL_MAX),",
     "tests": [
       "test/net/eliteGates/egaudit3_count.test.js"
     ]
@@ -610,8 +610,8 @@
   {
     "name": "EGA3-count-roll-one-seed",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "ws.map((w, i) => rollPass(egReliquarySeed(seed, i), lv, w,",
-    "new": "ws.map((w, i) => rollPass(egReliquarySeed(seed, 0), lv, w,",
+    "old": "    ws.map((w, i) => rollPass(egReliquarySeed(seed, i), lv, w, { panoply: egReliquaryPanoply(seed, w, i) })),",
+    "new": "    ws.map((w, i) => rollPass(egReliquarySeed(seed, 0), lv, w, { panoply: egReliquaryPanoply(seed, w, i) })),",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -619,8 +619,8 @@
   {
     "name": "EGA3-count-roll-depth-unread",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "rollPass(egReliquarySeed(seed, i), lv, w, { panoply",
-    "new": "rollPass(egReliquarySeed(seed, i), lv, 1, { panoply",
+    "old": "    ws.map((w, i) => rollPass(egReliquarySeed(seed, i), lv, w, { panoply: egReliquaryPanoply(seed, w, i) })),",
+    "new": "    ws.map((w, i) => rollPass(egReliquarySeed(seed, i), lv, 1, { panoply: egReliquaryPanoply(seed, w, i) })),",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -628,8 +628,8 @@
   {
     "name": "EGA3-count-roll-stream-crossed",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "egPanoplyDraw(seed >>> 0, 16 + i) * egPanoplyIn(w)",
-    "new": "egPanoplyDraw(seed >>> 0, i) * egPanoplyIn(w)",
+    "old": "  egPanoplyDraw(seed >>> 0, 16 + i) * egPanoplyIn(w) < EG_RELIQUARY_PANOPLY_X;",
+    "new": "  egPanoplyDraw(seed >>> 0, i) * egPanoplyIn(w) < EG_RELIQUARY_PANOPLY_X;",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -637,8 +637,8 @@
   {
     "name": "EGA3-count-roll-panoply-unread",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "{ panoply: egReliquaryPanoply(seed, w, i) }",
-    "new": "{ panoply: false }",
+    "old": "    ws.map((w, i) => rollPass(egReliquarySeed(seed, i), lv, w, { panoply: egReliquaryPanoply(seed, w, i) })),",
+    "new": "    ws.map((w, i) => rollPass(egReliquarySeed(seed, i), lv, w, { panoply: false })),",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -664,8 +664,8 @@
   {
     "name": "EGA3-count-grant-answer-unread",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "const rl = (Array.isArray(d?.rl) ? d.rl : [])",
-    "new": "const rl = (Array.isArray(c?.rl) ? c.rl : [])",
+    "old": "  const rl = (Array.isArray(d?.rl) ? d.rl : [])",
+    "new": "  const rl = (Array.isArray(c?.rl) ? c.rl : [])",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -673,8 +673,8 @@
   {
     "name": "EGA3-count-grant-seed-unread",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "roll: () => egReliquaryList(seed, level, rl)",
-    "new": "roll: () => egReliquaryList(0, level, rl)",
+    "old": "    roll: () => egReliquaryList(seed, level, rl),",
+    "new": "    roll: () => egReliquaryList(0, level, rl),",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -691,8 +691,8 @@
   {
     "name": "EGA3-count-grant-any-kind",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "if (c?.q !== 'x' || !Number.isSafeInteger(c.c) || typeof c.b !== 'string') return null;",
-    "new": "if (!Number.isSafeInteger(c?.c) || typeof c.b !== 'string') return null;",
+    "old": "  if (c?.q !== 'x' || !Number.isSafeInteger(c.c) || typeof c.b !== 'string') return null;",
+    "new": "  if (!Number.isSafeInteger(c?.c) || typeof c.b !== 'string') return null;",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -700,8 +700,8 @@
   {
     "name": "EGA3-count-grant-text",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "text: EG_SPOILS_TEXT.opened(rl.length), n: rl.length",
-    "new": "text: EG_SPOILS_TEXT.opened(1), n: rl.length",
+    "old": "    text: EG_SPOILS_TEXT.opened(rl.length),",
+    "new": "    text: EG_SPOILS_TEXT.opened(1),",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -799,8 +799,8 @@
   {
     "name": "EGA3-count-stake-odds-once",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "1 - EG_RELIQUARY_PANOPLY_X / egPanoplyIn(w)",
-    "new": "1 - 1 / egPanoplyIn(w)",
+    "old": "  const none = ws.reduce((p, w) => p * Math.max(0, 1 - EG_RELIQUARY_PANOPLY_X / egPanoplyIn(w)), 1);",
+    "new": "  const none = ws.reduce((p, w) => p * Math.max(0, 1 - 1 / egPanoplyIn(w)), 1);",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -808,8 +808,8 @@
   {
     "name": "EGA3-count-stake-valk-uncounted",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "valk ? `${valk} Valkynaz` : ''",
-    "new": "''",
+    "old": "    valk ? `${valk} Valkynaz` : '',",
+    "new": "    '',",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -817,8 +817,8 @@
   {
     "name": "EGA3-count-stake-likely-never",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "k >= 2 ? `a Panoply piece about 1 in ${k}` : 'a Panoply piece likely'",
-    "new": "`a Panoply piece about 1 in ${k}`",
+    "old": "    k >= 2 ? `a Panoply piece about 1 in ${k}` : 'a Panoply piece likely',",
+    "new": "    `a Panoply piece about 1 in ${k}`,",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -826,8 +826,8 @@
   {
     "name": "EGA3-count-stake-unshown",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "E.sg === 'rest' && run?.rw?.length ? `${egStakeText(run.rw)}. ${sub}` : sub",
-    "new": "sub",
+    "old": "      sub: witLine ? '' : E.sg === 'rest' && run?.rw?.length ? `${egStakeText(run.rw)}. ${sub}` : sub,",
+    "new": "      sub: witLine ? '' : sub,",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -835,8 +835,8 @@
   {
     "name": "EGA3-count-stake-any-stage",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "E.sg === 'rest' && run?.rw?.length ?",
-    "new": "run?.rw?.length ?",
+    "old": "      sub: witLine ? '' : E.sg === 'rest' && run?.rw?.length ? `${egStakeText(run.rw)}. ${sub}` : sub,",
+    "new": "      sub: witLine ? '' : run?.rw?.length ? `${egStakeText(run.rw)}. ${sub}` : sub,",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -844,8 +844,8 @@
   {
     "name": "EGA3-count-recap-old-ends",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "opened: EG_OPEN_ENDS.includes(why) ? run?.rel ?? 0 : 0",
-    "new": "opened: why === 'home' || why === 'last' ? run?.rel ?? 0 : 0",
+    "old": "    opened: EG_OPEN_ENDS.includes(why) ? (run?.rel ?? 0) : 0,",
+    "new": "    opened: why === 'home' || why === 'last' ? (run?.rel ?? 0) : 0,",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]
@@ -853,8 +853,8 @@
   {
     "name": "EGA3-count-link-circles-dropped",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "rw: Array.isArray(r[8]) ? r[8] : [] }",
-    "new": "rw: [] }",
+    "old": "    ? {\n        rel: r[1],\n        lumen: r[2],\n        shards: r[3],\n        tonics: r[4],\n        cant: r[5],\n        vs: r[6],\n        mast: r[7],\n        rw: Array.isArray(r[8]) ? r[8] : [],\n      }",
+    "new": "    ? { rel: r[1], lumen: r[2], shards: r[3], tonics: r[4], cant: r[5], vs: r[6], mast: r[7], rw: [] }",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]

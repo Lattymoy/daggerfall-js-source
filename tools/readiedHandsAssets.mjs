@@ -39,12 +39,18 @@ export function readReadiedHands(bytes) {
 
 if (isMain(import.meta.url)) {
   const src = process.argv[2];
-  if (!src) { console.error('usage: node tools/readiedHandsAssets.mjs <readied spellcasting hands.dfmod> [outDir]'); process.exit(1); }
+  if (!src) {
+    console.error('usage: node tools/readiedHandsAssets.mjs <readied spellcasting hands.dfmod> [outDir]');
+    process.exit(1);
+  }
   const outDir = process.argv[3] ?? fileURLToPath(new URL('../vendor/readied-spellcasting-hands/', import.meta.url));
   const assets = readReadiedHands(readFileSync(src));
   for (const a of assets) {
     const sha = createHash('sha256').update(a.body).digest('hex');
-    if (!a.path) { console.log(`  (unmapped) ${a.name}  ${a.body.length} chars  ${sha}`); continue; }
+    if (!a.path) {
+      console.log(`  (unmapped) ${a.name}  ${a.body.length} chars  ${sha}`);
+      continue;
+    }
     const dest = `${outDir.replace(/\/$/, '')}/${a.path}`;
     mkdirSync(dest.slice(0, dest.lastIndexOf('/')), { recursive: true });
     writeFileSync(dest, a.body);

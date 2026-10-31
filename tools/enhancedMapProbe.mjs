@@ -106,7 +106,8 @@ async function mount(page, kind) {
       const rnd = () => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
       // a ring road round the block, buildings in the four quarters
       for (let i = 0; i < 14; i++) {
-        const w = 5 + Math.floor(rnd() * 9), h = 5 + Math.floor(rnd() * 9);
+        const w = 5 + Math.floor(rnd() * 9),
+          h = 5 + Math.floor(rnd() * 9);
         const x = 4 + Math.floor(rnd() * (BLOCK - w - 8));
         const y = 4 + Math.floor(rnd() * (BLOCK - h - 8));
         // shops/taverns/temples vs houses, DFU's own byte groups
@@ -116,11 +117,23 @@ async function mount(page, kind) {
       return g;
     };
     const blocks = [];
-    for (let by = 0; by < 3; by++) for (let bx = 0; bx < 3; bx++) blocks.push({ x: bx, y: by, autoMap: block(7 + bx * 31 + by * 97) });
+    for (let by = 0; by < 3; by++)
+      for (let bx = 0; bx < 3; bx++) blocks.push({ x: bx, y: by, autoMap: block(7 + bx * 31 + by * 97) });
 
-    const NAMES = ['The Rusty Nail', 'Odd Blades', 'The Sleeping Giant', 'Temple of Kynareth',
-      'Ravenous Tailor', 'The Bent Coin', 'Hawk Armory', 'The Grey Mare', 'Coldharbour Books',
-      'Merry Alchemist', 'The Salty Dog', 'Ser Kithlan'];
+    const NAMES = [
+      'The Rusty Nail',
+      'Odd Blades',
+      'The Sleeping Giant',
+      'Temple of Kynareth',
+      'Ravenous Tailor',
+      'The Bent Coin',
+      'Hawk Armory',
+      'The Grey Mare',
+      'Coldharbour Books',
+      'Merry Alchemist',
+      'The Salty Dog',
+      'Ser Kithlan',
+    ];
     const buildings = [];
     let k = 0;
     for (let by = 0; by < 3; by++) {
@@ -128,7 +141,8 @@ async function mount(page, kind) {
         for (let i = 0; i < 3 && k < NAMES.length; i++, k++) {
           buildings.push({
             buildingKey: k,
-            blockX: bx, blockY: by,
+            blockX: bx,
+            blockY: by,
             position: [12 + i * 30, 0, 14 + i * 28],
             name: NAMES[k],
             isResidence: k === NAMES.length - 1,
@@ -156,7 +170,9 @@ async function mount(page, kind) {
       };
     } else {
       deps.town = {
-        gridW: 3, gridH: 3, blocks,
+        gridW: 3,
+        gridH: 3,
+        blocks,
         buildings: () => buildings,
         discovered: () => discovered,
         player: () => ({ x: 96, y: 100, yaw: Math.PI * 0.75 }),
@@ -165,7 +181,8 @@ async function mount(page, kind) {
       if (kind2 === 'town+bay') {
         // the bay too, so the strip shows two tabs - a 96x64 synthetic
         // heightmap, the same seam heldMapProbe uses
-        const W = 96, H = 64;
+        const W = 96,
+          H = 64;
         const bytes = new Uint8Array(W * H);
         for (let y = 0; y < H; y++) {
           for (let x = 0; x < W; x++) {
@@ -204,7 +221,9 @@ await page.screenshot({ path: `${SHOTS}/1-dungeon-floor-1.png` });
 
 // the floor key, and then the ARROWS - which must PAN, not change storey
 await page.evaluate(() => globalThis.__win.input('PageUp', { preventDefault() {} }));
-await page.evaluate(() => { for (let i = 0; i < 20; i++) globalThis.__win.tick(1 / 30); });
+await page.evaluate(() => {
+  for (let i = 0; i < 20; i++) globalThis.__win.tick(1 / 30);
+});
 let floorNow = await page.evaluate(() => globalThis.__win._sheet.floor);
 check('PageUp climbs a storey', floorNow === 1, `floor index ${floorNow}`);
 await page.screenshot({ path: `${SHOTS}/2-dungeon-floor-2.png` });
@@ -212,53 +231,82 @@ await page.screenshot({ path: `${SHOTS}/2-dungeon-floor-2.png` });
 // zoom in FIRST: at the rest fit the plan is smaller than the paper on
 // at least one axis, and clampView centres such an axis - so a pan that
 // cannot move is the clamp doing its job, not the arrow failing
-await page.evaluate(() => { globalThis.__win._zoomBy(6, globalThis.__win._paper.w / 2, globalThis.__win._paper.h / 2); for (let i = 0; i < 40; i++) globalThis.__win.tick(1 / 30); });
+await page.evaluate(() => {
+  globalThis.__win._zoomBy(6, globalThis.__win._paper.w / 2, globalThis.__win._paper.h / 2);
+  for (let i = 0; i < 40; i++) globalThis.__win.tick(1 / 30);
+});
 const before = await page.evaluate(() => ({ ...globalThis.__win._view, floor: globalThis.__win._sheet.floor }));
 await page.evaluate(() => globalThis.__win.input('ArrowRight', { preventDefault() {} }));
-await page.evaluate(() => { for (let i = 0; i < 20; i++) globalThis.__win.tick(1 / 30); });
+await page.evaluate(() => {
+  for (let i = 0; i < 20; i++) globalThis.__win.tick(1 / 30);
+});
 const after = await page.evaluate(() => ({ ...globalThis.__win._view, floor: globalThis.__win._sheet.floor }));
-check('THE ARROWS PAN, they do not change storey',
+check(
+  'THE ARROWS PAN, they do not change storey',
   after.floor === before.floor && Math.abs(after.ox - before.ox) > 1e-6,
-  `floor ${before.floor}->${after.floor}, ox ${before.ox.toFixed(2)}->${after.ox.toFixed(2)}`);
+  `floor ${before.floor}->${after.floor}, ox ${before.ox.toFixed(2)}->${after.ox.toFixed(2)}`,
+);
 await page.evaluate(() => globalThis.__win.dispose());
 
 // ── 2. THE TOWN ────────────────────────────────────────────────────
 await mount(page, 'town');
 strip = await page.evaluate(() => globalThis.__win._strip.tabs.map((t) => t.title));
-check('the town strip reads "Town" alone while the bay is not handed over',
-  strip.length === 1 && strip[0] === 'Town', strip.join(' | '));
-let plates = await page.evaluate(() => globalThis.__win._sheet.platesAt(globalThis.__win._view, globalThis.__win._paper.w, globalThis.__win._paper.h, null).length);
+check(
+  'the town strip reads "Town" alone while the bay is not handed over',
+  strip.length === 1 && strip[0] === 'Town',
+  strip.join(' | '),
+);
+let plates = await page.evaluate(
+  () =>
+    globalThis.__win._sheet.platesAt(globalThis.__win._view, globalThis.__win._paper.w, globalThis.__win._paper.h, null)
+      .length,
+);
 check('the town lays nameplates at rest', plates > 0, `${plates} plates`);
 // EM7/EM8: the quarters reach the paper, and the names reach them
 const quarters = await page.evaluate(() => {
   const plan = globalThis.__win._sheet.plan;
   return Object.fromEntries(Object.entries(plan.quarters).map(([q, c]) => [q, c.length]));
 });
-check('all FOUR quarters are traced, houses included',
-  Object.values(quarters).filter((n) => n > 0).length === 4, JSON.stringify(quarters));
+check(
+  'all FOUR quarters are traced, houses included',
+  Object.values(quarters).filter((n) => n > 0).length === 4,
+  JSON.stringify(quarters),
+);
 const atRest = await page.evaluate(() => {
   const w = globalThis.__win;
   const rows = w._sheet.platesAt(w._view, w._paper.w, w._paper.h, null);
   const by = {};
   for (const r of rows) (by[r.quest ? 'quest' : r.quarter] ??= []).push(r.size);
-  return { kinds: [...new Set(rows.map((r) => r.quarter))].sort(),
-    size: Object.fromEntries(Object.entries(by).map(([k, v]) => [k, Math.max(...v)])) };
+  return {
+    kinds: [...new Set(rows.map((r) => r.quarter))].sort(),
+    size: Object.fromEntries(Object.entries(by).map(([k, v]) => [k, Math.max(...v)])),
+  };
 });
-check('and the plates carry their own quarters, so a name is lettered like its building',
-  atRest.kinds.length >= 3 && !atRest.kinds.includes(null), atRest.kinds.join(', '));
+check(
+  'and the plates carry their own quarters, so a name is lettered like its building',
+  atRest.kinds.length >= 3 && !atRest.kinds.includes(null),
+  atRest.kinds.join(', '),
+);
 // EM8: a landmark stands proud of the run of shops. Read at REST,
 // because that is the view where every plate in the town is on the
 // paper - a zoomed view carries whichever few are under the lens.
-check('a landmark is lettered proud of the run of shops',
+check(
+  'a landmark is lettered proud of the run of shops',
   Math.max(atRest.size.tavern ?? 0, atRest.size.temple ?? 0) > (atRest.size.shop ?? Infinity),
-  JSON.stringify(atRest.size));
-check('...and a quest\'s name proud of the landmarks',
+  JSON.stringify(atRest.size),
+);
+check(
+  "...and a quest's name proud of the landmarks",
   (atRest.size.quest ?? 0) > Math.max(atRest.size.tavern ?? 0, atRest.size.temple ?? 0),
-  JSON.stringify(atRest.size));
+  JSON.stringify(atRest.size),
+);
 await page.screenshot({ path: `${SHOTS}/3-town.png` });
 
 // zoom in so the names letter up, and look for a plate the solver gave up on
-await page.evaluate(() => { globalThis.__win._zoomBy(3.2, globalThis.__win._paper.w / 2, globalThis.__win._paper.h / 2); for (let i = 0; i < 30; i++) globalThis.__win.tick(1 / 30); });
+await page.evaluate(() => {
+  globalThis.__win._zoomBy(3.2, globalThis.__win._paper.w / 2, globalThis.__win._paper.h / 2);
+  for (let i = 0; i < 30; i++) globalThis.__win.tick(1 / 30);
+});
 const zoomed = await page.evaluate(() => {
   const w = globalThis.__win;
   const rows = w._sheet.platesAt(w._view, w._paper.w, w._paper.h, null);
@@ -267,31 +315,46 @@ const zoomed = await page.evaluate(() => {
 // FEWER names, LARGER - a zoom carries whichever few are under the lens
 // and letters them up. The old wording here said "more of them" and
 // only ever asserted "> 0", which is not what a zoom does.
-check('a zoom letters the names it still holds larger',
+check(
+  'a zoom letters the names it still holds larger',
   zoomed.n > 0 && zoomed.size > Math.max(...Object.values(atRest.size)),
-  `${zoomed.n} plates, largest ${zoomed.size.toFixed(1)} against ${Math.max(...Object.values(atRest.size)).toFixed(1)} at rest`);
+  `${zoomed.n} plates, largest ${zoomed.size.toFixed(1)} against ${Math.max(...Object.values(atRest.size)).toFixed(1)} at rest`,
+);
 await page.screenshot({ path: `${SHOTS}/4-town-zoomed.png` });
 await page.evaluate(() => globalThis.__win.dispose());
 
 // ── 3. TWO TABS, AND THE CHROME HANDED BACK ────────────────────────
 await mount(page, 'town+bay');
 strip = await page.evaluate(() => globalThis.__win._strip.tabs.map((t) => `${t.title}${t.live ? '*' : ''}`));
-check('with the bay in hand the strip shows BOTH tabs, town first',
-  strip.length === 2 && strip[0].startsWith('Town') && strip[1].startsWith('The Bay'), strip.join(' | '));
+check(
+  'with the bay in hand the strip shows BOTH tabs, town first',
+  strip.length === 2 && strip[0].startsWith('Town') && strip[1].startsWith('The Bay'),
+  strip.join(' | '),
+);
 let search = await page.evaluate(() => globalThis.__win._chrome.search.style.display);
-check('the town sheet does NOT stand under the bay\'s search box', search === 'none', `display=${search || '(shown)'}`);
+check("the town sheet does NOT stand under the bay's search box", search === 'none', `display=${search || '(shown)'}`);
 await page.screenshot({ path: `${SHOTS}/5-tabs-town.png` });
 
-await page.evaluate(() => { globalThis.__win._selectSheet('world'); for (let i = 0; i < 30; i++) globalThis.__win.tick(1 / 30); });
+await page.evaluate(() => {
+  globalThis.__win._selectSheet('world');
+  for (let i = 0; i < 30; i++) globalThis.__win.tick(1 / 30);
+});
 search = await page.evaluate(() => globalThis.__win._chrome.search.style.display);
 check('...and the bay claims it on the way in', search !== 'none', `display=${search || '(shown)'}`);
 live = await page.evaluate(() => globalThis.__win._slot.live);
 check('the tab switched', live === 'world', live);
 await page.screenshot({ path: `${SHOTS}/6-tabs-bay.png` });
 
-await page.evaluate(() => { globalThis.__win._selectSheet('town'); for (let i = 0; i < 30; i++) globalThis.__win.tick(1 / 30); });
+await page.evaluate(() => {
+  globalThis.__win._selectSheet('town');
+  for (let i = 0; i < 30; i++) globalThis.__win.tick(1 / 30);
+});
 search = await page.evaluate(() => globalThis.__win._chrome.search.style.display);
-check('AND GIVES IT BACK on the way out - no search box over a town plan', search === 'none', `display=${search || '(shown)'}`);
+check(
+  'AND GIVES IT BACK on the way out - no search box over a town plan',
+  search === 'none',
+  `display=${search || '(shown)'}`,
+);
 await page.evaluate(() => globalThis.__win.dispose());
 
 await browser.close();
@@ -299,5 +362,8 @@ await server.close();
 
 const bad = results.filter((r) => !r.ok);
 console.log(`\n${results.length - bad.length}/${results.length} checks passed; shots in ${SHOTS}/`);
-if (bad.length) { console.log('FAILED:'); for (const b of bad) console.log(`  ${b.name} - ${b.detail}`); }
+if (bad.length) {
+  console.log('FAILED:');
+  for (const b of bad) console.log(`  ${b.name} - ${b.detail}`);
+}
 process.exit(bad.length ? 1 : 0);

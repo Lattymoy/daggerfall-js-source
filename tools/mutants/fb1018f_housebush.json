@@ -2,8 +2,8 @@
   {
     "name": "HOUSE-BUSH-not-asked",
     "file": "src/world/rmbFlats.js",
-    "old": "      if (sceneryUnderRoof(autoMap, x, y, held)) continue;   // HOUSE-BUSH: a cell its author left under a house\n",
-    "new": "",
+    "old": "      if (sceneryUnderRoof(autoMap, x, y, held)) continue; // HOUSE-BUSH: a cell its author left under a house\n      flats.push({",
+    "new": "      flats.push({",
     "tests": [
       "test/world/fb1018f_housebush.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "HOUSE-BUSH-no-automap-handed",
     "file": "src/world/rmbFlats.js",
-    "old": "  const autoMap = rmb.fldHeader.autoMapData;   // HOUSE-BUSH",
-    "new": "  const autoMap = null;   // HOUSE-BUSH",
+    "old": "  const autoMap = rmb.fldHeader.autoMapData; // HOUSE-BUSH",
+    "new": "  const autoMap = null; // HOUSE-BUSH",
     "tests": [
       "test/world/fb1018f_housebush.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "HOUSE-BUSH-any-cell",
     "file": "src/world/rmbFlats.js",
-    "old": "  for (const r of [row - 1, row]) for (const c of [col - 1, col]) if (quarterOf(autoMap[r * AUTOMAP_SIDE + c]) === null) return false;\n  return held(row * AUTOMAP_SIDE + col);",
-    "new": "  return [row - 1, row].some((r) => [col - 1, col].some((c) => quarterOf(autoMap[r * AUTOMAP_SIDE + c]) !== null)) && held(row * AUTOMAP_SIDE + col);",
+    "old": "  for (const r of [row - 1, row])\n    for (const c of [col - 1, col]) if (quarterOf(autoMap[r * AUTOMAP_SIDE + c]) === null) return false;\n  return held(row * AUTOMAP_SIDE + col); // the four are one footprint: architecture, side by side",
+    "new": "  return (\n    [row - 1, row].some((r) => [col - 1, col].some((c) => quarterOf(autoMap[r * AUTOMAP_SIDE + c]) !== null)) &&\n    held(row * AUTOMAP_SIDE + col)\n  ); // the four are one footprint: architecture, side by side",
     "tests": [
       "test/world/fb1018f_housebush.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "HOUSE-BUSH-row-a-tile-north",
     "file": "src/world/rmbFlats.js",
-    "old": "  const col = AUTOMAP_PER_TILE * x, row = AUTOMAP_SIDE - AUTOMAP_PER_TILE * (y + 1);",
-    "new": "  const col = AUTOMAP_PER_TILE * x, row = AUTOMAP_SIDE - AUTOMAP_PER_TILE * y;",
+    "old": "    row = AUTOMAP_SIDE - AUTOMAP_PER_TILE * (y + 1);",
+    "new": "    row = AUTOMAP_SIDE - AUTOMAP_PER_TILE * y;",
     "tests": [
       "test/world/fb1018f_housebush.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "HOUSE-BUSH-transposed",
     "file": "src/world/rmbFlats.js",
-    "old": "  const col = AUTOMAP_PER_TILE * x, row = AUTOMAP_SIDE - AUTOMAP_PER_TILE * (y + 1);",
-    "new": "  const col = AUTOMAP_PER_TILE * y, row = AUTOMAP_SIDE - AUTOMAP_PER_TILE * (x + 1);",
+    "old": "  const col = AUTOMAP_PER_TILE * x,\n    row = AUTOMAP_SIDE - AUTOMAP_PER_TILE * (y + 1);",
+    "new": "  const col = AUTOMAP_PER_TILE * y,\n    row = AUTOMAP_SIDE - AUTOMAP_PER_TILE * (x + 1);",
     "tests": [
       "test/world/fb1018f_housebush.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "HOUSE-BUSH-any-byte",
     "file": "src/world/rmbFlats.js",
-    "old": "if (quarterOf(autoMap[r * AUTOMAP_SIDE + c]) === null) return false;",
-    "new": "if (!autoMap[r * AUTOMAP_SIDE + c]) return false;",
+    "old": "  for (const r of [row - 1, row])\n    for (const c of [col - 1, col]) if (quarterOf(autoMap[r * AUTOMAP_SIDE + c]) === null) return false;",
+    "new": "  for (const r of [row - 1, row]) for (const c of [col - 1, col]) if (!autoMap[r * AUTOMAP_SIDE + c]) return false;",
     "tests": [
       "test/world/fb1018f_housebush.test.js"
     ],
@@ -82,7 +82,7 @@
   {
     "name": "HOUSE-BUSH-held-unread",
     "file": "src/world/rmbFlats.js",
-    "old": "  return held(row * AUTOMAP_SIDE + col);   // the four are one footprint: architecture, side by side",
+    "old": "  return held(row * AUTOMAP_SIDE + col); // the four are one footprint: architecture, side by side",
     "new": "  return true;",
     "tests": [
       "test/world/fb1018f_housebush.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "HOUSE-BUSH-walk-builds-no-held",
     "file": "src/world/rmbFlats.js",
-    "old": "  const held = heldFootprints(autoMap, rmb.subRecords);",
-    "new": "  const held = () => true;",
+    "old": "  const held = heldFootprints(autoMap, rmb.subRecords); // AUDIT FB1018f L4-1: the footprints a building of the block stands on",
+    "new": "  const held = () => true; // AUDIT FB1018f L4-1: the footprints a building of the block stands on",
     "tests": [
       "test/world/fb1018f_housebush.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "HOUSE-BUSH-footprint-one-cell",
     "file": "src/world/rmbFlats.js",
-    "old": "        if (run[kk] < 0 && quarterOf(autoMap[kk]) !== null) { run[kk] = runs; open.push(kk); }\n",
-    "new": "",
+    "old": "        if (run[kk] < 0 && quarterOf(autoMap[kk]) !== null) {\n          run[kk] = runs;\n          open.push(kk);\n        }\n      }",
+    "new": "      }",
     "tests": [
       "test/world/fb1018f_housebush.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "HOUSE-BUSH-origin-transposed",
     "file": "src/world/rmbFlats.js",
-    "old": "    const c = Math.floor(s.xPos / 64), r = Math.floor(s.zPos / 64);",
-    "new": "    const c = Math.floor(s.zPos / 64), r = Math.floor(s.xPos / 64);",
+    "old": "    const c = Math.floor(s.xPos / 64),\n      r = Math.floor(s.zPos / 64);",
+    "new": "    const c = Math.floor(s.zPos / 64),\n      r = Math.floor(s.xPos / 64);",
     "tests": [
       "test/world/fb1018f_housebush.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "HOUSE-BUSH-no-held-takes",
     "file": "src/world/rmbFlats.js",
-    "old": "AUTOMAP_SIDE * AUTOMAP_SIDE || !held) return false;",
-    "new": "AUTOMAP_SIDE * AUTOMAP_SIDE) return false;",
+    "old": "  if (!autoMap || autoMap.length < AUTOMAP_SIDE * AUTOMAP_SIDE || !held) return false;",
+    "new": "  if (!autoMap || autoMap.length < AUTOMAP_SIDE * AUTOMAP_SIDE) return false;",
     "tests": [
       "test/world/fb1018f_housebush.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "HOUSE-BUSH-north-rim-unguarded",
     "file": "src/world/rmbFlats.js",
-    "old": "if (col < 1 || row < 1 ||",
-    "new": "if (col < 1 ||",
+    "old": "  if (col < 1 || row < 1 || col >= AUTOMAP_SIDE || row >= AUTOMAP_SIDE) return false;",
+    "new": "  if (col < 1 || col >= AUTOMAP_SIDE || row >= AUTOMAP_SIDE) return false;",
     "tests": [
       "test/world/fb1018f_housebush.test.js"
     ],
@@ -153,8 +153,8 @@
   {
     "name": "HOUSE-BUSH-far-rims-unguarded",
     "file": "src/world/rmbFlats.js",
-    "old": " || col >= AUTOMAP_SIDE || row >= AUTOMAP_SIDE) return false;",
-    "new": ") return false;",
+    "old": "  if (col < 1 || row < 1 || col >= AUTOMAP_SIDE || row >= AUTOMAP_SIDE) return false;",
+    "new": "  if (col < 1 || row < 1) return false;",
     "tests": [
       "test/world/fb1018f_housebush.test.js"
     ],

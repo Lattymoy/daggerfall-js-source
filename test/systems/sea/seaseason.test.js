@@ -294,5 +294,5 @@ test('SEA-SEASON the seams by source: a clean checkpoint carries the figures in 
   assert.match(src('src/scenes/etherHost.js'), /L\.deepest\?\.\(etherDepthAt\(px\), day\(\)\);/);
   const win = src('src/ui/naval/navalYardWindow.js');
   assert.match(win, /renderSeason\(ot\.season\);/);
-  assert.match(win, /for \(const n of \[oLede, boardSec, heldSec, lettersSec, wantedSec, seasonSec\]\) n\.style\.display = tab === 'office' \? '' : 'none';/);
+  assert.match(win, /for \(const n of \[oLede, boardSec, heldSec, lettersSec, wantedSec, seasonSec\]\)\n\s*n\.style\.display = tab === 'office' \? '' : 'none';/);
 });

@@ -21,8 +21,8 @@
   {
     "name": "RESTX2-online-banks-no-real-time-RESTX1s-skip-back",
     "file": "src/systems/rest/restSession.js",
-    "old": "  _accrue(dt) {\n    this._timer += dt;\n  }",
-    "new": "  _accrue(dt) {\n    if (!Number.isFinite(this.deps.sharedMinutes?.())) this._timer += dt;\n  }",
+    "old": "    this._timer += dt;",
+    "new": "    if (!Number.isFinite(this.deps.sharedMinutes?.())) this._timer += dt;",
     "tests": [
       "test/systems/rest/restx2_online_rest.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "RESTX2-F1s-full-health-guard-put-back",
     "file": "src/systems/rest/restSession.js",
-    "old": "        this.deps.tickVitals();\n        if (--this.hoursRemaining < 1) done = REST_TEXT.wakeUp;",
-    "new": "        if (!this.deps.fullyHealed?.()) this.deps.tickVitals();\n        if (--this.hoursRemaining < 1) done = REST_TEXT.wakeUp;",
+    "old": "        this.deps.tickVitals();",
+    "new": "        if (!this.deps.fullyHealed?.()) this.deps.tickVitals();",
     "tests": [
       "test/systems/rest/restx2_online_rest.test.js"
     ]
@@ -86,8 +86,8 @@
   {
     "name": "CAMP1-the-timer-path-rolls-the-five-percent-after-all",
     "file": "src/systems/campEncounters.js",
-    "old": "  if (!campWindowOpen(ctx.gameMinutes)) return null;\n  // GUARANTEED: no chance check here any more - every open window (once\n  // per 15 real minutes) spawns a group. See the header note above.\n  return rollGroupComposition(ctx, rolls);",
-    "new": "  if (!campWindowOpen(ctx.gameMinutes)) return null;\n  if (!rollCampChance(rolls())) return null;\n  return rollGroupComposition(ctx, rolls);",
+    "old": "  // GUARANTEED: no chance check here any more - every open window (once\n  // per 15 real minutes) spawns a group. See the header note above.",
+    "new": "  if (!rollCampChance(rolls())) return null;",
     "tests": [
       "test/systems/camp1_groups.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "CAMP1-the-ring-excludes-its-own-edge",
     "file": "src/systems/campEncounters.js",
-    "old": "  const near = (a, b) => { const dx = a[0] - b[0], dz = a[2] - b[2]; return dx * dx + dz * dz <= r2; };",
-    "new": "  const near = (a, b) => { const dx = a[0] - b[0], dz = a[2] - b[2]; return dx * dx + dz * dz < r2; };",
+    "old": "    return dx * dx + dz * dz <= r2;",
+    "new": "    return dx * dx + dz * dz < r2;",
     "tests": [
       "test/systems/camp1_groups.test.js"
     ]
@@ -204,7 +204,7 @@
   {
     "name": "D-ONLINE1-any-graveyard-is-a-safe-landing",
     "file": "src/systems/deathRespawn.js",
-    "old": "  { kind: 'graveyard', match: (e) => e.locationType === LOCATION_TYPES.Graveyard && e.dungeonType === DUNGEON_TYPES.Cemetery },",
+    "old": "  {\n    kind: 'graveyard',\n    match: (e) => e.locationType === LOCATION_TYPES.Graveyard && e.dungeonType === DUNGEON_TYPES.Cemetery,\n  },",
     "new": "  { kind: 'graveyard', match: (e) => e.locationType === LOCATION_TYPES.Graveyard },",
     "tests": [
       "test/scenes/donline1_respawn.test.js"

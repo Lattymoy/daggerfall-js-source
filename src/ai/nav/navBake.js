@@ -20,8 +20,14 @@
 
 import { trianglesToColliders } from '../triRaster.js';
 import {
-  AGENT, buildNav, buildCompact, buildRegions, buildContours,
-  buildPolyMesh, buildPolyMeshDetail, findPath,
+  AGENT,
+  buildNav,
+  buildCompact,
+  buildRegions,
+  buildContours,
+  buildPolyMesh,
+  buildPolyMeshDetail,
+  findPath,
 } from './navmesh.js';
 
 /** THE SOUP AGENT: AGENT with ONE ring of erosion (radius =
@@ -56,20 +62,29 @@ export function navInputFromCollider(collider, { buckets = null, exclude = null 
   for (const [key, bucket] of collider._buckets) {
     if (buckets && !buckets.includes(key)) continue;
     if (exclude && exclude.has(key)) continue;
-    use.push(bucket); tris += bucket.tris.length;
+    use.push(bucket);
+    tris += bucket.tris.length;
   }
-  const positions = new Float32Array(tris * 9), indices = new Uint32Array(tris * 3);
-  let minY = Infinity, maxY = -Infinity, p = 0;
+  const positions = new Float32Array(tris * 9),
+    indices = new Uint32Array(tris * 3);
+  let minY = Infinity,
+    maxY = -Infinity,
+    p = 0;
   for (const bucket of use) {
     const t = bucket.t ? bucket.t() : [0, 0, 0];
-    const R = bucket.r ? bucket.r() : null;   // A mover's bucket, its triangles turned as they stand
+    const R = bucket.r ? bucket.r() : null; // A mover's bucket, its triangles turned as they stand
     for (const tri of bucket.tris) {
       for (let k = 0; k < 3; k++) {
         const v = tri[k];
-        const x = R ? R[0] * v[0] + R[3] * v[1] + R[6] * v[2] : v[0], y = (R ? R[1] * v[0] + R[4] * v[1] + R[7] * v[2] : v[1]) + t[1], z = R ? R[2] * v[0] + R[5] * v[1] + R[8] * v[2] : v[2];
+        const x = R ? R[0] * v[0] + R[3] * v[1] + R[6] * v[2] : v[0],
+          y = (R ? R[1] * v[0] + R[4] * v[1] + R[7] * v[2] : v[1]) + t[1],
+          z = R ? R[2] * v[0] + R[5] * v[1] + R[8] * v[2] : v[2];
         indices[p / 3] = p / 3;
-        positions[p++] = x + t[0]; positions[p++] = y; positions[p++] = z + t[2];
-        if (y < minY) minY = y; if (y > maxY) maxY = y;
+        positions[p++] = x + t[0];
+        positions[p++] = y;
+        positions[p++] = z + t[2];
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
       }
     }
   }
@@ -101,18 +116,24 @@ export function landAnchors(chf, anchors, tol = ANCHOR_Y_TOLERANCE) {
   const out = [];
   for (const a of anchors) {
     if (!a) continue;
-    const ax = Math.floor((a[0] - chf.xmin) / chf.cs), az = Math.floor((a[2] - chf.zmin) / chf.cs);
+    const ax = Math.floor((a[0] - chf.xmin) / chf.cs),
+      az = Math.floor((a[2] - chf.zmin) / chf.cs);
     let best = null;
-    for (let r = 0; r <= 1 && !best; r++) for (let dz = -r; dz <= r; dz++) for (let dx = -r; dx <= r; dx++) {
-      if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue;
-      const ix = ax + dx, iz = az + dz;
-      if (ix < 0 || iz < 0 || ix >= chf.nx || iz >= chf.nz) continue;
-      for (const s of chf.spans[ix + iz * chf.nx]) {
-        if (!s.walkable) continue;
-        const y = chf.ymin + s.floor * chf.ch, dy = Math.abs(y - a[1]);
-        if (dy <= tol && (!best || dy < best.dy)) best = { x: chf.xmin + (ix + 0.5) * chf.cs, y, z: chf.zmin + (iz + 0.5) * chf.cs, dy };
-      }
-    }
+    for (let r = 0; r <= 1 && !best; r++)
+      for (let dz = -r; dz <= r; dz++)
+        for (let dx = -r; dx <= r; dx++) {
+          if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue;
+          const ix = ax + dx,
+            iz = az + dz;
+          if (ix < 0 || iz < 0 || ix >= chf.nx || iz >= chf.nz) continue;
+          for (const s of chf.spans[ix + iz * chf.nx]) {
+            if (!s.walkable) continue;
+            const y = chf.ymin + s.floor * chf.ch,
+              dy = Math.abs(y - a[1]);
+            if (dy <= tol && (!best || dy < best.dy))
+              best = { x: chf.xmin + (ix + 0.5) * chf.cs, y, z: chf.zmin + (iz + 0.5) * chf.cs, dy };
+          }
+        }
     if (best) out.push({ x: best.x, y: best.y, z: best.z });
   }
   return out;
@@ -149,7 +170,7 @@ export function bakeSoup(positions, indices, { floor, anchor, anchors = null, ag
   let nav = buildNav(cols, ag, [], { at: () => -Infinity, min: floor });
   const cells = nav.nx * nav.nz;
   const chf = buildCompact(nav, ag);
-  nav = null;   // the solid field is spent once the compact one stands
+  nav = null; // the solid field is spent once the compact one stands
   chf.ground = { at: () => floor, min: floor };
   // THE ANCHOR CARRIES ITS Y. buildRegions elects the kept component by
   // the span NEAREST THE ANCHOR'S HEIGHT (his FOUNDRY S3 rule: "an
@@ -173,13 +194,25 @@ export function bakeSoup(positions, indices, { floor, anchor, anchors = null, ag
   // union, and unlanded they take his nearest-span pick, so none landing
   // keeps his single-anchor pick exactly.
   const feet = landAnchors(chf, [anchor]);
-  const landed = [...(feet.length ? feet : [regionAnchor(anchor)]), ...landAnchors(chf, anchors ?? [])];   // Feet that do not land (a load while swimming or levitating) stay in the union - the foes' alone culled the player's own room
+  const landed = [...(feet.length ? feet : [regionAnchor(anchor)]), ...landAnchors(chf, anchors ?? [])]; // Feet that do not land (a load while swimming or levitating) stay in the union - the foes' alone culled the player's own room
   buildRegions(chf, { anchor: regionAnchor(anchor), anchors: landed });
   buildContours(chf);
   buildPolyMesh(chf);
   buildPolyMeshDetail(chf, cols);
   const ms = Math.round((globalThis.performance ?? Date).now() - t0);
-  return { chf, cols, agent: ag, stats: { tris: Math.floor(indices.length / 3), boxes: cols.length, cs: ag.cs, cells, polys: chf.mesh?.polys?.length ?? 0, ms } };
+  return {
+    chf,
+    cols,
+    agent: ag,
+    stats: {
+      tris: Math.floor(indices.length / 3),
+      boxes: cols.length,
+      cs: ag.cs,
+      cells,
+      polys: chf.mesh?.polys?.length ?? 0,
+      ms,
+    },
+  };
 }
 
 /**
@@ -188,8 +221,12 @@ export function bakeSoup(positions, indices, { floor, anchor, anchors = null, ag
  * drops the rest (project-final/main.js:233 bakes anchored, always).
  * @returns {{ chf, cols, agent, stats }}
  */
-export function bakeNavFromCollider(collider, { anchor, anchors = null, agent = SOUP_AGENT, buckets = null, exclude = null } = {}) {
-  if (!anchor) throw new Error('bakeNavFromCollider: an anchor is required - the navmesh serves the component the agents live in');
+export function bakeNavFromCollider(
+  collider,
+  { anchor, anchors = null, agent = SOUP_AGENT, buckets = null, exclude = null } = {},
+) {
+  if (!anchor)
+    throw new Error('bakeNavFromCollider: an anchor is required - the navmesh serves the component the agents live in');
   const input = navInputFromCollider(collider, { buckets, exclude });
   if (!input.tris) return null;
   return bakeSoup(input.positions, input.indices, { floor: input.minY - 10, anchor, anchors, agent });

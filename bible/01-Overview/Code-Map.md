@@ -79,7 +79,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | First-person weapon | `combat/weapon/` |
 | Foraging | `systems/foraging/` |
 | Grammar (translations) | `systems/grammar/` |
-| Guilds | `systems/guild/`, `net/guild/` |
+| Guilds | `systems/guild/`, `net/guild/`, `ui/guild/` |
 | Guns | `combat/gun/` |
 | Herald (the world events on Discord) | `net/herald/` - and each event's own: `net/gate/gateHerald.js`, `net/serpent/serpentHerald.js`, `net/superDungeon/sdHerald.js`, `net/eliteGates/egHerald.js` |
 | Home decorating | `systems/decor/`, `scenes/decor/` |
@@ -121,7 +121,6 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | Regions | `systems/region/` |
 | Resting | `systems/rest/` |
 | Revenant | `systems/revenant/`, `ui/revenant/` |
-| Rewrite Engine rig | `characters/rewrite/` |
 | Roads | `world/road/` |
 | Roleplay Realism | `systems/roleplayRealism/` |
 | Roleplay Realism: Items | `systems/roleplayRealismItems/` |
@@ -175,7 +174,6 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/characters/ownModels/` | The port's own 3D models: heads, armour, clothing, weapons. |
 | `src/characters/paperdoll/` | The paperdoll. |
 | `src/characters/pieces/` | The voxel pieces a character is built from (heads, bodies, armour, weapons). |
-| `src/characters/rewrite/` | project-final's Rewrite Engine rig, vendored byte for byte (`test/characters/rig.test.js`). |
 
 #### `src/combat/`
 
@@ -463,6 +461,9 @@ mutation tables - walks `test/` recursively, so a new folder needs nothing regis
    alone so far) and `src/tools/paperdoll/` (a lab and its skin).
 4. **A new folder takes its row** in its layer's table ("The feature folders, layer by layer") in the same change. The
    test fails until it does.
+5. **Something reaches it.** A module under `src/` that no page, relay, worker, app, script or tool imports runs only
+   in its own tests. `node tools/unreached.mjs` lists them, and `test/tooling/unreached.test.js` fails on one unless
+   `tools/unreachedBaseline.json` stages it with its reason.
 
 ## How a file moves
 

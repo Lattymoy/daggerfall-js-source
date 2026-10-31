@@ -40,7 +40,9 @@ export function diverseWeaponsIconEntries(stems = DIVERSE_WEAPONS_STEMS) {
   for (const [stem, bits] of Object.entries(stems)) {
     const m = ICON_STEM.exec(stem);
     if (!m) continue;
-    const archive = Number(m[1]), record = Number(m[2]), frame = Number(m[3]);
+    const archive = Number(m[1]),
+      record = Number(m[2]),
+      frame = Number(m[3]);
     if (!ICON_ARCHIVES.includes(archive)) continue;
     for (let i = 0; i < DIVERSE_WEAPONS_METALS.length; i++) {
       if (!(bits & (1 << i))) continue;
@@ -61,14 +63,24 @@ let _installed = false;
  *  default fetches the shipped PNG by name. Returns how many entries
  *  were registered (0 when already installed). */
 export function installDiverseWeaponsIcons({ fetchBytes = null } = {}) {
-  if (_installed && vendorTextureCount() > 0) return 0;   // once - unless the registry was cleared under it (a test's reset)
+  if (_installed && vendorTextureCount() > 0) return 0; // once - unless the registry was cleared under it (a test's reset)
   _installed = true;
-  const load = fetchBytes ?? (async (name) => { const r = await fetch(diverseWeaponsSpriteUrl(name)); if (!r.ok) throw new Error(`${name}: ${r.status}`); return new Uint8Array(await r.arrayBuffer()); });
+  const load =
+    fetchBytes ??
+    (async (name) => {
+      const r = await fetch(diverseWeaponsSpriteUrl(name));
+      if (!r.ok) throw new Error(`${name}: ${r.status}`);
+      return new Uint8Array(await r.arrayBuffer());
+    });
   // AUDIT-DW F1: `lazy` - an icon is fetched when an item that wears it
   // is drawn (systems/textureReplacement.js preloadTextureRecord), never
   // 280 at once ahead of the first classic icon
-  return addVendorTextures(diverseWeaponsIconEntries().map((e) => ({ ...e, load, gate: moddedWeaponHUDAnimsEnabled, lazy: true })));
+  return addVendorTextures(
+    diverseWeaponsIconEntries().map((e) => ({ ...e, load, gate: moddedWeaponHUDAnimsEnabled, lazy: true })),
+  );
 }
 
 /** Test seam. */
-export function _resetDiverseWeaponsIcons() { _installed = false; }
+export function _resetDiverseWeaponsIcons() {
+  _installed = false;
+}

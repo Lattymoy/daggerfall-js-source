@@ -44,14 +44,22 @@ export function composeDerivedPicture(spec, src) {
     for (let x = 0; x < src.width; x++) {
       const tx = x + ax;
       if (tx < 0 || tx >= w) continue;
-      const s = (y * src.width + x) * 4, d = (ty * w + tx) * 4;
-      data[d] = src.data[s]; data[d + 1] = src.data[s + 1]; data[d + 2] = src.data[s + 2]; data[d + 3] = src.data[s + 3];
+      const s = (y * src.width + x) * 4,
+        d = (ty * w + tx) * 4;
+      data[d] = src.data[s];
+      data[d + 1] = src.data[s + 1];
+      data[d + 2] = src.data[s + 2];
+      data[d + 3] = src.data[s + 3];
     }
   }
   for (const [x, y, c] of spec.edits ?? []) {
-    if (x < 0 || y < 0 || x >= w || y >= h) throw new Error(`derived texture: an edit at ${x},${y} is off a ${w}x${h} picture`);
+    if (x < 0 || y < 0 || x >= w || y >= h)
+      throw new Error(`derived texture: an edit at ${x},${y} is off a ${w}x${h} picture`);
     const d = (y * w + x) * 4;
-    data[d] = hex(c, 0); data[d + 1] = hex(c, 2); data[d + 2] = hex(c, 4); data[d + 3] = hex(c, 6);
+    data[d] = hex(c, 0);
+    data[d + 1] = hex(c, 2);
+    data[d + 2] = hex(c, 4);
+    data[d + 3] = hex(c, 6);
   }
   return { width: w, height: h, data };
 }
@@ -62,7 +70,9 @@ export function classicRecordRgba(bitmap, palette) {
   const data = new Uint8Array(width * height * 4);
   for (let i = 0; i < width * height; i++) {
     const idx = bitmap.data[i];
-    data[i * 4] = palette.getRed(idx); data[i * 4 + 1] = palette.getGreen(idx); data[i * 4 + 2] = palette.getBlue(idx);
+    data[i * 4] = palette.getRed(idx);
+    data[i * 4 + 1] = palette.getGreen(idx);
+    data[i * 4 + 2] = palette.getBlue(idx);
     data[i * 4 + 3] = idx === 0 ? 0 : 255;
   }
   return { width, height, data };
@@ -94,7 +104,13 @@ export function deriveSpec(from, picture, src, at = [0, 0]) {
       // it - and the port keeps index 0's black there, as under every
       // classic sprite.
       if (picture.data[i + 3] === 0 && base.data[i + 3] === 0) continue;
-      if (picture.data[i] === base.data[i] && picture.data[i + 1] === base.data[i + 1] && picture.data[i + 2] === base.data[i + 2] && picture.data[i + 3] === base.data[i + 3]) continue;
+      if (
+        picture.data[i] === base.data[i] &&
+        picture.data[i + 1] === base.data[i + 1] &&
+        picture.data[i + 2] === base.data[i + 2] &&
+        picture.data[i + 3] === base.data[i + 3]
+      )
+        continue;
       const c = [0, 1, 2, 3].map((k) => picture.data[i + k].toString(16).padStart(2, '0')).join('');
       edits.push([x, y, c]);
     }
@@ -126,20 +142,24 @@ export function deriveSpec(from, picture, src, at = [0, 0]) {
  */
 export function composeTiledPicture(spec, src, paint) {
   const [w, h] = spec.size;
-  if (paint.width !== w || paint.height !== h) throw new Error(`derived texture: a ${paint.width}x${paint.height} paint for a ${w}x${h} picture`);
+  if (paint.width !== w || paint.height !== h)
+    throw new Error(`derived texture: a ${paint.width}x${paint.height} paint for a ${w}x${h} picture`);
   const [px, py] = spec.tile ?? [0, 0];
   const scroll = spec.scroll ?? 0;
   const k = [hex(spec.key, 0), hex(spec.key, 2), hex(spec.key, 4), hex(spec.key, 6)];
   const data = new Uint8Array(w * h * 4);
   for (let y = 0; y < h; y++) {
-    const sy = ((y + py) % src.height + src.height) % src.height;
-    const row = ((y + scroll) % h + h) % h;
+    const sy = (((y + py) % src.height) + src.height) % src.height;
+    const row = (((y + scroll) % h) + h) % h;
     data.set(paint.data.subarray(row * w * 4, (row + 1) * w * 4), y * w * 4);
     for (let x = 0; x < w; x++) {
       const d = (y * w + x) * 4;
       if (data[d] !== k[0] || data[d + 1] !== k[1] || data[d + 2] !== k[2] || data[d + 3] !== k[3]) continue;
-      const s = (sy * src.width + (((x + px) % src.width) + src.width) % src.width) * 4;
-      data[d] = src.data[s]; data[d + 1] = src.data[s + 1]; data[d + 2] = src.data[s + 2]; data[d + 3] = 255;
+      const s = (sy * src.width + ((((x + px) % src.width) + src.width) % src.width)) * 4;
+      data[d] = src.data[s];
+      data[d + 1] = src.data[s + 1];
+      data[d + 2] = src.data[s + 2];
+      data[d + 3] = 255;
     }
   }
   return { width: w, height: h, data };
@@ -158,22 +178,32 @@ export function deriveTiledPaint(picture, src, tile, key) {
   const k = [hex(key, 0), hex(key, 2), hex(key, 4), hex(key, 6)];
   const [px, py] = tile;
   const data = new Uint8Array(w * h * 4);
-  let fromRecord = 0, own = 0, clear = 0;
+  let fromRecord = 0,
+    own = 0,
+    clear = 0;
   for (let y = 0; y < h; y++) {
-    const sy = ((y + py) % src.height + src.height) % src.height;
+    const sy = (((y + py) % src.height) + src.height) % src.height;
     for (let x = 0; x < w; x++) {
       const i = (y * w + x) * 4;
       const p = picture.data;
-      if (p[i + 3] === 0) { clear++; continue; }
-      if (p[i] === k[0] && p[i + 1] === k[1] && p[i + 2] === k[2] && p[i + 3] === k[3]) throw new Error(`derived texture: the picture holds the key colour ${key} itself at ${x},${y}`);
-      const s = (sy * src.width + (((x + px) % src.width) + src.width) % src.width) * 4;
+      if (p[i + 3] === 0) {
+        clear++;
+        continue;
+      }
+      if (p[i] === k[0] && p[i + 1] === k[1] && p[i + 2] === k[2] && p[i + 3] === k[3])
+        throw new Error(`derived texture: the picture holds the key colour ${key} itself at ${x},${y}`);
+      const s = (sy * src.width + ((((x + px) % src.width) + src.width) % src.width)) * 4;
       if (p[i + 3] === 255 && p[i] === src.data[s] && p[i + 1] === src.data[s + 1] && p[i + 2] === src.data[s + 2]) {
-        data.set(k, i); fromRecord++;
+        data.set(k, i);
+        fromRecord++;
       } else {
-        data[i] = p[i]; data[i + 1] = p[i + 1]; data[i + 2] = p[i + 2]; data[i + 3] = p[i + 3]; own++;
+        data[i] = p[i];
+        data[i + 1] = p[i + 1];
+        data[i + 2] = p[i + 2];
+        data[i + 3] = p[i + 3];
+        own++;
       }
     }
   }
   return { paint: { width: w, height: h, data }, fromRecord, own, clear };
 }
-

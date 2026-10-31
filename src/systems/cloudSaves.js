@@ -51,10 +51,22 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import {
-  SAVE_DATA_PREFIX, SAVE_INFO_PREFIX, SAVE_SHOT_PREFIX, firstFreeKey, saveInfoOf, deleteSave, enumerateSaves,
+  SAVE_DATA_PREFIX,
+  SAVE_INFO_PREFIX,
+  SAVE_SHOT_PREFIX,
+  firstFreeKey,
+  saveInfoOf,
+  deleteSave,
+  enumerateSaves,
 } from './save/saveSlots.js';
 import { importSlots } from './save/saveTransfer.js';
-import { serviceBase, storedSession, forgetSession, accountRefusalText, forgetD1Bookmark } from '../net/accountClient.js';   // AUDIT SCALE II A-2: a write forgets the page's D1 bookmark
+import {
+  serviceBase,
+  storedSession,
+  forgetSession,
+  accountRefusalText,
+  forgetD1Bookmark,
+} from '../net/accountClient.js'; // AUDIT SCALE II A-2: a write forgets the page's D1 bookmark
 
 /** THE REFUSALS THIS SIDE OWNS, and only the ones the service cannot
  *  answer. Everything the SERVICE refuses with keeps its sentence in
@@ -143,7 +155,8 @@ async function ask(io, path, { method = 'GET', json = null, raw = null } = {}) {
   let res;
   try {
     res = await io.fetch(`${io.base}${path}`, {
-      method, headers,
+      method,
+      headers,
       body: json ? JSON.stringify(json) : (raw ?? undefined),
     });
   } catch {
@@ -156,7 +169,11 @@ async function ask(io, path, { method = 'GET', json = null, raw = null } = {}) {
   const type = res.headers?.get?.('content-type') ?? '';
   if (!res.ok) {
     let data = null;
-    try { data = await res.json(); } catch { data = null; }
+    try {
+      data = await res.json();
+    } catch {
+      data = null;
+    }
     const error = typeof data?.error === 'string' ? data.error : 'server';
     // A SECRET THE SERVICE HAS STOPPED HONOURING IS NOT A SESSION -
     // accountClient.js's own law, and the same single exception: only
@@ -166,7 +183,11 @@ async function ask(io, path, { method = 'GET', json = null, raw = null } = {}) {
     return { ok: false, error, status: res.status };
   }
   if (type.includes('json')) {
-    try { return { ok: true, data: await res.json() }; } catch { return { ok: false, error: 'server' }; }
+    try {
+      return { ok: true, data: await res.json() };
+    } catch {
+      return { ok: false, error: 'server' };
+    }
   }
   return { ok: true, text: await res.text() };
 }
@@ -186,7 +207,11 @@ export function localSlot(storage, key) {
   const infoText = storage.getItem(SAVE_INFO_PREFIX + key);
   if (!data || !infoText) return null;
   let info;
-  try { info = JSON.parse(infoText); } catch { return null; }
+  try {
+    info = JSON.parse(infoText);
+  } catch {
+    return null;
+  }
   if (!info || typeof info !== 'object') return null;
   return { key, data, infoText, info, shot: storage.getItem(SAVE_SHOT_PREFIX + key) ?? null };
 }
@@ -283,7 +308,8 @@ export async function pullSlot(io, storage, cloudCard, { replaces = null } = {})
   // B2: A RESTORE CHECKS WHAT ARRIVED, not the card on screen - the blob is the service's NOW and the card the listing's;
   // another device's push between the two would have the older copy replaced by a save that is not the newer one, filed
   // under the card's minute. (A Download keeps ACC2c's arrival as it was - nothing is removed there.)
-  if (replaces != null && Number.isFinite(cloudCard.gameTime) && minuteOf(data.text) !== cloudCard.gameTime) return { ok: false, error: 'stale' };
+  if (replaces != null && Number.isFinite(cloudCard.gameTime) && minuteOf(data.text) !== cloudCard.gameTime)
+    return { ok: false, error: 'stale' };
   const shot = await ask(io, slotPath(characterId, saveName, 'shot'));
 
   const info = {
@@ -302,14 +328,24 @@ export async function pullSlot(io, storage, cloudCard, { replaces = null } = {})
   // holds, and a player who presses Restore on a save they already have
   // has lost nothing - saying "already here" is the truth and an error
   // is not.
-  const done = r.imported.length ? { ok: true, key: r.imported[0] } : r.skipped ? { ok: true, key: null, skipped: true } : null;
+  const done = r.imported.length
+    ? { ok: true, key: r.imported[0] }
+    : r.skipped
+      ? { ok: true, key: null, skipped: true }
+      : null;
   if (!done) return { ok: false, error: 'no-room' };
-  if (replaces != null) done.replaced = dropReplaced(storage, replaces, cloudCard, done.key);   // FIELD 2026-09-27: the backup is here - now the older copy goes
+  if (replaces != null) done.replaced = dropReplaced(storage, replaces, cloudCard, done.key); // FIELD 2026-09-27: the backup is here - now the older copy goes
   return done;
 }
 
 /** A save blob's own game minute, as saveSlots.js stamps its card (`Math.floor(snap.classicMinutes)`); NaN unread. */
-const minuteOf = (text) => { try { return Math.floor(JSON.parse(text)?.classicMinutes ?? 0); } catch { return NaN; } };
+const minuteOf = (text) => {
+  try {
+    return Math.floor(JSON.parse(text)?.classicMinutes ?? 0);
+  } catch {
+    return NaN;
+  }
+};
 
 /** FIELD 2026-09-27: the local slot a player's restore replaces - removed only when it IS that slot (character,
  *  save name), NOT the backup's save (a different game minute, SP1's identity), STILL what was drawn (B3), and - when
@@ -320,14 +356,17 @@ function dropReplaced(storage, replaces, card, landedKey) {
   const info = saveInfoOf(key, storage);
   if (!info || slotKeyOf(info) !== slotKeyOf(card)) return false;
   if ((info.dateAndTime?.gameTime ?? -1) === (card?.gameTime ?? -1)) return false;
-  if (info.dateAndTime?.gameTime !== replaces.gameTime || info.dateAndTime?.realTime !== replaces.realTime) return false;   // B3
-  if (landedKey == null && !holdsSave(storage, card, key)) return false;   // B4
+  if (info.dateAndTime?.gameTime !== replaces.gameTime || info.dateAndTime?.realTime !== replaces.realTime)
+    return false; // B3
+  if (landedKey == null && !holdsSave(storage, card, key)) return false; // B4
   return deleteSave(key, storage);
 }
 
 /** B4: is THIS character's copy of the card's save (its slot, its minute) in the store, beside `except`? */
-const holdsSave = (storage, card, except) => [...enumerateSaves(storage).info.entries()]
-  .some(([k, i]) => k !== except && slotKeyOf(i) === slotKeyOf(card) && i.dateAndTime?.gameTime === card?.gameTime);
+const holdsSave = (storage, card, except) =>
+  [...enumerateSaves(storage).info.entries()].some(
+    ([k, i]) => k !== except && slotKeyOf(i) === slotKeyOf(card) && i.dateAndTime?.gameTime === card?.gameTime,
+  );
 
 /**
  * ACC2c — THE CARDS THIS DEVICE HAS NO SAVE FOR.

@@ -20,7 +20,7 @@ import { Arch3dFile } from '../src/formats/arch3dFile.js';
 import { dungeonLocationFor } from '../src/world/smallerDungeons.js';
 import { synthesizeDungeonLocation, WORLD_SALT } from '../src/world/spawnedDungeons.js';
 import { aurumCachePlaceOf, aurumCacheFoot, aurumCofferBox, aurumPileBox, AURUM_CACHE_KEY } from '../src/scenes/aurumCacheHost.js';
-import { aurumCacheSpotOf, AURUM_CACHE_AURUM, AURUM_CACHE_DAY_MAX } from '../src/net/aurumCacheLaw.js';
+import { aurumCacheSpotOf, aurumCacheAurumOf } from '../src/net/aurumCacheLaw.js';
 import { pickActivatableHit, RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../src/player/activate.js';
 import { hostModelReader } from './dungeonFireProbe.mjs';
 import { cacheDungeon, cofferMeets, treasureTexture } from './aurumCacheLayout.mjs';
@@ -88,7 +88,7 @@ try {
       localStorage.setItem('dagger.ui.v1', JSON.stringify({ ...JSON.parse(localStorage.getItem('dagger.ui.v1') || '{}'), tutorialPopups: false }));
     });
     const claims = [];
-    await page.route('**/v1/aurum/cache', (route) => { claims.push(route.request().postData()); route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ ok: true, id, aurum: AURUM_CACHE_AURUM, today: 1, max: AURUM_CACHE_DAY_MAX }) }); });
+    await page.route('**/v1/aurum/cache', (route) => { claims.push(route.request().postData()); route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ ok: true, id, aurum: aurumCacheAurumOf(id) }) }); });
     const q = `shot&online&nofoes&region=${encodeURIComponent(region)}&dungeon=${encodeURIComponent(name)}${spawn ? `&spawn=${spawn}` : ''}${lane ? `&lighting=${lane}` : ''}`;
     await page.goto(`http://localhost:5197/play/?${q}`);
     // the bench's `class` skip reads no class today (scenes/dungeon.js hands it inside a comment): the character is made

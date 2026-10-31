@@ -7,7 +7,7 @@
 // a town is the kernel's; and the Rivers and Streams mod's painted water, which a player switches on for themselves.
 import { sampleKernel, HEIGHTMAP_DIMENSION } from './terrain/terrainSampler.js';
 import { sampleHeight, isWaterHeight } from './terrain/terrainTiles.js';
-import { worldPixelKey } from './worldWide/worldGrid.js';   // WW1: a kernel kept by the world's own key - `y * 1000 + x` is two pixels past the Bay
+import { worldPixelKey } from './worldWide/worldGrid.js'; // WW1: a kernel kept by the world's own key - `y * 1000 + x` is two pixels past the Bay
 
 /**
  * Whether the terrain cell under a point of map pixel (`px`, `py`) is dry at all four of its corners - no water shows on
@@ -23,15 +23,17 @@ export function createDryGround(woods, keep = 8) {
   /** @type {Map<number, (x: number, y: number) => number>} */
   const kernels = new Map();
   /** a sample as the pixel stores it (float32), its height the tile job's */
-  const wet = (/** @type {(x: number, y: number) => number} */ k, /** @type {number} */ x, /** @type {number} */ y) => isWaterHeight(sampleHeight(Math.fround(k(x, y))));
+  const wet = (/** @type {(x: number, y: number) => number} */ k, /** @type {number} */ x, /** @type {number} */ y) =>
+    isWaterHeight(sampleHeight(Math.fround(k(x, y))));
   return (px, py, fx, fz) => {
     const key = worldPixelKey(px, py);
     let k = kernels.get(key);
     if (!k) {
       if (kernels.size >= keep) kernels.delete(/** @type {number} */ (kernels.keys().next().value));
-      kernels.set(key, k = sampleKernel(woods, px, py));
+      kernels.set(key, (k = sampleKernel(woods, px, py)));
     }
-    const x0 = Math.min(span - 1, Math.max(0, Math.floor(fx * span))), y0 = Math.min(span - 1, Math.max(0, Math.floor(fz * span)));
+    const x0 = Math.min(span - 1, Math.max(0, Math.floor(fx * span))),
+      y0 = Math.min(span - 1, Math.max(0, Math.floor(fz * span)));
     return !wet(k, x0, y0) && !wet(k, x0 + 1, y0) && !wet(k, x0, y0 + 1) && !wet(k, x0 + 1, y0 + 1);
   };
 }

@@ -29,7 +29,7 @@
   {
     "name": "ROAD-GAPS-through-a-path",
     "file": "src/world/road/roadGaps.js",
-    "old": "        if (way.slice(1, -1).some(([a, b]) => blocked(a, b) || root[b * W + a] >= 0) || way.some(([a, b]) => blocked(a, b))) continue;",
+    "old": "        if (\n          way.slice(1, -1).some(([a, b]) => blocked(a, b) || root[b * W + a] >= 0) ||\n          way.some(([a, b]) => blocked(a, b))\n        )\n          continue;",
     "new": "        if (way.some(([a, b]) => blocked(a, b))) continue;",
     "tests": [
       "test/world/road/road_gaps.test.js"
@@ -40,7 +40,7 @@
   {
     "name": "ROAD-GAPS-over-the-water",
     "file": "src/world/road/roadGaps.js",
-    "old": "        if (way.slice(1, -1).some(([a, b]) => blocked(a, b) || root[b * W + a] >= 0) || way.some(([a, b]) => blocked(a, b))) continue;",
+    "old": "        if (\n          way.slice(1, -1).some(([a, b]) => blocked(a, b) || root[b * W + a] >= 0) ||\n          way.some(([a, b]) => blocked(a, b))\n        )\n          continue;",
     "new": "        if (way.slice(1, -1).some(([a, b]) => root[b * W + a] >= 0)) continue;",
     "tests": [
       "test/world/road/road_gaps.test.js"
@@ -58,8 +58,8 @@
   {
     "name": "ROAD-GAPS-the-pieces-unjoined-after",
     "file": "src/world/road/roadGaps.js",
-    "old": "        for (const [a, b] of way) { const k = b * W + a; if (root[k] < 0) root[k] = k; join(i, k); }\n",
-    "new": "",
+    "old": "        for (const [a, b] of way) {\n          const k = b * W + a;\n          if (root[k] < 0) root[k] = k;\n          join(i, k);\n        }\n        links++;",
+    "new": "        links++;",
     "tests": [
       "test/world/road/road_gaps.test.js"
     ]

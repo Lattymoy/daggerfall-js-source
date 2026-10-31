@@ -46,14 +46,19 @@ export function createRoadStrike({ roads, open, collider, cityGuards, hitEffects
   return function strikeRoad(eye, dir) {
     const layer = roads();
     if (!layer || !open()) return false;
-    /** @type {any} */   // a seat of the street's shape ({ person, pos }), the talk ray's own pick (SOC5: the one cylinder)
+    /** @type {any} */ // a seat of the street's shape ({ person, pos }), the talk ray's own pick (SOC5: the one cylinder)
     const near = nearestPerson(eye, dir, layer.talkSeats());
     if (!near || near.distance > WEAPON_REACH) return false;
     const wall = collider.raycast(eye, dir, near.distance);
     if (Number.isFinite(wall) && wall < near.distance - 1e-3) return false;
-    if (cityGuards.playerSparesPerson(near.entry.person)) return ROAD_SPARED;   // ROAD-SPARE: the street's law, on the road
+    if (cityGuards.playerSparesPerson(near.entry.person)) return ROAD_SPARED; // ROAD-SPARE: the street's law, on the road
     if (!layer.slain(near.entry.person)) return false;
-    hitEffects.showBloodSplash(0, [eye[0] + dir[0] * near.distance, eye[1] + dir[1] * near.distance, eye[2] + dir[2] * near.distance], null, LETHAL_HIT);
+    hitEffects.showBloodSplash(
+      0,
+      [eye[0] + dir[0] * near.distance, eye[1] + dir[1] * near.distance, eye[2] + dir[2] * near.distance],
+      null,
+      LETHAL_HIT,
+    );
     tallyCrimeGuildRequirements(playerEntity, false, 5);
     playerWeaponHitEntity(playerEntity, { health: 0 }, { isCivilian: true });
     return ROAD_STRUCK;

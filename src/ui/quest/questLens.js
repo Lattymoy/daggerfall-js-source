@@ -46,12 +46,12 @@
 // hands that law its own reader and adds the target, the said law and
 // the diff. It never walks the machine itself.
 
-import { getMessageResources, getMacro, MACRO_TYPES, expandQuestMessage } from '../../systems/quest/questMacros.js';   // QL1: a sheet's line, expanded as a message's tokens are
+import { getMessageResources, getMacro, MACRO_TYPES, expandQuestMessage } from '../../systems/quest/questMacros.js'; // QL1: a sheet's line, expanded as a message's tokens are
 import { SITE_TYPES } from '../../systems/quest/place.js';
 import { getSeed, setSeed } from '../../formats/dfRandom.js';
 import { REGION_NAMES, patchRegionIndex } from '../../formats/mapsFile.js';
 import { questRail, journalLines, questTitleOf, QUEST_URGENT_SECONDS } from './questRail.js';
-import { localizedText, formatText, tryGetLocalizedText, TextCollections, t } from '../../systems/textManager.js';   // L10N3d: locationInRegionProvince, read in the player's language; QL1: a sheet's line in a pack's words
+import { localizedText, formatText, tryGetLocalizedText, TextCollections, t } from '../../systems/textManager.js'; // L10N3d: locationInRegionProvince, read in the player's language; QL1: a sheet's line in a pack's words
 
 /** GetLastPlaceMentionedInMessage (DaggerfallQuestJournalWindow.cs:
  *  470-485): the LAST Place resource any macro in the message names.
@@ -107,7 +107,10 @@ export function quietTokens(message) {
   try {
     return quietly(quest, () => message.getTextTokens(-1, QUIET_ROLL, true, false));
   } catch (e) {
-    warnOnce(`${quest?.uid}:${message.id}`, `[quest lens] message ${message.id} of ${quest?.questName ?? 'a quest'} does not expand (${e?.message ?? e}); it reads as nothing`);
+    warnOnce(
+      `${quest?.uid}:${message.id}`,
+      `[quest lens] message ${message.id} of ${quest?.questName ?? 'a quest'} does not expand (${e?.message ?? e}); it reads as nothing`,
+    );
     return null;
   }
 }
@@ -116,19 +119,22 @@ export function quietTokens(message) {
  *  roll and the DFRandom seed quiet - every one put back however `fn` leaves, a throw included. */
 function quietly(quest, fn) {
   const seed = getSeed();
-  const kept = quest ? {
-    resource: quest.lastResourceReferenced,
-    place: quest.lastPlaceReferenced,
-    logId: quest.currentLogMessageId,
-    rolls: quest.rolls,
-    hooks: quest.hooks,
-  } : null;
+  const kept = quest
+    ? {
+        resource: quest.lastResourceReferenced,
+        place: quest.lastPlaceReferenced,
+        logId: quest.currentLogMessageId,
+        rolls: quest.rolls,
+        hooks: quest.hooks,
+      }
+    : null;
   if (quest) {
     quest.rolls = QUIET_ROLL;
     // AUDIT GUIDE L3: an entry that names a quest LETTER reads the letter's signoff (Item.expandMacro ->
     // questLetterName -> expandLetterSignoff, DFU's ItemHelper and ExpandLetterSignoff) - and that path reveals its
     // names with no reveal flag at all. The read's own hooks answer nothing; the rest are the quest's.
-    if (quest.hooks) quest.hooks = Object.create(quest.hooks, { addDialog: { value: () => {} }, dialogLink: { value: () => {} } });
+    if (quest.hooks)
+      quest.hooks = Object.create(quest.hooks, { addDialog: { value: () => {} }, dialogLink: { value: () => {} } });
   }
   // AUDIT GUIDE L3: ...and draws the letter's variant on the ENGINE's roll (questLetterName's Math.random default):
   // for the read, the engine's roll is the quiet one, put back however the read leaves
@@ -166,11 +172,18 @@ export function quietText(quest, text, key = null) {
     return quietly(quest, () => {
       const tokens = [{ text: raw, formatting: 'text' }];
       expandQuestMessage(quest, tokens, false);
-      return String(tokens[0].text ?? raw).replace(/\s+/g, ' ').trim();
+      return String(tokens[0].text ?? raw)
+        .replace(/\s+/g, ' ')
+        .trim();
     });
   } catch (e) {
-    const once = `${quest?.uid}:ql:${key ?? raw}`;   // warnOnce's own guard, its words a console line
-    if (!_warned.has(once)) { _warned.add(once); console.warn(`[quest lens] the line "${raw}" of ${quest?.questName ?? 'a quest'} does not expand (${e?.message ?? e}); it reads as written`); }
+    const once = `${quest?.uid}:ql:${key ?? raw}`; // warnOnce's own guard, its words a console line
+    if (!_warned.has(once)) {
+      _warned.add(once);
+      console.warn(
+        `[quest lens] the line "${raw}" of ${quest?.questName ?? 'a quest'} does not expand (${e?.message ?? e}); it reads as written`,
+      );
+    }
     return raw;
   }
 }
@@ -182,7 +195,11 @@ export function quietLines(message) {
 }
 
 /** SiteTypes as a face names them. */
-const SITE_KIND = Object.freeze({ [SITE_TYPES.Town]: 'town', [SITE_TYPES.Dungeon]: 'dungeon', [SITE_TYPES.Building]: 'building' });
+const SITE_KIND = Object.freeze({
+  [SITE_TYPES.Town]: 'town',
+  [SITE_TYPES.Dungeon]: 'dungeon',
+  [SITE_TYPES.Building]: 'building',
+});
 
 /** AUDIT GUIDE H1: the clocks an entry NAMES - its DetailsMacros (`=queston_`, Clock.ExpandMacro's days), read
  *  unexpanded like saidOf, so nothing moves. A clock the journal names is a deadline the quest gave the player; one it
@@ -212,7 +229,8 @@ function saidOf(message, symbolName) {
     if (!token.text) continue;
     for (const word of token.text.split(' ')) {
       const macro = getMacro(word);
-      if (macro.symbol === symbolName && macro.type >= MACRO_TYPES.NameMacro1 && macro.type <= MACRO_TYPES.NameMacro4) said.add(macro.type);
+      if (macro.symbol === symbolName && macro.type >= MACRO_TYPES.NameMacro1 && macro.type <= MACRO_TYPES.NameMacro4)
+        said.add(macro.type);
     }
   }
   return said;
@@ -251,7 +269,7 @@ export function entryTarget(message, where = {}) {
   const site = place?.siteDetails ?? null;
   if (!site?.locationName) return null;
   const said = saidOf(message, place.symbol?.name);
-  const onMap = where.canFindPlace ? !!where.canFindPlace(site.regionName, site.locationName, site) : null;   // START3: the site, for its pixel past the Bay
+  const onMap = where.canFindPlace ? !!where.canFindPlace(site.regionName, site.locationName, site) : null; // START3: the site, for its pixel past the Bay
   // HandleQuestClicks' own gate (:450) is the NAME: a place named as the player's location offers no box
   const hereByName = !!where.currentLocationName && site.locationName === where.currentLocationName();
   // AUDIT GUIDE W2: "(you are here)" is a CLAIM, and a player cannot stand in a place their map lacks - a place of the
@@ -259,27 +277,41 @@ export function entryTarget(message, where = {}) {
   // U5: past the Bay they can - a start's lair stands off the classic map's table and off a map with the continent put
   // away - so a site with its own pixel (START3) is here by its name, DFU's own gate (:450)
   const here = hereByName && (onMap !== false || !!site.worldPixel);
-  const named = onMap === true || here || !!moved || said.has(MACRO_TYPES.NameMacro2) || said.has(MACRO_TYPES.NameMacro3);
-  const regionIndex = patchRegionIndex(site.regionIndex ?? 0, site.regionName ?? '');   // :455-456's legacy-save workaround, both sides of the seam
+  const named =
+    onMap === true || here || !!moved || said.has(MACRO_TYPES.NameMacro2) || said.has(MACRO_TYPES.NameMacro3);
+  const regionIndex = patchRegionIndex(site.regionIndex ?? 0, site.regionName ?? ''); // :455-456's legacy-save workaround, both sides of the seam
   return {
     symbol: place.symbol?.name ?? null,
     kind: named ? (SITE_KIND[site.siteType] ?? null) : null,
     locationName: named ? site.locationName : null,
     // AUDIT GUIDE W1: the region only where the entry says it or DFU's find-place box would (the place on the map, or
     // the player in it) - the town's own name (`__p_`) never unlocks it
-    regionName: onMap === true || here || moved || said.has(MACRO_TYPES.NameMacro4) ? (REGION_NAMES[regionIndex] ?? site.regionName ?? null) : null,
+    regionName:
+      onMap === true || here || moved || said.has(MACRO_TYPES.NameMacro4)
+        ? (REGION_NAMES[regionIndex] ?? site.regionName ?? null)
+        : null,
     buildingName: said.has(MACRO_TYPES.NameMacro1) ? (site.buildingName ?? null) : null,
     // GUIDE8's Town tier (AUDIT DELVE, systems/quest/questGuidance.js): the building the entry NAMES (its `_p_`, as the name
     // above), by its town's map id and its key - what the town map rings and the compass points at while the player is
     // in that town; null where the entry does not name it, or the place is no building
-    building: said.has(MACRO_TYPES.NameMacro1) && site.siteType === SITE_TYPES.Building && site.buildingKey > 0
-      ? { mapId: site.mapId ?? 0, buildingKey: site.buildingKey } : null,
+    building:
+      said.has(MACRO_TYPES.NameMacro1) && site.siteType === SITE_TYPES.Building && site.buildingKey > 0
+        ? { mapId: site.mapId ?? 0, buildingKey: site.buildingKey }
+        : null,
     onMap,
     here,
-    ...(site.worldPixel ? { pastBay: true } : {}),   // AUDIT STARTS U5: a site past the Bay - its note promises no directions the Bay's map never gives
+    ...(site.worldPixel ? { pastBay: true } : {}), // AUDIT STARTS U5: a site past the Bay - its note promises no directions the Bay's map never gives
     // START3: and a site past the Bay its own pixel (systems/quest/place.js siteWorldPixel) - the marks', the compass's and
     // the goto's, where MAPS.BSA names none
-    find: onMap === true && !hereByName ? { regionIndex: site.regionIndex ?? 0, regionName: site.regionName ?? '', locationName: site.locationName, ...(site.worldPixel ? { worldPixel: site.worldPixel } : {}) } : null,
+    find:
+      onMap === true && !hereByName
+        ? {
+            regionIndex: site.regionIndex ?? 0,
+            regionName: site.regionName ?? '',
+            locationName: site.locationName,
+            ...(site.worldPixel ? { worldPixel: site.worldPixel } : {}),
+          }
+        : null,
   };
 }
 
@@ -300,7 +332,7 @@ function movedSiteOf(message) {
  *  459-462; AUDIT GUIDE D4). ONE HOME: the classic logbook's FIND_PLACE_TEXT reads it from
  *  here, and every enhanced face says a target's place in the same words. */
 export const locationInRegionText = (locationName, regionName) =>
-  formatText(localizedText('locationInRegionProvince', '{0} in {1} province'), locationName, regionName);   // L10N3d: in the player's language
+  formatText(localizedText('locationInRegionProvince', '{0} in {1} province'), locationName, regionName); // L10N3d: in the player's language
 
 /** GUIDE2: the port's own words around a target - the enhanced faces'
  *  where line, its note and its door. */
@@ -308,9 +340,11 @@ export const WHERE_TEXT = Object.freeze({
   somewhere: (regionName) => `Somewhere in ${regionName} province`,
   here: 'you are here',
   offMap: 'Not on your map yet. Ask around for directions.',
-  get offMapPastBay() { return t('quest.where.offMapPastBay', 'Beyond the Iliac Bay, past the edge of your map.'); },   // AUDIT STARTS U5: no "yet", no asking - true off any map; in the player's language
+  get offMapPastBay() {
+    return t('quest.where.offMapPastBay', 'Beyond the Iliac Bay, past the edge of your map.');
+  }, // AUDIT STARTS U5: no "yet", no asking - true off any map; in the player's language
   show: 'Show on map',
-  showLabel: (place) => `Show on map: ${place}`,   // AUDIT GUIDE U12: its own words first (WCAG 2.5.3 - a speech user says "Show on map")
+  showLabel: (place) => `Show on map: ${place}`, // AUDIT GUIDE U12: its own words first (WCAG 2.5.3 - a speech user says "Show on map")
 });
 
 /**
@@ -330,16 +364,25 @@ export const WHERE_TEXT = Object.freeze({
 export function targetWords(target) {
   if (!target) return null;
   const place = target.locationName
-    ? (target.regionName ? locationInRegionText(target.locationName, target.regionName) : target.locationName)
-    : (target.regionName ? WHERE_TEXT.somewhere(target.regionName) : null);
+    ? target.regionName
+      ? locationInRegionText(target.locationName, target.regionName)
+      : target.locationName
+    : target.regionName
+      ? WHERE_TEXT.somewhere(target.regionName)
+      : null;
   if (!place && !target.buildingName) return null;
   const where = [target.buildingName, place].filter(Boolean).join(', ');
   return {
     where: target.here ? `${where} (${WHERE_TEXT.here})` : where,
     // AUDIT GUIDE W2: a place the map lacks is never here - AUDIT STARTS U5: but past the Bay, and there no note is owed
-    note: target.locationName && target.onMap === false && !target.here ? (target.pastBay ? WHERE_TEXT.offMapPastBay : WHERE_TEXT.offMap) : null,
+    note:
+      target.locationName && target.onMap === false && !target.here
+        ? target.pastBay
+          ? WHERE_TEXT.offMapPastBay
+          : WHERE_TEXT.offMap
+        : null,
     find: target.find ?? null,
-    town: place,   // AUDIT GUIDE K2: the place without its building - what a map mark two quests share says
+    town: place, // AUDIT GUIDE K2: the place without its building - what a map mark two quests share says
   };
 }
 
@@ -400,11 +443,11 @@ export const currentObjective = (ql) => {
 export class QuestLens {
   constructor({ questLog = null } = {}) {
     this._questLog = questLog;
-    this._text = new Map();    // entry key -> lines (null: the read threw)
-    this._named = new Map();   // entry key -> the clocks it names (AUDIT GUIDE H1)
-    this._namedBy = new Map();   // quest id -> every clock its entries have named since the baseline (a told deadline stays told)
-    this._last = null;         // id -> { title, main, clockSeconds, entryKeys } as of the previous look
-    this._known = new Set();   // ids the lens has shown since the baseline
+    this._text = new Map(); // entry key -> lines (null: the read threw)
+    this._named = new Map(); // entry key -> the clocks it names (AUDIT GUIDE H1)
+    this._namedBy = new Map(); // quest id -> every clock its entries have named since the baseline (a told deadline stays told)
+    this._last = null; // id -> { title, main, clockSeconds, entryKeys } as of the previous look
+    this._known = new Set(); // ids the lens has shown since the baseline
   }
 
   /** A load replaces the quest set whole: forget it, and let the next
@@ -418,7 +461,9 @@ export class QuestLens {
   }
 
   /** Drop the kept lines; the next look reads every entry again. */
-  rereadText() { this._text.clear(); }
+  rereadText() {
+    this._text.clear();
+  }
 
   look(where = {}) {
     const log = this._questLog?.() ?? { active: [], ended: [] };
@@ -432,7 +477,11 @@ export class QuestLens {
       if (!this._named.has(key)) this._named.set(key, clocksNamed(message));
       return this._text.get(key);
     });
-    for (const key of this._text.keys()) if (!read.has(key)) { this._text.delete(key); this._named.delete(key); }
+    for (const key of this._text.keys())
+      if (!read.has(key)) {
+        this._text.delete(key);
+        this._named.delete(key);
+      }
 
     const walk = new Map((log.active ?? []).map((a) => [String(a.id), a]));
     const quests = rail.active.map((r) => {
@@ -456,7 +505,8 @@ export class QuestLens {
       this._namedBy.set(r.id, named);
       let clockSeconds = null;
       for (const c of walk.get(String(r.id))?.clocks ?? []) {
-        if (named.has(c.name) && Number.isFinite(c.seconds)) clockSeconds = clockSeconds == null ? c.seconds : Math.min(clockSeconds, c.seconds);
+        if (named.has(c.name) && Number.isFinite(c.seconds))
+          clockSeconds = clockSeconds == null ? c.seconds : Math.min(clockSeconds, c.seconds);
       }
       return {
         key: r.key,
@@ -477,7 +527,9 @@ export class QuestLens {
         // QL2 (bible/06-Systems/Questlines-Arc.md section 6): a stamped quest's objective now - the first still to do -
         // for the tracker's card, and the ones done, for the herald's news; null and none for DFU's quest
         objective: currentObjective(walk.get(String(r.id))?.ql),
-        objectivesDone: (walk.get(String(r.id))?.ql?.objectives ?? []).filter((o) => o.state === 'done').map((o) => ({ id: o.id, text: o.text })),
+        objectivesDone: (walk.get(String(r.id))?.ql?.objectives ?? [])
+          .filter((o) => o.state === 'done')
+          .map((o) => ({ id: o.id, text: o.text })),
       };
     });
 
@@ -488,7 +540,18 @@ export class QuestLens {
     const away = new Set((log.shelved ?? []).map((q) => q.id));
     const live = new Set(quests.map((q) => q.id));
     for (const id of this._namedBy.keys()) if (!live.has(id) && !away.has(id)) this._namedBy.delete(id);
-    const last = new Map(quests.map((q) => [q.id, { title: q.title, main: q.main, clockSeconds: q.clockSeconds, newsKeys: q.entries.map((e) => newsKey(q.id, e)), done: q.objectivesDone.map((o) => o.id) }]));
+    const last = new Map(
+      quests.map((q) => [
+        q.id,
+        {
+          title: q.title,
+          main: q.main,
+          clockSeconds: q.clockSeconds,
+          newsKeys: q.entries.map((e) => newsKey(q.id, e)),
+          done: q.objectivesDone.map((o) => o.id),
+        },
+      ]),
+    );
     for (const [id, was] of this._last ?? []) if (away.has(id) && !last.has(id)) last.set(id, was);
     this._last = last;
     return { quests, events };
@@ -508,7 +571,7 @@ export class QuestLens {
       // A quest the lens has shown, back after a look without entries (a
       // `remove log step` took them all), is news, not a new quest.
       const had = new Set(was?.newsKeys ?? []);
-      const fresh = q.entries.filter((e) => !had.has(newsKey(q.id, e))).map((e) => e.key);   // AUDIT GUIDE H4
+      const fresh = q.entries.filter((e) => !had.has(newsKey(q.id, e))).map((e) => e.key); // AUDIT GUIDE H4
       if (fresh.length) events.push({ type: 'updated', ...base, entries: fresh });
       // QL2: an objective done since the last look - news of its own (the newest one, if a look finds several)
       const doneNow = q.objectivesDone.filter((o) => !(was?.done ?? []).includes(o.id));
@@ -521,7 +584,7 @@ export class QuestLens {
     for (const [id, was] of this._last) {
       if (now.has(id)) continue;
       const verdict = verdicts.get(id);
-      if (!verdict) continue;   // gone without an ending (a repair, a dropped share): nothing to say
+      if (!verdict) continue; // gone without an ending (a repair, a dropped share): nothing to say
       events.push({ type: verdict.success ? 'completed' : 'ended', id, title: was.title, main: was.main });
       this._known.delete(id);
     }

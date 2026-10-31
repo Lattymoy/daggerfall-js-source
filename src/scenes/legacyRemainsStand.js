@@ -40,8 +40,12 @@ export function createRemainsStand({ pool, feetOf, pixelKeyOf = () => null, icon
   const unstand = (/** @type {string} */ id) => {
     const s = stood.get(id);
     if (!s) return;
-    stood.delete(id);   // THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD (Home.md)
-    try { s.pool?.removePile?.(s.pile); } catch { /* a pool torn down already */ }
+    stood.delete(id); // THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD (Home.md)
+    try {
+      s.pool?.removePile?.(s.pile);
+    } catch {
+      /* a pool torn down already */
+    }
   };
   return {
     /**
@@ -66,16 +70,21 @@ export function createRemainsStand({ pool, feetOf, pixelKeyOf = () => null, icon
       }
       for (const [id, { r, feet }] of want) {
         if (stood.has(id)) continue;
-        const pile = p.seedPile(r.items, feet, icon, null, pixelKeyOf(r.place), { unsaved: true, owner: REMAINS_STAND_OWNER });
+        const pile = p.seedPile(r.items, feet, icon, null, pixelKeyOf(r.place), {
+          unsaved: true,
+          owner: REMAINS_STAND_OWNER,
+        });
         if (!pile) continue;
-        pile.label = label(r);   // the plaque's name for it (droppedLoot labelFor)
-        pile.mark = REMAINS_MARK;   // its line of light (droppedLoot lootFinds)
-        pile.noFind = true;   // no silver find (systems/silverFinds.js)
+        pile.label = label(r); // the plaque's name for it (droppedLoot labelFor)
+        pile.mark = REMAINS_MARK; // its line of light (droppedLoot lootFinds)
+        pile.noFind = true; // no silver find (systems/silverFinds.js)
         stood.set(id, { pile, pool: p });
       }
       return stood.size;
     },
     /** Every body let go - a load's adopt replaced every list (world.js letGoRemains, AUDIT FB1013d A2). */
-    clear() { for (const id of [...stood.keys()]) unstand(id); },
+    clear() {
+      for (const id of [...stood.keys()]) unstand(id);
+    },
   };
 }

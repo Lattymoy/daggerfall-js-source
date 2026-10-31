@@ -42,11 +42,17 @@ export const EG_BLOWS_MAX = 32;
 export const EG_SHAPE = Object.freeze({ disc: 'd', lane: 'l', cone: 'c', ring: 'r', all: 'a', out: 'h' });
 
 const DEG = Math.PI / 180;
-const wrap = (a) => { let x = (a + Math.PI) % (2 * Math.PI); if (x < 0) x += 2 * Math.PI; return x - Math.PI; };
+const wrap = (a) => {
+  let x = (a + Math.PI) % (2 * Math.PI);
+  if (x < 0) x += 2 * Math.PI;
+  return x - Math.PI;
+};
 const r2 = (v) => Math.round(v * 100) / 100;
 /** The distance from (px, pz) to the segment (ax, az)-(bx, bz). */
 export function segDist(px, pz, ax, az, bx, bz) {
-  const dx = bx - ax, dz = bz - az, L = dx * dx + dz * dz;
+  const dx = bx - ax,
+    dz = bz - az,
+    L = dx * dx + dz * dz;
   const t = L > 0 ? Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / L)) : 0;
   return Math.hypot(px - (ax + dx * t), pz - (az + dz * t));
 }
@@ -60,28 +66,45 @@ export function segDist(px, pz, ax, az, bx, bz) {
 export function egPolyIn(poly, x, z, pad = 0) {
   let inside = false;
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-    const ax = poly[j][0], az = poly[j][1], bx = poly[i][0], bz = poly[i][1];
-    if ((az > z) !== (bz > z) && x < ax + ((bx - ax) * (z - az)) / (bz - az)) inside = !inside;
+    const ax = poly[j][0],
+      az = poly[j][1],
+      bx = poly[i][0],
+      bz = poly[i][1];
+    if (az > z !== bz > z && x < ax + ((bx - ax) * (z - az)) / (bz - az)) inside = !inside;
   }
   return inside || egPolyEdgeDist(poly, x, z) <= Math.max(0, pad) + 1e-9;
 }
 /** The distance from (x, z) to polygon `poly`'s outline (m). */
 export function egPolyEdgeDist(poly, x, z) {
   let d = Infinity;
-  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) d = Math.min(d, segDist(x, z, poly[j][0], poly[j][1], poly[i][0], poly[i][1]));
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++)
+    d = Math.min(d, segDist(x, z, poly[j][0], poly[j][1], poly[i][0], poly[i][1]));
   return d;
 }
 /** How far (x, z) stands outside polygon `poly` (m): its distance to the outline outside it, minus that distance inside. */
-export const egPolyDist = (poly, x, z) => (egPolyIn(poly, x, z) ? -egPolyEdgeDist(poly, x, z) : egPolyEdgeDist(poly, x, z));
+export const egPolyDist = (poly, x, z) =>
+  egPolyIn(poly, x, z) ? -egPolyEdgeDist(poly, x, z) : egPolyEdgeDist(poly, x, z);
 /** The point of polygon `poly` nearest (x, z), `inset` m inside its outline (along the nearest edge's inward normal - a
  *  counter-clockwise polygon's left), or the outline's own nearest point where the inset would leave it. `[x, z]`. */
 export function egPolyKeep(poly, x, z, inset = 0) {
   if (egPolyIn(poly, x, z) && egPolyEdgeDist(poly, x, z) >= inset) return [x, z];
-  let best = null, bd = Infinity;
+  let best = null,
+    bd = Infinity;
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-    const ax = poly[j][0], az = poly[j][1], ex = poly[i][0] - ax, ez = poly[i][1] - az, L2 = ex * ex + ez * ez;
-    const t = L2 > 0 ? Math.max(0, Math.min(1, ((x - ax) * ex + (z - az) * ez) / L2)) : 0, px = ax + ex * t, pz = az + ez * t, d = Math.hypot(x - px, z - pz);
-    if (d < bd) { bd = d; const L = Math.sqrt(L2) || 1; best = [px, pz, -ez / L, ex / L]; }
+    const ax = poly[j][0],
+      az = poly[j][1],
+      ex = poly[i][0] - ax,
+      ez = poly[i][1] - az,
+      L2 = ex * ex + ez * ez;
+    const t = L2 > 0 ? Math.max(0, Math.min(1, ((x - ax) * ex + (z - az) * ez) / L2)) : 0,
+      px = ax + ex * t,
+      pz = az + ez * t,
+      d = Math.hypot(x - px, z - pz);
+    if (d < bd) {
+      bd = d;
+      const L = Math.sqrt(L2) || 1;
+      best = [px, pz, -ez / L, ex / L];
+    }
   }
   if (!best) return [x, z];
   const q = [best[0] + best[2] * inset, best[1] + best[3] * inset];
@@ -89,14 +112,26 @@ export function egPolyKeep(poly, x, z, inset = 0) {
 }
 /** Does fight floor piece `f` (a disc `d`, a lane `l`, a polygon `p`) hold (x, z), `pad` m about - a negative pad that far
  *  inside its edge? */
-export const egPieceIn = (f, x, z, pad = 0) => (f.t === 'p' ? egPolyIn(f.poly, x, z, Math.max(0, pad)) && (pad >= 0 || egPolyEdgeDist(f.poly, x, z) >= -pad) : f.t === 'd' ? Math.hypot(x - f.x, z - f.z) <= f.r + pad : segDist(x, z, f.ax, f.az, f.bx, f.bz) <= f.hw + pad);
+export const egPieceIn = (f, x, z, pad = 0) =>
+  f.t === 'p'
+    ? egPolyIn(f.poly, x, z, Math.max(0, pad)) && (pad >= 0 || egPolyEdgeDist(f.poly, x, z) >= -pad)
+    : f.t === 'd'
+      ? Math.hypot(x - f.x, z - f.z) <= f.r + pad
+      : segDist(x, z, f.ax, f.az, f.bx, f.bz) <= f.hw + pad;
 
 // ── the stamps' makers (each rounded to the centimetre, the wire's) ──────────────────────────────────────
 export const shDisc = (x, z, r) => ['d', r2(x), r2(z), r2(r)];
 export const shLane = (ax, az, bx, bz, w) => ['l', r2(ax), r2(az), r2(bx), r2(bz), r2(w)];
 /** A lane `len` long from (x, z) along `yaw`. */
 export const shLaneAt = (x, z, yaw, len, w) => shLane(x, z, x + Math.sin(yaw) * len, z + Math.cos(yaw) * len, w);
-export const shCone = (x, z, yaw, r, arc) => ['c', r2(x), r2(z), Math.round(wrap(yaw) * 1000) / 1000, r2(r), Math.round(arc)];
+export const shCone = (x, z, yaw, r, arc) => [
+  'c',
+  r2(x),
+  r2(z),
+  Math.round(wrap(yaw) * 1000) / 1000,
+  r2(r),
+  Math.round(arc),
+];
 export const shRing = (x, z, r0, r1) => ['r', r2(x), r2(z), r2(r0), r2(r1)];
 export const shAll = () => ['a'];
 /** Everywhere outside the havens `[[x, z, r], ...]`. */
@@ -107,13 +142,23 @@ export function egStampOk(s, B = 400) {
   if (!Array.isArray(s) || typeof s[0] !== 'string') return false;
   const n = (i, lo = -B, hi = B) => typeof s[i] === 'number' && Number.isFinite(s[i]) && s[i] >= lo && s[i] <= hi;
   switch (s[0]) {
-    case 'd': return s.length === 4 && n(1) && n(2) && n(3, 0.1, 80);
-    case 'l': return s.length === 6 && n(1) && n(2) && n(3) && n(4) && n(5, 0.1, 80);
-    case 'c': return s.length === 6 && n(1) && n(2) && n(3, -4, 4) && n(4, 0.1, 80) && n(5, 1, 360);
-    case 'r': return s.length === 5 && n(1) && n(2) && n(3, 0, 80) && n(4, 0.1, 120) && s[3] < s[4];
-    case 'a': return s.length === 1;
-    case 'h': if (s.length < 4 || (s.length - 1) % 3 !== 0 || s.length > 1 + 3 * 8) return false; for (let i = 1; i < s.length; i++) if (!n(i, (i - 1) % 3 === 2 ? 0.1 : -B, (i - 1) % 3 === 2 ? 40 : B)) return false; return true;
-    default: return false;
+    case 'd':
+      return s.length === 4 && n(1) && n(2) && n(3, 0.1, 80);
+    case 'l':
+      return s.length === 6 && n(1) && n(2) && n(3) && n(4) && n(5, 0.1, 80);
+    case 'c':
+      return s.length === 6 && n(1) && n(2) && n(3, -4, 4) && n(4, 0.1, 80) && n(5, 1, 360);
+    case 'r':
+      return s.length === 5 && n(1) && n(2) && n(3, 0, 80) && n(4, 0.1, 120) && s[3] < s[4];
+    case 'a':
+      return s.length === 1;
+    case 'h':
+      if (s.length < 4 || (s.length - 1) % 3 !== 0 || s.length > 1 + 3 * 8) return false;
+      for (let i = 1; i < s.length; i++)
+        if (!n(i, (i - 1) % 3 === 2 ? 0.1 : -B, (i - 1) % 3 === 2 ? 40 : B)) return false;
+      return true;
+    default:
+      return false;
   }
 }
 
@@ -121,13 +166,28 @@ export function egStampOk(s, B = 400) {
 export function egInShape(s, px, pz) {
   if (!s || !Number.isFinite(px) || !Number.isFinite(pz)) return false;
   switch (s[0]) {
-    case 'd': return Math.hypot(px - s[1], pz - s[2]) <= s[3];
-    case 'l': return segDist(px, pz, s[1], s[2], s[3], s[4]) <= s[5] / 2;
-    case 'c': { const dx = px - s[1], dz = pz - s[2], d = Math.hypot(dx, dz); return d <= s[4] && (d < 0.5 || Math.abs(wrap(Math.atan2(dx, dz) - s[3])) <= (s[5] / 2) * DEG); }
-    case 'r': { const d = Math.hypot(px - s[1], pz - s[2]); return d >= s[3] && d <= s[4]; }
-    case 'a': return true;
-    case 'h': { for (let i = 1; i + 2 < s.length; i += 3) if (Math.hypot(px - s[i], pz - s[i + 1]) <= s[i + 2]) return false; return true; }
-    default: return false;
+    case 'd':
+      return Math.hypot(px - s[1], pz - s[2]) <= s[3];
+    case 'l':
+      return segDist(px, pz, s[1], s[2], s[3], s[4]) <= s[5] / 2;
+    case 'c': {
+      const dx = px - s[1],
+        dz = pz - s[2],
+        d = Math.hypot(dx, dz);
+      return d <= s[4] && (d < 0.5 || Math.abs(wrap(Math.atan2(dx, dz) - s[3])) <= (s[5] / 2) * DEG);
+    }
+    case 'r': {
+      const d = Math.hypot(px - s[1], pz - s[2]);
+      return d >= s[3] && d <= s[4];
+    }
+    case 'a':
+      return true;
+    case 'h': {
+      for (let i = 1; i + 2 < s.length; i += 3) if (Math.hypot(px - s[i], pz - s[i + 1]) <= s[i + 2]) return false;
+      return true;
+    }
+    default:
+      return false;
   }
 }
 /** Is (px, pz) inside any of a blow's stamps? */
@@ -135,7 +195,8 @@ export const egInBlow = (blow, px, pz) => !!blow?.s?.some((s) => egInShape(s, px
 /** AUDIT EG IV (lane1 #5; section 13.2's CHECK class): does a blow reach member `sub` standing at (px, pz)? A blow that names its
  *  members (`on` - an errand's failure blow: the Chain Snaps, a Soul Burst, the Cage Closes) lands on them wherever they stand,
  *  and on no one else; any other, where its stamps hold the feet. */
-export const egBlowOn = (blow, sub, px, pz) => (blow?.on ? sub != null && blow.on.includes(sub) : egInBlow(blow, px, pz));
+export const egBlowOn = (blow, sub, px, pz) =>
+  blow?.on ? sub != null && blow.on.includes(sub) : egInBlow(blow, px, pz);
 
 /** A cone's inscribed radius: the largest disc inside the sector (half its length past a half-turn). */
 export function coneInscribed(r, arcDeg) {
@@ -146,11 +207,16 @@ export function coneInscribed(r, arcDeg) {
 /** How far the deepest point of an aimed stamp lies from its edge (m) - Infinity for a CHECK's. */
 export function egEscapeM(s) {
   switch (s?.[0]) {
-    case 'd': return s[3];
-    case 'l': return s[5] / 2;
-    case 'c': return coneInscribed(s[4], s[5]);
-    case 'r': return (s[4] - s[3]) / 2;
-    default: return Infinity;
+    case 'd':
+      return s[3];
+    case 'l':
+      return s[5] / 2;
+    case 'c':
+      return coneInscribed(s[4], s[5]);
+    case 'r':
+      return (s[4] - s[3]) / 2;
+    default:
+      return Infinity;
   }
 }
 /** A stamp's narrowest width (m) - Infinity for a CHECK's. */
@@ -202,7 +268,22 @@ export const EG_OUTLINE_MAX_MS = 30_000;
  * grammar, its fill starting when the first lands.
  * @param {{ i: number, o?: number, s: any[], at: number, wu: number, p: number, b?: number, el?: string|null, nm?: string, ch?: number|boolean, pu?: number, sp?: number, ft?: number, on?: string[]|null, ol?: number }} blow
  */
-export function egBlowOf({ i, o = 0, s, at, wu, p, b = 0, el = null, nm = '', ch = 0, pu = 0, sp = 0, on = null, ol = 0 }) {
+export function egBlowOf({
+  i,
+  o = 0,
+  s,
+  at,
+  wu,
+  p,
+  b = 0,
+  el = null,
+  nm = '',
+  ch = 0,
+  pu = 0,
+  sp = 0,
+  on = null,
+  ol = 0,
+}) {
   const blow = { i, o, s, at, wu: egFloorWindup(wu, s, !!ch), p, b, el, nm, ch: ch ? 1 : 0, pu, sp };
   if (on?.length) blow.on = [...on];
   if (ol > 0) blow.ol = Math.min(EG_OUTLINE_MAX_MS, Math.round(ol));
@@ -237,7 +318,12 @@ export function egBlowVerdict(blow, px, pz, now, late = 400, sub = null) {
  * @param {any[]} blows @param {number[]|null} me @param {number} now
  * @param {{ lords?: Set<any>, max?: number, aimedAt?: (b: any) => boolean }} [o]
  */
-export function egShapeOrder(blows, me, now, { lords = new Set(), max = EG_SHAPES_DRAWN_MAX, aimedAt = () => false } = {}) {
+export function egShapeOrder(
+  blows,
+  me,
+  now,
+  { lords = new Set(), max = EG_SHAPES_DRAWN_MAX, aimedAt = () => false } = {},
+) {
   const near = (b) => {
     let d = Infinity;
     for (const s of b.s) {
@@ -247,6 +333,19 @@ export function egShapeOrder(blows, me, now, { lords = new Set(), max = EG_SHAPE
     }
     return d;
   };
-  const key = (b) => [me && (egInBlow(b, me[0], me[1]) || aimedAt(b)) ? 0 : 1, b.ch || lords.has(b.o) ? 0 : 1, Math.max(0, b.at - now), me ? near(b) : 0, b.i];
-  return [...blows].map((b) => ({ b, k: key(b) })).sort((x, y) => { for (let i = 0; i < 5; i++) if (x.k[i] !== y.k[i]) return x.k[i] - y.k[i]; return 0; }).slice(0, max).map((e) => e.b);
+  const key = (b) => [
+    me && (egInBlow(b, me[0], me[1]) || aimedAt(b)) ? 0 : 1,
+    b.ch || lords.has(b.o) ? 0 : 1,
+    Math.max(0, b.at - now),
+    me ? near(b) : 0,
+    b.i,
+  ];
+  return [...blows]
+    .map((b) => ({ b, k: key(b) }))
+    .sort((x, y) => {
+      for (let i = 0; i < 5; i++) if (x.k[i] !== y.k[i]) return x.k[i] - y.k[i];
+      return 0;
+    })
+    .slice(0, max)
+    .map((e) => e.b);
 }

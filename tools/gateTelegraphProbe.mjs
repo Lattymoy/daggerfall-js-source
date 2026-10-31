@@ -16,7 +16,11 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const shotsAt = process.argv.includes('--shots') ? process.argv[process.argv.indexOf('--shots') + 1] : null;
-const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
+const out = [];
+const check = (n, ok, d = '') => {
+  out.push(ok);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`);
+};
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=640 height=480></canvas><script type=module>
 import { buildCourtModel, courtToDungeon } from '/src/world/gate/gateArena.js';
@@ -66,12 +70,27 @@ window.ready = true;
 
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
-  if (url === '/probe/') { res.writeHead(200, { 'content-type': 'text/html' }); res.end(PAGE); return; }   // not the root: U60 keeps that the landing page's
+  if (url === '/probe/') {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(PAGE);
+    return;
+  } // not the root: U60 keeps that the landing page's
   const f = join(ROOT, url);
-  if (!f.startsWith(ROOT) || !existsSync(f)) { res.writeHead(404); res.end(); return; }
+  if (!f.startsWith(ROOT) || !existsSync(f)) {
+    res.writeHead(404);
+    res.end();
+    return;
+  }
   // WB9e: a JSON module is served as JSON - the court's modules reach a JSON table now (the browser refuses an import
   // served as a stream of bytes)
-  res.writeHead(200, { 'content-type': extname(f) === '.js' ? 'text/javascript' : extname(f) === '.json' ? 'application/json' : 'application/octet-stream' });
+  res.writeHead(200, {
+    'content-type':
+      extname(f) === '.js'
+        ? 'text/javascript'
+        : extname(f) === '.json'
+          ? 'application/json'
+          : 'application/octet-stream',
+  });
   res.end(readFileSync(f));
 });
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -79,25 +98,42 @@ const port = server.address().port;
 const browser = await chromium.launch();
 try {
   const page = await browser.newPage({ viewport: { width: 640, height: 480 } });
-  const errs = []; page.on('pageerror', (e) => errs.push(e.message));
+  const errs = [];
+  page.on('pageerror', (e) => errs.push(e.message));
   await page.goto(`http://127.0.0.1:${port}/probe/`);
   await page.waitForFunction(() => window.ready === true, null, { timeout: 20000 });
   const p = await page.evaluate(() => window.probe);
   check('the pass builds', !p.err, p.err ?? '');
   check('its program links in a real WebGL2', p.linked === true);
-  check('the targets\' array is a live uniform', p.pts);
+  check("the targets' array is a live uniform", p.pts);
   const lum = (c) => c[0] + c[1] + c[2];
   const land = await page.evaluate(() => window.draw(window.W('slam', { x: -2, z: 1 }), 1, 10050));
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'slam.png') });
   check('no GL error drawing it', land.error === 0 && land.drawn === 1, `error ${land.error}, drawn ${land.drawn}`);
-  check('the slam lands bright and hot where it lands', land.at[0] > 150 && land.at[0] > land.at[2] * 2, JSON.stringify(land.at));
-  check('and not past its edge', lum(land.off) < lum(land.at) / 3, `${JSON.stringify(land.off)} vs ${JSON.stringify(land.at)}`);
+  check(
+    'the slam lands bright and hot where it lands',
+    land.at[0] > 150 && land.at[0] > land.at[2] * 2,
+    JSON.stringify(land.at),
+  );
+  check(
+    'and not past its edge',
+    lum(land.off) < lum(land.at) / 3,
+    `${JSON.stringify(land.off)} vs ${JSON.stringify(land.at)}`,
+  );
   const wind = await page.evaluate(() => window.draw(window.W('slam', { x: -2, z: 1 }), 1, 10000 - 400));
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'windup.png') });
-  check('through its wind-up it is dimmer than its landing', lum(wind.at) < lum(land.at), `${JSON.stringify(wind.at)} vs ${JSON.stringify(land.at)}`);
+  check(
+    'through its wind-up it is dimmer than its landing',
+    lum(wind.at) < lum(land.at),
+    `${JSON.stringify(wind.at)} vs ${JSON.stringify(land.at)}`,
+  );
   const nova = await page.evaluate(() => window.draw(window.W('nova', { x: 0, z: 0 }), 2, 10050));
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'nova.png') });
-  check('the nova\'s ring burns and its heart is safe', lum(nova.ring) > lum(nova.at) * 3, `${JSON.stringify(nova.ring)} vs ${JSON.stringify(nova.at)}`);
+  check(
+    "the nova's ring burns and its heart is safe",
+    lum(nova.ring) > lum(nova.at) * 3,
+    `${JSON.stringify(nova.ring)} vs ${JSON.stringify(nova.at)}`,
+  );
   check('no page error', errs.length === 0, errs.join('; '));
 } finally {
   await browser.close();

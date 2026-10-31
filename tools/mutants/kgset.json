@@ -12,8 +12,8 @@
   {
     "name": "KGSET-face-cache-stale",
     "file": "src/ui/card/cardBinderPage.js",
-    "old": "  if (_facesRev !== textRevision()) { _faces.clear(); _facesRev = textRevision(); }",
-    "new": "  if (_facesRev < 0) { _facesRev = textRevision(); }",
+    "old": "  if (_facesRev !== textRevision()) {\n    _faces.clear();",
+    "new": "  if (_facesRev < 0) {",
     "tests": [
       "test/systems/kgset_cards.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "KGSET-hud-title",
     "file": "src/ui/iliacTableHud.js",
-    "old": "title: card ? `${card.name} - ${cardRules(card)}` : '?',",
-    "new": "title: card ? `${card.name}` : '?',",
+    "old": "    title: card ? `${card.name} - ${cardRules(card)}` : '?',",
+    "new": "    title: card ? `${card.name}` : '?',",
     "tests": [
       "test/systems/kgset_cards.test.js"
     ]
@@ -68,7 +68,7 @@
   {
     "name": "KGSET-words-own-ids",
     "file": "src/systems/iliac/iliacCardWords.js",
-    "old": "const wordsOf = (/** @type {any} */ card) => (typeof card?.id === 'string' && Object.hasOwn(WORDS, card.id) ? WORDS[card.id] : null);",
+    "old": "const wordsOf = (/** @type {any} */ card) =>\n  typeof card?.id === 'string' && Object.hasOwn(WORDS, card.id) ? WORDS[card.id] : null;",
     "new": "const wordsOf = (/** @type {any} */ card) => WORDS[card?.id] ?? null;",
     "tests": [
       "test/systems/kgset_cards.test.js"
@@ -77,8 +77,8 @@
   {
     "name": "KGSET-foe-spider",
     "file": "src/systems/card/cardSources.js",
-    "old": "[M.Spider]: 'spider', ",
-    "new": "",
+    "old": "  [M.Spider]: 'spider',\n  [M.Slaughterfish]: 'slaughterfish',",
+    "new": "  [M.Slaughterfish]: 'slaughterfish',",
     "tests": [
       "test/systems/kgset_cards.test.js",
       "test/systems/cards9_sources.test.js"
@@ -87,8 +87,8 @@
   {
     "name": "KGSET-ranger-beasts",
     "file": "src/net/iliac/iliacCards.js",
-    "old": "pick: 'strongest', tag: 'beast', n: 2 }] }",
-    "new": "pick: 'strongest', n: 2 }] }",
+    "old": "      fx: [{ on: 'reveal', do: 'weaken', to: 'here.theirs', pick: 'strongest', tag: 'beast', n: 2 }],",
+    "new": "      fx: [{ on: 'reveal', do: 'weaken', to: 'here.theirs', pick: 'strongest', n: 2 }],",
     "tests": [
       "test/systems/kgset_cards.test.js",
       "test/systems/loot/cards8_catalog.test.js"
@@ -97,8 +97,8 @@
   {
     "name": "KGSET-bear-muzzle",
     "file": "src/render/iliacCardFaces.js",
-    "old": "    oval(ctx, 0, 0.21, 0.19, 0.15); oval(ctx, 0, 0.21, 0.15, 0.115);\n",
-    "new": "",
+    "old": "    oval(ctx, 0, 0.21, 0.19, 0.15);\n    oval(ctx, 0, 0.21, 0.15, 0.115);\n    mirrorQ(ctx, [",
+    "new": "    mirrorQ(ctx, [",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -106,8 +106,8 @@
   {
     "name": "KGSET-balance-deck-law",
     "file": "tools/iliacBalance.mjs",
-    "old": "    if ((held.get(c.id) ?? 0) >= most) continue;\n",
-    "new": "",
+    "old": "    if ((held.get(c.id) ?? 0) >= most) continue;\n    held.set(c.id, (held.get(c.id) ?? 0) + 1);",
+    "new": "    held.set(c.id, (held.get(c.id) ?? 0) + 1);",
     "tests": [
       "test/systems/kgset_cards.test.js"
     ]

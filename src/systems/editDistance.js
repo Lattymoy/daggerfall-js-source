@@ -45,7 +45,7 @@
 //       in a different order than DFU's.
 
 /** DaggerfallDistance.IsSeparator (:64-67). */
-export const isSeparator = (c) => c === ' ' || c === '-' || c === '\'';
+export const isSeparator = (c) => c === ' ' || c === '-' || c === "'";
 
 /** DaggerfallDistance.GetNumberOfWords (:69-77) - separators in
  *  [start, stop), not words. DFU's name; DFU's meaning. */
@@ -57,7 +57,9 @@ export function getNumberOfWords(s, start, stop) {
 
 /** DistanceMatch (Distance.cs:5-15): { text, relevance } with
  *  relevance 0 (low) .. 1 (high). */
-export function distanceMatch(text, relevance) { return { text, relevance }; }
+export function distanceMatch(text, relevance) {
+  return { text, relevance };
+}
 
 /** EditDistance.GetRelevance (:213-217). */
 const RELEVANCE_DROP = 0.1;
@@ -80,7 +82,9 @@ function compareMatches(a, b) {
  *  compareMatches, kept verbatim because the drop path reads
  *  Peek() after every Dequeue. */
 class PriorityQueue {
-  constructor() { this.data = []; }
+  constructor() {
+    this.data = [];
+  }
 
   enqueue(item) {
     this.data.push(item);
@@ -107,8 +111,7 @@ class PriorityQueue {
       let leftChildIndex = parentIndex * 2 + 1;
       if (leftChildIndex > lastIndex) break;
       const rightChildIndex = leftChildIndex + 1;
-      if (rightChildIndex <= lastIndex
-        && compareMatches(this.data[rightChildIndex], this.data[leftChildIndex]) < 0) {
+      if (rightChildIndex <= lastIndex && compareMatches(this.data[rightChildIndex], this.data[leftChildIndex]) < 0) {
         leftChildIndex = rightChildIndex;
       }
       if (compareMatches(this.data[parentIndex], this.data[leftChildIndex]) <= 0) break;
@@ -125,7 +128,9 @@ class PriorityQueue {
     return this.data[0];
   }
 
-  count() { return this.data.length; }
+  count() {
+    return this.data.length;
+  }
 }
 
 /** EditDistance (EditDistance.cs:9-250). The six cost functions are
@@ -173,9 +178,9 @@ export class EditDistance {
           futureRow[j1 + 1] = row[j1];
         } else {
           futureRow[j1 + 1] = Math.min(
-            Math.min(row[j1 + 1] + this.deleteCost(s1[i]),
-              futureRow[j1] + this.insertCost(s2[j1])),
-            row[j1] + this.replaceCost(s1[i], s2[j1]));
+            Math.min(row[j1 + 1] + this.deleteCost(s1[i]), futureRow[j1] + this.insertCost(s2[j1])),
+            row[j1] + this.replaceCost(s1[i], s2[j1]),
+          );
         }
         if (!foundLesser && futureRow[j1 + 1] <= upperBound) foundLesser = true;
       }
@@ -186,7 +191,7 @@ export class EditDistance {
       futureRow = temp;
     }
 
-    let min = Number.MAX_VALUE;   // C#'s float.MaxValue seed, kept
+    let min = Number.MAX_VALUE; // C#'s float.MaxValue seed, kept
     for (let j = 0; j <= l2; j++) {
       const cost = row[j] + this.trimCost(s2, j);
       if (cost < min) min = cost;
@@ -249,8 +254,9 @@ export function getDaggerfallDistance() {
       // Otherwise small cost of longer prefixes
       let beginningOfWord = stop - 1;
       while (beginningOfWord > 0 && !isSeparator(s[beginningOfWord - 1])) beginningOfWord--;
-      return WORD_PREFIX_PADDING * (stop - beginningOfWord)
-        + PREFIX_WORDS_PADDING * getNumberOfWords(s, 0, beginningOfWord);
+      return (
+        WORD_PREFIX_PADDING * (stop - beginningOfWord) + PREFIX_WORDS_PADDING * getNumberOfWords(s, 0, beginningOfWord)
+      );
     },
     (s, start) => {
       const l = s.length;
@@ -262,9 +268,9 @@ export function getDaggerfallDistance() {
       // Otherwise small cost of longer suffixes
       let endOfWord = start + 1;
       while (endOfWord < l && !isSeparator(s[endOfWord])) endOfWord++;
-      return WORD_SUFFIX_PADDING * (endOfWord - start)
-        + SUFFIX_WORDS_PADDING * getNumberOfWords(s, endOfWord, l);
-    });
+      return WORD_SUFFIX_PADDING * (endOfWord - start) + SUFFIX_WORDS_PADDING * getNumberOfWords(s, endOfWord, l);
+    },
+  );
 }
 
 /** DaggerfallTravelMapWindow.MatchesCutOff (:1533-1547): a perfect
@@ -275,5 +281,7 @@ export class MatchesCutOff {
     this.threshold = bestRelevance === 1 ? 1 : bestRelevance * 0.5;
   }
 
-  keep(relevance) { return relevance >= this.threshold; }
+  keep(relevance) {
+    return relevance >= this.threshold;
+  }
 }

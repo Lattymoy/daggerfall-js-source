@@ -22,8 +22,8 @@
   {
     "name": "ASL-A2-line-kept",
     "file": "src/systems/naval/shipLife.js",
-    "old": "      if (!a || (via && !b)) return null;\n      e.path = [...a, ...(b ? b.slice(1) : [])]",
-    "new": "      e.path = [...(a ?? [here, via ?? to]), ...(via ? (b ?? [via, to]).slice(1) : [])]",
+    "old": "      if (!a || (via && !b)) return null;\n      e.path = [...a, ...(b ? b.slice(1) : [])].map((q) => [q[0], q[1]]);",
+    "new": "      e.path = [...(a ?? [here, via ?? to]), ...(via ? (b ?? [via, to]).slice(1) : [])].map((q) => [q[0], q[1]]);",
     "tests": [
       "test/systems/naval/auditshiplife.test.js",
       "test/systems/naval/shiplife.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "ASL-A3-cell-across-land",
     "file": "src/systems/naval/shipLife.js",
-    "old": "!open(i, k) || !wet(p, centre(i, k))) continue;",
-    "new": "!open(i, k)) continue;",
+    "old": "          if (Math.max(Math.abs(i - i0), Math.abs(k - k0)) !== r || !open(i, k) || !wet(p, centre(i, k))) continue;",
+    "new": "          if (Math.max(Math.abs(i - i0), Math.abs(k - k0)) !== r || !open(i, k)) continue;",
     "tests": [
       "test/systems/naval/auditshiplife.test.js",
       "test/systems/naval/shiplife.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "ASL-A4-ring-point-unchecked",
     "file": "src/systems/naval/shipLife.js",
-    "old": "          if (grid.clear(hb.mouth, q)) ring.push(q);",
-    "new": "          if (grid.open(Math.floor(q[0] / grid.cell), Math.floor(q[1] / grid.cell))) ring.push(q);",
+    "old": "          if (grid.clear(hb.mouth, q)) ring.push(q); // AUDIT SHIP-LIFE A4: a point the water from the mouth reaches",
+    "new": "          if (grid.open(Math.floor(q[0] / grid.cell), Math.floor(q[1] / grid.cell))) ring.push(q); // AUDIT SHIP-LIFE A4: a point the water from the mouth reaches",
     "tests": [
       "test/systems/naval/auditshiplife.test.js",
       "test/systems/naval/shiplife.test.js"
@@ -62,7 +62,7 @@
   {
     "name": "ASL-A4-chord-unrouted",
     "file": "src/systems/naval/shipLife.js",
-    "old": "  for (const q of ring) { if (out.length && !clear(out[out.length - 1], q)) out.push([hub[0], hub[1]]); out.push(q); }",
+    "old": "  for (const q of ring) {\n    if (out.length && !clear(out[out.length - 1], q)) out.push([hub[0], hub[1]]);\n    out.push(q);\n  }",
     "new": "  for (const q of ring) out.push(q);",
     "tests": [
       "test/systems/naval/auditshiplife.test.js",
@@ -72,8 +72,8 @@
   {
     "name": "ASL-A4-lurk-ring-unchecked",
     "file": "src/systems/naval/shipLife.js",
-    "old": "          if (clear(at, q)) ring.push(q);",
-    "new": "          ring.push(q);",
+    "old": "          if (clear(at, q)) ring.push(q); // AUDIT SHIP-LIFE A4: as the patrol's",
+    "new": "          ring.push(q); // AUDIT SHIP-LIFE A4: as the patrol's",
     "tests": [
       "test/systems/naval/auditshiplife.test.js",
       "test/systems/naval/shiplife.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "ASL-A5-mean-kept",
     "file": "src/systems/naval/shipLife.js",
-    "old": "  if (m < berths.length * MOUTH_AGREE) {",
-    "new": "  if (m === 0) {",
+    "old": "    if (m < berths.length * MOUTH_AGREE) {",
+    "new": "    if (m === 0) {",
     "tests": [
       "test/systems/naval/auditshiplife.test.js",
       "test/systems/naval/shiplife.test.js"

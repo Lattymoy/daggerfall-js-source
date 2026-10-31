@@ -12,8 +12,8 @@
   {
     "name": "DECORLPT-scale-lost",
     "file": "src/scenes/yardNature.js",
-    "old": "      const batch = renderer.createBillboardBatch(pic.archive, pic.key, pic.handle.size, where, { scales: [piece.scale / LPT_SCALE_MAX] });",
-    "new": "      const batch = renderer.createBillboardBatch(pic.archive, pic.key, pic.handle.size, where, { scales: [1 / LPT_SCALE_MAX] });",
+    "old": "        scales: [piece.scale / LPT_SCALE_MAX],",
+    "new": "        scales: [1 / LPT_SCALE_MAX],",
     "tests": [
       "test/scenes/decorlpt.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "DECORLPT-not-cut",
     "file": "src/scenes/yardNature.js",
-    "old": "      batch.lptProto = pic.handle;\n",
-    "new": "",
+    "old": "      batch.lptProto = pic.handle;\n      batch.sway = pic.sway;",
+    "new": "      batch.sway = pic.sway;",
     "tests": [
       "test/scenes/decorlpt.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "DECORLPT-unheld",
     "file": "src/scenes/yardNature.js",
-    "old": "      door.acquire(far);\n",
-    "new": "",
+    "old": "      door.acquire(far);\n      trees?.sway?.(pic.proto, sway); // its 3D trees lean as its far pictures do (the pixel's own record of it)",
+    "new": "      trees?.sway?.(pic.proto, sway); // its 3D trees lean as its far pictures do (the pixel's own record of it)",
     "tests": [
       "test/scenes/decorlpt.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "DECORLPT-lean-unrecorded",
     "file": "src/scenes/yardNature.js",
-    "old": "      trees?.sway?.(pic.proto, sway);   // its 3D trees lean as its far pictures do (the pixel's own record of it)\n",
-    "new": "",
+    "old": "      trees?.sway?.(pic.proto, sway); // its 3D trees lean as its far pictures do (the pixel's own record of it)\n      trees?.windfall?.(pic.proto, windfall); // WINDFALL1: ...by either law",
+    "new": "      trees?.windfall?.(pic.proto, windfall); // WINDFALL1: ...by either law",
     "tests": [
       "test/scenes/decorlpt.test.js"
     ],
@@ -49,8 +49,8 @@
   {
     "name": "DECORLPT-yaw-lost",
     "file": "src/scenes/yardNature.js",
-    "old": "tree: { handle: pic.handle, pos: [...piece.pos], scale: piece.scale, yaw: yardTreeYaw(piece) } };",
-    "new": "tree: { handle: pic.handle, pos: [...piece.pos], scale: piece.scale, yaw: 0 } };",
+    "old": "        tree: { handle: pic.handle, pos: [...piece.pos], scale: piece.scale, yaw: yardTreeYaw(piece) },",
+    "new": "        tree: { handle: pic.handle, pos: [...piece.pos], scale: piece.scale, yaw: 0 },",
     "tests": [
       "test/scenes/decorlpt.test.js"
     ]

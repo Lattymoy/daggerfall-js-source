@@ -53,11 +53,22 @@ export function createDamageFlash() {
   return {
     /** Flash(). Re-flashing RESTARTS at 0.4 - two blows in one second
      *  do not stack into something darker, they refill the same fade. */
-    flash() { alpha = FLASH_ALPHA; fadingOut = true; blow = true; },
+    flash() {
+      alpha = FLASH_ALPHA;
+      fadingOut = true;
+      blow = true;
+    },
     /** Was there a blow since the last ask? Answers once. */
-    takeBlow() { const b = blow; blow = false; return b; },
+    takeBlow() {
+      const b = blow;
+      blow = false;
+      return b;
+    },
     /** BLOOD2e: a bleed's flash - subtle, and never under a blow's. */
-    bleed() { alpha = Math.max(alpha, BLEED_FLASH_ALPHA); fadingOut = true; },
+    bleed() {
+      alpha = Math.max(alpha, BLEED_FLASH_ALPHA);
+      fadingOut = true;
+    },
     /** OnGUI's fade step, on the host's REAL dt (Time.deltaTime is not
      *  scaled by the classic clock, and a flash does not slow down
      *  because the game does). */
@@ -68,19 +79,28 @@ export function createDamageFlash() {
       // zero, rather than drawing a zero-alpha quad and stopping next
       // frame. One frame of difference, kept.
       if (alpha > 0) return alpha;
-      alpha = 0; fadingOut = false;
+      alpha = 0;
+      fadingOut = false;
       return 0;
     },
     /** The full-screen quad. `drawScreenQuad` with a null texture and
      *  an alpha under one is the renderer's blended solid. */
     draw(renderer, canvas) {
       if (!fadingOut || !(alpha > 0)) return false;
-      renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height },
-        undefined, [FLASH_RGB[0], FLASH_RGB[1], FLASH_RGB[2], alpha]);
+      renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, [
+        FLASH_RGB[0],
+        FLASH_RGB[1],
+        FLASH_RGB[2],
+        alpha,
+      ]);
       return true;
     },
-    get alpha() { return alpha; },
-    get fading() { return fadingOut; },
+    get alpha() {
+      return alpha;
+    },
+    get fading() {
+      return fadingOut;
+    },
   };
 }
 
@@ -100,7 +120,9 @@ export const playerDamageFlash = createDamageFlash();
  *  DamageShaker is a second receiver on the same object - so the sites
  *  hand the amount through, and a listener hears it. */
 let _removeHealthListener = null;
-export function setRemoveHealthListener(fn) { _removeHealthListener = fn; }
+export function setRemoveHealthListener(fn) {
+  _removeHealthListener = fn;
+}
 export function flashPlayerDamage(amount = 0) {
   playerDamageFlash.flash();
   _removeHealthListener?.(amount);
@@ -108,7 +130,11 @@ export function flashPlayerDamage(amount = 0) {
 /** WB13d: a blow DFU never flashes (spell damage - the gate boss's frost, fire, lightning and venom) that the camera
  *  still feels: the RemoveHealth listener alone (Better Ambience's DamageShaker prices it by the share of health it
  *  took, under the player's own maxShake), no flash. */
-export function shakePlayerDamage(amount = 0) { _removeHealthListener?.(amount); }
+export function shakePlayerDamage(amount = 0) {
+  _removeHealthListener?.(amount);
+}
 /** BLOOD2e: the player bled a drip - the subtle flash, and no
  *  RemoveHealth (a drip is not a blow; the shaker does not hear it). */
-export function flashPlayerBleed() { playerDamageFlash.bleed(); }
+export function flashPlayerBleed() {
+  playerDamageFlash.bleed();
+}

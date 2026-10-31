@@ -2,8 +2,8 @@
   {
     "name": "TELL6b-len",
     "file": "src/ai/blowShapes.js",
-    "old": "charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.8, mult: 1.5, cross: 0.45, from: 5, to: 12 }),",
-    "new": "charge: Object.freeze({ windup: 0.9, len: 7.0, halfW: 0.8, mult: 1.5, cross: 0.45, from: 5, to: 12 }),",
+    "old": "  charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.8, mult: 1.5, cross: 0.45, from: 5, to: 12 }),",
+    "new": "  charge: Object.freeze({ windup: 0.9, len: 7.0, halfW: 0.8, mult: 1.5, cross: 0.45, from: 5, to: 12 }),",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "TELL6b-halfW",
     "file": "src/ai/blowShapes.js",
-    "old": "charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.8, mult: 1.5, cross: 0.45, from: 5, to: 12 }),",
-    "new": "charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.6, mult: 1.5, cross: 0.45, from: 5, to: 12 }),",
+    "old": "  charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.8, mult: 1.5, cross: 0.45, from: 5, to: 12 }),",
+    "new": "  charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.6, mult: 1.5, cross: 0.45, from: 5, to: 12 }),",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "TELL6b-cross",
     "file": "src/ai/blowShapes.js",
-    "old": "charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.8, mult: 1.5, cross: 0.45, from: 5, to: 12 }),",
-    "new": "charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.8, mult: 1.5, cross: 0.9, from: 5, to: 12 }),",
+    "old": "  charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.8, mult: 1.5, cross: 0.45, from: 5, to: 12 }),",
+    "new": "  charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.8, mult: 1.5, cross: 0.9, from: 5, to: 12 }),",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TELL6b-from",
     "file": "src/ai/blowShapes.js",
-    "old": "charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.8, mult: 1.5, cross: 0.45, from: 5, to: 12 }),",
-    "new": "charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.8, mult: 1.5, cross: 0.45, from: 3, to: 12 }),",
+    "old": "  charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.8, mult: 1.5, cross: 0.45, from: 5, to: 12 }),",
+    "new": "  charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.8, mult: 1.5, cross: 0.45, from: 3, to: 12 }),",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TELL6b-to",
     "file": "src/ai/blowShapes.js",
-    "old": "charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.8, mult: 1.5, cross: 0.45, from: 5, to: 12 }),",
-    "new": "charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.8, mult: 1.5, cross: 0.45, from: 5, to: 15 }),",
+    "old": "  charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.8, mult: 1.5, cross: 0.45, from: 5, to: 12 }),",
+    "new": "  charge: Object.freeze({ windup: 0.9, len: 9.0, halfW: 0.8, mult: 1.5, cross: 0.45, from: 5, to: 15 }),",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "TELL6b-lane-lunge",
     "file": "src/ai/blowShapes.js",
-    "old": "  if (b.kind === 'lunge' || b.kind === 'charge') { const P = BLOW[b.kind];",
-    "new": "  if (b.kind === 'lunge' || b.kind === 'charge') { const P = BLOW.lunge;",
+    "old": "    const P = BLOW[b.kind];",
+    "new": "    const P = BLOW.lunge;",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"
     ],
@@ -57,8 +57,8 @@
   {
     "name": "TELL6b-run-not-near",
     "file": "src/ai/foeBlows.js",
-    "old": "    if (now >= b.land && !(b.chainUntil > now) && !(b.dashUntil > now)) continue;   // A landing about to chain is still its foe's one; TELL6: a charge running its lane too",
-    "new": "    if (now >= b.land && !(b.chainUntil > now)) continue;   // A landing about to chain is still its foe's one; TELL6: a charge running its lane too",
+    "old": "    if (now >= b.land && !(b.chainUntil > now) && !(b.dashUntil > now)) continue; // A landing about to chain is still its foe's one; TELL6: a charge running its lane too",
+    "new": "    if (now >= b.land && !(b.chainUntil > now)) continue; // A landing about to chain is still its foe's one; TELL6: a charge running its lane too",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "TELL6b-mirror-lunge",
     "file": "src/render/foeTelegraph.js",
-    "old": "  if (kind === 'lunge' || kind === 'charge') {   // TELL6: the charge's lane, the lunge's law\n    const P = BLOW[kind];",
-    "new": "  if (kind === 'lunge' || kind === 'charge') {   // TELL6: the charge's lane, the lunge's law\n    const P = BLOW.lunge;",
+    "old": "    const P = BLOW[kind];",
+    "new": "    const P = BLOW.lunge;",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "TELL6b-quad-short",
     "file": "src/render/foeTelegraph.js",
-    "old": "ring: BLOW.ring.rOut, charge: BLOW.charge.len,",
-    "new": "ring: BLOW.ring.rOut, charge: BLOW.lunge.len,",
+    "old": "  charge: BLOW.charge.len,",
+    "new": "  charge: BLOW.lunge.len,",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "TELL6b-cover-ignored",
     "file": "src/ai/tactics.js",
-    "old": "  if (coverDistance(ai.collider, from, dir, len) < len) return false;\n  if (kind === 'leap' && ai.collider) {   // ground under its point - the terrain too, outdoors (Collider.surfaceHit)",
-    "new": "  if (kind === 'leap' && ai.collider) {   // ground under its point - the terrain too, outdoors (Collider.surfaceHit)",
+    "old": "  if (coverDistance(ai.collider, from, dir, len) < len) return false;\n  if (kind === 'leap' && ai.collider) {",
+    "new": "  if (kind === 'leap' && ai.collider) {",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"
     ]
@@ -140,7 +140,7 @@
   {
     "name": "TELL6b-no-run",
     "file": "src/ai/tactics.js",
-    "old": "    if (tf && s.blow.kind === 'charge') { beginDash(ai, s, s.blow, now, cooled); return true; }   // Its landing is its run",
+    "old": "    if (tf && s.blow.kind === 'charge') {\n      beginDash(ai, s, s.blow, now, cooled);\n      return true;\n    } // Its landing is its run",
     "new": "    // TELL6: its landing is its run",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"
@@ -169,7 +169,7 @@
   {
     "name": "TELL6b-run-slow",
     "file": "src/ai/tactics.js",
-    "old": "  ai._tacSpeed = (BLOW.charge.len / BLOW.charge.cross) / Math.max(0.1, ai.speed ?? 1);",
+    "old": "  ai._tacSpeed = BLOW.charge.len / BLOW.charge.cross / Math.max(0.1, ai.speed ?? 1);",
     "new": "  ai._tacSpeed = 1;",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"
@@ -178,8 +178,8 @@
   {
     "name": "TELL6b-run-chains",
     "file": "src/ai/tactics.js",
-    "old": "  if (!GAP_CLOSERS.includes(b.kind) && (b.chain ?? 0) < chainMax(ent) && chains(blowFamily(ent?.mobileType), ent, shapes) && Math.random() < TELL.CHAIN_CHANCE) {   // Phase two chains to three",
-    "new": "  if ((b.chain ?? 0) < chainMax(ent) && chains(blowFamily(ent?.mobileType), ent, shapes) && Math.random() < TELL.CHAIN_CHANCE) {   // Phase two chains to three",
+    "old": "    !GAP_CLOSERS.includes(b.kind) &&\n    (b.chain ?? 0) < chainMax(ent) &&",
+    "new": "    (b.chain ?? 0) < chainMax(ent) &&",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"
     ]

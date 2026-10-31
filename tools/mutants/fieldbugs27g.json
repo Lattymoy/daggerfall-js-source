@@ -11,8 +11,8 @@
   {
     "name": "STATION-ROWS-popup-duck",
     "file": "src/ui/guildServiceWindow.js",
-    "old": "if (isServiceBox(r)) { this._push({ ...r, closesWindow: !!r.closesWindow }); return; }   // STATION-ROWS",
-    "new": "if (r?.rows) { this._push({ ...r, closesWindow: !!r.closesWindow }); return; }   // STATION-ROWS",
+    "old": "    // switch calls CloseWindow first).\n    if (isServiceBox(r)) {",
+    "new": "    // switch calls CloseWindow first).\n    if (r?.rows) {",
     "tests": [
       "test/ui/stationrows.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "STATION-FEES-first-pass",
     "file": "src/net/decorLaw.js",
-    "old": "alchemy: 50_000, spells: 100_000, enchant: 200_000",
-    "new": "alchemy: 5_000, spells: 10_000, enchant: 20_000",
+    "old": "  alchemy: 50_000,\n  spells: 100_000,\n  enchant: 200_000,",
+    "new": "  alchemy: 5_000,\n  spells: 10_000,\n  enchant: 20_000,",
     "tests": [
       "test/ui/homestations.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "HOME-MAGIC-item-spends",
     "file": "src/systems/enchantments.js",
-    "old": "      if (ctx?.castBarred?.()) return null;\n",
-    "new": "",
+    "old": "        if (ctx?.castBarred?.()) return null;\n        const record = ctx?.spellsByIndex?.()?.get?.(param);",
+    "new": "        const record = ctx?.spellsByIndex?.()?.get?.(param);",
     "tests": [
       "test/systems/homemagic.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "EMPIRE-BANK-region-online",
     "file": "src/world/buildingNames.js",
-    "old": "      b = isOnlinePage() ? EMPIRE_BANK_OF : shownRegionName;   // EMPIRE-BANK",
-    "new": "      b = regionName;   // EMPIRE-BANK",
+    "old": "      b = isOnlinePage() ? EMPIRE_BANK_OF : shownRegionName; // EMPIRE-BANK",
+    "new": "      b = regionName; // EMPIRE-BANK",
     "tests": [
       "test/systems/empirebank.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "MW-ASSIGN-mod-armour-rowless",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "  const row = armorRowOf(templateIndex);   // MW-ASSIGN: a mod's piece by the classic row of its shape",
-    "new": "  const row = DF_ARMOR_ROWS[templateIndex];   // MW-ASSIGN: a mod's piece by the classic row of its shape",
+    "old": "  const row = armorRowOf(templateIndex); // MW-ASSIGN: a mod's piece by the classic row of its shape",
+    "new": "  const row = DF_ARMOR_ROWS[templateIndex]; // MW-ASSIGN: a mod's piece by the classic row of its shape",
     "tests": [
       "test/formats/morrowind/mwassign.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "MW-ASSIGN-mod-armour-unworn",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "    if (item && typeof item.templateIndex === 'number' && armorRowOf(item.templateIndex)) {   // MW-ASSIGN: a mod's pieces are worn too",
-    "new": "    if (item && typeof item.templateIndex === 'number' && item.templateIndex in DF_ARMOR_ROWS) {   // MW-ASSIGN: a mod's pieces are worn too",
+    "old": "    if (item && typeof item.templateIndex === 'number' && armorRowOf(item.templateIndex)) {",
+    "new": "    if (item && typeof item.templateIndex === 'number' && item.templateIndex in DF_ARMOR_ROWS) {",
     "tests": [
       "test/formats/morrowind/mwassign.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "MW-ASSIGN-vambrace-side",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "  525: Object.freeze({ tokens: ['bracer', 'gauntlet'], sides: ['left'] }),",
-    "new": "  525: Object.freeze({ tokens: ['bracer', 'gauntlet'], sides: ['right'] }),",
+    "old": "  525: Object.freeze({ tokens: ['bracer', 'gauntlet'], sides: ['left'] }), // Left Vambrace",
+    "new": "  525: Object.freeze({ tokens: ['bracer', 'gauntlet'], sides: ['right'] }), // Left Vambrace",
     "tests": [
       "test/formats/morrowind/mwassign.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "DECOR-ROOMS-wall-joins",
     "file": "src/systems/decor/decorRooms.js",
-    "old": "if (d >= size - 1e-6) { join(i, j); linked.push([i, j, dx, dz]); }",
-    "new": "{ join(i, j); linked.push([i, j, dx, dz]); }",
+    "old": "        if (d >= size - 1e-6) {",
+    "new": "        {",
     "tests": [
       "test/systems/decor/decorrooms.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "DECOR-ROOMS-nook-a-room",
     "file": "src/systems/decor/decorRooms.js",
-    "old": "filter(([, g]) => g.length >= DECOR_ROOM_MIN_CELLS)",
-    "new": "filter(([, g]) => g.length >= 1)",
+    "old": "      .filter(([, g]) => g.length >= DECOR_ROOM_MIN_CELLS)",
+    "new": "      .filter(([, g]) => g.length >= 1)",
     "tests": [
       "test/systems/decor/decorrooms.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "DECOR-MODFLATS-the-old-four-turns",
     "file": "src/ui/textureCanvas.js",
-    "old": "  await settling.get(key);   // in flight: until it lands or misses; a miss already known: at once\n",
-    "new": "  await getArchive(archive);\n  for (let i = 0; i < 4; i++) await Promise.resolve();\n",
+    "old": "  await settling.get(key); // in flight: until it lands or misses; a miss already known: at once",
+    "new": "  await getArchive(archive);\n  for (let i = 0; i < 4; i++) await Promise.resolve();",
     "tests": [
       "test/systems/decor/decormodflats.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "DECOR-MODFLATS-the-throw-unsettled",
     "file": "src/ui/textureCanvas.js",
-    "old": "}).catch((e) => { missed(); console.warn(`[icons] ${archive}_${record} would not draw`, e); });",
-    "new": "}).catch((e) => { console.warn(`[icons] ${archive}_${record} would not draw`, e); });",
+    "old": "      missed();\n      console.warn(`[icons] ${archive}_${record} would not draw`, e);",
+    "new": "      console.warn(`[icons] ${archive}_${record} would not draw`, e);",
     "tests": [
       "test/systems/decor/decormodflats.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "DECOR-MODFLATS-a-miss-unsettled",
     "file": "src/ui/textureCanvas.js",
-    "old": "  const missed = () => { waiting.delete(key); settling.delete(key); settle(); };",
-    "new": "  const missed = () => { waiting.delete(key); settling.delete(key); };",
+    "old": "    settle();\n  }; // a miss is cached as the null above, and wakes no one",
+    "new": "  }; // a miss is cached as the null above, and wakes no one",
     "tests": [
       "test/systems/decor/decormodflats.test.js"
     ]

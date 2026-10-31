@@ -4,7 +4,9 @@
     "file": "src/world/worldWide/worldCemetery.js",
     "old": "  return [...(places.inArea(area) ?? [])].filter(isCemeteryPlace).sort((a, b) => a.mapId - b.mapId);",
     "new": "  return [...(places.inArea(area) ?? [])].filter(isCemeteryPlace);",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "the draw over the walk's order: two clients' lists need not agree"
   },
   {
@@ -12,7 +14,9 @@
     "file": "src/world/worldWide/worldCemetery.js",
     "old": "export const isCemeteryPlace = (p) => !!p && !!p.hasDungeon && p.dungeonType === DUNGEON_TYPES.Cemetery;",
     "new": "export const isCemeteryPlace = (p) => !!p && !!p.hasDungeon;",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "a ruin taken for a crypt"
   },
   {
@@ -20,7 +24,9 @@
     "file": "src/world/worldWide/worldCemetery.js",
     "old": "export const isCemeteryPlace = (p) => !!p && !!p.hasDungeon && p.dungeonType === DUNGEON_TYPES.Cemetery;",
     "new": "export const isCemeteryPlace = (p) => !!p && p.dungeonType === DUNGEON_TYPES.Cemetery;",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "a graveyard with no dungeon taken"
   },
   {
@@ -28,7 +34,9 @@
     "file": "src/world/worldWide/worldCemetery.js",
     "old": "  if (own.length) return siteOf(own[Math.min(own.length - 1, Math.floor(roll() * own.length))]);",
     "new": "  if (own.length) return siteOf(own[0]);",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "no draw: always the first"
   },
   {
@@ -36,15 +44,19 @@
     "file": "src/world/worldWide/worldCemetery.js",
     "old": "      if (!dx && !dy) continue;",
     "new": "      if (dx || dy) continue;",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "none in the district: the districts about it never asked"
   },
   {
     "name": "R2-6-neighbour-farthest",
     "file": "src/world/worldWide/worldCemetery.js",
-    "old": "        if (d < bestD || (d === bestD && p.mapId < best.mapId)) { best = p; bestD = d; }",
-    "new": "        if (!best || p.mapId > best.mapId) { best = p; bestD = d; }",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "old": "        if (d < bestD || (d === bestD && p.mapId < best.mapId)) {",
+    "new": "        if (!best || p.mapId > best.mapId) {",
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "not the nearest"
   },
   {
@@ -52,7 +64,9 @@
     "file": "src/world/worldWide/worldCemetery.js",
     "old": "      if (row?.dungeonType !== DUNGEON_TYPES.Cemetery) continue;",
     "new": "      if (!row) continue;",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "the Bay's fallback takes a crypt for a cemetery"
   },
   {
@@ -60,7 +74,9 @@
     "file": "src/scenes/vampireCrypt.js",
     "old": "    const c = (places ? cemeteryPastBay(places, at.x, at.y, roll) : null) ?? nearestBayCemetery(maps, at.x, at.y);",
     "new": "    const c = places ? cemeteryPastBay(places, at.x, at.y, roll) : null;",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "no lair: the transfer skipped past the Bay again"
   },
   {
@@ -68,7 +84,9 @@
     "file": "src/scenes/vampireCrypt.js",
     "old": "  if (!inBay(at.x, at.y)) {",
     "new": "  if (false) {",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "the head's law: the region's MAPS rows past the Bay - none"
   },
   {
@@ -76,7 +94,9 @@
     "file": "src/scenes/world.js",
     "old": "    const pos = vampireCryptPixel(playerTravelPixel(), _questRegionIndex(), maps, worldPlaces);",
     "new": "    const pos = vampireCryptPixel(playerTravelPixel(), _questRegionIndex(), maps, null);",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "the host never hands the registry"
   },
   {
@@ -84,7 +104,9 @@
     "file": "src/net/staffEvent/staffEventLaw.js",
     "old": "  if (!worldPx(e.px) || !worldPx(e.py)) return 'pixel';",
     "new": "  if (!intIn(e.px, 0, 999) || !intIn(e.py, 0, 499)) return 'pixel';",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "the head's law: an area past the Bay refused"
   },
   {
@@ -92,39 +114,49 @@
     "file": "src/net/staffEvent/staffEventLaw.js",
     "old": "export const STAFF_EVENT_PIXEL_BOUND = 8192;",
     "new": "export const STAFF_EVENT_PIXEL_BOUND = 8193;",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "the law's bound past the wire's"
   },
   {
     "name": "R2-7-town-past-bay-taken",
     "file": "src/net/staffEvent/staffEventLaw.js",
-    "old": "  if (!isAreaEvent(e) && !staffTownPixelOk(e.px, e.py, e.loc, e.rg)) return 'town';",
-    "new": "",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "old": "  if (!isAreaEvent(e) && !staffTownPixelOk(e.px, e.py, e.loc, e.rg)) return 'town'; // AUDIT RELEASE R2-7, WW6: a town's event where its town stands - the Bay's or past it",
+    "new": "  // AUDIT RELEASE R2-7, WW6: a town's event where its town stands - the Bay's or past it",
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "WW6 (re-aimed by content): a town's event staged with its location and its pixel on two sides of the Bay's edge, which no raid runs"
   },
   {
     "name": "R2-7-word-pixel-the-bays",
     "file": "src/net/staffEvent/staffEventLaw.js",
-    "old": "  if (!worldPx(m.px) || !worldPx(m.py) || !intIn(m.n, 0, STAFF_EVENT_WORD_KILLS_MAX)",
-    "new": "  if (!intIn(m.px, 0, 999) || !worldPx(m.py) || !intIn(m.n, 0, STAFF_EVENT_WORD_KILLS_MAX)",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "old": "    !worldPx(m.px) ||",
+    "new": "    !intIn(m.px, 0, 999) ||",
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "the place's word past the Bay refused: no kill counted, no boss"
   },
   {
     "name": "R2-7-province-unlisted",
     "file": "src/net/staffPlaces.js",
-    "old": "  if (region !== null && isProvinceRegion(region)) return provincePlaces(maps, region, places);   // AUDIT RELEASE R2-7",
+    "old": "  if (region !== null && isProvinceRegion(region)) return provincePlaces(maps, region, places); // AUDIT RELEASE R2-7",
     "new": "",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "the picker's province empty"
   },
   {
     "name": "R2-7-offered-as-town",
     "file": "src/net/staffPlaces.js",
-    "old": "    const loc = kind === 'town' && Number.isSafeInteger(p?.location) && p.location < -1 ? p.location : -1;",
-    "new": "    const loc = 0;",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "old": "    const loc = kind === 'town' && Number.isSafeInteger(p?.location) && p.location < -1 ? p.location : -1; // WW6: a town past the Bay by its own index",
+    "new": "    const loc = 0; // WW6: a town past the Bay by its own index",
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "WW6 (re-aimed by content): a place past the Bay offered by a Bay location's index, which the law refuses there"
   },
   {
@@ -132,7 +164,9 @@
     "file": "src/net/staffPlaces.js",
     "old": "  const rows = places?.inTheatre?.(theatreOfRegion(region)) ?? [];",
     "new": "  const rows = places?.all?.() ?? [];",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "every province's places in one's list"
   },
   {
@@ -140,15 +174,19 @@
     "file": "src/scenes/world.js",
     "old": "  const worldPlaces = gamePlaces(createWorldPlaces());",
     "new": "  const worldPlaces = createWorldPlaces();",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "the host never keeps the registry for the picker"
   },
   {
     "name": "R2-8-place-the-bays",
     "file": "src/poi/poiLaw.js",
-    "old": "    if (!poiPixelOk(p.px)) say('place.px', 'px', { min: 1 - POI_WORLD_BOUND, max: POI_WORLD_BOUND - 1 });   // AUDIT RELEASE R2-8: the world's pixel",
+    "old": "    if (!poiPixelOk(p.px)) say('place.px', 'px', { min: 1 - POI_WORLD_BOUND, max: POI_WORLD_BOUND - 1 }); // AUDIT RELEASE R2-8: the world's pixel",
     "new": "    if (!Number.isInteger(p.px) || p.px < 0 || p.px >= POI_MAP.w) say('place.px', 'px', { max: POI_MAP.w - 1 });",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "the head's law: a POI past the Bay refused by the service and the editor"
   },
   {
@@ -156,7 +194,9 @@
     "file": "src/poi/poiLaw.js",
     "old": "export const POI_WORLD_BOUND = 8192;",
     "new": "export const POI_WORLD_BOUND = 8191;",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "the law's bound under the wire's"
   },
   {
@@ -164,7 +204,9 @@
     "file": "src/poi/poiLaw.js",
     "old": "export const poiPixelId = (doc) => poiPixelKey(doc.place.px, doc.place.py);",
     "new": "export const poiPixelId = (doc) => doc.place.py * POI_MAP.w + doc.place.px;",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "the head's id: two pixels past the Bay one id"
   },
   {
@@ -172,31 +214,39 @@
     "file": "src/poi/poiLaw.js",
     "old": "export const POI_PAST_BAY_ID_BASE = POI_MAP.w * POI_MAP.h;",
     "new": "export const POI_PAST_BAY_ID_BASE = 0;",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "the ids past the Bay over the Bay's own"
   },
   {
     "name": "R2-8-bay-ids-moved",
     "file": "src/poi/poiLaw.js",
-    "old": "  ? py * POI_MAP.w + px\n",
-    "new": "  ? POI_PAST_BAY_ID_BASE + (py + POI_WORLD_BOUND) * (2 * POI_WORLD_BOUND) + (px + POI_WORLD_BOUND)\n",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "old": "    ? py * POI_MAP.w + px",
+    "new": "    ? POI_PAST_BAY_ID_BASE + (py + POI_WORLD_BOUND) * (2 * POI_WORLD_BOUND) + (px + POI_WORLD_BOUND)",
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "the Bay's MapsFile ids moved"
   },
   {
     "name": "R2-8-feed-old-key",
     "file": "src/poi/poiFeed.js",
-    "old": "return byPixel.get(poiPixelKey(px, py)) ?? NONE; },",
-    "new": "return byPixel.get(py * 1000 + px) ?? NONE; },",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "old": "      return byPixel.get(poiPixelKey(px, py)) ?? NONE;",
+    "new": "      return byPixel.get(py * 1000 + px) ?? NONE;",
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "the feed asked by the old key: a POI past the Bay found at another pixel's ask"
   },
   {
     "name": "R2-8-editor-bays-clamp",
     "file": "src/poi/poiEdit.js",
-    "old": "  place.px = clamp(px, -E, E); place.py = clamp(py, -E, E);",
-    "new": "  place.px = clamp(px, 0, 999); place.py = clamp(py, 0, 499);",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "old": "  place.px = clamp(px, -E, E);\n  place.py = clamp(py, -E, E);",
+    "new": "  place.px = clamp(px, 0, 999);\n  place.py = clamp(py, 0, 499);",
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "the editor holds a place to the Bay's map"
   },
   {
@@ -204,7 +254,9 @@
     "file": "src/scenes/world.js",
     "old": "      const k = poiPixelKey(px, py);   // AUDIT RELEASE R2-8: `py * 1000 + px` gave two pixels past the Bay one riding frame",
     "new": "      const k = py * 1000 + px;",
-    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "tests": [
+      "test/world/worldWide/auditrelease_r2_gaps.test.js"
+    ],
     "note": "two pixels past the Bay share a riding frame"
   }
 ]

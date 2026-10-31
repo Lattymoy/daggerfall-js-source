@@ -209,8 +209,8 @@
   {
     "name": "PACK-PHONE-the-body-shown-by-default",
     "file": "src/systems/uiPrefs.js",
-    "old": "  packPhoneDoll: false,",
-    "new": "  packPhoneDoll: true,",
+    "old": "  packPhoneDoll: false, // PACK-PHONE (FIELD BUGS 2026-09-30): the pack's body on a phone - hidden until the header's Body shows it",
+    "new": "  packPhoneDoll: true, // PACK-PHONE (FIELD BUGS 2026-09-30): the pack's body on a phone - hidden until the header's Body shows it",
     "tests": [
       "test/systems/fb0930_packphone.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "PACK-PHONE-the-lane-never-told",
     "file": "src/systems/online/onlineLane.js",
-    "old": "  'packPhoneDoll',    // PACK-PHONE",
-    "new": "  //    // PACK-PHONE",
+    "old": "  'packPhoneDoll', // PACK-PHONE: whether THIS phone's pack draws the body - what this screen draws",
+    "new": "  //    // PACK-PHONE: whether THIS phone's pack draws the body - what this screen draws",
     "tests": [
       "test/systems/fb0930_packphone.test.js",
       "test/systems/onlinelane.test.js"

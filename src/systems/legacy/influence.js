@@ -14,7 +14,7 @@
 //    the town where they happened and in the family's seat - by name and by house.
 import { LEGAL_REP_MIN, LEGAL_REP_MAX } from '../court.js';
 import { changeReputation } from '../faction/factionRep.js';
-import { houseWord } from './houseName.js';   // LEGACY-NAME: "House Sentinel", never "House of Sentinel"
+import { houseWord } from './houseName.js'; // LEGACY-NAME: "House Sentinel", never "House of Sentinel"
 
 export const STANDING_SHARE = 0.25;
 export const REGARD_SHARE = 0.5;
@@ -31,7 +31,8 @@ const NAME_MAX = 60;
 /** @typedef {{ k: string, who: string, t: number, m: number|null }} News - kind, whole name, the town's minute, its map id */
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-const top = (entries, n) => entries.sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]) || (a[0] < b[0] ? -1 : 1)).slice(0, n);
+const top = (entries, n) =>
+  entries.sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]) || (a[0] < b[0] ? -1 : 1)).slice(0, n);
 
 /**
  * The standing the played character holds now - their person's `standing`, written at every save.
@@ -48,18 +49,35 @@ export function memberStanding(entity, regards, day) {
     if (Number.isFinite(n) && n !== 0 && /^\d+$/.test(k)) legal[k] = clamp(n, LEGAL_REP_MIN, LEGAL_REP_MAX);
   }
   const dict = entity?.factionRep?.dict;
-  const facs = dict instanceof Map ? [...dict].map(([id, f]) => [String(id), Math.trunc(Number(f?.rep) || 0)]).filter(([, r]) => r !== 0) : [];
-  const regs = regards?.entries && regards.regard
-    ? regards.entries().map((e) => [e.id, Math.round(/** @type {any} */ (regards).regard(e.id, day))]).filter(([, r]) => Math.abs(Number(r)) >= REGARD_FLOOR)
-    : [];
-  return { legal, factions: Object.fromEntries(top(facs, FACTIONS_KEPT)), regard: Object.fromEntries(top(regs, REGARDS_KEPT)) };
+  const facs =
+    dict instanceof Map
+      ? [...dict].map(([id, f]) => [String(id), Math.trunc(Number(f?.rep) || 0)]).filter(([, r]) => r !== 0)
+      : [];
+  const regs =
+    regards?.entries && regards.regard
+      ? regards
+          .entries()
+          .map((e) => [e.id, Math.round(/** @type {any} */ (regards).regard(e.id, day))])
+          .filter(([, r]) => Math.abs(Number(r)) >= REGARD_FLOOR)
+      : [];
+  return {
+    legal,
+    factions: Object.fromEntries(top(facs, FACTIONS_KEPT)),
+    regard: Object.fromEntries(top(regs, REGARDS_KEPT)),
+  };
 }
 
 /** A standing read back (a save, the store) - the shape held, anything else dropped; null when there is none. */
 export function readStanding(raw) {
   if (!raw || typeof raw !== 'object') return null;
-  const pick = (o, keyOk, lo, hi, n) => top(Object.entries(o && typeof o === 'object' ? o : {})
-    .map(([k, v]) => [k, Math.trunc(Number(v))]).filter(([k, v]) => keyOk(k) && Number.isFinite(v) && v !== 0).map(([k, v]) => [k, clamp(v, lo, hi)]), n);
+  const pick = (o, keyOk, lo, hi, n) =>
+    top(
+      Object.entries(o && typeof o === 'object' ? o : {})
+        .map(([k, v]) => [k, Math.trunc(Number(v))])
+        .filter(([k, v]) => keyOk(k) && Number.isFinite(v) && v !== 0)
+        .map(([k, v]) => [k, clamp(v, lo, hi)]),
+      n,
+    );
   return {
     legal: Object.fromEntries(pick(raw.legal, (k) => /^\d{1,3}$/.test(k), LEGAL_REP_MIN, LEGAL_REP_MAX, 200)),
     factions: Object.fromEntries(pick(raw.factions, (k) => /^\d{1,6}$/.test(k), -100, 100, FACTIONS_KEPT)),
@@ -105,24 +123,37 @@ export function inheritRegards(relations, parent, day) {
   let n = 0;
   for (const [id, r] of Object.entries(parent.regard ?? {})) {
     const d = Math.trunc(r * REGARD_SHARE);
-    if (d) { relations.inherit(id, d, day); n++; }
+    if (d) {
+      relations.inherit(id, d, day);
+      n++;
+    }
   }
   return n;
 }
 
 /** AUDIT LEGACY III P17: the news in ONE order - its minute, then its kind, its name, its town - so two copies that hold
  *  the same news keep the same NEWS_MAX at the cap (two items of one minute were kept by whichever copy merged first). */
-const newsOrder = (/** @type {News} */ a, /** @type {News} */ b) => a.t - b.t || (a.k < b.k ? -1 : a.k > b.k ? 1 : 0)
-  || (a.who < b.who ? -1 : a.who > b.who ? 1 : 0) || (a.m ?? -1) - (b.m ?? -1);
+const newsOrder = (/** @type {News} */ a, /** @type {News} */ b) =>
+  a.t - b.t ||
+  (a.k < b.k ? -1 : a.k > b.k ? 1 : 0) ||
+  (a.who < b.who ? -1 : a.who > b.who ? 1 : 0) ||
+  (a.m ?? -1) - (b.m ?? -1);
 /** One piece of news, as a reader's `heard` names it. */
 export const newsKey = (/** @type {News} */ n) => `${n.k}|${n.t}|${n.who}`;
 
 /** The house's news read back - kinds known, names bounded, the newest NEWS_MAX. @returns {News[]} */
 export function readNews(raw) {
   if (!Array.isArray(raw)) return [];
-  return raw.filter((n) => n && NEWS_KINDS.includes(n.k) && typeof n.who === 'string' && n.who && Number.isFinite(Number(n.t)))
-    .map((n) => ({ k: n.k, who: n.who.slice(0, NAME_MAX), t: Number(n.t), m: Number.isInteger(n.m) ? n.m >>> 0 : null }))
-    .sort(newsOrder).slice(-NEWS_MAX);
+  return raw
+    .filter((n) => n && NEWS_KINDS.includes(n.k) && typeof n.who === 'string' && n.who && Number.isFinite(Number(n.t)))
+    .map((n) => ({
+      k: n.k,
+      who: n.who.slice(0, NAME_MAX),
+      t: Number(n.t),
+      m: Number.isInteger(n.m) ? n.m >>> 0 : null,
+    }))
+    .sort(newsOrder)
+    .slice(-NEWS_MAX);
 }
 
 /**
@@ -133,7 +164,12 @@ export function readNews(raw) {
 export function noteNews(family, kind, who, t, mapId) {
   if (!family || !NEWS_KINDS.includes(kind) || !who || !Number.isFinite(t)) return false;
   const list = (family.news ??= []);
-  const n = { k: kind, who: String(who).slice(0, NAME_MAX), t: Math.floor(t), m: Number.isInteger(mapId) ? Number(mapId) >>> 0 : null };
+  const n = {
+    k: kind,
+    who: String(who).slice(0, NAME_MAX),
+    t: Math.floor(t),
+    m: Number.isInteger(mapId) ? Number(mapId) >>> 0 : null,
+  };
   if (list.some((x) => x.k === n.k && x.who === n.who && x.t === n.t)) return false;
   list.push(n);
   if (list.length > NEWS_MAX) list.splice(0, list.length - NEWS_MAX);
@@ -166,7 +202,10 @@ export function hearNews(family, reader, t) {
   for (const n of news) {
     const k = newsKey(n);
     if (Number.isFinite(was[k])) heard[k] = was[k];
-    else { heard[k] = Math.floor(Math.min(n.t, t)); fresh = true; }
+    else {
+      heard[k] = Math.floor(Math.min(n.t, t));
+      fresh = true;
+    }
   }
   const dropped = Object.keys(was).some((k) => !(k in heard));
   if (fresh || dropped || !reader.heard) reader.heard = heard;
@@ -175,7 +214,9 @@ export function hearNews(family, reader, t) {
 /** A reader's `heard` read back: news keys to minutes, at most NEWS_MAX of them - or none. */
 export function readHeard(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
-  const out = Object.entries(raw).filter(([k, v]) => typeof k === 'string' && k.length <= NAME_MAX + 40 && Number.isFinite(v)).slice(-NEWS_MAX);
+  const out = Object.entries(raw)
+    .filter(([k, v]) => typeof k === 'string' && k.length <= NAME_MAX + 40 && Number.isFinite(v))
+    .slice(-NEWS_MAX);
   return out.length ? Object.fromEntries(out.map(([k, v]) => [k, Math.floor(Number(v))])) : null;
 }
 /** Two copies' `heard` of one reader as one: each the earlier hearing. */
@@ -196,9 +237,19 @@ export function mergeHeard(a, b) {
 export function newsFor(family, mapId, t, heard = null) {
   if (!family?.news?.length || !Number.isFinite(t)) return [];
   const here = Number(mapId) >>> 0;
-  const seat = family.seat?.mapId != null && (family.seat.mapId >>> 0) === here;
+  const seat = family.seat?.mapId != null && family.seat.mapId >>> 0 === here;
   const at = (/** @type {News} */ n) => (heard && Number.isFinite(heard[newsKey(n)]) ? heard[newsKey(n)] : n.t);
-  return family.news.filter((n) => at(n) <= t && t - at(n) < HOUSE_NEWS_DAYS * DAY_MIN && (seat || (n.m != null && n.m === here)))
-    .map((n) => ({ kind: n.k, kin: /** @type {true} */ (true), who: n.who, house: houseWord(family.surname), foe: '', place: '', t: at(n), seen: /** @type {true} */ (true) }))
+  return family.news
+    .filter((n) => at(n) <= t && t - at(n) < HOUSE_NEWS_DAYS * DAY_MIN && (seat || (n.m != null && n.m === here)))
+    .map((n) => ({
+      kind: n.k,
+      kin: /** @type {true} */ (true),
+      who: n.who,
+      house: houseWord(family.surname),
+      foe: '',
+      place: '',
+      t: at(n),
+      seen: /** @type {true} */ (true),
+    }))
     .sort((a, b) => b.t - a.t);
 }

@@ -59,7 +59,8 @@ export function numberFor(r) {
  *  only from a frame the HUD saw (`prev` null is the first frame back from a window - a night's rest, a level-up, a
  *  load or a death - so what those windows restored is never floated as a heal). Pure; pinned. */
 export function healNumberFor(prev, now) {
-  const a = Number(prev), b = Number(now);
+  const a = Number(prev),
+    b = Number(now);
   if (prev == null || !Number.isFinite(a) || !Number.isFinite(b)) return null;
   const n = Math.round(b - a);
   return n > 0 ? { kind: 'heal', text: `+${n}`, tag: null } : null;
@@ -99,7 +100,9 @@ export function showNumber(n, { scatter01 = Math.random } = {}) {
   node.style.setProperty('--rise', `${RISE_MS}ms`);
   node.dataset.seq = String(++seq);
   host.append(node);
-  const gone = () => { if (node.isConnected) node.remove(); };
+  const gone = () => {
+    if (node.isConnected) node.remove();
+  };
   node.addEventListener('animationend', gone, { once: true });
   // a tab in the background does not run animations; the timer is the floor
   setTimeout(gone, RISE_MS + 250);
@@ -109,7 +112,13 @@ export function showNumber(n, { scatter01 = Math.random } = {}) {
 // ── TELL9: THE WORDS ON THE HIT (bible/12-Enhanced-AI/Feud-Arc.md 11.2) ──
 /** What a telegraphed blow's fight adds to a number: my blow on a wind-up that broke into a STAGGER, one that HOLDS, one
  *  on an overreached foe it could not stagger (OPEN); a PERFECT dodge, a word alone; a revenant's WEAKNESS (RVN3's). */
-export const HIT_TAGS = Object.freeze({ stagger: 'Stagger', hold: 'Holds', open: 'Open', perfect: 'Perfect', weakness: 'Weakness' });
+export const HIT_TAGS = Object.freeze({
+  stagger: 'Stagger',
+  hold: 'Holds',
+  open: 'Open',
+  perfect: 'Perfect',
+  weakness: 'Weakness',
+});
 /** A door's word joins the number my blow raised this long before it (the same frame: the formula reports, then the
  *  door decides). */
 export const TAG_JOIN_MS = 250;
@@ -125,7 +134,7 @@ export function showWord(text, kind = 'word') {
 /** A word on the number my blow on `target` just raised (a hit, inside TAG_JOIN_MS); none such - a spell's landing
  *  raises no number, another foe's is not this one's - and the word rises alone. Nothing without the enhanced HUD. */
 export function tagHit(target, word, { now = Date.now() } = {}) {
-  if (!word) return null;   // unmounted: no number joined (`_lastHit` is the mounted hook's), and showWord draws none
+  if (!word) return null; // unmounted: no number joined (`_lastHit` is the mounted hook's), and showWord draws none
   const l = _lastHit;
   if (l && target != null && l.target === target && now - l.at <= TAG_JOIN_MS && l.node?.isConnected) {
     const tag = document.createElement('small');
@@ -143,10 +152,17 @@ export function tagHit(target, word, { now = Date.now() } = {}) {
 export function retellHit(target, n, word, { now = Date.now() } = {}) {
   const l = _lastHit;
   if (!l || target == null || l.target !== target || now - l.at > TAG_JOIN_MS || !l.node?.isConnected) return null;
-  const first = l.node.firstChild, text = String(Math.max(0, Math.round(n)));
-  if (first && first.nodeType === 3) first.textContent = text;   // the number's own text, its tags kept after it
+  const first = l.node.firstChild,
+    text = String(Math.max(0, Math.round(n)));
+  if (first && first.nodeType === 3)
+    first.textContent = text; // the number's own text, its tags kept after it
   else if (!first) l.node.textContent = text;
-  if (word) { const tag = document.createElement('small'); tag.className = 'hitnum-tag'; tag.textContent = String(word); l.node.append(tag); }
+  if (word) {
+    const tag = document.createElement('small');
+    tag.className = 'hitnum-tag';
+    tag.textContent = String(word);
+    l.node.append(tag);
+  }
   return l.node;
 }
 
@@ -168,7 +184,7 @@ export function mountHitNumbers() {
   registered = true;
   setPlayerAttackHook((r) => {
     const node = showNumber(numberFor(r));
-    _lastHit = node && r?.hit && !r.ineffective ? { target: r.target ?? null, node, at: Date.now() } : null;   // TELL9: the door's word joins it
+    _lastHit = node && r?.hit && !r.ineffective ? { target: r.target ?? null, node, at: Date.now() } : null; // TELL9: the door's word joins it
   });
 }
 /** For tests and the classic skin's guarantee: nothing registered. */
@@ -177,5 +193,8 @@ export function unmountHitNumbers() {
   registered = false;
   _lastHit = null;
   setPlayerAttackHook(null);
-  if (layer) { layer.remove(); layer = null; }
+  if (layer) {
+    layer.remove();
+    layer = null;
+  }
 }

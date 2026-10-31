@@ -11,8 +11,8 @@
   {
     "name": "LOOT11-reach-unbounded",
     "file": "src/scenes/lootLines.js",
-    "old": "    if (!(d <= reach)) continue;\n",
-    "new": "\n",
+    "old": "    if (!(d <= reach)) continue;",
+    "new": "",
     "tests": [
       "test/scenes/loot11_lines.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LOOT11-magic-stands",
     "file": "src/scenes/lootLines.js",
-    "old": "if (!tier || (RARITIES[tier]?.rank ?? 0) < RARITIES.rare.rank) continue;",
-    "new": "if (!tier || (RARITIES[tier]?.rank ?? 0) < RARITIES.magic.rank) continue;",
+    "old": "    if (!tier || (RARITIES[tier]?.rank ?? 0) < RARITIES.rare.rank) continue;",
+    "new": "    if (!tier || (RARITIES[tier]?.rank ?? 0) < RARITIES.magic.rank) continue;",
     "tests": [
       "test/scenes/loot11_lines.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "LOOT11-unsorted",
     "file": "src/scenes/lootLines.js",
-    "old": "  out.sort((a, b) => a.d - b.d);\n",
-    "new": "\n",
+    "old": "  out.sort((a, b) => a.d - b.d);",
+    "new": "",
     "tests": [
       "test/scenes/loot11_lines.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "LOOT11-pick-off",
     "file": "src/scenes/lootLines.js",
-    "old": "    if (!rarity) continue;   // OFF IS DFU EXACTLY: with the loot-rarity row off, no find's own line\n",
-    "new": "",
+    "old": "    if (!rarity) continue; // OFF IS DFU EXACTLY: with the loot-rarity row off, no find's own line\n    const tier = bestRarity(f.own ? f.items : f.items.filter((it) => !isPresented(it))); // PI1: a standing item's line is its own",
+    "new": "    const tier = bestRarity(f.own ? f.items : f.items.filter((it) => !isPresented(it))); // PI1: a standing item's line is its own",
     "tests": [
       "test/scenes/loot11_lines.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LOOT11-pass-off",
     "file": "src/scenes/lootLines.js",
-    "old": "      if (!glow || (!lootRarityOn() && !_marksLive.size)) return false;",
-    "new": "      if (!glow) return false;",
+    "old": "      if (!glow || (!lootRarityOn() && !_marksLive.size)) return false; // WILD1: a marked find stands its line with the rarity row off too (pickLootLines)",
+    "new": "      if (!glow) return false; // WILD1: a marked find stands its line with the rarity row off too (pickLootLines)",
     "tests": [
       "test/scenes/loot11_lines.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "LOOT11-crown-at-the-feet",
     "file": "src/scenes/lootLines.js",
-    "old": "[pos[0], pos[1] + (Number.isFinite(size?.h) ? size.h : LOOT_LINE_CROWN), pos[2]]",
-    "new": "[pos[0], pos[1], pos[2]]",
+    "old": "export const lootCrown = (pos, size) =>\n  Array.isArray(pos) && pos.length >= 3\n    ? [pos[0], pos[1] + (Number.isFinite(size?.h) ? size.h : LOOT_LINE_CROWN), pos[2]]\n    : null;",
+    "new": "export const lootCrown = (pos, size) => (Array.isArray(pos) && pos.length >= 3 ? [pos[0], pos[1], pos[2]] : null);",
     "tests": [
       "test/scenes/loot11_lines.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "LOOT11-crown-unsized",
     "file": "src/scenes/lootLines.js",
-    "old": "(Number.isFinite(size?.h) ? size.h : LOOT_LINE_CROWN)",
-    "new": "(Number.isFinite(size?.h) ? size.h : 0)",
+    "old": "  Array.isArray(pos) && pos.length >= 3\n    ? [pos[0], pos[1] + (Number.isFinite(size?.h) ? size.h : LOOT_LINE_CROWN), pos[2]]\n    : null;",
+    "new": "  Array.isArray(pos) && pos.length >= 3 ? [pos[0], pos[1] + (Number.isFinite(size?.h) ? size.h : 0), pos[2]] : null;",
     "tests": [
       "test/scenes/loot11_lines.test.js"
     ]

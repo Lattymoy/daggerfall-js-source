@@ -41,7 +41,16 @@ export function buildingKeysOfType(blocks, makeKey, type) {
   return out;
 }
 
-export const SIEGE_FIELD = Object.freeze({ thronePaceM: 1.5, defendCampM: 12, gateInM: 6, attackCampM: 14, openGateM: 40, openCampM: 60, squareM: 20, templePaceM: 2 });
+export const SIEGE_FIELD = Object.freeze({
+  thronePaceM: 1.5,
+  defendCampM: 12,
+  gateInM: 6,
+  attackCampM: 14,
+  openGateM: 40,
+  openCampM: 60,
+  squareM: 20,
+  templePaceM: 2,
+});
 
 /**
  * CASTLE-GATE: A CROWN CITY'S CASTLE ENTRANCE - of a pixel's dungeon-entrance doors (each `{ door: { a, b }, box, normal }`,
@@ -55,14 +64,19 @@ export const SIEGE_FIELD = Object.freeze({ thronePaceM: 1.5, defendCampM: 12, ga
  * @param {Array<{ door: { a: number[], b: number[] } | null, box: number[], normal?: number[] | null, arena?: boolean }>} doors
  */
 export function castleEntranceOf(doors) {
-  let best = null, low = Infinity;
+  let best = null,
+    low = Infinity;
   for (const d of doors ?? []) {
-    if (d?.arena) continue;   // AUDIT PRE-MERGE 1003 W7
-    if (!d?.door || !Array.isArray(d.door.a) || !Array.isArray(d.door.b) || !Array.isArray(d.box) || d.box.length < 6) continue;
+    if (d?.arena) continue; // AUDIT PRE-MERGE 1003 W7
+    if (!d?.door || !Array.isArray(d.door.a) || !Array.isArray(d.door.b) || !Array.isArray(d.box) || d.box.length < 6)
+      continue;
     const y = (d.door.a[1] + d.door.b[1]) / 2;
     const normal = Array.isArray(d.normal) ? [...d.normal] : null;
-    if (!doorFace({ door: d.door, box: d.box, normal })) continue;   // AUDIT G3: a door no face is taken from
-    if (Number.isFinite(y) && y < low - 1e-6) { low = y; best = { door: d.door, box: [...d.box], normal }; }
+    if (!doorFace({ door: d.door, box: d.box, normal })) continue; // AUDIT G3: a door no face is taken from
+    if (Number.isFinite(y) && y < low - 1e-6) {
+      low = y;
+      best = { door: d.door, box: [...d.box], normal };
+    }
   }
   return best;
 }
@@ -74,23 +88,30 @@ export function castleEntranceOf(doors) {
 export function doorFaceSign(ox, oz, cx, cz, box, normal) {
   const dn = Array.isArray(normal) ? ox * normal[0] + oz * normal[2] : NaN;
   if (Number.isFinite(dn) && Math.abs(dn) >= 0.5) return dn < 0 ? [-ox, -oz] : [ox, oz];
-  const mx = (box[0] + box[3]) / 2, mz = (box[2] + box[5]) / 2;
+  const mx = (box[0] + box[3]) / 2,
+    mz = (box[2] + box[5]) / 2;
   return (cx - mx) * ox + (cz - mz) * oz < 0 ? [-ox, -oz] : [ox, oz];
 }
 
 /** A door's middle and its face (square to the door's span, away from the building's middle - CASTLE-GATE: along the
  *  frame's outward `normal` where it carries one, doorFaceSign) - or null. */
 export function doorFace(frame) {
-  const d = frame?.door, box = frame?.box;
+  const d = frame?.door,
+    box = frame?.box;
   if (!d || !Array.isArray(d.a) || !Array.isArray(d.b) || !Array.isArray(box) || box.length < 6) return null;
-  const rx = d.b[0] - d.a[0], rz = d.b[2] - d.a[2];
+  const rx = d.b[0] - d.a[0],
+    rz = d.b[2] - d.a[2];
   const w = Math.hypot(rx, rz);
   if (!(w >= 0.3)) return null;
-  const cx = (d.a[0] + d.b[0]) / 2, cz = (d.a[2] + d.b[2]) / 2;
+  const cx = (d.a[0] + d.b[0]) / 2,
+    cz = (d.a[2] + d.b[2]) / 2;
   return { at: [cx, cz], out: doorFaceSign(-rz / w, rx / w, cx, cz, box, frame.normal) };
 }
 const boxMid = (box) => [(box[0] + box[3]) / 2, (box[2] + box[5]) / 2];
-const unit = (x, z) => { const l = Math.hypot(x, z); return l > 1e-9 ? [x / l, z / l] : [1, 0]; };
+const unit = (x, z) => {
+  const l = Math.hypot(x, z);
+  return l > 1e-9 ? [x / l, z / l] : [1, 0];
+};
 const step = (p, d, m) => [p[0] + d[0] * m, p[1] + d[1] * m];
 
 /**
@@ -100,7 +121,18 @@ const step = (p, d, m) => [p[0] + d[0] * m, p[1] + d[1] * m];
  * BOUNTY1 took, `centre` the town's middle `[x, z]`, `tier` the seat's; AUDIT-SEATS G21: `castle` a crown city's castle
  * entrance's frame (`{ door, box }`, the dungeon-entrance door the town's blocks stand), or null.
  */
-export function siegeFieldOf({ frames = null, palaceKeys = [], templeKeys = [], hallKeys = [], gates = [], boards = [], bounty = new Set(), centre = [0, 0], tier = 'palace', castle = null } = {}) {
+export function siegeFieldOf({
+  frames = null,
+  palaceKeys = [],
+  templeKeys = [],
+  hallKeys = [],
+  gates = [],
+  boards = [],
+  bounty = new Set(),
+  centre = [0, 0],
+  tier = 'palace',
+  castle = null,
+} = {}) {
   const palace = palaceKeys.map((k) => doorFace(frames?.get?.(k))).find(Boolean) ?? null;
   // AUDIT-SEATS G21: a crown's field stands before its castle's entrance where the town's records hold one
   const face = (tier === 'crown' ? doorFace(castle) : null) ?? palace;
@@ -108,11 +140,16 @@ export function siegeFieldOf({ frames = null, palaceKeys = [], templeKeys = [], 
   const throne = step(face.at, face.out, SIEGE_FIELD.thronePaceM);
   const defend = step(face.at, face.out, SIEGE_FIELD.defendCampM);
   // the attackers' gate: the farthest from the palace; inside it the Gate, outside it their camp
-  let gate = null, far = -1;
+  let gate = null,
+    far = -1;
   for (const g of gates) {
     if (!Array.isArray(g?.box) || g.box.length < 6) continue;
-    const m = boxMid(g.box), d = Math.hypot(m[0] - throne[0], m[1] - throne[1]);
-    if (d > far) { far = d; gate = m; }
+    const m = boxMid(g.box),
+      d = Math.hypot(m[0] - throne[0], m[1] - throne[1]);
+    if (d > far) {
+      far = d;
+      gate = m;
+    }
   }
   let gateBanner, attack;
   if (gate) {
@@ -130,14 +167,24 @@ export function siegeFieldOf({ frames = null, palaceKeys = [], templeKeys = [], 
   const market = at >= 0 && boards[at].box.length >= 6 ? boxMid(boards[at].box) : centre;
   // the Temple: its door, else the largest guild hall's, else the middle
   let temple = null;
-  for (const k of templeKeys) { const f = doorFace(frames?.get?.(k)); if (f) { temple = step(f.at, f.out, SIEGE_FIELD.templePaceM); break; } }
+  for (const k of templeKeys) {
+    const f = doorFace(frames?.get?.(k));
+    if (f) {
+      temple = step(f.at, f.out, SIEGE_FIELD.templePaceM);
+      break;
+    }
+  }
   if (!temple) {
     let big = -1;
     for (const k of hallKeys) {
-      const fr = frames?.get?.(k), f = doorFace(fr);
+      const fr = frames?.get?.(k),
+        f = doorFace(fr);
       if (!f) continue;
       const area = (fr.box[3] - fr.box[0]) * (fr.box[5] - fr.box[2]);
-      if (area > big) { big = area; temple = step(f.at, f.out, SIEGE_FIELD.templePaceM); }
+      if (area > big) {
+        big = area;
+        temple = step(f.at, f.out, SIEGE_FIELD.templePaceM);
+      }
     }
   }
   const banners = [gateBanner, market, temple ?? centre];
@@ -147,10 +194,15 @@ export function siegeFieldOf({ frames = null, palaceKeys = [], templeKeys = [], 
 
 /** A pixel-local point `[x, z]` (metres) as the wire's world point - whole natives, the floating origin never read
  *  (streamingWorld.js worldCoords over pixelTranslation: x px x 32768 + x x 40, z (499 - py) x 32768 + z x 40). */
-export const siegeWorldPoint = (px, py, p) => [Math.round(px * PIXEL_UNITS + p[0] * SIEGE_UNITS_PER_M), Math.round((499 - py) * PIXEL_UNITS + p[1] * SIEGE_UNITS_PER_M)];
+export const siegeWorldPoint = (px, py, p) => [
+  Math.round(px * PIXEL_UNITS + p[0] * SIEGE_UNITS_PER_M),
+  Math.round((499 - py) * PIXEL_UNITS + p[1] * SIEGE_UNITS_PER_M),
+];
 /** The field as a pass carries it (`sf`): the banners, the Throne, the attackers' camp, the defenders' - world points. */
-export const siegeFieldWire = (px, py, f) => (f ? [...f.banners, f.throne, f.camps.attack, f.camps.defend].map((p) => siegeWorldPoint(px, py, p)) : null);
+export const siegeFieldWire = (px, py, f) =>
+  f ? [...f.banners, f.throne, f.camps.attack, f.camps.defend].map((p) => siegeWorldPoint(px, py, p)) : null;
 /** CROWN1 part two: A ROYAL TOURNEY'S RING (Seats-Arc 7.6: "at the castle's entrance square") - the crown's Palace square,
  *  its field's fourth banner (SIEGE_FIELD.squareM before the castle's entrance - CASTLE-GATE - or the palace door where the
  *  town has none), as a pass carries it: one world point. Null for a field with no square (a palace's). */
-export const royalRingWire = (px, py, f) => (f && f.banners.length >= 4 ? [siegeWorldPoint(px, py, f.banners[3])] : null);
+export const royalRingWire = (px, py, f) =>
+  f && f.banners.length >= 4 ? [siegeWorldPoint(px, py, f.banners[3])] : null;

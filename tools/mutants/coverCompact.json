@@ -29,8 +29,8 @@
   {
     "name": "COVER-COMPACT-a-row-s-last-cell-unread",
     "file": "src/ai/cover.js",
-    "old": "        for (let cell = firstAt(grid.keys, cellKey(gx, gz0)); cell < grid.keys.length && grid.keys[cell] <= last; cell++) {",
-    "new": "        for (let cell = firstAt(grid.keys, cellKey(gx, gz0)); cell < grid.keys.length && grid.keys[cell] < last; cell++) {",
+    "old": "          cell < grid.keys.length && grid.keys[cell] <= last;",
+    "new": "          cell < grid.keys.length && grid.keys[cell] < last;",
     "tests": [
       "test/ai/coverCompact.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "COVER-COMPACT-a-body-query-reads-what-is-waiting-unbuilt",
     "file": "src/ai/cover.js",
-    "old": "      if (set.dirty) seal(set);\n      const t = set.t(), x = p[0] - t[0], z = p[2] - t[2];",
-    "new": "      const t = set.t(), x = p[0] - t[0], z = p[2] - t[2];",
+    "old": "      if (set.dirty) seal(set);\n      const t = set.t(),",
+    "new": "      const t = set.t(),",
     "tests": [
       "test/ai/coverCompact.test.js"
     ]

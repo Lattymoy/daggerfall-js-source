@@ -2,8 +2,8 @@
   {
     "name": "TACT2-switch-ignored",
     "file": "src/ai/tactics.js",
-    "old": "  if (!tacticsSwitchOn()) { if (ai._tac) releaseTactics(ai); ai._tac = null; ai._tacStrike = undefined; ai._tacShoot = undefined; ai._aimReady = false; ai._wantAimed = false; ai._blowShot = null; return false; }   // AUDIT TELL B4: DFU's bow roll whole again",
-    "new": "  if (false) { if (ai._tac) releaseTactics(ai); ai._tac = null; ai._tacStrike = undefined; ai._tacShoot = undefined; ai._aimReady = false; ai._wantAimed = false; ai._blowShot = null; return false; }   // AUDIT TELL B4: DFU's bow roll whole again",
+    "old": "  if (!tacticsSwitchOn()) {",
+    "new": "  if (false) {",
     "tests": [
       "test/characters/enemy/tact2.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TACT2-no-swing-beat",
     "file": "src/ai/tactics.js",
-    "old": "    if (s.state === 'engage') { s.state = 'swing'; s.until = now + TACT.SWING; }   // the blow plays out where it was struck",
-    "new": "    if (s.state === 'engage') { s.state = 'swing'; s.until = now; }   // the blow plays out where it was struck",
+    "old": "      s.until = now + TACT.SWING;",
+    "new": "      s.until = now;",
     "tests": [
       "test/characters/enemy/tact2.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "TACT2-token-kept",
     "file": "src/ai/tactics.js",
-    "old": "    b.melee.delete(ai); b.waiting.set(ai, now);",
+    "old": "    b.melee.delete(ai);\n    b.waiting.set(ai, now);",
     "new": "    b.waiting.set(ai, now);",
     "tests": [
       "test/characters/enemy/tact2.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "TACT2-waiters-strike",
     "file": "src/ai/tactics.js",
-    "old": "  if (s.state === 'swing') { ai._tacStrike = false; ai.moving = false; face(); return true; }   // stands its blow\n  ai._tacStrike = false;",
-    "new": "  if (s.state === 'swing') { ai._tacStrike = false; ai.moving = false; face(); return true; }   // stands its blow\n  ai._tacStrike = undefined;",
+    "old": "  } // stands its blow\n  ai._tacStrike = false;",
+    "new": "  } // stands its blow\n  ai._tacStrike = undefined;",
     "tests": [
       "test/characters/enemy/tact2.test.js"
     ]
@@ -65,7 +65,7 @@
   {
     "name": "TACT2-no-hurt-backoff",
     "file": "src/ai/tactics.js",
-    "old": "    if (s.hp.length > 1 && (s.hp[0][1] - v.health) / v.maxHealth >= TACT.HURT_SHARE && s.state !== 'backoff' && now >= (s.backoffReady ?? 0)) {",
+    "old": "    if (\n      s.hp.length > 1 &&\n      (s.hp[0][1] - v.health) / v.maxHealth >= TACT.HURT_SHARE &&\n      s.state !== 'backoff' &&\n      now >= (s.backoffReady ?? 0)\n    ) {",
     "new": "    if (false) {",
     "tests": [
       "test/characters/enemy/tact2.test.js"
@@ -156,8 +156,8 @@
   {
     "name": "TACT2-no-out-of-sight-gate",
     "file": "src/ai/tactics.js",
-    "old": "  const fighting = (ai.inSight || away) && ai.detected && Number.isFinite(dist) && dist <= (shooter(ai) ? TACT.SHOOT_RANGE : TACT.ENGAGE_RANGE) && !ai.follow;",
-    "new": "  const fighting = true && Number.isFinite(dist) && dist <= (shooter(ai) ? TACT.SHOOT_RANGE : TACT.ENGAGE_RANGE) && !ai.follow;",
+    "old": "    (ai.inSight || away) &&\n    ai.detected &&\n    Number.isFinite(dist) &&\n    dist <= (shooter(ai) ? TACT.SHOOT_RANGE : TACT.ENGAGE_RANGE) &&\n    !ai.follow;",
+    "new": "    true && Number.isFinite(dist) && dist <= (shooter(ai) ? TACT.SHOOT_RANGE : TACT.ENGAGE_RANGE) && !ai.follow;",
     "tests": [
       "test/characters/enemy/tact2.test.js"
     ]
@@ -174,7 +174,7 @@
   {
     "name": "TACT2-release-keeps",
     "file": "src/ai/tactics.js",
-    "old": "    b.melee.delete(ai); b.ranged.delete(ai); b.waiting.delete(ai);",
+    "old": "    b.melee.delete(ai);\n    b.ranged.delete(ai);\n    b.waiting.delete(ai);",
     "new": "    b.waiting.delete(ai);",
     "tests": [
       "test/characters/enemy/tact2.test.js"

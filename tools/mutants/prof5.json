@@ -81,8 +81,8 @@
   {
     "name": "PROF5-law-load-ten",
     "file": "src/net/marketLaw.js",
-    "old": "load: 20, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10",
-    "new": "load: 10, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10",
+    "old": "export const COURIER = Object.freeze({ load: 20, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10 });",
+    "new": "export const COURIER = Object.freeze({ load: 10, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10 });",
     "tests": [
       "test/net/prof5_law.test.js"
     ]
@@ -90,8 +90,8 @@
   {
     "name": "PROF5-law-road-cheaper",
     "file": "src/net/marketLaw.js",
-    "old": "load: 20, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10",
-    "new": "load: 20, pixelsAMark: 30, least: 2, baseS: 900, pixelsAMinute: 10",
+    "old": "export const COURIER = Object.freeze({ load: 20, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10 });",
+    "new": "export const COURIER = Object.freeze({ load: 20, pixelsAMark: 30, least: 2, baseS: 900, pixelsAMinute: 10 });",
     "tests": [
       "test/net/prof5_law.test.js"
     ]
@@ -99,8 +99,8 @@
   {
     "name": "PROF5-law-least-one",
     "file": "src/net/marketLaw.js",
-    "old": "load: 20, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10",
-    "new": "load: 20, pixelsAMark: 25, least: 1, baseS: 900, pixelsAMinute: 10",
+    "old": "export const COURIER = Object.freeze({ load: 20, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10 });",
+    "new": "export const COURIER = Object.freeze({ load: 20, pixelsAMark: 25, least: 1, baseS: 900, pixelsAMinute: 10 });",
     "tests": [
       "test/net/prof5_law.test.js"
     ]
@@ -108,8 +108,8 @@
   {
     "name": "PROF5-law-courier-quicker",
     "file": "src/net/marketLaw.js",
-    "old": "load: 20, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10",
-    "new": "load: 20, pixelsAMark: 25, least: 2, baseS: 600, pixelsAMinute: 10",
+    "old": "export const COURIER = Object.freeze({ load: 20, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10 });",
+    "new": "export const COURIER = Object.freeze({ load: 20, pixelsAMark: 25, least: 2, baseS: 600, pixelsAMinute: 10 });",
     "tests": [
       "test/net/prof5_law.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "PROF5-law-hub-own-first",
     "file": "src/net/marketLaw.js",
-    "old": "  const f = witnessedFact(rows, parseHubReport);\n  if (f.state !== 'none'",
-    "new": "  const f = own ? { state: 'none' } : witnessedFact(rows, parseHubReport);\n  if (f.state !== 'none'",
+    "old": "  const f = witnessedFact(rows, parseHubReport);",
+    "new": "  const f = own ? { state: 'none' } : witnessedFact(rows, parseHubReport);",
     "tests": [
       "test/net/prof5_law.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "PROF5-law-median-unsorted",
     "file": "src/net/marketLaw.js",
-    "old": ".filter((r) => r && r.units > 0 && r.price > 0).sort((a, b) => a.price - b.price);",
-    "new": ".filter((r) => r && r.units > 0 && r.price > 0);",
+    "old": "  const sorted = (rows ?? []).filter((r) => r && r.units > 0 && r.price > 0).sort((a, b) => a.price - b.price);",
+    "new": "  const sorted = (rows ?? []).filter((r) => r && r.units > 0 && r.price > 0);",
     "tests": [
       "test/net/prof5_law.test.js"
     ]
@@ -284,8 +284,8 @@
   {
     "name": "PROF5-law-line-shifted",
     "file": "src/net/marketLaw.js",
-    "old": "  for (let d = today - days + 1; d <= today; d++)",
-    "new": "  for (let d = today - days; d < today; d++)",
+    "old": "  for (let d = today - days + 1; d <= today; d++) out.push(medianOf((rows ?? []).filter((r) => r.day === d)));",
+    "new": "  for (let d = today - days; d < today; d++) out.push(medianOf((rows ?? []).filter((r) => r.day === d)));",
     "tests": [
       "test/net/prof5_law.test.js"
     ]
@@ -302,8 +302,8 @@
   {
     "name": "PROF5-law-catalogue-unlawed",
     "file": "src/net/marketLaw.js",
-    "old": "  const all = [...MINED_KEYS, ...FOOD_KEYS, ...herbs].filter((k) => !UNYIELDED.includes(k)).map((k) => material(k)).filter(Boolean);",
-    "new": "  const all = [...MINED_KEYS, ...FOOD_KEYS, ...herbs].filter((k) => !UNYIELDED.includes(k)).map((k) => material(k) ?? { key: k, family: 'herbs', tier: 1 });",
+    "old": "    .map((k) => material(k))\n    .filter(Boolean);",
+    "new": "    .map((k) => material(k) ?? { key: k, family: 'herbs', tier: 1 });",
     "tests": [
       "test/net/prof5_law.test.js"
     ],
@@ -322,8 +322,8 @@
   {
     "name": "PROF5-law-wool-four",
     "file": "src/net/professionLaw.js",
-    "old": "Object.freeze({ key: WOOL.key, marks: 3, counter: 'weavers' })",
-    "new": "Object.freeze({ key: WOOL.key, marks: 4, counter: 'weavers' })",
+    "old": "  Object.freeze({ key: WOOL.key, marks: 3, counter: 'weavers' }),",
+    "new": "  Object.freeze({ key: WOOL.key, marks: 4, counter: 'weavers' }),",
     "tests": [
       "test/net/prof5_law.test.js",
       "test/net/prof5_service.test.js"
@@ -332,8 +332,8 @@
   {
     "name": "PROF5-law-wool-held-back",
     "file": "src/net/professionLaw.js",
-    "old": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane']);",
-    "new": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane', 'cloth:wool']);",
+    "old": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane']); // SEAT2b part two: a siege work's road is the writ's (RAM_KIT); AUDIT PROF12 E1: Arcane Essence's the Stores'",
+    "new": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane', 'cloth:wool']); // SEAT2b part two: a siege work's road is the writ's (RAM_KIT); AUDIT PROF12 E1: Arcane Essence's the Stores'",
     "tests": [
       "test/net/prof5_law.test.js",
       "test/net/prof5_service.test.js"
@@ -760,8 +760,8 @@
   {
     "name": "PROF5-book-mint-twice",
     "file": "src/net/marketBook.js",
-    "old": "      if (had && r.data?.piece) { try { mint?.(r.data.piece, kind); }",
-    "new": "      if (r.data?.piece) { try { mint?.(r.data.piece, kind); }",
+    "old": "      const had = letGo(kind, entry.rid, key);\n      forget();\n      if (had && r.data?.piece) {\n        try {",
+    "new": "      const had = letGo(kind, entry.rid, key);\n      forget();\n      if (r.data?.piece) {\n        try {",
     "tests": [
       "test/net/prof5_client.test.js"
     ]
@@ -770,8 +770,8 @@
     "name": "PROF5-book-piece-lost",
     "file": "src/net/marketBook.js",
     "note": "INT19 (PIN MOVED): re-aimed by content - a refused piece is put back by the realm act's undo (realmPieceAct)",
-    "old": "      try { piece.putBack(piece.item, piece.where); } catch (e) { console.warn('[market] put back', e); }\n",
-    "new": "",
+    "old": "      try {\n        piece.putBack(piece.item, piece.where);\n      } catch (e) {\n        console.warn('[market] put back', e);\n      }\n    },",
+    "new": "    },",
     "tests": [
       "test/net/prof5_client.test.js"
     ]
@@ -779,8 +779,8 @@
   {
     "name": "PROF5-book-settle-keeps-refused",
     "file": "src/net/marketBook.js",
-    "old": "            else { try { putBack(l.item, l.where); } catch (e) { console.warn('[market] put back', e); } }",
-    "new": "            else { /* kept */ }",
+    "old": "                try {\n                  putBack(l.item, l.where);\n                } catch (e) {\n                  console.warn('[market] put back', e);\n                }",
+    "new": "                /* kept */",
     "tests": [
       "test/net/prof5_client.test.js"
     ]
@@ -788,8 +788,8 @@
   {
     "name": "PROF5-book-marks-untold",
     "file": "src/net/marketBook.js",
-    "old": "    if (Number.isSafeInteger(d.balance)) { state.balance = d.balance; try { marks?.set?.(d.balance); } catch { /* the Marks book's own */ } }",
-    "new": "    if (Number.isSafeInteger(d.balance)) { state.balance = d.balance; }",
+    "old": "      try {\n        marks?.set?.(d.balance);\n      } catch {\n        /* the Marks book's own */\n      }\n    }",
+    "new": "    }",
     "tests": [
       "test/net/prof5_client.test.js"
     ]
@@ -806,8 +806,8 @@
   {
     "name": "PROF5-book-never-stale",
     "file": "src/net/marketBook.js",
-    "old": "stale: !r?.ok && !!hit?.data };",
-    "new": "stale: false };",
+    "old": "        stale: !r?.ok && !!hit?.data,",
+    "new": "        stale: false,",
     "tests": [
       "test/net/prof5_client.test.js"
     ]
@@ -824,7 +824,7 @@
   {
     "name": "PROF5-book-two-at-once",
     "file": "src/net/marketBook.js",
-    "old": "  const once = (key, fn) => {\n    if (_busy) return _busyKey === key ? _busy : Promise.resolve({ ok: false, error: 'market-busy' });\n    _busyKey = key;\n    return (_busy = (async () => { try { return await fn(); } finally { _busy = null; _busyKey = null; } })());\n  };",
+    "old": "  const once = (key, fn) => {\n    if (_busy) return _busyKey === key ? _busy : Promise.resolve({ ok: false, error: 'market-busy' });\n    _busyKey = key;\n    return (_busy = (async () => {\n      try {\n        return await fn();\n      } finally {\n        _busy = null;\n        _busyKey = null;\n      }\n    })());\n  };",
     "new": "  const once = (key, fn) => fn();",
     "tests": [
       "test/net/prof5_client.test.js"
@@ -833,8 +833,8 @@
   {
     "name": "PROF5-book-arrivals-left",
     "file": "src/net/marketBook.js",
-    "old": "        for (const d of state.road.filter((x) => x.kind === 'piece' && x.ready && x.character === me)) {",
-    "new": "        for (const d of state.road.filter((x) => x.kind === 'piece' && x.ready && x.character === me && false)) {",
+    "old": "          for (const d of state.road.filter((x) => x.kind === 'piece' && x.ready && x.character === me)) {",
+    "new": "          for (const d of state.road.filter((x) => x.kind === 'piece' && x.ready && x.character === me && false)) {",
     "tests": [
       "test/net/prof5_client.test.js"
     ]
@@ -851,8 +851,8 @@
   {
     "name": "PROF5-tab-whole-courier",
     "file": "src/ui/marketTab.js",
-    "old": "const courierOf = (row, units) => (row.region === m.region ? 0 : row.road ? courierFee(units, row.road.road) * (row.currency === 'gold' ? MARK_WORTH_GOLD : 1) : null);",
-    "new": "const courierOf = (row, units) => (row.region === m.region ? 0 : row.road ? row.road.courier : null);",
+    "old": "  const courierOf = (row, units) =>\n    row.region === m.region\n      ? 0\n      : row.road\n        ? courierFee(units, row.road.road) * (row.currency === 'gold' ? MARK_WORTH_GOLD : 1)\n        : null;",
+    "new": "  const courierOf = (row, units) => (row.region === m.region ? 0 : row.road ? row.road.courier : null);",
     "tests": [
       "test/net/prof5_client.test.js"
     ]
@@ -860,8 +860,8 @@
   {
     "name": "PROF5-tab-max-price-only",
     "file": "src/ui/marketTab.js",
-    "old": "listing: row.id, units, max: units * row.price + (courier ?? 0), hubs: m.hubs, ...at(), ...(gold ? { currency: 'gold' } : {}) }, m.mint),",
-    "new": "listing: row.id, units, max: units * row.price, hubs: m.hubs, ...at(), ...(gold ? { currency: 'gold' } : {}) }, m.mint),",
+    "old": "              max: units * row.price + (courier ?? 0),",
+    "new": "              max: units * row.price,",
     "tests": [
       "test/net/prof5_client.test.js"
     ]
@@ -878,8 +878,8 @@
   {
     "name": "PROF5-tab-fee-unsaid",
     "file": "src/ui/marketTab.js",
-    "old": ": `Fee ${marksText(fee)}, kept if you cancel. Up for 72 hours",
-    "new": ": `Fee kept if you cancel. Up for 72 hours",
+    "old": "                : `Fee ${marksText(fee)}, kept if you cancel. Up for 72 hours on every board. If it all sells you get ${marksText(sellerGets(worth(), pct ?? 0))}, after ${less}${pct == null ? ', before any Tithe' : ''}.`;",
+    "new": "                : `Fee kept if you cancel. Up for 72 hours on every board. If it all sells you get ${marksText(sellerGets(worth(), pct ?? 0))}, after ${less}${pct == null ? ', before any Tithe' : ''}.`;",
     "tests": [
       "test/net/prof5_client.test.js"
     ]
@@ -905,8 +905,8 @@
   {
     "name": "PROF5-tab-weavers-gone",
     "file": "src/ui/marketTab.js",
-    "old": "box.append(el('summary', null, MARKET_WORDS.suppliers), weaversNode());",
-    "new": "box.append(el('summary', null, MARKET_WORDS.suppliers));",
+    "old": "    box.append(el('summary', null, MARKET_WORDS.suppliers), weaversNode());",
+    "new": "    box.append(el('summary', null, MARKET_WORDS.suppliers));",
     "tests": [
       "test/net/prof5_client.test.js"
     ]
@@ -914,7 +914,7 @@
   {
     "name": "PROF5-window-market-always",
     "file": "src/ui/noticeWindow.js",
-    "old": "  const marketShown = () => !!marketHost && (marketAtOpen || marketHost.book?.state?.open !== false || tab === 'market');",
+    "old": "  const marketShown = () =>\n    !!marketHost && (marketAtOpen || marketHost.book?.state?.open !== false || tab === 'market');",
     "new": "  const marketShown = () => !!marketHost;",
     "tests": [
       "test/net/prof5_client.test.js"
@@ -923,8 +923,8 @@
   {
     "name": "PROF5-window-market-hidden",
     "file": "src/ui/noticeWindow.js",
-    "old": "...(workShown() ? [['work', 'Work']] : []), ...(marketShown() ? [['market', 'Market']] : []), ...(vendorTab ? [['vendors', 'Vendors']] : []), ...(guildsShown() ? [['guilds', 'Guilds']] : []), ...(seatShown() ? [['seat', 'Seat']] : [])];",
-    "new": "...(workShown() ? [['work', 'Work']] : []), ...(vendorTab ? [['vendors', 'Vendors']] : []), ...(guildsShown() ? [['guilds', 'Guilds']] : []), ...(seatShown() ? [['seat', 'Seat']] : [])];",
+    "old": "            ...(marketShown() ? [['market', 'Market']] : []),\n            ...(vendorTab ? [['vendors', 'Vendors']] : []),",
+    "new": "            ...(vendorTab ? [['vendors', 'Vendors']] : []),",
     "tests": [
       "test/net/prof5_client.test.js"
     ],
@@ -942,7 +942,7 @@
   },
   {
     "name": "PROF5-host-stock-untold",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "          toldBalance(r?.data?.balance);   // PROF5 (FOUND): the Bank's balance told too; AUDIT 32 B3: and the market's",
     "new": "",
     "tests": [

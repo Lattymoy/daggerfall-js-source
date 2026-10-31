@@ -155,8 +155,8 @@
   {
     "name": "DECK-rail-side-unread",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "            const i = side > 0 ? nx - 1 - n : n, j = k * nx + i, x = minX + (i + 0.5) * cell;",
-    "new": "            const i = n, j = k * nx + i, x = minX + (i + 0.5) * cell;",
+    "old": "            const i = side > 0 ? nx - 1 - n : n,",
+    "new": "            const i = n,",
     "tests": [
       "test/systems/naval/livingcrew.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "DECK-rail-row-unread",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "      const k0 = Math.min(nz - 1, Math.max(0, Math.floor((z - minZ) / cell)));\n      for (let r = 0; r < nz; r++) {\n        for (let pass",
-    "new": "      const k0 = 0;\n      for (let r = 0; r < nz; r++) {\n        for (let pass",
+    "old": "      const k0 = Math.min(nz - 1, Math.max(0, Math.floor((z - minZ) / cell)));",
+    "new": "      const k0 = 0;",
     "tests": [
       "test/systems/naval/livingcrew.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "HOST-flats-left-up",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "      for (const f of flats) { f.was = f.renderer.m_Enabled; f.renderer.m_Enabled = false; }",
-    "new": "      for (const f of flats) { f.was = f.renderer.m_Enabled; }",
+    "old": "          f.renderer.m_Enabled = false;\n        }",
+    "new": "        }",
     "tests": [
       "test/systems/naval/livingcrew.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "HOST-rowers-taken",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "peopleFlatsOf(w.boat).filter((f) => f.feet[1] >= main - DECK_STEP);",
-    "new": "peopleFlatsOf(w.boat);",
+    "old": "        const flats = peopleFlatsOf(w.boat).filter((f) => f.feet[1] >= main - DECK_STEP); // never the rowers below her deck",
+    "new": "        const flats = peopleFlatsOf(w.boat); // never the rowers below her deck",
     "tests": [
       "test/systems/naval/livingcrew.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "HOST-carry-by-the-root",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "      const m = ship.boat.MeshObject?.worldMatrix?.();\n      if (!m) continue;",
-    "new": "      const m = ship.boat.GameObject?.worldMatrix?.();\n      if (!m) continue;",
+    "old": "      const m = ship.boat.MeshObject?.worldMatrix?.();",
+    "new": "      const m = ship.boat.GameObject?.worldMatrix?.();",
     "tests": [
       "test/systems/naval/livingcrew.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "HOST-flats-never-back",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "    for (const f of ship.flats) f.renderer.m_Enabled = f.was;   // the mod's flats stand again\n",
-    "new": "",
+    "old": "    for (const f of ship.flats) f.renderer.m_Enabled = f.was; // the mod's flats stand again\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/naval/livingcrew.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "HOST-hold-unread",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "      if (w.hold && !ship.held) { ship.held = true; ship.life.take(Infinity); }",
-    "new": "      if (false) { ship.held = true; ship.life.take(Infinity); }",
+    "old": "      if (w.hold && !ship.held) {",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/naval/livingcrew.test.js"
     ]
@@ -236,7 +236,7 @@
   {
     "name": "HOST-reset-unread",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "    reset(key) { const ship = ships.get(key); if (ship) { standDown(ship); ships.delete(key); } },",
+    "old": "    reset(key) {\n      const ship = ships.get(key);\n      if (ship) {\n        standDown(ship);\n        ships.delete(key);\n      }\n    },",
     "new": "    reset() {},",
     "tests": [
       "test/systems/naval/livingcrew.test.js"
@@ -344,8 +344,8 @@
   {
     "name": "SAY-never-hidden",
     "file": "src/ui/naval/navalHud.js",
-    "old": "  const want = covered ? [] : layoutCrewLines(points, { scale, memory: sayMemory, dt, top: 0 });",
-    "new": "  const want = layoutCrewLines(points, { scale, memory: sayMemory, dt, top: 0 });",
+    "old": "  const want = covered ? [] : layoutCrewLines(points, { scale, memory: sayMemory, dt, top: 0 }); // CREW-SAY: laid out, never over each other",
+    "new": "  const want = layoutCrewLines(points, { scale, memory: sayMemory, dt, top: 0 }); // CREW-SAY: laid out, never over each other",
     "tests": [
       "test/systems/naval/livingcrew.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "SAY-fade-unread",
     "file": "src/ui/naval/navalHud.js",
-    "old": "tagAlpha(p.distance, CREW_SAY_RANGE, CREW_SAY_FADE_FROM)",
-    "new": "tagAlpha(0, CREW_SAY_RANGE, CREW_SAY_FADE_FROM)",
+    "old": "    set('a', String(Math.round(tagAlpha(p.distance, CREW_SAY_RANGE, CREW_SAY_FADE_FROM) * 100) / 100), (v) => {",
+    "new": "    set('a', String(Math.round(tagAlpha(0, CREW_SAY_RANGE, CREW_SAY_FADE_FROM) * 100) / 100), (v) => {",
     "tests": [
       "test/systems/naval/livingcrew.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "SAY-song-plain",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    set('kind', p.kind === 'sing' || p.kind === 'shout' ? `dfnaval-say ${p.kind}` : 'dfnaval-say', (v) => { slot.n.className = v; });",
-    "new": "    set('kind', 'dfnaval-say', (v) => { slot.n.className = v; });",
+    "old": "    set('kind', p.kind === 'sing' || p.kind === 'shout' ? `dfnaval-say ${p.kind}` : 'dfnaval-say', (v) => {",
+    "new": "    set('kind', 'dfnaval-say', (v) => {",
     "tests": [
       "test/systems/naval/livingcrew.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "PEERS-key-unstamped",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "if (boat) { boat.peerKey = `${owner}:${i}`; boat.uid = w.uid ?? 0;",
-    "new": "if (boat) { boat.uid = w.uid ?? 0;",
+    "old": "          boat.peerKey = `${owner}:${i}`;\n          boat.uid = w.uid ?? 0;",
+    "new": "          boat.uid = w.uid ?? 0;",
     "tests": [
       "test/systems/naval/livingcrew.test.js"
     ]

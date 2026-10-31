@@ -4,41 +4,53 @@
     "file": "src/net/siege/refereeHealthShare.js",
     "old": "  const dodge = Math.min(PVP_EVADE.dodgeMax, PVP_EVADE.perDodge * Math.max(0, Number(sh?.dodge) || 0));",
     "new": "  const dodge = PVP_EVADE.perDodge * Math.max(0, Number(sh?.dodge) || 0);",
-    "tests": ["test/net/pvpevade.test.js"]
+    "tests": [
+      "test/net/pvpevade.test.js"
+    ]
   },
   {
     "name": "PVP-EVADE-the-level-backwards",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "Math.max(0, toLevel - byLevel)",
-    "new": "Math.max(0, byLevel - toLevel)",
-    "tests": ["test/net/pvpevade.test.js"]
+    "old": "  const over = Number.isSafeInteger(byLevel) && Number.isSafeInteger(toLevel) ? Math.max(0, toLevel - byLevel) : 0;",
+    "new": "  const over = Number.isSafeInteger(byLevel) && Number.isSafeInteger(toLevel) ? Math.max(0, byLevel - toLevel) : 0;",
+    "tests": [
+      "test/net/pvpevade.test.js"
+    ]
   },
   {
     "name": "PVP-EVADE-no-whole-cap",
     "file": "src/net/siege/refereeHealthShare.js",
     "old": "  return Math.min(PVP_EVADE.max, dodge + level + Math.max(0, Number(sh?.evade) || 0));",
     "new": "  return dodge + level + Math.max(0, Number(sh?.evade) || 0);",
-    "tests": ["test/net/pvpevade.test.js"]
+    "tests": [
+      "test/net/pvpevade.test.js"
+    ]
   },
   {
     "name": "PVP-EVADE-the-roll-skipped",
     "file": "src/net/wild/wildRef.js",
-    "old": "  const evaded = !spell && roll() * 100 < pvpEvadeChance(",
-    "new": "  const evaded = false && roll() * 100 < pvpEvadeChance(",
-    "tests": ["test/net/pvpevade.test.js"]
+    "old": "  const evaded = !spell && roll() * 100 < pvpEvadeChance(t.f, a.cl ?? null, t.cl ?? null); // PVP-EVADE: after the striker's own hit roll, `why` 'evade'",
+    "new": "  const evaded = false && roll() * 100 < pvpEvadeChance(t.f, a.cl ?? null, t.cl ?? null); // PVP-EVADE: after the striker's own hit roll, `why` 'evade'",
+    "tests": [
+      "test/net/pvpevade.test.js"
+    ]
   },
   {
     "name": "PVP-EVADE-a-spell-evaded",
     "file": "src/net/wild/wildRef.js",
-    "old": "  const evaded = !spell && roll() * 100 < pvpEvadeChance(",
-    "new": "  const evaded = roll() * 100 < pvpEvadeChance(",
-    "tests": ["test/net/pvpevade.test.js"]
+    "old": "  const evaded = !spell && roll() * 100 < pvpEvadeChance(t.f, a.cl ?? null, t.cl ?? null); // PVP-EVADE: after the striker's own hit roll, `why` 'evade'",
+    "new": "  const evaded = roll() * 100 < pvpEvadeChance(t.f, a.cl ?? null, t.cl ?? null); // PVP-EVADE: after the striker's own hit roll, `why` 'evade'",
+    "tests": [
+      "test/net/pvpevade.test.js"
+    ]
   },
   {
     "name": "PVP-EVADE-no-dodge-bound",
     "file": "src/net/wire.js",
     "old": "  if (m.dg !== undefined && !intIn(m.dg, 0, VIT_DODGE_MAX)) return null;   // PVP-EVADE\n",
     "new": "",
-    "tests": ["test/net/pvpevade.test.js"]
+    "tests": [
+      "test/net/pvpevade.test.js"
+    ]
   }
 ]

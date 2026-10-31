@@ -1,684 +1,684 @@
 [
- {
-  "name": "SEAT2a-law-days",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const SIEGE_WINDOW_DAYS = Object.freeze(['Wednesday', 'Thursday', 'Friday', 'Saturday']);",
-  "new": "export const SIEGE_WINDOW_DAYS = Object.freeze(['Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']);",
-  "tests": [
-   "test/net/seat2a_client.test.js",
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-hours-early",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const SIEGE_WINDOW_HOURS = Object.freeze([16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2]);",
-  "new": "export const SIEGE_WINDOW_HOURS = Object.freeze([15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2]);",
-  "tests": [
-   "test/net/seat2a_client.test.js",
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-hours-late",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const SIEGE_WINDOW_HOURS = Object.freeze([16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2]);",
-  "new": "export const SIEGE_WINDOW_HOURS = Object.freeze([16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2, 3]);",
-  "tests": [
-   "test/net/seat2a_client.test.js",
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-default",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const SIEGE_WINDOW_DEFAULT = Object.freeze({ day: 0, hour: 20 });",
-  "new": "export const SIEGE_WINDOW_DEFAULT = Object.freeze({ day: 0, hour: 21 });",
-  "tests": [
-   "test/net/seat2a_client.test.js",
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-window-whole-day",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const siegeWindowOk = (day, hour) => Number.isSafeInteger(day) && day >= 0",
-  "new": "export const siegeWindowOk = (day, hour) => day >= 0",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-window-whole-hour",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  && Number.isSafeInteger(hour) && SIEGE_WINDOW_HOURS.includes(hour);",
-  "new": "  && SIEGE_WINDOW_HOURS.includes(Math.floor(hour));",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-wednesday",
-  "file": "src/net/townSeatLaw.js",
-  "old": "const WEDNESDAY_MS = 54 * H;",
-  "new": "const WEDNESDAY_MS = 48 * H;",
-  "tests": [
-   "test/net/seat2a_client.test.js",
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-night-after",
-  "file": "src/net/townSeatLaw.js",
-  "old": "hour * H + (hour < 16 ? 24 * H : 0);",
-  "new": "hour * H;",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-crown-slot",
-  "file": "src/net/townSeatLaw.js",
-  "old": "wayrest: Object.freeze({ day: 3, hour: 21 }),",
-  "new": "wayrest: Object.freeze({ day: 3, hour: 20 }),",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-palace-length",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const BATTLE_LENGTH_MS = Object.freeze({ palace: 30 * 60_000, crown: 45 * 60_000, tourney: 20 * 60_000, revolt: 2 * 3600 * 1000 });",
-  "new": "export const BATTLE_LENGTH_MS = Object.freeze({ palace: 45 * 60_000, crown: 45 * 60_000, tourney: 20 * 60_000, revolt: 2 * 3600 * 1000 });",
-  "tests": [
-   "test/net/seat2a_client.test.js",
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-tourney-length",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const BATTLE_LENGTH_MS = Object.freeze({ palace: 30 * 60_000, crown: 45 * 60_000, tourney: 20 * 60_000, revolt: 2 * 3600 * 1000 });",
-  "new": "export const BATTLE_LENGTH_MS = Object.freeze({ palace: 30 * 60_000, crown: 45 * 60_000, tourney: 30 * 60_000, revolt: 2 * 3600 * 1000 });",
-  "tests": [
-   "test/net/seat2a_client.test.js",
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-tourney-own-length",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const battleLengthMs = (b) => (b.kind === 'tourney' || b.kind === 'revolt' ? BATTLE_LENGTH_MS[b.kind] : BATTLE_LENGTH_MS[b.tier] ?? BATTLE_LENGTH_MS.palace);",
-  "new": "export const battleLengthMs = (b) => (b.kind === 'revolt' ? BATTLE_LENGTH_MS[b.kind] : BATTLE_LENGTH_MS[b.tier] ?? BATTLE_LENGTH_MS.palace);",
-  "tests": [
-   "test/net/seat2a_client.test.js",
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-crown-span",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const battleSpanMs = (b) => (b.kind === 'siege' && b.tier === 'crown' ? H : BATTLE_BLOCK_MS);",
-  "new": "export const battleSpanMs = (b) => BATTLE_BLOCK_MS;",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-crown-at-window",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  if (atSiegeWindow(b) && b.tier === 'crown' && CROWN_SIEGE_SLOT[b.kingdom]) {",
-  "new": "  if (false) {",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-tourney-at-window",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  const w = atSiegeWindow(b) && b.window && siegeWindowOk(b.window.day, b.window.hour) ? b.window : SIEGE_WINDOW_DEFAULT;",
-  "new": "  const w = b.window && siegeWindowOk(b.window.day, b.window.hour) ? b.window : SIEGE_WINDOW_DEFAULT;",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-window-unchecked",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  const w = atSiegeWindow(b) && b.window && siegeWindowOk(b.window.day, b.window.hour) ? b.window : SIEGE_WINDOW_DEFAULT;",
-  "new": "  const w = atSiegeWindow(b) && b.window ? b.window : SIEGE_WINDOW_DEFAULT;",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-unordered",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  for (const b of [...battles].sort((x, y) => crownFirst(x) - crownFirst(y) || x.key - y.key)) {",
-  "new": "  for (const b of [...battles]) {",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-clash-any-guild",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  const clashes = (b, at) => placed.some((p) => guildsOf(p).some((g) => guildsOf(b).includes(g))\n    && at < p.startsAt",
-  "new": "  const clashes = (b, at) => placed.some((p) => true\n    && at < p.startsAt",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-clash-touching",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    && at < p.startsAt + battleSpanMs(p) && p.startsAt < at + battleSpanMs(b));",
-  "new": "    && at <= p.startsAt + battleSpanMs(p) && p.startsAt <= at + battleSpanMs(b));",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-step-hourly",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    for (let t = want; t <= last; t += BATTLE_BLOCK_MS) if (allowed.has(t) && !clashes(b, t)) { at = t; break; }",
-  "new": "    for (let t = want; t <= last; t += H) if (allowed.has(t) && !clashes(b, t)) { at = t; break; }",
-  "tests": [
-   "test/net/seat2a_client.test.js",
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-any-hour",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    for (let t = want; t <= last; t += BATTLE_BLOCK_MS) if (allowed.has(t) && !clashes(b, t)) { at = t; break; }",
-  "new": "    for (let t = want; t <= last; t += BATTLE_BLOCK_MS) if (!clashes(b, t)) { at = t; break; }",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-unplaced-at-end",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    if (at == null) { unplaced.push(b); continue; }",
-  "new": "    if (at == null) { at = last; }",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-moved-unsaid",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    placed.push({ ...b, startsAt: at, endsAt: at + battleLengthMs(b), moved: at !== want });",
-  "new": "    placed.push({ ...b, startsAt: at, endsAt: at + battleLengthMs(b), moved: false });",
-  "tests": [
-   "test/net/seat2a_client.test.js",
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-palace-side",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const SIEGE_SIDE_MAX = Object.freeze({ palace: 10, crown: 20 });",
-  "new": "export const SIEGE_SIDE_MAX = Object.freeze({ palace: 11, crown: 20 });",
-  "tests": [
-   "test/net/seat2a_client.test.js",
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-crown-side",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const SIEGE_SIDE_MAX = Object.freeze({ palace: 10, crown: 20 });",
-  "new": "export const SIEGE_SIDE_MAX = Object.freeze({ palace: 10, crown: 16 });",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-palace-swords",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const SELLSWORDS_MAX = Object.freeze({ palace: 2, crown: 4 });",
-  "new": "export const SELLSWORDS_MAX = Object.freeze({ palace: 3, crown: 4 });",
-  "tests": [
-   "test/net/seat2a_client.test.js",
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-crown-swords",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const SELLSWORDS_MAX = Object.freeze({ palace: 2, crown: 4 });",
-  "new": "export const SELLSWORDS_MAX = Object.freeze({ palace: 2, crown: 2 });",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-close",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const SIGN_CLOSES_MS = 10 * 60_000;",
-  "new": "export const SIGN_CLOSES_MS = 5 * 60_000;",
-  "tests": [
-   "test/net/seat2a_client.test.js",
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-close-inclusive",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const signOpen = (startsAtMs, nowMs) => nowMs < startsAtMs - SIGN_CLOSES_MS;",
-  "new": "export const signOpen = (startsAtMs, nowMs) => nowMs <= startsAtMs - SIGN_CLOSES_MS;",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-cooling",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const SELLSWORD_COOL_WEEKS = 4;",
-  "new": "export const SELLSWORD_COOL_WEEKS = 1;",
-  "tests": [
-   "test/net/seat2a_client.test.js",
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-fee-cap",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const SELLSWORD_FEE_MAX = 5000;",
-  "new": "export const SELLSWORD_FEE_MAX = 10000;",
-  "tests": [
-   "test/net/seat2a_client.test.js",
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-fee-whole",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const sellswordFeeOk = (n) => Number.isSafeInteger(n) && n >= 0 && n <= SELLSWORD_FEE_MAX;",
-  "new": "export const sellswordFeeOk = (n) => n >= 0 && n <= SELLSWORD_FEE_MAX;",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-side-defender",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const sideOf = (battle, guild) => (battle?.attacker === guild ? 'attack' : battle?.defender === guild ? 'defend' : null);",
-  "new": "export const sideOf = (battle, guild) => (battle?.attacker === guild ? 'attack' : 'defend');",
-  "tests": [
-   "test/net/seat2a_client.test.js",
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-night-words",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  ? `${SIEGE_WINDOW_DAYS[w.day]} ${two(w.hour)}:00 UTC${w.hour < 16 ? ' (the night after)' : ''}` : null);",
-  "new": "  ? `${SIEGE_WINDOW_DAYS[w.day]} ${two(w.hour)}:00 UTC` : null);",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-moved-words",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  const moved = b.moved ? ' (moved, so that no guild fights twice at once)' : '';",
-  "new": "  const moved = '';",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-chronicle-moved",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    case 'battle-moved': return",
-  "new": "    case 'battle-moved-x': return",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-law-sellsword-plural",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const sideLine = (label, n, max, swords) => `${label}: ${n} of ${max} signed${swords ? ` (${swords} Sellsword${swords === 1 ? '' : 's'})` : ''}.`;",
-  "new": "export const sideLine = (label, n, max, swords) => `${label}: ${n} of ${max} signed.`;",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-window-anyone",
-  "file": "server-account/src/seatBattles.js",
-  "old": "  if (!SEAT_LEVER_RANKS.includes(Number(a.me.rank))) return { error: 'guild-rank' };\n  // AUDIT-SEATS S10",
-  "new": "  // AUDIT-SEATS S10",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-window-any-seat",
-  "file": "server-account/src/seatBattles.js",
-  "old": "    SELECT ?1, ?2, ?3, ?4, ?5, ?6 WHERE EXISTS (SELECT 1 FROM town_seat_holds WHERE key = ?1 AND guild_id = ?2)\n      AND EXISTS",
-  "new": "    SELECT ?1, ?2, ?3, ?4, ?5, ?6 WHERE 1\n      AND EXISTS",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-window-unchecked",
-  "file": "server-account/src/seatBattles.js",
-  "old": "  if (!siegeWindowOk(day, hour)) return { error: 'bad-window' };\n",
-  "new": "",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-old-holders-window",
-  "file": "server-account/src/seatBattles.js",
-  "old": "  const w = await db.prepare('SELECT day, hour FROM town_seat_windows WHERE key = ? AND guild_id = ?').bind(key, guildId).first();",
-  "new": "  const w = await db.prepare('SELECT day, hour FROM town_seat_windows WHERE key = ? AND ? IS NOT NULL').bind(key, guildId).first();",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-new-member",
-  "file": "server-account/src/seatBattles.js",
-  "old": "    if (Number(me.joined_at) > turningS - SEAT_MEMBER_WAIT_S) return { error: 'sign-new-member' };\n",
-  "new": "",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-unbound",
-  "file": "server-account/src/seatBattles.js",
-  "old": "    if (then !== me.guild_id && b.kind !== 'revolt') return { error: 'sign-unbound' };",
-  "new": "    if (false) return { error: 'sign-unbound' };",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-bound-elsewhere",
-  "file": "server-account/src/seatBattles.js",
-  "old": "    if (bound != null && bound !== me.guild_id) return { error: 'sign-bound-elsewhere' };\n    const r = await",
-  "new": "    const r = await",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-side-room",
-  "file": "server-account/src/seatBattles.js",
-  "old": "      WHERE ${openSql('?1', '?2', '?7')} AND ${roomSql('?1', '?2', '?6')}\n        AND EXISTS (SELECT 1 FROM guild_members WHERE player = ?3 AND char_id = ?4",
-  "new": "      WHERE ${openSql('?1', '?2', '?7')}\n        AND EXISTS (SELECT 1 FROM guild_members WHERE player = ?3 AND char_id = ?4",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-close-early",
-  "file": "server-account/src/seatBattles.js",
-  "old": "  if (nowS >= b.starts_at - SIGN_CLOSES_MS / 1000) return { error: 'sign-closed' };\n  if (await db.prepare('SELECT 1 FROM town_seat_rosters WHERE week = ? AND key = ? AND account = ?')",
-  "new": "  if (await db.prepare('SELECT 1 FROM town_seat_rosters WHERE week = ? AND key = ? AND account = ?')",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-twice",
-  "file": "server-account/src/seatBattles.js",
-  "old": "  if (await db.prepare('SELECT 1 FROM town_seat_rosters WHERE week = ? AND key = ? AND account = ?').bind(week, key, player.id).first()) return { error: 'sign-twice' };\n",
-  "new": "",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-unbinding",
-  "file": "server-account/src/seatBattles.js",
-  "old": "    await db.prepare('INSERT OR IGNORE INTO town_seat_binds (week, account, guild_id, char_id, at) VALUES (?, ?, ?, ?, ?)').bind(week, player.id, me.guild_id, character, nowS).run();\n    return { ok: true, side, sellsword: false };",
-  "new": "    return { ok: true, side, sellsword: false };",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-sword-member",
-  "file": "server-account/src/seatBattles.js",
-  "old": "  if (await db.prepare('SELECT 1 FROM guild_members WHERE player = ? AND guild_id IN (?, ?)').bind(player.id, b.attacker, b.defender).first()) return { error: 'sellsword-member' };\n  if (bound != null && bound !== hire.guild_id)",
-  "new": "  if (bound != null && bound !== hire.guild_id)",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-cooling",
-  "file": "server-account/src/seatBattles.js",
-  "old": "  if (await db.prepare('SELECT 1 FROM town_seat_rosters WHERE account = ? AND guild_id = ? AND week >= ? AND week < ?').bind(player.id, other, week - SELLSWORD_COOL_WEEKS, week).first()) return { error: 'sellsword-cooling' };\n",
-  "new": "",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-sword-fee",
-  "file": "server-account/src/seatBattles.js",
-  "old": "      SELECT ?1, ?2, ?3, ?4, ?5, ?6, 1, h.fee, ?7 FROM town_seat_hires h",
-  "new": "      SELECT ?1, ?2, ?3, ?4, ?5, ?6, 1, 0, ?7 FROM town_seat_hires h",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-hire-unsigned",
-  "file": "server-account/src/seatBattles.js",
-  "old": "    db.prepare(\"UPDATE town_seat_hires SET state = 'signed' WHERE week = ? AND key = ? AND account = ? AND state = 'offered' AND changes() > 0\").bind(week, key, player.id),\n  ]);\n  if (!r?.meta?.changes) return { error: nowS >= b.starts_at - SIGN_CLOSES_MS / 1000 ? 'sign-closed' : 'sellswords-full' };",
-  "new": "  ]);\n  if (!r?.meta?.changes) return { error: nowS >= b.starts_at - SIGN_CLOSES_MS / 1000 ? 'sign-closed' : 'sellswords-full' };",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-unsign-any-time",
-  "file": "server-account/src/seatBattles.js",
-  "old": "    db.prepare(`DELETE FROM town_seat_rosters WHERE week = ?1 AND key = ?2 AND account = ?3 AND ${openSql('?1', '?2', '?4')}`).bind(week, key, player.id, nowS),",
-  "new": "    db.prepare(`DELETE FROM town_seat_rosters WHERE week = ?1 AND key = ?2 AND account = ?3 AND ?4 IS NOT NULL`).bind(week, key, player.id, nowS),",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-hire-officer",
-  "file": "server-account/src/seatBattles.js",
-  "old": "  if (Number(a.me.rank) !== GUILD_RANK_MASTER) return { error: 'guild-rank' };\n  const b = await battleAt(db, weekAt(nowS), key);",
-  "new": "  const b = await battleAt(db, weekAt(nowS), key);",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-hire-member",
-  "file": "server-account/src/seatBattles.js",
-  "old": "  if (await db.prepare('SELECT 1 FROM guild_members WHERE player = ? AND guild_id IN (?, ?)').bind(who.id, m.b.attacker, m.b.defender).first()) return { error: 'sellsword-member' };\n",
-  "new": "",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-hire-fee",
-  "file": "server-account/src/seatBattles.js",
-  "old": "  if (!sellswordFeeOk(fee)) return { error: 'bad-fee' };\n",
-  "new": "",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-hire-cap",
-  "file": "server-account/src/seatBattles.js",
-  "old": "      WHERE (SELECT COUNT(*) FROM town_seat_hires WHERE week = ?1 AND key = ?2 AND guild_id = ?4 AND state IN ('offered', 'signed')) < ${max}",
-  "new": "      WHERE (SELECT COUNT(*) FROM town_seat_hires WHERE week = ?1 AND key = ?2 AND guild_id = ?4 AND state IN ('offered', 'signed')) <= ${max}",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-hire-twice",
-  "file": "server-account/src/seatBattles.js",
-  "old": "  if (await db.prepare(\"SELECT 1 FROM town_seat_hires WHERE week = ? AND key = ? AND account = ? AND state <> 'withdrawn'\").bind(week, key, who.id).first()) return { error: 'hire-twice' };\n",
-  "new": "",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-no-escrow",
-  "file": "server-account/src/seatBattles.js",
-  "old": "  if (fee > 0) {\n    stmts.push(db.prepare(`INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)\n      SELECT 'guild', ?1, 'escrow'",
-  "new": "  if (fee < 0) {\n    stmts.push(db.prepare(`INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)\n      SELECT 'guild', ?1, 'escrow'",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-no-return",
-  "file": "server-account/src/seatBattles.js",
-  "old": "  if (Number(h.fee) > 0) {\n    stmts.push(db.prepare(`INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)\n      VALUES ('escrow'",
-  "new": "  if (Number(h.fee) < 0) {\n    stmts.push(db.prepare(`INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)\n      VALUES ('escrow'",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-view-swords",
-  "file": "server-account/src/seatBattles.js",
-  "old": "  for (const r of rows) { const s = sides[r.side]; if (!s) continue; s.n += Number(r.n); if (Number(r.sellsword)) s.swords += Number(r.n); }",
-  "new": "  for (const r of rows) { const s = sides[r.side]; if (!s) continue; s.n += Number(r.n); }",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-view-hires-anyone",
-  "file": "server-account/src/seatBattles.js",
-  "old": "  if (side && me && Number(me.rank) === GUILD_RANK_MASTER) {",
-  "new": "  if (side && me) {",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-lead",
-  "file": "server-account/src/seatBattles.js",
-  "old": "export const BLACKOUT_LEAD_S = 30 * 60;",
-  "new": "export const BLACKOUT_LEAD_S = 15 * 60;",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-svc-live-past-end",
-  "file": "server-account/src/seatBattles.js",
-  "old": "starts_at - ? <= ? AND ends_at > ?\")",
-  "new": "starts_at - ? <= ? AND ends_at >= ?\")",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-turn-window-ignored",
-  "file": "server-account/src/seatTurning.js",
-  "old": "window: atSiegeWindow(b) ? await windowOf(db, b.key, b.defender) : null });",
-  "new": "window: null });",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-turn-moved-unsaid",
-  "file": "server-account/src/seatTurning.js",
-  "old": "    if (p.moved) stmts.push(history(p.key, 'battle-moved', { at: Math.floor(p.startsAt / 1000) }));\n",
-  "new": "",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-turn-no-tourney",
-  "file": "server-account/src/seatTurning.js",
-  "old": "    ...plan.contested.map((c) => ({ key: c.key, kind: 'tourney', attacker: c.a, defender: c.b })),\n",
-  "new": "",
-  "tests": [
-   "test/net/seat2a_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-tab-sign-closed",
-  "file": "src/ui/seatTab.js",
-  "old": "    } else if (f.open && (mine?.side || mine?.hire)) {",
-  "new": "    } else if (mine?.side || mine?.hire) {",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-tab-unsign-closed",
-  "file": "src/ui/seatTab.js",
-  "old": "      if (f.open) { const b = button('notice-seat-unsign',",
-  "new": "      if (true) { const b = button('notice-seat-unsign',",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-tab-fee-uncapped",
-  "file": "src/ui/seatTab.js",
-  "old": "          ? act(() => book.hire(seat, hireHandle, Math.min(SELLSWORD_FEE_MAX, hireFee)))",
-  "new": "          ? act(() => book.hire(seat, hireHandle, hireFee))",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-tab-window-anyone",
-  "file": "src/ui/seatTab.js",
-  "old": "      const ruling = !!holder && data.mine?.guild === holder.guild.id && SEAT_LEVER_RANKS.includes(data.mine?.rank);",
-  "new": "      const ruling = !!holder;",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-tab-window-day-kept",
-  "file": "src/ui/seatTab.js",
-  "old": "    day.onchange = () => { windowAsk = { day: Number(day.value), hour: want.hour }; ui.rerender(); };",
-  "new": "    day.onchange = () => { ui.rerender(); };",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-tab-withdraw-signed",
-  "file": "src/ui/seatTab.js",
-  "old": "        if (h.state === 'offered') { const w = button('notice-seat-withdraw',",
-  "new": "        if (h.state !== 'withdrawn') { const w = button('notice-seat-withdraw',",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a-book-sign-side",
-  "file": "src/net/townSeatBook.js",
-  "old": "(d) => `You are signed for the ${d.side === 'attack' ? 'attackers' : 'defenders'}",
-  "new": "(d) => `You are signed for the ${d.side === 'defend' ? 'attackers' : 'defenders'}",
-  "tests": [
-   "test/net/seat2a_client.test.js"
-  ]
- }
+  {
+    "name": "SEAT2a-law-days",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const SIEGE_WINDOW_DAYS = Object.freeze(['Wednesday', 'Thursday', 'Friday', 'Saturday']);",
+    "new": "export const SIEGE_WINDOW_DAYS = Object.freeze(['Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']);",
+    "tests": [
+      "test/net/seat2a_client.test.js",
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-hours-early",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const SIEGE_WINDOW_HOURS = Object.freeze([16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2]);",
+    "new": "export const SIEGE_WINDOW_HOURS = Object.freeze([15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2]);",
+    "tests": [
+      "test/net/seat2a_client.test.js",
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-hours-late",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const SIEGE_WINDOW_HOURS = Object.freeze([16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2]);",
+    "new": "export const SIEGE_WINDOW_HOURS = Object.freeze([16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2, 3]);",
+    "tests": [
+      "test/net/seat2a_client.test.js",
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-default",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const SIEGE_WINDOW_DEFAULT = Object.freeze({ day: 0, hour: 20 });",
+    "new": "export const SIEGE_WINDOW_DEFAULT = Object.freeze({ day: 0, hour: 21 });",
+    "tests": [
+      "test/net/seat2a_client.test.js",
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-window-whole-day",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  Number.isSafeInteger(day) &&\n  day >= 0 &&\n  day < SIEGE_WINDOW_DAYS.length &&\n  Number.isSafeInteger(hour) &&\n  SIEGE_WINDOW_HOURS.includes(hour);",
+    "new": "  day >= 0 && day < SIEGE_WINDOW_DAYS.length && Number.isSafeInteger(hour) && SIEGE_WINDOW_HOURS.includes(hour);",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-window-whole-hour",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  Number.isSafeInteger(hour) &&\n  SIEGE_WINDOW_HOURS.includes(hour);",
+    "new": "  SIEGE_WINDOW_HOURS.includes(Math.floor(hour));",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-wednesday",
+    "file": "src/net/townSeatLaw.js",
+    "old": "const WEDNESDAY_MS = 54 * H;",
+    "new": "const WEDNESDAY_MS = 48 * H;",
+    "tests": [
+      "test/net/seat2a_client.test.js",
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-night-after",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const siegeStartMs = (week, day, hour) =>\n  seatWeekStartMs(week) + WEDNESDAY_MS + day * 24 * H + hour * H + (hour < 16 ? 24 * H : 0);",
+    "new": "export const siegeStartMs = (week, day, hour) => seatWeekStartMs(week) + WEDNESDAY_MS + day * 24 * H + hour * H;",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-crown-slot",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  wayrest: Object.freeze({ day: 3, hour: 21 }),",
+    "new": "  wayrest: Object.freeze({ day: 3, hour: 20 }),",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-palace-length",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  palace: 30 * 60_000,",
+    "new": "  palace: 45 * 60_000,",
+    "tests": [
+      "test/net/seat2a_client.test.js",
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-tourney-length",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  tourney: 20 * 60_000,",
+    "new": "  tourney: 30 * 60_000,",
+    "tests": [
+      "test/net/seat2a_client.test.js",
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-tourney-own-length",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  b.kind === 'tourney' || b.kind === 'revolt'\n    ? BATTLE_LENGTH_MS[b.kind]\n    : (BATTLE_LENGTH_MS[b.tier] ?? BATTLE_LENGTH_MS.palace);",
+    "new": "  b.kind === 'revolt' ? BATTLE_LENGTH_MS[b.kind] : (BATTLE_LENGTH_MS[b.tier] ?? BATTLE_LENGTH_MS.palace);",
+    "tests": [
+      "test/net/seat2a_client.test.js",
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-crown-span",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const battleSpanMs = (b) => (b.kind === 'siege' && b.tier === 'crown' ? H : BATTLE_BLOCK_MS);",
+    "new": "export const battleSpanMs = (b) => BATTLE_BLOCK_MS;",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-crown-at-window",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (atSiegeWindow(b) && b.tier === 'crown' && CROWN_SIEGE_SLOT[b.kingdom]) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-tourney-at-window",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  const w =\n    atSiegeWindow(b) && b.window && siegeWindowOk(b.window.day, b.window.hour) ? b.window : SIEGE_WINDOW_DEFAULT;",
+    "new": "  const w = b.window && siegeWindowOk(b.window.day, b.window.hour) ? b.window : SIEGE_WINDOW_DEFAULT;",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-window-unchecked",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  const w =\n    atSiegeWindow(b) && b.window && siegeWindowOk(b.window.day, b.window.hour) ? b.window : SIEGE_WINDOW_DEFAULT;",
+    "new": "  const w = atSiegeWindow(b) && b.window ? b.window : SIEGE_WINDOW_DEFAULT;",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-unordered",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  for (const b of [...battles].sort((x, y) => crownFirst(x) - crownFirst(y) || x.key - y.key)) {",
+    "new": "  for (const b of [...battles]) {",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-clash-any-guild",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    placed.some(\n      (p) =>\n        guildsOf(p).some((g) => guildsOf(b).includes(g)) &&\n        at < p.startsAt + battleSpanMs(p) &&\n        p.startsAt < at + battleSpanMs(b),\n    );",
+    "new": "    placed.some((p) => true && at < p.startsAt + battleSpanMs(p) && p.startsAt < at + battleSpanMs(b));",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-clash-touching",
+    "file": "src/net/townSeatLaw.js",
+    "old": "        at < p.startsAt + battleSpanMs(p) &&\n        p.startsAt < at + battleSpanMs(b),",
+    "new": "        at <= p.startsAt + battleSpanMs(p) &&\n        p.startsAt <= at + battleSpanMs(b),",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-step-hourly",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    for (let t = want; t <= last; t += BATTLE_BLOCK_MS)",
+    "new": "    for (let t = want; t <= last; t += H)",
+    "tests": [
+      "test/net/seat2a_client.test.js",
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-any-hour",
+    "file": "src/net/townSeatLaw.js",
+    "old": "      if (allowed.has(t) && !clashes(b, t)) {",
+    "new": "      if (!clashes(b, t)) {",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-unplaced-at-end",
+    "file": "src/net/townSeatLaw.js",
+    "old": "      unplaced.push(b);\n      continue;",
+    "new": "      at = last;",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-moved-unsaid",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    placed.push({ ...b, startsAt: at, endsAt: at + battleLengthMs(b), moved: at !== want });",
+    "new": "    placed.push({ ...b, startsAt: at, endsAt: at + battleLengthMs(b), moved: false });",
+    "tests": [
+      "test/net/seat2a_client.test.js",
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-palace-side",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const SIEGE_SIDE_MAX = Object.freeze({ palace: 10, crown: 20 });",
+    "new": "export const SIEGE_SIDE_MAX = Object.freeze({ palace: 11, crown: 20 });",
+    "tests": [
+      "test/net/seat2a_client.test.js",
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-crown-side",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const SIEGE_SIDE_MAX = Object.freeze({ palace: 10, crown: 20 });",
+    "new": "export const SIEGE_SIDE_MAX = Object.freeze({ palace: 10, crown: 16 });",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-palace-swords",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const SELLSWORDS_MAX = Object.freeze({ palace: 2, crown: 4 });",
+    "new": "export const SELLSWORDS_MAX = Object.freeze({ palace: 3, crown: 4 });",
+    "tests": [
+      "test/net/seat2a_client.test.js",
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-crown-swords",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const SELLSWORDS_MAX = Object.freeze({ palace: 2, crown: 4 });",
+    "new": "export const SELLSWORDS_MAX = Object.freeze({ palace: 2, crown: 2 });",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-close",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const SIGN_CLOSES_MS = 10 * 60_000;",
+    "new": "export const SIGN_CLOSES_MS = 5 * 60_000;",
+    "tests": [
+      "test/net/seat2a_client.test.js",
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-close-inclusive",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const signOpen = (startsAtMs, nowMs) => nowMs < startsAtMs - SIGN_CLOSES_MS;",
+    "new": "export const signOpen = (startsAtMs, nowMs) => nowMs <= startsAtMs - SIGN_CLOSES_MS;",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-cooling",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const SELLSWORD_COOL_WEEKS = 4;",
+    "new": "export const SELLSWORD_COOL_WEEKS = 1;",
+    "tests": [
+      "test/net/seat2a_client.test.js",
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-fee-cap",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const SELLSWORD_FEE_MAX = 5000;",
+    "new": "export const SELLSWORD_FEE_MAX = 10000;",
+    "tests": [
+      "test/net/seat2a_client.test.js",
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-fee-whole",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const sellswordFeeOk = (n) => Number.isSafeInteger(n) && n >= 0 && n <= SELLSWORD_FEE_MAX;",
+    "new": "export const sellswordFeeOk = (n) => n >= 0 && n <= SELLSWORD_FEE_MAX;",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-side-defender",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const sideOf = (battle, guild) =>\n  battle?.attacker === guild ? 'attack' : battle?.defender === guild ? 'defend' : null;",
+    "new": "export const sideOf = (battle, guild) => (battle?.attacker === guild ? 'attack' : 'defend');",
+    "tests": [
+      "test/net/seat2a_client.test.js",
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-night-words",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  w && siegeWindowOk(w.day, w.hour)\n    ? `${SIEGE_WINDOW_DAYS[w.day]} ${two(w.hour)}:00 UTC${w.hour < 16 ? ' (the night after)' : ''}`\n    : null;",
+    "new": "  w && siegeWindowOk(w.day, w.hour) ? `${SIEGE_WINDOW_DAYS[w.day]} ${two(w.hour)}:00 UTC` : null;",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-moved-words",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  const moved = b.moved ? ' (moved, so that no guild fights twice at once)' : '';",
+    "new": "  const moved = '';",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-chronicle-moved",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    case 'battle-moved':",
+    "new": "    case 'battle-moved-x':",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-law-sellsword-plural",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const sideLine = (label, n, max, swords) =>\n  `${label}: ${n} of ${max} signed${swords ? ` (${swords} Sellsword${swords === 1 ? '' : 's'})` : ''}.`;",
+    "new": "export const sideLine = (label, n, max, swords) => `${label}: ${n} of ${max} signed.`;",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-window-anyone",
+    "file": "server-account/src/seatBattles.js",
+    "old": "  if (!SEAT_LEVER_RANKS.includes(Number(a.me.rank))) return { error: 'guild-rank' };\n  // AUDIT-SEATS S10 (5.1: \"Muster ... windows may move (6.3)\"; 6.3: \"a change made in the Muster applies from the next",
+    "new": "  // AUDIT-SEATS S10 (5.1: \"Muster ... windows may move (6.3)\"; 6.3: \"a change made in the Muster applies from the next",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-window-any-seat",
+    "file": "server-account/src/seatBattles.js",
+    "old": "    SELECT ?1, ?2, ?3, ?4, ?5, ?6 WHERE EXISTS (SELECT 1 FROM town_seat_holds WHERE key = ?1 AND guild_id = ?2)",
+    "new": "    SELECT ?1, ?2, ?3, ?4, ?5, ?6 WHERE 1",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-window-unchecked",
+    "file": "server-account/src/seatBattles.js",
+    "old": "  if (!siegeWindowOk(day, hour)) return { error: 'bad-window' };\n  const a = await guildActorOf(db, player, character);",
+    "new": "  const a = await guildActorOf(db, player, character);",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-old-holders-window",
+    "file": "server-account/src/seatBattles.js",
+    "old": "    .prepare('SELECT day, hour FROM town_seat_windows WHERE key = ? AND guild_id = ?')",
+    "new": "    .prepare('SELECT day, hour FROM town_seat_windows WHERE key = ? AND ? IS NOT NULL')",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-new-member",
+    "file": "server-account/src/seatBattles.js",
+    "old": "    if (Number(me.joined_at) > turningS - SEAT_MEMBER_WAIT_S) return { error: 'sign-new-member' };\n    const then =",
+    "new": "    const then =",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-unbound",
+    "file": "server-account/src/seatBattles.js",
+    "old": "    if (then !== me.guild_id && b.kind !== 'revolt') return { error: 'sign-unbound' }; // AUDIT SEATS-2 L2: a revolt won no Right - its week asks no bind (7.7)",
+    "new": "    if (false) return { error: 'sign-unbound' }; // AUDIT SEATS-2 L2: a revolt won no Right - its week asks no bind (7.7)",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-bound-elsewhere",
+    "file": "server-account/src/seatBattles.js",
+    "old": "    if (bound != null && bound !== me.guild_id) return { error: 'sign-bound-elsewhere' };\n    const r = await db",
+    "new": "    const r = await db",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-side-room",
+    "file": "server-account/src/seatBattles.js",
+    "old": "      WHERE ${openSql('?1', '?2', '?7')} AND ${roomSql('?1', '?2', '?6')}",
+    "new": "      WHERE ${openSql('?1', '?2', '?7')}",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-close-early",
+    "file": "server-account/src/seatBattles.js",
+    "old": "  if (nowS >= b.starts_at - SIGN_CLOSES_MS / 1000) return { error: 'sign-closed' };\n  if (",
+    "new": "  if (",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-twice",
+    "file": "server-account/src/seatBattles.js",
+    "old": "  if (\n    await db\n      .prepare('SELECT 1 FROM town_seat_rosters WHERE week = ? AND key = ? AND account = ?')\n      .bind(week, key, player.id)\n      .first()\n  )\n    return { error: 'sign-twice' };\n  if (await overRate({ db, nowS }, `seat-sign:${player.id}`, SEAT_EDICTS_HOUR, 3600)) return { error: 'seats-rate' };",
+    "new": "  if (await overRate({ db, nowS }, `seat-sign:${player.id}`, SEAT_EDICTS_HOUR, 3600)) return { error: 'seats-rate' };",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-unbinding",
+    "file": "server-account/src/seatBattles.js",
+    "old": "    await db\n      .prepare('INSERT OR IGNORE INTO town_seat_binds (week, account, guild_id, char_id, at) VALUES (?, ?, ?, ?, ?)')\n      .bind(week, player.id, me.guild_id, character, nowS)\n      .run();\n    return { ok: true, side, sellsword: false };",
+    "new": "    return { ok: true, side, sellsword: false };",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-sword-member",
+    "file": "server-account/src/seatBattles.js",
+    "old": "  if (\n    await db\n      .prepare('SELECT 1 FROM guild_members WHERE player = ? AND guild_id IN (?, ?)')\n      .bind(player.id, b.attacker, b.defender)\n      .first()\n  )\n    return { error: 'sellsword-member' };\n  if (bound != null && bound !== hire.guild_id) return { error: 'sign-bound-elsewhere' };",
+    "new": "  if (bound != null && bound !== hire.guild_id) return { error: 'sign-bound-elsewhere' };",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-cooling",
+    "file": "server-account/src/seatBattles.js",
+    "old": "  if (\n    await db\n      .prepare('SELECT 1 FROM town_seat_rosters WHERE account = ? AND guild_id = ? AND week >= ? AND week < ?')\n      .bind(player.id, other, week - SELLSWORD_COOL_WEEKS, week)\n      .first()\n  )\n    return { error: 'sellsword-cooling' };\n  const [r] = await db.batch([",
+    "new": "  const [r] = await db.batch([",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-sword-fee",
+    "file": "server-account/src/seatBattles.js",
+    "old": "      SELECT ?1, ?2, ?3, ?4, ?5, ?6, 1, h.fee, ?7 FROM town_seat_hires h",
+    "new": "      SELECT ?1, ?2, ?3, ?4, ?5, ?6, 1, 0, ?7 FROM town_seat_hires h",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-hire-unsigned",
+    "file": "server-account/src/seatBattles.js",
+    "old": "    db\n      .prepare(\n        \"UPDATE town_seat_hires SET state = 'signed' WHERE week = ? AND key = ? AND account = ? AND state = 'offered' AND changes() > 0\",\n      )\n      .bind(week, key, player.id),\n  ]);",
+    "new": "  ]);",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-unsign-any-time",
+    "file": "server-account/src/seatBattles.js",
+    "old": "      .prepare(\n        `DELETE FROM town_seat_rosters WHERE week = ?1 AND key = ?2 AND account = ?3 AND ${openSql('?1', '?2', '?4')}`,\n      )",
+    "new": "      .prepare(`DELETE FROM town_seat_rosters WHERE week = ?1 AND key = ?2 AND account = ?3 AND ?4 IS NOT NULL`)",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-hire-officer",
+    "file": "server-account/src/seatBattles.js",
+    "old": "  if (Number(a.me.rank) !== GUILD_RANK_MASTER) return { error: 'guild-rank' };\n  const b = await battleAt(db, weekAt(nowS), key);",
+    "new": "  const b = await battleAt(db, weekAt(nowS), key);",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-hire-member",
+    "file": "server-account/src/seatBattles.js",
+    "old": "  if (\n    await db\n      .prepare('SELECT 1 FROM guild_members WHERE player = ? AND guild_id IN (?, ?)')\n      .bind(who.id, m.b.attacker, m.b.defender)\n      .first()\n  )\n    return { error: 'sellsword-member' };\n  const week = m.b.week;",
+    "new": "  const week = m.b.week;",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-hire-fee",
+    "file": "server-account/src/seatBattles.js",
+    "old": "  if (!sellswordFeeOk(fee)) return { error: 'bad-fee' };\n  if (typeof handle !== 'string' || !handle) return { error: 'bad-handle' };",
+    "new": "  if (typeof handle !== 'string' || !handle) return { error: 'bad-handle' };",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-hire-cap",
+    "file": "server-account/src/seatBattles.js",
+    "old": "      WHERE (SELECT COUNT(*) FROM town_seat_hires WHERE week = ?1 AND key = ?2 AND guild_id = ?4 AND state IN ('offered', 'signed')) < ${max}",
+    "new": "      WHERE (SELECT COUNT(*) FROM town_seat_hires WHERE week = ?1 AND key = ?2 AND guild_id = ?4 AND state IN ('offered', 'signed')) <= ${max}",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-hire-twice",
+    "file": "server-account/src/seatBattles.js",
+    "old": "  if (\n    await db\n      .prepare(\"SELECT 1 FROM town_seat_hires WHERE week = ? AND key = ? AND account = ? AND state <> 'withdrawn'\")\n      .bind(week, key, who.id)\n      .first()\n  )\n    return { error: 'hire-twice' };\n  if (await overRate({ db, nowS }, `seat-lever:${player.id}`, SEAT_EDICTS_HOUR, 3600)) return { error: 'seats-rate' };",
+    "new": "  if (await overRate({ db, nowS }, `seat-lever:${player.id}`, SEAT_EDICTS_HOUR, 3600)) return { error: 'seats-rate' };",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-no-escrow",
+    "file": "server-account/src/seatBattles.js",
+    "old": "  if (fee > 0) {",
+    "new": "  if (fee < 0) {",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-no-return",
+    "file": "server-account/src/seatBattles.js",
+    "old": "  if (Number(h.fee) > 0) {",
+    "new": "  if (Number(h.fee) < 0) {",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-view-swords",
+    "file": "server-account/src/seatBattles.js",
+    "old": "    if (Number(r.sellsword)) s.swords += Number(r.n);\n  }",
+    "new": "  }",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-view-hires-anyone",
+    "file": "server-account/src/seatBattles.js",
+    "old": "  if (side && me && Number(me.rank) === GUILD_RANK_MASTER) {",
+    "new": "  if (side && me) {",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-lead",
+    "file": "server-account/src/seatBattles.js",
+    "old": "export const BLACKOUT_LEAD_S = 30 * 60;",
+    "new": "export const BLACKOUT_LEAD_S = 15 * 60;",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-svc-live-past-end",
+    "file": "server-account/src/seatBattles.js",
+    "old": "      \"SELECT COUNT(*) AS n, MAX(ends_at) AS until FROM town_seat_battles WHERE state = 'scheduled' AND starts_at - ? <= ? AND ends_at > ?\",",
+    "new": "      \"SELECT COUNT(*) AS n, MAX(ends_at) AS until FROM town_seat_battles WHERE state = 'scheduled' AND starts_at - ? <= ? AND ends_at >= ?\",",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-turn-window-ignored",
+    "file": "server-account/src/seatTurning.js",
+    "old": "window: atSiegeWindow(b) ? await windowOf(db, b.key, b.defender) : null });",
+    "new": "window: null });",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-turn-moved-unsaid",
+    "file": "server-account/src/seatTurning.js",
+    "old": "    if (p.moved) stmts.push(history(p.key, 'battle-moved', { at: Math.floor(p.startsAt / 1000) }));\n",
+    "new": "",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-turn-no-tourney",
+    "file": "server-account/src/seatTurning.js",
+    "old": "    ...plan.contested.map((c) => ({ key: c.key, kind: 'tourney', attacker: c.a, defender: c.b })),\n",
+    "new": "",
+    "tests": [
+      "test/net/seat2a_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-tab-sign-closed",
+    "file": "src/ui/seatTab.js",
+    "old": "    } else if (f.open && (mine?.side || mine?.hire)) {",
+    "new": "    } else if (mine?.side || mine?.hire) {",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-tab-unsign-closed",
+    "file": "src/ui/seatTab.js",
+    "old": "      if (f.open) {",
+    "new": "      if (true) {",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-tab-fee-uncapped",
+    "file": "src/ui/seatTab.js",
+    "old": "            ? act(() => book.hire(seat, hireHandle, Math.min(SELLSWORD_FEE_MAX, hireFee)))",
+    "new": "            ? act(() => book.hire(seat, hireHandle, hireFee))",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-tab-window-anyone",
+    "file": "src/ui/seatTab.js",
+    "old": "      const ruling = !!holder && data.mine?.guild === holder.guild.id && SEAT_LEVER_RANKS.includes(data.mine?.rank);",
+    "new": "      const ruling = !!holder;",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-tab-window-day-kept",
+    "file": "src/ui/seatTab.js",
+    "old": "      windowAsk = { day: Number(day.value), hour: want.hour };\n      ui.rerender();",
+    "new": "      ui.rerender();",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-tab-withdraw-signed",
+    "file": "src/ui/seatTab.js",
+    "old": "        if (h.state === 'offered') {",
+    "new": "        if (h.state !== 'withdrawn') {",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a-book-sign-side",
+    "file": "src/net/townSeatBook.js",
+    "old": "          `You are signed for the ${d.side === 'attack' ? 'attackers' : 'defenders'}${d.sellsword ? ' as a Sellsword' : ''} at ${seat.name}.`,",
+    "new": "          `You are signed for the ${d.side === 'defend' ? 'attackers' : 'defenders'}${d.sellsword ? ' as a Sellsword' : ''} at ${seat.name}.`,",
+    "tests": [
+      "test/net/seat2a_client.test.js"
+    ]
+  }
 ]

@@ -12,8 +12,8 @@
   {
     "name": "HOUSES3-the-slot-alone",
     "file": "src/net/homeLaw.js",
-    "old": "return [slot, ...(Array.isArray(slot.more) ? slot.more : [])].filter(",
-    "new": "return [slot].filter(",
+    "old": "  return [slot, ...(Array.isArray(slot.more) ? slot.more : [])].filter(\n    (d) => !!d && typeof d === 'object' && (Number(d.buildingKey) || 0) > 0,\n  );",
+    "new": "  return [slot].filter((d) => !!d && typeof d === 'object' && (Number(d.buildingKey) || 0) > 0);",
     "tests": [
       "test/systems/houses.test.js",
       "test/systems/houses3.test.js"
@@ -94,8 +94,8 @@
   {
     "name": "HOUSES3-no-next-offer",
     "file": "src/ui/bankWindow.js",
-    "old": "      this.box.onNo = () => this._offerHouse(offers, i + 1);\n",
-    "new": "",
+    "old": "      this.box.onNo = () => this._offerHouse(offers, i + 1);\n      return;",
+    "new": "      return;",
     "tests": [
       "test/systems/bankwindow.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "HOUSES3-the-crossed-offered",
     "file": "src/ui/bankWindow.js",
-    "old": "      if (offers[i].crossed) continue;\n",
-    "new": "",
+    "old": "      if (offers[i].crossed) continue;\n      const d = sellDecision('house', { owns: true, price: offers[i].price ?? 0 });",
+    "new": "      const d = sellDecision('house', { owns: true, price: offers[i].price ?? 0 });",
     "tests": [
       "test/systems/bankwindow.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "HOUSES3-the-first-sold-at-the-bank",
     "file": "src/ui/bankWindow.js",
-    "old": "this.box.onYes = () => this.hooks.sellHouse?.(i);",
-    "new": "this.box.onYes = () => this.hooks.sellHouse?.(0);",
+    "old": "      this.box.onYes = () => this.hooks.sellHouse?.(i);",
+    "new": "      this.box.onYes = () => this.hooks.sellHouse?.(0);",
     "tests": [
       "test/systems/bankwindow.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "HOUSES3-escape-the-next",
     "file": "src/ui/bankWindow.js",
-    "old": "else if (code === 'Escape') this._dismissBox();",
-    "new": "else if (code === 'Escape') this._dismissBox(MB_BUTTONS.No);",
+    "old": "        else if (code === 'Escape') this._dismissBox(); // HOUSES-3: a close, never the No that offers the next house",
+    "new": "        else if (code === 'Escape') this._dismissBox(MB_BUTTONS.No); // HOUSES-3: a close, never the No that offers the next house",
     "tests": [
       "test/systems/bankwindow.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "HOUSES3-the-order-gives-a-fourth",
     "file": "src/systems/knightlyGifts.js",
-    "old": "if (housesFull) return { kind: 'refuse', result: alreadyOwnResult, line: housesFullText() };",
-    "new": "if (false) return { kind: 'refuse', result: alreadyOwnResult, line: housesFullText() };",
+    "old": "  if (housesFull) return { kind: 'refuse', result: alreadyOwnResult, line: housesFullText() };",
+    "new": "  if (false) return { kind: 'refuse', result: alreadyOwnResult, line: housesFullText() };",
     "tests": [
       "test/systems/houses.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "HOUSES3-customs-past-the-three",
     "file": "src/systems/realmCustoms.js",
-    "old": "if (!permanent.has(name) || regionDeedsOf(houses, region).length >= HOUSES_PER_REGION) continue;",
-    "new": "if (!permanent.has(name)) continue;",
+    "old": "      if (!permanent.has(name) || regionDeedsOf(houses, region).length >= HOUSES_PER_REGION) continue;",
+    "new": "      if (!permanent.has(name)) continue;",
     "tests": [
       "test/systems/restore.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "HOUSES3-gold-the-slots-alone",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "for (const slot of deedsOfHouses(snap?.houses)) {",
-    "new": "for (const slot of (Array.isArray(snap?.houses) ? snap.houses : []).filter((s) => s?.buildingKey > 0)) {",
+    "old": "  for (const slot of deedsOfHouses(snap?.houses)) {",
+    "new": "  for (const slot of (Array.isArray(snap?.houses) ? snap.houses : []).filter((s) => s?.buildingKey > 0)) {",
     "tests": [
       "test/systems/houses3.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "HOUSES3-marks-the-first-alone",
     "file": "src/ui/town/townMapMarks.js",
-    "old": "const bought = new Set(regionDeedsOf(houses, regionIndex).filter(",
-    "new": "const bought = new Set(regionDeedsOf(houses, regionIndex).slice(0, 1).filter(",
+    "old": "      .filter((d) => Number.isFinite(Number(d.mapId)) && Number(d.mapId) >>> 0 === id)",
+    "new": "      .slice(0, 1)\n      .filter((d) => Number.isFinite(Number(d.mapId)) && Number(d.mapId) >>> 0 === id)",
     "tests": [
       "test/systems/houses3.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "HOUSES3-held-the-slots-alone",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "export const realmDeedsOf = (houses) => (Array.isArray(houses) ? houses : []).flatMap((_, region) => regionDeedsOf(houses, region).flatMap((slot) => {",
-    "new": "export const realmDeedsOf = (houses) => (Array.isArray(houses) ? houses : []).flatMap((_, region) => regionDeedsOf(houses, region).slice(0, 1).flatMap((slot) => {",
+    "old": "    regionDeedsOf(houses, region).flatMap((slot) => {\n      const mapId = Number(slot.mapId) >>> 0;\n      return realmDeedAt(houses, region, mapId, slot.buildingKey)\n        ? [{ region, mapId, buildingKey: slot.buildingKey }]\n        : [];\n    }),",
+    "new": "    regionDeedsOf(houses, region)\n      .slice(0, 1)\n      .flatMap((slot) => {\n        const mapId = Number(slot.mapId) >>> 0;\n        return realmDeedAt(houses, region, mapId, slot.buildingKey)\n          ? [{ region, mapId, buildingKey: slot.buildingKey }]\n          : [];\n      }),",
     "tests": [
       "test/systems/houses3.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "HOUSES3-arena-the-first-alone",
     "file": "src/systems/arena/arenaMove.js",
-    "old": "    first ??= moved;\n",
-    "new": "    first ??= moved;\n    break;\n",
+    "old": "    first ??= moved;\n  }",
+    "new": "    first ??= moved;\n    break;\n  }",
     "tests": [
       "test/systems/houses3.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "HOUSES3-arena-own-free",
     "file": "src/systems/arena/arenaMove.js",
-    "old": "held: new Set([...held, ...own])",
-    "new": "held",
+    "old": "    const moved = moveArenaDeed(\n      slot,\n      { summaries, oldTypeOf, held: new Set([...held, ...own]), isActiveQuestBuilding, scenes },\n      hooks,\n    );",
+    "new": "    const moved = moveArenaDeed(slot, { summaries, oldTypeOf, held, isActiveQuestBuilding, scenes }, hooks);",
     "tests": [
       "test/systems/houses3.test.js"
     ]

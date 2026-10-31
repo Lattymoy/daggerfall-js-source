@@ -4,48 +4,62 @@
     "file": "src/systems/faction/factionStanding.js",
     "old": "      if (!f || member.has(id)) continue;",
     "new": "      if (!f) continue;",
-    "tests": ["test/systems/fb1009e_everystanding.test.js"]
+    "tests": [
+      "test/systems/fb1009e_everystanding.test.js"
+    ]
   },
   {
     "name": "EVERY-STANDING-the-random-ruler-a-kingdom",
     "file": "src/systems/faction/factionStanding.js",
-    "old": "filter((f) => f.type === g.type && f.id !== RANDOM_RULER)",
-    "new": "filter((f) => f.type === g.type)",
-    "tests": ["test/systems/fb1009e_everystanding.test.js"]
+    "old": "          .filter((f) => f.type === g.type && f.id !== RANDOM_RULER)",
+    "new": "          .filter((f) => f.type === g.type)",
+    "tests": [
+      "test/systems/fb1009e_everystanding.test.js"
+    ]
   },
   {
     "name": "EVERY-STANDING-kingdoms-unsorted",
     "file": "src/systems/faction/factionStanding.js",
-    "old": ".sort((a, b) => String(a.name).localeCompare(String(b.name)))",
-    "new": "",
-    "tests": ["test/systems/fb1009e_everystanding.test.js"]
+    "old": "      : [...dict.values()]\n          .filter((f) => f.type === g.type && f.id !== RANDOM_RULER)\n          .sort((a, b) => String(a.name).localeCompare(String(b.name)))\n          .map((f) => f.id);",
+    "new": "      : [...dict.values()].filter((f) => f.type === g.type && f.id !== RANDOM_RULER).map((f) => f.id);",
+    "tests": [
+      "test/systems/fb1009e_everystanding.test.js"
+    ]
   },
   {
     "name": "EVERY-STANDING-the-rep-not-read",
     "file": "src/systems/faction/factionStanding.js",
-    "old": "name: getLocalizedFactionName(id, String(f.name ?? id)), rep: getReputation(store, id) });",
-    "new": "name: getLocalizedFactionName(id, String(f.name ?? id)), rep: 0 });",
-    "tests": ["test/systems/fb1009e_everystanding.test.js"]
+    "old": "      rows.push({\n        factionId: id,\n        name: getLocalizedFactionName(id, String(f.name ?? id)),\n        rep: getReputation(store, id),\n      }); // PROVINCE-COURTS: shown as GetFactionData shows a name (L10N3e) - a province's kingdom in the player's language",
+    "new": "      rows.push({ factionId: id, name: getLocalizedFactionName(id, String(f.name ?? id)), rep: 0 }); // PROVINCE-COURTS: shown as GetFactionData shows a name (L10N3e) - a province's kingdom in the player's language",
+    "tests": [
+      "test/systems/fb1009e_everystanding.test.js"
+    ]
   },
   {
     "name": "EVERY-STANDING-temples-by-their-house",
     "file": "src/systems/faction/factionStanding.js",
     "old": "  Object.freeze({ id: 'temples', title: 'Temples', ids: Object.freeze(Object.values(DIVINES)) }),",
     "new": "  Object.freeze({ id: 'temples', title: 'Temples', type: FACTION_TYPES.Temple }),",
-    "tests": ["test/systems/fb1009e_everystanding.test.js"]
+    "tests": [
+      "test/systems/fb1009e_everystanding.test.js"
+    ]
   },
   {
     "name": "EVERY-STANDING-the-page-never-asks",
     "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "  if (getPref('standingAll')) statsEveryStanding(detail, playerEntity);   // EVERY-STANDING",
     "new": "  void statsEveryStanding;",
-    "tests": ["test/systems/fb1009e_everystanding.test.js"]
+    "tests": [
+      "test/systems/fb1009e_everystanding.test.js"
+    ]
   },
   {
     "name": "STANDING-ON-off-by-default",
     "file": "src/systems/uiPrefs.js",
     "old": "  standingAll: true,",
     "new": "  standingAll: false,",
-    "tests": ["test/systems/fb1009e_everystanding.test.js"]
+    "tests": [
+      "test/systems/fb1009e_everystanding.test.js"
+    ]
   }
 ]

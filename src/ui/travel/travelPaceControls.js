@@ -5,7 +5,15 @@
 // and THE PACE BOX - a small box of its own for every other skin (the classic strip, GrimoireUI) while a journey runs,
 // so the dials and their rule are the same in every UI, online or off.
 import {
-  TRAVEL_PACE_DIALS, TRAVEL_PACE_TEXT, PACE_STEPS, OPEN_PACE_MAX, paceNow, paceCanRise, paceOnRoad, stepTravelPace, onTravelPace,
+  TRAVEL_PACE_DIALS,
+  TRAVEL_PACE_TEXT,
+  PACE_STEPS,
+  OPEN_PACE_MAX,
+  paceNow,
+  paceCanRise,
+  paceOnRoad,
+  stepTravelPace,
+  onTravelPace,
 } from '../../systems/travel/travelPace.js';
 
 /**
@@ -14,7 +22,12 @@ import {
  * @param {Document} doc @param {string} cls
  */
 export function buildPaceControls(doc, cls) {
-  const el = (tag, c, text = '') => { const n = doc.createElement(tag); n.className = c; if (text) n.textContent = text; return n; };
+  const el = (tag, c, text = '') => {
+    const n = doc.createElement(tag);
+    n.className = c;
+    if (text) n.textContent = text;
+    return n;
+  };
   const root = el('div', `${cls}-pace`);
   root.setAttribute?.('role', 'group');
   root.setAttribute?.('aria-label', TRAVEL_PACE_TEXT.title);
@@ -27,12 +40,19 @@ export function buildPaceControls(doc, cls) {
     const down = el('button', `${cls}-pace-step`, '−');
     const num = el('span', `${cls}-pace-num`, '');
     const up = el('button', `${cls}-pace-step`, '+');
-    for (const [b, dir, w] of [[down, -1, TRAVEL_PACE_TEXT.slower], [up, 1, TRAVEL_PACE_TEXT.faster]]) {
+    for (const [b, dir, w] of [
+      [down, -1, TRAVEL_PACE_TEXT.slower],
+      [up, 1, TRAVEL_PACE_TEXT.faster],
+    ]) {
       b.type = 'button';
       b.setAttribute?.('aria-label', `${w} - ${TRAVEL_PACE_TEXT[k].toLowerCase()}`);
-      b.tabIndex = -1;   // never the focus: a focused button is pressed again by Space, and Space is the world's
+      b.tabIndex = -1; // never the focus: a focused button is pressed again by Space, and Space is the world's
       b.onpointerdown = (e) => e.preventDefault?.();
-      b.onclick = (e) => { e.preventDefault(); e.stopPropagation?.(); stepTravelPace(k, dir); };
+      b.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation?.();
+        stepTravelPace(k, dir);
+      };
     }
     row.append(word, down, num, up);
     rows[k] = { row, down, up, num };
@@ -45,13 +65,17 @@ export function buildPaceControls(doc, cls) {
   root.addEventListener?.('pointerdown', own);
   const paint = () => {
     for (const k of TRAVEL_PACE_DIALS) {
-      const r = rows[k], v = paceNow(k);
+      const r = rows[k],
+        v = paceNow(k);
       const t = `×${v}`;
       if (r.num.textContent !== t) r.num.textContent = t;
       r.down.disabled = v <= PACE_STEPS[0];
       const rise = paceCanRise(k);
       r.up.disabled = !rise;
-      r.up.title = !rise && !paceOnRoad() && v >= OPEN_PACE_MAX ? TRAVEL_PACE_TEXT.roadOnly : `${TRAVEL_PACE_TEXT.faster} - ${TRAVEL_PACE_TEXT[k].toLowerCase()}`;
+      r.up.title =
+        !rise && !paceOnRoad() && v >= OPEN_PACE_MAX
+          ? TRAVEL_PACE_TEXT.roadOnly
+          : `${TRAVEL_PACE_TEXT.faster} - ${TRAVEL_PACE_TEXT[k].toLowerCase()}`;
       r.down.title = `${TRAVEL_PACE_TEXT.slower} - ${TRAVEL_PACE_TEXT[k].toLowerCase()}`;
     }
   };

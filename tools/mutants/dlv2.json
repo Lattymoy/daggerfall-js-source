@@ -11,8 +11,8 @@
   {
     "name": "DLV2-one-gate-for-all",
     "file": "src/scenes/delve/delveHold.js",
-    "old": "const g = gates[j % gates.length], rank",
-    "new": "const g = gates[0], rank",
+    "old": "    const g = gates[j % gates.length],",
+    "new": "    const g = gates[0],",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DLV2-facing-away",
     "file": "src/scenes/delve/delveHold.js",
-    "old": "yawRad: Math.atan2(site.x - pos[0], site.z - pos[2])",
-    "new": "yawRad: Math.atan2(pos[0] - site.x, pos[2] - site.z)",
+    "old": "        f = await host.spawn(type, at, { yawRad: Math.atan2(site.x - pos[0], site.z - pos[2]), ...opts });",
+    "new": "        f = await host.spawn(type, at, { yawRad: Math.atan2(pos[0] - site.x, pos[2] - site.z), ...opts });",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DLV2-captain-traits-dropped",
     "file": "src/scenes/delve/delveHold.js",
-    "old": "giveBossTraits(e, rollBossTraits(traits, rolls));",
-    "new": "giveBossTraits(e, rollBossTraits(1, rolls));",
+    "old": "        giveBossTraits(e, rollBossTraits(traits, rolls));",
+    "new": "        giveBossTraits(e, rollBossTraits(1, rolls));",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DLV2-captain-always-elite",
     "file": "src/scenes/delve/delveHold.js",
-    "old": "{ eliteFoe: !!host.elites() }",
-    "new": "{ eliteFoe: true }",
+    "old": "    void standOne(\n      holdStandPlaces(site, 1)[0],\n      { eliteFoe: !!host.elites() },\n      { i: site.i, g: myGen, w: 0, cap: true },\n    ).then((f) => {\n      if (myGen !== gen) return;\n      pending--;\n      const e = f?.entity;\n      if (e) {\n        e.bossTraits = undefined;\n        e.bossWard = undefined;\n        giveBossTraits(e, rollBossTraits(traits, rolls));\n      }\n    });",
+    "new": "    void standOne(holdStandPlaces(site, 1)[0], { eliteFoe: true }, { i: site.i, g: myGen, w: 0, cap: true }).then(\n      (f) => {\n        if (myGen !== gen) return;\n        pending--;\n        const e = f?.entity;\n        if (e) {\n          e.bossTraits = undefined;\n          e.bossWard = undefined;\n          giveBossTraits(e, rollBossTraits(traits, rolls));\n        }\n      },\n    );",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -48,7 +48,7 @@
     "name": "DLV2-shown-step",
     "file": "src/scenes/delve/delveLitany.js",
     "old": "    if (step >= 0 && step < led.order.length) out[led.order[step]] = PLATE_LOOK.shown;",
-    "new": "    if (step >= 0 && step < led.order.length) out[led.order[Math.min(step + 1, led.order.length - 1)]] = PLATE_LOOK.shown;",
+    "new": "    if (step >= 0 && step < led.order.length)\n      out[led.order[Math.min(step + 1, led.order.length - 1)]] = PLATE_LOOK.shown;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DLV2-lit-count",
     "file": "src/scenes/delve/delveLitany.js",
-    "old": "for (let n = 0; n < led.next; n++)",
-    "new": "for (let n = 0; n <= led.next && n < led.order.length; n++)",
+    "old": "    for (let n = 0; n < led.next; n++) out[led.order[n]] = PLATE_LOOK.lit;",
+    "new": "    for (let n = 0; n <= led.next && n < led.order.length; n++) out[led.order[n]] = PLATE_LOOK.lit;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "DLV2-step-said-every-frame",
     "file": "src/net/delve/delveLaw.js",
-    "old": "const stayed = on >= 0 && on === rec.pl;",
-    "new": "const stayed = false;",
+    "old": "  const stayed = on >= 0 && on === rec.pl;",
+    "new": "  const stayed = false;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "DLV2-chime-flat",
     "file": "src/scenes/delve/delveLitany.js",
-    "old": "pitch: 0.9 + 0.12 * Math.max(0, (n | 0) - 1)",
-    "new": "pitch: 0.9",
+    "old": "  chime: (n) => Object.freeze({ rec: SOUND.MakeItem, vol: 0.7, pitch: 0.9 + 0.12 * Math.max(0, (n | 0) - 1) }),",
+    "new": "  chime: (n) => Object.freeze({ rec: SOUND.MakeItem, vol: 0.7, pitch: 0.9 }),",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "DLV2-seal-kept-open",
     "file": "src/scenes/delve/delvePieces.js",
-    "old": "if (sealed && site.vault)",
-    "new": "if (site.vault)",
+    "old": "  if (sealed && site.vault)",
+    "new": "  if (site.vault)",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "DLV2-floor-without-the-pad",
     "file": "src/scenes/delve/delvePieces.js",
-    "old": "r: site.r + DELVE_WARD_PAD_M, courts",
-    "new": "r: site.r, courts",
+    "old": "  Object.freeze({ r: site.r + DELVE_WARD_PAD_M, courts: Object.freeze([Object.freeze([0, 0])]), ks: null });",
+    "new": "  Object.freeze({ r: site.r, courts: Object.freeze([Object.freeze([0, 0])]), ks: null });",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "DLV2-chest-foot-off-the-floor",
     "file": "src/scenes/delve/delvePieces.js",
-    "old": "return trs(at[0], at[1] - lo, at[2], 0, yaw, 0);",
-    "new": "return trs(at[0], at[1], at[2], 0, yaw, 0);",
+    "old": "  return trs(at[0], at[1] - lo, at[2], 0, yaw, 0);",
+    "new": "  return trs(at[0], at[1], at[2], 0, yaw, 0);",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "DLV2-the-row-unread",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "  if (getPref(DELVE_PREF) === false) return true;\n",
-    "new": "",
+    "old": "  if (getPref(DELVE_PREF) === false) return true;\n  return (",
+    "new": "  return (",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "DLV2-the-hollow-stood",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "dungeonTier(location) === 'super' || ",
-    "new": "",
+    "old": "  return (\n    !location?.hasDungeon ||\n    madeLevelOf(location) != null ||\n    isArenaFloor(location) ||\n    dungeonTier(location) === 'super' ||\n    isPrivateersHold(location)\n  );",
+    "new": "  return !location?.hasDungeon || madeLevelOf(location) != null || isArenaFloor(location) || isPrivateersHold(location);",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "DLV2-the-hold-stood",
     "file": "src/scenes/delve/delveHost.js",
-    "old": " || isPrivateersHold(location)",
-    "new": "",
+    "old": "    dungeonTier(location) === 'super' ||\n    isPrivateersHold(location)",
+    "new": "    dungeonTier(location) === 'super'",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "DLV2-arena-stood",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "isArenaFloor(location) || ",
-    "new": "",
+    "old": "    isArenaFloor(location) ||\n    dungeonTier(location) === 'super' ||",
+    "new": "    dungeonTier(location) === 'super' ||",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "DLV2-made-level-stood",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "madeLevelOf(location) != null || ",
-    "new": "",
+    "old": "    !location?.hasDungeon ||\n    madeLevelOf(location) != null ||\n    isArenaFloor(location) ||\n    dungeonTier(location) === 'super' ||\n    isPrivateersHold(location)",
+    "new": "    !location?.hasDungeon || isArenaFloor(location) || dungeonTier(location) === 'super' || isPrivateersHold(location)",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "DLV2-online-stood",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "const down = () => dead || none || (online() && !linked());",
-    "new": "const down = () => dead || none;",
+    "old": "  const down = () => dead || none || (online() && !linked());",
+    "new": "  const down = () => dead || none;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "DLV2-away-every-frame",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "&& !r.away) { r.away = true;",
-    "new": "&& true) { r.away = true;",
+    "old": "    if (running && !iw && now - led.inAt >= DELVE_AWAY_SAY_MS && !r.away) {",
+    "new": "    if (running && !iw && now - led.inAt >= DELVE_AWAY_SAY_MS && true) {",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -200,7 +200,7 @@
   {
     "name": "DLV2-vault-opened-sealed",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "      if (!r.won || !r.vault) { api.hudSay?.(DELVE_VAULT_TEXT.locked()); return 1; }",
+    "old": "      if (!r.won || !r.vault) {\n        api.hudSay?.(DELVE_VAULT_TEXT.locked());\n        return 1;\n      }",
     "new": "",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
@@ -209,8 +209,8 @@
   {
     "name": "DLV2-info-opens",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "      if (mode === 'info') { api.hudSay?.(nameOf(key)?.title ?? ''); return 1; }\n",
-    "new": "",
+    "old": "      if (mode === 'info') {\n        api.hudSay?.(nameOf(key)?.title ?? '');\n        return 1;\n      }\n      if (online() && r.won && !r.vault) {",
+    "new": "      if (online() && r.won && !r.vault) {",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "DLV2-vault-never-rolled",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "r.won = true; r.vault = online() ? null : myVault();",
-    "new": "r.won = true; r.vault = online() ? null : [];",
+    "old": "        r.vault = online() ? null : myVault();",
+    "new": "        r.vault = online() ? null : [];",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "DLV2-save-under-another-plan",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "if (!s || s.h !== hash || !Array.isArray(s.won) || online()) return;",
-    "new": "if (!s || !Array.isArray(s.won) || online()) return;",
+    "old": "      if (!s || s.h !== hash || !Array.isArray(s.won) || online()) return;",
+    "new": "      if (!s || !Array.isArray(s.won) || online()) return;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "DLV2-restore-keeps-the-old",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "r.led = null; r.won = false; r.vault = null;",
-    "new": "r.led = null;",
+    "old": "        r.won = false;\n        r.vault = null;\n        r.said = false;",
+    "new": "        r.said = false;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "DLV2-show-said-after-wrong",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "case 'show': if (!r.wrong) say(",
-    "new": "case 'show': if (true) say(",
+    "old": "        if (!r.wrong) say(DELVE_LITANY_TEXT.show());",
+    "new": "        if (true) say(DELVE_LITANY_TEXT.show());",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "DLV2-failed-keeps-the-ledger",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "case 'failed': r.foes?.on(ev); r.led = null;",
-    "new": "case 'failed': r.foes?.on(ev);",
+    "old": "        r.led = null;\n        r.dark = true;",
+    "new": "        r.dark = true;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -263,7 +263,7 @@
   {
     "name": "DLV2-destroy-keeps-the-doors",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "      unTargets?.(); unNamer?.(); unHear?.();",
+    "old": "      unTargets?.();\n      unNamer?.();\n      unHear?.();",
     "new": "      unHear?.();",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
@@ -272,8 +272,8 @@
   {
     "name": "DLV2-key-any-number",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "/^delve:vault:(\\d+)$/",
-    "new": "/^delve:vault:(\\d*)$/",
+    "old": "  const m = /^delve:vault:(\\d+)$/.exec(String(key ?? ''));",
+    "new": "  const m = /^delve:vault:(\\d*)$/.exec(String(key ?? ''));",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "DLV2-foot-on-the-floor",
     "file": "src/scenes/delve/delveHold.js",
-    "old": "pos[1] + PLACE_FOE_DEFAULTS.separationDistance + (fly(type) ? 1.5 : 0)",
-    "new": "pos[1] + (fly(type) ? 1.5 : 0)",
+    "old": "      const at = [pos[0], pos[1] + PLACE_FOE_DEFAULTS.separationDistance + (fly(type) ? 1.5 : 0), pos[2]];",
+    "new": "      const at = [pos[0], pos[1] + (fly(type) ? 1.5 : 0), pos[2]];",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "DLV2-clear-before-the-last-stood",
     "file": "src/scenes/delve/delveHold.js",
-    "old": "wave > 0 && pending === 0 && stood > 0",
-    "new": "wave > 0 && stood > 0",
+    "old": "      out.wc = wave > 0 && pending === 0 && stood > 0 && live === 0 ? wave : 0;",
+    "new": "      out.wc = wave > 0 && stood > 0 && live === 0 ? wave : 0;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "DLV2-clear-of-nothing",
     "file": "src/scenes/delve/delveHold.js",
-    "old": "pending === 0 && stood > 0 && live === 0",
-    "new": "pending === 0 && live === 0",
+    "old": "      out.wc = wave > 0 && pending === 0 && stood > 0 && live === 0 ? wave : 0;",
+    "new": "      out.wc = wave > 0 && pending === 0 && live === 0 ? wave : 0;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "DLV2-crumble-keeps-a-revived-one",
     "file": "src/scenes/delve/delveHold.js",
-    "old": "if (ours(f) && !f.dead) host.remove(f);",
-    "new": "if (ours(f) && !f.dead && f._delve.g === gen - 1) host.remove(f);",
+    "old": "    for (const f of [...(host.foes() ?? [])]) if (ours(f) && !f.dead) host.remove(f);",
+    "new": "    for (const f of [...(host.foes() ?? [])]) if (ours(f) && !f.dead && f._delve.g === gen - 1) host.remove(f);",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "DLV2-crumble-walks-a-spliced-list",
     "file": "src/scenes/delve/delveHold.js",
-    "old": "for (const f of [...(host.foes() ?? [])]) if (ours(f)",
-    "new": "for (const f of host.foes() ?? []) if (ours(f)",
+    "old": "    for (const f of [...(host.foes() ?? [])]) if (ours(f) && !f.dead) host.remove(f);",
+    "new": "    for (const f of host.foes() ?? []) if (ours(f) && !f.dead) host.remove(f);",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "DLV2-crumble-takes-another-site",
     "file": "src/scenes/delve/delveHold.js",
-    "old": "const ours = (f) => f?._delve?.i === site.i;",
-    "new": "const ours = (f) => !!f?._delve;",
+    "old": "  const ours = (f) => f?._delve?.i === site.i;",
+    "new": "  const ours = (f) => !!f?._delve;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "DLV2-late-one-kept",
     "file": "src/scenes/delve/delveHold.js",
-    "old": "if (stamp.g !== gen || !host.alive()) { host.remove(f); return null; }",
-    "new": "if (!host.alive()) { host.remove(f); return null; }",
+    "old": "    if (stamp.g !== gen || !host.alive()) {",
+    "new": "    if (!host.alive()) {",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "DLV2-a-pick-of-none-stood",
     "file": "src/scenes/delve/delveHold.js",
-    "old": "      if (!(type >= 0)) return null;\n",
-    "new": "",
+    "old": "      if (!(type >= 0)) return null;\n      const at = [pos[0], pos[1] + PLACE_FOE_DEFAULTS.separationDistance + (fly(type) ? 1.5 : 0), pos[2]];",
+    "new": "      const at = [pos[0], pos[1] + PLACE_FOE_DEFAULTS.separationDistance + (fly(type) ? 1.5 : 0), pos[2]];",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "DLV2-a-removal-a-kill",
     "file": "src/scenes/delve/delveHold.js",
-    "old": "!!f?.dead && (f.entity?.health <= 0 || !!f.executed",
-    "new": "!!f?.dead && (true || !!f.executed",
+    "old": "export const holdDowned = (f) => !!f?.dead && (f.entity?.health <= 0 || !!f.executed || !!f._swornAway || !!f.escaped);",
+    "new": "export const holdDowned = (f) => !!f?.dead && (true || !!f.executed || !!f._swornAway || !!f.escaped);",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "DLV2-a-flight-no-fall",
     "file": "src/scenes/delve/delveHold.js",
-    "old": " || !!f.escaped);",
-    "new": ");",
+    "old": "export const holdDowned = (f) => !!f?.dead && (f.entity?.health <= 0 || !!f.executed || !!f._swornAway || !!f.escaped);",
+    "new": "export const holdDowned = (f) => !!f?.dead && (f.entity?.health <= 0 || !!f.executed || !!f._swornAway);",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "DLV2-gone-counted-down",
     "file": "src/scenes/delve/delveHold.js",
-    "old": "else if (holdDowned(f)) { if (s.cap) capDown = true;",
-    "new": "else { if (s.cap) capDown = true;",
+    "old": "        } else if (holdDowned(f)) {",
+    "new": "        } else {",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "DLV2-no-restand",
     "file": "src/scenes/delve/delveHold.js",
-    "old": "      if (traits && !capDown && !capLive && pending === 0 && host.now() - askedAt >= HOLD_RESTAND_MS) standCaptain();\n",
-    "new": "",
+    "old": "      if (traits && !capDown && !capLive && pending === 0 && host.now() - askedAt >= HOLD_RESTAND_MS) standCaptain();\n    },",
+    "new": "    },",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -425,7 +425,7 @@
   {
     "name": "DLV2-count-spoilt-by-a-crumble",
     "file": "src/scenes/delve/delveHold.js",
-    "old": "        if (myGen !== gen) return;   // a later attempt's count is its own\n        pending--;",
+    "old": "        if (myGen !== gen) return; // a later attempt's count is its own\n        pending--;",
     "new": "        pending--;\n        if (myGen !== gen) return;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
@@ -434,8 +434,8 @@
   {
     "name": "DLV2-a-leash-set",
     "file": "src/scenes/delve/delveHold.js",
-    "old": "    f._delve = stamp;\n",
-    "new": "    f._delve = stamp;\n    if (f.ai) f.ai.follow = { feet: () => [site.x, site.y, site.z], stop: site.r / 2, leash: site.r + 4 };\n",
+    "old": "    host.mark?.(f);",
+    "new": "    if (f.ai) f.ai.follow = { feet: () => [site.x, site.y, site.z], stop: site.r / 2, leash: site.r + 4 };\n    host.mark?.(f);",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "DLV2-a-gate-missing",
     "file": "src/scenes/delve/delvePieces.js",
-    "old": "for (const g of holdGates(site)) n = put(",
-    "new": "for (const g of holdGates(site).slice(1)) n = put(",
+    "old": "      for (const g of holdGates(site))",
+    "new": "      for (const g of holdGates(site).slice(1))",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "DLV2-plate-look-ignored",
     "file": "src/scenes/delve/delvePieces.js",
-    "old": "look = looks[j] ?? PLATE_LOOK.dark;",
-    "new": "look = PLATE_LOOK.dark;",
+    "old": "        look = looks[j] ?? PLATE_LOOK.dark;",
+    "new": "        look = PLATE_LOOK.dark;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "DLV2-won-ring-still-amber",
     "file": "src/scenes/delve/delvePieces.js",
-    "old": "site.r, site.r - RING_W, won ? DELVE_COLORS.won : running",
-    "new": "site.r, site.r - RING_W, won ? DELVE_COLORS.ward : running",
+    "old": "      won ? DELVE_COLORS.won : running ? DELVE_COLORS.wake : DELVE_COLORS.ward,",
+    "new": "      won ? DELVE_COLORS.ward : running ? DELVE_COLORS.wake : DELVE_COLORS.ward,",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "DLV2-burning-ground",
     "file": "src/scenes/delve/delvePieces.js",
-    "old": "    pool: TELEGRAPH_POOL.blow,\n",
-    "new": "    pool: TELEGRAPH_POOL.ground,\n",
+    "old": "    pool: TELEGRAPH_POOL.blow,",
+    "new": "    pool: TELEGRAPH_POOL.ground,",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "DLV2-mark-made-anew",
     "file": "src/scenes/delve/delvePieces.js",
-    "old": "const sh = (out[n] ??= {",
-    "new": "const sh = (out[n] = {",
+    "old": "  const sh = (out[n] ??= {",
+    "new": "  const sh = (out[n] = {",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "DLV2-wave-gates-unfilled",
     "file": "src/scenes/delve/delvePieces.js",
-    "old": "running && led.p === DP.wave ? 1 : 0, s)",
-    "new": "0, s)",
+    "old": "          running && led.p === DP.wave ? 1 : 0,",
+    "new": "          0,",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "DLV2-dark-plate-filled",
     "file": "src/scenes/delve/delvePieces.js",
-    "old": "DELVE_COLORS.stone, 0.6, 0, s)",
-    "new": "DELVE_COLORS.stone, 0.6, 1, s)",
+    "old": "      else n = put(out, n, TELEGRAPH_KIND.disc, x, z, PLATE_R, 0, DELVE_COLORS.stone, 0.6, 0, s);",
+    "new": "      else n = put(out, n, TELEGRAPH_KIND.disc, x, z, PLATE_R, 0, DELVE_COLORS.stone, 0.6, 1, s);",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "DLV2-chest-walked-through",
     "file": "src/scenes/delve/delvePieces.js",
-    "old": "        try { collider?.addMesh(delveChestBucket(i), cpu.positions, cpu.indices, m); } catch (e) { console.warn('[delve] the chest\\'s collider', e?.message ?? e); }\n",
-    "new": "",
+    "old": "          try {\n            collider?.addMesh(delveChestBucket(i), cpu.positions, cpu.indices, m);\n          } catch (e) {\n            console.warn(\"[delve] the chest's collider\", e?.message ?? e);\n          }\n          chests.set(i, { entry, aabb: worldAabb(cpu.positions, m) });",
+    "new": "          chests.set(i, { entry, aabb: worldAabb(cpu.positions, m) });",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "DLV2-chest-bucket-left",
     "file": "src/scenes/delve/delvePieces.js",
-    "old": "        collider?.removeBucket?.(delveChestBucket(i));\n",
-    "new": "",
+    "old": "        collider?.removeBucket?.(delveChestBucket(i));\n      }",
+    "new": "      }",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "DLV2-teardown-builds-the-pass",
     "file": "src/scenes/delve/delvePieces.js",
-    "old": "      built?.destroy?.();",
-    "new": "      door?.()?.destroy?.();",
+    "old": "      built?.destroy?.(); // the pass this host built - never one asked for at the teardown",
+    "new": "      door?.()?.destroy?.(); // the pass this host built - never one asked for at the teardown",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "DLV2-fog-unread",
     "file": "src/scenes/delve/delvePieces.js",
-    "old": "pass.draw(sh, proj, view, eye, s, fog, centre, null, floor)",
-    "new": "pass.draw(sh, proj, view, eye, s, null, centre, null, floor)",
+    "old": "          pass.draw(sh, proj, view, eye, s, fog, centre, null, floor);",
+    "new": "          pass.draw(sh, proj, view, eye, s, null, centre, null, floor);",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "DLV2-near-said-again",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "      r.said = true;\n",
-    "new": "",
+    "old": "      r.said = true;\n      say(",
+    "new": "      say(",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "DLV2-a-hold-without-a-table",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "? DELVE_KIND_NAMES : DELVE_KIND_NAMES.filter((k) => !isWaveKind(k))",
-    "new": "? DELVE_KIND_NAMES : DELVE_KIND_NAMES",
+    "old": "  return idx != null && encounterTableChoices(idx).some((t) => t?.length)\n    ? DELVE_KIND_NAMES\n    : DELVE_KIND_NAMES.filter((k) => !isWaveKind(k));",
+    "new": "  return idx != null && encounterTableChoices(idx).some((t) => t?.length) ? DELVE_KIND_NAMES : DELVE_KIND_NAMES;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "DLV2-the-table-without-the-place",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "chooseRandomEnemy({ ...place, dungeonType:",
-    "new": "chooseRandomEnemy({ dungeonType:",
+    "old": "    pick: () =>\n      chooseRandomEnemy({ ...place, dungeonType: location?.mapTableData?.dungeonType, playerLevel: lv(), local: true }),",
+    "new": "    pick: () => chooseRandomEnemy({ dungeonType: location?.mapTableData?.dungeonType, playerLevel: lv(), local: true }),",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "DLV2-a-load-keeps-revived-foes",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "for (const r of runs) { r.foes?.crumble(); r.wakers?.crumble(); r.led = null; r.won = false;",
-    "new": "for (const r of runs) { r.wakers?.crumble(); r.led = null; r.won = false;",
+    "old": "        r.foes?.crumble();\n        r.wakers?.crumble();",
+    "new": "        r.wakers?.crumble();",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "DLV2-a-sealed-vault-listed",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "return r?.won && !down() ? r.vault ?? [] : null;",
-    "new": "return r ? r.vault ?? [] : null;",
+    "old": "      return r?.won && !down() ? (r.vault ?? []) : null;",
+    "new": "      return r ? (r.vault ?? []) : null;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -587,8 +587,8 @@
   {
     "name": "DLV2-a-sealed-vault-unlisted-dropped",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "subs: [sealedLine(r.site.kind)], unlisted: true };",
-    "new": "subs: [sealedLine(r.site.kind)] };",
+    "old": "    return { title: DELVE_VAULT_TEXT.sealed(), subs: [sealedLine(r.site.kind)], unlisted: true };",
+    "new": "    return { title: DELVE_VAULT_TEXT.sealed(), subs: [sealedLine(r.site.kind)] };",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -596,8 +596,8 @@
   {
     "name": "DLV2-quick-loot-skipped",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "      if (quickLootTake(key, { items: () => r.vault }, player(), setMidScreenText, { took: showPickups })) return 1;\n",
-    "new": "",
+    "old": "      if (quickLootTake(key, { items: () => r.vault }, player(), setMidScreenText, { took: showPickups })) return 1;\n      api.openLootList?.(r.vault);",
+    "new": "      api.openLootList?.(r.vault);",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -623,8 +623,8 @@
   {
     "name": "DLV2-outlasted-said-as-left",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "  if (ev.outlasted) return DELVE_HOLD_TEXT.outlasted();\n",
-    "new": "",
+    "old": "  if (ev.outlasted) return DELVE_HOLD_TEXT.outlasted();\n  return kind === 'vigil' ? DELVE_VIGIL_TEXT.failed() : DELVE_HOLD_TEXT.failed();",
+    "new": "  return kind === 'vigil' ? DELVE_VIGIL_TEXT.failed() : DELVE_HOLD_TEXT.failed();",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -632,8 +632,8 @@
   {
     "name": "DLV2-woken-again-at-once",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "    if (!r.led) { if (!iw || r.dark || now < r.rest) return;",
-    "new": "    if (!r.led) { if (!iw || now < r.rest) return;",
+    "old": "      if (!iw || r.dark || now < r.rest) return;",
+    "new": "      if (!iw || now < r.rest) return;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -641,8 +641,8 @@
   {
     "name": "DLV2-a-nan-clock",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "const ms = Number.isFinite(dt) ? Math.min(Math.max(0, dt), 1) * 1000 : 0;",
-    "new": "const ms = Math.min(Math.max(0, dt), 1) * 1000;",
+    "old": "      const ms = Number.isFinite(dt) ? Math.min(Math.max(0, dt), 1) * 1000 : 0;",
+    "new": "      const ms = Math.min(Math.max(0, dt), 1) * 1000;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]

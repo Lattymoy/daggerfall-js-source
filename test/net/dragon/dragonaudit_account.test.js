@@ -40,7 +40,7 @@ test('AUDIT DRAGON the service\'s tames read back: `/v1/dragon/tames` behind a s
   assert.deepEqual(card.body.dragons, { slain: 1 }, 'a stranger is told the dragons slain, never the tames');
   const own = await (await S.fetch('https://accounts.invalid/v1/account', { headers: { authorization: `Bearer ${who.secret}` } })).json();
   assert.deepEqual(own.account.dragons, { slain: 1, tamed: 1 }, 'its own card, both');
-  assert.match(src('server-account/src/service.js'), /'\/v1\/dragon\/tames',   \/\/ AUDIT DRAGON/);
+  assert.match(src('server-account/src/service.js'), /'\/v1\/dragon\/tames', \/\/ AUDIT DRAGON/);
   assert.match(src('src/net/duel/duelRecord.js'), /\.\.\.\(Number\.isSafeInteger\(d\?\.dragons\?\.slain\) \? \{ dragons: \{ slain: d\.dragons\.slain \} \} : \{\}\),/, 'and the Inspect card keeps it');
 });
 
@@ -76,7 +76,7 @@ test('AUDIT DRAGON the recall: with the mount on, the service\'s tames for the s
       dragonAccount: { me: () => 'acct-1', claim: async () => ({ ok: false }), tames: async () => { asked++; return { ok: true, data: { tames: served } }; } } });
     await off.recall('char-0001');
     assert.equal(asked, 1, 'the mount waiting: the service not asked');
-    assert.match(src('src/scenes/dragonRewards.js'), /recall\(characterId\)\.then\(\(\) => bind\(characterId\)\)/, 'a stand-up recalls, then binds');
+    assert.match(src('src/scenes/dragonRewards.js'), /recall\(characterId\)\n\s*\.then\(\(\) => bind\(characterId\)\)/, 'a stand-up recalls, then binds');
   } finally { playerEntity.items = was.items; playerEntity.characterId = was.id; }
 });
 

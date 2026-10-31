@@ -14,10 +14,16 @@
 // of active mods on that stat, so expiry/heal restores the base
 // cleanly and the raw (permanent) stat is never mutated.
 
-import { mentoredStat } from './mentorMode.js';   // SOFTCAP1: mentor mode's overlay - a leaf, so this file stays cycle-free
+import { mentoredStat } from './mentorMode.js'; // SOFTCAP1: mentor mode's overlay - a leaf, so this file stays cycle-free
 export const STAT_KEYS_ORDER = Object.freeze([
-  'strength', 'intelligence', 'willpower', 'agility',
-  'endurance', 'personality', 'speed', 'luck',
+  'strength',
+  'intelligence',
+  'willpower',
+  'agility',
+  'endurance',
+  'personality',
+  'speed',
+  'luck',
 ]);
 
 /** FormulaHelper.MaxStatValue(), verbatim - the live ceiling before
@@ -44,26 +50,31 @@ export const MAX_STAT_VALUE = 100;
  *  is, whatever its kind; an ended entry's are not live. DFU's one
  *  writer is the Mace of Molag Bal (MaceOfMolagBalEffect.cs:138), and
  *  without the layer its strength arm could not lift a 100 at all. */
-export function liveStat(entity, statName, skipKind = null) {   // AUDIT SURV-TIERS: `skipKind` leaves one entry kind out - the survival law caps its own entry against the stat WITHOUT it
-  const base = mentoredStat(entity, statName, entity.stats?.[statName] ?? 0);   // SOFTCAP1: mentor mode's attribute overlay (a no-op outside it)
+export function liveStat(entity, statName, skipKind = null) {
+  // AUDIT SURV-TIERS: `skipKind` leaves one entry kind out - the survival law caps its own entry against the stat WITHOUT it
+  const base = mentoredStat(entity, statName, entity.stats?.[statName] ?? 0); // SOFTCAP1: mentor mode's attribute overlay (a no-op outside it)
   let mod = 0;
-  let maxMod = 0;   // MACE-MAX: MergeStatMaxMods
-  let survival = 0;   // AUDIT SURV-TIERS: the needs' entry, capped below against everything else
-  let curse = 0;   // VAMP-DAY: a racial override's PENALTY (the vampire's day), capped below so it never zeroes a stat
+  let maxMod = 0; // MACE-MAX: MergeStatMaxMods
+  let survival = 0; // AUDIT SURV-TIERS: the needs' entry, capped below against everything else
+  let curse = 0; // VAMP-DAY: a racial override's PENALTY (the vampire's day), capped below so it never zeroes a stat
   const list = entity.activeEffects;
   if (list) {
     for (const a of list) {
       if (skipKind != null && a?.kind === skipKind) continue;
-      if (a?.statMaxMods && !a.ended) maxMod += a.statMaxMods[statName] ?? 0;   // MACE-MAX: every live effect's, whatever its kind
+      if (a?.statMaxMods && !a.ended) maxMod += a.statMaxMods[statName] ?? 0; // MACE-MAX: every live effect's, whatever its kind
       // disease/poison entries carry a signed per-stat statMods map
       // (poison drugs push POSITIVE mods - S19b)
-      if (a.kind === 'disease' || a.kind === 'poison') { mod += a.statMods?.[statName] ?? 0; continue; }
+      if (a.kind === 'disease' || a.kind === 'poison') {
+        mod += a.statMods?.[statName] ?? 0;
+        continue;
+      }
       // V2a: the racial override's SetStatMod channel - the curse
       // entry's map, re-applied every round by lycanthropyMagicRound
       // exactly as RacialOverrideEffect's constant pass does
       if (a.kind === 'racialOverride') {
-        const v = a.ended ? 0 : a.statMods?.[statName] ?? 0;
-        if (v < 0) curse += v; else mod += v;
+        const v = a.ended ? 0 : (a.statMods?.[statName] ?? 0);
+        if (v < 0) curse += v;
+        else mod += v;
         continue;
       }
       // V3: the artifact channel - the Mace of Molag Bal's strength
@@ -72,11 +83,17 @@ export function liveStat(entity, statName, skipKind = null) {   // AUDIT SURV-TI
       // incumbent puts it) rides an entry of this kind,
       // reset by the effect's own 12-minute decay rather than a
       // duration. Its MAX rides the same entry (statMaxMods, above).
-      if (a.kind === 'artifact') { if (!a.ended) mod += a.statMods?.[statName] ?? 0; continue; }
+      if (a.kind === 'artifact') {
+        if (!a.ended) mod += a.statMods?.[statName] ?? 0;
+        continue;
+      }
       // SURV1: the needs' one entry - hunger, thirst, sleep, exposure and
       // drink as a signed map rewritten every world minute
       // (survival/needs.js applySurvivalMods), never a duration
-      if (a.kind === 'survival') { survival += a.statMods?.[statName] ?? 0; continue; }
+      if (a.kind === 'survival') {
+        survival += a.statMods?.[statName] ?? 0;
+        continue;
+      }
       if (a.stat !== statName) continue;
       if (a.kind === 'fortifyAttribute') mod += a.magnitude;
       else if (a.kind === 'drainAttribute' || a.kind === 'transferAttribute') mod -= a.magnitude;
@@ -87,7 +104,7 @@ export function liveStat(entity, statName, skipKind = null) {   // AUDIT SURV-TI
   // every equip change and every magic round) - a field read, so this
   // leaf stays import-free; empty with every switch off.
   mod += entity._mods?.stats?.[statName] ?? 0;
-  maxMod += entity._mods?.statMax?.[statName] ?? 0;   // FIRM-MAX: a channel's lift of the ceiling (entityMods.js statMax)
+  maxMod += entity._mods?.statMax?.[statName] ?? 0; // FIRM-MAX: a channel's lift of the ceiling (entityMods.js statMax)
   // VAMP-DAY: THE CURSE'S DAY NEVER KILLS. A live 0 is death (killIfAnyLiveStatZero below), and a vampire's -20 by
   // day on a stat of twenty or less would have killed at dawn - so its penalty stops at a live 1, against the stat
   // without it, here where every read sees it (as DFU's DrainEffect stops at 1).
@@ -98,9 +115,10 @@ export function liveStat(entity, statName, skipKind = null) {   // AUDIT SURV-TI
   // zero-stat kill below reads every 0.2 real seconds: an ale's -2 on a live 7, then a Drain of 5 between two
   // minutes, made a live 0 and killed. So the entry's drain is held here too, against the stat WITHOUT it (and never
   // past the permanent stat's five), whatever lands between the minutes.
-  if (survival < 0) survival = -Math.min(-survival, Math.max(0, Math.min(base, Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE)) - 5));
+  if (survival < 0)
+    survival = -Math.min(-survival, Math.max(0, Math.min(base, Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE)) - 5));
   mod += survival;
-  return Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE + maxMod);   // MACE-MAX: GetLiveStatValue's maxValue, the max mods in it
+  return Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE + maxMod); // MACE-MAX: GetLiveStatValue's maxValue, the max mods in it
 }
 
 /** DrainEffect.IncreaseMagnitude, verbatim: the drain never reduces
@@ -152,7 +170,7 @@ export function killIfAnyLiveStatZero(entity, sinks, dt = 0) {
   entity._refreshModsTimer = (entity._refreshModsTimer ?? 0) + (Number(dt) || 0);
   if (!(entity._refreshModsTimer > REFRESH_MODS_DELAY)) return false;
   entity._refreshModsTimer = 0;
-  if ((entity.health ?? 0) <= 0) return false;   // already dead: DecreaseHealth has nothing to take
+  if ((entity.health ?? 0) <= 0) return false; // already dead: DecreaseHealth has nothing to take
   for (const stat of STAT_KEYS_ORDER) {
     // A stat the port has never recorded is not a stat at zero. DFU's
     // DaggerfallStats always carries all eight permanent values, so
@@ -162,7 +180,7 @@ export function killIfAnyLiveStatZero(entity, sinks, dt = 0) {
     // of them on their first frame.
     if (entity.stats?.[stat] == null) continue;
     if (liveStat(entity, stat) !== 0) continue;
-    sinks?.hurt?.(entity.health, { whole: true });   // AUDIT PSCALE1 DOORS-1: DFU's CurrentHealth = 0 - a kill, never divided by a party's toughness
+    sinks?.hurt?.(entity.health, { whole: true }); // AUDIT PSCALE1 DOORS-1: DFU's CurrentHealth = 0 - a kill, never divided by a party's toughness
     return true;
   }
   return false;
@@ -211,7 +229,11 @@ export function maxBreath(entity) {
  *  swimming loss applies on a FAILED Dice100 roll vs the live
  *  Swimming skill; success costs the default. */
 export const FATIGUE_LOSS = Object.freeze({
-  Default: 11, Climbing: 22, Running: 88, Swimming: 44, Jumping: 11,
+  Default: 11,
+  Climbing: 22,
+  Running: 88,
+  Swimming: 44,
+  Jumping: 11,
 });
 
 /** BALANCE 2026-09-27 (Mac: "I want to adjust fatigue drain and durability

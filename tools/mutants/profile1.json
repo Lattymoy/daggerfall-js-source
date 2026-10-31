@@ -2,8 +2,8 @@
   {
     "name": "P1-portrait-of-an-unfinished-character",
     "file": "src/ui/profileBadge.js",
-    "old": "s && s.chargenDone !== false && typeof s.race === 'string' && s.race",
-    "new": "s && typeof s.race === 'string' && s.race",
+    "old": "  return (saves ?? []).find((s) => s && s.chargenDone !== false && typeof s.race === 'string' && s.race) ?? null;",
+    "new": "  return (saves ?? []).find((s) => s && typeof s.race === 'string' && s.race) ?? null;",
     "tests": [
       "test/ui/enhanced/profile1_badge.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "P1-portrait-of-a-raceless-save-draws-a-stranger",
     "file": "src/ui/profileBadge.js",
-    "old": "s && s.chargenDone !== false && typeof s.race === 'string' && s.race",
-    "new": "s && s.chargenDone !== false",
+    "old": "  return (saves ?? []).find((s) => s && s.chargenDone !== false && typeof s.race === 'string' && s.race) ?? null;",
+    "new": "  return (saves ?? []).find((s) => s && s.chargenDone !== false) ?? null;",
     "tests": [
       "test/ui/enhanced/profile1_badge.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "P1-silhouette-never-gives-way",
     "file": "src/ui/profileBadge.js",
-    "old": "    stand.remove();\n",
-    "new": "",
+    "old": "    stand.remove();\n    frame.append(art);",
+    "new": "    frame.append(art);",
     "tests": [
       "test/ui/enhanced/profile1_badge.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "P1-a-null-face-empties-the-ring",
     "file": "src/ui/profileBadge.js",
-    "old": "    if (!art) return;\n",
-    "new": "",
+    "old": "    if (!art) return;\n    stand.remove();",
+    "new": "    stand.remove();",
     "tests": [
       "test/ui/enhanced/profile1_badge.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "P1-a-refused-face-throws",
     "file": "src/ui/profileBadge.js",
-    "old": ".then(show).catch(() => {});",
-    "new": ".then(show);",
+    "old": "    /** @type {Promise<HTMLCanvasElement|null>} */ (face).then(show).catch(() => {});",
+    "new": "    /** @type {Promise<HTMLCanvasElement|null>} */ (face).then(show);",
     "tests": [
       "test/ui/enhanced/profile1_badge.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "P1-gem-always-filled",
     "file": "src/ui/profileBadge.js",
-    "old": "session ? '\\u25c6' : '\\u25c7'",
-    "new": "'\\u25c6'",
+    "old": "  frame.append(el('span', `px-profilegem${session ? ' on' : ''}`, session ? '\\u25c6' : '\\u25c7'));",
+    "new": "  frame.append(el('span', `px-profilegem${session ? ' on' : ''}`, '\\u25c6'));",
     "tests": [
       "test/ui/enhanced/profile1_badge.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "P1-caption-drops-the-character",
     "file": "src/ui/profileBadge.js",
-    "old": "  words.append(el('span', 'px-profilesub', characterLine(save)));\n",
-    "new": "",
+    "old": "  words.append(el('span', 'px-profilesub', characterLine(save)));\n  b.append(words);",
+    "new": "  b.append(words);",
     "tests": [
       "test/ui/enhanced/profile1_badge.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "P1-mark-opens-nothing",
     "file": "src/ui/profileBadge.js",
-    "old": "  b.onclick = () => onOpen();\n",
-    "new": "",
+    "old": "  b.onclick = () => onOpen();\n  return b;",
+    "new": "  return b;",
     "tests": [
       "test/ui/enhanced/profile1_badge.test.js"
     ]

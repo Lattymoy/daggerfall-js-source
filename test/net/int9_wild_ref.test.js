@@ -782,7 +782,7 @@ test('INT9 THE CLIENT: a blow rolled on my own sheet and sent as a number; no de
   assert.ok(w.includes('if (d.order && n && body) host.wildDeposit({ r: d.r, items: d.items, o: d.order, p: body.p, room, mine: body });'), 'the service\'s records, on its order');   // PIN MOVED (HOST-SPLIT): scenes/wildDropHost.js
   assert.ok(w.includes("online?.sendWild({ k: 'fall', r: dep.r, p: dep.p, items: dep.chunks[dep.k], last: dep.k === dep.chunks.length - 1 ? 1 : 0, o: dep.o }, { room: dep.room })"));
   assert.ok(w.includes('_wildDeposits.push({ ...dep, chunks: wildChunks(dep.items, WILD_ITEMS_MAX, room), k: 0, at: Date.now() });'), 'chunked by their bytes');
-  assert.ok(w.includes('wildAccount.fall({ receipt: s.rc, room: s.room, ...(host.online?.wildCollectAt?.(s.room) ? { collect: 1 } : {}) }).then((a) => {'), 'the seizure names the room that refereed it');   // PIN MOVED (WILD-REJOIN, HOST-SPLIT): wildSeizeFrame moved verbatim to scenes/wildSeizeHost.js, which hostText reads with its host   // PIN MOVED (MAC, 2026-10-14): and asks the escrow where it collects
+  assert.ok(w.includes('wildAccount\n        .fall({ receipt: s.rc, room: s.room, ...(host.online?.wildCollectAt?.(s.room) ? { collect: 1 } : {}) })\n        .then((a) => {'), 'the seizure names the room that refereed it');   // PIN MOVED (WILD-REJOIN, HOST-SPLIT): wildSeizeFrame moved verbatim to scenes/wildSeizeHost.js, which hostText reads with its host   // PIN MOVED (MAC, 2026-10-14): and asks the escrow where it collects
   assert.ok(w.includes('const p = s.p ?? campToWire(player.feetAt());'), 'laid where the body fell');
   assert.ok(!/takeWildDrop\(|takeWildGold\(/.test(w), 'no drop of the client\'s own making');
   // the chunks: every frame of a heavy drop inside the wire's bound

@@ -34,21 +34,45 @@ import { t, intlLocale } from '../textManager.js';
 /** The map's words a traveller is told of (read in the player's language when read) - what falls and what blinds; the
  *  sky's look is never news (AUDIT OW-REVISITED L3-11: its words were never shown). */
 export const FORECAST_WORDS = Object.freeze({
-  get fog() { return t('forecast.word.fog', 'Fog'); },
-  get rain() { return t('forecast.word.rain', 'Rain'); },
-  get thunder() { return t('forecast.word.thunder', 'Thunderstorm'); },
-  get snow() { return t('forecast.word.snow', 'Snow'); },
-  get sandstorm() { return t('forecast.word.sandstorm', 'Sandstorm'); },
-  get ashfall() { return t('forecast.word.ashfall', 'Ashfall'); },   // ASHFALL1
+  get fog() {
+    return t('forecast.word.fog', 'Fog');
+  },
+  get rain() {
+    return t('forecast.word.rain', 'Rain');
+  },
+  get thunder() {
+    return t('forecast.word.thunder', 'Thunderstorm');
+  },
+  get snow() {
+    return t('forecast.word.snow', 'Snow');
+  },
+  get sandstorm() {
+    return t('forecast.word.sandstorm', 'Sandstorm');
+  },
+  get ashfall() {
+    return t('forecast.word.ashfall', 'Ashfall');
+  }, // ASHFALL1
 });
 /** What a traveller meets, as said after another ("Rain - snow in 30 min") - its own words, never a lowercased one. */
 const FORECAST_TURNS = Object.freeze({
-  get fog() { return t('forecast.turn.fog', 'fog'); },
-  get rain() { return t('forecast.turn.rain', 'rain'); },
-  get thunder() { return t('forecast.turn.thunder', 'thunderstorm'); },
-  get snow() { return t('forecast.turn.snow', 'snow'); },
-  get sandstorm() { return t('forecast.turn.sandstorm', 'sandstorm'); },
-  get ashfall() { return t('forecast.turn.ashfall', 'ashfall'); },   // ASHFALL1
+  get fog() {
+    return t('forecast.turn.fog', 'fog');
+  },
+  get rain() {
+    return t('forecast.turn.rain', 'rain');
+  },
+  get thunder() {
+    return t('forecast.turn.thunder', 'thunderstorm');
+  },
+  get snow() {
+    return t('forecast.turn.snow', 'snow');
+  },
+  get sandstorm() {
+    return t('forecast.turn.sandstorm', 'sandstorm');
+  },
+  get ashfall() {
+    return t('forecast.turn.ashfall', 'ashfall');
+  }, // ASHFALL1
 });
 /** What a traveller meets on the way - what falls, what blinds; the rest is the sky's look. */
 export const FORECAST_NOTABLE = Object.freeze(new Set(['fog', 'rain', 'thunder', 'snow', 'sandstorm', 'ashfall']));
@@ -88,8 +112,14 @@ export function etaWords(min) {
 /** Field metres as a distance: tenths of a kilometre under ten, whole ones past - in the language's own figures (AUDIT
  *  OW-REVISITED L3-12: "2,4 km" in German). */
 export const kmWords = (m) => {
-  const tenths = m < 9950, n = tenths ? Math.round(m / 100) / 10 : Math.round(m / 1000);
-  return t('forecast.km', '{n} km', { n: new Intl.NumberFormat(intlLocale(), { minimumFractionDigits: tenths ? 1 : 0, maximumFractionDigits: tenths ? 1 : 0 }).format(n) });
+  const tenths = m < 9950,
+    n = tenths ? Math.round(m / 100) / 10 : Math.round(m / 1000);
+  return t('forecast.km', '{n} km', {
+    n: new Intl.NumberFormat(intlLocale(), {
+      minimumFractionDigits: tenths ? 1 : 0,
+      maximumFractionDigits: tenths ? 1 : 0,
+    }).format(n),
+  });
 };
 
 /**
@@ -98,12 +128,20 @@ export const kmWords = (m) => {
  * `{ x, z, d, end }`, `d` the metres along, `end` set on the line's end when it is the JOURNEY's (`whole`: false where the
  * way was read only so far). At most `max`.
  */
-export function samplesAlong(points, step = ROUTE_STEP_M, ahead = ROUTE_AHEAD_M, max = ROUTE_SAMPLES_MAX, whole = true) {
+export function samplesAlong(
+  points,
+  step = ROUTE_STEP_M,
+  ahead = ROUTE_AHEAD_M,
+  max = ROUTE_SAMPLES_MAX,
+  whole = true,
+) {
   const out = [];
   if (!points || points.length < 2) return out;
-  let walked = 0, next = step;
+  let walked = 0,
+    next = step;
   for (let i = 1; i < points.length && out.length < max; i++) {
-    const [ax, az] = points[i - 1], [bx, bz] = points[i];
+    const [ax, az] = points[i - 1],
+      [bx, bz] = points[i];
     const len = Math.hypot(bx - ax, bz - az);
     while (next <= walked + len && next <= ahead && out.length < max) {
       const t = len > 0 ? (next - walked) / len : 1;
@@ -125,7 +163,8 @@ export function samplesAlong(points, step = ROUTE_STEP_M, ahead = ROUTE_AHEAD_M,
  */
 export function wayMinuteAt(points, mpm) {
   const cum = [0];
-  for (let i = 1; i < points.length; i++) cum.push(cum[i - 1] + Math.hypot(points[i][0] - points[i - 1][0], points[i][1] - points[i - 1][1]));
+  for (let i = 1; i < points.length; i++)
+    cum.push(cum[i - 1] + Math.hypot(points[i][0] - points[i - 1][0], points[i][1] - points[i - 1][1]));
   return (d) => {
     let m = 0;
     for (let i = 0; i < cum.length - 1 && d > cum[i]; i++) m += (Math.min(d, cum[i + 1]) - cum[i]) * (mpm[i] ?? 0);
@@ -145,24 +184,37 @@ export function routeForecast(samples, { nowWord, now, minuteAt, wordAt }) {
   let last = null;
   for (const s of samples) {
     const at = minuteAt(s.d);
-    const w = s.w ?? wordAt(s.x, s.z, at);   // a word the host already read (its pass reads a few a frame)
+    const w = s.w ?? wordAt(s.x, s.z, at); // a word the host already read (its pass reads a few a frame)
     last = { s, w, at };
-    if (w !== nowWord && (notable(w) || notable(nowWord))) return { kind: notable(w) ? 'ahead' : 'clearing', word: notable(w) ? w : nowWord, d: s.d, min: at - now, all: false };
+    if (w !== nowWord && (notable(w) || notable(nowWord)))
+      return {
+        kind: notable(w) ? 'ahead' : 'clearing',
+        word: notable(w) ? w : nowWord,
+        d: s.d,
+        min: at - now,
+        all: false,
+      };
   }
   return { kind: 'steady', word: nowWord, d: last?.s.d ?? 0, min: 0, all: !!last?.s.end };
 }
 
 /** The way ahead in words. `dest` the journey's end's name (a place's), or null. */
 export function routeLine(f, dest = null) {
-  const word = say(f.word), km = kmWords(f.d);
-  if (f.kind === 'ahead') return t('forecast.route.ahead', '{word} ahead - {km}, {eta}', { word, km, eta: etaWords(f.min) });
+  const word = say(f.word),
+    km = kmWords(f.d);
+  if (f.kind === 'ahead')
+    return t('forecast.route.ahead', '{word} ahead - {km}, {eta}', { word, km, eta: etaWords(f.min) });
   if (f.kind === 'clearing') return t('forecast.route.clears', '{word} clears {km} ahead', { word, km });
   if (notable(f.word)) {
     if (!f.all) return t('forecast.route.forNext', '{word} for the next {km}', { word, km });
-    return dest ? t('forecast.route.allTo', '{word} all the way to {dest}', { word, dest }) : t('forecast.route.all', '{word} all the way', { word });
+    return dest
+      ? t('forecast.route.allTo', '{word} all the way to {dest}', { word, dest })
+      : t('forecast.route.all', '{word} all the way', { word });
   }
   if (!f.all) return t('forecast.route.fairAhead', 'Fair weather ahead');
-  return dest ? t('forecast.route.fairAllTo', 'Fair weather all the way to {dest}', { dest }) : t('forecast.route.fairAll', 'Fair weather all the way');
+  return dest
+    ? t('forecast.route.fairAllTo', 'Fair weather all the way to {dest}', { dest })
+    : t('forecast.route.fairAll', 'Fair weather all the way');
 }
 
 /** HERE in words, from forecastAt's answer ({ at, now, steps, next }): what falls now and when it clears, what comes and
@@ -171,13 +223,18 @@ export function hereLine(fc, hours = HERE_HOURS) {
   if (!fc?.now) return '';
   const nowWord = fc.now.word;
   if (notable(nowWord)) {
-    const clear = fc.steps.find((s) => s.word !== nowWord), word = say(nowWord);
+    const clear = fc.steps.find((s) => s.word !== nowWord),
+      word = say(nowWord);
     if (!clear) return t('forecast.here.forNext', '{word} for the next {hours} h', { word, hours });
     const eta = etaWords(clear.at - fc.at);
-    return notable(clear.word) ? t('forecast.here.turns', '{word} - {next} {eta}', { word, next: FORECAST_TURNS[clear.word], eta }) : t('forecast.here.clearing', '{word} - clearing {eta}', { word, eta });
+    return notable(clear.word)
+      ? t('forecast.here.turns', '{word} - {next} {eta}', { word, next: FORECAST_TURNS[clear.word], eta })
+      : t('forecast.here.clearing', '{word} - clearing {eta}', { word, eta });
   }
   const comes = fc.steps.find((s) => notable(s.word));
-  return comes ? t('forecast.here.comes', '{word} {eta}', { word: say(comes.word), eta: etaWords(comes.at - fc.at) }) : t('forecast.here.fair', 'Fair for the next {hours} h', { hours });
+  return comes
+    ? t('forecast.here.comes', '{word} {eta}', { word: say(comes.word), eta: etaWords(comes.at - fc.at) })
+    : t('forecast.here.fair', 'Fair for the next {hours} h', { hours });
 }
 
 /**
@@ -187,16 +244,22 @@ export function hereLine(fc, hours = HERE_HOURS) {
  * minutes `d` metres ahead take at that pace, or null while not travelling.
  */
 export function paceMeter(tau = PACE_TAU_S) {
-  let last = null, v = 0, r = 0, warm = 0;
+  let last = null,
+    v = 0,
+    r = 0,
+    warm = 0;
   return {
     step(t, x, z, minute) {
       if (last && t > last.t) {
         const dt = t - last.t;
         const sp = Math.hypot(x - last.x, z - last.z) / dt;
         const clockJump = minute < last.m || (warm > 0 && minute - last.m > PACE_CLOCK_STEP_MIN + 4 * r * dt);
-        if (sp > PACE_JUMP_MPS || clockJump || dt > PACE_GAP_S) { v = 0; r = 0; warm = 0; }
-        else {
-          const k = warm > 0 ? 1 - Math.exp(-dt / tau) : 1;   // the first measure taken whole - a mean from nothing reads every pace slow
+        if (sp > PACE_JUMP_MPS || clockJump || dt > PACE_GAP_S) {
+          v = 0;
+          r = 0;
+          warm = 0;
+        } else {
+          const k = warm > 0 ? 1 - Math.exp(-dt / tau) : 1; // the first measure taken whole - a mean from nothing reads every pace slow
           v += (sp - v) * k;
           r += ((minute - last.m) / dt - r) * k;
           warm += dt;
@@ -204,9 +267,20 @@ export function paceMeter(tau = PACE_TAU_S) {
       }
       last = { t, x, z, m: minute };
     },
-    get v() { return v; },
-    get r() { return r; },
-    minutesFor(d) { return warm >= tau / 2 && v >= PACE_MIN_MPS ? (d / v) * r : null; },
-    reset() { last = null; v = 0; r = 0; warm = 0; },
+    get v() {
+      return v;
+    },
+    get r() {
+      return r;
+    },
+    minutesFor(d) {
+      return warm >= tau / 2 && v >= PACE_MIN_MPS ? (d / v) * r : null;
+    },
+    reset() {
+      last = null;
+      v = 0;
+      r = 0;
+      warm = 0;
+    },
   };
 }

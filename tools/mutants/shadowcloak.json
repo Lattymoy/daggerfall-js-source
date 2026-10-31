@@ -2,8 +2,8 @@
   {
     "name": "SHADOWCLOAK-the-word",
     "file": "src/ui/playerBadge.js",
-    "old": "  shadowcloak: 'Holo Shadow Cloak',",
-    "new": "  shadowcloak: 'Shadow Cloak',",
+    "old": "  shadowcloak: 'Holo Shadow Cloak', // SHADOW-CLOAK: the Shadow Fang's hooded cloak of shadow and crimson light, granted with the title",
+    "new": "  shadowcloak: 'Shadow Cloak', // SHADOW-CLOAK: the Shadow Fang's hooded cloak of shadow and crimson light, granted with the title",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SHADOWCLOAK-the-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker', vampirichaze: 'coldharbour' });",
-    "new": "radiance: 'primarch', shadowcloak: 'aegis', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker', vampirichaze: 'coldharbour' });",
+    "old": "  shadowcloak: 'shadowfang',",
+    "new": "  shadowcloak: 'aegis',",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],
@@ -48,8 +48,8 @@
   {
     "name": "SHADOWCLOAK-the-aura-not-granted",
     "file": "server-account/src/titles.js",
-    "old": "primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
-    "new": "primarch: 'radiance', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
+    "old": "  shadowfang: 'shadowcloak',\n  crystalfist: 'resonance',",
+    "new": "  crystalfist: 'resonance',",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],
@@ -58,8 +58,8 @@
   {
     "name": "SHADOWCLOAK-granted-to-another-list",
     "file": "server-account/src/titles.js",
-    "old": "primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
-    "new": "primarch: 'radiance', penitent: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
+    "old": "  shadowfang: 'shadowcloak',",
+    "new": "  penitent: 'shadowcloak',",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],
@@ -68,8 +68,8 @@
   {
     "name": "SHADOWCLOAK-the-vocabularys-aura",
     "file": "src/net/identityToken.js",
-    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings', 'vampirichaze']);",
-    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings', 'vampirichaze']);",
+    "old": "  'shadowcloak',\n  'seraphwings',",
+    "new": "  'seraphwings',",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],
@@ -730,8 +730,8 @@
   {
     "name": "SHADOWCLOAK-a-peer-with-no-body",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    if (!this._standing(b)) return null;\n    let bones = null; try { bones = b.rig.thirdBones",
-    "new": "    if (!b) return null;\n    let bones = null; try { bones = b.rig.thirdBones",
+    "old": "    if (!this._standing(b)) return null;",
+    "new": "    if (!b) return null;",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]
@@ -786,8 +786,8 @@
   {
     "name": "SHADOWCLOAK-bones-in-first-person",
     "file": "src/player/mwView.js",
-    "old": "  if (eotbLane() || !mwCamera.thirdPerson()) return null;\n  return fpArm.thirdBones(names);",
-    "new": "  if (eotbLane()) return null;\n  return fpArm.thirdBones(names);",
+    "old": "  if (eotbLane() || !mwCamera.thirdPerson()) return null;",
+    "new": "  if (eotbLane()) return null;",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]
@@ -795,8 +795,8 @@
   {
     "name": "SHADOWCLOAK-the-cards-name-the-key",
     "file": "src/ui/accountFlow.js",
-    "old": "{ what: AURA_TEXT[want] ?? want }",
-    "new": "{ what: want }",
+    "old": "        ? t('account.flow.wearing', 'Wearing {what}.', { what: AURA_TEXT[want] ?? want })",
+    "new": "        ? t('account.flow.wearing', 'Wearing {what}.', { what: want })",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]
@@ -1329,8 +1329,8 @@
   {
     "name": "SHADOWCLOAK-a-throwing-rig-ends-the-frame",
     "file": "src/net/peer/peerBodies.js",
-    "old": "let bones = null; try { bones = b.rig.thirdBones?.(names) ?? null; } catch (e) { console.error('[peerBodies] bonesOf', e); }",
-    "new": "let bones = b.rig.thirdBones?.(names) ?? null;",
+    "old": "    let bones = null;\n    try {\n      bones = b.rig.thirdBones?.(names) ?? null;\n    } catch (e) {\n      console.error('[peerBodies] bonesOf', e);\n    } // as every rig call here (AUDIT MWBODY A1): a throw never ends the frame",
+    "new": "    let bones = b.rig.thirdBones?.(names) ?? null; // as every rig call here (AUDIT MWBODY A1): a throw never ends the frame",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]

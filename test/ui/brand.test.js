@@ -402,7 +402,7 @@ test('BR5: the original game is named only where it must be - in what a player r
   assert.ok(read('LICENSE').includes('The Elder Scrolls II: Daggerfall is the property of Bethesda Softworks.'), 'the licence\'s own line');
   assert.match(read('src/ui/credits.js'), /title: 'The Elder Scrolls II: Daggerfall',\n {6}author: 'Bethesda Softworks',/, 'the credits\' first row');
   assert.match(read('app/lib/launcherState.cjs'), /title: 'Where is Daggerfall\?',/, 'the launcher asks for the files by the game\'s name');
-  assert.match(read('src/formats/mapsTables.js'), /'Wrothgarian Mountains', 'Daggerfall', 'Glenpoint'/, 'and the Bay\'s own region keeps its name');
+  assert.match(read('src/formats/mapsTables.js'), /'Wrothgarian Mountains',\n\s*'Daggerfall',\n\s*'Glenpoint'/, 'and the Bay\'s own region keeps its name');
 });
 
 test('AUDIT BR5: the drawn words no producer exports - the profession pages, the stats card, the decor line, the shots pane, the packs, the menu - name the original game only where it is owed', async () => {

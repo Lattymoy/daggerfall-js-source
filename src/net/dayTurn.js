@@ -27,11 +27,14 @@ let pageTurnMs = /** @type {number|null} */ (null);
 /** This page's moment in the day's turn, ms past 00:00 UTC: chosen once a page, at random, inside DAY_TURN_SPREAD_MS.
  *  @param {() => number} [rand] */
 export function dayTurnMs(rand = Math.random) {
-  if (pageTurnMs == null) pageTurnMs = Math.floor(Math.max(0, Math.min(1, Number(rand()) || 0)) * DAY_TURN_SPREAD_MS) % DAY_TURN_SPREAD_MS;
+  if (pageTurnMs == null)
+    pageTurnMs = Math.floor(Math.max(0, Math.min(1, Number(rand()) || 0)) * DAY_TURN_SPREAD_MS) % DAY_TURN_SPREAD_MS;
   return pageTurnMs;
 }
 /** The day a book holds answers for at `ms`: the UTC day, turned `turnMs` past its midnight. With `turnMs` 0, the UTC
  *  day itself. @param {number} ms @param {number} [turnMs] */
 export const turnedDayOf = (ms, turnMs = 0) => Math.floor((ms - turnMs) / DAY_MS);
 /** Tests stand a fresh page. */
-export const _resetDayTurnForTests = () => { pageTurnMs = null; };
+export const _resetDayTurnForTests = () => {
+  pageTurnMs = null;
+};

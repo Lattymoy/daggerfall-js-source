@@ -10,10 +10,52 @@ const acorn = require('acorn');
 
 /** Uppercase words with a digit or hyphen that are names, not slice tags. Rule names stay: they are law. */
 export const NOT_TAGS = new Set([
-  'ARENA2', 'MP3', 'UTF-8', 'UTF8', 'GL2', 'WEBGL2', 'X11', 'D1', 'R2', 'V8', 'SHA-1', 'SHA-256', 'MD5', 'ES2020',
-  'ES2022', 'H264', 'TES3', 'A1', 'BAY-OWN', 'TAMRIEL-WIDE', 'HOST-SPLIT', 'PLAIN-TEXT', 'LOOT-GATE', 'SCOPE1',
-  'POWER-CEILING', 'HISTORY-OUT', 'STE-NOTES', 'CITE-ANCHOR', 'RECORD-OPEN', 'IMG-CIF', 'MAP-PAL', 'RGB-565', 'UV0',
-  'UV1', 'XY-Z', 'HTTP-2', 'IPV4', 'IPV6', 'CRC32', 'TEXTURE-211', 'X-Y', 'Z-UP', 'DXT1', 'DXT5', 'BC1', 'BC3',
+  'ARENA2',
+  'MP3',
+  'UTF-8',
+  'UTF8',
+  'GL2',
+  'WEBGL2',
+  'X11',
+  'D1',
+  'R2',
+  'V8',
+  'SHA-1',
+  'SHA-256',
+  'MD5',
+  'ES2020',
+  'ES2022',
+  'H264',
+  'TES3',
+  'A1',
+  'BAY-OWN',
+  'TAMRIEL-WIDE',
+  'HOST-SPLIT',
+  'PLAIN-TEXT',
+  'LOOT-GATE',
+  'SCOPE1',
+  'POWER-CEILING',
+  'HISTORY-OUT',
+  'STE-NOTES',
+  'CITE-ANCHOR',
+  'RECORD-OPEN',
+  'IMG-CIF',
+  'MAP-PAL',
+  'RGB-565',
+  'UV0',
+  'UV1',
+  'XY-Z',
+  'HTTP-2',
+  'IPV4',
+  'IPV6',
+  'CRC32',
+  'TEXTURE-211',
+  'X-Y',
+  'Z-UP',
+  'DXT1',
+  'DXT5',
+  'BC1',
+  'BC3',
 ]);
 
 const TAG_CORE = String.raw`[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*[a-z]{0,2}`;
@@ -34,37 +76,50 @@ const QUOTE = String.raw`"[^"\n]*"|“[^”\n]*”|\*"[^"\n]*"\*|\*[^*\n]+\*`;
 const WHO = String.raw`(?:Mac|the owner|Dudey|a player|the player|Mac's)`;
 
 /** A comment line that carries history: a date, a bible page, an owner's quote, an audit, a moved pin or a leading tag. */
-export const HISTORY_LINE = new RegExp([
-  DATE,
-  String.raw`bible\/`,
-  String.raw`\b[A-Z][\w-]*-Arc\.md`,
-  String.raw`\b${WHO}\s*[:,]\s*(?:${QUOTE})`,
-  String.raw`\bAUDIT\b`,
-  String.raw`PIN MOVED`,
-  String.raw`FIELD BUGS`,
-].join('|'));
+export const HISTORY_LINE = new RegExp(
+  [
+    DATE,
+    String.raw`bible\/`,
+    String.raw`\b[A-Z][\w-]*-Arc\.md`,
+    String.raw`\b${WHO}\s*[:,]\s*(?:${QUOTE})`,
+    String.raw`\bAUDIT\b`,
+    String.raw`PIN MOVED`,
+    String.raw`FIELD BUGS`,
+  ].join('|'),
+);
 
 const leadingTag = (text) => {
   const m = /^\s*((?:AUDIT\b|FIELD BUGS\b|PIN MOVED\b)?[\s\S]*?)(?=:|\s-\s|\s—\s|\s\()/.exec(text);
   if (!m) return false;
-  const words = m[1].trim().split(/[\s,/&+]+/).filter(Boolean);
+  const words = m[1]
+    .trim()
+    .split(/[\s,/&+]+/)
+    .filter(Boolean);
   if (!words.length || words.length > 6) return false;
   const lead = words.filter((w) => !/^(?:AUDIT|FIELD|BUGS|PIN|MOVED|and)$/.test(w) && !new RegExp(`^${DATE}$`).test(w));
-  return lead.length > 0 && lead.every((w) => isTag(w) || /^[IVX]+$/.test(w) || /^\d+[a-z]?$/.test(w))
-    && (lead.some(isTag) || /^(?:AUDIT|FIELD BUGS|PIN MOVED)/.test(m[1].trim()));
+  return (
+    lead.length > 0 &&
+    lead.every((w) => isTag(w) || /^[IVX]+$/.test(w) || /^\d+[a-z]?$/.test(w)) &&
+    (lead.some(isTag) || /^(?:AUDIT|FIELD BUGS|PIN MOVED)/.test(m[1].trim()))
+  );
 };
 
 /** Does one comment line (its text, without `//` or ` * `) carry history? */
 export const isHistoryLine = (text) => HISTORY_LINE.test(text) || leadingTag(text);
 
-const FILLER = new Set(('see and since at per in its the of on from after before by with then also as a an was is now '
-  + 'made here below above this that for to it s slice audit section sections merge field bugs fix pass moved pin '
-  + 'record records the owner mac dudey player says said asked shipped rule law page arc it\'s via who where').split(' '));
+const FILLER = new Set(
+  (
+    'see and since at per in its the of on from after before by with then also as a an was is now ' +
+    'made here below above this that for to it s slice audit section sections merge field bugs fix pass moved pin ' +
+    "record records the owner mac dudey player says said asked shipped rule law page arc it's via who where"
+  ).split(' '),
+);
 
 /** Does a parenthetical hold nothing but references (tags, bible pages, sections, dates, owner quotes)? */
 function refOnly(inner) {
-  const marked = new RegExp(`${BIBLE_PATH}|${DATE}|(?:sections?|§)\\s*\\d|${WHO}\\s*[:,]\\s*(?:${QUOTE})|\\bAUDIT\\b`).test(inner)
-    || inner.split(/[\s,;:()/]+/).some(isTag);
+  const marked =
+    new RegExp(`${BIBLE_PATH}|${DATE}|(?:sections?|§)\\s*\\d|${WHO}\\s*[:,]\\s*(?:${QUOTE})|\\bAUDIT\\b`).test(inner) ||
+    inner.split(/[\s,;:()/]+/).some(isTag);
   if (!marked) return false;
   let rest = inner
     .replace(new RegExp(`${WHO}\\s*[:,]?\\s*(?:(?:${QUOTE})\\s*[,;]?\\s*(?:then|and)?\\s*)+`, 'g'), ' ')
@@ -72,13 +127,19 @@ function refOnly(inner) {
     .replace(new RegExp(DATE, 'g'), ' ')
     .replace(new RegExp(SECTION_REF, 'g'), ' ');
   const words = rest.split(/[\s,;:.()/'"`*-]+/).filter(Boolean);
-  const left = words.filter((w) => !isTag(w) && !FILLER.has(w.toLowerCase()) && !/^\d+[a-z]?$/.test(w) && !/^[IVX]+$/.test(w));
+  const left = words.filter(
+    (w) => !isTag(w) && !FILLER.has(w.toLowerCase()) && !/^\d+[a-z]?$/.test(w) && !/^[IVX]+$/.test(w),
+  );
   return left.length === 0 && /[A-Za-z0-9]/.test(inner);
 }
 
 /** Take the history out of one comment's text (its lines joined by `\n`, markers stripped), paragraph by paragraph. */
 export function cleanText(text) {
-  return text.split(/\n[ \t]*\n/).map(cleanParagraph).filter((p) => p !== '').join('\n\n');
+  return text
+    .split(/\n[ \t]*\n/)
+    .map(cleanParagraph)
+    .filter((p) => p !== '')
+    .join('\n\n');
 }
 
 function cleanParagraph(text) {
@@ -92,27 +153,55 @@ function cleanParagraph(text) {
     out = next;
   }
   // bible paths, with the section numbers after them, left inside prose or kept parentheticals
-  out = out.replace(new RegExp(`[ \\t]*${BIBLE_PATH}(?:\\s+(?:${SECTION_REF}|\\d+[a-z]?)(?:\\s*,\\s*(?:${SECTION_REF}|\\d+[a-z]?))*)?`, 'g'), '');
+  out = out.replace(
+    new RegExp(
+      `[ \\t]*${BIBLE_PATH}(?:\\s+(?:${SECTION_REF}|\\d+[a-z]?)(?:\\s*,\\s*(?:${SECTION_REF}|\\d+[a-z]?))*)?`,
+      'g',
+    ),
+    '',
+  );
   // a leading tag and its separator
   const tagged = leadingTag(out);
   if (tagged) out = out.replace(/^(\s*)(?:AUDIT\b|FIELD BUGS\b|PIN MOVED\b)?[\s\S]*?(?::|\s-\s|\s—\s)\s*/, '$1');
   // a comment left as nothing but tags
-  const words = out.trim().split(/[\s,/&+:;.()]+/).filter(Boolean);
-  if (words.some((w) => isTag(w) || w === 'AUDIT') && words.every((w) => isTag(w) || /^(?:AUDIT|FIELD|BUGS|\d+[a-z]?|[IVX]+)$/.test(w))) return '';
+  const words = out
+    .trim()
+    .split(/[\s,/&+:;.()]+/)
+    .filter(Boolean);
+  if (
+    words.some((w) => isTag(w) || w === 'AUDIT') &&
+    words.every((w) => isTag(w) || /^(?:AUDIT|FIELD|BUGS|\d+[a-z]?|[IVX]+)$/.test(w))
+  )
+    return '';
   // tidy what the cuts left
-  out = out.replace(/,[ \t]*;/g, ';').replace(/\([ \t]*[,;][ \t]*/g, '(').replace(/[ \t]*[,;][ \t]*\)/g, ')').replace(/^[ \t]*[-–—:;,][ \t]*/, '');
-  if (tagged) out = out.replace(/^(\s*)([a-z])(?=[a-z]*(?:[\s,;:.!?'-]|$))/, (_, s, c) => s + c.toUpperCase());   // a plain word, never an identifier
+  out = out
+    .replace(/,[ \t]*;/g, ';')
+    .replace(/\([ \t]*[,;][ \t]*/g, '(')
+    .replace(/[ \t]*[,;][ \t]*\)/g, ')')
+    .replace(/^[ \t]*[-–—:;,][ \t]*/, '');
+  if (tagged) out = out.replace(/^(\s*)([a-z])(?=[a-z]*(?:[\s,;:.!?'-]|$))/, (_, s, c) => s + c.toUpperCase()); // a plain word, never an identifier
   return /[A-Za-z0-9]/.test(out) ? out : '';
 }
 
 /** Every comment in a source, as acorn sees it: `{ block, start, end }`. Null when the file does not parse. */
 export function commentsOf(source) {
   const out = [];
-  const opts = { ecmaVersion: 'latest', allowHashBang: true, allowAwaitOutsideFunction: true, allowReturnOutsideFunction: true,
-    onComment: (block, text, start, end) => out.push({ block, start, end }) };
-  try { acorn.parse(source, { ...opts, sourceType: 'module' }); } catch {
+  const opts = {
+    ecmaVersion: 'latest',
+    allowHashBang: true,
+    allowAwaitOutsideFunction: true,
+    allowReturnOutsideFunction: true,
+    onComment: (block, text, start, end) => out.push({ block, start, end }),
+  };
+  try {
+    acorn.parse(source, { ...opts, sourceType: 'module' });
+  } catch {
     out.length = 0;
-    try { acorn.parse(source, { ...opts, sourceType: 'script' }); } catch { return null; }
+    try {
+      acorn.parse(source, { ...opts, sourceType: 'script' });
+    } catch {
+      return null;
+    }
   }
   return out;
 }

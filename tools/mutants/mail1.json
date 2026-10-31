@@ -213,7 +213,7 @@
     "name": "MAIL-route-open",
     "file": "server-account/src/service.js",
     "old": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover']);",
-    "new": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover', '/v1/mail/inbox']);",
+    "new": "export const OPEN_ROUTES = new Set([\n  '/v1/health',\n  '/v1/auth/guest',\n  '/v1/auth/login',\n  '/v1/auth/recover',\n  '/v1/mail/inbox',\n]);",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -315,8 +315,8 @@
   {
     "name": "BOX-auth-kept",
     "file": "src/net/mail.js",
-    "old": "    if (error === 'auth') { forgetSession(io?.storage); ",
-    "new": "    if (error === 'auth') { ",
+    "old": "      forgetSession(io?.storage);\n      this.state = 'signed-out';",
+    "new": "      this.state = 'signed-out';",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -345,8 +345,8 @@
   {
     "name": "BOX-open-refetches",
     "file": "src/net/mail.js",
-    "old": "    if (kept) return { ok: true, letter: kept };\n",
-    "new": "",
+    "old": "    if (kept) return { ok: true, letter: kept };\n    const io = this._io();",
+    "new": "    const io = this._io();",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -355,8 +355,8 @@
   {
     "name": "BOX-open-badge-stays",
     "file": "src/net/mail.js",
-    "old": "    if (head && !head.read) { head.read = true; this.unread = Math.max(0, this.unread - 1); }\n",
-    "new": "",
+    "old": "    if (head && !head.read) {\n      head.read = true;\n      this.unread = Math.max(0, this.unread - 1);\n    }\n    this._changed();",
+    "new": "    this._changed();",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -365,8 +365,8 @@
   {
     "name": "BOX-local-check-dropped",
     "file": "src/net/mail.js",
-    "old": "    if ('error' in words) return { ok: false, error: words.error };\n",
-    "new": "",
+    "old": "    if ('error' in words) return { ok: false, error: words.error };\n    const io = this._io();",
+    "new": "    const io = this._io();",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -375,8 +375,8 @@
   {
     "name": "BOX-stamp-after-session",
     "file": "src/net/mail.js",
-    "old": "    // when the Letters tab opens.\n    this.at = this.now();\n",
-    "new": "    // when the Letters tab opens.\n",
+    "old": "    this.at = this.now();\n    const io = this._io();",
+    "new": "    const io = this._io();",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -385,8 +385,8 @@
   {
     "name": "BOX-gone-letter-kept",
     "file": "src/net/mail.js",
-    "old": "    if (r.ok || r.error === 'no-letter') { this._drop(id); return { ok: true }; }",
-    "new": "    if (r.ok) { this._drop(id); return { ok: true }; }",
+    "old": "    if (r.ok || r.error === 'no-letter') {",
+    "new": "    if (r.ok) {",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -405,8 +405,8 @@
   {
     "name": "BOX-re-stacks",
     "file": "src/net/mail.js",
-    "old": "replace(/^(re:\\s*)+/i, '')",
-    "new": "replace(/^re:\\s*/i, '')",
+    "old": "  const s = `Re: ${String(subject ?? '').replace(/^(re:\\s*)+/i, '')}`;",
+    "new": "  const s = `Re: ${String(subject ?? '').replace(/^re:\\s*/i, '')}`;",
     "tests": [
       "test/server/mail1.test.js"
     ],

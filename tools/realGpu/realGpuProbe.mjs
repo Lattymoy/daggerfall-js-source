@@ -103,7 +103,7 @@ const kindOf = (functionName) => {
 export function nodeKey(node) {
   const frame = node.callFrame;
   const file = (frame.url || '').replace(/^.*?\/(src|tools|vendor|node_modules)\//, '$1/').replace(/\?.*$/, '');
-  return file ? `${frame.functionName || '(anon)'} ${file}:${frame.lineNumber + 1}` : (frame.functionName || '(anon)');
+  return file ? `${frame.functionName || '(anon)'} ${file}:${frame.lineNumber + 1}` : frame.functionName || '(anon)';
 }
 
 /** A phase's CPU profile read against its frame gaps. `alignNow` is the page's performance.now() when the align marker
@@ -125,7 +125,10 @@ export function analysePhase(profile, alignNow, gapsRaw, gapMs = DEFAULT_GAP_MS)
   let alignAt = null;
   for (let i = 0; i < profile.samples.length && alignAt === null; i++) {
     for (let c = profile.samples[i]; c != null; c = parent.get(c)) {
-      if (byId.get(c).callFrame.functionName === '__realGpuAlign') { alignAt = times[i]; break; }
+      if (byId.get(c).callFrame.functionName === '__realGpuAlign') {
+        alignAt = times[i];
+        break;
+      }
     }
   }
   // profile ms = performance.now() + offset
@@ -152,7 +155,11 @@ export function analysePhase(profile, alignNow, gapsRaw, gapMs = DEFAULT_GAP_MS)
         inclusive.set(key, (inclusive.get(key) || 0) + w);
       }
     }
-    const rank = (m, k) => [...m].sort((a, b) => b[1] - a[1]).slice(0, k).map(([f, v]) => [f, +v.toFixed(1)]);
+    const rank = (m, k) =>
+      [...m]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, k)
+        .map(([f, v]) => [f, +v.toFixed(1)]);
     return {
       kinds: Object.fromEntries(Object.entries(kinds).map(([k, v]) => [k, +v.toFixed(1)])),
       inclusive: rank(inclusive, top),
@@ -161,10 +168,13 @@ export function analysePhase(profile, alignNow, gapsRaw, gapMs = DEFAULT_GAP_MS)
   };
   const whole = attribute(() => true, 40);
   const wall = Object.values(whole.kinds).reduce((a, b) => a + b, 0) || 1;
-  const share = Object.fromEntries(Object.entries(whole.kinds).map(([k, v]) => [k, +(100 * v / wall).toFixed(1)]));
-  const hitches = offset === null ? [] : gapsRaw
-    .filter(([, ms]) => ms > gapMs)
-    .map(([end, ms]) => ({ atNow: end, ms, ...attribute((x) => x >= end - ms + offset && x <= end + offset) }));
+  const share = Object.fromEntries(Object.entries(whole.kinds).map(([k, v]) => [k, +((100 * v) / wall).toFixed(1)]));
+  const hitches =
+    offset === null
+      ? []
+      : gapsRaw
+          .filter(([, ms]) => ms > gapMs)
+          .map(([end, ms]) => ({ atNow: end, ms, ...attribute((x) => x >= end - ms + offset && x <= end + offset) }));
   return { aligned: offset !== null, share, whole, hitches };
 }
 
@@ -180,7 +190,9 @@ export function frameFigures(gaps) {
     over50: over(50).length,
     over100: over(100).length,
     over250: over(250).length,
-    sumOver50: +over(50).reduce((s, g) => s + g, 0).toFixed(0),
+    sumOver50: +over(50)
+      .reduce((s, g) => s + g, 0)
+      .toFixed(0),
   };
 }
 
@@ -190,7 +202,10 @@ export function frameFigures(gaps) {
  *  @param {{ gapsRaw: Array<[number, number]>, firstFrame: number|null, compileLog?: Array<{ fn: string, ms: number, at: number, by: string[] }>|null }} raw */
 export function bootFigures({ gapsRaw, firstFrame, compileLog = null }, playS = 25) {
   const longest = gapsRaw.reduce((a, g) => (g[1] > a[1] ? g : a), [0, 0]);
-  const play = firstFrame == null ? [] : gapsRaw.filter(([end, ms]) => end - ms >= firstFrame - 1 && end <= firstFrame + playS * 1000 && ms > 100);
+  const play =
+    firstFrame == null
+      ? []
+      : gapsRaw.filter(([end, ms]) => end - ms >= firstFrame - 1 && end <= firstFrame + playS * 1000 && ms > 100);
   const figures = {
     firstFrameS: firstFrame == null ? null : +(firstFrame / 1000).toFixed(1),
     longestS: +(longest[1] / 1000).toFixed(2),
@@ -199,7 +214,11 @@ export function bootFigures({ gapsRaw, firstFrame, compileLog = null }, playS = 
   };
   if (!compileLog) return figures;
   const seconds = (entries) => +(entries.reduce((s, e) => s + e.ms, 0) / 1000).toFixed(2);
-  const caller = (e) => `${e.fn} < ${e.by.filter((f) => !/glProgram\.js|^_buildProgram|^buildProgram/.test(f)).slice(0, 2).join(' < ')}`;
+  const caller = (e) =>
+    `${e.fn} < ${e.by
+      .filter((f) => !/glProgram\.js|^_buildProgram|^buildProgram/.test(f))
+      .slice(0, 2)
+      .join(' < ')}`;
   const byCaller = new Map();
   for (const e of compileLog) byCaller.set(caller(e), (byCaller.get(caller(e)) || 0) + e.ms);
   return {
@@ -209,7 +228,10 @@ export function bootFigures({ gapsRaw, firstFrame, compileLog = null }, playS = 
       beforeFirstFrame: seconds(compileLog.filter((e) => firstFrame == null || e.at < firstFrame)),
       afterFirstFrame: seconds(compileLog.filter((e) => firstFrame != null && e.at >= firstFrame)),
     },
-    byCaller: [...byCaller].sort((a, b) => b[1] - a[1]).slice(0, 25).map(([k, v]) => [Math.round(v), k]),
+    byCaller: [...byCaller]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 25)
+      .map(([k, v]) => [Math.round(v), k]),
   };
 }
 
@@ -221,11 +243,13 @@ export function bootFigures({ gapsRaw, firstFrame, compileLog = null }, playS = 
 export function judgeRun({ backend, phases, errors }) {
   const problems = [];
   if (!backend) problems.push('no backend read: the page never answered which GPU it draws on');
-  else if (SOFTWARE_RENDERER.test(backend.renderer)) problems.push(`a software renderer (${backend.renderer}): these are not a GPU's numbers`);
+  else if (SOFTWARE_RENDERER.test(backend.renderer))
+    problems.push(`a software renderer (${backend.renderer}): these are not a GPU's numbers`);
   for (const [name, phase] of Object.entries(phases)) {
     if (!(phase.frames > 0)) problems.push(`${name}: no frame drawn (a covered window, or the GPU process gone)`);
     const isBoot = name === 'boot' || name === 'boot2';
-    if (isBoot && !phase.aligned) problems.push(`${name}: the profile could not be aligned to the frames - its long frames are unattributed`);
+    if (isBoot && !phase.aligned)
+      problems.push(`${name}: the profile could not be aligned to the frames - its long frames are unattributed`);
     if (isBoot && phase.firstFrameS == null) problems.push(`${name}: no world frame`);
   }
   if (errors.length) problems.push(`the page threw ${errors.length} time(s): ${errors[0]}`);
@@ -236,9 +260,15 @@ export function judgeRun({ backend, phases, errors }) {
 function edgeMemory() {
   try {
     const out = execFileSync('tasklist', ['/FO', 'CSV', '/NH', '/FI', 'IMAGENAME eq msedge.exe'], { encoding: 'utf8' });
-    return out.trim().split(/\r?\n/).map((l) => l.split('","')).filter((c) => c.length > 4)
+    return out
+      .trim()
+      .split(/\r?\n/)
+      .map((l) => l.split('","'))
+      .filter((c) => c.length > 4)
       .map((c) => [Number(c[1]), Number(c[4].replace(/[^0-9]/g, '')) / 1024]);
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 
 /** MW_PATH: the retail Morrowind "Data Files" served at /mwdata/* (a dev-server mount; nothing ships it). */
@@ -249,7 +279,10 @@ const mwMount = (dir) => ({
       const name = decodeURIComponent(req.url.slice(1).split('?')[0]);
       if (!/^[A-Za-z0-9._ -]+$/.test(name)) return next();
       const path = join(dir, name);
-      if (statSync(path, { throwIfNoEntry: false })?.isFile() !== true) { res.statusCode = 404; return res.end('not found'); }
+      if (statSync(path, { throwIfNoEntry: false })?.isFile() !== true) {
+        res.statusCode = 404;
+        return res.end('not found');
+      }
       res.setHeader('Content-Type', 'application/octet-stream');
       createReadStream(path).pipe(res);
     });
@@ -271,7 +304,8 @@ async function main() {
   const sceneName = process.argv[2] ?? '';
   const sceneUrl = SCENES[sceneName] ?? sceneName;
   // before a server or a browser stands: a bare run starts nothing on a machine whose GPU may be busy
-  if (!sceneUrl.startsWith('/')) throw new Error(`realGpuProbe: name the scene - one of ${Object.keys(SCENES).join(', ')} - or a /play/ URL`);
+  if (!sceneUrl.startsWith('/'))
+    throw new Error(`realGpuProbe: name the scene - one of ${Object.keys(SCENES).join(', ')} - or a /play/ URL`);
   const url = flies ? sceneUrl.replace('&play', '&fly') : sceneUrl;
   mkdirSync(out, { recursive: true });
 
@@ -280,16 +314,25 @@ async function main() {
   if (!base) {
     const { createServer } = await import('vite');
     server = await createServer({
-      root, configFile: join(root, 'vite.config.js'), cacheDir: join(tmpdir(), 'realGpuProbe', 'vite-cache'),
-      plugins: env.MW_PATH ? [mwMount(env.MW_PATH)] : [], server: { port, strictPort: true, hmr: false, watch: null }, logLevel: 'error',
+      root,
+      configFile: join(root, 'vite.config.js'),
+      cacheDir: join(tmpdir(), 'realGpuProbe', 'vite-cache'),
+      plugins: env.MW_PATH ? [mwMount(env.MW_PATH)] : [],
+      server: { port, strictPort: true, hmr: false, watch: null },
+      logLevel: 'error',
     });
     await server.listen();
     base = `http://localhost:${port}`;
   }
   const edgeBefore = new Set(edgeMemory().map(([pid]) => pid));
-  const args = [`--window-size=${width},${height + 100}`, '--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding',
-    '--disable-background-timer-throttling', '--enable-precise-memory-info',
-    ...(env.ANGLE ? ['--use-gl=angle', `--use-angle=${env.ANGLE}`] : [])];
+  const args = [
+    `--window-size=${width},${height + 100}`,
+    '--disable-backgrounding-occluded-windows',
+    '--disable-renderer-backgrounding',
+    '--disable-background-timer-throttling',
+    '--enable-precise-memory-info',
+    ...(env.ANGLE ? ['--use-gl=angle', `--use-angle=${env.ANGLE}`] : []),
+  ];
   const launch = { channel: env.CHANNEL || 'msedge', headless: false, args };
   const context = env.PROFILE_DIR
     ? await chromium.launchPersistentContext(resolve(env.PROFILE_DIR), { ...launch, viewport: { width, height } })
@@ -299,8 +342,8 @@ async function main() {
     await context.addInitScript(FIRST_FRAME_MARK);
     await context.addInitScript(FRAME_LOG);
     if (env.CLOG) await context.addInitScript(COMPILE_LOG);
-    const page = context.pages()[0] ?? await context.newPage();
-    page.on('dialog', (d) => d.accept());   // the game's leave-page guard, after an idle reload
+    const page = context.pages()[0] ?? (await context.newPage());
+    page.on('dialog', (d) => d.accept()); // the game's leave-page guard, after an idle reload
     page.on('pageerror', (e) => run.errors.push(e.message));
     const cdp = await context.newCDPSession(page);
     await cdp.send('Profiler.enable');
@@ -310,7 +353,10 @@ async function main() {
       const end = Date.now() + maxS * 1000;
       let idleFrom = null;
       for (;;) {
-        const s = await page.evaluate(() => ({ f: window.__frame | 0, idle: typeof window.__streamIdle === 'function' ? window.__streamIdle() : true }));
+        const s = await page.evaluate(() => ({
+          f: window.__frame | 0,
+          idle: typeof window.__streamIdle === 'function' ? window.__streamIdle() : true,
+        }));
         if (!s.idle) idleFrom = null;
         else idleFrom ??= s.f;
         if ((idleFrom !== null && s.f - idleFrom >= frames) || Date.now() > end) return;
@@ -318,7 +364,7 @@ async function main() {
       }
     };
     const boot = async () => {
-      await page.goto(`${base}${url}`, { timeout: 300000 });   // a fresh server optimises its dependencies first
+      await page.goto(`${base}${url}`, { timeout: 300000 }); // a fresh server optimises its dependencies first
       await page.waitForFunction(() => (window.__frame | 0) > 0, null, { timeout: 900000, polling: 250 });
       await waitIdle(30, 300);
       return true;
@@ -326,7 +372,10 @@ async function main() {
     const fly = (sign) => async () => {
       const steps = (Number(env.FLY_S || 60) * 1000) / 50;
       for (let i = 0; i < steps; i++) {
-        await page.evaluate(([d, dir]) => (dir === 'x' ? window.__move(d, 0, 0) : window.__move(0, 0, d)), [sign * Number(env.SPEED || 2.5), env.DIR || 'x']);
+        await page.evaluate(
+          ([d, dir]) => (dir === 'x' ? window.__move(d, 0, 0) : window.__move(0, 0, d)),
+          [sign * Number(env.SPEED || 2.5), env.DIR || 'x'],
+        );
         await new Promise((r) => setTimeout(r, 50));
       }
       await waitIdle(30, 120);
@@ -334,15 +383,20 @@ async function main() {
     const walk = async () => {
       const steps = (Number(env.FLY_S || 60) * 1000) / 250;
       for (let i = 0; i < steps; i++) {
-        await page.evaluate(([d, dir]) => {
-          const c = window.__cam();
-          if (dir === 'x') window.__pose(c[0] + d, c[1] - 1.0, c[2], 0, 0);
-          else window.__pose(c[0], c[1] - 1.0, c[2] + d, 0, 0);
-        }, [Number(env.SPEED || 2.5), env.DIR || 'x']);
+        await page.evaluate(
+          ([d, dir]) => {
+            const c = window.__cam();
+            if (dir === 'x') window.__pose(c[0] + d, c[1] - 1.0, c[2], 0, 0);
+            else window.__pose(c[0], c[1] - 1.0, c[2] + d, 0, 0);
+          },
+          [Number(env.SPEED || 2.5), env.DIR || 'x'],
+        );
         await new Promise((r) => setTimeout(r, 250));
       }
     };
-    const settle = async () => { await new Promise((r) => setTimeout(r, Number(env.SETTLE_S || 20) * 1000)); };
+    const settle = async () => {
+      await new Promise((r) => setTimeout(r, Number(env.SETTLE_S || 20) * 1000));
+    };
     const bodies = { boot, boot2: boot, settled: settle, out: fly(1), back: fly(-1), walk };
 
     if (env.MW) {
@@ -350,7 +404,14 @@ async function main() {
       const kept = await page.evaluate(async () => {
         const { storeMorrowindFiles } = await import('/src/scenes/dataSource.js');
         const files = [];
-        for (const n of ['Morrowind.esm', 'Tribunal.esm', 'Bloodmoon.esm', 'Morrowind.bsa', 'Tribunal.bsa', 'Bloodmoon.bsa']) {
+        for (const n of [
+          'Morrowind.esm',
+          'Tribunal.esm',
+          'Bloodmoon.esm',
+          'Morrowind.bsa',
+          'Tribunal.bsa',
+          'Bloodmoon.bsa',
+        ]) {
           const r = await fetch(`/mwdata/${n}`);
           if (r.ok) files.push(new File([await r.blob()], n));
         }
@@ -369,15 +430,18 @@ async function main() {
       let alignNow = await page.evaluate(() => window.__realGpuAlign?.() ?? null).catch(() => null);
       const t0 = alignNow ?? 0;
       const navigated = await body();
-      if (navigated) alignNow = await page.evaluate(() => window.__realGpuAlign());   // the navigation reset the page's clock
+      if (navigated) alignNow = await page.evaluate(() => window.__realGpuAlign()); // the navigation reset the page's clock
       const t1 = await page.evaluate(() => performance.now());
       const { profile } = await cdp.send('Profiler.stop');
       writeFileSync(join(out, `${name}.cpuprofile`), JSON.stringify(profile));
-      const gapsRaw = (await page.evaluate(() => window.__realGpu.gaps.slice())).filter(([end]) => navigated || (end >= t0 && end <= t1));
+      const gapsRaw = (await page.evaluate(() => window.__realGpu.gaps.slice())).filter(
+        ([end]) => navigated || (end >= t0 && end <= t1),
+      );
       const firstFrame = navigated ? await page.evaluate(() => window.__bootFreezeFrames?.[0] ?? null) : null;
       const compileLog = env.CLOG ? await page.evaluate(() => window.__realGpuCompileLog?.slice() ?? null) : null;
       const phase = {
-        name, seconds: +((t1 - (navigated ? 0 : t0)) / 1000).toFixed(1),
+        name,
+        seconds: +((t1 - (navigated ? 0 : t0)) / 1000).toFixed(1),
         ...frameFigures(gapsRaw.map(([, ms]) => ms)),
         ...analysePhase(profile, alignNow, gapsRaw, gapMs),
         ...(navigated ? bootFigures({ gapsRaw, firstFrame, compileLog }) : {}),
@@ -391,7 +455,12 @@ async function main() {
         run.backend = await page.evaluate(() => {
           const gl = document.createElement('canvas').getContext('webgl2');
           const info = gl?.getExtension('WEBGL_debug_renderer_info');
-          return gl ? { renderer: info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER), parallelCompile: !!gl.getExtension('KHR_parallel_shader_compile') } : null;
+          return gl
+            ? {
+                renderer: info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER),
+                parallelCompile: !!gl.getExtension('KHR_parallel_shader_compile'),
+              }
+            : null;
         });
         console.log('  backend', JSON.stringify(run.backend));
       }
@@ -401,12 +470,17 @@ async function main() {
       await cdp.send('HeapProfiler.stopSampling');
       writeFileSync(join(out, 'heap-sampling.json'), JSON.stringify(profile));
     }
-    const mine = edgeMemory().filter(([pid]) => !edgeBefore.has(pid)).sort((a, b) => b[1] - a[1]);
+    const mine = edgeMemory()
+      .filter(([pid]) => !edgeBefore.has(pid))
+      .sort((a, b) => b[1] - a[1]);
     run.edgeMB = mine.map(([, mb]) => Math.round(mb));
     console.log('edge processes (MB working set)', JSON.stringify(run.edgeMB));
   } finally {
     await context.close();
-    await context.browser()?.close().catch(() => {});
+    await context
+      .browser()
+      ?.close()
+      .catch(() => {});
     if (server) await server.close();
   }
   const problems = judgeRun(run);

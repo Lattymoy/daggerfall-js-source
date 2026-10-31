@@ -13,11 +13,11 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { material } from './nodeLaw.js';
-import { STORES_MAX, looseOnly } from './professionLaw.js';   // CLOTH-GEMS: the loose door's materials
+import { STORES_MAX, looseOnly } from './professionLaw.js'; // CLOTH-GEMS: the loose door's materials
 import { MARKS_MAX } from './marksLaw.js';
 import { marketCatalogue, pieceListable, priceOk, UNYIELDED } from './marketLaw.js';
 import { recipeById, takesQuality, MASTERWORK } from './recipeLaw.js';
-import { RAID_KEY_RE } from './raid/raidLaw.js';   // SILVER-WAYS: a contract's raid, by its key
+import { RAID_KEY_RE } from './raid/raidLaw.js'; // SILVER-WAYS: a contract's raid, by its key
 
 const DAY_S = 86_400;
 
@@ -95,7 +95,8 @@ export const commissionPayOk = (n) => priceOk(n);
  *  Standard-bearer's Silk) - no one could make it, so no one may be asked to. CLOTH-GEMS (Professions-Arc 50): or a
  *  graded gem, which the loose door alone brings in - a piece made of loose goods is walled to gold and fills no Drakes
  *  commission, so no one could fill it. */
-export const commissionUnyielded = (recipeId) => !!recipeById(recipeId)?.inputs.some((i) => UNYIELDED.includes(i.key) || looseOnly(i.key));
+export const commissionUnyielded = (recipeId) =>
+  !!recipeById(recipeId)?.inputs.some((i) => UNYIELDED.includes(i.key) || looseOnly(i.key));
 /** Whether a recipe may be commissioned: a piece the market lists (weapons, armour, staves, bows, tools, kits,
  *  furniture; PROF7's leather armour, clothing and furnishings) - never arrows or a siege work - that someone could make
  *  now. */
@@ -106,12 +107,13 @@ export const commissionTakesQuality = (recipeId) => {
   return !!r && takesQuality(r);
 };
 /** A commission's least quality: 0 (Crude) to Masterwork where the recipe takes one; none (null) where it does not. */
-export const commissionQualityOk = (recipeId, q) => (commissionTakesQuality(recipeId)
-  ? Number.isInteger(q) && q >= 0 && q <= MASTERWORK
-  : q === null);
+export const commissionQualityOk = (recipeId, q) =>
+  commissionTakesQuality(recipeId) ? Number.isInteger(q) && q >= 0 && q <= MASTERWORK : q === null;
 /** Whether a piece answers a commission: the recipe asked, and at least the quality asked. */
-export const commissionFilledBy = (c, piece) => !!piece && piece.recipe === c.recipe
-  && (c.quality == null || (Number.isInteger(piece.quality) && piece.quality >= c.quality));
+export const commissionFilledBy = (c, piece) =>
+  !!piece &&
+  piece.recipe === c.recipe &&
+  (c.quality == null || (Number.isInteger(piece.quality) && piece.quality >= c.quality));
 
 /**
  * WHAT EACH GUILD RANK MAY DO OF PROF6'S (the ranks that may - GUILD1's ranks, 0 the Guildmaster, 1 an Officer): post a
@@ -128,8 +130,9 @@ export const WRIT_POWERS = Object.freeze({
 export const writMay = (rank, power) => (Object.hasOwn(WRIT_POWERS, power) ? WRIT_POWERS[power] : []).includes(rank);
 /** AUDIT 31 R1: whether a character of this rank may take `units` of a material out of its guild's Stores, holding
  *  `ownDeposit` of it there: an Officer or the Guildmaster any of it, any member back what they put in of their own. */
-export const guildTakeMay = (rank, units, ownDeposit) => writMay(rank, 'storesWithdraw')
-  || (Number.isSafeInteger(rank) && Number.isSafeInteger(ownDeposit) && units <= ownDeposit);
+export const guildTakeMay = (rank, units, ownDeposit) =>
+  writMay(rank, 'storesWithdraw') ||
+  (Number.isSafeInteger(rank) && Number.isSafeInteger(ownDeposit) && units <= ownDeposit);
 /** AUDIT 31 S6: whether an account holding `rank` in a writ's guild (null, none) may deliver to that writ - not a rank
  *  that takes the guild Stores out, which could sell the guild the same units again and again (its writ budget, or the
  *  treasury, become its own Marks - GUILD1's law: only the Guildmaster withdraws). */

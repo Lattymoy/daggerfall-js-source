@@ -2,8 +2,8 @@
   {
     "name": "WB13c-move-for-any-blow",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "move: !!aimed && aimed === PC.atk[A.key].name }",
-    "new": "move: !!aimed }",
+    "old": "          move: !!aimed && aimed === PC.atk[A.key].name,",
+    "new": "          move: !!aimed,",
     "tests": [
       "test/ui/gate/wb13c_hud.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WB13c-the-plate-for-his-own-fire",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "dagon: isDagons(A), move:",
-    "new": "dagon: !!A.el, move:",
+    "old": "          dagon: isDagons(A),",
+    "new": "          dagon: !!A.el,",
     "tests": [
       "test/ui/gate/wb13c_hud.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WB13c-the-fade-at-once",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "const alpha = s.fell ? Math.max(0, Math.min(1, 1 - (since - FELL_HOLD_MS) / FELL_FADE_MS)) : 1;",
-    "new": "const alpha = s.fell ? 0 : 1;",
+    "old": "  const alpha = s.fell ? Math.max(0, Math.min(1, 1 - (since - FELL_HOLD_MS) / FELL_FADE_MS)) : 1;",
+    "new": "  const alpha = s.fell ? 0 : 1;",
     "tests": [
       "test/ui/gate/wb13c_hud.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB13c-the-line-empty-at-the-landing",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "t: now < atk.at ? tel.t : 1,",
-    "new": "t: now < atk.at ? tel.t : 0,",
+    "old": "          t: now < atk.at ? tel.t : 1,",
+    "new": "          t: now < atk.at ? tel.t : 0,",
     "tests": [
       "test/ui/gate/wb13c_hud.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WB13c-the-epithet-uncoloured",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "const subColor = model.epithet ? model.epithetColor ?? '' : '';",
-    "new": "const subColor = '';",
+    "old": "  const subColor = model.epithet ? (model.epithetColor ?? '') : '';",
+    "new": "  const subColor = '';",
     "tests": [
       "test/ui/gate/wb13c_hud.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WB13c-the-wrath-never-near",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "const near = !!model.wrath && !!model.wrathNear;",
-    "new": "const near = false;",
+    "old": "  const near = !!model.wrath && !!model.wrathNear;",
+    "new": "  const near = false;",
     "tests": [
       "test/ui/gate/wb13c_hud.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WB13c-the-break-flash-held",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "flashing(shown.breakAt, now, FLASH_MS.wardBreak) ? ' wbreak' : ''",
-    "new": "shown.breakAt !== null ? ' wbreak' : ''",
+    "old": "  const cls = `wb-boss-bar${model.theme ? ` ${model.theme}` : ''}${model.warded ? ' warded' : ''}${flashing(shown.breakAt, now, FLASH_MS.wardBreak) ? ' wbreak' : ''}${flashing(shown.introAt, now, INTRO_MS) ? ' intro' : ''}${model.low ? ' low' : ''}`;",
+    "new": "  const cls = `wb-boss-bar${model.theme ? ` ${model.theme}` : ''}${model.warded ? ' warded' : ''}${shown.breakAt !== null ? ' wbreak' : ''}${flashing(shown.introAt, now, INTRO_MS) ? ' intro' : ''}${model.low ? ' low' : ''}`;",
     "tests": [
       "test/ui/gate/wb13c_hud.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WB13c-a-flash-at-his-fall",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "if (shown.warded && !model.warded && !model.fallen) shown.breakAt = now;",
-    "new": "if (shown.warded && !model.warded) shown.breakAt = now;",
+    "old": "    if (shown.warded && !model.warded && !model.fallen) shown.breakAt = now;",
+    "new": "    if (shown.warded && !model.warded) shown.breakAt = now;",
     "tests": [
       "test/ui/gate/wb13c_hud.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "WB13c-cleared-at-once",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "if (shown.outAt === null) shown.outAt = now;\n    else if (now - shown.outAt >= CALLOUT_OUT_MS)",
-    "new": "if (shown.outAt === null) shown.outAt = now - CALLOUT_OUT_MS;\n    if (now - shown.outAt >= CALLOUT_OUT_MS)",
+    "old": "    if (shown.outAt === null) shown.outAt = now;\n    else if (now - shown.outAt >= CALLOUT_OUT_MS) {",
+    "new": "    if (shown.outAt === null) shown.outAt = now - CALLOUT_OUT_MS;\n    if (now - shown.outAt >= CALLOUT_OUT_MS) {",
     "tests": [
       "test/ui/gate/wb13c_hud.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "WB13c-the-entrance-on-every-tick",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "if (fresh) shown.inAt = now;",
-    "new": "shown.inAt = now;",
+    "old": "      if (fresh) shown.inAt = now;",
+    "new": "      shown.inAt = now;",
     "tests": [
       "test/ui/gate/wb13c_hud.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "WB13c-move-never-shown",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "${shown.move ? ' aimed' : ''}",
-    "new": "",
+    "old": "  const ccls = `wb-boss-callout${flashing(shown.inAt, now, FLASH_MS.callIn) && shown.outAt === null ? ' cin' : ''}${shown.dagon ? ' dagon' : ''}${shown.move ? ' aimed' : ''}${shown.outAt !== null ? ' cout' : ''}`;",
+    "new": "  const ccls = `wb-boss-callout${flashing(shown.inAt, now, FLASH_MS.callIn) && shown.outAt === null ? ' cin' : ''}${shown.dagon ? ' dagon' : ''}${shown.outAt !== null ? ' cout' : ''}`;",
     "tests": [
       "test/ui/gate/wb13c_hud.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "WB13c-every-spent-mark-flashing",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "(shown.spentNew?.[i] && flashing(shown.spentAt, now, FLASH_MS.spent) ? 'wb-boss-mark spent now' : 'wb-boss-mark spent')",
-    "new": "'wb-boss-mark spent now'",
+    "old": "  const ticks = parts.ticks.map((_, i) =>\n    spent[i] === '1'\n      ? shown.spentNew?.[i] && flashing(shown.spentAt, now, FLASH_MS.spent)\n        ? 'wb-boss-mark spent now'\n        : 'wb-boss-mark spent'\n      : 'wb-boss-mark',\n  );",
+    "new": "  const ticks = parts.ticks.map((_, i) => (spent[i] === '1' ? 'wb-boss-mark spent now' : 'wb-boss-mark'));",
     "tests": [
       "test/ui/gate/wb13c_hud.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "WB13c-the-flash-on-a-late-joiner",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "if (shown.spent !== null) { shown.spentNew = [...spent].map((c, i) => c === '1' && shown.spent[i] !== '1'); shown.spentAt = now; }",
-    "new": "{ shown.spentNew = [...spent].map((c, i) => c === '1' && shown.spent?.[i] !== '1'); shown.spentAt = now; }",
+    "old": "    if (shown.spent !== null) {\n      shown.spentNew = [...spent].map((c, i) => c === '1' && shown.spent[i] !== '1');",
+    "new": "    {\n      shown.spentNew = [...spent].map((c, i) => c === '1' && shown.spent?.[i] !== '1');",
     "tests": [
       "test/ui/gate/wb13c_hud.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "WB13c-the-old-callout-left-in-the-node",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "    shown = { ...SHOWN(), vis: shown.vis };\n    parts.calloutText.textContent = '';\n",
-    "new": "    shown = { ...SHOWN(), vis: shown.vis };\n",
+    "old": "    parts.calloutText.textContent = '';\n  }",
+    "new": "  }",
     "tests": [
       "test/ui/gate/wb13c_hud.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "WB13c-the-landscape-rules-lost",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "@media (max-height: 480px) {\n  .wb-boss-bar { top: 44px; }",
-    "new": "@media (max-height: 1px) {\n  .wb-boss-bar { top: 44px; }",
+    "old": "@media (max-height: 480px) {",
+    "new": "@media (max-height: 1px) {",
     "tests": [
       "test/ui/gate/wb13c_hud.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "WB13c-the-entrance-for-ever",
     "file": "src/ui/gate/gateDamageChart.js",
-    "old": "entering: shown < CHART_IN_MS,",
-    "new": "entering: true,",
+    "old": "    entering: shown < CHART_IN_MS,",
+    "new": "    entering: true,",
     "tests": [
       "test/ui/gate/wb13c_hud.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "WB13c-all-rows-at-once",
     "file": "src/ui/gate/gateDamageChart.js",
-    "old": "animation-delay: ${i * CHART_ROW_STEP_MS}ms;",
-    "new": "animation-delay: 0ms;",
+    "old": "${Array.from({ length: DAMAGE_CHART_ROWS + 3 }, (_, i) => `.wb-dmg-in > :nth-child(${i + 4}), .wb-dmg-in > :nth-child(${i + 4}) .wb-dmg-fill { animation-delay: ${i * CHART_ROW_STEP_MS}ms; }`).join('\\n')}",
+    "new": "${Array.from({ length: DAMAGE_CHART_ROWS + 3 }, (_, i) => `.wb-dmg-in > :nth-child(${i + 4}), .wb-dmg-in > :nth-child(${i + 4}) .wb-dmg-fill { animation-delay: 0ms; }`).join('\\n')}",
     "tests": [
       "test/ui/gate/wb13c_hud.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "WB13c-a-screen-that-never-asks",
     "file": "src/ui/gate/gateGroundView.js",
-    "old": "    if (doc.head) injectEnhancedFonts(doc);   // WB13c: Cormorant on the classic skin too (it came only if another window had asked)\n",
-    "new": "",
+    "old": "    if (doc.head) injectEnhancedFonts(doc); // WB13c: Cormorant on the classic skin too (it came only if another window had asked)\n  }",
+    "new": "  }",
     "tests": [
       "test/ui/gate/wb13c_hud.test.js"
     ]

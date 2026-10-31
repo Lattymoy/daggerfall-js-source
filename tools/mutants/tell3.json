@@ -39,8 +39,8 @@
   {
     "name": "TELL3-guard-lost",
     "file": "src/ai/foeBlows.js",
-    "old": "  return { kind, origin: [origin[0], origin[1], origin[2]], yaw, start: now, land: now + w, mult: P.mult, color, guard: iron ? 'iron' : 'poise' };",
-    "new": "  return { kind, origin: [origin[0], origin[1], origin[2]], yaw, start: now, land: now + w, mult: P.mult, color, guard: 'poise' };",
+    "old": "    guard: iron ? 'iron' : 'poise',",
+    "new": "    guard: 'poise',",
     "tests": [
       "test/characters/enemy/tell3_iron.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "TELL3-iron-elite-share",
     "file": "src/ai/tells.js",
-    "old": "  IRON_ELITE: 1 / 3,            // an elite's blow is iron one time in this",
-    "new": "  IRON_ELITE: 1 / 2,            // an elite's blow is iron one time in this",
+    "old": "  IRON_ELITE: 1 / 3, // an elite's blow is iron one time in this",
+    "new": "  IRON_ELITE: 1 / 2, // an elite's blow is iron one time in this",
     "tests": [
       "test/characters/enemy/tell3_iron.test.js",
       "test/systems/tell1_poise.test.js"
@@ -67,8 +67,8 @@
   {
     "name": "TELL3-ring-not-iron",
     "file": "src/ai/tells.js",
-    "old": "  IRON_SHAPES: Object.freeze(['slam', 'ring']),   // a heavy or massive body's iron shapes (the ring is TELL6's)",
-    "new": "  IRON_SHAPES: Object.freeze(['slam']),   // a heavy or massive body's iron shapes (the ring is TELL6's)",
+    "old": "  IRON_SHAPES: Object.freeze(['slam', 'ring']), // a heavy or massive body's iron shapes (the ring is TELL6's)",
+    "new": "  IRON_SHAPES: Object.freeze(['slam']), // a heavy or massive body's iron shapes (the ring is TELL6's)",
     "tests": [
       "test/characters/enemy/tell3_iron.test.js",
       "test/systems/tell1_poise.test.js"
@@ -77,8 +77,8 @@
   {
     "name": "TELL3-sweep-iron",
     "file": "src/ai/tells.js",
-    "old": "  IRON_SHAPES: Object.freeze(['slam', 'ring']),   // a heavy or massive body's iron shapes (the ring is TELL6's)",
-    "new": "  IRON_SHAPES: Object.freeze(['slam', 'ring', 'sweep']),   // a heavy or massive body's iron shapes (the ring is TELL6's)",
+    "old": "  IRON_SHAPES: Object.freeze(['slam', 'ring']), // a heavy or massive body's iron shapes (the ring is TELL6's)",
+    "new": "  IRON_SHAPES: Object.freeze(['slam', 'ring', 'sweep']), // a heavy or massive body's iron shapes (the ring is TELL6's)",
     "tests": [
       "test/characters/enemy/tell3_iron.test.js",
       "test/systems/tell1_poise.test.js"
@@ -106,7 +106,7 @@
     "name": "TELL3-shape-ignored",
     "file": "src/ai/tells.js",
     "old": "  if (TELL.IRON_SHAPES.includes(kind) && (cls === 'heavy' || cls === 'massive')) return 'iron';",
-    "new": "  if ((cls === 'heavy' || cls === 'massive')) return 'iron';",
+    "new": "  if (cls === 'heavy' || cls === 'massive') return 'iron';",
     "tests": [
       "test/characters/enemy/tell3_iron.test.js"
     ]
@@ -114,8 +114,8 @@
   {
     "name": "TELL3-elite-never",
     "file": "src/ai/tells.js",
-    "old": "  const share = Math.max(isElite(ent) ? TELL.IRON_ELITE : 0, ent?.revenant?.edge?.iron > 0 ? ent.revenant.edge.iron : 0, ent?.revenant?.p2?.iron > 0 ? ent.revenant.p2.iron : 0);   // Phase two's half",
-    "new": "  const share = Math.max(0, ent?.revenant?.edge?.iron > 0 ? ent.revenant.edge.iron : 0, ent?.revenant?.p2?.iron > 0 ? ent.revenant.p2.iron : 0);   // Phase two's half",
+    "old": "    isElite(ent) ? TELL.IRON_ELITE : 0,",
+    "new": "    0,",
     "tests": [
       "test/characters/enemy/tell3_iron.test.js"
     ]
@@ -132,8 +132,8 @@
   {
     "name": "TELL3-gold-only",
     "file": "src/ai/tells.js",
-    "old": "  const share = Math.max(isElite(ent) ? TELL.IRON_ELITE : 0, ent?.revenant?.edge?.iron > 0 ? ent.revenant.edge.iron : 0, ent?.revenant?.p2?.iron > 0 ? ent.revenant.p2.iron : 0);   // Phase two's half",
-    "new": "  const share = Math.max(ent?.eliteFoe === true ? TELL.IRON_ELITE : 0, ent?.revenant?.edge?.iron > 0 ? ent.revenant.edge.iron : 0, ent?.revenant?.p2?.iron > 0 ? ent.revenant.p2.iron : 0);   // Phase two's half",
+    "old": "    isElite(ent) ? TELL.IRON_ELITE : 0,",
+    "new": "    ent?.eliteFoe === true ? TELL.IRON_ELITE : 0,",
     "tests": [
       "test/characters/enemy/tell3_iron.test.js"
     ]
@@ -150,7 +150,7 @@
   {
     "name": "TELL3-iron-weighed",
     "file": "src/ai/tactics.js",
-    "old": "  if (b.guard === 'iron') return 'hold';   // Iron takes no poise - it lands (a paralysis alone stops it, windupTurn)",
+    "old": "  if (b.guard === 'iron') return 'hold'; // Iron takes no poise - it lands (a paralysis alone stops it, windupTurn)",
     "new": "  // Iron takes no poise - it lands (a paralysis alone stops it, windupTurn)",
     "tests": [
       "test/characters/enemy/tell3_iron.test.js",
@@ -160,8 +160,8 @@
   {
     "name": "TELL3-brain-never-iron",
     "file": "src/ai/tactics.js",
-    "old": "  const guard = sig?.iron ? 'iron' : blowGuard(shape, ENEMY_BASICS[ent.mobileType]?.weight ?? 0, ent);   // Iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3",
-    "new": "  const guard = sig?.iron ? 'iron' : 'poise';   // Iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3",
+    "old": "  const guard = sig?.iron ? 'iron' : blowGuard(shape, ENEMY_BASICS[ent.mobileType]?.weight ?? 0, ent); // Iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3",
+    "new": "  const guard = sig?.iron ? 'iron' : 'poise'; // Iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3",
     "tests": [
       "test/characters/enemy/tell3_iron.test.js"
     ]
@@ -169,8 +169,8 @@
   {
     "name": "TELL3-brain-poise-colour",
     "file": "src/ai/tactics.js",
-    "old": "  const b = fitBlowToGround(makeBlow(shape, ai.feet, Math.atan2(dx, dz), now, sig ? sig.color : guard === 'iron' ? IRON_COLOR : BLOW_COLOR, guard, windup), ai.collider);   // AUDIT TACT D8: on the ground it marks; RVN5: a signature in its ember",
-    "new": "  const b = fitBlowToGround(makeBlow(shape, ai.feet, Math.atan2(dx, dz), now, sig ? sig.color : BLOW_COLOR, guard, windup), ai.collider);   // AUDIT TACT D8: on the ground it marks; RVN5: a signature in its ember",
+    "old": "    makeBlow(\n      shape,\n      ai.feet,\n      Math.atan2(dx, dz),\n      now,\n      sig ? sig.color : guard === 'iron' ? IRON_COLOR : BLOW_COLOR,\n      guard,\n      windup,\n    ),",
+    "new": "    makeBlow(shape, ai.feet, Math.atan2(dx, dz), now, sig ? sig.color : BLOW_COLOR, guard, windup),",
     "tests": [
       "test/characters/enemy/tell3_iron.test.js"
     ]
@@ -178,8 +178,8 @@
   {
     "name": "TELL3-brain-weightless",
     "file": "src/ai/tactics.js",
-    "old": "  const guard = sig?.iron ? 'iron' : blowGuard(shape, ENEMY_BASICS[ent.mobileType]?.weight ?? 0, ent);   // Iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3",
-    "new": "  const guard = sig?.iron ? 'iron' : blowGuard(shape, 0, ent);   // Iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3",
+    "old": "  const guard = sig?.iron ? 'iron' : blowGuard(shape, ENEMY_BASICS[ent.mobileType]?.weight ?? 0, ent); // Iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3",
+    "new": "  const guard = sig?.iron ? 'iron' : blowGuard(shape, 0, ent); // Iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3",
     "tests": [
       "test/characters/enemy/tell3_iron.test.js"
     ]
@@ -205,8 +205,8 @@
   {
     "name": "TELL3-uiron-unset",
     "file": "src/render/foeTelegraph.js",
-    "old": "      gl.uniform1f(U.uIron, b.guard === 'iron' ? 1 : 0);   // TELL3",
-    "new": "      gl.uniform1f(U.uIron, 0);   // TELL3",
+    "old": "      gl.uniform1f(U.uIron, b.guard === 'iron' ? 1 : 0); // TELL3",
+    "new": "      gl.uniform1f(U.uIron, 0); // TELL3",
     "tests": [
       "test/characters/enemy/tell3_iron.test.js"
     ]
@@ -214,8 +214,8 @@
   {
     "name": "TELL3-iron-undrawn",
     "file": "src/render/foeTelegraph.js",
-    "old": "  if (uIron > 0.5) oColor = telegraphIron(",
-    "new": "  if (uIron > 1.5) oColor = telegraphIron(",
+    "old": "  if (uIron > 0.5) oColor = telegraphIron(oColor, dist, inside ? 1.0 : 0.0, vec2(across, along), uColor, fogK);   // TELL3",
+    "new": "  if (uIron > 1.5) oColor = telegraphIron(oColor, dist, inside ? 1.0 : 0.0, vec2(across, along), uColor, fogK);   // TELL3",
     "tests": [
       "test/characters/enemy/tell3_iron.test.js"
     ]

@@ -137,8 +137,8 @@
   {
     "name": "LW-TALK-morning-any-hour",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "  if (!road && !own && hour >= 5 && hour < 11) pools.push(MORNING_TALKS);",
-    "new": "  if (!road && !own) pools.push(MORNING_TALKS);",
+    "old": "  if (!road && !own && hour >= 5 && hour < 11) pools.push(MORNING_TALKS); // LW-TALK: the street's - a room keeps its own two shares of three",
+    "new": "  if (!road && !own) pools.push(MORNING_TALKS); // LW-TALK: the street's - a room keeps its own two shares of three",
     "tests": [
       "test/systems/livingWorld/lwtalk_town.test.js"
     ]
@@ -367,8 +367,8 @@
   {
     "name": "LW-TALK-stand-cycles",
     "file": "src/characters/residentWalker.js",
-    "old": "st === 'stand' ? this._standFrame(n, rec) : this.frame % n",
-    "new": "this.frame % n",
+    "old": "    return this._frameOut(rec, st === 'stand' ? this._standFrame(n, rec) : this.frame % n, MOVE_FLIPS[o]);",
+    "new": "    return this._frameOut(rec, this.frame % n, MOVE_FLIPS[o]);",
     "tests": [
       "test/systems/livingWorld/lwtalk_town.test.js"
     ]

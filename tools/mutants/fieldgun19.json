@@ -52,7 +52,7 @@
   {
     "name": "FIELD-GUN19-6-the-greyscale-fallback-is-dropped",
     "file": "src/characters/thunderlockIds.js",
-    "old": "  if (!w) { r = pr; g = pg; b = pb; w = pw; }   // nothing chromatic: the old answer, on purpose",
+    "old": "  if (!w) {\n    r = pr;\n    g = pg;\n    b = pb;\n    w = pw;\n  } // nothing chromatic: the old answer, on purpose",
     "new": "",
     "tests": [
       "test/systems/thunderlock.test.js"

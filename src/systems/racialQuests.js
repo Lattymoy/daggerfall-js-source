@@ -52,7 +52,11 @@ export const VAMPIRE_INITIAL_QUEST = 'P0A01L00';
 //   getVampireClanQuest(clanFactionId, level) -> quest|null (the
 //   host reads the clan rep itself - it owns the faction store) }
 let _host = null;
-export function setRacialQuestHost(host) { const prev = _host; _host = host ?? null; return prev; }
+export function setRacialQuestHost(host) {
+  const prev = _host;
+  _host = host ?? null;
+  return prev;
+}
 
 /** DFRandom.random_range_inclusive over the tick's injectable 0..1
  *  rolls - the substitution every tick consumer records. */

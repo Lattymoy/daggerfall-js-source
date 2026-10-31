@@ -2,8 +2,8 @@
   {
     "name": "SD21-the-Hour-admitted",
     "file": "src/systems/madeLevel.js",
-    "old": "  hour: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'held', levitate: 'banned',",
-    "new": "  hour: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: null, regen: 'held', levitate: 'banned',",
+    "old": "    mark: 'refused',\n    recall: 'refused',\n    portalStone: 'refused',\n    companions: 'out',\n    regen: 'held',\n    levitate: 'banned',\n    runLeap: 'refused',",
+    "new": "    mark: 'refused',\n    recall: 'refused',\n    portalStone: 'refused',\n    companions: null,\n    regen: 'held',\n    levitate: 'banned',\n    runLeap: 'refused',",
     "tests": [
       "test/scenes/sd21_alone.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SD21-the-slot-by-its-truth",
     "file": "src/systems/madeLevel.js",
-    "old": ": isSdRealm(loc) ? 'hour'",
-    "new": ": isSdRealm(loc) && loc.sdRealm ? 'hour'",
+    "old": "  isGateArena(loc) ? 'court' : isSdRealm(loc) ? 'hour' : isEgHall(loc) ? 'spire' : isKetchShip(loc) ? 'ketch' : null;",
+    "new": "  isGateArena(loc)\n    ? 'court'\n    : isSdRealm(loc) && loc.sdRealm\n      ? 'hour'\n      : isEgHall(loc)\n        ? 'spire'\n        : isKetchShip(loc)\n          ? 'ketch'\n          : null;",
     "tests": [
       "test/scenes/sd21_alone.test.js",
       "test/systems/eliteGates/egmade_law.test.js"
@@ -21,8 +21,8 @@
   {
     "name": "SD21-every-dungeon-refused",
     "file": "src/systems/madeLevel.js",
-    "old": ": isSdRealm(loc) ? 'hour'",
-    "new": ": isSdRealm(loc) || loc?.dungeon ? 'hour'",
+    "old": "  isGateArena(loc) ? 'court' : isSdRealm(loc) ? 'hour' : isEgHall(loc) ? 'spire' : isKetchShip(loc) ? 'ketch' : null;",
+    "new": "  isGateArena(loc)\n    ? 'court'\n    : isSdRealm(loc) || loc?.dungeon\n      ? 'hour'\n      : isEgHall(loc)\n        ? 'spire'\n        : isKetchShip(loc)\n          ? 'ketch'\n          : null;",
     "tests": [
       "test/scenes/sd21_alone.test.js",
       "test/systems/eliteGates/egmade_law.test.js"
@@ -31,8 +31,8 @@
   {
     "name": "SD21-the-Hours-cards-drawn",
     "file": "src/systems/madeLevel.js",
-    "old": "  hour: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'held', levitate: 'banned',",
-    "new": "  hour: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'in', regen: 'held', levitate: 'banned',",
+    "old": "    mark: 'refused',\n    recall: 'refused',\n    portalStone: 'refused',\n    companions: 'out',\n    regen: 'held',\n    levitate: 'banned',\n    runLeap: 'refused',",
+    "new": "    mark: 'refused',\n    recall: 'refused',\n    portalStone: 'refused',\n    companions: 'in',\n    regen: 'held',\n    levitate: 'banned',\n    runLeap: 'refused',",
     "tests": [
       "test/scenes/sd21_alone.test.js"
     ]

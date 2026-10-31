@@ -10,7 +10,13 @@
 //   files  `${tag}/${kind}:${name}` -> { kind, name, path, data }   (text as a string; a font as bytes)
 // Every call answers as if nothing were installed when the browser has no IndexedDB (a private window, bare node).
 
-import { classifyPackFile, packContents, isTranslationPack, packNameOf, TEXT_KINDS } from '../systems/translationPacks.js';
+import {
+  classifyPackFile,
+  packContents,
+  isTranslationPack,
+  packNameOf,
+  TEXT_KINDS,
+} from '../systems/translationPacks.js';
 
 const DB_NAME = 'daggerfall-translations';
 const PACKS = 'packs';
@@ -21,7 +27,10 @@ function openDb() {
   if (_db) return _db;
   _db = new Promise((res, rej) => {
     const idb = globalThis.indexedDB;
-    if (!idb) { rej(new Error('no IndexedDB')); return; }
+    if (!idb) {
+      rej(new Error('no IndexedDB'));
+      return;
+    }
     const req = idb.open(DB_NAME, 1);
     req.onupgradeneeded = () => {
       const d = req.result;
@@ -31,12 +40,23 @@ function openDb() {
     req.onsuccess = () => res(req.result);
     req.onerror = () => rej(req.error);
   });
-  _db.catch(() => { _db = null; });
+  _db.catch(() => {
+    _db = null;
+  });
   return _db;
 }
 
-const done = (tx) => new Promise((res, rej) => { tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error); });
-const result = (req) => new Promise((res, rej) => { req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error); });
+const done = (tx) =>
+  new Promise((res, rej) => {
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+    tx.onabort = () => rej(tx.error);
+  });
+const result = (req) =>
+  new Promise((res, rej) => {
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  });
 const fileKey = (code, kind, name) => `${code}/${kind}:${name}`;
 
 /** Every installed pack, by language tag. Empty without IndexedDB. */
@@ -47,7 +67,9 @@ export async function installedPacks() {
     const store = tx.objectStore(PACKS);
     const [keys, values] = await Promise.all([result(store.getAllKeys()), result(store.getAll())]);
     return new Map(keys.map((k, i) => [k, values[i]]));
-  } catch { return new Map(); }
+  } catch {
+    return new Map();
+  }
 }
 
 /** A language's installed files: [{ kind, name, path, data }]. Empty when it has no pack. */
@@ -63,7 +85,9 @@ export async function packFiles(code) {
       if (v) out.push(v);
     }
     return out;
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 
 /** Remove a language's pack - its files and its record. Answers whether there was one. */
@@ -78,7 +102,9 @@ export async function removePack(code) {
     tx.objectStore(PACKS).delete(code);
     await done(tx);
     return had || keys.length > 0;
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -90,14 +116,19 @@ export async function removePack(code) {
 export async function installPack(code, entries, { name = null } = {}) {
   const list = [...(entries ?? [])];
   const { files, counts } = packContents(list.map((e) => e.path));
-  if (!isTranslationPack(counts)) throw new Error('no string table, quest or book in it - is this a Daggerfall Unity translation?');
+  if (!isTranslationPack(counts))
+    throw new Error('no string table, quest or book in it - is this a Daggerfall Unity translation?');
   const byPath = new Map(list.map((e) => [e.path, e]));
   const loaded = [];
   for (const f of files) {
     const raw = await byPath.get(f.path).read();
     const data = TEXT_KINDS.has(f.kind)
-      ? (typeof raw === 'string' ? raw : new TextDecoder('utf-8').decode(raw))
-      : (typeof raw === 'string' ? new TextEncoder().encode(raw) : new Uint8Array(raw));
+      ? typeof raw === 'string'
+        ? raw
+        : new TextDecoder('utf-8').decode(raw)
+      : typeof raw === 'string'
+        ? new TextEncoder().encode(raw)
+        : new Uint8Array(raw);
     loaded.push({ ...f, data });
   }
   await removePack(code);
@@ -112,9 +143,12 @@ export async function installPack(code, entries, { name = null } = {}) {
 
 /** A picked folder's files (webkitRelativePath) or a zip's entries, as installPack's entries. */
 export function packEntriesFromFiles(fileList) {
-  return [...(fileList ?? [])].map((f) => ({ path: f.webkitRelativePath || f.name, read: () => f.arrayBuffer().then((b) => new Uint8Array(b)) }))
+  return [...(fileList ?? [])]
+    .map((f) => ({ path: f.webkitRelativePath || f.name, read: () => f.arrayBuffer().then((b) => new Uint8Array(b)) }))
     .filter((e) => classifyPackFile(e.path));
 }
 
 /** Tests: forget the open database (a fresh fake per test). */
-export function _resetTranslationStoreForTests() { _db = null; }
+export function _resetTranslationStoreForTests() {
+  _db = null;
+}

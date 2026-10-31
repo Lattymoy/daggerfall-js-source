@@ -31,14 +31,24 @@ export const HOMES_MAX = 160;
 export const TAVERN_EVERY = 12;
 export const SHOP_EVERY = 5;
 /** The shops a fabric's front keeps. */
-export const FABRIC_SHOPS = Object.freeze([BUILDING_TYPES.GeneralStore, BUILDING_TYPES.Alchemist, BUILDING_TYPES.Armorer, BUILDING_TYPES.WeaponSmith, BUILDING_TYPES.PawnShop, BUILDING_TYPES.ClothingStore, BUILDING_TYPES.GemStore, BUILDING_TYPES.Bookseller]);
+export const FABRIC_SHOPS = Object.freeze([
+  BUILDING_TYPES.GeneralStore,
+  BUILDING_TYPES.Alchemist,
+  BUILDING_TYPES.Armorer,
+  BUILDING_TYPES.WeaponSmith,
+  BUILDING_TYPES.PawnShop,
+  BUILDING_TYPES.ClothingStore,
+  BUILDING_TYPES.GemStore,
+  BUILDING_TYPES.Bookseller,
+]);
 /** How far out from its front a home's door stands, metres (on the street, before the facade). */
 export const DOOR_OUT = 0.8;
 /** The lowest key a fabric's home takes: past every key of a Daggerfall block's buildings (column << 16 | row << 8 |
  *  record, the slice's eight by eight - under 0x80000). */
 export const FABRIC_HOME_KEY_MIN = 0x80000;
 
-const B = BLOCK_M, HALF = IMPERIAL_CELLS / 2;
+const B = BLOCK_M,
+  HALF = IMPERIAL_CELLS / 2;
 /** How far inside its slice's edge a home's door stands, metres (a walker's grid cell and its step before the door). */
 const NAV_EDGE = 3.2;
 /** The homes lately asked, by slice (a near ring's and its slack's). @type {Map<number, any>} */
@@ -58,22 +68,51 @@ const HOMES_KEEP = 32;
  */
 export function fabricHomesIn(s) {
   const had = _homes.get(s);
-  if (had) { _homes.delete(s); _homes.set(s, had); return had; }
-  const sx = s % IMPERIAL_SPAN, sy = Math.floor(s / IMPERIAL_SPAN);
-  const ox = (sx * 8 - HALF) * B, oz = (sy * 8 + 8 - HALF) * B;   // the slice's south-west corner: x east, z south
+  if (had) {
+    _homes.delete(s);
+    _homes.set(s, had);
+    return had;
+  }
+  const sx = s % IMPERIAL_SPAN,
+    sy = Math.floor(s / IMPERIAL_SPAN);
+  const ox = (sx * 8 - HALF) * B,
+    oz = (sy * 8 + 8 - HALF) * B; // the slice's south-west corner: x east, z south
   const candidates = homeCandidates(s);
-  const n = Math.min(candidates.length, Math.max(HOMES_MIN, Math.min(HOMES_MAX, Math.round(candidates.length / HOMES_EVERY))));
+  const n = Math.min(
+    candidates.length,
+    Math.max(HOMES_MIN, Math.min(HOMES_MAX, Math.round(candidates.length / HOMES_EVERY))),
+  );
   const chosen = [];
-  for (const c of candidates.map((p) => ({ p, h: hash32(p.key >>> 0, 0x686f6d65) >>> 0 })).sort((a, b) => a.h - b.h || (a.p.key >>> 0) - (b.p.key >>> 0))) {   // 'home'
+  for (const c of candidates
+    .map((p) => ({ p, h: hash32(p.key >>> 0, 0x686f6d65) >>> 0 }))
+    .sort((a, b) => a.h - b.h || (a.p.key >>> 0) - (b.p.key >>> 0))) {
+    // 'home'
     if (chosen.length >= n) break;
     const door = doorOf(c.p);
-    if (door && door[0] - ox > NAV_EDGE && door[0] - ox < 8 * B - NAV_EDGE && oz - door[1] > NAV_EDGE && oz - door[1] < 8 * B - NAV_EDGE) chosen.push({ p: c.p, door });   // its door on the slice's own grid
+    if (
+      door &&
+      door[0] - ox > NAV_EDGE &&
+      door[0] - ox < 8 * B - NAV_EDGE &&
+      oz - door[1] > NAV_EDGE &&
+      oz - door[1] < 8 * B - NAV_EDGE
+    )
+      chosen.push({ p: c.p, door }); // its door on the slice's own grid
   }
   chosen.sort((a, b) => (a.p.key >>> 0) - (b.p.key >>> 0));
-  const buildings = [], doors = [];
-  for (const { p, door: [X, Z, nrm] } of chosen) {
-    const key = p.key >>> 0, h = hash32(key, 0x74797065) >>> 0;   // 'type'
-    const type = h % TAVERN_EVERY === 0 ? BUILDING_TYPES.Tavern : h % SHOP_EVERY === 0 ? FABRIC_SHOPS[(h >>> 8) % FABRIC_SHOPS.length] : BUILDING_TYPES.House1 + ((h >>> 4) % 4);
+  const buildings = [],
+    doors = [];
+  for (const {
+    p,
+    door: [X, Z, nrm],
+  } of chosen) {
+    const key = p.key >>> 0,
+      h = hash32(key, 0x74797065) >>> 0; // 'type'
+    const type =
+      h % TAVERN_EVERY === 0
+        ? BUILDING_TYPES.Tavern
+        : h % SHOP_EVERY === 0
+          ? FABRIC_SHOPS[(h >>> 8) % FABRIC_SHOPS.length]
+          : BUILDING_TYPES.House1 + ((h >>> 4) % 4);
     buildings.push(Object.freeze({ key, type, quality: 1 + ((h >>> 12) % 20), factionId: 0 }));
     doors.push(Object.freeze({ key, x: X - ox, z: oz - Z, nx: nrm[0], nz: -nrm[1] }));
   }
@@ -85,28 +124,42 @@ export function fabricHomesIn(s) {
 /** A SLICE'S CANDIDATES for a home: every plot of its own cells (a Daggerfall block's cell keeps its own buildings) with a
  *  street front, none of a court's back range, its key past FABRIC_HOME_KEY_MIN, each once. @param {number} s */
 export function homeCandidates(s) {
-  const plan = imperialSlicePlan(s), sx = s % IMPERIAL_SPAN, sy = Math.floor(s / IMPERIAL_SPAN);
-  const seen = new Set(), candidates = [];
-  for (let pr = 0; pr < 8; pr++) for (let pc = 0; pc < 8; pc++) {
-    if (!imperialCodeCell(plan[pr][pc])) continue;
-    for (const p of fabricCell(sy * 8 + pr, sx * 8 + pc).plots) {
-      const key = p.key >>> 0;
-      if (!p.out || /** @type {any} */ (p).back || key < FABRIC_HOME_KEY_MIN || seen.has(key)) continue;
-      seen.add(key);
-      candidates.push(p);
+  const plan = imperialSlicePlan(s),
+    sx = s % IMPERIAL_SPAN,
+    sy = Math.floor(s / IMPERIAL_SPAN);
+  const seen = new Set(),
+    candidates = [];
+  for (let pr = 0; pr < 8; pr++)
+    for (let pc = 0; pc < 8; pc++) {
+      if (!imperialCodeCell(plan[pr][pc])) continue;
+      for (const p of fabricCell(sy * 8 + pr, sx * 8 + pc).plots) {
+        const key = p.key >>> 0;
+        if (!p.out || /** @type {any} */ (p).back || key < FABRIC_HOME_KEY_MIN || seen.has(key)) continue;
+        seen.add(key);
+        candidates.push(p);
+      }
     }
-  }
   return candidates;
 }
 /** A plot's door: the middle of the widest of its street fronts (`out`, by its street's width, the first on a tie) whose
  *  ground DOOR_OUT before it and a step further is open - the fabric's ground no court, wall, canal or building, no
  *  landmark's inside - as [x, z, normal] in the city's metres; null where no front has. @param {any} p */
 export function doorOf(p) {
-  const fronts = [0, 1, 2, 3].filter((k) => p.out & (1 << k)).sort((a, b) => (p.sw?.[b] ?? 0) - (p.sw?.[a] ?? 0) || a - b);
+  const fronts = [0, 1, 2, 3]
+    .filter((k) => p.out & (1 << k))
+    .sort((a, b) => (p.sw?.[b] ?? 0) - (p.sw?.[a] ?? 0) || a - b);
   for (const e of fronts) {
-    const a = p.q[e], b = p.q[(e + 1) & 3], nrm = outwardOf(p.q, e), m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-    const open = (/** @type {number} */ d) => { const x = m[0] + nrm[0] * d, z = m[1] + nrm[1] * d; return !fabricClosedOf(fabricGroundAt(x, z)) && !imperialClosed(x, z); };
-    if (open(DOOR_OUT) && open(DOOR_OUT + 1.6)) return /** @type {[number, number, number[]]} */ ([m[0] + nrm[0] * DOOR_OUT, m[1] + nrm[1] * DOOR_OUT, nrm]);
+    const a = p.q[e],
+      b = p.q[(e + 1) & 3],
+      nrm = outwardOf(p.q, e),
+      m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    const open = (/** @type {number} */ d) => {
+      const x = m[0] + nrm[0] * d,
+        z = m[1] + nrm[1] * d;
+      return !fabricClosedOf(fabricGroundAt(x, z)) && !imperialClosed(x, z);
+    };
+    if (open(DOOR_OUT) && open(DOOR_OUT + 1.6))
+      return /** @type {[number, number, number[]]} */ ([m[0] + nrm[0] * DOOR_OUT, m[1] + nrm[1] * DOOR_OUT, nrm]);
   }
   return null;
 }
@@ -115,4 +168,5 @@ export const NO_HOMES = Object.freeze({ buildings: Object.freeze([]), doors: Obj
 /** THE FABRIC'S HOMES OF A LOCATION the pixel builds near (scenes/pixelBuild.js, beside its Daggerfall blocks' buildings
  *  and doors): a family capital's slice's (world/tamrielCapitals.js synthesizeCapitalLocation's `capital`), none for any
  *  other place. @param {any} loc */
-export const cityHomesOf = (loc) => (loc?.capital && CAPITALS[loc.capital.k]?.family ? fabricHomesIn(loc.capital.s) : NO_HOMES);
+export const cityHomesOf = (loc) =>
+  loc?.capital && CAPITALS[loc.capital.k]?.family ? fabricHomesIn(loc.capital.s) : NO_HOMES;

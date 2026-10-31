@@ -21,8 +21,8 @@
   {
     "name": "MAC-E-the-corpse-container-reads-as-player-owned-so-its-icon-cycles",
     "file": "src/scenes/corpseMarker.js",
-    "old": "  playerOwned: false,\n  textureArchive: entry.corpseMarker?.archive ?? 0,",
-    "new": "  playerOwned: true,\n  textureArchive: entry.corpseMarker?.archive ?? 0,",
+    "old": "  playerOwned: false,",
+    "new": "  playerOwned: true,",
     "tests": [
       "test/scenes/mace_corpse_window.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "MAC-E-the-empty-body-is-disabled-on-the-take-so-the-line-is-never-heard",
     "file": "src/scenes/corpseMarker.js",
-    "old": "  if (!items?.length) {\n    entry.corpseDisabled = true;\n    say(localizedText('theBodyHasNoTreasure', 'The body has no treasure.'));\n    return 0;\n  }\n  // :948-952 - one item and it is arrows: taken whole, no window.\n  if (arrowsOnly(items)) {",
-    "new": "  if (!items?.length) {\n    entry.corpseDisabled = true;\n    return 0;\n  }\n  // :948-952 - one item and it is arrows: taken whole, no window.\n  if (arrowsOnly(items)) {",
+    "old": "    say(localizedText('theBodyHasNoTreasure', 'The body has no treasure.'));\n    return 0;",
+    "new": "    return 0;",
     "tests": [
       "test/scenes/mace_corpse_window.test.js",
       "test/scenes/cityguards.test.js"
@@ -94,8 +94,8 @@
   {
     "name": "MAC-D-the-quest-names-the-raw-field-again-so-a-book-is-Book",
     "file": "src/systems/quest/item.js",
-    "old": "    const long = itemLongName(it, {",
-    "new": "    const long = (it.name ?? '') && itemLongName(it, {",
+    "old": "    const long = itemLongName(it, {\n      differentiatePlantIngredients: false,\n      getQuest: (uid) => (uid === this.parentQuest?.uid ? this.parentQuest : null),\n    });",
+    "new": "    const long =\n      (it.name ?? '') &&\n      itemLongName(it, {\n        differentiatePlantIngredients: false,\n        getQuest: (uid) => (uid === this.parentQuest?.uid ? this.parentQuest : null),\n      });",
     "tests": [
       "test/systems/quest/macd_quest_item_name.test.js"
     ]
@@ -121,7 +121,7 @@
   {
     "name": "MAC-A-the-pull-in-casts-a-RAY-again-so-a-thin-pillar-is-threaded",
     "file": "src/player/mwCamera.js",
-    "old": "      const cast = spherecast\n        ? (o, d, m, r) => spherecast(o, r, d, m)\n        : (raycast ? (o, d, m) => raycast(o, d, m) : null);",
+    "old": "      const cast = spherecast ? (o, d, m, r) => spherecast(o, r, d, m) : raycast ? (o, d, m) => raycast(o, d, m) : null;",
     "new": "      const cast = raycast ? (o, d, m) => raycast(o, d, m) : null;",
     "tests": [
       "test/player/maca_camera_sphere.test.js"

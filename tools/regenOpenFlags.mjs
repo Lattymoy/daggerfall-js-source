@@ -23,7 +23,7 @@
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { flagLines } from './flagSites.mjs';   // IN1: the one definition of an open-flag site
+import { flagLines } from './flagSites.mjs'; // IN1: the one definition of an open-flag site
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const HOME = join(root, 'bible/Home.md');
@@ -52,7 +52,10 @@ for (const f of walk('src', '.js').sort()) {
 
 const home = readFileSync(HOME, 'utf8');
 const at = home.indexOf(HEADING);
-if (at < 0) { console.error(`${HEADING} not found in bible/Home.md`); process.exit(2); }
+if (at < 0) {
+  console.error(`${HEADING} not found in bible/Home.md`);
+  process.exit(2);
+}
 
 // The list runs from the heading to the next heading of the same or higher
 // level; prose between the heading and the first entry is preserved.
@@ -74,9 +77,11 @@ while (preamble.length > 1 && !preamble[preamble.length - 1].trim()) preamble.po
 const trailing = bodyLines.slice(cut).filter((l) => l.trim() && !/^- `src\//.test(l));
 const list = entries.length ? ['', ...entries] : [];
 
-const rebuilt = home.slice(0, at) + HEADING
-  + [...preamble, ...list, '', ...trailing].join('\n').replace(/\n{3,}/g, '\n\n')
-  + (tail || '\n');
+const rebuilt =
+  home.slice(0, at) +
+  HEADING +
+  [...preamble, ...list, '', ...trailing].join('\n').replace(/\n{3,}/g, '\n\n') +
+  (tail || '\n');
 
 if (process.argv.includes('--check')) {
   if (rebuilt !== home) {

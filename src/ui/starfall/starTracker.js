@@ -37,14 +37,16 @@ export const STAR_TRACKER_HEIGHT_VAR = '--dfstar-h';
 /** The gap the party list keeps under the plate, px. */
 export const STAR_TRACKER_GAP = 8;
 /** The party list's lines (ui/partyPanel.js .dfparty: 92, a touch screen's 76). */
-const PARTY_TOP = 92, PARTY_TOUCH_TOP = 76;
+const PARTY_TOP = 92,
+  PARTY_TOUCH_TOP = 76;
 
 /** Its line in the column: under the quest card (its published height), on the party list's line where there is none. */
 const under = (line) => `calc(${line}px + var(--dfquest-h, 0px) + env(safe-area-inset-top, 0px))`;
 /** The party list's rules while the plate stands (ui/partyPanel.js PARTY_CSS's shapes, under the lower of the card and the
  *  plate): its line, a touch screen's, a landscape phone's cut, and a phone's list at the foot kept under the plate. */
 function partyUnder() {
-  const lower = 'max(var(--dfquest-h, 0px), var(--dfstar-h, 0px))', on = 'body:has(.star-hud.on)';
+  const lower = 'max(var(--dfquest-h, 0px), var(--dfstar-h, 0px))',
+    on = 'body:has(.star-hud.on)';
   return `@media (min-width: 561px) {
   ${on} .dfparty { top: calc(${PARTY_TOP}px + ${lower} + env(safe-area-inset-top, 0px));
     max-height: calc(100dvh - 100px - ${lower} - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
@@ -103,7 +105,11 @@ ${partyUnder()}
 /** The kit's selector of this plate (its classic copy is the kit's rules cut to it). */
 export const isStarTrackerSelector = (/** @type {string} */ sel) => /\.star-hud(?![\w-])/.test(sel);
 
-let root = null, parts = null, fill = null, touch = false, ro = null;
+let root = null,
+  parts = null,
+  fill = null,
+  touch = false,
+  ro = null;
 const shown = { vis: '', cls: '', light: -1, at: '' };
 
 function ensureStyle(doc) {
@@ -120,13 +126,17 @@ function ensureStyle(doc) {
 }
 function build(doc) {
   ensureStyle(doc);
-  const part = (cls) => { const n = doc.createElement('div'); n.className = cls; return n; };
-  touch = isTouchDevice();   // once a plate: a finger does not come and go mid-game (the quest card reads it once too)
+  const part = (cls) => {
+    const n = doc.createElement('div');
+    n.className = cls;
+    return n;
+  };
+  touch = isTouchDevice(); // once a plate: a finger does not come and go mid-game (the quest card reads it once too)
   root = part('star-hud');
   parts = Object.fromEntries(STAR_TRACKER_KEYS.map((k) => [k, part(`star-hud-${k}`)]));
-  parts.phase.setAttribute?.('aria-live', 'polite');   // AUDIT STAR U2: the phase alone is spoken, never the countdown
+  parts.phase.setAttribute?.('aria-live', 'polite'); // AUDIT STAR U2: the phase alone is spoken, never the countdown
   const light = part('star-hud-light');
-  parts.gauge = part('star-hud-gauge');   // AUDIT STAR W7: the bar named - its light
+  parts.gauge = part('star-hud-gauge'); // AUDIT STAR W7: the bar named - its light
   const track = part('star-hud-track');
   fill = part('star-hud-fill');
   track.append(fill);
@@ -135,7 +145,12 @@ function build(doc) {
   (doc.body ?? doc.documentElement)?.append(root);
   // its box changing on its own - the face arriving after the first measure - measures it again (the quest card's AUDIT GUIDE O5)
   const RO = doc.defaultView?.ResizeObserver ?? globalThis.ResizeObserver;
-  if (typeof RO === 'function') { ro = new RO(() => { if (root && shown.vis === 'on') publish(doc, true); }); ro.observe(root); }
+  if (typeof RO === 'function') {
+    ro = new RO(() => {
+      if (root && shown.vis === 'on') publish(doc, true);
+    });
+    ro.observe(root);
+  }
 }
 
 /** AUDIT STAR U1: the plate's bottom against the party list's line, published (0 hidden) - the quest card's measure
@@ -146,8 +161,12 @@ function publish(doc, on) {
   let px = 0;
   if (on) {
     const r = root.getBoundingClientRect?.();
-    if (r && Number.isFinite(r.bottom) && r.bottom > 0) px = Math.ceil(r.bottom) - (touch ? PARTY_TOUCH_TOP : PARTY_TOP) + STAR_TRACKER_GAP;
-    else { const h = Math.ceil(Number(root.offsetHeight) || 0); px = h ? h + STAR_TRACKER_GAP : 0; }
+    if (r && Number.isFinite(r.bottom) && r.bottom > 0)
+      px = Math.ceil(r.bottom) - (touch ? PARTY_TOUCH_TOP : PARTY_TOP) + STAR_TRACKER_GAP;
+    else {
+      const h = Math.ceil(Number(root.offsetHeight) || 0);
+      px = h ? h + STAR_TRACKER_GAP : 0;
+    }
   }
   style.setProperty(STAR_TRACKER_HEIGHT_VAR, `${Math.max(0, px)}px`);
 }
@@ -165,28 +184,74 @@ export function drawStarTracker(model, { hidden = false, doc = globalThis.docume
   }
   const vis = want ? 'on' : 'off';
   let moved = false;
-  if (vis !== shown.vis) { shown.vis = vis; root.style.display = want ? '' : 'none'; moved = true; }
-  if (!want) { if (moved) { shown.at = ''; shown.cls = ''; root.className = 'star-hud'; publish(doc, false); } return; }   // its `on` gone: the party list's own line again
-  for (const k of STAR_TRACKER_KEYS) { const v = model[k] ?? ''; if (v !== shown[k]) { shown[k] = v; parts[k].textContent = v; moved = true; } }
+  if (vis !== shown.vis) {
+    shown.vis = vis;
+    root.style.display = want ? '' : 'none';
+    moved = true;
+  }
+  if (!want) {
+    if (moved) {
+      shown.at = '';
+      shown.cls = '';
+      root.className = 'star-hud';
+      publish(doc, false);
+    }
+    return;
+  } // its `on` gone: the party list's own line again
+  for (const k of STAR_TRACKER_KEYS) {
+    const v = model[k] ?? '';
+    if (v !== shown[k]) {
+      shown[k] = v;
+      parts[k].textContent = v;
+      moved = true;
+    }
+  }
   const gauge = STAR_CARD_TEXT.light();
-  if (gauge !== shown.gauge) { shown.gauge = gauge; parts.gauge.textContent = gauge; moved = true; }
-  const cls = ['star-hud', 'on', touch && 'touch', model.heart && 'heart', model.low && 'low', model.held && 'held'].filter(Boolean).join(' ');
-  if (cls !== shown.cls) { shown.cls = cls; root.className = cls; moved = true; }
+  if (gauge !== shown.gauge) {
+    shown.gauge = gauge;
+    parts.gauge.textContent = gauge;
+    moved = true;
+  }
+  const cls = ['star-hud', 'on', touch && 'touch', model.heart && 'heart', model.low && 'low', model.held && 'held']
+    .filter(Boolean)
+    .join(' ');
+  if (cls !== shown.cls) {
+    shown.cls = cls;
+    root.className = cls;
+    moved = true;
+  }
   const pct = Math.round(Math.max(0, Math.min(1, Number(model.light) || 0)) * 100);
-  if (pct !== shown.light) { shown.light = pct; fill.style.width = `${pct}%`; }
+  if (pct !== shown.light) {
+    shown.light = pct;
+    fill.style.width = `${pct}%`;
+  }
   // AUDIT STAR U1: measured again only when its words or its place may have moved - a part rewritten, the window
   // resized, the quest card above it grown or gone - never on a still frame
   const at = `${globalThis.innerWidth}x${globalThis.innerHeight}|${doc?.documentElement?.style?.getPropertyValue?.('--dfquest-h') ?? ''}`;
-  if (moved || at !== shown.at) { shown.at = at; publish(doc, true); }
+  if (moved || at !== shown.at) {
+    shown.at = at;
+    publish(doc, true);
+  }
 }
 /** The tracker taken down (a load, a reset). */
 export function destroyStarTracker() {
   const doc = root?.ownerDocument;
-  try { ro?.disconnect?.(); } catch { /* gone */ }
+  try {
+    ro?.disconnect?.();
+  } catch {
+    /* gone */
+  }
   root?.remove?.();
   if (root) publish(doc ?? globalThis.document, false);
-  root = null; parts = null; fill = null; touch = false; ro = null;
-  shown.vis = ''; shown.cls = ''; shown.light = -1; shown.at = '';
+  root = null;
+  parts = null;
+  fill = null;
+  touch = false;
+  ro = null;
+  shown.vis = '';
+  shown.cls = '';
+  shown.light = -1;
+  shown.at = '';
   delete shown.gauge;
   for (const k of STAR_TRACKER_KEYS) delete shown[k];
 }

@@ -28,11 +28,11 @@ import { totalGoldAmount, deductGold } from '../court.js';
 import { getReputation, changeReputation } from '../faction/factionRep.js';
 import { curableDiseaseCount } from '../diseases.js';
 import { cureDiseasesInfectionsLast } from '../effects.js';
-import { calculateCost, calculateTradePrice, essentialPrice } from '../shopStock.js';   // ESSENTIALS-HALF: online, a cure costs half
+import { calculateCost, calculateTradePrice, essentialPrice } from '../shopStock.js'; // ESSENTIALS-HALF: online, a cure costs half
 import { trainingPrice, trainingMax, trainingSkills, reducedCureCost } from './guildServices.js';
 import { getHolidayId, FREE_CURE_HOLIDAYS, HALF_PRICE_CURE_HOLIDAY } from '../holidays.js';
-import { firstName } from '../talk/talkSession.js';   // MH1: %pcf's own reader
-import { expandMacroValues } from '../quest/questMacros.js';   // MH1: the ONE macro walk
+import { firstName } from '../talk/talkSession.js'; // MH1: %pcf's own reader
+import { expandMacroValues } from '../quest/questMacros.js'; // MH1: the ONE macro walk
 
 /** MacroHelper's four (Utility/MacroHelper.cs :50, :105, :107, :153),
  *  which are all these three windows ask for. The FULL table is 100+
@@ -44,7 +44,24 @@ import { expandMacroValues } from '../quest/questMacros.js';   // MH1: the ONE m
  *
  *  The shared %pcn/%pcf/%cn/%oth ride the same value map, so a guild
  *  record with a player name in it reads correctly too. */
-export function expandGuildMacros(text, { amount = null, gold = null, god = null, godDesc = null, guildTitle = null, dungeon = null, roomHours = null, race = null, honorific = null, shopName = null, factionName = null, playerName = '', cityName = '' } = {}) {
+export function expandGuildMacros(
+  text,
+  {
+    amount = null,
+    gold = null,
+    god = null,
+    godDesc = null,
+    guildTitle = null,
+    dungeon = null,
+    roomHours = null,
+    race = null,
+    honorific = null,
+    shopName = null,
+    factionName = null,
+    playerName = '',
+    cityName = '',
+  } = {},
+) {
   // MH1: ONE walk (questMacros.expandMacroValues) over ONE value map.
   // A null value leaves its token VERBATIM - exactly the `if (x !=
   // null)` guards the old replaceAll chain carried - and the walk's
@@ -54,8 +71,12 @@ export function expandGuildMacros(text, { amount = null, gold = null, god = null
   // print - it goes to the walk as null, and the world answers it.
   const known = (v) => (v == null || v === '' ? null : v);
   return expandMacroValues(text ?? '', {
-    pcf: known(playerName) && firstName(playerName), pcn: known(playerName), cn: known(cityName), oth: '',
-    ra: race, hnr: honorific,
+    pcf: known(playerName) && firstName(playerName),
+    pcn: known(playerName),
+    cn: known(cityName),
+    oth: '',
+    ra: race,
+    hnr: honorific,
     a: amount == null ? null : String(amount),
     gii: gold == null ? null : String(gold),
     god,
@@ -65,7 +86,8 @@ export function expandGuildMacros(text, { amount = null, gold = null, god = null
     // MACRO-4: %lev and %pct are ONE MacroHelper row, GuildTitle (:128) -
     // the rank the promotion box names. The map carried only %pct, so
     // every rank change in every guild printed "the rank of %lev".
-    pct: guildTitle, lev: guildTitle,
+    pct: guildTitle,
+    lev: guildTitle,
     // MACRO-4: ThievesGuild/DarkBrotherhood's Dungeon() - the place the
     // promotion just revealed (ThievesGuild.cs:279-282).
     dng: dungeon,
@@ -82,14 +104,21 @@ export function expandGuildMacros(text, { amount = null, gold = null, god = null
     // DFU's GuildServicePopupWindow hands ITSELF to MacroHelper for every box it shows; the port's join flow handed
     // the rows over verbatim. MAC-BUGS W1's lesson, one symbol further: the table was filled for the symbols
     // somebody expected.
-    fon: factionName, kno: factionName,
+    fon: factionName,
+    kno: factionName,
   });
 }
 
 /** MACROS1: a TEXT.RSC record's rows ([{ text, center }] or bare strings) through expandGuildMacros - the shape kept,
  *  as guildServiceWindows.js maps its own. */
 export function expandGuildRows(rows, ctx) {
-  return (rows ?? []).map((r) => (typeof r === 'string' ? expandGuildMacros(r, ctx) : r && typeof r === 'object' ? { ...r, text: expandGuildMacros(r.text ?? '', ctx) } : r));
+  return (rows ?? []).map((r) =>
+    typeof r === 'string'
+      ? expandGuildMacros(r, ctx)
+      : r && typeof r === 'object'
+        ? { ...r, text: expandGuildMacros(r.text ?? '', ctx) }
+        : r,
+  );
 }
 
 /** DaggerfallTradeWindow's two shared ids, which all three of these
@@ -118,7 +147,7 @@ export const TRAINING_FATIGUE_LOSS = FATIGUE_LOSS.Default * 180;
  *  PlayerEntity.TimeOfLastSkillTraining, in classic minutes; an entity
  *  that has never trained reads 0, which is the same 0 DFU starts at. */
 export function trainingTooSoon(entity, nowClassicMinutes) {
-  return (nowClassicMinutes - (entity?.timeOfLastSkillTraining ?? 0)) < TRAINING_COOLDOWN_MINUTES;
+  return nowClassicMinutes - (entity?.timeOfLastSkillTraining ?? 0) < TRAINING_COOLDOWN_MINUTES;
 }
 
 /** TrainingSkill_OnItemPicked's skill gate (:98-104). DFU compares the
@@ -148,7 +177,8 @@ export function trainSkill(entity, skill, nowClassicMinutes, rolls = Math.random
   const mult = SKILL_ADVANCEMENT_MULTIPLIER[skill] ?? 0;
   const tally = (10 + Math.floor(rolls() * 11)) * mult;
   return {
-    skill, tally,
+    skill,
+    tally,
     advanceMinutes: TRAINING_HOURS * 60,
     fatigueLoss: TRAINING_FATIGUE_LOSS,
     textId: TRAIN_SKILL_ID,
@@ -165,11 +195,16 @@ export const trainableSkills = (guild) => trainingSkills(guild) ?? [];
 /** The whole offer decision, so a window is only buttons. */
 export function trainingOffer(entity, guild, membership, nowClassicMinutes, priceFactor = 1) {
   if (trainingTooSoon(entity, nowClassicMinutes)) return { kind: 'tooSoon', textId: TRAINING_TOO_SOON_ID };
-  return { kind: 'offer', textId: TRAINING_OFFER_ID, price: factored(trainingPrice(membership, entity.level ?? 1), priceFactor) };
+  return {
+    kind: 'offer',
+    textId: TRAINING_OFFER_ID,
+    price: factored(trainingPrice(membership, entity.level ?? 1), priceFactor),
+  };
 }
 /** CHAP3c (Chapters-Arc 5.2): a price with the hall's chapter's factor laid over it (npcChapterLaw.js chapterPriced's
  *  law, here so DFU's service law reads no network module) - DFU's own at 1. */
-const factored = (/** @type {number} */ price, /** @type {number} */ f) => (f === 1 || !(price > 0) ? price : Math.max(1, Math.round(price * f)));
+const factored = (/** @type {number} */ price, /** @type {number} */ f) =>
+  f === 1 || !(price > 0) ? price : Math.max(1, Math.round(price * f));
 
 /** ConfirmTraining's Yes branch (:73-90): the gold check happens
  *  BEFORE the skill picker opens, so a player who cannot pay never
@@ -237,14 +272,15 @@ export const CURE_BASE_COST_PER_DISEASE = 250;
  *
  *  The three FREE holidays are checked before anything is priced, and
  *  they cure whether or not the player could have paid. */
-export const becomingVampireOrWerebeast = (entity) =>
-  (entity?.timeToBecomeVampireOrWerebeast ?? 0) !== 0;
+export const becomingVampireOrWerebeast = (entity) => (entity?.timeToBecomeVampireOrWerebeast ?? 0) !== 0;
 
-export function cureDiseaseOffer(entity, guild, membership, {
-  quality = 0, regionIndex = 0, nowClassicMinutes = 0,
-  priceAdjustment = 1000, online = undefined,
-} = {}) {
-  let numberOfDiseases = curableDiseaseCount(entity);   // FIELD BUGS 29h (INFECTION-KEPT): never an infection the cure leaves
+export function cureDiseaseOffer(
+  entity,
+  guild,
+  membership,
+  { quality = 0, regionIndex = 0, nowClassicMinutes = 0, priceAdjustment = 1000, online = undefined } = {},
+) {
+  let numberOfDiseases = curableDiseaseCount(entity); // FIELD BUGS 29h (INFECTION-KEPT): never an infection the cure leaves
   if (becomingVampireOrWerebeast(entity)) numberOfDiseases++;
   const holidayId = getHolidayId(nowClassicMinutes, regionIndex);
 
@@ -254,7 +290,7 @@ export function cureDiseaseOffer(entity, guild, membership, {
   if (numberOfDiseases === 0) return { kind: 'noDisease', textId: NO_DISEASE_ID };
 
   let baseCost = CURE_BASE_COST_PER_DISEASE * numberOfDiseases;
-  baseCost = reducedCureCost(guild, membership, baseCost);   // Arkay's members only
+  baseCost = reducedCureCost(guild, membership, baseCost); // Arkay's members only
   // AUDIT 26 F113: CalculateCost's two-argument call here (:81) omits
   // conditionPercentage, NOT the regional term - CalculateCost always
   // runs ApplyRegionalPriceAdjustment inside (FormulaHelper.cs:1895),
@@ -274,15 +310,23 @@ export function cureDiseaseOffer(entity, guild, membership, {
   // temple's customer is by definition diseased, and a disease's PER
   // damage lives only in the mod channel, so the permanent read quoted
   // a price that never moved.
-  const haggled = calculateTradePrice(costBeforeBargaining, quality, {
-    mercantile: skillValue(entity, SKILLS.Mercantile),
-    personality: entity.stats?.personality == null ? 50 : liveStat(entity, 'personality'),
-  }, false);
+  const haggled = calculateTradePrice(
+    costBeforeBargaining,
+    quality,
+    {
+      mercantile: skillValue(entity, SKILLS.Mercantile),
+      personality: entity.stats?.personality == null ? 50 : liveStat(entity, 'personality'),
+    },
+    false,
+  );
   // ESSENTIALS-HALF (2026-09-30, Discord: "cut the cost of most essential items by half"): online the cure costs half
   // (shopStock.js essentialPrice). The priest's haggle line still reads the haggle itself, not the half.
   const cost = essentialPrice(haggled, { online });
   return {
-    kind: 'offer', diseases: numberOfDiseases, cost, holidayId,
+    kind: 'offer',
+    diseases: numberOfDiseases,
+    cost,
+    holidayId,
     textId: TRADE_MESSAGE_BASE_ID + cureOfferMessageOffset(costBeforeBargaining, haggled),
   };
 }
@@ -301,7 +345,7 @@ export function cureDiseaseOffer(entity, guild, membership, {
  *  TRADE-WRAP's departure (FIELD BUGS 2026-10-18b). */
 export function cureOfferMessageOffset(costBeforeBargaining, cost) {
   if (Math.floor(costBeforeBargaining / 2) <= cost) {
-    return (costBeforeBargaining - Math.floor(costBeforeBargaining / 4)) <= cost ? 2 : 1;
+    return costBeforeBargaining - Math.floor(costBeforeBargaining / 4) <= cost ? 2 : 1;
   }
   return 0;
 }
@@ -312,7 +356,7 @@ export function cureOfferMessageOffset(costBeforeBargaining, cost) {
 export function payForCure(entity, cost) {
   if (totalGoldAmount(entity) < cost) return { kind: 'notEnoughGold', textId: NOT_ENOUGH_GOLD_ID };
   deductGold(entity, cost);
-  cureDiseasesInfectionsLast(entity);   // FIELD BUGS 29h (INFECTION-KEPT): the plague, not the lycanthropy caught beside it
+  cureDiseasesInfectionsLast(entity); // FIELD BUGS 29h (INFECTION-KEPT): the plague, not the lycanthropy caught beside it
   // A4: the turn is cured with the diseases (:126) - the paid arm's
   // own line, beside CureAllDiseases and before the message.
   entity.timeToBecomeVampireOrWerebeast = 0;
@@ -321,7 +365,7 @@ export function payForCure(entity, cost) {
 
 /** The free-holiday arm's cure (:69-75), which takes no payment. */
 export function cureForFree(entity) {
-  cureDiseasesInfectionsLast(entity);   // INFECTION-KEPT
-  entity.timeToBecomeVampireOrWerebeast = 0;   // A4: :72, the same pair on the free arm
+  cureDiseasesInfectionsLast(entity); // INFECTION-KEPT
+  entity.timeToBecomeVampireOrWerebeast = 0; // A4: :72, the same pair on the free arm
   return { kind: 'cured', cost: 0 };
 }

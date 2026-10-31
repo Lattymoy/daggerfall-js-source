@@ -18,10 +18,17 @@ export function createHeatAct({ band = 1, gentle = false } = {}) {
   return {
     state: st,
     /** The glow now, 0 cold to 1 white. */
-    get glow() { return glowAt(st.t); },
+    get glow() {
+      return glowAt(st.t);
+    },
     /** Whether the glow stands in the band now. */
-    get inBand() { const g = glowAt(st.t); return g >= st.lo && g <= st.hi; },
-    tick(dt) { if (!st.done && Number.isFinite(dt) && dt > 0) st.t += dt; },
+    get inBand() {
+      const g = glowAt(st.t);
+      return g >= st.lo && g <= st.hi;
+    },
+    tick(dt) {
+      if (!st.done && Number.isFinite(dt) && dt > 0) st.t += dt;
+    },
     /** A strike: true on the band, false off it, null when it is too soon after the last (a hammer's fall) or the act is
      *  over. The third strike ends the act. `lead` - AUDIT 32 P1: the press's own moment past the act's last frame, as
      *  the stitch's (systems/stitchAct.js PRESS_LEAD_MAX_S). */
@@ -36,11 +43,17 @@ export function createHeatAct({ band = 1, gentle = false } = {}) {
       return hit;
     },
     /** Let go (Esc, or the page shut): no more strikes; an act of fewer than three is never clean. */
-    cancel() { st.done = true; },
+    cancel() {
+      st.done = true;
+    },
     /** The act's report: its strikes, its hits, and whether it was clean - three strikes, every one on the band. */
     report() {
       const hits = st.strikes.filter(Boolean).length;
-      return { strikes: st.strikes.length, hits, clean: !gentle && st.strikes.length >= HEAT_ACT.strikes && hits === st.strikes.length };
+      return {
+        strikes: st.strikes.length,
+        hits,
+        clean: !gentle && st.strikes.length >= HEAT_ACT.strikes && hits === st.strikes.length,
+      };
     },
   };
 }

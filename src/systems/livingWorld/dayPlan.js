@@ -48,7 +48,9 @@ export const GEAR_MIN = 30;
 export const HOME_GAP = 30;
 
 /** The kinds seen in the street (LW-STIR: `gate`, a stranger halted at a gate the watch keeps, come in by it). */
-export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch', 'post', 'gate']));
+export const OUTDOOR = Object.freeze(
+  new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch', 'post', 'gate']),
+);
 
 /**
  * @typedef {import('./places.js').Spot} Spot
@@ -73,7 +75,6 @@ export function walkMinutes(a, b, mpm) {
   return Math.max(1, Math.ceil((cells * NAV_CELL * WALK_DETOUR + WALK_EXTRA_M) / Math.max(0.1, mpm)));
 }
 
-
 /** WATCH-DAY: the watch's three shifts of a living day, in its hours (DAY_START_MIN is 04:00, so hour 30 is 06:00 the
  *  next morning): the day's 06-14, the evening's 14-22, the night's 22-06 - the night runs past the day's turn, and the
  *  next day's plan begins where it stands. */
@@ -96,7 +97,8 @@ export const PATROL_STOP_MAX = MIN_STAY + 14;
  *   `shift` 0 day, 1 evening, 2 night, 3 off; `patrol` which of the company's patrols, `pair` his place in it (null alone)
  */
 export function watchDuty(res, places, day, size = 1) {
-  const company = res.slot % WATCH_ROTATION, rank = Math.floor(res.slot / WATCH_ROTATION);
+  const company = res.slot % WATCH_ROTATION,
+    rank = Math.floor(res.slot / WATCH_ROTATION);
   const shift = (company + day) % WATCH_ROTATION;
   const exits = [...places.exits].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
   const posts = size >= 3 ? Math.min(exits.length, size - 2) : 0;
@@ -104,15 +106,40 @@ export function watchDuty(res, places, day, size = 1) {
   // beat of its own after the shift's own patrols'
   if (rank >= size && size >= 1) {
     const i = rank - size;
-    return { shift, company, rank, kind: 'patrol', post: null, patrol: Math.ceil(Math.max(1, size - posts) / 2) + Math.floor(i / 2), pair: /** @type {0|1} */ (i % 2) };
+    return {
+      shift,
+      company,
+      rank,
+      kind: 'patrol',
+      post: null,
+      patrol: Math.ceil(Math.max(1, size - posts) / 2) + Math.floor(i / 2),
+      pair: /** @type {0|1} */ (i % 2),
+    };
   }
   if (rank >= 2 && rank - 2 < posts) {
-    const turn = lwSeed(res.town, 0x706f7374, company, day) % exits.length;   // 'post'
-    return { shift, company, rank, kind: 'post', post: exits[(rank - 2 + turn) % exits.length], patrol: -1, pair: null };
+    const turn = lwSeed(res.town, 0x706f7374, company, day) % exits.length; // 'post'
+    return {
+      shift,
+      company,
+      rank,
+      kind: 'post',
+      post: exits[(rank - 2 + turn) % exits.length],
+      patrol: -1,
+      pair: null,
+    };
   }
-  const i = rank < 2 ? rank : rank - posts, patrols = Math.max(1, size - posts);
+  const i = rank < 2 ? rank : rank - posts,
+    patrols = Math.max(1, size - posts);
   const alone = patrols % 2 === 1 && i === patrols - 1;
-  return { shift, company, rank, kind: 'patrol', post: null, patrol: Math.floor(i / 2), pair: alone ? null : /** @type {0|1} */ (i % 2) };
+  return {
+    shift,
+    company,
+    rank,
+    kind: 'patrol',
+    post: null,
+    patrol: Math.floor(i / 2),
+    pair: alone ? null : /** @type {0|1} */ (i % 2),
+  };
 }
 
 /** WATCH-DAY: a patrol's beat for a shift - a DISTRICT of the town: four to six of its spots (its exits, its social
@@ -123,7 +150,7 @@ export function watchDuty(res, places, day, size = 1) {
  *  @param {number} shift @returns {readonly Spot[]} */
 export function patrolBeat(places, town, company, patrol, day, shift) {
   let kept = _beats.get(places);
-  if (!kept) _beats.set(places, kept = new Map());
+  if (!kept) _beats.set(places, (kept = new Map()));
   const key = `${town}|${company}|${patrol}|${day}|${shift}`;
   const had = kept.get(key);
   if (had) return had;
@@ -131,7 +158,7 @@ export function patrolBeat(places, town, company, patrol, day, shift) {
   // a beat's worth besides (two of a city's extra patrols walked one beat in 7 shifts of 100)
   const taken = new Set();
   for (let q = 0; q < patrol; q++) for (const sp of patrolBeat(places, town, company, q, day, shift)) taken.add(sp);
-  const rng = lwRng(town, 0x62656174, company, patrol, day, shift);   // 'beat'
+  const rng = lwRng(town, 0x62656174, company, patrol, day, shift); // 'beat'
   const all = [...places.exits, ...places.social, ...places.market];
   if (!all.length) return [];
   const free = taken.size ? all.filter((sp) => !taken.has(sp)) : all;
@@ -139,10 +166,17 @@ export function patrolBeat(places, town, company, patrol, day, shift) {
   const anchor = pool[Math.floor(rng() * pool.length)];
   const n = Math.min(pool.length, rollInt(rng, 4, 6));
   const gap = (/** @type {Spot} */ a) => Math.abs(a.cell[0] - anchor.cell[0]) + Math.abs(a.cell[1] - anchor.cell[1]);
-  const near = pool.map((sp) => ({ sp, d: gap(sp) })).sort((a, b) => a.d - b.d || (a.sp.key < b.sp.key ? -1 : a.sp.key > b.sp.key ? 1 : 0)).slice(0, n).map((x) => x.sp);
-  const cx = near.reduce((a, sp) => a + sp.x, 0) / near.length, cz = near.reduce((a, sp) => a + sp.z, 0) / near.length;
+  const near = pool
+    .map((sp) => ({ sp, d: gap(sp) }))
+    .sort((a, b) => a.d - b.d || (a.sp.key < b.sp.key ? -1 : a.sp.key > b.sp.key ? 1 : 0))
+    .slice(0, n)
+    .map((x) => x.sp);
+  const cx = near.reduce((a, sp) => a + sp.x, 0) / near.length,
+    cz = near.reduce((a, sp) => a + sp.z, 0) / near.length;
   const bearing = (/** @type {Spot} */ sp) => Math.atan2(sp.x - cx, sp.z - cz);
-  const out = Object.freeze(near.sort((a, b) => bearing(a) - bearing(b) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)));
+  const out = Object.freeze(
+    near.sort((a, b) => bearing(a) - bearing(b) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)),
+  );
   if (kept.size > 512) kept.clear();
   kept.set(key, out);
   return out;
@@ -162,14 +196,18 @@ const _beats = new WeakMap();
 export function patrolStops(beat, rng, first, from, until, mpm, hold = false) {
   const out = [];
   for (let t = from, i = first; beat.length && t < until; i++) {
-    const at = beat[i % beat.length], next = beat[(i + 1) % beat.length];
+    const at = beat[i % beat.length],
+      next = beat[(i + 1) % beat.length];
     const dur = rollInt(rng, PATROL_STOP_MIN, PATROL_STOP_MAX);
     out.push({ at, i: i % beat.length, from: t, dur });
     t += dur + walkMinutes(at, next, mpm);
   }
   if (hold) {
     while (out.length > 1 && out[out.length - 1].from > until - MIN_STAY * 2) out.pop();
-    if (out.length) { const last = out[out.length - 1]; last.dur = until - last.from; }
+    if (out.length) {
+      const last = out[out.length - 1];
+      last.dur = until - last.from;
+    }
   }
   return out;
 }
@@ -185,13 +223,23 @@ export function patrolStops(beat, rng, first, from, until, mpm, hold = false) {
 export function nightTail(res, places, day, size, mpm) {
   const d = watchDuty(res, places, day, size);
   if (d.shift !== 2) return null;
-  const night = dayPlan(res, places, day, { mpm, watch: size });   // the watch never takes the roads: no away windows
+  const night = dayPlan(res, places, day, { mpm, watch: size }); // the watch never takes the roads: no away windows
   const last = night[night.length - 1];
   if (!last?.duty) return null;
-  const D1 = (day + 1) * DAY_MIN + DAY_START_MIN, morning = hourOf(day, WATCH_SHIFTS[2][1]);
-  if (last.kind === 'post') return { at: last.at, kind: 'post', pair: null, stops: [{ at: last.at, from: D1, dur: morning - D1 }] };
+  const D1 = (day + 1) * DAY_MIN + DAY_START_MIN,
+    morning = hourOf(day, WATCH_SHIFTS[2][1]);
+  if (last.kind === 'post')
+    return { at: last.at, kind: 'post', pair: null, stops: [{ at: last.at, from: D1, dur: morning - D1 }] };
   const beat = patrolBeat(places, res.town, d.company, d.patrol, day, 2);
-  const tail = patrolStops(beat, lwRng(res.town, 0x7461696c, d.company, d.patrol, day), beat.indexOf(last.at), D1, morning, mpm, true);   // 'tail' - held to six
+  const tail = patrolStops(
+    beat,
+    lwRng(res.town, 0x7461696c, d.company, d.patrol, day),
+    beat.indexOf(last.at),
+    D1,
+    morning,
+    mpm,
+    true,
+  ); // 'tail' - held to six
   return { at: last.at, kind: 'watch', pair: d.pair, stops: tail };
 }
 
@@ -207,11 +255,14 @@ export function nightTail(res, places, day, size, mpm) {
 export function morningWalk(res, places, day, size, mpm) {
   const d = watchDuty(res, places, day, size);
   if (d.shift !== 0) return null;
-  const home = res.home != null ? places.doors.get(res.home) ?? null : null;
-  const to = d.kind === 'post' ? d.post : patrolBeat(places, res.town, d.company, d.patrol, day, 0)[0] ?? null;
+  const home = res.home != null ? (places.doors.get(res.home) ?? null) : null;
+  const to = d.kind === 'post' ? d.post : (patrolBeat(places, res.town, d.company, d.patrol, day, 0)[0] ?? null);
   if (!home || !to) return null;
-  const t1 = hourOf(day, WATCH_SHIFTS[0][0]), t0 = t1 - walkMinutes(home, to, mpm);
-  return t0 < day * DAY_MIN + DAY_START_MIN ? { from: home, to, t0, t1, kind: d.kind === 'post' ? 'post' : 'watch', mark: { duty: true, pair: d.pair } } : null;
+  const t1 = hourOf(day, WATCH_SHIFTS[0][0]),
+    t0 = t1 - walkMinutes(home, to, mpm);
+  return t0 < day * DAY_MIN + DAY_START_MIN
+    ? { from: home, to, t0, t1, kind: d.kind === 'post' ? 'post' : 'watch', mark: { duty: true, pair: d.pair } }
+    : null;
 }
 
 /** LW-PERF: each town's favourites, kept by its places (a resident's are their seed's alone, the same every day). */
@@ -226,10 +277,16 @@ const favouritesOf = new WeakMap();
  */
 export function favourites(res, places, home) {
   let kept = favouritesOf.get(places);
-  if (!kept) { kept = new Map(); favouritesOf.set(places, kept); }
+  if (!kept) {
+    kept = new Map();
+    favouritesOf.set(places, kept);
+  }
   const key = `${res.town}|${res.roll}|${res.slot}|${home?.key ?? ''}`;
   let fav = kept.get(key);
-  if (!fav) { fav = favouritesNow(res, places, home); kept.set(key, fav); }
+  if (!fav) {
+    fav = favouritesNow(res, places, home);
+    kept.set(key, fav);
+  }
   return fav;
 }
 
@@ -241,22 +298,48 @@ const doorKindsOf = new WeakMap();
 function doorKinds(places) {
   let k = doorKindsOf.get(places);
   if (!k) {
-    /** @type {Spot[]} */ const tavern = [], temple = [], shops = [], houses = [], outfitters = [];
+    /** @type {Spot[]} */ const tavern = [],
+      temple = [],
+      shops = [],
+      houses = [],
+      outfitters = [];
     /** @type {Map<number, Spot[]>} LW-ERRANDS: the guild halls by their guild's faction */
     const halls = new Map();
     for (const [key, spot] of places.doors) {
       const t = places.types.get(key) ?? -1;
       if (t === BUILDING_TYPES.Tavern) tavern.push(spot);
       if (t === BUILDING_TYPES.Temple) temple.push(spot);
-      if (t === BUILDING_TYPES.GuildHall) { const f = places.factions?.get(key) ?? 0; halls.set(f, [...(halls.get(f) ?? []), spot]); }
+      if (t === BUILDING_TYPES.GuildHall) {
+        const f = places.factions?.get(key) ?? 0;
+        halls.set(f, [...(halls.get(f) ?? []), spot]);
+      }
       if (hasShopJob(t)) shops.push(spot);
       if (t >= BUILDING_TYPES.House1 && t <= BUILDING_TYPES.House6) houses.push(spot);
-      if (t === BUILDING_TYPES.Armorer || t === BUILDING_TYPES.WeaponSmith || t === BUILDING_TYPES.Alchemist) outfitters.push(spot);
+      if (t === BUILDING_TYPES.Armorer || t === BUILDING_TYPES.WeaponSmith || t === BUILDING_TYPES.Alchemist)
+        outfitters.push(spot);
     }
-    const spots = [...new Set([...places.doors.values(), ...places.social, ...(places.corners ?? []), ...(places.squares ?? []), ...places.market])].sort((a, b) => a.key.localeCompare(b.key));
+    const spots = [
+      ...new Set([
+        ...places.doors.values(),
+        ...places.social,
+        ...(places.corners ?? []),
+        ...(places.squares ?? []),
+        ...places.market,
+      ]),
+    ].sort((a, b) => a.key.localeCompare(b.key));
     const orders = [...halls].filter(([f]) => ORDER_FACTIONS.has(f)).flatMap(([, list]) => list);
-    k = { tavern, temple, halls, orders, shops, houses, outfitters, rank: new Map(spots.map((s, i) => [s, i])),
-      social: [...places.social, ...(places.corners ?? [])], market: [...places.market, ...(places.squares ?? [])] };   // LW-DENSE: kept, for nearestOf's
+    k = {
+      tavern,
+      temple,
+      halls,
+      orders,
+      shops,
+      houses,
+      outfitters,
+      rank: new Map(spots.map((s, i) => [s, i])),
+      social: [...places.social, ...(places.corners ?? [])],
+      market: [...places.market, ...(places.squares ?? [])],
+    }; // LW-DENSE: kept, for nearestOf's
     doorKindsOf.set(places, k);
   }
   return k;
@@ -270,12 +353,22 @@ const nearestKept = new WeakMap();
 function nearestOf(places, list, from) {
   if (!from) return [...list];
   let byFrom = nearestKept.get(list);
-  if (!byFrom) { byFrom = new WeakMap(); nearestKept.set(list, byFrom); }
+  if (!byFrom) {
+    byFrom = new WeakMap();
+    nearestKept.set(list, byFrom);
+  }
   let out = byFrom.get(from);
   if (out) return out;
-  const fx = from.cell[0], fy = from.cell[1], rank = doorKinds(places).rank;
-  out = Object.freeze([...list].sort((a, b) => (Math.abs(a.cell[0] - fx) + Math.abs(a.cell[1] - fy)) - (Math.abs(b.cell[0] - fx) + Math.abs(b.cell[1] - fy))
-    || (rank.get(a) ?? 0) - (rank.get(b) ?? 0)));
+  const fx = from.cell[0],
+    fy = from.cell[1],
+    rank = doorKinds(places).rank;
+  out = Object.freeze(
+    [...list].sort(
+      (a, b) =>
+        Math.abs(a.cell[0] - fx) + Math.abs(a.cell[1] - fy) - (Math.abs(b.cell[0] - fx) + Math.abs(b.cell[1] - fy)) ||
+        (rank.get(a) ?? 0) - (rank.get(b) ?? 0),
+    ),
+  );
   byFrom.set(from, out);
   return out;
 }
@@ -302,7 +395,7 @@ export const MARKET_HOURS = Object.freeze([7.5, 10.5]);
  */
 export function squareOf(res, places) {
   const pts = places.squares?.length ? places.squares : places.square ? [places.square] : [];
-  return pts.length ? pts[lwSeed(res.town, res.roll.charCodeAt(0), res.slot, 0x73717561) % pts.length] : null;   // 'squa'
+  return pts.length ? pts[lwSeed(res.town, res.roll.charCodeAt(0), res.slot, 0x73717561) % pts.length] : null; // 'squa'
 }
 
 /** LW-ERRANDS: THE GUILDS A TOWN SHOWS - the Mages Guild and the Fighters Guild (guilds.js GUILDS) and the ten knightly
@@ -317,10 +410,17 @@ export const isMageClass = (cls) => cls != null && cls >= MOBILE_TYPES.Mage && c
 export const isWarriorClass = (cls) => cls != null && cls >= MOBILE_TYPES.Monk && cls <= MOBILE_TYPES.Knight;
 /** LW-ERRANDS: the trades whose workplace keeps them in a guild - a bookseller's, a library's and an alchemist's people
  *  the Mages Guild, an armourer's and a weaponsmith's the Fighters Guild. */
-export const GUILD_OF_TRADE = /** @type {ReadonlyMap<number, number>} */ (Object.freeze(new Map([
-  [BUILDING_TYPES.Bookseller, MAGES_GUILD], [BUILDING_TYPES.Library, MAGES_GUILD], [BUILDING_TYPES.Alchemist, MAGES_GUILD],
-  [BUILDING_TYPES.Armorer, FIGHTERS_GUILD], [BUILDING_TYPES.WeaponSmith, FIGHTERS_GUILD],
-])));
+export const GUILD_OF_TRADE = /** @type {ReadonlyMap<number, number>} */ (
+  Object.freeze(
+    new Map([
+      [BUILDING_TYPES.Bookseller, MAGES_GUILD],
+      [BUILDING_TYPES.Library, MAGES_GUILD],
+      [BUILDING_TYPES.Alchemist, MAGES_GUILD],
+      [BUILDING_TYPES.Armorer, FIGHTERS_GUILD],
+      [BUILDING_TYPES.WeaponSmith, FIGHTERS_GUILD],
+    ]),
+  )
+);
 
 /**
  * LW-ERRANDS: A RESIDENT'S GUILD HALL - the hall of the guild their trade or their class keeps them in, the nearest to
@@ -333,14 +433,16 @@ export const GUILD_OF_TRADE = /** @type {ReadonlyMap<number, number>} */ (Object
  * @param {Resident} res @param {Places} places @param {Spot|null} home @returns {Spot|null}
  */
 export function guildHallOf(res, places, home) {
-  if (res.job === 'guildsman') return res.work != null ? places.doors.get(res.work) ?? null : null;
+  if (res.job === 'guildsman') return res.work != null ? (places.doors.get(res.work) ?? null) : null;
   const { halls, orders } = doorKinds(places);
-  const nearest = (/** @type {readonly Spot[]|undefined} */ list) => (list?.length ? nearestOf(places, list, home)[0] : null);
+  const nearest = (/** @type {readonly Spot[]|undefined} */ list) =>
+    list?.length ? nearestOf(places, list, home)[0] : null;
   const order = nearest(orders);
   if (res.job === 'courtier') return order;
   if (res.cls === MOBILE_TYPES.Knight && order) return order;
-  const guild = (res.work != null ? GUILD_OF_TRADE.get(places.types.get(res.work) ?? -1) : undefined)
-    ?? (isMageClass(res.cls) ? MAGES_GUILD : isWarriorClass(res.cls) ? FIGHTERS_GUILD : null);
+  const guild =
+    (res.work != null ? GUILD_OF_TRADE.get(places.types.get(res.work) ?? -1) : undefined) ??
+    (isMageClass(res.cls) ? MAGES_GUILD : isWarriorClass(res.cls) ? FIGHTERS_GUILD : null);
   return guild == null ? null : nearest(halls.get(guild));
 }
 
@@ -349,7 +451,7 @@ export function guildHallOf(res, places, home) {
  *  Ascendant (GUILD_DAYS_BY_BAND) - each the first of GUILD_DAY_OFFSETS from the member's own day: the two are the same
  *  two, the one the first of them. @param {Resident} res @param {number} day @param {number} [days] */
 export function guildDay(res, day, days = GUILD_DAYS) {
-  const w = lwSeed(res.town, res.roll.charCodeAt(0), res.slot, 0x67696c64) % 7;   // 'gild'
+  const w = lwSeed(res.town, res.roll.charCodeAt(0), res.slot, 0x67696c64) % 7; // 'gild'
   const d = ((day % 7) + 7) % 7;
   return GUILD_DAY_OFFSETS.slice(0, days).some((o) => d === (w + o) % 7);
 }
@@ -365,7 +467,7 @@ export const GUILD_DAYS_BY_BAND = Object.freeze({ failing: 1, steady: 2, thrivin
 export function hallGuildDays(places, hall, bandOf) {
   if (!bandOf || hall?.building == null) return GUILD_DAYS;
   const band = bandOf(places.factions?.get(hall.building) ?? 0);
-  if (band === 'shut') return GUILD_DAYS_SHUT;   // CHAP6d: a hall a Crackdown shut keeps no evenings
+  if (band === 'shut') return GUILD_DAYS_SHUT; // CHAP6d: a hall a Crackdown shut keeps no evenings
   return /** @type {Record<string, number>} */ (GUILD_DAYS_BY_BAND)[band ?? ''] ?? GUILD_DAYS;
 }
 /** CHAP6d (Chapters-Arc 7, 9: "a chapter whose halls are shut sends nobody - its two `guildsman` idle at home"): the
@@ -385,18 +487,74 @@ const B = BUILDING_TYPES;
  * @type {Readonly<Record<string, readonly (readonly [number, number])[]>>}
  */
 export const ERRAND_NEEDS = Object.freeze({
-  homemaker: [[B.GeneralStore, 4], [B.ClothingStore, 2], [B.Alchemist, 1], [B.FurnitureStore, 1], [B.PawnShop, 1]],
-  crafter: [[B.GeneralStore, 3], [B.PawnShop, 2], [B.FurnitureStore, 1], [B.Bank, 1]],
-  keeper: [[B.Bank, 3], [B.GeneralStore, 2]],
-  helper: [[B.GeneralStore, 3], [B.Bank, 1]],
-  smith: [[B.Bank, 2], [B.GeneralStore, 2], [B.Alchemist, 1]],
-  clerk: [[B.GeneralStore, 2], [B.ClothingStore, 1], [B.Bookseller, 1]],
-  scholar: [[B.Library, 3], [B.Bookseller, 2], [B.Alchemist, 1]],
-  guildsman: [[B.Alchemist, 2], [B.Bookseller, 1], [B.Armorer, 1], [B.WeaponSmith, 1]],
-  guard: [[B.GeneralStore, 2], [B.Armorer, 1], [B.WeaponSmith, 1], [B.Alchemist, 1]],
-  courtier: [[B.GemStore, 3], [B.ClothingStore, 2], [B.Bank, 2], [B.Bookseller, 1]],
-  merchant: [[B.Bank, 3], [B.GeneralStore, 2], [B.PawnShop, 2], [B.GemStore, 1]],
-  visitor: [[B.GeneralStore, 2], [B.ClothingStore, 1], [B.GemStore, 1], [B.PawnShop, 1], [B.Alchemist, 1], [B.Bookseller, 1]],
+  homemaker: [
+    [B.GeneralStore, 4],
+    [B.ClothingStore, 2],
+    [B.Alchemist, 1],
+    [B.FurnitureStore, 1],
+    [B.PawnShop, 1],
+  ],
+  crafter: [
+    [B.GeneralStore, 3],
+    [B.PawnShop, 2],
+    [B.FurnitureStore, 1],
+    [B.Bank, 1],
+  ],
+  keeper: [
+    [B.Bank, 3],
+    [B.GeneralStore, 2],
+  ],
+  helper: [
+    [B.GeneralStore, 3],
+    [B.Bank, 1],
+  ],
+  smith: [
+    [B.Bank, 2],
+    [B.GeneralStore, 2],
+    [B.Alchemist, 1],
+  ],
+  clerk: [
+    [B.GeneralStore, 2],
+    [B.ClothingStore, 1],
+    [B.Bookseller, 1],
+  ],
+  scholar: [
+    [B.Library, 3],
+    [B.Bookseller, 2],
+    [B.Alchemist, 1],
+  ],
+  guildsman: [
+    [B.Alchemist, 2],
+    [B.Bookseller, 1],
+    [B.Armorer, 1],
+    [B.WeaponSmith, 1],
+  ],
+  guard: [
+    [B.GeneralStore, 2],
+    [B.Armorer, 1],
+    [B.WeaponSmith, 1],
+    [B.Alchemist, 1],
+  ],
+  courtier: [
+    [B.GemStore, 3],
+    [B.ClothingStore, 2],
+    [B.Bank, 2],
+    [B.Bookseller, 1],
+  ],
+  merchant: [
+    [B.Bank, 3],
+    [B.GeneralStore, 2],
+    [B.PawnShop, 2],
+    [B.GemStore, 1],
+  ],
+  visitor: [
+    [B.GeneralStore, 2],
+    [B.ClothingStore, 1],
+    [B.GemStore, 1],
+    [B.PawnShop, 1],
+    [B.Alchemist, 1],
+    [B.Bookseller, 1],
+  ],
 });
 
 export const ERRAND_NEED_SHARE = 0.6;
@@ -405,7 +563,11 @@ export const ERRAND_SHOP_SHARE = 2 / 3;
 /** LW-LODGE: one who lodges at a tavern - their home its door, and not its own staff (a visitor, a hand of a packet
  *  lying here, one of the town with no house but its rooms). @param {Resident} res @param {Places} places
  *  @param {Spot|null} home */
-export const isLodger = (res, places, home) => !!home && home.building != null && places.types.get(home.building) === BUILDING_TYPES.Tavern && res.work !== home.building;
+export const isLodger = (res, places, home) =>
+  !!home &&
+  home.building != null &&
+  places.types.get(home.building) === BUILDING_TYPES.Tavern &&
+  res.work !== home.building;
 /** LW-LODGE: a lodger's breakfast in the common room - minutes after waking, and how long - and how long before bed they
  *  go up to their room from the evening's supper there. */
 export const LODGE_BREAKFAST_MIN = Object.freeze([15, 45]);
@@ -426,11 +588,20 @@ export const MINSTREL_PLAY_H = Object.freeze([18.5, 23]);
  *  nearest; else one of the four nearest. @param {string} job @param {Places} places @param {readonly Spot[]} shops
  *  @param {() => number} rng @returns {Spot|null} */
 export function errandShop(job, places, shops, rng) {
-  const needs = (ERRAND_NEEDS[job] ?? []).map(([t, w]) => /** @type {const} */ ([shops.filter((s) => places.types.get(s.building ?? -1) === t), w])).filter(([list]) => list.length);
-  if (!needs.length || rng() >= ERRAND_NEED_SHARE) return shops.length ? shops[Math.floor(rng() * Math.min(4, shops.length))] : null;
+  const needs = (ERRAND_NEEDS[job] ?? [])
+    .map(([t, w]) => /** @type {const} */ ([shops.filter((s) => places.types.get(s.building ?? -1) === t), w]))
+    .filter(([list]) => list.length);
+  if (!needs.length || rng() >= ERRAND_NEED_SHARE)
+    return shops.length ? shops[Math.floor(rng() * Math.min(4, shops.length))] : null;
   let r = rng() * needs.reduce((n, [, w]) => n + w, 0);
   let list = needs[needs.length - 1][0];
-  for (const [l, w] of needs) { if (r < w) { list = l; break; } r -= w; }
+  for (const [l, w] of needs) {
+    if (r < w) {
+      list = l;
+      break;
+    }
+    r -= w;
+  }
   return list[Math.floor(rng() * Math.min(2, list.length))];
 }
 
@@ -440,21 +611,27 @@ export function errandShop(job, places, shops, rng) {
  *  of a town to the square, and its evening stood about one point; and a hamlet's market was its one shop's front.
  *  @param {Resident} res @param {Places} places @param {Spot|null} home */
 function favouritesNow(res, places, home) {
-  const rng = lwRng(res.town, res.roll.charCodeAt(0), res.slot, 0x666176);   // 'fav'
+  const rng = lwRng(res.town, res.roll.charCodeAt(0), res.slot, 0x666176); // 'fav'
   const near = (list, n = 2) => (list.length ? list[Math.floor(rng() * Math.min(list.length, n))] : null);
   const kinds = doorKinds(places);
   const byNear = (/** @type {readonly Spot[]} */ list) => nearestOf(places, list, home);
   const sq = squareOf(res, places);
   const own = (/** @type {Spot|null} */ s) => (s?.kind === 'square' ? sq : s);
-  const social = byNear(kinds.social);   // a corner of the town a social spot as any
+  const social = byNear(kinds.social); // a corner of the town a social spot as any
   const s1 = places.square && rng() < SQUARE_LIKE ? sq : own(near(social, SOCIAL_NEAR));
-  const s2 = own(near(social.filter((s) => own(s) !== s1), SOCIAL_NEAR)) ?? s1;
-  const market = byNear(kinds.market);   // a shop's front, or the square where the stalls stand - by its points, the more of them the more of the market
+  const s2 =
+    own(
+      near(
+        social.filter((s) => own(s) !== s1),
+        SOCIAL_NEAR,
+      ),
+    ) ?? s1;
+  const market = byNear(kinds.market); // a shop's front, or the square where the stalls stand - by its points, the more of them the more of the market
   return {
     social: [s1, s2].filter(Boolean),
     tavern: near(byNear(kinds.tavern)),
     temple: near(byNear(kinds.temple)),
-    guild: guildHallOf(res, places, home),   // LW-ERRANDS: their own guild's hall
+    guild: guildHallOf(res, places, home), // LW-ERRANDS: their own guild's hall
     market: own(near(market, SOCIAL_NEAR)),
     shops: byNear(kinds.shops),
     square: sq,
@@ -471,23 +648,47 @@ function favouritesNow(res, places, home) {
  *   trader's house (`{ at, from, dur }`), `browse` the doors of the town's public traders' houses (a browser's errand)
  * @returns {Entry[]}
  */
-export function dayPlan(res, places, day, { mpm, away = [], visitor = false, home: homeIn = null, watch: watchSize = 1, bandOf = null, errands = [], browse = [] }) {
-  const D0 = day * DAY_MIN + DAY_START_MIN, D1 = D0 + DAY_MIN;
-  const home = homeIn ?? (res.home != null ? places.doors.get(res.home) ?? null : null);
-  if (!home) return [{ kind: 'home', at: /** @type {any} */ (null), t0: D0, t1: D1 }];   // a home off the net: always in
+export function dayPlan(
+  res,
+  places,
+  day,
+  {
+    mpm,
+    away = [],
+    visitor = false,
+    home: homeIn = null,
+    watch: watchSize = 1,
+    bandOf = null,
+    errands = [],
+    browse = [],
+  },
+) {
+  const D0 = day * DAY_MIN + DAY_START_MIN,
+    D1 = D0 + DAY_MIN;
+  const home = homeIn ?? (res.home != null ? (places.doors.get(res.home) ?? null) : null);
+  if (!home) return [{ kind: 'home', at: /** @type {any} */ (null), t0: D0, t1: D1 }]; // a home off the net: always in
   const rng = lwRng(res.town, res.roll.charCodeAt(0), res.slot, day);
   const fav = favourites(res, places, home);
-  const work = res.work != null ? places.doors.get(res.work) ?? null : null;
+  const work = res.work != null ? (places.doors.get(res.work) ?? null) : null;
   const h = (hh) => hourOf(day, hh);
   // the temper's waking and bedtime - the watch's by its shift (WATCH-DAY: a day shift rises early, an evening shift
   // late; the night sleeps the day, abed after the night's watch till the afternoon)
   const shift = res.job === 'guard' && !visitor ? watchDuty(res, places, day, watchSize).shift : -1;
   let wake = res.temper === 0 ? h(5 + rng()) : res.temper === 2 ? h(8 + rng() * 2) : h(6 + rng() * 1.5);
   let bed = res.temper === 0 ? h(20 + rng()) : res.temper === 2 ? h(24.5 + rng() * 1.5) : h(21.5 + rng() * 1.5);
-  if (shift === 0) { wake = h(5 + rng() * 0.5); bed = h(21 + rng()); }
-  else if (shift === 1) { wake = h(9 + rng()); bed = h(23 + rng()); }
-  else if (shift === 2) { wake = h(10.5 + rng()); bed = h(WATCH_SHIFTS[2][1]); }
-  else if (shift === 3) { wake = h(13 + rng()); bed = h(21.5 + rng()); }
+  if (shift === 0) {
+    wake = h(5 + rng() * 0.5);
+    bed = h(21 + rng());
+  } else if (shift === 1) {
+    wake = h(9 + rng());
+    bed = h(23 + rng());
+  } else if (shift === 2) {
+    wake = h(10.5 + rng());
+    bed = h(WATCH_SHIFTS[2][1]);
+  } else if (shift === 3) {
+    wake = h(13 + rng());
+    bed = h(21.5 + rng());
+  }
   // WATCH-DAY: the morning after the night's watch begins where it stood at the day's turn - his post, his patrol's stop;
   // a day's watch whose walk out is longer than the morning begins the day on it, and his day off ends with it
   const startOut = shift === 3 ? nightTail(res, places, day - 1, watchSize, mpm) : null;
@@ -497,10 +698,13 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
   const intents = [];
   // LW-SPREAD: whatever takes them to the square takes them to their own point of it (squareOf) - the watch's beat aside,
   // its stops a patrol's pair's
-  const I = (kind, at, from, dur, until = undefined, slack = undefined, mark = undefined) => { if (at) intents.push({ kind, at: at.kind === 'square' && !mark?.duty ? fav.square : at, from, dur, until, slack, mark }); };
+  const I = (kind, at, from, dur, until = undefined, slack = undefined, mark = undefined) => {
+    if (at)
+      intents.push({ kind, at: at.kind === 'square' && !mark?.duty ? fav.square : at, from, dur, until, slack, mark });
+  };
   /** A stroll: two short stops at two of the town's spots - out among people, seen walking. */
   const stroll = (from) => {
-    const spots = [...places.social, ...(places.corners ?? []), ...places.market];   // LW-SPREAD: the town's corners too
+    const spots = [...places.social, ...(places.corners ?? []), ...places.market]; // LW-SPREAD: the town's corners too
     if (spots.length < 2) return;
     const a = spots[Math.floor(rng() * spots.length)];
     let b = spots[Math.floor(rng() * spots.length)];
@@ -509,7 +713,7 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
     I('market', b, from + 20, rollInt(rng, 6, 15));
   };
   const evening = (at = h(18)) => {
-    const from = at + rollInt(rng, 0, EVENING_SPREAD_MIN);   // LW-SPREAD: out for the evening at their own minute
+    const from = at + rollInt(rng, 0, EVENING_SPREAD_MIN); // LW-SPREAD: out for the evening at their own minute
     if (res.social > 0.3) I('social', pickOf(rng, fav.social.length ? fav.social : [null]), from, rollInt(rng, 30, 90));
     if (res.drink > TAVERN_DRINK && rng() < 0.75) I('tavern', fav.tavern, from + 60, rollInt(rng, 90, 180));
     else if (res.pious > 0.7 && rng() < 0.6) I('temple', fav.temple, from + 30, rollInt(rng, 30, 60));
@@ -519,52 +723,79 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
     }
   };
   // LW15: a public trader's house now and then a browser's errand (its own draw - a town with none plans as ever)
-  const brng = browse.length ? lwRng(res.town, res.roll.charCodeAt(0), res.slot, day, 0x62726f77) : null;   // 'brow'
+  const brng = browse.length ? lwRng(res.town, res.roll.charCodeAt(0), res.slot, day, 0x62726f77) : null; // 'brow'
   const errand = (from) => {
-    if (brng && brng() < PATRON_BROWSE_SHARE) { I('shop', browse[Math.floor(brng() * browse.length) % browse.length], from, 10 + Math.floor(brng() * 15)); return; }
-    if (rng() < ERRAND_SHOP_SHARE && fav.shops.length) I('shop', errandShop(job, places, fav.shops, rng), from, rollInt(rng, 15, 35));   // LW-ERRANDS: into a shop, of their need
+    if (brng && brng() < PATRON_BROWSE_SHARE) {
+      I('shop', browse[Math.floor(brng() * browse.length) % browse.length], from, 10 + Math.floor(brng() * 15));
+      return;
+    }
+    if (rng() < ERRAND_SHOP_SHARE && fav.shops.length)
+      I('shop', errandShop(job, places, fav.shops, rng), from, rollInt(rng, 15, 35)); // LW-ERRANDS: into a shop, of their need
     else I('market', fav.market, from, rollInt(rng, 20, 40));
   };
   // LW9: a carter come to market keeps a stall; a minstrel come to play keeps the tavern's evening - their own visits
-  const job = visitor ? (res.job === 'carter' ? 'carter-visit' : res.job === 'minstrel' ? 'minstrel-visit' : res.job === 'pilgrim' ? 'pilgrim-visit' : 'visitor') : res.job;   // LW13: a pilgrim come to a temple town keeps its temple
+  const job = visitor
+    ? res.job === 'carter'
+      ? 'carter-visit'
+      : res.job === 'minstrel'
+        ? 'minstrel-visit'
+        : res.job === 'pilgrim'
+          ? 'pilgrim-visit'
+          : 'visitor'
+    : res.job; // LW13: a pilgrim come to a temple town keeps its temple
   const lodger = isLodger(res, places, home);
   switch (job) {
-    case 'keeper': case 'smith': case 'clerk': case 'scholar': case 'helper': case 'guildsman': {
+    case 'keeper':
+    case 'smith':
+    case 'clerk':
+    case 'scholar':
+    case 'helper':
+    case 'guildsman': {
       if (rng() < 0.25) errand(wake + 30);
       // CHAP6d (Chapters-Arc 9): a guildsman whose hall a Crackdown shut keeps its working day at home
-      const at = job === 'guildsman' && work && hallGuildDays(places, work, bandOf) === GUILD_DAYS_SHUT ? home : work ?? home;
+      const at =
+        job === 'guildsman' && work && hallGuildDays(places, work, bandOf) === GUILD_DAYS_SHUT ? home : (work ?? home);
       I('work', at, h(job === 'smith' ? 7 : 8), 240);
       const lunch = rng();
       if (lunch < 0.3) I('tavern', fav.tavern, h(12), 45);
       else if (lunch < 0.5) I('market', fav.market, h(12), 30);
       I('work', at, h(12.5), 330, h(18));
       // LW-ERRANDS: on their guild's days, the evening at its hall first (a hall's own members are at it all day)
-      if (fav.guild && job !== 'guildsman' && guildDay(res, day, hallGuildDays(places, fav.guild, bandOf))) I('guild', fav.guild, h(18), rollInt(rng, 60, 120));   // CHAP5b: its chapter's days
+      if (fav.guild && job !== 'guildsman' && guildDay(res, day, hallGuildDays(places, fav.guild, bandOf)))
+        I('guild', fav.guild, h(18), rollInt(rng, 60, 120)); // CHAP5b: its chapter's days
       evening();
       break;
     }
     case 'crafter': {
       if (rng() < 0.7) errand(h(9));
-      if (rng() < 0.5) I('stall', rng() < 0.5 ? places.square ?? fav.market : fav.market, h(13), rollInt(rng, 60, 150));   // their wares at the square - LW-SPREAD: or at their market
+      if (rng() < 0.5)
+        I('stall', rng() < 0.5 ? (places.square ?? fav.market) : fav.market, h(13), rollInt(rng, 60, 150)); // their wares at the square - LW-SPREAD: or at their market
       else if (rng() < 0.5) errand(h(14));
       evening();
       break;
     }
     case 'homemaker': {
-      I('market', fav.market, h(MARKET_HOURS[0] + rng() * (MARKET_HOURS[1] - MARKET_HOURS[0])), rollInt(rng, 45, 90));   // LW-SPREAD: the morning's market at their own hour
+      I('market', fav.market, h(MARKET_HOURS[0] + rng() * (MARKET_HOURS[1] - MARKET_HOURS[0])), rollInt(rng, 45, 90)); // LW-SPREAD: the morning's market at their own hour
       errand(h(11));
       if (res.social > 0.5) stroll(h(13));
       if (res.pious > 0.6) I('temple', fav.temple, h(15), rollInt(rng, 30, 60));
-      if (res.social > 0.3) I('social', pickOf(rng, fav.social.length ? fav.social : [null]), h(16), rollInt(rng, 45, 120));
+      if (res.social > 0.3)
+        I('social', pickOf(rng, fav.social.length ? fav.social : [null]), h(16), rollInt(rng, 45, 120));
       evening(h(18.5));
       break;
     }
-    case 'labourer': case 'courier': {
-      let t = h(7), lunch = false;
+    case 'labourer':
+    case 'courier': {
+      let t = h(7),
+        lunch = false;
       for (let i = 0, n = rollInt(rng, 3, 5); i < n; i++) {
         const shop = fav.shops.length && rng() < 0.3;
         const spots = [...places.market, ...places.social];
-        const at = shop ? fav.shops[Math.floor(rng() * fav.shops.length)] : (spots.length ? spots[Math.floor(rng() * spots.length)] : null);
+        const at = shop
+          ? fav.shops[Math.floor(rng() * fav.shops.length)]
+          : spots.length
+            ? spots[Math.floor(rng() * spots.length)]
+            : null;
         const dur = rollInt(rng, 25, 60);
         I(shop ? 'work' : 'stall', at, t, dur);
         t += 120;
@@ -579,16 +810,25 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
       evening();
       break;
     }
-    case 'carter': case 'hunter':   // LW9: a farm's and a village's own, at home
+    case 'carter':
+    case 'hunter': // LW9: a farm's and a village's own, at home
     case 'farmer': {
       I('fields', exitNearest(places, home.cell), h(6), 660, h(17));
       evening(h(18));
       break;
     }
-    case 'fisher': case 'sailor': {
+    case 'fisher':
+    case 'sailor': {
       const dock = places.dock.length ? places.dock[lwSeed(res.town, res.slot) % places.dock.length] : null;
-      I(dock ? 'dock' : 'fields', dock ?? exitNearest(places, home.cell), h(job === 'sailor' ? 6 : 5.5), 450, h(job === 'sailor' ? 15 : 13));
-      if (job === 'fisher') I('stall', rng() < 0.5 ? places.square ?? fav.market : fav.market, h(14), rollInt(rng, 60, 90));   // LW-SPREAD: the catch at the square, or at their market
+      I(
+        dock ? 'dock' : 'fields',
+        dock ?? exitNearest(places, home.cell),
+        h(job === 'sailor' ? 6 : 5.5),
+        450,
+        h(job === 'sailor' ? 15 : 13),
+      );
+      if (job === 'fisher')
+        I('stall', rng() < 0.5 ? (places.square ?? fav.market) : fav.market, h(14), rollInt(rng, 60, 90)); // LW-SPREAD: the catch at the square, or at their market
       if (job === 'sailor' && res.drink > 0.3) I('tavern', fav.tavern, h(16), rollInt(rng, 120, 240));
       evening(h(18.5));
       break;
@@ -599,21 +839,29 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
       I('beg', fav.social[1] ?? fav.social[0] ?? null, h(13), 300, h(18));
       break;
     }
-    case 'innkeeper': case 'server': {
+    case 'innkeeper':
+    case 'server': {
       if (rng() < 0.6) I('market', fav.market, h(10.5), rollInt(rng, 30, 45));
       I('work', work ?? home, h(11), 900, bed);
       break;
     }
     case 'priest': {
-      if (rng() < 0.4) I('social', fav.temple ? (places.social.find((s) => s.building === fav.temple?.building) ?? null) : null, h(8), rollInt(rng, 30, 60));
+      if (rng() < 0.4)
+        I(
+          'social',
+          fav.temple ? (places.social.find((s) => s.building === fav.temple?.building) ?? null) : null,
+          h(8),
+          rollInt(rng, 30, 60),
+        );
       if (rng() < 0.3) I('market', fav.market, h(10), rollInt(rng, 20, 30));
       I('work', work ?? home, h(11), 600, bed);
       break;
     }
-    case 'noble':   // LW9: a court's own, at home
+    case 'noble': // LW9: a court's own, at home
     case 'courtier': {
       if (rng() < 0.35) I('social', places.square, h(15), rollInt(rng, 30, 60));
-      if (fav.guild && guildDay(res, day, hallGuildDays(places, fav.guild, bandOf))) I('guild', fav.guild, h(16.5), rollInt(rng, 60, 120));   // LW-ERRANDS: their order's hall; CHAP5b: its chapter's days
+      if (fav.guild && guildDay(res, day, hallGuildDays(places, fav.guild, bandOf)))
+        I('guild', fav.guild, h(16.5), rollInt(rng, 60, 120)); // LW-ERRANDS: their order's hall; CHAP5b: its chapter's days
       break;
     }
     case 'guard': {
@@ -623,18 +871,32 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
       const duty = watchDuty(res, places, day, watchSize);
       if (duty.shift === 3) {
         // the morning after the night: the watch kept to six, then home to bed - up in the afternoon, the evening theirs
-        if (startOut) for (const s of startOut.stops) I(startOut.kind, s.at, s.from, s.dur, undefined, Infinity, { duty: true, pair: startOut.pair });
+        if (startOut)
+          for (const s of startOut.stops)
+            I(startOut.kind, s.at, s.from, s.dur, undefined, Infinity, { duty: true, pair: startOut.pair });
         evening(h(18));
         break;
       }
       const [s0, s1] = WATCH_SHIFTS[duty.shift];
       const [from, until] = [h(s0), Math.min(h(s1), D1)];
-      if (duty.shift === 2) { errand(h(15)); if (res.social > 0.4) I('social', pickOf(rng, fav.social.length ? fav.social : [null]), h(17.5), rollInt(rng, 30, 75)); }
+      if (duty.shift === 2) {
+        errand(h(15));
+        if (res.social > 0.4)
+          I('social', pickOf(rng, fav.social.length ? fav.social : [null]), h(17.5), rollInt(rng, 30, 75));
+      }
       const mark = { duty: true, pair: duty.pair };
       if (duty.kind === 'post') I('post', duty.post, from, until - from, until, Infinity, mark);
       else {
         const beat = patrolBeat(places, res.town, duty.company, duty.patrol, day, duty.shift);
-        const stops = patrolStops(beat, lwRng(res.town, 0x73746f70, duty.company, duty.patrol, day, duty.shift), 0, from, until, mpm, true);   // 'stop' - the last held to the shift's end
+        const stops = patrolStops(
+          beat,
+          lwRng(res.town, 0x73746f70, duty.company, duty.patrol, day, duty.shift),
+          0,
+          from,
+          until,
+          mpm,
+          true,
+        ); // 'stop' - the last held to the shift's end
         for (const s of stops) I('watch', s.at, s.from, s.dur, until, Infinity, mark);
       }
       if (duty.shift === 0) evening(h(17.5));
@@ -643,26 +905,35 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
     case 'merchant': {
       I('stall', places.square ?? fav.market, h(8), 300, h(13));
       I('tavern', fav.tavern, h(13), 45);
-      for (let i = 0; i < 2 && fav.shops.length; i++) I('shop', errandShop(job, places, fav.shops, rng), h(14.5 + i), rollInt(rng, 30, 50));   // LW-ERRANDS: the bank, the trade
+      for (let i = 0; i < 2 && fav.shops.length; i++)
+        I('shop', errandShop(job, places, fav.shops, rng), h(14.5 + i), rollInt(rng, 30, 50)); // LW-ERRANDS: the bank, the trade
       I('tavern', fav.tavern, h(19), rollInt(rng, 120, 200));
       break;
     }
-    case 'patrol': case 'retainer':   // LW9: a knight of the patrol, a noble's retainer, at home
+    case 'patrol':
+    case 'retainer': // LW9: a knight of the patrol, a noble's retainer, at home
     case 'mercenary': {
       I('social', places.square ?? fav.social[0] ?? null, h(10), rollInt(rng, 60, 120));
       I('tavern', fav.tavern, h(13), 60);
-      const stay = rollInt(rng, 60, 120);   // drawn whether or not the hall is open: the day's other draws as ever
-      if (hallGuildDays(places, fav.guild, bandOf) !== GUILD_DAYS_SHUT) I('guild', fav.guild, h(15), stay);   // CHAP6d: never a shut hall
+      const stay = rollInt(rng, 60, 120); // drawn whether or not the hall is open: the day's other draws as ever
+      if (hallGuildDays(places, fav.guild, bandOf) !== GUILD_DAYS_SHUT) I('guild', fav.guild, h(15), stay); // CHAP6d: never a shut hall
       I('tavern', fav.tavern, h(19), rollInt(rng, 120, 240));
       break;
     }
     case 'adventurer': {
       if (rng() < 0.3) I('temple', fav.temple, h(9), rollInt(rng, 20, 40));
       const outfitters = nearestOf(places, doorKinds(places).outfitters, home);
-      if (outfitters.length && rng() < 0.6) I('shop', outfitters[Math.floor(rng() * Math.min(3, outfitters.length))], h(10), rollInt(rng, 30, 60));
-      if (hallGuildDays(places, fav.guild, bandOf) !== GUILD_DAYS_SHUT) I('guild', fav.guild, h(11.5), 60);   // CHAP6d: never a shut hall
+      if (outfitters.length && rng() < 0.6)
+        I('shop', outfitters[Math.floor(rng() * Math.min(3, outfitters.length))], h(10), rollInt(rng, 30, 60));
+      if (hallGuildDays(places, fav.guild, bandOf) !== GUILD_DAYS_SHUT) I('guild', fav.guild, h(11.5), 60); // CHAP6d: never a shut hall
       I('social', places.square ?? fav.social[0] ?? null, h(14), rollInt(rng, 60, 120));
-      I('tavern', lodger ? home : fav.tavern, h(18.5), rollInt(rng, 180, 300), lodger ? bed - rollInt(rng, LODGE_UP_MIN[0], LODGE_UP_MIN[1]) : undefined);   // LW-LODGE: a lodger sups at their own, and goes up before bed
+      I(
+        'tavern',
+        lodger ? home : fav.tavern,
+        h(18.5),
+        rollInt(rng, 180, 300),
+        lodger ? bed - rollInt(rng, LODGE_UP_MIN[0], LODGE_UP_MIN[1]) : undefined,
+      ); // LW-LODGE: a lodger sups at their own, and goes up before bed
       break;
     }
     case 'pilgrim': {
@@ -679,41 +950,80 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
       I('temple', fav.temple, h(PILGRIM_TEMPLE_H[0]), rollInt(rng, 150, 210));
       I('market', fav.market, h(13), rollInt(rng, 30, 60));
       I('temple', fav.temple, h(PILGRIM_TEMPLE_H[1]), rollInt(rng, 90, 120));
-      I('tavern', lodger ? home : fav.tavern, h(19.5), rollInt(rng, 90, 150), lodger ? bed - rollInt(rng, LODGE_UP_MIN[0], LODGE_UP_MIN[1]) : undefined);
+      I(
+        'tavern',
+        lodger ? home : fav.tavern,
+        h(19.5),
+        rollInt(rng, 90, 150),
+        lodger ? bed - rollInt(rng, LODGE_UP_MIN[0], LODGE_UP_MIN[1]) : undefined,
+      );
       break;
     }
     case 'carter-visit': {
       // LW9: THE CARTER AT MARKET - straight to a stall at the market as they come in, till the afternoon (their window cuts it)
-      I('stall', places.square ?? fav.market, h(MARKET_STALL_H[0]), (MARKET_STALL_H[1] - MARKET_STALL_H[0]) * 60, h(MARKET_STALL_H[1]), Infinity);
+      I(
+        'stall',
+        places.square ?? fav.market,
+        h(MARKET_STALL_H[0]),
+        (MARKET_STALL_H[1] - MARKET_STALL_H[0]) * 60,
+        h(MARKET_STALL_H[1]),
+        Infinity,
+      );
       break;
     }
-    case 'minstrel': case 'minstrel-visit': {
+    case 'minstrel':
+    case 'minstrel-visit': {
       // LW9: THE MINSTREL plays a tavern's common room of an evening (lodged at it, away from home; at home, their own
       // town's), a turn about the market first
       I('market', fav.market, h(11), rollInt(rng, 30, 60));
       const room = job === 'minstrel-visit' && lodger ? home : fav.tavern;
-      I('tavern', room, h(MINSTREL_PLAY_H[0]), (MINSTREL_PLAY_H[1] - MINSTREL_PLAY_H[0]) * 60, lodger && job === 'minstrel-visit' ? bed - rollInt(rng, LODGE_UP_MIN[0], LODGE_UP_MIN[1]) : undefined);
+      I(
+        'tavern',
+        room,
+        h(MINSTREL_PLAY_H[0]),
+        (MINSTREL_PLAY_H[1] - MINSTREL_PLAY_H[0]) * 60,
+        lodger && job === 'minstrel-visit' ? bed - rollInt(rng, LODGE_UP_MIN[0], LODGE_UP_MIN[1]) : undefined,
+      );
       break;
     }
     case 'visitor': {
       I('market', fav.market, h(9), rollInt(rng, 30, 60));
-      if (fav.shops.length) I('shop', errandShop(job, places, fav.shops, rng), h(10.5), rollInt(rng, 30, 60));   // LW-ERRANDS: a visitor's wares
+      if (fav.shops.length) I('shop', errandShop(job, places, fav.shops, rng), h(10.5), rollInt(rng, 30, 60)); // LW-ERRANDS: a visitor's wares
       if (res.pious > 0.5) I('temple', fav.temple, h(13), rollInt(rng, 30, 45));
       I('social', places.square ?? fav.social[0] ?? null, h(15), rollInt(rng, 45, 90));
-      I('tavern', lodger ? home : fav.tavern, h(18), rollInt(rng, 180, 300), lodger ? bed - rollInt(rng, LODGE_UP_MIN[0], LODGE_UP_MIN[1]) : undefined);   // LW-LODGE: a lodger sups at their own, and goes up before bed
+      I(
+        'tavern',
+        lodger ? home : fav.tavern,
+        h(18),
+        rollInt(rng, 180, 300),
+        lodger ? bed - rollInt(rng, LODGE_UP_MIN[0], LODGE_UP_MIN[1]) : undefined,
+      ); // LW-LODGE: a lodger sups at their own, and goes up before bed
       break;
     }
-    default: evening();
+    default:
+      evening();
   }
   // LW15: A PATRON'S ERRAND - to a player's trader's house at the minute the service's sale names, in and out again: laid
   // in its minute's place among the day's intents (they are kept in the clock's order), the stay it falls in cut for it
   // and taken up again after (a keeper slips out to the trader's and back to the counter)
   for (const e of errands) if (e?.at) patronErrand(intents, e, mpm);
   // the larks and the restless take a turn about the town before the day's business (a stroll at first light)
-  if (res.temper === 0 && res.social > 0.6 && job !== 'guard' && job !== 'farmer' && job !== 'fisher') { const at = intents.length; stroll(wake + 20); intents.unshift(...intents.splice(at)); }
+  if (res.temper === 0 && res.social > 0.6 && job !== 'guard' && job !== 'farmer' && job !== 'fisher') {
+    const at = intents.length;
+    stroll(wake + 20);
+    intents.unshift(...intents.splice(at));
+  }
   // LW-LODGE: a lodger breakfasts in the common room before anything (up in their room before it and after it)
-  if (lodger) { const at = intents.length; I('tavern', home, wake + rollInt(rng, LODGE_BREAKFAST_MIN[0], LODGE_BREAKFAST_MIN[1]), rollInt(rng, 20, 40)); intents.unshift(...intents.splice(at)); }
-  const start = startOut ? { at: startOut.at, kind: startOut.kind, mark: { duty: true, pair: startOut.pair } } : walkIn ? { at: walkIn.to, kind: walkIn.kind, mark: walkIn.mark, walk: walkIn } : null;
+  if (lodger) {
+    const at = intents.length;
+    I('tavern', home, wake + rollInt(rng, LODGE_BREAKFAST_MIN[0], LODGE_BREAKFAST_MIN[1]), rollInt(rng, 20, 40));
+    intents.unshift(...intents.splice(at));
+  }
+  const start = startOut
+    ? { at: startOut.at, kind: startOut.kind, mark: { duty: true, pair: startOut.pair } }
+    : walkIn
+      ? { at: walkIn.to, kind: walkIn.kind, mark: walkIn.mark, walk: walkIn }
+      : null;
   return schedule(intents, { D0, D1, wake, bed, home, mpm, away, start, end: walkOut });
 }
 
@@ -739,7 +1049,7 @@ function patronErrand(intents, e, mpm) {
     if (end > leave) {
       const back = e.from + e.dur + walkMinutes(e.at, prev.at, mpm);
       if (end - back >= MIN_STAY) add.push({ ...prev, from: back, dur: end - back });
-      prev.until = Math.min(prev.until ?? Infinity, leave);   // none of it left before: the day skips it (taken up after)
+      prev.until = Math.min(prev.until ?? Infinity, leave); // none of it left before: the day skips it (taken up after)
     }
   }
   intents.splice(k, 0, ...add);
@@ -768,20 +1078,40 @@ export function schedule(intents, { D0, D1, wake, bed, home, mpm, away, start = 
   const push = (kind, at, t0, t1, extra = {}) => {
     if (!(t1 > t0)) return;
     const last = out[out.length - 1];
-    if (last && kind !== 'walk' && last.kind === kind && last.at === at && last.t1 === t0 && !!last.armed === !!extra.armed) { last.t1 = t1; return; }
+    if (
+      last &&
+      kind !== 'walk' &&
+      last.kind === kind &&
+      last.at === at &&
+      last.t1 === t0 &&
+      !!last.armed === !!extra.armed
+    ) {
+      last.t1 = t1;
+      return;
+    }
     out.push({ kind, at, t0, t1, ...extra });
   };
   const windows = [...(away ?? [])].filter((w) => w.t1 > D0 && w.t0 < D1).sort((a, b) => a.t0 - b.t0);
-  let at = start?.at ?? home, atKind = start?.kind ?? 'home', cursor = D0;
+  let at = start?.at ?? home,
+    atKind = start?.kind ?? 'home',
+    cursor = D0;
   /** WATCH-DAY: the mark of where they are (a duty stay's), carried onto the walk that leaves it */
   let atMark = start?.mark ?? null;
-  if (start?.walk) { const w = start.walk; push('walk', w.to, w.t0, w.t1, { from: w.from, to: w.to, ...w.mark }); cursor = w.t1; }   // begun the night before
+  if (start?.walk) {
+    const w = start.walk;
+    push('walk', w.to, w.t0, w.t1, { from: w.from, to: w.to, ...w.mark });
+    cursor = w.t1;
+  } // begun the night before
   /** Stay where they are until `t` - at home asleep before waking and from bed on. */
   const fill = (t) => {
     t = Math.min(t, D1);
     if (!(t > cursor)) return;
     if (at === home) {
-      for (const [a, b, k] of [[cursor, Math.min(t, wake), 'sleep'], [Math.max(cursor, wake), Math.min(t, bed), 'home'], [Math.max(cursor, bed), t, 'sleep']]) {
+      for (const [a, b, k] of [
+        [cursor, Math.min(t, wake), 'sleep'],
+        [Math.max(cursor, wake), Math.min(t, bed), 'home'],
+        [Math.max(cursor, bed), t, 'sleep'],
+      ]) {
         if (b > a) push(/** @type {string} */ (k), home, /** @type {number} */ (a), /** @type {number} */ (b));
       }
     } else push(atKind, at, cursor, t, atMark ?? {});
@@ -792,7 +1122,11 @@ export function schedule(intents, { D0, D1, wake, bed, home, mpm, away, start = 
   const go = (to, by, extra = {}, arriveKind = 'home', arriveMark = null) => {
     if (to === at) return;
     const m = walkMinutes(at, to, mpm);
-    if (m > 0) { fill(Math.max(cursor, by - m)); push('walk', to, cursor, cursor + m, { from: at, to, ...(atMark ?? {}), ...(arriveMark ?? {}), ...extra }); cursor += m; }
+    if (m > 0) {
+      fill(Math.max(cursor, by - m));
+      push('walk', to, cursor, cursor + m, { from: at, to, ...(atMark ?? {}), ...(arriveMark ?? {}), ...extra });
+      cursor += m;
+    }
     at = to;
     atKind = arriveKind;
     atMark = arriveMark;
@@ -803,7 +1137,13 @@ export function schedule(intents, { D0, D1, wake, bed, home, mpm, away, start = 
       const out_ = walkMinutes(home, exit, mpm);
       const leaveHome = w.t0 - out_;
       if (at !== home) go(home, leaveHome - (w.armed ? GEAR_MIN : 0));
-      if (w.armed) { fill(leaveHome - GEAR_MIN); if (leaveHome > cursor) { push('gear', home, cursor, leaveHome); cursor = leaveHome; } }
+      if (w.armed) {
+        fill(leaveHome - GEAR_MIN);
+        if (leaveHome > cursor) {
+          push('gear', home, cursor, leaveHome);
+          cursor = leaveHome;
+        }
+      }
       go(exit, w.t0, { armed: !!w.armed }, 'away');
     }
     const back = exit && exit !== home ? walkMinutes(exit, home, mpm) : 0;
@@ -815,19 +1155,26 @@ export function schedule(intents, { D0, D1, wake, bed, home, mpm, away, start = 
     if (back > 0 && Math.max(cursor, t1) + halt + back > D1) t1 = D1;
     if (t1 > cursor) push('away', exit ?? home, cursor, t1, { armed: !!w.armed });
     cursor = Math.max(cursor, t1);
-    at = exit ?? home; atKind = 'away';
-    if (cursor < D1 && halt > 0) { push('gate', exit, cursor, cursor + halt); cursor += halt; atKind = 'gate'; }
+    at = exit ?? home;
+    atKind = 'away';
+    if (cursor < D1 && halt > 0) {
+      push('gate', exit, cursor, cursor + halt);
+      cursor += halt;
+      atKind = 'gate';
+    }
     if (cursor < D1 && back > 0) {
       push('walk', home, cursor, cursor + back, { from: exit, to: home, armed: !!w.armed });
       cursor += back;
-      at = home; atKind = 'home';
+      at = home;
+      atKind = 'home';
     }
   };
   let wi = 0;
   while (wi < windows.length && windows[wi].t0 <= D0) runAway(windows[wi++]);
   /** WATCH-DAY: the watch next after each intent (the one a stay off duty must leave in time for) */
   const nextWatch = intents.map(() => /** @type {typeof intents[number] | null} */ (null));
-  for (let k = intents.length - 2; k >= 0; k--) nextWatch[k] = intents[k + 1].mark?.duty ? intents[k + 1] : nextWatch[k + 1];
+  for (let k = intents.length - 2; k >= 0; k--)
+    nextWatch[k] = intents[k + 1].mark?.duty ? intents[k + 1] : nextWatch[k + 1];
   for (const [k, it] of intents.entries()) {
     if (cursor >= D1) break;
     // WATCH-DAY: into the uniform and out of it at home - never from one's watch straight to the evening's errand, nor
@@ -843,7 +1190,9 @@ export function schedule(intents, { D0, D1, wake, bed, home, mpm, away, start = 
     // man had left); off duty, a stay ends in time to change at home and walk out to the next watch on its hour
     const homeBy = it.mark?.duty ? Infinity : bed - walkMinutes(it.at, home, mpm);
     const w = windows[wi];
-    const awayBy = w ? w.t0 - (w.armed ? GEAR_MIN : 0) - walkMinutes(home, w.exit ?? home, mpm) - walkMinutes(it.at, home, mpm) : Infinity;
+    const awayBy = w
+      ? w.t0 - (w.armed ? GEAR_MIN : 0) - walkMinutes(home, w.exit ?? home, mpm) - walkMinutes(it.at, home, mpm)
+      : Infinity;
     const nw = it.mark?.duty ? null : nextWatch[k];
     const watchBy = nw ? nw.from - walkMinutes(it.at, home, mpm) - walkMinutes(home, nw.at, mpm) : Infinity;
     const end = Math.min(start + it.dur, it.until ?? Infinity, homeBy, awayBy, watchBy, D1);
@@ -866,17 +1215,25 @@ export function schedule(intents, { D0, D1, wake, bed, home, mpm, away, start = 
   }
   while (wi < windows.length) runAway(windows[wi++]);
   if (cursor < D1 && at !== home) go(home, cursor);
-  if (walkOut) { fill(walkOut.t0); push('walk', walkOut.to, walkOut.t0, walkOut.t1, { from: walkOut.from, to: walkOut.to, ...walkOut.mark }); }   // on into the next day
+  if (walkOut) {
+    fill(walkOut.t0);
+    push('walk', walkOut.to, walkOut.t0, walkOut.t1, { from: walkOut.from, to: walkOut.to, ...walkOut.mark });
+  } // on into the next day
   else fill(D1);
   return out;
 }
 
 /** The entry covering minute `t` (the last whose start is not after it), or null. @param {readonly Entry[]} plan @param {number} t */
 export function entryAt(plan, t) {
-  let lo = 0, hi = plan.length - 1, ans = -1;
+  let lo = 0,
+    hi = plan.length - 1,
+    ans = -1;
   while (lo <= hi) {
     const mid = (lo + hi) >> 1;
-    if (plan[mid].t0 <= t) { ans = mid; lo = mid + 1; } else hi = mid - 1;
+    if (plan[mid].t0 <= t) {
+      ans = mid;
+      lo = mid + 1;
+    } else hi = mid - 1;
   }
   return ans >= 0 && t < plan[ans].t1 ? ans : -1;
 }

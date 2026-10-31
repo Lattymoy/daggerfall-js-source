@@ -12,8 +12,8 @@
   {
     "name": "ROAD-LOOK-the-wet-word-unread",
     "file": "src/world/road/roadEdge.js",
-    "old": "return r < GROUND_RECORD_LIMIT && ((ROAD_EDGE_WET[r >> 5] >>> (r & 31)) & 1) === 0;",
-    "new": "return r < GROUND_RECORD_LIMIT;",
+    "old": "  return r < GROUND_RECORD_LIMIT && ((ROAD_EDGE_WET[r >> 5] >>> (r & 31)) & 1) === 0;",
+    "new": "  return r < GROUND_RECORD_LIMIT;",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "ROAD-LOOK-the-mirror-dropped",
     "file": "src/world/road/roadEdge.js",
-    "old": "const m = (l) => (l < 0 ? -l : l > 1 ? 2 - l : l);",
-    "new": "const m = (l) => l;",
+    "old": "  const m = (l) => (l < 0 ? -l : l > 1 ? 2 - l : l);",
+    "new": "  const m = (l) => l;",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "ROAD-LOOK-the-nearest-weight-the-wrong-way",
     "file": "src/world/road/roadEdge.js",
-    "old": "return (w * w) / Math.max(d * d, 1e-6); }",
-    "new": "return (d * d) / Math.max(w * w, 1e-6); }",
+    "old": "  return (w * w) / Math.max(d * d, 1e-6);",
+    "new": "  return (d * d) / Math.max(w * w, 1e-6);",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "ROAD-LOOK-the-bilinear-corner-the-wrong-cell",
     "file": "src/world/road/roadEdge.js",
-    "old": "const kx = Math.floor(x + 0.5), ky = Math.floor(y + 0.5)",
-    "new": "const kx = Math.floor(x), ky = Math.floor(y)",
+    "old": "  const kx = Math.floor(x + 0.5),\n    ky = Math.floor(y + 0.5),",
+    "new": "  const kx = Math.floor(x),\n    ky = Math.floor(y),",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "ROAD-LOOK-a-wet-neighbour-lending",
     "file": "src/world/road/roadEdge.js",
-    "old": "const gb = rb !== ra && takesRoadEdge(db) ? nearWeight(u) : 0;",
-    "new": "const gb = rb !== ra ? nearWeight(u) : 0;",
+    "old": "  const gb = rb !== ra && takesRoadEdge(db) ? nearWeight(u) : 0;",
+    "new": "  const gb = rb !== ra ? nearWeight(u) : 0;",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "ROAD-LOOK-the-wander-amplitude",
     "file": "src/world/road/roadEdge.js",
-    "old": "Object.freeze({ cells: 32, amp: 0.12 })",
-    "new": "Object.freeze({ cells: 32, amp: 0.3 })",
+    "old": "    Object.freeze({ cells: 32, amp: 0.12 }),",
+    "new": "    Object.freeze({ cells: 32, amp: 0.3 }),",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "ROAD-LOOK-the-early-answer-diagonal-unasked",
     "file": "src/world/road/roadEdge.js",
-    "old": "if (ra === rb && ra === rc && ra === rd) return whole;",
-    "new": "if (ra === rb && ra === rc) return whole;",
+    "old": "  if (ra === rb && ra === rc && ra === rd) return whole;",
+    "new": "  if (ra === rb && ra === rc) return whole;",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "ROAD-LOOK-the-other-kind-unnormalised",
     "file": "src/world/road/roadEdge.js",
-    "old": "if (gb > 0) draw.push([bx, by, ((1 - mine) * gb) / gs]);",
-    "new": "if (gb > 0) draw.push([bx, by, (1 - mine) * gb]);",
+    "old": "  if (gb > 0) draw.push([bx, by, ((1 - mine) * gb) / gs]);",
+    "new": "  if (gb > 0) draw.push([bx, by, (1 - mine) * gb]);",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "ROAD-LOOK-glsl-the-hash-salt",
     "file": "src/render/roadEdgeGlsl.js",
-    "old": "(salt * 0xcb1ab31fu)",
-    "new": "(salt * 0xcb1ab31eu)",
+    "old": "  highp uint h = (uint(c.x) * 0x8da6b343u) ^ (uint(c.y) * 0xd8163841u) ^ (salt * 0xcb1ab31fu);",
+    "new": "  highp uint h = (uint(c.x) * 0x8da6b343u) ^ (uint(c.y) * 0xd8163841u) ^ (salt * 0xcb1ab31eu);",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "ROAD-LOOK-glsl-the-noise-unwrapped",
     "file": "src/render/roadEdgeGlsl.js",
-    "old": "highp ivec2 i0 = i % n, i1 = (i + 1) % n;",
-    "new": "highp ivec2 i0 = i, i1 = i + 1;",
+    "old": "  highp ivec2 i0 = i % n, i1 = (i + 1) % n;",
+    "new": "  highp ivec2 i0 = i, i1 = i + 1;",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "ROAD-LOOK-glsl-the-wander-uncentred",
     "file": "src/render/roadEdgeGlsl.js",
-    "old": "(2.0 * reNoise(p, ${o.cells}, ${ROAD_EDGE.salt + k}u) - 1.0)",
-    "new": "(reNoise(p, ${o.cells}, ${ROAD_EDGE.salt + k}u))",
+    "old": "  return ${ROAD_EDGE.wander.map((o, k) => `${f(o.amp)} * (2.0 * reNoise(p, ${o.cells}, ${ROAD_EDGE.salt + k}u) - 1.0)`).join(' + ')};",
+    "new": "  return ${ROAD_EDGE.wander.map((o, k) => `${f(o.amp)} * (reNoise(p, ${o.cells}, ${ROAD_EDGE.salt + k}u))`).join(' + ')};",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "ROAD-LOOK-glsl-the-switch-unread",
     "file": "src/render/roadEdgeGlsl.js",
-    "old": "if (uRoadEdge <= 0.0 || !reTakes(data)) return own;",
-    "new": "if (!reTakes(data)) return own;",
+    "old": "  if (uRoadEdge <= 0.0 || !reTakes(data)) return own;",
+    "new": "  if (!reTakes(data)) return own;",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "ROAD-LOOK-glsl-the-mirror-dropped",
     "file": "src/render/roadEdgeGlsl.js",
-    "old": "  l = vec2(l.x < 0.0 ? -l.x : (l.x > 1.0 ? 2.0 - l.x : l.x), l.y < 0.0 ? -l.y : (l.y > 1.0 ? 2.0 - l.y : l.y));\n",
-    "new": "",
+    "old": "  l = vec2(l.x < 0.0 ? -l.x : (l.x > 1.0 ? 2.0 - l.x : l.x), l.y < 0.0 ? -l.y : (l.y > 1.0 ? 2.0 - l.y : l.y));\n  int t = int(d & 3u);",
+    "new": "  int t = int(d & 3u);",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "ROAD-LOOK-glsl-the-gradient-unturned",
     "file": "src/render/roadEdgeGlsl.js",
-    "old": "vec2 dux = transpose(ROT[t]) * gx, duy = transpose(ROT[t]) * gy;",
-    "new": "vec2 dux = gx, duy = gy;",
+    "old": "  vec2 dux = transpose(ROT[t]) * gx, duy = transpose(ROT[t]) * gy;",
+    "new": "  vec2 dux = gx, duy = gy;",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "ROAD-LOOK-glsl-the-bilinear-x-weight",
     "file": "src/render/roadEdgeGlsl.js",
-    "old": "float wxa = float(c.x) == k.x ? s.x : 1.0 - s.x",
-    "new": "float wxa = float(c.x) == k.x ? 1.0 - s.x : s.x",
+    "old": "  float wxa = float(c.x) == k.x ? s.x : 1.0 - s.x, wxb = float(cb.x) == k.x ? s.x : 1.0 - s.x;",
+    "new": "  float wxa = float(c.x) == k.x ? 1.0 - s.x : s.x, wxb = float(cb.x) == k.x ? s.x : 1.0 - s.x;",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "ROAD-LOOK-glsl-the-wet-neighbour-lending",
     "file": "src/render/roadEdgeGlsl.js",
-    "old": "float gc = (rc != ra && reTakes(dc)) ? reNear(v) : 0.0;",
-    "new": "float gc = (rc != ra) ? reNear(v) : 0.0;",
+    "old": "  float gc = (rc != ra && reTakes(dc)) ? reNear(v) : 0.0;",
+    "new": "  float gc = (rc != ra) ? reNear(v) : 0.0;",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "ROAD-LOOK-glsl-the-other-kind-unnormalised",
     "file": "src/render/roadEdgeGlsl.js",
-    "old": "return mix(o / gs, own, mine);",
-    "new": "return mix(o, own, mine);",
+    "old": "  return mix(o / gs, own, mine);",
+    "new": "  return mix(o, own, mine);",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "ROAD-LOOK-the-lane-call-dropped",
     "file": "src/render/enhancedLighting.js",
-    "old": "  tex = roadEdge(tex, data, unwrapped, gx, gy, t);   // ROAD-LOOK: a road's edge blended into its ground, its neighbour decoded as its own\n",
-    "new": "",
+    "old": "  tex = roadEdge(tex, data, unwrapped, gx, gy, t);   // ROAD-LOOK: a road's edge blended into its ground, its neighbour decoded as its own\n  if (!ge) tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share",
+    "new": "  if (!ge) tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share",
     "tests": [
       "test/world/road/roadlook.test.js",
       "test/systems/ecotone1.test.js"
@@ -248,8 +248,8 @@
   {
     "name": "ROAD-LOOK-the-owner-test",
     "file": "src/world/road/roadBridges.js",
-    "old": "            if (Math.floor(x) !== px || Math.floor(y) !== py) continue;",
-    "new": "            if (false) continue;",
+    "old": "            if (Math.floor(x) !== px || Math.floor(y) !== py) continue; // the pixel that holds the point owns it",
+    "new": "            if (false) continue; // the pixel that holds the point owns it",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -257,8 +257,8 @@
   {
     "name": "ROAD-LOOK-the-half-open-ends",
     "file": "src/world/road/roadBridges.js",
-    "old": "if (t < 0 || t > 1 || u < 0 || u >= 1) continue;",
-    "new": "if (t < 0 || t >= 1 || u < 0 || u >= 1) continue;",
+    "old": "            if (t < 0 || t > 1 || u < 0 || u >= 1) continue; // a river's vertex one segment's; a curve's ends both its segments' (the pixel's edge is the curve's end - the owner below, and the merge, make it one)",
+    "new": "            if (t < 0 || t >= 1 || u < 0 || u >= 1) continue; // a river's vertex one segment's; a curve's ends both its segments' (the pixel's edge is the curve's end - the owner below, and the merge, make it one)",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "ROAD-LOOK-the-track-kept",
     "file": "src/world/road/roadBridges.js",
-    "old": "(o.kind === c.kind || o.kind === 'road')",
-    "new": "(o.kind === c.kind)",
+    "old": "      const meets = (o) =>\n        o.river === c.river && (o.kind === c.kind || o.kind === 'road') && decksMeet(bridgeShape(o), bridgeShape(c));",
+    "new": "      const meets = (o) => o.river === c.river && o.kind === c.kind && decksMeet(bridgeShape(o), bridgeShape(c));",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -293,8 +293,8 @@
   {
     "name": "ROAD-LOOK-the-sine-unread",
     "file": "src/world/road/roadBridges.js",
-    "old": "const half = c.width / Math.max(BRIDGE.minSine, c.sin) / 2;",
-    "new": "const half = c.width / 2;",
+    "old": "  const half = c.width / Math.max(BRIDGE.minSine, c.sin) / 2;",
+    "new": "  const half = c.width / 2;",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -302,8 +302,8 @@
   {
     "name": "ROAD-LOOK-the-floor-on-the-sine",
     "file": "src/world/road/roadBridges.js",
-    "old": "const half = c.width / Math.max(BRIDGE.minSine, c.sin) / 2;",
-    "new": "const half = c.width / c.sin / 2;",
+    "old": "  const half = c.width / Math.max(BRIDGE.minSine, c.sin) / 2;",
+    "new": "  const half = c.width / c.sin / 2;",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "ROAD-LOOK-the-ramp-run",
     "file": "src/world/road/roadBridges.js",
-    "old": "reach: half + k.bank + (deck - c.level) * k.ramp };",
-    "new": "reach: half + k.bank + (deck - c.level) * 2 };",
+    "old": "  return { ...c, half, deck, abut: half + k.bank, reach: half + k.bank + (deck - c.level) * k.ramp };",
+    "new": "  return { ...c, half, deck, abut: half + k.bank, reach: half + k.bank + (deck - c.level) * 2 };",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "ROAD-LOOK-the-deck-height",
     "file": "src/world/road/roadBridges.js",
-    "old": "const deck = c.level + k.clearance + k.deck;",
-    "new": "const deck = c.level + k.clearance;",
+    "old": "  const deck = c.level + k.clearance + k.deck;",
+    "new": "  const deck = c.level + k.clearance;",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "ROAD-LOOK-the-memo-by-the-bytes-alone",
     "file": "src/world/road/roadBridges.js",
-    "old": "if (hit && hit.law === law && hit.key === key) return hit.list;",
-    "new": "if (hit && hit.key === key) return hit.list;",
+    "old": "  if (hit && hit.law === law && hit.key === key) return hit.list;",
+    "new": "  if (hit && hit.key === key) return hit.list;",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -338,8 +338,8 @@
   {
     "name": "ROAD-LOOK-the-channel-unasked",
     "file": "src/world/road/roadBridges.js",
-    "old": "            if (!wet) continue;\n",
-    "new": "",
+    "old": "            if (!wet) continue;\n            tilemap[t] = 0;",
+    "new": "            tilemap[t] = 0;",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -347,8 +347,8 @@
   {
     "name": "ROAD-LOOK-the-deck-width",
     "file": "src/world/road/roadBridges.js",
-    "old": "across = k.width / 2 + TILE_M",
-    "new": "across = k.width + TILE_M",
+    "old": "          across = k.width / 2 + TILE_M,",
+    "new": "          across = k.width + TILE_M,",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -365,8 +365,8 @@
   {
     "name": "ROAD-LOOK-the-path-left-set",
     "file": "src/world/road/roadBridges.js",
-    "old": "tilemap[t] = 0; paths[t] = 0; n++;",
-    "new": "tilemap[t] = 0; n++;",
+    "old": "            paths[t] = 0;\n            n++;",
+    "new": "            n++;",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -374,8 +374,8 @@
   {
     "name": "ROAD-LOOK-the-mesh-deck-height",
     "file": "src/world/road/bridgeModels.js",
-    "old": "      face(STONE, P(s0, -w, deckTop(b, s0)), P(s1, -w, deckTop(b, s1)), P(s1, w, deckTop(b, s1)), P(s0, w, deckTop(b, s0)), up);",
-    "new": "      face(STONE, P(s0, -w, deckTop(b, s0) + 0.3), P(s1, -w, deckTop(b, s1) + 0.3), P(s1, w, deckTop(b, s1) + 0.3), P(s0, w, deckTop(b, s0) + 0.3), up);",
+    "old": "        P(s0, -w, deckTop(b, s0)),\n        P(s1, -w, deckTop(b, s1)),\n        P(s1, w, deckTop(b, s1)),\n        P(s0, w, deckTop(b, s0)),",
+    "new": "        P(s0, -w, deckTop(b, s0) + 0.3),\n        P(s1, -w, deckTop(b, s1) + 0.3),\n        P(s1, w, deckTop(b, s1) + 0.3),\n        P(s0, w, deckTop(b, s0) + 0.3),",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -383,8 +383,8 @@
   {
     "name": "ROAD-LOOK-the-mesh-ramp-run",
     "file": "src/world/road/bridgeModels.js",
-    "old": "return b.deck - (a - b.abut) / k.ramp;",
-    "new": "return b.deck - (a - b.abut) / (2 * k.ramp);",
+    "old": "  return b.deck - (a - b.abut) / k.ramp;",
+    "new": "  return b.deck - (a - b.abut) / (2 * k.ramp);",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -392,8 +392,8 @@
   {
     "name": "ROAD-LOOK-a-parapet-dropped",
     "file": "src/world/road/bridgeModels.js",
-    "old": "    for (const side of [-1, 1]) {\n      for (let i = 0; i + 1 < S.length; i++) {",
-    "new": "    for (const side of [1]) {\n      for (let i = 0; i + 1 < S.length; i++) {",
+    "old": "    // the walls each side, from the arches (or the ground) to the parapet's top; the ramps' and the abutments' to the bed\n    for (const side of [-1, 1]) {",
+    "new": "    // the walls each side, from the arches (or the ground) to the parapet's top; the ramps' and the abutments' to the bed\n    for (const side of [1]) {",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "ROAD-LOOK-the-mid-rail-dropped",
     "file": "src/world/road/bridgeModels.js",
-    "old": "for (const h of [k.parapet, k.parapet / 2])",
-    "new": "for (const h of [k.parapet])",
+    "old": "      for (const h of [k.parapet, k.parapet / 2])",
+    "new": "      for (const h of [k.parapet])",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "ROAD-LOOK-the-openings-count",
     "file": "src/world/road/bridgeModels.js",
-    "old": "const n = Math.max(1, Math.ceil((L + k.pier) / (k.span + k.pier)))",
-    "new": "const n = Math.max(1, Math.floor((L + k.pier) / (k.span + k.pier)))",
+    "old": "  const n = Math.max(1, Math.ceil((L + k.pier) / (k.span + k.pier))),",
+    "new": "  const n = Math.max(1, Math.floor((L + k.pier) / (k.span + k.pier))),",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -419,8 +419,8 @@
   {
     "name": "ROAD-LOOK-the-arch-crown",
     "file": "src/world/road/bridgeModels.js",
-    "old": "const crown = b.level + k.clearance, spring = b.level + SPRING;",
-    "new": "const crown = b.level + k.clearance - 1, spring = b.level + SPRING;",
+    "old": "    const crown = b.level + k.clearance,",
+    "new": "    const crown = b.level + k.clearance - 1,",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -428,8 +428,8 @@
   {
     "name": "ROAD-LOOK-the-art",
     "file": "src/world/road/bridgeModels.js",
-    "old": "const STONE = art(CAPITAL_ART.bridgeStone), TIMBER = art(CAPITAL_ART.timber);",
-    "new": "const STONE = art(CAPITAL_ART.timber), TIMBER = art(CAPITAL_ART.timber);",
+    "old": "const STONE = art(CAPITAL_ART.bridgeStone),",
+    "new": "const STONE = art(CAPITAL_ART.timber),",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -437,8 +437,8 @@
   {
     "name": "ROAD-LOOK-the-stand-unsolid",
     "file": "src/world/road/bridgeModels.js",
-    "old": "    addStatic(mesh, PIXEL_FRAME); solid(mesh, PIXEL_FRAME); grow(box);",
-    "new": "    addStatic(mesh, PIXEL_FRAME); grow(box);",
+    "old": "    solid(mesh, PIXEL_FRAME);\n    grow(box);",
+    "new": "    grow(box);",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "ROAD-LOOK-the-still-mask-unread",
     "file": "src/world/road/roadLand.js",
-    "old": "if (!wet(x, y) || (still && still[i])) continue;",
-    "new": "if (!wet(x, y)) continue;",
+    "old": "      if (!wet(x, y) || (still && still[i])) continue; // ROAD-LOOK: a lake's water is never a ford's",
+    "new": "      if (!wet(x, y)) continue; // ROAD-LOOK: a lake's water is never a ford's",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -500,8 +500,8 @@
   {
     "name": "ROAD-LOOK-the-margin-unread",
     "file": "src/world/tamriel/tamrielWaters.js",
-    "old": "if (lakeDistance(l, x0 + u + 0.5, y0 + v + 0.5) < margin) out[v * w + u] = 1;",
-    "new": "if (lakeDistance(l, x0 + u + 0.5, y0 + v + 0.5) < 0) out[v * w + u] = 1;",
+    "old": "      for (let u = u0; u <= u1; u++) if (lakeDistance(l, x0 + u + 0.5, y0 + v + 0.5) < margin) out[v * w + u] = 1;",
+    "new": "      for (let u = u0; u <= u1; u++) if (lakeDistance(l, x0 + u + 0.5, y0 + v + 0.5) < 0) out[v * w + u] = 1;",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]
@@ -509,8 +509,8 @@
   {
     "name": "ROAD-LOOK-the-ink-law-index",
     "file": "src/world/road/roadBridges.js",
-    "old": "const k = x * 65536 + y, a = index.get(k) ?? [];",
-    "new": "const k = y * 65536 + x, a = index.get(k) ?? [];",
+    "old": "          const k = x * 65536 + y,",
+    "new": "          const k = y * 65536 + x,",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]

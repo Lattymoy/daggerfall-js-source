@@ -202,8 +202,8 @@
   {
     "name": "AUDITLWII2-W8-start",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "return at === 0 || /[.?!]\\s$/.test(text.slice(0, at)) ?",
-    "new": "return /[.?!]\\s$/.test(text.slice(0, at)) ?",
+    "old": "    return at === 0 || /[.?!]\\s$/.test(text.slice(0, at)) ? s.charAt(0).toUpperCase() + s.slice(1) : s;",
+    "new": "    return /[.?!]\\s$/.test(text.slice(0, at)) ? s.charAt(0).toUpperCase() + s.slice(1) : s;",
     "tests": [
       "test/systems/livingWorld/auditlwii2_town.test.js",
       "test/systems/livingWorld/lw16_word.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "AUDITLWII2-W8-stop",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "/[.?!]\\s$/.test(text.slice(0, at))",
-    "new": "/[?!]\\s$/.test(text.slice(0, at))",
+    "old": "    return at === 0 || /[.?!]\\s$/.test(text.slice(0, at)) ? s.charAt(0).toUpperCase() + s.slice(1) : s;",
+    "new": "    return at === 0 || /[?!]\\s$/.test(text.slice(0, at)) ? s.charAt(0).toUpperCase() + s.slice(1) : s;",
     "tests": [
       "test/systems/livingWorld/auditlwii2_town.test.js",
       "test/systems/livingWorld/lw16_word.test.js"
@@ -222,8 +222,8 @@
   {
     "name": "AUDITLWII2-W8-question",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "/[.?!]\\s$/.test(text.slice(0, at))",
-    "new": "/[.!]\\s$/.test(text.slice(0, at))",
+    "old": "    return at === 0 || /[.?!]\\s$/.test(text.slice(0, at)) ? s.charAt(0).toUpperCase() + s.slice(1) : s;",
+    "new": "    return at === 0 || /[.!]\\s$/.test(text.slice(0, at)) ? s.charAt(0).toUpperCase() + s.slice(1) : s;",
     "tests": [
       "test/systems/livingWorld/auditlwii2_town.test.js",
       "test/systems/livingWorld/lw16_word.test.js"
@@ -232,8 +232,8 @@
   {
     "name": "AUDITLWII2-W8-exclaim",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "/[.?!]\\s$/.test(text.slice(0, at))",
-    "new": "/[.?]\\s$/.test(text.slice(0, at))",
+    "old": "    return at === 0 || /[.?!]\\s$/.test(text.slice(0, at)) ? s.charAt(0).toUpperCase() + s.slice(1) : s;",
+    "new": "    return at === 0 || /[.?]\\s$/.test(text.slice(0, at)) ? s.charAt(0).toUpperCase() + s.slice(1) : s;",
     "tests": [
       "test/systems/livingWorld/auditlwii2_town.test.js",
       "test/systems/livingWorld/lw16_word.test.js"
@@ -242,8 +242,8 @@
   {
     "name": "AUDITLWII2-W8-mid",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "return at === 0 || /[.?!]\\s$/.test(text.slice(0, at)) ? s.charAt(0).toUpperCase() + s.slice(1) : s;",
-    "new": "return s.charAt(0).toUpperCase() + s.slice(1);",
+    "old": "    return at === 0 || /[.?!]\\s$/.test(text.slice(0, at)) ? s.charAt(0).toUpperCase() + s.slice(1) : s;",
+    "new": "    return s.charAt(0).toUpperCase() + s.slice(1);",
     "tests": [
       "test/systems/livingWorld/auditlwii2_town.test.js",
       "test/systems/livingWorld/lw16_word.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "AUDITLWII2-W10-late-online",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "until: e.from + e.dur + PATRON_LATE_MIN }];",
-    "new": "until: e.from + e.dur + PATRON_LATE_MIN / 1.5 }];",
+    "old": "  const add = [{ kind: 'shop', at: e.at, from: e.from, dur: e.dur, until: e.from + e.dur + PATRON_LATE_MIN }];",
+    "new": "  const add = [{ kind: 'shop', at: e.at, from: e.from, dur: e.dur, until: e.from + e.dur + PATRON_LATE_MIN / 1.5 }];",
     "tests": [
       "test/systems/livingWorld/auditlwii2_town.test.js"
     ]
@@ -315,8 +315,8 @@
   {
     "name": "AUDITLWII2-P17-LW15P-browse-any-trader",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "browse[Math.floor(brng() * browse.length) % browse.length]",
-    "new": "browse[0]",
+    "old": "      I('shop', browse[Math.floor(brng() * browse.length) % browse.length], from, 10 + Math.floor(brng() * 15));",
+    "new": "      I('shop', browse[0], from, 10 + Math.floor(brng() * 15));",
     "tests": [
       "test/systems/livingWorld/auditlwii2_town.test.js"
     ]

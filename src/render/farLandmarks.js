@@ -28,16 +28,34 @@ export const landmarkDistance = (px, py, curX, curY) => Math.hypot(px - curX, py
 export function landmarkNormals(positions, indices) {
   const n = new Float32Array(positions.length);
   for (let t = 0; t < indices.length; t += 3) {
-    const a = indices[t] * 3, b = indices[t + 1] * 3, c = indices[t + 2] * 3;
-    const ux = positions[b] - positions[a], uy = positions[b + 1] - positions[a + 1], uz = positions[b + 2] - positions[a + 2];
-    const vx = positions[c] - positions[a], vy = positions[c + 1] - positions[a + 1], vz = positions[c + 2] - positions[a + 2];
-    const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
-    for (const k of [a, b, c]) { n[k] += nx; n[k + 1] += ny; n[k + 2] += nz; }
+    const a = indices[t] * 3,
+      b = indices[t + 1] * 3,
+      c = indices[t + 2] * 3;
+    const ux = positions[b] - positions[a],
+      uy = positions[b + 1] - positions[a + 1],
+      uz = positions[b + 2] - positions[a + 2];
+    const vx = positions[c] - positions[a],
+      vy = positions[c + 1] - positions[a + 1],
+      vz = positions[c + 2] - positions[a + 2];
+    const nx = uy * vz - uz * vy,
+      ny = uz * vx - ux * vz,
+      nz = ux * vy - uy * vx;
+    for (const k of [a, b, c]) {
+      n[k] += nx;
+      n[k + 1] += ny;
+      n[k + 2] += nz;
+    }
   }
   for (let k = 0; k < n.length; k += 3) {
     const l = Math.hypot(n[k], n[k + 1], n[k + 2]) || 1;
-    n[k] /= l; n[k + 1] /= l; n[k + 2] /= l;
-    if (n[k + 1] < 0) { n[k] = -n[k]; n[k + 1] = -n[k + 1]; n[k + 2] = -n[k + 2]; }   // the sun's side up: winding is no law here
+    n[k] /= l;
+    n[k + 1] /= l;
+    n[k + 2] /= l;
+    if (n[k + 1] < 0) {
+      n[k] = -n[k];
+      n[k + 1] = -n[k + 1];
+      n[k + 2] = -n[k + 2];
+    } // the sun's side up: winding is no law here
   }
   return n;
 }
@@ -55,11 +73,13 @@ export class FarLandmark {
   /** @param {WebGL2RenderingContext} gl @param {{ px: number, py: number, mesh: { positions: Float32Array, indices?: ?(Uint16Array | Uint32Array), normals?: ?Float32Array, colors?: ?Uint8Array }, key?: string }} o */
   constructor(gl, { px, py, mesh, key = `${px},${py}` }) {
     this.gl = gl;
-    this.px = px; this.py = py; this.key = key;
+    this.px = px;
+    this.py = py;
+    this.key = key;
     const count = mesh.positions.length / 3;
     const Idx = count <= 65536 ? Uint16Array : Uint32Array;
     const tris = new Idx(mesh.indices ? mesh.indices.length : count);
-    for (let i = 0; i < tris.length; i++) tris[i] = mesh.indices ? mesh.indices[i] : i;   // sequential triangles where none are handed
+    for (let i = 0; i < tris.length; i++) tris[i] = mesh.indices ? mesh.indices[i] : i; // sequential triangles where none are handed
     this.tris = tris;
     this.positions = mesh.positions;
     const normals = mesh.normals ?? landmarkNormals(mesh.positions, this.tris);
@@ -93,19 +113,31 @@ export class FarLandmark {
   reorder(curX, curY) {
     const key = `${curX},${curY}`;
     if (!this.vao || key === this._orderKey) return;
-    const S = TERRAIN_SIZE, p = this.positions, t = this.tris, n = t.length / 3;
-    const tx = (curX - this.px + 0.5) * S, tz = (this.py - curY + 0.5) * S;   // the traveller in this pixel's frame (z north)
+    const S = TERRAIN_SIZE,
+      p = this.positions,
+      t = this.tris,
+      n = t.length / 3;
+    const tx = (curX - this.px + 0.5) * S,
+      tz = (this.py - curY + 0.5) * S; // the traveller in this pixel's frame (z north)
     const keyed = new Float64Array(n);
     for (let k = 0; k < n; k++) {
-      let cx = 0, cz = 0;
-      for (let c = 0; c < 3; c++) { const v = t[3 * k + c] * 3; cx += p[v]; cz += p[v + 2]; }
-      const dx = cx / 3 - tx, dz = cz / 3 - tz;
-      keyed[k] = -Math.round(Math.hypot(dx, dz)) * 1048576 + k;   // ascending: the farthest first (metres), then the mesh's own order
+      let cx = 0,
+        cz = 0;
+      for (let c = 0; c < 3; c++) {
+        const v = t[3 * k + c] * 3;
+        cx += p[v];
+        cz += p[v + 2];
+      }
+      const dx = cx / 3 - tx,
+        dz = cz / 3 - tz;
+      keyed[k] = -Math.round(Math.hypot(dx, dz)) * 1048576 + k; // ascending: the farthest first (metres), then the mesh's own order
     }
     keyed.sort();
     for (let k = 0; k < n; k++) {
       const s = ((keyed[k] % 1048576) + 1048576) % 1048576;
-      this.order[3 * k] = t[3 * s]; this.order[3 * k + 1] = t[3 * s + 1]; this.order[3 * k + 2] = t[3 * s + 2];
+      this.order[3 * k] = t[3 * s];
+      this.order[3 * k + 1] = t[3 * s + 1];
+      this.order[3 * k + 2] = t[3 * s + 2];
     }
     const gl = this.gl;
     gl.bindVertexArray(this.vao);
@@ -138,9 +170,40 @@ export class FarLandmark {
 /** A box of `w` x `d` metres (x east, z north) standing `h` over ground `y` at (x, z) of its pixel - a tower, a wall's run:
  *  the parts a silhouette is built of, and the pins' landmark. Ten triangles (its floor left open). */
 export function landmarkBox({ x, z, w, d, y, h, color = LANDMARK_GREY }) {
-  const x0 = x - w / 2, x1 = x + w / 2, z0 = z - d / 2, z1 = z + d / 2, y1 = y + h;
-  const positions = Float32Array.from([x0, y, z0, x1, y, z0, x1, y, z1, x0, y, z1, x0, y1, z0, x1, y1, z0, x1, y1, z1, x0, y1, z1]);
-  const indices = Uint16Array.from([0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7, 4, 5, 6, 4, 6, 7]);
+  const x0 = x - w / 2,
+    x1 = x + w / 2,
+    z0 = z - d / 2,
+    z1 = z + d / 2,
+    y1 = y + h;
+  const positions = Float32Array.from([
+    x0,
+    y,
+    z0,
+    x1,
+    y,
+    z0,
+    x1,
+    y,
+    z1,
+    x0,
+    y,
+    z1,
+    x0,
+    y1,
+    z0,
+    x1,
+    y1,
+    z0,
+    x1,
+    y1,
+    z1,
+    x0,
+    y1,
+    z1,
+  ]);
+  const indices = Uint16Array.from([
+    0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7, 4, 5, 6, 4, 6, 7,
+  ]);
   const colors = Uint8Array.from({ length: 24 }, (_, i) => color[i % 3]);
   return { positions, indices, colors };
 }

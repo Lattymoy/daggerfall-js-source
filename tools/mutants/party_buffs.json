@@ -74,7 +74,7 @@
   {
     "name": "PARTY-BUFFS-compose-keeps-the-bang",
     "file": "src/net/partyBuffs.js",
-    "old": "    const n = String(b.name ?? '').replace(/^!+/, '').slice(0, PARTY_FX_NAME_MAX);",
+    "old": "    const n = String(b.name ?? '')\n      .replace(/^!+/, '')\n      .slice(0, PARTY_FX_NAME_MAX);",
     "new": "    const n = String(b.name ?? '').slice(0, PARTY_FX_NAME_MAX);",
     "tests": [
       "test/ui/partybuffs.test.js"
@@ -83,8 +83,8 @@
   {
     "name": "PARTY-BUFFS-heal-floats-a-followed-rest",
     "file": "src/net/partyBuffs.js",
-    "old": "|| prevH <= 0 || pose?.rest || pose?.rs) return 0;",
-    "new": "|| prevH <= 0 || pose?.rest) return 0;",
+    "old": "  if (!Number.isFinite(h) || prevH == null || !Number.isFinite(prevH) || prevH <= 0 || pose?.rest || pose?.rs) return 0;",
+    "new": "  if (!Number.isFinite(h) || prevH == null || !Number.isFinite(prevH) || prevH <= 0 || pose?.rest) return 0;",
     "tests": [
       "test/ui/partybuffs.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PARTY-BUFFS-heal-floats-a-rise-from-death",
     "file": "src/net/partyBuffs.js",
-    "old": "|| prevH <= 0 || pose?.rest || pose?.rs) return 0;",
-    "new": "|| pose?.rest || pose?.rs) return 0;",
+    "old": "  if (!Number.isFinite(h) || prevH == null || !Number.isFinite(prevH) || prevH <= 0 || pose?.rest || pose?.rs) return 0;",
+    "new": "  if (!Number.isFinite(h) || prevH == null || !Number.isFinite(prevH) || pose?.rest || pose?.rs) return 0;",
     "tests": [
       "test/ui/partybuffs.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "PARTY-BUFFS-card-heal-never-floats",
     "file": "src/ui/partyPanel.js",
-    "old": "    if (healed > 0) floatHeal(card, healed);\n",
-    "new": "",
+    "old": "    if (healed > 0) floatHeal(card, healed);\n    card.hpH = h;",
+    "new": "    card.hpH = h;",
     "tests": [
       "test/ui/partybuffs.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "PARTY-BUFFS-card-heal-left-behind",
     "file": "src/ui/partyPanel.js",
-    "old": "    node.addEventListener?.('animationend', gone);\n",
-    "new": "",
+    "old": "    node.addEventListener?.('animationend', gone);\n    setTimeout(gone, 1500);",
+    "new": "    setTimeout(gone, 1500);",
     "tests": [
       "test/ui/partybuffs.test.js"
     ]

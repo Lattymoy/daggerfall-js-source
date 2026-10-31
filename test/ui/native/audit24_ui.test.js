@@ -140,7 +140,7 @@ test('audit24 ui: the history wheel pages in silence', () => {
   // NativePanel_OnMouseScrollDown/Up (:97-111) page and re-layout with
   // no PlayOneShot; only the two button handlers sound (:83, :92).
   const t = rd('src/ui/playerHistory.js');
-  assert.match(t, /wheel\(dy\) \{ return dy > 0 \? this\.nextPage\(false\) : this\.prevPage\(false\); \}/);
+  assert.match(t, /wheel\(dy\) \{\n\s*return dy > 0 \? this\.nextPage\(false\) : this\.prevPage\(false\);\n\s*\}/);
   const lines = Array.from({ length: 60 }, (_, i) => `line ${i}`);
   const w = new PlayerHistoryWindow({ backStory: lines });
   const before = w.pageStartLine;

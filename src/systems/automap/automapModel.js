@@ -106,9 +106,14 @@ export function normalizeAabb(a) {
  *  an automap AABB anywhere in the port. */
 export function aabbContains(aabb, p, tol = 0) {
   const { min, max } = aabb;
-  return p[0] >= min[0] - tol && p[0] <= max[0] + tol
-    && p[1] >= min[1] - tol && p[1] <= max[1] + tol
-    && p[2] >= min[2] - tol && p[2] <= max[2] + tol;
+  return (
+    p[0] >= min[0] - tol &&
+    p[0] <= max[0] + tol &&
+    p[1] >= min[1] - tol &&
+    p[1] <= max[1] + tol &&
+    p[2] >= min[2] - tol &&
+    p[2] <= max[2] + tol
+  );
 }
 
 const aabbVolume = ({ min, max }) => (max[0] - min[0]) * (max[1] - min[1]) * (max[2] - min[2]);
@@ -154,10 +159,10 @@ export function buildAutomapModel(entries) {
       _seq: seq++,
     });
   }
-  rows.sort((a, b) => (a.blockIndex - b.blockIndex)
-    || (a.elementIndex - b.elementIndex)
-    || (a.modelIndex - b.modelIndex)
-    || (a._seq - b._seq));
+  rows.sort(
+    (a, b) =>
+      a.blockIndex - b.blockIndex || a.elementIndex - b.elementIndex || a.modelIndex - b.modelIndex || a._seq - b._seq,
+  );
 
   // --- the point-query hash grid -------------------------------------
   const grid = new Map();
@@ -170,13 +175,19 @@ export function buildAutomapModel(entries) {
     const y1 = Math.floor((max[1] + AABB_TOLERANCE) / GRID_CELL);
     const z0 = Math.floor((min[2] - AABB_TOLERANCE) / GRID_CELL);
     const z1 = Math.floor((max[2] + AABB_TOLERANCE) / GRID_CELL);
-    if ((x1 - x0 + 1) * (y1 - y0 + 1) * (z1 - z0 + 1) > MAX_CELLS_PER_ROW) { oversize.push(row); continue; }
+    if ((x1 - x0 + 1) * (y1 - y0 + 1) * (z1 - z0 + 1) > MAX_CELLS_PER_ROW) {
+      oversize.push(row);
+      continue;
+    }
     for (let gx = x0; gx <= x1; gx++) {
       for (let gy = y0; gy <= y1; gy++) {
         for (let gz = z0; gz <= z1; gz++) {
           const k = `${gx},${gy},${gz}`;
           let cell = grid.get(k);
-          if (!cell) { cell = []; grid.set(k, cell); }
+          if (!cell) {
+            cell = [];
+            grid.set(k, cell);
+          }
           cell.push(row);
         }
       }
@@ -222,7 +233,10 @@ export function buildAutomapModel(entries) {
     let bestVol = Infinity;
     for (const row of queryPoint(p, tol)) {
       const v = aabbVolume(row.aabb);
-      if (v < bestVol) { best = row; bestVol = v; }
+      if (v < bestVol) {
+        best = row;
+        bestVol = v;
+      }
     }
     return best;
   }
@@ -262,7 +276,9 @@ export function buildAutomapModel(entries) {
     rows,
     byKey,
     blockNames,
-    get length() { return rows.length; },
+    get length() {
+      return rows.length;
+    },
     queryPoint,
     resolveAt,
     partition,
@@ -285,9 +301,9 @@ export function buildAutomapModel(entries) {
  * layout must not restore wrong discovery), stricter answer.
  */
 export function restoreMatchesLayout(model, savedBlockNames) {
-  if (!Array.isArray(savedBlockNames)) return true;   // no record of names (pre-C2 envelope) - nothing to disagree with
+  if (!Array.isArray(savedBlockNames)) return true; // no record of names (pre-C2 envelope) - nothing to disagree with
   const have = model?.blockNames ?? [];
   if (have.length !== savedBlockNames.length) return false;
-  for (let i = 0; i < have.length; i++) if ((have[i] ?? null) !== (savedBlockNames[i] ?? null)) return false;   // AUDIT-AMAP T1: a hole and a null are the same absence
+  for (let i = 0; i < have.length; i++) if ((have[i] ?? null) !== (savedBlockNames[i] ?? null)) return false; // AUDIT-AMAP T1: a hole and a null are the same absence
   return true;
 }

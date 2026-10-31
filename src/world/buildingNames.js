@@ -14,9 +14,9 @@
 
 import { srand, rand, randomRange } from '../formats/dfRandom.js';
 import { firstName, GENDERS } from '../characters/nameHelper.js';
-import { localizedText, localizedTable, localizedTextList, t } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; PROVINCE-COURTS: the port's own titles
-import { getLocalizedFactionName } from '../systems/textManager.js';   // L10N3e: a guild hall's and a temple's faction names, as shown
-import { isOnlinePage } from '../systems/online/onlineLane.js';   // EMPIRE-BANK: online, every bank is the Empire's
+import { localizedText, localizedTable, localizedTextList, t } from '../systems/textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language; PROVINCE-COURTS: the port's own titles
+import { getLocalizedFactionName } from '../systems/textManager.js'; // L10N3e: a guild hall's and a temple's faction names, as shown
+import { isOnlinePage } from '../systems/online/onlineLane.js'; // EMPIRE-BANK: online, every bank is the Empire's
 
 /** EMPIRE-BANK (2026-09-27, Discord: "For online mode, the bank of daggerfall becomes the bank of the empire"): what an
  *  online page's banks are "of" - every one of them, whatever region it stands in ("The Bank of the Empire"). A
@@ -24,20 +24,45 @@ import { isOnlinePage } from '../systems/online/onlineLane.js';   // EMPIRE-BANK
 export const EMPIRE_BANK_OF = 'the Empire';
 
 export const BUILDING_TYPES = Object.freeze({
-  None: -1, Alchemist: 0, HouseForSale: 1, Armorer: 2, Bank: 3, Town4: 4,
-  Bookseller: 5, ClothingStore: 6, FurnitureStore: 7, GemStore: 8,
-  GeneralStore: 9, Library: 10, GuildHall: 11, PawnShop: 12,
-  WeaponSmith: 13, Temple: 14, Tavern: 15, Palace: 16,
-  House1: 17, House2: 18, House3: 19, House4: 20, House5: 21, House6: 22,
-  Town23: 23, Ship: 24,
+  None: -1,
+  Alchemist: 0,
+  HouseForSale: 1,
+  Armorer: 2,
+  Bank: 3,
+  Town4: 4,
+  Bookseller: 5,
+  ClothingStore: 6,
+  FurnitureStore: 7,
+  GemStore: 8,
+  GeneralStore: 9,
+  Library: 10,
+  GuildHall: 11,
+  PawnShop: 12,
+  WeaponSmith: 13,
+  Temple: 14,
+  Tavern: 15,
+  Palace: 16,
+  House1: 17,
+  House2: 18,
+  House3: 19,
+  House4: 20,
+  House5: 21,
+  House6: 22,
+  Town23: 23,
+  Ship: 24,
   // AUDIT 24 systems: the tail of DFLocation.BuildingTypes
   // (DFLocation.cs:133-139). Special1-4 "never displayed on automap";
   // AnyShop/AnyHouse/AllValid are DaggerfallUnity's own wildcards.
   // TalkManager.CheckBuildingTypeInSkipList names AllValid and
   // Special1-4 by hand, and without them here five of its seventeen
   // entries were `undefined`.
-  Special1: 0x74, Special2: 0xdf, Special3: 0xf9, Special4: 0xfa,
-  AnyShop: 0xfffd, AnyHouse: 0xfffe, AllValid: 0xffff,
+  Special1: 0x74,
+  Special2: 0xdf,
+  Special3: 0xf9,
+  Special4: 0xfa,
+  AnyShop: 0xfffd,
+  AnyHouse: 0xfffe,
+  AllValid: 0xffff,
 });
 
 /** PROF-FOUND (2026-10-12, Mac: "Ensure all the professions new stores are flagged on the town map and you can ask NPCs
@@ -68,26 +93,273 @@ export const isTavern = (t) => t === BUILDING_TYPES.Tavern;
 // DFU Internal_Strings (classic FALL.EXE), verbatim - each list read by its
 // key where GenerateBuildingName reads it (FormulaHelper.cs:2939-3007), so
 // a translation's list (and its length, which the draw ranges over) is the one drawn.
-export const storesA = () => localizedTextList('StoresA', ["%ef's", "%cn's Best", 'The Essential', "Lord %ef's", "The Adventurer's", 'The Odd', "%ef's Finest", 'Bargain', 'Vintage', "The Emperor's", '%cn', "%ef's General", 'The Superior', "%ef's Quality", 'First Class', "The %rt's", 'The Champion', "Doctor %ef's", "Lady %ef's"]);
-export const tavernsA = () => localizedTextList('TavernsA', ["The Queen's", "The King's", 'The Dirty', 'The Black', 'The Mole and', 'The Green', 'The Red', 'The Gold', 'The White', 'The Silver', 'The Crimson', 'The Flying', 'The Dancing', 'The Laughing', 'The Restless', 'The Thirsty', 'The Unfortunate', 'The Lucky', "The Devil's", 'The Rusty', 'The Howling', 'The Screaming', 'The Bat and', 'The Lion and', 'The Lynx and', 'The Dwarf and', 'The Beaver and', 'The Fox and', 'The Mouse and', 'The Pig and', 'The Feather and', 'The Toad and', 'The Rat and', 'The Savage', 'The Knave and', 'The Dead']);
-export const tavernsB = () => localizedTextList('TavernsB', ['Chasm', 'Mug', 'Pit', 'Cat', 'Dog', 'Goblin', 'Griffin', 'Dragon', 'Ogre', 'Giant', 'Djinn', 'Wolf', 'Huntsman', 'Dagger', 'Skull', 'Sword', 'Guard', 'Dungeon', 'Helm', 'Castle', 'Jug', 'Bird', 'Gnome', 'Hedgehog', 'Muskrat', 'Woodchuck', 'Scorpion', 'Badger', 'Goat', 'Porcupine', 'Priest', 'Fawn', 'Stag', 'Barbarian', 'Rascal', 'Fairy']);
-export const generalStoresB = () => localizedTextList('GeneralStoresB', ['Supplies', 'Supply Store', 'Gear', 'Gear Store', 'Equipment', 'Equipment Store', 'Sundries', 'Provisions', 'Merchandise', 'General Store', 'Retail Store', 'Trading Post', 'Market', 'Wares', 'Warehouse']);
-export const weaponStoresB = () => localizedTextList('WeaponStoresB', ['Weapons', 'Weaponry', 'Arms', 'Armaments', 'Arsenal', 'Armsmaker', 'Blades', 'Blacksmith', 'Metalsmith', 'Weaponsmith']);
-export const armorStoresB = () => localizedTextList('ArmorStoresB', ['Armory', 'Mail', 'Shielding', 'Armor', 'Shields', 'Aegis', 'Metalworks', 'Blacksmith', 'Metalsmith', 'Armorer', 'Smith', 'Smithy']);
-export const bookStoresB = () => localizedTextList('BookStoresB', ['Books', 'Bookstore', 'Bookshop', 'Book Dealer', 'Book Center', 'Bookseller', 'Bookstall', 'Incunabula']);
-export const clothingStoresB = () => localizedTextList('ClothingStoresB', ['Clothing', 'Clothes', 'Garments', 'Apparel', 'Costumes', 'Vestments', 'Attire', 'Fashion', 'Tailoring', 'Outfits', 'Finery']);
-export const alchemyStoresB = () => localizedTextList('AlchemyStoresB', ['Herbs', 'Potherbs', 'Spices', 'Remedies', 'Antidotes', 'Physics', 'Medicines', 'Potions', 'Tinctures', 'Medicaments', 'Elixirs', 'Pharmacy', 'Apothecary', 'Unguents', 'Medicinal Agents', 'Herb Garden', 'Pharmaceuticals', 'Chemistry', 'Chemicals', 'Experimental Products', 'Alchemistry', 'Alchemical Solutions', 'Metallurgy']);
-export const gemStoresB = () => localizedTextList('GemStoresB', ['Gems', 'Gemstones', 'Jewelry', 'Jewels', 'Precious Stones', 'Bijoutry', 'Jewelers', 'Jewel Box', 'Jewelry Shop', 'Gemcutter']);
-export const pawnStoresB = () => localizedTextList('PawnStoresB', ['Pawnshop', 'Pawnbrokers', 'Used Supplies', 'Used Gear', 'Used Equipment', 'Used Merchandise', 'Hockshop', 'Antiquities']);
-export const furnitureStoresB = () => localizedTextList('FurnitureStoresB', ['Furniture', 'Furnishings', 'Interior Design', 'Furniture Shop', 'Decor', 'Carpentry', 'Woodworking', 'Crafts', 'Woodwork']);
-export const libraryStoresB = () => localizedTextList('LibraryStoresB', ['Library', 'Bookroom', 'Athenaeum', 'Public Library', 'Historians', 'Bookroom', 'Seminary', 'Lyceum']);
+export const storesA = () =>
+  localizedTextList('StoresA', [
+    "%ef's",
+    "%cn's Best",
+    'The Essential',
+    "Lord %ef's",
+    "The Adventurer's",
+    'The Odd',
+    "%ef's Finest",
+    'Bargain',
+    'Vintage',
+    "The Emperor's",
+    '%cn',
+    "%ef's General",
+    'The Superior',
+    "%ef's Quality",
+    'First Class',
+    "The %rt's",
+    'The Champion',
+    "Doctor %ef's",
+    "Lady %ef's",
+  ]);
+export const tavernsA = () =>
+  localizedTextList('TavernsA', [
+    "The Queen's",
+    "The King's",
+    'The Dirty',
+    'The Black',
+    'The Mole and',
+    'The Green',
+    'The Red',
+    'The Gold',
+    'The White',
+    'The Silver',
+    'The Crimson',
+    'The Flying',
+    'The Dancing',
+    'The Laughing',
+    'The Restless',
+    'The Thirsty',
+    'The Unfortunate',
+    'The Lucky',
+    "The Devil's",
+    'The Rusty',
+    'The Howling',
+    'The Screaming',
+    'The Bat and',
+    'The Lion and',
+    'The Lynx and',
+    'The Dwarf and',
+    'The Beaver and',
+    'The Fox and',
+    'The Mouse and',
+    'The Pig and',
+    'The Feather and',
+    'The Toad and',
+    'The Rat and',
+    'The Savage',
+    'The Knave and',
+    'The Dead',
+  ]);
+export const tavernsB = () =>
+  localizedTextList('TavernsB', [
+    'Chasm',
+    'Mug',
+    'Pit',
+    'Cat',
+    'Dog',
+    'Goblin',
+    'Griffin',
+    'Dragon',
+    'Ogre',
+    'Giant',
+    'Djinn',
+    'Wolf',
+    'Huntsman',
+    'Dagger',
+    'Skull',
+    'Sword',
+    'Guard',
+    'Dungeon',
+    'Helm',
+    'Castle',
+    'Jug',
+    'Bird',
+    'Gnome',
+    'Hedgehog',
+    'Muskrat',
+    'Woodchuck',
+    'Scorpion',
+    'Badger',
+    'Goat',
+    'Porcupine',
+    'Priest',
+    'Fawn',
+    'Stag',
+    'Barbarian',
+    'Rascal',
+    'Fairy',
+  ]);
+export const generalStoresB = () =>
+  localizedTextList('GeneralStoresB', [
+    'Supplies',
+    'Supply Store',
+    'Gear',
+    'Gear Store',
+    'Equipment',
+    'Equipment Store',
+    'Sundries',
+    'Provisions',
+    'Merchandise',
+    'General Store',
+    'Retail Store',
+    'Trading Post',
+    'Market',
+    'Wares',
+    'Warehouse',
+  ]);
+export const weaponStoresB = () =>
+  localizedTextList('WeaponStoresB', [
+    'Weapons',
+    'Weaponry',
+    'Arms',
+    'Armaments',
+    'Arsenal',
+    'Armsmaker',
+    'Blades',
+    'Blacksmith',
+    'Metalsmith',
+    'Weaponsmith',
+  ]);
+export const armorStoresB = () =>
+  localizedTextList('ArmorStoresB', [
+    'Armory',
+    'Mail',
+    'Shielding',
+    'Armor',
+    'Shields',
+    'Aegis',
+    'Metalworks',
+    'Blacksmith',
+    'Metalsmith',
+    'Armorer',
+    'Smith',
+    'Smithy',
+  ]);
+export const bookStoresB = () =>
+  localizedTextList('BookStoresB', [
+    'Books',
+    'Bookstore',
+    'Bookshop',
+    'Book Dealer',
+    'Book Center',
+    'Bookseller',
+    'Bookstall',
+    'Incunabula',
+  ]);
+export const clothingStoresB = () =>
+  localizedTextList('ClothingStoresB', [
+    'Clothing',
+    'Clothes',
+    'Garments',
+    'Apparel',
+    'Costumes',
+    'Vestments',
+    'Attire',
+    'Fashion',
+    'Tailoring',
+    'Outfits',
+    'Finery',
+  ]);
+export const alchemyStoresB = () =>
+  localizedTextList('AlchemyStoresB', [
+    'Herbs',
+    'Potherbs',
+    'Spices',
+    'Remedies',
+    'Antidotes',
+    'Physics',
+    'Medicines',
+    'Potions',
+    'Tinctures',
+    'Medicaments',
+    'Elixirs',
+    'Pharmacy',
+    'Apothecary',
+    'Unguents',
+    'Medicinal Agents',
+    'Herb Garden',
+    'Pharmaceuticals',
+    'Chemistry',
+    'Chemicals',
+    'Experimental Products',
+    'Alchemistry',
+    'Alchemical Solutions',
+    'Metallurgy',
+  ]);
+export const gemStoresB = () =>
+  localizedTextList('GemStoresB', [
+    'Gems',
+    'Gemstones',
+    'Jewelry',
+    'Jewels',
+    'Precious Stones',
+    'Bijoutry',
+    'Jewelers',
+    'Jewel Box',
+    'Jewelry Shop',
+    'Gemcutter',
+  ]);
+export const pawnStoresB = () =>
+  localizedTextList('PawnStoresB', [
+    'Pawnshop',
+    'Pawnbrokers',
+    'Used Supplies',
+    'Used Gear',
+    'Used Equipment',
+    'Used Merchandise',
+    'Hockshop',
+    'Antiquities',
+  ]);
+export const furnitureStoresB = () =>
+  localizedTextList('FurnitureStoresB', [
+    'Furniture',
+    'Furnishings',
+    'Interior Design',
+    'Furniture Shop',
+    'Decor',
+    'Carpentry',
+    'Woodworking',
+    'Crafts',
+    'Woodwork',
+  ]);
+export const libraryStoresB = () =>
+  localizedTextList('LibraryStoresB', [
+    'Library',
+    'Bookroom',
+    'Athenaeum',
+    'Public Library',
+    'Historians',
+    'Bookroom',
+    'Seminary',
+    'Lyceum',
+  ]);
 // MacroHelper.GetRulerTitle: twelve explicit cases, then `default: "Lord"`.
 // 11 is written out even though it equals the default - the table is a
 // transcription of the switch, and 'Lady' is reachable only via case 12.
 // PROVINCE-COURTS (bible/03-World/World-Wide.md): the port's own titles after DFU's twelve, for the provinces' rulers past
 // the Bay (systems/faction/provinceFactions.js RULER) - the same law, odd a man's and even a woman's ((ruler + 1) % 2).
-export const RULER_TITLES = localizedTable({ 1: ['King', 'King'], 2: ['Queen', 'Queen'], 3: ['Duke', 'Duke'], 4: ['Duchess', 'Duchess'], 5: ['Marquis', 'Marquis'], 6: ['Marquise', 'Marquise'], 7: ['Count', 'Count'], 8: ['Countess', 'Countess'], 9: ['Baron', 'Baron'], 10: ['Baroness', 'Baroness'], 11: ['Lord', 'Lord'], 12: ['Lady', 'Lady'],
-  13: () => t('faction.ruler.highKing', 'High King'), 14: () => t('faction.ruler.highQueen', 'High Queen'), 15: () => t('faction.ruler.emperor', 'Emperor'), 16: () => t('faction.ruler.empress', 'Empress') });
+export const RULER_TITLES = localizedTable({
+  1: ['King', 'King'],
+  2: ['Queen', 'Queen'],
+  3: ['Duke', 'Duke'],
+  4: ['Duchess', 'Duchess'],
+  5: ['Marquis', 'Marquis'],
+  6: ['Marquise', 'Marquise'],
+  7: ['Count', 'Count'],
+  8: ['Countess', 'Countess'],
+  9: ['Baron', 'Baron'],
+  10: ['Baroness', 'Baroness'],
+  11: ['Lord', 'Lord'],
+  12: ['Lady', 'Lady'],
+  13: () => t('faction.ruler.highKing', 'High King'),
+  14: () => t('faction.ruler.highQueen', 'High Queen'),
+  15: () => t('faction.ruler.emperor', 'Emperor'),
+  16: () => t('faction.ruler.empress', 'Empress'),
+});
 export const rulerTitle = (ruler) => RULER_TITLES[ruler] ?? localizedText('Lord', 'Lord');
 
 const STORE_B = {
@@ -121,31 +393,43 @@ const STORE_B = {
  *   without them names every building exactly as before.
  */
 export function generateBuildingName(seed, type, opts = {}) {
-  const { locationName = '', regionName = '', nameBank = 0, regentRuler = 0, factionId = 0, factionName = null, templeName = null, palaceName = null } = opts;
+  const {
+    locationName = '',
+    regionName = '',
+    nameBank = 0,
+    regentRuler = 0,
+    factionId = 0,
+    factionName = null,
+    templeName = null,
+    palaceName = null,
+  } = opts;
   const { shownFactionName = null, shownTempleName = null } = opts;
-  const shownLocationName = opts.shownLocationName ?? locationName, shownRegionName = opts.shownRegionName ?? regionName;
-  let a = '', b = '';
+  const shownLocationName = opts.shownLocationName ?? locationName,
+    shownRegionName = opts.shownRegionName ?? regionName;
+  let a = '',
+    b = '';
   let singleton = false;
   srand(seed);
   switch (type) {
     case BUILDING_TYPES.HouseForSale:
       return localizedText('houseForSale', 'House for sale');
     case BUILDING_TYPES.Tavern: {
-      const tavernB = tavernsB(), tavernA = tavernsA();
+      const tavernB = tavernsB(),
+        tavernA = tavernsA();
       b = tavernB[randomRange(0, tavernB.length)];
       a = tavernA[randomRange(0, tavernA.length)];
       break;
     }
     case BUILDING_TYPES.Bank:
-      b = isOnlinePage() ? EMPIRE_BANK_OF : shownRegionName;   // EMPIRE-BANK
+      b = isOnlinePage() ? EMPIRE_BANK_OF : shownRegionName; // EMPIRE-BANK
       a = localizedText('theBankOf', 'The Bank of');
       break;
     case BUILDING_TYPES.GuildHall:
-      a = shownFactionName?.(factionId) ?? factionName?.(factionId) ?? '';   // L10N3e: FormulaHelper.cs:3022, as shown
+      a = shownFactionName?.(factionId) ?? factionName?.(factionId) ?? ''; // L10N3e: FormulaHelper.cs:3022, as shown
       singleton = true;
       break;
     case BUILDING_TYPES.Temple:
-      a = shownTempleName?.(factionId) ?? templeName?.(factionId) ?? '';   // L10N3e: FormulaHelper.cs:3036, as shown
+      a = shownTempleName?.(factionId) ?? templeName?.(factionId) ?? ''; // L10N3e: FormulaHelper.cs:3036, as shown
       singleton = true;
       break;
     case BUILDING_TYPES.Palace:
@@ -158,7 +442,7 @@ export function generateBuildingName(seed, type, opts = {}) {
       break;
     default: {
       const list = STORE_B[type]?.();
-      if (!list) return '';   // houses: quest renames pend
+      if (!list) return ''; // houses: quest renames pend
       const stores = storesA();
       b = list[randomRange(0, list.length)];
       a = stores[randomRange(0, stores.length)];
@@ -167,7 +451,7 @@ export function generateBuildingName(seed, type, opts = {}) {
   }
   a = a.replaceAll('%cn', shownLocationName);
   if (a.includes('%ef')) {
-    rand();   // the classic macro-expansion burn, verbatim
+    rand(); // the classic macro-expansion burn, verbatim
     a = a.replaceAll('%ef', firstName(nameBank, GENDERS.Male));
   }
   if (a.includes('%rt')) a = a.replaceAll('%rt', rulerTitle(regentRuler));

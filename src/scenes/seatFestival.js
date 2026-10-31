@@ -52,12 +52,16 @@ export function festivalBannerAnchors({ frames = null, tavernKeys = [] } = {}) {
 
 /** THE LANTERNS before `anchors` (every banner the town flies), pixel-local `[x, y, z]` - one each, below the cloth's
  *  top and out before it. Pure. */
-export const festivalLanternsOf = (anchors) => (anchors ?? []).map((a) => [
-  a.top[0] + a.out[0] * FESTIVAL_LANTERN_OUT_M, a.top[1] - FESTIVAL_LANTERN_DROP_M, a.top[2] + a.out[2] * FESTIVAL_LANTERN_OUT_M,
-]);
+export const festivalLanternsOf = (anchors) =>
+  (anchors ?? []).map((a) => [
+    a.top[0] + a.out[0] * FESTIVAL_LANTERN_OUT_M,
+    a.top[1] - FESTIVAL_LANTERN_DROP_M,
+    a.top[2] + a.out[2] * FESTIVAL_LANTERN_OUT_M,
+  ]);
 
 /** THE MUSIC: the environment heard in a Festival town - its streets' City music the Tavern's; any other kept. Pure. */
-export const festivalEnvironment = (environment, festival) => (festival === true && environment === MUSIC_ENV.City ? MUSIC_ENV.Tavern : environment);
+export const festivalEnvironment = (environment, festival) =>
+  festival === true && environment === MUSIC_ENV.City ? MUSIC_ENV.Tavern : environment;
 
 /**
  * THE STAGE: whether a Festival rules at a town, and a built pixel's lanterns while it does. `seatAt(mapId)` the seat a
@@ -68,12 +72,22 @@ export const festivalEnvironment = (environment, festival) => (festival === true
 export function createFestivalStage({ seatAt, now = () => Date.now(), version = () => 0 }) {
   /** @type {Map<any, boolean>} */
   const rules = new Map();
-  let at = -Infinity, seen = -1;
+  let at = -Infinity,
+    seen = -1;
   const festive = (mapId) => {
-    const v = version(), t = now();
-    if (v !== seen || t - at >= BANNER_REFRESH_MS) { rules.clear(); seen = v; at = t; }
+    const v = version(),
+      t = now();
+    if (v !== seen || t - at >= BANNER_REFRESH_MS) {
+      rules.clear();
+      seen = v;
+      at = t;
+    }
     let r = rules.get(mapId);
-    if (r === undefined) { const town = mapId != null ? seatAt(mapId) : null; r = mapId != null && festivalRules(town?.charterSeat ?? town); rules.set(mapId, r); }   // DOMAIN3: a holding keeps its Charter's Festival
+    if (r === undefined) {
+      const town = mapId != null ? seatAt(mapId) : null;
+      r = mapId != null && festivalRules(town?.charterSeat ?? town);
+      rules.set(mapId, r);
+    } // DOMAIN3: a holding keeps its Charter's Festival
     return r;
   };
   return {

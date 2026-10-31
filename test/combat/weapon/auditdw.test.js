@@ -192,7 +192,7 @@ test('DW-CLIP: under the Diverse Weapons preset (DoubleScaleTextures + TrueTextu
   // DISC14-C: the gate is one helper now, shared with the doubled idle's bob - the shift and the centred bob ride the same doubling
   assert.match(rd('src/combat/weapon/weaponWidget.js'), /function doubledIdleNow\(\) \{\s*\n\s*if \(!w\.s\.doubleScale \|\| w\.s\.trueSize \|\| !w\.art\) return false;/);
   assert.match(rd('src/combat/weapon/weaponWidget.js'), /return record != null && !!customTexture\(record, Math\.max\(0, w\.currentFrame\)\)\?\.doubled;/);
-  assert.match(rd('src/combat/weapon/weaponWidget.js'), /if \(\(w\.weaponState === S\.Idle \|\| \(w\.currentWeaponType === T\.Bow && w\.currentFrame === 0\)\) && doubledIdleNow\(\)\) \{\s*\n\s*w\.offset = /);
+  assert.match(rd('src/combat/weapon/weaponWidget.js'), /if \(\(w\.weaponState === S\.Idle \|\| \(w\.currentWeaponType === T\.Bow && w\.currentFrame === 0\)\) && doubledIdleNow\(\)\) \{\n\s*w\.offset =/);
   _resetModSettings();
   assert.equal(modSettingsOf('diverse-weapons').WeaponWidgetPreset, false, 'DISC16-B: the preset defaults off, as at DW1 (DW-CLIP had it on)');
 });

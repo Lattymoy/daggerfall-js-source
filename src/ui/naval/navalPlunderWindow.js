@@ -105,9 +105,12 @@ export const NAVAL_PLUNDER_CSS = `
 export const thingsText = (n) => `${n} ${n === 1 ? 'thing' : 'things'}`;
 /** What a Take All did, in a line: where the goods went, and what would not go. */
 export function takenText(r, shipName = null) {
-  if (!r || r.taken <= 0) return r?.left > 0 ? `You cannot carry any of it. ${thingsText(r.left)} stay in the hold.` : 'The hold is empty.';
+  if (!r || r.taken <= 0)
+    return r?.left > 0 ? `You cannot carry any of it. ${thingsText(r.left)} stay in the hold.` : 'The hold is empty.';
   const to = r.where === 'hold' ? `to your ${shipName ?? 'ship'}'s hold` : 'into your pack';
-  return r.left > 0 ? `${thingsText(r.taken)} moved ${to}. ${thingsText(r.left)} will not fit and stay in the hold.` : `${thingsText(r.taken)} moved ${to}.`;
+  return r.left > 0
+    ? `${thingsText(r.taken)} moved ${to}. ${thingsText(r.left)} will not fit and stay in the hold.`
+    : `${thingsText(r.taken)} moved ${to}.`;
 }
 /** The window's standing words for a model - pure, the pins' reading. */
 export function plunderText(model, nameOf = (it) => String(it?.name ?? '')) {
@@ -117,13 +120,15 @@ export function plunderText(model, nameOf = (it) => String(it?.name ?? '')) {
   return {
     title: model.name,
     sub: [model.classLine, model.captain ? `Captain ${model.captain}` : null].filter(Boolean).join(' - '),
-    lede: model.raid ? 'The raiders are beaten. Their ship is alongside and its hold is open to you.' : `The ship is yours.${mine ? '' : ' None of your ships is alongside to load anything onto.'}`,
+    lede: model.raid
+      ? 'The raiders are beaten. Their ship is alongside and its hold is open to you.'
+      : `The ship is yours.${mine ? '' : ' None of your ships is alongside to load anything onto.'}`,
     count: items.length ? thingsText(items.length) : 'empty',
     rows: items.length > HOLD_ROWS ? [...shown, `and ${items.length - HOLD_ROWS} more`] : shown,
     more: items.length > HOLD_ROWS,
     take: model.raid || !mine ? 'Take all into your pack' : `Take all to your ${mine.name}`,
     /** SHIP-CLAIM: what claiming her makes of her, while the host offers it - never a raid's. */
-    claim: model.raid ? null : model.claimOffer?.()?.detail ?? null,
+    claim: model.raid ? null : (model.claimOffer?.()?.detail ?? null),
   };
 }
 
@@ -138,7 +143,10 @@ const el = (tag, cls = null, text = null) => {
 const button = (text, cls, onPress) => {
   const b = /** @type {HTMLButtonElement} */ (el('button', cls, text));
   b.setAttribute('type', 'button');
-  b.onclick = (e) => { e.stopPropagation(); if (!b.disabled) onPress(); };
+  b.onclick = (e) => {
+    e.stopPropagation();
+    if (!b.disabled) onPress();
+  };
   return b;
 };
 
@@ -201,13 +209,21 @@ export function mountNavalPlunderWindow(host, deps) {
   });
   const openHold = button('Open hold', 'dfnaval-btn dfnaval-open', () => {
     const refusal = deps.prepareHold?.();
-    if (refusal) { note = { text: refusal, warn: true }; render(); return; }
+    if (refusal) {
+      note = { text: refusal, warn: true };
+      render();
+      return;
+    }
     exit('hold');
   });
   holdActs.append(takeAll, openHold);
   holdSec.append(holdHead, holdList, holdActs);
   const settle = (fate) => {
-    if (m.fate?.(fate) === false) { note = { text: 'No safe return deck is available. Stay here or claim the ship first.', warn: true }; render(); return; }
+    if (m.fate?.(fate) === false) {
+      note = { text: 'No safe return deck is available. Stay here or claim the ship first.', warn: true };
+      render();
+      return;
+    }
     exit('fate');
   };
   // the choice
@@ -221,7 +237,12 @@ export function mountNavalPlunderWindow(host, deps) {
   const fateHead = el('h3', 'dfnaval-sechead');
   fateHead.append(el('span', null, m.raid ? 'The voyage' : 'The ship'));
   const fateActs = el('div', 'dfnaval-acts');
-  const sail = m.raid ? button('Sail on', 'dfnaval-btn dfnaval-take dfnaval-sail', () => { m.fate?.('sail'); exit('fate'); }) : null;
+  const sail = m.raid
+    ? button('Sail on', 'dfnaval-btn dfnaval-take dfnaval-sail', () => {
+        m.fate?.('sail');
+        exit('fate');
+      })
+    : null;
   if (sail) fateActs.append(sail);
   else {
     fateActs.append(
@@ -231,10 +252,16 @@ export function mountNavalPlunderWindow(host, deps) {
   }
   // SHIP-CLAIM: the third beside them - never a raid's (its one way on is Sail on). The host's answer decides it: a
   // refusal stays, with a word, where the other two leave
-  const claim = sail ? null : button('Claim', 'dfnaval-btn dfnaval-claim', () => {
-    if (m.fate?.('claim') === false) { note = { text: 'This ship can\'t be claimed.', warn: true }; render(); return; }
-    exit('fate');
-  });
+  const claim = sail
+    ? null
+    : button('Claim', 'dfnaval-btn dfnaval-claim', () => {
+        if (m.fate?.('claim') === false) {
+          note = { text: "This ship can't be claimed.", warn: true };
+          render();
+          return;
+        }
+        exit('fate');
+      });
   if (claim) fateActs.append(claim);
   const claimNote = el('p', 'dfnaval-lede dfnaval-claimnote');
   fateSec.append(fateHead, fateActs, claimNote);
@@ -250,16 +277,29 @@ export function mountNavalPlunderWindow(host, deps) {
     lede.textContent = t.lede;
     noteLine.textContent = note ? note.text : '';
     noteLine.className = `dfnaval-note${note?.warn ? ' warn' : ''}`;
-    if (note) noteLine.removeAttribute?.('hidden'); else noteLine.setAttribute('hidden', '');
+    if (note) noteLine.removeAttribute?.('hidden');
+    else noteLine.setAttribute('hidden', '');
     holdCount.textContent = t.count;
     for (const c of [...holdList.children]) c.remove();
     if (!t.rows.length) holdList.append(el('li', 'dfnaval-item more', 'Nothing left in the hold.'));
-    t.rows.forEach((row, i) => holdList.append(el('li', `dfnaval-item${t.more && i === t.rows.length - 1 ? ' more' : ''}`, row)));
+    t.rows.forEach((row, i) =>
+      holdList.append(el('li', `dfnaval-item${t.more && i === t.rows.length - 1 ? ' more' : ''}`, row)),
+    );
     takeAll.textContent = t.take;
     const empty = !(m.items?.length > 0);
-    if (empty) { takeAll.setAttribute('disabled', ''); openHold.setAttribute('disabled', ''); } else { takeAll.removeAttribute('disabled'); openHold.removeAttribute('disabled'); }
+    if (empty) {
+      takeAll.setAttribute('disabled', '');
+      openHold.setAttribute('disabled', '');
+    } else {
+      takeAll.removeAttribute('disabled');
+      openHold.removeAttribute('disabled');
+    }
     // SHIP-CLAIM: the claim stands while the host offers it, read at every paint, its line under the three
-    for (const n of [claim, claimNote]) if (n) { if (t.claim) n.removeAttribute('hidden'); else n.setAttribute('hidden', ''); }
+    for (const n of [claim, claimNote])
+      if (n) {
+        if (t.claim) n.removeAttribute('hidden');
+        else n.setAttribute('hidden', '');
+      }
     claimNote.textContent = t.claim ?? '';
     if (claim && t.claim) claim.setAttribute('title', t.claim);
     // the choice: the tiles, once one is taken the rest shut
@@ -286,7 +326,11 @@ export function mountNavalPlunderWindow(host, deps) {
   (sail ?? (takeAll.disabled ? close : takeAll)).focus?.({ preventScroll: true });
   const onKey = (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
-    if (overlayAction(e) === 'back') { e.preventDefault(); e.stopPropagation(); exit('close'); }
+    if (overlayAction(e) === 'back') {
+      e.preventDefault();
+      e.stopPropagation();
+      exit('close');
+    }
   };
   globalThis.addEventListener('keydown', onKey, { capture: true });
   const offOutside = closeOnOutsideTap(shell, '.dfnaval-win', () => exit('close'));

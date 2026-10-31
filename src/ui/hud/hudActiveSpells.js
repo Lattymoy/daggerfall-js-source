@@ -47,12 +47,12 @@
 // are already a Ledger note on ui/spell/spellIcons.js and stay one.
 
 import { drawSpellIcon, spellIconsLoaded } from '../spell/spellIcons.js';
-import { statusGlyphColor32 } from './hudStatus.js';   // TELL9: the bleed's own icon, the enhanced widget's glyph
-import { wildHere, WILD_TEXT } from '../../systems/wild/wildZone.js';   // WILD1: the open zone's own icon
-import { zoneSafe, ZONE_SAFE_TEXT } from '../../systems/wild/zoneSafe.js';   // ZONE-SAFE: named safe in a settlement's streets
-import { uiCanvas, toUiPoint } from '../uiScreen.js';   // RETRO-UI: the HUD's own space under the pillarbox
-import { liveBundles, canEndBundle } from '../../systems/mysticism.js';   // BUFF-END: and which the player may end
-import { shownSpellName } from '../../systems/loot/loot.js';   // L10N3e: the bundle's Name, which DFU gave a stock spell in the player's language
+import { statusGlyphColor32 } from './hudStatus.js'; // TELL9: the bleed's own icon, the enhanced widget's glyph
+import { wildHere, WILD_TEXT } from '../../systems/wild/wildZone.js'; // WILD1: the open zone's own icon
+import { zoneSafe, ZONE_SAFE_TEXT } from '../../systems/wild/zoneSafe.js'; // ZONE-SAFE: named safe in a settlement's streets
+import { uiCanvas, toUiPoint } from '../uiScreen.js'; // RETRO-UI: the HUD's own space under the pillarbox
+import { liveBundles, canEndBundle } from '../../systems/mysticism.js'; // BUFF-END: and which the player may end
+import { shownSpellName } from '../../systems/loot/loot.js'; // L10N3e: the bundle's Name, which DFU gave a stock spell in the player's language
 import { getString } from '../../systems/settings/settings.js';
 import { nativeMetrics, pointToNative } from '../native/nativePanel.js';
 
@@ -73,8 +73,13 @@ export const MAX_ICON_POOL = 24;
  * says so, which is the port's standard reading of a C# switch with
  * no default (Ledger A).
  */
-const scheme = (iconSize, origin, columnStep, rowStep, iconColumns) =>
-  ({ iconSize, origin, columnStep, rowStep, iconColumns });
+const scheme = (iconSize, origin, columnStep, rowStep, iconColumns) => ({
+  iconSize,
+  origin,
+  columnStep,
+  rowStep,
+  iconColumns,
+});
 
 export const ICON_SCHEMES = Object.freeze({
   classic: {
@@ -138,7 +143,8 @@ export const maxRoundsRemaining = (bundle) =>
  * by the index the bundle keeps beside its canonical name.
  */
 export function activeSpellIcons(entity) {
-  const self = [], other = [];
+  const self = [],
+    other = [];
   let poolIndex = 0;
   for (const bundle of liveBundles(entity)) {
     if (!bundle.showIcon) continue;
@@ -148,8 +154,8 @@ export function activeSpellIcons(entity) {
       poolIndex: poolIndex++,
       expiring: maxRoundsRemaining(bundle) < 2,
       isItem: bundle.bundleType === 'HeldMagicItem',
-      bundleId: bundle.bundleId,         // BUFF-END: the bundle a right-click ends...
-      endable: canEndBundle(bundle),     // ...when it is the player's to end (ui/hud/hudLarge.js routeSpellIconClick)
+      bundleId: bundle.bundleId, // BUFF-END: the bundle a right-click ends...
+      endable: canEndBundle(bundle), // ...when it is the player's to end (ui/hud/hudLarge.js routeSpellIconClick)
     };
     // SPELL-GIFT (2026-09-27, Tabitha: "the feedback for buffing other players is non-existent"): a GIFT - another
     // player's beneficial spell (ALLY-CAST's bundleAlly, only ever the beneficial families) - is a buff, and sorts with
@@ -160,17 +166,39 @@ export function activeSpellIcons(entity) {
   // the debuffs, its rounds its ticks left. TELL9: drawn from its own glyph (two drops of blood - ui/hud/hudStatus.js), its
   // index the atlas's first as an iconless bundle's (what a reader of DFU's shape finds)
   const bleed = entity?.bleed;
-  if (bleed && bleed.left > 0) other.push({ iconIndex: BLEED_ICON, glyph: BLEED_GLYPH, displayName: 'Bleeding', poolIndex: poolIndex++, expiring: bleed.left < 2, isItem: false, bundleId: null, endable: false });
+  if (bleed && bleed.left > 0)
+    other.push({
+      iconIndex: BLEED_ICON,
+      glyph: BLEED_GLYPH,
+      displayName: 'Bleeding',
+      poolIndex: poolIndex++,
+      expiring: bleed.left < 2,
+      isItem: false,
+      bundleId: null,
+      endable: false,
+    });
   // WILD1 (systems/wild/wildZone.js): the open zone, on the classic row as on the enhanced widget - its own glyph, first of
   // the warnings, while the player stands in it
-  if (entity === _zoneEntity && wildHere()) other.unshift({ iconIndex: BLEED_ICON, glyph: WILD_GLYPH, displayName: zoneSafe() ? ZONE_SAFE_TEXT.chip : WILD_TEXT.chip, poolIndex: poolIndex++, expiring: false, isItem: false, bundleId: null, endable: false });
+  if (entity === _zoneEntity && wildHere())
+    other.unshift({
+      iconIndex: BLEED_ICON,
+      glyph: WILD_GLYPH,
+      displayName: zoneSafe() ? ZONE_SAFE_TEXT.chip : WILD_TEXT.chip,
+      poolIndex: poolIndex++,
+      expiring: false,
+      isItem: false,
+      bundleId: null,
+      endable: false,
+    });
   return { self, other };
 }
 /** WILD1: the zone's glyph (ui/hud/hudStatus.js STATUS_GLYPHS), and the one entity it is shown for - the player's (the
  *  world host says which; a foe's row never wears it). */
 export const WILD_GLYPH = 'wild';
 let _zoneEntity = null;
-export function setZoneEntity(entity) { _zoneEntity = entity ?? null; }
+export function setZoneEntity(entity) {
+  _zoneEntity = entity ?? null;
+}
 /** TELL6e: the bleed's index - the atlas's first, as an iconless bundle's. */
 export const BLEED_ICON = 0;
 /** TELL9: the bleed's own icon - its glyph on the kit's grid (ui/hud/hudStatus.js STATUS_GLYPHS). */
@@ -227,14 +255,17 @@ export function alignIcons(icons, positioning, { largeHudTop = null } = {}) {
  *  ITEM's never does however few rounds it reads. Answers whether
  *  this icon is drawn on this frame. */
 export const iconVisible = (icon, blinkState, paused = false) =>
-  (paused || !icon.expiring || icon.isItem) ? true : blinkState;
+  paused || !icon.expiring || icon.isItem ? true : blinkState;
 
 /** The blink clock (:104-112). Its own object so the four hosts share
  *  one phase through drawHud rather than each counting. */
 export function createBlinkClock() {
-  let timer = 0, state = false;
+  let timer = 0,
+    state = false;
   return {
-    get state() { return state; },
+    get state() {
+      return state;
+    },
     tick(dt) {
       timer += dt;
       // ONE toggle per frame, `if` and not `while` - DFU's exactly
@@ -242,10 +273,16 @@ export function createBlinkClock() {
       // remainder forward and toggles again NEXT frame rather than
       // draining in place, so a stall makes the blink lag instead of
       // strobing. Verbatim, because the difference is visible.
-      if (timer > BLINK_INTERVAL) { timer -= BLINK_INTERVAL; state = !state; }
+      if (timer > BLINK_INTERVAL) {
+        timer -= BLINK_INTERVAL;
+        state = !state;
+      }
       return state;
     },
-    _reset() { timer = 0; state = false; },
+    _reset() {
+      timer = 0;
+      state = false;
+    },
   };
 }
 
@@ -256,19 +293,20 @@ export function createBlinkClock() {
  * `m` is the native 320x200 metrics - these positions are virtual
  * screen coordinates, the same space every classic window uses.
  */
-export function drawActiveSpells(renderer, m, entity, {
-  blinkState = false, paused = false, largeHudTop = null, schemeName = undefined,
-} = {}) {
+export function drawActiveSpells(
+  renderer,
+  m,
+  entity,
+  { blinkState = false, paused = false, largeHudTop = null, schemeName = undefined } = {},
+) {
   if (!spellIconsLoaded()) return [];
   const s = iconScheme(schemeName === undefined ? iconSchemeName() : schemeName);
   const { self, other } = activeSpellIcons(entity);
-  const placed = [
-    ...alignIcons(self, s.self, { largeHudTop }),
-    ...alignIcons(other, s.other, { largeHudTop }),
-  ];
+  const placed = [...alignIcons(self, s.self, { largeHudTop }), ...alignIcons(other, s.other, { largeHudTop })];
   for (const icon of placed) {
     if (!iconVisible(icon, blinkState, paused)) continue;
-    if (icon.glyph) drawGlyphIcon(renderer, m, icon.glyph, icon.rect);   // TELL9: an icon of the port's own
+    if (icon.glyph)
+      drawGlyphIcon(renderer, m, icon.glyph, icon.rect); // TELL9: an icon of the port's own
     else drawSpellIcon(renderer, m, icon.iconIndex, icon.rect);
   }
   return placed;
@@ -285,7 +323,6 @@ export function activeSpellAt(placed, vx, vy) {
   return null;
 }
 
-
 // ── THE POINTER ─────────────────────────────────────────────────────
 // DFU hangs a ToolTip off every pooled icon panel and lets each
 // panel's own MouseEnter raise it. The port's windows hit-test
@@ -294,8 +331,12 @@ export function activeSpellAt(placed, vx, vy) {
 // own the mouse. So the pointer's VIRTUAL position lands here on its
 // way past, and ui/hud/hud.js reads it: one store, because there is one
 // mouse, and the same reason the blink clock is one.
-let _vx = -1, _vy = -1;
-export function setHudPointer(vx, vy) { _vx = vx ?? -1; _vy = vy ?? -1; }
+let _vx = -1,
+  _vy = -1;
+export function setHudPointer(vx, vy) {
+  _vx = vx ?? -1;
+  _vy = vy ?? -1;
+}
 export const hudPointer = () => (_vx < 0 || _vy < 0 ? null : [_vx, _vy]);
 
 /** The whole transform in ONE place, so the four hosts each spend one
@@ -305,8 +346,13 @@ export function trackHudPointer(canvas, e) {
   if (!canvas?.getBoundingClientRect) return;
   const r = canvas.getBoundingClientRect();
   if (!r.width || !r.height) return;
-  const v = pointToNative(nativeMetrics(uiCanvas(canvas)), ...toUiPoint(   // RETRO-UI: the icons drawHud laid in the pillarbox
-    (e.clientX - r.left) * (canvas.width / r.width),
-    (e.clientY - r.top) * (canvas.height / r.height)));
+  const v = pointToNative(
+    nativeMetrics(uiCanvas(canvas)),
+    ...toUiPoint(
+      // RETRO-UI: the icons drawHud laid in the pillarbox
+      (e.clientX - r.left) * (canvas.width / r.width),
+      (e.clientY - r.top) * (canvas.height / r.height),
+    ),
+  );
   setHudPointer(v ? v[0] : -1, v ? v[1] : -1);
 }

@@ -63,43 +63,81 @@ export function standingName(/** @type {number} */ f) {
 
 /** AUDIT GUILD-WORDS II B-6: a list the player's language's way (Intl.ListFormat's conjunction - ui/credits.js's way). */
 const listOf = (/** @type {string[]} */ items) => {
-  try { return new Intl.ListFormat(intlLocale(), { type: 'conjunction' }).format(items); } catch { return items.join(', '); }
+  try {
+    return new Intl.ListFormat(intlLocale(), { type: 'conjunction' }).format(items);
+  } catch {
+    return items.join(', ');
+  }
 };
 
 /** The twenty-two the character belongs to, by the active book (DFU's - a vampire's mortal guilds lie dormant). */
-export const rollMembershipsOf = (/** @type {any} */ entity) => new Set(Object.values(activeMemberships(entity) ?? {})
-  .map((m) => rollFactionOfGuild(m?.guild)).filter((f) => /** @type {readonly unknown[]} */ (ROLL_FACTIONS).includes(f)));
+export const rollMembershipsOf = (/** @type {any} */ entity) =>
+  new Set(
+    Object.values(activeMemberships(entity) ?? {})
+      .map((m) => rollFactionOfGuild(m?.guild))
+      .filter((f) => /** @type {readonly unknown[]} */ (ROLL_FACTIONS).includes(f)),
+  );
 
 /** Whether the character belongs to any of the twenty-two the Roll keeps. */
 export const holdsRollMembership = (/** @type {any} */ entity) => rollMembershipsOf(entity).size > 0;
 
 /** One move, said (npcChapterLaw.js rollMovesOf's `{ f, delta?, paid?, now, owed }` - both where both moved, II B-4). */
-function standingItem(/** @type {any} */ entity, /** @type {{ f: number, delta?: number, paid?: number, now: number, owed: number }} */ c) {
-  const args = { name: standingName(c.f), now: c.now, owed: c.owed, paid: c.paid ?? 0,
-    delta: Number(c.delta) > 0 ? `+${c.delta}` : String(c.delta ?? 0) };
+function standingItem(
+  /** @type {any} */ entity,
+  /** @type {{ f: number, delta?: number, paid?: number, now: number, owed: number }} */ c,
+) {
+  const args = {
+    name: standingName(c.f),
+    now: c.now,
+    owed: c.owed,
+    paid: c.paid ?? 0,
+    delta: Number(c.delta) > 0 ? `+${c.delta}` : String(c.delta ?? 0),
+  };
   if (c.delta && c.paid) {
-    return c.owed > 0 ? t('chapters.standing.bothOwed', '{name} {delta}, and {paid} of what was owed arrived (now {now}, {owed} more to come)', args)
+    return c.owed > 0
+      ? t(
+          'chapters.standing.bothOwed',
+          '{name} {delta}, and {paid} of what was owed arrived (now {now}, {owed} more to come)',
+          args,
+        )
       : t('chapters.standing.both', '{name} {delta}, and {paid} of what was owed arrived (now {now})', args);
   }
   if (c.delta) {
-    return c.owed > 0 ? t('chapters.standing.itemOwed', '{name} {delta} (now {now}, {owed} more to come)', args)
+    return c.owed > 0
+      ? t('chapters.standing.itemOwed', '{name} {delta} (now {now}, {owed} more to come)', args)
       : t('chapters.standing.item', '{name} {delta} (now {now})', args);
   }
-  return c.owed > 0 ? t('chapters.standing.paidOwed', '{name}: {paid} of what was owed arrived (now {now}, {owed} more to come)', args)
+  return c.owed > 0
+    ? t('chapters.standing.paidOwed', '{name}: {paid} of what was owed arrived (now {now}, {owed} more to come)', args)
     : t('chapters.standing.paid', '{name}: {paid} of what was owed arrived (now {now})', args);
 }
 
 /** THE STANDING'S LINE: one line for an adoption's moves - or null when nothing moved. The guilds the character belongs
  *  to are named; the rest are counted (AUDIT GUILD-WORDS L2-3: DFU's drift and REP4's recovery move every standing a
  *  point, and a line of twenty-two names said nothing). */
-export function standingLine(/** @type {any} */ entity, /** @type {{ f: number, delta?: number, paid?: number, now: number, owed: number }[]} */ changes) {
-  const moved = (changes ?? []).filter((c) => (Number.isSafeInteger(c?.delta) && c.delta !== 0) || (Number.isSafeInteger(c?.paid) && c.paid !== 0));
+export function standingLine(
+  /** @type {any} */ entity,
+  /** @type {{ f: number, delta?: number, paid?: number, now: number, owed: number }[]} */ changes,
+) {
+  const moved = (changes ?? []).filter(
+    (c) => (Number.isSafeInteger(c?.delta) && c.delta !== 0) || (Number.isSafeInteger(c?.paid) && c.paid !== 0),
+  );
   if (!moved.length) return null;
   const mine = rollMembershipsOf(entity);
   const named = moved.filter((c) => mine.has(c.f)).map((c) => standingItem(entity, c));
   const others = moved.length - named.length;
-  if (!named.length) return t('chapters.standing.othersOnly', 'Standing moved with {n, plural, one {# guild} other {# guilds}} you do not belong to.', { n: others });
-  const list = others ? [...named, t('chapters.standing.others', '{n, plural, one {# other guild} other {# other guilds}}', { n: others })] : named;
+  if (!named.length)
+    return t(
+      'chapters.standing.othersOnly',
+      'Standing moved with {n, plural, one {# guild} other {# guilds}} you do not belong to.',
+      { n: others },
+    );
+  const list = others
+    ? [
+        ...named,
+        t('chapters.standing.others', '{n, plural, one {# other guild} other {# other guilds}}', { n: others }),
+      ]
+    : named;
   return t('chapters.standing.line', 'Standing: {list}', { list: listOf(list) });
 }
 
@@ -116,7 +154,10 @@ export function rollNoticeDoors({ entityOf, say }) {
       if (line) say(line);
       noteFirstUse('chapters');
     },
-    onStanding: (/** @type {{ f: number, delta?: number, paid?: number, now: number, owed: number }[]} */ changes, /** @type {boolean} */ first) => {
+    onStanding: (
+      /** @type {{ f: number, delta?: number, paid?: number, now: number, owed: number }[]} */ changes,
+      /** @type {boolean} */ first,
+    ) => {
       if (first && holdsRollMembership(entityOf())) noteFirstUse('chapters');
       const line = standingLine(entityOf(), changes);
       if (line) say(line);
@@ -126,14 +167,24 @@ export function rollNoticeDoors({ entityOf, say }) {
     // port's names carry no article to bend in a sentence
     onCeiling: (/** @type {number[]} */ factions) => {
       for (const f of factions) {
-        say(t('chapters.standing.ceiling', '{name}: quests cannot raise your standing any further today. {owed} more is owed and arrives over the coming days.',
-          { name: standingName(f), owed: standingOwedOf(f) }));
+        say(
+          t(
+            'chapters.standing.ceiling',
+            '{name}: quests cannot raise your standing any further today. {owed} more is owed and arrives over the coming days.',
+            { name: standingName(f), owed: standingOwedOf(f) },
+          ),
+        );
       }
     },
     onFull: (/** @type {number[]} */ factions) => {
       for (const f of factions) {
-        say(t('chapters.standing.full', '{name}: your standing and what is owed already reach {max}, so the rest of that reward is lost.',
-          { name: standingName(f), max: MAX_REPUTATION }));
+        say(
+          t(
+            'chapters.standing.full',
+            '{name}: your standing and what is owed already reach {max}, so the rest of that reward is lost.',
+            { name: standingName(f), max: MAX_REPUTATION },
+          ),
+        );
       }
     },
   };

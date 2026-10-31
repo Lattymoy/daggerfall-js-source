@@ -29,13 +29,13 @@
 
 import { travelTimeSeconds } from './clock.js';
 import { Message, Formatting } from './message.js';
-import { localizedQuestMessage } from './localizedQuest.js';   // L10N3c: GetMessage's Internal_Quests lookup
+import { localizedQuestMessage } from './localizedQuest.js'; // L10N3c: GetMessage's Internal_Quests lookup
 import { symbolToSaveData, symbolFromSaveData } from './symbol.js';
-import { smallerDungeonsStateNow } from '../../world/smallerDungeons.js';   // AUDIT 28 W4: Quest.cs:284's stamp
-import { askAgain } from './noAsksAgain.js';   // NO-ASKS-AGAIN (FIELD BUGS 2026-10-13e): a No that leads nowhere asks again
-import { isInstanceEpoch } from '../../net/instanceRoom.js';   // INSTANCES: a quest's instance epoch, its one spelling
-import { QUEST_SUCCESS_REP, QUEST_FAILURE_REP } from './questRepute.js';   // WAY-BACK: Quest.cs:36-37's one home, a leaf the guild hall reads
-import { readState, writeState } from '../questlines/qlState.js';   // QL1: a stamped quest's state - the layer's, kept by the quest (bible/06-Systems/Questlines-Arc.md 2.4)
+import { smallerDungeonsStateNow } from '../../world/smallerDungeons.js'; // AUDIT 28 W4: Quest.cs:284's stamp
+import { askAgain } from './noAsksAgain.js'; // NO-ASKS-AGAIN (FIELD BUGS 2026-10-13e): a No that leads nowhere asks again
+import { isInstanceEpoch } from '../../net/instanceRoom.js'; // INSTANCES: a quest's instance epoch, its one spelling
+import { QUEST_SUCCESS_REP, QUEST_FAILURE_REP } from './questRepute.js'; // WAY-BACK: Quest.cs:36-37's one home, a leaf the guild hall reads
+import { readState, writeState } from '../questlines/qlState.js'; // QL1: a stamped quest's state - the layer's, kept by the quest (bible/06-Systems/Questlines-Arc.md 2.4)
 
 /** ShowMessagePopup's chunker (Quest.cs:777, 793-819): a message
  *  longer than 22 LINES becomes several click-through boxes. A line
@@ -56,8 +56,7 @@ export function chunkMessageTokens(tokens, chunkSize = 22) {
     // JustifyCenter (message.js:"export const Formatting") - and Formatting has no such
     // member, so naming it here would compare against `undefined` and
     // count every token that carries no formatting at all.
-    if (token.formatting === Formatting.JustifyCenter
-      || token.formatting === Formatting.Nothing) {
+    if (token.formatting === Formatting.JustifyCenter || token.formatting === Formatting.Nothing) {
       if (++lineCount > chunkSize) {
         chunks.push(currentChunk);
         currentChunk = [];
@@ -69,7 +68,7 @@ export function chunkMessageTokens(tokens, chunkSize = 22) {
   return chunks;
 }
 
-export { QUEST_SUCCESS_REP, QUEST_FAILURE_REP };   // Quest.cs:36-37, from their leaf (questRepute.js)
+export { QUEST_SUCCESS_REP, QUEST_FAILURE_REP }; // Quest.cs:36-37, from their leaf (questRepute.js)
 
 /** QuestMachine.cs:260-272 - the fixed quest message ids. Defined
  *  here (its only consumer is the tombstone/offer flow) and
@@ -90,19 +89,34 @@ export const QUEST_MESSAGES = Object.freeze({
 
 let _uid = 0;
 /** DaggerfallUnity.NextUID - the global allocator. */
-export function nextUid() { return ++_uid; }
+export function nextUid() {
+  return ++_uid;
+}
 /** The allocator advances past restored uids (Q4-iv): C# persists
  *  its global NextUID; the port derives it from what it loads. */
-export function ensureUidAtLeast(uid) { if (uid > _uid) _uid = uid; }
+export function ensureUidAtLeast(uid) {
+  if (uid > _uid) _uid = uid;
+}
 /** Test seam. */
-export function resetUid() { _uid = 0; }
+export function resetUid() {
+  _uid = 0;
+}
 
 /** QUEST-SHELF (2026-10-08): whether a quest is set aside - abandoned, kept to be reclaimed (machine.js shelveQuest). It
  *  stands in the machine untouched: no tick, no questor's door shut, no topics, no site links, nothing stood in a scene. */
 export const isShelved = (quest) => quest?.shelvedAt != null;
 
 export class Quest {
-  constructor({ rolls = Math.random, nowSeconds = null, skySeconds = null, worldSeconds = null, raisedSeconds = null, hooks = null, actionFactory = null, questClockStepMax = null } = {}) {
+  constructor({
+    rolls = Math.random,
+    nowSeconds = null,
+    skySeconds = null,
+    worldSeconds = null,
+    raisedSeconds = null,
+    hooks = null,
+    actionFactory = null,
+    questClockStepMax = null,
+  } = {}) {
     this.uid = nextUid();
     this.questName = '';
     // AUDIT 24 (wave 26): NULL, because Quest.cs:56 is a bare
@@ -123,23 +137,23 @@ export class Quest {
     // unreachable and a null there would only add `?? ''` noise to the
     // dozen template literals that print it.
     this.displayName = null;
-    this.ownDisplayName = undefined;   // L10N5: the quest's own DisplayName while a translation's stands (localizeDisplayName)
+    this.ownDisplayName = undefined; // L10N5: the quest's own DisplayName while a translation's stands (localizeDisplayName)
     this.factionId = 0;
-    this.messages = new Map();     // id -> Message
-    this.tasks = new Map();        // symbol name -> Task
-    this.resources = new Map();    // symbol name -> QuestResource
+    this.messages = new Map(); // id -> Message
+    this.tasks = new Map(); // symbol name -> Task
+    this.resources = new Map(); // symbol name -> QuestResource
     this.rolls = rolls;
-    this.nowSeconds = nowSeconds;  // () => classic game seconds (machine-injected) - TIME3: the character's own clock, the countdowns'
-    this.skySeconds = skySeconds ?? nowSeconds;   // TIME3: () => the sky's seconds - an hour, a date, a season (DailyFrom, a notice's daytime); the one clock offline
-    this.worldSeconds = worldSeconds ?? nowSeconds;   // TIME3: () => the event clock's seconds - the journal's dates are stamped on it
-    this.raisedSeconds = raisedSeconds;   // TIME3: () => the session's raised seconds, or null - online a countdown charges none of them (QCLOCK-WORLD, quest/clock.js)
-    this.questClockStepMax = questClockStepMax;   // WORLD7: () => world seconds - the most one played frame charges a Clock or a spawn interval (machine-injected; Infinity offline)
-    this.hooks = hooks;            // machine hooks: showPopup/changeReputation/log
-    this.actionFactory = actionFactory;   // (line, quest) -> action | null (the machine's registry)
+    this.nowSeconds = nowSeconds; // () => classic game seconds (machine-injected) - TIME3: the character's own clock, the countdowns'
+    this.skySeconds = skySeconds ?? nowSeconds; // TIME3: () => the sky's seconds - an hour, a date, a season (DailyFrom, a notice's daytime); the one clock offline
+    this.worldSeconds = worldSeconds ?? nowSeconds; // TIME3: () => the event clock's seconds - the journal's dates are stamped on it
+    this.raisedSeconds = raisedSeconds; // TIME3: () => the session's raised seconds, or null - online a countdown charges none of them (QCLOCK-WORLD, quest/clock.js)
+    this.questClockStepMax = questClockStepMax; // WORLD7: () => world seconds - the most one played frame charges a Clock or a spawn interval (machine-injected; Infinity offline)
+    this.hooks = hooks; // machine hooks: showPopup/changeReputation/log
+    this.actionFactory = actionFactory; // (line, quest) -> action | null (the machine's registry)
     // Q3-i: Clock's travel arms over the world seam - flag&16's 2.5x
     // cautious ALL-places trip and _2place_'s one-way. null with no
     // world (headless), so the clock's HELD arm still pends loudly.
-    this.travelSeconds = (opts) => (this.hooks?.world ? travelTimeSeconds(this, null, true, opts) : null);   // TRIP-HOME: { home } - a deadline's way back to its questors
+    this.travelSeconds = (opts) => (this.hooks?.world ? travelTimeSeconds(this, null, true, opts) : null); // TRIP-HOME: { home } - a deadline's way back to its questors
     this.travelSecondsTo = (place) => (this.hooks?.world ? travelTimeSeconds(this, place, false) : null);
 
     // Q2 lifecycle state
@@ -149,26 +163,26 @@ export class Quest {
     this.questTombstoned = false;
     this.questTombstoneTime = 0;
     this.questStartTime = 0;
-    this.smallerDungeonsState = 0;   // AUDIT 28 W4: QuestSmallerDungeonsState.NotSet until Start() stamps it (Quest.cs:64)
+    this.smallerDungeonsState = 0; // AUDIT 28 W4: QuestSmallerDungeonsState.NotSet until Start() stamps it (Quest.cs:64)
     this.ticksToEnd = 0;
-    this.activeLogMessages = new Map();      // stepID -> { stepID, messageID, time }
+    this.activeLogMessages = new Map(); // stepID -> { stepID, messageID, time }
     this.oneTimeDisplayedMessages = new Set();
     // Q4-i macro context (Quest.cs/QuestMCP)
-    this.lastResourceReferenced = null;   // pronouns/%vcn read it
-    this.lastPlaceReferenced = null;      // %di reads it (the NRE quirk lives there)
-    this.externalMCP = null;              // the offer/talk window's second provider (Q4-ii)
-    this.currentLogMessageId = -1;        // the journal sets it while rendering (%qdt)
-    this.pendingPopups = [];                 // the pendingMessageBoxStack, hook-delivered
-    this.pendingClickRearms = [];            // Quest.cs:48 - resources whose click clears after the current task
-    this.questors = new Map();               // Quest.cs:47 - symbol name -> QuestorData { symbol, name }
-    this.oneTime = false;                    // Quest.OneTime - QuestListsManager stamps it at load (Q2b-ii)
+    this.lastResourceReferenced = null; // pronouns/%vcn read it
+    this.lastPlaceReferenced = null; // %di reads it (the NRE quirk lives there)
+    this.externalMCP = null; // the offer/talk window's second provider (Q4-ii)
+    this.currentLogMessageId = -1; // the journal sets it while rendering (%qdt)
+    this.pendingPopups = []; // the pendingMessageBoxStack, hook-delivered
+    this.pendingClickRearms = []; // Quest.cs:48 - resources whose click clears after the current task
+    this.questors = new Map(); // Quest.cs:47 - symbol name -> QuestorData { symbol, name }
+    this.oneTime = false; // Quest.OneTime - QuestListsManager stamps it at load (Q2b-ii)
     // QUEST-SHELF (2026-10-08, Mac: "All quests should be able to be abandoned and reclaimed"): ABANDONED, KEPT. The
     // character-clock second it was set aside (null: not set aside - machine.js shelveQuest / reclaimQuest), and the
     // Places whose site links it held then (their symbol names - the links stand again from them on its reclaim).
     this.shelvedAt = null;
     this.shelvedSites = null;
-    this.shelvedItems = null;   // QUEST-SHELF-DROP: its items the pack held as it was set aside, by symbol
-    this.instanceEpoch = null;   // INSTANCES: its instance's epoch, minted when one first opens (systems/instancePlaces.js questInstanceEpoch)
+    this.shelvedItems = null; // QUEST-SHELF-DROP: its items the pack held as it was set aside, by symbol
+    this.instanceEpoch = null; // INSTANCES: its instance's epoch, minted when one first opens (systems/instancePlaces.js questInstanceEpoch)
     // QL1 (bible/06-Systems/Questlines-Arc.md decision 1): the questlines' stamp and state - null, DFU's quest; set once,
     // at its start (machine.js startQuestImmediate), and kept for life. The machine never reads it; the layer does.
     this.ql = null;
@@ -177,7 +191,7 @@ export class Quest {
   // ---- Q1 structure ----
 
   addMessage(messageID, message) {
-    if (this.messages.has(messageID)) throw new Error(`Duplicate message id: ${messageID}`);   // Dictionary.Add
+    if (this.messages.has(messageID)) throw new Error(`Duplicate message id: ${messageID}`); // Dictionary.Add
     this.messages.set(messageID, message);
   }
 
@@ -199,7 +213,7 @@ export class Quest {
   addTask(task) {
     const existing = this.tasks.get(task.symbol.name);
     if (!existing) this.tasks.set(task.symbol.name, task);
-    else existing.copyQuestActions(task);   // duplicate symbol: merge actions in
+    else existing.copyQuestActions(task); // duplicate symbol: merge actions in
   }
 
   /** GetMessage (Quest.cs:666-684). L10N3c: a translation's text for `QUEST.messageId` (the current language's
@@ -209,8 +223,9 @@ export class Quest {
     const result = this.messages.get(messageID) ?? null;
     if (!result) return null;
     const lines = localizedQuestMessage(this.questName, messageID);
-    if (lines) result.localize(lines);   // L10N5: the quest's own lines kept beside, for the save
-    else result.ownText();   // L10N5: a language with no translation of it reads the quest's own again
+    if (lines)
+      result.localize(lines); // L10N5: the quest's own lines kept beside, for the save
+    else result.ownText(); // L10N5: a language with no translation of it reads the quest's own again
     return result;
   }
 
@@ -221,25 +236,46 @@ export class Quest {
     if (this.ownDisplayName === undefined) this.ownDisplayName = this.displayName;
     this.displayName = name || this.ownDisplayName;
   }
-  getTask(symbol) { return (symbol && this.tasks.get(symbol.name)) ?? null; }
-  getResource(symbol) { return (symbol && this.resources.get(symbol.name)) ?? null; }
-  getClock(symbol) { const r = this.getResource(symbol); return r?.isClock ? r : null; }
-  getPlace(symbol) { const r = this.getResource(symbol); return r?.isPlace ? r : null; }
+  getTask(symbol) {
+    return (symbol && this.tasks.get(symbol.name)) ?? null;
+  }
+  getResource(symbol) {
+    return (symbol && this.resources.get(symbol.name)) ?? null;
+  }
+  getClock(symbol) {
+    const r = this.getResource(symbol);
+    return r?.isClock ? r : null;
+  }
+  getPlace(symbol) {
+    const r = this.getResource(symbol);
+    return r?.isPlace ? r : null;
+  }
   // Quest.cs GetPerson/GetItem/GetFoe - `as` casts answer null for a
   // wrong-typed resource, so a Foe symbol handed to GetPerson is null.
-  getPerson(symbol) { const r = this.getResource(symbol); return r?.isPerson ? r : null; }
+  getPerson(symbol) {
+    const r = this.getResource(symbol);
+    return r?.isPerson ? r : null;
+  }
 
   /** GetQuestors (Quest.cs:756-765): the questor SYMBOLS, in Map
    *  order. ActiveQuestor walks these to find the Person a clicked
    *  StaticNPC is the questor for. */
-  getQuestors() { return [...this.questors.values()].map((q) => q.symbol); }
-  getItem(symbol) { const r = this.getResource(symbol); return r?.isItem ? r : null; }
-  getFoe(symbol) { const r = this.getResource(symbol); return r?.isFoe ? r : null; }
+  getQuestors() {
+    return [...this.questors.values()].map((q) => q.symbol);
+  }
+  getItem(symbol) {
+    const r = this.getResource(symbol);
+    return r?.isItem ? r : null;
+  }
+  getFoe(symbol) {
+    const r = this.getResource(symbol);
+    return r?.isFoe ? r : null;
+  }
 
   // ---- Q2 lifecycle (Quest.cs:280-600) ----
 
   start() {
-    this.questStartTime = this.worldSeconds?.() ?? 0;   // TIME3: a date the journal shows - the event clock's, read on the sky's calendar (%qdt)
+    this.questStartTime = this.worldSeconds?.() ?? 0; // TIME3: a date the journal shows - the event clock's, read on the sky's calendar (%qdt)
     // AUDIT 28 W4 (Quest.cs:284): the SmallerDungeons setting AS OF the
     // quest's start, frozen in - marker assignments are not relocated
     // when the setting flips, so the dungeon a quest points at keeps
@@ -271,7 +307,7 @@ export class Quest {
 
     // Update tasks
     for (const task of this.tasks.values()) {
-      if (task.dropped) continue;   // hard ignore
+      if (task.dropped) continue; // hard ignore
       // Handle quest break or completion from previous task
       if (this.questBreak || this.questComplete) {
         this.questBreak = false;
@@ -294,7 +330,9 @@ export class Quest {
 
   /** Quest.cs:353-364 - a resource click is consumed by the FIRST
    *  task that handles it; the rearm runs right after that task. */
-  scheduleClickRearm(resource) { this.pendingClickRearms.push(resource); }
+  scheduleClickRearm(resource) {
+    this.pendingClickRearms.push(resource);
+  }
 
   _clearPendingClickRearms() {
     for (const resource of this.pendingClickRearms) resource.rearmPlayerClick();
@@ -314,7 +352,9 @@ export class Quest {
       // `${null}` is the string "null" in JS where string.Format
       // (Quest.cs:459) renders a null argument as EMPTY - so the ?? ''
       // is what keeps this line 1:1 now that displayName can be null.
-      console.warn(`[quest] Person ${personSymbol.original} is already a questor for quest ${this.uid} [${this.displayName ?? ''}]`);
+      console.warn(
+        `[quest] Person ${personSymbol.original} is already a questor for quest ${this.uid} [${this.displayName ?? ''}]`,
+      );
       return;
     }
     const person = this.getPerson(personSymbol);
@@ -380,7 +420,10 @@ export class Quest {
     // QUEST-AUDIT III END-ONCE: a second `end quest` inside the first one's grace (a deadline's, under a reward box that
     // held the tick while the clock ran on) re-paid the reputation and filed the notebook entry twice. It extends the
     // grace, as DFU's does, and pays nothing more.
-    if (this.ticksToEnd > 0) { this.ticksToEnd = 2; return; }
+    if (this.ticksToEnd > 0) {
+      this.ticksToEnd = 2;
+      return;
+    }
     // Two ticks of grace so tasks started directly before "end quest"
     // still execute (DFU's Sx017 note).
     this.ticksToEnd = 2;
@@ -440,10 +483,12 @@ export class Quest {
     // questor messages by outcome, then this quest's rumors and info
     // topics scrubbed - all through the machine's talk hooks (Q4
     // wires TalkManager; tests capture). Null messages don't post.
-    const messageRumors = this.getMessage(this.questSuccess
-      ? QUEST_MESSAGES.RumorsPostSuccess : QUEST_MESSAGES.RumorsPostFailure);
-    const messageQuestor = this.getMessage(this.questSuccess
-      ? QUEST_MESSAGES.QuestorPostSuccess : QUEST_MESSAGES.QuestorPostFailure);
+    const messageRumors = this.getMessage(
+      this.questSuccess ? QUEST_MESSAGES.RumorsPostSuccess : QUEST_MESSAGES.RumorsPostFailure,
+    );
+    const messageQuestor = this.getMessage(
+      this.questSuccess ? QUEST_MESSAGES.QuestorPostSuccess : QUEST_MESSAGES.QuestorPostFailure,
+    );
     if (messageRumors) this.hooks?.addProgressRumor?.(this.uid, messageRumors);
     if (messageQuestor) this.hooks?.addQuestorPostMessage?.(this.uid, messageQuestor);
     this.hooks?.removeQuestRumors?.(this.uid);
@@ -478,15 +523,21 @@ export class Quest {
     this._dropAllQuestors();
   }
 
-  startTask(symbol) { this.getTask(symbol)?.start(); }
-  clearTask(symbol) { this.getTask(symbol)?.clear(); }
+  startTask(symbol) {
+    this.getTask(symbol)?.start();
+  }
+  clearTask(symbol) {
+    this.getTask(symbol)?.clear();
+  }
 
   /** Quests have log steps 0-9; adding an existing step replaces it. */
   addLogStep(stepID, messageID) {
-    this.activeLogMessages.set(stepID, { stepID, messageID, time: this.worldSeconds?.() ?? 0 });   // TIME3: the step's date, as the start's
+    this.activeLogMessages.set(stepID, { stepID, messageID, time: this.worldSeconds?.() ?? 0 }); // TIME3: the step's date, as the start's
   }
 
-  removeLogStep(stepID) { this.activeLogMessages.delete(stepID); }
+  removeLogStep(stepID) {
+    this.activeLogMessages.delete(stepID);
+  }
 
   /** LogEntry array, or null once the quest completed. */
   getLogMessages() {
@@ -521,12 +572,12 @@ export class Quest {
       this._showPendingTaskMessages();
       return null;
     }
-    return this.pendingPopups[this.pendingPopups.length - 1] ?? null;   // Peek
+    return this.pendingPopups[this.pendingPopups.length - 1] ?? null; // Peek
   }
 
   _showPendingTaskMessages() {
     while (this.pendingPopups.length) {
-      const tokens = this.pendingPopups.pop();   // a STACK, as DFU pushes/pops
+      const tokens = this.pendingPopups.pop(); // a STACK, as DFU pushes/pops
       // Each pop is a DaggerfallMessageBox.Show(), i.e. a
       // uiManager.PushWindow - so the host must STACK these, newest in
       // front. The double reversal (push 0..n, pop n..0, each landing
@@ -550,25 +601,29 @@ export class Quest {
       questComplete: this.questComplete,
       questSuccess: this.questSuccess,
       questName: this.questName,
-      displayName: this.ownDisplayName !== undefined ? this.ownDisplayName : this.displayName,   // L10N5: the quest's own name
+      displayName: this.ownDisplayName !== undefined ? this.ownDisplayName : this.displayName, // L10N5: the quest's own name
       factionId: this.factionId,
       questStartTime: this.questStartTime,
       questTombstoned: this.questTombstoned,
       questTombstoneTime: this.questTombstoneTime,
-      smallerDungeonsState: this.smallerDungeonsState ?? 0,   // AUDIT 28 W4: the frozen state, saved (Quest.cs:912)
+      smallerDungeonsState: this.smallerDungeonsState ?? 0, // AUDIT 28 W4: the frozen state, saved (Quest.cs:912)
       compiledByVersion: '',
       activeLogMessages: [...this.activeLogMessages.values()].map((e) => ({ ...e })),
       messages: [...this.messages.values()].map((m) => m.getSaveData()),
       resources: [...this.resources.values()].map((r) => r.getResourceSaveData()),
-      questors: [...this.questors.entries()].map(([name, q]) => ({ name, symbol: symbolToSaveData(q.symbol), displayName: q.name })),
+      questors: [...this.questors.entries()].map(([name, q]) => ({
+        name,
+        symbol: symbolToSaveData(q.symbol),
+        displayName: q.name,
+      })),
       tasks: [...this.tasks.values()].map((t) => t.getSaveData()),
       oneTimeDisplayedMessages: [...this.oneTimeDisplayedMessages],
-      shareId: this.shareId ?? null,   // DISC22-F: the shared copy's identity - the port's own member, absent in DFU's saves
-      instanceEpoch: this.instanceEpoch ?? null,   // INSTANCES: its instance's epoch once one opened (systems/instancePlaces.js questInstanceEpoch) - the port's own
-      shelvedAt: this.shelvedAt ?? null,   // QUEST-SHELF: the port's own, absent in DFU's saves (an older envelope: not set aside)
+      shareId: this.shareId ?? null, // DISC22-F: the shared copy's identity - the port's own member, absent in DFU's saves
+      instanceEpoch: this.instanceEpoch ?? null, // INSTANCES: its instance's epoch once one opened (systems/instancePlaces.js questInstanceEpoch) - the port's own
+      shelvedAt: this.shelvedAt ?? null, // QUEST-SHELF: the port's own, absent in DFU's saves (an older envelope: not set aside)
       shelvedSites: this.shelvedSites ? [...this.shelvedSites] : null,
-      shelvedItems: this.shelvedItems ? [...this.shelvedItems] : null,   // QUEST-SHELF-DROP
-      ql: writeState(this.ql),   // QL1: the questlines' stamp and state - the port's own, absent in DFU's saves (an older envelope: DFU's quest)
+      shelvedItems: this.shelvedItems ? [...this.shelvedItems] : null, // QUEST-SHELF-DROP
+      ql: writeState(this.ql), // QL1: the questlines' stamp and state - the port's own, absent in DFU's saves (an older envelope: DFU's quest)
       // TIME3: the clock its countdowns stand on - the holder's own, as it read when this was taken. A party member's copy
       // moves them onto theirs by the distance (quest/questStamps.js); an envelope without it is from before TIME3.
       ownSecondsAt: Number.isFinite(this.nowSeconds?.()) ? Math.floor(this.nowSeconds()) : null,
@@ -586,22 +641,28 @@ export class Quest {
   restoreSaveData(data, resolvers = {}) {
     this.uid = data.uid;
     ensureUidAtLeast(data.uid);
-    this.shareId = typeof data.shareId === 'string' && data.shareId ? data.shareId : null;   // DISC22-F
-    this.instanceEpoch = isInstanceEpoch(data.instanceEpoch) ? data.instanceEpoch : null;   // INSTANCES: an older envelope's quest mints one at its first instance
-    this.shelvedAt = Number.isFinite(data.shelvedAt) && data.shelvedAt !== 0 ? data.shelvedAt : null;   // QUEST-SHELF
-    this.shelvedSites = this.shelvedAt != null && Array.isArray(data.shelvedSites) ? data.shelvedSites.filter((n) => typeof n === 'string') : null;
-    this.shelvedItems = this.shelvedAt != null && Array.isArray(data.shelvedItems) ? data.shelvedItems.filter((n) => typeof n === 'string') : null;   // QUEST-SHELF-DROP
-    this.ql = readState(data.ql);   // QL1: a stamp this law knows, else DFU's quest
+    this.shareId = typeof data.shareId === 'string' && data.shareId ? data.shareId : null; // DISC22-F
+    this.instanceEpoch = isInstanceEpoch(data.instanceEpoch) ? data.instanceEpoch : null; // INSTANCES: an older envelope's quest mints one at its first instance
+    this.shelvedAt = Number.isFinite(data.shelvedAt) && data.shelvedAt !== 0 ? data.shelvedAt : null; // QUEST-SHELF
+    this.shelvedSites =
+      this.shelvedAt != null && Array.isArray(data.shelvedSites)
+        ? data.shelvedSites.filter((n) => typeof n === 'string')
+        : null;
+    this.shelvedItems =
+      this.shelvedAt != null && Array.isArray(data.shelvedItems)
+        ? data.shelvedItems.filter((n) => typeof n === 'string')
+        : null; // QUEST-SHELF-DROP
+    this.ql = readState(data.ql); // QL1: a stamp this law knows, else DFU's quest
     this.questComplete = data.questComplete;
     this.questSuccess = data.questSuccess;
     this.questName = data.questName;
-    this.displayName = data.displayName ?? null;   // an older envelope has no field; C# deserialises to null
-    this.ownDisplayName = undefined;   // L10N5: the machine names it in the language again (localizeDisplayName)
+    this.displayName = data.displayName ?? null; // an older envelope has no field; C# deserialises to null
+    this.ownDisplayName = undefined; // L10N5: the machine names it in the language again (localizeDisplayName)
     this.factionId = data.factionId;
     this.questStartTime = data.questStartTime;
     this.questTombstoned = data.questTombstoned;
     this.questTombstoneTime = data.questTombstoneTime;
-    this.smallerDungeonsState = data.smallerDungeonsState ?? 0;   // AUDIT 28 W4: the frozen state, restored (NotSet on an older envelope)
+    this.smallerDungeonsState = data.smallerDungeonsState ?? 0; // AUDIT 28 W4: the frozen state, restored (NotSet on an older envelope)
     this.activeLogMessages.clear();
     for (const logEntry of data.activeLogMessages) {
       this.activeLogMessages.set(logEntry.stepID, { ...logEntry });
@@ -635,5 +696,4 @@ export class Quest {
     // NO-ASKS-AGAIN (not DFU's - quest/noAsksAgain.js): a save taken after such a No, under DFU's law, loads asking again
     askAgain(this);
   }
-
 }

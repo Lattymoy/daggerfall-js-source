@@ -162,8 +162,8 @@
   {
     "name": "AUDIT-GROWTH-L1-5-brawler-overclaims",
     "file": "src/systems/martialPaths.js",
-    "old": "'For {seconds} seconds, blows from the enemy it hits deal {pct}% less damage to you.'",
-    "new": "'For {seconds} seconds, the enemy it hits deals {pct}% less damage to you.'",
+    "old": "    rider: t(\n      'martial.brawler.rider',\n      'For {seconds} seconds, blows from the enemy it hits deal {pct}% less damage to you.',\n      { seconds: N.knockout.seconds, pct: N.knockout.lighter },\n    ),",
+    "new": "    rider: t('martial.brawler.rider', 'For {seconds} seconds, the enemy it hits deals {pct}% less damage to you.', {\n      seconds: N.knockout.seconds,\n      pct: N.knockout.lighter,\n    }),",
     "tests": [
       "test/ui/growth/growth1_tab.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "AUDIT-GROWTH-L1-6-bloodmage-underclaims",
     "file": "src/systems/arcanePaths.js",
-    "old": "'If the target is below {pct}% health after the hit, it takes the same damage again.'",
-    "new": "'If the target drops below {pct}% health, it takes the same damage again.'",
+    "old": "    rider: t(\n      'schools.bloodmage.rider',\n      'If the target is below {pct}% health after the hit, it takes the same damage again.',\n      { pct: pc(N.bloodBoil.below) },\n    ),",
+    "new": "    rider: t('schools.bloodmage.rider', 'If the target drops below {pct}% health, it takes the same damage again.', {\n      pct: pc(N.bloodBoil.below),\n    }),",
     "tests": [
       "test/ui/growth/growth1_tab.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-GROWTH-L1-7-berserker-no-arrows",
     "file": "src/systems/martialPaths.js",
-    "old": "every blow or arrow you land heals you",
-    "new": "every blow you land heals you",
+    "old": "      'For {seconds} seconds, every blow or arrow you land heals you for {pct}% of its damage.',",
+    "new": "      'For {seconds} seconds, every blow you land heals you for {pct}% of its damage.',",
     "tests": [
       "test/ui/growth/growth1_tab.test.js"
     ],
@@ -214,8 +214,8 @@
   {
     "name": "AUDIT-GROWTH-L4-1-door-asks-nothing",
     "file": "src/ui/firmamentOver.js",
-    "old": "asks: () => { try { return !!o.view()?.back?.(); } catch { return false; } },",
-    "new": "asks: () => false,",
+    "old": "    asks: () => {\n      try {\n        return !!o.view()?.back?.();\n      } catch {\n        return false;\n      }\n    },",
+    "new": "    asks: () => false,",
     "tests": [
       "test/systems/revenant/rvnstars.test.js"
     ],
@@ -295,8 +295,8 @@
   {
     "name": "AUDIT-GROWTH-L4-4-captain-leave-words-dropped",
     "file": "src/ui/captainTreeWindow.js",
-    "old": "      unacceptedEsc: t('captain.sky.unacceptedLeave',",
-    "new": "      unacceptedEscX: t('captain.sky.unacceptedLeave',",
+    "old": "      unacceptedEsc: t(",
+    "new": "      unacceptedEscX: t(",
     "tests": [
       "test/ui/growth/growth1_tab.test.js"
     ],

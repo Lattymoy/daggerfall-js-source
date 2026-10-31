@@ -49,19 +49,94 @@ export const HAND_START_QUEST = '_STARTHD';
  * @type {ReadonlyArray<Readonly<{ key: string, quest: string, province: ?string, capital: ?string,
  *   homeland: ReadonlyArray<string>, lair: ReadonlyArray<ReadonlyArray<string>>, site: ?string }>>}
  */
-export const STARTS = Object.freeze(/** @type {Array<[string, string, ?string, ?string, string[], string[][]]>} */ ([
-  ['IliacBay', BAY_START_QUEST, null, null, ['Breton', 'Redguard'], []],
-  ['Skyrim', '_STARTSK', 'Skyrim', 'solitude', ['Nord'], [['DungeonLabyrinth', 'VampireHaunt'], ['DungeonLabyrinth', 'Crypt'], ['DungeonKeep', 'VampireHaunt'], ['DungeonRuin', 'DesecratedTemple']]],
-  ['Morrowind', '_STARTMW', 'Morrowind', 'mournhold', ['DarkElf'], [['DungeonLabyrinth', 'Mine'], ['DungeonKeep', 'Mine'], ['DungeonLabyrinth', 'NaturalCave']]],
-  ['Imperial', '_STARTIC', 'Imperial', 'imperial-city', [], [['DungeonLabyrinth', 'Prison'], ['DungeonKeep', 'Prison']]],
-  ['BlackMarsh', '_STARTBM', 'BlackMarsh', 'helstrom', ['Argonian'], [['DungeonRuin', '*']]],
-  ['Elsweyr', '_STARTEL', 'Elsweyr', 'torval', ['Khajiit'], [['DungeonLabyrinth', 'HumanStronghold'], ['DungeonKeep', 'HumanStronghold'], ['DungeonLabyrinth', 'RuinedCastle']]],
-  ['Valenwood', '_STARTVW', 'Valenwood', 'falinesti', ['WoodElf'], [['DungeonLabyrinth', 'NaturalCave'], ['DungeonKeep', 'NaturalCave']]],
-  ['Sumurset', '_STARTSU', 'Sumurset', 'alinor', ['HighElf'], [['DungeonLabyrinth', 'Laboratory'], ['DungeonKeep', 'Laboratory'], ['DungeonRuin', 'Laboratory'], ['DungeonLabyrinth', 'Coven']]],
-]).map(([key, quest, province, capital, homeland, lair]) => Object.freeze({
-  key, quest, province, capital, homeland: Object.freeze(homeland), lair: Object.freeze(lair.map((w) => Object.freeze(w))),
-  site: province ? `StartSite${key}` : null,
-})));
+export const STARTS = Object.freeze(
+  /** @type {Array<[string, string, ?string, ?string, string[], string[][]]>} */ ([
+    ['IliacBay', BAY_START_QUEST, null, null, ['Breton', 'Redguard'], []],
+    [
+      'Skyrim',
+      '_STARTSK',
+      'Skyrim',
+      'solitude',
+      ['Nord'],
+      [
+        ['DungeonLabyrinth', 'VampireHaunt'],
+        ['DungeonLabyrinth', 'Crypt'],
+        ['DungeonKeep', 'VampireHaunt'],
+        ['DungeonRuin', 'DesecratedTemple'],
+      ],
+    ],
+    [
+      'Morrowind',
+      '_STARTMW',
+      'Morrowind',
+      'mournhold',
+      ['DarkElf'],
+      [
+        ['DungeonLabyrinth', 'Mine'],
+        ['DungeonKeep', 'Mine'],
+        ['DungeonLabyrinth', 'NaturalCave'],
+      ],
+    ],
+    [
+      'Imperial',
+      '_STARTIC',
+      'Imperial',
+      'imperial-city',
+      [],
+      [
+        ['DungeonLabyrinth', 'Prison'],
+        ['DungeonKeep', 'Prison'],
+      ],
+    ],
+    ['BlackMarsh', '_STARTBM', 'BlackMarsh', 'helstrom', ['Argonian'], [['DungeonRuin', '*']]],
+    [
+      'Elsweyr',
+      '_STARTEL',
+      'Elsweyr',
+      'torval',
+      ['Khajiit'],
+      [
+        ['DungeonLabyrinth', 'HumanStronghold'],
+        ['DungeonKeep', 'HumanStronghold'],
+        ['DungeonLabyrinth', 'RuinedCastle'],
+      ],
+    ],
+    [
+      'Valenwood',
+      '_STARTVW',
+      'Valenwood',
+      'falinesti',
+      ['WoodElf'],
+      [
+        ['DungeonLabyrinth', 'NaturalCave'],
+        ['DungeonKeep', 'NaturalCave'],
+      ],
+    ],
+    [
+      'Sumurset',
+      '_STARTSU',
+      'Sumurset',
+      'alinor',
+      ['HighElf'],
+      [
+        ['DungeonLabyrinth', 'Laboratory'],
+        ['DungeonKeep', 'Laboratory'],
+        ['DungeonRuin', 'Laboratory'],
+        ['DungeonLabyrinth', 'Coven'],
+      ],
+    ],
+  ]).map(([key, quest, province, capital, homeland, lair]) =>
+    Object.freeze({
+      key,
+      quest,
+      province,
+      capital,
+      homeland: Object.freeze(homeland),
+      lair: Object.freeze(lair.map((w) => Object.freeze(w))),
+      site: province ? `StartSite${key}` : null,
+    }),
+  ),
+);
 
 /** START2: the Bay's start - the page's first, and every path's that names no other. */
 export const BAY_START = STARTS[0];
@@ -81,7 +156,8 @@ export const isStartQuestName = (questName) => {
 /** THE WRIT (bible/03-World/Passage.md "The writ"): does this start's commission carry the Crown's writ of passage? A
  *  province's does and the commission in hand does (their letters, 1030: "This letter is Our writ of passage"); the Bay's
  *  carries none (its 1030: "to be opened in the Iliac Bay and nowhere else") - AUDIT STARTS V3. */
-export const carriesWrit = (questName) => isStartQuestName(questName) && String(questName).toUpperCase() !== BAY_START_QUEST.toUpperCase();
+export const carriesWrit = (questName) =>
+  isStartQuestName(questName) && String(questName).toUpperCase() !== BAY_START_QUEST.toUpperCase();
 
 /** START2: a start by its key, or null. */
 export const startByKey = (key) => STARTS.find((s) => s.key === key) ?? null;
@@ -100,6 +176,6 @@ export const startSiteId = (start) => START_SITE_ID_BASE + STARTS.indexOf(start)
 /** The start whose site an id names (a Place's p1), or null. */
 export const startOfSiteId = (id) => {
   const i = Number(id) - START_SITE_ID_BASE;
-  const s = Number.isInteger(i) ? STARTS[i] ?? null : null;
-  return s?.site ? s : null;   // the Bay's start has no site of its own
+  const s = Number.isInteger(i) ? (STARTS[i] ?? null) : null;
+  return s?.site ? s : null; // the Bay's start has no site of its own
 };

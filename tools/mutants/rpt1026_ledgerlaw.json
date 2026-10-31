@@ -12,8 +12,8 @@
   {
     "name": "RPT1026-LEDGERLAW-105-hand-over-unwritten",
     "file": "server-account/src/ledger.js",
-    "old": "`UPDATE products SET handed_to = CASE WHEN owner = ?1 THEN NULL ELSE ?1 END\n",
-    "new": "`UPDATE products SET handed_to = NULL\n",
+    "old": "      (m) => `UPDATE products SET handed_to = CASE WHEN owner = ?1 THEN NULL ELSE ?1 END",
+    "new": "      (m) => `UPDATE products SET handed_to = NULL",
     "tests": [
       "test/server/rpt1026_ledgerlaw.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "RPT1026-LEDGERLAW-105-owner-holding-upheld-against",
     "file": "server-account/src/ledger.js",
-    "old": "\n          AND p.owner != ?${part.length + 1}`).bind(...part, at.player).all();",
-    "new": "`).bind(...part, at.player).all();",
+    "old": "        WHERE p.provenance IN (${marks(part.length, 1)}) AND ${CRAFT_RECORD_SQL} = c.player AND ${CRAFT_RECORD_SQL} != ?${part.length + 1}\n          AND p.owner != ?${part.length + 1}`,",
+    "new": "        WHERE p.provenance IN (${marks(part.length, 1)}) AND ${CRAFT_RECORD_SQL} = c.player AND ${CRAFT_RECORD_SQL} != ?${part.length + 1}`,",
     "tests": [
       "test/server/rpt1026_ledgerlaw.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "RPT1026-LEDGERLAW-105-fill-keeps-hand-over",
     "file": "server-account/src/writs.js",
-    "old": "bought_with = 'marks', handed_to = NULL\n",
-    "new": "bought_with = 'marks'\n",
+    "old": "        `UPDATE products SET credited = 0, owner = (SELECT poster FROM commissions WHERE id = ?1 AND fn = ?2), listed = 0, bought_with = 'marks', handed_to = NULL",
+    "new": "        `UPDATE products SET credited = 0, owner = (SELECT poster FROM commissions WHERE id = ?1 AND fn = ?2), listed = 0, bought_with = 'marks'",
     "tests": [
       "test/server/rpt1026_ledgerlaw.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "RPT1026-LEDGERLAW-99-excuse-ignores-values",
     "file": "server-account/src/verdict.js",
-    "old": "&& excused === lawExcuseOf(sig, values)\n",
-    "new": "&& excused.split('|')[0] === sig\n",
+    "old": "  excused != null && sig != null && excused === lawExcuseOf(sig, values) && !(values ?? '').includes(LAW_VALUES_CUT); // AUDIT RPT1026 C5: a state cut is no state an excuse names (judge.js LAW_VALUES_CUT)",
+    "new": "  excused != null && sig != null && excused.split('|')[0] === sig && !(values ?? '').includes(LAW_VALUES_CUT); // AUDIT RPT1026 C5: a state cut is no state an excuse names (judge.js LAW_VALUES_CUT)",
     "tests": [
       "test/server/rpt1026_ledgerlaw.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "RPT1026-LEDGERLAW-99-values-unread",
     "file": "server-account/src/verdict.js",
-    "old": "  const values = law > 0 ? lawValuesOf(save, summary) : null;",
-    "new": "  const values = null;",
+    "old": "  const values = law > 0 ? lawValuesOf(save, summary) : null; // RPT1026-LEDGERLAW: an excuse is of the values too",
+    "new": "  const values = null; // RPT1026-LEDGERLAW: an excuse is of the values too",
     "tests": [
       "test/server/rpt1026_ledgerlaw.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "RPT1026-LEDGERLAW-99-clean-keeps-excuse",
     "file": "server-account/src/verdict.js",
-    "old": "    + \" law_excused = CASE WHEN ?15 IS NULL AND instr(law_excused, '|') > 0 THEN NULL ELSE law_excused END\"\n",
-    "new": "    + ' law_excused = law_excused'\n",
+    "old": "        \" law_excused = CASE WHEN ?15 IS NULL AND instr(law_excused, '|') > 0 THEN NULL ELSE law_excused END\" +",
+    "new": "        ' law_excused = law_excused' +",
     "tests": [
       "test/server/rpt1026_ledgerlaw.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "RPT1026-LEDGERLAW-99-clear-writes-no-values",
     "file": "server-account/src/review.js",
-    "old": "law_excused = CASE WHEN law_v IS NULL THEN law_sig ELSE law_sig || '|' || law_v END,",
-    "new": "law_excused = law_sig,",
+    "old": "        law_excused = CASE WHEN law_v IS NULL THEN law_sig ELSE law_sig || '|' || law_v END, allowance = NULL, judge_rev = judge_rev + 1 WHERE id = ?`,",
+    "new": "        law_excused = law_sig, allowance = NULL, judge_rev = judge_rev + 1 WHERE id = ?`,",
     "tests": [
       "test/server/rpt1026_ledgerlaw.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "RPT1026-LEDGERLAW-99-help-words",
     "file": "tools/realmReview.mjs",
-    "old": "  '         (clear lifts the hold and EXCUSES the finding standing, exactly as it stands now - its pieces, purse, bank,',\n",
-    "new": "",
+    "old": "  '         (clear lifts the hold and EXCUSES the finding standing, exactly as it stands now - its pieces, purse, bank,',\n  '          level, attributes and skills; any other state holds again. A clean checkpoint ends the excuse of a purse, bank,',",
+    "new": "  '          level, attributes and skills; any other state holds again. A clean checkpoint ends the excuse of a purse, bank,',",
     "tests": [
       "test/server/rpt1026_ledgerlaw.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "RPT1026-LEDGERLAW-98-credit-unspent",
     "file": "src/systems/item/foundMark.js",
-    "old": "  spendOwnMends(item, from);   // RPT1026-LEDGERLAW",
-    "new": "  // RPT1026-LEDGERLAW",
+    "old": "  spendOwnMends(item, from); // RPT1026-LEDGERLAW: what wear took since the last mend is spent, never credited again",
+    "new": "  // RPT1026-LEDGERLAW: what wear took since the last mend is spent, never credited again",
     "tests": [
       "test/systems/item/rpt1026_ledgerlaw_mend.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "RPT1026-LEDGERLAW-98-spend-to-condition",
     "file": "src/systems/item/foundMark.js",
-    "old": "Math.max(0, Math.trunc(at ?? 0) - item.foundCondition)",
-    "new": "Math.max(0, Math.trunc(at ?? 0))",
+    "old": "  item.selfMended = Math.min(item.selfMended, Math.max(0, Math.trunc(at ?? 0) - item.foundCondition));",
+    "new": "  item.selfMended = Math.min(item.selfMended, Math.max(0, Math.trunc(at ?? 0)));",
     "tests": [
       "test/systems/item/rpt1026_ledgerlaw_mend.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "RPT1026-LEDGERLAW-269-goods-row-untagged",
     "file": "src/ui/marketTab.js",
-    "old": "    if (isStolen(it)) b.append(el('span', 'market-stolen', stolenTag()));",
-    "new": "",
+    "old": "    if (isStolen(it)) b.append(el('span', 'market-stolen', stolenTag())); // RPT1026-LEDGERLAW: the theft's mark rides the listing",
+    "new": "    // RPT1026-LEDGERLAW: the theft's mark rides the listing",
     "tests": [
       "test/ui/rpt1026_ledgerlaw_stolen.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "RPT1026-LEDGERLAW-269-goods-bar-silent",
     "file": "src/ui/marketTab.js",
-    "old": "    if (row.kind === 'item' && isStolen(row.item)) bar.append(el('p', 'market-stolenline', stolenLine()));",
-    "new": "",
+    "old": "    if (row.kind === 'item' && isStolen(row.item)) bar.append(el('p', 'market-stolenline', stolenLine())); // RPT1026-LEDGERLAW: what buying it means",
+    "new": "    // RPT1026-LEDGERLAW: what buying it means",
     "tests": [
       "test/ui/rpt1026_ledgerlaw_stolen.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "RPT1026-LEDGERLAW-269-trader-row-untagged",
     "file": "src/ui/vendor/vendorTab.js",
-    "old": "    if (isStolen(row.item)) b.append(el('span', 'market-stolen', stolenTag()));",
-    "new": "",
+    "old": "    if (isStolen(row.item)) b.append(el('span', 'market-stolen', stolenTag())); // RPT1026-LEDGERLAW: the theft's mark rides the listing",
+    "new": "    // RPT1026-LEDGERLAW: the theft's mark rides the listing",
     "tests": [
       "test/ui/rpt1026_ledgerlaw_stolen.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "RPT1026-LEDGERLAW-269-look-unsaid",
     "file": "src/systems/item/itemLook.js",
-    "old": "stolen: isStolen(it) ? stolenLine() : null",
-    "new": "stolen: null",
+    "old": "  return { rows, magic, stolen: isStolen(it) ? stolenLine() : null };",
+    "new": "  return { rows, magic, stolen: null };",
     "tests": [
       "test/ui/rpt1026_ledgerlaw_stolen.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "RPT1026-LEDGERLAW-269-look-undrawn",
     "file": "src/ui/vendor/vendorTab.js",
-    "old": "  if (stats.stolen) box.append(el('p', 'vendor-stolen', stats.stolen));",
-    "new": "",
+    "old": "  if (stats.stolen) box.append(el('p', 'vendor-stolen', stats.stolen)); // RPT1026-LEDGERLAW",
+    "new": "  // RPT1026-LEDGERLAW",
     "tests": [
       "test/ui/rpt1026_ledgerlaw_stolen.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "RPT1026-LEDGERLAW-269-page-untagged",
     "file": "src/ui/vendor/vendorPage.js",
-    "old": "${isStolen(r.item) ? ` · ${stolenTag()}` : ''}",
-    "new": "",
+    "old": "        `${goldText(r.price)} · ${r.owner ?? 'someone'}'s house, ${townOf(r.map)}${r.mine ? ' · yours' : ''}${isStolen(r.item) ? ` · ${stolenTag()}` : ''}`,",
+    "new": "        `${goldText(r.price)} · ${r.owner ?? 'someone'}'s house, ${townOf(r.map)}${r.mine ? ' · yours' : ''}`,",
     "tests": [
       "test/ui/rpt1026_ledgerlaw_stolen.test.js"
     ],

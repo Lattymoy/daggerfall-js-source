@@ -15,8 +15,13 @@ import { join, extname, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
-const W = 640, H = 400;
+const out = [];
+const check = (n, ok, d = '') => {
+  out.push(ok);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`);
+};
+const W = 640,
+  H = 400;
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=${W} height=${H}></canvas><script type=module>
 import { SdMotesRenderer, sdMoteVertices, sdMoteAt, SD_MOTES_TOTAL } from '/src/render/superDungeon/sdMotes.js';
@@ -63,30 +68,78 @@ window.ready = true;
 
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
-  if (url === '/probe/') { res.writeHead(200, { 'content-type': 'text/html' }); res.end(PAGE); return; }
+  if (url === '/probe/') {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(PAGE);
+    return;
+  }
   const f = join(ROOT, url);
-  if (!f.startsWith(ROOT) || !existsSync(f)) { res.writeHead(404); res.end(); return; }
-  res.writeHead(200, { 'content-type': extname(f) === '.js' ? 'text/javascript' : extname(f) === '.json' ? 'application/json' : 'application/octet-stream' });
+  if (!f.startsWith(ROOT) || !existsSync(f)) {
+    res.writeHead(404);
+    res.end();
+    return;
+  }
+  res.writeHead(200, {
+    'content-type':
+      extname(f) === '.js'
+        ? 'text/javascript'
+        : extname(f) === '.json'
+          ? 'application/json'
+          : 'application/octet-stream',
+  });
   res.end(readFileSync(f));
 });
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 const browser = await chromium.launch();
 try {
   const page = await browser.newPage();
-  const errs = []; page.on('pageerror', (e) => errs.push(e.message));
-  page.on('console', (m) => { if (m.type() === 'error') errs.push(m.text()); });
+  const errs = [];
+  page.on('pageerror', (e) => errs.push(e.message));
+  page.on('console', (m) => {
+    if (m.type() === 'error') errs.push(m.text());
+  });
   await page.goto(`http://127.0.0.1:${server.address().port}/probe/`);
-  try { await page.waitForFunction(() => window.ready === true, null, { timeout: 60000 }); } catch (e) { console.log(errs.join('\n')); throw e; }
+  try {
+    await page.waitForFunction(() => window.ready === true, null, { timeout: 60000 });
+  } catch (e) {
+    console.log(errs.join('\n'));
+    throw e;
+  }
   const p = await page.evaluate(() => window.probe);
-  check('the motes\' program compiles and links', !p.err && p.linked === true, p.err ?? '');
+  check("the motes' program compiles and links", !p.err && p.linked === true, p.err ?? '');
   check('over a thousand of them', p.total > 1000, `${p.total}`);
-  const views = { hall: [[0, 3, 14], [0, 3, 42]], steps: [[0, 2, 100], [0, -6, 160]], arena: [[0, 4, 212], [0, 4, 246]], sky: [[0, 2, 120], [0, 40, 160]] };
+  const views = {
+    hall: [
+      [0, 3, 14],
+      [0, 3, 42],
+    ],
+    steps: [
+      [0, 2, 100],
+      [0, -6, 160],
+    ],
+    arena: [
+      [0, 4, 212],
+      [0, 4, 246],
+    ],
+    sky: [
+      [0, 2, 120],
+      [0, 40, 160],
+    ],
+  };
   for (const [name, [eye, at]] of Object.entries(views)) {
     for (const t of [37.5, 400.25]) {
       const r = await page.evaluate(([e, a, tt]) => window.draw(e, a, tt), [eye, at, t]);
-      check(`${name} at ${t} s: drawn, no GL error, the air lit`, r.drew && r.drawn === p.total && r.glErr === 0 && r.lit > 40, `lit ${r.lit} px, error ${r.glErr}`);
+      check(
+        `${name} at ${t} s: drawn, no GL error, the air lit`,
+        r.drew && r.drawn === p.total && r.glErr === 0 && r.lit > 40,
+        `lit ${r.lit} px, error ${r.glErr}`,
+      );
       const kinds = r.asked.map((n, k) => [k, n, r.hits[k]]).filter(([, n]) => n > 0);
-      check(`${name} at ${t} s: every mote asked lit where the law puts it`, kinds.length > 0 && kinds.every(([, n, h]) => h === n), kinds.map(([k, n, h]) => `kind ${k}: ${h}/${n}`).join(', '));
+      check(
+        `${name} at ${t} s: every mote asked lit where the law puts it`,
+        kinds.length > 0 && kinds.every(([, n, h]) => h === n),
+        kinds.map(([k, n, h]) => `kind ${k}: ${h}/${n}`).join(', '),
+      );
     }
   }
   const miss = await page.evaluate(() => window.miss ?? []);

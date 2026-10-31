@@ -15,20 +15,33 @@ export function villainyLine(/** @type {number} */ n) {
 }
 
 const STORE = 'dfo.pvpVillainy.v1';
-const page = new Map();   // a blocked store keeps it for the page
+const page = new Map(); // a blocked store keeps it for the page
 /** The last meter heard for character `who`, kept in this browser (a viewer's convenience), or null. */
 export function villainyKept(who, heard = null) {
   if (heard != null && who) page.set(who, heard);
   try {
     const all = JSON.parse(appStorage()?.getItem(STORE) ?? '{}') ?? {};
-    if (heard != null && who) { all[who] = heard; appStorage()?.setItem(STORE, JSON.stringify(all)); }
+    if (heard != null && who) {
+      all[who] = heard;
+      appStorage()?.setItem(STORE, JSON.stringify(all));
+    }
     if (Number.isFinite(all[who])) return all[who];
-  } catch { /* the page's own below */ }
+  } catch {
+    /* the page's own below */
+  }
   return page.get(who) ?? null;
 }
 
 /** The section, appended to the sheet's `detail` with the menu's own kit: the referee's word, else the last kept, else 0. */
-export function statsVillainy(/** @type {HTMLElement} */ detail, /** @type {{ el: (tag: string, cls?: string | null, text?: string) => HTMLElement, meter: (now: number, max: number, tone: string) => HTMLElement }} */ { el, meter }, heard = pvpVillainy(), who = '') {
+export function statsVillainy(
+  /** @type {HTMLElement} */ detail,
+  /** @type {{ el: (tag: string, cls?: string | null, text?: string) => HTMLElement, meter: (now: number, max: number, tone: string) => HTMLElement }} */ {
+    el,
+    meter,
+  },
+  heard = pvpVillainy(),
+  who = '',
+) {
   const n = villainyKept(who, heard) ?? heard ?? 0;
   const row = el('div', 'px-mrow px-villainy');
   const top = el('div', 'px-mtop');
@@ -40,5 +53,8 @@ export function statsVillainy(/** @type {HTMLElement} */ detail, /** @type {{ el
   bar.append(mark);
   row.append(top, bar);
   detail.append(row);
-  if (isVillain(n)) detail.append(el('p', 'px-note', t('pvp.villain.red', 'You are a villain. You have a red skull, and your PvP flag stays on.')));
+  if (isVillain(n))
+    detail.append(
+      el('p', 'px-note', t('pvp.villain.red', 'You are a villain. You have a red skull, and your PvP flag stays on.')),
+    );
 }

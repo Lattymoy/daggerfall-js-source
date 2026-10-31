@@ -173,8 +173,8 @@
   {
     "name": "RS-the-route-unnamed",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/account/recovery-codes',\n",
-    "new": "",
+    "old": "  '/v1/account/recovery-codes',\n  // ACC3: the one WRITE in the wardrobe. Holding a title is derived",
+    "new": "  // ACC3: the one WRITE in the wardrobe. Holding a title is derived",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "RS-the-stage-gone",
     "file": "src/ui/accountFlow.js",
-    "old": "  'codes',      // RECOVERY-SET: a new set of recovery codes, behind the password\n",
-    "new": "",
+    "old": "  'codes', // RECOVERY-SET: a new set of recovery codes, behind the password\n]);",
+    "new": "]);",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "RS-no-password-field",
     "file": "src/ui/accountFlow.js",
-    "old": "  codes: ['oldPassword', 'code'],",
-    "new": "  codes: ['code'],",
+    "old": "  codes: ['oldPassword', 'code'], // RECOVERY-SET: the password, as changing it asks - AUDIT RECOVERY-SET A1: and a code the new set replaces",
+    "new": "  codes: ['code'], // RECOVERY-SET: the password, as changing it asks - AUDIT RECOVERY-SET A1: and a code the new set replaces",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "RS-the-password-not-sent",
     "file": "src/ui/accountFlow.js",
-    "old": "newRecoveryCodes(door(), pw('oldPassword'), v('code'))",
-    "new": "newRecoveryCodes(door(), '', v('code'))",
+    "old": "    const r = await ask(() => newRecoveryCodes(door(), pw('oldPassword'), v('code')));",
+    "new": "    const r = await ask(() => newRecoveryCodes(door(), '', v('code')));",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "RS-the-codes-kept",
     "file": "src/ui/accountFlow.js",
-    "old": "    self.recoveryCodes = null;\n    self.codesFor = '';\n    self.note = ''; self.error = '';",
-    "new": "    self.codesFor = '';\n    self.note = ''; self.error = '';",
+    "old": "    self.recoveryCodes = null;\n    self.codesFor = '';",
+    "new": "    self.codesFor = '';",
     "tests": [
       "test/server/recoveryset.test.js",
       "test/server/audit_recoveryset.test.js"
@@ -256,8 +256,8 @@
   {
     "name": "RS-the-sets-junk-kept",
     "file": "src/ui/accountFlow.js",
-    "old": "return d.recoveryCodes.filter((c) => typeof c === 'string' && c);",
-    "new": "return d.recoveryCodes;",
+    "old": "  if (Array.isArray(d?.recoveryCodes)) return d.recoveryCodes.filter((c) => typeof c === 'string' && c);",
+    "new": "  if (Array.isArray(d?.recoveryCodes)) return d.recoveryCodes;",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "RS-the-refusal-swallowed",
     "file": "src/ui/accountFlow.js",
-    "old": "    const r = await ask(() => newRecoveryCodes(door(), pw('oldPassword'), v('code')));\n    if (!r) return false;\n    if (!r.ok) return refuse(accountRefusalText(r.error));",
-    "new": "    const r = await ask(() => newRecoveryCodes(door(), pw('oldPassword'), v('code')));\n    if (!r) return false;\n    if (!r.ok) return refuse(accountRefusalText('server'));",
+    "old": "    if (!r) return false;\n    if (!r.ok) return refuse(accountRefusalText(r.error));\n    const codes = codesOf(r.data);",
+    "new": "    if (!r) return false;\n    if (!r.ok) return refuse(accountRefusalText('server'));\n    const codes = codesOf(r.data);",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "RS-an-empty-code-stage",
     "file": "src/ui/accountFlow.js",
-    "old": "    if (!codes.length) {\n      await self.start();",
-    "new": "    if (false) {\n      await self.start();",
+    "old": "    if (!codes.length) {",
+    "new": "    if (false) {",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "RS-the-file-unnumbered",
     "file": "src/ui/accountFlow.js",
-    "old": "...codes.map((c, i) => `${i + 1}. ${c}`),",
-    "new": "...codes.map((c) => c),",
+    "old": "    ...codes.map((c, i) => `${i + 1}. ${c}`),",
+    "new": "    ...codes.map((c) => c),",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "RS-the-name-unsanitised",
     "file": "src/ui/accountFlow.js",
-    "old": "String(handle || 'account').replace(/[^\\w-]+/g, '').toLowerCase()",
-    "new": "String(handle || 'account').toLowerCase()",
+    "old": "  `dfo-recovery-codes-${\n    String(handle || 'account')\n      .replace(/[^\\w-]+/g, '')\n      .toLowerCase() || 'account'\n  }.txt`;",
+    "new": "  `dfo-recovery-codes-${String(handle || 'account').toLowerCase() || 'account'}.txt`;",
     "tests": [
       "test/server/recoveryset.test.js"
     ]

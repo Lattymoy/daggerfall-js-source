@@ -47,8 +47,8 @@
   {
     "name": "PEER-PLAQUE1-empty-id-is-a-peer",
     "file": "src/player/socialPick.js",
-    "old": "export const peerIdOfKey = (key) => (typeof key === 'string' && key.startsWith(PEER_KEY_PREFIX) && key.length > PEER_KEY_PREFIX.length ? key.slice(PEER_KEY_PREFIX.length) : null);",
-    "new": "export const peerIdOfKey = (key) => (typeof key === 'string' && key.startsWith(PEER_KEY_PREFIX) ? key.slice(PEER_KEY_PREFIX.length) : null);",
+    "old": "  typeof key === 'string' && key.startsWith(PEER_KEY_PREFIX) && key.length > PEER_KEY_PREFIX.length\n    ? key.slice(PEER_KEY_PREFIX.length)\n    : null;",
+    "new": "  typeof key === 'string' && key.startsWith(PEER_KEY_PREFIX) ? key.slice(PEER_KEY_PREFIX.length) : null;",
     "tests": [
       "test/player/peerplaque.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PEER-PLAQUE1-a-number-key-reaches-startsWith",
     "file": "src/player/socialPick.js",
-    "old": "export const peerIdOfKey = (key) => (typeof key === 'string' && key.startsWith(PEER_KEY_PREFIX) && key.length > PEER_KEY_PREFIX.length ? key.slice(PEER_KEY_PREFIX.length) : null);",
-    "new": "export const peerIdOfKey = (key) => (String(key).startsWith(PEER_KEY_PREFIX) && String(key).length > PEER_KEY_PREFIX.length ? String(key).slice(PEER_KEY_PREFIX.length) : null);",
+    "old": "  typeof key === 'string' && key.startsWith(PEER_KEY_PREFIX) && key.length > PEER_KEY_PREFIX.length\n    ? key.slice(PEER_KEY_PREFIX.length)",
+    "new": "  String(key).startsWith(PEER_KEY_PREFIX) && String(key).length > PEER_KEY_PREFIX.length\n    ? String(key).slice(PEER_KEY_PREFIX.length)",
     "tests": [
       "test/player/peerplaque.test.js"
     ],
@@ -67,8 +67,8 @@
   {
     "name": "PEER-PLAQUE1-refused-acts-dropped",
     "file": "src/ui/socialMenu.js",
-    "old": "  return socialMenuRows({ peerId, ...acts }).filter((r) => r.act)\n",
-    "new": "  return socialMenuRows({ peerId, ...acts }).filter((r) => r.act && r.enabled)\n",
+    "old": "    .filter((r) => r.act)",
+    "new": "    .filter((r) => r.act && r.enabled)",
     "tests": [
       "test/player/peerplaque.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "PEER-PLAQUE1-trade-label-ignored",
     "file": "src/ui/socialMenu.js",
-    "old": "label: tradeLabel || 'Trade'",
-    "new": "label: 'Trade'",
+    "old": "      label: tradeLabel || 'Trade',",
+    "new": "      label: 'Trade',",
     "tests": [
       "test/player/peerplaque.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "PEER-PLAQUE1-stranger-gets-a-word",
     "file": "src/player/socialPick.js",
-    "old": "  if (acts.relation === 'friend') return 'Friend';\n  return null;",
-    "new": "  if (acts.relation === 'friend') return 'Friend';\n  return 'Stranger';",
+    "old": "  return null;",
+    "new": "  return 'Stranger';",
     "tests": [
       "test/player/peerplaque.test.js"
     ]

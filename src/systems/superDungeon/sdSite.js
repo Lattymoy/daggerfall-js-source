@@ -27,7 +27,7 @@ import { LOCATION_TYPES, REGION_NAMES } from '../../formats/mapsFile.js';
 import { hubClaim, outranks } from '../region/regionHubs.js';
 import { sdRoll, sdNameOf, sdLaneOf, SD_LANE_SPAN } from '../../net/superDungeon/sdLaw.js';
 import { synthesizeDungeonLocation, spawnClearance, SPAWN_CLEARANCE_M, SALT_MAX } from '../../world/spawnedDungeons.js';
-import { worldPixelOfKey } from '../../world/worldWide/worldGrid.js';   // WW5: a theatre's pixels are the world's keys
+import { worldPixelOfKey } from '../../world/worldWide/worldGrid.js'; // WW5: a theatre's pixels are the world's keys
 import { inBay } from '../../world/tamriel/tamrielFrame.js';
 
 /** With no region the census could name, the Hollow rises by one of the Bay's first this-many cities by the hubs' own claim
@@ -46,9 +46,13 @@ export const sdSalt = (s) => SD_SALT_BASE + 1 + ((Math.max(1, s | 0) - 1) % (SAL
 
 const W = 1000;
 /** A location's map pixel, off its MapId's low twenty bits (DFU's own law - systems/map/mapDirectory.js). */
-export const pixelOfLoc = (loc) => { const id = (Number(loc?.mapTableData?.mapId) >>> 0) & 0xfffff; return { px: id % W, py: Math.floor(id / W) }; };
+export const pixelOfLoc = (loc) => {
+  const id = (Number(loc?.mapTableData?.mapId) >>> 0) & 0xfffff;
+  return { px: id % W, py: Math.floor(id / W) };
+};
 /** AUDIT TAMRIEL-WIDE C4: a Hollow's city's pixel - a registry place's own (a province's Hollow, WW5), else its MapId's. */
-export const cityPixelOf = (city) => (Number.isInteger(city?.px) && Number.isInteger(city?.py) ? { px: city.px, py: city.py } : pixelOfLoc(city));
+export const cityPixelOf = (city) =>
+  Number.isInteger(city?.px) && Number.isInteger(city?.py) ? { px: city.px, py: city.py } : pixelOfLoc(city);
 
 /**
  * The cities a Hollow in region `r` may rise by, best first (the hubs' claim, then the lower region): the region's
@@ -67,7 +71,9 @@ export function sdCities(locations, r, { isBase = () => true, regionNameOf = (i)
     if (r < 0 && loc.mapTableData?.locationType !== LOCATION_TYPES.TownCity) continue;
     rows.push({ loc, claim });
   }
-  rows.sort((a, b) => (outranks(a.claim, b.claim) ? -1 : outranks(b.claim, a.claim) ? 1 : a.loc.regionIndex - b.loc.regionIndex));
+  rows.sort((a, b) =>
+    outranks(a.claim, b.claim) ? -1 : outranks(b.claim, a.claim) ? 1 : a.loc.regionIndex - b.loc.regionIndex,
+  );
   return (r < 0 ? rows.slice(0, SD_GREAT_CITIES) : rows).map((x) => x.loc);
 }
 
@@ -82,11 +88,11 @@ function pixelsByTown(scan) {
       const t = scan.townAt[p];
       if (t < 0) continue;
       let l = m.get(t);
-      if (!l) m.set(t, l = []);
+      if (!l) m.set(t, (l = []));
       l.push(p);
     }
   }
-  for (const l of m.values()) l.sort((a, b) => a - b);   // row-major: the roll's order is the data's
+  for (const l of m.values()) l.sort((a, b) => a - b); // row-major: the roll's order is the data's
   _byTown.set(scan, m);
   return m;
 }
@@ -118,7 +124,15 @@ export function findSdSite(rec, scan, cities, ground = () => true) {
     for (let j = 0; j < pixels.length; j++) {
       const id = pixels[(roll + j) % pixels.length];
       if (!ground(id % W, Math.floor(id / W))) continue;
-      return { s: rec.s, px: id % W, py: Math.floor(id / W), city, cityName: String(city.name ?? ''), cityRegion: city.regionIndex, region: rec.r };
+      return {
+        s: rec.s,
+        px: id % W,
+        py: Math.floor(id / W),
+        city,
+        cityName: String(city.name ?? ''),
+        cityRegion: city.regionIndex,
+        region: rec.r,
+      };
     }
   }
   return null;
@@ -131,10 +145,16 @@ export function findSdSite(rec, scan, cities, ground = () => true) {
  * @param {(mapId:number) => boolean} [isMain]
  */
 export function sdTemplates(locations, isMain = () => false) {
-  return [...(locations ?? [])].filter((l) => l?.hasDungeon && (l.dungeon?.blocks?.length ?? 0) >= SD_TEMPLATE_MIN_BLOCKS
-    && SD_TEMPLATE_TYPES.includes(l.mapTableData?.locationType) && l.exterior?.exteriorData && !l.spawned
-    && !isMain(l.mapTableData?.mapId)
-    && spawnClearance(l.exterior.exteriorData.width, l.exterior.exteriorData.height) >= SPAWN_CLEARANCE_M);
+  return [...(locations ?? [])].filter(
+    (l) =>
+      l?.hasDungeon &&
+      (l.dungeon?.blocks?.length ?? 0) >= SD_TEMPLATE_MIN_BLOCKS &&
+      SD_TEMPLATE_TYPES.includes(l.mapTableData?.locationType) &&
+      l.exterior?.exteriorData &&
+      !l.spawned &&
+      !isMain(l.mapTableData?.mapId) &&
+      spawnClearance(l.exterior.exteriorData.width, l.exterior.exteriorData.height) >= SPAWN_CLEARANCE_M,
+  );
 }
 /** The slot's template, or null for none. */
 export const pickSdTemplate = (s, templates) => (templates?.length ? templates[sdRoll(s, 3) % templates.length] : null);
@@ -151,7 +171,15 @@ export const pickSdTemplate = (s, templates) => (templates?.length ? templates[s
 /** WW5: a registry place's claim to its province's first city - the hubs' own order (systems/region/regionHubs.js
  *  hubClaim: a city over a town over a village, the one named for its province, its blocks), the lower map id on a tie. */
 const placeClaim = (p, provinceName) => {
-  const claim = hubClaim({ name: p.name, locationIndex: 0, mapTableData: { locationType: p.type }, exterior: { exteriorData: { width: p.w, height: p.h } } }, provinceName);
+  const claim = hubClaim(
+    {
+      name: p.name,
+      locationIndex: 0,
+      mapTableData: { locationType: p.type },
+      exterior: { exteriorData: { width: p.w, height: p.h } },
+    },
+    provinceName,
+  );
   return claim ? [...claim.slice(0, 4), -(p.mapId >>> 0)] : null;
 };
 /**
@@ -181,10 +209,10 @@ function theatrePixelsByTown(scan) {
   m = new Map();
   for (const [k, t] of scan.townOf) {
     let l = m.get(t);
-    if (!l) m.set(t, l = []);
+    if (!l) m.set(t, (l = []));
     l.push(k);
   }
-  for (const l of m.values()) l.sort((a, b) => a - b);   // by the world's key, row by row: the roll's order is the data's
+  for (const l of m.values()) l.sort((a, b) => a - b); // by the world's key, row by row: the roll's order is the data's
   _theatreByTown.set(scan, m);
   return m;
 }
@@ -210,7 +238,16 @@ export function findSdTheatreSite(rec, scan, cities, ground = () => true) {
     for (let j = 0; j < pixels.length; j++) {
       const [px, py] = worldPixelOfKey(pixels[(roll + j) % pixels.length]);
       if (!ground(px, py)) continue;
-      return { s: rec.s, px, py, city, cityName: String(city.name ?? ''), cityRegion: city.region, region: rec.r, lane: sdLaneOf(rec.s) };
+      return {
+        s: rec.s,
+        px,
+        py,
+        city,
+        cityName: String(city.name ?? ''),
+        cityRegion: city.region,
+        region: rec.r,
+        lane: sdLaneOf(rec.s),
+      };
     }
   }
   return null;
@@ -221,7 +258,8 @@ export function findSdTheatreSite(rec, scan, cities, ground = () => true) {
 export const SD_WORLD_LANE = 0x35d;
 /** WW5: a Hollow past the Bay's map id - its slot's own (the 32,768th of a lane after it shares it, as the Bay's Hollows'
  *  salts share theirs every 2,047th). */
-export const sdWorldMapId = (s) => ((SD_WORLD_LANE << 20) | 0x80000 | ((sdLaneOf(s) & 0xf) << 15) | ((s % SD_LANE_SPAN) & 0x7fff)) >>> 0;
+export const sdWorldMapId = (s) =>
+  ((SD_WORLD_LANE << 20) | 0x80000 | ((sdLaneOf(s) & 0xf) << 15) | ((s % SD_LANE_SPAN) & 0x7fff)) >>> 0;
 
 /**
  * THE HOLLOW: the template cloned on the site under the slot's own map id, named, Super. `where` is what the host's
@@ -234,6 +272,13 @@ export const sdWorldMapId = (s) => ((SD_WORLD_LANE << 20) | 0x80000 | ((sdLaneOf
  */
 export function sdHollowLocation(rec, site, template, where = {}) {
   if (!rec || !site || !template) return null;
-  const loc = synthesizeDungeonLocation(template, { salt: sdSalt(rec.s), px: site.px, py: site.py, where, elite: false, mapId: inBay(site.px, site.py) ? null : sdWorldMapId(rec.s) });
+  const loc = synthesizeDungeonLocation(template, {
+    salt: sdSalt(rec.s),
+    px: site.px,
+    py: site.py,
+    where,
+    elite: false,
+    mapId: inBay(site.px, site.py) ? null : sdWorldMapId(rec.s),
+  });
   return { ...loc, name: sdNameOf(rec.s, site.cityName), superTier: true, sdSlot: rec.s };
 }

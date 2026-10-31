@@ -2,8 +2,8 @@
   {
     "name": "SERVERPOST-the-record-unwritten",
     "file": "server-account/src/post.js",
-    "old": "(save) => { giveTradeGoods(save, [rec], 0); return null; }",
-    "new": "(save) => { return null; }",
+    "old": "      giveTradeGoods(save, [rec], 0);\n      return null;",
+    "new": "      return null;",
     "tests": [
       "test/server/serverpost_service.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "SERVERPOST-a-waiting-gift-thrown-away",
     "file": "server-account/src/post.js",
-    "old": "  if (recordOf(row) && row.claimed_at == null) return { error: 'post-unclaimed' };",
-    "new": "  if (false) return { error: 'post-unclaimed' };",
+    "old": "  if (recordOf(row) && row.claimed_at == null) return { error: 'post-unclaimed' }; // the one answer the box and the claim give",
+    "new": "  if (false) return { error: 'post-unclaimed' }; // the one answer the box and the claim give",
     "tests": [
       "test/server/serverpost_service.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "SERVERPOST-read-never-stamped",
     "file": "server-account/src/post.js",
-    "old": "  if (row.read_at == null) await db.prepare('UPDATE server_post SET read_at = ? WHERE id = ? AND to_id = ? AND read_at IS NULL').bind(nowS, id, reader.id).run();\n",
-    "new": "",
+    "old": "  if (row.read_at == null)\n    await db\n      .prepare('UPDATE server_post SET read_at = ? WHERE id = ? AND to_id = ? AND read_at IS NULL')\n      .bind(nowS, id, reader.id)\n      .run();\n  return { post: { ...headOf(row), body: row.body, read: true, readAt: row.read_at ?? nowS } };",
+    "new": "  return { post: { ...headOf(row), body: row.body, read: true, readAt: row.read_at ?? nowS } };",
     "tests": [
       "test/server/serverpost_service.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "SERVERPOST-a-failed-claim-read-as-claimed",
     "file": "server-account/src/post.js",
-    "old": "again.claimed_at != null ? 'post-claimed' : 'server'",
-    "new": "'post-claimed'",
+    "old": "    return { error: !again ? 'no-post' : again.claimed_at != null ? 'post-claimed' : 'server' };",
+    "new": "    return { error: !again ? 'no-post' : 'post-claimed' };",
     "tests": [
       "test/server/serverpost_service.test.js"
     ],
@@ -73,8 +73,8 @@
   {
     "name": "SERVERPOST-the-heartbeats-part-unanswered",
     "file": "server-account/src/heartbeat.js",
-    "old": "  if (body?.post === true) await part('post',",
-    "new": "  if (body?.post === 'never') await part('post',",
+    "old": "  if (body?.post === true)",
+    "new": "  if (body?.post === 'never')",
     "tests": [
       "test/server/serverpost_service.test.js"
     ],
@@ -83,8 +83,8 @@
   {
     "name": "SERVERPOST-the-first-look-said-new",
     "file": "src/net/serverPost.js",
-    "old": "    const fresh = first ? [] : post.filter(",
-    "new": "    const fresh = post.filter(",
+    "old": "    const fresh = first ? [] : post.filter((p) => !p.read && !this._known.has(p.id));",
+    "new": "    const fresh = post.filter((p) => !p.read && !this._known.has(p.id));",
     "tests": [
       "test/net/serverpost_client.test.js"
     ],
@@ -93,8 +93,8 @@
   {
     "name": "SERVERPOST-a-claimed-gift-still-counted",
     "file": "src/net/serverPost.js",
-    "old": "return this.post.filter((p) => !p.read || (p.item && !p.claimed)).length + (this.reports?.unread ?? 0);",
-    "new": "return this.post.filter((p) => !p.read || p.item).length + (this.reports?.unread ?? 0);",
+    "old": "    return this.post.filter((p) => !p.read || (p.item && !p.claimed)).length + (this.reports?.unread ?? 0);",
+    "new": "    return this.post.filter((p) => !p.read || p.item).length + (this.reports?.unread ?? 0);",
     "tests": [
       "test/net/serverpost_client.test.js"
     ],
@@ -113,8 +113,8 @@
   {
     "name": "SERVERPOST-throw-away-beside-a-waiting-gift",
     "file": "src/ui/enhanced/enhancedPost.js",
-    "old": "    if (!head.item || head.claimed) foot.append(keyed(button('pm-throw',",
-    "new": "    foot.append(keyed(button('pm-throw',",
+    "old": "    if (!head.item || head.claimed)\n      foot.append(\n        keyed(\n          button('pm-throw', 'Throw away', () => throwOne(head.id)),\n          'throw',\n        ),\n      );",
+    "new": "    foot.append(\n      keyed(\n        button('pm-throw', 'Throw away', () => throwOne(head.id)),\n        'throw',\n      ),\n    );",
     "tests": [
       "test/net/serverpost_client.test.js"
     ],
@@ -143,8 +143,8 @@
   {
     "name": "SERVERPOST-a-name-unchecked",
     "file": "tools/sendServerPost.mjs",
-    "old": "  for (const h of names) if (!HANDLE_RE.test(h)) throw new Error(`not a handle: ${JSON.stringify(h)}`);\n",
-    "new": "",
+    "old": "  for (const h of names) if (!HANDLE_RE.test(h)) throw new Error(`not a handle: ${JSON.stringify(h)}`);\n  return [...new Set(names.map((h) => h.toLowerCase()))];",
+    "new": "  return [...new Set(names.map((h) => h.toLowerCase()))];",
     "tests": [
       "test/tooling/serverpost_send.test.js"
     ],
@@ -153,8 +153,8 @@
   {
     "name": "SERVERPOST-the-bounds-dropped",
     "file": "tools/sendServerPost.mjs",
-    "old": "  if (!b || b.length > POST_BODY_MAX)",
-    "new": "  if (!b)",
+    "old": "  if (!b || b.length > POST_BODY_MAX) throw new Error(`not a message: 1 to ${POST_BODY_MAX} characters`);",
+    "new": "  if (!b) throw new Error(`not a message: 1 to ${POST_BODY_MAX} characters`);",
     "tests": [
       "test/tooling/serverpost_send.test.js"
     ],
@@ -163,8 +163,8 @@
   {
     "name": "SERVERPOST-the-gun-swapped",
     "file": "tools/sendServerPost.mjs",
-    "old": "  hourlock: () => mintHourlock(),",
-    "new": "  hourlock: () => ({ ...mintHourlock(), value: 1 }),",
+    "old": "  hourlock: () => mintHourlock(), // the Hourlock, as the Brass Remnant's spoils mint it (GUNS-UNFOUND: a gilded bow since 2026-10-23)",
+    "new": "  hourlock: () => ({ ...mintHourlock(), value: 1 }), // the Hourlock, as the Brass Remnant's spoils mint it (GUNS-UNFOUND: a gilded bow since 2026-10-23)",
     "tests": [
       "test/tooling/serverpost_send.test.js"
     ],
@@ -213,8 +213,8 @@
   {
     "name": "SERVERPOST-the-box-newest-first-alone",
     "file": "server-account/src/post.js",
-    "old": "ORDER BY (item IS NOT NULL AND claimed_at IS NULL) DESC, (read_at IS NULL) DESC, sent_at DESC, id DESC LIMIT ?",
-    "new": "ORDER BY sent_at DESC, id DESC LIMIT ?",
+    "old": "    WHERE to_id = ? ORDER BY (item IS NOT NULL AND claimed_at IS NULL) DESC, (read_at IS NULL) DESC, sent_at DESC, id DESC LIMIT ?`,",
+    "new": "    WHERE to_id = ? ORDER BY sent_at DESC, id DESC LIMIT ?`,",
     "tests": [
       "test/server/serverpost_service.test.js"
     ],
@@ -223,8 +223,8 @@
   {
     "name": "SERVERPOST-anothers-piece-thrown-away",
     "file": "server-account/src/post.js",
-    "old": "WHERE id = ? AND to_id = ?').bind(id, reader.id).first();\n  if (!row) return { error: 'no-post' };\n  if (recordOf(row) && row.claimed_at == null)",
-    "new": "WHERE id = ?').bind(id).first();\n  if (!row) return { error: 'no-post' };\n  if (recordOf(row) && row.claimed_at == null)",
+    "old": "  const row = await db\n    .prepare('SELECT id, item, claimed_at FROM server_post WHERE id = ? AND to_id = ?')\n    .bind(id, reader.id)\n    .first();",
+    "new": "  const row = await db.prepare('SELECT id, item, claimed_at FROM server_post WHERE id = ?').bind(id).first();",
     "tests": [
       "test/server/serverpost_service.test.js"
     ],
@@ -263,8 +263,8 @@
   {
     "name": "SERVERPOST-a-lost-answer-said-as-the-connection",
     "file": "src/net/serverPost.js",
-    "old": "      if (r?.unknown) return { ok: false, error: 'unknown' };",
-    "new": "",
+    "old": "      if (r?.unknown) return { ok: false, error: 'unknown' }; // the realm never said - the session is given up, and a join reads the record",
+    "new": "      // the realm never said - the session is given up, and a join reads the record",
     "tests": [
       "test/net/serverpost_client.test.js"
     ],
@@ -273,8 +273,8 @@
   {
     "name": "SERVERPOST-the-second-press-sent",
     "file": "src/ui/enhanced/enhancedPost.js",
-    "old": "    if (!b || b.busy) return;",
-    "new": "    if (!b) return;",
+    "old": "    if (!b || b.busy) return; // AUDIT SERVER-POST: a second press while the first is out is no second claim, and no busy sentence",
+    "new": "    if (!b) return; // AUDIT SERVER-POST: a second press while the first is out is no second claim, and no busy sentence",
     "tests": [
       "test/net/serverpost_client.test.js"
     ],
@@ -293,8 +293,8 @@
   {
     "name": "SERVERPOST-the-line-wiped-on-reopen",
     "file": "src/ui/enhanced/enhancedPost.js",
-    "old": "    if (!again) tell('');",
-    "new": "    tell('');",
+    "old": "    if (!again) tell(''); // reopened by a rebuild, the line it said stays said",
+    "new": "    tell(''); // reopened by a rebuild, the line it said stays said",
     "tests": [
       "test/net/serverpost_client.test.js"
     ],
@@ -303,8 +303,8 @@
   {
     "name": "SERVERPOST-the-focus-dropped",
     "file": "src/ui/enhanced/enhancedPost.js",
-    "old": "    setOpen(id); opened = null;\n    if (!again) tell('');   // reopened by a rebuild, the line it said stays said\n    focusTo = 'back';",
-    "new": "    setOpen(id); opened = null;\n    if (!again) tell('');   // reopened by a rebuild, the line it said stays said",
+    "old": "    focusTo = 'back';\n    draw(true);",
+    "new": "    draw(true);",
     "tests": [
       "test/net/serverpost_client.test.js"
     ],
@@ -333,8 +333,8 @@
   {
     "name": "TAMRIEL-POST-a-guest-sent-it",
     "file": "tools/sendServerPost.mjs",
-    "old": "${record ? sqlText(record) : 'NULL'}, CAST(strftime('%s', 'now') AS INTEGER)${gift ? `, ${sqlText(gift)}` : ''}\nFROM players p WHERE p.handle IS NOT NULL;`;",
-    "new": "${record ? sqlText(record) : 'NULL'}, CAST(strftime('%s', 'now') AS INTEGER)${gift ? `, ${sqlText(gift)}` : ''}\nFROM players p;`;",
+    "old": "FROM players p WHERE p.handle IS NOT NULL;`;",
+    "new": "FROM players p;`;",
     "tests": [
       "test/tooling/serverpost_send.test.js"
     ],
@@ -343,8 +343,8 @@
   {
     "name": "TAMRIEL-POST-the-stones-not-ten",
     "file": "tools/sendServerPost.mjs",
-    "old": "\"currentCondition\":1000,\"stackCount\":10}';",
-    "new": "\"currentCondition\":1000,\"stackCount\":1}';",
+    "old": "  '{\"group\":\"UselessItems2\",\"templateIndex\":572,\"name\":\"Portal Stone\",\"value\":1250,\"maxCondition\":1000,\"currentCondition\":1000,\"stackCount\":10}';",
+    "new": "  '{\"group\":\"UselessItems2\",\"templateIndex\":572,\"name\":\"Portal Stone\",\"value\":1250,\"maxCondition\":1000,\"currentCondition\":1000,\"stackCount\":1}';",
     "tests": [
       "test/tooling/serverpost_send.test.js"
     ],
@@ -353,8 +353,8 @@
   {
     "name": "TAMRIEL-POST-the-send-not-once",
     "file": "tools/sendServerPost.mjs",
-    "old": "  return `INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at${gift ? ', gift' : ''})\nSELECT lower(hex(randomblob(12))), p.id, ${sqlText(b)}, ${sqlText(sender)}, ${sqlText(words.subject)}, ${sqlText(words.body)}, ${record ? sqlText(record) : 'NULL'}",
-    "new": "  return `INSERT INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at${gift ? ', gift' : ''})\nSELECT lower(hex(randomblob(12))), p.id, ${sqlText(b)}, ${sqlText(sender)}, ${sqlText(words.subject)}, ${sqlText(words.body)}, ${record ? sqlText(record) : 'NULL'}",
+    "old": "  return `INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at${gift ? ', gift' : ''})",
+    "new": "  return `INSERT INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at${gift ? ', gift' : ''})",
     "tests": [
       "test/tooling/serverpost_send.test.js"
     ],

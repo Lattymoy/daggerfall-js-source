@@ -128,8 +128,8 @@
   {
     "name": "EGA4-lords-blowon-by-stamps",
     "file": "src/net/eliteGates/egShape.js",
-    "old": "(blow?.on ? sub != null && blow.on.includes(sub) : egInBlow(blow, px, pz))",
-    "new": "egInBlow(blow, px, pz)",
+    "old": "export const egBlowOn = (blow, sub, px, pz) =>\n  blow?.on ? sub != null && blow.on.includes(sub) : egInBlow(blow, px, pz);",
+    "new": "export const egBlowOn = (blow, sub, px, pz) => egInBlow(blow, px, pz);",
     "tests": [
       "test/net/eliteGates/egaudit4_lords_errands.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "EGA4-lords-blowof-drops-on",
     "file": "src/net/eliteGates/egShape.js",
-    "old": "  if (on?.length) blow.on = [...on];\n",
-    "new": "",
+    "old": "  if (on?.length) blow.on = [...on];\n  if (ol > 0) blow.ol = Math.min(EG_OUTLINE_MAX_MS, Math.round(ol));",
+    "new": "  if (ol > 0) blow.ol = Math.min(EG_OUTLINE_MAX_MS, Math.round(ol));",
     "tests": [
       "test/net/eliteGates/egaudit4_lords_errands.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "EGA4-lords-screen-verdict-by-stamps",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "egBlowVerdict(bl, f[0], f[1], t, 400, me())",
-    "new": "egBlowVerdict(bl, f[0], f[1], t)",
+    "old": "          const v = onStorey(egBlowVerdict(bl, f[0], f[1], t, 400, me()), bl, f[0], fy, f[1], t); // AUDIT EG IV (lane1 #5): a failure blow that names me lands wherever I stand; THE ASCENT: on its own storey",
+    "new": "          const v = onStorey(egBlowVerdict(bl, f[0], f[1], t), bl, f[0], fy, f[1], t); // AUDIT EG IV (lane1 #5): a failure blow that names me lands wherever I stand; THE ASCENT: on its own storey",
     "tests": [
       "test/net/eliteGates/egaudit4_lords_errands.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "EGA4-lords-screen-mark-left",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (bl.on && s[0] === 'd') { const at = targetFeet(bl.on[j] ?? bl.on[0]); if (at) { sh.origin[0] = at[0]; sh.origin[1] = at[1]; } }",
-    "new": "",
+    "old": "      if (bl.on && s[0] === 'd') {\n        const at = targetFeet(bl.on[j] ?? bl.on[0]);\n        if (at) {\n          sh.origin[0] = at[0];\n          sh.origin[1] = at[1];\n        }\n      } // AUDIT EG IV (lane1 #5): a failure blow's mark rides the member it names",
+    "new": "      // AUDIT EG IV (lane1 #5): a failure blow's mark rides the member it names",
     "tests": [
       "test/net/eliteGates/egaudit4_lords_errands.test.js"
     ]
@@ -383,7 +383,7 @@
   {
     "name": "EGA4-lords-errands-screen-unread",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      for (const [i, n] of F.pg?.as ?? []) { let ns = given.get(i); if (!ns) given.set(i, (ns = [])); ns.push(n); }",
+    "old": "      for (const [i, n] of F.pg?.as ?? []) {\n        let ns = given.get(i);\n        if (!ns) given.set(i, (ns = []));\n        ns.push(n);\n      }",
     "new": "",
     "tests": [
       "test/net/eliteGates/egaudit4_lords_errands.test.js"
@@ -392,8 +392,8 @@
   {
     "name": "EGA4-lords-errands-screen-placeless",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "const [x, z] = egBodyPlace(b, t);",
-    "new": "const [x, z] = [0, 0];",
+    "old": "  const [x, z] = egBodyPlace(b, t);",
+    "new": "  const [x, z] = [0, 0];",
     "tests": [
       "test/net/eliteGates/egaudit4_lords_errands.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "EGA4-lords-errands-sigil-nothing",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "  if (s?.sigil === 'given' || s?.sigil === 'stone') return",
-    "new": "  if (s?.sigil === 'given-' || s?.sigil === 'stone') return",
+    "old": "  if (s?.sigil === 'given' || s?.sigil === 'stone')",
+    "new": "  if (s?.sigil === 'given-' || s?.sigil === 'stone')",
     "tests": [
       "test/net/eliteGates/egaudit4_lords_errands.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "EGA4-lords-errands-words-name-unread",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "(co.find((c) => c[2] === ns[0]) ?? [])[1] ?? ''",
-    "new": "''",
+    "old": "    ? `${EG_NUMERALS[ns[0]] ?? ns[0]} - ${(co.find((c) => c[2] === ns[0]) ?? [])[1] ?? ''}`.replace(/ - $/, '')",
+    "new": "    ? `${EG_NUMERALS[ns[0]] ?? ns[0]} - ${''}`.replace(/ - $/, '')",
     "tests": [
       "test/net/eliteGates/egaudit4_lords_errands.test.js"
     ]

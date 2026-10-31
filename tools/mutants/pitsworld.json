@@ -2,73 +2,93 @@
   {
     "name": "PITS-WORLD-the-lane-gone",
     "file": "src/world/oceanHoles.js",
-    "old": "export const getAbyssMapId = (pitMapX, pitMapY) => (inBay(pitMapX, pitMapY)",
-    "new": "export const getAbyssMapId = (pitMapX, pitMapY) => (true",
-    "tests": ["test/world/pitsworld.test.js"],
+    "old": "  inBay(pitMapX, pitMapY)",
+    "new": "  true",
+    "tests": [
+      "test/world/pitsworld.test.js"
+    ],
     "note": "Past the Bay the abyss is the Bay's pixel id's again: a pit a thousand pixels off a Bay pit shares its abyss."
   },
   {
     "name": "PITS-WORLD-the-Bay's-arm-gone",
     "file": "src/world/oceanHoles.js",
-    "old": "export const getAbyssMapId = (pitMapX, pitMapY) => (inBay(pitMapX, pitMapY)",
-    "new": "export const getAbyssMapId = (pitMapX, pitMapY) => (false",
-    "tests": ["test/world/pitsworld.test.js", "test/world/oh_placement.test.js"],
+    "old": "  inBay(pitMapX, pitMapY)",
+    "new": "  false",
+    "tests": [
+      "test/world/pitsworld.test.js",
+      "test/world/oh_placement.test.js"
+    ],
     "note": "The Bay's pits leave the mod's own GetAbyssMapId."
   },
   {
     "name": "PITS-WORLD-isAbyss-the-Bay's-bound",
     "file": "src/world/oceanHoles.js",
-    "old": "  return ((v >>> 20) === 0x600 && (v & 0xfffff) < 500000) || worldLaneOf(v) === ABYSS_WORLD_LANE;",
-    "new": "  return ((v >>> 20) === 0x600) || worldLaneOf(v) === ABYSS_WORLD_LANE;",
-    "tests": ["test/world/pitsworld.test.js"],
+    "old": "  return (v >>> 20 === 0x600 && (v & 0xfffff) < 500000) || worldLaneOf(v) === ABYSS_WORLD_LANE;",
+    "new": "  return v >>> 20 === 0x600 || worldLaneOf(v) === ABYSS_WORLD_LANE;",
+    "tests": [
+      "test/world/pitsworld.test.js"
+    ],
     "note": "An id of the 0x600 lane whose low 20 bits are no Bay pixel's is taken for a Bay abyss."
   },
   {
     "name": "PITS-WORLD-isAbyss-no-world-lane",
     "file": "src/world/oceanHoles.js",
-    "old": "  return ((v >>> 20) === 0x600 && (v & 0xfffff) < 500000) || worldLaneOf(v) === ABYSS_WORLD_LANE;",
-    "new": "  return ((v >>> 20) === 0x600 && (v & 0xfffff) < 500000);",
-    "tests": ["test/world/pitsworld.test.js"],
+    "old": "  return (v >>> 20 === 0x600 && (v & 0xfffff) < 500000) || worldLaneOf(v) === ABYSS_WORLD_LANE;",
+    "new": "  return v >>> 20 === 0x600 && (v & 0xfffff) < 500000;",
+    "tests": [
+      "test/world/pitsworld.test.js"
+    ],
     "note": "An abyss past the Bay is not known for one: a lair could be made in it, and its page never opens."
   },
   {
     "name": "PITS-WORLD-isAbyss-any-world-lane",
     "file": "src/world/oceanHoles.js",
-    "old": "  return ((v >>> 20) === 0x600 && (v & 0xfffff) < 500000) || worldLaneOf(v) === ABYSS_WORLD_LANE;",
-    "new": "  return ((v >>> 20) === 0x600 && (v & 0xfffff) < 500000) || worldLaneOf(v) >= 0;",
-    "tests": ["test/world/pitsworld.test.js"],
+    "old": "  return (v >>> 20 === 0x600 && (v & 0xfffff) < 500000) || worldLaneOf(v) === ABYSS_WORLD_LANE;",
+    "new": "  return (v >>> 20 === 0x600 && (v & 0xfffff) < 500000) || worldLaneOf(v) >= 0;",
+    "tests": [
+      "test/world/pitsworld.test.js"
+    ],
     "note": "A spawned dungeon past the Bay is taken for an abyss."
   },
   {
     "name": "PITS-WORLD-isAbyss-the-old-range",
     "file": "src/world/oceanHoles.js",
-    "old": "  if (!Number.isSafeInteger(v) || v < 0 || v > 0xffffffff) return false;\n  return ((v >>> 20) === 0x600",
-    "new": "  if (!Number.isSafeInteger(v) || v < 0 || v > 0xffffffff) return false;\n  return v >= 0x60000000 || ((v >>> 20) === 0x600",
-    "tests": ["test/world/pitsworld.test.js"],
+    "old": "  return (v >>> 20 === 0x600 && (v & 0xfffff) < 500000) || worldLaneOf(v) === ABYSS_WORLD_LANE;",
+    "new": "  return v >= 0x60000000 || (v >>> 20 === 0x600 && (v & 0xfffff) < 500000) || worldLaneOf(v) === ABYSS_WORLD_LANE;",
+    "tests": [
+      "test/world/pitsworld.test.js"
+    ],
     "note": "Every id from 0x60000000 up an abyss again: a zone hall's and an Abyss Dungeon's."
   },
   {
     "name": "PITS-WORLD-the-hold-the-Bay's",
     "file": "src/world/oceanHoles.js",
     "old": "export const pitPixelOk = (mapPixelX, mapPixelY) => inWorldGrid(mapPixelX, mapPixelY);",
-    "new": "export const pitPixelOk = (mapPixelX, mapPixelY) => mapPixelX >= 0 && mapPixelY >= 0 && mapPixelX < 1000 && mapPixelY < 500;",
-    "tests": ["test/world/pitsworld.test.js", "test/scenes/oh_host.test.js"],
+    "new": "export const pitPixelOk = (mapPixelX, mapPixelY) =>\n  mapPixelX >= 0 && mapPixelY >= 0 && mapPixelX < 1000 && mapPixelY < 500;",
+    "tests": [
+      "test/world/pitsworld.test.js",
+      "test/scenes/oh_host.test.js"
+    ],
     "note": "IsValidMapPixel's Bay map again: no pit past the Bay or past the Veil."
   },
   {
     "name": "PITS-WORLD-the-hold-none",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "    if (!pitPixelOk(st.mapX, st.mapY)) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }\n",
-    "new": "",
-    "tests": ["test/scenes/oh_host.test.js"],
+    "old": "    if (!pitPixelOk(st.mapX, st.mapY)) {\n      markTerrainProcessed(st, v, 'rejected:off-the-map');\n      return;\n    }\n    if (!isPitPixel(st.mapX, st.mapY, s.pitSpawnRate)) {",
+    "new": "    if (!isPitPixel(st.mapX, st.mapY, s.pitSpawnRate)) {",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ],
     "note": "A pixel off the world's grid is cut, for an abyss no id can name."
   },
   {
     "name": "PITS-WORLD-the-zone's-gate-gone",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "    if (openZoneAt(st.mapX, st.mapY)) { markTerrainProcessed(st, v, 'rejected:open-zone'); return; }   // PITS-WORLD: the open zone stands no pit\n",
-    "new": "",
-    "tests": ["test/world/pitsworld.test.js"],
+    "old": "    if (openZoneAt(st.mapX, st.mapY)) {\n      markTerrainProcessed(st, v, 'rejected:open-zone');\n      return;\n    } // PITS-WORLD: the open zone stands no pit\n    const flag = !!deepWaters.tryGetSeafloor(entry); // TryGetFloorCollider",
+    "new": "    const flag = !!deepWaters.tryGetSeafloor(entry); // TryGetFloorCollider",
+    "tests": [
+      "test/world/pitsworld.test.js"
+    ],
     "note": "The open zone's water opens a pit."
   },
   {
@@ -76,15 +96,19 @@
     "file": "src/scenes/oceanHolesHost.js",
     "old": "  if (!isOnlinePage()) return false;\n  const m = cyrodiilMask();",
     "new": "  const m = cyrodiilMask();",
-    "tests": ["test/world/pitsworld.test.js"],
+    "tests": [
+      "test/world/pitsworld.test.js"
+    ],
     "note": "Offline the authored shape is a zone, and Cyrodiil's water stands no pit for a player alone."
   },
   {
     "name": "PITS-WORLD-the-zone-never",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "  return !!m && wildInside(m, mapX, mapY);\n}",
-    "new": "  return false;\n}",
-    "tests": ["test/world/pitsworld.test.js"],
+    "old": "  return !!m && wildInside(m, mapX, mapY);",
+    "new": "  return false;",
+    "tests": [
+      "test/world/pitsworld.test.js"
+    ],
     "note": "Online the zone's water is never asked (the ARENA2 half: the trace's zone)."
   },
   {
@@ -92,7 +116,10 @@
     "file": "src/scenes/dungeonContext.js",
     "old": " || isAbyssMapId(dfLocation?.mapTableData?.mapId)); }",
     "new": " || (Number(dfLocation?.mapTableData?.mapId) >>> 0) >= 0x60000000); }",
-    "tests": ["test/world/pitsworld.test.js", "test/systems/auditfeud2.test.js"],
+    "tests": [
+      "test/world/pitsworld.test.js",
+      "test/systems/auditfeud2.test.js"
+    ],
     "note": "A lair's home knows the abyss by the old range."
   },
   {
@@ -100,7 +127,10 @@
     "file": "src/scenes/dungeonContext.js",
     "old": "    : isAbyssMapId(dfLocation?.mapTableData?.mapId) ? 'ocean-holes'",
     "new": "    : (Number(dfLocation?.mapTableData?.mapId) >>> 0) >= 0x60000000 ? 'ocean-holes'",
-    "tests": ["test/world/pitsworld.test.js", "test/ui/tut1_tutorials.test.js"],
+    "tests": [
+      "test/world/pitsworld.test.js",
+      "test/ui/tut1_tutorials.test.js"
+    ],
     "note": "The tutorial's page knows the abyss by the old range: a zone hall opens the Ocean Holes' page."
   }
 ]

@@ -2,8 +2,8 @@
   {
     "name": "PVP-VITALS-the-cast-unpaid",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (spell ? !castPaid(a.f, c, to, now) : !payFatigue(a.f, PVP_VITALS.swing, now)) return",
-    "new": "  if (false) return",
+    "old": "  if (spell ? !castPaid(a.f, c, to, now) : !payFatigue(a.f, PVP_VITALS.swing, now))\n    return { ok: false, dealt: 0, fell: false, fall: null, why: spell ? 'magicka' : 'tired', graceEnded };",
+    "new": "  if (false) return { ok: false, dealt: 0, fell: false, fall: null, why: spell ? 'magicka' : 'tired', graceEnded };",
     "tests": [
       "test/net/pvpvitals.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "PVP-VITALS-the-rise-unsourced",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "healRoom(fighter, now), sourced ? Math.floor(healCredit(fighter, now)) : Infinity);",
-    "new": "healRoom(fighter, now), Infinity);",
+    "old": "    const got = Math.min(\n      fighter.max - fighter.hp,\n      Math.round(target) - fighter.hp,\n      healRoom(fighter, now),\n      sourced ? Math.floor(healCredit(fighter, now)) : Infinity,\n    );",
+    "new": "    const got = Math.min(fighter.max - fighter.hp, Math.round(target) - fighter.hp, healRoom(fighter, now), Infinity);",
     "tests": [
       "test/net/pvpvitals.test.js",
       "test/net/int9_wild_ref.test.js"
@@ -43,8 +43,8 @@
   {
     "name": "PVP-VITALS-the-shield-believed",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "  if (sourced && !shieldPaid(fighter, now)) share.shield = 0;",
-    "new": "",
+    "old": "  if (sourced && !shieldPaid(fighter, now)) share.shield = 0; // PVP-VITALS: a Shield nobody paid for is none",
+    "new": "  // PVP-VITALS: a Shield nobody paid for is none",
     "tests": [
       "test/net/pvpvitals.test.js"
     ],
@@ -53,8 +53,8 @@
   {
     "name": "PVP-VITALS-the-potion-clock-unread",
     "file": "src/net/wild/pvpVitals.js",
-    "old": "      if (now - (v.potion[u] ?? -Infinity) < PVP_VITALS.potionMs) continue;",
-    "new": "",
+    "old": "      if (now - (v.potion[u] ?? -Infinity) < PVP_VITALS.potionMs) continue; // the relay's own potion clock",
+    "new": "      // the relay's own potion clock",
     "tests": [
       "test/net/pvpvitals.test.js"
     ],
@@ -73,8 +73,8 @@
   {
     "name": "BOW-RATE-deeper",
     "file": "src/net/wild/pvpVitals.js",
-    "old": "  shaftMs: 250, shaftBurst: 2,",
-    "new": "  shaftMs: 250, shaftBurst: 4,",
+    "old": "  shaftBurst: 2,",
+    "new": "  shaftBurst: 4,",
     "tests": [
       "test/net/pvpvitals.test.js"
     ],
@@ -94,7 +94,7 @@
     "name": "SWING-RATE-one-bucket",
     "file": "src/net/wild/pvpVitals.js",
     "old": "  const [n, at] = v.swings[to] ?? [PVP_VITALS.shaftBurst, now];",
-    "new": "  const [n, at] = v.swings.all ?? [PVP_VITALS.shaftBurst, now]; to = 'all';",
+    "new": "  const [n, at] = v.swings.all ?? [PVP_VITALS.shaftBurst, now];\n  to = 'all';",
     "tests": [
       "test/net/pvpvitals.test.js"
     ],
@@ -103,8 +103,8 @@
   {
     "name": "BOW-FAST-no-stacks",
     "file": "src/net/wild/pvpVitals.js",
-    "old": "  v.fastK = now - (v.fastAt ?? -Infinity) < within * 1000 ?",
-    "new": "  v.fastK = false ?",
+    "old": "  v.fastK = now - (v.fastAt ?? -Infinity) < within * 1000 ? Math.min(RELAY_BOW_FAST.most, (v.fastK ?? 0) + 1) : 0;",
+    "new": "  v.fastK = false ? Math.min(RELAY_BOW_FAST.most, (v.fastK ?? 0) + 1) : 0;",
     "tests": [
       "test/net/pvpvitals.test.js"
     ],
@@ -113,8 +113,8 @@
   {
     "name": "BOW-FAST-unbounded",
     "file": "src/net/wild/pvpVitals.js",
-    "old": "Math.min(RELAY_BOW_FAST.most, (v.fastK ?? 0) + 1)",
-    "new": "((v.fastK ?? 0) + 1)",
+    "old": "  v.fastK = now - (v.fastAt ?? -Infinity) < within * 1000 ? Math.min(RELAY_BOW_FAST.most, (v.fastK ?? 0) + 1) : 0;",
+    "new": "  v.fastK = now - (v.fastAt ?? -Infinity) < within * 1000 ? (v.fastK ?? 0) + 1 : 0;",
     "tests": [
       "test/net/pvpvitals.test.js"
     ],
@@ -133,8 +133,8 @@
   {
     "name": "PVP-KIT-REGEN-the-price-Cure's",
     "file": "src/net/wild/pvpVitals.js",
-    "old": "fortify: 10, regen: 10, jump: 6,",
-    "new": "fortify: 10, regen: 5, jump: 6,",
+    "old": "  regen: 10,",
+    "new": "  regen: 5,",
     "tests": [
       "test/net/pvpvitals.test.js"
     ]
@@ -142,8 +142,8 @@
   {
     "name": "PVP-KIT-REGEN-the-rounds-uncounted",
     "file": "src/net/wild/pvpVitals.js",
-    "old": "  if (rs > 0) { v.credit = Math.min(f.max * PVP_VITALS.creditMax, v.credit + (rs * PVP_VITALS.regenKit * f.max) / 100); v.creditAt = now; }",
-    "new": "",
+    "old": "  if (rs > 0) {\n    v.credit = Math.min(f.max * PVP_VITALS.creditMax, v.credit + (rs * PVP_VITALS.regenKit * f.max) / 100);\n    v.creditAt = now;\n  }\n}",
+    "new": "}",
     "tests": [
       "test/net/pvpvitals.test.js"
     ]
@@ -151,8 +151,8 @@
   {
     "name": "PVP-KIT-REGEN-the-minute-unended",
     "file": "src/net/wild/pvpVitals.js",
-    "old": "v.regenTo = now + PVP_VITALS.buffMs; }",
-    "new": "v.regenTo = Infinity; }",
+    "old": "    v.regenTo = now + PVP_VITALS.buffMs;",
+    "new": "    v.regenTo = Infinity;",
     "tests": [
       "test/net/pvpvitals.test.js"
     ]
@@ -160,8 +160,8 @@
   {
     "name": "BOW-FAST-skip-unread",
     "file": "src/combat/duelCombat.js",
-    "old": "bowFastDamage(d.relayCut ? { ...landingShaft(), fast: 0 } : landingShaft(),",
-    "new": "bowFastDamage(landingShaft(),",
+    "old": "  const n =\n    d.by === 'arrow'\n      ? bowFastDamage(\n          d.relayCut ? { ...landingShaft(), fast: 0 } : landingShaft(),\n          Math.floor(scaled * pvpArrowScale(d.a?.pl)),\n        )\n      : scaled; // PVP-TRIANGLE: an arrow's; BOW-FAST: its stacks (the relay's to cut, `relayCut`: its pull alone)",
+    "new": "  const n = d.by === 'arrow' ? bowFastDamage(landingShaft(), Math.floor(scaled * pvpArrowScale(d.a?.pl))) : scaled; // PVP-TRIANGLE: an arrow's; BOW-FAST: its stacks (the relay's to cut, `relayCut`: its pull alone)",
     "tests": [
       "test/net/pvpvitals.test.js"
     ],

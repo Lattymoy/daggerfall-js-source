@@ -39,17 +39,22 @@
 import { getPref, setPref } from '../systems/uiPrefs.js';
 import { getInt, setValue, saveSettings } from '../systems/settings/settings.js';
 import { isEnhanced } from '../systems/uiSkin.js';
-import { registerFeatureLane } from '../systems/features.js';   // RF4: the row's lane is this module's
+import { registerFeatureLane } from '../systems/features.js'; // RF4: the row's lane is this module's
 
 export const LAND_VIEW_MIN = 1;
-export const LAND_VIEW_MAX = 6;         // the enhanced lane's ceiling
-export const LAND_VIEW_DFU_MAX = 4;     // StreamingWorld.cs [Range(1,4)]
-export const LAND_VIEW_DEFAULT = 5;     // the Enhanced pane's default (uiPrefs landViewDistance)
+export const LAND_VIEW_MAX = 6; // the enhanced lane's ceiling
+export const LAND_VIEW_DFU_MAX = 4; // StreamingWorld.cs [Range(1,4)]
+export const LAND_VIEW_DEFAULT = 5; // the Enhanced pane's default (uiPrefs landViewDistance)
 
 /** The row's tiers: value and label, DFU's whole 1..4 and the enhanced
  *  lane's 5..6 (FT2), Daggerfall's own 3 named. */
 export const LAND_VIEW_TIERS = Object.freeze([
-  [1, '1'], [2, '2'], [3, 'Classic (3)'], [4, '4'], [5, '5'], [6, 'Furthest (6)'],
+  [1, '1'],
+  [2, '2'],
+  [3, 'Classic (3)'],
+  [4, '4'],
+  [5, '5'],
+  [6, 'Furthest (6)'],
 ]);
 
 const clampInt = (v, lo, hi, fallback) => {
@@ -74,7 +79,11 @@ export const enhancedOutdoors = () => isEnhanced() && !!getPref('enhancedEnviron
 /** FT2: the radius the current lane will use, off the live stores -
  *  what the world host reads at mount and what the Features row shows. */
 export function landViewRead({ enhanced = enhancedOutdoors() } = {}) {
-  return landViewDistance({ enhanced, pref: getPref('landViewDistance'), setting: getInt('Experimental', 'TerrainDistance', 1, 4) });
+  return landViewDistance({
+    enhanced,
+    pref: getPref('landViewDistance'),
+    setting: getInt('Experimental', 'TerrainDistance', 1, 4),
+  });
 }
 
 /** FT2: ONE control writes BOTH stores - the pref whole (1..6), DFU's
@@ -97,4 +106,9 @@ export function landViewAsRead(v, { enhanced = enhancedOutdoors() } = {}) {
 }
 
 // RF4: the Features row `land-view-distance` reads its tiers and its two-store read/write from here.
-registerFeatureLane('landView', { tiers: LAND_VIEW_TIERS, read: landViewRead, write: landViewWrite, readOf: landViewAsRead });
+registerFeatureLane('landView', {
+  tiers: LAND_VIEW_TIERS,
+  read: landViewRead,
+  write: landViewWrite,
+  readOf: landViewAsRead,
+});

@@ -33,10 +33,19 @@
 
 import { registerCustomTemplates, templateByIndex, mintCondition, setItemFields } from './item/itemTemplates.js';
 import {
-  GEM_IDS, GEM_ROW_GRADES, GEM_GRADES, GEM_NAMES, GEM_GRADE_TEMPLATES, gemId, gemTemplateOf, registerGemFind,
-  SOURCE_MULT, luckMult, lootRarityOn,
+  GEM_IDS,
+  GEM_ROW_GRADES,
+  GEM_GRADES,
+  GEM_NAMES,
+  GEM_GRADE_TEMPLATES,
+  gemId,
+  gemTemplateOf,
+  registerGemFind,
+  SOURCE_MULT,
+  luckMult,
+  lootRarityOn,
 } from './loot/lootRarity.js';
-import { GEM_GRADE_PRICE, gradedGemPrice } from './loot/gemGrades.js';   // GEM-GRADES: the grade's price ladder, one home
+import { GEM_GRADE_PRICE, gradedGemPrice } from './loot/gemGrades.js'; // GEM-GRADES: the grade's price ladder, one home
 
 /** A graded row's price against its kind's DFU row - GEM-GRADES (CLOTH-GEMS): its one home is the leaf the jeweller's
  *  law reads too (systems/loot/gemGrades.js GEM_GRADE_PRICE, gradedGemPrice), re-exported here. Its rarity against the
@@ -45,21 +54,25 @@ export { GEM_GRADE_PRICE };
 export const GEM_GRADE_RARITY = Object.freeze({ chipped: -2, flawed: -1, plain: 0, flawless: 3, perfect: 6 });
 /** The thirty-two rows, in DFU's ItemTemplates.txt columns: the kind's weight, wear, points and art; the grade's name,
  *  price and rarity; an ingredient, as every DFU gem is (so a stack is one row's). */
-export const GEM_GRADE_ROWS = Object.freeze(GEM_ROW_GRADES.flatMap((grade) => GEM_IDS.map((kind, k) => {
-  const dfu = /** @type {any} */ (templateByIndex(k));
-  return Object.freeze({
-    index: /** @type {number} */ (gemTemplateOf(gemId(kind, grade))),
-    name: GEM_NAMES[gemId(kind, grade)],
-    baseWeight: dfu.baseWeight,
-    hitPoints: dfu.hitPoints,
-    basePrice: gradedGemPrice(dfu.basePrice, grade),
-    enchantmentPoints: dfu.enchantmentPoints,
-    rarity: Math.max(1, Math.min(20, dfu.rarity + GEM_GRADE_RARITY[grade])),
-    isIngredient: true,
-    worldTextureArchive: dfu.worldTextureArchive,
-    worldTextureRecord: dfu.worldTextureRecord,
-  });
-})));
+export const GEM_GRADE_ROWS = Object.freeze(
+  GEM_ROW_GRADES.flatMap((grade) =>
+    GEM_IDS.map((kind, k) => {
+      const dfu = /** @type {any} */ (templateByIndex(k));
+      return Object.freeze({
+        index: /** @type {number} */ (gemTemplateOf(gemId(kind, grade))),
+        name: GEM_NAMES[gemId(kind, grade)],
+        baseWeight: dfu.baseWeight,
+        hitPoints: dfu.hitPoints,
+        basePrice: gradedGemPrice(dfu.basePrice, grade),
+        enchantmentPoints: dfu.enchantmentPoints,
+        rarity: Math.max(1, Math.min(20, dfu.rarity + GEM_GRADE_RARITY[grade])),
+        isIngredient: true,
+        worldTextureArchive: dfu.worldTextureArchive,
+        worldTextureRecord: dfu.worldTextureRecord,
+      });
+    }),
+  ),
+);
 registerCustomTemplates(GEM_GRADE_ROWS);
 /** Whether a template is one of the port's graded rows. */
 export const isGradedGemTemplate = (/** @type {number} */ t) => GEM_GRADE_TEMPLATES.includes(t);
@@ -92,7 +105,10 @@ export const GEM_BOSS_TIERS = 4;
 export function gemFindChance({ kind = 'corpse', tier = 0, boss = false, luck = 50 } = {}) {
   if (!lootRarityOn()) return 0;
   const mult = boss ? SOURCE_MULT.boss : (SOURCE_MULT[kind] ?? 1);
-  return Math.max(0, Math.min(GEM_FIND.cap, (GEM_FIND.base + GEM_FIND.perTier * Math.max(0, tier)) * mult * luckMult(luck)));
+  return Math.max(
+    0,
+    Math.min(GEM_FIND.cap, (GEM_FIND.base + GEM_FIND.perTier * Math.max(0, tier)) * mult * luckMult(luck)),
+  );
 }
 /** The band a source's tier reads (a boss GEM_BOSS_TIERS deeper). */
 export function gemGradeBand({ tier = 0, boss = false } = {}) {
@@ -105,8 +121,12 @@ export function gemGradeBand({ tier = 0, boss = false } = {}) {
 export function rollGem(source, rolls = Math.random) {
   const { weights } = gemGradeBand(source);
   const total = weights.reduce((n, w) => n + w, 0);
-  let r = rolls() * total, g = 0;
-  while (g < weights.length - 1 && r >= weights[g]) { r -= weights[g]; g++; }
+  let r = rolls() * total,
+    g = 0;
+  while (g < weights.length - 1 && r >= weights[g]) {
+    r -= weights[g];
+    g++;
+  }
   const kind = GEM_IDS[Math.min(GEM_IDS.length - 1, Math.floor(rolls() * GEM_IDS.length))];
   return mintGem(gemId(kind, GEM_GRADES[g]));
 }
@@ -126,8 +146,11 @@ export const BOSS_GEMS = Object.freeze({ gate: 1, serpent: 1, abyss: 2 });
 export const BOSS_GEM_SOURCE = Object.freeze({ tier: 21, boss: true });
 /** A boss's gems, each known (a gem is always known - it carries no enchantment) - two draws a gem. */
 export function bossGems(/** @type {string} */ boss, rolls = Math.random) {
-  if (!lootRarityOn()) return [];   // AUDIT GEM (law 3): with the ladder off no graded gem is found - a boss's last draws, so nothing before them moves
+  if (!lootRarityOn()) return []; // AUDIT GEM (law 3): with the ladder off no graded gem is found - a boss's last draws, so nothing before them moves
   const out = [];
-  for (let i = 0; i < (BOSS_GEMS[boss] ?? 0); i++) { const g = rollGem(BOSS_GEM_SOURCE, rolls); if (g) out.push(g); }
+  for (let i = 0; i < (BOSS_GEMS[boss] ?? 0); i++) {
+    const g = rollGem(BOSS_GEM_SOURCE, rolls);
+    if (g) out.push(g);
+  }
   return out;
 }

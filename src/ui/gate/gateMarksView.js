@@ -20,9 +20,9 @@
 // the aspects; a sign for each trial. Pure where it can be - `marksViewOf` and `marksCardModel` are the pins' door.
 //
 // Not a DFU member. Ledger A (WB).
-import { readGateMods, validGatePortents, portentOf } from '../../net/gate/gateMods.js';   // WB14b: and the night's portents
+import { readGateMods, validGatePortents, portentOf } from '../../net/gate/gateMods.js'; // WB14b: and the night's portents
 import { ASPECT_COLORS, EMBER_COLOR } from '../../world/gate/gateBoss.js';
-import { injectEnhancedFonts } from '../enhanced/enhancedStyle.js';   // WB13c: the classic face, loaded by the gate's own screens
+import { injectEnhancedFonts } from '../enhanced/enhancedStyle.js'; // WB13c: the classic face, loaded by the gate's own screens
 
 /** The element each aspect's blows carry, as a player names it. */
 export const ASPECT_ELEMENT = Object.freeze({ burning: 'Fire', rime: 'Frost', storm: 'Lightning', venom: 'Poison' });
@@ -44,10 +44,17 @@ export const MARK_TIPS = Object.freeze({
   soulhungry: 'Keep each other standing.',
   favoured: 'Keep moving from the first phase.',
   echoing: 'Move as each meteor lands.',
-  legion: 'Stop the Atronachs. Break the Ward-Bearers.',   // WB11a (AUDIT WB11 U1: as short as the others - 138 characters made the tallest card, off a landscape phone)
+  legion: 'Stop the Atronachs. Break the Ward-Bearers.', // WB11a (AUDIT WB11 U1: as short as the others - 138 characters made the tallest card, off a landscape phone)
 });
 
-const hex = (c) => `#${c.map((v) => Math.round(Math.max(0, Math.min(1, v)) * 255).toString(16).padStart(2, '0')).join('')}`;
+const hex = (c) =>
+  `#${c
+    .map((v) =>
+      Math.round(Math.max(0, Math.min(1, v)) * 255)
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('')}`;
 /** An aspect's colour on the screen: his ember under it (world/gate/gateBoss.js - the court's own fire for the Burning). */
 export const aspectCss = (id) => hex(ASPECT_COLORS[id]?.ember ?? EMBER_COLOR);
 
@@ -56,37 +63,77 @@ export const aspectCss = (id) => hex(ASPECT_COLORS[id]?.ember ?? EMBER_COLOR);
  * stroked). The port's own shapes; nothing is loaded.
  */
 export const MARK_ICONS = Object.freeze({
-  burning: Object.freeze({ fill: true, d: 'M12 1.5c.9 3.2-.8 4.9-2 6.6-1 1.4-1.6 2.6-1 4 .5 1.1 1.7 1.6 2.6 1.1 1.2-.7 1.2-2.2.6-3.8 3.4 1.6 5.8 4.6 5.8 8.1A6 6 0 0 1 12 23.5a6 6 0 0 1-6-6c0-3.3 2.2-5.6 3.8-7.7C11.1 8 12.6 5.6 12 1.5z' }),
-  rime: Object.freeze({ fill: false, d: 'M12 2v20M3.3 7l17.4 10M20.7 7L3.3 17M12 2l-2.2 2.4M12 2l2.2 2.4M12 22l-2.2-2.4M12 22l2.2-2.4M3.3 7l.7 3.1M3.3 7l3.1-.9M20.7 17l-.7-3.1M20.7 17l-3.1.9M20.7 7l-3.1-.9M20.7 7l-.7 3.1M3.3 17l3.1.9M3.3 17l.7-3.1' }),
+  burning: Object.freeze({
+    fill: true,
+    d: 'M12 1.5c.9 3.2-.8 4.9-2 6.6-1 1.4-1.6 2.6-1 4 .5 1.1 1.7 1.6 2.6 1.1 1.2-.7 1.2-2.2.6-3.8 3.4 1.6 5.8 4.6 5.8 8.1A6 6 0 0 1 12 23.5a6 6 0 0 1-6-6c0-3.3 2.2-5.6 3.8-7.7C11.1 8 12.6 5.6 12 1.5z',
+  }),
+  rime: Object.freeze({
+    fill: false,
+    d: 'M12 2v20M3.3 7l17.4 10M20.7 7L3.3 17M12 2l-2.2 2.4M12 2l2.2 2.4M12 22l-2.2-2.4M12 22l2.2-2.4M3.3 7l.7 3.1M3.3 7l3.1-.9M20.7 17l-.7-3.1M20.7 17l-3.1.9M20.7 7l-3.1-.9M20.7 7l-.7 3.1M3.3 17l3.1.9M3.3 17l.7-3.1',
+  }),
   storm: Object.freeze({ fill: true, d: 'M13.5 1.5L4 13.8h6.4L8.7 22.5 20 9.4h-6.6l.1-7.9z' }),
-  venom: Object.freeze({ fill: true, d: 'M12 1.8c2.6 4.4 7 8.6 7 13.2a7 7 0 0 1-14 0c0-4.6 4.4-8.8 7-13.2zm-2.4 12.4a1.6 1.6 0 1 0 0 3.2 1.6 1.6 0 0 0 0-3.2zm4.3 2.6a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2z' }),
+  venom: Object.freeze({
+    fill: true,
+    d: 'M12 1.8c2.6 4.4 7 8.6 7 13.2a7 7 0 0 1-14 0c0-4.6 4.4-8.8 7-13.2zm-2.4 12.4a1.6 1.6 0 1 0 0 3.2 1.6 1.6 0 0 0 0-3.2zm4.3 2.6a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2z',
+  }),
   colossal: Object.freeze({ fill: true, d: 'M2 21.5l6.2-12.3 3.3 5.4 3.4-6.9 7.1 13.8z' }),
   unyielding: Object.freeze({ fill: true, d: 'M12 1.8l8.5 3.1v6.3c0 5.3-3.7 9.6-8.5 11-4.8-1.4-8.5-5.7-8.5-11V4.9z' }),
-  vengeful: Object.freeze({ fill: false, d: 'M4 4l10.5 10.5M4 4l.8 3.6M4 4l3.6.8M20 4L9.5 14.5M20 4l-.8 3.6M20 4l-3.6.8M12.5 16.5l3.5 3.5M11.5 16.5L8 20M15 19l3 3M9 19l-3 3' }),
-  scarring: Object.freeze({ fill: false, d: 'M12 1.5l-2.4 6.3 4.3 3.1-3.3 5.2 2 6.4M11.6 10.9l6.2-2.4M9.6 7.8L3.8 9.3M10.6 16.1l-5.2 2.6M13.9 10.9l3.1 6' }),
-  grudge: Object.freeze({ fill: false, d: 'M1.8 12S5.6 4.8 12 4.8 22.2 12 22.2 12 18.4 19.2 12 19.2 1.8 12 1.8 12zM12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z' }),
-  soulhungry: Object.freeze({ fill: true, d: 'M12 1.8c-5 0-8.5 3.5-8.5 8.1 0 2.9 1.4 4.9 3.3 6.1v3.3c0 1 .8 1.9 1.9 1.9h6.6c1.1 0 1.9-.9 1.9-1.9V16c1.9-1.2 3.3-3.2 3.3-6.1 0-4.6-3.5-8.1-8.5-8.1zM8.6 8.9a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm6.8 0a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM12 13.6l1.3 2.4h-2.6z' }),
-  favoured: Object.freeze({ fill: true, d: 'M12 1.5l3 6.9 7.4.7-5.6 4.9 1.7 7.3L12 17.5l-6.5 3.8 1.7-7.3-5.6-4.9 7.4-.7z' }),
-  echoing: Object.freeze({ fill: false, d: 'M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6zM12 2.5a9.5 9.5 0 1 0 0 19 9.5 9.5 0 0 0 0-19z' }),
+  vengeful: Object.freeze({
+    fill: false,
+    d: 'M4 4l10.5 10.5M4 4l.8 3.6M4 4l3.6.8M20 4L9.5 14.5M20 4l-.8 3.6M20 4l-3.6.8M12.5 16.5l3.5 3.5M11.5 16.5L8 20M15 19l3 3M9 19l-3 3',
+  }),
+  scarring: Object.freeze({
+    fill: false,
+    d: 'M12 1.5l-2.4 6.3 4.3 3.1-3.3 5.2 2 6.4M11.6 10.9l6.2-2.4M9.6 7.8L3.8 9.3M10.6 16.1l-5.2 2.6M13.9 10.9l3.1 6',
+  }),
+  grudge: Object.freeze({
+    fill: false,
+    d: 'M1.8 12S5.6 4.8 12 4.8 22.2 12 22.2 12 18.4 19.2 12 19.2 1.8 12 1.8 12zM12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z',
+  }),
+  soulhungry: Object.freeze({
+    fill: true,
+    d: 'M12 1.8c-5 0-8.5 3.5-8.5 8.1 0 2.9 1.4 4.9 3.3 6.1v3.3c0 1 .8 1.9 1.9 1.9h6.6c1.1 0 1.9-.9 1.9-1.9V16c1.9-1.2 3.3-3.2 3.3-6.1 0-4.6-3.5-8.1-8.5-8.1zM8.6 8.9a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm6.8 0a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM12 13.6l1.3 2.4h-2.6z',
+  }),
+  favoured: Object.freeze({
+    fill: true,
+    d: 'M12 1.5l3 6.9 7.4.7-5.6 4.9 1.7 7.3L12 17.5l-6.5 3.8 1.7-7.3-5.6-4.9 7.4-.7z',
+  }),
+  echoing: Object.freeze({
+    fill: false,
+    d: 'M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6zM12 2.5a9.5 9.5 0 1 0 0 19 9.5 9.5 0 0 0 0-19z',
+  }),
   // WB11a: Legion-Lord - his host, three figures abreast
   // WB14b: THE PORTENTS - the Vanguard a banner on its spear, the Sundering a shield split in two, the Captive a chain's links
   vanguard: Object.freeze({ fill: false, d: 'M5 22.5V1.5M5 2.5h13l-3.2 4.2L18 11H5' }),
-  sunder: Object.freeze({ fill: false, d: 'M11 2.2L4 5v6.3c0 4.9 3 8.8 7 10.5M13 2.2L20 5v6.3c0 4.9-3 8.8-7 10.5M12 2.5l-1.6 5.2 2.6 3.1-2.2 4.4 1.4 6.3' }),
-  captive: Object.freeze({ fill: false, d: 'M7.5 3.5a3.5 3.5 0 0 1 0 7 3.5 3.5 0 0 1 0-7zM16.5 13.5a3.5 3.5 0 0 1 0 7 3.5 3.5 0 0 1 0-7zM9.8 9.8l4.4 4.4' }),
-  legion: Object.freeze({ fill: false, d: 'M12 3.2a2.4 2.4 0 1 0 0 4.8 2.4 2.4 0 0 0 0-4.8zM7.6 14.6c.6-3 2.3-4.6 4.4-4.6s3.8 1.6 4.4 4.6M5.4 8.6a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM2.1 18.4c.5-2.5 1.7-3.7 3.3-3.7s2.8 1.2 3.3 3.7M18.6 8.6a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM15.3 18.4c.5-2.5 1.7-3.7 3.3-3.7s2.8 1.2 3.3 3.7M2 21.4h20' }),
+  sunder: Object.freeze({
+    fill: false,
+    d: 'M11 2.2L4 5v6.3c0 4.9 3 8.8 7 10.5M13 2.2L20 5v6.3c0 4.9-3 8.8-7 10.5M12 2.5l-1.6 5.2 2.6 3.1-2.2 4.4 1.4 6.3',
+  }),
+  captive: Object.freeze({
+    fill: false,
+    d: 'M7.5 3.5a3.5 3.5 0 0 1 0 7 3.5 3.5 0 0 1 0-7zM16.5 13.5a3.5 3.5 0 0 1 0 7 3.5 3.5 0 0 1 0-7zM9.8 9.8l4.4 4.4',
+  }),
+  legion: Object.freeze({
+    fill: false,
+    d: 'M12 3.2a2.4 2.4 0 1 0 0 4.8 2.4 2.4 0 0 0 0-4.8zM7.6 14.6c.6-3 2.3-4.6 4.4-4.6s3.8 1.6 4.4 4.6M5.4 8.6a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM2.1 18.4c.5-2.5 1.7-3.7 3.3-3.7s2.8 1.2 3.3 3.7M18.6 8.6a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM15.3 18.4c.5-2.5 1.7-3.7 3.3-3.7s2.8 1.2 3.3 3.7M2 21.4h20',
+  }),
 });
 /** A sign as markup - static text of the port's own (no word of a player's ever reaches it), `size` pixels square. */
 export function markIconSvg(id, size = 14) {
   const I = MARK_ICONS[id];
   if (!I) return '';
-  const paint = I.fill ? 'fill="currentColor"' : 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+  const paint = I.fill
+    ? 'fill="currentColor"'
+    : 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
   return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true"><path ${paint} d="${I.d}"/></svg>`;
 }
 
 /** SD18b: a mark's sign - its own path when it carries one (the Hour's marks - ui/superDungeon/sdMarksView.js), else the table's. */
 export function markIconHtml(m, size = 14) {
   if (!m?.path) return markIconSvg(m?.id, size);
-  const paint = m.fill ? 'fill="currentColor"' : 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+  const paint = m.fill
+    ? 'fill="currentColor"'
+    : 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
   return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true"><path ${paint} d="${m.path}"/></svg>`;
 }
 
@@ -104,9 +151,21 @@ export function marksViewOf(md) {
   const { aspect, trials } = readGateMods(md);
   const view = Object.freeze({
     key: [aspect.id, ...trials.map((t) => t.id)].join(','),
-    aspect: Object.freeze({ id: aspect.id, kind: 'aspect', name: aspect.name, epithet: aspect.epithet, element: ASPECT_ELEMENT[aspect.id] ?? 'Fire',
-      text: aspect.omen, tip: MARK_TIPS[aspect.id] ?? '', color: aspectCss(aspect.id) }),
-    trials: Object.freeze(trials.map((t) => Object.freeze({ id: t.id, kind: 'trial', name: t.name, text: t.text, tip: MARK_TIPS[t.id] ?? '' }))),
+    aspect: Object.freeze({
+      id: aspect.id,
+      kind: 'aspect',
+      name: aspect.name,
+      epithet: aspect.epithet,
+      element: ASPECT_ELEMENT[aspect.id] ?? 'Fire',
+      text: aspect.omen,
+      tip: MARK_TIPS[aspect.id] ?? '',
+      color: aspectCss(aspect.id),
+    }),
+    trials: Object.freeze(
+      trials.map((t) =>
+        Object.freeze({ id: t.id, kind: 'trial', name: t.name, text: t.text, tip: MARK_TIPS[t.id] ?? '' }),
+      ),
+    ),
   });
   _views.set(md, view);
   return view;
@@ -116,8 +175,8 @@ const _views = new WeakMap();
 
 /** The card's words. */
 export const MARKS_CARD_TEXT = Object.freeze({
-  title: 'The Warden\'s Marks',
-  gate: (boss, epithet) => `${boss} comes ${epithet} tonight`,   // WB13b: one subtitle near the gate and inside
+  title: "The Warden's Marks",
+  gate: (boss, epithet) => `${boss} comes ${epithet} tonight`, // WB13b: one subtitle near the gate and inside
   arrive: (boss, epithet) => `${boss} comes ${epithet} tonight`,
   element: (el) => `His blows carry ${el.toLowerCase()}`,
 });
@@ -137,7 +196,7 @@ export const MARKS_CARD_MODES = Object.freeze(['arrive', 'gate']);
 export function marksCardModel(md, boss, { mode = 'arrive', since = 0, now = 0, pt = null } = {}) {
   const view = marksViewOf(md);
   if (!view || !boss) return null;
-  const portents = portentRowsOf(pt);   // WB14b: and the night's portents, each its sign, name, line and tip
+  const portents = portentRowsOf(pt); // WB14b: and the night's portents, each its sign, name, line and tip
   let alpha = 1;
   if (mode === 'arrive') {
     const age = now - since;
@@ -145,10 +204,15 @@ export function marksCardModel(md, boss, { mode = 'arrive', since = 0, now = 0, 
     alpha = Math.min(1, age / 250, (MARKS_CARD_ARRIVE_MS - age) / MARKS_CARD_FADE_MS);
   }
   return {
-    mode: mode === 'gate' ? 'gate' : 'arrive', key: view.key, alpha: Math.round(alpha * 100) / 100,
+    mode: mode === 'gate' ? 'gate' : 'arrive',
+    key: view.key,
+    alpha: Math.round(alpha * 100) / 100,
     title: MARKS_CARD_TEXT.title,
     sub: (mode === 'gate' ? MARKS_CARD_TEXT.gate : MARKS_CARD_TEXT.arrive)(boss.name, view.aspect.epithet),
-    aspect: view.aspect, trials: view.trials, portents, ...(portents.length ? { key: `${view.key}|${portents.map((p) => p.id).join(',')}` } : {}),
+    aspect: view.aspect,
+    trials: view.trials,
+    portents,
+    ...(portents.length ? { key: `${view.key}|${portents.map((p) => p.id).join(',')}` } : {}),
   };
 }
 /** WB14b: THE NIGHT'S PORTENTS AS THE CARD SHOWS THEM - each its sign (MARK_ICONS), its name, its line and its tip
@@ -159,7 +223,27 @@ export function portentRowsOf(pt) {
   const key = ok.join(',');
   let rows = _portentRows.get(key);
   // AUDIT WB14 (TEXT-8): each row's words read as it is written - in the player's language now, never the one it was made in
-  if (!rows) { rows = Object.freeze(ok.map((id) => { const p = portentOf(id); return Object.freeze({ kind: 'portent', id, get name() { return p.name; }, get text() { return p.line; }, get tip() { return p.tip; } }); })); _portentRows.set(key, rows); }
+  if (!rows) {
+    rows = Object.freeze(
+      ok.map((id) => {
+        const p = portentOf(id);
+        return Object.freeze({
+          kind: 'portent',
+          id,
+          get name() {
+            return p.name;
+          },
+          get text() {
+            return p.line;
+          },
+          get tip() {
+            return p.tip;
+          },
+        });
+      }),
+    );
+    _portentRows.set(key, rows);
+  }
   return rows;
 }
 const NO_PORTENTS = Object.freeze([]);
@@ -214,16 +298,23 @@ body:has(.wb-marks-card:not([style*="display: none"])) .hudmid { z-index: 32; }
 }
 `;
 
-let root = null, parts = null;
+let root = null,
+  parts = null;
 let shown = { vis: '', key: '', mode: '', alpha: -1, sub: '' };
 
 function mark(doc) {
-  const n = doc.createElement('div'); n.className = 'wb-marks-row';
-  const icon = doc.createElement('div'); icon.className = 'wb-marks-icon';
-  const body = doc.createElement('div'); body.className = 'wb-marks-body';
-  const name = doc.createElement('div'); name.className = 'wb-marks-name';
-  const text = doc.createElement('div'); text.className = 'wb-marks-text';
-  const tip = doc.createElement('div'); tip.className = 'wb-marks-tip';
+  const n = doc.createElement('div');
+  n.className = 'wb-marks-row';
+  const icon = doc.createElement('div');
+  icon.className = 'wb-marks-icon';
+  const body = doc.createElement('div');
+  body.className = 'wb-marks-body';
+  const name = doc.createElement('div');
+  name.className = 'wb-marks-name';
+  const text = doc.createElement('div');
+  text.className = 'wb-marks-text';
+  const tip = doc.createElement('div');
+  tip.className = 'wb-marks-tip';
   body.append(name, text, tip);
   n.append(icon, body);
   return { n, icon, name, text, tip };
@@ -235,12 +326,14 @@ function build(doc) {
     st.id = MARKS_CARD_STYLE_ID;
     st.textContent = MARKS_CARD_CSS;
     (doc.head ?? doc.body)?.append(st);
-    if (doc.head) injectEnhancedFonts(doc);   // WB13c: Cormorant on the classic skin too (it came only if another window had asked)
+    if (doc.head) injectEnhancedFonts(doc); // WB13c: Cormorant on the classic skin too (it came only if another window had asked)
   }
   root = doc.createElement('div');
   root.className = 'wb-marks-card wb-marks-arrive';
-  const title = doc.createElement('div'); title.className = 'wb-marks-title';
-  const sub = doc.createElement('div'); sub.className = 'wb-marks-sub';
+  const title = doc.createElement('div');
+  title.className = 'wb-marks-title';
+  const sub = doc.createElement('div');
+  sub.className = 'wb-marks-sub';
   const rows = [mark(doc), mark(doc), mark(doc)];
   root.append(title, sub, ...rows.map((r) => r.n));
   (doc.body ?? doc.documentElement)?.append(root);
@@ -250,10 +343,14 @@ function build(doc) {
 /** Write one row: a mark's sign, name and lines - or hide it (no mark for it); a trial's sign in the card's own ring
  *  colour (`look` - AUDIT SD III, T3: the Hour's omens in its brass). */
 function writeRow(r, m, first, look = 'gate') {
-  if (!m) { r.n.style.display = 'none'; return; }
+  if (!m) {
+    r.n.style.display = 'none';
+    return;
+  }
   r.n.style.display = '';
-  r.icon.innerHTML = markIconHtml(m, 20);   // SD18b: the Hour's own signs
-  r.icon.style.color = m.kind === 'aspect' ? m.color : m.kind === 'portent' ? PORTENT_CSS : look === 'brass' ? '#e8c060' : '#ffb27a';
+  r.icon.innerHTML = markIconHtml(m, 20); // SD18b: the Hour's own signs
+  r.icon.style.color =
+    m.kind === 'aspect' ? m.color : m.kind === 'portent' ? PORTENT_CSS : look === 'brass' ? '#e8c060' : '#ffb27a';
   r.name.textContent = m.kind === 'aspect' ? `${m.name} - ${m.element}` : m.name;
   r.name.style.color = m.kind === 'aspect' ? m.color : '';
   r.text.textContent = m.text;
@@ -269,24 +366,41 @@ export function drawGateMarksCard(model, { hidden = false, doc = globalThis.docu
     build(doc);
   }
   const vis = want ? 'on' : 'off';
-  if (vis !== shown.vis) { shown.vis = vis; root.style.display = want ? '' : 'none'; }
+  if (vis !== shown.vis) {
+    shown.vis = vis;
+    root.style.display = want ? '' : 'none';
+  }
   if (!want || !model) return;
-  const mode = `${model.mode}${model.look === 'brass' ? ' sd-brass' : ''}`;   // AUDIT SD III (T3): the Hour's card in its own brass
-  if (mode !== shown.mode) { shown.mode = mode; root.className = `wb-marks-card wb-marks-${mode}`; }
+  const mode = `${model.mode}${model.look === 'brass' ? ' sd-brass' : ''}`; // AUDIT SD III (T3): the Hour's card in its own brass
+  if (mode !== shown.mode) {
+    shown.mode = mode;
+    root.className = `wb-marks-card wb-marks-${mode}`;
+  }
   if (model.key !== shown.key) {
     shown.key = model.key;
     parts.title.textContent = model.title;
-    const all = [model.aspect, ...model.trials, ...(model.portents ?? [])];   // WB14b: and the night's portents - a row more for each, made the first night that has one
-    while (parts.rows.length < all.length) { const r = mark(parts.doc); parts.rows.push(r); root.append(r.n); }
+    const all = [model.aspect, ...model.trials, ...(model.portents ?? [])]; // WB14b: and the night's portents - a row more for each, made the first night that has one
+    while (parts.rows.length < all.length) {
+      const r = mark(parts.doc);
+      parts.rows.push(r);
+      root.append(r.n);
+    }
     parts.rows.forEach((r, i) => writeRow(r, all[i] ?? null, i === 0, model.look));
   }
-  if (model.sub !== shown.sub) { shown.sub = model.sub; parts.sub.textContent = model.sub; }
-  if (model.alpha !== shown.alpha) { shown.alpha = model.alpha; root.style.opacity = String(model.alpha); }
+  if (model.sub !== shown.sub) {
+    shown.sub = model.sub;
+    parts.sub.textContent = model.sub;
+  }
+  if (model.alpha !== shown.alpha) {
+    shown.alpha = model.alpha;
+    root.style.opacity = String(model.alpha);
+  }
 }
 
 /** The page is going (a test's reset): the node leaves with it. */
 export function destroyGateMarksCard() {
   root?.remove?.();
-  root = null; parts = null;
+  root = null;
+  parts = null;
   shown = { vis: '', key: '', mode: '', alpha: -1, sub: '' };
 }

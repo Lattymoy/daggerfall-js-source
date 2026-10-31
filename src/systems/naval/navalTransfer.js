@@ -12,7 +12,10 @@ export function giveNavalItems(items, boat, entity, { force = false } = {}) {
   const left = [];
   let over = 0;
   for (const item of items) {
-    if (isGoldPieces(item)) { addGoldPieces(entity, item.stackCount ?? 1); continue; }
+    if (isGoldPieces(item)) {
+      addGoldPieces(entity, item.stackCount ?? 1);
+      continue;
+    }
     const plan = planTake(item, { bag: entity.items, entity, dryRun: true });
     if (force && (!plan.ok || plan.amount < (item.stackCount ?? 1))) {
       addItem(entity.items, item);

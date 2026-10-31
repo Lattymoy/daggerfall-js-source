@@ -21,15 +21,20 @@ export const WILD_GRACE_SAY_MS = 3_000;
 export function createWildGrace({ me, say, now = () => Date.now() }) {
   /** @type {Map<string, number>} fighter id -> when its safe passage ends */
   const until = new Map();
-  let mine = 0, keptSaid = -Infinity;
+  let mine = 0,
+    keptSaid = -Infinity;
   const secs = (/** @type {number} */ ms) => Math.max(1, Math.ceil(ms / 1000));
   return {
     /** A referee's `grace` word (`{ id, ms, n? }`). */
     heard(/** @type {{ id: string, ms: number, n?: number }} */ g) {
       const at = now();
-      if (g.ms > 0) until.set(g.id, at + g.ms); else until.delete(g.id);
+      if (g.ms > 0) until.set(g.id, at + g.ms);
+      else until.delete(g.id);
       if (g.n === 1) {
-        if (at - keptSaid >= WILD_GRACE_SAY_MS) { keptSaid = at; say(WILD_TEXT.graceKept(secs(g.ms))); }
+        if (at - keptSaid >= WILD_GRACE_SAY_MS) {
+          keptSaid = at;
+          say(WILD_TEXT.graceKept(secs(g.ms)));
+        }
         return;
       }
       if (g.id !== me()) return;
@@ -37,22 +42,34 @@ export function createWildGrace({ me, say, now = () => Date.now() }) {
         const fresh = mine <= at;
         mine = at + g.ms;
         if (fresh) say(WILD_TEXT.graceOn(secs(g.ms)));
-      } else if (mine > at) { mine = 0; say(WILD_TEXT.graceOff()); }
+      } else if (mine > at) {
+        mine = 0;
+        say(WILD_TEXT.graceOff());
+      }
     },
     /** The zone's frame: my safe passage run out, said - and (AUDIT PVP-EASE L3-7, L4-6) out of the zone, nothing heard
      *  stands and nothing is said ("Other players can attack you" a minute after the step out, where none can); the
      *  strangers' passages run out forgotten. @param {boolean} [inZone] */
     frame(inZone = true) {
-      if (!inZone) { if (mine || until.size) this.clear(); return; }
+      if (!inZone) {
+        if (mine || until.size) this.clear();
+        return;
+      }
       const at = now();
       for (const [id, end] of until) if (end <= at) until.delete(id);
-      if (mine && mine <= at) { mine = 0; say(WILD_TEXT.graceOff()); }
+      if (mine && mine <= at) {
+        mine = 0;
+        say(WILD_TEXT.graceOff());
+      }
     },
     /** How long my safe passage has left, ms. */
     mine: () => Math.max(0, mine - now()),
     /** Whether fighter `id` is under safe passage, as last heard. @param {string} id */
     graced: (id) => (until.get(id) ?? 0) > now(),
     /** The room left or the zone with it: nothing heard stands. */
-    clear() { until.clear(); mine = 0; },
+    clear() {
+      until.clear();
+      mine = 0;
+    },
   };
 }

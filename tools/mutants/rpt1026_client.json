@@ -82,8 +82,8 @@
   {
     "name": "RPT1026-WEIR-taken-still-lying",
     "file": "src/systems/eliteGates/weirKey.js",
-    "old": "  for (let i = _lying.length - 1; i >= 0; i--) if (!_lying[i].list.includes(_lying[i].face)) _lying.splice(i, 1);\n",
-    "new": "",
+    "old": "  for (let i = _lying.length - 1; i >= 0; i--) if (!_lying[i].list.includes(_lying[i].face)) _lying.splice(i, 1);\n  return _lying.reduce((s, e) => s + Math.max(1, e.face.stackCount ?? 1), 0);",
+    "new": "  return _lying.reduce((s, e) => s + Math.max(1, e.face.stackCount ?? 1), 0);",
     "tests": [
       "test/systems/eliteGates/rpt1026_client_weirface.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "RPT1026-WEIR-away-not-folded",
     "file": "src/systems/eliteGates/weirKey.js",
-    "old": "  if (!_facesHere()) { foldLyingWeirKeys(); return 0; }\n",
-    "new": "",
+    "old": "  if (!_facesHere()) {\n    foldLyingWeirKeys();\n    return 0;\n  }\n  const here = _facesHere();",
+    "new": "  const here = _facesHere();",
     "tests": [
       "test/systems/eliteGates/rpt1026_client_weirface.test.js",
       "test/scenes/audit_rpt1026_client.test.js"
@@ -103,8 +103,8 @@
   {
     "name": "RPT1026-WEIR-load-keeps-lying",
     "file": "src/systems/eliteGates/weirKey.js",
-    "old": "  _lying.length = 0;   // RPT1026-CLIENT: the load's world is a new one - every face it holds out of the pack is folded here\n",
-    "new": "",
+    "old": "  _lying.length = 0; // RPT1026-CLIENT: the load's world is a new one - every face it holds out of the pack is folded here\n  const folded = new Set();",
+    "new": "  const folded = new Set();",
     "tests": [
       "test/systems/eliteGates/rpt1026_client_weirface.test.js"
     ],
@@ -113,8 +113,8 @@
   {
     "name": "RPT1026-WEIR-here-door-unset",
     "file": "src/systems/eliteGates/egFind.js",
-    "old": "  setWeirKeyFacesHere(here);\n",
-    "new": "",
+    "old": "  setWeirKeyFacesHere(here);\n  /** @param {any} entity @param {boolean} [room] a room's body - its key to the pack (PARTY-LOOT) */",
+    "new": "  /** @param {any} entity @param {boolean} [room] a room's body - its key to the pack (PARTY-LOOT) */",
     "tests": [
       "test/systems/eliteGates/rpt1026_client_weirface.test.js"
     ],
@@ -133,8 +133,8 @@
   {
     "name": "RPT1026-FRAMECAP-off-free",
     "file": "src/systems/frameCap.js",
-    "old": "  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300)) || (_lifted ? LIFTED_OFF_FPS : 0);",
-    "new": "  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300));",
+    "old": "  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300)) || (_lifted ? LIFTED_OFF_FPS : 0); // spelled out: MENU T5 reads this clamp against the row's range",
+    "new": "  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300)); // spelled out: MENU T5 reads this clamp against the row's range",
     "tests": [
       "test/systems/rpt1026_client_framecap.test.js"
     ],
@@ -143,8 +143,8 @@
   {
     "name": "RPT1026-FRAMECAP-browser-capped",
     "file": "src/systems/frameCap.js",
-    "old": "  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300)) || (_lifted ? LIFTED_OFF_FPS : 0);",
-    "new": "  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300)) || LIFTED_OFF_FPS;",
+    "old": "  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300)) || (_lifted ? LIFTED_OFF_FPS : 0); // spelled out: MENU T5 reads this clamp against the row's range",
+    "new": "  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300)) || LIFTED_OFF_FPS; // spelled out: MENU T5 reads this clamp against the row's range",
     "tests": [
       "test/systems/rpt1026_client_framecap.test.js"
     ],
@@ -153,8 +153,8 @@
   {
     "name": "RPT1026-FRAMECAP-never-lifted",
     "file": "src/systems/frameCap.js",
-    "old": "  _lifted = true;   // RPT1026-CLIENT: Off has its ceiling from here (LIFTED_OFF_FPS)\n",
-    "new": "",
+    "old": "  _lifted = true; // RPT1026-CLIENT: Off has its ceiling from here (LIFTED_OFF_FPS)\n  const raf = win.requestAnimationFrame.bind(win),",
+    "new": "  const raf = win.requestAnimationFrame.bind(win),",
     "tests": [
       "test/systems/rpt1026_client_framecap.test.js"
     ],
@@ -213,8 +213,8 @@
   {
     "name": "RPT1026-SHAKE-unmapped",
     "file": "src/ui/settings/settingsMap.js",
-    "old": "\"Controls/CameraRecoilStrength\", \"port:techniqueMotion\", \"port:peerSpellShake\",",
-    "new": "\"Controls/CameraRecoilStrength\", \"port:techniqueMotion\",",
+    "old": "      'port:peerSpellShake',\n      'port:reducedMotion',",
+    "new": "      'port:reducedMotion',",
     "tests": [
       "test/scenes/rpt1026_client_peershake.test.js"
     ],

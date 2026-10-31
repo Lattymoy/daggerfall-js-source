@@ -21,8 +21,16 @@ export const PREVIEW_KEEP = 8;
  *  of it changes (a Wear on another piece is in every later figure). */
 function standKey(/** @type {any} */ stand) {
   let slots = [];
-  try { slots = equipTableOf(stand) ?? []; } catch { slots = []; }
-  const worn = slots.map((it) => (it ? `${it.group}.${it.templateIndex}.${it.material}.${it.variant}.${it.dye}.${appearanceSig(it)}` : '')).join('|');
+  try {
+    slots = equipTableOf(stand) ?? [];
+  } catch {
+    slots = [];
+  }
+  const worn = slots
+    .map((it) =>
+      it ? `${it.group}.${it.templateIndex}.${it.material}.${it.variant}.${it.dye}.${appearanceSig(it)}` : '',
+    )
+    .join('|');
   return `${stand?.race}|${stand?.gender}|${stand?.faceIndex}|${worn}`;
 }
 
@@ -33,7 +41,16 @@ function standKey(/** @type {any} */ stand) {
  * @param {{ entity: any, arm?: any, renderer?: () => any, createRig?: () => any, buildOpts?: (e: any) => any,
  *   composeDoll?: (e: any) => Promise<any>, dollArt?: () => boolean, plus?: () => boolean }} deps
  */
-export function createWardrobePreview({ entity, arm = fpArm, renderer = armRenderer, createRig = createFpArm, buildOpts = armBuildOptsOf, composeDoll = composeDollFor, dollArt = paperDollArtLoaded, plus = isEnhancedPlus }) {
+export function createWardrobePreview({
+  entity,
+  arm = fpArm,
+  renderer = armRenderer,
+  createRig = createFpArm,
+  buildOpts = armBuildOptsOf,
+  composeDoll = composeDollFor,
+  dollArt = paperDollArtLoaded,
+  plus = isEnhancedPlus,
+}) {
   /** key -> a figure drawn, null while drawing, false when it cannot be. @type {Map<string, any>} */
   const memo = new Map();
   let alive = true;
@@ -59,30 +76,50 @@ export function createWardrobePreview({ entity, arm = fpArm, renderer = armRende
       rig.attach(renderer(), null);
       const res = await rig.build(buildOpts(job.stand));
       if (alive && res?.ok) px = rig.figure({ yaw: 0, height: PREVIEW_FIGURE_H });
-    } catch { px = null; }
+    } catch {
+      px = null;
+    }
     building = false;
-    if (!alive) { release(); return; }
-    keep(job.key, px?.width && px?.height && px?.data ? { kind: 'body', width: px.width, height: px.height, data: px.data } : false);
+    if (!alive) {
+      release();
+      return;
+    }
+    keep(
+      job.key,
+      px?.width && px?.height && px?.data ? { kind: 'body', width: px.width, height: px.height, data: px.data } : false,
+    );
     job.onReady?.();
     pump();
   }
-  function bodyFigure(/** @type {any} */ stand, /** @type {string} */ key, /** @type {(() => void) | undefined} */ onReady) {
+  function bodyFigure(
+    /** @type {any} */ stand,
+    /** @type {string} */ key,
+    /** @type {(() => void) | undefined} */ onReady,
+  ) {
     if (memo.has(key)) return memo.get(key);
-    if (want && want.key !== key) memo.delete(want.key);   // passed over before it was built
+    if (want && want.key !== key) memo.delete(want.key); // passed over before it was built
     memo.set(key, null);
     want = { key, stand, onReady };
     pump();
     return null;
   }
-  function dollFigure(/** @type {any} */ stand, /** @type {string} */ key, /** @type {(() => void) | undefined} */ onReady) {
+  function dollFigure(
+    /** @type {any} */ stand,
+    /** @type {string} */ key,
+    /** @type {(() => void) | undefined} */ onReady,
+  ) {
     if (memo.has(key)) return memo.get(key);
     memo.set(key, null);
-    Promise.resolve(composeDoll(stand)).then((px) => {
-      if (!alive) return;
-      const data = px?.rgba ? new Uint8ClampedArray(px.rgba.buffer, px.rgba.byteOffset, px.rgba.length) : null;
-      keep(key, data ? { kind: 'doll', width: px.width, height: px.height, data } : false);
-      onReady?.();
-    }).catch(() => { if (alive) keep(key, false); });
+    Promise.resolve(composeDoll(stand))
+      .then((px) => {
+        if (!alive) return;
+        const data = px?.rgba ? new Uint8ClampedArray(px.rgba.buffer, px.rgba.byteOffset, px.rgba.length) : null;
+        keep(key, data ? { kind: 'doll', width: px.width, height: px.height, data } : false);
+        onReady?.();
+      })
+      .catch(() => {
+        if (alive) keep(key, false);
+      });
     return null;
   }
   function figure(/** @type {any} */ item, /** @type {any} */ look, /** @type {(() => void) | undefined} */ onReady) {
@@ -91,14 +128,18 @@ export function createWardrobePreview({ entity, arm = fpArm, renderer = armRende
     const key = standKey(stand);
     if (plus() && arm?.canThirdPerson?.()) {
       const body = bodyFigure(stand, `body|${key}`, onReady);
-      if (body !== false) return body ?? { kind: 'body', data: null };   // a body that cannot be built shows the doll
+      if (body !== false) return body ?? { kind: 'body', data: null }; // a body that cannot be built shows the doll
     }
     if (!dollArt()) return null;
     const doll = dollFigure(stand, `doll|${key}`, onReady);
-    return doll === false ? null : doll ?? { kind: 'doll', data: null };
+    return doll === false ? null : (doll ?? { kind: 'doll', data: null });
   }
   function release() {
-    try { rig?.unload?.(); } catch { /* the rig is going either way */ }
+    try {
+      rig?.unload?.();
+    } catch {
+      /* the rig is going either way */
+    }
     rig = null;
   }
   /** The window shut: the body's rig unloaded (EVERY ALLOCATION HAS AN OWNER) - one still building, as it lands. */

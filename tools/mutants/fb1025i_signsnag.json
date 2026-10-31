@@ -32,8 +32,8 @@
   {
     "name": "SIGN-PASS-every-triangle-stands",
     "file": "src/world/signSolid.js",
-    "old": "< hang ? 0 : 1;",
-    "new": "< hang ? 0 : 0;",
+    "old": "    marks[t] = Math.min(positions[a * 3 + 1], positions[b * 3 + 1], positions[c * 3 + 1]) < hang ? 0 : 1;",
+    "new": "    marks[t] = Math.min(positions[a * 3 + 1], positions[b * 3 + 1], positions[c * 3 + 1]) < hang ? 0 : 0;",
     "tests": [
       "test/world/fb1025i_signsnag.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "SIGN-PASS-the-highest-corner-read",
     "file": "src/world/signSolid.js",
-    "old": "    marks[t] = Math.min(positions[a * 3 + 1]",
-    "new": "    marks[t] = Math.max(positions[a * 3 + 1]",
+    "old": "    marks[t] = Math.min(positions[a * 3 + 1], positions[b * 3 + 1], positions[c * 3 + 1]) < hang ? 0 : 1;",
+    "new": "    marks[t] = Math.max(positions[a * 3 + 1], positions[b * 3 + 1], positions[c * 3 + 1]) < hang ? 0 : 1;",
     "tests": [
       "test/world/fb1025i_signsnag.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "SIGN-PASS-the-line-itself-stands",
     "file": "src/world/signSolid.js",
-    "old": "< hang ? 0 : 1;",
-    "new": "<= hang ? 0 : 1;",
+    "old": "    marks[t] = Math.min(positions[a * 3 + 1], positions[b * 3 + 1], positions[c * 3 + 1]) < hang ? 0 : 1;",
+    "new": "    marks[t] = Math.min(positions[a * 3 + 1], positions[b * 3 + 1], positions[c * 3 + 1]) <= hang ? 0 : 1;",
     "tests": [
       "test/world/fb1025i_signsnag.test.js"
     ],
@@ -93,8 +93,8 @@
   {
     "name": "SIGN-PASS-the-range-closed-below",
     "file": "src/world/houseSigns.js",
-    "old": "modelIdNum >= SHOP_SIGN_FIRST_MODEL &&",
-    "new": "modelIdNum > SHOP_SIGN_FIRST_MODEL &&",
+    "old": "export const isShopSignModel = (modelIdNum) =>\n  modelIdNum >= SHOP_SIGN_FIRST_MODEL && modelIdNum <= SHOP_SIGN_LAST_MODEL;",
+    "new": "export const isShopSignModel = (modelIdNum) => modelIdNum > SHOP_SIGN_FIRST_MODEL && modelIdNum <= SHOP_SIGN_LAST_MODEL;",
     "tests": [
       "test/world/fb1025i_signsnag.test.js"
     ],
@@ -103,8 +103,8 @@
   {
     "name": "SIGN-PASS-the-range-closed-above",
     "file": "src/world/houseSigns.js",
-    "old": "&& modelIdNum <= SHOP_SIGN_LAST_MODEL;",
-    "new": "&& modelIdNum < SHOP_SIGN_LAST_MODEL;",
+    "old": "export const isShopSignModel = (modelIdNum) =>\n  modelIdNum >= SHOP_SIGN_FIRST_MODEL && modelIdNum <= SHOP_SIGN_LAST_MODEL;",
+    "new": "export const isShopSignModel = (modelIdNum) => modelIdNum >= SHOP_SIGN_FIRST_MODEL && modelIdNum < SHOP_SIGN_LAST_MODEL;",
     "tests": [
       "test/world/fb1025i_signsnag.test.js"
     ],
@@ -258,8 +258,8 @@
   {
     "name": "SIGN-PASS-the-gate-stands-it-whole",
     "file": "src/player/lateSolid.js",
-    "old": "h.matrix, h.translation, null, false, h.sight);\n  return {",
-    "new": "h.matrix, h.translation);\n  return {",
+    "old": "  const stand = (key, h) =>\n    collider.addMesh?.(key, h.positions, h.indices, h.matrix, h.translation, null, false, h.sight);",
+    "new": "  const stand = (key, h) => collider.addMesh?.(key, h.positions, h.indices, h.matrix, h.translation);",
     "tests": [
       "test/world/fb1025i_signsnag.test.js"
     ]
@@ -267,8 +267,8 @@
   {
     "name": "SIGN-PASS-the-gate-asks-it-whole",
     "file": "src/player/lateSolid.js",
-    "old": "h.probe.addMesh(PROBE, h.positions, h.indices, h.matrix, h.translation, null, false, h.sight);",
-    "new": "h.probe.addMesh(PROBE, h.positions, h.indices, h.matrix, h.translation);",
+    "old": "      h.probe.addMesh(PROBE, h.positions, h.indices, h.matrix, h.translation, null, false, h.sight);",
+    "new": "      h.probe.addMesh(PROBE, h.positions, h.indices, h.matrix, h.translation);",
     "tests": [
       "test/world/fb1025i_signsnag.test.js"
     ]
@@ -276,8 +276,8 @@
   {
     "name": "SIGN-PASS-a-yard-board-laid-a-bodys",
     "file": "src/world/merchantYards/merchantYardModels.js",
-    "old": "  f.hang(true);\n  const { w, h, t } = SIGN_BOARD",
-    "new": "  const { w, h, t } = SIGN_BOARD",
+    "old": "  f.hang(true);\n  const { w, h, t } = SIGN_BOARD,",
+    "new": "  const { w, h, t } = SIGN_BOARD,",
     "tests": [
       "test/world/fb1025i_signsnag.test.js"
     ]
@@ -285,8 +285,8 @@
   {
     "name": "SIGN-PASS-the-mark-left-on-after-the-board",
     "file": "src/world/merchantYards/merchantYardModels.js",
-    "old": "  f.hang(false);\n",
-    "new": "",
+    "old": "  f.hang(false);\n}",
+    "new": "}",
     "tests": [
       "test/world/fb1025i_signsnag.test.js"
     ]
@@ -294,8 +294,8 @@
   {
     "name": "SIGN-PASS-the-crew-board-laid-a-bodys",
     "file": "src/world/shipyardModel.js",
-    "old": "  f.hang(true);   // FIELD BUGS 2026-10-25i SIGN-PASS",
-    "new": "  f.hang(false);   // FIELD BUGS 2026-10-25i SIGN-PASS",
+    "old": "  f.hang(true); // FIELD BUGS 2026-10-25i SIGN-PASS: a board hung from the eaves is drawn, never solid, as the gate's (signboard)",
+    "new": "  f.hang(false); // FIELD BUGS 2026-10-25i SIGN-PASS: a board hung from the eaves is drawn, never solid, as the gate's (signboard)",
     "tests": [
       "test/world/fb1025i_signsnag.test.js"
     ]
@@ -303,8 +303,8 @@
   {
     "name": "SIGN-PASS-every-yard-triangle-a-bodys",
     "file": "src/world/merchantYards/merchantYardModels.js",
-    "old": "sight[v / 3 + k] = g.hung[k] ? 1 : 0;",
-    "new": "sight[v / 3 + k] = 0;",
+    "old": "    for (let k = 0; k < n / 3; k++) sight[v / 3 + k] = g.hung[k] ? 1 : 0;",
+    "new": "    for (let k = 0; k < n / 3; k++) sight[v / 3 + k] = 0;",
     "tests": [
       "test/world/fb1025i_signsnag.test.js"
     ]

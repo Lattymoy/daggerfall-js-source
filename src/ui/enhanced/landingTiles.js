@@ -40,9 +40,12 @@ export function landingTiles(draw, { alive = () => true, later = nextFrame } = {
     queued = false;
     counts.landings++;
     for (const [tile, spec] of waiting) {
-      if (!alive() || tile.isConnected === false) { waiting.delete(tile); continue; }
+      if (!alive() || tile.isConnected === false) {
+        waiting.delete(tile);
+        continue;
+      }
       const fresh = draw(spec, landed);
-      if (!fresh.classList.contains('has-icon')) continue;   // its picture is still being made - the pass is every waiting tile's, and another picture woke it
+      if (!fresh.classList.contains('has-icon')) continue; // its picture is still being made - the pass is every waiting tile's, and another picture woke it
       waiting.delete(tile);
       const bar = tile.querySelector('.wear');
       if (bar) fresh.append(bar);
@@ -57,8 +60,13 @@ export function landingTiles(draw, { alive = () => true, later = nextFrame } = {
       if (!t.classList.contains('has-icon')) waiting.set(t, spec);
       return t;
     },
-    clear() { waiting.clear(); },
+    clear() {
+      waiting.clear();
+    },
     counts,
-    reset() { counts.landings = 0; counts.painted = 0; },
+    reset() {
+      counts.landings = 0;
+      counts.painted = 0;
+    },
   };
 }

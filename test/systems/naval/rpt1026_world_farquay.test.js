@@ -132,7 +132,7 @@ test('FAR-QUAY by source: the world host walks HARBOUR_TOWN_ORDER for every port
   assert.ok(W.includes('for (const [dx, dy] of isle ? [] : HARBOUR_TOWN_ORDER) {'), 'the town walked out to the ring');
   // PIN MOVED (the merge of main into #1184, 2026-10-27): the host is scenes/harbourHost.js (HOST-SPLIT) - the world host's
   // woods read live off it, and each town's keep beside its harbour (PORT-SHIPS)
-  assert.ok(W.includes('return _navalHarbourAt.towns.map((t) => { const h = harbourOf(t, { state, built: csaPixelAt, woods: host.woods }); return { ...h, keep: harbourKeep(t.loc, h.rect) }; });'), 'every town near, its readiness harbourOf\'s');
+  assert.ok(W.includes('return _navalHarbourAt.towns.map((t) => {\n      const h = harbourOf(t, { state, built: csaPixelAt, woods: host.woods });\n      return { ...h, keep: harbourKeep(t.loc, h.rect) };\n    });'), 'every town near, its readiness harbourOf\'s');
 });
 
 test('FAR-QUAY the readiness\'s box is half-open: built over exactly the ring\'s 25 pixels, a town is ready at the ring\'s reach - its far edges, a pixel\'s own, never read as the next pixel past it; one pixel short of the ring, it is not (mutant: the far edge read past the ring)', () => {

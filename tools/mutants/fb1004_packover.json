@@ -56,8 +56,8 @@
   {
     "name": "PACKOVER-the-overflows-rot-words-dropped",
     "file": "src/systems/materialsBag.js",
-    "old": "got.left, opts.cc, { slowRot: opts.slowRot === true, noRot: opts.noRot === true });",
-    "new": "got.left, opts.cc, {});",
+    "old": "  if (got.left > 0 && withdrawable(key))\n    over = withdrawIntoPack(entity, key, got.left, opts.cc, {\n      slowRot: opts.slowRot === true,\n      noRot: opts.noRot === true,\n    });",
+    "new": "  if (got.left > 0 && withdrawable(key)) over = withdrawIntoPack(entity, key, got.left, opts.cc, {});",
     "tests": [
       "test/net/fb1004_packover.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PACKOVER-the-overflows-cc-forced",
     "file": "src/systems/materialsBag.js",
-    "old": "over = withdrawIntoPack(entity, key, got.left, opts.cc, {",
-    "new": "over = withdrawIntoPack(entity, key, got.left, false, {",
+    "old": "    over = withdrawIntoPack(entity, key, got.left, opts.cc, {",
+    "new": "    over = withdrawIntoPack(entity, key, got.left, false, {",
     "tests": [
       "test/net/fb1004_packover.test.js"
     ]

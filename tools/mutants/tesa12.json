@@ -20,8 +20,8 @@
   {
     "name": "TESA12-the-cities-reversed",
     "file": "src/world/tamrielPlaces.js",
-    "old": "    CITIES.filter((c) => c.province === key).forEach((c, id) => {",
-    "new": "    CITIES.filter((c) => c.province === key).reverse().forEach((c, id) => {",
+    "old": "    CITIES.filter((c) => c.province === key).forEach((c, id) => {\n      const place = {\n        province: key,\n        provinceIndex: p,\n        id,\n        kind: 'city-state',\n        name: c.name,\n        ...(c.port ? { port: true } : {}),\n      };\n      const at = snapToProvince(c.at[0], c.at[1], own);\n      if (!at) {\n        lost.push({ ...place, px: c.at[0], py: c.at[1] });\n        return;\n      }\n      mine.push({ ...place, px: at.x, py: at.y, snapped: at.d });\n    });",
+    "new": "    CITIES.filter((c) => c.province === key)\n      .reverse()\n      .forEach((c, id) => {\n        const place = {\n          province: key,\n          provinceIndex: p,\n          id,\n          kind: 'city-state',\n          name: c.name,\n          ...(c.port ? { port: true } : {}),\n        };\n        const at = snapToProvince(c.at[0], c.at[1], own);\n        if (!at) {\n          lost.push({ ...place, px: c.at[0], py: c.at[1] });\n          return;\n        }\n        mine.push({ ...place, px: at.x, py: at.y, snapped: at.d });\n      });",
     "tests": [
       "test/tesa12_places.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TESA12-the-lore-port-dropped",
     "file": "src/world/tamrielPlaces.js",
-    "old": "name: c.name, ...(c.port ? { port: true } : {}) };",
-    "new": "name: c.name };",
+    "old": "      const place = {\n        province: key,\n        provinceIndex: p,\n        id,\n        kind: 'city-state',\n        name: c.name,\n        ...(c.port ? { port: true } : {}),\n      };",
+    "new": "      const place = { province: key, provinceIndex: p, id, kind: 'city-state', name: c.name };",
     "tests": [
       "test/tesa12_places.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TESA12-no-margin",
     "file": "src/world/tamrielPlaces.js",
-    "old": "const inBay = x + 1 > bay.x0 - BAY_MARGIN && x < bay.x1 + BAY_MARGIN && y + 1 > bay.y0 - BAY_MARGIN && y < bay.y1 + BAY_MARGIN;",
-    "new": "const inBay = x + 1 > bay.x0 && x < bay.x1 && y + 1 > bay.y0 && y < bay.y1;",
+    "old": "      const inBay =\n        x + 1 > bay.x0 - BAY_MARGIN &&\n        x < bay.x1 + BAY_MARGIN &&\n        y + 1 > bay.y0 - BAY_MARGIN &&\n        y < bay.y1 + BAY_MARGIN;",
+    "new": "      const inBay = x + 1 > bay.x0 && x < bay.x1 && y + 1 > bay.y0 && y < bay.y1;",
     "tests": [
       "test/tesa12_places.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "TESA12-the-first-draw-always",
     "file": "src/world/tamrielPlaces.js",
-    "old": "    if (d > bd) { bd = d; best = { x, y }; }",
-    "new": "    if (bd < 0) { bd = d; best = { x, y }; }",
+    "old": "    if (d > bd) {",
+    "new": "    if (bd < 0) {",
     "tests": [
       "test/tesa12_places.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "TESA12-the-cell-edge",
     "file": "src/world/tamrielPlaces.js",
-    "old": "const x = cx + 0.25 + 0.5 * ((h & 0xffff) / 0x10000)",
-    "new": "const x = cx + 0.5 * ((h & 0xffff) / 0x10000)",
+    "old": "    const x = cx + 0.25 + 0.5 * ((h & 0xffff) / 0x10000),",
+    "new": "    const x = cx + 0.5 * ((h & 0xffff) / 0x10000),",
     "tests": [
       "test/tesa12_places.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "TESA12-the-name-not-kept",
     "file": "src/world/tamrielPlaces.js",
-    "old": "        used.add(name);\n",
-    "new": "",
+    "old": "        used.add(name);\n        mine.push({ province: key, provinceIndex: p, id: slot, kind, name, px: at.x, py: at.y, snapped: 0 });",
+    "new": "        mine.push({ province: key, provinceIndex: p, id: slot, kind, name, px: at.x, py: at.y, snapped: 0 });",
     "tests": [
       "test/tesa12_places.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "TESA12-windhelm-inland",
     "file": "src/world/tamriel/tamrielGeography.js",
-    "old": "{ name: 'Windhelm', province: 'Skyrim', at: [186, 26], port: true }",
-    "new": "{ name: 'Windhelm', province: 'Skyrim', at: [186, 26] }",
+    "old": "    { name: 'Windhelm', province: 'Skyrim', at: [186, 26], port: true },",
+    "new": "    { name: 'Windhelm', province: 'Skyrim', at: [186, 26] },",
     "tests": [
       "test/tesa12_places.test.js"
     ]

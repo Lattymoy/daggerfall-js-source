@@ -132,13 +132,13 @@ test('WW3 the door and the site: the widget converts with toColor32 in both arms
   assert.ok(!/toColor32Order/.test(door.replace(/^\s*\*.*$/gm, '')), 'not in the code - the trap is named in the comment only');
   assert.equal((door.match(/toColor32\(/g) ?? []).length, 0, 'DWHD1: no arm flips - the reader answers top-first');
   assert.equal((door.match(/toScreenOrder\(/g) ?? []).length, 2, 'both keep their rows (HT3, DWHD1)');
-  assert.match(door, /try \{ return toScreenOrder\(tex\.rgba\(\)\); \}/, 'the bundle arm');
+  assert.match(door, /try \{\n\s*return toScreenOrder\(tex\.rgba\(\)\);\n\s*\}/, 'the bundle arm');
   assert.match(door, /return toScreenOrder\(await decodePng\(bytes\)\);/, 'the loose arm');
   assert.match(door, /`\{ width, height, colors \}` RGBA in the port's\n \*  color32 \(bottom-up\) order, the SHAPE renderer\.uploadTexture reads/, 'the door says which shape it answers');
   const site = rd('src/combat/weapon/weaponWidget.js');
   // DW1 reshaped the catch: a throw is ALSO a miss for that name (so the
   // `w_` ask falls through to the plain one next frame), and still says so
-  assert.match(site, /\}\)\.catch\(\(e\) => \{ misses\.add\(name\); console\.warn\('\[weapon widget\] texture load failed', name, e\); \}\);/, 'no bare swallow');
+  assert.match(site, /\}\)\n\s*\.catch\(\(e\) => \{\n\s*misses\.add\(name\);\n\s*console\.warn\('\[weapon widget\] texture load failed', name, e\);\n\s*\}\);/, 'no bare swallow');
   assert.ok(!/\.catch\(\(\) => \{\}\)/.test(site), 'and none left anywhere in the widget');
   // the one home the fix leans on, unchanged
   const conv = rd('src/formats/color32Order.js');

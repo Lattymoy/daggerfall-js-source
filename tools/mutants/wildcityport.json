@@ -51,8 +51,8 @@
   {
     "name": "WCP-the-teleport-the-journeys",
     "file": "src/systems/travel/pastBayTravel.js",
-    "old": "  return { ok: true, fee: 0 };   // WILD-CITY-PORT: nor the zone's journey law",
-    "new": "  return _zone;   // WILD-CITY-PORT: nor the zone's journey law",
+    "old": "  return { ok: true, fee: 0 }; // WILD-CITY-PORT: nor the zone's journey law (its in and out, its wait, its fare) - a teleport's is world.js wildTeleportRefused's",
+    "new": "  return _zone; // WILD-CITY-PORT: nor the zone's journey law (its in and out, its wait, its fare) - a teleport's is world.js wildTeleportRefused's",
     "tests": [
       "test/systems/portalbay_stone.test.js"
     ]

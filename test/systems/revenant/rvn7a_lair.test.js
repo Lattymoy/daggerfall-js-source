@@ -161,5 +161,5 @@ test('RVN7a the page: its lair as I know it - roaming, unknown, or named (mutant
   assert.equal(lairWords({ lair: null }), 'Lair: none. It roams.');
   assert.equal(lairWords({ lair: D(1, 2, 'Tomb of Vaness'), lairKnown: false }), 'Lair: unknown. Nearby towns may have heard of it.');
   assert.equal(lairWords({ lair: D(1, 2, 'Tomb of Vaness'), lairKnown: true }), 'Lair: Tomb of Vaness, marked on your map.');   // PIN MOVED (RVN7c: and marked on the map)
-  assert.match(read('src/ui/revenant/revenantPage.js'), /if \(!fallen\) text\.append\(el\('span', 'rvn-will', lairWords\(r\)\)\);   \/\/ RVN7/);
+  assert.match(read('src/ui/revenant/revenantPage.js'), /if \(!fallen\) text\.append\(el\('span', 'rvn-will', lairWords\(r\)\)\); \/\/ RVN7/);
 });

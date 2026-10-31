@@ -2,8 +2,8 @@
   {
     "name": "D25A-centroid-not-surface",
     "file": "src/systems/automap/automapFloors.js",
-    "old": "if (!keep || keep(surfaceY(t, px, pz))) covered[k] = 1;",
-    "new": "if (!keep || keep(t.y)) covered[k] = 1;",
+    "old": "      if (!keep || keep(surfaceY(t, px, pz))) covered[k] = 1;",
+    "new": "      if (!keep || keep(t.y)) covered[k] = 1;",
     "tests": [
       "test/ui/disc25a_dungeon_map.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "D25A-surface-is-the-mean",
     "file": "src/systems/automap/automapFloors.js",
-    "old": "  if (t.ay == null || t.by == null || t.cy == null) return t.y;\n",
-    "new": "  return t.y;\n",
+    "old": "  if (t.ay == null || t.by == null || t.cy == null) return t.y;",
+    "new": "  return t.y;",
     "tests": [
       "test/ui/disc25a_dungeon_map.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "D25A-stairs-any-rise",
     "file": "src/systems/automap/automapFloors.js",
-    "old": "if (s === t || !(Math.abs(y[i] - y[j]) <= rise)) return;",
-    "new": "if (s === t) return;",
+    "old": "    if (s === t || !(Math.abs(y[i] - y[j]) <= rise)) return;",
+    "new": "    if (s === t) return;",
     "tests": [
       "test/ui/disc25a_dungeon_map.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "D25A-stairs-one-side",
     "file": "src/systems/automap/automapFloors.js",
-    "old": "    add(s, t, a, b);\n    add(t, s, b, a);\n",
-    "new": "    add(s, t, a, b);\n",
+    "old": "    add(t, s, b, a);\n  };",
+    "new": "  };",
     "tests": [
       "test/ui/disc25a_dungeon_map.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "D25A-stack-counts-stairs",
     "file": "src/systems/automap/automapFloors.js",
-    "old": "if (t === s || !(Math.abs(y[i] - y[j]) > rise)) continue;",
-    "new": "if (t === s) continue;",
+    "old": "          if (t === s || !(Math.abs(y[i] - y[j]) > rise)) continue;",
+    "new": "          if (t === s) continue;",
     "tests": [
       "test/ui/disc25a_dungeon_map.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "D25A-sheets-never-merge",
     "file": "src/systems/automap/automapFloors.js",
-    "old": "if (run.every((j) => stack[j * n + i] <= overlap)) run.push(i);",
-    "new": "if (!run.length) run.push(i);",
+    "old": "    if (run.every((j) => stack[j * n + i] <= overlap)) run.push(i);",
+    "new": "    if (!run.length) run.push(i);",
     "tests": [
       "test/ui/disc25a_dungeon_map.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "D25A-overlap-off-by-one",
     "file": "src/systems/automap/automapFloors.js",
-    "old": "if (run.every((j) => stack[j * n + i] <= overlap)) run.push(i);",
-    "new": "if (run.every((j) => stack[j * n + i] < overlap)) run.push(i);",
+    "old": "    if (run.every((j) => stack[j * n + i] <= overlap)) run.push(i);",
+    "new": "    if (run.every((j) => stack[j * n + i] < overlap)) run.push(i);",
     "tests": [
       "test/ui/disc25a_dungeon_map.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "D25A-strip-ignores-hands",
     "file": "src/ui/ink/inkAutomap.js",
-    "old": "    max = Math.min(max, Math.floor((h.y0 - padY - top + gap) / (rowH + gap)));\n",
-    "new": "",
+    "old": "    max = Math.min(max, Math.floor((h.y0 - padY - top + gap) / (rowH + gap)));\n  }",
+    "new": "  }",
     "tests": [
       "test/ui/disc25a_dungeon_map.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "D25A-faint-not-drawn",
     "file": "src/ui/ink/inkAutomap.js",
-    "old": "    if (r.faint) ctx.globalAlpha = FLOOR_UNSEEN_ALPHA;\n",
-    "new": "",
+    "old": "    if (r.faint) ctx.globalAlpha = FLOOR_UNSEEN_ALPHA;\n    ctx.strokeText(r.label, r.x, r.y);",
+    "new": "    ctx.strokeText(r.label, r.x, r.y);",
     "tests": [
       "test/ui/disc25a_dungeon_map.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "D25A-name-under-hand",
     "file": "src/ui/ink/inkAutomap.js",
-    "old": "      if (under(lx, ly)) continue;\n",
-    "new": "",
+    "old": "      if (under(lx, ly)) continue;\n      ctx.font = `${G.label}px ${NAME_FACE}`;",
+    "new": "      ctx.font = `${G.label}px ${NAME_FACE}`;",
     "tests": [
       "test/ui/disc25a_dungeon_map.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "D25A-names-overwrite",
     "file": "src/ui/ink/inkAutomap.js",
-    "old": "      if (placed.some((b) => b.x0 < box.x1 && box.x0 < b.x1 && b.y0 < box.y1 && box.y0 < b.y1)) continue;\n",
-    "new": "",
+    "old": "      if (placed.some((b) => b.x0 < box.x1 && box.x0 < b.x1 && b.y0 < box.y1 && box.y0 < b.y1)) continue;\n      placed.push(box);",
+    "new": "      placed.push(box);",
     "tests": [
       "test/ui/disc25a_dungeon_map.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "D25B-no-retro-gate",
     "file": "src/systems/retroMode.js",
-    "old": "  const aspect = retroRenderingMode() !== 0 ? retroAspectCorrection() : 0;\n  if (!aspect || !(screenW > 0) || !(screenH > 0)) return null;",
-    "new": "  const aspect = retroAspectCorrection();\n  if (!aspect || !(screenW > 0) || !(screenH > 0)) return null;",
+    "old": "  const aspect = retroRenderingMode() !== 0 ? retroAspectCorrection() : 0;",
+    "new": "  const aspect = retroAspectCorrection();",
     "tests": [
       "test/systems/disc25b_retro_map.test.js"
     ]
@@ -535,8 +535,8 @@
   {
     "name": "D25D-refusal-names-no-guild",
     "file": "src/systems/quest/questShare.js",
-    "old": "return { ok: false, reason: 'guild', guild: guild.name };",
-    "new": "return { ok: false, reason: 'guild' };",
+    "old": "    if (guild && !hasJoined(memberships, guild)) return { ok: false, reason: 'guild', guild: guild.name }; // DISC25-D: WHICH guild",
+    "new": "    if (guild && !hasJoined(memberships, guild)) return { ok: false, reason: 'guild' }; // DISC25-D: WHICH guild",
     "tests": [
       "test/systems/quest/disc25d_guild_share.test.js"
     ]
@@ -544,8 +544,8 @@
   {
     "name": "D25D-text-ignores-guild",
     "file": "src/systems/quest/questShare.js",
-    "old": "  if (named) return t('quest.share.guildNamed', 'are not a member of {guild}, which this quest requires.', { guild: named });\n",
-    "new": "",
+    "old": "  if (named)\n    return t('quest.share.guildNamed', 'are not a member of {guild}, which this quest requires.', { guild: named });\n  const base = RECEIVER_REFUSAL_TEXT[result?.reason] ?? SHARE_REFUSAL_TEXT[result?.reason] ?? null;",
+    "new": "  const base = RECEIVER_REFUSAL_TEXT[result?.reason] ?? SHARE_REFUSAL_TEXT[result?.reason] ?? null;",
     "tests": [
       "test/systems/quest/disc25d_guild_share.test.js"
     ]

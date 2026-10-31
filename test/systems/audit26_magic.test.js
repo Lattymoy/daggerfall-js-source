@@ -105,7 +105,7 @@ test('audit26 F123: WeakensArmor is inert - the drawback costs the player nothin
   // source: the day either setter changes, the channel it was
   // written for is the only record of which law it belongs to.
   assert.match(src('src/systems/enchantments.js'),
-    /\[T\.WeakensArmor, \{[^\n]*setDecreasedArmorValueModifier\(mods, WEAKENS_ARMOR_VALUE\)/);
+    /\[\n\s*T\.WeakensArmor,\n\s*\{\n\s*flags: PAYLOAD\.Held,\n\s*constant\(\{ mods \}\) \{\n\s*setDecreasedArmorValueModifier\(mods, WEAKENS_ARMOR_VALUE\)/);
 });
 
 // ---------------------------------------------------------------

@@ -2,8 +2,8 @@
   {
     "name": "WEAR-VANILLA-overhaul-wear-ships-on",
     "file": "src/systems/modSettings.js",
-    "old": "      equipmentDamageEnhanced: Object.freeze({ default: false,",
-    "new": "      equipmentDamageEnhanced: Object.freeze({ default: true,",
+    "old": "      equipmentDamageEnhanced: Object.freeze({\n        default: false,",
+    "new": "      equipmentDamageEnhanced: Object.freeze({\n        default: true,",
     "tests": [
       "test/systems/wear_vanilla.test.js",
       "test/systems/pcaao.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "WEAR-VANILLA-fading-ships-on",
     "file": "src/systems/modSettings.js",
-    "old": "      fadingEnchantedItems: Object.freeze({ default: false,",
-    "new": "      fadingEnchantedItems: Object.freeze({ default: true,",
+    "old": "      fadingEnchantedItems: Object.freeze({\n        default: false,",
+    "new": "      fadingEnchantedItems: Object.freeze({\n        default: true,",
     "tests": [
       "test/systems/wear_vanilla.test.js",
       "test/systems/pcaao.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "WEAR-VANILLA-rr-armour-x5-ships-on",
     "file": "src/systems/modSettings.js",
-    "old": "      equipDamage: Object.freeze({ default: false,",
-    "new": "      equipDamage: Object.freeze({ default: true,",
+    "old": "      equipDamage: Object.freeze({\n        default: false,",
+    "new": "      equipDamage: Object.freeze({\n        default: true,",
     "tests": [
       "test/systems/wear_vanilla.test.js",
       "test/systems/rr1_realism.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "WEAR-VANILLA-room-armour-x5-on",
     "file": "src/systems/online/onlineLane.js",
-    "old": "classicStrengthDamageBonus: false, equipDamage: false, encumbranceEffects: true,",
-    "new": "classicStrengthDamageBonus: false, equipDamage: true, encumbranceEffects: true,",
+    "old": "    equipDamage: false,",
+    "new": "    equipDamage: true,",
     "tests": [
       "test/systems/wear_vanilla.test.js",
       "test/systems/modsonline.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "WEAR-VANILLA-reset-drops-overhaul-wear",
     "file": "src/systems/modSettings.js",
-    "old": "  Object.freeze({ vendor: 'pcaao', key: 'equipmentDamageEnhanced', stamp: 'equipmentDamageEnhanced@WEAR-VANILLA' }),\n",
-    "new": "",
+    "old": "  Object.freeze({ vendor: 'pcaao', key: 'equipmentDamageEnhanced', stamp: 'equipmentDamageEnhanced@WEAR-VANILLA' }),\n  Object.freeze({ vendor: 'pcaao', key: 'fadingEnchantedItems', stamp: 'fadingEnchantedItems@WEAR-VANILLA' }),",
+    "new": "  Object.freeze({ vendor: 'pcaao', key: 'fadingEnchantedItems', stamp: 'fadingEnchantedItems@WEAR-VANILLA' }),",
     "tests": [
       "test/systems/wear_vanilla.test.js"
     ]
@@ -51,8 +51,8 @@
   {
     "name": "WEAR-VANILLA-reset-drops-fading",
     "file": "src/systems/modSettings.js",
-    "old": "  Object.freeze({ vendor: 'pcaao', key: 'fadingEnchantedItems', stamp: 'fadingEnchantedItems@WEAR-VANILLA' }),\n",
-    "new": "",
+    "old": "  Object.freeze({ vendor: 'pcaao', key: 'fadingEnchantedItems', stamp: 'fadingEnchantedItems@WEAR-VANILLA' }),\n  Object.freeze({ vendor: 'roleplay-realism', key: 'equipDamage', stamp: 'equipDamage@WEAR-VANILLA' }),",
+    "new": "  Object.freeze({ vendor: 'roleplay-realism', key: 'equipDamage', stamp: 'equipDamage@WEAR-VANILLA' }),",
     "tests": [
       "test/systems/wear_vanilla.test.js"
     ]
@@ -60,8 +60,8 @@
   {
     "name": "WEAR-VANILLA-reset-drops-rr-armour-x5",
     "file": "src/systems/modSettings.js",
-    "old": "  Object.freeze({ vendor: 'roleplay-realism', key: 'equipDamage', stamp: 'equipDamage@WEAR-VANILLA' }),\n",
-    "new": "",
+    "old": "  Object.freeze({ vendor: 'roleplay-realism', key: 'equipDamage', stamp: 'equipDamage@WEAR-VANILLA' }),\n]);",
+    "new": "]);",
     "tests": [
       "test/systems/wear_vanilla.test.js"
     ]
@@ -69,8 +69,8 @@
   {
     "name": "WEAR-VANILLA-core-always-wears-its-way",
     "file": "src/combat/pcaao.js",
-    "old": "  if (modules.equipmentDamageEnhanced) pcaaoDamageEquipment(attacker, target, shared(damage), weapon, struckBodyPart, { rolls, say, modules });\n",
-    "new": "  pcaaoDamageEquipment(attacker, target, shared(damage), weapon, struckBodyPart, { rolls, say, modules });\n",
+    "old": "  if (modules.equipmentDamageEnhanced)\n    pcaaoDamageEquipment(attacker, target, shared(damage), weapon, struckBodyPart, { rolls, say, modules });",
+    "new": "  pcaaoDamageEquipment(attacker, target, shared(damage), weapon, struckBodyPart, { rolls, say, modules });",
     "tests": [
       "test/systems/wear_vanilla.test.js"
     ]
@@ -78,8 +78,8 @@
   {
     "name": "WEAR-VANILLA-core-wears-the-stand-in",
     "file": "src/combat/pcaao.js",
-    "old": "  if (!modules.equipmentDamageEnhanced) damageEquipment(attacker, target, damage, struckWith, struckBodyPart, { rolls, say });\n",
-    "new": "  if (!modules.equipmentDamageEnhanced) damageEquipment(attacker, target, damage, weapon, struckBodyPart, { rolls, say });\n",
+    "old": "    damageEquipment(attacker, target, damage, struckWith, struckBodyPart, { rolls, say });",
+    "new": "    damageEquipment(attacker, target, damage, weapon, struckBodyPart, { rolls, say });",
     "tests": [
       "test/systems/wear_vanilla.test.js"
     ]
@@ -87,8 +87,8 @@
   {
     "name": "AUDIT-ECON-W1-wear-before-the-reduction",
     "file": "src/combat/pcaao.js",
-    "old": "  if (modules.equipmentDamageEnhanced) pcaaoDamageEquipment(attacker, target, shared(damage), weapon, struckBodyPart, { rolls, say, modules });\n  if (AITarget && isMonster(AITarget)) {\n    if (!pcaaoArmorStruckVerification(target, struckBodyPart)) damage = pcaaoPercentageReductionCalculationForMonsters(attacker, target, damage, bluntWep, naturalDamResist);\n    else if (unarmedAttack) damage = pcaaoArmorDamageReductionWithUnarmed(attacker, target, damage, struckBodyPart, naturalDamResist, modules);\n    else if (weaponAttack) damage = pcaaoArmorDamageReductionWithWeapon(attacker, target, damage, weapon, struckBodyPart, naturalDamResist, modules);\n  } else if (unarmedAttack) {\n    damage = pcaaoArmorDamageReductionWithUnarmed(attacker, target, damage, struckBodyPart, naturalDamResist, modules);\n  } else if (weaponAttack) {\n    damage = pcaaoArmorDamageReductionWithWeapon(attacker, target, damage, weapon, struckBodyPart, naturalDamResist, modules);\n  }\n  damage = shared(damage);\n  // WEAR-VANILLA, the module off: FormulaHelper's DamageEquipment (formulas.js damageEquipment, Roleplay Realism's slot\n  // inside it), with the weapon the blow was struck with - a monster's stand-in is the overhaul's device, so a claw\n  // wears no armour, as in DFU - and (AUDIT ECON W1) by the damage that WENT THROUGH, after the reduction above. DFU's\n  // armour turns a blow aside and the blow wears nothing; the overhaul's lets nearly every blow land and takes its\n  // share off it instead, so the share it took wears nothing either. Fed the damage before the reduction, gear wore 1.3\n  // to 2.5 times DFU's rate a swing (a level-20 player in Daedric lost 2.5 times DFU's armour to a Knight's swing);\n  // after it, 0.7 to 1.2 times. The duel reads its blow the same way (scenes/world.js, the defender's own damage). The\n  // rest of the overhaul - the hit, the damage, the reduction - is untouched.\n  if (!modules.equipmentDamageEnhanced) damageEquipment(attacker, target, damage, struckWith, struckBodyPart, { rolls, say });\n",
-    "new": "  if (modules.equipmentDamageEnhanced) pcaaoDamageEquipment(attacker, target, shared(damage), weapon, struckBodyPart, { rolls, say, modules });\n  if (!modules.equipmentDamageEnhanced) damageEquipment(attacker, target, damage, struckWith, struckBodyPart, { rolls, say });\n  if (AITarget && isMonster(AITarget)) {\n    if (!pcaaoArmorStruckVerification(target, struckBodyPart)) damage = pcaaoPercentageReductionCalculationForMonsters(attacker, target, damage, bluntWep, naturalDamResist);\n    else if (unarmedAttack) damage = pcaaoArmorDamageReductionWithUnarmed(attacker, target, damage, struckBodyPart, naturalDamResist, modules);\n    else if (weaponAttack) damage = pcaaoArmorDamageReductionWithWeapon(attacker, target, damage, weapon, struckBodyPart, naturalDamResist, modules);\n  } else if (unarmedAttack) {\n    damage = pcaaoArmorDamageReductionWithUnarmed(attacker, target, damage, struckBodyPart, naturalDamResist, modules);\n  } else if (weaponAttack) {\n    damage = pcaaoArmorDamageReductionWithWeapon(attacker, target, damage, weapon, struckBodyPart, naturalDamResist, modules);\n  }\n  damage = shared(damage);\n  // WEAR-VANILLA, the module off: FormulaHelper's DamageEquipment (formulas.js damageEquipment, Roleplay Realism's slot\n  // inside it), with the weapon the blow was struck with - a monster's stand-in is the overhaul's device, so a claw\n  // wears no armour, as in DFU - and (AUDIT ECON W1) by the damage that WENT THROUGH, after the reduction above. DFU's\n  // armour turns a blow aside and the blow wears nothing; the overhaul's lets nearly every blow land and takes its\n  // share off it instead, so the share it took wears nothing either. Fed the damage before the reduction, gear wore 1.3\n  // to 2.5 times DFU's rate a swing (a level-20 player in Daedric lost 2.5 times DFU's armour to a Knight's swing);\n  // after it, 0.7 to 1.2 times. The duel reads its blow the same way (scenes/world.js, the defender's own damage). The\n  // rest of the overhaul - the hit, the damage, the reduction - is untouched.\n",
+    "old": "  if (AITarget && isMonster(AITarget)) {\n    if (!pcaaoArmorStruckVerification(target, struckBodyPart))\n      damage = pcaaoPercentageReductionCalculationForMonsters(attacker, target, damage, bluntWep, naturalDamResist);\n    else if (unarmedAttack)\n      damage = pcaaoArmorDamageReductionWithUnarmed(\n        attacker,\n        target,\n        damage,\n        struckBodyPart,\n        naturalDamResist,\n        modules,\n      );\n    else if (weaponAttack)\n      damage = pcaaoArmorDamageReductionWithWeapon(\n        attacker,\n        target,\n        damage,\n        weapon,\n        struckBodyPart,\n        naturalDamResist,\n        modules,\n      );\n  } else if (unarmedAttack) {\n    damage = pcaaoArmorDamageReductionWithUnarmed(attacker, target, damage, struckBodyPart, naturalDamResist, modules);\n  } else if (weaponAttack) {\n    damage = pcaaoArmorDamageReductionWithWeapon(\n      attacker,\n      target,\n      damage,\n      weapon,\n      struckBodyPart,\n      naturalDamResist,\n      modules,\n    );\n  }\n  damage = shared(damage);\n  // WEAR-VANILLA, the module off: FormulaHelper's DamageEquipment (formulas.js damageEquipment, Roleplay Realism's slot\n  // inside it), with the weapon the blow was struck with - a monster's stand-in is the overhaul's device, so a claw\n  // wears no armour, as in DFU - and (AUDIT ECON W1) by the damage that WENT THROUGH, after the reduction above. DFU's\n  // armour turns a blow aside and the blow wears nothing; the overhaul's lets nearly every blow land and takes its\n  // share off it instead, so the share it took wears nothing either. Fed the damage before the reduction, gear wore 1.3\n  // to 2.5 times DFU's rate a swing (a level-20 player in Daedric lost 2.5 times DFU's armour to a Knight's swing);\n  // after it, 0.7 to 1.2 times. The duel reads its blow the same way (scenes/world.js, the defender's own damage). The\n  // rest of the overhaul - the hit, the damage, the reduction - is untouched.\n  if (!modules.equipmentDamageEnhanced)\n    damageEquipment(attacker, target, damage, struckWith, struckBodyPart, { rolls, say });",
+    "new": "  if (!modules.equipmentDamageEnhanced)\n    damageEquipment(attacker, target, damage, struckWith, struckBodyPart, { rolls, say });\n  if (AITarget && isMonster(AITarget)) {\n    if (!pcaaoArmorStruckVerification(target, struckBodyPart))\n      damage = pcaaoPercentageReductionCalculationForMonsters(attacker, target, damage, bluntWep, naturalDamResist);\n    else if (unarmedAttack)\n      damage = pcaaoArmorDamageReductionWithUnarmed(\n        attacker,\n        target,\n        damage,\n        struckBodyPart,\n        naturalDamResist,\n        modules,\n      );\n    else if (weaponAttack)\n      damage = pcaaoArmorDamageReductionWithWeapon(\n        attacker,\n        target,\n        damage,\n        weapon,\n        struckBodyPart,\n        naturalDamResist,\n        modules,\n      );\n  } else if (unarmedAttack) {\n    damage = pcaaoArmorDamageReductionWithUnarmed(attacker, target, damage, struckBodyPart, naturalDamResist, modules);\n  } else if (weaponAttack) {\n    damage = pcaaoArmorDamageReductionWithWeapon(\n      attacker,\n      target,\n      damage,\n      weapon,\n      struckBodyPart,\n      naturalDamResist,\n      modules,\n    );\n  }\n  damage = shared(damage);\n  // WEAR-VANILLA, the module off: FormulaHelper's DamageEquipment (formulas.js damageEquipment, Roleplay Realism's slot\n  // inside it), with the weapon the blow was struck with - a monster's stand-in is the overhaul's device, so a claw\n  // wears no armour, as in DFU - and (AUDIT ECON W1) by the damage that WENT THROUGH, after the reduction above. DFU's\n  // armour turns a blow aside and the blow wears nothing; the overhaul's lets nearly every blow land and takes its\n  // share off it instead, so the share it took wears nothing either. Fed the damage before the reduction, gear wore 1.3\n  // to 2.5 times DFU's rate a swing (a level-20 player in Daedric lost 2.5 times DFU's armour to a Knight's swing);\n  // after it, 0.7 to 1.2 times. The duel reads its blow the same way (scenes/world.js, the defender's own damage). The\n  // rest of the overhaul - the hit, the damage, the reduction - is untouched.",
     "tests": [
       "test/systems/wear_vanilla.test.js"
     ]
@@ -96,8 +96,8 @@
   {
     "name": "AUDIT-ECON-W3-the-held-weapon-before-the-swap",
     "file": "src/combat/pcaao.js",
-    "old": "  if (!modules.equipmentDamageEnhanced) damageEquipment(attacker, target, damage, struckWith, struckBodyPart, { rolls, say });\n",
-    "new": "  if (!modules.equipmentDamageEnhanced) damageEquipment(attacker, target, damage, weaponIn, struckBodyPart, { rolls, say });\n",
+    "old": "    damageEquipment(attacker, target, damage, struckWith, struckBodyPart, { rolls, say });",
+    "new": "    damageEquipment(attacker, target, damage, weaponIn, struckBodyPart, { rolls, say });",
     "tests": [
       "test/systems/wear_vanilla.test.js"
     ]
@@ -105,8 +105,8 @@
   {
     "name": "AUDIT-ECON-W3-the-struck-part-dropped",
     "file": "src/combat/pcaao.js",
-    "old": "  if (!modules.equipmentDamageEnhanced) damageEquipment(attacker, target, damage, struckWith, struckBodyPart, { rolls, say });\n",
-    "new": "  if (!modules.equipmentDamageEnhanced) damageEquipment(attacker, target, damage, struckWith, -1, { rolls, say });\n",
+    "old": "  if (!modules.equipmentDamageEnhanced)\n    damageEquipment(attacker, target, damage, struckWith, struckBodyPart, { rolls, say });",
+    "new": "  if (!modules.equipmentDamageEnhanced) damageEquipment(attacker, target, damage, struckWith, -1, { rolls, say });",
     "tests": [
       "test/systems/wear_vanilla.test.js"
     ]
@@ -114,8 +114,8 @@
   {
     "name": "AUDIT-ECON-W3-a-foes-blows-wear-nothing",
     "file": "src/combat/pcaao.js",
-    "old": "  if (!modules.equipmentDamageEnhanced) damageEquipment(attacker, target, damage, struckWith, struckBodyPart, { rolls, say });\n",
-    "new": "  if (!modules.equipmentDamageEnhanced && isPlayer(attacker)) damageEquipment(attacker, target, damage, struckWith, struckBodyPart, { rolls, say });\n",
+    "old": "  if (!modules.equipmentDamageEnhanced)",
+    "new": "  if (!modules.equipmentDamageEnhanced && isPlayer(attacker))",
     "tests": [
       "test/systems/wear_vanilla.test.js"
     ]
@@ -123,8 +123,8 @@
   {
     "name": "AUDIT-ECON-W3-the-rolls-not-handed",
     "file": "src/combat/pcaao.js",
-    "old": "  if (!modules.equipmentDamageEnhanced) damageEquipment(attacker, target, damage, struckWith, struckBodyPart, { rolls, say });\n",
-    "new": "  if (!modules.equipmentDamageEnhanced) damageEquipment(attacker, target, damage, struckWith, struckBodyPart, { say });\n",
+    "old": "  if (!modules.equipmentDamageEnhanced)\n    damageEquipment(attacker, target, damage, struckWith, struckBodyPart, { rolls, say });",
+    "new": "  if (!modules.equipmentDamageEnhanced) damageEquipment(attacker, target, damage, struckWith, struckBodyPart, { say });",
     "tests": [
       "test/systems/wear_vanilla.test.js"
     ]
@@ -132,8 +132,8 @@
   {
     "name": "AUDIT-ECON-W3-the-voice-dropped",
     "file": "src/combat/pcaao.js",
-    "old": "  if (!modules.equipmentDamageEnhanced) damageEquipment(attacker, target, damage, struckWith, struckBodyPart, { rolls, say });\n",
-    "new": "  if (!modules.equipmentDamageEnhanced) damageEquipment(attacker, target, damage, struckWith, struckBodyPart, { rolls });\n",
+    "old": "    damageEquipment(attacker, target, damage, struckWith, struckBodyPart, { rolls, say });",
+    "new": "    damageEquipment(attacker, target, damage, struckWith, struckBodyPart, { rolls });",
     "tests": [
       "test/systems/wear_vanilla.test.js"
     ]
@@ -141,8 +141,8 @@
   {
     "name": "AUDIT-ECON-W3-the-damage-doubled",
     "file": "src/combat/pcaao.js",
-    "old": "  if (!modules.equipmentDamageEnhanced) damageEquipment(attacker, target, damage, struckWith, struckBodyPart, { rolls, say });\n",
-    "new": "  if (!modules.equipmentDamageEnhanced) damageEquipment(attacker, target, damage * 2, struckWith, struckBodyPart, { rolls, say });\n",
+    "old": "    damageEquipment(attacker, target, damage, struckWith, struckBodyPart, { rolls, say });",
+    "new": "    damageEquipment(attacker, target, damage * 2, struckWith, struckBodyPart, { rolls, say });",
     "tests": [
       "test/systems/wear_vanilla.test.js"
     ]
@@ -150,8 +150,8 @@
   {
     "name": "AUDIT-ECON-W3-the-modules-stand-in-lost",
     "file": "src/combat/pcaao.js",
-    "old": "  if (modules.equipmentDamageEnhanced) pcaaoDamageEquipment(attacker, target, shared(damage), weapon, struckBodyPart, { rolls, say, modules });\n",
-    "new": "  if (modules.equipmentDamageEnhanced) pcaaoDamageEquipment(attacker, target, shared(damage), struckWith, struckBodyPart, { rolls, say, modules });\n",
+    "old": "    pcaaoDamageEquipment(attacker, target, shared(damage), weapon, struckBodyPart, { rolls, say, modules });",
+    "new": "    pcaaoDamageEquipment(attacker, target, shared(damage), struckWith, struckBodyPart, { rolls, say, modules });",
     "tests": [
       "test/systems/wear_vanilla.test.js"
     ]
@@ -178,8 +178,8 @@
   {
     "name": "WEAR-TWICE-the-mods-doubled-too",
     "file": "src/combat/pcaao.js",
-    "old": "  lowerCondition(item, blowWear(amount, rolls), owner, say, removeFrom, shownItemName);",
-    "new": "  lowerCondition(item, blowWear(amount * 2, rolls), owner, say, removeFrom, shownItemName);",
+    "old": "  lowerCondition(item, blowWear(amount, rolls), owner, say, removeFrom, shownItemName); // BALANCE1: the mod's amount, on the port's wear scale; L10N3e: the broken line names it as shown",
+    "new": "  lowerCondition(item, blowWear(amount * 2, rolls), owner, say, removeFrom, shownItemName); // BALANCE1: the mod's amount, on the port's wear scale; L10N3e: the broken line names it as shown",
     "tests": [
       "test/systems/wear_vanilla.test.js",
       "test/systems/balance1.test.js"

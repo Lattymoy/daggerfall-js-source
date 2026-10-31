@@ -11,8 +11,8 @@
   {
     "name": "BF-the-mark-never-found",
     "file": "tools/bootFreezeProbe.mjs",
-    "old": "callFrame.functionName === '__bootFreezeFirstFrame') { firstAt = ts[i]; break; }",
-    "new": "callFrame.functionName === '__never') { firstAt = ts[i]; break; }",
+    "old": "        if (byId.get(c).callFrame.functionName === '__bootFreezeFirstFrame') {",
+    "new": "        if (byId.get(c).callFrame.functionName === '__never') {",
     "tests": [
       "test/tooling/bootfreeze_probe.test.js"
     ]

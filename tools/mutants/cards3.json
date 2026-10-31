@@ -2,8 +2,8 @@
   {
     "name": "CM-flight-floor",
     "file": "src/world/card/cardMotion.js",
-    "old": "const flight = Math.max(FLIGHT_MIN_S, (dist - slide) / FLIGHT_SPEED);",
-    "new": "const flight = (dist - slide) / FLIGHT_SPEED;",
+    "old": "  const flight = Math.max(FLIGHT_MIN_S, (dist - slide) / FLIGHT_SPEED);",
+    "new": "  const flight = (dist - slide) / FLIGHT_SPEED;",
     "tests": [
       "test/world/card/cards3_motion.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CM-slide-overshoots",
     "file": "src/world/card/cardMotion.js",
-    "old": "const d = v0 * s - 0.5 * SLIDE_DECEL * s * s;",
-    "new": "const d = v0 * s;",
+    "old": "        const d = v0 * s - 0.5 * SLIDE_DECEL * s * s;",
+    "new": "        const d = v0 * s;",
     "tests": [
       "test/world/card/cards3_motion.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CM-flipshift-wrong-way",
     "file": "src/world/card/cardMotion.js",
-    "old": "return [to[0] - Math.cos(yaw) * CARD_W, to[1], to[2] + Math.sin(yaw) * CARD_W];",
-    "new": "return [to[0] + Math.cos(yaw) * CARD_W, to[1], to[2] - Math.sin(yaw) * CARD_W];",
+    "old": "  return [to[0] - Math.cos(yaw) * CARD_W, to[1], to[2] + Math.sin(yaw) * CARD_W];",
+    "new": "  return [to[0] + Math.cos(yaw) * CARD_W, to[1], to[2] - Math.sin(yaw) * CARD_W];",
     "tests": [
       "test/world/card/cards3_motion.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "CS3-board-no-shift",
     "file": "src/world/card/cardScene.js",
-    "old": "to: flipShift(this._rest(this.places.board[i], i & 1), this.places.boardYaw)",
-    "new": "to: this._rest(this.places.board[i], i & 1)",
+    "old": "          to: flipShift(this._rest(this.places.board[i], i & 1), this.places.boardYaw),",
+    "new": "          to: this._rest(this.places.board[i], i & 1),",
     "tests": [
       "test/world/card/cards3_motion.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "CS3-own-cards-edge",
     "file": "src/world/card/cardScene.js",
-    "old": "t0: m.t1 + TURN_DELAY, pivot: 'middle' })",
-    "new": "t0: m.t1 + TURN_DELAY, pivot: 'edge' })",
+    "old": "                pivot: 'middle',",
+    "new": "                pivot: 'edge',",
     "tests": [
       "test/world/card/cards3_motion.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CS3-others-seen",
     "file": "src/world/card/cardScene.js",
-    "old": "card: mine ? holeOf(seat, r) : -1,",
-    "new": "card: holeOf(seat, r),",
+    "old": "          this.cards.push({ id: `h${this.handNo}:${seat}:${r}`, card: mine ? holeOf(seat, r) : -1, seat, motions });",
+    "new": "          this.cards.push({ id: `h${this.handNo}:${seat}:${r}`, card: holeOf(seat, r), seat, motions });",
     "tests": [
       "test/world/card/cards3_motion.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CS3-pot-lost",
     "file": "src/world/card/cardScene.js",
-    "old": "if (h) { this.lastBets.set(i, bet); pot += h.total - h.bet; }",
-    "new": "if (h) { this.lastBets.set(i, bet); }",
+    "old": "          pot += h.total - h.bet;\n        }",
+    "new": "        }",
     "tests": [
       "test/world/card/cards3_motion.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "CD3-winding-cw",
     "file": "src/render/cardTableDraw.js",
-    "old": "indices.push(base, base + 2, base + 1, base, base + 3, base + 2);   // counter-clockwise",
-    "new": "indices.push(base, base + 1, base + 2, base, base + 2, base + 3);   // counter-clockwise",
+    "old": "    indices.push(base, base + 2, base + 1, base, base + 3, base + 2); // counter-clockwise about its normal (the right hand's) - the renderer's front, as every model's",
+    "new": "    indices.push(base, base + 1, base + 2, base, base + 2, base + 3); // counter-clockwise about its normal (the right hand's) - the renderer's front, as every model's",
     "tests": [
       "test/net/card/cards3_draw.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "CD3-chip-winding-cw",
     "file": "src/render/cardTableDraw.js",
-    "old": "indices.push(base, base + 2, base + 1, base, base + 3, base + 2);   // the plate's winding",
-    "new": "indices.push(base, base + 1, base + 2, base, base + 2, base + 3);   // the plate's winding",
+    "old": "    indices.push(base, base + 2, base + 1, base, base + 3, base + 2); // the plate's winding",
+    "new": "    indices.push(base, base + 1, base + 2, base, base + 2, base + 3); // the plate's winding",
     "tests": [
       "test/net/card/cards3_draw.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CD3-face-mirrored",
     "file": "src/render/cardTableDraw.js",
-    "old": "[[fu0, fv0], [fu1, fv0], [fu1, fv1], [fu0, fv1]]",
-    "new": "[[fu1, fv0], [fu0, fv0], [fu0, fv1], [fu1, fv1]]",
+    "old": "      [fu0, fv0],\n      [fu1, fv0],\n      [fu1, fv1],\n      [fu0, fv1],",
+    "new": "      [fu1, fv0],\n      [fu0, fv0],\n      [fu0, fv1],\n      [fu1, fv1],",
     "tests": [
       "test/net/card/cards3_draw.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "CD3-unseen-shown",
     "file": "src/render/cardTableDraw.js",
-    "old": "isCard(c.card) ? faces[c.card] : back",
-    "new": "faces[Math.max(0, c.card)]",
+    "old": "        renderer.drawMesh(isCard(c.card) ? faces[c.card] : back, c.matrix ?? cardMatrix(c.pos, c.yaw, c.roll), null, {",
+    "new": "        renderer.drawMesh(faces[Math.max(0, c.card)], c.matrix ?? cardMatrix(c.pos, c.yaw, c.roll), null, {",
     "tests": [
       "test/net/card/cards3_draw.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "CD3-leak-meshes",
     "file": "src/render/cardTableDraw.js",
-    "old": "for (const m of [...faces, back, ...chips]) renderer.destroyMesh?.(m);",
-    "new": "for (const m of faces) renderer.destroyMesh?.(m);",
+    "old": "      for (const m of [...faces, back, ...chips]) renderer.destroyMesh?.(m);",
+    "new": "      for (const m of faces) renderer.destroyMesh?.(m);",
     "tests": [
       "test/net/card/cards3_draw.test.js"
     ]

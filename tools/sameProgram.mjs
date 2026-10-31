@@ -58,8 +58,8 @@ function identifierRoles(ast, sourceType) {
     }
   }
 
-  const fixedName = new Set();   // identifiers whose spelling other code depends on
-  let dynamicScope = false;      // `with` or a direct eval: names cannot be resolved statically
+  const fixedName = new Set(); // identifiers whose spelling other code depends on
+  let dynamicScope = false; // `with` or a direct eval: names cannot be resolved statically
   const markDeclaredNames = (declaration) => {
     if (!declaration) return;
     if (declaration.id) fixedName.add(declaration.id);
@@ -107,11 +107,21 @@ function identifierRoles(ast, sourceType) {
 function collectPatternNames(pattern, into) {
   if (!pattern) return;
   switch (pattern.type) {
-    case 'Identifier': into.add(pattern); break;
-    case 'ObjectPattern': for (const p of pattern.properties) collectPatternNames(p.type === 'RestElement' ? p.argument : p.value, into); break;
-    case 'ArrayPattern': for (const element of pattern.elements) collectPatternNames(element, into); break;
-    case 'RestElement': collectPatternNames(pattern.argument, into); break;
-    case 'AssignmentPattern': collectPatternNames(pattern.left, into); break;
+    case 'Identifier':
+      into.add(pattern);
+      break;
+    case 'ObjectPattern':
+      for (const p of pattern.properties) collectPatternNames(p.type === 'RestElement' ? p.argument : p.value, into);
+      break;
+    case 'ArrayPattern':
+      for (const element of pattern.elements) collectPatternNames(element, into);
+      break;
+    case 'RestElement':
+      collectPatternNames(pattern.argument, into);
+      break;
+    case 'AssignmentPattern':
+      collectPatternNames(pattern.left, into);
+      break;
   }
 }
 
@@ -147,40 +157,76 @@ class Difference extends Error {
  */
 export function sameProgram(beforeSrc, afterSrc, { renames = {} } = {}) {
   let before, after;
-  try { before = parseProgram(beforeSrc); } catch (e) { return { same: false, why: `the first version does not parse: ${e.message}`, before: null, after: null }; }
-  try { after = parseProgram(afterSrc); } catch (e) { return { same: false, why: `the second version does not parse: ${e.message}`, before: null, after: null }; }
-  if (before.sourceType !== after.sourceType) return { same: false, why: `one version parses only as a ${before.sourceType}, the other only as a ${after.sourceType}`, before: null, after: null };
+  try {
+    before = parseProgram(beforeSrc);
+  } catch (e) {
+    return { same: false, why: `the first version does not parse: ${e.message}`, before: null, after: null };
+  }
+  try {
+    after = parseProgram(afterSrc);
+  } catch (e) {
+    return { same: false, why: `the second version does not parse: ${e.message}`, before: null, after: null };
+  }
+  if (before.sourceType !== after.sourceType)
+    return {
+      same: false,
+      why: `one version parses only as a ${before.sourceType}, the other only as a ${after.sourceType}`,
+      before: null,
+      after: null,
+    };
 
   const roles = [identifierRoles(before.ast, before.sourceType), identifierRoles(after.ast, after.sourceType)];
-  const pairedForward = new Map(), pairedBack = new Map();   // variable of the first version <-> of the second
+  const pairedForward = new Map(),
+    pairedBack = new Map(); // variable of the first version <-> of the second
 
   const where = (node) => (node?.loc ? { line: node.loc.start.line, column: node.loc.start.column } : null);
-  const differ = (why, a, b) => { throw new Difference(why, where(a), where(b)); };
+  const differ = (why, a, b) => {
+    throw new Difference(why, where(a), where(b));
+  };
 
   const compareIdentifiers = (a, b, { local = false } = {}) => {
     const [first, second] = roles;
-    const fixedA = !local && first.fixedName.has(a), fixedB = !local && second.fixedName.has(b);
+    const fixedA = !local && first.fixedName.has(a),
+      fixedB = !local && second.fixedName.has(b);
     if (fixedA || fixedB) {
       if (fixedA !== fixedB) differ(`\`${a.name}\` and \`${b.name}\` stand in different roles`, a, b);
-      if (a.name !== b.name) differ(`\`${a.name}\` became \`${b.name}\` where other code reads the name itself (a property, a member, an export or import name, a label)`, a, b);
+      if (a.name !== b.name)
+        differ(
+          `\`${a.name}\` became \`${b.name}\` where other code reads the name itself (a property, a member, an export or import name, a label)`,
+          a,
+          b,
+        );
       return;
     }
-    const varA = first.variableOf.get(a), varB = second.variableOf.get(b);
+    const varA = first.variableOf.get(a),
+      varB = second.variableOf.get(b);
     if (!varA || !varB) {
-      if (varA || varB) differ(`\`${a.name}\` and \`${b.name}\` do not both name a declared variable - one of them now reaches a different binding or a global`, a, b);
+      if (varA || varB)
+        differ(
+          `\`${a.name}\` and \`${b.name}\` do not both name a declared variable - one of them now reaches a different binding or a global`,
+          a,
+          b,
+        );
       if (a.name !== b.name) differ(`the global \`${a.name}\` became \`${b.name}\``, a, b);
       return;
     }
     if (a.name !== b.name) {
-      if (renames[a.name] !== b.name) differ(`\`${a.name}\` was renamed to \`${b.name}\`, and that rename was not asked for`, a, b);
-      if (first.dynamicScope || second.dynamicScope) differ('a rename in a file with `with` or a direct `eval(` cannot be proven', a, b);
+      if (renames[a.name] !== b.name)
+        differ(`\`${a.name}\` was renamed to \`${b.name}\`, and that rename was not asked for`, a, b);
+      if (first.dynamicScope || second.dynamicScope)
+        differ('a rename in a file with `with` or a direct `eval(` cannot be proven', a, b);
     }
-    const pairedWith = pairedForward.get(varA), pairedFrom = pairedBack.get(varB);
+    const pairedWith = pairedForward.get(varA),
+      pairedFrom = pairedBack.get(varB);
     if (pairedWith === undefined && pairedFrom === undefined) {
       pairedForward.set(varA, varB);
       pairedBack.set(varB, varA);
     } else if (pairedWith !== varB || pairedFrom !== varA) {
-      differ(`\`${a.name}\` / \`${b.name}\` resolve to a different declaration than the same name did elsewhere in the file`, a, b);
+      differ(
+        `\`${a.name}\` / \`${b.name}\` resolve to a different declaration than the same name did elsewhere in the file`,
+        a,
+        b,
+      );
     }
   };
 
@@ -192,12 +238,27 @@ export function sameProgram(beforeSrc, afterSrc, { renames = {} } = {}) {
 
   const compareNodes = (a, b) => {
     if (a === null || a === undefined || b === null || b === undefined) {
-      if ((a ?? null) !== (b ?? null)) differ('a part is present in one version and missing in the other', a ?? b, b ?? a);
+      if ((a ?? null) !== (b ?? null))
+        differ('a part is present in one version and missing in the other', a ?? b, b ?? a);
+      return;
+    }
+    // `a || (b || c)` is `a || b || c`: a chain of one logical operator is associative in its value and in what it
+    // evaluates, so a formatter may drop the parentheses (LEGIBLE 3) - the two are compared as one chain
+    if (a.type === 'LogicalExpression' && b.type === 'LogicalExpression' && a.operator === b.operator) {
+      const chain = (n) =>
+        n.type === 'LogicalExpression' && n.operator === a.operator ? [...chain(n.left), ...chain(n.right)] : [n];
+      const ca = chain(a),
+        cb = chain(b);
+      if (ca.length !== cb.length) differ(`a chain of \`${a.operator}\` has a different number of parts`, a, b);
+      for (let i = 0; i < ca.length; i++) compareNodes(ca[i], cb[i]);
       return;
     }
     if (a.type !== b.type) differ(`a ${a.type} became a ${b.type}`, a, b);
     if (a.type === 'Identifier' || a.type === 'PrivateIdentifier') {
-      if (a.type === 'PrivateIdentifier') { if (a.name !== b.name) differ(`#${a.name} became #${b.name}`, a, b); return; }
+      if (a.type === 'PrivateIdentifier') {
+        if (a.name !== b.name) differ(`#${a.name} became #${b.name}`, a, b);
+        return;
+      }
       compareIdentifiers(a, b);
       return;
     }
@@ -206,32 +267,44 @@ export function sameProgram(beforeSrc, afterSrc, { renames = {} } = {}) {
       // keeps its spelling, the local one is a variable like any other - `import { a as b }` renames only the local
       const outer = a.type === 'ImportSpecifier' ? 'imported' : 'exported';
       const outerName = (n) => n[outer].name ?? n[outer].value;
-      if (outerName(a) !== outerName(b)) differ(`the ${outer} name \`${outerName(a)}\` became \`${outerName(b)}\``, a, b);
-      if (a.local.type === 'Identifier' && b.local.type === 'Identifier') compareIdentifiers(a.local, b.local, { local: true });
+      if (outerName(a) !== outerName(b))
+        differ(`the ${outer} name \`${outerName(a)}\` became \`${outerName(b)}\``, a, b);
+      if (a.local.type === 'Identifier' && b.local.type === 'Identifier')
+        compareIdentifiers(a.local, b.local, { local: true });
       else compareNodes(a.local, b.local);
       return;
     }
     if (a.type === 'Literal') {
       if (a.regex || b.regex) {
-        if (a.regex?.pattern !== b.regex?.pattern || a.regex?.flags !== b.regex?.flags) differ('a regular expression differs', a, b);
+        if (a.regex?.pattern !== b.regex?.pattern || a.regex?.flags !== b.regex?.flags)
+          differ('a regular expression differs', a, b);
         return;
       }
-      if (a.bigint !== undefined || b.bigint !== undefined) { compareValues(a.bigint, b.bigint, a, b, 'bigint'); return; }
+      if (a.bigint !== undefined || b.bigint !== undefined) {
+        compareValues(a.bigint, b.bigint, a, b, 'bigint');
+        return;
+      }
       if (!Object.is(a.value, b.value)) differ(`the literal ${a.raw} became ${b.raw}`, a, b);
       return;
     }
     if (a.type === 'TemplateElement') {
-      if (a.value.raw !== b.value.raw || a.value.cooked !== b.value.cooked || a.tail !== b.tail) differ('a template literal\'s text differs', a, b);
+      if (a.value.raw !== b.value.raw || a.value.cooked !== b.value.cooked || a.tail !== b.tail)
+        differ("a template literal's text differs", a, b);
       return;
     }
     const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
     for (const key of keys) {
       if (POSITION_FIELDS.has(key) || RULE_FIELDS.has(key)) continue;
-      const valueA = a[key], valueB = b[key];
+      const valueA = a[key],
+        valueB = b[key];
       if (Array.isArray(valueA) || Array.isArray(valueB)) {
-        if (!Array.isArray(valueA) || !Array.isArray(valueB) || valueA.length !== valueB.length) differ(`the ${a.type}'s \`${key}\` has a different number of parts`, a, b);
+        if (!Array.isArray(valueA) || !Array.isArray(valueB) || valueA.length !== valueB.length)
+          differ(`the ${a.type}'s \`${key}\` has a different number of parts`, a, b);
         for (let i = 0; i < valueA.length; i++) compareNodes(valueA[i], valueB[i]);
-      } else if ((valueA && typeof valueA === 'object' && typeof valueA.type === 'string') || (valueB && typeof valueB === 'object' && typeof valueB.type === 'string')) {
+      } else if (
+        (valueA && typeof valueA === 'object' && typeof valueA.type === 'string') ||
+        (valueB && typeof valueB === 'object' && typeof valueB.type === 'string')
+      ) {
         compareNodes(valueA, valueB);
       } else {
         compareValues(valueA, valueB, a, b, `${a.type}.${key}`);
@@ -261,7 +334,9 @@ function parseRenames(args) {
 
 function main(args) {
   const renames = parseRenames(args);
-  const plain = args.filter((a, i) => a !== '--rename' && args[i - 1] !== '--rename' && a !== '--against' && args[i - 1] !== '--against');
+  const plain = args.filter(
+    (a, i) => a !== '--rename' && args[i - 1] !== '--rename' && a !== '--against' && args[i - 1] !== '--against',
+  );
   const report = (label, result) => {
     if (result.same) return 0;
     const at = (p) => (p ? `${p.line}:${p.column + 1}` : '?');
@@ -272,22 +347,41 @@ function main(args) {
   if (againstAt >= 0) {
     const rev = args[againstAt + 1];
     const named = plain.filter((p) => /\.m?js$/.test(p));
-    const changed = execFileSync('git', ['diff', '--name-status', rev, '--', ...(named.length ? named : ['*.js', '*.mjs'])], { encoding: 'utf8', maxBuffer: 1 << 28 })
-      .split('\n').filter(Boolean).map((l) => l.split('\t'));
+    const changed = execFileSync(
+      'git',
+      ['diff', '--name-status', rev, '--', ...(named.length ? named : ['*.js', '*.mjs'])],
+      { encoding: 'utf8', maxBuffer: 1 << 28 },
+    )
+      .split('\n')
+      .filter(Boolean)
+      .map((l) => l.split('\t'));
     let bad = 0;
     for (const [status, path] of changed) {
-      if (status !== 'M') { console.log(`  NOT THE SAME  ${path}  (${status === 'A' ? 'added' : status === 'D' ? 'deleted' : status}): a file added, deleted or renamed is not a mechanical change to it`); bad++; continue; }
+      if (status !== 'M') {
+        console.log(
+          `  NOT THE SAME  ${path}  (${status === 'A' ? 'added' : status === 'D' ? 'deleted' : status}): a file added, deleted or renamed is not a mechanical change to it`,
+        );
+        bad++;
+        continue;
+      }
       const old = execFileSync('git', ['show', `${rev}:${path}`], { encoding: 'utf8', maxBuffer: 1 << 28 });
       bad += report(path, sameProgram(old, readFileSync(path, 'utf8'), { renames }));
     }
-    console.log(`${changed.length} file(s) compared against ${rev}: ${changed.length - bad} the same program, ${bad} not`);
+    console.log(
+      `${changed.length} file(s) compared against ${rev}: ${changed.length - bad} the same program, ${bad} not`,
+    );
     return bad ? 1 : 0;
   }
   if (plain.length !== 2) {
-    console.error('usage: node tools/sameProgram.mjs before.js after.js [--rename old=new ...]\n       node tools/sameProgram.mjs --against <rev> [path ...] [--rename old=new ...]');
+    console.error(
+      'usage: node tools/sameProgram.mjs before.js after.js [--rename old=new ...]\n       node tools/sameProgram.mjs --against <rev> [path ...] [--rename old=new ...]',
+    );
     return 2;
   }
-  const bad = report(`${plain[0]} -> ${plain[1]}`, sameProgram(readFileSync(plain[0], 'utf8'), readFileSync(plain[1], 'utf8'), { renames }));
+  const bad = report(
+    `${plain[0]} -> ${plain[1]}`,
+    sameProgram(readFileSync(plain[0], 'utf8'), readFileSync(plain[1], 'utf8'), { renames }),
+  );
   if (!bad) console.log('the same program');
   return bad;
 }

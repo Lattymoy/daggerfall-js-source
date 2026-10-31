@@ -1,709 +1,709 @@
 [
- {
-  "name": "SEAT2a3-law-agree",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    if (v.attack && v.defend) return k;",
-  "new": "    if (v.attack || v.defend) return k;",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-joined",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  if (!joined || !seen.size) return null;",
-  "new": "  if (!seen.size) return null;",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-most",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  return [...seen.values()].sort((a, b) => b.n - a.n || a.at - b.at)[0].field;",
-  "new": "  return [...seen.values()].sort((a, b) => a.at - b.at)[0].field;",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-earliest",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  return [...seen.values()].sort((a, b) => b.n - a.n || a.at - b.at)[0].field;",
-  "new": "  return [...seen.values()].sort((a, b) => b.n - a.n || b.at - a.at)[0].field;",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-window",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const passWindowEnds = (b) => b.starts_at + battleSpanMs({ kind: b.kind, tier: b.tier }) / 1000;",
-  "new": "export const passWindowEnds = (b) => b.starts_at + BATTLE_BLOCK_MS / 1000;",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-door",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const passOpens = (b) => b.starts_at - SIGN_CLOSES_MS / 1000;",
-  "new": "export const passOpens = (b) => b.starts_at - 2 * SIGN_CLOSES_MS / 1000;",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-held",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const SIEGE_STANDING = Object.freeze({ held: STANDING_CHANGES.siegeHeld, forfeit: 10 });",
-  "new": "export const SIEGE_STANDING = Object.freeze({ held: 10, forfeit: 10 });",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-forfeit",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const SIEGE_STANDING = Object.freeze({ held: STANDING_CHANGES.siegeHeld, forfeit: 10 });",
-  "new": "export const SIEGE_STANDING = Object.freeze({ held: STANDING_CHANGES.siegeHeld, forfeit: 15 });",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-bonus",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const SIEGE_DEFENCE_BONUS = 1.2;",
-  "new": "export const SIEGE_DEFENCE_BONUS = 1.25;",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-honours-win",
-  "file": "src/net/townSeatLaw.js",
-  "old": "win: Object.freeze({ marks: 50, xp: 2000 })",
-  "new": "win: Object.freeze({ marks: 50, xp: 1000 })",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-honours-lose",
-  "file": "src/net/townSeatLaw.js",
-  "old": "lose: Object.freeze({ marks: 25, xp: 1000 })",
-  "new": "lose: Object.freeze({ marks: 50, xp: 1000 })",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-spoils",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const SIEGE_SPOILS = Object.freeze(['ingot:warforged', 'cloth:standard', 'gem:siege']);",
-  "new": "export const SIEGE_SPOILS = Object.freeze(['ingot:warforged', 'cloth:silk', 'gem:siege']);",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-roll",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  return SIEGE_SPOILS[h % SIEGE_SPOILS.length];",
-  "new": "  return SIEGE_SPOILS[0];",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-pair",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const SIEGE_PAIR_WEEKS = 8;",
-  "new": "export const SIEGE_PAIR_WEEKS = 4;",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-winner-forfeit",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  if (result === 'defend' || result === 'forfeit' || result === 'absent') return 'defend';",
-  "new": "  if (result === 'defend' || result === 'absent') return 'defend';",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-winner-tie",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  if (result === 'tie') return higher === 'attack' || higher === 'defend' ? higher : null;",
-  "new": "  if (result === 'tie') return null;",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-taken",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  if (result === 'attack') return { bonus: false, barred: false, standing: 0, taken: true };",
-  "new": "  if (result === 'attack') return { bonus: false, barred: true, standing: 0, taken: true };",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-raised",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  if (result === 'defend') return { bonus: !!raised, barred: true, standing: raised ? SIEGE_STANDING.held + (throne ? STANDING_CHANGES.throneReached : 0) : 0, taken: false };",
-  "new": "  if (result === 'defend') return { bonus: true, barred: true, standing: SIEGE_STANDING.held + (throne ? STANDING_CHANGES.throneReached : 0), taken: false };",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-barred",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  if (result === 'defend') return { bonus: !!raised, barred: true, standing: raised ? SIEGE_STANDING.held + (throne ? STANDING_CHANGES.throneReached : 0) : 0, taken: false };",
-  "new": "  if (result === 'defend') return { bonus: !!raised, barred: !!raised, standing: raised ? SIEGE_STANDING.held + (throne ? STANDING_CHANGES.throneReached : 0) : 0, taken: false };",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-forfeit-once",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  if (result === 'forfeit') return { bonus: true, barred: true, standing: forfeitPaid ? 0 : SIEGE_STANDING.forfeit, taken: false };",
-  "new": "  if (result === 'forfeit') return { bonus: true, barred: true, standing: SIEGE_STANDING.forfeit, taken: false };",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-tourney",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  if (kind !== 'siege') return { bonus: false, barred: false, standing: 0, taken: false };",
-  "new": "  if (kind === 'nothing') return { bonus: false, barred: false, standing: 0, taken: false };",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-defence-bonus",
-  "file": "src/net/townSeatLaw.js",
-  "old": "overreachDefence(extra) * (held ? SIEGE_DEFENCE_BONUS : 1) + 1e-9)",
-  "new": "overreachDefence(extra) + 1e-9)",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-plan-bonus",
-  "file": "src/net/townSeatLaw.js",
-  "old": "extraOf(s.holder.guild), !!s.holder.bonus, s.holder.liegeReach ?? 0);",
-  "new": "extraOf(s.holder.guild), false, s.holder.liegeReach ?? 0);",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-plan-barred",
-  "file": "src/net/townSeatLaw.js",
-  "old": "      if (g.guild === s.holder.guild || (s.barred ?? []).includes(g.guild)) continue;",
-  "new": "      if (g.guild === s.holder.guild) continue;",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-chron-taken",
-  "file": "src/net/townSeatLaw.js",
-  "old": "      : `${when}, ${guildWords(d.guild)} took ${c} by siege from ${guildWords(d.from)}.`;",
-  "new": "      : `${when}, ${guildWords(d.guild)} took ${c} by siege.`;",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-chron-forfeit",
-  "file": "src/net/townSeatLaw.js",
-  "old": "; ${guildWords(d.guild)} holds it by forfeit.`;",
-  "new": "; ${guildWords(d.guild)} holds it.`;",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-law-why",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  'field-unsettled': 'Waiting for the other side\\'s scouts to agree on the field. Try again in a moment.',",
-  "new": "  'field-unsettled': 'Waiting.',",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-turn-bonus",
-  "file": "server-account/src/seatTurning.js",
-  "old": "bonus: aftermath(key, 'bonus').includes(h.guild_id),",
-  "new": "bonus: false,",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-turn-barred",
-  "file": "server-account/src/seatTurning.js",
-  "old": "      key, tier: seat.tier, holder, barred: aftermath(key, 'barred'),",
-  "new": "      key, tier: seat.tier, holder, barred: [],",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-turn-week",
-  "file": "server-account/src/seatTurning.js",
-  "old": "  const { results: afterRows = [] } = await db.prepare('SELECT key, guild_id, what FROM town_seat_aftermath WHERE week = ?').bind(week).all();",
-  "new": "  const { results: afterRows = [] } = await db.prepare('SELECT key, guild_id, what FROM town_seat_aftermath WHERE week = ?').bind(next).all();",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-standings-held",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "overreachOf(tiers.map((t) => t.tier)), held, liegeReach) : null;",
-  "new": "overreachOf(tiers.map((t) => t.tier)), false, liegeReach) : null;",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-pass-void",
-  "file": "server-account/src/seatSiege.js",
-  "old": "  if (!b || b.state === 'void') return { error: 'battle-none' };\n  if (nowS < passOpens(b)) return { error: 'pass-early' };",
-  "new": "  if (!b) return { error: 'battle-none' };\n  if (nowS < passOpens(b)) return { error: 'pass-early' };",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-pass-early",
-  "file": "server-account/src/seatSiege.js",
-  "old": "  if (nowS < passOpens(b)) return { error: 'pass-early' };",
-  "new": "  if (false) return { error: 'pass-early' };",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-pass-late",
-  "file": "server-account/src/seatSiege.js",
-  "old": "  const late = nowS >= se;   // AUDIT-SEATS R6",
-  "new": "  const late = nowS > se;   // AUDIT-SEATS R6",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-pass-side",
-  "file": "server-account/src/seatSiege.js",
-  "old": "  const side = row?.side === 'attack' || row?.side === 'defend' ? row.side : 'watch';",
-  "new": "  const side = row?.side ?? 'attack';",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-pass-field-check",
-  "file": "server-account/src/seatSiege.js",
-  "old": "      if (!siegeFieldValid(field, b.tier)) return { error: 'field-bad' };",
-  "new": "      if (!Array.isArray(field)) return { error: 'field-bad' };",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-pass-field-once",
-  "file": "server-account/src/seatSiege.js",
-  "old": "    await db.prepare('UPDATE town_seat_battles SET field = ? WHERE week = ? AND key = ? AND field IS NULL').bind(f, week, key).run();",
-  "new": "    await db.prepare('UPDATE town_seat_battles SET field = ? WHERE week = ? AND key = ?').bind(f, week, key).run();",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ],
-  "equivalent": true,
-  "why": "Only two requests racing between one's read of the battle's field and its write can reach it: a request that finds the field settled never writes. The guard is kept so the race keeps the first field, which no sequential pin can stage."
- },
- {
-  "name": "SEAT2a3-pass-joined",
-  "file": "server-account/src/seatSiege.js",
-  "old": "    const f = settleField(rows.map((r) => ({ side: r.side, field: r.field, at: Number(r.at) })), nowS >= b.starts_at, b.kind);",
-  "new": "    const f = settleField(rows.map((r) => ({ side: r.side, field: r.field, at: Number(r.at) })), true, b.kind);",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-pass-se",
-  "file": "server-account/src/seatSiege.js",
-  "old": "  const pass = await mintSiegeOrder({ s: player.id, sk: key, sw: week, sd: side, st: b.tier, sn: b.kind, sb: b.starts_at, se, sf, sx }",
-  "new": "  const pass = await mintSiegeOrder({ s: player.id, sk: key, sw: week, sd: side, st: b.tier, sn: b.kind, sb: b.starts_at, se: b.ends_at, sf, sx }",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-higher",
-  "file": "server-account/src/seatSiege.js",
-  "old": "  return a > d ? 'attack' : d > a ? 'defend' : null;",
-  "new": "  return a >= d ? 'attack' : 'defend';",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-swords-pay",
-  "file": "server-account/src/seatSiege.js",
-  "old": "    const paid = h.state === 'signed' && !voided;",
-  "new": "    const paid = false;",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-swords-home",
-  "file": "server-account/src/seatSiege.js",
-  "old": "state IN ('offered', 'signed') AND fee > 0 ORDER BY at, account",
-  "new": "state IN ('signed') AND fee > 0 ORDER BY at, account",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-battle-state",
-  "file": "server-account/src/seatSiege.js",
-  "old": "bind(result === 'forfeit' ? 'forfeit' : 'fought', W, K),",
-  "new": "bind('fought', W, K),",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-tourney-order",
-  "file": "server-account/src/seatSiege.js",
-  "old": "    const order = winner === 'defend' ? [b.defender, b.attacker] : winner === 'attack' ? [b.attacker, b.defender] : [];",
-  "new": "    const order = winner === 'defend' ? [b.defender] : winner === 'attack' ? [b.attacker] : [];",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-tourney-fee",
-  "file": "server-account/src/seatSiege.js",
-  "old": "          WHERE COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?1), 0) >= ?2 AND NOT EXISTS (SELECT 1 FROM town_seat_holds WHERE key = ?6)`)\n          .bind(g, fee, day, nowS, `tourney-${W}-${K}`, K), mustChange(db),",
-  "new": "          WHERE NOT EXISTS (SELECT 1 FROM town_seat_holds WHERE key = ?6)`)\n          .bind(g, fee, day, nowS, `tourney-${W}-${K}`, K), mustChange(db),",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-tourney-unheld",
-  "file": "server-account/src/seatSiege.js",
-  "old": "    return run([...head(null), history('tourney-unheld', {}), ...swords]);",
-  "new": "    return run([...head(null), ...swords]);",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-forfeit-pair",
-  "file": "server-account/src/seatSiege.js",
-  "old": "AND r.week >= ? AND r.week < ? LIMIT 1`).bind(b.attacker, b.defender, seasonFloor(W, zero), W).first());",
-  "new": "AND r.week >= ? AND r.week < ? LIMIT 1`).bind(b.attacker, b.defender, W, W).first());",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-taken-standing",
-  "file": "server-account/src/seatSiege.js",
-  "old": "        .bind(K, b.attacker, Number(seat?.region ?? 0), b.tier, W, STANDING_START, W, nowS),\n      db.prepare('DELETE FROM town_seat_legacy",
-  "new": "        .bind(K, b.attacker, Number(seat?.region ?? 0), b.tier, W, 60, W, nowS),\n      db.prepare('DELETE FROM town_seat_legacy",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-taken-truce",
-  "file": "server-account/src/seatSiege.js",
-  "old": "        .bind(K, b.attacker, Number(seat?.region ?? 0), b.tier, W, STANDING_START, W, nowS),\n      db.prepare('DELETE FROM town_seat_legacy",
-  "new": "        .bind(K, b.attacker, Number(seat?.region ?? 0), b.tier, W, STANDING_START, null, nowS),\n      db.prepare('DELETE FROM town_seat_legacy",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-taken-legacy",
-  "file": "server-account/src/seatSiege.js",
-  "old": "      db.prepare('DELETE FROM town_seat_legacy WHERE key = ? AND guild_id = ? AND week >= ?').bind(K, b.defender, W),",
-  "new": "      db.prepare('DELETE FROM town_seat_legacy WHERE key = ? AND guild_id = ? AND week >= ?').bind(K, b.attacker, W),",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-held-standing",
-  "file": "server-account/src/seatSiege.js",
-  "old": "    if (after.standing) stmts.push(db.prepare('UPDATE town_seat_holds SET standing = MIN(?, standing + ?) WHERE key = ? AND guild_id = ?').bind(STANDING_MAX, after.standing, K, b.defender));",
-  "new": "    if (false) stmts.push(db.prepare('UPDATE town_seat_holds SET standing = MIN(?, standing + ?) WHERE key = ? AND guild_id = ?').bind(STANDING_MAX, after.standing, K, b.defender));",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-held-bonus",
-  "file": "server-account/src/seatSiege.js",
-  "old": "    if (after.bonus) stmts.push(db.prepare(\"INSERT OR IGNORE INTO town_seat_aftermath (week, key, guild_id, what) VALUES (?, ?, ?, 'bonus')\").bind(W, K, b.defender));",
-  "new": "    if (after.bonus) stmts.push(db.prepare(\"INSERT OR IGNORE INTO town_seat_aftermath (week, key, guild_id, what) VALUES (?, ?, ?, 'bonus')\").bind(W + 1, K, b.defender));",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-held-bar",
-  "file": "server-account/src/seatSiege.js",
-  "old": "        db.prepare(\"INSERT OR IGNORE INTO town_seat_aftermath (week, key, guild_id, what) VALUES (?, ?, ?, 'barred')\").bind(W, K, b.attacker),",
-  "new": "        db.prepare(\"SELECT 1\"),",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-held-clear",
-  "file": "server-account/src/seatSiege.js",
-  "old": "        db.prepare('UPDATE town_seat_influence SET voided = 1 WHERE week = ? AND key = ? AND guild_id = ?').bind(W, K, b.attacker),",
-  "new": "        db.prepare('SELECT 1'),",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-held-kind",
-  "file": "server-account/src/seatSiege.js",
-  "old": "    const kind = result === 'forfeit' ? 'siege-forfeit' : result === 'absent' ? 'siege-absent' : 'siege-held';",
-  "new": "    const kind = 'siege-held';",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-claim-yours",
-  "file": "server-account/src/seatSiege.js",
-  "old": "  if (c.s !== player.id) return { error: 'not-yours' };",
-  "new": "  if (false) return { error: 'not-yours' };",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-claim-once",
-  "file": "server-account/src/seatSiege.js",
-  "old": "  const applied = !r && await applyResult(db, b, c, nowS, zero, env);",
-  "new": "  const applied = await applyResult(db, b, c, nowS, zero, env);",
-  "note": "Re-aimed by content (AUDIT DOMAINS): the result is handed the region law's week too (S1).",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ],
-  "equivalent": true,
-  "why": "A second receipt that skipped the read would run the result's batch again, and its first write - the result's INSERT, keyed on the battle - refuses it whole: the same answer, one wasted batch. The read is kept to spare that batch."
- },
- {
-  "name": "SEAT2a3-honours-h",
-  "file": "server-account/src/seatSiege.js",
-  "old": "  if (c.h !== 1 || b.kind === 'revolt') return { ...out, honours: null };",
-  "new": "  if (c.h === 2 || b.kind === 'revolt') return { ...out, honours: null };",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-honours-char",
-  "file": "server-account/src/seatSiege.js",
-  "old": "  if (!rostered || rostered.char_id !== character) return { error: 'honours-character' };",
-  "new": "  if (!rostered) return { error: 'honours-character' };",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js",
-   "test/server/audit_seats3_service.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-honours-pair",
-  "file": "server-account/src/seatSiege.js",
-  "old": "LIMIT 1`).bind(seasonFloor(c.sw, zero), c.sw, b.attacker, b.defender, c.sk).first());",
-  "new": "LIMIT 1`).bind(c.sw + 1, c.sw, b.attacker, b.defender, c.sk).first());",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-honours-pair-marks",
-  "file": "server-account/src/seatSiege.js",
-  "old": "    WHERE h.marks > 0 AND h.week >= ?1 AND h.week <= ?2",
-  "new": "    WHERE h.week >= ?1 AND h.week <= ?2",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-honours-won",
-  "file": "server-account/src/seatSiege.js",
-  "old": "  const won = r.winner === c.sd;",
-  "new": "  const won = true;",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-honours-marks",
-  "file": "server-account/src/seatSiege.js",
-  "old": "      .bind(c.sw, c.sk, player.id, rid, give.marks, utcDay(nowS), nowS));",
-  "new": "      .bind(c.sw, c.sk, player.id, rid, 1, utcDay(nowS), nowS));",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-honours-xp",
-  "file": "server-account/src/seatSiege.js",
-  "old": "        .bind(c.sw, c.sk, player.id, rid, RENOWN_XP_MAX, give.xp, nowS, character),",
-  "new": "        .bind(c.sw, c.sk, player.id, rid, RENOWN_XP_MAX, 1, nowS, character),",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-honours-spoil",
-  "file": "server-account/src/seatSiege.js",
-  "old": "ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = prof_stores.qty + 1`).bind(c.sw, c.sk, player.id, rid, character, spoil));",
-  "new": "ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = prof_stores.qty + 1`).bind(c.sw, c.sk, player.id, 'x', character, spoil));",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-route-live-get",
-  "file": "server-account/src/index.js",
-  "old": "      if (request.method !== 'GET') return no('method', 405, origin);\n      if (!env.DB) return no('no-database', 503, origin);\n      try {\n        return json(await siegesLive(",
-  "new": "      if (!env.DB) return no('no-database', 503, origin);\n      try {\n        return json(await siegesLive(",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ],
-  "note": "HOMES-SHED (PIN MOVED, re-aimed by content): the route's read stands inside its own try now - the mutant takes the GET check away before it, as before."
- },
- {
-  "name": "SEAT2a3-status-unsettled",
-  "file": "server-account/src/index.js",
-  "old": "  'pass-early': 409, 'pass-late': 409, 'field-unsettled': 409, 'honours-twice': 409, 'not-yours': 403,",
-  "new": "  'pass-early': 409, 'pass-late': 409, 'honours-twice': 409, 'not-yours': 403,",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-book-field",
-  "file": "src/net/townSeatBook.js",
-  "old": "      try { r = await door.pass(seat.key, field); } catch { r = { ok: false, error: 'offline' }; }",
-  "new": "      try { r = await door.pass(seat.key); } catch { r = { ok: false, error: 'offline' }; }",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-book-char",
-  "file": "src/net/townSeatBook.js",
-  "old": "      try { r = await door.claimSiege(receipt, character()); } catch { r = { ok: false, error: 'offline' }; }",
-  "new": "      try { r = await door.claimSiege(receipt); } catch { r = { ok: false, error: 'offline' }; }",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "SEAT2a3-client-words",
-  "file": "src/net/accountClient.js",
-  "old": "  ...readEach(SIEGE_WHY),   // SEAT2a part three: the pass and the Honours\n",
-  "new": "",
-  "tests": [
-   "test/net/seat2a_siege_service.test.js",
-   "test/net/seat2a_siege_client.test.js"
-  ]
- }
+  {
+    "name": "SEAT2a3-law-agree",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    if (v.attack && v.defend) return k;",
+    "new": "    if (v.attack || v.defend) return k;",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-joined",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (!joined || !seen.size) return null;",
+    "new": "  if (!seen.size) return null;",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-most",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  return [...seen.values()].sort((a, b) => b.n - a.n || a.at - b.at)[0].field;",
+    "new": "  return [...seen.values()].sort((a, b) => a.at - b.at)[0].field;",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-earliest",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  return [...seen.values()].sort((a, b) => b.n - a.n || a.at - b.at)[0].field;",
+    "new": "  return [...seen.values()].sort((a, b) => b.n - a.n || b.at - a.at)[0].field;",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-window",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const passWindowEnds = (b) => b.starts_at + battleSpanMs({ kind: b.kind, tier: b.tier }) / 1000;",
+    "new": "export const passWindowEnds = (b) => b.starts_at + BATTLE_BLOCK_MS / 1000;",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-door",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const passOpens = (b) => b.starts_at - SIGN_CLOSES_MS / 1000;",
+    "new": "export const passOpens = (b) => b.starts_at - (2 * SIGN_CLOSES_MS) / 1000;",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-held",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const SIEGE_STANDING = Object.freeze({ held: STANDING_CHANGES.siegeHeld, forfeit: 10 }); // AUDIT-SEATS L10: 7.3's row, written once",
+    "new": "export const SIEGE_STANDING = Object.freeze({ held: 10, forfeit: 10 }); // AUDIT-SEATS L10: 7.3's row, written once",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-forfeit",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const SIEGE_STANDING = Object.freeze({ held: STANDING_CHANGES.siegeHeld, forfeit: 10 }); // AUDIT-SEATS L10: 7.3's row, written once",
+    "new": "export const SIEGE_STANDING = Object.freeze({ held: STANDING_CHANGES.siegeHeld, forfeit: 15 }); // AUDIT-SEATS L10: 7.3's row, written once",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-bonus",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const SIEGE_DEFENCE_BONUS = 1.2;",
+    "new": "export const SIEGE_DEFENCE_BONUS = 1.25;",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-honours-win",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  win: Object.freeze({ marks: 50, xp: 2000 }),",
+    "new": "  win: Object.freeze({ marks: 50, xp: 1000 }),",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-honours-lose",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  lose: Object.freeze({ marks: 25, xp: 1000 }),",
+    "new": "  lose: Object.freeze({ marks: 50, xp: 1000 }),",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-spoils",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const SIEGE_SPOILS = Object.freeze(['ingot:warforged', 'cloth:standard', 'gem:siege']);",
+    "new": "export const SIEGE_SPOILS = Object.freeze(['ingot:warforged', 'cloth:silk', 'gem:siege']);",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-roll",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  return SIEGE_SPOILS[h % SIEGE_SPOILS.length];",
+    "new": "  return SIEGE_SPOILS[0];",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-pair",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const SIEGE_PAIR_WEEKS = 8;",
+    "new": "export const SIEGE_PAIR_WEEKS = 4;",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-winner-forfeit",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (result === 'defend' || result === 'forfeit' || result === 'absent') return 'defend';",
+    "new": "  if (result === 'defend' || result === 'absent') return 'defend';",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-winner-tie",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (result === 'tie') return higher === 'attack' || higher === 'defend' ? higher : null;",
+    "new": "  if (result === 'tie') return null;",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-taken",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (result === 'attack') return { bonus: false, barred: false, standing: 0, taken: true };",
+    "new": "  if (result === 'attack') return { bonus: false, barred: true, standing: 0, taken: true };",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-raised",
+    "file": "src/net/townSeatLaw.js",
+    "old": "      bonus: !!raised,\n      barred: true,\n      standing: raised ? SIEGE_STANDING.held + (throne ? STANDING_CHANGES.throneReached : 0) : 0,",
+    "new": "      bonus: true,\n      barred: true,\n      standing: SIEGE_STANDING.held + (throne ? STANDING_CHANGES.throneReached : 0),",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-barred",
+    "file": "src/net/townSeatLaw.js",
+    "old": "      barred: true,",
+    "new": "      barred: !!raised,",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-forfeit-once",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (result === 'forfeit')\n    return { bonus: true, barred: true, standing: forfeitPaid ? 0 : SIEGE_STANDING.forfeit, taken: false };",
+    "new": "  if (result === 'forfeit') return { bonus: true, barred: true, standing: SIEGE_STANDING.forfeit, taken: false };",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-tourney",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (kind !== 'siege') return { bonus: false, barred: false, standing: 0, taken: false };",
+    "new": "  if (kind === 'nothing') return { bonus: false, barred: false, standing: 0, taken: false };",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-defence-bonus",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  Math.floor(\n    Math.max(0, own?.influence ?? 0) *\n      (1 + standingModifier(standing)) *\n      overreachDefence(extra) *\n      (held ? SIEGE_DEFENCE_BONUS : 1) +\n      1e-9,\n  ) +",
+    "new": "  Math.floor(Math.max(0, own?.influence ?? 0) * (1 + standingModifier(standing)) * overreachDefence(extra) + 1e-9) +",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-plan-bonus",
+    "file": "src/net/townSeatLaw.js",
+    "old": "      !!s.holder.bonus,",
+    "new": "      false,",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-plan-barred",
+    "file": "src/net/townSeatLaw.js",
+    "old": "      if (g.guild === s.holder.guild || (s.barred ?? []).includes(g.guild)) continue; // SEAT2a: a challenger that lost or forfeited its siege here",
+    "new": "      if (g.guild === s.holder.guild) continue; // SEAT2a: a challenger that lost or forfeited its siege here",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-chron-taken",
+    "file": "src/net/townSeatLaw.js",
+    "old": "        : `${when}, ${guildWords(d.guild)} took ${c} by siege from ${guildWords(d.from)}.`;",
+    "new": "        : `${when}, ${guildWords(d.guild)} took ${c} by siege.`;",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-chron-forfeit",
+    "file": "src/net/townSeatLaw.js",
+    "old": "      return `${when}, ${guildWords(d.against)} never came to the siege of ${seat.name}; ${guildWords(d.guild)} holds it by forfeit.`;",
+    "new": "      return `${when}, ${guildWords(d.against)} never came to the siege of ${seat.name}; ${guildWords(d.guild)} holds it.`;",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-law-why",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  'field-unsettled': \"Waiting for the other side's scouts to agree on the field. Try again in a moment.\",",
+    "new": "  'field-unsettled': 'Waiting.',",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-turn-bonus",
+    "file": "server-account/src/seatTurning.js",
+    "old": "bonus: aftermath(key, 'bonus').includes(h.guild_id),",
+    "new": "bonus: false,",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-turn-barred",
+    "file": "server-account/src/seatTurning.js",
+    "old": "      key, tier: seat.tier, holder, barred: aftermath(key, 'barred'),",
+    "new": "      key, tier: seat.tier, holder, barred: [],",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-turn-week",
+    "file": "server-account/src/seatTurning.js",
+    "old": "  const { results: afterRows = [] } = await db.prepare('SELECT key, guild_id, what FROM town_seat_aftermath WHERE week = ?').bind(week).all();",
+    "new": "  const { results: afterRows = [] } = await db.prepare('SELECT key, guild_id, what FROM town_seat_aftermath WHERE week = ?').bind(next).all();",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-standings-held",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "overreachOf(tiers.map((t) => t.tier)), held, liegeReach) : null;",
+    "new": "overreachOf(tiers.map((t) => t.tier)), false, liegeReach) : null;",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-pass-void",
+    "file": "server-account/src/seatSiege.js",
+    "old": "  if (!b || b.state === 'void') return { error: 'battle-none' };\n  if (nowS < passOpens(b)) return { error: 'pass-early' };",
+    "new": "  if (!b) return { error: 'battle-none' };\n  if (nowS < passOpens(b)) return { error: 'pass-early' };",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-pass-early",
+    "file": "server-account/src/seatSiege.js",
+    "old": "  if (nowS < passOpens(b)) return { error: 'pass-early' };",
+    "new": "  if (false) return { error: 'pass-early' };",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-pass-late",
+    "file": "server-account/src/seatSiege.js",
+    "old": "  const late = nowS >= se;   // AUDIT-SEATS R6",
+    "new": "  const late = nowS > se;   // AUDIT-SEATS R6",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-pass-side",
+    "file": "server-account/src/seatSiege.js",
+    "old": "  const side = row?.side === 'attack' || row?.side === 'defend' ? row.side : 'watch';",
+    "new": "  const side = row?.side ?? 'attack';",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-pass-field-check",
+    "file": "server-account/src/seatSiege.js",
+    "old": "      if (!siegeFieldValid(field, b.tier)) return { error: 'field-bad' };",
+    "new": "      if (!Array.isArray(field)) return { error: 'field-bad' };",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-pass-field-once",
+    "file": "server-account/src/seatSiege.js",
+    "old": "    await db.prepare('UPDATE town_seat_battles SET field = ? WHERE week = ? AND key = ? AND field IS NULL').bind(f, week, key).run();",
+    "new": "    await db.prepare('UPDATE town_seat_battles SET field = ? WHERE week = ? AND key = ?').bind(f, week, key).run();",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ],
+    "equivalent": true,
+    "why": "Only two requests racing between one's read of the battle's field and its write can reach it: a request that finds the field settled never writes. The guard is kept so the race keeps the first field, which no sequential pin can stage."
+  },
+  {
+    "name": "SEAT2a3-pass-joined",
+    "file": "server-account/src/seatSiege.js",
+    "old": "    const f = settleField(rows.map((r) => ({ side: r.side, field: r.field, at: Number(r.at) })), nowS >= b.starts_at, b.kind);",
+    "new": "    const f = settleField(rows.map((r) => ({ side: r.side, field: r.field, at: Number(r.at) })), true, b.kind);",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-pass-se",
+    "file": "server-account/src/seatSiege.js",
+    "old": "  const pass = await mintSiegeOrder({ s: player.id, sk: key, sw: week, sd: side, st: b.tier, sn: b.kind, sb: b.starts_at, se, sf, sx }",
+    "new": "  const pass = await mintSiegeOrder({ s: player.id, sk: key, sw: week, sd: side, st: b.tier, sn: b.kind, sb: b.starts_at, se: b.ends_at, sf, sx }",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-higher",
+    "file": "server-account/src/seatSiege.js",
+    "old": "  return a > d ? 'attack' : d > a ? 'defend' : null;",
+    "new": "  return a >= d ? 'attack' : 'defend';",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-swords-pay",
+    "file": "server-account/src/seatSiege.js",
+    "old": "    const paid = h.state === 'signed' && !voided;",
+    "new": "    const paid = false;",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-swords-home",
+    "file": "server-account/src/seatSiege.js",
+    "old": "state IN ('offered', 'signed') AND fee > 0 ORDER BY at, account",
+    "new": "state IN ('signed') AND fee > 0 ORDER BY at, account",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-battle-state",
+    "file": "server-account/src/seatSiege.js",
+    "old": "bind(result === 'forfeit' ? 'forfeit' : 'fought', W, K),",
+    "new": "bind('fought', W, K),",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-tourney-order",
+    "file": "server-account/src/seatSiege.js",
+    "old": "    const order = winner === 'defend' ? [b.defender, b.attacker] : winner === 'attack' ? [b.attacker, b.defender] : [];",
+    "new": "    const order = winner === 'defend' ? [b.defender] : winner === 'attack' ? [b.attacker] : [];",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-tourney-fee",
+    "file": "server-account/src/seatSiege.js",
+    "old": "          WHERE COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?1), 0) >= ?2 AND NOT EXISTS (SELECT 1 FROM town_seat_holds WHERE key = ?6)`)\n          .bind(g, fee, day, nowS, `tourney-${W}-${K}`, K), mustChange(db),",
+    "new": "          WHERE NOT EXISTS (SELECT 1 FROM town_seat_holds WHERE key = ?6)`)\n          .bind(g, fee, day, nowS, `tourney-${W}-${K}`, K), mustChange(db),",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-tourney-unheld",
+    "file": "server-account/src/seatSiege.js",
+    "old": "    return run([...head(null), history('tourney-unheld', {}), ...swords]);",
+    "new": "    return run([...head(null), ...swords]);",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-forfeit-pair",
+    "file": "server-account/src/seatSiege.js",
+    "old": "AND r.week >= ? AND r.week < ? LIMIT 1`).bind(b.attacker, b.defender, seasonFloor(W, zero), W).first());",
+    "new": "AND r.week >= ? AND r.week < ? LIMIT 1`).bind(b.attacker, b.defender, W, W).first());",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-taken-standing",
+    "file": "server-account/src/seatSiege.js",
+    "old": "        .bind(K, b.attacker, Number(seat?.region ?? 0), b.tier, W, STANDING_START, W, nowS),\n      db.prepare('DELETE FROM town_seat_legacy",
+    "new": "        .bind(K, b.attacker, Number(seat?.region ?? 0), b.tier, W, 60, W, nowS),\n      db.prepare('DELETE FROM town_seat_legacy",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-taken-truce",
+    "file": "server-account/src/seatSiege.js",
+    "old": "        .bind(K, b.attacker, Number(seat?.region ?? 0), b.tier, W, STANDING_START, W, nowS),\n      db.prepare('DELETE FROM town_seat_legacy",
+    "new": "        .bind(K, b.attacker, Number(seat?.region ?? 0), b.tier, W, STANDING_START, null, nowS),\n      db.prepare('DELETE FROM town_seat_legacy",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-taken-legacy",
+    "file": "server-account/src/seatSiege.js",
+    "old": "      db.prepare('DELETE FROM town_seat_legacy WHERE key = ? AND guild_id = ? AND week >= ?').bind(K, b.defender, W),",
+    "new": "      db.prepare('DELETE FROM town_seat_legacy WHERE key = ? AND guild_id = ? AND week >= ?').bind(K, b.attacker, W),",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-held-standing",
+    "file": "server-account/src/seatSiege.js",
+    "old": "    if (after.standing) stmts.push(db.prepare('UPDATE town_seat_holds SET standing = MIN(?, standing + ?) WHERE key = ? AND guild_id = ?').bind(STANDING_MAX, after.standing, K, b.defender));",
+    "new": "    if (false) stmts.push(db.prepare('UPDATE town_seat_holds SET standing = MIN(?, standing + ?) WHERE key = ? AND guild_id = ?').bind(STANDING_MAX, after.standing, K, b.defender));",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-held-bonus",
+    "file": "server-account/src/seatSiege.js",
+    "old": "    if (after.bonus) stmts.push(db.prepare(\"INSERT OR IGNORE INTO town_seat_aftermath (week, key, guild_id, what) VALUES (?, ?, ?, 'bonus')\").bind(W, K, b.defender));",
+    "new": "    if (after.bonus) stmts.push(db.prepare(\"INSERT OR IGNORE INTO town_seat_aftermath (week, key, guild_id, what) VALUES (?, ?, ?, 'bonus')\").bind(W + 1, K, b.defender));",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-held-bar",
+    "file": "server-account/src/seatSiege.js",
+    "old": "        db.prepare(\"INSERT OR IGNORE INTO town_seat_aftermath (week, key, guild_id, what) VALUES (?, ?, ?, 'barred')\").bind(W, K, b.attacker),",
+    "new": "        db.prepare(\"SELECT 1\"),",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-held-clear",
+    "file": "server-account/src/seatSiege.js",
+    "old": "        db.prepare('UPDATE town_seat_influence SET voided = 1 WHERE week = ? AND key = ? AND guild_id = ?').bind(W, K, b.attacker),",
+    "new": "        db.prepare('SELECT 1'),",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-held-kind",
+    "file": "server-account/src/seatSiege.js",
+    "old": "    const kind = result === 'forfeit' ? 'siege-forfeit' : result === 'absent' ? 'siege-absent' : 'siege-held';",
+    "new": "    const kind = 'siege-held';",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-claim-yours",
+    "file": "server-account/src/seatSiege.js",
+    "old": "  if (c.s !== player.id) return { error: 'not-yours' };",
+    "new": "  if (false) return { error: 'not-yours' };",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-claim-once",
+    "file": "server-account/src/seatSiege.js",
+    "old": "  const applied = !r && await applyResult(db, b, c, nowS, zero, env);",
+    "new": "  const applied = await applyResult(db, b, c, nowS, zero, env);",
+    "note": "Re-aimed by content (AUDIT DOMAINS): the result is handed the region law's week too (S1).",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ],
+    "equivalent": true,
+    "why": "A second receipt that skipped the read would run the result's batch again, and its first write - the result's INSERT, keyed on the battle - refuses it whole: the same answer, one wasted batch. The read is kept to spare that batch."
+  },
+  {
+    "name": "SEAT2a3-honours-h",
+    "file": "server-account/src/seatSiege.js",
+    "old": "  if (c.h !== 1 || b.kind === 'revolt') return { ...out, honours: null };",
+    "new": "  if (c.h === 2 || b.kind === 'revolt') return { ...out, honours: null };",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-honours-char",
+    "file": "server-account/src/seatSiege.js",
+    "old": "  if (!rostered || rostered.char_id !== character) return { error: 'honours-character' };",
+    "new": "  if (!rostered) return { error: 'honours-character' };",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js",
+      "test/server/audit_seats3_service.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-honours-pair",
+    "file": "server-account/src/seatSiege.js",
+    "old": "LIMIT 1`).bind(seasonFloor(c.sw, zero), c.sw, b.attacker, b.defender, c.sk).first());",
+    "new": "LIMIT 1`).bind(c.sw + 1, c.sw, b.attacker, b.defender, c.sk).first());",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-honours-pair-marks",
+    "file": "server-account/src/seatSiege.js",
+    "old": "    WHERE h.marks > 0 AND h.week >= ?1 AND h.week <= ?2",
+    "new": "    WHERE h.week >= ?1 AND h.week <= ?2",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-honours-won",
+    "file": "server-account/src/seatSiege.js",
+    "old": "  const won = r.winner === c.sd;",
+    "new": "  const won = true;",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-honours-marks",
+    "file": "server-account/src/seatSiege.js",
+    "old": "      .bind(c.sw, c.sk, player.id, rid, give.marks, utcDay(nowS), nowS));",
+    "new": "      .bind(c.sw, c.sk, player.id, rid, 1, utcDay(nowS), nowS));",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-honours-xp",
+    "file": "server-account/src/seatSiege.js",
+    "old": "        .bind(c.sw, c.sk, player.id, rid, RENOWN_XP_MAX, give.xp, nowS, character),",
+    "new": "        .bind(c.sw, c.sk, player.id, rid, RENOWN_XP_MAX, 1, nowS, character),",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-honours-spoil",
+    "file": "server-account/src/seatSiege.js",
+    "old": "ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = prof_stores.qty + 1`).bind(c.sw, c.sk, player.id, rid, character, spoil));",
+    "new": "ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = prof_stores.qty + 1`).bind(c.sw, c.sk, player.id, 'x', character, spoil));",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-route-live-get",
+    "file": "server-account/src/index.js",
+    "old": "      if (request.method !== 'GET') return no('method', 405, origin);\n      if (!env.DB) return no('no-database', 503, origin);\n      try {\n        return json(await siegesLive(",
+    "new": "      if (!env.DB) return no('no-database', 503, origin);\n      try {\n        return json(await siegesLive(",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ],
+    "note": "HOMES-SHED (PIN MOVED, re-aimed by content): the route's read stands inside its own try now - the mutant takes the GET check away before it, as before."
+  },
+  {
+    "name": "SEAT2a3-status-unsettled",
+    "file": "server-account/src/index.js",
+    "old": "  'pass-early': 409, 'pass-late': 409, 'field-unsettled': 409, 'honours-twice': 409, 'not-yours': 403,",
+    "new": "  'pass-early': 409, 'pass-late': 409, 'honours-twice': 409, 'not-yours': 403,",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-book-field",
+    "file": "src/net/townSeatBook.js",
+    "old": "        r = await door.pass(seat.key, field);",
+    "new": "        r = await door.pass(seat.key);",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-book-char",
+    "file": "src/net/townSeatBook.js",
+    "old": "        r = await door.claimSiege(receipt, character());",
+    "new": "        r = await door.claimSiege(receipt);",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT2a3-client-words",
+    "file": "src/net/accountClient.js",
+    "old": "  ...readEach(SIEGE_WHY),   // SEAT2a part three: the pass and the Honours\n",
+    "new": "",
+    "tests": [
+      "test/net/seat2a_siege_service.test.js",
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  }
 ]

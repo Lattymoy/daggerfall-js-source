@@ -36,9 +36,23 @@ export const ROLE_ORDER = Object.freeze(['warrior', 'thief', 'mage']);
 /** A pilgrim's cycle with a holy day in reach goes to it this often (its own draw). */
 export const HOLY_CHANCE = 0.8;
 /** The words of a company's name. */
-export const COMPANY_WORDS = Object.freeze(['Lantern', 'Iron', 'Silver', 'Wandering', 'Grey', 'Oaken', 'Last', 'Free', 'Crimson', 'Northern', 'Hollow', 'Bright']);
+export const COMPANY_WORDS = Object.freeze([
+  'Lantern',
+  'Iron',
+  'Silver',
+  'Wandering',
+  'Grey',
+  'Oaken',
+  'Last',
+  'Free',
+  'Crimson',
+  'Northern',
+  'Hollow',
+  'Bright',
+]);
 export const COMPANY_BEASTS = Object.freeze(['Ravens', 'Wolves', 'Hawks', 'Stags', 'Foxes', 'Owls', 'Bears', 'Hounds']);
-const COMP = 0x636f6d70, HOLY = 0x686f6c79;   // 'comp', 'holy'
+const COMP = 0x636f6d70,
+  HOLY = 0x686f6c79; // 'comp', 'holy'
 
 /** A class's run: 'mage', 'thief', 'warrior', or null. @param {number|null|undefined} cls */
 export function roleOf(cls) {
@@ -48,7 +62,10 @@ export function roleOf(cls) {
 }
 /** Members in the order a company walks: warriors, thieves, mages (each in the order given). @template {{ cls?: number|null }} T @param {T[]} members @returns {T[]} */
 export const byRole = (members) => [...members].sort((a, b) => rank(a) - rank(b));
-const rank = (m) => { const i = ROLE_ORDER.indexOf(/** @type {string} */ (roleOf(m.cls))); return i < 0 ? ROLE_ORDER.length : i; };
+const rank = (m) => {
+  const i = ROLE_ORDER.indexOf(/** @type {string} */ (roleOf(m.cls)));
+  return i < 0 ? ROLE_ORDER.length : i;
+};
 
 /** The deal kept by roster (the census's roster is made once a town). @type {WeakMap<object, any[]>} */
 const DEALS = new WeakMap();
@@ -65,8 +82,16 @@ export function companiesOf(roster) {
   got = [];
   // LW-WIDE: the roster's first ranks dealt as they always were, then its divers among themselves (`wide`)
   const from = /** @type {any} */ (roster).wideFrom ?? Infinity;
-  dealCompanies(advs.filter((r) => r.slot < from), got, false);
-  dealCompanies(advs.filter((r) => r.slot >= from), got, true);
+  dealCompanies(
+    advs.filter((r) => r.slot < from),
+    got,
+    false,
+  );
+  dealCompanies(
+    advs.filter((r) => r.slot >= from),
+    got,
+    true,
+  );
   DEALS.set(roster, got);
   return got;
 }
@@ -94,7 +119,9 @@ function dealCompanies(advs, got, wide) {
  *  @param {string} key @param {string} first @param {string} town */
 export function companyName(key, first, town) {
   const rng = lwRng(textSeed(key), COMP);
-  const r = rng(), word = pickOf(rng, COMPANY_WORDS), beasts = pickOf(rng, COMPANY_BEASTS);
+  const r = rng(),
+    word = pickOf(rng, COMPANY_WORDS),
+    beasts = pickOf(rng, COMPANY_BEASTS);
   const name = String(first).split(' ')[0];
   if (r < 1 / 3 && name) return `${name}'s company`;
   if (r < 2 / 3 && town) return `${beasts} of ${town}`;
@@ -122,7 +149,7 @@ export const headOf = (members) => members.reduce((a, m) => (!a || (m.level ?? 1
 export function holyDayOf(temples, day0, days) {
   for (let d = day0 + 1; d < day0 + days - 1; d++) {
     const row = holidayOn(dayOfYearFromMinutes(d * DAY_MIN + 12 * 60));
-    if (!row || row.region === 0xFF) continue;   // never a day every region keeps
+    if (!row || row.region === 0xff) continue; // never a day every region keeps
     for (const t of temples) if (holidayKeptIn(row, t.region ?? -1)) return { town: t, day: d, id: row.id };
   }
   return null;

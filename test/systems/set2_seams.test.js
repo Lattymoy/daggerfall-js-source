@@ -55,7 +55,7 @@ test('SET2 the blow\'s word: a foe whose AI has not detected me is unaware - nev
   assert.match(af, /calculateAttackDamage\(playerEntity, foe\.entity, \{[\s\S]*?unaware: foeUnaware\(foe\),[\s\S]*?\}\);/, 'the shaft\'s word');
   const f = strip(read('src/combat/formulas.js'));
   // PIN MOVED (TWO-HANDS AUDIT 2, bible/05-Combat/Two-Hands.md): and, after it, the off hand's share (`blowShare`)
-  assert.match(f, /core\(attacker, target, \{[^}]*unaware, blowShare \}\)/, 'a replacement core is handed the word');
+  assert.match(f, /core\(attacker, target, \{ weapon, wraps, damageMod, toHitMod, backstabChance, weaponAnimTime, rolls, dfRand, onMonsterHit, onInflictPoison, say, playerReflexes, notes, onStruck: \(part\) => \(struckPart = part\), unaware, blowShare \}\)/, 'a replacement core is handed the word');
 });
 
 test('SET2 AUDIT SET M2: the strike tail - every named strike listener told MY attack\'s FINAL damage at a foe, with the weapon, after either core (a replaced core\'s number too); never a miss, a blow at a player, a peer\'s blow resolved here, or a foe\'s; a listener that throws is skipped (mutants: the strike listeners never told; a miss told; a blow at a player told; a peer\'s blow told; a foe\'s blow told)', () => {
@@ -119,7 +119,7 @@ test('SET2 PCAAO\'s core reads the port\'s layers at the stock\'s own places - t
     assert.equal(info?.unaware, true, 'the host\'s word reaches the blow modifier under this core');
   } finally { registerWeaponDamageMod('set2-roll', null); registerWeaponBlowMod('set2-blow', null); }
   const p = strip(read('src/combat/pcaao.js'));
-  assert.match(p, /pcaaoWeaponAttackDamage\(attacker, target, damageModifiers, weaponAnimTime, weapon, rolls, modules, \{ unaware: !!unaware \}\)/);
+  assert.match(p, /pcaaoWeaponAttackDamage\(attacker, target, damageModifiers, weaponAnimTime, weapon, rolls, modules, \{\n\s*unaware: !!unaware,\n\s*\}\)/);
 });
 
 test('SET2 the damage door: a registered modifier over the damage before the shield, a death save that leaves a live player at 1 before the guild\'s avoid-death is asked, a listener told what landed - none of them asked on a SetHealth(0) door or a duel\'s blow, and none told when a veto or a shield takes the whole blow; one that throws is skipped (mutants: the modifier after the shield; the save on the SetHealth(0) door; the listener told on a vetoed blow)', () => {

@@ -30,11 +30,9 @@ const ok = (cond, label) => {
 
 await page.goto('http://localhost:5219/mw-viewer.html');
 await page.setInputFiles('#file', 'test/fixtures/mw/fixture.bsa');
-await page.waitForFunction(
-  () => window.__mwviewer && (window.__mwviewer.loaded || window.__mwviewer.error),
-  null,
-  { timeout: 15000 },
-);
+await page.waitForFunction(() => window.__mwviewer && (window.__mwviewer.loaded || window.__mwviewer.error), null, {
+  timeout: 15000,
+});
 
 // Deterministic pose for sampling: stop the spin, tip the pitch high so
 // the up-facing quad fills the view.
@@ -125,8 +123,10 @@ await page.selectOption('#meshsel', 'meshes/fixture/part.nif');
 await page.waitForTimeout(200);
 await page.selectOption('#animsel', 'Move');
 const status4 = await page.textContent('#status');
-ok(/1 part \(meshes\/fixture\/part\.nif: 1 skinned, 1 attached\)/.test(status4),
-  `part binds: ${status4.replace('\n', ' | ')}`);
+ok(
+  /1 part \(meshes\/fixture\/part\.nif: 1 skinned, 1 attached\)/.test(status4),
+  `part binds: ${status4.replace('\n', ' | ')}`,
+);
 await page.evaluate(() => window.__mwviewerSetAnimTime(1.5));
 await page.waitForTimeout(200);
 const partPosed = await page.evaluate(() => window.__mwviewerSkinnedPositions(1));
@@ -162,7 +162,9 @@ ok(/11 slots without skins/.test(npcStatus), 'the honest missing-slots census re
 const npcParts = await page.evaluate(() => ({
   skins: window.__mwviewer.loaded.skinnedMeshes.length,
   pieces: window.__mwviewer.loaded.npcAsm.pieces
-    .map((p) => `${p.slot}:${p.kind}@${p.bone}`).sort().join(),
+    .map((p) => `${p.slot}:${p.kind}@${p.bone}`)
+    .sort()
+    .join(),
   chestRest: (() => {
     const c = window.__mwviewer.loaded.npcAsm.pieces.find((p) => p.kind === 'skinned');
     return Array.from(c.positions).map((x) => +x.toFixed(3));
@@ -175,20 +177,25 @@ const npcParts = await page.evaluate(() => ({
   })(),
 }));
 ok(npcParts.skins === 1, `the base file's own skin stays a same-file batch (${npcParts.skins})`);
-ok(npcParts.pieces === 'chest:rigid@chest,chest:skinned@chest,hair:rigid@head,head:rigid@head',
-  `the assembly census - four pieces, filtered and bone-placed (${npcParts.pieces})`);
-ok(JSON.stringify(npcParts.chestRest) === JSON.stringify([0.5, 0, 0, 1.5, 0, 0, 0.5, 0, 1]),
-  `the chest rests through the real skinning equation (${npcParts.chestRest})`);
-ok(npcParts.headMinZ > 1.0,
-  `the head sits on the Head bone above the chest (minZ ${npcParts.headMinZ})`);
+ok(
+  npcParts.pieces === 'chest:rigid@chest,chest:skinned@chest,hair:rigid@head,head:rigid@head',
+  `the assembly census - four pieces, filtered and bone-placed (${npcParts.pieces})`,
+);
+ok(
+  JSON.stringify(npcParts.chestRest) === JSON.stringify([0.5, 0, 0, 1.5, 0, 0, 0.5, 0, 1]),
+  `the chest rests through the real skinning equation (${npcParts.chestRest})`,
+);
+ok(npcParts.headMinZ > 1.0, `the head sits on the Head bone above the chest (minZ ${npcParts.headMinZ})`);
 // The female NPC swaps in the female chest - read the bound part ids.
 await page.selectOption('#npcsel', 'test npc f');
 await page.waitForTimeout(400);
 const fStatus = await page.textContent('#status');
 ok(/Test NPC F/.test(fStatus), `female npc assembles: ${fStatus}`);
 const fBound = await page.evaluate(() => window.__mwviewer.loaded.npcBound);
-ok(fBound && fBound.includes('b_test_chest_f') && !fBound.includes('b_test_chest'),
-  `sex matching bound the female chest (${fBound})`);
+ok(
+  fBound && fBound.includes('b_test_chest_f') && !fBound.includes('b_test_chest'),
+  `sex matching bound the female chest (${fBound})`,
+);
 
 // MW-D17: THE CLIP LAW IS THE VIEWER'S ONE HOME FOR TIME. The retired
 // player - start + (elapsed modulo span) - looped EVERY group forever
@@ -203,23 +210,35 @@ await page.selectOption('#animsel', 'Move');
 // 51 answers loopFallback FALSE, so the clip plays once to its stop key
 // and freezes there. The modulo player can never satisfy this wait.
 await page.waitForFunction(
-  () => { const c = window.__mwviewerClip(); return c && c.playing === false; },
-  null, { timeout: 20000 },
+  () => {
+    const c = window.__mwviewerClip();
+    return c && c.playing === false;
+  },
+  null,
+  { timeout: 20000 },
 );
 const moveClip = await page.evaluate(() => window.__mwviewerClip());
-ok(moveClip && Math.abs(moveClip.time - 1.5) < 1e-6,
-  `"move" plays ONCE and freezes on its stop key (t=${moveClip && moveClip.time})`);
-ok(moveClip && moveClip.loopStopFinite === false,
-  'no loop keys, no fallback: the loop window never closes (rule 49\'s +Infinity)');
+ok(
+  moveClip && Math.abs(moveClip.time - 1.5) < 1e-6,
+  `"move" plays ONCE and freezes on its stop key (t=${moveClip && moveClip.time})`,
+);
+ok(
+  moveClip && moveClip.loopStopFinite === false,
+  "no loop keys, no fallback: the loop window never closes (rule 49's +Infinity)",
+);
 const frozen = await page.evaluate(() => window.__mwviewerSkinnedPositions());
-ok(frozen && Math.abs(frozen[11] - 2) < 1e-3,
-  `and the POSE holds the stop key - v3 stays at z=2, got ${frozen && frozen[11].toFixed(3)}`);
+ok(
+  frozen && Math.abs(frozen[11] - 2) < 1e-3,
+  `and the POSE holds the stop key - v3 stays at z=2, got ${frozen && frozen[11].toFixed(3)}`,
+);
 
 // "idle" IS rule 51's hardcoded set: same file, same absence of loop
 // keys, and it loops for ever. The wrap is observed, not assumed: the
 // playhead must approach the stop and then come back down.
 await page.selectOption('#animsel', 'Idle');
-await page.evaluate(() => { window.__probeMaxT = 0; });
+await page.evaluate(() => {
+  window.__probeMaxT = 0;
+});
 await page.waitForFunction(
   () => {
     const c = window.__mwviewerClip();
@@ -227,15 +246,22 @@ await page.waitForFunction(
     if (c.time > window.__probeMaxT) window.__probeMaxT = c.time;
     return window.__probeMaxT > 0.4 && c.time < window.__probeMaxT - 0.2;
   },
-  null, { timeout: 20000 },
+  null,
+  { timeout: 20000 },
 );
 const idleClip = await page.evaluate(() => window.__mwviewerClip());
-ok(idleClip && idleClip.playing === true,
-  'rule 51: "idle" loops with NO loop keys - the hardcoded set is the fallback');
-ok(idleClip && idleClip.loopStopFinite === true && Math.abs(idleClip.loopStopTime - 0.5) < 1e-6,
-  `loopFallback closes the window at the stop key (${idleClip && idleClip.loopStopTime})`);
-ok(idleClip && idleClip.time >= -1e-6 && idleClip.time <= 0.5 + 1e-6,
-  `and the playhead lives inside the group (t=${idleClip && idleClip.time})`);
+ok(
+  idleClip && idleClip.playing === true,
+  'rule 51: "idle" loops with NO loop keys - the hardcoded set is the fallback',
+);
+ok(
+  idleClip && idleClip.loopStopFinite === true && Math.abs(idleClip.loopStopTime - 0.5) < 1e-6,
+  `loopFallback closes the window at the stop key (${idleClip && idleClip.loopStopTime})`,
+);
+ok(
+  idleClip && idleClip.time >= -1e-6 && idleClip.time <= 0.5 + 1e-6,
+  `and the playhead lives inside the group (t=${idleClip && idleClip.time})`,
+);
 
 ok(crashes.length === 0, `no pageerrors${crashes.length ? `: ${crashes[0]}` : ''}`);
 

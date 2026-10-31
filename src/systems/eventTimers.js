@@ -22,17 +22,27 @@
 // each group in the list's own order, and a player can show one group alone (ui/enhanced/enhancedTimers.js).
 import { gateAt, gateTimes, gatePhase, GATE_EVERY_DAYS, gameDayAt, GATE_DAY_MINUTES } from '../net/gate/gateLaw.js';
 import { wallMsForClassicMinutes } from '../net/wire.js';
-import { seatWeekOf, seatWeekStartMs, seatPhaseOf, SEAT_RECKONING_MS, seasonOf, seatSeasonName, battleLengthMs, SIGN_CLOSES_MS, guildWords } from '../net/townSeatLaw.js';
-import { serpentAt, serpentTimes, serpentPhase, serpentBossOf, SERPENT_EVERY_DAYS } from '../net/serpent/serpentLaw.js';   // SERPENT-TIMERS: the sea serpent's day
-import { sdPhase, SD_COLLAPSE_MS, sdRiseNotBefore } from '../net/superDungeon/sdLaw.js';   // SD2c: the Super dungeon's record, once it is news; FRONTS: a province's next rise on its turn, with a place free
-import { frontTimerRows } from './frontWords.js';   // FRONTS: the provinces past the Bay whose turn it is, and the next
-import { egTimes } from '../net/eliteGates/egLaw.js';   // EG-F: an Elite Breach's clock - the company's own row
-import { arenaSeasonOf, arenaSeasonEndsS } from '../net/arena/arenaLaw.js';   // EG-ZM: the Spire's boards keep the arena's season
-import { ketchVoyageAt } from '../net/ketch/ketchLaw.js';   // KETCH: the Sky-Ketch's voyage - the clock's alone
-import { ketchStationHere, ketchStationsStanding } from '../scenes/ketch/ketchStanding.js';   // KETCH-EVERYWHERE: the station of the province I stand in
+import {
+  seatWeekOf,
+  seatWeekStartMs,
+  seatPhaseOf,
+  SEAT_RECKONING_MS,
+  seasonOf,
+  seatSeasonName,
+  battleLengthMs,
+  SIGN_CLOSES_MS,
+  guildWords,
+} from '../net/townSeatLaw.js';
+import { serpentAt, serpentTimes, serpentPhase, serpentBossOf, SERPENT_EVERY_DAYS } from '../net/serpent/serpentLaw.js'; // SERPENT-TIMERS: the sea serpent's day
+import { sdPhase, SD_COLLAPSE_MS, sdRiseNotBefore } from '../net/superDungeon/sdLaw.js'; // SD2c: the Super dungeon's record, once it is news; FRONTS: a province's next rise on its turn, with a place free
+import { frontTimerRows } from './frontWords.js'; // FRONTS: the provinces past the Bay whose turn it is, and the next
+import { egTimes } from '../net/eliteGates/egLaw.js'; // EG-F: an Elite Breach's clock - the company's own row
+import { arenaSeasonOf, arenaSeasonEndsS } from '../net/arena/arenaLaw.js'; // EG-ZM: the Spire's boards keep the arena's season
+import { ketchVoyageAt } from '../net/ketch/ketchLaw.js'; // KETCH: the Sky-Ketch's voyage - the clock's alone
+import { ketchStationHere, ketchStationsStanding } from '../scenes/ketch/ketchStanding.js'; // KETCH-EVERYWHERE: the station of the province I stand in
 import { ketchCity } from './ketch/ketchWords.js';
 import { t, getLocalizedRegionName } from './textManager.js';
-import { regionOfTheatre } from '../formats/mapsTables.js';   // WW5: a province lane's region, its name in the player's language
+import { regionOfTheatre } from '../formats/mapsTables.js'; // WW5: a province lane's region, its name in the player's language
 
 const DAY_MS = 86_400_000;
 
@@ -56,12 +66,16 @@ export const timerGroupOf = (kind) => TIMER_GROUPS.find((g) => g.kinds.includes(
 export function timerGroups(rows) {
   return TIMER_GROUPS.map((g) => {
     const of = (rows ?? []).filter((r) => timerGroupOf(r.kind) === g.id);
-    return { id: g.id, rows: of, live: of.filter((r) => r.live && !r.sched).length };   // AUDIT FRONTS B4: a schedule is not under way
+    return { id: g.id, rows: of, live: of.filter((r) => r.live && !r.sched).length }; // AUDIT FRONTS B4: a schedule is not under way
   }).filter((g) => g.rows.length);
 }
 
 /** The battle kinds in the words a seat's own tab uses for them. */
-const BATTLE_TITLE = Object.freeze({ siege: (n) => `Siege of ${n}`, tourney: (n) => `Tourney at ${n}`, revolt: (n) => `Revolt at ${n}` });
+const BATTLE_TITLE = Object.freeze({
+  siege: (n) => `Siege of ${n}`,
+  tourney: (n) => `Tourney at ${n}`,
+  revolt: (n) => `Revolt at ${n}`,
+});
 
 const capital = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 
@@ -72,11 +86,46 @@ export const gateEventId = (n) => (Number.isSafeInteger(n) && n >= 0 ? `gate:${n
  *  sighted, arrives, keeps station and weighs anchor at the same instants for everyone, over the same fields. Its words
  *  through the text core as the row is laid (L10N4). */
 function ketchRows(now, coming, live, theatre = 0) {
-  const kv = ketchVoyageAt(now, theatre), kWhere = theatre ? t('ketch.timers.whereAt', 'Over {city}', { city: ketchCity(theatre) }) : t('ketch.timers.where', 'Over Daggerfall');
-  if (kv.phase === 'away') coming(`ketch:${kv.n}`, 'ketch', t('ketch.timers.sighted', 'The Sky-Ketch is sighted'), kv.sightAt, kWhere, t('ketch.timers.sightedSub', 'It stays east of the city for seven hours'));
-  else if (kv.phase === 'sighted') coming(`ketch:${kv.n}`, 'ketch', t('ketch.timers.arrives', 'The Sky-Ketch arrives'), kv.at, kWhere, t('ketch.timers.arrivesSub', 'Its anchor-lift comes down when this runs out'));
-  else if (kv.phase === 'docked') live(`ketch:${kv.n}`, 'ketch', t('ketch.timers.station', 'The Sky-Ketch keeps station'), kv.departAt, kWhere, t('ketch.timers.stationSub', 'Its anchor-lift is down in the fields east of the city until this runs out'));
-  else live(`ketch:${kv.n}`, 'ketch', t('ketch.timers.departing', 'The Sky-Ketch weighs anchor'), kv.endAt, kWhere, t('ketch.timers.departingSub', 'The crews aboard have until this runs out'));
+  const kv = ketchVoyageAt(now, theatre),
+    kWhere = theatre
+      ? t('ketch.timers.whereAt', 'Over {city}', { city: ketchCity(theatre) })
+      : t('ketch.timers.where', 'Over Daggerfall');
+  if (kv.phase === 'away')
+    coming(
+      `ketch:${kv.n}`,
+      'ketch',
+      t('ketch.timers.sighted', 'The Sky-Ketch is sighted'),
+      kv.sightAt,
+      kWhere,
+      t('ketch.timers.sightedSub', 'It stays east of the city for seven hours'),
+    );
+  else if (kv.phase === 'sighted')
+    coming(
+      `ketch:${kv.n}`,
+      'ketch',
+      t('ketch.timers.arrives', 'The Sky-Ketch arrives'),
+      kv.at,
+      kWhere,
+      t('ketch.timers.arrivesSub', 'Its anchor-lift comes down when this runs out'),
+    );
+  else if (kv.phase === 'docked')
+    live(
+      `ketch:${kv.n}`,
+      'ketch',
+      t('ketch.timers.station', 'The Sky-Ketch keeps station'),
+      kv.departAt,
+      kWhere,
+      t('ketch.timers.stationSub', 'Its anchor-lift is down in the fields east of the city until this runs out'),
+    );
+  else
+    live(
+      `ketch:${kv.n}`,
+      'ketch',
+      t('ketch.timers.departing', 'The Sky-Ketch weighs anchor'),
+      kv.endAt,
+      kWhere,
+      t('ketch.timers.departingSub', 'The crews aboard have until this runs out'),
+    );
 }
 
 /**
@@ -88,16 +137,47 @@ function ketchRows(now, coming, live, theatre = 0) {
 function sdLaneRows(src, now, live, coming, rows) {
   const recs = (src?.sd?.lanes ?? []).map((L) => L?.rec);
   for (const L of src?.sd?.lanes ?? []) {
-    const lr = L?.rec ?? null, lp = sdPhase(lr, now);
+    const lr = L?.rec ?? null,
+      lp = sdPhase(lr, now);
     if (!lr || !Number.isSafeInteger(lr.s)) continue;
     const lname = L.name || t('sd.timers.anAbyss', 'An Abyss Dungeon');
-    const lplace = L.site?.cityName ?? null, province = L.province ? getLocalizedRegionName(regionOfTheatre(L.lane), () => L.province) : '';
-    const lwhere = lplace ? t('events.where.near', 'Near {place}', { place: lplace }) : province ? t('sd.timers.in', 'In {province}', { province }) : null;
-    if (lp === 'found') live(`sd:${lr.s}`, 'super', t('events.super.stands', '{name} stands', { name: lname }), lr.until, lwhere, t('sd.timers.fades', 'Found. It fades away unbeaten when this runs out'));
-    else if (lp === 'fell') { live(`sd:${lr.s}`, 'super', t('sd.timers.collapses', '{name} collapses', { name: lname }), lr.fellAt + SD_COLLAPSE_MS, lwhere, t('sd.timers.broken', 'Its Hour is broken. It collapses when this runs out')); rows[rows.length - 1].shut = true; }
-    else if (lp === 'gone' && L.mine && Number.isFinite(lr.next)) {
-      const rise = sdRiseNotBefore(lr, now, recs);   // FRONTS: not before its province's turn, nor while two stand past the Bay (AUDIT FRONTS B1)
-      if (rise > now) coming(`sd:${lr.s + 1}`, 'super', t('sd.timers.rises', 'An Abyss Dungeon rises'), rise, null, t('sd.timers.watch', 'Not before this. Watch {province} for its brass omen', { province }));
+    const lplace = L.site?.cityName ?? null,
+      province = L.province ? getLocalizedRegionName(regionOfTheatre(L.lane), () => L.province) : '';
+    const lwhere = lplace
+      ? t('events.where.near', 'Near {place}', { place: lplace })
+      : province
+        ? t('sd.timers.in', 'In {province}', { province })
+        : null;
+    if (lp === 'found')
+      live(
+        `sd:${lr.s}`,
+        'super',
+        t('events.super.stands', '{name} stands', { name: lname }),
+        lr.until,
+        lwhere,
+        t('sd.timers.fades', 'Found. It fades away unbeaten when this runs out'),
+      );
+    else if (lp === 'fell') {
+      live(
+        `sd:${lr.s}`,
+        'super',
+        t('sd.timers.collapses', '{name} collapses', { name: lname }),
+        lr.fellAt + SD_COLLAPSE_MS,
+        lwhere,
+        t('sd.timers.broken', 'Its Hour is broken. It collapses when this runs out'),
+      );
+      rows[rows.length - 1].shut = true;
+    } else if (lp === 'gone' && L.mine && Number.isFinite(lr.next)) {
+      const rise = sdRiseNotBefore(lr, now, recs); // FRONTS: not before its province's turn, nor while two stand past the Bay (AUDIT FRONTS B1)
+      if (rise > now)
+        coming(
+          `sd:${lr.s + 1}`,
+          'super',
+          t('sd.timers.rises', 'An Abyss Dungeon rises'),
+          rise,
+          null,
+          t('sd.timers.watch', 'Not before this. Watch {province} for its brass omen', { province }),
+        );
     }
   }
 }
@@ -121,8 +201,10 @@ export function eventTimerRows(src) {
   if (!Number.isFinite(now)) return [];
   /** @type {Array<{id: string, kind: string, title: string, where: string|null, detail: string|null, live: boolean, at: number, until: number|null, door?: string, shut?: boolean, sched?: boolean}>} */
   const rows = [];
-  const coming = (id, kind, title, at, where = null, detail = null) => rows.push({ id, kind, title, where, detail, live: false, at, until: null });
-  const live = (id, kind, title, until, where = null, detail = null) => rows.push({ id, kind, title, where, detail, live: true, at: until, until });
+  const coming = (id, kind, title, at, where = null, detail = null) =>
+    rows.push({ id, kind, title, where, detail, live: false, at, until: null });
+  const live = (id, kind, title, until, where = null, detail = null) =>
+    rows.push({ id, kind, title, where, detail, live: true, at: until, until });
 
   // ── THE OBLIVION GATE (gateLaw: a gate every game day - omen, rise, open, seal, wrath) ──
   const t = gateAt(now);
@@ -131,15 +213,38 @@ export function eventTimerRows(src) {
   const place = src?.gate?.place ? `Near ${src.gate.place}` : null;
   // (gateLaw's words: 'sealed' is the risen gate not yet open, 'closed' the gate shut for the night)
   /** A gate's row from its omen to its collapse - the Bay's, and WW2 each lane's past it, in the same words. */
-  const gateRows = (/** @type {ReturnType<typeof gateAt>} */ g, /** @type {string} */ ph, /** @type {string|null} */ where) => {
-    if (ph === 'omen' || ph === 'rising' || ph === 'sealed') coming(gateEventId(g.day), 'gate', 'Dagon\'s Breach opens', g.openAt, where, 'The omen is in the sky');
-    else if (ph === 'open') live(gateEventId(g.day), 'gate', 'Dagon\'s Breach open', g.sealAt, where, 'Seals when this runs out. Get inside');
-    else if (ph === 'closed') { live(gateEventId(g.day), 'gate', 'Dagon\'s Breach sealed', g.wrathAt, where, 'Collapses when this runs out'); rows[rows.length - 1].shut = true; }   // AUDIT EVENTS1 A6: no one gets in - the event board leaves it out
+  const gateRows = (
+    /** @type {ReturnType<typeof gateAt>} */ g,
+    /** @type {string} */ ph,
+    /** @type {string|null} */ where,
+  ) => {
+    if (ph === 'omen' || ph === 'rising' || ph === 'sealed')
+      coming(gateEventId(g.day), 'gate', "Dagon's Breach opens", g.openAt, where, 'The omen is in the sky');
+    else if (ph === 'open')
+      live(gateEventId(g.day), 'gate', "Dagon's Breach open", g.sealAt, where, 'Seals when this runs out. Get inside');
+    else if (ph === 'closed') {
+      live(gateEventId(g.day), 'gate', "Dagon's Breach sealed", g.wrathAt, where, 'Collapses when this runs out');
+      rows[rows.length - 1].shut = true;
+    } // AUDIT EVENTS1 A6: no one gets in - the event board leaves it out
   };
-  if (phase === 'quiet') coming(gateEventId(t.day), 'gate', 'Dagon\'s Breach opens', t.openAt, null, 'Its omen burns in the sky 15 minutes before');
+  if (phase === 'quiet')
+    coming(
+      gateEventId(t.day),
+      'gate',
+      "Dagon's Breach opens",
+      t.openAt,
+      null,
+      'Its omen burns in the sky 15 minutes before',
+    );
   else gateRows(t, phase, place);
   // ...and the gate after it, once this one is under way
-  if (phase !== 'quiet') coming(gateEventId(t.day + GATE_EVERY_DAYS), 'gate', 'Next Dagon\'s Breach opens', gateTimes(t.day + GATE_EVERY_DAYS).openAt);
+  if (phase !== 'quiet')
+    coming(
+      gateEventId(t.day + GATE_EVERY_DAYS),
+      'gate',
+      "Next Dagon's Breach opens",
+      gateTimes(t.day + GATE_EVERY_DAYS).openAt,
+    );
   // FRONTS (bible/03-World/World-Wide.md FRONTS): the provinces past the Bay whose turn it is, and the next two days' -
   // where the host stands the provinces' events (`fronts`)
   if (src?.fronts) rows.push(...frontTimerRows(now));
@@ -160,11 +265,28 @@ export function eventTimerRows(src) {
   const sPhase = serpentPhase(s, now, src?.serpent?.fellAt?.(s.day) ?? null);
   const sName = serpentBossOf(s.day).name;
   const off = src?.serpent?.place ? `Off ${src.serpent.place}` : null;
-  if (sPhase === 'quiet') coming(`serpent:${s.day}`, 'serpent', `${sName} rises`, s.riseAt, null, 'The harbor bells ring 15 minutes before');
-  else if (sPhase === 'omen') coming(`serpent:${s.day}`, 'serpent', `${sName} rises`, s.riseAt, off, 'The harbor bells are ringing. Its waters are circled on your map');
+  if (sPhase === 'quiet')
+    coming(`serpent:${s.day}`, 'serpent', `${sName} rises`, s.riseAt, null, 'The harbor bells ring 15 minutes before');
+  else if (sPhase === 'omen')
+    coming(
+      `serpent:${s.day}`,
+      'serpent',
+      `${sName} rises`,
+      s.riseAt,
+      off,
+      'The harbor bells are ringing. Its waters are circled on your map',
+    );
   // SERPENT4 (2026-10-11): its waters stand open until it dives - one row from its rising to its dive, the storm's breaking
   // no instant a ship sails against
-  else if (sPhase === 'rising' || sPhase === 'hunt' || sPhase === 'late') live(`serpent:${s.day}`, 'serpent', `${sName} hunts`, s.soundAt, off, 'It dives when this runs out. Sail out to join the hunt');
+  else if (sPhase === 'rising' || sPhase === 'hunt' || sPhase === 'late')
+    live(
+      `serpent:${s.day}`,
+      'serpent',
+      `${sName} hunts`,
+      s.soundAt,
+      off,
+      'It dives when this runs out. Sail out to join the hunt',
+    );
   if (sPhase !== 'quiet') {
     const nextDay = s.day + SERPENT_EVERY_DAYS;
     coming(`serpent:${nextDay}`, 'serpent', 'Next sea serpent rises', serpentTimes(nextDay).riseAt);
@@ -177,12 +299,38 @@ export function eventTimerRows(src) {
   const sdRec = src?.sd?.rec ?? null;
   const sdNow = sdPhase(sdRec, now);
   const sdName = src?.sd?.name || 'The Abyss Dungeon';
-  const sdPlace = src?.sd?.place ?? src?.sd?.site?.cityName ?? null;   // AUDIT EVENTS1 A2: the host hands the site itself (its city and its pixel)
+  const sdPlace = src?.sd?.place ?? src?.sd?.site?.cityName ?? null; // AUDIT EVENTS1 A2: the host hands the site itself (its city and its pixel)
   const sdWhere = sdPlace ? `Near ${sdPlace}` : null;
-  if (sdNow === 'found') live(`sd:${sdRec.s}`, 'super', `${sdName} stands`, sdRec.until, sdWhere, 'Found. It fades away unbeaten when this runs out');
-  else if (sdNow === 'fell') { live(`sd:${sdRec.s}`, 'super', `${sdName} collapses`, sdRec.fellAt + SD_COLLAPSE_MS, sdWhere, 'Its Hour is broken. It collapses when this runs out'); rows[rows.length - 1].shut = true; }   // AUDIT EVENTS1 A6
+  if (sdNow === 'found')
+    live(
+      `sd:${sdRec.s}`,
+      'super',
+      `${sdName} stands`,
+      sdRec.until,
+      sdWhere,
+      'Found. It fades away unbeaten when this runs out',
+    );
+  else if (sdNow === 'fell') {
+    live(
+      `sd:${sdRec.s}`,
+      'super',
+      `${sdName} collapses`,
+      sdRec.fellAt + SD_COLLAPSE_MS,
+      sdWhere,
+      'Its Hour is broken. It collapses when this runs out',
+    );
+    rows[rows.length - 1].shut = true;
+  } // AUDIT EVENTS1 A6
   // SD19: the next one's rise, once this one is gone - never where (a Hollow risen is a find), only not before when
-  else if (sdNow === 'gone' && Number.isFinite(sdRec?.next) && sdRec.next > now) coming(`sd:${(sdRec.s ?? 0) + 1}`, 'super', 'An Abyss Dungeon rises', sdRec.next, null, 'Not before this. Watch the Bay for its brass omen');
+  else if (sdNow === 'gone' && Number.isFinite(sdRec?.next) && sdRec.next > now)
+    coming(
+      `sd:${(sdRec.s ?? 0) + 1}`,
+      'super',
+      'An Abyss Dungeon rises',
+      sdRec.next,
+      null,
+      'Not before this. Watch the Bay for its brass omen',
+    );
   // WW5 (bible/03-World/World-Wide.md WW5): AND EVERY PROVINCE'S HOLLOW (sdLaneRows)
   sdLaneRows(src, now, live, coming, rows);
 
@@ -190,7 +338,8 @@ export function eventTimerRows(src) {
   // Starfall.md section 8): the rows the star's own law lays (systems/starfall/starfallClient.js starTimerRows) - each
   // fallen star still undecided, to its deadline; the next fall, with the night's coven - handed in whole by the host, the
   // one that knows where the night's stars fall and which of them are held.
-  for (const r of src?.stars ?? []) if (r?.kind === 'star' && typeof r.id === 'string' && Number.isFinite(r.at)) rows.push(r);
+  for (const r of src?.stars ?? [])
+    if (r?.kind === 'star' && typeof r.id === 'string' && Number.isFinite(r.at)) rows.push(r);
 
   // ── THE SKY-KETCH (net/ketch/ketchLaw.js: a voyage every real Saturday, the clock's alone) ── KETCH: ketchRows
   ketchRows(now, coming, live);
@@ -205,10 +354,14 @@ export function eventTimerRows(src) {
   // answer, then the hall the company stands in and what is left on the count (`until` its end, held or running).
   const el = src?.elite ?? null;
   if (el && Number.isFinite(el.op) && !el.end) {
-    const T = egTimes({ openedAt: el.op }), what = el.rh ? 'Rehearsal' : 'Elite Breach';
-    if ((el.h ?? 0) > 0 && Number.isFinite(el.until)) live(`elite:${el.op}`, 'elite', `Hall ${el.h}`, /** @type {number} */ (el.until), null, 'Time left');
-    else if (now < T.openAt) coming(`elite:${el.op}`, 'elite', `${what} opens`, T.openAt, null, 'Your company is called');
-    else if (now < T.admitUntil) live(`elite:${el.op}`, 'elite', `${what} open`, T.admitUntil, null, 'Answer the call before this runs out');
+    const T = egTimes({ openedAt: el.op }),
+      what = el.rh ? 'Rehearsal' : 'Elite Breach';
+    if ((el.h ?? 0) > 0 && Number.isFinite(el.until))
+      live(`elite:${el.op}`, 'elite', `Hall ${el.h}`, /** @type {number} */ (el.until), null, 'Time left');
+    else if (now < T.openAt)
+      coming(`elite:${el.op}`, 'elite', `${what} opens`, T.openAt, null, 'Your company is called');
+    else if (now < T.admitUntil)
+      live(`elite:${el.op}`, 'elite', `${what} open`, T.admitUntil, null, 'Answer the call before this runs out');
   }
   // EG-ZM (Elite-Gates.md section 20, THE BOARD WINDOW - "reached from the Timers row"): where the host hands the boards'
   // door, every Elite row carries it, and the boards' own season - the arena's eight weeks (net/arena/arenaLaw.js) - stands as an
@@ -216,7 +369,14 @@ export function eventTimerRows(src) {
   // as Spire Champions through the next season (AUDIT EG III: its words, section 20's own).
   if (typeof src?.doors?.board === 'function') {
     const season = arenaSeasonOf(Math.floor(now / 1000));
-    coming(`elite:season:${season}`, 'elite', `The Spire's season ${season} ends`, arenaSeasonEndsS(season) * 1000, null, 'Each Descent bracket\'s top ten hold the title Spire Champion through the next season');
+    coming(
+      `elite:season:${season}`,
+      'elite',
+      `The Spire's season ${season} ends`,
+      arenaSeasonEndsS(season) * 1000,
+      null,
+      "Each Descent bracket's top ten hold the title Spire Champion through the next season",
+    );
     for (const r of rows) if (r.kind === 'elite') r.door = 'board';
   }
 
@@ -224,18 +384,38 @@ export function eventTimerRows(src) {
   // AUDIT TIMERS1 D3: the day rolls about twenty-two across the Iliac Bay - the window held them all, twenty-seven rows.
   // The player's own region's raids are listed whole; the rest are one row, the soonest of them, and how many more.
   const raidRow = (r) => {
-    const where = r.region ? `In ${r.region}` : null;   // the title names the town
+    const where = r.region ? `In ${r.region}` : null; // the title names the town
     const who = r.type ? capital(r.type) : null;
-    if (r.startMs > now) coming(`raid:${r.name}:${r.startMs}`, 'raid', `Raid on ${r.name}`, r.startMs, where, who ? `${who} attack` : null);
-    else live(`raid:${r.name}:${r.startMs}`, 'raid', `Raid on ${r.name}`, r.endMs, where, who ? `${who} withdraw when this runs out` : null);
+    if (r.startMs > now)
+      coming(
+        `raid:${r.name}:${r.startMs}`,
+        'raid',
+        `Raid on ${r.name}`,
+        r.startMs,
+        where,
+        who ? `${who} attack` : null,
+      );
+    else
+      live(
+        `raid:${r.name}:${r.startMs}`,
+        'raid',
+        `Raid on ${r.name}`,
+        r.endMs,
+        where,
+        who ? `${who} withdraw when this runs out` : null,
+      );
   };
-  const raids = (src?.raids ?? []).filter((r) => r && Number.isFinite(r.startMs) && Number.isFinite(r.endMs) && r.endMs > now && !r.done);
+  const raids = (src?.raids ?? []).filter(
+    (r) => r && Number.isFinite(r.startMs) && Number.isFinite(r.endMs) && r.endMs > now && !r.done,
+  );
   const home = src?.region ?? null;
   const elsewhere = [];
-  for (const r of raids) ((r.home ?? (home && r.region === home)) ? raidRow(r) : elsewhere.push(r));   // WW6: a raid past the Bay is the player's own by its district (raidingParties.js raidTimerList `home`), not its province's name
+  for (const r of raids) (r.home ?? (home && r.region === home)) ? raidRow(r) : elsewhere.push(r); // WW6: a raid past the Bay is the player's own by its district (raidingParties.js raidTimerList `home`), not its province's name
   if (elsewhere.length) {
     // the soonest to matter: one under way (to its end), else the next to start
-    const next = elsewhere.reduce((a, r) => ((r.startMs <= now ? r.endMs : r.startMs) < (a.startMs <= now ? a.endMs : a.startMs) ? r : a));
+    const next = elsewhere.reduce((a, r) =>
+      (r.startMs <= now ? r.endMs : r.startMs) < (a.startMs <= now ? a.endMs : a.startMs) ? r : a,
+    );
     const more = elsewhere.length - 1;
     const rest = more ? `${more} more today across Tamriel` : null;
     const under = next.startMs <= now;
@@ -248,12 +428,25 @@ export function eventTimerRows(src) {
   // ── THE RAID DAY (the event clock's day - two real hours: the bounty board's hunts and the raids roll with it) ──
   // AUDIT TIMERS1 D4: NOT the calendar's day - since TIME1 the sky's date turns every real hour - so it says what turns
   const nextDay = Math.round(wallMsForClassicMinutes((gameDayAt(now) + 1) * GATE_DAY_MINUTES));
-  coming('gameday', 'reset', 'New bounty hunts and raids', nextDay, null, 'New hunts on the bounty board and new town raids');
+  coming(
+    'gameday',
+    'reset',
+    'New bounty hunts and raids',
+    nextDay,
+    null,
+    'New hunts on the bounty board and new town raids',
+  );
 
   // ── THE UTC DAY (the daily caps the service counts on its UTC day) ──
   // AUDIT TIMERS1 D10: the caps as they are - the Watch's only where the seats are open
-  coming('daily', 'reset', 'Daily reset', (Math.floor(now / DAY_MS) + 1) * DAY_MS, '00:00 UTC',
-    `Gathering nodes come back. Daily limits reset for rare hides, silver and Court writs${src?.seatsOpen ? ', and the Watch' : ''}`);   // CAP-OFF: gathering, hides and hauls keep no day's limit
+  coming(
+    'daily',
+    'reset',
+    'Daily reset',
+    (Math.floor(now / DAY_MS) + 1) * DAY_MS,
+    '00:00 UTC',
+    `Gathering nodes come back. Daily limits reset for rare hides, silver and Court writs${src?.seatsOpen ? ', and the Watch' : ''}`,
+  ); // CAP-OFF: gathering, hides and hauls keep no day's limit
 
   // ── THE SEAT WEEK (Muster, Reckoning, the Turning - Sunday 18:00 UTC) ──
   // AUDIT TIMERS1 D5: the seats' rows for an account the seats are open to (the service says, `seatBook.open`)
@@ -261,13 +454,28 @@ export function eventTimerRows(src) {
   const turningAt = seatWeekStartMs(week + 1);
   const reckoningAt = turningAt - SEAT_RECKONING_MS;
   if (src?.seatsOpen) {
-    if (seatPhaseOf(now) === 'muster') coming('reckoning', 'seat', 'The Reckoning', reckoningAt, 'Friday 18:00 UTC', 'Pledges lock until the Turning');
+    if (seatPhaseOf(now) === 'muster')
+      coming('reckoning', 'seat', 'The Reckoning', reckoningAt, 'Friday 18:00 UTC', 'Pledges lock until the Turning');
     else live('reckoning', 'seat', 'The Reckoning', turningAt, 'Pledges are locked', 'Ends at the Turning');
-    coming('turning', 'seat', 'The Turning', turningAt, 'Sunday 18:00 UTC', 'Seats change hands. The Officers\' writ budget, the weekly caps and the Tides reset');
+    coming(
+      'turning',
+      'seat',
+      'The Turning',
+      turningAt,
+      'Sunday 18:00 UTC',
+      "Seats change hands. The Officers' writ budget, the weekly caps and the Tides reset",
+    );
     const season = seasonOf(week, src?.zero ?? null);
     if (season) {
       const name = seatSeasonName(season.n);
-      if (name) coming(`season:${season.n}`, 'seat', `${capital(name)} ends`, seatWeekStartMs(season.end), 'At its last Turning');
+      if (name)
+        coming(
+          `season:${season.n}`,
+          'seat',
+          `${capital(name)} ends`,
+          seatWeekStartMs(season.end),
+          'At its last Turning',
+        );
     }
   }
 
@@ -282,17 +490,34 @@ export function eventTimerRows(src) {
       // AUDIT TIMERS1 D1: the service sends each side as the guild ({ id, name, tag, heraldry }), not a name - the first
       // cut printed "[object Object] against [object Object]". In the seat tab's own words; a revolt is the town's own
       // rising, against the holder alone.
-      const side = (g) => (g && typeof g === 'object' && g.name ? guildWords(g) : (typeof g === 'string' ? g : null));
-      const a = side(b.guild), d = side(b.against) ?? side(s?.holder?.guild);
+      const side = (g) => (g && typeof g === 'object' && g.name ? guildWords(g) : typeof g === 'string' ? g : null);
+      const a = side(b.guild),
+        d = side(b.against) ?? side(s?.holder?.guild);
       const sides = a && d ? `${capital(a)} against ${d}` : a ? capital(a) : d ? `Against ${d}` : null;
       // AUDIT TIMERS1 D2: an ended battle says nothing - but the seat's Royal Tourney below still does (a `continue`
       // here skipped it, from a crown's siege's end to the Turning)
       if (end > now) {
-        if (start > now) coming(`battle:${s.key ?? name}`, 'battle', title, start, sides, `Rosters close ${Math.round(SIGN_CLOSES_MS / 60_000)} minutes before`);
+        if (start > now)
+          coming(
+            `battle:${s.key ?? name}`,
+            'battle',
+            title,
+            start,
+            sides,
+            `Rosters close ${Math.round(SIGN_CLOSES_MS / 60_000)} minutes before`,
+          );
         else live(`battle:${s.key ?? name}`, 'battle', title, end, sides, 'Under way');
       }
     }
-    if (s?.holder?.edict === 'royal-tourney') live(`royal:${s.key ?? name}`, 'battle', `Royal Tourney at ${name}`, turningAt, null, 'The champion is named at the Turning');
+    if (s?.holder?.edict === 'royal-tourney')
+      live(
+        `royal:${s.key ?? name}`,
+        'battle',
+        `Royal Tourney at ${name}`,
+        turningAt,
+        null,
+        'The champion is named at the Turning',
+      );
   }
 
   // live first (soonest end first), then what is coming (soonest first)
@@ -304,7 +529,10 @@ export function eventTimerRows(src) {
 export function timerText(ms) {
   const s = Math.max(0, Math.ceil((Number(ms) || 0) / 1000));
   const two = (n) => String(n).padStart(2, '0');
-  const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  const d = Math.floor(s / 86400),
+    h = Math.floor((s % 86400) / 3600),
+    m = Math.floor((s % 3600) / 60),
+    sec = s % 60;
   if (d > 0) return `${d}d ${two(h)}h`;
   if (h > 0) return `${h}:${two(m)}:${two(sec)}`;
   return `${m}:${two(sec)}`;
@@ -315,9 +543,12 @@ const MONTHS = Object.freeze(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', '
 /** The moment in the player's own clock: "18:00" today, "Sun 18:00" within the week, "Sun 18 Oct 18:00" beyond it
  *  (AUDIT TIMERS1 D9: a weekday alone did not say which Sunday a Season's end, sixteen days out, meant). */
 export function localWhenText(wallMs, todayMs = Date.now()) {
-  const d = new Date(wallMs), t = new Date(todayMs);
+  const d = new Date(wallMs),
+    t = new Date(todayMs);
   const hm = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   const sameDay = d.getFullYear() === t.getFullYear() && d.getMonth() === t.getMonth() && d.getDate() === t.getDate();
   if (sameDay) return hm;
-  return wallMs - todayMs < 6 * DAY_MS ? `${WEEKDAYS[d.getDay()]} ${hm}` : `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]} ${hm}`;
+  return wallMs - todayMs < 6 * DAY_MS
+    ? `${WEEKDAYS[d.getDay()]} ${hm}`
+    : `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]} ${hm}`;
 }

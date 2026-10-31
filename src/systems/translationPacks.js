@@ -12,20 +12,39 @@
 // Pure: the store (scenes/translationStore.js) keeps the files, and scenes/localeData.js puts them to use.
 
 export const PACK_KIND = Object.freeze({
-  TABLE: 'table', QUEST: 'quest', BOOK: 'book', NAMEGEN: 'nameGen', TEXT_TABLE: 'textTable', FONT: 'font', FONT_CHARS: 'fontChars',
+  TABLE: 'table',
+  QUEST: 'quest',
+  BOOK: 'book',
+  NAMEGEN: 'nameGen',
+  TEXT_TABLE: 'textTable',
+  FONT: 'font',
+  FONT_CHARS: 'fontChars',
 });
 /** The kinds read as text; a font is bytes. */
-export const TEXT_KINDS = new Set([PACK_KIND.TABLE, PACK_KIND.QUEST, PACK_KIND.BOOK, PACK_KIND.NAMEGEN, PACK_KIND.TEXT_TABLE, PACK_KIND.FONT_CHARS]);
+export const TEXT_KINDS = new Set([
+  PACK_KIND.TABLE,
+  PACK_KIND.QUEST,
+  PACK_KIND.BOOK,
+  PACK_KIND.NAMEGEN,
+  PACK_KIND.TEXT_TABLE,
+  PACK_KIND.FONT_CHARS,
+]);
 
 /** A pack file's kind and name by its path - `{ kind, name }` - or null for a file the game does not read. The path is
  *  read from its LAST `Text` or `Fonts` folder on (any case, either slash), so a pack's own top folder, a zip's, or a
  *  whole StreamingAssets tree all read the same. */
 export function classifyPackFile(path) {
-  const parts = String(path ?? '').replace(/\\/g, '/').split('/').filter(Boolean);
+  const parts = String(path ?? '')
+    .replace(/\\/g, '/')
+    .split('/')
+    .filter(Boolean);
   let at = -1;
   for (let i = parts.length - 2; i >= 0; i--) {
     const seg = parts[i].toLowerCase();
-    if (seg === 'text' || seg === 'fonts') { at = i; break; }
+    if (seg === 'text' || seg === 'fonts') {
+      at = i;
+      break;
+    }
   }
   if (at < 0) return null;
   const folder = parts[at].toLowerCase();
@@ -40,8 +59,10 @@ export function classifyPackFile(path) {
   }
   if (rest.length === 2) {
     const sub = rest[0].toLowerCase();
-    if (sub === 'quests' && (m = /^(.+)-LOC\.txt$/i.exec(file))) return { kind: PACK_KIND.QUEST, name: m[1].toUpperCase() };
-    if (sub === 'books' && (m = /^(.+)-LOC\.txt$/i.exec(file))) return { kind: PACK_KIND.BOOK, name: m[1].toUpperCase() };
+    if (sub === 'quests' && (m = /^(.+)-LOC\.txt$/i.exec(file)))
+      return { kind: PACK_KIND.QUEST, name: m[1].toUpperCase() };
+    if (sub === 'books' && (m = /^(.+)-LOC\.txt$/i.exec(file)))
+      return { kind: PACK_KIND.BOOK, name: m[1].toUpperCase() };
     return null;
   }
   if (rest.length !== 1) return null;
@@ -54,7 +75,7 @@ export function classifyPackFile(path) {
 /** The files a pack's listing holds that the game reads, one per kind and name (a later path of the same kind and name
  *  replaces an earlier one, as DFU's later search path does), and how many of each kind. */
 export function packContents(paths) {
-  const files = new Map();   // `${kind}:${name}` -> { kind, name, path }
+  const files = new Map(); // `${kind}:${name}` -> { kind, name, path }
   for (const path of paths ?? []) {
     const c = classifyPackFile(path);
     if (c) files.set(`${c.kind}:${c.name}`, { ...c, path });

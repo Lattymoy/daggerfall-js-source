@@ -2,8 +2,8 @@
   {
     "name": "EGZ-a-crust-that-never-breaks",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "  if (u < EG_SLAG_TELL_S + EG_SLAG_MOLTEN_S + EG_SLAG_CRUST_S) return { st: 'crust'",
-    "new": "  if (u < P) return { st: 'crust'",
+    "old": "  if (u < EG_SLAG_TELL_S + EG_SLAG_MOLTEN_S + EG_SLAG_CRUST_S)\n    return { st: 'crust', k: (u - EG_SLAG_TELL_S - EG_SLAG_MOLTEN_S) / EG_SLAG_CRUST_S };",
+    "new": "  if (u < P) return { st: 'crust', k: (u - EG_SLAG_TELL_S - EG_SLAG_MOLTEN_S) / EG_SLAG_CRUST_S };",
     "tests": [
       "test/net/eliteGates/egz_frag.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EGZ-the-spouts-pouring-together",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "u = wrapT(t + (s.phase ?? 0) + (k * P) / EG_SLAG_SPOUTS, P);",
-    "new": "u = wrapT(t + (s.phase ?? 0), P);",
+    "old": "    u = wrapT(t + (s.phase ?? 0) + (k * P) / EG_SLAG_SPOUTS, P);",
+    "new": "    u = wrapT(t + (s.phase ?? 0), P);",
     "tests": [
       "test/net/eliteGates/egz_frag.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EGZ-the-piece-on-no-lane",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "out.dx = k >= 0 ? egSlagX(s, k) - s.x : 0; }",
-    "new": "out.dx = 0; }",
+    "old": "    out.dx = k >= 0 ? egSlagX(s, k) - s.x : 0;",
+    "new": "    out.dx = 0;",
     "tests": [
       "test/net/eliteGates/egz_frag.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "EGZ-the-crossing-s-hold-dropped",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "  if (b?.kind === 'slag' && egSlagState(",
-    "new": "  if (false && egSlagState(",
+    "old": "  if (\n    b?.kind === 'slag' &&\n    egSlagState(b, egSlagLane(b, t + air), t + air + b.d / B.run + EG_CRUMBLE_SLACK_S).st !== 'crust'\n  )",
+    "new": "  if (false && egSlagState(b, egSlagLane(b, t + air), t + air + b.d / B.run + EG_CRUMBLE_SLACK_S).st !== 'crust')",
     "tests": [
       "test/net/eliteGates/egz_frag.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "EGZ-a-crust-left-onto-a-rail",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "      if (meets && !EG_SLAG_AFTER.includes(next.kind)) why.push(",
-    "new": "      if (false) why.push(",
+    "old": "      if (meets && !EG_SLAG_AFTER.includes(next.kind)) why.push(`${s.i}: a slag crust left onto a ${next.kind}`);",
+    "new": "      if (false) why.push(`${s.i}: a slag crust left onto a ${next.kind}`);",
     "tests": [
       "test/net/eliteGates/egz_frag.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "EGZ-the-shaft-s-bound-unasked",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "    if (c.n && c.median > EG_SHAFT_MAX_S) why.push(",
-    "new": "    if (false) why.push(",
+    "old": "      if (c.n && c.median > EG_SHAFT_MAX_S)\n        why.push(`a shaft crossed in ${c.median.toFixed(1)} s, past ${EG_SHAFT_MAX_S} s`);",
+    "new": "      if (false) why.push(`a shaft crossed in ${c.median.toFixed(1)} s, past ${EG_SHAFT_MAX_S} s`);",
     "tests": [
       "test/net/eliteGates/egz_frag.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "EGZ-a-spout-s-spill-missing",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "const slagLanes = (x, zS, zE, y, phase) => Array.from({ length: EG_SLAG_SPOUTS }",
-    "new": "const slagLanes = (x, zS, zE, y, phase) => Array.from({ length: 1 }",
+    "old": "  Array.from({ length: EG_SLAG_SPOUTS }, (_, k) => {",
+    "new": "  Array.from({ length: 1 }, (_, k) => {",
     "tests": [
       "test/net/eliteGates/egz_frag.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "EGZ-the-spill-out-of-step",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "phase: phase + (k * EG_SLAG_CYCLE_S * 1000) / EG_SLAG_SPOUTS, period: 0 };",
-    "new": "phase: phase, period: 0 };",
+    "old": "    return {\n      kind: 'slag',\n      sh: [lx, zS, lx, zE + EG_SLAG_LIP_CM],\n      w: EG_SLAG_STEP.w,\n      y,\n      phase: phase + (k * EG_SLAG_CYCLE_S * 1000) / EG_SLAG_SPOUTS,\n      period: 0,\n    };",
+    "new": "    return { kind: 'slag', sh: [lx, zS, lx, zE + EG_SLAG_LIP_CM], w: EG_SLAG_STEP.w, y, phase: phase, period: 0 };",
     "tests": [
       "test/net/eliteGates/egz_frag.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "EGZ-the-spill-short-of-the-floor",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "sh: [lx, zS, lx, zE + EG_SLAG_LIP_CM]",
-    "new": "sh: [lx, zS, lx, zE]",
+    "old": "      sh: [lx, zS, lx, zE + EG_SLAG_LIP_CM],",
+    "new": "      sh: [lx, zS, lx, zE],",
     "tests": [
       "test/net/eliteGates/egz_frag.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "EGZ-the-forge-walls-too-narrow",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "    halfW = slag ? 420 : 350; height = 650;",
-    "new": "    halfW = 350; height = 650;",
+    "old": "    halfW = slag ? 420 : 350;",
+    "new": "    halfW = 350;",
     "tests": [
       "test/net/eliteGates/egz_frag.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "EGZ-the-chute-without-its-slag",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "  if (kit === 'forge') {\n    // THE SLAG CHUTE's crossing",
-    "new": "  if (false) {\n    // THE SLAG CHUTE's crossing",
+    "old": "  if (kit === 'forge') {",
+    "new": "  if (false) {",
     "tests": [
       "test/net/eliteGates/egz_frag.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "EGZ-a-shaft-of-another-band-s-kit",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "Object.freeze(['mist']), Object.freeze(['gloam'])",
-    "new": "Object.freeze(['mist']), Object.freeze(['caverns'])",
+    "old": "  Object.freeze(['mist']),\n  Object.freeze(['gloam']),",
+    "new": "  Object.freeze(['mist']),\n  Object.freeze(['caverns']),",
     "tests": [
       "test/net/eliteGates/egz_frag.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "EGZ-the-sluice-a-single-blow",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "pct: 0.4, flood: 6000 }),",
-    "new": "pct: 0.4, flood: 0 }),",
+    "old": "    flood: 6000,",
+    "new": "    flood: 0,",
     "tests": [
       "test/net/eliteGates/egz_frag.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "EGZ-the-mirror-lights-nothing",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "stun: 4000, lit: 6000 }),",
-    "new": "stun: 4000, lit: 0 }),",
+    "old": "    lit: 6000,",
+    "new": "    lit: 0,",
     "tests": [
       "test/net/eliteGates/egz_frag.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "EGZ-the-law-before-forgotten",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "export const EG_LAWS = Object.freeze({ 4: '2026-10-11', 5: '2026-10-12', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' });",
-    "new": "export const EG_LAWS = Object.freeze({ 5: '2026-10-12', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' });",
+    "old": "  4: '2026-10-11',\n  5: '2026-10-12',",
+    "new": "  5: '2026-10-12',",
     "tests": [
       "test/net/eliteGates/egz_frag.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "EGZ-the-spouts-undrawn",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "      boxD(f, SD_REALM_BRASS_RECORD, x0, y0, z0, x1, y1, z1, false, 0.5);\n      quadTo(f, EG_DRESS.molten,",
-    "new": "      quadTo(f, EG_DRESS.molten,",
+    "old": "        boxD(f, SD_REALM_BRASS_RECORD, x0, y0, z0, x1, y1, z1, false, 0.5);\n        quadTo(",
+    "new": "        quadTo(",
     "tests": [
       "test/net/eliteGates/egz_frag.test.js"
     ]

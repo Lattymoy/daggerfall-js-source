@@ -50,8 +50,8 @@
   {
     "name": "CAMP1REST-the-camp-band-slides-inside-the-rest-interrupts-reach",
     "file": "src/systems/campEncounters.js",
-    "old": "export const MIN_CAMP_SPAWN_DISTANCE = 100;   // a camp is come across, never landed on",
-    "new": "export const MIN_CAMP_SPAWN_DISTANCE = 11;   // a camp is come across, never landed on",
+    "old": "export const MIN_CAMP_SPAWN_DISTANCE = 100; // a camp is come across, never landed on",
+    "new": "export const MIN_CAMP_SPAWN_DISTANCE = 11; // a camp is come across, never landed on",
     "tests": [
       "test/systems/camp1_groups.test.js"
     ]
@@ -60,7 +60,7 @@
     "name": "CAMP1REST-the-resting-arm-reads-the-mark-before-the-reach",
     "file": "src/systems/encounters.js",
     "old": "    if (resting && !canSee && (f.ai._distLocal ?? f.ai._dist ?? Infinity) > RESTING_DISTANCE) continue;",
-    "new": "    if (resting && !canSee && !f.ai.wouldBeSpawned && (f.ai._distLocal ?? f.ai._dist ?? Infinity) > RESTING_DISTANCE) continue;",
+    "new": "    if (resting && !canSee && !f.ai.wouldBeSpawned && (f.ai._distLocal ?? f.ai._dist ?? Infinity) > RESTING_DISTANCE)\n      continue;",
     "tests": [
       "test/systems/camp1_groups.test.js"
     ]

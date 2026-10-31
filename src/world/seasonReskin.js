@@ -54,13 +54,15 @@
  */
 export function createSeasonReskin() {
   const keys = new Set();
-  const skins = new Set();   // AUDIT PRECIP HOST-7
-  let reskin = null;   // ...and what re-skins one (scenes/pixelBuild.js reskinPixelNow, handed in by the build)
+  const skins = new Set(); // AUDIT PRECIP HOST-7
+  let reskin = null; // ...and what re-skins one (scenes/pixelBuild.js reskinPixelNow, handed in by the build)
   let all = false;
   return {
     /** One pixel key qualifies (a build that published across an
      *  install asks for its own re-skin this way). */
-    mark(key) { keys.add(key); },
+    mark(key) {
+      keys.add(key);
+    },
     /** The refresh's filter over a built grid: a pixel on an OLDER
      *  install (`generation`) that ALSO carries a batch on an archive
      *  the mod has ever managed (`manages`, vanillaAtlasByArchive).
@@ -75,14 +77,24 @@ export function createSeasonReskin() {
       }
     },
     /** The classic winter flip: every key, as before. */
-    markAll() { all = true; },
+    markAll() {
+      all = true;
+    },
     /** AUDIT PRECIP HOST-7: one pixel the snow turned - re-skinned in place, never rebuilt. */
-    skin(key) { skins.add(key); },
+    skin(key) {
+      skins.add(key);
+    },
     /** Is there anything to re-skin at all? */
-    get pending() { return all || keys.size > 0 || skins.size > 0; },
+    get pending() {
+      return all || keys.size > 0 || skins.size > 0;
+    },
     /** The teleport's quiet path: a real unload rebuilds everything
      *  anyway, so the frame's own re-skin has nothing left to re-skin. */
-    clear() { all = false; keys.clear(); skins.clear(); },
+    clear() {
+      all = false;
+      keys.clear();
+      skins.clear();
+    },
     /** The keys to rebuild now, and the pending state spent. A marked
      *  key that has since left `built` (streamed out, or torn down by a
      *  teleport) is dropped: there is no batch there to re-apply, which
@@ -91,30 +103,42 @@ export function createSeasonReskin() {
       const out = all ? [...built.keys()] : [...keys].filter((k) => built.has(k));
       all = false;
       keys.clear();
-      for (const k of out) skins.delete(k);   // AUDIT PRECIP HOST-7: rebuilt, it reads the snow - its skin is spent
+      for (const k of out) skins.delete(k); // AUDIT PRECIP HOST-7: rebuilt, it reads the snow - its skin is spent
       return out;
     },
     /** AUDIT PRECIP HOST-7: the skin due next - the one standing nearest `at` ({x, y}, the player's pixel), spent; null
      *  for none. A key that has left `built` is dropped (its next build reads the snow). */
     nextSkin(built, at) {
-      let best = null, bestD = Infinity;
+      let best = null,
+        bestD = Infinity;
       for (const k of skins) {
         const p = built.get(k);
-        if (!p) { skins.delete(k); continue; }
+        if (!p) {
+          skins.delete(k);
+          continue;
+        }
         const d = Math.hypot(p.px - at.x, p.py - at.y);
-        if (d < bestD) { bestD = d; best = k; }
+        if (d < bestD) {
+          bestD = d;
+          best = k;
+        }
       }
       if (best !== null) skins.delete(best);
       return best;
     },
     /** AUDIT PRECIP HOST-7: the build's re-skin, handed in where it is made. */
-    skinWith(fn) { reskin = fn; },
+    skinWith(fn) {
+      reskin = fn;
+    },
     /** AUDIT PRECIP HOST-7: the skin due next (nextSkin) re-skinned - its promise (never rejected: a re-skin that throws
      *  leaves the pixel as it stood, said), or null when none is due or no re-skin was handed in. */
     runSkin(built, at) {
       const key = reskin ? this.nextSkin(built, at) : null;
       if (key === null) return null;
-      return reskin(key).catch((e) => { console.warn(`[season] re-skin ${key}:`, e?.message ?? e); return false; });
+      return reskin(key).catch((e) => {
+        console.warn(`[season] re-skin ${key}:`, e?.message ?? e);
+        return false;
+      });
     },
   };
 }

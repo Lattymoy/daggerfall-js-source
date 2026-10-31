@@ -1,461 +1,461 @@
 [
- {
-  "name": "MWNPC16-skin-turned-away",
-  "file": "src/render/shadowPass.js",
-  "old": "  recordCharacter(mesh, matrix, sphere = null, body = false, anchored = false) {\n    if (!mesh) return;",
-  "new": "  recordCharacter(mesh, matrix, sphere = null, body = false, anchored = false) {\n    if (!mesh || mesh.skin) return;",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-sphere-ignored",
-  "file": "src/render/shadowPass.js",
-  "old": "    if (sphere) { r.bounded = true;",
-  "new": "    if (false) { r.bounded = true;",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-palette-not-held",
-  "file": "src/render/shadowPass.js",
-  "old": "        if (skin) { gl.uniform1f(prog.skin, skin.pairs); f.holdSkin?.(skin.tex); }",
-  "new": "        if (skin) { gl.uniform1f(prog.skin, skin.pairs); }",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-released-palette-drawn",
-  "file": "src/render/shadowPass.js",
-  "old": "        if (skin && !skin.tex) continue;\n",
-  "new": "",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-runs-one-by-one",
-  "file": "src/render/shadowPass.js",
-  "old": "            if (rg.first === runEnd) { runEnd += rg.count; continue; }\n",
-  "new": "",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-cut-range-in-the-run",
-  "file": "src/render/shadowPass.js",
-  "old": "            if (rg.alphaCut > 0 && rg.tex && cutP) {",
-  "new": "            if (false) {",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-cast-only-replayed",
-  "file": "src/render/shadowPass.js",
-  "old": "          if (b.noShadow || b.castOnly || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH))",
-  "new": "          if (b.noShadow || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH))",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-cast-only-a-mover",
-  "file": "src/render/shadowPass.js",
-  "old": "          if (!b?._shDyn || !b.vao || b._dead || b.noShadow || b.castOnly || b.conceal) continue;",
-  "new": "          if (!b?._shDyn || !b.vao || b._dead || b.noShadow || b.conceal) continue;",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-cast-unasked",
-  "file": "src/combat/fpArm.js",
-  "old": "      if (cast && !conceal && renderer.recordShadowBody) castBody(",
-  "new": "      if (!conceal && renderer.recordShadowBody) castBody(",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-veil-cast",
-  "file": "src/combat/fpArm.js",
-  "old": "      if (cast && !conceal && renderer.recordShadowBody) castBody(",
-  "new": "      if (cast && renderer.recordShadowBody) castBody(",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-unseen-past-reach",
-  "file": "src/combat/fpArm.js",
-  "old": "      if (reach && !renderer.shadowReachSphere(center[0], center[1], center[2], Math.hypot(halfW, halfH))) return false;\n",
-  "new": "",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-peers-cast",
-  "file": "src/net/peer/peerBodies.js",
-  "old": "    this._casts = !!casts;   // MWNPC16",
-  "new": "    this._casts = true;   // MWNPC16",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-unseen-not-cast",
-  "file": "src/net/peer/peerBodies.js",
-  "old": "          if (cast && b.posedAt > 0) { try { b.rig.castThird?.(",
-  "new": "          if (false) { try { b.rig.castThird?.(",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-grown-cast",
-  "file": "src/net/peer/peerBodies.js",
-  "old": "      const cast = this._casts && !veiled && !(ow > 1) && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;",
-  "new": "      const cast = this._casts && !veiled && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-veiled-cast",
-  "file": "src/net/peer/peerBodies.js",
-  "old": "      const cast = this._casts && !veiled && !(ow > 1) && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;",
-  "new": "      const cast = this._casts && !(ow > 1) && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-npc-lane-silent",
-  "file": "src/characters/npcBodies.js",
-  "old": "gate: BODY_BUILD_GATE, casts: true,",
-  "new": "gate: BODY_BUILD_GATE, casts: false,",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-release-not-dead",
-  "file": "src/combat/fpArm.js",
-  "old": "      m._dead = true;   // MWNPC16: a shadow record made before the release (replayed at the next frame's head) casts nothing\n",
-  "new": "",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-selector-trusted",
-  "file": "src/render/renderer.js",
-  "old": "    this._activeUnit = null;\n    this._activeTexture(gl.TEXTURE0 + SKIN_PALETTE_UNIT);",
-  "new": "    this._activeTexture(gl.TEXTURE0 + SKIN_PALETTE_UNIT);",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-render-never-builds",
-  "file": "src/render/shadowPass.js",
-  "old": "    if (this._bodyWanted) this._ensureBodyPrograms();   // MWNPC16: before the first replay binds its own\n",
-  "new": "",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-body-never-asks",
-  "file": "src/render/shadowPass.js",
-  "old": "    if (mesh.skin || (!this._bodyBuilt && ranges && ranges.some((rg) => rg.alphaCut > 0 && rg.tex))) this._bodyWanted = true;",
-  "new": "    if (false) this._bodyWanted = true;",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-cut-range-never-asks",
-  "file": "src/render/shadowPass.js",
-  "old": "    if (mesh.skin || (!this._bodyBuilt && ranges && ranges.some((rg) => rg.alphaCut > 0 && rg.tex))) this._bodyWanted = true;",
-  "new": "    if (mesh.skin) this._bodyWanted = true;",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-build-throw-escapes",
-  "file": "src/render/shadowPass.js",
-  "old": "      try { p = build(); } catch (e) { console.warn(`[shadow] a body's depth program would not build - ${e?.message ?? e}`); return null; }",
-  "new": "      p = build();",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-look-blind-to-pose",
-  "file": "src/render/shadowPass.js",
-  "old": "    let h = Math.imul(shId(mesh) ^ 0x2f0b3e5d, 0x9e3779b1) ^ (mesh._poseGen | 0);",
-  "new": "    let h = Math.imul(shId(mesh) ^ 0x2f0b3e5d, 0x9e3779b1);",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-look-blind-to-matrix",
-  "file": "src/render/shadowPass.js",
-  "old": "    for (let i = 0; i < 16; i++) h = (Math.imul(h ^ mb[i], 0x85ebca6b) + i) | 0;\n",
-  "new": "",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-look-blind-to-hidden",
-  "file": "src/render/shadowPass.js",
-  "old": "    if (ranges) for (let i = 0; i < ranges.length; i++) if (ranges[i].hidden) h = Math.imul(h ^ (i + 1), 0xc2b2ae35);\n",
-  "new": "",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-bodies-never-redrawn",
-  "file": "src/render/shadowPass.js",
-  "old": ": dynNear === DYN_BODY ? !bodiesHeld : due;",
-  "new": ": dynNear === DYN_BODY ? false : due;",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-bodies-always-redrawn",
-  "file": "src/render/shadowPass.js",
-  "old": ": dynNear === DYN_BODY ? !bodiesHeld : due;",
-  "new": ": due;",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-held-through-mover",
-  "file": "src/render/shadowPass.js",
-  "old": "this._slotBodySig[k * 2 + 1] = dynNear === DYN_BODY ? this._bodySig[1] : -1;",
-  "new": "this._slotBodySig[k * 2 + 1] = dynNear === DYN_BODY ? this._bodySig[1] : 1;",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-rig-a-body",
-  "file": "src/render/shadowPass.js",
-  "old": "      if (r.kind !== REC_CHAR || !r.body) return DYN_MOVER;",
-  "new": "      if (r.kind !== REC_CHAR) return DYN_MOVER;",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-pose-gen-never-bumped",
-  "file": "src/render/renderer.js",
-  "old": "    this._activeTexture(gl.TEXTURE0);\n    mesh._poseGen = (mesh._poseGen ?? 0) + 1;",
-  "new": "    this._activeTexture(gl.TEXTURE0);",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-lo-blind",
-  "file": "src/render/shadowPass.js",
-  "old": " && !(filter === REPLAY_LO && r.kind === REC_CHAR && r.anchored)) continue;",
-  "new": ") continue;",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-lo-sig-blind",
-  "file": "src/render/shadowPass.js",
-  "old": "      if (r.dynamic && !(anim && r.kind === REC_CHAR && r.anchored)) continue;",
-  "new": "      if (r.dynamic) continue;",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-lane-word-dropped",
-  "file": "src/characters/npcBodies.js",
-  "old": "lane.stand(laneName, actor, conceal, flash, fx, !!batch && batch.origin == null && batch._dyn !== true);",
-  "new": "lane.stand(laneName, actor, conceal, flash, fx);",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-origin-taken",
-  "file": "src/characters/npcBodies.js",
-  "old": "lane.stand(laneName, actor, conceal, flash, fx, !!batch && batch.origin == null && batch._dyn !== true);",
-  "new": "lane.stand(laneName, actor, conceal, flash, fx, !!batch && batch._dyn !== true);",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-anchored-not-passed",
-  "file": "src/net/peer/peerBodies.js",
-  "old": "      const anchored = cast && !!this._cam?.anchoredOf?.(b.id);",
-  "new": "      const anchored = false;",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-posed-test-dropped",
-  "file": "src/net/peer/peerBodies.js",
-  "old": "          if (cast && b.posedAt > 0) { try",
-  "new": "          if (cast) { try",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-flip-left-posed",
-  "file": "src/net/peer/peerBodies.js",
-  "old": "b.dead = dd; b.posedAt = 0; if (dd)",
-  "new": "b.dead = dd; if (dd)",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-prefilter-gone",
-  "file": "src/combat/fpArm.js",
-  "old": "      if (reach && !renderer.shadowReachSphere(feet[0], feet[1], feet[2], Math.hypot(halfW, halfH) + mid)) return false;\n",
-  "new": "",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-cast-anchored-dropped",
-  "file": "src/combat/fpArm.js",
-  "old": "    renderer.recordShadowBody(thirdMesh, model, castSphere, anchored);",
-  "new": "    renderer.recordShadowBody(thirdMesh, model, castSphere);",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-word-not-kept",
-  "file": "src/render/renderer.js",
-  "old": "    gl.bindTexture(gl.TEXTURE_2D, want);\n    this._skinUnitHolds = want;",
-  "new": "    gl.bindTexture(gl.TEXTURE_2D, want);",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "MWNPC16-sway-cadence-for-a-body",
-  "file": "src/render/shadowPass.js",
-  "old": "    return near === DYN_SWAY ? DYN_MOVER : DYN_BODY;",
-  "new": "    return near === DYN_SWAY ? DYN_SWAY : DYN_BODY;",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "AUDIT-MWNPC16-18-R1-dissolve-unread",
-  "file": "src/net/peer/peerBodies.js",
-  "old": " && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;",
-  "new": " && !fx?.noShadow;",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "AUDIT-MWNPC16-18-R1-threshold-moved",
-  "file": "src/systems/dissolve.js",
-  "old": "export const dissolveShadowless = (d) => !!d && d[0] > DISSOLVE_SHADOWLESS;",
-  "new": "export const dissolveShadowless = (d) => !!d && d[0] >= DISSOLVE_SHADOWLESS;",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "AUDIT-MWNPC16-18-R2-cut-model-unset",
-  "file": "src/render/shadowPass.js",
-  "old": "              gl.uniformMatrix4fv(cutP.model, false, r.matrix);\n",
-  "new": "",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "AUDIT-MWNPC16-18-R2-built-every-frame",
-  "file": "src/render/shadowPass.js",
-  "old": "    if (this._bodyBuilt) return;\n",
-  "new": "",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "AUDIT-MWNPC16-18-R2-cut-palette-unset",
-  "file": "src/render/shadowPass.js",
-  "old": "if (skinned) gl.uniform1i(u(p, 'uSkinPalette'), SKIN_PALETTE_UNIT);",
-  "new": "if (skinned && !cut) gl.uniform1i(u(p, 'uSkinPalette'), SKIN_PALETTE_UNIT);",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "AUDIT-MWNPC16-18-R2-signature-keeps-cast-only",
-  "file": "src/render/shadowPass.js",
-  "old": "(b._shDyn && !(anim && b._shAnim)) || b.noShadow || b.castOnly || b.conceal",
-  "new": "(b._shDyn && !(anim && b._shAnim)) || b.noShadow || b.castOnly && false || b.conceal",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "AUDIT-MWNPC16-18-R2-static-log-keeps-cast-only",
-  "file": "src/render/shadowPass.js",
-  "old": "b._shDyn || b.noShadow || b.castOnly || b.conceal",
-  "new": "b._shDyn || b.noShadow || b.castOnly && false || b.conceal",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "AUDIT-MWNPC16-18-R2-boss-casts-nothing",
-  "file": "src/net/peer/peerBodies.js",
-  "old": "      const cast = this._casts && !veiled && !(ow > 1) && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;",
-  "new": "      const cast = this._casts && !veiled && !(g > 1) && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "AUDIT-MWNPC16-18-R2-unseen-boss-at-man-size",
-  "file": "src/net/peer/peerBodies.js",
-  "old": "b.rig.castThird?.({ feet: b.feet, yaw: b.yaw, grow: g, anchored })",
-  "new": "b.rig.castThird?.({ feet: b.feet, yaw: b.yaw, grow: ow, anchored })",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- },
- {
-  "name": "AUDIT-MWNPC16-18-R2-castThird-ungrown",
-  "file": "src/combat/fpArm.js",
-  "old": "      const model = thirdModel(feet, yaw, grow);\n      const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);\n      if (reach &&",
-  "new": "      const model = thirdModel(feet, yaw);\n      const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);\n      if (reach &&",
-  "tests": [
-   "test/render/mwnpc16_bodyshadow.test.js"
-  ]
- }
+  {
+    "name": "MWNPC16-skin-turned-away",
+    "file": "src/render/shadowPass.js",
+    "old": "  recordCharacter(mesh, matrix, sphere = null, body = false, anchored = false) {\n    if (!mesh) return;",
+    "new": "  recordCharacter(mesh, matrix, sphere = null, body = false, anchored = false) {\n    if (!mesh || mesh.skin) return;",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-sphere-ignored",
+    "file": "src/render/shadowPass.js",
+    "old": "    if (sphere) { r.bounded = true;",
+    "new": "    if (false) { r.bounded = true;",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-palette-not-held",
+    "file": "src/render/shadowPass.js",
+    "old": "        if (skin) { gl.uniform1f(prog.skin, skin.pairs); f.holdSkin?.(skin.tex); }",
+    "new": "        if (skin) { gl.uniform1f(prog.skin, skin.pairs); }",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-released-palette-drawn",
+    "file": "src/render/shadowPass.js",
+    "old": "        if (skin && !skin.tex) continue;\n",
+    "new": "",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-runs-one-by-one",
+    "file": "src/render/shadowPass.js",
+    "old": "            if (rg.first === runEnd) { runEnd += rg.count; continue; }\n",
+    "new": "",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-cut-range-in-the-run",
+    "file": "src/render/shadowPass.js",
+    "old": "            if (rg.alphaCut > 0 && rg.tex && cutP) {",
+    "new": "            if (false) {",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-cast-only-replayed",
+    "file": "src/render/shadowPass.js",
+    "old": "          if (b.noShadow || b.castOnly || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH))",
+    "new": "          if (b.noShadow || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH))",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-cast-only-a-mover",
+    "file": "src/render/shadowPass.js",
+    "old": "          if (!b?._shDyn || !b.vao || b._dead || b.noShadow || b.castOnly || b.conceal) continue;",
+    "new": "          if (!b?._shDyn || !b.vao || b._dead || b.noShadow || b.conceal) continue;",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-cast-unasked",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (cast && !conceal && renderer.recordShadowBody) castBody(",
+    "new": "      if (!conceal && renderer.recordShadowBody) castBody(",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-veil-cast",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (cast && !conceal && renderer.recordShadowBody) castBody(",
+    "new": "      if (cast && renderer.recordShadowBody) castBody(",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-unseen-past-reach",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (reach && !renderer.shadowReachSphere(center[0], center[1], center[2], Math.hypot(halfW, halfH))) return false;\n",
+    "new": "",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-peers-cast",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "    this._casts = !!casts; // MWNPC16",
+    "new": "    this._casts = true; // MWNPC16",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-unseen-not-cast",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "          if (cast && b.posedAt > 0) {",
+    "new": "          if (false) {",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-grown-cast",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "      const cast = this._casts && !veiled && !(ow > 1) && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;",
+    "new": "      const cast = this._casts && !veiled && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-veiled-cast",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "      const cast = this._casts && !veiled && !(ow > 1) && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;",
+    "new": "      const cast = this._casts && !(ow > 1) && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-npc-lane-silent",
+    "file": "src/characters/npcBodies.js",
+    "old": "gate: BODY_BUILD_GATE, casts: true,",
+    "new": "gate: BODY_BUILD_GATE, casts: false,",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-release-not-dead",
+    "file": "src/combat/fpArm.js",
+    "old": "      m._dead = true;   // MWNPC16: a shadow record made before the release (replayed at the next frame's head) casts nothing\n",
+    "new": "",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-selector-trusted",
+    "file": "src/render/renderer.js",
+    "old": "    this._activeUnit = null;\n    this._activeTexture(gl.TEXTURE0 + SKIN_PALETTE_UNIT);",
+    "new": "    this._activeTexture(gl.TEXTURE0 + SKIN_PALETTE_UNIT);",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-render-never-builds",
+    "file": "src/render/shadowPass.js",
+    "old": "    if (this._bodyWanted) this._ensureBodyPrograms();   // MWNPC16: before the first replay binds its own\n",
+    "new": "",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-body-never-asks",
+    "file": "src/render/shadowPass.js",
+    "old": "    if (mesh.skin || (!this._bodyBuilt && ranges && ranges.some((rg) => rg.alphaCut > 0 && rg.tex))) this._bodyWanted = true;",
+    "new": "    if (false) this._bodyWanted = true;",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-cut-range-never-asks",
+    "file": "src/render/shadowPass.js",
+    "old": "    if (mesh.skin || (!this._bodyBuilt && ranges && ranges.some((rg) => rg.alphaCut > 0 && rg.tex))) this._bodyWanted = true;",
+    "new": "    if (mesh.skin) this._bodyWanted = true;",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-build-throw-escapes",
+    "file": "src/render/shadowPass.js",
+    "old": "      try { p = build(); } catch (e) { console.warn(`[shadow] a body's depth program would not build - ${e?.message ?? e}`); return null; }",
+    "new": "      p = build();",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-look-blind-to-pose",
+    "file": "src/render/shadowPass.js",
+    "old": "    let h = Math.imul(shId(mesh) ^ 0x2f0b3e5d, 0x9e3779b1) ^ (mesh._poseGen | 0);",
+    "new": "    let h = Math.imul(shId(mesh) ^ 0x2f0b3e5d, 0x9e3779b1);",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-look-blind-to-matrix",
+    "file": "src/render/shadowPass.js",
+    "old": "    for (let i = 0; i < 16; i++) h = (Math.imul(h ^ mb[i], 0x85ebca6b) + i) | 0;\n",
+    "new": "",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-look-blind-to-hidden",
+    "file": "src/render/shadowPass.js",
+    "old": "    if (ranges) for (let i = 0; i < ranges.length; i++) if (ranges[i].hidden) h = Math.imul(h ^ (i + 1), 0xc2b2ae35);\n",
+    "new": "",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-bodies-never-redrawn",
+    "file": "src/render/shadowPass.js",
+    "old": ": dynNear === DYN_BODY ? !bodiesHeld : due;",
+    "new": ": dynNear === DYN_BODY ? false : due;",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-bodies-always-redrawn",
+    "file": "src/render/shadowPass.js",
+    "old": ": dynNear === DYN_BODY ? !bodiesHeld : due;",
+    "new": ": due;",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-held-through-mover",
+    "file": "src/render/shadowPass.js",
+    "old": "this._slotBodySig[k * 2 + 1] = dynNear === DYN_BODY ? this._bodySig[1] : -1;",
+    "new": "this._slotBodySig[k * 2 + 1] = dynNear === DYN_BODY ? this._bodySig[1] : 1;",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-rig-a-body",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (r.kind !== REC_CHAR || !r.body) return DYN_MOVER;",
+    "new": "      if (r.kind !== REC_CHAR) return DYN_MOVER;",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-pose-gen-never-bumped",
+    "file": "src/render/renderer.js",
+    "old": "    this._activeTexture(gl.TEXTURE0);\n    mesh._poseGen = (mesh._poseGen ?? 0) + 1;",
+    "new": "    this._activeTexture(gl.TEXTURE0);",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-lo-blind",
+    "file": "src/render/shadowPass.js",
+    "old": " && !(filter === REPLAY_LO && r.kind === REC_CHAR && r.anchored)) continue;",
+    "new": ") continue;",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-lo-sig-blind",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (r.dynamic && !(anim && r.kind === REC_CHAR && r.anchored)) continue;",
+    "new": "      if (r.dynamic) continue;",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-lane-word-dropped",
+    "file": "src/characters/npcBodies.js",
+    "old": "lane.stand(laneName, actor, conceal, flash, fx, !!batch && batch.origin == null && batch._dyn !== true);",
+    "new": "lane.stand(laneName, actor, conceal, flash, fx);",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-origin-taken",
+    "file": "src/characters/npcBodies.js",
+    "old": "lane.stand(laneName, actor, conceal, flash, fx, !!batch && batch.origin == null && batch._dyn !== true);",
+    "new": "lane.stand(laneName, actor, conceal, flash, fx, !!batch && batch._dyn !== true);",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-anchored-not-passed",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "      const anchored = cast && !!this._cam?.anchoredOf?.(b.id); // AUDIT MWNPC16-18 A3",
+    "new": "      const anchored = false; // AUDIT MWNPC16-18 A3",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-posed-test-dropped",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "          if (cast && b.posedAt > 0) {",
+    "new": "          if (cast) {",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-flip-left-posed",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "      b.posedAt = 0;\n      if (dd) b.rig.die?.(dd - 1);",
+    "new": "      if (dd) b.rig.die?.(dd - 1);",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-prefilter-gone",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (reach && !renderer.shadowReachSphere(feet[0], feet[1], feet[2], Math.hypot(halfW, halfH) + mid)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-cast-anchored-dropped",
+    "file": "src/combat/fpArm.js",
+    "old": "    renderer.recordShadowBody(thirdMesh, model, castSphere, anchored);",
+    "new": "    renderer.recordShadowBody(thirdMesh, model, castSphere);",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-word-not-kept",
+    "file": "src/render/renderer.js",
+    "old": "    gl.bindTexture(gl.TEXTURE_2D, want);\n    this._skinUnitHolds = want;",
+    "new": "    gl.bindTexture(gl.TEXTURE_2D, want);",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "MWNPC16-sway-cadence-for-a-body",
+    "file": "src/render/shadowPass.js",
+    "old": "    return near === DYN_SWAY ? DYN_MOVER : DYN_BODY;",
+    "new": "    return near === DYN_SWAY ? DYN_SWAY : DYN_BODY;",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWNPC16-18-R1-dissolve-unread",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "      const cast = this._casts && !veiled && !(ow > 1) && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;",
+    "new": "      const cast = this._casts && !veiled && !(ow > 1) && !fx?.noShadow;",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWNPC16-18-R1-threshold-moved",
+    "file": "src/systems/dissolve.js",
+    "old": "export const dissolveShadowless = (d) => !!d && d[0] > DISSOLVE_SHADOWLESS;",
+    "new": "export const dissolveShadowless = (d) => !!d && d[0] >= DISSOLVE_SHADOWLESS;",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWNPC16-18-R2-cut-model-unset",
+    "file": "src/render/shadowPass.js",
+    "old": "              gl.uniformMatrix4fv(cutP.model, false, r.matrix);\n",
+    "new": "",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWNPC16-18-R2-built-every-frame",
+    "file": "src/render/shadowPass.js",
+    "old": "    if (this._bodyBuilt) return;\n",
+    "new": "",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWNPC16-18-R2-cut-palette-unset",
+    "file": "src/render/shadowPass.js",
+    "old": "if (skinned) gl.uniform1i(u(p, 'uSkinPalette'), SKIN_PALETTE_UNIT);",
+    "new": "if (skinned && !cut) gl.uniform1i(u(p, 'uSkinPalette'), SKIN_PALETTE_UNIT);",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWNPC16-18-R2-signature-keeps-cast-only",
+    "file": "src/render/shadowPass.js",
+    "old": "(b._shDyn && !(anim && b._shAnim)) || b.noShadow || b.castOnly || b.conceal",
+    "new": "(b._shDyn && !(anim && b._shAnim)) || b.noShadow || b.castOnly && false || b.conceal",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWNPC16-18-R2-static-log-keeps-cast-only",
+    "file": "src/render/shadowPass.js",
+    "old": "b._shDyn || b.noShadow || b.castOnly || b.conceal",
+    "new": "b._shDyn || b.noShadow || b.castOnly && false || b.conceal",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWNPC16-18-R2-boss-casts-nothing",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "      const cast = this._casts && !veiled && !(ow > 1) && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;",
+    "new": "      const cast = this._casts && !veiled && !(g > 1) && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWNPC16-18-R2-unseen-boss-at-man-size",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "              b.rig.castThird?.({ feet: b.feet, yaw: b.yaw, grow: g, anchored });",
+    "new": "              b.rig.castThird?.({ feet: b.feet, yaw: b.yaw, grow: ow, anchored });",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MWNPC16-18-R2-castThird-ungrown",
+    "file": "src/combat/fpArm.js",
+    "old": "      const model = thirdModel(feet, yaw, grow);\n      const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);\n      if (reach &&",
+    "new": "      const model = thirdModel(feet, yaw);\n      const center = transformPoint(model, (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);\n      if (reach &&",
+    "tests": [
+      "test/render/mwnpc16_bodyshadow.test.js"
+    ]
+  }
 ]

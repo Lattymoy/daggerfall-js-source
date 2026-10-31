@@ -19,10 +19,19 @@
 // PURE, and the relay's too: it imports the wire's and the gate's law (both already the relay's) and the festival's
 // calendar (net/festivalLaw.js, a leaf but for the holiday tables). An edit here is an
 // edit to the relay's law (test/net/relayversion.test.js). Not a DFU member. Ledger A (STARFALL).
-import { PIXEL_UNITS, STAR_LEDGERS_MAX, STAR_LEDGERS_BY_MAX, STAR_IDLE_MS, STAR_WAVE_SIZE_OLD_MAX, siteEventLaneOpen, siteEventPixelOk, sharedClassicMinutes } from '../wire.js';
-import { frontStands, frontDayOfMinute } from '../frontLaw.js';   // FRONTS: a province's stars on its turn alone
+import {
+  PIXEL_UNITS,
+  STAR_LEDGERS_MAX,
+  STAR_LEDGERS_BY_MAX,
+  STAR_IDLE_MS,
+  STAR_WAVE_SIZE_OLD_MAX,
+  siteEventLaneOpen,
+  siteEventPixelOk,
+  sharedClassicMinutes,
+} from '../wire.js';
+import { frontStands, frontDayOfMinute } from '../frontLaw.js'; // FRONTS: a province's stars on its turn alone
 import { gateHash, PIXEL_M, GATE_SPOT_SPREAD_M } from '../gate/gateLaw.js';
-import { festivalOpen } from '../festivalLaw.js';   // the festival's one calendar (a leaf beside the holiday tables)
+import { festivalOpen } from '../festivalLaw.js'; // the festival's one calendar (a leaf beside the holiday tables)
 
 // ═══ THE WINDOW ══════════════════════════════════════════════════════════════════════════════════════════════════════
 /** THE WITCHES' FESTIVAL'S DAYS - the Starfall is the festival's (bible/06-Systems/Witches-Festival.md), so it runs while
@@ -53,7 +62,8 @@ export const STAR_AFTER_MS = 120_000;
 
 /** The night an instant stands in: the one whose midnight is the nearest hour at or after it, while its last star stands
  *  (its midnight plus STAR_LIFE_MS) - so the hour's first quarter is the night before's dawn. */
-export const starNightAt = (nowMs) => Math.ceil((nowMs - STAR_LIFE_MS - STAR_FALLS_MS[STAR_PER_NIGHT - 1]) / STAR_HOUR_MS);
+export const starNightAt = (nowMs) =>
+  Math.ceil((nowMs - STAR_LIFE_MS - STAR_FALLS_MS[STAR_PER_NIGHT - 1]) / STAR_HOUR_MS);
 /**
  * WW5 (bible/03-World/World-Wide.md WW5): A COVEN NIGHT IN EVERY THEATRE - the Bay's, and each province's past it that
  * stands (net/wire.js SITE_EVENT_LANES: Cyrodiil's open zone none). One sky turns over the whole of Tamriel, so every
@@ -62,7 +72,7 @@ export const starNightAt = (nowMs) => Math.ceil((nowMs - STAR_LIFE_MS - STAR_FAL
  * night: lane `t`'s three are `t * STAR_PER_NIGHT + 0..2` - so the Bay's are the 0, 1 and 2 they always were, and every
  * ledger, receipt, row and key the Bay's stars ever made keeps its shape.
  */
-export const STAR_LANES = 10;   // THEATRE_COUNT (world/worldWide/worldGrid.js), restated - this law's graph is the relay's (net/wire.js STAR_LANES_WIRE, pinned equal)
+export const STAR_LANES = 10; // THEATRE_COUNT (world/worldWide/worldGrid.js), restated - this law's graph is the relay's (net/wire.js STAR_LANES_WIRE, pinned equal)
 /** WW5: the lane (theatre) star number `k` is on. */
 export const starLaneOf = (k) => Math.floor(k / STAR_PER_NIGHT);
 /** WW5: star `k`'s place in its night, 0..STAR_PER_NIGHT - 1 - what its fall's instant, its master and the Heart-Star read. */
@@ -71,7 +81,13 @@ export const starIndexOf = (k) => k - starLaneOf(k) * STAR_PER_NIGHT;
 export const starOfLane = (lane, j) => lane * STAR_PER_NIGHT + j;
 /** Whether night `n` and star `k` name a star the law can fall (a whole night, a star of its three) - WW5: on a lane that
  *  stands (net/wire.js SITE_EVENT_LANES). */
-export const starOk = (n, k) => Number.isSafeInteger(n) && n > 0 && Number.isInteger(k) && k >= 0 && k < STAR_PER_NIGHT * STAR_LANES && siteEventLaneOpen(starLaneOf(k));
+export const starOk = (n, k) =>
+  Number.isSafeInteger(n) &&
+  n > 0 &&
+  Number.isInteger(k) &&
+  k >= 0 &&
+  k < STAR_PER_NIGHT * STAR_LANES &&
+  siteEventLaneOpen(starLaneOf(k));
 
 /**
  * A star's instants, relay ms: the omen's start, the streak's, the landing, the deadline, and the moment it is gone (its
@@ -79,15 +95,22 @@ export const starOk = (n, k) => Number.isSafeInteger(n) && n > 0 && Number.isInt
  * @param {number} n the night @param {number} k the star
  */
 export function starTimes(n, k) {
-  const fallAt = n * STAR_HOUR_MS + STAR_FALLS_MS[starIndexOf(k)];   // WW5: every lane's star its place's instant
-  return { omenAt: fallAt - STAR_OMEN_MS, streakAt: fallAt - STAR_STREAK_MS, fallAt, endAt: fallAt + STAR_LIFE_MS, goneAt: fallAt + STAR_LIFE_MS + STAR_AFTER_MS };
+  const fallAt = n * STAR_HOUR_MS + STAR_FALLS_MS[starIndexOf(k)]; // WW5: every lane's star its place's instant
+  return {
+    omenAt: fallAt - STAR_OMEN_MS,
+    streakAt: fallAt - STAR_STREAK_MS,
+    fallAt,
+    endAt: fallAt + STAR_LIFE_MS,
+    goneAt: fallAt + STAR_LIFE_MS + STAR_AFTER_MS,
+  };
 }
 /** FRONTS (bible/03-World/World-Wide.md FRONTS): the game day a star's front is read on - the day it lands in. */
 export const starFrontDay = (n, k) => frontDayOfMinute(sharedClassicMinutes(starTimes(n, k).fallAt));
 /** Whether a star of night `n` falls inside the window: its landing is the window's. FRONTS: and a province's star lands
  *  on its province's turn alone (net/frontLaw.js); the Bay's every night. starOk stays the shape alone, so a receipt
  *  already minted reads as it did. */
-export const starInWindow = (n, k) => starOk(n, k) && starfallRuns(starTimes(n, k).fallAt) && frontStands(starFrontDay(n, k), starLaneOf(k));
+export const starInWindow = (n, k) =>
+  starOk(n, k) && starfallRuns(starTimes(n, k).fallAt) && frontStands(starFrontDay(n, k), starLaneOf(k));
 /** Whether a word about star (n, k) is heard at `nowMs`: from its landing to its deadline and the grace - inside the
  *  window. Before it lands there is nothing to defend; after its deadline nothing to move. */
 export function starHeard(n, k, nowMs) {
@@ -111,7 +134,8 @@ const unit = (n, k, j) => starRoll(n, k, j) / 4294967296;
 /** The star's spot inside its pixel, metres from the pixel's south-west corner: [east, north] - the gate's frame and
  *  spread (net/gate/gateLaw.js gateSpotLocal), so the relay can place a star from the pixel a word names. */
 export function starSpotLocal(n, k) {
-  const a = unit(n, k, 1) * 2 * Math.PI, r = Math.sqrt(unit(n, k, 2)) * GATE_SPOT_SPREAD_M;
+  const a = unit(n, k, 1) * 2 * Math.PI,
+    r = Math.sqrt(unit(n, k, 2)) * GATE_SPOT_SPREAD_M;
   return [PIXEL_M / 2 + Math.cos(a) * r, PIXEL_M / 2 + Math.sin(a) * r];
 }
 /** A native unit's metres: a map pixel is PIXEL_UNITS (net/wire.js) over PIXEL_M - forty (the rite's RITE_UNITS_PER_M). */
@@ -166,13 +190,15 @@ export const STAR_WAVE_MAX = 24;
  * (systems/party/partyScale.js). Pure.
  * @param {number} k the wave, 1..STAR_WAVES @param {number} n the defenders
  */
-export const starWaveSize = (k, n) => Math.min(STAR_WAVE_MAX, STAR_WAVE_MIN + 2 * (Math.max(1, n | 0) - 1) + Math.max(0, (k | 0) - 1));
+export const starWaveSize = (k, n) =>
+  Math.min(STAR_WAVE_MAX, STAR_WAVE_MIN + 2 * (Math.max(1, n | 0) - 1) + Math.max(0, (k | 0) - 1));
 /** STAR-TUNE: the coven's foes - its waves and its circle - stand with this times their health: what the rite on a star
  *  calls is no foe of the road (the rite's Summoner's own law, net/gate/gateRite.js RITE_SUMMONER_HEALTH). The master is
  *  an elite already (systems/eliteFoes.js). The relay bounds a camp's foe by it (net/foeBounds.js FOE_BOUND.star). */
 export const STAR_FOE_HEALTH = 2;
 /** The master's circle at each of its calls: one and half the defenders, two to five; the Heart-Star's twice. */
-export const starCircleSize = (n, heart = false) => Math.max(2, Math.min(5, 1 + Math.ceil(Math.max(0, n | 0) / 2))) * (heart ? 2 : 1);
+export const starCircleSize = (n, heart = false) =>
+  Math.max(2, Math.min(5, 1 + Math.ceil(Math.max(0, n | 0) / 2))) * (heart ? 2 : 1);
 /** The master calls its circle at these shares of its health. */
 export const STAR_CIRCLE_AT = Object.freeze([2 / 3, 1 / 3]);
 /** While any of its circle stands, the master takes this share of every blow (section 4). */
@@ -220,9 +246,16 @@ export const STAR_LEVEL_MAX = 60;
 
 /** The phases (the ledger's `p`, the wire's): waiting for a defender, gathering, a wave, a breath, the master, held, lost. */
 export const STAR_PHASES = Object.freeze(['fallen', 'gather', 'wave', 'breath', 'master', 'held', 'lost']);
-export const P_FALLEN = 0, P_GATHER = 1, P_WAVE = 2, P_BREATH = 3, P_MASTER = 4, P_HELD = 5, P_LOST = 6;
+export const P_FALLEN = 0,
+  P_GATHER = 1,
+  P_WAVE = 2,
+  P_BREATH = 3,
+  P_MASTER = 4,
+  P_HELD = 5,
+  P_LOST = 6;
 /** Why a star was lost (the ledger's `why`): its light drunk, or its deadline passed. */
-export const STAR_LOST_DARK = 1, STAR_LOST_DAWN = 2;
+export const STAR_LOST_DARK = 1,
+  STAR_LOST_DAWN = 2;
 
 /**
  * @typedef {{ nm: string, lv: number, s: 0|1, last: number, near: boolean, hb: number }} StarAccount
@@ -245,17 +278,57 @@ export const STAR_LOST_DARK = 1, STAR_LOST_DAWN = 2;
 /** A star's ledger, off the first word from it (`by` the account that said it): nothing moved, the light full. Pure. */
 export function newStarLedger(w, nowMs, by = '') {
   return {
-    n: w.n, k: w.k, px: w.px, py: w.py, first: nowMs,
-    p: P_FALLEN, ec: 0, stepAt: nowMs, gatherAt: 0, w: 0, wz: 0, ws: 0, bs: 0, ma: 0,
-    kn: 0, lt: STAR_LIGHT, bt: STAR_BLOWS_BURST, btAt: nowMs, own: '', ownAt: 0, nearAt: -Infinity,
-    hd: 0, lo: 0, why: 0, b: 1, nd: 0,
-    a: {}, rc: {}, told: false, top: [], hn: 0, by, said: false,
+    n: w.n,
+    k: w.k,
+    px: w.px,
+    py: w.py,
+    first: nowMs,
+    p: P_FALLEN,
+    ec: 0,
+    stepAt: nowMs,
+    gatherAt: 0,
+    w: 0,
+    wz: 0,
+    ws: 0,
+    bs: 0,
+    ma: 0,
+    kn: 0,
+    lt: STAR_LIGHT,
+    bt: STAR_BLOWS_BURST,
+    btAt: nowMs,
+    own: '',
+    ownAt: 0,
+    nearAt: -Infinity,
+    hd: 0,
+    lo: 0,
+    why: 0,
+    b: 1,
+    nd: 0,
+    a: {},
+    rc: {},
+    told: false,
+    top: [],
+    hn: 0,
+    by,
+    said: false,
   };
 }
 /** Whether a stored value is a ledger this law made (a cell's storage read back): its star, its pixel, its phase, its
  *  accounts and receipts. */
-export const starLedgerSane = (v) => !!v && typeof v === 'object' && starOk(v.n, v.k) && Number.isInteger(v.px) && Number.isInteger(v.py) && siteEventPixelOk(starLaneOf(v.k), v.px, v.py)   // WW5: on its own lane's pixel, as its word was (net/wire.js starWireOk)
-  && Number.isInteger(v.p) && v.p >= P_FALLEN && v.p <= P_LOST && !!v.a && typeof v.a === 'object' && !!v.rc && typeof v.rc === 'object';
+export const starLedgerSane = (v) =>
+  !!v &&
+  typeof v === 'object' &&
+  starOk(v.n, v.k) &&
+  Number.isInteger(v.px) &&
+  Number.isInteger(v.py) &&
+  siteEventPixelOk(starLaneOf(v.k), v.px, v.py) && // WW5: on its own lane's pixel, as its word was (net/wire.js starWireOk)
+  Number.isInteger(v.p) &&
+  v.p >= P_FALLEN &&
+  v.p <= P_LOST &&
+  !!v.a &&
+  typeof v.a === 'object' &&
+  !!v.rc &&
+  typeof v.rc === 'object';
 /** A ledger's identity in its cell: the star and its pixel (a forged pixel is a ledger of its own - section 10). */
 export const starLedgerId = (w) => `${w.n}.${w.k}@${w.px},${w.py}`;
 /** Whether a ledger is over: held or lost. */
@@ -275,7 +348,8 @@ export const starOwner = (led, nowMs) => (led.own && nowMs - led.ownAt <= STAR_O
  *  last word from it (`nearAt`, that word's reach) - so a star left alone waits where it stood, and a word from off the
  *  star moves it no further than the last defender's. */
 function clockTo(led, nowMs) {
-  const from = led.stepAt, to = Math.min(nowMs, led.nearAt + STAR_PRESENT_MS);
+  const from = led.stepAt,
+    to = Math.min(nowMs, led.nearAt + STAR_PRESENT_MS);
   led.stepAt = Math.max(led.stepAt, nowMs);
   if (led.p === P_FALLEN || starOver(led)) return;
   if (to > from) led.ec += to - from;
@@ -284,17 +358,27 @@ function clockTo(led, nowMs) {
 const bandNow = (led, nowMs) => starBandOf(starDefenders(led, nowMs).map((r) => r.lv));
 /** A wave starts: its size and its band by the defenders standing now, fixed for it. */
 function waveStarts(led, at, nowMs) {
-  led.w++; led.p = P_WAVE; led.ws = at; led.kn = 0;
+  led.w++;
+  led.p = P_WAVE;
+  led.ws = at;
+  led.kn = 0;
   led.wz = starWaveSize(led.w, starDefenders(led, nowMs).length || 1);
   led.b = bandNow(led, nowMs);
 }
 /** A breath starts (after a wave, cleared or out of time): the light steadies. */
 function breathStarts(led, at) {
-  led.p = P_BREATH; led.bs = at; led.kn = 0;
+  led.p = P_BREATH;
+  led.bs = at;
+  led.kn = 0;
   led.lt = Math.min(STAR_LIGHT, led.lt + STAR_BREATH_LIGHT);
 }
 /** Lost - dark or at dawn - stamped once. */
-function lose(led, nowMs, why) { if (starOver(led)) return; led.p = P_LOST; led.lo = nowMs; led.why = why; }
+function lose(led, nowMs, why) {
+  if (starOver(led)) return;
+  led.p = P_LOST;
+  led.lo = nowMs;
+  led.why = why;
+}
 
 /**
  * THE MACHINE: the ledger moved on to `nowMs` - its deadline first (wall time), then every transition its encounter
@@ -305,14 +389,23 @@ function lose(led, nowMs, why) { if (starOver(led)) return; led.p = P_LOST; led.
 export function stepStar(led, nowMs) {
   if (starOver(led)) return false;
   const before = `${led.p}.${led.w}.${led.lt}`;
-  if (nowMs >= starLostAt(led.n, led.k)) { lose(led, nowMs, STAR_LOST_DAWN); return true; }
+  if (nowMs >= starLostAt(led.n, led.k)) {
+    lose(led, nowMs, STAR_LOST_DAWN);
+    return true;
+  }
   clockTo(led, nowMs);
-  for (let i = 0; i < 2 * STAR_WAVES + 4; i++) {   // at most every transition of a star in one step
-    if (led.p === P_GATHER && led.ec >= led.gatherAt + STAR_GATHER_MS) waveStarts(led, led.gatherAt + STAR_GATHER_MS, nowMs);
+  for (let i = 0; i < 2 * STAR_WAVES + 4; i++) {
+    // at most every transition of a star in one step
+    if (led.p === P_GATHER && led.ec >= led.gatherAt + STAR_GATHER_MS)
+      waveStarts(led, led.gatherAt + STAR_GATHER_MS, nowMs);
     else if (led.p === P_WAVE && led.ec >= led.ws + STAR_WAVE_MAX_MS) breathStarts(led, led.ws + STAR_WAVE_MAX_MS);
     else if (led.p === P_BREATH && led.ec >= led.bs + STAR_BREATH_MS) {
-      if (led.w >= STAR_WAVES) { led.p = P_MASTER; led.ma = led.bs + STAR_BREATH_MS; led.kn = 0; led.b = bandNow(led, nowMs); }
-      else waveStarts(led, led.bs + STAR_BREATH_MS, nowMs);
+      if (led.w >= STAR_WAVES) {
+        led.p = P_MASTER;
+        led.ma = led.bs + STAR_BREATH_MS;
+        led.kn = 0;
+        led.b = bandNow(led, nowMs);
+      } else waveStarts(led, led.bs + STAR_BREATH_MS, nowMs);
     } else break;
   }
   return `${led.p}.${led.w}.${led.lt}` !== before;
@@ -337,34 +430,71 @@ export function foldStarWord(led, acct, name, w, near, nowMs) {
   }
   rec.nm = typeof name === 'string' ? name : '';
   rec.lv = Math.max(1, Math.min(STAR_LEVEL_MAX, w.lv | 0));
-  rec.last = nowMs; rec.near = !!near;
-  if (!near) return moved;   // heard, never counted: a word from off the star moves nothing (section 5)
+  rec.last = nowMs;
+  rec.near = !!near;
+  if (!near) return moved; // heard, never counted: a word from off the star moves nothing (section 5)
   led.nearAt = nowMs;
-  if (w.s === 1 && !rec.s) { rec.s = 1; moved = true; }
+  if (w.s === 1 && !rec.s) {
+    rec.s = 1;
+    moved = true;
+  }
   // the first defender's word begins the gathering - the encounter clock starts with it
-  if (led.p === P_FALLEN) { led.p = P_GATHER; led.gatherAt = led.ec; led.b = bandNow(led, nowMs); moved = true; }
+  if (led.p === P_FALLEN) {
+    led.p = P_GATHER;
+    led.gatherAt = led.ec;
+    led.b = bandNow(led, nowMs);
+    moved = true;
+  }
   // THE OWNER: the first who says so, until silent STAR_ORPHAN_MS or until it says it no longer is (a camp race lost -
   // world/worldOfDaggerfall/wodShared.js yieldsTo); its blow count is its own for the star's life, never reset
   if (w.o === 1 && (!starOwner(led, nowMs) || led.own === acct)) {
-    if (led.own !== acct) { led.own = acct; moved = true; }
+    if (led.own !== acct) {
+      led.own = acct;
+      moved = true;
+    }
     led.ownAt = nowMs;
-  } else if (w.o !== 1 && led.own === acct) { led.own = ''; led.ownAt = 0; moved = true; }
+  } else if (w.o !== 1 && led.own === acct) {
+    led.own = '';
+    led.ownAt = 0;
+    moved = true;
+  }
   const nd = starDefenders(led, nowMs).length;
-  if (nd !== led.nd) { led.nd = nd; moved = true; }
+  if (nd !== led.nd) {
+    led.nd = nd;
+    moved = true;
+  }
   if (led.own !== acct) return moved;
   // the owner's: the deaths of this wave, the wave cleared, the blows on the star, the master's fall. The deaths are
   // credited only to the wave the word names: the owner's screen says the last wave's through the breath, and the word
   // that ends the breath starts the next (stepped above) - credited there, the new wave would stand already dead
-  if (led.p === P_WAVE && w.kw === led.w && w.kn > led.kn) { led.kn = Math.min(w.kn, led.wz); moved = true; }
-  if (led.p === P_WAVE && w.wc === led.w && led.ec - led.ws >= starClearFloorMs(led.wz, led.nd)) { breathStarts(led, led.ec); moved = true; }   // AUDIT STAR-TUNE F2: shared by its defenders
+  if (led.p === P_WAVE && w.kw === led.w && w.kn > led.kn) {
+    led.kn = Math.min(w.kn, led.wz);
+    moved = true;
+  }
+  if (led.p === P_WAVE && w.wc === led.w && led.ec - led.ws >= starClearFloorMs(led.wz, led.nd)) {
+    breathStarts(led, led.ec);
+    moved = true;
+  } // AUDIT STAR-TUNE F2: shared by its defenders
   if (w.hb > rec.hb) {
     led.bt = Math.min(STAR_BLOWS_BURST, led.bt + ((nowMs - led.btAt) / 1000) * STAR_BLOWS_HZ);
     led.btAt = nowMs;
     const credit = Math.max(0, Math.min(w.hb - rec.hb, Math.floor(led.bt)));
-    if (credit > 0) { rec.hb += credit; led.bt -= credit; led.lt = Math.max(0, led.lt - credit * STAR_BLOW_LIGHT); moved = true; }
+    if (credit > 0) {
+      rec.hb += credit;
+      led.bt -= credit;
+      led.lt = Math.max(0, led.lt - credit * STAR_BLOW_LIGHT);
+      moved = true;
+    }
   }
-  if (led.lt <= 0) { lose(led, nowMs, STAR_LOST_DARK); return true; }
-  if (led.p === P_MASTER && w.mf === 1 && led.ec - led.ma >= STAR_MASTER_MIN_MS) { led.p = P_HELD; led.hd = nowMs; moved = true; }
+  if (led.lt <= 0) {
+    lose(led, nowMs, STAR_LOST_DARK);
+    return true;
+  }
+  if (led.p === P_MASTER && w.mf === 1 && led.ec - led.ma >= STAR_MASTER_MIN_MS) {
+    led.p = P_HELD;
+    led.hd = nowMs;
+    moved = true;
+  }
   return moved;
 }
 
@@ -378,7 +508,12 @@ export function starEarned(led) {
   return Object.entries(led.a).filter(([, r]) => r.s === 1 && r.near && led.hd - r.last <= STAR_PRESENT_MS);
 }
 /** The names a held star says: its earners, by name, STAR_TOP_MAX of them. */
-export const starTop = (earned) => earned.map(([, r]) => r.nm).filter((nm) => typeof nm === 'string' && nm).sort().slice(0, STAR_TOP_MAX);
+export const starTop = (earned) =>
+  earned
+    .map(([, r]) => r.nm)
+    .filter((nm) => typeof nm === 'string' && nm)
+    .sort()
+    .slice(0, STAR_TOP_MAX);
 
 /** The ms left in the ledger's phase on the encounter clock (the gathering, a wave, a breath), or -1 where none runs. */
 export function starPhaseLeft(led) {
@@ -389,28 +524,57 @@ export function starPhaseLeft(led) {
 }
 /** The blows the owner's count has had credited (0 with no owner) - a reloaded owner's count starts from it, so its
  *  foes' blows are never counted twice nor lost behind an old count. */
-export const starOwnerBlows = (led) => (led.own ? led.a[led.own]?.hb ?? 0 : 0);
+export const starOwnerBlows = (led) => (led.own ? (led.a[led.own]?.hb ?? 0) : 0);
 /** The ledger as the cell says it (net/wire.js validStarOut `st`): the star, its phase and wave, the wave's size and the
  *  deaths said of it, the ms left in the phase, the light (whole), the defenders and their band, whether an owner holds
  *  the foes and its credited blows, held or lost and why. Said to the account `acct` that spoke, it carries that
  *  account's own credited blows (`hm`): a reloaded or new device counts on from them, owner or not. AUDIT STAR-TUNE F3:
  *  a wave past an older client's `st` (net/wire.js STAR_WAVE_SIZE_OLD_MAX) says nine in `wz` and itself in `wx`. */
 export const starLedgerState = (led, acct) => ({
-  k: 'st', n: led.n, s: led.k, px: led.px, py: led.py, p: led.p, w: led.w, wz: Math.min(led.wz, STAR_WAVE_SIZE_OLD_MAX), kn: led.kn, wl: starPhaseLeft(led),
-  lt: Math.ceil(led.lt), nd: led.nd, b: led.b, ow: led.own ? 1 : 0, hc: starOwnerBlows(led), hd: led.hd, lo: led.lo, why: led.why,
+  k: 'st',
+  n: led.n,
+  s: led.k,
+  px: led.px,
+  py: led.py,
+  p: led.p,
+  w: led.w,
+  wz: Math.min(led.wz, STAR_WAVE_SIZE_OLD_MAX),
+  kn: led.kn,
+  wl: starPhaseLeft(led),
+  lt: Math.ceil(led.lt),
+  nd: led.nd,
+  b: led.b,
+  ow: led.own ? 1 : 0,
+  hc: starOwnerBlows(led),
+  hd: led.hd,
+  lo: led.lo,
+  why: led.why,
   ...(typeof acct === 'string' ? { hm: Object.hasOwn(led.a, acct) ? led.a[acct].hb : 0 } : {}),
   ...(led.wz > STAR_WAVE_SIZE_OLD_MAX ? { wx: led.wz } : {}),
 });
 /** A held star as the cell and the hub say it (net/wire.js validStarOut `hd`): the star, the moment, its earners' first
  *  names and how many earned it. */
-export const starHeldWord = (led) => ({ k: 'hd', n: led.n, s: led.k, px: led.px, py: led.py, at: led.hd, top: led.top, c: led.hn });
+export const starHeldWord = (led) => ({
+  k: 'hd',
+  n: led.n,
+  s: led.k,
+  px: led.px,
+  py: led.py,
+  at: led.hd,
+  top: led.top,
+  c: led.hn,
+});
 /** When the last of night `n`'s stars is gone: the hub keeps a night's held stars until then. */
 export const starNightGoneAt = (n) => starTimes(n, STAR_PER_NIGHT - 1).goneAt;
 /** WW5: THE HUB'S HELD STARS IN THE ORDER IT SAYS THEM (`[n, s, px, py, at]` - net/wire.js STAR_HELD_MAX): the Bay's lane
  *  first, each lane in the order its holds came. An older client reads the list's first twelve (its STAR_HELD_MAX) and
  *  drops a province's as junk, so the Bay's - six at the most, a night's and the night before's - are always among them.
  *  Pure: a new list, the input untouched. */
-export const starHeldOrder = (list) => [...list].map((e, i) => [e, i]).sort((a, b) => (starLaneOf(a[0][1]) === 0 ? 0 : 1) - (starLaneOf(b[0][1]) === 0 ? 0 : 1) || a[1] - b[1]).map(([e]) => e);
+export const starHeldOrder = (list) =>
+  [...list]
+    .map((e, i) => [e, i])
+    .sort((a, b) => (starLaneOf(a[0][1]) === 0 ? 0 : 1) - (starLaneOf(b[0][1]) === 0 ? 0 : 1) || a[1] - b[1])
+    .map(([e]) => e);
 
 // ═══ THE CELL'S PLACES ════════════════════════════════════════════════════════════════════════════════════════════════
 /** Whether a ledger holds a place in its cell: not over, and short of its deadline - past it, it only hears its last

@@ -65,11 +65,11 @@ export const GREETING_EXCLUDED_FACTION_IDS = Object.freeze([42, 108]);
  *  thresholds" - and the thresholds are NOT four apart (3/7/13/17),
  *  which is exactly why the division would be wrong. */
 export function shopQualityTextId(quality) {
-  if (quality <= 3) return 270;    // 01-03
-  if (quality <= 7) return 269;    // 04-07
-  if (quality <= 13) return 268;   // 08-13
-  if (quality <= 17) return 267;   // 14-17
-  return 266;                      // 18-20
+  if (quality <= 3) return 270; // 01-03
+  if (quality <= 7) return 269; // 04-07
+  if (quality <= 13) return 268; // 08-13
+  if (quality <= 17) return 267; // 14-17
+  return 266; // 18-20
 }
 
 /** DFLocation.BuildingTypes House1..House4 (:597-598), the inclusive
@@ -92,13 +92,20 @@ export const isGreetingHouse = (buildingType) =>
  * predicate already.
  */
 export function buildingGreeting({
-  buildingType, quality = 0, factionId = 0,
-  buildingUnlocked = false, isBrokenIn = false, houseOwned = false, isShop = false,
+  buildingType,
+  quality = 0,
+  factionId = 0,
+  buildingUnlocked = false,
+  isBrokenIn = false,
+  houseOwned = false,
+  isShop = false,
 } = {}) {
-  if (buildingUnlocked
-    && isGreetingHouse(buildingType)
-    && !GREETING_EXCLUDED_FACTION_IDS.includes(factionId)
-    && !houseOwned) {
+  if (
+    buildingUnlocked &&
+    isGreetingHouse(buildingType) &&
+    !GREETING_EXCLUDED_FACTION_IDS.includes(factionId) &&
+    !houseOwned
+  ) {
     // INSIDE the branch, not beside it: a house you broke into says
     // nothing AND never reaches the shop arm.
     return isBrokenIn ? null : { kind: 'house', textId: HOUSE_GREETING_TEXT_ID };

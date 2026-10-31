@@ -254,7 +254,7 @@ test('SOUNDSCAPE THE WORLD HOST: constructed once beside the Deadlands\' air wit
   assert.match(W, /^      windAudio\.stop\(\); soundscape\.stop\(\);   \/\/ WIND3/m, 'the modal frame silences it with the wind, on the wind\'s own line (DISC6 reads the lines after it)');
   assert.match(W, /if \(!hourScoreFrame\(\) && !gateScoreFrame\(\) && !arenaScoreFrame\(\) && !soundscape\.scoreFrame\(\) && !musicBoxScore\.frame\(\)\) musicDirector\.update\(\{/);
   const H = readFileSync(new URL('../../src/scenes/soundscapeHost.js', import.meta.url), 'utf8');
-  assert.ok(H.includes('      installSoundscapeSounds(deps.audio);   // AUDIT SOUNDSCAPE S7'), 'the loader asked every frame - its own backoff decides');
+  assert.ok(H.includes('installSoundscapeSounds(deps.audio); // AUDIT SOUNDSCAPE S7'), 'the loader asked every frame - its own backoff decides');
   const N = readFileSync(new URL('../../src/scenes/naval/navalHost.js', import.meta.url), 'utf8');
   assert.ok(N.includes('    battle: () => aiming || crewAlarm() || !!boarding,'), 'the naval host\'s battle: the watch\'s alarm and a boarding');
 });

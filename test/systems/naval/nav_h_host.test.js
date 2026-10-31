@@ -467,7 +467,7 @@ test('NAV-H the attack\'s five doors: a readied spell eats the press first, the 
   assert.match(w, /brace: csaRuntime\.isSailing\(\) && \(held\(keys, 'Crouch'\) \|\| navalTouchBrace\(\)\)/, 'the brace is the Crouch action at the helm (AUDIT NAV1: or the plate\'s Brace under a finger)');
   const pad = src('ui/gamepadInput.js');
   assert.match(pad, /&& !hooks\.aimHold\?\.\(\);/, 'the pad holds RT plainly at the guns');
-  assert.match(pad, /if \(swinging && !plus && !hooks\.aimHold\?\.\(\)\) hooks\.attack\?\./, 'and its right stick looks');
+  assert.match(pad, /if \(swinging && !plus && !hooks\.aimHold\?\.\(\)\)\n\s*hooks\.attack\?\./, 'and its right stick looks');
   const touch = src('ui/touch/touch.js');
   assert.match(touch, /if \(swiping && hooks\.aimHold\?\.\(\)\) \{ hooks\.look\?\.\(ev\.dx \* TOUCH_LOOK_GAIN \* lookNorm\(\), ev\.dy \* TOUCH_LOOK_GAIN \* lookNorm\(\)\); continue; \}/, 'the finger\'s drag under the hold is a look');
 });

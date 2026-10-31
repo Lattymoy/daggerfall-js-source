@@ -2,8 +2,8 @@
   {
     "name": "WEAPON-GEAR-unread",
     "file": "src/systems/weaponMastery.js",
-    "old": "return climbPastPct(skill, attacker, target, opts) + weaponGearPct(attacker, skill, opts);",
-    "new": "return climbPastPct(skill, attacker, target, opts);",
+    "old": "  return climbPastPct(skill, attacker, target, opts) + weaponGearPct(attacker, skill, opts);",
+    "new": "  return climbPastPct(skill, attacker, target, opts);",
     "tests": [
       "test/combat/weapon_gear.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "WEAPON-GEAR-the-greater-not-the-sum",
     "file": "src/systems/weaponMastery.js",
-    "old": "return climbPastPct(skill, attacker, target, opts) + weaponGearPct(attacker, skill, opts);",
-    "new": "return Math.max(climbPastPct(skill, attacker, target, opts), weaponGearPct(attacker, skill, opts));",
+    "old": "  return climbPastPct(skill, attacker, target, opts) + weaponGearPct(attacker, skill, opts);",
+    "new": "  return Math.max(climbPastPct(skill, attacker, target, opts), weaponGearPct(attacker, skill, opts));",
     "tests": [
       "test/combat/weapon_gear.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "WEAPON-GEAR-only-past-200",
     "file": "src/systems/weaponMastery.js",
-    "old": "return gear > 0 ? Math.min(",
-    "new": "return gear > 200 ? Math.min(",
+    "old": "  return gear > 0 ? Math.min(WEAPON_GEAR_PCT_MOST, gear * WEAPON_GEAR_PER_POINT) : 0;",
+    "new": "  return gear > 200 ? Math.min(WEAPON_GEAR_PCT_MOST, gear * WEAPON_GEAR_PER_POINT) : 0;",
     "tests": [
       "test/combat/weapon_gear.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "WEAPON-GEAR-uncounted-most",
     "file": "src/systems/weaponMastery.js",
-    "old": "Math.min(WEAPON_GEAR_PCT_MOST, gear * WEAPON_GEAR_PER_POINT)",
-    "new": "gear * WEAPON_GEAR_PER_POINT",
+    "old": "  return gear > 0 ? Math.min(WEAPON_GEAR_PCT_MOST, gear * WEAPON_GEAR_PER_POINT) : 0;",
+    "new": "  return gear > 0 ? gear * WEAPON_GEAR_PER_POINT : 0;",
     "tests": [
       "test/combat/weapon_gear.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "WEAPON-GEAR-the-fists-too",
     "file": "src/systems/weaponMastery.js",
-    "old": "|| !Number.isInteger(skill) || skill === SKILLS.HandToHand) return 0;\n  const gear",
-    "new": "|| !Number.isInteger(skill)) return 0;\n  const gear",
+    "old": "  if (\n    !online ||\n    !entity?.isPlayer ||\n    entity.peer ||\n    entity._mentor ||\n    entity.isInBeastForm ||\n    !Number.isInteger(skill) ||\n    skill === SKILLS.HandToHand\n  )",
+    "new": "  if (!online || !entity?.isPlayer || entity.peer || entity._mentor || entity.isInBeastForm || !Number.isInteger(skill))",
     "tests": [
       "test/combat/weapon_gear.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "WEAPON-GEAR-offline",
     "file": "src/systems/weaponMastery.js",
-    "old": "if (!online || !entity?.isPlayer || entity.peer || entity._mentor || entity.isInBeastForm || !Number.isInteger(skill) || skill === SKILLS.HandToHand) return 0;",
-    "new": "if (!entity?.isPlayer || entity.peer || entity._mentor || entity.isInBeastForm || !Number.isInteger(skill) || skill === SKILLS.HandToHand) return 0;",
+    "old": "    !online ||\n    !entity?.isPlayer ||",
+    "new": "    !entity?.isPlayer ||",
     "tests": [
       "test/combat/weapon_gear.test.js"
     ],
@@ -61,7 +61,7 @@
   },
   {
     "name": "WEAPON-GEAR-half-a-point",
-    "file": "src/systems/weaponMastery.js",
+    "file": "src/systems/powerBlows.js",
     "old": "export const WEAPON_GEAR_PER_POINT = 0.44;",
     "new": "export const WEAPON_GEAR_PER_POINT = 0.5;",
     "tests": [

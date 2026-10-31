@@ -6,12 +6,24 @@
 // block's pond stays on its tier (read as the sea, it sank a 46 m pit into the Well District) - else the relief's height;
 // the outer `band` samples eased to the land's own, so no seam opens with the pixels round it. Pure and worker-safe: the
 // terrain worker and this thread read the same law.
-import { SCALED_OCEAN_ELEVATION, MAX_TERRAIN_HEIGHT, HEIGHTMAP_DIMENSION, STREAMING_TERRAIN_SCALE } from './terrainSampler.js';
-import { solitudeHeight, solitudeWalkShut, SOLITUDE_LEVELS, SOLITUDE_PIXEL, SOLITUDE_EDGE_BAND } from '../solitudeRelief.js';
+import {
+  SCALED_OCEAN_ELEVATION,
+  MAX_TERRAIN_HEIGHT,
+  HEIGHTMAP_DIMENSION,
+  STREAMING_TERRAIN_SCALE,
+} from './terrainSampler.js';
+import {
+  solitudeHeight,
+  solitudeWalkShut,
+  SOLITUDE_LEVELS,
+  SOLITUDE_PIXEL,
+  SOLITUDE_EDGE_BAND,
+} from '../solitudeRelief.js';
 
 const f32 = Math.fround;
 /** Metres over the sea as the samples are normalized (the kernel's unit is STREAMING_TERRAIN_SCALE metres). */
-export const reliefSample = (metres) => f32((SCALED_OCEAN_ELEVATION + metres / STREAMING_TERRAIN_SCALE) / MAX_TERRAIN_HEIGHT);
+export const reliefSample = (metres) =>
+  f32((SCALED_OCEAN_ELEVATION + metres / STREAMING_TERRAIN_SCALE) / MAX_TERRAIN_HEIGHT);
 /** The sea's own height, normalized (capitalSea.js CAPITAL_SEA's). */
 const SEA = f32(SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT);
 
@@ -22,7 +34,15 @@ const SEA = f32(SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT);
  * where its walkers never go (its terraces' works, world/townWalls.js townWalkShut).
  */
 export const CAPITAL_RELIEFS = Object.freeze({
-  solitude: Object.freeze({ height: solitudeHeight, flat: SOLITUDE_LEVELS.city, x0: SOLITUDE_PIXEL.x0, z0: SOLITUDE_PIXEL.z0, side: SOLITUDE_PIXEL.side, band: SOLITUDE_EDGE_BAND, walkShut: solitudeWalkShut }),
+  solitude: Object.freeze({
+    height: solitudeHeight,
+    flat: SOLITUDE_LEVELS.city,
+    x0: SOLITUDE_PIXEL.x0,
+    z0: SOLITUDE_PIXEL.z0,
+    side: SOLITUDE_PIXEL.side,
+    band: SOLITUDE_EDGE_BAND,
+    walkShut: solitudeWalkShut,
+  }),
 });
 /** A capital location's relief (its flatten's `relief` key's, CAPITAL_RELIEFS) - null for every other location. */
 export const reliefOf = (dfLocation) => CAPITAL_RELIEFS[dfLocation?.capital?.flattenAt?.relief] ?? null;
@@ -33,9 +53,13 @@ export function reliefFlat(key) {
   return { avg: v, classic: v };
 }
 
-const T = 128, H = HEIGHTMAP_DIMENSION;
+const T = 128,
+  H = HEIGHTMAP_DIMENSION;
 
-const smooth = (t) => { const k = t < 0 ? 0 : t > 1 ? 1 : t; return k * k * (3 - 2 * k); };
+const smooth = (t) => {
+  const k = t < 0 ? 0 : t > 1 ? 1 : t;
+  return k * k * (3 - 2 * k);
+};
 
 /** A vertex's place in a relief's anchor metres: x east from its pixel's west edge, z south from its north edge (y 0 the
  *  pixel's south edge). */
@@ -44,10 +68,18 @@ export const reliefVertexAt = (r, x, y) => [r.x0 + (x * r.side) / T, r.z0 + ((T 
  *  across the quad's two triangles, as terrainSurface.js surfaceHeightAt splits them. Between vertices the relief's own
  *  law and the drawn ground differ: a carriage stood level on the law sat 0.6 m into its bank. The outer band aside. */
 export function reliefDrawnAt(r, x, z) {
-  const q = r.side / T, lx = (x - r.x0) / q, lz = (r.z0 + r.side - z) / q;
-  const qx = Math.max(0, Math.min(T - 1, Math.floor(lx))), qz = Math.max(0, Math.min(T - 1, Math.floor(lz))), ax = lx - qx, az = lz - qz;
+  const q = r.side / T,
+    lx = (x - r.x0) / q,
+    lz = (r.z0 + r.side - z) / q;
+  const qx = Math.max(0, Math.min(T - 1, Math.floor(lx))),
+    qz = Math.max(0, Math.min(T - 1, Math.floor(lz))),
+    ax = lx - qx,
+    az = lz - qz;
   const h = (i, j) => r.height(...reliefVertexAt(r, i, j));
-  const h00 = h(qx, qz), h10 = h(qx + 1, qz), h01 = h(qx, qz + 1), h11 = h(qx + 1, qz + 1);
+  const h00 = h(qx, qz),
+    h10 = h(qx + 1, qz),
+    h01 = h(qx, qz + 1),
+    h11 = h(qx + 1, qz + 1);
   return az >= ax ? h00 + az * (h01 - h00) + ax * (h11 - h01) : h00 + ax * (h10 - h00) + az * (h11 - h10);
 }
 
@@ -65,10 +97,12 @@ export function capitalReliefGround(S, natural, key) {
   for (let x = 0; x < H; x++) {
     for (let y = 0; y < H; y++) {
       const i = x * H + y;
-      const [ax, az] = reliefVertexAt(r, x, y), m = r.height(ax, az);
+      const [ax, az] = reliefVertexAt(r, x, y),
+        m = r.height(ax, az);
       const own = m <= 1e-3 ? SEA : reliefSample(m);
       // the outer band: the land's own at the edge, eased to the relief's over `band` samples in
-      const d = Math.min(x, y, T - x, T - y), w = d >= r.band ? 0 : 1 - smooth(d / r.band);
+      const d = Math.min(x, y, T - x, T - y),
+        w = d >= r.band ? 0 : 1 - smooth(d / r.band);
       const v = w > 0 ? f32(own + (natural[i] - own) * w) : own;
       S[i] = v <= SEA ? SEA : v;
     }

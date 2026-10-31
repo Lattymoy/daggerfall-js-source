@@ -45,31 +45,60 @@ window.__ready = true;
 </script></body></html>`;
 
 let failed = false;
-const fail = (m) => { console.log(`FAIL: ${m}`); failed = true; };
+const fail = (m) => {
+  console.log(`FAIL: ${m}`);
+  failed = true;
+};
 
 const server = await createServer({
-  root: ROOT, logLevel: 'silent', server: { port: 5217, strictPort: true },
-  plugins: [{ name: 'ether-chart-page', configureServer(s) { s.middlewares.use('/__etherchart', (_, res) => { res.setHeader('content-type', 'text/html'); res.end(PAGE); }); } }],
+  root: ROOT,
+  logLevel: 'silent',
+  server: { port: 5217, strictPort: true },
+  plugins: [
+    {
+      name: 'ether-chart-page',
+      configureServer(s) {
+        s.middlewares.use('/__etherchart', (_, res) => {
+          res.setHeader('content-type', 'text/html');
+          res.end(PAGE);
+        });
+      },
+    },
+  ],
 });
 await server.listen();
 const browser = await chromium.launch();
 const fonts = new Map();
 /** The game's own font request, answered from node; `cssDelay` holds the stylesheet back. */
-const route = (cssDelay = 0) => async (r) => {
-  const url = r.request().url();
-  try {
-    let hit = fonts.get(url);
-    if (!hit) {
-      const res = await fetch(url, { headers: { 'user-agent': UA } });
-      hit = { status: res.status, headers: { 'content-type': res.headers.get('content-type') ?? '', 'access-control-allow-origin': '*' }, body: Buffer.from(await res.arrayBuffer()) };
-      fonts.set(url, hit);
+const route =
+  (cssDelay = 0) =>
+  async (r) => {
+    const url = r.request().url();
+    try {
+      let hit = fonts.get(url);
+      if (!hit) {
+        const res = await fetch(url, { headers: { 'user-agent': UA } });
+        hit = {
+          status: res.status,
+          headers: { 'content-type': res.headers.get('content-type') ?? '', 'access-control-allow-origin': '*' },
+          body: Buffer.from(await res.arrayBuffer()),
+        };
+        fonts.set(url, hit);
+      }
+      if (cssDelay && /googleapis/.test(url)) await new Promise((ok) => setTimeout(ok, cssDelay));
+      await r.fulfill(hit);
+    } catch (e) {
+      console.log(`the fonts could not be fetched (${e.message}) - offline, nothing measured`);
+      process.exit(1);
     }
-    if (cssDelay && /googleapis/.test(url)) await new Promise((ok) => setTimeout(ok, cssDelay));
-    await r.fulfill(hit);
-  } catch (e) { console.log(`the fonts could not be fetched (${e.message}) - offline, nothing measured`); process.exit(1); }
-};
+  };
 async function open({ w, h, dpr = 1, touch = false, q = '', cssDelay = 0 }) {
-  const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: dpr, hasTouch: touch, isMobile: touch });
+  const ctx = await browser.newContext({
+    viewport: { width: w, height: h },
+    deviceScaleFactor: dpr,
+    hasTouch: touch,
+    isMobile: touch,
+  });
   const page = await ctx.newPage();
   page.on('pageerror', (e) => fail(`page error: ${e.message}`));
   await page.route(/fonts\.(googleapis|gstatic)\.com/, route(cssDelay));
@@ -77,7 +106,10 @@ async function open({ w, h, dpr = 1, touch = false, q = '', cssDelay = 0 }) {
   await page.waitForFunction(() => window.__ready);
   return { ctx, page };
 }
-const settle = async (page) => { await page.evaluate(() => document.fonts.ready); await page.waitForTimeout(400); };
+const settle = async (page) => {
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(400);
+};
 
 try {
   // 1. the mean letter
@@ -91,30 +123,65 @@ try {
       const names = islesNear(h.px - 200, h.py, 200).map((i) => capFirst(i.name));
       await document.fonts.load(CHART_FONT.name);
       const g = document.createElement('canvas').getContext('2d');
-      g.font = CHART_FONT.name; g.letterSpacing = CHART_TRACKING;
-      let px = 0, chars = 0, byName = 0;
-      for (const n of names) { const wd = g.measureText(n).width; px += wd; chars += n.length; byName += wd / n.length; }
-      return { names: names.length, byName: byName / names.length, byLetter: px / chars, face: document.fonts.check(CHART_FONT.name) };
+      g.font = CHART_FONT.name;
+      g.letterSpacing = CHART_TRACKING;
+      let px = 0,
+        chars = 0,
+        byName = 0;
+      for (const n of names) {
+        const wd = g.measureText(n).width;
+        px += wd;
+        chars += n.length;
+        byName += wd / n.length;
+      }
+      return {
+        names: names.length,
+        byName: byName / names.length,
+        byLetter: px / chars,
+        face: document.fonts.check(CHART_FONT.name),
+      };
     });
-    console.log(`1. the mean letter over ${m.names} names: ${m.byName.toFixed(3)} name by name, ${m.byLetter.toFixed(3)} letter by letter (LABEL_CHAR_PX ${LABEL_CHAR_PX})`);
+    console.log(
+      `1. the mean letter over ${m.names} names: ${m.byName.toFixed(3)} name by name, ${m.byLetter.toFixed(3)} letter by letter (LABEL_CHAR_PX ${LABEL_CHAR_PX})`,
+    );
     if (!m.face) fail('the face never loaded - measured the fallback');
     if (m.names !== 755) fail(`the sample is ${m.names} names, not 755`);
-    if (Math.round(m.byName * 10) / 10 !== LABEL_CHAR_PX) fail(`LABEL_CHAR_PX ${LABEL_CHAR_PX} is not the name-by-name mean rounded (${m.byName.toFixed(3)})`);
+    if (Math.round(m.byName * 10) / 10 !== LABEL_CHAR_PX)
+      fail(`LABEL_CHAR_PX ${LABEL_CHAR_PX} is not the name-by-name mean rounded (${m.byName.toFixed(3)})`);
     await ctx.close();
   }
   // 2. the window fits
-  for (const s of [{ name: 'desktop', w: 1280, h: 860 }, { name: 'short', w: 1280, h: 600 }, { name: 'phone', w: 390, h: 844, dpr: 3, touch: true }, { name: 'phone-side', w: 844, h: 390, dpr: 3, touch: true }, { name: 'wide', w: 2560, h: 1440 }]) {
+  for (const s of [
+    { name: 'desktop', w: 1280, h: 860 },
+    { name: 'short', w: 1280, h: 600 },
+    { name: 'phone', w: 390, h: 844, dpr: 3, touch: true },
+    { name: 'phone-side', w: 844, h: 390, dpr: 3, touch: true },
+    { name: 'wide', w: 2560, h: 1440 },
+  ]) {
     const { ctx, page } = await open(s);
     await settle(page);
     const r = await page.evaluate(() => {
-      const body = document.querySelector('.dfchart-win .dfnaval-winbody'), h2 = document.querySelector('.dfnaval-wintitle h2');
-      const tools = document.querySelector('.dfchart-tools').getBoundingClientRect(), win = document.querySelector('.dfchart-win').getBoundingClientRect();
+      const body = document.querySelector('.dfchart-win .dfnaval-winbody'),
+        h2 = document.querySelector('.dfnaval-wintitle h2');
+      const tools = document.querySelector('.dfchart-tools').getBoundingClientRect(),
+        win = document.querySelector('.dfchart-win').getBoundingClientRect();
       const map = document.querySelector('.dfchart-map').getBoundingClientRect();
-      const door = document.querySelector('.dfchart-over').getBoundingClientRect();   // ETHER-OW: the fourth press of the row
-      return { scroll: body.scrollHeight - body.clientHeight, cut: h2.scrollWidth > h2.clientWidth, toolsIn: tools.bottom <= win.bottom + 0.5, map: [Math.round(map.width), Math.round(map.height)],
-        doorIn: door.width >= 44 && door.left >= win.left - 0.5 && door.right <= win.right + 0.5 && door.bottom <= win.bottom + 0.5 };
+      const door = document.querySelector('.dfchart-over').getBoundingClientRect(); // ETHER-OW: the fourth press of the row
+      return {
+        scroll: body.scrollHeight - body.clientHeight,
+        cut: h2.scrollWidth > h2.clientWidth,
+        toolsIn: tools.bottom <= win.bottom + 0.5,
+        map: [Math.round(map.width), Math.round(map.height)],
+        doorIn:
+          door.width >= 44 &&
+          door.left >= win.left - 0.5 &&
+          door.right <= win.right + 0.5 &&
+          door.bottom <= win.bottom + 0.5,
+      };
     });
-    console.log(`2. ${s.name} ${s.w}x${s.h}: chart ${r.map.join('x')}, body scroll ${r.scroll}, title cut ${r.cut}, tools in view ${r.toolsIn}, the Overworld's door in view ${r.doorIn}`);
+    console.log(
+      `2. ${s.name} ${s.w}x${s.h}: chart ${r.map.join('x')}, body scroll ${r.scroll}, title cut ${r.cut}, tools in view ${r.toolsIn}, the Overworld's door in view ${r.doorIn}`,
+    );
     if (r.scroll > 0) fail(`${s.name}: the window scrolls ${r.scroll}px`);
     if (r.cut) fail(`${s.name}: the title is cut`);
     if (!r.toolsIn) fail(`${s.name}: the zoom and Ship are out of the window`);
@@ -130,18 +197,38 @@ try {
     await settle(after.page);
     const pix = (p) => p.evaluate(() => document.querySelector('.dfchart-map').toDataURL());
     const [a, b] = [await pix(late.page), await pix(after.page)];
-    console.log(`3. a window opened before the fonts' stylesheet came, once the face has landed: ${a === b ? 'the same canvas' : 'A DIFFERENT CANVAS'} as one opened after`);
+    console.log(
+      `3. a window opened before the fonts' stylesheet came, once the face has landed: ${a === b ? 'the same canvas' : 'A DIFFERENT CANVAS'} as one opened after`,
+    );
     if (a !== b) fail('the late window kept another face');
-    await late.ctx.close(); await after.ctx.close();
+    await late.ctx.close();
+    await after.ctx.close();
   }
   // 4. a full captain
   {
     const { ctx, page } = await open({ w: 1280, h: 860, q: '?captain=full' });
     await settle(page);
-    for (const [zoom, keys] of [['x1', ['Minus', 'Minus']], ['x2', ['Equal']], ['x4', ['Equal']], ['x8', ['Equal']], ['x16', ['Equal']]]) {
+    for (const [zoom, keys] of [
+      ['x1', ['Minus', 'Minus']],
+      ['x2', ['Equal']],
+      ['x4', ['Equal']],
+      ['x8', ['Equal']],
+      ['x16', ['Equal']],
+    ]) {
       for (const k of keys) await page.keyboard.press(k);
-      const t = await page.evaluate(() => { const out = []; for (let i = 0; i < 15; i++) { const t0 = performance.now(); window.__chart.repaint(); out.push(performance.now() - t0); } out.sort((x, y) => x - y); return { median: out[7], max: out[14], n: window.__charted }; });
-      console.log(`4. ${t.n} isles charted, ${zoom}: a repaint ${t.median.toFixed(1)} ms (the slowest of 15 ${t.max.toFixed(1)})`);
+      const t = await page.evaluate(() => {
+        const out = [];
+        for (let i = 0; i < 15; i++) {
+          const t0 = performance.now();
+          window.__chart.repaint();
+          out.push(performance.now() - t0);
+        }
+        out.sort((x, y) => x - y);
+        return { median: out[7], max: out[14], n: window.__charted };
+      });
+      console.log(
+        `4. ${t.n} isles charted, ${zoom}: a repaint ${t.median.toFixed(1)} ms (the slowest of 15 ${t.max.toFixed(1)})`,
+      );
     }
     await ctx.close();
   }

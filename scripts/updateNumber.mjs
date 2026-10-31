@@ -28,7 +28,8 @@ export const UPDATE_RE = /^\d+\.\d+\.\d+$/;
 /** The environment's word for the number, for a build whose clone has no history to derive it from. */
 export const UPDATE_ENV = 'DFO_UPDATE';
 
-const git = (args, cwd) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+const git = (args, cwd) =>
+  execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 
 /**
  * The update number at `at`, or null where it cannot be known (a shallow clone, no line, no git). The environment's
@@ -36,16 +37,32 @@ const git = (args, cwd) => execFileSync('git', args, { cwd, encoding: 'utf8', st
  * @param {{ at?: string, env?: Record<string, string|undefined>, cwd?: string, run?: (args: string[]) => string }} [opts]
  * @returns {string|null}
  */
-export function updateNumber({ at = 'HEAD', env = process.env, cwd = process.cwd(), run = (args) => git(args, cwd) } = {}) {
+export function updateNumber({
+  at = 'HEAD',
+  env = process.env,
+  cwd = process.cwd(),
+  run = (args) => git(args, cwd),
+} = {}) {
   const told = String(env?.[UPDATE_ENV] ?? '').trim();
   if (told) return UPDATE_RE.test(told) ? told : null;
   try {
-    if (run(['rev-parse', '--is-shallow-repository']) === 'true') return null;   // its count would start where the clone was cut
+    if (run(['rev-parse', '--is-shallow-repository']) === 'true') return null; // its count would start where the clone was cut
     const line = UPDATE_LINE_RE.exec(run(['show', `${at}:${UPDATE_LINE_FILE}`]))?.[1];
     if (!line) return null;
     // a merge's diff is its first parent's - the merge that brought the line is the commit on main that changed it
-    const since = run(['log', '--first-parent', '--diff-merges=first-parent', '--no-patch', '-1', '--format=%H', `-G${UPDATE_LINE_DIFF_RE}`, at, '--', UPDATE_LINE_FILE]);
-    if (!/^[0-9a-f]{40,64}$/.test(since)) return null;   // a commit's name, or nothing - never a line of some other output
+    const since = run([
+      'log',
+      '--first-parent',
+      '--diff-merges=first-parent',
+      '--no-patch',
+      '-1',
+      '--format=%H',
+      `-G${UPDATE_LINE_DIFF_RE}`,
+      at,
+      '--',
+      UPDATE_LINE_FILE,
+    ]);
+    if (!/^[0-9a-f]{40,64}$/.test(since)) return null; // a commit's name, or nothing - never a line of some other output
     const count = (rev) => Number(run(['rev-list', '--count', '--first-parent', rev]));
     const patch = count(at) - count(since) + 1;
     return Number.isSafeInteger(patch) && patch >= 1 ? `${line}.${patch}` : null;

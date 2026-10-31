@@ -47,8 +47,8 @@
   {
     "name": "CRAFT-WRITS-remedy-to-mages",
     "file": "src/net/craftWritLaw.js",
-    "old": "    healing: DIVINES.Stendarr, healTrue",
-    "new": "    healing: GUILD_FACTION_IDS.MagesGuild, healTrue",
+    "old": "    healing: DIVINES.Stendarr,",
+    "new": "    healing: GUILD_FACTION_IDS.MagesGuild,",
     "tests": [
       "test/net/craftwrits_law.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CRAFT-WRITS-feast-to-fighters",
     "file": "src/net/craftWritLaw.js",
-    "old": "tart: DIVINES.Mara, feast: DIVINES.Mara",
-    "new": "tart: DIVINES.Mara, feast: GUILD_FACTION_IDS.FightersGuild",
+    "old": "    feast: DIVINES.Mara,",
+    "new": "    feast: GUILD_FACTION_IDS.FightersGuild,",
     "tests": [
       "test/net/craftwrits_law.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CRAFT-WRITS-two-tiers",
     "file": "src/net/craftWritLaw.js",
-    "old": "  return open.filter((p) => /** @type {any} */ (p).tier >= best - 2)",
-    "new": "  return open.filter((p) => /** @type {any} */ (p).tier >= best - 3)",
+    "old": "  return open.filter((p) => /** @type {any} */ (p).tier >= best - 2).map((p) => /** @type {any} */ (p).key);",
+    "new": "  return open.filter((p) => /** @type {any} */ (p).tier >= best - 3).map((p) => /** @type {any} */ (p).key);",
     "tests": [
       "test/net/craftwrits_law.test.js"
     ]
@@ -111,7 +111,7 @@
   {
     "name": "CRAFT-WRITS-second-potion-same",
     "file": "src/net/craftWritLaw.js",
-    "old": "  const third = smithed ? pick(craftWritChoices('kit', smithing), 2) : pick(potions.length > 1 ? potions.filter((k) => k !== first) : potions, 2);",
+    "old": "  const third = smithed\n    ? pick(craftWritChoices('kit', smithing), 2)\n    : pick(potions.length > 1 ? potions.filter((k) => k !== first) : potions, 2);",
     "new": "  const third = smithed ? pick(craftWritChoices('kit', smithing), 2) : pick(potions, 2);",
     "tests": [
       "test/net/craftwrits_law.test.js"
@@ -120,8 +120,8 @@
   {
     "name": "CRAFT-WRITS-never-a-kit",
     "file": "src/net/craftWritLaw.js",
-    "old": "  const third = smithed ? pick(",
-    "new": "  const third = false ? pick(",
+    "old": "  const third = smithed",
+    "new": "  const third = false",
     "tests": [
       "test/net/craftwrits_law.test.js",
       "test/net/craftwrits_service.test.js"
@@ -159,8 +159,8 @@
   {
     "name": "CRAFT-WRITS-pieces-count",
     "file": "src/net/craftWritLaw.js",
-    "old": "  if (!Array.isArray(pieces) || pieces.length !== w.qty ||",
-    "new": "  if (!Array.isArray(pieces) ||",
+    "old": "    pieces.length !== w.qty ||\n    new Set(pieces).size !== pieces.length ||",
+    "new": "    new Set(pieces).size !== pieces.length ||",
     "tests": [
       "test/net/craftwrits_law.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "CRAFT-WRITS-host-no-putback",
     "file": "src/scenes/craftWritHost.js",
-    "old": "          if (t.whole) { if (!pack.includes(t.rec)) pack.splice(Math.min(t.at, pack.length), 0, t.rec); } else t.rec.stackCount = recordCount(t.rec) + t.n;\n",
-    "new": "",
+    "old": "          if (t.whole) {\n            if (!pack.includes(t.rec)) pack.splice(Math.min(t.at, pack.length), 0, t.rec);\n          } else t.rec.stackCount = recordCount(t.rec) + t.n;\n        }",
+    "new": "        }",
     "tests": [
       "test/net/craftwrits_client.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "CRAFT-WRITS-host-any-piece",
     "file": "src/scenes/craftWritHost.js",
-    "old": "    const ok = new Set(Array.isArray(w?.pieces) ? w.pieces : []);\n    return (player()?.items ?? []).filter((it) => ok.has(it?.provenance) && pieceOf(it, w.product))",
-    "new": "    return (player()?.items ?? []).filter((it) => pieceOf(it, w.product))",
+    "old": "    const ok = new Set(Array.isArray(w?.pieces) ? w.pieces : []);\n    return (player()?.items ?? [])\n      .filter((it) => ok.has(it?.provenance) && pieceOf(it, w.product))\n      .map((it) => String(it.provenance));",
+    "new": "    return (player()?.items ?? []).filter((it) => pieceOf(it, w.product)).map((it) => String(it.provenance));",
     "tests": [
       "test/net/craftwrits_client.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "CRAFT-WRITS-board-waits-not",
     "file": "src/ui/noticeWindow.js",
-    "old": "      b.disabled = busy || workBusy || !h.ready || full;\n",
-    "new": "      b.disabled = busy || workBusy || full;\n",
+    "old": "      b.disabled = busy || workBusy || !h.ready || full;",
+    "new": "      b.disabled = busy || workBusy || full;",
     "tests": [
       "test/net/craftwrits_client.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "CRAFT-WRITS-board-head",
     "file": "src/ui/noticeWindow.js",
-    "old": "      body.append(sectionHead(t('notice.craftWrit.head', 'Crafting writs - {filled, number} of {max, number} today', { filled: writs.crafts.today.filled, max: writs.crafts.today.max })));",
-    "new": "      body.append(sectionHead(t('notice.craftWrit.head', 'Crafting writs - {filled, number} of {max, number} today', { filled: 0, max: writs.crafts.today.max })));",
+    "old": "            filled: writs.crafts.today.filled,",
+    "new": "            filled: 0,",
     "tests": [
       "test/net/craftwrits_client.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-T3-progress",
     "file": "server-account/src/progress.js",
-    "old": "    case '/v1/writs/craft': if (a.ok) { add('prof', n(a.xp)); add('renown', n(a.renown?.credited)); } break;",
-    "new": "",
+    "old": "    case '/v1/writs/craft':\n      if (a.ok) {\n        add('prof', n(a.xp));\n        add('renown', n(a.renown?.credited));\n      }\n      break; // CRAFT-WRITS: the XP the crafter's limit let in",
+    "new": "    // CRAFT-WRITS: the XP the crafter's limit let in",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -642,8 +642,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-E2-counter-marked-up",
     "file": "src/net/craftWritLaw.js",
-    "old": "(p.bought ?? 0) * 100)) / (100 * NOVICE_YIELD[p.kind])));",
-    "new": "(p.bought ?? 0) * CRAFT_PAY_PCT)) / (100 * NOVICE_YIELD[p.kind])));",
+    "old": "      (qty * ((p.cost - (p.bought ?? 0)) * CRAFT_PAY_PCT + (p.bought ?? 0) * 100)) / (100 * NOVICE_YIELD[p.kind]),",
+    "new": "      (qty * ((p.cost - (p.bought ?? 0)) * CRAFT_PAY_PCT + (p.bought ?? 0) * CRAFT_PAY_PCT)) /\n        (100 * NOVICE_YIELD[p.kind]),",
     "tests": [
       "test/net/craftwrits_law.test.js"
     ]
@@ -651,8 +651,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-E3-sheet-a-bottle",
     "file": "src/net/craftWritLaw.js",
-    "old": "rec?.group === 'UselessItems1' && rec.templateIndex === POTION_BOTTLE\n  && ",
-    "new": "",
+    "old": "  rec?.group === 'UselessItems1' &&\n  rec.templateIndex === POTION_BOTTLE &&\n  Number.isSafeInteger(rec.potionRecipeKey) &&\n  rec.potionRecipeKey === key &&\n  mayGo(rec);",
+    "new": "  Number.isSafeInteger(rec.potionRecipeKey) && rec.potionRecipeKey === key && mayGo(rec);",
     "tests": [
       "test/net/craftwrits_law.test.js"
     ]
@@ -660,8 +660,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-E4-daedric-asked",
     "file": "src/net/craftWritLaw.js",
-    "old": " && !r.inputs.some((i) => UNYIELDED.includes(i.key) || EMBER_MADE.includes(i.key))",
-    "new": "",
+    "old": "export const WRIT_KITS = Object.freeze(\n  RECIPES.filter(\n    (r) => r.product === 'kit' && !r.inputs.some((i) => UNYIELDED.includes(i.key) || EMBER_MADE.includes(i.key)),\n  ),\n);",
+    "new": "export const WRIT_KITS = Object.freeze(RECIPES.filter((r) => r.product === 'kit'));",
     "tests": [
       "test/net/craftwrits_law.test.js"
     ]
@@ -669,8 +669,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-E6-count-unbounded",
     "file": "src/net/craftWritLaw.js",
-    "old": "Math.min(CRAFT_WRIT_QTY_MAX, /** @type {number} */ (qty))",
-    "new": "/** @type {number} */ (qty)",
+    "old": "    Number.isSafeInteger(qty) && /** @type {number} */ (qty) >= 1\n      ? Math.min(CRAFT_WRIT_QTY_MAX, /** @type {number} */ (qty))\n      : craftWritBaseQty(p);",
+    "new": "    Number.isSafeInteger(qty) && /** @type {number} */ (qty) >= 1 ? /** @type {number} */ (qty) : craftWritBaseQty(p);",
     "tests": [
       "test/net/craftwrits_law.test.js"
     ]
@@ -678,8 +678,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-E6-null-ranks",
     "file": "src/net/craftWritLaw.js",
-    "old": "= ranks ?? {};",
-    "new": "= ranks;",
+    "old": "  const { provisioning = 0, smithing = 0, smithed = false } = ranks ?? {}; // E6: a null read as none",
+    "new": "  const { provisioning = 0, smithing = 0, smithed = false } = ranks; // E6: a null read as none",
     "tests": [
       "test/net/craftwrits_law.test.js"
     ]
@@ -687,8 +687,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-C1-repeat-kept-out",
     "file": "src/scenes/craftWritHost.js",
-    "old": "          apply: (/** @type {any} */ a) => { if (a.data?.repeat && a.data?.realm == null) putBack(); },   // C1\n",
-    "new": "",
+    "old": "          apply: (/** @type {any} */ a) => {\n            if (a.data?.repeat && a.data?.realm == null) putBack();\n          }, // C1\n          call: (at) => {",
+    "new": "          call: (at) => {",
     "tests": [
       "test/net/craftwrits_client.test.js"
     ]
@@ -714,8 +714,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-C3-lock-unread",
     "file": "src/net/craftWritLaw.js",
-    "old": "tradeableRecord(rec) && !isLocked(rec);",
-    "new": "tradeableRecord(rec);",
+    "old": "const mayGo = (/** @type {any} */ rec) => tradeableRecord(rec) && !isLocked(rec);",
+    "new": "const mayGo = (/** @type {any} */ rec) => tradeableRecord(rec);",
     "tests": [
       "test/net/craftwrits_law.test.js",
       "test/net/craftwrits_client.test.js"
@@ -733,8 +733,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-C5-a-adamantium",
     "file": "src/net/craftWritLaw.js",
-    "old": "'{n, plural, one {one {name}} other {# {name}s}}'",
-    "new": "'{n, plural, one {a {name}} other {# {name}s}}'",
+    "old": "  return t('prof.craftWrit.countKit', '{n, plural, one {one {name}} other {# {name}s}}', { n: qty, name: p.name }); // AUDIT CRAFT-WRITS C5: never \"a Adamantium Repair Kit\"",
+    "new": "  return t('prof.craftWrit.countKit', '{n, plural, one {a {name}} other {# {name}s}}', { n: qty, name: p.name }); // AUDIT CRAFT-WRITS C5: never \"a Adamantium Repair Kit\"",
     "tests": [
       "test/net/craftwrits_law.test.js"
     ]
@@ -742,8 +742,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-C6-silence",
     "file": "src/ui/noticeWindow.js",
-    "old": "    if (r?.unknown) return t('notice.craftWrit.unknown',",
-    "new": "    if (false) return t('notice.craftWrit.unknown',",
+    "old": "    if (r?.unknown)",
+    "new": "    if (false)",
     "tests": [
       "test/net/craftwrits_client.test.js"
     ]
@@ -751,8 +751,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-C6-elsewhere",
     "file": "src/ui/noticeWindow.js",
-    "old": "    if (r?.elsewhere || r?.error === 'elsewhere') return t('notice.craftWrit.elsewhere',",
-    "new": "    if (false) return t('notice.craftWrit.elsewhere',",
+    "old": "    if (r?.elsewhere || r?.error === 'elsewhere')",
+    "new": "    if (false)",
     "tests": [
       "test/net/craftwrits_client.test.js"
     ]
@@ -778,8 +778,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-C9-throw-kept-out",
     "file": "src/scenes/craftWritHost.js",
-    "old": "        putBack();   // C9: a throw before the service was asked (the book gone) - the goods were never the record's\n",
-    "new": "",
+    "old": "        putBack(); // C9: a throw before the service was asked (the book gone) - the goods were never the record's\n        console.warn('[craft writ] the delivery would not ask', e);",
+    "new": "        console.warn('[craft writ] the delivery would not ask', e);",
     "tests": [
       "test/net/craftwrits_client.test.js"
     ]
@@ -787,8 +787,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-C9-foot-of-pack",
     "file": "src/scenes/craftWritHost.js",
-    "old": "pack.splice(Math.min(t.at, pack.length), 0, t.rec)",
-    "new": "pack.push(t.rec)",
+    "old": "            if (!pack.includes(t.rec)) pack.splice(Math.min(t.at, pack.length), 0, t.rec);",
+    "new": "            if (!pack.includes(t.rec)) pack.push(t.rec);",
     "tests": [
       "test/net/craftwrits_client.test.js"
     ]
@@ -796,8 +796,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-C4-landed-unread",
     "file": "src/scenes/craftWritHost.js",
-    "old": "      if (r?.ok && !r.data) Promise.resolve(book()?.refresh?.({ force: true })).catch(() => {});\n",
-    "new": "",
+    "old": "      if (r?.ok && !r.data) Promise.resolve(book()?.refresh?.({ force: true })).catch(() => {});\n      return r;",
+    "new": "      return r;",
     "tests": [
       "test/net/craftwrits_client.test.js"
     ]
@@ -805,8 +805,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-C9-board-held",
     "file": "src/ui/noticeWindow.js",
-    "old": "    try { r = await work.crafts.deliver(w); } catch (e) { console.warn('[work] a crafting writ would not deliver', e); r = { ok: false, error: 'server' }; }   // C9: never a board held busy\n",
-    "new": "    r = await work.crafts.deliver(w);\n",
+    "old": "    try {\n      r = await work.crafts.deliver(w);\n    } catch (e) {\n      console.warn('[work] a crafting writ would not deliver', e);\n      r = { ok: false, error: 'server' };\n    } // C9: never a board held busy",
+    "new": "    r = await work.crafts.deliver(w);",
     "tests": [
       "test/net/craftwrits_client.test.js"
     ]
@@ -814,8 +814,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-T5-tab-uncounted",
     "file": "src/ui/noticeWindow.js",
-    "old": " + (work?.crafts ? (writs.crafts?.writs ?? []).filter((w) => w.state === 'open').length : 0)",
-    "new": "",
+    "old": "          (work?.crafts ? (writs.crafts?.writs ?? []).filter((w) => w.state === 'open').length : 0) +\n          (writs.writsOpen === true",
+    "new": "          (writs.writsOpen === true",
     "tests": [
       "test/net/craftwrits_client.test.js"
     ]

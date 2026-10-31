@@ -2,8 +2,8 @@
   {
     "name": "RELAYLOAD-weight",
     "file": "tools/relayLoad.mjs",
-    "old": "sends: 'SUM(double8 * _sample_interval)',",
-    "new": "sends: 'SUM(double8)',",
+    "old": "  sends: 'SUM(double8 * _sample_interval)',",
+    "new": "  sends: 'SUM(double8)',",
     "tests": [
       "test/server/relayload.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RELAYLOAD-double-moved",
     "file": "tools/relayLoad.mjs",
-    "old": "full: 'SUM(double13 * _sample_interval)',",
-    "new": "full: 'SUM(double12 * _sample_interval)',",
+    "old": "  full: 'SUM(double13 * _sample_interval)',",
+    "new": "  full: 'SUM(double12 * _sample_interval)',",
     "tests": [
       "test/server/relayload.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RELAYLOAD-peak-weighted",
     "file": "tools/relayLoad.mjs",
-    "old": "${W.n} AS room_windows, MAX(double15) AS peak,",
-    "new": "${W.n} AS room_windows, SUM(double15) AS peak,",
+    "old": "      `SELECT blob1 AS kind, ${W.n} AS room_windows, MAX(double15) AS peak, ${W.hellos} AS hellos, ${W.busy} AS busy, ${W.full} AS room_full, ${W.refused} AS refused, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends, IF(${W.poses} > 0, ${W.sends} / ${W.poses}, 0.0) AS sends_per_pose, ${W.mbOut} AS mb_out, ${W.storage} AS storage FROM ${DATASET} WHERE ${since(h)} GROUP BY kind ORDER BY sends DESC LIMIT 40`,",
+    "new": "      `SELECT blob1 AS kind, ${W.n} AS room_windows, SUM(double15) AS peak, ${W.hellos} AS hellos, ${W.busy} AS busy, ${W.full} AS room_full, ${W.refused} AS refused, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends, IF(${W.poses} > 0, ${W.sends} / ${W.poses}, 0.0) AS sends_per_pose, ${W.mbOut} AS mb_out, ${W.storage} AS storage FROM ${DATASET} WHERE ${since(h)} GROUP BY kind ORDER BY sends DESC LIMIT 40`,",
     "tests": [
       "test/server/relayload.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RELAYLOAD-kinds-order",
     "file": "tools/relayLoad.mjs",
-    "old": "GROUP BY kind ORDER BY sends DESC LIMIT 40",
-    "new": "GROUP BY kind ORDER BY hellos DESC LIMIT 40",
+    "old": "      `SELECT blob1 AS kind, ${W.n} AS room_windows, MAX(double15) AS peak, ${W.hellos} AS hellos, ${W.busy} AS busy, ${W.full} AS room_full, ${W.refused} AS refused, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends, IF(${W.poses} > 0, ${W.sends} / ${W.poses}, 0.0) AS sends_per_pose, ${W.mbOut} AS mb_out, ${W.storage} AS storage FROM ${DATASET} WHERE ${since(h)} GROUP BY kind ORDER BY sends DESC LIMIT 40`,",
+    "new": "      `SELECT blob1 AS kind, ${W.n} AS room_windows, MAX(double15) AS peak, ${W.hellos} AS hellos, ${W.busy} AS busy, ${W.full} AS room_full, ${W.refused} AS refused, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends, IF(${W.poses} > 0, ${W.sends} / ${W.poses}, 0.0) AS sends_per_pose, ${W.mbOut} AS mb_out, ${W.storage} AS storage FROM ${DATASET} WHERE ${since(h)} GROUP BY kind ORDER BY hellos DESC LIMIT 40`,",
     "tests": [
       "test/server/relayload.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RELAYLOAD-crowds-order",
     "file": "tools/relayLoad.mjs",
-    "old": "ORDER BY peak DESC LIMIT 40",
-    "new": "ORDER BY sends DESC LIMIT 40",
+    "old": "      `SELECT timestamp AS stamp, blob1 AS kind, double15 AS peak, double2 AS sockets, double3 AS hellos, double4 AS busy, double13 AS room_full, double14 AS drops, double7 AS poses, double8 AS sends FROM ${DATASET} WHERE ${since(h)} AND blob1 != 'chat' ORDER BY peak DESC LIMIT 40`,",
+    "new": "      `SELECT timestamp AS stamp, blob1 AS kind, double15 AS peak, double2 AS sockets, double3 AS hellos, double4 AS busy, double13 AS room_full, double14 AS drops, double7 AS poses, double8 AS sends FROM ${DATASET} WHERE ${since(h)} AND blob1 != 'chat' ORDER BY sends DESC LIMIT 40`,",
     "tests": [
       "test/server/relayload.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "RELAYLOAD-if-integer",
     "file": "tools/relayLoad.mjs",
-    "old": "${W.sends} / ${W.poses}, 0.0) AS sends_per_pose",
-    "new": "${W.sends} / ${W.poses}, 0) AS sends_per_pose",
+    "old": "      `SELECT blob1 AS kind, ${W.n} AS room_windows, MAX(double15) AS peak, ${W.hellos} AS hellos, ${W.busy} AS busy, ${W.full} AS room_full, ${W.refused} AS refused, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends, IF(${W.poses} > 0, ${W.sends} / ${W.poses}, 0.0) AS sends_per_pose, ${W.mbOut} AS mb_out, ${W.storage} AS storage FROM ${DATASET} WHERE ${since(h)} GROUP BY kind ORDER BY sends DESC LIMIT 40`,",
+    "new": "      `SELECT blob1 AS kind, ${W.n} AS room_windows, MAX(double15) AS peak, ${W.hellos} AS hellos, ${W.busy} AS busy, ${W.full} AS room_full, ${W.refused} AS refused, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends, IF(${W.poses} > 0, ${W.sends} / ${W.poses}, 0) AS sends_per_pose, ${W.mbOut} AS mb_out, ${W.storage} AS storage FROM ${DATASET} WHERE ${since(h)} GROUP BY kind ORDER BY sends DESC LIMIT 40`,",
     "tests": [
       "test/server/relayload.test.js"
     ]
@@ -85,7 +85,7 @@
   {
     "name": "RELAYLOAD-drawing-shared",
     "file": "tools/d1Load.mjs",
-    "old": "if (!rows.length) return `${head}No points in the window.\\n`;",
+    "old": "  if (!rows.length) return `${head}No points in the window.\\n`;",
     "new": "",
     "tests": [
       "test/server/relayload.test.js"
@@ -94,8 +94,8 @@
   {
     "name": "RELAYLOAD-crowds-double-moved",
     "file": "tools/relayLoad.mjs",
-    "old": "double13 AS room_full, double14 AS drops, double7 AS poses",
-    "new": "double12 AS room_full, double14 AS drops, double7 AS poses",
+    "old": "      `SELECT timestamp AS stamp, blob1 AS kind, double15 AS peak, double2 AS sockets, double3 AS hellos, double4 AS busy, double13 AS room_full, double14 AS drops, double7 AS poses, double8 AS sends FROM ${DATASET} WHERE ${since(h)} AND blob1 != 'chat' ORDER BY peak DESC LIMIT 40`,",
+    "new": "      `SELECT timestamp AS stamp, blob1 AS kind, double15 AS peak, double2 AS sockets, double3 AS hellos, double4 AS busy, double12 AS room_full, double14 AS drops, double7 AS poses, double8 AS sends FROM ${DATASET} WHERE ${since(h)} AND blob1 != 'chat' ORDER BY peak DESC LIMIT 40`,",
     "tests": [
       "test/server/relayload.test.js"
     ],
@@ -104,8 +104,8 @@
   {
     "name": "RELAYLOAD-crowds-hellos-moved",
     "file": "tools/relayLoad.mjs",
-    "old": "double3 AS hellos, double4 AS busy",
-    "new": "double4 AS hellos, double4 AS busy",
+    "old": "      `SELECT timestamp AS stamp, blob1 AS kind, double15 AS peak, double2 AS sockets, double3 AS hellos, double4 AS busy, double13 AS room_full, double14 AS drops, double7 AS poses, double8 AS sends FROM ${DATASET} WHERE ${since(h)} AND blob1 != 'chat' ORDER BY peak DESC LIMIT 40`,",
+    "new": "      `SELECT timestamp AS stamp, blob1 AS kind, double15 AS peak, double2 AS sockets, double4 AS hellos, double4 AS busy, double13 AS room_full, double14 AS drops, double7 AS poses, double8 AS sends FROM ${DATASET} WHERE ${since(h)} AND blob1 != 'chat' ORDER BY peak DESC LIMIT 40`,",
     "tests": [
       "test/server/relayload.test.js"
     ],
@@ -114,8 +114,8 @@
   {
     "name": "RELAYLOAD-windows-kind-blob2",
     "file": "tools/relayLoad.mjs",
-    "old": "AS bucket, blob1 AS kind,",
-    "new": "AS bucket, blob2 AS kind,",
+    "old": "      `SELECT toStartOfInterval(timestamp, INTERVAL '5' MINUTE) AS bucket, blob1 AS kind, ${W.sockets} AS sockets, MAX(double15) AS peak, ${W.busy} AS busy, ${W.full} AS room_full, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends FROM ${DATASET} WHERE ${since(windowHours(h))} AND blob1 IN (${WINDOW_KINDS.map((k) => `'${k}'`).join(', ')}) GROUP BY bucket, kind ORDER BY bucket DESC, kind LIMIT ${12 * windowHours(h) * WINDOW_KINDS.length + 12 * WINDOW_KINDS.length}`,",
+    "new": "      `SELECT toStartOfInterval(timestamp, INTERVAL '5' MINUTE) AS bucket, blob2 AS kind, ${W.sockets} AS sockets, MAX(double15) AS peak, ${W.busy} AS busy, ${W.full} AS room_full, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends FROM ${DATASET} WHERE ${since(windowHours(h))} AND blob1 IN (${WINDOW_KINDS.map((k) => `'${k}'`).join(', ')}) GROUP BY bucket, kind ORDER BY bucket DESC, kind LIMIT ${12 * windowHours(h) * WINDOW_KINDS.length + 12 * WINDOW_KINDS.length}`,",
     "tests": [
       "test/server/relayload.test.js"
     ],
@@ -124,8 +124,8 @@
   {
     "name": "RELAYLOAD-crowds-kind-blob2",
     "file": "tools/relayLoad.mjs",
-    "old": "SELECT timestamp AS stamp, blob1 AS kind, double15 AS peak",
-    "new": "SELECT timestamp AS stamp, blob2 AS kind, double15 AS peak",
+    "old": "      `SELECT timestamp AS stamp, blob1 AS kind, double15 AS peak, double2 AS sockets, double3 AS hellos, double4 AS busy, double13 AS room_full, double14 AS drops, double7 AS poses, double8 AS sends FROM ${DATASET} WHERE ${since(h)} AND blob1 != 'chat' ORDER BY peak DESC LIMIT 40`,",
+    "new": "      `SELECT timestamp AS stamp, blob2 AS kind, double15 AS peak, double2 AS sockets, double3 AS hellos, double4 AS busy, double13 AS room_full, double14 AS drops, double7 AS poses, double8 AS sends FROM ${DATASET} WHERE ${since(h)} AND blob1 != 'chat' ORDER BY peak DESC LIMIT 40`,",
     "tests": [
       "test/server/relayload.test.js"
     ],
@@ -134,8 +134,8 @@
   {
     "name": "RELAYLOAD-windows-peak-sockets",
     "file": "tools/relayLoad.mjs",
-    "old": "AS bucket, blob1 AS kind, ${W.sockets} AS sockets, MAX(double15) AS peak,",
-    "new": "AS bucket, blob1 AS kind, ${W.sockets} AS sockets, MAX(double2) AS peak,",
+    "old": "      `SELECT toStartOfInterval(timestamp, INTERVAL '5' MINUTE) AS bucket, blob1 AS kind, ${W.sockets} AS sockets, MAX(double15) AS peak, ${W.busy} AS busy, ${W.full} AS room_full, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends FROM ${DATASET} WHERE ${since(windowHours(h))} AND blob1 IN (${WINDOW_KINDS.map((k) => `'${k}'`).join(', ')}) GROUP BY bucket, kind ORDER BY bucket DESC, kind LIMIT ${12 * windowHours(h) * WINDOW_KINDS.length + 12 * WINDOW_KINDS.length}`,",
+    "new": "      `SELECT toStartOfInterval(timestamp, INTERVAL '5' MINUTE) AS bucket, blob1 AS kind, ${W.sockets} AS sockets, MAX(double2) AS peak, ${W.busy} AS busy, ${W.full} AS room_full, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends FROM ${DATASET} WHERE ${since(windowHours(h))} AND blob1 IN (${WINDOW_KINDS.map((k) => `'${k}'`).join(', ')}) GROUP BY bucket, kind ORDER BY bucket DESC, kind LIMIT ${12 * windowHours(h) * WINDOW_KINDS.length + 12 * WINDOW_KINDS.length}`,",
     "tests": [
       "test/server/relayload.test.js"
     ],
@@ -154,8 +154,8 @@
   {
     "name": "RELAYLOAD-column-renamed",
     "file": "tools/relayLoad.mjs",
-    "old": "${W.mbOut} AS mb_out,",
-    "new": "${W.mbOut} AS mbout,",
+    "old": "      `SELECT blob1 AS kind, ${W.n} AS room_windows, MAX(double15) AS peak, ${W.hellos} AS hellos, ${W.busy} AS busy, ${W.full} AS room_full, ${W.refused} AS refused, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends, IF(${W.poses} > 0, ${W.sends} / ${W.poses}, 0.0) AS sends_per_pose, ${W.mbOut} AS mb_out, ${W.storage} AS storage FROM ${DATASET} WHERE ${since(h)} GROUP BY kind ORDER BY sends DESC LIMIT 40`,",
+    "new": "      `SELECT blob1 AS kind, ${W.n} AS room_windows, MAX(double15) AS peak, ${W.hellos} AS hellos, ${W.busy} AS busy, ${W.full} AS room_full, ${W.refused} AS refused, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends, IF(${W.poses} > 0, ${W.sends} / ${W.poses}, 0.0) AS sends_per_pose, ${W.mbOut} AS mbout, ${W.storage} AS storage FROM ${DATASET} WHERE ${since(h)} GROUP BY kind ORDER BY sends DESC LIMIT 40`,",
     "tests": [
       "test/server/relayload.test.js"
     ],
@@ -164,8 +164,8 @@
   {
     "name": "RELAYLOAD-if-guard-moved",
     "file": "tools/relayLoad.mjs",
-    "old": "IF(${W.poses} > 0, ${W.sends} / ${W.poses}, 0.0)",
-    "new": "IF(${W.poses} >= 0, ${W.sends} / ${W.poses}, 0.0)",
+    "old": "      `SELECT blob1 AS kind, ${W.n} AS room_windows, MAX(double15) AS peak, ${W.hellos} AS hellos, ${W.busy} AS busy, ${W.full} AS room_full, ${W.refused} AS refused, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends, IF(${W.poses} > 0, ${W.sends} / ${W.poses}, 0.0) AS sends_per_pose, ${W.mbOut} AS mb_out, ${W.storage} AS storage FROM ${DATASET} WHERE ${since(h)} GROUP BY kind ORDER BY sends DESC LIMIT 40`,",
+    "new": "      `SELECT blob1 AS kind, ${W.n} AS room_windows, MAX(double15) AS peak, ${W.hellos} AS hellos, ${W.busy} AS busy, ${W.full} AS room_full, ${W.refused} AS refused, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends, IF(${W.poses} >= 0, ${W.sends} / ${W.poses}, 0.0) AS sends_per_pose, ${W.mbOut} AS mb_out, ${W.storage} AS storage FROM ${DATASET} WHERE ${since(h)} GROUP BY kind ORDER BY sends DESC LIMIT 40`,",
     "tests": [
       "test/server/relayload.test.js"
     ],
@@ -174,8 +174,8 @@
   {
     "name": "RELAYLOAD-if-divide-swapped",
     "file": "tools/relayLoad.mjs",
-    "old": "${W.sends} / ${W.poses}, 0.0)",
-    "new": "${W.poses} / ${W.sends}, 0.0)",
+    "old": "      `SELECT blob1 AS kind, ${W.n} AS room_windows, MAX(double15) AS peak, ${W.hellos} AS hellos, ${W.busy} AS busy, ${W.full} AS room_full, ${W.refused} AS refused, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends, IF(${W.poses} > 0, ${W.sends} / ${W.poses}, 0.0) AS sends_per_pose, ${W.mbOut} AS mb_out, ${W.storage} AS storage FROM ${DATASET} WHERE ${since(h)} GROUP BY kind ORDER BY sends DESC LIMIT 40`,",
+    "new": "      `SELECT blob1 AS kind, ${W.n} AS room_windows, MAX(double15) AS peak, ${W.hellos} AS hellos, ${W.busy} AS busy, ${W.full} AS room_full, ${W.refused} AS refused, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends, IF(${W.poses} > 0, ${W.poses} / ${W.sends}, 0.0) AS sends_per_pose, ${W.mbOut} AS mb_out, ${W.storage} AS storage FROM ${DATASET} WHERE ${since(h)} GROUP BY kind ORDER BY sends DESC LIMIT 40`,",
     "tests": [
       "test/server/relayload.test.js"
     ],
@@ -184,8 +184,8 @@
   {
     "name": "RELAYLOAD-kinds-limit",
     "file": "tools/relayLoad.mjs",
-    "old": "GROUP BY kind ORDER BY sends DESC LIMIT 40",
-    "new": "GROUP BY kind ORDER BY sends DESC LIMIT 4",
+    "old": "      `SELECT blob1 AS kind, ${W.n} AS room_windows, MAX(double15) AS peak, ${W.hellos} AS hellos, ${W.busy} AS busy, ${W.full} AS room_full, ${W.refused} AS refused, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends, IF(${W.poses} > 0, ${W.sends} / ${W.poses}, 0.0) AS sends_per_pose, ${W.mbOut} AS mb_out, ${W.storage} AS storage FROM ${DATASET} WHERE ${since(h)} GROUP BY kind ORDER BY sends DESC LIMIT 40`,",
+    "new": "      `SELECT blob1 AS kind, ${W.n} AS room_windows, MAX(double15) AS peak, ${W.hellos} AS hellos, ${W.busy} AS busy, ${W.full} AS room_full, ${W.refused} AS refused, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends, IF(${W.poses} > 0, ${W.sends} / ${W.poses}, 0.0) AS sends_per_pose, ${W.mbOut} AS mb_out, ${W.storage} AS storage FROM ${DATASET} WHERE ${since(h)} GROUP BY kind ORDER BY sends DESC LIMIT 4`,",
     "tests": [
       "test/server/relayload.test.js"
     ],
@@ -194,8 +194,8 @@
   {
     "name": "RELAYLOAD-crowds-limit",
     "file": "tools/relayLoad.mjs",
-    "old": "ORDER BY peak DESC LIMIT 40",
-    "new": "ORDER BY peak DESC LIMIT 4",
+    "old": "      `SELECT timestamp AS stamp, blob1 AS kind, double15 AS peak, double2 AS sockets, double3 AS hellos, double4 AS busy, double13 AS room_full, double14 AS drops, double7 AS poses, double8 AS sends FROM ${DATASET} WHERE ${since(h)} AND blob1 != 'chat' ORDER BY peak DESC LIMIT 40`,",
+    "new": "      `SELECT timestamp AS stamp, blob1 AS kind, double15 AS peak, double2 AS sockets, double3 AS hellos, double4 AS busy, double13 AS room_full, double14 AS drops, double7 AS poses, double8 AS sends FROM ${DATASET} WHERE ${since(h)} AND blob1 != 'chat' ORDER BY peak DESC LIMIT 4`,",
     "tests": [
       "test/server/relayload.test.js"
     ],
@@ -204,8 +204,8 @@
   {
     "name": "RELAYLOAD-windows-cut",
     "file": "tools/relayLoad.mjs",
-    "old": "LIMIT ${12 * windowHours(h) * WINDOW_KINDS.length + 12 * WINDOW_KINDS.length}",
-    "new": "LIMIT 400",
+    "old": "      `SELECT toStartOfInterval(timestamp, INTERVAL '5' MINUTE) AS bucket, blob1 AS kind, ${W.sockets} AS sockets, MAX(double15) AS peak, ${W.busy} AS busy, ${W.full} AS room_full, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends FROM ${DATASET} WHERE ${since(windowHours(h))} AND blob1 IN (${WINDOW_KINDS.map((k) => `'${k}'`).join(', ')}) GROUP BY bucket, kind ORDER BY bucket DESC, kind LIMIT ${12 * windowHours(h) * WINDOW_KINDS.length + 12 * WINDOW_KINDS.length}`,",
+    "new": "      `SELECT toStartOfInterval(timestamp, INTERVAL '5' MINUTE) AS bucket, blob1 AS kind, ${W.sockets} AS sockets, MAX(double15) AS peak, ${W.busy} AS busy, ${W.full} AS room_full, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends FROM ${DATASET} WHERE ${since(windowHours(h))} AND blob1 IN (${WINDOW_KINDS.map((k) => `'${k}'`).join(', ')}) GROUP BY bucket, kind ORDER BY bucket DESC, kind LIMIT 400`,",
     "tests": [
       "test/server/relayload.test.js"
     ],
@@ -214,8 +214,8 @@
   {
     "name": "RELAYLOAD-windows-order",
     "file": "tools/relayLoad.mjs",
-    "old": "ORDER BY bucket DESC, kind LIMIT",
-    "new": "ORDER BY bucket DESC, sends DESC LIMIT",
+    "old": "      `SELECT toStartOfInterval(timestamp, INTERVAL '5' MINUTE) AS bucket, blob1 AS kind, ${W.sockets} AS sockets, MAX(double15) AS peak, ${W.busy} AS busy, ${W.full} AS room_full, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends FROM ${DATASET} WHERE ${since(windowHours(h))} AND blob1 IN (${WINDOW_KINDS.map((k) => `'${k}'`).join(', ')}) GROUP BY bucket, kind ORDER BY bucket DESC, kind LIMIT ${12 * windowHours(h) * WINDOW_KINDS.length + 12 * WINDOW_KINDS.length}`,",
+    "new": "      `SELECT toStartOfInterval(timestamp, INTERVAL '5' MINUTE) AS bucket, blob1 AS kind, ${W.sockets} AS sockets, MAX(double15) AS peak, ${W.busy} AS busy, ${W.full} AS room_full, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends FROM ${DATASET} WHERE ${since(windowHours(h))} AND blob1 IN (${WINDOW_KINDS.map((k) => `'${k}'`).join(', ')}) GROUP BY bucket, kind ORDER BY bucket DESC, sends DESC LIMIT ${12 * windowHours(h) * WINDOW_KINDS.length + 12 * WINDOW_KINDS.length}`,",
     "tests": [
       "test/server/relayload.test.js"
     ],
@@ -234,8 +234,8 @@
   {
     "name": "RELAYLOAD-windows-every-kind",
     "file": "tools/relayLoad.mjs",
-    "old": " AND blob1 IN (${WINDOW_KINDS.map((k) => `'${k}'`).join(', ')})",
-    "new": "",
+    "old": "      `SELECT toStartOfInterval(timestamp, INTERVAL '5' MINUTE) AS bucket, blob1 AS kind, ${W.sockets} AS sockets, MAX(double15) AS peak, ${W.busy} AS busy, ${W.full} AS room_full, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends FROM ${DATASET} WHERE ${since(windowHours(h))} AND blob1 IN (${WINDOW_KINDS.map((k) => `'${k}'`).join(', ')}) GROUP BY bucket, kind ORDER BY bucket DESC, kind LIMIT ${12 * windowHours(h) * WINDOW_KINDS.length + 12 * WINDOW_KINDS.length}`,",
+    "new": "      `SELECT toStartOfInterval(timestamp, INTERVAL '5' MINUTE) AS bucket, blob1 AS kind, ${W.sockets} AS sockets, MAX(double15) AS peak, ${W.busy} AS busy, ${W.full} AS room_full, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends FROM ${DATASET} WHERE ${since(windowHours(h))} GROUP BY bucket, kind ORDER BY bucket DESC, kind LIMIT ${12 * windowHours(h) * WINDOW_KINDS.length + 12 * WINDOW_KINDS.length}`,",
     "tests": [
       "test/server/relayload.test.js"
     ],
@@ -244,8 +244,8 @@
   {
     "name": "RELAYLOAD-crowds-channels-in",
     "file": "tools/relayLoad.mjs",
-    "old": " AND blob1 != 'chat' ORDER BY peak DESC",
-    "new": " ORDER BY peak DESC",
+    "old": "      `SELECT timestamp AS stamp, blob1 AS kind, double15 AS peak, double2 AS sockets, double3 AS hellos, double4 AS busy, double13 AS room_full, double14 AS drops, double7 AS poses, double8 AS sends FROM ${DATASET} WHERE ${since(h)} AND blob1 != 'chat' ORDER BY peak DESC LIMIT 40`,",
+    "new": "      `SELECT timestamp AS stamp, blob1 AS kind, double15 AS peak, double2 AS sockets, double3 AS hellos, double4 AS busy, double13 AS room_full, double14 AS drops, double7 AS poses, double8 AS sends FROM ${DATASET} WHERE ${since(h)} ORDER BY peak DESC LIMIT 40`,",
     "tests": [
       "test/server/relayload.test.js"
     ],
@@ -401,8 +401,8 @@
   {
     "name": "RELAYLOAD-fulls-wait-over-the-held",
     "file": "tools/relayLoad.mjs",
-    "old": "IF(${B.heldSent} > 0, ${B.heldMs} / ${B.heldSent}, 0.0) AS wait_ms",
-    "new": "IF(${B.held} > 0, ${B.heldMs} / ${B.held}, 0.0) AS wait_ms",
+    "old": "      `SELECT blob1 AS kind, ${B.fulls} AS fulls, ${B.fullDrops} AS full_drops, ${B.held} AS held, ${B.heldSent} AS held_sent, ${B.heldGone} AS held_gone, IF(${B.heldSent} > 0, ${B.heldMs} / ${B.heldSent}, 0.0) AS wait_ms, ${B.beats} AS beats, ${B.hitDrops} AS hit_drops FROM ${DATASET} WHERE ${since(h)} AND blob6 != '' GROUP BY kind ORDER BY fulls DESC LIMIT 40`,",
+    "new": "      `SELECT blob1 AS kind, ${B.fulls} AS fulls, ${B.fullDrops} AS full_drops, ${B.held} AS held, ${B.heldSent} AS held_sent, ${B.heldGone} AS held_gone, IF(${B.held} > 0, ${B.heldMs} / ${B.held}, 0.0) AS wait_ms, ${B.beats} AS beats, ${B.hitDrops} AS hit_drops FROM ${DATASET} WHERE ${since(h)} AND blob6 != '' GROUP BY kind ORDER BY fulls DESC LIMIT 40`,",
     "tests": [
       "test/server/relayload.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "RELAYLOAD-fulls-before-the-hold-read",
     "file": "tools/relayLoad.mjs",
-    "old": "WHERE ${since(h)} AND blob6 != '' GROUP BY kind ORDER BY fulls DESC LIMIT 40",
-    "new": "WHERE ${since(h)} GROUP BY kind ORDER BY fulls DESC LIMIT 40",
+    "old": "      `SELECT blob1 AS kind, ${B.fulls} AS fulls, ${B.fullDrops} AS full_drops, ${B.held} AS held, ${B.heldSent} AS held_sent, ${B.heldGone} AS held_gone, IF(${B.heldSent} > 0, ${B.heldMs} / ${B.heldSent}, 0.0) AS wait_ms, ${B.beats} AS beats, ${B.hitDrops} AS hit_drops FROM ${DATASET} WHERE ${since(h)} AND blob6 != '' GROUP BY kind ORDER BY fulls DESC LIMIT 40`,",
+    "new": "      `SELECT blob1 AS kind, ${B.fulls} AS fulls, ${B.fullDrops} AS full_drops, ${B.held} AS held, ${B.heldSent} AS held_sent, ${B.heldGone} AS held_gone, IF(${B.heldSent} > 0, ${B.heldMs} / ${B.heldSent}, 0.0) AS wait_ms, ${B.beats} AS beats, ${B.hitDrops} AS hit_drops FROM ${DATASET} WHERE ${since(h)} GROUP BY kind ORDER BY fulls DESC LIMIT 40`,",
     "tests": [
       "test/server/relayload.test.js"
     ]
@@ -419,8 +419,8 @@
   {
     "name": "RELAYLOAD-storage-reads-first",
     "file": "tools/relayLoad.mjs",
-    "old": "FROM ${DATASET} WHERE ${since(h)} ORDER BY writes DESC LIMIT 40",
-    "new": "FROM ${DATASET} WHERE ${since(h)} ORDER BY reads DESC LIMIT 40",
+    "old": "      `SELECT timestamp AS stamp, blob1 AS kind, double11 AS writes, double10 AS reads, double2 AS room_sockets, double15 AS room_peak FROM ${DATASET} WHERE ${since(h)} ORDER BY writes DESC LIMIT 40`,",
+    "new": "      `SELECT timestamp AS stamp, blob1 AS kind, double11 AS writes, double10 AS reads, double2 AS room_sockets, double15 AS room_peak FROM ${DATASET} WHERE ${since(h)} ORDER BY reads DESC LIMIT 40`,",
     "tests": [
       "test/server/relayload.test.js"
     ]
@@ -428,8 +428,8 @@
   {
     "name": "RELAYLOAD-storage-writes-the-reads",
     "file": "tools/relayLoad.mjs",
-    "old": "blob1 AS kind, double11 AS writes, double10 AS reads,",
-    "new": "blob1 AS kind, double10 AS writes, double11 AS reads,",
+    "old": "      `SELECT timestamp AS stamp, blob1 AS kind, double11 AS writes, double10 AS reads, double2 AS room_sockets, double15 AS room_peak FROM ${DATASET} WHERE ${since(h)} ORDER BY writes DESC LIMIT 40`,",
+    "new": "      `SELECT timestamp AS stamp, blob1 AS kind, double10 AS writes, double11 AS reads, double2 AS room_sockets, double15 AS room_peak FROM ${DATASET} WHERE ${since(h)} ORDER BY writes DESC LIMIT 40`,",
     "tests": [
       "test/server/relayload.test.js"
     ]

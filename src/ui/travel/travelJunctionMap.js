@@ -24,8 +24,15 @@
 // change would otherwise leak one cache entry per turn of the head.
 
 import {
-  JUNCTION_MAP_WIDTH, JUNCTION_MAP_HEIGHT, JUNCTION_MAP_W2, JUNCTION_MAP_H2,
-  JUNCTION_HERE_PT, junctionDirectionIndex, drawMapSection, DOT_SCALE, packRGBA,
+  JUNCTION_MAP_WIDTH,
+  JUNCTION_MAP_HEIGHT,
+  JUNCTION_MAP_W2,
+  JUNCTION_MAP_H2,
+  JUNCTION_HERE_PT,
+  junctionDirectionIndex,
+  drawMapSection,
+  DOT_SCALE,
+  packRGBA,
 } from './travelPathsOverlay.js';
 import { nativeMetrics } from '../native/nativePanel.js';
 
@@ -54,7 +61,7 @@ export class TravelJunctionMap {
     this._tex = null;
     this._key = null;
     this._dirty = false;
-    this.lastDrawn = null;   // { x, y, direction } - what the buffer holds
+    this.lastDrawn = null; // { x, y, direction } - what the buffer holds
   }
 
   /** The panel's rect on the 320x200 screen: ScreenPositionX/Y and
@@ -72,18 +79,25 @@ export class TravelJunctionMap {
     const s = this.deps.settings?.() ?? {};
     const originX = mapPixel.x - JUNCTION_MAP_W2;
     const originY = mapPixel.y - JUNCTION_MAP_H2;
-    drawMapSection(this.buf, {
-      originX, originY, width: JUNCTION_MAP_WIDTH, height: JUNCTION_MAP_HEIGHT,
-      circular: s.junctionMapCircular !== false,
-    }, {
-      pathsAt: (x, y, type) => this.deps.pathsAt?.(x, y, type) ?? 0,
-      locationAt: (x, y) => this.deps.locationAt?.(x, y) ?? null,
-      colorOf: (t) => this.deps.locationColorOf?.(t) ?? null,
-      onlyLargeDots: !(s.variableSizeDots ?? false),
-      markedMapId: this.deps.markedMapId?.() ?? -1,
-      markColor: s.markLocationColor ? packRGBA(...s.markLocationColor) : null,
-      showPaths: [true, true, false, false],
-    });
+    drawMapSection(
+      this.buf,
+      {
+        originX,
+        originY,
+        width: JUNCTION_MAP_WIDTH,
+        height: JUNCTION_MAP_HEIGHT,
+        circular: s.junctionMapCircular !== false,
+      },
+      {
+        pathsAt: (x, y, type) => this.deps.pathsAt?.(x, y, type) ?? 0,
+        locationAt: (x, y) => this.deps.locationAt?.(x, y) ?? null,
+        colorOf: (t) => this.deps.locationColorOf?.(t) ?? null,
+        onlyLargeDots: !(s.variableSizeDots ?? false),
+        markedMapId: this.deps.markedMapId?.() ?? -1,
+        markColor: s.markLocationColor ? packRGBA(...s.markLocationColor) : null,
+        showPaths: [true, true, false, false],
+      },
+    );
     const player = s.playerColor ? packRGBA(...s.playerColor) : packRGBA(255, 0, 0, 255);
     this.buf[JUNCTION_HERE_PT] = player;
     const pip = junctionDirectionIndex(direction);
@@ -96,8 +110,13 @@ export class TravelJunctionMap {
    *  CHANGED, which is what keeps a x50 journey from rebuilding a
    *  hundred-texel texture every frame. */
   update(mapPixel, direction) {
-    if (this.lastDrawn && this.lastDrawn.x === mapPixel.x && this.lastDrawn.y === mapPixel.y
-      && this.lastDrawn.direction === direction) return false;
+    if (
+      this.lastDrawn &&
+      this.lastDrawn.x === mapPixel.x &&
+      this.lastDrawn.y === mapPixel.y &&
+      this.lastDrawn.direction === direction
+    )
+      return false;
     this.draw(mapPixel, direction);
     return true;
   }
@@ -116,7 +135,10 @@ export class TravelJunctionMap {
       // is flipped at upload (ui/travel/travelMapWindow.js:"_upload(renderer, kind, buf, w = REGION_W, h = REGION_H)")
       const flipped = new Uint32Array(this.buf.length);
       for (let row = 0; row < JUNCTION_TEX_H; row++) {
-        flipped.set(this.buf.subarray((JUNCTION_TEX_H - row - 1) * JUNCTION_TEX_W, (JUNCTION_TEX_H - row) * JUNCTION_TEX_W), row * JUNCTION_TEX_W);
+        flipped.set(
+          this.buf.subarray((JUNCTION_TEX_H - row - 1) * JUNCTION_TEX_W, (JUNCTION_TEX_H - row) * JUNCTION_TEX_W),
+          row * JUNCTION_TEX_W,
+        );
       }
       this._key = `junction-${++_texVer}`;
       // AUDIT-TO1 E3: the FILTER is set at upload, which is the only
@@ -126,16 +148,22 @@ export class TravelJunctionMap {
       // four undefineds into uSrc - a NaN quad that never drew a texel.
       // Point is the mod's default (:182), Bilinear and Trilinear both
       // map to the port's linear (departure 7).
-      this._tex = renderer.uploadTexture('travelto', this._key,
+      this._tex = renderer.uploadTexture(
+        'travelto',
+        this._key,
         { width: JUNCTION_TEX_W, height: JUNCTION_TEX_H, colors: flipped },
-        { smooth: filterModeName(s.junctionMapFilterMode ?? 0) === 'linear', mips: false, variant: '#travelto' });
+        { smooth: filterModeName(s.junctionMapFilterMode ?? 0) === 'linear', mips: false, variant: '#travelto' },
+      );
       this._dirty = false;
     }
     // :356-357 - an opaque panel paints its background colour first
     if (s.junctionMapOpaque && s.junctionMapBackground) {
       const [r, g, b, a] = s.junctionMapBackground;
-      renderer.drawScreenQuad?.(null, { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s },
-        { color: [r / 255, g / 255, b / 255, a / 255] });
+      renderer.drawScreenQuad?.(
+        null,
+        { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s },
+        { color: [r / 255, g / 255, b / 255, a / 255] },
+      );
     }
     if (this._tex) {
       renderer.drawScreenQuad?.(this._tex, { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s });
@@ -144,8 +172,11 @@ export class TravelJunctionMap {
 
   dispose(renderer) {
     if (this._key && renderer) renderer.releaseTexture?.('travelto', this._key);
-    this._key = null; this._tex = null;
+    this._key = null;
+    this._tex = null;
   }
 }
 
-export function createTravelJunctionMap(deps = {}) { return new TravelJunctionMap(deps); }
+export function createTravelJunctionMap(deps = {}) {
+  return new TravelJunctionMap(deps);
+}

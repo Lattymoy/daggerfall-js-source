@@ -30,8 +30,8 @@
   {
     "name": "AUDIT-CHAP5-E1-EFFECT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "crackdownMerit: 1.5, crackdownShut: 30,",
-    "new": "crackdownMerit: 1.5, crackdownPay: 1.5, crackdownShut: 30,",
+    "old": "  crackdownShut: 30,",
+    "new": "  crackdownPay: 1.5,\n  crackdownShut: 30,",
     "tests": [
       "test/net/audit_chap5.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "AUDIT-CHAP5-E3-DRAW",
     "file": "src/net/npcChapterLaw.js",
-    "old": "let r = drawOf(gateHash(CHAPTER_EVENT_SALT, season, chapterTitleKey(faction, region)), total);",
-    "new": "let r = gateHash(CHAPTER_EVENT_SALT, season, chapterTitleKey(faction, region)) % total;",
+    "old": "  let r = drawOf(gateHash(CHAPTER_EVENT_SALT, season, chapterTitleKey(faction, region)), total); // AUDIT CHAP5 E3",
+    "new": "  let r = gateHash(CHAPTER_EVENT_SALT, season, chapterTitleKey(faction, region)) % total; // AUDIT CHAP5 E3",
     "tests": [
       "test/net/audit_chap5.test.js",
       "test/net/chap6a_events.test.js"
@@ -49,8 +49,8 @@
   {
     "name": "AUDIT-CHAP5-E3-SCHISM",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const out = drawOf(gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)), own.length);",
-    "new": "const out = gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)) % own.length;",
+    "old": "  const out = drawOf(gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)), own.length); // AUDIT CHAP5 E3",
+    "new": "  const out = gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)) % own.length; // AUDIT CHAP5 E3",
     "tests": [
       "test/net/chap6b_backing.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "AUDIT-CHAP5-E3-SCALE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "Math.floor((h / 2 ** 32) * n);",
-    "new": "Math.floor((h / 2 ** 31) * n) % n;",
+    "old": "export const drawOf = (/** @type {number} */ h, /** @type {number} */ n) => Math.floor((h / 2 ** 32) * n);",
+    "new": "export const drawOf = (/** @type {number} */ h, /** @type {number} */ n) => Math.floor((h / 2 ** 31) * n) % n;",
     "tests": [
       "test/net/audit_chap5.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "AUDIT-CHAP5-D3-ORDERS",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (ORDER_SET.has(/** @type {number} */ (faction)) || hallHidden(faction)) return ['writs'];",
-    "new": "if (hallHidden(faction)) return ['writs'];",
+    "old": "  if (ORDER_SET.has(/** @type {number} */ (faction)) || hallHidden(faction)) return ['writs'];",
+    "new": "  if (hallHidden(faction)) return ['writs'];",
     "tests": [
       "test/net/audit_chap5.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "AUDIT-CHAP5-D3-HIDDEN",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (ORDER_SET.has(/** @type {number} */ (faction)) || hallHidden(faction)) return ['writs'];",
-    "new": "if (ORDER_SET.has(/** @type {number} */ (faction))) return ['writs'];",
+    "old": "  if (ORDER_SET.has(/** @type {number} */ (faction)) || hallHidden(faction)) return ['writs'];",
+    "new": "  if (ORDER_SET.has(/** @type {number} */ (faction))) return ['writs'];",
     "tests": [
       "test/net/audit_chap5.test.js",
       "test/net/chap6a_events.test.js"
@@ -86,8 +86,8 @@
   {
     "name": "AUDIT-CHAP5-D3-FIGHTERS",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (faction === GUILD_FACTION_IDS.FightersGuild || faction === DIVINES.Kynareth) return ['training', 'writs'];",
-    "new": "if (faction === DIVINES.Kynareth) return ['training', 'writs'];",
+    "old": "  if (faction === GUILD_FACTION_IDS.FightersGuild || faction === DIVINES.Kynareth) return ['training', 'writs'];",
+    "new": "  if (faction === DIVINES.Kynareth) return ['training', 'writs'];",
     "tests": [
       "test/net/audit_chap5.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "AUDIT-CHAP5-D3-KYNARETH",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (faction === GUILD_FACTION_IDS.FightersGuild || faction === DIVINES.Kynareth) return ['training', 'writs'];",
-    "new": "if (faction === GUILD_FACTION_IDS.FightersGuild) return ['training', 'writs'];",
+    "old": "  if (faction === GUILD_FACTION_IDS.FightersGuild || faction === DIVINES.Kynareth) return ['training', 'writs'];",
+    "new": "  if (faction === GUILD_FACTION_IDS.FightersGuild) return ['training', 'writs'];",
     "tests": [
       "test/net/audit_chap5.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "AUDIT-CHAP5-D3-WEIGHT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  if (chapterDoctrinesFor(faction).length < 2) { w.calm += w.schism; w.schism = 0; }   // AUDIT CHAP5 D3: no two doctrines, no Schism\n",
-    "new": "",
+    "old": "  if (chapterDoctrinesFor(faction).length < 2) {\n    w.calm += w.schism;\n    w.schism = 0;\n  } // AUDIT CHAP5 D3: no two doctrines, no Schism\n  if (band === 'ascendant') w.succession += E.successionAscendant;",
+    "new": "  if (band === 'ascendant') w.succession += E.successionAscendant;",
     "tests": [
       "test/net/audit_chap5.test.js"
     ]
@@ -113,8 +113,8 @@
   {
     "name": "AUDIT-CHAP5-D3-OWN",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  const own = chapterDoctrinesFor(faction);\n",
-    "new": "  const own = [...CHAPTER_DOCTRINES];\n",
+    "old": "  const own = chapterDoctrinesFor(faction);",
+    "new": "  const own = [...CHAPTER_DOCTRINES];",
     "tests": [
       "test/net/audit_chap5.test.js"
     ]
@@ -122,8 +122,8 @@
   {
     "name": "AUDIT-CHAP5-D3-TWO",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (own.length < 3) return own.length === 2 ? own : [];",
-    "new": "if (own.length < 3) return own;",
+    "old": "  if (own.length < 3) return own.length === 2 ? own : [];",
+    "new": "  if (own.length < 3) return own;",
     "tests": [
       "test/net/audit_chap5.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "AUDIT-CHAP5-D1-SEVEN",
     "file": "src/net/npcChapterLaw.js",
-    "old": "whole(row.rank) !== ROLL_BOOK_RANK_MAX || ",
-    "new": "",
+    "old": "  if (\n    !row ||\n    typeof row !== 'object' ||\n    whole(row.rank) !== ROLL_BOOK_RANK_MAX ||\n    !(typeof rank === 'number' && rank > whole(row.rank))\n  )\n    return book;",
+    "new": "  if (!row || typeof row !== 'object' || !(typeof rank === 'number' && rank > whole(row.rank))) return book;",
     "tests": [
       "test/net/audit_chap5.test.js"
     ]
@@ -532,8 +532,8 @@
   {
     "name": "AUDIT-CHAP5-T14-WIN-INT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (!b || typeof b.guild !== 'string' || !Number.isSafeInteger(b.amount)",
-    "new": "if (!b || typeof b.guild !== 'string'",
+    "old": "    if (!b || typeof b.guild !== 'string' || !Number.isSafeInteger(b.amount)) continue;",
+    "new": "    if (!b || typeof b.guild !== 'string') continue;",
     "tests": [
       "test/net/audit_chap5.test.js"
     ]
@@ -541,8 +541,8 @@
   {
     "name": "AUDIT-CHAP5-T11-TOP-Y",
     "file": "src/scenes/chapterBanners.js",
-    "old": "top[1] = t[1] + b.a.top[1];",
-    "new": "top[1] = t[1];",
+    "old": "        top[1] = t[1] + b.a.top[1];",
+    "new": "        top[1] = t[1];",
     "tests": [
       "test/net/audit_chap5.test.js"
     ]
@@ -550,8 +550,8 @@
   {
     "name": "AUDIT-CHAP5-T11-TOP-X",
     "file": "src/scenes/chapterBanners.js",
-    "old": "top[0] = t[0] + b.a.top[0];",
-    "new": "top[0] = t[0] - b.a.top[0];",
+    "old": "        top[0] = t[0] + b.a.top[0];",
+    "new": "        top[0] = t[0] - b.a.top[0];",
     "tests": [
       "test/net/audit_chap5.test.js"
     ]
@@ -559,8 +559,8 @@
   {
     "name": "AUDIT-CHAP5-T11-TOP-Z",
     "file": "src/scenes/chapterBanners.js",
-    "old": "top[2] = t[2] + b.a.top[2];",
-    "new": "top[2] = t[2] - b.a.top[2];",
+    "old": "        top[2] = t[2] + b.a.top[2];",
+    "new": "        top[2] = t[2] - b.a.top[2];",
     "tests": [
       "test/net/audit_chap5.test.js"
     ]
@@ -568,8 +568,8 @@
   {
     "name": "AUDIT-CHAP5-T11-OUT",
     "file": "src/scenes/chapterBanners.js",
-    "old": "right: b.a.right, out: b.a.out }",
-    "new": "right: b.a.out, out: b.a.right }",
+    "old": "      right: b.a.right,\n      out: b.a.out,",
+    "new": "      right: b.a.out,\n      out: b.a.right,",
     "tests": [
       "test/net/audit_chap5.test.js"
     ]
@@ -586,8 +586,8 @@
   {
     "name": "AUDIT-CHAP5-T11-SORT",
     "file": "src/scenes/chapterBanners.js",
-    "old": "      if (e) { eyeAt = e; nearest.sort(byEye); }",
-    "new": "      if (e) { eyeAt = e; }",
+    "old": "        nearest.sort(byEye);\n      }",
+    "new": "      }",
     "tests": [
       "test/net/audit_chap5.test.js"
     ]

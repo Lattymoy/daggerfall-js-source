@@ -85,8 +85,8 @@
   {
     "name": "AUDWB-A1-a-present-seat-freed",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    if (present.has(sub) || hasPart(p)) continue;",
-    "new": "    if (hasPart(p)) continue;",
+    "old": "    if (present.has(sub) || hasPart(p)) continue; // AUDIT WBX R2: a real part in the fight keeps a seat",
+    "new": "    if (hasPart(p)) continue; // AUDIT WBX R2: a real part in the fight keeps a seat",
     "tests": [
       "test/net/gate/auditwb_relay.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "AUDWB-A1-a-strikers-seat-freed",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    if (present.has(sub) || hasPart(p)) continue;",
-    "new": "    if (present.has(sub) || p.stoodMs >= SEAT_KEEP_MS) continue;",
+    "old": "    if (present.has(sub) || hasPart(p)) continue; // AUDIT WBX R2: a real part in the fight keeps a seat",
+    "new": "    if (present.has(sub) || p.stoodMs >= SEAT_KEEP_MS) continue; // AUDIT WBX R2: a real part in the fight keeps a seat",
     "tests": [
       "test/net/gate/auditwb_relay.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "AUDWB-A1-a-standers-seat-freed",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    if (present.has(sub) || hasPart(p)) continue;",
-    "new": "    if (present.has(sub) || p.dealt >= RECEIPT_SHARE * p.share) continue;",
+    "old": "    if (present.has(sub) || hasPart(p)) continue; // AUDIT WBX R2: a real part in the fight keeps a seat",
+    "new": "    if (present.has(sub) || p.dealt >= RECEIPT_SHARE * p.share) continue; // AUDIT WBX R2: a real part in the fight keeps a seat",
     "tests": [
       "test/net/gate/auditwb_relay.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "AUDWB-A1-the-fraction-lost",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  f.hp = f.max * frac;\n  if (!(f.max > 0)) f.idle = frac;",
-    "new": "  f.hp = Math.min(f.hp, f.max);\n  if (!(f.max > 0)) f.idle = frac;",
+    "old": "  f.hp = f.max * frac;",
+    "new": "  f.hp = Math.min(f.hp, f.max);",
     "tests": [
       "test/net/gate/auditwb_relay.test.js"
     ]

@@ -198,7 +198,7 @@ test('PVP-KIT THE WIRING: one host line; the cast engine reads the gift reach; o
   assert.match(h, /const allyReach = sp\.pvpReach \?\? allyReachFor\(sp\.rangeType\);/);
   const hb = readFileSync(new URL('../../../src/ui/enhanced/enhancedHotbar.js', import.meta.url), 'utf8');
   const qs = readFileSync(new URL('../../../src/systems/quickslots.js', import.meta.url), 'utf8');
-  assert.match(qs, /if \(e\.type === 'kit'\) \{ const r = kitPress\?\.\(i, \{ \.\.\.e\.kit \}\) \?\? 'none';/);
+  assert.match(qs, /if \(e\.type === 'kit'\) \{\n\s*const r = kitPress\?\.\(i, \{ \.\.\.e\.kit \}\) \?\? 'none';/);
   assert.doesNotMatch(hb, /keyClaim/, 'no second bar takes the keys');
   const fx = readFileSync(new URL('../../../src/systems/effects.js', import.meta.url), 'utf8');
   assert.match(fx, /\|\| spell\?\.pvpKit != null;/);

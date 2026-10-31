@@ -2,8 +2,8 @@
   {
     "name": "RR3b-1-the-location-key-is-not-copied-for-readlocationidfast",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "  dfLocation.mapTableData.locationId = dfLocation.exterior.recordElement.header.locationId;\n",
-    "new": "",
+    "old": "  dfLocation.mapTableData.locationId = dfLocation.exterior.recordElement.header.locationId;\n  const locationIndex = dfRegion.locationCount++;",
+    "new": "  const locationIndex = dfRegion.locationCount++;",
     "tests": [
       "test/systems/talk/rr3b_worlddata.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RR3b-2-the-new-location-forgets-unknown2",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "  dfLocation.exterior.recordElement.header.unknown2 = locationIndex >>> 0;\n  dfRegion.mapTable.push",
-    "new": "  dfRegion.mapTable.push",
+    "old": "  dfLocation.exterior.recordElement.header.unknown2 = locationIndex >>> 0;\n  dfRegion.mapTable.push(dfLocation.mapTableData);",
+    "new": "  dfRegion.mapTable.push(dfLocation.mapTableData);",
     "tests": [
       "test/systems/talk/rr3b_worlddata.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RR3b-4-the-cached-region-is-not-relaid",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "    if (cached !== NO_REPLACEMENT) { copyRegionInto(cached, dfRegion); return true; }",
-    "new": "    if (cached !== NO_REPLACEMENT) { return true; }",
+    "old": "      copyRegionInto(cached, dfRegion);\n      return true;",
+    "new": "      return true;",
     "tests": [
       "test/systems/talk/rr3b_worlddata.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RR3b-5-a-mod-that-is-off-still-ships-its-assets",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "  return a.isOn?.() ?? true;\n}",
-    "new": "  return true;\n}",
+    "old": "  return a.isOn?.() ?? true;",
+    "new": "  return true;",
     "tests": [
       "test/systems/talk/rr3b_worlddata.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RR3b-7-the-new-block-index-starts-at-zero",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "  if (nextBlockIndex === 0) nextBlockIndex = _blocksFile.count;\n",
-    "new": "",
+    "old": "  if (nextBlockIndex === 0) nextBlockIndex = _blocksFile.count;\n  for (const blockName of dfLocation.exterior?.exteriorData?.blockNames ?? []) {",
+    "new": "  for (const blockName of dfLocation.exterior?.exteriorData?.blockNames ?? []) {",
     "tests": [
       "test/systems/talk/rr3b_worlddata.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "RR3b-8-a-classic-block-name-is-reassigned",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "    if (_blocksFile.getBlockIndex(blockName) === -1) assignNextIndex(blockName);\n  }\n  for (const dungeonBlock",
-    "new": "    assignNextIndex(blockName);\n  }\n  for (const dungeonBlock",
+    "old": "    if (_blocksFile.getBlockIndex(blockName) === -1) assignNextIndex(blockName);",
+    "new": "    assignNextIndex(blockName);",
     "tests": [
       "test/systems/talk/rr3b_worlddata.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RR3b-9-no-reader-still-caches-the-region",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "  if (!_blocksFile) return false;   // ContentReader/BlockFileReader null",
-    "new": "  if (!_blocksFile) return true;   // ContentReader/BlockFileReader null",
+    "old": "  if (!_blocksFile) return false; // ContentReader/BlockFileReader null: nothing assigned, and the region is not cached",
+    "new": "  if (!_blocksFile) return true; // ContentReader/BlockFileReader null: nothing assigned, and the region is not cached",
     "tests": [
       "test/systems/talk/rr3b_worlddata.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "RR3b-10-a-variant-block-with-no-file-is-cached-as-none",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "    if (variant === NO_VARIANT) cacheBlock(blockName, NO_REPLACEMENT);\n    return null;",
-    "new": "    cacheBlock(blockKey, NO_REPLACEMENT);\n    return null;",
+    "old": "    if (variant === NO_VARIANT) cacheBlock(blockName, NO_REPLACEMENT);",
+    "new": "    cacheBlock(blockKey, NO_REPLACEMENT);",
     "tests": [
       "test/systems/talk/rr3b_worlddata.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RR3b-11-the-json-block-keeps-its-own-index",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "  const dfBlock = blockFromJson(json, block, blockName);\n  if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);   // :382-384",
-    "new": "  const dfBlock = blockFromJson(json, json.Index ?? block, blockName);\n  if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);   // :382-384",
+    "old": "  // AUDIT-RR2 G14 refusal of RDB/RDI files is lifted now that the converters below read both halves\n  const dfBlock = blockFromJson(json, block, blockName);",
+    "new": "  // AUDIT-RR2 G14 refusal of RDB/RDI files is lifted now that the converters below read both halves\n  const dfBlock = blockFromJson(json, json.Index ?? block, blockName);",
     "tests": [
       "test/systems/talk/rr3b_worlddata.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RR3b-12-the-building-is-served-without-its-variant",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "  const variant = getBuildingVariantHere(blockName, recordIndex, NO_VARIANT);\n  const key = `${blockIndex}|${recordIndex}|${variant}`;",
-    "new": "  const variant = '_master';\n  const key = `${blockIndex}|${recordIndex}|${variant}`;",
+    "old": "  const variant = getBuildingVariantHere(blockName, recordIndex, NO_VARIANT);",
+    "new": "  const variant = '_master';",
     "tests": [
       "test/systems/talk/rr3b_worlddata.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "RR3b-16-the-location-type-is-not-spelled",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "locationType: enumOf(LOCATION_TYPES, mt.LocationType, LOCATION_TYPES.None),",
-    "new": "locationType: LOCATION_TYPES.None,",
+    "old": "      locationType: enumOf(LOCATION_TYPES, mt.LocationType, LOCATION_TYPES.None),",
+    "new": "      locationType: LOCATION_TYPES.None,",
     "tests": [
       "test/systems/talk/rr3b_worlddata.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "RR3b-17-the-building-list-is-not-padded",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "  while (buildingDataList.length < 32) buildingDataList.push({ ...emptyBuildingData(), buildingType: -1 });",
-    "new": "",
+    "old": "  while (buildingDataList.length < 32) buildingDataList.push({ ...emptyBuildingData(), buildingType: -1 }); // AUDIT-RR2 G19: DFU's list is the JSON's length; the port's 32-slot shape pads with BuildingTypes.None (-1), not Alchemist (0)",
+    "new": "  // AUDIT-RR2 G19: DFU's list is the JSON's length; the port's 32-slot shape pads with BuildingTypes.None (-1), not Alchemist (0)",
     "tests": [
       "test/systems/talk/rr3b_worlddata.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "RR3b-18-the-block-positions-forget-the-subrecords",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "xPos: subRecords[i]?.xPos ?? 0, zPos: subRecords[i]?.zPos ?? 0, yRotation: subRecords[i]?.yRotation ?? 0 }));",
-    "new": "xPos: 0, zPos: 0, yRotation: 0 }));",
+    "old": "  const blockPositions = new Array(32).fill(null).map((_, i) => ({\n    unknown1: 0,\n    unknown2: 0,\n    xPos: subRecords[i]?.xPos ?? 0,\n    zPos: subRecords[i]?.zPos ?? 0,\n    yRotation: subRecords[i]?.yRotation ?? 0,\n  }));",
+    "new": "  const blockPositions = new Array(32)\n    .fill(null)\n    .map((_, i) => ({ unknown1: 0, unknown2: 0, xPos: 0, zPos: 0, yRotation: 0 }));",
     "tests": [
       "test/systems/talk/rr3b_worlddata.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "RR3b-19-the-merge-keeps-the-pool-draw",
     "file": "src/systems/talk/talkTopics.js",
-    "old": "          if (drawn) drawn.used = false;\n",
-    "new": "",
+    "old": "          if (drawn) drawn.used = false;\n          list[i].factionId = replacement.factionId;",
+    "new": "          list[i].factionId = replacement.factionId;",
     "tests": [
       "test/systems/talk/rr3b_worlddata.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "RR3b-21-the-merge-takes-the-type-only-with-a-faction",
     "file": "src/systems/talk/talkTopics.js",
-    "old": "        list[i].buildingType = replacement.buildingType;\n      }\n      // RMBLayout.cs:677-683",
-    "new": "      }\n      // RMBLayout.cs:677-683",
+    "old": "        list[i].buildingType = replacement.buildingType;\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/talk/rr3b_worlddata.test.js"
     ]

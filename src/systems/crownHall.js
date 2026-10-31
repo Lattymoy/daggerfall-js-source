@@ -32,8 +32,8 @@
 import { FACTION_TYPES } from '../formats/factionFile.js';
 import { BANNER_H_M } from '../render/bannerPass.js';
 import { BULLETIN_BOARD_MODEL_ID } from '../world/rmbLayout.js';
-import { isProvinceFactionId } from './faction/provinceFactions.js';   // PROVINCE-COURTS: a province's ruler
-import { CASTLE_SEATS } from '../world/capitalCastles.js';   // PROVINCE-COURTS: the castle copy's throne seat
+import { isProvinceFactionId } from './faction/provinceFactions.js'; // PROVINCE-COURTS: a province's ruler
+import { CASTLE_SEATS } from '../world/capitalCastles.js'; // PROVINCE-COURTS: the castle copy's throne seat
 
 /** Daggerfall's chest (worldTooltips.js's "Chest", the first of its three). */
 export const CROWN_HALL_CHEST_MODEL = 41811;
@@ -54,11 +54,20 @@ export const CROWN_HALL_BANNER_OUT_M = 0.15;
 /** Where the board and the chest are tried: paces into the room and to the side, in order, the first that stands. A
  *  piece keeps CROWN_HALL_CLEAR_M from anything the line to it meets, and its floor within CROWN_HALL_STEP_M of the
  *  throne room's. */
-export const CROWN_HALL_SPOTS = Object.freeze([[2.5, 2], [2.5, 1.5], [2, 1.5], [3, 2], [2, 1], [1.5, 1]]);
+export const CROWN_HALL_SPOTS = Object.freeze([
+  [2.5, 2],
+  [2.5, 1.5],
+  [2, 1.5],
+  [3, 2],
+  [2, 1],
+  [1.5, 1],
+]);
 export const CROWN_HALL_CLEAR_M = 0.6;
 export const CROWN_HALL_STEP_M = 0.6;
 /** Eight ways round, the first the castle's +z. */
-const WAYS = Object.freeze(Array.from({ length: 8 }, (_, i) => Object.freeze([Math.sin((i * Math.PI) / 4), Math.cos((i * Math.PI) / 4)])));
+const WAYS = Object.freeze(
+  Array.from({ length: 8 }, (_, i) => Object.freeze([Math.sin((i * Math.PI) / 4), Math.cos((i * Math.PI) / 4)])),
+);
 
 /**
  * THE CROWN'S RULER - the faction id of the region's ruler, or null: the region's Province faction (type 7) whose first
@@ -90,7 +99,10 @@ export function crownHallPlan(at, ray) {
   if (!Number.isFinite(drop)) return null;
   const floor = at.y + 0.5 - drop;
   const eye = floor + CROWN_HALL_EYE_M;
-  const look = (x, z, w, max) => { const d = ray([x, eye, z], [w[0], 0, w[1]], max); return Number.isFinite(d) ? d : max; };
+  const look = (x, z, w, max) => {
+    const d = ray([x, eye, z], [w[0], 0, w[1]], max);
+    return Number.isFinite(d) ? d : max;
+  };
   // the wall behind the throne: the nearest surface round the ruler, looked for over a throne's back (the first, on a
   // tie - an axis before its diagonal in a square room); the room opens the other way
   const high = floor + CROWN_HALL_WALL_EYE_M;
@@ -98,10 +110,13 @@ export function crownHallPlan(at, ray) {
   let wall = Infinity;
   for (const w of WAYS) {
     const d = ray([at.x, high, at.z], [w[0], 0, w[1]], CROWN_HALL_LOOK_M);
-    if (Number.isFinite(d) && d < wall - 1e-6) { wall = d; back = w; }
+    if (Number.isFinite(d) && d < wall - 1e-6) {
+      wall = d;
+      back = w;
+    }
   }
   const open = [-back[0], -back[1]];
-  const side = [open[1], -open[0]];   // the aisle's one side; its other, negated
+  const side = [open[1], -open[0]]; // the aisle's one side; its other, negated
   // THE BANNERS: on that wall, facing into the room, the cloth's top under the ceiling
   const banners = [];
   if (wall <= CROWN_HALL_WALL_M) {
@@ -111,7 +126,7 @@ export function crownHallPlan(at, ray) {
     if (top - BANNER_H_M >= floor) {
       const d = wall - CROWN_HALL_BANNER_OUT_M;
       const out = [open[0], 0, open[1]];
-      const right = [-out[2], 0, out[0]];   // AUDIT GUILD1d R4: the cloth's right from its face, never from the wall's order
+      const right = [-out[2], 0, out[0]]; // AUDIT GUILD1d R4: the cloth's right from its face, never from the wall's order
       for (const s of [-1, 1]) {
         const x = at.x + back[0] * d + side[0] * s * CROWN_HALL_BANNER_SIDE_M;
         const z = at.z + back[1] * d + side[1] * s * CROWN_HALL_BANNER_SIDE_M;
@@ -124,11 +139,13 @@ export function crownHallPlan(at, ray) {
     for (const [fwd, lat] of CROWN_HALL_SPOTS) {
       const x = at.x + open[0] * fwd + side[0] * s * lat;
       const z = at.z + open[1] * fwd + side[1] * s * lat;
-      const dx = x - at.x, dz = z - at.z, len = Math.hypot(dx, dz);
+      const dx = x - at.x,
+        dz = z - at.z,
+        len = Math.hypot(dx, dz);
       if (look(at.x, at.z, [dx / len, dz / len], len + CROWN_HALL_CLEAR_M) < len + CROWN_HALL_CLEAR_M) continue;
       const under = ray([x, eye, z], [0, -1, 0], CROWN_HALL_EYE_M + CROWN_HALL_STEP_M);
       if (!Number.isFinite(under) || Math.abs(eye - under - floor) > CROWN_HALL_STEP_M) continue;
-      const face = [-side[0] * s, -side[1] * s];   // towards the aisle
+      const face = [-side[0] * s, -side[1] * s]; // towards the aisle
       return { pos: [x, eye - under, z], yawDeg: (Math.atan2(face[0], face[1]) * 180) / Math.PI, model };
     }
     return null;
@@ -147,12 +164,15 @@ export const crownRulerHere = (people, rulerId) => {
   const list = people ?? [];
   // PROVINCE-COURTS: a province's ruler (systems/faction/provinceFactions.js) sits a capital's castle under DFU's
   // generic ruler - the copy's throne seat (world/capitalCastles.js CASTLE_SEATS), one copy serving two capitals
-  return list.find((p) => p?.factionID === rulerId) ?? (isProvinceFactionId(rulerId) ? list.find((p) => p?.factionID === CASTLE_SEATS.ruler.faction) ?? null : null);
+  return (
+    list.find((p) => p?.factionID === rulerId) ??
+    (isProvinceFactionId(rulerId) ? (list.find((p) => p?.factionID === CASTLE_SEATS.ruler.faction) ?? null) : null)
+  );
 };
 
 /** The throne room's words. */
 export const CROWN_HALL_TEXT = Object.freeze({
   board: 'Roster board',
   chest: 'Stores chest',
-  chestShut: (name) => `This chest is ${name || 'the crown\'s guild'}'s. Its Stores are for its members.`,
+  chestShut: (name) => `This chest is ${name || "the crown's guild"}'s. Its Stores are for its members.`,
 });

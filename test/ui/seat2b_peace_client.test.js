@@ -11,8 +11,9 @@ import { byClass } from '../chargenDom.mjs';
 import { createTownSeatBook, SEAT_TOWERS_KEY, SEAT_TOWERS_SAID_MAX, SEAT_TOWERS_EVERY_MS } from '../../src/net/townSeatBook.js';
 import { storedText } from '../../src/systems/smithItems.js';
 import { SIEGE_STAYS_LINE, STOCK_STAYS_LINE } from '../../src/ui/professions/profPages.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
-const W = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+const W = hostText('src/scenes/world.js');
 const memStore = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)), m }; };
 const SH = { id: 'gsh', name: 'The Silver Hand', tag: 'SH' };
 
@@ -126,7 +127,7 @@ test('SEAT2b part two THE HOST\'S SEAMS: a members\' Harbour is the travel map\'
   assert.match(W, /const seaPixel = \(x, y\) => isWaterPixel\(maps\.getClimateIndex\(x, y\), woods\.getHeightMapValue\(x, y\)\);/);
   assert.match(W, /port: coastalAt\(town\.px, town\.py, seaPixel, csaIsPortTown\(town\.px, town\.py\)\),/);
   assert.match(W, /const \{ seat \} = myHall\(recipeById\(recipe\)\?\.profession\);/);   // PIN MOVED (AUDIT PROF-541 R2-H1): fortLaw.js hallStepsFor (prof9_client.test.js drives it)
-  assert.match(W, /const myHall = \(profession\) => hallStepsFor\(seatHere\(_musicLoc\?\.mapTableData\?\.mapId\), guildBook\?\.guild\?\.id \?\? null, profession\);/);
+  assert.match(W, /const myHall = \(profession\) => hallStepsFor\(seatHere\(host\._musicLoc\?\.mapTableData\?\.mapId\), host\.guildBook\?\.guild\?\.id \?\? null, profession\);/);
   assert.match(W, /name: typeof playerEntity\?\.name === 'string' \? playerEntity\.name : null, seat, \.\.\.more \}, profMintCraft\);/);   // PIN MOVED (MASTER-ART): the page's other asks handed on after the seat
   assert.match(W, /\{ const g = guildBook\?\.guild\?\.id \?\? null; if \(g && seatBook\?\.towersDue\(g\)\) seatBook\.towers\(g, \(t\) => townTalk\.say\(t, 6\)\)\.catch\(\(\) => \{\}\); \}/);
   assert.match(W, /const made = rec\?\.kind === 'siege' \? storedText\(rec\.name, Number\(r\.data\.count\) \|\| 1\) : craftedText\(mintPieces\(r\.data\)\);/);

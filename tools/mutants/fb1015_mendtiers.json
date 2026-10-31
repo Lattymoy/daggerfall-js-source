@@ -40,8 +40,8 @@
   {
     "name": "MEND-TIERS-the-tier-test-reversed",
     "file": "src/systems/enchantments.js",
-    "old": "if (!best || tier < bestTier ||",
-    "new": "if (!best || tier > bestTier ||",
+    "old": "    if (!best || tier < bestTier || (tier === bestTier && mendOrder(it, best) < 0)) {",
+    "new": "    if (!best || tier > bestTier || (tier === bestTier && mendOrder(it, best) < 0)) {",
     "tests": [
       "test/systems/fb1015_mendtiers.test.js"
     ]

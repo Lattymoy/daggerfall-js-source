@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-PARTY-UI-1-the-leader-indoors-read-as-out",
     "file": "src/systems/party/partyTravel.js",
-    "old": "round: null, outdoors: host.outdoors(), hub:",
-    "new": "round: null, outdoors: true, hub:",
+    "old": "        return {\n          role: 'leader',\n          round: null,\n          outdoors: host.outdoors(),\n          hub: host.relayOk(),\n          gathered: company,\n          held: !!t,\n        };",
+    "new": "        return { role: 'leader', round: null, outdoors: true, hub: host.relayOk(), gathered: company, held: !!t };",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-PARTY-UI-2-an-old-hub-read-as-new",
     "file": "src/systems/party/partyTravel.js",
-    "old": "hub: host.relayOk(), gathered: company",
-    "new": "hub: true, gathered: company",
+    "old": "        return {\n          role: 'leader',\n          round: null,\n          outdoors: host.outdoors(),\n          hub: host.relayOk(),\n          gathered: company,\n          held: !!t,\n        };",
+    "new": "        return { role: 'leader', round: null, outdoors: host.outdoors(), hub: true, gathered: company, held: !!t };",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-PARTY-UI-2-nobody-gathered-read-as-company",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (s.leads()) company = host.gathered().length > 0;",
-    "new": "if (s.leads()) company = true;",
+    "old": "      if (s.leads()) company = host.gathered().length > 0; // AUDIT PARTY-UI 2: the tab's \"a round can open\" - propose's own `gathered`",
+    "new": "      if (s.leads()) company = true; // AUDIT PARTY-UI 2: the tab's \"a round can open\" - propose's own `gathered`",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-PARTY-UI-3-the-instant-read-alone",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (near !== round.at && !host.nearLeader(lead)) return",
-    "new": "if (!host.nearLeader(lead)) return",
+    "old": "    if (near !== round.at && !host.nearLeader(lead))\n      return { line: `Gather with ${lead.name || 'the leader'} to travel with the party.` };",
+    "new": "    if (!host.nearLeader(lead)) return { line: `Gather with ${lead.name || 'the leader'} to travel with the party.` };",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-PARTY-UI-3-the-kept-read-alone",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (near !== round.at && !host.nearLeader(lead)) return",
-    "new": "if (near !== round.at) return",
+    "old": "    if (near !== round.at && !host.nearLeader(lead))\n      return { line: `Gather with ${lead.name || 'the leader'} to travel with the party.` };",
+    "new": "    if (near !== round.at) return { line: `Gather with ${lead.name || 'the leader'} to travel with the party.` };",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-PARTY-UI-4-the-tab-handed-no-line",
     "file": "src/systems/party/partyTravel.js",
-    "old": "return { line: answer(round.at, yes == null ? vote !== round.at : !!yes), said: true };",
-    "new": "return { line: (answer(round.at, yes == null ? vote !== round.at : !!yes), null), said: true };",
+    "old": "    return { line: answer(round.at, yes == null ? vote !== round.at : !!yes), said: true };",
+    "new": "    return { line: (answer(round.at, yes == null ? vote !== round.at : !!yes), null), said: true };",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-PARTY-UI-4-the-answer-unsaid-in-the-chat",
     "file": "src/systems/party/partyTravel.js",
-    "old": "    host.say(line);\n    host.poseDirty();\n    return line;",
-    "new": "    host.poseDirty();\n    return line;",
+    "old": "    host.say(line);\n    host.poseDirty();",
+    "new": "    host.poseDirty();",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-PARTY-UI-5-the-pending-offer-kept",
     "file": "src/systems/party/partyTravel.js",
-    "old": "offerDue = false; leaderSeen = { acct: trip0.acct, px: trip0.x, py: trip0.y };",
-    "new": "leaderSeen = { acct: trip0.acct, px: trip0.x, py: trip0.y };",
+    "old": "    offerDue = false;\n    leaderSeen = { acct: trip0.acct, px: trip0.x, py: trip0.y };",
+    "new": "    leaderSeen = { acct: trip0.acct, px: trip0.x, py: trip0.y };",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-PARTY-UI-5-the-jump-left-to-be-seen",
     "file": "src/systems/party/partyTravel.js",
-    "old": "offerDue = false; leaderSeen = { acct: trip0.acct, px: trip0.x, py: trip0.y };",
-    "new": "offerDue = false;",
+    "old": "    leaderSeen = { acct: trip0.acct, px: trip0.x, py: trip0.y };\n    showPrompt(",
+    "new": "    showPrompt(",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "AUDIT-PARTY-UI-5-a-pixel-step-read-as-elsewhere",
     "file": "src/systems/party/partyTravel.js",
-    "old": "leaderJourneyed({ px: here.x, py: here.y }, p),",
-    "new": "(p.px !== here.x || p.py !== here.y),",
+    "old": "        away: !!p && !host.journeying() && leaderJourneyed({ px: here.x, py: here.y }, p),",
+    "new": "        away: !!p && !host.journeying() && (p.px !== here.x || p.py !== here.y),",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-PARTY-UI-5-elsewhere-while-i-move",
     "file": "src/systems/party/partyTravel.js",
-    "old": "away: !!p && !host.journeying() && ",
-    "new": "away: !!p && ",
+    "old": "        away: !!p && !host.journeying() && leaderJourneyed({ px: here.x, py: here.y }, p),",
+    "new": "        away: !!p && leaderJourneyed({ px: here.x, py: here.y }, p),",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-PARTY-UI-5-the-member-indoors-read-as-out",
     "file": "src/systems/party/partyTravel.js",
-    "old": "        outdoors: host.outdoors(),\n      };",
-    "new": "        outdoors: true,\n      };",
+    "old": "        away: !!p && !host.journeying() && leaderJourneyed({ px: here.x, py: here.y }, p),\n        outdoors: host.outdoors(),",
+    "new": "        away: !!p && !host.journeying() && leaderJourneyed({ px: here.x, py: here.y }, p),\n        outdoors: true,",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "AUDIT-PARTY-UI-7e-an-offline-leader-elsewhere",
     "file": "src/systems/party/partyTravel.js",
-    "old": "      const p = lead && memberPresent(lead) ? lead.p : null;\n      const here = host.here();",
-    "new": "      const p = lead ? lead.p : null;\n      const here = host.here();",
+    "old": "      const p = lead && memberPresent(lead) ? lead.p : null;",
+    "new": "      const p = lead ? lead.p : null;",
     "tests": [
       "test/systems/party/partytravel.test.js",
       "test/net/soc3_socialpanel.test.js"
@@ -248,8 +248,8 @@
   {
     "name": "AUDIT-PARTY-UI-7g-elsewhere-on-x-alone",
     "file": "src/systems/party/partyTravel.js",
-    "old": "leaderJourneyed({ px: here.x, py: here.y }, p)",
-    "new": "leaderJourneyed({ px: here.x, py: p.py }, p)",
+    "old": "        away: !!p && !host.journeying() && leaderJourneyed({ px: here.x, py: here.y }, p),",
+    "new": "        away: !!p && !host.journeying() && leaderJourneyed({ px: here.x, py: p.py }, p),",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -257,8 +257,8 @@
   {
     "name": "AUDIT-PARTY-UI-8-the-hint-names-the-tab-under-a-window",
     "file": "src/systems/party/partyTravel.js",
-    "old": "Type /travel to come along.",
-    "new": "Ready up on the Party tab, or type /travel.",
+    "old": "          host.say(`${lead.name || 'The leader'} wants the party to travel to ${dest}. Type /travel to come along.`);",
+    "new": "          host.say(\n            `${lead.name || 'The leader'} wants the party to travel to ${dest}. Ready up on the Party tab, or type /travel.`,\n          );",
     "tests": [
       "test/systems/party/partytravel.test.js",
       "test/net/soc3_socialpanel.test.js"
@@ -267,8 +267,8 @@
   {
     "name": "AUDIT-PARTY-UI-8-setting-out-over-a-leader-already-there",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (t && !t.arrived) return { role: 'leader', round:",
-    "new": "if (t) return { role: 'leader', round:",
+    "old": "        if (t && !t.arrived)\n          return { role: 'leader', round: { dest: t.name, count: t.count ?? '', set: t.go != null } };",
+    "new": "        if (t) return { role: 'leader', round: { dest: t.name, count: t.count ?? '', set: t.go != null } };",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]

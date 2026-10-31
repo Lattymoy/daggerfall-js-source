@@ -101,8 +101,8 @@
   {
     "name": "FLIGHT-FIRST-the-will-read-off-every-fight",
     "file": "tools/tellDuel.mjs",
-    "old": "WILL_WEAK: { kneel: at(ref, 'trade', true).will, held: at(ref, 'trade', true).will >= T.KNEEL_WEAK },",
-    "new": "WILL_WEAK: { kneel: at(ref, 'trade', true).kneel, held: at(ref, 'trade', true).kneel >= T.KNEEL_WEAK },",
+    "old": "    WILL_WEAK: { kneel: at(ref, 'trade', true).will, held: at(ref, 'trade', true).will >= T.KNEEL_WEAK },",
+    "new": "    WILL_WEAK: { kneel: at(ref, 'trade', true).kneel, held: at(ref, 'trade', true).kneel >= T.KNEEL_WEAK },",
     "tests": [
       "test/systems/revenant/flightfirst.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "FLIGHT-FIRST-a-fled-fight-counted-as-ended",
     "file": "tools/tellDuel.mjs",
-    "old": "const ended = rows.filter((x) => x.end === 'knelt' || x.end === 'tore');",
-    "new": "const ended = rows;",
+    "old": "  const ended = rows.filter((x) => x.end === 'knelt' || x.end === 'tore');",
+    "new": "  const ended = rows;",
     "tests": [
       "test/systems/revenant/flightfirst.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "FLIGHT-FIRST-the-weights-cells-running",
     "file": "tools/tellDuel.mjs",
-    "old": "...revenantCell({ weapon: 'Longsword', mode, rank, flight: false }, fights) });\n  const verdict",
-    "new": "...revenantCell({ weapon: 'Longsword', mode, rank }, fights) });\n  const verdict",
+    "old": "      weight.push({\n        weapon: 'Longsword',\n        mode,\n        rank,\n        ...revenantCell({ weapon: 'Longsword', mode, rank, flight: false }, fights),\n      });",
+    "new": "      weight.push({ weapon: 'Longsword', mode, rank, ...revenantCell({ weapon: 'Longsword', mode, rank }, fights) });",
     "tests": [
       "test/systems/revenant/flightfirst.test.js"
     ]

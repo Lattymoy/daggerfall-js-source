@@ -28,11 +28,16 @@ import { BAY_REGION_COUNT } from '../../formats/mapsTables.js';
 import { BASE_HEIGHT_SCALE, SCALED_OCEAN_ELEVATION } from '../../world/terrain/terrainSampler.js';
 import { spawnsDungeon, WORLD_SALT } from '../../world/spawnedDungeons.js';
 import { pickGateRegion, pickGatePixel, gateSpotLocal, omenRing } from '../../net/gate/gateLaw.js';
-import { WILD_REGION } from '../wild/wildZone.js';   // PVPDUNGEONS: no world event in the open zone
+import { WILD_REGION } from '../wild/wildZone.js'; // PVPDUNGEONS: no world event in the open zone
 
-const W = 1000, H = 500;
+const W = 1000,
+  H = 500;
 /** The towns a gate may be reached from: DFU's fast-travel towns. */
-export const GATE_TOWN_TYPES = Object.freeze([LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage]);
+export const GATE_TOWN_TYPES = Object.freeze([
+  LOCATION_TYPES.TownCity,
+  LOCATION_TYPES.TownHamlet,
+  LOCATION_TYPES.TownVillage,
+]);
 /** How far from its town a gate may stand, map pixels (Chebyshev): far enough to be the wilds, near enough to ride. */
 export const GATE_TOWN_MIN_PX = 2;
 export const GATE_TOWN_MAX_PX = 4;
@@ -42,10 +47,11 @@ export const GATE_REGION_MIN_PIXELS = 24;
 /** Is a politic value a province's (MapsFile.getRegionIndexAt's own bands: a region's 128 + index, and the one known
  *  bad value 128 + 105 that DFU reads as the Wrothgarian Mountains)? AUDIT WB C1: not High Rock's sea coast's 64 - it
  *  is the sea's value (ui/travel/travelMapWindow.js), and no province an omen can name. */
-export const politicClaimed = (pol) => (pol >= 128 && pol < 128 + BAY_REGION_COUNT) || pol === 128 + 105;   // WW-R: the Bay's own regions - the Bay's scan reads the Bay's map
+export const politicClaimed = (pol) => (pol >= 128 && pol < 128 + BAY_REGION_COUNT) || pol === 128 + 105; // WW-R: the Bay's own regions - the Bay's scan reads the Bay's map
 /** Is a pixel water - the ONE law (ui/overworldModel.js isWaterPixel, pinned equal): an Ocean climate, or a height
  *  byte at or under the ocean's elevation. */
-export const gateSeaPixel = (climate, byte) => climate === CLIMATES.Ocean || byte * BASE_HEIGHT_SCALE <= SCALED_OCEAN_ELEVATION;
+export const gateSeaPixel = (climate, byte) =>
+  climate === CLIMATES.Ocean || byte * BASE_HEIGHT_SCALE <= SCALED_OCEAN_ELEVATION;
 
 /**
  * The world's suitable pixels, by region. `heightAt(x, y)` is the pixel's height byte (WOODS.WLD's - formats/woodsFile.js
@@ -87,28 +93,37 @@ export function gateScanner(maps, { spawnSalt = WORLD_SALT, heightAt = null } = 
       // past them (formats/worldData/worldDataReplacement.js), and they stand only where Replace Game Artwork is on: Roleplay &
       // Realism's fort barred a pixel's neighbourhood on one client and not another, the region's list changed length,
       // and the day's roll picked two different spots
-      const base = typeof maps.baseLocationCount === 'function' ? Math.min(table.length, maps.baseLocationCount(r)) : table.length;
+      const base =
+        typeof maps.baseLocationCount === 'function' ? Math.min(table.length, maps.baseLocationCount(r)) : table.length;
       for (let i = 0; i < base; i++) {
         const row = table[i];
         if (!row) continue;
-        const id = (row.mapId >>> 0) & 0xfffff;   // DFU's own law: the low 20 bits of a MapId ARE its pixel (y * 1000 + x)
-        const px = id % 1000, py = Math.floor(id / 1000);
+        const id = (row.mapId >>> 0) & 0xfffff; // DFU's own law: the low 20 bits of a MapId ARE its pixel (y * 1000 + x)
+        const px = id % 1000,
+          py = Math.floor(id / 1000);
         if (px >= W || py >= H) continue;
-        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-          const x = px + dx, y = py + dy;
-          if (x >= 0 && y >= 0 && x < W && y < H) near[y * W + x] = 1;
-        }
+        for (let dy = -1; dy <= 1; dy++)
+          for (let dx = -1; dx <= 1; dx++) {
+            const x = px + dx,
+              y = py + dy;
+            if (x >= 0 && y >= 0 && x < W && y < H) near[y * W + x] = 1;
+          }
         if (!townTypes.has(row.locationType)) continue;
         const t = towns.length;
         towns.push({ name: String(region.mapNames?.[i] ?? ''), px, py, region: r });
-        for (let dy = -GATE_TOWN_MAX_PX; dy <= GATE_TOWN_MAX_PX; dy++) for (let dx = -GATE_TOWN_MAX_PX; dx <= GATE_TOWN_MAX_PX; dx++) {
-          const d = Math.max(Math.abs(dx), Math.abs(dy));
-          if (d < GATE_TOWN_MIN_PX) continue;
-          const x = px + dx, y = py + dy;
-          if (x < 0 || y < 0 || x >= W || y >= H) continue;
-          const p = y * W + x;
-          if (d < townDist[p]) { townDist[p] = d; townAt[p] = t; }   // the NEAREST town names the gate; the first listed wins a tie
-        }
+        for (let dy = -GATE_TOWN_MAX_PX; dy <= GATE_TOWN_MAX_PX; dy++)
+          for (let dx = -GATE_TOWN_MAX_PX; dx <= GATE_TOWN_MAX_PX; dx++) {
+            const d = Math.max(Math.abs(dx), Math.abs(dy));
+            if (d < GATE_TOWN_MIN_PX) continue;
+            const x = px + dx,
+              y = py + dy;
+            if (x < 0 || y < 0 || x >= W || y >= H) continue;
+            const p = y * W + x;
+            if (d < townDist[p]) {
+              townDist[p] = d;
+              townAt[p] = t;
+            } // the NEAREST town names the gate; the first listed wins a tie
+          }
       }
     }
   };
@@ -123,7 +138,7 @@ export function gateScanner(maps, { spawnSalt = WORLD_SALT, heightAt = null } = 
       if (!politicClaimed(maps.getPoliticIndex(x, y))) continue;
       const r = maps.getRegionIndexAt(x, y);
       let list = lists.get(r);
-      if (!list) lists.set(r, list = []);
+      if (!list) lists.set(r, (list = []));
       list.push(p);
     }
   };
@@ -132,10 +147,13 @@ export function gateScanner(maps, { spawnSalt = WORLD_SALT, heightAt = null } = 
     step(more = () => true) {
       if (done) return done;
       if (!near) masks();
-      do { row(); y++; } while (y < H - 1 && more());
+      do {
+        row();
+        y++;
+      } while (y < H - 1 && more());
       if (y < H - 1) return null;
       const byRegion = new Map();
-      for (const [r, list] of lists) byRegion.set(r, Int32Array.from(list));   // row-major, so ascending: the roll's order is the data's
+      for (const [r, list] of lists) byRegion.set(r, Int32Array.from(list)); // row-major, so ascending: the roll's order is the data's
       return (done = { byRegion, towns, townAt });
     },
     /** How far through the rows, 0..1 (a probe's, a test's). */
@@ -144,7 +162,10 @@ export function gateScanner(maps, { spawnSalt = WORLD_SALT, heightAt = null } = 
 }
 
 /** The regions a gate may open in, ascending. */
-export const gateRegions = (scan) => [...scan.byRegion.keys()].filter((r) => r !== WILD_REGION && scan.byRegion.get(r).length >= GATE_REGION_MIN_PIXELS).sort((a, b) => a - b);
+export const gateRegions = (scan) =>
+  [...scan.byRegion.keys()]
+    .filter((r) => r !== WILD_REGION && scan.byRegion.get(r).length >= GATE_REGION_MIN_PIXELS)
+    .sort((a, b) => a - b);
 
 /**
  * A day's gate site, or null when the world offered no ground at all.
@@ -156,12 +177,24 @@ export function findGateSite(day, scan) {
   if (region == null) return null;
   const id = pickGatePixel(day, scan.byRegion.get(region));
   if (id == null) return null;
-  const px = id % W, py = Math.floor(id / W);
+  const px = id % W,
+    py = Math.floor(id / W);
   const town = scan.towns[scan.townAt[id]] ?? null;
   const spot = gateSpotLocal(day);
   const regionName = REGION_NAMES[region] ?? '';
   const near = town?.name || regionName;
   // AUDIT WB C3: the town is named with ITS province - the nearest town can stand across the border from the gate
   const townRegion = town ? (REGION_NAMES[town.region] ?? '') : '';
-  return { day, region, regionName, px, py, town, spot, ring: omenRing(day, px, py, spot), near, place: town?.name && townRegion ? `${town.name}, ${townRegion}` : near };
+  return {
+    day,
+    region,
+    regionName,
+    px,
+    py,
+    town,
+    spot,
+    ring: omenRing(day, px, py, spot),
+    near,
+    place: town?.name && townRegion ? `${town.name}, ${townRegion}` : near,
+  };
 }

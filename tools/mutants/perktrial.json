@@ -11,8 +11,8 @@
   {
     "name": "PERKTRIAL-the-trials-end-inside",
     "file": "src/net/professionLaw.js",
-    "old": "return Number.isSafeInteger(at) && nowS < at + SPEC_TRIAL_S ? at + SPEC_TRIAL_S : null;",
-    "new": "return Number.isSafeInteger(at) && nowS <= at + SPEC_TRIAL_S ? at + SPEC_TRIAL_S : null;",
+    "old": "  return Number.isSafeInteger(at) && nowS < at + SPEC_TRIAL_S ? at + SPEC_TRIAL_S : null;",
+    "new": "  return Number.isSafeInteger(at) && nowS <= at + SPEC_TRIAL_S ? at + SPEC_TRIAL_S : null;",
     "tests": [
       "test/net/perktrial.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PERKTRIAL-the-ranks-crossed",
     "file": "src/net/professionLaw.js",
-    "old": "row?.[rank === 50 ? 'spec50_at' : rank === 100 ? 'spec100_at' : '']",
-    "new": "row?.[rank === 50 ? 'spec100_at' : rank === 100 ? 'spec50_at' : '']",
+    "old": "  const at = Number(row?.[rank === 50 ? 'spec50_at' : rank === 100 ? 'spec100_at' : ''] ?? NaN);",
+    "new": "  const at = Number(row?.[rank === 50 ? 'spec100_at' : rank === 100 ? 'spec50_at' : ''] ?? NaN);",
     "tests": [
       "test/net/perktrial.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PERKTRIAL-the-lock-read-at-its-end",
     "file": "src/net/professionLaw.js",
-    "old": "return Number.isSafeInteger(at) && at > nowS ? at : null;",
-    "new": "return Number.isSafeInteger(at) && at >= nowS ? at : null;",
+    "old": "  return Number.isSafeInteger(at) && at > nowS ? at : null;",
+    "new": "  return Number.isSafeInteger(at) && at >= nowS ? at : null;",
     "tests": [
       "test/net/perktrial.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PERKTRIAL-the-client-read-past-its-day",
     "file": "src/net/professionLaw.js",
-    "old": "return Number.isFinite(at) && nowS < at; };",
-    "new": "return Number.isFinite(at); };",
+    "old": "  return Number.isFinite(at) && nowS < at;",
+    "new": "  return Number.isFinite(at);",
     "tests": [
       "test/net/perktrial.test.js",
       "test/net/audit29_client.test.js"
@@ -68,8 +68,8 @@
   {
     "name": "PERKTRIAL-a-waiting-change-kept-waiting",
     "file": "src/net/professionLaw.js",
-    "old": "  if (row?.respec_to && (row.respec_rank === 50 || row.respec_rank === 100)) {   // AUDIT PERK-TRIAL P8: whatever its time",
-    "new": "  if (row?.respec_to && Number.isSafeInteger(row?.respec_at) && nowS >= row.respec_at && (row.respec_rank === 50 || row.respec_rank === 100)) {",
+    "old": "  if (row?.respec_to && (row.respec_rank === 50 || row.respec_rank === 100)) {\n    // AUDIT PERK-TRIAL P8: whatever its time",
+    "new": "  if (\n    row?.respec_to &&\n    Number.isSafeInteger(row?.respec_at) &&\n    nowS >= row.respec_at &&\n    (row.respec_rank === 50 || row.respec_rank === 100)\n  ) {",
     "tests": [
       "test/net/perktrial.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "DSET-any-public-key",
     "file": "tools/discordModCommands.mjs",
-    "old": "if (String(app.verify_key ?? '').toLowerCase() !== publicKey.toLowerCase()) {",
-    "new": "if (false) {",
+    "old": "  if (String(app.verify_key ?? '').toLowerCase() !== publicKey.toLowerCase()) {",
+    "new": "  if (false) {",
     "tests": [
       "test/server/discord_setup.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "DSET-always-patched",
     "file": "tools/discordModCommands.mjs",
-    "old": "if (app.interactions_endpoint_url !== url) {",
-    "new": "if (true) {",
+    "old": "  if (app.interactions_endpoint_url !== url) {",
+    "new": "  if (true) {",
     "tests": [
       "test/server/discord_setup.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "DSET-no-second-offer",
     "file": "tools/discordModCommands.mjs",
-    "old": "if (n >= SETUP_TRIES) throw new Error(r.error);",
-    "new": "throw new Error(r.error);",
+    "old": "      if (n >= SETUP_TRIES) throw new Error(r.error);",
+    "new": "      throw new Error(r.error);",
     "tests": [
       "test/server/discord_setup.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "DSET-no-wait",
     "file": "tools/discordModCommands.mjs",
-    "old": "      await wait(SETUP_RETRY_MS);\n",
-    "new": "",
+    "old": "      await wait(SETUP_RETRY_MS);\n    }",
+    "new": "    }",
     "tests": [
       "test/server/discord_setup.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "DSET-wrong-server",
     "file": "tools/discordModCommands.mjs",
-    "old": "/guilds/${chan.guild_id}/commands",
-    "new": "/guilds/${channel}/commands",
+    "old": "  got(\n    await call('registering the commands', `/applications/${app.id}/guilds/${chan.guild_id}/commands`, 'PUT', commands),\n  );",
+    "new": "  got(await call('registering the commands', `/applications/${app.id}/guilds/${channel}/commands`, 'PUT', commands));",
     "tests": [
       "test/server/discord_setup.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "DSET-dm-channel-taken",
     "file": "tools/discordModCommands.mjs",
-    "old": "if (!SNOWFLAKE_RE.test(chan?.guild_id ?? '')) throw",
-    "new": "if (false) throw",
+    "old": "  if (!SNOWFLAKE_RE.test(chan?.guild_id ?? ''))",
+    "new": "  if (false)",
     "tests": [
       "test/server/discord_setup.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "DSET-any-door",
     "file": "tools/discordModCommands.mjs",
-    "old": "if (!/^https:\\/\\/[^\\s/]+\\/v1\\/discord\\/interactions$/.test(url ?? '')) throw",
-    "new": "if (false) throw",
+    "old": "  if (!/^https:\\/\\/[^\\s/]+\\/v1\\/discord\\/interactions$/.test(url ?? ''))\n    throw new Error(`not the service's interactions door: \"${url ?? ''}\"`);",
+    "new": "  if (false) throw new Error(`not the service's interactions door: \"${url ?? ''}\"`);",
     "tests": [
       "test/server/discord_setup.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "DSET-token-in-refusal",
     "file": "tools/discordModCommands.mjs",
-    "old": "return { error: `${what}: Discord said",
-    "new": "return { error: `${what} ${token}: Discord said",
+    "old": "    if (!res.ok) return { error: `${what}: Discord said ${res.status}: ${text.slice(0, 300)}`, status: res.status };",
+    "new": "    if (!res.ok)\n      return { error: `${what} ${token}: Discord said ${res.status}: ${text.slice(0, 300)}`, status: res.status };",
     "tests": [
       "test/server/discord_setup.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "DSET-no-user-agent",
     "file": "tools/discordModCommands.mjs",
-    "old": "authorization: `Bot ${token}`, 'user-agent': DISCORD_USER_AGENT },\n",
-    "new": "authorization: `Bot ${token}` },\n",
+    "old": "      headers: { 'content-type': 'application/json', authorization: `Bot ${token}`, 'user-agent': DISCORD_USER_AGENT },",
+    "new": "      headers: { 'content-type': 'application/json', authorization: `Bot ${token}` },",
     "tests": [
       "test/server/discord_setup.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "DCODE-first-command-only",
     "file": "tools/discordModCommands.mjs",
-    "old": "got(await call('registering the commands', `/applications/${app.id}/guilds/${chan.guild_id}/commands`, 'PUT', commands));",
-    "new": "got(await call('registering the commands', `/applications/${app.id}/guilds/${chan.guild_id}/commands`, 'PUT', commands.slice(0, 1)));",
+    "old": "    await call('registering the commands', `/applications/${app.id}/guilds/${chan.guild_id}/commands`, 'PUT', commands),",
+    "new": "    await call(\n      'registering the commands',\n      `/applications/${app.id}/guilds/${chan.guild_id}/commands`,\n      'PUT',\n      commands.slice(0, 1),\n    ),",
     "tests": [
       "test/server/discord_setup.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "DCODE-no-admin-bypass",
     "file": "tools/discordModCommands.mjs",
-    "old": "  if ((p & ADMINISTRATOR) === ADMINISTRATOR) return ALL;\n",
-    "new": "",
+    "old": "  if ((p & ADMINISTRATOR) === ADMINISTRATOR) return ALL;\n  const apply = (allow, deny) => {",
+    "new": "  const apply = (allow, deny) => {",
     "tests": [
       "test/server/discord_setup.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "DCODE-role-overwrites-any-role",
     "file": "tools/discordModCommands.mjs",
-    "old": "if (o.type === 0 && o.id !== guildId && memberRoles.includes(o.id))",
-    "new": "if (o.type === 0 && o.id !== guildId)",
+    "old": "    if (o.type === 0 && o.id !== guildId && memberRoles.includes(o.id)) {",
+    "new": "    if (o.type === 0 && o.id !== guildId) {",
     "tests": [
       "test/server/discord_setup.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "DCODE-allow-before-deny",
     "file": "tools/discordModCommands.mjs",
-    "old": "  const apply = (allow, deny) => { p &= ~deny; p |= allow; };",
-    "new": "  const apply = (allow, deny) => { p |= allow; p &= ~deny; };",
+    "old": "    p &= ~deny;\n    p |= allow;",
+    "new": "    p |= allow;\n    p &= ~deny;",
     "tests": [
       "test/server/discord_setup.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "DCODE-member-overwrite-any-type",
     "file": "tools/discordModCommands.mjs",
-    "old": "overwrites.find((o) => o.type === 1 && o.id === userId)",
-    "new": "overwrites.find((o) => o.id === userId)",
+    "old": "  const own = overwrites.find((o) => o.type === 1 && o.id === userId);",
+    "new": "  const own = overwrites.find((o) => o.id === userId);",
     "tests": [
       "test/server/discord_setup.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "DCODE-missing-never-said",
     "file": "tools/discordModCommands.mjs",
-    "old": "const missing = MOD_CHANNEL_NEEDS.filter(([, bit]) => (have & bit) !== bit).map(([name]) => name);",
-    "new": "const missing = [];",
+    "old": "  const missing = MOD_CHANNEL_NEEDS.filter(([, bit]) => (have & bit) !== bit).map(([name]) => name);",
+    "new": "  const missing = [];",
     "tests": [
       "test/server/discord_setup.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "DCODE-report-green-anyway",
     "file": "tools/discordModCommands.mjs",
-    "old": "  if (!done.missing.length) return { lines: [...lines, '- the bot\\'s permissions in the moderators\\' channel: everything the cards need'], error: null };",
-    "new": "  return { lines: [...lines, '- the bot\\'s permissions in the moderators\\' channel: everything the cards need'], error: null };",
+    "old": "  if (!done.missing.length)\n    return {\n      lines: [...lines, \"- the bot's permissions in the moderators' channel: everything the cards need\"],\n      error: null,\n    };",
+    "new": "  return {\n    lines: [...lines, \"- the bot's permissions in the moderators' channel: everything the cards need\"],\n    error: null,\n  };",
     "tests": [
       "test/server/discord_setup.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "DCODE-needs-no-embed",
     "file": "server-account/src/discord.js",
-    "old": "['Send Messages', 1n << 11n], ['Embed Links', 1n << 14n]]",
-    "new": "['Send Messages', 1n << 11n]]",
+    "old": "  ['Embed Links', 1n << 14n],\n]);",
+    "new": "]);",
     "tests": [
       "test/server/discord_setup.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "DCODE-usage-typed-again",
     "file": "server-account/src/discord.js",
-    "old": "default: return say(usageOf('mod'));",
-    "new": "default: return say('Use /mod lookup, mute or unmute.');",
+    "old": "      return say(usageOf('mod')); // DISCORD-CODE: the declared subcommands, named (discordCommands.js)",
+    "new": "      return say('Use /mod lookup, mute or unmute.'); // DISCORD-CODE: the declared subcommands, named (discordCommands.js)",
     "tests": [
       "test/server/discord_setup.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "DCODE-usage-forgets-the-last",
     "file": "server-account/src/discordCommands.js",
-    "old": "`Use /${name} ${subs.slice(0, -1).join(', ')} or ${subs.at(-1)}.`",
-    "new": "`Use /${name} ${subs.slice(0, -1).join(', ')}.`",
+    "old": "    ? `Use /${name} ${subs.slice(0, -1).join(', ')} or ${subs.at(-1)}.`",
+    "new": "    ? `Use /${name} ${subs.slice(0, -1).join(', ')}.`",
     "tests": [
       "test/server/discord_setup.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "DCODE-404-unexplained",
     "file": "tools/discordModCommands.mjs",
-    "old": "  if (read.status === 404) throw new Error(",
-    "new": "  if (false) throw new Error(",
+    "old": "  if (read.status === 404)",
+    "new": "  if (false)",
     "tests": [
       "test/server/discord_setup.test.js"
     ],

@@ -2,8 +2,8 @@
   {
     "name": "SD20E-T1-what-it-is-back",
     "file": "src/systems/superDungeon/sdOmen.js",
-    "old": "`${name || 'An Abyss Dungeon'}${w ? ` - ${w}` : ''}`",
-    "new": "`${name ? `${name} - an Abyss Dungeon` : 'An Abyss Dungeon'}${w ? ` - ${w}` : ''}`",
+    "old": "  return `${name || 'An Abyss Dungeon'}${w ? ` - ${w}` : ''}`;",
+    "new": "  return `${name ? `${name} - an Abyss Dungeon` : 'An Abyss Dungeon'}${w ? ` - ${w}` : ''}`;",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SD20E-T1-nowrap-back",
     "file": "src/ui/gate/gateBanner.js",
-    "old": "width: max-content; max-width: calc(100vw - 32px); text-align: center; line-height: 1.3; }",
-    "new": "white-space: nowrap; }",
+    "old": "  width: max-content; max-width: calc(100vw - 32px); text-align: center; line-height: 1.3; }",
+    "new": "  white-space: nowrap; }",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SD20E-T3-the-banner-never-brass",
     "file": "src/ui/gate/gateBanner.js",
-    "old": "const cls = look === 'brass' ? 'wb-gate-banner sd-brass' : 'wb-gate-banner';",
-    "new": "const cls = 'wb-gate-banner';",
+    "old": "  const cls = look === 'brass' ? 'wb-gate-banner sd-brass' : 'wb-gate-banner';",
+    "new": "  const cls = 'wb-gate-banner';",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SD20E-T3-the-brass-never-taken-off",
     "file": "src/ui/gate/gateBanner.js",
-    "old": "if (cls !== shownCls) { shownCls = cls; node.className = cls; }",
-    "new": "if (cls !== shownCls && look === 'brass') { shownCls = cls; node.className = cls; }",
+    "old": "  if (cls !== shownCls) {",
+    "new": "  if (cls !== shownCls && look === 'brass') {",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD20E-T3-the-card-unmodelled",
     "file": "src/ui/superDungeon/sdMarksView.js",
-    "old": "alpha: Math.round(alpha * 100) / 100, look: 'brass',",
-    "new": "alpha: Math.round(alpha * 100) / 100,",
+    "old": "    alpha: Math.round(alpha * 100) / 100,\n    look: 'brass', // AUDIT SD III (T3): in the Hour's brass, never Dagon's red",
+    "new": "    alpha: Math.round(alpha * 100) / 100, // AUDIT SD III (T3): in the Hour's brass, never Dagon's red",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SD20E-T3-the-class-unput",
     "file": "src/ui/gate/gateMarksView.js",
-    "old": "const mode = `${model.mode}${model.look === 'brass' ? ' sd-brass' : ''}`;",
-    "new": "const mode = model.mode;",
+    "old": "  const mode = `${model.mode}${model.look === 'brass' ? ' sd-brass' : ''}`; // AUDIT SD III (T3): the Hour's card in its own brass",
+    "new": "  const mode = model.mode; // AUDIT SD III (T3): the Hour's card in its own brass",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SD20E-T3-the-omens-red",
     "file": "src/ui/gate/gateMarksView.js",
-    "old": "look === 'brass' ? '#e8c060' : '#ffb27a'",
-    "new": "'#ffb27a'",
+    "old": "  r.icon.style.color =\n    m.kind === 'aspect' ? m.color : m.kind === 'portent' ? PORTENT_CSS : look === 'brass' ? '#e8c060' : '#ffb27a';",
+    "new": "  r.icon.style.color = m.kind === 'aspect' ? m.color : m.kind === 'portent' ? PORTENT_CSS : '#ffb27a';",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD20E-T2-the-card-on-the-chips",
     "file": "src/ui/superDungeon/sdTitleCard.js",
-    "old": ".sd-title-card { top: 40%; }",
-    "new": ".sd-title-card { top: 30%; }",
+    "old": "@media (max-width: 640px) { .sd-title-card { top: 40%; } .sd-title-main { font-size: 28px; } .sd-title-sub { font-size: 15px; } .sd-title-kicker { font-size: 12px; letter-spacing: 0.22em; } }",
+    "new": "@media (max-width: 640px) { .sd-title-card { top: 30%; } .sd-title-main { font-size: 28px; } .sd-title-sub { font-size: 15px; } .sd-title-kicker { font-size: 12px; letter-spacing: 0.22em; } }",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SD20E-T2-the-sideways-card",
     "file": "src/ui/superDungeon/sdTitleCard.js",
-    "old": ".sd-title-card { top: 46%; }",
-    "new": ".sd-title-card { top: 48%; }",
+    "old": "@media (max-height: 480px) { .sd-title-card { top: 46%; } .sd-title-main { font-size: 26px; } .sd-title-kicker { font-size: 12px; } }",
+    "new": "@media (max-height: 480px) { .sd-title-card { top: 48%; } .sd-title-main { font-size: 26px; } .sd-title-kicker { font-size: 12px; } }",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SD20E-T2-the-foot-stays",
     "file": "src/ui/superDungeon/sdTitleCard.js",
-    "old": "@media (max-height: 480px) { body:has(.sd-title-card.on:not([style*=\"display: none\"])) .wb-boss-foot { display: none; } }\n",
-    "new": "",
+    "old": "@media (max-height: 480px) { body:has(.sd-title-card.on:not([style*=\"display: none\"])) .wb-boss-foot { display: none; } }\n`;",
+    "new": "`;",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SD20E-T2-the-chevron-on-the-plate",
     "file": "src/ui/gate/gateGroundView.js",
-    "old": "@media (max-height: 480px) { .wb-ground-arrow svg { top: ${-PERIL_ARROW_R_LOW - 14}px; } }\n",
-    "new": "",
+    "old": "@media (max-height: 480px) { .wb-ground-arrow svg { top: ${-PERIL_ARROW_R_LOW - 14}px; } }\n`;",
+    "new": "`;",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SD20E-T5-the-count-in-the-head",
     "file": "src/ui/superDungeon/sdRemnantBar.js",
-    "old": "rises: (e, secs) => `${e === 0 ? 'Gold' : 'Silver'} rises - ${secs}s`,",
-    "new": "rises: (e, secs) => `${e === 0 ? 'Gold' : 'Silver'} rises in ${secs}s`,",
+    "old": "  rises: (e, secs) => `${e === 0 ? 'Gold' : 'Silver'} rises - ${secs}s`, // AUDIT SD II (L6 F6): the pair's window; AUDIT SD III (T5): its count after the dash, as every countdown on the bar - \"rises in 12s\" came in afresh each second",
+    "new": "  rises: (e, secs) => `${e === 0 ? 'Gold' : 'Silver'} rises in ${secs}s`, // AUDIT SD II (L6 F6): the pair's window; AUDIT SD III (T5): its count after the dash, as every countdown on the bar - \"rises in 12s\" came in afresh each second",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SD20E-T10-the-gates-word",
     "file": "src/ui/superDungeon/sdRemnantBar.js",
-    "old": "fallen: !!s.fell, fallenText: SD_BAR_TEXT.undone, callout,",
-    "new": "fallen: !!s.fell, callout,",
+    "old": "    fallenText: SD_BAR_TEXT.undone,\n    callout,",
+    "new": "    callout,",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SD20E-T10-the-bar-deaf-to-it",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "model.fallen ? model.fallenText ?? BOSS_BAR_TEXT.fallen :",
-    "new": "model.fallen ? BOSS_BAR_TEXT.fallen :",
+    "old": "    ? (model.fallenText ?? BOSS_BAR_TEXT.fallen)",
+    "new": "    ? BOSS_BAR_TEXT.fallen",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SD20E-T6-a-count-of-its-own",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "return SD_COUNT_TEXT.fades(timerText(rec.until - now));",
-    "new": "return SD_COUNT_TEXT.fades(`${Math.floor((rec.until - now) / 3_600_000)}h ${String(Math.ceil(((rec.until - now) % 3_600_000) / 60_000)).padStart(2, '0')}m`);",
+    "old": "  return SD_COUNT_TEXT.fades(timerText(rec.until - now));",
+    "new": "  return SD_COUNT_TEXT.fades(\n    `${Math.floor((rec.until - now) / 3_600_000)}h ${String(Math.ceil(((rec.until - now) % 3_600_000) / 60_000)).padStart(2, '0')}m`,\n  );",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "SD20E-T9-the-old-signature",
     "file": "src/net/superDungeon/sdMarks.js",
-    "old": "sig: 'The Dragon\\'s Haste',",
-    "new": "sig: 'The Dragon\\'s Break',",
+    "old": "    sig: \"The Dragon's Haste\",",
+    "new": "    sig: \"The Dragon's Break\",",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SD20E-T14-a-fixed-fifteen",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "SD_FIGHT_TEXT.dragonBreak(sdProfileOf(state).pairMs)",
-    "new": "SD_FIGHT_TEXT.dragonBreak(15_000)",
+    "old": "      if (w.k === 'ph' && was.fi)\n        say(w.n === 2 ? SD_FIGHT_TEXT.dragonBreak(sdProfileOf(state).pairMs) : SD_FIGHT_TEXT.lastMoment);",
+    "new": "      if (w.k === 'ph' && was.fi) say(w.n === 2 ? SD_FIGHT_TEXT.dragonBreak(15_000) : SD_FIGHT_TEXT.lastMoment);",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "SD20E-T14-the-tip-another-form",
     "file": "src/ui/superDungeon/sdMarksView.js",
-    "old": "blades: 'Fell Gold and Silver within 10 seconds of each other.',",
-    "new": "blades: 'Strike down both Echoes together.',",
+    "old": "  blades: 'Fell Gold and Silver within 10 seconds of each other.', // AUDIT SD III (T14): the Dragon Break's window in its one form",
+    "new": "  blades: 'Strike down both Echoes together.', // AUDIT SD III (T14): the Dragon Break's window in its one form",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "SD20E-T11-the-capitals-back",
     "file": "src/systems/superDungeon/sdOmen.js",
-    "old": ", under ${O.map((o) => sdNameIn(o.name)).join(' and ')}.",
-    "new": ", under ${O.map((o) => o.name).join(' and ')}.",
+    "old": "    ? `${name || 'The Abyss Dungeon'} keeps the Ending of ${E.stone}, its ${E.sig.replace(/^The /, '')}, under ${O.map((o) => sdNameIn(o.name)).join(' and ')}.`",
+    "new": "    ? `${name || 'The Abyss Dungeon'} keeps the Ending of ${E.stone}, its ${E.sig.replace(/^The /, '')}, under ${O.map((o) => o.name).join(' and ')}.`",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "SD20E-T12-toward-it",
     "file": "src/systems/superDungeon/sdOmen.js",
-    "old": "turn their heads toward the walls',",
-    "new": "turn their heads toward it',",
+    "old": "  underking: 'the dead in their barrows turn their heads toward the walls', // AUDIT SD III (T12): \"toward it\" - toward the air, the walls, the city?",
+    "new": "  underking: 'the dead in their barrows turn their heads toward it', // AUDIT SD III (T12): \"toward it\" - toward the air, the walls, the city?",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "SD20E-T13-garbled-again",
     "file": "src/net/superDungeon/sdMarks.js",
-    "old": "text: 'Each Mantella Pulse climbs twice as fast, to three quarters of your health at most.'",
-    "new": "text: 'Each Mantella Pulse climbs twice as steeply - to three quarters of your health.'",
+    "old": "    text: 'Each Mantella Pulse climbs twice as fast, to three quarters of your health at most.',",
+    "new": "    text: 'Each Mantella Pulse climbs twice as steeply - to three quarters of your health.',",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SD20E-T15-the-hollows-door",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "to: 'To the Abyss Dungeon\\'s door',",
-    "new": "to: 'To the Hollow\\'s door',",
+    "old": "  to: \"To the Abyss Dungeon's door\", // AUDIT SD III (T15): the player's word for it - \"the Hollow's door\"",
+    "new": "  to: \"To the Hollow's door\", // AUDIT SD III (T15): the player's word for it - \"the Hollow's door\"",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "SD20E-T15-the-collapse-the-hollows",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "The Hour is broken. The Abyss Dungeon collapses in ${t}.` : `The Abyss Dungeon collapses in ${t}.`",
-    "new": "The Hour is broken. The Hollow collapses in ${t}.` : `The Hollow collapses in ${t}.`",
+    "old": "  return first ? `The Hour is broken. The Abyss Dungeon collapses in ${t}.` : `The Abyss Dungeon collapses in ${t}.`;",
+    "new": "  return first ? `The Hour is broken. The Hollow collapses in ${t}.` : `The Hollow collapses in ${t}.`;",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "SD20E-T15-the-fade-closes",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "'The Abyss Dungeon fades'",
-    "new": "'The Hollow closes'",
+    "old": "  `${hour ? 'The Hour closes' : 'The Abyss Dungeon fades'} in ${countdownText(left)}.`;",
+    "new": "  `${hour ? 'The Hour closes' : 'The Hollow closes'} in ${countdownText(left)}.`;",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -355,8 +355,8 @@
     "name": "SD20E-T19-the-hour-unwhere",
     "file": "src/systems/superDungeon/sdOmen.js",
     "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
-    "old": "${sdWhere(near, region, province)} will fade within the hour.",
-    "new": "near ${near || 'the Iliac Bay'} will fade within the hour.",
+    "old": "  `${name || 'The Abyss Dungeon'} ${sdWhere(near, region, province)} will fade within the hour.`; // AUDIT SD III (T19): where, as the find's line says it",
+    "new": "  `${name || 'The Abyss Dungeon'} near ${near || 'the Iliac Bay'} will fade within the hour.`; // AUDIT SD III (T19): where, as the find's line says it",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -365,8 +365,8 @@
     "name": "SD20E-T19-the-host-unregioned",
     "file": "src/scenes/superDungeon/sdHost.js",
     "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
-    "old": "near: hh?.site?.cityName || '', region: province ? '' : regionName(rec.r) || '', province }",
-    "new": "near: hh?.site?.cityName || '', province }",
+    "old": "        say(\n          sdHourLine({\n            name: hh?.loc?.name,\n            near: hh?.site?.cityName || '',\n            region: province ? '' : regionName(rec.r) || '',\n            province,\n          }),\n        );",
+    "new": "        say(sdHourLine({ name: hh?.loc?.name, near: hh?.site?.cityName || '', province }));",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]

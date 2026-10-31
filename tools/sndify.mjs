@@ -23,7 +23,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { isMain } from './lib/isMain.mjs';
 
-export const DF_RATE = 11025;   // SndFile.cs / sndFile.js SAMPLE_RATE
+export const DF_RATE = 11025; // SndFile.cs / sndFile.js SAMPLE_RATE
 
 /** RIFF/WAVE reader: PCM 8/16/24/32-bit and 32-bit float, any channel
  *  count, any rate. Answers { rate, channels, data: Float32Array[] }. */
@@ -31,9 +31,12 @@ export function readWav(bytes) {
   const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const tag = (o) => String.fromCharCode(bytes[o], bytes[o + 1], bytes[o + 2], bytes[o + 3]);
   if (tag(0) !== 'RIFF' || tag(8) !== 'WAVE') throw new Error('not a RIFF/WAVE file');
-  let fmt = null, dataAt = -1, dataLen = 0;
+  let fmt = null,
+    dataAt = -1,
+    dataLen = 0;
   for (let p = 12; p + 8 <= bytes.length;) {
-    const id = tag(p), size = dv.getUint32(p + 4, true);
+    const id = tag(p),
+      size = dv.getUint32(p + 4, true);
     if (id === 'fmt ') {
       fmt = {
         format: dv.getUint16(p + 8, true),
@@ -41,8 +44,11 @@ export function readWav(bytes) {
         rate: dv.getUint32(p + 12, true),
         bits: dv.getUint16(p + 22, true),
       };
-    } else if (id === 'data') { dataAt = p + 8; dataLen = size; }
-    p += 8 + size + (size & 1);   // chunks are word aligned
+    } else if (id === 'data') {
+      dataAt = p + 8;
+      dataLen = size;
+    }
+    p += 8 + size + (size & 1); // chunks are word aligned
   }
   if (!fmt || dataAt < 0) throw new Error('WAVE is missing fmt or data');
   const { channels, bits, format } = fmt;
@@ -54,9 +60,10 @@ export function readWav(bytes) {
       const o = dataAt + (f * channels + c) * bytesPer;
       let v;
       if (format === 3 && bits === 32) v = dv.getFloat32(o, true);
-      else if (bits === 8) v = (bytes[o] - 128) / 128;            // unsigned, as the classic files are
+      else if (bits === 8)
+        v = (bytes[o] - 128) / 128; // unsigned, as the classic files are
       else if (bits === 16) v = dv.getInt16(o, true) / 32768;
-      else if (bits === 24) v = ((bytes[o] | (bytes[o + 1] << 8) | (dv.getInt8(o + 2) << 16))) / 8388608;
+      else if (bits === 24) v = (bytes[o] | (bytes[o + 1] << 8) | (dv.getInt8(o + 2) << 16)) / 8388608;
       else if (bits === 32) v = dv.getInt32(o, true) / 2147483648;
       else throw new Error(`unsupported sample width ${bits}`);
       out[c][f] = v;
@@ -70,16 +77,22 @@ export function writeWav8(samples, rate = DF_RATE) {
   const n = samples.length;
   const buf = new Uint8Array(44 + n);
   const dv = new DataView(buf.buffer);
-  const str = (o, s) => { for (let i = 0; i < s.length; i++) buf[o + i] = s.charCodeAt(i); };
-  str(0, 'RIFF'); dv.setUint32(4, 36 + n, true); str(8, 'WAVE');
-  str(12, 'fmt '); dv.setUint32(16, 16, true);
-  dv.setUint16(20, 1, true);        // PCM
-  dv.setUint16(22, 1, true);        // mono
+  const str = (o, s) => {
+    for (let i = 0; i < s.length; i++) buf[o + i] = s.charCodeAt(i);
+  };
+  str(0, 'RIFF');
+  dv.setUint32(4, 36 + n, true);
+  str(8, 'WAVE');
+  str(12, 'fmt ');
+  dv.setUint32(16, 16, true);
+  dv.setUint16(20, 1, true); // PCM
+  dv.setUint16(22, 1, true); // mono
   dv.setUint32(24, rate, true);
-  dv.setUint32(28, rate, true);     // byte rate = rate * 1 * 1
-  dv.setUint16(32, 1, true);        // block align
-  dv.setUint16(34, 8, true);        // bits
-  str(36, 'data'); dv.setUint32(40, n, true);
+  dv.setUint32(28, rate, true); // byte rate = rate * 1 * 1
+  dv.setUint16(32, 1, true); // block align
+  dv.setUint16(34, 8, true); // bits
+  str(36, 'data');
+  dv.setUint32(40, n, true);
   buf.set(samples, 44);
   return buf;
 }
@@ -87,7 +100,8 @@ export function writeWav8(samples, rate = DF_RATE) {
 /** Down to mono, the way a mixdown does - the average, not the sum. */
 export const toMono = (channels) => {
   if (channels.length === 1) return channels[0];
-  const n = channels[0].length, out = new Float32Array(n);
+  const n = channels[0].length,
+    out = new Float32Array(n);
   for (let i = 0; i < n; i++) {
     let s = 0;
     for (const c of channels) s += c[i];
@@ -102,23 +116,31 @@ export const toMono = (channels) => {
  *  the difference between "old" and "broken": aliased cymbal fizz turns
  *  into a warble that no amount of 8-bit grit explains. */
 export function lowpass(x, cutoff, rate) {
-  const a = Math.exp(-2 * Math.PI * cutoff / rate);
+  const a = Math.exp((-2 * Math.PI * cutoff) / rate);
   const out = new Float32Array(x.length);
   let y = 0;
-  for (let i = 0; i < x.length; i++) { y = (1 - a) * x[i] + a * y; out[i] = y; }
+  for (let i = 0; i < x.length; i++) {
+    y = (1 - a) * x[i] + a * y;
+    out[i] = y;
+  }
   y = 0;
-  for (let i = x.length - 1; i >= 0; i--) { y = (1 - a) * out[i] + a * y; out[i] = y; }
+  for (let i = x.length - 1; i >= 0; i--) {
+    y = (1 - a) * out[i] + a * y;
+    out[i] = y;
+  }
   return out;
 }
 
 /** Linear resample. The band above the new Nyquist is already gone. */
 export function resample(x, from, to) {
   if (from === to) return x;
-  const n = Math.max(1, Math.round(x.length * to / from));
+  const n = Math.max(1, Math.round((x.length * to) / from));
   const out = new Float32Array(n);
   const step = (x.length - 1) / Math.max(1, n - 1);
   for (let i = 0; i < n; i++) {
-    const p = i * step, j = Math.floor(p), t = p - j;
+    const p = i * step,
+      j = Math.floor(p),
+      t = p - j;
     out[i] = x[j] + (x[Math.min(j + 1, x.length - 1)] - x[j]) * t;
   }
   return out;
@@ -153,7 +175,8 @@ export function quantise8(x, peak = 0.89) {
  *  the threshold, so the attack still starts from zero rather than on
  *  a vertical edge - a step is a click. */
 export function trimSilence(x, rate, { threshold = 0.004, head = 0.002, tail = 0.01 } = {}) {
-  let a = 0, b = x.length - 1;
+  let a = 0,
+    b = x.length - 1;
   while (a < x.length && Math.abs(x[a]) < threshold) a++;
   while (b > a && Math.abs(x[b]) < threshold) b--;
   if (a >= b) return x;
@@ -178,7 +201,8 @@ export function bake(mono, rate, { gain = 1, peak = 0.89, trim = true, maxSecond
     // AUDIT SOUNDSCAPE W12: `edges` [in, out] seconds - a recording that starts or stops mid-sound (a croak cut out of
     // a take, its first and last 5 ms at a tenth to two fifths of its peak) eased in and out, so neither edge clicks
     const out = x === mono ? new Float32Array(x) : x;
-    const a = Math.min(out.length, Math.round(edges[0] * rate)), b = Math.min(out.length, Math.round(edges[1] * rate));
+    const a = Math.min(out.length, Math.round(edges[0] * rate)),
+      b = Math.min(out.length, Math.round(edges[1] * rate));
     for (let i = 0; i < a; i++) out[i] *= i / a;
     for (let i = 0; i < b; i++) out[out.length - 1 - i] *= i / b;
     x = out;
@@ -207,8 +231,12 @@ if (isMain(import.meta.url)) {
     process.exit(2);
   }
   const r = bakeFile(files[0], files[1], {
-    gain: opt('gain', 1), peak: opt('peak', 0.89),
-    maxSeconds: opt('max', 0), trim: !args.includes('--no-trim'),
+    gain: opt('gain', 1),
+    peak: opt('peak', 0.89),
+    maxSeconds: opt('max', 0),
+    trim: !args.includes('--no-trim'),
   });
-  console.log(`${files[0]} (${r.from}Hz x${r.channels}) -> ${files[1]}  ${DF_RATE}Hz 8-bit mono, ${r.frames} samples, ${r.seconds.toFixed(3)}s`);
+  console.log(
+    `${files[0]} (${r.from}Hz x${r.channels}) -> ${files[1]}  ${DF_RATE}Hz 8-bit mono, ${r.frames} samples, ${r.seconds.toFixed(3)}s`,
+  );
 }

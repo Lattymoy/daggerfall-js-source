@@ -2,8 +2,8 @@
   {
     "name": "C5-hole-to-room",
     "file": "src/net/holdemTable.js",
-    "old": "t.hand.seats.map((s, k) => ({ to: t.seats[live[k]].id, frame: { hole:",
-    "new": "t.hand.seats.map((s, k) => ({ to: null, frame: { hole:",
+    "old": "    to: t.seats[live[k]].id,",
+    "new": "    to: null,",
     "tests": [
       "test/net/cards5_relay.test.js",
       "test/systems/cards5_client.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "C5-room-sees-hands",
     "file": "src/net/holdemTable.js",
-    "old": "hand: t.hand ? viewFor(t.hand, -1) : null, clockAt:",
-    "new": "hand: t.hand ? viewFor(t.hand, 0) : null, clockAt:",
+    "old": "    hand: t.hand ? viewFor(t.hand, -1) : null,",
+    "new": "    hand: t.hand ? viewFor(t.hand, 0) : null,",
     "tests": [
       "test/net/cards5_relay.test.js",
       "test/systems/cards5_client.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "C5-anyone-acts",
     "file": "src/net/holdemTable.js",
-    "old": "  if (t.seats[t.handSeats[k]]?.id !== id) return 'not your turn';\n",
-    "new": "\n",
+    "old": "  if (t.seats[t.handSeats[k]]?.id !== id) return 'not your turn';",
+    "new": "",
     "tests": [
       "test/net/cards5_relay.test.js",
       "test/systems/cards5_client.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "C5-stand-no-fold",
     "file": "src/net/holdemTable.js",
-    "old": "  t.hand = foldSeat(prev, k);\n",
-    "new": "  t.hand = prev;\n",
+    "old": "  t.hand = foldSeat(prev, k);",
+    "new": "  t.hand = prev;",
     "tests": [
       "test/net/cards5_relay.test.js",
       "test/systems/cards5_client.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "C5-taken-sat",
     "file": "src/net/holdemTable.js",
-    "old": "  if (t.seats[chair]) return 'taken';\n",
-    "new": "\n",
+    "old": "  if (t.seats[chair]) return 'taken';",
+    "new": "",
     "tests": [
       "test/net/cards5_relay.test.js",
       "test/systems/cards5_client.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "C5-first-deal-now",
     "file": "src/net/holdemTable.js",
-    "old": "t.nextDealAt = Math.max(t.nextDealAt, now + HOLDEM_FIRST_MS);\n  return [room(t, [{ t: 'sit', seat: chair,",
-    "new": "t.nextDealAt = now;\n  return [room(t, [{ t: 'sit', seat: chair,",
+    "old": "  if (!t.hand && liveChairs(t).length === HOLDEM_SEATS_MIN)\n    t.nextDealAt = Math.max(t.nextDealAt, now + HOLDEM_FIRST_MS);",
+    "new": "  if (!t.hand && liveChairs(t).length === HOLDEM_SEATS_MIN) t.nextDealAt = now;",
     "tests": [
       "test/net/cards5_relay.test.js",
       "test/systems/cards5_client.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "C5-no-seed",
     "file": "src/net/holdemTable.js",
-    "old": "  t.seed = rand32() >>> 0;\n",
-    "new": "  t.seed = 0;\n",
+    "old": "  t.seed = rand32() >>> 0;",
+    "new": "  t.seed = 0;",
     "tests": [
       "test/net/cards5_relay.test.js",
       "test/systems/cards5_client.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "C5-wire-no-chair-bound",
     "file": "src/net/holdemTable.js",
-    "old": "|| m.chair >= m.chairs) return null;",
-    "new": ") return null;",
+    "old": "    if (\n      !Number.isInteger(m.chairs) ||\n      m.chairs < HOLDEM_SEATS_MIN ||\n      m.chairs > HOLDEM_SEATS_MAX ||\n      m.chair >= m.chairs\n    )\n      return null;",
+    "new": "    if (!Number.isInteger(m.chairs) || m.chairs < HOLDEM_SEATS_MIN || m.chairs > HOLDEM_SEATS_MAX) return null;",
     "tests": [
       "test/net/cards5_relay.test.js",
       "test/systems/cards5_client.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "C5-wire-raise-unchecked",
     "file": "src/net/holdemTable.js",
-    "old": "    if (a.type === 'raise' && !chipsOk(a.to)) return null;\n",
-    "new": "\n",
+    "old": "    if (a.type === 'raise' && !chipsOk(a.to)) return null;",
+    "new": "",
     "tests": [
       "test/net/cards5_relay.test.js",
       "test/systems/cards5_client.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "C5-out-bad-card",
     "file": "src/net/holdemTable.js",
-    "old": "m.hole.cards.every((c) => Number.isInteger(c) && c >= 0 && c < 52)",
-    "new": "m.hole.cards.every((c) => Number.isInteger(c))",
+    "old": "      m.hole.cards.every((c) => Number.isInteger(c) && c >= 0 && c < 52)",
+    "new": "      m.hole.cards.every((c) => Number.isInteger(c))",
     "tests": [
       "test/net/cards5_relay.test.js",
       "test/systems/cards5_client.test.js"

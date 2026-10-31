@@ -41,31 +41,28 @@ export const MARK_BODY_ROWS = 5;
 
 /** Patreon's two shapes (PATREON1): the bar in the dim, standing the full height, a column of air, and the disc in the
  *  brass - five across with its four corners cut, which is what a circle is at this size. */
-const PATREON_ART = Object.freeze([
-  '+..###.',
-  '+.#####',
-  '+.#####',
-  '+.#####',
-  '+..###.',
-]);
+const PATREON_ART = Object.freeze(['+..###.', '+.#####', '+.#####', '+.#####', '+..###.']);
 
 /** Ko-fi's mug (U64's cup, the handle a ring): two wisps of steam in the dim, a row of air, then the filled body with
  *  its handle on the right - five rows, Patreon's height. */
-const KOFI_ART = Object.freeze([
-  '.+.+..',
-  '+.+...',
-  '......',
-  '####..',
-  '######',
-  '####.#',
-  '######',
-  '####..',
-]);
+const KOFI_ART = Object.freeze(['.+.+..', '+.+...', '......', '####..', '######', '####.#', '######', '####..']);
 
 /** @type {readonly SupportAsk[]} The asks, in the order both doors show them - Patreon first, as it was the only one. */
 export const SUPPORT_ASKS = Object.freeze([
-  Object.freeze({ id: 'patreon', name: 'Patreon', label: 'Support on Patreon', url: 'https://www.patreon.com/c/dfenhanced', art: PATREON_ART }),
-  Object.freeze({ id: 'kofi', name: 'Ko-fi', label: 'Support on Ko-fi', url: 'https://ko-fi.com/daggerfallonline', art: KOFI_ART }),
+  Object.freeze({
+    id: 'patreon',
+    name: 'Patreon',
+    label: 'Support on Patreon',
+    url: 'https://www.patreon.com/c/dfenhanced',
+    art: PATREON_ART,
+  }),
+  Object.freeze({
+    id: 'kofi',
+    name: 'Ko-fi',
+    label: 'Support on Ko-fi',
+    url: 'https://ko-fi.com/daggerfallonline',
+    art: KOFI_ART,
+  }),
 ]);
 
 /**
@@ -82,13 +79,20 @@ export function markCss(ask, px = MARK_PX) {
   const colour = (ch) => (ch === '#' ? 'var(--mk-hi)' : 'var(--mk-lo)');
   let ground = 'transparent';
   const shadows = [];
-  ask.art.forEach((row, y) => [...row].forEach((ch, x) => {
-    if (ch === '.') return;
-    if (x === 0 && y === 0) { ground = colour(ch); return; }
-    shadows.push(`${x * px}px ${y * px}px 0 ${colour(ch)}`);
-  }));
-  return `.supmark-${ask.id} { width: ${cols * px}px; height: ${rows * px}px; }\n`
-    + `.supmark-${ask.id}::before { background: ${ground}; box-shadow: ${shadows.join(', ')}; }`;
+  ask.art.forEach((row, y) =>
+    [...row].forEach((ch, x) => {
+      if (ch === '.') return;
+      if (x === 0 && y === 0) {
+        ground = colour(ch);
+        return;
+      }
+      shadows.push(`${x * px}px ${y * px}px 0 ${colour(ch)}`);
+    }),
+  );
+  return (
+    `.supmark-${ask.id} { width: ${cols * px}px; height: ${rows * px}px; }\n` +
+    `.supmark-${ask.id}::before { background: ${ground}; box-shadow: ${shadows.join(', ')}; }`
+  );
 }
 
 /** Both marks, as the site's corner and the door's icons draw them: the brass and the dim at rest, the brass lit by the

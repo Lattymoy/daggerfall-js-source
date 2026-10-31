@@ -164,7 +164,7 @@
   {
     "name": "DECOR1e-the-placer-from-nothing",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "  const s = { yaw: from ? wrapTurn((mount ? from.rot?.[2] : from.rot?.[0]) ?? 0) : 0, raise: 0, scale: from?.scale ?? 1, snap: false, nudge: [0, 0] };",
+    "old": "  const s = {\n    yaw: from ? wrapTurn((mount ? from.rot?.[2] : from.rot?.[0]) ?? 0) : 0,\n    raise: 0,\n    scale: from?.scale ?? 1,\n    snap: false,\n    nudge: [0, 0],\n  };",
     "new": "  const s = { yaw: 0, raise: 0, scale: 1, snap: false, nudge: [0, 0] };",
     "tests": [
       "test/systems/online/decor1e.test.js"
@@ -384,8 +384,8 @@
   {
     "name": "DECOR1e-the-pieces-half-dropped",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "decorBack: n(r.data?.decorBack), ...(r.data?.refund != null",
-    "new": "decorBack: 0, ...(r.data?.refund != null",
+    "old": "        decorBack: n(r.data?.decorBack),",
+    "new": "        decorBack: 0,",
     "tests": [
       "test/systems/online/decor1e.test.js"
     ]
@@ -393,8 +393,8 @@
   {
     "name": "DECOR1e-the-sale-line-the-home-alone",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "`You sold your home. ${gold(refund + piecesBack + rent)} gold",
-    "new": "`You sold your home. ${gold(refund + rent)} gold",
+    "old": "  `You sold your home. ${gold(refund + piecesBack + rent)} gold went to ${EMPIRE_ACCOUNT_WORDS}` +",
+    "new": "  `You sold your home. ${gold(refund + rent)} gold went to ${EMPIRE_ACCOUNT_WORDS}` +",
     "tests": [
       "test/systems/online/decor1e.test.js"
     ],
@@ -412,8 +412,8 @@
   {
     "name": "DECOR1e-the-sale-half-whole",
     "file": "src/net/decorLaw.js",
-    "old": ".reduce((n, p) => n + decorRefund(p?.paid), 0);",
-    "new": ".reduce((n, p) => n + (p?.paid ?? 0), 0);",
+    "old": "export const decorSaleBack = (pieces) =>\n  (Array.isArray(pieces) ? pieces : []).reduce((n, p) => n + decorRefund(p?.paid), 0);",
+    "new": "export const decorSaleBack = (pieces) => (Array.isArray(pieces) ? pieces : []).reduce((n, p) => n + (p?.paid ?? 0), 0);",
     "tests": [
       "test/systems/online/decor1e.test.js",
       "test/server/decor1.test.js"

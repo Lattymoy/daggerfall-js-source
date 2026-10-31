@@ -52,12 +52,12 @@
 // killCount < spawnCount.
 
 import { QuestResourceBehaviour } from './resourceBehaviour.js';
-import { isShelved } from './quest.js';   // QUEST-SHELF: a quest set aside
+import { isShelved } from './quest.js'; // QUEST-SHELF: a quest set aside
 import { GENDERS } from '../../characters/nameHelper.js';
 import { RDB_SIDE } from '../../world/rdbLayout.js';
-import { MARKER_TYPES } from './place.js';   // TOTEM-CAGE: the two records that carry a DaggerfallMarker
-import { freeLodgedFeet } from '../../characters/foeSpacing.js';   // LODGED-STAND: a quest Person never stands in a model
-import { STATIC_NPC_ACTIVATION_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../../player/activate.js';   // DQ1: a stand's reach
+import { MARKER_TYPES } from './place.js'; // TOTEM-CAGE: the two records that carry a DaggerfallMarker
+import { freeLodgedFeet } from '../../characters/foeSpacing.js'; // LODGED-STAND: a quest Person never stands in a model
+import { STATIC_NPC_ACTIVATION_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../../player/activate.js'; // DQ1: a stand's reach
 
 /** FactionFile.GetFlatData: archive packs above bit 7. */
 export const getFlatData = (flat) => ({ archive: flat >> 7, record: flat & 0x7f });
@@ -87,9 +87,14 @@ export function markerScenePosition(marker) {
 }
 
 /** AddQuestResourceObjects (:903-937). */
-export function addQuestResourceObjects(machine, adapter, siteType, buildingKey = 0,
-  { enableNPCs = true, enableFoes = true, enableItems = true, byName = !!machine?.mountByName } = {}) {
-  void enableItems;   // C#'s own dead parameter, kept for the signature
+export function addQuestResourceObjects(
+  machine,
+  adapter,
+  siteType,
+  buildingKey = 0,
+  { enableNPCs = true, enableFoes = true, enableItems = true, byName = !!machine?.mountByName } = {},
+) {
+  void enableItems; // C#'s own dead parameter, kept for the signature
   // QREPAIR: `byName` - the repair's mount (quest/questRepair.js sets machine.mountByName for its pass) matches a
   // standing behaviour by quest and symbol NAME, not identity: see isAlreadyInjected
   const siteLinks = machine.getSiteLinks(siteType, adapter.currentMapId?.(), buildingKey);
@@ -97,7 +102,7 @@ export function addQuestResourceObjects(machine, adapter, siteType, buildingKey 
   for (const link of siteLinks) {
     const quest = machine.getQuest(link.questUID);
     if (!quest) throw new Error(`Could not find active quest for UID ${link.questUID}`);
-    if (isShelved(quest)) continue;   // QUEST-SHELF: a quest set aside mounts nothing (its links are set aside with it)
+    if (isShelved(quest)) continue; // QUEST-SHELF: a quest set aside mounts nothing (its links are set aside with it)
     const place = quest.getPlace(link.placeSymbol);
     if (!place) throw new Error(`Could not find Place symbol ${link.placeSymbol?.name} in quest UID ${link.questUID}`);
     // One snapshot per link guards the double-inject (slightly
@@ -110,20 +115,47 @@ export function addQuestResourceObjects(machine, adapter, siteType, buildingKey 
     // AUDIT QA3 D1: never a destroyed one (a foe the quest hid, gone with its body) - bound to the loaded Foe it read
     // "already here", and a foe the save held standing never stood
     for (const b of resourceBehaviours) if (!b.isComponentDestroyed) b.relinkToLiveQuest?.();
-    addMarkerResourceObjects(machine, adapter, siteType, enableNPCs, enableFoes, quest,
-      resourceBehaviours, place.siteDetails.selectedMarker, byName);
+    addMarkerResourceObjects(
+      machine,
+      adapter,
+      siteType,
+      enableNPCs,
+      enableFoes,
+      quest,
+      resourceBehaviours,
+      place.siteDetails.selectedMarker,
+      byName,
+    );
     if (place.siteDetails.questSpawnMarkers) {
       for (const marker of place.siteDetails.questSpawnMarkers) {
-        addMarkerResourceObjects(machine, adapter, siteType, enableNPCs, enableFoes, quest,
-          resourceBehaviours, marker, byName);
+        addMarkerResourceObjects(
+          machine,
+          adapter,
+          siteType,
+          enableNPCs,
+          enableFoes,
+          quest,
+          resourceBehaviours,
+          marker,
+          byName,
+        );
       }
     }
   }
 }
 
 /** AddMarkerResourceObjects (:938-971). */
-export function addMarkerResourceObjects(machine, adapter, siteType, enableNPCs, enableFoes,
-  quest, resourceBehaviours, marker, byName = false) {
+export function addMarkerResourceObjects(
+  machine,
+  adapter,
+  siteType,
+  enableNPCs,
+  enableFoes,
+  quest,
+  resourceBehaviours,
+  marker,
+  byName = false,
+) {
   if (!marker?.targetResources) return;
   for (const target of marker.targetResources) {
     const resource = quest.getResource(target);
@@ -166,11 +198,16 @@ export function addMarkerResourceObjects(machine, adapter, siteType, enableNPCs,
 export function isAlreadyInjected(resourceBehaviours, resource, byName = false) {
   if (!resourceBehaviours || resourceBehaviours.length === 0) return false;
   for (const behaviour of resourceBehaviours) {
-    if (behaviour.isComponentDestroyed) continue;   // AUDIT QA3 D1: Destroy() takes it out of the scene's objects, as C#'s does
+    if (behaviour.isComponentDestroyed) continue; // AUDIT QA3 D1: Destroy() takes it out of the scene's objects, as C#'s does
     if (behaviour.targetSymbol === resource.symbol) return true;
     // QREPAIR: the repair's mount closes the load hole above for its own pass - the same quest, the same symbol name,
     // is the same resource standing. DFU's own mounts (the layout, the hot-place) keep the identity match, verbatim.
-    if (byName && behaviour.questUID === resource.parentQuest?.uid && behaviour.targetSymbol?.name === resource.symbol?.name) return true;
+    if (
+      byName &&
+      behaviour.questUID === resource.parentQuest?.uid &&
+      behaviour.targetSymbol?.name === resource.symbol?.name
+    )
+      return true;
   }
   return false;
 }
@@ -257,7 +294,7 @@ export function sceneMarkerOf(blocks, markerID) {
  *  nowhere: null. */
 export function sceneMarkerMover(blocks, actions, markerID) {
   const at = sceneMarkerOf(blocks, markerID);
-  const o = at ? actions?.objectAt?.(at.index, at.marker.position) ?? null : null;
+  const o = at ? (actions?.objectAt?.(at.index, at.marker.position) ?? null) : null;
   return o?.kind === 'moveFlat' ? o : null;
 }
 
@@ -283,7 +320,9 @@ export function rideSceneMarker(stand, offset) {
  *  pose. */
 export function questStandBox(s) {
   const o = s.off;
-  const x = o ? s.x + o[0] : s.x, y = o ? s.y + o[1] : s.y, z = o ? s.z + o[2] : s.z;
+  const x = o ? s.x + o[0] : s.x,
+    y = o ? s.y + o[1] : s.y,
+    z = o ? s.z + o[2] : s.z;
   return { min: [x - s.width / 2, y, z - s.width / 2], max: [x + s.width / 2, y + s.height, z + s.width / 2] };
 }
 
@@ -297,7 +336,7 @@ export function questFlatTargets(list) {
     const isPerson = s.behaviour?.targetResource?.isPerson === true;
     out.push({
       key: `questflat:${i}`,
-      aabb: questStandBox(s),   // TOTEM-CAGE: where the stand IS - a stand riding an acting marker is clicked where it rode to
+      aabb: questStandBox(s), // TOTEM-CAGE: where the stand IS - a stand riding an acting marker is clicked where it rode to
       distance: isPerson ? STATIC_NPC_ACTIVATION_DISTANCE : DEFAULT_ACTIVATION_DISTANCE,
     });
   });
@@ -325,7 +364,7 @@ export function siteMarkerSpots(siteDetails, marker, items = true) {
   const own = marker?.flatPosition ? markerScenePosition(marker) : null;
   if (!own) return [];
   const d2 = (p) => (p.x - own.x) ** 2 + (p.y - own.y) ** 2 + (p.z - own.z) ** 2;
-  return [...(siteDetails?.questSpawnMarkers ?? []), ...(items ? siteDetails?.questItemMarkers ?? [] : [])]
+  return [...(siteDetails?.questSpawnMarkers ?? []), ...(items ? (siteDetails?.questItemMarkers ?? []) : [])]
     .filter((m) => m?.flatPosition)
     .map(markerScenePosition)
     .filter((p) => d2(p) > 1e-9)
@@ -353,7 +392,7 @@ export function standSpot(own, spots, hasFloor) {
 export function freeQuestStand(collider, feet, height) {
   const f = [...feet];
   if (!collider || !freeLodgedFeet(collider, f, { height })) return feet;
-  f[1] += height * 0.02;   // AUDIT QA3 D3: the stand's own lift off the ground plane (worldModes.js standQuestFlatIn), kept
+  f[1] += height * 0.02; // AUDIT QA3 D3: the stand's own lift off the ground plane (worldModes.js standQuestFlatIn), kept
   return f;
 }
 
@@ -374,7 +413,8 @@ export function crowdingPerson(p, w, people) {
   for (const pn of people ?? []) {
     if (!pn?.stood || pn.active === false) continue;
     const reach = (w + (pn.width || w)) / 2;
-    if (Math.abs(pn.x - p[0]) < reach && Math.abs(pn.z - p[2]) < reach && Math.abs(pn.y - p[1]) < CROWD_STOREY_M) return pn;
+    if (Math.abs(pn.x - p[0]) < reach && Math.abs(pn.z - p[2]) < reach && Math.abs(pn.y - p[1]) < CROWD_STOREY_M)
+      return pn;
   }
   return null;
 }
@@ -387,9 +427,10 @@ export function crowdingPerson(p, w, people) {
  *  with a floor that shares none - never on an item's marker nor at the room's door - else (RPT1026-QUESTS QUEST-CROWD)
  *  beside its own spot (besideSpot), else where the backstop stood it, as DFU does. */
 export function buildingStandSpot(own, spots, collider, lift, w = null, people = null, stands = null, self = null) {
-  const hasFloor = (p) => Number.isFinite(collider?.raycast?.([p[0], p[1] + lift, p[2]], [0, -1, 0], MARKER_FLOOR_REACH));
+  const hasFloor = (p) =>
+    Number.isFinite(collider?.raycast?.([p[0], p[1] + lift, p[2]], [0, -1, 0], MARKER_FLOOR_REACH));
   const at = standSpot(own, spots, hasFloor);
-  const crowd = crowdOf(people, stands, self);   // RPT1026-QUESTS QUEST-CROWD: and the quest people already stood here
+  const crowd = crowdOf(people, stands, self); // RPT1026-QUESTS QUEST-CROWD: and the quest people already stood here
   if (w == null || !crowdingPerson(at, w, crowd)) return at;
   for (const p of spots?.spawns ?? []) if (hasFloor(p) && !crowdingPerson(p, w, crowd)) return p;
   return besideSpot(at, collider, lift, w, crowd) ?? at;
@@ -418,10 +459,11 @@ export function besideSpot(at, collider, lift, w, crowd) {
   for (const k of QUEST_BESIDE_REACH) {
     const d = k * w;
     for (let i = 0; i < 8; i++) {
-      const a = (i * Math.PI) / 4, dir = [Math.cos(a), 0, Math.sin(a)];
+      const a = (i * Math.PI) / 4,
+        dir = [Math.cos(a), 0, Math.sin(a)];
       const p = [at[0] + dir[0] * d, at[1], at[2] + dir[2] * d];
       const hit = down(p);
-      if (!Number.isFinite(hit) || Math.abs((p[1] + lift - hit) - floor) > BESIDE_FLOOR_M) continue;
+      if (!Number.isFinite(hit) || Math.abs(p[1] + lift - hit - floor) > BESIDE_FLOOR_M) continue;
       const wall = collider?.raycast?.([at[0], floor + 1, at[2]], dir, d);
       if (Number.isFinite(wall) && wall < d) continue;
       if (!crowdingPerson(p, w, crowd)) return p;
@@ -445,7 +487,8 @@ export function besideSpot(at, collider, lift, w, crowd) {
 export function crowdOf(people, stands = null, self = null) {
   const stood = [];
   for (const s of stands ?? []) {
-    if (!s || s === self || !s.batch || s.dead || s.active === false || !s.behaviour?.targetResource?.isPerson) continue;
+    if (!s || s === self || !s.batch || s.dead || s.active === false || !s.behaviour?.targetResource?.isPerson)
+      continue;
     stood.push({ stood: true, active: true, x: s.x, y: s.y, z: s.z, width: s.width });
   }
   return stood.length ? [...(people ?? []), ...stood] : people;
@@ -456,9 +499,13 @@ export function crowdOf(people, stands = null, self = null) {
 /** The ring constants; TryPlacement's wilderness arm widens to 8/25
  *  (:252-257), every other site uses the defaults. */
 export const PLACE_FOE_DEFAULTS = Object.freeze({
-  minDistance: 5, maxDistance: 20,
-  wildernessMinDistance: 8, wildernessMaxDistance: 25,
-  overlapSphereRadius: 0.65, separationDistance: 1.25, maxFloorDistance: 4,
+  minDistance: 5,
+  maxDistance: 20,
+  wildernessMinDistance: 8,
+  wildernessMaxDistance: 25,
+  overlapSphereRadius: 0.65,
+  separationDistance: 1.25,
+  maxFloorDistance: 4,
 });
 
 /** One placement attempt, just outside the player's view unless the
@@ -474,7 +521,15 @@ export const PLACE_FOE_DEFAULTS = Object.freeze({
  *  Answers the spawn position {x,y,z} (the host stands the foe there,
  *  faces it at the player, and FinalizeFoe aligns ground units /
  *  raises flying ones 1.5 - geometry), or null = retry next tick. */
-export function placeFoeFreely(env, { minDistance = PLACE_FOE_DEFAULTS.minDistance, maxDistance = PLACE_FOE_DEFAULTS.maxDistance, lineOfSightCheck = true } = {}) {   // AUDIT 68 S30-placefoe-defaults-dup: the table, not a second copy of it
+export function placeFoeFreely(
+  env,
+  {
+    minDistance = PLACE_FOE_DEFAULTS.minDistance,
+    maxDistance = PLACE_FOE_DEFAULTS.maxDistance,
+    lineOfSightCheck = true,
+  } = {},
+) {
+  // AUDIT 68 S30-placefoe-defaults-dup: the table, not a second copy of it
   const C = PLACE_FOE_DEFAULTS;
   const rolls = env.rolls ?? Math.random;
 
@@ -491,12 +546,12 @@ export function placeFoeFreely(env, { minDistance = PLACE_FOE_DEFAULTS.minDistan
     // Select a left or right direction outside of camera FOV
     let directionAngle = env.fovDegrees;
     directionAngle += rolls() * 4;
-    yawDegrees = (rolls() > 0.5) ? -directionAngle : directionAngle;
+    yawDegrees = rolls() > 0.5 ? -directionAngle : directionAngle;
   } else {
     // Don't care about player's field of view (e.g. at rest)
     yawDegrees = rolls() * 360;
   }
-  const yaw = env.playerYawRadians + yawDegrees * Math.PI / 180;
+  const yaw = env.playerYawRadians + (yawDegrees * Math.PI) / 180;
   const spawnDirection = { x: Math.sin(yaw), y: 0, z: Math.cos(yaw) };
 
   // Check for a hit

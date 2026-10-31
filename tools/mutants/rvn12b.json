@@ -2,8 +2,8 @@
   {
     "name": "RVN12b-effect-lost",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "fireproof: 'it shrugs off fire',",
-    "new": "",
+    "old": "  fireproof: 'it shrugs off fire',\n  rimebound: 'it shrugs off frost',",
+    "new": "  rimebound: 'it shrugs off frost',",
     "tests": [
       "test/systems/revenant/rvn12b_page.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RVN12b-effect-wrong",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "arrowWise: 'your arrows bite less; it closes fast',",
-    "new": "arrowWise: 'your arrows bite less',",
+    "old": "  arrowWise: 'your arrows bite less; it closes fast',",
+    "new": "  arrowWise: 'your arrows bite less',",
     "tests": [
       "test/systems/revenant/rvn12b_page.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RVN12b-chips-unknown-kept",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "(r?.learned ?? []).filter((a) => ADAPT_NAMES[a]).map((a) =>",
-    "new": "(r?.learned ?? []).map((a) =>",
+    "old": "  (r?.learned ?? [])\n    .filter((a) => ADAPT_NAMES[a])\n    .map((a) => ({\n      id: a,\n      name: ADAPT_NAMES[a],\n      effect: ADAPT_EFFECTS[a] ?? '',\n      title: `${ADAPT_NAMES[a]} - ${ADAPT_EFFECTS[a] ?? ''}`,\n    }));",
+    "new": "  (r?.learned ?? []).map((a) => ({\n    id: a,\n    name: ADAPT_NAMES[a],\n    effect: ADAPT_EFFECTS[a] ?? '',\n    title: `${ADAPT_NAMES[a]} - ${ADAPT_EFFECTS[a] ?? ''}`,\n  }));",
     "tests": [
       "test/systems/revenant/rvn12b_page.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RVN12b-took-unnamed",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "  const names = (r?.took ?? []).map((it) => takenName(it)).filter(Boolean);",
-    "new": "  const names = (r?.took ?? []).map(() => 'piece');",
+    "old": "  const names = (r?.took ?? []).map((it) => takenName(it)).filter(Boolean); // RVN12b: the pieces it took, by the names the pack shows (AUDIT FEUD: their article gone after \"your\")",
+    "new": "  const names = (r?.took ?? []).map(() => 'piece'); // RVN12b: the pieces it took, by the names the pack shows (AUDIT FEUD: their article gone after \"your\")",
     "tests": [
       "test/systems/revenant/rvn12b_page.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RVN12b-took-one-only",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "`Took: your ${names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names[0]}",
-    "new": "`Took: your ${names[0]}",
+    "old": "  return `Took: your ${names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names[0]}. Take ${names.length > 1 ? 'them' : 'it'} back from it.`;",
+    "new": "  return `Took: your ${names[0]}. Take ${names.length > 1 ? 'them' : 'it'} back from it.`;",
     "tests": [
       "test/systems/revenant/rvn12b_page.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RVN12b-pips-words-always",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "words: w ? `Festering:",
-    "new": "words: true ? `Festering:",
+    "old": "    words: w ? `Festering: ${w} of ${WRATH_MAX}. It grows stronger the longer you leave it.` : '',",
+    "new": "    words: true ? `Festering: ${w} of ${WRATH_MAX}. It grows stronger the longer you leave it.` : '',",
     "tests": [
       "test/systems/revenant/rvn12b_page.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "RVN12b-loyalty-word",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "`Loyalty: ${r.companion.loyalty} - ${loyaltyLabel(r.companion.loyalty)}.`",
-    "new": "`Loyalty: ${r.companion.loyalty}.`",
+    "old": "  Number.isFinite(r?.companion?.loyalty)\n    ? `Loyalty: ${r.companion.loyalty} - ${loyaltyLabel(r.companion.loyalty)}.`\n    : '';",
+    "new": "  Number.isFinite(r?.companion?.loyalty) ? `Loyalty: ${r.companion.loyalty}.` : '';",
     "tests": [
       "test/systems/revenant/rvn12b_page.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RVN12b-sworn-unshown",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "    if (loy) text.append(el('span', 'rvn-will', loy));\n",
-    "new": "",
+    "old": "    if (loy) text.append(el('span', 'rvn-will', loy));\n    item.append(face(el, r), text);",
+    "new": "    item.append(face(el, r), text);",
     "tests": [
       "test/systems/revenant/rvn12b_page.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "RVN12b-chips-undrawn",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "    for (const c of chips) { const chip = el('span', 'rvn-chip', c.name); chip.title = c.title; box.append(chip); }\n",
-    "new": "",
+    "old": "    for (const c of chips) {\n      const chip = el('span', 'rvn-chip', c.name);\n      chip.title = c.title;\n      box.append(chip);\n    }\n    text.append(box);",
+    "new": "    text.append(box);",
     "tests": [
       "test/systems/revenant/rvn12b_page.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RVN12b-effects-undrawn",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "    text.append(el('span', 'rvn-effects', chips.map((c) => `${c.name} - ${c.effect}.`).join(' ')));\n",
-    "new": "",
+    "old": "    text.append(el('span', 'rvn-effects', chips.map((c) => `${c.name} - ${c.effect}.`).join(' ')));\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/revenant/rvn12b_page.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RVN12b-took-undrawn",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "  if (took) text.append(el('span', 'rvn-will', took));\n",
-    "new": "",
+    "old": "  if (took) text.append(el('span', 'rvn-will', took));\n  const fester = fallen ? null : festerPips(r); // RVN12b (24.1): RVN9's wrath, three pips",
+    "new": "  const fester = fallen ? null : festerPips(r); // RVN12b (24.1): RVN9's wrath, three pips",
     "tests": [
       "test/systems/revenant/rvn12b_page.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "RVN12b-pips-unfilled",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "el('span', `rvn-pip${i < fester.filled ? ' is-on' : ''}`, '')",
-    "new": "el('span', 'rvn-pip', '')",
+    "old": "    for (let i = 0; i < fester.of; i++) pips.append(el('span', `rvn-pip${i < fester.filled ? ' is-on' : ''}`, ''));",
+    "new": "    for (let i = 0; i < fester.of; i++) pips.append(el('span', 'rvn-pip', ''));",
     "tests": [
       "test/systems/revenant/rvn12b_page.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "RVN12b-unbroken-unsaid",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "d?.deed === 'fled' && d.unbroken === true ? 'escaped unbroken' : DEED_WORDS",
-    "new": "DEED_WORDS",
+    "old": "    : d?.deed === 'fled' && d.unbroken === true\n      ? 'escaped unbroken'\n      : (DEED_WORDS[d?.deed] ?? String(d?.deed ?? '')); // RVN12b (24.1): an escape unbroken",
+    "new": "    : (DEED_WORDS[d?.deed] ?? String(d?.deed ?? '')); // RVN12b (24.1): an escape unbroken",
     "tests": [
       "test/systems/revenant/rvn12b_page.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "RVN12b-signature-edge",
     "file": "src/ui/revenant/revenantCard.js",
-    "old": "body .rvncard.is-signature { border-left-color: #a8332a; }\n",
-    "new": "",
+    "old": "body .rvncard.is-signature { border-left-color: #a8332a; }\nbody .rvncard.is-signature .rvncard-kicker { color: #e06a5a; }",
+    "new": "body .rvncard.is-signature .rvncard-kicker { color: #e06a5a; }",
     "tests": [
       "test/systems/revenant/rvn12b_page.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "RVN12b-theft-edge",
     "file": "src/ui/revenant/revenantCard.js",
-    "old": "body .rvncard.is-stole { border-left-color: #c9822e; }\n",
-    "new": "",
+    "old": "body .rvncard.is-stole { border-left-color: #c9822e; }\nbody .rvncard.is-stole .rvncard-kicker { color: #e0a54a; }",
+    "new": "body .rvncard.is-stole .rvncard-kicker { color: #e0a54a; }",
     "tests": [
       "test/systems/revenant/rvn12b_page.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "RVN12b-betrayal-edge",
     "file": "src/ui/revenant/revenantCard.js",
-    "old": "body .rvncard.is-betrayed { border-left-color: #0b0b0b; }\n",
-    "new": "",
+    "old": "body .rvncard.is-betrayed { border-left-color: #0b0b0b; }\nbody .rvncard.is-betrayed .rvncard-kicker { color: #d8d8d8; }",
+    "new": "body .rvncard.is-betrayed .rvncard-kicker { color: #d8d8d8; }",
     "tests": [
       "test/systems/revenant/rvn12b_page.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "RVN12b-kin-edges",
     "file": "src/ui/revenant/revenantCard.js",
-    "old": "body .rvncard.is-felled, body .rvncard.is-festered, body .rvncard.is-lair, body .rvncard.is-weakness { border-left-color: #8c3a32; }\n",
-    "new": "",
+    "old": "body .rvncard.is-felled, body .rvncard.is-festered, body .rvncard.is-lair, body .rvncard.is-weakness { border-left-color: #8c3a32; }\nbody .rvncard.is-routed, body .rvncard.is-unbroken, body .rvncard.is-deserted { border-left-color: #c9822e; }",
+    "new": "body .rvncard.is-routed, body .rvncard.is-unbroken, body .rvncard.is-deserted { border-left-color: #c9822e; }",
     "tests": [
       "test/systems/revenant/rvn12b_page.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "RVN12b-warn-edge",
     "file": "src/ui/revenant/revenantCard.js",
-    "old": "body .rvncard.is-warn { border-left-color: #8a63d2; }\n",
-    "new": "",
+    "old": "body .rvncard.is-warn { border-left-color: #8a63d2; }\nbody .rvncard.is-warn .rvncard-kicker { color: #c3a8ff; }",
+    "new": "body .rvncard.is-warn .rvncard-kicker { color: #c3a8ff; }",
     "tests": [
       "test/systems/revenant/rvn12b_page.test.js"
     ]

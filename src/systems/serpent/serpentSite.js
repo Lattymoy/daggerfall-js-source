@@ -26,7 +26,7 @@
 import { serpentLaneScore, serpentAlongAt, serpentRing, SERPENT_LANE_TRIES } from '../../net/serpent/serpentLaw.js';
 import { worldPixelKey, inWorldGrid } from '../../world/worldWide/worldGrid.js';
 import { PIXEL_M } from '../../net/gate/gateLaw.js';
-import { PIXEL_UNITS } from '../../net/wire.js';   // native units a map pixel (world/streamingWorld.js NATIVE_PIXEL's)
+import { PIXEL_UNITS } from '../../net/wire.js'; // native units a map pixel (world/streamingWorld.js NATIVE_PIXEL's)
 import { REGION_NAMES } from '../../formats/mapsFile.js';
 /** Every map pixel within this of the site's (Chebyshev) is open sea - a mile and more of water on every side. */
 export const SITE_CLEAR_PX = 1;
@@ -37,16 +37,21 @@ export const SITE_SLIDE = 0.16;
 export const SITE_SLIDE_STEP = 0.04;
 
 /** The map pixel a native point stands in (wire.js mapPixelOfWire's arithmetic). */
-export const sitePixelOfNative = (x, z) => [Math.floor(x / PIXEL_UNITS), 499 - Math.floor(z / PIXEL_UNITS)];   // WW-C2: floored, as mapPixelOfWire
+export const sitePixelOfNative = (x, z) => [Math.floor(x / PIXEL_UNITS), 499 - Math.floor(z / PIXEL_UNITS)]; // WW-C2: floored, as mapPixelOfWire
 /** AUDIT TAMRIEL-WIDE E3: a lane's two numbers - its ports' world keys, the same on every client whatever else the list
  *  holds or its order - or null for a port with no pixel. */
-export const serpentLaneEnds = (lane) => (inWorldGrid(lane?.a?.px, lane?.a?.py) && inWorldGrid(lane?.b?.px, lane?.b?.py)
-  ? [worldPixelKey(lane.a.px, lane.a.py), worldPixelKey(lane.b.px, lane.b.py)] : null);
+export const serpentLaneEnds = (lane) =>
+  inWorldGrid(lane?.a?.px, lane?.a?.py) && inWorldGrid(lane?.b?.px, lane?.b?.py)
+    ? [worldPixelKey(lane.a.px, lane.a.py), worldPixelKey(lane.b.px, lane.b.py)]
+    : null;
 /** The lanes a day tries, best first: each scored by its ends (serpentLaneScore), SERPENT_LANE_TRIES of them. A lane
  *  added moves a day only where it scores above the day's site; a tie keeps the list's order. */
 export function serpentLaneTries(day, lanes) {
   const scored = [];
-  lanes.forEach((lane, i) => { const e = serpentLaneEnds(lane); if (e) scored.push({ lane, ends: e, score: serpentLaneScore(day, e[0], e[1]), i }); });
+  lanes.forEach((lane, i) => {
+    const e = serpentLaneEnds(lane);
+    if (e) scored.push({ lane, ends: e, score: serpentLaneScore(day, e[0], e[1]), i });
+  });
   return scored.sort((p, q) => q.score - p.score || p.i - q.i).slice(0, SERPENT_LANE_TRIES);
 }
 /** Is every pixel within `r` of (px, py) open sea? */
@@ -61,8 +66,13 @@ export function pointAlong(way, k) {
   for (let i = 1; i < pts.length; i++) total += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z);
   let left = Math.max(0, Math.min(1, k)) * total;
   for (let i = 1; i < pts.length; i++) {
-    const a = pts[i - 1], b = pts[i], d = Math.hypot(b.x - a.x, b.z - a.z);
-    if (left <= d) { const t = d > 0 ? left / d : 0; return { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t }; }
+    const a = pts[i - 1],
+      b = pts[i],
+      d = Math.hypot(b.x - a.x, b.z - a.z);
+    if (left <= d) {
+      const t = d > 0 ? left / d : 0;
+      return { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t };
+    }
     left -= d;
   }
   return { x: pts[pts.length - 1].x, z: pts[pts.length - 1].z };
@@ -88,12 +98,20 @@ export function findSerpentSite(day, { lanes, wayOf, open }) {
       const p = pointAlong(way, g);
       const [px, py] = sitePixelOfNative(p.x, p.z);
       if (!openAround(px, py, open)) continue;
-      const da = Math.hypot(lane.a.road.x - px, lane.a.road.y - py), db = Math.hypot(lane.b.road.x - px, lane.b.road.y - py);
+      const da = Math.hypot(lane.a.road.x - px, lane.a.road.y - py),
+        db = Math.hypot(lane.b.road.x - px, lane.b.road.y - py);
       const port = da <= db ? lane.a : lane.b;
       const near = String(port.name || '') || (REGION_NAMES[port.region] ?? 'the Bay');
       const region = REGION_NAMES[port.region] ?? '';
       return Object.freeze({
-        day, lane: lane.key, px, py, sx: p.x, sz: p.z, near, region,
+        day,
+        lane: lane.key,
+        px,
+        py,
+        sx: p.x,
+        sz: p.z,
+        near,
+        region,
         place: region && region !== near ? `${near}, ${region}` : near,
         between: [lane.a.name || null, lane.b.name || null],
         ring: serpentRing(day, p.x, p.z),
@@ -108,7 +126,20 @@ export function findSerpentSite(day, { lanes, wayOf, open }) {
  *  @param {number} day @param {{sx: number, sz: number, pl: string}} at */
 export function siteOfWord(day, { sx, sz, pl }) {
   const [px, py] = sitePixelOfNative(sx, sz);
-  return Object.freeze({ day, lane: null, px, py, sx, sz, near: pl, region: '', place: pl, between: [null, null], ring: serpentRing(day, sx, sz), told: true });
+  return Object.freeze({
+    day,
+    lane: null,
+    px,
+    py,
+    sx,
+    sz,
+    near: pl,
+    region: '',
+    place: pl,
+    between: [null, null],
+    ring: serpentRing(day, sx, sz),
+    told: true,
+  });
 }
 
 /**

@@ -36,7 +36,10 @@ export const UNDERCROFT_FACTION = 518;
 /** The training pit's ring, metres (a cellar is not the sand: the clamp holds the bout to the pit). */
 export const PIT_RING_R = 6;
 /** Editor markers: archive 199, record 10 the start, 15 a random foe, 16 a fixed one. */
-const EDITOR = 199, START = 10, RANDOM = 15, FIXED = 16;
+const EDITOR = 199,
+  START = 10,
+  RANDOM = 15,
+  FIXED = 16;
 
 /** The two with a post, then the hall's people in the order they take the markers out from the stair. `female` sets
  *  StaticNPC's gender flag (32). */
@@ -57,7 +60,13 @@ export const UNDERCROFT_PEOPLE = Object.freeze([
 export const UNDERCROFT_BEASTS = Object.freeze([M.GrizzlyBear, M.SabertoothTiger, M.GiantScorpion, M.GrizzlyBear]);
 /** The training pit's dummy; the Hall of Champions' trophies; a beast's chain. */
 export const PIT_DUMMY = Object.freeze([211, 20]);
-export const HALL_TROPHIES = Object.freeze([Object.freeze([200, 1]), Object.freeze([207, 8]), Object.freeze([200, 5]), Object.freeze([207, 12]), Object.freeze([207, 2])]);
+export const HALL_TROPHIES = Object.freeze([
+  Object.freeze([200, 1]),
+  Object.freeze([207, 8]),
+  Object.freeze([200, 5]),
+  Object.freeze([207, 12]),
+  Object.freeze([207, 2]),
+]);
 export const BEAST_CHAIN = Object.freeze([211, 5]);
 /** The braziers that light the pit and the Hall (TEXTURE.210's standing brazier, the colosseum's own), and the reach of
  *  the light every lit place of the hall gives, metres (a dungeon Light's range). */
@@ -102,15 +111,34 @@ export function undercroftPopulation(blocks) {
   let seed = 0;
   /** a flat at a marker's place, `side`/`along` metres off it (the side square to the way back to the stair) */
   const flat = (m, archive, record, { side = 0, along = 0, person = null } = {}) => {
-    const hx = s.x - m.x, hz = s.z - m.z, hl = Math.hypot(hx, hz) || 1;
-    const ux = hx / hl, uz = hz / hl, px = -uz, pz = ux;
+    const hx = s.x - m.x,
+      hz = s.z - m.z,
+      hl = Math.hypot(hx, hz) || 1;
+    const ux = hx / hl,
+      uz = hz / hl,
+      px = -uz,
+      pz = ux;
     const b = blocks[m.block];
-    const x = m.x + px * side + ux * along - b.originX, z = m.z + pz * side + uz * along - b.originZ;
+    const x = m.x + px * side + ux * along - b.originX,
+      z = m.z + pz * side + uz * along - b.originZ;
     const position = SEED + seed++;
     out.flats.push({
-      block: m.block, archive, record, x, y: m.y, z, action: null, position, flatPosition: position,
-      npc: !!person, role: person?.role ?? null, factionID: person ? UNDERCROFT_FACTION : 0, flags: person?.female ? 32 : 0,
-      rawX: Math.round(x / 0.025), rawY: Math.round(-m.y / 0.025), rawZ: Math.round(z / 0.025),
+      block: m.block,
+      archive,
+      record,
+      x,
+      y: m.y,
+      z,
+      action: null,
+      position,
+      flatPosition: position,
+      npc: !!person,
+      role: person?.role ?? null,
+      factionID: person ? UNDERCROFT_FACTION : 0,
+      flags: person?.female ? 32 : 0,
+      rawX: Math.round(x / 0.025),
+      rawY: Math.round(-m.y / 0.025),
+      rawZ: Math.round(z / 0.025),
     });
   };
   let i = 0;
@@ -120,19 +148,31 @@ export function undercroftPopulation(blocks) {
   flat(pit, PIT_DUMMY[0], PIT_DUMMY[1], { side: 1.8 });
   flat(pit, HALL_BRAZIER[0], HALL_BRAZIER[1], { side: -2.2 });
   out.pit = [pit.x, pit.y, pit.z];
-  { const hx = s.x - pit.x, hz = s.z - pit.z, hl = Math.hypot(hx, hz) || 1; out.pitAxis = [hx / hl, hz / hl]; }   // the way back to the stair: the pit's passage
+  {
+    const hx = s.x - pit.x,
+      hz = s.z - pit.z,
+      hl = Math.hypot(hx, hz) || 1;
+    out.pitAxis = [hx / hl, hz / hl];
+  } // the way back to the stair: the pit's passage
   const lit = (m, range = HALL_LIGHT_M) => out.lights.push({ x: m.x, y: m.y + 1.2, z: m.z, range });
   lit(pit);
   // the Hall of Champions: its keeper, its trophies in a row beside her
   if (i < order.length) {
     const hall = order[i++];
     flat(hall, HALL_KEEPER.archive, HALL_KEEPER.record, { person: HALL_KEEPER });
-    HALL_TROPHIES.forEach(([a, r], t) => flat(hall, a, r, { side: (t % 2 ? -1 : 1) * (1.1 + 0.45 * Math.floor(t / 2)), along: -0.3 }));
+    HALL_TROPHIES.forEach(([a, r], t) =>
+      flat(hall, a, r, { side: (t % 2 ? -1 : 1) * (1.1 + 0.45 * Math.floor(t / 2)), along: -0.3 }),
+    );
     flat(hall, HALL_BRAZIER[0], HALL_BRAZIER[1], { along: 1.6 });
     out.hall = [hall.x, hall.y, hall.z];
     lit(hall);
   }
-  for (const p of UNDERCROFT_PEOPLE) { if (i >= order.length) break; const m = order[i++]; flat(m, p.archive, p.record, { person: p }); lit(m, HALL_LIGHT_M * 0.7); }
+  for (const p of UNDERCROFT_PEOPLE) {
+    if (i >= order.length) break;
+    const m = order[i++];
+    flat(m, p.archive, p.record, { person: p });
+    lit(m, HALL_LIGHT_M * 0.7);
+  }
   for (const mobileType of UNDERCROFT_BEASTS) {
     if (i >= order.length) break;
     const m = order[i++];
@@ -142,7 +182,8 @@ export function undercroftPopulation(blocks) {
   }
   // UNDERCROFT-DEEP: past the hall's reach, the deep cellars hold the keep's own foes again
   out.near = [[s.x, s.y, s.z], ...order.slice(0, i).map((m) => [m.x, m.y, m.z])];
-  for (const m of order.slice(i)) if (!undercroftHallNear(out, [m.x, m.y, m.z])) out.deep.push({ x: m.x, y: m.y, z: m.z });
+  for (const m of order.slice(i))
+    if (!undercroftHallNear(out, [m.x, m.y, m.z])) out.deep.push({ x: m.x, y: m.y, z: m.z });
   out.quiet = order.length - i - out.deep.length;
   return out;
 }
@@ -158,12 +199,20 @@ export function deepFoesOf(layoutEnemies, deep) {
  *  or of any place the hall took (`hall` undercroftPopulation's answer). No rest is broken there. Pure. */
 export function undercroftHallNear(hall, feet) {
   if (!hall || !feet) return false;
-  for (const p of hall.near ?? []) if (Math.hypot(feet[0] - p[0], feet[1] - p[1], feet[2] - p[2]) < UNDERCROFT_DEEP_M) return true;
+  for (const p of hall.near ?? [])
+    if (Math.hypot(feet[0] - p[0], feet[1] - p[1], feet[2] - p[2]) < UNDERCROFT_DEEP_M) return true;
   return false;
 }
 
 /** A beast's chain: the bout team's tag no other body carries, always held - it targets nobody, nobody targets it; the
  *  yield floor holds it at 1 if struck. `say` the keepers' warning. */
 export function chainTag(n, say = null) {
-  return { id: `undercroft:chain:${n}`, side: 0, out: false, hold: true, chained: true, hooks: { hurt: () => {}, floor: () => {}, intrude: () => say?.() } };
+  return {
+    id: `undercroft:chain:${n}`,
+    side: 0,
+    out: false,
+    hold: true,
+    chained: true,
+    hooks: { hurt: () => {}, floor: () => {}, intrude: () => say?.() },
+  };
 }

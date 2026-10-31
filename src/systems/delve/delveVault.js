@@ -7,7 +7,16 @@
 // (Ledger A: DELVE II).
 import { goldStack } from '../inventory.js';
 import { spoilsBase, magicOrBetter } from '../gate/gateSpoils.js';
-import { applyRarity, lastPass, techniquePass, stampWonWeapons, pileSource, dungeonRarityTier, dungeonFamily, lootRarityOn } from '../loot/lootRarity.js';
+import {
+  applyRarity,
+  lastPass,
+  techniquePass,
+  stampWonWeapons,
+  pileSource,
+  dungeonRarityTier,
+  dungeonFamily,
+  lootRarityOn,
+} from '../loot/lootRarity.js';
 import { ELITE_LOOT_QUALITY_MULT } from '../../world/spawnedDungeons.js';
 
 /** Gold a level of the opener's, before the roll's variation (0.8 to 1.2 of it): half a raided town's thanks. */
@@ -18,7 +27,12 @@ const levelOf = (level) => Math.max(1, Math.floor(Number.isFinite(level) ? level
 /** The source the vault's piece is laddered at: the dungeon's own pile's - its type's tier, an Elite's quality, its family -
  *  at the opener's level (LOOT-GATE). Pure. @param {number|undefined} dungeonType @param {boolean} elite @param {number} level */
 export function vaultSource(dungeonType, elite, level) {
-  return { ...pileSource(dungeonRarityTier(dungeonType)), qualityMult: elite ? ELITE_LOOT_QUALITY_MULT : 1, family: dungeonFamily(dungeonType), rollerLevel: levelOf(level) };
+  return {
+    ...pileSource(dungeonRarityTier(dungeonType)),
+    qualityMult: elite ? ELITE_LOOT_QUALITY_MULT : 1,
+    family: dungeonFamily(dungeonType),
+    rollerLevel: levelOf(level),
+  };
 }
 
 /** One known piece - a weapon, a piece of armour or a jewel, never arrows - Magic or better at `source` (the ladder off,

@@ -321,7 +321,7 @@ test('COATS1 the riding sprite: the horse\'s frames dyed under their own record,
   assert.equal(ridingLook(TRANSPORT_MODES.Horse, HORSE_LOOK_WORN_MAX + 1), 0);
   assert.equal(ridingLook(TRANSPORT_MODES.Horse, withMountLook(look, 'dawnfire')), withMountLook(look, 'dawnfire'), 'STOREFRONT: my mount look rides with it');
   const src = readFileSync(new URL('../../../src/systems/riding.js', import.meta.url), 'utf8');
-  assert.match(src, /recolorHorse\(frameToColor32\(cfa\.getDFBitmap\(0, f\), palette, null\), c, \{ bottomFirst: false, legs: false, tack: false \}\)/, 'each frame dyed before its upload - its lower edge no hoof, no saddle to spare');
+  assert.match(src, /recolorHorse\(frameToColor32\(cfa\.getDFBitmap\(0, f\), palette, null\), c, \{\n\s*bottomFirst: false,\n\s*legs: false,\n\s*tack: false,\n\s*\}\)/, 'each frame dyed before its upload - its lower edge no hoof, no saddle to spare');
   assert.match(src, /records\.push\(`ride:\$\{fileName\}:\$\{f\}\$\{lookSuffix\(c\)\}`\)/, 'under its look\'s record');
   await assert.rejects(loadRidingArt(async () => { throw new Error('no ARENA2'); }, null, { uploadTexture: () => {} }, TRANSPORT_MODES.Horse, look), 'no art, no riding sprite: a refusal the rig logs');
   const rig = readFileSync(new URL('../../../src/player/mountRig.js', import.meta.url), 'utf8');

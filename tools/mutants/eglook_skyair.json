@@ -2,8 +2,8 @@
   {
     "name": "EGLOOK-SKY-spire-foot-off-the-haze",
     "file": "src/render/eliteGates/egSkyMap.js",
-    "old": "if (s.w > 0.5 && e > s.y * 0.9) col = mix(col, GLOW * 0.9, step(x, wd * 0.7));\n      hz = hazeFar(e);",
-    "new": "if (s.w > 0.5 && e > s.y * 0.9) col = mix(col, GLOW * 0.9, step(x, wd * 0.7));\n      hz = 0.0;",
+    "old": "      hz = hazeFar(e);",
+    "new": "      hz = 0.0;",
     "tests": [
       "test/render/eliteGates/eglook_sky.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "EGLOOK-SKY-cairn-off-the-haze",
     "file": "src/render/eliteGates/egSkyMap.js",
-    "old": "if (x < wd) { col = ROCK; hz = hazeFar(e); }\n  }\n  return vec4(col, hz);\n}` + PAINT_MAIN;\n}\n\n// ── THE EVERGLOAM",
-    "new": "if (x < wd) { col = ROCK; hz = 0.0; }\n  }\n  return vec4(col, hz);\n}` + PAINT_MAIN;\n}\n\n// ── THE EVERGLOAM",
+    "old": "    if (x < wd) { col = ROCK; hz = hazeFar(e); }",
+    "new": "    if (x < wd) { col = ROCK; hz = 0.0; }",
     "tests": [
       "test/render/eliteGates/eglook_sky.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "EGLOOK-SKY-zenith-lifted",
     "file": "src/world/eliteGates/egAtmos.js",
-    "old": "sky: Object.freeze({ zenith: f3(0.1, 0.014, 0.011), horizon: f3(0.34, 0.05, 0.03),",
-    "new": "sky: Object.freeze({ zenith: f3(0.3, 0.05, 0.03), horizon: f3(0.34, 0.05, 0.03),",
+    "old": "      zenith: f3(0.1, 0.014, 0.011),",
+    "new": "      zenith: f3(0.3, 0.05, 0.03),",
     "tests": [
       "test/render/eliteGates/eglook_sky.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "EGLOOK-SKY-lake-unlit",
     "file": "src/render/eliteGates/egSkyMap.js",
-    "old": "col = mix(DEEP * (0.6 + 0.6 * v.y), GLOW, heat);",
-    "new": "col = DEEP * (0.6 + 0.6 * v.y);",
+    "old": "    col = mix(DEEP * (0.6 + 0.6 * v.y), GLOW, heat);",
+    "new": "    col = DEEP * (0.6 + 0.6 * v.y);",
     "tests": [
       "test/render/eliteGates/eglook_sky.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "EGLOOK-SKY-moon-off-the-key",
     "file": "src/render/eliteGates/egSkyMap.js",
-    "old": "const k = egAtmosOf(2).key.dir, az = Math.atan2(k[0], k[2]), elev = 0.3;",
-    "new": "const k = egAtmosOf(2).key.dir, az = Math.atan2(k[2], k[0]), elev = 0.3;",
+    "old": "      az = Math.atan2(k[0], k[2]),",
+    "new": "      az = Math.atan2(k[2], k[0]),",
     "tests": [
       "test/render/eliteGates/eglook_sky.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "EGLOOK-SKY-moon-high",
     "file": "src/render/eliteGates/egSkyMap.js",
-    "old": "const k = egAtmosOf(2).key.dir, az = Math.atan2(k[0], k[2]), elev = 0.3;",
-    "new": "const k = egAtmosOf(2).key.dir, az = Math.atan2(k[0], k[2]), elev = 0.7;",
+    "old": "      elev = 0.3;",
+    "new": "      elev = 0.7;",
     "tests": [
       "test/render/eliteGates/eglook_sky.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "EGLOOK-SKY-spire-lit",
     "file": "src/render/eliteGates/egSkyMap.js",
-    "old": "col = ROCK + GLOW * 0.2 * step(wd * 0.72, x) * exp(-max(e, 0.0) * 16.0);",
-    "new": "col = GLOW;",
+    "old": "      col = ROCK + GLOW * 0.2 * step(wd * 0.72, x) * exp(-max(e, 0.0) * 16.0);",
+    "new": "      col = GLOW;",
     "tests": [
       "test/render/eliteGates/eglook_sky.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "EGLOOK-SKY-eruption-fire-gone",
     "file": "src/render/eliteGates/egSkyMap.js",
-    "old": "if (t < 0.12 && abs(x) < s.y * 1.1) col = FIRE;",
-    "new": "if (t < -1.0) col = FIRE;",
+    "old": "    if (t < 0.12 && abs(x) < s.y * 1.1) col = FIRE;",
+    "new": "    if (t < -1.0) col = FIRE;",
     "tests": [
       "test/render/eliteGates/eglook_sky.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "EGLOOK-SKY-ray-unsnapped",
     "file": "src/render/eliteGates/egSkyPass.js",
-    "old": "vec3 c = ringSnap(normalize(d), CELL, cell);",
-    "new": "vec3 c = normalize(d); ringSnap(c, CELL, cell);",
+    "old": "  vec3 c = ringSnap(normalize(d), CELL, cell);",
+    "new": "  vec3 c = normalize(d); ringSnap(c, CELL, cell);",
     "tests": [
       "test/render/eliteGates/eglook_sky.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "EGLOOK-SKY-off-the-ramp",
     "file": "src/render/eliteGates/egSkyPass.js",
-    "old": "return s * s;\n}\nvoid main()",
-    "new": "return s;\n}\nvoid main()",
+    "old": "  return s * s;",
+    "new": "  return s;",
     "tests": [
       "test/render/eliteGates/eglook_sky.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "EGLOOK-SKY-map-whole-every-frame",
     "file": "src/render/eliteGates/egSkyMap.js",
-    "old": "const all = this.band !== b || this.painted < 4;",
-    "new": "const all = true;",
+    "old": "    const all = this.band !== b || this.painted < 4;",
+    "new": "    const all = true;",
     "tests": [
       "test/render/eliteGates/eglook_sky.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "EGLOOK-SKY-band-change-a-quadrant",
     "file": "src/render/eliteGates/egSkyMap.js",
-    "old": "const all = this.band !== b || this.painted < 4;",
-    "new": "const all = this.painted < 4;",
+    "old": "    const all = this.band !== b || this.painted < 4;",
+    "new": "    const all = this.painted < 4;",
     "tests": [
       "test/render/eliteGates/eglook_sky.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "EGLOOK-SKY-lite-every-call",
     "file": "src/render/eliteGates/egSkyMap.js",
-    "old": "if (!all && this.lite && (this.calls & 3) !== 0) return false;",
-    "new": "if (false) return false;",
+    "old": "    if (!all && this.lite && (this.calls & 3) !== 0) return false;",
+    "new": "    if (false) return false;",
     "tests": [
       "test/render/eliteGates/eglook_sky.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "EGLOOK-SKY-map-texture-kept",
     "file": "src/render/eliteGates/egSkyMap.js",
-    "old": "gl.deleteTexture(this.target.tex); gl.deleteFramebuffer(this.target.fbo);",
-    "new": "gl.deleteFramebuffer(this.target.fbo);",
+    "old": "    gl.deleteTexture(this.target.tex);\n    gl.deleteFramebuffer(this.target.fbo);",
+    "new": "    gl.deleteFramebuffer(this.target.fbo);",
     "tests": [
       "test/render/eliteGates/eglook_sky.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "EGLOOK-SKY-drawn-before-its-map",
     "file": "src/render/eliteGates/egSkyPass.js",
-    "old": "if (!this.program || !this.map.holds(band | 0)) return false;",
-    "new": "if (!this.program) return false;",
+    "old": "    if (!this.program || !this.map.holds(band | 0)) return false;",
+    "new": "    if (!this.program) return false;",
     "tests": [
       "test/render/eliteGates/eglook_sky.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "EGLOOK-SKY-depth-written",
     "file": "src/render/eliteGates/egSkyPass.js",
-    "old": "gl.depthMask(false);\n    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);",
-    "new": "gl.depthMask(true);\n    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);",
+    "old": "    gl.depthMask(false);",
+    "new": "    gl.depthMask(true);",
     "tests": [
       "test/render/eliteGates/eglook_sky.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "EGLOOK-SKY-colour-of-its-own",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "return Object.freeze({ zenith: k.zenith, horizon: k.horizon, deep: k.up, ...s });",
-    "new": "return Object.freeze({ zenith: [0.05, 0.012, 0.01], horizon: k.horizon, deep: k.up, ...s });",
+    "old": "    return Object.freeze({ zenith: k.zenith, horizon: k.horizon, deep: k.up, ...s });",
+    "new": "    return Object.freeze({ zenith: [0.05, 0.012, 0.01], horizon: k.horizon, deep: k.up, ...s });",
     "tests": [
       "test/render/eliteGates/eglook_sky.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "EGLOOK-AIR-count-past-1000",
     "file": "src/world/eliteGates/egAtmos.js",
-    "old": "Object.freeze({ kind: 'spark', n: 600,",
-    "new": "Object.freeze({ kind: 'spark', n: 900,",
+    "old": "      Object.freeze({ kind: 'spark', n: 600, lo: f3(0.5, 0.12, 0.03), hi: f3(1.0, 0.72, 0.3) }),",
+    "new": "      Object.freeze({ kind: 'spark', n: 900, lo: f3(0.5, 0.12, 0.03), hi: f3(1.0, 0.72, 0.3) }),",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "EGLOOK-AIR-cool-past-L2",
     "file": "src/world/eliteGates/egAtmos.js",
-    "old": "Object.freeze({ kind: 'soul', n: 800, lo: f3(0.2, 0.26, 0.4), hi: f3(0.32, 0.47, 0.54) }),",
-    "new": "Object.freeze({ kind: 'soul', n: 800, lo: f3(0.2, 0.26, 0.4), hi: f3(0.5, 0.7, 0.8) }),",
+    "old": "      Object.freeze({ kind: 'soul', n: 800, lo: f3(0.2, 0.26, 0.4), hi: f3(0.32, 0.47, 0.54) }),",
+    "new": "      Object.freeze({ kind: 'soul', n: 800, lo: f3(0.2, 0.26, 0.4), hi: f3(0.5, 0.7, 0.8) }),",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "EGLOOK-AIR-hot-past-L3",
     "file": "src/world/eliteGates/egAtmos.js",
-    "old": "hi: f3(1.0, 0.66, 0.26) }),",
-    "new": "hi: f3(1.0, 0.95, 0.8) }),",
+    "old": "      Object.freeze({ kind: 'ember', n: 600, lo: f3(0.42, 0.08, 0.03), hi: f3(1.0, 0.66, 0.26) }),",
+    "new": "      Object.freeze({ kind: 'ember', n: 600, lo: f3(0.42, 0.08, 0.03), hi: f3(1.0, 0.95, 0.8) }),",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "EGLOOK-AIR-layout-reseeded",
     "file": "src/render/eliteGates/egMotes.js",
-    "old": "let x = (seed ^ (band * 0x9e3779b1)) >>> 0;",
-    "new": "let x = (seed ^ (band * 0x9e3779b1) ^ (Date.now() & 0xffff)) >>> 0;",
+    "old": "  let x = (seed ^ (band * 0x9e3779b1)) >>> 0;",
+    "new": "  let x = (seed ^ (band * 0x9e3779b1) ^ (Date.now() & 0xffff)) >>> 0;",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "EGLOOK-AIR-lives-not-whole",
     "file": "src/render/eliteGates/egMotes.js",
-    "old": "float n = floor(B.x + a * (B.y - B.x + 1.0));",
-    "new": "float n = B.x + a * (B.y - B.x + 1.0);",
+    "old": "  float n = floor(B.x + a * (B.y - B.x + 1.0));          // whole lives a period",
+    "new": "  float n = B.x + a * (B.y - B.x + 1.0);          // whole lives a period",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "EGLOOK-AIR-wind-not-whole",
     "file": "src/render/eliteGates/egMotes.js",
-    "old": "C.y * CELL * T / PERIOD",
-    "new": "C.y * CELL * 0.9 * T / PERIOD",
+    "old": "  return vec3(px * CELL + sin(ph + c * TAU) * A.w + C.y * CELL * T / PERIOD, y, pz * CELL + cos(ph * 0.83 + a * TAU) * A.w * 0.8);",
+    "new": "  return vec3(px * CELL + sin(ph + c * TAU) * A.w + C.y * CELL * 0.9 * T / PERIOD, y, pz * CELL + cos(ph * 0.83 + a * TAU) * A.w * 0.8);",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "EGLOOK-AIR-riser-falls",
     "file": "src/render/eliteGates/egMotes.js",
-    "old": "float y = A.x > 0.0 ? mix(A.y, A.z, u) : mix(A.z, A.y, u);",
-    "new": "float y = A.x > 0.0 ? mix(A.z, A.y, u) : mix(A.z, A.y, u);",
+    "old": "  float y = A.x > 0.0 ? mix(A.y, A.z, u) : mix(A.z, A.y, u);",
+    "new": "  float y = A.x > 0.0 ? mix(A.z, A.y, u) : mix(A.z, A.y, u);",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "EGLOOK-AIR-born-lit",
     "file": "src/render/eliteGates/egMotes.js",
-    "old": "alpha = min(1.0, u * 8.0) * (C.z > 0.5 ? 1.0 - u : min(1.0, (1.0 - u) * 6.0));",
-    "new": "alpha = (C.z > 0.5 ? 1.0 - u : min(1.0, (1.0 - u) * 6.0));",
+    "old": "  alpha = min(1.0, u * 8.0) * (C.z > 0.5 ? 1.0 - u : min(1.0, (1.0 - u) * 6.0));",
+    "new": "  alpha = (C.z > 0.5 ? 1.0 - u : min(1.0, (1.0 - u) * 6.0));",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "EGLOOK-AIR-cooling-stopped",
     "file": "src/render/eliteGates/egMotes.js",
-    "old": "heat = C.z > 0.5 ? 1.0 - u * u : 0.5;",
-    "new": "heat = C.z > 0.5 ? 1.0 : 0.5;",
+    "old": "  heat = C.z > 0.5 ? 1.0 - u * u : 0.5;   // a hot one holds its heat through its first half, cooling as it climbs",
+    "new": "  heat = C.z > 0.5 ? 1.0 : 0.5;   // a hot one holds its heat through its first half, cooling as it climbs",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "EGLOOK-AIR-wrap-unfaded",
     "file": "src/render/eliteGates/egMotes.js",
-    "old": "alpha *= 1.0 - smoothstep(0.72, 0.98, max(abs(rel.x), abs(rel.y)) / (CELL * 0.5));",
-    "new": "alpha *= 1.0;",
+    "old": "  alpha *= 1.0 - smoothstep(0.72, 0.98, max(abs(rel.x), abs(rel.y)) / (CELL * 0.5));",
+    "new": "  alpha *= 1.0;",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "EGLOOK-AIR-off-the-anchor",
     "file": "src/render/eliteGates/egMotes.js",
-    "old": "vec3 w = uAnchor + moteAt(s, T, size, alpha, heat);",
-    "new": "vec3 w = moteAt(s, T, size, alpha, heat);",
+    "old": "  vec3 w = uAnchor + moteAt(s, T, size, alpha, heat);",
+    "new": "  vec3 w = moteAt(s, T, size, alpha, heat);",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "EGLOOK-AIR-clearance-shrunk",
     "file": "src/render/eliteGates/egMotes.js",
-    "old": "export const EG_MOTE_FLOOR = Object.freeze({ clear: 3,",
-    "new": "export const EG_MOTE_FLOOR = Object.freeze({ clear: 2,",
+    "old": "export const EG_MOTE_FLOOR = Object.freeze({ clear: 3, ease: 1.5, under: 1, margin: 1, max: 40 });",
+    "new": "export const EG_MOTE_FLOOR = Object.freeze({ clear: 2, ease: 1.5, under: 1, margin: 1, max: 40 });",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "EGLOOK-AIR-lanes-dropped",
     "file": "src/render/eliteGates/egMotes.js",
-    "old": "for (const l of spec.lanes ?? []) { const a = P(l.ax",
-    "new": "for (const l of []) { const a = P(l.ax",
+    "old": "  for (const l of spec.lanes ?? []) {",
+    "new": "  for (const l of []) {",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "EGLOOK-AIR-passages-dropped",
     "file": "src/render/eliteGates/egMotes.js",
-    "old": "for (const q of spec.caves ?? []) rect(",
-    "new": "for (const q of []) rect(",
+    "old": "  for (const q of spec.caves ?? [])",
+    "new": "  for (const q of [])",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "EGLOOK-AIR-floors-capped-short",
     "file": "src/render/eliteGates/egMotes.js",
-    "old": "ease: 1.5, under: 1, margin: 1, max: 40 });",
-    "new": "ease: 1.5, under: 1, margin: 1, max: 12 });",
+    "old": "export const EG_MOTE_FLOOR = Object.freeze({ clear: 3, ease: 1.5, under: 1, margin: 1, max: 40 });",
+    "new": "export const EG_MOTE_FLOOR = Object.freeze({ clear: 3, ease: 1.5, under: 1, margin: 1, max: 12 });",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "EGLOOK-AIR-fade-starts-low",
     "file": "src/render/eliteGates/egMotes.js",
-    "old": "k = min(k, smoothstep(f1.w, f1.w + ${f(F.ease)}, dy));",
-    "new": "k = min(k, smoothstep(f1.w - 1.0, f1.w + ${f(F.ease)}, dy));",
+    "old": "    k = min(k, smoothstep(f1.w, f1.w + ${f(F.ease)}, dy));",
+    "new": "    k = min(k, smoothstep(f1.w - 1.0, f1.w + ${f(F.ease)}, dy));",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "EGLOOK-AIR-depth-written",
     "file": "src/render/eliteGates/egMotes.js",
-    "old": "gl.enable(gl.DEPTH_TEST); gl.depthMask(false);\n    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);",
-    "new": "gl.enable(gl.DEPTH_TEST); gl.depthMask(true);\n    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);",
+    "old": "    gl.depthMask(false);",
+    "new": "    gl.depthMask(true);",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "EGLOOK-AIR-blended-over",
     "file": "src/render/eliteGates/egMotes.js",
-    "old": "gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);",
-    "new": "gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);",
+    "old": "    gl.blendFunc(gl.ONE, gl.ONE);",
+    "new": "    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "EGLOOK-AIR-layout-laid-a-frame",
     "file": "src/render/eliteGates/egMotes.js",
-    "old": "if (b === this.band) return false;\n    const gl = this.gl, data = egMoteLayout(b, this.lite);",
-    "new": "const gl = this.gl, data = egMoteLayout(b, this.lite);",
+    "old": "    if (b === this.band) return false;\n    const gl = this.gl,",
+    "new": "    const gl = this.gl,",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "EGLOOK-AIR-halo-cap-lifted",
     "file": "src/render/eliteGates/egMotes.js",
-    "old": "export const EG_HALO = Object.freeze({ max: 48,",
-    "new": "export const EG_HALO = Object.freeze({ max: 64,",
+    "old": "  max: 48,",
+    "new": "  max: 64,",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "EGLOOK-AIR-far-lamps-kept",
     "file": "src/render/eliteGates/egMotes.js",
-    "old": "if (d > far2) continue;",
-    "new": "if (false) continue;",
+    "old": "    if (d > far2) continue;",
+    "new": "    if (false) continue;",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "EGLOOK-AIR-beams-dropped",
     "file": "src/render/eliteGates/egMotes.js",
-    "old": "if (L.k !== EG_LIGHT_KIND.beam || !(L.h > 0)) continue;",
-    "new": "continue;",
+    "old": "    if (L.k !== EG_LIGHT_KIND.beam || !(L.h > 0)) continue;",
+    "new": "    continue;",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "EGLOOK-AIR-halo-slots-a-frame",
     "file": "src/render/eliteGates/egMotes.js",
-    "old": "const haloSlot = (out, n) => (out[n] ??= { at:",
-    "new": "const haloSlot = (out, n) => (out[n] = { at:",
+    "old": "const haloSlot = (out, n) => (out[n] ??= { at: new Float32Array(3), size: 0, color: new Float32Array(3) });",
+    "new": "const haloSlot = (out, n) => (out[n] = { at: new Float32Array(3), size: 0, color: new Float32Array(3) });",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "EGLOOK-AIR-rim-over-a-floor",
     "file": "src/render/eliteGates/egMotes.js",
-    "old": "const y = lowUnder(c.x0, c.z0, c.x1, c.z1);",
-    "new": "const y = 0;",
+    "old": "    const y = lowUnder(c.x0, c.z0, c.x1, c.z1);",
+    "new": "    const y = 0;",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "EGLOOK-AIR-galleries-misted",
     "file": "src/render/eliteGates/egMotes.js",
-    "old": "bands: Object.freeze([1]), below: 2.4,",
-    "new": "bands: Object.freeze([0, 1]), below: 2.4,",
+    "old": "  bands: Object.freeze([1]),",
+    "new": "  bands: Object.freeze([0, 1]),",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "EGLOOK-AIR-rim-cap-lifted",
     "file": "src/render/eliteGates/egMotes.js",
-    "old": "alpha: 0.55, max: 8 });",
-    "new": "alpha: 0.55, max: 12 });",
+    "old": "  max: 8,",
+    "new": "  max: 12,",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "EGLOOK-AIR-mist-never-round",
     "file": "src/render/eliteGates/egMistPass.js",
-    "old": "float rim = uRound > 0.5 ?",
-    "new": "float rim = uRound > 9.5 ?",
+    "old": "  float rim = uRound > 0.5 ? 1.0 - smoothstep(0.72, 1.0, length(vQ * 2.0 - 1.0)) : smoothstep(0.0, 0.08, vQ.x) * smoothstep(0.0, 0.08, 1.0 - vQ.x) * smoothstep(0.0, 0.06, vQ.y) * smoothstep(0.0, 0.06, 1.0 - vQ.y);",
+    "new": "  float rim = uRound > 9.5 ? 1.0 - smoothstep(0.72, 1.0, length(vQ * 2.0 - 1.0)) : smoothstep(0.0, 0.08, vQ.x) * smoothstep(0.0, 0.08, 1.0 - vQ.x) * smoothstep(0.0, 0.06, vQ.y) * smoothstep(0.0, 0.06, 1.0 - vQ.y);",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "EGLOOK-AIR-light-at-most-its-colour",
     "file": "src/render/eliteGates/egMotes.js",
-    "old": "return d < 0.2 ? 1.0 : d < 0.55 ? 0.5 : d < 1.0 ? 0.2 : 0.0;",
-    "new": "return d < 0.2 ? 1.3 : d < 0.55 ? 0.5 : d < 1.0 ? 0.2 : 0.0;",
+    "old": "  return d < 0.2 ? 1.0 : d < 0.55 ? 0.5 : d < 1.0 ? 0.2 : 0.0;",
+    "new": "  return d < 0.2 ? 1.3 : d < 0.55 ? 0.5 : d < 1.0 ? 0.2 : 0.0;",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]

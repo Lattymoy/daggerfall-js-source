@@ -673,8 +673,8 @@ test('RVN-STARS THE DOORS: both doors that draw the pause window lay its sky ove
   const over = read('src/ui/firmamentOver.js');
   assert.match(over, /export function revenantStarsOver\(\{ alive, below, back \}\) \{\n\s+let last = null;\n\s+const o = overPage\(\{/);
   assert.match(over, /load: \(\) => import\('\.\/revenantStarsWindow\.js'\),/);
-  assert.match(over, /const view = mountRevenantStarsWindow\(h, \{ id, onExit: \(\) => \{ unregister\(\); onExit\(\); \} \}\);/);
-  assert.match(over, /back: \(\) => \{ back\(\); refocus\(last\); \},/, 'AUDIT RVN-STARS S21: the focus back on its Stars');
+  assert.match(over, /const view = mountRevenantStarsWindow\(h, \{\n\s*id,\n\s*onExit: \(\) => \{\n\s*unregister\(\);\n\s*onExit\(\);\n\s*\},\n\s*\}\);/);
+  assert.match(over, /back: \(\) => \{\n\s*back\(\);\n\s*refocus\(last\);\n\s*\},/, 'AUDIT RVN-STARS S21: the focus back on its Stars');
   assert.match(over, /\[data-focus="cmp-\$\{id\}-stars"\]/);
   assert.match(read('src/ui/companionRoster.js'), /`cmp-\$\{r\.id\}-stars`/, 'the key the door focuses');
   const pause = read('src/ui/pauseDoor.js');

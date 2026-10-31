@@ -47,7 +47,7 @@ export class Task {
     this.globalVarLink = -1;
     this.hasTriggerConditions = false;
     this.actions = [];
-    this.pendingActionLines = [];   // Q1: lines awaiting the action registry
+    this.pendingActionLines = []; // Q1: lines awaiting the action registry
     if (lines !== null) this.setTask(lines, globalVar);
   }
 
@@ -73,9 +73,16 @@ export class Task {
     this._readTaskLines(lines, i);
   }
 
-  start() { this.setTriggerValue(true); }
-  clear() { this.setTriggerValue(false); }
-  drop() { this.dropped = true; this.setTriggerValue(false); }
+  start() {
+    this.setTriggerValue(true);
+  }
+  clear() {
+    this.setTriggerValue(false);
+  }
+  drop() {
+    this.dropped = true;
+    this.setTriggerValue(false);
+  }
 
   getTriggerValue() {
     // A GlobalVarLink task reads the shared 64-global store (classic
@@ -96,7 +103,10 @@ export class Task {
     // completed actions so a restart runs them again ("clear" exists
     // exactly so tasks can re-trigger; without this, a cleared task's
     // second activation ran zero actions).
-    if (this.dropped) { this.triggered = false; return; }
+    if (this.dropped) {
+      this.triggered = false;
+      return;
+    }
     if (value === false) this._rearmActions();
   }
 
@@ -138,7 +148,7 @@ export class Task {
       // machine error-terminates the quest) - never a silent rearm.
       const targetTask = this.parentQuest.getTask(this.targetSymbol);
       if (targetTask.getTriggerValue()) this.clear();
-      else this._rearmActions({ persist: true });   // QUEST-AUDIT III MUTE-HELD: the persisting re-arm (actions.js MuteNpc)
+      else this._rearmActions({ persist: true }); // QUEST-AUDIT III MUTE-HELD: the persisting re-arm (actions.js MuteNpc)
     }
 
     this.prevTriggered = this.getTriggerValue();

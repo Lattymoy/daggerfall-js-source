@@ -281,7 +281,7 @@ export async function preloadTamrielTrace({ fetchBytes, palette, relief = true, 
   const picker = new ImgFile();
   picker.load(pickerBytes, 'TAMRIEL2.IMG', palette);
   const trace = traceTamrielPicture(picker.getDFBitmap(), picture.getDFBitmap(), paletteReader(pal), { niben });
-  if (trace && relief) trace.relief = await loadRelief(trace).catch((e) => (console.warn('[tamriel] the relief did not load; the authored heights stand:', e?.message ?? e), null));   // TAMRIEL-RELIEF: the owner's heightmap, laid on this picture (world/tamriel/tamrielRelief.js); AUDIT TESA II G2: its loss its own
+  if (trace && relief) trace.relief = await loadRelief(trace).catch((e) => { console.warn('[tamriel] the relief did not load; the authored heights stand:', e?.message ?? e); return null; });   // TAMRIEL-RELIEF: the owner's heightmap, laid on this picture (world/tamriel/tamrielRelief.js); AUDIT TESA II G2: its loss its own
   if (!trace || !key) return trace;
   keepTrace(store, key, trace);
   return keepsFits(trace, store, key);

@@ -11,8 +11,8 @@
   {
     "name": "WRIT-WALL-said-where-the-writ-fills",
     "file": "src/ui/noticeWindow.js",
-    "old": "    const walled = w.state === 'open' && held < w.qty ? Number(",
-    "new": "    const walled = w.state === 'open' && true ? Number(",
+    "old": "    const walled = w.state === 'open' && held < w.qty ? Number(work.book.walled?.(w.material)) || 0 : 0;",
+    "new": "    const walled = w.state === 'open' && true ? Number(work.book.walled?.(w.material)) || 0 : 0;",
     "tests": [
       "test/systems/professions/fb1013e_writwall.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WRIT-WALL-the-card-line-suppressed",
     "file": "src/ui/noticeWindow.js",
-    "old": "    if (walledSaid) li.append(el('p', 'writ-walled', walledSaid));   // WRIT-WALL: on the card - a phone has no hover\n",
-    "new": "",
+    "old": "    if (walledSaid) li.append(el('p', 'writ-walled', walledSaid)); // WRIT-WALL: on the card - a phone has no hover\n    li.append(el('span', 'notice-seal', ''));",
+    "new": "    li.append(el('span', 'notice-seal', ''));",
     "tests": [
       "test/systems/professions/fb1013e_writwall.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WRIT-WALL-the-title-the-old-words",
     "file": "src/ui/noticeWindow.js",
-    "old": "      if (held < w.qty) b.title = walledSaid ?? (",
-    "new": "      if (held < w.qty) b.title = (",
+    "old": "        b.title =\n          walledSaid ??\n          (work.book.carrying?.()\n            ? 'Not enough in your Stores, Materials Bag and pack together'\n            : 'Not enough in your Stores'); // BAG1; AUDIT BAG1: and the pack; WRIT-WALL: and what of them is walled",
+    "new": "        b.title = work.book.carrying?.()\n          ? 'Not enough in your Stores, Materials Bag and pack together'\n          : 'Not enough in your Stores'; // BAG1; AUDIT BAG1: and the pack; WRIT-WALL: and what of them is walled",
     "tests": [
       "test/systems/professions/fb1013e_writwall.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WRIT-WALL-the-guild-card-unwired",
     "file": "src/ui/noticeWindow.js",
-    "old": "    walled: (m) => Number(work.book.walled?.(m)) || 0,   // WRIT-WALL: and what is held past it\n",
-    "new": "",
+    "old": "          walled: (m) => Number(work.book.walled?.(m)) || 0, // WRIT-WALL: and what is held past it\n          regionNameOf: work.regionNameOf ?? ((r) => String(r)),",
+    "new": "          regionNameOf: work.regionNameOf ?? ((r) => String(r)),",
     "tests": [
       "test/systems/professions/fb1013e_writwall.test.js"
     ]

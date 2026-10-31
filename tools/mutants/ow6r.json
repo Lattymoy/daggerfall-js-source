@@ -12,8 +12,8 @@
   {
     "name": "OW6-R-life-too-many",
     "file": "src/systems/seaRaiders.js",
-    "old": "  if (l !== life && l !== life - 1) return false;\n  const reach = RAIDER_REACH_PX + RAIDER_CELL_PX;",
-    "new": "  if (l !== life && l !== life - 1 && l !== life - 2) return false;\n  const reach = RAIDER_REACH_PX + RAIDER_CELL_PX;",
+    "old": "  if (l !== life && l !== life - 1) return false;",
+    "new": "  if (l !== life && l !== life - 1 && l !== life - 2) return false;",
     "tests": [
       "test/systems/ows3_raiders.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "OW6-R-reach-off",
     "file": "src/systems/seaRaiders.js",
-    "old": "  const reach = RAIDER_REACH_PX + RAIDER_CELL_PX;\n  return Math.abs(Number(m[1]) * RAIDER_CELL_PX - at.x) <= reach",
-    "new": "  const reach = RAIDER_REACH_PX + 2 * RAIDER_CELL_PX;\n  return Math.abs(Number(m[1]) * RAIDER_CELL_PX - at.x) <= reach",
+    "old": "  const reach = RAIDER_REACH_PX + RAIDER_CELL_PX;",
+    "new": "  const reach = RAIDER_REACH_PX + 2 * RAIDER_CELL_PX;",
     "tests": [
       "test/systems/ows3_raiders.test.js"
     ],

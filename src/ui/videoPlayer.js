@@ -43,8 +43,8 @@
 //     Open lets it escape; the READER still throws verbatim, and next()/draw()
 //     are inert until a file has opened.
 
-import { getFloat } from '../systems/settings/settings.js';   // SETT: DaggerfallVideo reads SoundVolume per clip
-import { UP_Y } from '../world/mat4.js';   // EV2: the shared billboard up axis
+import { getFloat } from '../systems/settings/settings.js'; // SETT: DaggerfallVideo reads SoundVolume per clip
+import { UP_Y } from '../world/mat4.js'; // EV2: the shared billboard up axis
 import { VidFile, VID_BLOCK_TYPES } from '../formats/vidFile.js';
 import { NATIVE_W, NATIVE_H, drawImg, nativeMetrics } from './native/nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
@@ -60,10 +60,7 @@ const VIDEO_BLOCKS = [
   VID_BLOCK_TYPES.Video_IncrementalFrame,
   VID_BLOCK_TYPES.Video_IncrementalRowOffsetFrame,
 ];
-const AUDIO_BLOCKS = [
-  VID_BLOCK_TYPES.Audio_StartFrame,
-  VID_BLOCK_TYPES.Audio_IncrementalFrame,
-];
+const AUDIO_BLOCKS = [VID_BLOCK_TYPES.Audio_StartFrame, VID_BLOCK_TYPES.Audio_IncrementalFrame];
 
 export class VideoPlayer {
   /**
@@ -102,10 +99,15 @@ export class VideoPlayer {
     // clock's origin can never move under a running stream. A stub with
     // no state field counts as running (the test seam).
     const ctx = (audioContext ?? (() => audio.ctx))();
-    this._ctx = (ctx == null || (ctx.state ?? 'running') === 'running') ? ctx : null;
-    this._now = now ?? (() => (this._ctx
-      ? this._ctx.currentTime
-      : (typeof performance !== 'undefined' ? performance.now() / 1000 : Date.now() / 1000)));
+    this._ctx = ctx == null || (ctx.state ?? 'running') === 'running' ? ctx : null;
+    this._now =
+      now ??
+      (() =>
+        this._ctx
+          ? this._ctx.currentTime
+          : typeof performance !== 'undefined'
+            ? performance.now() / 1000
+            : Date.now() / 1000);
     this.soundVolume = soundVolume;
     this.textureKey = textureKey;
 
@@ -118,8 +120,12 @@ export class VideoPlayer {
   }
 
   /** Frames only exist once a video block has been read. */
-  get frameTexture() { return this._tex; }
-  get endOfFile() { return this.vidFile.endOfFile; }
+  get frameTexture() {
+    return this._tex;
+  }
+  get endOfFile() {
+    return this.vidFile.endOfFile;
+  }
 
   /** DFU Open(): decode the header/palette and size the frame texture. */
   open(bytes) {
@@ -275,7 +281,9 @@ function defaultListen(onAnyKey) {
   // gate, so it skips a video that no other key can.
   const handler = (ev) => onAnyKey(ev?.key === 'Escape');
   for (const ev of events) window.addEventListener(ev, handler, { passive: true });
-  return () => { for (const ev of events) window.removeEventListener(ev, handler); };
+  return () => {
+    for (const ev of events) window.removeEventListener(ev, handler);
+  };
 }
 
 /**
@@ -285,14 +293,25 @@ function defaultListen(onAnyKey) {
  * Resolves true if the video played, false if the bytes would not open.
  * `raf`/`listen`/`now` exist so the loop can be driven headlessly.
  */
-export function playVideo(canvas, renderer, bytes, {
-  endOnAnyKey = true, soundVolume = null, audioContext, now,
-  raf = (fn) => requestAnimationFrame(fn),
-  listen = defaultListen,
-} = {}) {
+export function playVideo(
+  canvas,
+  renderer,
+  bytes,
+  {
+    endOnAnyKey = true,
+    soundVolume = null,
+    audioContext,
+    now,
+    raf = (fn) => requestAnimationFrame(fn),
+    listen = defaultListen,
+  } = {},
+) {
   return new Promise((resolve) => {
     const player = new VideoPlayer({ renderer, soundVolume, audioContext, now });
-    if (!player.play(bytes)) { resolve(false); return; }
+    if (!player.play(bytes)) {
+      resolve(false);
+      return;
+    }
     // AUDIT 64 F41: RaiseOnVideoStartGlobalEvent - raised AFTER the
     // video actually opened (DaggerfallVidPlayerWindow.cs:110-112
     // `video.Open(PlayOnStart); video.Playing = true;` then the raise,
@@ -300,13 +319,16 @@ export function playVideo(canvas, renderer, bytes, {
     // the `player.play` guard above resolves WITHOUT going through
     // finish(), so a mute raised before it would never be lifted and
     // one undecodable VID would silence the game for good.
-    music.setMuted(true);        // DaggerfallSongPlayer.cs:356-362
-    muteAmbientForVideo();       // AmbientEffectsPlayer.cs:536-549
+    music.setMuted(true); // DaggerfallSongPlayer.cs:356-362
+    muteAmbientForVideo(); // AmbientEffectsPlayer.cs:536-549
 
     let anyKey = false;
-    let backDown = false;   // F151: GetBackButtonDown, its own disjunct
+    let backDown = false; // F151: GetBackButtonDown, its own disjunct
     let settled = false;
-    const detach = listen((back = false) => { anyKey = true; if (back) backDown = true; });
+    const detach = listen((back = false) => {
+      anyKey = true;
+      if (back) backDown = true;
+    });
     const finish = (played) => {
       if (settled) return;
       settled = true;
@@ -314,10 +336,14 @@ export function playVideo(canvas, renderer, bytes, {
       // (:134 any key / back button, :150 end of file). Here it heads
       // finish(), which is the one door all three exits take: end of
       // file, any key/back, and the AUDIT 19 error boundary.
-      music.setMuted(false);     // DaggerfallSongPlayer.cs:364-369
-      unmuteAmbientForVideo();   // AmbientEffectsPlayer.cs:551-554
+      music.setMuted(false); // DaggerfallSongPlayer.cs:364-369
+      unmuteAmbientForVideo(); // AmbientEffectsPlayer.cs:551-554
       detach();
-      try { player.dispose(); } catch { /* nothing to release */ }
+      try {
+        player.dispose();
+      } catch {
+        /* nothing to release */
+      }
       resolve(played);
     };
     const frame = () => {

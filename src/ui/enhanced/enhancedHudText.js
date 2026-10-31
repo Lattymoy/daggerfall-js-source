@@ -47,10 +47,10 @@
 // online panels and the touch layer beside them. The NATIVE WINDOWS
 // are still drawn on the canvas in the 1996 bitmap face under this
 // skin, and that is a slice of its own rather than an oversight:
-// ui/deathScreen.js:"font, died, (canvas.width - measureText(font.fnt, died) * s)", ui/restWindow.js:"rows = this.endLines", ui/saveWindow.js:"font, prompt, m,"+
+// ui/deathScreen.js:"const died = t('death.title', 'YOU HAVE DIED')".."font,", ui/restWindow.js:"rows = this.endLines", ui/saveWindow.js:"font, prompt, m,"+
 // (shadowText, eight sites), ui/travel/travelPopUp.js:"font, r.text ?? r",
 // ui/quest/questJournal.js:"font, line, m.ox + (lx + 1)", ui/messageBox.js:"for (const c of r.cells)"/ui/messageBox.js:"font, r.text, m," and
-// ui/actionText.js:"drawText(renderer, font, l, x + 12 * s, ty, s, TEXT)"/ui/actionText.js:"if (drawMessageBox(renderer, m, font, box, opts))" (every ActionTextBox's parchment on the
+// ui/actionText.js:"drawText(renderer, font, l, x + 12 * s, ty, s, TEXT)"ui/actionText.js:"if (drawMessageBox(renderer, m, font, box, opts))" (every ActionTextBox's parchment on the
 // classic skin). Each of those is a native window whose every drawn
 // element cites a DFU rect (THE NATIVE-WINDOW RULE), so the face
 // cannot change without the metrics changing with it. (FONT3, 2026-10-02: that list is history - five of the seven
@@ -82,11 +82,11 @@ function applyScale(node) {
  *  this once scaled too is a toast in the notice stack since
  *  ENH-NOTICE3, which does not scale with the HUD - it is the box's
  *  stack, at the box's size.) */
-export function setEnhancedMidTextScale(scale, doc = (typeof document === 'undefined' ? null : document)) {
+export function setEnhancedMidTextScale(scale, doc = typeof document === 'undefined' ? null : document) {
   hudScaleVar = String(scale);
   if (!doc) return;
   doc.getElementById?.(ENHANCED_MID_TEXT_ID)?.style?.setProperty('--hud-scale', hudScaleVar);
-  for (const h of labelHosts.values()) h.node.style.setProperty('--hud-scale', hudScaleVar);   // AUDIT HCC U6: the mods' HUD labels scale with it
+  for (const h of labelHosts.values()) h.node.style.setProperty('--hud-scale', hudScaleVar); // AUDIT HCC U6: the mods' HUD labels scale with it
 }
 
 // ── A MOD'S OWN HUD LABEL (AUDIT HCC U6) ────────────────────────────
@@ -98,7 +98,7 @@ export function setEnhancedMidTextScale(scale, doc = (typeof document === 'undef
 const labelHosts = new Map();
 /** `frame` = { text, visible, top } as drawEnhancedMidText's. Returns the node (null off a document or when nothing
  *  was ever shown). */
-export function drawEnhancedHudLabel(id, frame, doc = (typeof document === 'undefined' ? null : document)) {
+export function drawEnhancedHudLabel(id, frame, doc = typeof document === 'undefined' ? null : document) {
   if (!doc) return null;
   const text = frame?.visible === false ? '' : String(frame?.text ?? '');
   let h = labelHosts.get(id);
@@ -116,11 +116,20 @@ export function drawEnhancedHudLabel(id, frame, doc = (typeof document === 'unde
     labelHosts.set(id, h);
   }
   const { node, last } = h;
-  if (last.text !== text) { last.text = text; node.textContent = text; }
+  if (last.text !== text) {
+    last.text = text;
+    node.textContent = text;
+  }
   const top = Number.isFinite(frame?.top) ? `${frame.top.toFixed(1)}px` : null;
-  if (top !== null && last.top !== top) { last.top = top; node.style.setProperty('--hudmid-top', top); }
+  if (top !== null && last.top !== top) {
+    last.top = top;
+    node.style.setProperty('--hudmid-top', top);
+  }
   const shown = text !== '';
-  if (last.on !== shown) { last.on = shown; node.style.display = shown ? '' : 'none'; }
+  if (last.on !== shown) {
+    last.on = shown;
+    node.style.display = shown ? '' : 'none';
+  }
   return node;
 }
 
@@ -172,7 +181,7 @@ export function midTextTopPx(canvas, y) {
  * the classic label's own top edge in CSS pixels (null leaves the
  * sheet's fallback proportion alone).
  */
-export function drawEnhancedMidText(frame, doc = (typeof document === 'undefined' ? null : document)) {
+export function drawEnhancedMidText(frame, doc = typeof document === 'undefined' ? null : document) {
   if (!doc) return null;
   const text = frame?.visible === false ? '' : String(frame?.text ?? '');
   if (!midHost && !text) return null;
@@ -186,11 +195,20 @@ export function drawEnhancedMidText(frame, doc = (typeof document === 'undefined
     applyScale(midHost);
     doc.body.append(midHost);
   }
-  if (lastMid.text !== text) { lastMid.text = text; midHost.textContent = text; }
+  if (lastMid.text !== text) {
+    lastMid.text = text;
+    midHost.textContent = text;
+  }
   const top = Number.isFinite(frame?.top) ? `${frame.top.toFixed(1)}px` : null;
-  if (top !== null && lastMid.top !== top) { lastMid.top = top; midHost.style.setProperty('--hudmid-top', top); }
+  if (top !== null && lastMid.top !== top) {
+    lastMid.top = top;
+    midHost.style.setProperty('--hudmid-top', top);
+  }
   const shown = text !== '';
-  if (lastMid.on !== shown) { lastMid.on = shown; midHost.style.display = shown ? '' : 'none'; }
+  if (lastMid.on !== shown) {
+    lastMid.on = shown;
+    midHost.style.display = shown ? '' : 'none';
+  }
   return midHost;
 }
 
@@ -212,7 +230,7 @@ let statusHost = null;
 const lastStatus = {};
 
 /** The status line, or '' for none. Same hide law as the two above. */
-export function drawEnhancedStatusLine(text, doc = (typeof document === 'undefined' ? null : document)) {
+export function drawEnhancedStatusLine(text, doc = typeof document === 'undefined' ? null : document) {
   if (!doc) return null;
   const line = String(text ?? '');
   if (!statusHost && !line) return null;
@@ -225,9 +243,15 @@ export function drawEnhancedStatusLine(text, doc = (typeof document === 'undefin
     statusHost.setAttribute('aria-hidden', 'true');
     doc.body.append(statusHost);
   }
-  if (lastStatus.text !== line) { lastStatus.text = line; statusHost.textContent = line; }
+  if (lastStatus.text !== line) {
+    lastStatus.text = line;
+    statusHost.textContent = line;
+  }
   const shown = line !== '';
-  if (lastStatus.on !== shown) { lastStatus.on = shown; statusHost.style.display = shown ? '' : 'none'; }
+  if (lastStatus.on !== shown) {
+    lastStatus.on = shown;
+    statusHost.style.display = shown ? '' : 'none';
+  }
   return statusHost;
 }
 
@@ -246,10 +270,25 @@ export function drawEnhancedStatusLine(text, doc = (typeof document === 'undefin
  *  column there.) If a page-level teardown is ever wired, this is the
  *  half of it that belongs here. */
 export function destroyEnhancedHudText() {
-  try { midHost?.remove(); } catch { /* already gone */ }
-  try { statusHost?.remove(); } catch { /* already gone */ }
-  midHost = null; statusHost = null;
-  for (const h of labelHosts.values()) { try { h.node.remove(); } catch { /* already gone */ } }
+  try {
+    midHost?.remove();
+  } catch {
+    /* already gone */
+  }
+  try {
+    statusHost?.remove();
+  } catch {
+    /* already gone */
+  }
+  midHost = null;
+  statusHost = null;
+  for (const h of labelHosts.values()) {
+    try {
+      h.node.remove();
+    } catch {
+      /* already gone */
+    }
+  }
   labelHosts.clear();
   hudScaleVar = null;
   for (const k of Object.keys(lastMid)) delete lastMid[k];

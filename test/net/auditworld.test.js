@@ -244,10 +244,10 @@ test('AUDIT WORLD: the hosts by source - the dungeon host stamps its memory and 
   const pb = rd('src/net/peer/peerBodies.js');
   assert.doesNotMatch(pb, /a peer's drawn bow shows no arrow/, 'D7: the build doc');
   // PIN MOVED (MWNPC4): the reactions (the hit count, the death) re-latch with the swing
-  assert.match(pb, /if \(b\.goneAt == null\) \{ b\.goneAt = now; b\.hit = null; b\.dead = null; b\.swing = null; b\.pending = null; b\.posed = false; \}/, 'C7: the linger re-latches (AUDIT PEER-CADENCE F2: and forgets its skin)');
+  assert.match(pb, /if \(b\.goneAt == null\) \{\n\s*b\.goneAt = now;\n\s*b\.hit = null;\n\s*b\.dead = null;\n\s*b\.swing = null;\n\s*b\.pending = null;\n\s*b\.posed = false;\n\s*\}/, 'C7: the linger re-latches (AUDIT PEER-CADENCE F2: and forgets its skin)');
   // PIN MOVED (AUDIT MW-NPC II L2): the skin is forgotten far, and on a PEER's frozen frame - an NPC lane's frozen frame
   // (a talk window holding the street) keeps it (mwnpc_audit2.test.js L2)
-  assert.match(pb, /\} else \{[\s\S]{0,800}?if \(b\.far \|\| dt > 0 \|\| !this\._buildInRange\) \{ b\.posed = false; b\.stale = false; b\.owed = false; \}[^\n]*\n\s*if \(b\.swing != null\) \{ b\.swing = peer\.shown\.an \| 0; b\.cast = peer\.shown\.cn \| 0; b\.pending = null; \}/, 'C7: out of range the counts follow (AUDIT PEER-CADENCE F2: and the skin is forgotten)');
+  assert.match(pb, /\} else \{\n\s*\/\/ AUDIT MW-NPC II L2: an NPC lane's frozen frame \(a talk window holds the street - its hosts pass dt 0\) keeps the\n\s*\/\/ skin: nothing moved under it, and forgotten, every standing body was owed a pose on the frame the window shut -\n\s*\/\/ 20 skins against the frame's 8 at Near, 37 against 16 at All\. Far \(or a peer's frozen frame\), stale as ever\.\n\s*if \(b\.far \|\| dt > 0 \|\| !this\._buildInRange\) \{\n\s*b\.posed = false;\n\s*b\.stale = false;\n\s*b\.owed = false;\n\s*\} \/\/ AUDIT PEER-CADENCE F2: far \(or a frozen frame\) - whatever skin stands is stale by the time it is stepped again\n\s*if \(b\.swing != null\) \{\n\s*b\.swing = peer\.shown\.an \| 0;\n\s*b\.cast = peer\.shown\.cn \| 0;\n\s*b\.pending = null;\n\s*\}/, 'C7: out of range the counts follow (AUDIT PEER-CADENCE F2: and the skin is forgotten)');
   const wire = rd('src/net/wire.js');
   assert.match(wire, /A pose is \{x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr, ce, ar\}/, 'D11 (SPELLFX1: plus ce and ar)');
   // the record

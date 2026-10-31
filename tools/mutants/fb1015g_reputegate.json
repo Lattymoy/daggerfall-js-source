@@ -47,8 +47,8 @@
   {
     "name": "REPUTE-GATE-the-flow-offline",
     "file": "src/systems/quest/offerFlow.js",
-    "old": "guild.getReputation(), !!this.deps.sharedClock?.());",
-    "new": "guild.getReputation(), false);",
+    "old": "      !!this.deps.sharedClock?.(),",
+    "new": "      false,",
     "tests": [
       "test/systems/quest/fb1015g_reputegate.test.js",
       "test/systems/quest/questoffers.test.js"
@@ -57,7 +57,7 @@
   {
     "name": "REPUTE-GATE-the-pool-ungated",
     "file": "src/systems/quest/offerFlow.js",
-    "old": "    this.questPool = reputeGated(this.questLists.getGuildQuestPool(guildGroup, status, factionId, guild.getReputation(), rank),\n      guild.getReputation(), !!this.deps.sharedClock?.());",
+    "old": "    this.questPool = reputeGated(\n      this.questLists.getGuildQuestPool(guildGroup, status, factionId, guild.getReputation(), rank),\n      guild.getReputation(),\n      !!this.deps.sharedClock?.(),\n    );",
     "new": "    this.questPool = this.questLists.getGuildQuestPool(guildGroup, status, factionId, guild.getReputation(), rank);",
     "tests": [
       "test/systems/quest/fb1015g_reputegate.test.js",

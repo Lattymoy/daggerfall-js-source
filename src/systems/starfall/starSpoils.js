@@ -43,9 +43,12 @@ export const STAR_SPOILS_RECORDS_MAX = 32;
 export const starSpoilsDay = (n, k) => `star:${n}.${k}`;
 /** The words. */
 export const STAR_SPOILS_TEXT = Object.freeze({
-  granted: () => t('starfall.spoils.granted', 'The star\'s spoils are in your pack.'),   // AUDIT STAR (W5): gold, Starfall Glass and a piece, never the glass alone
-  recovered: () => t('starfall.spoils.recovered', 'A fallen star\'s spoils are in your pack.'),
-  kept: (name) => (name ? t('starfall.spoils.keptFor', 'A fallen star\'s spoils wait for {name}.', { name }) : t('starfall.spoils.kept', 'A fallen star\'s spoils wait for the one who held it.')),
+  granted: () => t('starfall.spoils.granted', "The star's spoils are in your pack."), // AUDIT STAR (W5): gold, Starfall Glass and a piece, never the glass alone
+  recovered: () => t('starfall.spoils.recovered', "A fallen star's spoils are in your pack."),
+  kept: (name) =>
+    name
+      ? t('starfall.spoils.keptFor', "A fallen star's spoils wait for {name}.", { name })
+      : t('starfall.spoils.kept', "A fallen star's spoils wait for the one who held it."),
 });
 
 /**
@@ -64,11 +67,11 @@ export function rollStarSpoils(seed, level, n, k) {
   const tier = magicOrBetter(rolls, RAID_SPOILS_SOURCE);
   applyRarity(item, tier, rolls);
   item.isIdentified = true;
-  const pieces = [{ item, tier: item.rarity ?? tier }];   // a Legendary with no record for its kind falls to Rare: read back off the item
-  const set = rollStarspunPiece(rolls, twice === 2);   // LAST: every spoils before it stays what it was for its seed
+  const pieces = [{ item, tier: item.rarity ?? tier }]; // a Legendary with no record for its kind falls to Rare: read back off the item
+  const set = rollStarspunPiece(rolls, twice === 2); // LAST: every spoils before it stays what it was for its seed
   if (set) pieces.push({ item: set, tier: set.rarity });
-  lastPass([item], rolls);   // LOOT2: the ladder's last pass, after the set piece
-  techniquePass([item], rolls);   // TECH1: a weapon's technique - LAST of all (law 9)
+  lastPass([item], rolls); // LOOT2: the ladder's last pass, after the set piece
+  techniquePass([item], rolls); // TECH1: a weapon's technique - LAST of all (law 9)
   return { gold, starglass: glass, pieces };
 }
 
@@ -76,5 +79,9 @@ export function rollStarSpoils(seed, level, n, k) {
  *  Pure. */
 export function starSpoilsList(seed, level, n, k) {
   const s = rollStarSpoils(seed, level, n, k);
-  return [...s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier })), { kind: 'item', item: s.starglass, tier: 'common' }, { kind: 'gold', gold: s.gold, tier: 'common' }];
+  return [
+    ...s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier })),
+    { kind: 'item', item: s.starglass, tier: 'common' },
+    { kind: 'gold', gold: s.gold, tier: 'common' },
+  ];
 }

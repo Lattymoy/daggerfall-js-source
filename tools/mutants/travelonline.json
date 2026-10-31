@@ -2,8 +2,8 @@
   {
     "name": "TRAVEL-ONLINE-1-the-mod-the-player's",
     "file": "src/systems/online/onlineLane.js",
-    "old": "  'travel-options': Object.freeze({\n    Enabled: true,\n",
-    "new": "  'travel-options': Object.freeze({\n",
+    "old": "    Enabled: true,\n    'CautiousTravel.PlayerControlledCautiousTravel': true,",
+    "new": "    'CautiousTravel.PlayerControlledCautiousTravel': true,",
     "tests": [
       "test/systems/travel/travelonline.test.js",
       "test/systems/modsonline.test.js"
@@ -13,8 +13,8 @@
   {
     "name": "TRAVEL-ONLINE-2-cautiously-the-player's",
     "file": "src/systems/online/onlineLane.js",
-    "old": "    'CautiousTravel.PlayerControlledCautiousTravel': true,\n    'StopAtInnsTravel.PlayerControlledInnsTravel': true,\n    'ShipTravel.OnlyFromPorts': true,",
-    "new": "    'StopAtInnsTravel.PlayerControlledInnsTravel': true,\n    'ShipTravel.OnlyFromPorts': true,",
+    "old": "    'CautiousTravel.PlayerControlledCautiousTravel': true,\n    'StopAtInnsTravel.PlayerControlledInnsTravel': true,",
+    "new": "    'StopAtInnsTravel.PlayerControlledInnsTravel': true,",
     "tests": [
       "test/systems/travel/travelonline.test.js",
       "test/systems/modsonline.test.js"
@@ -24,8 +24,8 @@
   {
     "name": "TRAVEL-ONLINE-3-inns-the-player's",
     "file": "src/systems/online/onlineLane.js",
-    "old": "    'CautiousTravel.PlayerControlledCautiousTravel': true,\n    'StopAtInnsTravel.PlayerControlledInnsTravel': true,\n    'ShipTravel.OnlyFromPorts': true,",
-    "new": "    'CautiousTravel.PlayerControlledCautiousTravel': true,\n    'ShipTravel.OnlyFromPorts': true,",
+    "old": "    'StopAtInnsTravel.PlayerControlledInnsTravel': true,\n    'ShipTravel.OnlyFromPorts': true,",
+    "new": "    'ShipTravel.OnlyFromPorts': true,",
     "tests": [
       "test/systems/travel/travelonline.test.js",
       "test/systems/modsonline.test.js"
@@ -46,8 +46,8 @@
   {
     "name": "TRAVEL-ONLINE-5-the-ports-the-player's",
     "file": "src/systems/online/onlineLane.js",
-    "old": "    'StopAtInnsTravel.PlayerControlledInnsTravel': true,\n    'ShipTravel.OnlyFromPorts': true,\n  }),",
-    "new": "    'StopAtInnsTravel.PlayerControlledInnsTravel': true,\n  }),",
+    "old": "    'ShipTravel.OnlyFromPorts': true,\n  }),",
+    "new": "  }),",
     "tests": [
       "test/systems/travel/travelonline.test.js",
       "test/systems/modsonline.test.js"

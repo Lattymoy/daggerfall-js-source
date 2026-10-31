@@ -2,8 +2,8 @@
   {
     "name": "ARENA-LADDER-family-number-off",
     "file": "src/ai/blowShapes.js",
-    "old": "[16, BRUTE], [24, BRUTE]",
-    "new": "[16, BRUTE], [23, BRUTE]",
+    "old": "    [24, BRUTE],",
+    "new": "    [23, BRUTE],",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "ARENA-LADDER-reexport-copy",
     "file": "src/ai/foeBlows.js",
-    "old": "export { BLOW, blowShapesOf, blowFamily, extraShapesOf, inBlow } from './blowShapes.js';   // the shapes' one home - a leaf the ground's pass reads too; AUDIT ARENA-LADDER: the families and the verdict too (the relay reads them); TELL7's whole set beside them",
-    "new": "export { BLOW, blowFamily, extraShapesOf, inBlow } from './blowShapes.js';\nconst _copy = (t, e) => blowShapesOf(t, e).slice();\nexport { _copy as blowShapesOf };   // the shapes' one home - a leaf the ground's pass reads too; AUDIT ARENA-LADDER: the families and the verdict too (the relay reads them); TELL7's whole set beside them",
+    "old": "export { BLOW, blowShapesOf, blowFamily, extraShapesOf, inBlow } from './blowShapes.js'; // the shapes' one home - a leaf the ground's pass reads too; AUDIT ARENA-LADDER: the families and the verdict too (the relay reads them); TELL7's whole set beside them",
+    "new": "export { BLOW, blowFamily, extraShapesOf, inBlow } from './blowShapes.js';\nconst _copy = (t, e) => blowShapesOf(t, e).slice();\nexport { _copy as blowShapesOf }; // the shapes' one home - a leaf the ground's pass reads too; AUDIT ARENA-LADDER: the families and the verdict too (the relay reads them); TELL7's whole set beside them",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "ARENA-LADDER-aim-me-alone",
     "file": "src/ai/tactics.js",
-    "old": "  const sb = ai?.vitals?.()?.bout, tb = t?.entity?.bout;",
-    "new": "  return null;\n  const sb = ai?.vitals?.()?.bout, tb = t?.entity?.bout;",
+    "old": "  const sb = ai?.vitals?.()?.bout,",
+    "new": "  return null;\n  const sb = ai?.vitals?.()?.bout,",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -42,7 +42,7 @@
   {
     "name": "ARENA-LADDER-aim-bout-unread",
     "file": "src/ai/tactics.js",
-    "old": "  if (String(sb.id) !== String(tb.id) || sb.out || tb.out || sb.hold || tb.hold || (sb.side | 0) === (tb.side | 0)) return null;",
+    "old": "  if (String(sb.id) !== String(tb.id) || sb.out || tb.out || sb.hold || tb.hold || (sb.side | 0) === (tb.side | 0))\n    return null;",
     "new": "  if (sb.out || tb.out || sb.hold || tb.hold || (sb.side | 0) === (tb.side | 0)) return null;",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
@@ -52,7 +52,7 @@
   {
     "name": "ARENA-LADDER-aim-side-unread",
     "file": "src/ai/tactics.js",
-    "old": "  if (String(sb.id) !== String(tb.id) || sb.out || tb.out || sb.hold || tb.hold || (sb.side | 0) === (tb.side | 0)) return null;",
+    "old": "  if (String(sb.id) !== String(tb.id) || sb.out || tb.out || sb.hold || tb.hold || (sb.side | 0) === (tb.side | 0))\n    return null;",
     "new": "  if (String(sb.id) !== String(tb.id) || sb.out || tb.out || sb.hold || tb.hold) return null;",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
@@ -62,7 +62,7 @@
   {
     "name": "ARENA-LADDER-aim-out-unread",
     "file": "src/ai/tactics.js",
-    "old": "  if (String(sb.id) !== String(tb.id) || sb.out || tb.out || sb.hold || tb.hold || (sb.side | 0) === (tb.side | 0)) return null;",
+    "old": "  if (String(sb.id) !== String(tb.id) || sb.out || tb.out || sb.hold || tb.hold || (sb.side | 0) === (tb.side | 0))\n    return null;",
     "new": "  if (String(sb.id) !== String(tb.id) || sb.out || sb.hold || tb.hold || (sb.side | 0) === (tb.side | 0)) return null;",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "ARENA-LADDER-landing-at-me",
     "file": "src/ai/tactics.js",
-    "old": "    if (tf) return resolveLanding(ai, s, s.blow, arrived && inBlow(s.blow, tf[0], tf[2]), now, cooled, atMe, judgedHere(ai, key));",
-    "new": "    if (tf) return resolveLanding(ai, s, s.blow, arrived && (_me ? inBlow(s.blow, _me.feet[0], _me.feet[2]) : false), now, cooled, atMe, judgedHere(ai, key));",
+    "old": "        arrived && inBlow(s.blow, tf[0], tf[2]),",
+    "new": "        arrived && (_me ? inBlow(s.blow, _me.feet[0], _me.feet[2]) : false),",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -82,7 +82,7 @@
   {
     "name": "ARENA-LADDER-landing-mark-unread",
     "file": "src/ai/tactics.js",
-    "old": "  if (b0.key !== undefined && key !== b0.key) { breakWindup(ai); return false; }\n  const atMe = !!_me && key === LOCAL;",
+    "old": "  if (b0.key !== undefined && key !== b0.key) {\n    breakWindup(ai);\n    return false;\n  }\n  const atMe = !!_me && key === LOCAL;",
     "new": "  const atMe = !!_me && key === LOCAL;",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "ARENA-LADDER-dodge-untold",
     "file": "src/ai/foeBlows.js",
-    "old": "  if (!v) { ai._blowMult = undefined; tellDodged(ai); }   // dodged: the weight is spent with it, and the dodge is told",
-    "new": "  if (!v) { ai._blowMult = undefined; }   // dodged: the weight is spent with it, and the dodge is told",
+    "old": "    tellDodged(ai);\n  } // dodged: the weight is spent with it, and the dodge is told",
+    "new": "  } // dodged: the weight is spent with it, and the dodge is told",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "ARENA-LADDER-relay-tier-unread",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "const shapes = (a.level >= ARENA_BLOW_TIER_LEVEL || a.elite) && now",
-    "new": "const shapes = (a.level >= 0 || a.elite) && now",
+    "old": "        (a.level >= ARENA_BLOW_TIER_LEVEL || a.elite) &&\n        now >= (a.blowAt ?? 0) &&\n        !st.ai.some((o) => o !== a && o.atk?.s && o.atk.at > now)",
+    "new": "        (a.level >= 0 || a.elite) && now >= (a.blowAt ?? 0) && !st.ai.some((o) => o !== a && o.atk?.s && o.atk.at > now)",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "ARENA-LADDER-relay-verdict-reach",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "(s ? inBlow({ kind: s, origin: [ox, 0, oz], yaw: yw }, p[0], p[1]) : Math.hypot",
-    "new": "(Math.hypot",
+    "old": "    const hit =\n      !!(t && !t.out && p) &&\n      (s\n        ? inBlow({ kind: s, origin: [ox, 0, oz], yaw: yw }, p[0], p[1])\n        : Math.hypot(p[0] - here[0], p[1] - here[1]) <= a.reach + ARENA_POSE_SLACK * 0.5);",
+    "new": "    const hit = !!(t && !t.out && p) && Math.hypot(p[0] - here[0], p[1] - here[1]) <= a.reach + ARENA_POSE_SLACK * 0.5;",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "ARENA-LADDER-relay-weight-dropped",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "const dmg = s ? Math.max(1, Math.round(roll * BLOW[s].mult)) : roll;",
-    "new": "const dmg = roll;",
+    "old": "      const dmg = s ? Math.max(1, Math.round(roll * BLOW[s].mult)) : roll;",
+    "new": "      const dmg = roll;",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "ARENA-LADDER-relay-cooldown-unset",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "        a.blowAt = now + ARENA_BLOW_COOLDOWN_MIN_MS",
-    "new": "        a.blowAt = now + 0 * ARENA_BLOW_COOLDOWN_MIN_MS",
+    "old": "          ARENA_BLOW_COOLDOWN_MIN_MS +",
+    "new": "          0 * ARENA_BLOW_COOLDOWN_MIN_MS +",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "ARENA-LADDER-run-kept",
     "file": "src/systems/arena/arenaLadder.js",
-    "old": "    out.runLost = s.won > 0;\n    s.won = 0;",
-    "new": "    out.runLost = s.won > 0;",
+    "old": "    s.won = 0;\n    if (how === 'yield') r.yields++;",
+    "new": "    if (how === 'yield') r.yields++;",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "ARENA-LADDER-champion-plain",
     "file": "src/systems/arena/arenaLadder.js",
-    "old": "champion: [champ(M.Knight, 5)]",
-    "new": "champion: [b(M.Knight, 5)]",
+    "old": "    Object.freeze({ bouts: [[b(M.Warrior, 3)], [b(M.Monk, 4)], [b(M.Archer, 5)]], champion: [champ(M.Knight, 5)] }),",
+    "new": "    Object.freeze({ bouts: [[b(M.Warrior, 3)], [b(M.Monk, 4)], [b(M.Archer, 5)]], champion: [b(M.Knight, 5)] }),",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "ARENA-LADDER-spawn-elite-dropped",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "{ level: f.spec.level, elite: !!f.spec.elite,",
-    "new": "{ level: f.spec.level,",
+    "old": "          elite: !!f.spec.elite,\n          gender: f.who.gender,",
+    "new": "          gender: f.who.gender,",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "ARENA-LADDER-relay-champion-plain",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "foes: list.map(([m, l]) => arenaFoeStats(m, l, { elite: champion }))",
-    "new": "foes: list.map(([m, l]) => arenaFoeStats(m, l))",
+    "old": "    foes: list.map(([m, l]) => arenaFoeStats(m, l, { elite: champion })),",
+    "new": "    foes: list.map(([m, l]) => arenaFoeStats(m, l)),",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "ARENA-LADDER-judges-floor-not-passed",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "judgesFloor: st.kind === 'pve' ? LADDER_JUDGES_SHARE : 0 });",
-    "new": "judgesFloor: 0 });",
+    "old": "    judgesFloor: st.kind === 'pve' ? LADDER_JUDGES_SHARE : 0,",
+    "new": "    judgesFloor: 0,",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "ARENA-LADDER-kit-strip-unread",
     "file": "src/systems/arena/arenaKit.js",
-    "old": "  for (const k of SAND_BARRED_KINDS) {\n    if (!hasActiveEffect(entity, k)) continue;",
-    "new": "  for (const k of SAND_BARRED_KINDS.slice(1)) {\n    if (!hasActiveEffect(entity, k)) continue;",
+    "old": "  for (const k of SAND_BARRED_KINDS) {",
+    "new": "  for (const k of SAND_BARRED_KINDS.slice(1)) {",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -302,8 +302,8 @@
   {
     "name": "ARENA-LADDER-gone-a-fall",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "if (!C.ex && !boutFighter(C.b, YOU)?.out) { voidBout(C); return; } boutFell(C.b, fid, t);",
-    "new": "boutFell(C.b, fid, t);",
+    "old": "          if (!C.ex && !boutFighter(C.b, YOU)?.out) {\n            voidBout(C);\n            return;\n          }\n          boutFell(C.b, fid, t);",
+    "new": "          boutFell(C.b, fid, t);",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -322,8 +322,8 @@
   {
     "name": "ARENA-LADDER-out-striker-counted",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "    if (boutFighter(C.b, from)?.out) { if (foe?.entity) foe.entity.health = Math.min(foe.entity.maxHealth ?? foe.entity.health, foe.entity.health + dmg); return; }\n",
-    "new": "",
+    "old": "    if (boutFighter(C.b, from)?.out) {\n      if (foe?.entity) foe.entity.health = Math.min(foe.entity.maxHealth ?? foe.entity.health, foe.entity.health + dmg);\n      return;\n    }\n    const f = boutFighter(C.b, fid);",
+    "new": "    const f = boutFighter(C.b, fid);",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -332,8 +332,8 @@
   {
     "name": "ARENA-LADDER-told-striker-unread",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "    if (told && lawNow() - told.at <= RESOLUTION_MS && !boutFighter(C.b, told.from)?.out) return told.from;\n",
-    "new": "",
+    "old": "    if (told && lawNow() - told.at <= RESOLUTION_MS && !boutFighter(C.b, told.from)?.out) return told.from;\n    let best = null,",
+    "new": "    let best = null,",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -352,8 +352,8 @@
   {
     "name": "ARENA-LADDER-ticket-any-shape",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "      if (m.z !== undefined) { if (typeof m.z !== 'string' || !ARENA_TICKET_RE.test(m.z)) return null; out.z = m.z; }",
-    "new": "      if (m.z !== undefined) { out.z = m.z; }",
+    "old": "        if (typeof m.z !== 'string' || !ARENA_TICKET_RE.test(m.z)) return null;\n        out.z = m.z;",
+    "new": "        out.z = m.z;",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -362,8 +362,8 @@
   {
     "name": "ARENA-LADDER-atk-shape-any",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "        if (!ARENA_BLOW_SHAPES.includes(m.s) || num(m.yw, 10) == null",
-    "new": "        if (num(m.yw, 10) == null",
+    "old": "        if (\n          !ARENA_BLOW_SHAPES.includes(m.s) ||\n          num(m.yw, 10) == null ||\n          num(m.ox, 1e5) == null ||\n          num(m.oz, 1e5) == null\n        )\n          return null;",
+    "new": "        if (num(m.yw, 10) == null || num(m.ox, 1e5) == null || num(m.oz, 1e5) == null) return null;",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -382,8 +382,8 @@
   {
     "name": "ARENA-LADDER-receipt-z-unsigned",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "h: r.how, ...(st.f[0].tk ? { z: st.f[0].tk } : {}) }];",
-    "new": "h: r.how }];",
+    "old": "  return [\n    {\n      a: 'l',\n      j: st.o,\n      s: st.f[0].sub,\n      q: st.tier,\n      u: st.bout,\n      r: r.side === 0 ? 1 : 0,\n      h: r.how,\n      ...(st.f[0].tk ? { z: st.f[0].tk } : {}),\n    },\n  ]; // AUDIT ARENA-LADDER: the attempt's ticket, signed",
+    "new": "  return [{ a: 'l', j: st.o, s: st.f[0].sub, q: st.tier, u: st.bout, r: r.side === 0 ? 1 : 0, h: r.how }]; // AUDIT ARENA-LADDER: the attempt's ticket, signed",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -472,8 +472,8 @@
   {
     "name": "ARENA-LADDER-client-no-flush",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "    try { await claims.flush(); await claims.idle?.(); } catch { /* carried again later */ }\n",
-    "new": "",
+    "old": "    try {\n      await claims.flush();\n      await claims.idle?.();\n    } catch {\n      /* carried again later */\n    }\n    if (bout !== b) return;",
+    "new": "    if (bout !== b) return;",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -492,7 +492,7 @@
   {
     "name": "ARENA-LADDER-client-fail-silent",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "    say(r && !r.ok && (r.error === 'order' || r.error === 'ladder-needs-account') ? accountRefusalText(r.error) : O.ticketFail);\n    endBout();",
+    "old": "    say(\n      r && !r.ok && (r.error === 'order' || r.error === 'ladder-needs-account')\n        ? accountRefusalText(r.error)\n        : O.ticketFail,\n    );\n    endBout();",
     "new": "    endBout();",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
@@ -522,8 +522,8 @@
   {
     "name": "ARENA-LADDER-ceiling-unnamed",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "radius: cur.ring ?? RING_R, ...(kitBout(cur) ? { ceilAbove: SAND_CEILING_M } : {}) });",
-    "new": "radius: cur.ring ?? RING_R });",
+    "old": "      const r = (cur.ringed ??= {\n        centre: [0, 0, 0],\n        radius: cur.ring ?? RING_R,\n        ...(kitBout(cur) ? { ceilAbove: SAND_CEILING_M } : {}),\n      }); // AUDIT ARENA-LADDER: and the kit law's ceiling (2: a ladder bout's)",
+    "new": "      const r = (cur.ringed ??= { centre: [0, 0, 0], radius: cur.ring ?? RING_R }); // AUDIT ARENA-LADDER: and the kit law's ceiling (2: a ladder bout's)",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -642,8 +642,8 @@
   {
     "name": "ARENA-LADDER-2-client-guest-asked",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "    if (deps.guest?.()) return { ok: false, text: O.guestLadder };",
-    "new": "",
+    "old": "    if (deps.guest?.()) return { ok: false, text: O.guestLadder }; // AUDIT ARENA-LADDER 2: the ladder online takes a registered account",
+    "new": "    // AUDIT ARENA-LADDER 2: the ladder online takes a registered account",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -652,8 +652,8 @@
   {
     "name": "ARENA-LADDER-2-ticket-before-floor",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "    void Promise.resolve(go).then((ok) => { if (ok && bout === b) return askTicket(b); return null; });",
-    "new": "    void Promise.resolve(go); void askTicket(b);",
+    "old": "    void Promise.resolve(go).then((ok) => {\n      if (ok && bout === b) return askTicket(b);\n      return null;\n    });",
+    "new": "    void Promise.resolve(go);\n    void askTicket(b);",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -662,8 +662,8 @@
   {
     "name": "ARENA-LADDER-2-room-unsent",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "deps.account.attempt?.(b.tier, b.bout, b.o)",
-    "new": "deps.account.attempt?.(b.tier, b.bout)",
+    "old": "    const r = await Promise.resolve(deps.account.attempt?.(b.tier, b.bout, b.o)).catch(() => null);",
+    "new": "    const r = await Promise.resolve(deps.account.attempt?.(b.tier, b.bout)).catch(() => null);",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -672,8 +672,8 @@
   {
     "name": "ARENA-LADDER-2-board-unasked",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "    if (r && !r.ok && r.error === 'order') askBoard(true);\n",
-    "new": "",
+    "old": "    if (r && !r.ok && r.error === 'order') askBoard(true);\n    say(",
+    "new": "    say(",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -682,8 +682,8 @@
   {
     "name": "ARENA-LADDER-2-kept-unread",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "    if (claims.ladderKept?.()) { say(O.stillRecording); endBout(); return; }\n",
-    "new": "",
+    "old": "    if (claims.ladderKept?.()) {\n      say(O.stillRecording);\n      endBout();\n      return;\n    }\n    const r = await Promise.resolve(deps.account.attempt?.(b.tier, b.bout, b.o)).catch(() => null);",
+    "new": "    const r = await Promise.resolve(deps.account.attempt?.(b.tier, b.bout, b.o)).catch(() => null);",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -692,8 +692,8 @@
   {
     "name": "ARENA-LADDER-2-flush-quiet",
     "file": "src/net/arena/arenaClaims.js",
-    "old": "    if (running) { again = true; return running; }",
-    "new": "    if (running) { again = true; return Promise.resolve(0); }",
+    "old": "      return running;",
+    "new": "      return Promise.resolve(0);",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -702,8 +702,8 @@
   {
     "name": "ARENA-LADDER-2-immunity-unset",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "foe.entity.items = []; foe.entity.pacifyImmune = true; }",
-    "new": "foe.entity.items = []; }",
+    "old": "            foe.entity.pacifyImmune = true;\n          } // AUDIT ARENA-LADDER 2: no Calm, no Charm, no tongue sways a fighter (WB8a's door - every path, a weapon's spell too)",
+    "new": "          } // AUDIT ARENA-LADDER 2: no Calm, no Charm, no tongue sways a fighter (WB8a's door - every path, a weapon's spell too)",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -722,8 +722,8 @@
   {
     "name": "ARENA-LADDER-2-held-unmarked",
     "file": "src/systems/arena/arenaKit.js",
-    "old": "    if (entity.activeEffects.some((a) => a.kind === k && a.heldItem)) entity._sandHeld = true;\n",
-    "new": "",
+    "old": "    if (entity.activeEffects.some((a) => a.kind === k && a.heldItem)) entity._sandHeld = true;\n    cureAllOfKind(entity, k);",
+    "new": "    cureAllOfKind(entity, k);",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -752,8 +752,8 @@
   {
     "name": "ARENA-LADDER-2-paid-unkept",
     "file": "src/systems/arena/arenaLadder.js",
-    "old": "  L.paid = Math.max(L.won, int(raw.paid, 0, BOUTS_PER_TIER, L.won));",
-    "new": "  L.paid = int(raw.paid, 0, BOUTS_PER_TIER, L.won);",
+    "old": "  L.paid = Math.max(L.won, int(raw.paid, 0, BOUTS_PER_TIER, L.won)); // AUDIT ARENA-LADDER 2: a save before it - what is won was paid",
+    "new": "  L.paid = int(raw.paid, 0, BOUTS_PER_TIER, L.won); // AUDIT ARENA-LADDER 2: a save before it - what is won was paid",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -762,8 +762,8 @@
   {
     "name": "ARENA-LADDER-2-repeat-purse",
     "file": "src/systems/arena/arenaLadder.js",
-    "old": "    purse: champion ? CHAMPION_PURSE[s.tier] : repeat ? 0 : BOUT_PURSE[s.tier], repeat,",
-    "new": "    purse: champion ? CHAMPION_PURSE[s.tier] : BOUT_PURSE[s.tier], repeat,",
+    "old": "    purse: champion ? CHAMPION_PURSE[s.tier] : repeat ? 0 : BOUT_PURSE[s.tier],",
+    "new": "    purse: champion ? CHAMPION_PURSE[s.tier] : BOUT_PURSE[s.tier],",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -772,8 +772,8 @@
   {
     "name": "ARENA-LADDER-2-repeat-points",
     "file": "src/systems/arena/arenaLeague.js",
-    "old": "(!won || repeat ? 0 :",
-    "new": "(!won ? 0 :",
+    "old": "  !won || repeat ? 0 : grand ? TEAM_POINTS.grand : champion ? TEAM_POINTS.champion : TEAM_POINTS.bout;",
+    "new": "  !won ? 0 : grand ? TEAM_POINTS.grand : champion ? TEAM_POINTS.champion : TEAM_POINTS.bout;",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -782,8 +782,8 @@
   {
     "name": "ARENA-LADDER-2-one-at-a-time",
     "file": "src/net/arena/arenaBrain.js",
-    "old": " && !st.ai.some((o) => o !== a && o.atk?.s && o.atk.at > now)",
-    "new": "",
+    "old": "        (a.level >= ARENA_BLOW_TIER_LEVEL || a.elite) &&\n        now >= (a.blowAt ?? 0) &&\n        !st.ai.some((o) => o !== a && o.atk?.s && o.atk.at > now)\n          ? blowShapesOf(a.mobile)\n          : [];",
+    "new": "        (a.level >= ARENA_BLOW_TIER_LEVEL || a.elite) && now >= (a.blowAt ?? 0) ? blowShapesOf(a.mobile) : [];",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -792,8 +792,8 @@
   {
     "name": "ARENA-LADDER-2-tie-first",
     "file": "src/systems/arena/arenaBout.js",
-    "old": "      side = ai.length ? judgeBout(ai) : null;",
-    "new": "      side = ai.length ? judgeBout(ai) ?? ai[0].side : null;",
+    "old": "      side = ai.length ? judgeBout(ai) : null; // AUDIT ARENA-LADDER 2: fighters level on the card - a draw, never the first one's",
+    "new": "      side = ai.length ? (judgeBout(ai) ?? ai[0].side) : null; // AUDIT ARENA-LADDER 2: fighters level on the card - a draw, never the first one's",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -812,8 +812,8 @@
   {
     "name": "ARENA-LADDER-2-swing-at-word",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "if (foe?._pup) { if (!w.s) foe._pup.strike = 'melee';",
-    "new": "if (foe?._pup) { foe._pup.strike = 'melee';",
+    "old": "          if (!w.s) foe._pup.strike = 'melee';",
+    "new": "          foe._pup.strike = 'melee';",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -822,8 +822,8 @@
   {
     "name": "ARENA-LADDER-2-elite-unsent",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "elite: C.relay.kind === 'pve' && !!C.relay.next?.champion,",
-    "new": "elite: false,",
+    "old": "        elite: C.relay.kind === 'pve' && !!C.relay.next?.champion,",
+    "new": "        elite: false,",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],
@@ -842,8 +842,8 @@
   {
     "name": "ARENA-LADDER-2-void-after-out",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "if (!C.ex && !boutFighter(C.b, YOU)?.out) { voidBout",
-    "new": "if (!C.ex) { voidBout",
+    "old": "          if (!C.ex && !boutFighter(C.b, YOU)?.out) {",
+    "new": "          if (!C.ex) {",
     "tests": [
       "test/systems/arenaladder_audit.test.js"
     ],

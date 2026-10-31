@@ -14,7 +14,7 @@ import { registerCustomTemplates } from '../item/itemTemplates.js';
 import { ICON_STAFF } from '../../net/professionLaw.js';
 
 /** The block (1710-1719: the two, the rest spare). */
-export const UPKEEP_ITEM = Object.freeze({ Oats: 1710, WagonKit: 1711, DwarvenOil: 1712 });   // DRAGON5c: the tamed dragon's food
+export const UPKEEP_ITEM = Object.freeze({ Oats: 1710, WagonKit: 1711, DwarvenOil: 1712 }); // DRAGON5c: the tamed dragon's food
 export const UPKEEP_ITEM_GROUP = 'UselessItems2';
 /** The online sources' switch - false for the release the templates shipped in (REST6's law), on since (UPKEEP-ONLINE).
  *  Off again is the way back if an older client ever meets one it cannot read. Offline they sell at once. */
@@ -23,27 +23,48 @@ export const UPKEEP_ITEMS_ONLINE = true;
 export const upkeepItemsAvailable = (online) => !online || UPKEEP_ITEMS_ONLINE;
 /** DRAGON5c (bible/11-Multiplayer/Dwarven-Dragon.md section 10): Dwarven Oil's own switch, REST6's law - false for the
  *  release that ships its row, as the dragon's mount is (systems/dragon/dragonMount.js DRAGON_MOUNT_ONLINE). */
-export const DWARVEN_OIL_ONLINE = true;   // DRAGON-ON (2026-10-29, with the ride): on (Dwarven-Dragon.md DRAGON-ON)
+export const DWARVEN_OIL_ONLINE = true; // DRAGON-ON (2026-10-29, with the ride): on (Dwarven-Dragon.md DRAGON-ON)
 export const dwarvenOilAvailable = (online) => !online || DWARVEN_OIL_ONLINE;
 
-const row = (index, name, baseWeight, basePrice, icon, stackable) => Object.freeze({
-  index, name, baseWeight, hitPoints: 1, capacityOrTarget: 0, basePrice, enchantmentPoints: 0, rarity: 20, variants: 0,
-  drawOrderOrEffect: 0, isBluntWeapon: false, isLiquid: false, isOneHanded: false, isIngredient: false,
-  worldTextureArchive: icon[0], worldTextureRecord: icon[1], playerTextureArchive: 0, playerTextureRecord: 0, stackable,
-  // a supply spent whole, never wear a smith mends (REST II H7's law)
-  isNotRepairable: true,
-});
+const row = (index, name, baseWeight, basePrice, icon, stackable) =>
+  Object.freeze({
+    index,
+    name,
+    baseWeight,
+    hitPoints: 1,
+    capacityOrTarget: 0,
+    basePrice,
+    enchantmentPoints: 0,
+    rarity: 20,
+    variants: 0,
+    drawOrderOrEffect: 0,
+    isBluntWeapon: false,
+    isLiquid: false,
+    isOneHanded: false,
+    isIngredient: false,
+    worldTextureArchive: icon[0],
+    worldTextureRecord: icon[1],
+    playerTextureArchive: 0,
+    playerTextureRecord: 0,
+    stackable,
+    // a supply spent whole, never wear a smith mends (REST II H7's law)
+    isNotRepairable: true,
+  });
 /** The rows, in DFU's ItemTemplates.txt columns. Rarity 20: no shelf and no loot table rolls them. The pictures are
  *  DFU's own: the provisions' sack (Climates & Calories' Rations), the planks' (the professions' Plank). */
 export const UPKEEP_ITEM_ROWS = Object.freeze([
   row(UPKEEP_ITEM.Oats, 'Sack of Oats', 1.0, 4, [205, 17], true),
   row(UPKEEP_ITEM.WagonKit, 'Wagon Repair Kit', 4.0, 60, ICON_STAFF, true),
-  row(UPKEEP_ITEM.DwarvenOil, 'Dwarven Oil', 0.5, 30, [205, 11], true),   // DRAGON5c: a day's food for the tamed dragon, in DFU's Glass Bottle
+  row(UPKEEP_ITEM.DwarvenOil, 'Dwarven Oil', 0.5, 30, [205, 11], true), // DRAGON5c: a day's food for the tamed dragon, in DFU's Glass Bottle
 ]);
 registerCustomTemplates(UPKEEP_ITEM_ROWS);
 
 /** One of the two, as a yard mints it. */
-export const newUpkeepItem = (templateIndex, stackCount = 1) => ({ group: UPKEEP_ITEM_GROUP, templateIndex, ...(stackCount > 1 ? { stackCount } : {}) });
+export const newUpkeepItem = (templateIndex, stackCount = 1) => ({
+  group: UPKEEP_ITEM_GROUP,
+  templateIndex,
+  ...(stackCount > 1 ? { stackCount } : {}),
+});
 export const isOatsItem = (item) => item?.templateIndex === UPKEEP_ITEM.Oats;
 export const isWagonKitItem = (item) => item?.templateIndex === UPKEEP_ITEM.WagonKit;
 export const isDwarvenOilItem = (item) => item?.templateIndex === UPKEEP_ITEM.DwarvenOil;

@@ -36,7 +36,13 @@
 import { UMRandom } from '../formats/umRandom.js';
 
 export const WEATHER_TYPES = Object.freeze([
-  'sunny', 'cloudy', 'overcast', 'fog', 'rain', 'thunder', 'snow',
+  'sunny',
+  'cloudy',
+  'overcast',
+  'fog',
+  'rain',
+  'thunder',
+  'snow',
   // WEATHER2d (2026-09-14, Mac: "a new sand storm weather event for
   // desert regions"): the port's own EIGHTH word, APPENDED so DFU's
   // seven keep their enum values (a save's byte, the classic array's
@@ -58,8 +64,8 @@ export const FOG_SETTINGS = Object.freeze({
   heavy: { mode: 'exp', density: 0.05, start: 0, end: 0, excludeSky: false },
   interior: { mode: 'exp', density: 0.001, start: 0, end: 0, excludeSky: false },
   dungeon: { mode: 'exp', density: 0.005, start: 0, end: 0, excludeSky: false },
-  sandstorm: { mode: 'exp', density: 0.09, start: 0, end: 0, excludeSky: false },   // WEATHER2d: the port's own row - denser than the heavy fog, the sky in it (the wall is fog and cloud both)
-  ashfall: { mode: 'exp', density: 0.006, start: 0, end: 0, excludeSky: true },   // ASHFALL1: the port's own row - a haze of ash, thicker than the snow's (half a kilometre to the fog's colour), the pall over it seen
+  sandstorm: { mode: 'exp', density: 0.09, start: 0, end: 0, excludeSky: false }, // WEATHER2d: the port's own row - denser than the heavy fog, the sky in it (the wall is fog and cloud both)
+  ashfall: { mode: 'exp', density: 0.006, start: 0, end: 0, excludeSky: true }, // ASHFALL1: the port's own row - a haze of ash, thicker than the snow's (half a kilometre to the fog's colour), the pall over it seen
 });
 
 /** EV4: the DISTANCE HAZE follows the streamed horizon. DFU's linear
@@ -90,14 +96,21 @@ export function isSnowFreeClimate(climateIndex) {
  *  ProcessFogSetting replaces them), in the same shape. */
 export function fogForWeather(weather, table = FOG_SETTINGS) {
   switch (weather) {
-    case 'overcast': return table.overcast;
-    case 'fog': return table.heavy;
+    case 'overcast':
+      return table.overcast;
+    case 'fog':
+      return table.heavy;
     case 'rain':
-    case 'thunder': return table.rainy;
-    case 'snow': return table.snowy;
-    case 'sandstorm': return table.sandstorm ?? table.heavy;   // WEATHER2d: the port's row; a mod's five settings (Dynamic Skies) have none, so the heavy fog stands in
-    case 'ashfall': return table.ashfall ?? table.snowy;   // ASHFALL1: the port's row; a mod's five have none, so the snow's (the nearest haze of a fall) stands in
-    default: return table.sunny; // sunny, cloudy
+    case 'thunder':
+      return table.rainy;
+    case 'snow':
+      return table.snowy;
+    case 'sandstorm':
+      return table.sandstorm ?? table.heavy; // WEATHER2d: the port's row; a mod's five settings (Dynamic Skies) have none, so the heavy fog stands in
+    case 'ashfall':
+      return table.ashfall ?? table.snowy; // ASHFALL1: the port's row; a mod's five have none, so the snow's (the nearest haze of a fall) stands in
+    default:
+      return table.sunny; // sunny, cloudy
   }
 }
 
@@ -134,8 +147,9 @@ export function weatherSunlightScale(weather, isWinter) {
   else if (weather === 'thunder') scale = 0.25;
   else if (weather === 'snow') scale = 0.45;
   else if (weather === 'overcast' || weather === 'fog') scale = 0.65;
-  else if (weather === 'sandstorm') scale = 0.35;   // WEATHER2d: the port's own - between a rain and a storm
-  else if (weather === 'ashfall') scale = 0.4;   // ASHFALL1: the port's own - the pall a shade darker than a rain's deck
+  else if (weather === 'sandstorm')
+    scale = 0.35; // WEATHER2d: the port's own - between a rain and a storm
+  else if (weather === 'ashfall') scale = 0.4; // ASHFALL1: the port's own - the pall a shade darker than a rain's deck
   return scale;
 }
 
@@ -171,8 +185,14 @@ export function weatherFlags(weather) {
     raining: weather === 'rain' || weather === 'thunder',
     storming: weather === 'thunder',
     snowing: weather === 'snow',
-    overcast: weather === 'overcast' || weather === 'fog' || weather === 'rain'
-      || weather === 'thunder' || weather === 'snow' || weather === 'sandstorm' || weather === 'ashfall',
+    overcast:
+      weather === 'overcast' ||
+      weather === 'fog' ||
+      weather === 'rain' ||
+      weather === 'thunder' ||
+      weather === 'snow' ||
+      weather === 'sandstorm' ||
+      weather === 'ashfall',
   });
 }
 
@@ -185,8 +205,8 @@ export function precipitationForWeather(weather) {
   if (weather === 'rain') return 'rain';
   if (weather === 'thunder') return 'storm';
   if (weather === 'snow') return 'snow';
-  if (weather === 'sandstorm') return 'sand';   // WEATHER2d: the wind-borne sand (render/windWisps.js SAND_LOOK), not the rain program
-  if (weather === 'ashfall') return 'ash';   // ASHFALL1: the ash and its embers (render/dryFall.js), not the rain program
+  if (weather === 'sandstorm') return 'sand'; // WEATHER2d: the wind-borne sand (render/windWisps.js SAND_LOOK), not the rain program
+  if (weather === 'ashfall') return 'ash'; // ASHFALL1: the ash and its embers (render/dryFall.js), not the rain program
   return null;
 }
 
@@ -229,7 +249,7 @@ export function fogFactor(settings, distance) {
  */
 export class LightningPlayer {
   constructor(seed = 1) {
-    this._rng = new UMRandom((seed >>> 0) || 1);
+    this._rng = new UMRandom(seed >>> 0 || 1);
     this._wait = this._nextWait();
     this._slots = 0;
     this._phase = 0; // 0 waiting, 1 in-sequence
@@ -237,10 +257,11 @@ export class LightningPlayer {
     this._litHalf = false;
     this._on = false;
     this.lastClipClass = null; // 'short' | 'thunder' | 'roll' for audio
-    this.strikes = 0;          // BOLT: strikes so far - a host sees a new one land (systems/lightning.js localStrike)
+    this.strikes = 0; // BOLT: strikes so far - a host sees a new one land (systems/lightning.js localStrike)
   }
 
-  _int(min, max) { // random.Next semantics: max exclusive
+  _int(min, max) {
+    // random.Next semantics: max exclusive
     return min + Math.floor(this._rng.nextFloat() * (max - min));
   }
 
@@ -259,15 +280,21 @@ export class LightningPlayer {
       let min;
       let max;
       if (pick < 1 / 3) {
-        this.lastClipClass = 'short'; min = 4; max = 8;
+        this.lastClipClass = 'short';
+        min = 4;
+        max = 8;
       } else if (pick < 2 / 3) {
-        this.lastClipClass = 'thunder'; min = 5; max = 10;
+        this.lastClipClass = 'thunder';
+        min = 5;
+        max = 10;
       } else {
-        this.lastClipClass = 'roll'; min = 20; max = 30;
+        this.lastClipClass = 'roll';
+        min = 20;
+        max = 30;
       }
       this._slots = this._int(min, max);
       this._phase = 1;
-      this.strikes++;   // BOLT: counted, never drawn from the stream - DFU's schedule is untouched
+      this.strikes++; // BOLT: counted, never drawn from the stream - DFU's schedule is untouched
       this._slotsDone = 0;
       this._litHalf = false;
       // StartWaiting() fires WITH PlayEffects (:150-151): the next wait
@@ -290,7 +317,7 @@ export class LightningPlayer {
     }
     if (this._slotsDone >= this._slots) {
       this._phase = 0;
-      this._on = false;   // "Reset values just to be sure" (:384-386)
+      this._on = false; // "Reset values just to be sure" (:384-386)
     }
     return this._on ? 2 : 1;
   }
@@ -298,5 +325,5 @@ export class LightningPlayer {
 
 /** 50/50 rng for the sky variant, seedable for deterministic shots. */
 export function weatherRng(seed = 1) {
-  return new UMRandom((seed >>> 0) || 1);
+  return new UMRandom(seed >>> 0 || 1);
 }

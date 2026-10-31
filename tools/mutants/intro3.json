@@ -1,80 +1,704 @@
 [
-  {"name": "INTRO3-LEAD", "file": "src/systems/introScore.js", "old": "Math.round(CLOUD_REVEAL_TIME / INTRO_SECONDS_PER_TICK) - (CLOUD_BAR - FIRST_BAR) * BAR;", "new": "Math.round(CLOUD_REVEAL_TIME / INTRO_SECONDS_PER_TICK) - (CLOUD_BAR - FIRST_BAR) * BAR + 1;", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3-TEMPO", "file": "src/systems/introScore.js", "old": "((IMPACT_BAR - CLOUD_BAR) * BAR);", "new": "((IMPACT_BAR - CLOUD_BAR + 1) * BAR);", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3-CLOUD-HIT", "file": "src/systems/introScore.js", "old": "landOn(w, CLOUD_BAR, 'C', 0.96);", "new": "landOn(w, CLOUD_BAR + 1, 'C', 0.96);", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3-IMPACT-SWELL", "file": "src/systems/introScore.js", "old": "swellInto(w, IMPACT_BAR, 4);", "new": "swellInto(w, IMPACT_BAR - 1, 4);", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3-SWELL-TOP", "file": "src/systems/introScore.js", "old": "12 + 115 * Math.pow(i / steps, 1.6)", "new": "12 + 114 * Math.pow(i / steps, 1.6)", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3-THEME-NOTE", "file": "src/systems/introScore.js", "old": "9: [['C5', 0.75], ['C5', 0.25], ['F5', 1],", "new": "9: [['C5', 0.75], ['C5', 0.25], ['G5', 1],", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3-HARMONY", "file": "src/systems/introScore.js", "old": "10: ['Cm', 'F'], 11: ['Gm', 'Dm'],", "new": "10: ['Cm', 'Cm'], 11: ['Gm', 'Dm'],", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3-CLOUD-CHORD", "file": "src/systems/introScore.js", "old": "2: ['C', 'C'], 3: ['C', 'C'],", "new": "2: ['Cm', 'C'], 3: ['C', 'C'],", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3-MELODY-BEAT", "file": "src/systems/introScore.js", "old": "      w.note('horn', m, beat, beats * 0.94, n, (100 + accent) * Math.min(1.1, s.dyn));\n      if (s.octave) w.note('violins', m, beat, beats * 0.94, midiNote(n) + 12, (90 + accent) * s.dyn);\n    }\n    beat += beats;", "new": "      w.note('horn', m, beat, beats * 0.94, n, (100 + accent) * Math.min(1.1, s.dyn));\n      if (s.octave) w.note('violins', m, beat, beats * 0.94, midiNote(n) + 12, (90 + accent) * s.dyn);\n    }\n    beat += Math.max(beats, 0.5);", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3-BREAKDOWN-BASS", "file": "src/systems/introScore.js", "old": "if (!s.bare) w.note('contrabass'", "new": "if (s.bare || !s.bare) w.note('contrabass'", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3-OPENING-SWELL", "file": "src/systems/introScore.js", "old": "? 44 : level });", "new": "? level : level });", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3-DOUBLE-STRIKE", "file": "src/systems/introScore.js", "old": "if (was) { was.velocity = Math.max(was.velocity, v); was.duration = Math.max(was.duration, duration); return; }\n      const e = { tick: at, type: 'noteOn', channel, note, velocity: v, duration };", "new": "if (was && false) { was.velocity = Math.max(was.velocity, v); was.duration = Math.max(was.duration, duration); return; }\n      const e = { tick: at, type: 'noteOn', channel, note, velocity: v, duration };", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3B-VOICES", "file": "src/systems/introScore.js", "old": "voices: INTRO_VOICES_BY_CHANNEL, kit: INTRO_KIT,", "new": "voices: null, kit: INTRO_KIT,", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3B-KIT", "file": "src/systems/introScore.js", "old": "voices: INTRO_VOICES_BY_CHANNEL, kit: INTRO_KIT,", "new": "voices: INTRO_VOICES_BY_CHANNEL, kit: null,", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3B-HALO-OCTAVE", "file": "src/systems/introScore.js", "old": "w.note('halo', m, half, len, midiNote(n) + 12, 72 * d);", "new": "w.note('halo', m, half, len, midiNote(n), 72 * d);", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3B-BRAAM", "file": "src/systems/introScore.js", "old": "if (s.brass) w.note('brass', m, half, len * 0.9, midiNote(c.brass[0]) - 12, 96 * d);", "new": "if (s.brass) w.note('brass', m, half, len * 0.9, midiNote(c.brass[0]), 96 * d);", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3B-TIMPANI-THREE", "file": "src/systems/introScore.js", "old": "if (s.kit >= 2) w.note('timpani', m, 2, 1,", "new": "if (s.kit >= 3) w.note('timpani', m, 2, 1,", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3B-CELLOS-EVERY-STEP", "file": "src/systems/introScore.js", "old": "if (accent || s.kit >= 3) w.note('cellos'", "new": "if (accent) w.note('cellos'", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3B-ROLL", "file": "src/systems/introScore.js", "old": "rollSnare(w, 55, 2);", "new": "rollSnare(w, 55, 1);", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3B-SWELL-SURGE", "file": "src/systems/introScore.js", "old": "from + (1 - from) * ((i - 8) / 8)", "new": "from", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3B-PRESS-ATTACK", "file": "src/systems/introScore.js", "old": "attack: 0.012, release: 0.25, ceiling: -1, out: 2", "new": "attack: 0.003, release: 0.25, ceiling: -1, out: 2.4", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3C-HALO-OPENING", "file": "src/systems/introScore.js", "old": "if (m <= 1) return { dyn: 0.85, kit: 0, pad: true, harp: true };", "new": "if (m <= 1) return { dyn: 0.85, kit: 0, pad: true, harp: true, halo: true };", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3C-HALO-QUIET-AFTER", "file": "src/systems/introScore.js", "old": "if (m <= 5) return { dyn: 0.75, kit: 0, pad: true, harp: true };", "new": "if (m <= 5) return { dyn: 0.75, kit: 0, pad: true, harp: true, halo: true };", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3C-HALO-SOFT", "file": "src/systems/introScore.js", "old": "w.note('halo', m, half, len, midiNote(n) + 12, 72 * d);", "new": "w.note('halo', m, half, len, midiNote(n) + 12, 96 * d);", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3C-HALO-BOWED", "file": "src/systems/introScore.js", "old": "halo: Object.freeze({ saw: 1, cutoff: 6,", "new": "halo: Object.freeze({ saw: 0, cutoff: 6,", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3C-VIOLINS-HILL", "file": "src/systems/introScore.js", "old": "[3000, 8, 1]], air: -4, ensemble: 0.45, ensembleRate: 0.8, ensembleMs: 10 })", "new": "[3000, 0, 1]], air: -4, ensemble: 0.45, ensembleRate: 0.8, ensembleMs: 10 })", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3C-ROLL-TONE", "file": "src/systems/introScore.js", "old": "[KIT.ride]: Object.freeze({ hz: 5500, q: 0.6, attack: 0.02, decay: 0.45, gain: 0.55 }),", "new": "[KIT.ride]: Object.freeze({ hz: 1200, q: 0.6, attack: 0.02, decay: 0.45, gain: 0.55 }),", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3C-VIBRATO-DRIFT", "file": "src/systems/song/songPlayer.js", "old": "const lfo = this._channelLfo(channel, `vib${u}`, (own.vibRate ?? 5.5) * (1 + 0.06 * (u - (n - 1) / 2)));", "new": "const lfo = this._channelLfo(channel, `vib${u}`, (own.vibRate ?? 5.5));", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-VIBRATO-WHOLE", "file": "src/systems/song/songPlayer.js", "old": "for (const osc of mod ? [carrier, mod] : [carrier]) {", "new": "for (const osc of [carrier]) {", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-VIBRATO-ONSET", "file": "src/systems/song/songPlayer.js", "old": "depth.gain.linearRampToValueAtTime(osc.frequency.value * span, tA + 0.25);", "new": "depth.gain.linearRampToValueAtTime(osc.frequency.value * span, t0);", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-VIBRATO-RANGE", "file": "src/systems/song/songPlayer.js", "old": "vibrato: [0, 50], vibRate: [0.5, 12],", "new": "vibrato: [0, 90], vibRate: [0.1, 12],", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-VIBRATO-NONE", "file": "src/systems/song/songPlayer.js", "old": "if (own?.vibrato > 0) links.push(...this._vibrato(carrier, mod, own, e.channel, u, offs.length, t0, tA));", "new": "if (own?.vibrato > 50) links.push(...this._vibrato(carrier, mod, own, e.channel, u, offs.length, t0, tA));", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-VIOLINS-VIBRATO", "file": "src/systems/introScore.js", "old": "vibrato: 13, vibRate: 5.6, arc: 0.4, sway: 0.25, swayRate: 0.4, noise: 0.08,", "new": "vibrato: 0, vibRate: 5.6, arc: 0.4, sway: 0.25, swayRate: 0.4, noise: 0.08,", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3C-STRINGS-STATIC", "file": "src/systems/introScore.js", "old": "gain: 1.1, unison: 3, cents: 6, spread: 0.6, vibrato: 11,", "new": "gain: 1.1, unison: 3, cents: 12, spread: 0.6, vibrato: 11,", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3C-BREATH-LOOP", "file": "src/systems/song/songPlayer.js", "old": "n.buffer = this._noiseBuffer(); n.loop = true;", "new": "n.buffer = this._noiseBuffer();", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-BREATH-BAND", "file": "src/systems/song/songPlayer.js", "old": "bp.frequency.value = Math.min(5000, Math.max(600, hz * 2.5)); bp.Q.value = 0.6;", "new": "bp.frequency.value = 3200; bp.Q.value = 0.6;", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-BREATH-SIDES", "file": "src/systems/song/songPlayer.js", "old": "    for (const node of into) g.connect(node);\n", "new": "    g.connect(into[0]);\n", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-BREATH-NONE", "file": "src/systems/song/songPlayer.js", "old": "if (own?.noise > 0) oscs.push(this._breath(hz, own.noise, into, t0, tA));", "new": "if (own?.noise > 1) oscs.push(this._breath(hz, own.noise, into, t0, tA));", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-STRINGS-BREATH", "file": "src/systems/introScore.js", "old": "swayRate: 0.35, noise: 0.08, body: [[450, 7, 0.8]", "new": "swayRate: 0.35, noise: 0.4, body: [[450, 7, 0.8]", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3C-BOW-SINE", "file": "src/systems/song/songPlayer.js", "old": "carrier.type = bowed ? 'sawtooth' : 'sine';", "new": "carrier.type = 'sine';", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-BOW-LAW", "file": "src/systems/song/songPlayer.js", "old": "(0.7 + 0.3 * Math.min(1, velocity / 127))", "new": "(0.5 + 0.5 * Math.min(1, velocity / 127))", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-BOW-SETTLE", "file": "src/systems/song/songPlayer.js", "old": "lp.frequency.exponentialRampToValueAtTime(Math.max(40, fc * 0.85), Math.max(tA + 0.09, tD));", "new": "lp.frequency.exponentialRampToValueAtTime(Math.max(40, fc * 0.5), Math.max(tA + 0.09, tD));", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-BOW-MOD", "file": "src/systems/song/songPlayer.js", "old": "      if (!bowed) {\n        mod = ctx.createOscillator();", "new": "      if (true) {\n        mod = ctx.createOscillator();", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-INSERT-NONE", "file": "src/systems/song/songPlayer.js", "old": "(own && (own.body || own.air !== undefined || own.ensemble > 0) ? this._insert(g, own, channel) : g).connect(to);", "new": "g.connect(to);", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-INSERT-AIR", "file": "src/systems/song/songPlayer.js", "old": "f.type = 'highshelf'; f.frequency.value = 5000; f.gain.value = own.air;", "new": "f.type = 'highshelf'; f.frequency.value = 500; f.gain.value = own.air;", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-ENSEMBLE-DRY", "file": "src/systems/song/songPlayer.js", "old": "dry.gain.value = 1 - 0.35 * own.ensemble;", "new": "dry.gain.value = 1;", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-ENSEMBLE-SWEEP", "file": "src/systems/song/songPlayer.js", "old": "sweep.gain.value = ms * len * 0.2;", "new": "sweep.gain.value = 0;", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-ENSEMBLE-RATES", "file": "src/systems/song/songPlayer.js", "old": "for (const [len, speed] of [[1, 1], [1.37, 0.79], [1.83, 1.31]]) {", "new": "for (const [len, speed] of [[1, 1], [1.37, 1], [1.83, 1]]) {", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-DROP-CHAINS", "file": "src/systems/song/songPlayer.js", "old": "if (this._songVoices || this._voicedChains) this._dropChannelChains();", "new": "if (false) this._dropChannelChains();", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-TONE-NONE", "file": "src/systems/song/songPlayer.js", "old": "this._routeTone(songTone(song));", "new": "this._routeTone(null);", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-TONE-RESTORE", "file": "src/systems/song/songPlayer.js", "old": "if (!tone || typeof this.ctx.createBiquadFilter !== 'function') { this._fader.connect(this._master); return; }", "new": "if (!tone || typeof this.ctx.createBiquadFilter !== 'function') return;", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-IDXFLOOR", "file": "src/systems/song/songPlayer.js", "old": "Math.max(1, depth * (spec.idxFloor ?? 0.12)), t0 + Math.max(0.02, spec.idxDecay));", "new": "Math.max(1, depth * 0.12), t0 + Math.max(0.02, spec.idxDecay));", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-BITE-FADE", "file": "src/systems/song/songPlayer.js", "old": "g.gain.exponentialRampToValueAtTime(Math.max(0.0001, share / 16), tA + 0.3);", "new": "g.gain.exponentialRampToValueAtTime(Math.max(0.0001, share), tA + 0.3);", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-TONE-250", "file": "src/systems/introScore.js", "old": "[250, -4, 1.2]", "new": "[250, 0, 1.2]", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3C-CHOIR-VOWEL", "file": "src/systems/introScore.js", "old": "body: [[650, 7, 2.5], [1050, 5, 3], [2500, 6, 3]]", "new": "body: [[300, 7, 2.5], [1050, 5, 3], [2500, 6, 3]]", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3C-HORN-FLOOR", "file": "src/systems/introScore.js", "old": "idxDecay: 1.1, idxFloor: 0.5,", "new": "idxDecay: 1.1,", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3C-CONTRABASS-BOWED", "file": "src/systems/introScore.js", "old": "contrabass: Object.freeze({ saw: 1, cutoff: 14,", "new": "contrabass: Object.freeze({ cutoff: 14,", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3C-ROLL-STICK", "file": "src/systems/introScore.js", "old": "[KIT.ride]: Object.freeze({ hz: 5500, q: 0.6, attack: 0.02, decay: 0.45, gain: 0.55 }),", "new": "[KIT.ride]: Object.freeze({ hz: 5500, q: 0.6, attack: 0.002, decay: 0.45, gain: 0.55, click: 0.4 }),", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3C-ROLL-FLAT", "file": "src/systems/introScore.js", "old": "w.hit('ride', bar - 1, 4 - beats + i / 4, 12 + 115 * Math.pow(i / steps, 1.6));", "new": "w.hit('ride', bar - 1, 4 - beats + i / 4, 80);", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3C-ARC-NONE", "file": "src/systems/song/songPlayer.js", "old": "const arc = own?.arc > 0 && tOff - tD >= 0.25 && crest > tD + 0.05 ? own.arc : 0;", "new": "const arc = 0;", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-ARC-CREST", "file": "src/systems/song/songPlayer.js", "old": "const crest = t0 + 0.55 * (tOff - t0);", "new": "const crest = t0 + 0.2 * (tOff - t0);", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-ARC-DIP", "file": "src/systems/song/songPlayer.js", "old": "g.gain.exponentialRampToValueAtTime(arc ? Math.max(0.0001, sustain * (1 - 0.4 * arc)) : sustain, tD);", "new": "g.gain.exponentialRampToValueAtTime(sustain, tD);", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-ARC-EASE", "file": "src/systems/song/songPlayer.js", "old": "g.gain.exponentialRampToValueAtTime(Math.max(0.0001, sustain * (1 - 0.6 * arc)), tOff); }", "new": "g.gain.exponentialRampToValueAtTime(sustain, tOff); }", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-SWAY-NONE", "file": "src/systems/song/songPlayer.js", "old": "if (own?.sway > 0) { const g = ctx.createGain(); g.connect(out); out = g; const sway", "new": "if (false) { const g = ctx.createGain(); g.connect(out); out = g; const sway", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-SWAY-DRIFT", "file": "src/systems/song/songPlayer.js", "old": "return this._channelLfo(channel, `sway${u}`, (own.swayRate ?? 0.3) * (1 + 0.21 * (u - (n - 1) / 2)), 0.3 * own.sway);", "new": "return this._channelLfo(channel, `sway${u}`, (own.swayRate ?? 0.3), 0.3 * own.sway);", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-SWAY-DEPTH", "file": "src/systems/song/songPlayer.js", "old": "(1 + 0.21 * (u - (n - 1) / 2)), 0.3 * own.sway);", "new": "(1 + 0.21 * (u - (n - 1) / 2)), own.sway);", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3C-BASS-ARC", "file": "src/systems/introScore.js", "old": "vibRate: 4.4, arc: 1, sway: 0.2, swayRate: 0.15,", "new": "vibRate: 4.4, sway: 0.2, swayRate: 0.15,", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3C-PAD-SWAY", "file": "src/systems/introScore.js", "old": "vibRate: 4, arc: 0.8, sway: 0.4, swayRate: 0.25,", "new": "vibRate: 4, arc: 0.8,", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3C-BASS-LOUD", "file": "src/systems/introScore.js", "old": "gain: 1, unison: 2, cents: 4, spread: 0.15, vibrato: 5", "new": "gain: 1.4, unison: 2, cents: 4, spread: 0.15, vibrato: 5", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3C-TONE-100", "file": "src/systems/introScore.js", "old": "bands: [[100, 2, 1.2]", "new": "bands: [[100, 6, 1.2]", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3C-DRUMS-LIGHT", "file": "src/systems/introScore.js", "old": "[KIT.kick]: Object.freeze({ hz: 50, decay: 0.42, gain: 1.4, click: 0.5 }),", "new": "[KIT.kick]: Object.freeze({ hz: 50, decay: 0.42, gain: 1.2, click: 0.5 }),", "tests": ["test/systems/intro3_score.test.js"]},
-  {"name": "INTRO3D-LETS-GO", "file": "src/systems/song/songPlayer.js", "old": "for (const n of outs) { try { n.disconnect(); } catch { /* gone with the context */ } }", "new": "", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3D-LINKS-GO", "file": "src/systems/song/songPlayer.js", "old": "for (const [from, to] of links) { try { from.disconnect(to); } catch { /* gone with the context */ } }", "new": "", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3D-SHARED", "file": "src/systems/song/songPlayer.js", "old": "if (!bank[key]) {", "new": "if (true) {", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3D-SLOW-BOW", "file": "src/systems/song/songPlayer.js", "old": "    slow(lp.frequency, lp.Q, lp.gain, lp.detune);\n", "new": "", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3D-SLOW-PITCH", "file": "src/systems/song/songPlayer.js", "old": "      if (bowed) slow(carrier.frequency, carrier.detune);\n", "new": "", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3D-BEND-UNISON", "file": "src/systems/song/songPlayer.js", "old": "offs: offs.length > 1 ? [", "new": "offs: oscs.length > 2 ? [", "tests": ["test/systems/eliteGates/egroar_score.test.js"]},
-  {"name": "INTRO3D-LFOS-DROPPED", "file": "src/systems/song/songPlayer.js", "old": "try { lfo.stop(this.ctx.currentTime); out.disconnect(); }", "new": "try { out.disconnect(); }", "tests": ["test/systems/eliteGates/egroar_score.test.js"]}
+  {
+    "name": "INTRO3-LEAD",
+    "file": "src/systems/introScore.js",
+    "old": "export const INTRO_LEAD_TICKS = Math.round(CLOUD_REVEAL_TIME / INTRO_SECONDS_PER_TICK) - (CLOUD_BAR - FIRST_BAR) * BAR;",
+    "new": "export const INTRO_LEAD_TICKS =\n  Math.round(CLOUD_REVEAL_TIME / INTRO_SECONDS_PER_TICK) - (CLOUD_BAR - FIRST_BAR) * BAR + 1;",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3-TEMPO",
+    "file": "src/systems/introScore.js",
+    "old": "export const INTRO_SECONDS_PER_TICK = (CREST_TIME - CLOUD_REVEAL_TIME) / ((IMPACT_BAR - CLOUD_BAR) * BAR);",
+    "new": "export const INTRO_SECONDS_PER_TICK = (CREST_TIME - CLOUD_REVEAL_TIME) / ((IMPACT_BAR - CLOUD_BAR + 1) * BAR);",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3-CLOUD-HIT",
+    "file": "src/systems/introScore.js",
+    "old": "  landOn(w, CLOUD_BAR, 'C', 0.96);",
+    "new": "  landOn(w, CLOUD_BAR + 1, 'C', 0.96);",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3-IMPACT-SWELL",
+    "file": "src/systems/introScore.js",
+    "old": "  swellInto(w, IMPACT_BAR, 4);",
+    "new": "  swellInto(w, IMPACT_BAR - 1, 4);",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3-SWELL-TOP",
+    "file": "src/systems/introScore.js",
+    "old": "  for (let i = 0; i <= steps; i++) w.hit('ride', bar - 1, 4 - beats + i / 4, 12 + 115 * Math.pow(i / steps, 1.6));",
+    "new": "  for (let i = 0; i <= steps; i++) w.hit('ride', bar - 1, 4 - beats + i / 4, 12 + 114 * Math.pow(i / steps, 1.6));",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3-THEME-NOTE",
+    "file": "src/systems/introScore.js",
+    "old": "    ['C5', 0.25],\n    ['F5', 1],",
+    "new": "    ['C5', 0.25],\n    ['G5', 1],",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3-HARMONY",
+    "file": "src/systems/introScore.js",
+    "old": "  10: ['Cm', 'F'],",
+    "new": "  10: ['Cm', 'Cm'],",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3-CLOUD-CHORD",
+    "file": "src/systems/introScore.js",
+    "old": "  2: ['C', 'C'],",
+    "new": "  2: ['Cm', 'C'],",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3-MELODY-BEAT",
+    "file": "src/systems/introScore.js",
+    "old": "    beat += beats;",
+    "new": "    beat += Math.max(beats, 0.5);",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3-BREAKDOWN-BASS",
+    "file": "src/systems/introScore.js",
+    "old": "      if (!s.bare) w.note('contrabass', m, half, len, c.root, 100 * d);",
+    "new": "      if (s.bare || !s.bare) w.note('contrabass', m, half, len, c.root, 100 * d);",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3-OPENING-SWELL",
+    "file": "src/systems/introScore.js",
+    "old": "      value: voice === 'strings' || voice === 'pad' || voice === 'contrabass' || voice === 'harp' ? 44 : level,",
+    "new": "      value: voice === 'strings' || voice === 'pad' || voice === 'contrabass' || voice === 'harp' ? level : level,",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3-DOUBLE-STRIKE",
+    "file": "src/systems/introScore.js",
+    "old": "      if (was) {",
+    "new": "      if (was && false) {",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3B-VOICES",
+    "file": "src/systems/introScore.js",
+    "old": "    voices: INTRO_VOICES_BY_CHANNEL,",
+    "new": "    voices: null,",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3B-KIT",
+    "file": "src/systems/introScore.js",
+    "old": "    kit: INTRO_KIT, // INTRO3b: its own voices and kit (songPlayer.js songVoices, songKit)",
+    "new": "    kit: null, // INTRO3b: its own voices and kit (songPlayer.js songVoices, songKit)",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3B-HALO-OCTAVE",
+    "file": "src/systems/introScore.js",
+    "old": "      if (s.halo) for (const n of c.choir) w.note('halo', m, half, len, midiNote(n) + 12, 72 * d);",
+    "new": "      if (s.halo) for (const n of c.choir) w.note('halo', m, half, len, midiNote(n), 72 * d);",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3B-BRAAM",
+    "file": "src/systems/introScore.js",
+    "old": "      if (s.brass) w.note('brass', m, half, len * 0.9, midiNote(c.brass[0]) - 12, 96 * d);",
+    "new": "      if (s.brass) w.note('brass', m, half, len * 0.9, midiNote(c.brass[0]), 96 * d);",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3B-TIMPANI-THREE",
+    "file": "src/systems/introScore.js",
+    "old": "  if (s.kit >= 2) w.note('timpani', m, 2, 1, midiNote(CHORDS[h2].root) + 12, 80 * d); // INTRO3b: the timpani answers on three",
+    "new": "  if (s.kit >= 3) w.note('timpani', m, 2, 1, midiNote(CHORDS[h2].root) + 12, 80 * d); // INTRO3b: the timpani answers on three",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3B-CELLOS-EVERY-STEP",
+    "file": "src/systems/introScore.js",
+    "old": "        if (accent || s.kit >= 3) w.note('cellos', m, b, 0.45, p, (accent ? 88 : 70) * d);",
+    "new": "        if (accent) w.note('cellos', m, b, 0.45, p, (accent ? 88 : 70) * d);",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3B-ROLL",
+    "file": "src/systems/introScore.js",
+    "old": "  rollSnare(w, 55, 2);",
+    "new": "  rollSnare(w, 55, 1);",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3B-SWELL-SURGE",
+    "file": "src/systems/introScore.js",
+    "old": "    const k = i <= 8 ? 1 - (1 - from) * (i / 8) : from + (1 - from) * ((i - 8) / 8);",
+    "new": "    const k = i <= 8 ? 1 - (1 - from) * (i / 8) : from;",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3B-PRESS-ATTACK",
+    "file": "src/systems/introScore.js",
+    "old": "  attack: 0.012,\n  release: 0.25,\n  ceiling: -1,\n  out: 2,",
+    "new": "  attack: 0.003,\n  release: 0.25,\n  ceiling: -1,\n  out: 2.4,",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-HALO-OPENING",
+    "file": "src/systems/introScore.js",
+    "old": "  if (m <= 1) return { dyn: 0.85, kit: 0, pad: true, harp: true };",
+    "new": "  if (m <= 1) return { dyn: 0.85, kit: 0, pad: true, harp: true, halo: true };",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-HALO-QUIET-AFTER",
+    "file": "src/systems/introScore.js",
+    "old": "  if (m <= 5) return { dyn: 0.75, kit: 0, pad: true, harp: true };",
+    "new": "  if (m <= 5) return { dyn: 0.75, kit: 0, pad: true, harp: true, halo: true };",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-HALO-SOFT",
+    "file": "src/systems/introScore.js",
+    "old": "      if (s.halo) for (const n of c.choir) w.note('halo', m, half, len, midiNote(n) + 12, 72 * d);",
+    "new": "      if (s.halo) for (const n of c.choir) w.note('halo', m, half, len, midiNote(n) + 12, 96 * d);",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-HALO-BOWED",
+    "file": "src/systems/introScore.js",
+    "old": "  halo: Object.freeze({\n    saw: 1,",
+    "new": "  halo: Object.freeze({\n    saw: 0,",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-VIOLINS-HILL",
+    "file": "src/systems/introScore.js",
+    "old": "      [3000, 8, 1],",
+    "new": "      [3000, 0, 1],",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-ROLL-TONE",
+    "file": "src/systems/introScore.js",
+    "old": "  [KIT.ride]: Object.freeze({ hz: 5500, q: 0.6, attack: 0.02, decay: 0.45, gain: 0.55 }),",
+    "new": "  [KIT.ride]: Object.freeze({ hz: 1200, q: 0.6, attack: 0.02, decay: 0.45, gain: 0.55 }),",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-VIBRATO-DRIFT",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "    const lfo = this._channelLfo(channel, `vib${u}`, (own.vibRate ?? 5.5) * (1 + 0.06 * (u - (n - 1) / 2)));",
+    "new": "    const lfo = this._channelLfo(channel, `vib${u}`, own.vibRate ?? 5.5);",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-VIBRATO-WHOLE",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "    for (const osc of mod ? [carrier, mod] : [carrier]) {",
+    "new": "    for (const osc of [carrier]) {",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-VIBRATO-ONSET",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "      depth.gain.linearRampToValueAtTime(osc.frequency.value * span, tA + 0.25);",
+    "new": "      depth.gain.linearRampToValueAtTime(osc.frequency.value * span, t0);",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-VIBRATO-RANGE",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "  vibrato: [0, 50],\n  vibRate: [0.5, 12],",
+    "new": "  vibrato: [0, 90],\n  vibRate: [0.1, 12],",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-VIBRATO-NONE",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "      if (own?.vibrato > 0) links.push(...this._vibrato(carrier, mod, own, e.channel, u, offs.length, t0, tA)); // INTRO3c",
+    "new": "      if (own?.vibrato > 50) links.push(...this._vibrato(carrier, mod, own, e.channel, u, offs.length, t0, tA)); // INTRO3c",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-VIOLINS-VIBRATO",
+    "file": "src/systems/introScore.js",
+    "old": "    vibrato: 13,",
+    "new": "    vibrato: 0,",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-STRINGS-STATIC",
+    "file": "src/systems/introScore.js",
+    "old": "    unison: 3,\n    cents: 6,\n    spread: 0.6,",
+    "new": "    unison: 3,\n    cents: 12,\n    spread: 0.6,",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-BREATH-LOOP",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "    n.loop = true;\n    bp.type = 'bandpass';",
+    "new": "    bp.type = 'bandpass';",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-BREATH-BAND",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "    bp.frequency.value = Math.min(5000, Math.max(600, hz * 2.5));",
+    "new": "    bp.frequency.value = 3200;",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-BREATH-SIDES",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "    for (const node of into) g.connect(node);",
+    "new": "    g.connect(into[0]);",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-BREATH-NONE",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "    if (own?.noise > 0) oscs.push(this._breath(hz, own.noise, into, t0, tA)); // INTRO3c: the bow's bite, as the note starts",
+    "new": "    if (own?.noise > 1) oscs.push(this._breath(hz, own.noise, into, t0, tA)); // INTRO3c: the bow's bite, as the note starts",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-STRINGS-BREATH",
+    "file": "src/systems/introScore.js",
+    "old": "    swayRate: 0.35,\n    noise: 0.08,",
+    "new": "    swayRate: 0.35,\n    noise: 0.4,",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-BOW-SINE",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "      carrier.type = bowed ? 'sawtooth' : 'sine';",
+    "new": "      carrier.type = 'sine';",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-BOW-LAW",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "    const fc = Math.min(0.45 * ctx.sampleRate, hz * (spec.cutoff ?? 8) * (0.7 + 0.3 * Math.min(1, velocity / 127)));",
+    "new": "    const fc = Math.min(0.45 * ctx.sampleRate, hz * (spec.cutoff ?? 8) * (0.5 + 0.5 * Math.min(1, velocity / 127)));",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-BOW-SETTLE",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "    lp.frequency.exponentialRampToValueAtTime(Math.max(40, fc * 0.85), Math.max(tA + 0.09, tD));",
+    "new": "    lp.frequency.exponentialRampToValueAtTime(Math.max(40, fc * 0.5), Math.max(tA + 0.09, tD));",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-BOW-MOD",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "      if (!bowed) {",
+    "new": "      if (true) {",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-INSERT-NONE",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "      (own && (own.body || own.air !== undefined || own.ensemble > 0) ? this._insert(g, own, channel) : g).connect(to); // INTRO3c: through the voice's body, air and ensemble",
+    "new": "      g.connect(to); // INTRO3c: through the voice's body, air and ensemble",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-INSERT-AIR",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "      f.frequency.value = 5000;",
+    "new": "      f.frequency.value = 500;",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-ENSEMBLE-DRY",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "      dry.gain.value = 1 - 0.35 * own.ensemble;",
+    "new": "      dry.gain.value = 1;",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-ENSEMBLE-SWEEP",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "        sweep.gain.value = ms * len * 0.2;",
+    "new": "        sweep.gain.value = 0;",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-ENSEMBLE-RATES",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "        [1.37, 0.79],\n        [1.83, 1.31],",
+    "new": "        [1.37, 1],\n        [1.83, 1],",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-DROP-CHAINS",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "    if (this._songVoices || this._voicedChains) this._dropChannelChains(); // INTRO3c: a voiced song's channels play through their own body and ensemble - built for this song, not the last",
+    "new": "    if (false) this._dropChannelChains(); // INTRO3c: a voiced song's channels play through their own body and ensemble - built for this song, not the last",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-TONE-NONE",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "    this._routeTone(songTone(song)); // INTRO3c: and its tone - none for every song but the ones that carry one",
+    "new": "    this._routeTone(null); // INTRO3c: and its tone - none for every song but the ones that carry one",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-TONE-RESTORE",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "    if (!tone || typeof this.ctx.createBiquadFilter !== 'function') {\n      this._fader.connect(this._master);\n      return;\n    }",
+    "new": "    if (!tone || typeof this.ctx.createBiquadFilter !== 'function') return;",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-IDXFLOOR",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "        modGain.gain.exponentialRampToValueAtTime(\n          Math.max(1, depth * (spec.idxFloor ?? 0.12)),\n          t0 + Math.max(0.02, spec.idxDecay),\n        );",
+    "new": "        modGain.gain.exponentialRampToValueAtTime(Math.max(1, depth * 0.12), t0 + Math.max(0.02, spec.idxDecay));",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-BITE-FADE",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "    g.gain.exponentialRampToValueAtTime(Math.max(0.0001, share / 16), tA + 0.3);",
+    "new": "    g.gain.exponentialRampToValueAtTime(Math.max(0.0001, share), tA + 0.3);",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-TONE-250",
+    "file": "src/systems/introScore.js",
+    "old": "    [250, -4, 1.2],",
+    "new": "    [250, 0, 1.2],",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-CHOIR-VOWEL",
+    "file": "src/systems/introScore.js",
+    "old": "      [650, 7, 2.5],",
+    "new": "      [300, 7, 2.5],",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-HORN-FLOOR",
+    "file": "src/systems/introScore.js",
+    "old": "    idxFloor: 0.5,\n    release: 0.3,",
+    "new": "    release: 0.3,",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-CONTRABASS-BOWED",
+    "file": "src/systems/introScore.js",
+    "old": "    saw: 1,\n    cutoff: 14,",
+    "new": "    cutoff: 14,",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-ROLL-STICK",
+    "file": "src/systems/introScore.js",
+    "old": "  [KIT.ride]: Object.freeze({ hz: 5500, q: 0.6, attack: 0.02, decay: 0.45, gain: 0.55 }),",
+    "new": "  [KIT.ride]: Object.freeze({ hz: 5500, q: 0.6, attack: 0.002, decay: 0.45, gain: 0.55, click: 0.4 }),",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-ROLL-FLAT",
+    "file": "src/systems/introScore.js",
+    "old": "  for (let i = 0; i <= steps; i++) w.hit('ride', bar - 1, 4 - beats + i / 4, 12 + 115 * Math.pow(i / steps, 1.6));",
+    "new": "  for (let i = 0; i <= steps; i++) w.hit('ride', bar - 1, 4 - beats + i / 4, 80);",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-ARC-NONE",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "    const arc = own?.arc > 0 && tOff - tD >= 0.25 && crest > tD + 0.05 ? own.arc : 0;",
+    "new": "    const arc = 0;",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-ARC-CREST",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "    const crest = t0 + 0.55 * (tOff - t0);",
+    "new": "    const crest = t0 + 0.2 * (tOff - t0);",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-ARC-DIP",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "      g.gain.exponentialRampToValueAtTime(arc ? Math.max(0.0001, sustain * (1 - 0.4 * arc)) : sustain, tD);",
+    "new": "      g.gain.exponentialRampToValueAtTime(sustain, tD);",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-ARC-EASE",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "        g.gain.exponentialRampToValueAtTime(Math.max(0.0001, sustain * (1 - 0.6 * arc)), tOff);",
+    "new": "        g.gain.exponentialRampToValueAtTime(sustain, tOff);",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-SWAY-NONE",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "      if (own?.sway > 0) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-SWAY-DRIFT",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "    return this._channelLfo(\n      channel,\n      `sway${u}`,\n      (own.swayRate ?? 0.3) * (1 + 0.21 * (u - (n - 1) / 2)),\n      0.3 * own.sway,\n    );",
+    "new": "    return this._channelLfo(channel, `sway${u}`, own.swayRate ?? 0.3, 0.3 * own.sway);",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-SWAY-DEPTH",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "    return this._channelLfo(\n      channel,\n      `sway${u}`,\n      (own.swayRate ?? 0.3) * (1 + 0.21 * (u - (n - 1) / 2)),\n      0.3 * own.sway,\n    );",
+    "new": "    return this._channelLfo(channel, `sway${u}`, (own.swayRate ?? 0.3) * (1 + 0.21 * (u - (n - 1) / 2)), own.sway);",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-BASS-ARC",
+    "file": "src/systems/introScore.js",
+    "old": "    arc: 1,\n    sway: 0.2,",
+    "new": "    sway: 0.2,",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-PAD-SWAY",
+    "file": "src/systems/introScore.js",
+    "old": "    sway: 0.4,\n    swayRate: 0.25,\n    body: [[300, 5, 0.8]],",
+    "new": "    body: [[300, 5, 0.8]],",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-BASS-LOUD",
+    "file": "src/systems/introScore.js",
+    "old": "    gain: 1,",
+    "new": "    gain: 1.4,",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-TONE-100",
+    "file": "src/systems/introScore.js",
+    "old": "    [100, 2, 1.2],",
+    "new": "    [100, 6, 1.2],",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3C-DRUMS-LIGHT",
+    "file": "src/systems/introScore.js",
+    "old": "  [KIT.kick]: Object.freeze({ hz: 50, decay: 0.42, gain: 1.4, click: 0.5 }),",
+    "new": "  [KIT.kick]: Object.freeze({ hz: 50, decay: 0.42, gain: 1.2, click: 0.5 }),",
+    "tests": [
+      "test/systems/intro3_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3D-LETS-GO",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "      for (const n of outs) {\n        try {\n          n.disconnect();\n        } catch {\n          /* gone with the context */\n        }\n      }\n      for (const [from, to] of links) {",
+    "new": "      for (const [from, to] of links) {",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3D-LINKS-GO",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "      for (const [from, to] of links) {\n        try {\n          from.disconnect(to);\n        } catch {\n          /* gone with the context */\n        }\n      }\n    };",
+    "new": "    };",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3D-SHARED",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "    if (!bank[key]) {",
+    "new": "    if (true) {",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3D-SLOW-BOW",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "    slow(lp.frequency, lp.Q, lp.gain, lp.detune);\n    lp.frequency.setValueAtTime(fc * 0.5, t0);",
+    "new": "    lp.frequency.setValueAtTime(fc * 0.5, t0);",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3D-SLOW-PITCH",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "      if (bowed) slow(carrier.frequency, carrier.detune);\n      carrier.frequency.value = hz * spec.car;",
+    "new": "      carrier.frequency.value = hz * spec.car;",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3D-BEND-UNISON",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "      offs: offs.length > 1 ? [...offs.flatMap((c) => [c, c]), ...(subN ? [0] : [])] : null, // INTRO3d: a unison's, by its copies (a bowed one's oscillators are one a copy)",
+    "new": "      offs: oscs.length > 2 ? [...offs.flatMap((c) => [c, c]), ...(subN ? [0] : [])] : null, // INTRO3d: a unison's, by its copies (a bowed one's oscillators are one a copy)",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  },
+  {
+    "name": "INTRO3D-LFOS-DROPPED",
+    "file": "src/systems/song/songPlayer.js",
+    "old": "          lfo.stop(this.ctx.currentTime);\n          out.disconnect();",
+    "new": "          out.disconnect();",
+    "tests": [
+      "test/systems/eliteGates/egroar_score.test.js"
+    ]
+  }
 ]

@@ -12,8 +12,8 @@
   {
     "name": "ORRERY-SIGHT-turns-range",
     "file": "src/systems/eliteGates/spireOrrery.js",
-    "old": "+ 1, egOrreryTurns(spec.c));",
-    "new": "+ 1);",
+    "old": "  return orreryOf((egSeed(seed, EG_ORRERY_SALT + spec.h) % 2147483646) + 1, egOrreryTurns(spec.c));",
+    "new": "  return orreryOf((egSeed(seed, EG_ORRERY_SALT + spec.h) % 2147483646) + 1);",
     "tests": [
       "test/systems/eliteGates/fb1017e_orrerysight.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "ORRERY-SIGHT-riddles-unread",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "spireRiddleLines(spireOrreryOf(E.seed, spec)).join('\\n')",
-    "new": "''",
+    "old": "    riddles: E.sg === 'trial' && !watching ? spireRiddleLines(spireOrreryOf(E.seed, spec)).join('\\n') : '', // FIELD BUGS 2026-10-17e (ORRERY-SIGHT): an Athenaeum's six, a line each - the truth the stones are turned to",
+    "new": "    riddles: E.sg === 'trial' && !watching ? '' : '', // FIELD BUGS 2026-10-17e (ORRERY-SIGHT): an Athenaeum's six, a line each - the truth the stones are turned to",
     "tests": [
       "test/systems/eliteGates/fb1017e_orrerysight.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "ORRERY-SIGHT-one-hour",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "spireStoneWords(b.pt, orr[b.pt])",
-    "new": "spireStoneWords(b.pt, orr[0])",
+    "old": "              marks: [{ sigil: 'stone', text: spireStoneWords(b.pt, orr[b.pt]) }],",
+    "new": "              marks: [{ sigil: 'stone', text: spireStoneWords(b.pt, orr[0]) }],",
     "tests": [
       "test/systems/eliteGates/fb1017e_orrerysight.test.js"
     ],

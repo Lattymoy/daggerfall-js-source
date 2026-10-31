@@ -35,10 +35,14 @@ const frames = async (n, cap = 30000) => {
   const t0 = Date.now();
   while (Date.now() - t0 < cap) {
     await page.waitForTimeout(150);
-    if (await page.evaluate(() => window.__frame ?? 0) >= f0 + n) break;
+    if ((await page.evaluate(() => window.__frame ?? 0)) >= f0 + n) break;
   }
 };
-const map = () => page.evaluate(() => { const s = window.__travelMap(); return s ? JSON.parse(s) : null; });
+const map = () =>
+  page.evaluate(() => {
+    const s = window.__travelMap();
+    return s ? JSON.parse(s) : null;
+  });
 const until = async (pred, cap = 30000) => {
   const t0 = Date.now();
   for (;;) {
@@ -49,12 +53,18 @@ const until = async (pred, cap = 30000) => {
   }
 };
 const clickNative = (x, y) => page.mouse.click(x * 4, y * 4);
-const fail = (m) => { console.log('FAIL:', m); process.exit(1); };
+const fail = (m) => {
+  console.log('FAIL:', m);
+  process.exit(1);
+};
 
 // Drain the quest arc's boot boxes before driving keys.
 for (let i = 0, quiet = 0; i < 30 && quiet < 2; i++) {
   const up = await page.evaluate(() => JSON.parse(window.__talk()).overlay);
-  if (up) { quiet = 0; await page.keyboard.press('Escape'); } else quiet++;
+  if (up) {
+    quiet = 0;
+    await page.keyboard.press('Escape');
+  } else quiet++;
   await frames(2);
 }
 
@@ -67,7 +77,10 @@ if (dest.pixel.x === before.pixel.x && dest.pixel.y === before.pixel.y) {
 }
 
 console.log('\n== THE MAP OPENS ARMED, through the host door the guild service uses ==');
-const opened = await page.evaluate(() => { const s = window.__openTeleportMap(); return s ? JSON.parse(s) : null; });
+const opened = await page.evaluate(() => {
+  const s = window.__openTeleportMap();
+  return s ? JSON.parse(s) : null;
+});
 if (!opened) fail('openTeleportMap answered null - the G5 host door is dead');
 console.log('armed:', opened.armed, '| telePopUp:', opened.telePopUp);
 if (!opened.armed) fail('the map opened UNarmed - activateTeleportationTravel never ran');
@@ -78,7 +91,12 @@ if (!opened.identifying) await clickNative(25, 191);
 await page.keyboard.press('Enter');
 await frames(1);
 let st = await map();
-if (!st?.regionSelected) { await clickNative(25, 191); await page.keyboard.press('Enter'); await frames(1); st = await map(); }
+if (!st?.regionSelected) {
+  await clickNative(25, 191);
+  await page.keyboard.press('Enter');
+  await frames(1);
+  st = await map();
+}
 if (!st?.regionSelected) fail('could not open the region page');
 if (!st.armed) fail('the arm did not survive opening a region page');
 
@@ -91,11 +109,18 @@ for (const c of dest.name) {
 }
 await page.keyboard.press('Enter');
 await frames(1);
-if ((await map())?.picker) { await page.keyboard.press('Enter'); await frames(1); }
+if ((await map())?.picker) {
+  await page.keyboard.press('Enter');
+  await frames(1);
+}
 
 console.log('\n== THE PICK OPENS THE TELEPORT BOX, not the travel one ==');
 st = await until((s) => s?.top === 'confirm' || s?.telePopUp || s?.popUp, 40000);
-if (st?.top === 'confirm') { await page.keyboard.press('y'); await frames(1); st = await map(); }
+if (st?.top === 'confirm') {
+  await page.keyboard.press('y');
+  await frames(1);
+  st = await map();
+}
 console.log('telePopUp:', JSON.stringify(st?.telePopUp), '| popUp:', st?.popUp);
 if (!st?.telePopUp) fail('no teleport box - the fork did not fire');
 if (st.popUp) fail('the TRAVEL popup opened as well; the fork must pick one');
@@ -123,9 +148,15 @@ for (const c of dest.name) {
 }
 await page.keyboard.press('Enter');
 await frames(1);
-if ((await map())?.picker) { await page.keyboard.press('Enter'); await frames(1); }
+if ((await map())?.picker) {
+  await page.keyboard.press('Enter');
+  await frames(1);
+}
 st = await until((s) => s?.top === 'confirm' || s?.telePopUp, 40000);
-if (st?.top === 'confirm') { await page.keyboard.press('y'); await frames(1); }
+if (st?.top === 'confirm') {
+  await page.keyboard.press('y');
+  await frames(1);
+}
 if (!(await map())?.telePopUp) fail('the box did not reopen');
 await page.evaluate(() => window.__teleportAnswer(true));
 await frames(8, 60000);
@@ -141,7 +172,9 @@ if (after.gold !== before.gold) fail(`teleporting cost ${before.gold - after.gol
 if (after.minutes !== before.minutes) {
   fail(`the clock moved ${after.minutes - before.minutes} minutes - no time passes`);
 }
-console.log(`gold ${before.gold} -> ${after.gold} (unchanged), clock ${before.minutes} -> ${after.minutes} (unchanged)`);
+console.log(
+  `gold ${before.gold} -> ${after.gold} (unchanged), clock ${before.minutes} -> ${after.minutes} (unchanged)`,
+);
 
 if (errors.length) fail(`page errors: ${errors.join(' | ')}`);
 console.log('\nOK: the guild teleport lands the player free of gold and free of time.');

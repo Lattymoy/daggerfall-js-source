@@ -56,25 +56,77 @@ import { frameCss } from './enhanced/enhancedFrame.js';
 import { isEnhancedPlus } from '../systems/uiSkin.js';
 import { scopeRules } from './brokerWindow.js';
 import {
-  NOTE_DAYS, NOTE_BUTTONS, NOTE_BUTTON_LABEL, NOTE_SUBJECT_MAX, NOTE_BODY_MAX, NOTE_LINES_MAX, NOTICE_DAYS_MAX,
-  BOUNTY_BOARD_LINE, noteIsNew,
+  NOTE_DAYS,
+  NOTE_BUTTONS,
+  NOTE_BUTTON_LABEL,
+  NOTE_SUBJECT_MAX,
+  NOTE_BODY_MAX,
+  NOTE_LINES_MAX,
+  NOTICE_DAYS_MAX,
+  BOUNTY_BOARD_LINE,
+  noteIsNew,
 } from '../net/boardLaw.js';
-import { accountRefusalText } from '../net/accountClient.js';   // PROF1: a writ's refusal, in words
-import { hallPosterName, isChapterWrit, meritLineOf, chapterLineOf, chapterFocusLineOf, chapterPatronSheetLine, chapterPatronBidLine, chapterPatronBidsOf, chapterPatronBidSaid,
-  chapterBandOf, chapterBandEffectsLine, chapterDutiesLine, meritEarnsOf, chapterSeasonOf,
-  MERIT_WRIT, MERIT_RECEIPT, MERIT_TENURE_S, MERIT_CAP_WEEK, STRENGTH_START, STRENGTH_MIN, STRENGTH_MAX, STRENGTH_STEP_MAX, STRENGTH_IDLE, STRENGTH_SHORT, STRENGTH_TARGET,
-  CHAPTER_FAILING_FALL, CHAPTER_FAILING_MEETS, CHAPTER_EVENT_EFFECTS, CHAPTER_BANDS, CHAPTER_SEATS, SEAT_RANK, SEAT_TENURE_S, SEAT_ACCOUNT_AGE_S,
-  SEAT_MERIT_WEEKS, CHAPTER_EVENTS, CHAPTER_PATRON_MIN, CHAPTER_PATRON_BAND, ROLL_BOOK_RANK_MAX, ROLL_GAIN_DAY_MAX, HALL_WRIT_REP, RECEIPT_REP } from '../net/npcChapterLaw.js';   // CHAP7b: a chapter's patron, a guildmaster's bid; GUILD3d: the chapter's card - its band's effects, its duties
-import { chapterSeasonLines, chapterBackChoices, chapterBackedLine } from '../net/chapterEvents.js';   // CHAP6c: a chapter's Season - its lines, a member's choices   // CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ, its Merit; CHAP3b: a chapter's Strength
-import { t } from '../systems/textManager.js';   // STANDING-WORDS: the guide's rank and standing, in the player's language
-import { movedFirstText } from '../net/bagLaw.js';   // AUDIT2 BAG1 K8: what went into the Stores before a refusal
-import { createMarketTab } from './marketTab.js';   // PROF5: the Market tab
-import { craftNeedText, craftMadeText, craftPayText, craftHeldText, craftShortText, craftFilledText } from '../net/craftWritLaw.js';   // CRAFT-WRITS: a crafting writ's card, in words
-import { createWorkTab, writWalledText } from './workTab.js';   // PROF6: the Work tab's guild writs and commissions; WRIT-WALL: what no writ may spend, in words
-import { createSeatTab, boardFold } from './seatTab.js';   // SEAT1b: the Seat tab - a seat town's standings, pledges and Tribute
-import { createVendorTab } from './vendor/vendorTab.js';   // HOME-VENDOR: the Vendors tab, and a trader's stall
-import { bannerSvg } from './heraldryArt.js';   // GUILD1e: a guild's banner over its notes and its posters
-import { freshSift, siftWork, workSiftBar, workSiftFoot, updateSiftBar, wordsOf } from './workSift.js';   // BOARD-SIFT: the Work tab's bar
+import { accountRefusalText } from '../net/accountClient.js'; // PROF1: a writ's refusal, in words
+import {
+  hallPosterName,
+  isChapterWrit,
+  meritLineOf,
+  chapterLineOf,
+  chapterFocusLineOf,
+  chapterPatronSheetLine,
+  chapterPatronBidLine,
+  chapterPatronBidsOf,
+  chapterPatronBidSaid,
+  chapterBandOf,
+  chapterBandEffectsLine,
+  chapterDutiesLine,
+  meritEarnsOf,
+  chapterSeasonOf,
+  MERIT_WRIT,
+  MERIT_RECEIPT,
+  MERIT_TENURE_S,
+  MERIT_CAP_WEEK,
+  STRENGTH_START,
+  STRENGTH_MIN,
+  STRENGTH_MAX,
+  STRENGTH_STEP_MAX,
+  STRENGTH_IDLE,
+  STRENGTH_SHORT,
+  STRENGTH_TARGET,
+  CHAPTER_FAILING_FALL,
+  CHAPTER_FAILING_MEETS,
+  CHAPTER_EVENT_EFFECTS,
+  CHAPTER_BANDS,
+  CHAPTER_SEATS,
+  SEAT_RANK,
+  SEAT_TENURE_S,
+  SEAT_ACCOUNT_AGE_S,
+  SEAT_MERIT_WEEKS,
+  CHAPTER_EVENTS,
+  CHAPTER_PATRON_MIN,
+  CHAPTER_PATRON_BAND,
+  ROLL_BOOK_RANK_MAX,
+  ROLL_GAIN_DAY_MAX,
+  HALL_WRIT_REP,
+  RECEIPT_REP,
+} from '../net/npcChapterLaw.js'; // CHAP7b: a chapter's patron, a guildmaster's bid; GUILD3d: the chapter's card - its band's effects, its duties
+import { chapterSeasonLines, chapterBackChoices, chapterBackedLine } from '../net/chapterEvents.js'; // CHAP6c: a chapter's Season - its lines, a member's choices   // CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ, its Merit; CHAP3b: a chapter's Strength
+import { t } from '../systems/textManager.js'; // STANDING-WORDS: the guide's rank and standing, in the player's language
+import { movedFirstText } from '../net/bagLaw.js'; // AUDIT2 BAG1 K8: what went into the Stores before a refusal
+import { createMarketTab } from './marketTab.js'; // PROF5: the Market tab
+import {
+  craftNeedText,
+  craftMadeText,
+  craftPayText,
+  craftHeldText,
+  craftShortText,
+  craftFilledText,
+} from '../net/craftWritLaw.js'; // CRAFT-WRITS: a crafting writ's card, in words
+import { createWorkTab, writWalledText } from './workTab.js'; // PROF6: the Work tab's guild writs and commissions; WRIT-WALL: what no writ may spend, in words
+import { createSeatTab, boardFold } from './seatTab.js'; // SEAT1b: the Seat tab - a seat town's standings, pledges and Tribute
+import { createVendorTab } from './vendor/vendorTab.js'; // HOME-VENDOR: the Vendors tab, and a trader's stall
+import { bannerSvg } from './heraldryArt.js'; // GUILD1e: a guild's banner over its notes and its posters
+import { freshSift, siftWork, workSiftBar, workSiftFoot, updateSiftBar, wordsOf } from './workSift.js'; // BOARD-SIFT: the Work tab's bar
 
 /** @param {string} tag @param {string|null} [cls] @param {string|null} [text] */
 const el = (tag, cls = null, text = null) => {
@@ -86,21 +138,41 @@ const el = (tag, cls = null, text = null) => {
 const button = (cls, text, onPress) => {
   const b = /** @type {HTMLButtonElement} */ (el('button', `act ${cls}`, text));
   b.setAttribute('type', 'button');
-  b.onclick = (e) => { e.stopPropagation(); onPress(); };
+  b.onclick = (e) => {
+    e.stopPropagation();
+    onPress();
+  };
   return b;
 };
 
 /** The seal a card wears - who posted it. */
-export const NOTICE_SEALS = Object.freeze({ town: 'The town', bounty: 'The bounty board', server: 'The server', player: 'A player', guild: 'A guild' });
+export const NOTICE_SEALS = Object.freeze({
+  town: 'The town',
+  bounty: 'The bounty board',
+  server: 'The server',
+  player: 'A player',
+  guild: 'A guild',
+});
 /** "2 days left", "5 hours left", "under an hour left". */
 export function timeLeftText(expiresAt, nowS) {
   const s = Math.max(0, (Number(expiresAt) || 0) - nowS);
-  if (s >= 86400) { const d = Math.floor(s / 86400); return `${d} day${d === 1 ? '' : 's'} left`; }
-  if (s >= 3600) { const h = Math.floor(s / 3600); return `${h} hour${h === 1 ? '' : 's'} left`; }
+  if (s >= 86400) {
+    const d = Math.floor(s / 86400);
+    return `${d} day${d === 1 ? '' : 's'} left`;
+  }
+  if (s >= 3600) {
+    const h = Math.floor(s / 3600);
+    return `${h} hour${h === 1 ? '' : 's'} left`;
+  }
   return 'under an hour left';
 }
 /** The first lines of a body, for its card - the whole is for the card opened large. */
-export const snippetOf = (body, lines = 4) => String(body ?? '').split('\n').filter((l) => l.trim()).slice(0, lines).join('\n');
+export const snippetOf = (body, lines = 4) =>
+  String(body ?? '')
+    .split('\n')
+    .filter((l) => l.trim())
+    .slice(0, lines)
+    .join('\n');
 
 /** GUILD1e: the town board's recruitment notes that still recruit - each hung on the Guilds tab as its guild's poster. */
 export const recruitPosters = (board) => (board?.notes ?? []).filter((n) => n?.button === 'guild' && n.guild);
@@ -108,18 +180,18 @@ export const recruitPosters = (board) => (board?.notes ?? []).filter((n) => n?.b
 export const GUILD_BOARD_EMPTY = Object.freeze({
   'no-guild': 'Join a guild to read its board.',
   shut: 'Guild boards are closed to you.',
-  slow: 'Your guild\'s board did not load.',
+  slow: "Your guild's board did not load.",
   none: (name) => `No notes from ${name} yet.`,
 });
 /** BOARD-UI: the window's own fixed words, in one place - short, and plain. */
 export const BOARD_WORDS = Object.freeze({
   reading: 'Reading the board...',
   stale: 'This may be out of date. The server is slow to answer.',
-  closed: 'The Notice Board is closed to you. Only the town\'s news is shown.',
-  slow: 'Players\' notes did not load. Only the town\'s news is shown.',
+  closed: "The Notice Board is closed to you. Only the town's news is shown.",
+  slow: "Players' notes did not load. Only the town's news is shown.",
   noNotes: 'No notes from players yet.',
   news: 'News',
-  notes: 'Players\' notes',
+  notes: "Players' notes",
   writsShut: 'Court work is closed to you.',
   writsSlow: 'The writs did not load.',
   writsNone: (region) => `No Court writs in ${region} today. They go up once players have gathered in the region.`,
@@ -141,26 +213,63 @@ export const CHAPTER_GUIDE_TITLE = 'How chapters work';
 export function chapterGuide() {
   const n = (/** @type {number} */ x) => Number(x).toLocaleString('en-US');
   const days = (/** @type {number} */ s) => n(s / 86_400);
-  const bands = CHAPTER_BANDS.map((b, i) => (i ? `${b.name} from ${b.from}` : `${b.name} under ${CHAPTER_BANDS[1].from}`)).join(', ');
+  const bands = CHAPTER_BANDS.map((b, i) =>
+    i ? `${b.name} from ${b.from}` : `${b.name} under ${CHAPTER_BANDS[1].from}`,
+  ).join(', ');
   const events = CHAPTER_EVENTS.map((e) => e.name);
   const patronBand = /** @type {{ name: string }} */ (CHAPTER_BANDS.find((b) => b.band === CHAPTER_PATRON_BAND)).name;
   return [
-    ['What a chapter is', 'Every guild, including the Fighters and Mages Guilds, the temples and the knightly orders, keeps a chapter in each region where it has a hall. All players online share it. The cards below are this region\'s chapters. Join a guild at one of its halls and its chapters are yours.'],
+    [
+      'What a chapter is',
+      "Every guild, including the Fighters and Mages Guilds, the temples and the knightly orders, keeps a chapter in each region where it has a hall. All players online share it. The cards below are this region's chapters. Join a guild at one of its halls and its chapters are yours.",
+    ],
     // STANDING-WORDS / SEAT-WORDS (Field-Bugs-2026-10-15g): the guide said what a chair is and never that a guild's own
     // review stops below it, nor how the standing itself moves online
     // AUDIT GUILD-WORDS L1-5, L3-3: a chair's services are its own chapter's halls', for a member at 7 (seatedBook); L3-2,
     // L3-4, L3-5: the pace a quest keeps and the real day, a receipt's first of the day; II C-3: no quest is said free of
     // its guild's losses; II C-5: a chapter writ, yours or the chapter's; II C-8: the day turns at midnight UTC
-    [t('notice.chapters.rank.name', 'Your rank'), t('notice.chapters.rank.words', 'Your guild still promotes you as usual, up to rank {cap}. Ranks {officer} and {master} are the chairs (see below). A chair\'s services are at its own chapter\'s halls, for members at rank {cap}.', { cap: ROLL_BOOK_RANK_MAX, officer: SEAT_RANK.officer, master: SEAT_RANK.master })],
-    [t('notice.chapters.standing.name', 'Standing'), t('notice.chapters.standing.words', 'Your standing with each of these guilds is kept online. Quests raise it by at most {max} a real day for each guild (days start at midnight UTC), and any more is paid on later days. On top of that, a chapter writ (yours or the chapter\'s) adds {writ}, and closing a Breach or defending a town adds {receipt} to each of your guilds with a chapter there ({writ} more for the first each day, if the chapter asks for it).', { max: ROLL_GAIN_DAY_MAX, writ: HALL_WRIT_REP, receipt: RECEIPT_REP })],
-    ['Merit', `Your work for a chapter this week. You earn ${n(MERIT_WRIT)} for filling your own chapter writ (one a day, and bought goods earn none), and a share of ${n(MERIT_RECEIPT)} for each Dagon's Breach closed or raided town defended in the region. It counts after ${days(MERIT_TENURE_S)} real days in the guild, at most ${n(MERIT_CAP_WEEK)} an account a week in each chapter, and in only one chapter of each guild a week.`],
+    [
+      t('notice.chapters.rank.name', 'Your rank'),
+      t(
+        'notice.chapters.rank.words',
+        "Your guild still promotes you as usual, up to rank {cap}. Ranks {officer} and {master} are the chairs (see below). A chair's services are at its own chapter's halls, for members at rank {cap}.",
+        { cap: ROLL_BOOK_RANK_MAX, officer: SEAT_RANK.officer, master: SEAT_RANK.master },
+      ),
+    ],
+    [
+      t('notice.chapters.standing.name', 'Standing'),
+      t(
+        'notice.chapters.standing.words',
+        "Your standing with each of these guilds is kept online. Quests raise it by at most {max} a real day for each guild (days start at midnight UTC), and any more is paid on later days. On top of that, a chapter writ (yours or the chapter's) adds {writ}, and closing a Breach or defending a town adds {receipt} to each of your guilds with a chapter there ({writ} more for the first each day, if the chapter asks for it).",
+        { max: ROLL_GAIN_DAY_MAX, writ: HALL_WRIT_REP, receipt: RECEIPT_REP },
+      ),
+    ],
+    [
+      'Merit',
+      `Your work for a chapter this week. You earn ${n(MERIT_WRIT)} for filling your own chapter writ (one a day, and bought goods earn none), and a share of ${n(MERIT_RECEIPT)} for each Dagon's Breach closed or raided town defended in the region. It counts after ${days(MERIT_TENURE_S)} real days in the guild, at most ${n(MERIT_CAP_WEEK)} an account a week in each chapter, and in only one chapter of each guild a week.`,
+    ],
     // AUDIT PLAIN-UI W1: the whole of strengthAfter, failingWeekAfter, the Rivalry's swing and strengthSeasonEnd - "Merit
     // raises it" alone hid the week's mark, the fall back toward 50 and the Failing band's fall
-    ['Strength', `The chapter's health, from ${STRENGTH_MIN} to ${STRENGTH_MAX}, starting at ${STRENGTH_START}. The week's mark is ${STRENGTH_TARGET} Merit for every 100 active players (at least ${STRENGTH_TARGET}). At each Turning (Sunday 18:00 UTC), Strength rises 1 for each mark its members' Merit reached that week, up to ${STRENGTH_STEP_MAX}. A week below the mark moves a chapter above ${STRENGTH_START} back ${STRENGTH_SHORT} toward it. A week with no Merit costs ${STRENGTH_IDLE}. A Failing chapter loses ${CHAPTER_FAILING_FALL} more unless its Merit reaches ${CHAPTER_FAILING_MEETS === 2 ? 'twice' : `${CHAPTER_FAILING_MEETS} times`} the mark. A Rivalry's winner takes ${CHAPTER_EVENT_EFFECTS.rivalrySwing} from the loser, and a Season's end moves every chapter halfway back to ${STRENGTH_START}.`],
-    ['Band', `Strength's name: ${bands}. The band sets the halls' prices, what they stock and how many chapter writs they post. Each card says what its band does.`],
-    ['The chairs', `Rank ${SEAT_RANK.master} (the Master) and rank ${SEAT_RANK.officer} (${CHAPTER_SEATS.officer} council chairs) go at each Turning to the members with the most Merit over the last ${SEAT_MERIT_WEEKS} weeks. A member needs ${days(SEAT_TENURE_S)} real days in the guild, enough standing for rank ${SEAT_RANK.officer} and an account ${days(SEAT_ACCOUNT_AGE_S)} real days old. The Master picks the week's Focus: the goods the chapter writs ask for.`],
-    ['Season', `Each Season a chapter draws one event: ${events.slice(0, -1).join(', ')} or ${events[events.length - 1]}. A Schism or a Succession asks members to back a side. The card says what this Season's event does.`],
-    ['Patron', `A player guild's Guildmaster can bid silver (at least ${n(CHAPTER_PATRON_MIN)}) to be a chapter's patron next Season. The highest bid is spent and the others are returned. The patron's members pay ${patronBand} prices for training and spells in its halls, or the chapter's own prices if lower.`],
+    [
+      'Strength',
+      `The chapter's health, from ${STRENGTH_MIN} to ${STRENGTH_MAX}, starting at ${STRENGTH_START}. The week's mark is ${STRENGTH_TARGET} Merit for every 100 active players (at least ${STRENGTH_TARGET}). At each Turning (Sunday 18:00 UTC), Strength rises 1 for each mark its members' Merit reached that week, up to ${STRENGTH_STEP_MAX}. A week below the mark moves a chapter above ${STRENGTH_START} back ${STRENGTH_SHORT} toward it. A week with no Merit costs ${STRENGTH_IDLE}. A Failing chapter loses ${CHAPTER_FAILING_FALL} more unless its Merit reaches ${CHAPTER_FAILING_MEETS === 2 ? 'twice' : `${CHAPTER_FAILING_MEETS} times`} the mark. A Rivalry's winner takes ${CHAPTER_EVENT_EFFECTS.rivalrySwing} from the loser, and a Season's end moves every chapter halfway back to ${STRENGTH_START}.`,
+    ],
+    [
+      'Band',
+      `Strength's name: ${bands}. The band sets the halls' prices, what they stock and how many chapter writs they post. Each card says what its band does.`,
+    ],
+    [
+      'The chairs',
+      `Rank ${SEAT_RANK.master} (the Master) and rank ${SEAT_RANK.officer} (${CHAPTER_SEATS.officer} council chairs) go at each Turning to the members with the most Merit over the last ${SEAT_MERIT_WEEKS} weeks. A member needs ${days(SEAT_TENURE_S)} real days in the guild, enough standing for rank ${SEAT_RANK.officer} and an account ${days(SEAT_ACCOUNT_AGE_S)} real days old. The Master picks the week's Focus: the goods the chapter writs ask for.`,
+    ],
+    [
+      'Season',
+      `Each Season a chapter draws one event: ${events.slice(0, -1).join(', ')} or ${events[events.length - 1]}. A Schism or a Succession asks members to back a side. The card says what this Season's event does.`,
+    ],
+    [
+      'Patron',
+      `A player guild's Guildmaster can bid silver (at least ${n(CHAPTER_PATRON_MIN)}) to be a chapter's patron next Season. The highest bid is spent and the others are returned. The patron's members pay ${patronBand} prices for training and spells in its halls, or the chapter's own prices if lower.`,
+    ],
   ];
 }
 
@@ -169,18 +278,47 @@ export function chapterGuide() {
  * @param {{ town:{name:string}, rumour?:string[], bountyLine?:boolean, gate?:({subject:string, body:string}|null),
  *   sd?:({subject:string, body:string}|null), board?:any, seenAt?:number|null }} o
  */
-export function noticeCards({ town, rumour = [], bountyLine = false, gate = null, sd = null, board = null, seenAt = null }) {
+export function noticeCards({
+  town,
+  rumour = [],
+  bountyLine = false,
+  gate = null,
+  sd = null,
+  board = null,
+  seenAt = null,
+}) {
   const cards = [];
   const lines = (rumour ?? []).map((l) => String(l ?? '').trim()).filter(Boolean);
-  if (lines.length) cards.push({ key: 'rumour', seal: 'town', subject: `News of ${town.name || 'the town'}`, body: lines.join('\n') });
+  if (lines.length)
+    cards.push({ key: 'rumour', seal: 'town', subject: `News of ${town.name || 'the town'}`, body: lines.join('\n') });
   if (bountyLine) cards.push({ key: 'bounty', seal: 'bounty', subject: 'Bounties', body: BOUNTY_BOARD_LINE });
   if (gate) cards.push({ key: 'gate', seal: 'server', subject: gate.subject, body: gate.body });
-  if (sd) cards.push({ key: 'sd', seal: 'server', subject: sd.subject, body: sd.body });   // SD2c: a found Super dungeon, the server's word as the gate is
+  if (sd) cards.push({ key: 'sd', seal: 'server', subject: sd.subject, body: sd.body }); // SD2c: a found Super dungeon, the server's word as the gate is
   for (const n of board?.notices ?? []) {
-    cards.push({ key: `notice:${n.id}`, seal: 'server', subject: n.subject, body: n.body, from: n.from, at: n.at, expiresAt: n.expiresAt, notice: n, isNew: noteIsNew(n, seenAt) });
+    cards.push({
+      key: `notice:${n.id}`,
+      seal: 'server',
+      subject: n.subject,
+      body: n.body,
+      from: n.from,
+      at: n.at,
+      expiresAt: n.expiresAt,
+      notice: n,
+      isNew: noteIsNew(n, seenAt),
+    });
   }
   for (const n of board?.notes ?? []) {
-    cards.push({ key: `note:${n.id}`, seal: n.guild ? 'guild' : 'player', subject: n.subject, body: n.body, from: n.from, at: n.at, expiresAt: n.expiresAt, note: n, isNew: noteIsNew(n, seenAt) });
+    cards.push({
+      key: `note:${n.id}`,
+      seal: n.guild ? 'guild' : 'player',
+      subject: n.subject,
+      body: n.body,
+      from: n.from,
+      at: n.at,
+      expiresAt: n.expiresAt,
+      note: n,
+      isNew: noteIsNew(n, seenAt),
+    });
   }
   return cards;
 }
@@ -189,7 +327,8 @@ export const NOTICE_SKIN_STYLE_ID = 'notice-skin-style';
 /** The window's own sheet for the classic skins: its layout and the kit's rules cut to its selectors. TOAST-SPLIT: the
  *  board's window, header and presses only - "notice" alone took the HUD toasts' `.notice` dress and fade too. */
 const BOARD_KIT_SEL = /\.notice-(?:shell|win|head)\b/;
-export const noticeSkinCss = () => [NOTICE_CSS, PROF_CSS, scopeRules(frameCss(), (sel) => BOARD_KIT_SEL.test(sel))].join('\n');
+export const noticeSkinCss = () =>
+  [NOTICE_CSS, PROF_CSS, scopeRules(frameCss(), (sel) => BOARD_KIT_SEL.test(sel))].join('\n');
 function injectSkin(doc = document) {
   if (isEnhancedPlus() || doc.getElementById?.(NOTICE_SKIN_STYLE_ID)) return;
   const st = doc.createElement('style');
@@ -242,22 +381,28 @@ export function mountNoticeBoard(host, deps) {
   shell.append(win);
   host.append(shell);
 
-  let view = 'board';   // 'board' | 'read' | 'pin' | 'notice'
+  let view = 'board'; // 'board' | 'read' | 'pin' | 'notice'
   const guildOnly = deps.guildOnly ?? null;
   // HOME-VENDOR: a trader's stall - the window over its one tab, under its owner's name (no town's board is read)
   const traderOnly = guildOnly ? null : (deps.traderOnly ?? null);
-  let tab = guildOnly ? 'guilds' : traderOnly ? 'vendors' : 'notices';  // PROF1: 'notices' | 'work'; PROF5: 'market'; GUILD1e: 'guilds'
+  let tab = guildOnly ? 'guilds' : traderOnly ? 'vendors' : 'notices'; // PROF1: 'notices' | 'work'; PROF5: 'market'; GUILD1e: 'guilds'
   // GUILD1e: the reader's guild board - its own read, its own one-at-a-time door
-  let gboard = null, gerror = null, gstale = false, gbusy = false;
+  let gboard = null,
+    gerror = null,
+    gstale = false,
+    gbusy = false;
   const guildsShown = () => !!guildOnly || !!deps.guilds;
   const character = () => deps.character?.() ?? null;
   const gme = () => gboard?.me ?? { canPin: false, live: 0, max: 3, keeper: false };
-  let writs = null, writsError = null, writsStale = false, writsBusy = false;   // PROF1: the Work tab's list
+  let writs = null,
+    writsError = null,
+    writsStale = false,
+    writsBusy = false; // PROF1: the Work tab's list
   /** QL-OFFERED: this opening's questline offers - read once, at the Notices tab's first draw (the board's one door,
    *  ui/noticeDoor.js, hands the bridge's source) - and the cards still up. */
   let lineOffers;
   const linesOf = () => (lineOffers === undefined ? (lineOffers = deps.questlines?.() ?? null) : lineOffers);
-  let chapterGuideOpen = null;   // PLAIN-UI: How chapters work unfolded - null until the reader folds or unfolds it
+  let chapterGuideOpen = null; // PLAIN-UI: How chapters work unfolded - null until the reader folds or unfolds it
   const work = deps.work ?? null;
   const workShown = () => !!work && work.book?.state?.open === true;
   // BOARD-SIFT: the Work tab's filter and order - the professions book's for the session, so a reopened board keeps them
@@ -268,123 +413,227 @@ export function mountNoticeBoard(host, deps) {
   // AUDIT 657 B5: and a Market the board showed as it opened stays for this opening - the board's own read of the market
   // (BOARD-UI's prefetch) can hear it is shut before the tab is pressed, and the tab went with no word; pressed, it says why
   const marketAtOpen = !!marketHost && marketHost.book?.state?.open !== false;
-  const marketShown = () => !!marketHost && (marketAtOpen || marketHost.book?.state?.open !== false || tab === 'market');
+  const marketShown = () =>
+    !!marketHost && (marketAtOpen || marketHost.book?.state?.open !== false || tab === 'market');
   // AUDIT 30 U12: the market's door is its own - a board read under way never greys Buy, and a market act never the board
   let marketBusy = false;
-  const market = marketHost ? createMarketTab(marketHost, {
-    busy: () => marketBusy || !!marketHost.book?.busy,
-    run: async (start) => {
-      if (marketBusy) return;
-      marketBusy = true; render();
-      let r = null;
-      try { r = await start(); } catch (e) { console.warn('[board] act', e); r = { ok: false, text: accountRefusalText('server') }; } finally { marketBusy = false; }   // MARKET-AUDIT: an act that threw left every button greyed
-      if (!alive) return;
-      word = { ok: !!r?.ok, text: r?.text ?? '' };
-      render();
-    },
-    rerender: () => render(),
-    hush: () => { word = null; },   // MARKET-AUDIT U6: an act's word stays with the view it was said in
-    nowS,
-    alive: () => alive,
-  }) : null;
+  const market = marketHost
+    ? createMarketTab(marketHost, {
+        busy: () => marketBusy || !!marketHost.book?.busy,
+        run: async (start) => {
+          if (marketBusy) return;
+          marketBusy = true;
+          render();
+          let r = null;
+          try {
+            r = await start();
+          } catch (e) {
+            console.warn('[board] act', e);
+            r = { ok: false, text: accountRefusalText('server') };
+          } finally {
+            marketBusy = false;
+          } // MARKET-AUDIT: an act that threw left every button greyed
+          if (!alive) return;
+          word = { ok: !!r?.ok, text: r?.text ?? '' };
+          render();
+        },
+        rerender: () => render(),
+        hush: () => {
+          word = null;
+        }, // MARKET-AUDIT U6: an act's word stays with the view it was said in
+        nowS,
+        alive: () => alive,
+      })
+    : null;
   let marketOpened = false;
   // HOME-VENDOR: the Vendors tab (a town's board: the region's traders) or the stall (traderOnly) - its own door, as the market's
   const vendorHost = guildOnly ? null : (deps.vendors ?? null);
-  let vendorBusy = false, vendorOpened = false;
-  const vendorTab = vendorHost ? createVendorTab(vendorHost, {
-    busy: () => vendorBusy,
-    run: async (start) => {
-      if (vendorBusy) return;
-      vendorBusy = true; render();
-      let r = null;
-      try { r = await start(); } catch (e) { console.warn('[board] act', e); r = { ok: false, text: accountRefusalText('server') }; } finally { vendorBusy = false; }   // MARKET-AUDIT: an act that threw left every button greyed
-      if (!alive) return;
-      word = { ok: !!r?.ok, text: r?.text ?? '' };
-      render();
-    },
-    rerender: () => { if (alive) render(); },
-    nowS,
-    alive: () => alive,
-  }) : null;
+  let vendorBusy = false,
+    vendorOpened = false;
+  const vendorTab = vendorHost
+    ? createVendorTab(vendorHost, {
+        busy: () => vendorBusy,
+        run: async (start) => {
+          if (vendorBusy) return;
+          vendorBusy = true;
+          render();
+          let r = null;
+          try {
+            r = await start();
+          } catch (e) {
+            console.warn('[board] act', e);
+            r = { ok: false, text: accountRefusalText('server') };
+          } finally {
+            vendorBusy = false;
+          } // MARKET-AUDIT: an act that threw left every button greyed
+          if (!alive) return;
+          word = { ok: !!r?.ok, text: r?.text ?? '' };
+          render();
+        },
+        rerender: () => {
+          if (alive) render();
+        },
+        nowS,
+        alive: () => alive,
+      })
+    : null;
   // SEAT1b (Seats-Arc 7.9): the Seat tab, at a seat town's rumour board while the seats are open to this account - its
   // own door, as the market's
   const seatHost = guildOnly ? null : (deps.seat ?? null);
   const seatShown = () => !!seatHost && seatHost.book?.open === true;
-  let seatBusy = false, seatOpened = false;
+  let seatBusy = false,
+    seatOpened = false;
   // DOMAIN1 (bible/11-Multiplayer/Domains.md 5): a member's gift reads the Stores and the bag as the market's listing does
   // (its host's own reads) and puts the bag's units in the Stores first - nothing given where the market is not open
   const mk = deps.market ?? null;
-  const giving = mk ? {
-    stores: (/** @type {string} */ k) => { const s = mk.stores?.()?.get?.(k); return s ? (s.own | 0) + (s.bought | 0) : 0; },
-    bag: (/** @type {string} */ k) => Number(mk.carried?.()?.get?.(k)) || 0,
-    putIn: (/** @type {string} */ k, /** @type {number} */ n) => mk.putIn(k, n),
-  } : null;
-  const seatTab = seatHost ? createSeatTab({ ...seatHost, giving, ...(deps.seatBattle ? { enterBattle: deps.seatBattle } : {}), ...(deps.seatRoyal ? { enterRoyal: deps.seatRoyal } : {}), ...(deps.seatRecords ? { readRecords: deps.seatRecords } : {}), banner: (h, w) => bannerImg(h, w) }, {   // SEAT2a part four: and the battle's door
-    busy: () => seatBusy,
-    run: async (start) => {
-      if (seatBusy) return;
-      seatBusy = true; render();
-      let r = null;
-      try { r = await start(); } catch (e) { console.warn('[board] act', e); r = { ok: false, text: accountRefusalText('server') }; } finally { seatBusy = false; }   // MARKET-AUDIT: an act that threw left every button greyed
-      if (!alive) return;
-      word = { ok: !!r?.ok, text: r?.text ?? '' };
-      render();
-    },
-    rerender: () => { if (alive) render(); },
-    nowS,
-    alive: () => alive,
-  }) : null;
+  const giving = mk
+    ? {
+        stores: (/** @type {string} */ k) => {
+          const s = mk.stores?.()?.get?.(k);
+          return s ? (s.own | 0) + (s.bought | 0) : 0;
+        },
+        bag: (/** @type {string} */ k) => Number(mk.carried?.()?.get?.(k)) || 0,
+        putIn: (/** @type {string} */ k, /** @type {number} */ n) => mk.putIn(k, n),
+      }
+    : null;
+  const seatTab = seatHost
+    ? createSeatTab(
+        {
+          ...seatHost,
+          giving,
+          ...(deps.seatBattle ? { enterBattle: deps.seatBattle } : {}),
+          ...(deps.seatRoyal ? { enterRoyal: deps.seatRoyal } : {}),
+          ...(deps.seatRecords ? { readRecords: deps.seatRecords } : {}),
+          banner: (h, w) => bannerImg(h, w),
+        },
+        {
+          // SEAT2a part four: and the battle's door
+          busy: () => seatBusy,
+          run: async (start) => {
+            if (seatBusy) return;
+            seatBusy = true;
+            render();
+            let r = null;
+            try {
+              r = await start();
+            } catch (e) {
+              console.warn('[board] act', e);
+              r = { ok: false, text: accountRefusalText('server') };
+            } finally {
+              seatBusy = false;
+            } // MARKET-AUDIT: an act that threw left every button greyed
+            if (!alive) return;
+            word = { ok: !!r?.ok, text: r?.text ?? '' };
+            render();
+          },
+          rerender: () => {
+            if (alive) render();
+          },
+          nowS,
+          alive: () => alive,
+        },
+      )
+    : null;
   // PROF6: the Work tab's guild writs and commissions - their own door, as the market's
   let workBusy = false;
-  const workMore = work?.writs ? createWorkTab({
-    writs: work.writs, held: (m) => work.book.held(m), carrying: () => work.book.carrying?.() === true, region: work.region, regionName: work.regionName,   // AUDIT BAG1: whose count `held` is
-    walled: (m) => Number(work.book.walled?.(m)) || 0,   // WRIT-WALL: and what is held past it
-    regionNameOf: work.regionNameOf ?? ((r) => String(r)), countName: work.countName, pieces: work.pieces ?? (() => []),
-    reload: () => { work.book.forgetWrits?.(); loadWrits(true); },   // AUDIT 31 B7: a read begun before the act is read again
-  }, {
-    busy: () => workBusy || busy || !!work.writs.busy,
-    nowMs: () => nowS() * 1000,
-    run: async (start) => {
-      if (workBusy) return;
-      workBusy = true; render();
-      let r = null;
-      try { r = await start(); } catch (e) { console.warn('[board] act', e); r = { ok: false, text: accountRefusalText('server') }; } finally { workBusy = false; }   // MARKET-AUDIT: an act that threw left every button greyed
-      if (!alive) return;
-      word = { ok: !!r?.ok, text: r?.text ?? '' };
-      render();
-    },
-    rerender: () => render(),
-    nowS,
-  }) : null;
-  let reading = null;   // the card read large
-  let word = null;      // { ok, text } - the status line
-  let board = null, stale = false, error = null, busy = false;
-  const seenAtOpen = deps.book.seenAt(map);   // what was new when the window opened stays marked new while it is up
+  const workMore = work?.writs
+    ? createWorkTab(
+        {
+          writs: work.writs,
+          held: (m) => work.book.held(m),
+          carrying: () => work.book.carrying?.() === true,
+          region: work.region,
+          regionName: work.regionName, // AUDIT BAG1: whose count `held` is
+          walled: (m) => Number(work.book.walled?.(m)) || 0, // WRIT-WALL: and what is held past it
+          regionNameOf: work.regionNameOf ?? ((r) => String(r)),
+          countName: work.countName,
+          pieces: work.pieces ?? (() => []),
+          reload: () => {
+            work.book.forgetWrits?.();
+            loadWrits(true);
+          }, // AUDIT 31 B7: a read begun before the act is read again
+        },
+        {
+          busy: () => workBusy || busy || !!work.writs.busy,
+          nowMs: () => nowS() * 1000,
+          run: async (start) => {
+            if (workBusy) return;
+            workBusy = true;
+            render();
+            let r = null;
+            try {
+              r = await start();
+            } catch (e) {
+              console.warn('[board] act', e);
+              r = { ok: false, text: accountRefusalText('server') };
+            } finally {
+              workBusy = false;
+            } // MARKET-AUDIT: an act that threw left every button greyed
+            if (!alive) return;
+            word = { ok: !!r?.ok, text: r?.text ?? '' };
+            render();
+          },
+          rerender: () => render(),
+          nowS,
+        },
+      )
+    : null;
+  let reading = null; // the card read large
+  let word = null; // { ok, text } - the status line
+  let board = null,
+    stale = false,
+    error = null,
+    busy = false;
+  const seenAtOpen = deps.book.seenAt(map); // what was new when the window opened stays marked new while it is up
   let alive = true;
   // AUDIT 28 N13: the book keeps what is being written, for the session - a stray tap outside throws nothing away
   const draft = deps.book.draft?.(map) ?? { subject: '', body: '', days: NOTE_DAYS[NOTE_DAYS.length - 1], button: '' };
   const noticeDraft = deps.book.noticeDraft?.() ?? { subject: '', body: '', days: 3 };
 
   const back = () => {
-    if (tab === 'work' && workMore?.closeForm()) { render(); return; }   // AUDIT 31 U12: Escape closes an open form first
-    if (tab === 'work' || tab === 'market' || tab === 'seat' || tab === 'vendors' || view === 'board') exit(); else { view = 'board'; reading = null; render(); }
+    if (tab === 'work' && workMore?.closeForm()) {
+      render();
+      return;
+    } // AUDIT 31 U12: Escape closes an open form first
+    if (tab === 'work' || tab === 'market' || tab === 'seat' || tab === 'vendors' || view === 'board') exit();
+    else {
+      view = 'board';
+      reading = null;
+      render();
+    }
   };
   const onKey = (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
-    if (isTextEntryTarget(e.target) && e.key !== 'Escape') return;   // a field's keys are the field's
-    if (e.key === 'Escape' || overlayAction(e) === 'back') { e.preventDefault(); e.stopPropagation(); back(); }
+    if (isTextEntryTarget(e.target) && e.key !== 'Escape') return; // a field's keys are the field's
+    if (e.key === 'Escape' || overlayAction(e) === 'back') {
+      e.preventDefault();
+      e.stopPropagation();
+      back();
+    }
   };
   globalThis.addEventListener('keydown', onKey, { capture: true });
   const offOutside = closeOnOutsideTap(shell, '.notice-win', exit);
 
   async function load(force = false) {
-    if (guildOnly) { loadGuild(force); return; }   // GUILD1e: the hall's board reads no town
-    if (traderOnly) { if (vendorTab && !vendorOpened) { vendorOpened = true; vendorTab.open(); } return; }   // HOME-VENDOR: nor a stall
-    busy = true; render();
+    if (guildOnly) {
+      loadGuild(force);
+      return;
+    } // GUILD1e: the hall's board reads no town
+    if (traderOnly) {
+      if (vendorTab && !vendorOpened) {
+        vendorOpened = true;
+        vendorTab.open();
+      }
+      return;
+    } // HOME-VENDOR: nor a stall
+    busy = true;
+    render();
     const r = await deps.book.read(map, { force });
     if (!alive) return;
     busy = false;
-    board = r.board; stale = !!r.stale; error = r.error;
+    board = r.board;
+    stale = !!r.stale;
+    error = r.error;
     if (board) deps.book.markSeen(map);
     render();
   }
@@ -393,22 +642,30 @@ export function mountNoticeBoard(host, deps) {
   let guildSeq = 0;
   async function loadGuild(force = false) {
     const seq = ++guildSeq;
-    gbusy = true; render();
+    gbusy = true;
+    render();
     const r = await deps.book.readGuild(character(), { force });
     if (!alive || seq !== guildSeq) return;
     gbusy = false;
-    gboard = r.data; gerror = r.error; gstale = !!r.stale;
+    gboard = r.data;
+    gerror = r.error;
+    gstale = !!r.stale;
     render();
   }
   /** GUILD1e: a guild board's act - one at a time, as the town's; its answer repaints from the book's fresh read. */
   async function gact(start, after = 'board') {
     if (gbusy || busy) return;
-    gbusy = true; render();
+    gbusy = true;
+    render();
     const r = await start();
     if (!alive) return;
     gbusy = false;
     word = { ok: !!r?.ok, text: r?.text ?? '' };
-    if (r?.ok) { gboard = deps.book.cachedGuild(character()) ?? gboard; view = after; reading = null; }
+    if (r?.ok) {
+      gboard = deps.book.cachedGuild(character()) ?? gboard;
+      view = after;
+      reading = null;
+    }
     render();
   }
 
@@ -416,12 +673,18 @@ export function mountNoticeBoard(host, deps) {
    *  note" overwrote the first's word). `start` is called only when nothing else is under way. */
   async function act(start, after = 'board') {
     if (busy) return;
-    busy = true; render();
+    busy = true;
+    render();
     const r = await start();
     if (!alive) return;
     busy = false;
     word = { ok: !!r?.ok, text: r?.text ?? '' };
-    if (r?.ok) { board = deps.book.cached(map) ?? board; view = after; reading = null; deps.book.markSeen(map); }
+    if (r?.ok) {
+      board = deps.book.cached(map) ?? board;
+      view = after;
+      reading = null;
+      deps.book.markSeen(map);
+    }
     render();
   }
 
@@ -432,30 +695,74 @@ export function mountNoticeBoard(host, deps) {
     const title = el('div', 'notice-title');
     const notes = board?.notes?.length ?? 0;
     const gnotes = gboard?.notes?.length ?? 0;
-    const sub = tab === 'guilds'
-      ? (gboard ? `${gnotes} note${gnotes === 1 ? '' : 's'} on ${gboard.guild?.name ?? 'your guild'}'s board · yours up: ${gme().live} of ${gme().max}` : (gbusy ? BOARD_WORDS.reading : ''))
-      : board
-        ? `${notes} note${notes === 1 ? '' : 's'} pinned here${me().canPin ? ` · yours up: ${me().live} of ${me().max}` : ''}`
-        : (busy ? BOARD_WORDS.reading : '');
-    title.append(el('h2', null, guildOnly ? `The board of ${gboard?.guild?.name ?? guildOnly.name}` : traderOnly ? traderOnly.title : `Notice Board of ${deps.town.name}`), el('p', 'notice-sub', traderOnly ? (traderOnly.sub ?? '') : sub));
-    const line = el('p', `notice-word${word?.ok ? ' ok' : ''}`, word?.text ?? ((tab === 'guilds' ? gstale : stale) ? BOARD_WORDS.stale : ''));
+    const sub =
+      tab === 'guilds'
+        ? gboard
+          ? `${gnotes} note${gnotes === 1 ? '' : 's'} on ${gboard.guild?.name ?? 'your guild'}'s board · yours up: ${gme().live} of ${gme().max}`
+          : gbusy
+            ? BOARD_WORDS.reading
+            : ''
+        : board
+          ? `${notes} note${notes === 1 ? '' : 's'} pinned here${me().canPin ? ` · yours up: ${me().live} of ${me().max}` : ''}`
+          : busy
+            ? BOARD_WORDS.reading
+            : '';
+    title.append(
+      el(
+        'h2',
+        null,
+        guildOnly
+          ? `The board of ${gboard?.guild?.name ?? guildOnly.name}`
+          : traderOnly
+            ? traderOnly.title
+            : `Notice Board of ${deps.town.name}`,
+      ),
+      el('p', 'notice-sub', traderOnly ? (traderOnly.sub ?? '') : sub),
+    );
+    const line = el(
+      'p',
+      `notice-word${word?.ok ? ' ok' : ''}`,
+      word?.text ?? ((tab === 'guilds' ? gstale : stale) ? BOARD_WORDS.stale : ''),
+    );
     line.setAttribute('aria-live', 'polite');
     title.append(line);
     const acts = el('div', 'notice-headacts');
-    if (tab === 'work' || tab === 'market' || tab === 'seat' || tab === 'vendors') {   // HOME-VENDOR
+    if (tab === 'work' || tab === 'market' || tab === 'seat' || tab === 'vendors') {
+      // HOME-VENDOR
       acts.append(button('notice-close', 'Close', exit));
       head.append(title, acts);
       return [head, tabsNode()];
     }
     if (tab === 'guilds') {
       // GUILD1e: a note for the guild's own board, while the member has room
-      if (view === 'board' && gboard && gme().canPin && gme().live < gme().max) acts.append(button('primary notice-pinbtn', 'Pin a note for the guild', () => { view = 'gpin'; word = null; render(); }));
+      if (view === 'board' && gboard && gme().canPin && gme().live < gme().max)
+        acts.append(
+          button('primary notice-pinbtn', 'Pin a note for the guild', () => {
+            view = 'gpin';
+            word = null;
+            render();
+          }),
+        );
       acts.append(button('notice-close', view === 'board' ? 'Close' : 'Back', back));
       head.append(title, acts);
       return [head, tabsNode()];
     }
-    if (view === 'board' && me().canPin && me().live < me().max) acts.append(button('primary notice-pinbtn', 'Pin a note', () => { view = 'pin'; word = null; render(); }));
-    if (view === 'board' && me().developer) acts.append(button('notice-noticebtn', 'Post a notice', () => { view = 'notice'; word = null; render(); }));
+    if (view === 'board' && me().canPin && me().live < me().max)
+      acts.append(
+        button('primary notice-pinbtn', 'Pin a note', () => {
+          view = 'pin';
+          word = null;
+          render();
+        }),
+      );
+    if (view === 'board' && me().developer)
+      acts.append(
+        button('notice-noticebtn', 'Post a notice', () => {
+          view = 'notice';
+          word = null;
+          render();
+        }),
+      );
     acts.append(button('notice-close', view === 'board' ? 'Close' : 'Back', back));
     head.append(title, acts);
     return [head, tabsNode()];
@@ -464,32 +771,68 @@ export function mountNoticeBoard(host, deps) {
   /** BOARD-UI: a tab's count - the Notices' notes not yet read when the window opened, the Work tab's writs open to take
    *  once its list is read; null for none. */
   const tabCount = (id) => {
-    if (id === 'notices') return noticeCards({ town: deps.town, board, seenAt: seenAtOpen }).filter((c) => c.isNew).length || null;
-    if (id === 'work' && writs) return (writs.writs ?? []).filter((w) => w.state === 'open').length + (work?.crafts ? (writs.crafts?.writs ?? []).filter((w) => w.state === 'open').length : 0) + (writs.writsOpen === true ? (writs.guildWrits ?? []).filter((w) => w.state === 'open').length + (writs.commissions ?? []).filter((c) => c.state === 'open' && c.forMe).length : 0) || null;
+    if (id === 'notices')
+      return noticeCards({ town: deps.town, board, seenAt: seenAtOpen }).filter((c) => c.isNew).length || null;
+    if (id === 'work' && writs)
+      return (
+        (writs.writs ?? []).filter((w) => w.state === 'open').length +
+          (work?.crafts ? (writs.crafts?.writs ?? []).filter((w) => w.state === 'open').length : 0) +
+          (writs.writsOpen === true
+            ? (writs.guildWrits ?? []).filter((w) => w.state === 'open').length +
+              (writs.commissions ?? []).filter((c) => c.state === 'open' && c.forMe).length
+            : 0) || null
+      );
     return null;
   };
   /** The tabs: Notices alone, or Notices and Work while the professions are this account's (PROF1), and Market while
    *  the market is (PROF5). */
   function tabsNode() {
     const tabs = el('nav', 'notice-tabs');
-    const shown = guildOnly ? [['guilds', 'Guild notes']] : traderOnly ? [['vendors', 'Trader']]   // HOME-VENDOR: a stall's one tab
-      : [['notices', 'Notices'], ...(workShown() ? [['work', 'Work']] : []), ...(marketShown() ? [['market', 'Market']] : []), ...(vendorTab ? [['vendors', 'Vendors']] : []), ...(guildsShown() ? [['guilds', 'Guilds']] : []), ...(seatShown() ? [['seat', 'Seat']] : [])];
+    const shown = guildOnly
+      ? [['guilds', 'Guild notes']]
+      : traderOnly
+        ? [['vendors', 'Trader']] // HOME-VENDOR: a stall's one tab
+        : [
+            ['notices', 'Notices'],
+            ...(workShown() ? [['work', 'Work']] : []),
+            ...(marketShown() ? [['market', 'Market']] : []),
+            ...(vendorTab ? [['vendors', 'Vendors']] : []),
+            ...(guildsShown() ? [['guilds', 'Guilds']] : []),
+            ...(seatShown() ? [['seat', 'Seat']] : []),
+          ];
     if (!shown.some(([id]) => id === tab)) tab = shown[0][0];
     for (const [id, label] of shown) {
       const t = el(shown.length > 1 ? 'button' : 'span', `notice-tab${tab === id ? ' on' : ''}`, label);
       const n = shown.length > 1 ? tabCount(id) : null;
-      if (n) { t.append(el('span', 'notice-tabcount', String(n))); t.setAttribute('aria-label', `${label}, ${n} ${id === 'work' ? 'open' : 'new'}`); }
+      if (n) {
+        t.append(el('span', 'notice-tabcount', String(n)));
+        t.setAttribute('aria-label', `${label}, ${n} ${id === 'work' ? 'open' : 'new'}`);
+      }
       if (tab === id) t.setAttribute('aria-current', 'page');
       if (shown.length > 1) {
         t.setAttribute('type', 'button');
         t.onclick = () => {
           if (tab === id) return;
-          tab = id; word = null;
+          tab = id;
+          word = null;
           if (id === 'work') openWork();
-          if (id === 'market' && market && !marketOpened) { marketOpened = true; market.open(); }
-          if (id === 'seat' && seatTab && !seatOpened) { seatOpened = true; seatTab.open(); }   // SEAT1b
-          if (id === 'vendors' && vendorTab && !vendorOpened) { vendorOpened = true; vendorTab.open(); }   // HOME-VENDOR
-          if (id === 'guilds') { view = 'board'; reading = null; if (!gboard && !gbusy) loadGuild(false); }   // GUILD1e
+          if (id === 'market' && market && !marketOpened) {
+            marketOpened = true;
+            market.open();
+          }
+          if (id === 'seat' && seatTab && !seatOpened) {
+            seatOpened = true;
+            seatTab.open();
+          } // SEAT1b
+          if (id === 'vendors' && vendorTab && !vendorOpened) {
+            vendorOpened = true;
+            vendorTab.open();
+          } // HOME-VENDOR
+          if (id === 'guilds') {
+            view = 'board';
+            reading = null;
+            if (!gboard && !gbusy) loadGuild(false);
+          } // GUILD1e
           else if (view === 'gpin') view = 'board';
           render();
         };
@@ -497,7 +840,16 @@ export function mountNoticeBoard(host, deps) {
       tabs.append(t);
     }
     // BOARD-UI: the chosen tab scrolled into the strip, once it is in the window (a phone's strip scrolls sideways)
-    Promise.resolve().then(() => { try { /** @type {any} */ (tabs.querySelector?.('.notice-tab.on'))?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' }); } catch { /* none to scroll */ } });
+    Promise.resolve().then(() => {
+      try {
+        /** @type {any} */ (tabs.querySelector?.('.notice-tab.on'))?.scrollIntoView?.({
+          block: 'nearest',
+          inline: 'nearest',
+        });
+      } catch {
+        /* none to scroll */
+      }
+    });
     return tabs;
   }
 
@@ -507,7 +859,14 @@ export function mountNoticeBoard(host, deps) {
   /** The Work tab shown: PROF6's kept fills settled once (a commission's piece whose answer was lost), the list read. */
   let workSettled = false;
   function openWork() {
-    if (!workSettled && work?.settle) { workSettled = true; Promise.resolve(work.settle()).catch(() => {}).then(() => { if (alive && workMore) loadWrits(true); }); }
+    if (!workSettled && work?.settle) {
+      workSettled = true;
+      Promise.resolve(work.settle())
+        .catch(() => {})
+        .then(() => {
+          if (alive && workMore) loadWrits(true);
+        });
+    }
     if (!writs && !writsBusy) loadWrits(false);
   }
 
@@ -516,15 +875,28 @@ export function mountNoticeBoard(host, deps) {
   async function loadWrits(force) {
     if (!work) return;
     const seq = ++writsSeq;
-    writsBusy = true; render();
+    writsBusy = true;
+    render();
     const r = await work.book.writs(work.region, { force });
     if (!alive || seq !== writsSeq) return;
     writsBusy = false;
-    writs = r.data; writsError = r.error; writsStale = !!r.stale;
+    writs = r.data;
+    writsError = r.error;
+    writsStale = !!r.stale;
     if (r.data && !r.stale) {
-      try { work.onList?.(r.data); } catch (e) { console.warn('[work] list', e); }   // AUDIT 31 B5: its balance the Bank's
+      try {
+        work.onList?.(r.data);
+      } catch (e) {
+        console.warn('[work] list', e);
+      } // AUDIT 31 B5: its balance the Bank's
       // AUDIT 31 H6: a commission of this account's filled - its piece comes by the market's deliveries, read fresh there
-      if ((r.data.yours?.commissions ?? []).some((c) => c.mine && c.state === 'filled')) { try { work.forgetMarket?.(); } catch { /* the market's own */ } }
+      if ((r.data.yours?.commissions ?? []).some((c) => c.mine && c.state === 'filled')) {
+        try {
+          work.forgetMarket?.();
+        } catch {
+          /* the market's own */
+        }
+      }
     }
     render();
   }
@@ -534,20 +906,45 @@ export function mountNoticeBoard(host, deps) {
    *  CHAP3a: a member's own writ its own, its pay Merit too. GUILD3a (bible/11-Multiplayer/Guilds-Made-Plain.md, ONE WORD,
    *  ONE THING): a "Chapter writ" and "Your chapter writ" - "hall" is a guild's hall, never a card's kind. */
   function writNode(w) {
-    const poster = isChapterWrit(w.kind) ? hallPosterName(w.faction) ?? 'guild' : null;
+    const poster = isChapterWrit(w.kind) ? (hallPosterName(w.faction) ?? 'guild') : null;
     const own = w.kind === 'member';
-    const li = el('li', `notice-card notice-writ ${poster ? 'seal-guild' : 'seal-court'}${w.state !== 'open' ? ' done' : ''}`);
+    const li = el(
+      'li',
+      `notice-card notice-writ ${poster ? 'seal-guild' : 'seal-court'}${w.state !== 'open' ? ' done' : ''}`,
+    );
     li.append(el('span', 'notice-pin'), el('span', 'writ-kind', writKindText(w)));
-    li.append(el('p', 'writ-need', own
-      ? `Yours to fill: ${w.qty} ${work.countName(w.material, w.qty)}, for the ${poster} in ${work.regionName}`
-      : poster
-        ? `Wanted: ${w.qty} ${work.countName(w.material, w.qty)}, for the ${poster} in ${work.regionName}`
-        : `The Court of ${work.regionName} needs ${w.qty} ${work.countName(w.material, w.qty)}`));
+    li.append(
+      el(
+        'p',
+        'writ-need',
+        own
+          ? `Yours to fill: ${w.qty} ${work.countName(w.material, w.qty)}, for the ${poster} in ${work.regionName}`
+          : poster
+            ? `Wanted: ${w.qty} ${work.countName(w.material, w.qty)}, for the ${poster} in ${work.regionName}`
+            : `The Court of ${work.regionName} needs ${w.qty} ${work.countName(w.material, w.qty)}`,
+      ),
+    );
     // AUDIT CHAP3 C8: a member's own writ promises Merit only where the account's Merit line here says it can earn some
     const m = own ? (writs?.merit ?? []).find((x) => x.faction === w.faction) : null;
-    const earns = meritEarnsOf(m);   // AUDIT GUILD3 L2: the law's one rule, the Duties line's too
-    li.append(el('p', 'writ-pay', `Pays ${w.pay.toLocaleString('en-US')} silver, ${w.renown.toLocaleString('en-US')} Renown${own && earns ? `, standing and Merit with the ${poster}` : poster ? ` and standing with the ${poster}` : ''}`));
-    li.append(el('p', 'writ-left', w.state === 'mine' ? 'Taken by you' : w.state === 'taken' ? 'Filled by another' : timeLeftText(w.expiresAt, nowS())));
+    const earns = meritEarnsOf(m); // AUDIT GUILD3 L2: the law's one rule, the Duties line's too
+    li.append(
+      el(
+        'p',
+        'writ-pay',
+        `Pays ${w.pay.toLocaleString('en-US')} silver, ${w.renown.toLocaleString('en-US')} Renown${own && earns ? `, standing and Merit with the ${poster}` : poster ? ` and standing with the ${poster}` : ''}`,
+      ),
+    );
+    li.append(
+      el(
+        'p',
+        'writ-left',
+        w.state === 'mine'
+          ? 'Taken by you'
+          : w.state === 'taken'
+            ? 'Filled by another'
+            : timeLeftText(w.expiresAt, nowS()),
+      ),
+    );
     const held = work.book.held(w.material);
     // WRIT-WALL (FIELD BUGS 2026-10-13e, "Cant turn in writs": 100 Iron in the pack, "0 held" on the card and nothing
     // said why): what is held and no writ may spend - looted, shop-bought, traded or gold-bought (net/profBook.js walled) -
@@ -558,14 +955,21 @@ export function mountNoticeBoard(host, deps) {
     if (w.state === 'open') {
       const full = writsFull();
       const b = button('primary notice-take', 'Take', () => takeWrit(w));
-      b.disabled = busy || workBusy || held < w.qty || full;   // AUDIT 31 B10: nor while a guild writ's or a commission's act is out
-      if (held < w.qty) b.title = walledSaid ?? (work.book.carrying?.() ? 'Not enough in your Stores, Materials Bag and pack together' : 'Not enough in your Stores');   // BAG1; AUDIT BAG1: and the pack; WRIT-WALL: and what of them is walled
-      else if (full) b.title = 'You have filled today\'s writs';   // CHAP2a: the Court's and the halls' one allowance
+      b.disabled = busy || workBusy || held < w.qty || full; // AUDIT 31 B10: nor while a guild writ's or a commission's act is out
+      if (held < w.qty)
+        b.title =
+          walledSaid ??
+          (work.book.carrying?.()
+            ? 'Not enough in your Stores, Materials Bag and pack together'
+            : 'Not enough in your Stores'); // BAG1; AUDIT BAG1: and the pack; WRIT-WALL: and what of them is walled
+      else if (full) b.title = "You have filled today's writs"; // CHAP2a: the Court's and the halls' one allowance
       take.append(b);
     }
-    take.append(el('span', null, `${held.toLocaleString('en-US')} ${work.book.carrying?.() ? 'held' : 'in your Stores'}`));   // BAG1: the Stores' and what is carried
+    take.append(
+      el('span', null, `${held.toLocaleString('en-US')} ${work.book.carrying?.() ? 'held' : 'in your Stores'}`),
+    ); // BAG1: the Stores' and what is carried
     li.append(take);
-    if (walledSaid) li.append(el('p', 'writ-walled', walledSaid));   // WRIT-WALL: on the card - a phone has no hover
+    if (walledSaid) li.append(el('p', 'writ-walled', walledSaid)); // WRIT-WALL: on the card - a phone has no hover
     li.append(el('span', 'notice-seal', ''));
     return li;
   }
@@ -573,27 +977,47 @@ export function mountNoticeBoard(host, deps) {
   /** CHAP2a: today's writs filled - the Court's and the halls' one allowance. */
   const writsFull = () => (work.book.state.writs?.today ?? 0) >= (work.book.state.writs?.max ?? 3);
   /** GUILD3a: a writ card's kind as it is written on the card - AUDIT BOARD-SIFT: and searched as it is written. */
-  function writKindText(w) { return w.kind === 'member' ? 'Your chapter writ' : isChapterWrit(w.kind) ? 'Chapter writ' : 'Court writ'; }
+  function writKindText(w) {
+    return w.kind === 'member' ? 'Your chapter writ' : isChapterWrit(w.kind) ? 'Chapter writ' : 'Court writ';
+  }
   /** BOARD-SIFT: a Court or chapter writ as the Work tab's bar sifts it - fillable while its Take would be (writNode's own
    *  law: open, held whole, today's allowance not spent), its silver its pay, its name its material. AUDIT BOARD-SIFT:
    *  its words its material one and many ("ruby" finds the Rubies), its kind as the card says it and its chapter's guild. */
   function writEntry(w) {
     const chapter = isChapterWrit(w.kind);
-    const name = work.countName(w.material, 2), open = w.state === 'open';
-    return { kind: chapter ? 'chapter' : 'court', open, fill: open && work.book.held(w.material) >= w.qty && !writsFull(), pay: Number(w.pay) || 0,
-      ends: Number(w.expiresAt) || 0, name, words: wordsOf(name, work.countName(w.material, 1), writKindText(w), chapter ? hallPosterName(w.faction) : null), card: () => writNode(w) };
+    const name = work.countName(w.material, 2),
+      open = w.state === 'open';
+    return {
+      kind: chapter ? 'chapter' : 'court',
+      open,
+      fill: open && work.book.held(w.material) >= w.qty && !writsFull(),
+      pay: Number(w.pay) || 0,
+      ends: Number(w.expiresAt) || 0,
+      name,
+      words: wordsOf(name, work.countName(w.material, 1), writKindText(w), chapter ? hallPosterName(w.faction) : null),
+      card: () => writNode(w),
+    };
   }
 
   /** CRAFT-WRITS (bible/06-Systems/Professions-Arc.md section 49): A CRAFTING WRIT'S CARD - the guild's ask, what fills it,
    *  its pay, its time left, what the character holds toward it (craftWritHost.js held) and Deliver, waiting with its
    *  reason where something is short or the day's are filled. @param {any} w */
   function craftNode(w) {
-    const li = el('li', ['notice-card', 'notice-writ', 'notice-craft', 'seal-guild', ...(w.state !== 'open' ? ['done'] : [])].join(' '));
+    const li = el(
+      'li',
+      ['notice-card', 'notice-writ', 'notice-craft', 'seal-guild', ...(w.state !== 'open' ? ['done'] : [])].join(' '),
+    );
     li.append(el('span', 'notice-pin'), el('span', 'writ-kind', t('notice.craftWrit.kind', 'Crafting writ')));
     li.append(el('p', 'writ-need', craftNeedText(w)));
     li.append(el('p', 'writ-made', craftMadeText(w.product)));
     li.append(el('p', 'writ-pay', craftPayText(w)));
-    li.append(el('p', 'writ-left', w.state === 'mine' ? t('notice.craftWrit.mine', 'Filled by you') : timeLeftText(w.expiresAt, nowS())));
+    li.append(
+      el(
+        'p',
+        'writ-left',
+        w.state === 'mine' ? t('notice.craftWrit.mine', 'Filled by you') : timeLeftText(w.expiresAt, nowS()),
+      ),
+    );
     if (w.state === 'open') {
       const h = work.crafts.held(w);
       const today = writs?.crafts?.today ?? { filled: 0, max: 3 };
@@ -603,8 +1027,15 @@ export function mountNoticeBoard(host, deps) {
       b.disabled = busy || workBusy || !h.ready || full;
       // why Deliver waits - on its title, its name for a reader, and the card (a phone has no hover): AUDIT CRAFT-WRITS C8,
       // the day's three filled said on the card too, where only the title said it
-      const why = !h.ready ? craftShortText(w, h) : full ? t('notice.craftWrit.full', 'You have filled today\'s crafting writs') : null;
-      if (why) { b.title = why; b.setAttribute('aria-label', `${t('notice.craftWrit.deliver', 'Deliver')}: ${why}`); }
+      const why = !h.ready
+        ? craftShortText(w, h)
+        : full
+          ? t('notice.craftWrit.full', "You have filled today's crafting writs")
+          : null;
+      if (why) {
+        b.title = why;
+        b.setAttribute('aria-label', `${t('notice.craftWrit.deliver', 'Deliver')}: ${why}`);
+      }
       take.append(b, el('span', null, craftHeldText(w, h)));
       li.append(take);
       if (why) li.append(el('p', 'writ-walled', `${why}.`));
@@ -617,17 +1048,32 @@ export function mountNoticeBoard(host, deps) {
    *  as a Court writ's are (`onTaken`), the list read again; said in the chat when the board closed first. @param {any} w */
   async function deliverCraft(w) {
     if (busy || workBusy || !work.crafts) return;
-    busy = true; render();
+    busy = true;
+    render();
     let r;
-    try { r = await work.crafts.deliver(w); } catch (e) { console.warn('[work] a crafting writ would not deliver', e); r = { ok: false, error: 'server' }; }   // C9: never a board held busy
+    try {
+      r = await work.crafts.deliver(w);
+    } catch (e) {
+      console.warn('[work] a crafting writ would not deliver', e);
+      r = { ok: false, error: 'server' };
+    } // C9: never a board held busy
     if (r?.ok && r.data) work.onTaken?.(r);
     const said = r?.ok ? craftFilledText(w, r.data) : craftRefusalText(r);
-    if (!alive) { if (r?.ok) work.sayLate?.(said); return; }
+    if (!alive) {
+      if (r?.ok) work.sayLate?.(said);
+      return;
+    }
     busy = false;
     // AUDIT CRAFT-WRITS C1: the card filled at once - the list read again comes after, and a press on its Deliver meanwhile
     // asked the service a second time
     if ((r?.ok || r?.error === 'craft-writ-filled') && writs?.crafts) {
-      writs = { ...writs, crafts: { ...writs.crafts, writs: writs.crafts.writs.map((x) => (x.id === w.id ? { ...x, state: 'mine' } : x)) } };
+      writs = {
+        ...writs,
+        crafts: {
+          ...writs.crafts,
+          writs: writs.crafts.writs.map((x) => (x.id === w.id ? { ...x, state: 'mine' } : x)),
+        },
+      };
     }
     word = { ok: !!r?.ok, text: said };
     loadWrits(true);
@@ -635,8 +1081,13 @@ export function mountNoticeBoard(host, deps) {
   /** C6: a delivery that did not land, said - the realm's silence (the goods wait with the record a rejoin reads) and a
    *  character changed before the ask in their own words, every other refusal the service's. @param {any} r */
   function craftRefusalText(r) {
-    if (r?.unknown) return t('notice.craftWrit.unknown', 'The realm did not answer. Rejoin and look at the board again - the writ shows whether it was filled.');
-    if (r?.elsewhere || r?.error === 'elsewhere') return t('notice.craftWrit.elsewhere', 'You are playing another character now - the writ was not delivered.');
+    if (r?.unknown)
+      return t(
+        'notice.craftWrit.unknown',
+        'The realm did not answer. Rejoin and look at the board again - the writ shows whether it was filled.',
+      );
+    if (r?.elsewhere || r?.error === 'elsewhere')
+      return t('notice.craftWrit.elsewhere', 'You are playing another character now - the writ was not delivered.');
     return accountRefusalText(r?.error);
   }
 
@@ -648,42 +1099,53 @@ export function mountNoticeBoard(host, deps) {
   function chapterCard(c) {
     const card = el('section', 'notice-panel notice-chapter-card');
     card.append(el('h3', null, `${hallPosterName(c.faction) ?? 'Guild'} - ${chapterBandOf(c.strength).name}`));
-    card.append(el('p', 'notice-chapter', `${chapterLineOf(c)}.`));   // CHAP3b: the chapter here, its Strength (AUDIT GUILD3 W12: a sentence, as the card's others)
+    card.append(el('p', 'notice-chapter', `${chapterLineOf(c)}.`)); // CHAP3b: the chapter here, its Strength (AUDIT GUILD3 W12: a sentence, as the card's others)
     const merit = (writs?.merit ?? []).find((m) => m.faction === c.faction);
     // GUILD3d: what the band does - AUDIT GUILD3 L3: none of its halls' where they are shut this Season (its season line says so)
     const band = chapterBandEffectsLine(c.strength, c.faction, { shut: !!chapterSeasonOf(c)?.shut });
     if (band) card.append(el('p', 'notice-chapter notice-band', band));
-    if (merit) card.append(el('p', 'notice-merit', `${meritLineOf(merit, nowS())}.`));   // CHAP3a: the account's Merit here (W12: a sentence)
+    if (merit) card.append(el('p', 'notice-merit', `${meritLineOf(merit, nowS())}.`)); // CHAP3a: the account's Merit here (W12: a sentence)
     // CHAP4d: and its Master's Focus this week - and, for its Master, the families to choose it from
     const focusLine = chapterFocusLineOf(c.faction, c.focus);
     if (focusLine) card.append(el('p', 'notice-chapter notice-focus', focusLine));
     if (c.master && c.focuses?.length && work.setFocus) {
-      const row = el('p', 'notice-chapter notice-focus-pick', 'Your chapter\'s Focus this week: ');
+      const row = el('p', 'notice-chapter notice-focus-pick', "Your chapter's Focus this week: ");
       for (const f of c.focuses) row.append(button(f === c.focus ? 'on' : '', f, () => setFocus(c.faction, f)));
       card.append(row);
     }
     // CHAP6c: its Season - the event, the doctrine, shut halls - and, for a member of its guild here (its Merit line
     // stands on the board), the sides it may back
-    for (const line of chapterSeasonLines(c.faction, work.region, c)) card.append(el('p', 'notice-chapter notice-season', line));
+    for (const line of chapterSeasonLines(c.faction, work.region, c))
+      card.append(el('p', 'notice-chapter notice-season', line));
     const choices = work.back && merit ? chapterBackChoices(c.faction, work.region, c) : [];
     if (choices.length) {
-      const row = el('p', 'notice-chapter notice-back-pick', c.event === 'schism' ? 'Back a side: ' : 'Name who follows: ');
-      for (const ch of choices) row.append(button(ch.side === c.backed ? 'on' : '', ch.label, () => backSide(c, ch.side)));
+      const row = el(
+        'p',
+        'notice-chapter notice-back-pick',
+        c.event === 'schism' ? 'Back a side: ' : 'Name who follows: ',
+      );
+      for (const ch of choices)
+        row.append(button(ch.side === c.backed ? 'on' : '', ch.label, () => backSide(c, ch.side)));
       card.append(row);
     }
     // CHAP7b: its patron this Season; and, for its guild's guildmaster (the board sends its bid to it alone), the guild's
     // own bid for the Season after and what it may bid
-    const patronLine = chapterPatronSheetLine(c.patron, c.faction);   // AUDIT GUILD3 L6: and what its patronage buys here
+    const patronLine = chapterPatronSheetLine(c.patron, c.faction); // AUDIT GUILD3 L6: and what its patronage buys here
     if (patronLine) card.append(el('p', 'notice-chapter notice-patron', patronLine));
     const bidLine = work.patron ? chapterPatronBidLine(c.patronBid) : null;
     if (bidLine) {
       card.append(el('p', 'notice-chapter notice-patron', bidLine));
-      const row = el('p', 'notice-chapter notice-patron-pick', c.patronBid.marks > 0 ? 'Raise the bid to: ' : 'Bid for it: ');
-      for (const m of chapterPatronBidsOf(c.patronBid)) row.append(button('', `${m.toLocaleString('en-US')} silver`, () => bidPatron(c, m)));
+      const row = el(
+        'p',
+        'notice-chapter notice-patron-pick',
+        c.patronBid.marks > 0 ? 'Raise the bid to: ' : 'Bid for it: ',
+      );
+      for (const m of chapterPatronBidsOf(c.patronBid))
+        row.append(button('', `${m.toLocaleString('en-US')} silver`, () => bidPatron(c, m)));
       card.append(row);
     }
     // GUILD3d: its Duties - a gate held, a raid defended - and the reader's first of each today (CHAP2b's asks)
-    const duties = chapterDutiesLine(c.faction, writs?.receipts, merit);   // AUDIT GUILD3 L2: Merit promised where the reader earns it
+    const duties = chapterDutiesLine(c.faction, writs?.receipts, merit); // AUDIT GUILD3 L2: Merit promised where the reader earns it
     if (duties) card.append(el('p', 'notice-chapter notice-duties', duties));
     return card;
   }
@@ -693,10 +1155,16 @@ export function mountNoticeBoard(host, deps) {
    *  Focus is, in the chat when the board closed first. @param {any} c @param {number} side */
   async function backSide(c, side) {
     if (busy || workBusy || !work.back) return;
-    busy = true; render();
+    busy = true;
+    render();
     const r = await work.back(c.faction, side);
-    const said = r?.ok ? { ok: true, text: chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' } : { ok: false, text: accountRefusalText(r?.error) };
-    if (!alive) { work.sayLate?.(said.text); return; }
+    const said = r?.ok
+      ? { ok: true, text: chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' }
+      : { ok: false, text: accountRefusalText(r?.error) };
+    if (!alive) {
+      work.sayLate?.(said.text);
+      return;
+    }
     busy = false;
     word = said;
     loadWrits(true);
@@ -706,10 +1174,16 @@ export function mountNoticeBoard(host, deps) {
    *  in the chat when the board closed first. @param {any} c @param {number} marks */
   async function bidPatron(c, marks) {
     if (busy || workBusy || !work.patron) return;
-    busy = true; render();
+    busy = true;
+    render();
     const r = await work.patron(c.faction, marks);
-    const said = r?.ok ? { ok: true, text: chapterPatronBidSaid(c.faction, r.data?.season ?? c.patronBid?.season, marks) ?? 'Bid made.' } : { ok: false, text: accountRefusalText(r?.error) };
-    if (!alive) { work.sayLate?.(said.text); return; }
+    const said = r?.ok
+      ? { ok: true, text: chapterPatronBidSaid(c.faction, r.data?.season ?? c.patronBid?.season, marks) ?? 'Bid made.' }
+      : { ok: false, text: accountRefusalText(r?.error) };
+    if (!alive) {
+      work.sayLate?.(said.text);
+      return;
+    }
     busy = false;
     word = said;
     loadWrits(true);
@@ -717,10 +1191,16 @@ export function mountNoticeBoard(host, deps) {
 
   async function setFocus(faction, focus) {
     if (busy || workBusy || !work.setFocus) return;
-    busy = true; render();
+    busy = true;
+    render();
     const r = await work.setFocus(faction, focus);
-    const said = r?.ok ? { ok: true, text: chapterFocusLineOf(faction, focus) ?? 'Focus set.' } : { ok: false, text: accountRefusalText(r?.error) };
-    if (!alive) { work.sayLate?.(said.text); return; }   // AUDIT CHAP4 C: a Focus set as the board closed is said in the chat, as a Take is
+    const said = r?.ok
+      ? { ok: true, text: chapterFocusLineOf(faction, focus) ?? 'Focus set.' }
+      : { ok: false, text: accountRefusalText(r?.error) };
+    if (!alive) {
+      work.sayLate?.(said.text);
+      return;
+    } // AUDIT CHAP4 C: a Focus set as the board closed is said in the chat, as a Take is
     busy = false;
     word = said;
     loadWrits(true);
@@ -728,20 +1208,37 @@ export function mountNoticeBoard(host, deps) {
 
   async function takeWrit(w) {
     if (busy || workBusy) return;
-    busy = true; render();
-    const r = await work.book.deliver(w.id, work.region, { material: w.material, qty: w.qty });   // AUDIT BAG1 B9: the card's own word
+    busy = true;
+    render();
+    const r = await work.book.deliver(w.id, work.region, { material: w.material, qty: w.qty }); // AUDIT BAG1 B9: the card's own word
     // AUDIT CHAP2 C1: the host hears a filled writ whether or not the board still stands - its balance, its Renown and a
     // hall writ's Roll refresh were lost with a board closed while the answer was out
     const said = r?.ok ? work.onTaken?.(r) : null;
-    if (!alive) { if (said) work.sayLate?.(said); return; }   // AUDIT CHAP3 C5: the line said in the chat, not lost with the board
+    if (!alive) {
+      if (said) work.sayLate?.(said);
+      return;
+    } // AUDIT CHAP3 C5: the line said in the chat, not lost with the board
     busy = false;
     if (r?.ok) {
-      writs = work.book.state && writs ? { ...writs, writs: writs.writs.map((x) => (x.id === w.id ? { ...x, state: 'mine' } : x)), today: r.data?.today ?? writs.today } : writs;
+      writs =
+        work.book.state && writs
+          ? {
+              ...writs,
+              writs: writs.writs.map((x) => (x.id === w.id ? { ...x, state: 'mine' } : x)),
+              today: r.data?.today ?? writs.today,
+            }
+          : writs;
       word = { ok: true, text: said || `Writ filled: ${r.data?.pay ?? w.pay} silver.` };
     } else {
       word = { ok: false, text: `${accountRefusalText(r?.error)}${movedFirstText(r)}` };
       // AUDIT CHAP3 C7: and a writ no longer the reader's (no-writ) or the Chapters shut: the list read again, its Take gone
-      if (r?.error === 'writ-taken' || r?.error === 'writ-expired' || r?.error === 'no-writ' || r?.error === 'chapters-closed') loadWrits(true);
+      if (
+        r?.error === 'writ-taken' ||
+        r?.error === 'writ-expired' ||
+        r?.error === 'no-writ' ||
+        r?.error === 'chapters-closed'
+      )
+        loadWrits(true);
     }
     render();
   }
@@ -751,12 +1248,25 @@ export function mountNoticeBoard(host, deps) {
     // BOARD-UI: the day's count above the cards - under the last card it stood off the bottom of a long list
     const today = writs?.today ?? { filled: work.book.state.writs?.today ?? 0, max: work.book.state.writs?.max ?? 3 };
     // AUDIT CHAP2 C5: "Writs" - the count is every writ the account filled today, the Court's and the halls' (CALL 8)
-    body.append(el('p', 'notice-worktoday', `Writs today: ${today.filled} of ${today.max}${writsStale ? ' - the list may be out of date' : ''}`));
+    body.append(
+      el(
+        'p',
+        'notice-worktoday',
+        `Writs today: ${today.filled} of ${today.max}${writsStale ? ' - the list may be out of date' : ''}`,
+      ),
+    );
     // CRAFT-WRITS: the character's crafting writs above the Court's - its own three, the day's count beside them. BOARD-SIFT
     // (at the merge of CRAFT-WRITS): they stand over the bar, never sifted by it - three of the character's own, their own day
-    const crafts = work.crafts ? writs?.crafts?.writs ?? [] : [];
+    const crafts = work.crafts ? (writs?.crafts?.writs ?? []) : [];
     if (crafts.length) {
-      body.append(sectionHead(t('notice.craftWrit.head', 'Crafting writs - {filled, number} of {max, number} today', { filled: writs.crafts.today.filled, max: writs.crafts.today.max })));
+      body.append(
+        sectionHead(
+          t('notice.craftWrit.head', 'Crafting writs - {filled, number} of {max, number} today', {
+            filled: writs.crafts.today.filled,
+            max: writs.crafts.today.max,
+          }),
+        ),
+      );
       const cg = el('ul', 'notice-grid');
       cg.setAttribute('role', 'list');
       for (const w of crafts) cg.append(craftNode(w));
@@ -776,12 +1286,14 @@ export function mountNoticeBoard(host, deps) {
       if (writsBusy && !writs) return [el('li', 'notice-empty', BOARD_WORDS.writsReading)];
       if (!writs && writsError) {
         const shut = writsError === 'prof-closed' || writsError === 'no-session' || writsError === 'auth';
-        const li = el('li', 'notice-empty', shut ? BOARD_WORDS.writsShut : BOARD_WORDS.writsSlow);   // AUDIT 31 U13: the guilds' and the commissions' too
-        if (!shut) li.append(button('notice-retry', 'Try again', () => loadWrits(true)));   // AUDIT 29 C11: read now, not in a minute
+        const li = el('li', 'notice-empty', shut ? BOARD_WORDS.writsShut : BOARD_WORDS.writsSlow); // AUDIT 31 U13: the guilds' and the commissions' too
+        if (!shut) li.append(button('notice-retry', 'Try again', () => loadWrits(true))); // AUDIT 29 C11: read now, not in a minute
         return [li];
       }
       const sifting = sift.kind !== 'all' || !!sift.find.trim() || sift.fill;
-      return writs && !list.length && (!entries.length || !sifting) ? [el('li', 'notice-empty', BOARD_WORDS.writsNone(work.regionName))] : [];
+      return writs && !list.length && (!entries.length || !sifting)
+        ? [el('li', 'notice-empty', BOARD_WORDS.writsNone(work.regionName))]
+        : [];
     };
     // AUDIT BOARD-SIFT (lane B M4): the bar's own changes draw the results alone - the grid, "Show more", the bar's counts
     const foot = el('div', 'work-sift-foot');
@@ -796,27 +1308,40 @@ export function mountNoticeBoard(host, deps) {
     refresh();
     if (bar) body.append(bar);
     body.append(grid, foot);
-    const yours = workMore ? workMore.node(writs) : null;   // PROF6: "Yours", the forms
+    const yours = workMore ? workMore.node(writs) : null; // PROF6: "Yours", the forms
     if (yours) body.append(yours);
     // BOARD-SIFT: the region's chapters after the work, under their own head - their panels stood over the writs, a
     // dozen of them between the reader and the first card
     const carded = new Set((writs?.chapters ?? []).map((c) => c.faction));
-    if (writs?.chapters?.length || (writs?.merit ?? []).some((m) => !carded.has(m.faction))) body.append(sectionHead(t('notice.chapters.head', 'Chapters in {region}', { region: work.regionName })));
+    if (writs?.chapters?.length || (writs?.merit ?? []).some((m) => !carded.has(m.faction)))
+      body.append(sectionHead(t('notice.chapters.head', 'Chapters in {region}', { region: work.regionName })));
     // CHAP3a: the account's Merit here - GUILD3d: on its chapter's card; above them only for a chapter the board draws
     // no card for (a service from before the cards)
-    for (const m of writs?.merit ?? []) if (!carded.has(m.faction)) body.append(el('p', 'notice-merit', meritLineOf(m, nowS())));
+    for (const m of writs?.merit ?? [])
+      if (!carded.has(m.faction)) body.append(el('p', 'notice-merit', meritLineOf(m, nowS())));
     // PLAIN-UI: HOW CHAPTERS WORK over the cards - open for a reader with no Merit in any of them yet, folded for one with
     // some. AUDIT PLAIN-UI T3: the service sends a Merit row for EVERY membership here (npcMerit.js meritAsks, 0 and a
     // week's wait included), so its length folded the guide for the newest member, who needs it most
     if (writs?.chapters?.length) {
-      const guide = boardFold(el, 'notice-panel chapter-guide board-guide', CHAPTER_GUIDE_TITLE,
-        chapterGuideOpen ?? !(writs?.merit ?? []).some((m) => Number(m?.merit) > 0), (o) => { chapterGuideOpen = o; });
+      const guide = boardFold(
+        el,
+        'notice-panel chapter-guide board-guide',
+        CHAPTER_GUIDE_TITLE,
+        chapterGuideOpen ?? !(writs?.merit ?? []).some((m) => Number(m?.merit) > 0),
+        (o) => {
+          chapterGuideOpen = o;
+        },
+      );
       const steps = el('ol');
-      for (const [name, words] of chapterGuide()) { const li = el('li'); li.append(el('b', null, `${name}. `), words); steps.append(li); }
+      for (const [name, words] of chapterGuide()) {
+        const li = el('li');
+        li.append(el('b', null, `${name}. `), words);
+        steps.append(li);
+      }
       guide.append(steps);
       body.append(guide);
     }
-    for (const c of writs?.chapters ?? []) body.append(chapterCard(c));   // GUILD3d: each chapter here, one card
+    for (const c of writs?.chapters ?? []) body.append(chapterCard(c)); // GUILD3d: each chapter here, one card
     return body;
   }
 
@@ -829,9 +1354,19 @@ export function mountNoticeBoard(host, deps) {
     foot.append(el('span', 'notice-from', c.from ? `- ${c.from}` : NOTICE_SEALS[c.seal]));
     if (c.isNew) foot.append(el('span', 'notice-new', 'new'));
     li.append(foot, el('span', 'notice-seal', ''));
-    const open = () => { reading = c; view = 'read'; word = null; render(); };
+    const open = () => {
+      reading = c;
+      view = 'read';
+      word = null;
+      render();
+    };
     li.onclick = open;
-    li.onkeydown = (e) => { if (e.target === li && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault?.(); open(); } };
+    li.onkeydown = (e) => {
+      if (e.target === li && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault?.();
+        open();
+      }
+    };
     return li;
   }
 
@@ -850,19 +1385,43 @@ export function mountNoticeBoard(host, deps) {
   /** THE NOTICES TAB (BOARD-UI): the town's and the server's word ("News"), then the players' notes under their count. */
   function boardBody() {
     const body = el('div', 'notice-cork');
-    const cards = noticeCards({ town: deps.town, rumour: deps.rumour, bountyLine: deps.bountyLine, gate: deps.gate?.() ?? null, sd: deps.sd?.() ?? null, board, seenAt: seenAtOpen });   // SD2c: a found Super dungeon's card among the news, as the gate's
-    const news = cards.filter((c) => !c.note), notes = cards.filter((c) => c.note);
+    const cards = noticeCards({
+      town: deps.town,
+      rumour: deps.rumour,
+      bountyLine: deps.bountyLine,
+      gate: deps.gate?.() ?? null,
+      sd: deps.sd?.() ?? null,
+      board,
+      seenAt: seenAtOpen,
+    }); // SD2c: a found Super dungeon's card among the news, as the gate's
+    const news = cards.filter((c) => !c.note),
+      notes = cards.filter((c) => c.note);
     if (news.length) body.append(sectionHead(BOARD_WORDS.news), gridOf(news));
     // QL-OFFERED: the questlines' introductions on offer, under the town's seal and their givers' names
-    const work = (linesOf()?.cards ?? []).map((l) => ({ key: `ql:${l.id}`, seal: 'town', subject: l.title, body: l.text, from: l.giver, line: l }));
+    const work = (linesOf()?.cards ?? []).map((l) => ({
+      key: `ql:${l.id}`,
+      seal: 'town',
+      subject: l.title,
+      body: l.text,
+      from: l.giver,
+      line: l,
+    }));
     if (work.length) body.append(sectionHead(t('ql.board.head', 'Help wanted'), work.length), gridOf(work));
     body.append(sectionHead(BOARD_WORDS.notes, board ? notes.length : null));
     const grid = gridOf(notes);
     if (!board && !busy && error) {
       // AUDIT 28 N11: a board closed to this account says so - the next press is DFU's own sign again
-      grid.append(el('li', 'notice-empty', error === 'board-closed' || error === 'no-session' || error === 'auth' ? BOARD_WORDS.closed : BOARD_WORDS.slow));
-    }
-    else if (board && !notes.length) grid.append(el('li', 'notice-empty', `${BOARD_WORDS.noNotes}${me().canPin ? ' Pin the first.' : ''}`));
+      grid.append(
+        el(
+          'li',
+          'notice-empty',
+          error === 'board-closed' || error === 'no-session' || error === 'auth'
+            ? BOARD_WORDS.closed
+            : BOARD_WORDS.slow,
+        ),
+      );
+    } else if (board && !notes.length)
+      grid.append(el('li', 'notice-empty', `${BOARD_WORDS.noNotes}${me().canPin ? ' Pin the first.' : ''}`));
     body.append(grid);
     return body;
   }
@@ -878,7 +1437,16 @@ export function mountNoticeBoard(host, deps) {
 
   /** GUILD1e: a town's recruitment note hung as its guild's poster - the banner, the guild, the note's subject. */
   function posterNode(n) {
-    const c = { key: `note:${n.id}`, seal: 'guild', subject: n.subject, body: n.body, from: n.from, at: n.at, expiresAt: n.expiresAt, note: n };
+    const c = {
+      key: `note:${n.id}`,
+      seal: 'guild',
+      subject: n.subject,
+      body: n.body,
+      from: n.from,
+      at: n.at,
+      expiresAt: n.expiresAt,
+      note: n,
+    };
     const li = el('li', 'notice-card notice-poster seal-guild');
     li.setAttribute('role', 'button');
     li.setAttribute('tabindex', '0');
@@ -887,9 +1455,19 @@ export function mountNoticeBoard(host, deps) {
     if (img) li.append(img);
     li.append(el('h4', null, `<${n.guild.tag}> ${n.guild.name}`), el('p', 'notice-snippet', n.subject));
     li.append(el('div', 'notice-foot', `- ${n.from}`), el('span', 'notice-seal', ''));
-    const open = () => { reading = c; view = 'read'; word = null; render(); };
+    const open = () => {
+      reading = c;
+      view = 'read';
+      word = null;
+      render();
+    };
     li.onclick = open;
-    li.onkeydown = (e) => { if (e.target === li && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault?.(); open(); } };
+    li.onkeydown = (e) => {
+      if (e.target === li && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault?.();
+        open();
+      }
+    };
     return li;
   }
 
@@ -906,15 +1484,31 @@ export function mountNoticeBoard(host, deps) {
     const grid = el('ul', 'notice-grid');
     grid.setAttribute('role', 'list');
     const notes = gboard?.notes ?? [];
-    for (const n of notes) grid.append(cardNode({ key: `gnote:${n.id}`, seal: 'guild', subject: n.subject, body: n.body, from: n.from, at: n.at, expiresAt: n.expiresAt, gnote: n }));
-    if (gbusy && !gboard) grid.append(el('li', 'notice-empty', 'Reading your guild\'s board...'));
+    for (const n of notes)
+      grid.append(
+        cardNode({
+          key: `gnote:${n.id}`,
+          seal: 'guild',
+          subject: n.subject,
+          body: n.body,
+          from: n.from,
+          at: n.at,
+          expiresAt: n.expiresAt,
+          gnote: n,
+        }),
+      );
+    if (gbusy && !gboard) grid.append(el('li', 'notice-empty', "Reading your guild's board..."));
     else if (!gboard && gerror) {
       const shut = gerror === 'board-closed' || gerror === 'no-session' || gerror === 'auth';
-      const li = el('li', 'notice-empty', gerror === 'no-guild' ? GUILD_BOARD_EMPTY['no-guild'] : shut ? GUILD_BOARD_EMPTY.shut : GUILD_BOARD_EMPTY.slow);
+      const li = el(
+        'li',
+        'notice-empty',
+        gerror === 'no-guild' ? GUILD_BOARD_EMPTY['no-guild'] : shut ? GUILD_BOARD_EMPTY.shut : GUILD_BOARD_EMPTY.slow,
+      );
       if (!shut && gerror !== 'no-guild') li.append(button('notice-retry', 'Try again', () => loadGuild(true)));
       grid.append(li);
-    }
-    else if (gboard && !notes.length) grid.append(el('li', 'notice-empty', GUILD_BOARD_EMPTY.none(g?.name ?? 'your guild')));
+    } else if (gboard && !notes.length)
+      grid.append(el('li', 'notice-empty', GUILD_BOARD_EMPTY.none(g?.name ?? 'your guild')));
     body.append(grid);
     if (!guildOnly) {
       const posters = recruitPosters(board);
@@ -934,25 +1528,50 @@ export function mountNoticeBoard(host, deps) {
     const body = el('div', 'notice-cork');
     const form = el('form', 'notice-form');
     const subject = /** @type {HTMLInputElement} */ (el('input', 'notice-input'));
-    subject.maxLength = NOTE_SUBJECT_MAX; subject.value = d.subject; subject.placeholder = 'What is it about?';
+    subject.maxLength = NOTE_SUBJECT_MAX;
+    subject.value = d.subject;
+    subject.placeholder = 'What is it about?';
     subject.setAttribute('data-focus', 'gsubject');
     const text = /** @type {HTMLTextAreaElement} */ (el('textarea', 'notice-textarea'));
-    text.maxLength = NOTE_BODY_MAX; text.value = d.body; text.rows = 7; text.placeholder = 'Your note';
+    text.maxLength = NOTE_BODY_MAX;
+    text.value = d.body;
+    text.rows = 7;
+    text.placeholder = 'Your note';
     text.setAttribute('data-focus', 'gbody');
     const counted = el('span', 'notice-count', `${d.body.length} / ${NOTE_BODY_MAX}`);
-    subject.oninput = () => { d.subject = subject.value; };
-    text.oninput = () => { d.body = text.value; counted.textContent = `${text.value.length} / ${NOTE_BODY_MAX}${text.value.split('\n').length > NOTE_LINES_MAX ? ` - at most ${NOTE_LINES_MAX} lines` : ''}`; };
+    subject.oninput = () => {
+      d.subject = subject.value;
+    };
+    text.oninput = () => {
+      d.body = text.value;
+      counted.textContent = `${text.value.length} / ${NOTE_BODY_MAX}${text.value.split('\n').length > NOTE_LINES_MAX ? ` - at most ${NOTE_LINES_MAX} lines` : ''}`;
+    };
     const days = /** @type {HTMLSelectElement} */ (el('select', 'notice-select'));
-    for (const n of NOTE_DAYS) { const o = /** @type {HTMLOptionElement} */ (el('option', null, `${n} day${n === 1 ? '' : 's'}`)); o.value = String(n); if (n === d.days) o.selected = true; days.append(o); }
-    days.onchange = () => { d.days = Number(days.value); };
+    for (const n of NOTE_DAYS) {
+      const o = /** @type {HTMLOptionElement} */ (el('option', null, `${n} day${n === 1 ? '' : 's'}`));
+      o.value = String(n);
+      if (n === d.days) o.selected = true;
+      days.append(o);
+    }
+    days.onchange = () => {
+      d.days = Number(days.value);
+    };
     form.append(field('Subject', subject), field('Note', text, counted), field('Keep it up for', days));
     form.append(el('p', 'notice-tip', `Only members of ${gboard?.guild?.name ?? 'your guild'} can read it.`));
     const acts = el('div', 'notice-acts');
-    acts.append(button('primary notice-dopin', gbusy ? 'Pinning...' : 'Pin it', () => {
-      gact(() => deps.book.pinGuild(character(), { subject: d.subject, body: d.body, days: d.days }))
-        .then(() => { if (word?.ok) { d.subject = ''; d.body = ''; } });
-    }));
-    form.onsubmit = (e) => { e.preventDefault(); };
+    acts.append(
+      button('primary notice-dopin', gbusy ? 'Pinning...' : 'Pin it', () => {
+        gact(() => deps.book.pinGuild(character(), { subject: d.subject, body: d.body, days: d.days })).then(() => {
+          if (word?.ok) {
+            d.subject = '';
+            d.body = '';
+          }
+        });
+      }),
+    );
+    form.onsubmit = (e) => {
+      e.preventDefault();
+    };
     form.append(acts);
     body.append(form);
     setTimeout(() => subject.focus?.(), 0);
@@ -968,19 +1587,32 @@ export function mountNoticeBoard(host, deps) {
     if (n?.guild) card.append(el('p', 'notice-guild', `Recruiting for <${n.guild.tag}> ${n.guild.name}`));
     card.append(el('p', 'notice-text', c.body));
     const meta = el('p', 'notice-meta');
-    meta.textContent = [c.from ? `Posted by ${c.from}${n?.title ? `, ${n.title}` : ''}` : NOTICE_SEALS[c.seal], c.expiresAt ? timeLeftText(c.expiresAt, nowS()) : ''].filter(Boolean).join(' · ');
+    meta.textContent = [
+      c.from ? `Posted by ${c.from}${n?.title ? `, ${n.title}` : ''}` : NOTICE_SEALS[c.seal],
+      c.expiresAt ? timeLeftText(c.expiresAt, nowS()) : '',
+    ]
+      .filter(Boolean)
+      .join(' · ');
     card.append(meta);
-    if (!me().moderator && n?.mine && n.hidden) card.append(el('p', 'notice-mod', BOARD_WORDS.hidden));   // AUDIT 28 N2
-    if (me().moderator && n?.hidden) card.append(el('p', 'notice-mod', `Hidden by ${n.reports} report${n.reports === 1 ? '' : 's'} · note ${n.id}`));
-    else if (me().moderator && n) card.append(el('p', 'notice-mod', `Note ${n.id}${n.reports ? ` · ${n.reports} report${n.reports === 1 ? '' : 's'}` : ''}`));
+    if (!me().moderator && n?.mine && n.hidden) card.append(el('p', 'notice-mod', BOARD_WORDS.hidden)); // AUDIT 28 N2
+    if (me().moderator && n?.hidden)
+      card.append(el('p', 'notice-mod', `Hidden by ${n.reports} report${n.reports === 1 ? '' : 's'} · note ${n.id}`));
+    else if (me().moderator && n)
+      card.append(
+        el('p', 'notice-mod', `Note ${n.id}${n.reports ? ` · ${n.reports} report${n.reports === 1 ? '' : 's'}` : ''}`),
+      );
     const acts = el('div', 'notice-acts');
     // QL-OFFERED: a questline's letter - its Take begins the line with the very quest this card was read from
     if (c.line) {
       const take = button('primary notice-take', t('ql.board.take', 'Take it'), () => {
         const r = linesOf()?.take(c.line.id) ?? { ok: false, text: '' };
-        if (r.ok && lineOffers) lineOffers = { ...lineOffers, cards: lineOffers.cards.filter((x) => x.id !== c.line.id) };
+        if (r.ok && lineOffers)
+          lineOffers = { ...lineOffers, cards: lineOffers.cards.filter((x) => x.id !== c.line.id) };
         word = { ok: !!r.ok, text: r.text ?? '' };
-        if (r.ok) { view = 'board'; reading = null; }
+        if (r.ok) {
+          view = 'board';
+          reading = null;
+        }
         render();
       });
       take.title = t('ql.board.takeTitle', 'Begin this questline. Its steps are on the Quests tab of the pause menu.');
@@ -990,30 +1622,53 @@ export function mountNoticeBoard(host, deps) {
       const b = button('primary notice-answer', NOTE_BUTTON_LABEL[n.button] ?? 'Answer', () => {
         // PROF6: a crafter's advertisement - the Work tab's commission form, its author named (10.6)
         if (n.button === 'commission') {
-          if (!commissionsOpen()) { word = { ok: false, text: 'Commissions are not open to you here.' }; render(); return; }
+          if (!commissionsOpen()) {
+            word = { ok: false, text: 'Commissions are not open to you here.' };
+            render();
+            return;
+          }
           workMore.openCommission(n.from);
-          tab = 'work'; view = 'board'; reading = null; word = null;
+          tab = 'work';
+          view = 'board';
+          reading = null;
+          word = null;
           openWork();
           render();
           return;
         }
         const r = deps.answer?.(n);
-        if (r && r.ok === false) { word = { ok: false, text: r.text ?? '' }; render(); }
+        if (r && r.ok === false) {
+          word = { ok: false, text: r.text ?? '' };
+          render();
+        }
       });
-      if (!me().canPin) { b.disabled = true; b.title = BOARD_WORDS.guestAnswer; }
+      if (!me().canPin) {
+        b.disabled = true;
+        b.title = BOARD_WORDS.guestAnswer;
+      }
       // AUDIT 31 U5: a crafter's button only where commissions are this account's - never pressed to be refused
-      else if (n.button === 'commission' && !commissionsOpen()) { b.disabled = true; b.setAttribute('title', 'Commissions are not open to you here'); }
+      else if (n.button === 'commission' && !commissionsOpen()) {
+        b.disabled = true;
+        b.setAttribute('title', 'Commissions are not open to you here');
+      }
       acts.append(b);
     }
     if (n?.mine) acts.append(button('notice-takedown', 'Take it down', () => act(() => deps.book.takeDown(map, n.id))));
-    if (n && !n.mine && me().canPin) acts.append(button('notice-report', 'Report', () => act(() => deps.book.report(map, n.id))));
+    if (n && !n.mine && me().canPin)
+      acts.append(button('notice-report', 'Report', () => act(() => deps.book.report(map, n.id))));
     if (n && me().moderator) {
       if (n.hidden) acts.append(button('notice-restore', 'Restore', () => act(() => deps.book.modRestore(map, n.id))));
       acts.append(button('notice-remove', 'Remove', () => act(() => deps.book.modRemove(map, n.id))));
     }
-    if (c.notice && me().developer) acts.append(button('notice-remove', 'Take the notice down', () => act(() => deps.book.noticeRemove(map, c.notice.id))));
+    if (c.notice && me().developer)
+      acts.append(
+        button('notice-remove', 'Take the notice down', () => act(() => deps.book.noticeRemove(map, c.notice.id))),
+      );
     // GUILD1e: a guild note - its author's to take down, and an Officer's or the guildmaster's (the service asks again)
-    if (c.gnote && (c.gnote.mine || gme().keeper)) acts.append(button('notice-takedown', 'Take it down', () => gact(() => deps.book.takeDownGuild(character(), c.gnote.id))));
+    if (c.gnote && (c.gnote.mine || gme().keeper))
+      acts.append(
+        button('notice-takedown', 'Take it down', () => gact(() => deps.book.takeDownGuild(character(), c.gnote.id))),
+      );
     card.append(acts);
     body.append(card);
     return body;
@@ -1030,27 +1685,71 @@ export function mountNoticeBoard(host, deps) {
     const body = el('div', 'notice-cork');
     const form = el('form', 'notice-form');
     const subject = /** @type {HTMLInputElement} */ (el('input', 'notice-input'));
-    subject.maxLength = NOTE_SUBJECT_MAX; subject.value = draft.subject; subject.placeholder = 'What is it about?';
+    subject.maxLength = NOTE_SUBJECT_MAX;
+    subject.value = draft.subject;
+    subject.placeholder = 'What is it about?';
     const text = /** @type {HTMLTextAreaElement} */ (el('textarea', 'notice-textarea'));
-    text.maxLength = NOTE_BODY_MAX; text.value = draft.body; text.rows = 7; text.placeholder = 'Your note';
+    text.maxLength = NOTE_BODY_MAX;
+    text.value = draft.body;
+    text.rows = 7;
+    text.placeholder = 'Your note';
     const counted = el('span', 'notice-count', `${draft.body.length} / ${NOTE_BODY_MAX}`);
-    subject.oninput = () => { draft.subject = subject.value; };
-    text.oninput = () => { draft.body = text.value; counted.textContent = `${text.value.length} / ${NOTE_BODY_MAX}${text.value.split('\n').length > NOTE_LINES_MAX ? ` - at most ${NOTE_LINES_MAX} lines` : ''}`; };
+    subject.oninput = () => {
+      draft.subject = subject.value;
+    };
+    text.oninput = () => {
+      draft.body = text.value;
+      counted.textContent = `${text.value.length} / ${NOTE_BODY_MAX}${text.value.split('\n').length > NOTE_LINES_MAX ? ` - at most ${NOTE_LINES_MAX} lines` : ''}`;
+    };
     const days = /** @type {HTMLSelectElement} */ (el('select', 'notice-select'));
-    for (const d of NOTE_DAYS) { const o = /** @type {HTMLOptionElement} */ (el('option', null, `${d} day${d === 1 ? '' : 's'}`)); o.value = String(d); if (d === draft.days) o.selected = true; days.append(o); }
-    days.onchange = () => { draft.days = Number(days.value); };
+    for (const d of NOTE_DAYS) {
+      const o = /** @type {HTMLOptionElement} */ (el('option', null, `${d} day${d === 1 ? '' : 's'}`));
+      o.value = String(d);
+      if (d === draft.days) o.selected = true;
+      days.append(o);
+    }
+    days.onchange = () => {
+      draft.days = Number(days.value);
+    };
     const btn = /** @type {HTMLSelectElement} */ (el('select', 'notice-select'));
-    for (const k of ['', ...NOTE_BUTTONS]) { const o = /** @type {HTMLOptionElement} */ (el('option', null, k ? NOTE_BUTTON_LABEL[k] : 'None')); o.value = k; if (k === draft.button) o.selected = true; btn.append(o); }
-    btn.onchange = () => { draft.button = btn.value; };
-    form.append(field('Subject', subject), field('Note', text, counted), field('Keep it up for', days), field('Answer button', btn));
+    for (const k of ['', ...NOTE_BUTTONS]) {
+      const o = /** @type {HTMLOptionElement} */ (el('option', null, k ? NOTE_BUTTON_LABEL[k] : 'None'));
+      o.value = k;
+      if (k === draft.button) o.selected = true;
+      btn.append(o);
+    }
+    btn.onchange = () => {
+      draft.button = btn.value;
+    };
+    form.append(
+      field('Subject', subject),
+      field('Note', text, counted),
+      field('Keep it up for', days),
+      field('Answer button', btn),
+    );
     form.append(el('p', 'notice-tip', BOARD_WORDS.pinTip));
     const acts = el('div', 'notice-acts');
     const pin = button('primary notice-dopin', busy ? 'Pinning...' : 'Pin it', () => {
-      act(() => deps.book.pin(map, { subject: draft.subject, body: draft.body, days: draft.days, button: draft.button || null, character: deps.character?.() ?? null }))
-        .then(() => { if (word?.ok) { draft.subject = ''; draft.body = ''; draft.button = ''; } });
+      act(() =>
+        deps.book.pin(map, {
+          subject: draft.subject,
+          body: draft.body,
+          days: draft.days,
+          button: draft.button || null,
+          character: deps.character?.() ?? null,
+        }),
+      ).then(() => {
+        if (word?.ok) {
+          draft.subject = '';
+          draft.body = '';
+          draft.button = '';
+        }
+      });
     });
     acts.append(pin);
-    form.onsubmit = (e) => { e.preventDefault(); };
+    form.onsubmit = (e) => {
+      e.preventDefault();
+    };
     form.append(acts);
     body.append(form);
     setTimeout(() => subject.focus?.(), 0);
@@ -1061,22 +1760,43 @@ export function mountNoticeBoard(host, deps) {
     const body = el('div', 'notice-cork');
     const form = el('form', 'notice-form');
     const subject = /** @type {HTMLInputElement} */ (el('input', 'notice-input'));
-    subject.maxLength = NOTE_SUBJECT_MAX; subject.value = noticeDraft.subject;
+    subject.maxLength = NOTE_SUBJECT_MAX;
+    subject.value = noticeDraft.subject;
     const text = /** @type {HTMLTextAreaElement} */ (el('textarea', 'notice-textarea'));
-    text.maxLength = NOTE_BODY_MAX; text.value = noticeDraft.body; text.rows = 6;
+    text.maxLength = NOTE_BODY_MAX;
+    text.value = noticeDraft.body;
+    text.rows = 6;
     const days = /** @type {HTMLInputElement} */ (el('input', 'notice-input notice-days'));
-    days.type = 'number'; days.min = '1'; days.max = String(NOTICE_DAYS_MAX); days.value = String(noticeDraft.days);
-    subject.oninput = () => { noticeDraft.subject = subject.value; };
-    text.oninput = () => { noticeDraft.body = text.value; };
-    days.oninput = () => { noticeDraft.days = Number(days.value); };
+    days.type = 'number';
+    days.min = '1';
+    days.max = String(NOTICE_DAYS_MAX);
+    days.value = String(noticeDraft.days);
+    subject.oninput = () => {
+      noticeDraft.subject = subject.value;
+    };
+    text.oninput = () => {
+      noticeDraft.body = text.value;
+    };
+    days.oninput = () => {
+      noticeDraft.days = Number(days.value);
+    };
     form.append(field('Subject', subject), field('Notice', text), field(`Days (1 to ${NOTICE_DAYS_MAX})`, days));
     form.append(el('p', 'notice-tip', BOARD_WORDS.noticeTip));
     const acts = el('div', 'notice-acts');
-    acts.append(button('primary notice-dopost', 'Post on every board', () => {
-      // AUDIT 28 N7: posted, the draft is spent - a second press never puts the same notice up twice
-      act(() => deps.book.notice(map, { ...noticeDraft })).then(() => { if (word?.ok) { noticeDraft.subject = ''; noticeDraft.body = ''; } });
-    }));
-    form.onsubmit = (e) => { e.preventDefault(); };
+    acts.append(
+      button('primary notice-dopost', 'Post on every board', () => {
+        // AUDIT 28 N7: posted, the draft is spent - a second press never puts the same notice up twice
+        act(() => deps.book.notice(map, { ...noticeDraft })).then(() => {
+          if (word?.ok) {
+            noticeDraft.subject = '';
+            noticeDraft.body = '';
+          }
+        });
+      }),
+    );
+    form.onsubmit = (e) => {
+      e.preventDefault();
+    };
     form.append(acts);
     body.append(form);
     return body;
@@ -1090,9 +1810,15 @@ export function mountNoticeBoard(host, deps) {
    */
   function keptOf() {
     const a = /** @type {any} */ (globalThis.document?.activeElement);
-    const key = a && win.contains?.(a) ? a.getAttribute?.('data-focus') ?? null : null;
+    const key = a && win.contains?.(a) ? (a.getAttribute?.('data-focus') ?? null) : null;
     let at = null;
-    if (key) { try { at = [a.selectionStart, a.selectionEnd]; } catch { /* a number field has none */ } }
+    if (key) {
+      try {
+        at = [a.selectionStart, a.selectionEnd];
+      } catch {
+        /* a number field has none */
+      }
+    }
     const b = /** @type {any} */ (win.querySelector?.('.notice-cork'));
     return { key, at, top: b?.scrollTop ?? 0, where: `${tab}|${view}` };
   }
@@ -1102,17 +1828,32 @@ export function mountNoticeBoard(host, deps) {
     if (!k.key) return;
     // AUDIT BOARD-SIFT (lane B L5): and a press that keys its focus (the market's pages) - the focus fell to the page.
     // AUDIT PACK-PICK (lane B): and a fold's name (a pack picker's refused) - a picture landing took the focus from it
-    const n = /** @type {any} */ ([...(win.querySelectorAll?.('input, select, textarea, button, summary') ?? [])].find((x) => x.getAttribute?.('data-focus') === k.key));
+    const n = /** @type {any} */ (
+      [...(win.querySelectorAll?.('input, select, textarea, button, summary') ?? [])].find(
+        (x) => x.getAttribute?.('data-focus') === k.key,
+      )
+    );
     if (!n) return;
-    try { n.focus?.({ preventScroll: true }); } catch { n.focus?.(); }
-    if (k.at && k.at[0] != null) { try { n.setSelectionRange(k.at[0], k.at[1]); } catch { /* none to set */ } }
+    try {
+      n.focus?.({ preventScroll: true });
+    } catch {
+      n.focus?.();
+    }
+    if (k.at && k.at[0] != null) {
+      try {
+        n.setSelectionRange(k.at[0], k.at[1]);
+      } catch {
+        /* none to set */
+      }
+    }
   }
   /** CRASH-BLUR (from play, 2026-10-07: "NotFoundError: Failed to execute 'replaceChildren' ... Perhaps it was moved in a
    *  'blur' event handler"): a paint asked for WHILE one paints is coalesced, never run inside it. Emptying the window
    *  takes a focused list out of the document, the browser blurs it as it goes, and the Market's answer held for that
    *  list (marketTab.js's redraw) repaints on that blur - a second replaceChildren inside the first emptied the window
    *  under it, and the first threw on the node already gone. The inner ask is kept and drawn once the outer is done. */
-  let painting = false, paintAgain = false;
+  let painting = false,
+    paintAgain = false;
   /** AUDIT BOARD-SIFT (lane B M4): A PAINT WAITS ON A WORD BEING COMPOSED in one of the window's fields (an IME's, a phone
    *  keyboard's - ui/workSift.js typedField marks it): emptying the window took the field mid-word, and the composition
    *  landed twice ("mitmithril"). It paints once the word is whole, or the field let go. */
@@ -1122,7 +1863,11 @@ export function mountNoticeBoard(host, deps) {
     if (a?.getAttribute?.('data-composing') !== '1' || !win.contains?.(a)) return false;
     if (!composeWait) {
       composeWait = true;
-      const go = () => { if (!composeWait) return; composeWait = false; render(); };
+      const go = () => {
+        if (!composeWait) return;
+        composeWait = false;
+        render();
+      };
       a.addEventListener?.('compositionend', go, { once: true });
       a.addEventListener?.('blur', go, { once: true });
     }
@@ -1132,12 +1877,18 @@ export function mountNoticeBoard(host, deps) {
    *  down and coming up took the pressed node out from under it, and the browser's click found no tile (a pack's pictures
    *  landing dropped a phone's taps). It paints once the press is let go - after the press's own click, which follows the
    *  pointer's coming up in the same input's task (so a timer, never a microtask) - or once it has been held two seconds. */
-  let pressAt = 0, pressWait = false;
-  const pressDown = () => { pressAt = Date.now(); };
+  let pressAt = 0,
+    pressWait = false;
+  const pressDown = () => {
+    pressAt = Date.now();
+  };
   const pressUp = () => {
     if (!pressAt) return;
     pressAt = 0;
-    if (pressWait) { pressWait = false; setTimeout(() => render(), 0); }
+    if (pressWait) {
+      pressWait = false;
+      setTimeout(() => render(), 0);
+    }
   };
   shell.addEventListener('pointerdown', pressDown, true);
   globalThis.addEventListener('pointerup', pressUp, true);
@@ -1149,12 +1900,20 @@ export function mountNoticeBoard(host, deps) {
   };
   function render() {
     if (!alive) return;
-    if (painting) { paintAgain = true; return; }
+    if (painting) {
+      paintAgain = true;
+      return;
+    }
     if (composing() || pressing()) return;
     painting = true;
     try {
-      do { paintAgain = false; paint(); } while (paintAgain && alive);
-    } finally { painting = false; }
+      do {
+        paintAgain = false;
+        paint();
+      } while (paintAgain && alive);
+    } finally {
+      painting = false;
+    }
   }
   function paint() {
     const kept = keptOf();
@@ -1162,10 +1921,22 @@ export function mountNoticeBoard(host, deps) {
     win.append(...header());
     if (tab === 'work' && workShown()) win.append(workBody());
     else if (tab === 'market' && market && marketShown()) win.append(market.body());
-    else if (tab === 'seat' && seatTab && seatShown()) win.append(seatTab.body());   // SEAT1b
-    else if (tab === 'vendors' && vendorTab) win.append(vendorTab.body());   // HOME-VENDOR
-    else if (tab === 'guilds' && guildsShown()) win.append(view === 'gpin' ? guildPinBody() : view === 'read' && reading ? readBody() : guildsBody());   // GUILD1e
-    else win.append(view === 'read' && reading ? readBody() : view === 'pin' ? pinBody() : view === 'notice' ? noticeBody() : boardBody());
+    else if (tab === 'seat' && seatTab && seatShown())
+      win.append(seatTab.body()); // SEAT1b
+    else if (tab === 'vendors' && vendorTab)
+      win.append(vendorTab.body()); // HOME-VENDOR
+    else if (tab === 'guilds' && guildsShown())
+      win.append(view === 'gpin' ? guildPinBody() : view === 'read' && reading ? readBody() : guildsBody()); // GUILD1e
+    else
+      win.append(
+        view === 'read' && reading
+          ? readBody()
+          : view === 'pin'
+            ? pinBody()
+            : view === 'notice'
+              ? noticeBody()
+              : boardBody(),
+      );
     giveBack(kept);
   }
 

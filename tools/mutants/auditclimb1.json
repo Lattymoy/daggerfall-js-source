@@ -35,8 +35,8 @@
   {
     "name": "AUDITCLIMB1-F2-path-unproven",
     "file": "src/player/parkour.js",
-    "old": "    if (!capsuleFits(collider, movePoint(m, i / n), body)) return false;\n",
-    "new": "",
+    "old": "  for (let i = 1; i <= n; i++) {\n    if (!capsuleFits(collider, movePoint(m, i / n), body)) return false;\n  }",
+    "new": "  for (let i = 1; i <= n; i++) {}",
     "tests": [
       "test/systems/auditclimb1.test.js",
       "test/systems/parkour.test.js",
@@ -238,8 +238,8 @@
   {
     "name": "AUDITCLIMB1-G1-foot-in-the-slope",
     "file": "src/player/parkour.js",
-    "old": "let top = y + radius / ny - radius;",
-    "new": "let top = y;",
+    "old": "      let top = y + radius / ny - radius;",
+    "new": "      let top = y;",
     "tests": [
       "test/systems/auditclimb1.test.js",
       "test/systems/parkour.test.js",
@@ -271,8 +271,8 @@
   {
     "name": "AUDITCLIMB1-G3-no-middle-landing",
     "file": "src/player/parkour.js",
-    "old": "  else if (depth >= PARKOUR_MIN_STAND_DEPTH) s = depth / 2;\n",
-    "new": "",
+    "old": "  else if (depth >= PARKOUR_MIN_STAND_DEPTH) s = depth / 2;\n  else {",
+    "new": "  else {",
     "tests": [
       "test/systems/auditclimb1.test.js",
       "test/systems/parkour.test.js",
@@ -316,7 +316,7 @@
   {
     "name": "AUDITCLIMB1-G4-no-slab",
     "file": "src/player/parkour.js",
-    "old": "  const wall = scanFace(collider, feet, dir, low, high, reach) ?? scanSlab(collider, feet, dir, low, high, reach, radius);",
+    "old": "  const wall =\n    scanFace(collider, feet, dir, low, high, reach) ?? scanSlab(collider, feet, dir, low, high, reach, radius);",
     "new": "  const wall = scanFace(collider, feet, dir, low, high, reach);",
     "tests": [
       "test/systems/auditclimb1.test.js",
@@ -338,8 +338,8 @@
   {
     "name": "AUDITCLIMB1-G5-no-footing",
     "file": "src/player/parkour.js",
-    "old": "    if (Number.isFinite(f.dist) && lipY - PARKOUR_UNDER - f.dist - feet[1] > PARKOUR_FOOTING) return { ok: false, why: 'riser' };\n",
-    "new": "",
+    "old": "    if (Number.isFinite(f.dist) && lipY - PARKOUR_UNDER - f.dist - feet[1] > PARKOUR_FOOTING)\n      return { ok: false, why: 'riser' };\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/auditclimb1.test.js",
       "test/systems/parkour.test.js",
@@ -349,8 +349,8 @@
   {
     "name": "AUDITCLIMB1-G6-no-floor-asked",
     "file": "src/player/parkour.js",
-    "old": "    if (!Number.isFinite(below.dist)) continue;\n",
-    "new": "",
+    "old": "    if (!Number.isFinite(below.dist)) continue;\n    if (!capsuleFits(collider, up, height) || !capsuleFits(collider, over, height)) continue;",
+    "new": "    if (!capsuleFits(collider, up, height) || !capsuleFits(collider, over, height)) continue;",
     "tests": [
       "test/systems/auditclimb1.test.js",
       "test/systems/parkour.test.js",
@@ -382,8 +382,8 @@
   {
     "name": "AUDITCLIMB1-depth-unbisected",
     "file": "src/player/parkour.js",
-    "old": "    for (let k = 0; k < 4; k++) { const mid = (a + b) / 2; if (onTop(mid)) a = mid; else b = mid; }\n",
-    "new": "",
+    "old": "    for (let k = 0; k < 4; k++) {\n      const mid = (a + b) / 2;\n      if (onTop(mid)) a = mid;\n      else b = mid;\n    }\n    return { depth: (a + b) / 2 };",
+    "new": "    return { depth: (a + b) / 2 };",
     "tests": [
       "test/systems/auditclimb1.test.js",
       "test/systems/parkour.test.js",

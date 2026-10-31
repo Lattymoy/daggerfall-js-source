@@ -355,5 +355,5 @@ test('VENDOR-HOUSES the mark: a trader\'s house carries `vendor` through the row
 });
 
 test('VENDOR-HOUSES the wiring: the vendor host registers the directory\'s read, the market\'s gate on it', () => {
-  assert.match(src('src/scenes/vendorHost.js'), /registerVendorHouseReader\(\(region\) => \(vendorMarketOpen\(\) \? vendorReachable\(region\) : null\), \{ open: vendorMarketOpen \}\);/);   // PIN MOVED (AUDIT TECH-FEEDBACK II F5)
+  assert.match(src('src/scenes/vendorHost.js'), /registerVendorHouseReader\(\(region\) => \(vendorMarketOpen\(\) \? vendorReachable\(region\) : null\), \{\n\s*open: vendorMarketOpen,\n\s*\}\);/);   // PIN MOVED (AUDIT TECH-FEEDBACK II F5)
 });

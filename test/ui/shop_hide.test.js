@@ -50,5 +50,5 @@ test('SHOP-REREAD (2026-10-31): a signed-in account is read again at every press
   assert.equal(shopReread({ stage: 'in', refresh: async () => { throw new Error('offline'); } }), true, 'a failed read never throws');
   const m = rd('src/ui/enhanced/enhancedMenu.js'), s = rd('src/ui/enhanced/enhancedShop.js');
   assert.ok(m.includes('onOpen: () => { shopOpen = true; shopFocusIn = true; shopReread(shopFlow); render(); }'), 'the gem\'s press');
-  assert.ok(s.includes('const onFocus = () => { if (win.isConnected) shopReread(f()); };'), 'the window\'s focus, one home');
+  assert.ok(s.includes('const onFocus = () => {\n    if (win.isConnected) shopReread(f());\n  };'), 'the window\'s focus, one home');
 });

@@ -28,6 +28,7 @@ import { partCount } from '../../src/ui/collectionsPage.js';
 import { utcDay } from '../../src/net/marksLaw.js';
 import '../../src/systems/professions/profTemplates.js';   // the Mounted Trophy's row, as the game registers it
 import { readFileSync } from 'node:fs';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
@@ -191,9 +192,9 @@ test('HUNTERS-MARK THE GATHERED LOG AND THE COLLECTIONS PAGE\'S PARTS: a fish lo
 
 test('HUNTERS-MARK THE FOUR HOSTS\' WIRING (Bounty-Boards.md 12.8): the streaming world builds the hunt\'s online deps and the trophy door in their modules and hands them over - the gather host its entity to a kind\'s answer, the Standing page its hunt block, the deploy filter the trophy law the service now reads (mutants: the kind\'s answer told no entity; the host\'s hunt deps gone; the trophy door gone)', () => {
   assert.match(src('src/scenes/gatherHost.js'), /k\?\.answered\?\.\(d, \(t\) => hud\.toast\(t\), \{ hauled, entity: deps\.entity\?\.\(\) \?\? null \}\)/);
-  const world = src('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /    hunt: huntOnline\(params\.has\('online'\), saveSoon\),\n/);
-  assert.match(world, /huntKind\(\{ book: profBook, bodies: \(\) => huntBodies\(\), openLoot: openHuntLoot, trophy: trophyDoor\(saveSoon\) \}\)/);
+  assert.match(world, /huntKind\(\{ book: profBook, bodies: \(\) => host\.huntBodies\(\), openLoot: openHuntLoot, trophy: trophyDoor\(saveSoon\) \}\)/);
   assert.match(src('src/ui/enhanced/enhancedMenu.js'), /statsHunt\(detail, \{ el, divider: pxDivider, meter: pxMeter \}\);/);
   assert.match(src('.github/workflows/account-deploy.yml'), /- "src\/net\/trophyLaw\.js"/);
 });

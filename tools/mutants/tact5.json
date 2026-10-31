@@ -3,7 +3,7 @@
     "name": "TACT5-retreats-from-press",
     "file": "src/ai/tactics.js",
     "old": "  const open = (backTurned && dist <= ring + TACT.RING_SLACK) || dist < ring - TACT.RING_SLACK;",
-    "new": "  const open = (backTurned && dist <= ring + TACT.RING_SLACK);",
+    "new": "  const open = backTurned && dist <= ring + TACT.RING_SLACK;",
     "tests": [
       "test/characters/enemy/tact5_feedback.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "TACT5-recover-retreats",
     "file": "src/ai/tactics.js",
-    "old": "    s.backUntil = now + TACT.RECOVER_HOP;   // FEEDBACK: a hop out, not a retreat",
-    "new": "    s.backUntil = s.until;   // FEEDBACK: a hop out, not a retreat",
+    "old": "    s.backUntil = now + TACT.RECOVER_HOP; // FEEDBACK: a hop out, not a retreat",
+    "new": "    s.backUntil = s.until; // FEEDBACK: a hop out, not a retreat",
     "tests": [
       "test/characters/enemy/tact5_feedback.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "TACT5-backstep-unbounded",
     "file": "src/ai/tactics.js",
-    "old": "  if (dist < ring - TACT.RING_SLACK) { ai.moving = false; return true; }   // FEEDBACK: its back-step spent, it stands",
-    "new": "  if (dist < ring - TACT.RING_SLACK) { ai._tacDir = [-ux, -uz]; ai._tacSpeed = TACT.STEP_SPEED; ai.moving = true; return true; }",
+    "old": "    ai.moving = false;\n    return true;\n  } // FEEDBACK: its back-step spent, it stands",
+    "new": "    ai._tacDir = [-ux, -uz];\n    ai._tacSpeed = TACT.STEP_SPEED;\n    ai.moving = true;\n    return true;\n  }",
     "tests": [
       "test/characters/enemy/tact5_feedback.test.js"
     ]
@@ -39,7 +39,7 @@
     "name": "TACT5-kite-backpedals",
     "file": "src/ai/tactics.js",
     "old": "      return walkAway(ai, -ux, -uz, TACT.STEP_SPEED);",
-    "new": "      ai._tacDir = [-ux, -uz]; ai._tacSpeed = TACT.STEP_SPEED; ai.moving = true; face();\n      return true;",
+    "new": "      ai._tacDir = [-ux, -uz];\n      ai._tacSpeed = TACT.STEP_SPEED;\n      ai.moving = true;\n      face();\n      return true;",
     "tests": [
       "test/characters/enemy/tact5_feedback.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "TACT5-walks-before-turning",
     "file": "src/ai/tactics.js",
-    "old": "  if (Math.abs(d) > TACT.WALK_FACE_DEG * Math.PI / 180) { ai.moving = false; return true; }",
-    "new": "  if (false) { ai.moving = false; return true; }",
+    "old": "  if (Math.abs(d) > (TACT.WALK_FACE_DEG * Math.PI) / 180) {",
+    "new": "  if (false) {",
     "tests": [
       "test/characters/enemy/tact5_feedback.test.js"
     ]
@@ -56,7 +56,7 @@
   {
     "name": "TACT5-backoff-no-cooldown",
     "file": "src/ai/tactics.js",
-    "old": "    if (s.hp.length > 1 && (s.hp[0][1] - v.health) / v.maxHealth >= TACT.HURT_SHARE && s.state !== 'backoff' && now >= (s.backoffReady ?? 0)) {",
+    "old": "    if (\n      s.hp.length > 1 &&\n      (s.hp[0][1] - v.health) / v.maxHealth >= TACT.HURT_SHARE &&\n      s.state !== 'backoff' &&\n      now >= (s.backoffReady ?? 0)\n    ) {",
     "new": "    if (s.hp.length > 1 && (s.hp[0][1] - v.health) / v.maxHealth >= TACT.HURT_SHARE && s.state !== 'backoff') {",
     "tests": [
       "test/characters/enemy/tact5_feedback.test.js"
@@ -65,8 +65,8 @@
   {
     "name": "TACT5-kite-uncapped",
     "file": "src/ai/tactics.js",
-    "old": "      if (ai._tacBlocked || now >= s.kiteUntil) {   // a wall behind it: cornered, it fights hand to hand",
-    "new": "      if (ai._tacBlocked) {   // a wall behind it: cornered, it fights hand to hand",
+    "old": "      if (ai._tacBlocked || now >= s.kiteUntil) {",
+    "new": "      if (ai._tacBlocked) {",
     "tests": [
       "test/characters/enemy/tact5_feedback.test.js"
     ]
@@ -74,7 +74,7 @@
   {
     "name": "TACT5-kite-no-cooldown",
     "file": "src/ai/tactics.js",
-    "old": "  s.kind = shooter(ai) && now >= s.meleeUntil && (dist >= TACT.KITE_IN || s.kiting || now >= (s.kiteReady ?? 0)) ? 'ranged' : 'melee';",
+    "old": "  s.kind =\n    shooter(ai) && now >= s.meleeUntil && (dist >= TACT.KITE_IN || s.kiting || now >= (s.kiteReady ?? 0))\n      ? 'ranged'\n      : 'melee';",
     "new": "  s.kind = shooter(ai) && now >= s.meleeUntil && (dist >= TACT.KITE_IN || s.kiting || true) ? 'ranged' : 'melee';",
     "tests": [
       "test/characters/enemy/tact5_feedback.test.js"
@@ -83,8 +83,8 @@
   {
     "name": "TACT5-token-kept-across-kinds",
     "file": "src/ai/tactics.js",
-    "old": "  if (s.kind === 'ranged') b.melee.delete(ai); else b.ranged.delete(ai);   // FEEDBACK: a token of the kind it no longer fights as is handed back",
-    "new": "  if (false) b.melee.delete(ai); else if (false) b.ranged.delete(ai);   // FEEDBACK: a token of the kind it no longer fights as is handed back",
+    "old": "  if (s.kind === 'ranged') b.melee.delete(ai);\n  else b.ranged.delete(ai); // FEEDBACK: a token of the kind it no longer fights as is handed back",
+    "new": "  if (false) b.melee.delete(ai);\n  else if (false) b.ranged.delete(ai); // FEEDBACK: a token of the kind it no longer fights as is handed back",
     "tests": [
       "test/characters/enemy/tact5_feedback.test.js"
     ]

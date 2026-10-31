@@ -23,8 +23,8 @@
   {
     "name": "TEMPLESTEPS-3-sunk",
     "file": "src/world/townStandIns.js",
-    "old": "  m.box(tex, [0, 0, 0], RMBRP_BLOCK_CM.map((c) => c * k), 0.5);",
-    "new": "  m.box(tex, [0, -0.5, 0], RMBRP_BLOCK_CM.map((c) => c * k), 0.5);",
+    "old": "    [0, 0, 0],",
+    "new": "    [0, -0.5, 0],",
     "tests": [
       "test/world/fb1015f_templesteps.test.js"
     ],
@@ -43,8 +43,8 @@
   {
     "name": "TEMPLESTEPS-5-one-rock-scale",
     "file": "src/world/townStandIns.js",
-    "old": "53036: 6, 53037: 4, 53038: 4, 53039: 4,",
-    "new": "53036: 6, 53037: 4, 53038: 1, 53039: 4,",
+    "old": "  53038: 4,",
+    "new": "  53038: 1,",
     "tests": [
       "test/world/fb1015f_templesteps.test.js"
     ],
@@ -64,8 +64,8 @@
   {
     "name": "TEMPLESTEPS-7-boulder-overshoot",
     "file": "src/world/townStandIns.js",
-    "old": "r = k * (0.82 + rnd() * 0.18);",
-    "new": "r = k * (0.82 + rnd() * 0.3);",
+    "old": "        r = k * (0.82 + rnd() * 0.18);",
+    "new": "        r = k * (0.82 + rnd() * 0.3);",
     "tests": [
       "test/world/wd3_standins.test.js"
     ],
@@ -85,8 +85,8 @@
   {
     "name": "TEMPLESTEPS-9-stall-off-origin",
     "file": "src/world/townStandIns.js",
-    "old": "const X = (v) => v + dx, Y = (v) => v + dy, Z = (v) => v + dz;",
-    "new": "const X = (v) => v + dx + 2.35, Y = (v) => v + dy, Z = (v) => v + dz;",
+    "old": "  const X = (v) => v + dx,",
+    "new": "  const X = (v) => v + dx + 2.35,",
     "tests": [
       "test/world/fb1015f_templesteps.test.js",
       "test/world/wd3_standins.test.js"
@@ -96,8 +96,8 @@
   {
     "name": "TEMPLESTEPS-10-top-covers",
     "file": "src/world/townStandIns.js",
-    "old": "    if (q[1] - top < HILL_PATCH_SINK - 1e-4 && outsideHull(hull, q[0], q[2]) <= HILL_PATCH_MARGIN) return false;",
-    "new": "    if (q[1] - top < HILL_PATCH_SINK - 1e-4 && outsideHull(hull, q[0], q[2]) < 0) return false;",
+    "old": "    if (q[1] - top < HILL_PATCH_SINK - 1e-4 && outsideHull(hull, q[0], q[2]) <= HILL_PATCH_MARGIN) return false; // the top would cover what the author left in the open",
+    "new": "    if (q[1] - top < HILL_PATCH_SINK - 1e-4 && outsideHull(hull, q[0], q[2]) < 0) return false; // the top would cover what the author left in the open",
     "tests": [
       "test/world/fb1015f_templesteps.test.js"
     ],
@@ -106,8 +106,8 @@
   {
     "name": "TEMPLESTEPS-11-bank-blind",
     "file": "src/world/townStandIns.js",
-    "old": "          if (l1 * p[1] + l2 * q[1] + (1 - l1 - l2) * r[1] <= y - HILL_PATCH_SINK) continue;   // the bank passes under it",
-    "new": "          if (l1 * p[1] + l2 * q[1] + (1 - l1 - l2) * r[1] <= y + 100) continue;   // the bank passes under it",
+    "old": "          if (l1 * p[1] + l2 * q[1] + (1 - l1 - l2) * r[1] <= y - HILL_PATCH_SINK) continue; // the bank passes under it",
+    "new": "          if (l1 * p[1] + l2 * q[1] + (1 - l1 - l2) * r[1] <= y + 100) continue; // the bank passes under it",
     "tests": [
       "test/world/fb1015f_templesteps.test.js"
     ],
@@ -116,8 +116,8 @@
   {
     "name": "TEMPLESTEPS-12-bank-not-steepened",
     "file": "src/world/townStandIns.js",
-    "old": "          slopes[i] = Math.max(slopes[i], need); slopes[j] = Math.max(slopes[j], need);",
-    "new": "          slopes[i] = Math.max(slopes[i], need);",
+    "old": "          slopes[j] = Math.max(slopes[j], need);\n          steeper = true;",
+    "new": "          steeper = true;",
     "tests": [
       "test/world/fb1015f_templesteps.test.js"
     ],
@@ -156,8 +156,8 @@
   {
     "name": "TEMPLESTEPS-16-approach-middle",
     "file": "src/world/townStandIns.js",
-    "old": "  const side = Math.max(half - 0.1, 0), pts = [];",
-    "new": "  const side = 0, pts = [];",
+    "old": "  const side = Math.max(half - 0.1, 0),",
+    "new": "  const side = 0,",
     "tests": [
       "test/world/fb1015f_templesteps.test.js"
     ],
@@ -166,8 +166,8 @@
   {
     "name": "TEMPLESTEPS-17-approach-inward",
     "file": "src/world/townStandIns.js",
-    "old": "  const foot = at(cx, footY, cz), tip = at(cx + door.normal.x, footY, cz + door.normal.z);",
-    "new": "  const foot = at(cx, footY, cz), tip = at(cx - door.normal.x, footY, cz + door.normal.z);",
+    "old": "    tip = at(cx + door.normal.x, footY, cz + door.normal.z);",
+    "new": "    tip = at(cx - door.normal.x, footY, cz + door.normal.z);",
     "tests": [
       "test/world/fb1015f_templesteps.test.js"
     ],
@@ -176,8 +176,8 @@
   {
     "name": "TEMPLESTEPS-18-door-head",
     "file": "src/world/townStandIns.js",
-    "old": "  const v0 = door.vert0, v2 = door.vert2, footY = Math.min(v0.y, door.vert1.y, v2.y);",
-    "new": "  const v0 = door.vert0, v2 = door.vert2, footY = Math.max(v0.y, door.vert1.y, v2.y);",
+    "old": "    footY = Math.min(v0.y, door.vert1.y, v2.y);",
+    "new": "    footY = Math.max(v0.y, door.vert1.y, v2.y);",
     "tests": [
       "test/world/fb1015f_templesteps.test.js"
     ],
@@ -196,8 +196,8 @@
   {
     "name": "TEMPLESTEPS-20-sweep-structures",
     "file": "tools/townSolidsSweep.mjs",
-    "old": "export const RMBRP_STRUCTURES = Object.freeze([53160, 53170, ...Object.keys(RMBRP_DOCKS).map(Number), 53143, 53144, 53182, 53187, 53194, CITY_WALL_PIECE]);",
-    "new": "export const RMBRP_STRUCTURES = Object.freeze([53160, ...Object.keys(RMBRP_DOCKS).map(Number), 53143, 53144, 53182, 53187, 53194, CITY_WALL_PIECE]);",
+    "old": "  53170,\n  ...Object.keys(RMBRP_DOCKS).map(Number),",
+    "new": "  ...Object.keys(RMBRP_DOCKS).map(Number),",
     "tests": [
       "test/world/wd3_standins.test.js"
     ],

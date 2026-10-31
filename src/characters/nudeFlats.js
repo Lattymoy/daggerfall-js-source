@@ -49,22 +49,22 @@ import { getBool } from '../systems/settings/settings.js';
 /** `archive_record` -> the clothed stand-in [archive, record]. The
  *  captions are FLATS.CFG's; where they stand is BLOCKS.BSA's. */
 export const NUDE_FLAT_STAND_INS = Object.freeze({
-  '175_0': Object.freeze([182, 56]),    // "beautiful maiden" (Azura, when summoned) -> "hooded woman"
-  '176_2': Object.freeze([176, 6]),     // "bare-breasted dancer" (Dark Brotherhood halls) -> "woman in black and red"
-  '176_3': Object.freeze([176, 6]),     // "bare-breasted dancer" -> "woman in black and red"
-  '179_0': Object.freeze([179, 2]),     // "naked dark-haired woman" (coven witch) -> "mysterious woman"
-  '179_1': Object.freeze([179, 4]),     // "naked woman" (coven witch, crossbow) -> "red-haired woman" (spear)
-  '179_3': Object.freeze([179, 2]),     // "black-cowled dancer" (coven witch; no "?" mark) -> "mysterious woman"
-  '182_32': Object.freeze([182, 11]),   // "good-looking whore" -> "comely maiden"
-  '182_34': Object.freeze([182, 47]),   // "blonde whore" (houses, tavern blocks, Temple of Dibella) -> "pretty young lady"
-  '182_41': Object.freeze([182, 27]),   // "remarkable woman" (houses, Mages Guild) -> "elegantly dressed lady"
-  '182_48': Object.freeze([182, 26]),   // "blond whore" (houses, general stores, Temple of Dibella) -> "young lady in green"
-  '184_6': Object.freeze([182, 11]),    // "bare-breasted wench" (taverns) -> "comely maiden" (the barmaid)
-  '184_11': Object.freeze([184, 29]),   // "naked blonde woman" (taverns, Temple of Kynareth) -> "blonde wearing blue"
-  '184_12': Object.freeze([184, 23]),   // "naked brunette" (houses, taverns, Temple of Kynareth) -> "woman in green pants"
-  '184_13': Object.freeze([184, 5]),    // "naked blonde" -> "beautiful blonde"
-  '184_14': Object.freeze([184, 26]),   // "naked brunette" (houses, Temple of Dibella) -> "red-haired woman"
-  '184_31': Object.freeze([182, 57]),   // "bald slave" (naked, in chains) -> "nearly naked man" (the same figure in a loincloth)
+  '175_0': Object.freeze([182, 56]), // "beautiful maiden" (Azura, when summoned) -> "hooded woman"
+  '176_2': Object.freeze([176, 6]), // "bare-breasted dancer" (Dark Brotherhood halls) -> "woman in black and red"
+  '176_3': Object.freeze([176, 6]), // "bare-breasted dancer" -> "woman in black and red"
+  '179_0': Object.freeze([179, 2]), // "naked dark-haired woman" (coven witch) -> "mysterious woman"
+  '179_1': Object.freeze([179, 4]), // "naked woman" (coven witch, crossbow) -> "red-haired woman" (spear)
+  '179_3': Object.freeze([179, 2]), // "black-cowled dancer" (coven witch; no "?" mark) -> "mysterious woman"
+  '182_32': Object.freeze([182, 11]), // "good-looking whore" -> "comely maiden"
+  '182_34': Object.freeze([182, 47]), // "blonde whore" (houses, tavern blocks, Temple of Dibella) -> "pretty young lady"
+  '182_41': Object.freeze([182, 27]), // "remarkable woman" (houses, Mages Guild) -> "elegantly dressed lady"
+  '182_48': Object.freeze([182, 26]), // "blond whore" (houses, general stores, Temple of Dibella) -> "young lady in green"
+  '184_6': Object.freeze([182, 11]), // "bare-breasted wench" (taverns) -> "comely maiden" (the barmaid)
+  '184_11': Object.freeze([184, 29]), // "naked blonde woman" (taverns, Temple of Kynareth) -> "blonde wearing blue"
+  '184_12': Object.freeze([184, 23]), // "naked brunette" (houses, taverns, Temple of Kynareth) -> "woman in green pants"
+  '184_13': Object.freeze([184, 5]), // "naked blonde" -> "beautiful blonde"
+  '184_14': Object.freeze([184, 26]), // "naked brunette" (houses, Temple of Dibella) -> "red-haired woman"
+  '184_31': Object.freeze([182, 57]), // "bald slave" (naked, in chains) -> "nearly naked man" (the same figure in a loincloth)
 });
 
 /** Show Nudity: ChildGuard/PlayerNudity, the switch the paperdoll's welds

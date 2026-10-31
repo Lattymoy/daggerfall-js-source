@@ -22,8 +22,8 @@
 // Pure: the mask, a pixel test and a day in; the halls out. The same on every client.
 // ═══════════════════════════════════════════════════════════════════
 import { WILD_RINGS, maskWorld, ringOfDepth } from './wildZone.js';
-import { WATER_SPECIES } from '../../characters/dungeonEnemies.js';   // SLAUGHTER-BOX: RDBLayout's water species, one home
-import { isClassEnemyId } from '../../characters/enemy/enemyBasics.js';   // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
+import { WATER_SPECIES } from '../../characters/dungeonEnemies.js'; // SLAUGHTER-BOX: RDBLayout's water species, one home
+import { isClassEnemyId } from '../../characters/enemy/enemyBasics.js'; // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
 
 export const WILD_DUNGEONS_PER_RING = Object.freeze([10, 8, 6, 4]);
 /** A hall keeps at least this many of the mask's cells from every other hall (they never crowd one valley). */
@@ -53,23 +53,40 @@ const ringOf = (mask, i) => ringOfDepth(mask, mask.depth?.[i] ?? 0);
  */
 export function wildRingBorderDistance(mask) {
   const box = mask.box ?? { x0: 0, y0: 0, x1: mask.width - 1, y1: mask.height - 1 };
-  const W = mask.width, dist = new Int16Array(mask.width * mask.height).fill(-1), queue = [];
-  const N4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  const W = mask.width,
+    dist = new Int16Array(mask.width * mask.height).fill(-1),
+    queue = [];
+  const N4 = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+  ];
   for (let y = box.y0; y <= box.y1; y++) {
     for (let x = box.x0; x <= box.x1; x++) {
-      const i = y * W + x, r = ringOf(mask, i);
+      const i = y * W + x,
+        r = ringOf(mask, i);
       if (!r) continue;
       for (const [dx, dy] of N4) {
-        const nx = x + dx, ny = y + dy;
+        const nx = x + dx,
+          ny = y + dy;
         const nr = nx >= 0 && ny >= 0 && nx < W && ny < mask.height ? ringOf(mask, ny * W + nx) : 0;
-        if (nr !== r) { dist[i] = 1; queue.push(i); break; }
+        if (nr !== r) {
+          dist[i] = 1;
+          queue.push(i);
+          break;
+        }
       }
     }
   }
   for (let q = 0; q < queue.length; q++) {
-    const i = queue[q], x = i % W, y = (i - x) / W, r = ringOf(mask, i);
+    const i = queue[q],
+      x = i % W,
+      y = (i - x) / W,
+      r = ringOf(mask, i);
     for (const [dx, dy] of N4) {
-      const nx = x + dx, ny = y + dy;
+      const nx = x + dx,
+        ny = y + dy;
       if (nx < 0 || ny < 0 || nx >= W || ny >= mask.height) continue;
       const j = ny * W + nx;
       if (dist[j] !== -1 || ringOf(mask, j) !== r) continue;
@@ -81,12 +98,17 @@ export function wildRingBorderDistance(mask) {
 }
 
 const _bd = new WeakMap();
-const borderDist = (mask) => { let d = _bd.get(mask); if (!d) _bd.set(mask, d = wildRingBorderDistance(mask)); return d; };
+const borderDist = (mask) => {
+  let d = _bd.get(mask);
+  if (!d) _bd.set(mask, (d = wildRingBorderDistance(mask)));
+  return d;
+};
 
 /** WW-C2: `list` thinned evenly to at most `max` of its entries, from an offset the day's `rand` draws - in its order. */
 function thin(list, max, rand) {
   if (list.length <= max) return list;
-  const step = list.length / max, off = rand() * step;
+  const step = list.length / max,
+    off = rand() * step;
   return Array.from({ length: max }, (_, k) => list[Math.min(list.length - 1, Math.floor(off + k * step))]);
 }
 
@@ -121,7 +143,10 @@ export function wildHallPicks(mask, free, day, { poolMax = WILD_HALL_POOL_MAX } 
       if (ring) byRing[ring].push({ x, y, ring, bd: bd[i], free: /** @type {boolean|undefined} */ (undefined) });
     }
   }
-  const isFree = (p) => { const [x, y] = pixelOf(p.x, p.y); return (p.free ??= !!free(x, y)); };
+  const isFree = (p) => {
+    const [x, y] = pixelOf(p.x, p.y);
+    return (p.free ??= !!free(x, y));
+  };
   const halls = [];
   const far = (p, also) => {
     let m = Infinity;
@@ -134,32 +159,59 @@ export function wildHallPicks(mask, free, day, { poolMax = WILD_HALL_POOL_MAX } 
     const ring_ = byRing[ring];
     if (!want) continue;
     const rand = rng(Math.imul(day + 1, 0x9e3779b1) ^ Math.imul(ring, 0x85ebca6b));
-    const sift = rng(Math.imul(day + 7, 0x7feb352d) ^ Math.imul(ring, 0x846ca68b));   // WW-C2: the day's thinning, its own stream
+    const sift = rng(Math.imul(day + 7, 0x7feb352d) ^ Math.imul(ring, 0x846ca68b)); // WW-C2: the day's thinning, its own stream
     // the ring's free cells at `min` and deeper, in the scan's order - the band thinned to the pool's most
-    const freeFrom = (min) => thin(ring_.filter((p) => p.bd >= min), poolMax, sift).filter(isFree);
+    const freeFrom = (min) =>
+      thin(
+        ring_.filter((p) => p.bd >= min),
+        poolMax,
+        sift,
+      ).filter(isFree);
     let _all = null;
     const all = () => (_all ??= thin(ring_, poolMax, sift).filter(isFree));
     // the deepest a free cell stands: asked a level at a time from the deepest down (each level thinned); none, an empty ring
     let deepest = -Infinity;
-    for (const lv of [...new Set(ring_.map((p) => p.bd))].sort((a, b) => b - a)) if (thin(ring_.filter((p) => p.bd === lv), poolMax, sift).some(isFree)) { deepest = lv; break; }
+    for (const lv of [...new Set(ring_.map((p) => p.bd))].sort((a, b) => b - a))
+      if (
+        thin(
+          ring_.filter((p) => p.bd === lv),
+          poolMax,
+          sift,
+        ).some(isFree)
+      ) {
+        deepest = lv;
+        break;
+      }
     if (deepest === -Infinity) continue;
     // AS CENTRED AS THE RING ALLOWS: the deepest band of the ring that still holds room for its halls all the way round
     // (at least three candidates a hall), never a cell touching another tier when the ring has any other
     const maxBd = Math.max(1, deepest);
     let floor = Math.max(1, Math.ceil(maxBd * 0.6));
     let pool = freeFrom(floor);
-    while (pool.length < want * 3 && floor > 2) { floor -= 1; pool = freeFrom(floor); }
-    if (pool.length < want) { const two = freeFrom(2); pool = two.length >= want ? two : all(); }
+    while (pool.length < want * 3 && floor > 2) {
+      floor -= 1;
+      pool = freeFrom(floor);
+    }
+    if (pool.length < want) {
+      const two = freeFrom(2);
+      pool = two.length >= want ? two : all();
+    }
     const picked = [];
     // THE COUNT IS THE OWNER'S: the spacing is kept while the band allows it, then eased (two cells, then any free one),
     // then the band widened to the whole ring - never fewer halls than the tier is owed while it has free ground
-    for (const [spacing, fromOf] of /** @type {Array<[number, () => any[]]>} */ ([[WILD_HALL_SPACING, () => pool], [2, () => pool], [1, () => pool], [2, all], [1, all]])) {
+    for (const [spacing, fromOf] of /** @type {Array<[number, () => any[]]>} */ ([
+      [WILD_HALL_SPACING, () => pool],
+      [2, () => pool],
+      [1, () => pool],
+      [2, all],
+      [1, all],
+    ])) {
       if (picked.length >= want) break;
-      const from = fromOf();   // WILD-FREE: the whole ring's free cells asked only when the band could not hold the count
+      const from = fromOf(); // WILD-FREE: the whole ring's free cells asked only when the band could not hold the count
       if (!picked.length) {
         const first = from.filter((p) => far(p, []) >= spacing);
         if (!first.length) continue;
-        picked.push(first[Math.floor(rand() * first.length)]);   // the first: anywhere in the band, by the day
+        picked.push(first[Math.floor(rand() * first.length)]); // the first: anywhere in the band, by the day
       }
       while (picked.length < want) {
         let best = [];
@@ -176,7 +228,10 @@ export function wildHallPicks(mask, free, day, { poolMax = WILD_HALL_POOL_MAX } 
         picked.push(best[Math.floor(rand() * best.length)].p);
       }
     }
-    for (const p of picked) { const [x, y] = pixelOf(p.x, p.y); halls.push({ x, y, ring, key: `${x},${y}`, cx: p.x, cy: p.y }); }
+    for (const p of picked) {
+      const [x, y] = pixelOf(p.x, p.y);
+      halls.push({ x, y, ring, key: `${x},${y}`, cx: p.x, cy: p.y });
+    }
   }
   return halls;
 }
@@ -186,7 +241,10 @@ export const wildHallAt = (halls, x, y) => halls?.find((h) => h.x === x && h.y =
 
 /** A template a hall may clone: never a graveyard (LocationTypes 12 - "Cemeteries cannot be zone dungeons!"), nor a
  *  cemetery's own dungeon type (18). */
-export const wildHallTemplateOk = (loc) => loc?.mapTableData?.locationType !== 12 && loc?.mapTableData?.dungeonType !== 18 && !/cemetery|graveyard/i.test(String(loc?.name ?? ''));
+export const wildHallTemplateOk = (loc) =>
+  loc?.mapTableData?.locationType !== 12 &&
+  loc?.mapTableData?.dungeonType !== 18 &&
+  !/cemetery|graveyard/i.test(String(loc?.name ?? ''));
 
 // ── THE HALLS' FOES (the owner: "THE DUNGEONS IN THE ZONE HAVE TO HAVE ONLY HIGH TIER ENEMIES! NO RATS/BATS OR OTHER LOWTIER
 // ENEMIES!") ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -196,16 +254,21 @@ export const wildHallTemplateOk = (loc) => loc?.mapTableData?.locationType !== 1
 // human classes (Mage .. Knight, 128+) are kept: they are drawn at the player's own level, never a low tier.
 /** The monsters a hall may hold, by ring (the deeper, the worse); `water` for a water marker. */
 export const WILD_HALL_FOES = Object.freeze({
-  1: Object.freeze([9, 14, 19, 22, 24, 35, 36, 37, 38]),            // Werewolf, Wereboar, Mummy, Gargoyle, Orc Warlord, the four Atronachs
-  2: Object.freeze([9, 14, 19, 22, 23, 24, 25, 26, 27, 28, 36]),    // + Wraith, Frost/Fire Daedra, Daedroth, Vampire
-  3: Object.freeze([22, 23, 25, 26, 27, 28, 29, 30, 32]),           // + Daedra Seducer, Vampire Ancient, Lich
-  4: Object.freeze([25, 26, 27, 29, 30, 31, 32, 33]),               // the heart: Daedra Lord, Ancient Lich among the Daedra and the undying
-  water: Object.freeze([41, 42]),                                   // Dreugh, Lamia
+  1: Object.freeze([9, 14, 19, 22, 24, 35, 36, 37, 38]), // Werewolf, Wereboar, Mummy, Gargoyle, Orc Warlord, the four Atronachs
+  2: Object.freeze([9, 14, 19, 22, 23, 24, 25, 26, 27, 28, 36]), // + Wraith, Frost/Fire Daedra, Daedroth, Vampire
+  3: Object.freeze([22, 23, 25, 26, 27, 28, 29, 30, 32]), // + Daedra Seducer, Vampire Ancient, Lich
+  4: Object.freeze([25, 26, 27, 29, 30, 31, 32, 33]), // the heart: Daedra Lord, Ancient Lich among the Daedra and the undying
+  water: Object.freeze([41, 42]), // Dreugh, Lamia
 });
 const HIGH = new Set(Object.values(WILD_HALL_FOES).flat());
 /** Is this monster one of the high tiers a hall keeps as it is? (A human class always.) */
 export const wildHallKeeps = (mobileType) => isClassEnemyId(mobileType) || HIGH.has(mobileType);
-const mix = (a, b) => { let h = (a ^ Math.imul(b + 0x7f4a7c15, 0x9e3779b1)) >>> 0; h = Math.imul(h ^ (h >>> 16), 0x85ebca6b) >>> 0; h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35) >>> 0; return (h ^ (h >>> 16)) >>> 0; };
+const mix = (a, b) => {
+  let h = (a ^ Math.imul(b + 0x7f4a7c15, 0x9e3779b1)) >>> 0;
+  h = Math.imul(h ^ (h >>> 16), 0x85ebca6b) >>> 0;
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35) >>> 0;
+  return (h ^ (h >>> 16)) >>> 0;
+};
 /**
  * A hall's foes with every low tier swapped for its ring's high tier: `enemies` the layout's records (each `{ mobileType }`),
  * `ring` the hall's tier, `seed` its id. Returns a new list (the records copied, a swapped one with `wildSwapped` set).

@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-STOREFRONT-a-lost-ware-still-given",
     "file": "src/net/shopLaw.js",
-    "old": "if (!out.has(g) && !lost.has(g)) { out.add(g); stack.push(g); }",
-    "new": "if (!out.has(g)) { out.add(g); stack.push(g); }",
+    "old": "      if (!out.has(g) && !lost.has(g)) {",
+    "new": "      if (!out.has(g)) {",
     "tests": [
       "test/server/storefront_audit.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-STOREFRONT-a-rolled-date-read-later",
     "file": "src/net/shopLaw.js",
-    "old": "  if (at.getUTCFullYear() !== y || at.getUTCMonth() + 1 !== mo || at.getUTCDate() !== d || at.getUTCHours() !== h || at.getUTCMinutes() !== mi || at.getUTCSeconds() !== se) return NaN;\n",
-    "new": "",
+    "old": "  if (\n    at.getUTCFullYear() !== y ||\n    at.getUTCMonth() + 1 !== mo ||\n    at.getUTCDate() !== d ||\n    at.getUTCHours() !== h ||\n    at.getUTCMinutes() !== mi ||\n    at.getUTCSeconds() !== se\n  )\n    return NaN;\n  return ms + (end && m[4] === undefined ? DAY_MS : 0);",
+    "new": "  return ms + (end && m[4] === undefined ? DAY_MS : 0);",
     "tests": [
       "test/server/storefront_service.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-STOREFRONT-a-bad-line-opening-the-sale",
     "file": "src/net/shopLaw.js",
-    "old": "  if (mine.some((e) => e.bad)) return false;\n",
-    "new": "",
+    "old": "  if (mine.some((e) => e.bad)) return false;\n  const limits = mine.filter((e) => e.limited);",
+    "new": "  const limits = mine.filter((e) => e.limited);",
     "tests": [
       "test/server/storefront_service.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-STOREFRONT-a-bad-line-dropped",
     "file": "src/net/shopLaw.js",
-    "old": "{ id: w.id, fromMs: NaN, toMs: NaN, limited: false, bad: true }",
-    "new": "{ id: w.id, fromMs: NaN, toMs: NaN, limited: false, bad: false }",
+    "old": "          : { id: w.id, fromMs: NaN, toMs: NaN, limited: false, bad: true },",
+    "new": "          : { id: w.id, fromMs: NaN, toMs: NaN, limited: false, bad: false },",
     "tests": [
       "test/server/storefront_service.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-STOREFRONT-a-drop-to-come-on-the-card",
     "file": "server-account/src/shop.js",
-    "old": "    if (!isHeld && !onSale && (!shopDropped(w, schedule, nowS * 1000) || aurumShut(env, w))) continue;   // AUDIT-STOREFRONT S2: nothing upcoming is told; AURUM: no pack while Aurum is shut\n",
-    "new": "    if (!isHeld && !onSale && aurumShut(env, w)) continue;\n",
+    "old": "    if (!isHeld && !onSale && (!shopDropped(w, schedule, nowS * 1000) || aurumShut(env, w))) continue; // AUDIT-STOREFRONT S2: nothing upcoming is told; AURUM: no pack while Aurum is shut",
+    "new": "    if (!isHeld && !onSale && aurumShut(env, w)) continue;",
     "tests": [
       "test/server/storefront_service.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-STOREFRONT-an-ended-window-told",
     "file": "server-account/src/shop.js",
-    "old": "const feat = onSale ? live.find((e) => e.id === w.id) : null;",
-    "new": "const feat = live.find((e) => e.id === w.id);",
+    "old": "    const feat = onSale ? live.find((e) => e.id === w.id) : null; // AUDIT-STOREFRONT S9: a window's end only beside a sale",
+    "new": "    const feat = live.find((e) => e.id === w.id); // AUDIT-STOREFRONT S9: a window's end only beside a sale",
     "tests": [
       "test/server/storefront_service.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "AUDIT-STOREFRONT-a-replaced-page-left-open",
     "file": "server-account/src/shop.js",
-    "old": "  await closePages({ db, nowS }, env, fetch, older?.results ?? []);\n",
-    "new": "",
+    "old": "  await closePages({ db, nowS }, env, fetch, older?.results ?? []);\n  return { url: s.url };",
+    "new": "  return { url: s.url };",
     "tests": [
       "test/server/storefront_audit.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "AUDIT-STOREFRONT-a-grant-leaving-wrong-pages-open",
     "file": "server-account/src/shop.js",
-    "old": "  if (r.applied) await closeStale({ db, nowS }, env, fetch, order.player);\n",
-    "new": "",
+    "old": "  if (r.applied) await closeStale({ db, nowS }, env, fetch, order.player);\n  return { ok: r.ok, applied: r.applied };",
+    "new": "  return { ok: r.ok, applied: r.applied };",
     "tests": [
       "test/server/storefront_audit.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "AUDIT-STOREFRONT-a-ware-paid-twice-kept",
     "file": "server-account/src/shop.js",
-    "old": "refund = shopOwns(row, w.id) ? 'held' :",
-    "new": "refund = false ? 'held' :",
+    "old": "    const refund = shopOwns(row, w.id) ? 'held' : creditMoved(row, w, order) ? 'price' : null;",
+    "new": "    const refund = false ? 'held' : creditMoved(row, w, order) ? 'price' : null;",
     "tests": [
       "test/server/storefront_audit.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "AUDIT-STOREFRONT-an-owed-refund-never-asked-again",
     "file": "server-account/src/shop.js",
-    "old": "  if (order?.refund_owed && order.payment_intent) return refundOwed(db, env, fetch, order, order.payment_intent);   // Stripe's word again: ask it again\n",
-    "new": "",
+    "old": "  if (order?.refund_owed && order.payment_intent) return refundOwed(db, env, fetch, order, order.payment_intent); // Stripe's word again: ask it again\n  if (!order?.player || !w || !['open', 'expired'].includes(order.status)) return { ok: true, applied: 0 };",
+    "new": "  if (!order?.player || !w || !['open', 'expired'].includes(order.status)) return { ok: true, applied: 0 };",
     "tests": [
       "test/server/storefront_audit.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "AUDIT-STOREFRONT-an-owed-refund-never-cleared",
     "file": "server-account/src/shop.js",
-    "old": "    if (why === 'refunded') await db.prepare('UPDATE shop_orders SET refund_owed = 0 WHERE payment_intent = ?1 AND refund_owed = 1').bind(intent).run();   // a refund the service asked, landed\n",
-    "new": "",
+    "old": "    if (why === 'refunded')\n      await db\n        .prepare('UPDATE shop_orders SET refund_owed = 0 WHERE payment_intent = ?1 AND refund_owed = 1')\n        .bind(intent)\n        .run(); // a refund the service asked, landed\n    return { ok: true, applied: 0 };",
+    "new": "    return { ok: true, applied: 0 };",
     "tests": [
       "test/server/storefront_audit.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "AUDIT-STOREFRONT-the-row-guard-dropped",
     "file": "server-account/src/shop.js",
-    "old": "UPDATE players SET shop_wares = ?2, shop_held = ?3 WHERE id = ?1 AND shop_wares = ?4 AND shop_held = ?5",
-    "new": "UPDATE players SET shop_wares = ?2, shop_held = ?3 WHERE id = ?1 AND ?4 = ?4 AND ?5 = ?5",
+    "old": "    .prepare('UPDATE players SET shop_wares = ?2, shop_held = ?3 WHERE id = ?1 AND shop_wares = ?4 AND shop_held = ?5')",
+    "new": "    .prepare('UPDATE players SET shop_wares = ?2, shop_held = ?3 WHERE id = ?1 AND ?4 = ?4 AND ?5 = ?5')",
     "tests": [
       "test/server/storefront_audit.test.js"
     ]
@@ -129,7 +129,7 @@
   {
     "name": "AUDIT-STOREFRONT-the-retry-dropped",
     "file": "server-account/src/shop.js",
-    "old": "      if (i === 2) throw e;   // never written: a 5xx, and Stripe tells it again",
+    "old": "      if (i === 2) throw e; // never written: a 5xx, and Stripe tells it again",
     "new": "      throw e;",
     "tests": [
       "test/server/storefront_audit.test.js"
@@ -138,8 +138,8 @@
   {
     "name": "AUDIT-STOREFRONT-a-mark-on-a-ware-another-order-covers",
     "file": "server-account/src/shop.js",
-    "old": "!direct.includes(id) && !covered.has(id) &&",
-    "new": "!direct.includes(id) &&",
+    "old": "    if (still.includes(id) && !direct.includes(id) && !covered.has(id) && !toks.includes(`-${id}`)) toks.push(`-${id}`);",
+    "new": "    if (still.includes(id) && !direct.includes(id) && !toks.includes(`-${id}`)) toks.push(`-${id}`);",
     "tests": [
       "test/server/storefront_audit.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "AUDIT-STOREFRONT-a-mark-left-by-a-grant",
     "file": "server-account/src/shop.js",
-    "old": "const toks = tokensOf(row).filter((t) => !(t[0] === '-' && covers.includes(t.slice(1))));",
-    "new": "const toks = tokensOf(row);",
+    "old": "  const toks = tokensOf(row).filter((t) => !(t[0] === '-' && covers.includes(t.slice(1))));",
+    "new": "  const toks = tokensOf(row);",
     "tests": [
       "test/server/storefront_audit.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "AUDIT-STOREFRONT-the-letter-saying-only-its-ware",
     "file": "server-account/src/shop.js",
-    "old": "revokePost(order, why, had.filter((id) => !has.includes(id)))",
-    "new": "revokePost(order, why)",
+    "old": "      ...(order.player\n        ? [\n            postStatement(\n              db,\n              order.player,\n              revokePost(\n                order,\n                why,\n                had.filter((id) => !has.includes(id)),\n              ),\n              null,\n              nowS,\n            ),\n          ]\n        : []), // no ware: a letter with nothing on the account",
+    "new": "      ...(order.player ? [postStatement(db, order.player, revokePost(order, why), null, nowS)] : []), // no ware: a letter with nothing on the account",
     "tests": [
       "test/server/storefront_audit.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "AUDIT-STOREFRONT-a-held-ware-said-off",
     "file": "server-account/src/shop.js",
-    "old": "!names.length ? 'Your account still holds it through another order.' :",
-    "new": "false ? '' :",
+    "old": "        !names.length\n        ? 'Your account still holds it through another order.'",
+    "new": "        false\n        ? ''",
     "tests": [
       "test/server/storefront_audit.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "AUDIT-STOREFRONT-a-window-told-beside-no-sale",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "win = row?.until && row.sale ? row : null, deal",
-    "new": "win = row?.until ? row : null, deal",
+    "old": "      win = row?.until && row.sale ? row : null,",
+    "new": "      win = row?.until ? row : null,",
     "tests": [
       "test/ui/storefront_audit_window.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "AUDIT-STOREFRONT-the-days-left-frozen",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "      day = Math.floor(now() / 86_400_000);\n      draw();\n",
-    "new": "      day = Math.floor(now() / 86_400_000);\n",
+    "old": "      draw();\n      const fl = f();",
+    "new": "      const fl = f();",
     "tests": [
       "test/ui/storefront_audit_window.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "AUDIT-STOREFRONT-a-part-held-giver-unmarked",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "held, part: !held && shopClosure(id).some((x) => x !== id && shopHeldAny(flow, x)) };",
-    "new": "held, part: false };",
+    "old": "      part: !held && shopClosure(id).some((x) => x !== id && shopHeldAny(flow, x)),",
+    "new": "      part: false,",
     "tests": [
       "test/ui/storefront_audit_window.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "AUDIT-STOREFRONT-a-small-dot",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": ".px-shopwin .sh-cdot { width: 24px; height: 24px; min-width: 24px; min-height: 24px;",
-    "new": ".px-shopwin .sh-cdot { width: 14px; height: 14px; min-width: 14px; min-height: 14px;",
+    "old": ".px-shopwin .sh-cdot { width: 24px; height: 24px; min-width: 24px; min-height: 24px; padding: 0; border: 0; border-radius: 50%; background: transparent; box-shadow: none; display: inline-flex; align-items: center; justify-content: center; }",
+    "new": ".px-shopwin .sh-cdot { width: 14px; height: 14px; min-width: 14px; min-height: 14px; padding: 0; border: 0; border-radius: 50%; background: transparent; box-shadow: none; display: inline-flex; align-items: center; justify-content: center; }",
     "tests": [
       "test/ui/storefront_audit_window.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "AUDIT-STOREFRONT-in-the-shop-before-the-drop",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "  if (e.avail === 'store' && Array.isArray(shop?.wares)) return storeAvail(`${e.kind}:${e.key}`, shop.wares);\n",
-    "new": "",
+    "old": "  if (e.avail === 'store' && Array.isArray(shop?.wares)) return storeAvail(`${e.kind}:${e.key}`, shop.wares);\n  if (e.avail !== 'seasonal') return e.avail;",
+    "new": "  if (e.avail !== 'seasonal') return e.avail;",
     "tests": [
       "test/ui/storefront_audit_window.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "AUDIT-STOREFRONT-a-bundle-only-ware-by-its-own-row",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "w.alone && /** @type {string[]} */ (shopClosure(w.id)).includes(id)",
-    "new": "w.id === id",
+    "old": "  const givers = SHOP_WARES.filter((w) => w.alone && /** @type {string[]} */ (shopClosure(w.id)).includes(id)).map(\n    (w) => w.id,\n  );",
+    "new": "  const givers = SHOP_WARES.filter((w) => w.id === id).map((w) => w.id);",
     "tests": [
       "test/ui/storefront_audit_window.test.js"
     ]

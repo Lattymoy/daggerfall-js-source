@@ -4,7 +4,9 @@
     "file": "src/systems/smithItems.js",
     "old": "  if (it && it.maxCondition > 0) it.currentCondition = wearCondition(it.maxCondition, piece.wear);\n  return it;",
     "new": "  return it;",
-    "tests": ["test/ui/market_look.test.js"],
+    "tests": [
+      "test/ui/market_look.test.js"
+    ],
     "note": "a worn piece looked at (and collected) whole"
   },
   {
@@ -12,7 +14,9 @@
     "file": "src/scenes/marketPiecesHost.js",
     "old": "    const it = mintMarketPiece(piece);   // MARKET-LOOK: the mint the board's look shows",
     "new": "    const it = mintPiece(piece, piece.provenance);",
-    "tests": ["test/ui/market_look.test.js"],
+    "tests": [
+      "test/ui/market_look.test.js"
+    ],
     "note": "the collect mints apart from the look - what arrives is no longer what was looked at"
   },
   {
@@ -20,14 +24,18 @@
     "file": "src/ui/marketTab.js",
     "old": "  const pickedNodes = (row, bar) => [lookNode(row), bar].filter(Boolean);",
     "new": "  const pickedNodes = (row, bar) => [bar];",
-    "tests": ["test/ui/market_look.test.js"]
+    "tests": [
+      "test/ui/market_look.test.js"
+    ]
   },
   {
     "name": "MARKET-LOOK-wrong-piece",
     "file": "src/ui/marketTab.js",
     "old": "    const rec = row?.kind === 'item' ? row.item : row?.piece;",
     "new": "    const rec = (st.data?.rows ?? [])[0]?.piece ?? (row?.kind === 'item' ? row.item : row?.piece);",
-    "tests": ["test/ui/market_look.test.js"],
+    "tests": [
+      "test/ui/market_look.test.js"
+    ],
     "note": "the first row's piece looked at whichever row is picked"
   },
   {
@@ -35,14 +43,18 @@
     "file": "src/ui/marketTab.js",
     "old": "    const rec = row?.kind === 'item' ? row.item : row?.piece;",
     "new": "    const rec = row?.piece;",
-    "tests": ["test/ui/market_look.test.js"]
+    "tests": [
+      "test/ui/market_look.test.js"
+    ]
   },
   {
     "name": "MARKET-LOOK-raw-record",
     "file": "src/ui/marketTab.js",
-    "old": "it = row.kind === 'item' ? goodItemOf(rec) : mintMarketPiece(rec);",
-    "new": "it = row.kind === 'item' ? rec : mintMarketPiece(rec);",
-    "tests": ["test/ui/market_look.test.js"],
+    "old": "        it = row.kind === 'item' ? goodItemOf(rec) : mintMarketPiece(rec);",
+    "new": "        it = row.kind === 'item' ? rec : mintMarketPiece(rec);",
+    "tests": [
+      "test/ui/market_look.test.js"
+    ],
     "note": "another player's record read without the wire's clamp"
   },
   {
@@ -50,6 +62,8 @@
     "file": "src/ui/marketTab.js",
     "old": "        if (st.picked === a.id) list.append(...pickedNodes(a, auctionBar(a)));",
     "new": "        if (st.picked === a.id) list.append(auctionBar(a));",
-    "tests": ["test/ui/market_look.test.js"]
+    "tests": [
+      "test/ui/market_look.test.js"
+    ]
   }
 ]

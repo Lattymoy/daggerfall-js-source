@@ -11,8 +11,8 @@
   {
     "name": "PERF-CPU-the-cpu-door-turns-the-gpu-zone-arm-on-too",
     "file": "src/render/perfMeter.js",
-    "old": "  try { return /[?&]perf=cpu\\b/.test(search); } catch { return false; }",
-    "new": "  try { return /[?&]perf\\b/.test(search); } catch { return false; }",
+    "old": "    return /[?&]perf=cpu\\b/.test(search);",
+    "new": "    return /[?&]perf\\b/.test(search);",
     "tests": [
       "test/render/perfon2_peercull.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PERF-CPU-the-spans-do-not-tile-so-a-zone-is-counted-from-the-frame-start",
     "file": "src/render/perfMeter.js",
-    "old": "  _cpuMark(name) {\n    this._cpuClose();\n    this.cpuOpen = [name, this._now()];\n  }",
-    "new": "  _cpuMark(name) {\n    this.cpuOpen = [name, this._now()];\n  }",
+    "old": "    this._cpuClose();\n    this.cpuOpen = [name, this._now()];",
+    "new": "    this.cpuOpen = [name, this._now()];",
     "tests": [
       "test/render/perfon2_peercull.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PERF-CPU-a-span-left-open-leaks-into-the-next-frame",
     "file": "src/render/perfMeter.js",
-    "old": "    if (this.cpu) {\n      this._cpuClose();",
-    "new": "    if (this.cpu) {\n      if (false) this._cpuClose();",
+    "old": "      this._cpuClose();",
+    "new": "      if (false) this._cpuClose();",
     "tests": [
       "test/render/perfon2_peercull.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PERF-CPU-markCpu-also-opens-a-gpu-query-so-the-zone-arm-is-disturbed",
     "file": "src/render/perfMeter.js",
-    "old": "  markCpu(name) { if (this.cpu) this._cpuMark(name); }",
-    "new": "  markCpu(name) { this.mark(name); }",
+    "old": "  markCpu(name) {\n    if (this.cpu) this._cpuMark(name);",
+    "new": "  markCpu(name) {\n    this.mark(name);",
     "tests": [
       "test/render/perfon2_peercull.test.js"
     ]

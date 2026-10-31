@@ -2,8 +2,8 @@
   {
     "name": "EGPLUS-role-forgotten",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    'body .eg-k-tile'],   // EG-PLUS",
-    "new": "    ],   // EG-PLUS",
+    "old": "    'body .eg-k-tile',\n  ], // EG-PLUS: a Vestige offered, a start, a decree for the Wager - the one taken brass   // COLLECTIONS (CARDS-PLUS): the Codex | Cards switch, the binder's kinds, a deck's cards",
+    "new": "  ], // EG-PLUS: a Vestige offered, a start, a decree for the Wager - the one taken brass   // COLLECTIONS (CARDS-PLUS): the Codex | Cards switch, the binder's kinds, a deck's cards",
     "tests": [
       "test/ui/eliteGates/egplus_ui.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EGPLUS-ground-on-press",
     "file": "src/ui/eliteGates/egKit.js",
-    "old": ".eg-k-btn { margin: 0; padding: 4px 12px;",
-    "new": ".eg-k-btn { background: #333; margin: 0; padding: 4px 12px;",
+    "old": ".eg-k-btn { margin: 0; padding: 4px 12px; min-height: 30px; border-width: 2px; border-style: solid; font: inherit; font-size: 13px; color: #efe8d6; text-align: center; cursor: pointer; }",
+    "new": ".eg-k-btn { background: #333; margin: 0; padding: 4px 12px; min-height: 30px; border-width: 2px; border-style: solid; font: inherit; font-size: 13px; color: #efe8d6; text-align: center; cursor: pointer; }",
     "tests": [
       "test/ui/eliteGates/egplus_ui.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EGPLUS-serif-back",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "${PIXEL_FONT_CSS} font-size: calc(14px * var(--hud-scale, 1));",
-    "new": "font-family: Georgia, serif; font-size: calc(14px * var(--hud-scale, 1));",
+    "old": "  padding: 9px 12px 10px; border-width: 2px; border-style: solid; ${PIXEL_FONT_CSS} font-size: calc(14px * var(--hud-scale, 1)); line-height: 1.35;",
+    "new": "  padding: 9px 12px 10px; border-width: 2px; border-style: solid; font-family: Georgia, serif; font-size: calc(14px * var(--hud-scale, 1)); line-height: 1.35;",
     "tests": [
       "test/ui/eliteGates/egplus_ui.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "EGPLUS-decree-lines-dropped",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": ", lines: o.map((id) => EG_DECREES[id]?.line ?? '') };",
-    "new": ", lines: o.map(() => '') };",
+    "old": "      lines: o.map((id) => EG_DECREES[id]?.line ?? ''),",
+    "new": "      lines: o.map(() => ''),",
     "tests": [
       "test/ui/eliteGates/egplus_ui.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "EGPLUS-vote-unmarked",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "if (a.mine === y) { b.className += ' on';",
-    "new": "if (false) { b.className += ' on';",
+    "old": "      if (a.mine === y) {",
+    "new": "      if (false) {",
     "tests": [
       "test/ui/eliteGates/egplus_ui.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "EGPLUS-reader-unmarked",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": "const n = el('div', `eg-k-row${r.you ? ' on' : ''}`);",
-    "new": "const n = el('div', 'eg-k-row');",
+    "old": "    const n = el('div', `eg-k-row${r.you ? ' on' : ''}`);",
+    "new": "    const n = el('div', 'eg-k-row');",
     "tests": [
       "test/ui/eliteGates/egplus_ui.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "EGPLUS-band-dropped",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": "sub: [`Hall ${r.h} - ${EG_BAND_NAMES[egBandOfHall(r.h)]}`, r.pr || '']",
-    "new": "sub: [`Hall ${r.h}`, r.pr || '']",
+    "old": "      sub: [`Hall ${r.h} - ${EG_BAND_NAMES[egBandOfHall(r.h)]}`, r.pr || ''].filter(Boolean).join(' - '),",
+    "new": "      sub: [`Hall ${r.h}`, r.pr || ''].filter(Boolean).join(' - '),",
     "tests": [
       "test/ui/eliteGates/egplus_ui.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "EGPLUS-runs-oldest-first",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": "typeof r.title === 'string').slice().reverse();\n    return { season: ''",
-    "new": "typeof r.title === 'string').slice();\n    return { season: ''",
+    "old": "      .slice()\n      .reverse();",
+    "new": "      .slice();",
     "tests": [
       "test/ui/eliteGates/egplus_ui.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "EGPLUS-chosen-twice",
     "file": "src/ui/eliteGates/egStartPanel.js",
-    "old": "const finish = (fn) => { if (done) return; done = true; leave(); fn(); };",
-    "new": "const finish = (fn) => { done = true; leave(); fn(); };",
+    "old": "    if (done) return;\n    done = true;",
+    "new": "    done = true;",
     "tests": [
       "test/ui/eliteGates/egplus_ui.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "EGPLUS-slot-told-after",
     "file": "src/ui/eliteGates/egStartPanel.js",
-    "old": "const finish = (fn) => { if (done) return; done = true; leave(); fn(); };",
-    "new": "const finish = (fn) => { if (done) return; done = true; fn(); leave(); };",
+    "old": "    leave();\n    fn();",
+    "new": "    fn();\n    leave();",
     "tests": [
       "test/ui/eliteGates/egplus_ui.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "EGPLUS-ask-skipped",
     "file": "src/ui/eliteGates/egStartPanel.js",
-    "old": "    if (!s.missing.length) { choose(",
-    "new": "    if (true) { choose(",
+    "old": "    if (!s.missing.length) {",
+    "new": "    if (true) {",
     "tests": [
       "test/ui/eliteGates/egplus_ui.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "EGPLUS-fold-stuck",
     "file": "src/ui/eliteGates/egStartPanel.js",
-    "old": "fold.addEventListener?.('click', () => { folded = open; draw(); });",
-    "new": "fold.addEventListener?.('click', () => { folded = true; draw(); });",
+    "old": "        folded = open;",
+    "new": "        folded = true;",
     "tests": [
       "test/ui/eliteGates/egplus_ui.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "EGPLUS-panel-never",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "  if (o.panel) { const p = o.panel.open(o); if (p) return p; }",
-    "new": "  if (false) { const p = o.panel.open(o); if (p) return p; }",
+    "old": "  if (o.panel) {",
+    "new": "  if (false) {",
     "tests": [
       "test/ui/eliteGates/egplus_ui.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "EGPLUS-hall1-dropped",
     "file": "src/ui/eliteGates/egStartPanel.js",
-    "old": "const list = keys > 0 ? (mine.includes(0) ? mine : [...mine, 0]) : [];",
-    "new": "const list = keys > 0 ? mine.filter((ew) => ew > 0) : [];",
+    "old": "  const list = keys > 0 ? (mine.includes(0) ? mine : [...mine, 0]) : [];",
+    "new": "  const list = keys > 0 ? mine.filter((ew) => ew > 0) : [];",
     "tests": [
       "test/ui/eliteGates/egplus_ui.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "EGPLUS-mark-misread",
     "file": "src/ui/eliteGates/egStartPanel.js",
-    "old": "egMayStart(/** @type {number[]} */ (starts[m.sub]), ew)",
-    "new": "egMayStart(/** @type {number[]} */ (starts[me]), ew)",
+    "old": "        (m) => Array.isArray(starts?.[m.sub]) && egMayStart(/** @type {number[]} */ (starts[m.sub]), ew),",
+    "new": "        (m) => Array.isArray(starts?.[m.sub]) && egMayStart(/** @type {number[]} */ (starts[me]), ew),",
     "tests": [
       "test/ui/eliteGates/egplus_ui.test.js"
     ]

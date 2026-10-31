@@ -7,13 +7,20 @@
 
 /** The meter's numbers, in monster-kill units. */
 export const VILLAIN = Object.freeze({
-  max: 10_000, red: 5_000,
-  perLevel: 100, fromLevels: 5, unflagged: 2_000,   // a kill: each level under the killer from 5 under, and an unflagged victim
-  monster: 1, monsterBelow: 1, quest: 200, raid: 500,   // what lowers it: a monster at or above the killer's level less 1
+  max: 10_000,
+  red: 5_000,
+  perLevel: 100,
+  fromLevels: 5,
+  unflagged: 2_000, // a kill: each level under the killer from 5 under, and an unflagged victim
+  monster: 1,
+  monsterBelow: 1,
+  quest: 200,
+  raid: 500, // what lowers it: a monster at or above the killer's level less 1
 });
 
 /** The meter held to 0..VILLAIN.max (anything not a number is 0). */
-export const villainClamp = (/** @type {unknown} */ n) => (Number.isFinite(n) ? Math.max(0, Math.min(VILLAIN.max, Math.trunc(/** @type {number} */ (n)))) : 0);
+export const villainClamp = (/** @type {unknown} */ n) =>
+  Number.isFinite(n) ? Math.max(0, Math.min(VILLAIN.max, Math.trunc(/** @type {number} */ (n)))) : 0;
 
 /** Is a meter at `n` a villain's? */
 export const isVillain = (/** @type {unknown} */ n) => villainClamp(n) >= VILLAIN.red;
@@ -26,17 +33,23 @@ export const isVillain = (/** @type {unknown} */ n) => villainClamp(n) >= VILLAI
  */
 export function villainKillPoints({ killer = null, victim = null, flagged = true, defended = false }) {
   if (defended) return 0;
-  const under = Number.isSafeInteger(killer) && Number.isSafeInteger(victim) ? /** @type {number} */ (killer) - /** @type {number} */ (victim) : 0;
+  const under =
+    Number.isSafeInteger(killer) && Number.isSafeInteger(victim)
+      ? /** @type {number} */ (killer) - /** @type {number} */ (victim)
+      : 0;
   const levels = under >= VILLAIN.fromLevels ? under * VILLAIN.perLevel : 0;
   return levels + (flagged ? 0 : VILLAIN.unflagged);
 }
 
 /** The meter after a change of `delta`, held to its bounds. */
-export const villainAfter = (/** @type {unknown} */ n, /** @type {number} */ delta) => villainClamp(villainClamp(n) + (Number.isFinite(delta) ? Math.trunc(delta) : 0));
+export const villainAfter = (/** @type {unknown} */ n, /** @type {number} */ delta) =>
+  villainClamp(villainClamp(n) + (Number.isFinite(delta) ? Math.trunc(delta) : 0));
 
 /** What a monster kill takes off: VILLAIN.monster for a monster at or above the killer's level less VILLAIN.monsterBelow. */
-export const villainMonsterLowers = (/** @type {number} */ killerLevel, /** @type {number} */ monsterLevel) => (
-  Number.isFinite(killerLevel) && Number.isFinite(monsterLevel) && monsterLevel >= killerLevel - VILLAIN.monsterBelow ? VILLAIN.monster : 0);
+export const villainMonsterLowers = (/** @type {number} */ killerLevel, /** @type {number} */ monsterLevel) =>
+  Number.isFinite(killerLevel) && Number.isFinite(monsterLevel) && monsterLevel >= killerLevel - VILLAIN.monsterBelow
+    ? VILLAIN.monster
+    : 0;
 
 /** What a helpful quest takes off. */
 export const villainQuestLowers = () => VILLAIN.quest;

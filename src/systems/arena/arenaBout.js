@@ -89,22 +89,62 @@ const share = (f) => (f.maxHealth > 0 ? clamp01(f.health / f.maxHealth) : 0);
  * default: the judges as they always were - the relay's ladder alone passes net/arena/arenaLaw.js LADDER_JUDGES_SHARE).
  * @param {{ id: string, kind?: string, fighters: any[], ring: { centre: number[], radius: number }, now: number, limitMs?: number, tier?: number, label?: string, judgesFloor?: number }} o
  */
-export function newBout({ id, kind = 'exhibition', fighters, ring, now, limitMs = BOUT_LIMIT_MS, tier = 0, label = '', judgesFloor = 0 }) {
+export function newBout({
+  id,
+  kind = 'exhibition',
+  fighters,
+  ring,
+  now,
+  limitMs = BOUT_LIMIT_MS,
+  tier = 0,
+  label = '',
+  judgesFloor = 0,
+}) {
   if (!Array.isArray(fighters) || fighters.length < 2) throw new Error('arenaBout: a bout needs two fighters');
   const sides = new Set(fighters.map((f) => f.side));
   if (sides.size < 2) throw new Error('arenaBout: a bout needs two sides');
   const b = {
-    id: String(id), kind, tier, label, limitMs, phase: 'call', phaseAt: now, startAt: now, fightAt: NaN, endAt: NaN,
-    judgesFloor: Number.isFinite(judgesFloor) && judgesFloor > 0 ? Math.min(1, judgesFloor) : 0,   // AUDIT ARENA-LADDER
+    id: String(id),
+    kind,
+    tier,
+    label,
+    limitMs,
+    phase: 'call',
+    phaseAt: now,
+    startAt: now,
+    fightAt: NaN,
+    endAt: NaN,
+    judgesFloor: Number.isFinite(judgesFloor) && judgesFloor > 0 ? Math.min(1, judgesFloor) : 0, // AUDIT ARENA-LADDER
     ring: { centre: [ring.centre[0], ring.centre[1]], radius: ring.radius },
     /** @type {BoutFighter[]} */
     fighters: fighters.map((f) => ({
-      id: String(f.id), name: String(f.name ?? f.id), side: f.side | 0, maxHealth: Math.max(1, f.maxHealth | 0),
-      health: Math.max(1, (f.health ?? f.maxHealth) | 0), temper: clamp01(f.temper ?? 0.5), ai: f.ai !== false,
-      home: f.home ?? '', epithet: f.epithet ?? '', out: null, outAt: NaN, dealt: 0, hits: 0, misses: 0, crits: 0,
-      low: false, comeback: false, outsideAt: NaN, fleeing: false, atMark: false, temperAt: now, pos: null,
+      id: String(f.id),
+      name: String(f.name ?? f.id),
+      side: f.side | 0,
+      maxHealth: Math.max(1, f.maxHealth | 0),
+      health: Math.max(1, (f.health ?? f.maxHealth) | 0),
+      temper: clamp01(f.temper ?? 0.5),
+      ai: f.ai !== false,
+      home: f.home ?? '',
+      epithet: f.epithet ?? '',
+      out: null,
+      outAt: NaN,
+      dealt: 0,
+      hits: 0,
+      misses: 0,
+      crits: 0,
+      low: false,
+      comeback: false,
+      outsideAt: NaN,
+      fleeing: false,
+      atMark: false,
+      temperAt: now,
+      pos: null,
     })),
-    lastBlowAt: NaN, stallSaid: false, criers: 0, countN: 3,
+    lastBlowAt: NaN,
+    stallSaid: false,
+    criers: 0,
+    countN: 3,
     /** @type {null | { side: number|null, how: string, winners: string[], losers: string[], judges: any }} */
     result: null,
     /** @type {BoutEvent[]} */
@@ -115,9 +155,15 @@ export function newBout({ id, kind = 'exhibition', fighters, ring, now, limitMs 
 }
 
 /** @param {any} b @param {BoutEvent} e */
-function emit(b, e) { b.events.push(e); }
+function emit(b, e) {
+  b.events.push(e);
+}
 /** The events raised since the last take, in order - the caller's to hear once. */
-export function takeBoutEvents(b) { const e = b.events; b.events = []; return e; }
+export function takeBoutEvents(b) {
+  const e = b.events;
+  b.events = [];
+  return e;
+}
 
 const fighterOf = (b, id) => b.fighters.find((f) => f.id === String(id)) ?? null;
 /** A fighter of the bout by id, or null. */
@@ -129,7 +175,8 @@ export const boutLive = (b) => b?.phase === 'fight';
 /** Is the bout before its fight (the call, the walk, the count) - the fighters stand and do not strike. */
 export const boutBefore = (b) => b?.phase === 'call' || b?.phase === 'walk' || b?.phase === 'count';
 /** Is the bout over (its verdict said or later)? */
-export const boutOver = (b) => !!b && (b.phase === 'end' || b.phase === 'verdict' || b.phase === 'heal' || b.phase === 'done');
+export const boutOver = (b) =>
+  !!b && (b.phase === 'end' || b.phase === 'verdict' || b.phase === 'heal' || b.phase === 'done');
 /** The fight's time left, ms (the whole limit before it starts, 0 after). */
 export function boutTimeLeft(b, now) {
   if (!b) return 0;
@@ -143,7 +190,8 @@ export const callMs = (b) => CALL_BEAT_MS * (1 + b.fighters.length);
 
 /** Move to `phase` at `now`, said. */
 function enter(b, phase, now, extra = {}) {
-  b.phase = phase; b.phaseAt = now;
+  b.phase = phase;
+  b.phaseAt = now;
   emit(b, { k: phase, at: now, ...extra });
 }
 
@@ -152,7 +200,10 @@ export function boutAtMarks(b, id, now) {
   const f = fighterOf(b, id);
   if (!f || b.phase !== 'walk') return false;
   f.atMark = true;
-  if (b.fighters.every((x) => x.atMark)) { b.countN = 3; enter(b, 'count', now, { n: 3 }); }
+  if (b.fighters.every((x) => x.atMark)) {
+    b.countN = 3;
+    enter(b, 'count', now, { n: 3 });
+  }
   return true;
 }
 
@@ -168,31 +219,60 @@ export function boutTick(b, now, rng = Math.random) {
     case 'call': {
       // the Herald cries each fighter a beat apart, after the bout's own line
       const due = Math.min(b.fighters.length, Math.floor(t / CALL_BEAT_MS));
-      while (b.criers < due) { const f = b.fighters[b.criers++]; emit(b, { k: 'crier', at: now, a: f.id }); }
+      while (b.criers < due) {
+        const f = b.fighters[b.criers++];
+        emit(b, { k: 'crier', at: now, a: f.id });
+      }
       if (t >= callMs(b)) enter(b, 'walk', now);
       break;
     }
     case 'walk':
-      if (t >= WALK_MAX_MS) { b.countN = 3; enter(b, 'count', now, { n: 3 }); }
+      if (t >= WALK_MAX_MS) {
+        b.countN = 3;
+        enter(b, 'count', now, { n: 3 });
+      }
       break;
     case 'count': {
       const n = 3 - Math.floor(t / (COUNT_MS / 3));
-      if (n >= 1 && n < (b.countN ?? 3)) { b.countN = n; emit(b, { k: 'count', at: now, n }); }
-      if (t >= COUNT_MS) { b.fightAt = now; b.lastBlowAt = now; for (const f of b.fighters) { f.temperAt = now; f.outsideAt = NaN; } enter(b, 'fight', now); }
+      if (n >= 1 && n < (b.countN ?? 3)) {
+        b.countN = n;
+        emit(b, { k: 'count', at: now, n });
+      }
+      if (t >= COUNT_MS) {
+        b.fightAt = now;
+        b.lastBlowAt = now;
+        for (const f of b.fighters) {
+          f.temperAt = now;
+          f.outsideAt = NaN;
+        }
+        enter(b, 'fight', now);
+      }
       break;
     }
-    case 'fight': fightTick(b, now, rng); break;
-    case 'end': if (t >= END_HOLD_MS) enter(b, 'verdict', now, { side: b.result?.side ?? null, how: b.result?.how ?? '' }); break;
-    case 'verdict': if (t >= VERDICT_MS) enter(b, 'heal', now); break;
-    case 'heal': if (t >= HEAL_HOLD_MS) enter(b, 'done', now); break;
-    default: break;
+    case 'fight':
+      fightTick(b, now, rng);
+      break;
+    case 'end':
+      if (t >= END_HOLD_MS) enter(b, 'verdict', now, { side: b.result?.side ?? null, how: b.result?.how ?? '' });
+      break;
+    case 'verdict':
+      if (t >= VERDICT_MS) enter(b, 'heal', now);
+      break;
+    case 'heal':
+      if (t >= HEAL_HOLD_MS) enter(b, 'done', now);
+      break;
+    default:
+      break;
   }
   return b;
 }
 
 function fightTick(b, now, rng) {
   // THE STALL: no blow landed for STALL_MS - said once a stall, the clock reset by the next blow
-  if (!b.stallSaid && now - b.lastBlowAt >= STALL_MS) { b.stallSaid = true; emit(b, { k: 'stall', at: now }); }
+  if (!b.stallSaid && now - b.lastBlowAt >= STALL_MS) {
+    b.stallSaid = true;
+    emit(b, { k: 'stall', at: now });
+  }
   for (const f of b.fighters) {
     if (f.out) continue;
     // FLEE and RING-OUT, from the last place the host gave
@@ -200,11 +280,20 @@ function fightTick(b, now, rng) {
       const d = Math.hypot(f.pos[0] - b.ring.centre[0], f.pos[1] - b.ring.centre[1]);
       if (d > b.ring.radius + RING_SLACK_M) {
         if (!Number.isFinite(f.outsideAt)) f.outsideAt = now;
-        if (now - f.outsideAt >= RING_OUT_MS) { out(b, f, 'ringout', now); continue; }
+        if (now - f.outsideAt >= RING_OUT_MS) {
+          out(b, f, 'ringout', now);
+          continue;
+        }
       } else if (d > b.ring.radius) {
         if (!Number.isFinite(f.outsideAt)) f.outsideAt = now;
-        if (!f.fleeing && now - f.outsideAt >= FLEE_MS) { f.fleeing = true; emit(b, { k: 'flee', at: now, a: f.id }); }
-      } else { f.outsideAt = NaN; f.fleeing = false; }
+        if (!f.fleeing && now - f.outsideAt >= FLEE_MS) {
+          f.fleeing = true;
+          emit(b, { k: 'flee', at: now, a: f.id });
+        }
+      } else {
+        f.outsideAt = NaN;
+        f.fleeing = false;
+      }
     }
     // THE TEMPER: an AI at the yield line asks it once a second
     if (f.ai && share(f) <= YIELD_SHARE && now - f.temperAt >= TEMPER_EVERY_MS) {
@@ -225,7 +314,8 @@ export function aiYields(temper, healthShare, rng = Math.random) {
 /** A fighter out of the bout by `how`, said; the bout ends when one side (or none) stands. */
 function out(b, f, how, now) {
   if (f.out) return;
-  f.out = how; f.outAt = now;
+  f.out = how;
+  f.outAt = now;
   emit(b, { k: how, at: now, a: f.id });
   const left = standingSides(b);
   if (left.length <= 1) finish(b, left.length ? left[0] : null, how, now);
@@ -244,7 +334,7 @@ function finish(b, side, how, now, judges = null) {
 /** THE JUDGES: each standing side's damage dealt, then its hits, then the fewest misses - the best side wins; level on
  *  all three is a draw (null). `sides` [{ side, dealt, hits, misses }]. Pure. */
 export function judgeBout(sides) {
-  const ranked = [...sides].sort((x, y) => (y.dealt - x.dealt) || (y.hits - x.hits) || (x.misses - y.misses));
+  const ranked = [...sides].sort((x, y) => y.dealt - x.dealt || y.hits - x.hits || x.misses - y.misses);
   if (!ranked.length) return null;
   const [a, c] = ranked;
   if (c && a.dealt === c.dealt && a.hits === c.hits && a.misses === c.misses) return null;
@@ -256,7 +346,10 @@ export function boutTallies(b) {
   const by = new Map();
   for (const f of b.fighters) {
     const t = by.get(f.side) ?? { side: f.side, dealt: 0, hits: 0, misses: 0, standing: false };
-    t.dealt += f.dealt; t.hits += f.hits; t.misses += f.misses; t.standing ||= !f.out;
+    t.dealt += f.dealt;
+    t.hits += f.hits;
+    t.misses += f.misses;
+    t.standing ||= !f.out;
     by.set(f.side, t);
   }
   return [...by.values()];
@@ -272,7 +365,7 @@ function timeUp(b, now) {
     const dealt = tallies.find((t) => t.side === side)?.dealt ?? 0;
     if (dealt < b.judgesFloor * theirs) {
       const ai = tallies.filter((t) => !b.fighters.some((f) => f.side === t.side && !f.ai));
-      side = ai.length ? judgeBout(ai) : null;   // AUDIT ARENA-LADDER 2: fighters level on the card - a draw, never the first one's
+      side = ai.length ? judgeBout(ai) : null; // AUDIT ARENA-LADDER 2: fighters level on the card - a draw, never the first one's
     }
   }
   finish(b, side, 'judges', now, tallies);
@@ -287,21 +380,33 @@ function timeUp(b, now) {
 export function boutHit(b, blow) {
   const { from, to, dmg, health, crit = false, now } = blow;
   if (!boutLive(b)) return false;
-  const a = fighterOf(b, from), t = fighterOf(b, to);
+  const a = fighterOf(b, from),
+    t = fighterOf(b, to);
   if (!a || !t || a === t || a.out || t.out || a.side === t.side) return false;
   const d = Math.max(0, Math.round(Number(dmg) || 0));
   if (!(d > 0)) return false;
   const was = share(t);
-  t.health = Number.isFinite(health) ? Math.max(0, Math.min(t.maxHealth, Math.round(/** @type {number} */ (health)))) : Math.max(0, t.health - d);
-  a.dealt += d; a.hits++;
-  b.lastBlowAt = now; b.stallSaid = false;
+  t.health = Number.isFinite(health)
+    ? Math.max(0, Math.min(t.maxHealth, Math.round(/** @type {number} */ (health))))
+    : Math.max(0, t.health - d);
+  a.dealt += d;
+  a.hits++;
+  b.lastBlowAt = now;
+  b.stallSaid = false;
   emit(b, { k: 'hit', at: now, a: a.id, b: t.id, dmg: d });
-  if (crit) { a.crits++; emit(b, { k: 'crit', at: now, a: a.id, b: t.id, dmg: d }); }
+  if (crit) {
+    a.crits++;
+    emit(b, { k: 'crit', at: now, a: a.id, b: t.id, dmg: d });
+  }
   const now2 = share(t);
-  if (d >= t.maxHealth * KNOCKDOWN_SHARE || (was > YIELD_SHARE && now2 <= YIELD_SHARE)) emit(b, { k: 'knockdown', at: now, a: a.id, b: t.id });
+  if (d >= t.maxHealth * KNOCKDOWN_SHARE || (was > YIELD_SHARE && now2 <= YIELD_SHARE))
+    emit(b, { k: 'knockdown', at: now, a: a.id, b: t.id });
   if (now2 <= COMEBACK_LOW) t.low = true;
   // THE COMEBACK: a fighter once down at COMEBACK_LOW who has now drawn level with the one they struck - said once
-  if (a.low && !a.comeback && share(a) >= now2) { a.comeback = true; emit(b, { k: 'comeback', at: now, a: a.id }); }
+  if (a.low && !a.comeback && share(a) >= now2) {
+    a.comeback = true;
+    emit(b, { k: 'comeback', at: now, a: a.id });
+  }
   return true;
 }
 
