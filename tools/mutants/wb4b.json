@@ -29,8 +29,8 @@
   {
     "name": "WB4b-the-sweep-without-his-radius",
     "file": "src/systems/spellcast.js",
-    "old": "    if (sphereOverlapsCapsule(pos, radius, f.ai?.feet, f.ai?.height, f.ai?.radius)) out.push(f);",
-    "new": "    if (sphereOverlapsCapsule(pos, radius, f.ai?.feet, f.ai?.height)) out.push(f);",
+    "old": "    if (sphereOverlapsCapsule(pos, radius, f.ai?.feet, f.ai?.height, f.ai?.radius)) out.push(f); // WB4b: a body's own radius, where it states one",
+    "new": "    if (sphereOverlapsCapsule(pos, radius, f.ai?.feet, f.ai?.height)) out.push(f); // WB4b: a body's own radius, where it states one",
     "tests": [
       "test/net/gate/wb4b_gate_blows.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WB4b-the-missile-without-his-radius",
     "file": "src/systems/spellcast.js",
-    "old": "  return missileHitsCapsule(pos, foe?.ai?.feet, foe?.ai?.height, foe?.ai?.radius);",
-    "new": "  return missileHitsCapsule(pos, foe?.ai?.feet, foe?.ai?.height);",
+    "old": "  return missileHitsCapsule(pos, foe?.ai?.feet, foe?.ai?.height, foe?.ai?.radius); // WB4b: a body's own radius, where it states one",
+    "new": "  return missileHitsCapsule(pos, foe?.ai?.feet, foe?.ai?.height); // WB4b: a body's own radius, where it states one",
     "tests": [
       "test/net/gate/wb4b_gate_blows.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WB4b-the-touchs-sweep-cut-short",
     "file": "src/systems/spellcast.js",
-    "old": "for (let t = 0; t <= TOUCH_RANGE + 1e-9 && t < bestT; t += TOUCH_STEP) {",
-    "new": "for (let t = 0; t <= TOUCH_RANGE / 2 && t < bestT; t += TOUCH_STEP) {",
+    "old": "      for (let t = 0; t <= TOUCH_RANGE + 1e-9 && t < bestT; t += TOUCH_STEP) {",
+    "new": "      for (let t = 0; t <= TOUCH_RANGE / 2 && t < bestT; t += TOUCH_STEP) {",
     "tests": [
       "test/net/gate/wb4b_gate_blows.test.js"
     ]

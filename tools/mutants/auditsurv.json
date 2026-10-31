@@ -241,8 +241,8 @@
   {
     "name": "AUDITSURV-the-chargen-kit-carries-no-provisions",
     "file": "src/systems/startingGear.js",
-    "old": "for (const it of startingProvisions(entity)) { addItem(entity.items, it); added.push(it); }",
-    "new": "{ }",
+    "old": "  if (survivalOn())\n    for (const it of startingProvisions(entity)) {\n      addItem(entity.items, it);\n      added.push(it);\n    } // AUDIT C&C I7: the character's own wardrobe for the start's shoes and cloak",
+    "new": "  if (survivalOn()) {\n  } // AUDIT C&C I7: the character's own wardrobe for the start's shoes and cloak",
     "tests": [
       "test/systems/survival/auditsurv.test.js"
     ],

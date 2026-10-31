@@ -78,8 +78,8 @@
   {
     "name": "MEND-THIRD-kit-uncredited",
     "file": "src/systems/smithItems.js",
-    "old": "  creditOwnMend(it, was);   // MEND-THIRD: a kit is its owner's own mend - a third of it past a found piece's mark sells\n",
-    "new": "",
+    "old": "  creditOwnMend(it, was); // MEND-THIRD: a kit is its owner's own mend - a third of it past a found piece's mark sells\n  const i = items.indexOf(kit);",
+    "new": "  const i = items.indexOf(kit);",
     "tests": [
       "test/systems/mend_third.test.js"
     ],

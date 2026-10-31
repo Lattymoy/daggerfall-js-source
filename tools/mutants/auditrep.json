@@ -20,8 +20,8 @@
   {
     "name": "AUDITREP-F2-an-untrusted-read-stamps",
     "file": "src/systems/standing.js",
-    "old": "  if (!Number.isFinite(worldNow)) return true;\n",
-    "new": "",
+    "old": "  if (!Number.isFinite(worldNow)) return true;\n  if (!Number.isFinite(r.banishedUntil)) r.banishedUntil = banishmentEnd(worldNow); // BANISH-SKY: the calendar's thirty days",
+    "new": "  if (!Number.isFinite(r.banishedUntil)) r.banishedUntil = banishmentEnd(worldNow); // BANISH-SKY: the calendar's thirty days",
     "tests": [
       "test/systems/auditrep.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDITREP-F2-the-court-stamps-NaN",
     "file": "src/systems/standing.js",
-    "old": "Number.isFinite(worldNow) ? banishmentEnd(worldNow) : null",
-    "new": "banishmentEnd(worldNow)",
+    "old": "  r.banishedUntil = Number.isFinite(worldNow) ? banishmentEnd(worldNow) : null; // BANISH-SKY: the calendar's thirty days",
+    "new": "  r.banishedUntil = banishmentEnd(worldNow); // BANISH-SKY: the calendar's thirty days",
     "tests": [
       "test/systems/auditrep.test.js"
     ]

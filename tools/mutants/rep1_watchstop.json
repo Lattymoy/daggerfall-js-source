@@ -11,8 +11,8 @@
   {
     "name": "REP1-no-cooldown",
     "file": "src/systems/standing.js",
-    "old": "  if (ownNow < (s.challengeAt[regionIndex] ?? -Infinity) + CHALLENGE_COOLDOWN_MINUTES) return false;\n",
-    "new": "",
+    "old": "  if (ownNow < (s.challengeAt[regionIndex] ?? -Infinity) + CHALLENGE_COOLDOWN_MINUTES) return false;\n  return ownNow >= (s.graceUntil[regionIndex] ?? -Infinity);",
+    "new": "  return ownNow >= (s.graceUntil[regionIndex] ?? -Infinity);",
     "tests": [
       "test/systems/rep1_watchstop.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "REP1-the-table's-sign",
     "file": "src/systems/standing.js",
-    "old": "BASE_PENALTY[t] - PENALTY_PER_LEGAL_REP_POINT[t] * rep",
-    "new": "BASE_PENALTY[t] + PENALTY_PER_LEGAL_REP_POINT[t] * rep",
+    "old": "    Math.max(MIN_PENALTY[t], BASE_PENALTY[t] - PENALTY_PER_LEGAL_REP_POINT[t] * rep),",
+    "new": "    Math.max(MIN_PENALTY[t], BASE_PENALTY[t] + PENALTY_PER_LEGAL_REP_POINT[t] * rep),",
     "tests": [
       "test/systems/rep1_watchstop.test.js"
     ]

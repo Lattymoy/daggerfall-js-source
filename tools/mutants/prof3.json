@@ -401,8 +401,8 @@
   {
     "name": "PROF3-piece-rarity-random",
     "file": "src/systems/smithItems.js",
-    "old": "      applyRarity(item, eff.rarity, rolls, null, { fits, byLines: at(MINT_V_LINES)",
-    "new": "      applyRarity(item, eff.rarity, Math.random, null, { fits, byLines: at(MINT_V_LINES)",
+    "old": "      applyRarity(item, eff.rarity, rolls, null, {",
+    "new": "      applyRarity(item, eff.rarity, Math.random, null, {",
     "tests": [
       "test/systems/prof3_client.test.js"
     ],
@@ -411,8 +411,8 @@
   {
     "name": "PROF3-piece-no-condition",
     "file": "src/systems/smithItems.js",
-    "old": "    item.maxCondition = item.currentCondition = Math.max(1, Math.round(item.maxCondition * eff.condition));\n",
-    "new": "",
+    "old": "    item.maxCondition = item.currentCondition = Math.max(1, Math.round(item.maxCondition * eff.condition));\n    if (eff.weight !== 1)",
+    "new": "    if (eff.weight !== 1)",
     "tests": [
       "test/systems/prof3_client.test.js"
     ]
@@ -420,8 +420,8 @@
   {
     "name": "PROF3-piece-mark-kept-affix",
     "file": "src/systems/smithItems.js",
-    "old": "    if (q === MASTERWORK && mark) item.name = templateByIndex(r.templateIndex)?.name ?? item.name;   // the mark is its name (itemNameParts)\n",
-    "new": "",
+    "old": "    if (q === MASTERWORK && mark) item.name = templateByIndex(r.templateIndex)?.name ?? item.name; // the mark is its name (itemNameParts)\n    if (r.kind === 'jewel') setJewel(item, r, hand); // PROF10: its metal's and its gem's name, points and worth",
+    "new": "    if (r.kind === 'jewel') setJewel(item, r, hand); // PROF10: its metal's and its gem's name, points and worth",
     "tests": [
       "test/systems/prof3_client.test.js"
     ]
@@ -429,8 +429,8 @@
   {
     "name": "PROF3-piece-tool-life",
     "file": "src/systems/smithItems.js",
-    "old": "    item.maxCondition = item.currentCondition = TOOL_LIFE[q];",
-    "new": "    item.maxCondition = item.currentCondition = 50;",
+    "old": "    item.maxCondition = item.currentCondition = TOOL_LIFE[q]; // FORAGE0 14.7: a tool's quality is its life",
+    "new": "    item.maxCondition = item.currentCondition = 50; // FORAGE0 14.7: a tool's quality is its life",
     "tests": [
       "test/systems/prof3_client.test.js"
     ]
@@ -447,8 +447,8 @@
   {
     "name": "PROF3-kit-unclamped",
     "file": "src/systems/smithItems.js",
-    "old": "  it.currentCondition = Math.min(kitCeiling(it, kit), it.currentCondition + Math.ceil(it.maxCondition * (kit.fieldKit === true ? FIELD_KIT_REPAIR : KIT_REPAIR)));",
-    "new": "  it.currentCondition = it.currentCondition + Math.ceil(it.maxCondition * (kit.fieldKit === true ? FIELD_KIT_REPAIR : KIT_REPAIR));",
+    "old": "  it.currentCondition = Math.min(\n    kitCeiling(it, kit),\n    it.currentCondition + Math.ceil(it.maxCondition * (kit.fieldKit === true ? FIELD_KIT_REPAIR : KIT_REPAIR)),\n  ); // KIT-CEILING: never past three quarters - CRAFT5: nine tenths, a Superior or Masterwork kit's",
+    "new": "  it.currentCondition =\n    it.currentCondition + Math.ceil(it.maxCondition * (kit.fieldKit === true ? FIELD_KIT_REPAIR : KIT_REPAIR)); // KIT-CEILING: never past three quarters - CRAFT5: nine tenths, a Superior or Masterwork kit's",
     "tests": [
       "test/systems/prof3_client.test.js"
     ]
@@ -465,8 +465,8 @@
   {
     "name": "PROF3-kit-chain-refused",
     "file": "src/systems/smithItems.js",
-    "old": "|| (m === 1 && item.material === ARMOR_CHAIN)",
-    "new": "",
+    "old": "  if (item.group === 'Armor') return item.material === ARMOR_PLATE + m || (m === 1 && item.material === ARMOR_CHAIN);",
+    "new": "  if (item.group === 'Armor') return item.material === ARMOR_PLATE + m;",
     "tests": [
       "test/systems/prof3_client.test.js"
     ]

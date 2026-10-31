@@ -11,8 +11,8 @@
   {
     "name": "MACE-MAX-the-clamp-ignores-max-mods",
     "file": "src/systems/statMods.js",
-    "old": "  return Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE + maxMod);",
-    "new": "  return Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE);",
+    "old": "  return Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE + maxMod); // MACE-MAX: GetLiveStatValue's maxValue, the max mods in it",
+    "new": "  return Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE); // MACE-MAX: GetLiveStatValue's maxValue, the max mods in it",
     "tests": [
       "test/systems/fb1013e_macemax.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "MACE-MAX-an-ended-entry-keeps-its-max-mods",
     "file": "src/systems/statMods.js",
-    "old": "      if (a?.statMaxMods && !a.ended) maxMod += a.statMaxMods[statName] ?? 0;",
-    "new": "      if (a?.statMaxMods) maxMod += a.statMaxMods[statName] ?? 0;",
+    "old": "      if (a?.statMaxMods && !a.ended) maxMod += a.statMaxMods[statName] ?? 0; // MACE-MAX: every live effect's, whatever its kind",
+    "new": "      if (a?.statMaxMods) maxMod += a.statMaxMods[statName] ?? 0; // MACE-MAX: every live effect's, whatever its kind",
     "tests": [
       "test/systems/fb1013e_macemax.test.js"
     ]

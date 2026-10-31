@@ -128,8 +128,8 @@
   {
     "name": "SET2-the-cost-under-1",
     "file": "src/systems/spellcost.js",
-    "old": "if (Number.isFinite(n)) sp = Math.max(1, Math.round(n));",
-    "new": "if (Number.isFinite(n)) sp = Math.round(n);",
+    "old": "        if (Number.isFinite(n)) sp = Math.max(1, Math.round(n));",
+    "new": "        if (Number.isFinite(n)) sp = Math.round(n);",
     "tests": [
       "test/systems/set2_seams.test.js"
     ]

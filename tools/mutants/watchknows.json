@@ -92,8 +92,8 @@
   {
     "name": "WATCH-KNOWS-any-crime",
     "file": "src/systems/standing.js",
-    "old": "  if (!WARNABLE_CRIMES.includes(crime)) return false;\n",
-    "new": "",
+    "old": "  if (!WARNABLE_CRIMES.includes(crime)) return false;\n  if (knownCriminal(player, regionIndex, { ownNow, worldNow })) return false;",
+    "new": "  if (knownCriminal(player, regionIndex, { ownNow, worldNow })) return false;",
     "tests": [
       "test/systems/livingWorld/watchknows_watch.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "WATCH-KNOWS-theft-warned",
     "file": "src/systems/standing.js",
-    "old": "CRIMES.Vagrancy, CRIMES.Pickpocketing]);",
-    "new": "CRIMES.Vagrancy, CRIMES.Pickpocketing, CRIMES.Theft]);",
+    "old": "  CRIMES.Pickpocketing,\n]);",
+    "new": "  CRIMES.Pickpocketing,\n  CRIMES.Theft,\n]);",
     "tests": [
       "test/systems/livingWorld/watchknows_watch.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "WATCH-KNOWS-known-warned",
     "file": "src/systems/standing.js",
-    "old": "  if (knownCriminal(player, regionIndex, { ownNow, worldNow })) return false;\n  return !Number.isFinite",
-    "new": "  return !Number.isFinite",
+    "old": "  if (knownCriminal(player, regionIndex, { ownNow, worldNow })) return false;\n  return !Number.isFinite(standingOf(player).warned[regionIndex]);",
+    "new": "  return !Number.isFinite(standingOf(player).warned[regionIndex]);",
     "tests": [
       "test/systems/livingWorld/watchknows_watch.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "WATCH-KNOWS-unnoted",
     "file": "src/systems/standing.js",
-    "old": "{ standingOf(player).warned[regionIndex] = ownNow; }",
-    "new": "{ void player; void regionIndex; void ownNow; }",
+    "old": "  standingOf(player).warned[regionIndex] = ownNow;",
+    "new": "  void player;\n  void regionIndex;\n  void ownNow;",
     "tests": [
       "test/systems/livingWorld/watchknows_watch.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "WATCH-KNOWS-unsaved",
     "file": "src/systems/standing.js",
-    "old": ", warned: { ...s.warned } };",
-    "new": " };",
+    "old": "    warned: { ...s.warned },\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/livingWorld/watchknows_watch.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "WATCH-KNOWS-unrestored",
     "file": "src/systems/standing.js",
-    "old": "  Object.assign(s.warned, num(snap?.warned));\n",
-    "new": "",
+    "old": "  Object.assign(s.warned, num(snap?.warned));\n  return s;",
+    "new": "  return s;",
     "tests": [
       "test/systems/livingWorld/watchknows_watch.test.js"
     ],

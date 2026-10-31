@@ -234,8 +234,8 @@
   {
     "name": "AUDIT-PSCALE1-stat-zero-divided",
     "file": "src/systems/statMods.js",
-    "old": "    sinks?.hurt?.(entity.health, { whole: true });",
-    "new": "    sinks?.hurt?.(entity.health);",
+    "old": "    sinks?.hurt?.(entity.health, { whole: true }); // AUDIT PSCALE1 DOORS-1: DFU's CurrentHealth = 0 - a kill, never divided by a party's toughness",
+    "new": "    sinks?.hurt?.(entity.health); // AUDIT PSCALE1 DOORS-1: DFU's CurrentHealth = 0 - a kill, never divided by a party's toughness",
     "tests": [
       "test/systems/party/pscale1.test.js",
       "test/systems/auditpscale1.test.js"

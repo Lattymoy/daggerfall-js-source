@@ -191,7 +191,7 @@
   {
     "name": "DRAGON5-the-mounts-ride-unsent",
     "file": "src/systems/staffDragon.js",
-    "old": "export const dragonPoseRide = (mode = null) => ((_ride || mode === 'Dragon') && _relayKeepsRide ? DRAGON_POSE_RIDE : null);",
+    "old": "export const dragonPoseRide = (mode = null) =>\n  (_ride || mode === 'Dragon') && _relayKeepsRide ? DRAGON_POSE_RIDE : null;",
     "new": "export const dragonPoseRide = (mode = null) => (_ride && _relayKeepsRide ? DRAGON_POSE_RIDE : null);",
     "tests": [
       "test/net/dragon/dragon5_mount.test.js"

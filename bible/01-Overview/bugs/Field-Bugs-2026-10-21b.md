@@ -220,7 +220,7 @@ THE LAW NOW.
   (`snowCoverHost.js:"py, now(), arriving?.()"`),
   so a wait across the year's real turn finishes too.
 - SNOW-HOLD: the blanket's five-second prune lets a queued tile go with the overlays once it leaves the rings it draws
-  (`snowfallRuntime.js:"if (B.queue.some((t) => !live.has(t))) { B.queue = B.queue.filter((t) => live.has(t)); B.queued = new Set(B.queue); }"`
+  (`snowfallRuntime.js:"if (B.queue.some((t) => !live.has(t)))"`
   - `_blanketProcess` skips such a tile, so letting it go is the same), and a blanket going inactive lets its queue go
   (standing again queues every visible tile anew). The same walk now holds no destroyed tile and a queue of the 49 its
   rings draw. A host tile says THAT it replaced one; the old goes to the runtime through `promotions` alone. Departures

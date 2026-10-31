@@ -329,8 +329,8 @@
   {
     "name": "TESA-BIOME-37-class-from",
     "file": "src/systems/tamrielFauna.js",
-    "old": "      if (lv == null) { if (i < CLASS_FROM) continue; } else {",
-    "new": "      if (lv == null) { if (i < 0) continue; } else {",
+    "old": "        if (i < CLASS_FROM) continue;",
+    "new": "        if (i < 0) continue;",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -365,8 +365,8 @@
   {
     "name": "TESA-BIOME-41-out-of-reach",
     "file": "src/systems/tamrielFauna.js",
-    "old": "        if (off > SLOT_REACH) continue;\n",
-    "new": "",
+    "old": "        if (off > SLOT_REACH) continue;\n        w /= 1 + off / 2;",
+    "new": "        w /= 1 + off / 2;",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -392,8 +392,8 @@
   {
     "name": "TESA-BIOME-44-fallback-far",
     "file": "src/systems/tamrielFauna.js",
-    "old": "      pick = nearest(i, (id, r) => fresh(id, r) && !crowded(id, i) && near(id)) ?? nearest(i, fresh) ?? nearest(i, () => true)",
-    "new": "      pick = nearest(i, (id, r) => fresh(id, r) && !crowded(id, i)) ?? nearest(i, fresh) ?? nearest(i, () => true)",
+    "old": "        nearest(i, (id, r) => fresh(id, r) && !crowded(id, i) && near(id)) ??",
+    "new": "        nearest(i, (id, r) => fresh(id, r) && !crowded(id, i)) ??",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "TESA-BIOME-45-fallback-person-low",
     "file": "src/systems/tamrielFauna.js",
-    "old": "        ?? (i >= CLASS_FROM ? entries[0]?.[0] : undefined) ?? 0;",
-    "new": "        ?? entries[0]?.[0] ?? 0;",
+    "old": "        (i >= CLASS_FROM ? entries[0]?.[0] : undefined) ??",
+    "new": "        entries[0]?.[0] ??",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -419,8 +419,8 @@
   {
     "name": "TESA-BIOME-47-no-cover",
     "file": "src/systems/tamrielFauna.js",
-    "old": "    if (at < 0) continue;\n",
-    "new": "    if (at < 0 || true) continue;\n",
+    "old": "    if (at < 0) continue;",
+    "new": "    if (at < 0 || true) continue;",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -482,8 +482,8 @@
   {
     "name": "TESA-BIOME-54-standin-wolf",
     "file": "src/systems/tamrielFauna.js",
-    "old": "[M.Wolf]: null,",
-    "new": "[M.Wolf]: M.Sabertooth,",
+    "old": "  [M.Wolf]: null,",
+    "new": "  [M.Wolf]: M.Sabertooth,",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -491,8 +491,8 @@
   {
     "name": "TESA-BIOME-55-standin-troll",
     "file": "src/systems/tamrielFauna.js",
-    "old": "[M.Troll]: null,",
-    "new": "[M.Troll]: M.Giant,",
+    "old": "  [M.Troll]: null,",
+    "new": "  [M.Troll]: M.Giant,",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -500,8 +500,8 @@
   {
     "name": "TESA-BIOME-56-standin-land-dreugh",
     "file": "src/systems/tamrielFauna.js",
-    "old": "[M.LandDreugh]: null,",
-    "new": "[M.LandDreugh]: M.Dreugh,",
+    "old": "  [M.LandDreugh]: null,",
+    "new": "  [M.LandDreugh]: M.Dreugh,",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -509,8 +509,8 @@
   {
     "name": "TESA-BIOME-57-band-order",
     "file": "src/systems/tamrielFauna.js",
-    "old": "BIOMES.forEach((b, i) => { for (let k = 0; k < 3; k++) BIOME_OF_INDEX.set(BIOME_TABLE_BASE + 3 * i + k, [b, k]); });",
-    "new": "BIOMES.forEach((b, i) => { for (let k = 0; k < 3; k++) BIOME_OF_INDEX.set(BIOME_TABLE_BASE + 3 * i + k, [b, 2 - k]); });",
+    "old": "  for (let k = 0; k < 3; k++) BIOME_OF_INDEX.set(BIOME_TABLE_BASE + 3 * i + k, [b, k]);",
+    "new": "  for (let k = 0; k < 3; k++) BIOME_OF_INDEX.set(BIOME_TABLE_BASE + 3 * i + k, [b, 2 - k]);",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -545,7 +545,7 @@
   {
     "name": "TESA-BIOME-61-levels-classic",
     "file": "src/systems/tamrielFauna.js",
-    "old": "  return dex ? dexClassicRow(id, v, { mudex }).level ?? v.level : v.level;",
+    "old": "  return dex ? (dexClassicRow(id, v, { mudex }).level ?? v.level) : v.level;",
     "new": "  return v.level;",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
@@ -554,8 +554,8 @@
   {
     "name": "TESA-BIOME-62-levels-no-mudex",
     "file": "src/systems/tamrielFauna.js",
-    "old": "  return dex ? dexClassicRow(id, v, { mudex }).level ?? v.level : v.level;",
-    "new": "  return dex ? dexClassicRow(id, v, { mudex: false }).level ?? v.level : v.level;",
+    "old": "  return dex ? (dexClassicRow(id, v, { mudex }).level ?? v.level) : v.level;",
+    "new": "  return dex ? (dexClassicRow(id, v, { mudex: false }).level ?? v.level) : v.level;",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -572,7 +572,7 @@
   {
     "name": "TESA-BIOME-64-band-at-bay",
     "file": "src/systems/tamrielFauna.js",
-    "old": "  return b ? BIOME_BANDS.get(b.key) ?? null : null;",
+    "old": "  return b ? (BIOME_BANDS.get(b.key) ?? null) : null;",
     "new": "  return BIOME_BANDS.get('cyrodiilNibenay');",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"

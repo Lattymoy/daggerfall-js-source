@@ -665,8 +665,8 @@
   {
     "name": "AUDITTESA2G-F6-the-trace-unasked",
     "file": "src/systems/tamrielFauna.js",
-    "old": "  return !!tamrielTrace() && !!tamrielBiomeAt(px, py) && ",
-    "new": "  return !!tamrielBiomeAt(px, py) && ",
+    "old": "  return (\n    !!tamrielTrace() &&\n    !!tamrielBiomeAt(px, py) &&\n    !arenaPlaceOnPixel(px, py) &&\n    !capitalOnPixel(px, py) &&\n    !placeAt(px, py)\n  );",
+    "new": "  return !!tamrielBiomeAt(px, py) && !arenaPlaceOnPixel(px, py) && !capitalOnPixel(px, py) && !placeAt(px, py);",
     "tests": [
       "test/systems/audittesa2g_bands.test.js"
     ]
@@ -674,8 +674,8 @@
   {
     "name": "AUDITTESA2G-F6-the-sea-a-band-s",
     "file": "src/systems/tamrielFauna.js",
-    "old": "  return !!tamrielTrace() && !!tamrielBiomeAt(px, py) && ",
-    "new": "  return !!tamrielTrace() && ",
+    "old": "  return (\n    !!tamrielTrace() &&\n    !!tamrielBiomeAt(px, py) &&\n    !arenaPlaceOnPixel(px, py) &&\n    !capitalOnPixel(px, py) &&\n    !placeAt(px, py)\n  );",
+    "new": "  return !!tamrielTrace() && !arenaPlaceOnPixel(px, py) && !capitalOnPixel(px, py) && !placeAt(px, py);",
     "tests": [
       "test/systems/audittesa2g_bands.test.js"
     ]
@@ -683,8 +683,8 @@
   {
     "name": "AUDITTESA2G-F6-arena-s-places-unread",
     "file": "src/systems/tamrielFauna.js",
-    "old": " && !arenaPlaceOnPixel(px, py)",
-    "new": "",
+    "old": "  return (\n    !!tamrielTrace() &&\n    !!tamrielBiomeAt(px, py) &&\n    !arenaPlaceOnPixel(px, py) &&\n    !capitalOnPixel(px, py) &&\n    !placeAt(px, py)\n  );",
+    "new": "  return !!tamrielTrace() && !!tamrielBiomeAt(px, py) && !capitalOnPixel(px, py) && !placeAt(px, py);",
     "tests": [
       "test/systems/audittesa2g_bands.test.js"
     ]
@@ -692,8 +692,8 @@
   {
     "name": "AUDITTESA2G-F6-the-capitals-unread",
     "file": "src/systems/tamrielFauna.js",
-    "old": " && !capitalOnPixel(px, py)",
-    "new": "",
+    "old": "  return (\n    !!tamrielTrace() &&\n    !!tamrielBiomeAt(px, py) &&\n    !arenaPlaceOnPixel(px, py) &&\n    !capitalOnPixel(px, py) &&\n    !placeAt(px, py)\n  );",
+    "new": "  return !!tamrielTrace() && !!tamrielBiomeAt(px, py) && !arenaPlaceOnPixel(px, py) && !placeAt(px, py);",
     "tests": [
       "test/systems/audittesa2g_bands.test.js"
     ]
@@ -701,8 +701,8 @@
   {
     "name": "AUDITTESA2G-F6-the-host-s-roll-unread",
     "file": "src/systems/tamrielFauna.js",
-    "old": " && !placeAt(px, py);",
-    "new": ";",
+    "old": "  return (\n    !!tamrielTrace() &&\n    !!tamrielBiomeAt(px, py) &&\n    !arenaPlaceOnPixel(px, py) &&\n    !capitalOnPixel(px, py) &&\n    !placeAt(px, py)\n  );",
+    "new": "  return !!tamrielTrace() && !!tamrielBiomeAt(px, py) && !arenaPlaceOnPixel(px, py) && !capitalOnPixel(px, py);",
     "tests": [
       "test/systems/audittesa2g_bands.test.js"
     ]

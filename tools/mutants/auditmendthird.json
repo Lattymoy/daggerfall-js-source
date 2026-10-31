@@ -72,8 +72,8 @@
   {
     "name": "AUDIT-MEND-THIRD-L1-6-temper-leaves-the-mark",
     "file": "src/systems/smithItems.js",
-    "old": "  scaleFoundMark(item, oldMax, item.maxCondition);\n",
-    "new": "",
+    "old": "  scaleFoundMark(item, oldMax, item.maxCondition);\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/systems/auditmendthird.test.js"
     ],

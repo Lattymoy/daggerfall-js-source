@@ -829,8 +829,8 @@
   {
     "name": "EGZS-free-door-foe",
     "file": "src/systems/spellcost.js",
-    "old": "if (portMods && casterEntity?.isPlayer) for (const fn of _freeCasts.values())",
-    "new": "if (casterEntity?.isPlayer) for (const fn of _freeCasts.values())",
+    "old": "  if (portMods && casterEntity?.isPlayer)",
+    "new": "  if (casterEntity?.isPlayer)",
     "tests": [
       "test/net/eliteGates/egz_mastery.test.js"
     ],
@@ -839,8 +839,8 @@
   {
     "name": "EGZS-free-door-one",
     "file": "src/systems/spellcost.js",
-    "old": "if (fn(casterEntity, spell) === true) { sp = 0; break; }",
-    "new": "if (fn(casterEntity, spell) === true) { sp = 1; break; }",
+    "old": "          sp = 0;",
+    "new": "          sp = 1;",
     "tests": [
       "test/net/eliteGates/egz_mastery.test.js"
     ],

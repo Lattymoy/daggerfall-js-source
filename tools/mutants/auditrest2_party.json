@@ -279,8 +279,8 @@
   {
     "name": "AUDITREST2-P-P6-a-rental-counts-no-nights",
     "file": "src/systems/tavern.js",
-    "old": "    nights: days,\n",
-    "new": "",
+    "old": "    nights: days,\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/auditrest2_party.test.js",
       "test/systems/rest/rest1_act.test.js"
@@ -289,8 +289,8 @@
   {
     "name": "AUDITREST2-P-P6-an-extension-adds-none",
     "file": "src/systems/tavern.js",
-    "old": "    if (Number.isFinite(room.nights)) room.nights += days;",
-    "new": "    if (false) room.nights += days;",
+    "old": "    if (Number.isFinite(room.nights)) room.nights += days; // an old save's room (no count) reads its nights off its hours at its next night",
+    "new": "    if (false) room.nights += days; // an old save's room (no count) reads its nights off its hours at its next night",
     "tests": [
       "test/systems/auditrest2_party.test.js",
       "test/systems/rest/rest1_act.test.js"

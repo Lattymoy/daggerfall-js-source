@@ -135,8 +135,8 @@
   {
     "name": "MEND-WORN-kit-own-order",
     "file": "src/systems/smithItems.js",
-    "old": "    .sort(mendOrder);",
-    "new": "    .sort((a, b) => a.currentCondition / a.maxCondition - b.currentCondition / b.maxCondition);",
+    "old": "    .sort(mendOrder); // MEND-WORN: the order's one home, Repairs Objects' too (itemTemplates.js)",
+    "new": "    .sort((a, b) => a.currentCondition / a.maxCondition - b.currentCondition / b.maxCondition); // MEND-WORN: the order's one home, Repairs Objects' too (itemTemplates.js)",
     "tests": [
       "test/systems/mend_worn.test.js"
     ]

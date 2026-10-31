@@ -29,8 +29,8 @@
   {
     "name": "ARMOR-LEAN-every-record-leans",
     "file": "src/systems/smithItems.js",
-    "old": "lean: at(MINT_V_ARMOR_LEAN),",
-    "new": "lean: true,",
+    "old": "        lean: at(MINT_V_ARMOR_LEAN),",
+    "new": "        lean: true,",
     "tests": [
       "test/systems/affixlines_reforge.test.js"
     ]

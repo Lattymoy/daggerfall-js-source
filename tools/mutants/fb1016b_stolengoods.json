@@ -20,8 +20,8 @@
   {
     "name": "FB1016-STOLEN-GOODS-sold-shelved",
     "file": "src/systems/stolenGoods.js",
-    "old": "  void shelfItems; void item;\n  return false;\n",
-    "new": "  shelfItems.push(item);\n  return true;\n",
+    "old": "  void shelfItems;\n  void item;\n  return false;",
+    "new": "  shelfItems.push(item);\n  return true;",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "FB1016-STOLEN-GOODS-mark-not-true",
     "file": "src/systems/stolenGoods.js",
-    "old": "if (it && typeof it === 'object' && !Array.isArray(it)) it[STOLEN_MARK] = true;",
-    "new": "if (it && typeof it === 'object' && !Array.isArray(it)) it[STOLEN_MARK] = 1;",
+    "old": "  for (const it of items ?? []) if (it && typeof it === 'object' && !Array.isArray(it)) it[STOLEN_MARK] = true;",
+    "new": "  for (const it of items ?? []) if (it && typeof it === 'object' && !Array.isArray(it)) it[STOLEN_MARK] = 1;",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "FB1016-STOLEN-GOODS-count-a-stack-as-nothing",
     "file": "src/systems/stolenGoods.js",
-    "old": "it.stackCount > 0 ? it.stackCount : 1), 0);",
-    "new": "it.stackCount > 0 ? it.stackCount : 0), 0);",
+    "old": "  (items ?? []).reduce((n, it) => n + (Number.isInteger(it?.stackCount) && it.stackCount > 0 ? it.stackCount : 1), 0);",
+    "new": "  (items ?? []).reduce((n, it) => n + (Number.isInteger(it?.stackCount) && it.stackCount > 0 ? it.stackCount : 0), 0);",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -302,8 +302,8 @@
   {
     "name": "FB1016B-SG-AUDIT-S1-every-take-marked",
     "file": "src/systems/stolenGoods.js",
-    "old": "  if (!(keeping instanceof Set) || !keeping.has(source)) return false;\n  markStolen([moved]);",
-    "new": "  if (!(keeping instanceof Set)) return false;\n  markStolen([moved]);",
+    "old": ") {\n  if (!(keeping instanceof Set) || !keeping.has(source)) return false;\n  markStolen([moved]);",
+    "new": ") {\n  if (!(keeping instanceof Set)) return false;\n  markStolen([moved]);",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "FB1016B-SG-AUDIT-S1-every-put-cleared",
     "file": "src/systems/stolenGoods.js",
-    "old": "  if (!(keeping instanceof Set) || !keeping.has(source)) return false;\n  clearStolen(moved);",
-    "new": "  if (!(keeping instanceof Set)) return false;\n  clearStolen(moved);",
+    "old": ") {\n  if (!(keeping instanceof Set) || !keeping.has(source)) return false;\n  clearStolen(moved);",
+    "new": ") {\n  if (!(keeping instanceof Set)) return false;\n  clearStolen(moved);",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "FB1016B-SG-AUDIT-S1-the-split-outside-the-keeping",
     "file": "src/systems/stolenGoods.js",
-    "old": "  markStolen([moved]);\n  keeping.add(moved);\n",
-    "new": "  markStolen([moved]);\n",
+    "old": "  keeping.add(moved);\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -338,8 +338,8 @@
   {
     "name": "FB1016B-SG-AUDIT-S1-a-merge-left-in-the-keeping",
     "file": "src/systems/stolenGoods.js",
-    "old": "  if (held !== moved) keeping.delete(moved);\n",
-    "new": "",
+    "old": "  if (held !== moved) keeping.delete(moved);\n  keeping.add(held);",
+    "new": "  keeping.add(held);",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]

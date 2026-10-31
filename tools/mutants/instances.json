@@ -499,8 +499,8 @@
   {
     "name": "INSTANCES-ANCHOR-FORGETS",
     "file": "src/systems/teleportAnchor.js",
-    "old": "    dungeon: insideDungeon && dungeon ? { ...(instanceOfWord(dungeon.ins) ? { ins: dungeon.ins } : {}), whole: dungeon.whole === true } : null,",
-    "new": "    dungeon: null,",
+    "old": "    dungeon:\n      insideDungeon && dungeon\n        ? { ...(instanceOfWord(dungeon.ins) ? { ins: dungeon.ins } : {}), whole: dungeon.whole === true }\n        : null, // INSTANCES (the audit)",
+    "new": "    dungeon: null, // INSTANCES (the audit)",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],

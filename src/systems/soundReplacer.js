@@ -22,27 +22,33 @@ import { getPref } from './uiPrefs.js';
 
 /** Classic sound INDEX (SoundClips) -> the loose file's name, and the pref that silences it. */
 export const SOUND_REPLACEMENTS = Object.freeze({
-  6: 'AmbientCrickets',       // SoundClips.AmbientCrickets - the night loop (systems/ambientEffects.js AMBIENT_CRICKETS_LOOP)
-  113: 'AmbientDistantHowl',  // SoundClips.AmbientDistantHowl - a cemetery's ambient one-shot, and wherever else it plays
+  6: 'AmbientCrickets', // SoundClips.AmbientCrickets - the night loop (systems/ambientEffects.js AMBIENT_CRICKETS_LOOP)
+  113: 'AmbientDistantHowl', // SoundClips.AmbientDistantHowl - a cemetery's ambient one-shot, and wherever else it plays
 });
 export const SOUND_SWITCHES = Object.freeze({ 6: 'nightCrickets', 113: 'distantHowl' });
 
-export const soundBufferKey = (name) => `rep:${name}`;   // the engine's buffer key for a replacement (musicReplacement.js has its own replacementKey, a song key)
+export const soundBufferKey = (name) => `rep:${name}`; // the engine's buffer key for a replacement (musicReplacement.js has its own replacementKey, a song key)
 /** The clip name a supplied file answers for (`AmbientCrickets.wav`, any case), or null. */
 export function soundEntry(fileName) {
-  const base = String(fileName ?? '').split(/[\\/]/).pop().toLowerCase();
+  const base = String(fileName ?? '')
+    .split(/[\\/]/)
+    .pop()
+    .toLowerCase();
   for (const name of Object.values(SOUND_REPLACEMENTS)) if (base === `${name.toLowerCase()}.wav`) return name;
   return null;
 }
 
-let _files = new Map();   // clip name -> stored file name
-let _load = null;         // stored file name -> Promise<Uint8Array|null>
-let _gen = 0;             // bumps on every registration, so the engine re-reads a re-attached pack
+let _files = new Map(); // clip name -> stored file name
+let _load = null; // stored file name -> Promise<Uint8Array|null>
+let _gen = 0; // bumps on every registration, so the engine re-reads a re-attached pack
 
 /** The attached pack: the stored names and their loader. Answers how many clips it covers. */
 export function setSoundReplacements(fileNames, load) {
   _files = new Map();
-  for (const f of fileNames ?? []) { const n = soundEntry(f); if (n) _files.set(n, f); }
+  for (const f of fileNames ?? []) {
+    const n = soundEntry(f);
+    if (n) _files.set(n, f);
+  }
   _load = load ?? null;
   _gen++;
   return _files.size;
@@ -54,12 +60,20 @@ export const soundReplacementGen = () => _gen;
 export function soundSilenced(index) {
   const k = SOUND_SWITCHES[index];
   if (!k) return false;
-  try { return getPref(k) === false; } catch { return false; }
+  try {
+    return getPref(k) === false;
+  } catch {
+    return false;
+  }
 }
 
 /** The supplied file's bytes, or null (no pack, no such file, a failed read). */
 export async function fetchReplacement(name) {
   const f = _files.get(name);
   if (!f || !_load) return null;
-  try { return (await _load(f)) ?? null; } catch { return null; }
+  try {
+    return (await _load(f)) ?? null;
+  } catch {
+    return null;
+  }
 }

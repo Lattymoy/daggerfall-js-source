@@ -11,8 +11,8 @@
   {
     "name": "MA-the-blanket-pruned-active-alone",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "        this._blanketPrune(f, near);\n        this._midLetGo(near);\n",
-    "new": "        this._midLetGo(near);\n",
+    "old": "        this._blanketPrune(f, near);\n        this._midLetGo(near);",
+    "new": "        this._midLetGo(near);",
     "tests": [
       "test/systems/memaudit.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "MA-a-dropped-overlay-keeps-its-tile",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "    o.t = null;\n",
-    "new": "",
+    "old": "    o.t = null;\n    o.pos = o.nrm = o.ctx = o.statics = null;",
+    "new": "    o.pos = o.nrm = o.ctx = o.statics = null;",
     "tests": [
       "test/systems/memaudit.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "MA-a-dropped-overlay-keeps-its-arrays",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "    o.pos = o.nrm = o.ctx = o.statics = null;\n",
-    "new": "",
+    "old": "    o.pos = o.nrm = o.ctx = o.statics = null;\n    this.dirty.blanket.add(o);",
+    "new": "    this.dirty.blanket.add(o);",
     "tests": [
       "test/systems/memaudit.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "MA-M3-the-mid-ring-kept",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "        this._midLetGo(near);\n",
-    "new": "",
+    "old": "        this._midLetGo(near);\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/memaudit.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "MA-M3-the-mid-build-kept",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "    M.tiles = []; M.buildTiles = []; M.blankets = new Map(); M.source = null; M.reuse = null;",
-    "new": "    M.tiles = []; M.blankets = new Map(); M.source = null; M.reuse = null;",
+    "old": "    M.buildTiles = [];\n    M.blankets = new Map();",
+    "new": "    M.blankets = new Map();",
     "tests": [
       "test/systems/memaudit.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "MA-M4-the-ring-asked-a-frame",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "M.buildTiles.length) && !(B.nextPrune && f.now < B.nextPrune)) {",
-    "new": "M.buildTiles.length)) {",
+    "old": "      if (\n        (B.overlays.size || B.building || M.tiles.length || M.buildTiles.length) &&\n        !(B.nextPrune && f.now < B.nextPrune)\n      ) {",
+    "new": "      if (B.overlays.size || B.building || M.tiles.length || M.buildTiles.length) {",
     "tests": [
       "test/systems/memaudit.test.js"
     ]

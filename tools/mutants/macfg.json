@@ -74,8 +74,8 @@
   {
     "name": "MAC-G-the-tolerance-read-takes-immunity-before-resistance",
     "file": "src/systems/specialAdvantages.js",
-    "old": "  ['resistanceFlags', 'resistance'], ['immunityFlags', 'immunity'],",
-    "new": "  ['immunityFlags', 'immunity'], ['resistanceFlags', 'resistance'],",
+    "old": "  ['resistanceFlags', 'resistance'],\n  ['immunityFlags', 'immunity'],",
+    "new": "  ['immunityFlags', 'immunity'],\n  ['resistanceFlags', 'resistance'],",
     "equivalent": true,
     "why": "GetTolerance reads resistance first (DFCareer.cs:746-762), but cannotAdd makes two tolerances on ONE effect impossible, so no career the game can build distinguishes the two orders. Kept as the reference's order; recorded as equivalent rather than pinned by a career that cannot exist.",
     "tests": [
@@ -159,8 +159,8 @@
   {
     "name": "MAC-G-DFUs-athleticism-slip-is-ported-with-the-rest",
     "file": "src/systems/specialAdvantages.js",
-    "old": "    if ((abilities & SPECIAL_ABILITY_BITS.athleticism) === SPECIAL_ABILITY_BITS.athleticism) add('athleticism', '', 'race');",
-    "new": "    if ((abilities & SPECIAL_ABILITY_BITS.athleticism) === SPECIAL_ABILITY_BITS.athleticism) add('acuteHearing', '', 'race');",
+    "old": "      add('athleticism', '', 'race');",
+    "new": "      add('acuteHearing', '', 'race');",
     "tests": [
       "test/ui/enhanced/macfg_fold_and_specials.test.js"
     ]

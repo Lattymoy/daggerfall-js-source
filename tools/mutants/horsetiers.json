@@ -74,8 +74,8 @@
   {
     "name": "HORSE-TIERS-the-hungers-penalty-paid",
     "file": "src/systems/steedCare.js",
-    "old": "penalty = rules.hungerCosts ? HUNGER[hunger].penalty : 0;",
-    "new": "penalty = HUNGER[hunger].penalty;",
+    "old": "    penalty = rules.hungerCosts ? HUNGER[hunger].penalty : 0;",
+    "new": "    penalty = HUNGER[hunger].penalty;",
     "tests": [
       "test/systems/horsetiers.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "HORSE-TIERS-the-breath-slowed",
     "file": "src/systems/steedCare.js",
-    "old": "(rules.hungerCosts ? HUNGER[hunger]?.breath ?? 1 : 1)",
-    "new": "(HUNGER[hunger]?.breath ?? 1)",
+    "old": "  else\n    spent -=\n      BREATH_BACK *\n      (0.75 + end / 200) *\n      (rules.hungerCosts ? (HUNGER[hunger]?.breath ?? 1) : 1) *\n      (ridden ? RIDDEN_BACK : 1) *\n      t;",
+    "new": "  else spent -= BREATH_BACK * (0.75 + end / 200) * (HUNGER[hunger]?.breath ?? 1) * (ridden ? RIDDEN_BACK : 1) * t;",
     "tests": [
       "test/systems/horsetiers.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "HORSE-TIERS-the-draft-dragging",
     "file": "src/systems/steedCare.js",
-    "old": "export const teamDraftScale = (strength, load, rules = HORSE_CARE_HARD) => (rules.draftDrags ?",
-    "new": "export const teamDraftScale = (strength, load, rules = HORSE_CARE_HARD) => (true ?",
+    "old": "  rules.draftDrags ? Math.max(0.75, Math.min(1, 1 - Math.max(0, Math.min(1, load)) * (0.3 - 0.002 * strength))) : 1;",
+    "new": "  true ? Math.max(0.75, Math.min(1, 1 - Math.max(0, Math.min(1, load)) * (0.3 - 0.002 * strength))) : 1;",
     "tests": [
       "test/systems/horsetiers.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "HORSE-TIERS-the-starving-line-unheld",
     "file": "src/systems/steedCare.js",
-    "old": "  if (!rules.bondFades && holdStarving(horse, now)) changed = true;   // HORSE-TIERS: Boons owes no fade, then or later\n",
-    "new": "",
+    "old": "  if (!rules.bondFades && holdStarving(horse, now)) changed = true; // HORSE-TIERS: Boons owes no fade, then or later\n  return { changed, ate };",
+    "new": "  return { changed, ate };",
     "tests": [
       "test/systems/horsetiers.test.js"
     ]

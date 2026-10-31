@@ -16,18 +16,24 @@ import { wallMsForClassicMinutes, sharedClassicMinutes } from '../net/wire.js';
 let _on = false;
 
 /** TIME1: worldTick.js's setSharedClock - on while a shared clock stands with a sky beside it. */
-export function setSkyCalendar(on) { _on = !!on; }
+export function setSkyCalendar(on) {
+  _on = !!on;
+}
 /** Whether an event minute maps onto a sky of its own (tests and the census). */
 export const skyCalendarOn = () => _on;
 
 /** TIME1: the sky's classic minute at the instant the event clock reads `eventMinutes` - the minute a season, a month
  *  or an hour of the day is read off for a law that walks the event clock. The minute itself when off. */
-export const skyMinuteOfEvent = (eventMinutes) => (_on && Number.isFinite(eventMinutes) ? skyClassicMinutes(wallMsForClassicMinutes(eventMinutes)) : eventMinutes);
+export const skyMinuteOfEvent = (eventMinutes) =>
+  _on && Number.isFinite(eventMinutes) ? skyClassicMinutes(wallMsForClassicMinutes(eventMinutes)) : eventMinutes;
 /** TIME3: the same in classic SECONDS - a journal's date (quest/questMacros.js %qdt): the step was stamped on the event
  *  clock (quest/quest.js), and the date the player reads it by is the sky's at that instant. Unrounded, as the date
  *  reader floors: a stamp a fraction of a second before the sky's midnight is still that day. The stamp itself when
  *  off, untouched. */
-export const skySecondsOfEvent = (eventSeconds) => (_on && Number.isFinite(eventSeconds) ? skyClassicMinutes(wallMsForClassicMinutes(eventSeconds / 60)) * 60 : eventSeconds);
+export const skySecondsOfEvent = (eventSeconds) =>
+  _on && Number.isFinite(eventSeconds)
+    ? skyClassicMinutes(wallMsForClassicMinutes(eventSeconds / 60)) * 60
+    : eventSeconds;
 
 /** BANISH-SKY (bible/06-Systems/Online-Waits.md WAIT4): the two directions as the LAW has them, whatever is installed -
  *  the sky's minute at the instant the event clock reads `eventMinutes`, and the event clock's minute at the instant the
@@ -38,4 +44,5 @@ export const skyOfEventLaw = (eventMinutes) => skyClassicMinutes(wallMsForClassi
 export const eventOfSkyLaw = (skyMinutes) => sharedClassicMinutes(wallMsForSkyMinutes(skyMinutes));
 /** BANISH-SKY: the event clock's minute at the instant the sky reads `skyMinutes` - a term the player is told in the
  *  sky's days (a banishment's thirty), stamped as every term is on the event clock. The minute itself when off. */
-export const eventMinuteOfSky = (skyMinutes) => (_on && Number.isFinite(skyMinutes) ? eventOfSkyLaw(skyMinutes) : skyMinutes);
+export const eventMinuteOfSky = (skyMinutes) =>
+  _on && Number.isFinite(skyMinutes) ? eventOfSkyLaw(skyMinutes) : skyMinutes;

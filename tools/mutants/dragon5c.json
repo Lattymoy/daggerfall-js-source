@@ -20,8 +20,8 @@
   {
     "name": "DRAGON5c-the-dragon-refused-its-food",
     "file": "src/systems/steedCare.js",
-    "old": "  if (!isSteedItem(horse) || !Array.isArray(items) || !items.includes(horse)) return { ok: false, text: STEED_TEXT.noHorse, gained: 0 };   // DRAGON5c: or the dragon",
-    "new": "  if (!isHorseItem(horse) || !Array.isArray(items) || !items.includes(horse)) return { ok: false, text: STEED_TEXT.noHorse, gained: 0 };   // DRAGON5c: or the dragon",
+    "old": "  if (!isSteedItem(horse) || !Array.isArray(items) || !items.includes(horse))",
+    "new": "  if (!isHorseItem(horse) || !Array.isArray(items) || !items.includes(horse))",
     "tests": [
       "test/net/dragon/dragon5c_care.test.js"
     ]

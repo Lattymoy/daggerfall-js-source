@@ -499,8 +499,8 @@
   {
     "name": "CRAFT4-piece-weight-kept",
     "file": "src/systems/smithItems.js",
-    "old": "    if (step.weight !== 1) item.weightInKg = Math.round(unitWeightInKg(item) * step.weight * 100) / 100;\n",
-    "new": "",
+    "old": "    if (step.weight !== 1) item.weightInKg = Math.round(unitWeightInKg(item) * step.weight * 100) / 100;\n    item.quality = quality;",
+    "new": "    item.quality = quality;",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -517,8 +517,8 @@
   {
     "name": "CRAFT4-piece-rarity-kept",
     "file": "src/systems/smithItems.js",
-    "old": "for (const k of TEMPER_MINTED) { if (fresh[k] === undefined) delete item[k]; else item[k] = fresh[k]; }",
-    "new": "for (const k of TEMPER_MINTED) { if (fresh[k] !== undefined && k !== 'rarity' && k !== 'affixes') item[k] = fresh[k]; }",
+    "old": "      if (fresh[k] === undefined) delete item[k];\n      else item[k] = fresh[k];",
+    "new": "      if (fresh[k] !== undefined && k !== 'rarity' && k !== 'affixes') item[k] = fresh[k];",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -526,8 +526,8 @@
   {
     "name": "CRAFT4-reforge-unknown",
     "file": "src/systems/smithItems.js",
-    "old": "  if (!itemIsIdentified(item)) return 'unknown';\n",
-    "new": "",
+    "old": "  if (!itemIsIdentified(item)) return 'unknown';\n  if (isEquipped(item)) return 'worn';",
+    "new": "  if (isEquipped(item)) return 'worn';",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -553,8 +553,8 @@
   {
     "name": "CRAFT4-reforge-own-rng",
     "file": "src/systems/smithItems.js",
-    "old": "reforgeAffix(item, index, seededRng(seed >>> 0)))",
-    "new": "reforgeAffix(item, index))",
+    "old": "  essenceReforgeRefusal(item, index) || !Number.isSafeInteger(seed)\n    ? null\n    : reforgeAffix(item, index, seededRng(seed >>> 0));",
+    "new": "  essenceReforgeRefusal(item, index) || !Number.isSafeInteger(seed) ? null : reforgeAffix(item, index);",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -562,8 +562,8 @@
   {
     "name": "CRAFT4-reforge-any-seed",
     "file": "src/systems/smithItems.js",
-    "old": "(essenceReforgeRefusal(item, index) || !Number.isSafeInteger(seed) ? null",
-    "new": "(essenceReforgeRefusal(item, index) ? null",
+    "old": "  essenceReforgeRefusal(item, index) || !Number.isSafeInteger(seed)\n    ? null\n    : reforgeAffix(item, index, seededRng(seed >>> 0));",
+    "new": "  essenceReforgeRefusal(item, index) ? null : reforgeAffix(item, index, seededRng(seed >>> 0));",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]

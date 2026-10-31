@@ -138,14 +138,14 @@ strictly better than the fine the owner set.
 
 THE LAW NOW.
 
-- SENTENCE-MENDS: `standing.js:"export function sentenceMends(player, regionIndex, {"` - the fine's own law
+- SENTENCE-MENDS: `standing.js:"export function sentenceMends"` - the fine's own law
   (`mendToLine`, the one body both answer through), called once the prison's days are served and before the refill on
   the zero-day arm (`arrestFlow.js` finish; AUDIT FB1021d SM-1 moved the prison's from beside the refund), answering the
   name the prisoner came in with (SM-3) and once a grace (SM-4), and said ("Time served mends your name in Daggerfall (+5). You are a
   scoundrel."). Not an acquittal (the court tried nothing to answer), a guild's rescue (the guild answered) or a
   banishment (DFU's state 4 repairs nothing). The report's chain now: -20 -> -22 -> released at -15; the next stop's
   sentence -> -10, no longer known; no stop and no patrol after it.
-- PATROL-GRACE: `standing.js:"export function patrolHalts("` - a known criminal outside the grace an answered law gives;
+- PATROL-GRACE: `standing.js:"export function patrolHalts"` - a known criminal outside the grace an answered law gives;
   LW9's `wanted` asks it (`world.js:"patrolHalts(playerEntity, trip.from.region,"`). An arrest on the road instead of a
   knight's sword stays LW-II's open item 6.
 - CURFEW-REFUND: the charge keeps the factor it was laid at (`arrestFlow.js:"playerEntity.chargedFactor ="`,

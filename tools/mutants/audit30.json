@@ -513,8 +513,8 @@
   {
     "name": "AUDIT30-C8-the-marked-piece-the-s",
     "file": "src/systems/smithItems.js",
-    "old": "text: `${named ? long : `The ${long}`} is mended:",
-    "new": "text: `The ${long} is mended:",
+    "old": "  return { kind: 'repairKit', text: `${named ? long : `The ${long}`} is mended: ${done.from}% to ${done.to}%.` }; // AUDIT ECON R2: as the card prints them",
+    "new": "  return { kind: 'repairKit', text: `The ${long} is mended: ${done.from}% to ${done.to}%.` }; // AUDIT ECON R2: as the card prints them",
     "tests": [
       "test/net/audit30_client.test.js"
     ]

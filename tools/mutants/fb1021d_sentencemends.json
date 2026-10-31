@@ -82,7 +82,7 @@
   {
     "name": "PATROL-GRACE-blind-to-grace",
     "file": "src/systems/standing.js",
-    "old": "  return knownCriminal(player, regionIndex, { ownNow, worldNow }) && ownNow >= (standingOf(player).graceUntil[regionIndex] ?? -Infinity);",
+    "old": "  return (\n    knownCriminal(player, regionIndex, { ownNow, worldNow }) &&\n    ownNow >= (standingOf(player).graceUntil[regionIndex] ?? -Infinity)\n  );",
     "new": "  return knownCriminal(player, regionIndex, { ownNow, worldNow });",
     "tests": [
       "test/systems/fb1021d_sentencemends.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "SENTENCE-MENDS-grace-unread",
     "file": "src/systems/standing.js",
-    "old": "  if (ownNow != null && ownNow < (standingOf(player).graceUntil[regionIndex] ?? -Infinity)) return 0;\n",
-    "new": "",
+    "old": "  if (ownNow != null && ownNow < (standingOf(player).graceUntil[regionIndex] ?? -Infinity)) return 0;\n  return mendToLine(player, regionIndex, 'served', from == null ? Infinity : Math.max(0, KNOWN_CRIMINAL_BELOW - from));",
+    "new": "  return mendToLine(player, regionIndex, 'served', from == null ? Infinity : Math.max(0, KNOWN_CRIMINAL_BELOW - from));",
     "tests": [
       "test/systems/fb1021d_sentencemends.test.js"
     ],
@@ -203,8 +203,8 @@
   {
     "name": "PATROL-GRACE-name-alone",
     "file": "src/systems/standing.js",
-    "old": "  return knownCriminal(player, regionIndex, { ownNow, worldNow }) && ownNow",
-    "new": "  return legalRepOf(player, regionIndex) < KNOWN_CRIMINAL_BELOW && ownNow",
+    "old": "    knownCriminal(player, regionIndex, { ownNow, worldNow }) &&",
+    "new": "    legalRepOf(player, regionIndex) < KNOWN_CRIMINAL_BELOW &&",
     "tests": [
       "test/systems/fb1021d_sentencemends.test.js"
     ],

@@ -974,8 +974,8 @@
   {
     "name": "PROF9-mint-hand-dropped",
     "file": "src/systems/smithItems.js",
-    "old": "if (r.kind === 'dish') return mintDish({ recipe, maker, hand }, provenance);",
-    "new": "if (r.kind === 'dish') return mintDish({ recipe, maker, hand: null }, provenance);",
+    "old": "  if (r.kind === 'dish') return mintDish({ recipe, maker, hand }, provenance); // PROF9: a dish, its cook's hand the record's",
+    "new": "  if (r.kind === 'dish') return mintDish({ recipe, maker, hand: null }, provenance); // PROF9: a dish, its cook's hand the record's",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -983,8 +983,8 @@
   {
     "name": "PROF9-spoiled-as-minted",
     "file": "src/systems/smithItems.js",
-    "old": "  if ((item.foodStage ?? 0) > 0) return false;",
-    "new": "",
+    "old": "  if ((item.foodStage ?? 0) > 0) return false; // PROF9: a dish spoiled since it was cooked - the record mints it fresh",
+    "new": "  // PROF9: a dish spoiled since it was cooked - the record mints it fresh",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -992,8 +992,8 @@
   {
     "name": "PROF9-crafted-text-servings",
     "file": "src/systems/smithItems.js",
-    "old": "pieces.length > 1 ? `You cooked ${pieces.length} servings of",
-    "new": "pieces.length > 2 ? `You cooked ${pieces.length} servings of",
+    "old": "    return pieces.length > 1",
+    "new": "    return pieces.length > 2",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]

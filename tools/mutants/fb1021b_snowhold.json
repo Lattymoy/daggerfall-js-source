@@ -2,8 +2,8 @@
   {
     "name": "SNOW-HOLD-queue-unpruned",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "    if (B.queue.some((t) => !live.has(t))) { B.queue = B.queue.filter((t) => live.has(t)); B.queued = new Set(B.queue); }",
-    "new": "",
+    "old": "    if (B.queue.some((t) => !live.has(t))) {\n      B.queue = B.queue.filter((t) => live.has(t));\n      B.queued = new Set(B.queue);\n    }\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/fb1021b_snowhold.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "SNOW-HOLD-queue-kept-inactive",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "      if (was) { B.queue.length = 0; B.queued.clear(); }\n",
-    "new": "",
+    "old": "      if (was) {\n        B.queue.length = 0;\n        B.queued.clear();\n      }\n      // MEM-AUDIT (2026-10-23): AND ITS OVERLAYS ARE PRUNED STILL. The prune below ran only while the tier was active, so",
+    "new": "      // MEM-AUDIT (2026-10-23): AND ITS OVERLAYS ARE PRUNED STILL. The prune below ran only while the tier was active, so",
     "tests": [
       "test/systems/fb1021b_snowhold.test.js"
     ],

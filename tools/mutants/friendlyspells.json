@@ -119,8 +119,8 @@
   {
     "name": "SNDREP1-name-loose",
     "file": "src/systems/soundReplacer.js",
-    "old": "if (base === `${name.toLowerCase()}.wav`) return name;",
-    "new": "if (base.startsWith(name.toLowerCase())) return name;",
+    "old": "  for (const name of Object.values(SOUND_REPLACEMENTS)) if (base === `${name.toLowerCase()}.wav`) return name;",
+    "new": "  for (const name of Object.values(SOUND_REPLACEMENTS)) if (base.startsWith(name.toLowerCase())) return name;",
     "tests": [
       "test/systems/friendlyspells.test.js"
     ]

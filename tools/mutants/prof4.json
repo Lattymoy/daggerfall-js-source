@@ -706,8 +706,8 @@
   {
     "name": "PROF4-masterwork-joiner-flag",
     "file": "src/systems/smithItems.js",
-    "old": "    if (marked === true && q !== MASTERWORK) item.marked = true;",
-    "new": "    if (marked === true) item.marked = true;",
+    "old": "    if (marked === true && q !== MASTERWORK) item.marked = true; // a Master Joiner's (a Masterwork's mark is its own)",
+    "new": "    if (marked === true) item.marked = true; // a Master Joiner's (a Masterwork's mark is its own)",
     "tests": [
       "test/systems/prof4_client.test.js"
     ]
@@ -724,8 +724,8 @@
   {
     "name": "PROF4-marked-article",
     "file": "src/systems/smithItems.js",
-    "old": "  const one = marked ? name : `",
-    "new": "  const one = false ? name : `",
+    "old": "  const one = marked ? name : `${/^[AEIOU]/.test(word || name) ? 'an' : 'a'} ${word}${name}`;",
+    "new": "  const one = false ? name : `${/^[AEIOU]/.test(word || name) ? 'an' : 'a'} ${word}${name}`;",
     "tests": [
       "test/systems/prof4_client.test.js"
     ]

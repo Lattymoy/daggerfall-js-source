@@ -753,8 +753,8 @@
   {
     "name": "SURVTIERS-the-cap-only-at-the-minute",
     "file": "src/systems/statMods.js",
-    "old": "  if (survival < 0) survival = -Math.min(-survival, Math.max(0, Math.min(base, Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE)) - 5));\n",
-    "new": "",
+    "old": "  if (survival < 0)\n    survival = -Math.min(-survival, Math.max(0, Math.min(base, Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE)) - 5));\n  mod += survival;",
+    "new": "  mod += survival;",
     "tests": [
       "test/systems/survival/survtiers.test.js"
     ]

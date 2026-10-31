@@ -119,8 +119,8 @@
   {
     "name": "CRAFT5-mint-kit-no-quality",
     "file": "src/systems/smithItems.js",
-    "old": "    if (Number.isInteger(quality) && quality >= 0) item.quality = Math.min(MASTERWORK, quality);   // CRAFT5: its quality its reach (kitReach) - none for a kit made before\n",
-    "new": "",
+    "old": "    if (Number.isInteger(quality) && quality >= 0) item.quality = Math.min(MASTERWORK, quality); // CRAFT5: its quality its reach (kitReach) - none for a kit made before\n    if (mark) item.maker = mark;",
+    "new": "    if (mark) item.maker = mark;",
     "tests": [
       "test/net/craft5_consumables.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "CRAFT5-mint-kit-none-zero",
     "file": "src/systems/smithItems.js",
-    "old": "    if (Number.isInteger(quality) && quality >= 0) item.quality = Math.min(MASTERWORK, quality);",
-    "new": "    if (Number.isInteger(quality)) item.quality = Math.max(0, Math.min(MASTERWORK, quality));",
+    "old": "    if (Number.isInteger(quality) && quality >= 0) item.quality = Math.min(MASTERWORK, quality); // CRAFT5: its quality its reach (kitReach) - none for a kit made before",
+    "new": "    if (Number.isInteger(quality)) item.quality = Math.max(0, Math.min(MASTERWORK, quality)); // CRAFT5: its quality its reach (kitReach) - none for a kit made before",
     "tests": [
       "test/net/craft5_consumables.test.js"
     ]
@@ -146,7 +146,7 @@
   {
     "name": "CRAFT5-gives-own",
     "file": "src/systems/smithItems.js",
-    "old": "export const kitGives = (it, kit = null) => kitCeiling(it, kit) - it.currentCondition > Math.floor(it.maxCondition / 100);",
+    "old": "export const kitGives = (it, kit = null) =>\n  kitCeiling(it, kit) - it.currentCondition > Math.floor(it.maxCondition / 100);",
     "new": "export const kitGives = (it, kit = null) => kitCeiling(it) - it.currentCondition > Math.floor(it.maxCondition / 100);",
     "tests": [
       "test/net/craft5_consumables.test.js"
@@ -155,8 +155,8 @@
   {
     "name": "CRAFT5-targets-own",
     "file": "src/systems/smithItems.js",
-    "old": "kitMends(metal, it) && kitGives(it, kit))   // KIT-CEILING",
-    "new": "kitMends(metal, it) && kitGives(it))   // KIT-CEILING",
+    "old": "    .filter((it) => it !== kit && kitMends(metal, it) && kitGives(it, kit)) // KIT-CEILING: below it, by more than a hundredth (CRAFT5: the kit's own)",
+    "new": "    .filter((it) => it !== kit && kitMends(metal, it) && kitGives(it)) // KIT-CEILING: below it, by more than a hundredth (CRAFT5: the kit's own)",
     "tests": [
       "test/net/craft5_consumables.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "CRAFT5-use-own",
     "file": "src/systems/smithItems.js",
-    "old": "  it.currentCondition = Math.min(kitCeiling(it, kit),",
-    "new": "  it.currentCondition = Math.min(kitCeiling(it),",
+    "old": "    kitCeiling(it, kit),",
+    "new": "    kitCeiling(it),",
     "tests": [
       "test/net/craft5_consumables.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "CRAFT5-heldback-own",
     "file": "src/systems/smithItems.js",
-    "old": "it.currentCondition < it.maxCondition && !kitGives(it, kit));",
-    "new": "it.currentCondition < it.maxCondition && !kitGives(it));",
+    "old": "    (it) => it !== kit && kitMends(metal, it) && it.currentCondition < it.maxCondition && !kitGives(it, kit),",
+    "new": "    (it) => it !== kit && kitMends(metal, it) && it.currentCondition < it.maxCondition && !kitGives(it),",
     "tests": [
       "test/net/craft5_consumables.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "CRAFT5-text-three-quarters",
     "file": "src/systems/smithItems.js",
-    "old": "  if (!done && kitHeldBack(item, pack).length > 0) return { kind: 'repairKit', text: kitCeilingText(item), refused: true };",
-    "new": "  if (!done && kitHeldBack(item, pack).length > 0) return { kind: 'repairKit', text: KIT_CEILING_TEXT, refused: true };",
+    "old": "  if (!done && kitHeldBack(item, pack).length > 0)\n    return { kind: 'repairKit', text: kitCeilingText(item), refused: true }; // CRAFT5: the kit's own reach",
+    "new": "  if (!done && kitHeldBack(item, pack).length > 0) return { kind: 'repairKit', text: KIT_CEILING_TEXT, refused: true }; // CRAFT5: the kit's own reach",
     "tests": [
       "test/net/craft5_consumables.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "CRAFT5-text-crafted-kit",
     "file": "src/systems/smithItems.js",
-    "old": "  const word = !marked && Number.isInteger(it.quality) ? `${QUALITY_NAMES[it.quality]} ` : '';",
-    "new": "  const word = !marked && Number.isInteger(it.quality) && !Number.isInteger(it.kitMetal) ? `${QUALITY_NAMES[it.quality]} ` : '';",
+    "old": "  const word = !marked && Number.isInteger(it.quality) ? `${QUALITY_NAMES[it.quality]} ` : ''; // CRAFT5: a kit's quality too - its reach",
+    "new": "  const word =\n    !marked && Number.isInteger(it.quality) && !Number.isInteger(it.kitMetal) ? `${QUALITY_NAMES[it.quality]} ` : ''; // CRAFT5: a kit's quality too - its reach",
     "tests": [
       "test/net/craft5_consumables.test.js"
     ]

@@ -50,7 +50,7 @@ keep a heal or a count.
 A cast carries its spell's element (`el`, DFU's 0-4: fire, frost, poison, shock, magic;
 `siegeCombat.js:"export const pvpSpellElement"`). The struck player reports, per element, what its Resist
 effects let through, then its own saving throw - race, Willpower and gear, as a monster's spell meets it - summed over
-the dice (`spellcast.js:"export function savingLands("`; `pvpGuard.js:"export function pvpWardKept"`, the report's
+the dice (`spellcast.js:"export function savingLands"`; `pvpGuard.js:"export function pvpWardKept"`, the report's
 `w`). The caster's stand-in rolls no save. The referee holds each share to at least 15 - the owner's "85% resist", immunity included - and
 takes it before PVP-HIT's cap (`refereeHealthShare.js:"export function wardedCast"`).
 
@@ -292,7 +292,7 @@ toolkit spell casts it. A departure: DFU has no PvP.
 Range in the picked element (`pvpKit.js:"const FIREBALL = Object.freeze({"`), its harm the referee's path as before
 (siegeSpellNumbers, the crit, the triangle, the ward, PVP-HIT); the bar's Poison is the one poison spell that reaches a
 player. Each cast costs its share of maximum magicka (`pvpKit.js:"export const KIT_SPELLS = Object.freeze({"`,
-`spellcost.js:"if (spell.pvpKitCost > 0) sp = Math.trunc(spell.pvpKitCost);"`), and PVP-ARMOUR-CAST still adds to it.
+`spellcost.js:"if (spell.pvpKitCost > 0)"`), and PVP-ARMOUR-CAST still adds to it.
 
 The rest are CasterOnly gifts, a minute long, scaled with the governing school from 100 to 300. "Goo choose make it
 15m": the party member under the crosshair within 15 m takes one, else I do

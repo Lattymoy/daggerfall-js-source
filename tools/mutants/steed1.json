@@ -2,8 +2,8 @@
   {
     "name": "STEED1-one-draw-not-two",
     "file": "src/systems/steedCare.js",
-    "old": "STEED_BORN_MIN + Math.round(span * (mix(seed, 2 * i + 1) + mix(seed, 2 * i + 2)) / 2)",
-    "new": "STEED_BORN_MIN + Math.round(span * mix(seed, 2 * i + 1))",
+    "old": "    out[k] = STEED_BORN_MIN + Math.round((span * (mix(seed, 2 * i + 1) + mix(seed, 2 * i + 2))) / 2);",
+    "new": "    out[k] = STEED_BORN_MIN + Math.round(span * mix(seed, 2 * i + 1));",
     "tests": [
       "test/systems/steed1_horsecare.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "STEED1-a-stat-off-another-draw",
     "file": "src/systems/steedCare.js",
-    "old": "mix(seed, 2 * i + 1) + mix(seed, 2 * i + 2)",
-    "new": "mix(seed, 1) + mix(seed, 2 * i + 2)",
+    "old": "    out[k] = STEED_BORN_MIN + Math.round((span * (mix(seed, 2 * i + 1) + mix(seed, 2 * i + 2))) / 2);",
+    "new": "    out[k] = STEED_BORN_MIN + Math.round((span * (mix(seed, 1) + mix(seed, 2 * i + 2))) / 2);",
     "tests": [
       "test/systems/steed1_horsecare.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "STEED1-the-love-unread",
     "file": "src/systems/steedCare.js",
-    "old": "* DAY_BOND_TENTHS * f.love);",
-    "new": "* DAY_BOND_TENTHS);",
+    "old": "  const gained = Math.round(((until - from) / MINUTES_A_DAY) * DAY_BOND_TENTHS * f.love);",
+    "new": "  const gained = Math.round(((until - from) / MINUTES_A_DAY) * DAY_BOND_TENTHS);",
     "tests": [
       "test/systems/steed1_horsecare.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "STEED1-full-at-the-edge",
     "file": "src/systems/steedCare.js",
-    "old": "if (from - now >= FULL_AHEAD) return",
-    "new": "if (from - now > FULL_AHEAD) return",
+    "old": "  if (from - now >= FULL_AHEAD) return { ok: false, text: STEED_TEXT.full(who), gained: 0 };",
+    "new": "  if (from - now > FULL_AHEAD) return { ok: false, text: STEED_TEXT.full(who), gained: 0 };",
     "tests": [
       "test/systems/steed1_horsecare.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "STEED1-starving-a-minute-late",
     "file": "src/systems/steedCare.js",
-    "old": "return now - f >= STARVING_AFTER ? 'starving' : 'hungry';",
-    "new": "return now - f > STARVING_AFTER ? 'starving' : 'hungry';",
+    "old": "  return now - f >= STARVING_AFTER ? 'starving' : 'hungry';",
+    "new": "  return now - f > STARVING_AFTER ? 'starving' : 'hungry';",
     "tests": [
       "test/systems/steed1_horsecare.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "STEED1-the-fade-never-taken",
     "file": "src/systems/steedCare.js",
-    "old": "  if (fade > 0) setBond(item, bondTenths(item) - fade);\n",
-    "new": "\n",
+    "old": "  if (fade > 0) setBond(item, bondTenths(item) - fade);",
+    "new": "",
     "tests": [
       "test/systems/steed1_horsecare.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "STEED1-no-grazing-floor",
     "file": "src/systems/steedCare.js",
-    "old": "if (now - /** @type {number} */ (fedUntil(horse)) > GRAZED_BACK) {",
-    "new": "if (false) {",
+    "old": "    if (now - /** @type {number} */ (fedUntil(horse)) > GRAZED_BACK) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/steed1_horsecare.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "STEED1-the-span-eats-nothing",
     "file": "src/systems/steedCare.js",
-    "old": "const from = Array.isArray(items) && steedFoodIn(items, kind) ? items : Array.isArray(stores) && steedFoodIn(stores, kind) ? stores : null;",
-    "new": "const from = null;",
+    "old": "      const from =\n        Array.isArray(items) && steedFoodIn(items, kind)\n          ? items\n          : Array.isArray(stores) && steedFoodIn(stores, kind)\n            ? stores\n            : null;",
+    "new": "      const from = null;",
     "tests": [
       "test/systems/steed1_horsecare.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "STEED1-winded-to-half",
     "file": "src/systems/steedCare.js",
-    "old": "else if (winded && max - spent >= WINDED_UNTIL * max) winded = false;",
-    "new": "else if (winded && max - spent >= 0.5 * max) winded = false;",
+    "old": "  else if (winded && max - spent >= WINDED_UNTIL * max) winded = false;",
+    "new": "  else if (winded && max - spent >= 0.5 * max) winded = false;",
     "tests": [
       "test/systems/steed1_horsecare.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "STEED1-the-ridden-share",
     "file": "src/systems/steedCare.js",
-    "old": "* (ridden ? RIDDEN_BACK : 1) * t;",
-    "new": "* t;",
+    "old": "  else\n    spent -=\n      BREATH_BACK *\n      (0.75 + end / 200) *\n      (rules.hungerCosts ? (HUNGER[hunger]?.breath ?? 1) : 1) *\n      (ridden ? RIDDEN_BACK : 1) *\n      t;",
+    "new": "  else spent -= BREATH_BACK * (0.75 + end / 200) * (rules.hungerCosts ? (HUNGER[hunger]?.breath ?? 1) : 1) * t;",
     "tests": [
       "test/systems/steed1_horsecare.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "STEED1-the-endurance-unread",
     "file": "src/systems/steedCare.js",
-    "old": "spent += GALLOP_SPEND * (1.25 - end / 200) * t;",
-    "new": "spent += GALLOP_SPEND * t;",
+    "old": "  if (galloping && !winded) spent += GALLOP_SPEND * (1.25 - end / 200) * t;",
+    "new": "  if (galloping && !winded) spent += GALLOP_SPEND * t;",
     "tests": [
       "test/systems/steed1_horsecare.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "STEED1-the-ride-reorder",
     "file": "src/systems/steedCare.js",
-    "old": "  items.splice(items.indexOf(horses[0]), 0, pick);\n",
-    "new": "  items.push(pick);\n",
+    "old": "  items.splice(items.indexOf(horses[0]), 0, pick);",
+    "new": "  items.push(pick);",
     "tests": [
       "test/systems/steed1_horsecare.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "STEED1-the-wagon-stores-unread",
     "file": "src/systems/steedCare.js",
-    "old": "const from = Array.isArray(items) && steedFoodIn(items, kind) ? items : Array.isArray(stores) && steedFoodIn(stores, kind) ? stores : null;",
-    "new": "const from = Array.isArray(items) && steedFoodIn(items, kind) ? items : null;",
+    "old": "      const from =\n        Array.isArray(items) && steedFoodIn(items, kind)\n          ? items\n          : Array.isArray(stores) && steedFoodIn(stores, kind)\n            ? stores\n            : null;",
+    "new": "      const from = Array.isArray(items) && steedFoodIn(items, kind) ? items : null;",
     "tests": [
       "test/systems/steed1_horsecare.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "AUDIT-STEED1-grazing-fade-for-span",
     "file": "src/systems/steedCare.js",
-    "old": "const owedTo = since != null && since < now ? since : now;",
-    "new": "const owedTo = now;",
+    "old": "  const owedTo = since != null && since < now ? since : now;",
+    "new": "  const owedTo = now;",
     "tests": [
       "test/systems/steed1_horsecare.test.js"
     ]

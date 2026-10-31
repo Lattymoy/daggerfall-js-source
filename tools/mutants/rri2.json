@@ -130,7 +130,7 @@
     "name": "RRI2-15-the-kit-keeps-the-class-weapon",
     "file": "src/systems/startingGear.js",
     "old": "  return _assigner?.(entity, opts) ?? assignStartingGear(entity, opts);",
-    "new": "  _assigner?.(entity, opts); return assignStartingGear(entity, opts);",
+    "new": "  _assigner?.(entity, opts);\n  return assignStartingGear(entity, opts);",
     "tests": [
       "test/systems/rri2_realism.test.js"
     ]

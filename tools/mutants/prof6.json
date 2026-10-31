@@ -710,8 +710,8 @@
   {
     "name": "PROF6-pieces-any-recipe",
     "file": "src/systems/smithItems.js",
-    "old": "  return item.group === s.group && item.templateIndex === s.templateIndex && (item.material ?? 0) === (s.material ?? 0)",
-    "new": "  return item.group === s.group && item.templateIndex === s.templateIndex",
+    "old": "    item.group === s.group &&\n    item.templateIndex === s.templateIndex &&\n    (item.material ?? 0) === (s.material ?? 0) &&\n    (item.kitMetal ?? null) === (s.kitMetal ?? null)",
+    "new": "    item.group === s.group && item.templateIndex === s.templateIndex && (item.kitMetal ?? null) === (s.kitMetal ?? null)",
     "tests": [
       "test/net/prof6_client.test.js",
       "test/net/audit31_client.test.js"

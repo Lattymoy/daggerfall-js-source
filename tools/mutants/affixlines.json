@@ -86,8 +86,8 @@
   {
     "name": "AFFIX-LINES-every-record-the-new-law",
     "file": "src/systems/smithItems.js",
-    "old": "byLines: at(MINT_V_LINES), lean",
-    "new": "byLines: true, lean",
+    "old": "        byLines: at(MINT_V_LINES),",
+    "new": "        byLines: true,",
     "tests": [
       "test/systems/affixlines_reforge.test.js",
       "test/systems/fb1013e_craftprocs.test.js"
@@ -96,8 +96,8 @@
   {
     "name": "AFFIX-LINES-no-record-the-new-law",
     "file": "src/systems/smithItems.js",
-    "old": "byLines: at(MINT_V_LINES), lean",
-    "new": "byLines: false, lean",
+    "old": "        byLines: at(MINT_V_LINES),",
+    "new": "        byLines: false,",
     "tests": [
       "test/systems/affixlines_reforge.test.js",
       "test/systems/fb1013e_craftprocs.test.js"
@@ -330,8 +330,8 @@
   {
     "name": "REFORGE-REPLACE-the-asked-reforge-forgotten",
     "file": "src/systems/smithItems.js",
-    "old": "  if (item.reforged !== undefined || item.reforges !== undefined || item.imprint !== undefined) return false;",
-    "new": "  if (item.reforged !== undefined || item.imprint !== undefined) return false;",
+    "old": "  if (item.reforged !== undefined || item.reforges !== undefined || item.imprint !== undefined) return false; // AUDIT LOOT F3: a line the Reforge rolled again (REFORGE-REPLACE: replaced, counted), a power imprinted - the record mints neither",
+    "new": "  if (item.reforged !== undefined || item.imprint !== undefined) return false; // AUDIT LOOT F3: a line the Reforge rolled again (REFORGE-REPLACE: replaced, counted), a power imprinted - the record mints neither",
     "tests": [
       "test/systems/auditloot.test.js",
       "test/systems/affixlines_reforge.test.js"

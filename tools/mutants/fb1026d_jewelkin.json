@@ -23,8 +23,8 @@
   {
     "name": "JEWEL-KIN-version-unread",
     "file": "src/systems/smithItems.js",
-    "old": "fists: at(MINT_V_JEWEL_KIN) });",
-    "new": "fists: true });",
+    "old": "        fists: at(MINT_V_JEWEL_KIN),",
+    "new": "        fists: true,",
     "tests": [
       "test/systems/fb1026d_jewelkin.test.js"
     ],
@@ -33,8 +33,8 @@
   {
     "name": "JEWEL-KIN-new-records-old-lean",
     "file": "src/systems/smithItems.js",
-    "old": "fists: at(MINT_V_JEWEL_KIN) });",
-    "new": "fists: false });",
+    "old": "        fists: at(MINT_V_JEWEL_KIN),",
+    "new": "        fists: false,",
     "tests": [
       "test/systems/fb1026d_jewelkin.test.js"
     ],
@@ -113,8 +113,8 @@
   {
     "name": "JEWEL-KIN-armour-version-read",
     "file": "src/systems/smithItems.js",
-    "old": "fists: at(MINT_V_JEWEL_KIN) });",
-    "new": "fists: at(MINT_V_ARMOR_LEAN) });",
+    "old": "        fists: at(MINT_V_JEWEL_KIN),",
+    "new": "        fists: at(MINT_V_ARMOR_LEAN),",
     "tests": [
       "test/systems/fb1026d_jewelkin.test.js"
     ],

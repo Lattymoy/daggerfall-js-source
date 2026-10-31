@@ -9859,7 +9859,7 @@ report; their base of 1-8 printed right). The cost was right because
 spellcost.js reads the same record the DFU way
 (FormulaHelper.CalculateEffectCosts, behind the same three support
 flags - all 93 rows of the cost table agree with them), and so does the
-cast (spellcast.js:"export function rollMagnitude(effect, casterLevel, rolls = Math.random) {"); the
+cast (spellcast.js:"export function rollMagnitude"); the
 description alone misread it. The suite was green because PX23b's pin
 built its record by hand, with zeros where no producer writes one -
 TEST THE SHAPE THE PRODUCER MINTS, once more.

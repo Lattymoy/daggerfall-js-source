@@ -56,8 +56,8 @@
   {
     "name": "VAMPDAY-the-dawn-kills",
     "file": "src/systems/statMods.js",
-    "old": "  if (curse < 0) curse = -Math.min(-curse, Math.max(0, Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE) - 1));\n",
-    "new": "",
+    "old": "  if (curse < 0) curse = -Math.min(-curse, Math.max(0, Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE) - 1));\n  mod += curse;",
+    "new": "  mod += curse;",
     "tests": [
       "test/systems/vampday.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "VAMPDAY-the-floor-is-zero",
     "file": "src/systems/statMods.js",
-    "old": "MAX_STAT_VALUE) - 1));\n  mod += curse;",
-    "new": "MAX_STAT_VALUE) - 0));\n  mod += curse;",
+    "old": "  if (curse < 0) curse = -Math.min(-curse, Math.max(0, Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE) - 1));",
+    "new": "  if (curse < 0) curse = -Math.min(-curse, Math.max(0, Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE) - 0));",
     "tests": [
       "test/systems/vampday.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "VAMPDAY-the-penalty-lost",
     "file": "src/systems/statMods.js",
-    "old": "  mod += curse;\n",
-    "new": "\n",
+    "old": "  mod += curse;",
+    "new": "",
     "tests": [
       "test/systems/vampday.test.js"
     ]

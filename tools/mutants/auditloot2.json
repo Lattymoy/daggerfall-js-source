@@ -241,8 +241,8 @@
   {
     "name": "AUDIT-LOOT-II-C1-a-hone-minted-back",
     "file": "src/systems/smithItems.js",
-    "old": "  if (item.honed !== undefined) return false;",
-    "new": "",
+    "old": "  if (item.honed !== undefined) return false; // AUDIT LOOT II C1: nor a line honed past its roll (LOOT17) - the market's mint would hand back the roll, the shards and the gold gone",
+    "new": "  // AUDIT LOOT II C1: nor a line honed past its roll (LOOT17) - the market's mint would hand back the roll, the shards and the gold gone",
     "tests": [
       "test/systems/auditloot2.test.js"
     ]

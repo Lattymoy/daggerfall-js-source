@@ -729,8 +729,8 @@
   {
     "name": "PROF7-stitch-short-clean",
     "file": "src/systems/stitchAct.js",
-    "old": "clean: !gentle && st.stitches.length >= STITCH_ACT.stitches && hits === st.stitches.length",
-    "new": "clean: !gentle && hits === st.stitches.length",
+    "old": "      return {\n        stitches: st.stitches.length,\n        hits,\n        clean: !gentle && st.stitches.length >= STITCH_ACT.stitches && hits === st.stitches.length,\n      };",
+    "new": "      return { stitches: st.stitches.length, hits, clean: !gentle && hits === st.stitches.length };",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -983,8 +983,8 @@
   {
     "name": "PROF7-garment-as-armour",
     "file": "src/systems/smithItems.js",
-    "old": "      : r.kind === 'garment' ? garmentItem(r, seed, dye)   // PROF7: DFU's clothing, its variant and dye the record's\n",
-    "new": "",
+    "old": "        : r.kind === 'garment'\n          ? garmentItem(r, seed, dye) // PROF7: DFU's clothing, its variant and dye the record's\n          : r.kind === 'jewel'\n            ? jewelItem(r) // PROF10: DFU's jewellery\n            : armorOfMaterial(r.templateIndex, r.material); // PROF7: leather armour at Leather (0)",
+    "new": "        : r.kind === 'jewel'\n          ? jewelItem(r) // PROF10: DFU's jewellery\n          : armorOfMaterial(r.templateIndex, r.material); // PROF7: leather armour at Leather (0)",
     "tests": [
       "test/systems/prof7_client.test.js"
     ]
@@ -1003,8 +1003,8 @@
   {
     "name": "PROF7-garment-variant-zero",
     "file": "src/systems/smithItems.js",
-    "old": "variant: (seed >>> 0) % variants,",
-    "new": "variant: 0,",
+    "old": "      variant: (seed >>> 0) % variants,",
+    "new": "      variant: 0,",
     "tests": [
       "test/systems/prof7_client.test.js"
     ]

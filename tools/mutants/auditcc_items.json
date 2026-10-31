@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-CC-I7-the-wizard-hands-no-character",
     "file": "src/systems/startingGear.js",
-    "old": "for (const it of startingProvisions(entity)) { addItem(entity.items, it); added.push(it); }",
-    "new": "for (const it of startingProvisions()) { addItem(entity.items, it); added.push(it); }",
+    "old": "    for (const it of startingProvisions(entity)) {",
+    "new": "    for (const it of startingProvisions()) {",
     "tests": [
       "test/systems/survival/auditcc_items.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "AUDIT-CC-I7-boons-sets-out-bare",
     "file": "src/systems/startingGear.js",
-    "old": "import { survivalOn } from './survival/switch.js';",
-    "new": "import { survivalTier } from './survival/switch.js'; const survivalOn = () => survivalTier() !== 'off' && survivalTier() !== 'boons';",
+    "old": "import { survivalOn } from './survival/switch.js'; // AUDIT SURV E: the survival kit reaches the character chargen makes",
+    "new": "import { survivalTier } from './survival/switch.js';\nconst survivalOn = () => survivalTier() !== 'off' && survivalTier() !== 'boons'; // AUDIT SURV E: the survival kit reaches the character chargen makes",
     "tests": [
       "test/systems/survival/auditcc_items.test.js"
     ],

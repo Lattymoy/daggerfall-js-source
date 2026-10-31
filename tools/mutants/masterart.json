@@ -133,8 +133,8 @@
   {
     "name": "MASTER-ART-mint-any-version",
     "file": "src/systems/smithItems.js",
-    "old": "&& version >= MINT_V_MASTER && Array.isArray(lines) && applyMasterWork(item, lines);",
-    "new": "&& version >= MINT_V_LINES && Array.isArray(lines) && applyMasterWork(item, lines);",
+    "old": "      version >= MINT_V_MASTER &&",
+    "new": "      version >= MINT_V_LINES &&",
     "tests": [
       "test/net/masterart_law.test.js"
     ]
@@ -142,8 +142,8 @@
   {
     "name": "MASTER-ART-rare-roll-over-the-lines",
     "file": "src/systems/smithItems.js",
-    "old": "if (!master && eff.rarity && rarityEligible(item)) {",
-    "new": "if (eff.rarity && rarityEligible(item)) {",
+    "old": "    if (!master && eff.rarity && rarityEligible(item)) {",
+    "new": "    if (eff.rarity && rarityEligible(item)) {",
     "equivalent": true,
     "why": "rarityEligible refuses a piece that already wears a tier (LR4: one roll per item), so the Master's lines laid first keep the Rare roll off by that law too; the guard says it where it acts",
     "tests": [
@@ -154,8 +154,8 @@
   {
     "name": "MASTER-ART-pieces-without-lines",
     "file": "src/systems/smithItems.js",
-    "old": "version: mintVersionOf(p.record), lines: masterLinesOf(p.record) }",
-    "new": "version: mintVersionOf(p.record) }",
+    "old": "    .map((p) => mintPiece({ ...data, version: mintVersionOf(p.record), lines: masterLinesOf(p.record) }, p.provenance))",
+    "new": "    .map((p) => mintPiece({ ...data, version: mintVersionOf(p.record) }, p.provenance))",
     "tests": [
       "test/net/masterart_service.test.js",
       "test/ui/professions/masterart_ui.test.js"

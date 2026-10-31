@@ -12,7 +12,7 @@
     "name": "BANISH-SKY-the-term-at-the-rate-of-its-first-day",
     "file": "src/systems/standing.js",
     "old": "export const banishmentEnd = (worldNow) => eventMinuteOfSky(skyMinuteOfEvent(worldNow) + BANISHMENT_MINUTES);",
-    "new": "export const banishmentEnd = (worldNow) => worldNow + 30 * (eventMinuteOfSky(skyMinuteOfEvent(worldNow) + 1440) - worldNow);",
+    "new": "export const banishmentEnd = (worldNow) =>\n  worldNow + 30 * (eventMinuteOfSky(skyMinuteOfEvent(worldNow) + 1440) - worldNow);",
     "tests": [
       "test/systems/banishsky_standing.test.js"
     ]
@@ -56,7 +56,7 @@
   {
     "name": "BANISH-SKY-offline-reads-a-sky",
     "file": "src/systems/skyCalendar.js",
-    "old": "export const eventMinuteOfSky = (skyMinutes) => (_on && Number.isFinite(skyMinutes) ? eventOfSkyLaw(skyMinutes) : skyMinutes);",
+    "old": "export const eventMinuteOfSky = (skyMinutes) =>\n  _on && Number.isFinite(skyMinutes) ? eventOfSkyLaw(skyMinutes) : skyMinutes;",
     "new": "export const eventMinuteOfSky = (skyMinutes) => (Number.isFinite(skyMinutes) ? eventOfSkyLaw(skyMinutes) : skyMinutes);",
     "tests": [
       "test/systems/banishsky_standing.test.js"

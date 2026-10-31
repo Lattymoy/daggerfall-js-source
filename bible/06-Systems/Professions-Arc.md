@@ -6625,7 +6625,7 @@ possible. No exceptions and no band aids." The decisions below are the record's,
   is made (`profState`'s `master`). AUDIT HORIZONTAL B3: the goods held and the recipe's own craft asked are pinned - the
   catalysts alone make nothing, and a Smith at Master makes no leather cuirass.
 
-- **The mint** - `smithItems.js:"function applyMasterWork(item, lines) {"`: Legendary, the record's lines at their
+- **The mint** - `smithItems.js:"function applyMasterWork"`: Legendary, the record's lines at their
   signed values, its name its lines' (the mark's over it), its worth its lines'; laid whatever the switch, as the last
   pass is. The market's piece carries the lines (`market.js` pieceOf).
 

@@ -362,8 +362,8 @@
   {
     "name": "AUDIT32-P1-stitch-at-the-frame",
     "file": "src/systems/stitchAct.js",
-    "old": "const at = st.t + Math.max(0, Math.min(PRESS_LEAD_MAX_S, Number(lead) || 0));",
-    "new": "const at = st.t;",
+    "old": "      const at = st.t + Math.max(0, Math.min(PRESS_LEAD_MAX_S, Number(lead) || 0));",
+    "new": "      const at = st.t;",
     "tests": [
       "test/ui/audit32_pages.test.js"
     ]

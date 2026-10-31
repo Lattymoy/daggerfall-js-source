@@ -197,8 +197,8 @@
   {
     "name": "FIRM-MAX-ceiling-unread",
     "file": "src/systems/statMods.js",
-    "old": "  maxMod += entity._mods?.statMax?.[statName] ?? 0;",
-    "new": "",
+    "old": "  maxMod += entity._mods?.statMax?.[statName] ?? 0; // FIRM-MAX: a channel's lift of the ceiling (entityMods.js statMax)",
+    "new": "  // FIRM-MAX: a channel's lift of the ceiling (entityMods.js statMax)",
     "tests": [
       "test/systems/firm1_powers.test.js"
     ]

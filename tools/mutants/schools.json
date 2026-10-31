@@ -119,8 +119,8 @@
   {
     "name": "SCHOOLS3-the-pair-ignored",
     "file": "src/systems/spellcost.js",
-    "old": "  const skillOf = (id) => skillValue(casterEntity, pathCastSchool(casterEntity, spell, id));",
-    "new": "  const skillOf = (id) => skillValue(casterEntity, id);",
+    "old": "  const skillOf = (id) => skillValue(casterEntity, pathCastSchool(casterEntity, spell, id)); // SCHOOLS3: the school it is cast in",
+    "new": "  const skillOf = (id) => skillValue(casterEntity, id); // SCHOOLS3: the school it is cast in",
     "tests": [
       "test/systems/schools_arcane.test.js"
     ]

@@ -476,8 +476,8 @@
   {
     "name": "WW6-staff-run-by-region",
     "file": "src/systems/staffEvents.js",
-    "old": ": raidTownIs(r, town)) return r;",
-    "new": ": !!town && town.regionIndex === r.regionIndex && town.locationIndex === r.locationIndex) return r;",
+    "old": "    if (isAreaEvent(r.staff) ? outdoors && !!px && px.x === r.px && px.y === r.py : raidTownIs(r, town)) return r;",
+    "new": "    if (\n      isAreaEvent(r.staff)\n        ? outdoors && !!px && px.x === r.px && px.y === r.py\n        : !!town && town.regionIndex === r.regionIndex && town.locationIndex === r.locationIndex\n    )\n      return r;",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]

@@ -434,8 +434,8 @@
   {
     "name": "HANDWRAPS-swing-sound",
     "file": "src/systems/soundClips.js",
-    "old": "  if (!weapon || isHandWraps(weapon)) return SOUND.SwingHighPitch;",
-    "new": "  if (!weapon) return SOUND.SwingHighPitch;",
+    "old": "  if (!weapon || isHandWraps(weapon)) return SOUND.SwingHighPitch; // HAND-WRAPS (AUDIT B7): a fist's swing, a peer's too",
+    "new": "  if (!weapon) return SOUND.SwingHighPitch; // HAND-WRAPS (AUDIT B7): a fist's swing, a peer's too",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],
@@ -444,8 +444,8 @@
   {
     "name": "HANDWRAPS-hit-sound",
     "file": "src/systems/soundClips.js",
-    "old": "  return SOUND.Hit1 + (weapon && !isHandWraps(weapon)",
-    "new": "  return SOUND.Hit1 + (weapon",
+    "old": "    (weapon && !isHandWraps(weapon) // HAND-WRAPS (AUDIT B7): a fist's hit",
+    "new": "    (weapon // HAND-WRAPS (AUDIT B7): a fist's hit",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],

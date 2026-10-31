@@ -164,8 +164,8 @@
   {
     "name": "TIME1-the-calendar-maps-nothing",
     "file": "src/systems/skyCalendar.js",
-    "old": "(_on && Number.isFinite(eventMinutes) ? skyClassicMinutes(wallMsForClassicMinutes(eventMinutes)) : eventMinutes)",
-    "new": "(eventMinutes)",
+    "old": "export const skyMinuteOfEvent = (eventMinutes) =>\n  _on && Number.isFinite(eventMinutes) ? skyClassicMinutes(wallMsForClassicMinutes(eventMinutes)) : eventMinutes;",
+    "new": "export const skyMinuteOfEvent = (eventMinutes) => eventMinutes;",
     "tests": [
       "test/systems/time1_sky.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "TIME1-the-calendar-maps-offline-too",
     "file": "src/systems/skyCalendar.js",
-    "old": "(_on && Number.isFinite(eventMinutes) ? skyClassicMinutes",
-    "new": "(Number.isFinite(eventMinutes) ? skyClassicMinutes",
+    "old": "  _on && Number.isFinite(eventMinutes) ? skyClassicMinutes(wallMsForClassicMinutes(eventMinutes)) : eventMinutes;",
+    "new": "  Number.isFinite(eventMinutes) ? skyClassicMinutes(wallMsForClassicMinutes(eventMinutes)) : eventMinutes;",
     "tests": [
       "test/systems/time1_sky.test.js"
     ]

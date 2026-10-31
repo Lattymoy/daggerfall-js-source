@@ -870,8 +870,8 @@
   {
     "name": "LANE-E-SO-merge-not-replace",
     "file": "src/systems/standingOwed.js",
-    "old": "  owed = out;\n",
-    "new": "  Object.assign(owed, out);\n",
+    "old": "  owed = out;",
+    "new": "  Object.assign(owed, out);",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/guild/fb1015_promonow.test.js",

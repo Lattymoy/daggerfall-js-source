@@ -269,8 +269,8 @@
   {
     "name": "AWD3-ROOM-LOST",
     "file": "src/systems/tavern.js",
-    "old": "  ?? (inn ? rooms.find((r) => r.mapId === mapId && !recordStands(r)) : null) ?? null;",
-    "new": "  ?? null;",
+    "old": "  (inn ? rooms.find((r) => r.mapId === mapId && !recordStands(r)) : null) ??\n  null;",
+    "new": "  null;",
     "tests": [
       "test/systems/wd3_layoutPins.test.js"
     ]

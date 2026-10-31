@@ -520,8 +520,8 @@
   {
     "name": "AUDIT31-host-recipe-unstamped",
     "file": "src/systems/smithItems.js",
-    "old": "  item.recipe = r.id;   // AUDIT 31 H3: an Ebony and a Warforged piece mint the same template and material\n",
-    "new": "",
+    "old": "  item.recipe = r.id; // AUDIT 31 H3: an Ebony and a Warforged piece mint the same template and material\n  item.provenance = provenance;",
+    "new": "  item.provenance = provenance;",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -529,8 +529,8 @@
   {
     "name": "AUDIT31-host-recipe-unread",
     "file": "src/systems/smithItems.js",
-    "old": "  if (typeof item?.recipe === 'string') return item.recipe === recipeId;",
-    "new": "",
+    "old": "  if (typeof item?.recipe === 'string') return item.recipe === recipeId; // AUDIT 31 H3: its own record's, where it keeps one",
+    "new": "  // AUDIT 31 H3: its own record's, where it keeps one",
     "tests": [
       "test/net/audit31_client.test.js"
     ]

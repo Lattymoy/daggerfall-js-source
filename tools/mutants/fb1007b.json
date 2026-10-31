@@ -86,8 +86,8 @@
   {
     "name": "FB1007B-START-CELL-Y-UNREAD",
     "file": "src/systems/startDungeon.js",
-    "old": "px.y === getInt('Startup', 'StartCellY')",
-    "new": "true",
+    "old": "export const isStartCell = (px) =>\n  !!px && px.x === getInt('Startup', 'StartCellX') && px.y === getInt('Startup', 'StartCellY');",
+    "new": "export const isStartCell = (px) => !!px && px.x === getInt('Startup', 'StartCellX') && true;",
     "tests": [
       "test/net/holdshared.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "FB1007B-START-CELL-HARDCODED",
     "file": "src/systems/startDungeon.js",
-    "old": "px.x === getInt('Startup', 'StartCellX')",
-    "new": "px.x === 109",
+    "old": "export const isStartCell = (px) =>\n  !!px && px.x === getInt('Startup', 'StartCellX') && px.y === getInt('Startup', 'StartCellY');",
+    "new": "export const isStartCell = (px) => !!px && px.x === 109 && px.y === getInt('Startup', 'StartCellY');",
     "tests": [
       "test/net/holdshared.test.js"
     ]

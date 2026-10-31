@@ -119,8 +119,8 @@
   {
     "name": "PVP-KIT-the-price-unread",
     "file": "src/systems/spellcost.js",
-    "old": "  if (spell.pvpKitCost > 0) sp = Math.trunc(spell.pvpKitCost);",
-    "new": "",
+    "old": "  if (spell.pvpKitCost > 0) sp = Math.trunc(spell.pvpKitCost); // PVP-KIT: the PvP bar's price, a share of maximum magicka (systems/wild/pvpKit.js kitCost)",
+    "new": "  // PVP-KIT: the PvP bar's price, a share of maximum magicka (systems/wild/pvpKit.js kitCost)",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]

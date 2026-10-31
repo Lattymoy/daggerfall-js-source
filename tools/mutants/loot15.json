@@ -209,8 +209,8 @@
   {
     "name": "LOOT15-the-cast-keeps-its-spell",
     "file": "src/systems/spellcost.js",
-    "old": "const n = fn(casterEntity, sp, spell);",
-    "new": "const n = fn(casterEntity, sp);",
+    "old": "        const n = fn(casterEntity, sp, spell);",
+    "new": "        const n = fn(casterEntity, sp);",
     "tests": [
       "test/systems/loot15_garments.test.js"
     ]

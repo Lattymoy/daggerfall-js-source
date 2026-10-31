@@ -750,8 +750,8 @@
   {
     "name": "PROF10-jewel-a-useless-item",
     "file": "src/systems/smithItems.js",
-    "old": "return mintCondition(setItemFields({ group: 'Jewellery', templateIndex: r.templateIndex,",
-    "new": "return mintCondition(setItemFields({ group: 'UselessItems2', templateIndex: r.templateIndex,",
+    "old": "      group: 'Jewellery',",
+    "new": "      group: 'UselessItems2',",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -759,8 +759,8 @@
   {
     "name": "PROF10-jewel-minted-as-armour",
     "file": "src/systems/smithItems.js",
-    "old": ": r.kind === 'jewel' ? jewelItem(r)   // PROF10: DFU's jewellery",
-    "new": ": r.kind === 'never' ? jewelItem(r)   // PROF10: DFU's jewellery",
+    "old": "          : r.kind === 'jewel'",
+    "new": "          : r.kind === 'never'",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -768,8 +768,8 @@
   {
     "name": "PROF10-jewel-unset",
     "file": "src/systems/smithItems.js",
-    "old": "    if (r.kind === 'jewel') setJewel(item, r, hand);   // PROF10: its metal's and its gem's name, points and worth\n",
-    "new": "",
+    "old": "    if (r.kind === 'jewel') setJewel(item, r, hand); // PROF10: its metal's and its gem's name, points and worth\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -777,8 +777,8 @@
   {
     "name": "PROF10-name-the-templates",
     "file": "src/systems/smithItems.js",
-    "old": "item.name.includes(word) ? item.name.replace(word, r.name) : r.name;",
-    "new": "item.name.includes(word) ? item.name : r.name;",
+    "old": "  item.name =\n    word && typeof item.name === 'string' && item.name.includes(word) ? item.name.replace(word, r.name) : r.name;",
+    "new": "  item.name = word && typeof item.name === 'string' && item.name.includes(word) ? item.name : r.name;",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -786,8 +786,8 @@
   {
     "name": "PROF10-points-no-hand",
     "file": "src/systems/smithItems.js",
-    "old": "item.enchantmentPoints = jewelPoints(r, base?.enchantmentPoints ?? 0, hand);",
-    "new": "item.enchantmentPoints = jewelPoints(r, base?.enchantmentPoints ?? 0, null);",
+    "old": "  item.enchantmentPoints = jewelPoints(r, base?.enchantmentPoints ?? 0, hand);",
+    "new": "  item.enchantmentPoints = jewelPoints(r, base?.enchantmentPoints ?? 0, null);",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -795,8 +795,8 @@
   {
     "name": "PROF10-worth-no-gem",
     "file": "src/systems/smithItems.js",
-    "old": "* jewelPointsPct(r, hand)) / 100) + gem);",
-    "new": "* jewelPointsPct(r, hand)) / 100));",
+    "old": "    ) + gem,",
+    "new": "    ),",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -804,8 +804,8 @@
   {
     "name": "PROF10-worth-no-share",
     "file": "src/systems/smithItems.js",
-    "old": "* jewelPointsPct(r, hand)) / 100) + gem);",
-    "new": "* 0) / 100) + gem);",
+    "old": "      (Number.isFinite(item.value) ? item.value : (base?.basePrice ?? 0)) +\n        ((base?.basePrice ?? 0) * jewelPointsPct(r, hand)) / 100,",
+    "new": "      (Number.isFinite(item.value) ? item.value : (base?.basePrice ?? 0)) + ((base?.basePrice ?? 0) * 0) / 100,",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -813,8 +813,8 @@
   {
     "name": "PROF10-kept-word-elsewhere",
     "file": "src/systems/smithItems.js",
-    "old": "'The last facet caught the light, but the realm has not answered yet. Your piece is kept and will be made when it does.'",
-    "new": "'The last pan came off the fire, but the realm has not answered yet. Your dish is kept and will be made when it does.'",
+    "old": "  'The last facet caught the light, but the realm has not answered yet. Your piece is kept and will be made when it does.';",
+    "new": "  'The last pan came off the fire, but the realm has not answered yet. Your dish is kept and will be made when it does.';",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1491,8 +1491,8 @@
   {
     "name": "AUDIT-PROF-541-J4-no-fit",
     "file": "src/systems/smithItems.js",
-    "old": "applyRarity(item, eff.rarity, rolls, null, { fits, byLines",
-    "new": "applyRarity(item, eff.rarity, rolls, null, { byLines",
+    "old": "        fits,\n        byLines: at(MINT_V_LINES),",
+    "new": "        byLines: at(MINT_V_LINES),",
     "tests": [
       "test/systems/prof10_client.test.js"
     ],
@@ -1529,8 +1529,8 @@
   {
     "name": "AUDIT-PROF-541-J6-hand-unkept",
     "file": "src/systems/smithItems.js",
-    "old": "if (jewelHandOk(r, hand)) item.hand = hand;",
-    "new": "if (false) item.hand = hand;",
+    "old": "  if (jewelHandOk(r, hand)) item.hand = hand; // AUDIT PROF-541 J6: the jeweller's hand kept on the piece - its points' cap its own (enchanting.js craftedJewelPoints)",
+    "new": "  if (false) item.hand = hand; // AUDIT PROF-541 J6: the jeweller's hand kept on the piece - its points' cap its own (enchanting.js craftedJewelPoints)",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1538,8 +1538,8 @@
   {
     "name": "AUDIT-PROF-541-J6-any-hand-kept",
     "file": "src/systems/smithItems.js",
-    "old": "if (jewelHandOk(r, hand)) item.hand = hand;",
-    "new": "if (hand) item.hand = hand;",
+    "old": "  if (jewelHandOk(r, hand)) item.hand = hand; // AUDIT PROF-541 J6: the jeweller's hand kept on the piece - its points' cap its own (enchanting.js craftedJewelPoints)",
+    "new": "  if (hand) item.hand = hand; // AUDIT PROF-541 J6: the jeweller's hand kept on the piece - its points' cap its own (enchanting.js craftedJewelPoints)",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]

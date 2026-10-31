@@ -208,8 +208,8 @@
   {
     "name": "TIME3-the-journal-date-moves-offline",
     "file": "src/systems/skyCalendar.js",
-    "old": "(_on && Number.isFinite(eventSeconds) ? skyClassicMinutes(",
-    "new": "(Number.isFinite(eventSeconds) ? skyClassicMinutes(",
+    "old": "  _on && Number.isFinite(eventSeconds)\n    ? skyClassicMinutes(wallMsForClassicMinutes(eventSeconds / 60)) * 60\n    : eventSeconds;",
+    "new": "  Number.isFinite(eventSeconds) ? skyClassicMinutes(wallMsForClassicMinutes(eventSeconds / 60)) * 60 : eventSeconds;",
     "tests": [
       "test/systems/quest/time3_quests.test.js"
     ]

@@ -27,25 +27,29 @@
 //   defaulted OFF, the same stance the 17e audit took on the
 //   enhanced 16-slot item list.
 
-import { addItem, addGoldPieces } from './inventory.js';   // E4: gold is the counter, not a bag stack
-import { giveWallet, isWalletItem } from './walletItem.js';   // WALLET1: the wallet rides the port's own tail
-import { giveStartingLockpicks } from './lockpick/lockpickItem.js';   // LOCKPICK: a class that picks locks sets out with picks
+import { addItem, addGoldPieces } from './inventory.js'; // E4: gold is the counter, not a bag stack
+import { giveWallet, isWalletItem } from './walletItem.js'; // WALLET1: the wallet rides the port's own tail
+import { giveStartingLockpicks } from './lockpick/lockpickItem.js'; // LOCKPICK: a class that picks locks sets out with picks
 import { equipItem } from './equip.js';
-import { templateByIndex, mintCondition, setItemFields } from './item/itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
+import { templateByIndex, mintCondition, setItemFields } from './item/itemTemplates.js'; // MAC-N1: SetItem's name + value, the one export
 import { CLOTHING_DYES } from '../characters/dyes.js';
-import { createWeapon } from '../combat/enemyEquipment.js';   // ItemBuilder.CreateWeapon's one home (the arrow arm)
-import { getBool } from './settings/settings.js';   // SETT: PlayerTorchFromItems
-import { survivalOn } from './survival/switch.js';   // AUDIT SURV E: the survival kit reaches the character chargen makes
+import { createWeapon } from '../combat/enemyEquipment.js'; // ItemBuilder.CreateWeapon's one home (the arrow arm)
+import { getBool } from './settings/settings.js'; // SETT: PlayerTorchFromItems
+import { survivalOn } from './survival/switch.js'; // AUDIT SURV E: the survival kit reaches the character chargen makes
 import { startingProvisions, startingCampfire } from './survival/items.js';
-import { sharedClockOn } from './worldTick.js';   // REST2: online the Campfire is the rest's
+import { sharedClockOn } from './worldTick.js'; // REST2: online the Campfire is the rest's
 
 // ItemEnums template indices
-const SHORT_SHIRT_M = 165, CASUAL_PANTS_M = 151;
-const SHORT_SHIRT_CLOSED_F = 206, CASUAL_PANTS_F = 190;
+const SHORT_SHIRT_M = 165,
+  CASUAL_PANTS_M = 151;
+const SHORT_SHIRT_CLOSED_F = 206,
+  CASUAL_PANTS_F = 190;
 const SPELLBOOK = 132;
-const TORCH = 247, CANDLE = 253;
+const TORCH = 247,
+  CANDLE = 253;
 const ARROW = 131;
-const LONGSWORD = 120, BATTLE_AXE = 127;
+const LONGSWORD = 120,
+  BATTLE_AXE = 127;
 
 /** StartingWeaponTypesByClass (ItemHelper.cs:1311-1329) in career
  *  order: Mage, Spellsword, Battlemage, Sorcerer, Healer, Nightblade,
@@ -55,9 +59,7 @@ export const STARTING_WEAPON_BY_CLASS = Object.freeze([
   116, 119, 119, 116, 124, 116, 116, 114, 119, 116, 116, 120, 115, 130, 127, 126, 118, 120,
 ]);
 /** StartingWeaponMaterialsByClass: 0 = iron, 1 = steel. */
-export const STARTING_MATERIAL_BY_CLASS = Object.freeze([
-  1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0,
-]);
+export const STARTING_MATERIAL_BY_CLASS = Object.freeze([1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0]);
 export const ARCHER_CLASS_INDEX = 13;
 export const ARCHER_ARROWS = 24;
 export const STARTING_GOLD = 100;
@@ -67,18 +69,31 @@ export const STARTING_GOLD = 100;
  *  TEMPLATE name (AUDIT 17f: the hand-written names here were
  *  lower-cased copies - DFU's ItemName is ItemTemplate.name, so the
  *  bag read "Short shirt" where classic reads "Short Shirt"). */
-const mint = (item) => mintCondition(setItemFields(item));   // AUDIT 23 (items-5): condition mints with the item; MAC-N1: the name + value half is the one export
+const mint = (item) => mintCondition(setItemFields(item)); // AUDIT 23 (items-5): condition mints with the item; MAC-N1: the name + value half is the one export
 
 /** AssignStartingGear verbatim. `rolls` is the RNG seam;
  *  torchesFromItems ports DFU's setting (ships OFF - not classic);
  *  SETT made it LIVE, so the default is a point-of-use store read and
  *  an explicit argument still overrides it (the tests do).
  *  Returns the items added, newest last. */
-export function assignStartingGear(entity, { classIndex = 0, isCustom = false, rolls = Math.random, torchesFromItems = getBool('Enhancements', 'PlayerTorchFromItems') } = {}) {
+export function assignStartingGear(
+  entity,
+  {
+    classIndex = 0,
+    isCustom = false,
+    rolls = Math.random,
+    torchesFromItems = getBool('Enhancements', 'PlayerTorchFromItems'),
+  } = {},
+) {
   entity.items = entity.items ?? [];
   const female = entity.gender === 'female';
   const added = [];
-  const add = (item) => { const it = mint(item); addItem(entity.items, it); added.push(it); return it; };
+  const add = (item) => {
+    const it = mint(item);
+    addItem(entity.items, it);
+    added.push(it);
+    return it;
+  };
 
   // AUDIT 17f: the SPELLBOOK is added FIRST (ItemHelper.cs:1300-1306).
   // AddItem's default is AddPosition.Back (ItemCollection.cs:217), so
@@ -93,7 +108,7 @@ export function assignStartingGear(entity, { classIndex = 0, isCustom = false, r
   const shirt = add({
     group: female ? 'WomensClothing' : 'MensClothing',
     templateIndex: female ? SHORT_SHIRT_CLOSED_F : SHORT_SHIRT_M,
-    variant: 0,   // CreateMens/WomensClothing(..., 0) - the shirt is NOT randomized
+    variant: 0, // CreateMens/WomensClothing(..., 0) - the shirt is NOT randomized
     dye: CLOTHING_DYES[Math.floor(rolls() * CLOTHING_DYES.length)],
   });
   const pants = add({
@@ -154,9 +169,19 @@ export function assignStartingGear(entity, { classIndex = 0, isCustom = false, r
 /** The port's own tail (AUDIT SURV E), one home: rides DFU's kit above and
  *  a mod's kit alike (RRI2's assignSkillEquipment), after the bag. */
 export function addSurvivalProvisions(entity, added = []) {
-  if (survivalOn()) for (const it of startingProvisions(entity)) { addItem(entity.items, it); added.push(it); }   // AUDIT C&C I7: the character's own wardrobe for the start's shoes and cloak
+  if (survivalOn())
+    for (const it of startingProvisions(entity)) {
+      addItem(entity.items, it);
+      added.push(it);
+    } // AUDIT C&C I7: the character's own wardrobe for the start's shoes and cloak
   // REST2: online the Campfire is the rest's - a character set out with the arc Off still carries one
-  else if (sharedClockOn()) { const it = startingCampfire(); if (it) { addItem(entity.items, it); added.push(it); } }
+  else if (sharedClockOn()) {
+    const it = startingCampfire();
+    if (it) {
+      addItem(entity.items, it);
+      added.push(it);
+    }
+  }
   // WALLET1: and the wallet, whatever the switches (systems/walletItem.js) - the kit a new character sets out with holds
   // one, as a character from before the wallet is given one ONCE as its save is restored (save.js restorePlayer, the
   // save's `walletGift` mark - PORTAL-GIFT's shape; AUDIT 625 W4: not every load, nor any character that has none)
@@ -175,7 +200,9 @@ export function addSurvivalProvisions(entity, added = []) {
  *  skillBasedStartingEquipment). The port's seam: a registered assigner
  *  answers the items it added, or null to let AssignStartingGear run. */
 let _assigner = null;
-export function setStartingEquipmentAssigner(fn) { _assigner = typeof fn === 'function' ? fn : null; }
+export function setStartingEquipmentAssigner(fn) {
+  _assigner = typeof fn === 'function' ? fn : null;
+}
 export function assignStartingEquipment(entity, opts = {}) {
   return _assigner?.(entity, opts) ?? assignStartingGear(entity, opts);
 }

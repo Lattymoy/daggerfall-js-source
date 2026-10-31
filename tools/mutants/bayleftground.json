@@ -137,8 +137,8 @@
   {
     "name": "BAY-LEFT-GROUND-D3-metres-the-Bays-x",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "  minX: -(WORLD_PIXEL_SPAN - 1) * 819.2, maxX: WORLD_PIXEL_SPAN * 819.2,",
-    "new": "  minX: 0, maxX: 819200,",
+    "old": "  minX: -(WORLD_PIXEL_SPAN - 1) * 819.2,\n  maxX: WORLD_PIXEL_SPAN * 819.2,",
+    "new": "  minX: 0,\n  maxX: 819200,",
     "tests": [
       "test/render/bayleftground_snow.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "BAY-LEFT-GROUND-D3-metres-the-Bays-z",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "  minZ: (500 - WORLD_PIXEL_SPAN) * 819.2, maxZ: (499 + WORLD_PIXEL_SPAN) * 819.2,",
-    "new": "  minZ: 0, maxZ: 409600,",
+    "old": "  minZ: (500 - WORLD_PIXEL_SPAN) * 819.2,\n  maxZ: (499 + WORLD_PIXEL_SPAN) * 819.2,",
+    "new": "  minZ: 0,\n  maxZ: 409600,",
     "tests": [
       "test/render/bayleftground_snow.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "BAY-LEFT-GROUND-D3-kindAt-unread",
     "file": "src/systems/snowfall.js",
-    "old": "const k = net.kindAt ? (authored[i] ? ROAD_KIND.none : net.kindAt(x, z, this.tiles[i])) : classifyRoadTile(x, z, this.tiles[i], net, rect, authored[i]);",
-    "new": "const k = classifyRoadTile(x, z, this.tiles[i], net, rect, authored[i]);",
+    "old": "        const k = net.kindAt\n          ? authored[i]\n            ? ROAD_KIND.none\n            : net.kindAt(x, z, this.tiles[i])\n          : classifyRoadTile(x, z, this.tiles[i], net, rect, authored[i]);",
+    "new": "        const k = classifyRoadTile(x, z, this.tiles[i], net, rect, authored[i]);",
     "tests": [
       "test/render/bayleftground_snow.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "BAY-LEFT-GROUND-D3-kindAt-over-an-authored-tile",
     "file": "src/systems/snowfall.js",
-    "old": "net.kindAt ? (authored[i] ? ROAD_KIND.none : net.kindAt(x, z, this.tiles[i]))",
-    "new": "net.kindAt ? net.kindAt(x, z, this.tiles[i])",
+    "old": "          ? authored[i]\n            ? ROAD_KIND.none\n            : net.kindAt(x, z, this.tiles[i])",
+    "new": "          ? net.kindAt(x, z, this.tiles[i])",
     "tests": [
       "test/render/bayleftground_snow.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-ENVIRONS-S1-roads-round-the-player",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "for (const t of this.world.terrainsIn(minGX, minGZ, maxGX, maxGZ)) {",
-    "new": "for (const t of this.world.terrainsNear(Math.ceil(span / 819.2) + 1)) {",
+    "old": "      for (const t of this.world.terrainsIn(minGX, minGZ, maxGX, maxGZ)) {",
+    "new": "      for (const t of this.world.terrainsNear(Math.ceil(span / 819.2) + 1)) {",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-ENVIRONS-S3-frame-on-the-old-window",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "if (L.resourceRebuild) { this._rebuildGrid(); L = this.local; }",
-    "new": "if (L.resourceRebuild) { this._rebuildGrid(); }",
+    "old": "      L = this.local;\n    } // AUDIT ENVIRONS S3: CreateGridResources - the frame goes on with the new window",
+    "new": "    } // AUDIT ENVIRONS S3: CreateGridResources - the frame goes on with the new window",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-ENVIRONS-S8-rebuild-keeps-the-remainder",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "    this.refillRemainder = 0;   // AUDIT ENVIRONS S8: CreateGridResources' own\n",
-    "new": "",
+    "old": "    this.refillRemainder = 0; // AUDIT ENVIRONS S8: CreateGridResources' own\n    this.dirty.localMesh = this.dirty.localStatic = true;",
+    "new": "    this.dirty.localMesh = this.dirty.localStatic = true;",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-ENVIRONS-S8-refill-clock-at-once",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "this.nextRefillTime = now + REFILL_INTERVAL_SECONDS; this.refillRemainder = 0; this.isSnowing = snowing;",
-    "new": "this.refillRemainder = 0; this.isSnowing = snowing;",
+    "old": "    this.nextRefillTime = now + REFILL_INTERVAL_SECONDS;\n    this.refillRemainder = 0;",
+    "new": "    this.refillRemainder = 0;",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-ENVIRONS-S4-no-requeue-on-reactivation",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "    if (!was) B.lastPixel = null;",
-    "new": "    if (!was) B.lastPixel = B.lastPixel;",
+    "old": "    if (!was) B.lastPixel = null; // AUDIT ENVIRONS S4: SetActive(true) - the visible tiles queue again, a tile rebuilt while it was off among them",
+    "new": "    if (!was) B.lastPixel = B.lastPixel; // AUDIT ENVIRONS S4: SetActive(true) - the visible tiles queue again, a tile rebuilt while it was off among them",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-ENVIRONS-S7-far-tiles-built",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "      if (!B.live.has(t)) continue;",
-    "new": "      if (!B.live.has(t) && false) continue;",
+    "old": "      if (!B.live.has(t)) continue; // AUDIT ENVIRONS S7: ProcessBuildQueue - a tile no longer standing in the drawn rings is not built (activeInHierarchy)",
+    "new": "      if (!B.live.has(t) && false) continue; // AUDIT ENVIRONS S7: ProcessBuildQueue - a tile no longer standing in the drawn rings is not built (activeInHierarchy)",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-ENVIRONS-S6-terrain-line-dropped",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "      `terrain=${terrain}`,\n",
-    "new": "",
+    "old": "      `terrain=${terrain}`,\n      `lighting=ambient(${amb[0].toFixed(3)},${amb[1].toFixed(3)},${amb[2].toFixed(3)}) probes=${x.surface ? 'Off' : 'unavailable'}`,",
+    "new": "      `lighting=ambient(${amb[0].toFixed(3)},${amb[1].toFixed(3)},${amb[2].toFixed(3)}) probes=${x.surface ? 'Off' : 'unavailable'}`,",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-ENVIRONS-S6-js-booleans",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "const b = (v) => (v ? 'True' : 'False');",
-    "new": "const b = (v) => String(!!v);",
+    "old": "    const b = (v) => (v ? 'True' : 'False'); // a C# bool's ToString",
+    "new": "    const b = (v) => String(!!v); // a C# bool's ToString",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "AUDIT-ENVIRONS-G6-span-unread",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "      for (let k = 1; k < b.pos.length; k += 3) { const y = b.pos[k]; if (y < lo) lo = y; if (y > hi) hi = y; }\n",
-    "new": "",
+    "old": "      for (let k = 1; k < b.pos.length; k += 3) {\n        const y = b.pos[k];\n        if (y < lo) lo = y;\n        if (y > hi) hi = y;\n      }\n      o.minY = lo;",
+    "new": "      o.minY = lo;",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -445,8 +445,8 @@
   {
     "name": "AUDIT-ENVIRONS-P3-vertex-tile-unasked",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "if (R && oj >= 0 && oj < 257 && oi >= 0 && oi < 257 && R.tiles[M.meshTile[from] - 1] === t) {",
-    "new": "if (R && oj >= 0 && oj < 257 && oi >= 0 && oi < 257) {",
+    "old": "      if (R && oj >= 0 && oj < 257 && oi >= 0 && oi < 257 && R.tiles[M.meshTile[from] - 1] === t) {",
+    "new": "      if (R && oj >= 0 && oj < 257 && oi >= 0 && oi < 257) {",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -454,8 +454,8 @@
   {
     "name": "AUDIT-ENVIRONS-P3-texel-tile-unasked",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "if (R && t && oj >= 0 && oj < 321 && oi >= 0 && oi < 321 && R.tiles[M.statTile[from] - 1] === t",
-    "new": "if (R && t && oj >= 0 && oj < 321 && oi >= 0 && oi < 321",
+    "old": "        R.tiles[M.statTile[from] - 1] === t &&\n        f32(R.center[0] + f32(f32(f32(oj / 320) - 0.5) * dia)) === wx &&",
+    "new": "        f32(R.center[0] + f32(f32(f32(oj / 320) - 0.5) * dia)) === wx &&",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -463,8 +463,8 @@
   {
     "name": "AUDIT-ENVIRONS-P3-ground-unasked",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "M.reuse = last && M.context0.sameGround(last.context) && ",
-    "new": "M.reuse = last && ",
+    "old": "      last &&\n      M.context0.sameGround(last.context) &&\n      Number.isInteger(dx / 1.25) &&\n      Number.isInteger(dz / 1.25) &&\n      Number.isInteger(dx) &&\n      Number.isInteger(dz)",
+    "new": "      last && Number.isInteger(dx / 1.25) && Number.isInteger(dz / 1.25) && Number.isInteger(dx) && Number.isInteger(dz)",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -472,7 +472,7 @@
   {
     "name": "AUDIT-ENVIRONS-P3-source-across-the-origin",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "    M.source = null; M.reuse = null;   // AUDIT ENVIRONS P3: every place the ring sampled is another number now",
+    "old": "    M.source = null;\n    M.reuse = null; // AUDIT ENVIRONS P3: every place the ring sampled is another number now",
     "new": "",
     "tests": [
       "test/systems/audit_environs.test.js"
@@ -481,8 +481,8 @@
   {
     "name": "AUDIT-ENVIRONS-P3-copying-under-new-settings",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "    this.mid.reuse = null;   // AUDIT ENVIRONS P3: a build going on samples the rest under the new settings",
-    "new": "    // this.mid.reuse = null;   // AUDIT ENVIRONS P3: a build going on samples the rest under the new settings",
+    "old": "    this.mid.reuse = null; // AUDIT ENVIRONS P3: a build going on samples the rest under the new settings (the next one's sameGround refuses a source of the old)",
+    "new": "    // this.mid.reuse = null;   // AUDIT ENVIRONS P3: a build going on samples the rest under the new settings (the next one's sameGround refuses a source of the old)",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -490,8 +490,8 @@
   {
     "name": "AUDIT-ENVIRONS-P3-copy-spends-nothing",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "        else { this._midCopyMesh(run); run.k = k; run.from = from; run.len = 1; }\n      } else {",
-    "new": "        else { this._midCopyMesh(run); run.k = k; run.from = from; run.len = 1; }\n        continue;\n      } else {",
+    "old": "        }\n      } else {\n        const og = t.origin(_o);",
+    "new": "        }\n        continue;\n      } else {\n        const og = t.origin(_o);",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -499,8 +499,8 @@
   {
     "name": "AUDIT-ENVIRONS-P3-heights-uncopied",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "    M.nextHeights.set(M.heights.subarray(a * 4, b * 4), k * 4);\n",
-    "new": "",
+    "old": "    M.nextHeights.set(M.heights.subarray(a * 4, b * 4), k * 4);\n    M.nextBnrm.set(M.bnrm.subarray(a * 3, b * 3), k * 3);",
+    "new": "    M.nextBnrm.set(M.bnrm.subarray(a * 3, b * 3), k * 3);",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -508,8 +508,8 @@
   {
     "name": "AUDIT-ENVIRONS-P4-bucket-skipped-on-one-axis",
     "file": "src/systems/snowfall.js",
-    "old": "if (discsWithin(bx * BUCKET, wx, half, scale, radius, res, pMinX, pMaxX) && discsWithin(bz * BUCKET, wz, half, scale, radius, res, pMinZ, pMaxZ)) continue;",
-    "new": "if (discsWithin(bx * BUCKET, wx, half, scale, radius, res, pMinX, pMaxX) || discsWithin(bz * BUCKET, wz, half, scale, radius, res, pMinZ, pMaxZ)) continue;",
+    "old": "          discsWithin(bx * BUCKET, wx, half, scale, radius, res, pMinX, pMaxX) &&",
+    "new": "          discsWithin(bx * BUCKET, wx, half, scale, radius, res, pMinX, pMaxX) ||",
     "tests": [
       "test/systems/snowfall1_model.test.js"
     ]
@@ -517,8 +517,8 @@
   {
     "name": "AUDIT-ENVIRONS-P4-bucket-reach-of-its-first-cell",
     "file": "src/systems/snowfall.js",
-    "old": "const a = f32(((first + 0.5) * 0.5 - (w - half)) * scale), b = f32(((first + BUCKET - 1 + 0.5) * 0.5 - (w - half)) * scale);",
-    "new": "const a = f32(((first + 0.5) * 0.5 - (w - half)) * scale), b = a;",
+    "old": "    b = f32(((first + BUCKET - 1 + 0.5) * 0.5 - (w - half)) * scale);",
+    "new": "    b = a;",
     "tests": [
       "test/systems/snowfall1_model.test.js"
     ]
@@ -526,8 +526,8 @@
   {
     "name": "AUDIT-ENVIRONS-P4-disc-skipped-on-one-axis",
     "file": "src/systems/snowfall.js",
-    "old": "  if (x0 >= pMinX && x1 <= pMaxX && z0 >= pMinZ && z1 <= pMaxZ) return 0;   // AUDIT ENVIRONS P4",
-    "new": "  if (x0 >= pMinX && x1 <= pMaxX) return 0;   // AUDIT ENVIRONS P4",
+    "old": "  if (x0 >= pMinX && x1 <= pMaxX && z0 >= pMinZ && z1 <= pMaxZ) return 0; // AUDIT ENVIRONS P4: every pixel of it preserved - none to visit",
+    "new": "  if (x0 >= pMinX && x1 <= pMaxX) return 0; // AUDIT ENVIRONS P4: every pixel of it preserved - none to visit",
     "tests": [
       "test/systems/snowfall1_model.test.js"
     ]
@@ -535,8 +535,8 @@
   {
     "name": "AUDIT-ENVIRONS-P4-refill-reads-a-freed-slot",
     "file": "src/systems/snowfall.js",
-    "old": "    for (let q = 0; q < n; q++) {\n      if (!live[q]) continue;\n      const key = keys[q], cell = vals[q];",
-    "new": "    for (let q = 0; q < n; q++) {\n      const key = keys[q], cell = vals[q];",
+    "old": "      if (!live[q]) continue;\n      const key = keys[q],",
+    "new": "      const key = keys[q],",
     "tests": [
       "test/systems/snowfall1_model.test.js",
       "test/render/snowfall1_runtime.test.js"
@@ -545,8 +545,8 @@
   {
     "name": "AUDIT-ENVIRONS-P5-turn-read-crosswise",
     "file": "src/systems/snowfall.js",
-    "old": "    const px = f32(clamp01(turnX(tile, u, v)) * 63), py = f32(f32(1 - clamp01(turnY(tile, u, v))) * 63);",
-    "new": "    const px = f32(clamp01(turnY(tile, u, v)) * 63), py = f32(f32(1 - clamp01(turnX(tile, u, v))) * 63);",
+    "old": "    const px = f32(clamp01(turnX(tile, u, v)) * 63),\n      py = f32(f32(1 - clamp01(turnY(tile, u, v))) * 63);",
+    "new": "    const px = f32(clamp01(turnY(tile, u, v)) * 63),\n      py = f32(f32(1 - clamp01(turnX(tile, u, v))) * 63);",
     "tests": [
       "test/systems/snowfall1_model.test.js"
     ]
@@ -554,8 +554,8 @@
   {
     "name": "AUDIT-ENVIRONS-P5-quarter-turn-lost",
     "file": "src/systems/snowfall.js",
-    "old": "    case 3: return f32(1 - v);\n    default: return u;",
-    "new": "    case 3: return v;\n    default: return u;",
+    "old": "    case 3:\n      return f32(1 - v);",
+    "new": "    case 3:\n      return v;",
     "tests": [
       "test/systems/snowfall1_model.test.js"
     ]
@@ -581,8 +581,8 @@
   {
     "name": "AUDIT-ENVIRONS-P5-track-place-turned",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "      out.tile = r.data.pathTile(ix, iz); out.u = f32(tx - ix); out.v = f32(tz - iz);",
-    "new": "      out.tile = r.data.pathTile(ix, iz); out.u = f32(tz - iz); out.v = f32(tx - ix);",
+    "old": "      out.u = f32(tx - ix);\n      out.v = f32(tz - iz);",
+    "new": "      out.u = f32(tz - iz);\n      out.v = f32(tx - ix);",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -599,8 +599,8 @@
   {
     "name": "AUDIT-ENVIRONS-P6-table-off-by-a-record",
     "file": "src/systems/snowfall.js",
-    "old": "for (let b = 0; b < 256; b++) a.byTile[b] = this.isFullySnowCovered(archive, b) ? 1 : 0;",
-    "new": "for (let b = 0; b < 256; b++) a.byTile[b] = this.isFullySnowCovered(archive, b + 4) ? 1 : 0;",
+    "old": "      for (let b = 0; b < 256; b++) a.byTile[b] = this.isFullySnowCovered(archive, b) ? 1 : 0;",
+    "new": "      for (let b = 0; b < 256; b++) a.byTile[b] = this.isFullySnowCovered(archive, b + 4) ? 1 : 0;",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -608,8 +608,8 @@
   {
     "name": "AUDIT-ENVIRONS-P6-roads-of-another-pixel",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "road = B.context0.roadOf(t.mapX, t.mapY), map = t.tileMap;",
-    "new": "road = B.context0.roadOf(t.mapX + 1, t.mapY), map = t.tileMap;",
+    "old": "      road = B.context0.roadOf(t.mapX, t.mapY),",
+    "new": "      road = B.context0.roadOf(t.mapX + 1, t.mapY),",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -617,8 +617,8 @@
   {
     "name": "AUDIT-ENVIRONS-P7-bare-by-the-wrong-threshold",
     "file": "src/systems/snowfall.js",
-    "old": "d[i] = pixels[k + 1] > 1 ? 255 : 0; }",
-    "new": "d[i] = pixels[k + 1] > 2 ? 255 : 0; }",
+    "old": "    d[i] = pixels[k + 1] > 1 ? 255 : 0;",
+    "new": "    d[i] = pixels[k + 1] > 2 ? 255 : 0;",
     "tests": [
       "test/systems/audit_environs.test.js",
       "test/systems/snowfall1_model.test.js"
@@ -627,8 +627,8 @@
   {
     "name": "AUDIT-ENVIRONS-P7-backward-pass-skips-the-reckoned",
     "file": "src/systems/snowfall.js",
-    "old": "    for (let x = width - 1; x >= 0; x--) {\n      const i = j * width + x;\n      let a = d[i];\n      if (a === 0) continue;",
-    "new": "    for (let x = width - 1; x >= 0; x--) {\n      const i = j * width + x;\n      let a = d[i];\n      if (a !== 255) continue;",
+    "old": "      let a = d[i];\n      if (a === 0) continue;\n      if (x + 1 < width) a = Math.min(a, d[i + 1] + 1);",
+    "new": "      let a = d[i];\n      if (a !== 255) continue;\n      if (x + 1 < width) a = Math.min(a, d[i + 1] + 1);",
     "tests": [
       "test/systems/audit_environs.test.js",
       "test/systems/snowfall1_model.test.js"
@@ -637,8 +637,8 @@
   {
     "name": "AUDIT-ENVIRONS-P8-outrun-unmarked",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "if (L.fullRebuild) { L.heightRebuild = true; L.staticRebuild = true; L.outrun = true; }",
-    "new": "if (L.fullRebuild) { L.heightRebuild = true; L.staticRebuild = true; }",
+    "old": "      L.outrun = true;\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -646,8 +646,8 @@
   {
     "name": "AUDIT-ENVIRONS-P8-milliseconds-asked-through-it",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "      budget--;\n      if ((budget & BUDGET_CHECK) === 0 && !L.outrun && this._spent()) return;\n    }\n    if (L.statCursor >= sn) this._commitRecenter();",
-    "new": "      budget--;\n      if ((budget & BUDGET_CHECK) === 0 && this._spent()) return;\n    }\n    if (L.statCursor >= sn) this._commitRecenter();",
+    "old": "      this.context.sample(wx, wz, L.nextContext, k * 4);\n      budget--;\n      if ((budget & BUDGET_CHECK) === 0 && !L.outrun && this._spent()) return;\n    }",
+    "new": "      this.context.sample(wx, wz, L.nextContext, k * 4);\n      budget--;\n      if ((budget & BUDGET_CHECK) === 0 && this._spent()) return;\n    }",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
