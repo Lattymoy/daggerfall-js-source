@@ -147,16 +147,17 @@ SAFE-ROAD ("make the road safe out of the pvp
 zone", "enemys avoid roads"): the Imperial start wakes at the center, so Cyrodiil's roads hold no hostile population
 and foes keep off them; a new character is under the PvP zone's level 30 and walks out on them.
 
-REGION-HOTSPOT (the owner, 2026-10-30: "every region need to have enemy to fight for all leveling in that region",
-then chose every region 1-45; 2026-10-31: "needs to have hot spot of 45 that circles out to 30-34, 20-10, 10-1"): each
-area rings out from its hot spot (`pveHotspots.js`). A Bay region's hot spot is its land farthest from its edge and the
-sea, and its reach is how far its land runs from there (90th centile), both measured from MAPS.BSA by
-`tools/pveHotspots.mjs`. Past the Bay a province's 96-pixel district has its middle and its half diagonal. The rung is
-1 at the hot spot and 0 at the reach, and each sixth of the way out is a band lower: 36-45 at the heart, 1-8 at the edge.
+REGION-HOTSPOT (the owner, 2026-10-30: "every region need to have enemy to fight for all leveling in that region";
+2026-10-31: "needs to have hot spot of 45 that circles out to 30-34, 20-10, 10-1", "only need 3 spots in total, region
+need to be a lot more free for lower level to travel"): each of the ten areas has three hot spots (`pveZones.js`
+`areaHotspots`). The first stands as far from the area's start as its land allows, each next as far from the start
+and the ones before; the heart's first is the Imperial City. On the Bay they may stand on a region's heart, its land
+farthest from its edge and the sea (`pveHotspots.js`, measured from MAPS.BSA by `tools/pveHotspots.mjs`); past the
+Bay on a district's middle, by the province map.
 
-Progress toward the center widens the rings, so the heart has more high ground, but an area's edge is level 1 even
-there. Measured on the Bay: 44 of 45 land regions hold all six bands; the last is a one-pixel sliver. A region with no
-land falls back to the progress alone. The district step of the first pass is gone: it broke the rings.
+A place's rung is 1 on its nearest hot spot and 0 at 120 pixels: 36-45 on it, a band lower each sixth of the way out,
+and 1-8 everywhere outside. Toward the center the rings widen. On the Bay the three stand in Ephesus, Ayasofya and
+Kambria, and 76% of the land is 1-8. The first pass's district step is gone: it broke the rings.
 
 Four districts in a hundred are high-level enclaves, three bands up, with a warning; ten are farming grounds. The party
 zone is the heart's ring on the top band. A town is safe, a dungeon is one band deeper and the old and undead ones two.

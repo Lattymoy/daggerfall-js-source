@@ -1,10 +1,10 @@
 // @ts-check
-// REGION-HOTSPOT (bible/05-Combat/Fixed-PvE.md section 9): each area's hot spot, where its level 36-45 foes stand. On
-// the Bay a region's own, measured from MAPS.BSA by tools/pveHotspots.mjs; past the Bay a province's 96-pixel district
-// has its middle. A leaf: the table and the district grid, nothing else.
-import { BAY_REGION_COUNT } from '../../formats/mapsTables.js';
-import { inBay } from '../../world/tamriel/tamrielFrame.js';
-import { districtOf, DISTRICT_PX, WORLD_PIXEL_SPAN } from '../../world/worldWide/worldGrid.js';
+// REGION-HOTSPOT (bible/05-Combat/Fixed-PvE.md section 9): where an area's hot spots - its level 36-45 foes - may stand.
+// On the Bay the regions' hearts, measured from MAPS.BSA by tools/pveHotspots.mjs; past the Bay the middles of a
+// province's 96-pixel districts. pveZones.js picks three. A leaf: the table and the map, nothing else.
+import { inBay, bayToPicture } from '../../world/tamriel/tamrielFrame.js';
+import { DISTRICT_PX, WORLD_PIXEL_SPAN } from '../../world/worldWide/worldGrid.js';
+import { provinceAt } from '../../world/tamriel/tamrielGeography.js';
 
 /** BAY-OWN: each Bay region's [x, y, reach] in MAPS.BSA pixels - its land farthest from its edge and the sea, and how far
  *  its land runs from there (90th centile). Null for a region with no land. Made by tools/pveHotspots.mjs. */
@@ -72,15 +72,25 @@ export const BAY_HOTSPOTS = Object.freeze([
   [247,  96,  86],
   [428,  342,  9],
 ].map((h) => (h ? Object.freeze(h) : null)));
-/** Past the Bay: a district's hot spot is its middle, and its reach the district's half diagonal. */
-export const DISTRICT_REACH = Math.round(DISTRICT_PX * Math.SQRT1_2);
-
 /**
- * The hot spot of the area (`px`, `py`) stands in: `[x, y, reach]`, or null for a Bay region with no land.
- * @param {number} px @param {number} py @param {number} region @returns {readonly number[]|null}
+ * Where an area's hot spots may stand: on the Bay its regions' hearts (BAY_HOTSPOTS); past it the middle of each
+ * 96-pixel district the province's map (tamrielGeography.js provinceAt, fixed, the same on every machine) holds.
+ * @param {string} area @returns {ReadonlyArray<readonly number[]>}
  */
-export function hotspotAt(px, py, region) {
-  if (inBay(px, py) && region < BAY_REGION_COUNT) return BAY_HOTSPOTS[region] ?? null;   // BAY-OWN: the Bay's regions
-  const [cx, cy] = districtOf(px, py), half = DISTRICT_PX / 2;
-  return [cx * DISTRICT_PX - WORLD_PIXEL_SPAN + half, cy * DISTRICT_PX - WORLD_PIXEL_SPAN + half, DISTRICT_REACH];
+export function hotspotCandidates(area) {
+  if (area === 'IliacBay') return BAY_SPOTS;   // BAY-OWN: the Bay's regions
+  if (!_byArea) {
+    _byArea = new Map();
+    const half = DISTRICT_PX / 2, n = Math.ceil((2 * WORLD_PIXEL_SPAN) / DISTRICT_PX);
+    for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) {
+      const x = cx * DISTRICT_PX - WORLD_PIXEL_SPAN + half, y = cy * DISTRICT_PX - WORLD_PIXEL_SPAN + half;
+      if (inBay(x, y)) continue;
+      const key = provinceAt(...bayToPicture(x, y))?.key;
+      if (key) { if (!_byArea.has(key)) _byArea.set(key, []); _byArea.get(key).push(Object.freeze([x, y])); }
+    }
+  }
+  return _byArea.get(area) ?? [];
 }
+const BAY_SPOTS = Object.freeze(BAY_HOTSPOTS.filter((h) => h).map((h) => Object.freeze([h[0], h[1]])));
+/** @type {Map<string, Array<readonly number[]>>|null} */
+let _byArea = null;

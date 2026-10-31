@@ -23,9 +23,12 @@
   {"name": "STAGE7-waits-kept", "file": "src/systems/pve/pvePopulation.js", "old": "  for (const [id, w] of L.waits) if (w.standsAt <= now) L.waits.delete(id);\n", "new": "", "tests": ["test/systems/pve/pve_population.test.js"]},
   {"name": "LADDER-no-lean", "file": "src/systems/pve/pveZones.js", "old": "(1 + LADDER_LEAN * Math.max(", "new": "(1 + 0 * Math.max(", "tests": ["test/systems/pve/pve_population.test.js"]},
   {"name": "LADDER-party-anywhere", "file": "src/systems/pve/pveZones.js", "old": " >= PARTY_ZONE_FROM && base === TOP;", "new": " >= PARTY_ZONE_FROM;", "tests": ["test/systems/pve/pve_population.test.js"]},
-  {"name": "HOT-no-hotspot", "file": "src/systems/pve/pveZones.js", "old": "  return hot ? ladderTier(", "new": "  return false ? ladderTier(", "tests": ["test/systems/pve/pve_population.test.js"]},
-  {"name": "HOT-district-corner", "file": "src/systems/pve/pveHotspots.js", "old": "half = DISTRICT_PX / 2;", "new": "half = 0;", "tests": ["test/systems/pve/pve_population.test.js"]},
-  {"name": "HOT-bay-as-district", "file": "src/systems/pve/pveHotspots.js", "old": "  if (inBay(px, py) && region < BAY_REGION_COUNT) return", "new": "  if (false) return", "tests": ["test/systems/pve/pve_population.test.js"]},
-  {"name": "HOT-rings-reversed", "file": "src/systems/pve/pveZones.js", "old": "  return Math.max(0, 1 - Math.hypot(", "new": "  return Math.max(0, 0 + Math.hypot(", "tests": ["test/systems/pve/pve_population.test.js"]},
+  {"name": "HOT-no-hotspot", "file": "src/systems/pve/pveZones.js", "old": "  return hots.length ? ladderTier(", "new": "  return false ? ladderTier(", "tests": ["test/systems/pve/pve_population.test.js"]},
+  {"name": "HOT-district-corner", "file": "src/systems/pve/pveHotspots.js", "old": "const half = DISTRICT_PX / 2, n =", "new": "const half = 0, n =", "tests": ["test/systems/pve/pve_population.test.js"]},
+  {"name": "HOT-bay-as-district", "file": "src/systems/pve/pveHotspots.js", "old": "if (area === 'IliacBay') return BAY_SPOTS;", "new": "if (false) return BAY_SPOTS;", "tests": ["test/systems/pve/pve_population.test.js"]},
+  {"name": "HOT-rings-reversed", "file": "src/systems/pve/pveZones.js", "old": "best = Math.max(best, 1 - Math.hypot(", "new": "best = Math.max(best, 0 + Math.hypot(", "tests": ["test/systems/pve/pve_population.test.js"]},
+  {"name": "HOT-farthest-ignored", "file": "src/systems/pve/pveZones.js", "old": "      if (d > far) { far = d; pick = c; }", "new": "      if (pick == null) { far = d; pick = c; }", "tests": ["test/systems/pve/pve_population.test.js"]},
+  {"name": "HOT-start-ignored", "file": "src/systems/pve/pveZones.js", "old": "const from = start ? [start] : [];", "new": "const from = [];", "tests": ["test/systems/pve/pve_population.test.js"]},
+  {"name": "HOT-center-not-first", "file": "src/systems/pve/pveZones.js", "old": "const out = start ? [] : [zoneCenterPx()];", "new": "const out = [];", "tests": ["test/systems/pve/pve_population.test.js"]},
   {"name": "STAGE7-lasting-ignored", "file": "src/systems/pve/pvePopulation.js", "old": "  if (lasting) { L.gone.add(id); cell?.slots.delete(id); }", "new": "", "tests": ["test/systems/pve/pve_population.test.js"]}
 ]

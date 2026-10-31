@@ -6,7 +6,7 @@
 // only: it changes no foe and bars no one. Ledger A (FIXED-PVE).
 import { BAY_REGION_COUNT, REGION_NAMES } from '../../formats/mapsTables.js';
 import { DUNGEON_TYPES } from '../../formats/mapsFile.js';
-import { hotspotAt } from './pveHotspots.js';
+import { hotspotCandidates } from './pveHotspots.js';
 import { districtOf } from '../../world/worldWide/worldGrid.js';
 import { CITIES } from '../../world/tamriel/tamrielGeography.js';
 import { pictureToBay } from '../../world/tamriel/tamrielFrame.js';
@@ -70,17 +70,43 @@ export function zoneProgress(px, py, area) {
 /** The base band at (`px`, `py`) in `area`: its progress cut into six even steps, the center the top. */
 export const zoneBaseTier = (px, py, area) => Math.min(TOP, Math.floor(zoneProgress(px, py, area) * ZONE_BANDS.length));
 
-/** REGION-HOTSPOT (the owner, 2026-10-30: "every region need to have enemy to fight for all leveling in that region",
- *  chose every region 1-45; 2026-10-31: "needs to have hot spot of 45 that circles out to 30-34, 20-10, 10-1"): EACH
- *  AREA RINGS OUT FROM ITS HOT SPOT (pveHotspots.js). Its rung is 1 at the hot spot and 0 at its reach: the top band at
- *  the heart, a band lower each sixth of the way out, levels 1-8 at the edge. Closer to the center the rings widen:
- *  more high ground. Daggerfall Unity has no zones: it scales every foe to the player. */
+/** REGION-HOTSPOT (the owner, 2026-10-30: "every region need to have enemy to fight for all leveling in that region";
+ *  2026-10-31: "needs to have hot spot of 45 that circles out to 30-34, 20-10, 10-1", "only need 3 spots in total,
+ *  region need to be a lot more free for lower level to travel"): EACH AREA HAS THREE HOT SPOTS, each as far from the
+ *  start and from the others as its land allows (the heart's first is the center). A place's rung is 1 on a hot spot
+ *  and 0 at its reach: 36-45 there, a band lower each sixth out, and 1-8 everywhere outside. Toward the center the rings
+ *  widen. Daggerfall Unity has no zones: it scales every foe to the player. */
+export const AREA_HOTSPOTS = 3;
+/** How far a hot spot's rings reach, in world pixels. */
+export const HOTSPOT_REACH = 120;
 export const LADDER_RUNGS = Object.freeze([1, 2, 3, 4, 5].map((k) => k / 6));
 /** How much the center widens the rings: the rung r reads 1 - (1 - r)^(1 + LEAN x progress). */
 export const LADDER_LEAN = 0.5;
-/** A place's rung: 1 at its area's hot spot, falling to 0 at the hot spot's reach. @param {number} px @param {number} py @param {readonly number[]} hot */
-export function hotspotRung(px, py, hot) {
-  return Math.max(0, 1 - Math.hypot(px - hot[0], py - hot[1]) / hot[2]);
+/** A place's rung: 1 on its area's nearest hot spot, falling to 0 at its reach. @param {number} px @param {number} py @param {ReadonlyArray<readonly number[]>} hots */
+export function hotspotRung(px, py, hots) {
+  let best = 0;
+  for (const h of hots) best = Math.max(best, 1 - Math.hypot(px - h[0], py - h[1]) / HOTSPOT_REACH);
+  return best;
+}
+const _hots = new Map();
+/** An area's hot spots: the first farthest from its start (the heart's, its center), each next farthest from the start
+ *  and those before it. @param {string} area @returns {ReadonlyArray<readonly number[]>} */
+export function areaHotspots(area) {
+  if (_hots.has(area)) return _hots.get(area);
+  const cands = hotspotCandidates(area), start = zoneStartPx(area);
+  /** @type {Array<readonly number[]>} */ const out = start ? [] : [zoneCenterPx()];
+  const from = start ? [start] : [];
+  while (out.length < AREA_HOTSPOTS && out.length < cands.length) {
+    let pick = null, far = -1;
+    for (const c of cands) {
+      const d = Math.min(...[...from, ...out].map((p) => Math.hypot(c[0] - p[0], c[1] - p[1])));
+      if (d > far) { far = d; pick = c; }
+    }
+    out.push(/** @type {readonly number[]} */ (pick));
+  }
+  const hots = Object.freeze(out.map((h) => Object.freeze([h[0], h[1]])));
+  _hots.set(area, hots);
+  return hots;
 }
 /** The band a rung stands on at `progress` toward the center. @param {number} rung @param {number} progress */
 export function ladderTier(rung, progress) {
@@ -90,11 +116,11 @@ export function ladderTier(rung, progress) {
   return t;
 }
 
-/** The base band at (`px`, `py`) in `region`: its ring round its area's hot spot (REGION-HOTSPOT), else its progress.
+/** The base band at (`px`, `py`) in `region`: its ring round its area's hot spots (REGION-HOTSPOT), else its progress.
  *  @param {number} px @param {number} py @param {number} region */
 export function zoneBase(px, py, region) {
-  const area = /** @type {string} */ (zoneAreaOf(region)), hot = hotspotAt(px, py, region);
-  return hot ? ladderTier(hotspotRung(px, py, hot), zoneProgress(px, py, area)) : zoneBaseTier(px, py, area);
+  const area = /** @type {string} */ (zoneAreaOf(region)), hots = areaHotspots(area);
+  return hots.length ? ladderTier(hotspotRung(px, py, hots), zoneProgress(px, py, area)) : zoneBaseTier(px, py, area);
 }
 
 /** SAFE-ROAD (the owner, 2026-10-30: "have them spawn there make the road safe out of the pvp zone", "enemys avoid

@@ -82,8 +82,7 @@ test('SAFE-ROAD: Cyrodiil\'s roads hold no hostile foe, so the Imperial start wa
 
 test('GROUP-PARTY: the heart\'s inner ring is the party zone - wild and dungeons, never a road or a town, nowhere else', async () => {
   const { PARTY_ZONE_FROM, zoneProgress } = await import('../../../src/systems/pve/pveZones.js');
-  const { hotspotAt } = await import('../../../src/systems/pve/pveHotspots.js');
-  const [cx, cy] = /** @type {number[]} */ (hotspotAt(...zoneCenterPx().map(Math.floor), CYRODIIL_REGION));   // the heart's district's hot spot
+  const [cx, cy] = zoneCenterPx().map(Math.floor);
   assert.equal(PARTY_ZONE_FROM, 0.9);
   const at = (o) => pveZoneAt({ px: cx, py: cy, region: CYRODIIL_REGION, ...o });
   assert.ok(zoneProgress(cx + 20, cy, 'Imperial') >= 0.9);
@@ -92,30 +91,38 @@ test('GROUP-PARTY: the heart\'s inner ring is the party zone - wild and dungeons
   const sk = CITIES.find((c) => c.name === 'Skingrad').at, [sx, sy] = pictureToBay(sk[0], sk[1]).map(Math.floor);
   assert.equal(pveZoneAt({ px: sx, py: sy, region: CYRODIIL_REGION }).party, false, 'Skingrad lies outside it');
   assert.equal(pveZoneAt({ px: cx + 20, py: cy, region: SKYRIM }).party, false);
-  assert.ok(zoneProgress(cx + 47, cy + 47, 'Imperial') >= 0.9);
-  assert.equal(pveZoneAt({ px: cx + 47, py: cy + 47, region: CYRODIIL_REGION }).party, false, 'the heart district\'s edge is no party zone');
+  assert.ok(zoneProgress(cx + 60, cy, 'Imperial') >= 0.9);
+  assert.equal(pveZoneAt({ px: cx + 60, py: cy, region: CYRODIIL_REGION }).party, false, 'off the top ring by the heart is no party zone');
 });
 
-test('REGION-HOTSPOT: every area rings out from its hot spot - 36-45 at the heart, 1-8 at its reach - wider near the center', async () => {
-  const { hotspotRung, ladderTier, LADDER_RUNGS } = await import('../../../src/systems/pve/pveZones.js');
-  const { hotspotAt, BAY_HOTSPOTS, DISTRICT_REACH } = await import('../../../src/systems/pve/pveHotspots.js');
-  assert.deepEqual([[0, 0], [5, 0], [10, 0], [20, 0]].map(([x, y]) => hotspotRung(x, y, [0, 0, 10])), [1, 0.5, 0, 0]);
+test('REGION-HOTSPOT: each area has three hot spots, far from its start and each other - 36-45 on them, 1-8 outside their rings', async () => {
+  const { hotspotRung, ladderTier, LADDER_RUNGS, areaHotspots, AREA_HOTSPOTS, HOTSPOT_REACH } = await import('../../../src/systems/pve/pveZones.js');
+  const { hotspotCandidates, BAY_HOTSPOTS } = await import('../../../src/systems/pve/pveHotspots.js');
+  assert.deepEqual([[0, 0], [60, 0], [120, 0], [300, 0]].map(([x, y]) => hotspotRung(x, y, [[0, 0]])), [1, 0.5, 0, 0]);
+  assert.equal(hotspotRung(200, 0, [[0, 0], [180, 0]]), 1 - 20 / HOTSPOT_REACH, 'the nearest hot spot rules');
   assert.deepEqual([0.16, 0.17, 0.34, 0.5, 0.67, 0.84, 1].map((r) => ladderTier(r, 0)), [0, 1, 2, 3, 4, 5, 5]);
   assert.equal(LADDER_RUNGS.length, ZONE_BANDS.length - 1);
   assert.ok(ladderTier(0.6, 1) > ladderTier(0.6, 0), 'the rings widen toward the center');
-  assert.equal(ladderTier(0, 1), 0, 'an area\'s reach is the first band even at the heart');
+  assert.equal(ladderTier(0, 1), 0, 'outside the rings is the first band even at the heart');
   assert.equal(BAY_HOTSPOTS.length, BAY_REGION_COUNT);
-  const [hx, hy, reach] = /** @type {number[]} */ (BAY_HOTSPOTS[17]);   // the Daggerfall region
-  assert.deepEqual(hotspotAt(207, 213, 17), BAY_HOTSPOTS[17]);
-  const ring = (f) => zoneBase(Math.round(hx + reach * f), hy, 17);
-  assert.deepEqual([ring(0), ring(1)], [ZONE_BANDS.length - 1, 0], 'Daggerfall: 36-45 at its hot spot, 1-8 at its reach');
+  for (const area of Object.keys(ZONE_STARTS)) {
+    const hots = areaHotspots(area), cands = hotspotCandidates(area), start = zoneStartPx(area);
+    assert.equal(hots.length, AREA_HOTSPOTS, area);
+    assert.ok(hots.every((h) => cands.some((c) => c[0] === h[0] && c[1] === h[1]) || (!start && h === hots[0])), `${area}: on its own land`);
+    if (start) {
+      const far = Math.max(...cands.map((c) => Math.hypot(c[0] - start[0], c[1] - start[1])));
+      assert.equal(Math.hypot(hots[0][0] - start[0], hots[0][1] - start[1]), far, `${area}: the first is the farthest from the start`);
+      assert.equal(zoneBase(...start.map(Math.floor), area === 'IliacBay' ? 17 : BAY_REGION_COUNT), 0, `${area}: its start is level 1-8`);
+    }
+  }
+  assert.deepEqual(areaHotspots('Imperial')[0], zoneCenterPx(), 'the heart\'s first is the center');
+  assert.ok(areaHotspots('Skyrim').every((h) => (h[0] + 8192) % 96 === 48 && (h[1] + 8192) % 96 === 48), 'past the Bay a district\'s middle');
+  const [hx, hy] = areaHotspots('IliacBay')[0];
+  const ring = (f) => zoneBase(Math.round(hx - HOTSPOT_REACH * f), hy, 0);
+  assert.deepEqual([ring(0), ring(1.1)], [ZONE_BANDS.length - 1, 0], '36-45 on the hot spot, 1-8 past its reach');
   assert.ok([0, 0.2, 0.4, 0.6, 0.8, 1].map(ring).every((t, i, a) => i === 0 || t <= a[i - 1]), 'the bands fall walking out');
-  const [cx, cy] = zoneCenterPx().map(Math.floor);
-  const sk = hotspotAt(cx, cy - 300, SKYRIM);
-  assert.deepEqual([sk[2], (sk[0] + 8192) % 96, (sk[1] + 8192) % 96], [DISTRICT_REACH, 48, 48], 'past the Bay a district\'s middle');
-  assert.deepEqual([zoneBase(sk[0], sk[1], SKYRIM), zoneBase(sk[0] + 47, sk[1] + 47, SKYRIM)], [ZONE_BANDS.length - 1, 0]);
-
-  assert.equal(hotspotAt(0, 0, 3), BAY_HOTSPOTS[3], 'a region with no land has none');
+  assert.equal(zoneBase(207, 213, 17), 0, 'Daggerfall city stands far from every hot spot');
+  assert.strictEqual(areaHotspots('IliacBay'), areaHotspots('IliacBay'), 'picked once');
 });
 
 test('STAGE 7: the recommended score climbs with the band and is advice only', () => {
