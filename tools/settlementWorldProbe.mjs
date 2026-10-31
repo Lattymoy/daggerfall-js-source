@@ -74,11 +74,18 @@ try {
   await drain();
   const before = await page.evaluate(() => window.__mode?.() ?? null);
   await page.screenshot({ path: join(out, 'door.png') });
-  await page.evaluate(() => window.__enter?.());   // the modes' own tryEnter, from the eye: the door the press would take
+  const said = [];
+  const hear = (m) => said.push(`${m.type()}: ${m.text()}`.slice(0, 200));
+  page.on('console', hear);
+  const doorsSeen = await page.evaluate(() => { const d = window.__doors?.() ?? []; return { n: d.length, last: JSON.stringify(d.slice(-2)).slice(0, 400) }; });
+  const entered = await page.evaluate(async () => { try { return String(await window.__enter?.()); } catch (e) { return `threw ${e?.message}`; } });   // the modes' own tryEnter, from the eye
+  console.log(JSON.stringify({ doorsSeen, entered }));
   const after = await until(() => (window.__mode?.() === 'interior' ? 'interior' : null), 180000) ?? await page.evaluate(() => window.__mode?.() ?? null);
   await drain(); await frames(20);
   await page.screenshot({ path: join(out, 'inside.png') });
+  page.off('console', hear);
   console.log(JSON.stringify({ door: d.type, modeBefore: before, modeAfter: after }));
+  if (after !== 'interior') console.log(said.slice(0, 15).join('\n'));
 } catch (e) { console.log('FAIL:', e.message); }
 console.log(errors.length ? `errors:\n${errors.slice(0, 12).join('\n')}` : 'no page errors');
 await browser.close(); await server.close();
