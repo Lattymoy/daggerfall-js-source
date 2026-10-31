@@ -28,6 +28,15 @@ footsteps; and a first-person mode that keeps the sprite's shadow. Repaints wait
 carries the view it is to paint, so a turn never paints the old view back. A melee blow plays one stroke: an even blow
 the first half of the six-frame swing, an odd blow the second.
 
+**A clip on the move plays whole.** While a swing, a cast or a loose plays, no stance repaint lands on it, and a turn
+repaints the clip's own shown frame at the new view. A look changed later (a weapon or a piece) has its clips composed
+before they play, `LAYERED_WARM_A_FRAME` frames a frame (`src/player/eyeOfTheBeholder/layeredWarm.js`), for the player
+and for a walker's drawn weapon (`src/net/peer/peerRiders.js`).
+
+**Facing.** The body faces its walk, and stood still its last facing, so the eye can go round it through all eight
+views. A blow or a cast turns it to the camera while it plays, so it strikes where the player looks. This is
+`Graphics.TurnToView` at Only When Animating (`src/systems/modSettings.js`); the pane keeps all four options.
+
 **The cart and the lantern.** The mod's wagon follows the player (`eotbWagon.js`). A lit lantern can hang at the
 sprite's hip, from Handheld Torches' own Lanterns at Waist setting (`eotbLantern.js`).
 
@@ -36,7 +45,10 @@ sprite's hip, from Handheld Torches' own Lanterns at Waist setting (`eotbLantern
 
 **The back holster** (`src/player/eyeOfTheBeholder/eotbHolster.js`). While the weapon is sheathed, a long blade, axe, blunt weapon,
 staff, bow or Thunderlock in the weapon hand rides on the sprite's back and turns with it in every direction, for the
-player and every other walker. Short blades and the Pistolet are not drawn yet.
+player and every other walker. Short blades and the Pistolet are not drawn yet. A flail stands with its handle upright,
+cap on top, and its chain and ball hang from the cap beside the handle
+(`src/player/eyeOfTheBeholder/eotbHolsterFlail.js` `uprightFlailPicture`; `loadBackPicture` is the door every body takes
+the back's picture through).
 
 **Riding with the Morrowind body.** On a horse whose 3D rig stands, the Morrowind body sits astride and the view works
 as on foot. In the cart's saddle, or before the rig can draw, the Morrowind body holds first person.
@@ -58,6 +70,10 @@ carries one row on the mod's directory, and a file belongs there only if the mod
 - **A lantern at the sprite's waist** (Mac), and **back-holstered weapons that turn with the sprite** (Mac): both this
   game's own additions.
 - **A blow is one stroke, strokes alternating, no setting** (Mac).
+- **Walking never cancels an attack animation** (the owner).
+- **Players can see every rotation of their character** when idle, or moving with the camera facing another way (the
+  owner): `Graphics.TurnToView` ships at Only When Animating.
+- **A flail on the back hangs its ball and chain from the cap** (the owner).
 - **Class sprites as skins in two panels** (Mac).
 
 ## Daggerfall Unity
@@ -71,6 +87,11 @@ camera and `Mathf.RoundToInt`. Departures from the assembly, each for its reason
 4. The extra cast to the smoothed eye, because the mod's three axis casts miss a diagonal wall.
 5. A queued repaint carries its own view, because the mod's could paint the old view after a turn.
 6. One stroke a blow; the ping-pong variant plays as None and Mixed as Mirror.
+7. A clip on the move plays whole: a stance's delayed repaint is dropped while a clip plays, and a turn mid-clip
+   repaints the clip's shown frame. The mod's `LoopIdleBillboard` runs beside a clip and repainted the walk between the
+   swing's frames.
+8. `Graphics.TurnToView` defaults to 1 (Only When Animating), not the bundle's 2 (When Weapon Readied), under which a
+   readied body faced the camera and only ever showed its back.
 
 Not ported: Unity lifecycle and component plumbing, the mesh and material code the billboard batch replaces, Free
 Rein's move vector (not in the game), the attack-from-body ray, DFU's mod bus, and `get_scaleOffset`, which nothing in
@@ -82,9 +103,14 @@ the assembly calls.
 - `src/player/eyeOfTheBeholder/eotbBody.js`, `eotbBillboard.js`, `eotbSprite.js` - the sprite body
 - `src/player/eyeOfTheBeholder/eotbWagon.js`, `eotbLantern.js`, `eotbHolster.js`, `eotbQuiver.js`, `eotbGlow.js` - the cart, lantern,
   holster, quiver and glow
+- `src/player/eyeOfTheBeholder/eotbHolsterFlail.js` - a flail's picture on the back
+- `src/player/eyeOfTheBeholder/layeredWarm.js` - a layered look's clips composed before they play
 - `src/systems/modSettings.js` - the mod's fifty-four settings
 - `tools/eotbIl.mjs`, `tools/backHolsterProbe.mjs` - the IL extraction, the holster probe
 - `test/player/eyeOfTheBeholder/eotb_scope.test.js` - the method ledger against the IL
 - `test/systems/eotb_camera.test.js` - the camera and the wall
 - `test/player/eyeOfTheBeholder/eotb_billboard.test.js` - strokes and repaints
+- `test/player/eyeOfTheBeholder/eotb_body.test.js` - a clip on the move, the warm, the free facing
+- `test/player/eyeOfTheBeholder/holster_flail.test.js` - the flail on the back
+- `test/net/layered_peers.test.js` - a walker's warm
 - `test/player/viewtoggle.test.js` - the perspective toggle

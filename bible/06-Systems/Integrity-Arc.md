@@ -47,6 +47,11 @@ target's machine applies a peer's harm. A duel's winner and a fall's drop in the
 and the account service settles (`src/net/duel/duelReceipt.js`, `src/net/wild/wildReceipt.js`). A duel is outdoors
 only.
 
+The same checkpoint verdict reads the kit's might off the judged pack (`src/net/kitMight.js` `kitMightOf`): how much
+harder its lawful kit can make one blow or spell than the gate's reference. It is kept on the character's row (`might`),
+none while the law holds the character, and the identity token signs it (`mg`, `src/net/mightLaw.js`). An Elite
+Breach's purse grows by it; no referee between players reads it.
+
 ### Boss fights
 
 In a gate's court, an Abyss Dungeon and a serpent's waters, the relay judges the boss's blows itself from the poses it
@@ -89,6 +94,7 @@ Server-rolled spawns are in `bible/11-Multiplayer/Spawn-Grants.md`.
 - `server-account/src/budget.js` - the wealth budget
 - `server-account/src/progress.js` - progression claims
 - `src/net/siege/siegeRef.js`, `src/net/duel/duelRef.js`, `src/net/wild/wildRef.js` - the PvP referee
+- `src/net/kitMight.js`, `src/net/mightLaw.js` - the kit's might and its signed form
 - `src/net/bossRef.js`, `src/net/bossBody.js` - boss fights
 - `src/scenes/exteriorFoes.js` - a peer's foes bounded
 - `test/systems/item/int1_itemlaw.test.js` - the law against every honest producer

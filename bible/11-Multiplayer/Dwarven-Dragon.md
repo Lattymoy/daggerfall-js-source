@@ -7,17 +7,32 @@ in a hundred binds it as a flying mount.
 
 ## How it works
 
-**When and where** (`src/net/dragon/dragonLaw.js`). The real clock is cut into watches of `DRAGON_WATCH_MS`; one watch
-in `DRAGON_WATCH_ONE_IN` brings a dragon down. Every roll takes the watch's omen, whose seed is an HMAC of the relay's
-`GATE_SIGNING_KEY` (`src/net/dragon/dragonSeed.js`), so the source cannot predict a dragon. The landing is a random
-second in the watch's first `DRAGON_LAND_SPAN_MS` (`dragonLandOf`). A client asks for the omen only once its landing
-has passed, and the relay never answers for a watch to come. The dragon stays until slain or `DRAGON_STAY_MS`, then
+**When** (`src/net/dragon/dragonLaw.js`). The real clock is cut into watches of `DRAGON_WATCH_MS`. A watch holds
+`DRAGON_CELLS_A_WATCH` omens, each seed its own HMAC of the relay's `GATE_SIGNING_KEY` (`src/net/dragon/dragonSeed.js`
+`dragonOmenSeeds`), so the source cannot predict a dragon and one omen told says nothing of another. One omen in
+`DRAGON_WATCH_ONE_IN` brings a dragon down, where its cell has ground. An omen within two cells of an earlier one is
+dropped (`dragonCandidates`), so up to four may stand at once, three cells apart at least. The landing is a random second
+in the watch's first `DRAGON_LAND_SPAN_MS` (`dragonLandOf`). The dragon stays until slain or `DRAGON_STAY_MS`, then
 climbs away. One in `DRAGON_SHINY_ONE_IN` is the Aetherbright.
 
-The omen picks a theatre among `GATE_LANES_OPEN` (`dragonLaneOf`) - the Bay and every province but Cyrodiil - and the
-gate's site law finds its pixel in the world's data (`src/systems/dragon/dragonSite.js`). The relay never reads the map:
-it holds a fight at the site a join names, at most `DRAGON_SITES_MAX` a watch, at a pixel's centre on its theatre's side
-of the Bay's edge (`dragonSiteOk`). No chat line, no map ring.
+**Where.** Each omen picks one of the relay's world cells in the continent's frame (`dragonCellOf`, `DRAGON_CELLS`), a
+box the relay knows with no map. The client finds the site in that cell over the world's own data
+(`src/systems/dragon/dragonSite.js` `dragonSiteOf`): the Bay's gate scan's ground where the cell has any, else, past the
+Bay, the gate's ground over the towns about it (`src/scenes/gate/gateLanes.js` `groundIn`, read in idle slices once the
+countryside stands and the land is laid). The omen's own roll picks one pixel (`dragonSitePick`). A cell with no ground
+brings no dragon. The relay holds a fight at the site a join names, at most `DRAGON_SITES_MAX` a dragon, at a pixel's
+centre in its omen's cell (`dragonSiteOk`, `dragonCandidateOf`). No chat line, no map ring.
+
+**Told near its cell** (`server/src/dragonFights.js`). A client asks for this watch's omens and the last's, down
+whatever room it stands in. The relay judges a pose in a cell room (within the socket's cover) or in a battle; a private
+room's pose is never judged. A socket not yet stood `DRAGON_TELL_DWELL_MS` in the cell of its pose hears nothing. One
+that has is told a landed dragon's omen within `DRAGON_TELL_PX` of its cell, and null otherwise, no sooner than a quiet
+watch's time (`dragonQuietAt`). A join from a socket not yet stood is dropped too. The client asks again once outside a told omen's reach, and after
+a null from another pixel, or from the same one after `DRAGON_NONE_AGAIN_MS` (`src/scenes/dragonHost.js`).
+
+**The budget.** An account is judged in at most `DRAGON_JUDGED_CELLS_MAX` cells a watch, all its sockets together,
+counted on the hub (`dragonJudgeInternal`). An ask is charged every cell its pose could be told of (`dragonReachCells`),
+a join its site's cell. A fight's words reach a passer-by only once its account is granted the fight's cell.
 
 **Seen in the sky** (`src/scenes/dragonHost.js`). Until a player comes within `DRAGON_ADMIT_R`, the dragon circles its
 site at `ROOST_ALT` on a path that is a function of the clock and omen (`src/net/dragon/dragonBody.js`), so every screen
@@ -64,10 +79,13 @@ me.
 and lies deactivated for `DRAGON_REMAINS_MS`. A dealer dealt `DRAGON_DEALT_SHARE` of their share; a stander stood within
 `DRAGON_STAND_R` for `DRAGON_STOOD_SHARE` of the fight. A dealer's party counts as standers.
 
-**Spoils and the tame.** The receipt is `z1` (`src/net/dragon/dragonReceipt.js`), Ed25519 under the relay's key. The
+**Spoils and the tame.** The receipt is `z1` (`src/net/dragon/dragonReceipt.js`), Ed25519 under the relay's key. It
+signs its dragon's place (`p`, its cell's number, `dragonPlaceOf`), so each dragon of a watch is its own kill and a
+forged site in its cell pays once. The hub keeps an account's receipts of its newest watch, one a place. The
 device carries it (`src/net/dragon/dragonClaims.js`) to `/v1/dragon/claim` (`server-account/src/dragons.js`
-`claimDragon`), which counts one kill a watch and account and gives the hoard to the one claim that writes the watch's
-row. The hoard (`src/systems/dragon/dragonSpoils.js`) is rolled on the receipt's seed, never past the character's level:
+`claimDragon`), which counts one kill a (watch, place, account) and gives the hoard to the one claim that writes that
+dragon's row. A receipt with no place counts one a watch, and a placed receipt is refused where an older service
+counted its watch after it was minted. The hoard (`src/systems/dragon/dragonSpoils.js`) is rolled on the receipt's seed, never past the character's level:
 `DRAGON_GOLD_PER_LEVEL` gold a level, and Magic-or-better and Rare-or-better pieces for a dealer, less for a stander.
 The tame is the service's own draw, 1 in `DRAGON_TAME_ONE_IN`, for a dealer whose character holds no dragon. A tamed
 player sees "Its core still turns. The Dwarven Dragon is yours." and the item goes into the pack
@@ -108,6 +126,9 @@ monster they meet - never a player, party mate or court boss. `/dragon blue` and
 - The mount walks and gallops as a horse, flies 25 m/s, and travels twice a horse's pace on the map, straight over water
   and mountains (the owner). This pace is the owner's word past the power ceiling (`05-Combat/Power-Ceiling.md`).
 - The spawn must not be predictable from the source (the owner): every roll is the relay's seed, told after landing.
+- Cell-scoped (the owner): an omen is told only to a player near its cell, never to every screen.
+- A budget of cells an account is judged in each watch, kept on the hub (the owner).
+- Each dragon pays its own kill: a second dragon in one watch pays too (the owner).
 - A tamer's title is worn on a metal name plate (the owner); developers' tames never count as a First (the owner).
 - Lore: the Rourken and aetherium are canon; the clockwork dragons as sky-ketch outriders are the port's own.
 
@@ -121,8 +142,17 @@ Daggerfall has no other players, no world boss and no flying mount; none of this
 - `src/systems/dragon/` - site, spoils, mount, keep, flight, journey, words
 - `src/scenes/dragonHost.js`, `src/scenes/dragonKeepHost.js`, `src/scenes/dragonRewards.js` - the dragon on screen, the
   keep, the hoard
+- `server/src/dragonFights.js` - the relay's half: the tell, the budget, the fight, the receipts
 - `server-account/src/dragons.js` - claim, hoard, tame
 - `src/systems/staffDragon.js`, `src/scenes/staffDragonHost.js` - the Admin's ride
 - `test/net/dragon/` - law, relay, client, claims, service, mount, keep, care, Aetherbright, hidden omens, audits
+- `test/net/dragon/dragoncell.test.js`, `dragonbudget.test.js`, `dragoneach.test.js` - the cell's tell, the budget, a
+  kill a dragon
 - `test/net/dragonride_wire.test.js` - the ride's relay gate and pose law
 - `test/systems/travel/dragon6_flight.test.js` - the flown journey
+
+## Open
+
+- Guest accounts cost nothing to make, and the cell budget is an account's, so many guests can still sweep the cells;
+  the hub's count is lost when it sleeps. Put to the owner.
+- A forger told an omen whose cell has no ground can fight a dragon no honest screen sees. Put to the owner.
