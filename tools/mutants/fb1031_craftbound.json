@@ -23,7 +23,7 @@
   {
     "name": "AUDIT-FB1031-D1-the-kept-id-never-spent-by-a-count",
     "file": "src/systems/festival/festivalClient.js",
-    "old": "  if (_discard && !_discardFlying && Number.isSafeInteger(d[_discard.kind])) _discard = null;",
+    "old": "  if (_discard && !_discardFlying.has(_discard) && Number.isSafeInteger(d[_discard.kind])) _discard = null;",
     "new": "",
     "tests": ["test/server/bound_destroy_service.test.js"]
   },

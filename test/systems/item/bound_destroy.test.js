@@ -463,3 +463,35 @@ test('AUDIT FB1031 D5: a priced ware the realm locked is never dismantled - refu
     assert.match(realmLockedText('The ware'), /^The ware is locked by the realm/);
   } finally { setRealmLocked([]); }
 });
+
+// AUDIT FB1031 II R1, R4, R9: after D5 a copy the realm locked is the Broker's no longer - its card offered a Dismantle
+// that refused, and the batch salvage still sent it to him. A lock laid while the question stood is said in its words.
+test('AUDIT FB1031 II R1 R4: a locked priced ware\'s card offers Destroy alone, the batch sends it to no Broker; a lock laid under the question is refused in the lock\'s words (mutants: Dismantle offered; the batch line the Broker\'s; the realm branch unsaid)', async () => {
+  const { realmLockedText } = await import('../../../src/systems/item/itemBound.js');
+  const { itemLongName } = await import('../../../src/systems/item/itemInfo.js');
+  const day = brokerDay(Date.parse('2026-09-27T12:00:00Z'));
+  const mint = () => brokerSale(brokerStock(day)[5], { items: [Object.assign(sigilStone(), { stackCount: 20 })], bought: [], day }).give;
+  const ware = mint();
+  ware.uid = 'u-ware-dupe';
+  const name = itemLongName(ware);
+  setRealmLocked(['u-ware-dupe']);
+  try {
+    await withPack([ware], async ({ open, actOf }) => {
+      open(name);
+      assert.deepEqual([!!actOf('Dismantle'), !!actOf(destroyAct())], [false, true]);
+    });
+    assert.doesNotMatch(batchRefusal(name, 'aetheric', ware), /Broker/, 'not the Broker\'s');
+  } finally { setRealmLocked([]); }
+  const fresh = mint();
+  fresh.uid = 'u-ware-later';
+  await withPack([fresh], async ({ dom, open, actOf, press, said }) => {
+    open(itemLongName(fresh));
+    press(actOf('Dismantle'));
+    setRealmLocked(['u-ware-later']);
+    try {
+      const yes = dom.doc.querySelectorAll('.act').find((b) => b.textContent === 'Dismantle' && b.className.includes('primary'));
+      press(yes);
+      assert.ok(yes && said().includes(realmLockedText('').slice(1, 60)), 'the lock\'s words');
+    } finally { setRealmLocked([]); }
+  });
+});

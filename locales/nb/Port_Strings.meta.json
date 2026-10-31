@@ -15721,7 +15721,7 @@
  },
  "gather.goods.andStores": {
   "en": "2afef57ead7f",
-  "tr": "76d89e594e29",
+  "tr": "2afef57ead7f",
   "by": "claude-in-session"
  },
  "gather.stop.gone": {
@@ -18026,7 +18026,7 @@
  },
  "inventory.batch.aethericKept": {
   "en": "6cc61475fe5d",
-  "tr": "7db1f540064d",
+  "tr": "bb5cb608c2d3",
   "by": "claude-in-session"
  },
  "inventory.batch.allJunk": {

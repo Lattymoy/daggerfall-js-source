@@ -158,7 +158,7 @@ import { setCard, setStrip, markSetFrame } from '../setCard.js';   // SET5: a se
 import { setIdOf, setById, setLines, setSigilLines } from '../../systems/sigil/sigilSets.js';   // CARD-FIT U4/U10: a set piece and its sigil in a line each
 import { isLocked, toggleLocked, lockRefuses, lockedText, LOCKED_LINE } from '../../systems/item/itemLock.js';   // LOCK1
 import { isJunk, junkable, toggleJunk, lockLiftsJunk, JUNK_LINE } from '../../systems/item/itemJunk.js';   // LOOT18
-import { isBound, boundLine, boundRefusesPut, boundText, realmLockedText, isPackOnly, packOnlyText } from '../../systems/item/itemBound.js';   // SS1: a bound piece says so on its card   // SS3: and goes nowhere but the wagon and the player's own storage
+import { isBound, boundLine, boundRefusesPut, boundText, realmLockedText, isRealmLocked, isPackOnly, packOnlyText } from '../../systems/item/itemBound.js';   // SS1: a bound piece says so on its card   // SS3: and goes nowhere but the wagon and the player's own storage
 import { isStolen, stolenLine } from '../../systems/stolenGoods.js';   // STOLEN-GOODS: a stolen piece says so on its card
 import { letterRefusesPut, letterPutText } from '../../systems/peerWord.js';   // HACKED-GOLD: online a letter of credit goes nowhere a peer's word could hand it on
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
@@ -3741,7 +3741,8 @@ function itemActs(picked, side, { qty = true } = {}) {
   // SS5 (Mac: "The ability to dismantle in the inventory and recieve back sigil stones", the Broker's wares alone): a
   // ware in the pack is DISMANTLED for a share of its price (systems/sigil/sigilBroker.js), asked first - it is gone for good.
   // A worn one is taken off first (its primary act, beside this); a locked one says why when pressed, as its Drop does.
-  if (side === 'local' && !line.equipped && dismantleStones(picked) > 0) {
+  // AUDIT FB1031 II R4: never on a copy the realm locked - the Broker refuses it (D5), and Destroy stands instead
+  if (side === 'local' && !line.equipped && dismantleStones(picked) > 0 && !isRealmLocked(picked)) {
     const d = el('button', 'act', 'Dismantle');
     d.onclick = () => askDismantle(picked);
     acts.append(d);
@@ -4002,7 +4003,8 @@ export function batchRefusal(name, why, item = null) {
   if (why === 'bound') return t('inventory.batch.bound', '{name} is bound to you, and does not break.', { name });
   if (why === 'quest') return t('inventory.batch.quest', '{name} belongs to a quest.', { name });
   if (why === 'aetheric') {
-    return dismantleStones(item) > 0 ? t('inventory.batch.aetheric', '{name} is Aetheric - the Sigil Broker dismantles it, not the Reforge.', { name })
+    // AUDIT FB1031 II R1: a ware the realm locked is no Broker's to dismantle (D5)
+    return dismantleStones(item) > 0 && !isRealmLocked(item) ? t('inventory.batch.aetheric', '{name} is Aetheric - the Sigil Broker dismantles it, not the Reforge.', { name })
       : t('inventory.batch.aethericKept', '{name} is Aetheric, and the Reforge never breaks it.', { name });
   }
   if (why === 'gilded') return t('inventory.batch.gilded', '{name} is Gilded - its roll is never broken down.', { name });

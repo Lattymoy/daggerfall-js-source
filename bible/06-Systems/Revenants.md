@@ -773,7 +773,7 @@ A sworn revenant wears what the player gives it. `systems/revenant/revenantGear.
   none - AUDIT RVN G2).
 - **Who wears what is DFU's table** (`armedKind`, `combat/enemyEquipment.js equipmentVariantFor` - ItemHelper's own): the
   classes, the orcs and the centaur take a weapon and armour. Every kind takes a charm ("A bear wears it on a cord").
-- **A melee weapon**, Dagger to War Axe. A foe's archery is its kind's flags (`enemyMotor.js hasBowAttack`), never its
+- **A melee weapon**, Dagger to War Axe, and RRI's Light Flail and Archer's Axe (AUDIT FB1031 C3, II R5). A foe's archery is its kind's flags (`enemyMotor.js hasBowAttack`), never its
   weapon, so a bow would only be swung.
 - **Balanced by rank**. A sworn one bears what its rank has earned:
 

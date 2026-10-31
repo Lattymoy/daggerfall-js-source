@@ -107,7 +107,7 @@ function learn(/** @type {any} */ d) {
   const items = _doors.entity()?.items;
   // AUDIT FB1031 D1: a count heard says whether a kept let-go landed - the next press is a new ask against it, never a
   // replay of an id the service answers "done" (not while that ask is in flight: its own answer settles it)
-  if (_discard && !_discardFlying && Number.isSafeInteger(d[_discard.kind])) _discard = null;
+  if (_discard && !_discardFlying.has(_discard) && Number.isSafeInteger(d[_discard.kind])) _discard = null;
   if (Number.isSafeInteger(d.cakes) && d.cakes >= 0) {
     _state = { ..._state, cakes: d.cakes };
     // OVERLOAD-EASE (2026-10-29): a restack is no save - the stack mirrors the service's count (bound, worth nothing) and
@@ -398,7 +398,8 @@ export const DISCARD_FINAL = Object.freeze(['rid', 'kind', 'count', 'guest']);
 /** The let-go asked and not yet answered: `{ kind, n, rid, account }` - the same ask reuses its id, so a lost answer
  *  never takes twice. */
 let _discard = /** @type {{ kind: string, n: number, rid: string, account: string|null } | null} */ (null);
-let _discardFlying = false;
+/** AUDIT FB1031 II R2: the let-gos in flight, by ask - one landing never spends another's id. */
+let _discardFlying = new Set();
 /**
  * LET GO `n` of the account's Soul Cakes or Hearth Offerings (`kind` 'cakes' or 'bowls') - the pack's Destroy
  * (systems/item/itemDiscard.js destroyPiece). A face removed from the pack alone came back with the next answer, so the
@@ -411,8 +412,8 @@ export async function discardFaces(kind, n) {
   if (festivalShut() === 'guest') return { ok: false, text: festivalRefusalText('guest') };
   const me = _api.me() ?? null;
   const ask = _discard?.kind === kind && _discard.n === n && _discard.account === me ? _discard : (_discard = { kind, n, rid: saleRid(), account: me });
-  _discardFlying = true;
-  const r = await _api.discard(kind, n, ask.rid).catch(() => null).finally(() => { _discardFlying = false; });
+  _discardFlying.add(ask);
+  const r = await _api.discard(kind, n, ask.rid).catch(() => null).finally(() => { _discardFlying.delete(ask); });
   if ((r?.ok || DISCARD_FINAL.includes(r?.error)) && _discard === ask) _discard = null;
   if (!r?.ok) {
     learn(r);   // a refusal's counts (`count`: fewer than that held now)
@@ -433,7 +434,7 @@ export async function townOfferings(/** @type {number} */ mapId) {
 
 /** Tests only. */
 export function _resetFestivalClientForTests() {
-  _doors = NO_DOORS; _api = null; _pending = null; _asking = null; _wardrobe = null; _chain = Promise.resolve(); _actTurn = null; _discard = null; _discardFlying = false;
+  _doors = NO_DOORS; _api = null; _pending = null; _asking = null; _wardrobe = null; _chain = Promise.resolve(); _actTurn = null; _discard = null; _discardFlying = new Set();
   _state = UNHEARD; _stateOf = null; _fullSaid = null;
   _hear.clear(); _version = 0; _rest.reset();
 }

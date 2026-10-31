@@ -282,7 +282,7 @@
   {
     "name": "BOUND-DESTROY-batch-broker-words",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "    return dismantleStones(item) > 0 ? t('inventory.batch.aetheric',",
+    "old": "    return dismantleStones(item) > 0 && !isRealmLocked(item) ? t('inventory.batch.aetheric',",
     "new": "    return true ? t('inventory.batch.aetheric',",
     "tests": [
       "test/systems/item/bound_destroy.test.js"

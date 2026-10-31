@@ -144,8 +144,8 @@ stacks are the counts' face, so a stack removed on the client alone came back wi
 them go: `/v1/festival/discard` (acct233; `festival.js` `discardFestival`) takes `{ kind, n, rid }`. The request id's own row
 (`fest_discards`, migration 0204) is laid only while the count holds n, and the count goes down where it was laid, so
 an id asked twice is one let-go, answered `repeat`. It works on any day and under any switch, as a take-in does, never
-for a guest. The client (`festivalClient.js` `discardFaces`) keeps an unanswered ask's id for the same ask again, and
-restacks the pack from the answer. Pinned by `test/server/bound_destroy_service.test.js` and
+for a guest. The client (`festivalClient.js` `discardFaces`) keeps an unanswered ask's id until a count heard since
+says whether it landed (AUDIT FB1031 D1, II R2), and restacks the pack from the answer. Pinned by `test/server/bound_destroy_service.test.js` and
 `test/systems/item/bound_destroy.test.js`.
 
 The town underfoot is asked for its offerings every 60 seconds and after every move (`scenes/witchesHost.js`) - while the

@@ -100,6 +100,8 @@ test('AUDIT FB1031 P1-P2: at a forge the bar stays over the Anvil through its ow
     mintCarried(e, OAK, 3);
     resetProfPages();
     assert.deepEqual(bench(), [], 'a fresh visit reads no old answer');
+    const fresh = dom.mk('div'); drawCraftingPage(fresh, () => {}, kit);
+    assert.equal(stationsAt(fresh)[0], 'BAR', 'AUDIT FB1031 II R9: a fresh visit forgets the last press\'s station - the bar over the first');
     const r = dom.mk('div'); drawCraftingPage(r, () => {}, kit);
     r.children.find((c) => c.className === 'prof-benchstores-wrap').querySelectorAll('button')[0].onclick();   // a second put-in
   });

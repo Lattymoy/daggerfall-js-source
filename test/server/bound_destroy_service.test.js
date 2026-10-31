@@ -134,3 +134,39 @@ test('AUDIT FB1031 D3: past FEST_OPS_MAX asks in the hour a let-go is answered r
   assert.deepEqual(await discardFestival(ctx(), p, { kind: 'bowls', n: 1, rid: 'bbbbbbbbbbbd' }), { error: 'rate' });
   assert.deepEqual(row(alice), { fest_cakes: 5, fest_bowls: 2 });
 });
+
+// AUDIT FB1031 II R2: D1's in-flight guard was one boolean for every let-go - the cakes' answer landing cleared it while
+// the bowls' was in flight, and its counts then spent the bowls' kept id, so a lost bowls answer was asked again anew.
+test('AUDIT FB1031 II R2: two let-gos in flight - one landing never spends the other\'s kept id; the lost one is asked again by the same id (mutant: one flag for every ask)', async () => {
+  await import('../modsOff.js');
+  const { SESSION_KEY } = await import('../../src/net/accountClient.js');
+  const { bindFestival, discardFaces, _resetFestivalClientForTests } = await import('../../src/systems/festival/festivalClient.js');
+  const store = new Map();
+  const realStorage = globalThis.localStorage;
+  globalThis.localStorage = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => { store.set(k, String(v)); }, removeItem: (k) => { store.delete(k); } };
+  store.set(SESSION_KEY, JSON.stringify({ secret: 's', id: 'acct-a', name: 'A', kind: 'linked' }));
+  try {
+    _resetFestivalClientForTests();
+    const asked = [];
+    const held = {};
+    const api = { me: () => 'acct-a', mine: async () => ({ ok: false, error: 'offline' }),
+      discard: (kind, n, rid) => { asked.push([kind, rid]); return new Promise((r) => { held[kind] = r; }); } };
+    const entity = { isPlayer: true, items: [] };
+    bindFestival({ online: () => true, entity: () => entity, say: () => {}, selfId: () => 'me', saved: () => {}, api, nowMs: () => Date.parse('2026-10-31T12:00:00Z') });
+    const a = discardFaces('cakes', 5);
+    const b = discardFaces('bowls', 3);
+    held.cakes({ ok: true, data: { cakes: 0, bowls: 3 } });   // the cakes' answer first, its counts read before the bowls landed
+    await a;
+    held.bowls(null);   // the bowls' answer lost
+    await b;
+    const c = discardFaces('bowls', 3);
+    held.bowls({ ok: true, repeat: true, data: { cakes: 0, bowls: 0 } });
+    await c;
+    const bowls = asked.filter(([k]) => k === 'bowls').map(([, rid]) => rid);
+    assert.equal(bowls.length, 2);
+    assert.equal(bowls[0], bowls[1], 'the same id asked again');
+  } finally {
+    _resetFestivalClientForTests();
+    globalThis.localStorage = realStorage;
+  }
+});

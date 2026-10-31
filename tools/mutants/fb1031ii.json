@@ -4,48 +4,107 @@
     "file": "src/ui/heldMap.js",
     "old": "    this._dropWash();   // AUDIT FB1031 II T1\n",
     "new": "",
-    "tests": ["test/ui/fb1031_witness.test.js"]
+    "tests": [
+      "test/ui/fb1031_witness.test.js"
+    ]
   },
   {
     "name": "AUDIT-FB1031-II-T1-the-wash-kept-by-the-sheet",
     "file": "src/ui/heldMap.js",
     "old": "        this._dropWash();   // AUDIT FB1031 II T1: nor the wash's\n",
     "new": "",
-    "tests": ["test/ui/fb1031_witness.test.js"]
+    "tests": [
+      "test/ui/fb1031_witness.test.js"
+    ]
   },
   {
     "name": "AUDIT-FB1031-II-T1-the-canvas-unemptied",
     "file": "src/ui/heldMap.js",
     "old": "    if (this._washCanvas) { this._washCanvas.width = 0; this._washCanvas.height = 0; }",
     "new": "",
-    "tests": ["test/ui/fb1031_witness.test.js"]
+    "tests": [
+      "test/ui/fb1031_witness.test.js"
+    ]
   },
   {
     "name": "AUDIT-FB1031-II-T2-no-gap-after-a-landing",
     "file": "src/net/profBook.js",
     "old": "        _groundWait = now() + PROF_GROUND_ASK_GAP_MS;",
     "new": "",
-    "tests": ["test/ui/fb1031_witness.test.js"]
+    "tests": [
+      "test/ui/fb1031_witness.test.js"
+    ]
   },
   {
     "name": "AUDIT-FB1031-II-T2-the-view-alone-asked",
     "file": "src/ui/witnessMapMark.js",
     "old": "      book.askGround([...tilesInView(box), ...ring]).catch(() => {});",
     "new": "      book.askGround(tilesInView(box)).catch(() => {});",
-    "tests": ["test/ui/fb1031_witness.test.js"]
+    "tests": [
+      "test/ui/fb1031_witness.test.js"
+    ]
   },
   {
     "name": "AUDIT-FB1031-II-T3-the-fill-dropped",
     "file": "src/ui/witnessMapMark.js",
     "old": "if (img === prev?.img) d.fill(0);",
     "new": "",
-    "tests": ["test/ui/fb1031_witness.test.js"]
+    "tests": [
+      "test/ui/fb1031_witness.test.js"
+    ]
   },
   {
     "name": "AUDIT-FB1031-II-T3-the-size-unchecked",
     "file": "src/ui/witnessMapMark.js",
     "old": "prev.w === w && prev.h === h",
     "new": "true",
-    "tests": ["test/ui/fb1031_witness.test.js"]
+    "tests": [
+      "test/ui/fb1031_witness.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-II-R1-the-batch-line-the-broker-s",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    return dismantleStones(item) > 0 && !isRealmLocked(item) ? t('inventory.batch.aetheric',",
+    "new": "    return dismantleStones(item) > 0 ? t('inventory.batch.aetheric',",
+    "tests": [
+      "test/systems/item/bound_destroy.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-II-R4-dismantle-offered-a-locked-copy",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (side === 'local' && !line.equipped && dismantleStones(picked) > 0 && !isRealmLocked(picked)) {",
+    "new": "  if (side === 'local' && !line.equipped && dismantleStones(picked) > 0) {",
+    "tests": [
+      "test/systems/item/bound_destroy.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-II-R9-the-realm-branch-unsaid",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": " : why === 'realm' ? realmLockedText(name) : null; refresh(); render(); };",
+    "new": " : null; refresh(); render(); };",
+    "tests": [
+      "test/systems/item/bound_destroy.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-II-R9-a-reset-keeps-the-landing",
+    "file": "src/ui/professions/profPages.js",
+    "old": "_stores.benchWord = null; _stores.benchAt = null;",
+    "new": "_stores.benchWord = null;",
+    "tests": [
+      "test/ui/professions/fb1029_benchstores.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1031-II-R2-one-landing-clears-every-ask",
+    "file": "src/systems/festival/festivalClient.js",
+    "old": ".finally(() => { _discardFlying.delete(ask); });",
+    "new": ".finally(() => { _discardFlying.clear(); });",
+    "tests": [
+      "test/server/bound_destroy_service.test.js"
+    ]
   }
 ]

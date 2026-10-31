@@ -15721,7 +15721,7 @@
  },
  "gather.goods.andStores": {
   "en": "2afef57ead7f",
-  "tr": "514c3d8e495b",
+  "tr": "2afef57ead7f",
   "by": "claude-in-session"
  },
  "gather.stop.gone": {
@@ -18181,7 +18181,7 @@
  },
  "inventory.destroy.keep": {
   "en": "466fc492747c",
-  "tr": "63df50a0a93d",
+  "tr": "4ed6344ff5ce",
   "by": "claude-in-session"
  },
  "inventory.destroy.worn": {

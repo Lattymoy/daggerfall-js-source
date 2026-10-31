@@ -47,7 +47,8 @@ FOUND. YARD-HEIGHT held every yard piece to 4 m; half the Bay's 6,016 houses hav
 there. FIXED. A piece stands to 8 m on or against its house, never above its roof; free of it the 4 m holds. A
 picture set on a yard's wall hangs flat (`06-Systems/Online-Arc.md` YARD-WALLS; acct231). AUDIT FB1031 Y1-Y8: "against
 its house" reads the house's own ground, roofs and faces, not its box; a duplicate hangs upright; no tree hangs.
-NOT CHANGED: roads; the deck minimum, since every smaller level roof inside the walls is a stair tread.
+OPEN (Y4): the service knows no lots, so a crafted client can stand a free piece to 8 m. NOT CHANGED: roads; the deck
+minimum, since every smaller level roof inside the walls is a stair tread.
 
 ## 5. Trees that hold foes out (TRUNK-FOES)
 

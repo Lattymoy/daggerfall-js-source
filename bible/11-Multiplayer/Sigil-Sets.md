@@ -1229,7 +1229,8 @@ good. Not a DFU member: Daggerfall has no bound piece and no destroy.
 - **The law** (`systems/item/itemDiscard.js`). `discardRefusal` destroys what its own mark binds and the two festival
   faces. Every row-bound token is kept (`kept`): the Embers, Shards and Portal Stones are coin with a sink that pays;
   the Wallet, the Card Binder and the Dwarven Dragon are one each and hold what they hold; a Weir Key is the account
-  service's count. A priced ware is `dismantle` - Dismantle pays, so it stands instead. A worn, locked or quest piece
+  service's count. A priced ware is `dismantle` - Dismantle pays, so it stands instead - unless the realm locked the copy, which the Broker
+  refuses and Destroy takes (AUDIT FB1031 D5, II R4). A worn, locked or quest piece
   is refused. A copy the realm locked has no mark: the ledger holds it while it reads it, and the lock lifts to the
   usual ways out. `discardItem` takes the piece or the whole stack, all or nothing, as `dismantleWare` does.
 - **The enhanced pack.** The card and its right-click menu offer Destroy where Dismantle is not. It asks first in the
@@ -1240,6 +1241,6 @@ good. Not a DFU member: Daggerfall has no bound piece and no destroy.
   priced now reads "is Aetheric, and the Reforge never breaks it."
 
 The Soul Cakes and Hearth Offerings go through the account service (`06-Systems/Witches-Festival.md` BOUND-DESTROY).
-Four hosts: none edited - the pack is every host's. Pinned by `test/systems/item/bound_destroy.test.js` (11) and
-`test/server/bound_destroy_service.test.js` (3); `tools/mutants/bound_destroy.json` (42, all dead). Re-aimed by content:
+Four hosts: none edited - the pack is every host's. Pinned by `test/systems/item/bound_destroy.test.js` (13) and
+`test/server/bound_destroy_service.test.js` (6); `tools/mutants/bound_destroy.json` (42, all dead). Re-aimed by content:
 `wallet1.json` and `fb1019f_keyface.json` (the classic pack-only refusal's line), the version records at acct233.

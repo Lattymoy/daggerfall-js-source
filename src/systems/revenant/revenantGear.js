@@ -10,7 +10,7 @@
 //    kind may wear a CHARM (a piece of jewellery the player could wear - a wand is none: AUDIT RVN G2): a bear wears it
 //    on a cord.
 //  - A MELEE WEAPON. A foe's archery is its kind's flags (enemyMotor.js hasBowAttack), never its weapon, so a bow in a
-//    sworn one's hand would only be swung: the weapon slot takes Dagger to War Axe.
+//    sworn one's hand would only be swung: the weapon slot takes Dagger to War Axe, and RRI's two (AUDIT FB1031 C3).
 //  - BALANCED BY RANK. A sworn one bears what its rank has earned: the metal (GEAR.METAL_CAP - Silver at rank I up to
 //    Daedric at rank V) and the tier (GEAR.RARITY_CAP - Magic at rank I, Rare from rank II, Legendary from rank IV).
 //    An artifact, an Aetheric or a Gilded piece answers to the player alone.
